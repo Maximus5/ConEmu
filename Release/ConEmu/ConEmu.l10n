@@ -3,47 +3,61 @@
     {"id": "en", "name": "English" }
     ,
     {"id": "ru", "name": "Русский" }
+    ,
+    {"id": "zh", "name": "简体中文" }
   ]
   ,
   "cmnhints": {
     "bRealConsoleSettings": {
       "en": "You may change font face and size in the Real console. Console restart required.",
       "ru": "Вы можете изменить имя шрифта и размер для RealConsole. Требуется перезапуск консоли.",
+      "zh": "你可以改变真实控制台（Real console）的字体外观和大小。需要重启控制台（Console）。",
       "id": 1608 }
     ,
     "bReloadSettings": {
       "en": "Reload all settings from registry/xml",
+      "zh": "从注册表或xml文件重新加载所有配置",
       "id": 1596 }
     ,
     "bResetSettings": {
       "en": "Reset all settings to defaults",
+      "zh": "重置所有配置为默认配置",
       "id": 1595 }
     ,
     "bSaveSettings": {
       "en": [ "Save settings to registry/xml\r\n"
             , "Don't close dialog if Shift pressed" ],
+      "zh": [ "保存设置到注册表或xml文件\r\n"
+            , "如果按下Shift键不会关闭对话框" ],
       "id": 1610 }
     ,
     "cbActivateSplitMouseOver": {
       "en": [ "When several panes (splits) are visible simultaneously activate (put focus in) console with mouse hover,\r\n"
             , "3rd-state - match ‘Active window tracking’ system settings" ],
+      "zh": [ "当一些窗格（分割窗口）可见并同时激活时（聚焦在） 鼠标悬停的控制台上，\r\n"
+            , "第三种情况 - 匹配 ‘激活的窗口跟踪’ 系统设置" ],
       "id": 2601 }
     ,
     "cbAdminShield": {
       "en": "When this is checked - ‘Shield’ icon will be shown in tabs, started ‘As administrator’",
+      "zh": "如果选中此处 - “盾牌” 图标会显示在Tab页上，以管理员权限“As administrator”启动",
       "id": 2109 }
     ,
     "cbAdminSuffix": {
       "en": [ "When this is checked - specified suffix will be appended in tabs titles, started ‘As administrator’.\r\n"
             , "You may choose insertion place with ‘%a’ var, otherwise suffix will be at the tab end." ],
+     "zh": [ "如果选中此处 - 指定的后缀会被追加在Tab页的标题上，以管理员权限“As administrator”启动.\r\n"
+            , "你可以使用变量‘%a’选择插入位置，否则后缀会插入在Tab最后面" ],
       "id": 2110 }
     ,
     "cbAlwaysOnTop": {
       "en": "Places the ConEmu window above all non-topmost windows. The window maintains its topmost position even when it is deactivated",
+      "zh": "把ConEmu窗口放置在其他非置顶窗口的前面。即使在不激活的状态下，窗口会一直置顶",
       "id": 1572 }
     ,
     "cbAlwaysShowTrayIcon": {
       "en": "Always show ConEmu icon in the Taskbar Status Area (TSA)",
+      "zh": "总是显示ConEmu图标在任务栏状态区域(TSA)",
       "id": 1736 }
     ,
     "cbAnsiLog": {
@@ -53,302 +67,400 @@
       "ru": [ "Логировать консольный вывод в текстовые файлы\r\n"
             , "ConEmu-YYYY-MM-DD-pNNNN.log\r\n"
             , "(влияет только на новые консоли)" ],
+      "zh": [ "输出控制台（console）日志到文本文件\r\n"
+            , "ConEmu-YYYY-MM-DD-pNNNN.log\r\n"
+            , "（仅影响之后新建的控制台（console））" ],
       "id": 2679 }
     ,
     "cbAutoRegFonts": {
       "en": "Search, register for process, and use first *.ttf file in conemu folder",
+      "zh": "查找、注册进程，并且使用conemu文件夹中的第一个*.ttf文件",
       "id": 1550 }
     ,
     "cbBgAllowPlugin": {
       "en": [ "Enable background Far plugins (e.g. Panel Colorer),\r\n"
             , "3rd-state - don't draw in viewer/editor" ],
+      "zh": [ "启用背景Far插件（比如 窗格颜色美化），\r\n"
+            , "第三种情况 - 不要在视图/编辑器（viewer/editor）中绘制" ],
       "id": 1734 }
     ,
     "cbBgImage": {
       "en": [ "Show background image instead standard\r\n"
             , "colors #0 and #1 (black and blue)\r\n"
             , "3rd-state - don't draw in viewer/editor" ],
+      "zh": [ "现实背景图片取代标准背景\r\n"
+            , "颜色 #0 和 #1 （黑和蓝）\r\n"
+            , "第三种情况 - 不要在视图/编辑器（viewer/editor）中绘制" ],
       "id": 1699 }
     ,
     "cbBold": {
       "en": "Main font weight",
+      "zh": "主字体加粗",
       "id": 2278 }
     ,
     "cbClinkWebPage": {
       "en": "Open clink's web page https://mridgers.github.io/clink/ in your browser",
+      "zh": "在浏览器中打开clink项目的主页 https://mridgers.github.io/clink/",
       "id": 2614 }
     ,
     "cbCloseConsoleConfirm": {
       "en": "Show confirmation before closing tab or page (tab ‘Close’ menu item)",
+      "zh": "关闭标签（Tab）或页面时需要确认 (标签页“关闭”菜单项)",
       "id": 2179 }
     ,
     "cbCloseEditViewConfirm": {
       "en": "Show confirmation before closing Far Manager editor or viewer tab",
+      "zh": "关闭Far Manager编辑器或视图标签（Tab）时需要确认",
       "id": 2517 }
     ,
     "cbCloseWindowConfirm": {
       "en": "Show confirmation before closing ConEmu window (cross clicking)",
+      "zh": "关闭ConEmu窗口时需要确认 （cross clicking）",
       "id": 2757 }
     ,
     "cbComspecTest": {
       "en": "Show ‘calculated’ ComSpec path",
+      "zh": "显示ComSpec路径的“计算值”",
       "id": 2162 }
     ,
     "cbComspecUpdateEnv": {
       "en": "ConEmu may update %ComSpec% variable to selected command processor",
+      "zh": "ConEmu更新%ComSpec%变量至选定的命令处理器",
       "id": 2160 }
     ,
     "cbConfirmCloseRunning": {
       "en": "If there are two or more user processes in the console",
+      "zh": "如果在控制台（Console）里有两个或更多的用户进程",
       "id": 2758 }
     ,
     "cbConsoleExceptionHandler": {
       "en": [ "By default ConEmu doesn't do SetUnhandledExceptionFilter in alternative servers (Far, Telnet, etc.)\r\n"
             , "But it may be enabled for debugging purposes" ],
+      "zh": [ "默认情况下ConEmu不会在可替代的服务里（Far, Telnet, 等等）使用未处理异常过滤器（SetUnhandledExceptionFilter）\r\n"
+            , "但可以在调试情形下启用" ],
       "id": 2622 }
     ,
     "cbCTSAutoCopy": {
       "en": "Copy immediately on left mouse button up (when selecting with mouse)",
+      "zh": "鼠标左键释放时立即复制（用鼠标选中文本时）",
       "id": 2340 }
     ,
     "cbCTSBashMargin": {
       "en": "Bash leave one space-character on the right edge of console when wrapping lines, skip these spaces when copying to clipboard",
+      "zh": "在封装各行时，Bash会在控制台（Console）最右边留一个空格字符，粘贴到剪贴板时会跳过此空格",
       "id": 2359 }
     ,
     "cbCTSBlockSelection": {
       "en": "Enable rectangular selection (like standard Windows console)",
+      "zh": "启用矩形选择（和标准的Windows控制台console一样)",
       "id": 1635 }
     ,
     "cbCTSClickPromptPosition": {
       "en": "3rd-state means ‘try to detect if console is in ReadConsole’, if you want to use this with bash - turn checkbox to ‘On’ (don't use third state)",
+      "zh": "第三种情况 意思是“如果控制台console在ReadConsole里，尝试自动探测console”, 如果你想在使用bash时使用此功能 - 把复选框选为 ‘On’ （不要使用第三种情况）",
       "id": 2344 }
     ,
     "cbCTSDeleteLeftWord": {
       "en": [ "Delete word leftward to the cursor (ignored in Far),\r\n"
             , "3rd-state means ‘try to detect if console is in ReadConsole’, if you want to use this with bash - turn checkbox to ‘On’ (don't use third state)" ],
+      "zh": [ "删除光标左边的单词（在Far里会忽略）,\r\n"
+            , "第三种情况 意思是“如果控制台console在ReadConsole里，尝试自动探测console”, 如果你想在使用bash时使用此功能 - 把复选框选为 ‘On’ （不要使用第三种情况）" ],
       "id": 2526 }
     ,
     "cbCTSDetectLineEnd": {
       "en": "Try to copy wrapped text as single line when possible (Text selection)",
+      "zh": "如果可能，尝试复制封装为单行的文本（文本选择）",
       "id": 2358 }
     ,
     "cbCTSEndCopyBefore": {
       "en": "Copy selection to clipboard before selection region reset",
+      "zh": "在选择区域重置前复制所选内容到剪贴板",
       "id": 2579 }
     ,
     "cbCTSEndOnKeyPress": {
       "en": [ "When ‘Off’ - only characters ends selection\r\n"
             , "When ‘On’ - any key ends selection (Arrows, PgUp, End, etc.)" ],
+      "zh": [ "当为‘Off’时 - 仅字符键结束选择\r\n"
+            , "当为‘On’时 - 任意键结束选择（Arrows, PgUp, End,等）" ],
       "id": 2436 }
     ,
     "cbCTSEndOnTyping": {
       "en": "Reset selection region on keypress",
+      "zh": "按下键盘按键时重置选择区域",
       "id": 2412 }
     ,
     "cbCTSFreezeBeforeSelect": {
       "en": "Freeze console contents before selection (may cause small lag)",
+      "zh": "在选择前冻结控制台内容（可能导致轻微滞后）",
       "id": 2257 }
     ,
     "cbCTSIBeam": {
       "en": "Show IBeam (text selection) cursor when available and allowed by settings and key modifiers",
+      "zh": "在可用并被程序配置和键修饰符（key modifiers）设置为允许的情况下，显示IBeam（文本选择）光标",
       "id": 2603 }
     ,
     "cbCTSShiftArrowStartSel": {
       "en": "Start text selection with Shift+Left/Right/Home/End or block selection with Shift+Up/Down",
+      "zh": "以Shift+Left/Right/Home/End键开始文本选择，或者，按下Shift+Up/Down键开始块状模式选择",
       "id": 2553 }
     ,
     "cbCTSTextSelection": {
       "en": "Enable streaming selection (like GUI text editors)",
+      "zh": "启用流选择（类似图形界面文本选择）",
       "id": 1630 }
     ,
     "cbCTSTrimTrailing": {
       "en": "3rd-state means ‘Only for Text selection’",
+      "zh": "第三种情况 意思是“仅文本选择”",
       "id": 2365 }
     ,
     "cbCursorBlink": {
       "en": [ "When \"Blinking\" is ON - cursor blinks\r\n"
             , "with standard cursor blink rate." ],
+      "zh": [ "当 \"闪烁\" 选项开启 - 光标会闪烁\r\n"
+            , "闪烁在标准频率下" ],
       "id": 1522 }
     ,
     "cbCursorColor": {
       "en": [ "ON - cursor emulates console behaviour (sort of colors inversion)\r\n"
             , "OFF - cursor is white (color#15) on dark backgrounds,\r\n"
             , "and black (color#0) on light backgrounds; also this checkbox affect appearance of ‘Block’ cursors" ],
+      "zh": [ "ON - 光标模拟控制台行为（各种颜色转化）\r\n"
+            , "OFF - 光标为白色 (颜色#15) 背景灰暗\r\n"
+            , "以及光标黑色(颜色#0) 背景明亮；这个复选框同时也会影响块状（“Block”）光标的外观" ],
       "id": 1210 }
     ,
     "cbCursorIgnoreSize": {
       "en": "Ignore cursor size in real console, always show cursor with specified size",
+      "zh": "忽略在真实控制台（real console）中的光标大小，总是以指定大小显示光标",
       "id": 1655 }
     ,
     "cbDebugSteps": {
       "en": [ "Show some debug information in ConEmu title\r\n"
             , "E.g. plugin communication steps." ],
+      "zh": [ "在ConEmu标题里显示一些调试信息\r\n"
+            , "比如：插件交互步骤" ],
       "id": 1551 }
     ,
     "cbDefTermAgressive": {
       "en": "If enabled, running ConEmu instance will not be required for hooking new processes. One already hooked process, e.g. ‘Explorer.exe’, will be enough.",
+      "zh": "如果被启用，运行中的ConEmu实例不会被请求hook新的进程。已经被hook的进程已经足够，例如 ‘Explorer.exe’。",
       "id": 2684 }
     ,
     "cbDisableAllFlashing": {
       "en": [ "Disable all flashing (from consoles) on Windows taskbar.\r\n"
             , "3rd-state - allow short flashing." ],
+      "zh": [ "停止Windows任务栏上所有来自控制台（Console）的闪烁。\r\n"
+            , "第三种情况 - 允许较短闪烁" ],
       "id": 1719 }
     ,
     "cbDisableFarFlashing": {
       "en": [ "Disable flashing (from Far Manager) on Windows taskbar.\r\n"
             , "3rd-state - allow short flashing." ],
+      "zh": [ "停止Windows任务栏上所有来自Far Manager的闪烁。\r\n"
+            , "第三种情况 - 允许较短闪烁" ],
       "id": 1718 }
     ,
     "cbDnDCopy": {
       "en": [ "Forced \"Copy\" action as default,\r\n"
             , "You can use Ctrl, Shift or Alt\r\n"
             , "during drag to change action" ],
+      "zh": [ "强制复制行为\"Copy\"为默认行为，\r\n"
+            , "你能使用Ctrl, Shift 或者 Alt\r\n"
+            , "在拖放时改变行为" ],
       "id": 2287 }
     ,
     "cbDosBox": {
       "en": "Enables DosBox integration",
+      "zh": "启用DosBox集成",
       "id": 1753 }
     ,
     "cbDragIcons": {
       "en": "Show icons of dragged iterms",
+      "zh": "显示拖放项目的图标",
       "id": 1553 }
     ,
     "cbDragImage": {
       "en": "Create and display overlay transparent snapshot of files are dragged",
+      "zh": "创建并显示被拖放文件的覆盖透明快照",
       "id": 1548 }
     ,
     "cbDragL": {
       "en": "Allow drag with left mouse button",
+      "zh": "允许使用鼠标左键拖放",
       "id": 1504 }
     ,
     "cbDragPanel": {
       "en": [ "Enable sizing of left and right panel by dragging with mouse.\r\n"
             , "3rd-state - resize on button release with macroses." ],
+      "zh": [ "通过拖放鼠标启用左右窗格\r\n"
+            , "第三种情况 - 按钮释放时通过宏指令调整大小" ],
       "id": 1568 }
     ,
     "cbDragR": {
       "en": "Allow drag with right mouse button",
+      "zh": "允许用鼠标右键拖放",
       "id": 1505 }
     ,
     "cbDropEnabled": {
       "en": [ "Off - ConEmu will NOT receive external drops\r\n"
             , "On - Drops allowed (Far confirmation dialog)\r\n"
             , "3rd-state - same as \"On\", but w/o confirmation" ],
+      "zh": [ "Off - ConEmu不会接受外部拖放\r\n"
+            , "On - 允许拖放 (Far 确认对话框)\r\n"
+            , "第三种情况 - 同\"On\"，但无 w/o 确认" ],
       "id": 1502 }
     ,
     "cbDropUnlocked": {
       "en": "Unlock source and target window on Drop operation. This may cause unpredictable results, when DragSource creates temp dragged files ONLY for drag lifetime.",
+      "zh": "通过拖放解锁源窗口和目标窗口。当拖放源仅在拖放进行时创建临时文件，可能会导致不预期的结果。",
       "id": 1579 }
     ,
     "cbDropUseBCopy": {
       "en": "Use BCopy service for drop operations (‘Unlocked drop’ must be checked)",
+      "zh": "拖放操作时使用BCopy服务（“解锁拖放（Unlocked drop）”必须被选中）",
       "id": 1580 }
     ,
     "cbEnableMouse": {
       "en": "Uncheck this to stop sending mouse events to console, mouse will be processed by ConEmu internally (text selection, for example)",
+      "zh": "不选中时停止发送鼠标事件到控制台console，鼠标事件会在ConEmu内部处理（例如，文本选择）",
       "id": 2313 }
     ,
     "cbEnhanceGraphics": {
       "en": "Enhance appearance of progressbars and scrollbars",
+      "zh": "增强进度栏和滚动条的外观",
       "id": 2289 }
     ,
     "cbExportConfig": {
       "en": [ "Export your current settings to xml file\r\n"
             , "\r\n"
             , "Beware overwriting your current ConEmu.xml if you are using ConEmu portable mode!" ],
+      "zh": [ "导出当前配置到xml文件\r\n"
+            , "\r\n"
+            , "如果你正在使用的是便携模式，注意会覆盖你当前的ConEmu.xml文件！" ],
       "id": 2572 }
     ,
     "cbExtendColors": {
       "en": [ "You can use up to 32 foreground colors\r\n"
             , "(instead of console standard 16) at the\r\n"
             , "expense of one of background colors" ],
+      "zh": [ "你可以使用32多种前端颜色\r\n"
+            , "（取代控制台console标准的16种）\r\n"
+            , "背景颜色会占用一种颜色" ],
       "id": 1515 }
     ,
     "cbExtendFonts": {
       "en": [ "ConEmu is able to use normal, bold and italic fonts side by side.\r\n"
             , "This feature may be useful for prompt decoration or with Colorer plugin for Far Manager (1.7x, 2.x)." ],
+      "zh": [ "ConEmu可以同时使用normal、bold和italic字体。\r\n"
+            , "这个特征可能对于提示性装饰很有用或者和Far Manager的颜色插件配合使用 (1.7x, 2.x)." ],
       "id": 1576 }
     ,
     "cbExtendUCharMap": {
       "en": "Show glyphs from selected font in ‘Unicode CharMap’ plugin (FAR2 only)",
+      "zh": "显示从‘Unicode CharMap’插件里选择的字体的象形文字（仅支持FAR2）",
       "id": 1722 }
     ,
     "cbFadeInactive": {
       "en": "When ConEmu loses focus, its contents may be faded. You may specify most bright color.",
+      "zh": "当不再聚焦在ConEmu上时，它的内容可能会褪色。你可以指定比较明亮的颜色。",
       "id": 1581 }
     ,
     "cbFarHourglass": {
       "en": "Show AppStarting cursor (arrow with a small hourglass) when Far is not responding (during long operations)",
+      "zh": "在需要较长时间操作的过程中，如果Far不响应，显示程序启动光标（带一个小沙漏的箭头）",
       "id": 1563 }
     ,
     "cbFARuseASCIIsort": {
       "en": [ "Hook Far string sort functions.\r\n"
             , "!!!HIGHLY EXPERIMENTAL!!!" ],
+      "zh": [ "Hook Far字符串排序函数。\r\n"
+            , "!!!高度实验性功能!!!" ],
       "id": 1561 }
     ,
     "cbFixAltOnAltTab": {
       "en": "When You set a macro on Alt (RAlt) it can unexpectedly activates on AltTab or AltF9. This issue can be fixed by sending to console Control depress before Alt release.",
+      "zh": "当你在Alt (右Alt)键设置一个宏时，可能会不按照预期的激活AltTab或AltF9。这个问题可以在Alt释放前，通过向控制台发送按下Conctrol键的消息而解决",
       "id": 1562 }
     ,
     "cbFixFarBorders": {
       "en": [ "You can specify additional font for drawing pseudographics or specified range of symbols.\r\n"
             , "E.g. main - \"Fixedsys\", additional - \"Lucida Console\".\r\n"
             , "You may force this font for specified range of symbols, search \"Settings-ConEmu.reg\" for \"FixFarBordersRanges\" option." ],
+      "zh": [ "你可以为错误代码页或指定范围内的符号指定额外的字体。\r\n"
+            , "例如：主要 - \"Fixedsys\", 额外 - \"Lucida Console\".\r\n"
+            , "你可以为指定范围的符号强制使用此字体，可在\"Settings-ConEmu.reg\" 中查找\"FixFarBordersRanges\"选项。" ],
       "id": 1207 }
     ,
     "cbFocusInChildWindows": {
       "en": "Set focus in xshell/putty/notepad/etc. when ConEmu is activated or tab switched.",
+      "zh": "当ConEmu激活时或者切换标签页时，聚焦在xshell/putty/notepad/等窗口上。",
       "id": 2568 }
     ,
     "cbFontAuto": {
       "en": "Automatic font resize for the fixed real console width",
+      "zh": "对于固定宽度的真实控制台（real console）自动重新设置字体大小",
       "id": 1566 }
     ,
     "cbHandleFarDetach": {
       "en": "Automatic attach to ConEmu new Far manager console, created on detach (CtrlAltTab)",
+      "zh": "自动附加到ConEmu分离时创建的新的Far manager console (CtrlAltTab)",
       "id": 1619 }
     ,
     "cbHereName": {
       "en": [ "What you will see in the Explorer popup menu\r\n"
             , "You can use `&` sign to set hotkey for the menu item" ],
+      "zh": [ "Explorer的弹出菜单中你所看见的内容\r\n"
+            , "你可以使用 `&` 标志为菜单项设置热键" ],
       "id": 2407 }
     ,
     "cbHideCaption": {
       "en": "Hide main window caption, when maximized (Alt-F9)",
+      "zh": "最大化时，隐藏主窗口标题 (Alt-F9)",
       "id": 1565 }
     ,
     "cbHideCaptionAlways": {
       "en": "Remove window border and caption. Only console, tabs and status bar will be shown.",
+      "zh": "移除窗口边界和标题栏。仅显示控制台（console）、标签页（tabs）和状态栏",
       "id": 1569 }
     ,
     "cbHideDisabledTabs": {
       "en": [ "Hide tabs, which can't be activated.\r\n"
             , "E.g. hide Far Manager editors while executing cmd.exe" ],
+      "zh": [ "隐藏不能被激活的标签页（tabs）。\r\n"
+            , "例如：执行cmd.exe时隐藏Far Manager编辑器" ],
       "id": 2051 }
     ,
     "cbHideInactiveConTabs": {
       "en": "Show tabs from active console only",
+      "zh": "仅显示活动的控制台（console）的标签页（tabs）",
       "id": 1642 }
     ,
     "cbInjectConEmuHkFast": {
       "en": "Required for many features (ANSI X3.64, -new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (crash in Windows 8, telnet in Windows 7, dialogs and menus behind of ConEmu window, chcp hungs, and so on...)",
+      "zh": "此功能被更多特征所需要（ANSI X3.64, -new_console argument, ConEmu tabs中的GUI, ...) 并消除若干问题(在Windows 8奔溃，Windows 7中的telnet，对话框和菜单出现在ConEmu窗口后面， chcp挂起，等等……)",
       "id": 2098 }
     ,
     "cbInsideName": {
       "en": [ "What you will see in the Explorer popup menu\r\n"
             , "You can use `&` sign to set hotkey for the menu item" ],
+      "zh": [ "Explorer的弹出菜单中你所看见的内容\r\n"
+            , "你可以使用`&` 标志为菜单项设置热键" ],
       "id": 2406 }
     ,
     "cbInsideSyncDir": {
       "en": "Sync current directory (Explorer -> ConEmu)",
+      "zh": "同步当前目录(Explorer -> ConEmu)",
       "id": 2397 }
     ,
     "cbInstallKeybHooks": {
       "en": "Allows interception of Win+Number, Win+Arrows, Alt+Esc, Alt+Tab, etc.",
+      "zh": "允许拦截Win+Number, Win+Arrows, Alt+Esc, Alt+Tab,等等。",
       "id": 1649 }
     ,
     "cbItalic": {
       "en": "Main font italic",
+      "zh": "主字体斜体",
       "id": 2280 }
     ,
     "cbLongOutput": {
@@ -357,6 +469,11 @@
             , "console commands. Full console output\r\n"
             , "(up to specified count of lines) will be\r\n"
             , "available via Far macro (CtrlO.reg)" ],
+      "zh": [ "自动扩展buffer高度至指定\r\n"
+            , "行数，（当Far执行控制台（console）命令时）\r\n"
+            , "完整的控制台（console）输出\r\n"
+            , "(行数达到指定的数目) 将会\r\n"
+            , "可以使用 - 通过Far宏 (CtrlO.reg)" ],
       "id": 1534 }
     ,
     "cbMinToTray": {
@@ -364,61 +481,84 @@
             , "Right click on ‘Close window button’\r\n"
             , "in ConEmu title for minimize to TSA,\r\n"
             , "when this checkbox is OFF" ],
+      "zh": [ "自动最小化到任务栏状态区域(TSA)\r\n"
+            , "在‘关闭窗口按钮’上右击\r\n"
+            , "在ConEmu标题里最小化至TSA,\r\n"
+            , "当此选项关闭时（OFF）" ],
       "id": 1507 }
     ,
     "cbMonitorConsoleLang": {
       "en": [ "Monitor input language change in real\r\n"
             , "console (e.g. Far Manager XLat switching support)" ],
+      "zh": [ "监视输入语言的改变在真实\r\n"
+            , "控制台（console）里(例如 Far Manager XLat切换支持)" ],
       "id": 1537 }
     ,
     "cbMonospace": {
       "en": "Check it for non proportional (monospaced) fonts",
+      "zh": "为无比例（等宽）字体选中此处",
       "id": 2283 }
     ,
     "cbMultiCon": {
       "en": [ "Turn on MultiConsole\r\n"
             , "(several consoles in one ConEmu)\r\n"
             , "ConEmu restart required" ],
+      "zh": [ "关闭多重控制台（MultiConsole）\r\n"
+            , "(若干控制台（consoles）在一个ConEmu里)\r\n"
+            , "需要ConEmu重启" ],
       "id": 1506 }
     ,
     "cbMultiIterate": {
       "en": "Iterate opened Far windows with ‘Host-key’+Number",
+      "zh": "使用‘Host-key’+数字，迭代打开Far windows",
       "id": 2104 }
     ,
     "cbNewConfirm": {
       "en": [ "Confirm new console creation.\r\n"
             , "You may change cmd line for it, or turn on \"Run as...\" feature.\r\n"
             , "Even if unchecked, You may hold \"Shift\" to display dialog." ],
+      "zh": [ "确认创建新的控制台（console）\r\n"
+            , "你可以为它改变cmd行，或者关闭\"Run as...\" 特征。\r\n"
+            , "即使没有选中，你可以按住 \"Shift\" 来显示对话框。" ],
       "id": 1546 }
     ,
     "cbNumberInCaption": {
       "en": "Show [ActiveCon/TotalCon] in window caption",
+      "zh": "在窗口标题里显示[ActiveCon/TotalCon]",
       "id": 2480 }
     ,
     "cbOneTabPerGroup": {
       "en": "Show only one tab for all splits in the group",
+      "zh": "在一组分屏中仅显示一个标签页（Tab）",
       "id": 2599 }
     ,
     "cbProcessAnsi": {
       "en": "Enable processing of ANSI escape sequences, ‘Inject ConEmuHk’ must be checked if you want to work with second level processes (e.g. cmd.exe -> app.exe)",
+      "zh": "启用ANSI转义序列的处理， 如果你想调用第二层次的进程(比如 cmd.exe -> app.exe)，‘Inject ConEmuHk’必须被选中",
       "id": 2253 }
     ,
     "cbProcessCmdStart": {
       "en": "Hook 'start' command in your cmd's prompt and batches started in ConEmu tabs to run console applications in new ConEmu tabs",
+      "zh": "Hook你cmd prompt里的'start' 命令 ，已及在ConEmu标签页里开始的批处理，然后在新的ConEmu标签页运行console程序",
       "id": 2740 }
     ,
     "cbProcessCtrlZ": {
       "en": [ "Treat Ctrl-Z as ‘EndOfStream’. On new line press Ctrl-Z and Enter.\r\n"
             , "Refer to the gh#465 for details (Go input streams)." ],
+      "zh": [ "把Ctrl-Z作为‘EndOfStream’。在新的一行按下Ctrl-Z和Enter。\r\n"
+            , "细节请参考gh#465(Go input streams)." ],
       "id": 2878 }
     ,
     "cbProcessNewConArg": {
       "en": "Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs",
+      "zh": " 在你的shell提示、ConEmu标签里开始运行的脚本之间，启动'-new_console'和'-cur_console'的切换处理",
       "id": 2640 }
     ,
     "cbQuakeStyle": {
       "en": [ "Slide console window from the top of the screen like gaming consoles\r\n"
             , "Choose desired hotkey for ‘Minimize/Restore’ action on ‘Keys & Macro’ page" ],
+      "zh": [ "从屏幕顶部滑出控制台（console）窗口，类似游戏控制台的效果\r\n"
+            , "可以在‘Keys & Macro’页面，为‘最小化/恢复’动作选择想要的热键。" ],
       "id": 2333 }
     ,
     "cbRClick": {
@@ -426,110 +566,146 @@
             , "On - EMenu called instead of RClick\r\n"
             , "3rd-state - Short RClick passed, Long RClick -> EMenu\r\n"
             , "Warning! This may conflict with RDrag" ],
+      "zh": [ "Off - 所有RClicks传递给控制台console\r\n"
+            , "On - 调用EMenu替代RClick\r\n"
+            , "第三那种情况 - 短RClick被传递，长RClick -> EMenu\r\n"
+            , "警告！这可能与RDrag发生冲突" ],
       "id": 1696 }
     ,
     "cbRestore2ActiveMonitor": {
       "en": "When restoring or sliding-down move window to the active monitor, where mouse cursor is located",
+      "zh": "当窗口恢复至或者下滑移动到鼠标所在的活动的显示屏时",
       "id": 2867 }
     ,
     "cbRetardInactivePanes": {
       "en": "Retard inactive but visible split-panes in the active ConEmu window",
+      "zh": "延缓在活动的ConEmu窗口里可见但非活动的分割窗格",
       "id": 2665 }
     ,
     "cbRSelectionFix": {
       "en": [ "Fix dashed selection with fast right mouse drag\r\n"
             , "Far 3: restore files selection instead of EMenu" ],
+      "zh": [ "修复右键快速拖放时“破碎”状的选择\r\n"
+            , "Far 3:恢复文件选择而不是EMenu" ],
       "id": 1536 }
     ,
     "cbSafeFarClose": {
       "en": "Try to close Far Manager softly, instead of closing console window, when you close ConEmu window",
+      "zh": "当你关闭ConEmu窗口时，尝试轻柔的关闭Far Manager，取代关闭console窗口",
       "id": 1654 }
     ,
     "cbSendAltEsc": {
       "en": "When checked, You can use \"Alt+Esc\" in Far internally",
+      "zh": "如果选中此项，你可以在Far里使用内部的\"Alt+Esc\"",
       "id": 1778 }
     ,
     "cbSendAltPrintScrn": {
       "en": "When checked, You can use \"Alt+PrintScrn\" in Far internally",
+      "zh": "如果选中此项，你可以在Far里使用内部的\"Alt+PrintScrn\"",
       "id": 1779 }
     ,
     "cbSendAltTab": {
       "en": [ "When checked, You can use \"Alt+Tab\" in Far internally.\r\n"
             , "Warning! This blocks ability of switching to another window" ],
+      "zh": [ "如果选中此项，你可以在Far里使用内部的\"Alt+Tab\"。\r\n"
+            , "警告！这会阻碍切换到其他窗口的能力" ],
       "id": 1777 }
     ,
     "cbSendCtrlEsc": {
       "en": "When checked, You can use \"Ctrl+Esc\" in Far internally",
+      "zh": "如果选中此项，你可以在Far里使用内部的\"Ctrl+Esc\"",
       "id": 1781 }
     ,
     "cbSendPrintScrn": {
       "en": "When checked, You can use \"PrintScrn\" in Far internally",
+      "zh": "如果选中此项，你可以在Far里使用内部的\"PrintScrn\"",
       "id": 1780 }
     ,
     "cbShellNoZoneCheck": {
       "en": "SEE_MASK_NOZONECHECKS. Same as appeared in Far 2 build 771 and disappeared after 1464.",
+      "zh": "SEE_MASK_NOZONECHECKS. 和在Far 2 build 771中出现，在build 1464取消的同种功能相同",
       "id": 1725 }
     ,
     "cbShowFarWindows": {
       "en": "Show all Far Manager windows (panels, editors, viewers) instead of one tab for one console",
+      "zh": "显示所有Far Manager窗口（窗格，编辑器，视图），取代一个控制台（console）对应一个标签页的显示方式",
       "id": 2053 }
     ,
     "cbShowHelpTooltips": {
       "en": "Don't like tooltips in settings dialog? Disable this feature.",
+      "zh": "不喜欢设置对话框里的提示？可以取消此功能。",
       "id": 2592 }
     ,
     "cbShowWasHiddenMsg": {
       "en": "Show ‘ConEmu was hidden from some program’ message in TSA",
+      "zh": "在任务栏状态区域（TSA）显示消息“ConEmu被一些程序隐藏”",
       "id": 2435 }
     ,
     "cbShowWasSetOnTopMsg": {
       "en": "Show ‘Some external program brought ConEmu OnTop. Revert?’ confirmation box",
+      "zh": "显示“一些外部程序使ConEmu置顶。 恢复？”确认框",
       "id": 2854 }
     ,
     "cbSingleInstance": {
       "en": [ "Use one ConEmu window when starting new console from shortcut or somewhere\r\n"
             , "May be disabled by ‘/nosingle’ or forced by ‘/single’ switches" ],
+      "zh": [ "当从快捷图标或某些方式打开新的控制台（console）时，使用ConEmu窗口\r\n"
+            , "此功能可被‘/nosingle’关闭，或被‘/single’开关强制启用" ],
       "id": 2578 }
     ,
     "cbSkipActivation": {
       "en": [ "Skip mouse button (left/right/middle)\r\n"
             , "click, while activating window" ],
+      "zh": [ "跳过鼠标按钮（左/右/中）\r\n"
+            , "点击（当激活窗口时）" ],
       "id": 1542 }
     ,
     "cbSkipFocusEvents": {
       "en": [ "Don't send focus events to console to disable\r\n"
             , "autoclosing of fast search dialog in panels" ],
+      "zh": [ "不要发送聚焦事件到控制台（console）以致失效\r\n"
+            , "自动关闭窗格中快速查找对话框" ],
       "id": 1538 }
     ,
     "cbSkipMove": {
       "en": [ "Skip mouse move events, while\r\n"
             , "ConEmu is not foreground window" ],
+      "zh": [ "跳过鼠标移动事件，当\r\n"
+            , "ConEmu不是前端窗口" ],
       "id": 1543 }
     ,
     "cbSleepInBackground": {
       "en": "Reduce FPS when ConEmu loses focus",
+      "zh": "当ConEmu失去焦点，减少FPS",
       "id": 1721 }
     ,
     "cbSnapToDesktopEdges": {
       "en": "Lock ConEmu window inside desktop work area",
+      "zh": "锁定ConEmu窗口在桌面工作区域内",
       "id": 2403 }
     ,
     "cbStartFarRestoreEditors": {
       "en": "When ‘Auto save/restore opened tabs’ save/restore Far Manager editors/viewers too",
+      "zh": "当‘自动保存/恢复打开过的标签页’时，同时保存/恢复Far Manager编辑器/视图",
       "id": 2238 }
     ,
     "cbStartFarRestoreFolders": {
       "en": "When ‘Auto save/restore opened tabs’ save/restore Far Manager panels folders too",
+      "zh": "当‘自动保存/恢复打开过的标签页’时，同时保存/恢复Far Manager窗格文件夹",
       "id": 2237 }
     ,
     "cbSuppressBells": {
       "en": [ "Suppress annoying bells produced by echoing char(7), Beep and MessageBeep functions.\r\n"
             , "Inject ConEmuHk is required." ],
+      "zh": [ "抑制回显字符(7)、Beep和MessageBeep函数时产生的烦人响声。\r\n"
+            , "需要注入ConEmuHk" ],
       "id": 2598 }
     ,
     "cbTabLazy": {
       "en": [ "When checked - real window switching\r\n"
             , "will be performed on Ctrl depress" ],
+      "zh": [ "如果选中 - 真实窗口切换\r\n"
+            , "会在按下Ctrl键时执行" ],
       "id": 1532 }
     ,
     "cbTabRecent": {
@@ -537,11 +713,17 @@
             , "You may still switch between tabs in\r\n"
             , "standard manner using Left/Right\r\n"
             , "(after CtrlTab), while Ctrl is still presses." ],
+      "zh": [ "最近标签之间的切换。\r\n"
+            , "你可以仍旧在标签页之间切换以\r\n"
+            , "使用Left/Right键的标准方式\r\n"
+            , "(在CtrlTab之后), 当Ctrl仍旧按下时。" ],
       "id": 1533 }
     ,
     "cbTabs": {
       "en": [ "Show tabs (all opened panels, editors and viewers)\r\n"
             , "on the top of ConEmu window" ],
+      "zh": [ "显示标签页（所有打开的窗格，编辑器和视图）\r\n"
+            , "在ConEmu窗口顶部" ],
       "id": 2288 }
     ,
     "cbTabSelf": {
@@ -549,248 +731,320 @@
             , "(by ConEmu). These keystrokes will not be sent\r\n"
             , "to console window, but You can easily\r\n"
             , "switch between consoles (panels)." ],
+      "zh": [ "在内部处理CtrlTab和CtrlShiftTab\r\n"
+            , "(by ConEmu)。这些按键不会被发送\r\n"
+            , "至console窗口，但你很容易\r\n"
+            , "在consoles（窗格）之间切换。" ],
       "id": 1531 }
     ,
     "cbTabsOnTaskBar": {
       "en": [ "Represent each console on taskbar\r\n"
             , "3rd-state - Windows 7 and higher" ],
+      "zh": [ "在任务栏表示每个console\r\n"
+            , "第三种情况 - Windows 7 及以后" ],
       "id": 2048 }
     ,
     "cbThumbLoadFiles": {
       "en": "Generate previews for files",
+      "zh": "生成预览文件",
       "id": 1664 }
     ,
     "cbThumbLoadFolders": {
       "en": "Generate previews for folders (by first 4 files)",
+      "zh": "生成预览文件夹（由前4个文件）",
       "id": 1663 }
     ,
     "cbThumbRestoreOnStartup": {
       "en": "Restore panel views on Far startup",
+      "zh": "Far启动时恢复窗格视图",
       "id": 1720 }
     ,
     "cbThumbUsePicView2": {
       "en": "Try to use PicView2 plugin to generate previews (FAR2 only)",
+      "zh": "尝试用PicView2插件生成预览（仅支持FAR2）",
       "id": 1680 }
     ,
     "cbTrueColorer": {
       "en": "Colorer truemod support",
+      "zh": "着色truemod支持",
       "id": 1578 }
     ,
     "cbTryToCenter": {
       "en": "Draw console content in center of ConEmu window. Use together with ‘Pad size’",
+      "zh": "在ConEmu窗口中间绘制console内容。与‘Pad size’结合使用",
       "id": 1570 }
     ,
     "cbUseClink": {
       "en": [ "Use clink to extend command prompt (cmd.exe)\r\n"
+            , "https://mridgers.github.io/clink/" ],
+      "zh": [ "使用clink扩展 command prompt (cmd.exe)\r\n"
             , "https://mridgers.github.io/clink/" ],
       "id": 2418 }
     ,
     "cbUseInjects": {
       "en": [ "Allow injecting ConEmuHk.dll in every process of ConEmu console window.\r\n"
             , "Required for many features (ANSI X3.64, -new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (telnet in Windows 7, dialogs and menus behind of ConEmu window, chcp hungs, and so on...)" ],
+      "zh": [ "允许在ConEmu控制台窗口的每个进程注入ConEmuHk.dll。\r\n"
+            , "被许多功能所需要 (ANSI X3.64, -new_console argument, ConEmu标签页中的GUI程序, ...) 并且消除若干问题（Windows 7的telnet，对话框和菜单位于ConEmu窗口之后， chcp 挂起，等等……）" ],
       "id": 1752 }
     ,
     "cbUseKeyboardHooksFast": {
       "en": "Required for some keyboard combinations. When checked, ConEmu will install keyboard hook when ConEmu is foreground window. So, You must allow that in antiviral software (AVP for example)",
+      "zh": "某些键盘组合所需的。 如果被选中， ConEmu是前端窗口时，ConEmu会安装键盘hook。 因此，你必须在杀毒软件允许（比如AVP）",
       "id": 2086 }
     ,
     "cbUserScreenTransparent": {
       "en": "Turn on ‘User screen’ transparency, when panel(s) is lifted up or hided. You may temporary reveal ‘User screen’ by depressing Ctrl-Alt-Shift.",
+      "zh": "当窗格高举或隐藏时，打开‘用户屏幕’透明。 你可以按下Ctrl-Alt-Shift暂时显示‘用户屏幕’。",
       "id": 1573 }
     ,
     "cbUseWinArrows": {
       "en": "Resize ConEmu window with arrow keys",
+      "zh": "用箭头键调整ConEmu窗口大小",
       "id": 1768 }
     ,
     "cbUseWinNumber": {
       "en": "Enables switching of tabs (30 consoles) by their numbers (1,2,...,9,10,11,...). ‘Host-key’ is ‘Win’ key, by default.",
+      "zh": "启用以它们(30个consoles)的数字编号(1,2,...,9,10,11,...)来切换标签页。 默认情况下，‘Host-key’是‘Win’键。",
       "id": 1648 }
     ,
     "cbUseWinTab": {
       "en": "Disable Windows 7 Aero switch (Win+Tab) when ConEmu in foreground",
+      "zh": "当ConEmu处于前台，禁止Windows 7 Aero切换(Win+Tab)",
       "id": 1764 }
     ,
     "cbVisible": {
       "en": "Show real console on startup",
+      "zh": "启动时显示真实控制台（real console）",
       "id": 1545 }
     ,
     "lbCmdOutputCP": {
       "en": [ "Windows command processor (cmd.exe) may cause then output of internal commands to be OEM or Unicode.\r\n"
             , "You may force this selection, or use automatic selection (FAR2 -> Unicode)." ],
+      "zh": [ "Windows 命令行 (cmd.exe) 可能导致内部命令的输出为OEM或者Unicode.\r\n"
+            , "你可以强制选择，或者使用自动选择 (FAR2 -> Unicode)。" ],
       "id": 1558 }
     ,
     "lbColorsOverride": {
       "en": [ "You may choose one of predefined color schemes.\r\n"
             , "Each scheme customize 32 colors (16+16)\r\n"
             , "and extend foreground options." ],
+      "zh": [ "你可以选择一个预先确定的颜色方案。\r\n"
+            , "每一个方案都有32种颜色(16+16)\r\n"
+            , "并扩展前景选项。" ],
       "id": 2147 }
     ,
     "lbConClrBack": {
       "en": "Specify default background text color for new consoles",
+      "zh": "为新的控制台（console）指定默认背景文本颜色",
       "id": 2399 }
     ,
     "lbConClrPopBack": {
       "en": "Specify default background popup color for new consoles",
+      "zh": "为新的控制台（console）指定默认的背景弹出颜色",
       "id": 2402 }
     ,
     "lbConClrPopText": {
       "en": "Specify default foreground (font) popup color for new consoles",
+      "zh": "为新的控制台（console）指定默认的前台（字体）弹出颜色",
       "id": 2401 }
     ,
     "lbConClrText": {
       "en": "Specify default foreground (font) text color for new consoles",
+      "zh": "为新的控制台（console）指定默认的前台（字体）文本颜色",
       "id": 2398 }
     ,
     "lbCTSBlockSelection": {
       "en": "Choose modifier to starting ‘Block selection’ with mouse LeftClick+Drag",
+      "zh": "使用鼠标LeftClick+Drag选择修改器来启动“块状选择”（‘Block selection’）",
       "id": 1633 }
     ,
     "lbCTSEOL": {
       "en": "Choose preferred line separator (\\r\\n, \\n or \\r)",
+      "zh": "选择首选的换行符 (\\r\\n, \\n 或 \\r)",
       "id": 2367 }
     ,
     "lbCTSTextSelection": {
       "en": "Choose modifier to starting ‘Text selection’ with mouse LeftClick+Drag",
+      "zh": "使用鼠标LeftClick+Drag选择修改器来启动“文本选择”（‘Text selection’）",
       "id": 1634 }
     ,
     "lbDefaultColors": {
       "en": [ "You may choose one of predefined color schemes.\r\n"
             , "Each scheme customize 32 colors (16+16)\r\n"
             , "and extend foreground options." ],
+      "zh": [ "你可以选择一个预先确定的颜色方案。\r\n"
+            , "每一个方案都有32种颜色(16+16)\r\n"
+            , "并扩展前景选项。" ],
       "id": 1554 }
     ,
     "lbExtendFontBoldIdx": {
       "en": "Choose background color index for which ‘Bold’ font properties whill be inverted (default is Red #12)",
+      "zh": "选择背景颜色索引，“粗体”字体属性会被倒置，(默认为红色 #12)",
       "id": 1577 }
     ,
     "lbExtendFontItalicIdx": {
       "en": "Choose background color index for which ‘Italic’ font properties whill be inverted (default is Magenta #13)",
+      "zh": "选择背景颜色索引，‘斜体’ 字体属性会被倒置，(默认为品红色 #13)",
       "id": 2300 }
     ,
     "lbExtendFontNormalIdx": {
       "en": "When Bold or Italic font property was inverted, ConEmu may change background to default color (default is Blue #1)",
+      "zh": "当“粗体”或“斜体”字体属性被倒置，ConEmu会改变背景为默认颜色(默认为蓝色 #1)",
       "id": 2301 }
     ,
     "lbExtendIdx": {
       "en": "Choose background color index, used to increase foreground color index",
+      "zh": "选择背景颜色索引，用来增加前景颜色索引",
       "id": 2299 }
     ,
     "lbGotoEditorCmd": {
       "en": "Command line for starting editor with file positioned on line and column",
+      "zh": "启动编辑器的命令行，文件定位于行和列",
       "id": 2255 }
     ,
     "lbLDragKey": {
       "en": "Drag with left mouse button, only when pressed...",
+      "zh": "用鼠标左键拖放，仅当按下时……",
       "id": 1501 }
     ,
     "lbNtvdmHeight": {
       "en": [ "Old DOS programs may be runned under console sizes: 80x25, 80x28, 80x43 or 80x50. You may force window size selection, or left the automatic selection.\r\n"
             , "This feature is not available in x64 OS." ],
+      "zh": [ "老的DOS程序可能运行在控制台大小： 80x25, 80x28, 80x43 or 80x50。你可以强制选择大小，或让自动选择。\r\n"
+            , "此功能在x64 OS上不可用。" ],
       "id": 1559 }
     ,
     "lbRDragKey": {
       "en": "Drag with right mouse button, only when pressed...",
+      "zh": "用鼠标右键拖放，仅当按下时……",
       "id": 1503 }
     ,
     "rbActivityCmd": {
       "en": "Log internal ConEmu (GUI<-->Server) calls",
+      "zh": "记录内部的ConEmu调用日志 (GUI<-->Server)",
       "id": 2069 }
     ,
     "rbActivityDebug": {
       "en": "Automatically attach ConEmu debugger to all started processes",
+      "zh": "自动附加ConEmu调试器到所有已启动的进程",
       "id": 2446 }
     ,
     "rbActivityDisabled": {
       "en": "Disable debug logging. This implies on ‘Settings’ dialog close.",
+      "zh": "禁用调试日志。这意味着‘Settings’对话框关闭。",
       "id": 1747 }
     ,
     "rbActivityInput": {
       "en": "Log keyboard and mouse activities",
+      "zh": "记录键盘和鼠标活动的日志",
       "id": 1762 }
     ,
     "rbActivityShell": {
       "en": "Log shell calls (progress creations, library loadings, etc.) ‘Inject ConEmuHk’ is required",
+      "zh": "记录shell调用(创建过程，加载库过程，等等)的日志 ，需要‘注入ConEmuHk’",
       "id": 1748 }
     ,
     "rbComspec_AppBit": {
       "en": "64bit OS only, (System32 or SysWOW64) - same bits as application (ConEmu, Far Manager, ...)",
+      "zh": "仅64位操作系统， (System32 or SysWOW64) - 和应用程序使用相同的bits (ConEmu, Far Manager, ...)",
       "id": 2158 }
     ,
     "rbComspec_OSbit": {
       "en": "64bit OS only, (System32 or SysWOW64) - use System32",
+      "zh": "仅64bit操作系统， (System32 or SysWOW64) - 使用System32",
       "id": 2157 }
     ,
     "rbComspec_x32": {
       "en": "64bit OS only, (System32 or SysWOW64) - use SysWOW64",
+      "zh": "仅64bit操作系统， (System32 or SysWOW64) - 使用SysWOW64",
       "id": 2159 }
     ,
     "rbComspecAuto": {
       "en": "Start tcc - if installed, %ComSpec% - otherwise (used for ‘Create new ‘cmd.exe’ console’)",
+      "zh": "启动tcc - 如果已安装, %ComSpec% - 否则 (被‘创建新的 ‘cmd.exe’ console’所使用)",
       "id": 2148 }
     ,
     "rbComspecCmd": {
       "en": "Use cmd.exe only (used for ‘Create new ‘cmd.exe’ console’)",
+      "zh": "仅使用cmd.exe (被‘创建新的 ‘cmd.exe’ console’所使用)",
       "id": 2150 }
     ,
     "rbComspecEnvVar": {
       "en": "Use %ComSpec% environment variable (used for ‘Create new ‘cmd.exe’ console’)",
+      "zh": "使用环境变量%ComSpec% (被‘创建新的 ‘cmd.exe’ console’所使用)",
       "id": 2149 }
     ,
     "rbComspecExplicit": {
       "en": "Specified command processor (used for ‘Create new ‘cmd.exe’ console’)",
+      "zh": "指定command processor (被‘创建新的 ‘cmd.exe’ console’所使用)",
       "id": 2151 }
     ,
     "rbScrollbarAuto": {
       "en": "Show scrollbar on mousehover or scroll position change",
+      "zh": "在鼠标悬停或滚动位置改变时显示滚动栏",
       "id": 2489 }
     ,
     "rbScrollbarHide": {
       "en": "Don't show scrollbar",
+      "zh": "不要显示滚动栏",
       "id": 2487 }
     ,
     "rbScrollbarShow": {
       "en": "Always show scrollbar on the right edge of window",
+      "zh": "总是在窗口右边边缘显示滚动栏",
       "id": 2488 }
     ,
     "rbStartLastTabs": {
       "en": "Auto save/restore (reopen) ConEmu tabs",
+      "zh": "自动保存/恢复(重新打开)ConEmu标签页",
       "id": 2236 }
     ,
     "rbStartNamedTask": {
       "en": "Starts ConEmu with several (one or more) tabs, commands located in ConEmu Settings, Tasks page",
+      "zh": "启动ConEmu若干（一个或更多）标签页时，命令定位于ConEmu设置，任务页",
       "id": 2235 }
     ,
     "rbStartSingleApp": {
       "en": "Starts ConEmu with single tab opened",
+      "zh": "启动ConEmu时打开单个标签页（tab）",
       "id": 2233 }
     ,
     "rbStartTasksFile": {
       "en": "Starts ConEmu with several (one or more) tabs, commands located in specified text file",
+      "zh": "启动ConEmu若干（一个或更多）标签页时，命令定位于指定的文本文件",
       "id": 2234 }
     ,
     "rCursorB": {
       "en": "Full cell (block) cursor, change ‘Color’ checkbox for changing cursor appearance",
+      "zh": "完整单元 (块状) 光标, 改变‘颜色’复选框来改变光标外观",
       "id": 2532 }
     ,
     "rCursorH": {
       "en": "Horizontal text cursor, like native console",
+      "zh": "水平文本光标，如同本地console",
       "id": 2530 }
     ,
     "rCursorV": {
       "en": "Vertical text cursor, like standard graphic text editors",
+      "zh": "垂直文本光标，如同标准图形文本编辑器",
       "id": 2531 }
     ,
     "slTransparent": {
       "en": "Transparency of the main ConEmu window",
+      "zh": "主ConEmu窗口的透明度",
       "id": 1564 }
     ,
     "tAnsiLogPath": {
       "en": [ "You may choose folder for in-console log files\r\n"
             , "(affect new consoles only)" ],
+      "zh": [ "你可以为in-console日志文件选择文件夹\r\n"
+            , "(仅影响以后新建的控制台（console）)" ],
       "id": 2680 }
     ,
     "tBgImage": {
       "en": "Choose background image file (bmp, jpg, png, tif) or specify solid color in any form supported by ‘Colors’ page",
+      "zh": "选择背景图片(bmp, jpg, png, tif) 或指定‘Colors’页支持的任何形式的单色",
       "id": 1697 }
     ,
     "tBgImageColors": {
@@ -798,11 +1052,17 @@
             , "which will be replaced with background image,\r\n"
             , "default is ‘#0 #1’ Black and Blue.\r\n"
             , "Use \"*\" (asterisk) for Far Manager panels background color." ],
+      "zh": [ "选择背景颜色索引，\r\n"
+            , "会被背景图片取代\r\n"
+            , "默认为‘#0 #1’ 黑色和蓝色。\r\n"
+            , "使用 \"*\" (星号)为Far Manager窗格背景颜色。" ],
       "id": 1575 }
     ,
     "tCloseTabMacro": {
       "en": [ "Macro for close Editor/Viewer/Panels in Far Manager, when you choose ‘Close’ from tab context menu\r\n"
             , "Clear field to reset to defaults" ],
+      "zh": [ "Far Manager里的关闭编辑器/视图/窗格的宏， 当你从标签页上下文菜单中选择‘Close’时\r\n"
+            , "清除字段重置为默认值" ],
       "id": 2078 }
     ,
     "tCmdGroupCommands": {
@@ -811,78 +1071,106 @@
             , "Each command creates tab or pane on group start\r\n"
             , "Mark active console tab with '>' sign\r\n"
             , "Start console 'As Admin' with '*' sign" ],
+      "zh": [ "命令(application, arguments, ‘-new_console’)\r\n"
+            , "用空行分隔命令\r\n"
+            , "每一个命令创建一个组开始的或窗格\r\n"
+            , "用'>'标志活动控制台标签页\r\n"
+            , "用'*'标志“以管理员身份”启动console " ],
       "id": 2118 }
     ,
     "tCmdGroupGuiArg": {
       "en": [ "Task parameters (‘/dir’, ‘/icon’)\r\n"
             , "Example: /dir \"C:\\\" /icon \"cmd.exe\" /single" ],
+      "zh": [ "任务参数 (‘/dir’, ‘/icon’)\r\n"
+            , "例子： /dir \"C:\\\" /icon \"cmd.exe\" /single" ],
       "id": 2322 }
     ,
     "tCmdGroupKey": {
       "en": "Choose hotkey for creating this task (not global, it works in ConEmu only)",
+      "zh": "选择创建此任务的热键（非全局，仅在ConEmu中有效）",
       "id": 2628 }
     ,
     "tCmdGroupName": {
       "en": "Task name (alias), surrounded by {...}, used in ‘[+] menu’, ‘Recreate dialog’ or ‘/cmd’ agrument of ConEmu.exe",
+      "zh": "任务名 (别名), 包括在{...}里, 在‘[+] menu’里使用, ‘重新吵架对话框’ 或 ‘/cmd’ ConEmu.exe的参数",
       "id": 2117 }
     ,
     "tCursorFixedSize": {
       "en": "Specified size of cursor in percents. Use together with ‘Fixed cursor size’",
+      "zh": "指定光标大小的百分比。与‘固定光标大小’结合使用",
       "id": 2368 }
     ,
     "tCursorMinSize": {
       "en": "Specified minimal size of cursor in pixels (regardless of ‘Fixed cursor size’)",
+      "zh": "指定最小尺寸的光标（与'固定光标大小'无关）",
       "id": 2370 }
     ,
     "tFadeHigh": {
       "en": "When ConEmu loses focus, its contents may be faded. You may specify here \"high shift\" (which makes light colors darker).",
+      "zh": "当ConEmu失去焦点，其内容可能会褪色。您可以在这里指定\"high shift\"（这使得亮颜色较暗）。",
       "id": 1625 }
     ,
     "tFadeLow": {
       "en": "When ConEmu loses focus, its contents may be faded. You may specify here \"low shift\" (which makes dark colors lighter).",
+      "zh": "当ConEmu失去焦点，其内容可能会褪色。您可以在这里指定\"low shift\"（这使得暗颜色较亮）。",
       "id": 1624 }
     ,
     "tFontCharset": {
       "en": "Main font charset",
+      "zh": "主要的字体的字符集",
       "id": 1513 }
     ,
     "tFontFace": {
       "en": "Face name for main font",
       "ru": "Имя основного шрифта консоли",
+      "zh": "主字体的名称",
       "id": 1511 }
     ,
     "tFontFace2": {
       "en": [ "Font face used to draw pseudographics or specified range of symbols.\r\n"
             , "E.g. main - \"Fixedsys\", additional - \"Lucida Console\".\r\n"
             , "You may force this font for specified range of symbols, search \"Settings-ConEmu.reg\" for \"FixFarBordersRanges\" option." ],
+      "zh": [ "用于绘制错误代码页或指定范围的符号的字体。\r\n"
+            , "例如 主要 - \"Fixedsys\", 额外 - \"Lucida Console\".\r\n"
+            , "你可以为指定范围的符号强制使用此字体，查找\"Settings-ConEmu.reg\"中的\"FixFarBordersRanges\"选项。" ],
       "id": 1514 }
     ,
     "tFontSizeX": {
       "en": [ "Main font width\r\n"
             , "0 - mean default width\r\n"
             , "for specified height" ],
+      "zh": [ "主字体宽度\r\n"
+            , "0 - 表示默认宽度\r\n"
+            , "相对于指定的高度" ],
       "id": 2279 }
     ,
     "tFontSizeX2": {
       "en": [ "WIDTH for pseudographics font.\r\n"
             , "It must be wider than main font,\r\n"
             , "otherwise, You may get \"dashed\" borders." ],
+      "zh": [ "错误代码页字体的宽度。\r\n"
+            , "它必须比主字体宽，\r\n"
+            , "否则，你可能会得到“破碎”的边界。" ],
       "id": 2284 }
     ,
     "tFontSizeX3": {
       "en": "Cell width for \"Monospace\" mode",
+      "zh": "“等宽”模式下的单元格宽度",
       "id": 2290 }
     ,
     "tFontSizeY": {
       "en": "Main font height",
+      "zh": "主字体高度",
       "id": 1512 }
     ,
     "tHereConfig": {
       "en": "Allows to set different font, palette and other settings for your ConEmu instance",
+      "zh": "可以为你的ConEmu实例设置不同的字体，调色板和其他设置",
       "id": 2390 }
     ,
     "tHereIcon": {
       "en": "‘C:\\Far\\far.exe,0’, ‘powershell.exe’, ‘C:\\Images\\Icon.ico’",
+      "zh": "‘C:\\Far\\far.exe,0’, ‘powershell.exe’, ‘C:\\Images\\Icon.ico’",
       "id": 2389 }
     ,
     "tHereShell": {
@@ -891,26 +1179,36 @@
             , "Use ‘!ConEmuWorkDir!’ for the directory,\r\n"
             , "but not a clicked file\r\n"
             , "Use ‘/single /cmd shell’ to reuse existing ConEmu window instead of creating new one" ],
+      "zh": [ "这里指定你的shell (cmd, far,等等)\r\n"
+            , "使用宏‘%1’代表‘被点击’的项目\r\n"
+            , "使用‘!ConEmuWorkDir!’代表所在目录，\r\n"
+            , "而不是被点击的文件\r\n"
+            , "使用‘/single /cmd shell’使用现有的窗口而不是创建新ConEmu窗口" ],
       "id": 2391 }
     ,
     "tHideCaptionAlwaysDelay": {
       "en": "Delay in milliseconds, for a Frame appearance",
+      "zh": "框架出现毫秒为单位延迟",
       "id": 1590 }
     ,
     "tHideCaptionAlwaysDissapear": {
       "en": "Delay in milliseconds, for a Frame disappearance",
+      "zh": "框架消失以毫秒为单位延迟",
       "id": 1591 }
     ,
     "tHideCaptionAlwaysFrame": {
       "en": "While caption and frame are hidden, ConEmu may keep small part of frame (in pixels) around console part. Default is 1 pixel.",
+      "zh": "当标题和框架隐藏时，ConEmu可能保持较小部分（像素）在控制台的周围。默认为1像素。",
       "id": 1589 }
     ,
     "tInsideConfig": {
       "en": "Allows to set different font, palette and other settings for your ConEmu instance",
+      "zh": "可以为你的ConEmu实例设置不同的字体，调色板和其他设置",
       "id": 2385 }
     ,
     "tInsideIcon": {
       "en": "‘C:\\Far\\far.exe,0’, ‘powershell.exe’, ‘C:\\Images\\Icon.ico’",
+      "zh": "‘C:\\Far\\far.exe,0’, ‘powershell.exe’, ‘C:\\Images\\Icon.ico’",
       "id": 2384 }
     ,
     "tInsideShell": {
@@ -918,25 +1216,36 @@
             , "Use ‘%1’ macro for ‘clicked’ item\r\n"
             , "Use ‘!ConEmuWorkDir!’ for the directory,\r\n"
             , "but not a clicked file" ],
+      "zh": [ "这里指定你的shell (cmd, far,等等)\r\n"
+            , "使用宏‘%1’代表‘被点击’的项目\r\n"
+            , "使用‘!ConEmuWorkDir!’代表所在目录，\r\n"
+            , "而不是被点击的文件" ],
       "id": 2386 }
     ,
     "tInsideSyncDir": {
       "en": [ "Format of ‘cd’, default is ‘\\eCD /d \\1\\n’.\r\n"
+            , "\\e - ESC, \\b - BS, \\n - ENTER, \\1 - \"dir\", \\2 - \"bash dir\"." ],
+      "zh": [ "‘cd’的格式，默认为‘\\eCD /d \\1\\n’.\r\n"
             , "\\e - ESC, \\b - BS, \\n - ENTER, \\1 - \"dir\", \\2 - \"bash dir\"." ],
       "id": 2479 }
     ,
     "tLongOutputHeight": {
       "en": [ "Length of backscroll buffer in lines.\r\n"
             , "Maximum supported value is 32766." ],
+      "zh": [ "每行反卷缓冲区的长度。\r\n"
+            , "支持的最大值是32766." ],
       "id": 1535 }
     ,
     "tOptionSearch": {
       "en": [ "This allows to search all setup pages controls for specified text\r\n"
             , "Click ‘zoom’ icon or press ‘Enter’ to continue search" ],
+      "zh": [ "这允许在所有设置页控件中搜索指定文本\r\n"
+            , "单击“缩放”图标或按“回车”继续搜索" ],
       "id": 2569 }
     ,
     "tPadSize": {
       "en": "Create pad between ConEmu frame and console field",
+      "zh": "在ConEmu框架和控制台之间创建pad",
       "id": 2356 }
     ,
     "tPerfCounters": {
@@ -945,75 +1254,104 @@
             , "Render: Average duration of rendering text to memory DC\r\n"
             , "Blt: Average duration of blit operation from memory DC to screen DC\r\n"
             , "RPS: Average counts of reads real console data per second" ],
+      "zh": [ "FPS: 每秒帧数\r\n"
+            , "Data: 从真实到虚拟控制台传输数据的平均时间\r\n"
+            , "Render: 渲染文本到内存DC的平均时间\r\n"
+            , "Blt: 从内存DC到屏幕DC的blit操作的平均时间\r\n"
+            , "RPS: 每秒读取真实控制台数据的平均计数" ],
       "id": 2602 }
     ,
     "tQuakeAnimation": {
       "en": [ "Duration of window animation (0..2000ms): Quake slide down/up and restoring/hiding window to TSA.\r\n"
             , "Animation is working only when window caption is hidden." ],
+      "zh": [ "窗口动画的持续时间(0..2000ms): 震动下滑/上滑和恢复/隐藏窗口至任务栏状态区域（TSA）。\r\n"
+            , "动画只在窗口标题隐藏时有效。" ],
       "id": 2564 }
     ,
     "tRClickMacro": {
       "en": [ "Far Manager macro for EMenu of file panel selected items\r\n"
             , "Clear field to reset to defaults" ],
+      "zh": [ "文件窗格选定项目的EMenu的Far Manager宏\r\n"
+            , "清除字段重置为默认值" ],
       "id": 2075 }
     ,
     "tRealFontBorders": {
       "en": [ "Real sizes of \"Change pseudographics font\":\r\n"
             , "Height x Width" ],
+      "zh": [ "“改变错误代码页字体”的实际尺寸：\r\n"
+            , "高度×宽度" ],
       "id": 1518 }
     ,
     "tRealFontMain": {
       "en": [ "Real sizes of main font:\r\n"
             , "Height x Width x AveWidth" ],
+      "zh": [ "主字体的实际尺寸：\r\n"
+            , "高 x 宽 x Avewidth" ],
       "id": 1517 }
     ,
     "tSafeFarCloseMacro": {
       "en": [ "Macro for close Far Manager softly, instead of closing console window, when you close ConEmu window\r\n"
             , "Clear field to reset to defaults" ],
+      "zh": [ "宏 - 当你关闭conemu窗口，轻柔的关闭Far Manager，而不是关闭控制台窗口，\r\n"
+            , "清除字段重置为默认值" ],
       "id": 2080 }
     ,
     "tSaveAllMacro": {
       "en": [ "Macro for saving all opened Far Manager modified editors, when you choose ‘Save all’ from tab context menu\r\n"
             , "Clear field to reset to defaults" ],
+      "zh": [ "宏 - 当您从标签上下文菜单选择“保存所有”时，保存所有打开的Far Manager修改过的编辑器\r\n"
+            , "清除字段重置为默认值" ],
       "id": 2079 }
     ,
     "tScrollAppearDelay": {
       "en": "Scrollbar appear delay when ‘Always show scrollbar’ is off or in 3rd-state",
+      "zh": "当“显示滚动条”选项被关闭或第三情况下，滚动条出现延迟",
       "id": 2354 }
     ,
     "tScrollDisappearDelay": {
       "en": "Scrollbar disappear delay when ‘Always show scrollbar’ is off or in 3rd-state",
+      "en": "当“显示滚动条”选项被关闭或第三情况下，滚动条消失",
       "id": 2355 }
     ,
     "tsTopPID": {
       "en": "Far PID and Far with plugin PID",
+      "zh": "Far PID 和带插件的Far PID",
       "id": 1510 }
     ,
     "tStorage": {
       "en": [ "Current storage of ConEmu settings\r\n"
             , "You may change location by creating/deleting \"ConEmu.xml\" file\r\n"
             , "Also you may use /config \"Name\" command-line switch (ConEmu.exe) for multiple configurations" ],
+      "zh": [ "ConEmu设置的当前储存\r\n"
+            , "你可以通过创建/删除改变\"ConEmu.xml\"文件位置。\r\n"
+            , "你也可以使用/config \"Name\"命令行切换（ConEmu .exe）的多种配置" ],
       "id": 2571 }
     ,
     "tTabBarDblClickAction": {
       "en": [ "When you double click on the free space of tab bar...\r\n"
             , "‘Auto’ means ‘Maximize/Restore’ when caption is hidden and ‘Open new shell’ when caption is visible" ],
+      "zh": [ "当你双击标签栏的空白地方...\r\n"
+            , "标题隐藏时，或标题可见并‘Open new shell’ 时，‘Auto’ 表示 ‘最大化/恢复’" ],
       "id": 2600 }
     ,
     "tTabBtnDblClickAction": {
       "en": "When you double click on the tab...",
+      "zh": "当您双击标签...",
       "id": 2593 }
     ,
     "tTabConsole": {
       "en": "Common tab template (any console program except Far Manager)",
+      "zh": "通用标签模板（除了Far Manager以外的任何控制台程序）",
       "id": 1638 }
     ,
     "tTabEditor": {
       "en": "Tab template for Far Manager internal editors",
+      "zh": "Far Manager内部编辑器的标签模板",
       "id": 1639 }
     ,
     "tTabEditorMod": {
       "en": "Tab template for Far Manager internal modified editors",
+      "zh": "Far Manager内部被修改的编辑器的标签模板",
       "id": 1641 }
     ,
     "tTabFlashCounter": {
@@ -1021,108 +1359,142 @@
             , "ConEmu may flash tab icon in that case\r\n"
             , "Set ‘-1’ to flash infinitely\r\n"
             , "Use odd values to leave tab in highlighted state" ],
+      "zh": [ "在不活动的控制台上发生了变化时\r\n"
+            , "ConEmu在这种情况下，可以闪烁标签图标\r\n"
+            , "设置‘-1’使得无限闪烁\r\n"
+            , "使用奇数值使标签出在高亮状态下" ],
       "id": 2739 }
     ,
     "tTabModifiedSuffix": {
       "en": [ "When something was changed in the inactive console\r\n"
             , "ConEmu may show that in the tab label\r\n"
             , "Set or clear this suffix appended to the tab template" ],
+      "zh": [ "在不活动的控制台上发生了变化时\r\n"
+            , "ConEmu会显示在标签页的标签上\r\n"
+            , "设置或清除附加到标签模板的此后缀" ],
       "id": 2738 }
     ,
     "tTabPanels": {
       "en": "Tab template for Far Manager panels",
+      "zh": "Far Manager窗格的标签模板",
       "id": 1644 }
     ,
     "tTabViewer": {
       "en": "Tab template for Far Manager internal viewers",
+      "zh": "Far Manager内部视图的标签模板",
       "id": 1640 }
     ,
     "tThumbLoadingTimeout": {
       "en": "Maximal duration of preview generation (per file)",
+      "zh": "预览生成的最大持续时间（每个文件）",
       "id": 1679 }
     ,
     "tThumbMaxZoom": {
       "en": "Maximal zoom for images smaller than preview",
+      "zh": "小于预览的图像的最大缩放",
       "id": 1662 }
     ,
     "tThumbsFontName": {
       "en": "Text labels font name in Thumbnails mode",
+      "zh": "在缩略图模式下，文本标签的字体名称",
       "id": 1659 }
     ,
     "tThumbsFontSize": {
       "en": "Text labels font height in Thumbnails mode",
+      "zh": "在缩略图模式下，文本标签的字体高度",
       "id": 1660 }
     ,
     "tThumbsImgSize": {
       "en": [ "Size in pixels of preview square in Thumbnails mode\r\n"
             , "Default is 96" ],
+      "zh": [ "在缩略图模式预览平方像素大小\r\n"
+            , "默认为96" ],
       "id": 1682 }
     ,
     "tThumbsPadding": {
       "en": "Horizontal spacing in pixels (left and right) of text label",
+      "zh": "文本标签（左，右）的水平间距（像素）",
       "id": 1708 }
     ,
     "tThumbsSpacing": {
       "en": "Vertical spacing in pixels (top and bottom) of text label",
+      "zh": "文本标签（顶部和底部）的垂直间距（像素）",
       "id": 1707 }
     ,
     "tThumbsX1": {
       "en": "Spacing in pixels from the left side of cell to the left side of preview",
+      "zh": "单元左边到预览左边的间距（像素）",
       "id": 1703 }
     ,
     "tThumbsX2": {
       "en": "Spacing in pixels from the right side of preview to the right side of cell",
+      "zh": "预览右边到单元左边的间距（像素）",
       "id": 1705 }
     ,
     "tThumbsY1": {
       "en": "Spacing in pixels from the top side of cell to the top side of preview",
+      "zh": "单元顶部到预览顶部的间距（像素）",
       "id": 1704 }
     ,
     "tThumbsY2": {
       "en": "Spacing in pixels from the bottom side of preview to the bottom side of cell (text label is placed here)",
+      "zh": "预览底部到单元底部的间距（像素），文本标签放在此处",
       "id": 1706 }
     ,
     "tTilesFontName": {
       "en": "Text labels font name in Tiles mode",
+      "zh": "Tiles模式文本标签字体名称",
       "id": 1661 }
     ,
     "tTilesFontSize": {
       "en": "Text labels font height in Tiles mode",
+      "zh": "Tiles模式文本标签字体高度",
       "id": 1666 }
     ,
     "tTilesImgSize": {
       "en": [ "Size in pixels of preview square in Tiles mode\r\n"
             , "Default is 48" ],
+      "zh": [ "Tiles模式预览方块的大小（像素）\r\n"
+            , "默认为48" ],
       "id": 1681 }
     ,
     "tTilesPadding": {
       "en": "Spacing in pixels on the right of text label",
+      "zh": "文本标签右边的间距（像素）",
       "id": 1714 }
     ,
     "tTilesSpacing": {
       "en": "Spacing in pixels on the left of text label",
+      "zh": "文本标签左边的间距（像素）",
       "id": 1713 }
     ,
     "tTilesX1": {
       "en": "Spacing in pixels from the left side of cell to the left side of preview",
+      "zh": "单元的左边预览左边的间距（像素）",
       "id": 1709 }
     ,
     "tTilesX2": {
       "en": "Spacing in pixels from the right side of preview to the right side of cell (text label is placed here)",
+      "zh": "预览右边到单元右边的间距（像素），文本标签放在此处",
       "id": 1711 }
     ,
     "tTilesY1": {
       "en": "Spacing in pixels from the top side of cell to the top side of preview",
+      "zh": "单元顶部到预览顶部的间距（像素）",
       "id": 1710 }
     ,
     "tTilesY2": {
       "en": "Spacing in pixels from the bottom side of preview to the bottom side of cell",
+      "zh": "预览的底部到单元底部的间距（像素）",
       "id": 1712 }
     ,
     "tUpdateVerLocation": {
       "en": [ "URL to retrieve latest version information,\r\n"
             , "default is: https://conemu.github.io/version.ini\r\n"
             , "Erase text box to revert to default URL." ],
+      "zh": [ "接收最新版本的信息的URL \r\n"
+            , "默认为： https://conemu.github.io/version.ini\r\n"
+            , "删除文本框，以恢复默认的网址。" ],
       "id": 2052 }
     ,
     "tWndHeight": {
@@ -1130,6 +1502,10 @@
             , "Use numbers for size in cells\r\n"
             , "Use percent sign (e.g. ‘40%’) for monitor-relative size\r\n"
             , "Use ‘px’ suffix (e.g. ‘800px’) for strict pixel size" ],
+      "zh": [ "控制台窗口的高度\r\n"
+            , "使用单元格的数目作为大小\r\n"
+            , "使用百分比标识(比如 ‘40%’)相对于显示屏的大小\r\n"
+            , "使用‘px’后缀 (比如 ‘800px’) 作为严格的像素大小" ],
       "id": 2282 }
     ,
     "tWndWidth": {
@@ -1137,1695 +1513,2122 @@
             , "Use numbers for size in cells\r\n"
             , "Use percent sign (e.g. ‘40%’) for monitor-relative size\r\n"
             , "Use ‘px’ suffix (e.g. ‘800px’) for strict pixel size" ],
+      "zh": [ "控制台窗口的宽度\r\n"
+            , "使用单元格的数目作为大小\r\n"
+            , "使用百分比标识(比如 ‘40%’)相对于显示屏的大小\r\n"
+            , "使用‘px’后缀 (比如 ‘800px’) 作为严格的像素大小" ],
       "id": 2281 }
     ,
     "tWndX": {
       "en": [ "Upper left corner of ConEmu in Normal mode\r\n"
             , "This is in pixels" ],
+      "zh": [ "正常模式ConEmu左上角\r\n"
+            , "以像素为单位" ],
       "id": 2295 }
     ,
     "tWndY": {
       "en": [ "Upper left corner of ConEmu in Normal mode\r\n"
             , "This is in pixels" ],
+      "zh": [ "正常模式ConEmu左上角\r\n"
+            , "以像素为单位" ],
       "id": 2296 }
     ,
     "vkAltEnter": {
       "en": "Full screen",
+      "zh": "全屏",
       "id": 2017 }
     ,
     "vkAlwaysOnTop": {
       "en": "Switch ‘Always on top’ window mode",
+      "zh": "切换‘总是置顶’窗口模式",
       "id": 2327 }
     ,
     "vkAppsBS": {
       "en": "Scroll buffer to the cursor position",
+      "zh": "滚动缓存至光标位置",
       "id": 2697 }
     ,
     "vkAppsEnd": {
       "en": "Scroll buffer to the bottom",
+      "zh": "滚动缓存至底部",
       "id": 2696 }
     ,
     "vkAppsHome": {
       "en": "Scroll buffer to the top",
+      "zh": "滚动缓存至ding部",
       "id": 2695 }
     ,
     "vkAppsPgDn": {
       "en": "Scroll buffer one half-page down",
+      "zh": "滚动缓存至半页下面",
       "id": 2694 }
     ,
     "vkAppsPgUp": {
       "en": "Scroll buffer one half-page up",
+      "zh": "滚动缓存至半页上面",
       "id": 2693 }
     ,
     "vkCdExplorerPath": {
       "en": "Activate ConEmu and ‘CD’ to last (top in Z-order) Explorer window path",
+      "zh": "激活ConEmu并‘CD’到最后的(top in Z-order) Explorer窗口路径",
       "id": 2853 }
     ,
     "vkChildSystemMenu": {
       "en": "Child GUI window system menu (PuTTY, Notepad, etc.)",
+      "zh": "子GUI窗口系统菜单(PuTTY, Notepad, etc.)",
       "id": 2577 }
     ,
     "vkCloseAllCon": {
       "en": "Close all consoles",
+      "zh": "关闭所有控制台",
       "id": 2625 }
     ,
     "vkCloseConEmu": {
       "en": "Close all tabs (same as ‘Cross’ click)",
+      "zh": "关闭所有标签页 (同点击‘叉号’)",
       "id": 2502 }
     ,
     "vkCloseExceptCon": {
       "en": "Close all but active",
+      "zh": "关闭除了活动的所有",
       "id": 2626 }
     ,
     "vkCloseGroup": {
       "en": "Close all panes of the active group",
+      "zh": "关闭活动组的所有窗格",
       "id": 2513 }
     ,
     "vkCloseGroupPrc": {
       "en": "Close all active processes of the active group",
+      "zh": "关闭所有活动组的活动进程",
       "id": 2621 }
     ,
     "vkCloseTab": {
       "en": "Close current tab",
+      "zh": "关闭当前标签页",
       "id": 2501 }
     ,
     "vkCloseZombies": {
       "en": "Close all zombies",
+      "zh": "关闭所有zombies",
       "id": 2713 }
     ,
     "vkConDetach": {
       "en": "Detach active RealConsole from ConEmu",
+      "zh": "从ConEmu分离活动的真实控制台（RealConsole）",
       "id": 2839 }
     ,
     "vkConsole_1": {
       "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
+      "zh": "以数字激活控制台 (使用‘Host-key’+数字来切换控制台)",
       "id": 2031 }
     ,
     "vkConsole_10": {
       "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
+      "zh": "以数字激活控制台 (使用‘Host-key’+数字来切换控制台)",
       "id": 2040 }
     ,
     "vkConsole_2": {
       "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
+      "zh": "以数字激活控制台 (使用‘Host-key’+数字来切换控制台)",
       "id": 2032 }
     ,
     "vkConsole_3": {
       "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
+      "zh": "以数字激活控制台 (使用‘Host-key’+数字来切换控制台)",
       "id": 2033 }
     ,
     "vkConsole_4": {
       "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
+      "zh": "以数字激活控制台 (使用‘Host-key’+数字来切换控制台)",
       "id": 2034 }
     ,
     "vkConsole_5": {
       "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
+      "zh": "以数字激活控制台 (使用‘Host-key’+数字来切换控制台)",
       "id": 2035 }
     ,
     "vkConsole_6": {
       "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
+      "zh": "以数字激活控制台 (使用‘Host-key’+数字来切换控制台)",
       "id": 2036 }
     ,
     "vkConsole_7": {
       "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
+      "zh": "以数字激活控制台 (使用‘Host-key’+数字来切换控制台)",
       "id": 2037 }
     ,
     "vkConsole_8": {
       "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
+      "zh": "以数字激活控制台 (使用‘Host-key’+数字来切换控制台)",
       "id": 2038 }
     ,
     "vkConsole_9": {
       "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
+      "zh": "以数字激活控制台 (使用‘Host-key’+数字来切换控制台)",
       "id": 2039 }
     ,
     "vkConUnfasten": {
       "en": "Unfasten active RealConsole from active ConEmu window",
+      "zh": "从ConEmu窗口解开活动的真实控制台（RealConsole）",
       "id": 2840 }
     ,
     "vkCtrlDown": {
       "en": "Scroll buffer one line down (disabled in Far /w)",
+      "zh": "向下滚动缓存一行 (在Far /w里禁用)",
       "id": 2020 }
     ,
     "vkCtrlPgDn": {
       "en": "Scroll buffer one page down (disabled in Far /w)",
+      "zh": "向下滚动缓存一页 (在Far /w里禁用)",
       "id": 2022 }
     ,
     "vkCtrlPgUp": {
       "en": "Scroll buffer one page up (disabled in Far /w)",
+      "zh": "向上滚动缓存一页 (在Far /w里禁用)",
       "id": 2021 }
     ,
     "vkCtrlShiftTab": {
       "en": "Previous tab (may be disabled)",
+      "zh": "前一个标签页 (可被禁用)",
       "id": 2024 }
     ,
     "vkCtrlTab": {
       "en": "Next tab (may be disabled)",
+      "zh": "下一个标签页 (可被禁用)",
       "id": 2023 }
     ,
     "vkCtrlTab_Down": {
       "en": "Switch tab to right (while Ctrl-Tab was pressed and Ctrl - hold)",
+      "zh": "切换标签页到右边 (当 Ctrl-Tab按下并按住 Ctrl)",
       "id": 2028 }
     ,
     "vkCtrlTab_Left": {
       "en": "Switch tab to left (while Ctrl-Tab was pressed and Ctrl - hold)",
+      "zh": "切换标签页到左边 (当 Ctrl-Tab按下并按住 Ctrl)",
       "id": 2025 }
     ,
     "vkCtrlTab_Right": {
       "en": "Switch tab to right (while Ctrl-Tab was pressed and Ctrl - hold)",
+      "zh": "切换标签页到右边 (当 Ctrl-Tab按下并按住 Ctrl)",
       "id": 2026 }
     ,
     "vkCtrlTab_Up": {
       "en": "Switch tab to left (while Ctrl-Tab was pressed and Ctrl - hold)",
+      "zh": "切换标签页到左边 (当 Ctrl-Tab按下并按住 Ctrl)",
       "id": 2027 }
     ,
     "vkCtrlUp": {
       "en": "Scroll buffer one line up (disabled in Far /w)",
+      "zh": "向上滚动缓存一行 (在Far /w里禁用)",
       "id": 2019 }
     ,
     "vkCtrlWinAltSpace": {
       "en": "Show real console",
+      "zh": "像素真实控制台",
       "id": 2016 }
     ,
     "vkCtrlWinEnter": {
       "en": "Full screen",
+      "zh": "全屏",
       "id": 2029 }
     ,
     "vkCTSCopyHtml0": {
       "en": "Copy: Current selection as plain text",
+      "zh": "复制： 当前选择为普通文本",
       "id": 2633 }
     ,
     "vkCTSCopyHtml1": {
       "en": "Copy: Current selection HTML formatted",
+      "zh": "复制： 当前HTML格式的选择",
       "id": 2634 }
     ,
     "vkCTSCopyHtml2": {
       "en": "Copy: Current selection as HTML",
+      "zh": "复制： 当前选择为HTML",
       "id": 2635 }
     ,
     "vkCTSShiftDown": {
       "en": "Start block selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
+      "zh": "开始块状模式选择，在Far里会忽略，可以在 ‘标志 & 粘贴’ 和 ‘应用程序区别’ 页禁用",
       "id": 2557 }
     ,
     "vkCTSShiftEnd": {
       "en": "Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
+      "zh": "开始文本选择，在Far里会忽略，可以在 ‘标志 & 粘贴’ 和 ‘应用程序区别’ 页禁用",
       "id": 2631 }
     ,
     "vkCTSShiftHome": {
       "en": "Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
+      "zh": "开始文本选择，在Far里会忽略，可以在 ‘标志 & 粘贴’ 和 ‘应用程序区别’ 页禁用",
       "id": 2630 }
     ,
     "vkCTSShiftLeft": {
       "en": "Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
+      "zh": "开始文本选择，在Far里会忽略，可以在 ‘标志 & 粘贴’ 和 ‘应用程序区别’ 页禁用",
       "id": 2554 }
     ,
     "vkCTSShiftRight": {
       "en": "Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
+      "zh": "开始文本选择，在Far里会忽略，可以在 ‘标志 & 粘贴’ 和 ‘应用程序区别’ 页禁用",
       "id": 2555 }
     ,
     "vkCTSShiftUp": {
       "en": "Start block selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
+      "zh": "开始块状模式选择，在Far里会忽略，可以在 ‘标志 & 粘贴’ 和 ‘应用程序区别’ 页禁用",
       "id": 2556 }
     ,
     "vkCTSVkAct": {
       "en": "Right and middle mouse buttons modifier (Text selection)",
+      "zh": "鼠标右键和中键修改器 (文本选择)",
       "id": 2009 }
     ,
     "vkCTSVkBlock": {
       "en": "Block selection modifier",
+      "zh": "块状模式选择修改器",
       "id": 2007 }
     ,
     "vkCTSVkBlockStart": {
       "en": "Start vertical block selection (like standard console)",
+      "zh": "开始垂直的块状模式选择 (类似标准控制台)",
       "id": 2112 }
     ,
     "vkCTSVkCopyAll": {
       "en": "Copy: All active console text output (buffer including)",
+      "zh": "复制：所有活动的控制台输出 (包含缓存)",
       "id": 2595 }
     ,
     "vkCTSVkPromptClk": {
       "en": "Change prompt text cursor position with left mouse click (cmd, powershell, tcc/le, ...)",
+      "zh": "鼠标左击改变prompt文本光标位置 (cmd, powershell, tcc/le, ...)",
       "id": 2346 }
     ,
     "vkCTSVkText": {
       "en": "Text selection modifier",
+      "zh": "文本选择修改器",
       "id": 2008 }
     ,
     "vkCTSVkTextStart": {
       "en": "Start text selection (like text editors)",
+      "zh": "开始文本选择 (类似文本编辑器)",
       "id": 2113 }
     ,
     "vkDebugProcess": {
       "en": "Debug active process",
+      "zh": "调试活动进程",
       "id": 2874 }
     ,
     "vkDeleteLeftWord": {
       "en": "Delete word leftward to the cursor (ignored in Far)",
+      "zh": "删除光标左边的单词 (在Far中忽略)",
       "id": 2522 }
     ,
     "vkDumpProcess": {
       "en": "Active process memory dump",
+      "zh": "活动进程内存转储",
       "id": 2875 }
     ,
     "vkDumpTree": {
       "en": "Active process tree memory dump",
+      "zh": "活动进程树内存转储",
       "id": 2876 }
     ,
     "vkDuplicateRoot": {
       "en": "Duplicate tab with current state of root process",
+      "zh": "复制标签页及根进程的当前状态",
       "id": 2503 }
     ,
     "vkDuplicateRootAs": {
       "en": "Duplicate tab with current state of root process, run ‘As Administator’",
+      "zh": "复制标签页及根进程的当前状态, “以管理员身份”运行",
       "id": 2504 }
     ,
     "vkEscNoConsoles": {
       "en": "Minimize ConEmu by Esc when no open consoles left (see option ‘Don't close ConEmu on last console close’)",
+      "zh": "当没有打开的控制台时，Esc键最小化ConEmu (见选项 ‘最后一个控制台关闭使不要关闭ConEmu’)",
       "id": 2546 }
     ,
     "vkFarGotoEditorVk": {
       "en": "Highlighting: hyperlinks and compiler errors (FarGotoEditor modifier)",
+      "zh": "高亮： 超链接和编译错误 (FarGotoEditor修改器)",
       "id": 2010 }
     ,
     "vkFindTextDlg": {
       "en": "Find text in active console",
+      "zh": "在活动控制台查找文本",
       "id": 2230 }
     ,
     "vkFontLarger": {
       "en": "Make main font larger",
+      "zh": "使主字体更大",
       "id": 2453 }
     ,
     "vkFontOriginal": {
       "en": "Make main font original size",
+      "zh": "使主字体变为原始大小",
       "id": 2698 }
     ,
     "vkFontSmaller": {
       "en": "Make main font smaller",
+      "zh": "使主字体更小",
       "id": 2454 }
     ,
     "vkForceFullScreen": {
       "en": "Enter TEXT fullscreen mode, when available. If not - standard fullscreen and always on top",
+      "zh": "如果可用的话，进入文本全屏模式，如果不可用 - 标准全屏并总是置顶",
       "id": 2260 }
     ,
     "vkGlobalRestore": {
       "en": "Restore (bring to front)",
+      "zh": "恢复 (带到前面)",
       "id": 2484 }
     ,
     "vkHighlightMouse": {
       "en": "Highlighting: Switch ‘Highlight row under mouse cursor’",
+      "zh": "高亮： 切换 ‘高亮光标下的行’",
       "id": 2646 }
     ,
     "vkHighlightMouseX": {
       "en": "Highlighting: Switch ‘Highlight row & col under mouse cursor’",
+      "zh": "高亮： 切换 ‘高亮光标下的行&列’",
       "id": 2725 }
     ,
     "vkJumpNextMonitor": {
       "en": "Move ConEmu window to next monitor",
+      "zh": "移动ConEmu窗口至下一个显示屏",
       "id": 2581 }
     ,
     "vkJumpPrevMonitor": {
       "en": "Move ConEmu window to previous monitor",
+      "zh": "移动ConEmu窗口至前一个显示屏",
       "id": 2582 }
     ,
     "vkLDragKey": {
       "en": "Drag from Far panels with left mouse key (LDrag modifier)",
+      "zh": "从Far窗格用鼠标左键拖动(LDrag修改器)",
       "id": 2011 }
     ,
     "vkMaximize": {
       "en": "Maximize/restore",
+      "zh": "最大化/恢复",
       "id": 2015 }
     ,
     "vkMaximizeHeight": {
       "en": "Snap ConEmu window to the monitor's top/bottom edges (maximize height)",
+      "zh": "快闪ConEmu窗口至顶/低边缘 (最大的高度)",
       "id": 2637 }
     ,
     "vkMaximizePane": {
       "en": "Split: Maximize/restore active pane",
+      "zh": "分屏： 最大化/恢复活动的窗格",
       "id": 2729 }
     ,
     "vkMaximizeWidth": {
       "en": "Snap ConEmu window to the monitor's left/right edges (maximize width)",
+      "zh": "快闪ConEmu窗口至左/右边缘 (最大的宽度)",
       "id": 2636 }
     ,
     "vkMinimizeRestor2": {
       "en": "Minimize/Restore (alternative)",
+      "zh": "最小化/恢复(替代)",
       "id": 2413 }
     ,
     "vkMinimizeRestore": {
       "en": "Minimize/Restore (Quake-style hotkey also)",
+      "zh": "最小化/恢复(震动式热键)",
       "id": 2000 }
     ,
     "vkMoveTabLeft": {
       "en": "Move active tab leftward",
+      "zh": "向左移动活动的标签页",
       "id": 2414 }
     ,
     "vkMoveTabRight": {
       "en": "Move active tab rightward",
+      "zh": "向右移动活动的标签页",
       "id": 2415 }
     ,
     "vkMultiAltCon": {
       "en": "Show alternative console buffer (last command output)",
+      "zh": "显示可选择的控制台缓冲（最后一个命令输出）",
       "id": 2254 }
     ,
     "vkMultiBuffer": {
       "en": "Switch bufferheight mode",
+      "zh": "切换缓存高度模式",
       "id": 2004 }
     ,
     "vkMultiClose": {
       "en": "Close active console",
+      "zh": "关闭活动的控制台",
       "id": 2005 }
     ,
     "vkMultiCmd": {
       "en": "Create new ‘cmd.exe’ console",
+      "zh": "创建新的‘cmd.exe’控制台",
       "id": 2006 }
     ,
     "vkMultiGroup": {
       "en": "Group keyboard input for visible splits",
+      "zh": "可见的分屏组键盘输入",
       "id": 2728 }
     ,
     "vkMultiNew": {
       "en": "Create new console or new window (check ‘Multiple consoles in one ConEmu window’)",
+      "zh": "创建新的控制台或新的窗口 (选中 ‘多重consoles在一个ConEmu窗口里’)",
       "id": 2001 }
     ,
     "vkMultiNewAttach": {
       "en": "Attach existing Console or GUI application",
+      "zh": "附加存在的控制台（Console）或GUI应用程序",
       "id": 2314 }
     ,
     "vkMultiNewPopup": {
       "en": "Show create new console popup menu",
+      "zh": "显示新建控制台下拉菜单",
       "id": 2252 }
     ,
     "vkMultiNewPopup2": {
       "en": "Show create new console popup menu with task submenus",
+      "zh": "显示新建控制台下拉菜单及任务子菜单",
       "id": 2624 }
     ,
     "vkMultiNewShift": {
       "en": "Create new console (after ‘Create confirmation’)",
+      "zh": "创建新窗口 (在‘确认创建’之后)",
       "id": 2043 }
     ,
     "vkMultiNewWnd": {
       "en": "Create new window (after ‘Create confirmation’)",
+      "zh": "创建新窗口 (在‘确认创建’之后)",
       "id": 2329 }
     ,
     "vkMultiNext": {
       "en": "Switch next console",
+      "zh": "切换下一个控制台",
       "id": 2002 }
     ,
     "vkMultiNextShift": {
       "en": "Switch previous console",
+      "zh": "切换前一个控制台",
       "id": 2030 }
     ,
     "vkMultiPause": {
       "en": "Pause current console",
+      "zh": "暂停当前控制台",
       "id": 2727 }
     ,
     "vkMultiRecreate": {
       "en": "Recreate active console",
+      "zh": "重新创建活动的控制台",
       "id": 2003 }
     ,
     "vkPasteCygwin": {
       "en": "Paste path from clipboard in unix format",
+      "zh": "从剪贴板粘贴unix格式路径",
       "id": 2492 }
     ,
     "vkPasteDirectory": {
       "en": "Choose and paste folder path",
+      "zh": "选择和粘贴文件夹路径",
       "id": 2486 }
     ,
     "vkPasteFilePath": {
       "en": "Choose and paste file pathname",
+      "zh": "选择和粘贴文件路径名",
       "id": 2485 }
     ,
     "vkPasteFirstLine": {
       "en": "Paste first line of clipboard contents, autoconvert paths for cygwin's applications (ignored in Far)",
+      "zh": "粘贴剪贴板内容的第一行，为cygwin应用程序自动转换路径 (在Far里忽略)",
       "id": 2224 }
     ,
     "vkPasteText": {
       "en": "Paste clipboard contents (ignored in Far)",
+      "zh": "粘贴剪贴板内容(在Far里忽略)",
       "id": 2223 }
     ,
     "vkPicViewFaster": {
       "en": "PicView Far plugin: Slideshow faster",
+      "zh": "PicView Far插件：幻灯片插件",
       "id": 2183 }
     ,
     "vkPicViewSlide": {
       "en": "PicView Far plugin: Slideshow start",
+      "zh": "PicView Far插件：幻灯片开始",
       "id": 2181 }
     ,
     "vkPicViewSlower": {
       "en": "PicView Far plugin: Slideshow slower",
+      "zh": "PicView Far插件：幻灯片减慢",
       "id": 2182 }
     ,
     "vkRDragKey": {
       "en": "Drag from Far panels with right mouse key (RDrag modifier)",
+      "zh": "鼠标右键拖动Far panels(RDrag修改器)",
       "id": 2012 }
     ,
     "vkRenameTab": {
       "en": "Rename active tab (for Far Manager only first tab may be renamed)",
+      "zh": "重命名活动标签页(对于Far Manager 仅第一个标签页可以被重命名)",
       "id": 2335 }
     ,
     "vkScreenshot": {
       "en": "Make screenshot of active window",
+      "zh": "活动窗口截图",
       "id": 2315 }
     ,
     "vkScreenshotFull": {
       "en": "Make screenshot of entire desktop",
+      "zh": "整个桌面截屏",
       "id": 2328 }
     ,
     "vkSetFocusChild": {
       "en": "Set focus to child GUI application",
+      "zh": "将焦点集中在子GUI应用程序",
       "id": 2576 }
     ,
     "vkSetFocusGui": {
       "en": "Set focus to ConEmu",
+      "zh": "将焦点集中在ConEmu",
       "id": 2575 }
     ,
     "vkSetFocusSwitch": {
       "en": "Switch focus between ConEmu and child GUI application (e.g. PuTTY or Notepad)",
+      "zh": "在ConEmu和子GUI应用程序间切换焦点(比如PuTTY或Notepad)",
       "id": 2566 }
     ,
     "vkShowCaption": {
       "en": "Show window caption",
+      "zh": "显示窗口标题",
       "id": 2437 }
     ,
     "vkShowStatusBar": {
       "en": "Show status bar",
+      "zh": "显示状态栏",
       "id": 2325 }
     ,
     "vkShowTabBar": {
       "en": "Show tab bar",
+      "zh": "显示标签页栏",
       "id": 2326 }
     ,
     "vkShowTabsList": {
       "en": "Show opened tabs list (ignored in Far - use macro instead)",
+      "zh": "显示打开的标签页列表 (在Far里会被忽略 - 使用宏代替)",
       "id": 2222 }
     ,
     "vkShowTabsList2": {
       "en": "Show opened tabs list (works in Far too)",
+      "zh": "显示打开的标签页列表 (在Far里同样工作)",
       "id": 2455 }
     ,
     "vkSplitFocusDown": {
       "en": "Split: Put focus to nearest pane downward",
+      "zh": "分屏： 聚焦在最近的窗格下边",
       "id": 2611 }
     ,
     "vkSplitFocusLeft": {
       "en": "Split: Put focus to nearest pane leftward",
+      "zh": "分屏： 聚焦在最近的窗格左边",
       "id": 2612 }
     ,
     "vkSplitFocusRight": {
       "en": "Split: Put focus to nearest pane rightward",
+      "zh": "分屏： 聚焦在最近的窗格右边",
       "id": 2613 }
     ,
     "vkSplitFocusUp": {
       "en": "Split: Put focus to nearest pane upward",
+      "zh": "分屏： 聚焦在最近的窗格上边",
       "id": 2610 }
     ,
     "vkSplitNewConH": {
       "en": "Split: Duplicate active ‘shell’ split to right",
+      "zh": "分屏：复制活动的‘shell’分屏至右边",
       "id": 2605 }
     ,
     "vkSplitNewConV": {
       "en": "Split: Duplicate active ‘shell’ split to bottom",
+      "zh": "分屏：复制活动的‘shell’分屏至底部",
       "id": 2604 }
     ,
     "vkSplitSizeHleft": {
       "en": "Split: Move splitter leftward",
+      "zh": "分屏：向左移动分离器",
       "id": 2608 }
     ,
     "vkSplitSizeHright": {
       "en": "Split: Move splitter rightward",
+      "zh": "分屏：向右移动分离器",
       "id": 2609 }
     ,
     "vkSplitSizeVdown": {
       "en": "Split: Move splitter downward",
+      "zh": "分屏：向下移动分离器",
       "id": 2607 }
     ,
     "vkSplitSizeVup": {
       "en": "Split: Move splitter upward",
+      "zh": "分屏：向上移动分离器",
       "id": 2606 }
     ,
     "vkSystemMenu": {
       "en": "Show ConEmu System menu",
+      "zh": "显示ConEmu系统菜单",
       "id": 2018 }
     ,
     "vkSystemMenu2": {
       "en": "Show ConEmu System menu",
+      "zh": "显示ConEmu系统菜单",
       "id": 2495 }
     ,
     "vkTabMenu": {
       "en": "Show Tab context menu",
+      "zh": "显示标签页上下文菜单",
       "id": 2111 }
     ,
     "vkTabMenu2": {
       "en": "Show Tab context menu",
+      "zh": "显示标签页上下文菜单",
       "id": 2494 }
     ,
     "vkTabPane": {
       "en": "Split: Put focus to next visible pane",
+      "zh": "分屏：聚焦在下一个可见的窗格",
       "id": 2511 }
     ,
     "vkTabPaneShift": {
       "en": "Split: Put focus to previous visible pane",
+      "zh": "分屏：聚焦在前一个可见的窗格",
       "id": 2512 }
     ,
     "vkTermButShell": {
       "en": "Terminate all but shell processes in the current console",
+      "zh": "在当前控制台中结束所有进程除了shell进程",
       "id": 2761 }
     ,
     "vkTerminateApp": {
       "en": "Terminate active process in the current console",
+      "zh": "在当前控制台中终止活动进程",
       "id": 2261 }
     ,
     "vkTileToLeft": {
       "en": "Snap ConEmu window to the monitor's left edge",
+      "zh": "快闪ConEmu窗口至左边缘",
       "id": 2596 }
     ,
     "vkTileToRight": {
       "en": "Snap ConEmu window to the monitor's right edge",
+      "zh": "快闪ConEmu窗口至右边缘",
       "id": 2597 }
     ,
     "vkTransparencyDec": {
       "en": "Transparency: more opaque",
+      "zh": "透明度：更不透明",
       "id": 2648 }
     ,
     "vkTransparencyInc": {
       "en": "Transparency: more translucent",
+      "zh": "透明度：更加透明",
       "id": 2647 }
     ,
     "vkWinAltA": {
       "en": "Show ‘About’ dialog",
+      "zh": "显示 ‘关于’ 对话框",
       "id": 2324 }
     ,
     "vkWinAltH": {
       "en": "Open online help/wiki in your browser",
+      "zh": "在你的浏览器里打开在线帮助/百科",
       "id": 2760 }
     ,
     "vkWinAltK": {
       "en": "Setup ‘Hotkeys’",
+      "zh": "安装 ‘热键’",
       "id": 2500 }
     ,
     "vkWinAltP": {
       "en": "Settings dialog",
+      "zh": "设置对话框",
       "id": 2013 }
     ,
     "vkWinAltSpace": {
       "en": "Show ConEmu menu",
+      "zh": "显示ConEmu菜单",
       "id": 2014 }
     ,
     "vkWinAltT": {
       "en": "Setup ‘Tasks’",
+      "zh": "安装 ‘任务’",
       "id": 2726 }
     ,
     "vkWinDown": {
       "en": "Increase window height (check ‘Resize with arrows’)",
+      "zh": "增加窗口高度(选中‘使用箭头键调整大小’)",
       "id": 2047 }
     ,
     "vkWinLeft": {
       "en": "Decrease window width (check ‘Resize with arrows’)",
+      "zh": "减少窗口宽度(选中‘使用箭头键调整大小’)",
       "id": 2044 }
     ,
     "vkWinRight": {
       "en": "Increase window width (check ‘Resize with arrows’)",
+      "zh": "增加窗口宽度(选中‘使用箭头键调整大小’)",
       "id": 2045 }
     ,
     "vkWinUp": {
       "en": "Decrease window height (check ‘Resize with arrows’)",
+      "zh": "减少窗口高度(选中‘使用箭头键调整大小’)",
       "id": 2046 }
     ,
     "vkWndDragKey": {
       "en": "Move ConEmu window by dragging client area",
+      "zh": "拖动工作区来移动ConEmu窗口",
       "id": 2404 }
   }
   ,
   "mnuhints": {
     "ID_HOMEPAGE": {
       "en": "Visit https://conemu.github.io/",
+      "zh": "访问https://conemu.github.io/",
       "id": 43962 }
     ,
     "ID_REPORTBUG": {
       "en": [ "Create bug report or request new feature\r\n"
             , "https://conemu.github.io/en/Issues.html" ],
+      "zh": [ "创建错误报告或要求新功能\r\n"
+            , "https://conemu.github.io/en/Issues.html" ],
       "id": 43961 }
     ,
     "IDM_DETACH": {
       "en": "Show RealConsole and detach it from ConEmu",
+      "zh": "显示并从ConEmu分离真实控制台（RealConsole）",
       "id": 43993 }
     ,
     "IDM_RESTART": {
       "en": [ "Restart current console\r\n"
             , "Hold Shift to popup Restart dialog" ],
+      "zh": [ "重启当前控制台\r\n"
+            , "按住Shift键来弹出重启对话框" ],
       "id": 43986 }
     ,
     "IDM_RESTARTAS": {
       "en": [ "Restart current console as Admin (Vista+) or user (WinXP)\r\n"
             , "Hold Shift to popup Restart dialog" ],
+      "zh": [ "以管理员身份(Vista+)或用户身份(WinXP)重启当前控制台\r\n"
+            , "按住Shift键来弹出重启对话框" ],
       "id": 43987 }
     ,
     "IDM_RESTARTDLG": {
       "en": "Show ‘Restart current console’ dialog",
+      "zh": "显示‘重启当前控制台’对话框",
       "id": 43998 }
     ,
     "IDM_TERMINATEALLCON": {
       "en": "Do normal close of all consoles (tabs and panes)",
+      "zh": "正常关闭所有控制台(标签页和窗格)",
       "id": 44001 }
     ,
     "IDM_TERMINATEBUTSHELL": {
       "en": "Active console/pane: Terminate all except root process",
+      "zh": "活动的控制台/窗格：结束所有进程除了根进程",
       "id": 43991 }
     ,
     "IDM_TERMINATECON": {
       "en": "Active console/pane: Do normal close",
+      "zh": "活动的控制台/窗格：正常关闭",
       "id": 43989 }
     ,
     "IDM_TERMINATECONEXPT": {
       "en": "Close all tabs and panes except active console/pane",
+      "zh": "关闭所有标签和窗格除了活动的控制台/窗格",
       "id": 44002 }
     ,
     "IDM_TERMINATEGROUP": {
       "en": "Active group: Do normal close of each pane",
+      "zh": "活动组：正常关闭每一个窗格",
       "id": 43997 }
     ,
     "IDM_TERMINATEPRC": {
       "en": "Active console/pane: Terminate active process",
+      "zh": "活动控制台/窗格：终止活动进程",
       "id": 43988 }
     ,
     "IDM_TERMINATEPRCGROUP": {
       "en": "Active group: Terminate active process in each pane",
+      "zh": "活动组：在每个窗格中终止活动进程",
       "id": 44000 }
     ,
     "IDM_TERMINATEZOMBIES": {
       "en": "Close ‘zombies’ (where ‘Press Esc to close console’ is displayed)",
+      "zh": "关闭‘zombies’ (‘按下Esc关闭console’显示的地方)",
       "id": 44003 }
     ,
     "IDM_UNFASTEN": {
       "en": "Open active console/pane in the new ConEmu window",
+      "zh": "在新的ConEmu窗口里打开活动的控制台/窗格",
       "id": 44004 }
   }
   ,
   "controls": {
     "bApplyViewSettings": {
       "en": "&Apply",
+      "zh": "应用(&A)",
       "id": 1715 }
     ,
     "bCmdAutoClear": {
       "en": "Clear",
+      "zh": "清除",
       "id": 2424 }
     ,
     "bCmdAutoRegister": {
       "en": "Register ConEmu autorun",
+      "zh": "注册ConEmu自动运行",
       "id": 2395 }
     ,
     "bCmdAutoUnregister": {
       "en": "Unregister",
+      "zh": "反注册",
       "id": 2396 }
     ,
     "bConFontAdd2HKLM": {
       "en": "Add font to ‘...\\Console\\TrueTypeFont’",
+      "zh": "添加字体到‘...\\Console\\TrueTypeFont’",
       "id": 1730 }
     ,
     "bConFontCancel": {
       "en": "Cancel",
       "ru": "Отмена",
+      "zh": "取消",
       "id": 1726 }
     ,
     "bConFontOK": {
       "en": "OK&",
+      "zh": "确定&",
       "id": 1716 }
     ,
     "bHereRegister": {
       "en": "Register",
+      "zh": "注册",
       "id": 2392 }
     ,
     "bHereUnregister": {
       "en": "Unregister",
+      "zh": "反注册",
       "id": 2393 }
     ,
     "bImportSettings": {
       "en": "Import...",
       "ru": "Импорт...",
+      "zh": "导入...",
       "id": 2664 }
     ,
     "bInsideRegister": {
       "en": "Register",
+      "zh": "注册",
       "id": 2387 }
     ,
     "bInsideUnregister": {
       "en": "Unregister",
+      "zh": "反注册",
       "id": 2388 }
     ,
     "bReloadSettings": {
       "en": "Reload...",
       "ru": "Перечитать...",
+      "zh": "重新加载...",
       "id": 1596 }
     ,
     "bResetSettings": {
       "en": "Reset...",
       "ru": "Сброс...",
+      "zh": "重置...",
       "id": 1595 }
     ,
     "bSaveSettings": {
       "en": "Save settings",
       "ru": "Сохранить настройки",
+      "zh": "保存设置",
       "id": 1610 }
     ,
     "cbActivateSplitMouseOver": {
       "en": "Activate split/pane on mouse hover",
+      "zh": "鼠标悬停时激活分屏/窗格",
       "id": 2601 }
     ,
     "cbActivityReset": {
       "en": "&Reset",
+      "zh": "重置(&R)",
       "id": 1717 }
     ,
     "cbActivitySaveAs": {
       "en": "Save &as...",
+      "zh": "另存为(&a)...",
       "id": 1746 }
     ,
     "cbAddConEmu2Path": {
       "en": "Add %ConEmuDir% to %PATH%",
+      "zh": "添加%ConEmuDir%到%PATH%",
       "id": 2423 }
     ,
     "cbAddConEmuBase2Path": {
       "en": "Add %ConEmuBaseDir% to %PATH%",
+      "zh": "添加%ConEmuBaseDir%到%PATH%",
       "id": 2584 }
     ,
     "cbAddDefaults": {
       "en": "Add default tasks...",
+      "zh": "添加默认任务...",
       "id": 2632 }
     ,
     "cbAdminShield": {
       "en": "Admin shield",
+      "zh": "管理员盾牌",
       "id": 2109 }
     ,
     "cbAdminSuffix": {
       "en": "suffix",
+      "zh": "后缀",
       "id": 2110 }
     ,
     "cbAlwaysOnTop": {
       "en": "Always on top",
+      "zh": "总是置顶",
       "id": 1572 }
     ,
     "cbAlwaysShowTrayIcon": {
       "en": "Always show TSA icon",
+      "zh": "总是显示任务栏状态区域图标",
       "id": 1736 }
     ,
     "cbAnsiLog": {
       "en": "Log console output (*)",
+      "zh": "记录控制台输出日志(*)",
       "id": 2679 }
     ,
     "cbAppDistinctDown": {
       "en": "Down",
+      "zh": "向下",
       "id": 2139 }
     ,
     "cbAppDistinctReload": {
       "en": "Reload...",
+      "zh": "重新加载...",
       "id": 2140 }
     ,
     "cbAppDistinctUp": {
       "en": "Up",
+      "zh": "向上",
       "id": 2138 }
     ,
     "cbApplyDefTerm": {
       "en": "Apply",
       "ru": "Применить",
+      "zh": "应用",
       "id": 2865 }
     ,
     "cbApplyPos": {
       "en": "Apply",
       "ru": "Apply",
+      "zh": "应用",
       "id": 1520 }
     ,
     "cbAutoRegFonts": {
       "en": "Auto register fonts",
+      "zh": "自动注册字体",
       "id": 1550 }
     ,
     "cbAutoSaveSizePos": {
       "en": "Auto save window size and position on exit",
+      "zh": "自动保存窗口大小和位置",
       "id": 1723 }
     ,
     "cbBgAllowPlugin": {
       "en": "Allow background plugins (Far Manager)",
+      "zh": "允许背景插件(Far Manager)",
       "id": 1734 }
     ,
     "cbBgImage": {
       "en": "Back&ground image (bmp, jpg, png, tif):",
+      "zh": "背景图片(bmp, jpg, png, tif):",
       "id": 1699 }
     ,
     "cbBgImageOverride": {
       "en": "Background image override",
+      "zh": "覆盖背景图片",
       "id": 2350 }
     ,
     "cbBold": {
       "en": "&Bold",
+      "zh": "粗体(&B)",
       "id": 2278 }
     ,
     "cbClipboardOverride": {
       "en": "Clipboard (Copy/Paste) override",
+      "zh": "覆盖(复制/粘贴)剪贴板",
       "id": 2172 }
     ,
     "cbClipConfirmEnter": {
       "en": "Confirm <Enter> keypress",
+      "zh": "确认<Enter>按键",
       "id": 2171 }
     ,
     "cbClipConfirmLimit": {
       "en": "Confirm pasting more than",
+      "zh": "确认粘贴多于",
       "id": 2225 }
     ,
     "cbClipCtrlV": {
       "en": "First line (default Ctrl+V)",
+      "zh": "第一行 (默认Ctrl+V)",
       "id": 2170 }
     ,
     "cbClipShiftIns": {
       "en": "All lines (default Shift+Ins)",
+      "zh": "所有行 (默认Shift+Ins)",
       "id": 2168 }
     ,
     "cbCloseConEmuOnCrossClicking": {
       "en": "Quit on close (e.g. caption bar cross clicking)",
+      "zh": "关闭时退出程序 (比如 标题栏点击叉号)",
       "id": 2585 }
     ,
     "cbCloseConEmuWithLastTab": {
       "en": "Close ConEmu with last tab",
+      "zh": "关闭最后标签页时关闭ConEmu",
       "id": 2588 }
     ,
     "cbCloseConsoleConfirm": {
       "en": "Confirm tab closing",
+      "zh": "确认标签页关闭",
       "id": 2179 }
     ,
     "cbCloseEditViewConfirm": {
       "en": "Confirm Far Manager Editor/Viewer tab closing",
+      "zh": "确认Far Manager编辑器/视图标签页关闭",
       "id": 2517 }
     ,
     "cbCloseWindowConfirm": {
       "en": "Confirm window closing (cross click)",
+      "zh": "确认窗口关闭(点击叉号)",
       "id": 2757 }
     ,
     "cbCmdAutorunNewWnd": {
       "en": "Force new ConEmu window",
+      "zh": "强制新建ConEmu窗口",
       "id": 2411 }
     ,
     "cbCmdGroupApp": {
       "en": "Tab...",
+      "zh": "标签页...",
       "id": 2128 }
     ,
     "cbCmdGrpDefaultCmd": {
       "en": "Default shell (Win+X)",
+      "zh": "默认shell (Win+X)",
       "id": 2751 }
     ,
     "cbCmdGrpDefaultNew": {
       "en": "Default task for new console",
+      "zh": "新建控制台的默认任务",
       "id": 2750 }
     ,
     "cbCmdGrpTaskbar": {
       "en": "Taskbar jump lists",
+      "zh": "任务栏跳转列表",
       "id": 2752 }
     ,
     "cbCmdGrpToolbar": {
       "en": "Toolbar",
+      "zh": "工具栏",
       "id": 2753 }
     ,
     "cbCmdTaskbarCommands": {
       "en": "Add commands from history, too",
+      "zh": "从历史添加命令",
       "id": 2133 }
     ,
     "cbCmdTaskbarTasks": {
       "en": "Add ConEmu tasks to taskbar",
+      "zh": "添加ConEmu任务至任务栏",
       "id": 2132 }
     ,
     "cbCmdTaskbarUpdate": {
       "en": "Update Now!",
+      "zh": "现在更新！",
       "id": 2320 }
     ,
     "cbCmdTasksActive": {
       "en": "Active tabs",
+      "zh": "活动的标签页",
       "id": 2493 }
     ,
     "cbCmdTasksDir": {
       "en": "Startup dir...",
+      "zh": "启动目录...",
       "id": 2452 }
     ,
     "cbCmdTasksDown": {
       "en": "&Down",
+      "zh": "向下(&D)",
       "id": 2127 }
     ,
     "cbCmdTasksParm": {
       "en": "File path...",
+      "zh": "文件路径...",
       "id": 2129 }
     ,
     "cbCmdTasksReload": {
       "en": "Reload...",
+      "zh": "重新加载...",
       "id": 2131 }
     ,
     "cbCmdTasksUp": {
       "en": "&Up",
+      "zh": "向上(&U)",
       "id": 2126 }
     ,
     "cbColorKeyTransparent": {
       "en": "‘Color key’ transparency",
+      "zh": "‘颜色键’ 透明度",
       "id": 2312 }
     ,
     "cbColorResetExt": {
       "en": "Default...",
+      "zh": "默认...",
       "id": 2716 }
     ,
     "cbColorSchemeDelete": {
       "en": "Delete...",
+      "zh": "删除...",
       "id": 2125 }
     ,
     "cbColorSchemeSave": {
       "en": "Save",
+      "zh": "保存",
       "id": 2123 }
     ,
     "cbColorsOverride": {
       "en": "Color palette override",
+      "zh": "覆盖调色板",
       "id": 2146 }
     ,
     "cbComspecTest": {
       "en": "Test",
+      "zh": "测试",
       "id": 2162 }
     ,
     "cbComspecUncPaths": {
       "en": "Support UNC paths in cmd.exe (\\\\server\\share\\folder)",
+      "zh": "在cmd.exe里支持UNC路径(\\\\server\\share\\folder)",
       "id": 2451 }
     ,
     "cbComspecUpdateEnv": {
       "en": "Set ComSpec environment variable for child processes to selected value",
+      "zh": "为子进程设置环境变量ComSpec为指定值",
       "id": 2160 }
     ,
     "cbConfirmCloseRunning": {
       "en": "When running process was detected",
+      "zh": "当运行中的进程被分离时",
       "id": 2758 }
     ,
     "cbConfirmDetach": {
       "en": "Confirm console detach",
+      "zh": "确认控制台分离",
       "id": 2689 }
     ,
     "cbConsoleExceptionHandler": {
       "en": "Exception handler (debug)",
+      "zh": "移除处理程序(调试)",
       "id": 2622 }
     ,
     "cbCTSAutoCopy": {
       "en": "Copy on Left Button release",
+      "zh": "鼠标左键释放时复制",
       "id": 2340 }
     ,
     "cbCTSBashMargin": {
       "en": "Bash margin",
+      "zh": "Bash边缘",
       "id": 2359 }
     ,
     "cbCTSBlockSelection": {
       "en": "Block (rectangular) selection",
+      "zh": "块状模式(矩形) 选择",
       "id": 1635 }
     ,
     "cbCTSClickPromptPosition": {
       "en": "Change prompt (cmd, powershell) text cursor position with Left Click",
+      "zh": "右击改变prompt (cmd, powershell)文本光标位置",
       "id": 2344 }
     ,
     "cbCTSDeleteLeftWord": {
       "en": "Ctrl+BackSpace - delete word leftward to the text cursor",
+      "zh": "Ctrl+BackSpace - 删除文本光标左边的单词",
       "id": 2526 }
     ,
     "cbCTSDetectLineEnd": {
       "en": "Detect line ends",
+      "zh": "探测行尾",
       "id": 2358 }
     ,
     "cbCTSEndCopyBefore": {
       "en": "copy before reset",
+      "zh": "重置之前复制",
       "id": 2579 }
     ,
     "cbCTSEndOnKeyPress": {
       "en": "any key",
+      "zh": "任意键",
       "id": 2436 }
     ,
     "cbCTSEndOnTyping": {
       "en": "Reset selection on input",
+      "zh": "输入时重置选择",
       "id": 2412 }
     ,
     "cbCTSFreezeBeforeSelect": {
       "en": "Freeze console contents before selection (may cause small lag)",
+      "zh": "在选择前冻结控制台的内容（可能会导致轻微滞后）",
       "id": 2257 }
     ,
     "cbCTSIBeam": {
       "en": "Show IBeam cursor",
+      "zh": "显示IBeam光标",
       "id": 2603 }
     ,
     "cbCTSIntelligent": {
       "en": "Intelligent mode",
+      "zh": "智能模式",
       "id": 2657 }
     ,
     "cbCTSShiftArrowStartSel": {
       "en": "Start selection with Shift+Arrow (Text = Left/Right/Home/End, Block = Up/Down)",
+      "zh": "使用Shift+箭头键开始选择 (文本模式 = Left/Right/Home/End, 块状模式 = Up/Down)",
       "id": 2553 }
     ,
     "cbCTSTextSelection": {
       "en": "Text selection",
+      "zh": "文本选择",
       "id": 1630 }
     ,
     "cbCTSTrimTrailing": {
       "en": "Trim trailing spaces",
+      "zh": "修剪尾随空格",
       "id": 2365 }
     ,
     "cbCursorBlink": {
       "en": "Blinking",
+      "zh": "闪烁",
       "id": 1522 }
     ,
     "cbCursorColor": {
       "en": "Co&lor (inverse screen part under cursor shape)",
+      "zh": "颜色(&l)(光标形状下的逆屏幕部分)",
       "id": 1210 }
     ,
     "cbCursorIgnoreSize": {
       "en": "Fixed cursor size",
+      "zh": "固定光标大小",
       "id": 1655 }
     ,
     "cbCursorOverride": {
       "en": "Cursor override",
+      "zh": "覆盖光标",
       "id": 2145 }
     ,
     "cbDebugSteps": {
       "en": "Debug steps in caption",
+      "zh": "标题里显示调试步骤",
       "id": 1551 }
     ,
     "cbDefaultTerminal": {
       "en": "Force ConEmu as default terminal for console applications",
+      "zh": "强制使用ConEmu作为控制台应用程序的默认终端",
       "id": 2515 }
     ,
     "cbDefaultTerminalDebugLog": {
       "en": "Enable logging of hooked processes (debug purposes)",
+      "zh": "启用hooked进程的日志（调试目的）",
       "id": 2866 }
     ,
     "cbDefaultTerminalNoInjects": {
       "en": "Don't use ConEmuHk.dll in started console",
+      "zh": "不要在启动的控制台里使用ConEmuHk.dll",
       "id": 2518 }
     ,
     "cbDefaultTerminalStartup": {
       "en": "Register on OS startup",
+      "zh": "在系统启动时注册",
       "id": 2547 }
     ,
     "cbDefaultTerminalTSA": {
       "en": "Leave in TSA",
+      "zh": "留在任务栏状态区域（TSA）",
       "id": 2627 }
     ,
     "cbDefaultTerminalUseExisting": {
       "en": "Use existing ConEmu window if available",
+      "zh": "使用现有的ConEmu窗口（如果可用）",
       "id": 2661 }
     ,
     "cbDefTermAgressive": {
       "en": "Aggressive mode",
+      "zh": "攻击模式",
       "id": 2684 }
     ,
     "cbDisableAllFlashing": {
       "en": "Disable all flashing",
+      "zh": "禁用所有闪烁",
       "id": 1719 }
     ,
     "cbDisableConImeFast": {
       "en": " Disable ConIme.exe autorun (Vista only)",
+      "zh": " 禁用ConIme.exe自动启动(仅Vista)",
       "id": 2090 }
     ,
     "cbDisableFarFlashing": {
       "en": "Disable Far flashing",
+      "zh": "禁用Far的闪烁",
       "id": 1718 }
     ,
     "cbDnDCopy": {
       "en": "Copy by default",
+      "zh": "默认复制",
       "id": 2287 }
     ,
     "cbDosBox": {
       "en": "DosBox (DOS apps)",
+      "zh": "DosBox (DOS程序)",
       "id": 1753 }
     ,
     "cbDragIcons": {
       "en": "Shell icons",
+      "zh": "Shell图标",
       "id": 1553 }
     ,
     "cbDragImage": {
       "en": "Overlay",
+      "zh": "叠加",
       "id": 1548 }
     ,
     "cbDragL": {
       "en": "LDrag",
+      "zh": "LDrag",
       "id": 1504 }
     ,
     "cbDragPanel": {
       "en": "Resize panels by mouse",
+      "zh": "鼠标调整窗格大小",
       "id": 1568 }
     ,
     "cbDragPanelBothEdges": {
       "en": "use both panel edges",
+      "zh": "使用窗格两个边缘",
       "id": 2102 }
     ,
     "cbDragR": {
       "en": "RDrag",
+      "zh": "RDrag",
       "id": 1505 }
     ,
     "cbDropEnabled": {
       "en": "Drop && Confirmation",
+      "zh": "下拉 && 确认",
       "id": 1502 }
     ,
     "cbDropUseMenu": {
       "en": "Use drop menu",
+      "zh": "使用下拉菜单",
       "id": 2246 }
     ,
     "cbDupConfirm": {
       "en": "Confirm tab duplicating (Duplicate root menu item)",
+      "zh": "确认标签页复制（复制根菜单项）",
       "id": 2688 }
     ,
     "cbEnableAutoUpdateFast": {
       "en": "Enable automatic updates",
+      "zh": "启用自动更新",
       "id": 2087 }
     ,
     "cbEnableMouse": {
       "en": "Send mouse events to console",
+      "zh": "发送鼠标消息到控制台（console）",
       "id": 2313 }
     ,
     "cbEnhanceGraphics": {
       "en": "Enhance progressbars and scrollbars",
+      "zh": "增强进度栏和滚动栏",
       "id": 2289 }
     ,
     "cbExportConfig": {
       "en": "Export...",
       "ru": "Экспорт...",
+      "zh": "导出...",
       "id": 2572 }
     ,
     "cbExtendColors": {
       "en": "Extend foreground colors with background",
+      "zh": "扩展相对于背景的前景颜色",
       "id": 1515 }
     ,
     "cbExtendFonts": {
       "en": "Extend fonts",
+      "zh": "扩展字体",
       "id": 1576 }
     ,
     "cbExtendFontsOverride": {
       "en": "Extend fonts override",
+      "zh": "覆盖扩展字体",
       "id": 2144 }
     ,
     "cbExtendUCharMap": {
       "en": "Extend Unicode CharMap",
+      "zh": "扩展Unicode字符表",
       "id": 1722 }
     ,
     "cbFadeInactive": {
       "en": "Fade when inactive",
+      "zh": "不活动时褪色",
       "id": 1581 }
     ,
     "cbFarGotoEditor": {
       "en": "Highlight and goto",
+      "zh": "高亮并转到",
       "id": 1765 }
     ,
     "cbFarHourglass": {
       "en": "Hourglass if not responding",
+      "zh": "如果没有响应，鼠标变沙漏形状",
       "id": 1563 }
     ,
     "cbFARuseASCIIsort": {
       "en": "ASCII sort function in Far",
+      "zh": "Far里的ASCII排序函数",
       "id": 1561 }
     ,
     "cbFindFreezeConsole": {
       "en": "&Freeze console",
+      "zh": "冻结(&F)console",
       "id": 2176 }
     ,
     "cbFindHighlightAll": {
       "en": "&Highlight all matches",
+      "zh": "高亮(&H)所有匹配的",
       "id": 2228 }
     ,
     "cbFindMatchCase": {
       "en": "Match &case",
+      "zh": "匹配(&c)",
       "id": 2175 }
     ,
     "cbFindNext": {
       "en": "&Next",
+      "zh": "下一个(&N)",
       "id": 2177 }
     ,
     "cbFindPrev": {
       "en": "&Previous",
+      "zh": "前一个(&P)",
       "id": 2178 }
     ,
     "cbFindTransparent": {
       "en": "&Transparent",
+      "zh": "透明(&T)",
       "id": 2232 }
     ,
     "cbFindWholeWords": {
       "en": "Match &whole words",
+      "zh": "匹配整个单词(&w)",
       "id": 2174 }
     ,
     "cbFixAltOnAltTab": {
       "en": "Fix Alt on AltTab/AltF9 (to avoid execution of Far Manager macro, linked to Alt-release)",
+      "zh": "修复Alt于AltTab/AltF9 (避免执行Far Manager宏, 连接到Alt-release)",
       "id": 1562 }
     ,
     "cbFixFarBorders": {
       "en": "Alternative font (pseudographics, CJK, etc.)",
+      "zh": "替代字体（错误代码页，中日韩，等。）",
       "id": 1207 }
     ,
     "cbFocusInChildWindows": {
       "en": "Focus in child windows",
+      "zh": "聚焦在子窗口",
       "id": 2568 }
     ,
     "cbFont2AA": {
       "en": "Anti-aliasing",
+      "zh": "防走样",
       "id": 2883 }
     ,
     "cbFontAsDeviceUnits": {
       "en": "Treat font height as device units",
+      "zh": "把字体高度作为设备单位",
       "id": 2692 }
     ,
     "cbFontAuto": {
       "en": "Auto size (fixed console size in cells)",
+      "zh": "自动设置大小(固定的控制台大小-以单元格为单位)",
       "id": 1566 }
     ,
     "cbFontMonitorDpi": {
       "en": "Admit monitor dpi with font size",
+      "zh": "确认显示器dpi字体大小",
       "id": 2691 }
     ,
     "cbFullscreenFixedConSize": {
       "en": "Fixed console size",
+      "zh": "固定的控制台（console）大小",
       "id": 2469 }
     ,
     "cbFullscreenNoBars": {
       "en": "Hide tab && status bars",
+      "zh": "隐藏标签页 && 状态栏",
       "id": 2468 }
     ,
     "cbHideCaption": {
       "en": "Hide caption when maximized",
+      "zh": "最大化时隐藏标题",
       "id": 1565 }
     ,
     "cbHideCaptionAlways": {
       "en": "Hide caption always",
+      "zh": "总是隐藏标题",
       "id": 1569 }
     ,
     "cbHideChildCaption": {
       "en": "Hide caption of child GUI windows started in ConEmu",
+      "zh": "隐藏ConEmu里启动的GUI窗口的标题",
       "id": 2562 }
     ,
     "cbHideDisabledTabs": {
       "en": "Hide disabled tabs",
+      "zh": "隐藏失效的标签页",
       "id": 2051 }
     ,
     "cbHideInactiveConTabs": {
       "en": "Active console only",
+      "zh": "仅活动的控制台",
       "id": 1642 }
     ,
     "cbHideOnLastTabClose": {
       "en": "Hide to the TSA",
+      "zh": "隐藏至任务栏状态区域（TSA）",
       "id": 2587 }
     ,
     "cbHighlightMouseCol": {
       "en": "Highlight whole column under mouse cursor",
+      "zh": "高亮显示在鼠标光标下的整个列",
       "id": 2642 }
     ,
     "cbHighlightMouseRow": {
       "en": "Highlight whole row under mouse cursor",
+      "zh": "高亮显示在鼠标光标下的整个行",
       "id": 2641 }
     ,
     "cbHotkeysAssignedOnly": {
       "en": "&Hide unassigned",
+      "zh": "隐藏未分配(&H)",
       "id": 2514 }
     ,
     "cbInactiveCursor": {
       "en": "Inactive console Text Cursor",
+      "zh": "不活动的控制台文本光标",
       "id": 2544 }
     ,
     "cbInactiveCursorBlink": {
       "en": "Blinking",
+      "zh": "闪烁",
       "id": 2545 }
     ,
     "cbInactiveCursorColor": {
       "en": "Color (inverse screen part under cursor shape)",
+      "zh": "颜色（在光标下的逆屏幕部分）",
       "id": 2538 }
     ,
     "cbInactiveCursorIgnoreSize": {
       "en": "Fixed cursor size",
+      "zh": "固定光标大小",
       "id": 2539 }
     ,
     "cbInjectConEmuHkFast": {
       "en": "Inject ConEmuHk.dll into all processes started in ConEmu tabs",
+      "zh": "向ConEmu标签页里启动的所有进程注入ConEmuHk.dll",
       "id": 2098 }
     ,
     "cbInsideSyncDir": {
       "en": "Sync dir",
+      "zh": "同步目录",
       "id": 2397 }
     ,
     "cbInstallKeybHooks": {
       "en": "Install keyboard hooks",
+      "zh": "安装键盘hooks",
       "id": 1649 }
     ,
     "cbIntegralSize": {
       "en": "Align ConEmu window size to cells",
+      "zh": "对齐ConEmu窗口大小至单元格",
       "id": 2594 }
     ,
     "cbItalic": {
       "en": "&Italic",
+      "zh": "斜体(&I)",
       "id": 2280 }
     ,
     "cbKeyBarRClick": {
       "en": "KeyBar RClick",
+      "zh": "KeyBar RClick",
       "id": 2114 }
     ,
     "cbLongOutput": {
       "en": "Long console output",
+      "zh": "长控制台（console）输出",
       "id": 1534 }
     ,
     "cbMapShiftEscToEsc": {
       "en": "Map Shift+Esc to Esc",
+      "zh": "关联Shift+Esc到Esc",
       "id": 2563 }
     ,
     "cbMinimizeOnLastTabClose": {
       "en": "Minimize on closing last tab",
+      "zh": "关闭最后一个标签时最小化",
       "id": 2586 }
     ,
     "cbMinimizeOnLoseFocus": {
       "en": "Minimize on focus lose (not in Quake style)",
+      "zh": "失去焦点时最小化（不使用震动方式）",
       "id": 2567 }
     ,
     "cbMinToTray": {
       "en": "Auto minimize to TSA",
+      "zh": "自动最小化到任务栏状态区域（TSA）",
       "id": 1507 }
     ,
     "cbMonitorConsoleLang": {
       "en": "Monitor console lang",
+      "zh": "监视控制台（console）语言",
       "id": 1537 }
     ,
     "cbMonospace": {
       "en": "&Monospace",
+      "zh": "等宽(&M)",
       "id": 2283 }
     ,
     "cbMultiCon": {
       "en": "Multiple consoles in one ConEmu window",
+      "zh": "多个consoles在一个ConEmu窗口里",
       "id": 1506 }
     ,
     "cbMultiIterate": {
       "en": "‘Host-key’+Number iterates Far windows",
+      "zh": "‘Host-key’+数字迭代Far窗口",
       "id": 2104 }
     ,
     "cbMultiShowButtons": {
       "en": "Show buttons (toolbar) in tab bar",
+      "zh": "在标签栏显示按钮（工具栏）",
       "id": 2549 }
     ,
     "cbMultiShowSearch": {
       "en": "Show search field in tab bar",
+      "zh": "在标签页栏显示搜索栏",
       "id": 2715 }
     ,
     "cbNewConfirm": {
       "en": "Confirm creating new console/tab (Win+W, toolbar [+])",
+      "zh": "确认创建新的控制台/标签 (Win+W, 工具栏 [+])",
       "id": 1546 }
     ,
     "cbNumberInCaption": {
       "en": "Always show numbers [n/m]",
+      "zh": "总是显示数字 [n/m]",
       "id": 2480 }
     ,
     "cbOneTabPerGroup": {
       "en": "One tab per group",
+      "zh": "每组一个标签页",
       "id": 2599 }
     ,
     "cbProcessAnsi": {
       "en": "ANSI X3.64 / xterm 256 colors",
+      "zh": "ANSI X3.64 / xterm 256 色",
       "id": 2253 }
     ,
     "cbProcessCmdStart": {
       "en": "Process 'start'",
+      "zh": "处理 'start'",
       "id": 2740 }
     ,
     "cbProcessCtrlZ": {
       "en": "Process Ctrl-Z in ReadConsole",
+      "zh": "在真实控制台（RealConsole）里处理 Ctrl-Z",
       "id": 2878 }
     ,
     "cbProcessNewConArg": {
       "en": "Process '-new_console' and '-cur_console' switches",
+      "zh": "进行 '-new_console' 和 '-cur_console' 切换",
       "id": 2640 }
     ,
     "cbQuakeAutoHide": {
       "en": "Auto-hide on focus lose",
+      "zh": "失去焦点时自动隐藏",
       "id": 2466 }
     ,
     "cbQuakeFast": {
       "en": "Quake-style slide down from the top of the screen",
+      "zh": "从屏幕顶部震动式向下滑动",
       "id": 2846 }
     ,
     "cbQuakeStyle": {
       "en": "Quake style slide down",
+      "zh": "震动式向下滑动",
       "id": 2333 }
     ,
     "cbRClick": {
       "en": "&RightClick 4 EMenu",
+      "zh": "右击(&R) 4 EMenu",
       "id": 1696 }
     ,
     "cbRestore2ActiveMonitor": {
       "en": "Restore to active monitor",
+      "zh": "恢复至活动的显示屏",
       "id": 2867 }
     ,
     "cbRetardInactivePanes": {
       "en": "Retard inactive panes",
+      "zh": "延缓不活动的窗格",
       "id": 2665 }
     ,
     "cbRSelectionFix": {
       "en": "Right selection fix",
+      "zh": "修复为正确的选择",
       "id": 1536 }
     ,
     "cbRunAsAdmin": {
       "en": "&Run as administrator",
+      "zh": "以管理员身份运行(&R)",
       "id": 1547 }
     ,
     "cbRunAsRestricted": {
       "en": "Restricte&d current user",
+      "zh": "受限的(&d)当前用户",
       "id": 1650 }
     ,
     "cbRunInNewWindow": {
       "en": "New &window",
+      "zh": "新建(&w)窗口",
       "id": 2330 }
     ,
     "cbSafeFarClose": {
       "en": "Safe Far close",
+      "zh": "安全关闭Far",
       "id": 1654 }
     ,
     "cbSendAltEsc": {
       "en": "Alt+Esc",
+      "zh": "Alt+Esc",
       "id": 1778 }
     ,
     "cbSendAltPrintScrn": {
       "en": "Alt+PrScrn",
+      "zh": "Alt+PrScrn",
       "id": 1779 }
     ,
     "cbSendAltTab": {
       "en": "Alt+Tab",
+      "zh": "Alt+Tab",
       "id": 1777 }
     ,
     "cbSendCtrlEsc": {
       "en": "Ctrl+Esc",
+      "zh": "Ctrl+Esc",
       "id": 1781 }
     ,
     "cbSendPrintScrn": {
       "en": "PrntScrn",
+      "zh": "PrntScrn",
       "id": 1780 }
     ,
     "cbShellNoZoneCheck": {
       "en": "No zone check",
+      "zh": "没有区域检查",
       "id": 1725 }
     ,
     "cbShowFarWindows": {
       "en": "Far windows",
+      "zh": "Far窗口",
       "id": 2053 }
     ,
     "cbShowHelpTooltips": {
       "en": "Show balloon help tooltips",
+      "zh": "显示气球帮助提示",
       "id": 2592 }
     ,
     "cbShowStatusBar": {
       "en": "Show status bar",
+      "zh": "显示状态栏",
       "id": 2262 }
     ,
     "cbShowWasHiddenMsg": {
       "en": "Show ‘... was hidden’ warning in TSA",
+      "zh": "在任务栏状态区域显示“... 被隐藏”警告",
       "id": 2435 }
     ,
     "cbShowWasSetOnTopMsg": {
       "en": "Show ‘... brought ConEmu OnTop. Revert?’ confirmation box",
+      "zh": "显示“...置顶ConEmu。 恢复？” 确认框",
       "id": 2854 }
     ,
     "cbSingleInstance": {
       "en": "Single instance mode (use existing window instead of running new instance)",
+      "zh": "单实例模式（使用现有窗口而不是运行新实例）",
       "id": 2578 }
     ,
     "cbSkipActivation": {
       "en": "Skip click on activation",
+      "zh": "激活时跳过点击",
       "id": 1542 }
     ,
     "cbSkipFocusEvents": {
       "en": "Skip focus events (don't send to console FOCUS_EVENT, useful with Far Manager)",
+      "zh": "跳过焦点事件（FOCUS_EVENT不发送到控制台，对于Far Manager有用)",
       "id": 1538 }
     ,
     "cbSkipMove": {
       "en": "Skip mouse events in background",
+      "zh": "跳过背景鼠标事件",
       "id": 1543 }
     ,
     "cbSleepInBackground": {
       "en": "Sleep in background",
+      "zh": "在后端Sleep",
       "id": 1721 }
     ,
     "cbSnapToDesktopEdges": {
       "en": "Snap to desktop edges",
+      "zh": "快闪至桌面边缘",
       "id": 2403 }
     ,
     "cbStartFarRestoreEditors": {
       "en": "Far editors/viewers also",
+      "zh": "Far编辑器/视图也",
       "id": 2238 }
     ,
     "cbStartFarRestoreFolders": {
       "en": "Far folders also",
+      "zh": "Far文件夹也",
       "id": 2237 }
     ,
     "cbStatusHorzSep": {
       "en": "Horizontal",
+      "zh": "水平",
       "id": 2422 }
     ,
     "cbStatusSystemColors": {
       "en": "System colors",
+      "zh": "系统颜色",
       "id": 2496 }
     ,
     "cbStatusVertPad": {
       "en": "Use vertical padding",
+      "zh": "使用垂直填充",
       "id": 2615 }
     ,
     "cbStatusVertSep": {
       "en": "Vertical",
+      "zh": "垂直",
       "id": 2421 }
     ,
     "cbSuppressBells": {
       "en": "Suppress bells",
+      "zh": "抑制bell声",
       "id": 2598 }
     ,
     "cbTabLazy": {
       "en": "Lazy tab switch",
+      "zh": "懒人标签开关",
       "id": 1532 }
     ,
     "cbTabRecent": {
       "en": "Recent mode",
+      "zh": "最近模式",
       "id": 1533 }
     ,
     "cbTabSelf": {
       "en": "Internal CtrlTab",
+      "zh": "内部CtrlTab",
       "id": 1531 }
     ,
     "cbTabsInCaption": {
       "en": "Show tabs in caption",
+      "zh": "在标题显示标签页",
       "id": 1735 }
     ,
     "cbTabsLocationBottom": {
       "en": "Tabs on bottom",
+      "zh": "标签在底部",
       "id": 2481 }
     ,
     "cbTaskbarProgress": {
       "en": "Show progress indicator (Win7 and higher)",
+      "zh": "显示进度指示器（win7或更高）",
       "id": 2656 }
     ,
     "cbTaskbarShield": {
       "en": "Show overlay icon (Win7 and higher)",
+      "zh": "显示覆盖图标（win7或更高）",
       "id": 2491 }
     ,
     "cbThumbCacheFolder": {
       "en": "Choose...",
+      "zh": "选择...",
       "id": 1691 }
     ,
     "cbThumbLoadFiles": {
       "en": "Load previews for files",
+      "zh": "文件加载预览",
       "id": 1664 }
     ,
     "cbThumbLoadFolders": {
       "en": "Load previews in subfolders",
+      "zh": "子文件夹中加载预览",
       "id": 1663 }
     ,
     "cbThumbPreviewBox": {
       "en": "Preview frame",
+      "zh": "预览框",
       "id": 1667 }
     ,
     "cbThumbRestoreOnStartup": {
       "en": "Restore on Far startup",
+      "zh": "恢复Far启动",
       "id": 1720 }
     ,
     "cbThumbSelectionBox": {
       "en": "Current item frame",
+      "zh": "当前项目框架",
       "id": 1668 }
     ,
     "cbThumbUsePicView2": {
       "en": "Use PicView2 for previews",
+      "zh": "使用picview2用于预览",
       "id": 1680 }
     ,
     "cbTransparent": {
       "en": "Active window transparency",
+      "zh": "活动窗口透明度",
       "id": 1574 }
     ,
     "cbTransparentSeparate": {
       "en": "Use separate transparency value for inactive window",
+      "zh": "为不活动窗口使用单独的透明度",
       "id": 2381 }
     ,
     "cbTrueColorer": {
       "en": "TrueMod (24bit color) support",
+      "zh": "TrueMod（24位色）的支持",
       "id": 1578 }
     ,
     "cbTryToCenter": {
       "en": "Center console in ConEmu workspace",
+      "zh": "使控制台位于ConEmu工作空间中心",
       "id": 1570 }
     ,
     "cbUnicodeRangesApply": {
       "en": "Apply",
+      "zh": "应用",
       "id": 2838 }
     ,
     "cbUpdateCheck": {
       "en": "Apply && Check",
+      "zh": "应用 && 检查",
       "id": 2877 }
     ,
     "cbUpdateCheckHourly": {
       "en": "Hourly",
+      "zh": "每小时",
       "id": 2067 }
     ,
     "cbUpdateCheckOnStartup": {
       "en": "Startup",
+      "zh": "启动时",
       "id": 2058 }
     ,
     "cbUpdateConfirmDownload": {
       "en": "TSA notification only",
+      "zh": "仅在任务栏状态区域通知",
       "id": 2068 }
     ,
     "cbUpdateInetTool": {
       "en": "External downloader",
+      "zh": "外部下载器",
       "id": 2856 }
     ,
     "cbUpdateLeavePackages": {
       "en": "Leave downloaded packages",
+      "zh": "保留下载的软件包",
       "id": 2065 }
     ,
     "cbUpdateUseProxy": {
       "en": "Proxy",
+      "zh": "代理",
       "id": 2059 }
     ,
     "cbUseClink": {
       "en": "Use Clink in prompt",
+      "zh": "命令行提示符里使用Clink",
       "id": 2418 }
     ,
     "cbUseCurrentSizePos": {
       "en": "Show && store current window size and position",
+      "zh": "显示 && 储存当前窗口的大小和位置",
       "id": 2417 }
     ,
     "cbUseInjects": {
       "en": "Inject ConEmuHk",
+      "zh": "注入ConEmuHk",
       "id": 1752 }
     ,
     "cbUseKeyboardHooksFast": {
       "en": "Install keyboard hooks (required for Win+Number, Win+Tab, PrntScrn and so on)",
+      "zh": "安装键盘hooks (被Win+Number, Win+Tab, PrntScrn等等所需要)",
       "id": 2086 }
     ,
     "cbUserScreenTransparent": {
       "en": "‘User screen’ transparency (Far Manager feature)",
+      "zh": "‘用户屏幕’ 透明度 (Far Manager的特征)",
       "id": 1573 }
     ,
     "cbUseWinArrows": {
       "en": "Win+Arrows - resize window",
+      "zh": "Win+箭头-调整窗口大小",
       "id": 1768 }
     ,
     "cbUseWinNumber": {
       "en": "Win+Numbers - activate console",
+      "zh": "Win+数字 - 激活控制台（console）",
       "id": 1648 }
     ,
     "cbUseWinTab": {
       "en": "Win+Tab - switch consoles (Tabs)",
+      "zh": "Win+Tab - 切换控制台consoles (标签页)",
       "id": 1764 }
     ,
     "cbVisible": {
       "en": "Show real console",
+      "zh": "显示真实控制台",
       "id": 1545 }
     ,
     "gbActivityLog": {
       "en": "Shell activity",
+      "zh": "Shell活动",
       "id": 1744 }
     ,
     "gbAddToPath": {
@@ -2834,231 +3637,288 @@
     ,
     "gbAlphaTransparency": {
       "en": "Alpha transparency",
+      "zh": "Alpha透明度",
       "id": 2936 }
     ,
     "gbAntiAliasing": {
       "en": "Anti-aliasing",
+      "zh": "防走样",
       "id": 2677 }
     ,
     "gbAppDistinct": {
       "en": "Application distinct settings",
+      "zh": "应用不同的设置",
       "id": 2317 }
     ,
     "gbCmdAutoAttach": {
       "en": "Automatic attach of cmd && Tcc/Le to ConEmu (new window will be started if not found)",
+      "zh": "自动附加cmd && Tcc/Le到ConEmu (如果不存在ConEmu，会启动新的ConEmu窗口)",
       "id": 2955 }
     ,
     "gbCmdTasks": {
       "en": "&Predefined tasks (command groups)",
+      "zh": "预定义的任务（命令组）(&P)",
       "id": 2115 }
     ,
     "gbCmdTasks7": {
       "en": "Windows 7 taskbar (Jump list)",
+      "zh": "Windows 7任务栏（跳转列表）",
       "id": 2134 }
     ,
     "gbColorEnhancement": {
       "en": "Graphic enhancement",
+      "zh": "图形增强",
       "id": 2928 }
     ,
     "gbComspec": {
       "en": "Used command processor",
+      "zh": "使用的命令处理器",
       "id": 2155 }
     ,
     "gbComspecBits": {
       "en": "Choose preferred command processor platform (bits)",
+      "zh": "选择首选的命令处理器平台(bits)",
       "id": 2156 }
     ,
     "gbConfirmActions": {
       "en": "Confirm actions",
+      "zh": "确认动作",
       "id": 2686 }
     ,
     "gbConfirmClose": {
       "en": "Close confirmations",
+      "zh": "关闭确认",
       "id": 2756 }
     ,
     "gbConfirmCloseFar": {
       "en": "Far Manager",
+      "zh": "Far Manager",
       "id": 2759 }
     ,
     "gbConfirmMisc": {
       "en": "Miscellaneous",
+      "zh": "其他",
       "id": 2687 }
     ,
     "gbConsoleBuffer": {
       "en": "Console buffer height",
+      "zh": "Console缓存高度",
       "id": 2894 }
     ,
     "gbCopyingOverride": {
       "en": "Copying text override",
+      "zh": "覆盖复制文本",
       "id": 2348 }
     ,
     "gbCtrlIntercept": {
       "en": "Intercept keys",
+      "zh": "拦截按键",
       "id": 3017 }
     ,
     "gbCtrlMisc": {
       "en": "Miscellaneous",
+      "zh": "其他",
       "id": 3019 }
     ,
     "gbCtrlMouse": {
       "en": "Mouse options",
+      "zh": "鼠标选项",
       "id": 3016 }
     ,
     "gbCtrlMouseBtns": {
       "en": "Mouse button actions",
+      "zh": "鼠标按钮行为",
       "id": 3021 }
     ,
     "gbCtrlPrompt": {
       "en": "Read line enhancements (command prompt, ReadConsoleW)",
+      "zh": "读行功能增强(command prompt, ReadConsoleW)",
       "id": 3020 }
     ,
     "gbCtrlSeizeKeys": {
       "en": "Seize keys / Send to console",
+      "zh": "抓取按键 / 发送至控制台",
       "id": 3018 }
     ,
     "gbCursorActive": {
       "en": "Active console Text Cursor",
+      "zh": "活动控制台的文本光标r",
       "id": 2913 }
     ,
     "gbDefaultTermConfClose": {
       "en": "Confirm close (Press Enter or Esc to close console)",
+      "zh": "确认关闭（按下回车键或ESC键关闭控制台）",
       "id": 2660 }
     ,
     "gbDefTerm": {
       "en": "WARNING!!! Enabling this option may cause false alarms in antiviral programs!!!",
+      "zh": "警告！！！ 启用此选项会倒置杀毒软件假的警报！！！",
       "id": 2926 }
     ,
     "gbExtendColors": {
       "en": "Extended foreground colors (same format as Standard colors)",
+      "zh": "扩展前端颜色 (同标准颜色的格式)",
       "id": 2927 }
     ,
     "gbFarDragDrop": {
       "en": "Shell style Drag and Drop (Far Manager only)",
+      "zh": "Shell风格的拖放 (仅Far Manager)",
       "id": 2957 }
     ,
     "gbFarMacros": {
       "en": "Far Manager macros",
+      "zh": "Far Manager的宏",
       "id": 2965 }
     ,
     "gbFarOptions": {
       "en": "Far Manager options",
+      "zh": "Far Manager选项",
       "id": 2958 }
     ,
     "gbFarPanelViews": {
       "en": "Far Panel Views",
+      "zh": "Far面板视图",
       "id": 2992 }
     ,
     "gbFarPreviewBg": {
       "en": "Preview background",
+      "zh": "预览背景",
       "id": 3005 }
     ,
     "gbFarTabTemplates": {
       "en": "Tab templates",
+      "zh": "标签页（Tab）模版",
       "id": 2959 }
     ,
     "gbFarThumbnails": {
       "en": "Thumbnails mode",
+      "zh": "缩略图模式",
       "id": 2993 }
     ,
     "gbFarTiles": {
       "en": "Tiles mode",
+      "zh": "Tiles模式",
       "id": 2994 }
     ,
     "gbFeatureAppear": {
       "en": "Appearance",
+      "zh": "外观",
       "id": 2164 }
     ,
     "gbFeatureCaption": {
       "en": "Title bar (Caption) and border options",
+      "zh": "标题栏（标题）和边框选项",
       "id": 2165 }
     ,
     "gbFeatureClipboard": {
       "en": "Pasting text behavior (with exception of Far Manager)",
+      "zh": "粘贴文本行为（Far Manager除外）",
       "id": 2166 }
     ,
     "gbFeatureDebug": {
       "en": "Debugging options",
+      "zh": "调试选项",
       "id": 2747 }
     ,
     "gbFeatureInConsole": {
       "en": "In-console options",
+      "zh": "控制台内部选项",
       "id": 2746 }
     ,
     "gbFeatureMisc": {
       "en": "Miscellaneous options",
+      "zh": "杂项选项",
       "id": 2163 }
     ,
     "gbFeatureRetard": {
       "en": "CPU consuming",
+      "zh": "CPU消耗",
       "id": 2748 }
     ,
     "gbFindText": {
       "en": "&Find options",
+      "zh": "查找选项(&F)",
       "id": 2229 }
     ,
     "gbHighlightRowCol": {
       "en": "Highlight rows/columns",
+      "zh": "高亮行/列",
       "id": 2973 }
     ,
     "gbHotkeys": {
       "en": "Hotkeys, modifiers, macros",
+      "zh": "热键，修改器，宏",
       "id": 3014 }
     ,
     "gbHyperlinks": {
       "en": "Hyperlinks and compiler errors (goto editor)",
+      "zh": "超链接和编译错误（转到编辑器）",
       "id": 2972 }
     ,
     "gbInfoCmdLine": {
       "en": "Current command line",
+      "zh": "当前命令行",
       "id": 2944 }
     ,
     "gbInfoProcesses": {
       "en": "Processes",
+      "zh": "进程",
       "id": 2942 }
     ,
     "gbInfoSizes": {
       "en": "Sizes",
+      "zh": "大小",
       "id": 2943 }
     ,
     "gbIntgrHere": {
       "en": "ConEmu Here - Explorer context menu integration",
+      "zh": "这里打开ConEmu - Explorer右键菜单集成",
       "id": 2915 }
     ,
     "gbIntgrInside": {
       "en": "ConEmu Inside - Explorer context menu integration",
+      "zh": "里面打开ConEmu - Explorer右键菜单集成",
       "id": 2916 }
     ,
     "gbMainConFont": {
       "en": "Main console font",
       "ru": "Основной шрифт консоли",
+      "zh": "控制台主要字体",
       "id": 2678 }
     ,
     "gbMinimizeAction": {
       "en": "Minimize ConEmu automatically",
+      "zh": "自动最小化ConEmu",
       "id": 2911 }
     ,
     "gbMinimizeOnEsc": {
       "en": "Minimize when Esc pressed",
+      "zh": "按下Esc时最小化",
       "id": 2912 }
     ,
     "gbNtvdm": {
       "en": "DOS applications (ntvdm)",
+      "zh": "DOS应用程序(ntvdm)",
       "id": 2895 }
     ,
     "gbPastingOverride": {
       "en": "Pasting text override (with exception of Far Manager)",
+      "zh": "覆盖粘贴文本(Far Manager除外)",
       "id": 2349 }
     ,
     "gbPerformance": {
       "en": "Performance counters",
+      "zh": "性能计数器",
       "id": 1400 }
     ,
     "gbPromptOverride": {
       "en": "Prompt override",
+      "zh": "覆盖Prompt",
       "id": 2347 }
     ,
     "gbQuakeAnimation": {
       "en": "Animation time",
+      "zh": "动画时间",
       "id": 2690 }
     ,
     "gbQuakeStyle": {
@@ -3067,6 +3927,7 @@
     ,
     "gbRecreateSplit": {
       "en": "New console split",
+      "zh": "新建console分屏",
       "id": 2440 }
     ,
     "gbSelectColorIdx": {
@@ -3075,239 +3936,298 @@
     ,
     "gbSelectingOverride": {
       "en": "Starting selection with arrows",
+      "zh": "使用箭头键开始选择",
       "id": 2558 }
     ,
     "gbSelectKeyboard": {
       "en": "Select text with keyboard (Also there are two hotkeys on Keys&Macro page)",
+      "zh": "使用键盘选择文本（Keys&Macro页面也有两个热键）",
       "id": 2980 }
     ,
     "gbSelectMouse": {
       "en": "Select text with mouse (LeftClick+Drag)",
+      "zh": "使用鼠标选择文本（LeftClick+Drag）",
       "id": 2979 }
     ,
     "gbSetAlias": {
       "en": "Set up environment variables, cmd.exe aliases, codepage",
+      "zh": "设置环境变量，cmd.exe的别名，代码页",
       "id": 2850 }
     ,
     "gbShowGeneric": {
       "en": "Generic",
+      "zh": "通用",
       "id": 2900 }
     ,
     "gbShowScrollBar": {
       "en": "Scrollbar",
+      "zh": "滚动条",
       "id": 2901 }
     ,
     "gbStandardColors": {
       "en": "Standard colors:",
+      "zh": "标准颜色：",
       "id": 1544 }
     ,
     "gbStartGroupCommands": {
       "en": "Selected task contents (view only, change on Tasks page)",
+      "zh": "选定的任务内容（只查看，可在任务页面更改）",
       "id": 2754 }
     ,
     "gbStartupOptions": {
       "en": "Startup options (may be overriden with \"/cmd\" or \"/cmdlist\" argument of ConEmu.exe)",
+      "zh": "启动选项 (可能在下面情况下被覆盖： \"/cmd\" 或 \"/cmdlist\" ConEmu.exe的参数)",
       "id": 2868 }
     ,
     "gbStaticTransparency": {
       "en": "Static transparency",
+      "zh": "静态透明",
       "id": 2939 }
     ,
     "gbStatusFontColor": {
       "en": "Font and color",
+      "zh": "字体和颜色",
       "id": 2986 }
     ,
     "gbTabs": {
       "en": "Tabs (consoles, Far Manager panels/editors/viewers)",
+      "zh": "标签页（控制台，Far Manager面板/编辑器/视图)",
       "id": 2981 }
     ,
     "gbTaskBarButton": {
       "en": "Taskbar buttons",
+      "zh": "任务栏按钮",
       "id": 2909 }
     ,
     "gbTaskBarNotify": {
       "en": "Taskbar status area (TSA)",
+      "zh": "任务栏状态区域(TSA)",
       "id": 2908 }
     ,
     "gbTextSelection": {
       "en": "Text selection",
+      "zh": "文本选择",
       "id": 2975 }
     ,
     "gbUpdate": {
       "en": "Update settings",
+      "zh": "更新设置",
       "id": 2864 }
     ,
     "gbVConAlignment": {
       "en": "Alignment",
+      "zh": "对齐",
       "id": 2897 }
     ,
     "gbVConFont": {
       "en": "Font",
+      "zh": "字体",
       "id": 2951 }
     ,
     "gbWindowPos": {
       "en": "Window position (pixels)",
+      "zh": "窗口位置(像素)",
       "id": 2890 }
     ,
     "gbWindowSize": {
       "en": "Window size (cells, pixels or percents)",
+      "zh": "窗口大小(单元格，像素或百分比)",
       "id": 2893 }
     ,
     "gbWindowSizePos": {
       "en": "Console size and Window position",
+      "zh": "Console大小和窗口位置",
       "id": 2889 }
     ,
     "gbWndCloseAction": {
       "en": "Action on closing last console (tab) and 'cross clicking'",
+      "zh": "关闭最后一个console（tab）和“点击叉号”时的动作",
       "id": 2910 }
     ,
     "ID_ATTACH": {
       "en": "Attach",
+      "zh": "附加",
       "id": 21 }
     ,
     "IDC_ATTACH_ALT": {
       "en": "&Alternative mode",
+      "zh": "可选(&A)模式",
       "id": 2405 }
     ,
     "IDC_CONSOLE_STATES": {
       "en": "Console states",
+      "zh": "Console 状态",
       "id": 1560 }
     ,
     "IDC_NEWCONSOLE": {
       "en": "&New",
+      "zh": "新建(&N)",
       "id": 1775 }
     ,
     "IDC_REFRESH": {
       "en": "&Refresh",
+      "zh": "刷新(&R)",
       "id": 1776 }
     ,
     "IDC_RESTART_MSG": {
       "en": "About to restart console",
+      "zh": "将要重启控制台",
       "id": 1529 }
     ,
     "IDC_START": {
       "en": "Re&start",
+      "zh": "重启(&s)",
       "id": 1524 }
     ,
     "IDC_TERMINATE": {
       "en": "&Terminate",
+      "zh": "终止(&T)",
       "id": 1525 }
     ,
     "IDC_WARNING": {
       "en": "Warning, unsaved work may be lost!",
+      "zh": "警告，为保存的工作会丢失！",
       "id": 1530 }
     ,
     "IDCANCEL": {
       "en": "Cancel",
       "ru": "Отмена",
+      "zh": "取消",
       "id": 2 }
     ,
     "IDOK": {
       "en": "OK",
+      "en": "确定",
       "id": 1 }
     ,
     "rbActivityAnsi": {
       "en": "Ansi",
+      "zh": "Ansi",
       "id": 2583 }
     ,
     "rbActivityCmd": {
       "en": "Cmd",
+      "zh": "Cmd",
       "id": 2069 }
     ,
     "rbActivityDebug": {
       "en": "Debug",
+      "zh": "调试",
       "id": 2446 }
     ,
     "rbActivityDisabled": {
       "en": "&Disabled",
+      "zh": "禁用(&D)",
       "id": 1747 }
     ,
     "rbActivityInput": {
       "en": "&Input",
+      "zh": "输入(&I)",
       "id": 1762 }
     ,
     "rbActivityShell": {
       "en": "Sh&ell",
+      "zh": "Sh&ell",
       "id": 1748 }
     ,
     "rbAnotherUser": {
       "en": "&Another user",
+      "zh": "另一个(&A)用户",
       "id": 1657 }
     ,
     "rbAppDistinctElevatedIgnore": {
       "en": "Elevation don't matter",
+      "zh": "是否提升的无关紧要",
       "id": 2143 }
     ,
     "rbAppDistinctElevatedOff": {
       "en": "Non elevated",
+      "zh": "非提升的",
       "id": 2142 }
     ,
     "rbAppDistinctElevatedOn": {
       "en": "Elevated",
+      "zh": "提升的",
       "id": 2141 }
     ,
     "rbAutoUpdateDeveloperFast": {
       "en": "‘Developer’ builds",
+      "zh": "‘开发者’ builds",
       "id": 2591 }
     ,
     "rbAutoUpdatePreviewFast": {
       "en": "‘Preview’",
+      "zh": "‘预览’",
       "id": 2590 }
     ,
     "rbAutoUpdateStableFast": {
       "en": "‘Stable’",
+      "zh": "‘稳定’",
       "id": 2589 }
     ,
     "rbBgReplaceIndexes": {
       "en": "Replace color indexes",
+      "zh": "替换颜色索引",
       "id": 2426 }
     ,
     "rbBgReplaceTransparent": {
       "en": "Transparent",
+      "zh": "透明度",
       "id": 2425 }
     ,
     "rbColorBgrHex": {
       "en": "0xBBGGRR (hex)",
+      "zh": "0xBBGGRR (hex)",
       "id": 2722 }
     ,
     "rbColorRgbDec": {
       "en": "RRR GGG BBB (dec)",
+      "zh": "RRR GGG BBB (dec)",
       "id": 2720 }
     ,
     "rbColorRgbHex": {
       "en": "#RRGGBB (hex)",
+      "zh": "#RRGGBB (hex)",
       "id": 2721 }
     ,
     "rbComspec_AppBit": {
       "en": "Same as running application",
+      "zh": "与正在运行的程序相同",
       "id": 2158 }
     ,
     "rbComspec_OSbit": {
       "en": "Same as OS",
+      "zh": "与操作系统相同",
       "id": 2157 }
     ,
     "rbComspec_x32": {
       "en": "x32 always",
+      "zh": "总是x32",
       "id": 2159 }
     ,
     "rbComspecAuto": {
       "en": "Auto (tcc - if installed, %ComSpec% - otherwise)",
+      "zh": "自动 (tcc - 如果已安装, %ComSpec% - 否则)",
       "id": 2148 }
     ,
     "rbComspecCmd": {
       "en": "cmd",
+      "zh": "cmd",
       "id": 2150 }
     ,
     "rbComspecEnvVar": {
       "en": "%ComSpec% (env.var.)",
+      "zh": "%ComSpec% (env.var.)",
       "id": 2149 }
     ,
     "rbComspecExplicit": {
       "en": "Explicit executable (env.var. of ConEmu.exe allowed)",
+      "zh": "显式可执行文件(允许使用ConEmu.exe的env.var.)",
       "id": 2151 }
     ,
     "rbCTSActBufferOnly": {
       "en": "Buffer only (e.g. cmd.exe)",
+      "zh": "仅缓存 (比如 cmd.exe)",
       "id": 1738 }
     ,
     "rbCurrentUser": {
@@ -3316,258 +4236,322 @@
     ,
     "rbDefaultTerminalConfAlways": {
       "en": "Always",
+      "zh": "总是",
       "id": 2520 }
     ,
     "rbDefaultTerminalConfAuto": {
       "en": "Automatic",
+      "zh": "自动",
       "id": 2519 }
     ,
     "rbDefaultTerminalConfNever": {
       "en": "Never",
+      "zh": "从不",
       "id": 2521 }
     ,
     "rbHotkeysAll": {
       "en": "&All hotkeys",
+      "zh": "所有热键(&A)",
       "id": 2447 }
     ,
     "rbHotkeysMacros": {
       "en": "&Macros",
+      "zh": "宏(&M)",
       "id": 2450 }
     ,
     "rbHotkeysSystem": {
       "en": "&System",
+      "zh": "系统(&S)",
       "id": 2449 }
     ,
     "rbHotkeysUser": {
       "en": "&User defined",
+      "zh": "用户定义的(&U)",
       "id": 2448 }
     ,
     "rbMinByEscAlways": {
       "en": "Always",
+      "zh": "总是",
       "id": 2559 }
     ,
     "rbMinByEscEmpty": {
       "en": "If all consoles closed",
+      "zh": "如果所有控制台已关闭",
       "id": 2560 }
     ,
     "rbMinByEscNever": {
       "en": "Never",
+      "zh": "从不",
       "id": 2561 }
     ,
     "rbPriorityAbove": {
       "en": "&Above normal",
+      "zh": "高于(&A)正常",
       "id": 2765 }
     ,
     "rbPriorityBelow": {
       "en": "&Below normal",
+      "zh": "低于(&B)正常",
       "id": 2767 }
     ,
     "rbPriorityHigh": {
       "en": "&High",
+      "zh": "高(&H)",
       "id": 2764 }
     ,
     "rbPriorityIdle": {
       "en": "&Idle",
+      "zh": "闲置(&I)",
       "id": 2768 }
     ,
     "rbPriorityNormal": {
       "en": "&Normal",
+      "zh": "正常(&N)",
       "id": 2766 }
     ,
     "rbPriorityRealtime": {
       "en": "&Realtime",
+      "zh": "实时(&R)",
       "id": 2763 }
     ,
     "rbRecreateSplit2Bottom": {
       "en": "To &bottom",
+      "zh": "到底部(&b)",
       "id": 2443 }
     ,
     "rbRecreateSplit2Right": {
       "en": "To ri&ght",
+      "zh": "到右边(&g)",
       "id": 2442 }
     ,
     "rbRecreateSplitNone": {
       "en": "&Layered",
+      "zh": "分层的(&L)",
       "id": 2441 }
     ,
     "rbScrollbarAuto": {
       "en": "Auto",
+      "zh": "自动",
       "id": 2489 }
     ,
     "rbScrollbarHide": {
       "en": "Hide",
+      "zh": "隐藏",
       "id": 2487 }
     ,
     "rbScrollbarShow": {
       "en": "Show",
+      "zh": "显示",
       "id": 2488 }
     ,
     "rbStartLastTabs": {
       "en": "Auto save/restore opened tabs",
+      "zh": "自动保存/恢复打开的标签页（tab）",
       "id": 2236 }
     ,
     "rbStartNamedTask": {
       "en": "Specified named task",
+      "zh": "指定命名任务",
       "id": 2235 }
     ,
     "rbStartSingleApp": {
       "en": "Command line",
+      "zh": "命令行",
       "id": 2233 }
     ,
     "rbStartTasksFile": {
       "en": "Tasks file",
+      "zh": "任务文件",
       "id": 2234 }
     ,
     "rbTabsAlways": {
       "en": "Always show",
+      "zh": "总是显示",
       "id": 2476 }
     ,
     "rbTabsAuto": {
       "en": "Auto show",
+      "zh": "自动显示",
       "id": 2477 }
     ,
     "rbTabsNone": {
       "en": "Don't show",
+      "zh": "不要显示",
       "id": 2478 }
     ,
     "rbTaskbarBtnActive": {
       "en": "Active console only (ConEmu window)",
+      "zh": "仅活动控制台 (ConEmu窗口)",
       "id": 2472 }
     ,
     "rbTaskbarBtnAll": {
       "en": "Show all consoles (all OS)",
+      "zh": "显示所有控制台(所有系统)",
       "id": 2473 }
     ,
     "rbTaskbarBtnHidden": {
       "en": "Don't show ConEmu window on Taskbar",
+      "zh": "不在任务栏上显示ConEmu窗口",
       "id": 2475 }
     ,
     "rbTaskbarBtnWin7": {
       "en": "Show all consoles (Win7 and higher)",
+      "zh": "显示所有控制台(Win7或更高)",
       "id": 2474 }
     ,
     "rbThumbBackColorIdx": {
       "en": "Color index",
+      "zh": "颜色索引",
       "id": 1670 }
     ,
     "rbThumbBackColorRGB": {
       "en": "RGB",
+      "zh": "RGB",
       "id": 1671 }
     ,
     "rbThumbCacheDisabled": {
       "en": "No cache",
+      "zh": "无缓存",
       "id": 1689 }
     ,
     "rbThumbCachePluginFolder": {
       "en": "plugin folder",
+      "zh": "插件文件夹",
       "id": 1687 }
     ,
     "rbThumbCacheSpecifiedFolder": {
       "en": "specified folder",
+      "zh": "指定的文件夹",
       "id": 1690 }
     ,
     "rbThumbCacheUserFolder": {
       "en": "user folder",
+      "zh": "用户文件夹",
       "id": 1688 }
     ,
     "rbThumbPreviewBoxColorIdx": {
       "en": "Color index",
+      "zh": "颜色索引",
       "id": 1673 }
     ,
     "rbThumbPreviewBoxColorRGB": {
       "en": "RGB",
+      "zh": "RGB",
       "id": 1674 }
     ,
     "rbThumbSelectionBoxColorIdx": {
       "en": "Color index",
+      "zh": "Color索引",
       "id": 1676 }
     ,
     "rbThumbSelectionBoxColorRGB": {
       "en": "RGB",
+      "zh": "RGB",
       "id": 1677 }
     ,
     "rbUpdateLatestAvailable": {
       "en": "Latest",
+      "zh": "最新",
       "id": 2056 }
     ,
     "rbUpdatePreview": {
       "en": "Preview",
+      "zh": "预览",
       "id": 2055 }
     ,
     "rbUpdateStableOnly": {
       "en": "Stable",
+      "zh": "稳定",
       "id": 2054 }
     ,
     "rbUpdateUseArc": {
       "en": "7-Zip archieve (ConEmu.7z), WinRar or 7-Zip required",
+      "zh": "7-Zip文档(ConEmu.7z)，需要WinRar或者7-Zip",
       "id": 2071 }
     ,
     "rbUpdateUseExe": {
       "en": "Installer (ConEmuSetup.exe /p:%s)",
+      "zh": "安装程序 (ConEmuSetup.exe /p:%s)",
       "id": 2070 }
     ,
     "rCascade": {
       "en": "Cascade",
+      "zh": "Cascade",
       "id": 2302 }
     ,
     "rCTAA": {
       "en": "&Clear Type",
+      "zh": "&Clear Type",
       "id": 1204 }
     ,
     "rCursorB": {
       "en": "Block",
+      "zh": "块状",
       "id": 2532 }
     ,
     "rCursorH": {
       "en": "&Horizontal (as console)",
+      "zh": "水平(&H) (如同console)",
       "id": 2530 }
     ,
     "rCursorR": {
       "en": "Rectangle",
+      "zh": "矩形",
       "id": 2533 }
     ,
     "rCursorV": {
       "en": "&Vertical (as GUI)",
+      "zh": "垂直(&V) (如同GUI)",
       "id": 2531 }
     ,
     "rFixed": {
       "en": "Fixed",
+      "zh": "固定的",
       "id": 2303 }
     ,
     "rFullScreen": {
       "en": "Full screen",
+      "zh": "全屏",
       "id": 1313 }
     ,
     "rInactiveCursorB": {
       "en": "Block",
+      "zh": "块状",
       "id": 2536 }
     ,
     "rInactiveCursorH": {
       "en": "Horizontal (as console)",
+      "zh": "水平 (作为 console)",
       "id": 2534 }
     ,
     "rInactiveCursorR": {
       "en": "Rectangle",
+      "zh": "矩形",
       "id": 2537 }
     ,
     "rInactiveCursorV": {
       "en": "Vertical (as GUI)",
+      "zh": "垂直 (作为GUI)",
       "id": 2535 }
     ,
     "rMaximized": {
       "en": "Maximized",
+      "zh": "最大化",
       "id": 1312 }
     ,
     "rNoneAA": {
       "en": "&None",
+      "zh": "无(&N)",
       "id": 1202 }
     ,
     "rNormal": {
       "en": "Normal",
+      "zh": "正常",
       "id": 1311 }
     ,
     "rStandardAA": {
       "en": "&Standard",
+      "zh": "标准的(&S)",
       "id": 1203 }
     ,
     "stAffinityBox": {
@@ -3580,27 +4564,34 @@
     ,
     "stAppDistinctName": {
       "en": "Executables, delimited by \"|\", e.g. \"tcc.exe|cmd.exe\":",
+      "zh": "用\"|\"分割开来的可执行文件，比如 \"tcc.exe|cmd.exe\":",
       "id": 2319 }
     ,
     "stBgImage": {
       "en": "Path:",
+      "zh": "路径：",
       "id": 2671 }
     ,
     "stBgPlacement": {
       "en": "Placement:",
+      "zh": "位置：",
       "id": 2338 }
     ,
     "stClipConfirmLimit": {
       "en": "chars",
+      "zh": "字符",
       "id": 2227 }
     ,
     "stCloseTabMacro": {
       "en": "Close tab (Panel, Editor, Viewer):",
+      "zh": "关闭标签页（面板，编辑器，视图）：",
       "id": 2966 }
     ,
     "stCmdAutoAttach": {
       "en": [ "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\n"
             , "Current command stored in registry ‘AutoRun’ (HKLM value is not processed here):" ],
+      "zh": [ "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\n"
+            , "当前命令储存在注册表‘自动运行’ (此处HKLM的值未被处理):" ],
       "id": 2956 }
     ,
     "stCmdGroupCommands": {
@@ -3609,203 +4600,258 @@
             , "Each command creates tab in ConEmu when group started\n"
             , "Mark active console tab with '>' sign\n"
             , "Start console 'As Administrator' with '*' sign" ],
+      "zh": [ "&Commands (application, arguments, \"-new_console\" params)\n"
+            , "用空行分隔命令\n"
+            , "当开始命令组时，每个命令在ConEmu中创建标签页\n"
+            , "用'>'标记活动的控制台\n"
+            , "用'*'标识“以管理员身份”启动控制台（console）" ],
       "id": 2121 }
     ,
     "stCmdGroupGuiArg": {
       "en": "Task parameters. Example: /dir \"C:\\\" /icon \"cmd.exe\" /single",
+      "zh": "任务参数。例子： /dir \"C:\\\" /icon \"cmd.exe\" /single",
       "id": 2323 }
     ,
     "stCmdGroupKey": {
       "en": "&Hotkey:",
+      "zh": "热键(&H):",
       "id": 3024 }
     ,
     "stCmdOutputCP": {
       "en": "Cmd.exe output codepage:",
+      "zh": "Cmd.exe输出代码页",
       "id": 2954 }
     ,
     "stCmdTaskAdd": {
       "en": "Add:",
+      "zh": "添加：",
       "id": 2884 }
     ,
     "stColorBack": {
       "en": "Back:",
+      "zh": "背部：",
       "id": 2933 }
     ,
     "stColorFadeHigh": {
       "en": "High:",
+      "zh": "高：",
       "id": 2930 }
     ,
     "stColorFadeLow": {
       "en": "Low:",
+      "zh": "低：",
       "id": 2929 }
     ,
     "stColorPopupBack": {
       "en": "Back:",
+      "zh": "背部：",
       "id": 2935 }
     ,
     "stColorPopupText": {
       "en": "Popup:",
+      "zh": "弹出：",
       "id": 2934 }
     ,
     "stColorSchemeFast": {
       "en": "Choose preferred color scheme:",
+      "zh": "选择最喜欢的颜色方案：",
       "id": 2845 }
     ,
     "stColorSchemes": {
       "en": "Schemes:",
+      "zh": "方案:",
       "id": 2931 }
     ,
     "stColorText": {
       "en": "Text:",
+      "zh": "文本：",
       "id": 2932 }
     ,
     "stConEmuAbout": {
       "en": "Console Emulation program (local terminal)",
       "ru": "Эмулятор консоли (локальный терминал)",
+      "zh": "控制台模拟器（Console Emulation）(本地终端)",
       "id": 2250 }
     ,
     "stConEmuVersion": {
       "en": "Version status:",
       "ru": "Версия программы:",
+      "zh": "版本状态：",
       "id": 2683 }
     ,
     "stConsoleSizeChars": {
       "en": "Console (chars):",
+      "zh": "控制台（字符）：",
       "id": 2945 }
     ,
     "stConsoleSizePixels": {
       "en": "(pixels):",
+      "zh": "（像素）：",
       "id": 2946 }
     ,
     "stCopyFormat": {
       "en": "Copying format:",
       "ru": "Формат копирования:",
+      "zh": "复制的格式：",
       "id": 2872 }
     ,
     "stCTSBackColor": {
       "en": "Back:",
+      "zh": "背部：",
       "id": 2978 }
     ,
     "stCTSEOL": {
       "en": "EOL:",
+      "zh": "EOL:",
       "id": 2366 }
     ,
     "stCTSIntelligentExceptions": {
       "en": "Exceptions (\"|\"-separated):",
       "ru": "Исключения (разделитель-\"|\"):",
+      "zh": "例外(\"|\"-分隔符):",
       "id": 2659 }
     ,
     "stCTSMBtnAction": {
       "en": "Middle:",
+      "zh": "中间：",
       "id": 3023 }
     ,
     "stCTSRBtnAction": {
       "en": "Right:",
+      "zh": "右：",
       "id": 3022 }
     ,
     "stCTSTextColor": {
       "en": "Text:",
+      "zh": "文本：",
       "id": 2977 }
     ,
     "stCursorMinSize": {
       "en": "Min size (pix):",
+      "zh": "最小尺寸（像素）：",
       "id": 2371 }
     ,
     "stDarker": {
       "en": "Darkening:",
       "ru": "Затемнение:",
+      "zh": "改变暗度：",
       "id": 2672 }
     ,
     "stDarkerPlugin": {
       "en": "Darkening:",
       "ru": "Затемнение:",
+      "zh": "改变暗度：",
       "id": 2673 }
     ,
     "stDcWndSize": {
       "en": "DC window:",
+      "zh": "DC窗口",
       "id": 2947 }
     ,
     "stDefaultTerminal": {
       "en": [ "List of hooked executables or window class names delimited with ‘|’\r\n"
             , "Example: explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow" ],
+      "zh": [ "以分割符‘|’列出hooked的可执行文件或窗口类的名字\r\n"
+            , "例子： explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow" ],
       "id": 2663 }
     ,
     "stDefaultTerminalSwitchInfo": {
       "en": [ "If you want to start some command in the Windows standard console window from hooked executable when 'Default terminal' is enabled, just use \"-new_console:z\" switch.\r\n"
             , "Example: \"cmd.exe -new_console:z\"" ],
+      "zh": [ "当“默认终端”已启用时，如果你想在Windows标准控制台窗口启动一些来自hooked的可执行文件的命令，只需使用\"-new_console:z\"开关。\r\n"
+            , "例子： \"cmd.exe -new_console:z\"" ],
       "id": 2662 }
     ,
     "stDisableConImeFast1": {
       "en": "Unwanted value of ‘LoadConIme’ registry parameter! This may cause hanging of other console applications! ConEmu may disable ConIme.exe via registry:",
+      "zh": "注册表参数‘LoadConIme’多余的值！这可能会导致其他控制台应用程序挂起！ConEmu可以通过注册表禁用ConIme.exe：",
       "id": 2094 }
     ,
     "stEnableAutoUpdateFast": {
       "en": "You can change following on 'Update' page of Settings dialog later",
+      "zh": "你可以以后在设置对话框'Update'页面改变下面内容",
       "id": 2093 }
     ,
     "stExtendFontBoldIdx": {
       "en": "Bold:",
+      "zh": "粗体：",
       "id": 2241 }
     ,
     "stExtendFontItalicIdx": {
       "en": "Italic:",
+      "zh": "斜体：",
       "id": 2242 }
     ,
     "stExtendFontNormalIdx": {
       "en": "Replace:",
+      "zh": "替换：",
       "id": 2243 }
     ,
     "stExtendFonts": {
       "en": "By the cost of background colors you may change the used font to bold or italic",
+      "zh": "由于背景颜色的原因，你可以改变使用的字体为加粗或斜体",
       "id": 2836 }
     ,
     "stExtendFontsBold": {
       "en": "Bold:",
+      "zh": "粗体：",
       "id": 2886 }
     ,
     "stExtendFontsItalic": {
       "en": "Italic:",
+      "zh": "斜体：",
       "id": 2887 }
     ,
     "stExtendFontsNormal": {
       "en": "Normal:",
+      "zh": "正常：",
       "id": 2888 }
     ,
     "stFarPanelLeft": {
       "en": "Left:",
+      "zh": "左：",
       "id": 2949 }
     ,
     "stFarPanelRight": {
       "en": "Right:",
+      "zh": "右：",
       "id": 2950 }
     ,
     "stFarPID": {
       "en": "Far PID:",
+      "zh": "Far PID:",
       "id": 2940 }
     ,
     "stFarTabTemplates": {
       "en": [ "%s - Title, %c - Console #, %n - Active process name, %p - PID, %a - ‘Admin’, %% - %,\n"
             , "%i - Far window number (you can see it in standard F12 menu)" ],
+      "zh": [ "%s - 标题, %c - 控制台 #, %n - 活动的进程名, %p - PID, %a - ‘Admin’, %% - %,\n"
+            , "%i - Far窗口编号(你能在标准的F12菜单里看见)" ],
       "id": 2960 }
     ,
     "stFontCharset": {
       "en": "Font charset:",
+      "zh": "字体的字符集：",
       "id": 2666 }
     ,
     "stFontSizeX": {
       "en": "Width:",
+      "zh": "宽度：",
       "id": 2668 }
     ,
     "stFontSizeX2": {
       "en": "Width:",
+      "zh": "宽度：",
       "id": 2670 }
     ,
     "stFontSizeX3": {
       "en": "Cell:",
+      "zh": "单元：",
       "id": 2669 }
     ,
     "stFontSizeY": {
       "en": "Size:",
+      "zh": "大小：",
       "id": 2667 }
     ,
     "stFrameAppear": {
@@ -3822,405 +4868,510 @@
     ,
     "stGotoEditorCmd": {
       "en": "External editor, when Far not started:",
+      "zh": "当Far未启动时，外部编辑器：",
       "id": 2256 }
     ,
     "stGotoEditorCmdHelp": {
       "en": [ "Available macros: ‘%1’ - line number, ‘%2’ - column number\n"
             , "‘%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File\n"
             , "Use ‘#’ prefix to run editor outside of ConEmu" ],
+      "zh": [ "可用的宏： ‘%1’ - 行数, ‘%2’ - 列数\n"
+            , "‘%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File\n"
+            , "使用‘#’前缀来运行ConEmu外部的编辑器" ],
       "id": 2681 }
     ,
     "stGuiMacro": {
       "en": "Description:",
+      "zh": "描述：",
       "id": 2189 }
     ,
     "stHotkeys": {
       "en": "Show:",
+      "zh": "显示：",
       "id": 3015 }
     ,
     "stHotKeySelect": {
       "en": "Choose hotkey:",
+      "zh": "选择热键：",
       "id": 1769 }
     ,
     "stInactiveCursorMinSize": {
       "en": "Min size (pix):",
+      "zh": "最小尺寸（像素）：",
       "id": 2542 }
     ,
     "stInjectConEmuHkFast": {
       "en": "You can change following on 'Features' page of Settings dialog later",
+      "zh": "你可以以后在设置对话框'Features'页面改变下面内容",
       "id": 2744 }
     ,
     "stIntgrHereCfg": {
       "en": "Configuration:",
+      "zh": "配置：",
       "id": 2918 }
     ,
     "stIntgrHereCmd": {
       "en": "Command:",
+      "zh": "命令：",
       "id": 2919 }
     ,
     "stIntgrHereIcon": {
       "en": "Icon file:",
+      "zh": "图标文件：",
       "id": 2920 }
     ,
     "stIntgrHereItem": {
       "en": "Menu item:",
+      "zh": "菜单项：",
       "id": 2917 }
     ,
     "stIntgrInsideCfg": {
       "en": "Configuration:",
+      "zh": "配置：",
       "id": 2923 }
     ,
     "stIntgrInsideCmd": {
       "en": "Command:",
+      "zh": "命令：",
       "id": 2924 }
     ,
     "stIntgrInsideIcon": {
       "en": "Icon file:",
+      "zh": "图标文件：",
       "id": 2925 }
     ,
     "stIntgrInsideItem": {
       "en": "Menu item:",
+      "zh": "菜单项：",
       "id": 2922 }
     ,
     "stIntgrInsideNote": {
       "en": "Use this if you want ConEmu act as a page of Windows Explorer window",
+      "zh": "使用此功能 - 如果你希望ConEmu作为Windows Explorer窗口的一个页面",
       "id": 2921 }
     ,
     "stKeySelect": {
       "en": "Key:",
+      "zh": "键：",
       "id": 2885 }
     ,
     "stKeySelectMod": {
       "en": "Modifiers:",
+      "zh": "修改器：",
       "id": 3025 }
     ,
     "stMoreConfont1": {
       "en": "WARNING!!!",
+      "zh": "警告！！！",
       "id": 3006 }
     ,
     "stMoreConfont2": {
       "en": "Change these settings very carefully!!!",
+      "zh": "改变这些设置时请非常小心！！！",
       "id": 3007 }
     ,
     "stMoreConfont3": {
       "en": "Font must be Unicode and must be smaller than main font!!!",
+      "zh": "字体必须是Unicode的并且必须小于主字体！！！",
       "id": 3008 }
     ,
     "stMoreConfont4": {
       "en": "For example: True Type font ‘Lucida Console’ 5x3",
+      "zh": "例如： True Type 字体 ‘Lucida Console’ 5x3",
       "id": 3009 }
     ,
     "stMoreConfont5": {
       "en": "Font must be declared in: HKLM\\Software\\Microsoft\\",
+      "zh": "字体必须在HKLM\\Software\\Microsoft\\里声明",
       "id": 3010 }
     ,
     "stMoreConfont6": {
       "en": "\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
+      "zh": "\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
       "id": 3011 }
     ,
     "stNewTabName": {
       "en": "&New tab name (clear to revert):",
+      "zh": "新建(&N)标签页名称 (清除并恢复):",
       "id": 2336 }
     ,
     "stNtvdmHeight": {
       "en": "16bit height:",
+      "zh": "16bit高度：",
       "id": 2896 }
     ,
     "stOpaqueActive": {
       "en": "Opaque",
+      "zh": "不透明",
       "id": 2938 }
     ,
     "stOpaqueInactive": {
       "en": "Opaque",
+      "zh": "不透明",
       "id": 2383 }
     ,
     "stPalettePreviewFast": {
       "en": [ "\n"
             , "colors\n"
             , "preview" ],
+      "zh": [ "\n"
+            , "颜色\n"
+            , "预览" ],
       "id": 2849 }
     ,
     "stPriorityBox": {
       "en": "Priority",
+      "zh": "优先权",
       "id": 2762 }
     ,
     "stQuakeAnimation": {
       "en": "ms:",
+      "zh": "毫秒：",
       "id": 2565 }
     ,
     "stRConCursorInfo": {
       "en": "Cursor (x,y,h):",
+      "zh": "光标(x,y,h):",
       "id": 2948 }
     ,
     "stRConStates": {
       "en": "States:",
+      "zh": "状态：",
       "id": 2941 }
     ,
     "stRunAsPassword": {
       "en": "&Password:",
+      "zh": "密码(&P):",
       "id": 2970 }
     ,
     "stRunAsUser": {
       "en": "User &name:",
+      "zh": "用户名(&n):",
       "id": 2969 }
     ,
     "stSaveAllMacro": {
       "en": "Save all editors:",
+      "zh": "保存所有编辑器：",
       "id": 2967 }
     ,
     "stScrollAppear": {
       "en": "Appear delay:",
+      "zh": "出现延迟：",
       "id": 2902 }
     ,
     "stScrollDisappear": {
       "en": "Disappear:",
+      "zh": "消失：",
       "id": 2903 }
     ,
     "stSetCommands": {
       "en": [ "Here you may set up your environment variables, default code page, and so on...\r\n"
             , "One line may have only one command! You may comment lines with # sign." ],
+      "zh": [ "你可以在这里设置你的环境变量，默认代码页，等等...\r\n"
+            , "一行只能有一个命令！你可以以#标识开始注释行。" ],
       "id": 2852 }
     ,
     "stSingleInstance": {
       "en": "You can change following on 'Appearance' page of Settings dialog later",
+      "zh": "你可以以后在设置对话框'Appearance'页面改变下面内容",
       "id": 2742 }
     ,
     "stStartCreateDelay": {
       "en": "Delay between consoles initialization (ms):",
+      "zh": "控制台（console）初始化之间的延迟 (ms):",
       "id": 2870 }
     ,
     "stStartupDir": {
       "en": "Startup &directory for new process:",
+      "zh": "新进程的启动目录(&d)",
       "id": 2968 }
     ,
     "stStartupShellFast": {
       "en": "Choose your startup task or even a shell with arguments:",
+      "zh": "选择你的启动任务或者带参数的shell:",
       "id": 2843 }
     ,
     "stStatusAvailCol": {
       "en": "Available columns:",
+      "zh": "可用的列：",
       "id": 2990 }
     ,
     "stStatusColorBack": {
       "en": "Back:",
+      "zh": "背景：",
       "id": 2497 }
     ,
     "stStatusColorDark": {
       "en": "Dark:",
+      "zh": "暗度：",
       "id": 2499 }
     ,
     "stStatusColorLight": {
       "en": "Light:",
+      "zh": "亮度：",
       "id": 2498 }
     ,
     "stStatusFontCharset": {
       "en": "Charset:",
+      "zh": "字符集：",
       "id": 2988 }
     ,
     "stStatusFontFace": {
       "en": "Name:",
+      "zh": "名称：",
       "id": 2987 }
     ,
     "stStatusLines": {
       "en": "Lines:",
+      "zh": "行：",
       "id": 2989 }
     ,
     "stStatusSelCol": {
       "en": "Selected columns:",
+      "zh": "选中的列：",
       "id": 2991 }
     ,
     "stStorage": {
       "en": "Storage:",
       "ru": "Настройки:",
+      "zh": "储存处：",
       "id": 2573 }
     ,
     "stStorageLocation": {
       "en": "Choose ConEmu settings storage location (You may turn on/off portable mode here)",
+      "zh": "选择ConEmu设置储存位置(你可以在这里打开/关闭便携模式)",
       "id": 2741 }
     ,
     "stTabBarDblClickAction": {
       "en": "Tab bar:",
+      "zh": "标签栏：",
       "id": 2733 }
     ,
     "stTabBtnDblClickAction": {
       "en": "Tab button (labels):",
+      "zh": "标签页按钮（标签）：",
       "id": 2732 }
     ,
     "stTabConsole": {
       "en": "Console:",
+      "zh": "控制台：",
       "id": 2735 }
     ,
     "stTabDblClkActions": {
       "en": "Tab double click actions",
+      "zh": "标签页（Tab）双击行为",
       "id": 2734 }
     ,
     "stTabEditor": {
       "en": "Editor:",
+      "zh": "编辑器：",
       "id": 2962 }
     ,
     "stTabEditorMod": {
       "en": "Modified:",
+      "zh": "修改：",
       "id": 2964 }
     ,
     "stTabFlashCounter": {
       "en": "Invisible tab activity flash count:",
+      "zh": "隐形标签页的活动的闪光计数：",
       "id": 2983 }
     ,
     "stTabFontCharset": {
       "en": "Charset:",
+      "zh": "字符集：",
       "id": 2731 }
     ,
     "stTabFontFace": {
       "en": "Tab font:",
+      "zh": "标签页字体：",
       "id": 2730 }
     ,
     "stTabLenMax": {
       "en": "Maximum tab width (in chars):",
+      "zh": "标签页最大宽度（以字符计）：",
       "id": 2985 }
     ,
     "stTabModifiedSuffix": {
       "en": "Modified suffix:",
+      "zh": "修改后的后缀：",
       "id": 2982 }
     ,
     "stTabPanels": {
       "en": "Panels:",
+      "zh": "面板：",
       "id": 2961 }
     ,
     "stTabSkipWords": {
       "en": "Skip words from title:",
+      "zh": "从标题跳过单词：",
       "id": 2984 }
     ,
     "stTabTemplateDescr": {
       "en": [ "%s - Title, %c - Console #, %n - Active process name, %p - PID,\n"
             , "%a - ‘Admin’, %d - current shell directory, %f - folder, %% - %" ],
+      "zh": [ "%s - 标题, %c - Console #, %n - 激活的进程名, %p - PID,\n"
+            , "%a - ‘管理员’, %d - 当前shell目录, %f - 文件夹, %% - %" ],
       "id": 2737 }
     ,
     "stTabTemplateGroup": {
       "en": "Tab templates (Far Manager ones are located on 'Far Manager' page)",
+      "zh": "标签页（Tab）模版 (Far Manager 的放置在 'Far Manager' 页)",
       "id": 2736 }
     ,
     "stTabViewer": {
       "en": "Viewer:",
+      "zh": "视图：",
       "id": 2963 }
     ,
     "stThumbLoadingTimeout": {
       "en": "Loading timeout (sec.):",
+      "zh": "加载超时(秒):",
       "id": 3004 }
     ,
     "stThumbMaxZoom": {
       "en": "Max. zoom:",
+      "zh": "最大缩放：",
       "id": 3003 }
     ,
     "stThumbsFontName": {
       "en": "Label font:",
+      "zh": "标签字体：",
       "id": 2995 }
     ,
     "stThumbsImgSize": {
       "en": "Image size:",
+      "zh": "图像大小：",
       "id": 2996 }
     ,
     "stThumbsPadding": {
       "en": "Horz.pad:",
+      "zh": "水平pad:",
       "id": 2998 }
     ,
     "stThumbsSpacing": {
       "en": "Vert.pad:",
+      "zh": "垂直pad:",
       "id": 2997 }
     ,
     "stTilesFontName": {
       "en": "Label font:",
+      "zh": "标签字体：",
       "id": 2999 }
     ,
     "stTilesImgSize": {
       "en": "Image size:",
+      "zh": "图像大小：",
       "id": 3000 }
     ,
     "stTilesPadding": {
       "en": "Right pad:",
+      "zh": "右pad:",
       "id": 3002 }
     ,
     "stTilesSpacing": {
       "en": "Left pad:",
+      "zh": "左pad:",
       "id": 3001 }
     ,
     "stTransparentActive": {
       "en": "Transparent",
+      "zh": "透明",
       "id": 2937 }
     ,
     "stTransparentInactive": {
       "en": "Transparent",
+      "zh": "透明",
       "id": 2382 }
     ,
     "stUnicodeRanges": {
       "en": "Unicode ranges, the default is \"2013-25C4;\"",
+      "zh": "Unicode范围，默认为 \"2013-25C4;\"",
       "id": 2837 }
     ,
     "stUpdateCheck": {
       "en": "Do automatic check on",
+      "zh": "自动检查更新",
       "id": 2863 }
     ,
     "stUpdateCommand": {
       "en": "Update command (%1 - package, %2 - ConEmu.exe folder, %3 - x86/x64, %4 - PID)",
+      "zh": "更新命令 (%1 - package, %2 - ConEmu.exe文件夹, %3 - x86/x64, %4 - PID)",
       "id": 2859 }
     ,
     "stUpdatePostCommand": {
       "en": "Post-update command, don't forget ‘call’ for batches",
+      "zh": "更新后命令，不要忘记从批处理“调用”",
       "id": 2860 }
     ,
     "stUpdateProxy": {
       "en": "Server:port",
+      "zh": "服务器:端口",
       "id": 2083 }
     ,
     "stUpdateProxyPassword": {
       "en": "Password",
+      "zh": "密码",
       "id": 2085 }
     ,
     "stUpdateProxyUser": {
       "en": "User",
+      "zh": "用户",
       "id": 2084 }
     ,
     "stUpdateReleaseType": {
       "en": "Preferred release type",
+      "zh": "最喜爱的release类型",
       "id": 2862 }
     ,
     "stUpdateVerLocation": {
       "en": "ConEmu latest version location info",
+      "zh": "ConEmu最新版本信息位置",
       "id": 2861 }
     ,
     "stUseKeyboardHooksFast": {
       "en": "You can change following on 'Controls' page of Settings dialog later",
+      "zh": "你可以以后在设置对话框'Controls'页面改变下面内容",
       "id": 2743 }
     ,
     "stVConFontFix": {
       "en": "Fix:",
+      "zh": "修复：",
       "id": 2953 }
     ,
     "stVConFontMain": {
       "en": "Main:",
+      "zh": "主要：",
       "id": 2952 }
     ,
     "stVConPadSize": {
       "en": "Pad size:",
+      "zh": "Pad大小：",
       "id": 2898 }
     ,
     "stVConPadSizePix": {
       "en": "pixels",
+      "zh": "像素",
       "id": 2899 }
     ,
     "stWndHeight": {
       "en": "Height:",
+      "zh": "高度：",
       "id": 2439 }
     ,
     "stWndWidth": {
       "en": "Width:",
+      "zh": "宽度：",
       "id": 2438 }
     ,
     "tConsoleFontConsoleNote": {
       "en": "Console restart may be required",
+      "zh": "可能需要重启Console",
       "id": 1732 }
     ,
     "tConsoleFontHklmNote": {
       "en": "NOTE!!! Computer restart may be required to apply registry changes",
+      "zh": "注意！！！ 应用注册表改动可能需要计算机重启",
       "id": 1731 }
   }
 }
