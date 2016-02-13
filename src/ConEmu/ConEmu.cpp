@@ -2394,9 +2394,14 @@ void CConEmuMain::Destroy(bool abForce)
 	{
 		// Expected only in Inside mode if parent was abnormally terminated
 		_ASSERTE(mp_Inside!=NULL);
-		int iBtn = MsgBox(L"ConEmu's parent window was terminated abnormally.\n"
-			L"Continue to kill ConEmu process?",
-			MB_OKCANCEL|MB_ICONEXCLAMATION, GetDefaultTitle(), NULL, false);
+		int iBtn;
+		// Don't warn if we have nothing to do
+		if (isInsideInvalid() && !isVConExists(0))
+			iBtn = IDOK;
+		else
+			iBtn = MsgBox(L"ConEmu's parent window was terminated abnormally.\n"
+				L"Continue to kill ConEmu process?",
+				MB_OKCANCEL|MB_ICONEXCLAMATION, GetDefaultTitle(), NULL, false);
 		if (iBtn == IDOK)
 		{
 			ExitProcess(1);
