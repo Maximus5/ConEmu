@@ -553,7 +553,8 @@ LPCWSTR CLngRc::getRsrc(UINT id, CEStr* lpText /*= NULL*/)
 wrap:
 	if (lpText)
 		lpText->Set(pszRsrc);
-	return pszRsrc;
+	// Don't return NULL-s ever
+	return (pszRsrc ? pszRsrc : L"");
 }
 
 // static
