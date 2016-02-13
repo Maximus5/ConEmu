@@ -1310,7 +1310,7 @@
     ,
     "tScrollDisappearDelay": {
       "en": "Scrollbar disappear delay when ‘Always show scrollbar’ is off or in 3rd-state",
-      "en": "当“显示滚动条”选项被关闭或第三情况下，滚动条消失",
+      "zh": "当“显示滚动条”选项被关闭或第三情况下，滚动条消失",
       "id": 2355 }
     ,
     "tsTopPID": {
@@ -4141,7 +4141,7 @@
     ,
     "IDOK": {
       "en": "OK",
-      "en": "确定",
+      "zh": "确定",
       "id": 1 }
     ,
     "rbActivityAnsi": {
