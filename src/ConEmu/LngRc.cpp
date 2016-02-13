@@ -208,6 +208,7 @@ bool CLngRc::LoadResouces(LPCWSTR asLanguage, LPCWSTR asFile)
 	m_CmnHints.alloc(4096);
 	m_MnuHints.alloc(512);
 	m_Controls.alloc(4096);
+	m_Strings.alloc(lng_NextId);
 
 	// Process sections
 	for (size_t i = 0; i < countof(sections); i++)
