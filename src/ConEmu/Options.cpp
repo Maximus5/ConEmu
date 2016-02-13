@@ -3836,7 +3836,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"Update.Proxy", UpdSet.szUpdateProxy);
 		reg->Save(L"Update.ProxyUser", UpdSet.szUpdateProxyUser);
 		reg->Save(L"Update.ProxyPassword", UpdSet.szUpdateProxyPassword);
-		//reg->Save(L"Update.DownloadSetup", UpdSet.isUpdateDownloadSetup); // 1-Installer (ConEmuSetup.exe), 2-7z archieve (ConEmu.7z), WinRar or 7z required
+		//reg->Save(L"Update.DownloadSetup", UpdSet.isUpdateDownloadSetup); // 1-Installer (ConEmuSetup.exe), 2-7z archive (ConEmu.7z), WinRar or 7z required
 		reg->Save(L"Update.ExeCmdLine", UpdSet.szUpdateExeCmdLine);
 		reg->Save(L"Update.ArcCmdLine", UpdSet.szUpdateArcCmdLine);
 		reg->Save(L"Update.DownloadPath", UpdSet.szUpdateDownloadPath);

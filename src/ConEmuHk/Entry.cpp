@@ -628,7 +628,7 @@ ShowExeMsgBox gbShowExeMsgBox = smb_None;
 //
 //	Seems like it can be any repository.
 //
-//	Simplifying, the following command can be runned (but "git clone ..." must be runned at least once)
+//	Simplifying, the following command can be run (but "git clone ..." must be run at least once)
 //	  ssh git@github.com "git-upload-pack 'git@github.com:Maximus5/FarPl.git'"
 //
 //	For my test case - possible workaround was setting and waiting for ghDebugSshLibsCan event.
