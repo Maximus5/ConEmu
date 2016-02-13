@@ -1566,7 +1566,9 @@ LRESULT CSettings::OnInitDialog()
 
 	gbLastColorsOk = FALSE;
 
-	EditIconHint_Set(ghOpWnd, GetDlgItem(ghOpWnd, tOptionSearch), true, L"Search (Ctrl+F)", false, UM_SEARCH, bSaveSettings);
+	EditIconHint_Set(ghOpWnd, GetDlgItem(ghOpWnd, tOptionSearch), true,
+		CLngRc::getRsrc(lng_SearchCtrlF/*"Search (Ctrl+F)"*/),
+		false, UM_SEARCH, bSaveSettings);
 	EditIconHint_Subclass(ghOpWnd);
 
 	RECT rcEdt = {}, rcBtn = {};

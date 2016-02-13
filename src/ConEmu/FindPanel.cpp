@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "ConEmu.h"
 #include "FindPanel.h"
+#include "LngRc.h"
 #include "Menu.h"
 #include "Options.h"
 #include "OptionsClass.h"
@@ -43,7 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ATOM CFindPanel::mh_Class = NULL;
 #define FindPanelClass L"ConEmuFindPanel"
-#define SearchHint L"Search"
+#define SearchHint CLngRc::getRsrc(lng_Search/*"Search"*/)
 #define SearchCtrlId 1
 #define SearchCtrlShift 3
 #define SearchCtrlWidthMul 5

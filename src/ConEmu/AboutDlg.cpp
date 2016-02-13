@@ -152,7 +152,9 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			SetDlgItemText(hDlg, stConEmuUrl, gsHomePage);
 
-			EditIconHint_Set(hDlg, GetDlgItem(hDlg, tAboutSearch), true, L"Search", false, UM_SEARCH, IDOK);
+			EditIconHint_Set(hDlg, GetDlgItem(hDlg, tAboutSearch), true,
+				CLngRc::getRsrc(lng_Search/*"Search"*/),
+				false, UM_SEARCH, IDOK);
 			EditIconHint_Subclass(hDlg);
 
 			wchar_t* pszLabel = GetDlgItemTextPtr(hDlg, stConEmuVersion);
