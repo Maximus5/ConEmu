@@ -386,6 +386,15 @@ function ParseLngData($LngData)
   return $hints
 }
 
+# If string comes from ConvertFrom-JSON - it is ‘de-escaped’
+function EscapeJson($str)
+{
+  if ($str -eq $null) {
+    return $null
+  }
+  return $str.Replace("\", "\\").Replace("`t","\t").Replace("`n","\n").Replace("`r","\r")
+}
+
 function AddValue($lng,$value)
 {
   $lines = @()
@@ -416,22 +425,27 @@ function AppendExistingTranslations([string]$section,[string]$name,[string]$en_v
     $jres = $js."$name"
     if ($jres -ne $null) {
       # If English resource was changed - mark other translations as deprecated
-      $depr = ""; $old_en = "";
-      $jlng = $jres."en"
+      $depr_en = ""; $old_en = "";
+      $jlng = EscapeJson $jres."en"
       if ($jlng -ne $null) {
         $old_en = [System.String]::Join("",$jlng).Replace("`r","\r").Replace("`n","\n").Replace("`t","\t").Replace("`"","\`"")
       }
       if ($old_en -ne $en_value) {
-        $depr = "_"
+        $depr_en = "_"
+        Write-Host "Deprecation: $name;`n  old: '$old_en'`n  new: '$en_value'"
       }
 
       # Append existing translations"
       $json.languages | ? { $_.id -ne "en" } | % {
-        $jlng = $jres."$($_.id)"
+        $depr = $depr_en
+        $jlng = EscapeJson $jres."$($_.id)"
         # Perhaps resource was already deprecated?
         if ($jlng -eq $null) {
-          $jlng = $jres."_$($_.id)"
-          $depr = "_"
+          $jlng = EscapeJson $jres."_$($_.id)"
+          if ($jlng -ne $null) {
+            $depr = "_"
+            Write-Host "Already deprecated: $name / _$_.id"
+          }
         }
         # Append translation if found
         if ($jlng -ne $null) {
