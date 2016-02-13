@@ -135,6 +135,7 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"Special Thanks\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"Michael Lukashov: bug- and warning-fixes\r\n" \
+	L"@ulin0208: Chinese translation\r\n" \
 	L"Rick Sladkey: bugfixes\r\n" \
 	L"ForNeVeR: some ConEmuBg improvements\r\n" \
 	L"thecybershadow: bdf support, Documentation\r\n" \
