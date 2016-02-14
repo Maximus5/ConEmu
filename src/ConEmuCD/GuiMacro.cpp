@@ -135,7 +135,11 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 	wchar_t szLog[200];
 	if (gpLogSize) gpLogSize->LogString(szArg);
 
-	// Могли указать PID или HWND требуемого инстанса
+	ZeroStruct(Inst);
+
+	// Caller may specify PID/HWND of desired ConEmu instance,
+	// or some other switches, like Tab or Split index
+	_ASSERTE(!szArg.IsEmpty() && (lstrcmpni(szArg.ms_Val, L"/GuiMacro", 9) == 0));
 	if (szArg[9] == L':' || szArg[9] == L'=')
 	{
 		wchar_t* pszEnd = NULL;
