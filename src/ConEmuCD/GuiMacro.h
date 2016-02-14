@@ -41,19 +41,6 @@ struct MacroInstance
 
 extern bool gbPrefereSilentMode; // = false;
 
-class CGuiMacro
-{
-public:
-	CGuiMacro();
-	~CGuiMacro();
-
-public:
-	// Methods
-
-protected:
-	// Members
-
-};
 
 void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst);
 int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst);

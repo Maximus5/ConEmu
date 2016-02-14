@@ -43,13 +43,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 bool    gbPrefereSilentMode = false;
 
-CGuiMacro::CGuiMacro()
-{
-}
-
-CGuiMacro::~CGuiMacro()
-{
-}
 
 BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
 {
