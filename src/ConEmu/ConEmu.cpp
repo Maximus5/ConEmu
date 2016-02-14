@@ -3335,13 +3335,11 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 
 				if (!pVCon)
 				{
+					LPCWSTR pszFailMsg = L"Can't create new virtual console! {CConEmuMain::CreateConGroup}";
+					LogString(pszFailMsg);
 					if ((mn_StartupFinished == ss_Started) || !isInsideInvalid())
 					{
-						DisplayLastError(L"Can't create new virtual console!", -1);
-					}
-					else
-					{
-						LogString(L"Can't create new virtual console!");
+						DisplayLastError(pszFailMsg, -1);
 					}
 
 					if (!lbOneCreated)
@@ -6849,7 +6847,12 @@ bool CConEmuMain::CreateStartupConsoles()
 
 			if (!CreateCon(&args, TRUE))
 			{
-				DisplayLastError(L"Can't create new virtual console!");
+				LPCWSTR pszFailMsg = L"Can't create new virtual console! {CConEmuMain::CreateStartupConsoles}";
+				LogString(pszFailMsg);
+				if (!isInsideInvalid())
+				{
+					DisplayLastError(pszFailMsg, -1);
+				}
 				Destroy();
 				return false;
 			}
