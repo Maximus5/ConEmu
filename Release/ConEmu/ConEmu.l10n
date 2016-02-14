@@ -2414,6 +2414,14 @@
       "en": "Settings",
       "ru": "Настройки",
       "id": 2 }
+    ,
+    "lng_Search": {
+      "en": "Search",
+      "id": 9 }
+    ,
+    "lng_SearchCtrlF": {
+      "en": "Search (Ctrl+F)",
+      "id": 10 }
   }
   ,
   "controls": {
