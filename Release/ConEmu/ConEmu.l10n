@@ -52,7 +52,7 @@
     ,
     "cbAlwaysOnTop": {
       "en": "Places the ConEmu window above all non-topmost windows. The window maintains its topmost position even when it is deactivated",
-      "zh": "把ConEmu窗口放置在其他非置顶窗口的前面。即使在不激活的状态下，窗口会一直置顶",
+      "zh": "把ConEmu窗口放置在其他非置顶窗口的前面。即使在不激活的状态下，窗口也会一直置顶",
       "id": 1572 }
     ,
     "cbAlwaysShowTrayIcon": {
@@ -67,7 +67,7 @@
       "ru": [ "Логировать консольный вывод в текстовые файлы\r\n"
             , "ConEmu-YYYY-MM-DD-pNNNN.log\r\n"
             , "(влияет только на новые консоли)" ],
-      "zh": [ "输出控制台（console）日志到文本文件\r\n"
+      "zh": [ "记录控制台（console）输出到文本文件\r\n"
             , "ConEmu-YYYY-MM-DD-pNNNN.log\r\n"
             , "（仅影响之后新建的控制台（console））" ],
       "id": 2679 }
@@ -125,7 +125,7 @@
     ,
     "cbComspecUpdateEnv": {
       "en": "ConEmu may update %ComSpec% variable to selected command processor",
-      "zh": "ConEmu更新%ComSpec%变量至选定的命令处理器",
+      "zh": "ConEmu可以更新%ComSpec%变量为选定的命令处理器",
       "id": 2160 }
     ,
     "cbConfirmCloseRunning": {
@@ -1264,7 +1264,7 @@
     "tQuakeAnimation": {
       "en": [ "Duration of window animation (0..2000ms): Quake slide down/up and restoring/hiding window to TSA.\r\n"
             , "Animation is working only when window caption is hidden." ],
-      "zh": [ "窗口动画的持续时间(0..2000ms): 震动下滑/上滑和恢复/隐藏窗口至任务栏状态区域（TSA）。\r\n"
+      "zh": [ "窗口动画的持续时间(0..2000ms): 以Quake风格下滑/上滑和恢复/隐藏窗口至任务栏状态区域（TSA）。\r\n"
             , "动画只在窗口标题隐藏时有效。" ],
       "id": 2564 }
     ,
@@ -1935,7 +1935,7 @@
     ,
     "vkMinimizeRestore": {
       "en": "Minimize/Restore (Quake-style hotkey also)",
-      "zh": "最小化/恢复(震动式热键)",
+      "zh": "最小化/恢复(Quake式热键)",
       "id": 2000 }
     ,
     "vkMoveTabLeft": {
@@ -2383,44 +2383,53 @@
     "lng_DlgAbout": {
       "en": "About",
       "ru": "О программе",
+      "zh": "关于",
       "id": 6 }
     ,
     "lng_DlgAffinity": {
       "en": "Set active console processes affinity and priority",
       "ru": "Задать процессов активной консоли сходство и приоритет",
+      "zh": "设置活动的控制台进程之间的关系和优先权",
       "id": 4 }
     ,
     "lng_DlgAttach": {
       "en": "Attach: Choose window or console application",
       "ru": "Attach: Выберите окно или консольное приложение",
+      "zh": "Attach: 选择窗口或控制台应用程序",
       "id": 5 }
     ,
     "lng_DlgFastCfg": {
       "en": "fast configuration",
       "ru": "быстрая настройка",
+      "zh": "快速配置",
       "id": 1 }
     ,
     "lng_DlgHotkey": {
       "en": "Choose hotkey",
       "ru": "Выберите хоткей",
+      "zh": "选择热键",
       "id": 7 }
     ,
     "lng_DlgRenameTab": {
       "en": "Rename tab",
       "ru": "Переименовать таб",
+      "zh": "重命名标签页(tab)",
       "id": 3 }
     ,
     "lng_DlgSettings": {
       "en": "Settings",
       "ru": "Настройки",
+      "zh": "设置",
       "id": 2 }
     ,
     "lng_Search": {
       "en": "Search",
+      "zh": "查找",
       "id": 9 }
     ,
     "lng_SearchCtrlF": {
       "en": "Search (Ctrl+F)",
+      "zh": "查找 (Ctrl+F)",
       "id": 10 }
   }
   ,
@@ -3115,7 +3124,7 @@
     ,
     "cbFont2AA": {
       "en": "Anti-aliasing",
-      "zh": "防走样",
+      "zh": "抗锯齿",
       "id": 2883 }
     ,
     "cbFontAsDeviceUnits": {
@@ -3255,7 +3264,7 @@
     ,
     "cbMinimizeOnLoseFocus": {
       "en": "Minimize on focus lose (not in Quake style)",
-      "zh": "失去焦点时最小化（不使用震动方式）",
+      "zh": "失去焦点时最小化（不使用Quake方式）",
       "id": 2567 }
     ,
     "cbMinToTray": {
@@ -3335,12 +3344,12 @@
     ,
     "cbQuakeFast": {
       "en": "Quake-style slide down from the top of the screen",
-      "zh": "从屏幕顶部震动式向下滑动",
+      "zh": "从屏幕顶部Quake式向下滑动",
       "id": 2846 }
     ,
     "cbQuakeStyle": {
       "en": "Quake style slide down",
-      "zh": "震动式向下滑动",
+      "zh": "Quake式向下滑动",
       "id": 2333 }
     ,
     "cbRClick": {
@@ -3685,6 +3694,7 @@
     ,
     "gbAddToPath": {
       "en": "Add to %PATH% environment variable",
+      "zh": "添加到%PATH%环境变量",
       "id": 2974 }
     ,
     "gbAlphaTransparency": {
@@ -3694,7 +3704,7 @@
     ,
     "gbAntiAliasing": {
       "en": "Anti-aliasing",
-      "zh": "防走样",
+      "zh": "抗锯齿",
       "id": 2677 }
     ,
     "gbAppDistinct": {
@@ -3975,6 +3985,7 @@
     ,
     "gbQuakeStyle": {
       "en": "Quake style",
+      "zh": "Quake风格",
       "id": 2907 }
     ,
     "gbRecreateSplit": {
@@ -3984,6 +3995,7 @@
     ,
     "gbSelectColorIdx": {
       "en": "Color indexes",
+      "zh": "颜色索引",
       "id": 2976 }
     ,
     "gbSelectingOverride": {
@@ -4573,7 +4585,7 @@
     ,
     "rInactiveCursorH": {
       "en": "Horizontal (as console)",
-      "zh": "水平 (作为 console)",
+      "zh": "水平 (如同console)",
       "id": 2534 }
     ,
     "rInactiveCursorR": {
@@ -4583,7 +4595,7 @@
     ,
     "rInactiveCursorV": {
       "en": "Vertical (as GUI)",
-      "zh": "垂直 (作为GUI)",
+      "zh": "垂直 (如同GUI)",
       "id": 2535 }
     ,
     "rMaximized": {
@@ -4608,10 +4620,12 @@
     ,
     "stAffinityBox": {
       "en": "Affinity",
+      "zh": "关联",
       "id": 2769 }
     ,
     "stAppDistinctBottom": {
       "en": "End of scroll area",
+      "zh": "滚动区域末尾",
       "id": 2357 }
     ,
     "stAppDistinctName": {
@@ -4652,7 +4666,7 @@
             , "Each command creates tab in ConEmu when group started\n"
             , "Mark active console tab with '>' sign\n"
             , "Start console 'As Administrator' with '*' sign" ],
-      "zh": [ "&Commands (application, arguments, \"-new_console\" params)\n"
+      "zh": [ "命令组(&C) (application, arguments, \"-new_console\" params)\n"
             , "用空行分隔命令\n"
             , "当开始命令组时，每个命令在ConEmu中创建标签页\n"
             , "用'>'标记活动的控制台\n"
@@ -4902,14 +4916,17 @@
     ,
     "stFrameAppear": {
       "en": "Appear delay:",
+      "zh": "显示延迟：",
       "id": 2905 }
     ,
     "stFrameDisappear": {
       "en": "Disappear:",
+      "zh": "消失：",
       "id": 2906 }
     ,
     "stFrameWidth": {
       "en": "Frame width:",
+      "zh": "框架宽度：",
       "id": 2904 }
     ,
     "stGotoEditorCmd": {
@@ -5106,7 +5123,7 @@
     ,
     "stScrollAppear": {
       "en": "Appear delay:",
-      "zh": "出现延迟：",
+      "zh": "显示延迟：",
       "id": 2902 }
     ,
     "stScrollDisappear": {
