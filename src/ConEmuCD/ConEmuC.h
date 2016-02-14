@@ -300,7 +300,6 @@ extern "C" {
 
 int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount);
 BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi);
-WARNING("Use MyGetConsoleScreenBufferInfo instead of GetConsoleScreenBufferInfo");
 BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc);
 void CmdOutputStore(bool abCreateOnly = false);
 void CmdOutputRestore(bool abSimpleMode);

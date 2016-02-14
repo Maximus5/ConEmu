@@ -8045,6 +8045,9 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 	}
 }
 
+
+WARNING("Use MyGetConsoleScreenBufferInfo instead of GetConsoleScreenBufferInfo");
+
 // Действует аналогично функции WinApi (GetConsoleScreenBufferInfo), но в режиме сервера:
 // 1. запрещает (то есть отменяет) максимизацию консольного окна
 // 2. корректирует srWindow: сбрасывает горизонтальную прокрутку,
