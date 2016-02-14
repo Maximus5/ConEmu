@@ -95,7 +95,8 @@ int GuiMacroCommandLine(LPCWSTR asCmdLine)
 			// Return result via EnvVar only
 			gbPrefereSilentMode = true;
 
-			iRc = DoGuiMacro(lsCmdLine, MacroInst);
+			_ASSERTE(gnRunMode == RM_GUIMACRO);
+			iRc = DoGuiMacro(lsCmdLine, MacroInst, gmf_SetEnvVar);
 
 			// We've done
 			gbInShutdown = TRUE;
@@ -278,7 +279,7 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 	}
 }
 
-int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst)
+int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags)
 {
 	// If neither hMacroInstance nor ghConEmuWnd was set - Macro will fails most likely
 	_ASSERTE(Inst.hConEmuWnd!=NULL || ghConEmuWnd!=NULL);
@@ -288,13 +289,16 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst)
 		|| (Inst.hConEmuWnd && !IsWindow(Inst.hConEmuWnd))
 		)
 	{
-		bool bRedirect = IsOutputRedirected();
-		if (!gbPrefereSilentMode || bRedirect)
+		wchar_t szErr[120] = L"FAILED:Specified ConEmu instance is not found";
+
+		bool bRedirect = false;
+		bool bPrintError = (Flags & gmf_PrintResult) && ((bRedirect = IsOutputRedirected()) || !gbPrefereSilentMode);
+		if (bPrintError)
 		{
-			wchar_t szErr[120] = L"FAILED:Specified ConEmu instance is not found";
 			if (bRedirect) wcscat_c(szErr, L"\n"); // PowerShell... it does not insert linefeed
 			_wprintf(szErr);
 		}
+
 		return CERR_GUIMACRO_FAILED;
 	}
 
@@ -316,16 +320,22 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst)
 	{
 		if (pOut->GuiMacro.nSucceeded)
 		{
-			LPCWSTR pszSet = (pOut->DataSize() >= sizeof(pOut->GuiMacro)) ? pOut->GuiMacro.sMacro : L"";
-			SetEnvironmentVariable(CEGUIMACRORETENVVAR, pszSet);
-			iRc = CERR_GUIMACRO_SUCCEEDED; // OK
-		}
+			LPCWSTR pszResult = (pOut->DataSize() >= sizeof(pOut->GuiMacro)) ? pOut->GuiMacro.sMacro : L"";
 
-		if (pOut->GuiMacro.nSucceeded && (gnRunMode != RM_GUIMACRO))
-		{
-			// If current RealConsole was already started in ConEmu
-			if (ghConEmuWnd)
+			if (pszResult && *pszResult)
 			{
+				iRc = CERR_GUIMACRO_SUCCEEDED; // OK
+			}
+
+			if (Flags & gmf_SetEnvVar)
+			{
+				SetEnvironmentVariable(CEGUIMACRORETENVVAR, pszResult);
+			}
+
+			// If current RealConsole was already started in ConEmu
+			if (Flags & gmf_ExportEnvVar)
+			{
+				_ASSERTE((Flags & gmf_SetEnvVar));
 				// Transfer EnvVar to parent console processes
 				// This would work only if ‘Inject ConEmuHk’ is enabled
 				// However, it's ignored by some shells
@@ -333,16 +343,18 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst)
 			}
 
 			// Let reuse `-Silent` switch
-			if (!gbPrefereSilentMode || IsOutputRedirected())
+			if ((Flags & gmf_PrintResult)
+				&& (!gbPrefereSilentMode || IsOutputRedirected()))
 			{
 				// Show macro result in StdOutput
-				_wprintf(pOut->GuiMacro.sMacro);
+				_wprintf(pszResult);
 
 				// PowerShell... it does not insert linefeed
 				if (!IsOutputRedirected())
 					_wprintf(L"\n");
 			}
 		}
+
 		ExecuteFreeResult(pOut);
 	}
 	ExecuteFreeResult(pIn);

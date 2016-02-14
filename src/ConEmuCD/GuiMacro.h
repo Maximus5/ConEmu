@@ -41,6 +41,14 @@ struct MacroInstance
 
 extern bool gbPrefereSilentMode; // = false;
 
+typedef DWORD GuiMacroFlags;
+const GuiMacroFlags
+	gmf_SetEnvVar    = 1,
+	gmf_ExportEnvVar = 2,
+	gmf_PrintResult  = 4,
+	gmf_None         = 0;
+
 
 void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst);
-int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst);
+
+int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags);
