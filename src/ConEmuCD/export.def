@@ -8,6 +8,7 @@ EXPORTS
 	HandlerRoutine
 	PrivateEntry=RequestLocalServer
 	DownloadCommand
+	GuiMacro
 
 ; LLKeyHooks (ConEmu GUI)
 	ghKeyHook

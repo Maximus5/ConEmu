@@ -6,6 +6,7 @@ EXPORTS
 	HandlerRoutine=HandlerRoutine@4
 	PrivateEntry=RequestLocalServer@4
 	DownloadCommand=DownloadCommand@12
+	GuiMacro=GuiMacro@12
 
 ; LLKeyHooks (ConEmu GUI)
 	ghKeyHook

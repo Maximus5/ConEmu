@@ -283,7 +283,7 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 	}
 }
 
-int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags)
+int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, GuiMacroResultCallback ResultCallback /*= NULL*/)
 {
 	// If neither hMacroInstance nor ghConEmuWnd was set - Macro will fails most likely
 	_ASSERTE(Inst.hConEmuWnd!=NULL || ghConEmuWnd!=NULL);
@@ -294,6 +294,11 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags)
 		)
 	{
 		wchar_t szErr[120] = L"FAILED:Specified ConEmu instance is not found";
+
+		if (ResultCallback)
+		{
+			ResultCallback(gmrInvalidInstance, szErr);
+		}
 
 		bool bRedirect = false;
 		bool bPrintError = (Flags & gmf_PrintResult) && ((bRedirect = IsOutputRedirected()) || !gbPrefereSilentMode);
@@ -331,6 +336,11 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags)
 				iRc = CERR_GUIMACRO_SUCCEEDED; // OK
 			}
 
+			if (ResultCallback)
+			{
+				ResultCallback(gmrOk, pszResult);
+			}
+
 			if (Flags & gmf_SetEnvVar)
 			{
 				SetEnvironmentVariable(CEGUIMACRORETENVVAR, pszResult);
@@ -362,5 +372,27 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags)
 		ExecuteFreeResult(pOut);
 	}
 	ExecuteFreeResult(pIn);
+	return iRc;
+}
+
+int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, GuiMacroResultCallback ResultCallback /*= NULL*/)
+{
+	MacroInstance Inst = {};
+
+	if (asInstance && *asInstance)
+	{
+		_ASSERTE((lstrcmpni(asInstance, L"/GuiMacro", 9) != 0) && (lstrcmpni(asInstance, L"-GuiMacro", 9) != 0));
+
+		CEStr lsArg = lstrmerge(L"/GuiMacro:", asInstance);
+		ArgGuiMacro(lsArg, Inst);
+	}
+
+	GuiMacroFlags Flags = gmf_None;
+	if (ResultCallback == NULL)
+		Flags = gmf_SetEnvVar;
+	else if (ResultCallback == (GuiMacroResultCallback)-1)
+		ResultCallback = NULL;
+
+	int iRc = DoGuiMacro(asMacro, Inst, Flags, ResultCallback);
 	return iRc;
 }
