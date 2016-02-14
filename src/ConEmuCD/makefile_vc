@@ -31,6 +31,7 @@ BASEADDRESS=/DYNAMICBASE:NO /BASE:0x54610000 /FIXED:NO
 
 
 LINK_OBJS = \
+$(INTDIR)\Actions.obj \
 $(INTDIR)\CEStr.obj \
 $(INTDIR)\CmdLine.obj \
 $(INTDIR)\Common.obj \
@@ -47,6 +48,7 @@ $(INTDIR)\EmergencyShow.obj \
 $(INTDIR)\ExecPty.obj \
 $(INTDIR)\execute.obj \
 $(INTDIR)\GuiHooks.obj \
+$(INTDIR)\GuiMacro.obj \
 $(INTDIR)\HkFunc.obj \
 $(INTDIR)\Infiltrate.obj \
 $(INTDIR)\InjectRemote.obj \
@@ -67,6 +69,7 @@ $(INTDIR)\Queue.obj \
 $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\SrvPipes.obj \
+$(INTDIR)\UnicodeTest.obj \
 $(INTDIR)\WCodePage.obj \
 $(INTDIR)\WConsole.obj \
 $(INTDIR)\WConsoleInfo.obj \
@@ -251,6 +254,8 @@ clean:
 ################
 #LINK_OBJS begin
 
+$(INTDIR)\Actions.obj: Actions.cpp Actions.h
+
 $(INTDIR)\CEStr.obj: ../common/CEStr.cpp ../common/CEStr.h
 
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
@@ -282,6 +287,8 @@ $(INTDIR)\ExecPty.obj: ../common/ExecPty.cpp ../common/ExecPty.h
 $(INTDIR)\execute.obj: ../common/execute.cpp ../common/execute.h
 
 $(INTDIR)\GuiHooks.obj: GuiHooks.cpp GuiHooks.h
+
+$(INTDIR)\GuiMacro.obj: GuiMacro.cpp GuiMacro.h
 
 $(INTDIR)\HkFunc.obj: ../common/HkFunc.cpp ../common/HkFunc.h
 
@@ -322,6 +329,8 @@ $(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs
 $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 
 $(INTDIR)\SrvPipes.obj: SrvPipes.cpp ../common/PipeServer.h
+
+$(INTDIR)\UnicodeTest.obj: UnicodeTest.cpp UnicodeTest.h
 
 $(INTDIR)\WCodePage.obj: ../common/WCodePage.cpp ../common/WCodePage.h
 

@@ -54,6 +54,7 @@ SRCS = \
 		../common/WThreads.cpp       \
 		../common/WUser.cpp          \
 		../ConEmuHk/Injects.cpp      \
+		Actions.cpp        \
 		ConEmuCmd.cpp      \
 		ConEmuSrv.cpp      \
 		ConProcess.cpp     \
@@ -61,6 +62,7 @@ SRCS = \
 		Debugger.cpp       \
 		DownloaderCall.cpp \
 		GuiHooks.cpp       \
+		GuiMacro.cpp       \
 		Infiltrate.cpp     \
 		InjectRemote.cpp   \
 		Queue.cpp          \

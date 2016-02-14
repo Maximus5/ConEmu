@@ -841,6 +841,7 @@
     <ClInclude Include="..\common\WThreads.h" />
     <ClInclude Include="..\common\WUser.h" />
     <ClInclude Include="..\ConEmuHk\Injects.h" />
+    <ClInclude Include="Actions.h" />
     <ClInclude Include="ConEmuC.h" />
     <ClInclude Include="ConProcess.h" />
     <ClInclude Include="ConsoleHelp.h" />
@@ -848,6 +849,7 @@
     <ClInclude Include="DownloaderCall.h" />
     <ClInclude Include="ExitCodes.h" />
     <ClInclude Include="GuiHooks.h" />
+    <ClInclude Include="GuiMacro.h" />
     <ClInclude Include="Queue.h" />
     <ClInclude Include="resource.h" />
     <CustomBuild Include="header.h">
@@ -870,6 +872,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CustomBuild>
+    <ClInclude Include="UnicodeTest.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuCD.rc" />
@@ -908,6 +911,7 @@
     <ClCompile Include="..\common\WThreads.cpp" />
     <ClCompile Include="..\common\WUser.cpp" />
     <ClCompile Include="..\ConEmuHk\Injects.cpp" />
+    <ClCompile Include="Actions.cpp" />
     <ClCompile Include="ConEmuCmd.cpp" />
     <ClCompile Include="ConEmuSrv.cpp" />
     <ClCompile Include="ConProcess.cpp" />
@@ -915,6 +919,7 @@
     <ClCompile Include="Debugger.cpp" />
     <ClCompile Include="DownloaderCall.cpp" />
     <ClCompile Include="GuiHooks.cpp" />
+    <ClCompile Include="GuiMacro.cpp" />
     <ClCompile Include="InjectRemote.cpp" />
     <ClCompile Include="Queue.cpp" />
     <ClCompile Include="SrvPipes.cpp" />
@@ -924,6 +929,7 @@
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">Default</BasicRuntimeChecks>
       <BufferSecurityCheck Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">false</BufferSecurityCheck>
     </ClCompile>
+    <ClCompile Include="UnicodeTest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="export.def" />

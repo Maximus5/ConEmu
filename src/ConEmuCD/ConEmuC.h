@@ -121,6 +121,10 @@ bool isConEmuTerminated();
 
 /*  Global  */
 extern DWORD   gnSelfPID;
+extern wchar_t gsModuleName[32];
+extern wchar_t gsVersion[20];
+extern wchar_t gsSelfExe[MAX_PATH];  // Full path+exe to our executable
+extern wchar_t gsSelfPath[MAX_PATH]; // Directory of our executable
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
 extern HWND    ghConWnd;
 extern DWORD   gnConEmuPID; // PID of ConEmu[64].exe (ghConEmuWnd)
@@ -295,9 +299,8 @@ extern "C" {
 #endif
 
 int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount);
-SHORT CorrectTopVisible(int nY);
 BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi);
-WARNING("Вместо GetConsoleScreenBufferInfo нужно использовать MyGetConsoleScreenBufferInfo!");
+WARNING("Use MyGetConsoleScreenBufferInfo instead of GetConsoleScreenBufferInfo");
 BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc);
 void CmdOutputStore(bool abCreateOnly = false);
 void CmdOutputRestore(bool abSimpleMode);

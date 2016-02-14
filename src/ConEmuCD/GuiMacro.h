@@ -26,17 +26,34 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #pragma once
 
-#define UnicodeTestString L"AÀΑ╬豈Ａꊠ黠だ➀ጀะڰЯ0123456789"
-#define ColorTestString L"123456789也不是可运行的程序１２３４５６７８９"
+#include <windows.h>
 
-// Returns:
-// * CERR_UNICODE_CHK_OKAY(142), if RealConsole supports
-//   unicode characters output.
-// * CERR_UNICODE_CHK_FAILED(141), if RealConsole CAN'T
-//   output/store unicode characters.
-// This function is called by: ConEmuC.exe /CHECKUNICODE
-int CheckUnicodeFont();
+struct MacroInstance
+{
+	HWND  hConEmuWnd;  // Root! window
+	DWORD nTabIndex;   // Specially selected tab, 1-based
+	DWORD nSplitIndex; // Specially selected split, 1-based
+	DWORD nPID;
+};
 
-int TestUnicodeCvt();
+extern bool gbPrefereSilentMode; // = false;
+
+class CGuiMacro
+{
+public:
+	CGuiMacro();
+	~CGuiMacro();
+
+public:
+	// Methods
+
+protected:
+	// Members
+
+};
+
+void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst);
+int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst);

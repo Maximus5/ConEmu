@@ -434,6 +434,7 @@
       <File RelativePath="..\common\WUser.h" />
       <File RelativePath="..\ConEmuHk\Console2.h" />
       <File RelativePath="..\ConEmuHk\Injects.h" />
+      <File RelativePath=".\Actions.h" />
       <File RelativePath=".\ConProcess.h" />
       <File RelativePath=".\ConEmuC.h" />
       <File RelativePath=".\ConsoleHelp.h" />
@@ -441,8 +442,10 @@
       <File RelativePath=".\DownloaderCall.h" />
       <File RelativePath=".\ExitCodes.h" />
       <File RelativePath=".\GuiHooks.h" />
+      <File RelativePath=".\GuiMacro.h" />
       <File RelativePath=".\Queue.h" />
       <File RelativePath=".\resource.h" />
+      <File RelativePath=".\UnicodeTest.h" />
     </Filter>
     <Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav" UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
       <File RelativePath=".\ConEmuCD.rc" />
@@ -481,6 +484,7 @@
       <File RelativePath="..\common\WThreads.cpp" />
       <File RelativePath="..\common\WUser.cpp" />
       <File RelativePath="..\ConEmuHk\Injects.cpp" />
+      <File RelativePath=".\Actions.cpp" />
       <File RelativePath=".\ConEmuCmd.cpp" />
       <File RelativePath=".\ConEmuSrv.cpp" />
       <File RelativePath=".\ConProcess.cpp" />
@@ -489,6 +493,7 @@
       <File RelativePath=".\DownloaderCall.cpp" />
       <File RelativePath=".\export.def" />
       <File RelativePath=".\GuiHooks.cpp" />
+      <File RelativePath=".\GuiMacro.cpp" />
       <File RelativePath=".\InjectRemote.cpp" />
       <File RelativePath=".\Queue.cpp" />
       <File RelativePath=".\SrvPipes.cpp" />
@@ -500,6 +505,7 @@
           <Tool Name="VCCLCompilerTool" BasicRuntimeChecks="0" BufferSecurityCheck="false" />
         </FileConfiguration>
       </File>
+      <File RelativePath=".\UnicodeTest.cpp" />
     </Filter>
     <Filter Name="1 - Registry">
       <File RelativePath=".\header.h">
