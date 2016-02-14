@@ -2625,6 +2625,11 @@ bool ProcessMessage(MSG& Msg)
 	static bool bQuitMsg = false;
 	static MSG MouseClickPatch = {};
 
+	#ifdef _DEBUG
+	static DWORD LastInsideCheck = 0;
+	const  DWORD DeltaInsideCheck = 1000;
+	#endif
+
 	MSetter nestedLevel(&gnMessageNestingLevel);
 
 	if (Msg.message == WM_QUIT)
@@ -2639,6 +2644,31 @@ bool ProcessMessage(MSG& Msg)
 
 	if (gpConEmu)
 	{
+		#ifdef _DEBUG
+		if (gpConEmu->mp_Inside)
+		{
+			DWORD nCurTick = GetTickCount();
+			if (!LastInsideCheck)
+			{
+				LastInsideCheck = nCurTick;
+			}
+			else if ((LastInsideCheck - nCurTick) >= DeltaInsideCheck)
+			{
+				if (gpConEmu->isInsideInvalid())
+				{
+					// Show assertion once
+					static bool bWarned = false;
+					if (!bWarned)
+					{
+						bWarned = true;
+						_ASSERTE(FALSE && "Parent was terminated, but ConEmu wasn't");
+					}
+				}
+				LastInsideCheck = nCurTick;
+			}
+		}
+		#endif
+
 		if (gpConEmu->isDialogMessage(Msg))
 			goto wrap;
 
