@@ -13,7 +13,7 @@ NEEDDEFLIB = 1
 
 !include ../makefile_vc_defs
 
-USERLIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib shlwapi.lib
+USERLIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib shlwapi.lib oleaut32.lib
 
 DEF_NAME = export
 
