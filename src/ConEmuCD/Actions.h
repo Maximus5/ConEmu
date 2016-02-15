@@ -66,4 +66,5 @@ enum ConEmuExecAction
 
 int  DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdline */, MacroInstance& Inst);
 int  DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = false);
+int  DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg);
 bool DoStateCheck(ConEmuStateCheck eStateCheck);

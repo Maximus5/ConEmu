@@ -46,6 +46,8 @@ public:
 	// Methods
 	virtual void Alias(LPCWSTR asName, LPCWSTR asValue);
 	virtual void ChCp(LPCWSTR asCP);
+	virtual void Echo(LPCWSTR asSwitches, LPCWSTR asText);
 	virtual void Set(LPCWSTR asName, LPCWSTR asValue);
 	virtual void Title(LPCWSTR asTitle);
+	virtual void Type(LPCWSTR asSwitches, LPCWSTR asFile);
 };

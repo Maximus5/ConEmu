@@ -45,8 +45,10 @@ public:
 	// Methods
 	virtual void Alias(LPCWSTR asName, LPCWSTR asValue) = 0;
 	virtual void ChCp(LPCWSTR asCP) = 0;
+	virtual void Echo(LPCWSTR asSwitches, LPCWSTR asText) = 0;
 	virtual void Set(LPCWSTR asName, LPCWSTR asValue) = 0;
 	virtual void Title(LPCWSTR asTitle) = 0;
+	virtual void Type(LPCWSTR asSwitches, LPCWSTR asFile) = 0;
 };
 
 class CStartEnvTitle : public CStartEnvBase
@@ -63,8 +65,10 @@ public:
 	// Methods
 	virtual void Alias(LPCWSTR asName, LPCWSTR asValue) {};
 	virtual void ChCp(LPCWSTR asCP) {};
+	virtual void Echo(LPCWSTR asSwitches, LPCWSTR asText) {};
 	virtual void Set(LPCWSTR asName, LPCWSTR asValue) {};
 	virtual void Title(LPCWSTR asTitle);
+	virtual void Type(LPCWSTR asSwitches, LPCWSTR asFile) {};
 };
 
 

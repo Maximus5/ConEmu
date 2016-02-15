@@ -252,6 +252,27 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 				}
 			}
 		}
+		// Echo the "text" before console starts
+		// Type the "text file" before console starts
+		else if ((lstrcmpi(lsSet, L"echo") == 0) || (lstrcmpi(lsSet, L"type") == 0))
+		{
+			lsCmd.Set(lsSet);
+			// echo [-r] [-n] [-x] [-b] "String to echo"
+			// type [-b] [-CP] "Path to text file to echo"
+			CEStr lsSwitches;
+			while (*lsCmdLine == L'-')
+			{
+				if (NextArg(&lsCmdLine, lsSet) != 0)
+					break;
+				lstrmerge(&lsSwitches.ms_Val, lsSwitches.IsEmpty() ? NULL : L" ", lsSet.ms_Val);
+			}
+			// Next argument is expected to be processed text or file
+			if (NextArg(&lsCmdLine, lsSet) == 0)
+			{
+				bTokenOk = true;
+				Add(lsCmd, lsSwitches, lsSet);
+			}
+		}
 		else
 		{
 			lsCmd.Empty();
@@ -371,6 +392,13 @@ CProcessEnvCmd::Command* CProcessEnvCmd::Add(LPCWSTR asCmd, LPCWSTR asName, LPCW
 		return NULL;
 	}
 
+	if ((lstrcmp(asCmd, L"echo") == 0) || (lstrcmp(asCmd, L"type") == 0))
+	{
+		// These are intended to be an options for echo/type
+		if (asName == NULL)
+			asName = L"";
+	}
+	else
 	{
 		if (!asName || !*asName)
 		{
@@ -463,6 +491,14 @@ bool CProcessEnvCmd::Apply(CStartEnvBase* pSetEnv)
 		{
 			pSetEnv->Title(p->pszName);
 		}
+		else if (lstrcmp(p->szCmd, L"echo") == 0)
+		{
+			pSetEnv->Echo(p->pszName, p->pszValue);
+		}
+		else if (lstrcmp(p->szCmd, L"type") == 0)
+		{
+			pSetEnv->Type(p->pszName, p->pszValue);
+		}
 		else
 		{
 			_ASSERTE(FALSE && "Command was not implemented!");
@@ -518,6 +554,21 @@ wchar_t* CProcessEnvCmd::Allocate(size_t* pchSize)
 					*(pszDst++) = L' ';
 					*(pszDst++) = L'\"';
 					cpyadv(pszDst, p->pszName);
+					*(pszDst++) = L'\"';
+					*(pszDst++) = L'\n';
+				}
+				else if ((lstrcmp(p->szCmd, L"echo") == 0) || (lstrcmp(p->szCmd, L"type") == 0))
+				{
+					cpyadv(pszDst, p->szCmd);
+					*(pszDst++) = L' ';
+					if (p->pszName && *p->pszName)
+					{
+						// type/echo options (like in `ConEmuC -t/-e ...`)
+						cpyadv(pszDst, p->pszName);
+						*(pszDst++) = L' ';
+					}
+					*(pszDst++) = L'\"';
+					cpyadv(pszDst, p->pszValue);
 					*(pszDst++) = L'\"';
 					*(pszDst++) = L'\n';
 				}
