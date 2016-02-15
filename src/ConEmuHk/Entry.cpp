@@ -1042,11 +1042,14 @@ DWORD DllStart_Continue()
 		//{
 		#endif
 
-		DLOG0("StartupHooks",0);
-		print_timings(L"StartupHooks");
-		StartupHooks();
-		print_timings(L"StartupHooks - done");
-		DLOGEND();
+		if (!gbConEmuCProcess)
+		{
+			DLOG0("StartupHooks",0);
+			print_timings(L"StartupHooks");
+			StartupHooks();
+			print_timings(L"StartupHooks - done");
+			DLOGEND();
+		}
 
 		#ifdef _DEBUG
 		//}
@@ -1234,7 +1237,7 @@ void InitExeName()
 	}
 
 	// Lets check the name
-	if ((lstrcmpi(gsExeName, L"ConEmuC.exe") == 0) || (lstrcmpi(gsExeName, L"ConEmuC64.exe") == 0))
+	if (IsConsoleServer(gsExeName)) // ConEmuC.exe|| ConEmuC64.exe
 	{
 		gbConEmuCProcess = true;
 	}

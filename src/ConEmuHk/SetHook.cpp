@@ -818,6 +818,13 @@ HookItem* FindFunction(const char* pszFuncName)
 // Main initialization routine
 bool StartupHooks()
 {
+	_ASSERTE(!IsConsoleServer(gsExeName));
+	if (gbConEmuCProcess)
+	{
+		// ConEmuC.exe and ConEmuC64.exe must not be "hooked"
+		return false;
+	}
+
 	//HLOG0("StartupHooks",0);
 	gnDllState |= ds_HooksStarting;
 
