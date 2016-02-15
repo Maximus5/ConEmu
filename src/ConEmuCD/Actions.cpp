@@ -772,7 +772,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	bool     bToBottom = false;
 	bool     bAsciiPrint = false;
 	bool     bStreamBy1 = false;
-	CEStr   szArg;
+	CEStr    szArg;
 	HANDLE   hFile = NULL;
 	DWORD    DefaultCP = 0;
 	BOOL     bRc = FALSE;
