@@ -816,7 +816,7 @@ HookItem* FindFunction(const char* pszFuncName)
 
 
 // Main initialization routine
-BOOL StartupHooks()
+bool StartupHooks()
 {
 	//HLOG0("StartupHooks",0);
 	gnDllState |= ds_HooksStarting;

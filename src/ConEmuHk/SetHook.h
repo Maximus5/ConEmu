@@ -216,7 +216,7 @@ void FinalizeHookedModules();
 
 void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID = 0, void* ApiFunction = NULL, HookItem** ph = NULL, bool abAllowNulls = false);
 
-BOOL StartupHooks();
+bool StartupHooks();
 void ShutdownHooks();
 
 int  InitHooks(HookItem* apHooks);
