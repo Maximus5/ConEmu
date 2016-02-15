@@ -48,25 +48,11 @@ const GuiMacroFlags
 	gmf_PrintResult  = 4,
 	gmf_None         = 0;
 
-enum GuiMacroResult
-{
-	// Succeeded
-	gmrOk = 0,
-	// Reserved for .Net control module
-	gmrPending = 1,
-	gmrDllNotLoaded = 2,
-	gmrException = 3,
-	// Bad PID or ConEmu HWND was specified
-	gmrInvalidInstance = 4,
-};
-
-typedef void (__stdcall* GuiMacroResultCallback)(GuiMacroResult code, LPCWSTR result);
-
 void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst);
 
-int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, GuiMacroResultCallback ResultCallback = NULL);
+int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR* bsResult = NULL);
 
 #if defined(__GNUC__)
 extern "C"
 #endif
-int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, GuiMacroResultCallback ResultCallback = NULL);
+int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, BSTR* bsResult = NULL);

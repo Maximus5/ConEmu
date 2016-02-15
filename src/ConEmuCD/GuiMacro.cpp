@@ -283,29 +283,30 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 	}
 }
 
-int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, GuiMacroResultCallback ResultCallback /*= NULL*/)
+int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR* bsResult /*= NULL*/)
 {
 	// If neither hMacroInstance nor ghConEmuWnd was set - Macro will fails most likely
 	_ASSERTE(Inst.hConEmuWnd!=NULL || ghConEmuWnd!=NULL);
+
+	wchar_t szErrInst[80] = L"FAILED:Specified ConEmu instance is not found";
+	wchar_t szErrExec[80] = L"FAILED:Unknown GuiMacro execution error";
 
 	// Don't allow to execute on wrong instance
 	if ((Inst.nPID && !Inst.hConEmuWnd)
 		|| (Inst.hConEmuWnd && !IsWindow(Inst.hConEmuWnd))
 		)
 	{
-		wchar_t szErr[120] = L"FAILED:Specified ConEmu instance is not found";
-
-		if (ResultCallback)
+		if (bsResult)
 		{
-			ResultCallback(gmrInvalidInstance, szErr);
+			*bsResult = ::SysAllocString(szErrInst);
 		}
 
 		bool bRedirect = false;
 		bool bPrintError = (Flags & gmf_PrintResult) && ((bRedirect = IsOutputRedirected()) || !gbPrefereSilentMode);
 		if (bPrintError)
 		{
-			if (bRedirect) wcscat_c(szErr, L"\n"); // PowerShell... it does not insert linefeed
-			_wprintf(szErr);
+			if (bRedirect) wcscat_c(szErrInst, L"\n"); // PowerShell... it does not insert linefeed
+			_wprintf(szErrInst);
 		}
 
 		return CERR_GUIMACRO_FAILED;
@@ -331,14 +332,11 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, GuiMa
 		{
 			LPCWSTR pszResult = (pOut->DataSize() >= sizeof(pOut->GuiMacro)) ? pOut->GuiMacro.sMacro : L"";
 
-			if (pszResult && *pszResult)
-			{
-				iRc = CERR_GUIMACRO_SUCCEEDED; // OK
-			}
+			iRc = CERR_GUIMACRO_SUCCEEDED; // OK
 
-			if (ResultCallback)
+			if (bsResult)
 			{
-				ResultCallback(gmrOk, pszResult);
+				*bsResult = ::SysAllocString(pszResult);
 			}
 
 			if (Flags & gmf_SetEnvVar)
@@ -372,10 +370,16 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, GuiMa
 		ExecuteFreeResult(pOut);
 	}
 	ExecuteFreeResult(pIn);
+
+	if ((iRc != CERR_GUIMACRO_SUCCEEDED) && bsResult)
+	{
+		*bsResult = ::SysAllocString(szErrExec);
+	}
+
 	return iRc;
 }
 
-int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, GuiMacroResultCallback ResultCallback /*= NULL*/)
+int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, BSTR* bsResult /*= NULL*/)
 {
 	MacroInstance Inst = {};
 
@@ -388,11 +392,11 @@ int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, GuiMacroResultCallba
 	}
 
 	GuiMacroFlags Flags = gmf_None;
-	if (ResultCallback == NULL)
+	if (bsResult == NULL)
 		Flags = gmf_SetEnvVar;
-	else if (ResultCallback == (GuiMacroResultCallback)-1)
-		ResultCallback = NULL;
+	else if (bsResult == (BSTR*)-1)
+		bsResult = NULL;
 
-	int iRc = DoGuiMacro(asMacro, Inst, Flags, ResultCallback);
+	int iRc = DoGuiMacro(asMacro, Inst, Flags, bsResult);
 	return iRc;
 }
