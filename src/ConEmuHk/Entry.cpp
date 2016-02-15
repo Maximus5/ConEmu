@@ -216,7 +216,7 @@ extern HHOOK ghGuiClientRetHook;
 
 
 CEStartupEnv* gpStartEnv = NULL;
-BOOL    gbConEmuCProcess = FALSE;
+bool    gbConEmuCProcess = false;
 DWORD   gnSelfPID = 0;
 BOOL    gbSelfIsRootConsoleProcess = FALSE;
 BOOL    gbForceStartPipeServer = FALSE;
