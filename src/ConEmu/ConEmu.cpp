@@ -1372,7 +1372,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 	else
 	{
 		// Strip from cmdline some commands, which ConEmuC can process internally
-		ProcessSetEnvCmd(asCmdLine, false);
+		ProcessSetEnvCmd(asCmdLine);
 
 		// Проверить битность asCmdLine во избежание лишних запусков серверов для Inject
 		// и корректной битности запускаемого процессора по настройке

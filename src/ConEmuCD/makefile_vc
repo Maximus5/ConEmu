@@ -69,6 +69,7 @@ $(INTDIR)\Queue.obj \
 $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\SrvPipes.obj \
+$(INTDIR)\StartEnv.obj \
 $(INTDIR)\UnicodeTest.obj \
 $(INTDIR)\WCodePage.obj \
 $(INTDIR)\WConsole.obj \
@@ -329,6 +330,8 @@ $(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs
 $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 
 $(INTDIR)\SrvPipes.obj: SrvPipes.cpp ../common/PipeServer.h
+
+$(INTDIR)\StartEnv.obj: StartEnv.cpp StartEnv.h
 
 $(INTDIR)\UnicodeTest.obj: UnicodeTest.cpp UnicodeTest.h
 

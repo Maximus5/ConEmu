@@ -35,46 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WObjects.h"
 #include "WThreads.h"
 
-//Issue 60: BUGBUG: На некоторых системах (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
-//Поэтому выполняем в отдельном потоке, и если он завис - просто зовем TerminateThread
-static DWORD WINAPI OurSetConsoleCPThread(LPVOID lpParameter)
-{
-	UINT nCP = LODWORD(lpParameter);
-	SetConsoleCP(nCP);
-	SetConsoleOutputCP(nCP);
-	return 0;
-}
-
-bool SetConsoleCpHelper(UINT nCP)
-{
-	if (!nCP || nCP > 0xFFFF)
-		return false;
-
-	bool bOk = false;
-
-	//Issue 60: BUGBUG: On some OS versions (Win2k3, WinXP) SetConsoleCP (and family) just hangs
-	DWORD nTID;
-	HANDLE hThread = apiCreateThread(OurSetConsoleCPThread, (LPVOID)(DWORD_PTR)nCP, &nTID, "OurSetConsoleCPThread(%u)", nCP);
-
-	if (hThread)
-	{
-		DWORD nWait = WaitForSingleObject(hThread, 1000);
-
-		if (nWait == WAIT_TIMEOUT)
-		{
-			// That is dangerous operation, however there is no other workaround
-			// https://conemu.github.io/en/MicrosoftBugs.html#chcp_hung
-
-			apiTerminateThread(hThread, 100);
-
-		}
-
-		CloseHandle(hThread);
-	}
-
-	return bOk;
-}
-
 // Return true if "SetEnvironmentVariable" was processed
 // if (bDoSet==false) - just skip all "set" commands
 // Supported commands:
@@ -82,33 +42,67 @@ bool SetConsoleCpHelper(UINT nCP)
 //  "set PATH=C:\Program Files;%PATH%"
 //  chcp [utf8|ansi|oem|<cp_no>]
 //  title "Console init title"
-bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CEStr* rpsTitle /*= NULL*/, CProcessEnvCmd* pSetEnv /*= NULL*/)
+bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, CProcessEnvCmd* pSetEnv /*= NULL*/, CStartEnvBase* pDoSet /*= NULL*/)
 {
 	LPCWSTR lsCmdLine = asCmdLine;
 
 	CProcessEnvCmd tmp;
-	if (!pSetEnv)
-		pSetEnv = &tmp;
+	CProcessEnvCmd* lpSetEnv = pSetEnv ? pSetEnv : &tmp;
 
-	pSetEnv->AddCommands(asCmdLine, &lsCmdLine);
+	lpSetEnv->AddCommands(asCmdLine, &lsCmdLine);
 
-	bool bEnvChanged = (pSetEnv->mn_SetCount != 0);
+	bool bEnvChanged = (lpSetEnv->mn_SetCount != 0);
 
 	// Ask to be changed?
-	if (bDoSet)
-		pSetEnv->Apply();
+	if (pDoSet)
+		lpSetEnv->Apply(pDoSet);
 
-	// Return requested title?
-	if (rpsTitle && pSetEnv->mp_CmdTitle)
-		rpsTitle->Set(pSetEnv->mp_CmdTitle->pszName);
-
+	// Return naked command
 	asCmdLine = lsCmdLine;
 
-	// Fin
+	// Fin, we must have something to execute
 	_ASSERTE(asCmdLine && *asCmdLine);
 
 	return bEnvChanged;
 }
+
+
+CStartEnvTitle::CStartEnvTitle(wchar_t** ppszTitle)
+	: mppsz_Title(ppszTitle)
+	, mps_Title(NULL)
+{
+}
+
+CStartEnvTitle::CStartEnvTitle(CEStr* psTitle)
+	: mppsz_Title(NULL)
+	, mps_Title(psTitle)
+{
+}
+
+void CStartEnvTitle::Title(LPCWSTR asTitle)
+{
+	if (!asTitle || !*asTitle)
+	{
+		_ASSERTE(asTitle && *asTitle);
+		return;
+	}
+
+	if (mppsz_Title)
+	{
+		SafeFree(*mppsz_Title);
+		*mppsz_Title = lstrdup(asTitle);
+	}
+	else if (mps_Title)
+	{
+		mps_Title->Set(asTitle);
+	}
+	else
+	{
+		_ASSERTE(mppsz_Title || mps_Title);
+	}
+}
+
+
 
 CProcessEnvCmd::CProcessEnvCmd()
 	: mch_Total(0)
@@ -234,7 +228,7 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 					}
 					else
 					{
-						Add(L"chcp", lsSet, NULL);
+						Add(lsCmd, lsSet, NULL);
 					}
 				}
 			}
@@ -254,7 +248,7 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 				}
 				else
 				{
-					Add(L"title", lsSet, NULL);
+					Add(lsCmd, lsSet, NULL);
 				}
 			}
 		}
@@ -371,10 +365,18 @@ void CProcessEnvCmd::AddLines(LPCWSTR asLines)
 
 CProcessEnvCmd::Command* CProcessEnvCmd::Add(LPCWSTR asCmd, LPCWSTR asName, LPCWSTR asValue)
 {
-	if (!asCmd || !*asCmd || !asName || !*asName)
+	if (!asCmd || !*asCmd)
 	{
-		_ASSERTE(asCmd && *asCmd && asName && *asName);
+		_ASSERTE(asCmd && *asCmd);
 		return NULL;
+	}
+
+	{
+		if (!asName || !*asName)
+		{
+			_ASSERTE(asName && *asName);
+			return NULL;
+		}
 	}
 
 	Command* p = (Command*)malloc(sizeof(Command));
@@ -385,42 +387,57 @@ CProcessEnvCmd::Command* CProcessEnvCmd::Add(LPCWSTR asCmd, LPCWSTR asName, LPCW
 	p->pszName = lstrdup(asName);
 	p->pszValue = (asValue && *asValue) ? lstrdup(asValue) : NULL;
 
+	size_t cchAdd = 0;
+
 	if (lstrcmp(asCmd, L"set") == 0)
 	{
 		mn_SetCount++;
-		mch_Total += (7 + lstrlen(asName) + (asValue ? lstrlen(asValue) : 0));
+		cchAdd = 5; // set "name=value"\0
 	}
 	else if (lstrcmp(asCmd, L"alias") == 0)
 	{
 		mn_SetCount++;
-		mch_Total += (9 + lstrlen(asName) + (asValue ? lstrlen(asValue) : 0));
+		cchAdd = 5; // alias "name=value"\0
 	}
 	else if (lstrcmp(asCmd, L"chcp") == 0)
 	{
 		_ASSERTE(mp_CmdChCp==NULL);
 		mp_CmdChCp = p;
-		mch_Total += (6 + lstrlen(asName));
+		cchAdd = 4; // chcp "cp"\0
 	}
 	else if (lstrcmp(asCmd, L"title") == 0)
 	{
 		_ASSERTE(mp_CmdTitle==NULL);
 		mp_CmdTitle = p;
-		mch_Total += (7 + lstrlen(asName));
+		cchAdd = 4; // title "new title"\0
+	}
+	else if ((lstrcmp(asCmd, L"echo") == 0) || (lstrcmp(asCmd, L"type") == 0))
+	{
+		cchAdd = 5; // echo <options> "text"\0 | type <options> "file"\0
 	}
 	else
 	{
 		_ASSERTE(FALSE && "Command was not counted!");
+		return NULL;
 	}
+
+	mch_Total += (lstrlen(asCmd) + cchAdd + lstrlen(asName) + (asValue ? lstrlen(asValue) : 0));
 
 	m_Commands.push_back(p);
 
 	return p;
 }
 
-bool CProcessEnvCmd::Apply()
+bool CProcessEnvCmd::Apply(CStartEnvBase* pSetEnv)
 {
 	bool bEnvChanged = false;
 	Command* p;
+
+	if (!pSetEnv)
+	{
+		_ASSERTE(pSetEnv!=NULL);
+		return false;
+	}
 
 	for (INT_PTR i = 0; i < m_Commands.size(); i++)
 	{
@@ -430,29 +447,21 @@ bool CProcessEnvCmd::Apply()
 		{
 			bEnvChanged = true;
 			// Expand value
-			wchar_t* pszExpanded = ExpandEnvStr(p->pszValue);
-			LPCWSTR pszSet = pszExpanded ? pszExpanded : p->pszValue;
-			SetEnvironmentVariable(p->pszName, (pszSet && *pszSet) ? pszSet : NULL);
-			SafeFree(pszExpanded);
+			pSetEnv->Set(p->pszName, p->pszValue);
 		}
 		else if (lstrcmpi(p->szCmd, L"alias") == 0)
 		{
 			// NULL will remove alias
 			// We set aliases for "cmd.exe" executable, as Far Manager supports too
-			AddConsoleAlias(p->pszName, (p->pszValue && *p->pszValue) ? p->pszValue : NULL, L"cmd.exe");
+			pSetEnv->Alias(p->pszName, p->pszValue);
 		}
 		else if (lstrcmp(p->szCmd, L"chcp") == 0)
 		{
-			UINT nCP = GetCpFromString(p->pszName);
-			if (nCP > 0 && nCP <= 0xFFFF)
-			{
-				//Issue 60: BUGBUG: On some OS versions (Win2k3, WinXP) SetConsoleCP (and family) just hangs
-				SetConsoleCpHelper(nCP);
-			}
+			pSetEnv->ChCp(p->pszName);
 		}
 		else if (lstrcmp(p->szCmd, L"title") == 0)
 		{
-			// Do not do anything here...
+			pSetEnv->Title(p->pszName);
 		}
 		else
 		{
@@ -463,6 +472,7 @@ bool CProcessEnvCmd::Apply()
 	return bEnvChanged;
 }
 
+// Helper to fill CESERVER_REQ_SRVSTARTSTOPRET::pszCommands
 wchar_t* CProcessEnvCmd::Allocate(size_t* pchSize)
 {
 	wchar_t* pszData = NULL;
@@ -482,28 +492,34 @@ wchar_t* CProcessEnvCmd::Allocate(size_t* pchSize)
 				if ((lstrcmp(p->szCmd, L"set") == 0) || (lstrcmp(p->szCmd, L"alias") == 0))
 				{
 					cpyadv(pszDst, p->szCmd);
-					pszDst++; // leave '\0'
+					*(pszDst++) = L' ';
+					*(pszDst++) = L'\"';
 					cpyadv(pszDst, p->pszName);
-					*(pszDst++) = L'='; // replace '\0' with '='
+					*(pszDst++) = L'='; // name=value
 					if (p->pszValue)
 						cpyadv(pszDst, p->pszValue);
 					else
 						*pszDst = 0;
-					pszDst++; // leave '\0'
+					*(pszDst++) = L'\"';
+					*(pszDst++) = L'\n';
 				}
 				else if (lstrcmp(p->szCmd, L"chcp") == 0)
 				{
 					cpyadv(pszDst, L"chcp");
-					pszDst++; // leave '\0'
+					*(pszDst++) = L' ';
+					*(pszDst++) = L'\"';
 					cpyadv(pszDst, p->pszName);
-					pszDst++; // leave '\0'
+					*(pszDst++) = L'\"';
+					*(pszDst++) = L'\n';
 				}
 				else if (lstrcmp(p->szCmd, L"title") == 0)
 				{
 					cpyadv(pszDst, L"title");
-					pszDst++; // leave '\0'
+					*(pszDst++) = L' ';
+					*(pszDst++) = L'\"';
 					cpyadv(pszDst, p->pszName);
-					pszDst++; // leave '\0'
+					*(pszDst++) = L'\"';
+					*(pszDst++) = L'\n';
 				}
 				else
 				{
@@ -513,7 +529,7 @@ wchar_t* CProcessEnvCmd::Allocate(size_t* pchSize)
 
 			// Fin
 			cchData = (pszDst - pszData + 1);
-			_ASSERTE(cchData > 2 && pszData[cchData-2] == 0 && pszData[cchData-3] != 0 && pszData[cchData]);
+			_ASSERTE(cchData > 2 && pszData[cchData-2] == L'\n' && pszData[cchData-3] != 0 && pszData[cchData]);
 			pszData[cchData-1] = 0; // MSZZ
 		}
 	}

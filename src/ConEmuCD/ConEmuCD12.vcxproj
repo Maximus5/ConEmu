@@ -962,6 +962,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CustomBuild>
+    <ClInclude Include="StartEnv.h" />
     <ClInclude Include="UnicodeTest.h" />
   </ItemGroup>
   <ItemGroup>
@@ -1019,6 +1020,7 @@
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">Default</BasicRuntimeChecks>
       <BufferSecurityCheck Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">false</BufferSecurityCheck>
     </ClCompile>
+    <ClCompile Include="StartEnv.cpp" />
     <ClCompile Include="UnicodeTest.cpp" />
   </ItemGroup>
   <ItemGroup>

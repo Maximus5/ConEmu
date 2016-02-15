@@ -8006,6 +8006,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	LPCWSTR pszTemp = NULL;
 	LPCWSTR pszIconFile = (m_Args.pszIconFile && *m_Args.pszIconFile) ? m_Args.pszIconFile : NULL;
 	bool bAsAdmin = false;
+	CStartEnvTitle setTitle(&ms_DefTitle);
 
 	if (m_Args.pszSpecialCmd)
 	{
@@ -8038,7 +8039,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	}
 
 	// Parse command line
-	ProcessSetEnvCmd(lpszCmd, false, &ms_DefTitle);
+	ProcessSetEnvCmd(lpszCmd, NULL, &setTitle);
 	pszTemp = lpszCmd;
 
 	if (0 == NextArg(&pszTemp, szExe))
@@ -15956,7 +15957,7 @@ BOOL CRealConsole::GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName,
 	LPCWSTR pszCmd = GetCmd();
 	// Strip from startup command: set, chcp, title, etc.
 	if (pszCmd)
-		ProcessSetEnvCmd(pszCmd, false);
+		ProcessSetEnvCmd(pszCmd);
 	// Now we can compare executable name
 	TODO("PortableApps!!! Запускаться может, например, CommandPromptPortable.exe, а стартовать cmd.exe");
 	if (pszCmd && *pszCmd && asAppFileName && *asAppFileName)

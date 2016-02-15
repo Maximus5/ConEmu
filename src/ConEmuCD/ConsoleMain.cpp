@@ -98,6 +98,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConsoleHelp.h"
 #include "GuiMacro.h"
 #include "Debugger.h"
+#include "StartEnv.h"
 #include "UnicodeTest.h"
 
 
@@ -200,7 +201,6 @@ BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
 wchar_t* gpszRunCmd = NULL;
 wchar_t* gpszRootExe = NULL; // may be set with '/ROOTEXE' switch if used with '/TRMPID'. full path to root exe
-wchar_t* gpszForcedTitle = NULL;
 CProcessEnvCmd* gpSetEnv = NULL;
 LPCWSTR gpszCheck4NeedCmd = NULL; // Для отладки
 wchar_t gszComSpec[MAX_PATH+1] = {0};
@@ -2828,7 +2828,8 @@ void ApplyProcessSetEnvCmd()
 {
 	if (gpSetEnv)
 	{
-		gpSetEnv->Apply();
+		CStartEnv setEnv;
+		gpSetEnv->Apply(&setEnv);
 	}
 }
 
@@ -2837,56 +2838,10 @@ void ApplyEnvironmentCommands(wchar_t* pszCommand)
 {
 	UINT nSetCP = 0; // Postponed
 
-	// Do loop
-	while (*pszCommand)
-	{
-		if (lstrcmpi(pszCommand, L"set") == 0)
-		{
-			// Get variable "Name=Value"
-			wchar_t* pszName = pszCommand + lstrlen(pszCommand) + 1;
-			// Get next command
-			pszCommand = pszName + lstrlen(pszName) + 1;
-			// Process it
-			wchar_t* pszValue = (wchar_t*)wcschr(pszName, L'=');
-			if (pszValue)
-				*(pszValue++) = 0;
-			wchar_t* pszExpand = ExpandEnvStr(pszValue);
-			SetEnvironmentVariable(pszName, pszExpand ? pszExpand : pszValue);
-			SafeFree(pszExpand);
-		}
-		else if (lstrcmpi(pszCommand, L"alias") == 0)
-		{
-			// Get variable "Name=Value"
-			wchar_t* pszName = pszCommand + lstrlen(pszCommand) + 1;
-			// Get next command
-			pszCommand = pszName + lstrlen(pszName) + 1;
-			// Process it
-			wchar_t* pszValue = (wchar_t*)wcschr(pszName, L'=');
-			if (pszValue)
-				*(pszValue++) = 0;
-			// NULL will remove alias
-			// We set aliases for "cmd.exe" executable, as Far Manager supports too
-			AddConsoleAlias(pszName, pszValue && *pszValue ? pszValue : NULL, L"cmd.exe");
-		}
-		else if (lstrcmpi(pszCommand, L"chcp") == 0)
-		{
-			wchar_t* pszCP = pszCommand + lstrlen(pszCommand) + 1;
-			pszCommand = pszCP + lstrlen(pszCP) + 1;
-			nSetCP = GetCpFromString(pszCP);
-		}
-		else
-		{
-			wchar_t* pszUnsupported = pszCommand + lstrlen(pszCommand) + 1;
-			_ASSERTE(FALSE && "Command was not implemented yet");
-			pszCommand = pszUnsupported + lstrlen(pszUnsupported) + 1;
-		}
-	}
+	if (!gpSetEnv)
+		gpSetEnv = new CProcessEnvCmd();
 
-	// Postponed commands?
-	if (nSetCP)
-	{
-		SetConsoleCpHelper(nSetCP);
-	}
+	gpSetEnv->AddLines(pszCommand);
 }
 
 // Parse ConEmuC command line switches
@@ -4092,12 +4047,10 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			//  "set PATH=C:\Program Files;%PATH%"
 			//  chcp [utf8|ansi|oem|<cp_no>]
 			//  title "Console init title"
-			CEStr lsForcedTitle;
 			if (!gpSetEnv)
 				gpSetEnv = new CProcessEnvCmd();
-			ProcessSetEnvCmd(lsCmdLine, true, &lsForcedTitle, gpSetEnv);
-			if (!lsForcedTitle.IsEmpty())
-				gpszForcedTitle = lsForcedTitle.Detach();
+			CStartEnvTitle setTitleVar(&gpszForcedTitle);
+			ProcessSetEnvCmd(lsCmdLine, gpSetEnv, &setTitleVar);
 		}
 
 		gpszCheck4NeedCmd = lsCmdLine; // Для отладки

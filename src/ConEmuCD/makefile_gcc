@@ -67,6 +67,7 @@ SRCS = \
 		InjectRemote.cpp   \
 		Queue.cpp          \
 		SrvPipes.cpp       \
+		StartEnv.cpp       \
 		UnicodeTest.cpp
 
 include ../makefile_gcc_target

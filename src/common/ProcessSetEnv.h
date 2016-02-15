@@ -32,9 +32,42 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MArray.h"
 
 class CProcessEnvCmd;
+class CStartEnvBase;
 
-bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, bool bDoSet, CEStr* rpsTitle = NULL, CProcessEnvCmd* pSetEnv = NULL);
-bool SetConsoleCpHelper(UINT nCP);
+
+bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, CProcessEnvCmd* pSetEnv = NULL, CStartEnvBase* pDoSet = NULL);
+
+
+// Define callback interface
+class CStartEnvBase
+{
+public:
+	// Methods
+	virtual void Alias(LPCWSTR asName, LPCWSTR asValue) = 0;
+	virtual void ChCp(LPCWSTR asCP) = 0;
+	virtual void Set(LPCWSTR asName, LPCWSTR asValue) = 0;
+	virtual void Title(LPCWSTR asTitle) = 0;
+};
+
+class CStartEnvTitle : public CStartEnvBase
+{
+protected:
+	wchar_t** mppsz_Title;
+	CEStr* mps_Title;
+public:
+	CStartEnvTitle(wchar_t** ppszTitle);
+	CStartEnvTitle(CEStr* psTitle);
+	virtual ~CStartEnvTitle() {};
+
+public:
+	// Methods
+	virtual void Alias(LPCWSTR asName, LPCWSTR asValue) {};
+	virtual void ChCp(LPCWSTR asCP) {};
+	virtual void Set(LPCWSTR asName, LPCWSTR asValue) {};
+	virtual void Title(LPCWSTR asTitle);
+};
+
+
 
 class CProcessEnvCmd
 {
@@ -64,7 +97,7 @@ public:
 
 public:
 	// Apply routine, returns true if environment was set/changed
-	bool Apply();
+	bool Apply(CStartEnvBase* pSetEnv);
 
 public:
 	// Allocate MSZZ block

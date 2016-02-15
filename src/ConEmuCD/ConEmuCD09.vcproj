@@ -445,6 +445,7 @@
       <File RelativePath=".\GuiMacro.h" />
       <File RelativePath=".\Queue.h" />
       <File RelativePath=".\resource.h" />
+      <File RelativePath=".\StartEnv.h" />
       <File RelativePath=".\UnicodeTest.h" />
     </Filter>
     <Filter Name="Resource Files" Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav" UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
@@ -505,6 +506,7 @@
           <Tool Name="VCCLCompilerTool" BasicRuntimeChecks="0" BufferSecurityCheck="false" />
         </FileConfiguration>
       </File>
+      <File RelativePath=".\StartEnv.cpp" />
       <File RelativePath=".\UnicodeTest.cpp" />
     </Filter>
     <Filter Name="1 - Registry">
