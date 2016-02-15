@@ -771,6 +771,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	bool     bProcessed = true;
 	bool     bToBottom = false;
 	bool     bAsciiPrint = false;
+	bool     bExpandEnvVar = false;
 	bool     bStreamBy1 = false;
 	CEStr    szArg;
 	HANDLE   hFile = NULL;
@@ -792,6 +793,9 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		// ‘RAW’: Do not process ANSI and specials (^e^[^r^n^t^b...)
 		else if (lstrcmpi(szArg, L"-r") == 0)
 			bProcessed = false;
+		// Expand environment variables before echo
+		else if (lstrcmpi(szArg, L"-x") == 0)
+			bExpandEnvVar = true;
 		// Scroll to bottom of screen buffer (ConEmu TrueColor buffer compatible)
 		else if (lstrcmpi(szArg, L"-b") == 0)
 			bToBottom = true;
@@ -837,6 +841,14 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	}
 	else if (eExecAction == ea_OutEcho)
 	{
+		CEStr lsExpand;
+		if (bExpandEnvVar && wcschr(asCmdArg, L'%'))
+		{
+			lsExpand = ExpandEnvStr(asCmdArg);
+			if (!lsExpand.IsEmpty())
+				asCmdArg = lsExpand.ms_Val;
+		}
+
 		// Get the string
 		int nLen = lstrlen(asCmdArg);
 		if ((nLen < 1) && !bAddNewLine)
