@@ -13663,7 +13663,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				if (this->isValid(pRCon))
 				{
 					CVConGuard VCon(pRCon->VCon());
-					MsgBox(pszErrMsg, MB_ICONSTOP|MB_SYSTEMMODAL, ghWnd, false);
+					MsgBox(pszErrMsg, MB_ICONSTOP|MB_SYSTEMMODAL, NULL, ghWnd, false);
 				}
 
 				free(pszErrMsg);

@@ -421,7 +421,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 			_wsprintf(pszMsg, SKIPLEN(nCchSize)
 				L"File already exists!\n\n%s\nSize: %I64i\nDate: %02i.%02i.%i %02i:%02i:%02i\n\nOverwrite?",
 				pszFullName, liSize.QuadPart, st.wDay, st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond);
-			int nRc = MsgBox(pszMsg, MB_ICONEXCLAMATION|MB_YESNO, gpConEmu->GetDefaultTitle(), gnWnd, false);
+			int nRc = MsgBox(pszMsg, MB_ICONEXCLAMATION|MB_YESNO, gpConEmu->GetDefaultTitle(), ghWnd, false);
 			free(pszMsg);
 
 			if (nRc != IDYES)
