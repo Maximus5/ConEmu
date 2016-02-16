@@ -705,8 +705,15 @@ wrap:
 }
 
 
+// The function exists in both "ConEmuC/ConEmuC.cpp" and "ConEmuCD/Actions.cpp"
+// Version in "ConEmuC/ConEmuC.cpp" shows arguments from main(int argc, char** argv)
+// Version in "ConEmuCD/Actions.cpp" perhaps would not be ever called
 int DoParseArgs(LPCWSTR asCmdLine)
 {
+	_printf("Parsing command\n  `");
+	_wprintf(asCmdLine);
+	_printf("`\n");
+
 	int iShellCount = 0;
 	LPWSTR* ppszShl = CommandLineToArgvW(asCmdLine, &iShellCount);
 
@@ -715,20 +722,20 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	_printf("ConEmu `NextArg` splitter\n");
 	while (NextArg(&asCmdLine, szArg) == 0)
 	{
-		_printf("%u: `", ++i);
+		_printf("  %u: `", ++i);
 		_wprintf(szArg);
 		_printf("`\n");
 	}
-	_printf("Total arguments parsed: %u\n", i);
+	_printf("  Total arguments parsed: %u\n", i);
 
 	_printf("Standard shell splitter\n");
 	for (int j = 0; j < iShellCount; j++)
 	{
-		_printf("%u: `", j);
+		_printf("  %u: `", j);
 		_wprintf(ppszShl[j]);
 		_printf("`\n");
 	}
-	_printf("Total arguments parsed: %u\n", iShellCount);
+	_printf("  Total arguments parsed: %u\n", iShellCount);
 	LocalFree(ppszShl);
 
 	return i;

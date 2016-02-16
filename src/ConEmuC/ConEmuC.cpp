@@ -146,6 +146,24 @@ void _wprintf(LPCWSTR asBuffer)
 	}
 }
 
+void _printf(LPCSTR asBuffer)
+{
+	if (!asBuffer) return;
+
+	int nAllLen = lstrlenA(asBuffer);
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD dwWritten = 0;
+
+	if (!IsOutputRedirected())
+	{
+		WriteConsoleA(hOut, asBuffer, nAllLen, &dwWritten, 0);
+	}
+	else
+	{
+		WriteFile(hOut, asBuffer, nAllLen, &dwWritten, 0);
+	}
+}
+
 void PrintVersion()
 {
 	wchar_t szProgInfo[255], szVer[32];
@@ -163,6 +181,74 @@ void Help()
 	// See definition in "ConEmuCD/ConsoleHelp.h"
 	_wprintf(pConsoleHelp);
 	_wprintf(pNewConsoleHelp);
+}
+
+static int gn_argc = 0;
+static char** gp_argv = NULL;
+
+// The function exists in both "ConEmuC/ConEmuC.cpp" and "ConEmuCD/Actions.cpp"
+// Version in "ConEmuC/ConEmuC.cpp" shows arguments from main(int argc, char** argv)
+// Version in "ConEmuCD/Actions.cpp" perhaps would not be ever called
+int DoParseArgs(LPCWSTR asCmdLine)
+{
+	char szLine[80];
+
+	_wsprintfA(szLine, SKIPLEN(countof(szLine)) "main arguments (%i)\n", gn_argc);
+	_printf(szLine);
+	for (int j = 0; j < gn_argc; j++)
+	{
+		_wsprintfA(szLine, SKIPLEN(countof(szLine)) "  %u: ", j);
+		_printf(szLine);
+		if (!gp_argv)
+		{
+			_printf("*NULL");
+		}
+		else if (!gp_argv[j])
+		{
+			_printf("<NULL>");
+		}
+		else
+		{
+			_printf("`");
+			_printf(gp_argv[j]);
+			_printf("`");
+		}
+		_printf("\n");
+	}
+
+	_printf("Parsing command\n  `");
+	_wprintf(asCmdLine);
+	_printf("`\n");
+
+	int iShellCount = 0;
+	LPWSTR* ppszShl = CommandLineToArgvW(asCmdLine, &iShellCount);
+
+	int i = 0;
+	CEStr szArg;
+	_printf("ConEmu `NextArg` splitter\n");
+	while (NextArg(&asCmdLine, szArg) == 0)
+	{
+		_wsprintfA(szLine, SKIPLEN(countof(szLine)) "  %u: `", ++i);
+		_printf(szLine);
+		_wprintf(szArg);
+		_printf("`\n");
+	}
+	_wsprintfA(szLine, SKIPLEN(countof(szLine)) "  Total arguments parsed: %u\n", i);
+	_printf(szLine);
+
+	_printf("Standard shell splitter\n");
+	for (int j = 0; j < iShellCount; j++)
+	{
+		_wsprintfA(szLine, SKIPLEN(countof(szLine)) "  %u: `", j);
+		_printf(szLine);
+		_wprintf(ppszShl[j]);
+		_printf("`\n");
+	}
+	_wsprintfA(szLine, SKIPLEN(countof(szLine)) "  Total arguments parsed: %u\n", iShellCount);
+	_printf(szLine);
+	LocalFree(ppszShl);
+
+	return i;
 }
 
 bool ProcessCommandLine(int& iRc, HMODULE& hConEmu)
@@ -217,6 +303,13 @@ bool ProcessCommandLine(int& iRc, HMODULE& hConEmu)
 				break;
 			}
 
+			if ((lstrcmpi(lsArg, L"/Args") == 0) ||  (lstrcmpi(lsArg, L"/ParseArgs") == 0))
+			{
+				iRc = DoParseArgs(pszCmdLine);
+				bProcessed = true;
+				break;
+			}
+
 			if ((lstrcmpi(lsArg, L"/?") == 0)
 				|| (lstrcmpi(lsArg, L"/h") == 0)
 				|| (lstrcmpi(lsArg, L"/help") == 0)
@@ -257,6 +350,8 @@ bool ProcessCommandLine(int& iRc, HMODULE& hConEmu)
 
 int main(int argc, char** argv)
 {
+	gn_argc = argc; gp_argv = argv;
+
 	int iRc = 0;
 	HMODULE hConEmu = NULL;
 	wchar_t szErrInfo[200];
