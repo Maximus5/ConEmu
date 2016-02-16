@@ -150,6 +150,7 @@ int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/
 
 	size_t nArgLen = 0;
 	bool lbQMode = false;
+	bool lbDemangleDblQuotes = false;
 
 	// аргумент начинается с "
 	if (*psCmdLine == L'"')
@@ -198,6 +199,7 @@ int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/
 		{
 			pch += 2;
 			pch = wcschr(pch, L'"');
+			lbDemangleDblQuotes = true;
 
 			if (!pch) return CERR_CMDLINE;
 		}
@@ -217,11 +219,30 @@ int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/
 		//if (!pch) pch = psCmdLine + lstrlenW(psCmdLine); // до конца строки
 	}
 
+	_ASSERTE(pch >= psCmdLine);
 	nArgLen = pch - psCmdLine;
 
-	// Вернуть аргумент
-	if (!rsArg.Set(psCmdLine, nArgLen))
-		return CERR_CMDLINE;
+	// Set result arugment
+	if (!lbDemangleDblQuotes)
+	{
+		if (!rsArg.Set(psCmdLine, nArgLen))
+			return CERR_CMDLINE;
+	}
+	else
+	{
+		wchar_t* ptrDst = rsArg.GetBuffer(nArgLen);
+		if (!ptrDst)
+			return CERR_CMDLINE;
+		for (size_t i = 0; i < nArgLen; i++)
+		{
+			*(ptrDst++) = psCmdLine[i];
+			if ((psCmdLine[i] == L'"')
+				&& ((i+1) < nArgLen)
+				&& (psCmdLine[i+1] == L'"'))
+				i++; // Demangle `""` into `"`
+		}
+		*ptrDst = 0;
+	}
 	rsArg.mn_TokenNo++;
 
 	if (rsArgStart) *rsArgStart = psCmdLine;
