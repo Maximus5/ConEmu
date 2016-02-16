@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define QuotationNeededChars  (L" " CmdEscapeNeededChars)
 
 int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart=NULL);
+bool DemangleArg(LPCWSTR asArg, INT_PTR iLen /* = -1 */, CEStr& rsDemangle);
 
 typedef DWORD NEXTLINEFLAGS;
 const NEXTLINEFLAGS

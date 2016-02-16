@@ -38,6 +38,75 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MWow64Disable.h"
 #endif
 
+bool DemangleArg(LPCWSTR asArg, INT_PTR iLen /* = -1 */, CEStr& rsDemangle)
+{
+	// Process special symbols: ^e^[^r^n^t^b
+
+	if ((iLen == 0) || !asArg || !*asArg)
+	{
+		if (!rsDemangle.Set(L""))
+			return false;
+		return true;
+	}
+
+	if (iLen < 0)
+		iLen = lstrlen(asArg);
+
+	LPCWSTR pchCap = wcschr(asArg, L'^');
+
+	if ((pchCap == NULL) || ((INT_PTR)(pchCap - asArg) >= iLen))
+	{
+		// Nothing to replace
+		if (!rsDemangle.Set(asArg, iLen))
+			return false;
+	}
+	else
+	{
+		wchar_t* pszDst = rsDemangle.GetBuffer(iLen);
+		if (!pszDst)
+			return false;
+
+		const wchar_t* pszSrc = asArg;
+		const wchar_t* pszEnd = asArg + iLen;
+		while (pszSrc < pszEnd)
+		{
+			if (*pszSrc == L'^')
+			{
+				switch (*(++pszSrc))
+				{
+				case L'^':
+					*pszDst = L'^'; break;
+				case L'r': case L'R':
+					*pszDst = L'\r'; break;
+				case L'n': case L'N':
+					*pszDst = L'\n'; break;
+				case L't': case L'T':
+					*pszDst = L'\t'; break;
+				case L'a': case L'A':
+					*pszDst = 7; break;
+				case L'b': case L'B':
+					*pszDst = L'\b'; break;
+				case L'e': case L'E': case L'[':
+					*pszDst = 27; break;
+				default:
+					// Unknown ctrl-sequence, bypass
+					*(pszDst++) = *(pszSrc++);
+					continue;
+				}
+				pszDst++; pszSrc++;
+			}
+			else
+			{
+				*(pszDst++) = *(pszSrc++);
+			}
+		}
+		// Was processed? Zero terminate it.
+		*pszDst = 0;
+	}
+
+	return true;
+}
+
 // Function checks, if we need drop first and last quotation marks
 // Example: ""7z.exe" /?"
 // Using cmd.exe rules
