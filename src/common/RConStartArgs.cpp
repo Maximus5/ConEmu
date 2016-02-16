@@ -83,7 +83,7 @@ void RConStartArgs::RunArgTests()
 		{L"\"\"c:\\Windows\\System32\\cmd.exe\" /?\"", {L"c:\\Windows\\System32\\cmd.exe", L"/?"}},
 		// Following example is crazy, but quotation issues may happens
 		//{L"First Sec\"\"ond \"Thi\"rd\" \"Fo\"\"rth\"", {L"First", L"Sec\"\"ond", L"Thi\"rd", L"Fo\"\"rth"}},
-		{L"First \"Fo\"\"rth\"", {L"First", L"Fo\"\"rth"}},
+		{L"First \"Fo\"\"rth\"", {L"First", L"Fo\"rth"}},
 		// Multiple commands
 		{L"set ConEmuReportExe=VIM.EXE & SH.EXE", {L"set", L"ConEmuReportExe=VIM.EXE", L"&", L"SH.EXE"}},
 		// Inside escaped arguments
@@ -116,7 +116,10 @@ void RConStartArgs::RunArgTests()
 			else
 			{
 				nDbg = lstrcmp(s, lsArgTest[i].pszCmp[j]);
-				_ASSERTE(nDbg==0);
+				if (nDbg != 0)
+				{
+					_ASSERTE(nDbg==0);
+				}
 			}
 		}
 	}

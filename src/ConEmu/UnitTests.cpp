@@ -266,6 +266,36 @@ void DebugNeedCmdUnitTests()
 	}
 }
 
+void DebugCmdParserTests()
+{
+	RConStartArgs::RunArgTests();
+
+	struct strTests { wchar_t szTest[100], szCmp[100]; }
+	Tests[] = {
+		{ L"\"Test1 & ^ \"\" Test2\"  Test3  \"Test \"\" 4\"", L"Test1 & ^ \" Test2\0Test3\0Test \" 4\0\0" }
+	};
+
+	LPCWSTR pszSrc, pszCmp;
+	CEStr ls;
+	int iCmp;
+	for (INT_PTR i = 0; i < countof(Tests); i++)
+	{
+		pszSrc = Tests[i].szTest;
+		pszCmp = Tests[i].szCmp;
+		while (0 == NextArg(&pszSrc, ls))
+		{
+			iCmp = wcscmp(ls.ms_Val, pszCmp);
+			if (iCmp != 0)
+			{
+				_ASSERTE(lstrcmp(ls.ms_Val, pszCmp) == 0);
+				break;
+			}
+			pszCmp += wcslen(pszCmp)+1;
+		}
+		_ASSERTE(*pszCmp == 0);
+	}
+}
+
 void DebugStrUnitTest()
 {
 	struct strTests { wchar_t szTest[100], szCmp[100]; }
@@ -435,8 +465,8 @@ void DebugJsonTest()
 
 void DebugUnitTests()
 {
-	RConStartArgs::RunArgTests();
 	DebugNeedCmdUnitTests();
+	DebugCmdParserTests();
 	UnitMaskTests();
 	UnitDriveTests();
 	UnitFileNamesTest();
