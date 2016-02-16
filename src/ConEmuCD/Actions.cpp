@@ -767,10 +767,8 @@ HMODULE LoadConEmuHk()
 int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 {
 	int iRc = 0;
-	wchar_t* pszTemp = NULL;
-	wchar_t* pszLine = NULL;
+	CEStr    szTemp;
 	char*    pszOem = NULL;
-	char*    pszFile = NULL;
 	LPCWSTR  pszText = NULL;
 	DWORD    cchLen = 0, dwWritten = 0;
 	HANDLE   hOut = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -833,125 +831,52 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		{
 			_ASSERTE(!bAsciiPrint || !DefaultCP);
 			DWORD nSize = 0, nErrCode = 0;
-			int iRead = ReadTextFile(szArg, (1<<24), pszTemp, cchLen, nErrCode, bAsciiPrint ? (DWORD)-1 : DefaultCP);
+			int iRead = ReadTextFile(szArg, (1<<24), szTemp.ms_Val, cchLen, nErrCode, bAsciiPrint ? (DWORD)-1 : DefaultCP);
 			if (iRead < 0)
 			{
 				wchar_t szInfo[100];
 				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\r\nCode=%i, Error=%u\r\n", iRead, nErrCode);
-				pszTemp = lstrmerge(L"Reading source file failed!\r\n", szArg, szInfo);
-				cchLen = pszTemp ? lstrlen(pszTemp) : 0;
+				szTemp = lstrmerge(L"Reading source file failed!\r\n", szArg, szInfo);
+				cchLen = szTemp.GetLen();
 				bAsciiPrint = false;
 				iRc = 4;
 			}
-			pszText = pszTemp;
+			pszText = szTemp.ms_Val;
 		}
 	}
 	else if (eExecAction == ea_OutEcho)
 	{
-		CEStr lsExpand;
-		if (bExpandEnvVar && wcschr(asCmdArg, L'%'))
+		_ASSERTE(szTemp.ms_Val == NULL);
+
+		while (NextArg(&asCmdArg, szArg) == 0)
 		{
-			lsExpand = ExpandEnvStr(asCmdArg);
-			if (!lsExpand.IsEmpty())
-				asCmdArg = lsExpand.ms_Val;
-		}
+			LPCWSTR pszAdd = szArg.ms_Val;
+			_ASSERTE(pszAdd!=NULL);
 
-		// Get the string
-		int nLen = lstrlen(asCmdArg);
-		if ((nLen < 1) && !bAddNewLine)
-			goto wrap;
+			CEStr lsExpand, lsDemangle;
 
-		// Cut double-quotes, trailing spaces, process ASCII analogues
-		if (nLen > 0)
-		{
-			int j = nLen-1;
-			pszLine = lstrdup(asCmdArg,2/*Add two extra wchar_t*/);
-			if (!pszLine)
+			// Expand environment variables
+			// TODO: Expand !Variables! too
+			if (bExpandEnvVar && wcschr(pszAdd, L'%'))
 			{
-				iRc = 100; goto wrap;
-			}
-
-			while ((j > 0) && (pszLine[j] == L' '))
-			{
-				pszLine[j--] = 0;
-			}
-
-			if (((nLen > 2) && (asCmdArg[0] == L'"'))
-				&& ((j > 0) && (pszLine[j] == L'"')))
-			{
-				pszLine[j] = 0;
-				asCmdArg = pszLine + 1;
-			}
-			else
-			{
-				asCmdArg = pszLine;
-				j++;
-				_ASSERTE(j >= 0 && j <= nLen);
-			}
-
-			if (bAddNewLine)
-			{
-				pszLine[j++] = L'\r';
-				pszLine[j++] = L'\n';
-				pszLine[j] = 0;
-				bAddNewLine = false; // Already prepared
+				lsExpand = ExpandEnvStr(pszAdd);
+				if (!lsExpand.IsEmpty())
+					pszAdd = lsExpand.ms_Val;
 			}
 
 			// Process special symbols: ^e^[^r^n^t^b
-			if (bProcessed)
+			if (bProcessed && wcschr(pszAdd, L'^'))
 			{
-				wchar_t* pszDst = wcschr(pszLine, L'^');
-				if (pszDst)
-				{
-					const wchar_t* pszSrc = pszDst;
-					const wchar_t* pszEnd = pszLine + j;
-					while (pszSrc < pszEnd)
-					{
-						if (*pszSrc == L'^')
-						{
-							switch (*(++pszSrc))
-							{
-							case L'^':
-								*pszDst = L'^'; break;
-							case L'r': case L'R':
-								*pszDst = L'\r'; break;
-							case L'n': case L'N':
-								*pszDst = L'\n'; break;
-							case L't': case L'T':
-								*pszDst = L'\t'; break;
-							case L'a': case L'A':
-								*pszDst = 7; break;
-							case L'b': case L'B':
-								*pszDst = L'\b'; break;
-							case L'e': case L'E': case L'[':
-								*pszDst = 27; break;
-							default:
-								// Unknown ctrl-sequence, bypass
-								*(pszDst++) = *(pszSrc++);
-								continue;
-							}
-							pszDst++; pszSrc++;
-						}
-						else
-						{
-							*(pszDst++) = *(pszSrc++);
-						}
-					}
-					// Was processed? Zero terminate it.
-					*pszDst = 0;
-				}
+				if (DemangleArg(pszAdd, -1/*process all chars*/, lsDemangle))
+					pszAdd = lsDemangle.ms_Val;
 			}
+
+			lstrmerge(&szTemp.ms_Val, szTemp.IsEmpty() ? NULL : L" ", pszAdd);
 		}
 
 		if (bAddNewLine)
-		{
-			pszTemp = lstrmerge(asCmdArg, L"\r\n");
-			pszText = pszTemp;
-		}
-		else
-		{
-			pszText = asCmdArg;
-		}
+			lstrmerge(&szTemp.ms_Val, L"\r\n");
+		pszText = szTemp.ms_Val;
 		cchLen = pszText ? lstrlen(pszText) : 0;
 	}
 
@@ -1056,8 +981,6 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		iRc = 3;
 
 wrap:
-	SafeFree(pszLine);
-	SafeFree(pszTemp);
 	SafeFree(pszOem);
 	return iRc;
 }
