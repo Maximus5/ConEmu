@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "VConChild.h"
 #include "version.h"
+#include "../common/MSetter.h"
 #include "../common/WObjects.h"
 #include "../common/StartupEnvEx.h"
 
@@ -538,6 +539,7 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 			szTitle.ms_Val,
 			MB_USERICON, MAKEINTRESOURCE(IMAGE_ICON), 0, NULL, LANG_NEUTRAL
 		};
+		MSetter lInCall(&gnInMsgBox);
 		// Use MessageBoxIndirect instead of MessageBox to show our icon instead of std ICONINFORMATION
 		MessageBoxIndirect(&mb);
 	}
