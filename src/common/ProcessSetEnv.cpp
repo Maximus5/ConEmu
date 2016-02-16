@@ -266,11 +266,24 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 					break;
 				lstrmerge(&lsSwitches.ms_Val, lsSwitches.IsEmpty() ? NULL : L" ", lsSet.ms_Val);
 			}
-			// Next argument is expected to be processed text or file
-			if (NextArg(&lsCmdLine, lsSet) == 0)
+			// Rest arguments are expected to be processed text or file
+			CEStr lsAdd; const wchar_t* pchStart = NULL;
+			while (NextArg(&lsCmdLine, lsSet, &pchStart) == 0)
 			{
 				bTokenOk = true;
-				Add(lsCmd, lsSwitches, lsSet);
+				lstrmerge(&lsAdd.ms_Val,
+					lsAdd.IsEmpty() ? NULL : L" ",
+					(*pchStart == L'"') ? L"\"" : NULL,
+					lsSet.ms_Val,
+					(*pchStart == L'"') ? L"\"" : NULL);
+				lsCmdLine = SkipNonPrintable(lsCmdLine);
+				if (!*lsCmdLine || (*lsCmdLine == L'&') || (*lsCmdLine == L'|'))
+					break;
+
+			}
+			if (!lsAdd.IsEmpty())
+			{
+				Add(lsCmd, lsSwitches, lsAdd);
 			}
 		}
 		else
