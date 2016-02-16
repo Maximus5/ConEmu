@@ -77,7 +77,7 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	szUpdateVerLocation = NULL;
 	isUpdateCheckOnStartup = false;
 	isUpdateCheckHourly = false;
-	isUpdateConfirmDownload = true; // true-Show MessageBox, false-notify via TSA only
+	isUpdateConfirmDownload = true; // true-Show MsgBox, false-notify via TSA only
 	isUpdateUseBuilds = 0; // 0-спросить пользователя при первом запуске, 1-stable only, 2-latest, 3-preview
 	isUpdateInetTool = false;
 	szUpdateInetTool = NULL;

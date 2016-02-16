@@ -1329,7 +1329,6 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				}
 				else if (!klstricmp(curCommand, _T("/?")) || !klstricmp(curCommand, _T("/h")) || !klstricmp(curCommand, _T("/help")))
 				{
-					//MessageBox(NULL, pHelp, L"About ConEmu...", MB_ICONQUESTION);
 					if (gpLng) gpLng->Reload();
 					ConEmuAbout::OnInfo_About();
 					iResult = -1;

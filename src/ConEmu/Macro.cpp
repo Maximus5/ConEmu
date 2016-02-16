@@ -178,7 +178,7 @@ namespace ConEmuMacro
 	LPWSTR Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Menu(Type)
 	LPWSTR Menu(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	// MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
+	// MsgBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
 	LPWSTR MsgBox(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Palette([<Cmd>[,"<NewPalette>"]])
 	LPWSTR Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
@@ -1942,7 +1942,7 @@ LPWSTR ConEmuMacro::Menu(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	return lstrdup(L"InvalidArg");
 }
 
-// MessageBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
+// MsgBox(ConEmu,asText,asTitle,anType) // LPWSTR asText [, LPWSTR asTitle[, int anType]]
 LPWSTR ConEmuMacro::MsgBox(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	LPWSTR pszText = NULL, pszTitle = NULL;

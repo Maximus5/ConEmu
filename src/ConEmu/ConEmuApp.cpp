@@ -2419,7 +2419,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 
 	if (!dwMsgFlags) dwMsgFlags = MB_SYSTEMMODAL | MB_ICONERROR;
 
-	WARNING("!!! Заменить MessageBox на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
+	WARNING("!!! Заменить MsgBox на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
 
 	BOOL lb = gbInDisplayLastError; gbInDisplayLastError = TRUE;
 	nBtn = MsgBox(out ? out : asLabel, dwMsgFlags, asTitle, hParent);

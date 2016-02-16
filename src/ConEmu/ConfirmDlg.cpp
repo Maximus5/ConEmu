@@ -271,7 +271,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		}
 	}
 
-	// Иначе - через стандартный MessageBox
+	// Иначе - через стандартный MsgBox
 
 	if (Parm.asSingleConsole)
 	{
@@ -324,7 +324,7 @@ wrap:
 	return nBtn;
 }
 
-// uType - flags from MessageBox, i.e. MB_YESNOCANCEL
+// uType - flags from MsgBox, i.e. MB_YESNOCANCEL
 int ConfirmDialog(LPCWSTR asMessage,
 	LPCWSTR asMainLabel, LPCWSTR asCaption, LPCWSTR asUrl, UINT uType,
 	LPCWSTR asBtn1Name /*= NULL*/, LPCWSTR asBtn1Hint /*= NULL*/,

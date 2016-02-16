@@ -4215,14 +4215,6 @@ void CVirtualConsole::UpdateInfo()
 	}
 }
 
-//void CVirtualConsole::Box(LPCTSTR szText)
-//{
-//#ifdef _DEBUG
-//	_ASSERT(FALSE);
-//#endif
-//	MessageBox(NULL, szText, mp_ConEmu->GetDefaultTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
-//}
-
 RECT CVirtualConsole::GetRect()
 {
 	RECT rc;

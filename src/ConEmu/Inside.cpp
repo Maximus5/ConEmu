@@ -434,7 +434,6 @@ RepeatCheck:
 			}
 		}
 
-		//MessageBox(L"Can't find appropriate shell window!", MB_ICONSTOP);
 		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"%sCan't find appropriate shell window!\nUnrecognized layout of the Explorer.\n\nContinue in normal mode?", szAddMsg);
 		int nBtn = MsgBox(szMsg, MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
 
@@ -479,7 +478,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 	if (gnOsVer < 0x600)
 	{
 		// WinXP, Win2k3
-		nBtn = IDYES; // MessageBox(L"Tip pane is not found in Explorer window!\nThis pane is required for 'ConEmu Inside' mode.\nDo you want to show this pane?", MB_ICONQUESTION|MB_YESNO);
+		nBtn = IDYES; // MsgBox(L"Tip pane is not found in Explorer window!\nThis pane is required for 'ConEmu Inside' mode.\nDo you want to show this pane?", MB_ICONQUESTION|MB_YESNO);
 		if (nBtn == IDYES)
 		{
 

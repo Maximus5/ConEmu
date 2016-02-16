@@ -326,7 +326,6 @@ class CVirtualConsole :
 		void Free(LPVOID ptr);
 		MSection csCON;
 		int mn_BackColorIdx; //==0
-		//void Box(LPCTSTR szText);
 		typedef struct tag_PARTBRUSHES
 		{
 			wchar_t ch; // 0x2591 0x2592 0x2593 0x2588 - по увеличению плотности
