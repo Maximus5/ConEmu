@@ -266,7 +266,7 @@ void CConEmuUpdate::RequestTerminate()
 
 void CConEmuUpdate::StopChecking()
 {
-	if (MessageBox(NULL, L"Are you sure, stop updates checking?", ms_DefaultTitle, MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO) != IDYES)
+	if (MsgBox(L"Are you sure, stop updates checking?", MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO, ms_DefaultTitle, NULL, false) != IDYES)
 		return;
 
 	RequestTerminate();
@@ -515,7 +515,7 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 		{
 			DontEnable de;
 			LPCWSTR pszConfirm = L"ConEmu was installed with setup!\nAre you sure to update installation with 7zip?";
-			int iBtn = MessageBox(NULL, pszConfirm, ms_DefaultTitle, MB_ICONEXCLAMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_YESNO|MB_DEFBUTTON2);
+			int iBtn = MsgBox(pszConfirm, MB_ICONEXCLAMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_YESNO|MB_DEFBUTTON2, ms_DefaultTitle, NULL, false);
 			if (iBtn != IDYES)
 			{
 				goto wrap;
@@ -1982,7 +1982,7 @@ MsgOnly:
 		pszFile ? pszFile : L"");
 
 
-	iBtn = MessageBox(NULL, pszMsg, ms_DefaultTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO);
+	iBtn = MsgBox(pszMsg, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNO, ms_DefaultTitle, NULL, false);
 
 wrap:
 	InterlockedDecrement(&mn_InShowMsgBox);
@@ -2051,7 +2051,7 @@ MsgOnly:
 		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new " CV_STABLE
 		: (mp_Set->isUpdateUseBuilds==3) ? L"new " CV_PREVIEW : L"new " CV_DEVEL, ms_NewVersion);
 
-	iBtn = MessageBox(NULL, szMsg, ms_DefaultTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNOCANCEL);
+	iBtn = MsgBox(szMsg, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNOCANCEL, ms_DefaultTitle, NULL, false);
 
 wrap:
 	InterlockedDecrement(&mn_InShowMsgBox);
@@ -2125,7 +2125,7 @@ MsgOnly:
 		(LPCWSTR)szInfo,
 		(LPCWSTR)szCurVer);
 
-	iBtn = MessageBox(NULL, szMsg, ms_DefaultTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONINFORMATION|MB_OK);
+	iBtn = MsgBox(szMsg, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONINFORMATION|MB_OK, ms_DefaultTitle, NULL, false);
 
 wrap:
 	InterlockedDecrement(&mn_InShowMsgBox);
@@ -2210,7 +2210,7 @@ void CConEmuUpdate::WaitAllInstances()
 			return;
 
 		// Ругнуться
-		int nBtn = MessageBox(NULL, szMessage, ms_DefaultTitle, MB_ICONEXCLAMATION|MB_OKCANCEL);
+		int nBtn = MsgBox(szMessage, MB_ICONEXCLAMATION|MB_OKCANCEL, ms_DefaultTitle, NULL, false);
 		if (nBtn == IDCANCEL)
 			return; // "Cancel" - means stop checking
 	}

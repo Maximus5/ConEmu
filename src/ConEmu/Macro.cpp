@@ -1952,7 +1952,7 @@ LPWSTR ConEmuMacro::MsgBox(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		if (p->GetStrArg(1, pszTitle))
 			p->GetIntArg(2, nButtons);
 
-	int nRc = MessageBox(NULL, pszText ? pszText : L"", pszTitle ? pszTitle : L"ConEmu Macro", nButtons);
+	int nRc = ::MsgBox(pszText ? pszText : L"", nButtons, pszTitle ? pszTitle : L"ConEmu Macro", NULL, false);
 
 	switch(nRc)
 	{

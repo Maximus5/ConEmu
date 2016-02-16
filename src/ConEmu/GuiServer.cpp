@@ -171,7 +171,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 		wchar_t szMsg[128];
 		msprintf(szMsg, countof(szMsg), L"CGuiServer::GuiServerCommand.\nGUI TID=%u\nSrcPID=%u, SrcTID=%u, Cmd=%u",
 			GetCurrentThreadId(), pIn->hdr.nSrcPID, pIn->hdr.nSrcThreadId, pIn->hdr.nCmd);
-		MessageBox(szMsg, MB_ICONINFORMATION);
+		MsgBox(szMsg, MB_ICONINFORMATION, NULL, NULL, false);
 	}
 	#endif
 
@@ -540,7 +540,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 		case CECMD_ASSERT:
 		{
-			DWORD nBtn = MessageBox(NULL, pIn->AssertInfo.szDebugInfo, pIn->AssertInfo.szTitle, pIn->AssertInfo.nBtns);
+			DWORD nBtn = MsgBox(pIn->AssertInfo.szDebugInfo, pIn->AssertInfo.nBtns, pIn->AssertInfo.szTitle, NULL, false);
 
 			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
 			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
@@ -578,7 +578,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				wchar_t szDbg[1024];
 				_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"AttachGuiApp requested from:\n%s\nPID=%u", pIn->AttachGuiApp.sAppFilePathName, pIn->AttachGuiApp.nPID);
 				//MBoxA(szDbg);
-				MessageBox(NULL, szDbg, L"ConEmu", MB_SYSTEMMODAL);
+				MsgBox(szDbg, MB_SYSTEMMODAL, L"ConEmu", NULL, false);
 			}
 			#endif
 

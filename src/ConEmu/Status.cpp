@@ -2190,7 +2190,7 @@ bool CStatus::isSettingsOpened(UINT nOpenPageID)
 	{
 		gpSetCls->Dialog(nOpenPageID);
 		if (!nOpenPageID)
-			MessageBox(ghOpWnd, L"Close settings dialog first, please.", gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION);
+			MsgBox(L"Close settings dialog first, please.", MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle(), ghOpWnd);
 		return true;
 	}
 

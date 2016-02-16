@@ -1125,7 +1125,7 @@ bool CConEmuMain::CheckRequiredFiles()
 			{
 				_wcscat_c(pszMsg, cchMax, L"\nConEmu will exits now");
 			}
-			MessageBox(NULL, pszMsg, GetDefaultTitle(), MB_SYSTEMMODAL|(*szRequired ? MB_ICONSTOP : MB_ICONWARNING));
+			MsgBox(pszMsg, MB_SYSTEMMODAL|(*szRequired ? MB_ICONSTOP : MB_ICONWARNING), GetDefaultTitle(), NULL);
 			free(pszMsg);
 		}
 	}
@@ -2568,15 +2568,11 @@ void CConEmuMain::AskChangeBufferHeight()
 
 	BOOL lbBufferHeight = pRCon->isBufferHeight();
 
-	int nBtn = 0;
-
-	{
-		DontEnable de;
-		nBtn = MessageBox(ghWnd, lbBufferHeight ?
-						  L"Do You want to turn bufferheight OFF?" :
-						  L"Do You want to turn bufferheight ON?",
-						  GetDefaultTitle(), MB_ICONQUESTION|MB_OKCANCEL);
-	}
+	int nBtn = MsgBox(lbBufferHeight ?
+					  L"Do You want to turn bufferheight OFF?" :
+					  L"Do You want to turn bufferheight ON?",
+					  MB_ICONQUESTION|MB_OKCANCEL,
+					  GetDefaultTitle());
 
 	if (nBtn != IDOK) return;
 
@@ -4813,7 +4809,7 @@ bool CConEmuMain::StartDebugLogConsole()
 	          WIN3264TEST(ms_ConEmuC32Full,ms_ConEmuC64Full), dwSelfPID, LONGOUTPUTHEIGHT_MAX);
 
 	#ifdef _DEBUG
-	if (MessageBox(NULL, szExe, L"StartDebugLogConsole", MB_OKCANCEL|MB_SYSTEMMODAL) != IDOK)
+	if (MsgBox(szExe, MB_OKCANCEL|MB_SYSTEMMODAL, L"StartDebugLogConsole", NULL, false) != IDOK)
 		return false;
 	#endif
 
@@ -13667,7 +13663,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				if (this->isValid(pRCon))
 				{
 					CVConGuard VCon(pRCon->VCon());
-					MessageBox(ghWnd, pszErrMsg, this->GetLastTitle(), MB_ICONSTOP|MB_SYSTEMMODAL);
+					MsgBox(pszErrMsg, MB_ICONSTOP|MB_SYSTEMMODAL, ghWnd, false);
 				}
 
 				free(pszErrMsg);

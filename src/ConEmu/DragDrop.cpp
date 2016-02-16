@@ -110,8 +110,8 @@ CDragDrop::~CDragDrop()
 
 	if (!lbEmpty)
 	{
-		if (MessageBox(ghWnd, L"Not all shell operations was finished!\r\nDo You want to terminate them (it's may be harmful)?",
-		              gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION) == IDYES)
+		if (MsgBox(L"Not all shell operations was finished!\r\nDo You want to terminate them (it's may be harmful)?",
+		           MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle(), NULL, false) == IDYES)
 		{
 			// Terminate all shell (copying) threads
 			CS.Lock(mp_CrThreads);
@@ -393,7 +393,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 				pszMsg = (wchar_t*)calloc(nSize + 100, 2);
 				wcscpy(pszMsg, L"Can't create directory! Same name file exists!\n");
 				wcscat(pszMsg, pszFullName);
-				MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(), MB_ICONSTOP);
+				MsgBox(pszMsg, MB_ICONSTOP, gpConEmu->GetDefaultTitle(), ghWnd, false);
 				free(pszMsg);
 				free(pszFullName);
 				return NULL;
@@ -404,7 +404,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 			pszMsg = (wchar_t*)calloc(nSize + 100, 2);
 			wcscpy(pszMsg, L"Can't create file! Same name folder exists!\n");
 			wcscat(pszMsg, pszFullName);
-			MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(), MB_ICONSTOP);
+			MsgBox(pszMsg, MB_ICONSTOP, gpConEmu->GetDefaultTitle(), ghWnd, false);
 			free(pszMsg);
 			free(pszFullName);
 			return NULL;
@@ -421,7 +421,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 			_wsprintf(pszMsg, SKIPLEN(nCchSize)
 				L"File already exists!\n\n%s\nSize: %I64i\nDate: %02i.%02i.%i %02i:%02i:%02i\n\nOverwrite?",
 				pszFullName, liSize.QuadPart, st.wDay, st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond);
-			int nRc = MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(), MB_ICONEXCLAMATION|MB_YESNO);
+			int nRc = MsgBox(pszMsg, MB_ICONEXCLAMATION|MB_YESNO, gpConEmu->GetDefaultTitle(), gnWnd, false);
 			free(pszMsg);
 
 			if (nRc != IDYES)
@@ -1138,8 +1138,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		if (((i + 1) < iQuantity)
 		        && (GetTickCount() - dwStartTick) >= OPER_TIMEOUT)
 		{
-			DontEnable de;
-			int nBtn = MessageBox(ghWnd, L"Drop operation is too long. Continue?", gpConEmu->GetDefaultTitle(), MB_YESNO|MB_ICONEXCLAMATION);
+			int nBtn = MsgBox(L"Drop operation is too long. Continue?", MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle(), ghWnd, false);
 
 			if (nBtn != IDYES) break;
 
@@ -1910,12 +1909,7 @@ void CDragDrop::ReportUnknownData(IDataObject* pDataObject, LPCWSTR sUnknownErro
 	wchar_t* pszMsg = (wchar_t*)calloc((nLen+256),sizeof(wchar_t));
 	lstrcpy(pszMsg, sUnknownError);
 	lstrcpy(pszMsg+nLen, L"\n\nPress 'Retry' to create report for developer");
-	int nBtn = 0;
-	{
-		DontEnable de;
-		nBtn = (int)MessageBox(ghWnd, pszMsg, gpConEmu->GetDefaultTitle(),
-	                           MB_SYSTEMMODAL|MB_ICONINFORMATION|MB_RETRYCANCEL|MB_DEFBUTTON2);
-	}
+	int nBtn = MsgBox(pszMsg, MB_SYSTEMMODAL|MB_ICONINFORMATION|MB_RETRYCANCEL|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), ghWnd, false);
 	free(pszMsg);
 
 	if (nBtn != IDRETRY)
