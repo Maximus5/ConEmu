@@ -3439,12 +3439,14 @@ BOOL CRealConsole::StartMonitorThread()
 	return lbRc;
 }
 
-HKEY CRealConsole::PrepareConsoleRegistryKey()
+HKEY CRealConsole::PrepareConsoleRegistryKey(LPCWSTR asSubKey)
 {
 	HKEY hkConsole = NULL;
 	LONG lRegRc;
 
-	if (0 == (lRegRc = RegCreateKeyEx(HKEY_CURRENT_USER, L"Console\\ConEmu", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConsole, NULL)))
+
+	CEStr lsKey = JoinPath(L"Console", asSubKey); // Default is "Console\\ConEmu"
+	if (0 == (lRegRc = RegCreateKeyEx(HKEY_CURRENT_USER, lsKey, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConsole, NULL)))
 	{
 		DWORD nSize = sizeof(DWORD), nValue, nType, nNewValue;
 		struct {
@@ -3462,6 +3464,9 @@ HKEY CRealConsole::PrepareConsoleRegistryKey()
 			// Restrict windows from creating console using undesired font
 			{ L"FaceName", REG_SZ, {(DWORD_PTR)gpSet->ConsoleFont.lfFaceName} },
 			{ L"FontSize", REG_DWORD, {(DWORD_PTR)(LOWORD(gpSet->ConsoleFont.lfHeight) << 16)} },
+			// Avoid extra conhost resizes on startup
+			{ L"ScreenBufferSize", REG_DWORD, {(DWORD_PTR)((LOWORD(mp_RBuf->GetBufferHeight()) << 16) | LOWORD(mp_RBuf->GetBufferWidth()))} },
+			{ L"WindowSize", REG_DWORD, {(DWORD_PTR)((LOWORD(mp_RBuf->GetTextHeight()) << 16) | LOWORD(mp_RBuf->GetTextWidth()))} },
 		};
 		for (size_t i = 0; i < countof(BufferValues); ++i)
 		{
@@ -3502,7 +3507,8 @@ HKEY CRealConsole::PrepareConsoleRegistryKey()
 	}
 	else
 	{
-		DisplayLastError(L"Failed to create/open registry key 'HKCU\\Console\\ConEmu'", lRegRc);
+		CEStr lsMsg = lstrmerge(L"Failed to create/open registry key", L"\n[HKCU\\", lsKey, L"]");
+		DisplayLastError(lsMsg, lRegRc);
 		hkConsole = NULL;
 	}
 
@@ -4227,41 +4233,7 @@ BOOL CRealConsole::StartProcess()
 	wchar_t* psCurCmd = NULL;
 	_ASSERTE((m_Args.pszStartupDir == NULL) || (*m_Args.pszStartupDir != 0));
 
-	// HistoryBufferSize, NumberOfHistoryBuffers, FaceName, FontSize, ...
-	HKEY hkConsole = PrepareConsoleRegistryKey();
-
-	BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;
-	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx, true, hkConsole);
-	si.dwFlags |= STARTF_USEFILLATTRIBUTE;
-	si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
-	//if (nTextColorIdx <= 15 || nBackColorIdx <= 15) -- всегда, иначе может снести крышу от старых данных
-	//{
-	//	if (nTextColorIdx > 15)
-	//		nTextColorIdx = GetDefaultTextColorIdx();
-	//	if (nBackColorIdx > 15)
-	//		nBackColorIdx = GetDefaultBackColorIdx();
-	//	si.dwFlags |= STARTF_USEFILLATTRIBUTE;
-	//	si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
-	//	if (hkConsole)
-	//	{
-	//		DWORD nColors = si.dwFillAttribute;
-	//		RegSetValueEx(hkConsole, L"ScreenColors", 0, REG_DWORD, (LPBYTE)&nColors, sizeof(nColors));
-	//	}
-	//}
-	//if (nPopTextColorIdx <= 15 || nPopBackColorIdx <= 15)
-	//{
-	//	if (hkConsole)
-	//	{
-	//		DWORD nColors = ((mn_PopBackColorIdx & 0xF) << 4) | (mn_PopTextColorIdx & 0xF);
-	//		RegSetValueEx(hkConsole, L"PopupColors", 0, REG_DWORD, (LPBYTE)&nColors, sizeof(nColors));
-	//	}
-	//}
-	if (hkConsole)
-	{
-		RegCloseKey(hkConsole);
-		hkConsole = NULL;
-	}
-
+	// Altered console title was set?
 	if (!ms_DefTitle.IsEmpty())
 		si.lpTitle = ms_DefTitle.ms_Val;
 
@@ -4276,11 +4248,49 @@ BOOL CRealConsole::StartProcess()
 	DWORD dwLastError = 0;
 	DWORD nCreateBegin, nCreateEnd, nCreateDuration = 0;
 
-	// ConHost.exe появился в Windows 7. Но там он создается "от родительского csrss".
-	// А вот в Win8 - уже все хорошо, он создается от корневого консольного процесса.
+	// We need to know full path to ConEmuC
+	CEStr lsConsoleKey;
+	// If we call ShellExecute("runas", ...) we need to use special console key
+	if (m_Args.RunAsAdministrator != crb_On)
+	{
+		// For CreateProcess - we can specify console window title
+		// which is used as registry key to initialize conhost
+		// si.lpTitle must be already set either to "ConEmu", or ms_DefTitle.ms_Val
+		_ASSERTE(si.lpTitle && *si.lpTitle);
+		lsConsoleKey.Set(si.lpTitle);
+	}
+	else
+	{
+		// We need, for example
+		// [HKEY_CURRENT_USER\Console\C:_Tools_ConEmu_ConEmuC64.exe]
+		lsConsoleKey.Set(mp_ConEmu->ConEmuCExeFull(lpszCmd));
+		wchar_t* pch = wcschr(lsConsoleKey.ms_Val, L'\\');
+		while (pch)
+		{
+			*(pch++) = L'_';
+			pch = wcschr(pch, L'\\');
+		}
+	}
+
+	// HistoryBufferSize, NumberOfHistoryBuffers, FaceName, FontSize, ...
+	HKEY hkConsole = PrepareConsoleRegistryKey(lsConsoleKey);
+
+	BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;
+	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx, true, hkConsole);
+	si.dwFlags |= STARTF_USEFILLATTRIBUTE;
+	si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
+
+	if (hkConsole)
+	{
+		RegCloseKey(hkConsole);
+		hkConsole = NULL;
+	}
+
+	// ConHost.exe was introduced in Windows 7.
+	// But in that version the process was created "from parent csrss".
+	// Windows 8 - is OK, conhost.exe is a child of our Root console process.
 	bool bNeedConHostSearch = (gnOsVer == 0x0601);
 	bool bConHostLocked = false;
-	//DEBUGTEST(if (gnOsVer == 0x0602) bNeedConHostSearch = true); // В Win8 искать не надо, но для отладки пока
 	if (bNeedConHostSearch)
 	{
 		if (!mp_ConHostSearch)
