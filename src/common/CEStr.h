@@ -38,8 +38,10 @@ public:
 private:
 	INT_PTR mn_MaxCount; // Including termination \0
 public:
-	// Point to the end dblquot
+	// Point to the end dblquot, if we need drop first and last quotation marks
 	LPCWSTR mpsz_Dequoted;
+	// true if it's a double-quoted argument from NextArg
+	bool mb_Quoted;
 	// if 0 - this is must be first call (first token of command line)
 	// so, we need to test for mpsz_Dequoted
 	int mn_TokenNo;

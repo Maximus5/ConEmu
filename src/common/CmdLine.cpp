@@ -38,71 +38,69 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MWow64Disable.h"
 #endif
 
-bool DemangleArg(LPCWSTR asArg, INT_PTR iLen /* = -1 */, CEStr& rsDemangle)
+// Returns true on changes
+// bDeQuote:  replace two "" with one "
+// bDeEscape: process special symbols: ^e^[^r^n^t^b
+bool DemangleArg(CEStr& rsDemangle, bool bDeQuote /*= true*/, bool bDeEscape /*= false*/)
 {
-	// Process special symbols: ^e^[^r^n^t^b
-
-	if ((iLen == 0) || !asArg || !*asArg)
+	if (rsDemangle.IsEmpty() || !(bDeQuote || bDeEscape))
 	{
-		if (!rsDemangle.Set(L""))
-			return false;
-		return true;
+		return false; // Nothing to do
 	}
 
-	if (iLen < 0)
-		iLen = lstrlen(asArg);
-
-	LPCWSTR pchCap = wcschr(asArg, L'^');
-
-	if ((pchCap == NULL) || ((INT_PTR)(pchCap - asArg) >= iLen))
+	LPCWSTR pszDemangles = (bDeQuote && bDeEscape) ? L"^\"" : bDeQuote ? L"\"" : L"^";
+	LPCWSTR pchCap = wcspbrk(rsDemangle, pszDemangles);
+	if (pchCap == NULL)
 	{
-		// Nothing to replace
-		if (!rsDemangle.Set(asArg, iLen))
-			return false;
+		return false; // Nothing to replace
 	}
-	else
-	{
-		wchar_t* pszDst = rsDemangle.GetBuffer(iLen);
-		if (!pszDst)
-			return false;
 
-		const wchar_t* pszSrc = asArg;
-		const wchar_t* pszEnd = asArg + iLen;
-		while (pszSrc < pszEnd)
+	wchar_t* pszDst = rsDemangle.ms_Val;
+	const wchar_t* pszSrc = rsDemangle.ms_Val;
+	const wchar_t* pszEnd = rsDemangle.ms_Val + rsDemangle.GetLen();
+
+	while (pszSrc < pszEnd)
+	{
+		if (bDeQuote && (*pszSrc == L'"'))
 		{
-			if (*pszSrc == L'^')
-			{
-				switch (*(++pszSrc))
-				{
-				case L'^':
-					*pszDst = L'^'; break;
-				case L'r': case L'R':
-					*pszDst = L'\r'; break;
-				case L'n': case L'N':
-					*pszDst = L'\n'; break;
-				case L't': case L'T':
-					*pszDst = L'\t'; break;
-				case L'a': case L'A':
-					*pszDst = 7; break;
-				case L'b': case L'B':
-					*pszDst = L'\b'; break;
-				case L'e': case L'E': case L'[':
-					*pszDst = 27; break;
-				default:
-					// Unknown ctrl-sequence, bypass
-					*(pszDst++) = *(pszSrc++);
-					continue;
-				}
-				pszDst++; pszSrc++;
-			}
-			else
-			{
-				*(pszDst++) = *(pszSrc++);
-			}
+			*(pszDst++) = *(pszSrc++);
+			if (*pszSrc == L'"') // Expected, but may be missed by user?
+				pszSrc++;
 		}
-		// Was processed? Zero terminate it.
-		*pszDst = 0;
+		else if (bDeEscape && (*pszSrc == L'^'))
+		{
+			switch (*(++pszSrc))
+			{
+			case L'^': // Demangle cap
+				*pszDst = L'^'; break;
+			case 0:    // Leave single final cap
+				*pszDst = L'^'; continue;
+			case L'r': case L'R': // CR
+				*pszDst = L'\r'; break;
+			case L'n': case L'N': // LF
+				*pszDst = L'\n'; break;
+			case L't': case L'T': // TAB
+				*pszDst = L'\t'; break;
+			case L'a': case L'A': // BELL
+				*pszDst = 7; break;
+			case L'b': case L'B': // BACK
+				*pszDst = L'\b'; break;
+			case L'e': case L'E': case L'[': // ESC
+				*pszDst = 27; break;
+			default:
+				// Unknown ctrl-sequence, bypass
+				*(pszDst++) = *(pszSrc++);
+				continue;
+			}
+			pszDst++; pszSrc++;
+		}
+		else
+		{
+			*(pszDst++) = *(pszSrc++);
+		}
 	}
+	// Was processed? Zero terminate it.
+	*pszDst = 0;
 
 	return true;
 }
@@ -219,7 +217,6 @@ int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/
 
 	size_t nArgLen = 0;
 	bool lbQMode = false;
-	bool lbDemangleDblQuotes = false;
 
 	// аргумент начинается с "
 	if (*psCmdLine == L'"')
@@ -268,7 +265,6 @@ int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/
 		{
 			pch += 2;
 			pch = wcschr(pch, L'"');
-			lbDemangleDblQuotes = true;
 
 			if (!pch) return CERR_CMDLINE;
 		}
@@ -292,26 +288,11 @@ int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/
 	nArgLen = pch - psCmdLine;
 
 	// Set result arugment
-	if (!lbDemangleDblQuotes)
-	{
-		if (!rsArg.Set(psCmdLine, nArgLen))
-			return CERR_CMDLINE;
-	}
-	else
-	{
-		wchar_t* ptrDst = rsArg.GetBuffer(nArgLen);
-		if (!ptrDst)
-			return CERR_CMDLINE;
-		for (size_t i = 0; i < nArgLen; i++)
-		{
-			*(ptrDst++) = psCmdLine[i];
-			if ((psCmdLine[i] == L'"')
-				&& ((i+1) < nArgLen)
-				&& (psCmdLine[i+1] == L'"'))
-				i++; // Demangle `""` into `"`
-		}
-		*ptrDst = 0;
-	}
+	// Warning: Don't demangle quotes/escapes here, or we'll fail to
+	// concatenate environment or smth, losing quotes and others
+	if (!rsArg.Set(psCmdLine, nArgLen))
+		return CERR_CMDLINE;
+	rsArg.mb_Quoted = lbQMode;
 	rsArg.mn_TokenNo++;
 
 	if (rsArgStart) *rsArgStart = psCmdLine;

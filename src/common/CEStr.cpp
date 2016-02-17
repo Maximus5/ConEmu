@@ -43,6 +43,7 @@ CEStr::CEStr(wchar_t* RVAL_REF asPtr)
 {
 	mn_MaxCount = 0; ms_Val = NULL;
 	mpsz_Dequoted = NULL;
+	mb_Quoted = false;
 	mb_RestoreEnvVar = false;
 	ms_RestoreVarName[0] = 0;
 	AttachInt(asPtr);
@@ -182,6 +183,7 @@ void CEStr::Empty()
 	mn_TokenNo = 0;
 	mn_CmdCall = cc_Undefined;
 	mpsz_Dequoted = NULL;
+	mb_Quoted = false;
 	#ifdef _DEBUG
 	ms_LastTokenEnd = NULL;
 	ms_LastTokenSave[0] = 0;
@@ -272,6 +274,7 @@ void CEStr::SetAt(INT_PTR nIdx, wchar_t wc)
 void CEStr::GetPosFrom(const CEStr& arg)
 {
 	mpsz_Dequoted = arg.mpsz_Dequoted;
+	mb_Quoted = arg.mb_Quoted;
 	mn_TokenNo = arg.mn_TokenNo;
 	mn_CmdCall = arg.mn_CmdCall;
 	#ifdef _DEBUG
