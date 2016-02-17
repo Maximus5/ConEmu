@@ -874,7 +874,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 						L"Maximum real console size {%i,%i} was reached, lesser size {%i,%i} was applied than requested {%u,%u}",
 						pOut ? (int)pOut->SetSizeRet.crMaxSize.X : -1, pOut ? (int)pOut->SetSizeRet.crMaxSize.Y : -1,
 						nSetWidth, nSetHeight, (UINT)sizeX, (UINT)sizeY);
-					mp_RCon->LogString(L"Maximum real console size was reached, lesser size was applied");
+					mp_RCon->LogString(szInfo);
 
 					_wsprintf(szInfo, SKIPCOUNT(szInfo)
 						L"Maximum real console size {%i,%i} was reached\nDecrease font size in the real console properties",
