@@ -5496,9 +5496,16 @@ void CConEmuSize::EvalVConCreateSize(CVirtualConsole* apVCon, uint& rnTextWidth,
 void CConEmuSize::DoBringHere()
 {
 	if (!IsSizePosFree())
-		return 0;
+	{
+		LogString(L"CConEmuSize::DoBringHere() skipped due to !IsSizePosFree()");
+		return;
+	}
+
+	LogString(L"CConEmuSize::DoBringHere()");
+
 	if (!IsWindowVisible(ghWnd))
 		Icon.RestoreWindowFromTray();
+
 	POINT ptCur = {}; GetCursorPos(&ptCur);
 	HMONITOR hMon = MonitorFromPoint(ptCur, MONITOR_DEFAULTTOPRIMARY);
 	MONITORINFO mi = {sizeof(mi)};
