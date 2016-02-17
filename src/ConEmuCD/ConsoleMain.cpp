@@ -3665,7 +3665,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		else if (lstrcmpi(szArg, L"/ROOT")==0)
 		{
 			#ifdef SHOW_SERVER_STARTED_MSGBOX
-			ShowServerStartedMsgBox();
+			ShowServerStartedMsgBox(asCmdLine);
 			#endif
 			gnRunMode = RM_SERVER; gbNoCreateProcess = FALSE;
 			gbAsyncRun = FALSE;
