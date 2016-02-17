@@ -866,13 +866,18 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 					pszAdd = lsExpand.ms_Val;
 			}
 
-			// Process special symbols: ^e^[^r^n^t^b
-			if (bProcessed && wcschr(pszAdd, L'^'))
+			// Replace two double-quotes with one double-quotes
+			if (szArg.mb_Quoted
+				// Process special symbols: ^e^[^r^n^t^b
+				|| (bProcessed && wcschr(pszAdd, L'^'))
+				)
 			{
-				if (DemangleArg(pszAdd, -1/*process all chars*/, lsDemangle))
+				lsDemangle.Set(pszAdd);
+				if (DemangleArg(lsDemangle, szArg.mb_Quoted, bProcessed))
 					pszAdd = lsDemangle.ms_Val;
 			}
 
+			// Concatenate result text
 			lstrmerge(&szTemp.ms_Val, szTemp.IsEmpty() ? NULL : L" ", pszAdd);
 		}
 
