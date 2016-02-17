@@ -5228,8 +5228,8 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bF
 		else if (((GetTickCount() - nLastWriteTick) >= TickDelta) || (nSkipped >= SkipDelta))
 			bWriteLog = true;
 
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%ix%i} %s (skipped=%i) {%u:%u:x%X:%u} %s %s",
-		           lsbi.dwSize.X, lsbi.dwSize.Y, (pszLabel ? pszLabel : ""), nSkipped,
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%i,%i,%i} %s (skipped=%i) {%u:%u:x%X:%u} %s %s",
+		           lsbi.dwSize.X, lsbi.srWindow.Bottom-lsbi.srWindow.Top+1, lsbi.dwSize.Y, (pszLabel ? pszLabel : ""), nSkipped,
 		           bConsoleOK, bHandleOK, (DWORD)(DWORD_PTR)hCon, nErrCode,
 				   szWindowInfo, szFontInfo);
 	}
