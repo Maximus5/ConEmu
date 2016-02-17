@@ -1893,6 +1893,10 @@
       "zh": "高亮： 切换 ‘高亮光标下的行&列’",
       "id": 2725 }
     ,
+    "vkJumpActiveMonitor": {
+      "en": "Move ConEmu window to the monitor with mouse cursor (Bring here)",
+      "id": 3026 }
+    ,
     "vkJumpNextMonitor": {
       "en": "Move ConEmu window to next monitor",
       "zh": "移动ConEmu窗口至下一个显示屏",
