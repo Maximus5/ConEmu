@@ -460,6 +460,7 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"     \"NOR\", \"MAX\", \"FS\" (fullscreen), \"MIN\", \"TSA\",\r\n" \
 	L"     \"TLEFT\", \"TRIGHT\" (tile to left/right), \"THEIGHT\",\r\n" \
 	L"     \"MPREV\", \"MNEXT\" (move ConEmu to prev/next monitor)\r\n" \
+	L"     \"HERE\" (move ConEmu to monitor with mouse cursor)\r\n" \
 	L"WindowPosSize(\"<X>\",\"<Y>\",\"<W>\",\"<H>\")\r\n" \
 	L"  - Change ConEmu window geometry\r\n" \
 	L"Zoom(N)\r\n" \

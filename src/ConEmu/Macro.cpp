@@ -1794,6 +1794,7 @@ LPWSTR ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 	LPCWSTR sTileHeight = L"THEIGHT";
 	LPCWSTR sMonitorPrev = L"MPREV";
 	LPCWSTR sMonitorNext = L"MNEXT";
+	LPCWSTR sBringHere = L"HERE";
 
 	ConEmuWindowCommand Cmd = cwc_Current;
 
@@ -1828,6 +1829,8 @@ LPWSTR ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 				Cmd = cwc_PrevMonitor;
 			else if (lstrcmpi(pszMode, sMonitorNext) == 0)
 				Cmd = cwc_NextMonitor;
+			else if (lstrcmpi(pszMode, sBringHere) == 0)
+				Cmd = cwc_BringHere;
 			else //if (lstrcmpi(pszMode, sNOR) == 0)
 				Cmd = cwc_Restore;
 		}
@@ -1860,6 +1863,9 @@ LPWSTR ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 	case cwc_PrevMonitor:
 	case cwc_NextMonitor:
 		gpConEmu->JumpNextMonitor(Cmd==cwc_NextMonitor);
+		break;
+	case cwc_BringHere:
+		gpConEmu->DoBringHere();
 		break;
 	default:
 		; // GCC fix
