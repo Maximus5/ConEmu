@@ -115,6 +115,7 @@ void RConStartArgs::RunArgTests()
 			}
 			else
 			{
+				DemangleArg(s, s.mb_Quoted);
 				nDbg = lstrcmp(s, lsArgTest[i].pszCmp[j]);
 				if (nDbg != 0)
 				{

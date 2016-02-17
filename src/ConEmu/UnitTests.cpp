@@ -284,6 +284,7 @@ void DebugCmdParserTests()
 		pszCmp = Tests[i].szCmp;
 		while (0 == NextArg(&pszSrc, ls))
 		{
+			DemangleArg(ls, ls.mb_Quoted);
 			iCmp = wcscmp(ls.ms_Val, pszCmp);
 			if (iCmp != 0)
 			{
