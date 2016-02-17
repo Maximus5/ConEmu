@@ -117,18 +117,14 @@ class MArray
 			MCHKHEAP;
 			return nPos;
 		};
-		void insert(INT_PTR nPos, const _Ty& _Item)
+		void insert(INT_PTR nPosBefore, const _Ty& _Item)
 		{
 			if (mn_TySize==0)
 			{
 				_ARRAY_ASSERTE(!(mn_TySize==0));
 				return;
 			}
-			if ((nPos < 0) || (nPos > mn_Elements))
-			{
-				_ARRAY_ASSERTE((nPos >= 0) && (nPos <= mn_Elements));
-			}
-			if (nPos == mn_Elements)
+			if ((nPosBefore < 0) || (nPosBefore >= mn_Elements))
 			{
 				push_back(_Item);
 				return;
@@ -139,12 +135,13 @@ class MArray
 				_ARRAY_ASSERTE(mn_MaxSize==mn_Elements);
 				addsize(max(256,mn_MaxSize));
 			}
+			_ARRAY_ASSERTE(mn_Elements > nPosBefore);
 			memmove(
-				((_Ty*)mp_Elements)+1,
-				((_Ty*)mp_Elements),
-				mn_TySize*mn_Elements);
+				((_Ty*)mp_Elements)+1+nPosBefore,
+				((_Ty*)mp_Elements)+nPosBefore,
+				mn_TySize*(mn_Elements-nPosBefore));
 			memmove(
-				((_Ty*)mp_Elements),
+				((_Ty*)mp_Elements)+nPosBefore,
 				&_Item, mn_TySize);
 			mn_Elements++;
 			MCHKHEAP;
