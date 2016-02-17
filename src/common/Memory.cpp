@@ -65,12 +65,14 @@ static const char* _PointToName(const char* asFileOrPath)
 		return NULL;
 	}
 
-	const char* pszSlash = strrchr(asFileOrPath, '\\');
-	if (!pszSlash) // MinGW builds
-		pszSlash = strrchr(asFileOrPath, '/');
+	// Utilize both type of slashes
+	const char* pszBSlash = strrchr(asFileOrPath, '\\');
+	const char* pszFSlash = strrchr(pszBSlash ? pszBSlash : asFileOrPath, '/');
+
+	const char* pszSlash = pszFSlash ? pszFSlash : pszBSlash;;
 
 	if (pszSlash)
-		return pszSlash+1;
+		return pszSlash + 1;
 
 	return asFileOrPath;
 }
