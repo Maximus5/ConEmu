@@ -8,7 +8,7 @@ USELIBCRT = 1
 
 !include ../makefile_vc_defs
 
-USERLIBS = kernel32.lib user32.lib
+USERLIBS = kernel32.lib user32.lib shell32.lib
 
 !if defined(AMD64)
 OUTNAME=ConEmuC64
