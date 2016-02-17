@@ -66,6 +66,7 @@ MFileLog::MFileLog(LPCWSTR asName, LPCWSTR asDir /*= NULL*/, DWORD anPID /*= 0*/
 	mh_LogFile = NULL;
 	ms_FilePathName = NULL;
 	ms_DefPath = (asDir && *asDir) ? lstrdup(asDir) : NULL;
+	ZeroStruct(mst_LastWrite);
 	InitFileName(asName, anPID);
 }
 
@@ -142,8 +143,12 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 		_wsprintf(szLevel, SKIPLEN(countof(szLevel)) L"[%u]", anLevel);
 	wchar_t szVer4[8] = L"";
 	lstrcpyn(szVer4, WSTRING(MVV_4a), countof(szVer4));
-	wchar_t szConEmu[64];
-	_wsprintf(szConEmu, SKIPLEN(countof(szConEmu)) L"ConEmu %u%02u%02u%s%s[%s%s] log%s",
+	wchar_t szConEmu[128];
+	GetLocalTime(&mst_LastWrite);
+	_wsprintf(szConEmu, SKIPLEN(countof(szConEmu))
+		L"%i-%02i-%02i %i:%02i:%02i.%03i ConEmu %u%02u%02u%s%s[%s%s] log%s",
+		mst_LastWrite.wYear, mst_LastWrite.wMonth, mst_LastWrite.wDay,
+		mst_LastWrite.wHour, mst_LastWrite.wMinute, mst_LastWrite.wSecond, mst_LastWrite.wMilliseconds,
 		MVV_1, MVV_2, MVV_3, szVer4[0]&&szVer4[1]?L"-":L"", szVer4,
 		WIN3264TEST(L"32",L"64"), RELEASEDEBUGTEST(L"",L"D"), szLevel);
 
@@ -261,7 +266,7 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 		return (dwErr ? dwErr : -1);
 	}
 
-	LogString(szConEmu, true);
+	LogString(szConEmu, false);
 
 	return 0; // OK
 }
@@ -350,7 +355,11 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 	{
 		SYSTEMTIME st; GetLocalTime(&st);
 		char szTime[32];
-		_wsprintfA(szTime, SKIPLEN(countof(szTime)) "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+		if (memcmp(&st, &mst_LastWrite, 4*sizeof(st.wYear)) == 0)
+			_wsprintfA(szTime, SKIPLEN(countof(szTime)) "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+		else
+			_wsprintfA(szTime, SKIPLEN(countof(szTime)) "%i-%02i-%02i %i:%02i:%02i.%03i ", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+		mst_LastWrite = st;
 		INT_PTR dwLen = lstrlenA(szTime);
 		memmove(pszBuffer+cchCur, szTime, dwLen);
 		cchCur += dwLen;

@@ -41,6 +41,7 @@ class MFileLog
 		wchar_t* ms_FileName;
 		wchar_t* ms_DefPath;
 		HANDLE   mh_LogFile;
+		SYSTEMTIME mst_LastWrite;
 		HRESULT  InitFileName(LPCWSTR asName = NULL, DWORD anPID = 0);
 
 		#if !defined(CONEMU_MINIMAL)
