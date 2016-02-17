@@ -273,6 +273,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_LEFT,VK_LWIN);
 	Add(vkTileToRight,    chk_User,  NULL,    L"Key.TileToRight",       CConEmuCtrl::key_GuiMacro, false, L"WindowMode(7)"/*, DontHookJumps*/)
 		->SetHotKey(VK_RIGHT,VK_LWIN);
+	Add(vkJumpActiveMonitor,chk_User,  NULL,  L"Key.JumpActiveMonitor", CConEmuCtrl::key_GuiMacro, false, L"WindowMode(12)"/*,  DontHookJumps*/)
+		;
 	Add(vkJumpPrevMonitor,chk_User,  NULL,    L"Key.JumpPrevMonitor",   CConEmuCtrl::key_GuiMacro, false, L"WindowMode(9)"/*,  DontHookJumps*/)
 		->SetHotKey(VK_LEFT,VK_LWIN,VK_SHIFT);
 	Add(vkJumpNextMonitor,chk_User,  NULL,    L"Key.JumpNextMonitor",   CConEmuCtrl::key_GuiMacro, false, L"WindowMode(10)"/*, DontHookJumps*/)

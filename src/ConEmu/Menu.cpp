@@ -1146,7 +1146,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		if (!gpConEmu->mp_Inside)
 		{
 			if (!gpSet->isQuakeStyle)
-				InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_TOMONITOR, _T("Bring &here"));
+				InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_TOMONITOR, MenuAccel(vkJumpActiveMonitor,L"Bring &here"));
 			InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_TOTRAY, TRAY_ITEM_HIDE_NAME/* L"Hide to &TSA" */);
 		}
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
@@ -2200,7 +2200,7 @@ LPCWSTR CConEmuMenu::MenuAccel(int DescrID, LPCWSTR asText)
 
 	const ConEmuHotKey* pHK = NULL;
 	DWORD VkMod = gpSet->GetHotkeyById(DescrID, &pHK);
-	if (!ConEmuHotKey::GetHotkey(VkMod) || !pHK)
+	if (!VkMod || !ConEmuHotKey::GetHotkey(VkMod) || !pHK)
 		return asText;
 
 	pHK->GetHotkeyName(szKey);
