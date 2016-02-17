@@ -126,8 +126,9 @@ CProcessEnvCmd::~CProcessEnvCmd()
 
 // May comes from Task or ConEmu's /cmd switch
 // or from Setting\Environment page where one line is a single command (bAlone == true)
-void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/, bool bAlone /*= false*/)
+bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/, bool bAlone /*= false*/, INT_PTR anBefore /*= -1*/)
 {
+	bool bNew = false;
 	LPCWSTR lsCmdLine = asCommands;
 	CEStr lsSet, lsAmp, lsCmd;
 
@@ -228,7 +229,7 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 					}
 					else
 					{
-						Add(lsCmd, lsSet, NULL);
+						bNew |= (NULL != Add(lsCmd, lsSet, NULL, anBefore));
 					}
 				}
 			}
@@ -248,7 +249,7 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 				}
 				else
 				{
-					Add(lsCmd, lsSet, NULL);
+					bNew |= (NULL != Add(lsCmd, lsSet, NULL, anBefore));
 				}
 			}
 		}
@@ -283,7 +284,7 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 			}
 			if (!lsAdd.IsEmpty())
 			{
-				Add(lsCmd, lsSwitches, lsAdd);
+				bNew |= (NULL != Add(lsCmd, lsSwitches, lsAdd, anBefore));
 			}
 		}
 		else
@@ -331,7 +332,7 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 
 			*(pszEq++) = 0;
 
-			Add(lsCmd, lsNameVal, pszEq ? pszEq : L"");
+			bNew |= (NULL != Add(lsCmd, lsNameVal, pszEq ? pszEq : L"", anBefore));
 		}
 
 		// Remember processed position
@@ -347,6 +348,8 @@ void CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 		static wchar_t szSimple[] = L"cmd";
 		*ppszEnd = szSimple;
 	}
+
+	return bNew;
 }
 
 // Comes from CESERVER_REQ::NewCmd.GetEnvStrings()
@@ -368,16 +371,17 @@ void CProcessEnvCmd::AddZeroedPairs(LPCWSTR asNameValueSeq)
 
 		if (IsEnvBlockVariableValid(pszName))
 		{
-			Add(L"set", pszName, pszValue);
+			Add(L"set", pszName, pszValue, -1 /*append*/);
 		}
 	}
 }
 
 // Comes from ConEmu's settings (Environment setting page)
-void CProcessEnvCmd::AddLines(LPCWSTR asLines)
+void CProcessEnvCmd::AddLines(LPCWSTR asLines, bool bPriority)
 {
 	LPCWSTR pszLines = asLines;
 	CEStr lsLine;
+	INT_PTR nBefore = bPriority ? 0 : -1;
 
 	while (0 == NextLine(&pszLines, lsLine))
 	{
@@ -393,11 +397,12 @@ void CProcessEnvCmd::AddLines(LPCWSTR asLines)
 			)
 			continue;
 		// Process this line
-		AddCommands(pszLine, NULL, true);
+		if (AddCommands(pszLine, NULL, true, nBefore) && bPriority)
+			nBefore++;
 	}
 }
 
-CProcessEnvCmd::Command* CProcessEnvCmd::Add(LPCWSTR asCmd, LPCWSTR asName, LPCWSTR asValue)
+CProcessEnvCmd::Command* CProcessEnvCmd::Add(LPCWSTR asCmd, LPCWSTR asName, LPCWSTR asValue, INT_PTR anBefore)
 {
 	if (!asCmd || !*asCmd)
 	{
@@ -464,7 +469,7 @@ CProcessEnvCmd::Command* CProcessEnvCmd::Add(LPCWSTR asCmd, LPCWSTR asName, LPCW
 
 	mch_Total += (lstrlen(asCmd) + cchAdd + lstrlen(asName) + (asValue ? lstrlen(asValue) : 0));
 
-	m_Commands.push_back(p);
+	m_Commands.insert(anBefore, p);
 
 	return p;
 }

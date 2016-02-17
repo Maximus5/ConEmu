@@ -2833,15 +2833,16 @@ void ApplyProcessSetEnvCmd()
 	}
 }
 
-// Use here 'wchar_t*' because we replace '=' with '\0' here
-void ApplyEnvironmentCommands(wchar_t* pszCommand)
+// Lines come from Settings/Environment page
+void ApplyEnvironmentCommands(LPCWSTR pszCommands)
 {
 	UINT nSetCP = 0; // Postponed
 
 	if (!gpSetEnv)
 		gpSetEnv = new CProcessEnvCmd();
 
-	gpSetEnv->AddLines(pszCommand);
+	// These must be applied before commands from CommandLine
+	gpSetEnv->AddLines(pszCommands, true);
 }
 
 // Parse ConEmuC command line switches

@@ -416,7 +416,7 @@ void DebugProcessNameTest()
 void DebugTestSetParser()
 {
 	CProcessEnvCmd cmd;
-	cmd.AddLines(L"set  V1=From Settings \r\nset V2=Value2 & Value2\r\n set \"V3=\"Value \"\" 3 \" \r\n");
+	cmd.AddLines(L"set  V1=From Settings \r\nset V2=Value2 & Value2\r\n set \"V3=\"Value \"\" 3 \" \r\n", false);
 	_ASSERTE(cmd.mn_SetCount==3
 		&& !wcscmp(cmd.m_Commands[0]->pszName, L"V1") && !wcscmp(cmd.m_Commands[0]->pszValue, L"From Settings")
 		&& !wcscmp(cmd.m_Commands[1]->pszName, L"V2") && !wcscmp(cmd.m_Commands[1]->pszValue, L"Value2 & Value2")

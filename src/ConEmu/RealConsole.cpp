@@ -1399,7 +1399,7 @@ void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 
 	if (gpSet->psEnvironmentSet)
 	{
-		env.AddLines(gpSet->psEnvironmentSet);
+		env.AddLines(gpSet->psEnvironmentSet, true);
 	}
 
 	size_t cchData = 0;

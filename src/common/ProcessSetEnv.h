@@ -94,10 +94,11 @@ public:
 
 public:
 	// Append helpers
-	void AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd = NULL, bool bAlone = false); // May comes from Task or ConEmu's /cmd switch
+	bool AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd = NULL, bool bAlone = false, INT_PTR anBefore = -1); // May comes from Task or ConEmu's /cmd switch
 	void AddZeroedPairs(LPCWSTR asNameValueSeq); // Comes from GetEnvironmentStrings()
-	void AddLines(LPCWSTR asLines); // Comes from ConEmu's settings (Environment setting page)
-	Command* Add(LPCWSTR asCmd, LPCWSTR asName, LPCWSTR asValue);
+	void AddLines(LPCWSTR asLines, bool bPriority); // Comes from ConEmu's settings (Environment setting page)
+protected:
+	Command* Add(LPCWSTR asCmd, LPCWSTR asName, LPCWSTR asValue, INT_PTR anBefore);
 
 public:
 	// Apply routine, returns true if environment was set/changed
