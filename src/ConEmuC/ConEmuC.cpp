@@ -228,6 +228,8 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	_printf("ConEmu `NextArg` splitter\n");
 	while (NextArg(&asCmdLine, szArg) == 0)
 	{
+		if (szArg.mb_Quoted)
+			DemangleArg(szArg, true);
 		_wsprintfA(szLine, SKIPLEN(countof(szLine)) "  %u: `", ++i);
 		_printf(szLine);
 		_wprintf(szArg);
