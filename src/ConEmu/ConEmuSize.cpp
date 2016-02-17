@@ -5505,10 +5505,16 @@ void CConEmuSize::DoBringHere()
 	if (!GetMonitorInfo(hMon, &mi))
 	{
 		_ASSERTE(FALSE && "GetMonitorInfo fails");
+		// TODO: Utilize SystemParametersInfo? to determine working area
+		// TODO: Ensure, ConEmu window doesn't go out of working are (size)
 		mi.rcWork.left = mi.rcWork.top = 0;
+		setWindowPos(HWND_TOP, mi.rcWork.left, mi.rcWork.top, 0,0, SWP_NOSIZE);
 	}
-	//TODO: Change to "JumpToMonitor"?
-	setWindowPos(HWND_TOP, mi.rcWork.left, mi.rcWork.top, 0,0, SWP_NOSIZE);
+	else
+	{
+		RECT rcDefWnd = GetDefaultRect();
+		JumpNextMonitor(ghWnd, hMon, true/*doesn't matter if hMon defined*/, rcDefWnd);
+	}
 }
 
 void CConEmuSize::DoFullScreen()
