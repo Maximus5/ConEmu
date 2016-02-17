@@ -5493,6 +5493,24 @@ void CConEmuSize::EvalVConCreateSize(CVirtualConsole* apVCon, uint& rnTextWidth,
 	}
 }
 
+void CConEmuSize::DoBringHere()
+{
+	if (!IsSizePosFree())
+		return 0;
+	if (!IsWindowVisible(ghWnd))
+		Icon.RestoreWindowFromTray();
+	POINT ptCur = {}; GetCursorPos(&ptCur);
+	HMONITOR hMon = MonitorFromPoint(ptCur, MONITOR_DEFAULTTOPRIMARY);
+	MONITORINFO mi = {sizeof(mi)};
+	if (!GetMonitorInfo(hMon, &mi))
+	{
+		_ASSERTE(FALSE && "GetMonitorInfo fails");
+		mi.rcWork.left = mi.rcWork.top = 0;
+	}
+	//TODO: Change to "JumpToMonitor"?
+	setWindowPos(HWND_TOP, mi.rcWork.left, mi.rcWork.top, 0,0, SWP_NOSIZE);
+}
+
 void CConEmuSize::DoFullScreen()
 {
 	if (mp_ConEmu->mp_Inside)

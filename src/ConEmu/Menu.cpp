@@ -2486,19 +2486,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 
 		case ID_TOMONITOR:
 		{
-			if (!gpConEmu->IsSizePosFree())
-				return 0;
-			if (!IsWindowVisible(ghWnd))
-				Icon.RestoreWindowFromTray();
-			POINT ptCur = {}; GetCursorPos(&ptCur);
-			HMONITOR hMon = MonitorFromPoint(ptCur, MONITOR_DEFAULTTOPRIMARY);
-			MONITORINFO mi = {sizeof(mi)};
-			if (!GetMonitorInfo(hMon, &mi))
-			{
-				_ASSERTE(FALSE && "GetMonitorInfo fails");
-				mi.rcWork.left = mi.rcWork.top = 0;
-			}
-			SetWindowPos(ghWnd, HWND_TOP, mi.rcWork.left, mi.rcWork.top, 0,0, SWP_NOSIZE);
+			gpConEmu->DoBringHere();
 			return 0;
 		}
 

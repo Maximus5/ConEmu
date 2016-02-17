@@ -177,6 +177,7 @@ public:
 	void LogMinimizeRestoreSkip(LPCWSTR asMsgFormat, DWORD nParm1 = 0, DWORD nParm2 = 0, DWORD nParm3 = 0);
 	bool JumpNextMonitor(bool Next);
 	bool JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd, LPRECT prcNewPos = NULL);
+	void DoBringHere();
 	void DoFullScreen();
 	void DoMaximizeRestore();
 	void DoMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
