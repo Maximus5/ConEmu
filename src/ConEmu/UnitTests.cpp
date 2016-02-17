@@ -444,6 +444,17 @@ void DebugMapsTests()
 	_ASSERTE(circ.HasValue(116));
 }
 
+void DebugArrayTests()
+{
+	MArray<int> arr;
+	arr.push_back(1);
+	arr.push_back(2);
+	arr.push_back(3);
+	arr.push_back(4);
+	arr.insert(2, 5);
+	_ASSERTE(arr[0]==1 && arr[1]==2 && arr[2]==5 && arr[3]==3 && arr[4]==4);
+}
+
 void DebugJsonTest()
 {
 	MJsonValue value, v1, v2, v3, v4;
@@ -486,6 +497,7 @@ void DebugUnitTests()
 	DebugProcessNameTest();
 	DebugTestSetParser();
 	DebugMapsTests();
+	DebugArrayTests();
 	DebugJsonTest();
 }
 #endif
