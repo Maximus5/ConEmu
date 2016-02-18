@@ -19,6 +19,105 @@ http://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.2.17
+* gh-541: Chinese translation (from @ulin).
+* Maximus5/conemu-inside#4: Don't warn `ConEmu's parent window was terminated abnormally` if we have no VCon.
+* Maximus5/conemu-inside#4: Don't show ‘Can't create new virtual console’ error if parent was killed during initialization.
+* Maximus5/conemu-inside#12: Query GuiMacro result via callback function.
+  ConEmuCD.dll and ConEmuCD64.dll now export `GuiMacro` function.
+  https://github.com/Maximus5/ConEmu/commit/ffd3774eb037fb73828ff969464ef57a97dda1a4
+* Don't install hooks in `ConEmuC.exe`.
+* ConEmuC internal `-echo` able to expand environment variables by `-x` subswitch.
+  Example: ConEmuC -echo -x "Version: %ConEmuBuild%"
+* Maximus5/conemu-inside#3: Write user-defined text to console on startup.
+
+  Commands `echo` and `type` are processed internally by ConEmuC now.
+  For example, it's possible to add into the Settings/Environment.
+
+    echo -x "Welcome to ConEmu %ConEmuBuild% terminal^nPress Win-Alt-P to show Settings dialog"
+
+  Alternatively, you may add `echo` or `type` before the command itself,
+  when you create new console, or in the Task definition. Example.
+
+    type -utf8 "%ConEmuDir%\Hello.txt" & cmd /k "%ConEmuBaseDir%\CmdInit.cmd"
+
+* Implement `-Args` to show how ConEmu's command line parser works.
+  Example: ConEmuC -args "Test1 & ^ "" Test2" "Test "" 3"
+
+* Two double-quotes are replaced with one double-quotes in NextArg.
+
+  So, the command:
+
+    ConEmuC -args "Test1 & ^ "" Test2" "Test "" 3"
+
+  must produce following output:
+
+    1: `Test1 & ^ " Test2`
+    2: `Test " 3`
+
+* Changes in `ConEmuC -echo` feature.
+
+  * Arguments are processed one-by-one, strings with special characters
+    must be framed with double-quotes, two sequential double-quotes are
+    replaces with one double quotes, multiple spaces between arguments
+    are treated as single space.
+
+  * If `-r` subswitch is **not** specified, than following replacements are done.
+
+    * `^^` -> `^`
+    * `^n` or `^N` -> (char)10 {\n : LF}
+    * `^r` or `^R` -> (char)13 {\r : CR}
+    * `^t` or `^T` -> (char)9  {\t : TAB}
+    * `^a` or `^A` -> (char)7  {BELL}
+    * `^b` or `^B` -> (char)8  {\b : BACK}
+    * `^e` or `^E` or `^[` -> (char)27  {ESC}
+
+  * If `-x` subswitch **is specified**, than `%EnvVars%` are expanded.
+
+~~~
+$ ConEmuC -echo "A1 "" A2"   "A3" A4"
+A1 " A2 A3 A4
+
+$ ConEmuC -echo "Line1^nLine2"
+Line1
+Line2
+
+$ ConEmuC -echo -r "Line1^nLine2"
+Line1^nLine2
+~~~
+
+* Settings/Environment has priority over console command line.
+
+  Commands `echo`, `type`, `set` and others, defined in on the ‘Environment’
+  settings page, are executed before commands, defined in the Task or console
+  command line.
+
+  So, if ‘Environment’ has following line
+
+    echo -x "Welcome to the ConEmu %ConEmuBuild% terminal"
+
+  And {cmd} Task is defined like following
+
+    echo "Initializing {cmd} Task..." & cmd /k "%ConEmuBaseDir%\CmdInit.cmd"
+
+  Than you'll see in the terminal
+
+    Welcome to the ConEmu 160217 terminal
+    Initializing {cmd} Task...
+
+* Log system date on `-log` start and date change.
+* Show (StatusBar) and log PID of started console server.
+* GuiMacro: `WindowMode("HERE")` moves ConEmu to monitor with mouse cursor.
+* Add hotkey for ‘Move ConEmu window to the monitor with mouse cursor (Bring here)’.
+* gh-240: Create a workaround for ‘Maximum real console size was reached’.
+
+  Looks like MS-Bug in conhost leads to abnormally large font set in real console,
+  if tab was started As Admin in Windows 10 and Win-L pressed.
+
+  > C:\ConEmu\ConEmu64.exe -basic -max -size 12 -visible -log -cmd {cmd (Admin)}
+  > rundll32 user32.dll,LockWorkStation
+
+
 2016.2.11
 * Initial steps for localization.
   More information in docs: https://conemu.github.io/en/l10n.html
