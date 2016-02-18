@@ -68,6 +68,7 @@ $(INTDIR)\ProcessSetEnv.obj \
 $(INTDIR)\Queue.obj \
 $(INTDIR)\RConStartArgs.obj \
 $(INTDIR)\SetEnvVar.obj \
+$(INTDIR)\SrvCommands.obj \
 $(INTDIR)\SrvPipes.obj \
 $(INTDIR)\StartEnv.obj \
 $(INTDIR)\UnicodeTest.obj \
@@ -328,6 +329,8 @@ $(INTDIR)\Queue.obj: Queue.cpp ../common/PipeServer.h ../common/InQueue.h
 $(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
 
 $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
+
+$(INTDIR)\SrvCommands.obj: SrvCommands.cpp SrvCommands.h
 
 $(INTDIR)\SrvPipes.obj: SrvPipes.cpp ../common/PipeServer.h
 

@@ -445,6 +445,7 @@
       <File RelativePath=".\GuiMacro.h" />
       <File RelativePath=".\Queue.h" />
       <File RelativePath=".\resource.h" />
+      <File RelativePath=".\SrvCommands.h" />
       <File RelativePath=".\StartEnv.h" />
       <File RelativePath=".\UnicodeTest.h" />
     </Filter>
@@ -497,6 +498,7 @@
       <File RelativePath=".\GuiMacro.cpp" />
       <File RelativePath=".\InjectRemote.cpp" />
       <File RelativePath=".\Queue.cpp" />
+      <File RelativePath=".\SrvCommands.cpp" />
       <File RelativePath=".\SrvPipes.cpp" />
       <File RelativePath=".\Infiltrate.cpp">
         <FileConfiguration Name="Debug_F3|Win32">

@@ -872,6 +872,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </CustomBuild>
+    <ClInclude Include="SrvCommands.h" />
     <ClInclude Include="StartEnv.h" />
     <ClInclude Include="UnicodeTest.h" />
   </ItemGroup>
@@ -923,6 +924,7 @@
     <ClCompile Include="GuiMacro.cpp" />
     <ClCompile Include="InjectRemote.cpp" />
     <ClCompile Include="Queue.cpp" />
+    <ClCompile Include="SrvCommands.cpp" />
     <ClCompile Include="SrvPipes.cpp" />
     <ClCompile Include="Infiltrate.cpp">
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug_F3|Win32'">Default</BasicRuntimeChecks>
