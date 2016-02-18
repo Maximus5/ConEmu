@@ -3029,26 +3029,14 @@ int CSettings::HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort)
 				wchar_t szBuf1[512], szBuf2[512];
 
 				if (pHk1->HkType == chk_Macro)
-				{
 					pszDescr1 = (pHk1->GuiMacro && *pHk1->GuiMacro) ? pHk1->GuiMacro : L"<Not set>";
-				}
 				else
-				{
-					if (!CLngRc::getHint(pHk1->DescrLangID, szBuf1, countof(szBuf1)))
-						_wsprintf(szBuf1, SKIPLEN(countof(szBuf1)) L"%i", pHk1->DescrLangID);
-					pszDescr1 = szBuf1;
-				}
+					pszDescr1 = pHk1->GetDescription(szBuf1, countof(szBuf1));
 
 				if (pHk2->HkType == chk_Macro)
-				{
 					pszDescr2 = (pHk2->GuiMacro && *pHk2->GuiMacro) ? pHk2->GuiMacro : L"<Not set>";
-				}
 				else
-				{
-					if (!CLngRc::getHint(pHk2->DescrLangID, szBuf2, countof(szBuf2)))
-						_wsprintf(szBuf2, SKIPLEN(countof(szBuf2)) L"%i", pHk2->DescrLangID);
-					pszDescr2 = szBuf2;
-				}
+					pszDescr2 = pHk2->GetDescription(szBuf2, countof(szBuf2));
 
 				nCmp = lstrcmpi(pszDescr1, pszDescr2);
 				if (nCmp == 0)
