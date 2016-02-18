@@ -468,6 +468,7 @@ const CECMD
 	CECMD_LOCKSTATION    = 88, // When user press Win+L
 	CECMD_UNLOCKSTATION  = 89, // CESERVER_REQ_SETSIZE
 	CECMD_GETROOTINFO    = 90, // CESERVER_ROOT_INFO
+	CECMD_WRITETEXT      = 91, // wData[] == LPCWSTR
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,

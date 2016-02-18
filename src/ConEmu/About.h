@@ -463,6 +463,8 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"     \"HERE\" (move ConEmu to monitor with mouse cursor)\r\n" \
 	L"WindowPosSize(\"<X>\",\"<Y>\",\"<W>\",\"<H>\")\r\n" \
 	L"  - Change ConEmu window geometry\r\n" \
+	L"Write(\"<Text>\")\r\n" \
+	L"  - Write text to console OUTPUT\r\n" \
 	L"Zoom(N)\r\n" \
 	L"  - Set zoom value, 100 - original font size\r\n" \
 	L""

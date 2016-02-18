@@ -600,6 +600,7 @@ class CRealConsole
 		bool isConsoleReady();
 		void OnServerClosing(DWORD anSrvPID, int* pnShellExitCode);
 		void Paste(CEPasteMode PasteMode = pm_Standard, LPCWSTR asText = NULL, bool abNoConfirm = false, bool abCygWin = false);
+		bool Write(LPCWSTR pszText, int nLen = -1, DWORD* pnWritten = NULL);
 		void LogString(LPCSTR asText);
 		void LogString(LPCWSTR asText);
 		bool isActive(bool abAllowGroup);

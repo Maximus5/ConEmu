@@ -239,6 +239,8 @@ namespace ConEmuMacro
 	LPWSTR WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Change window pos and size, same as ‘Apply’ button in the ‘Size & Pos’ page of the Settings dialog
 	LPWSTR WindowPosSize(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Write all strings to console. Use carefully!
+	LPWSTR Write(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Установить Zoom для шрифта. 100% и т.п.
 	LPWSTR Zoom(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 
@@ -311,6 +313,7 @@ namespace ConEmuMacro
 		{WindowMinimize, {L"WindowMinimize"}, gmf_MainThread},
 		{WindowMode, {L"WindowMode"}, gmf_MainThread},
 		{WindowPosSize, {L"WindowPosSize"}, gmf_MainThread},
+		{Write, {L"Write"}},
 		{Zoom, {L"Zoom"}, gmf_MainThread},
 		// End
 		{NULL}
@@ -3752,6 +3755,22 @@ LPWSTR ConEmuMacro::TransparencyHelper(int nCmd, int nValue)
 	{
 		gpConEmu->OnTransparent();
 	}
+
+	return lstrdup(L"OK");
+}
+
+// Write all strings to console. Use carefully!
+LPWSTR ConEmuMacro::Write(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	if (!apRCon)
+		return lstrdup(L"FAILED:NO_RCON");
+
+	LPWSTR pszText = NULL;
+	if (!p->GetRestStrArgs(0, pszText))
+		return lstrdup(L"FAILED:NO_TEXT");
+
+	if (!apRCon->Write(pszText))
+		return lstrdup(L"FAILED");
 
 	return lstrdup(L"OK");
 }

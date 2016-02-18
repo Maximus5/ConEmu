@@ -2365,6 +2365,45 @@ BOOL cmd_GetRootInfo(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_WriteText(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE;
+
+	LogString("CECMD_WRITETEXT");
+
+	*out = ExecuteNewCmd(CECMD_WRITETEXT, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+
+	if (*out)
+	{
+		DWORD nWritten = 0;
+
+		DWORD nBytes = in.DataSize();
+		_ASSERTE(nBytes && !(nBytes % sizeof(wchar_t)));
+		LPCWSTR pszText = (LPCWSTR)in.wData;
+		int nLen = nBytes>>1;
+
+		// Z-Terminated string is expected here, but we check
+		if (nLen > 0)
+		{
+			if (pszText[nLen-1] == 0)
+				nLen--;
+			else
+				_ASSERTE(pszText[nLen-1] == 0);
+		}
+
+		if (nLen > 0)
+		{
+			WriteOutput(pszText, nLen, nWritten, true/*bProcessed*/, false/*bAsciiPrint*/, false/*bStreamBy1*/, false/*bToBottom*/);
+		}
+
+		(*out)->dwData[0] = nWritten;
+	}
+
+	lbRc = ((*out) != NULL);
+
+	return lbRc;
+}
+
 
 /* ********************************** */
 
@@ -2605,6 +2644,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_GETROOTINFO:
 		{
 			lbRc = cmd_GetRootInfo(in, out);
+		} break;
+		case CECMD_WRITETEXT:
+		{
+			lbRc = cmd_WriteText(in, out);
 		} break;
 		default:
 		{

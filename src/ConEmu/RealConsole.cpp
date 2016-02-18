@@ -12298,6 +12298,46 @@ wrap:
 #endif
 }
 
+// !!! USE CAREFULLY !!!
+// This function writes directly to console surface!
+// So, it may cause a rubbish, if console has running applications!
+bool CRealConsole::Write(LPCWSTR pszText, int nLen /*= -1*/, DWORD* pnWritten /*= NULL*/)
+{
+	if (!this)
+		return false;
+
+	if (nLen == -1)
+		nLen = wcslen(pszText);
+	if (nLen <= 0)
+		return false;
+
+	DWORD dwServerPID = GetServerPID(false);
+	if (!dwServerPID)
+		return false;
+
+	bool lbRc = false;
+	DWORD cbData = (nLen + 1) * sizeof(pszText[0]);
+
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_WRITETEXT, sizeof(CESERVER_REQ_HDR)+cbData);
+	if (pIn)
+	{
+		wmemmove((wchar_t*)pIn->wData, pszText, nLen);
+		pIn->wData[nLen] = 0;
+
+		CESERVER_REQ* pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
+		if (pOut->DataSize() >= sizeof(DWORD))
+		{
+			if (pnWritten)
+				*pnWritten = pOut->dwData[0];
+			lbRc = (pOut->dwData[0] != 0);
+		}
+		ExecuteFreeResult(pOut);
+		ExecuteFreeResult(pIn);
+	}
+
+	return lbRc;
+}
+
 bool CRealConsole::isConsoleClosing()
 {
 	if (!mp_ConEmu->isValid(this))
