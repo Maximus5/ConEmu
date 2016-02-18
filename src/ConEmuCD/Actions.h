@@ -68,3 +68,5 @@ int  DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdl
 int  DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = false);
 int  DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg);
 bool DoStateCheck(ConEmuStateCheck eStateCheck);
+
+int  WriteOutput(LPCWSTR pszText, DWORD cchLen, DWORD& dwWritten, bool bProcessed, bool bAsciiPrint, bool bStreamBy1, bool bToBottom);

@@ -770,10 +770,8 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 {
 	int iRc = 0;
 	CEStr    szTemp;
-	char*    pszOem = NULL;
 	LPCWSTR  pszText = NULL;
 	DWORD    cchLen = 0, dwWritten = 0;
-	HANDLE   hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	bool     bAddNewLine = true;
 	bool     bProcessed = true;
 	bool     bToBottom = false;
@@ -783,7 +781,6 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	CEStr    szArg;
 	HANDLE   hFile = NULL;
 	DWORD    DefaultCP = 0;
-	BOOL     bRc = FALSE;
 
 	_ASSERTE(asCmdArg && (*asCmdArg != L' '));
 	asCmdArg = SkipNonPrintable(asCmdArg);
@@ -887,6 +884,25 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		cchLen = pszText ? lstrlen(pszText) : 0;
 	}
 
+	#ifdef _DEBUG
+	if (bAsciiPrint)
+	{
+		_ASSERTE(eExecAction == ea_OutType);
+	}
+	#endif
+
+	iRc = WriteOutput(pszText, cchLen, dwWritten, bProcessed, bAsciiPrint, bStreamBy1, bToBottom);
+
+	return iRc;
+}
+
+
+int WriteOutput(LPCWSTR pszText, DWORD cchLen, DWORD& dwWritten, bool bProcessed, bool bAsciiPrint, bool bStreamBy1, bool bToBottom)
+{
+	int    iRc = 0;
+	BOOL   bRc = FALSE;
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
 	if (bToBottom)
 	{
 		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
@@ -927,7 +943,6 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 
 		if (bAsciiPrint)
 		{
-			_ASSERTE(eExecAction == ea_OutType);
 			if (!bStreamBy1)
 			{
 				if (WriteProcessedA)
@@ -965,6 +980,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	{
 		// Current process output was redirected to file!
 
+		char* pszOem = NULL;
 		UINT  cp = GetConsoleOutputCP();
 		int   nDstLen = WideCharToMultiByte(cp, 0, pszText, cchLen, NULL, 0, NULL, NULL);
 		if (nDstLen < 1)
@@ -981,6 +997,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 			{
 				bRc = WriteFile(hOut, pszOem, nWrite, &dwWritten, 0);
 			}
+			free(pszOem);
 		}
 	}
 
@@ -988,7 +1005,6 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		iRc = 3;
 
 wrap:
-	SafeFree(pszOem);
 	return iRc;
 }
 
