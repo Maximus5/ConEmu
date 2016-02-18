@@ -1896,6 +1896,28 @@ void CEAnsi::DoPrintEnv(LPCWSTR asCmd, INT_PTR cchLen)
 		wchar_t* pszValue = szValue;
 		DWORD cchMax = countof(szValue);
 		DWORD nMax = GetEnvironmentVariable(pszVarName, pszValue, cchMax);
+
+		// Some predefined as `time`, `date`, `cd`, ...
+		if (!nMax)
+		{
+			if ((lstrcmpi(pszVarName, L"date") == 0)
+				|| (lstrcmpi(pszVarName, L"time") == 0))
+			{
+				SYSTEMTIME st = {}; GetLocalTime(&st);
+				if (lstrcmpi(pszVarName, L"date") == 0)
+					_wsprintf(szValue, SKIPCOUNT(szValue) L"%u-%02u-%02u", st.wYear, st.wMonth, st.wDay);
+				else
+					_wsprintf(szValue, SKIPCOUNT(szValue) L"%u:%02u:%02u.%03u", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+				nMax = lstrlen(szValue);
+			}
+			#if 0
+			else if (lstrcmpi(pszVarName, L"cd") == 0)
+			{
+				//TODO: If possible
+			}
+			#endif
+		}
+
 		if (nMax >= cchMax)
 		{
 			cchMax = nMax+1;
