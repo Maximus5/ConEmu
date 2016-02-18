@@ -405,6 +405,7 @@ static LngPredefined gsDataHints[] = {
 	{ vkPicViewSlower,         L"PicView Far plugin: Slideshow slower" },
 	{ vkRDragKey,              L"Drag from Far panels with right mouse key (RDrag modifier)" },
 	{ vkRenameTab,             L"Rename active tab" },
+	{ vkResetTerminal,         L"Reset terminal: clear screen, backscroll, move cursor to the upper-left corner" },
 	{ vkScreenshot,            L"Make screenshot of active window" },
 	{ vkScreenshotFull,        L"Make screenshot of entire desktop" },
 	{ vkSetFocusChild,         L"Set focus to child GUI application" },
