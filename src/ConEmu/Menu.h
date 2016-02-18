@@ -31,6 +31,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "MenuIds.h"
 
+enum MenuItemType
+{
+	mit_Separator,
+	mit_Command,
+	mit_Option,
+};
+
+struct MenuItem
+{
+	MenuItemType mit;
+	UINT MenuId;
+	UINT HotkeyId;
+	UINT Flags;
+	LPCWSTR pszText;
+};
+
 class CConEmuMenu
 {
 public:
@@ -56,6 +72,7 @@ public:
 	HMENU CreateHelpMenuPopup();
 	HMENU CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly);
 	HMENU CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, bool abAddNew, bool abFromConsole);
+	bool  CreateOrUpdateMenu(HMENU& hMenu, const MenuItem* Items, size_t ItemsCount);
 
 	int trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, HWND hWnd, RECT *prcRect = NULL);
 

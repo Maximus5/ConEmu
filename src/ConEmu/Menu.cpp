@@ -276,6 +276,42 @@ void CConEmuMenu::CmdTaskPopupItem::SetMenuName(wchar_t* pszDisplay, INT_PTR cch
 	}
 }
 
+bool CConEmuMenu::CreateOrUpdateMenu(HMENU& hMenu, const MenuItem* Items, size_t ItemsCount)
+{
+	bool bNew = false;
+	if (hMenu == NULL)
+	{
+		bNew = true;
+		hMenu = CreatePopupMenu();
+	}
+
+	for (size_t i = 0; i < ItemsCount; ++i)
+	{
+		if (Items[i].mit == mit_Separator)
+		{
+			if (bNew)
+				AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
+		}
+		else if (bNew)
+		{
+			AppendMenu(hMenu,
+				MF_STRING|Items[i].Flags,
+				Items[i].MenuId,
+				Items[i].HotkeyId ? MenuAccel(Items[i].HotkeyId,Items[i].pszText) : Items[i].pszText);
+		}
+		else if (Items[i].mit == mit_Command)
+		{
+			EnableMenuItem(hMenu, Items[i].MenuId, MF_BYCOMMAND|Items[i].Flags);
+		}
+		else
+		{
+			CheckMenuItem(hMenu, Items[i].MenuId, MF_BYCOMMAND|Items[i].Flags);
+		}
+	}
+
+	return bNew;
+}
+
 void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 0*/, bool bShowTaskItems /*= false*/)
 {
 	mb_CmdShowTaskItems = bShowTaskItems;
@@ -2063,36 +2099,25 @@ HMENU CConEmuMenu::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 
 	HMENU hMenu = ahExist;
 
-	if (!hMenu)
-	{
-		hMenu = CreatePopupMenu();
-		AppendMenu(hMenu, MF_STRING|(lbEnabled?MF_ENABLED:MF_GRAYED),        ID_CON_MARKBLOCK, MenuAccel(vkCTSVkBlockStart,L"Mark &block"));
-		AppendMenu(hMenu, MF_STRING|(lbEnabled?MF_ENABLED:MF_GRAYED),        ID_CON_MARKTEXT,  MenuAccel(vkCTSVkTextStart,L"Mar&k text"));
-		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
-		AppendMenu(hMenu, MF_STRING|(lbSelectionExist?MF_ENABLED:MF_GRAYED), ID_CON_COPY,      L"Cop&y");
-		AppendMenu(hMenu, MF_STRING|(lbEnabled?MF_ENABLED:MF_GRAYED),        ID_CON_COPY_ALL,  MenuAccel(vkCTSVkCopyAll,L"Copy &all"));
-		AppendMenu(hMenu, MF_STRING|(lbEnabled?MF_ENABLED:MF_GRAYED),        ID_CON_PASTE,     MenuAccel(vkPasteText,L"&Paste"));
-		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
-		AppendMenu(hMenu, MF_STRING|((gpSet->isCTSHtmlFormat == 0)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML0, L"Plain &text only");
-		AppendMenu(hMenu, MF_STRING|((gpSet->isCTSHtmlFormat == 1)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML1, L"Copy &HTML format");
-		AppendMenu(hMenu, MF_STRING|((gpSet->isCTSHtmlFormat == 2)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML2, L"Copy a&s HTML");
-		AppendMenu(hMenu, MF_STRING|((gpSet->isCTSHtmlFormat == 3)?MF_CHECKED:MF_UNCHECKED), ID_CON_COPY_HTML3, L"A&NSI sequences");
-		AppendMenu(hMenu, MF_SEPARATOR, 0, NULL);
-		AppendMenu(hMenu, MF_STRING|(lbEnabled?MF_ENABLED:MF_GRAYED),         ID_CON_FIND,     MenuAccel(vkFindTextDlg,L"&Find text..."));
-	}
-	else
-	{
-		EnableMenuItem(hMenu, ID_CON_MARKBLOCK,  MF_BYCOMMAND|(lbEnabled?MF_ENABLED:MF_GRAYED));
-		EnableMenuItem(hMenu, ID_CON_MARKTEXT,   MF_BYCOMMAND|(lbEnabled?MF_ENABLED:MF_GRAYED));
-		EnableMenuItem(hMenu, ID_CON_COPY,       MF_BYCOMMAND|(lbSelectionExist?MF_ENABLED:MF_GRAYED));
-		EnableMenuItem(hMenu, ID_CON_COPY_ALL,   MF_BYCOMMAND|(lbEnabled?MF_ENABLED:MF_GRAYED));
-		EnableMenuItem(hMenu, ID_CON_PASTE,      MF_BYCOMMAND|(lbEnabled?MF_ENABLED:MF_GRAYED));
-		EnableMenuItem(hMenu, ID_CON_FIND,       MF_BYCOMMAND|(lbEnabled?MF_ENABLED:MF_GRAYED));
-		CheckMenuItem(hMenu,  ID_CON_COPY_HTML0, MF_BYCOMMAND|((gpSet->isCTSHtmlFormat == 0)?MF_CHECKED:MF_UNCHECKED));
-		CheckMenuItem(hMenu,  ID_CON_COPY_HTML1, MF_BYCOMMAND|((gpSet->isCTSHtmlFormat == 1)?MF_CHECKED:MF_UNCHECKED));
-		CheckMenuItem(hMenu,  ID_CON_COPY_HTML2, MF_BYCOMMAND|((gpSet->isCTSHtmlFormat == 2)?MF_CHECKED:MF_UNCHECKED));
-		CheckMenuItem(hMenu,  ID_CON_COPY_HTML3, MF_BYCOMMAND|((gpSet->isCTSHtmlFormat == 3)?MF_CHECKED:MF_UNCHECKED));
-	}
+	const BYTE fmt = gpSet->isCTSHtmlFormat;
+	// MenuItemType mit; UINT MenuId; UINT HotkeyId; UINT Flags; LPCWSTR pszText;
+	MenuItem Items[] = {
+		{ mit_Command,   ID_CON_MARKBLOCK,  vkCTSVkBlockStart, (lbEnabled?MF_ENABLED:MF_GRAYED), L"Mark &block"       },
+		{ mit_Command,   ID_CON_MARKTEXT,   vkCTSVkTextStart,  (lbEnabled?MF_ENABLED:MF_GRAYED), L"Mar&k text"        },
+		{ mit_Separator },
+		{ mit_Command,   ID_CON_COPY,       0,          (lbSelectionExist?MF_ENABLED:MF_GRAYED), L"Cop&y"             },
+		{ mit_Command,   ID_CON_COPY_ALL,   vkCTSVkCopyAll,    (lbEnabled?MF_ENABLED:MF_GRAYED), L"Copy &all"         },
+		{ mit_Command,   ID_CON_PASTE,      vkPasteText,       (lbEnabled?MF_ENABLED:MF_GRAYED), L"&Paste"            },
+		{ mit_Separator },
+		{ mit_Option,    ID_CON_COPY_HTML0, 0,             ((fmt == 0)?MF_CHECKED:MF_UNCHECKED), L"Plain &text only"  },
+		{ mit_Option,    ID_CON_COPY_HTML1, 0,             ((fmt == 1)?MF_CHECKED:MF_UNCHECKED), L"Copy &HTML format" },
+		{ mit_Option,    ID_CON_COPY_HTML2, 0,             ((fmt == 2)?MF_CHECKED:MF_UNCHECKED), L"Copy a&s HTML"     },
+		{ mit_Option,    ID_CON_COPY_HTML3, 0,             ((fmt == 3)?MF_CHECKED:MF_UNCHECKED), L"A&NSI sequences"   },
+		{ mit_Separator },
+		{ mit_Command,   ID_CON_FIND,       vkFindTextDlg,     (lbEnabled?MF_ENABLED:MF_GRAYED), L"&Find text..."     },
+	};
+
+	CreateOrUpdateMenu(hMenu, Items, countof(Items));
 
 	return hMenu;
 }
