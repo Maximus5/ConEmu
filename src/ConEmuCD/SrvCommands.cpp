@@ -2331,8 +2331,6 @@ BOOL cmd_GetRootInfo(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = TRUE;
 
-	gpSrv->bStationLocked = FALSE;
-
 	LogString("CECMD_GETROOTINFO");
 
 	*out = ExecuteNewCmd(CECMD_GETROOTINFO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_ROOT_INFO));
