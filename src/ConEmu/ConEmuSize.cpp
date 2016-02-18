@@ -5508,20 +5508,21 @@ void CConEmuSize::DoBringHere()
 
 	POINT ptCur = {}; GetCursorPos(&ptCur);
 	HMONITOR hMon = MonitorFromPoint(ptCur, MONITOR_DEFAULTTOPRIMARY);
+	HMONITOR hWndMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
 	MONITORINFO mi = {sizeof(mi)};
-	if (!GetMonitorInfo(hMon, &mi))
+	bool bUseJump = (hWndMon != hMon);
+	GetMonitorInfoSafe(hMon, mi);
+
+	//if (!bUseJump)
 	{
-		_ASSERTE(FALSE && "GetMonitorInfo fails");
-		// TODO: Utilize SystemParametersInfo? to determine working area
-		// TODO: Ensure, ConEmu window doesn't go out of working are (size)
-		mi.rcWork.left = mi.rcWork.top = 0;
 		setWindowPos(HWND_TOP, mi.rcWork.left, mi.rcWork.top, 0,0, SWP_NOSIZE);
 	}
-	else
-	{
-		RECT rcDefWnd = GetDefaultRect();
-		JumpNextMonitor(ghWnd, hMon, true/*doesn't matter if hMon defined*/, rcDefWnd);
-	}
+	//else
+	//{
+	//	RECT rcDefWnd = GetDefaultRect();
+	//	JumpNextMonitor(ghWnd, hMon, true/*doesn't matter if hMon defined*/, rcDefWnd);
+	//}
+	UNREFERENCED_PARAMETER(bUseJump);
 }
 
 void CConEmuSize::DoFullScreen()
