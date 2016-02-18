@@ -4,7 +4,8 @@
 
 #define ID_CON_SETPALETTE_FIRST 0xAB40
 #define ID_CON_SETPALETTE_LAST  0xABA0
-// (0xABA1 .. 0xABA4) are free yet
+// (0xABA1 .. 0xABA3) are free yet
+#define ID_RESET_TERMINAL 0xABA4 // Reset terminal
 #define ID_CON_COPY_HTML3 0xABA5 // Copy ANSI sequences
 #define ID_ONLINEHELP 0xABA6
 #define ID_MINIDUMPTREE 0xABA7

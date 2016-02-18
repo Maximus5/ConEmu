@@ -2109,6 +2109,8 @@ HMENU CConEmuMenu::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 		{ mit_Command,   ID_CON_COPY_ALL,   vkCTSVkCopyAll,    (lbEnabled?MF_ENABLED:MF_GRAYED), L"Copy &all"         },
 		{ mit_Command,   ID_CON_PASTE,      vkPasteText,       (lbEnabled?MF_ENABLED:MF_GRAYED), L"&Paste"            },
 		{ mit_Separator },
+		{ mit_Command,   ID_RESET_TERMINAL, vkResetTerminal,   (lbEnabled?MF_ENABLED:MF_GRAYED), L"&Reset terminal"   },
+		{ mit_Separator },
 		{ mit_Option,    ID_CON_COPY_HTML0, 0,             ((fmt == 0)?MF_CHECKED:MF_UNCHECKED), L"Plain &text only"  },
 		{ mit_Option,    ID_CON_COPY_HTML1, 0,             ((fmt == 1)?MF_CHECKED:MF_UNCHECKED), L"Copy &HTML format" },
 		{ mit_Option,    ID_CON_COPY_HTML2, 0,             ((fmt == 2)?MF_CHECKED:MF_UNCHECKED), L"Copy a&s HTML"     },
@@ -2300,6 +2302,17 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 				if (gpConEmu->GetActiveVCon(&VCon) >= 0)
 				{
 					VCon->RCon()->Paste();
+				}
+			}
+			return 0;
+
+		case ID_RESET_TERMINAL:
+			{
+				CVConGuard VCon;
+				if (gpConEmu->GetActiveVCon(&VCon) >= 0)
+				{
+					CEStr szMacro = lstrdup(L"Write(\"\\ec\")");
+					CEStr szResult = ConEmuMacro::ExecuteMacro(szMacro.ms_Val, VCon->RCon());
 				}
 			}
 			return 0;
