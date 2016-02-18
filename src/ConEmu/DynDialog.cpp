@@ -671,6 +671,16 @@ BOOL CDynDialog::LocalizeControl(HWND hChild, LPARAM lParam)
 	if (!CLngRc::isLocalized())
 		return TRUE;
 
+	_ASSERTE(lParam!=NULL);
+	_ASSERTE(IsWindow((HWND)lParam));
+
+	// Only first level
+	HWND hParent = GetParent(hChild);
+	if (hParent != (HWND)lParam)
+	{
+		return TRUE; // continue enum
+	}
+
 	LONG wID = GetWindowLong(hChild, GWL_ID);
 
 	#if 0
@@ -679,7 +689,8 @@ BOOL CDynDialog::LocalizeControl(HWND hChild, LPARAM lParam)
 	#endif
 
 	_ASSERTE(IDC_STATIC == -1);
-	if (wID != IDC_STATIC)   // IDC_STATIC
+	if ((wID != 0)              // Unknown control?
+		&& (wID != IDC_STATIC)) // IDC_STATIC
 	{
 		CEStr lsLoc;
 		wchar_t szClass[64];

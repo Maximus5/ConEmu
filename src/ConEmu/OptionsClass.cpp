@@ -9264,7 +9264,7 @@ BOOL CSettings::RegisterTipsForChild(HWND hChild, LPARAM lParam)
 	#endif
 
 	// Localize Control text
-	CDynDialog::LocalizeControl(hChild, 0);
+	CDynDialog::LocalizeControl(hChild, lParam);
 
 	// Register tooltip by child HWND
 	if (gpSetCls->hwndTip)
