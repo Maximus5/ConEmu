@@ -6,16 +6,17 @@ Automatic Update to get Preview or Alpha builds as soon as they are released.
 Any contributions are appreciated
 ---------------------------------
 You can show your appreciation and support future development by:
-+ bugreporting: http://conemu.github.io/en/Issues.html
-+ funding: http://conemu.github.io/donate.html
++ localization: https://conemu.github.io/en/Localization.html
++ bugreporting: https://conemu.github.io/en/Issues.html
++ funding: https://conemu.github.io/donate.html
 + helping with documentation: https://github.com/ConEmu/ConEmu.github.io
 + coding: https://github.com/Maximus5/ConEmu
-+ voting: http://conemu.github.io/en/Awards.html#Voting
++ voting: https://conemu.github.io/en/Awards.html#Voting
 or anything else, spreading the word for example.
 
 ConEmu changelog is always available online
 -------------------------------------------
-http://conemu.github.io/en/Whats_New.html
+https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
