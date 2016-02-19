@@ -117,6 +117,17 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEZONEID       CEWIKIBASE L"ZoneId.html"
 
 
+// Tasks related
+#define CmdFilePrefix     L'@' // Request to load "task" from the text file
+#define DropLnkPrefix     L'?' // The sign we probably got command line by dropping smth on ConEmu's icon
+#define TaskBracketLeft   L'{'
+#define TaskBracketLeftS  L"{"
+#define TaskBracketRight  L'}'
+#define TaskBracketRightS L"}"
+#define AutoStartTaskName L"<Startup>"
+#define AutoStartTaskLeft L'<'
+
+
 // EnvVars
 #define ENV_CONEMUDIR_VAR_A            "ConEmuDir"
 #define ENV_CONEMUDIR_VAR_W              _CRT_WIDE(ENV_CONEMUDIR_VAR_A)

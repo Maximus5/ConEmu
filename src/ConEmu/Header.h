@@ -768,15 +768,6 @@ typedef struct tagMYRGB
 } MYRGB, MYCOLORREF;
 #include <poppack.h>
 
-#define CmdFilePrefix     L'@' // Request to load "task" from the text file
-#define DropLnkPrefix     L'?' // The sign we probably got command line by dropping smth on ConEmu's icon
-#define TaskBracketLeft   L'{'
-#define TaskBracketLeftS  L"{"
-#define TaskBracketRight  L'}'
-#define TaskBracketRightS L"}"
-#define AutoStartTaskName L"<Startup>"
-#define AutoStartTaskLeft L'<'
-
 // pszWords - '|'separated
 void StripWords(wchar_t* pszText, const wchar_t* pszWords);
 
