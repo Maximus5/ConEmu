@@ -1467,6 +1467,53 @@ CESERVER_REQ* CRealServer::cmdQueryPalette(LPVOID pInst, CESERVER_REQ* pIn, UINT
 	return pOut;
 }
 
+CESERVER_REQ* CRealServer::cmdGetTaskCmd(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	CEStr lsData;
+	const CommandTasks* pTask = (pIn->DataSize() > sizeof(pIn->GetTask)) ? gpSet->CmdTaskGetByName(pIn->GetTask.data) : NULL;
+	if (pTask)
+	{
+		LPCWSTR pszTemp = pTask->pszCommands;
+		if (0 == NextLine(&pszTemp, lsData))
+		{
+			RConStartArgs args;
+			LPCWSTR pszRaw = gpConEmu->ParseScriptLineOptions(lsData.ms_Val, NULL, NULL);
+			if (pszRaw)
+			{
+				args.pszSpecialCmd = lstrdup(pszRaw);
+				// Parse all -new_console's
+				args.ProcessNewConArg();
+				// Prohbit external requests for credentials
+				args.CleanSecure();
+				// Directory?
+				if (!args.pszStartupDir && pTask->pszGuiArgs)
+					pTask->ParseGuiArgs(&args);
+				// Prepare for execution
+				lsData = args.CreateCommandLine(false);
+			}
+		}
+	}
+
+	int nLen = lsData.GetLen();
+
+	CESERVER_REQ* pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_TASK) + nLen*sizeof(wchar_t));
+	if (!pOut)
+		return NULL;
+
+	if (nLen > 0)
+	{
+		pOut->GetTask.nIdx = TRUE;
+		lstrcpy(pOut->GetTask.data, lsData.ms_Val);
+	}
+	else
+	{
+		pOut->GetTask.nIdx = FALSE;
+		pOut->GetTask.data[0] = 0;
+	}
+
+	return pOut;
+}
+
 // Эта функция пайп не закрывает!
 //void CRealServer::ServerThreadCommand(HANDLE hPipe)
 BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
@@ -1590,6 +1637,9 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 		break;
 	case CECMD_QUERYPALETTE:
 		pOut = pRSrv->cmdQueryPalette(pInst, pIn, nDataSize);
+		break;
+	case CECMD_GETTASKCMD:
+		pOut = pRSrv->cmdGetTaskCmd(pInst, pIn, nDataSize);
 		break;
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(pInst, pIn, nDataSize);

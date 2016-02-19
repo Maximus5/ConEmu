@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -484,6 +484,7 @@ const CECMD
 	CECMD_UNLOCKSTATION  = 89, // CESERVER_REQ_SETSIZE
 	CECMD_GETROOTINFO    = 90, // CESERVER_ROOT_INFO
 	CECMD_WRITETEXT      = 91, // wData[] == LPCWSTR
+	CECMD_GETTASKCMD     = 92, // CESERVER_REQ_TASK
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -2208,6 +2209,13 @@ struct CESERVER_ROOT_INFO
 	DWORD nUpTime; // millisec
 };
 
+// CECMD_GETTASKCMD
+struct CESERVER_REQ_TASK
+{
+	UINT    nIdx;
+	wchar_t data[1]; // Variable length
+};
+
 struct CESERVER_REQ
 {
 	CESERVER_REQ_HDR hdr;
@@ -2267,6 +2275,7 @@ struct CESERVER_REQ
 		CESERVER_PROMPTSTARTED PromptStarted;
 		CESERVER_PALETTE Palette;
 		CESERVER_ROOT_INFO RootInfo;
+		CESERVER_REQ_TASK GetTask;
 	};
 
 	DWORD DataSize() { return (this && (hdr.cbSize >= sizeof(hdr))) ? (hdr.cbSize - sizeof(hdr)) : 0; };

@@ -201,6 +201,7 @@ BOOL    gbForceHideConWnd = FALSE;
 DWORD   gdwMainThreadId = 0;
 wchar_t* gpszRunCmd = NULL;
 wchar_t* gpszRootExe = NULL; // may be set with '/ROOTEXE' switch if used with '/TRMPID'. full path to root exe
+wchar_t* gpszTaskCmd = NULL;
 CProcessEnvCmd* gpSetEnv = NULL;
 LPCWSTR gpszCheck4NeedCmd = NULL; // Для отладки
 wchar_t gszComSpec[MAX_PATH+1] = {0};
@@ -2121,6 +2122,7 @@ wrap:
 #endif
 
 	SafeFree(gpszRunCmd);
+	SafeFree(gpszTaskCmd);
 	SafeFree(gpszForcedTitle);
 
 	CommonShutdown();
@@ -2849,6 +2851,45 @@ void ApplyEnvironmentCommands(LPCWSTR pszCommands)
 
 	// These must be applied before commands from CommandLine
 	gpSetEnv->AddLines(pszCommands, true);
+}
+
+// Allow smth like: ConEmuC -c {Far} /e text.txt
+wchar_t* ExpandTaskCmd(LPCWSTR asCmdLine)
+{
+	if (!ghConWnd)
+	{
+		_ASSERTE(ghConWnd);
+		return NULL;
+	}
+	if (!asCmdLine || (asCmdLine[0] != TaskBracketLeft))
+	{
+		_ASSERTE(asCmdLine && (asCmdLine[0] == TaskBracketLeft));
+		return NULL;
+	}
+	LPCWSTR pszNameEnd = wcschr(asCmdLine, TaskBracketRight);
+	if (!pszNameEnd)
+		return NULL;
+	pszNameEnd++;
+
+	size_t cchCount = (pszNameEnd - asCmdLine);
+	DWORD cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_TASK) + cchCount*sizeof(asCmdLine[0]);
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETTASKCMD, cbSize);
+	if (!pIn)
+		return NULL;
+	wmemmove(pIn->GetTask.data, asCmdLine, cchCount);
+	_ASSERTE(pIn->GetTask.data[cchCount] == 0);
+
+	wchar_t* pszResult = NULL;
+	CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+	if (pOut && (pOut->DataSize() > sizeof(pOut->GetTask)) && pOut->GetTask.data[0])
+	{
+		LPCWSTR pszTail = SkipNonPrintable(pszNameEnd);
+		pszResult = lstrmerge(pOut->GetTask.data, (pszTail && *pszTail) ? L" " : NULL, pszTail);
+	}
+	ExecuteFreeResult(pIn);
+	ExecuteFreeResult(pOut);
+
+	return pszResult;
 }
 
 // Parse ConEmuC command line switches
@@ -3706,6 +3747,14 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			if (gnRunMode == RM_COMSPEC)
 			{
 				gpSrv->bK = (szArg[1] & ~0x20) == L'K';
+			}
+
+			if (lsCmdLine && (lsCmdLine[0] == TaskBracketLeft) && wcschr(lsCmdLine, TaskBracketRight))
+			{
+				// Allow smth like: ConEmuC -c {Far} /e text.txt
+				gpszTaskCmd = ExpandTaskCmd(lsCmdLine);
+				if (gpszTaskCmd && *gpszTaskCmd)
+					lsCmdLine = gpszTaskCmd;
 			}
 
 			break; // lsCmdLine уже указывает на запускаемую программу
