@@ -32,6 +32,62 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
+void STRPTR2::Set(wchar_t* RVAL_REF ptrSrc, int iLen /*= -1*/)
+{
+	_ASSERTE(!cchCount && !bMangled && !psz);
+	if (iLen < 0)
+		iLen = lstrlen(ptrSrc);
+	cchCount = (iLen + 1);
+	psz = ptrSrc;
+}
+
+LPBYTE STRPTR2::Mangle(LPBYTE ptrDst)
+{
+	_ASSERTE(!bMangled);
+	if (!bMangled)
+	{
+		_ASSERTE(!cchCount || psz);
+
+		if (cchCount && psz)
+		{
+			wchar_t* ptrSrc = psz;
+			offset = ptrDst - (LPBYTE)this;
+			// ptrDst is expected to be inside memory block allocated for CESERVER_REQ
+			_ASSERTE((((INT_PTR)offset) > 0) && (offset < 0x100000));
+			// Copy our string to testination
+			memmove(ptrDst, ptrSrc, cchCount*sizeof(ptrSrc[0]));
+			ptrDst += cchCount*sizeof(ptrSrc[0]);
+			// Release previously allocated pointer
+			SafeFree(ptrSrc);
+		}
+		else
+		{
+			cchCount = 0;
+		}
+
+		bMangled = TRUE;
+	}
+	return ptrDst;
+}
+
+LPWSTR STRPTR2::Demangle()
+{
+	if (!cchCount)
+		return NULL;
+	if (!bMangled)
+		return psz;
+	_ASSERTE(offset >= sizeof(STRPTR2));
+	psz = (wchar_t*)(((LPBYTE)this) + offset);
+	return psz;
+}
+
+STRPTR2::operator LPCWSTR()
+{
+	return Demangle();
+}
+
+
+
 BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64::MsgStr* pMsg)
 {
 	if (!pMsg || !piRec)

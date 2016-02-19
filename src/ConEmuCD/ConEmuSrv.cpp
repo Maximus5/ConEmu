@@ -2528,9 +2528,9 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 	_ASSERTE(pStartStopRet->GuiMapping.cbSize == sizeof(pStartStopRet->GuiMapping));
 
 	// Environment initialization
-	if (pStartStopRet->cchEnvCommands && pStartStopRet->szCommands[0])
+	if (pStartStopRet->EnvCommands.cchCount)
 	{
-		ApplyEnvironmentCommands(pStartStopRet->szCommands);
+		ApplyEnvironmentCommands(pStartStopRet->EnvCommands.Demangle());
 	}
 
 	// Also calls SetConEmuEnvVar

@@ -640,6 +640,29 @@ struct HANDLE2
 	};
 };
 
+struct STRPTR2
+{
+	// Number of CHARS, including terminator zero(s)
+	DWORD cchCount;
+	// FALSE - psz is valid, TRUE - offset is valid
+	BOOL  bMangled;
+	// The string itself
+	union
+	{
+		// Used internally, invalid during call
+		// Mangled/Demangled before and after call
+		wchar_t* psz;
+		// Must be 64bit to maintain struct size
+		// During call this is an offset in BYTES from STRPTR
+		u64      offset;
+	};
+
+	void   Set(wchar_t* RVAL_REF ptrSrc, int iLen = -1);
+	LPBYTE Mangle(LPBYTE ptrDst);
+	LPWSTR Demangle();
+	operator LPCWSTR();
+};
+
 struct MSG64
 {
 	DWORD cbSize;
@@ -1840,13 +1863,7 @@ struct CESERVER_REQ_SRVSTARTSTOPRET
 	// "chcp utf-8" \0
 	// ...
 	// Some more commands may be implemented later, "alias" for example
-	DWORD cchEnvCommands;
-	union
-	{
-		wchar_t  szCommands[1]; // Variable length
-		wchar_t* pszCommands;   // Used in GUI Internally
-		u64      Reserved;      // Required for same size in both versions
-	};
+	STRPTR2 EnvCommands;
 	// void SetEnvironmentCommands(LPCWSTR aszzEnvVars, LPCWSTR aszSettingCommands);
 };
 

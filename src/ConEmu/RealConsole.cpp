@@ -1384,7 +1384,7 @@ void CRealConsole::QueryStartStopRet(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 	mp_ConEmu->GetGuiInfo(pRet.GuiMapping);
 
 	// Environment strings (inherited from parent console)
-	_ASSERTE(pRet.cchEnvCommands == 0 && pRet.pszCommands == NULL);
+	_ASSERTE(pRet.EnvCommands.cchCount == 0 && pRet.EnvCommands.psz == NULL);
 	SetInitEnvCommands(pRet);
 }
 
@@ -1403,8 +1403,7 @@ void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 	}
 
 	size_t cchData = 0;
-	pRet.pszCommands = env.Allocate(&cchData);
-	pRet.cchEnvCommands = cchData;
+	pRet.EnvCommands.Set(env.Allocate(&cchData), cchData);
 }
 
 #if 0

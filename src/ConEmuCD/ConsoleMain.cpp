@@ -2836,6 +2836,12 @@ void ApplyProcessSetEnvCmd()
 // Lines come from Settings/Environment page
 void ApplyEnvironmentCommands(LPCWSTR pszCommands)
 {
+	if (!pszCommands || !*pszCommands)
+	{
+		_ASSERTE(pszCommands && *pszCommands);
+		return;
+	}
+
 	UINT nSetCP = 0; // Postponed
 
 	if (!gpSetEnv)

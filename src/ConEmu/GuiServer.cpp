@@ -142,6 +142,43 @@ void CGuiServer::Stop(bool abDeinitialize/*=false*/)
 	}
 }
 
+static bool AllocateStartStopRet(CECMD cmd, CESERVER_REQ_SRVSTARTSTOPRET& Ret, CESERVER_REQ* &ppReply, DWORD &pcbMaxReplySize, DWORD &pcbReplySize)
+{
+	bool lbAllocated = false;
+
+	pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SRVSTARTSTOPRET)
+		+ (Ret.EnvCommands.cchCount * sizeof(wchar_t))
+		;
+	if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, cmd, pcbReplySize))
+	{
+		SafeFree(Ret.EnvCommands.psz);
+	}
+	else
+	{
+		lbAllocated = true;
+
+		_ASSERTE(sizeof(ppReply->SrvStartStopRet) == sizeof(Ret));
+		memmove(&ppReply->SrvStartStopRet, &Ret, sizeof(Ret));
+
+		// Variable strings
+		LPBYTE ptrDst = ((LPBYTE)&ppReply->SrvStartStopRet) + sizeof(ppReply->SrvStartStopRet);
+
+		// Environment strings (inherited from parent console)
+		if (Ret.EnvCommands.cchCount)
+		{
+			ptrDst = ppReply->SrvStartStopRet.EnvCommands.Mangle(ptrDst);
+			_ASSERTE(ppReply->SrvStartStopRet.EnvCommands.cchCount == Ret.EnvCommands.cchCount);
+		}
+		else
+		{
+			_ASSERTE(ppReply->SrvStartStopRet.EnvCommands.cchCount == 0);
+			_ASSERTE(Ret.EnvCommands.psz == NULL);
+		}
+	}
+
+	return lbAllocated;
+}
+
 //// Эта функция пайп не закрывает!
 //void CGuiServer::GuiServerThreadCommand(HANDLE hPipe)
 BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
@@ -345,31 +382,9 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			CESERVER_REQ_SRVSTARTSTOPRET Ret = {};
 			lbRc = CVConGroup::AttachRequested(pIn->StartStop.hWnd, &(pIn->StartStop), Ret);
 
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET)+(Ret.cchEnvCommands*sizeof(wchar_t));
-			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+			if (!AllocateStartStopRet(pIn->hdr.nCmd, Ret, ppReply, pcbMaxReplySize, pcbReplySize))
 			{
-				SafeFree(Ret.pszCommands);
 				goto wrap;
-			}
-
-			if (lbRc)
-			{
-				_ASSERTE(sizeof(ppReply->SrvStartStopRet) == sizeof(Ret));
-				memmove(&ppReply->SrvStartStopRet, &Ret, sizeof(Ret));
-
-				// Environment strings (inherited from parent console)
-				if (Ret.cchEnvCommands && Ret.pszCommands)
-				{
-					memmove(ppReply->SrvStartStopRet.szCommands, Ret.pszCommands, Ret.cchEnvCommands*sizeof(wchar_t));
-					ppReply->SrvStartStopRet.cchEnvCommands = Ret.cchEnvCommands;
-				}
-				else
-				{
-					ppReply->SrvStartStopRet.cchEnvCommands = 0;
-				}
-				SafeFree(Ret.pszCommands);
-
-				_ASSERTE((ppReply->StartStopRet.nBufferHeight == 0) || ((int)ppReply->StartStopRet.nBufferHeight > (pIn->StartStop.sbi.srWindow.Bottom-pIn->StartStop.sbi.srWindow.Top)));
 			}
 
 			MCHKHEAP;
@@ -462,28 +477,12 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				}
 				#endif
 
-				pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOPRET)+(arg.Ret.cchEnvCommands*sizeof(wchar_t));
-				if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+				if (!AllocateStartStopRet(pIn->hdr.nCmd, arg.Ret, ppReply, pcbMaxReplySize, pcbReplySize))
 				{
-					SafeFree(arg.Ret.pszCommands);
 					goto wrap;
 				}
 				lbAllocated = true;
 
-				_ASSERTE(sizeof(ppReply->SrvStartStopRet) == sizeof(arg.Ret));
-				memmove(&ppReply->SrvStartStopRet, &arg.Ret, sizeof(arg.Ret));
-
-				// Environment strings (inherited from parent console)
-				if (arg.Ret.cchEnvCommands && arg.Ret.pszCommands)
-				{
-					memmove(ppReply->SrvStartStopRet.szCommands, arg.Ret.pszCommands, arg.Ret.cchEnvCommands*sizeof(wchar_t));
-					ppReply->SrvStartStopRet.cchEnvCommands = arg.Ret.cchEnvCommands;
-				}
-				else
-				{
-					ppReply->SrvStartStopRet.cchEnvCommands = 0;
-				}
-				SafeFree(arg.Ret.pszCommands);
 			}
 			else if (pIn->SrvStartStop.Started == srv_Stopped)
 			{
