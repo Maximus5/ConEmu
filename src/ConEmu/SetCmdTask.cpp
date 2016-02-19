@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2015 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -316,7 +316,7 @@ bool CommandTasks::LoadCmdTask(SettingsBase* reg, int iIndex)
 				for (int k = 0; k < iCmdCount; k++)
 				{
 					bool bActive = false;
-					gpConEmu->ParseScriptLineOptions(pszCommands[k], NULL, &bActive);
+					gpConEmu->ParseScriptLineOptions(pszCommands[k], &bActive, NULL);
 
 					if (((k+1) == nActive) && !bActive)
 						*(psz++) = L'>';

@@ -2920,7 +2920,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 
 					if (!szBatch.IsEmpty())
 					{
-						pszTemp = gpConEmu->ParseScriptLineOptions(szBatch, NULL, NULL);
+						pszTemp = gpConEmu->ParseScriptLineOptions(szBatch, NULL, &args);
 
 						// Icon may be defined in -new_console:C:...
 						if (!pszIcon)

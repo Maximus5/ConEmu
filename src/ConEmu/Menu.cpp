@@ -614,15 +614,12 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			else if (itm.ItemType == CmdTaskPopupItem::eTaskCmd)
 			{
 				const CommandTasks* pGrp = (const CommandTasks*)itm.pGrp;
-				bool lbSetActive = false;
-				bool lbRunAdmin = false;
-
-				// Task pre-options, for example ">*cmd"
-				con.pszSpecialCmd = lstrdup(gpConEmu->ParseScriptLineOptions(itm.pszCmd, &lbRunAdmin, &lbSetActive));
-				con.RunAsAdministrator = lbRunAdmin ? crb_On : crb_Off;
 
 				// May be directory was set in task properties?
 				pGrp->ParseGuiArgs(&con);
+
+				// Task pre-options, for example ">*cmd"
+				con.pszSpecialCmd = lstrdup(gpConEmu->ParseScriptLineOptions(itm.pszCmd, NULL, &con));
 
 				con.ProcessNewConArg();
 
@@ -774,12 +771,14 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 				PostMessage(hMenuWnd, WM_CLOSE, 0, 0);
 			}
 
-			bool bRunAs = false;
+			RConStartArgs con;
 
-			LPCWSTR pszCmd = gpConEmu->ParseScriptLineOptions(itm.pszCmd, &bRunAs, NULL);
+			// May be directory was set in task properties?
+			pGrp->ParseGuiArgs(&con);
+
+			LPCWSTR pszCmd = gpConEmu->ParseScriptLineOptions(itm.pszCmd, NULL, &con);
 
 			// Well, start selected line from Task
-			RConStartArgs con;
 			con.pszSpecialCmd = lstrdup(pszCmd);
 			if (!con.pszSpecialCmd)
 			{
@@ -787,11 +786,6 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 			}
 			else
 			{
-				con.RunAsAdministrator = bRunAs ? crb_On : crb_Off; // May be set in style ">*powershell"
-
-				// May be directory was set in task properties?
-				pGrp->ParseGuiArgs(&con);
-
 				con.ProcessNewConArg();
 
 				if (isPressed(VK_SHIFT))

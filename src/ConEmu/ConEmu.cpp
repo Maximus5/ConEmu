@@ -3154,7 +3154,7 @@ void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
 	CallMainThread(false, impl::CreateConMainThread, (LPARAM)Impl);
 }
 
-LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, bool* rpbSetActive, size_t cchNameMax, wchar_t* rsName/*[MAX_RENAME_TAB_LEN]*/)
+LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive, RConStartArgs* pArgs)
 {
 	if (!apszLine)
 	{
@@ -3162,39 +3162,115 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbAsAdmin, 
 		return NULL;
 	}
 
-	// !!! Don't Reset values (rpbSetActive, rpbAsAdmin, rsName)
+	// !!! Don't Reset values (rpbSetActive, rpbAsAdmin, pArgs)
 	// !!! They may be defined in the other place
+
+	apszLine = SkipNonPrintable(apszLine);
 
 	// Go
 	while (*apszLine == L'>' || *apszLine == L'*' /*|| *apszLine == L'?'*/ || *apszLine == L' ' || *apszLine == L'\t')
 	{
-		if (*apszLine == L'>' && rpbSetActive)
-			*rpbSetActive = true;
+		if (*apszLine == L'>')
+		{
+			if (rpbSetActive)
+				*rpbSetActive = true;
+			if (pArgs && (pArgs->ForegroungTab == crb_Undefined) && (pArgs->BackgroundTab == crb_Undefined))
+				pArgs->ForegroungTab = crb_On;
+		}
 
-		if (*apszLine == L'*' && rpbAsAdmin)
-			*rpbAsAdmin = true;
-
-		//if (*apszLine == L'?')
-		//{
-		//	LPCWSTR pszStart = apszLine+1;
-		//	LPCWSTR pszEnd = wcschr(pszStart, L'?');
-		//	if (!pszEnd) pszEnd = pszStart + _tcslen(pszStart);
-
-		//	if (rsName && (pszEnd > pszStart) && (cchNameMax > 1))
-		//	{
-		//		UINT nLen = min((INT_PTR)cchNameMax, (pszEnd-pszStart+1));
-		//		lstrcpyn(rsName, pszStart, nLen);
-		//	}
-
-		//	apszLine = pszEnd;
-		//	if (!*pszEnd)
-		//		break;
-		//}
+		if (*apszLine == L'*')
+		{
+			if (pArgs && (pArgs->RunAsAdministrator == crb_Undefined))
+				pArgs->RunAsAdministrator = crb_On;
+		}
 
 		apszLine++;
 	}
 
-	return apszLine;
+	// don't reset one that may come from apDefArgs
+	if (pArgs && (pArgs->RunAsAdministrator == crb_Undefined))
+		pArgs->RunAsAdministrator = crb_Off;
+
+	// Process some more specials
+	if (apszLine && *apszLine)
+	{
+		LPCWSTR pcszCmd = apszLine;
+		CEStr szArg;
+		const int iNewConLen = lstrlen(L"-new_console");
+		while (NextArg(&pcszCmd, szArg) == 0)
+		{
+			// On first "-new_console" or "-cur_console" stop processing "specials"
+			if (wcsncmp(szArg, L"-new_console", iNewConLen) == 0 || wcsncmp(szArg, L"-cur_console", iNewConLen) == 0)
+				break;
+
+			// Only /-syntax is allowed
+			if (szArg.ms_Val[0] != L'/')
+				break;
+
+			if (lstrcmpi(szArg, L"/bufferheight") == 0)
+			{
+				if (NextArg(&pcszCmd, szArg) == 0)
+				{
+					wchar_t* pszEnd = NULL;
+					if (pArgs)
+					{
+						pArgs->nBufHeight = wcstol(szArg, &pszEnd, 10);
+						pArgs->BufHeight = crb_On;
+					}
+					apszLine = pcszCmd; // OK
+					continue;
+				}
+			}
+			else if (lstrcmpi(szArg, L"/dir") == 0)
+			{
+				if (NextArg(&pcszCmd, szArg) == 0)
+				{
+					if (pArgs)
+					{
+						SafeFree(pArgs->pszStartupDir);
+						pArgs->pszStartupDir = lstrdup(szArg);
+					}
+					apszLine = pcszCmd; // OK
+					continue;
+				}
+			}
+			else if (lstrcmpi(szArg, L"/icon") == 0)
+			{
+				if (NextArg(&pcszCmd, szArg) == 0)
+				{
+					if (pArgs)
+					{
+						SafeFree(pArgs->pszIconFile);
+						pArgs->pszIconFile = lstrdup(szArg);
+					}
+					apszLine = pcszCmd; // OK
+					continue;
+				}
+			}
+			else if (lstrcmpi(szArg, L"/tab") == 0)
+			{
+				if (NextArg(&pcszCmd, szArg) == 0)
+				{
+					if (pArgs)
+					{
+						SafeFree(pArgs->pszRenameTab);
+						pArgs->pszRenameTab = lstrdup(szArg);
+					}
+					apszLine = pcszCmd; // OK
+					continue;
+				}
+			}
+
+			wchar_t* pszErr = lstrmerge(L"Unsupported switch in task command:", L"\r\n", apszLine);
+			int iBtn = MsgBox(pszErr, MB_ICONSTOP | MB_OKCANCEL, GetDefaultTitle());
+			SafeFree(pszErr);
+			if (iBtn == IDCANCEL)
+				return NULL;
+			return L"";
+		}
+	}
+
+	return SkipNonPrintable(apszLine);
 }
 
 // Возвращает указатель на АКТИВНУЮ консоль (при создании группы)
@@ -3204,186 +3280,108 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 	CVirtualConsole* pVConResult = NULL;
 	// Поехали
 	wchar_t *pszDataW = lstrdup(apszScript);
-	wchar_t *pszLine = pszDataW;
-	wchar_t *pszNewLine = wcschr(pszLine, L'\n');
+	const wchar_t *pszCursor = pszDataW;
+	CEStr szLine;
+	//wchar_t *pszNewLine = wcschr(pszLine, L'\n');
 	CVirtualConsole *pSetActive = NULL, *pVCon = NULL, *pLastVCon = NULL;
-	bool lbSetActive = false, lbOneCreated = false, lbRunAdmin = false;
+	bool lbSetActive = false, lbOneCreated = false;
 
 	CVConGroup::OnCreateGroupBegin();
 
-	while (*pszLine)
+	while (0 == NextLine(&pszCursor, szLine, NLF_SKIP_EMPTY_LINES| NLF_TRIM_SPACES))
 	{
 		lbSetActive = false;
-		lbRunAdmin = abForceAsAdmin;
 
-		// Task pre-options, for example ">*cmd"
-		pszLine = (wchar_t*)ParseScriptLineOptions(pszLine, &lbRunAdmin, &lbSetActive);
+		// Prepare arguments
+		RConStartArgs args;
 
-		if (pszNewLine)
+		if (apDefArgs)
 		{
-			*pszNewLine = 0;
-			if ((pszNewLine > pszDataW) && (*(pszNewLine-1) == L'\r'))
-				*(pszNewLine-1) = 0;
+			args.AssignFrom(apDefArgs);
+
+			// If the caller has specified exact split configuration - use it only for the first creating pane
+			if (lbOneCreated && args.eSplit)
+			{
+				args.eSplit = args.eSplitNone;
+				args.nSplitValue = DefaultSplitValue;
+				args.nSplitPane = 0;
+			}
 		}
 
-		while (*pszLine == L' ') pszLine++;
+		if (apDefArgs && apDefArgs->pszStartupDir && *apDefArgs->pszStartupDir)
+			args.pszStartupDir = lstrdup(apDefArgs->pszStartupDir);
+		else if (asStartupDir && *asStartupDir)
+			args.pszStartupDir = lstrdup(asStartupDir);
+		else
+			SafeFree(args.pszStartupDir);
+
+		if (abForceAsAdmin)
+			args.RunAsAdministrator = crb_On;
+
+
+		// Task pre-options, for example ">* /dir c:\sources cmd"
+		LPCWSTR pszLine = ParseScriptLineOptions(szLine.ms_Val, &lbSetActive, &args);
+		if (pszLine == NULL)
+		{
+			// Stop processing this task, error was displayed
+			break;
+		}
 
 		if (*pszLine)
 		{
-			RConStartArgs args;
+			SafeFree(args.pszSpecialCmd);
+			args.pszSpecialCmd = lstrdup(pszLine);
 
-			if (apDefArgs)
+			// If any previous tab was marked as "active"/"foreground" for starting group,
+			// we need to run others tabs in "background"
+			if (pSetActive && CVConGroup::isValid(pSetActive))
+				args.BackgroundTab = crb_On;
+
+			pVCon = CreateCon(&args, false, true);
+
+			if (!pVCon)
 			{
-				args.AssignFrom(apDefArgs);
-
-				// If the caller has specified exact split configuration - use it only for the first creating pane
-				if (lbOneCreated && args.eSplit)
+				LPCWSTR pszFailMsg = L"Can't create new virtual console! {CConEmuMain::CreateConGroup}";
+				LogString(pszFailMsg);
+				if ((mn_StartupFinished == ss_Started) || !isInsideInvalid())
 				{
-					args.eSplit = args.eSplitNone;
-					args.nSplitValue = DefaultSplitValue;
-					args.nSplitPane = 0;
-				}
-			}
-
-			if (apDefArgs && apDefArgs->pszStartupDir && *apDefArgs->pszStartupDir)
-				args.pszStartupDir = lstrdup(apDefArgs->pszStartupDir);
-			else if (asStartupDir && *asStartupDir)
-				args.pszStartupDir = lstrdup(asStartupDir);
-			else
-				SafeFree(args.pszStartupDir);
-
-			LPCWSTR pcszCmd = pszLine;
-			CEStr szArg;
-			const int iNewConLen = lstrlen(L"-new_console");
-			while (NextArg(&pcszCmd, szArg) == 0)
-			{
-				if (wcsncmp(szArg, L"-new_console", iNewConLen) == 0 || wcsncmp(szArg, L"-cur_console", iNewConLen) == 0)
-					break;
-
-				if (szArg.ms_Val[0] != L'/')
-					break;
-
-				if (lstrcmpi(szArg, L"/bufferheight") == 0)
-				{
-					if (NextArg(&pcszCmd, szArg) == 0)
-					{
-						wchar_t* pszEnd = NULL;
-						args.nBufHeight = wcstol(szArg, &pszEnd, 10);
-						args.BufHeight = crb_On;
-						pszLine = (wchar_t*)pcszCmd; // OK
-						continue;
-					}
-				}
-				else if (lstrcmpi(szArg, L"/dir") == 0)
-				{
-					if (NextArg(&pcszCmd, szArg) == 0)
-					{
-						SafeFree(args.pszStartupDir);
-						args.pszStartupDir = lstrdup(szArg);
-						pszLine = (wchar_t*)pcszCmd; // OK
-						continue;
-					}
-				}
-				else if (lstrcmpi(szArg, L"/icon") == 0)
-				{
-					if (NextArg(&pcszCmd, szArg) == 0)
-					{
-						SafeFree(args.pszIconFile);
-						args.pszIconFile = lstrdup(szArg);
-						pszLine = (wchar_t*)pcszCmd; // OK
-						continue;
-					}
-				}
-				else if (lstrcmpi(szArg, L"/tab") == 0)
-				{
-					if (NextArg(&pcszCmd, szArg) == 0)
-					{
-						SafeFree(args.pszRenameTab);
-						args.pszRenameTab = lstrdup(szArg);
-						pszLine = (wchar_t*)pcszCmd; // OK
-						continue;
-					}
+					DisplayLastError(pszFailMsg, -1);
 				}
 
-				wchar_t* pszErr = lstrmerge(L"Unsupported switch in task command:\r\n", pszLine);
-				int iBtn = MsgBox(pszErr, MB_ICONSTOP|MB_OKCANCEL, GetDefaultTitle());
-				SafeFree(pszErr);
-				*pszLine = 0;
-				if (iBtn == IDCANCEL)
-					pszNewLine = NULL;
-				break;
-			}
-
-			if (*pszLine)
-			{
-				SafeFree(args.pszSpecialCmd);
-				args.pszSpecialCmd = lstrdup(pszLine);
-
-				if (lbRunAdmin) // don't reset one that may come from apDefArgs
-					args.RunAsAdministrator = crb_On;
-
-				// If any previous tab was marked as "active"/"foreground" for starting group,
-				// we need to run others tabs in "background"
-				if (pSetActive && CVConGroup::isValid(pSetActive))
-					args.BackgroundTab = crb_On;
-
-				pVCon = CreateCon(&args, false, true);
-
-				if (!pVCon)
+				if (!lbOneCreated)
 				{
-					LPCWSTR pszFailMsg = L"Can't create new virtual console! {CConEmuMain::CreateConGroup}";
-					LogString(pszFailMsg);
-					if ((mn_StartupFinished == ss_Started) || !isInsideInvalid())
-					{
-						DisplayLastError(pszFailMsg, -1);
-					}
-
-					if (!lbOneCreated)
-					{
-						//Destroy(); -- должна вызывающая функция
-						goto wrap;
-					}
-				}
-				else
-				{
-					lbOneCreated = true;
-
-					const RConStartArgs& modArgs = pVCon->RCon()->GetArgs();
-					if (modArgs.ForegroungTab == crb_On)
-						lbSetActive = true;
-
-					pLastVCon = pVCon;
-					if (lbSetActive && !pSetActive)
-						pSetActive = pVCon;
-
-					if (CVConGroup::isVConExists((int)MAX_CONSOLE_COUNT-1))
-						break; // Больше создать не получится
-				}
-			}
-
-			// При создании группы консолей требуется обрабатывать сообщения,
-			// иначе может возникнуть блокировка запускаемого сервера
-			MSG Msg;
-			while (PeekMessage(&Msg,0,0,0,PM_REMOVE))
-			{
-				if (!ProcessMessage(Msg))
+					//Destroy(); -- must call caller
 					goto wrap;
+				}
 			}
+			else
+			{
+				lbOneCreated = true;
 
-			if (!ghWnd || !IsWindow(ghWnd))
+				const RConStartArgs& modArgs = pVCon->RCon()->GetArgs();
+				if (modArgs.ForegroungTab == crb_On)
+					lbSetActive = true;
+
+				pLastVCon = pVCon;
+				if (lbSetActive && !pSetActive)
+					pSetActive = pVCon;
+
+				if (CVConGroup::isVConExists((int)MAX_CONSOLE_COUNT-1))
+					break; // No more consoles are allowed
+			}
+		}
+
+		// While creating group of consoles we have to
+		// process messaged to avoid possible deadlocks
+		MSG Msg;
+		while (PeekMessage(&Msg,0,0,0,PM_REMOVE))
+		{
+			if (!ProcessMessage(Msg))
 				goto wrap;
 		}
 
-		if (!pszNewLine) break;
-
-		pszLine = pszNewLine+1;
-
-		if (!*pszLine) break;
-
-		while ((*pszLine == L'\r') || (*pszLine == L'\n'))
-			pszLine++; // пропустить все переводы строк
-
-		pszNewLine = wcschr(pszLine, L'\n');
+		if (!ghWnd || !IsWindow(ghWnd))
+			goto wrap;
 	}
 
 	if (pSetActive)

@@ -940,12 +940,8 @@ void CRecreateDlg::InitVars()
 					pszLine--;
 				if (pszLine)
 					*pszLine = 0;
-				bool lbRunAdmin = (mp_Args->RunAsAdministrator == crb_On);
 
-				pszCmd = gpConEmu->ParseScriptLineOptions(pszBuf, &lbRunAdmin, NULL);
-
-				if (lbRunAdmin)
-					mp_Args->RunAsAdministrator = crb_On;
+				pszCmd = gpConEmu->ParseScriptLineOptions(pszBuf, NULL, mp_Args);
 			}
 			else
 			{
