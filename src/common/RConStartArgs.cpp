@@ -464,6 +464,18 @@ bool RConStartArgs::AssignInheritedArgs(const struct RConStartArgs* args, bool a
 }
 #endif
 
+void RConStartArgs::CleanSecure()
+{
+	SafeFree(pszUserName);
+	SafeFree(pszDomain);
+	if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
+
+	RunAsAdministrator = crb_Undefined;
+	RunAsRestricted = crb_Undefined;
+	UseEmptyPassword = crb_Undefined;
+	ForceUserDialog = crb_Undefined;
+}
+
 RConStartArgs::~RConStartArgs()
 {
 	SafeFree(pszSpecialCmd); // именно SafeFree
@@ -473,14 +485,8 @@ RConStartArgs::~RConStartArgs()
 	SafeFree(pszIconFile);
 	SafeFree(pszPalette);
 	SafeFree(pszWallpaper);
-	SafeFree(pszUserName);
-	SafeFree(pszDomain);
-	//SafeFree(pszUserProfile);
 
-	//SafeFree(pszUserPassword);
-	if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
-
-	//if (hLogonToken) { CloseHandle(hLogonToken); hLogonToken = NULL; }
+	CleanSecure();
 
 	#if 0
 	if (hShlwapi)

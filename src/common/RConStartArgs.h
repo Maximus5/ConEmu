@@ -69,6 +69,7 @@ struct RConStartArgs
 	wchar_t* pszUserName, *pszDomain, szUserPassword[MAX_PATH]; // "-new_console:u:<user>:<pwd>"
 	RConBoolArg     UseEmptyPassword;   // для GUI
 	RConBoolArg     ForceUserDialog;    // -new_console:u
+	void CleanSecure();
 	//wchar_t* pszUserProfile;    // %USERPROFILE%
 
 	RConBoolArg     OverwriteMode;      // -new_console:w - enable "Overwrite" mode in console prompt
