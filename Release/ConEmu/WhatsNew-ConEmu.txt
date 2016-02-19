@@ -20,6 +20,41 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.2.18
+* GuiMacro. New function `Write("Text")` writes "Text" to console output (dangerous).
+
+  Use it at you own risk! Calling this function may cause unexpected behavior
+  of running console application! That is because function changes console
+  contents and cursor position directly, bypassing detouring standard
+  ConIn/ConOut processing queue.
+
+  In most cases **safe** functions `Paste`, `Print` and `Keys` are preferable!
+
+  However, with `Write` you may implement some interesting features,
+  like printing sort of ‘hints’ in shell prompt:
+
+    Write "\e7\e[90mEcho \"Hello world!\"\e[m\e8"
+
+  Ref: Maximus5/conemu-inside#3
+
+* gh-550, gh-372, gh-234: Unassigned by default hotkey ‘Reset terminal’ (dangerous).
+
+  I'm still sure that this operation is harmful and dangerous:
+  <https://conemu.github.io/en/ClearScreen.html>.
+  But since GuiMacro `Write` exists, anyone may create a macro
+  for `Write("\ec")`, which the hotkey actualy executes.
+
+  TabMenu item ‘Edit -> Reset terminal’ is available too.
+
+  BTW, with `Write` macro anyone may push to console several colored lines,
+  using ANSI sequences, to ‘mark’ some point in real-time logs (tail -f).
+
+    Write "\n\n\e[91m========== '\e]9;8;\"time\"\e\\' ==========\e[m\n\n"
+
+* Bring here: Just move window to the upper-left corner of active monitor.
+* ANSI: Let `ESC ] 9 ; 8 ; "*env*" ST` supports `date` and `time`.
+
+
 2016.2.17
 * gh-541: Chinese translation (from @ulin).
 * Maximus5/conemu-inside#4: Don't warn `ConEmu's parent window was terminated abnormally` if we have no VCon.
