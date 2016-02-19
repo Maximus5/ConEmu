@@ -106,8 +106,11 @@ struct RConStartArgs
 
 	// Internal for GUI tab creation
 	#ifndef CONEMU_MINIMAL
+	// Environment
 	DWORD cchEnvStrings;
 	wchar_t* pszEnvStrings;
+	// Task name if defined
+	wchar_t* pszTaskName;
 	#endif
 
 	RConStartArgs();

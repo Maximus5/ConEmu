@@ -1404,6 +1404,32 @@ void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 
 	size_t cchData = 0;
 	pRet.EnvCommands.Set(env.Allocate(&cchData), cchData);
+
+	// Current palette
+	_ASSERTE(pRet.PaletteName.psz == NULL);
+	const ColorPalette* pPal = NULL;
+	LPCWSTR pszPalette = m_Args.pszPalette ? m_Args.pszPalette : NULL;
+	if (!pszPalette || !*pszPalette)
+	{
+		int iActiveIndex = mp_VCon->GetPaletteIndex();
+		if (iActiveIndex == -1)
+			pPal = gpSet->PaletteFindCurrent(true);
+		if (!pPal)
+			pPal = gpSet->PaletteGet(iActiveIndex);
+		if (pPal)
+			pszPalette = pPal->pszName;
+	}
+	if (pszPalette && *pszPalette)
+	{
+		pRet.PaletteName.Set(lstrdup(pszPalette), wcslen(pszPalette)+1);
+	}
+
+	// Task name
+	_ASSERTE(pRet.TaskName.psz == NULL);
+	if (m_Args.pszTaskName && *m_Args.pszTaskName)
+	{
+		pRet.TaskName.Set(lstrdup(m_Args.pszTaskName), wcslen(m_Args.pszTaskName)+1);
+	}
 }
 
 #if 0

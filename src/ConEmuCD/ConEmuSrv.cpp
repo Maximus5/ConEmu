@@ -2533,6 +2533,9 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 		ApplyEnvironmentCommands(pStartStopRet->EnvCommands.Demangle());
 	}
 
+	SetEnvironmentVariable(ENV_CONEMU_TASKNAME_W, pStartStopRet->TaskName.Demangle());
+	SetEnvironmentVariable(ENV_CONEMU_PALETTENAME_W, pStartStopRet->PaletteName.Demangle());
+
 	// Also calls SetConEmuEnvVar
 	SetConEmuWindows(pStartStopRet->Info.hWnd, pStartStopRet->Info.hWndDc, pStartStopRet->Info.hWndBack);
 	_ASSERTE(gnConEmuPID == pStartStopRet->Info.dwPID);

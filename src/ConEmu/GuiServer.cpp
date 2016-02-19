@@ -148,10 +148,14 @@ static bool AllocateStartStopRet(CECMD cmd, CESERVER_REQ_SRVSTARTSTOPRET& Ret, C
 
 	pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SRVSTARTSTOPRET)
 		+ (Ret.EnvCommands.cchCount * sizeof(wchar_t))
+		+ (Ret.TaskName.cchCount * sizeof(wchar_t))
+		+ (Ret.PaletteName.cchCount * sizeof(wchar_t))
 		;
 	if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, cmd, pcbReplySize))
 	{
 		SafeFree(Ret.EnvCommands.psz);
+		SafeFree(Ret.TaskName.psz);
+		SafeFree(Ret.PaletteName.psz);
 	}
 	else
 	{
@@ -174,6 +178,14 @@ static bool AllocateStartStopRet(CECMD cmd, CESERVER_REQ_SRVSTARTSTOPRET& Ret, C
 			_ASSERTE(ppReply->SrvStartStopRet.EnvCommands.cchCount == 0);
 			_ASSERTE(Ret.EnvCommands.psz == NULL);
 		}
+
+		// Current VCon Palette name
+		if (Ret.PaletteName.cchCount)
+			ptrDst = ppReply->SrvStartStopRet.PaletteName.Mangle(ptrDst);
+
+		// Current RCon Task name
+		if (Ret.TaskName.cchCount)
+			ptrDst = ppReply->SrvStartStopRet.TaskName.Mangle(ptrDst);
 	}
 
 	return lbAllocated;

@@ -6431,6 +6431,11 @@ wchar_t CConEmuMain::IsConsoleBatchOrTask(LPCWSTR asSource)
 
 wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgs* pArgs /*= NULL*/)
 {
+	if (pArgs && pArgs->pszTaskName)
+	{
+		SafeFree(pArgs->pszTaskName);
+	}
+
 	wchar_t cType = IsConsoleBatchOrTask(asSource);
 	if (!cType)
 	{
@@ -6687,6 +6692,9 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 
 		if (pGrp)
 		{
+			if (pArgs)
+				pArgs->pszTaskName = lstrdup(szName);
+
 			// TODO: Supposed to be appended to EACH command (task line),
 			// TODO: but now lsTail may be appended to single-command tasks only
 			if (pGrp->pszCommands && !wcschr(pGrp->pszCommands, L'\n'))

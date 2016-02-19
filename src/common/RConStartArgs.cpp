@@ -297,6 +297,7 @@ RConStartArgs::RConStartArgs()
 	// Internal for GUI tab creation
 	#ifndef CONEMU_MINIMAL
 	cchEnvStrings = 0; pszEnvStrings = NULL;
+	pszTaskName = NULL;
 	#endif
 }
 
@@ -389,6 +390,7 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args, bool abConcat /
 
 	// Internal for GUI tab creation
 	#ifndef CONEMU_MINIMAL
+	// Environment
 	SafeFree(this->pszEnvStrings);
 	this->cchEnvStrings = args->cchEnvStrings;
 	if (args->cchEnvStrings && args->pszEnvStrings)
@@ -400,6 +402,10 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args, bool abConcat /
 			memmove(this->pszEnvStrings, args->pszEnvStrings, cbBytes);
 		}
 	}
+	// Task name
+	SafeFree(this->pszTaskName);
+	if (args->pszTaskName && *args->pszTaskName)
+		this->pszTaskName = lstrdup(args->pszTaskName);
 	#endif
 
 	return true;
@@ -486,6 +492,7 @@ RConStartArgs::~RConStartArgs()
 	// Internal for GUI tab creation
 	#ifndef CONEMU_MINIMAL
 	SafeFree(this->pszEnvStrings);
+	SafeFree(this->pszTaskName);
 	#endif
 }
 

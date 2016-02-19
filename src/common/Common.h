@@ -148,6 +148,10 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMU_BUILD_W               _CRT_WIDE(ENV_CONEMU_BUILD_A)
 #define ENV_CONEMU_CONFIG_A            "ConEmuConfig"
 #define ENV_CONEMU_CONFIG_W              _CRT_WIDE(ENV_CONEMU_CONFIG_A)
+#define ENV_CONEMU_TASKNAME_A          "ConEmuTask"
+#define ENV_CONEMU_TASKNAME_W            _CRT_WIDE(ENV_CONEMU_TASKNAME_A)
+#define ENV_CONEMU_PALETTENAME_A       "ConEmuPalette"
+#define ENV_CONEMU_PALETTENAME_W         _CRT_WIDE(ENV_CONEMU_PALETTENAME_A)
 #define ENV_CONEMU_ISADMIN_A           "ConEmuIsAdmin"
 #define ENV_CONEMU_ISADMIN_W             _CRT_WIDE(ENV_CONEMU_ISADMIN_A)
 #define ENV_CONEMU_WAITKEY_A           "ConEmuWaitKey"
@@ -1865,6 +1869,10 @@ struct CESERVER_REQ_SRVSTARTSTOPRET
 	// Some more commands may be implemented later, "alias" for example
 	STRPTR2 EnvCommands;
 	// void SetEnvironmentCommands(LPCWSTR aszzEnvVars, LPCWSTR aszSettingCommands);
+
+	// Store Task and Palette names in EnvVars?
+	STRPTR2 TaskName;
+	STRPTR2 PaletteName;
 };
 
 struct CESERVER_REQ_POSTMSG
