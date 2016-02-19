@@ -3321,6 +3321,20 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 
 		// Task pre-options, for example ">* /dir c:\sources cmd"
 		LPCWSTR pszLine = ParseScriptLineOptions(szLine.ms_Val, &lbSetActive, &args);
+
+		// Support limited tasks nesting
+		CEStr lsTempTask, lsTempLine;
+		while (pszLine && IsConsoleBatchOrTask(pszLine))
+		{
+			lsTempTask = LoadConsoleBatch(pszLine, &args);
+			if (lsTempTask.IsEmpty())
+				break;
+			LPCWSTR pszTempPtr = lsTempTask.ms_Val;
+			if (0 != NextLine(&pszTempPtr, lsTempLine))
+				break;
+			pszLine = ParseScriptLineOptions(lsTempLine.ms_Val, NULL, &args);
+		}
+
 		if (pszLine == NULL)
 		{
 			// Stop processing this task, error was displayed
