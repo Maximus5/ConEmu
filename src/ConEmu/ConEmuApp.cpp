@@ -2925,9 +2925,12 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 						// Icon may be defined in -new_console:C:...
 						if (!pszIcon)
 						{
-							_ASSERTE(args.pszSpecialCmd == NULL);
-							args.pszSpecialCmd = lstrdup(pszTemp);
-							args.ProcessNewConArg();
+							if (!args.pszIconFile)
+							{
+								_ASSERTE(args.pszSpecialCmd == NULL);
+								args.pszSpecialCmd = lstrdup(pszTemp);
+								args.ProcessNewConArg();
+							}
 							if (args.pszIconFile)
 								pszIcon = args.pszIconFile;
 						}
