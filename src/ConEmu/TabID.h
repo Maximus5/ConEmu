@@ -133,7 +133,7 @@ public:
 	HRGN     rgnTab;  // точный регион таба, для реакции на мышку
 	bool     Clipped; // текст был обрезан при отрисовке, показывать тултип
 public:
-	TabDrawInfo() {rgnTab = NULL; Clipped=false;};
+	TabDrawInfo() {memset(&rcTab, 0, sizeof(rcTab)); rgnTab = NULL; Clipped=false;};
 };
 
 struct TabInfo
