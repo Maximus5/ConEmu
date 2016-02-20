@@ -793,7 +793,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 
 	if (gpSetCls->isAdvLogging >= 4)
 	{
-		gpConEmu->LogMessage(hWnd, messg, wParam, lParam);
+		if (gpConEmu) gpConEmu->LogMessage(hWnd, messg, wParam, lParam);
 	}
 
 	if (gpConEmu)
