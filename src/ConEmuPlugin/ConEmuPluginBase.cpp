@@ -2265,9 +2265,10 @@ bool CPluginBase::UpdateConEmuTabs(bool abSendChanges)
 
 		if (abSendChanges || gbForceSendTabs)
 		{
+			bool lbForceSend = (gbForceSendTabs != FALSE) || (lbCh && (gnReqCommand==(DWORD)-1));
 			_ASSERTE((gbForceSendTabs==FALSE || IsDebuggerPresent()) && "Async SetWindow was timeouted?");
 			gbForceSendTabs = FALSE;
-			SendTabs(gpTabs->Tabs.nTabCount, lbCh && (gnReqCommand==(DWORD)-1));
+			SendTabs(gpTabs->Tabs.nTabCount, lbForceSend);
 		}
 	}
 
@@ -3068,6 +3069,7 @@ HANDLE CPluginBase::OpenPluginCommon(int OpenFrom, INT_PTR Item, bool FromMacro)
 			//MSectionLock SC; SC.Lock(csTabs, TRUE);
 			//SendTabs(gnCurTabCount, TRUE);
 			//SC.Unlock();
+			gbForceSendTabs = TRUE;
 			UpdateConEmuTabs(true);
 			SetEvent(ghSetWndSendTabsEvent);
 			goto wrap;
