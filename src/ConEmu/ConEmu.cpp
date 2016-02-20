@@ -10662,7 +10662,7 @@ LRESULT CConEmuMain::OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 		INPUT_RECORD r = {MOUSE_EVENT};
 		r.Event.MouseEvent.dwMousePosition = mouse.LClkCon;
 		r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-		pVCon->RCon()->PostConsoleEvent(&r);
+		if (pVCon) pVCon->RCon()->PostConsoleEvent(&r);
 		return 0;
 	}
 
