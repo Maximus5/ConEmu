@@ -32,12 +32,12 @@ action = function()
     if mf.substr(r,0,5)=="Found" then
       exit() -- OK
     elseif mf.substr(r,0,6)=="Active" then
-      iWnd = mf.atoi(mf.substr(r,7),10)+1
-      far.AdvControl(far.Flags.ACTL_SETCURRENTWINDOW,iWnd)
-      far.AdvControl(far.Flags.ACTL_COMMIT)
+      iWnd = mf.atoi(mf.substr(r,7),10)+101
+      Plugin.SyncCall(ConEmu,iWnd);
+      Plugin.SyncCall(ConEmu,100);
       exit() -- Ok
     elseif r=="Blocked" then
-      -- msgbox("ConEmu macro","Tab can't be activated now\n"+%s);
+      -- msgbox("ConEmu macro","Tab can't be activated now\n"..spname);
     end
   end
 
