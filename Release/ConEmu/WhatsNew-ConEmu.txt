@@ -20,6 +20,31 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.2.19
+* Task may be executed in the running console with `ConEmuC -c {TaskName}`.
+
+  Actually, first command of the named task is executed,
+  and rest of command line is appended as arguments.
+  For example, you may start Far editor in the **current**
+  console by executing in the prompt:
+
+    ConEmuC -c {Far} /e text.txt
+
+* Support tasks nesting.
+
+  Simple nesting is allowed, so one may create their own task,
+  which starts {cmd}, {powershell} and {VS 14.0 x86 tools prompt},
+  even in splits or with extra arguments. For example:
+
+    {cmd} & echo Extra args
+    {powershell} -new_console:sV
+
+* New predefined environment variables: `ConEmuTask` and `ConEmuPalette`.
+* TaskBar JumpList icons fix.
+* Far Macro: ConEmu.Editor.lua was broken (Far3 latest builds).
+* Far Tabs were not updated in ConEmu after plugin call `Plugin.SyncCall(ConEmu,100)`.
+
+
 2016.2.18
 * GuiMacro. New function `Write("Text")` writes "Text" to console output (dangerous).
 
