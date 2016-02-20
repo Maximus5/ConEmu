@@ -5696,11 +5696,13 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 		// чтобы не насиловать консоль лишний раз - реальное изменение ее размеров только
 		// при отпускании мышкой рамки окна
 		BOOL lbSizeChanged = FALSE;
-		int nCurConWidth = (int)gp_VActive->RCon()->TextWidth();
-		int nCurConHeight = (int)gp_VActive->RCon()->TextHeight();
+		int nCurConWidth = 0;
+		int nCurConHeight = 0;
 
 		if (gp_VActive)
 		{
+			nCurConWidth = (int)gp_VActive->RCon()->TextWidth();
+			nCurConHeight = (int)gp_VActive->RCon()->TextHeight();
 			lbSizeChanged = (c.right != nCurConWidth || c.bottom != nCurConHeight);
 		}
 
