@@ -828,7 +828,11 @@ void CConEmuInside::InsideUpdatePlacement()
 			RECT rcWnd = {}; // GetDefaultRect();
 			if (GetInsideRect(&rcWnd))
 			{
-				// Запомнить и Подвинуть
+				// Store new parent coords
+				mrc_InsideParent = rcParent;
+				mrc_InsideParentRel = rcRelative;
+
+				// Correct our window position
 				gpConEmu->UpdateInsideRect(rcWnd);
 			}
 		}
@@ -854,8 +858,6 @@ bool CConEmuInside::GetInsideRect(RECT* prWnd)
 	GetClientRect(mh_InsideParentWND, &rcParent);
 	if (m_InsideIntegration == ii_Simple)
 	{
-		mrc_InsideParent = rcParent;
-		ZeroStruct(mrc_InsideParentRel);
 		rcWnd = rcParent;
 	}
 	else
@@ -863,8 +865,6 @@ bool CConEmuInside::GetInsideRect(RECT* prWnd)
 		RECT rcChild = {};
 		GetWindowRect(mh_InsideParentRel, &rcChild);
 		MapWindowPoints(NULL, mh_InsideParentWND, (LPPOINT)&rcChild, 2);
-		mrc_InsideParent = rcParent;
-		mrc_InsideParentRel = rcChild;
 		IntersectRect(&rcRelative, &rcParent, &rcChild);
 
 		// WinXP & Win2k3
