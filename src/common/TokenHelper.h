@@ -39,7 +39,7 @@ protected:
 public:
 	CAdjustProcessToken()
 	{
-		hToken = NULL; tp_prev = NULL; tp = NULL;
+		hToken = NULL; tp_prev = NULL; prev_size = 0; tp = NULL; tp_size = 0;
 		bEnabled = FALSE; dwErr = 0;
 		if (!OpenProcessToken(GetCurrentProcess(), 
 				//TOKEN_ASSIGN_PRIMARY|TOKEN_DUPLICATE|TOKEN_QUERY|TOKEN_ADJUST_DEFAULT,

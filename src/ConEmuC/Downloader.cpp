@@ -284,6 +284,7 @@ CDownloader::CDownloader()
 	msz_AgentName = NULL;
 
 	mb_AsyncMode = true;
+	mb_FtpMode = false;
 	mn_Timeout = DOWNLOADTIMEOUT;
 	mn_RecvTimeout = mn_DataTimeout = 0; // 0 --> use max as mn_Timeout
 	//mh_StopThread = NULL;
