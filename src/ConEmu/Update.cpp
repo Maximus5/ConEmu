@@ -799,7 +799,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	SafeFree(mpsz_ConfirmSource);
 	mpsz_ConfirmSource = lstrdup(pszSource);
 
-	if (!gpConEmu->CallMainThread(true, QueryConfirmationCallback, us_ConfirmDownload))
+	if (gpConEmu && !gpConEmu->CallMainThread(true, QueryConfirmationCallback, us_ConfirmDownload))
 	{
 		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
 		wcscpy_c(ms_SkipVersion, ms_NewVersion);
