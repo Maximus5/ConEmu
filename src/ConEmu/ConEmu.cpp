@@ -6461,7 +6461,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgs* pArgs /*
 	wchar_t cType = IsConsoleBatchOrTask(asSource);
 	if (!cType)
 	{
-		_ASSERTE(*asSource==CmdFilePrefix || *asSource==TaskBracketLeft);
+		_ASSERTE(asSource && (*asSource==CmdFilePrefix || *asSource==TaskBracketLeft));
 		return NULL;
 	}
 
