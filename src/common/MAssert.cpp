@@ -188,24 +188,29 @@ void MyAssertDumpToFile(const wchar_t* pszFile, int nLine, const wchar_t* pszTes
 	DWORD nWrite;
 
 	msprintf(szLine, countof(szLine), L"CEAssert PID=%u TID=%u\r\nAssertion in ", GetCurrentProcessId(), GetCurrentThreadId());
-	WriteFile(hFile, szLine, (nWrite = lstrlen(szLine)*2), &nWrite, NULL);
+	nWrite = lstrlen(szLine)*2;
+	WriteFile(hFile, szLine, nWrite, &nWrite, NULL);
 	if (!GetModuleFileNameW(NULL, dmpfile, countof(dmpfile)-2))
 		lstrcpyn(dmpfile, L"<unknown>\r\n", countof(dmpfile));
 	else
 		wcscat_c(dmpfile, L"\r\n");
-	WriteFile(hFile, dmpfile, (nWrite = lstrlen(dmpfile)*2), &nWrite, NULL);
+	nWrite = lstrlen(dmpfile)*2;
+	WriteFile(hFile, dmpfile, nWrite, &nWrite, NULL);
 
 	// File.cpp: 123\r\n
 	if (pszFile)
 	{
-		WriteFile(hFile, pszFile, (nWrite = lstrlen(pszFile)*2), &nWrite, NULL);
+		nWrite = lstrlen(pszFile)*2;
+		WriteFile(hFile, pszFile, nWrite, &nWrite, NULL);
 		msprintf(szLine, countof(szLine), L": %i\r\n\r\n", nLine);
-		WriteFile(hFile, szLine, (nWrite = lstrlen(szLine)*2), &nWrite, NULL);
+		nWrite = lstrlen(szLine)*2;
+		WriteFile(hFile, szLine, nWrite, &nWrite, NULL);
 	}
 
 	if (pszTest)
 	{
-		WriteFile(hFile, pszTest, (nWrite = lstrlen(pszTest)*2), &nWrite, NULL);
+		nWrite = lstrlen(pszTest)*2;
+		WriteFile(hFile, pszTest, nWrite, &nWrite, NULL);
 		WriteFile(hFile, L"\r\n", 4, &nWrite, NULL);
 	}
 
