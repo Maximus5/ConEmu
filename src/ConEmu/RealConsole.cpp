@@ -1403,7 +1403,8 @@ void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 	}
 
 	size_t cchData = 0;
-	pRet.EnvCommands.Set(env.Allocate(&cchData), cchData);
+	CEStr EnvData = env.Allocate(&cchData);
+	pRet.EnvCommands.Set(EnvData.Detach(), cchData);
 
 	// Current palette
 	_ASSERTE(pRet.PaletteName.psz == NULL);
