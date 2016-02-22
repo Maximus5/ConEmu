@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -66,14 +66,14 @@ _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n")
 		L"       /TRMPID=<PID> - called from *.vshost.exe when 'AllocConsole' just created\r\n" \
 		L"     /B{W|H|Z}       - define window width, height and buffer height\r\n" \
 		L"     /F{N|W|H}       - define console font name, width, height\r\n" \
-		L"     /GuiMacro ...   - http://conemu.github.io/en/GuiMacro.html\r\n" \
-		L"     /Export[...]    - http://conemu.github.io/en/ExportEnvVar.html\r\n" \
+		L"     /GuiMacro ...   - https://conemu.github.io/en/GuiMacro.html\r\n" \
+		L"     /Export[...]    - https://conemu.github.io/en/ExportEnvVar.html\r\n" \
 		L"     /IsAdmin        - returns 1 as errorlevel if current user has elevated privileges, 2 if not\r\n" \
 		L"     /IsAnsi         - returns 1 as errorlevel if ANSI are processed, 2 if not\r\n" \
 		L"     /IsConEmu       - returns 1 as errorlevel if running in ConEmu tab, 2 if not\r\n" \
 		L"     /IsTerm         - returns 1 as errorlevel if running in telnet, 2 if not\r\n" \
 		L"     /Log[N]         - create (debug) log file, N is number from 0 to 3\r\n" \
-		L"     /Echo | /Type   - http://conemu.github.io/en/ConEmuC.html#EchoAndType\r\n" \
+		L"     /Echo | /Type   - https://conemu.github.io/en/ConEmuC.html#EchoAndType\r\n" \
 		L"     /StoreCWD       - inform ConEmu about current working directory\r\n" \
 _DBGHLP(L"     -- following switches are visible in debug builds only but available in release too--\r\n") \
 _DBGHLP(L"     /CINMODE==<hex:gnConsoleModeFlags>\r\n") \
@@ -111,6 +111,7 @@ _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
 		L"     r - run as restricted user\r\n" \
 		L"     R - force start hooks server in the parent process\r\n" \
 		L"     s[<SplitTab>T][<Percents>](H|V)\r\n" \
+		L"       - https://conemu.github.io/en/SplitScreen.html\r\n" \
 		L"     t - see below\r\n" \
 _DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r\n") \
 		L"     u - ConEmu choose user dialog\r\n" \
