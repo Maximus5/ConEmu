@@ -5521,12 +5521,12 @@ wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in by
 
 bool Settings::LoadMSZ(SettingsBase* reg, LPCWSTR asName, wchar_t*& rsLines, LPCWSTR asDelim /*= L"|"*/, bool bFinalToo /*= false*/)
 {
-	SafeFree(rsLines);
 	wchar_t* pszMsz = NULL; // MSZZ
 
 	bool bRc = reg->Load(asName, &pszMsz);
 	if (bRc && pszMsz)
 	{
+		SafeFree(rsLines);
 		rsLines = MSZ2LineDelimited(pszMsz, asDelim, bFinalToo);
 		free(pszMsz);
 	}
