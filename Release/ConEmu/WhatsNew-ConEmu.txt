@@ -20,6 +20,22 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.2.22
+* gh-555: Aliases support was broken (771ab79 regression).
+* Maximus5/conemu-inside#13: ConEmu-Inside position was not updated in some cases.
+* Understandable error message if bad `-loadcfgfile` was specified.
+* Don't erase default MSZ setting value, if one not found in xml.
+* Let `-new_console:c1` consoles stay open silently even on Esc/Enter.
+  When all processes in console are finished:
+  * ConEmu does not close the console automatically;
+  * Confirmation message is not written to console;
+  * All keypresses are ignored.
+  So, user may either close console via ConEmu interface
+  (kill hotkeys or close menu items), or parent process
+  (when ConEmu is working in the ‘Inside’ mode) may close
+  the console via GuiMacro `Close(0,1)`.
+
+
 2016.2.19
 * Task may be executed in the running console with `ConEmuC -c {TaskName}`.
 
