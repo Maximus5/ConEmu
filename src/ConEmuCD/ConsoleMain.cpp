@@ -4277,7 +4277,8 @@ int ExitWaitForKey(DWORD vkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontS
 
 	int nKeyPressed = -1;
 
-	if (!vkKeys) vkKeys = VK_ESCAPE;
+	//-- Don't exit on ANY key if -new_console:c1
+	//if (!vkKeys) vkKeys = VK_ESCAPE;
 
 	// Чтобы ошибку было нормально видно
 	if (!abDontShowConsole)
@@ -4326,7 +4327,10 @@ int ExitWaitForKey(DWORD vkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontS
 
 	// Сначала почистить буфер
 	INPUT_RECORD r = {0}; DWORD dwCount = 0;
-	DWORD nPreFlush = 0, nPostFlush = 0, nPreQuit = 0;
+	DWORD nPreFlush = 0, nPostFlush = 0;
+	#ifdef _DEBUG
+	DWORD nPreQuit = 0;
+	#endif
 
 	GetNumberOfConsoleInputEvents(hIn, &nPreFlush);
 
@@ -4392,9 +4396,14 @@ int ExitWaitForKey(DWORD vkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontS
 
 		if (dwCount)
 		{
+			#ifdef _DEBUG
 			GetNumberOfConsoleInputEvents(hIn, &nPreQuit);
+			#endif
 
-			if (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount) && dwCount)
+			// Avoid ConIn overflow, even if (vkKeys == 0)
+			if (ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount)
+				&& dwCount
+				&& vkKeys)
 			{
 				bool lbMatch = false;
 
