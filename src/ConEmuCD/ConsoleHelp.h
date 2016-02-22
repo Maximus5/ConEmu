@@ -111,6 +111,7 @@ _DBGHLP(L"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
 		L"     b - Create background tab\r\n" \
 		L"     c - force enable ‘Press Enter or Esc to close console’ confirmation\r\n" \
 		L"         c0 - wait for Enter/Esc silently\r\n" \
+		L"         c1 - don't close console automatically, even by Enter/Esc\r\n" \
 		L"     f - force starting console active, useful when starting several consoles simultaneously\r\n" \
 		L"     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\r\n" \
 		L"     i - don't inject ConEmuHk into starting process\r\n" \

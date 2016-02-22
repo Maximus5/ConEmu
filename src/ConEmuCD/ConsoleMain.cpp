@@ -1974,7 +1974,8 @@ wrap:
 			pszMsg = L"\n\nPress Enter or Esc to exit...";
 			lbDontShowConsole = gnRunMode != RM_SERVER;
 		}
-		else if (gnConfirmExitParm == RConStartArgs::eConfEmpty)
+		else if ((gnConfirmExitParm == RConStartArgs::eConfEmpty)
+				|| (gnConfirmExitParm == RConStartArgs::eConfHalt))
 		{
 			lbLineFeedAfter = FALSE; // Don't print anything to console
 		}
@@ -2007,7 +2008,9 @@ wrap:
 			}
 		}
 
-		if (!pszMsg && (gnConfirmExitParm != RConStartArgs::eConfEmpty))
+		if (!pszMsg
+			&& (gnConfirmExitParm != RConStartArgs::eConfEmpty)
+			&& (gnConfirmExitParm != RConStartArgs::eConfHalt))
 		{
 			// Let's show anything (default message)
 			pszMsg = L"\n\nPress Enter or Esc to close console, or wait...";
@@ -2023,7 +2026,9 @@ wrap:
 			#endif
 		}
 
-		ExitWaitForKey(VK_RETURN|(VK_ESCAPE<<8), pszMsg, lbLineFeedAfter, lbDontShowConsole);
+		DWORD keys = (gnConfirmExitParm == RConStartArgs::eConfHalt) ? 0
+			: (VK_RETURN|(VK_ESCAPE<<8));
+		ExitWaitForKey(keys, pszMsg, lbLineFeedAfter, lbDontShowConsole);
 
 		UNREFERENCED_PARAMETER(nProcCount);
 		UNREFERENCED_PARAMETER(nProcesses[0]);
@@ -3071,9 +3076,11 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			break;
 		}
 		else if ((wcscmp(szArg, L"/CONFIRM")==0)
+			|| (wcscmp(szArg, L"/CONFHALT")==0)
 			|| (wcscmp(szArg, L"/ECONFIRM")==0))
 		{
 			gnConfirmExitParm = (wcscmp(szArg, L"/CONFIRM")==0) ? RConStartArgs::eConfAlways
+				: (wcscmp(szArg, L"/CONFHALT")==0) ? RConStartArgs::eConfHalt
 				: RConStartArgs::eConfEmpty;
 			gbAlwaysConfirmExit = TRUE; gbAutoDisableConfirmExit = FALSE;
 		}

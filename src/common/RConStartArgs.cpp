@@ -530,7 +530,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	if (InjectsDisable == crb_On) cchMaxLen++; // -new_console:i
 	if (ForceNewWindow == crb_On) cchMaxLen++; // -new_console:N
 	if (ForceHooksServer == crb_On) cchMaxLen++; // -new_console:R
-	if (eConfirmation) cchMaxLen+=2; // -new_console:c[0] / -new_console:n
+	if (eConfirmation) cchMaxLen+=2; // -new_console:c[0|1] / -new_console:n
 	if (ForceDosBox == crb_On) cchMaxLen++; // -new_console:x
 	if (ForceInherit == crb_On) cchMaxLen++; // -new_console:I
 	if (eSplit) cchMaxLen += 64; // -new_console:s[<SplitTab>T][<Percents>](H|V)
@@ -579,6 +579,8 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 		wcscat_c(szAdd, L"c"); break;
 	case eConfEmpty:
 		wcscat_c(szAdd, L"c0"); break;
+	case eConfHalt:
+		wcscat_c(szAdd, L"c1"); break;
 	case eConfNever:
 		wcscat_c(szAdd, L"n"); break;
 	case eConfDefault:
@@ -729,6 +731,8 @@ void RConStartArgs::AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax)
 		_wcscat_c(rsServerCmdLine, cchMax, L" /CONFIRM"); break;
 	case eConfEmpty:
 		_wcscat_c(rsServerCmdLine, cchMax, L" /ECONFIRM"); break;
+	case eConfHalt:
+		_wcscat_c(rsServerCmdLine, cchMax, L" /CONFHALT"); break;
 	case eConfNever:
 		_wcscat_c(rsServerCmdLine, cchMax, L" /NOCONFIRM"); break;
 	case eConfDefault:
@@ -1151,16 +1155,27 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						break;
 
 					case L'c':
-						if (*pszEnd != L'0')
+						if (!isDigit(*pszEnd))
 						{
 							// c - force enable 'Press Enter or Esc to close console' confirmation
 							eConfirmation = eConfAlways;
 						}
 						else
 						{
-							// c0 - force wait for Enter or Esc without print message
-							pszEnd++;
-							eConfirmation = eConfEmpty;
+							switch (*(pszEnd++))
+							{
+							case L'0':
+								// c0 - force wait for Enter or Esc without print message
+								eConfirmation = eConfEmpty;
+								break;
+							case L'1':
+								// c1 - don't close console at all (only via ConEmu interface / cross click)
+								eConfirmation = eConfHalt;
+								break;
+							default:
+								_ASSERTE(FALSE && "Unsupported option");
+								eConfirmation = eConfAlways;
+							}
 						}
 						break;
 
