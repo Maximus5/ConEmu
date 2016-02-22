@@ -94,31 +94,6 @@ _DBGHLP(L"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
 
 #define pNewConsoleHelp \
 		L"When you run application from ConEmu console, you may use one or more\r\n" \
-		L"  Switch: -new_console[:switches]\r\n" \
-		L"     a - RunAs shell verb (as Admin on Vista+, user/pwd in Win2k and WinXP)\r\n" \
-		L"     b - Create background tab\r\n" \
-		L"     c[0] - force enable [silent] 'Press Enter or Esc to close console' confirmation\r\n" \
-		L"     C - see below\r\n" \
-		L"     d - see below\r\n" \
-		L"     f - force starting console active, useful when starting several consoles simultaneously\r\n" \
-		L"     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\r\n" \
-		L"     i - don't inject ConEmuHk into starting process\r\n" \
-		L"     I - (GuiMacro only) forces inheriting of root process contents, like \"Duplicate root\"\r\n" \
-_DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
-		L"     n - disable 'Press Enter or Esc to close console' confirmation\r\n" \
-		L"     o - don't enable 'Long console output' when starting command from Far Manager\r\n" \
-		L"     P - see below\r\n" \
-		L"     r - run as restricted user\r\n" \
-		L"     R - force start hooks server in the parent process\r\n" \
-		L"     s[<SplitTab>T][<Percents>](H|V)\r\n" \
-		L"       - https://conemu.github.io/en/SplitScreen.html\r\n" \
-		L"     t - see below\r\n" \
-_DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r\n") \
-		L"     u - ConEmu choose user dialog\r\n" \
-		L"     w[0] - Enable [disable] 'Overwrite' mode in command prompt by default\r\n" \
-		L"     W - see below\r\n" \
-		L"     z - Don't use 'Default terminal' feature for this command\r\n" \
-		L"\r\n" \
 		L"  Switch: -new_console:C:\"iconfile\"\r\n" \
 		L"       - specify icon used in tab\r\n" \
 		L"  Switch: -new_console:d:\"dir\"\r\n" \
@@ -131,6 +106,26 @@ _DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r
 		L"       - specify user/pwd in args\r\n" \
 		L"  Switch: -new_console:W:\"tabwallpaper\"\r\n" \
 		L"       - use specified wallpaper for the tab\r\n" \
+		L"  Switch: -new_console[:switches]\r\n" \
+		L"     a - RunAs shell verb (as Admin on Vista+, user/pwd in Win2k and WinXP)\r\n" \
+		L"     b - Create background tab\r\n" \
+		L"     c - force enable ‘Press Enter or Esc to close console’ confirmation\r\n" \
+		L"         c0 - wait for Enter/Esc silently\r\n" \
+		L"     f - force starting console active, useful when starting several consoles simultaneously\r\n" \
+		L"     h<height> - i.e., h0 - turn buffer off, h9999 - switch to 9999 lines\r\n" \
+		L"     i - don't inject ConEmuHk into starting process\r\n" \
+		L"     I - (GuiMacro only) forces inheriting of root process contents, like \"Duplicate root\"\r\n" \
+_DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
+		L"     n - disable 'Press Enter or Esc to close console' confirmation\r\n" \
+		L"     o - don't enable 'Long console output' when starting command from Far Manager\r\n" \
+		L"     r - run as restricted user\r\n" \
+		L"     R - force start hooks server in the parent process\r\n" \
+		L"     s[<SplitTab>T][<Percents>](H|V)\r\n" \
+		L"       - https://conemu.github.io/en/SplitScreen.html\r\n" \
+_DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r\n") \
+		L"     u - ConEmu choose user dialog\r\n" \
+		L"     w[0] - Enable [disable] 'Overwrite' mode in command prompt by default\r\n" \
+		L"     z - Don't use 'Default terminal' feature for this command\r\n" \
 		L"\r\n" \
 		L"  Warning: Option 'Inject ConEmuHk' must be enabled in ConEmu settings!\r\n" \
 		L"  Example: dir -new_console:bh9999c:d:\"C:\\\":P:\"^<PowerShell^>\" c:\\Users /s\r\n" \
