@@ -84,12 +84,13 @@ struct RConStartArgs
 	RConBoolArg     ForceNewWindow;     // -new_console:N - Force new ConEmu window with Default terminal
 	RConBoolArg     ForceHooksServer;   // -new_console:R - Force CheckHookServer (GitShowBranch.cmd, actually used with -cur_console)
 
- 	enum {
- 		eConfDefault = 0,
- 		eConfAlways  = 1,         // -new_console:c
- 		eConfNever   = 2,         // -new_console:n
+	enum CloseConfirm
+	{
+		eConfDefault = 0,
+		eConfAlways  = 1,         // -new_console:c
+		eConfNever   = 2,         // -new_console:n
 		eConfEmpty   = 3,         // -new_console:c0
- 	} eConfirmation;
+	} eConfirmation;
 
 	RConBoolArg     ForceDosBox;        // -new_console:x (may be useful with .bat files)
 

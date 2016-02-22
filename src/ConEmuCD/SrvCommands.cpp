@@ -645,7 +645,8 @@ BOOL cmd_FarLoaded(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	// gnConfirmExitParm==1 получается, когда консоль запускалась через "-new_console"
 	// Если плагин фара загрузился - думаю можно отключить подтверждение закрытия консоли
-	if ((gbAutoDisableConfirmExit || (gnConfirmExitParm == 1)) && gpSrv->dwRootProcess == in.dwData[0])
+	if ((gbAutoDisableConfirmExit || (gnConfirmExitParm == RConStartArgs::eConfAlways))
+		&& gpSrv->dwRootProcess == in.dwData[0])
 	{
 		// FAR нормально запустился, считаем что все ок и подтверждения закрытия консоли не потребуется
 		DisableAutoConfirmExit(TRUE);

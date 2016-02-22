@@ -99,6 +99,8 @@ public:
 #include <Shlwapi.h>
 #include <Tlhelp32.h>
 
+#include "../common/RConStartArgs.h"
+
 void ShutdownSrvStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0, int nParm4 = 0);
 
 enum SetTerminateEventPlace
@@ -143,7 +145,7 @@ extern int nExitQueryPlace, nExitPlaceStep, nExitPlaceThread;
 extern HANDLE  ghQuitEvent;      // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
 extern bool    gbQuit;           // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
 extern bool    gbSkipHookersCheck;
-extern int     gnConfirmExitParm;
+extern RConStartArgs::CloseConfirm gnConfirmExitParm;
 extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
 extern int     gbRootWasFoundInCon;
 extern BOOL    gbComspecInitCalled;

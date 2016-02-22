@@ -187,7 +187,7 @@ BOOL    gbCtrlBreakStopWaitingShown = FALSE;
 BOOL    gbTerminateOnCtrlBreak = FALSE;
 BOOL    gbPrintRetErrLevel = FALSE; // Вывести в StdOut код завершения процесса (RM_COMSPEC в основном)
 bool    gbSkipHookersCheck = false;
-int     gnConfirmExitParm = 0; // 1 - RConStartArgs::eConfAlways, 2 - RConStartArgs::eConfNever, 3 - RConStartArgs::eConfEmpty
+RConStartArgs::CloseConfirm gnConfirmExitParm = RConStartArgs::eConfDefault; // | eConfAlways | eConfNever | eConfEmpty | eConfHalt
 BOOL    gbAlwaysConfirmExit = FALSE;
 BOOL    gbAutoDisableConfirmExit = FALSE; // если корневой процесс проработал достаточно (10 сек) - будет сброшен gbAlwaysConfirmExit
 BOOL    gbRootAliveLess10sec = FALSE; // корневой процесс проработал менее CHECK_ROOTOK_TIMEOUT
@@ -3073,8 +3073,8 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		else if ((wcscmp(szArg, L"/CONFIRM")==0)
 			|| (wcscmp(szArg, L"/ECONFIRM")==0))
 		{
-			TODO("уточнить, что нужно в gbAutoDisableConfirmExit");
-			gnConfirmExitParm = (wcscmp(szArg, L"/CONFIRM")==0) ? RConStartArgs::eConfAlways : RConStartArgs::eConfEmpty;
+			gnConfirmExitParm = (wcscmp(szArg, L"/CONFIRM")==0) ? RConStartArgs::eConfAlways
+				: RConStartArgs::eConfEmpty;
 			gbAlwaysConfirmExit = TRUE; gbAutoDisableConfirmExit = FALSE;
 		}
 		else if (wcscmp(szArg, L"/NOCONFIRM")==0)
