@@ -1169,9 +1169,19 @@ bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/,
 	LPCWSTR pszExt = asFilePath ? PointToExt(asFilePath) : NULL;
 	int nLen = asFilePath ? lstrlen(asFilePath) : 0;
 
+	if (!asFilePath || !*asFilePath)
+	{
+		DisplayLastError(L"Empty file path specified in CConEmuMain::SetConfigFile", -1);
+		return false;
+	}
+
 	if (!asFilePath || !*asFilePath || !pszExt || !*pszExt || (nLen > MAX_PATH))
 	{
-		DisplayLastError(L"Invalid file path specified in CConEmuMain::SetConfigFile", -1);
+		CEStr lsMsg = lstrmerge(
+			L"Invalid file path specified in CConEmuMain::SetConfigFile",
+			L"\n", L"asFilePath=`", asFilePath, L"`",
+			L"\n", L"Only *.xml files are allowed");
+		DisplayLastError(lsMsg, -1);
 		return false;
 	}
 
