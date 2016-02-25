@@ -59,9 +59,23 @@ public:
 	bool mb_RestoreEnvVar; // Если используется для сохранения переменной окружения, восстановить при закрытии объекта
 	wchar_t ms_RestoreVarName[32];
 
-private:
-	// Not copyable, not implemented, use explicit Set method
+
+	// *** Not copyable, not implemented, use explicit Set method ***
+	private:
+	// We may use "=delete" in C++11, but than cl shows only first error
+	CEStr(const CEStr&);
 	CEStr& operator=(const CEStr &);
+	// *** Not copyable, not implemented, use explicit Set method ***
+
+	// *** VC9 can't distinct wchar_t* as lval or rval ***
+	// *** so we prohibit wchar_t assignments in VC14 to find problems ***
+	#if defined(HAS_CPP11)
+	private:
+	CEStr(wchar_t*&);
+	CEStr& operator=(wchar_t*&);
+	#endif
+	// *** VC9 can't distinct wchar_t* as lval or rval ***
+
 
 private:
 	LPCWSTR AttachInt(wchar_t*& asPtr);
