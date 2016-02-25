@@ -913,7 +913,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			pszFind = pszSwitch;
 		else
 		{
-			// НЕ наш аргумент
+			// Not ours
 			pszSwitch = wcschr(pszSwitch+1, L' ');
 			if (!pszSwitch)
 				break;
@@ -926,12 +926,12 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 		if (pszStopAt && (pszFind >= pszStopAt))
 			break;
 
-		// Проверка валидности
+		// Validate trailing char (separators, ':' subswitch delimiter, or EOL)
 		_ASSERTE(pszFind >= pszSpecialCmd);
 		if ((pszFind[nNewConLen] != L' ') && (pszFind[nNewConLen] != L':')
 			&& (pszFind[nNewConLen] != L'"') && (pszFind[nNewConLen] != 0))
 		{
-			// НЕ наш аргумент
+			// Not ours
 			pszFrom = pszFind+nNewConLen;
 		}
 		else
@@ -939,15 +939,10 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			if (pszFindNew)
 				NewConsole = crb_On;
 
-			// -- не будем пока, мешает. например, при запуске задач
-			//// По умолчанию, принудительно включить "Press Enter or Esc to close console"
-			//if (!bForceCurConsole)
-			//	eConfirmation = eConfAlways;
-
 			bool lbQuot = (*(pszFind-1) == L'"');
 			bool lbWasQuot = lbQuot;
 			const wchar_t* pszEnd = pszFind+nNewConLen;
-			//wchar_t szNewConArg[MAX_PATH+1];
+
 			if (lbQuot)
 				pszFind--;
 
@@ -957,7 +952,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			}
 			else if (*pszEnd != L':')
 			{
-				// Конец
+				// End of switch is expected
 				_ASSERTE(*pszEnd == L' ' || *pszEnd == 0);
 			}
 			else
@@ -971,7 +966,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					_ASSERTE(*pszEnd == L':');
 				}
 
-				// Найти конец аргумента
+				// Find the end of argument
 				const wchar_t* pszArgEnd = pszEnd;
 				bool lbLocalQuot = false;
 				while (*pszArgEnd)
@@ -984,7 +979,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					case L'"':
 						if (*(pszArgEnd+1) == L'"')
 						{
-							pszArgEnd += 2; // Skip qoubled qouble quote
+							pszArgEnd += 2; // Skip qoubled qouble-quotes
 							continue;
 						}
 						if (!lbQuot)
@@ -1017,7 +1012,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 				}
 				EndFound:
 
-				// Обработка доп.параметров -new_console:xxx
+				// Process subswitches -new_console:xxx
 				bool lbReady = false;
 				while (!lbReady && *pszEnd)
 				{
@@ -1026,9 +1021,6 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 					switch (cOpt)
 					{
-					//case L'-':
-					//	bStop = true; // следующие "-new_console" - не трогать!
-					//	break;
 					case L'"':
 						// Assert was happened, for example, with: "/C \"ConEmu:run:Far.exe  -new_console:\""
 						if (!lbWasQuot && (pszEnd < pszArgEnd))
@@ -1145,7 +1137,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						break;
 
 					case L'h':
-						// "h0" - отключить буфер, "h9999" - включить буфер в 9999 строк
+						// "h0" - disable backscroll, "h9999" - set backscroll 9999 lines (max 32766 lines)
 						{
 							BufHeight = crb_On;
 							if (isDigit(*pszEnd))
@@ -1206,10 +1198,10 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 					case L's':
 						// s[<SplitTab>T][<Percents>](H|V)
-						// Пример: "s3T30H" - разбить 3-ий таб. будет создан новый Pane справа, шириной 30% от 3-го таба.
+						// Example: "s3T30H" - split 3-d console. New pane will be created to the right, using 30% 3-d console width
 						{
 							SplitType newSplit = eSplitNone;
-							UINT nTab = 0 /*active*/, nValue = /*пополам*/DefaultSplitValue/10;
+							UINT nTab = 0 /*active*/, nValue = /*half by default*/DefaultSplitValue/10;
 							bool bDisableSplit = false;
 							while (*pszEnd)
 							{
@@ -1269,8 +1261,8 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							else
 							{
 								eSplit = newSplit ? newSplit : eSplitHorz;
-								// Для удобства, пользователь задает размер НОВОЙ части
-								nSplitValue = 1000-max(1,min(nValue*10,999)); // проценты
+								// User set the size of NEW part
+								nSplitValue = 1000-max(1,min(nValue*10,999)); // percents
 								_ASSERTE(nSplitValue>=1 && nSplitValue<1000);
 								nSplitPane = nTab;
 							}
@@ -1396,7 +1388,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 								switch (cOpt)
 								{
 								case L'd':
-									// Например, "%USERPROFILE%"
+									// For example, "%USERPROFILE%"
 									// TODO("А надо ли разворачивать их тут? Наверное при запуске под другим юзером некорректно? Хотя... все равно до переменных не доберемся");
 									if (wcschr(pszStartupDir, L'%'))
 									{
@@ -1456,8 +1448,8 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 			if (pszEnd > pszFind)
 			{
-				// pszEnd должен указывать на конец -new_console[:...] / -cur_console[:...]
-				// и включать обрамляющую кавычку, если он окавычен
+				// pszEnd must point at the end of -new_console[:...] / -cur_console[:...]
+				// and include trailing double-quote (if argument was quoted)
 				if (lbWasQuot)
 				{
 					if (*pszEnd == L'"' && *(pszEnd-1) != L'"')
@@ -1469,25 +1461,26 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						pszEnd--;
 				}
 
-				// Откусить лишние пробелы, которые стоят ПЕРЕД -new_console[:...] / -cur_console[:...]
+				// Trim extra LEADING spaces before -new_console[:...] / -cur_console[:...]
 				while (((pszFind - 1) >= pszSpecialCmd)
 					&& (*(pszFind-1) == L' ')
 					&& (((pszFind - 1) == pszSpecialCmd) || (*(pszFind-2) == L' ') || (/**pszEnd == L'"' ||*/ *pszEnd == 0 || *pszEnd == L' ')))
 				{
 					pszFind--;
 				}
-				// Откусить лишние пробелы ПОСЛЕ -new_console[:...] / -cur_console[:...] если он стоит в НАЧАЛЕ строки!
+				// Skip extra TRAILING spaces (after -new_console[:...] / -cur_console[:...])
+				// IF argument was AT THE BEGINNING of the command!
 				if (pszFind == pszSpecialCmd)
 				{
 					while (*pszEnd == L' ')
 						pszEnd++;
 				}
 
-				// Здесь нужно подвинуть pszStopAt
+				// Advance pszStopAt
 				if (pszStopAt)
 					pszStopAt -= (pszEnd - pszFind);
 
-				// Удалить из строки запуска обработанный ключ
+				// Remove from the command processed argument
 				wmemmove(pszFind, pszEnd, (lstrlen(pszEnd)+1));
 				nChanges++;
 			}
