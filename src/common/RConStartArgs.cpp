@@ -876,13 +876,25 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 		wchar_t* pszSwitch = wcschr(pszFrom, L'-');
 		if (!pszSwitch)
 			break;
-		// Pre-validation
-		if (((pszSwitch[1] != L'n') && (pszSwitch[1] != L'c')) // -new_... or -cur_...
-			|| (((pszSwitch != /* > */ pszFrom) // If it is started from pszFrom - no need to check previous symbols
-				&& (*(pszSwitch-1) != L'"') || (((pszSwitch-2) >= pszFrom) && (*(pszSwitch-2) == L'\\'))) // Found: \"-new...
-				&& (*(pszSwitch-1) != L' '))) // Prev symbol was space
+
+		// Pre-validation (conditions to skip this switch)
+		bool bValid =
+			// -new_... or -cur_...
+			((pszSwitch[1] == L'n') || (pszSwitch[1] == L'c'))
+			&& (
+				// If it is started from pszFrom - no need to check previous symbols
+				(pszSwitch == pszFrom)
+				// Skip parts like: \"-new...\"   or   `-new_...`
+				|| (*(pszSwitch-1) == L' ')
+				// If prev symbol was double-quote
+				|| ((*(pszSwitch-1) == L'"')
+					// and there is a space before double-quote
+					&& (((pszSwitch-2) < pszFrom) || (*(pszSwitch-2) == L' '))
+			));
+		// Skip unsupported switches
+		if (!bValid)
 		{
-			// НЕ наш аргумент
+			// Not ours
 			pszSwitch = wcschr(pszSwitch+1, L' ');
 			if (!pszSwitch)
 				break;
@@ -890,6 +902,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			continue;
 		}
 
+		// Continue checks
 		wchar_t* pszFindNew = NULL;
 		wchar_t* pszFind = NULL;
 		wchar_t szTest[12]; lstrcpyn(szTest, pszSwitch+1, countof(szTest));
