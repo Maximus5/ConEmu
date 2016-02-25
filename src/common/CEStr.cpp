@@ -54,6 +54,11 @@ CEStr::operator LPCWSTR() const
 	return ms_Val;
 }
 
+LPCWSTR CEStr::c_str(LPCWSTR asNullSubstitute /*= NULL*/) const
+{
+	return ms_Val ? ms_Val : asNullSubstitute;
+}
+
 // cchMaxCount - including terminating \0
 LPCWSTR CEStr::Right(INT_PTR cchMaxCount) const
 {

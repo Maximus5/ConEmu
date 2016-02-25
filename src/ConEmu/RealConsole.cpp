@@ -14826,7 +14826,7 @@ wrap:
 void CRealConsole::GetPanelDirs(CEStr& szActiveDir, CEStr& szPassive)
 {
 	szActiveDir.Set(ms_CurWorkDir);
-	szPassive.Set(isFar() ? ms_CurPassiveDir : L"");
+	szPassive.Set(isFar() ? ms_CurPassiveDir.c_str(L"") : L"");
 }
 
 void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
@@ -15634,8 +15634,8 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 				CEStr lsLog(lstrmerge(L"CRealConsole::PostMacro: ", asMacro));
 				LogString(lsLog);
 			}
-			CEStr pszRc = ConEmuMacro::ExecuteMacro(pszGui.ms_Val, this);
-			LogString(pszRc ? pszRc : L"<NULL>");
+			CEStr szRc = ConEmuMacro::ExecuteMacro(pszGui.ms_Val, this);
+			LogString(szRc.c_str(L"<NULL>"));
 			TODO("Show result in the status line?");
 		}
 		return;

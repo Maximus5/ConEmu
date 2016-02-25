@@ -68,6 +68,7 @@ private:
 
 public:
 	operator LPCWSTR() const;
+	LPCWSTR c_str(LPCWSTR asNullSubstitute = NULL) const;
 	LPCWSTR Right(INT_PTR cchMaxCount) const;
 	CEStr& operator=(wchar_t* RVAL_REF asPtr);
 	CEStr& operator=(const wchar_t* asPtr);
