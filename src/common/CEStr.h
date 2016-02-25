@@ -90,5 +90,6 @@ public:
 
 	CEStr();
 	CEStr(wchar_t* RVAL_REF asPtr);
+	CEStr(const wchar_t* asPtr);
 	~CEStr();
 };

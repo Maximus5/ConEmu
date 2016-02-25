@@ -37,6 +37,13 @@ CEStr::CEStr()
 	Empty();
 }
 
+CEStr::CEStr(const wchar_t* asPtr)
+	: ms_Val(NULL), mn_MaxCount(0)
+{
+	Empty();
+	Set(asPtr);
+}
+
 CEStr::CEStr(wchar_t* RVAL_REF asPtr)
 	: ms_Val(NULL), mn_MaxCount(0)
 {
