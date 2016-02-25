@@ -372,6 +372,17 @@ void DebugStrUnitTest()
 
 	iCmp = lstrcmp(str1, pszTest);
 	_ASSERTE(iCmp == 0);
+
+	{
+		LPCWSTR pszTest;
+		CEStr szStr1(L"Test");
+		CEStr szStr2;
+		//pszTest = szStr1 ? szStr1 : L"<NULL>"; // -- expected to be cl error in VC14
+		pszTest = szStr1 ? (LPCWSTR)szStr1 : L"<NULL>";
+		pszTest = szStr2 ? (LPCWSTR)szStr2 : L"<NULL>";
+		//msprintf(szStr2.GetBuffer(128), 128, L"Str1=`%s`", szStr1); //-- would be nice to forbid or assert this. strict `(LPCWSTR)szStr1` is required here
+		UNREFERENCED_PARAMETER(pszTest);
+	}
 }
 
 void DebugCpUnitTest()
