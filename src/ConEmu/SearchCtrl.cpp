@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2015 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Resource.h"
 #include "ToolImg.h"
 #include "../common/MMap.h"
+#include "../common/MSetter.h"
 
 #define CE_ICON_SPACING 6
 #define CE_ICON_YPAD 2
@@ -280,6 +281,7 @@ static bool EditIconHintOverIcon(HWND hEditCtrl, CEIconHintInfo* p, LPARAM* lpPa
 	return bOverIcon;
 }
 
+// Find child with VScroll in hwnd
 static BOOL CALLBACK EditIconHint_FindScrollCtrl(HWND hwnd, LPARAM lParam)
 {
 	if (!IsWindowVisible(hwnd))
@@ -353,26 +355,45 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 		break;
 
 	case WM_MOUSEWHEEL:
+		// If control under mouse cursor has VScroll - forward message to it
 		{
+			// Add protection
+			static LONG lInCall = 0;
+			if (lInCall > 0)
+				goto wrap;
+			MSetter lSet(&lInCall);
+			// Find control under mouse cursor
 			POINT ptCur = {}; GetCursorPos(&ptCur);
 			HWND hPrevParent = NULL;
 			HWND hParent = hi.hRootDlg;
-			while (hParent)
+			if (hParent)
 			{
 				MapWindowPoints(hPrevParent, hParent, &ptCur, 1);
 				HWND hCtrlOver = ChildWindowFromPointEx(hParent, ptCur, CWP_SKIPDISABLED|CWP_SKIPINVISIBLE|CWP_SKIPTRANSPARENT);
 				if (!hCtrlOver || (hParent == hCtrlOver))
 					break;
 				wchar_t szClass[64] = L""; GetClassName(hCtrlOver, szClass, countof(szClass));
+				// Child dialog?
 				if (lstrcmp(szClass, L"#32770") == 0)
 				{
+					// Find first control with VScroll
 					HWND hSubItem = NULL;
 					EnumChildWindows(hCtrlOver, EditIconHint_FindScrollCtrl, (LPARAM)&hSubItem);
 					hCtrlOver = hSubItem;
 				}
-				if (hCtrlOver)
+				if (!hCtrlOver || (hCtrlOver == hEditCtrl))
+					break;
+				// Informational
+				GetClassName(hCtrlOver, szClass, countof(szClass));
+				// Must have VScroll
+				DWORD_PTR dwStyles = GetWindowLongPtr(hCtrlOver, GWL_STYLE);
+				if (dwStyles & WS_VSCROLL)
+				{
+					// Forward message to proper control
 					SendMessage(hCtrlOver, Msg, wParam, lParam);
-				break;
+					// Done, don't pass WM_MOUSEWHEEL to DefWndProc
+					goto wrap;
+				}
 			}
 		}
 		break;
