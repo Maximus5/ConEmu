@@ -93,6 +93,7 @@ class MPipe
 			memset(&m_In, 0, sizeof(m_In));
 			mp_Out = NULL;
 			mn_OutSize = mn_MaxOutSize = 0;
+			memset(&m_Tmp, 0, sizeof(m_Tmp));
 			mn_ErrCode = 0;
 			mn_OpenCount = mn_CloseCount = mn_FailCount = 0;
 			mh_Heap = GetProcessHeap();

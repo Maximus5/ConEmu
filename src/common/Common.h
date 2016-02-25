@@ -77,7 +77,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEC_INITTITLE       L"ConEmu"
 
 #define VirtualConsoleClass L"VirtualConsoleClass" // окна отрисовки
-#define VirtualConsoleClassMain L"VirtualConsoleClass" // главное окно
+#define VirtualConsoleClassMain L"VirtualConsoleClassMain" // главное окно
 #define VirtualConsoleClassApp L"VirtualConsoleClassApp" // специальный Popup (не используется)
 #define VirtualConsoleClassWork L"VirtualConsoleClassWork" // Holder для всех VCon
 #define VirtualConsoleClassBack L"VirtualConsoleClassBack" // Подложка (со скроллерами) для каждого VCon

@@ -6461,7 +6461,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgs* pArgs /*
 	wchar_t cType = IsConsoleBatchOrTask(asSource);
 	if (!cType)
 	{
-		_ASSERTE(*asSource==CmdFilePrefix || *asSource==TaskBracketLeft);
+		_ASSERTE(asSource && (*asSource==CmdFilePrefix || *asSource==TaskBracketLeft));
 		return NULL;
 	}
 
@@ -8237,7 +8237,7 @@ UINT CConEmuMain::IsQuakeVisible()
 				_ASSERTE(nVisiblePart <= 100);
 				nVisiblePart = 100;
 			}
-			_ASSERTE(nVisiblePart >= 0);
+			_ASSERTE((int)nVisiblePart >= 0);
 		}
 		else
 		{
@@ -10662,7 +10662,7 @@ LRESULT CConEmuMain::OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 		INPUT_RECORD r = {MOUSE_EVENT};
 		r.Event.MouseEvent.dwMousePosition = mouse.LClkCon;
 		r.Event.MouseEvent.dwEventFlags = MOUSE_MOVED;
-		pVCon->RCon()->PostConsoleEvent(&r);
+		if (pVCon) pVCon->RCon()->PostConsoleEvent(&r);
 		return 0;
 	}
 

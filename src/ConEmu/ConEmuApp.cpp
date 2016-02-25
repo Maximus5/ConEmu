@@ -1595,7 +1595,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 		DisplayShedulerError(L"Cannot get task settings.", hr, bsTaskName, lpCommandLine);
 		goto wrap;
 	}
-	hr = pSettings->put_ExecutionTimeLimit(szIndefinitely);
+	hr = pSettings->put_ExecutionTimeLimit(::SysAllocString(szIndefinitely));
 	if (FAILED(hr))
 	{
 		DisplayShedulerError(L"Cannot set task execution time limit.", hr, bsTaskName, lpCommandLine);
