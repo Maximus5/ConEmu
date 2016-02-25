@@ -31,15 +31,29 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CEStr.h"
 #include "WObjects.h"
 
+#if CE_UNIT_TEST==1
+	#include <stdio.h>
+	#define CESTRLOG0(msg) printf("  %s\n",(msg))
+	#define CESTRLOG1(fmt,a1) printf("  " fmt "\n",(a1))
+	#define CESTRLOG2(fmt,a1,a2) printf("  " fmt "\n",(a1),(a2))
+#else
+	#define CESTRLOG0(msg)
+	#define CESTRLOG1(fmt,a1)
+	#define CESTRLOG2(fmt,a1,a2)
+#endif
+
+
 CEStr::CEStr()
 	: ms_Val(NULL), mn_MaxCount(0)
 {
+	CESTRLOG0("CEStr::CEStr()");
 	Empty();
 }
 
 CEStr::CEStr(const wchar_t* asPtr)
 	: ms_Val(NULL), mn_MaxCount(0)
 {
+	CESTRLOG1("CEStr::CEStr(const wchar_t* x%p)", asPtr);
 	Empty();
 	Set(asPtr);
 }
@@ -47,6 +61,7 @@ CEStr::CEStr(const wchar_t* asPtr)
 CEStr::CEStr(wchar_t* RVAL_REF asPtr)
 	: ms_Val(NULL), mn_MaxCount(0)
 {
+	CESTRLOG1("CEStr::CEStr(wchar_t* RVAL_REF x%p)", asPtr);
 	Empty();
 	AttachInt(asPtr);
 }
@@ -72,17 +87,20 @@ void CEStr::Empty()
 
 CEStr::operator LPCWSTR() const
 {
+	CESTRLOG1("CEStr::LPCWSTR()", 0);
 	return ms_Val;
 }
 
 LPCWSTR CEStr::c_str(LPCWSTR asNullSubstitute /*= NULL*/) const
 {
+	CESTRLOG0("CEStr::c_str()");
 	return ms_Val ? ms_Val : asNullSubstitute;
 }
 
 // cchMaxCount - including terminating \0
 LPCWSTR CEStr::Right(INT_PTR cchMaxCount) const
 {
+	CESTRLOG1("CEStr::Right(%i)", (int)cchMaxCount);
 	if (cchMaxCount <= 0)
 	{
 		_ASSERTE(cchMaxCount > 0);
@@ -100,18 +118,22 @@ LPCWSTR CEStr::Right(INT_PTR cchMaxCount) const
 
 CEStr& CEStr::operator=(wchar_t* RVAL_REF asPtr)
 {
+	CESTRLOG1("CEStr::=(wchar_t* RVAL_REF x%p)", asPtr);
 	AttachInt(asPtr);
 	return *this;
 }
 
 CEStr& CEStr::operator=(const wchar_t* asPtr)
 {
+	CESTRLOG1("CEStr::=(const wchar_t* x%p)", asPtr);
 	Set(asPtr);
 	return *this;
 }
 
 CEStr::~CEStr()
 {
+	CESTRLOG1("CEStr::~CEStr(x%p)", ms_Val);
+
 	if (mb_RestoreEnvVar && *ms_RestoreVarName && !IsEmpty())
 	{
 		SetEnvironmentVariable(ms_RestoreVarName, ms_Val);
@@ -134,6 +156,8 @@ INT_PTR CEStr::GetMaxCount()
 
 wchar_t* CEStr::GetBuffer(INT_PTR cchMaxLen)
 {
+	CESTRLOG1("CEStr::GetBuffer(%i)", (int)cchMaxLen);
+
 	if (cchMaxLen <= 0)
 	{
 		_ASSERTE(cchMaxLen>0);
@@ -164,11 +188,15 @@ wchar_t* CEStr::GetBuffer(INT_PTR cchMaxLen)
 		ms_Val[min(cchMaxLen,nOldLen)] = 0;
 	}
 
+	CESTRLOG1("  ms_Val=x%p", ms_Val);
+
 	return ms_Val;
 }
 
 wchar_t* CEStr::Detach()
 {
+	CESTRLOG1("CEStr::Detach()=x%p", ms_Val);
+
 	wchar_t* psz = ms_Val;
 	ms_Val = NULL;
 	mn_MaxCount = 0;
@@ -178,6 +206,7 @@ wchar_t* CEStr::Detach()
 
 LPCWSTR CEStr::Attach(wchar_t* RVAL_REF asPtr)
 {
+	CESTRLOG1("CEStr::Attach(wchar_t* RVAL_REF x%p)", ms_Val);
 	return AttachInt(asPtr);
 }
 
@@ -188,6 +217,8 @@ LPCWSTR CEStr::AttachInt(wchar_t*& asPtr)
 		return ms_Val; // Already
 	}
 
+	_ASSERTE(!asPtr || !ms_Val || ((asPtr+wcslen(asPtr)) < ms_Val) || ((ms_Val+wcslen(ms_Val)) < asPtr));
+
 	Empty();
 	SafeFree(ms_Val);
 	if (asPtr)
@@ -196,6 +227,7 @@ LPCWSTR CEStr::AttachInt(wchar_t*& asPtr)
 		mn_MaxCount = lstrlen(asPtr)+1;
 	}
 
+	CESTRLOG1("  ms_Val=x%p", ms_Val);
 
 	return ms_Val;
 }
@@ -207,6 +239,8 @@ bool CEStr::IsEmpty()
 
 LPCWSTR CEStr::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
 {
+	CESTRLOG2("CEStr::Set(x%p)", asNewValue, (int)anChars);
+
 	if (asNewValue)
 	{
 		ssize_t nNewLen = (anChars < 0) ? (ssize_t)wcslen(asNewValue) : klMin(anChars, (ssize_t)wcslen(asNewValue));
@@ -242,6 +276,8 @@ LPCWSTR CEStr::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
 		// Make it NULL
 		Empty();
 	}
+
+	CESTRLOG1("  ms_Val=x%p", ms_Val);
 
 	return ms_Val;
 }
