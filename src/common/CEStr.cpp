@@ -32,21 +32,35 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WObjects.h"
 
 CEStr::CEStr()
+	: ms_Val(NULL), mn_MaxCount(0)
 {
-	mn_MaxCount = 0; ms_Val = NULL;
-	mb_RestoreEnvVar = false;
-	ms_RestoreVarName[0] = 0;
 	Empty();
 }
 
 CEStr::CEStr(wchar_t* RVAL_REF asPtr)
+	: ms_Val(NULL), mn_MaxCount(0)
 {
-	mn_MaxCount = 0; ms_Val = NULL;
+	Empty();
+	AttachInt(asPtr);
+}
+
+void CEStr::Empty()
+{
+	if (ms_Val)
+	{
+		*ms_Val = 0;
+	}
+
+	mn_TokenNo = 0;
+	mn_CmdCall = cc_Undefined;
 	mpsz_Dequoted = NULL;
 	mb_Quoted = false;
+	#ifdef _DEBUG
+	ms_LastTokenEnd = NULL;
+	ms_LastTokenSave[0] = 0;
+	#endif
 	mb_RestoreEnvVar = false;
 	ms_RestoreVarName[0] = 0;
-	AttachInt(asPtr);
 }
 
 CEStr::operator LPCWSTR() const
@@ -175,26 +189,8 @@ LPCWSTR CEStr::AttachInt(wchar_t*& asPtr)
 		mn_MaxCount = lstrlen(asPtr)+1;
 	}
 
+
 	return ms_Val;
-}
-
-void CEStr::Empty()
-{
-	if (ms_Val)
-	{
-		*ms_Val = 0;
-	}
-
-	mn_TokenNo = 0;
-	mn_CmdCall = cc_Undefined;
-	mpsz_Dequoted = NULL;
-	mb_Quoted = false;
-	#ifdef _DEBUG
-	ms_LastTokenEnd = NULL;
-	ms_LastTokenSave[0] = 0;
-	#endif
-	mb_RestoreEnvVar = false;
-	ms_RestoreVarName[0] = 0;
 }
 
 bool CEStr::IsEmpty()
