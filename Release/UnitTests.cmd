@@ -35,6 +35,8 @@ c:\windows\syswow64\cmd.exe -new_console:ba /k "%~0" tab4
 c:\windows\syswow64\cmd.exe -new_console:bt:"Far":C:"%ConEmuDrive%\Far30.Latest\far-bis\Far.exe" /c "%~0" tab5
 c:\windows\syswow64\cmd.exe -new_console:abP:"<Monokai>":t:Tab6 /k "%~0" tab6
 c:\windows\syswow64\cmd.exe -new_console:b:t:Tab7 /k "%~0" tab7
+rem Source cl tests
+if exist "%~dp0..\src\UnitTests\run-tests.cmd" call "%~dp0..\src\UnitTests\run-tests.cmd"
 goto fin
 
 :tab1
