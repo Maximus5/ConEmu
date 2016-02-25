@@ -45,6 +45,20 @@ int main(int argc, char** argv)
 	Verify0((ls6.ms_Val && 0==wcscmp(ls6.ms_Val,L"Test3")),"ls6==`Test3`");
 	}
 
+	{
+	Verify_Step("-new_console parser tests");
+	LPCWSTR pszTest = L"-new_console:a \\\"-new_console:c\\\" `-new_console:d:C:\\` -cur_console:b";
+	LPCWSTR pszCmp = L"\\\"-new_console:c\\\" `-new_console:d:C:\\`";
+	RConStartArgs arg; arg.pszSpecialCmd = lstrdup(pszTest);
+	arg.ProcessNewConArg();
+	int iCmp = lstrcmp(arg.pszSpecialCmd, pszCmp);
+	Verify0((iCmp==0),"arg.pszSpecialCmd==\\\"-new_console:c\\\" `-new_console:d:C:\\`");
+
+	Verify_Step("RConStartArgs::RunArgTests()");
+	RConStartArgs::RunArgTests();
+	Verify0(!gbVerifyFailed,"RConStartArgs tests passed");
+	}
+
 	if (gbVerifyFailed)
 		Verify_MsgFail("Some tests failed!");
 	else

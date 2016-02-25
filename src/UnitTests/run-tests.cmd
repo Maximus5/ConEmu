@@ -7,7 +7,7 @@ if exist "%~dp0*.obj" del /Q "%~dp0*.obj" > nul
 if exist "%~dp0tests.fail" del /Q "%~dp0tests.fail" > nul
 
 set commons=../common/CEStr.cpp ../common/Memory.cpp ../common/WObjects.cpp ../common/WUser.cpp ../common/CmdLine.cpp ^
-            ../common/MStrSafe.cpp ../common/MStrDup.cpp ../common/MAssert.cpp ../common/WThreads.cpp
+            ../common/MStrSafe.cpp ../common/MStrDup.cpp ../common/MAssert.cpp ../common/WThreads.cpp ../common/RConStartArgs.cpp
 
 set cpp_def=/nologo /D_UNICODE /DUNICODE /D_DEBUG /DDEBUG /DCE_UNIT_TEST=1
 set lnk_def=/MTd /link user32.lib advapi32.lib
