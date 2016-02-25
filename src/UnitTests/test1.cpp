@@ -1,10 +1,19 @@
 ﻿#include "tests.h"
 
 bool gbVerifyFailed = false;
+bool gbVerifyVerbose = false;
 
 int main(int argc, char** argv)
 {
 	HeapInitialize();
+
+	for (int i=0; i<argc; i++)
+	{
+		if (strcmp(argv[i], "-verbose")==0 || strcmp(argv[i], "--verbose")==0)
+			gbVerifyVerbose = true;
+	}
+
+	// Tests
 
 	{
 	Verify_Step("ls1(`Test`)");
