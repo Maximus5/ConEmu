@@ -1,4 +1,5 @@
 ﻿#include "tests.h"
+#pragma warning(disable: 4474)
 
 bool gbVerifyFailed = false;
 bool gbVerifyVerbose = false;
