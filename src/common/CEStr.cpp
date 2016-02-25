@@ -33,9 +33,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #if CE_UNIT_TEST==1
 	#include <stdio.h>
-	#define CESTRLOG0(msg) printf("  %s\n",(msg))
-	#define CESTRLOG1(fmt,a1) printf("  " fmt "\n",(a1))
-	#define CESTRLOG2(fmt,a1,a2) printf("  " fmt "\n",(a1),(a2))
+	extern bool gbVerifyVerbose;
+	#define CESTRLOG0(msg) if (gbVerifyVerbose) printf("  %s\n",(msg))
+	#define CESTRLOG1(fmt,a1) if (gbVerifyVerbose) printf("  " fmt "\n",(a1))
+	#define CESTRLOG2(fmt,a1,a2) if (gbVerifyVerbose) printf("  " fmt "\n",(a1),(a2))
 #else
 	#define CESTRLOG0(msg)
 	#define CESTRLOG1(fmt,a1)
