@@ -115,9 +115,11 @@ public:
 
 #if CE_UNIT_TEST==1
 
+	extern bool gbVerifyFailed;
+
 	#include <stdio.h>
 	extern const char* PointToName(const char* asFileOrPath);
-	#define _ASSERT(x) if (!(x)) { printf(\
+	#define _ASSERT(x) if (!(x)) { gbVerifyFailed=true; printf(\
 		"    \033[91m" \
 		    "ASSERTION: %s\n" \
 		"         FILE: %s LINE: %i" \
@@ -125,7 +127,6 @@ public:
 	#define _ASSERTE(x) _ASSERT(x)
 	#define _ASSERTEX(x) _ASSERT(x)
 
-	extern bool gbVerifyFailed;
 	#define Verify_Step(step) printf("  \033[36m%s\033[m\n" , step)
 	#define Verify_MsgOk(msg) printf("  \033[32m" "%s" "\033[m\n",(msg))
 	#define Verify_MsgFail(msg) printf("  \033[91m" "%s" "\033[m\n",(msg))
