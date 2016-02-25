@@ -128,11 +128,19 @@ WARNING("WIN64 was not defined");
 #define SafeDeleteObject(h) if ((h)!=NULL) { DeleteObject((h)); (h)=NULL; }
 
 #if defined(_MSC_VER) && (_MSC_VER <= 1500)
-	#define RVAL_REF
+	#undef HAS_CPP11
 #elif defined(__GNUC__)
-	#define RVAL_REF
+	#define HAS_CPP11
 #else
+	#define HAS_CPP11
+#endif
+
+#if defined(HAS_CPP11)
 	#define RVAL_REF &&
+	#define FN_DELETE = delete
+#else
+	#define RVAL_REF
+	#define FN_DELETE
 #endif
 
 #define ScopedObject_Cat2(n,i) n ## i
