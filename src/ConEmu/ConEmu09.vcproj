@@ -406,6 +406,7 @@
       <File RelativePath="..\common\MFileLog.cpp" />
       <File RelativePath="..\common\MGlobal.cpp" />
       <File RelativePath="..\common\MJsonReader.cpp" />
+      <File RelativePath="..\common\MModule.cpp" />
       <File RelativePath="..\common\Monitors.cpp" />
       <File RelativePath="..\common\MSection.cpp" />
       <File RelativePath="..\common\MSectionSimple.cpp" />
@@ -530,6 +531,7 @@
       <File RelativePath="..\common\MFileLog.h" />
       <File RelativePath="..\common\MGlobal.h" />
       <File RelativePath="..\common\MJsonReader.h" />
+      <File RelativePath="..\common\MModule.h" />
       <File RelativePath="..\common\Monitors.h" />
       <File RelativePath="..\common\MPipe.h" />
       <File RelativePath="..\common\MSection.h" />

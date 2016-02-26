@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2015 Maximus5
+Copyright (c) 2012-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "header.h"
+#include "../common/MModule.h"
+
 #include "ConEmu.h"
 #include "RealConsole.h"
 #include "VConRelease.h"
@@ -77,6 +79,7 @@ static HRESULT CALLBACK TaskDlgCallback(HWND hwnd, UINT uNotification, WPARAM wP
 	return S_OK;
 }
 
+static MModule gComCtl32;
 typedef HRESULT (WINAPI* TaskDialogIndirect_t)(const TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioButton, BOOL *pfVerificationFlagChecked);
 static TaskDialogIndirect_t TaskDialogIndirect_f = NULL; //(TaskDialogIndirect_t)(hDll?GetProcAddress(hDll, "TaskDialogIndirect"):NULL);
 
@@ -87,12 +90,10 @@ HRESULT TaskDialog(TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioBut
 
 	if (!TaskDialogIndirect_f)
 	{
-		HMODULE hDll = GetModuleHandle(L"comctl32.dll");
-		if (!hDll)
+		if (gComCtl32.Load(L"comctl32.dll"))
 		{
-			hDll = LoadLibrary(L"comctl32.dll");
+			gComCtl32.GetProcAddress("TaskDialogIndirect", TaskDialogIndirect_f);
 		}
-		TaskDialogIndirect_f = (TaskDialogIndirect_t)(hDll?GetProcAddress(hDll, "TaskDialogIndirect"):NULL);
 	}
 
 	if (TaskDialogIndirect_f)

@@ -947,6 +947,7 @@
     <ClCompile Include="..\common\MFileLog.cpp" />
     <ClCompile Include="..\common\MGlobal.cpp" />
     <ClCompile Include="..\common\MJsonReader.cpp" />
+    <ClCompile Include="..\common\MModule.cpp" />
     <ClCompile Include="..\common\Monitors.cpp" />
     <ClCompile Include="..\common\MSection.cpp" />
     <ClCompile Include="..\common\MSectionSimple.cpp" />
@@ -1069,6 +1070,7 @@
     <ClInclude Include="..\common\MFileLog.h" />
     <ClInclude Include="..\common\MGlobal.h" />
     <ClInclude Include="..\common\MJsonReader.h" />
+    <ClInclude Include="..\common\MModule.h" />
     <ClInclude Include="..\common\Monitors.h" />
     <ClInclude Include="..\common\MPipe.h" />
     <ClInclude Include="..\common\MSection.h" />
