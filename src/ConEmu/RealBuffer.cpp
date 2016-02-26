@@ -6445,15 +6445,13 @@ bool CRealBuffer::isSelectionAllowed()
 			if (CompareProcessNames(pszCompare, L"far"))
 			{
 				// Tricky a little
-				// Editor and panels - send mouse to console
-				// Userscreen and viewer - use mouse for selection
-				// If user want to send mouse to console always - set "far.exe" instead of "far"
+				// * in Far Viewer - click&drag is used for content scrolling
+				// * in Far Editor - used for text selection
+				// * in Far Panels - used for file drag&drop (ConEmu's or Far internal)
+				// * UserScreen (panels are hidden) - use mouse for selection
+				// To send mouse to console always - set exceptions to "far.exe" instead of "far"
 				if (mp_RCon->isFar())
 				{
-					// Don't allow:
-					// in Far Viewer - click&drag is used for content scrolling
-					// in Far Editor - used for text selection
-					// in Far Panels - used for file drag&drop (ConEmu's or Far internal)
 					if (mp_RCon->isViewer() || mp_RCon->isEditor() || mp_RCon->isFilePanel(true, true))
 					{
 						return false;
@@ -6464,7 +6462,14 @@ bool CRealBuffer::isSelectionAllowed()
 						int nDialogs = m_Rgn.GetDetectedDialogs(3,NULL,NULL);
 						if ((nDialogs > 0) && !((nDialogs == 1) && (nDlgFlags == FR_MENUBAR)))
 							return false; // Any dialog on screen? Don't select
+						return true;
 					}
+				}
+				else
+				{
+					// Must not get here, because of CompareProcessNames
+					_ASSERTE(FALSE);
+					continue;
 				}
 			}
 			else if (CompareProcessNames(pszCompare, L"vim"))
