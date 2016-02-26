@@ -2351,6 +2351,8 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 	while (p->GetStrArg(iKeyNo++, pszKey))
 	{
+		// GetStrArg never returns true & NULL
+		_ASSERTE(pszKey);
 		// Modifiers (for Example RCtrl+Shift+LAlt)
 		DWORD dwControlState = 0, dwScan = 0;
 		int iScanCode = -1;
