@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/DbgHlpGcc.h"
 #endif
 #include "../common/ConEmuCheck.h"
+#include "../common/MBSTR.h"
 #include "../common/MSetter.h"
 #include "../common/WFiles.h"
 #include "AboutDlg.h"
@@ -1525,7 +1526,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	bool bCoInitialized = false;
 	DWORD nTickStart, nDuration;
 	const DWORD nMaxWindowWait = 30000;
-	wchar_t szIndefinitely[] = L"PT0S";
+	MBSTR szIndefinitely(L"PT0S");
 
 	//  ------------------------------------------------------
 	//  Initialize COM.

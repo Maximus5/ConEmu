@@ -940,6 +940,7 @@
     <ClCompile Include="..\common\execute.cpp" />
     <ClCompile Include="..\common\HkFunc.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
+    <ClCompile Include="..\common\MBSTR.cpp" />
     <ClCompile Include="..\common\md5.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
     <ClCompile Include="..\common\MEvent.cpp" />
@@ -1060,6 +1061,7 @@
     <ClInclude Include="..\common\HkFunc.h" />
     <ClInclude Include="..\common\kl_parts.h" />
     <ClInclude Include="..\common\MArray.h" />
+    <ClInclude Include="..\common\MBSTR.h" />
     <ClInclude Include="..\common\MCircular.h" />
     <ClInclude Include="..\common\md5.h" />
     <ClInclude Include="..\common\Memory.h" />

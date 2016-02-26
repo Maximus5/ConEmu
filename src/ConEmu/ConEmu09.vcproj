@@ -399,6 +399,7 @@
       <File RelativePath="..\common\execute.cpp" />
       <File RelativePath="..\common\HkFunc.cpp" />
       <File RelativePath="..\common\MAssert.cpp" />
+      <File RelativePath="..\common\MBSTR.cpp" />
       <File RelativePath="..\common\md5.cpp" />
       <File RelativePath="..\common\Memory.cpp" />
       <File RelativePath="..\common\MEvent.cpp" />
@@ -521,6 +522,7 @@
       <File RelativePath="..\common\HkFunc.h" />
       <File RelativePath="..\common\kl_parts.h" />
       <File RelativePath="..\common\MArray.h" />
+      <File RelativePath="..\common\MBSTR.h" />
       <File RelativePath="..\common\MCircular.h" />
       <File RelativePath="..\common\md5.h" />
       <File RelativePath="..\common\Memory.h" />
