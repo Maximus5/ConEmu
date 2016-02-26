@@ -8237,7 +8237,6 @@ UINT CConEmuMain::IsQuakeVisible()
 				_ASSERTE(nVisiblePart <= 100);
 				nVisiblePart = 100;
 			}
-			_ASSERTE(nVisiblePart >= 0);
 		}
 		else
 		{
