@@ -1342,22 +1342,7 @@ int GuiMessageBox(HWND hConEmuWndRoot, LPCWSTR asText, LPCWSTR asTitle, int anBt
 	else
 	{
 		//_ASSERTE(hConEmuWndRoot!=NULL);
-		// Избежать статической линковки к user32
-		HMODULE hUser32 = GetModuleHandle(L"User32.dll");
-		if (hUser32 == NULL)
-			hUser32 = LoadLibrary(L"User32.dll");
-		typedef int (WINAPI* MessageBoxW_T)(HWND, LPCWSTR, LPCWSTR, UINT);
-		MessageBoxW_T _MessageBoxW = hUser32 ? (MessageBoxW_T)GetProcAddress(hUser32, "MessageBoxW") : NULL;
-		if (_MessageBoxW)
-		{
-			nResult = _MessageBoxW(NULL, asText, asTitle, MB_SYSTEMMODAL|anBtns);
-		}
-		else
-		{
-			#ifdef _DEBUG
-			_CrtDbgBreak();
-			#endif
-		}
+		nResult = MessageBoxW(NULL, asText, asTitle, MB_SYSTEMMODAL|anBtns);
 	}
 
 	return nResult;
