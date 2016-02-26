@@ -202,6 +202,17 @@ WARNING("WIN64 was not defined");
 	#define VCGCCTEST(vc,gcc) gcc
 #endif
 
+#if defined(DEPRECATED)
+#undef DEPRECATED
+#endif
+#ifdef __GNUC__
+#define DEPRECATED(msg,func) func __attribute__ ((deprecated))
+#elif defined(_MSC_VER)
+#define DEPRECATED(msg,func) __declspec(deprecated(msg)) func
+#else
+#define DEPRECATED(msg,func) func
+#endif
+
 #ifdef CONEMU_MINIMAL
 #undef SHOWDEBUGSTR
 #endif
