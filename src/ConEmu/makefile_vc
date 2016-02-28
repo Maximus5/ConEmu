@@ -88,6 +88,7 @@ $(INTDIR)\MGlobal.obj \
 $(INTDIR)\MJsonReader.obj \
 $(INTDIR)\MModule.obj \
 $(INTDIR)\Monitors.obj \
+$(INTDIR)\MRect.obj \
 $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSection.obj \
 $(INTDIR)\MSecurity.obj \
@@ -401,6 +402,8 @@ $(INTDIR)\MJsonReader.obj: ../common/MJsonReader.cpp ../common/MJsonReader.h
 $(INTDIR)\MModule.obj: ../common/MModule.cpp ../common/MModule.h
 
 $(INTDIR)\Monitors.obj: ../common/Monitors.cpp
+
+$(INTDIR)\MRect.obj: ../common/MRect.cpp ../common/MRect.h
 
 $(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSectionSimple.h ../common/MSection.h
 

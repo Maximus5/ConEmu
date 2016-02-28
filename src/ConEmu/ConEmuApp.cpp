@@ -567,43 +567,6 @@ void   _free(LPVOID ptr) {
 */
 
 
-COORD /*__forceinline*/ MakeCoord(int X,int Y)
-{
-	COORD cr = {(SHORT)X,(SHORT)Y};
-	return cr;
-}
-
-POINT /*__forceinline*/ MakePoint(int X,int Y)
-{
-	POINT pt = {X,Y};
-	return pt;
-}
-
-RECT /*__forceinline*/ MakeRect(int W,int H)
-{
-	RECT rc = {0,0,W,H};
-	return rc;
-}
-
-RECT /*__forceinline*/ MakeRect(int X1, int Y1,int X2,int Y2)
-{
-	RECT rc = {X1,Y1,X2,Y2};
-	return rc;
-}
-
-BOOL /*__forceinline*/ CoordInRect(const COORD& c, const RECT& r)
-{
-	return (c.X >= r.left && c.X <= r.right) && (c.Y >= r.top && c.Y <= r.bottom);
-}
-
-BOOL IntersectSmallRect(RECT& rc1, SMALL_RECT& rc2)
-{
-	RECT frc2 = {rc2.Left, rc2.Top, rc2.Right, rc2.Bottom};
-	RECT tmp;
-	BOOL lb = IntersectRect(&tmp, &rc1, &frc2);
-	return lb;
-}
-
 bool IntFromString(int& rnValue, LPCWSTR asValue, int anBase /*= 10*/, LPCWSTR* rsEnd /*= NULL*/)
 {
 	bool bOk = false;
@@ -2550,26 +2513,6 @@ void MessageLoop()
 	}
 
 	gbMessagingStarted = false;
-}
-
-bool PtDiffTest(int x1, int y1, int x2, int y2, UINT maxDx, UINT maxDy)
-{
-	int nX = abs(x1 - x2);
-
-	if (nX > (int)maxDx)
-		return false;
-
-	int nY = abs(y1 - y2);
-
-	if (nY > (int)maxDy)
-		return false;
-
-	return true;
-}
-
-bool PtDiffTest(POINT C, int aX, int aY, UINT D)
-{
-	return PtDiffTest(C.x, C.y, aX, aY, D, D);
 }
 
 bool PtMouseDblClickTest(const MSG& msg1, const MSG msg2)
