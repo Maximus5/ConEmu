@@ -700,6 +700,7 @@ class CConEmuMain
 		bool SetSkipOnFocus(bool abSkipOnFocus);
 		void SetWaitCursor(BOOL abWait);
 		void CheckNeedRepaint();
+		void EnterAltNumpadMode(UINT nBase);
 	public:
 		void ReportOldCmdVersion(DWORD nCmd, DWORD nVersion, int bFromServer, DWORD nFromProcess, u64 hFromModule, DWORD nBits);
 		bool SetParent(HWND hNewParent);

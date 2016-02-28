@@ -135,6 +135,8 @@ namespace ConEmuMacro
 	LPWSTR About(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// AffinityPriority([Affinity,Priority])
 	LPWSTR AffinityPriority(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// AltNumber([Base])
+	LPWSTR AltNumber(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Attach - console or ChildGui by PID
 	LPWSTR Attach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Break (0=CtrlC; 1=CtrlBreak)
@@ -261,6 +263,7 @@ namespace ConEmuMacro
 		// List all functions
 		{About, {L"About"}, gmf_MainThread},
 		{AffinityPriority, {L"AffinityPriority"}, gmf_PostponeWhenActive|gmf_MainThread},
+		{AltNumber, {L"AltNumber"}},
 		{Attach, {L"Attach"}, gmf_MainThread},
 		{Break, {L"Break"}},
 		{Close, {L"Close"}, gmf_MainThread},
@@ -1418,6 +1421,16 @@ LPWSTR ConEmuMacro::AffinityPriority(GuiMacro* p, CRealConsole* apRCon, bool abF
 		pszRc = lstrdup(L"OK");
 
 	return pszRc ? pszRc : lstrdup(L"FAILED");
+}
+
+// AltNumber([Base]) -- Base is 10 or 16
+LPWSTR ConEmuMacro::AltNumber(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	int nBase = 0;
+	if (!p->GetIntArg(0, nBase) || !(nBase == 10 || nBase == 16))
+		nBase = 16;
+	gpConEmu->EnterAltNumpadMode(nBase);
+	return lstrdup(L"OK");
 }
 
 LPWSTR ConEmuMacro::Attach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)

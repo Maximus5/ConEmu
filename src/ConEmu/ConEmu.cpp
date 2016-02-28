@@ -8307,6 +8307,23 @@ void CConEmuMain::CheckNeedRepaint()
 	}
 }
 
+void CConEmuMain::EnterAltNumpadMode(UINT nBase)
+{
+	if (!this || !mp_AltNumpad)
+	{
+		_ASSERTE(this && mp_AltNumpad);
+		return;
+	}
+
+	if ((nBase != 10) && (nBase != 16))
+	{
+		_ASSERTE(nBase==10 || nBase==16);
+		return;
+	}
+
+	mp_AltNumpad->StartCapture(nBase, 0, true);
+}
+
 LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 #ifdef _DEBUG

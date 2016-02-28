@@ -297,6 +297,7 @@ static LngPredefined gsDataHints[] = {
 	{ tWndX,                   L"Upper left corner of ConEmu in Normal mode\r\nThis is in pixels" },
 	{ tWndY,                   L"Upper left corner of ConEmu in Normal mode\r\nThis is in pixels" },
 	{ vkAltEnter,              L"Full screen" },
+	{ vkAltNumpad,             L"Start Alt+Number mode to enter unicode symbol by its hex codebase" },
 	{ vkAlwaysOnTop,           L"Switch ‘Always on top’ window mode" },
 	{ vkAppsBS,                L"Scroll buffer to the cursor position" },
 	{ vkAppsEnd,               L"Scroll buffer to the bottom" },

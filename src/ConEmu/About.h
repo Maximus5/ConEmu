@@ -208,6 +208,8 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"  - Show ‘About’ dialog with page activated, e.g. ‘About(\"-new_console\")’\r\n" \
 	L"AffinityPriority([Affinity,Priority])\r\n" \
 	L"  - Change affinity and priority of active console\r\n" \
+	L"AltNumber([Base])\r\n" \
+	L"  - Start Alt+Numbers mode: Base = 10 or 16\r\n" \
 	L"Attach([<PID>[,<Alternative>]])\r\n" \
 	L"  - Attach console or ChildGui by PID\r\n" \
 	L"Break([<Event>[,<ProcessGroupId>]])\r\n" \
