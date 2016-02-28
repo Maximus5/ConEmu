@@ -31,6 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
+#include "../common/wcchars.h"
+
 class CConEmuMain;
 class CRealConsole;
 
@@ -47,8 +49,10 @@ protected:
 	CConEmuMain* mp_ConEmu;
 	AltCharAction m_WaitingForAltChar;
 	bool mb_InAltNumber;
+	bool mb_External; // Mode triggered by hotkey
 	UINT mn_NumberBase; // 10 or 16
 	u64  mn_AltNumber;
+	UINT mn_SkipVkKeyUp;
 
 public:
 	CAltNumpad(CConEmuMain* apConEmu);
@@ -57,11 +61,14 @@ public:
 public:
 	// Methods
 	bool OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
-	void StartCapture(UINT NumberBase, UINT Initial);
+	void StartCapture(UINT NumberBase, UINT Initial, bool External);
 
 protected:
 	void ClearAltNumber(bool bFull);
 	void DumpChars(wchar_t* asChars);
 	AltCharAction DumpAltNumber();
 	bool isAltNumpad();
+	void DumpStatus();
+protected:
+	ucs32 GetChars(wchar_t (&wszChars)[3]);
 };
