@@ -93,6 +93,7 @@ $(INTDIR)\MAssert.obj \
 $(INTDIR)\MConHandle.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\MFileLog.obj \
+$(INTDIR)\MRect.obj \
 $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSection.obj \
 $(INTDIR)\MSecurity.obj \
@@ -391,6 +392,8 @@ $(INTDIR)\MConHandle.obj: ../common/MConHandle.cpp ../common/MConHandle.h
 $(INTDIR)\Memory.obj: ../common/Memory.cpp
 
 $(INTDIR)\MFileLog.obj: ../common/MFileLog.cpp ../common/MFileLog.h
+
+$(INTDIR)\MRect.obj: ../common/MRect.cpp ../common/MRect.h
 
 $(INTDIR)\MSectionSimple.obj: ../common/MSectionSimple.cpp ../common/MSectionSimple.h ../common/MSection.h
 

@@ -518,6 +518,7 @@
     <ClInclude Include="..\common\MConHandle.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MFileLog.h" />
+    <ClInclude Include="..\common\MRect.h" />
     <ClInclude Include="..\common\MSection.h" />
     <ClInclude Include="..\common\MSectionSimple.h" />
     <ClInclude Include="..\common\MSecurity.h" />
@@ -589,6 +590,7 @@
     <ClCompile Include="..\common\MConHandle.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
     <ClCompile Include="..\common\MFileLog.cpp" />
+    <ClCompile Include="..\common\MRect.cpp" />
     <ClCompile Include="..\common\MSection.cpp" />
     <ClCompile Include="..\common\MSectionSimple.cpp" />
     <ClCompile Include="..\common\MSecurity.cpp" />

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 #include "../common/MConHandle.h"
+#include "../common/MRect.h"
 #include "../common/HandleKeeper.h"
 
 #include "Ansi.h"
@@ -47,6 +48,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /* **************** */
 
 extern void CheckPowerShellProgress(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
+
+static void CheckNeedExtScroll(ExtScrollScreenParm& scrl, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin)
+{
+	// TODO: ...
+	_ASSERTE(lpClipRectangle == NULL);
+	_ASSERTE(dwDestinationOrigin.X == 0);
+
+	// Full console contents is to be scrolled
+	if (!lpScrollRectangle)
+		return;
+
+	scrl.Flags |= essf_Region|essf_Global;
+	scrl.Region = MakeRect(lpScrollRectangle->Left, lpScrollRectangle->Top, lpScrollRectangle->Right, lpScrollRectangle->Bottom);
+}
 
 /* **************** */
 
@@ -301,8 +316,8 @@ BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT
 
 	if (HandleKeeper::IsOutputHandle(hConsoleOutput))
 	{
-		WARNING("Проверка аргументов! Скролл может быть частичным");
 		ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConsoleOutput, dwDestinationOrigin.Y - lpScrollRectangle->Top};
+		CheckNeedExtScroll(scrl, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin);
 		ExtScrollScreen(&scrl);
 	}
 
@@ -320,8 +335,8 @@ BOOL WINAPI OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT
 
 	if (HandleKeeper::IsOutputHandle(hConsoleOutput))
 	{
-		WARNING("Проверка аргументов! Скролл может быть частичным");
 		ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConsoleOutput, dwDestinationOrigin.Y - lpScrollRectangle->Top};
+		CheckNeedExtScroll(scrl, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin);
 		ExtScrollScreen(&scrl);
 	}
 

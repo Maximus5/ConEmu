@@ -200,6 +200,7 @@ static const EXTSCROLLSCREENFLAGS
 	essf_Current  = 0x0000000000000010ULL, // Use current color (may be extended) selected in console
 
 	essf_Region   = 0x0000000000000020ULL, // Scroll region is defined. If not - scroll whole screen (visible buffer?)
+	essf_Global   = 0x0000000000000080ULL, // Global coordinates are used
 
 	essf_Commit   = 0x0000000000000100ULL,
 	essf_None     = 0x0000000000000000ULL;

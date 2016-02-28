@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
+#include "../common/MRect.h"
 #include "../common/MStrDup.h"
 #include "../common/UnicodeChars.h"
 #include "../ConEmu/version.h"
@@ -1581,12 +1582,24 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 	int SrcLineTop = 0, SrcLineBottom = 0, DstLineTop = 0;
 	int nDir = (int)Info->Dir;
 
+	if (Info->Flags & essf_Global)
+	{
+		if (Info->Flags & essf_Region)
+		{
+			RECT rcDest = {};
+			if (!IntersectSmallRect(Info->Region, srWork, &rcDest))
+				return FALSE; // Nothing to scroll
+			// We need relative "working" coordinates here
+			Info->Region = MakeRect(rcDest.left, rcDest.top - srWork.Top, rcDest.right, rcDest.bottom - srWork.Top);
+		}
+	}
+
 	if (Info->Flags & essf_Region)
 	{
-		_ASSERTEX(Info->Region.left==0 && Info->Region.right==0); // Not used yet!
+		_ASSERTEX(Info->Region.left==0 && Info->Region.right==(csbi.dwSize.X-1)); // Not used yet!
 		if ((Info->Region.top < 0) || (Info->Region.bottom < Info->Region.top))
 		{
-			_ASSERTEX(Info->Region.top>=0 && Info->Region.bottom>=Info->Region.top); // Must not be empty!
+			_ASSERTEX(Info->Region.top>=0 && Info->Region.bottom>=Info->Region.top); // Invalid scroll region was requested?
 			SetLastError(E_INVALIDARG);
 			return FALSE;
 		}
