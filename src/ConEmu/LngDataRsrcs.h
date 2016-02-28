@@ -30,6 +30,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 static LngPredefined gsDataRsrcs[] = {
 	{ lng_AboutAppName,             L"Console Emulation program (local terminal)" },
+	{ lng_AltNumberACP,             L"Type ANSI code point using decimal numbers" },
+	{ lng_AltNumberExt,             L" - <Enter> to paste, <Esc> to cancel" },
+	{ lng_AltNumberHex,             L"Type UNICODE code point using hexadecimal numbers" },
+	{ lng_AltNumberStdACP,          L" - release <Alt> to paste ANSI code point" },
+	{ lng_AltNumberStdOEM,          L" - release <Alt> to paste OEM code point" },
+	{ lng_AltNumberStdUCS,          L" - release <Alt> to paste UNICODE code point" },
 	{ lng_DlgAbout,                 L"About" },
 	{ lng_DlgAffinity,              L"Set active console processes affinity and priority" },
 	{ lng_DlgAttach,                L"Attach: Choose window or console application" },

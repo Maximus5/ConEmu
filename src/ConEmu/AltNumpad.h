@@ -50,6 +50,7 @@ protected:
 	AltCharAction m_WaitingForAltChar;
 	bool mb_InAltNumber;
 	bool mb_External; // Mode triggered by hotkey
+	bool mb_AnsiCP; // If started by Alt+0ddd
 	UINT mn_NumberBase; // 10 or 16
 	u64  mn_AltNumber;
 	UINT mn_SkipVkKeyUp;

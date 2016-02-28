@@ -41,6 +41,12 @@ enum LngResources
 	lng_AboutAppName              = 8,
 	lng_Search                    = 9,
 	lng_SearchCtrlF               = 10,
+	lng_AltNumberStdOEM           = 11,
+	lng_AltNumberStdACP           = 12,
+	lng_AltNumberStdUCS           = 13,
+	lng_AltNumberExt              = 14,
+	lng_AltNumberHex              = 15,
+	lng_AltNumberACP              = 16,
 	// last auto-gen identifier
 	lng_NextId
 };

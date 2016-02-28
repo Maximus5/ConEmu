@@ -31,8 +31,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include "../common/MStrDup.h"
 #include "AltNumpad.h"
 #include "ConEmu.h"
+#include "LngRc.h"
 #include "RealConsole.h"
 #include "Status.h"
 #include "VConRelease.h"
@@ -45,6 +47,7 @@ CAltNumpad::CAltNumpad(CConEmuMain* apConEmu)
 	, m_WaitingForAltChar(eAltCharNone)
 	, mb_InAltNumber(false)
 	, mb_External(false)
+	, mb_AnsiCP(false)
 	, mn_NumberBase(10)
 	, mn_AltNumber(0)
 	, mn_SkipVkKeyUp(0)
@@ -266,6 +269,7 @@ void CAltNumpad::StartCapture(UINT NumberBase, UINT Initial, bool External)
 	// mb_InAltNumber will be cleared by DumpAltNumber or ClearAltNumber
 	mb_InAltNumber = true;
 	mb_External = External;
+	mb_AnsiCP = (!External && !Initial && (NumberBase == 10));
 
 	DumpStatus();
 }
@@ -281,6 +285,7 @@ void CAltNumpad::ClearAltNumber(bool bFull)
 
 	mb_InAltNumber = false;
 	mb_External = false;
+	mb_AnsiCP = false;
 
 	if (bFull)
 	{
@@ -370,12 +375,18 @@ ucs32 CAltNumpad::GetChars(wchar_t (&wszChars)[3])
 			wszChars[1] = 0;
 		}
 	}
+	else if (mb_AnsiCP)
+	{
+		wc32 = LOBYTE(wc32);
+		wszChars[0] = (wchar_t)wc32;
+		wszChars[1] = 0;
+	}
 	else
 	{
-		// Let use OEM codepage for beginning?
+		wc32 = LOBYTE(wc32);
 		// Actually, CP does not matter, because here we rely on OS
 		// More info: https://conemu.github.io/en/AltNumpad.html
-		char szChars[2] = {(char)LOBYTE(wc32), 0};
+		char szChars[2] = {(char)wc32, 0};
 		MultiByteToWideChar(CP_OEMCP, 0, szChars, -1, wszChars, countof(wszChars));
 	}
 
@@ -387,12 +398,31 @@ void CAltNumpad::DumpStatus()
 	if (!mp_ConEmu->mp_Status)
 		return;
 
-	wchar_t szStatus[120] = L"";
+	CEStr lsStatus;
 	if (mb_InAltNumber)
 	{
-		wchar_t wszChars[3] = L"";
-		ucs32 wc32 = GetChars(wszChars);
-		_wsprintf(szStatus, SKIPCOUNT(szStatus) L"Alt+Num: `%s` (%Xh/%u)", wszChars, wc32, wc32);
+		if (mn_AltNumber == 0)
+		{
+			// OEM may be started by Alt+1..9 only
+			_ASSERTE((mn_NumberBase == 16) || mb_AnsiCP);
+			lsStatus = CLngRc::getRsrc(
+				(mn_NumberBase == 16)
+					? lng_AltNumberHex/*"Type UNICODE code point using hexadecimal numbers"*/
+					: lng_AltNumberACP/*"Type ANSI code point using decimal numbers"*/
+				);
+		}
+		else
+		{
+			wchar_t wszChars[3] = L"", szStatus[80];
+			ucs32 wc32 = GetChars(wszChars);
+			_wsprintf(szStatus, SKIPCOUNT(szStatus) L"Alt+Num: `%s` (%Xh/%u)", wszChars, wc32, wc32);
+			lsStatus = lstrmerge(szStatus,
+				CLngRc::getRsrc(
+					mb_External ? lng_AltNumberExt/*" - <Enter> to paste, <Esc> to cancel"*/
+					: (mn_NumberBase == 16) ? lng_AltNumberStdUCS/*" - release <Alt> to paste UNICODE code point"*/
+					: mb_AnsiCP ? lng_AltNumberStdACP/*" - release <Alt> to paste ANSI code point"*/
+					: lng_AltNumberStdOEM/*" - release <Alt> to paste OEM code point"*/));
+		}
 	}
-	mp_ConEmu->mp_Status->SetStatus(szStatus);
+	mp_ConEmu->mp_Status->SetStatus(lsStatus);
 }
