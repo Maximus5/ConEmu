@@ -257,6 +257,13 @@ void CAltNumpad::StartCapture(UINT NumberBase, UINT Initial, bool External)
 		return;
 	}
 
+	// If user-defined hotkey is "Alt+Key" - let's work in standard mode
+	if (External && isAltNumpad())
+	{
+		LogString(L"AltNumber: Forcing standard mode");
+		External = false;
+	}
+
 	wchar_t szLog[80];
 	_wsprintf(szLog, SKIPCOUNT(szLog) L"AltNumber: Starting: Base=%u Initial=%u %s",
 		NumberBase, Initial, External ? L"External" : L"Internal");
