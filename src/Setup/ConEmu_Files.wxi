@@ -368,11 +368,14 @@
       <Component Id="KeyEvents.rc" Guid="$(var.Guid.KeyEvents.rc)" Win64="$(var.Win64)">
         <File Id="KeyEvents.rc" Source="..\KeyEvents.SysLog\KeyEvents.rc"  KeyPath="yes" />
       </Component>
-      <Component Id="KeyEvents.h" Guid="$(var.Guid.KeyEvents.h)" Win64="$(var.Win64)">
-        <File Id="KeyEvents.h" Source="..\KeyEvents.SysLog\resource.h"  KeyPath="yes" />
+      <Component Id="KeyEvents.resource.h" Guid="$(var.Guid.KeyEvents.resource.h)" Win64="$(var.Win64)">
+        <File Id="KeyEvents.resource.h" Source="..\KeyEvents.SysLog\resource.h"  KeyPath="yes" />
       </Component>
-      <Component Id="KeyEvents.makefile_gcc" Guid="$(var.Guid.KeyEvents.makefile_gcc)" Win64="$(var.Win64)">
-        <File Id="KeyEvents.makefile_gcc" Source="..\KeyEvents.SysLog\makefile_gcc"  KeyPath="yes" />
+      <Component Id="KeyEvents.version.h" Guid="$(var.Guid.KeyEvents.version.h)" Win64="$(var.Win64)">
+        <File Id="KeyEvents.version.h" Source="..\KeyEvents.SysLog\version.h"  KeyPath="yes" />
+      </Component>
+      <Component Id="KeyEvents.vcxproj" Guid="$(var.Guid.KeyEvents.vcxproj)" Win64="$(var.Win64)">
+        <File Id="KeyEvents.vcxproj" Source="..\KeyEvents.SysLog\KeyEvents.vcxproj"  KeyPath="yes" />
       </Component>
     </DirectoryRef>
 

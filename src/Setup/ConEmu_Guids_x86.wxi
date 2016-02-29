@@ -147,8 +147,9 @@
 	<?define Guid.KeyEvents.exe = "806D8029-BF3A-40C3-9C00-B143EAD0C4E6" ?>
 	<?define Guid.KeyEvents.cpp = "72CD2120-9A1B-4983-BC0D-7BB2A73A700D" ?>
 	<?define Guid.KeyEvents.rc = "D529D01D-346F-4122-8F04-696A8D6EE048" ?>
-	<?define Guid.KeyEvents.h = "CE352461-11D0-40B2-9F44-92ED676C88D0" ?>
-	<?define Guid.KeyEvents.makefile_gcc = "43EBBD12-666E-45D6-AADE-364902359E08" ?>
+	<?define Guid.KeyEvents.resource.h = "CE352461-11D0-40B2-9F44-92ED676C88D0" ?>
+	<?define Guid.KeyEvents.version.h = "01C7C8E9-9E0E-4DCF-8A74-B6D545E32B71" ?>
+	<?define Guid.KeyEvents.vcxproj = "DEED2E84-B7A9-4459-A82D-F8AF04176F15" ?>
 	<!-- Far Plugins for ConEmu -->
 	<?define Guid.PluginReadme.txt = "19DD5099-4F2B-4C01-B82F-AB3EB3D3DDC7" ?>
 	<?define Guid.ConEmu.dll = "146BCC2A-8064-4157-8728-207B26089482" ?>

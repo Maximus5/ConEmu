@@ -215,8 +215,9 @@
         <ComponentRef Id="KeyEvents.exe"/>
         <ComponentRef Id="KeyEvents.cpp"/>
         <ComponentRef Id="KeyEvents.rc"/>
-        <ComponentRef Id="KeyEvents.h"/>
-        <ComponentRef Id="KeyEvents.makefile_gcc"/>
+        <ComponentRef Id="KeyEvents.resource.h"/>
+        <ComponentRef Id="KeyEvents.version.h"/>
+        <ComponentRef Id="KeyEvents.vcxproj"/>
       </Feature>
     </Feature>
   </Feature>
