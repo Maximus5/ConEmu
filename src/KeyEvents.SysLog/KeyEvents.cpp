@@ -323,7 +323,10 @@ int _tmain(int argc, _TCHAR* argv[])
 		
 			SYSTEMTIME st; GetLocalTime(&st);
 			__INPUT_RECORD_Dump(&r, szFormat);
-			wprintf(L"%02i:%02i:%02i %s\n", st.wHour,st.wMinute,st.wSecond, szFormat);
+			wprintf(L"%02i:%02i:%02i ", st.wHour,st.wMinute,st.wSecond);
+			DWORD nLen = wcslen(szFormat);
+			WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), szFormat, nLen, &nLen, NULL);
+			wprintf(L"\n");
 
 			if (r.EventType == MOUSE_EVENT)
 				rl = r;
