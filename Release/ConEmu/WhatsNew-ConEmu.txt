@@ -20,6 +20,22 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.2.28
+* Fix crash when mouse wheel was scrolled over search edit box.
+* Warning fixes (from Michael Lukashov).
+* Intelligent selection mode was not working in Far userscreen (Panels turned off).
+* gh-560: Fix true-color scrolling issues in Far 3.0.4525.
+* Alt+Numbers mode improvements.
+  * Hotkey (unassigned): Start Alt+Number mode to enter unicode symbol by its hex codebase.
+  * Allow mode start by GuiMacro: `AltNumber([Base])`.
+    * Base==0: Start Alt+Numbers in ANSI decimal mode (‘ANSI’ actually means UNICODE code points 32..255)
+    * Base==10: Start Alt+Numbers in OEM decimal mode
+    * Base==16: Start Alt+Numbers in hexadecimal mode
+  * Alt+Numbers: If mode was started by Alt+Key (user-defined), do paste on Alt release.
+  * Alt+Numbers: Show collected codebase and hints about mode in the StatusBar.
+* KeyEvents v4.3: Unicode characters were not printed correctly.
+
+
 2016.2.22
 * gh-555: Aliases support was broken (771ab79 regression).
 * Maximus5/conemu-inside#13: ConEmu-Inside position was not updated in some cases.
