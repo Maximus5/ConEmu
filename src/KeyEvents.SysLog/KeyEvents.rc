@@ -8,6 +8,7 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include <windows.h>
+#include "version.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -35,6 +36,7 @@ END
 2 TEXTINCLUDE 
 BEGIN
     "#include <windows.h>\r\n"
+    "#include ""version.h""\r\n"
     "\0"
 END
 
@@ -53,8 +55,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 4,3,0,0
- PRODUCTVERSION 4,3,0,0
+ FILEVERSION KE_VER_MAJOR,KE_VER_MINOR,0,0
+ PRODUCTVERSION KE_VER_MAJOR,KE_VER_MINOR,0,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -69,8 +71,8 @@ BEGIN
     BEGIN
         BLOCK "041904b0"
         BEGIN
-            VALUE "FileVersion", "4.3"
-            VALUE "ProductVersion", "4.3"
+            VALUE "FileVersion", KE_VER_STRING
+            VALUE "ProductVersion", KE_VER_STRING
         END
     END
     BLOCK "VarFileInfo"

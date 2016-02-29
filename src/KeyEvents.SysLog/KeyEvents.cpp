@@ -4,6 +4,7 @@
 #include <Windows.h>
 #include <stdio.h>
 #include <tchar.h>
+#include "version.h"
 
 #ifndef MOUSE_HWHEELED
 #define MOUSE_HWHEELED 0x0008
@@ -285,7 +286,7 @@ int _tmain(int argc, _TCHAR* argv[])
     int WasMouseMoveDup = 0;
 
 
-	printf("KeyEvents from Maximus5, ver 4.2. Far SysLog mode\n");
+	printf("KeyEvents from Maximus5, ver %s. Far SysLog mode\n", KE_VER_STRING);
 	    
     if (hKernel)
         pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
