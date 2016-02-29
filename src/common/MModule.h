@@ -28,16 +28,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#ifdef _DEBUG
-#include "CEStr.h"
-#endif
+#include <Windows.h>
 
 class MModule
 {
 protected:
 	HMODULE mh_Module;
 	#ifdef _DEBUG
-	CEStr   ms_Module;
+	wchar_t ms_Module[MAX_PATH];
 	#endif
 	bool    mb_Loaded;
 public:

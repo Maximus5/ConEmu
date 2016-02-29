@@ -34,6 +34,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 MModule::MModule()
 	: mh_Module(NULL)
+	#ifdef _DEBUG
+	, ms_Module()
+	#endif
 	, mb_Loaded(false)
 {
 }
@@ -63,7 +66,7 @@ HMODULE MModule::Load(LPCWSTR asModule)
 	_ASSERTE(mh_Module==NULL && !mb_Loaded);
 
 	#ifdef _DEBUG
-	ms_Module.Set(asModule);
+	lstrcpyn(ms_Module, asModule ? asModule : L"", countof(ms_Module));
 	#endif
 
 	mh_Module = LoadLibrary(asModule);
@@ -82,7 +85,7 @@ void MModule::Free()
 
 	mh_Module = NULL;
 	#ifdef _DEBUG
-	ms_Module.Empty();
+	ms_Module[0] = 0;
 	#endif
 	mb_Loaded = false;
 }
