@@ -8315,9 +8315,9 @@ void CConEmuMain::EnterAltNumpadMode(UINT nBase)
 		return;
 	}
 
-	if ((nBase != 10) && (nBase != 16))
+	if ((nBase != 0) && (nBase != 10) && (nBase != 16))
 	{
-		_ASSERTE(nBase==10 || nBase==16);
+		_ASSERTE(nBase==0 || nBase==10 || nBase==16);
 		return;
 	}
 

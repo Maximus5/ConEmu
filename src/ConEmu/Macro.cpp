@@ -263,7 +263,7 @@ namespace ConEmuMacro
 		// List all functions
 		{About, {L"About"}, gmf_MainThread},
 		{AffinityPriority, {L"AffinityPriority"}, gmf_PostponeWhenActive|gmf_MainThread},
-		{AltNumber, {L"AltNumber"}},
+		{AltNumber, {L"AltNumber", L"AltNumbers", L"AltNumpad"}},
 		{Attach, {L"Attach"}, gmf_MainThread},
 		{Break, {L"Break"}},
 		{Close, {L"Close"}, gmf_MainThread},
@@ -1423,11 +1423,11 @@ LPWSTR ConEmuMacro::AffinityPriority(GuiMacro* p, CRealConsole* apRCon, bool abF
 	return pszRc ? pszRc : lstrdup(L"FAILED");
 }
 
-// AltNumber([Base]) -- Base is 10 or 16
+// AltNumber([Base]) -- Base is 0 or 10 or 16
 LPWSTR ConEmuMacro::AltNumber(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	int nBase = 0;
-	if (!p->GetIntArg(0, nBase) || !(nBase == 10 || nBase == 16))
+	if (!p->GetIntArg(0, nBase) || !(nBase == 0 || nBase == 10 || nBase == 16))
 		nBase = 16;
 	gpConEmu->EnterAltNumpadMode(nBase);
 	return lstrdup(L"OK");

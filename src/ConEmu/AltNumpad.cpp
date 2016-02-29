@@ -270,13 +270,15 @@ void CAltNumpad::StartCapture(UINT NumberBase, UINT Initial, bool External)
 	LogString(szLog);
 
 	mn_AltNumber = Initial;
-	mn_NumberBase = NumberBase;
+	mn_NumberBase = NumberBase ? NumberBase : 10;
 
 	// Ready to continue
 	// mb_InAltNumber will be cleared by DumpAltNumber or ClearAltNumber
 	mb_InAltNumber = true;
 	mb_External = External;
-	mb_AnsiCP = (!External && !Initial && (NumberBase == 10));
+	// GuiMacro: AltNumber(0) - ANSI, AltNumber(10) - OEM, AltNumber(16) - HEX
+	// Std Alt+0ddd - ANSI
+	mb_AnsiCP = (NumberBase == 0) || (!External && !Initial && (NumberBase == 10));
 
 	DumpStatus();
 }
