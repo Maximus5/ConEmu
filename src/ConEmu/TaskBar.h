@@ -79,6 +79,7 @@ protected:
 	HWND GetProgressHWND();
 public:
 	void Taskbar_GhostReorder();
+	bool isTaskbarSmallIcons();
 public:
 	CTaskBar();
 	virtual ~CTaskBar();

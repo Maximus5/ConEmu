@@ -159,7 +159,9 @@ class CConEmuMain
 		void AddPostGuiRConMacro(LPCWSTR asGuiMacro);
 		void ExecPostGuiMacro();
 		wchar_t *mps_IconPath;
+		HICON mh_TaskbarIcon;
 		void SetWindowIcon(LPCWSTR asNewIcon);
+		void SetTaskbarIcon(HICON ahNewIcon);
 		CPushInfo *mp_PushInfo;
 		BOOL mb_DosBoxExists;
 		ConEmuInstallMode m_InstallMode;

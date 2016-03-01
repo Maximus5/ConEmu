@@ -405,6 +405,23 @@ void CTaskBar::Taskbar_SetShield(bool abShield)
 	Taskbar_SetOverlay(abShield ? mh_Shield : NULL);
 }
 
+bool CTaskBar::isTaskbarSmallIcons()
+{
+	bool bSmall = true;
+	HKEY hk = NULL;
+	if (IsWindows7
+		&& (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", 0, KEY_READ, &hk)))
+	{
+		DWORD nSmall = 0, nSize = sizeof(nSmall);
+		if (0 == RegQueryValueEx(hk, L"TaskbarSmallIcons", NULL, NULL, (LPBYTE)&nSmall, &nSize))
+			bSmall = (nSmall != 0);
+		else
+			bSmall = false; // Default?
+		RegCloseKey(hk);
+	}
+	return bSmall;
+}
+
 void CTaskBar::Taskbar_SetOverlay(HICON ahIcon)
 {
 	HRESULT hr = E_FAIL;
@@ -434,12 +451,7 @@ void CTaskBar::Taskbar_UpdateOverlay()
 		return;
 	}
 
-	if (!IsWindows7)
-	{
-		LogString(L"Taskbar_UpdateOverlay skipped: !IsWindows7");
-		return;
-	}
-
+	// TODO: Separate option is required!
 	if (!gpSet->isTaskbarShield)
 	{
 		Taskbar_SetOverlay(NULL);
@@ -453,8 +465,19 @@ void CTaskBar::Taskbar_UpdateOverlay()
 	if ((hIcon = gpConEmu->GetCurrentVConIcon()) != NULL)
 	{
 		LogString(L"Taskbar_UpdateOverlay executed with tab icon");
-		Taskbar_SetOverlay(hIcon);
-		DestroyIcon(hIcon);
+		if (!isTaskbarSmallIcons())
+		{
+			Taskbar_SetOverlay(hIcon);
+			DestroyIcon(hIcon);
+		}
+		else
+		{
+			gpConEmu->SetTaskbarIcon(hIcon);
+		}
+	}
+	else if (!IsWindows7)
+	{
+		LogString(L"Taskbar_UpdateOverlay skipped: !IsWindows7");
 	}
 	else
 	{

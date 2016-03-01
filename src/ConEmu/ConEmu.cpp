@@ -431,6 +431,7 @@ CConEmuMain::CConEmuMain()
 	mn_AdmShieldTimerCounter = 0;
 
 	mps_IconPath = NULL;
+	mh_TaskbarIcon = NULL;
 	mp_PushInfo = NULL;
 
 	#ifdef __GNUC__
@@ -3557,6 +3558,29 @@ void CConEmuMain::ExecPostGuiMacro()
 		SafeFree(pszRc);
 		SafeFree(pszMacro);
 	}
+}
+
+void CConEmuMain::SetTaskbarIcon(HICON ahNewIcon)
+{
+	// Change only icon on TaskBar, don't change Alt+Tab or TitleBar icons
+	#if 1
+	// -- Seems like this is not required, at least Win 8 sends WM_GETICON automatically
+	//SendMessage(ghWnd, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+
+	if (mh_TaskbarIcon && (mh_TaskbarIcon != ahNewIcon))
+		DestroyIcon(mh_TaskbarIcon);
+	mh_TaskbarIcon = ahNewIcon;
+	#endif
+
+	// This would change window icon (TaskBar, TitleBar, Alt+Tab)
+	#if 0
+	HICON hOldIcon = (HICON)SendMessage(ghWnd, WM_SETICON, ICON_SMALL, (LPARAM)ahNewIcon);
+	if (hOldIcon && (hOldIcon != hClassIconSm))
+		DestroyIcon(hOldIcon);
+	if (mh_TaskbarIcon && (mh_TaskbarIcon != hClassIconSm) && (mh_TaskbarIcon != hOldIcon))
+		DestroyIcon(mh_TaskbarIcon);
+	mh_TaskbarIcon = ahNewIcon;
+	#endif
 }
 
 void CConEmuMain::SetWindowIcon(LPCWSTR asNewIcon)
@@ -13493,6 +13517,19 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				result = this->OnLangChange(messg, wParam, lParam);
 			else
 				_ASSERTE(hWnd == ghWnd); // CConEmuMain::WndProc is expected to be called for ghWnd
+			break;
+
+		case WM_GETICON:
+			switch (wParam)
+			{
+			case ICON_BIG: // 1
+				return (LRESULT)hClassIcon;
+			case ICON_SMALL:
+			case ICON_SMALL2:
+				return (LRESULT)(mh_TaskbarIcon ? mh_TaskbarIcon : hClassIconSm);
+			default:
+				return ::DefWindowProc(hWnd, messg, wParam, lParam);
+			}
 			break;
 
 		default:
