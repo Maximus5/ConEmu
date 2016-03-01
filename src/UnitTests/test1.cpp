@@ -59,6 +59,22 @@ int main(int argc, char** argv)
 	Verify0(!gbVerifyFailed,"RConStartArgs tests passed");
 	}
 
+	{
+	Verify_Step("msprintf tests");
+	wchar_t szBuffer[200];
+	msprintf(szBuffer, countof(szBuffer), L"%u %03u %03u %i %x %02X %02X %04x %08X",
+		123, 98, 4567, -234, 0x12AB, 0x0A, 0xABC, 0x01A0, 0x0765ABCD);
+	const wchar_t szStd[] = L"123 098 4567 -234 12ab 0A ABC 01a0 0765ABCD";
+	int iCmp = lstrcmp(szBuffer, szStd);
+	WVerify2((iCmp==0),L"`%s` (msprintf[W])\n    `%s` (standard)", szBuffer, szStd);
+	char szBufA[200];
+	msprintf(szBufA, countof(szBufA), "%u %i %x %02X %02X %04x %08X",
+		123, -234, 0x12AB, 0x0A, 0xABC, 0x01A0, 0x0765ABCD);
+	const char szStdA[] = "123 -234 12ab 0A ABC 01a0 0765ABCD";
+	iCmp = lstrcmpA(szBufA, szStdA);
+	Verify2((iCmp==0),"`%s` (msprintf[A])\n    `%s` (standard)", szBufA, szStdA);
+	}
+
 	if (gbVerifyFailed)
 		Verify_MsgFail("Some tests failed!");
 	else

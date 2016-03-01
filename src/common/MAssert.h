@@ -137,6 +137,13 @@ public:
 	#define Verify2(cond,errfmt,a1,a2) Verify3(cond,errfmt,a1,a2,0)
 	#define Verify1(cond,errfmt,a1) Verify2(cond,errfmt,a1,0)
 	#define Verify0(cond,errfmt) Verify1(cond,errfmt,0)
+	#define WVerify4(cond,errfmt,a1,a2,a3,a4) \
+		if (!(cond)) wprintf(L"    \033[91m" errfmt L"\033[m\n",(a1),(a2),(a3),(a4)), gbVerifyFailed=true; \
+		        else wprintf(L"    \033[32m" errfmt L"\033[m\n",(a1),(a2),(a3),(a4))
+	#define WVerify3(cond,errfmt,a1,a2,a3) WVerify4(cond,errfmt,a1,a2,a3,0)
+	#define WVerify2(cond,errfmt,a1,a2) WVerify3(cond,errfmt,a1,a2,0)
+	#define WVerify1(cond,errfmt,a1) WVerify2(cond,errfmt,a1,0)
+	#define WVerify0(cond,errfmt) WVerify1(cond,errfmt,0)
 
 #else
 
