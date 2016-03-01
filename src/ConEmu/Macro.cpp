@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include "../common/MStrEsc.h"
 #include "../common/WFiles.h"
 
 #include "RealConsole.h"
@@ -781,9 +782,8 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 				// то ее удобнее показывать как "Verbatim", иначе - C-String
 				// Однозначно показывать как C-String нужно те строки, которые
 				// содержат переводы строк, Esc, табуляции и пр.
-				_ASSERTE(gsEscaped[0] == L'\\');
-				bool bSlash = (wcschr(a.Str, L'\\') != NULL);
-				bool bEsc = (wcspbrk(a.Str, gsEscaped+1) != NULL) || (wcschr(a.Str, L'"') != NULL);
+				bool bSlash = false, bEsc = false;
+				CheckStrForSpecials(a.Str, &bSlash, &bEsc);
 				if (!(bEsc || bSlash) || bEsc)
 					a.Type = gmt_Str;
 			}

@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/MBSTR.h"
 #include "../common/MSetter.h"
+#include "../common/MStrEsc.h"
 #include "../common/WFiles.h"
 #include "AboutDlg.h"
 #include "Options.h"
@@ -693,148 +694,18 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*
 	return nLen;
 }
 
-const wchar_t* gsEscaped = L"\\\r\n\t\a\x1B";
-
 // TODO: Optimize: Now pszDst must be (4x len in maximum for "\xFF" form) for bSet==true
 void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
 {
-	_ASSERTE(pszSrc && pszDst);
-
-	LPCWSTR  pszCtrl = L"rntae\\\"";
-
 	if (bSet)
 	{
 		// Set escapes: wchar(13) --> "\\r"
-
-		_ASSERTE(pszSrc != pszDst);
-
-		wchar_t wc = *pszSrc;
-		switch (wc)
-		{
-			case L'"': // 34
-				*(pszDst++) = L'\\';
-				*(pszDst++) = L'"';
-				pszSrc++;
-				break;
-			case L'\\': // 92
-				*(pszDst++) = L'\\';
-				pszSrc++;
-				if (!*pszSrc || !wcschr(pszCtrl, *pszSrc))
-					*(pszDst++) = L'\\';
-				break;
-			case L'\r': // 13
-				*(pszDst++) = L'\\';
-				*(pszDst++) = L'r';
-				pszSrc++;
-				break;
-			case L'\n': // 10
-				*(pszDst++) = L'\\';
-				*(pszDst++) = L'n';
-				pszSrc++;
-				break;
-			case L'\t': // 9
-				*(pszDst++) = L'\\';
-				*(pszDst++) = L't';
-				pszSrc++;
-				break;
-			case L'\b': // 8 (BS)
-				*(pszDst++) = L'\\';
-				*(pszDst++) = L'b';
-				pszSrc++;
-				break;
-			case 27: //ESC
-				*(pszDst++) = L'\\';
-				*(pszDst++) = L'e';
-				pszSrc++;
-				break;
-			case L'\a': // 7 (BELL)
-				*(pszDst++) = L'\\';
-				*(pszDst++) = L'a';
-				pszSrc++;
-				break;
-			default:
-				// Escape (if possible) ASCII symbols with codes 01..31 (dec)
-				if (wc < L' ')
-				{
-					wchar_t wcn = pszSrc[1];
-					// If next string character is 'hexadecimal' digit - back conversion will be ambiguous
-					if (!((wcn >= L'0' && wcn <= L'9') || (wcn >= L'a' && wcn <= L'f') || (wcn >= L'A' && wcn <= L'F')))
-					{
-						*(pszDst++) = L'\\';
-						*(pszDst++) = L'x';
-						msprintf(pszDst, 3, L"%02X", (UINT)wc);
-						pszDst+=2;
-						break;
-					}
-				}
-				*(pszDst++) = *(pszSrc++);
-		}
+		EscapeChar(pszSrc, pszDst);
 	}
 	else
 	{
 		// Remove escapes: "\\r" --> wchar(13), etc.
-
-		if (*pszSrc == L'\\')
-		{
-			// -- Must be the same set in "Set escapes"
-			switch (pszSrc[1])
-			{
-				case L'"':
-					*(pszDst++) = L'"';
-					pszSrc += 2;
-					break;
-				case L'\\':
-					*(pszDst++) = L'\\';
-					pszSrc += 2;
-					break;
-				case L'r': case L'R':
-					*(pszDst++) = L'\r';
-					pszSrc += 2;
-					break;
-				case L'n': case L'N':
-					*(pszDst++) = L'\n';
-					pszSrc += 2;
-					break;
-				case L't': case L'T':
-					*(pszDst++) = L'\t';
-					pszSrc += 2;
-					break;
-				case L'b': case L'B':
-					*(pszDst++) = L'\b';
-					pszSrc += 2;
-					break;
-				case L'e': case L'E':
-					*(pszDst++) = 27; // ESC
-					pszSrc += 2;
-					break;
-				case L'a': case L'A':
-					*(pszDst++) = L'\a'; // BELL
-					pszSrc += 2;
-					break;
-				case L'x':
-				{
-					wchar_t sTemp[5] = L"", *pszEnd = NULL;
-					lstrcpyn(sTemp, pszSrc+2, 5);
-					UINT wc = wcstoul(sTemp, &pszEnd, 16);
-					if (pszEnd > sTemp)
-					{
-						*(pszDst++) = LOWORD(wc);
-						pszSrc += (pszEnd - sTemp) + 2;
-					}
-					else
-					{
-						*(pszDst++) = *(pszSrc++);
-					}
-					break;
-				}
-				default:
-					*(pszDst++) = *(pszSrc++);
-			}
-		}
-		else
-		{
-			*(pszDst++) = *(pszSrc++);
-		}
+		UnescapeChar(pszSrc, pszDst);
 	}
 }
 

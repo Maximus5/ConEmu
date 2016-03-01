@@ -46,6 +46,7 @@ SRCS = \
 		../common/MSecurity.cpp      \
 		../common/MSetter.cpp        \
 		../common/MStrDup.cpp        \
+		../common/MStrEsc.cpp        \
 		../common/MStrSafe.cpp       \
 		../common/MTimer.cpp         \
 		../common/MToolTip.cpp       \
