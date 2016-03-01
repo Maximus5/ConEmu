@@ -208,9 +208,10 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 								*(pszValue++) = (wchar_t)(cBase + n - 10);
 							nValue = nValue >> 4;
 						}
+						int nCurLen = (int)(pszValue - szValue);
 						if (!nLen)
 						{
-							nLen = (int)(pszValue - szValue);
+							nLen = nCurLen;
 							if (!nLen)
 							{
 								*(pszValue++) = L'0';
@@ -219,7 +220,7 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 						}
 						else
 						{
-							pszValue = (szValue+nLen);
+							pszValue = (szValue+klMax(nLen,nCurLen));
 						}
 						// Теперь перекинуть в Dest
 						while (pszValue > szValue)
