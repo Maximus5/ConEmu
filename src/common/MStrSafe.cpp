@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include <windows.h>
+#include "defines.h"
 #include "MAssert.h"
 #include "MStrSafe.h"
 
@@ -148,20 +149,29 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 					int nLen = 0;
 					DWORD nValue;
 					wchar_t cBase = L'A';
-					if (pszSrc[0] == L'0' && pszSrc[1] == L'8' && (pszSrc[2] == L'X' || pszSrc[2] == L'x'))
+					if (pszSrc[0] == L'0' && isDigit(pszSrc[1]) && (pszSrc[2] == L'X' || pszSrc[2] == L'x'))
 					{
 						if (pszSrc[2] == L'x')
 							cBase = L'a';
-						memmove(szValue, L"00000000", 16);
-						nLen = 8;
-						pszSrc += 3;
-					}
-					else if (pszSrc[0] == L'0' && pszSrc[1] == L'2' && (pszSrc[2] == L'X' || pszSrc[2] == L'x'))
-					{
-						if (pszSrc[2] == L'x')
-							cBase = L'a';
-						memmove(szValue, L"00", 4);
-						nLen = 2;
+						if (pszSrc[1] == L'8')
+						{
+							memmove(szValue, L"00000000", 16);
+							nLen = 8;
+						}
+						else if (pszSrc[1] == L'4')
+						{
+							memmove(szValue, L"0000", 8);
+							nLen = 4;
+						}
+						else if (pszSrc[1] == L'2')
+						{
+							memmove(szValue, L"00", 4);
+							nLen = 2;
+						}
+						else
+						{
+							_ASSERTE(FALSE && "Unsupported %0?X format");
+						}
 						pszSrc += 3;
 					}
 					else if (pszSrc[0] == L'0' && (pszSrc[1] == L'2' || pszSrc[1] == L'3') && pszSrc[2] == L'u')
