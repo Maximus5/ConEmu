@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -686,4 +686,31 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 
 
 	return lbChanged;
+}
+
+bool GetRootInfo(CESERVER_REQ* pReq)
+{
+	if (!pReq)
+		return false;
+	if (!gpSrv || !gpSrv->dwRootProcess || !gpSrv->hRootProcess)
+		return false;
+
+	DWORD nWait = WaitForSingleObject(gpSrv->hRootProcess, 0);
+	pReq->RootInfo.bRunning = (nWait == WAIT_TIMEOUT);
+	pReq->RootInfo.nPID = gpSrv->dwRootProcess;
+	pReq->RootInfo.nExitCode = (nWait == WAIT_TIMEOUT) ? STILL_ACTIVE : 999;
+	GetExitCodeProcess(gpSrv->hRootProcess, &pReq->RootInfo.nExitCode);
+	if (nWait == WAIT_TIMEOUT)
+	{
+		pReq->RootInfo.nUpTime = (GetTickCount() - gpSrv->dwRootStartTime);
+	}
+	else
+	{
+		FILETIME ftCreation = {}, ftExit = {}, ftKernel = {}, ftUser = {};
+		GetProcessTimes(gpSrv->hRootProcess, &ftCreation, &ftExit, &ftKernel, &ftUser);
+		__int64 upTime = ((*(u64*)&ftExit) - (*(u64*)&ftCreation)) / 10000LL;
+		pReq->RootInfo.nUpTime = (LODWORD(upTime) == upTime) ? LODWORD(upTime) : (DWORD)-1;
+	}
+
+	return true;
 }

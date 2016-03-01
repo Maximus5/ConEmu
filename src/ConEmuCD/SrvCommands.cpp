@@ -2338,25 +2338,7 @@ BOOL cmd_GetRootInfo(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	if (*out)
 	{
-		if (!gpSrv || !gpSrv->dwRootProcess || gpSrv->hRootProcess)
-		{
-			DWORD nWait = WaitForSingleObject(gpSrv->hRootProcess, 0);
-			(*out)->RootInfo.bRunning = (nWait == WAIT_TIMEOUT);
-			(*out)->RootInfo.nPID = gpSrv->dwRootProcess;
-			(*out)->RootInfo.nExitCode = (nWait == WAIT_TIMEOUT) ? STILL_ACTIVE : 999;
-			GetExitCodeProcess(gpSrv->hRootProcess, &(*out)->RootInfo.nExitCode);
-			if (nWait == WAIT_TIMEOUT)
-			{
-				(*out)->RootInfo.nUpTime = (GetTickCount() - gpSrv->dwRootStartTime);
-			}
-			else
-			{
-				FILETIME ftCreation = {}, ftExit = {}, ftKernel = {}, ftUser = {};
-				GetProcessTimes(gpSrv->hRootProcess, &ftCreation, &ftExit, &ftKernel, &ftUser);
-				__int64 upTime = ((*(u64*)&ftExit) - (*(u64*)&ftCreation)) / 10000LL;
-				(*out)->RootInfo.nUpTime = (LODWORD(upTime) == upTime) ? LODWORD(upTime) : (DWORD)-1;
-			}
-		}
+		GetRootInfo(*out);
 	}
 
 	lbRc = ((*out) != NULL);

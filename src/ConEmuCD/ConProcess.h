@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -38,3 +38,4 @@ BOOL CheckProcessCount(BOOL abForce = FALSE);
 BOOL ProcessAdd(DWORD nPID, MSectionLock *pCS);
 BOOL ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS);
 void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS);
+bool GetRootInfo(CESERVER_REQ* pReq);
