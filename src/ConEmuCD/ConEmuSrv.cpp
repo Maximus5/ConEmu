@@ -3996,34 +3996,29 @@ static int ReadConsoleInfo()
 	gpSrv->pConsole->info.dwConsoleOutMode = gpSrv->dwConsoleOutMode;
 	gpSrv->pConsole->info.dwSbiSize = sizeof(gpSrv->sbi);
 	gpSrv->pConsole->info.sbi = gpSrv->sbi;
+
+
 	// Если есть возможность (WinXP+) - получим реальный список процессов из консоли
 	//CheckProcessCount(); -- уже должно быть вызвано !!!
 	//2010-05-26 Изменения в списке процессов не приходили в GUI до любого чиха в консоль.
+	#ifdef _DEBUG
 	_ASSERTE(gpSrv->pnProcesses!=NULL);
-
-	if (!gpSrv->nProcessCount /*&& gpSrv->pConsole->info.nProcesses[0]*/)
+	if (!gpSrv->nProcessCount)
 	{
-		_ASSERTE(gpSrv->nProcessCount); //CheckProcessCount(); -- уже должно быть вызвано !!!
+		_ASSERTE(gpSrv->nProcessCount); //CheckProcessCount(); -- must be already initialized !!!
+	}
+	#endif
+
+	DWORD nCurProcCount = GetProcessCount(gpSrv->pConsole->info.nProcesses, countof(gpSrv->pConsole->info.nProcesses));
+	_ASSERTE(nCurProcCount && gpSrv->pConsole->info.nProcesses[0]);
+	if (nCurProcCount
+		&& memcmp(gpSrv->nLastRetProcesses, gpSrv->pConsole->info.nProcesses, sizeof(gpSrv->nLastRetProcesses)))
+	{
+		// Process list was changed
+		memmove(gpSrv->nLastRetProcesses, gpSrv->pConsole->info.nProcesses, sizeof(gpSrv->nLastRetProcesses));
 		lbChanged = TRUE;
 	}
-	else if (memcmp(gpSrv->pnProcesses, gpSrv->pConsole->info.nProcesses,
-	               sizeof(DWORD)*min(gpSrv->nProcessCount,countof(gpSrv->pConsole->info.nProcesses))))
-	{
-		// Список процессов изменился!
-		lbChanged = TRUE;
-	}
 
-	GetProcessCount(gpSrv->pConsole->info.nProcesses, countof(gpSrv->pConsole->info.nProcesses));
-	_ASSERTE(gpSrv->pConsole->info.nProcesses[0]);
-	//if (memcmp(&(gpSrv->pConsole->hdr), gpSrv->pConsoleMap->Ptr(), gpSrv->pConsole->hdr.cbSize))
-	//	gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
-	//if (lbChanged) {
-	//	gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
-	//	//lbChanged = TRUE;
-	//}
-	//if (lbChanged) {
-	//	//gpSrv->pConsole->bChanged = TRUE;
-	//}
 	return lbChanged ? 1 : 0;
 }
 
