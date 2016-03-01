@@ -13495,29 +13495,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				break;
 
 			break;
-			//case WM_NCHITTEST:
-			//	{
-			//		/*result = -1;
-			//		if (gpSet->isHideCaptionAlways && gpSet->isTabs) {
-			//			if (this->mp_TabBar->IsShown()) {
-			//				HWND hTabBar = this->mp_TabBar->GetTabbar();
-			//				RECT rcWnd; GetWindowRect(hTabBar, &rcWnd);
-			//				TCHITTESTINFO tch = {{(int)(short)LOWORD(lParam),(int)(short)HIWORD(lParam)}};
-			//				if (PtInRect(&rcWnd, tch.pt)) {
-			//					// Преобразовать в относительные координаты
-			//					tch.pt.x -= rcWnd.left; tch.pt.y -= rcWnd.top;
-			//					LRESULT nTest = SendMessage(hTabBar, TCM_HITTEST, 0, (LPARAM)&tch);
-			//					if (nTest == -1) {
-			//						result = HTCAPTION;
-			//					}
-			//				}
-			//			}
-			//		}
-			//		if (result == -1)*/
-			//		result = DefWindowProc(hWnd, messg, wParam, lParam);
-			//		if (gpSet->isHideCaptionAlways() && !this->mp_TabBar->IsShown() && result == HTTOP)
-			//			result = HTCAPTION;
-			//	} break;
+
 		default:
 
 			if (messg == this->mn_MsgPostCreate)
