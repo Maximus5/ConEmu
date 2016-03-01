@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include "../common/GuiMacro.h"
 #include "../common/MStrEsc.h"
 #include "../common/WFiles.h"
 
@@ -2920,6 +2921,8 @@ LPWSTR ConEmuMacro::GetInfo(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 		// RCon related
 		else if (apRCon)
 			pszVal = apRCon->GetConsoleInfo(pszName, szBuf);
+		else if (lstrcmpi(pszName, L"Root") == 0 || lstrcmpi(pszName, L"RootInfo") == 0)
+			pszVal = CreateRootInfoXml(NULL/*asRootExeName*/, NULL, szBuf);
 
 		// Concat the string
 		lstrmerge(&pszResult, pszResult ? L"\n" : NULL, pszVal);

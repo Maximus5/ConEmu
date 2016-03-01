@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/ConEmuPipeMode.h"
 #include "../common/Execute.h"
+#include "../common/GuiMacro.h"
 #include "../common/MFileLog.h"
 #include "../common/MSectionSimple.h"
 #include "../common/MSetter.h"
@@ -7774,42 +7775,14 @@ LPCWSTR CRealConsole::GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo)
 		if (dwServerPID)
 			pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
 
-		// Return JSON
-		rsInfo.Set(L"<Root\n");
+		// Return <Root ... /> xml
+		CreateRootInfoXml(GetRootProcessName(),
+			(pOut && (pOut->DataSize() >= sizeof(CESERVER_ROOT_INFO))) ? &pOut->RootInfo : NULL,
+			rsInfo);
 
-		// Name="cmd.exe"
-		{
-			LPCWSTR pszName = GetRootProcessName();
-			LPWSTR pszReady = NULL; szTemp[0] = 0;
-			if (pszName && *pszName)
-			{
-				pszReady = szTemp;
-				_ASSERTE(wcslen(pszName)*4 < countof(szTemp));
-				INT_PTR cchMax = countof(szTemp) - 1;
-				while (*pszName && ((pszReady - szTemp) < cchMax))
-				{
-					EscapeChar(true, pszName, pszReady);
-				}
-				*pszReady = 0;
-			}
-			lstrmerge(&rsInfo.ms_Val, L"\tName=\"", *szTemp ? szTemp : L"<Unknown>", L"\"\n");
-		}
-
-		if (pOut && (pOut->DataSize() >= sizeof(CESERVER_ROOT_INFO)) && pOut->RootInfo.nPID)
-		{
-			lstrmerge(&rsInfo.ms_Val, L"\tRunning=\"", pOut->RootInfo.bRunning ? L"true" : L"false", L"\"\n");
-			lstrmerge(&rsInfo.ms_Val, L"\tPID=\"", _itow(pOut->RootInfo.nPID, szTemp, 10), L"\"\n");
-			lstrmerge(&rsInfo.ms_Val, L"\tExitCode=\"", _itow(pOut->RootInfo.nExitCode, szTemp, 10), L"\"\n");
-			lstrmerge(&rsInfo.ms_Val, L"\tUpTime=\"", _itow(pOut->RootInfo.nUpTime, szTemp, 10), L"\"\n"); // Final, no trailing ","
-		}
-		else
-		{
-			//lstrmerge(&rsInfo.ms_Val, L"\t\"Status\"=\"Unknown\"\n"); // Final, no trailing ","
-		}
 		ExecuteFreeResult(pOut);
 		ExecuteFreeResult(pIn);
 
-		lstrmerge(&rsInfo.ms_Val, L"/>\n");
 		pszVal = rsInfo.ms_Val;
 	}
 	else if (lstrcmpi(asWhat, L"AnsiLog") == 0)

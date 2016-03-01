@@ -963,6 +963,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
     <ClCompile Include="..\common\execute.cpp" />
+    <ClCompile Include="..\common\GuiMacro.cpp" />
     <ClCompile Include="..\common\HkFunc.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\MBSTR.cpp" />
@@ -1088,6 +1089,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClInclude Include="..\common\DefTermBase.h" />
     <ClInclude Include="..\common\Dump.h" />
     <ClInclude Include="..\common\execute.h" />
+    <ClInclude Include="..\common\GuiMacro.h" />
     <ClInclude Include="..\common\HkFunc.h" />
     <ClInclude Include="..\common\kl_parts.h" />
     <ClInclude Include="..\common\MArray.h" />

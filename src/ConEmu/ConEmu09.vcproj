@@ -397,6 +397,7 @@
       <File RelativePath="..\common\Common.cpp" />
       <File RelativePath="..\common\ConEmuCheck.cpp" />
       <File RelativePath="..\common\execute.cpp" />
+      <File RelativePath="..\common\GuiMacro.cpp" />
       <File RelativePath="..\common\HkFunc.cpp" />
       <File RelativePath="..\common\MAssert.cpp" />
       <File RelativePath="..\common\MBSTR.cpp" />
@@ -522,6 +523,7 @@
       <File RelativePath="..\common\defines.h" />
       <File RelativePath="..\common\Dump.h" />
       <File RelativePath="..\common\execute.h" />
+      <File RelativePath="..\common\GuiMacro.h" />
       <File RelativePath="..\common\HkFunc.h" />
       <File RelativePath="..\common\kl_parts.h" />
       <File RelativePath="..\common\MArray.h" />
