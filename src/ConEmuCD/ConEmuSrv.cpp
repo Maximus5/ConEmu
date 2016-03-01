@@ -1263,6 +1263,14 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 			goto wrap;
 	}
 
+	if ((gnRunMode == RM_SERVER) && gbAttachMode)
+	{
+		DumpInitStatus("\nServerInit: ServerInitAttach2Gui");
+		iRc = ServerInitAttach2Gui();
+		if (iRc != 0)
+			goto wrap;
+	}
+
 	// Ensure that "set" commands in the command line will override ConEmu's default environment (settings page)
 	ApplyProcessSetEnvCmd();
 
@@ -1366,15 +1374,12 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 
 	if ((gnRunMode == RM_SERVER) && gbAttachMode)
 	{
-		DumpInitStatus("\nServerInit: ServerInitAttach2Gui");
-		iRc = ServerInitAttach2Gui();
-		if (iRc != 0)
-			goto wrap;
-		// ConEmuHk еще не загружен, а он необходим для многих функций
+		// External attach to running process, required ConEmuHk is not loaded yet
 		if (!gbAlternativeAttach && gbNoCreateProcess && gbAlienMode && !gbDontInjectConEmuHk)
 		{
 			if (gpSrv->dwRootProcess)
 			{
+				DumpInitStatus("\nServerInit: InjectRemote (gbAlienMode)");
 				CINFILTRATE_EXIT_CODES iRemote = InjectRemote(gpSrv->dwRootProcess);
 				if (iRemote != CIR_OK/*0*/ && iRemote != CIR_AlreadyInjected/*1*/)
 				{
