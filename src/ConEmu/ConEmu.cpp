@@ -13486,14 +13486,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_IME_STARTCOMPOSITION:
 			result = this->OnKeyboardIme(hWnd, messg, wParam, lParam);
 			break;
+
 		case WM_INPUTLANGCHANGE:
 		case WM_INPUTLANGCHANGEREQUEST:
-
 			if (hWnd == ghWnd)
 				result = this->OnLangChange(messg, wParam, lParam);
 			else
-				break;
-
+				_ASSERTE(hWnd == ghWnd); // CConEmuMain::WndProc is expected to be called for ghWnd
 			break;
 
 		default:
