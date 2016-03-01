@@ -1911,6 +1911,18 @@ wrap:
 			wcscat_c(szInfo, L"\n");
 			_wprintf(szInfo);
 		}
+
+		// Post information to GUI
+		if (gnMainServerPID)
+		{
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETROOTINFO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_ROOT_INFO));
+			if (pIn && GetRootInfo(pIn))
+			{
+				CESERVER_REQ *pSrvOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd, TRUE/*async*/);
+				ExecuteFreeResult(pSrvOut);
+			}
+			ExecuteFreeResult(pIn);
+		}
 	}
 
 	if (iRc && (gbAttachMode & am_Auto))

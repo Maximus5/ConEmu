@@ -790,6 +790,8 @@ class CRealConsole
 		wchar_t ms_RootProcessName[MAX_PATH];
 		int mn_RootProcessIcon;
 		bool mb_NeedLoadRootProcessIcon;
+		CESERVER_ROOT_INFO m_RootInfo;
+		void UpdateRootInfo(const CESERVER_ROOT_INFO& RootInfo);
 		// Replace in asCmd some env.vars (!ConEmuBackHWND! and so on)
 		//wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
 		//wchar_t* mpsz_CmdBuffer;
@@ -822,7 +824,6 @@ class CRealConsole
 			HANDLE hServerProcess; // Handle процесса сервера
 			BOOL   bBackActivated; // Main server was activated back, when AltServer was closed
 		} m_ServerClosing;
-		int mn_ShellExitCode;
 		//
 		MSection csPRC; //DWORD ncsTPRC;
 		MArray<ConProcess> m_Processes;

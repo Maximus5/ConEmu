@@ -366,7 +366,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mb_DebugLocked = FALSE;
 	#endif
 
-	mn_ShellExitCode = STILL_ACTIVE;
+	ZeroStruct(m_RootInfo);
+	//m_RootInfo.nExitCode = STILL_ACTIVE;
 	ZeroStruct(m_ServerClosing);
 	ZeroStruct(m_Args);
 	ms_RootProcessName[0] = 0;
@@ -4135,7 +4136,8 @@ void CRealConsole::ResetVarsOnStart()
 	//Drop flag after Restart console
 	mb_InPostCloseMacro = false;
 	//mb_WasStartDetached = FALSE; -- не сбрасывать, на него смотрит и isDetached()
-	mn_ShellExitCode = STILL_ACTIVE;
+	ZeroStruct(m_RootInfo);
+	//m_RootInfo.nExitCode = STILL_ACTIVE;
 	ZeroStruct(m_ServerClosing);
 	mn_StartTick = mn_RunTime = 0;
 	mn_DeactivateTick = 0;
@@ -4173,6 +4175,16 @@ void CRealConsole::SetRootProcessName(LPCWSTR asProcessName)
 		mn_RootProcessIcon = -1;
 		lstrcpyn(ms_RootProcessName, asProcessName, countof(ms_RootProcessName));
 		mb_NeedLoadRootProcessIcon = true;
+	}
+}
+
+void CRealConsole::UpdateRootInfo(const CESERVER_ROOT_INFO& RootInfo)
+{
+	m_RootInfo = RootInfo;
+
+	if (isActive(false))
+	{
+		mp_ConEmu->mp_Status->UpdateStatusBar(true);
 	}
 }
 
@@ -7165,7 +7177,8 @@ void CRealConsole::OnServerClosing(DWORD anSrvPID, int* pnShellExitCode)
 	// Shell exit code
 	if (pnShellExitCode)
 	{
-		mn_ShellExitCode = *pnShellExitCode;
+		m_RootInfo.nExitCode = *pnShellExitCode;
+		m_RootInfo.bRunning = false;
 	}
 }
 

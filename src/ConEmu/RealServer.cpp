@@ -1641,6 +1641,11 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 	case CECMD_GETTASKCMD:
 		pOut = pRSrv->cmdGetTaskCmd(pInst, pIn, nDataSize);
 		break;
+	case CECMD_GETROOTINFO:
+		_ASSERTE(!pIn->RootInfo.bRunning && pIn->RootInfo.nPID);
+		pRSrv->mp_RCon->UpdateRootInfo(pIn->RootInfo);
+		pOut = ExecuteNewCmd(CECMD_GETROOTINFO, sizeof(CESERVER_REQ_HDR));
+		break;
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(pInst, pIn, nDataSize);
 	default:
