@@ -1582,6 +1582,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 		if (*pszFmt == _T('%'))
 		{
 			pszFmt++;
+			bool bDynamic = false; // Allowed to trim this part
 			LPCTSTR pszText = NULL;
 			switch (*pszFmt)
 			{
@@ -1625,6 +1626,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 					{
 						// CTabBarClass::Update will be triggered from CRealConsole::StoreCurWorkDir
 						// https://conemu.github.io/en/ShellWorkDir.html
+						bDynamic = true;
 						pszText = pRCon ? pRCon->GetConsoleCurDir(szArg) : NULL;
 						if (pszText && (*pszFmt == _T('f') || *pszFmt == _T('F')))
 						{
@@ -1651,6 +1653,16 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 			{
 				if ((*(pszDst-1) == L' ') && (*pszText == L' '))
 					pszText = SkipNonPrintable(pszText);
+				TCHAR* pszPartEnd = pszEnd; CEStr lsTrimmed;
+				if (bDynamic && (nMaxLen > 1) && (wcslen(pszText) > nMaxLen))
+				{
+					if (lsTrimmed.Set(pszText))
+					{
+						lsTrimmed.ms_Val[nMaxLen-1] = L'\x2026' /*"…"*/;
+						lsTrimmed.ms_Val[nMaxLen] = 0;
+						pszText = lsTrimmed.ms_Val;
+					}
+				}
 				while (*pszText && pszDst < pszEnd)
 				{
 					*(pszDst++) = *(pszText++);
