@@ -3562,7 +3562,7 @@ void CConEmuMain::ExecPostGuiMacro()
 void CConEmuMain::SetWindowIcon(LPCWSTR asNewIcon)
 {
 	// Don't change TITLE BAR icon after initialization finished
-	if (mn_StartupFinished == ss_Started)
+	if (mn_StartupFinished >= ss_Started)
 		return;
 
 	if (!asNewIcon || !*asNewIcon)
