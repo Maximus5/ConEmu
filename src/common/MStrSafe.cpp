@@ -366,12 +366,29 @@ LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...)
 					int nLen = 0;
 					DWORD nValue;
 					char cBase = 'A';
-					if (pszSrc[0] == '0' && pszSrc[1] == '8' && (pszSrc[2] == 'X' || pszSrc[2] == 'x'))
+					if (pszSrc[0] == '0' && isDigit(pszSrc[1]) && (pszSrc[2] == 'X' || pszSrc[2] == 'x'))
 					{
 						if (pszSrc[2] == 'x')
 							cBase = 'a';
-						memmove(szValue, "00000000", 8);
-						nLen = 8;
+						if (pszSrc[1] == '8')
+						{
+							memmove(szValue, "00000000", 8);
+							nLen = 8;
+						}
+						else if (pszSrc[1] == '4')
+						{
+							memmove(szValue, "0000", 4);
+							nLen = 4;
+						}
+						else if (pszSrc[1] == '2')
+						{
+							memmove(szValue, "00", 2);
+							nLen = 2;
+						}
+						else
+						{
+							_ASSERTE(FALSE && "Unsupported %0?X format");
+						}
 						pszSrc += 3;
 					}
 					else if (pszSrc[0] == 'X' || pszSrc[0] == 'x')
@@ -382,7 +399,7 @@ LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...)
 					}
 					else
 					{
-						_ASSERTE(*pszSrc == 'u' || *pszSrc == 's' || *pszSrc == 'c' || *pszSrc == 'i' || *pszSrc == 'X');
+						_ASSERTE(FALSE && "Unsupported modifier");
 						goto wrap;
 					}
 					
@@ -398,18 +415,19 @@ LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...)
 							*(pszValue++) = (char)(cBase + n - 10);
 						nValue = nValue >> 4;
 					}
+					int nCurLen = (int)(pszValue - szValue);
 					if (!nLen)
 					{
-						nLen = (int)(pszValue - szValue);
+						nLen = nCurLen;
 						if (!nLen)
 						{
-							*pszValue = '0';
+							*(pszValue++) = '0';
 							nLen = 1;
 						}
 					}
 					else
 					{
-						pszValue = (szValue+nLen);
+						pszValue = (szValue+klMax(nLen,nCurLen));
 					}
 					// Теперь перекинуть в Dest
 					while (pszValue > szValue)
