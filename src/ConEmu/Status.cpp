@@ -364,43 +364,11 @@ bool CStatus::FillItems()
 bool CStatus::LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMax)
 {
 	bool lbRc = false;
-	DWORD nPID = 0;
-	ConProcess Process = {};
+	CEStr lsInfo;
 
-	if (!pRCon || ((nPID = pRCon->GetActivePID(&Process)) == 0))
+	if (pRCon && pRCon->GetActiveProcessInfo(lsInfo))
 	{
-		// Clean possible rubbish
-		*pszText = 0;
-	}
-	else
-	{
-		TODO("Show full running process tree?");
-
-		wchar_t szNameTrim[64];
-		lstrcpyn(szNameTrim, *Process.Name ? Process.Name : L"???", countof(szNameTrim));
-
-		DWORD nInteractivePID = pRCon->GetInteractivePID();
-		DWORD nFarPluginPID = pRCon->GetFarPID(true);
-		LPCWSTR pszInteractive = (nPID == nFarPluginPID) ? L"#"
-			: (nPID == nInteractivePID) ? L"*"
-			: L"";
-
-		bool isAdmin = pRCon->isAdministrator();
-		LPCWSTR pszAdmin = isAdmin ? L"*" : L"";
-
-		// Issue 1708: show active process bitness and UAC state
-		if (IsWindows64())
-		{
-			wchar_t szBits[8] = L"";
-			if (Process.Bits > 0) _wsprintf(szBits, SKIPLEN(countof(szBits)) L"%i", Process.Bits);
-
-			_wsprintf(pszText, SKIPLEN(cchMax) _T("%s%s[%s%s]:%u"), szNameTrim, pszInteractive, pszAdmin, szBits, nPID);
-		}
-		else
-		{
-			_wsprintf(pszText, SKIPLEN(cchMax) _T("%s%s%s:%u"), szNameTrim, pszInteractive, pszAdmin, nPID);
-		}
-
+		lstrcpyn(pszText, lsInfo.c_str(L"Terminated"), cchMax);
 		lbRc = true;
 	}
 

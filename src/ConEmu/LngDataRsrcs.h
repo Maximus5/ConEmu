@@ -43,6 +43,7 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_DlgHotkey,                L"Choose hotkey" },
 	{ lng_DlgRenameTab,             L"Rename tab" },
 	{ lng_DlgSettings,              L"Settings" },
+	{ lng_ExitCode,                 L"exit code" },
 	{ lng_Search,                   L"Search" },
 	{ lng_SearchCtrlF,              L"Search (Ctrl+F)" },
 	{ /* empty trailing item for patch convenience */ }

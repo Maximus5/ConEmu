@@ -63,7 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfirmDlg.h"
 #include "DynDialog.h"
 #include "Inside.h"
-#include "LngDataEnum.h"
+#include "LngRc.h"
 #include "Macro.h"
 #include "Menu.h"
 #include "MyClipboard.h"
@@ -7832,6 +7832,70 @@ LPCWSTR CRealConsole::GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo)
 		pszVal = rsInfo.Set(szTemp);
 
 	return pszVal;
+}
+
+// Used in StatusBar
+LPCWSTR CRealConsole::GetActiveProcessInfo(CEStr& rsInfo)
+{
+	if (!this)
+		return NULL;
+
+	DWORD nPID = 0;
+	ConProcess Process = {};
+
+	if ((nPID = GetActivePID(&Process)) == 0)
+	{
+		if (m_RootInfo.nPID)
+		{
+			wchar_t szExitInfo[80];
+			if (m_RootInfo.bRunning)
+				_wsprintf(szExitInfo, SKIPCOUNT(szExitInfo) L":%u", m_RootInfo.nPID);
+			else
+				_wsprintf(szExitInfo, SKIPCOUNT(szExitInfo) L":%u %s %i",
+					m_RootInfo.nPID,
+					CLngRc::getRsrc(lng_ExitCode/*"exit code"*/),
+					(int)m_RootInfo.nExitCode);
+			rsInfo = lstrmerge(ms_RootProcessName, szExitInfo);
+		}
+		else
+		{
+			rsInfo = L"Unknown state";
+		}
+	}
+	else
+	{
+		TODO("Show full running process tree?");
+
+		wchar_t szNameTrim[64];
+		lstrcpyn(szNameTrim, *Process.Name ? Process.Name : L"???", countof(szNameTrim));
+
+		DWORD nInteractivePID = GetInteractivePID();
+		DWORD nFarPluginPID = GetFarPID(true);
+		LPCWSTR pszInteractive = (nPID == nFarPluginPID) ? L"#"
+			: (nPID == nInteractivePID) ? L"*"
+			: L"";
+
+		bool isAdmin = isAdministrator();
+		LPCWSTR pszAdmin = isAdmin ? L"*" : L"";
+
+		size_t cchTextMax = 255;
+		wchar_t* pszText = rsInfo.GetBuffer(cchTextMax);
+
+		// Issue 1708: show active process bitness and UAC state
+		if (IsWindows64())
+		{
+			wchar_t szBits[8] = L"";
+			if (Process.Bits > 0) _wsprintf(szBits, SKIPLEN(countof(szBits)) L"%i", Process.Bits);
+
+			_wsprintf(pszText, SKIPLEN(cchTextMax) _T("%s%s[%s%s]:%u"), szNameTrim, pszInteractive, pszAdmin, szBits, nPID);
+		}
+		else
+		{
+			_wsprintf(pszText, SKIPLEN(cchTextMax) _T("%s%s%s:%u"), szNameTrim, pszInteractive, pszAdmin, nPID);
+		}
+	}
+
+	return rsInfo.c_str(L"Unknown state");
 }
 
 // Вернуть PID "условно активного" процесса в консоли
