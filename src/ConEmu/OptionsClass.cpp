@@ -9454,7 +9454,7 @@ void CSettings::RecreateFont(WORD wFromID)
 		ShowFontErrorTip(gpSetCls->szFontError);
 	}
 
-	if (gpConEmu->mn_StartupFinished == CConEmuMain::ss_Started)
+	if (gpConEmu->mn_StartupFinished >= CConEmuMain::ss_Started)
 	{
 		gpConEmu->OnPanelViewSettingsChanged(TRUE);
 	}

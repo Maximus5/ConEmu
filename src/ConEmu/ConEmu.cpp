@@ -6760,7 +6760,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 				LPCWSTR pszDefCmd = GetDefaultCmd();
 
 				RConStartArgs args;
-				args.aRecreate = (mn_StartupFinished == ss_Started) ? cra_EditTab : cra_CreateTab;
+				args.aRecreate = (mn_StartupFinished >= ss_Started) ? cra_EditTab : cra_CreateTab;
 				if (pszDefCmd && *pszDefCmd)
 				{
 					SafeFree(args.pszSpecialCmd);
