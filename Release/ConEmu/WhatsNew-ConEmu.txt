@@ -20,6 +20,44 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.3.1
+* gh-562: Environment was not applied to elevated consoles.
+* Window icon was changed by mistake when starting task with defined icon.
+  This must happen only for startup task.
+* StatusBar was not updated after root process termination.
+  Especially for consoles started with `-new_console:c0` or `-new_console:c1`.
+* gh-561: Tab macro `%d` was not trimmed to ‘Max tab width’.
+* For TaskBar with small icons show current console icon instead of ConEmu default (option ‘Admin shield’).
+* GuiMacro: `GetInfo("Root")` XML-result changes.
+
+  Ref: Maximus5/conemu-inside#8
+
+  State: Empty, NotStarted, Running, Exited.
+  PID and ExitCode: unsigned integers.
+  UpTime: milliseconds.
+  Examples below.
+
+  * If there are not consoles in ConEmu.
+
+    <Root State="Empty" />
+
+  * If console initialization is in progress (`ping localhost -t` for example).
+
+    <Root State="NotStarted" Name="ping.exe" />
+
+  * If root process was started and is running. Note, `259` in `ExitCode` is `STILL_ACTIVE` constant.
+
+    <Root State="Running" Name="ping.exe" PID="7136" ExitCode="259" UpTime="3183" />
+
+  * If root process was finished (terminated by `Ctrl+C` as example).
+
+    <Root State="Exited" Name="ping.exe" PID="7136" ExitCode="3221225786" UpTime="10195" />
+
+  * Another example for `cmd.exe` normal exit.
+
+    <Root State="Exited" Name="cmd.exe" PID="6688" ExitCode="0" UpTime="1825" />
+
+
 2016.2.28
 * Fix crash when mouse wheel was scrolled over search edit box.
 * Warning fixes (from Michael Lukashov).
