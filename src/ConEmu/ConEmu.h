@@ -210,7 +210,6 @@ class CConEmuMain
 	private:
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();
-		static bool UpdateGuiInfoMappingFill(CVirtualConsole* pVCon, LPARAM lParam);
 		void UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr = true);
 		bool mb_LastTransparentFocused; // нужно для проверки gpSet->isTransparentSeparate
 	public:

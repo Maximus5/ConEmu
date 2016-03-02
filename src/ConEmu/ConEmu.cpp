@@ -2331,26 +2331,36 @@ void CConEmuMain::UpdateGuiInfoMapping()
 
 }
 
-/** static **/
-bool CConEmuMain::UpdateGuiInfoMappingFill(CVirtualConsole* pVCon, LPARAM lParam)
-{
-	int* pnCount = (int*)lParam;
-	gpConEmu->m_GuiInfo.hActiveCons[*pnCount] = pVCon->RCon()->ConWnd();
-	(*pnCount)++;
-	return true;
-}
-
 void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr /*= true*/)
 {
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
 
 	m_GuiInfo.bGuiActive = bActive;
 
-	int nActiveCount = 0;
-	CVConGroup::EnumVCon(gpSet->isRetardInactivePanes ? evf_Active : evf_Visible, UpdateGuiInfoMappingFill, (LPARAM)&nActiveCount);
-	for (int i = nActiveCount; i < countof(m_GuiInfo.hActiveCons); i++)
-		m_GuiInfo.hActiveCons[i] = NULL;
 
+	// *** ConEmuGuiMapping::hActiveCons - begin
+	{
+		struct FillActive
+		{
+			int nActiveCount;
+
+			static bool Fill(CVirtualConsole* pVCon, LPARAM lParam)
+			{
+				FillActive* p = (FillActive*)lParam;
+				gpConEmu->m_GuiInfo.hActiveCons[p->nActiveCount] = pVCon->RCon()->ConWnd();
+				p->nActiveCount++;
+				return true;
+			}
+		} fillActive = {0};
+
+		CVConGroup::EnumVCon(gpSet->isRetardInactivePanes ? evf_Active : evf_Visible, FillActive::Fill, (LPARAM)&fillActive);
+
+		if (fillActive.nActiveCount < countof(m_GuiInfo.hActiveCons))
+			memset(m_GuiInfo.hActiveCons + fillActive.nActiveCount, 0, sizeof(m_GuiInfo.hActiveCons[0])*(countof(m_GuiInfo.hActiveCons) - fillActive.nActiveCount));
+	}
+	// *** ConEmuGuiMapping::hActiveCons - end
+
+	// Update finished
 	m_GuiInfo.dwActiveTick = GetTickCount();
 
 	if (!bUpdatePtr)
