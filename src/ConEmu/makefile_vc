@@ -62,7 +62,6 @@ $(INTDIR)\FindDlg.obj \
 $(INTDIR)\FindPanel.obj \
 $(INTDIR)\FrameHolder.obj \
 $(INTDIR)\GestureEngine.obj \
-$(INTDIR)\GuiMacro.obj \
 $(INTDIR)\GuiServer.obj \
 $(INTDIR)\HkFunc.obj \
 $(INTDIR)\HooksUnlocker.obj \
@@ -86,12 +85,13 @@ $(INTDIR)\Menu.obj \
 $(INTDIR)\MEvent.obj \
 $(INTDIR)\MFileLog.obj \
 $(INTDIR)\MGlobal.obj \
+$(INTDIR)\MGuiMacro.obj \
 $(INTDIR)\MJsonReader.obj \
 $(INTDIR)\MModule.obj \
 $(INTDIR)\Monitors.obj \
 $(INTDIR)\MRect.obj \
-$(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSection.obj \
+$(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSecurity.obj \
 $(INTDIR)\MSetter.obj \
 $(INTDIR)\MStrDup.obj \
@@ -353,7 +353,7 @@ $(INTDIR)\FrameHolder.obj: FrameHolder.cpp FrameHolder.h
 
 $(INTDIR)\GestureEngine.obj: GestureEngine.cpp GestureEngine.h
 
-$(INTDIR)\GuiMacro.obj: ../common/GuiMacro.cpp ../common/GuiMacro.h
+$(INTDIR)\MGuiMacro.obj: ../common/MGuiMacro.cpp ../common/MGuiMacro.h
 
 $(INTDIR)\GuiServer.obj: GuiServer.cpp GuiServer.h ConEmu.h RealConsole.h VirtualConsole.h
 

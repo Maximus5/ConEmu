@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
-#include "../common/GuiMacro.h"
+#include "../common/MGuiMacro.h"
 #include "../common/MStrEsc.h"
 #include "../common/WFiles.h"
 

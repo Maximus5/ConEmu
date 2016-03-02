@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "Common.h"
-#include "GuiMacro.h"
+#include "MGuiMacro.h"
 #include "MStrDup.h"
 #include "MStrEsc.h"
 

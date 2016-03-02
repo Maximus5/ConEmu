@@ -45,7 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/ConEmuPipeMode.h"
 #include "../common/Execute.h"
-#include "../common/GuiMacro.h"
+#include "../common/MGuiMacro.h"
 #include "../common/MFileLog.h"
 #include "../common/MSectionSimple.h"
 #include "../common/MSetter.h"

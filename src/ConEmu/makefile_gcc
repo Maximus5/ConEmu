@@ -24,12 +24,11 @@ USERLIBS += -lversion -lshlwapi -loleaut32 -lNetapi32 -lwinmm
 USERLIBS += -ladvapi32 -lshell32 -lgdi32 -lcomdlg32 -lole32 -luuid -lcomctl32
 
 SRCS = \
-		../common/CEStr.cpp         \
+		../common/CEStr.cpp          \
 		../common/CmdLine.cpp        \
 		../common/Common.cpp         \
 		../common/ConEmuCheck.cpp    \
 		../common/execute.cpp        \
-		../common/GuiMacro.cpp       \
 		../common/HkFunc.cpp         \
 		../common/MAssert.cpp        \
 		../common/MBSTR.cpp          \
@@ -38,12 +37,13 @@ SRCS = \
 		../common/MEvent.cpp         \
 		../common/MFileLog.cpp       \
 		../common/MGlobal.cpp        \
+		../common/MGuiMacro.cpp      \
 		../common/MJsonReader.cpp    \
 		../common/MModule.cpp        \
 		../common/Monitors.cpp       \
 		../common/MRect.cpp          \
-		../common/MSectionSimple.cpp \
 		../common/MSection.cpp       \
+		../common/MSectionSimple.cpp \
 		../common/MSecurity.cpp      \
 		../common/MSetter.cpp        \
 		../common/MStrDup.cpp        \
@@ -56,7 +56,7 @@ SRCS = \
 		../common/RgnDetect.cpp      \
 		../common/SetEnvVar.cpp      \
 		../common/wcchars.cpp        \
-		../common/WConsoleInfo.cpp       \
+		../common/WConsoleInfo.cpp   \
 		../common/wcwidth.cpp        \
 		../common/WFiles.cpp         \
 		../common/WObjects.cpp       \
@@ -64,7 +64,7 @@ SRCS = \
 		../common/WThreads.cpp       \
 		../common/WUser.cpp          \
 		AboutDlg.cpp       \
-		AltNumpad.cpp        \
+		AltNumpad.cpp      \
 		Attach.cpp         \
 		Background.cpp     \
 		BaseDragDrops.cpp  \
