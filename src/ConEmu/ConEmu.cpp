@@ -2334,6 +2334,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr /*= true*/)
 {
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_RetardNAPanes,(gpSet->isRetardInactivePanes ? CECF_RetardNAPanes : 0));
 
 	m_GuiInfo.bGuiActive = bActive;
 
@@ -2360,6 +2361,7 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr /*= t
 	}
 	// *** ConEmuGuiMapping::hActiveCons - end
 
+
 	// Update finished
 	m_GuiInfo.dwActiveTick = GetTickCount();
 
@@ -2370,11 +2372,11 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr /*= t
 
 	if (pData)
 	{
-		if ((((pData->Flags & CECF_SleepInBackg)!=0) != (gpSet->isSleepInBackground != FALSE))
+		if ((pData->Flags != m_GuiInfo.Flags)
 			|| ((pData->bGuiActive!=FALSE) != (bActive!=FALSE))
 			|| (memcmp(pData->hActiveCons, m_GuiInfo.hActiveCons, sizeof(m_GuiInfo.hActiveCons)) != 0))
 		{
-			SetConEmuFlags(pData->Flags,CECF_SleepInBackg,(gpSet->isSleepInBackground ? CECF_SleepInBackg : 0));
+			pData->Flags = m_GuiInfo.Flags;
 			pData->bGuiActive = bActive;
 			memmove(pData->hActiveCons, m_GuiInfo.hActiveCons, sizeof(m_GuiInfo.hActiveCons));
 			pData->dwActiveTick = m_GuiInfo.dwActiveTick;

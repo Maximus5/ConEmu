@@ -1169,6 +1169,8 @@ const ConEmuConsoleFlags
 
 	CECF_ProcessCtrlZ    = 0x00001000, // Return 0 bytes from ReadConsole if Ctrl-Z was only entered on the line
 
+	CECF_RetardNAPanes   = 0x00002000, // Retard inactive panes
+
 	CECF_Empty = 0
 	;
 #define SetConEmuFlags(v,m,f) (v) = ((v) & ~(m)) | (f)

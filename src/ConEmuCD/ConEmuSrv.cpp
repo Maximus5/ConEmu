@@ -4430,6 +4430,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 	BOOL bDCWndVisible = (BOOL)-1;
 	BOOL bNewActive = (BOOL)-1, bNewFellInSleep = FALSE;
 	BOOL ActiveSleepInBg = (gpSrv->guiSettings.Flags & CECF_SleepInBackg);
+	BOOL RetardNAPanes = (gpSrv->guiSettings.Flags & CECF_RetardNAPanes);
 	BOOL bOurConActive = (BOOL)-1, bOneConActive = (BOOL)-1;
 	bool bLowSpeed = false;
 	BOOL bOnlyCursorChanged;
@@ -4820,9 +4821,10 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		bOneConActive = lbOneConActive;
 
 		ActiveSleepInBg = (gpSrv->guiSettings.Flags & CECF_SleepInBackg);
+		RetardNAPanes = (gpSrv->guiSettings.Flags & CECF_RetardNAPanes);
 
 		BOOL lbNewActive;
-		if (bOurConActive || bDCWndVisible)
+		if (bOurConActive || (bDCWndVisible && !RetardNAPanes))
 		{
 			// Mismatch may appears during console closing
 			//if (gpLogSize && gbInShutdown && (bDCWndVisible != bOurConActive))
