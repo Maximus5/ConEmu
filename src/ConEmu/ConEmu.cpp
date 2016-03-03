@@ -2339,27 +2339,35 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr /*= t
 	m_GuiInfo.bGuiActive = bActive;
 
 
-	// *** ConEmuGuiMapping::hActiveCons - begin
+	// *** ConEmuGuiMapping::Consoles - begin
 	{
-		struct FillActive
+		struct FillConsoles
 		{
-			int nActiveCount;
+			ConEmuGuiMapping* pGuiInfo;
+			int nCount;
 
 			static bool Fill(CVirtualConsole* pVCon, LPARAM lParam)
 			{
-				FillActive* p = (FillActive*)lParam;
-				gpConEmu->m_GuiInfo.hActiveCons[p->nActiveCount] = pVCon->RCon()->ConWnd();
-				p->nActiveCount++;
+				FillConsoles* p = (FillConsoles*)lParam;
+				ConEmuConsoleInfo& ci = p->pGuiInfo->Consoles[p->nCount++];
+				CRealConsole* pRCon = pVCon->RCon();
+				ci.Console = pRCon->ConWnd();
+				ci.DCWindow = pVCon->GetView();
+				ci.ChildGui = pVCon->GuiWnd();
+				ci.Flags = (pVCon->isActive(false) ? ccf_Active : ccf_None)
+					| (pVCon->isVisible() ? ccf_Visible : ccf_None)
+					| (ci.ChildGui ? ccf_ChildGui : ccf_None);
+				ci.ServerPID = pRCon->GetServerPID(true);
 				return true;
 			}
-		} fillActive = {0};
+		} fill = { &m_GuiInfo, 0};
 
-		CVConGroup::EnumVCon(gpSet->isRetardInactivePanes ? evf_Active : evf_Visible, FillActive::Fill, (LPARAM)&fillActive);
+		CVConGroup::EnumVCon(evf_All, FillConsoles::Fill, (LPARAM)&fill);
 
-		if (fillActive.nActiveCount < countof(m_GuiInfo.hActiveCons))
-			memset(m_GuiInfo.hActiveCons + fillActive.nActiveCount, 0, sizeof(m_GuiInfo.hActiveCons[0])*(countof(m_GuiInfo.hActiveCons) - fillActive.nActiveCount));
+		if (fill.nCount < countof(m_GuiInfo.Consoles))
+			memset(m_GuiInfo.Consoles + fill.nCount, 0, sizeof(m_GuiInfo.Consoles[0])*(countof(m_GuiInfo.Consoles) - fill.nCount));
 	}
-	// *** ConEmuGuiMapping::hActiveCons - end
+	// *** ConEmuGuiMapping::Consoles - end
 
 
 	// Update finished
@@ -2374,11 +2382,11 @@ void CConEmuMain::UpdateGuiInfoMappingActive(bool bActive, bool bUpdatePtr /*= t
 	{
 		if ((pData->Flags != m_GuiInfo.Flags)
 			|| ((pData->bGuiActive!=FALSE) != (bActive!=FALSE))
-			|| (memcmp(pData->hActiveCons, m_GuiInfo.hActiveCons, sizeof(m_GuiInfo.hActiveCons)) != 0))
+			|| (memcmp(pData->Consoles, m_GuiInfo.Consoles, sizeof(m_GuiInfo.Consoles)) != 0))
 		{
 			pData->Flags = m_GuiInfo.Flags;
 			pData->bGuiActive = bActive;
-			memmove(pData->hActiveCons, m_GuiInfo.hActiveCons, sizeof(m_GuiInfo.hActiveCons));
+			memmove(pData->Consoles, m_GuiInfo.Consoles, sizeof(m_GuiInfo.Consoles));
 			pData->dwActiveTick = m_GuiInfo.dwActiveTick;
 		}
 	}

@@ -227,7 +227,7 @@ LGSResult LoadGuiSettingsPtr(ConEmuGuiMapping& GuiMapping, const ConEmuGuiMappin
 	{
 		// But active consoles list may be changed
 		if (!lbCopied)
-			memmove(GuiMapping.hActiveCons, pInfo->hActiveCons, sizeof(GuiMapping.hActiveCons));
+			memmove(GuiMapping.Consoles, pInfo->Consoles, sizeof(GuiMapping.Consoles));
 		liRc = lgs_ActiveChanged;
 	}
 	else
@@ -4800,13 +4800,13 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		}
 
 		BOOL lbOurConActive = FALSE, lbOneConActive = FALSE;
-		for (size_t i = 0; i < countof(gpSrv->guiSettings.hActiveCons); i++)
+		for (size_t i = 0; i < countof(gpSrv->guiSettings.Consoles); i++)
 		{
-			HWND h = gpSrv->guiSettings.hActiveCons[i];
-			if (h)
+			ConEmuConsoleInfo& ci = gpSrv->guiSettings.Consoles[i];
+			if ((ci.Flags & ccf_Active) && (HWND)ci.Console)
 			{
 				lbOneConActive = TRUE;
-				if (ghConWnd == h)
+				if (ghConWnd == (HWND)ci.Console)
 				{
 					lbOurConActive = TRUE;
 					break;

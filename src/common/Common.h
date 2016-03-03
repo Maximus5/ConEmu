@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    160
+#define CESERVER_REQ_VER    161
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1175,6 +1175,22 @@ const ConEmuConsoleFlags
 	;
 #define SetConEmuFlags(v,m,f) (v) = ((v) & ~(m)) | (f)
 
+typedef ConEmuConsoleFlags DWORD;
+const ConEmuConsoleFlags
+	ccf_Active   = 1,
+	ccf_Visible  = 2,
+	ccf_ChildGui = 4,
+	ccf_None     = 0;
+
+struct ConEmuConsoleInfo
+{
+	ConEmuConsoleFlags Flags;
+	HWND2 Console;
+	HWND2 DCWindow;
+	HWND2 ChildGui;
+	DWORD ServerPID;
+};
+
 struct ConEmuGuiMapping
 {
 	DWORD    cbSize;
@@ -1200,11 +1216,14 @@ struct ConEmuGuiMapping
 
 	//BOOL     bSleepInBackg; // Sleep in background
 
-	BOOL     bGuiActive;    // Gui is In focus or Not
-	DWORD    dwActiveTick;  // Tick, when hActiveCons/bGuiActive was changed
-	HWND2    hActiveCons[MAX_CONSOLE_COUNT]; // Active or visible Real console HWND
+	// Gui is In focus or Not
+	BOOL  bGuiActive;
+	// Tick, when hActiveCons/bGuiActive was changed
+	DWORD dwActiveTick;
+	// Information about open consoles
+	ConEmuConsoleInfo Consoles[MAX_CONSOLE_COUNT];
 
-	/* Основной шрифт в GUI */
+	/* Main font in GUI */
 	struct ConEmuMainFont MainFont;
 	
 	// DosBox
