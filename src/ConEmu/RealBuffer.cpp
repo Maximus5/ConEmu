@@ -4206,6 +4206,136 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	}
 }
 
+void CRealBuffer::ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift)
+{
+	COORD cr; ConsoleCursorPos(&cr);
+	COORD crPromptBegin = {};
+
+	// -- координаты нужны абсолютные
+	//// Поправить
+	//cr.Y -= con.nTopVisibleLine;
+
+	bool bJump = bCtrl;
+	short iDiff = 1;
+
+	switch (vkKey)
+	{
+	case VK_LEFT:
+	case VK_RIGHT:
+	{
+		ExpandTextRangeType etr;
+		bool bLeftward = (vkKey == VK_LEFT);
+		if (bLeftward)
+			cr.X = max(0, (cr.X - iDiff));
+		else
+			cr.X = min((GetBufferWidth() - 1), (cr.X + iDiff));
+		// If `Ctrl` is pressed - jump `by word`
+		if (bJump
+			&& ((bLeftward && (cr.X > 1))
+				|| (!bLeftward && ((cr.X + 1) < GetBufferWidth()))
+				))
+		{
+			COORD crFrom = cr;
+			COORD crTo = crFrom;
+			// Either by `word`
+			if ((etr = ExpandTextRange(crFrom, crTo, etr_Word)) != etr_None)
+			{
+				COORD& crNew = (bLeftward ? crFrom : crTo);
+				if (crNew.X != cr.X)
+					cr = crNew;
+				else
+					etr = etr_None;
+			}
+			// or by 10 chars (we add/sub 9 more chars)
+			if (etr == etr_None)
+			{
+				if (bLeftward)
+					cr.X = max(0, (cr.X - 9));
+				else
+					cr.X = min((GetBufferWidth() - 1), (cr.X + 9));
+			}
+		}
+		// Do pos change
+		break;
+	}
+	case VK_UP:
+	{
+		// Half screen if Ctrl is pressed
+		if (bJump)
+			iDiff = (GetWindowHeight() >> 1);
+		cr.Y = max(0, (cr.Y - iDiff));
+		break;
+	}
+	case VK_DOWN:
+	{
+		// Half screen if Ctrl is pressed
+		if (bJump)
+			iDiff = (GetWindowHeight() >> 1);
+		cr.Y = min((GetBufferHeight() - 1), (cr.Y + iDiff));
+		break;
+	}
+	case VK_HOME:
+	{
+		// Extend to prompt starting position first
+		SHORT X = 0;
+		if (mp_RCon->QueryPromptStart(&crPromptBegin)
+			&& (cr.Y == crPromptBegin.Y))
+		{
+			if (cr.X > crPromptBegin.X)
+				X = crPromptBegin.X;
+			else if (cr.X == 0)
+				X = crPromptBegin.X;
+		}
+		cr.X = X;
+		break;
+	}
+	case VK_END:
+	{
+		//TODO: Extend to text line ending first
+		SHORT X = (GetBufferWidth() - 1);
+		wchar_t* pszLine = NULL; int nLineLen = 0;
+		COORD lcrScr = BufferToScreen(cr);
+		// Find last non-spacing character
+		MSectionLock csData; csData.Lock(&csCON);
+		if (GetConsoleLine(lcrScr.Y, &pszLine, &nLineLen, &csData))
+		{
+			SHORT newX = X;
+			while ((newX > 0) && (pszLine[newX] == 0 || pszLine[newX] == L' ' || pszLine[newX] == L'\t'))
+				newX--;
+			_ASSERTE(con.m_sel.dwFlags!=0);
+			if (newX > cr.X)
+			{
+				X = newX;
+			}
+			else if (cr.X == X)
+			{
+				if (((cr.Y != con.m_sel.srSelection.Top) || ((newX+1) != con.m_sel.srSelection.Left))
+					&& ((cr.Y != con.m_sel.srSelection.Bottom) || ((newX+1) != con.m_sel.srSelection.Right)))
+				{
+					X = newX;
+				}
+			}
+		}
+		cr.X = X;
+		break;
+	}
+	}
+
+	// What shall we do?
+	bool bResetSel = !bShift;
+	if (bResetSel)
+	{
+		// If `Shift` key was released, we reset selection to new position
+		bool lbStreamSelection = (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION)) == CONSOLE_TEXT_SELECTION;
+		StartSelection(lbStreamSelection, cr.X, cr.Y);
+	}
+	else
+	{
+		// `Shift` is holded, extend selection range
+		ExpandSelection(cr.X, cr.Y, true);
+	}
+}
+
 void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 {
 	_ASSERTE(con.m_sel.dwFlags!=0);
@@ -5002,102 +5132,10 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		if ((wParam == VK_ESCAPE) || (wParam == VK_RETURN) /*|| (wParam == 'C' || wParam == VK_INSERT)*/)
 		{
 			DoSelectionFinalize(wParam != VK_ESCAPE, cm_CopySel, wParam);
-			return true;
 		}
 		else
 		{
-			COORD cr; ConsoleCursorPos(&cr);
-
-			// -- координаты нужны абсолютные
-			//// Поправить
-			//cr.Y -= con.nTopVisibleLine;
-
-			bool bJump = isPressed(VK_CONTROL);
-			short iDiff = 1;
-
-			switch (LOWORD(wParam))
-			{
-				case VK_LEFT:
-				case VK_RIGHT:
-				{
-					ExpandTextRangeType etr;
-					bool bLeftward = (LOWORD(wParam) == VK_LEFT);
-					if (bLeftward)
-						cr.X = max(0, (cr.X-iDiff));
-					else
-						cr.X = min((GetBufferWidth() - 1), (cr.X+iDiff));
-					// If `Ctrl` is pressed - jump `by word`
-					if (bJump
-						&& ((bLeftward && (cr.X > 1))
-							|| (!bLeftward && ((cr.X + 1) < GetBufferWidth()))
-						))
-					{
-						COORD crFrom = cr;
-						COORD crTo = crFrom;
-						// Either by `word`
-						if ((etr = ExpandTextRange(crFrom, crTo, etr_Word)) != etr_None)
-						{
-							COORD& crNew = (bLeftward ? crFrom : crTo);
-							if (crNew.X != cr.X)
-								cr = crNew;
-							else
-								etr = etr_None;
-						}
-						// or by 10 chars (we add/sub 9 more chars)
-						if (etr == etr_None)
-						{
-							if (bLeftward)
-								cr.X = max(0, (cr.X-9));
-							else
-								cr.X = min((GetBufferWidth() - 1), (cr.X+9));
-						}
-					}
-					// Do pos change
-					break;
-				}
-				case VK_UP:
-				{
-					// Half screen if Ctrl is pressed
-					if (bJump)
-						iDiff = (GetWindowHeight()>>1);
-					cr.Y = max(0, (cr.Y-iDiff));
-					break;
-				}
-				case VK_DOWN:
-				{
-					// Half screen if Ctrl is pressed
-					if (bJump)
-						iDiff = (GetWindowHeight()>>1);
-					cr.Y = min((GetBufferHeight()-1), (cr.Y+iDiff));
-					break;
-				}
-				case VK_HOME:
-				{
-					//TODO: Extend to prompt starting position first
-					cr.X = 0;
-					break;
-				}
-				case VK_END:
-				{
-					//TODO: Extend to text line ending first
-					cr.X = (GetBufferWidth()-1);
-					break;
-				}
-			}
-
-			// What shall we do?
-			bool bResetSel = !isPressed(VK_SHIFT);
-			if (bResetSel)
-			{
-				// If `Shift` key was released, we reset selection to new position
-				bool lbStreamSelection = (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION)) == CONSOLE_TEXT_SELECTION;
-				StartSelection(lbStreamSelection, cr.X,cr.Y);
-			}
-			else
-			{
-				// `Shift` is holded, extend selection range
-				ExpandSelection(cr.X,cr.Y, true);
-			}
+			ChangeSelectionByKey(LODWORD(wParam), isPressed(VK_CONTROL), isPressed(VK_SHIFT));
 		}
 
 		return true;

@@ -2852,7 +2852,7 @@ LPWSTR ConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	else if (nType == 0)
 	{
 		if (nHomeEnd)
-			apRCon->ExpandSelection((nHomeEnd < 0) ? 0 : apRCon->BufferWidth()-1, cr.Y);
+			apRCon->ChangeSelectionByKey(((nHomeEnd < 0) ? VK_HOME : VK_END), false, true);
 	}
 
 	return lstrdup(L"OK");

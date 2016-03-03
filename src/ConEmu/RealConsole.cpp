@@ -5457,6 +5457,11 @@ void CRealConsole::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*
 	mp_ABuf->StartSelection(abTextMode, anX, anY, abByMouse);
 }
 
+void CRealConsole::ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift)
+{
+	mp_ABuf->ChangeSelectionByKey(vkKey, bCtrl, bShift);
+}
+
 void CRealConsole::ExpandSelection(SHORT anX, SHORT anY)
 {
 	mp_ABuf->ExpandSelection(anX, anY, mp_ABuf->isSelectionPresent());
@@ -14751,6 +14756,26 @@ CEPauseCmd CRealConsole::Pause(CEPauseCmd cmd)
 	}
 
 	return result;
+}
+
+bool CRealConsole::QueryPromptStart(COORD *cr)
+{
+	if (!this || !hConWnd || !m_AppMap.IsValid())
+		return false;
+
+	#ifdef _DEBUG
+	DWORD nPID = GetActivePID();
+	#endif
+
+	// TODO: It would be nice to check m_AppMap.Ptr()->nPreReadRowID?
+
+	CONSOLE_SCREEN_BUFFER_INFO csbiPreRead = m_AppMap.Ptr()->csbiPreRead;
+	if (!csbiPreRead.dwCursorPosition.X && !csbiPreRead.dwCursorPosition.X)
+		return false;
+
+	if (cr)
+		*cr = csbiPreRead.dwCursorPosition;
+	return true;
 }
 
 void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr)

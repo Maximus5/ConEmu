@@ -472,6 +472,7 @@ class CRealConsole
 		void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* sbi);
 		void GetConsoleInfo(ConsoleInfoArg* pInfo);
 		//void GetConsoleCursorPos(COORD *pcr);
+		bool QueryPromptStart(COORD *cr);
 		void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr = NULL);
 		DWORD GetConsoleCP();
 		DWORD GetConsoleOutputCP();
@@ -529,6 +530,7 @@ class CRealConsole
 		CEPauseCmd Pause(CEPauseCmd cmd);
 		void AutoCopyTimer(); // Чтобы разрулить "Auto Copy" & "Double click - select word"
 		void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
+		void ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift);
 		void ExpandSelection(SHORT anX, SHORT anY);
 		bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = NULL);
 		void DoSelectionStop();
