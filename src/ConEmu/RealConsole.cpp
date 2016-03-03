@@ -2304,7 +2304,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 		if (!piRec->Event.KeyEvent.wRepeatCount)
 		{
 			_ASSERTE(piRec->Event.KeyEvent.wRepeatCount!=0);
-			piRec->Event.KeyEvent.wRepeatCount = 0;
+			piRec->Event.KeyEvent.wRepeatCount = 1;
 		}
 
 		// Keyboard/Output/Delay performance
