@@ -5114,6 +5114,56 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 		return ConEmuSkipHotKey;
 	}
 
+	// Del/Shift-Del/BS - try to "edit" prompt
+	bool bDel = false, bShiftDel = false, bBS = false;
+	if ((bDel = VkState.IsEqual(VK_DELETE, cvk_Naked))
+		|| (bShiftDel = VkState.IsEqual(VK_DELETE, cvk_Shift))
+		|| (bBS = VkState.IsEqual(VK_BACK, cvk_Naked)))
+	{
+		CONSOLE_SELECTION_INFO sel = con.m_sel;
+		COORD cur = con.m_sbi.dwCursorPosition;
+		COORD anch = sel.dwSelectionAnchor;
+		if (bKeyDown
+			// If this was one-line selection
+			&& (sel.srSelection.Top == sel.srSelection.Bottom)
+			// And cursor position matches anchor position
+			&& (cur.Y == anch.Y)
+			&& (((cur.X == anch.X) && (anch.X == sel.srSelection.Left) && (sel.srSelection.Right >= cur.X))
+				|| ((cur.X == (anch.X+1)) && (anch.X == sel.srSelection.Right) && (sel.srSelection.Left <= cur.X))
+				)
+			)
+		{
+			DoSelectionFinalize(bShiftDel, cm_CopySel, VkState.Vk);
+			// Now post sequence of keys
+			UINT vkPostKey = 0; LPCWSTR pszKey = NULL;
+			if ((anch.X == sel.srSelection.Left) && (cur.X == anch.X)
+				&& (sel.srSelection.Right >= sel.srSelection.Left))
+			{
+				vkPostKey = VK_DELETE; pszKey = L"Delete";
+			}
+			else if ((anch.X == sel.srSelection.Right)
+				&& (sel.srSelection.Right >= sel.srSelection.Left))
+			{
+				vkPostKey = VK_BACK; pszKey = L"Backspace";
+			}
+			if (vkPostKey)
+			{
+				int iScanCode = 0; DWORD dwControlState = 0;
+				UINT VK = ConEmuHotKey::GetVkByKeyName(pszKey, &iScanCode, &dwControlState);
+				INPUT_RECORD r[2] = { { KEY_EVENT },{ KEY_EVENT } };
+				TranslateKeyPress(VK, dwControlState, (VK == VK_BACK) ? (wchar_t)VK_BACK : 0, iScanCode, r, r + 1);
+
+				bool lbPress = false;
+				r[0].Event.KeyEvent.wRepeatCount = (sel.srSelection.Right - sel.srSelection.Left + 1);
+				if (r[0].Event.KeyEvent.wRepeatCount <= GetTextWidth())
+					lbPress = mp_RCon->PostConsoleEvent(r);
+				if (lbPress)
+					mp_RCon->PostConsoleEvent(r + 1);
+			}
+		}
+		return ConEmuSkipHotKey;
+	}
+
 	return NULL;
 }
 
