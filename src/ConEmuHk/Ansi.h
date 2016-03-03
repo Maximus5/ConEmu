@@ -134,6 +134,7 @@ protected:
 public:
 	static void ChangeTermMode(TermModeCommand mode, DWORD value);
 	static void StartXTermMode(bool bStart);
+	static void StorePromptBegin();
 
 public:
 	struct AnsiEscCode

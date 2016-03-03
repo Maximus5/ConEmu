@@ -30,7 +30,7 @@ if "%ConEmuIsAdmin%" == "ADMIN" (
 )
 
 rem Finally reset color and add space
-set ConEmuPrompt3=$E[m$S
+set ConEmuPrompt3=$E[m$S$E]9;12$E\
 
 if /I "%~1" == "/git" goto git
 if /I "%~1" == "-git" goto git

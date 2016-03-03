@@ -3076,10 +3076,10 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 					// ESC ] 9 ; 11; "*txt*" ST - Just a ‘comment’, skip it.
 					DumpKnownEscape(Code.ArgSZ+5, lstrlen(Code.ArgSZ+5), de_Comment);
 				}
-				else if (Code.ArgSZ[3] == L'3')
+				else if (Code.ArgSZ[3] == L'2')
 				{
-					// ESC ] 9 ; 13 ST
-					//TODO: !!!
+					// ESC ] 9 ; 12 ST
+					StorePromptBegin();
 				}
 			}
 			else if (Code.ArgSZ[2] == L'2' && Code.ArgSZ[3] == L';')
@@ -3492,6 +3492,18 @@ void CEAnsi::StartXTermMode(bool bStart)
 	// Remember last mode
 	gbWasXTermOutput = bStart;
 	ChangeTermMode(tmc_Keyboard, bStart ? te_xterm : te_win32);
+}
+
+// This is useful when user press Shift+Home,
+// we'll select only "typed command" part, without "prompt"
+void CEAnsi::StorePromptBegin()
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (GetConsoleScreenBufferInfo(hConOut, &csbi))
+	{
+		OnReadConsoleBefore(hConOut, csbi);
+	}
 }
 
 
