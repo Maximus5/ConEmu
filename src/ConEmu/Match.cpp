@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2015 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -775,6 +775,7 @@ bool CMatch::MatchAny()
 		LPCWSTR pszDelim = (wcsncmp(m_SrcLine.ms_Val+mn_MatchLeft, L"file://", 7) == 0) ? pszUrlFileDelim : pszUrlDelim;
 		while (((mn_MatchRight+1) < mn_SrcLength) && !wcschr(pszDelim, m_SrcLine.ms_Val[mn_MatchRight+1]))
 			mn_MatchRight++;
+		DEBUGTEST(int i4break = 0);
 	}
 	else while ((mn_MatchRight+1) < mn_SrcLength)
 	{
@@ -1025,6 +1026,9 @@ bool CMatch::MatchAny()
 	{
 		// Считаем, что OK
 		bMaybeMail = false;
+		// Cut off ending punctuators
+		if (wcschr(pszPuctuators, m_SrcLine.ms_Val[mn_MatchRight]))
+			mn_MatchRight--;
 		// Cut off ending bracket if it is
 		if (wcschr(pszEndBrackets, m_SrcLine.ms_Val[mn_MatchRight]))
 			mn_MatchRight--;
