@@ -26,6 +26,9 @@ authors with proper information.
 Please read the [article on the official site](https://conemu.github.io/en/BadIssue.html)
 how to report issues properly. Brief excerpts below.
 
+* Please ensure that your problem does not belong to
+  [third-party software](https://conemu.github.io/en/ThirdPartyProblems.html).
+
 * Attach [descriptive screenshots](https://conemu.github.io/en/BadIssue.html#Screenshot)
   demonstating all steps you are doing. And it would be better, if you comment or highlight
   points of problems on screenshots.
