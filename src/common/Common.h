@@ -1191,6 +1191,7 @@ struct ConEmuConsoleInfo
 	DWORD ServerPID;
 };
 
+// CEGUIINFOMAPNAME L"ConEmuGuiInfoMapping.%u" ( % == dwGuiProcessId )
 struct ConEmuGuiMapping
 {
 	DWORD    cbSize;
@@ -1478,7 +1479,7 @@ struct ConEmuAnsiLog
 };
 
 
-// CECONMAPNAME
+// CECONMAPNAME L"ConEmuFileMapping.%08X" ( % == (DWORD)ghConWnd )
 struct CESERVER_CONSOLE_MAPPING_HDR
 {
 	DWORD cbSize;
@@ -1540,7 +1541,7 @@ const CEActiveAppFlags
 	caf_Standard     = 0;
 
 
-// CECONAPPMAPNAME
+// CECONAPPMAPNAME L"ConEmuAppMapping.%08X" ( % == (DWORD)ghConWnd )
 struct CESERVER_CONSOLE_APP_MAPPING
 {
 	DWORD cbSize;

@@ -30,44 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
+#include "../common/Common.h"
 
-#include "GuiMacro.h"
-
-enum ConEmuStateCheck
-{
-	ec_None = 0,
-	ec_IsConEmu,
-	ec_IsTerm,
-	ec_IsAnsi,
-	ec_IsAdmin,
-};
-
-enum ConEmuExecAction
-{
-	ea_None = 0,
-	ea_RegConFont, // RegisterConsoleFontHKLM
-	ea_InjectHooks,
-	ea_InjectRemote,
-	ea_InjectDefTrm,
-	ea_GuiMacro,
-	ea_CheckUnicodeFont,
-	ea_TestUnicodeCvt,
-	ea_OsVerInfo,
-	ea_ExportCon,  // export env.vars to processes of active console
-	ea_ExportTab,  // ea_ExportCon + ConEmu window
-	ea_ExportGui,  // export env.vars to ConEmu window
-	ea_ExportAll,  // export env.vars to all opened tabs of current ConEmu window
-	ea_ParseArgs,  // debug test of NextArg function... print args to STDOUT
-	ea_ErrorLevel, // return specified errorlevel
-	ea_OutEcho,    // echo "string" with ANSI processing
-	ea_OutType,    // print file contents with ANSI processing
-	ea_StoreCWD,   // store current console work dir
-	ea_DumpStruct, // dump file mapping contents
-};
-
-int  DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdline */, MacroInstance& Inst);
-int  DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = false);
-int  DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg);
-bool DoStateCheck(ConEmuStateCheck eStateCheck);
-
-int  WriteOutput(LPCWSTR pszText, DWORD cchLen, DWORD& dwWritten, bool bProcessed, bool bAsciiPrint, bool bStreamBy1, bool bToBottom);
+int DumpStructData(LPCWSTR asMappingName);
+int DoDumpStruct(LPCWSTR asCmdLine);

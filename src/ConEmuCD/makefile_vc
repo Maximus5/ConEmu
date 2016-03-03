@@ -54,6 +54,7 @@ $(INTDIR)\Infiltrate.obj \
 $(INTDIR)\InjectRemote.obj \
 $(INTDIR)\Injects.obj \
 $(INTDIR)\InQueue.obj \
+$(INTDIR)\MapDump.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\MConHandle.obj \
 $(INTDIR)\Memory.obj \
@@ -301,6 +302,8 @@ $(INTDIR)\InjectRemote.obj: InjectRemote.cpp
 $(INTDIR)\Injects.obj: ..\ConEmuHk\Injects.cpp
 
 $(INTDIR)\InQueue.obj: ../common/InQueue.cpp ../common/InQueue.h
+
+$(INTDIR)\MapDump.obj: MapDump.cpp MapDump.h
 
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 

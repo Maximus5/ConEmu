@@ -65,6 +65,7 @@ SRCS = \
 		GuiMacro.cpp       \
 		Infiltrate.cpp     \
 		InjectRemote.cpp   \
+		MapDump.cpp        \
 		Queue.cpp          \
 		SrvCommands.cpp    \
 		SrvPipes.cpp       \

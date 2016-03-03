@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuC.h"
 #include "Actions.h"
 #include "GuiMacro.h"
+#include "MapDump.h"
 #include "UnicodeTest.h"
 
 
@@ -1102,6 +1103,11 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 	case ea_StoreCWD:
 		{
 			iRc = DoStoreCWD(asCmdArg);
+			break;
+		}
+	case ea_DumpStruct:
+		{
+			iRc = DoDumpStruct(asCmdArg);
 			break;
 		}
 	default:

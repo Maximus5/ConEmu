@@ -443,6 +443,7 @@
       <File RelativePath=".\ExitCodes.h" />
       <File RelativePath=".\GuiHooks.h" />
       <File RelativePath=".\GuiMacro.h" />
+      <File RelativePath=".\MapDump.h" />
       <File RelativePath=".\Queue.h" />
       <File RelativePath=".\resource.h" />
       <File RelativePath=".\SrvCommands.h" />
@@ -497,6 +498,7 @@
       <File RelativePath=".\GuiHooks.cpp" />
       <File RelativePath=".\GuiMacro.cpp" />
       <File RelativePath=".\InjectRemote.cpp" />
+      <File RelativePath=".\MapDump.cpp" />
       <File RelativePath=".\Queue.cpp" />
       <File RelativePath=".\SrvCommands.cpp" />
       <File RelativePath=".\SrvPipes.cpp" />

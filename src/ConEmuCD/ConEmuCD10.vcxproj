@@ -860,6 +860,7 @@
     <ClInclude Include="ExitCodes.h" />
     <ClInclude Include="GuiHooks.h" />
     <ClInclude Include="GuiMacro.h" />
+    <ClInclude Include="MapDump.h" />
     <ClInclude Include="Queue.h" />
     <ClInclude Include="resource.h" />
     <CustomBuildStep Include="header.h">
@@ -933,6 +934,7 @@
     <ClCompile Include="GuiHooks.cpp" />
     <ClCompile Include="GuiMacro.cpp" />
     <ClCompile Include="InjectRemote.cpp" />
+    <ClCompile Include="MapDump.cpp" />
     <ClCompile Include="Queue.cpp" />
     <ClCompile Include="SrvCommands.cpp" />
     <ClCompile Include="SrvPipes.cpp" />

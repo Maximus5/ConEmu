@@ -134,8 +134,8 @@ DWORD WINAPI MyAssertThread(LPVOID p)
 		#if defined(CONEMU_MINIMAL) && defined(ASSERT_PIPE_ALLOWED)
 			GuiMessageBox(ghConEmuWnd, pa->szDebugInfo, pa->szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL);
 		#else
-			AssertMsgBox ? AssertMsgBox(pa->szDebugInfo, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL, pa->szTitle, NULL, false) :
-			MessageBox(NULL, pa->szDebugInfo, pa->szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL);
+			AssertMsgBox ? AssertMsgBox(pa->szDebugInfo, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL|MB_DEFBUTTON2, pa->szTitle, NULL, false) :
+			MessageBox(NULL, pa->szDebugInfo, pa->szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_RETRYCANCEL|MB_DEFBUTTON2);
 		#endif
 			
 

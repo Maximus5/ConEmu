@@ -3050,6 +3050,11 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			eExecAction = ea_StoreCWD;
 			break;
 		}
+		else if (lstrcmpi(szArg, L"/STRUCT") == 0)
+		{
+			eExecAction = ea_DumpStruct;
+			break;
+		}
 		else if (lstrcmpi(szArg, L"/SILENT")==0)
 		{
 			gbPrefereSilentMode = true;
