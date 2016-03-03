@@ -548,6 +548,7 @@ class CRealConsole
 		void SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet);
 		BOOL RecreateProcess(RConStartArgs *args);
 		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
+		void ResetHighlightHyperlinks();
 		ExpandTextRangeType GetLastTextRangeType();
 		bool IsFarHyperlinkAllowed(bool abFarRequired);
 	private:

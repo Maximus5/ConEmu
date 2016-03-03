@@ -16192,6 +16192,22 @@ void CRealConsole::GetConsoleModes(WORD& nConInMode, WORD& nConOutMode, TermEmul
 	}
 }
 
+void CRealConsole::ResetHighlightHyperlinks()
+{
+	if (!this)
+		return;
+	// Reset flags in buffers
+	if (mp_RBuf)
+		mp_RBuf->ResetHighlightHyperlinks();
+	if (mp_EBuf)
+		mp_EBuf->ResetHighlightHyperlinks();
+	if (mp_SBuf)
+		mp_SBuf->ResetHighlightHyperlinks();
+	// Following is superfluous, JIC if we create new buffers in future
+	if (mp_ABuf)
+		mp_ABuf->ResetHighlightHyperlinks();
+}
+
 ExpandTextRangeType CRealConsole::GetLastTextRangeType()
 {
 	return mp_ABuf->GetLastTextRangeType();

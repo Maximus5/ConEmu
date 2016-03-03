@@ -370,6 +370,7 @@ class CVirtualConsole :
 			bool  mb_HighlightCol;
 		} m_HighlightInfo;
 		void ResetHighlightCoords();
+		void ResetHighlightHyperlinks();
 		void UpdateHighlights();
 		void UpdateHighlightsRowCol();
 		void UpdateHighlightsHyperlink();

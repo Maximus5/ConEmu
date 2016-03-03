@@ -120,6 +120,7 @@ public:
 	COORD BufferToScreen(COORD crMouse, bool bFixup = true, bool bVertOnly = false);
 	bool ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScreen);
 	bool ProcessFarHyperlink(bool bUpdateScreen);
+	void ResetHighlightHyperlinks();
 	ExpandTextRangeType GetLastTextRangeType();
 
 	void ShowKeyBarHint(WORD nID);
@@ -147,6 +148,7 @@ public:
 	void DoSelectionStop();
 	bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = NULL, HGLOBAL* phUnicode = NULL);
 	void UpdateSelection();
+	void UpdateHyperlink();
 	bool isConSelectMode();
 	bool isStreamSelection();
 
@@ -211,7 +213,7 @@ private:
 	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 
 	ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CEStr* psText = NULL);
-	void StoreLastTextRange(ExpandTextRangeType etr);
+	bool StoreLastTextRange(ExpandTextRangeType etr);
 
 	short CheckProgressInConsole(const wchar_t* pszCurLine);
 
@@ -283,6 +285,7 @@ protected:
 		int nRClickVK; // VK_F1..F12
 		// Последний etr... (подсветка URL's и строк-ошибок-компиляторов)
 		ConEmuTextRange etr; // etrLast, mcr_FileLineStart, mcr_FileLineEnd
+		bool etrWasChanged;
 	} con;
 	bool SetTopLeft(int ay = -1, int ax = -1, bool abServerCall = false);
 

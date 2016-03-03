@@ -76,6 +76,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
 #define DEBUGSTRTOPLEFT(s) DEBUGSTR(s)
 #define DEBUGSTRTRUEMOD(s) //DEBUGSTR(s)
+#define DEBUGSTRLINK(s) DEBUGSTR(s)
 
 // ANSI, without "\r\n"
 #define IFLOGCONSOLECHANGE gpSetCls->isAdvLogging>=2
@@ -2821,6 +2822,11 @@ bool CRealBuffer::ResetLastMousePos()
 	return bChanged;
 }
 
+void CRealBuffer::ResetHighlightHyperlinks()
+{
+	con.etr.etrLast = etr_None;
+}
+
 bool CRealBuffer::ProcessFarHyperlink(bool bUpdateScreen)
 {
 	bool bChanged = false;
@@ -2906,16 +2912,20 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 	ExpandTextRangeType rc = CanProcessHyperlink(crStart)
 		? ExpandTextRange(crStart, crEnd, etr_AnyClickable, &szText)
 		: etr_None;
+	bool bChanged = con.etrWasChanged || (con.etr.etrLast != rc);
 	if (memcmp(&crStart, &con.etr.mcr_FileLineStart, sizeof(crStart)) != 0
 		|| memcmp(&crEnd, &con.etr.mcr_FileLineEnd, sizeof(crStart)) != 0)
 	{
 		con.etr.mcr_FileLineStart = crStart;
 		con.etr.mcr_FileLineEnd = crEnd;
 		// bUpdateScreen если вызов идет из GetConsoleData для коррекции отдаваемых координат
-		if (bUpdateScreen)
-		{
-			UpdateSelection(); // обновить на экране
-		}
+		bChanged = true;
+	}
+
+	if (bChanged && bUpdateScreen)
+	{
+		// Refresh on-screen
+		UpdateHyperlink();
 	}
 
 	if ((rc & etr_File) || (rc & etr_Url))
@@ -4897,6 +4907,14 @@ void CRealBuffer::UpdateSelection()
 	mp_RCon->mp_VCon->Redraw(true);
 }
 
+void CRealBuffer::UpdateHyperlink()
+{
+	DEBUGSTRLINK(con.etr.etrLast ? L"Highligting hyperlink" : L"Drop hyperlink highlighting");
+	con.etrWasChanged = false;
+	con.bConsoleDataChanged = TRUE;
+	mp_RCon->mp_VCon->Redraw(true);
+}
+
 bool CRealBuffer::isConSelectMode()
 {
 	if (!this) return false;
@@ -5096,8 +5114,8 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		{
 			if (GetLastTextRangeType() != etr_None)
 			{
-				StoreLastTextRange(etr_None);
-				UpdateSelection();
+				if (StoreLastTextRange(etr_None))
+					UpdateHyperlink();
 			}
 		}
 	}
@@ -5106,8 +5124,7 @@ bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	{
 		if (gpSet->isFarGotoEditor && isKey(wParam, gpSet->GetHotkeyById(vkFarGotoEditorVk)))
 		{
-			if (ProcessFarHyperlink(true))
-				UpdateSelection();
+			ProcessFarHyperlink(true);
 		}
 
 		if (mp_RCon->mn_SelectModeSkipVk)
@@ -6757,10 +6774,14 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 	return result;
 }
 
-void CRealBuffer::StoreLastTextRange(ExpandTextRangeType etr)
+bool CRealBuffer::StoreLastTextRange(ExpandTextRangeType etr)
 {
+	bool bChanged = false;
+
 	if (con.etr.etrLast != etr)
 	{
+		con.etrWasChanged = bChanged = true;
+
 		con.etr.etrLast = etr;
 		//if (etr == etr_None)
 		//{
@@ -6770,6 +6791,8 @@ void CRealBuffer::StoreLastTextRange(ExpandTextRangeType etr)
 		if ((mp_RCon->mp_ABuf == this) && mp_RCon->isVisible())
 			gpConEmu->OnSetCursor();
 	}
+
+	return bChanged;
 }
 
 BOOL CRealBuffer::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/, BOOL abIncludeEdges /*= FALSE*/)
