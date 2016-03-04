@@ -2842,7 +2842,14 @@ LPWSTR ConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			cr.X--;
 	}
 
-	apRCon->StartSelection(bText, cr.X, cr.Y);
+	DWORD nAnchorFlag =
+		(nDY < 0) ? CONSOLE_RIGHT_ANCHOR :
+		(nDY > 0) ? CONSOLE_LEFT_ANCHOR :
+		(nDX < 0) ? CONSOLE_RIGHT_ANCHOR :
+		(nDX > 0) ? CONSOLE_LEFT_ANCHOR :
+		0;
+
+	apRCon->StartSelection(bText, cr.X, cr.Y, false, nAnchorFlag);
 
 	if (nType == 1)
 	{

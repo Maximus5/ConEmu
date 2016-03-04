@@ -141,9 +141,10 @@ private:
 public:
 	void OnTimerCheckSelection();
 	void MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensitive, bool abWholeWords); // <<== CRealConsole::DoFindText
-	void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE, UINT anFromMsg=0, COORD *pcrTo=NULL);
+	void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE, UINT anFromMsg=0, COORD *pcrTo=NULL, DWORD anAnchorFlag = 0);
 	void ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift);
 	void ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection);
+	UINT CorrectSelectionAnchor();
 	bool DoSelectionFinalize(bool abCopy, CECopyMode CopyMode = cm_CopySel, WPARAM wParam = 0, HGLOBAL* phUnicode = NULL);
 	void DoCopyPaste(bool abCopy, bool abPaste);
 	void DoSelectionStop();

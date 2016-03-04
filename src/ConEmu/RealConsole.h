@@ -88,6 +88,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CONSOLE_BLOCK_SELECTION 0x0100 // selecting text (standard mode)
 #define CONSOLE_TEXT_SELECTION 0x0200 // selecting text (stream mode)
 #define CONSOLE_DBLCLICK_SELECTION 0x0400 // двойным кликом выделено слово, пропустить WM_LBUTTONUP
+#define CONSOLE_LEFT_ANCHOR 0x0800 // If selection was started rightward
+#define CONSOLE_RIGHT_ANCHOR 0x1000 // If selection was started leftward
 #define CONSOLE_KEYMOD_MASK 0xFF000000 // Здесь хранится модификатор, которым начали выделение мышкой
 
 #define PROCESS_WAIT_START_TIME RELEASEDEBUGTEST(1000,1000)
@@ -529,7 +531,7 @@ class CRealConsole
 		bool isPaused();
 		CEPauseCmd Pause(CEPauseCmd cmd);
 		void AutoCopyTimer(); // Чтобы разрулить "Auto Copy" & "Double click - select word"
-		void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE);
+		void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE, DWORD anAnchorFlag=0);
 		void ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift);
 		void ExpandSelection(SHORT anX, SHORT anY);
 		bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = NULL);

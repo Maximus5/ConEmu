@@ -5452,9 +5452,9 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 	PostConsoleEvent(&r);
 }
 
-void CRealConsole::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=-1*/, BOOL abByMouse/*=FALSE*/)
+void CRealConsole::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=-1*/, BOOL abByMouse/*=FALSE*/, DWORD anAnchorFlag/*=0*/)
 {
-	mp_ABuf->StartSelection(abTextMode, anX, anY, abByMouse);
+	mp_ABuf->StartSelection(abTextMode, anX, anY, abByMouse, 0, NULL, anAnchorFlag);
 }
 
 void CRealConsole::ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift)
