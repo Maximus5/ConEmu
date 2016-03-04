@@ -1538,6 +1538,10 @@
       "zh": "全屏",
       "id": 2017 }
     ,
+    "vkAltNumpad": {
+      "en": "Start Alt+Number mode to enter unicode symbol by its hex codebase",
+      "id": 3028 }
+    ,
     "vkAlwaysOnTop": {
       "en": "Switch ‘Always on top’ window mode",
       "zh": "切换‘总是置顶’窗口模式",
@@ -2078,6 +2082,10 @@
       "zh": "重命名活动标签页",
       "id": 2335 }
     ,
+    "vkResetTerminal": {
+      "en": "Reset terminal: clear screen, backscroll, move cursor to the upper-left corner",
+      "id": 3027 }
+    ,
     "vkScreenshot": {
       "en": "Make screenshot of active window",
       "zh": "活动窗口截图",
@@ -2384,6 +2392,30 @@
       "zh": "控制台模拟器（Console Emulation）(本地终端)",
       "id": 8 }
     ,
+    "lng_AltNumberACP": {
+      "en": "Type ANSI code point using decimal numbers",
+      "id": 16 }
+    ,
+    "lng_AltNumberExt": {
+      "en": " - <Enter> to paste, <Esc> to cancel",
+      "id": 14 }
+    ,
+    "lng_AltNumberHex": {
+      "en": "Type UNICODE code point using hexadecimal numbers",
+      "id": 15 }
+    ,
+    "lng_AltNumberStdACP": {
+      "en": " - release <Alt> to paste ANSI code point",
+      "id": 12 }
+    ,
+    "lng_AltNumberStdOEM": {
+      "en": " - release <Alt> to paste OEM code point",
+      "id": 11 }
+    ,
+    "lng_AltNumberStdUCS": {
+      "en": " - release <Alt> to paste UNICODE code point",
+      "id": 13 }
+    ,
     "lng_DlgAbout": {
       "en": "About",
       "ru": "О программе",
@@ -2426,6 +2458,10 @@
       "zh": "设置",
       "id": 2 }
     ,
+    "lng_ExitCode": {
+      "en": "exit code",
+      "id": 17 }
+    ,
     "lng_Search": {
       "en": "Search",
       "zh": "查找",
@@ -2435,6 +2471,18 @@
       "en": "Search (Ctrl+F)",
       "zh": "查找 (Ctrl+F)",
       "id": 10 }
+    ,
+    "lng_SelBlock": {
+      "en": " block selection",
+      "id": 20 }
+    ,
+    "lng_SelChars": {
+      "en": " chars ",
+      "id": 18 }
+    ,
+    "lng_SelStream": {
+      "en": " stream selection",
+      "id": 19 }
   }
   ,
   "controls": {
