@@ -5475,7 +5475,7 @@ void CRealConsole::DoSelectionStop()
 void CRealConsole::OnSelectionChanged()
 {
 	// Show current selection state in the Status bar
-	wchar_t szSelInfo[128] = L"";
+	CEStr szSelInfo;
 	CONSOLE_SELECTION_INFO sel = {};
 	if (mp_ABuf->GetConsoleSelectionInfo(&sel))
 	{
@@ -5498,11 +5498,19 @@ void CRealConsole::OnSelectionChanged()
 		bool bStreamMode = ((sel.dwFlags & CONSOLE_TEXT_SELECTION) != 0);
 		int  nCellsCount = mp_ABuf->GetSelectionCellsCount();
 
-		_wsprintf(szSelInfo, SKIPLEN(countof(szSelInfo)) L"%i chars {%i,%i}-{%i,%i} %s selection",
-			nCellsCount,
+		wchar_t szCoords[128] = L"", szChars[20];
+		_wsprintf(szCoords, SKIPLEN(countof(szCoords)) L"{%i,%i}-{%i,%i}:{%i,%i}",
 			sel.srSelection.Left+1, sel.srSelection.Top+1,
 			sel.srSelection.Right+1, sel.srSelection.Bottom+1,
-			bStreamMode ? L"stream" : L"block");
+			sel.dwSelectionAnchor.X+1, sel.dwSelectionAnchor.Y+1);
+		szSelInfo = lstrmerge(
+			_ltow(nCellsCount, szChars, 10),
+			CLngRc::getRsrc(lng_SelChars/*" chars "*/),
+			szCoords,
+			bStreamMode
+				? CLngRc::getRsrc(lng_SelStream/*" stream selection"*/)
+				: CLngRc::getRsrc(lng_SelBlock/*" block selection"*/)
+			);
 	}
 	SetConStatus(szSelInfo);
 }

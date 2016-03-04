@@ -46,5 +46,8 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_ExitCode,                 L"exit code" },
 	{ lng_Search,                   L"Search" },
 	{ lng_SearchCtrlF,              L"Search (Ctrl+F)" },
+	{ lng_SelBlock,                 L" block selection" },
+	{ lng_SelChars,                 L" chars " },
+	{ lng_SelStream,                L" stream selection" },
 	{ /* empty trailing item for patch convenience */ }
 };

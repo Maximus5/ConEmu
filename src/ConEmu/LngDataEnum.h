@@ -48,6 +48,9 @@ enum LngResources
 	lng_AltNumberHex              = 15,
 	lng_AltNumberACP              = 16,
 	lng_ExitCode                  = 17,
+	lng_SelChars                  = 18,
+	lng_SelStream                 = 19,
+	lng_SelBlock                  = 20,
 	// last auto-gen identifier
 	lng_NextId
 };
