@@ -1540,6 +1540,7 @@
     ,
     "vkAltNumpad": {
       "en": "Start Alt+Number mode to enter unicode symbol by its hex codebase",
+      "zh": "启动 ALT+数字 模式，输入十六进制代码的Unicode符号",
       "id": 3028 }
     ,
     "vkAlwaysOnTop": {
@@ -1899,6 +1900,7 @@
     ,
     "vkJumpActiveMonitor": {
       "en": "Move ConEmu window to the monitor with mouse cursor (Bring here)",
+      "zh": "用鼠标移动ConEmu窗口至显示器（鼠标处）",
       "id": 3026 }
     ,
     "vkJumpNextMonitor": {
@@ -2084,6 +2086,7 @@
     ,
     "vkResetTerminal": {
       "en": "Reset terminal: clear screen, backscroll, move cursor to the upper-left corner",
+      "zh": "重置终端：清屏，回滚，移动鼠标至左上角",
       "id": 3027 }
     ,
     "vkScreenshot": {
@@ -2394,26 +2397,32 @@
     ,
     "lng_AltNumberACP": {
       "en": "Type ANSI code point using decimal numbers",
+      "zh": "使用十进制数字输入ANSI代码点",
       "id": 16 }
     ,
     "lng_AltNumberExt": {
       "en": " - <Enter> to paste, <Esc> to cancel",
+      "zh": " - <Enter> 键粘贴，<Esc> 键取消",
       "id": 14 }
     ,
     "lng_AltNumberHex": {
       "en": "Type UNICODE code point using hexadecimal numbers",
+      "zh": "使用十六进制数字输入UNICODE代码点",
       "id": 15 }
     ,
     "lng_AltNumberStdACP": {
       "en": " - release <Alt> to paste ANSI code point",
+      "zh": " - 释放 <Alt> 键粘贴ANSI代码点",
       "id": 12 }
     ,
     "lng_AltNumberStdOEM": {
       "en": " - release <Alt> to paste OEM code point",
+      "zh": " - 释放 <Alt> 键粘贴OEM代码点",
       "id": 11 }
     ,
     "lng_AltNumberStdUCS": {
       "en": " - release <Alt> to paste UNICODE code point",
+      "zh": " - 释放 <Alt> 键粘贴UNICODE代码点",
       "id": 13 }
     ,
     "lng_DlgAbout": {
@@ -2460,6 +2469,7 @@
     ,
     "lng_ExitCode": {
       "en": "exit code",
+      "zh": "退出代码",
       "id": 17 }
     ,
     "lng_Search": {
@@ -2474,14 +2484,17 @@
     ,
     "lng_SelBlock": {
       "en": " block selection",
+      "zh": " 块状选择",
       "id": 20 }
     ,
     "lng_SelChars": {
       "en": " chars ",
+      "zh": " 字符 ",
       "id": 18 }
     ,
     "lng_SelStream": {
       "en": " stream selection",
+      "zh": " 流选择",
       "id": 19 }
   }
   ,
