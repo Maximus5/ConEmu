@@ -858,7 +858,6 @@
 #define rbDefaultTerminalConfNever      2521
 #define vkDeleteLeftWord                2522
 #define cbCTSDeleteLeftWord             2526
-#define lbCTSFindIdx                    2529
 #define rCursorH                        2530
 #define rCursorV                        2531
 #define rCursorB                        2532

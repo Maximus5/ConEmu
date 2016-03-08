@@ -906,12 +906,11 @@ BEGIN
     RTEXT           "Copying format:",stCopyFormat,10,47,71,8
     COMBOBOX        lbCopyFormat,86,44,120,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "Color indexes",gbSelectColorIdx,4,67,319,30
-    RTEXT           "Text:",stCTSTextColor,6,81,27,8
-    COMBOBOX        lbCTSForeIdx,35,78,27,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Back:",stCTSBackColor,69,81,34,8
-    COMBOBOX        lbCTSBackIdx,105,78,27,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Find:",IDC_STATIC,136,80,34,8,NOT WS_VISIBLE | WS_DISABLED
-    COMBOBOX        lbCTSFindIdx,172,78,27,30,CBS_DROPDOWNLIST | CBS_SORT | NOT WS_VISIBLE | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Foreground:",stCTSTextColor,11,81,57,8
+    COMBOBOX        lbCTSForeIdx,70,78,27,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Background:",stCTSBackColor,100,81,57,8
+    COMBOBOX        lbCTSBackIdx,160,78,27,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    CTEXT           "",stCTSPreview,196,76,121,17,WS_BORDER
     GROUPBOX        "Select text with mouse (LeftClick+Drag)",gbSelectMouse,4,102,319,57
     CONTROL         "Intelligent mode",cbCTSIntelligent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,115,80,8
     RTEXT           "Exceptions (""|""-separated):",stCTSIntelligentExceptions,90,115,103,8
@@ -929,7 +928,6 @@ BEGIN
     CONTROL         "Reset selection on input",cbCTSEndOnTyping,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,191,100,8
     CONTROL         "any key",cbCTSEndOnKeyPress,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,191,45,8
     CONTROL         "copy before reset",cbCTSEndCopyBefore,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,163,191,73,8
-    CTEXT           "",stCTSPreview,206,76,112,17,WS_BORDER
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235
