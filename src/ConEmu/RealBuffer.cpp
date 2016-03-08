@@ -3785,10 +3785,11 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 				DWORD nPrevTick = (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION) ? con.m_SelDblClickTick : con.m_SelClickTick;
 				if ((GetTickCount() - nPrevTick) > GetDoubleClickTime())
 				{
-					// Если длительность удержания кнопки мышки превышает DblClickTime
-					// то можно (и нужно) сразу выполнить копирование
+					// If duration of dragging/marking with mouse key pressed
+					// exceeds DblClickTime we may (and must) do copy immediately
 					_ASSERTE(nPrevTick!=0);
-					DoSelectionFinalize(true);
+					_ASSERTE(gpSet->isCTSAutoCopy && mp_RCon && mp_RCon->isSelectionPresent());
+					mp_RCon->AutoCopyTimer();
 				}
 				else
 				{
@@ -4489,6 +4490,12 @@ bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFo
 
 	RealBufferType bufType = m_Type;
 
+	bool bResetSelection = false;
+	if (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION)
+		bResetSelection = gpSet->isCTSResetOnRelease;
+	else if (con.m_sel.dwFlags)
+		bResetSelection = gpSet->isCTSEndOnTyping;
+
 	if (!con.m_sel.dwFlags)
 	{
 		MBoxAssert(con.m_sel.dwFlags != 0);
@@ -4531,8 +4538,8 @@ bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFo
 		}
 	}
 
-	// Fin, Сбрасываем
-	if (bRc)
+	// Fin, Reset selection region
+	if (bResetSelection && bRc)
 	{
 		DoSelectionStop(); // con.m_sel.dwFlags = 0;
 
@@ -5130,6 +5137,8 @@ bool CRealBuffer::DoSelectionFinalize(bool abCopy, CECopyMode CopyMode, WPARAM w
 	}
 
 	mp_RCon->mn_SelectModeSkipVk = wParam;
+
+	// Spare if abCopy is true
 	DoSelectionStop(); // con.m_sel.dwFlags = 0;
 
 	if (m_Type == rbt_Selection)
@@ -5164,12 +5173,16 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 		return ConEmuSkipHotKey;
 	}
 
-	// Del/Shift-Del/BS - try to "edit" prompt
-	bool bDel = false, bShiftDel = false, bBS = false;
-	if ((bDel = VkState.IsEqual(VK_DELETE, cvk_Naked))
+	// Del/Shift-Del/BS/Ctrl-X - try to "edit" prompt
+	bool bDel = false, bShiftDel = false, bBS = false, bCtrlX = false;
+	if (gpSet->isCTSEraseBeforeReset &&
+		((bDel = VkState.IsEqual(VK_DELETE, cvk_Naked))
 		|| (bShiftDel = VkState.IsEqual(VK_DELETE, cvk_Shift))
+		|| (bCtrlX = VkState.IsEqual('X', cvk_Ctrl))
 		|| (bBS = VkState.IsEqual(VK_BACK, cvk_Naked)))
+		)
 	{
+		bool bCopyBeforeErase = (bShiftDel || bCtrlX);
 		CONSOLE_SELECTION_INFO sel = con.m_sel;
 		COORD cur = con.m_sbi.dwCursorPosition;
 		COORD anch = sel.dwSelectionAnchor;
@@ -5183,7 +5196,7 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 				)
 			)
 		{
-			DoSelectionFinalize(bShiftDel, cm_CopySel, VkState.Vk);
+			DoSelectionFinalize(bCopyBeforeErase, cm_CopySel, VkState.Vk);
 			// Now post sequence of keys
 			UINT vkPostKey = 0; LPCWSTR pszKey = NULL;
 			if ((anch.X == sel.srSelection.Left) && (cur.X == anch.X)

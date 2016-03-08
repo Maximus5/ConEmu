@@ -12216,6 +12216,10 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	PostConsoleMessage(hConWnd, WM_COMMAND, SC_PASTE_SECRET, 0);
 #else
 
+	// Reset selection if it was present
+	if (isSelectionPresent())
+		mp_ABuf->DoSelectionFinalize(false);
+
 	wchar_t* pszBuf = NULL;
 
 	if (asText != NULL)
@@ -16322,7 +16326,10 @@ void CRealConsole::AutoCopyTimer()
 	if (gpSet->isCTSAutoCopy && isSelectionPresent())
 	{
 		DEBUGSTRTEXTSEL(L"CRealConsole::AutoCopyTimer() -> DoSelectionFinalize");
-		mp_ABuf->DoSelectionFinalize(true);
+		if (gpSet->isCTSResetOnRelease)
+			mp_ABuf->DoSelectionFinalize(true);
+		else
+			DoSelectionCopy();
 	}
 	else
 	{

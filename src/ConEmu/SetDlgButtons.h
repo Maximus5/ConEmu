@@ -228,9 +228,11 @@ protected:
 	static void OnBtn_CTSActConditionRadio(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSFreezeBeforeSelect(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSAutoCopy(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_CTSResetOnRelease(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSIBeam(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSEndCopyAuto(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSEndOnKeyPress(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_CTSEraseBeforeReset(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSBlockSelection(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSTextSelection(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSDetectLineEnd(HWND hDlg, WORD CB, BYTE uCheck);

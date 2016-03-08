@@ -911,7 +911,7 @@ BEGIN
     RTEXT           "Background:",stCTSBackColor,100,81,57,8
     COMBOBOX        lbCTSBackIdx,160,78,27,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     CTEXT           "",stCTSPreview,196,76,121,17,WS_BORDER
-    GROUPBOX        "Select text with mouse (LeftClick+Drag)",gbSelectMouse,4,102,319,57
+    GROUPBOX        "Select text with mouse (LeftClick+Drag)",gbSelectMouse,4,102,319,68
     CONTROL         "Intelligent mode",cbCTSIntelligent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,115,80,8
     RTEXT           "Exceptions (""|""-separated):",stCTSIntelligentExceptions,90,115,103,8
     EDITTEXT        tCTSIntelligentExceptions,196,113,121,12,ES_AUTOHSCROLL
@@ -920,14 +920,18 @@ BEGIN
     CONTROL         "Block (rectangular) selection",cbCTSBlockSelection,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,131,109,8
     COMBOBOX        lbCTSBlockSelection,262,129,55,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Copy on Left Button release",cbCTSAutoCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,145,125,8
-    CONTROL         "Show IBeam cursor",cbCTSIBeam,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,145,125,8
-    GROUPBOX        "Select text with keyboard (Also there are two hotkeys on Keys&Macro page)",gbSelectKeyboard,4,164,319,42
+    CONTROL         "Copy on Left Button release",cbCTSAutoCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,145,136,8
+    CONTROL         "Reset selection on Left Button release",cbCTSResetOnRelease,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,145,167,8
+    CONTROL         "Show IBeam cursor",cbCTSIBeam,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,158,136,8
+    GROUPBOX        "Select text with keyboard (Also there are two hotkeys on Keys&Macro page)",gbSelectKeyboard,4,177,319,52
     CONTROL         "Start selection with Shift+Arrow (Text = Left/Right/Home/End, Block = Up/Down)",cbCTSShiftArrowStartSel,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,177,308,8
-    CONTROL         "Reset selection on input",cbCTSEndOnTyping,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,191,100,8
-    CONTROL         "any key",cbCTSEndOnKeyPress,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,191,45,8
-    CONTROL         "copy before reset",cbCTSEndCopyBefore,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,163,191,73,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,190,308,8
+    CONTROL         "Reset selection on input",cbCTSEndOnTyping,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,204,136,8
+    CONTROL         "any non-alpha-numeric key",cbCTSEndOnKeyPress,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,154,203,164,8
+    CONTROL         "copy before reset",cbCTSEndCopyBefore,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,22,218,125,8
+    CONTROL         "try to cut/erase selection before reset",cbCTSEraseBeforeReset,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,154,218,164,8
 END
 
 IDD_SPG_TABS DIALOGEX 0, 0, 328, 235

@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 static LngPredefined gsDataHints[] = {
+	{ ID_DONATE_LINK,          L"Visit https://conemu.github.io/donate.html" },
 	{ ID_HOMEPAGE,             L"Visit https://conemu.github.io/" },
 	{ ID_REPORTBUG,            L"Create bug report or request new feature\r\nhttps://conemu.github.io/en/Issues.html" },
 	{ IDM_DETACH,              L"Show RealConsole and detach it from ConEmu" },
@@ -75,8 +76,10 @@ static LngPredefined gsDataHints[] = {
 	{ cbCTSEndCopyBefore,      L"Copy selection to clipboard before selection region reset" },
 	{ cbCTSEndOnKeyPress,      L"When ‘Off’ - only characters ends selection\r\nWhen ‘On’ - any key ends selection (Arrows, PgUp, End, etc.)" },
 	{ cbCTSEndOnTyping,        L"Reset selection region on keypress" },
+	{ cbCTSEraseBeforeReset,   L"Try to erase selected region if possible\r\nby posting sequence of Del/BS to console.\r\nImplement ‘usual’ hotkeys Ctrl+X, Shift+Del, BS and Del." },
 	{ cbCTSFreezeBeforeSelect, L"Freeze console contents before selection (may cause small lag)" },
 	{ cbCTSIBeam,              L"Show IBeam (text selection) cursor when available and allowed by settings and key modifiers" },
+	{ cbCTSResetOnRelease,     L"Reset selection region on left mouse button up (when selecting with mouse)" },
 	{ cbCTSShiftArrowStartSel, L"Start text selection with Shift+Left/Right/Home/End or block selection with Shift+Up/Down" },
 	{ cbCTSTextSelection,      L"Enable streaming selection (like GUI text editors)" },
 	{ cbCTSTrimTrailing,       L"3rd-state means ‘Only for Text selection’" },

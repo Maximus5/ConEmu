@@ -695,9 +695,11 @@ void Settings::InitSettings()
 	isCTSIntelligent = true;
 	pszCTSIntelligentExceptions = LineDelimited2MSZ(L"far|vim");
 	isCTSAutoCopy = true;
+	isCTSResetOnRelease = false;
 	isCTSIBeam = true;
 	isCTSEndOnTyping = false;
 	isCTSEndOnKeyPress = false;
+	isCTSEraseBeforeReset = true;
 	isCTSFreezeBeforeSelect = false;
 	isCTSSelectBlock = true; //isCTSVkBlock = VK_LMENU; // по умолчанию - блок выделяется c LAlt
 	isCTSSelectText = true; //isCTSVkText = VK_LSHIFT; // а текст - при нажатом LShift
@@ -2617,9 +2619,11 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		}
 
 		reg->Load(L"CTS.AutoCopy", isCTSAutoCopy);
+		reg->Load(L"CTS.ResetOnRelease", isCTSResetOnRelease);
 		reg->Load(L"CTS.IBeam", isCTSIBeam);
 		reg->Load(L"CTS.EndOnTyping", isCTSEndOnTyping); MinMax(isCTSEndOnTyping, 2);
 		reg->Load(L"CTS.EndOnKeyPress", isCTSEndOnKeyPress);
+		reg->Load(L"CTS.EraseBeforeReset", isCTSEraseBeforeReset);
 		reg->Load(L"CTS.Freeze", isCTSFreezeBeforeSelect);
 		reg->Load(L"CTS.SelectBlock", isCTSSelectBlock);
 		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
@@ -3661,9 +3665,11 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		SafeFree(pszApps);
 		}
 		reg->Save(L"CTS.AutoCopy", isCTSAutoCopy);
+		reg->Save(L"CTS.ResetOnRelease", isCTSResetOnRelease);
 		reg->Save(L"CTS.IBeam", isCTSIBeam);
 		reg->Save(L"CTS.EndOnTyping", isCTSEndOnTyping);
 		reg->Save(L"CTS.EndOnKeyPress", isCTSEndOnKeyPress);
+		reg->Save(L"CTS.EraseBeforeReset", isCTSEraseBeforeReset);
 		reg->Save(L"CTS.Freeze", isCTSFreezeBeforeSelect);
 		reg->Save(L"CTS.SelectBlock", isCTSSelectBlock);
 		//reg->Save(L"CTS.VkBlock", isCTSVkBlock);

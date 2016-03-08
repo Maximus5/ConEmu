@@ -2374,11 +2374,19 @@ LRESULT CSettings::OnInitDialog_MarkCopy(HWND hWnd2, bool abInitial)
 	SafeFree(pszExcept);
 
 	checkDlgButton(hWnd2, cbCTSAutoCopy, gpSet->isCTSAutoCopy);
+	checkDlgButton(hWnd2, cbCTSResetOnRelease, gpSet->isCTSResetOnRelease);
+	EnableDlgItem(hWnd2, cbCTSResetOnRelease, gpSet->isCTSAutoCopy);
+
 	checkDlgButton(hWnd2, cbCTSIBeam, gpSet->isCTSIBeam);
+
 	checkDlgButton(hWnd2, cbCTSEndOnTyping, (gpSet->isCTSEndOnTyping != 0));
 	checkDlgButton(hWnd2, cbCTSEndOnKeyPress, (gpSet->isCTSEndOnTyping != 0) && gpSet->isCTSEndOnKeyPress);
 	checkDlgButton(hWnd2, cbCTSEndCopyBefore, (gpSet->isCTSEndOnTyping == 1));
-	EnableWindow(GetDlgItem(hWnd2, cbCTSEndOnKeyPress), gpSet->isCTSEndOnTyping!=0);
+	checkDlgButton(hWnd2, cbCTSEraseBeforeReset, gpSet->isCTSEraseBeforeReset);
+	EnableDlgItem(hWnd2, cbCTSEndOnKeyPress, gpSet->isCTSEndOnTyping!=0);
+	EnableDlgItem(hWnd2, cbCTSEndCopyBefore, gpSet->isCTSEndOnTyping!=0);
+	EnableDlgItem(hWnd2, cbCTSEraseBeforeReset, gpSet->isCTSEndOnTyping!=0);
+
 	checkDlgButton(hWnd2, cbCTSFreezeBeforeSelect, gpSet->isCTSFreezeBeforeSelect);
 	checkDlgButton(hWnd2, cbCTSBlockSelection, gpSet->isCTSSelectBlock);
 	UINT VkMod = gpSet->GetHotkeyById(vkCTSVkBlock);
