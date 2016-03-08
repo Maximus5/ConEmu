@@ -104,7 +104,9 @@ bool CImgButtons::GetBtnInfo(UINT nCtrlId, BtnInfo** ppBtn)
 void CImgButtons::AddDonateButtons()
 {
 	Add(L"DONATE", CToolImg::CreateDonateButton, pLinkDonate, gsDonatePage, ConEmuAbout::OnInfo_DonateLink);
+	/*
 	Add(L"FLATTR", CToolImg::CreateFlattrButton, pLinkFlattr, gsFlattrPage, ConEmuAbout::OnInfo_FlattrLink);
+	*/
 
 	ImplementButtons();
 }
