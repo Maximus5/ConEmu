@@ -189,6 +189,12 @@
       "zh": "按下键盘按键时重置选择区域",
       "id": 2412 }
     ,
+    "cbCTSEraseBeforeReset": {
+      "en": [ "Try to erase selected region if possible\r\n"
+            , "by posting sequence of Del/BS to console.\r\n"
+            , "Implement ‘usual’ hotkeys Ctrl+X, Shift+Del, BS and Del." ],
+      "id": 3030 }
+    ,
     "cbCTSFreezeBeforeSelect": {
       "en": "Freeze console contents before selection (may cause small lag)",
       "zh": "在选择前冻结控制台内容（可能导致轻微滞后）",
@@ -198,6 +204,10 @@
       "en": "Show IBeam (text selection) cursor when available and allowed by settings and key modifiers",
       "zh": "在可用并被程序配置和键修饰符（key modifiers）设置为允许的情况下，显示IBeam（文本选择）光标",
       "id": 2603 }
+    ,
+    "cbCTSResetOnRelease": {
+      "en": "Reset selection region on left mouse button up (when selecting with mouse)",
+      "id": 3029 }
     ,
     "cbCTSShiftArrowStartSel": {
       "en": "Start text selection with Shift+Left/Right/Home/End or block selection with Shift+Up/Down",
@@ -2306,6 +2316,11 @@
   }
   ,
   "mnuhints": {
+    "ID_DONATE_LINK": {
+      "en": "Visit https://conemu.github.io/donate.html",
+      "zh": "访问https://conemu.github.io/donate.html",
+      "id": 43948 }
+    ,
     "ID_HOMEPAGE": {
       "en": "Visit https://conemu.github.io/",
       "zh": "访问https://conemu.github.io/",
@@ -2907,14 +2922,18 @@
       "id": 2579 }
     ,
     "cbCTSEndOnKeyPress": {
-      "en": "any key",
-      "zh": "任意键",
+      "en": "any non-alpha-numeric key",
+      "_zh": "任意键",
       "id": 2436 }
     ,
     "cbCTSEndOnTyping": {
       "en": "Reset selection on input",
       "zh": "输入时重置选择",
       "id": 2412 }
+    ,
+    "cbCTSEraseBeforeReset": {
+      "en": "try to cut/erase selection before reset",
+      "id": 3030 }
     ,
     "cbCTSFreezeBeforeSelect": {
       "en": "Freeze console contents before selection (may cause small lag)",
@@ -2930,6 +2949,10 @@
       "en": "Intelligent mode",
       "zh": "智能模式",
       "id": 2657 }
+    ,
+    "cbCTSResetOnRelease": {
+      "en": "Reset selection on Left Button release",
+      "id": 3029 }
     ,
     "cbCTSShiftArrowStartSel": {
       "en": "Start selection with Shift+Arrow (Text = Left/Right/Home/End, Block = Up/Down)",
@@ -4821,8 +4844,8 @@
       "id": 2872 }
     ,
     "stCTSBackColor": {
-      "en": "Back:",
-      "zh": "背部：",
+      "en": "Background:",
+      "_zh": "背部：",
       "id": 2978 }
     ,
     "stCTSEOL": {
@@ -4847,8 +4870,8 @@
       "id": 3022 }
     ,
     "stCTSTextColor": {
-      "en": "Text:",
-      "zh": "文本：",
+      "en": "Foreground:",
+      "_zh": "文本：",
       "id": 2977 }
     ,
     "stCursorMinSize": {
