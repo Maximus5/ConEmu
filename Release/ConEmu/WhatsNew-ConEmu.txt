@@ -20,6 +20,22 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.3.8
+* Option ‘Retard inactive panes’ was ignored in some cases.
+* Trailing dot was not trimmed after md-style hyperlink.
+* gh-420: Do not enable by default option ‘Process start’.
+* Debugging purposes: `ConEmuC.exe -struct %ConEmuPID%`.
+* In prompt, Shift+Home/End selects command text first, second press expands selection to line start/end.
+* If selection was started from keyboard, than Del/Shift-Del/Backspace removes selected text.
+  ConEmu tries to ‘map’ single Del/BS to series of keypresses to remove whole selected block.
+  Only one-line selections are processed.
+  Shift-Del do copying to clipboard before erasion.
+* Allow persistent mouse selection. Selection will reset on Paste or Typing.
+* When selection crosses anchor, behave same way if selection was started in that direction.
+* ANSI: Implement `ESC ] 9 ; 12 ST` to store end of prompt message.
+* l10n: Update chinese translation.
+
+
 2016.3.1
 * gh-562: Environment was not applied to elevated consoles.
 * Window icon was changed by mistake when starting task with defined icon.
