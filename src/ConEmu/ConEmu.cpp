@@ -428,7 +428,7 @@ CConEmuMain::CConEmuMain()
 	mb_AllowAutoChildFocus = false;
 	mb_ScClosePending = false;
 	mb_UpdateJumpListOnStartup = false;
-	mn_AdmShieldTimerCounter = 0;
+	mn_TBOverlayTimerCounter = 0;
 
 	mps_IconPath = NULL;
 	mh_TaskbarIcon = NULL;
@@ -7007,10 +7007,10 @@ void CConEmuMain::OnMainCreateFinished()
 	UNREFERENCED_PARAMETER(n);
 	OnActivateSplitChanged();
 
-	if (gpSet->isTaskbarShield && gpSet->isWindowOnTaskBar())
+	if (gpSet->isTaskbarOverlay && gpSet->isWindowOnTaskBar())
 	{
-		// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
-		mn_AdmShieldTimerCounter = 0;
+		// Bug in Win7? Sometimes after startup ‘Overlay icon’ was not appeared.
+		mn_TBOverlayTimerCounter = 0;
 		SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
 	}
 
@@ -8107,8 +8107,8 @@ void CConEmuMain::OnTaskbarButtonCreated()
 	{
 		if (mb_IsUacAdmin)
 		{
-			// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
-			mn_AdmShieldTimerCounter = 0;
+			// Bug in Win7? Sometimes after startup ‘Overlay icon’ was not appeared.
+			mn_TBOverlayTimerCounter = 0;
 			SetKillTimer(true, TIMER_ADMSHIELD_ID, TIMER_ADMSHIELD_ELAPSE);
 		}
 	}
@@ -12308,16 +12308,16 @@ void CConEmuMain::OnTimer_RClickPaint()
 	RightClickingPaint(NULL, NULL);
 }
 
-// Bug in Win7? Sometimes after startup "As Admin" shield was not appeared.
+// Bug in Win7? Sometimes after startup ‘Overlay icon’ was not appeared.
 void CConEmuMain::OnTimer_AdmShield()
 {
-	if (gpSet->isTaskbarShield)
+	if (gpSet->isTaskbarOverlay)
 	{
 		LogString(L"Calling Taskbar_UpdateOverlay from timer");
 		Taskbar_UpdateOverlay();
-		mn_AdmShieldTimerCounter++;
+		mn_TBOverlayTimerCounter++;
 	}
-	if ((mn_AdmShieldTimerCounter >= 5) || !gpSet->isTaskbarShield)
+	if ((mn_TBOverlayTimerCounter >= 5) || !gpSet->isTaskbarOverlay)
 	{
 		SetKillTimer(false, TIMER_ADMSHIELD_ID, 0);
 		LogString(L"Timer for Taskbar_UpdateOverlay was stopped");

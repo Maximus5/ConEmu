@@ -1922,7 +1922,7 @@ LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 		(gpSet->m_isTabsOnTaskBar == 2) ? rbTaskbarBtnWin7 :
 		(gpSet->m_isTabsOnTaskBar == 1) ? rbTaskbarBtnAll
 		: rbTaskbarBtnActive);
-	checkDlgButton(hWnd2, cbTaskbarShield, gpSet->isTaskbarShield);
+	checkDlgButton(hWnd2, cbTaskbarOverlay, gpSet->isTaskbarOverlay);
 	checkDlgButton(hWnd2, cbTaskbarProgress, gpSet->isTaskbarProgress);
 
 	//checkRadioButton(hWnd2, rbMultiLastClose, rbMultiLastTSA,

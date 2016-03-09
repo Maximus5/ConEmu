@@ -3630,7 +3630,7 @@
       "zh": "显示进度指示器（win7或更高）",
       "id": 2656 }
     ,
-    "cbTaskbarShield": {
+    "cbTaskbarOverlay": {
       "en": "Show overlay icon (Win7 and higher)",
       "zh": "显示覆盖图标（win7或更高）",
       "id": 2491 }

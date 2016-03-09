@@ -778,7 +778,7 @@ void Settings::InitSettings()
 	nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION; nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;
 	ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
-	isTaskbarShield = true;
+	isTaskbarOverlay = true;
 	isTaskbarProgress = true;
 
 	isTabsInCaption = false; //cbTabsInCaption
@@ -2809,7 +2809,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"TabDblClick", nTabBarDblClickAction); MinMax(nTabBarDblClickAction, 3);
 		reg->Load(L"TabBtnDblClick", nTabBtnDblClickAction); MinMax(nTabBtnDblClickAction, 5);
 		reg->Load(L"TabsOnTaskBar", m_isTabsOnTaskBar);
-		reg->Load(L"TaskBarOverlay", isTaskbarShield);
+		reg->Load(L"TaskBarOverlay", isTaskbarOverlay);
 		reg->Load(L"TaskbarProgress", isTaskbarProgress);
 
 		if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { SafeFree(sTabCloseMacro); }
@@ -3759,7 +3759,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"TabDblClick", nTabBarDblClickAction);
 		reg->Save(L"TabBtnDblClick", nTabBtnDblClickAction);
 		reg->Save(L"TabsOnTaskBar", m_isTabsOnTaskBar);
-		reg->Save(L"TaskBarOverlay", isTaskbarShield);
+		reg->Save(L"TaskBarOverlay", isTaskbarOverlay);
 		reg->Save(L"TaskbarProgress", isTaskbarProgress);
 		reg->Save(L"TabCloseMacro", sTabCloseMacro);
 		reg->Save(L"TabFontFace", sTabFontFace);

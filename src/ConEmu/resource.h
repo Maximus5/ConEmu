@@ -825,7 +825,7 @@
 #define rbScrollbarShow                 2488
 #define rbScrollbarAuto                 2489
 #define stHideCaptionAlwaysFrame        2490
-#define cbTaskbarShield                 2491
+#define cbTaskbarOverlay                2491
 #define vkPasteCygwin                   2492
 #define cbCmdTasksActive                2493
 #define vkTabMenu2                      2494

@@ -452,10 +452,10 @@ void CTaskBar::Taskbar_UpdateOverlay()
 	}
 
 	// TODO: Separate option is required!
-	if (!gpSet->isTaskbarShield)
+	if (!gpSet->isTaskbarOverlay)
 	{
 		Taskbar_SetOverlay(NULL);
-		LogString(L"Taskbar_UpdateOverlay skipped: !isTaskbarShield");
+		LogString(L"Taskbar_UpdateOverlay skipped: !isTaskbarOverlay");
 		return;
 	}
 
