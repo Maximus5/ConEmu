@@ -274,6 +274,27 @@ bool isCharComining(ucs32 inChar)
 	return is_char_combining(inChar);
 }
 
+bool isCharNonWord(ucs32 inChar)
+{
+	if (isCharSpace(inChar)
+		|| isCharSeparate(inChar)
+		|| isCharPseudographics(inChar)
+		)
+		return true;
+	return false;
+}
+
+bool isCharPunctuation(ucs32 inChar)
+{
+	// .,!:;?()<>[]{}¡¿
+	return ((inChar <= 0xBF)
+		&& ((inChar == L'.') || (inChar == L',') || (inChar == L'!') || (inChar == L':')
+			|| (inChar == L';') || (inChar == L'?') || (inChar == L'¡') || (inChar == L'¿')
+			|| (inChar == L'(') || (inChar == L')') || (inChar == L'{') || (inChar == L'}')
+			|| (inChar == L'<') || (inChar == L'>') || (inChar == L'[') || (inChar == L']')
+		));
+}
+
 
 
 //TODO: 1 pixel for all shrinkable characters? prefer some function of Length...

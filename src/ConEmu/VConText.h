@@ -216,3 +216,5 @@ bool isCharSpaceSingle(ucs32 inChar);
 bool isCharRTL(ucs32 inChar);
 bool isCharCJK(ucs32 inChar);
 bool isCharComining(ucs32 inChar);
+bool isCharNonWord(ucs32 inChar);
+bool isCharPunctuation(ucs32 inChar);
