@@ -26,9 +26,10 @@ typedef INT_PTR ssize_t;
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 #define __forceinline __inline__
 #endif
-template <class T>__forceinline const T& klMin(const T &a, const T &b) {return a < b ? a : b;}
-template <class T>__forceinline const T& klMax(const T &a, const T &b) {return a > b ? a : b;}
-template <class T>__forceinline void klSwap(T &a, T &b) {T k = a; a = b; b = k;}
+template <class T>__forceinline const T& klMin(const T& a, const T& b) {return a < b ? a : b;}
+template <class T>__forceinline const T& klMax(const T& a, const T& b) {return a > b ? a : b;}
+template <class T>__forceinline void klSwap(T& a, T& b) {T k = a; a = b; b = k;}
+template <class T>__forceinline const T klSet(T& a, const T& b) { const T k = a; a = b; return k; }
 
 #define klstricmp lstrcmpi
 #define klstricmpA lstrcmpiA
