@@ -4355,6 +4355,11 @@ BOOL CRealConsole::StartProcess()
 	}
 
 
+	// In case if console was restarted with another icon (shell/task)
+	if (isActive(false))
+		mp_ConEmu->Taskbar_UpdateOverlay();
+
+
 	bool bAllowDefaultCmd = (!m_Args.pszSpecialCmd || !*m_Args.pszSpecialCmd);
 	//int nStep = (m_Args.pszSpecialCmd!=NULL) ? 2 : 1;
 	int nStep = 1;

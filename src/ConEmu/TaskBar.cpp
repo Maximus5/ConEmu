@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2015 Maximus5
+Copyright (c) 2011-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -425,6 +425,10 @@ bool CTaskBar::isTaskbarSmallIcons()
 void CTaskBar::Taskbar_SetOverlay(HICON ahIcon)
 {
 	HRESULT hr = E_FAIL;
+
+	// If we use ‘Overlay icon’, don't change WM_GETICON
+	gpConEmu->SetTaskbarIcon(NULL);
+
 	// WinXP does not have mp_TaskBar3
 	if (mp_TaskBar3)
 	{
@@ -445,13 +449,9 @@ void CTaskBar::Taskbar_SetOverlay(HICON ahIcon)
 
 void CTaskBar::Taskbar_UpdateOverlay()
 {
-	if (!this || !mp_TaskBar3)
-	{
-		LogString(L"Taskbar_UpdateOverlay skipped: !mp_TaskBar3");
-		return;
-	}
-
-	// TODO: Separate option is required!
+	// The icon may be set either via ITaskbarList3::SetOverlayIcon
+	// or via result of WM_GETICON if TaskBar has small icons
+	// Also, WinXP has small icons always...
 	if (!gpSet->isTaskbarOverlay)
 	{
 		Taskbar_SetOverlay(NULL);

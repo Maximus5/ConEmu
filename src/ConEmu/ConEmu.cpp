@@ -3584,12 +3584,24 @@ void CConEmuMain::SetTaskbarIcon(HICON ahNewIcon)
 {
 	// Change only icon on TaskBar, don't change Alt+Tab or TitleBar icons
 	#if 1
-	// -- Seems like this is not required, at least Win 8 sends WM_GETICON automatically
-	//SendMessage(ghWnd, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
 
-	if (mh_TaskbarIcon && (mh_TaskbarIcon != ahNewIcon))
-		DestroyIcon(mh_TaskbarIcon);
-	mh_TaskbarIcon = ahNewIcon;
+	if (mh_TaskbarIcon != ahNewIcon)
+	{
+		wchar_t szLog[140] = L"";
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"SetTaskbarIcon: NewIcon=x%p OldIcon=x%p", (LPVOID)ahNewIcon, (LPVOID)mh_TaskbarIcon);
+		LogString(szLog);
+
+		// mh_TaskbarIcon will be returned for WM_GETICON(ICON_SMALL|ICON_SMALL2)
+		HICON hOldIcon = klSet(mh_TaskbarIcon, ahNewIcon);
+		if (hOldIcon)
+			DestroyIcon(hOldIcon);
+
+		// Have to "force refresh" the icon on TaskBar, otherwise
+		// icon would not be updated on sequential clicks on cbTaskbarOverlay
+		SendMessage(ghWnd, WM_SETICON, ICON_SMALL, 0);
+		SendMessage(ghWnd, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
+	}
+
 	#endif
 
 	// This would change window icon (TaskBar, TitleBar, Alt+Tab)
@@ -13546,7 +13558,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				return (LRESULT)hClassIcon;
 			case ICON_SMALL:
 			case ICON_SMALL2:
-				return (LRESULT)(mh_TaskbarIcon ? mh_TaskbarIcon : hClassIconSm);
+				if (!gpSet->isTaskbarOverlay || !mh_TaskbarIcon)
+					return (LRESULT)hClassIconSm;
+				return (LRESULT)mh_TaskbarIcon;
 			default:
 				return ::DefWindowProc(hWnd, messg, wParam, lParam);
 			}
