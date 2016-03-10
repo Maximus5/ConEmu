@@ -164,17 +164,18 @@ DWORD CRunQueue::RunQueueThread()
 
 		if (nWait == WAIT_TIMEOUT)
 		{
+			if (CVConGroup::InCreateGroup())
+				continue;
+
 			// To avoid "initialization hangs" we enforce bPending
 			// even if mh_AdvanceEvent was not set (unexpected behavior?)
 			bPending = !m_RunQueue.empty();
 
-			if (CVConGroup::InCreateGroup())
-				continue;
-
 			#ifdef _DEBUG
 			if (bPending)
 			{
-				_ASSERTE(!bPending && "AdvanceQueue() was not called?");
+				DWORD nWait2 = WaitForSingleObject(mh_AdvanceEvent, 0);
+				_ASSERTE((nWait2 == WAIT_OBJECT_0) && "AdvanceQueue() was not called?");
 			}
 			#endif
 		}
