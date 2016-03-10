@@ -3460,7 +3460,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		if (messg == WM_LBUTTONDOWN)
 		{
 			// Selection mode would be started here
-			if (OnMouseSelection(messg, wParam, x, y))
+			if (OnMouseSelection(WM_LBUTTONDOWN, wParam, x, y))
 				return true;
 		}
 
