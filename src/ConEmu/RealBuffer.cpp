@@ -3940,9 +3940,11 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	{
 		BYTE bAction = (messg == WM_RBUTTONUP) ? gpSet->isCTSRBtnAction : gpSet->isCTSMBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
 
+		// On mouse selection, when LBtn is still down, and RBtn is clicked - Do "Internal Copy & Paste"
+
 		bool bDoCopyWin = (bAction == 1);
-		bool bDoPaste = (bAction == 3);
-		bool bDoCopy = bDoCopyWin || bDoPaste;
+		bool bDoPaste = (bAction == 3) && (con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN);
+		bool bDoCopy = bDoCopyWin || bDoPaste || (bAction == 3);
 
 		if (!bDoPaste)
 		{
