@@ -3355,7 +3355,23 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 	mcr_LastMousePos = crMouse;
 
-	bool  bSelAllowed = isSelectionAllowed();
+	bool  bSelAllowed = isSelectionPresent();
+	// No sense to query isSelectionAllowed on any MouseMove
+	if (!bSelAllowed)
+	{
+		if ((con.ISel.State != IS_None)
+			|| (messg == WM_LBUTTONDOWN || messg == WM_LBUTTONUP || messg == WM_LBUTTONDBLCLK)
+			|| (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONUP)
+			|| (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONUP)
+			)
+		{
+			bSelAllowed = isSelectionAllowed();
+			#ifdef _DEBUG
+			if (bSelAllowed)
+				DEBUGSTRSEL(L"Selection: isSelectionAllowed()==true");
+			#endif
+		}
+	}
 
 	if (bSelAllowed && gpSet->isCTSIntelligent
 		&& !isSelectionPresent()
@@ -3363,42 +3379,80 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	{
 		if (messg == WM_LBUTTONDOWN)
 		{
-			con.mpt_IntelliLClick = MakePoint(x,y);
-			con.mb_IntelliStored = TRUE;
+			DEBUGSTRSEL(L"Selection: set IS_LBtnDown on WM_LBUTTONDOWN");
+			con.ISel.LClickPt = MakePoint(x,y);
+			con.ISel.ClickTick = GetTickCount();
+			con.ISel.State = IS_LBtnDown;
 		}
-		else if (con.mb_IntelliStored)
+		else if (con.ISel.State)
 		{
 			if (!isPressed(VK_LBUTTON))
 			{
-				con.mb_IntelliStored = FALSE;
+				DEBUGSTRSEL(L"Selection: set IS_LBtnReleased");
+				con.ISel.State = IS_LBtnReleased;
 			}
-			else if (messg == WM_MOUSEMOVE)
+			else
 			{
 				int nMinX = gpSetCls->FontWidth();
 				int nMinY = gpSetCls->FontHeight();
 				int nMinDiff = max(nMinX, nMinY);
-				int nXdiff = x - con.mpt_IntelliLClick.x;
-				int nYdiff = y - con.mpt_IntelliLClick.y;
-				// Приоритет - текстовому выделению?
-				DWORD nForce = 0;
-				if (_abs(nXdiff) >= nMinDiff)
-					nForce = CONSOLE_TEXT_SELECTION;
-				else if (_abs(nYdiff) >= nMinDiff)
-					nForce = CONSOLE_BLOCK_SELECTION;
-				// GO!
-				if (nForce)
+				int nXdiff = x - con.ISel.LClickPt.x;
+				int nYdiff = y - con.ISel.LClickPt.y;
+
+				if ((messg == WM_MOUSEMOVE) && (con.ISel.State == IS_LBtnDown))
 				{
-					gpConEmu->ForceSelectionModifierPressed(nForce);
-					_ASSERTE((nForce & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)) == nForce);
-					con.m_sel.dwFlags |= (nForce & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION));
-					OnMouseSelection(WM_LBUTTONDOWN, wParam, con.mpt_IntelliLClick.x, con.mpt_IntelliLClick.y);
+					// Check first for Text selection
+					DWORD nForce = 0;
+					if (_abs(nXdiff) >= nMinDiff)
+						nForce = CONSOLE_TEXT_SELECTION;
+					else if (_abs(nYdiff) >= nMinDiff)
+						nForce = CONSOLE_BLOCK_SELECTION;
+					// GO!
+					if (nForce)
+					{
+						DEBUGSTRSEL(L"Selection: Starting due to MouseMove and IntelliSel");
+						gpConEmu->ForceSelectionModifierPressed(nForce);
+						_ASSERTE((nForce & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)) == nForce);
+						con.m_sel.dwFlags |= (nForce & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION));
+						OnMouseSelection(WM_LBUTTONDOWN, wParam, con.ISel.LClickPt.x, con.ISel.LClickPt.y);
+						return true;
+					}
+				}
+				else if ((messg == WM_LBUTTONDBLCLK) && (con.ISel.State == IS_LBtnReleased))
+				{
+					if ((_abs(nXdiff) < nMinDiff) && (_abs(nYdiff) < nMinDiff))
+					{
+						// Simulate started stream selection
+						if (!(con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)))
+						{
+							DEBUGSTRSEL(L"Selection: Simulating CONSOLE_TEXT_SELECTION started");
+							con.m_sel.dwFlags = CONSOLE_TEXT_SELECTION|CONSOLE_MOUSE_SELECTION;
+						}
+
+						// And expand it to word boundary
+						DEBUGSTRSEL(L"Selection: Trigger WM_LBUTTONDBLCLK on IntelliSel");
+						OnMouseSelection(WM_LBUTTONDBLCLK, wParam, x, y);
+
+						// To be sure Triple-Click would be OK
+						if (con.m_sel.dwFlags)
+							con.m_sel.dwFlags |= CONSOLE_DBLCLICK_SELECTION;
+
+						DEBUGSTRSEL(L"Selection: set IS_None (auto)");
+						con.ISel.State = IS_None;
+
+						return true;
+					}
 				}
 			}
 		}
 	}
-	else
+	else if (con.ISel.State)
 	{
-		con.mb_IntelliStored = FALSE;
+		if ((GetTickCount() - con.ISel.ClickTick) <= GetDoubleClickTime())
+		{
+			DEBUGSTRSEL(L"Selection: set IS_None (timeout)");
+			con.ISel.State = IS_None;
+		}
 	}
 
 	if (bSelAllowed)
@@ -3677,7 +3731,9 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	COORD cr = ScreenToBuffer(crScreen);
 
 
-	if (messg == WM_LBUTTONDOWN)
+	if ((messg == WM_LBUTTONDOWN)
+		|| ((messg == WM_LBUTTONDBLCLK) && (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)) && (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION))
+		)
 	{
 		BOOL lbStreamSelection = FALSE;
 		BYTE vkMod = 0; // Если удерживается модификатор - его нужно "отпустить" в консоль

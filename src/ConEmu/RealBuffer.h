@@ -54,6 +54,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CMatch;
 
+enum IntelligentSelectionState
+{
+	IS_None = 0,
+	IS_LBtnDown,
+	IS_LBtnReleased,
+};
+
 class CRealBuffer
 {
 public:
@@ -249,7 +256,11 @@ protected:
 	{
 		CONSOLE_SELECTION_INFO m_sel;
 		DWORD m_SelClickTick, m_SelDblClickTick, m_SelLastScrollCheck;
-		BOOL mb_IntelliStored; POINT mpt_IntelliLClick; // Сохранить позицию клика для Intelligent selection
+		struct {
+			IntelligentSelectionState State; // former mb_IntelliStored
+			DWORD ClickTick; // To be sure if we need DblClick selection
+			POINT LClickPt; // Save LBtnDown position for Intelligent selection
+		} ISel; // Intelligent selection
 		LONG mn_UpdateSelectionCalled;
 		CONSOLE_CURSOR_INFO m_ci;
 		DWORD m_dwConsoleCP, m_dwConsoleOutputCP;
