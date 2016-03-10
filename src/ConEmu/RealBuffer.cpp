@@ -3345,17 +3345,26 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	DEBUGSTRMOUSE(szDbgInfo);
 	#endif
 
+	bool lbSkip = true;
+	bool lbFarBufferSupported = false;
+	bool lbMouseSendAllowed = false;
+	bool lbMouseOverScroll = false;
+	bool bSelAllowed = false;
+	DWORD nModifierPressed = 0;
+	DWORD nModifierNoEmptyPressed = 0;
+
 	// Ensure that coordinates are correct
 	if (!PatchMouseCoords(x, y, crMouse))
 	{
 		if (isSelectionPresent())
-			return true; // even if outside - don't send to console!
-		return false;
+			goto wrap; // even if outside - don't send to console!
+		lbSkip = false;
+		goto wrap;
 	}
 
 	mcr_LastMousePos = crMouse;
 
-	bool  bSelAllowed = isSelectionPresent();
+	bSelAllowed = isSelectionPresent();
 	// No sense to query isSelectionAllowed on any MouseMove
 	if (!bSelAllowed)
 	{
@@ -3373,9 +3382,15 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		}
 	}
 
+	if (bSelAllowed)
+	{
+		nModifierPressed = gpConEmu->isSelectionModifierPressed(true);
+		nModifierNoEmptyPressed = gpConEmu->isSelectionModifierPressed(false);
+	}
+
 	if (bSelAllowed && gpSet->isCTSIntelligent
 		&& !isSelectionPresent()
-		&& !gpConEmu->isSelectionModifierPressed(true))
+		&& !nModifierPressed)
 	{
 		if (messg == WM_LBUTTONDOWN)
 		{
@@ -3415,7 +3430,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 						_ASSERTE((nForce & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)) == nForce);
 						con.m_sel.dwFlags |= (nForce & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION));
 						OnMouseSelection(WM_LBUTTONDOWN, wParam, con.ISel.LClickPt.x, con.ISel.LClickPt.y);
-						return true;
+						goto wrap;
 					}
 				}
 				else if ((messg == WM_LBUTTONDBLCLK) && (con.ISel.State == IS_LBtnReleased))
@@ -3440,7 +3455,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 						DEBUGSTRSEL(L"Selection: set IS_None (auto)");
 						con.ISel.State = IS_None;
 
-						return true;
+						goto wrap;
 					}
 				}
 			}
@@ -3503,15 +3518,15 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			// Skip LBtnUp
 			if ((messg == WM_LBUTTONUP)
 				// but allow LBtnDown if it's inside selection (double and triple clicks)
-				|| (!bInside && (messg == WM_LBUTTONDOWN)))
+				|| (!bInside && (messg == WM_LBUTTONDOWN) && !nModifierNoEmptyPressed))
 			{
 				// Anyway, clicks would be ignored
 				#ifdef _DEBUG
-				wchar_t szLog[128];
-				_wsprintf(szLog, SKIPCOUNT(szLog) L"Selection: %s %s ignored", (messg == WM_LBUTTONDOWN) ? L"WM_LBUTTONDOWN" : L"WM_LBUTTONUP", bInside ? L"Inside" : L"Outside");
-				DEBUGSTRSEL(szLog);
+				_wsprintf(szDbgInfo, SKIPCOUNT(szDbgInfo) L"Selection: %s %s ignored", GetMouseMsgName(messg), bInside ? L"Inside" : L"Outside");
+				DEBUGSTRSEL(szDbgInfo);
 				#endif
-				return true;
+				con.mn_SkipNextMouseEvent = (messg == WM_LBUTTONDOWN) ? WM_LBUTTONUP : 0;
+				goto wrap;
 			}
 		}
 
@@ -3519,16 +3534,16 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		{
 			// Selection mode would be started here
 			if (OnMouseSelection(WM_LBUTTONDOWN, wParam, x, y))
-				return true;
+				goto wrap;
 		}
 
 		// Если выделение еще не начато, но удерживается модификатор - игнорировать WM_MOUSEMOVE
 		if (messg == WM_MOUSEMOVE && !con.m_sel.dwFlags)
 		{
-			if (gpConEmu->isSelectionModifierPressed(false))
+			if (nModifierNoEmptyPressed)
 			{
 				// Пропустить, пользователь собирается начать выделение, не посылать движение мыши в консоль
-				return true;
+				goto wrap;
 			}
 		}
 
@@ -3557,7 +3572,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 				}
 			}
 
-			return true;
+			goto wrap;
 		}
 
 		if (((gpSet->isCTSMBtnAction == 2) || ((gpSet->isCTSMBtnAction == 3) && !isSelectionPresent()))
@@ -3571,7 +3586,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 				mp_RCon->Paste();
 			}
 
-			return true;
+			goto wrap;
 		}
 	}
 
@@ -3585,14 +3600,16 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			{
 				// Пускать или нет событие мыши в консоль?
 				// Лучше наверное не пускать, а то вьювер может заклинить на прокрутке, например
-				return true;
+				goto wrap;
 			}
 		}
 	}
 
-	bool lbFarBufferSupported = mp_RCon->isFarBufferSupported();
-	bool lbMouseSendAllowed = !gpSet->isDisableMouse && mp_RCon->isSendMouseAllowed();
-	bool lbMouseOverScroll = false;
+	// Init variables
+	lbFarBufferSupported = mp_RCon->isFarBufferSupported();
+	lbMouseSendAllowed = !gpSet->isDisableMouse && mp_RCon->isSendMouseAllowed();
+	lbMouseOverScroll = false;
+
 	// Проверять мышку имеет смысл только если она пересылается в фар, а не работает на прокрутку
 	if ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL))
 	{
@@ -3610,13 +3627,14 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		if ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL))
 		{
 			_ASSERTE(FALSE && "Must be processed in CRealConsole::OnScroll");
-			return true; // обработано
+			goto wrap; // обработано
 		}
 
 		if (!isConSelectMode())
 		{
-			// Пропустить в консоль, если это НЕ Far
-			return (m_Type != rbt_Primary);
+			// Allow posting mouse event to console if this is NOT a Far.exe
+			lbSkip = (m_Type != rbt_Primary);
+			goto wrap;
 		}
 	}
 
@@ -3628,7 +3646,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		if (messg != WM_MOUSEMOVE) DEBUGSTRSEL(L"Seletion: (con.m_sel.dwFlags != 0)");
 		#endif
 		OnMouseSelection(messg, wParam, x, y);
-		return true;
+		goto wrap;
 	}
 
 	// При правом клике на KeyBar'е - показать PopupMenu с вариантами модификаторов F-клавиш
@@ -3695,7 +3713,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 					con.ptRClick4KeyBar = mp_RCon->mp_VCon->ConsoleToClient((vk==VK_F1)?(px+1):(px+2), lcrScr.Y);
 					ClientToScreen(mp_RCon->GetView(), &con.ptRClick4KeyBar);
 					con.nRClickVK = vk;
-					return true;
+					goto wrap;
 				}
 			}
 		}
@@ -3737,13 +3755,13 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 			//Done
 			con.bRClick4KeyBar = FALSE;
-			return true;
+			goto wrap;
 		}
 		else if (messg == WM_MOUSEMOVE)
 		{
 			_ASSERTE(con.bRClick4KeyBar);
 			TODO("«Отпустить» если был сдвиг?");
-			return true; // не пропускать в консоль
+			goto wrap; // не пропускать в консоль
 		}
 	}
 	else if (con.bRClick4KeyBar)
@@ -3751,8 +3769,19 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		con.bRClick4KeyBar = FALSE;
 	}
 
-	// Пропускать мышь в консоль только если буфер реальный
-	return (m_Type != rbt_Primary);
+	// Allow posting mouse event to console only for rbt_Primary buffer
+	lbSkip = (m_Type != rbt_Primary);
+wrap:
+	if (messg == con.mn_SkipNextMouseEvent)
+	{
+		con.mn_SkipNextMouseEvent = 0;
+		#ifdef _DEBUG
+		_wsprintf(szDbgInfo, SKIPCOUNT(szDbgInfo) L"Selection: %s is skipped", GetMouseMsgName(messg));
+		DEBUGSTRSEL(szDbgInfo);
+		#endif
+		lbSkip = true;
+	}
+	return lbSkip;
 }
 
 BOOL CRealBuffer::GetRBtnDrag(COORD* pcrMouse)

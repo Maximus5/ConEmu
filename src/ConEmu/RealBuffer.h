@@ -261,6 +261,7 @@ protected:
 			DWORD ClickTick; // To be sure if we need DblClick selection
 			POINT LClickPt; // Save LBtnDown position for Intelligent selection
 		} ISel; // Intelligent selection
+		UINT mn_SkipNextMouseEvent; // Avoid posting LBtnUp in console, if we processed LBtnDn internally
 		LONG mn_UpdateSelectionCalled;
 		CONSOLE_CURSOR_INFO m_ci;
 		DWORD m_dwConsoleCP, m_dwConsoleOutputCP;
