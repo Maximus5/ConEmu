@@ -86,6 +86,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRDRAW(s) //DEBUGSTR(s)
 #define DEBUGSTRSTATUS(s) DEBUGSTR(s)
 #define DEBUGSTRINPUT(s) //DEBUGSTR(s)
+#define DEBUGSTRINPUTMSG(s) DEBUGSTR(s)
+#define DEBUGSTRINPUTLL(s) DEBUGSTR(s)
 #define DEBUGSTRWHEEL(s) //DEBUGSTR(s)
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
@@ -2226,19 +2228,30 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 		}
 		#endif
 
-		// Запомним
-		m_LastMouse.dwMousePosition   = piRec->Event.MouseEvent.dwMousePosition;
-		m_LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
-		m_LastMouse.dwButtonState     = piRec->Event.MouseEvent.dwButtonState;
-		m_LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
+		if (((m_LastMouse.dwEventFlags & MOUSE_MOVED) && !(piRec->Event.MouseEvent.dwEventFlags & MOUSE_MOVED))
+			|| (!(m_LastMouse.dwEventFlags & MOUSE_MOVED)
+					&& (0 != memcmp(&m_LastMouse, &piRec->Event.MouseEvent, sizeof(m_LastMouse))))
+			)
+		{
+			#ifdef _DEBUG
+			const MOUSE_EVENT_RECORD& me = piRec->Event.MouseEvent;
+			wchar_t szDbg[120];
+			_wsprintf(szDbg, SKIPCOUNT(szDbg) L"RCon::Mouse(Send) event at {%i,%i} Btns=x%X Keys=x%X %s",
+				me.dwMousePosition.X, me.dwMousePosition.Y, me.dwButtonState, me.dwControlKeyState,
+				(me.dwEventFlags & MOUSE_MOVED) ? L"Moved" : L"");
+			DEBUGSTRINPUTLL(szDbg);
+			#endif
+		}
+
+		// Store last mouse event
+		m_LastMouse = piRec->Event.MouseEvent;
+		//m_LastMouse.dwMousePosition   = piRec->Event.MouseEvent.dwMousePosition;
+		//m_LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
+		//m_LastMouse.dwButtonState     = piRec->Event.MouseEvent.dwButtonState;
+		//m_LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
 		#ifdef _DEBUG
 		nLastBtnState = piRec->Event.MouseEvent.dwButtonState;
 		#endif
-		//#ifdef _DEBUG
-		//wchar_t szDbg[60];
-		//swprintf_c(szDbg, L"ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
-		//DEBUGSTRINPUT(szDbg);
-		//#endif
 	}
 	else if (piRec->EventType == KEY_EVENT)
 	{
@@ -5037,8 +5050,15 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 #define WM_MOUSEHWHEEL                  0x020E
 #endif
 #ifdef _DEBUG
-	wchar_t szDbg[60]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"RCon::MouseEvent at DC {%ix%i}\n", x,y);
-	DEBUGSTRINPUT(szDbg);
+	wchar_t szDbg[60];
+	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"RCon::Mouse(messg=%s) at DC {%ix%i} %s",
+		GetMouseMsgName(messg), x, y, abForceSend ? L"ForceSend" : L"");
+	static UINT lastMsg = 0;
+	if ((messg != WM_MOUSEMOVE) || (messg != lastMsg))
+	{
+		DEBUGSTRINPUTMSG(szDbg);
+	}
+	lastMsg = messg;
 #endif
 
 	if (!this || !hConWnd)
@@ -5144,10 +5164,9 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 				{
 				wchar_t szInfo[100];
 				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Changing prompt position by LClick: {%i,%i} Force=%u Margin=%u", pIn->Prompt.xPos, pIn->Prompt.yPos, pIn->Prompt.Force, pIn->Prompt.BashMargin);
+				DEBUGSTRCLICKPOS(szInfo);
 				if (mp_Log)
 					LogString(szInfo);
-				else
-					DEBUGSTRCLICKPOS(szInfo);
 				}
 
 				CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
@@ -9361,11 +9380,11 @@ void CRealConsole::OnFocus(BOOL abFocused)
 		#ifdef _DEBUG
 		if (abFocused)
 		{
-			DEBUGSTRINPUT(L"--Gets focus\n")
+			DEBUGSTRFOCUS(L"--Gets focus");
 		}
 		else
 		{
-			DEBUGSTRINPUT(L"--Loses focus\n")
+			DEBUGSTRFOCUS(L"--Loses focus");
 		}
 		#endif
 
