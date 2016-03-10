@@ -1654,7 +1654,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 				if ((*(pszDst-1) == L' ') && (*pszText == L' '))
 					pszText = SkipNonPrintable(pszText);
 				TCHAR* pszPartEnd = pszEnd; CEStr lsTrimmed;
-				if (bDynamic && (nMaxLen > 1) && (wcslen(pszText) > nMaxLen))
+				if (bDynamic && (nMaxLen > 1) && (wcslen(pszText) > (size_t)nMaxLen))
 				{
 					if (lsTrimmed.Set(pszText))
 					{
