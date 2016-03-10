@@ -10014,22 +10014,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 #ifdef _DEBUG
 	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI::Mouse %s at screen {%ix%i} x%08X%s\n",
-		(messg==WM_MOUSEMOVE) ? L"WM_MOUSEMOVE" :
-		(messg==WM_LBUTTONDOWN) ? L"WM_LBUTTONDOWN" :
-		(messg==WM_LBUTTONUP) ? L"WM_LBUTTONUP" :
-		(messg==WM_LBUTTONDBLCLK) ? L"WM_LBUTTONDBLCLK" :
-		(messg==WM_RBUTTONDOWN) ? L"WM_RBUTTONDOWN" :
-		(messg==WM_RBUTTONUP) ? L"WM_RBUTTONUP" :
-		(messg==WM_RBUTTONDBLCLK) ? L"WM_RBUTTONDBLCLK" :
-		(messg==WM_MBUTTONDOWN) ? L"WM_MBUTTONDOWN" :
-		(messg==WM_MBUTTONUP) ? L"WM_MBUTTONUP" :
-		(messg==WM_MBUTTONDBLCLK) ? L"WM_MBUTTONDBLCLK" :
-		(messg==0x020A) ? L"WM_MOUSEWHEEL" :
-		(messg==0x020B) ? L"WM_XBUTTONDOWN" :
-		(messg==0x020C) ? L"WM_XBUTTONUP" :
-		(messg==0x020D) ? L"WM_XBUTTONDBLCLK" :
-		(messg==0x020E) ? L"WM_MOUSEHWHEEL" :
-		L"UnknownMsg",
+		GetMouseMsgName(messg),
 		ptCurScreen.x,ptCurScreen.y,(DWORD)wParam,
 		bContinue ? L"" : L" - SKIPPED!");
 	DEBUGSTRMOUSE(szDbg);

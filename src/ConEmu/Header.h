@@ -189,6 +189,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
 #define DEBUGLOGFILE(m)
 #define DebugLogMessage(h,m,w,l,posted,extra)
 #endif
+LPCWSTR GetMouseMsgName(UINT msg);
 
 void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
 

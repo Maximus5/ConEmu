@@ -189,6 +189,36 @@ wchar_t gsAltConFont[32] = L"Courier New"; // "Lucida Console" is not installed?
 // Use this (default) in ConEmu interface, where allowed (tabs, status, panel views, ...)
 wchar_t gsDefMUIFont[32] = L"Tahoma";         // WindowsVista ? L"Segoe UI" : L"Tahoma"
 
+LPCWSTR GetMouseMsgName(UINT msg)
+{
+	LPCWSTR pszName;
+	switch (msg)
+	{
+	case WM_MOUSEMOVE: pszName = L"WM_MOUSEMOVE"; break;
+	case WM_LBUTTONDOWN: pszName = L"WM_LBUTTONDOWN"; break;
+	case WM_LBUTTONUP: pszName = L"WM_LBUTTONUP"; break;
+	case WM_LBUTTONDBLCLK: pszName = L"WM_LBUTTONDBLCLK"; break;
+	case WM_RBUTTONDOWN: pszName = L"WM_RBUTTONDOWN"; break;
+	case WM_RBUTTONUP: pszName = L"WM_RBUTTONUP"; break;
+	case WM_RBUTTONDBLCLK: pszName = L"WM_RBUTTONDBLCLK"; break;
+	case WM_MBUTTONDOWN: pszName = L"WM_MBUTTONDOWN"; break;
+	case WM_MBUTTONUP: pszName = L"WM_MBUTTONUP"; break;
+	case WM_MBUTTONDBLCLK: pszName = L"WM_MBUTTONDBLCLK"; break;
+	case 0x020A: pszName = L"WM_MOUSEWHEEL"; break;
+	case 0x020B: pszName = L"WM_XBUTTONDOWN"; break;
+	case 0x020C: pszName = L"WM_XBUTTONUP"; break;
+	case 0x020D: pszName = L"WM_XBUTTONDBLCLK"; break;
+	case 0x020E: pszName = L"WM_MOUSEHWHEEL"; break;
+	default:
+		{
+			static wchar_t szTmp[32] = L"";
+			_wsprintf(szTmp, SKIPCOUNT(szTmp) L"0x%X(%u)", msg, msg);
+			pszName = szTmp;
+		}
+	}
+	return pszName;
+}
+
 LONG gnMessageNestingLevel = 0;
 
 #ifdef MSGLOGGER
