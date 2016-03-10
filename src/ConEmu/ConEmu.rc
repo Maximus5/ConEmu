@@ -312,7 +312,7 @@ BEGIN
                     "Button",BS_AUTORADIOBUTTON,11,59,140,8
     CONTROL         "Don't show ConEmu window on Taskbar",rbTaskbarBtnHidden,
                     "Button",BS_AUTORADIOBUTTON,158,59,159,8
-    CONTROL         "Show overlay icon (Win7 and higher)",cbTaskbarShield,
+    CONTROL         "Show overlay icon (Win7 and higher)",cbTaskbarOverlay,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,74,143,8
     CONTROL         "Show progress indicator (Win7 and higher)",cbTaskbarProgress,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,74,159,8
