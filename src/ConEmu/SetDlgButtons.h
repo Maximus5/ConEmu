@@ -151,7 +151,7 @@ protected:
 	static void OnBtn_TabSelf(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_TabRecent(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_TabLazy(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_TaskbarShield(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_TaskbarOverlay(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_TaskbarProgress(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_TaskbarBtnRadio(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_RSelectionFix(HWND hDlg, WORD CB, BYTE uCheck);

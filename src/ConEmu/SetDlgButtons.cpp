@@ -430,7 +430,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			OnBtn_TabLazy(hDlg, CB, uCheck);
 			break;
 		case cbTaskbarOverlay:
-			OnBtn_TaskbarShield(hDlg, CB, uCheck);
+			OnBtn_TaskbarOverlay(hDlg, CB, uCheck);
 			break;
 		case cbTaskbarProgress:
 			OnBtn_TaskbarProgress(hDlg, CB, uCheck);
@@ -2632,7 +2632,7 @@ void CSetDlgButtons::OnBtn_TabLazy(HWND hDlg, WORD CB, BYTE uCheck)
 
 
 // cbTaskbarOverlay
-void CSetDlgButtons::OnBtn_TaskbarShield(HWND hDlg, WORD CB, BYTE uCheck)
+void CSetDlgButtons::OnBtn_TaskbarOverlay(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbTaskbarOverlay);
 
