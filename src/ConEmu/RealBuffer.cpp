@@ -6663,8 +6663,9 @@ bool CRealBuffer::isSelectionAllowed()
 				}
 				else
 				{
-					// Must not get here, because of CompareProcessNames
-					_ASSERTE(FALSE);
+					// GetActiveProcessName() may have lags due to complexity
+					// But isFar() always returns actual state
+					// So we may get here if 'Far' has just become inactive (command execution)
 					continue;
 				}
 			}
