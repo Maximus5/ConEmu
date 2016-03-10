@@ -3625,15 +3625,15 @@
       "zh": "标签在底部",
       "id": 2481 }
     ,
-    "cbTaskbarProgress": {
-      "en": "Show progress indicator (Win7 and higher)",
-      "zh": "显示进度指示器（win7或更高）",
-      "id": 2656 }
-    ,
     "cbTaskbarOverlay": {
       "en": "Show overlay icon (Win7 and higher)",
       "zh": "显示覆盖图标（win7或更高）",
       "id": 2491 }
+    ,
+    "cbTaskbarProgress": {
+      "en": "Show progress indicator (Win7 and higher)",
+      "zh": "显示进度指示器（win7或更高）",
+      "id": 2656 }
     ,
     "cbThumbCacheFolder": {
       "en": "Choose...",
