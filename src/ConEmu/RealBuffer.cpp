@@ -69,14 +69,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConText.h"
 #include "VirtualConsole.h"
 
-#define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE2(s) DEBUGSTR(s) // Warning level
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
-#define DEBUGSTRTOPLEFT(s) DEBUGSTR(s)
+#define DEBUGSTRTOPLEFT(s) //DEBUGSTR(s)
 #define DEBUGSTRTRUEMOD(s) //DEBUGSTR(s)
-#define DEBUGSTRLINK(s) DEBUGSTR(s)
+#define DEBUGSTRLINK(s) //DEBUGSTR(s)
+#define DEBUGSTRSEL(s) DEBUGSTR(s)
 
 // ANSI, without "\r\n"
 #define IFLOGCONSOLECHANGE gpSetCls->isAdvLogging>=2
@@ -3404,7 +3405,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	{
 		if (messg == WM_LBUTTONDOWN)
 		{
-			// Начало обработки выделения
+			// Selection mode would be started here
 			if (OnMouseSelection(messg, wParam, x, y))
 				return true;
 		}
@@ -3419,7 +3420,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			}
 		}
 
-		if (((gpSet->isCTSRBtnAction == 2) || ((gpSet->isCTSRBtnAction == 3) && !isSelectionPresent()))
+		if (((gpSet->isCTSRBtnAction == 2/*Paste*/) || ((gpSet->isCTSRBtnAction == 3/*Auto*/) && !isSelectionPresent()))
 				&& (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONUP)
 		        && ((gpSet->isCTSActMode == 2 && mp_RCon->isBufferHeight() && !mp_RCon->isFarBufferSupported())
 		            || (gpSet->isCTSActMode == 1 && gpSet->IsModifierPressed(vkCTSVkAct, true))))
@@ -3430,13 +3431,16 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 				// and if selection exists copy it first and paste internally
 				if (isSelectionPresent() && gpSet->isCTSIntelligent)
 				{
+					DEBUGSTRSEL(L"Selection: DoCopyPaste#R");
 					DoCopyPaste(true, true);
 				}
 				else
 				{
 					// Paste is useless in "Alternative mode" or while selection is present...
+					DEBUGSTRSEL(L"Selection: DoSelectionFinalize#R");
 					DoSelectionFinalize(false);
 					// And Paste itself
+					DEBUGSTRSEL(L"Selection: Paste#R");
 					mp_RCon->Paste();
 				}
 			}
@@ -3449,7 +3453,11 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		        && ((gpSet->isCTSActMode == 2 && mp_RCon->isBufferHeight() && !mp_RCon->isFarBufferSupported())
 		            || (gpSet->isCTSActMode == 1 && gpSet->IsModifierPressed(vkCTSVkAct, true))))
 		{
-			if (messg == WM_MBUTTONUP) mp_RCon->Paste();
+			if (messg == WM_MBUTTONUP)
+			{
+				DEBUGSTRSEL(L"Selection: Paste#M");
+				mp_RCon->Paste();
+			}
 
 			return true;
 		}
@@ -3504,6 +3512,9 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	if (con.m_sel.dwFlags != 0)
 	{
 		// Ручная обработка выделения, на консоль полагаться не следует...
+		#ifdef _DEBUG
+		if (messg != WM_MOUSEMOVE) DEBUGSTRSEL(L"Seletion: (con.m_sel.dwFlags != 0)");
+		#endif
 		OnMouseSelection(messg, wParam, x, y);
 		return true;
 	}
@@ -3702,6 +3713,13 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			crTo.X = GetBufferWidth()-1;
 		}
 
+		#ifdef _DEBUG
+		wchar_t szLog[200]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Selection: %s %s",
+			(messg == WM_LBUTTONDOWN) ? L"WM_LBUTTONDOWN" : L"WM_LBUTTONDBLCLK",
+			bTripleClick ? L"bTripleClick" : L"");
+		DEBUGSTRSEL(szLog);
+		#endif
+
 		// Если дошли сюда - значит или модификатор нажат, или из меню выделение запустили
 		StartSelection(lbStreamSelection, cr.X, cr.Y, TRUE, bTripleClick ? WM_LBUTTONDBLCLK : WM_LBUTTONDOWN, bTripleClick ? &crTo : NULL);
 
@@ -3713,6 +3731,8 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	{
 		// Выделить слово под курсором (как в обычной консоли)
 		BOOL lbStreamSelection = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
+
+		DEBUGSTRSEL(L"Selection: WM_LBUTTONDBLCLK - expanding etr_Word");
 
 		// Нужно получить координаты слова
 		COORD crFrom = cr, crTo = cr;
