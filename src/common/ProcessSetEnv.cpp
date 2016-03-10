@@ -268,15 +268,15 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 				lstrmerge(&lsSwitches.ms_Val, lsSwitches.IsEmpty() ? NULL : L" ", lsSet.ms_Val);
 			}
 			// Rest arguments are expected to be processed text or file
-			CEStr lsAdd; const wchar_t* pchStart = NULL;
-			while (NextArg(&lsCmdLine, lsSet, &pchStart) == 0)
+			CEStr lsAdd;
+			while (NextArg(&lsCmdLine, lsSet) == 0)
 			{
 				bTokenOk = true;
 				lstrmerge(&lsAdd.ms_Val,
 					lsAdd.IsEmpty() ? NULL : L" ",
-					(*pchStart == L'"') ? L"\"" : NULL,
+					lsSet.mb_Quoted ? L"\"" : NULL,
 					lsSet.ms_Val,
-					(*pchStart == L'"') ? L"\"" : NULL);
+					lsSet.mb_Quoted ? L"\"" : NULL);
 				lsCmdLine = SkipNonPrintable(lsCmdLine);
 				if (!*lsCmdLine || (*lsCmdLine == L'&') || (*lsCmdLine == L'|'))
 					break;
@@ -585,9 +585,9 @@ wchar_t* CProcessEnvCmd::Allocate(size_t* pchSize)
 						cpyadv(pszDst, p->pszName);
 						*(pszDst++) = L' ';
 					}
-					*(pszDst++) = L'\"';
+					//*(pszDst++) = L'\"';
 					cpyadv(pszDst, p->pszValue);
-					*(pszDst++) = L'\"';
+					//*(pszDst++) = L'\"';
 					*(pszDst++) = L'\n';
 				}
 				else
