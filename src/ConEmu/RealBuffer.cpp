@@ -3457,6 +3457,64 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 	if (bSelAllowed)
 	{
+		// Click outside selection region - would reset active selection
+		if (((messg == WM_LBUTTONDOWN) || ((messg == WM_LBUTTONUP) && !(con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN)))
+			&& gpSet->isCTSIntelligent // Only intelligent mode?
+			&& isSelectionPresent())
+		{
+			COORD crScreen = mp_RCon->mp_VCon->ClientToConsole(x,y);
+			MinMax(crScreen.X, 0, TextWidth()-1);
+			MinMax(crScreen.Y, 0, TextHeight()-1);
+			COORD cr = ScreenToBuffer(crScreen);
+
+			bool bInside = false;
+			if (isStreamSelection())
+			{
+				// Complicated rules
+				const SMALL_RECT& sr = con.m_sel.srSelection;
+				if ((((cr.Y == sr.Top) && (cr.X >= sr.Left))
+						|| (cr.Y > sr.Top))
+					&& (((cr.Y == sr.Bottom) && (cr.X <= sr.Right))
+						|| (cr.Y < sr.Bottom))
+					)
+				{
+					bInside = true;
+				}
+			}
+			else // block selection
+			{
+				bInside = CoordInSmallRect(cr, con.m_sel.srSelection);
+			}
+
+			if (!bInside)
+			{
+				DEBUGSTRSEL(L"Selection: DoSelectionFinalize#L");
+				DoSelectionFinalize(false);
+			}
+
+			if (messg == WM_LBUTTONDOWN)
+			{
+				DEBUGSTRSEL(L"Selection: set IS_LBtnDown on WM_LBUTTONDOWN after reset");
+				con.ISel.LClickPt = MakePoint(x,y);
+				con.ISel.ClickTick = GetTickCount();
+				con.ISel.State = IS_LBtnDown;
+			}
+
+			// Skip LBtnUp
+			if ((messg == WM_LBUTTONUP)
+				// but allow LBtnDown if it's inside selection (double and triple clicks)
+				|| (!bInside && (messg == WM_LBUTTONDOWN)))
+			{
+				// Anyway, clicks would be ignored
+				#ifdef _DEBUG
+				wchar_t szLog[128];
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"Selection: %s %s ignored", (messg == WM_LBUTTONDOWN) ? L"WM_LBUTTONDOWN" : L"WM_LBUTTONUP", bInside ? L"Inside" : L"Outside");
+				DEBUGSTRSEL(szLog);
+				#endif
+				return true;
+			}
+		}
+
 		if (messg == WM_LBUTTONDOWN)
 		{
 			// Selection mode would be started here
