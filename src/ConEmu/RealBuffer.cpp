@@ -4181,7 +4181,7 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 	con.m_sel.srSelection.Top = con.m_sel.srSelection.Bottom = cr.Y;
 	_ASSERTE(cr.Y>=GetBufferPosY() && cr.Y<GetBufferHeight());
 
-	UpdateSelection();
+	con.mn_UpdateSelectionCalled = 0;
 
 	if ((anFromMsg == WM_LBUTTONDBLCLK) || (pcrTo && (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION)))
 	{
@@ -4206,6 +4206,12 @@ void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=
 		{
 			mp_RCon->VCon()->SetAutoCopyTimer(true);
 		}
+	}
+
+	// Refresh on-screen and status
+	if (!con.mn_UpdateSelectionCalled)
+	{
+		UpdateSelection();
 	}
 }
 
@@ -5085,6 +5091,8 @@ int CRealBuffer::GetSelectionCellsCount()
 // обновить на экране
 void CRealBuffer::UpdateSelection()
 {
+	InterlockedIncrement(&con.mn_UpdateSelectionCalled);
+
 	// Show current selection state in the Status bar
 	mp_RCon->OnSelectionChanged();
 

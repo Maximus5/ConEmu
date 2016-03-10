@@ -250,6 +250,7 @@ protected:
 		CONSOLE_SELECTION_INFO m_sel;
 		DWORD m_SelClickTick, m_SelDblClickTick, m_SelLastScrollCheck;
 		BOOL mb_IntelliStored; POINT mpt_IntelliLClick; // Сохранить позицию клика для Intelligent selection
+		LONG mn_UpdateSelectionCalled;
 		CONSOLE_CURSOR_INFO m_ci;
 		DWORD m_dwConsoleCP, m_dwConsoleOutputCP;
 		WORD m_dwConsoleInMode, m_dwConsoleOutMode;
