@@ -635,7 +635,7 @@ function UpdateConEmuL10N()
   Set-Content $target_l10n $script:l10n -Encoding UTF8
 }
 
-function NewLngResource([string]$id,[string]$str)
+function NewLngResource([string]$id,[string]$str,[bool]$loop=$FALSE)
 {
   $script:str_id = @{}
 
@@ -653,8 +653,10 @@ function NewLngResource([string]$id,[string]$str)
 
   if ($script:rsrcs.ContainsKey($id)) {
     Write-Host -ForegroundColor Red "Key '$id' already exists: $($script:rsrcs[$id])"
-    $host.SetShouldExit(101)
-    exit
+    if (-Not ($loop)) {
+      $host.SetShouldExit(101)
+      exit
+    }
     return
   }
 
@@ -666,8 +668,10 @@ function NewLngResource([string]$id,[string]$str)
   $iNextId = ($script:str_id.Values | measure-object -Maximum).Maximum
   if (($iNextId -eq $null) -Or ($iNextId -eq 0)) {
     Write-Host -ForegroundColor Red "lng_NextId was not found!"
-    $host.SetShouldExit(101)
-    exit
+    if (-Not ($loop)) {
+      $host.SetShouldExit(101)
+      exit
+    }
     return
   }
   $iNextId ++
@@ -721,6 +725,29 @@ function NewLngResource([string]$id,[string]$str)
   return
 }
 
+function NewLngResourceLoop()
+{
+  while ($TRUE) {
+    Write-Host -ForeGroundColor Yellow -NoNewLine "ResourceID: "
+    Write-Host -ForeGroundColor Gray -NoNewLine "lng_"
+    $id = Read-Host
+    if ($id -eq "") { return }
+    $id = "lng_$id"
+    if (-Not ($id -match "^\w+$")) {
+      Write-Host -ForegroundColor Red "  Invalid ResourceID: '$id'"
+      continue
+    }
+    Write-Host -ForeGroundColor Yellow -NoNewLine "    String: "
+    $str = Read-Host
+    if ($str -eq "") {
+      Write-Host -ForegroundColor Red "  Empty string skipped"
+      continue
+    }
+
+    NewLngResource $id $str $TRUE
+  }
+}
+
 
 
 #################################################
@@ -730,6 +757,10 @@ if ($mode -eq "auto") {
   UpdateConEmuL10N
   Write-Host "All done"
 } elseif ($mode -eq "add") {
-  if ($str -eq "") { $str = $env:ce_add_str }
-  NewLngResource $id $str
+  if (($id -eq "") -Or ($id -eq "-")) {
+    NewLngResourceLoop
+  } else {
+    if ($str -eq "") { $str = $env:ce_add_str }
+    NewLngResource $id $str
+  }
 }
