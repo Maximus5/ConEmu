@@ -3477,30 +3477,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			&& gpSet->isCTSIntelligent // Only intelligent mode?
 			&& isSelectionPresent())
 		{
-			COORD crScreen = mp_RCon->mp_VCon->ClientToConsole(x,y);
-			MinMax(crScreen.X, 0, TextWidth()-1);
-			MinMax(crScreen.Y, 0, TextHeight()-1);
-			COORD cr = ScreenToBuffer(crScreen);
-
-			bool bInside = false;
-			if (isStreamSelection())
-			{
-				// Complicated rules
-				const SMALL_RECT& sr = con.m_sel.srSelection;
-				if ((((cr.Y == sr.Top) && (cr.X >= sr.Left))
-						|| (cr.Y > sr.Top))
-					&& (((cr.Y == sr.Bottom) && (cr.X <= sr.Right))
-						|| (cr.Y < sr.Bottom))
-					)
-				{
-					bInside = true;
-				}
-			}
-			else // block selection
-			{
-				bInside = CoordInSmallRect(cr, con.m_sel.srSelection);
-			}
-
+			bool bInside = isMouseInsideSelection(x, y);
 			if (!bInside)
 			{
 				DEBUGSTRSEL(L"Selection: DoSelectionFinalize#L");
@@ -6845,6 +6822,38 @@ bool CRealBuffer::isMouseSelectionPresent()
 		return false;
 
 	return ((con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION) != 0);
+}
+
+bool CRealBuffer::isMouseInsideSelection(int x, int y)
+{
+	if (!this || !isSelectionPresent())
+		return false;
+
+	COORD crScreen = mp_RCon->mp_VCon->ClientToConsole(x, y);
+	MinMax(crScreen.X, 0, TextWidth() - 1);
+	MinMax(crScreen.Y, 0, TextHeight() - 1);
+	COORD cr = ScreenToBuffer(crScreen);
+
+	bool bInside = false;
+	if (isStreamSelection())
+	{
+		// Complicated rules
+		const SMALL_RECT& sr = con.m_sel.srSelection;
+		if ((((cr.Y == sr.Top) && (cr.X >= sr.Left))
+			|| (cr.Y > sr.Top))
+			&& (((cr.Y == sr.Bottom) && (cr.X <= sr.Right))
+				|| (cr.Y < sr.Bottom))
+			)
+		{
+			bInside = true;
+		}
+	}
+	else // block selection
+	{
+		bInside = CoordInSmallRect(cr, con.m_sel.srSelection);
+	}
+
+	return bInside;
 }
 
 bool CRealBuffer::GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel)
