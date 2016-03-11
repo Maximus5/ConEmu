@@ -173,23 +173,28 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 	case WM_PAINT:
 		DBGFUNCTION(L"WM_PAINT \n");
-		lResult = OnPaint(hWnd, NULL/*use BeginPaint,EndPaint*/, WM_PAINT); return true;
+		lResult = OnPaint(hWnd, NULL/*use BeginPaint,EndPaint*/, WM_PAINT);
+		return true;
 
 	case WM_NCPAINT:
 		DBGFUNCTION(L"WM_NCPAINT \n");
-		lResult = OnNcPaint(hWnd, uMsg, wParam, lParam); return true;
+		lResult = OnNcPaint(hWnd, uMsg, wParam, lParam);
+		return true;
 
 	case WM_NCACTIVATE:
 		DBGFUNCTION(L"WM_NCACTIVATE \n");
-		lResult = OnNcActivate(hWnd, uMsg, wParam, lParam); return true;
+		lResult = OnNcActivate(hWnd, uMsg, wParam, lParam);
+		return true;
 
 	case WM_NCCALCSIZE:
 		DBGFUNCTION(L"WM_NCCALCSIZE \n");
-		lResult = OnNcCalcSize(hWnd, uMsg, wParam, lParam); return true;
+		lResult = OnNcCalcSize(hWnd, uMsg, wParam, lParam);
+		return true;
 
 	case WM_NCHITTEST:
 		DBGFUNCTION(L"WM_NCHITTEST \n");
-		lResult = OnNcHitTest(hWnd, uMsg, wParam, lParam); return true;
+		lResult = OnNcHitTest(hWnd, uMsg, wParam, lParam);
+		return true;
 
 	case WM_NCLBUTTONDOWN:
 	case WM_NCLBUTTONUP:
@@ -354,11 +359,14 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	//case WM_NCCREATE: gpConEmu->CheckGlassAttribute(); return false;
 
 	case 0xAE: /*WM_NCUAHDRAWCAPTION*/
-		lResult = OnDwmMessage(hWnd, uMsg, wParam, lParam); return true;
+		lResult = OnDwmMessage(hWnd, uMsg, wParam, lParam);
+		return true;
 	case 0xAF: /*WM_NCUAHDRAWFRAME*/
-		lResult = OnDwmMessage(hWnd, uMsg, wParam, lParam); return true;
+		lResult = OnDwmMessage(hWnd, uMsg, wParam, lParam);
+		return true;
 	case 0x31E: /*WM_DWMCOMPOSITIONCHANGED*/
-		lResult = OnDwmMessage(hWnd, uMsg, wParam, lParam); return true;
+		lResult = OnDwmMessage(hWnd, uMsg, wParam, lParam);
+		return true;
 
 	case WM_SYSCOMMAND:
 		if (wParam == SC_MAXIMIZE || wParam == SC_MINIMIZE || wParam == SC_RESTORE)
