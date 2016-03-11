@@ -742,6 +742,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			break;
 		case cbCTSResetOnRelease:
 			OnBtn_CTSResetOnRelease(hDlg, CB, uCheck);
+			break;
 		case cbCTSIBeam:
 			OnBtn_CTSIBeam(hDlg, CB, uCheck);
 			break;
