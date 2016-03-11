@@ -3949,12 +3949,28 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		// On mouse selection, when LBtn is still down, and RBtn is clicked - Do "Internal Copy & Paste"
 
 		bool bDoCopyWin = (bAction == 1);
-		bool bDoPaste = (bAction == 3) && (con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN);
-		bool bDoCopy = bDoCopyWin || bDoPaste || (bAction == 3);
+		bool bDoPaste = false;
+
+		if (bAction == 3)
+		{
+			if ((con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN))
+			{
+				// LBtn is pressed now
+				bDoPaste = true;
+			}
+			else if (gpSet->isCTSIntelligent && isMouseInsideSelection(x, y))
+			{
+				// If LBtn was released, but RBtn was pressed **over** selection
+				// That allows DblClick on file and RClick on it to paste selection into CmdLine
+				bDoPaste = true;
+			}
+		}
+
 
 		if (!bDoPaste)
 		{
 			// While "Paste" was not requested - that means "Copy to Windows clipboard"
+			bool bDoCopy = bDoCopyWin || bDoPaste || (bAction == 3);
 			DoSelectionFinalize(bDoCopy);
 		}
 		else
