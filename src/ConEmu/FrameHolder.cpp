@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
+#include "../common/MSetter.h"
 
 #ifdef _DEBUG
 static int _nDbgStep = 0; wchar_t _szDbg[512];
@@ -73,6 +74,7 @@ CFrameHolder::CFrameHolder()
 	mn_FrameHeight = 0;
 	mn_OurCaptionHeight = 0;
 	mn_CaptionDragHeight = 0;
+	mn_InNcPaint = 0;
 }
 
 CFrameHolder::~CFrameHolder()
@@ -177,9 +179,14 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		return true;
 
 	case WM_NCPAINT:
+	{
 		DBGFUNCTION(L"WM_NCPAINT \n");
+		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_NCPAINT - begin");
+		MSetter inNcPaint(&mn_InNcPaint);
 		lResult = OnNcPaint(hWnd, uMsg, wParam, lParam);
+		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_NCPAINT - end");
 		return true;
+	}
 
 	case WM_NCACTIVATE:
 		DBGFUNCTION(L"WM_NCACTIVATE \n");
@@ -359,14 +366,28 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	//case WM_NCCREATE: gpConEmu->CheckGlassAttribute(); return false;
 
 	case 0xAE: /*WM_NCUAHDRAWCAPTION*/
+	{
+		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_NCUAHDRAWCAPTION - begin");
+		MSetter inNcPaint(&mn_InNcPaint);
 		lResult = OnDwmMessage(hWnd, uMsg, wParam, lParam);
+		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_NCUAHDRAWCAPTION - end");
 		return true;
+	}
 	case 0xAF: /*WM_NCUAHDRAWFRAME*/
+	{
+		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_NCUAHDRAWFRAME - begin");
+		MSetter inNcPaint(&mn_InNcPaint);
 		lResult = OnDwmMessage(hWnd, uMsg, wParam, lParam);
+		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_NCUAHDRAWFRAME - end");
 		return true;
+	}
 	case 0x31E: /*WM_DWMCOMPOSITIONCHANGED*/
+	{
+		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_DWMCOMPOSITIONCHANGED - begin");
 		lResult = OnDwmMessage(hWnd, uMsg, wParam, lParam);
+		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_DWMCOMPOSITIONCHANGED - end");
 		return true;
+	}
 
 	case WM_SYSCOMMAND:
 		if (wParam == SC_MAXIMIZE || wParam == SC_MINIMIZE || wParam == SC_RESTORE)

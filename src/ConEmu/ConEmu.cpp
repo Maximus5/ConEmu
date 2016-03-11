@@ -13543,8 +13543,14 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				return (LRESULT)hClassIcon;
 			case ICON_SMALL:
 			case ICON_SMALL2:
-				if (!gpSet->isTaskbarOverlay || !mh_TaskbarIcon)
+				if (isInNcPaint() || !gpSet->isTaskbarOverlay || !mh_TaskbarIcon)
+				{
+					if (gpSetCls->isAdvLogging>=2)
+						LogString(L"WM_GETICON: returning hClassIconSm");
 					return (LRESULT)hClassIconSm;
+				}
+				if (gpSetCls->isAdvLogging >= 2)
+					LogString(L"WM_GETICON: returning mh_TaskbarIcon");
 				return (LRESULT)mh_TaskbarIcon;
 			default:
 				return ::DefWindowProc(hWnd, messg, wParam, lParam);
