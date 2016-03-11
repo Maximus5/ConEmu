@@ -2127,7 +2127,7 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 			ch = lpCur->Char.UnicodeChar;
 			//2009-09-25. Некоторые (старые?) программы умудряются засунуть в консоль символы (ASC<32)
 			//            их нужно заменить на юникодные аналоги
-			*(lpChar++) = (ch < 32) ? gszAnalogues[(WORD)ch] : ch;
+			*(lpChar++) = ((WORD)ch < 32) ? gszAnalogues[(WORD)ch] : ch;
 		}
 
 		// Для использования строковых функций - гарантируем ASCIIZ буфера
