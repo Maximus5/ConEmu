@@ -2374,7 +2374,7 @@ LRESULT CSettings::OnInitDialog_MarkCopy(HWND hWnd2, bool abInitial)
 	SafeFree(pszExcept);
 
 	checkDlgButton(hWnd2, cbCTSAutoCopy, gpSet->isCTSAutoCopy);
-	checkDlgButton(hWnd2, cbCTSResetOnRelease, gpSet->isCTSResetOnRelease);
+	checkDlgButton(hWnd2, cbCTSResetOnRelease, (gpSet->isCTSResetOnRelease && gpSet->isCTSAutoCopy));
 	EnableDlgItem(hWnd2, cbCTSResetOnRelease, gpSet->isCTSAutoCopy);
 
 	checkDlgButton(hWnd2, cbCTSIBeam, gpSet->isCTSIBeam);

@@ -3880,7 +3880,10 @@ void CSetDlgButtons::OnBtn_CTSAutoCopy(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->isCTSAutoCopy = (uCheck != BST_UNCHECKED);
 
 	if (hDlg)
+	{
+		CSettings::checkDlgButton(hDlg, cbCTSResetOnRelease, (gpSet->isCTSResetOnRelease && gpSet->isCTSAutoCopy));
 		CSettings::EnableDlgItem(hDlg, cbCTSResetOnRelease, gpSet->isCTSAutoCopy);
+	}
 
 } // cbCTSAutoCopy
 
