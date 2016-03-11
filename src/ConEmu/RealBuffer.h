@@ -174,6 +174,9 @@ public:
 	BOOL GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData = NULL);
 	void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
 
+	void ResetConData();
+	bool isConDataValid();
+
 	DWORD_PTR GetKeybLayout();
 	void  SetKeybLayout(DWORD_PTR anNewKeyboardLayout);
 
@@ -278,6 +281,7 @@ protected:
 		BOOL bInGetConsoleData;
 		int nCreatedBufWidth, nCreatedBufHeight; // Informational
 		size_t nConBufCells; // Max buffers size (cells!)
+		bool mb_ConDataValid;
 		wchar_t *pConChar;
 		WORD  *pConAttr;
 		CHAR_INFO *pDataCmp;

@@ -4164,6 +4164,12 @@ void CRealConsole::ResetVarsOnStart()
 
 	mn_FarNoPanelsCheck = 0;
 
+	// Don't show in VCon invalid data
+	if (mp_RBuf)
+		mp_RBuf->ResetConData();
+	// At the moment of start, Primary buffer is expected to be active
+	_ASSERTE(mp_ABuf == mp_RBuf);
+
 	if (mp_XTerm)
 		mp_XTerm->Reset();
 

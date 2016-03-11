@@ -383,6 +383,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 		}
 	}
 
+	con.mb_ConDataValid = true;
 	con.bConsoleDataChanged = TRUE;
 
 	lbRc = true; // OK
@@ -534,6 +535,7 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 		//wmemmove(con.pConChar, dump.pszBlock1, cchCellCount);
 	}
 
+	con.mb_ConDataValid = true;
 	con.bConsoleDataChanged = TRUE;
 
 	lbRc = true; // OK
@@ -2139,6 +2141,8 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 		{
 			_ASSERTE(lpChar < (con.pConChar + con.nConBufCells));
 		}
+
+		con.mb_ConDataValid = true;
 
 		HEAPVAL
 	}
@@ -5640,6 +5644,33 @@ void CRealBuffer::PrepareColorTable(bool bExtendFonts, CharAttr (&lcaTableExt)[0
 	}
 }
 
+void CRealBuffer::ResetConData()
+{
+	con.mb_ConDataValid = false;
+}
+
+bool CRealBuffer::isConDataValid()
+{
+	if (m_Type == rbt_Primary)
+	{
+		if (!con.pConChar || !con.pConAttr)
+			return false;
+		_ASSERTE(!con.mb_ConDataValid || *con.pConChar);
+	}
+	else
+	{
+		if (!dump.pszBlock1 || !dump.pcaBlock1)
+			return false;
+	}
+
+	if (!con.mb_ConDataValid)
+	{
+		return false;
+	}
+
+	return true;
+}
+
 // nWidth и nHeight это размеры, которые хочет получить VCon (оно могло еще не среагировать на изменения?
 void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr)
 {
@@ -5784,22 +5815,19 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	}
 	else
 	{
-		if (!con.pConChar || !con.pConAttr)
+		if (!isConDataValid())
 		{
-			nYMax = nHeight; // Мусор чистить не нужно, уже полный "reset"
-
-			wmemset(pChar, wSetChar, cwDstBufSize);
-
+			// Return totally clear buffer, no need to erase "bottom"
+			nYMax = nHeight;
+			// Under debug, show "warning" char if only buffer was not initialized
+			wchar_t wc = (con.pConChar && con.pConAttr) ? L' ' : wSetChar;
+			wmemset(pChar, wc, cwDstBufSize);
+			// And Attributes
 			for (DWORD i = 0; i < cwDstBufSize; i++)
 				pAttr[i] = lcaDef;
-
-			//wmemset((wchar_t*)pAttr, wSetAttr, cbDstBufSize);
-			//} else if (nWidth == con.nTextWidth && nHeight == con.nTextHeight) {
-			//    TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
-			//    //_ASSERTE(*con.pConChar!=ucBoxDblVert);
-			//    memmove(pChar, con.pConChar, cbDstBufSize);
-			//    WARNING("Это заменить на for");
-			//    memmove(pAttr, con.pConAttr, cbDstBufSize);
+			// Advance pointer to the end of the buffer
+			_ASSERTE(con.nConBufCells >= ((size_t)nWidth*(size_t)nHeight + 1)); // It's expected to be ASCIIZ
+			pszDst = pChar + nWidth*nHeight;
 		}
 		else
 		{
