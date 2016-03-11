@@ -4144,6 +4144,8 @@ void CRealConsole::SetSwitchActiveServer(bool bSwitch, CRealConsole::SwitchActiv
 
 void CRealConsole::ResetVarsOnStart()
 {
+	mp_VCon->ResetOnStart();
+
 	mb_InCloseConsole = FALSE;
 	mb_RecreateFailed = FALSE;
 	SetSwitchActiveServer(false, eResetEvent, eResetEvent);

@@ -150,6 +150,7 @@ class CVirtualConsole :
 		bool	mb_ChildWindowWasFound;
 	public:
 		bool InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC, MSectionLock *pSCON);
+		void ResetOnStart();
 	private:
 		// Working pointers
 		bool mb_PointersAllocated;

@@ -668,6 +668,11 @@ void CVirtualConsole::PointersZero()
 	ResetHighlightCoords();
 }
 
+// Function called when RCon is about to start new root
+void CVirtualConsole::ResetOnStart()
+{
+	// Placeholder
+}
 
 // InitDC вызывается только при критических изменениях (размеры, шрифт, и т.п.) когда нужно пересоздать DC и Bitmap
 bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC, MSectionLock *pSCON)
