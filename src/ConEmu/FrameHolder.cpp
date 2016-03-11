@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,21 +29,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #define HIDE_USE_EXCEPTION_INFO
-#include <windows.h>
-#include "DwmApi_Part.h"
-#include <TCHAR.H>
-//#ifdef _DEBUG
-//#include <CRTDBG.H>
-//#endif
 #include "Header.h"
-#include "DwmHelper.h"
-#include "TabBar.h"
-#include "FrameHolder.h"
 #include "ConEmu.h"
+#include "DwmApi_Part.h"
+#include "DwmHelper.h"
+#include "FrameHolder.h"
+#include "Menu.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "Status.h"
-#include "Menu.h"
+#include "TabBar.h"
 #include "TrayIcon.h"
 
 #ifdef _DEBUG
