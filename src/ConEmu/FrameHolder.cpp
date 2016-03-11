@@ -887,35 +887,43 @@ void CFrameHolder::CalculateTabPosition(const RECT &rcWindow, const RECT &rcCapt
 	}
 }
 
+bool CFrameHolder::isInNcPaint()
+{
+	_ASSERTE(mn_InNcPaint>=0);
+	return (mn_InNcPaint > 0);
+}
+
 LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	RecalculateFrameSizes();
-
-	if (!gpSet->isTabsInCaption)
-	{
-		LRESULT lRc = DefWindowProc(hWnd, uMsg, wParam, lParam);
-		return lRc;
-	}
-
-	FrameDrawStyle fdt = gpConEmu->DrawType();
-
-	if (fdt == fdt_Aero || fdt == fdt_Win8)
-	{
-		LRESULT lRc = DefWindowProc(hWnd, uMsg, wParam, lParam);
-		//TODO: Может быть на "стекле" сразу рисовать, а не в WM_PAINT?
-		return lRc;
-	}
-
-	if (!gpSet->isTabs)
-	{
-		return DefWindowProc(hWnd, uMsg, wParam, lParam);
-	}
-
-
+	LRESULT lRc = 0;
+	FrameDrawStyle fdt;
 	RECT dirty_box, dirty, wr = {}, tr = {}, cr = {}, xorRect;
 	BOOL fRegionOwner = FALSE;
 	HDC hdc;
 	HRGN hrgn = (HRGN)wParam;
+
+	RecalculateFrameSizes();
+
+	if (!gpSet->isTabsInCaption)
+	{
+		lRc = DefWindowProc(hWnd, uMsg, wParam, lParam);
+		goto wrap;
+	}
+
+	fdt = gpConEmu->DrawType();
+
+	if (fdt == fdt_Aero || fdt == fdt_Win8)
+	{
+		lRc = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+		//TODO: Может быть на "стекле" сразу рисовать, а не в WM_PAINT?
+		goto wrap;
+	}
+
+	if (!gpSet->isTabs)
+	{
+		lRc = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+
 
 	GetWindowRect(hWnd, &wr);
 	CalculateCaptionPosition(wr, &cr);
@@ -1044,7 +1052,9 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	if(fRegionOwner)
 		DeleteObject(hrgn);
 
-	return 0;
+	lRc = 0;
+wrap:
+	return lRc;
 }
 
 LRESULT CFrameHolder::OnNcActivate(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
