@@ -1368,7 +1368,8 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	BSTR bsDir = lpCurrentDirectory ? SysAllocString(lpCurrentDirectory) : NULL;
 	BSTR bsRoot = SysAllocString(L"\\");
 
-	VARIANT vtUsersSID = {VT_BSTR}; vtUsersSID.bstrVal = SysAllocString(L"S-1-5-32-545");
+	// No need, using TASK_LOGON_INTERACTIVE_TOKEN now
+	// -- VARIANT vtUsersSID = {VT_BSTR}; vtUsersSID.bstrVal = SysAllocString(L"S-1-5-32-545"); // Well Known SID for "\\Builtin\Users" group
 	VARIANT vtZeroStr = {VT_BSTR}; vtZeroStr.bstrVal = SysAllocString(L"");
 	VARIANT vtEmpty = {VT_EMPTY};
 
@@ -1522,8 +1523,10 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 
 	//  ------------------------------------------------------
 	//  Save the task in the root folder.
-	//  Using Well Known SID for \\Builtin\Users group
-	hr = pRootFolder->RegisterTaskDefinition(bsTaskName, pTask, TASK_CREATE, vtUsersSID, vtEmpty, TASK_LOGON_GROUP, vtZeroStr, &pRegisteredTask);
+	hr = pRootFolder->RegisterTaskDefinition(bsTaskName, pTask, TASK_CREATE,
+		//vtUsersSID, vtEmpty, TASK_LOGON_GROUP, // gh-571 - this may start process as wrong user
+		vtEmpty, vtEmpty, TASK_LOGON_INTERACTIVE_TOKEN,
+		vtZeroStr, &pRegisteredTask);
 	if (FAILED(hr))
 	{
 		DisplayShedulerError(L"Error registering the task instance.", hr, bsTaskName, lpCommandLine);
@@ -1602,7 +1605,7 @@ wrap:
 	SysFreeString(bsArgs);
 	if (bsDir) SysFreeString(bsDir);
 	SysFreeString(bsRoot);
-	VariantClear(&vtUsersSID);
+	//VariantClear(&vtUsersSID);
 	VariantClear(&vtZeroStr);
 	SafeRelease(pRegisteredTask);
 	SafeRelease(pRunningTask);
