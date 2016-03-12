@@ -1342,7 +1342,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 		DisplayLastError(L"GetModuleFileName(NULL) failed");
 		return FALSE;
 	}
-	CEStr szCommand(lstrmerge(L"/bypass /cmd ", lpCommandLine));
+	CEStr szCommand(L"/bypass /cmd ", lpCommandLine);
 	LPCWSTR pszCmdArgs = szCommand;
 
 	BOOL lbRc = FALSE;
@@ -2111,7 +2111,7 @@ void WarnCreateWindowFail(LPCWSTR pszDescription, HWND hParent, DWORD nErrCode)
 			gpConEmu->mp_Inside->m_InsideParentInfo.ParentPID,
 			gpConEmu->mp_Inside->m_InsideParentInfo.ParentParentPID,
 			(LPVOID)gpConEmu->mp_Inside->mh_InsideParentWND);
-		CEStr lsLog = lstrmerge(szCreateFail, gpConEmu->mp_Inside->m_InsideParentInfo.ExeName);
+		CEStr lsLog(szCreateFail, gpConEmu->mp_Inside->m_InsideParentInfo.ExeName);
 		LogString(lsLog);
 	}
 
@@ -3080,7 +3080,7 @@ HRESULT UpdateAppUserModelID()
 	{
 		_ASSERTE(pszColon!=NULL && "::<CESERVER_REQ_VER> is expected at the tail!");
 	}
-	CEStr AppID = lstrmerge(APP_MODEL_ID_PREFIX/*L"Maximus5.ConEmu."*/, lsTempBuf.ms_Val);
+	CEStr AppID(APP_MODEL_ID_PREFIX/*L"Maximus5.ConEmu."*/, lsTempBuf.ms_Val);
 
 	// And update it
 	HRESULT hr = E_NOTIMPL;
@@ -3185,7 +3185,7 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 
 		for (int j = 0; pszFiles[j]; j++)
 		{
-			CEStr lsFile = JoinPath(pszDirs[i], pszFiles[j]);
+			CEStr lsFile(JoinPath(pszDirs[i], pszFiles[j]));
 			int nZone = 0;
 			if (HasZoneIdentifier(lsFile, nZone)
 				&& (nZone != 0 /*LocalComputer*/))
@@ -3200,7 +3200,7 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 		return 0; // All files are OK
 	}
 
-	CEStr lsMsg = lstrmerge(
+	CEStr lsMsg(
 		L"ConEmu binaries were marked as ‘Downloaded from internet’:\r\n",
 		szZonedFiles.ms_Val, L"\r\n\r\n"
 		L"This may cause blocking or access denied errors!");
@@ -3440,7 +3440,7 @@ int CheckForDebugArgs(LPCWSTR asCmdLine)
 	if (debug)
 	{
 		wchar_t szTitle[128]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Conemu started, PID=%i", GetCurrentProcessId());
-		CEStr lsText = lstrmerge(L"GetCommandLineW()\n", GetCommandLineW(), L"\n\n\n" L"lpCmdLine\n", asCmdLine);
+		CEStr lsText(L"GetCommandLineW()\n", GetCommandLineW(), L"\n\n\n" L"lpCmdLine\n", asCmdLine);
 		MessageBox(NULL, lsText, szTitle, MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
 		nDbg = IsDebuggerPresent();
 	}

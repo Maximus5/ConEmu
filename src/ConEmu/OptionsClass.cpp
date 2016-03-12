@@ -3083,11 +3083,11 @@ void CSettings::setHotkeyCheckbox(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWST
 			}
 		}
 
-		CEStr lsText = GetDlgItemTextPtr(hDlg, nCtrlId);
+		CEStr lsText(GetDlgItemTextPtr(hDlg, nCtrlId));
 		LPCWSTR pszTail = lsText.IsEmpty() ? NULL : wcsstr(lsText, L" - ");
 		if (pszTail)
 		{
-			CEStr lsNew = lstrmerge(szKeyFull, pszTail);
+			CEStr lsNew(szKeyFull, pszTail);
 			SetDlgItemText(hDlg, nCtrlId, lsNew);
 		}
 
@@ -3510,7 +3510,7 @@ LRESULT CSettings::OnInitDialog_Tasks(HWND hWnd2, bool abForceReload)
 		wcscpy_c(szKey, gsNoHotkey);
 	else
 		pDefCmdKey->GetHotkeyName(szKey, true);
-	CEStr lsLabel(lstrmerge(L"Default shell (", szKey, L")"));
+	CEStr lsLabel(L"Default shell (", szKey, L")");
 	SetDlgItemText(hWnd2, cbCmdGrpDefaultCmd, lsLabel);
 
 	// Not implemented yet

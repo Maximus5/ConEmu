@@ -276,7 +276,7 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 
 		if (gpSetCls->isAdvLogging)
 		{
-			CEStr lsLog(lstrmerge(L"Icon `", asIconDescr, L"` was loaded: ", szIconInfo));
+			CEStr lsLog(L"Icon `", asIconDescr, L"` was loaded: ", szIconInfo);
 			gpConEmu->LogString(lsLog);
 		}
 
@@ -294,7 +294,7 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 				HICON hNewIcon = ImageList_GetIcon(hAdmList, 0, ILD_TRANSPARENT);
 				if (hNewIcon)
 				{
-					CEStr lsLog(lstrmerge(L"Admin icon `", asIconDescr, L"` was created: ", GetIconInfoStr(hNewIcon, szMergedInfo)));
+					CEStr lsLog(L"Admin icon `", asIconDescr, L"` was created: ", GetIconInfoStr(hNewIcon, szMergedInfo));
 					gpConEmu->LogString(lsLog);
 
 					iIconIdxAdm = ImageList_ReplaceIcon(mh_TabIcons, -1, hNewIcon);
@@ -331,7 +331,7 @@ wrap:
 	SafeFree(pszExpanded);
 	if (gpSetCls->isAdvLogging && (iIconIdx < 0))
 	{
-		CEStr lsLog(lstrmerge(L"Icon `", asIconDescr, L"` loading was failed"));
+		CEStr lsLog(L"Icon `", asIconDescr, L"` loading was failed");
 		gpConEmu->LogString(lsLog);
 	}
 	return iIconIdx;
@@ -352,7 +352,7 @@ LPCWSTR CIconList::GetIconInfoStr(HICON h, wchar_t (&szInfo)[80])
 LPCWSTR CIconList::ParseIconFileIndex(CEStr& lsIconFileIndex, int& nIndex)
 {
 	LPCWSTR lpszExt = PointToExt(lsIconFileIndex);
-	LPCWSTR lpszIndex = wcsrchr(lpszExt ? lpszExt : lsIconFileIndex, L',');
+	LPCWSTR lpszIndex = wcsrchr(lpszExt ? lpszExt : (LPCWSTR)lsIconFileIndex, L',');
 	if (lpszIndex)
 	{
 		lsIconFileIndex.ms_Val[lpszIndex - lsIconFileIndex.ms_Val] = 0;

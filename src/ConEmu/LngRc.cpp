@@ -190,7 +190,7 @@ bool CLngRc::LoadResouces(LPCWSTR asLanguage, LPCWSTR asFile)
 	if (!jsonFile->ParseJson(lsJsonData))
 	{
 		// TODO: Log error
-		CEStr lsErrMsg = lstrmerge(
+		CEStr lsErrMsg(
 			L"Language resources loading failed!\r\n"
 			L"File: ", asFile, L"\r\n"
 			L"Error: ", jsonFile->GetParseError());

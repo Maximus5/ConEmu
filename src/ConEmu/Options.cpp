@@ -2234,7 +2234,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		return;
 	}
 	// Log xml/reg + file + config
-	CEStr lsDesc = GetStoragePlaceDescr(apStorage, L"Settings::LoadSettings");
+	CEStr lsDesc(GetStoragePlaceDescr(apStorage, L"Settings::LoadSettings"));
 	gpConEmu->LogString(lsDesc.ms_Val);
 
 	// Settings service
@@ -5279,7 +5279,7 @@ int Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR
 		if (aFlags & CETF_MAKE_UNIQUE)
 		{
 			// If task with same name exists - append suffix " (1)" ... " (999)"
-			CEStr lsNaked = lstrdup((asName[0] == TaskBracketLeft) ? (asName+1) : asName);
+			CEStr lsNaked((asName[0] == TaskBracketLeft) ? (asName+1) : asName);
 			INT_PTR iLen = wcslen(lsNaked);
 			if ((iLen > 0) && (lsNaked.ms_Val[iLen-1] == TaskBracketRight))
 				lsNaked.ms_Val[iLen-1] = 0;

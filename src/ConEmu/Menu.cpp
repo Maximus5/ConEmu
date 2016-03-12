@@ -2305,8 +2305,8 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 				CVConGuard VCon;
 				if (gpConEmu->GetActiveVCon(&VCon) >= 0)
 				{
-					CEStr szMacro = lstrdup(L"Write(\"\\ec\")");
-					CEStr szResult = ConEmuMacro::ExecuteMacro(szMacro.ms_Val, VCon->RCon());
+					CEStr szMacro(L"Write(\"\\ec\")"), szResult;
+					szResult = ConEmuMacro::ExecuteMacro(szMacro.ms_Val, VCon->RCon());
 				}
 			}
 			return 0;

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -137,7 +137,7 @@ bool CPushInfo::ShowNotification()
 
 	if (mp_Active->pszTsaNotify)
 	{
-		CEStr lsMsg(lstrmerge(mp_Active->pszTsaNotify, TSA_MESSAGE_FOOTER));
+		CEStr lsMsg(mp_Active->pszTsaNotify, TSA_MESSAGE_FOOTER);
 		Icon.ShowTrayIcon(lsMsg, tsa_Push_Notify);
 	}
 	return true;
@@ -152,7 +152,7 @@ void CPushInfo::OnNotificationClick()
 
 	if (mp_Active->pszFullMessage)
 	{
-		CEStr lsMsg(lstrmerge(mp_Active->pszFullMessage, L"\r\n\r\n", INFO_MESSAGE_FOOTER));
+		CEStr lsMsg(mp_Active->pszFullMessage, L"\r\n\r\n", INFO_MESSAGE_FOOTER);
 		int iBtn = MsgBox(lsMsg, MB_ICONINFORMATION|MB_YESNOCANCEL);
 
 		switch (iBtn)

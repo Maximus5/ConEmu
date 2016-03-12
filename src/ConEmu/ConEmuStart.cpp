@@ -380,7 +380,7 @@ LPCTSTR CConEmuStart::GetDefaultTask()
 		if (pGrp->pszName && *pGrp->pszName
 			&& (pGrp->Flags & CETF_NEW_DEFAULT))
 		{
-			ms_DefNewTaskName.Attach(lstrdup(pGrp->pszName));
+			ms_DefNewTaskName = (LPCWSTR)pGrp->pszName;
 			return ms_DefNewTaskName.ms_Val;
 		}
 	}
@@ -782,7 +782,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					if (!opt.cmdNew || !*opt.cmdNew)
 					{
-						CEStr lsMsg = lstrmerge(L"Invalid cmd line. '", curCommand, L"' exists, command line is empty");
+						CEStr lsMsg(L"Invalid cmd line. '", curCommand, L"' exists, command line is empty");
 						DisplayLastError(lsMsg, -1);
 						goto wrap;
 					}
@@ -1348,7 +1348,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 	if (psUnknown)
 	{
 		DEBUGSTRSTARTUP(L"Unknown switch, exiting!");
-		CEStr lsFail(lstrmerge(L"Unknown switch specified:\r\n", psUnknown));
+		CEStr lsFail(L"Unknown switch specified:\r\n", psUnknown);
 		gpConEmu->LogString(lsFail, false, false);
 
 		LPCWSTR pszNewConWarn = NULL;
@@ -1363,7 +1363,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 			pszNewConWarn = L"\r\n\r\n" L"Switch -new_console must be specified *after* /cmd or /cmdlist";
 		}
 
-		CEStr lsMsg(lstrmerge(
+		CEStr lsMsg(
 			lsFail,
 			pszNewConWarn,
 			L"\r\n\r\n"
@@ -1371,7 +1371,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 			CEGUIARGSPAGE
 			L"\r\n\r\n"
 			L"Or run ‘ConEmu.exe -?’ to get the brief."
-			));
+			);
 
 		MBoxA(lsMsg);
 		goto wrap;

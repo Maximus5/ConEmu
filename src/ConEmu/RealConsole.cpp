@@ -1407,7 +1407,7 @@ void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 	}
 
 	size_t cchData = 0;
-	CEStr EnvData = env.Allocate(&cchData);
+	CEStr EnvData(env.Allocate(&cchData));
 	pRet.EnvCommands.Set(EnvData.Detach(), cchData);
 
 	// Current palette
@@ -3486,7 +3486,7 @@ HKEY CRealConsole::PrepareConsoleRegistryKey(LPCWSTR asSubKey)
 	LONG lRegRc;
 
 
-	CEStr lsKey = JoinPath(L"Console", asSubKey); // Default is "Console\\ConEmu"
+	CEStr lsKey(JoinPath(L"Console", asSubKey)); // Default is "Console\\ConEmu"
 	if (0 == (lRegRc = RegCreateKeyEx(HKEY_CURRENT_USER, lsKey, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConsole, NULL)))
 	{
 		DWORD nSize = sizeof(DWORD), nValue, nType, nNewValue;
@@ -3548,7 +3548,7 @@ HKEY CRealConsole::PrepareConsoleRegistryKey(LPCWSTR asSubKey)
 	}
 	else
 	{
-		CEStr lsMsg = lstrmerge(L"Failed to create/open registry key", L"\n[HKCU\\", lsKey, L"]");
+		CEStr lsMsg(L"Failed to create/open registry key", L"\n[HKCU\\", lsKey, L"]");
 		DisplayLastError(lsMsg, lRegRc);
 		hkConsole = NULL;
 	}
@@ -4019,7 +4019,7 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 			else
 			{
 				// В режиме "Дамп дерева процессов" нас интересует и дамп текущего процесса ConEmu.exe
-				CEStr lsPID(lstrdup(_itow(GetCurrentProcessId(), szExe, 10)));
+				CEStr lsPID((LPCWSTR)_itow(GetCurrentProcessId(), szExe, 10));
 				ConProcess* pPrc = NULL;
 				int nCount = GetProcesses(&pPrc, false/*ClientOnly*/);
 				if (!pPrc || (nCount < 1))
@@ -9735,7 +9735,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 			wchar_t* pszTaskCommands = mp_ConEmu->LoadConsoleBatch(args->pszSpecialCmd, args);
 			if (!pszTaskCommands || !*pszTaskCommands)
 			{
-				CEStr lsMsg(lstrmerge(L"Can't load task contents!\n", args->pszSpecialCmd));
+				CEStr lsMsg(L"Can't load task contents!\n", args->pszSpecialCmd);
 				MsgBox(lsMsg, MB_ICONSTOP);
 				return false;
 			}
@@ -9743,7 +9743,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 			wchar_t* pszBreak = (wchar_t*)wcspbrk(pszTaskCommands, L"\r\n");
 			if (pszBreak)
 			{
-				CEStr lsMsg(lstrmerge(L"Task ", args->pszSpecialCmd, L" contains more than a command.\n" L"Only first will be executed."));
+				CEStr lsMsg(L"Task ", args->pszSpecialCmd, L" contains more than a command.\n" L"Only first will be executed.");
 				int iBtn = MsgBox(lsMsg, MB_ICONEXCLAMATION|MB_OKCANCEL);
 				if (iBtn != IDOK)
 					return false;
@@ -15748,13 +15748,13 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		// This is GuiMacro, but not a Far Manager macros
 		if (asMacro[1])
 		{
-			CEStr pszGui = lstrdup(asMacro+1);
+			CEStr pszGui(asMacro+1), szRc;
 			if (m_UseLogs)
 			{
-				CEStr lsLog(lstrmerge(L"CRealConsole::PostMacro: ", asMacro));
+				CEStr lsLog(L"CRealConsole::PostMacro: ", asMacro);
 				LogString(lsLog);
 			}
-			CEStr szRc = ConEmuMacro::ExecuteMacro(pszGui.ms_Val, this);
+			szRc = ConEmuMacro::ExecuteMacro(pszGui.ms_Val, this);
 			LogString(szRc.c_str(L"<NULL>"));
 			TODO("Show result in the status line?");
 		}
@@ -15797,7 +15797,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 	if (m_UseLogs)
 	{
 		wchar_t szPID[32]; _wsprintf(szPID, SKIPCOUNT(szPID) L"(FarPID=%u): ", nPID);
-		CEStr lsLog(lstrmerge(L"CRealConsole::PostMacro", szPID, asMacro));
+		CEStr lsLog(L"CRealConsole::PostMacro", szPID, asMacro);
 		LogString(lsLog);
 	}
 
@@ -16070,7 +16070,7 @@ void CRealConsole::Unfasten()
 	LPCWSTR pszConEmuStartArgs = gpConEmu->MakeConEmuStartArgs(lsTempBuf);
 	wchar_t szMacro[64];
 	_wsprintf(szMacro, SKIPCOUNT(szMacro) L"-GuiMacro \"Attach %u\"", nAttachPID);
-	CEStr lsRunArgs = lstrmerge(L"\"", gpConEmu->ms_ConEmuExe, L"\" -Detached ", pszConEmuStartArgs, szMacro);
+	CEStr lsRunArgs(L"\"", gpConEmu->ms_ConEmuExe, L"\" -Detached ", pszConEmuStartArgs, szMacro);
 
 	STARTUPINFO si = {sizeof(si)};
 	PROCESS_INFORMATION pi = {};

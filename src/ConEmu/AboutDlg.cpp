@@ -418,7 +418,7 @@ void ConEmuAbout::InitCommCtrls()
 
 void ConEmuAbout::OnInfo_OnlineWiki(LPCWSTR asPageName /*= NULL*/)
 {
-	CEStr szUrl(lstrmerge(CEWIKIBASE, asPageName ? asPageName : L"TableOfContents", L".html"));
+	CEStr szUrl(CEWIKIBASE, asPageName ? asPageName : L"TableOfContents", L".html");
 	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", szUrl, NULL, NULL, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{
@@ -532,7 +532,7 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 
 	if (!bOk)
 	{
-		CEStr szTitle = lstrmerge(gpConEmu->GetDefaultTitle(), L" ", CLngRc::getRsrc(lng_DlgAbout/*"About"*/));
+		CEStr szTitle(gpConEmu->GetDefaultTitle(), L" ", CLngRc::getRsrc(lng_DlgAbout/*"About"*/));
 		DontEnable de;
 		MSGBOXPARAMS mb = {sizeof(MSGBOXPARAMS), ghWnd, g_hInstance,
 			pAbout,

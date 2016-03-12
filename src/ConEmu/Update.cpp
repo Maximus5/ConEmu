@@ -823,7 +823,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 
 		if (gpConEmu)
 		{
-			CEStr lsInfo = lstrmerge(L"Update: Downloading package: ", pszSource);
+			CEStr lsInfo(L"Update: Downloading package: ", pszSource);
 			gpConEmu->LogString(lsInfo);
 		}
 
@@ -960,7 +960,7 @@ bool CConEmuUpdate::LoadVersionInfoFromServer()
 	// Logging
 	if (gpConEmu)
 	{
-		CEStr lsInfo = lstrmerge(L"Update: Loading versions from server: ", pszUpdateVerLocationSet);
+		CEStr lsInfo(L"Update: Loading versions from server: ", pszUpdateVerLocationSet);
 		gpConEmu->LogString(lsInfo);
 	}
 
@@ -1002,7 +1002,7 @@ bool CConEmuUpdate::LoadVersionInfoFromServer()
 	// Logging
 	if (gpConEmu)
 	{
-		CEStr lsInfo = lstrmerge(L"Update: Checking version information: ", pszUpdateVerLocation);
+		CEStr lsInfo(L"Update: Checking version information: ", pszUpdateVerLocation);
 		gpConEmu->LogString(lsInfo);
 	}
 
@@ -1504,7 +1504,7 @@ BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc,
 
 	if (gpConEmu)
 	{
-		CEStr lsMsg = lstrmerge(L"Update: Downloading ", asSource, L" to ", asTarget);
+		CEStr lsMsg(L"Update: Downloading ", asSource, L" to ", asTarget);
 		gpConEmu->LogString(lsMsg);
 	}
 
@@ -1568,7 +1568,7 @@ void CConEmuUpdate::ReportErrorInt(wchar_t* asErrorInfo)
 
 	if (gpConEmu)
 	{
-		CEStr lsLog = lstrmerge(L"Update: ", asErrorInfo);
+		CEStr lsLog(L"Update: ", asErrorInfo);
 		wchar_t* ptr = lsLog.ms_Val;
 		while ((ptr = wcspbrk(ptr, L"\r\n")) != NULL) *ptr = L' ';
 		gpConEmu->LogString(lsLog);
@@ -1693,11 +1693,11 @@ void CConEmuUpdate::ReportBrokenIni(LPCWSTR asSection, LPCWSTR asName, LPCWSTR a
 {
 	DWORD nErr = GetLastError();
 
-	CEStr lsInfo = lstrmerge(
+	CEStr lsInfo(
 		L"[", asSection, L"] \"", asName, L"\""
 		);
 
-	CEStr lsIni = lstrmerge(
+	CEStr lsIni(
 		L"URL: ", asIniUrl, L"\n"
 		L"File: ", asIniLocal
 		);
@@ -2340,7 +2340,7 @@ void CConEmuUpdate::LogCallback(const CEDownloadInfo* pError)
 	wchar_t* pszText = pError->GetFormatted(false);
 	if (pszText)
 	{
-		CEStr lsLog = lstrmerge(L"Update: ", pszText);
+		CEStr lsLog(L"Update: ", pszText);
 		gpConEmu->LogString(lsLog);
 		free(pszText);
 	}

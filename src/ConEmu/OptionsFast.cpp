@@ -830,7 +830,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 
 		if (gpSet->IsConfigNew && gpConEmu->opt.ExitAfterActionPrm.Exists)
 		{
-			CEStr lsMsg = lstrmerge(
+			CEStr lsMsg(
 				L"Something is going wrong...\n\n"
 				L"Automatic action is pending, but settings weren't initialized!\n"
 				L"\n"
@@ -870,7 +870,7 @@ static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asComman
 {
 	_ASSERTE(asName && asName[0] && asName[0] != TaskBracketLeft && asName[wcslen(asName)-1] != TaskBracketRight);
 	wchar_t szLeft[2] = {TaskBracketLeft}, szRight[2] = {TaskBracketRight};
-	CEStr lsName = lstrmerge(szLeft, asName, szRight);
+	CEStr lsName(szLeft, asName, szRight);
 
 	// Don't add duplicates in the append mode
 	if ((sAppendMode & slf_AppendTasks))
@@ -1097,7 +1097,7 @@ static bool UnExpandEnvStrings(LPCWSTR asSource, wchar_t* rsUnExpanded, INT_PTR 
 	if (!IsFilePath(asSource, true))
 		return false;
 
-	CEStr szTemp(lstrdup(asSource));
+	CEStr szTemp((LPCWSTR)asSource);
 	wchar_t* ptrSrc = szTemp.ms_Val;
 	if (!ptrSrc)
 		return false;
@@ -1844,12 +1844,12 @@ static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 		if (szCmd && FileExists(szCmd))
 		{
 			CEStr szIcon(JoinPath(pszVerPath, L"Setup\\setup.ico"));
-			CEStr szArgs(lstrmerge(L"-new_console:t:\"WinSDK ", pszVer, L"\":C:\"", szIcon, L"\""));
-			CEStr szFull(lstrmerge(L"cmd /V /K ", szArgs, L" \"", szCmd, L"\""));
+			CEStr szArgs(L"-new_console:t:\"WinSDK ", pszVer, L"\":C:\"", szIcon, L"\"");
+			CEStr szFull(L"cmd /V /K ", szArgs, L" \"", szCmd, L"\"");
 			// Create task
 			if (szFull)
 			{
-				CEStr szName(lstrmerge(L"SDK::WinSDK ", pszVer));
+				CEStr szName(L"SDK::WinSDK ", pszVer);
 				if (szName)
 				{
 					SettingsLoadedFlags old = sAppendMode;
@@ -1883,11 +1883,11 @@ static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 
 		if (RegGetStringValue(hkVer, L"Setup\\VC", L"ProductDir", pszDir) > 0)
 		{
-			CEStr pszVcVarsBat = JoinPath(pszDir, L"vcvarsall.bat");
+			CEStr pszVcVarsBat(JoinPath(pszDir, L"vcvarsall.bat"));
 			if (FileExists(pszVcVarsBat))
 			{
-				CEStr pszName = lstrmerge(L"SDK::VS ", pszVer, L" x86 tools prompt");
-				CEStr pszFull = lstrmerge(L"cmd /k \"\"", pszVcVarsBat, L"\"\" x86 -new_console:t:\"VS ", pszVer, L"\"");
+				CEStr pszName(L"SDK::VS ", pszVer, L" x86 tools prompt");
+				CEStr pszFull(L"cmd /k \"\"", pszVcVarsBat, L"\"\" x86 -new_console:t:\"VS ", pszVer, L"\"");
 
 				CEStr lsIcon; LPCWSTR pszIconSource = NULL;
 				LPCWSTR pszIconSources[] = {
@@ -1938,7 +1938,7 @@ static void CreateChocolateyTask()
 	// Chocolatey gallery
 	//-- Placing ANSI in Task commands will be too long and unfriendly
 	//-- Also, automatic run of Chocolatey installation may harm user environment in some cases
-	CEStr szFull = ExpandEnvStr(L"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd");
+	CEStr szFull(ExpandEnvStr(L"%ConEmuBaseDir%\\Addons\\ChocolateyAbout.cmd"));
 	if (szFull && FileExists(szFull))
 	{
 		// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
@@ -2087,7 +2087,7 @@ static void CreateBashTask()
 // Docker Toolbox
 static void CreateDockerTask()
 {
-	CEStr szFull = ExpandEnvStr(L"%DOCKER_TOOLBOX_INSTALL_PATH%\\docker.exe");
+	CEStr szFull(ExpandEnvStr(L"%DOCKER_TOOLBOX_INSTALL_PATH%\\docker.exe"));
 	if (szFull && FileExists(szFull))
 	{
 		AppFoundList App(1);

@@ -804,7 +804,7 @@ void LogFocusInfo(LPCWSTR asInfo, int Level/*=1*/)
 
 	if (Level <= gpSetCls->isAdvLogging)
 	{
-		CEStr lsMsg = lstrmerge(asInfo, szStyles);
+		CEStr lsMsg(asInfo, szStyles);
 		gpConEmu->LogString(lsMsg, TRUE);
 	}
 
@@ -821,7 +821,7 @@ void CConEmuMain::SetAppID(LPCWSTR asExtraArgs)
 {
 	BYTE md5ok = 0;
 	wchar_t szID[40] = L"";
-	CEStr lsFull = lstrmerge(ms_ConEmuExeDir, asExtraArgs);
+	CEStr lsFull(ms_ConEmuExeDir, asExtraArgs);
 
 	if (!lsFull.IsEmpty())
 	{
@@ -831,7 +831,7 @@ void CConEmuMain::SetAppID(LPCWSTR asExtraArgs)
 
 		if (gpSetCls->isAdvLogging)
 		{
-			CEStr lsLog = lstrmerge(L"Creating AppID from data: `", pszData, L"`");
+			CEStr lsLog(L"Creating AppID from data: `", pszData, L"`");
 			LogString(lsLog);
 		}
 
@@ -868,7 +868,7 @@ void CConEmuMain::SetAppID(LPCWSTR asExtraArgs)
 
 	if (gpSetCls->isAdvLogging)
 	{
-		CEStr lsLog = lstrmerge(L"New AppID: ", ms_AppID);
+		CEStr lsLog(L"New AppID: ", ms_AppID);
 		LogString(lsLog);
 	}
 }
@@ -1178,7 +1178,7 @@ bool CConEmuMain::SetConfigFile(LPCWSTR asFilePath, bool abWriteReq /*= false*/,
 
 	if (!asFilePath || !*asFilePath || !pszExt || !*pszExt || (nLen > MAX_PATH))
 	{
-		CEStr lsMsg = lstrmerge(
+		CEStr lsMsg(
 			L"Invalid file path specified in CConEmuMain::SetConfigFile",
 			L"\n", L"asFilePath=`", asFilePath, L"`",
 			L"\n", L"Only *.xml files are allowed");
@@ -4632,7 +4632,7 @@ int CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd /
 				if (!ptrMap)
 				{
 					_wsprintf(szLogPrefix, SKIPCOUNT(szLogPrefix) L"GuiTestMapping failed for PID=%u HWND=x%08X: ", dwPID, LODWORD(ConEmuHwnd));
-					CEStr lsLog = lstrmerge(szLogPrefix, GuiTestMapping.GetErrorText());
+					CEStr lsLog(szLogPrefix, GuiTestMapping.GetErrorText());
 					LogString(lsLog);
 					continue;
 				}
@@ -4641,7 +4641,7 @@ int CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd /
 					|| (lstrcmpi(ptrMap->AppID, this->ms_AppID) != 0))
 				{
 					_wsprintf(szLogPrefix, SKIPCOUNT(szLogPrefix) L"Skipped due to different AppID; PID=%u HWND=x%08X: \"", dwPID, LODWORD(ConEmuHwnd));
-					CEStr lsSkip = lstrmerge(szLogPrefix, ptrMap->AppID, L"\"; Our: \"", this->ms_AppID, L"\"");
+					CEStr lsSkip(szLogPrefix, ptrMap->AppID, L"\"; Our: \"", this->ms_AppID, L"\"");
 					LogString(lsSkip);
 					continue;
 				}
@@ -6862,7 +6862,7 @@ bool CConEmuMain::CreateStartupConsoles()
 
 	if (isScript)
 	{
-		CEStr szDataW = lstrdup(pszCmd);
+		CEStr szDataW((LPCWSTR)pszCmd);
 
 		// "Script" is a Task represented as one string with "|||" as command delimiter
 		// Replace "|||" to "\r\n" as standard Task expects
@@ -6894,10 +6894,10 @@ bool CConEmuMain::CreateStartupConsoles()
 		// Was "/dir" specified in the app switches?
 		if (mb_ConEmuWorkDirArg)
 			args.pszStartupDir = lstrdup(ms_ConEmuWorkDir);
-		CEStr lsLog(lstrmerge(L"Creating console group using task ", pszCmd));
+		CEStr lsLog(L"Creating console group using task ", pszCmd);
 		LogString(lsLog);
 		// Here are either text file with Task contents, or just a Task name
-		CEStr szDataW = LoadConsoleBatch(pszCmd, &args);
+		CEStr szDataW(LoadConsoleBatch(pszCmd, &args));
 		if (szDataW.IsEmpty())
 		{
 			Destroy();
@@ -6924,7 +6924,7 @@ bool CConEmuMain::CreateStartupConsoles()
 			SafeFree(args.pszSpecialCmd);
 			args.pszSpecialCmd = lstrdup(GetCmd());
 
-			CEStr lsLog(lstrmerge(L"Creating console using command ", args.pszSpecialCmd));
+			CEStr lsLog(L"Creating console using command ", args.pszSpecialCmd);
 			LogString(lsLog);
 
 			if (!CreateCon(&args, TRUE))

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -90,7 +90,7 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 		if (!bFound)
 		{
 			// If there is "src" subfolder in the current folder
-			CEStr szSrc = JoinPath(pszDir, L"src");
+			CEStr szSrc(JoinPath(pszDir, L"src"));
 			if (DirectoryExists(szSrc))
 			{
 				bFound = FileExistSubDir(szSrc, pszWinPath, 1, szFull);
