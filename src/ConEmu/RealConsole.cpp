@@ -4651,6 +4651,8 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	//lstrcpy(psCurCmd, mp_ConEmu->ms_ConEmuCExeName);
 	_wcscat_c(psCurCmd, nLen, L"\" ");
 
+	if (m_UseLogs) _wcscat_c(psCurCmd, nLen, (m_UseLogs == 3) ? L" /LOG3" : (m_UseLogs == 2) ? L" /LOG2" : L" /LOG");
+
 	if ((m_Args.RunAsAdministrator == crb_On) && !mp_ConEmu->mb_IsUacAdmin)
 	{
 		m_Args.Detached = crb_On;
@@ -4699,7 +4701,6 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		wcscat(psCurCmd, gpSet->FontFile);
 		wcscat(psCurCmd, L"\"");
 	}*/
-	if (m_UseLogs) _wcscat_c(psCurCmd, nLen, (m_UseLogs==3) ? L" /LOG3" : (m_UseLogs==2) ? L" /LOG2" : L" /LOG");
 
 	if (!gpSet->isConVisible) _wcscat_c(psCurCmd, nLen, L" /HIDE");
 
