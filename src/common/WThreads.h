@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 HANDLE apiCreateThread(LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, LPDWORD lpThreadId, LPCSTR asThreadNameFormat = NULL, int anFormatArg = 0);
 BOOL apiTerminateThreadEx(HANDLE hThread, DWORD dwExitCode, LPCSTR asFile, int anLine);
 #define apiTerminateThread(hThread,dwExitCode) apiTerminateThreadEx(hThread,dwExitCode,__FILE__,__LINE__)
+bool wasTerminateThreadCalled();
 
 #define MS_VC_THREADNAME_EXCEPTION 0x406D1388
 

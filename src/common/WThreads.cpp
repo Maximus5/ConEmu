@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,8 @@ static struct ConEmuThreadInfo
 } g_Threads[THREADS_LOG_SIZE];
 
 LONG g_ThreadsIdx = 0;
-LONG g_TerminatedThreadIdx = -1; // -2 if terminated thread was not found in g_Threads
+LONG g_TerminatedThreadIdx = -1;
+static HANDLE gh_UnknownTerminatedThread = NULL;
 
 struct ConEmuThreadStartArg
 {
@@ -210,6 +211,13 @@ BOOL apiTerminateThreadEx(HANDLE hThread, DWORD dwExitCode, LPCSTR asFile, int a
 	#pragma warning( disable : 6258 )
 	#endif
 
+	if (!pThread)
+	{
+		//TODO: Log or Assert on terminate unknown thread
+		_ASSERTE(FALSE && "TerminateThread-ing unknown thread")
+		gh_UnknownTerminatedThread = hThread;
+	}
+
 	BOOL bRc = ::TerminateThread(hThread, dwExitCode);
 
 	#ifndef __GNUC__
@@ -224,11 +232,12 @@ BOOL apiTerminateThreadEx(HANDLE hThread, DWORD dwExitCode, LPCSTR asFile, int a
 		_wsprintfA(pThread->sKiller, SKIPCOUNT(pThread->sKiller) "%s:%i", szKiller, anLine);
 		pThread->bActive = FALSE;
 	}
-	else
-	{
-		g_TerminatedThreadIdx = -2;
-	}
 	return bRc;
+}
+
+bool wasTerminateThreadCalled()
+{
+	return (g_TerminatedThreadIdx != -1);
 }
 
 
