@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Common.h"
 #include "CEStr.h"
+#include "MStrDup.h"
 #include "WObjects.h"
 
 #if CE_UNIT_TEST==1
@@ -51,12 +52,13 @@ CEStr::CEStr()
 	Empty();
 }
 
-CEStr::CEStr(const wchar_t* asPtr)
+CEStr::CEStr(const wchar_t* asStr1, const wchar_t* asStr2/*= NULL*/, const wchar_t* asStr3/*= NULL*/, const wchar_t* asStr4/*= NULL*/, const wchar_t* asStr5/*= NULL*/, const wchar_t* asStr6/*= NULL*/, const wchar_t* asStr7/*= NULL*/, const wchar_t* asStr8/*= NULL*/, const wchar_t* asStr9/*= NULL*/)
 	: ms_Val(NULL), mn_MaxCount(0)
 {
 	CESTRLOG1("CEStr::CEStr(const wchar_t* x%p)", asPtr);
 	Empty();
-	Set(asPtr);
+	wchar_t* lpszMerged = lstrmerge(asStr1, asStr2, asStr3, asStr4, asStr5, asStr6, asStr7, asStr8, asStr9);
+	AttachInt(lpszMerged);
 }
 
 CEStr::CEStr(wchar_t* RVAL_REF asPtr)
