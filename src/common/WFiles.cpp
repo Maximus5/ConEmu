@@ -55,7 +55,7 @@ bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEStr* r
 	// "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\"
 	LPCWSTR pszRoot = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\";
 	HKEY hk; LONG lRc;
-	CEStr lsName; lsName.Attach(lstrmerge(pszRoot, pszSearchFile, pszExt ? NULL : L".exe"));
+	CEStr lsName(pszRoot, pszSearchFile, pszExt ? NULL : L".exe");
 	// Seems like 32-bit and 64-bit registry branches are the same now, but just in case - will check both
 	DWORD nWOW[2] = {WIN3264TEST(KEY_WOW64_32KEY,KEY_WOW64_64KEY), WIN3264TEST(KEY_WOW64_64KEY,KEY_WOW64_32KEY)};
 	for (int i = 0; i < 3; i++)
@@ -586,7 +586,7 @@ bool FileExistSubDir(LPCWSTR asDirectory, LPCWSTR asFile, int iDepth, CEStr& rsF
 		return false;
 	}
 
-	CEStr lsFind = JoinPath(asDirectory, L"*");
+	CEStr lsFind(JoinPath(asDirectory, L"*"));
 
 	WIN32_FIND_DATAW fnd = {0};
 	HANDLE hFind = FindFirstFile(lsFind, &fnd);
@@ -847,7 +847,7 @@ bool HasZoneIdentifier(LPCWSTR asFile, int& nZoneID)
 	}
 
 	bool bHasZone = false;
-	CEStr lsZoneStream = lstrmerge(asFile, L":Zone.Identifier");
+	CEStr lsZoneStream(asFile, L":Zone.Identifier");
 
 	#ifdef _DEBUG
 	char szData[128] = ""; DWORD nRead = 0; BOOL bRead;
@@ -869,7 +869,7 @@ bool HasZoneIdentifier(LPCWSTR asFile, int& nZoneID)
 
 bool DropZoneIdentifier(LPCWSTR asFile, DWORD& nErrCode)
 {
-	CEStr lsZoneStream = lstrmerge(asFile, L":Zone.Identifier");
+	CEStr lsZoneStream(asFile, L":Zone.Identifier");
 
 	// First, try to delete "Zone.Identifier" stream
 	if (DeleteFile(lsZoneStream))
