@@ -930,6 +930,7 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	BOOL fRegionOwner = FALSE;
 	HDC hdc;
 	HRGN hrgn = (HRGN)wParam;
+	PaintDC dc = {};
 
 	RecalculateFrameSizes();
 
@@ -1035,7 +1036,6 @@ LRESULT CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	//HRGN hdcrgn = CreateRectRgn(cr.left, cr.top, cr.right, tr.bottom);
 	//hdc = GetDCEx(hWnd, hdcrgn, DCX_INTERSECTRGN);
 
-	PaintDC dc = {};
 	gpConEmu->BeginBufferedPaint(hdc, cr, dc);
 
 	gpConEmu->mp_TabBar->PaintTabs(dc, cr, tr);
