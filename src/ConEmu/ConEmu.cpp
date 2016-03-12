@@ -2549,6 +2549,11 @@ CConEmuMain::~CConEmuMain()
 
 	LoadImageFinalize();
 
+	if (wasTerminateThreadCalled())
+	{
+		LogString(L"WARNING!!! TerminateThread was called, process would be terminated forcedly");
+	}
+
 	SafeDelete(mp_Log);
 	SafeDelete(mpcs_Log);
 
