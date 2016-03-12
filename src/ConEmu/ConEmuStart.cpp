@@ -763,48 +763,17 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					iResult = nSetupRc;
 					goto wrap;
 				}
-				else if (!klstricmp(curCommand, _T("/bypass")))
+				else if (!klstricmp(curCommand, _T("/bypass"))
+					|| !klstricmp(curCommand, _T("/demote")))
 				{
+					// -bypass
 					// Этот ключик был придуман для прозрачного запуска консоли
 					// в режиме администратора
 					// (т.е. чтобы окно UAC нормально всплывало, но не мелькало консольное окно)
 					// Но не получилось, пока требуются хэндлы процесса, а их не получается
 					// передать в НЕ приподнятый процесс (исходный ConEmu GUI).
 
-					AcquireCmdNew();
-
-					if (!opt.cmdNew || !*opt.cmdNew)
-					{
-						DisplayLastError(L"Invalid cmd line. '/bypass' exists, '/cmd' not", -1);
-						goto wrap;
-					}
-
-					// Information
-					#ifdef _DEBUG
-					STARTUPINFO siOur = {sizeof(siOur)};
-					GetStartupInfo(&siOur);
-					#endif
-
-					STARTUPINFO si = {sizeof(si)};
-					si.dwFlags = STARTF_USESHOWWINDOW;
-
-					PROCESS_INFORMATION pi = {};
-
-					BOOL b = CreateProcess(NULL, opt.cmdNew.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
-					if (b)
-					{
-						CloseHandle(pi.hProcess);
-						CloseHandle(pi.hThread);
-						iResult = 0;
-						goto wrap;
-					}
-
-					// Failed
-					DisplayLastError(opt.cmdNew);
-					goto wrap;
-				}
-				else if (!klstricmp(curCommand, _T("/demote")))
-				{
+					// -demote
 					// Запуск процесса (ком.строка после "/demote") в режиме простого юзера,
 					// когда текущий процесс уже запущен "под админом". "Понизить" текущие
 					// привилегии просто так нельзя, поэтому запуск идет через TaskSheduler.
@@ -813,10 +782,10 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					if (!opt.cmdNew || !*opt.cmdNew)
 					{
-						DisplayLastError(L"Invalid cmd line. '/demote' exists, '/cmd' not", -1);
+						CEStr lsMsg = lstrmerge(L"Invalid cmd line. '", curCommand, L"' exists, command line is empty");
+						DisplayLastError(lsMsg, -1);
 						goto wrap;
 					}
-
 
 					// Information
 					#ifdef _DEBUG
@@ -827,7 +796,10 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					STARTUPINFO si = {sizeof(si)};
 					PROCESS_INFORMATION pi = {};
 					si.dwFlags = STARTF_USESHOWWINDOW;
-					si.wShowWindow = SW_SHOWNORMAL;
+					if (0 == klstricmp(curCommand, _T("/demote")))
+						si.wShowWindow = SW_SHOWNORMAL;
+					else
+						si.wShowWindow = SW_HIDE;
 
 					wchar_t szCurDir[MAX_PATH+1] = L"";
 					GetCurrentDirectory(countof(szCurDir), szCurDir);
@@ -835,11 +807,18 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					BOOL b;
 					DWORD nErr = 0;
 
-
-					b = CreateProcessDemoted(opt.cmdNew.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+					if (!klstricmp(curCommand, _T("/demote")))
+					{
+						b = CreateProcessDemoted(opt.cmdNew.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
+					}
+					else // -bypass
+					{
+						b = CreateProcess(NULL, opt.cmdNew.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+						nErr = b ? 0 : GetLastError();
+					}
 
-
+					// Done, close handles, if they were opened
 					if (b)
 					{
 						SafeCloseHandle(pi.hProcess);
