@@ -1978,6 +1978,12 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahPare
 	HooksUnlocker;
 	MSetter lInCall(&gnInMsgBox);
 
+	if (gpSetCls->isAdvLogging)
+	{
+		CEStr lsLog(lpCaption, lpCaption ? L":: " : NULL, lpText);
+		LogString(lsLog);
+	}
+
 	// If there were problems with displaying error box, MessageBox will return default button
 	// This may cause infinite loops in some cases
 	SetLastError(0);
@@ -2120,8 +2126,6 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 	if (gbMessagingStarted) apiSetForegroundWindow(hParent ? hParent : ghWnd);
 
 	if (!dwMsgFlags) dwMsgFlags = MB_SYSTEMMODAL | MB_ICONERROR;
-
-	WARNING("!!! Заменить MsgBox на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
 
 	BOOL lb = gbInDisplayLastError; gbInDisplayLastError = TRUE;
 	nBtn = MsgBox(out ? out : asLabel, dwMsgFlags, asTitle, hParent);
