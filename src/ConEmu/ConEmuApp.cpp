@@ -1317,17 +1317,20 @@ static void DisplayShedulerError(LPCWSTR pszStep, HRESULT hr, LPCWSTR bsTaskName
 {
 	wchar_t szInfo[200] = L"";
 	_wsprintf(szInfo, SKIPCOUNT(szInfo) L" Please check sheduler log.\n" L"HR=%u, TaskName=", (DWORD)hr);
-	wchar_t* pszErr = lstrmerge(pszStep, szInfo, bsTaskName, L"\n", lpCommandLine);
-	DisplayLastError(pszErr, hr);
-	free(pszErr);
+	CEStr szErr(pszStep, szInfo, bsTaskName, L"\n", lpCommandLine);
+	DisplayLastError(szErr, (DWORD)hr);
 }
 #endif
 
-BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
-							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
-							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
-							 LPDWORD pdwLastError)
+/// The function starts new process using Windows Task Sheduler
+/// This allows to run process ‘Demoted’ (bAsSystem == false)
+/// or under ‘System’ account (bAsSystem == true)
+// TODO: Server started as bAsSystem is not working properly yet
+BOOL CreateProcessSheduled(bool bAsSystem, LPWSTR lpCommandLine,
+						   LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
+						   BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
+						   LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
+						   LPDWORD pdwLastError)
 {
 	if (!lpCommandLine || !*lpCommandLine)
 	{
@@ -1335,6 +1338,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 		return FALSE;
 	}
 
+	// This issue is not actual anymore, because we call put_ExecutionTimeLimit(‘Infinite’)
 	// Issue 1897: Created task stopped after 72 hour, so use "/bypass"
 	CEStr szExe;
 	if (!GetModuleFileName(NULL, szExe.GetBuffer(MAX_PATH), MAX_PATH) || szExe.IsEmpty())
@@ -1346,9 +1350,12 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	LPCWSTR pszCmdArgs = szCommand;
 
 	BOOL lbRc = FALSE;
-	BOOL lbTryStdCreate = FALSE;
 
-#if !defined(__GNUC__)
+#if defined(__GNUC__)
+
+	DisplayLastError(L"GNU <taskschd.h> does not have TaskSheduler support yet!", (DWORD)-1);
+
+#else
 
 	// Task не выносит окна созданных задач "наверх"
 	HWND hPrevEmu = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
@@ -1370,6 +1377,8 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 
 	// No need, using TASK_LOGON_INTERACTIVE_TOKEN now
 	// -- VARIANT vtUsersSID = {VT_BSTR}; vtUsersSID.bstrVal = SysAllocString(L"S-1-5-32-545"); // Well Known SID for "\\Builtin\Users" group
+	MBSTR szSystemSID(L"S-1-5-18");
+	VARIANT vtSystemSID = {VT_BSTR}; vtSystemSID.bstrVal = szSystemSID;
 	VARIANT vtZeroStr = {VT_BSTR}; vtZeroStr.bstrVal = SysAllocString(L"");
 	VARIANT vtEmpty = {VT_EMPTY};
 
@@ -1387,10 +1396,11 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	ITaskFolder *pRootFolder = NULL;
 	ITaskService *pService = NULL;
 	HRESULT hr;
-	TASK_STATE taskState;
+	TASK_STATE taskState, prevTaskState;
 	bool bCoInitialized = false;
 	DWORD nTickStart, nDuration;
 	const DWORD nMaxWindowWait = 30000;
+	const DWORD nMaxSystemWait = 30000;
 	MBSTR szIndefinitely(L"PT0S");
 
 	//  ------------------------------------------------------
@@ -1525,7 +1535,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 	//  Save the task in the root folder.
 	hr = pRootFolder->RegisterTaskDefinition(bsTaskName, pTask, TASK_CREATE,
 		//vtUsersSID, vtEmpty, TASK_LOGON_GROUP, // gh-571 - this may start process as wrong user
-		vtEmpty, vtEmpty, TASK_LOGON_INTERACTIVE_TOKEN,
+		bAsSystem ? vtSystemSID : vtEmpty, vtEmpty, bAsSystem ? TASK_LOGON_SERVICE_ACCOUNT : TASK_LOGON_INTERACTIVE_TOKEN,
 		vtZeroStr, &pRegisteredTask);
 	if (FAILED(hr))
 	{
@@ -1533,9 +1543,10 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 		goto wrap;
 	}
 
+	prevTaskState = (TASK_STATE)-1;
+
 	//  ------------------------------------------------------
 	//  Run the task
-	taskState = TASK_STATE_UNKNOWN;
 	hr = pRegisteredTask->Run(vtEmpty, &pRunningTask);
 	if (FAILED(hr))
 	{
@@ -1543,16 +1554,36 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 		goto wrap;
 	}
 
-	#ifdef _DEBUG
-	HRESULT hrRun; hrRun = pRunningTask->get_State(&taskState);
-	#endif
+	HRESULT hrRun; hrRun = pRunningTask->get_State(&prevTaskState);
 
 	//  ------------------------------------------------------
 	// Success! Task successfully started. But our task may end
 	// promptly because it just bypassing the command line
-	{
-		lbRc = TRUE;
+	lbRc = TRUE;
 
+	if (bAsSystem)
+	{
+		nTickStart = GetTickCount();
+		nDuration = 0;
+		_ASSERTE(hCreated==NULL);
+		hCreated = NULL;
+
+		while (nDuration <= nMaxSystemWait/*30000*/)
+		{
+			hrRun = pRunningTask->get_State(&taskState);
+			if (FAILED(hr))
+				break;
+			if (taskState == TASK_STATE_RUNNING)
+				break; // OK, started
+			if (taskState == TASK_STATE_READY)
+				break; // Already finished?
+
+			Sleep(100);
+			nDuration = (GetTickCount() - nTickStart);
+		}
+	}
+	else
+	{
 		// Success! Program was started.
 		// Give 30 seconds for new window appears and bring it to front
 		LPCWSTR pszExeName = PointToName(szExe);
@@ -1563,7 +1594,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 			_ASSERTE(hCreated==NULL);
 			hCreated = NULL;
 
-			while (nDuration <= nMaxWindowWait/*20000*/)
+			while (nDuration <= nMaxWindowWait/*30000*/)
 			{
 				HWND hTop = NULL;
 				while ((hTop = FindWindowEx(NULL, hTop, VirtualConsoleClassMain, NULL)) != NULL)
@@ -1622,19 +1653,25 @@ wrap:
 	// End of Task-scheduler mode
 #endif
 
-	#if defined(__GNUC__)
-	if (!lbRc)
-	{
-		lbTryStdCreate = TRUE;
-	}
-	#endif
+	return lbRc;
+}
 
+BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
+						  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
+						  BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
+						  LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
+						  LPDWORD pdwLastError)
+{
+	BOOL lbRc;
 
-
-
+	lbRc = CreateProcessSheduled(false, lpCommandLine,
+						   lpProcessAttributes, lpThreadAttributes,
+						   bInheritHandles, dwCreationFlags, lpEnvironment,
+						   lpCurrentDirectory, lpStartupInfo, lpProcessInformation,
+						   pdwLastError);
 
 	// If all methods fails - try to execute "as is"?
-	if (lbTryStdCreate)
+	if (!lbRc)
 	{
 		lbRc = CreateProcess(NULL, lpCommandLine,
 							 lpProcessAttributes, lpThreadAttributes,
