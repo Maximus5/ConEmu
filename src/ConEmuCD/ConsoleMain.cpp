@@ -2446,6 +2446,7 @@ int CheckAttachProcess()
 		{
 			_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach of GUI application was requested,\n"
 				L"but required HWND(0x%08X) not found!", LODWORD(gpSrv->hRootProcessGui));
+			LogString(szFailMsg);
 			liArgsFailed = 1;
 			// will return CERR_CARGUMENT
 		}
@@ -2457,6 +2458,7 @@ int CheckAttachProcess()
 				_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach of GUI application was requested,\n"
 					L"but PID(%u) of HWND(0x%08X) does not match Root(%u)!",
 					nPid, LODWORD(gpSrv->hRootProcessGui), gpSrv->dwRootProcess);
+				LogString(szFailMsg);
 				liArgsFailed = 2;
 				// will return CERR_CARGUMENT
 			}
@@ -2465,6 +2467,7 @@ int CheckAttachProcess()
 	else if (pfnGetConsoleProcessList==NULL)
 	{
 		wcscpy_c(szFailMsg, L"Attach to console app was requested, but required WinXP or higher!");
+		LogString(szFailMsg);
 		liArgsFailed = 3;
 		// will return CERR_CARGUMENT
 	}
@@ -2491,6 +2494,7 @@ int CheckAttachProcess()
 		if (nProcCount < 2)
 		{
 			wcscpy_c(szFailMsg, L"Attach to console app was requested, but there is no console processes!");
+			LogString(szFailMsg);
 			liArgsFailed = 4;
 			//will return CERR_CARGUMENT
 		}
@@ -2533,12 +2537,14 @@ int CheckAttachProcess()
 			if ((gpSrv->dwRootProcess != 0) && !lbRootExists)
 			{
 				_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach to GUI was requested, but\n" L"root process (%u) does not exists", gpSrv->dwRootProcess);
+				LogString(szFailMsg);
 				liArgsFailed = 5;
 				//will return CERR_CARGUMENT
 			}
 			else if ((gpSrv->dwRootProcess == 0) && (nProcCount > 2))
 			{
 				_wsprintf(szFailMsg, SKIPLEN(countof(szFailMsg)) L"Attach to GUI was requested, but\n" L"there is more than 2 console processes: %s\n", szProc);
+				LogString(szFailMsg);
 				liArgsFailed = 6;
 				//will return CERR_CARGUMENT
 			}
@@ -2573,6 +2579,8 @@ int CheckAttachProcess()
 
 		const DWORD nAttachErrorTimeoutMessage = 15*1000; // 15 sec
 		ExitWaitForKey(VK_RETURN|(VK_ESCAPE<<8), lsMsg, true, true, nAttachErrorTimeoutMessage);
+
+		LogString(L"CheckAttachProcess: CERR_CARGUMENT after ExitWaitForKey");
 
 		gbInShutdown = TRUE;
 		return CERR_CARGUMENT;
@@ -3367,6 +3375,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 					gbInShutdown = TRUE;
 					gbAlwaysConfirmExit = FALSE;
+					LogString(L"CERR_CARGUMENT: (gbAlternativeAttach && gpSrv->dwRootProcess)");
 					return CERR_CARGUMENT;
 				}
 
@@ -3383,6 +3392,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			}
 			else if (gpSrv->dwRootProcess == 0)
 			{
+				LogString("CERR_CARGUMENT: Attach to GUI was requested, but invalid PID specified");
 				_printf("Attach to GUI was requested, but invalid PID specified:\n");
 				_wprintf(GetCommandLineW());
 				_printf("\n");
@@ -3453,6 +3463,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 			if (gnConEmuPID == 0)
 			{
+				LogString(L"CERR_CARGUMENT: Invalid GUI PID specified");
 				_printf("Invalid GUI PID specified:\n");
 				_wprintf(GetCommandLineW());
 				_printf("\n");
@@ -3478,14 +3489,22 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			}
 			else
 			{
+				wchar_t szLog[120];
 				LPCWSTR pszDescr = szArg+7;
 				if (pszDescr[0] == L'0' && (pszDescr[1] == L'x' || pszDescr[1] == L'X'))
 					pszDescr += 2; // That may be useful for calling from batch files
 				gpSrv->hGuiWnd = (HWND)wcstoul(pszDescr, &pszEnd, 16);
 				gpSrv->bRequestNewGuiWnd = FALSE;
 
-				if ((gpSrv->hGuiWnd) == NULL || !IsWindow(gpSrv->hGuiWnd))
+				BOOL isWnd = gpSrv->hGuiWnd ? IsWindow(gpSrv->hGuiWnd) : FALSE;
+				DWORD nErr = gpSrv->hGuiWnd ? GetLastError() : 0;
+
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"GUI HWND=0x%08X, %s, ErrCode=%u", LODWORD(gpSrv->hGuiWnd), isWnd ? L"Valid" : L"Invalid", nErr);
+				LogString(szLog);
+
+				if (!isWnd)
 				{
+					LogString(L"CERR_CARGUMENT: Invalid GUI HWND was specified in /GHWND arg");
 					_printf("Invalid GUI HWND specified:\n");
 					_wprintf(GetCommandLineW());
 					_printf("\n");
@@ -3594,6 +3613,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 			if (gpSrv->dwRootProcess == 0)
 			{
+				LogString(L"CERR_CARGUMENT: Debug of process was requested, but invalid PID specified");
 				_printf("Debug of process was requested, but invalid PID specified:\n");
 				_wprintf(GetCommandLineW());
 				_printf("\n");
@@ -3627,6 +3647,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			wchar_t* pszLine = lstrdup(GetCommandLineW());
 			if (!pszLine || !*pszLine)
 			{
+				LogString(L"CERR_CARGUMENT: Debug of process was requested, but GetCommandLineW failed");
 				_printf("Debug of process was requested, but GetCommandLineW failed\n");
 				_ASSERTE(FALSE);
 				return CERR_CARGUMENT;
@@ -3641,6 +3662,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 			if (!pszDebugCmd || !*pszDebugCmd)
 			{
+				LogString(L"CERR_CARGUMENT: Debug of process was requested, but command was not found");
 				_printf("Debug of process was requested, but command was not found\n");
 				_ASSERTE(FALSE);
 				return CERR_CARGUMENT;
@@ -3944,6 +3966,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 	if (gnRunMode == RM_UNDEFINED)
 	{
+		LogString(L"CERR_CARGUMENT: Parsing command line failed (/C argument not found)");
 		_printf("Parsing command line failed (/C argument not found):\n");
 		_wprintf(GetCommandLineW());
 		_printf("\n");
