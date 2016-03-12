@@ -61,10 +61,16 @@ public:
 
 
 	// *** Not copyable, not implemented, use explicit Set method ***
+	#if defined(__GNUC__)
+	public:
+	CEStr(const CEStr&) = delete;
+	CEStr& operator=(const CEStr &) = delete;
+	#else
 	private:
 	// We may use "=delete" in C++11, but than cl shows only first error
 	CEStr(const CEStr&);
 	CEStr& operator=(const CEStr &);
+	#endif
 	// *** Not copyable, not implemented, use explicit Set method ***
 
 	// *** VC9 can't distinct wchar_t* as lval or rval ***
