@@ -62,7 +62,7 @@ struct CEStartupEnv
 	LPCWSTR pszPathEnv;
 	size_t  cchPathLen;
 	BOOL    bIsRemote; // SM_REMOTESESSION - Informational
-	UINT    nPixels;   // BITSPIXEL - Informational
+	int     nBPP;      // BITSPIXEL - Informational
 	UINT    bIsWine;   // Informational (FALSE/TRUE/ or 2 in ConEmuHk)
 	UINT    bIsWinPE;  // Informational (FALSE/TRUE/ or 2 in ConEmuHk)
 	UINT    bIsAdmin;  // Informational (FALSE/TRUE/ or 2 in ConEmuHk)

@@ -192,7 +192,7 @@ public:
 			EnumDisplayMonitors(NULL, NULL, LoadStartupEnv_FillMonitors, (LPARAM)pEnv);
 
 			HDC hDC = CreateCompatibleDC(NULL);
-			pEnv->nPixels = GetDeviceCaps(hDC, BITSPIXEL);
+			pEnv->nBPP = GetDeviceCaps(hDC, BITSPIXEL);
 			DeleteDC(hDC);
 
 			// These functions call AdvApi32 functions
@@ -296,12 +296,12 @@ public:
 		lstrcpyn(szTitle, apStartEnv->si.lpTitle ? apStartEnv->si.lpTitle : L"", countof(szTitle));
 
 		_wsprintf(szSI, SKIPLEN(countof(szSI))
-			L"  Desktop: %s; BPP: %u\r\n  Title: %s\r\n  Size: {%u,%u},{%u,%u}\r\n"
+			L"  Desktop: `%s`\r\n  Title: %s%s%s\r\n  Size: {%u,%u},{%u,%u}\r\n"
 			L"  Flags: 0x%08X, ShowWindow: %u, ConHWnd: 0x%08X\r\n"
 			L"  char: %u, short: %u, int: %u, long: %u, u64: %u\r\n"
 			L"  Handles: 0x%08X, 0x%08X, 0x%08X\r\n"
 			,
-			szDesktop, apStartEnv->nPixels, szTitle,
+			szDesktop, szTitle,
 			apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
 			apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow, LODWORD(hConWnd),
 			LODWORD(sizeof(CHAR)), LODWORD(sizeof(short)), LODWORD(sizeof(int)), LODWORD(sizeof(long)), LODWORD(sizeof(u64)),
@@ -403,7 +403,7 @@ public:
 		dumpEnvStr(szSI, true);
 
 		HDC hdcScreen = GetDC(NULL);
-		int nBits = GetDeviceCaps(hdcScreen,BITSPIXEL);
+		apStartEnv->nBPP = GetDeviceCaps(hdcScreen,BITSPIXEL);
 		int nPlanes = GetDeviceCaps(hdcScreen,PLANES);
 		int nAlignment = GetDeviceCaps(hdcScreen,BLTALIGNMENT);
 		int nVRefr = GetDeviceCaps(hdcScreen,VREFRESH);
@@ -413,7 +413,7 @@ public:
 		int nDpiY = GetDeviceCaps(hdcScreen, LOGPIXELSY);
 		_wsprintf(szSI, SKIPLEN(countof(szSI))
 			L"Display: bpp=%i, planes=%i, align=%i, vrefr=%i, shade=x%08X, rast=x%08X, dpi=%ix%i, per-mon-dpi=%u",
-			nBits, nPlanes, nAlignment, nVRefr, nShadeCaps, nDevCaps, nDpiX, nDpiY, apStartEnv->bIsPerMonitorDpi);
+			apStartEnv->nBPP, nPlanes, nAlignment, nVRefr, nShadeCaps, nDevCaps, nDpiX, nDpiY, apStartEnv->bIsPerMonitorDpi);
 		ReleaseDC(NULL, hdcScreen);
 		dumpEnvStr(szSI, true);
 
