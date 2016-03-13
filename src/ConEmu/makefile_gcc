@@ -61,6 +61,7 @@ SRCS = \
 		../common/WFiles.cpp         \
 		../common/WObjects.cpp       \
 		../common/WRegistry.cpp      \
+		../common/WSession.cpp       \
 		../common/WThreads.cpp       \
 		../common/WUser.cpp          \
 		AboutDlg.cpp       \

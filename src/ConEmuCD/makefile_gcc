@@ -36,6 +36,7 @@ SRCS = \
 		../common/MConHandle.cpp     \
 		../common/Memory.cpp         \
 		../common/MFileLog.cpp       \
+		../common/MModule.cpp        \
 		../common/Monitors.cpp       \
 		../common/MSection.cpp       \
 		../common/MSectionSimple.cpp \
@@ -51,6 +52,7 @@ SRCS = \
 		../common/WFiles.cpp         \
 		../common/WModuleCheck.cpp   \
 		../common/WObjects.cpp       \
+		../common/WSession.cpp       \
 		../common/WThreads.cpp       \
 		../common/WUser.cpp          \
 		../ConEmuHk/Injects.cpp      \

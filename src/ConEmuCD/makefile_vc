@@ -59,6 +59,7 @@ $(INTDIR)\MAssert.obj \
 $(INTDIR)\MConHandle.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\MFileLog.obj \
+$(INTDIR)\MModule.obj \
 $(INTDIR)\Monitors.obj \
 $(INTDIR)\MSection.obj \
 $(INTDIR)\MSectionSimple.obj \
@@ -79,6 +80,7 @@ $(INTDIR)\WConsoleInfo.obj \
 $(INTDIR)\WFiles.obj \
 $(INTDIR)\WModuleCheck.obj \
 $(INTDIR)\WObjects.obj \
+$(INTDIR)\WSession.obj \
 $(INTDIR)\WThreads.obj \
 $(INTDIR)\WUser.obj
 
@@ -313,6 +315,8 @@ $(INTDIR)\Memory.obj: ../common/Memory.cpp
 
 $(INTDIR)\MFileLog.obj: ../common/MFileLog.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
 
+$(INTDIR)\MModule.obj: ../common/MModule.cpp ../common/MModule.h
+
 $(INTDIR)\Monitors.obj: ../common/Monitors.cpp
 
 $(INTDIR)\MSection.obj: ../common/MSection.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
@@ -352,6 +356,8 @@ $(INTDIR)\WFiles.obj: ../common/WFiles.cpp ../common/WFiles.h
 $(INTDIR)\WModuleCheck.obj: ../common/WModuleCheck.cpp ../common/WModuleCheck.h
 
 $(INTDIR)\WObjects.obj: ../common/WObjects.cpp ../common/WObjects.h
+
+$(INTDIR)\WSession.obj: ../common/WSession.cpp ../common/WSession.h
 
 $(INTDIR)\WThreads.obj: ../common/WThreads.cpp ../common/WThreads.h
 

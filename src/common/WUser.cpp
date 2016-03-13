@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Common.h"
 #include <Sddl.h> // ConvertSidToStringSid
 #include "CmdLine.h"
+#include "MModule.h"
 #include "MStrDup.h"
 #include "WObjects.h"
 #include "WUser.h"

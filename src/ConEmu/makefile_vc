@@ -150,6 +150,7 @@ $(INTDIR)\WFiles.obj \
 $(INTDIR)\WinObjBase.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WRegistry.obj \
+$(INTDIR)\WSession.obj \
 $(INTDIR)\WThreads.obj \
 $(INTDIR)\WUser.obj
 
@@ -528,6 +529,8 @@ $(INTDIR)\WinObjBase.obj: WinObjBase.cpp WinObjBase.h
 $(INTDIR)\WObjects.obj: ../common/WObjects.cpp
 
 $(INTDIR)\WRegistry.obj: ../common/WRegistry.cpp
+
+$(INTDIR)\WSession.obj: ../common/WSession.cpp ../common/WSession.h
 
 $(INTDIR)\WThreads.obj: ../common/WThreads.cpp ../common/WThreads.h
 
