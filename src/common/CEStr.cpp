@@ -55,7 +55,7 @@ CEStr::CEStr()
 CEStr::CEStr(const wchar_t* asStr1, const wchar_t* asStr2/*= NULL*/, const wchar_t* asStr3/*= NULL*/, const wchar_t* asStr4/*= NULL*/, const wchar_t* asStr5/*= NULL*/, const wchar_t* asStr6/*= NULL*/, const wchar_t* asStr7/*= NULL*/, const wchar_t* asStr8/*= NULL*/, const wchar_t* asStr9/*= NULL*/)
 	: ms_Val(NULL), mn_MaxCount(0)
 {
-	CESTRLOG1("CEStr::CEStr(const wchar_t* x%p)", asPtr);
+	CESTRLOG1("CEStr::CEStr(const wchar_t* x%p, x%p, x%p, ...)", asStr1, asStr2, asStr3);
 	Empty();
 	wchar_t* lpszMerged = lstrmerge(asStr1, asStr2, asStr3, asStr4, asStr5, asStr6, asStr7, asStr8, asStr9);
 	AttachInt(lpszMerged);
