@@ -765,6 +765,8 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					goto wrap;
 				}
 				else if (!klstricmp(curCommand, _T("/bypass"))
+					|| !klstricmp(curCommand, _T("/system"))
+					|| !klstricmp(curCommand, _T("/interactive"))
 					|| !klstricmp(curCommand, _T("/demote")))
 				{
 					// -bypass
@@ -778,6 +780,14 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					// Запуск процесса (ком.строка после "/demote") в режиме простого юзера,
 					// когда текущий процесс уже запущен "под админом". "Понизить" текущие
 					// привилегии просто так нельзя, поэтому запуск идет через TaskSheduler.
+
+					// -system
+					// Non-interactive process, started as System account
+					// It's used when starting consoles, our server works fine as non-interactive
+
+					// -interactive
+					// Used when ConEmu.exe is started under System account,
+					// but we need to give starting process interactive capabilities.
 
 					AcquireCmdNew();
 
@@ -812,6 +822,16 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					{
 						b = CreateProcessDemoted(opt.cmdNew.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
+					}
+					else if (!klstricmp(curCommand, _T("/system")))
+					{
+						b = CreateProcessSheduled(true, opt.cmdNew.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+							szCurDir, &si, &pi, &nErr);
+					}
+					else if (!klstricmp(curCommand, _T("/interactive")))
+					{
+						b = CreateProcessInteractive((DWORD)-1, NULL, opt.cmdNew.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
+							szCurDir, &si, &pi);
 					}
 					else // -bypass
 					{

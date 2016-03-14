@@ -274,7 +274,8 @@ void RConStartArgs::RunArgTests()
 // If you add some members - don't forget them in RConStartArgs::AssignFrom!
 RConStartArgs::RConStartArgs()
 {
-	Detached = RunAsAdministrator = RunAsRestricted = NewConsole = crb_Undefined;
+	Detached = NewConsole = crb_Undefined;
+	RunAsAdministrator = RunAsSystem = RunAsRestricted = crb_Undefined;
 	ForceUserDialog = BackgroundTab = ForegroungTab = NoDefaultTerm = ForceDosBox = ForceInherit = crb_Undefined;
 	eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 	aRecreate = cra_CreateTab;
@@ -413,10 +414,11 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args, bool abConcat /
 
 bool RConStartArgs::AssignUserArgs(const struct RConStartArgs* args, bool abConcat /*= false*/)
 {
-	if (!abConcat || (args->RunAsRestricted || args->RunAsAdministrator || args->pszUserName))
+	if (!abConcat || (args->RunAsRestricted || args->RunAsAdministrator || args->RunAsSystem || args->pszUserName))
 	{
 		this->RunAsRestricted = args->RunAsRestricted;
 		this->RunAsAdministrator = args->RunAsAdministrator;
+		this->RunAsSystem = args->RunAsSystem;
 	}
 	else
 	{
@@ -451,7 +453,7 @@ bool RConStartArgs::AssignUserArgs(const struct RConStartArgs* args, bool abConc
 
 bool RConStartArgs::HasInheritedArgs() const
 {
-	if (RunAsAdministrator || RunAsRestricted || pszUserName)
+	if (RunAsAdministrator || RunAsSystem || RunAsRestricted || pszUserName)
 		return true;
 	return false;
 }
@@ -471,6 +473,7 @@ void RConStartArgs::CleanSecure()
 	if (szUserPassword[0]) SecureZeroMemory(szUserPassword, sizeof(szUserPassword));
 
 	RunAsAdministrator = crb_Undefined;
+	RunAsSystem = crb_Undefined;
 	RunAsRestricted = crb_Undefined;
 	UseEmptyPassword = crb_Undefined;
 	ForceUserDialog = crb_Undefined;
@@ -516,6 +519,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	cchMaxLen += (pszPalette    ? (lstrlen(pszPalette)*2 + 20) : 0); // "-new_console:P:..."
 	cchMaxLen += 15;
 	if (RunAsAdministrator == crb_On) cchMaxLen++; // -new_console:a
+	if (RunAsSystem == crb_On) cchMaxLen++; // -new_console:A
 	if (RunAsRestricted == crb_On) cchMaxLen++; // -new_console:r
 	cchMaxLen += (pszUserName ? (lstrlen(pszUserName) + 32 // "-new_console:u:<user>:<pwd>"
 						+ (pszDomain ? lstrlen(pszDomain) : 0)
@@ -557,6 +561,11 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	else if (RunAsRestricted == crb_On)
 	{
 		wcscat_c(szAdd, L"r");
+	}
+	// Used *together* with RunAsAdministrator
+	if (RunAsSystem == crb_On)
+	{
+		wcscat_c(szAdd, L"A");
 	}
 
 	if ((ForceUserDialog == crb_On) && !(pszUserName && *pszUserName))
@@ -1064,6 +1073,11 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					case L'a':
 						// a - RunAs shell verb (as admin on Vista+, login/password in WinXP-)
 						RunAsAdministrator = crb_On;
+						break;
+
+					case L'A':
+						// A - Run console as System account
+						RunAsSystem = crb_On;
 						break;
 
 					case L'r':

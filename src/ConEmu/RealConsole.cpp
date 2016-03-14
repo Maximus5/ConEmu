@@ -4635,15 +4635,13 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	// Begin generation of execution command line
 	*psCurCmd = 0;
 
-	#if 0
-	// Issue 791: Server fails, when GUI started under different credentials (login) as server
-	if (m_Args.bRunAsAdministrator)
+	if (m_Args.RunAsSystem == crb_On)
 	{
+		_ASSERTE(m_Args.RunAsAdministrator == crb_On);
 		_wcscat_c(psCurCmd, nLen, L"\"");
 		_wcscat_c(psCurCmd, nLen, mp_ConEmu->ms_ConEmuExe);
-		_wcscat_c(psCurCmd, nLen, L"\" /bypass /cmd ");
+		_wcscat_c(psCurCmd, nLen, L"\" -system -cmd ");
 	}
-	#endif
 
 	_wcscat_c(psCurCmd, nLen, L"\"");
 	// Copy to psCurCmd full path to ConEmuC.exe or ConEmuC64.exe

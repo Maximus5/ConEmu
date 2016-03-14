@@ -37,6 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <taskschd.h>
 #include "../common/MBSTR.h"
 #endif
+#include "../common/TokenHelper.h"
+#include "../common/WSession.h"
 
 #include "version.h"
 
@@ -111,6 +113,91 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	return lbRc;
 }
 
+BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
+							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
+							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
+							 LPDWORD pdwLastError /*= NULL*/)
+{
+	BOOL lbRc = FALSE;
+	HANDLE hToken = NULL, hTokenRest = NULL;
+	wchar_t szLog[128];
+	DWORD nErrCode = 0, nCurSession = (DWORD)-1, nNewSessionId = (DWORD)-1, nRetSize = 0;
+
+	if (!OpenProcessToken(GetCurrentProcess(),
+	                    TOKEN_DUPLICATE | TOKEN_ADJUST_SESSIONID | TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY | TOKEN_EXECUTE,
+	                    &hToken))
+	{
+		nErrCode = GetLastError();
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to OpenProcessToken, code=%u", nErrCode);
+		if (pdwLastError) *pdwLastError = nErrCode;
+	}
+	else
+	{
+		if (!GetTokenInformation(hToken, TokenSessionId, &nCurSession, sizeof(nCurSession), &nRetSize))
+			_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to query TokenSessionId, code=%u", GetLastError());
+		else
+			_wsprintf(szLog, SKIPCOUNT(szLog) L"Current TokenSessionId is %u", nCurSession);
+		LogString(szLog);
+		nNewSessionId = (anSessionId == (DWORD)-1) ? apiGetConsoleSessionID() : anSessionId;
+
+		if (!DuplicateTokenEx(hToken, MAXIMUM_ALLOWED, NULL, SecurityImpersonation, TokenPrimary, &hTokenRest))
+		{
+			_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to duplicate current token, code=%u", GetLastError());
+			LogString(szLog);
+		}
+		else
+		{
+			CAdjustProcessToken tcbName;
+			if (tcbName.Enable(1, SE_TCB_NAME) != 1)
+			{
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to adjust SE_TCB_NAME privilege, code=%u", GetLastError());
+				LogString(szLog);
+			}
+
+			if (!SetTokenInformation(hTokenRest, TokenSessionId, &nNewSessionId, sizeof(nNewSessionId)))
+			{
+				nErrCode = GetLastError();
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to adjust TokenSessionId to %u, code=%u", nNewSessionId, nErrCode);
+				LogString(szLog);
+				if (pdwLastError) *pdwLastError = nErrCode;
+			}
+			else
+			{
+				tcbName.Release();
+
+				if (!GetTokenInformation(hTokenRest, TokenSessionId, &nCurSession, sizeof(nCurSession), &nRetSize))
+					_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to query new TokenSessionId, code=%u", GetLastError());
+				else
+					_wsprintf(szLog, SKIPCOUNT(szLog) L"New TokenSessionId is %u", nCurSession);
+				LogString(szLog);
+
+				if (CreateProcessAsUserW(hTokenRest, lpApplicationName, lpCommandLine,
+								 lpProcessAttributes, lpThreadAttributes,
+								 bInheritHandles, dwCreationFlags, lpEnvironment,
+								 lpCurrentDirectory, lpStartupInfo, lpProcessInformation))
+				{
+					lbRc = TRUE;
+				}
+				else
+				{
+					nErrCode = GetLastError();
+					_wsprintf(szLog, SKIPCOUNT(szLog) L"CreateProcessAsUserW failed, code=%u", nErrCode);
+					LogString(szLog);
+					if (pdwLastError) *pdwLastError = nErrCode;
+				}
+
+			}
+
+			CloseHandle(hTokenRest); hTokenRest = NULL;
+		}
+
+		CloseHandle(hToken); hToken = NULL;
+	}
+
+	return lbRc;
+}
+
 #if !defined(__GNUC__)
 static void DisplayShedulerError(LPCWSTR pszStep, HRESULT hr, LPCWSTR bsTaskName, LPCWSTR lpCommandLine)
 {
@@ -124,7 +211,6 @@ static void DisplayShedulerError(LPCWSTR pszStep, HRESULT hr, LPCWSTR bsTaskName
 /// The function starts new process using Windows Task Sheduler
 /// This allows to run process ‘Demoted’ (bAsSystem == false)
 /// or under ‘System’ account (bAsSystem == true)
-// TODO: Server started as bAsSystem is not working properly yet
 BOOL CreateProcessSheduled(bool bAsSystem, LPWSTR lpCommandLine,
 						   LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 						   BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
@@ -145,7 +231,7 @@ BOOL CreateProcessSheduled(bool bAsSystem, LPWSTR lpCommandLine,
 		DisplayLastError(L"GetModuleFileName(NULL) failed");
 		return FALSE;
 	}
-	CEStr szCommand(L"/bypass /cmd ", lpCommandLine);
+	CEStr szCommand(bAsSystem ? L"-interactive " : L"-bypass ", lpCommandLine);
 	LPCWSTR pszCmdArgs = szCommand;
 
 	BOOL lbRc = FALSE;

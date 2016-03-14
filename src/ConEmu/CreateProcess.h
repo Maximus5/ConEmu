@@ -43,3 +43,8 @@ BOOL CreateProcessSheduled(bool bAsSystem, LPWSTR lpCommandLine,
 						     BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 						     LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
 						     LPDWORD pdwLastError);
+BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
+							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
+							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
+							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
+							 LPDWORD pdwLastError = NULL);

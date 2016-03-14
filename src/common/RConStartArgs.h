@@ -65,6 +65,7 @@ struct RConStartArgs
 	wchar_t* pszWallpaper;  // "-new_console:W:<wallpaper>"
 	
 	RConBoolArg     RunAsAdministrator; // -new_console:a
+	RConBoolArg     RunAsSystem;        // -new_console:A
 	RConBoolArg     RunAsRestricted;    // -new_console:r
 	wchar_t* pszUserName, *pszDomain, szUserPassword[MAX_PATH]; // "-new_console:u:<user>:<pwd>"
 	RConBoolArg     UseEmptyPassword;   // для GUI
