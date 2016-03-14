@@ -34,11 +34,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 MModule::MModule()
 	: mh_Module(NULL)
-	#ifdef _DEBUG
-	, ms_Module()
-	#endif
 	, mb_Loaded(false)
 {
+	#ifdef _DEBUG
+	ms_Module[0] = 0;
+	#endif
 }
 
 MModule::MModule(LPCWSTR asModule)
