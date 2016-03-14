@@ -297,13 +297,13 @@ public:
 		lstrcpyn(szTitle, apStartEnv->si.lpTitle ? apStartEnv->si.lpTitle : L"<NULL>", countof(szTitle));
 
 		_wsprintf(szSI, SKIPLEN(countof(szSI))
-			L"  Desktop: %s%s%s, SessionId: %s\r\n  Title: %s%s%s\r\n  Size: {%u,%u},{%u,%u}\r\n"
+			L"  Desktop: %s%s%s, SessionId: %s, ConsoleSessionId: %u\r\n  Title: %s%s%s\r\n  Size: {%u,%u},{%u,%u}\r\n"
 			L"  Flags: 0x%08X, ShowWindow: %u, ConHWnd: 0x%08X\r\n"
 			L"  char: %u, short: %u, int: %u, long: %u, u64: %u\r\n"
 			L"  Handles: 0x%08X, 0x%08X, 0x%08X\r\n"
 			,
 			apStartEnv->si.lpDesktop ? L"`" : L"", szDesktop, apStartEnv->si.lpDesktop ? L"`" : L"",
-			apiQuerySessionID(),
+			apiQuerySessionID(), apiGetConsoleSessionID(),
 			apStartEnv->si.lpTitle ? L"`" : L"", szTitle, apStartEnv->si.lpTitle ? L"`" : L"",
 			apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
 			apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow, LODWORD(hConWnd),
