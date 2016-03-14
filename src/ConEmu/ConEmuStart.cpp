@@ -1080,14 +1080,17 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					// Copy current Task list to Win7 Jump list (Taskbar icon)
 					gpConEmu->mb_UpdateJumpListOnStartup = true;
 				}
-				else if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0"))
-				{
-					gpSetCls->isAdvLogging = 1;
-				}
-				else if (!klstricmp(curCommand, L"/log1") || !klstricmp(curCommand, L"/log2")
+				else if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0")
+					|| !klstricmp(curCommand, L"/log1") || !klstricmp(curCommand, L"/log2")
 					|| !klstricmp(curCommand, L"/log3") || !klstricmp(curCommand, L"/log4"))
 				{
-					gpSetCls->isAdvLogging = (BYTE)(curCommand[4] - L'0'); // 1..4
+					if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0"))
+						gpSetCls->isAdvLogging = 1;
+					else
+						gpSetCls->isAdvLogging = (BYTE)(curCommand[4] - L'0'); // 1..4
+					// Do create logging service
+					DEBUGSTRSTARTUP(L"Creating log file");
+					gpConEmu->CreateLog();
 				}
 				else if (!klstricmp(curCommand, _T("/single")) || !klstricmp(curCommand, _T("/reuse")))
 				{
@@ -1339,12 +1342,6 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 		} // while (NextArg(&cmdLineRest, szArg, &pszArgStart) == 0)
 	}
 	// Processing loop end
-
-	if (gpSetCls->isAdvLogging)
-	{
-		DEBUGSTRSTARTUP(L"Creating log file");
-		gpConEmu->CreateLog();
-	}
 
 	if (psUnknown)
 	{

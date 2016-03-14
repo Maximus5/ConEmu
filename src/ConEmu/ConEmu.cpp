@@ -1835,8 +1835,8 @@ bool CConEmuMain::CreateLog()
 
 	if (mp_Log!=NULL)
 	{
-		_ASSERTE(mp_Log==NULL);
-		return true; // создан уже
+		// Logging service is already created
+		return true;
 	}
 
 	bool bRc = false;
