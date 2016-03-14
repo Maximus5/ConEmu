@@ -50,6 +50,7 @@ $(INTDIR)\ConEmuPipe.obj \
 $(INTDIR)\ConEmuSize.obj \
 $(INTDIR)\ConEmuStart.obj \
 $(INTDIR)\ConfirmDlg.obj \
+$(INTDIR)\CreateProcess.obj \
 $(INTDIR)\CustomFonts.obj \
 $(INTDIR)\DefaultTerm.obj \
 $(INTDIR)\DpiAware.obj \
@@ -329,6 +330,8 @@ $(INTDIR)\ConEmuSize.obj: ConEmuSize.cpp ConEmuSize.h
 $(INTDIR)\ConEmuStart.obj: ConEmuStart.cpp ConEmuStart.h
 
 $(INTDIR)\ConfirmDlg.obj: ConfirmDlg.cpp ConfirmDlg.h
+
+$(INTDIR)\CreateProcess.obj: CreateProcess.cpp CreateProcess.h
 
 $(INTDIR)\CustomFonts.obj: CustomFonts.cpp CustomFonts.h
 

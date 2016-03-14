@@ -445,6 +445,7 @@
       <File RelativePath=".\ConEmuSize.cpp" />
       <File RelativePath=".\ConEmuStart.cpp" />
       <File RelativePath=".\ConfirmDlg.cpp" />
+      <File RelativePath=".\CreateProcess.cpp" />
       <File RelativePath=".\CustomFonts.cpp" />
       <File RelativePath=".\DefaultTerm.cpp" />
       <File RelativePath=".\DpiAware.cpp" />
@@ -585,6 +586,7 @@
       <File RelativePath=".\ConEmuSize.h" />
       <File RelativePath=".\ConEmuStart.h" />
       <File RelativePath=".\ConfirmDlg.h" />
+      <File RelativePath=".\CreateProcess.h" />
       <File RelativePath=".\CustomFonts.h" />
       <File RelativePath=".\DefaultTerm.h" />
       <File RelativePath=".\DpiAware.h" />

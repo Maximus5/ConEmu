@@ -263,22 +263,6 @@ enum CESelectFileFlags
 wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder = NULL, HWND hParent = ghWnd, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote /*bool bAutoQuote = true, bool bCygwin = false*/);
 wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = NULL, LPCWSTR asDefPath = NULL, HWND hParent = ghWnd, LPCWSTR asFilter = NULL, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote /*bool abAutoQuote = true, bool bCygwin = false, bool bSaveNewFile = false*/);
 
-BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
-							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
-							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
-							 LPDWORD pdwLastError = NULL);
-BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
-							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
-							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
-							 LPDWORD pdwLastError);
-BOOL CreateProcessSheduled(bool bAsSystem, LPWSTR lpCommandLine,
-						     LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
-						     BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
-						     LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
-						     LPDWORD pdwLastError);
-
 #include "../common/RConStartArgs.h"
 
 

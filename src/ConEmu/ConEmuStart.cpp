@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AboutDlg.h"
 #include "ConEmu.h"
 #include "ConEmuStart.h"
+#include "CreateProcess.h"
 #include "Inside.h"
 #include "LngRc.h"
 #include "Options.h"

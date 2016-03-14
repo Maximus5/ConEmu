@@ -574,6 +574,7 @@
     <ClCompile Include="ConEmuSize.cpp" />
     <ClCompile Include="ConEmuStart.cpp" />
     <ClCompile Include="ConfirmDlg.cpp" />
+    <ClCompile Include="CreateProcess.cpp" />
     <ClCompile Include="CustomFonts.cpp" />
     <ClCompile Include="DefaultTerm.cpp" />
     <ClCompile Include="DpiAware.cpp" />
@@ -715,6 +716,7 @@
     <ClInclude Include="ConEmuSize.h" />
     <ClInclude Include="ConEmuStart.h" />
     <ClInclude Include="ConfirmDlg.h" />
+    <ClInclude Include="CreateProcess.h" />
     <ClInclude Include="CustomFonts.h" />
     <ClInclude Include="DefaultTerm.h" />
     <ClInclude Include="DpiAware.h" />
