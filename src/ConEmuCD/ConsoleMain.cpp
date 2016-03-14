@@ -5100,7 +5100,6 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 }
 
 
-WARNING("Добавить LogInput(INPUT_RECORD* pRec) но имя файла сделать 'ConEmuC-input-%i.log'");
 void CreateLogSizeFile(int nLevel, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo /*= NULL*/)
 {
 	if (gpLogSize) return;  // уже
@@ -5176,8 +5175,7 @@ void CreateLogSizeFile(int nLevel, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleI
 		}
 	}
 
-	_wcscpy_c(pszDot, 16, L"-size");
-	gpLogSize = new MFileLog(pszName, pszDir, GetCurrentProcessId());
+	gpLogSize = new MFileLog(L"ConEmu-srv", pszDir, GetCurrentProcessId());
 
 	if (!gpLogSize)
 		return;
