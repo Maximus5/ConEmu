@@ -192,62 +192,102 @@ static char** gp_argv = NULL;
 int DoParseArgs(LPCWSTR asCmdLine)
 {
 	char szLine[80];
+	char szCLVer[32];
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	GetConsoleScreenBufferInfo(hOut, &csbi);
 
-	_wsprintfA(szLine, SKIPLEN(countof(szLine)) "main arguments (%i)\n", gn_argc);
-	_printf(szLine);
+	struct Highlighter
+	{
+		HANDLE hOut;
+		WORD defAttr;
+		Highlighter(HANDLE ahOut, WORD adefAttr, WORD fore)
+			: hOut(ahOut), defAttr(adefAttr)
+		{
+			SetConsoleTextAttribute(hOut, fore|(defAttr & 0xF0));
+		};
+		~Highlighter()
+		{
+			SetConsoleTextAttribute(hOut, defAttr);
+		};
+	};
+	#undef HL
+	#define HL(fore) Highlighter hl(hOut, csbi.wAttributes, fore)
+
+	#if defined(__GNUC__)
+	lstrcpyn(szCLVer, "GNUC");
+	#elif defined(_MSC_VER)
+	_wsprintfA(szCLVer, SKIPCOUNT(szCLVer) "VC %u.%u", (int)(_MSC_VER / 100), (int)(_MSC_VER % 100));
+	#else
+	lstrcpyn(szCLVer, "<Unknown CL>");
+	#endif
+
+	_wsprintfA(szLine, SKIPCOUNT(szLine) "main arguments (count %i) {%s}\n", gn_argc, szCLVer);
+	{ HL(10); _printf(szLine); }
 	for (int j = 0; j < gn_argc; j++)
 	{
-		_wsprintfA(szLine, SKIPLEN(countof(szLine)) "  %u: ", j);
-		_printf(szLine);
+		if (j >= 999)
+		{
+			HL(12);
+			_printf("*** TOO MANY ARGUMENTS ***\n");
+			break;
+		}
+		_wsprintfA(szLine, SKIPCOUNT(szLine) "  %u: ", j);
+		{ HL(2); _printf(szLine); }
 		if (!gp_argv)
 		{
+			HL(12);
 			_printf("*NULL");
 		}
 		else if (!gp_argv[j])
 		{
+			HL(12);
 			_printf("<NULL>");
 		}
 		else
 		{
-			_printf("`");
-			_printf(gp_argv[j]);
-			_printf("`");
+			{ HL(8); _printf("`"); }
+			{ HL(15); _printf(gp_argv[j]); }
+			{ HL(8); _printf("`"); }
 		}
 		_printf("\n");
 	}
 
-	_printf("Parsing command\n  `");
-	_wprintf(asCmdLine);
-	_printf("`\n");
+	{ HL(10); _printf("Parsing command"); }
+	{ HL(8); _printf("\n  `"); }
+	{ HL(15); _wprintf(asCmdLine); }
+	{ HL(8); _printf("`\n"); }
 
 	int iShellCount = 0;
 	LPWSTR* ppszShl = CommandLineToArgvW(asCmdLine, &iShellCount);
 
 	int i = 0;
 	CEStr szArg;
-	_printf("ConEmu `NextArg` splitter\n");
+	{ HL(10); _printf("ConEmu `NextArg` splitter\n"); }
 	while (NextArg(&asCmdLine, szArg) == 0)
 	{
 		if (szArg.mb_Quoted)
 			DemangleArg(szArg, true);
-		_wsprintfA(szLine, SKIPLEN(countof(szLine)) "  %u: `", ++i);
-		_printf(szLine);
-		_wprintf(szArg);
-		_printf("`\n");
+		_wsprintfA(szLine, SKIPCOUNT(szLine) "  %u: ", ++i);
+		{ HL(2); _printf(szLine); }
+		{ HL(8); _printf("`"); }
+		{ HL(15); _wprintf(szArg); }
+		{ HL(8); _printf("`\n"); }
 	}
-	_wsprintfA(szLine, SKIPLEN(countof(szLine)) "  Total arguments parsed: %u\n", i);
-	_printf(szLine);
+	_wsprintfA(szLine, SKIPCOUNT(szLine) "  Total arguments parsed: %u\n", i);
+	{ HL(8); _printf(szLine); }
 
-	_printf("Standard shell splitter\n");
+	{ HL(10); _printf("Standard shell splitter\n"); }
 	for (int j = 0; j < iShellCount; j++)
 	{
-		_wsprintfA(szLine, SKIPLEN(countof(szLine)) "  %u: `", j);
-		_printf(szLine);
-		_wprintf(ppszShl[j]);
-		_printf("`\n");
+		_wsprintfA(szLine, SKIPCOUNT(szLine) "  %u: ", j);
+		{ HL(2); _printf(szLine); }
+		{ HL(8); _printf("`"); }
+		{ HL(15); _wprintf(ppszShl[j]); }
+		{ HL(8); _printf("`\n"); }
 	}
-	_wsprintfA(szLine, SKIPLEN(countof(szLine)) "  Total arguments parsed: %u\n", iShellCount);
-	_printf(szLine);
+	_wsprintfA(szLine, SKIPCOUNT(szLine) "  Total arguments parsed: %u\n", iShellCount);
+	{ HL(8); _printf(szLine); }
 	LocalFree(ppszShl);
 
 	return i;
