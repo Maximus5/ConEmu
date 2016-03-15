@@ -24,9 +24,6 @@
     <ClCompile Include="..\common\MStrSafe.cpp">
       <Filter>0 -Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\CmdArg.cpp">
-      <Filter>0 -Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\CmdLine.cpp">
       <Filter>0 -Source Files</Filter>
     </ClCompile>
@@ -45,6 +42,15 @@
     <ClCompile Include="Downloader.cpp">
       <Filter>0 -Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\CEStr.cpp">
+      <Filter>0 -Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\HkFunc.cpp">
+      <Filter>0 -Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MStrDup.cpp">
+      <Filter>0 -Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\MStrSafe.h">
@@ -54,9 +60,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\ConEmu\version.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\CmdArg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\CmdLine.h">
@@ -78,6 +81,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Downloader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\CEStr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\HkFunc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\kl_parts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MStrDup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
