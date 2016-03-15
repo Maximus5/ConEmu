@@ -185,7 +185,28 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	SendMessage(hDlg, UM_FILL_CMDLIST, TRUE, 0);
 
 	// Set text in command and folder fields
-	SetDlgItemText(hDlg, IDC_RESTART_CMD, mpsz_DefCmd ? mpsz_DefCmd : pArgs->pszSpecialCmd ? pArgs->pszSpecialCmd : L"");
+	{
+	LPCWSTR pszSetCmd = mpsz_DefCmd ? mpsz_DefCmd : pArgs->pszSpecialCmd ? pArgs->pszSpecialCmd : L"";
+	CEStr lsTempCmd, lsAppend;
+	if (!mpsz_DefCmd && pArgs)
+	{
+		RConStartArgs tempArgs;
+		tempArgs.AssignFrom(pArgs);
+		tempArgs.CleanSecure();
+		tempArgs.RunAsSystem = pArgs->RunAsSystem;
+		tempArgs.eSplit = RConStartArgs::eSplitNone;
+		SafeFree(tempArgs.pszSpecialCmd);
+		SafeFree(tempArgs.pszStartupDir);
+		tempArgs.NewConsole = pArgs->NewConsole;
+		lsAppend = tempArgs.CreateCommandLine();
+		if (!lsAppend.IsEmpty())
+		{
+			lsTempCmd = lstrmerge(pszSetCmd, ((lsAppend[0] == L' ') ? NULL : L" "), lsAppend);
+			pszSetCmd = lsTempCmd.ms_Val;
+		}
+	}
+	SetDlgItemText(hDlg, IDC_RESTART_CMD, pszSetCmd);
+	}
 
 	// "%CD%" was specified as startup dir? In Task parameters for example...
 	CEStr lsStartDir;
@@ -712,6 +733,11 @@ INT_PTR CRecreateDlg::OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 		if (pArgs->pszSpecialCmd)
 			gpSet->HistoryAdd(pArgs->pszSpecialCmd);
+
+		// Especially to reset properly RunAsSystem in active console
+		pArgs->ProcessNewConArg();
+		if (pArgs->RunAsSystem == crb_Undefined)
+			pArgs->RunAsSystem = crb_Off;
 
 		if ((pArgs->aRecreate != cra_RecreateTab) && (pArgs->aRecreate != cra_EditTab))
 		{

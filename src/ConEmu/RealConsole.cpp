@@ -9784,6 +9784,8 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 		return false;
 	}
 
+	m_Args.ProcessNewConArg();
+
 	//if (args->pszSpecialCmd && *args->pszSpecialCmd)
 	//{
 	//	if (m_Args.pszSpecialCmd) Free(m_Args.pszSpecialCmd);
