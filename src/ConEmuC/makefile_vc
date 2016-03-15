@@ -4,7 +4,7 @@
 NAME=ConEmuC
 DIRNAME=$(NAME)
 RELEASEDIR=..\..\Release\ConEmu
-USELIBCRT = 1
+NEEDDEFLIB = 1
 
 !include ../makefile_vc_defs
 
@@ -57,8 +57,8 @@ DEFINES=\
 	/DUSE_SEH
 
 # common
-CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHs-c- $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(OBJDIR)\\" /Fd"$(OBJDIR)\\" /J /c /FAcs /Fa"$(CODDIR)\\"
-LINKFLAGS=/nologo /subsystem:console /def:"$(DEF_FILE)" /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /RELEASE /nxcompat /ENTRY:main /DEBUG /pdb:"$(OUTDIR)\$(OUTNAME).pdb"
+CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHs-c- $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(OBJDIR)/" /Fd"$(OBJDIR)/" /J /c /FAcs /Fa"$(CODDIR)/"
+LINKFLAGS=/nologo /subsystem:console /def:"$(DEF_FILE)" /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /RELEASE /nxcompat /DEBUG /pdb:"$(OUTDIR)\$(OUTNAME).pdb"
 RFLAGS=$(RCWIN64) /l 0x409 /fo"$(RES_FILE)" /d "SELF_MANIFEST" /d $(USEDEBUG)
 
 # config-cpecific
