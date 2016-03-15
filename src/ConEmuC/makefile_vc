@@ -107,8 +107,11 @@ ALL: AllDirs build clean
 #depfile:
 #	$(GAWK) -f .\scripts\mkdep.awk mkdep.list > $(DEPFILE)
 
+cppflags:
+	@echo $(CLR_BRN)compiling $(NAME) :: $(CPPFLAGS)$(CLR_STD)
+
 .PHONY: build
-build: "$(OUTDIR)\$(OUTNAME).exe"
+build: cppflags "$(OUTDIR)\$(OUTNAME).exe"
 
 .PHONY: AllDirs
 AllDirs:
