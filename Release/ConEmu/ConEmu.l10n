@@ -193,6 +193,9 @@
       "en": [ "Try to erase selected region if possible\r\n"
             , "by posting sequence of Del/BS to console.\r\n"
             , "Implement ‘usual’ hotkeys Ctrl+X, Shift+Del, BS and Del." ],
+      "zh": [ "如果可能，尝试擦除选择的区域\r\n"
+            , "由发送系列的Del/BS键至控制台（console）。\r\n"
+            , "实现“通常意义的”热键Ctrl+X，Shift+Del，BS和Del。" ],
       "id": 3030 }
     ,
     "cbCTSFreezeBeforeSelect": {
@@ -207,6 +210,7 @@
     ,
     "cbCTSResetOnRelease": {
       "en": "Reset selection region on left mouse button up (when selecting with mouse)",
+      "zh": "鼠标左键向上时重置选择区域（当用鼠标选择时）",
       "id": 3029 }
     ,
     "cbCTSShiftArrowStartSel": {
@@ -2923,7 +2927,7 @@
     ,
     "cbCTSEndOnKeyPress": {
       "en": "any non-alpha-numeric key",
-      "_zh": "任意键",
+      "zh": "任意非字母数字键",
       "id": 2436 }
     ,
     "cbCTSEndOnTyping": {
@@ -2933,6 +2937,7 @@
     ,
     "cbCTSEraseBeforeReset": {
       "en": "try to cut/erase selection before reset",
+      "zh": "重置前尝试剪切/擦除选择",
       "id": 3030 }
     ,
     "cbCTSFreezeBeforeSelect": {
@@ -2952,6 +2957,7 @@
     ,
     "cbCTSResetOnRelease": {
       "en": "Reset selection on Left Button release",
+      "zh": "鼠标左键释放时重置选择",
       "id": 3029 }
     ,
     "cbCTSShiftArrowStartSel": {
@@ -4384,6 +4390,7 @@
     ,
     "rbCurrentUser": {
       "en": "Run as current &user <UserName>",
+      "zh": "以当前用户身份运行(&u) <UserName>",
       "id": 1656 }
     ,
     "rbDefaultTerminalConfAlways": {
@@ -4845,7 +4852,7 @@
     ,
     "stCTSBackColor": {
       "en": "Background:",
-      "_zh": "背部：",
+      "zh": "背景：",
       "id": 2978 }
     ,
     "stCTSEOL": {
@@ -4871,7 +4878,7 @@
     ,
     "stCTSTextColor": {
       "en": "Foreground:",
-      "_zh": "文本：",
+      "zh": "前景：",
       "id": 2977 }
     ,
     "stCursorMinSize": {
