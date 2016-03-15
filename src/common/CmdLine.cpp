@@ -246,7 +246,10 @@ int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/
 					// a) at the beginning of the line (handled above, bQuoteEscaped);
 					// b) after space, left bracket or colon (-GuiMacro)
 					// c) when already was forced by bQuoteEscaped
-					if ((((pch - 1) >= psCmdLine) && wcschr(L" (,", *(pch-1))) || bQuoteEscaped)
+					if ((
+						((((pch - 1) >= psCmdLine) && wcschr(L" (,", *(pch-1)))
+							|| (*(pch+2) && !isSpace(*(pch+2)))
+						)) || bQuoteEscaped)
 					{
 						bQuoteEscaped = true;
 						pch++; // Point to "
