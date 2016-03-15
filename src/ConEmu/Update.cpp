@@ -1115,6 +1115,7 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	HANDLE hBatch = NULL;
 	wchar_t* pszBatch = NULL;
 	wchar_t* pszCommand = NULL;
+	LPCWSTR pszWorkDir = NULL;
 	BOOL lbWrite;
 	DWORD nLen, nWritten;
 	char szOem[4096];
@@ -1248,8 +1249,18 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	// Сброс переменной окружения: "set ConEmuInUpdate="
 	WRITE_BATCH_W(L"\r\nset " ENV_CONEMU_INUPDATE_W L"=\r\n");
 
-	// Перезапуск ConEmu
-	WRITE_BATCH_A("\r\necho Starting ConEmu...\r\nstart \"ConEmu\" \"");
+	// Start updated ConEmu instance
+	WRITE_BATCH_A("\r\necho Starting ConEmu...\r\n");
+	// Return working directory
+	pszWorkDir = gpConEmu->WorkDir();
+	if (pszWorkDir && *pszWorkDir)
+	{
+		WRITE_BATCH_A("cd /d \"");
+		WRITE_BATCH_W(pszWorkDir);
+		WRITE_BATCH_A("\\\"\r\n");
+	}
+	// start "ConEmu" -demote -cmd ConEmu.exe ...
+	WRITE_BATCH_A("start \"ConEmu\" \"");
 	WRITE_BATCH_W(gpConEmu->ms_ConEmuExe);
 	WRITE_BATCH_A("\" ");
 	if (bNeedRunElevation)
