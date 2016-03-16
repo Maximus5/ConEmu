@@ -208,10 +208,11 @@ static void DisplayShedulerError(LPCWSTR pszStep, HRESULT hr, LPCWSTR bsTaskName
 }
 #endif
 
-/// The function starts new process using Windows Task Sheduler
+
+/// The function starts new process using Windows Task Scheduler
 /// This allows to run process ‘Demoted’ (bAsSystem == false)
 /// or under ‘System’ account (bAsSystem == true)
-BOOL CreateProcessSheduled(bool bAsSystem, LPWSTR lpCommandLine,
+BOOL CreateProcessScheduled(bool bAsSystem, LPWSTR lpCommandLine,
 						   LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 						   BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 						   LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
@@ -238,7 +239,7 @@ BOOL CreateProcessSheduled(bool bAsSystem, LPWSTR lpCommandLine,
 
 #if defined(__GNUC__)
 
-	DisplayLastError(L"GNU <taskschd.h> does not have TaskSheduler support yet!", (DWORD)-1);
+	DisplayLastError(L"GNU <taskschd.h> does not have TaskScheduler support yet!", (DWORD)-1);
 
 #else
 
@@ -549,7 +550,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 {
 	BOOL lbRc;
 
-	lbRc = CreateProcessSheduled(false, lpCommandLine,
+	lbRc = CreateProcessScheduled(false, lpCommandLine,
 						   lpProcessAttributes, lpThreadAttributes,
 						   bInheritHandles, dwCreationFlags, lpEnvironment,
 						   lpCurrentDirectory, lpStartupInfo, lpProcessInformation,

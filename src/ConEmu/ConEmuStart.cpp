@@ -825,7 +825,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					}
 					else if (!klstricmp(curCommand, _T("/system")))
 					{
-						b = CreateProcessSheduled(true, opt.cmdNew.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+						b = CreateProcessScheduled(true, opt.cmdNew.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
 					}
 					else if (!klstricmp(curCommand, _T("/interactive")))
