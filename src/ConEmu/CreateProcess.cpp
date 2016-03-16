@@ -554,7 +554,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 						   lpProcessAttributes, lpThreadAttributes,
 						   bInheritHandles, dwCreationFlags, lpEnvironment,
 						   lpCurrentDirectory, lpStartupInfo, lpProcessInformation,
-						   pdwLastError);
+						   NULL);
 
 	// If all methods fails - try to execute "as is"?
 	if (!lbRc)
