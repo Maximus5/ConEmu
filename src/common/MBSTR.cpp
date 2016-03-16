@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 MBSTR::MBSTR(LPCWSTR asString)
 {
-	ms_bstr = ::SysAllocString(asString);
+	ms_bstr = asString ? ::SysAllocString(asString) : NULL;
 }
 
 MBSTR::~MBSTR()

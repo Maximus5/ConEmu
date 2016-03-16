@@ -35,7 +35,7 @@ class MBSTR
 protected:
 	BSTR ms_bstr;
 public:
-	MBSTR(LPCWSTR asString);
+	MBSTR(LPCWSTR asString = NULL);
 	~MBSTR();
 public:
 	void Free();
