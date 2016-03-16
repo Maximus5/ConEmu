@@ -4626,7 +4626,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		lpszCmd = L"";
 	}
 	int nLen = _tcslen(lpszCmd);
-	nLen += _tcslen(mp_ConEmu->ms_ConEmuExe) + 350 + MAX_PATH*2;
+	nLen += _tcslen(mp_ConEmu->ms_ConEmuExe) + 360 + MAX_PATH*2;
 	MCHKHEAP;
 	psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 	_ASSERTE(psCurCmd);
@@ -4640,7 +4640,10 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		_ASSERTE(m_Args.RunAsAdministrator == crb_On);
 		_wcscat_c(psCurCmd, nLen, L"\"");
 		_wcscat_c(psCurCmd, nLen, mp_ConEmu->ms_ConEmuExe);
-		_wcscat_c(psCurCmd, nLen, L"\" -system -cmd ");
+		_wcscat_c(psCurCmd, nLen, L"\" ");
+		if (gpSetCls->isAdvLogging)
+			_wcscat_c(psCurCmd, nLen, L"-log ");
+		_wcscat_c(psCurCmd, nLen, L"-system -cmd ");
 	}
 
 	_wcscat_c(psCurCmd, nLen, L"\"");

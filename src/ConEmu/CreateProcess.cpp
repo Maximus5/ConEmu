@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/TokenHelper.h"
 #include "../common/WSession.h"
 
+#include "OptionsClass.h"
 #include "version.h"
 
 //#define DEBUGSTRMOVE(s) //DEBUGSTR(s)
@@ -232,7 +233,10 @@ BOOL CreateProcessScheduled(bool bAsSystem, LPWSTR lpCommandLine,
 		DisplayLastError(L"GetModuleFileName(NULL) failed");
 		return FALSE;
 	}
-	CEStr szCommand(bAsSystem ? L"-interactive " : L"-bypass ", lpCommandLine);
+	CEStr szCommand(
+		gpSetCls->isAdvLogging ? L"-log " : NULL,
+		bAsSystem ? L"-interactive " : L"-bypass ",
+		lpCommandLine);
 	LPCWSTR pszCmdArgs = szCommand;
 
 	BOOL lbRc = FALSE;
