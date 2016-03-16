@@ -48,9 +48,9 @@ public:
 	HMODULE Load(LPCWSTR asModule);
 public:
 	template <typename FUNCTIONTYPE>
-	bool GetProcAddress(LPCSTR asFunction, FUNCTIONTYPE& pfn) const
+	bool GetProcAddress(LPCSTR asFunction, FUNCTIONTYPE*& pfn) const
 	{
-		pfn = mh_Module ? (FUNCTIONTYPE)::GetProcAddress(mh_Module, asFunction) : NULL;
+		pfn = mh_Module ? (FUNCTIONTYPE*)::GetProcAddress(mh_Module, asFunction) : NULL;
 		return (pfn != NULL);
 	};
 public:
