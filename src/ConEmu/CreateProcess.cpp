@@ -46,6 +46,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define DEBUGSTRMOVE(s) //DEBUGSTR(s)
 
 
+
+/// Run process under restrictive token
 BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
@@ -114,6 +116,10 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 	return lbRc;
 }
 
+
+
+/// If process is started under LocalSystem account, it goes to SessionID=0
+/// But we need interactive session to able to communicate with ConEmu window
 BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
@@ -240,7 +246,7 @@ static BOOL CreateProcessScheduled(bool bAsSystem, LPWSTR lpCommandLine,
 	}
 
 	// This issue is not actual anymore, because we call put_ExecutionTimeLimit(‘Infinite’)
-	// Issue 1897: Created task stopped after 72 hour, so use "/bypass"
+	// -- Issue 1897: Created task stopped after 72 hour, so use "/bypass"
 	CEStr szExe;
 	if (!GetModuleFileName(NULL, szExe.GetBuffer(MAX_PATH), MAX_PATH) || szExe.IsEmpty())
 	{
