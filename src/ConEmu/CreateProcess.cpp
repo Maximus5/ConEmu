@@ -50,7 +50,7 @@ BOOL CreateProcessRestricted(LPCWSTR lpApplicationName, LPWSTR lpCommandLine,
 							 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
-							 LPDWORD pdwLastError)
+							 LPDWORD pdwLastError /*= NULL*/)
 {
 	BOOL lbRc = FALSE;
 	HANDLE hToken = NULL, hTokenRest = NULL;
@@ -217,7 +217,7 @@ static BOOL CreateProcessScheduled(bool bAsSystem, LPWSTR lpCommandLine,
 						   LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 						   BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 						   LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
-						   LPDWORD pdwLastError)
+						   LPDWORD pdwLastError /*= NULL*/)
 {
 	if (!lpCommandLine || !*lpCommandLine)
 	{
@@ -567,7 +567,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 						  LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 						  BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 						  LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
-						  LPDWORD pdwLastError)
+						  LPDWORD pdwLastError /*= NULL*/)
 {
 	BOOL lbRc;
 
