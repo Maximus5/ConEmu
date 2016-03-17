@@ -5933,14 +5933,17 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
 	HWND hInsideFocus = NULL;
 	DWORD nForePID = 0;
 
-	if (mp_Inside && (hForeWnd == mp_Inside->mh_InsideParentRoot))
+	if (mp_Inside)
 	{
-		if ((hInsideFocus = mp_Inside->CheckInsideFocus()))
+		if (hForeWnd == mp_Inside->mh_InsideParentRoot)
 		{
-			DWORD nInsideFocusPID = 0; GetWindowThreadProcessId(hInsideFocus, &nInsideFocusPID);
-			if (nInsideFocusPID == GetCurrentProcessId())
+			if ((hInsideFocus = mp_Inside->CheckInsideFocus()))
 			{
-				NewState |= fgf_InsideParent;
+				DWORD nInsideFocusPID = 0; GetWindowThreadProcessId(hInsideFocus, &nInsideFocusPID);
+				if (nInsideFocusPID == GetCurrentProcessId())
+				{
+					NewState |= fgf_InsideParent;
+				}
 			}
 		}
 	}
