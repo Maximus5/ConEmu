@@ -131,21 +131,25 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 	{
 		nErrCode = GetLastError();
 		_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to OpenProcessToken, code=%u", nErrCode);
-		if (pdwLastError) *pdwLastError = nErrCode;
-	}
-	else
-	{
-		if (!GetTokenInformation(hToken, TokenSessionId, &nCurSession, sizeof(nCurSession), &nRetSize))
-			_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to query TokenSessionId, code=%u", GetLastError());
-		else
-			_wsprintf(szLog, SKIPCOUNT(szLog) L"Current TokenSessionId is %u", nCurSession);
 		LogString(szLog);
-		nNewSessionId = (anSessionId == (DWORD)-1) ? apiGetConsoleSessionID() : anSessionId;
+		if (pdwLastError) *pdwLastError = nErrCode;
+		goto wrap;
+	}
 
+	if (!GetTokenInformation(hToken, TokenSessionId, &nCurSession, sizeof(nCurSession), &nRetSize))
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to query TokenSessionId, code=%u", GetLastError());
+	else
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"Current TokenSessionId is %u", nCurSession);
+	LogString(szLog);
+	nNewSessionId = (anSessionId == (DWORD)-1) ? apiGetConsoleSessionID() : anSessionId;
+
+	if (nNewSessionId != nCurSession)
+	{
 		if (!DuplicateTokenEx(hToken, MAXIMUM_ALLOWED, NULL, SecurityImpersonation, TokenPrimary, &hTokenRest))
 		{
 			_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to duplicate current token, code=%u", GetLastError());
 			LogString(szLog);
+			goto wrap;
 		}
 		else
 		{
@@ -162,6 +166,7 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 				_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to adjust TokenSessionId to %u, code=%u", nNewSessionId, nErrCode);
 				LogString(szLog);
 				if (pdwLastError) *pdwLastError = nErrCode;
+				goto wrap;
 			}
 			else
 			{
@@ -172,30 +177,39 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 				else
 					_wsprintf(szLog, SKIPCOUNT(szLog) L"New TokenSessionId is %u", nCurSession);
 				LogString(szLog);
-
-				if (CreateProcessAsUserW(hTokenRest, lpApplicationName, lpCommandLine,
-								 lpProcessAttributes, lpThreadAttributes,
-								 bInheritHandles, dwCreationFlags, lpEnvironment,
-								 lpCurrentDirectory, lpStartupInfo, lpProcessInformation))
-				{
-					lbRc = TRUE;
-				}
-				else
-				{
-					nErrCode = GetLastError();
-					_wsprintf(szLog, SKIPCOUNT(szLog) L"CreateProcessAsUserW failed, code=%u", nErrCode);
-					LogString(szLog);
-					if (pdwLastError) *pdwLastError = nErrCode;
-				}
-
 			}
-
-			CloseHandle(hTokenRest); hTokenRest = NULL;
 		}
-
-		CloseHandle(hToken); hToken = NULL;
 	}
 
+	// Now create the process
+	if (hTokenRest)
+	{
+		lbRc = CreateProcessAsUserW(hTokenRest, lpApplicationName, lpCommandLine,
+									lpProcessAttributes, lpThreadAttributes,
+									bInheritHandles, dwCreationFlags, lpEnvironment,
+									lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	}
+	else
+	{
+		lbRc = CreateProcess(NULL, lpCommandLine,
+							 lpProcessAttributes, lpThreadAttributes,
+							 bInheritHandles, dwCreationFlags, lpEnvironment,
+							 lpCurrentDirectory, lpStartupInfo, lpProcessInformation);
+	}
+
+	// Log errors
+	if (!lbRc)
+	{
+		nErrCode = GetLastError();
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"%s failed, code=%u", hTokenRest ? L"CreateProcessAsUser" : L"CreateProcess", nErrCode);
+		LogString(szLog);
+		if (pdwLastError) *pdwLastError = nErrCode;
+	}
+
+	SafeCloseHandle(hTokenRest);
+	SafeCloseHandle(hToken);
+
+wrap:
 	return lbRc;
 }
 
