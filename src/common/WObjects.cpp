@@ -942,7 +942,8 @@ int GetProcessBits(DWORD nPID, HANDLE hProcess /*= NULL*/)
 	return ImageBits;
 }
 
-bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info)
+
+bool GetProcessInfo(bool (*compare)(PROCESSENTRY32W* p, LPARAM lParam), LPARAM lParam, PROCESSENTRY32W* Info)
 {
 	bool bFound = false;
 	if (Info)
@@ -954,7 +955,7 @@ bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info)
 		if (Process32First(h, &PI))
 		{
 			do {
-				if (PI.th32ProcessID == nPID)
+				if (compare(&PI, lParam))
 				{
 					if (Info)
 						*Info = PI;
@@ -967,6 +968,36 @@ bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info)
 		CloseHandle(h);
 	}
 	return bFound;
+}
+
+bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info)
+{
+	struct cmp
+	{
+		static bool compare(PROCESSENTRY32W* p, LPARAM lParam)
+		{
+			return (p->th32ProcessID == LODWORD(lParam));
+		};
+	};
+	return GetProcessInfo(cmp::compare, (LPARAM)nPID, Info);
+}
+
+bool GetProcessInfo(LPCWSTR asExeName, PROCESSENTRY32W* Info)
+{
+	struct cmp
+	{
+		static bool compare(PROCESSENTRY32W* p, LPARAM lParam)
+		{
+			LPCWSTR pszName1 = PointToName(p->szExeFile);
+			LPCWSTR pszName2 = (LPCWSTR)lParam;
+			int iCmp = lstrcmpi(pszName1, pszName2);
+			return (iCmp == 0);
+		};
+	};
+	LPCWSTR pszName = PointToName(asExeName);
+	if (!pszName || !*pszName)
+		return false;
+	return GetProcessInfo(cmp::compare, (LPARAM)pszName, Info);
 }
 
 bool isTerminalMode()

@@ -89,6 +89,8 @@ bool isTerminalMode();
 typedef struct tagPROCESSENTRY32W PROCESSENTRY32W;
 int  GetProcessBits(DWORD nPID, HANDLE hProcess = NULL);
 bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
+bool GetProcessInfo(LPCWSTR asExeName, PROCESSENTRY32W* Info);
+bool GetProcessInfo(bool (*compare)(PROCESSENTRY32W* p, LPARAM lParam), LPARAM lParam, PROCESSENTRY32W* Info);
 
 wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount);
 wchar_t* ExpandEnvStr(LPCWSTR pszCommand);
