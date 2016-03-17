@@ -38,7 +38,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 							 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 							 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
 							 LPDWORD pdwLastError = NULL);
-BOOL CreateProcessScheduled(bool bAsSystem, LPWSTR lpCommandLine,
+BOOL CreateProcessSystem(LPWSTR lpCommandLine,
 						     LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 						     BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 						     LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,

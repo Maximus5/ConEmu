@@ -213,7 +213,7 @@ static void DisplayShedulerError(LPCWSTR pszStep, HRESULT hr, LPCWSTR bsTaskName
 /// The function starts new process using Windows Task Scheduler
 /// This allows to run process ‘Demoted’ (bAsSystem == false)
 /// or under ‘System’ account (bAsSystem == true)
-BOOL CreateProcessScheduled(bool bAsSystem, LPWSTR lpCommandLine,
+static BOOL CreateProcessScheduled(bool bAsSystem, LPWSTR lpCommandLine,
 						   LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 						   BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 						   LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
@@ -542,6 +542,23 @@ wrap:
 	if (pdwLastError) *pdwLastError = hr;
 	// End of Task-scheduler mode
 #endif
+
+	return lbRc;
+}
+
+BOOL CreateProcessSystem(LPWSTR lpCommandLine,
+						 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
+						 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
+						 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
+						 LPDWORD pdwLastError /*= NULL*/)
+{
+	BOOL lbRc;
+
+	lbRc = CreateProcessScheduled(true, lpCommandLine,
+						   lpProcessAttributes, lpThreadAttributes,
+						   bInheritHandles, dwCreationFlags, lpEnvironment,
+						   lpCurrentDirectory, lpStartupInfo, lpProcessInformation,
+						   pdwLastError);
 
 	return lbRc;
 }
