@@ -753,6 +753,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					goto wrap;
 				}
 				else if (!klstricmp(curCommand, _T("/bypass"))
+					|| !klstricmp(curCommand, _T("/apparent"))
 					|| !klstricmp(curCommand, _T("/system"))
 					|| !klstricmp(curCommand, _T("/interactive"))
 					|| !klstricmp(curCommand, _T("/demote")))
@@ -763,6 +764,9 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					// (т.е. чтобы окно UAC нормально всплывало, но не мелькало консольное окно)
 					// Но не получилось, пока требуются хэндлы процесса, а их не получается
 					// передать в НЕ приподнятый процесс (исходный ConEmu GUI).
+
+					// -apparent
+					// Same as -bypass, but run the process as SW_SHOWNORMAL
 
 					// -demote
 					// Запуск процесса (ком.строка после "/demote") в режиме простого юзера,
@@ -806,7 +810,10 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					STARTUPINFO si = {sizeof(si)};
 					PROCESS_INFORMATION pi = {};
 					si.dwFlags = STARTF_USESHOWWINDOW;
-					if (0 == klstricmp(curCommand, _T("/demote")))
+					// Only `-demote` and `-apparent` switches were implemented to start application visible
+					// All others are intended to run our server process, without blinking of course
+					if ((0 == klstricmp(curCommand, _T("/demote")))
+						|| (0 == klstricmp(curCommand, _T("/apparent"))))
 						si.wShowWindow = SW_SHOWNORMAL;
 					else
 						si.wShowWindow = SW_HIDE;
@@ -832,9 +839,10 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						b = CreateProcessInteractive((DWORD)-1, NULL, opt.cmdNew.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
 					}
-					else // -bypass
+					else // -bypass, -apparent
 					{
-						b = CreateProcess(NULL, opt.cmdNew.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
+						b = CreateProcess(NULL, opt.cmdNew.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
+							NULL, &si, &pi);
 						nErr = b ? 0 : GetLastError();
 					}
 
