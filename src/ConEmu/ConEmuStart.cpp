@@ -676,18 +676,6 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				curCommand = szNext.ms_Val;
 
 
-			#define AcquireCmdNew() \
-				_ASSERTE(opt.cmdNew.IsEmpty()); \
-				pszTemp = cmdLineRest; \
-				if ((NextArg(&pszTemp, szNext) == 0) \
-					&& (szNext.ms_Val[0] == L'-' || szNext.ms_Val[0] == L'/') \
-					&& (lstrcmpi(szNext.ms_Val+1, L"cmd") == 0)) { \
-					opt.cmdNew.Set(pszTemp); \
-				} else { \
-					opt.cmdNew.Set(cmdLineRest); \
-				}
-
-
 			if (*curCommand != L'/')
 			{
 				continue; // Try next switch?
@@ -789,7 +777,18 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					// Used when ConEmu.exe is started under System account,
 					// but we need to give starting process interactive capabilities.
 
-					AcquireCmdNew();
+					_ASSERTE(opt.cmdNew.IsEmpty());
+					pszTemp = cmdLineRest;
+					if ((NextArg(&pszTemp, szNext) == 0)
+						&& (szNext.ms_Val[0] == L'-' || szNext.ms_Val[0] == L'/')
+						&& (lstrcmpi(szNext.ms_Val+1, L"cmd") == 0))
+					{
+						opt.cmdNew.Set(pszTemp);
+					}
+					else
+					{
+						opt.cmdNew.Set(cmdLineRest);
+					}
 
 					if (!opt.cmdNew || !*opt.cmdNew)
 					{
