@@ -824,6 +824,19 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					BOOL b;
 					DWORD nErr = 0;
 
+					// if we were started from TaskScheduler, it would be nice to wait a little
+					// to let parent (creator of the scheduler task) know we were started successfully
+					bool bFromScheduler = false;
+
+					// Log the command to be started
+					{
+						CEStr lsLog(
+							L"Starting process",
+							L": ", curCommand,
+							L" `", opt.cmdNew.ms_Val, L"`");
+						LogString(lsLog);
+					}
+
 					if (!klstricmp(curCommand, _T("/demote")))
 					{
 						b = CreateProcessDemoted(opt.cmdNew.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
@@ -838,25 +851,58 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					{
 						b = CreateProcessInteractive((DWORD)-1, NULL, opt.cmdNew.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
+						bFromScheduler = true;
 					}
 					else // -bypass, -apparent
 					{
 						b = CreateProcess(NULL, opt.cmdNew.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
 							NULL, &si, &pi);
 						nErr = b ? 0 : GetLastError();
+						bFromScheduler = true;
 					}
 
-					// Done, close handles, if they were opened
-					if (b)
+					// Log the result
 					{
-						SafeCloseHandle(pi.hProcess);
-						SafeCloseHandle(pi.hThread);
-						iResult = 0;
-						goto wrap;
+						CEStr lsLog; wchar_t szExtra[32] = L"";
+						if (b)
+						{
+							if (pi.dwProcessId)
+								_wsprintf(szExtra, SKIPCOUNT(szExtra) L", PID=%u", pi.dwProcessId);
+							lsLog = lstrmerge(
+								L"Process was created successfully",
+								szExtra);
+						}
+						else
+						{
+							_wsprintf(szExtra, SKIPCOUNT(szExtra) L", ErrorCode=%u", nErr);
+							lsLog = lstrmerge(
+								L"Failed to start process",
+								szExtra);
+						}
+						LogString(lsLog);
 					}
 
 					// If the error was not shown yet
 					if (nErr) DisplayLastError(opt.cmdNew, nErr);
+
+					// if we were started from TaskScheduler, it would be nice to wait a little
+					// to let parent (creator of the scheduler task) know we were started successfully
+					if (bFromScheduler)
+					{
+						LogString(L"Sleeping for 5 seconds");
+						Sleep(5*1000);
+					}
+
+					// Success?
+					if (b)
+					{
+						iResult = 0;
+					}
+
+					// Done, close handles, if they were opened
+					SafeCloseHandle(pi.hProcess);
+					SafeCloseHandle(pi.hThread);
+
 					goto wrap;
 				}
 				else if (!klstricmp(curCommand, _T("/multi")))
