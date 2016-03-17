@@ -1925,16 +1925,15 @@ LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 	checkDlgButton(hWnd2, cbTaskbarOverlay, gpSet->isTaskbarOverlay);
 	checkDlgButton(hWnd2, cbTaskbarProgress, gpSet->isTaskbarProgress);
 
-	//checkRadioButton(hWnd2, rbMultiLastClose, rbMultiLastTSA,
-	//	gpSet->isMultiLeaveOnClose ? (gpSet->isMultiHideOnClose ? rbMultiLastTSA : rbMultiLastLeave) : rbMultiLastClose);
-	checkDlgButton(hWnd2, cbCloseConEmuWithLastTab, (gpSet->isMultiLeaveOnClose == 0) ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hWnd2, cbCloseConEmuOnCrossClicking, (gpSet->isMultiLeaveOnClose != 1) ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hWnd2, cbMinimizeOnLastTabClose, (gpSet->isMultiLeaveOnClose && gpSet->isMultiHideOnClose != 0) ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose && gpSet->isMultiHideOnClose == 1) ? BST_CHECKED : BST_UNCHECKED);
 	//
-	EnableDlgItem(hWnd2, cbCloseConEmuOnCrossClicking, (gpSet->isMultiLeaveOnClose != 0));
-	EnableDlgItem(hWnd2, cbMinimizeOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0));
-	EnableDlgItem(hWnd2, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0) && (gpSet->isMultiHideOnClose != 0));
+	checkDlgButton(hWnd2, cbCloseConEmuWithLastTab, gpSet->isCloseOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbCloseConEmuOnCrossClicking, gpSet->isCloseOnCrossClick() ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbMinimizeOnLastTabClose, gpSet->isMinOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hWnd2, cbHideOnLastTabClose, gpSet->isHideOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
+	//
+	EnableDlgItem(hWnd2, cbCloseConEmuOnCrossClicking, !gpSet->isCloseOnLastTabClose());
+	EnableDlgItem(hWnd2, cbMinimizeOnLastTabClose, !gpSet->isCloseOnLastTabClose());
+	EnableDlgItem(hWnd2, cbHideOnLastTabClose, !gpSet->isCloseOnLastTabClose() && gpSet->isMinOnLastTabClose());
 
 
 	checkDlgButton(hWnd2, cbMinimizeOnLoseFocus, gpSet->mb_MinimizeOnLoseFocus);

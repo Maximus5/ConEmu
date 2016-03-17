@@ -873,6 +873,11 @@ struct Settings
 		BYTE isMultiLeaveOnClose; // 0 - закрываться, 1 - оставаться, 2 - НЕ оставаться при закрытии "крестиком"
 		//reg->Load(L"Multi.HideOnClose", isMultiHideOnClose);
 		BYTE isMultiHideOnClose; // 0 - не скрываться, 1 - в трей, 2 - просто минимизация
+		// helpers
+		bool isCloseOnLastTabClose();
+		bool isCloseOnCrossClick();
+		bool isMinOnLastTabClose();
+		bool isHideOnLastTabClose();
 		//reg->Load(L"Multi.MinByEsc", isMultiMinByEsc);
 		BYTE isMultiMinByEsc; // 0 - Never, 1 - Always, 2 - NoConsoles
 		//reg->Load(L"MapShiftEscToEsc", isMapShiftEscToEsc);

@@ -3139,8 +3139,8 @@ void CSetDlgButtons::OnBtn_CloseConEmuOptions(HWND hDlg, WORD CB, BYTE uCheck)
 	// isMultiLeaveOnClose: 0 - закрываться, 1 - оставаться, 2 - НЕ оставаться при закрытии "крестиком"
 
 	BYTE CurVal = gpSet->isMultiLeaveOnClose;
-	BOOL bClose = (gpSet->isMultiLeaveOnClose == 0); // закрываться с последним табом
-	BOOL bQuit = (gpSet->isMultiLeaveOnClose != 1);  // закрываться по крестику
+	BOOL bClose = gpSet->isCloseOnLastTabClose(); // закрываться с последним табом
+	BOOL bQuit = gpSet->isCloseOnCrossClick();  // закрываться по крестику
 	_ASSERTE((bClose&&bQuit) || (!bClose&&bQuit) || (!bClose&&!bQuit));
 
 	// hDlg may be NULL if called from GuiMacro
@@ -3168,11 +3168,11 @@ void CSetDlgButtons::OnBtn_CloseConEmuOptions(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (hDlg)
 	{
-		checkDlgButton(hDlg, cbMinimizeOnLastTabClose, (gpSet->isMultiLeaveOnClose && gpSet->isMultiHideOnClose != 0) ? BST_CHECKED : BST_UNCHECKED);
-		checkDlgButton(hDlg, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose && gpSet->isMultiHideOnClose == 1) ? BST_CHECKED : BST_UNCHECKED);
-		CSettings::EnableDlgItem(hDlg, cbCloseConEmuOnCrossClicking, (gpSet->isMultiLeaveOnClose != 0));
-		CSettings::EnableDlgItem(hDlg, cbMinimizeOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0));
-		CSettings::EnableDlgItem(hDlg, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0) && (gpSet->isMultiHideOnClose != 0));
+		checkDlgButton(hDlg, cbMinimizeOnLastTabClose, gpSet->isMinOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
+		checkDlgButton(hDlg, cbHideOnLastTabClose, gpSet->isHideOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
+		CSettings::EnableDlgItem(hDlg, cbCloseConEmuOnCrossClicking, !gpSet->isCloseOnLastTabClose());
+		CSettings::EnableDlgItem(hDlg, cbMinimizeOnLastTabClose, !gpSet->isCloseOnLastTabClose());
+		CSettings::EnableDlgItem(hDlg, cbHideOnLastTabClose, !gpSet->isCloseOnLastTabClose() && gpSet->isMinOnLastTabClose());
 	}
 } // cbCloseConEmuWithLastTab || cbCloseConEmuOnCrossClicking
 
@@ -3183,12 +3183,12 @@ void CSetDlgButtons::OnBtn_HideOrMinOnLastTabClose(HWND hDlg, WORD CB, BYTE uChe
 	_ASSERTE(CB==cbMinimizeOnLastTabClose || CB==cbHideOnLastTabClose);
 
 	if ((hDlg && !IsChecked(hDlg, cbCloseConEmuWithLastTab))
-		|| (!hDlg && gpSet->isMultiLeaveOnClose))
+		|| (!hDlg && !gpSet->isCloseOnLastTabClose()))
 	{
 		// isMultiHideOnClose: 0 - не скрываться, 1 - в трей, 2 - просто минимизация
 
-		BOOL chkMin = (gpSet->isMultiHideOnClose != 0);
-		BOOL chkTSA = (gpSet->isMultiHideOnClose == 1);
+		BOOL chkMin = gpSet->isMinOnLastTabClose();
+		BOOL chkTSA = gpSet->isHideOnLastTabClose();
 
 		// hDlg may be NULL if called from GuiMacro
 		if (hDlg)
@@ -3216,8 +3216,8 @@ void CSetDlgButtons::OnBtn_HideOrMinOnLastTabClose(HWND hDlg, WORD CB, BYTE uChe
 
 		if (hDlg)
 		{
-			checkDlgButton(hDlg, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose && gpSet->isMultiHideOnClose == 1) ? BST_CHECKED : BST_UNCHECKED);
-			CSettings::EnableDlgItem(hDlg, cbHideOnLastTabClose, (gpSet->isMultiLeaveOnClose != 0) && (gpSet->isMultiHideOnClose != 0));
+			checkDlgButton(hDlg, cbHideOnLastTabClose, gpSet->isHideOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
+			CSettings::EnableDlgItem(hDlg, cbHideOnLastTabClose, !gpSet->isCloseOnLastTabClose() && gpSet->isMinOnLastTabClose());
 		}
 	}
 } // cbMinimizeOnLastTabClose || cbHideOnLastTabClose

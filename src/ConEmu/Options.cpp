@@ -4998,6 +4998,42 @@ bool Settings::NeedCreateAppWindow()
 	return false;
 }
 
+bool Settings::isCloseOnLastTabClose()
+{
+	if (isMultiLeaveOnClose != 0)
+		return false;
+	if (gpConEmu->WindowStartNoClose)
+		return false;
+	if (gpConEmu->m_StartDetached != crb_Undefined)
+		return false;
+	return true;
+}
+
+bool Settings::isCloseOnCrossClick()
+{
+	if (isCloseOnLastTabClose())
+		return true;
+	return (isMultiLeaveOnClose != 1);
+}
+
+bool Settings::isMinOnLastTabClose()
+{
+	if (isCloseOnLastTabClose())
+		return false;
+	if (gpConEmu->WindowStartNoClose)
+		return true;
+	return (isMultiHideOnClose != 0);
+}
+
+bool Settings::isHideOnLastTabClose()
+{
+	if (isCloseOnLastTabClose())
+		return false;
+	if (gpConEmu->WindowStartNoClose)
+		return true;
+	return (isMultiHideOnClose == 1);
+}
+
 // Показывать табы на таскбаре? (для каждой консоли - своя кнопка)
 bool Settings::isTabsOnTaskBar()
 {

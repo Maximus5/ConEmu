@@ -7001,10 +7001,10 @@ void CConEmuMain::OnMainCreateFinished()
 
 			if (WindowStartNoClose)
 			{
-				LogString(L"Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1} due to WindowStartTsa & WindowStartNoClose");
+				LogString(L"Implied {isMultiLeaveOnClose=1 && isMultiHideOnClose=1} due to WindowStartTsa & WindowStartNoClose");
 				//_ASSERTE(FALSE && "Set up {isMultiLeaveOnClose=1 && isMultiHideOnClose=1}");
-				gpSet->isMultiLeaveOnClose = 1;
-				gpSet->isMultiHideOnClose = 1;
+				//gpSet->isMultiLeaveOnClose = 1;
+				//gpSet->isMultiHideOnClose = 1;
 			}
 		}
 		else if (IsWindowVisible(ghWnd) && !isIconic())
@@ -7051,8 +7051,12 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 	if (gpSetCls->isAdvLogging)
 	{
 		wchar_t sInfo[100];
-		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"PostCreate.%u.begin (LeaveOnClose=%u, HideOnClose=%u)",
-			abReceived ? 2 : 1, (UINT)gpSet->isMultiLeaveOnClose, (UINT)gpSet->isMultiHideOnClose);
+		_wsprintf(sInfo, SKIPLEN(countof(sInfo))
+			L"PostCreate.%u.begin (LastTabClose=%u CrossClick=%u DoMin=%u DoHide=%u)",
+			abReceived ? 2 : 1,
+			(UINT)gpSet->isCloseOnLastTabClose(), (UINT)gpSet->isCloseOnCrossClick(),
+			(UINT)gpSet->isMinOnLastTabClose(), (UINT)gpSet->isHideOnLastTabClose()
+			);
 		LogString(sInfo);
 	}
 
@@ -12561,11 +12565,11 @@ bool CConEmuMain::isDestroyOnClose(bool ScCloseOnEmpty /*= false*/)
 	{
 		bNeedDestroy = true; // Иначе облом при обновлении
 	}
-	else if (!gpSet->isMultiLeaveOnClose || mb_ForceQuitOnClose)
+	else if (gpSet->isCloseOnLastTabClose() || mb_ForceQuitOnClose)
 	{
 		bNeedDestroy = true;
 	}
-	else if (gpSet->isMultiLeaveOnClose == 1)
+	else if (!gpSet->isCloseOnCrossClick())
 	{
 		bNeedDestroy = ScCloseOnEmpty;
 	}
@@ -12573,7 +12577,7 @@ bool CConEmuMain::isDestroyOnClose(bool ScCloseOnEmpty /*= false*/)
 	{
 		// Сюда мы попадаем, если просили оставлять ConEmu только если
 		// закрыта была вкладка, а не нажат "крестик" в заголовке
-		_ASSERTE(gpSet->isMultiLeaveOnClose == 2);
+		_ASSERTE(gpSet->isCloseOnCrossClick());
 		// mb_ScClosePending выставляется в true при закрытии крестиком
 		// То есть, если нажали "крестик" - вызываем закрытие окна ConEmu
 		bNeedDestroy = (mb_ScClosePending || ScCloseOnEmpty);
@@ -12582,9 +12586,11 @@ bool CConEmuMain::isDestroyOnClose(bool ScCloseOnEmpty /*= false*/)
 	if (gpSetCls->isAdvLogging)
 	{
 		wchar_t sInfo[100];
-		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"isDestroyOnClose(%u) {%u,%u,%u} -> %u",
-			(UINT)ScCloseOnEmpty,
-			(UINT)step, (UINT)gpSet->isMultiLeaveOnClose, (UINT)mb_ScClosePending,
+		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"isDestroyOnClose(%u) {%u,%u,%u,%u,%u,%u} -> %u",
+			(UINT)ScCloseOnEmpty, (UINT)step,
+			(UINT)gpSet->isCloseOnLastTabClose(), (UINT)gpSet->isCloseOnCrossClick(),
+			(UINT)gpSet->isMinOnLastTabClose(), (UINT)gpSet->isHideOnLastTabClose(),
+			(UINT)mb_ScClosePending,
 			bNeedDestroy);
 		LogString(sInfo);
 	}
