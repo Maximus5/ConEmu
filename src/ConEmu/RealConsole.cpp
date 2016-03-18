@@ -299,7 +299,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_ServerActiveTick1 = mn_ServerActiveTick2 = 0;
 	mh_UpdateServerActiveEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
 	//mb_UpdateServerActive = FALSE;
-	mh_ApplyFinished = CreateEvent(NULL,TRUE,FALSE,NULL);
+	mh_ApplyFinished.Create(NULL,TRUE,FALSE,NULL);
 	//mh_EndUpdateEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 	//WARNING("mh_Sync2WindowEvent убрать");
 	//mh_Sync2WindowEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -544,7 +544,6 @@ CRealConsole::~CRealConsole()
 	//	delete mp_Rgn;
 	//	mp_Rgn = NULL;
 	//}
-	SafeCloseHandle(mh_ApplyFinished);
 	SafeCloseHandle(mh_UpdateServerActiveEvent);
 	SafeCloseHandle(mh_MonitorThreadEvent);
 	SafeDelete(mp_Files);
@@ -11965,7 +11964,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 			UpdateServerActive(); // пусть будет асинхронно, задержки раздражают
 
 			// И MonitorThread, чтобы он получил новое содержимое
-			ResetEvent(mh_ApplyFinished);
+			mh_ApplyFinished.Reset();
 			mn_LastConsolePacketIdx--;
 			SetMonitorThreadEvent();
 

@@ -776,7 +776,8 @@ class CRealConsole
 		//HANDLE mh_InputThread; DWORD mn_InputThreadID;
 
 		DWORD mn_TermEventTick;
-		HANDLE mh_TermEvent, mh_ApplyFinished;
+		HANDLE mh_TermEvent;
+		MEvent mh_ApplyFinished;
 		HANDLE mh_StartExecuted;
 		BOOL mb_StartResult, mb_WaitingRootStartup;
 		BOOL mb_FullRetrieveNeeded; //, mb_Detached;

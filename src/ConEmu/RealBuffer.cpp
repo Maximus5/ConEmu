@@ -813,7 +813,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	nCallTimeout = RELEASEDEBUGTEST(500,30000);
 
 	_ASSERTE(con.bLockChange2Text);
-	ResetEvent(mp_RCon->mh_ApplyFinished);
+	mp_RCon->mh_ApplyFinished.Reset();
 
 	_ASSERTE(mp_RCon->m_ConsoleMap.IsValid());
 	bNeedApplyConsole =
@@ -942,7 +942,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					#ifdef _DEBUG
 					DWORD nWaitStart = GetTickCount();
 					nWaitTimeout = SETSYNCSIZEAPPLYTIMEOUT*4; //30000;
-					nWait = WaitForSingleObject(mp_RCon->mh_ApplyFinished, nWaitTimeout);
+					nWait = mp_RCon->mh_ApplyFinished.Wait(nWaitTimeout);
 					if (nWait == WAIT_TIMEOUT)
 					{
 						_ASSERTE(FALSE && "SETSYNCSIZEAPPLYTIMEOUT");
@@ -2264,13 +2264,13 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 	if (!mp_RCon->isServerAvailable())
 	{
 		// Сервер уже закрывается. попытка считать данные из консоли может привести к зависанию!
-		SetEvent(mp_RCon->mh_ApplyFinished);
+		mp_RCon->mh_ApplyFinished.Set();
 		return FALSE;
 	}
 
 	// mh_ApplyFinished must be set when the expected data (or size) will be ready
 	bool bSetApplyFinished = !con.bLockChange2Text;
-	ResetEvent(mp_RCon->mh_ApplyFinished);
+	mp_RCon->mh_ApplyFinished.Reset();
 
 	const CESERVER_REQ_CONINFO_INFO* pInfo = NULL;
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_CONSOLEDATA, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO));
@@ -2319,7 +2319,7 @@ BOOL CRealBuffer::ApplyConsoleInfo()
 
 	if (bSetApplyFinished)
 	{
-		SetEvent(mp_RCon->mh_ApplyFinished);
+		mp_RCon->mh_ApplyFinished.Set();
 	}
 
 	if (lbChanged)
