@@ -143,6 +143,13 @@ WARNING("WIN64 was not defined");
 	#define FN_DELETE
 #endif
 
+// GCC headers do not describe Task Scheduler 2.0 interfaces
+#if defined(__GNUC__) // && !defined(__MINGW32__)
+	#undef CE_HAS_SCHEDULER_V2
+#else
+	#define CE_HAS_SCHEDULER_V2
+#endif
+
 #define ScopedObject_Cat2(n,i) n ## i
 #define ScopedObject_Cat1(n,i) ScopedObject_Cat2(n,i)
 #define ScopedObject(cls) cls ScopedObject_Cat1(cls,__LINE__)

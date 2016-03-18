@@ -501,6 +501,7 @@
       <File RelativePath=".\TabID.cpp" />
       <File RelativePath=".\TaskBar.cpp" />
       <File RelativePath=".\TaskBarGhost.cpp" />
+      <File RelativePath=".\TaskScheduler.cpp" />
       <File RelativePath=".\TermX.cpp" />
       <File RelativePath=".\ToolImg.cpp" />
       <File RelativePath=".\TrayIcon.cpp" />
@@ -649,6 +650,7 @@
       <File RelativePath=".\TabID.h" />
       <File RelativePath=".\TaskBar.h" />
       <File RelativePath=".\TaskBarGhost.h" />
+      <File RelativePath=".\TaskScheduler.h" />
       <File RelativePath=".\TermX.h" />
       <File RelativePath=".\ToolImg.h" />
       <File RelativePath=".\TrayIcon.h" />

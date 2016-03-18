@@ -133,6 +133,7 @@ SRCS = \
 		TabID.cpp          \
 		TaskBar.cpp        \
 		TaskBarGhost.cpp   \
+		TaskScheduler.cpp  \
 		TermX.cpp          \
 		ToolImg.cpp        \
 		TrayIcon.cpp       \

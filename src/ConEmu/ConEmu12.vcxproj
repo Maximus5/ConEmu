@@ -1067,6 +1067,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClCompile Include="TabID.cpp" />
     <ClCompile Include="TaskBar.cpp" />
     <ClCompile Include="TaskBarGhost.cpp" />
+    <ClCompile Include="TaskScheduler.cpp" />
     <ClCompile Include="TermX.cpp" />
     <ClCompile Include="ToolImg.cpp" />
     <ClCompile Include="TrayIcon.cpp" />
@@ -1219,6 +1220,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClInclude Include="TabID.h" />
     <ClInclude Include="TaskBar.h" />
     <ClInclude Include="TaskBarGhost.h" />
+    <ClInclude Include="TaskScheduler.h" />
     <ClInclude Include="TermX.h" />
     <ClInclude Include="ToolImg.h" />
     <ClInclude Include="TrayIcon.h" />
