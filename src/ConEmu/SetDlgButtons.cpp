@@ -60,7 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 void CSetDlgButtons::UnitTests()
 {
-	_ASSERTE(lstrcmp(CSettings::RASTER_FONTS_NAME, L"Raster Fonts")==0);
+	_ASSERTE(lstrcmp(CFontMgr::RASTER_FONTS_NAME, L"Raster Fonts")==0);
 }
 #endif
 
@@ -1733,12 +1733,12 @@ void CSetDlgButtons::OnBtn_FontAuto(HWND hDlg, WORD CB, BYTE uCheck)
 
 	gpSet->isFontAutoSize = uCheck;
 
-	if (gpSet->isFontAutoSize && gpSetCls->LogFont.lfFaceName[0] == L'['
-	        && !wcsncmp(gpSetCls->LogFont.lfFaceName+1, CSetDlgFonts::RASTER_FONTS_NAME, _tcslen(CSetDlgFonts::RASTER_FONTS_NAME)))
+	if (gpSet->isFontAutoSize && gpFontMgr->LogFont.lfFaceName[0] == L'['
+	        && !wcsncmp(gpFontMgr->LogFont.lfFaceName+1, CFontMgr::RASTER_FONTS_NAME, _tcslen(CFontMgr::RASTER_FONTS_NAME)))
 	{
 		gpSet->isFontAutoSize = false;
 		checkDlgButton(hDlg, cbFontAuto, BST_UNCHECKED);
-		gpSetCls->ShowFontErrorTip(gpSetCls->szRasterAutoError);
+		gpSetCls->ShowFontErrorTip(gpFontMgr->szRasterAutoError);
 	}
 } // cbFontAuto
 
@@ -1749,7 +1749,7 @@ void CSetDlgButtons::OnBtn_FixFarBorders(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbFixFarBorders);
 
 	gpSet->isFixFarBorders = (uCheck == BST_UNCHECKED) ? 0 : 1;
-	gpSetCls->ResetFontWidth();
+	gpFontMgr->ResetFontWidth();
 	gpConEmu->Update(true);
 
 } // cbFixFarBorders
@@ -1780,7 +1780,7 @@ void CSetDlgButtons::OnBtn_UnicodeRangesApply(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (gpSet->isFixFarBorders)
 	{
-		gpSetCls->ResetFontWidth();
+		gpFontMgr->ResetFontWidth();
 		gpConEmu->Update(true);
 	}
 } // cbUnicodeRangesApply
@@ -2743,7 +2743,7 @@ void CSetDlgButtons::OnBtn_Monospace(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->isMonospace = uCheck;
 
 	gpSetCls->mb_IgnoreEditChanged = TRUE;
-	gpSetCls->ResetFontWidth();
+	gpFontMgr->ResetFontWidth();
 	gpConEmu->Update(true);
 	gpSetCls->mb_IgnoreEditChanged = FALSE;
 

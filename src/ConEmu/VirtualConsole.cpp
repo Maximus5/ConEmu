@@ -264,8 +264,8 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	//mp_BkEmfData = NULL; mn_BkEmfDataMax = 0; mb_BkEmfChanged = FALSE;
 	//mcs_BkImgData = NULL;
 	//mn_BkImgWidth = mn_BkImgHeight = 0;
-	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gpSetCls->mh_Font)+sizeof(mh_FontByIndex[0])));
-	memmove(mh_FontByIndex, gpSetCls->mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0])); //-V512
+	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gpFontMgr->mh_Font)+sizeof(mh_FontByIndex[0])));
+	memmove(mh_FontByIndex, gpFontMgr->mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0])); //-V512
 	mh_UCharMapFont = NULL; ms_LastUCharMapFont[0] = 0;
 	mh_FontByIndex[fnt_UCharMap] = NULL; // reserved for ‘Unicode CharMap’ Far plugin
 	memset(&TransparentInfo, 0, sizeof(TransparentInfo));
@@ -290,9 +290,9 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	//InitializeCriticalSection(&csCON); ncsTCON = 0;
 	mb_InPaintCall = FALSE;
 	mb_InConsoleResize = FALSE;
-	nFontHeight = gpSetCls->FontHeight();
-	nFontWidth = gpSetCls->FontWidth();
-	nFontCharSet = gpSetCls->FontCharSet();
+	nFontHeight = gpFontMgr->FontHeight();
+	nFontWidth = gpFontMgr->FontWidth();
+	nFontCharSet = gpFontMgr->FontCharSet();
 	nLastNormalBack = 255;
 	mb_ConDataChanged = false;
 	mh_TransparentRgn = NULL;
@@ -771,11 +771,11 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 		m_DC.Delete();
 
 
-		Assert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
+		Assert(gpFontMgr->FontWidth() && gpFontMgr->FontHeight());
 
-		nFontHeight = gpSetCls->FontHeight();
-		nFontWidth = gpSetCls->FontWidth();
-		nFontCharSet = gpSetCls->FontCharSet();
+		nFontHeight = gpFontMgr->FontHeight();
+		nFontWidth = gpFontMgr->FontWidth();
+		nFontCharSet = gpFontMgr->FontCharSet();
 
 		DEBUGTEST(BOOL lbWasInitialized = TextWidth && TextHeight);
 
@@ -1261,44 +1261,45 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 
 	WARNING("Не работает с *.bdf?");
 
-	if (!gpSetCls->m_CharABC[ch].abcB)
+	if (!gpFontMgr->m_CharABC[ch].abcB)
 	{
 		if (isCharRTL(ch))
 		{
 			WARNING("Поскольку с RTL все достаточно сложно, пока считаем шрифт моноширинным");
-			gpSetCls->m_CharABC[ch].abcA = gpSetCls->m_CharABC[ch].abcC = 0;
-			gpSetCls->m_CharABC[ch].abcB = nFontWidth;
+			gpFontMgr->m_CharABC[ch].abcA = gpFontMgr->m_CharABC[ch].abcC = 0;
+			gpFontMgr->m_CharABC[ch].abcB = nFontWidth;
 		}
 		else
 		{
-			if (gpSetCls->mh_Font2.IsSet() && gpSet->isFixFarBorders && isCharAltFont(ch))
+			if (gpFontMgr->mh_Font2.IsSet() && gpSet->isFixFarBorders && isCharAltFont(ch))
 			{
-				SelectFont(gpSetCls->mh_Font2);
+				SelectFont(gpFontMgr->mh_Font2);
 			}
 			else
 			{
 				TODO("Тут надо бы деление по стилям сделать");
-				SelectFont(gpSetCls->mh_Font[0]);
+				SelectFont(gpFontMgr->mh_Font[0]);
 			}
 
 			//This function succeeds only with TrueType fonts
-			lbCharABCOk = GetCharABCWidths((HDC)m_DC, ch, ch, &gpSetCls->m_CharABC[ch]);
+			lbCharABCOk = GetCharABCWidths((HDC)m_DC, ch, ch, &gpFontMgr->m_CharABC[ch]);
 
 			if (!lbCharABCOk)
 			{
 				// Значит шрифт не TTF/OTF
 				CharAttr nilAttr = {};
-				gpSetCls->m_CharABC[ch].abcB = CharWidth(ch, nilAttr);
-				_ASSERTE(gpSetCls->m_CharABC[ch].abcB);
+				gpFontMgr->m_CharABC[ch].abcB = CharWidth(ch, nilAttr);
+				_ASSERTE(gpFontMgr->m_CharABC[ch].abcB);
 
-				if (!gpSetCls->m_CharABC[ch].abcB) gpSetCls->m_CharABC[ch].abcB = 1;
+				if (!gpFontMgr->m_CharABC[ch].abcB)
+					gpFontMgr->m_CharABC[ch].abcB = 1;
 
-				gpSetCls->m_CharABC[ch].abcA = gpSetCls->m_CharABC[ch].abcC = 0;
+				gpFontMgr->m_CharABC[ch].abcA = gpFontMgr->m_CharABC[ch].abcC = 0;
 			}
 		}
 	}
 
-	*abc = gpSetCls->m_CharABC[ch];
+	*abc = gpFontMgr->m_CharABC[ch];
 }
 
 // Возвращает ширину символа, учитывает FixBorders
@@ -1321,7 +1322,7 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	}
 
 	// Проверяем сразу, чтобы по условиям не бегать
-	WORD& nWidth = gpSetCls->m_CharWidth[ch];
+	WORD& nWidth = gpFontMgr->m_CharWidth[ch];
 
 	if (nWidth)
 		return nWidth;
@@ -1330,14 +1331,14 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	//bool isBorder = false; //, isVBorder = false;
 
 	// Наверное все же нужно считать именно в том шрифте, которым будет идти отображение
-	if (gpSetCls->mh_Font2.IsSet() && gpSet->isFixFarBorders && isCharAltFont(ch))
+	if (gpFontMgr->mh_Font2.IsSet() && gpSet->isFixFarBorders && isCharAltFont(ch))
 	{
-		SelectFont(gpSetCls->mh_Font2);
+		SelectFont(gpFontMgr->mh_Font2);
 	}
 	else
 	{
 		TODO("Тут надо бы деление по стилям сделать");
-		SelectFont(gpSetCls->mh_Font[0]);
+		SelectFont(gpFontMgr->mh_Font[0]);
 	}
 
 	//SelectFont(gpSetCls->mh_Font[0]);
@@ -2141,8 +2142,8 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 		{
 			MSectionLock SCON; SCON.Lock(&csCON);
 			CharAttr* pnAttr = mpn_ConAttrEx;
-			int nFontHeight = gpSetCls->FontHeight();
-			int    nMaxRects = TextHeight*5;
+			int nFontHeight = gpFontMgr->FontHeight();
+			int nMaxRects = TextHeight*5;
 			//#ifdef _DEBUG
 			//nMaxRects = 5;
 			//#endif
@@ -2385,7 +2386,7 @@ bool CVirtualConsole::LoadConsoleData()
 
 						if (mh_UCharMapFont) DeleteObject(mh_UCharMapFont);
 
-						mh_UCharMapFont = gpSetCls->CreateOtherFont(ms_LastUCharMapFont);
+						mh_UCharMapFont = gpFontMgr->CreateOtherFont(ms_LastUCharMapFont);
 					}
 				}
 
@@ -2630,11 +2631,11 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 		InvalidateBack();
 	}
 
-	if ((nFontHeight != gpSetCls->FontHeight()) || (nFontWidth != gpSetCls->FontWidth()))
+	if ((nFontHeight != gpFontMgr->FontHeight()) || (nFontWidth != gpFontMgr->FontWidth()))
 		isFontSizeChanged = true;
-	nFontHeight = gpSetCls->FontHeight();
-	nFontWidth = gpSetCls->FontWidth();
-	nFontCharSet = gpSetCls->FontCharSet();
+	nFontHeight = gpFontMgr->FontHeight();
+	nFontWidth = gpFontMgr->FontWidth();
+	nFontCharSet = gpFontMgr->FontCharSet();
 	winSize = MakeCoord(mp_RCon->TextWidth(),mp_RCon->TextHeight());
 	//csbi.dwCursorPosition.X -= csbi.srWindow.Left; -- горизонтальная прокрутка игнорируется!
 	csbi.dwCursorPosition.Y -= csbi.srWindow.Top;
@@ -2793,7 +2794,7 @@ void CVirtualConsole::UpdateText()
 	_ASSERTE((HDC)m_DC!=NULL);
 
 	// Refresh fonts array
-	memmove(mh_FontByIndex, gpSetCls->mh_Font, sizeof(gpSetCls->mh_Font));
+	memmove(mh_FontByIndex, gpFontMgr->mh_Font, sizeof(gpFontMgr->mh_Font));
 	mh_FontByIndex[fnt_UCharMap] = mh_UCharMapFont ? mh_UCharMapFont : mh_FontByIndex[0];
 	//mh_FontByIndex[fnt_FarBorders] = (gpSetCls->mh_Font2.IsSet() && gpSet->isFixFarBorders) ? gpSetCls->mh_Font2 : mh_FontByIndex[0];
 
@@ -2832,9 +2833,9 @@ void CVirtualConsole::UpdateText()
 
 	bool bEnhanceGraphics = gpSet->isEnhanceGraphics;
 	bool bFixFarBorders = gpSet->isFixFarBorders;
-	bool bFontProportional = !gpSetCls->FontMonospaced();
-	CEFONT hFont = gpSetCls->mh_Font[0];
-	CEFONT hFont2 = gpSetCls->mh_Font2;
+	bool bFontProportional = !gpFontMgr->FontMonospaced();
+	CEFONT hFont = gpFontMgr->mh_Font[0];
+	CEFONT hFont2 = gpFontMgr->mh_Font2;
 	uint partIndex;
 	VConTextPart *part, *nextPart;
 
@@ -2994,7 +2995,7 @@ void CVirtualConsole::UpdateText()
 			if (part->Flags & TRF_TextAlternative)
 			{
 				SelectFont(hFont2);
-				charSet = gpSetCls->BorderFontCharSet();
+				charSet = gpFontMgr->BorderFontCharSet();
 			}
 			else
 			{
@@ -3801,7 +3802,7 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisi
 	if (!bGuiVisible)
 	{
 		CEDC cePaintDc(hPaintDc);
-		CEFONT hOldF = cePaintDc.SelectObject(gpSetCls->mh_Font[0]);
+		CEFONT hOldF = cePaintDc.SelectObject(gpFontMgr->mh_Font[0]);
 		LPCWSTR pszStarting = L"Initializing ConEmu.";
 
 		// 120721 - если показана статусная строка - не будем писать в саму консоль?
@@ -4036,7 +4037,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 		if (mpsz_ConChar && mpn_ConAttrEx)
 		{
 			CEDC cePaintDc(hPaintDc);
-			CEFONT hOldFont = cePaintDc.SelectObject(gpSetCls->mh_Font[0]);
+			CEFONT hOldFont = cePaintDc.SelectObject(gpFontMgr->mh_Font[0]);
 			MSectionLock SCON; SCON.Lock(&csCON);
 
 			int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
@@ -4306,8 +4307,8 @@ POINT CVirtualConsole::ConsoleToClient(LONG x, LONG y)
 
 	if (!this)
 	{
-		pt.y = y*gpSetCls->FontHeight();
-		pt.x = x*gpSetCls->FontWidth();
+		pt.y = y * gpFontMgr->FontHeight();
+		pt.x = x * gpFontMgr->FontWidth();
 		return pt;
 	}
 
@@ -4350,8 +4351,8 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y, bool StrictMonospace/*=fa
 
 	if (!this)
 	{
-		cr.Y = y/gpSetCls->FontHeight();
-		cr.X = x/gpSetCls->FontWidth();
+		cr.Y = y / gpFontMgr->FontHeight();
+		cr.X = x / gpFontMgr->FontWidth();
 		return cr;
 	}
 
@@ -4865,8 +4866,8 @@ bool CVirtualConsole::UpdatePanelView(bool abLeftPanel, bool abOnRegister/*=fals
 	// Перенес вниз, т.к. при регистрации окошко отображает GUI
 	//UpdatePanelRgn(abLeftPanel, FALSE, abOnRegister);
 	// лучше не зависеть от ConCharX - он может оказаться не инициализированным!
-	pt[0] = MakePoint(pp->WorkRect.left*gpSetCls->FontWidth(), pp->WorkRect.top*gpSetCls->FontHeight());
-	pt[1] = MakePoint(pp->WorkRect.right*gpSetCls->FontWidth(), pp->WorkRect.bottom*gpSetCls->FontHeight());
+	pt[0] = MakePoint(pp->WorkRect.left * gpFontMgr->FontWidth(), pp->WorkRect.top * gpFontMgr->FontHeight());
+	pt[1] = MakePoint(pp->WorkRect.right * gpFontMgr->FontWidth(), pp->WorkRect.bottom * gpFontMgr->FontHeight());
 	//pt[0] = ConsoleToClient(pp->WorkRect.left, pp->WorkRect.top);
 	//pt[1] = ConsoleToClient(pp->WorkRect.right, pp->WorkRect.bottom);
 	//TODO("Потребуется коррекция для DoubleView");

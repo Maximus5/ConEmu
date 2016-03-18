@@ -86,7 +86,7 @@ void CTabPanelBase::UpdateTabFontInt()
 	lf.lfCharSet = gpSet->nTabFontCharSet;
 	lf.lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
 	wcscpy_c(lf.lfFaceName, gpSet->sTabFontFace);
-	gpSetCls->EvalLogfontSizes(lf, gpSet->nTabFontHeight, 0);
+	gpFontMgr->EvalLogfontSizes(lf, gpSet->nTabFontHeight, 0);
 
 	wchar_t szInfo[100];
 	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Creating tab font name='%s' height=%i", lf.lfFaceName, lf.lfHeight);

@@ -85,7 +85,7 @@ bool CIconList::Initialize()
 		int iSysX = GetSystemMetrics(SM_CXSMICON), iSysY = GetSystemMetrics(SM_CYSMICON);
 		int iFontY = gpSetCls->EvalSize(gpSet->nTabFontHeight, esf_Vertical|esf_CanUseUnits|esf_CanUseDpi|esf_CanUseZoom);
 		if (iFontY < 0)
-			iFontY = gpSetCls->EvalFontHeight(gpSet->sTabFontFace, iFontY, gpSet->nTabFontHeight);
+			iFontY = gpFontMgr->EvalFontHeight(gpSet->sTabFontFace, iFontY, gpSet->nTabFontHeight);
 		int iDpyY = gpSetCls->EvalSize(max(16,iSysY), esf_Vertical|esf_CanUseDpi);
 		mn_CxIcon = 16; mn_CyIcon = 16;
 		if (iFontY > 16)

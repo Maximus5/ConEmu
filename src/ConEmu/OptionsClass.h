@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "CustomFonts.h"
 #include "DpiAware.h"
+#include "FontMgr.h"
 #include "HotkeyList.h"
 #include "Options.h"
 #include "SetDlgButtons.h"
@@ -97,6 +98,7 @@ class CSettings
 		friend class CSetDlgButtons;
 		friend class CSetDlgColors;
 		friend class CSetDlgFonts;
+		friend class CFontMgr;
 	public:
 
 		private:
@@ -115,7 +117,6 @@ class CSettings
 		// === Запрет сохранения опций при выходе ===
 		bool ibDisableSaveSettingsOnExit;
 
-		wchar_t szFontError[512];
 	public:
 
 		bool IsMulti();
@@ -138,50 +139,7 @@ class CSettings
 		//bool FarSyncSize;
 		//int nCmdOutputCP;
 
-		LPCWSTR FontFaceName();
-		LONG FontWidth();
-		LONG FontCellWidth();
-		LONG FontHeight();
-		LONG FontHeightHtml();
-		LPCWSTR BorderFontFaceName();
-		LONG BorderFontWidth();
-		BYTE BorderFontCharSet();
-		BYTE FontCharSet();
-		BOOL FontBold();
-		BOOL FontItalic();
-		BOOL FontClearType();
-		BYTE FontQuality();
-		bool FontMonospaced();
-		HFONT CreateOtherFont(const wchar_t* asFontName);
-		void GetMainLogFont(LOGFONT& lf);
-		void EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth);
 		LONG EvalSize(LONG nSize, EvalSizeFlags Flags);
-		LONG EvalFontHeight(LPCWSTR lfFaceName, LONG lfHeight, BYTE nFontCharSet);
-		LONG GetZoom(bool bRaw = false); // в процентах (false) или mn_FontZoomValue (true)
-	private:
-		LONG mn_FontZoomValue; // 100% == 10000 (FontZoom100)
-		LOGFONT LogFont, LogFont2;
-		LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта
-		LONG mn_FontWidth, mn_FontHeight, mn_BorderFontWidth; // реальные размеры шрифтов
-		//BYTE mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр)
-		TEXTMETRIC m_tm[MAX_FONT_STYLES+1];
-		LPOUTLINETEXTMETRIC m_otm[MAX_FONT_STYLES];
-		BOOL mb_Name1Ok, mb_Name2Ok;
-		void ResetFontWidth();
-		LONG EvalCellWidth();
-		void SaveFontSizes(bool bAuto, bool bSendChanges);
-		// When font size is used as character size (negative LF.lfHeight)
-		// we need to evaluate real font size... Only for vector fonts!
-		struct FontHeightInfo
-		{
-			// In
-			wchar_t lfFaceName[LF_FACESIZE];
-			int     lfHeight;
-			UINT    lfCharSet;
-			// Out
-			int     CellHeight;
-		};
-		MArray<FontHeightInfo> m_FontHeights;
 
 	public:
 		char isAllowDetach;
@@ -227,10 +185,6 @@ class CSettings
 		void NeedBackgroundUpdate();
 		//CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);
 	public:
-		CEFONT  mh_Font[MAX_FONT_STYLES], mh_Font2;
-		TODO("По хорошему, CharWidth & CharABC нужно разделять по шрифтам - у Bold ширина может быть больше");
-		WORD    m_CharWidth[0x10000]; //, Font2Width[0x10000];
-		ABC     m_CharABC[0x10000];
 
 		//HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hCmdTasks, hViews, hInfo, hDebug, hUpdate, hSelection;
 		enum TabHwndIndex {
@@ -293,11 +247,6 @@ class CSettings
 		bool SetOption(LPCWSTR asName, LPCWSTR asValue);
 		void SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine = NULL);
 		void SettingsPreSave();
-		//void InitSettings();
-		//BOOL SaveSettings(BOOL abSilent = FALSE);
-		//void SaveSizePosOnExit();
-		//void SaveConsoleFont();
-		//void UpdateMargins(RECT arcMargins);
 		static void Dialog(int IdShowPage = 0);
 		void UpdateWindowMode(ConEmuWindowMode WndMode);
 		void UpdatePosSizeEnabled(HWND hWnd2);
@@ -307,10 +256,6 @@ class CSettings
 		void Performance(UINT nID, BOOL bEnd);
 		void PostUpdateCounters(bool bPosted);
 		void SetArgBufferHeight(int anBufferHeight);
-		void InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);
-		BOOL RegisterFont(LPCWSTR asFontFile, BOOL abDefault);
-		void RegisterFonts();
-		void RegisterFontsDir(LPCWSTR asFromDir);
 	public:
 		enum ShellIntegrType
 		{
@@ -324,17 +269,8 @@ class CSettings
 		void UnregisterShell(LPCWSTR asName);
 		void UnregisterShellInvalids();
 		bool DeleteRegKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName);
-		bool MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/);
 	public:
-		void UnregisterFonts();
-		BOOL GetFontNameFromFile(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
-		BOOL GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
-		BOOL GetFontNameFromFile_OTF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
-		BOOL GetFontNameFromFile_BDF(LPCTSTR lpszFilePath, wchar_t (&rsFontName)[LF_FACESIZE], wchar_t (&rsFullFontName)[LF_FACESIZE]);
 		void UpdateConsoleMode(CRealConsole* pRCon);
-		bool AutoRecreateFont(int nFontW, int nFontH);
-		bool MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/);
-		void MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/);
 		bool CheckTheming();
 		void OnPanelViewAppeared(BOOL abAppear);
 		bool EditConsoleFont(HWND hParent);
@@ -364,7 +300,6 @@ class CSettings
 		int GetOverallDpi();
 	public:
 		int QueryDpi();
-		bool RecreateFontByDpi(int dpiX, int dpiY, LPRECT prcSuggested);
 	private:
 		static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh = false);
 	protected:
@@ -459,9 +394,6 @@ class CSettings
 		TOOLINFO tiBalloon;
 		void RegisterTipsFor(HWND hChildDlg);
 		static BOOL CALLBACK RegisterTipsForChild(HWND hChild, LPARAM lParam);
-		CEFONT CreateFontIndirectMy(LOGFONT *inFont);
-		bool FindCustomFont(LPCWSTR lfFaceName, int iSize, BOOL bBold, BOOL bItalic, BOOL bUnderline, CustomFontFamily** ppCustom, CustomFont** ppFont);
-		void RecreateBorderFont(const LOGFONT *inFont);
 		void RecreateFont(WORD wFromID);
 #if 0
 		// Theming
@@ -484,19 +416,6 @@ class CSettings
 		void RegisterTabs();
 		void UnregisterTabs();
 		WORD mn_LastChangingFontCtrlId;
-		// Временно регистрируемые шрифты
-		typedef struct tag_RegFont
-		{
-			BOOL    bDefault;             // Этот шрифт пользователь указал через /fontfile
-			CustomFontFamily* pCustom;    // Для шрифтов, рисованных нами
-			wchar_t szFontFile[MAX_PATH]; // полный путь
-			wchar_t szFontName[32];       // Font Family
-			BOOL    bUnicode;             // Юникодный?
-			BOOL    bHasBorders;          // Имеет ли данный шрифт символы рамок
-			BOOL    bAlreadyInSystem;     // Шрифт с таким именем уже был зарегистрирован в системе
-		} RegFont;
-		MArray<RegFont> m_RegFonts;
-		BOOL mb_StopRegisterFonts;
 
 		bool mb_ThemingEnabled;
 

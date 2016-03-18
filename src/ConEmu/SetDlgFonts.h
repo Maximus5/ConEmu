@@ -31,27 +31,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CSetDlgFonts
 {
 protected:
-	static const wchar_t RASTER_FONTS_NAME[]; // L"Raster Fonts";
-	static const wchar_t szRasterAutoError[]; // L"Font auto size is not allowed for a fixed raster font size. Select 'Terminal' instead of '[Raster Fonts ...]'";
-	static SIZE szRasterSizes[100]; // {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
-
-	static const int FontDefWidthMin; // 0
-	static const int FontDefWidthMax; // 99
-
-	static const int FontZoom100; // 10000
-
-	static const wchar_t TEST_FONT_WIDTH_STRING_EN[]; // L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	static const wchar_t TEST_FONT_WIDTH_STRING_RU[]; // L"АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
+	//static const wchar_t TEST_FONT_WIDTH_STRING_EN[]; // L"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	//static const wchar_t TEST_FONT_WIDTH_STRING_RU[]; // L"АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
 
 	static int CALLBACK EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount);
 	static int CALLBACK EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
 
 	static bool StartEnumFontsThread();
 	static bool EnumFontsFinished();
-
-	static bool IsAlmostMonospace(LPCWSTR asFaceName, LPTEXTMETRIC lptm, LPOUTLINETEXTMETRIC lpotm = NULL);
-	static LPOUTLINETEXTMETRIC LoadOutline(HDC hDC, HFONT hFont);
-	static void DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl = NULL);
 
 private:
 	static HANDLE mh_EnumThread;

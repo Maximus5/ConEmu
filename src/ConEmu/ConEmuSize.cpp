@@ -599,8 +599,8 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			//    pVCon->InitDC(false, true); // инициализировать ширину шрифта по умолчанию
 			//}
 			// ЭТО размер окна отрисовки DC
-			rc = MakeRect((rFrom.right-rFrom.left) * gpSetCls->FontWidth(),
-			              (rFrom.bottom-rFrom.top) * gpSetCls->FontHeight());
+			rc = MakeRect((rFrom.right-rFrom.left) * gpFontMgr->FontWidth(),
+			              (rFrom.bottom-rFrom.top) * gpFontMgr->FontHeight());
 
 			RECT rcScroll = CalcMargins(CEM_SCROLL|CEM_PAD);
 			AddMargins(rc, rcScroll, TRUE);
@@ -841,8 +841,8 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 
 
 	// Font size must be initialized already!
-	int nFontWidth = gpSetCls->FontWidth();
-	int nFontHeight = gpSetCls->FontHeight();
+	int nFontWidth = gpFontMgr->FontWidth();
+	int nFontHeight = gpFontMgr->FontHeight();
 	if ((nFontWidth <= 0) || (nFontHeight <= 0))
 	{
 		Assert(nFontWidth>0 && nFontHeight>0);
@@ -1451,7 +1451,7 @@ void CConEmuSize::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
 
 	if (nFontH < 8) nFontH = 8;
 
-	gpSetCls->AutoRecreateFont(nFontW, nFontH);
+	gpFontMgr->AutoRecreateFont(nFontW, nFontH);
 }
 
 void CConEmuSize::UpdateIdealRect(RECT rcNewIdeal)
@@ -2667,7 +2667,7 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 
 		wndSizeRect = *pRect;
 		// Для красивости рамки под мышкой
-		LONG nWidth = gpSetCls->FontWidth(), nHeight = gpSetCls->FontHeight();
+		LONG nWidth = gpFontMgr->FontWidth(), nHeight = gpFontMgr->FontHeight();
 
 		if (nWidth && nHeight)
 		{
@@ -4609,7 +4609,7 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 		#endif
 
 		// it returns false if DPI was not changed
-		if (gpSetCls->RecreateFontByDpi(dpiX, dpiY, prcSuggested))
+		if (gpFontMgr->RecreateFontByDpi(dpiX, dpiY, prcSuggested))
 		{
 			// Вернуть флажок
 			lRc = TRUE;

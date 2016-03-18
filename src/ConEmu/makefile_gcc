@@ -87,6 +87,7 @@ SRCS = \
 		DynDialog.cpp      \
 		FindDlg.cpp        \
 		FindPanel.cpp      \
+		FontMgr.cpp        \
 		FrameHolder.cpp    \
 		GestureEngine.cpp  \
 		GuiServer.cpp      \

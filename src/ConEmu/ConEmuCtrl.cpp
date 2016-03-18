@@ -926,8 +926,8 @@ bool CConEmuCtrl::key_WinSize(BYTE vk)
 		if (GetWindowRect(ghWnd, &rcWindow))
 		{
 			RECT rcMon = gpConEmu->CalcRect(CER_MONITOR, rcWindow, CER_MONITOR, pVCon);
-			int nX = gpSetCls->FontWidth();
-			int nY = gpSetCls->FontHeight();
+			int nX = gpFontMgr->FontWidth();
+			int nY = gpFontMgr->FontHeight();
 			if (vk == VK_LEFT)
 			{
 				rcWindow.right = rcWindow.right - nX;

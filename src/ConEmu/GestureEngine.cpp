@@ -531,7 +531,7 @@ bool CGestures::ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy)
 		{
 			TODO("Если можно будет задавать разный шрифт для разных консолей - заменить gpSet->FontHeight()");
 			// Соотнести Pan с высотой шрифта
-			int dy = ((ldy < 0) ? -ldy : ldy) / gpSetCls->FontHeight();
+			int dy = ((ldy < 0) ? -ldy : ldy) / gpFontMgr->FontHeight();
 			if (dy > 0)
 			{
 				short Delta = ((ldy < 0) ? -120 : 120) * dy;

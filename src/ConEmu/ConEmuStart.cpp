@@ -984,7 +984,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 					gpConEmu->AppendExtraArgs(L"/fontfile", szFile.GetStr());
-					gpSetCls->RegisterFont(szFile.GetStr(), TRUE);
+					gpFontMgr->RegisterFont(szFile.GetStr(), TRUE);
 				}
 				// Register all fonts from specified directory
 				else if (!klstricmp(curCommand, _T("/fontdir")))
@@ -995,7 +995,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 					gpConEmu->AppendExtraArgs(L"/fontdir", szDir.GetStr());
-					gpSetCls->RegisterFontsDir(szDir.GetStr());
+					gpFontMgr->RegisterFontsDir(szDir.GetStr());
 				}
 				else if (!klstricmp(curCommand, _T("/fs")))
 				{

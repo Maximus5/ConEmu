@@ -1967,7 +1967,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	// Evaluate window sized for Normal mode
 	if ((this->WndWidth.Value && this->WndHeight.Value) || mp_Inside)
 	{
-		MBoxAssert(gpSetCls->FontWidth() && gpSetCls->FontHeight());
+		MBoxAssert(gpFontMgr->FontWidth() && gpFontMgr->FontHeight());
 		RECT rcWnd = GetDefaultRect();
 		if (gpSet->IsConfigNew)
 		{
@@ -2076,16 +2076,16 @@ bool CConEmuMain::SetParent(HWND hNewParent)
 void CConEmuMain::FillConEmuMainFont(ConEmuMainFont* pFont)
 {
 	// Параметры основного шрифта ConEmu
-	lstrcpyn(pFont->sFontName, gpSetCls->FontFaceName(), countof(pFont->sFontName));
-	pFont->nFontHeight = gpSetCls->FontHeight();
-	pFont->nFontWidth = gpSetCls->FontWidth();
-	pFont->nFontCellWidth = gpSetCls->FontCellWidth();
-	pFont->nFontQuality = gpSetCls->FontQuality();
-	pFont->nFontCharSet = gpSetCls->FontCharSet();
-	pFont->Bold = gpSetCls->FontBold();
-	pFont->Italic = gpSetCls->FontItalic();
-	lstrcpyn(pFont->sBorderFontName, gpSetCls->BorderFontFaceName(), countof(pFont->sBorderFontName));
-	pFont->nBorderFontWidth = gpSetCls->BorderFontWidth();
+	lstrcpyn(pFont->sFontName, gpFontMgr->FontFaceName(), countof(pFont->sFontName));
+	pFont->nFontHeight = gpFontMgr->FontHeight();
+	pFont->nFontWidth = gpFontMgr->FontWidth();
+	pFont->nFontCellWidth = gpFontMgr->FontCellWidth();
+	pFont->nFontQuality = gpFontMgr->FontQuality();
+	pFont->nFontCharSet = gpFontMgr->FontCharSet();
+	pFont->Bold = gpFontMgr->FontBold();
+	pFont->Italic = gpFontMgr->FontItalic();
+	lstrcpyn(pFont->sBorderFontName, gpFontMgr->BorderFontFaceName(), countof(pFont->sBorderFontName));
+	pFont->nBorderFontWidth = gpFontMgr->BorderFontWidth();
 }
 
 
@@ -3850,7 +3850,7 @@ void CConEmuMain::PostMacroFontSetName(wchar_t* pszFontName, WORD anHeight /*= 0
 	else
 	{
 		if (gpSetCls)
-			gpSetCls->MacroFontSetName(pszFontName, anHeight, anWidth);
+			gpFontMgr->MacroFontSetName(pszFontName, anHeight, anWidth);
 		free(pszFontName);
 	}
 }
@@ -7149,10 +7149,10 @@ void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
 			CheckUpdates(FALSE); // Не показывать сообщение "You are using latest available version"
 		}
 
-		if (gpSetCls->szFontError[0] && !(gpStartEnv && ((gpStartEnv->bIsWinPE == 1) || (gpStartEnv->bIsWine == 1))))
+		if (gpFontMgr->szFontError[0] && !(gpStartEnv && ((gpStartEnv->bIsWinPE == 1) || (gpStartEnv->bIsWine == 1))))
 		{
-			MBoxA(gpSetCls->szFontError);
-			gpSetCls->szFontError[0] = 0;
+			MBoxA(gpFontMgr->szFontError);
+			gpFontMgr->szFontError[0] = 0;
 		}
 
 		if (!gpSetCls->CheckConsoleFontFast())
@@ -8067,7 +8067,7 @@ void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 		gpSet->ThSet.crFadePalette[i] = (pcrFade[i]) & 0xFFFFFF;
 	}
 
-	gpSet->ThSet.nFontQuality = gpSetCls->FontQuality();
+	gpSet->ThSet.nFontQuality = gpFontMgr->FontQuality();
 
 	// Параметры основного шрифта ConEmu
 	FillConEmuMainFont(&gpSet->ThSet.MainFont);
@@ -9003,7 +9003,8 @@ void CConEmuMain::UpdateImeComposition()
 		HIMC hImc = _ImmGetContext(ghWnd/*hView?*/);
 		_ImmSetCompositionWindow(hImc, &cf);
 
-		LOGFONT lf; gpSetCls->GetMainLogFont(lf);
+		LOGFONT lf = {};
+		gpFontMgr->GetMainLogFont(lf);
 		_ImmSetCompositionFont(hImc, &lf);
 	}
 }
@@ -10204,7 +10205,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (!pVCon)
 		return 0;
 
-	if (gpSetCls->FontWidth()==0 || gpSetCls->FontHeight()==0)
+	if (gpFontMgr->FontWidth()==0 || gpFontMgr->FontHeight()==0)
 		return 0;
 
 	if ((messg==WM_LBUTTONUP || messg==WM_MOUSEMOVE) && (mouse.state & MOUSE_SIZING_DBLCKL))
@@ -13737,7 +13738,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 			else if (messg == this->mn_MsgFontSetSize)
 			{
-				gpSetCls->MacroFontSetSize((int)wParam, (int)lParam);
+				gpFontMgr->MacroFontSetSize((int)wParam, (int)lParam);
 				return 0;
 			}
 			else if (messg == this->mn_MsgMacroFontSetName)

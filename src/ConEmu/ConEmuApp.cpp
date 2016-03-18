@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConfirmDlg.h"
 #include "DpiAware.h"
+#include "FontMgr.h"
 #include "HooksUnlocker.h"
 #include "Inside.h"
 #include "LngRc.h"
@@ -129,6 +130,7 @@ CConEmuMain *gpConEmu = NULL;
 //CVirtualConsole *pVCon=NULL;
 Settings  *gpSet = NULL;
 CSettings *gpSetCls = NULL;
+CFontMgr* gpFontMgr = NULL;
 //TCHAR temp[MAX_PATH]; -- низзя, очень велик шанс нарваться при многопоточности
 HICON hClassIcon = NULL, hClassIconSm = NULL;
 BOOL gbDebugLogStarted = FALSE;
@@ -3166,6 +3168,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	DEBUGSTRSTARTUP(L"Environment checked");
 
+	gpFontMgr = new CFontMgr;
 	gpSetCls = new CSettings;
 	gpConEmu = new CConEmuMain;
 	CLngRc::Initialize();
@@ -3606,8 +3609,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	DEBUGSTRSTARTUPLOG(L"Registering local fonts");
 
-	gpSetCls->RegisterFonts();
-	gpSetCls->InitFont(
+	gpFontMgr->RegisterFonts();
+	gpFontMgr->InitFont(
 		gpConEmu->opt.FontVal.GetStr(),
 		gpConEmu->opt.SizeVal.Exists ? gpConEmu->opt.SizeVal.GetInt() : -1,
 		gpConEmu->opt.ClearTypeVal.Exists ? gpConEmu->opt.ClearTypeVal.GetInt() : -1
@@ -3786,7 +3789,7 @@ done:
 	//delete pVCon;
 	//CloseHandle(hChildProcess); -- он более не требуется
 	//if (FontFilePrm) RemoveFontResourceEx(FontFile, FR_PRIVATE, NULL); //ADD fontname; by Mors
-	gpSetCls->UnregisterFonts();
+	gpFontMgr->UnregisterFonts();
 
 	//CoUninitialize();
 	OleUninitialize();
@@ -3802,6 +3805,8 @@ done:
 		delete gpSetCls;
 		gpSetCls = NULL;
 	}
+
+	SafeDelete(gpFontMgr);
 
 	if (gpUpd)
 	{

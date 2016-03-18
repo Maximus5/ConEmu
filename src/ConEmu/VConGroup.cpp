@@ -859,7 +859,7 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 
 	int nSaveSplitPercent10 = mn_SplitPercent10;
 
-	int nCellSize = (m_SplitType == RConStartArgs::eSplitVert) ? gpSetCls->FontHeight() : gpSetCls->FontWidth();
+	int nCellSize = (m_SplitType == RConStartArgs::eSplitVert) ? gpFontMgr->FontHeight() : gpFontMgr->FontWidth();
 	int nMinCells = (m_SplitType == RConStartArgs::eSplitVert) ? MIN_CON_HEIGHT : MIN_CON_WIDTH;
 
 	// Нашли? Корректируем mn_SplitPercent10
@@ -1085,7 +1085,7 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 		}
 
 		UINT nScreenWidth = (nWidth * nSplit / 1000);
-		LONG nCellWidth = gpSetCls->FontWidth();
+		LONG nCellWidth = gpFontMgr->FontWidth();
 		LONG nCon2Width;
 		if (nCellWidth > 0)
 		{
@@ -1132,7 +1132,7 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 		}
 
 		UINT nScreenHeight = (nHeight * nSplit / 1000);
-		LONG nCellHeight = gpSetCls->FontHeight();
+		LONG nCellHeight = gpFontMgr->FontHeight();
 		LONG nCon2Height;
 		if (nCellHeight > 0)
 		{
@@ -4501,7 +4501,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		}
 		// Расчетное DC (размер)
 		_ASSERTE(rcCalcCon.left==0 && rcCalcCon.top==0);
-		RECT rcCalcDC = MakeRect(0,0,rcCalcCon.right*gpSetCls->FontWidth(), rcCalcCon.bottom*gpSetCls->FontHeight());
+		RECT rcCalcDC = MakeRect(0, 0, (rcCalcCon.right * gpFontMgr->FontWidth()), (rcCalcCon.bottom * gpFontMgr->FontHeight()));
 
 		RECT rcScrollPad = gpConEmu->CalcMargins(CEM_SCROLL|CEM_PAD);
 		gpConEmu->AddMargins(rcCalcBack, rcScrollPad, FALSE);
@@ -4690,8 +4690,8 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				//2009-07-09 - ClientToConsole использовать нельзя, т.к. после его
 				//  приближений высота может получиться больше Ideal, а ширина - меньше
 				//120822 - было "(rc.right - rc.left + 1)"
-				int nW = (rc.right - rc.left) / gpSetCls->FontWidth();
-				int nH = (rc.bottom - rc.top) / gpSetCls->FontHeight();
+				int nW = (rc.right - rc.left) / gpFontMgr->FontWidth();
+				int nH = (rc.bottom - rc.top) / gpFontMgr->FontHeight();
 				rc.left = 0; rc.top = 0; rc.right = nW; rc.bottom = nH;
 
 				//2010-01-19 - Sort of Windows95 'Auto' option in the font size list box

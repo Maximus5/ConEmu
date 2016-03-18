@@ -147,7 +147,7 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 			CRealConsole* pRCon = (CVConGroup::GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 			RECT rcWnd = {}; GetWindowRect(pRCon->GetView(), &rcWnd);
 			RECT rcDlg = {}; GetWindowRect(hWnd2, &rcDlg);
-			int nShift = max(gpSetCls->FontWidth(),gpSetCls->FontHeight());
+			int nShift = max(gpFontMgr->FontWidth(),gpFontMgr->FontHeight());
 			int nWidth = rcDlg.right - rcDlg.left;
 			SetWindowPos(hWnd2, gpSet->isAlwaysOnTop ? HWND_TOPMOST : HWND_TOP,
 				max(rcWnd.left,(rcWnd.right-nShift-nWidth)), (rcWnd.top+nShift), 0,0,

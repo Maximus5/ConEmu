@@ -996,6 +996,7 @@
     <ClCompile Include="DynDialog.cpp" />
     <ClCompile Include="FindDlg.cpp" />
     <ClCompile Include="FindPanel.cpp" />
+    <ClCompile Include="FontMgr.cpp" />
     <ClCompile Include="FrameHolder.cpp" />
     <ClCompile Include="GestureEngine.cpp" />
     <ClCompile Include="GuiServer.cpp" />
@@ -1134,6 +1135,7 @@
     <ClInclude Include="DynDialog.h" />
     <ClInclude Include="FindDlg.h" />
     <ClInclude Include="FindPanel.h" />
+    <ClInclude Include="FontMgr.h" />
     <ClInclude Include="FrameHolder.h" />
     <ClInclude Include="GestureEngine.h" />
     <ClInclude Include="globals.h" />

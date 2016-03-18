@@ -37,19 +37,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/WThreads.h"
 
-#define DEBUGSTRFONT(s) DEBUGSTR(s)
+#define DEBUGSTRFONT(s) //DEBUGSTR(s)
 
-const wchar_t CSetDlgFonts::RASTER_FONTS_NAME[] = L"Raster Fonts";
-const wchar_t CSetDlgFonts::szRasterAutoError[] = L"Font auto size is not allowed for a fixed raster font size. Select 'Terminal' instead of '[Raster Fonts ...]'";
-SIZE CSetDlgFonts::szRasterSizes[100] = {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
-
-const int CSetDlgFonts::FontDefWidthMin = 0;
-const int CSetDlgFonts::FontDefWidthMax = 99;
-
-const int CSetDlgFonts::FontZoom100 = 10000;
-
-const wchar_t CSetDlgFonts::TEST_FONT_WIDTH_STRING_EN[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const wchar_t CSetDlgFonts::TEST_FONT_WIDTH_STRING_RU[] = L"АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
+//const wchar_t CSetDlgFonts::TEST_FONT_WIDTH_STRING_EN[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+//const wchar_t CSetDlgFonts::TEST_FONT_WIDTH_STRING_RU[] = L"АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
 
 HANDLE CSetDlgFonts::mh_EnumThread = NULL;
 DWORD  CSetDlgFonts::mn_EnumThreadId = 0;
@@ -82,7 +73,7 @@ int CSetDlgFonts::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 		aiFontCount[1]++;
 	}
 
-	DWORD bAlmostMonospace = IsAlmostMonospace(lplf->lfFaceName, (LPTEXTMETRIC)lpntm /*lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight*/) ? 1 : 0;
+	DWORD bAlmostMonospace = CFontMgr::IsAlmostMonospace(lplf->lfFaceName, (LPTEXTMETRIC)lpntm /*lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight*/) ? 1 : 0;
 
 	HWND hMainPg = gpSetCls->GetPage(CSettings::thi_Main);
 	if (SendDlgItemMessage(hMainPg, tFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) lplf->lfFaceName)==-1)
@@ -113,11 +104,11 @@ int CSetDlgFonts::EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpn
 		return TRUE; // такие мелкие - не интересуют
 
 	LONG nWidth  = lpelfe->elfLogFont.lfWidth;
-	UINT nMaxCount = countof(szRasterSizes);
+	UINT nMaxCount = countof(CFontMgr::szRasterSizes);
 
-	while(sz<nMaxCount && szRasterSizes[sz].cy)
+	while(sz<nMaxCount && CFontMgr::szRasterSizes[sz].cy)
 	{
-		if (szRasterSizes[sz].cx == nWidth && szRasterSizes[sz].cy == nHeight)
+		if (CFontMgr::szRasterSizes[sz].cx == nWidth && CFontMgr::szRasterSizes[sz].cy == nHeight)
 			return TRUE; // Этот размер уже добавили
 
 		sz++;
@@ -126,7 +117,7 @@ int CSetDlgFonts::EnumFontCallBackEx(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpn
 	if (sz >= nMaxCount)
 		return FALSE; // место кончилось
 
-	szRasterSizes[sz].cx = nWidth; szRasterSizes[sz].cy = nHeight;
+	CFontMgr::szRasterSizes[sz].cx = nWidth; CFontMgr::szRasterSizes[sz].cy = nHeight;
 	return TRUE;
 	UNREFERENCED_PARAMETER(lpelfe);
 	UNREFERENCED_PARAMETER(lpntme);
@@ -143,29 +134,29 @@ DWORD CSetDlgFonts::EnumFontsThread(LPVOID apArg)
 	EnumFontFamilies(hdc, (LPCTSTR) NULL, (FONTENUMPROC) EnumFamCallBack, (LPARAM) aFontCount);
 	// Теперь - загрузить размеры установленных терминальных шрифтов (aka Raster fonts)
 	LOGFONT term = {0}; term.lfCharSet = OEM_CHARSET; wcscpy_c(term.lfFaceName, L"Terminal");
-	//szRasterSizes[0].cx = szRasterSizes[0].cy = 0;
-	memset(szRasterSizes, 0, sizeof(szRasterSizes));
+	//CFontMgr::szRasterSizes[0].cx = CFontMgr::szRasterSizes[0].cy = 0;
+	memset(CFontMgr::szRasterSizes, 0, sizeof(CFontMgr::szRasterSizes));
 	EnumFontFamiliesEx(hdc, &term, (FONTENUMPROCW) EnumFontCallBackEx, 0/*LPARAM*/, 0);
-	UINT nMaxCount = countof(szRasterSizes);
+	UINT nMaxCount = countof(CFontMgr::szRasterSizes);
 
-	for(UINT i = 0; i<(nMaxCount-1) && szRasterSizes[i].cy; i++)
+	for(UINT i = 0; i<(nMaxCount-1) && CFontMgr::szRasterSizes[i].cy; i++)
 	{
 		UINT k = i;
 
-		for(UINT j = i+1; j<nMaxCount && szRasterSizes[j].cy; j++)
+		for(UINT j = i+1; j<nMaxCount && CFontMgr::szRasterSizes[j].cy; j++)
 		{
-			if (szRasterSizes[j].cy < szRasterSizes[k].cy)
+			if (CFontMgr::szRasterSizes[j].cy < CFontMgr::szRasterSizes[k].cy)
 				k = j;
-			else if (szRasterSizes[j].cy == szRasterSizes[k].cy
-					&& szRasterSizes[j].cx < szRasterSizes[k].cx)
+			else if (CFontMgr::szRasterSizes[j].cy == CFontMgr::szRasterSizes[k].cy
+					&& CFontMgr::szRasterSizes[j].cx < CFontMgr::szRasterSizes[k].cx)
 				k = j;
 		}
 
 		if (k != i)
 		{
-			SIZE sz = szRasterSizes[k];
-			szRasterSizes[k] = szRasterSizes[i];
-			szRasterSizes[i] = sz;
+			SIZE sz = CFontMgr::szRasterSizes[k];
+			CFontMgr::szRasterSizes[k] = CFontMgr::szRasterSizes[i];
+			CFontMgr::szRasterSizes[i] = sz;
 		}
 	}
 
@@ -174,9 +165,9 @@ DWORD CSetDlgFonts::EnumFontsThread(LPVOID apArg)
 	HWND hMainPg = gpSetCls->GetPage(CSettings::thi_Main);
 	if (hMainPg)
 	{
-		for (size_t sz=0; sz<countof(szRasterSizes) && szRasterSizes[sz].cy; sz++)
+		for (size_t sz=0; sz<countof(CFontMgr::szRasterSizes) && CFontMgr::szRasterSizes[sz].cy; sz++)
 		{
-			_wsprintf(szName, SKIPLEN(countof(szName)) L"[%s %ix%i]", RASTER_FONTS_NAME, szRasterSizes[sz].cx, szRasterSizes[sz].cy);
+			_wsprintf(szName, SKIPLEN(countof(szName)) L"[%s %ix%i]", CFontMgr::RASTER_FONTS_NAME, CFontMgr::szRasterSizes[sz].cx, CFontMgr::szRasterSizes[sz].cy);
 			int nIdx = SendDlgItemMessage(hMainPg, tFontFace, CB_INSERTSTRING, sz, (LPARAM)szName);
 			SendDlgItemMessage(hMainPg, tFontFace, CB_SETITEMDATA, nIdx, 1);
 		}
@@ -218,162 +209,4 @@ bool CSetDlgFonts::StartEnumFontsThread()
 bool CSetDlgFonts::EnumFontsFinished()
 {
 	return mb_EnumThreadFinished;
-}
-
-bool CSetDlgFonts::IsAlmostMonospace(LPCWSTR asFaceName, LPTEXTMETRIC lptm, LPOUTLINETEXTMETRIC lpotm)
-{
-	if (!lptm && lpotm)
-		lptm = &lpotm->otmTextMetrics;
-	if (!lptm)
-	{
-		_ASSERTE(lptm || lpotm);
-		return false;
-	}
-
-	bool bPanMono = false, bSelfOtm = false;
-
-	if (!lpotm && (lptm->tmPitchAndFamily & (TMPF_TRUETYPE)))
-	{
-		HFONT hFont = CreateFont(-lptm->tmHeight, 0, 0, 0, lptm->tmWeight, lptm->tmItalic, 0, 0, lptm->tmCharSet, 0, 0, 0,
-			0, asFaceName);
-		if (hFont)
-		{
-			lpotm = LoadOutline(NULL, hFont);
-			bSelfOtm = (lpotm != NULL);
-			DeleteObject(hFont);
-		}
-	}
-
-	if (lpotm)
-	{
-		if (lpotm->otmPanoseNumber.bProportion == PAN_PROP_MONOSPACED)
-			bPanMono = true;
-		if (bSelfOtm)
-			SafeFree(lpotm);
-	}
-
-	if (bPanMono)
-	{
-		return true;
-	}
-
-	// Некоторые шрифты (Consolas) достаточно странные. Заявлены как моноширинные (PAN_PROP_MONOSPACED),
-	// похожи на моноширинные, но tmMaxCharWidth у них очень широкий (иероглифы что-ли?)
-	if (lstrcmp(asFaceName, L"Consolas") == 0)
-		return true;
-
-	int tmMaxCharWidth = lptm->tmMaxCharWidth, tmAveCharWidth = lptm->tmAveCharWidth, tmHeight = lptm->tmHeight;
-
-	// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
-	bool bAlmostMonospace = false;
-
-	if (tmMaxCharWidth && tmAveCharWidth && tmHeight)
-	{
-		int nRelativeDelta = (tmMaxCharWidth - tmAveCharWidth) * 100 / tmHeight;
-
-		// Если расхождение менее 16% высоты - считаем шрифт моноширинным
-		// Увеличил до 16%. Win7, Courier New, 6x4
-		if (nRelativeDelta <= 16)
-			bAlmostMonospace = true;
-
-		//if (abs(m_tm->tmMaxCharWidth - m_tm->tmAveCharWidth)<=2)
-		//{ -- это была попытка прикинуть среднюю ширину по английским буквам
-		//  -- не нужно, т.к. затевалось из-за проблем с ClearType на больших размерах
-		//  -- шрифтов, а это лечится аргументом pDX в TextOut
-		//	int nTestLen = _tcslen(TEST_FONT_WIDTH_STRING_EN);
-		//	SIZE szTest = {0,0};
-		//	if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen, &szTest)) {
-		//		int nAveWidth = (szTest.cx + nTestLen - 1) / nTestLen;
-		//		if (nAveWidth > m_tm->tmAveCharWidth || nAveWidth > m_tm->tmMaxCharWidth)
-		//			m_tm->tmMaxCharWidth = m_tm->tmAveCharWidth = nAveWidth;
-		//	}
-		//}
-	}
-	else
-	{
-		_ASSERTE(tmMaxCharWidth);
-		_ASSERTE(tmAveCharWidth);
-		_ASSERTE(tmHeight);
-	}
-
-	return bAlmostMonospace;
-}
-
-LPOUTLINETEXTMETRIC CSetDlgFonts::LoadOutline(HDC hDC, HFONT hFont)
-{
-	BOOL lbSelfDC = FALSE;
-
-	if (!hDC)
-	{
-		HDC hScreenDC = GetDC(0);
-		hDC = CreateCompatibleDC(hScreenDC);
-		lbSelfDC = TRUE;
-		ReleaseDC(0, hScreenDC);
-	}
-
-	HFONT hOldF = NULL;
-
-	if (hFont)
-	{
-		hOldF = (HFONT)SelectObject(hDC, hFont);
-	}
-
-	LPOUTLINETEXTMETRIC pOut = NULL;
-	UINT nSize = GetOutlineTextMetrics(hDC, 0, NULL);
-
-	if (nSize)
-	{
-		pOut = (LPOUTLINETEXTMETRIC)calloc(nSize,1);
-
-		if (pOut)
-		{
-			pOut->otmSize = nSize;
-
-			if (!GetOutlineTextMetricsW(hDC, nSize, pOut))
-			{
-				free(pOut); pOut = NULL;
-			}
-			else
-			{
-				pOut->otmpFamilyName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFamilyName);
-				pOut->otmpFaceName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFaceName);
-				pOut->otmpStyleName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpStyleName);
-				pOut->otmpFullName = (PSTR)(((LPBYTE)pOut) + (DWORD_PTR)pOut->otmpFullName);
-			}
-		}
-	}
-
-	if (hFont)
-	{
-		SelectObject(hDC, hOldF);
-	}
-
-	if (lbSelfDC)
-	{
-		DeleteDC(hDC);
-	}
-
-	return pOut;
-}
-
-void CSetDlgFonts::DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl)
-{
-	wchar_t szFontFace[32], szFontDump[255];
-	TEXTMETRIC ltm;
-
-	if (!hFont)
-	{
-		_wsprintf(szFontDump, SKIPLEN(countof(szFontDump)) L"*** gpSet->%s: WAS NOT CREATED!\n", szType);
-	}
-	else
-	{
-		SelectObject(hDC, hFont); // вернуть шрифт должна вызывающая функция!
-		GetTextMetrics(hDC, &ltm);
-		GetTextFace(hDC, countof(szFontFace), szFontFace);
-		_wsprintf(szFontDump, SKIPLEN(countof(szFontDump)) L"*** gpSet->%s: '%s', Height=%i, Ave=%i, Max=%i, Over=%i, Angle*10=%i\n",
-		          szType, szFontFace, ltm.tmHeight, ltm.tmAveCharWidth, ltm.tmMaxCharWidth, ltm.tmOverhang,
-		          lpOutl ? lpOutl->otmItalicAngle : 0);
-	}
-
-	DEBUGSTRFONT(szFontDump);
 }

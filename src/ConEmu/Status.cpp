@@ -651,7 +651,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				break;
 
 			case csi_Zoom:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%i%%", gpSetCls->GetZoom());
+				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%i%%", gpFontMgr->GetZoom());
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"200%");
 				break;
 			case csi_DPI:
@@ -2000,7 +2000,7 @@ bool CStatus::IsWindowChanged()
 
 	if (!gpSet->isStatusColumnHidden[csi_Zoom])
 	{
-		l = gpSetCls->GetZoom();
+		l = gpFontMgr->GetZoom();
 		if (l != mn_Zoom)
 		{
 			mn_Zoom = l; bChanged = true;
@@ -2146,7 +2146,7 @@ bool CStatus::ProcessZoomMenuId(WORD nCmd)
 	StatusMenuOptions* p;
 	if ((p = GetStatusMenuItem(nCmd, gZoomOpt, countof(gZoomOpt))) != NULL)
 	{
-		gpSetCls->MacroFontSetSize(2, p->nValue);
+		gpFontMgr->MacroFontSetSize(2, p->nValue);
 		return true;
 	}
 	return false;
@@ -2218,16 +2218,16 @@ void CStatus::ShowZoomMenu(POINT pt)
 	HMENU hPopup = CreateStatusMenu(gZoomOpt, countof(gZoomOpt));
 
 	_ASSERTE(m_ClickedItemDesc == csi_Zoom);
-	int nPrevZoom = gpSetCls->GetZoom(true);
+	int nPrevZoom = gpFontMgr->GetZoom(true);
 	int nCmd = ShowStatusBarMenu(pt, hPopup, csi_Zoom);
 
 	bool bSelected = ProcessZoomMenuId(nCmd);
 
 	if (!bSelected)
 	{
-		if (nPrevZoom != gpSetCls->GetZoom(true))
+		if (nPrevZoom != gpFontMgr->GetZoom(true))
 		{
-			gpSetCls->MacroFontSetSize(3, nPrevZoom);
+			gpFontMgr->MacroFontSetSize(3, nPrevZoom);
 		}
 	}
 
@@ -2369,7 +2369,7 @@ int CStatus::Transparent_IsMenuChecked(int nValue, int* pnNextValue)
 
 int CStatus::Zoom_IsMenuChecked(int nValue, int* pnNextValue)
 {
-	int nZoom = gpSetCls->GetZoom();
+	int nZoom = gpFontMgr->GetZoom();
 	int iChecked = 0;
 	if (nValue == nZoom)
 		iChecked = true;

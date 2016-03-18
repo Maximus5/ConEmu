@@ -3412,8 +3412,8 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			}
 			else
 			{
-				int nMinX = gpSetCls->FontWidth();
-				int nMinY = gpSetCls->FontHeight();
+				int nMinX = gpFontMgr->FontWidth();
+				int nMinY = gpFontMgr->FontHeight();
 				int nMinDiff = max(nMinX, nMinY);
 				int nXdiff = x - con.ISel.LClickPt.x;
 				int nYdiff = y - con.ISel.LClickPt.y;
@@ -4918,7 +4918,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 		else
 		{
 			//wchar_t szClass[64]; _wsprintf(szClass, SKIPLEN(countof(szClass)) L"ConEmu%s%s", gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x32",L"x64"));
-			html = new CHtmlCopy((nFormat == 2), gpConEmu->ms_ConEmuBuild, gpSetCls->FontFaceName(), gpSetCls->FontHeightHtml(), crFore, crBack);
+			html = new CHtmlCopy((nFormat == 2), gpConEmu->ms_ConEmuBuild, gpFontMgr->FontFaceName(), gpFontMgr->FontHeightHtml(), crFore, crBack);
 		}
 	}
 
