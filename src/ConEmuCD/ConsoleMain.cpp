@@ -1171,6 +1171,9 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		wchar_t szLog[80];
 		_wsprintf(szLog, SKIPCOUNT(szLog) L"ParseCommandLine returns %i, exiting", iRc);
 		LogFunction(szLog);
+		// Especially if our process was started under non-interactive account,
+		// than ExitWaitForKey causes the infinitely running process, which user can't kill easily
+		gbInShutdown = true;
 		goto wrap;
 	}
 
