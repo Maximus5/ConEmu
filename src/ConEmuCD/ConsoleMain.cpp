@@ -1775,7 +1775,7 @@ wait:
 	else if (gnRunMode == RM_SERVER)
 	{
 		nExitPlaceStep = EPS_WAITING4PROCESS/*550*/;
-		// There is at least one process in .onsole. Wait until there would be nobody except us.
+		// There is at least one process in console. Wait until there would be nobody except us.
 		nWait = WAIT_TIMEOUT; nWaitExitEvent = -2;
 
 		_ASSERTE(!gpSrv->DbgInfo.bDebuggerActive);
