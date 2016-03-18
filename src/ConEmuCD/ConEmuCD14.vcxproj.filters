@@ -13,14 +13,8 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="1 - Registry">
-      <UniqueIdentifier>{b18bc7e0-1bfc-4e57-95be-5b0b36536129}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\common.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ConEmuC.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -108,9 +102,6 @@
     <ClInclude Include="ConProcess.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\CmdArg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\EmergencyShow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -145,6 +136,57 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DownloaderCall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\CEStr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\HkFunc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\kl_parts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MCircular.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MStrDup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WCodePage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WConsoleInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WModuleCheck.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WSession.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Actions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiMacro.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MapDump.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SrvCommands.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StartEnv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UnicodeTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -238,9 +280,6 @@
     <ClCompile Include="ConProcess.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\CmdArg.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\EmergencyShow.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
@@ -269,6 +308,48 @@
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DownloaderCall.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\CEStr.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\HkFunc.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MModule.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MStrDup.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WCodePage.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WConsoleInfo.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WModuleCheck.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WSession.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Actions.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiMacro.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MapDump.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SrvCommands.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StartEnv.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UnicodeTest.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>
