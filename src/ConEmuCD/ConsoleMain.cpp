@@ -4423,6 +4423,13 @@ int ExitWaitForKey(DWORD vkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontS
 			}
 		}
 
+		// If server was connected to GUI, but we get here because
+		// root process was not attached to console yet (antivirus lags?)
+		if (gpSrv->ConnectInfo.bConnected)
+		{
+			TODO("It would be nice to check for new console processed started in console?");
+		}
+
 		if (!PeekConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &r, 1, &dwCount))
 			dwCount = 0;
 
