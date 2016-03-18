@@ -950,7 +950,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					}
 					DWORD nWaitDelay = GetTickCount() - nWaitStart;
 					#else
-					nWait = WaitForSingleObject(mp_RCon->mh_ApplyFinished, nWaitTimeout);
+					nWait = mp_RCon->mh_ApplyFinished.Wait(nWaitTimeout);
 					#endif
 
 					COORD crDebugCurSize = con.m_sbi.dwSize;
