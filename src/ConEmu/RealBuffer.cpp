@@ -2615,9 +2615,9 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 				{
 					if (bNeedLoadData && nCalcCount && pData)
 					{
-						#ifdef _DEBUG
+						#if 0
 						bool bCorner = (pData[0].Char.UnicodeChar == L'╔');
-						if (con.bLockChange2Text && !bCorner)
+						if (con.bLockChange2Text && mp_RCon->isFar() && !bCorner)
 						{
 							bSetApplyFinished = false;
 						}
