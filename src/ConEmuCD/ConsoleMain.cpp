@@ -2052,7 +2052,8 @@ wrap:
 		{
 			int nCount = gpSrv->nProcessCount;
 
-			if (nCount > 1 || gpSrv->DbgInfo.bDebuggerActive)
+			if ((gpSrv->ConnectInfo.bConnected && (nCount > 1))
+				|| gpSrv->DbgInfo.bDebuggerActive)
 			{
 				// OK, new root found, wait for it
 				goto wait;

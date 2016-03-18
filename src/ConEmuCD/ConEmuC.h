@@ -469,6 +469,7 @@ struct SrvInfo
 		BOOL  bCallRc;
 		DWORD nTryCount, nErr, nDupErrCode;
 		DWORD nInitTick, nStartTick, nEndTick, nDelta, nConnectDelta;
+		BOOL  bConnected;
 	} ConnectInfo;
 
 	HANDLE hMainServer; DWORD dwMainServerPID;

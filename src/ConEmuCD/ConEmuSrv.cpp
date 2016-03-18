@@ -2630,6 +2630,7 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 	if (ghConEmuWnd)
 	{
 		CheckConEmuHwnd();
+		gpSrv->ConnectInfo.bConnected = TRUE;
 		bConnected = true;
 	}
 	else
