@@ -3509,7 +3509,9 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 				if (!isWnd)
 				{
 					LogString(L"CERR_CARGUMENT: Invalid GUI HWND was specified in /GHWND arg");
-					_printf("Invalid GUI HWND specified:\n");
+					_printf("Invalid GUI HWND specified: ");
+					_wprintf(szArg);
+					_printf("\n" "Command line:\n");
 					_wprintf(GetCommandLineW());
 					_printf("\n");
 					_ASSERTE(FALSE && "Invalid window was specified in /GHWND arg");
