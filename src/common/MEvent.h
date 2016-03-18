@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2014 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,19 +31,40 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
+#if defined(_DEBUG)
+enum MEventNotification
+{
+	evn_Create,
+	evn_Open,
+	evn_Set,
+	evn_Reset,
+	evn_Close,
+};
+#endif
+
 class MEvent
 {
 protected:
-	WCHAR  ms_EventName[MAX_PATH];
-	HANDLE mh_Event;
-	DWORD  mn_LastError;
+	WCHAR   ms_EventName[MAX_PATH];
+	HANDLE  mh_Event;
+	DWORD   mn_LastError;
+	bool    mb_NameIsNull;
+	#if defined(_DEBUG)
+	bool    mb_DebugNotify;
+	void    OnDebugNotify(MEventNotification Action);
+	#endif
 public:
 	MEvent();
 	~MEvent();
-	void InitName(const wchar_t *aszTemplate, DWORD Parm1=0);
 public:
-	void   Close();
-	HANDLE Open(bool bCreate = false, LPSECURITY_ATTRIBUTES pSec = NULL, bool bManualReset = false, bool bInitialState = false);
-	DWORD  Wait(DWORD dwMilliseconds, BOOL abAutoOpen=TRUE);
-	HANDLE GetHandle();
+	void    InitName(const wchar_t *aszTemplate, DWORD Parm1=0);
+public:
+	void    Close();
+	HANDLE  Create(LPSECURITY_ATTRIBUTES pSec, bool bManualReset, bool bInitialState, LPCWSTR lpName);
+	HANDLE  Open(bool bCreate = false, LPSECURITY_ATTRIBUTES pSec = NULL, bool bManualReset = false, bool bInitialState = false);
+	bool    Set();
+	bool    Reset();
+	DWORD   Wait(DWORD dwMilliseconds, BOOL abAutoOpen=TRUE);
+	HANDLE  GetHandle();
+	LPCWSTR GetName();
 };
