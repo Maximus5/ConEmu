@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 
 #include "../common/CEStr.h"
-#include "DrawObjectsGdi.h"
 #include "DynDialog.h"
 #include "LngRc.h"
 
@@ -48,7 +47,11 @@ wchar_t CDynDialog::Unknown[] = L"Unknown";
 CDynDialog* CDynDialog::mp_Creating = NULL;
 MMap<HWND,CDynDialog*>* CDynDialog::mp_DlgMap = NULL;
 
+#if defined(DEBUG)
+WARNING("Remove this when ready, created just for CL check!");
+#include "DrawObjectsGdi.h"
 CDrawFactoryGdi gdi;
+#endif
 
 #ifdef _DEBUG
 void CDynDialog::UnitTests()
