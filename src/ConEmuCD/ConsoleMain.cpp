@@ -66,6 +66,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTARTSTOPBOX(x) //MessageBox(NULL, x, WIN3264TEST(L"ConEmuC",L"ConEmuC64"), MB_ICONINFORMATION|MB_SYSTEMMODAL)
 #define DEBUGSTRFIN(x) DEBUGSTR(x)
 #define DEBUGSTRCP(x) DEBUGSTR(x)
+#define DEBUGSTRSIZE(x) DEBUGSTR(x)
 
 //#define SHOW_INJECT_MSGBOX
 
@@ -5826,6 +5827,8 @@ static bool ApplyConsoleSizeSimple(const COORD& crNewSize, const CONSOLE_SCREEN_
 	bool lbRc = true;
 	dwErr = 0;
 
+	DEBUGSTRSIZE(L"SetConsoleSize: ApplyConsoleSizeSimple started");
+
 	bool lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y)
 		|| ((csbi.srWindow.Right - csbi.srWindow.Left + 1) != crNewSize.X)
 		|| ((csbi.srWindow.Bottom - csbi.srWindow.Top + 1) != crNewSize.Y);
@@ -6031,6 +6034,8 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 {
 	bool lbRc = true;
 	dwErr = 0;
+
+	DEBUGSTRSIZE(L"SetConsoleSize: ApplyConsoleSizeBuffer started");
 
 	RECT rcConPos = {};
 	GetWindowRect(ghConWnd, &rcConPos);
@@ -6252,10 +6257,15 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	_ASSERTE(ghConWnd);
 	_ASSERTE(BufferHeight==0 || BufferHeight>crNewSize.Y); // Otherwise - it will be NOT a bufferheight...
 
-	if (!ghConWnd) return FALSE;
+	if (!ghConWnd)
+	{
+		DEBUGSTRSIZE(L"SetConsoleSize: Skipped due to ghConWnd==NULL");
+		return FALSE;
+	}
 
 	if (CheckWasFullScreen())
 	{
+		DEBUGSTRSIZE(L"SetConsoleSize was skipped due to CONSOLE_FULLSCREEN_HARDWARE");
 		LogString("SetConsoleSize was skipped due to CONSOLE_FULLSCREEN_HARDWARE");
 		return FALSE;
 	}
@@ -6278,6 +6288,8 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		// Ресайз выполнять только в нити RefreshThread. Поэтому если нить другая - ждем...
 		if (gpSrv->dwRefreshThread && dwCurThId != gpSrv->dwRefreshThread)
 		{
+			DEBUGSTRSIZE(L"SetConsoleSize: Waiting for RefreshThread");
+
 			ResetEvent(gpSrv->hReqSizeChanged);
 			if (InterlockedIncrement(&gpSrv->nRequestChangeSize) <= 0)
 			{
@@ -6324,9 +6336,12 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		}
 	}
 
+	DEBUGSTRSIZE(L"SetConsoleSize: Started");
+
 	MSectionLock RCS;
 	if (gpSrv->pReqSizeSection && !RCS.Lock(gpSrv->pReqSizeSection, TRUE, 30000))
 	{
+		DEBUGSTRSIZE(L"SetConsoleSize: !!!Failed to lock section!!!");
 		_ASSERTE(FALSE);
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
@@ -6349,6 +6364,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	if (!GetConsoleScreenBufferInfo(ghConOut, &csbi))
 	{
 		DWORD nErrCode = GetLastError();
+		DEBUGSTRSIZE(L"SetConsoleSize: !!!GetConsoleScreenBufferInfo failed!!!");
 		_ASSERTE(FALSE && "GetConsoleScreenBufferInfo was failed");
 		SetLastError(nErrCode ? nErrCode : ERROR_INVALID_HANDLE);
 		return FALSE;
@@ -6358,6 +6374,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 
 	if (!AdaptConsoleFontSize(crNewSize))
 	{
+		DEBUGSTRSIZE(L"SetConsoleSize: !!!AdaptConsoleFontSize failed!!!");
 		lbRc = FALSE;
 		goto wrap;
 	}
@@ -6396,6 +6413,9 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		lbRc = ApplyConsoleSizeBuffer(gnBufferHeight, crNewSize, csbi, dwErr, bForceWriteLog);
 	}
 
+	#ifdef _DEBUG
+	DEBUGSTRSIZE(lbRc ? L"SetConsoleSize: FINISHED" : L"SetConsoleSize: !!! FAILED !!!");
+	#endif
 
 wrap:
 	gpSrv->bRequestChangeSizeResult = lbRc;

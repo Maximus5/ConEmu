@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTARTSTOPBOX(x) //MessageBox(NULL, x, WIN3264TEST(L"ConEmuC",L"ConEmuC64"), MB_ICONINFORMATION|MB_SYSTEMMODAL)
 #define DEBUGSTRFIN(x) DEBUGSTR(x)
 #define DEBUGSTRCP(x) DEBUGSTR(x)
+#define DEBUGSTRSIZE(x) DEBUGSTR(x)
 
 //#define SHOW_INJECT_MSGBOX
 
@@ -347,14 +348,19 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 	switch (in.hdr.nCmd)
 	{
 	case CECMD_SETSIZESYNC:
+		DEBUGSTRSIZE(L"CECMD_SETSIZESYNC");
 		lstrcpynA(szCmdName, ":CECMD_SETSIZESYNC", countof(szCmdName)); break;
 	case CECMD_SETSIZENOSYNC:
+		DEBUGSTRSIZE(L"CECMD_SETSIZENOSYNC");
 		lstrcpynA(szCmdName, ":CECMD_SETSIZENOSYNC", countof(szCmdName)); break;
 	case CECMD_CMDSTARTED:
+		DEBUGSTRSIZE(L"CECMD_CMDSTARTED");
 		lstrcpynA(szCmdName, ":CECMD_CMDSTARTED", countof(szCmdName)); break;
 	case CECMD_CMDFINISHED:
+		DEBUGSTRSIZE(L"CECMD_CMDFINISHED");
 		lstrcpynA(szCmdName, ":CECMD_CMDFINISHED", countof(szCmdName)); break;
 	case CECMD_UNLOCKSTATION:
+		DEBUGSTRSIZE(L"CECMD_UNLOCKSTATION");
 		lstrcpynA(szCmdName, ":CECMD_UNLOCKSTATION", countof(szCmdName)); bForceWriteLog = true; break;
 	default:
 		_ASSERTE(FALSE && "Unnamed command");
@@ -411,7 +417,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		if (in.hdr.nCmd == CECMD_CMDFINISHED)
 		{
 			PRINT_COMSPEC(L"CECMD_CMDFINISHED, Set height to: %i\n", crNewSize.Y);
-			DEBUGSTRCMD(L"\n!!! CECMD_CMDFINISHED !!!\n\n");
+			DEBUGSTRSIZE(L"\n!!! CECMD_CMDFINISHED !!!\n\n");
 			// Вернуть нотификатор
 			TODO("Смена режима рефреша консоли")
 			//if (gpSrv->dwWinEventThread != 0)
@@ -420,7 +426,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		else if (in.hdr.nCmd == CECMD_CMDSTARTED)
 		{
 			PRINT_COMSPEC(L"CECMD_CMDSTARTED, Set height to: %i\n", nBufferHeight);
-			DEBUGSTRCMD(L"\n!!! CECMD_CMDSTARTED !!!\n\n");
+			DEBUGSTRSIZE(L"\n!!! CECMD_CMDSTARTED !!!\n\n");
 			// Отключить нотификатор
 			TODO("Смена режима рефреша консоли")
 			//if (gpSrv->dwWinEventThread != 0)
