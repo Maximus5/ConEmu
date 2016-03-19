@@ -294,7 +294,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_TermEventTick = 0;
 	mh_TermEvent = CreateEvent(NULL,TRUE/*MANUAL - используется в нескольких нитях!*/,FALSE,NULL); ResetEvent(mh_TermEvent);
 	mh_StartExecuted = CreateEvent(NULL,FALSE,FALSE,NULL); ResetEvent(mh_StartExecuted);
-	mb_StartResult = mb_WaitingRootStartup = FALSE;
+	mb_StartResult = FALSE;
+	UpdateStartState(rss_NotStarted, true);
 	mh_MonitorThreadEvent = CreateEvent(NULL,TRUE,FALSE,NULL); //2009-09-09 Поставил Manual. Нужно для определения, что можно убирать флаг Detached
 	mn_ServerActiveTick1 = mn_ServerActiveTick2 = 0;
 	mh_UpdateServerActiveEvent = CreateEvent(NULL,TRUE,FALSE,NULL);
@@ -2501,11 +2502,11 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 	bool bDetached = (pRCon->m_Args.Detached == crb_On) && !pRCon->mb_ProcessRestarted && !pRCon->mn_InRecreate;
 	bool lbChildProcessCreated = FALSE;
 
+	pRCon->UpdateStartState(rss_MonitorStarted);
+
 	pRCon->LogString("MonitorThread started");
 
 	pRCon->SetConStatus(bDetached ? L"Detached" : L"Initializing RealConsole...", cso_ResetOnConsoleReady|cso_Critical);
-
-	//pRCon->mb_WaitingRootStartup = TRUE;
 
 	if (pRCon->mb_NeedStartProcess)
 	{
@@ -2528,10 +2529,7 @@ DWORD CRealConsole::MonitorThread(LPVOID lpParameter)
 		int nNumber = pRCon->mp_ConEmu->isVConValid(pRCon->mp_VCon);
 		UNREFERENCED_PARAMETER(nNumber);
 		#endif
-
 	}
-
-	pRCon->mb_WaitingRootStartup = FALSE;
 
 	//_ASSERTE(pRCon->mh_ConChanged!=NULL);
 	// Пока нить запускалась - произошел "аттач" так что все нормально...
@@ -4159,6 +4157,8 @@ void CRealConsole::ResetVarsOnStart()
 	mb_WasVisibleOnce = mp_VCon->isVisible();
 	mb_NeedLoadRootProcessIcon = true;
 
+	UpdateStartState(rss_StartupRequested);
+
 	hConWnd = NULL;
 
 	mn_FarNoPanelsCheck = 0;
@@ -4384,6 +4384,7 @@ BOOL CRealConsole::StartProcess()
 	//int nStep = (m_Args.pszSpecialCmd!=NULL) ? 2 : 1;
 	int nStep = 1;
 
+	UpdateStartState(rss_StartingServer);
 
 	// Go
 	while (nStep <= 2)
@@ -4397,6 +4398,7 @@ BOOL CRealConsole::StartProcess()
 
 		if (lbRc)
 		{
+			UpdateStartState(rss_ServerStarted);
 			break; // OK, запустили
 		}
 
@@ -7110,6 +7112,8 @@ HWND CRealConsole::OnServerStarted(const HWND ahConWnd, const DWORD anServerPID,
 		return NULL;
 	}
 
+	UpdateStartState(rss_ServerConnected);
+
 	// Окошко консоли скорее всего еще не инициализировано
 	if (hConWnd == NULL)
 	{
@@ -7227,6 +7231,8 @@ void CRealConsole::OnServerClosing(DWORD anSrvPID, int* pnShellExitCode)
 		m_RootInfo.nExitCode = *pnShellExitCode;
 		m_RootInfo.bRunning = false;
 	}
+	// Reset starting state flags
+	UpdateStartState(rss_NotStarted, true);
 }
 
 bool CRealConsole::isProcessExist(DWORD anPID)
@@ -7876,6 +7882,10 @@ LPCWSTR CRealConsole::GetActiveProcessInfo(CEStr& rsInfo)
 					(int)m_RootInfo.nExitCode);
 			rsInfo = lstrmerge(ms_RootProcessName, szExitInfo);
 		}
+		else if ((m_StartState < rss_ProcessActive) && ms_RootProcessName[0])
+		{
+			rsInfo = lstrmerge(L"Starting: ", ms_RootProcessName);
+		}
 		else
 		{
 			rsInfo = L"Unknown state";
@@ -8281,6 +8291,7 @@ void CRealConsole::SetActivePID(const ConProcess* apProcess)
 	}
 	else if (m_ActiveProcess.ProcessID != apProcess->ProcessID)
 	{
+		UpdateStartState(rss_ProcessActive);
 		m_ActiveProcess = *apProcess;
 		bChanged = true;
 	}
@@ -9848,6 +9859,12 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	return true;
 }
 
+void CRealConsole::UpdateStartState(RConStartState state, bool force /*= false*/)
+{
+	if (force || (m_StartState < state))
+		m_StartState = state;
+}
+
 void CRealConsole::RequestStartup(bool bForce)
 {
 	_ASSERTE(this);
@@ -9859,7 +9876,7 @@ void CRealConsole::RequestStartup(bool bForce)
 		m_Args.Detached = crb_Off;
 	}
 	// Push request to "startup queue"
-	mb_WaitingRootStartup = TRUE;
+	UpdateStartState(rss_StartupRequested);
 	mp_ConEmu->mp_RunQueue->RequestRConStartup(this);
 }
 

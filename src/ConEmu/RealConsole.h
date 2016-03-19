@@ -262,6 +262,17 @@ enum StartDebugType
 	sdt_DebugProcessTree,
 };
 
+enum RConStartState
+{
+	rss_NotStarted,
+	rss_MonitorStarted,
+	rss_StartupRequested,
+	rss_StartingServer,
+	rss_ServerStarted,
+	rss_ServerConnected,
+	rss_ProcessActive,
+};
+
 struct ConEmuHotKey;
 struct ConsoleInfoArg;
 
@@ -775,7 +786,9 @@ class CRealConsole
 		HANDLE mh_TermEvent;
 		MEvent mh_ApplyFinished;
 		HANDLE mh_StartExecuted;
-		BOOL mb_StartResult, mb_WaitingRootStartup;
+		BOOL mb_StartResult;
+		RConStartState m_StartState;
+		void UpdateStartState(RConStartState state, bool force = false);
 		BOOL mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgs m_Args;
 		SYSTEMTIME m_StartTime;
