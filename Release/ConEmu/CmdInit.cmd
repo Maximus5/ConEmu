@@ -10,7 +10,7 @@ cmd /d /c ver | "%windir%\system32\find.exe" "Windows"
 rem Now we form the command prompt
 
 rem This will start prompt with `User@PC `
-set ConEmuPrompt0=$E[32m$E]9;8;"USERNAME"$E\@$E]9;8;"COMPUTERNAME"$E\$S
+set ConEmuPrompt0=$E[m$E[32m$E]9;8;"USERNAME"$E\@$E]9;8;"COMPUTERNAME"$E\$S
 
 rem Followed by colored `Path`
 set ConEmuPrompt1=%ConEmuPrompt0%$E[92m$P$E[90m
