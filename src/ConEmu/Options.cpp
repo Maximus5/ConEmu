@@ -805,7 +805,7 @@ void Settings::InitSettings()
 	isDragPanel = 2; // по умолчанию сделаем чтобы драгалось макросами (вдруг у юзера на Ctrl-Left/Right/Up/Down макросы висят... как бы конфуза не получилось)
 	isDragPanelBothEdges = false; // таскать за обе рамки (правую-левой панели и левую-правой панели)
 	isKeyBarRClick = true;
-	isDebugSteps = true;
+	isDebugSteps = false;
 	MCHKHEAP
 	FindOptions.bMatchCase = false;
 	FindOptions.bMatchWholeWords = false;
