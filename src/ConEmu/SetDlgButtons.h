@@ -136,6 +136,7 @@ protected:
 	static void OnBtn_FixAltOnAltTab(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_AutoRegFonts(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_DebugSteps(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_DebugLog(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_DragLR(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_DropEnabled(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_DnDCopy(HWND hDlg, WORD CB, BYTE uCheck);

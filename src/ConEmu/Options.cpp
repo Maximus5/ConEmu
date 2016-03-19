@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #include <TlHelp32.h>
 #endif
+#include "../common/MFileLog.h"
 #include "../common/Monitors.h"
 #include "../common/StartupEnvDef.h"
 #include "../common/WRegistry.h"
@@ -806,6 +807,7 @@ void Settings::InitSettings()
 	isDragPanelBothEdges = false; // таскать за обе рамки (правую-левой панели и левую-правой панели)
 	isKeyBarRClick = true;
 	isDebugSteps = false;
+	isDebugLog = 0; mb_DisableLogging = false;
 	MCHKHEAP
 	FindOptions.bMatchCase = false;
 	FindOptions.bMatchWholeWords = false;
@@ -2775,6 +2777,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		reg->Load(L"DebugSteps", isDebugSteps);
 
+		reg->Load(L"DebugLog", isDebugLog);
+
 		mb_StatusSettingsWasChanged = false;
 		reg->Load(L"StatusBar.Show", isStatusBarShow);
 		reg->Load(L"StatusBar.Flags", isStatusBarFlags);
@@ -3742,6 +3746,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"DragOverlay", isDragOverlay);
 		reg->Save(L"DragShowIcons", isDragShowIcons);
 		reg->Save(L"DebugSteps", isDebugSteps);
+		reg->Save(L"DebugLog", isDebugLog);
 		reg->Save(L"DragPanel", isDragPanel);
 		reg->Save(L"DragPanelBothEdges", isDragPanelBothEdges);
 		reg->Save(L"KeyBarRClick", isKeyBarRClick);
@@ -5002,13 +5007,25 @@ uint Settings::isLogging(uint level /*= 1*/)
 {
 	if (mb_DisableLogging)
 		return 0;
-	BYTE logLevel = (BYTE)(gpConEmu->opt.AdvLogging.GetInt());
+	BYTE logLevel = klMax(isDebugLog, (BYTE)(gpConEmu->opt.AdvLogging.GetInt()));
 	return (logLevel && (level <= logLevel)) ? logLevel : 0;
+}
+
+void Settings::EnableLogging()
+{
+	mb_DisableLogging = false;
+	if (isLogging())
+		gpConEmu->CreateLog();
 }
 
 void Settings::DisableLogging()
 {
 	mb_DisableLogging = true;
+}
+
+LPCWSTR Settings::GetLogFileName()
+{
+	return gpConEmu->mp_Log ? gpConEmu->mp_Log->GetLogFileName() : L"";
 }
 
 bool Settings::isCloseOnLastTabClose()

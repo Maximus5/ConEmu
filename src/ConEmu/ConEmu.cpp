@@ -1831,7 +1831,7 @@ DWORD CConEmuMain::GetWorkWindowStyleEx()
 
 bool CConEmuMain::CreateLog()
 {
-	_ASSERTE(gpSet->isLogging() && !mp_Log);
+	_ASSERTE(gpSet->isLogging());
 
 	if (mp_Log!=NULL)
 	{

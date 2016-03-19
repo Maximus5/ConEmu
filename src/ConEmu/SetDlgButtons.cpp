@@ -381,6 +381,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbDebugSteps:
 			OnBtn_DebugSteps(hDlg, CB, uCheck);
 			break;
+		case cbDebugLog:
+			OnBtn_DebugLog(hDlg, CB, uCheck);
+			break;
 		case cbDragL:
 		case cbDragR:
 			OnBtn_DragLR(hDlg, CB, uCheck);
@@ -2457,6 +2460,31 @@ void CSetDlgButtons::OnBtn_DebugSteps(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->isDebugSteps = uCheck;
 
 } // cbDebugSteps
+
+
+  // cbDebugLog
+void CSetDlgButtons::OnBtn_DebugLog(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbDebugLog);
+
+	// Reset value loaded from registry only if there
+	// was no `-log` switch in ConEmu.exe arguments
+	if (uCheck)
+	{
+		if (!gpSet->isDebugLog && !gpConEmu->opt.AdvLogging.Exists)
+			gpSet->isDebugLog = 1;
+		_ASSERTE(gpSet->isLogging());
+		gpSet->EnableLogging();
+		gpSetCls->UpdateLogLocation();
+	}
+	else
+	{
+		if (gpSet->isDebugLog && !gpConEmu->opt.AdvLogging.Exists)
+			gpSet->isDebugLog = 0;
+		gpSet->DisableLogging();
+	}
+
+} // cbDebugLog
 
 
 // cbDragL || cbDragR

@@ -2017,6 +2017,9 @@ LRESULT CSettings::OnInitDialog_Ext(HWND hWnd2, bool abInitial)
 
 	checkDlgButton(hWnd2, cbDebugSteps, gpSet->isDebugSteps);
 
+	checkDlgButton(hWnd2, cbDebugLog, gpSet->isLogging());
+	UpdateLogLocation();
+
 	checkDlgButton(hWnd2, cbMonitorConsoleLang, gpSet->isMonitorConsoleLang ? BST_CHECKED : BST_UNCHECKED);
 
 	checkDlgButton(hWnd2, cbSleepInBackground, gpSet->isSleepInBackground);
@@ -8639,6 +8642,16 @@ void CSettings::UpdateFontInfo()
 	SetDlgItemText(hInfoPg, tRealFontMain, szTemp);
 	_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"%ix%i", gpFontMgr->LogFont2.lfHeight, gpFontMgr->LogFont2.lfWidth);
 	SetDlgItemText(hInfoPg, tRealFontBorders, szTemp);
+}
+
+void CSettings::UpdateLogLocation()
+{
+	// Cut log file to directory only
+	CEStr lsLogPath(gpSet->GetLogFileName());
+	LPCWSTR pszName = lsLogPath.IsEmpty() ? NULL : PointToName(lsLogPath.ms_Val);
+	if (pszName)
+		*(wchar_t*)pszName = 0;
+	SetDlgItemText(hWnd2, tDebugLogDir, lsLogPath);
 }
 
 void CSettings::PostUpdateCounters(bool bPosted)

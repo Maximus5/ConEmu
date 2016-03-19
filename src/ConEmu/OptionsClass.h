@@ -250,6 +250,7 @@ class CSettings
 		void UpdatePos(int x, int y, bool bGetRect = false);
 		void UpdateSize(const CESize w, const CESize h);
 		void UpdateFontInfo();
+		void UpdateLogLocation();
 		void Performance(UINT nID, BOOL bEnd);
 		void PostUpdateCounters(bool bPosted);
 		void SetArgBufferHeight(int anBufferHeight);

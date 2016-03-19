@@ -692,13 +692,15 @@ BEGIN
     CONTROL         "Process '-new_console' and '-cur_console' switches",cbProcessNewConArg,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,125,187,8
     CONTROL         "Process 'start'",cbProcessCmdStart,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,125,88,8
-    GROUPBOX        "Debugging options",gbFeatureDebug,4,161,319,28
+    GROUPBOX        "Debugging options",gbFeatureDebug,4,161,319,43
     CONTROL         "Exception handler (debug)",cbConsoleExceptionHandler,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,174,110,8
     CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,174,99,8
     CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,174,74,8
     PUSHBUTTON      "...",bRealConsoleSettings,306,173,13,11
     CONTROL         "Process Ctrl-Z in ReadConsole",cbProcessCtrlZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,139,113,8
+    CONTROL         "Internal LogFiles location",cbDebugLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,189,110,8
+    EDITTEXT        tDebugLogDir,128,187,191,12,ES_AUTOHSCROLL | ES_READONLY
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 328, 235
