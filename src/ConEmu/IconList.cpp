@@ -274,7 +274,7 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 		wchar_t szIconInfo[80] = L"", szMergedInfo[80] = L"";
 		GetIconInfoStr(hFileIcon, szIconInfo);
 
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 		{
 			CEStr lsLog(L"Icon `", asIconDescr, L"` was loaded: ", szIconInfo);
 			gpConEmu->LogString(lsLog);
@@ -329,7 +329,7 @@ wrap:
 		gpConEmu->ChangeWorkDir(NULL);
 	}
 	SafeFree(pszExpanded);
-	if (gpSetCls->isAdvLogging && (iIconIdx < 0))
+	if (gpSet->isLogging() && (iIconIdx < 0))
 	{
 		CEStr lsLog(L"Icon `", asIconDescr, L"` loading was failed");
 		gpConEmu->LogString(lsLog);

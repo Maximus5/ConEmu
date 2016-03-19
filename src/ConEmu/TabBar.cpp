@@ -260,7 +260,7 @@ void CTabBarClass::SelectTab(int i)
 {
 	wchar_t szInfo[120];
 	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"SelectTab tab requested: Tab=%i", i+1);
-	if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+	if (gpSet->isLogging()) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 
 	if (mp_Rebar->IsTabbarCreated())
 		mn_CurSelTab = mp_Rebar->SelectTabInt(i); // Меняем выделение, только если оно реально меняется

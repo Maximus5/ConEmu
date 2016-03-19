@@ -1277,7 +1277,7 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
 
-	if (gpSetCls->isAdvLogging >= 4)
+	if (gpSet->isLogging(4))
 	{
 		gpConEmu->LogMessage(hWnd, messg, wParam, lParam);
 	}
@@ -1365,7 +1365,7 @@ BOOL CheckCreateAppWindow()
 		return FALSE;
 	}
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szCreated[128];
 		_wsprintf(szCreated, SKIPLEN(countof(szCreated)) L"App window created, HWND=0x%08X\r\n", LODWORD(ghWndApp));
@@ -1457,7 +1457,7 @@ void SkipOneShowWindow()
 		gpConEmu->Taskbar_DeleteTabXP(hSkip);
 		DestroyWindow(hSkip);
 
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 		{
 			wchar_t szInfo[128];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Skip window 0x%08X was created and destroyed", LODWORD(hSkip));
@@ -1540,7 +1540,7 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahPare
 	HooksUnlocker;
 	MSetter lInCall(&gnInMsgBox);
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		CEStr lsLog(lpCaption, lpCaption ? L":: " : NULL, lpText);
 		LogString(lsLog);

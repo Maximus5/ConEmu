@@ -194,5 +194,6 @@ public:
 		CESwitch MultiConValue; // sw_Simple
 		CESwitch VisValue; // sw_Simple
 		CESwitch ResetSettings; // sw_Simple
+		CESwitch AdvLogging; // sw_Int: -log[1|2|3|4]
 	} opt;
 };

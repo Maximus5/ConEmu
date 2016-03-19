@@ -237,7 +237,7 @@ HRESULT CTaskScheduler2::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 	bsArguments = lpArguments;
 	bsDirectory = lpDirectory;
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		CEStr lsLog(L"Scheduler: Creating Task: `", lpTaskName, L"`; Exe: `", lpApplication, L"`; Args: ", lpArguments, L"; Dir: `", lpDirectory, L"`");
 		LogString(lsLog);
@@ -407,7 +407,7 @@ wrap:
 
 HRESULT CTaskScheduler2::Run()
 {
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		CEStr lsLog(L"Scheduler: Starting Task: `", bsTaskName, L"`");
 		LogString(lsLog);
@@ -553,7 +553,7 @@ HRESULT CTaskScheduler1::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 		goto wrap;
 	}
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		CEStr lsLog(L"Scheduler: Creating Task: `", lpTaskName, L"`; Exe: `", lpApplication, L"`; Args: ", lpArguments, L"; Dir: `", lpDirectory, L"`");
 		LogString(lsLog);
@@ -734,7 +734,7 @@ HRESULT CTaskScheduler1::Run()
 		goto wrap;
 	}
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		CEStr lsLog(L"Scheduler: Starting Task: `", bsTaskName, L"`");
 		LogString(lsLog);
@@ -831,7 +831,7 @@ BOOL CreateProcessScheduled(bool bAsSystem, LPWSTR lpCommandLine,
 		return FALSE;
 	}
 	CEStr szCommand(
-		gpSetCls->isAdvLogging ? L"-log " : NULL,
+		gpSet->isLogging() ? L"-log " : NULL,
 		lpCurrentDirectory ? L"-dir \"" : NULL, lpCurrentDirectory, lpCurrentDirectory ? L"\" " : NULL,
 		bAsSystem ? L"-interactive " : L"-apparent ",
 		lpCommandLine);

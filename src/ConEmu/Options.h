@@ -669,6 +669,11 @@ struct Settings
 		//reg->Load(L"DebugSteps", isDebugSteps);
 		bool isDebugSteps;
 
+		// Helpers
+		bool mb_DisableLogging;
+		uint isLogging(uint level = 1);
+		void DisableLogging();
+
 		//reg->Load(L"EnhanceGraphics", isEnhanceGraphics);
 		bool isEnhanceGraphics; // Progressbars and scrollbars (pseudographics)
 		//reg->Load(L"EnhanceButtons", isEnhanceButtons);

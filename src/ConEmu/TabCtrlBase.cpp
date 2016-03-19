@@ -212,7 +212,7 @@ bool CTabPanelBase::FarSendChangeTab(int tabIndex, CVConGuard* rpVCon /*= NULL*/
 	int iTickDelta = nLastTick ? (int)(nCurTick - nLastTick) : -1;
 	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Change tab requested: Tab=%i VCon=%i Wnd=%i Delta=%i",
 		tabIndex+1, VCon.VCon() ? VCon->Index() : -1, wndIndex, iTickDelta);
-	if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+	if (gpSet->isLogging()) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 	// _ASSERTE((iTickDelta==-1 || iTickDelta>=250) && "Suspicious fast tab switching, may be not intended by user"); -- may occurs while closing all tabs or window
 	nLastTick = nCurTick;
 
@@ -457,7 +457,7 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 			if (mn_LastChangeTick && ((GetTickCount() - mn_LastChangeTick) <= MIN_TABCLICK_CHANGE_DELTA))
 			{
 				wcscpy_c(szInfo, L"Tab LeftClick was skipped (mn_LastChangeTick)");
-				if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+				if (gpSet->isLogging()) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 				break;
 			}
 			// Может приходить и из ReBar по клику НАД табами
@@ -467,7 +467,7 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 			if (lnCurTab != nTabIdx)
 			{
 				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Tab was LeftClicked Tab=%i OldTab=%i InSelChange=%i", nTabIdx+1, lnCurTab+1, mn_InSelChange);
-				if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+				if (gpSet->isLogging()) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 
 				if (mn_InSelChange == 0)
 				{
@@ -476,7 +476,7 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 				else
 				{
 					wcscpy_c(szInfo, L"Tab LeftClick was skipped (mn_InSelChange)");
-					if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+					if (gpSet->isLogging()) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 				}
 			}
 			mn_LastChangeTick = GetTickCount();

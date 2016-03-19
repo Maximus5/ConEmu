@@ -398,7 +398,7 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 	GetClassName(hFind, Info.szClass, countof(Info.szClass));
 	GetWindowText(hFind, Info.szTitle, countof(Info.szTitle));
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szLogInfo[MAX_PATH*3];
 		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"Attach:%s x%08X/x%08X/x%08X {%s} \"%s\"", Info.szExeName, LODWORD(hFind), nStyle, nStyleEx, Info.szClass, Info.szTitle);
@@ -759,7 +759,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 		goto wrap;
 	}
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[128];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo))

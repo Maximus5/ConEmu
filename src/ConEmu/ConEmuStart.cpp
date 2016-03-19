@@ -1158,9 +1158,9 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					|| !klstricmp(curCommand, L"/log3") || !klstricmp(curCommand, L"/log4"))
 				{
 					if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0"))
-						gpSetCls->isAdvLogging = 1;
+						gpConEmu->opt.AdvLogging.SetInt(1);
 					else
-						gpSetCls->isAdvLogging = (BYTE)(curCommand[4] - L'0'); // 1..4
+						gpConEmu->opt.AdvLogging.SetInt((BYTE)(curCommand[4] - L'0')); // 1..4
 					// Do create logging service
 					DEBUGSTRSTARTUP(L"Creating log file");
 					gpConEmu->CreateLog();

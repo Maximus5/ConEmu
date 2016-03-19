@@ -147,7 +147,6 @@ CSettings::CSettings()
 	isFastSetupDisabled = false;
 	isDontCascade = false; // -nocascade or -dontcascade switch
 	ibDisableSaveSettingsOnExit = false;
-	isAdvLogging = 0;
 	m_ActivityLoggingType = glt_None; mn_ActivityCmdStartTick = 0;
 	bForceBufferHeight = false; nForceBufferHeight = 1000; /* устанавливается в true, из ком.строки /BufferHeight */
 
@@ -9790,7 +9789,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 
 wrap:
 	bConsoleFontChecked = (gpSetCls->nConFontError == 0);
-	if (isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[128];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CheckConsoleFontFast(`%s`,`%s`) = %u",

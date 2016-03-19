@@ -347,7 +347,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	//if (gpSet->isShowBgImage)
 	//    gpSet->LoadBackgroundFile(gpSet->sBgImage);
 
-	if (gpSetCls->isAdvLogging != 3)
+	if (gpSet->isLogging(3) != 3)
 	{
 		mpsz_LogScreen = NULL;
 	}
@@ -1484,7 +1484,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 		{
 			if (isVisible())
 			{
-				if (gpSetCls->isAdvLogging>=3) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.1");
+				if (gpSet->isLogging(3)) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.1");
 
 				Invalidate();
 			}
@@ -1654,7 +1654,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 			//mb_PaintRequested = TRUE;
 			Invalidate();
 
-			if (gpSetCls->isAdvLogging>=3) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.2");
+			if (gpSet->isLogging(3)) mp_RCon->LogString("Invalidating from CVirtualConsole::Update.2");
 
 			//09.06.13 а если так? быстрее изменения на экране не появятся?
 			//UpdateWindow('ghWnd DC'); // оно посылает сообщение в окно, и ждет окончания отрисовки
@@ -3967,8 +3967,8 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 	// Собственно, копирование готового bitmap
 	if (!gbNoDblBuffer)
 	{
-		// Обычный режим
-		if (gpSetCls->isAdvLogging>=3) mp_RCon->LogString("Blitting to Display");
+		// Normal mode
+		if (gpSet->isLogging(3)) mp_RCon->LogString("Blitting to Display");
 
 		gpSetCls->Performance(tPerfBlt, FALSE);
 

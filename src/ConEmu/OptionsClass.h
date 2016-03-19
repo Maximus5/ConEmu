@@ -144,9 +144,6 @@ class CSettings
 	public:
 		char isAllowDetach;
 
-		// Debugging - "c:\\temp\\ConEmuVCon-%i-%i.dat"
-		BYTE isAdvLogging;
-
 		//
 		enum GuiLoggingType m_ActivityLoggingType;
 		DWORD mn_ActivityCmdStartTick;

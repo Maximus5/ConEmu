@@ -130,7 +130,7 @@ bool CFontMgr::AutoRecreateFont(int nFontW, int nFontH)
 	if (mn_AutoFontWidth == nFontW && mn_AutoFontHeight == nFontH)
 		return false; // ничего не делали
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "AutoRecreateFont(H=%i, W=%i)", nFontH, nFontW);
 		CVConGroup::LogString(szInfo);
@@ -487,7 +487,7 @@ BOOL CFontMgr::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 
 	// Dump found table item
 	LogString(lpszFilePath);
-	bool bDumpTable = RELEASEDEBUGTEST((gpSetCls->isAdvLogging !=0),true);
+	bool bDumpTable = RELEASEDEBUGTEST((gpSet->isLogging()!=0),true);
 	wchar_t szDumpInfo[200];
 
 	//if (f.Open(lpszFilePath, CFile::modeRead|CFile::shareDenyWrite)){
@@ -1002,7 +1002,7 @@ void CFontMgr::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD
 		LF.lfWidth = 0;
 	}
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "MacroFontSetName('%s', H=%i, W=%i)", LF.lfFaceName, LF.lfHeight, LF.lfWidth);
 		CVConGroup::LogString(szInfo);
@@ -1050,7 +1050,7 @@ void CFontMgr::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD
 bool CFontMgr::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/)
 {
 	wchar_t szLog[128];
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		_wsprintf(szLog, SKIPLEN(countof(szLog)) L"MacroFontSetSize(%i,%i)", nRelative, nValue);
 		gpConEmu->LogString(szLog);
@@ -2243,7 +2243,7 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 		gpSet->FontSizeX2 = CSettings::GetNumber(hMainPg, tFontSizeX2, FontDefWidthMin, FontDefWidthMax);
 		gpSet->FontSizeX3 = CSettings::GetNumber(hMainPg, tFontSizeX3, FontDefWidthMin, FontDefWidthMax);
 
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 		{
 			char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "AutoRecreateFont(H=%i, W=%i)", LF.lfHeight, LF.lfWidth);
 			CVConGroup::LogString(szInfo);

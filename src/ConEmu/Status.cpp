@@ -971,7 +971,7 @@ void CStatus::SetStatus(LPCWSTR asStatus)
 	}
 
 	// В лог?
-	if (ms_Status[0] && gpSetCls->isAdvLogging)
+	if (ms_Status[0] && gpSet->isLogging())
 	{
 		gpConEmu->LogString(ms_Status);
 	}

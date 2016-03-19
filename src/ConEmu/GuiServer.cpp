@@ -234,21 +234,23 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			LPCWSTR pszCommand = pIn->NewCmd.GetCommand();
 			_ASSERTE(pszCommand!=NULL && "Must be at least empty string but NOT NULL");
 
-			if (pIn->NewCmd.isAdvLogging && !gpSetCls->isAdvLogging)
+			if (pIn->NewCmd.isAdvLogging && !gpSet->isLogging())
 			{
-				gpSetCls->isAdvLogging = pIn->NewCmd.isAdvLogging;
+				gpConEmu->opt.AdvLogging.SetInt(pIn->NewCmd.isAdvLogging);
 				gpConEmu->CreateLog();
 			}
 
-			if (gpSetCls->isAdvLogging && (pIn->NewCmd.isAdvLogging > gpSetCls->isAdvLogging))
+			if (pIn->NewCmd.isAdvLogging > gpSet->isLogging())
 			{
 				wchar_t szLogLevel[80];
-				_wsprintf(szLogLevel, SKIPLEN(countof(szLogLevel)) L"Changing log level! Old=%u, New=%u", (UINT)gpSetCls->isAdvLogging, (UINT)pIn->NewCmd.isAdvLogging);
+				_wsprintf(szLogLevel, SKIPLEN(countof(szLogLevel))
+					L"Changing log level! Old=%u, New=%u",
+					(UINT)gpSet->isLogging(), (UINT)pIn->NewCmd.isAdvLogging);
 				gpConEmu->LogString(szLogLevel);
-				gpSetCls->isAdvLogging = pIn->NewCmd.isAdvLogging;
+				gpConEmu->opt.AdvLogging.SetInt(pIn->NewCmd.isAdvLogging);
 			}
 
-			if (gpSetCls->isAdvLogging)
+			if (gpSet->isLogging())
 			{
 				size_t cchAll = 120 + _tcslen(pIn->NewCmd.szConEmu) + _tcslen(pIn->NewCmd.szCurDir) + _tcslen(pszCommand);
 				wchar_t* pszInfo = (wchar_t*)malloc(cchAll*sizeof(*pszInfo));

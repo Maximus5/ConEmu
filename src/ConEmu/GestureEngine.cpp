@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "GestureEngine.h"
 #include "ConEmu.h"
-#include "OptionsClass.h"
+#include "FontMgr.h"
 #include "VirtualConsole.h"
 #include "VConGroup.h"
 #include "RealConsole.h"
@@ -204,7 +204,7 @@ void CGestures::DumpGesture(LPCWSTR tp, const GESTUREINFO& gi)
 
 
 
-	if (gpSetCls->isAdvLogging >= 2)
+	if (gpSet->isLogging(2))
 	{
 		gpConEmu->LogString(szDump);
 	}
@@ -255,7 +255,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		BOOL bResult = _SetGestureConfig(hWnd, 0, countof(gc), gc, sizeof(GESTURECONFIG));
 		DWORD dwErr = GetLastError();
 
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 		{
 			wchar_t szNotify[60];
 			_wsprintf(szNotify, SKIPLEN(countof(szNotify)) L"SetGestureConfig -> %u,%u", bResult, dwErr);
@@ -299,7 +299,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	}
 
 	#ifdef USE_DUMPGEST
-	bool bLog = (gpSetCls->isAdvLogging >= 2);
+	bool bLog = gpSet->isLogging(2);
 	UNREFERENCED_PARAMETER(bLog);
 	bLog = true;
 	#endif

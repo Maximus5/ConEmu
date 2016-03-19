@@ -3103,7 +3103,7 @@ void Settings::LoadSizeSettings(SettingsBase* reg)
 	sizeRaw = wndHeight.Raw;
 	reg->Load(L"ConWnd Height", sizeRaw); wndHeight.SetFromRaw(false, sizeRaw);
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[120]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Loaded pos: {%i,%i}, size: {%s,%s}", _wndX, _wndY, wndWidth.AsString(), wndHeight.AsString());
 		gpConEmu->LogString(szInfo);
@@ -4996,6 +4996,19 @@ bool Settings::NeedCreateAppWindow()
 	if (!IsWindows7 && isTabsOnTaskBar())
 		return true;
 	return false;
+}
+
+uint Settings::isLogging(uint level /*= 1*/)
+{
+	if (mb_DisableLogging)
+		return 0;
+	BYTE logLevel = (BYTE)(gpConEmu->opt.AdvLogging.GetInt());
+	return (logLevel && (level <= logLevel)) ? logLevel : 0;
+}
+
+void Settings::DisableLogging()
+{
+	mb_DisableLogging = true;
 }
 
 bool Settings::isCloseOnLastTabClose()

@@ -80,7 +80,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSEL(s) DEBUGSTR(s)
 
 // ANSI, without "\r\n"
-#define IFLOGCONSOLECHANGE gpSetCls->isAdvLogging>=2
+#define IFLOGCONSOLECHANGE gpSet->isLogging(2)
 #define LOGCONSOLECHANGE(s) if (IFLOGCONSOLECHANGE) mp_RCon->LogString(s)
 
 #ifndef CONSOLE_MOUSE_DOWN
@@ -893,7 +893,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 
 	if (!fSuccess || (pOut && (pOut->hdr.cbSize < nOutSize)))
 	{
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 		{
 			DWORD dwErr = GetLastError();
 			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv.ExecuteCmd FAILED!!! ErrCode=0x%08X, Bytes read=%i", dwErr, pOut ? pOut->hdr.cbSize : 0);
@@ -910,7 +910,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		{
 			_ASSERTE(pOut->hdr.nCmd == pIn->hdr.nCmd);
 
-			if (gpSetCls->isAdvLogging)
+			if (gpSet->isLogging())
 			{
 				char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv FAILED!!! OutCmd(%i)!=InCmd(%i)", pOut->hdr.nCmd, pIn->hdr.nCmd);
 				mp_RCon->LogString(szInfo);
@@ -957,7 +957,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 
 					if (crDebugCurSize.X != sizeX)
 					{
-						if (gpSetCls->isAdvLogging)
+						if (gpSet->isLogging())
 						{
 							char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSize FAILED!!! ReqSize={%ix%i}, OutSize={%ix%i}", sizeX, (sizeBuffer ? sizeBuffer : sizeY), crDebugCurSize.X, crDebugCurSize.Y);
 							mp_RCon->LogString(szInfo);
@@ -969,7 +969,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					}
 				}
 
-				if (gpSetCls->isAdvLogging)
+				if (gpSet->isLogging())
 				{
 					mp_RCon->LogString(
 					    (nWait == (DWORD)-1) ?
@@ -988,7 +988,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 			{
 				nBufHeight = pIn->SetSize.nBufferHeight;
 
-				if (gpSetCls->isAdvLogging)
+				if (gpSet->isLogging())
 					mp_RCon->LogString("SetConsoleSizeSrv.Not waiting for ApplyFinished");
 			}
 
@@ -998,7 +998,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 			{
 				_ASSERTE((sbi.srWindow.Bottom-sbi.srWindow.Top)<200);
 
-				if (gpSetCls->isAdvLogging)
+				if (gpSet->isLogging())
 				{
 					char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "Current size: {%i,%i} Buf={%i,%i}", sbi.srWindow.Right-sbi.srWindow.Left+1, sbi.srWindow.Bottom-sbi.srWindow.Top+1, sbi.dwSize.X, sbi.dwSize.Y);
 					mp_RCon->LogString(szInfo);
@@ -1010,7 +1010,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				}
 				else
 				{
-					if (gpSetCls->isAdvLogging)
+					if (gpSet->isLogging())
 					{
 						char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
 						                             sizeX, sizeY,
@@ -1030,7 +1030,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					_ASSERTE(sbi.dwSize.Y<200);
 				}
 
-				if (gpSetCls->isAdvLogging)
+				if (gpSet->isLogging())
 				{
 					char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "Current size: Cols=%i, Rows=%i", sbi.dwSize.X, sbi.dwSize.Y);
 					mp_RCon->LogString(szInfo);
@@ -1042,7 +1042,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				}
 				else
 				{
-					if (gpSetCls->isAdvLogging)
+					if (gpSet->isLogging())
 					{
 						char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
 						                             sizeX, sizeY,
@@ -1134,7 +1134,7 @@ BOOL CRealBuffer::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DW
 	{
 		// 19.06.2009 Maks - Она действительно может быть еще не создана
 		//Box(_T("Console was not created (CRealConsole::SetConsoleSize)"));
-		if (gpSetCls->isAdvLogging) mp_RCon->LogString("SetConsoleSize skipped (!mp_RCon->hConWnd || !mp_RCon->ms_ConEmuC_Pipe)");
+		if (gpSet->isLogging()) mp_RCon->LogString("SetConsoleSize skipped (!mp_RCon->hConWnd || !mp_RCon->ms_ConEmuC_Pipe)");
 
 		// Это должно быть только на этапе создания новой консоли (например, появилась панель табов)
 		if (con.nTextWidth != sizeX || con.nTextHeight != sizeY)
@@ -1209,7 +1209,7 @@ BOOL CRealBuffer::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DW
 		}
 		else
 		{
-			if (gpSetCls->isAdvLogging) mp_RCon->LogString("SetConsoleSize skipped until LMouseButton not released");
+			if (gpSet->isLogging()) mp_RCon->LogString("SetConsoleSize skipped until LMouseButton not released");
 			DEBUGSTRSIZE2(L"!!! SetConsoleSize skipped until LMouseButton not released !!!\n");
 			goto wrap;
 		}

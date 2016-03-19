@@ -1835,7 +1835,7 @@ HMONITOR CConEmuSize::GetPrimaryMonitor(MONITORINFO* pmi /*= NULL*/)
 	// GetPrimaryMonitorInfo failed?
 	_ASSERTE(hMon && mi.cbSize && !IsRectEmpty(&mi.rcMonitor) && !IsRectEmpty(&mi.rcWork));
 
-	if (gpSetCls->isAdvLogging >= 2)
+	if (gpSet->isLogging(2))
 	{
 		wchar_t szInfo[128];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"  GetPrimaryMonitor=%u -> hMon=x%08X Work=({%i,%i}-{%i,%i}) Area=({%i,%i}-{%i,%i})",
@@ -1852,7 +1852,7 @@ HMONITOR CConEmuSize::GetPrimaryMonitor(MONITORINFO* pmi /*= NULL*/)
 
 LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 {
-	bool bLog = RELEASEDEBUGTEST((gpSetCls->isAdvLogging >= 2),true);
+	bool bLog = RELEASEDEBUGTEST((gpSet->isLogging(2) >= 2),true);
 	wchar_t szMinMax[255];
 	RECT rcWnd;
 
@@ -1865,7 +1865,7 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	          pInfo->ptMinTrackSize.x, pInfo->ptMinTrackSize.y,
 	          pInfo->ptMaxTrackSize.x, pInfo->ptMaxTrackSize.y,
 			  LOGRECTCOORDS(rcWnd));
-		if (gpSetCls->isAdvLogging >= 2)
+		if (gpSet->isLogging(2))
 			LogString(szMinMax, true, false);
 		DEBUGSTRSIZE(szMinMax);
 	}
@@ -1969,7 +1969,7 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	          pInfo->ptMinTrackSize.x, pInfo->ptMinTrackSize.y,
 	          pInfo->ptMaxTrackSize.x, pInfo->ptMaxTrackSize.y,
 			  LOGRECTCOORDS(rcWnd));
-		if (gpSetCls->isAdvLogging >= 2)
+		if (gpSet->isLogging(2))
 			LogString(szMinMax, true, false);
 		DEBUGSTRSIZE(szMinMax);
 	}
@@ -2001,7 +2001,7 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	DEBUGTEST(WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl););
 	DEBUGTEST(WINDOWPOS ps = *p);
 
-	if (gpSetCls->isAdvLogging >= 2)
+	if (gpSet->isLogging(2))
 	{
 		wchar_t szInfo[255];
 		wcscpy_c(szInfo, L"OnWindowPosChanged:");
@@ -2127,7 +2127,7 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	}
 
 	//Логирование, что получилось
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		mp_ConEmu->LogWindowPos(L"WM_WINDOWPOSCHANGED.end");
 	}
@@ -2466,7 +2466,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 	size_t cchLen = wcslen(szInfo);
 	_wsprintf(szInfo + cchLen, SKIPLEN(countof(szInfo) - cchLen) L" --> (F:x%08X X:%i Y:%i W:%i H:%i)", p->flags, p->x, p->y, p->cx, p->cy);
-	if (gpSetCls->isAdvLogging >= 2)
+	if (gpSet->isLogging(2))
 	{
 		LogString(szInfo);
 	}
@@ -2629,7 +2629,7 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 	wchar_t szDbg[255];
 	wsprintf(szDbg, L"CConEmuSize::OnSizing(wParam=%i, L.Lo=%i, L.Hi=%i)\n",
 	          wParam, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 		mp_ConEmu->LogString(szDbg);
 	#endif
 
@@ -2772,7 +2772,7 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 		}
 	}
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 		mp_ConEmu->LogWindowPos(L"OnSizing.end");
 
 	return result;
@@ -2844,7 +2844,7 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 		*prcWnd = rcWnd;
 	}
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 		mp_ConEmu->LogWindowPos(L"OnMoving.end");
 
 	return TRUE;
@@ -3104,7 +3104,7 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 	// While debugging - low-level keyboard hooks almost lock DevEnv
 	HooksUnlocker;
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[64], szName[32];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetTileMode(%s)", FormatTileMode(Tile,szName,countof(szName)));
@@ -3295,7 +3295,7 @@ RECT CConEmuSize::GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi)
 
 void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, bool bChanged, const RECT& rcSet, LPRECT prcAfter, HMONITOR hMon)
 {
-	if (!gpSetCls->isAdvLogging && !IsDebuggerPresent())
+	if (!gpSet->isLogging() && !IsDebuggerPresent())
 		return;
 
 	ConEmuWindowCommand NewTile = GetTileMode(false/*Estimate*/, NULL);
@@ -3317,7 +3317,7 @@ void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, 
 		(DWORD)(DWORD_PTR)hMon,
 		szAfter);
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 		mp_ConEmu->LogString(szInfo);
 	else
 		DEBUGSTRSIZE(szInfo);
@@ -3520,7 +3520,7 @@ bool CConEmuSize::JumpNextMonitor(bool Next)
 	DWORD nWndPID = 0; GetWindowThreadProcessId(hJump, &nWndPID);
 	if (nWndPID != GetCurrentProcessId())
 	{
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 		{
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 				L"JumpNextMonitor skipped, not our window PID=%u, HWND=x%08X",
@@ -3635,7 +3635,7 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	HMONITOR hNext = hJumpMon ? (GetMonitorInfoSafe(hJumpMon, mi) ? hJumpMon : NULL) : GetNextMonitorInfo(&mi, &rcMain, Next);
 	if (!hNext)
 	{
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 		{
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 				L"JumpNextMonitor(%i) skipped, GetNextMonitorInfo({%i,%i}-{%i,%i}) returns NULL",
@@ -3644,7 +3644,7 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 		}
 		return false;
 	}
-	else if (gpSetCls->isAdvLogging)
+	else if (gpSet->isLogging())
 	{
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 			L"JumpNextMonitor(%i), GetNextMonitorInfo({%i,%i}-{%i,%i}) returns 0x%08X ({%i,%i}-{%i,%i})",
@@ -3838,7 +3838,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 	CVConGuard VCon;
 	mp_ConEmu->GetActiveVCon(&VCon);
-	//CRealConsole* pRCon = (gpSetCls->isAdvLogging!=0) ? (VCon.VCon() ? VCon.VCon()->RCon() : NULL) : NULL;
+	//CRealConsole* pRCon = gpSet->isLogging() ? (VCon.VCon() ? VCon.VCon()->RCon() : NULL) : NULL;
 
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode exec: NewMode=%s", GetWindowModeName(NewMode));
 	LogString(szInfo);
@@ -3883,13 +3883,13 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				}
 				else if (IsWindowVisible(ghWnd))
 				{
-					if (gpSetCls->isAdvLogging) LogString(L"WM_SYSCOMMAND(SC_RESTORE)");
+					if (gpSet->isLogging()) LogString(L"WM_SYSCOMMAND(SC_RESTORE)");
 
 					DefWindowProc(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0); //2009-04-22 Было SendMessage
 				}
 				else
 				{
-					if (gpSetCls->isAdvLogging) LogString(L"ShowMainWindow(SW_SHOWNORMAL)");
+					if (gpSet->isLogging()) LogString(L"ShowMainWindow(SW_SHOWNORMAL)");
 
 					ShowMainWindow(SW_SHOWNORMAL, abFirstShow);
 				}
@@ -3900,7 +3900,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				//if (mb_MaximizedHideCaption)
 				//	mb_MaximizedHideCaption = FALSE;
 
-				if (gpSetCls->isAdvLogging) LogString(L"OnSize(false).1");
+				if (gpSet->isLogging()) LogString(L"OnSize(false).1");
 
 				//OnSize(false); // подровнять ТОЛЬКО дочерние окошки
 			}
@@ -4037,7 +4037,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				//RePaint();
 				mp_ConEmu->InvalidateAll();
 
-				if (gpSetCls->isAdvLogging) LogString(L"OnSize(false).2");
+				if (gpSet->isLogging()) LogString(L"OnSize(false).2");
 
 				//OnSize(false); // консоль уже изменила свой размер
 
@@ -4051,7 +4051,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				MSetter lSet(&mn_IgnoreSizeChange);
 				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, abFirstShow);
 
-				if (gpSetCls->isAdvLogging) LogString(L"OnSize(false).3");
+				if (gpSet->isLogging()) LogString(L"OnSize(false).3");
 			}
 
 			_ASSERTE(mn_IgnoreSizeChange>=0);
@@ -4153,7 +4153,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				lSet.Unlock();
 				//WindowMode = inMode; // Запомним!
 
-				if (gpSetCls->isAdvLogging) LogString(L"OnSize(false).5");
+				if (gpSet->isLogging()) LogString(L"OnSize(false).5");
 
 				OnSize(false); // подровнять ТОЛЬКО дочерние окошки
 			}
@@ -4171,7 +4171,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 		_ASSERTE(FALSE && "Unsupported mode");
 	}
 
-	if (gpSetCls->isAdvLogging) LogString(L"SetWindowMode done");
+	if (gpSet->isLogging()) LogString(L"SetWindowMode done");
 
 	//WindowMode = inMode; // Запомним!
 
@@ -4188,7 +4188,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	//	EnableWindow(GetDlgItem(hSizePos, tWndHeight), canEditWindowSizes);
 	//}
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[64];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode(%u) end", inMode);
@@ -4201,7 +4201,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 wrap:
 	if (!lbRc)
 	{
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 		{
 			LogString(L"Failed to switch WindowMode");
 		}
@@ -4325,7 +4325,7 @@ void CConEmuSize::OnConsoleResize(bool abPosted /*= false*/)
 
 	if (!abPosted)
 	{
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 			LogString(L"OnConsoleResize(abPosted==false)", TRUE);
 
 		if (!lbPosted)
@@ -4345,7 +4345,7 @@ void CConEmuSize::OnConsoleResize(bool abPosted /*= false*/)
 
 	if (isIconic())
 	{
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 			LogString(L"OnConsoleResize ignored, because of iconic");
 
 		return; // если минимизировано - ничего не делать
@@ -4362,7 +4362,7 @@ void CConEmuSize::OnConsoleResize(bool abPosted /*= false*/)
 		ResetSizingFlags(MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 	}
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[160]; wsprintf(szInfo, L"OnConsoleResize: mouse.state=0x%08X, SizingToDo=%i, IsSizing=%i, LBtnPressed=%i, PostUpdateWindowSize=%i",
 		                            mp_ConEmu->mouse.state, (int)lbSizingToDo, (int)lbIsSizing, (int)lbLBtnPressed, (int)0/*mb_PostUpdateWindowSize*/);
@@ -4797,7 +4797,7 @@ bool CConEmuSize::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int c
 	}
 
 	wchar_t szInfo[128]; _wsprintf(szInfo, SKIPCOUNT(szInfo) L"setWindowPos: {%i,%i} (%ix%i) Flags=x%X After=x%X", X, Y, cx, cy, uFlags, LODWORD(hWndInsertAfter));
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		LogString(szInfo);
 	}
@@ -4848,7 +4848,7 @@ void CConEmuSize::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 			return; // менять не нужно
 	}
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[128];
 		RECT rcBox = {};
@@ -5139,7 +5139,7 @@ void CConEmuSize::CheckTopMostState()
 
 	if (!gpSet->isAlwaysOnTop && ((dwStyleEx & WS_EX_TOPMOST) == WS_EX_TOPMOST))
 	{
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 		{
 			wchar_t szInfo[200];
 			RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
@@ -5718,7 +5718,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	DEBUGTEST(static DWORD nLastQuakeHide);
 
 	// Logging
-	if (RELEASEDEBUGTEST((gpSetCls->isAdvLogging>0),true))
+	if (RELEASEDEBUGTEST(gpSet->isLogging(),true))
 	{
 		switch (cmd)
 		{

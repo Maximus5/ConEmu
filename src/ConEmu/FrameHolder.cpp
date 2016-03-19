@@ -181,10 +181,10 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	case WM_NCPAINT:
 	{
 		DBGFUNCTION(L"WM_NCPAINT \n");
-		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_NCPAINT - begin");
+		if (gpSet->isLogging(2)) LogString(L"WM_NCPAINT - begin");
 		MSetter inNcPaint(&mn_InNcPaint);
 		lResult = OnNcPaint(hWnd, uMsg, wParam, lParam);
-		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_NCPAINT - end");
+		if (gpSet->isLogging(2)) LogString(L"WM_NCPAINT - end");
 		return true;
 	}
 
@@ -367,25 +367,25 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 	case 0xAE: /*WM_NCUAHDRAWCAPTION*/
 	{
-		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_NCUAHDRAWCAPTION - begin");
+		if (gpSet->isLogging(2)) LogString(L"WM_NCUAHDRAWCAPTION - begin");
 		MSetter inNcPaint(&mn_InNcPaint);
 		lResult = OnDwmMessage(hWnd, uMsg, wParam, lParam);
-		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_NCUAHDRAWCAPTION - end");
+		if (gpSet->isLogging(2)) LogString(L"WM_NCUAHDRAWCAPTION - end");
 		return true;
 	}
 	case 0xAF: /*WM_NCUAHDRAWFRAME*/
 	{
-		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_NCUAHDRAWFRAME - begin");
+		if (gpSet->isLogging(2)) LogString(L"WM_NCUAHDRAWFRAME - begin");
 		MSetter inNcPaint(&mn_InNcPaint);
 		lResult = OnDwmMessage(hWnd, uMsg, wParam, lParam);
-		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_NCUAHDRAWFRAME - end");
+		if (gpSet->isLogging(2)) LogString(L"WM_NCUAHDRAWFRAME - end");
 		return true;
 	}
 	case 0x31E: /*WM_DWMCOMPOSITIONCHANGED*/
 	{
-		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_DWMCOMPOSITIONCHANGED - begin");
+		if (gpSet->isLogging(2)) LogString(L"WM_DWMCOMPOSITIONCHANGED - begin");
 		lResult = OnDwmMessage(hWnd, uMsg, wParam, lParam);
-		if (gpSetCls->isAdvLogging >= 2) LogString(L"WM_DWMCOMPOSITIONCHANGED - end");
+		if (gpSet->isLogging(2)) LogString(L"WM_DWMCOMPOSITIONCHANGED - end");
 		return true;
 	}
 
@@ -1090,7 +1090,7 @@ LRESULT CFrameHolder::OnNcActivate(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 {
 	mb_NcActive = (wParam != 0);
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[100];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CFrameHolder::OnNcActivate(%u,x%X)", (DWORD)wParam, (DWORD)(DWORD_PTR)lParam);

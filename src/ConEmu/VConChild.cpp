@@ -305,7 +305,7 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 	DWORD nDcShowCmd = nShowCmd;
 
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		if (hChildGUI != NULL)
 			_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"ShowView: Back=x%08X, DC=x%08X, ChildGUI=x%08X, ShowCMD=%u, ChildVisible=%u",
@@ -356,7 +356,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 	MSG msgStr = {hWnd, messg, wParam, lParam};
 	ConEmuMsgLogger::Log(msgStr, ConEmuMsgLogger::msgCanvas);
 
-	if (gpSetCls->isAdvLogging >= 4)
+	if (gpSet->isLogging(4))
 	{
 		gpConEmu->LogMessage(hWnd, messg, wParam, lParam);
 	}
@@ -439,7 +439,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			break;
 		case WM_PAINT:
 			pVCon->mn_WmPaintCounter++;
-			if (gpSetCls->isAdvLogging >= 2)
+			if (gpSet->isLogging(2))
 			{
 				wchar_t szInfo[80];
 				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"VCon[%i] WM_PAINT %u times, %u pending", pVCon->Index(), pVCon->mn_WmPaintCounter, pVCon->mn_InvalidateViewPending);
@@ -791,7 +791,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 	MSG msgStr = {hWnd, messg, wParam, lParam};
 	ConEmuMsgLogger::Log(msgStr, ConEmuMsgLogger::msgBack);
 
-	if (gpSetCls->isAdvLogging >= 4)
+	if (gpSet->isLogging(4))
 	{
 		if (gpConEmu) gpConEmu->LogMessage(hWnd, messg, wParam, lParam);
 	}
@@ -1153,7 +1153,7 @@ LRESULT CConEmuChild::OnPaint()
 
 	mb_PostFullPaint = FALSE;
 
-	if (gpSetCls->isAdvLogging>2)
+	if (gpSet->isLogging(2))
 		VCon->RCon()->LogString("CConEmuChild::OnPaint");
 
 	//gpSetCls->Performance(tPerfBlt, FALSE);
@@ -1255,7 +1255,7 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 	RECT rcNewWnd;    ::GetWindowRect(mh_WndDC, &rcNewWnd);
 	#endif
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		char szInfo[128];
 		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "VCon(0x%08X).OnSize(%ux%u)", LODWORD(mh_WndDC), (UINT)LOWORD(lParam), (UINT)HIWORD(lParam));
@@ -1295,7 +1295,7 @@ LRESULT CConEmuChild::OnMove(WPARAM wParam, LPARAM lParam)
 	RECT rcNewWnd;    ::GetWindowRect(mh_WndDC, &rcNewWnd);
 	#endif
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		char szInfo[128];
 		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "VCon(0x%08X).OnMove(%ux%u)", LODWORD(mh_WndDC), (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
@@ -1486,7 +1486,7 @@ void CConEmuChild::InvalidateView()
 			DeleteObject(hRgn);
 		}
 
-		if ((l == 1) && (gpSetCls->isAdvLogging >= 2))
+		if ((l == 1) && gpSet->isLogging(2))
 		{
 			wchar_t szInfo[80];
 			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"VCon[%i] invalidate called", mp_VCon->Index());

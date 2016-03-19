@@ -685,19 +685,19 @@ void CVConGroup::GetAllTextSize(SIZE& sz, SIZE& Splits, bool abMinimal /*= false
 
 void CVConGroup::LogString(LPCSTR asText)
 {
-	if (gpSetCls->isAdvLogging && gp_VActive)
+	if (gpSet->isLogging() && gp_VActive)
 		gp_VActive->RCon()->LogString(asText);
 }
 
 void CVConGroup::LogString(LPCWSTR asText)
 {
-	if (gpSetCls->isAdvLogging && gp_VActive)
+	if (gpSet->isLogging() && gp_VActive)
 		gp_VActive->RCon()->LogString(asText);
 }
 
 void CVConGroup::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars /*= NULL*/)
 {
-	if (gpSetCls->isAdvLogging && gp_VActive)
+	if (gpSet->isLogging() && gp_VActive)
 		gp_VActive->RCon()->LogInput(uMsg, wParam, lParam, pszTranslatedChars);
 }
 
@@ -3474,7 +3474,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 	bool bFound = false;
 	_ASSERTE(pStartStop->dwPID!=0);
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		size_t cchAll = 255 + _tcslen(pStartStop->sCmdLine) + _tcslen(pStartStop->sModuleName);
 		wchar_t* pszLog = (wchar_t*)malloc(cchAll*sizeof(*pszLog));
@@ -3615,7 +3615,7 @@ CRealConsole* CVConGroup::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFil
 
 	// Logging
 	wchar_t szLogInfo[MAX_PATH];
-	if (gpSetCls->isAdvLogging!=0)
+	if (gpSet->isLogging())
 	{
 		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. SrvPID=%u. AppPID=%u, FileName=", anServerPID, anAppPID);
 		lstrcpyn(szLogInfo+_tcslen(szLogInfo), asAppFileName ? asAppFileName : L"<NULL>", 128);
@@ -3646,7 +3646,7 @@ CRealConsole* CVConGroup::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFil
 	}
 
 	// Logging
-	if (gpSetCls->isAdvLogging!=0)
+	if (gpSet->isLogging())
 	{
 		wchar_t szRc[64];
 		if (pRCon)
@@ -4102,7 +4102,7 @@ bool CVConGroup::ConActivate(CVConGuard& VCon, int nCon)
 	wchar_t szInfo[128];
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Activating con #%u, OldSize={%u,%u}, NewSize={%u,%u}",
 		nCon, nOldConWidth, nOldConHeight, nNewConWidth, nNewConHeight);
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		pRCon->LogString(szInfo);
 	}
@@ -5008,7 +5008,7 @@ void CVConGroup::SyncWindowToConsole()
 	//GetCWShift(ghWnd, &cwShift);
 	RECT wndR; GetWindowRect(ghWnd, &wndR); // текущий XY
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		char szInfo[128]; wsprintfA(szInfo, "SyncWindowToConsole(Cols=%i, Rows=%i)", gp_VActive->TextWidth, gp_VActive->TextHeight);
 		CVConGroup::LogString(szInfo);
@@ -5706,7 +5706,7 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 			lbSizeChanged = (c.right != nCurConWidth || c.bottom != nCurConHeight);
 		}
 
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 		{
 			char szInfo[160]; wsprintfA(szInfo, "OnConsoleResize: lbSizeChanged=%i, client={{%i,%i},{%i,%i}}, CalcCon={%i,%i}, CurCon={%i,%i}",
 			                            lbSizeChanged, client.left, client.top, client.right, client.bottom,

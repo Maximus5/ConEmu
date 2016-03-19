@@ -403,7 +403,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	//mp_ColorData = NULL;
 	mn_LastColorFarID = 0;
 	//ms_ConEmuC_DataReady[0] = 0; mh_ConEmuC_DataReady = NULL;
-	m_UseLogs = gpSetCls->isAdvLogging;
+	m_UseLogs = gpSet->isLogging();
 
 	mp_TrueColorerData = NULL;
 	mn_TrueColorMaxCells = 0;
@@ -561,7 +561,7 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 	_ASSERTE(args!=NULL);
 
 	// В этот момент логи данной консоли еще не созданы, пишем в GUI-шный
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szPrefix[128];
 		_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::PreCreate, hView=x%08X, hBack=x%08X, Detached=%u, AsAdmin=%u, Cmd=",
@@ -3905,7 +3905,7 @@ wrap:
 		SafeFree(mp_ConHostSearch);
 	}
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[100];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"ConHostPID=%u", mn_ConHost_PID);
@@ -4641,7 +4641,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		_wcscat_c(psCurCmd, nLen, L"\"");
 		_wcscat_c(psCurCmd, nLen, mp_ConEmu->ms_ConEmuExe);
 		_wcscat_c(psCurCmd, nLen, L"\" ");
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 			_wcscat_c(psCurCmd, nLen, L"-log ");
 		_wcscat_c(psCurCmd, nLen, L"-system -cmd ");
 	}
@@ -6071,7 +6071,7 @@ void CRealConsole::StopSignal()
 
 void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
 {
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[100];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"StartStopXTerm(nPID=%u, xTerm=%u)", nPID, (UINT)xTerm);
@@ -6094,7 +6094,7 @@ void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
 
 void CRealConsole::StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste)
 {
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[100];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"StartStopBracketedPaste(nPID=%u, Enabled=%s)", nPID, bUseBracketedPaste ? L"YES" : L"NO");
@@ -6127,7 +6127,7 @@ BOOL CRealConsole::GetBracketedPaste()
 void CRealConsole::PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted)
 {
 	_ASSERTE(pStarted->hProcess == NULL && pStarted->nPID);
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[100];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"PortableStarted(nPID=%u, Subsystem=%u)", pStarted->nPID, pStarted->nSubsystem);
@@ -7505,7 +7505,7 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 		// cygwin/msys connector
 		SetTerminalPID(0);
 	}
-	else if (gpSetCls->isAdvLogging)
+	else if (gpSet->isLogging())
 	{
 		wchar_t szInfo[100];
 		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"ServerPID=%u was set for VCon%i", anMainSrvPID, mp_VCon->Index()+1);
@@ -9093,7 +9093,7 @@ void CRealConsole::ShowGuiClientExt(int nMode, BOOL bDetach /*= FALSE*/) // -1 T
 		ExecuteFreeResult(pOut);
 		ExecuteFreeResult(pIn);
 
-		if (gpSetCls->isAdvLogging)
+		if (gpSet->isLogging())
 		{
 			wchar_t sInfo[200];
 			_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"ShowGuiClientExtern: PID=%u, hGuiWnd=x%08X, bExtern=%i, bDetach=%u",
@@ -9437,7 +9437,7 @@ void CRealConsole::CreateLogFiles()
 
 	wchar_t szInfo[MAX_PATH * 2];
 
-	HRESULT hr = mp_Log ? mp_Log->CreateLogFile(L"ConEmu-con", mn_MainSrv_PID, gpSetCls->isAdvLogging) : E_UNEXPECTED;
+	HRESULT hr = mp_Log ? mp_Log->CreateLogFile(L"ConEmu-con", mn_MainSrv_PID, gpSet->isLogging()) : E_UNEXPECTED;
 	if (hr != 0)
 	{
 		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Create log file failed! ErrCode=0x%08X\n%s\n", (DWORD)hr, mp_Log->GetLogFileName());
@@ -9769,7 +9769,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	_ASSERTE(m_Args.pszStartupDir==NULL || (m_Args.pszStartupDir && args->pszStartupDir));
 	SafeFree(m_Args.pszStartupDir);
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szPrefix[128];
 		_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::RecreateProcess, hView=x%08X, Detached=%u, AsAdmin=%u, Cmd=",
@@ -10111,7 +10111,7 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 	}
 	#endif
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t sInfo[200];
 		_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"SetOtherWindowPos: hWnd=x%08X, hInsertAfter=x%08X, X=%i, Y=%i, CX=%i, CY=%i, Flags=x%04X",
@@ -10331,7 +10331,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
 	wchar_t szInfo[120];
 	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"RCon was activated Index=%i OldIndex=%i", nNewNum+1, nOldNum+1);
-	if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+	if (gpSet->isLogging()) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 
 	_ASSERTE(isActive(false));
 	// Чтобы можно было найти хэндл окна по хэндлу консоли
@@ -12227,7 +12227,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 	//	DEBUGSTRLANG(szMsg);
 	//#endif
 
-	if (gpSetCls->isAdvLogging > 1)
+	if (gpSet->isLogging(2))
 	{
 		WCHAR szInfo[255];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CRealConsole::SwitchKeyboardLayout(CP:%i, HKL:0x%08I64X)",
@@ -14231,7 +14231,7 @@ void CRealConsole::GuiWndFocusStore()
 		}
 	}
 
-	if (gpSetCls->isAdvLogging && bHwndChanged)
+	if (gpSet->isLogging() && bHwndChanged)
 	{
 		wchar_t szInfo[100];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GuiWndFocusStore for PID=%u, hWnd=x%08X", nPID, LODWORD(m_ChildGui.hGuiWndFocusStore));
@@ -14369,7 +14369,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	CVConGuard guard(mp_VCon);
 
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[MAX_PATH*4];
 		HWND hBack = guard->GetBack();
@@ -15070,7 +15070,7 @@ void CRealConsole::OnConsoleLangChange(DWORD_PTR dwNewKeybLayout)
 {
 	if (mp_RBuf->GetKeybLayout() != dwNewKeybLayout)
 	{
-		if (gpSetCls->isAdvLogging > 1)
+		if (gpSet->isLogging(2))
 		{
 			wchar_t szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CRealConsole::OnConsoleLangChange, Old=0x%08X, New=0x%08X",
@@ -15092,7 +15092,7 @@ void CRealConsole::OnConsoleLangChange(DWORD_PTR dwNewKeybLayout)
 	}
 	else
 	{
-		if (gpSetCls->isAdvLogging > 1)
+		if (gpSet->isLogging(2))
 		{
 			wchar_t szInfo[255];
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CRealConsole::OnConsoleLangChange skipped, mp_RBuf->GetKeybLayout() already is 0x%08X",
@@ -15438,7 +15438,7 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ 
 	}
 	#endif
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		if (mp_Log)
 			LogString(pszInfo);
@@ -16339,7 +16339,7 @@ void CRealConsole::setGuiWndPID(HWND ahGuiWnd, DWORD anPID, int anBits, LPCWSTR 
 
 	setGuiWnd(ahGuiWnd);
 
-	if (gpSetCls->isAdvLogging)
+	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[MAX_PATH+100];
 		DWORD dwExStyle = ahGuiWnd ? GetWindowLong(ahGuiWnd, GWL_EXSTYLE) : 0;

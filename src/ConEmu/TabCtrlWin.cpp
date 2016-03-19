@@ -819,7 +819,7 @@ int CTabPanelWin::SelectTabInt(int i)
 
 	wchar_t szInfo[120];
 	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"SelectTabInt Tab=%i CurTab=%i", i+1, iCurSel+1);
-	if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+	if (gpSet->isLogging()) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 
 	if (i != iCurSel)    // Меняем выделение, только если оно реально меняется
 	{
@@ -1064,7 +1064,7 @@ bool CTabPanelWin::OnNotifyInt(LPNMHDR nmhdr, LRESULT& lResult)
 
 		wchar_t szInfo[120];
 		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"WinApi tab was changed: NewTab=%i", lnNewTab+1);
-		if (gpSetCls->isAdvLogging) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
+		if (gpSet->isLogging()) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 
 		bool bRollbackTabs = false, bRefreshTabs = false;
 
@@ -1097,7 +1097,7 @@ bool CTabPanelWin::OnNotifyInt(LPNMHDR nmhdr, LRESULT& lResult)
 			}
 		}
 
-		if (gpSetCls->isAdvLogging) { LogString(L"WinApi tab change was finished"); } else { DEBUGSTRSEL(L"WinApi tab change was finished"); }
+		if (gpSet->isLogging()) { LogString(L"WinApi tab change was finished"); } else { DEBUGSTRSEL(L"WinApi tab change was finished"); }
 		mn_LastChangeTick = GetTickCount();
 		InterlockedDecrement(&mn_InSelChange);
 		lResult = FALSE; // Value ignored actually
