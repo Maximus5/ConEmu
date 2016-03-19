@@ -1,4 +1,4 @@
-param([string]$mode="auto",[string]$id="",[string]$str="")
+param([string]$mode="auto",[string]$id="",[string]$str="",[switch]$force)
 
 $path = split-path -parent $MyInvocation.MyCommand.Definition
 
@@ -635,8 +635,147 @@ function UpdateConEmuL10N()
   Set-Content $target_l10n $script:l10n -Encoding UTF8
 }
 
+# $loop is $TRUE when called from NewLngResourceLoop
+function NewLngResourceHelper([string]$id,[string]$str,[bool]$loop=$FALSE,[string]$file="",[string]$header="")
+{
+  $script:str_id = @{}
+
+  if ($header -ne "") { $id_pad = 30 } else { $id_pad = 25 }
+
+  if ($header -ne "") {
+    #Write-Host -NoNewLine ("Reading: " + $header)
+    $rsrch  = Get-Content $header
+    #Write-Host (" Lines: " + $rsrch.Length)
+    ParseResIdsEnum $rsrch
+  }
+
+  #Write-Host -NoNewLine ("Reading: " + $file)
+  $strdata = Get-Content $file
+  #Write-Host (" Lines: " + $strdata.Length)
+
+  # Prepare string resources
+  $script:rsrcs = ParseLngData $strdata
+
+  $action = "add"
+
+  if ($script:rsrcs.ContainsKey($id)) {
+    if ($script:rsrcs[$id] -eq $str) { $color = "Green" } else { $color = "Red" }
+    Write-Host -ForegroundColor $color "Key '$id' already exists: $($script:rsrcs[$id])"
+    if ($force) {
+      $rewrite = "Y"
+    } else {
+      Write-Host -NoNewLine -ForegroundColor White "Rewrite files? [y/N] "
+      $rewrite = Read-Host
+    }
+    if ($rewrite -eq "Y") {
+      $action = "set"
+    } else {
+      if (-Not ($loop)) {
+        $host.SetShouldExit(101)
+        exit
+      }
+      return
+    }
+  }
+
+  #############
+  $script:dst_ids = @()
+  $script:dst_str = @()
+
+  if ($header -ne "") {
+    # enum LngResources
+    if ($action -eq "set") {
+      $iNextId = $action[$id]
+    } else {
+      $iNextId = ($script:str_id.Values | measure-object -Maximum).Maximum
+      if (($iNextId -eq $null) -Or ($iNextId -eq 0)) {
+        Write-Host -ForegroundColor Red "lng_NextId was not found!"
+        if (-Not ($loop)) {
+          $host.SetShouldExit(101)
+          exit
+        }
+        return
+      }
+      $iNextId ++
+    }
+    for ($i = 0; $i -lt $rsrch.Count; $i++) {
+      if ($rsrch[$i].Trim() -eq $last_gen_ids_note) {
+        break
+      }
+      $script:dst_ids += $rsrch[$i]
+    }
+    if ($action -eq "add") {
+      $script:dst_ids += ("`t" + $id.PadRight(30) + "= " + [string]$iNextId + ",")
+    }
+    $script:dst_ids += "`t$last_gen_ids_note"
+    $script:dst_ids += "`tlng_NextId"
+    $script:dst_ids += "};"
+  }
+
+  #$script:dst_ids
+
+  # static LngPredefined gsDataRsrcs[]
+  for ($i = 0; $i -lt $strdata.Count; $i++) {
+    $script:dst_str += $strdata[$i]
+    if ($strdata[$i].StartsWith("static LngPredefined")) {
+      break
+    }
+  }
+  #
+  if ($action -eq "set") {
+    $script:rsrcs[$id] = $str
+  } else {
+    $script:rsrcs.Add($id, $str)
+  }
+
+  $list = New-Object System.Collections.ArrayList
+  $list.AddRange($script:rsrcs.Keys)
+  $list.Sort([System.StringComparer]::Ordinal);
+  $list | % {
+    $script:dst_str += ("`t{ " + ($_+",").PadRight($id_pad) + "L`"" + $script:rsrcs[$_] + "`" },")
+  }
+  $script:dst_str += "`t$last_gen_str_note"
+  $script:dst_str += "};"
+
+  #$script:dst_str
+
+  if ($header -ne "") {
+    Set-Content $header $script:dst_ids -Encoding UTF8
+  }
+  Set-Content $file $script:dst_str -Encoding UTF8
+
+  if ($header -ne "") {
+    Add-Type -AssemblyName System.Windows.Forms
+    if ($str.Length -le 64) {
+      $clip = "CLngRc::getRsrc($id/*`"$str`"*/)"
+    } else {
+      $clip = "CLngRc::getRsrc($id)"
+    }
+    [Windows.Forms.Clipboard]::SetText($clip);
+  }
+
+  if ($action -eq "add") {
+    Write-Host -ForegroundColor Yellow "Resource created:"
+  } else {
+    Write-Host -ForegroundColor Yellow "Resource updated:"
+  }
+  if ($header -ne "") {
+    Write-Host -ForegroundColor Green "  $($id)=$($iNextId)"
+    Write-Host -ForegroundColor Yellow "Ready to paste:"
+    Write-Host -ForegroundColor Green "  $clip"
+  } else {
+    Write-Host -ForegroundColor Green "  $($id)=`"$str`""
+  }
+  Write-Host -ForegroundColor Yellow "Don't forget to update ConEmu.l10n with rc2json.cmd!"
+
+  return
+}
+
+# $loop is $TRUE when called from NewLngResourceLoop
 function NewLngResource([string]$id,[string]$str,[bool]$loop=$FALSE)
 {
+  # NewLngResourceHelper -id $id -str $str -loop $FALSE -file $rsrcs_h_file -header $rsrsids_h_file
+
   $script:str_id = @{}
 
   #Write-Host -NoNewLine ("Reading: " + $rsrsids_h_file)
@@ -725,6 +864,23 @@ function NewLngResource([string]$id,[string]$str,[bool]$loop=$FALSE)
   return
 }
 
+function NewCtrlHint([string]$id,[string]$str)
+{
+  $script:res_id = @{}
+  #Write-Host -NoNewLine ("Reading: " + $resource_h_file)
+  $resh  = Get-Content $resource_h_file
+  #Write-Host (" Lines: " + $resh.Length)
+  ParseResIds $resh
+
+  if (-Not ($script:res_id.ContainsKey($id))) {
+    Write-Host -ForegroundColor Red "ResourceID '$id' not found in 'resource.h'!"
+    $host.SetShouldExit(101)
+    exit
+  }
+
+  NewLngResourceHelper -id $id -str $str -loop $FALSE -file $hints_h_file -header ""
+}
+
 function NewLngResourceLoop()
 {
   while ($TRUE) {
@@ -761,6 +917,10 @@ if ($mode -eq "auto") {
     NewLngResourceLoop
   } else {
     if ($str -eq "") { $str = $env:ce_add_str }
-    NewLngResource $id $str
+    if ($id.StartsWith("lng_")) {
+      NewLngResource $id $str
+    } else {
+      NewCtrlHint $id $str
+    }
   }
 }
