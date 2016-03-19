@@ -2188,14 +2188,14 @@ HMENU CConEmuMenu::CreateHelpMenuPopup()
 		AppendMenu(hHelp, MF_SEPARATOR, 0, NULL);
 	}
 
-	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_HOMEPAGE, _T("&Visit home page"));
-	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_DONATE_LINK, _T("&Donate ConEmu"));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, IDM_HOMEPAGE, _T("&Visit home page"));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, IDM_DONATE_LINK, _T("&Donate ConEmu"));
 
 	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_WHATS_NEW_FILE, _T("Whats &new (local)"));
 	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_WHATS_NEW_WWW, _T("Whats new (&web)"));
 	AppendMenu(hHelp, MF_SEPARATOR, 0, NULL);
 
-	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_REPORTBUG, _T("&Report a bug..."));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, IDM_REPORTBUG, _T("&Report a bug..."));
 
 	if (gpConEmu->ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
 		AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_HELP, _T("&Help"));
@@ -2464,13 +2464,13 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 			return 0;
 		} // case ID_HELP:
 
-		case ID_HOMEPAGE:
+		case IDM_HOMEPAGE:
 		{
 			ConEmuAbout::OnInfo_HomePage();
 			return 0;
 		}
 
-		case ID_REPORTBUG:
+		case IDM_REPORTBUG:
 		{
 			ConEmuAbout::OnInfo_ReportBug();
 			return 0;
@@ -2491,7 +2491,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 			return 0;
 		}
 
-		case ID_DONATE_LINK:
+		case IDM_DONATE_LINK:
 		{
 			ConEmuAbout::OnInfo_Donate();
 			return 0;

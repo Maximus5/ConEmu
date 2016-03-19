@@ -364,7 +364,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
 						WP1(ID_SETTINGS);
 						WP1(ID_HELP);
 						WP1(ID_ABOUT);
-						WP1(ID_DONATE_LINK);
+						WP1(IDM_DONATE_LINK);
 						WP1(ID_TOTRAY);
 						WP1(ID_TOMONITOR);
 						WP1(ID_CONPROP);
