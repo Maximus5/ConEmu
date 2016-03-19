@@ -156,7 +156,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	CESERVER_REQ* pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_STARTSTOPRET));
 
 	//
-	DWORD nStarted = pIn->StartStop.nStarted;
+	StartStopType nStarted = pIn->StartStop.nStarted;
 	DWORD nParentFarPid = pIn->StartStop.nParentFarPID;
 	HWND  hWnd     = (HWND)pIn->StartStop.hWnd;
 
