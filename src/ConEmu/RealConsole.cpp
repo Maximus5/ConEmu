@@ -317,7 +317,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mb_DataChanged = FALSE;
 	mb_RConStartedSuccess = FALSE;
 	ZeroStruct(m_Term);
-	ms_LogShellActivity[0] = 0; mb_ShellActivityLogged = false;
 	mn_ProgramStatus = 0; mn_FarStatus = 0; mn_Comspec4Ntvdm = 0;
 	isShowConsole = gpSet->isConVisible;
 	//mb_ConsoleSelectMode = false;

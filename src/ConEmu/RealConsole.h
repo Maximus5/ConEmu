@@ -643,10 +643,6 @@ class CRealConsole
 		bool GetMaxConSize(COORD* pcrMaxConSize);
 		int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf);
 		const CRgnDetect* GetDetector();
-		// Логирование Shell вызовов
-		//void LogShellStartStop();
-		bool IsLogShellStarted();
-		wchar_t ms_LogShellActivity[MAX_PATH]; bool mb_ShellActivityLogged;
 		int GetStatusLineCount(int nLeftPanelEdge);
 		void GetStartTime(SYSTEMTIME& st);
 		LPCWSTR GetConsoleStartDir(CEStr& szDir);
