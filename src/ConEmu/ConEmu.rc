@@ -640,9 +640,9 @@ BEGIN
     GROUPBOX        "Processes",gbInfoProcesses,4,65,185,125
     EDITTEXT        tsTopPID,40,45,54,12,ES_AUTOHSCROLL | ES_READONLY
     LISTBOX         lbProcesses,9,76,173,109,NOT LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
-    EDITTEXT        tPerfCounters,9,13,307,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tPerfCounters,9,13,363,12,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "Current command line",gbInfoCmdLine,4,190,375,29
-    EDITTEXT        tCurCmdLine,9,201,307,12,ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        tCurCmdLine,9,201,363,12,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "Sizes",gbInfoSizes,195,65,128,125
     RTEXT           "Console (chars):",stConsoleSizeChars,199,76,60,8
     EDITTEXT        tConSizeChr,264,74,54,12,ES_AUTOHSCROLL | ES_READONLY
@@ -887,7 +887,7 @@ BEGIN
     CONTROL         "Add %ConEmuBaseDir% to %PATH%",cbAddConEmuBase2Path,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,165,14,152,8
     GROUPBOX        "Set up environment variables, cmd.exe aliases, codepage",gbSetAlias,4,35,375,195
-    LTEXT           "Here you may set up your environment variables, default code page, and so on...\r\nOne line may have only one command! You may comment lines with # sign.",stSetCommands,10,47,307,17,SS_NOPREFIX
+    LTEXT           "Here you may set up your environment variables, default code page, and so on...\r\nOne line may have only one command! You may comment lines with # sign.",stSetCommands,10,47,363,17,SS_NOPREFIX
     EDITTEXT        tSetCommands,9,111,309,114,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
     LTEXT           "set HOME=C:\\My Tools\\Home\r\nset PATH=%ConEmuBaseDir%\\Scripts;%PATH%\r\nchcp utf-8\r\nalias st=start $* -cur_console:n\r\nalias sudo=ConEmuC -c $* -new_console:a",stSetCommands2,22,65,192,40,SS_NOPREFIX
 END
@@ -1005,7 +1005,7 @@ BEGIN
     RTEXT           "Dark:",stStatusColorDark,209,41,36,8
     EDITTEXT        tc37,250,40,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
     LTEXT           "",c37,298,40,12,12,SS_NOTIFY | SS_SUNKEN
-    GROUPBOX        "Font and color",gbStatusFontColor,9,12,307,59
+    GROUPBOX        "Font and color",gbStatusFontColor,9,12,363,59
     RTEXT           "Lines:",stStatusLines,14,58,25,8
     CONTROL         "Horizontal",cbStatusHorzSep,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,44,58,50,8
     CONTROL         "Vertical",cbStatusVertSep,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,96,58,42,8
@@ -1347,8 +1347,8 @@ BEGIN
     CONTROL         "Elevation don't matter",rbAppDistinctElevatedIgnore,
                     "Button",BS_AUTORADIOBUTTON,127,60,90,8
     LTEXT           "Executables, delimited by ""|"", e.g. ""tcc.exe|cmd.exe"":",stAppDistinctName,10,71,207,8
-    EDITTEXT        tAppDistinctName,9,81,307,12,ES_AUTOHSCROLL
-    CTEXT           "tAppDistinctHolder - Location for IDD_SPG_APPDISTINCT2",tAppDistinctHolder,9,98,307,130,WS_BORDER
+    EDITTEXT        tAppDistinctName,9,81,363,12,ES_AUTOHSCROLL
+    CTEXT           "tAppDistinctHolder - Location for IDD_SPG_APPDISTINCT2",tAppDistinctHolder,9,98,363,130,WS_BORDER
 END
 
 IDD_SPG_APPDISTINCT2 DIALOGEX 0, 0, 307, 339
