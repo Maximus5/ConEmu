@@ -90,3 +90,18 @@ bool PtDiffTest(POINT C, int aX, int aY, UINT D)
 {
 	return PtDiffTest(C.x, C.y, aX, aY, D, D);
 }
+
+bool CoordEqual(const COORD& cr1, const COORD& cr2)
+{
+	return ((cr1.X == cr2.X) && (cr1.Y == cr2.Y));
+}
+
+bool operator ==(const COORD& cr1, const COORD& cr2)
+{
+	return CoordEqual(cr1, cr2);
+}
+
+bool operator !=(const COORD& cr1, const COORD& cr2)
+{
+	return !CoordEqual(cr1, cr2);
+}
