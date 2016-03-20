@@ -111,7 +111,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Main console font",gbMainConFont,4,1,319,93
+    GROUPBOX        "Main console font",gbMainConFont,4,1,375,93
     COMBOBOX        tFontFace,10,13,129,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Size:",stFontSizeY,145,15,20,8
     COMBOBOX        tFontSizeY,169,13,30,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
@@ -134,7 +134,7 @@ BEGIN
     CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,110,72,48,8
     RTEXT           "Font charset:",stFontCharset,170,72,57,8
     COMBOBOX        tFontCharset,231,70,86,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "",gbFixFarBorders,4,99,319,56
+    GROUPBOX        "",gbFixFarBorders,4,99,375,56
     CONTROL         "Alternative font (pseudographics, CJK, etc.)",cbFixFarBorders,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,99,181,8
     COMBOBOX        tFontFace2,10,111,119,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
@@ -145,7 +145,7 @@ BEGIN
     COMBOBOX        tUnicodeRanges,10,136,243,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Apply",cbUnicodeRangesApply,258,136,59,12
     LTEXT           "By the cost of background colors you may change the used font to bold or italic",stExtendFonts,12,171,305,8
-    GROUPBOX        "",gbExtendFonts,4,160,319,44
+    GROUPBOX        "",gbExtendFonts,4,160,375,44
     CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,160,77,8
     COMBOBOX        lbExtendFontBoldIdx,45,185,37,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     COMBOBOX        lbExtendFontItalicIdx,119,185,37,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
@@ -160,7 +160,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Console size and Window position",gbWindowSizePos,4,1,319,180
+    GROUPBOX        "Console size and Window position",gbWindowSizePos,4,1,375,180
     EDITTEXT        tWndWidth,42,63,39,12,ES_AUTOHSCROLL
     EDITTEXT        tWndHeight,122,63,39,12,ES_AUTOHSCROLL
     CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,50,38,8
@@ -211,7 +211,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Generic",gbShowGeneric,4,1,319,54
+    GROUPBOX        "Generic",gbShowGeneric,4,1,375,54
     CONTROL         "Single instance mode (use existing window instead of running new instance)",cbSingleInstance,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,310,8
     CONTROL         "Multiple consoles in one ConEmu window",cbMultiCon,
@@ -220,11 +220,11 @@ BEGIN
     CONTROL         "Show buttons (toolbar) in tab bar",cbMultiShowButtons,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,40,170,8
     CONTROL         "Show search field in tab bar",cbMultiShowSearch,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,183,40,128,8
-    GROUPBOX        "Appearance",gbFeatureAppear,4,60,319,28
+    GROUPBOX        "Appearance",gbFeatureAppear,4,60,375,28
     CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,73,140,8
     CONTROL         "Show balloon help tooltips",cbShowHelpTooltips,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,183,73,128,8
-    GROUPBOX        "Scrollbar",gbShowScrollBar,4,104,319,29
+    GROUPBOX        "Scrollbar",gbShowScrollBar,4,104,375,29
     CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON | WS_GROUP,10,117,30,8
     CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,48,117,35,8
     CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,92,117,33,8
@@ -232,7 +232,7 @@ BEGIN
     EDITTEXT        tScrollAppearDelay,183,115,40,12,ES_AUTOHSCROLL
     RTEXT           "Disappear:",stScrollDisappear,230,117,43,8
     EDITTEXT        tScrollDisappearDelay,277,115,40,12,ES_AUTOHSCROLL
-    GROUPBOX        "Title bar (Caption) and border options",gbFeatureCaption,4,138,319,59
+    GROUPBOX        "Title bar (Caption) and border options",gbFeatureCaption,4,138,375,59
     CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,151,117,8
     CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,151,79,8
     CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,151,94,8
@@ -258,22 +258,22 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Confirm actions",gbConfirmActions,4,1,319,53
+    GROUPBOX        "Confirm actions",gbConfirmActions,4,1,375,53
     CONTROL         "Confirm creating new console/tab (Win+W, toolbar [+])",cbNewConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,307,8
     CONTROL         "Confirm tab duplicating (Duplicate root menu item)",cbDupConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,26,307,10
     CONTROL         "Confirm console detach",cbConfirmDetach,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,39,307,8
-    GROUPBOX        "Close confirmations",gbConfirmClose,4,63,319,81
+    GROUPBOX        "Close confirmations",gbConfirmClose,4,63,375,81
     CONTROL         "Confirm window closing (cross click)",cbCloseWindowConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,76,307,8
     CONTROL         "Confirm tab closing",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,89,307,8
     CONTROL         "When running process was detected",cbConfirmCloseRunning,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,102,307,8
-    GROUPBOX        "Far Manager",gbConfirmCloseFar,4,115,319,29
+    GROUPBOX        "Far Manager",gbConfirmCloseFar,4,115,375,29
     CONTROL         "Confirm Far Manager Editor/Viewer tab closing",cbCloseEditViewConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,128,307,8
-    GROUPBOX        "Miscellaneous",gbConfirmMisc,4,150,319,39
+    GROUPBOX        "Miscellaneous",gbConfirmMisc,4,150,375,39
     CONTROL         "Show ‘... was hidden’ warning in TSA",cbShowWasHiddenMsg,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,163,307,8
     CONTROL         "Show ‘... brought ConEmu OnTop. Revert?’ confirmation box",cbShowWasSetOnTopMsg,
@@ -285,7 +285,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Create new console history settings",gbHistorySettings,4,1,319,229
+    GROUPBOX        "Create new console history settings",gbHistorySettings,4,1,375,229
     CONTROL         "Save command history (leave edit box empty to use main settings storage)",cbSaveCmdHistory,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,308,8
     EDITTEXT        tCmdHistoryLocation,21,27,281,12,ES_AUTOHSCROLL
@@ -301,10 +301,10 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Taskbar status area (TSA)",gbTaskBarNotify,4,1,319,29
+    GROUPBOX        "Taskbar status area (TSA)",gbTaskBarNotify,4,1,375,29
     CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,89,8
     CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,14,89,8
-    GROUPBOX        "Taskbar buttons",gbTaskBarButton,4,34,319,55
+    GROUPBOX        "Taskbar buttons",gbTaskBarButton,4,34,375,55
     CONTROL         "Show all consoles (Win7 and higher)",rbTaskbarBtnWin7,
                     "Button",BS_AUTORADIOBUTTON | WS_GROUP,11,46,137,8
     CONTROL         "Show all consoles (all OS)",rbTaskbarBtnAll,"Button",BS_AUTORADIOBUTTON,158,46,160,8
@@ -316,11 +316,11 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,74,143,8
     CONTROL         "Show progress indicator (Win7 and higher)",cbTaskbarProgress,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,74,159,8
-    GROUPBOX        "Action on closing last console (tab) and 'cross clicking'",gbWndCloseAction,4,93,319,42
-    GROUPBOX        "Minimize ConEmu automatically",gbMinimizeAction,4,140,319,57
+    GROUPBOX        "Action on closing last console (tab) and 'cross clicking'",gbWndCloseAction,4,93,375,42
+    GROUPBOX        "Minimize ConEmu automatically",gbMinimizeAction,4,140,375,57
     CONTROL         "Minimize on focus lose (not in Quake style)",cbMinimizeOnLoseFocus,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,153,199,8
-    GROUPBOX        "Minimize when Esc pressed",gbMinimizeOnEsc,4,168,319,29
+    GROUPBOX        "Minimize when Esc pressed",gbMinimizeOnEsc,4,168,375,29
     CONTROL         "If all consoles closed",rbMinByEscEmpty,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,181,99,8
     CONTROL         "Always",rbMinByEscAlways,"Button",BS_AUTORADIOBUTTON,113,181,42,8
     CONTROL         "Never",rbMinByEscNever,"Button",BS_AUTORADIOBUTTON,161,181,38,8
@@ -332,7 +332,7 @@ BEGIN
     CONTROL         "Hide to the TSA",cbHideOnLastTabClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,120,66,8
     CONTROL         "Close ConEmu with last tab",cbCloseConEmuWithLastTab,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,106,113,8
-    GROUPBOX        "Windows 7 taskbar (Jump list)",gbCmdTasks7,4,202,319,29
+    GROUPBOX        "Windows 7 taskbar (Jump list)",gbCmdTasks7,4,202,375,29
     CONTROL         "Add ConEmu tasks to taskbar",cbCmdTaskbarTasks,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,215,114,8
     CONTROL         "Add commands from history, too",cbCmdTaskbarCommands,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,215,123,8
@@ -344,7 +344,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Active console Text Cursor",gbCursorActive,4,1,319,68
+    GROUPBOX        "Active console Text Cursor",gbCursorActive,4,1,375,68
     CONTROL         "&Horizontal (as console)",rCursorH,"Button",BS_AUTORADIOBUTTON | WS_GROUP,12,15,95,8
     CONTROL         "&Vertical (as GUI)",rCursorV,"Button",BS_AUTORADIOBUTTON,116,15,81,8
     CONTROL         "Block",rCursorB,"Button",BS_AUTORADIOBUTTON,209,15,47,8
@@ -357,7 +357,7 @@ BEGIN
     LTEXT           "(5-100) %",stCursorFixedSize,153,49,38,8
     RTEXT           "Min size (pix):",stCursorMinSize,204,49,50,8
     EDITTEXT        tCursorMinSize,260,47,40,12,ES_AUTOHSCROLL
-    GROUPBOX        "",gbCursorInactive,4,81,319,68
+    GROUPBOX        "",gbCursorInactive,4,81,375,68
     CONTROL         "Inactive console Text Cursor",cbInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,81,120,8
     CONTROL         "Horizontal (as console)",rInactiveCursorH,"Button",BS_AUTORADIOBUTTON | WS_GROUP,12,95,95,8
     CONTROL         "Vertical (as GUI)",rInactiveCursorV,"Button",BS_AUTORADIOBUTTON,116,95,81,8
@@ -378,7 +378,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "ConEmu Here - Explorer context menu integration",gbIntgrHere,4,1,319,81
+    GROUPBOX        "ConEmu Here - Explorer context menu integration",gbIntgrHere,4,1,375,81
     LTEXT           "Menu item:",stIntgrHereItem,11,14,39,8
     COMBOBOX        cbHereName,54,11,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Configuration:",stIntgrHereCfg,173,14,59,8
@@ -389,7 +389,7 @@ BEGIN
     EDITTEXT        tHereIcon,54,46,263,13,ES_AUTOHSCROLL
     PUSHBUTTON      "Register",bHereRegister,213,62,50,14
     PUSHBUTTON      "Unregister",bHereUnregister,267,62,50,14
-    GROUPBOX        "ConEmu Inside - Explorer context menu integration",gbIntgrInside,4,91,319,96
+    GROUPBOX        "ConEmu Inside - Explorer context menu integration",gbIntgrInside,4,91,375,96
     LTEXT           "Menu item:",stIntgrInsideItem,11,120,39,8
     COMBOBOX        cbInsideName,54,118,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Configuration:",stIntgrInsideCfg,173,120,59,8
@@ -410,7 +410,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "WARNING!!! Enabling this option may cause false alarms in antiviral programs!!!",gbDefTerm,4,1,319,228
+    GROUPBOX        "WARNING!!! Enabling this option may cause false alarms in antiviral programs!!!",gbDefTerm,4,1,375,228
     CONTROL         "Force ConEmu as default terminal for console applications",cbDefaultTerminal,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,14,309,8
     LTEXT           "List of hooked executables or window class names delimited with ‘|’\r\nExample: explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow",stDefaultTerminal,10,44,306,17
@@ -438,7 +438,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Startup options (may be overriden with ""/cmd"" or ""/cmdlist"" argument of ConEmu.exe)",gbStartupOptions,4,1,319,126
+    GROUPBOX        "Startup options (may be overriden with ""/cmd"" or ""/cmdlist"" argument of ConEmu.exe)",gbStartupOptions,4,1,375,126
     CONTROL         "Command line",rbStartSingleApp,"Button",BS_AUTORADIOBUTTON,9,15,290,8
     EDITTEXT        tCmdLine,21,25,278,12,ES_AUTOHSCROLL | WS_DISABLED
     CONTROL         "Tasks file",rbStartTasksFile,"Button",BS_AUTORADIOBUTTON,9,40,290,8
@@ -451,9 +451,9 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,221,90,97,8
     PUSHBUTTON      "...",cbCmdLine,303,25,15,13,WS_DISABLED
     PUSHBUTTON      "...",cbStartTasksFile,303,49,15,13,WS_DISABLED
-    GROUPBOX        "Selected task contents (view only, change on Tasks page)",gbStartGroupCommands,4,133,319,97,WS_DISABLED
+    GROUPBOX        "Selected task contents (view only, change on Tasks page)",gbStartGroupCommands,4,133,375,97,WS_DISABLED
     EDITTEXT        tStartGroupCommands,8,144,309,82,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | ES_WANTRETURN | WS_DISABLED | WS_VSCROLL
-    GROUPBOX        "",gbTaskStartDelay,4,100,319,27
+    GROUPBOX        "",gbTaskStartDelay,4,100,375,27
     RTEXT           "Delay between consoles initialization (ms):",stStartCreateDelay,9,111,263,8
     EDITTEXT        tStartCreateDelay,277,109,40,12,ES_AUTOHSCROLL | ES_NUMBER
 END
@@ -463,7 +463,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Standard colors:",gbStandardColors,4,20,319,86
+    GROUPBOX        "Standard colors:",gbStandardColors,4,20,375,86
     CONTROL         "RRR GGG BBB (dec)",rbColorRgbDec,"Button",BS_AUTORADIOBUTTON,73,20,84,8
     CONTROL         "#RRGGBB (hex)",rbColorRgbHex,"Button",BS_AUTORADIOBUTTON,159,20,69,8
     CONTROL         "0xBBGGRR (hex)",rbColorBgrHex,"Button",BS_AUTORADIOBUTTON,231,20,71,8
@@ -515,7 +515,7 @@ BEGIN
     RTEXT           "13.",IDC_STATIC,241,47,13,8
     RTEXT           "14.",IDC_STATIC,241,60,13,8
     RTEXT           "15.",IDC_STATIC,241,73,13,8
-    GROUPBOX        "Extended foreground colors (same format as Standard colors)",gbExtendColors,4,111,319,83
+    GROUPBOX        "Extended foreground colors (same format as Standard colors)",gbExtendColors,4,111,375,83
     RTEXT           "16.",IDC_STATIC,8,140,13,8
     LTEXT           "",c16,24,137,12,12,SS_NOTIFY | SS_SUNKEN
     RTEXT           "17.",IDC_STATIC,8,153,13,8
@@ -568,7 +568,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,122,177,10
     COMBOBOX        lbExtendIdx,192,120,45,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Default...",cbColorResetExt,259,120,59,14
-    GROUPBOX        "Graphic enhancement",gbColorEnhancement,4,196,319,29
+    GROUPBOX        "Graphic enhancement",gbColorEnhancement,4,196,375,29
     RTEXT           "Schemes:",stColorSchemes,7,5,59,8
     COMBOBOX        lbDefaultColors,72,3,144,59,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     CONTROL         "TrueMod (24bit color) support",cbTrueColorer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,189,209,129,8
@@ -594,7 +594,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Alpha transparency",gbAlphaTransparency,4,1,319,79
+    GROUPBOX        "Alpha transparency",gbAlphaTransparency,4,1,375,79
     CONTROL         "Active window transparency",cbTransparent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,14,310,8
     RTEXT           "Transparent",stTransparentActive,7,30,51,8
     CONTROL         "",slTransparent,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,68,30,210,12
@@ -604,7 +604,7 @@ BEGIN
     RTEXT           "Transparent",stTransparentInactive,7,62,51,8
     CONTROL         "",slTransparentInactive,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,68,62,210,12
     LTEXT           "Opaque",stOpaqueInactive,287,62,31,8
-    GROUPBOX        "Static transparency",gbStaticTransparency,4,86,319,46
+    GROUPBOX        "Static transparency",gbStaticTransparency,4,86,375,46
     LTEXT           "",c38,160,98,20,12,SS_NOTIFY | SS_SUNKEN
     EDITTEXT        tc38,111,98,45,12,ES_AUTOHSCROLL | NOT WS_BORDER,WS_EX_STATICEDGE
     CONTROL         "‘Color key’ transparency",cbColorKeyTransparent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,100,97,8
@@ -621,10 +621,10 @@ BEGIN
     CONTROL         "List1",tvSetupCategories,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_LINESATROOT | TVS_SHOWSELALWAYS | WS_BORDER | WS_HSCROLL | WS_TABSTOP,4,19,112,243
     EDITTEXT        tOptionSearch,4,3,112,13,ES_AUTOHSCROLL | ES_WANTRETURN
     LTEXT           " ",tSetupPagePlace,121,19,381,243,WS_BORDER
-    DEFPUSHBUTTON   "Save settings",bSaveSettings,411,267,91,14
-    PUSHBUTTON      "Reset...",bResetSettings,207,267,60,14
-    PUSHBUTTON      "Reload...",bReloadSettings,273,267,60,14
-    PUSHBUTTON      "Import...",bImportSettings,339,267,60,14
+    DEFPUSHBUTTON   "Save settings",bSaveSettings,388,267,114,14
+    PUSHBUTTON      "Reset...",bResetSettings,181,267,60,14
+    PUSHBUTTON      "Reload...",bReloadSettings,247,267,60,14
+    PUSHBUTTON      "Import...",bImportSettings,313,267,60,14
     LTEXT           "Storage:",stStorage,135,5,47,8
     EDITTEXT        tStorage,186,3,251,13,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "Export...",cbExportConfig,442,2,60,14
@@ -635,13 +635,13 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Performance counters",gbPerformance,4,1,319,30
-    GROUPBOX        "Console states",IDC_CONSOLE_STATES,4,35,319,28
+    GROUPBOX        "Performance counters",gbPerformance,4,1,375,30
+    GROUPBOX        "Console states",IDC_CONSOLE_STATES,4,35,375,28
     GROUPBOX        "Processes",gbInfoProcesses,4,65,185,125
     EDITTEXT        tsTopPID,40,45,54,12,ES_AUTOHSCROLL | ES_READONLY
     LISTBOX         lbProcesses,9,76,173,109,NOT LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
     EDITTEXT        tPerfCounters,9,13,307,12,ES_AUTOHSCROLL | ES_READONLY
-    GROUPBOX        "Current command line",gbInfoCmdLine,4,190,319,29
+    GROUPBOX        "Current command line",gbInfoCmdLine,4,190,375,29
     EDITTEXT        tCurCmdLine,9,201,307,12,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "Sizes",gbInfoSizes,195,65,128,125
     RTEXT           "Console (chars):",stConsoleSizeChars,199,76,60,8
@@ -671,14 +671,14 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Miscellaneous options",gbFeatureMisc,4,1,319,27
+    GROUPBOX        "Miscellaneous options",gbFeatureMisc,4,1,375,27
     CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,110,8
     CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,13,99,8
     CONTROL         "Focus in child windows",cbFocusInChildWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,13,87,8
-    GROUPBOX        "CPU consuming",gbFeatureRetard,4,34,319,29
+    GROUPBOX        "CPU consuming",gbFeatureRetard,4,34,375,29
     CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,47,110,8
     CONTROL         "Retard inactive panes",cbRetardInactivePanes,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,47,99,8
-    GROUPBOX        "In-console options",gbFeatureInConsole,4,69,319,86
+    GROUPBOX        "In-console options",gbFeatureInConsole,4,69,375,86
     CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,82,110,8
     CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,81,76,8
     PUSHBUTTON      "...",bDosBoxSettings,212,79,13,11
@@ -692,7 +692,7 @@ BEGIN
     CONTROL         "Process '-new_console' and '-cur_console' switches",cbProcessNewConArg,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,125,187,8
     CONTROL         "Process 'start'",cbProcessCmdStart,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,125,88,8
-    GROUPBOX        "Debugging options",gbFeatureDebug,4,161,319,43
+    GROUPBOX        "Debugging options",gbFeatureDebug,4,161,375,43
     CONTROL         "Exception handler (debug)",cbConsoleExceptionHandler,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,174,110,8
     CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,174,99,8
@@ -708,7 +708,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Used command processor",gbComspec,4,1,319,126
+    GROUPBOX        "Used command processor",gbComspec,4,1,375,126
     CONTROL         "Auto (tcc - if installed, %ComSpec% - otherwise)",rbComspecAuto,
                     "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,9,12,178,8
     CONTROL         "%ComSpec% (env.var.)",rbComspecEnvVar,"Button",BS_AUTORADIOBUTTON,189,12,98,8
@@ -728,7 +728,7 @@ BEGIN
     COMBOBOX        lbCmdOutputCP,108,98,81,30,CBS_DROPDOWNLIST | WS_TABSTOP
     CONTROL         "Support UNC paths in cmd.exe (\\\\server\\share\\folder)",cbComspecUncPaths,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,114,309,8
-    GROUPBOX        "Automatic attach of cmd && Tcc/Le to ConEmu (new window will be started if not found)",gbCmdAutoAttach,4,168,319,65
+    GROUPBOX        "Automatic attach of cmd && Tcc/Le to ConEmu (new window will be started if not found)",gbCmdAutoAttach,4,168,375,65
     LTEXT           "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\nCurrent command stored in registry ‘AutoRun’ (HKLM value is not processed here):",stCmdAutoAttach,11,178,308,16
     EDITTEXT        tCmdAutoAttach,9,197,308,13,ES_AUTOHSCROLL | ES_READONLY
     CONTROL         "Force new ConEmu window",cbCmdAutorunNewWnd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,216,100,10
@@ -742,7 +742,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Shell style Drag and Drop (Far Manager only)",gbFarDragDrop,4,1,319,41
+    GROUPBOX        "Shell style Drag and Drop (Far Manager only)",gbFarDragDrop,4,1,375,41
     CONTROL         "LDrag",cbDragL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,12,36,8
     COMBOBOX        lbLDragKey,47,11,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Drop && Confirmation",cbDropEnabled,"Button",BS_AUTO3STATE | WS_TABSTOP,107,12,82,8
@@ -752,7 +752,7 @@ BEGIN
     COMBOBOX        lbRDragKey,47,25,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,107,27,66,8
     CONTROL         "Use drop menu",cbDropUseMenu,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,27,66,8
-    GROUPBOX        "Far Manager options",gbFarOptions,4,48,319,54
+    GROUPBOX        "Far Manager options",gbFarOptions,4,48,375,54
     CONTROL         "Hourglass if not responding",cbFarHourglass,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,60,101,8
     PUSHBUTTON      "...",bFarHourglass,113,59,13,11,WS_DISABLED
     CONTROL         "Extend Unicode CharMap",cbExtendUCharMap,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,74,117,8
@@ -763,7 +763,7 @@ BEGIN
     CONTROL         "No zone check",cbShellNoZoneCheck,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,74,81,8
     CONTROL         "KeyBar RClick",cbKeyBarRClick,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,238,88,81,8
     CONTROL         "Disable Far flashing",cbDisableFarFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,9,88,117,8
-    GROUPBOX        "Tab templates",gbFarTabTemplates,4,107,319,63
+    GROUPBOX        "Tab templates",gbFarTabTemplates,4,107,375,63
     RTEXT           "Panels:",stTabPanels,8,137,30,8
     EDITTEXT        tTabPanels,42,135,117,12,ES_AUTOHSCROLL
     RTEXT           "Viewer:",stTabViewer,161,137,36,8
@@ -780,7 +780,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Far Manager macros",gbFarMacros,4,1,319,131
+    GROUPBOX        "Far Manager macros",gbFarMacros,4,1,375,131
     CONTROL         "&RightClick 4 EMenu",cbRClick,"Button",BS_AUTO3STATE | WS_TABSTOP,10,13,306,8
     COMBOBOX        tRClickMacro,9,25,308,12,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Safe Far close",cbSafeFarClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,44,306,8
@@ -796,7 +796,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Shell activity",gbActivityLog,4,1,319,230
+    GROUPBOX        "Shell activity",gbActivityLog,4,1,375,230
     CONTROL         "&Disabled",rbActivityDisabled,"Button",BS_AUTORADIOBUTTON,9,14,43,8
     CONTROL         "Sh&ell",rbActivityShell,"Button",BS_AUTORADIOBUTTON,54,14,30,8
     CONTROL         "&Input",rbActivityInput,"Button",BS_AUTORADIOBUTTON,86,14,35,8
@@ -849,14 +849,14 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Hyperlinks and compiler errors (goto editor)",gbHyperlinks,4,1,319,73
+    GROUPBOX        "Hyperlinks and compiler errors (goto editor)",gbHyperlinks,4,1,375,73
     CONTROL         "Highlight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,13,76,8
     COMBOBOX        lbFarGotoEditorVk,94,11,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "External editor, when Far not started:",stGotoEditorCmd,158,14,139,8
     COMBOBOX        lbGotoEditorCmd,11,27,287,13,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "...",bGotoEditorCmd,301,27,16,12
     LTEXT           "Available macros: ‘%1’ - line number, ‘%2’ - column number\n‘%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File\nUse ‘#’ prefix to run editor outside of ConEmu",stGotoEditorCmdHelp,13,44,281,24
-    GROUPBOX        "Highlight rows/columns",gbHighlightRowCol,4,80,319,43
+    GROUPBOX        "Highlight rows/columns",gbHighlightRowCol,4,80,375,43
     CONTROL         "Highlight whole row under mouse cursor",cbHighlightMouseRow,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,94,305,8
     CONTROL         "Highlight whole column under mouse cursor",cbHighlightMouseCol,
@@ -868,7 +868,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Pasting text behavior (with exception of Far Manager)",gbFeatureClipboard,4,1,319,42
+    GROUPBOX        "Pasting text behavior (with exception of Far Manager)",gbFeatureClipboard,4,1,375,42
     CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,117,8
     CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,14,91,8
     CONTROL         "Confirm <Enter> keypress",cbClipConfirmEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,117,8
@@ -882,11 +882,11 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Add to %PATH% environment variable",gbAddToPath,4,1,319,28
+    GROUPBOX        "Add to %PATH% environment variable",gbAddToPath,4,1,375,28
     CONTROL         "Add %ConEmuDir% to %PATH%",cbAddConEmu2Path,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,14,150,8
     CONTROL         "Add %ConEmuBaseDir% to %PATH%",cbAddConEmuBase2Path,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,165,14,152,8
-    GROUPBOX        "Set up environment variables, cmd.exe aliases, codepage",gbSetAlias,4,35,319,195
+    GROUPBOX        "Set up environment variables, cmd.exe aliases, codepage",gbSetAlias,4,35,375,195
     LTEXT           "Here you may set up your environment variables, default code page, and so on...\r\nOne line may have only one command! You may comment lines with # sign.",stSetCommands,10,47,307,17,SS_NOPREFIX
     EDITTEXT        tSetCommands,9,111,309,114,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
     LTEXT           "set HOME=C:\\My Tools\\Home\r\nset PATH=%ConEmuBaseDir%\\Scripts;%PATH%\r\nchcp utf-8\r\nalias st=start $* -cur_console:n\r\nalias sudo=ConEmuC -c $* -new_console:a",stSetCommands2,22,65,192,40,SS_NOPREFIX
@@ -897,7 +897,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Text selection",gbTextSelection,4,1,319,61
+    GROUPBOX        "Text selection",gbTextSelection,4,1,375,61
     CONTROL         "Freeze console contents before selection (may cause small lag)",cbCTSFreezeBeforeSelect,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,14,249,8
     CONTROL         "Detect line ends",cbCTSDetectLineEnd,"Button",BS_AUTO3STATE | WS_TABSTOP,11,30,66,8
@@ -907,13 +907,13 @@ BEGIN
     COMBOBOX        lbCTSEOL,270,28,47,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Copying format:",stCopyFormat,10,47,71,8
     COMBOBOX        lbCopyFormat,86,44,120,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Color indexes",gbSelectColorIdx,4,67,319,30
+    GROUPBOX        "Color indexes",gbSelectColorIdx,4,67,375,30
     RTEXT           "Foreground:",stCTSTextColor,11,81,57,8
     COMBOBOX        lbCTSForeIdx,70,78,27,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Background:",stCTSBackColor,100,81,57,8
     COMBOBOX        lbCTSBackIdx,160,78,27,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     CTEXT           "",stCTSPreview,196,76,121,17,WS_BORDER
-    GROUPBOX        "Select text with mouse (LeftClick+Drag)",gbSelectMouse,4,102,319,68
+    GROUPBOX        "Select text with mouse (LeftClick+Drag)",gbSelectMouse,4,102,375,68
     CONTROL         "Intelligent mode",cbCTSIntelligent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,115,80,8
     RTEXT           "Exceptions (""|""-separated):",stCTSIntelligentExceptions,90,115,103,8
     EDITTEXT        tCTSIntelligentExceptions,196,113,121,12,ES_AUTOHSCROLL
@@ -926,7 +926,7 @@ BEGIN
     CONTROL         "Reset selection on Left Button release",cbCTSResetOnRelease,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,150,145,167,8
     CONTROL         "Show IBeam cursor",cbCTSIBeam,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,158,136,8
-    GROUPBOX        "Select text with keyboard (Also there are two hotkeys on Keys&Macro page)",gbSelectKeyboard,4,177,319,52
+    GROUPBOX        "Select text with keyboard (Also there are two hotkeys on Keys&Macro page)",gbSelectKeyboard,4,177,375,52
     CONTROL         "Start selection with Shift+Arrow (Text = Left/Right/Home/End, Block = Up/Down)",cbCTSShiftArrowStartSel,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,190,308,8
     CONTROL         "Reset selection on input",cbCTSEndOnTyping,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,204,136,8
@@ -941,7 +941,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Tabs (consoles, Far Manager panels/editors/viewers)",gbTabs,4,1,319,229
+    GROUPBOX        "Tabs (consoles, Far Manager panels/editors/viewers)",gbTabs,4,1,375,229
     CONTROL         "Internal CtrlTab",cbTabSelf,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,29,64,8
     CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,29,66,8
     CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,29,59,8
@@ -988,7 +988,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "",IDC_STATIC,4,1,319,228
+    GROUPBOX        "",IDC_STATIC,4,1,375,228
     RTEXT           "Name:",stStatusFontFace,14,24,25,8
     COMBOBOX        tStatusFontFace,44,22,115,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     CTEXT           "x",IDC_STATIC,164,24,8,8
@@ -1021,12 +1021,12 @@ BEGIN
     CONTROL         "Use vertical padding",cbStatusVertPad,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,144,58,101,8
 END
 
-IDD_SPG_VIEWS DIALOGEX 0, 0, 328, 319
+IDD_SPG_VIEWS DIALOGEX 0, 0, 381, 319
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Far Panel Views",gbFarPanelViews,4,1,319,212
+    GROUPBOX        "Far Panel Views",gbFarPanelViews,4,1,375,212
     GROUPBOX        "Thumbnails mode",gbFarThumbnails,9,12,308,49
     RTEXT           "Label font:",stThumbsFontName,12,27,40,8
     COMBOBOX        tThumbsFontName,57,25,116,76,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
@@ -1151,7 +1151,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Hotkeys, modifiers, macros",gbHotkeys,4,1,319,232
+    GROUPBOX        "Hotkeys, modifiers, macros",gbHotkeys,4,1,375,232
     CONTROL         "List1",lbConEmuHotKeys,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,8,23,311,172
     RTEXT           "Choose hotkey:",stHotKeySelect,9,202,64,8,WS_DISABLED
     CONTROL         "",hkHotKeySelect,"msctls_hotkey32",WS_DISABLED | WS_BORDER | WS_TABSTOP,77,200,47,13
@@ -1175,18 +1175,18 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Mouse options",gbCtrlMouse,4,1,319,41
+    GROUPBOX        "Mouse options",gbCtrlMouse,4,1,375,41
     CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,152,8
     CONTROL         "Skip click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,14,152,8
     CONTROL         "Skip mouse events in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,28,152,8
     CONTROL         "Activate split/pane on mouse hover",cbActivateSplitMouseOver,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,167,28,152,8
-    GROUPBOX        "Intercept keys",gbCtrlIntercept,4,45,319,38
+    GROUPBOX        "Intercept keys",gbCtrlIntercept,4,45,375,38
     CONTROL         "Install keyboard hooks",cbInstallKeybHooks,"Button",BS_AUTO3STATE | WS_TABSTOP,10,56,152,8
     CONTROL         "Win+Tab - switch consoles (Tabs)",cbUseWinTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,56,152,8
     CONTROL         "Win+Numbers - activate console",cbUseWinNumber,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,69,152,8
     CONTROL         "Win+Arrows - resize window",cbUseWinArrows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,69,152,8
-    GROUPBOX        "Seize keys / Send to console",gbCtrlSeizeKeys,4,84,319,26
+    GROUPBOX        "Seize keys / Send to console",gbCtrlSeizeKeys,4,84,375,26
     CONTROL         "Alt+Tab",cbSendAltTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,96,42,8
     CONTROL         "Alt+Esc",cbSendAltEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,59,96,39,8
     CONTROL         "PrntScrn",cbSendPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,96,42,8
@@ -1194,16 +1194,16 @@ BEGIN
     CONTROL         "Alt+PrScrn",cbSendAltPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,221,96,47,8
     CONTROL         "Fix Alt on AltTab/AltF9 (to avoid execution of Far Manager macro, linked to Alt-release)",cbFixAltOnAltTab,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,124,308,8
-    GROUPBOX        "Miscellaneous",gbCtrlMisc,4,111,319,43
+    GROUPBOX        "Miscellaneous",gbCtrlMisc,4,111,375,43
     CONTROL         "Skip focus events (don't send to console FOCUS_EVENT, useful with Far Manager)",cbSkipFocusEvents,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,138,308,8
-    GROUPBOX        "Read line enhancements (command prompt, ReadConsoleW)",gbCtrlPrompt,4,156,319,43
+    GROUPBOX        "Read line enhancements (command prompt, ReadConsoleW)",gbCtrlPrompt,4,156,375,43
     CONTROL         "Change prompt (cmd, powershell) text cursor position with Left Click",cbCTSClickPromptPosition,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,11,170,237,8
     COMBOBOX        lbCTSClickPromptPosition,250,168,67,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Ctrl+BackSpace - delete word leftward to the text cursor",cbCTSDeleteLeftWord,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,11,183,306,8
-    GROUPBOX        "Mouse button actions",gbCtrlMouseBtns,4,202,319,30
+    GROUPBOX        "Mouse button actions",gbCtrlMouseBtns,4,202,375,30
     CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,216,10,8
     COMBOBOX        lbCTSActAlways,22,213,49,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,76,216,100,8
@@ -1218,7 +1218,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Update settings",gbUpdate,4,1,319,230
+    GROUPBOX        "Update settings",gbUpdate,4,1,375,230
     LTEXT           "Do automatic check on",stUpdateCheck,10,13,87,8
     CONTROL         "Startup",cbUpdateCheckOnStartup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,104,13,51,8
     CONTROL         "Hourly",cbUpdateCheckHourly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,13,47,8
@@ -1303,7 +1303,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "&Predefined tasks (command groups)",gbCmdTasks,4,1,319,230
+    GROUPBOX        "&Predefined tasks (command groups)",gbCmdTasks,4,1,375,230
     LISTBOX         lbCmdTasks,9,12,93,163,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
     EDITTEXT        tCmdGroupName,109,12,81,12,ES_AUTOHSCROLL
     LTEXT           "&Commands (application, arguments, ""-new_console"" params)\nDelimit commands with empty lines\nEach command creates tab in ConEmu when group started\nMark active console tab with '>' sign\nStart console 'As Administrator' with '*' sign",stCmdGroupCommands,111,81,208,41
@@ -1335,7 +1335,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Application distinct settings",gbAppDistinct,4,1,319,232
+    GROUPBOX        "Application distinct settings",gbAppDistinct,4,1,375,232
     LISTBOX         lbAppDistinct,9,12,252,44,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
     PUSHBUTTON      "+",cbAppDistinctAdd,265,12,25,14
     PUSHBUTTON      "-",cbAppDistinctDel,291,12,25,14
@@ -1493,7 +1493,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "",gbBgImage,4,1,319,98
+    GROUPBOX        "",gbBgImage,4,1,375,98
     CONTROL         "Back&ground image (bmp, jpg, png, tif):",cbBgImage,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,10,1,139,8
     LTEXT           "Path:",stBgImage,10,15,18,8
