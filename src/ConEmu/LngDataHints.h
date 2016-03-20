@@ -55,7 +55,7 @@ static LngPredefined gsDataHints[] = {
 	{ cbAlwaysOnTop,           L"Places the ConEmu window above all non-topmost windows. The window maintains its topmost position even when it is deactivated" },
 	{ cbAlwaysShowTrayIcon,    L"Always show ConEmu icon in the Taskbar Status Area (TSA)" },
 	{ cbAnsiLog,               L"Log console output to text files\r\nConEmu-YYYY-MM-DD-pNNNN.log\r\n(affect new consoles only)" },
-	{ cbAutoRegFonts,          L"Search, register for process, and use first *.ttf file in conemu folder" },
+	{ cbAutoRegFonts,          L"Use in ConEmu fonts, located in ConEmu folder.\r\n*.ttf, *.otf and *.bdf files are supported." },
 	{ cbBgAllowPlugin,         L"Enable background Far plugins (e.g. Panel Colorer),\r\n3rd-state - don't draw in viewer/editor" },
 	{ cbBgImage,               L"Show background image instead standard\r\ncolors #0 and #1 (black and blue)\r\n3rd-state - don't draw in viewer/editor" },
 	{ cbBold,                  L"Main font weight" },
