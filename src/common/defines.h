@@ -167,6 +167,7 @@ WARNING("WIN64 was not defined");
 #define RectWidth(rc) ((rc).right-(rc).left)
 #define RectHeight(rc) ((rc).bottom-(rc).top)
 #define LOGRECTCOORDS(rc) (rc).left, (rc).top, (rc).right, (rc).bottom
+#define LOGSRECTCOORDS(rc) (rc).Left, (rc).Top, (rc).Right, (rc).Bottom
 #define LOGRECTSIZE(rc) RectWidth(rc), RectHeight(rc)
 
 #define _abs(n) (((n)>=0) ? (n) : -(n))
