@@ -119,9 +119,9 @@ BEGIN
     COMBOBOX        tFontSizeX,231,13,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Cell:",stFontSizeX3,263,15,19,8
     COMBOBOX        tFontSizeX3,287,13,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,33,31,8
-    CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,44,33,31,8
-    CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,88,33,56,8
+    CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,33,44,8
+    CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,55,33,38,8
+    CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,94,33,56,8
     CONTROL         "Auto size (fixed console size in cells)",cbFontAuto,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,169,33,140,8
     CONTROL         "Admit monitor dpi with font size",cbFontMonitorDpi,
@@ -625,8 +625,8 @@ BEGIN
     PUSHBUTTON      "Reset...",bResetSettings,126,258,60,14
     PUSHBUTTON      "Reload...",bReloadSettings,192,258,60,14
     PUSHBUTTON      "Import...",bImportSettings,258,258,60,14
-    LTEXT           "Storage:",stStorage,106,5,29,8
-    EDITTEXT        tStorage,141,3,217,13,ES_AUTOHSCROLL | ES_READONLY
+    LTEXT           "Storage:",stStorage,106,5,47,8
+    EDITTEXT        tStorage,157,3,201,13,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "Export...",cbExportConfig,361,2,60,14
 END
 
@@ -1110,7 +1110,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "Real console font"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "OK",bConFontOK,127,138,50,14,WS_DISABLED
+    DEFPUSHBUTTON   "OK&",bConFontOK,127,138,50,14,WS_DISABLED
     PUSHBUTTON      "Cancel",bConFontCancel,182,138,50,14
     CTEXT           "Font must be Unicode and must be smaller than main font!!!",stMoreConfont3,4,28,228,8
     COMBOBOX        tConsoleFontFace,12,65,123,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
