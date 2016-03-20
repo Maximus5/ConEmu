@@ -3257,6 +3257,7 @@
     ,
     "cbFixFarBorders": {
       "en": "Alternative font (pseudographics, CJK, etc.)",
+      "ru": "Дополнительный шрифт (графика, CJK, и т.п.)",
       "zh": "替代字体（错误代码页，中日韩，等。）",
       "id": 1207 }
     ,
@@ -3267,6 +3268,7 @@
     ,
     "cbFont2AA": {
       "en": "Anti-aliasing",
+      "ru": "Сглаживание",
       "zh": "抗锯齿",
       "id": 2883 }
     ,
@@ -3749,6 +3751,7 @@
     ,
     "cbUnicodeRangesApply": {
       "en": "Apply",
+      "ru": "Применить",
       "zh": "应用",
       "id": 2838 }
     ,
@@ -3849,11 +3852,13 @@
     ,
     "gbAntiAliasing": {
       "en": "Anti-aliasing",
+      "ru": "Сглаживание",
       "zh": "抗锯齿",
       "id": 2677 }
     ,
     "gbAppDistinct": {
       "en": "Application distinct settings",
+      "ru": "Настройки раздельно по приложениям",
       "zh": "应用不同的设置",
       "id": 2317 }
     ,
@@ -4691,6 +4696,7 @@
     ,
     "rCTAA": {
       "en": "&Clear Type",
+      "ru": "&Clear Type",
       "zh": "&Clear Type",
       "id": 1204 }
     ,
@@ -4751,6 +4757,7 @@
     ,
     "rNoneAA": {
       "en": "&None",
+      "ru": "Нет",
       "zh": "无(&N)",
       "id": 1202 }
     ,
@@ -4761,6 +4768,7 @@
     ,
     "rStandardAA": {
       "en": "&Standard",
+      "ru": "Обычное",
       "zh": "标准的(&S)",
       "id": 1203 }
     ,
@@ -5037,26 +5045,31 @@
     ,
     "stFontCharset": {
       "en": "Font charset:",
+      "ru": "Набор символов:",
       "zh": "字体的字符集：",
       "id": 2666 }
     ,
     "stFontSizeX": {
       "en": "Width:",
+      "ru": "Ширина:",
       "zh": "宽度：",
       "id": 2668 }
     ,
     "stFontSizeX2": {
       "en": "Width:",
+      "ru": "Ширина:",
       "zh": "宽度：",
       "id": 2670 }
     ,
     "stFontSizeX3": {
       "en": "Cell:",
+      "ru": "Ячейка:",
       "zh": "单元：",
       "id": 2669 }
     ,
     "stFontSizeY": {
       "en": "Size:",
+      "ru": "Высота:",
       "zh": "大小：",
       "id": 2667 }
     ,
@@ -5072,6 +5085,7 @@
     ,
     "stFrameWidth": {
       "en": "Frame width:",
+      "ru": "Ширина рамки:",
       "zh": "框架宽度：",
       "id": 2904 }
     ,
@@ -5498,47 +5512,56 @@
       "id": 2382 }
     ,
     "stUnicodeRanges": {
-      "en": "Unicode ranges, the default is \"2013-25C4;\"",
-      "zh": "Unicode范围，默认为 \"2013-25C4;\"",
+      "en": "Unicode ranges, the default is \"2013-25C4;\":",
+      "ru": "Диапазоны Unicode (умолчание \"2013-25C4;\"):",
+      "zh": "Unicode范围，默认为 \"2013-25C4;\":",
       "id": 2837 }
     ,
     "stUpdateCheck": {
       "en": "Do automatic check on",
+      "ru": "Автоматически проверять при",
       "zh": "自动检查更新",
       "id": 2863 }
     ,
     "stUpdateCommand": {
       "en": "Update command (%1 - package, %2 - ConEmu.exe folder, %3 - x86/x64, %4 - PID)",
+      "ru": "Команда обновления (%1 - пакет, %2 - папка с ConEmu.exe, %3 - x86/x64, %4 - PID)",
       "zh": "更新命令 (%1 - package, %2 - ConEmu.exe文件夹, %3 - x86/x64, %4 - PID)",
       "id": 2859 }
     ,
     "stUpdatePostCommand": {
       "en": "Post-update command, don't forget ‘call’ for batches",
+      "ru": "Выполнить после обновления, не забудьте «call» для вызова bat/cmd файлов",
       "zh": "更新后命令，不要忘记从批处理“调用”",
       "id": 2860 }
     ,
     "stUpdateProxy": {
       "en": "Server:port",
+      "ru": "Сервер:порт",
       "zh": "服务器:端口",
       "id": 2083 }
     ,
     "stUpdateProxyPassword": {
       "en": "Password",
+      "ru": "Пароль",
       "zh": "密码",
       "id": 2085 }
     ,
     "stUpdateProxyUser": {
       "en": "User",
+      "ru": "Логин",
       "zh": "用户",
       "id": 2084 }
     ,
     "stUpdateReleaseType": {
       "en": "Preferred release type",
+      "ru": "Проверять релизы",
       "zh": "最喜爱的release类型",
       "id": 2862 }
     ,
     "stUpdateVerLocation": {
       "en": "ConEmu latest version location info",
+      "ru": "URL информации о последних версия",
       "zh": "ConEmu最新版本信息位置",
       "id": 2861 }
     ,
@@ -5554,26 +5577,31 @@
     ,
     "stVConFontMain": {
       "en": "Main:",
+      "ru": "Основной:",
       "zh": "主要：",
       "id": 2952 }
     ,
     "stVConPadSize": {
       "en": "Pad size:",
+      "ru": "Окантовка:",
       "zh": "Pad大小：",
       "id": 2898 }
     ,
     "stVConPadSizePix": {
       "en": "pixels",
+      "ru": "в пикселях",
       "zh": "像素",
       "id": 2899 }
     ,
     "stWndHeight": {
       "en": "Height:",
+      "ru": "Высота:",
       "zh": "高度：",
       "id": 2439 }
     ,
     "stWndWidth": {
       "en": "Width:",
+      "ru": "Ширина:",
       "zh": "宽度：",
       "id": 2438 }
     ,
