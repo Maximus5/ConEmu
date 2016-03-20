@@ -73,8 +73,9 @@
       "id": 2679 }
     ,
     "cbAutoRegFonts": {
-      "en": "Search, register for process, and use first *.ttf file in conemu folder",
-      "zh": "查找、注册进程，并且使用conemu文件夹中的第一个*.ttf文件",
+      "en": [ "Use in ConEmu fonts, located in ConEmu folder.\r\n"
+            , "*.ttf, *.otf and *.bdf files are supported." ],
+      "_zh": "查找、注册进程，并且使用conemu文件夹中的第一个*.ttf文件",
       "id": 1550 }
     ,
     "cbBgAllowPlugin": {
@@ -2320,31 +2321,38 @@
   }
   ,
   "mnuhints": {
-    "ID_DONATE_LINK": {
+    "IDM_DETACH": {
+      "en": "Show RealConsole and detach it from ConEmu",
+      "ru": "Показать RealConsole и отцепить ее от ConEmu",
+      "zh": "显示并从ConEmu分离真实控制台（RealConsole）",
+      "id": 43993 }
+    ,
+    "IDM_DONATE_LINK": {
       "en": "Visit https://conemu.github.io/donate.html",
+      "ru": "Вебсайт: https://conemu.github.io/donate.html",
       "zh": "访问https://conemu.github.io/donate.html",
       "id": 43948 }
     ,
-    "ID_HOMEPAGE": {
+    "IDM_HOMEPAGE": {
       "en": "Visit https://conemu.github.io/",
+      "ru": "Вебсайт: https://conemu.github.io/",
       "zh": "访问https://conemu.github.io/",
       "id": 43962 }
     ,
-    "ID_REPORTBUG": {
+    "IDM_REPORTBUG": {
       "en": [ "Create bug report or request new feature\r\n"
+            , "https://conemu.github.io/en/Issues.html" ],
+      "ru": [ "Сообщить об ошибке или предложить улучшение\r\n"
             , "https://conemu.github.io/en/Issues.html" ],
       "zh": [ "创建错误报告或要求新功能\r\n"
             , "https://conemu.github.io/en/Issues.html" ],
       "id": 43961 }
     ,
-    "IDM_DETACH": {
-      "en": "Show RealConsole and detach it from ConEmu",
-      "zh": "显示并从ConEmu分离真实控制台（RealConsole）",
-      "id": 43993 }
-    ,
     "IDM_RESTART": {
       "en": [ "Restart current console\r\n"
             , "Hold Shift to popup Restart dialog" ],
+      "ru": [ "Перезапустить активную консоль\r\n"
+            , "Удерживайте Shift для диалога с опциями" ],
       "zh": [ "重启当前控制台\r\n"
             , "按住Shift键来弹出重启对话框" ],
       "id": 43986 }
@@ -2352,57 +2360,69 @@
     "IDM_RESTARTAS": {
       "en": [ "Restart current console as Admin (Vista+) or user (WinXP)\r\n"
             , "Hold Shift to popup Restart dialog" ],
+      "ru": [ "Перезапустить активную консоль под Админом (Vista+) или другим юзером (WinXP)\r\n"
+            , "Удерживайте Shift для диалога с опциями" ],
       "zh": [ "以管理员身份(Vista+)或用户身份(WinXP)重启当前控制台\r\n"
             , "按住Shift键来弹出重启对话框" ],
       "id": 43987 }
     ,
     "IDM_RESTARTDLG": {
       "en": "Show ‘Restart current console’ dialog",
+      "ru": "Показать диалог ‘Перезапустить активную консоль’",
       "zh": "显示‘重启当前控制台’对话框",
       "id": 43998 }
     ,
     "IDM_TERMINATEALLCON": {
       "en": "Do normal close of all consoles (tabs and panes)",
+      "ru": "Обычное закрытие всех консолей (табы и сплиты)",
       "zh": "正常关闭所有控制台(标签页和窗格)",
       "id": 44001 }
     ,
     "IDM_TERMINATEBUTSHELL": {
       "en": "Active console/pane: Terminate all except root process",
+      "ru": "Активная консоль/сплит: Завершить все процессы кроме корневого",
       "zh": "活动的控制台/窗格：结束所有进程除了根进程",
       "id": 43991 }
     ,
     "IDM_TERMINATECON": {
       "en": "Active console/pane: Do normal close",
+      "ru": "Активная консоль/сплит: Обычное закрытие",
       "zh": "活动的控制台/窗格：正常关闭",
       "id": 43989 }
     ,
     "IDM_TERMINATECONEXPT": {
       "en": "Close all tabs and panes except active console/pane",
+      "ru": "Закрыть все консоли (табы и сплиты) кроме текущей",
       "zh": "关闭所有标签和窗格除了活动的控制台/窗格",
       "id": 44002 }
     ,
     "IDM_TERMINATEGROUP": {
       "en": "Active group: Do normal close of each pane",
+      "ru": "Активная группа: Закрыть все сплиты",
       "zh": "活动组：正常关闭每一个窗格",
       "id": 43997 }
     ,
     "IDM_TERMINATEPRC": {
       "en": "Active console/pane: Terminate active process",
+      "ru": "Активная консоль/сплит: Завершить активный процесс",
       "zh": "活动控制台/窗格：终止活动进程",
       "id": 43988 }
     ,
     "IDM_TERMINATEPRCGROUP": {
       "en": "Active group: Terminate active process in each pane",
+      "ru": "Активная группа: Завершить активный процесс в каждом сплите",
       "zh": "活动组：在每个窗格中终止活动进程",
       "id": 44000 }
     ,
     "IDM_TERMINATEZOMBIES": {
       "en": "Close ‘zombies’ (where ‘Press Esc to close console’ is displayed)",
+      "ru": "Закрыть ‘зомби’ (консоли, ожидающие ‘Press Esc to close console’)",
       "zh": "关闭‘zombies’ (‘按下Esc关闭console’显示的地方)",
       "id": 44003 }
     ,
     "IDM_UNFASTEN": {
       "en": "Open active console/pane in the new ConEmu window",
+      "ru": "Открыть активную консоль/сплит в новом окне ConEmu",
       "zh": "在新的ConEmu窗口里打开活动的控制台/窗格",
       "id": 44004 }
   }
@@ -2488,31 +2508,37 @@
     ,
     "lng_ExitCode": {
       "en": "exit code",
+      "ru": "код возврата",
       "zh": "退出代码",
       "id": 17 }
     ,
     "lng_Search": {
       "en": "Search",
+      "ru": "Поиск",
       "zh": "查找",
       "id": 9 }
     ,
     "lng_SearchCtrlF": {
       "en": "Search (Ctrl+F)",
+      "ru": "Поиск (Ctrl+F)",
       "zh": "查找 (Ctrl+F)",
       "id": 10 }
     ,
     "lng_SelBlock": {
       "en": " block selection",
+      "ru": " блоковое выделение",
       "zh": " 块状选择",
       "id": 20 }
     ,
     "lng_SelChars": {
       "en": " chars ",
+      "ru": " символов ",
       "zh": " 字符 ",
       "id": 18 }
     ,
     "lng_SelStream": {
       "en": " stream selection",
+      "ru": " текстовое выделение",
       "zh": " 流选择",
       "id": 19 }
   }
@@ -2520,26 +2546,31 @@
   "controls": {
     "bApplyViewSettings": {
       "en": "&Apply",
+      "ru": "Применить",
       "zh": "应用(&A)",
       "id": 1715 }
     ,
     "bCmdAutoClear": {
       "en": "Clear",
+      "ru": "Очистить",
       "zh": "清除",
       "id": 2424 }
     ,
     "bCmdAutoRegister": {
       "en": "Register ConEmu autorun",
+      "ru": "Включить автозапуск ConEmu",
       "zh": "注册ConEmu自动运行",
       "id": 2395 }
     ,
     "bCmdAutoUnregister": {
       "en": "Unregister",
+      "ru": "Отключить",
       "zh": "反注册",
       "id": 2396 }
     ,
     "bConFontAdd2HKLM": {
       "en": "Add font to ‘...\\Console\\TrueTypeFont’",
+      "ru": "Добавить шрифт в ‘...\\Console\\TrueTypeFont’",
       "zh": "添加字体到‘...\\Console\\TrueTypeFont’",
       "id": 1730 }
     ,
@@ -2550,17 +2581,20 @@
       "id": 1726 }
     ,
     "bConFontOK": {
-      "en": "OK&",
-      "zh": "确定&",
+      "en": "OK",
+      "ru": "OK",
+      "zh": "确定",
       "id": 1716 }
     ,
     "bHereRegister": {
       "en": "Register",
+      "ru": "Добавить",
       "zh": "注册",
       "id": 2392 }
     ,
     "bHereUnregister": {
       "en": "Unregister",
+      "ru": "Удалить",
       "zh": "反注册",
       "id": 2393 }
     ,
@@ -2572,11 +2606,13 @@
     ,
     "bInsideRegister": {
       "en": "Register",
+      "ru": "Добавить",
       "zh": "注册",
       "id": 2387 }
     ,
     "bInsideUnregister": {
       "en": "Unregister",
+      "ru": "Удалить",
       "zh": "反注册",
       "id": 2388 }
     ,
@@ -2994,6 +3030,10 @@
       "en": "Cursor override",
       "zh": "覆盖光标",
       "id": 2145 }
+    ,
+    "cbDebugLog": {
+      "en": "Internal LogFiles location",
+      "id": 3031 }
     ,
     "cbDebugSteps": {
       "en": "Debug steps in caption",
