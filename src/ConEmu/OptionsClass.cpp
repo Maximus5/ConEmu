@@ -8651,7 +8651,7 @@ void CSettings::UpdateLogLocation()
 	LPCWSTR pszName = lsLogPath.IsEmpty() ? NULL : PointToName(lsLogPath.ms_Val);
 	if (pszName)
 		*(wchar_t*)pszName = 0;
-	SetDlgItemText(hWnd2, tDebugLogDir, lsLogPath);
+	SetDlgItemText(GetPage(thi_Ext), tDebugLogDir, lsLogPath);
 }
 
 void CSettings::PostUpdateCounters(bool bPosted)
