@@ -2467,6 +2467,11 @@
       "zh": " - 释放 <Alt> 键粘贴UNICODE代码点",
       "id": 13 }
     ,
+    "lng_BasicSettings": {
+      "en": "Basic settings",
+      "ru": "Настройки по умолчанию",
+      "id": 21 }
+    ,
     "lng_DlgAbout": {
       "en": "About",
       "ru": "О программе",
@@ -3377,7 +3382,7 @@
     ,
     "cbItalic": {
       "en": "&Italic",
-      "en": "Курсив",
+      "ru": "Курсив",
       "zh": "斜体(&I)",
       "id": 2280 }
     ,

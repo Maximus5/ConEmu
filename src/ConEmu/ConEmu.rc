@@ -1110,7 +1110,7 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "Real console font"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    DEFPUSHBUTTON   "OK&",bConFontOK,127,138,50,14,WS_DISABLED
+    DEFPUSHBUTTON   "OK",bConFontOK,127,138,50,14,WS_DISABLED
     PUSHBUTTON      "Cancel",bConFontCancel,182,138,50,14
     CTEXT           "Font must be Unicode and must be smaller than main font!!!",stMoreConfont3,4,28,228,8
     COMBOBOX        tConsoleFontFace,12,65,123,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
