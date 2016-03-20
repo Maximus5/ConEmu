@@ -1353,13 +1353,14 @@ LRESULT CSettings::OnInitDialog()
 		EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
 		if (isResetBasicSettings)
 		{
-			SetDlgItemText(ghOpWnd, bSaveSettings, L"Basic settings");
+			SetDlgItemText(ghOpWnd, bSaveSettings, CLngRc::getRsrc(lng_BasicSettings/*"Настройки по умолчанию"*/));
 		}
 	}
 
 	if (isResetBasicSettings)
 	{
-		SetDlgItemText(ghOpWnd, tStorage, L"<Basic settings>");
+		CEStr lsBracketed(L"<", CLngRc::getRsrc(lng_BasicSettings/*"Настройки по умолчанию"*/), L">");
+		SetDlgItemText(ghOpWnd, tStorage, lsBracketed);
 	}
 	else if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_REG) == 0)
 	{

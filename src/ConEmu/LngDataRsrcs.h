@@ -36,6 +36,7 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_AltNumberStdACP,          L" - release <Alt> to paste ANSI code point" },
 	{ lng_AltNumberStdOEM,          L" - release <Alt> to paste OEM code point" },
 	{ lng_AltNumberStdUCS,          L" - release <Alt> to paste UNICODE code point" },
+	{ lng_BasicSettings,            L"Basic settings" },
 	{ lng_DlgAbout,                 L"About" },
 	{ lng_DlgAffinity,              L"Set active console processes affinity and priority" },
 	{ lng_DlgAttach,                L"Attach: Choose window or console application" },
