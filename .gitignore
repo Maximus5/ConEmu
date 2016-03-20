@@ -31,6 +31,7 @@ _*.sln
 
 /gcc
 /Debug
+/Release
 /MinGW
 /Portable_Test
 /ConEmuPortableRarInfo.txt
