@@ -4578,15 +4578,36 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 	else
 	{
 		COORD anchor = con.m_sel.dwSelectionAnchor;
+		SMALL_RECT srSel = con.m_sel.srSelection;
 		// Switch Left/Right members
 		if ((cr.Y > anchor.Y)
 		        || ((cr.Y == anchor.Y) && (cr.X > anchor.X)))
 		{
-			// Extending selection rightward
+			// Extending selection rightward, if it was leftward selection?
 			if (con.m_sel.dwFlags & CONSOLE_RIGHT_ANCHOR)
 			{
-				// Is was leftward selection
-				if (((anchor.X + 1) < TextWidth()) && (cr.X >= anchor.X))
+				if (cr.Y > anchor.Y)
+				{
+					if ((anchor.X + 1) < GetBufferWidth())
+					{
+						con.m_sel.dwSelectionAnchor.X++;
+					}
+					else
+					{
+						if ((con.m_sel.dwSelectionAnchor.Y + 1) < TextHeight())
+						{
+							con.m_sel.dwSelectionAnchor.X = 0;
+							con.m_sel.dwSelectionAnchor.Y++;
+						}
+						else
+						{
+							_ASSERTE((con.m_sel.dwSelectionAnchor.Y + 1) < TextHeight());
+						}
+					}
+					con.m_sel.dwFlags = (con.m_sel.dwFlags & ~CONSOLE_RIGHT_ANCHOR) | CONSOLE_LEFT_ANCHOR;
+				}
+				else if (((anchor.X + 1) < GetBufferWidth())
+					&& (cr.X >= (anchor.X /*+ ((con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN) ? 1 : 0)*/)))
 				{
 					con.m_sel.dwSelectionAnchor.X++;
 					cr.X = klMax(cr.X, con.m_sel.dwSelectionAnchor.X);
@@ -4598,11 +4619,24 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 		}
 		else
 		{
-			// Extending selection leftward
+			// Extending selection leftward, if it was rightward selection?
 			if (con.m_sel.dwFlags & CONSOLE_LEFT_ANCHOR)
 			{
-				// Is was rightward selection
-				if (((anchor.X - 1) > 0) && (cr.X <= anchor.X))
+				if (cr.Y < anchor.Y)
+				{
+					if (con.m_sel.dwSelectionAnchor.X > 0)
+					{
+						con.m_sel.dwSelectionAnchor.X--;
+					}
+					else
+					{
+						con.m_sel.dwSelectionAnchor.X = GetBufferWidth() - 1;
+						con.m_sel.dwSelectionAnchor.Y--;
+					}
+					con.m_sel.dwFlags = (con.m_sel.dwFlags & ~CONSOLE_LEFT_ANCHOR) | CONSOLE_RIGHT_ANCHOR;
+				}
+				else if ((anchor.X > 1)
+					&& ((cr.X /*+ ((con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN) ? 1 : 0)*/) < anchor.X))
 				{
 					con.m_sel.dwSelectionAnchor.X--;
 					cr.X = klMin(cr.X, con.m_sel.dwSelectionAnchor.X);
@@ -4611,6 +4645,19 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 			}
 			con.m_sel.srSelection.Left = cr.X;
 			con.m_sel.srSelection.Right = con.m_sel.dwSelectionAnchor.X;
+		}
+
+		if (anchor != con.m_sel.dwSelectionAnchor)
+		{
+			wchar_t szLog[140];
+			_wsprintf(szLog, SKIPCOUNT(szLog)
+				L"Selection: %s: Coord={%i,%i} Old={%i,%i}:{%i,%i}-{%i,%i} New={%i,%i}:{%i,%i}-{%i,%i}",
+				(con.m_sel.dwFlags & CONSOLE_LEFT_ANCHOR) ? L"<<LeftAnchor" :
+				(con.m_sel.dwFlags & CONSOLE_RIGHT_ANCHOR) ? L"RightAnchor>>" : L"???",
+				anX, anY, anchor.X, anchor.Y, LOGSRECTCOORDS(srSel),
+				con.m_sel.dwSelectionAnchor.X, con.m_sel.dwSelectionAnchor.Y, LOGSRECTCOORDS(con.m_sel.srSelection)
+				);
+			mp_RCon->LogString(szLog);
 		}
 	}
 
