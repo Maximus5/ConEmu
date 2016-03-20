@@ -774,94 +774,96 @@ function NewLngResourceHelper([string]$id,[string]$str,[bool]$loop=$FALSE,[strin
 # $loop is $TRUE when called from NewLngResourceLoop
 function NewLngResource([string]$id,[string]$str,[bool]$loop=$FALSE)
 {
-  # NewLngResourceHelper -id $id -str $str -loop $FALSE -file $rsrcs_h_file -header $rsrsids_h_file
-
-  $script:str_id = @{}
-
-  #Write-Host -NoNewLine ("Reading: " + $rsrsids_h_file)
-  $rsrch  = Get-Content $rsrsids_h_file
-  #Write-Host (" Lines: " + $rsrch.Length)
-  ParseResIdsEnum $rsrch
-
-  #Write-Host -NoNewLine ("Reading: " + $rsrcs_h_file)
-  $strdata = Get-Content $rsrcs_h_file
-  #Write-Host (" Lines: " + $strdata.Length)
-
-  # Prepare string resources
-  $script:rsrcs = ParseLngData $strdata
-
-  if ($script:rsrcs.ContainsKey($id)) {
-    Write-Host -ForegroundColor Red "Key '$id' already exists: $($script:rsrcs[$id])"
-    if (-Not ($loop)) {
-      $host.SetShouldExit(101)
-      exit
-    }
-    return
-  }
-
-  #############
-  $script:dst_ids = @()
-  $script:dst_str = @()
-
-  # enum LngResources
-  $iNextId = ($script:str_id.Values | measure-object -Maximum).Maximum
-  if (($iNextId -eq $null) -Or ($iNextId -eq 0)) {
-    Write-Host -ForegroundColor Red "lng_NextId was not found!"
-    if (-Not ($loop)) {
-      $host.SetShouldExit(101)
-      exit
-    }
-    return
-  }
-  $iNextId ++
-  for ($i = 0; $i -lt $rsrch.Count; $i++) {
-    if ($rsrch[$i].Trim() -eq $last_gen_ids_note) {
-      break
-    }
-    $script:dst_ids += $rsrch[$i]
-  }
-  $script:dst_ids += ("`t" + $id.PadRight(30) + "= " + [string]$iNextId + ",")
-  $script:dst_ids += "`t$last_gen_ids_note"
-  $script:dst_ids += "`tlng_NextId"
-  $script:dst_ids += "};"
-
-  #$script:dst_ids
-
-  # static LngPredefined gsDataRsrcs[]
-  for ($i = 0; $i -lt $strdata.Count; $i++) {
-    $script:dst_str += $strdata[$i]
-    if ($strdata[$i].StartsWith("static LngPredefined")) {
-      break
-    }
-  }
-  #
-  $script:rsrcs.Add($id, $str)
-  $script:rsrcs.Keys | sort | % {
-    $script:dst_str += ("`t{ " + ($_+",").PadRight(30) + "L`"" + $script:rsrcs[$_] + "`" },")
-  }
-  $script:dst_str += "`t$last_gen_str_note"
-  $script:dst_str += "};"
-
-  #$script:dst_str
-
-  Set-Content $rsrsids_h_file $script:dst_ids -Encoding UTF8
-  Set-Content $rsrcs_h_file   $script:dst_str -Encoding UTF8
-
-  Add-Type -AssemblyName System.Windows.Forms
-  if ($str.Length -le 64) {
-    $clip = "CLngRc::getRsrc($id/*`"$str`"*/)"
-  } else {
-    $clip = "CLngRc::getRsrc($id)"
-  }
-  [Windows.Forms.Clipboard]::SetText($clip);
-
-  Write-Host -ForegroundColor Yellow "Resource created:"
-  Write-Host -ForegroundColor Green "  $($id)=$($iNextId)"
-  Write-Host -ForegroundColor Yellow "Ready to paste:"
-  Write-Host -ForegroundColor Green "  $clip"
-  Write-Host -ForegroundColor Yellow "Don't forget to update ConEmu.l10n with rc2json.cmd!"
+  NewLngResourceHelper -id $id -str $str -loop $FALSE -file $rsrcs_h_file -header $rsrsids_h_file
 
   return
+
+  #$script:str_id = @{}
+
+  ##Write-Host -NoNewLine ("Reading: " + $rsrsids_h_file)
+  #$rsrch  = Get-Content $rsrsids_h_file
+  ##Write-Host (" Lines: " + $rsrch.Length)
+  #ParseResIdsEnum $rsrch
+
+  ##Write-Host -NoNewLine ("Reading: " + $rsrcs_h_file)
+  #$strdata = Get-Content $rsrcs_h_file
+  ##Write-Host (" Lines: " + $strdata.Length)
+
+  ## Prepare string resources
+  #$script:rsrcs = ParseLngData $strdata
+
+  #if ($script:rsrcs.ContainsKey($id)) {
+  #  Write-Host -ForegroundColor Red "Key '$id' already exists: $($script:rsrcs[$id])"
+  #  if (-Not ($loop)) {
+  #    $host.SetShouldExit(101)
+  #    exit
+  #  }
+  #  return
+  #}
+
+  ##############
+  #$script:dst_ids = @()
+  #$script:dst_str = @()
+
+  ## enum LngResources
+  #$iNextId = ($script:str_id.Values | measure-object -Maximum).Maximum
+  #if (($iNextId -eq $null) -Or ($iNextId -eq 0)) {
+  #  Write-Host -ForegroundColor Red "lng_NextId was not found!"
+  #  if (-Not ($loop)) {
+  #    $host.SetShouldExit(101)
+  #    exit
+  #  }
+  #  return
+  #}
+  #$iNextId ++
+  #for ($i = 0; $i -lt $rsrch.Count; $i++) {
+  #  if ($rsrch[$i].Trim() -eq $last_gen_ids_note) {
+  #    break
+  #  }
+  #  $script:dst_ids += $rsrch[$i]
+  #}
+  #$script:dst_ids += ("`t" + $id.PadRight(30) + "= " + [string]$iNextId + ",")
+  #$script:dst_ids += "`t$last_gen_ids_note"
+  #$script:dst_ids += "`tlng_NextId"
+  #$script:dst_ids += "};"
+
+  ##$script:dst_ids
+
+  ## static LngPredefined gsDataRsrcs[]
+  #for ($i = 0; $i -lt $strdata.Count; $i++) {
+  #  $script:dst_str += $strdata[$i]
+  #  if ($strdata[$i].StartsWith("static LngPredefined")) {
+  #    break
+  #  }
+  #}
+  ##
+  #$script:rsrcs.Add($id, $str)
+  #$script:rsrcs.Keys | sort | % {
+  #  $script:dst_str += ("`t{ " + ($_+",").PadRight(30) + "L`"" + $script:rsrcs[$_] + "`" },")
+  #}
+  #$script:dst_str += "`t$last_gen_str_note"
+  #$script:dst_str += "};"
+
+  ##$script:dst_str
+
+  #Set-Content $rsrsids_h_file $script:dst_ids -Encoding UTF8
+  #Set-Content $rsrcs_h_file   $script:dst_str -Encoding UTF8
+
+  #Add-Type -AssemblyName System.Windows.Forms
+  #if ($str.Length -le 64) {
+  #  $clip = "CLngRc::getRsrc($id/*`"$str`"*/)"
+  #} else {
+  #  $clip = "CLngRc::getRsrc($id)"
+  #}
+  #[Windows.Forms.Clipboard]::SetText($clip);
+
+  #Write-Host -ForegroundColor Yellow "Resource created:"
+  #Write-Host -ForegroundColor Green "  $($id)=$($iNextId)"
+  #Write-Host -ForegroundColor Yellow "Ready to paste:"
+  #Write-Host -ForegroundColor Green "  $clip"
+  #Write-Host -ForegroundColor Yellow "Don't forget to update ConEmu.l10n with rc2json.cmd!"
+
+  #return
 }
 
 function NewCtrlHint([string]$id,[string]$str)
@@ -883,6 +885,8 @@ function NewCtrlHint([string]$id,[string]$str)
 
 function NewLngResourceLoop()
 {
+  $script:rsrcs = ParseLngData (Get-Content $rsrcs_h_file)
+
   while ($TRUE) {
     Write-Host -ForeGroundColor Yellow -NoNewLine "ResourceID: "
     Write-Host -ForeGroundColor Gray -NoNewLine "lng_"
@@ -892,6 +896,12 @@ function NewLngResourceLoop()
     if (-Not ($id -match "^\w+$")) {
       Write-Host -ForegroundColor Red "  Invalid ResourceID: '$id'"
       continue
+    }
+    if ($script:rsrcs.ContainsKey($id)) {
+      Write-Host -ForeGroundColor Green -NoNewLine "   Current: "
+      Write-Host -ForeGroundColor Gray -NoNewLine "``"
+      Write-Host -ForeGroundColor Yellow -NoNewLine $script:rsrcs[$id]
+      Write-Host -ForeGroundColor Gray "``"
     }
     Write-Host -ForeGroundColor Yellow -NoNewLine "    String: "
     $str = Read-Host
