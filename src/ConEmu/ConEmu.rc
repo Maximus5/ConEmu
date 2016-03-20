@@ -111,48 +111,48 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Main console font",gbMainConFont,4,1,375,93
-    COMBOBOX        tFontFace,10,13,129,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Size:",stFontSizeY,145,15,20,8
-    COMBOBOX        tFontSizeY,169,13,30,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Width:",stFontSizeX,201,15,26,8
-    COMBOBOX        tFontSizeX,231,13,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Cell:",stFontSizeX3,263,15,19,8
-    COMBOBOX        tFontSizeX3,287,13,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,33,44,8
-    CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,55,33,38,8
-    CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,94,33,56,8
+    GROUPBOX        "Main console font",gbMainConFont,4,1,375,101
+    COMBOBOX        tFontFace,10,13,139,90,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Size:",stFontSizeY,151,15,40,8
+    COMBOBOX        tFontSizeY,195,13,30,89,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Width:",stFontSizeX,229,15,39,8
+    COMBOBOX        tFontSizeX,272,13,30,89,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Cell:",stFontSizeX3,302,15,34,8
+    COMBOBOX        tFontSizeX3,343,13,30,89,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,33,75,8
+    CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,47,75,8
+    CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,72,177,8
     CONTROL         "Auto size (fixed console size in cells)",cbFontAuto,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,169,33,140,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,33,177,8
     CONTROL         "Admit monitor dpi with font size",cbFontMonitorDpi,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,47,144,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,59,177,8
     CONTROL         "Treat font height as device units",cbFontAsDeviceUnits,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,169,47,140,8
-    GROUPBOX        "Anti-aliasing",gbAntiAliasing,10,59,154,28,WS_GROUP
-    CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,72,36,8
-    CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,57,72,47,8
-    CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,110,72,48,8
-    RTEXT           "Font charset:",stFontCharset,170,72,57,8
-    COMBOBOX        tFontCharset,231,70,86,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "",gbFixFarBorders,4,99,375,56
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,47,177,8
+    GROUPBOX        "Anti-aliasing",gbAntiAliasing,10,66,171,28,WS_GROUP
+    CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,79,36,8
+    CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,56,79,59,8
+    CONTROL         "&Clear Type",rCTAA,"Button",BS_AUTORADIOBUTTON,118,79,53,8
+    LTEXT           "Font charset:",stFontCharset,85,32,63,8
+    COMBOBOX        tFontCharset,83,42,66,120,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "",gbFixFarBorders,4,107,375,60
     CONTROL         "Alternative font (pseudographics, CJK, etc.)",cbFixFarBorders,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,99,181,8
-    COMBOBOX        tFontFace2,10,111,119,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Width:",stFontSizeX2,135,112,24,8
-    COMBOBOX        tFontSizeX2,163,111,30,66,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Anti-aliasing",cbFont2AA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,205,112,109,10
-    LTEXT           "Unicode ranges, the default is ""2013-25C4;""",stUnicodeRanges,11,126,308,8
-    COMBOBOX        tUnicodeRanges,10,136,243,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Apply",cbUnicodeRangesApply,258,136,59,12
-    LTEXT           "By the cost of background colors you may change the used font to bold or italic",stExtendFonts,12,171,305,8
-    GROUPBOX        "",gbExtendFonts,4,160,375,44
-    CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,160,77,8
-    COMBOBOX        lbExtendFontBoldIdx,45,185,37,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbExtendFontItalicIdx,119,185,37,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbExtendFontNormalIdx,195,185,37,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Bold:",stExtendFontsBold,11,187,30,8
-    RTEXT           "Italic:",stExtendFontsItalic,86,187,30,8
-    RTEXT           "Normal:",stExtendFontsNormal,161,187,30,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,107,181,8
+    COMBOBOX        tFontFace2,10,119,139,118,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Width:",stFontSizeX2,151,120,40,8
+    COMBOBOX        tFontSizeX2,195,119,30,93,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Anti-aliasing",cbFont2AA,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,233,120,118,10
+    LTEXT           "Unicode ranges, the default is ""2013-25C4;"":",stUnicodeRanges,11,138,308,8
+    COMBOBOX        tUnicodeRanges,10,148,270,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Apply",cbUnicodeRangesApply,289,148,84,12
+    LTEXT           "By the cost of background colors you may change the used font to bold or italic",stExtendFonts,12,183,305,8
+    GROUPBOX        "",gbExtendFonts,4,172,375,44
+    CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,172,77,8
+    COMBOBOX        lbExtendFontBoldIdx,45,197,37,47,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbExtendFontItalicIdx,119,197,37,47,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbExtendFontNormalIdx,195,197,37,48,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Bold:",stExtendFontsBold,11,199,30,8
+    RTEXT           "Italic:",stExtendFontsItalic,86,199,30,8
+    RTEXT           "Normal:",stExtendFontsNormal,161,199,30,8
 END
 
 IDD_SPG_WNDSIZEPOS DIALOGEX 0, 0, 381, 242
