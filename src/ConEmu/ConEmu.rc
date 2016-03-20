@@ -1303,31 +1303,31 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "&Predefined tasks (command groups)",gbCmdTasks,4,1,375,230
-    LISTBOX         lbCmdTasks,9,12,93,163,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
-    EDITTEXT        tCmdGroupName,109,12,81,12,ES_AUTOHSCROLL
-    LTEXT           "&Commands (application, arguments, ""-new_console"" params)\nDelimit commands with empty lines\nEach command creates tab in ConEmu when group started\nMark active console tab with '>' sign\nStart console 'As Administrator' with '*' sign",stCmdGroupCommands,111,81,208,41
-    EDITTEXT        tCmdGroupCommands,109,125,208,85,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
-    PUSHBUTTON      "&+",cbCmdTasksAdd,9,213,17,14
-    PUSHBUTTON      "&-",cbCmdTasksDel,27,213,17,14
-    PUSHBUTTON      "&Up",cbCmdTasksUp,47,213,27,14
-    PUSHBUTTON      "&Down",cbCmdTasksDown,75,213,27,14
-    PUSHBUTTON      "Add default tasks...",cbAddDefaults,9,179,93,14
-    PUSHBUTTON      "Reload...",cbCmdTasksReload,9,196,93,14
-    LTEXT           "Task parameters. Example: /dir ""C:\\"" /icon ""cmd.exe"" /single",stCmdGroupGuiArg,111,56,208,8
-    EDITTEXT        tCmdGroupGuiArg,110,66,208,12,ES_AUTOHSCROLL
-    RTEXT           "Add:",stCmdTaskAdd,106,217,21,8
-    PUSHBUTTON      "Tab...",cbCmdGroupApp,132,213,34,14
-    PUSHBUTTON      "Startup dir...",cbCmdTasksDir,167,213,53,14
-    PUSHBUTTON      "File path...",cbCmdTasksParm,221,213,47,14
-    PUSHBUTTON      "Active tabs",cbCmdTasksActive,270,213,49,14
-    RTEXT           "&Hotkey:",stCmdGroupKey,193,14,30,8
-    EDITTEXT        tCmdGroupKey,227,12,72,12,ES_AUTOHSCROLL | ES_READONLY
-    PUSHBUTTON      "...",cbCmdGroupKey,303,12,16,13
-    CONTROL         "Default task for new console",cbCmdGrpDefaultNew,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,109,28,115,10
-    CONTROL         "Default shell (Win+X)",cbCmdGrpDefaultCmd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,109,41,115,10
-    CONTROL         "Taskbar jump lists",cbCmdGrpTaskbar,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,28,93,10
-    CONTROL         "Toolbar",cbCmdGrpToolbar,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,41,93,10
+    GROUPBOX        "&Predefined tasks (command groups)",gbCmdTasks,4,1,375,238
+    LISTBOX         lbCmdTasks,9,12,115,170,LBS_USETABSTOPS | LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    EDITTEXT        tCmdGroupName,129,12,97,12,ES_AUTOHSCROLL
+    LTEXT           "&Commands (application, arguments, ""-new_console"" params)\nDelimit commands with empty lines\nEach command creates tab in ConEmu when group started\nMark active console tab with '>' sign\nStart console 'As Administrator' with '*' sign",stCmdGroupCommands,132,81,208,41
+    EDITTEXT        tCmdGroupCommands,129,125,245,93,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
+    PUSHBUTTON      "&+",cbCmdTasksAdd,9,221,17,14
+    PUSHBUTTON      "&-",cbCmdTasksDel,27,221,17,14
+    PUSHBUTTON      "&Up",cbCmdTasksUp,47,221,37,14
+    PUSHBUTTON      "&Down",cbCmdTasksDown,87,221,37,14
+    PUSHBUTTON      "Add default tasks...",cbAddDefaults,9,187,115,14
+    PUSHBUTTON      "Reload...",cbCmdTasksReload,9,204,115,14
+    LTEXT           "Task parameters. Example: /dir ""C:\\"" /icon ""cmd.exe"" /single",stCmdGroupGuiArg,131,56,208,8
+    EDITTEXT        tCmdGroupGuiArg,129,66,245,12,ES_AUTOHSCROLL
+    RTEXT           "Add:",stCmdTaskAdd,129,225,54,8
+    PUSHBUTTON      "Tab...",cbCmdGroupApp,188,221,34,14
+    PUSHBUTTON      "Startup dir...",cbCmdTasksDir,223,221,53,14
+    PUSHBUTTON      "File path...",cbCmdTasksParm,277,221,47,14
+    PUSHBUTTON      "Active tabs",cbCmdTasksActive,325,221,49,14
+    RTEXT           "&Hotkey:",stCmdGroupKey,231,14,33,8
+    EDITTEXT        tCmdGroupKey,268,12,85,12,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "...",cbCmdGroupKey,358,12,16,13
+    CONTROL         "Default task for new console",cbCmdGrpDefaultNew,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,28,136,10
+    CONTROL         "Default shell (Win+X)",cbCmdGrpDefaultCmd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,41,136,10
+    CONTROL         "Taskbar jump lists",cbCmdGrpTaskbar,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,268,28,108,10
+    CONTROL         "Toolbar",cbCmdGrpToolbar,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,268,41,108,10
 END
 
 IDD_SPG_APPDISTINCT DIALOGEX 0, 0, 381, 242
