@@ -127,6 +127,7 @@ SRCS = \
 		SetDlgColors.cpp   \
 		SetDlgFonts.cpp    \
 		SetDlgLists.cpp    \
+		SetPgBase.cpp      \
 		Status.cpp         \
 		TabBar.cpp         \
 		TabCtrlBase.cpp    \

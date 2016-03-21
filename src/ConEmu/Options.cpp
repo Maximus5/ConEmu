@@ -4535,9 +4535,9 @@ void Settings::SetMinToTray(bool bMinToTray)
 {
 	mb_MinToTray = bMinToTray;
 
-	if (ghOpWnd && gpSetCls->GetPage(CSettings::thi_Taskbar))
+	if (ghOpWnd && gpSetCls->GetPage(thi_Taskbar))
 	{
-		gpSetCls->checkDlgButton(gpSetCls->GetPage(CSettings::thi_Taskbar), cbMinToTray, mb_MinToTray);
+		gpSetCls->checkDlgButton(gpSetCls->GetPage(thi_Taskbar), cbMinToTray, mb_MinToTray);
 	}
 }
 
@@ -4602,7 +4602,7 @@ int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)
 		wchar_t* pch = Apps[i]->AppNamesLwr;
 		if (!pch || !*pch)
 		{
-			_ASSERTE((pch && *pch) || (ghOpWnd && IsWindowVisible(gpSetCls->GetPage(CSettings::thi_Apps))));
+			_ASSERTE((pch && *pch) || (ghOpWnd && IsWindowVisible(gpSetCls->GetPage(thi_Apps))));
 			continue;
 		}
 

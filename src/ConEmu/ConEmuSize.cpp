@@ -1097,7 +1097,7 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 	int newX = 0, newY = 0;
 	CESize newW, newH;
 
-	HWND hDlg = gpSetCls->GetPage(CSettings::thi_SizePos); // ‘Size & Pos’ settings page
+	HWND hDlg = gpSetCls->GetPage(thi_SizePos); // ‘Size & Pos’ settings page
 
 	if (!asX || !*asX || !IntFromString(newX, asX))
 		newX = gpConEmu->wndX;
@@ -2946,7 +2946,7 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		DoDesktopModeSwitch();
 	}
 
-	HWND hWnd2 = gpSetCls->GetPage(CSettings::thi_Appear); // Страничка с настройками
+	HWND hWnd2 = gpSetCls->GetPage(thi_Appear); // Страничка с настройками
 	if (hWnd2)
 	{
 		EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
@@ -2957,7 +2957,7 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		gpSetCls->checkDlgButton(hWnd2, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
 	}
 
-	hWnd2 = gpSetCls->GetPage(CSettings::thi_SizePos); // Страничка с настройками
+	hWnd2 = gpSetCls->GetPage(thi_SizePos); // Страничка с настройками
 	if (hWnd2)
 	{
 		gpSetCls->checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
@@ -2985,7 +2985,7 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	}
 
 
-	HWND hTabsPg = gpSetCls->GetPage(CSettings::thi_Appear); // Страничка с настройками
+	HWND hTabsPg = gpSetCls->GetPage(thi_Appear); // Страничка с настройками
 	if (hTabsPg)
 	{
 		gpSetCls->checkDlgButton(hTabsPg, cbHideCaptionAlways, gpSet->isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
@@ -3013,8 +3013,8 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 
 	//if (hWnd2)
 	//	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
-	if (gpSetCls->GetPage(CSettings::thi_Appear))
-		SetDlgItemInt(gpSetCls->GetPage(CSettings::thi_Appear), tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
+	if (gpSetCls->GetPage(thi_Appear))
+		SetDlgItemInt(gpSetCls->GetPage(thi_Appear), tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 
 	// Save current rect, JIC
 	if (ghWnd)
@@ -4180,10 +4180,10 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	//	VCon->RCon()->SyncGui2Window();
 	//}
 
-	//if (gpSetCls->GetPage(CSettings::thi_SizePos))
+	//if (gpSetCls->GetPage(thi_SizePos))
 	//{
 	//	bool canEditWindowSizes = (inMode == wmNormal);
-	//	HWND hSizePos = gpSetCls->GetPage(CSettings::thi_SizePos);
+	//	HWND hSizePos = gpSetCls->GetPage(thi_SizePos);
 	//	EnableWindow(GetDlgItem(hSizePos, tWndWidth), canEditWindowSizes);
 	//	EnableWindow(GetDlgItem(hSizePos, tWndHeight), canEditWindowSizes);
 	//}

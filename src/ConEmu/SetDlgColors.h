@@ -34,9 +34,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define getG(inColorref) (byte)((inColorref) >> 8)
 #define getB(inColorref) (byte)((inColorref) >> 16)
 
+class CSetPgBase;
+
 class CSetDlgColors
 {
 protected:
+	friend class CSetPgBase;
+
 	static const int MAX_COLOR_EDT_ID; // c31
 	static BOOL gbLastColorsOk; // FALSE
 	static ColorPalette gLastColors; // {}

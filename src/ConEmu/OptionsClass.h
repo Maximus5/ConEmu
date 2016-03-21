@@ -41,6 +41,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetDlgButtons.h"
 #include "SetDlgColors.h"
 #include "SetDlgFonts.h"
+#include "SetPgBase.h"
+
+#define BALLOON_MSG_TIMERID 101
 
 class CBackground;
 class CBackgroundInfo;
@@ -183,48 +186,14 @@ class CSettings
 		//CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);
 	public:
 
-		//HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hCmdTasks, hViews, hInfo, hDebug, hUpdate, hSelection;
-		enum TabHwndIndex {
-			thi_Fonts = 0,     // "Main"
-			thi_SizePos,      //   "Size & Pos"
-			thi_Appear,         //   "Appearance"
-			thi_Backgr,       //   "Background"
-			thi_Confirm,      //   "Confirmations"
-			thi_Taskbar,      //   "Task bar"
-			thi_Update,       //   "Update"
-			thi_Startup,      // "Startup"
-			thi_Tasks,        //   "Tasks"
-			thi_Comspec,      //   "ComSpec"
-			thi_Environment,  //   "Environment"
-			thi_Ext,          // "Features"
-			thi_Cursor,       //   "Text cursor"
-			thi_Colors,       //   "Colors"
-			thi_Transparent,  //   "Transparency"
-			thi_Tabs,         //   "Tabs"
-			thi_Status,       //   "Status bar"
-			thi_Apps,         //   "App distinct"
-			thi_Integr,       // "Integration"
-			thi_DefTerm,      //   "Default terminal"
-			thi_Keys,         // "Keys & Macro"
-			thi_KeybMouse,    //   "Controls"
-			thi_MarkCopy,     //   "Mark & Copy"
-			thi_Paste,        //   "Paste"
-			thi_Hilight,      //   "Highlight"
-			thi_Far,          // "Far Manager"
-			thi_FarMacro,     //   "Far macros"
-			thi_Views,        //   "Views"
-			thi_Info,         // "Info"
-			thi_Debug,        //   "Debug"
-			//
-			thi_Last
-		};
 		HWND GetActivePage();
+		CSetPgBase* GetActivePageObj();
 		HWND GetPage(TabHwndIndex nPage);
+		CSetPgBase* GetPageObj(TabHwndIndex nPage);
 		TabHwndIndex GetPageId(HWND hPage);
 
 	private:
-		// mh_Tabs moved to the m_Pages
-		int  mn_LastActivedTab;
+		TabHwndIndex m_LastActivePageId;
 
 	public:
 		//static void CenterDialog(HWND hWnd2);
@@ -232,8 +201,6 @@ class CSettings
 		DWORD BalloonStyle();
 		// IDD_SETTINGS
 		static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		// Вкладки настроек: IDD_SPG_FONTS, IDD_SPG_FEATURE, и т.д.
-		static INT_PTR CALLBACK pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		//
 		void debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl);
 		void debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile);
@@ -491,55 +458,7 @@ class CSettings
 		};
 		void debugLogCommand(HWND hWnd2, LogCommandsData* apData);
 
-		enum ConEmuSetupItemType
-		{
-			sit_Bool      = 1,
-			sit_Byte      = 2,
-			sit_Char      = 3,
-			sit_Long      = 4,
-			sit_ULong     = 5,
-			sit_Rect      = 6,
-			sit_FixString = 7,
-			sit_VarString = 8,
-			sit_MSZString = 9,
-			sit_FixData   = 10,
-			sit_Fonts     = 11,
-			sit_FontsAndRaster = 12,
-		};
-		struct ConEmuSetupItem
-		{
-			//DWORD nDlgID; // ID диалога
-			DWORD nItemID; // ID контрола в диалоге, 0 - последний элемент в списке
-			ConEmuSetupItemType nDataType; // Тип данных
-
-			void* pData; // Ссылка на элемент в gpSet
-			size_t nDataSize; // Размер или maxlen, если pData фиксированный
-
-			ConEmuSetupItemType nListType; // Тип данных в pListData
-			const void* pListData; // Для DDLB - можно задать список
-			size_t nListItems; // количество элементов в списке
-
-			#ifdef _DEBUG
-			BOOL bFound; // для отладки корректности настройки
-			#endif
-
-			//wchar_t sItemName[32]; // Имя элемента в настройке (reg/xml)
-		};
-		struct ConEmuSetupPages
-		{
-			int              PageID;       // Dialog ID
-			int              Level;        // 0, 1
-			wchar_t          PageName[64]; // Label in treeview
-			TabHwndIndex     PageIndex;    // mh_Tabs[...]
-			bool             Collapsed;
-			// Filled after creation
-			bool             DpiChanged;
-			HTREEITEM        hTI;
-			ConEmuSetupItem* pItems;
-			HWND             hPage;
-			CDpiForDialog*   pDpiAware;
-			CDynDialog*      pDialog;
-		};
+		friend class CSetPgBase;
 		CDynDialog *mp_Dialog;
 		ConEmuSetupPages *m_Pages;
 		int mn_PagesCount;
@@ -550,5 +469,7 @@ class CSettings
 		CDpiForDialog* mp_DpiDistinct2;
 		void ProcessDpiChange(ConEmuSetupPages* p);
 		TabHwndIndex GetPageId(HWND hPage, ConEmuSetupPages** pp);
+		const ConEmuSetupPages* GetPageData(TabHwndIndex nPage);
+		TabHwndIndex GetPageIdByDialogId(UINT DialogID);
 		int GetDialogDpi();
 };

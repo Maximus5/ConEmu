@@ -495,6 +495,7 @@
       <File RelativePath=".\SetDlgColors.cpp" />
       <File RelativePath=".\SetDlgFonts.cpp" />
       <File RelativePath=".\SetDlgLists.cpp" />
+      <File RelativePath=".\SetPgBase.cpp" />
       <File RelativePath=".\Status.cpp" />
       <File RelativePath=".\TabBar.cpp" />
       <File RelativePath=".\TabCtrlBase.cpp" />
@@ -644,6 +645,7 @@
       <File RelativePath=".\SetDlgColors.h" />
       <File RelativePath=".\SetDlgFonts.h" />
       <File RelativePath=".\SetDlgLists.h" />
+      <File RelativePath=".\SetPgBase.h" />
       <File RelativePath=".\SetTypes.h" />
       <File RelativePath=".\Status.h" />
       <File RelativePath=".\TabBar.h" />

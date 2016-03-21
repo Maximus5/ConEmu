@@ -1036,6 +1036,7 @@
     <ClCompile Include="SetDlgColors.cpp" />
     <ClCompile Include="SetDlgFonts.cpp" />
     <ClCompile Include="SetDlgLists.cpp" />
+    <ClCompile Include="SetPgBase.cpp" />
     <ClCompile Include="Status.cpp" />
     <ClCompile Include="TabBar.cpp" />
     <ClCompile Include="TabCtrlBase.cpp" />
@@ -1182,6 +1183,7 @@
     <ClInclude Include="SetDlgColors.h" />
     <ClInclude Include="SetDlgFonts.h" />
     <ClInclude Include="SetDlgLists.h" />
+    <ClInclude Include="SetPgBase.h" />
     <ClInclude Include="SetTypes.h" />
     <ClInclude Include="Status.h" />
     <ClInclude Include="TabBar.h" />

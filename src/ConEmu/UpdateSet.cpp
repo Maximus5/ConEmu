@@ -63,7 +63,7 @@ void ConEmuUpdateSettings::SetUpdateVerLocation(LPCWSTR asNewIniLocation)
 
 	if (gpSetCls && ghOpWnd)
 	{
-		HWND hUpdate = gpSetCls->GetPage(CSettings::thi_Update);
+		HWND hUpdate = gpSetCls->GetPage(thi_Update);
 		if (hUpdate)
 			SetDlgItemText(hUpdate, tUpdateVerLocation, gpSet->UpdSet.UpdateVerLocation());
 	}

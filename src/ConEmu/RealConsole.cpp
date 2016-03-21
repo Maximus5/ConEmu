@@ -2331,7 +2331,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 		}
 	}
 
-	if (gpSetCls->GetPage(gpSetCls->thi_Debug) && gpSetCls->m_ActivityLoggingType == glt_Input)
+	if (gpSetCls->GetPage(thi_Debug) && gpSetCls->m_ActivityLoggingType == glt_Input)
 	{
 		//INPUT_RECORD *prCopy = (INPUT_RECORD*)calloc(sizeof(INPUT_RECORD),1);
 		CESERVER_REQ_PEEKREADINFO* pCopy = (CESERVER_REQ_PEEKREADINFO*)malloc(sizeof(CESERVER_REQ_PEEKREADINFO));
@@ -2342,7 +2342,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 			pCopy->cPeekRead = 'S';
 			pCopy->cUnicode = 'W';
 			pCopy->Buffer[0] = *piRec;
-			PostMessage(gpSetCls->GetPage(gpSetCls->thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
+			PostMessage(gpSetCls->GetPage(thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
 		}
 	}
 

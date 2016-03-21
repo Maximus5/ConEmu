@@ -75,7 +75,7 @@ int CSetDlgFonts::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 
 	DWORD bAlmostMonospace = CFontMgr::IsAlmostMonospace(lplf->lfFaceName, (LPTEXTMETRIC)lpntm /*lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight*/) ? 1 : 0;
 
-	HWND hMainPg = gpSetCls->GetPage(CSettings::thi_Fonts);
+	HWND hMainPg = gpSetCls->GetPage(thi_Fonts);
 	if (SendDlgItemMessage(hMainPg, tFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) lplf->lfFaceName)==-1)
 	{
 		int nIdx;
@@ -162,7 +162,7 @@ DWORD CSetDlgFonts::EnumFontsThread(LPVOID apArg)
 
 	DeleteDC(hdc);
 
-	HWND hMainPg = gpSetCls->GetPage(CSettings::thi_Fonts);
+	HWND hMainPg = gpSetCls->GetPage(thi_Fonts);
 	if (hMainPg)
 	{
 		for (size_t sz=0; sz<countof(CFontMgr::szRasterSizes) && CFontMgr::szRasterSizes[sz].cy; sz++)
@@ -185,13 +185,13 @@ DWORD CSetDlgFonts::EnumFontsThread(LPVOID apArg)
 
 	// Если шустрый юзер успел переключиться на вкладку "Views" до окончания
 	// загрузки шрифтов - послать в диалог сообщение "Считать список из [thi_Fonts]"
-	HWND hViewsPg = gpSetCls->GetPage(CSettings::thi_Views);
+	HWND hViewsPg = gpSetCls->GetPage(thi_Views);
 	if (hViewsPg)
 		PostMessage(hViewsPg, gpSetCls->mn_MsgLoadFontFromMain, 0, 0);
-	HWND hTabsPg = gpSetCls->GetPage(CSettings::thi_Tabs);
+	HWND hTabsPg = gpSetCls->GetPage(thi_Tabs);
 	if (hTabsPg)
 		PostMessage(hTabsPg, gpSetCls->mn_MsgLoadFontFromMain, 0, 0);
-	HWND hStatusPg = gpSetCls->GetPage(CSettings::thi_Status);
+	HWND hStatusPg = gpSetCls->GetPage(thi_Status);
 	if (hStatusPg)
 		PostMessage(hStatusPg, gpSetCls->mn_MsgLoadFontFromMain, 0, 0);
 

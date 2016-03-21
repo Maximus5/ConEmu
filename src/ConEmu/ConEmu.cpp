@@ -2158,7 +2158,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.hGuiWnd = ghWnd;
 	m_GuiInfo.nGuiPID = GetCurrentProcessId();
 
-	m_GuiInfo.nLoggingType = gpSetCls->GetPage(gpSetCls->thi_Debug) ? gpSetCls->m_ActivityLoggingType : glt_None;
+	m_GuiInfo.nLoggingType = gpSetCls->GetPage(thi_Debug) ? gpSetCls->m_ActivityLoggingType : glt_None;
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0) ; // ((gpSet->isUseInjects == BST_CHECKED) ? 1 : (gpSet->isUseInjects == BST_INDETERMINATE) ? 3 : 0);
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_UseTrueColor,(gpSet->isTrueColorer ? CECF_UseTrueColor : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessAnsi,(gpSet->isProcessAnsi ? CECF_ProcessAnsi : 0));
@@ -4977,7 +4977,7 @@ void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 		return;
 	}
 
-	HWND hInfo = gpSetCls->GetPage(gpSetCls->thi_Info);
+	HWND hInfo = gpSetCls->GetPage(thi_Info);
 
 	CVConGuard VCon;
 	wchar_t szNo[32], szFlags[255]; szNo[0] = szFlags[0] = 0;
@@ -5049,7 +5049,7 @@ void CConEmuMain::UpdateCursorInfo(const ConsoleInfoArg* pInfo)
 {
 	mp_Status->OnConsoleChanged(&pInfo->sbi, &pInfo->cInfo, &pInfo->TopLeft, false);
 
-	if (!gpSetCls->GetPage(gpSetCls->thi_Info)) return;
+	if (!gpSetCls->GetPage(thi_Info)) return;
 
 	if (!isMainThread())
 	{
@@ -5063,7 +5063,7 @@ void CConEmuMain::UpdateCursorInfo(const ConsoleInfoArg* pInfo)
 	_wsprintf(szCursor, SKIPLEN(countof(szCursor)) _T("%ix%i, %i %s"),
 		(int)pInfo->crCursor.X, (int)pInfo->crCursor.Y,
 		pInfo->cInfo.dwSize, pInfo->cInfo.bVisible ? L"vis" : L"hid");
-	SetDlgItemText(gpSetCls->GetPage(gpSetCls->thi_Info), tCursorPos, szCursor);
+	SetDlgItemText(gpSetCls->GetPage(thi_Info), tCursorPos, szCursor);
 }
 
 void CConEmuMain::UpdateSizes()
@@ -5071,7 +5071,7 @@ void CConEmuMain::UpdateSizes()
 	POINT ptCur = {}; GetCursorPos(&ptCur);
 	HWND hPoint = WindowFromPoint(ptCur);
 
-	HWND hInfo = gpSetCls->GetPage(gpSetCls->thi_Info);
+	HWND hInfo = gpSetCls->GetPage(thi_Info);
 
 	if (!ghOpWnd || !hInfo)
 	{

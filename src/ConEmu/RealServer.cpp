@@ -1142,7 +1142,7 @@ CESERVER_REQ* CRealServer::cmdOnCreateProc(LPVOID pInst, CESERVER_REQ* pIn, UINT
 	BOOL lbDos = (pIn->OnCreateProc.nImageBits == 16)
 		&& (pIn->OnCreateProc.nImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE);
 
-	if (gpSetCls->GetPage(gpSetCls->thi_Debug))
+	if (gpSetCls->GetPage(thi_Debug))
 	{
 		DebugLogShellActivity *shl = (DebugLogShellActivity*)calloc(sizeof(DebugLogShellActivity),1);
 		shl->nParentPID = pIn->hdr.nSrcPID;
@@ -1162,7 +1162,7 @@ CESERVER_REQ* CRealServer::cmdOnCreateProc(LPVOID pInst, CESERVER_REQ* pIn, UINT
 		shl->hStdOut = (DWORD)pIn->OnCreateProc.hStdOut;
 		shl->hStdErr = (DWORD)pIn->OnCreateProc.hStdErr;
 
-		PostMessage(gpSetCls->GetPage(gpSetCls->thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_SHELL_MAGIC, (LPARAM)shl);
+		PostMessage(gpSetCls->GetPage(thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_SHELL_MAGIC, (LPARAM)shl);
 	}
 
 	if (pIn->OnCreateProc.nImageBits > 0)
@@ -1208,7 +1208,7 @@ CESERVER_REQ* CRealServer::cmdOnPeekReadInput(LPVOID pInst, CESERVER_REQ* pIn, U
 
 	DEBUGSTRCMD(L"GUI recieved CECMD_PEEKREADINFO\n");
 
-	if (gpSetCls->GetPage(gpSetCls->thi_Debug) && gpSetCls->m_ActivityLoggingType == glt_Input)
+	if (gpSetCls->GetPage(thi_Debug) && gpSetCls->m_ActivityLoggingType == glt_Input)
 	{
 		if (nDataSize >= sizeof(CESERVER_REQ_PEEKREADINFO))
 		{
@@ -1216,7 +1216,7 @@ CESERVER_REQ* CRealServer::cmdOnPeekReadInput(LPVOID pInst, CESERVER_REQ* pIn, U
 			if (pCopy)
 			{
 				memmove(pCopy, &pIn->PeekReadInfo, nDataSize);
-				PostMessage(gpSetCls->GetPage(gpSetCls->thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
+				PostMessage(gpSetCls->GetPage(thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_INPUT_MAGIC, (LPARAM)pCopy);
 			}
 		}
 	}

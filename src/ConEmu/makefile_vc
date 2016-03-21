@@ -127,6 +127,7 @@ $(INTDIR)\SetDlgColors.obj \
 $(INTDIR)\SetDlgFonts.obj \
 $(INTDIR)\SetDlgLists.obj \
 $(INTDIR)\SetEnvVar.obj \
+$(INTDIR)\SetPgBase.obj \
 $(INTDIR)\Status.obj \
 $(INTDIR)\TabBar.obj \
 $(INTDIR)\TabCtrlBase.obj \
@@ -486,6 +487,8 @@ $(INTDIR)\SetDlgFonts.obj: SetDlgFonts.cpp SetDlgFonts.h
 $(INTDIR)\SetDlgLists.obj: SetDlgLists.cpp SetDlgLists.h
 
 $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
+
+$(INTDIR)\SetPgBase.obj: SetPgBase.cpp SetPgBase.h
 
 $(INTDIR)\Status.obj: Status.cpp
 

@@ -84,9 +84,9 @@ void TrayIcon::SettingsChanged()
 			RemoveTrayIcon();
 	}
 
-	if (gpSetCls->GetPage(gpSetCls->thi_Taskbar))
+	if (gpSetCls->GetPage(thi_Taskbar))
 	{
-		CheckDlgButton(gpSetCls->GetPage(gpSetCls->thi_Taskbar), cbAlwaysShowTrayIcon, bShowTSA);
+		CheckDlgButton(gpSetCls->GetPage(thi_Taskbar), cbAlwaysShowTrayIcon, bShowTSA);
 	}
 }
 

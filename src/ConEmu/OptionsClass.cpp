@@ -73,6 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetColorPalette.h"
 #include "SetCmdTask.h"
 #include "SetDlgLists.h"
+#include "SetPgBase.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
@@ -91,7 +92,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define COUNTER_REFRESH 5000
 
 
-#define BALLOON_MSG_TIMERID 101
 #define FAILED_FONT_TIMEOUT 3000
 #define FAILED_CONFONT_TIMEOUT 30000
 #define FAILED_SELMOD_TIMEOUT 5000
@@ -188,7 +188,7 @@ CSettings::CSettings()
 	gpSet->mb_CharSetWasSet = FALSE;
 	mb_TabHotKeyRegistered = FALSE;
 	//hMain = hExt = hFar = hTabs = hKeys = hColors = hCmdTasks = hViews = hInfo = hDebug = hUpdate = hSelection = NULL;
-	mn_LastActivedTab = 0;
+	m_LastActivePageId = thi_Last;
 	hwndTip = NULL; hwndBalloon = NULL;
 	mb_IgnoreCmdGroupEdit = mb_IgnoreCmdGroupList = false;
 	hConFontDlg = NULL; hwndConFontBalloon = NULL; bShowConFontError = FALSE; sConFontError[0] = 0; bConsoleFontChecked = FALSE;
@@ -555,8 +555,16 @@ void CSettings::InitVars_Pages()
 		{},
 	};
 
+	#ifdef _DEBUG
+	for (size_t i = 0; Pages[i].DialogID; i++)
+	{
+		_ASSERTE(Pages[i].PageIndex == (TabHwndIndex)i);
+	}
+	#endif
+
 	mn_PagesCount = ((int)countof(Pages) - 1);
-	_ASSERTE(mn_PagesCount>0 && Pages[mn_PagesCount].PageID==0);
+	_ASSERTE(mn_PagesCount>0 && Pages[mn_PagesCount].DialogID==0);
+	_ASSERTE(mn_PagesCount == thi_Last);
 
 	m_Pages = (ConEmuSetupPages*)malloc(sizeof(Pages));
 	memmove(m_Pages, Pages, sizeof(Pages));
@@ -981,7 +989,7 @@ void CSettings::SearchForControls()
 
 	SetCursor(LoadCursor(NULL,IDC_WAIT));
 
-	for (i = 0; m_Pages[i].PageID; i++)
+	for (i = 0; m_Pages[i].DialogID; i++)
 	{
 		if (m_Pages[i].hPage && IsWindowVisible(m_Pages[i].hPage))
 		{
@@ -1020,11 +1028,11 @@ void CSettings::SearchForControls()
 			iFrom = 0; iTo = iTab;
 		}
 
-		for (i = iFrom; (i < iTo) && m_Pages[i].PageID; i++)
+		for (i = iFrom; (i < iTo) && m_Pages[i].DialogID; i++)
 		{
 			if (m_Pages[i].hPage == NULL)
 			{
-				CreatePage(&(m_Pages[i]));
+				CSetPgBase::CreatePage(&(m_Pages[i]));
 			}
 
 			iCurTab = i;
@@ -1388,9 +1396,9 @@ LRESULT CSettings::OnInitDialog()
 		HWND hTree = GetDlgItem(ghOpWnd, tvSetupCategories);
 		HTREEITEM hLastRoot = TVI_ROOT;
 		bool bNeedExpand = true;
-		for (size_t i = 0; m_Pages[i].PageID; i++)
+		for (size_t i = 0; m_Pages[i].DialogID; i++)
 		{
-			if ((m_Pages[i].PageID == IDD_SPG_UPDATE) && !gpConEmu->isUpdateAllowed())
+			if ((m_Pages[i].DialogID == IDD_SPG_UPDATE) && !gpConEmu->isUpdateAllowed())
 			{
 				m_Pages[i].hTI = NULL;
 				continue;
@@ -1427,7 +1435,7 @@ LRESULT CSettings::OnInitDialog()
 
 		mb_IgnoreSelPage = false;
 
-		CreatePage(&(m_Pages[0]));
+		CSetPgBase::CreatePage(&(m_Pages[0]));
 
 		apiShowWindow(m_Pages[0].hPage, SW_SHOW);
 	}
@@ -5962,14 +5970,14 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 			if (mb_IgnoreSelPage)
 				return 0;
 			HWND hCurrent = NULL;
-			for (size_t i = 0; m_Pages[i].PageID; i++)
+			for (size_t i = 0; m_Pages[i].DialogID; i++)
 			{
 				if (p->itemNew.hItem == m_Pages[i].hTI)
 				{
 					if (m_Pages[i].hPage == NULL)
 					{
 						SetCursor(LoadCursor(NULL,IDC_WAIT));
-						CreatePage(&(m_Pages[i]));
+						CSetPgBase::CreatePage(&(m_Pages[i]));
 					}
 					else
 					{
@@ -5977,7 +5985,7 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 						ProcessDpiChange(&(m_Pages[i]));
 					}
 					ShowWindow(m_Pages[i].hPage, SW_SHOW);
-					mn_LastActivedTab = gpSetCls->m_Pages[i].PageID;
+					m_LastActivePageId = gpSetCls->m_Pages[i].PageIndex;
 				}
 				else if (p->itemOld.hItem == m_Pages[i].hTI)
 				{
@@ -5993,6 +6001,7 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 	return 0;
 }
 
+/// IdShowPage is DialogID (IDD_SPG_FONTS, etc.)
 void CSettings::Dialog(int IdShowPage /*= 0*/)
 {
 	if (!ghOpWnd || !IsWindow(ghOpWnd))
@@ -6034,14 +6043,17 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 
 	apiShowWindow(ghOpWnd, SW_SHOWNORMAL);
 
-	if (!IdShowPage && gpSetCls->mn_LastActivedTab)
-		IdShowPage = gpSetCls->mn_LastActivedTab;
+	TabHwndIndex showPage = thi_Last;
+	if (IdShowPage)
+		showPage = gpSetCls->GetPageIdByDialogId(IdShowPage);
+	if ((showPage == thi_Last) && (gpSetCls->m_LastActivePageId != thi_Last))
+		showPage = gpSetCls->m_LastActivePageId;
 
-	if (IdShowPage != 0)
+	if (showPage != thi_Last)
 	{
-		for (size_t i = 0; gpSetCls->m_Pages[i].PageID; i++)
+		for (size_t i = 0; gpSetCls->m_Pages[i].DialogID; i++)
 		{
-			if (gpSetCls->m_Pages[i].PageID == IdShowPage)
+			if (gpSetCls->m_Pages[i].PageIndex == showPage)
 			{
 				//PostMessage(GetDlgItem(ghOpWnd, tvSetupCategories), TVM_SELECTITEM, TVGN_CARET, (LPARAM)gpSetCls->m_Pages[i].hTI);
 				SelectTreeItem(GetDlgItem(ghOpWnd, tvSetupCategories), gpSetCls->m_Pages[i].hTI, true);
@@ -6531,7 +6543,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 			if (gpSetCls->mp_DpiAware && gpSetCls->mp_DpiAware->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
 			{
 				// Refresh the visible page and mark 'to be changed' others
-				for (ConEmuSetupPages* p = gpSetCls->m_Pages; p->PageID; p++)
+				for (ConEmuSetupPages* p = gpSetCls->m_Pages; p->DialogID; p++)
 				{
 					if (p->hPage)
 					{
@@ -6615,387 +6627,6 @@ INT_PTR CSettings::OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 	}
 
 	return TRUE;
-}
-
-// Общая DlgProc на _все_ вкладки
-INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-	static bool bSkipSelChange = false;
-
-	ConEmuSetupPages* pPage = NULL;
-	TabHwndIndex pgId = gpSetCls->GetPageId(hWnd2, &pPage);
-
-	if (pPage && pPage->pDpiAware && pPage->pDpiAware->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
-	{
-		return TRUE;
-	}
-
-	if ((messg == WM_INITDIALOG) || (messg == gpSetCls->mn_ActivateTabMsg))
-	{
-		if (!lParam)
-		{
-			_ASSERTE(lParam!=0);
-			return 0;
-		}
-
-		ConEmuSetupPages* p = (ConEmuSetupPages*)lParam;
-		bool bInitial = (messg == WM_INITDIALOG);
-
-		if (bInitial)
-		{
-			_ASSERTE(p->PageIndex>=0 && p->hPage==NULL);
-			p->hPage = hWnd2;
-
-			HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
-			RECT rcClient; GetWindowRect(hPlace, &rcClient);
-			MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
-			if (p->pDpiAware)
-				p->pDpiAware->Attach(hWnd2, ghOpWnd, p->pDialog);
-			MoveWindowRect(hWnd2, rcClient);
-		}
-		else
-		{
-			_ASSERTE(p->PageIndex>=0 && p->hPage==hWnd2);
-			// обновить контролы страничек при активации вкладки
-		}
-
-		switch (p->PageID)
-		{
-		case IDD_SPG_FONTS:
-			gpSetCls->OnInitDialog_Main(hWnd2, bInitial);
-			break;
-		case IDD_SPG_SIZEPOS:
-			{
-			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_WndSizePos(hWnd2, bInitial);
-			bSkipSelChange = lbOld;
-			}
-			break;
-		case IDD_SPG_BACKGR:
-			gpSetCls->OnInitDialog_Background(hWnd2, bInitial);
-			break;
-		case IDD_SPG_APPEAR:
-			gpSetCls->OnInitDialog_Show(hWnd2, bInitial);
-			break;
-		case IDD_SPG_CONFIRM:
-			gpSetCls->OnInitDialog_Confirm(hWnd2, bInitial);
-			break;
-		case IDD_SPG_TASKBAR:
-			gpSetCls->OnInitDialog_Taskbar(hWnd2, bInitial);
-			break;
-		case IDD_SPG_CURSOR:
-			gpSetCls->OnInitDialog_Cursor(hWnd2, bInitial);
-			break;
-		case IDD_SPG_STARTUP:
-			gpSetCls->OnInitDialog_Startup(hWnd2, bInitial);
-			break;
-		case IDD_SPG_FEATURE:
-			gpSetCls->OnInitDialog_Ext(hWnd2, bInitial);
-			break;
-		case IDD_SPG_COMSPEC:
-			gpSetCls->OnInitDialog_Comspec(hWnd2, bInitial);
-			break;
-		case IDD_SPG_ENVIRONMENT:
-			gpSetCls->OnInitDialog_Environment(hWnd2, bInitial);
-			break;
-		case IDD_SPG_MARKCOPY:
-			gpSetCls->OnInitDialog_MarkCopy(hWnd2, bInitial);
-			break;
-		case IDD_SPG_PASTE:
-			gpSetCls->OnInitDialog_Paste(hWnd2, bInitial);
-			break;
-		case IDD_SPG_HIGHLIGHT:
-			gpSetCls->OnInitDialog_Hilight(hWnd2, bInitial);
-			break;
-		case IDD_SPG_FEATURE_FAR:
-			gpSetCls->OnInitDialog_Far(hWnd2, bInitial);
-			break;
-		case IDD_SPG_FARMACRO:
-			gpSetCls->OnInitDialog_FarMacro(hWnd2, bInitial);
-			break;
-		case IDD_SPG_KEYS:
-			{
-			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_Keys(hWnd2, bInitial);
-			bSkipSelChange = lbOld;
-			}
-			break;
-		case IDD_SPG_CONTROL:
-			gpSetCls->OnInitDialog_Control(hWnd2, bInitial);
-			break;
-		case IDD_SPG_TABS:
-			gpSetCls->OnInitDialog_Tabs(hWnd2, bInitial);
-			break;
-		case IDD_SPG_STATUSBAR:
-			gpSetCls->OnInitDialog_Status(hWnd2, bInitial);
-			break;
-		case IDD_SPG_COLORS:
-			gpSetCls->OnInitDialog_Color(hWnd2, bInitial);
-			break;
-		case IDD_SPG_TRANSPARENT:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Transparent(hWnd2);
-			break;
-		case IDD_SPG_TASKS:
-			{
-			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_Tasks(hWnd2, bInitial);
-			bSkipSelChange = lbOld;
-			}
-			break;
-		case IDD_SPG_APPDISTINCT:
-			gpSetCls->OnInitDialog_Apps(hWnd2, bInitial);
-			break;
-		case IDD_SPG_INTEGRATION:
-			gpSetCls->OnInitDialog_Integr(hWnd2, bInitial);
-			break;
-		case IDD_SPG_DEFTERM:
-			{
-			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_DefTerm(hWnd2, bInitial);
-			bSkipSelChange = lbOld;
-			}
-			break;
-		case IDD_SPG_VIEWS:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Views(hWnd2);
-			break;
-		case IDD_SPG_DEBUG:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Debug(hWnd2);
-			break;
-		case IDD_SPG_UPDATE:
-			gpSetCls->OnInitDialog_Update(hWnd2, bInitial);
-			break;
-		case IDD_SPG_INFO:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Info(hWnd2);
-			break;
-
-		default:
-			// Чтобы не забыть добавить вызов инициализации
-			_ASSERTE(FALSE && "Unhandled PageID!");
-		} // switch (((ConEmuSetupPages*)lParam)->PageID)
-
-		if (bInitial)
-		{
-			gpSetCls->RegisterTipsFor(hWnd2);
-		}
-	}
-	else if ((messg == WM_HELP) || (messg == HELP_WM_HELP))
-	{
-		_ASSERTE(messg == WM_HELP);
-		return gpSetCls->wndOpProc(hWnd2, messg, wParam, lParam);
-	}
-	else if (pgId == thi_Apps)
-	{
-		// Страничка "App distinct" в некотором смысле особенная.
-		// У многих контролов ИД дублируются с другими вкладками.
-		return gpSetCls->pageOpProc_Apps(hWnd2, NULL, messg, wParam, lParam);
-	}
-	else if (pgId == thi_Integr)
-	{
-		return gpSetCls->pageOpProc_Integr(hWnd2, messg, wParam, lParam);
-	}
-	else if (pgId == thi_Startup)
-	{
-		return gpSetCls->pageOpProc_Start(hWnd2, messg, wParam, lParam);
-	}
-	else
-	// All other messages
-	switch (messg)
-	{
-		#ifdef _DEBUG
-		case WM_INITDIALOG:
-			// Должно быть обработано выше
-			_ASSERTE(messg!=WM_INITDIALOG);
-			break;
-		#endif
-
-		case WM_COMMAND:
-			{
-				switch (HIWORD(wParam))
-				{
-				case BN_CLICKED:
-					gpSetCls->OnButtonClicked(hWnd2, wParam, lParam);
-					return 0;
-
-				case EN_CHANGE:
-					if (!bSkipSelChange)
-						gpSetCls->OnEditChanged(hWnd2, wParam, lParam);
-					return 0;
-
-				case CBN_EDITCHANGE:
-				case CBN_SELCHANGE/*LBN_SELCHANGE*/:
-					if (!bSkipSelChange)
-						gpSetCls->OnComboBox(hWnd2, wParam, lParam);
-					return 0;
-
-				case LBN_DBLCLK:
-					gpSetCls->OnListBoxDblClk(hWnd2, wParam, lParam);
-					return 0;
-
-				case CBN_KILLFOCUS:
-					if (gpSetCls->mn_LastChangingFontCtrlId && LOWORD(wParam) == gpSetCls->mn_LastChangingFontCtrlId)
-					{
-						_ASSERTE(pgId == thi_Fonts);
-						PostMessage(hWnd2, gpSetCls->mn_MsgRecreateFont, gpSetCls->mn_LastChangingFontCtrlId, 0);
-						gpSetCls->mn_LastChangingFontCtrlId = 0;
-						return 0;
-					}
-					break;
-
-				default:
-					if (HIWORD(wParam) == 0xFFFF && LOWORD(wParam) == lbConEmuHotKeys)
-					{
-						gpSetCls->OnHotkeysNotify(hWnd2, wParam, 0);
-					}
-				} // switch (HIWORD(wParam))
-			} // WM_COMMAND
-			break;
-		case WM_MEASUREITEM:
-			return gpSetCls->OnMeasureFontItem(hWnd2, messg, wParam, lParam);
-		case WM_DRAWITEM:
-			return gpSetCls->OnDrawFontItem(hWnd2, messg, wParam, lParam);
-		case WM_CTLCOLORSTATIC:
-			{
-				WORD wID = GetDlgCtrlID((HWND)lParam);
-
-				if ((wID >= c0 && wID <= MAX_COLOR_EDT_ID) || (wID >= c32 && wID <= c38))
-					return gpSetCls->ColorCtlStatic(hWnd2, wID, (HWND)lParam);
-
-				return 0;
-			} // WM_CTLCOLORSTATIC
-		case WM_HSCROLL:
-			{
-				if ((pgId == thi_Backgr) && (HWND)lParam == GetDlgItem(hWnd2, slDarker))
-				{
-					int newV = SendDlgItemMessage(hWnd2, slDarker, TBM_GETPOS, 0, 0);
-
-					if (newV != gpSet->bgImageDarker)
-					{
-						gpSetCls->SetBgImageDarker(newV, true);
-
-						//gpSet->bgImageDarker = newV;
-						//TCHAR tmp[10];
-						//_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%i", gpSet->bgImageDarker);
-						//SetDlgItemText(hWnd2, tDarker, tmp);
-
-						//// Картинку может установить и плагин
-						//if (gpSet->isShowBgImage && gpSet->sBgImage[0])
-						//	gpSetCls->LoadBackgroundFile(gpSet->sBgImage);
-						//else
-						//	gpSetCls->NeedBackgroundUpdate();
-
-						//gpConEmu->Update(true);
-					}
-				}
-				else if ((pgId == thi_Transparent) && (HWND)lParam == GetDlgItem(hWnd2, slTransparent))
-				{
-					int newV = SendDlgItemMessage(hWnd2, slTransparent, TBM_GETPOS, 0, 0);
-
-					if (newV != gpSet->nTransparent)
-					{
-						checkDlgButton(hWnd2, cbTransparent, (newV!=MAX_ALPHA_VALUE) ? BST_CHECKED : BST_UNCHECKED);
-						gpSet->nTransparent = newV;
-						if (!gpSet->isTransparentSeparate)
-							SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->nTransparent);
-						gpConEmu->OnTransparent();
-					}
-				}
-				else if ((pgId == thi_Transparent) && (HWND)lParam == GetDlgItem(hWnd2, slTransparentInactive))
-				{
-					int newV = SendDlgItemMessage(hWnd2, slTransparentInactive, TBM_GETPOS, 0, 0);
-
-					if (gpSet->isTransparentSeparate && (newV != gpSet->nTransparentInactive))
-					{
-						//checkDlgButton(hWnd2, cbTransparentInactive, (newV!=MAX_ALPHA_VALUE) ? BST_CHECKED : BST_UNCHECKED);
-						gpSet->nTransparentInactive = newV;
-						gpConEmu->OnTransparent();
-					}
-				}
-			} // WM_HSCROLL
-			break;
-
-		case WM_NOTIFY:
-			{
-				if (((NMHDR*)lParam)->code == TTN_GETDISPINFO)
-				{
-					return gpSetCls->ProcessTipHelp(hWnd2, messg, wParam, lParam);
-				}
-				else switch (((NMHDR*)lParam)->idFrom)
-				{
-				case lbActivityLog:
-					if (!bSkipSelChange)
-						return gpSetCls->OnActivityLogNotify(hWnd2, wParam, lParam);
-					break;
-				case lbConEmuHotKeys:
-					if (!bSkipSelChange)
-						return gpSetCls->OnHotkeysNotify(hWnd2, wParam, lParam);
-					break;
-				}
-				return 0;
-			} // WM_NOTIFY
-			break;
-
-		case WM_TIMER:
-
-			if (wParam == BALLOON_MSG_TIMERID)
-			{
-				KillTimer(hWnd2, BALLOON_MSG_TIMERID);
-				SendMessage(gpSetCls->hwndBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&gpSetCls->tiBalloon);
-				SendMessage(gpSetCls->hwndTip, TTM_ACTIVATE, TRUE, 0);
-			}
-			break;
-
-		default:
-		{
-			if (messg == gpSetCls->mn_MsgRecreateFont)
-			{
-				gpSetCls->RecreateFont(wParam);
-			}
-			else if (messg == gpSetCls->mn_MsgLoadFontFromMain)
-			{
-				if (pgId == thi_Views)
-					gpSetCls->OnInitDialog_CopyFonts(hWnd2, tThumbsFontName, tTilesFontName, 0);
-				else if (pgId == thi_Tabs)
-					gpSetCls->OnInitDialog_CopyFonts(hWnd2, tTabFontFace, 0);
-				else if (pgId == thi_Status)
-					gpSetCls->OnInitDialog_CopyFonts(hWnd2, tStatusFontFace, 0);
-
-			}
-			else if (messg == gpSetCls->mn_MsgUpdateCounter)
-			{
-				gpSetCls->PostUpdateCounters(true);
-			}
-			else if (messg == DBGMSG_LOG_ID && pgId == thi_Debug)
-			{
-				if (wParam == DBGMSG_LOG_SHELL_MAGIC)
-				{
-					bool lbOld = bSkipSelChange; bSkipSelChange = true;
-					DebugLogShellActivity *pShl = (DebugLogShellActivity*)lParam;
-					gpSetCls->debugLogShell(hWnd2, pShl);
-					bSkipSelChange = lbOld;
-				} // DBGMSG_LOG_SHELL_MAGIC
-				else if (wParam == DBGMSG_LOG_INPUT_MAGIC)
-				{
-					bool lbOld = bSkipSelChange; bSkipSelChange = true;
-					CESERVER_REQ_PEEKREADINFO* pInfo = (CESERVER_REQ_PEEKREADINFO*)lParam;
-					gpSetCls->debugLogInfo(hWnd2, pInfo);
-					bSkipSelChange = lbOld;
-				} // DBGMSG_LOG_INPUT_MAGIC
-				else if (wParam == DBGMSG_LOG_CMD_MAGIC)
-				{
-					bool lbOld = bSkipSelChange; bSkipSelChange = true;
-					LogCommandsData* pCmd = (LogCommandsData*)lParam;
-					gpSetCls->debugLogCommand(hWnd2, pCmd);
-					bSkipSelChange = lbOld;
-				} // DBGMSG_LOG_CMD_MAGIC
-			} // if (messg == DBGMSG_LOG_ID && hWnd2 == gpSetCls->hDebug)
-		} // default:
-	}
-
-	return 0;
 }
 
 INT_PTR CSettings::pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -10423,24 +10054,6 @@ bool CSettings::isDialogMessage(MSG &Msg)
 	return false;
 }
 
-HWND CSettings::CreatePage(ConEmuSetupPages* p)
-{
-	if (mp_DpiAware)
-	{
-		if (!p->pDpiAware)
-			p->pDpiAware = new CDpiForDialog();
-		p->DpiChanged = false;
-	}
-	wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Creating child dialog ID=%u", p->PageID);
-	LogString(szLog);
-	SafeDelete(p->pDialog);
-
-	p->pDialog = CDynDialog::ShowDialog(p->PageID, ghOpWnd, pageOpProc, (LPARAM)p);
-	p->hPage = p->pDialog ? p->pDialog->mh_Dlg : NULL;
-
-	return p->hPage;
-}
-
 void CSettings::ProcessDpiChange(ConEmuSetupPages* p)
 {
 	if (!p->hPage || !p->pDpiAware || !mp_DpiAware)
@@ -10453,7 +10066,7 @@ void CSettings::ProcessDpiChange(ConEmuSetupPages* p)
 	p->DpiChanged = false;
 	p->pDpiAware->SetDialogDPI(mp_DpiAware->GetCurDpi(), &rcClient);
 
-	if ((p->PageID == thi_Apps) && mp_DpiDistinct2)
+	if ((p->DialogID == thi_Apps) && mp_DpiDistinct2)
 	{
 		HWND hHolder = GetDlgItem(p->hPage, tAppDistinctHolder);
 		RECT rcPos = {}; GetWindowRect(hHolder, &rcPos);
@@ -10463,52 +10076,111 @@ void CSettings::ProcessDpiChange(ConEmuSetupPages* p)
 	}
 }
 
+const ConEmuSetupPages* CSettings::GetPageData(TabHwndIndex nPage)
+{
+	const ConEmuSetupPages* pData = NULL;
+
+	if (m_Pages)
+	{
+		_ASSERTE((thi_Fonts == (TabHwndIndex)0) && (nPage >= thi_Fonts) && (nPage < thi_Last));
+
+		if ((nPage >= thi_Fonts) && (nPage < thi_Last))
+		{
+			if (m_Pages[nPage].PageIndex == nPage)
+			{
+				pData = &(m_Pages[nPage]);
+			}
+			else
+			{
+				_ASSERTE(m_Pages[nPage].PageIndex == nPage);
+
+				for (const ConEmuSetupPages* p = m_Pages; p->DialogID; p++)
+				{
+					if (p->PageIndex == nPage)
+					{
+						pData = p;
+						break;
+					}
+				}
+			}
+		}
+	}
+
+	if (!pData)
+	{
+		_ASSERTE(FALSE && "Invalid nPage identifier!");
+		return NULL;
+	}
+
+	return pData;
+}
+
+TabHwndIndex CSettings::GetPageIdByDialogId(UINT DialogID)
+{
+	TabHwndIndex pageId = thi_Last;
+
+	if (!ghOpWnd || !m_Pages)
+	{
+		_ASSERTE(ghOpWnd && m_Pages);
+	}
+	else
+	{
+		for (const ConEmuSetupPages* p = m_Pages; p->DialogID; p++)
+		{
+			if (p->DialogID == DialogID)
+			{
+				pageId = p->PageIndex;
+				break;
+			}
+		}
+	}
+
+	return pageId;
+}
+
 HWND CSettings::GetActivePage()
 {
-	HWND hPage = NULL;
-
-	if (ghOpWnd && m_Pages)
-	{
-		for (const ConEmuSetupPages* p = m_Pages; p->PageID; p++)
-		{
-			if (p->PageID == mn_LastActivedTab)
-			{
-				if (IsWindowVisible(p->hPage))
-					hPage = p->hPage;
-				break;
-			}
-		}
-	}
-
-	return hPage;
+	const ConEmuSetupPages* p = (m_LastActivePageId != thi_Last) ? GetPageData(m_LastActivePageId) : NULL;
+	if (!p)
+		return NULL;
+	if (!p->hPage || !IsWindowVisible(p->hPage))
+		return NULL;
+	return p->hPage;
 }
 
-HWND CSettings::GetPage(CSettings::TabHwndIndex nPage)
+CSetPgBase* CSettings::GetActivePageObj()
 {
-	HWND hPage = NULL;
-
-	if (ghOpWnd && m_Pages && (nPage >= thi_Fonts) && (nPage < thi_Last))
-	{
-		for (const ConEmuSetupPages* p = m_Pages; p->PageID; p++)
-		{
-			if (p->PageIndex == nPage)
-			{
-				hPage = p->hPage;
-				break;
-			}
-		}
-	}
-
-	return hPage;
+	const ConEmuSetupPages* p = (m_LastActivePageId != thi_Last) ? GetPageData(m_LastActivePageId) : NULL;
+	if (!p)
+		return NULL;
+	if (!p->hPage || !IsWindowVisible(p->hPage))
+		return NULL;
+	return p->pPage;
 }
 
-CSettings::TabHwndIndex CSettings::GetPageId(HWND hPage, ConEmuSetupPages** pp)
+HWND CSettings::GetPage(TabHwndIndex nPage)
+{
+	const ConEmuSetupPages* p = GetPageData(nPage);
+	if (!p)
+		return NULL;
+	return p->hPage;
+}
+
+CSetPgBase* CSettings::GetPageObj(TabHwndIndex nPage)
+{
+	const ConEmuSetupPages* p = GetPageData(nPage);
+	if (!p)
+		return NULL;
+	return p->pPage;
+}
+
+TabHwndIndex CSettings::GetPageId(HWND hPage, ConEmuSetupPages** pp)
 {
 	TabHwndIndex pgId = thi_Last;
 
 	if (ghOpWnd && m_Pages && hPage)
 	{
-		for (ConEmuSetupPages* p = m_Pages; p->PageID; p++)
+		for (ConEmuSetupPages* p = m_Pages; p->DialogID; p++)
 		{
 			if (p->hPage == hPage)
 			{
@@ -10523,7 +10195,7 @@ CSettings::TabHwndIndex CSettings::GetPageId(HWND hPage, ConEmuSetupPages** pp)
 	return pgId;
 }
 
-CSettings::TabHwndIndex CSettings::GetPageId(HWND hPage)
+TabHwndIndex CSettings::GetPageId(HWND hPage)
 {
 	return GetPageId(hPage, NULL);
 }
@@ -10540,7 +10212,7 @@ void CSettings::ClearPages()
 		mp_DpiDistinct2->Detach();
 	SafeDelete(mp_DlgDistinct2);
 
-	for (ConEmuSetupPages *p = m_Pages; p->PageID; p++)
+	for (ConEmuSetupPages *p = m_Pages; p->DialogID; p++)
 	{
 		if (p->pDpiAware)
 		{
