@@ -1,6 +1,6 @@
 ﻿param([string]$filename,[string]$classname)
 
-$year = 2016
+$year = (Get-Date).Year
 $licence = "
 /*
 Copyright (c) $year Maximus5
@@ -40,7 +40,7 @@ class $classname
 {
 public:
 `t$classname();
-`t~$classname();
+`tvirtual ~$classname();
 
 public:
 `t// Methods
