@@ -6268,7 +6268,7 @@ void CConEmuSize::DoDesktopModeSwitch()
 		{
 			gpConEmu->opt.DesktopMode.Clear();
 
-			HWND hExt = gpSetCls->GetPage(gpSetCls->thi_Ext);
+			HWND hExt = gpSetCls->GetPage(gpSetCls->thi_Features);
 
 			if (ghOpWnd && hExt)
 			{

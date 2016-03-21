@@ -149,7 +149,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 		case IDD_SPG_STARTUP:
 			gpSetCls->OnInitDialog_Startup(hDlg, bInitial);
 			break;
-		case IDD_SPG_FEATURE:
+		case IDD_SPG_FEATURES:
 			gpSetCls->OnInitDialog_Ext(hDlg, bInitial);
 			break;
 		case IDD_SPG_COMSPEC:

@@ -533,7 +533,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_TASKS,       1, L"Tasks",          thi_Tasks      /* OnInitDialog_CmdTasks */},
 		{IDD_SPG_COMSPEC,     1, L"ComSpec",        thi_Comspec    /* OnInitDialog_Comspec */},
 		{IDD_SPG_ENVIRONMENT, 1, L"Environment",    thi_Environment/* OnInitDialog_Environment */},
-		{IDD_SPG_FEATURE,     0, L"Features",       thi_Ext        /* OnInitDialog_Ext */},
+		{IDD_SPG_FEATURES,    0, L"Features",       thi_Features   /* OnInitDialog_Ext */},
 		{IDD_SPG_CURSOR,      1, L"Text cursor",    thi_Cursor     /* OnInitDialog_Cursor */},
 		{IDD_SPG_COLORS,      1, L"Colors",         thi_Colors     /* OnInitDialog_Color */},
 		{IDD_SPG_TRANSPARENT, 1, L"Transparency",   thi_Transparent/* OnInitDialog_Transparent */},
@@ -8283,7 +8283,7 @@ void CSettings::UpdateLogLocation()
 	LPCWSTR pszName = lsLogPath.IsEmpty() ? NULL : PointToName(lsLogPath.ms_Val);
 	if (pszName)
 		*(wchar_t*)pszName = 0;
-	SetDlgItemText(GetPage(thi_Ext), tDebugLogDir, lsLogPath);
+	SetDlgItemText(GetPage(thi_Features), tDebugLogDir, lsLogPath);
 }
 
 void CSettings::PostUpdateCounters(bool bPosted)

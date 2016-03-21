@@ -46,7 +46,7 @@ enum TabHwndIndex
 	thi_Tasks,        //   "Tasks"
 	thi_Comspec,      //   "ComSpec"
 	thi_Environment,  //   "Environment"
-	thi_Ext,          // "Features"
+	thi_Features,     // "Features"
 	thi_Cursor,       //   "Text cursor"
 	thi_Colors,       //   "Colors"
 	thi_Transparent,  //   "Transparency"
