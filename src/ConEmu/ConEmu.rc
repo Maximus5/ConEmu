@@ -883,13 +883,13 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Add to %PATH% environment variable",gbAddToPath,4,1,375,28
-    CONTROL         "Add %ConEmuDir% to %PATH%",cbAddConEmu2Path,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,14,150,8
+    CONTROL         "Add %ConEmuDir% to %PATH%",cbAddConEmu2Path,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,14,176,8
     CONTROL         "Add %ConEmuBaseDir% to %PATH%",cbAddConEmuBase2Path,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,165,14,152,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,14,176,8
     GROUPBOX        "Set up environment variables, cmd.exe aliases, codepage",gbSetAlias,4,35,375,195
     LTEXT           "Here you may set up your environment variables, default code page, and so on...\r\nOne line may have only one command! You may comment lines with # sign.",stSetCommands,10,47,363,17,SS_NOPREFIX
-    EDITTEXT        tSetCommands,9,111,309,114,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
-    LTEXT           "set HOME=C:\\My Tools\\Home\r\nset PATH=%ConEmuBaseDir%\\Scripts;%PATH%\r\nchcp utf-8\r\nalias st=start $* -cur_console:n\r\nalias sudo=ConEmuC -c $* -new_console:a",stSetCommands2,22,65,192,40,SS_NOPREFIX
+    EDITTEXT        tSetCommands,9,111,365,114,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
+    LTEXT           "set HOME=C:\\My Tools\\Home\r\nset PATH=%ConEmuBaseDir%\\Scripts;%PATH%\r\nchcp utf-8\r\nalias st=start $* -cur_console:n\r\nalias sudo=ConEmuC -c $* -new_console:a",stSetCommands2,22,65,352,40,SS_NOPREFIX
 END
 
 IDD_SPG_MARKCOPY DIALOGEX 0, 0, 381, 242
