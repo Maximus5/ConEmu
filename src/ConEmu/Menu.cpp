@@ -592,7 +592,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 		}
 		else if (itm.ItemType == CmdTaskPopupItem::eSetupTasks)
 		{
-			CSettings::Dialog(IDD_SPG_CMDTASKS);
+			CSettings::Dialog(IDD_SPG_TASKS);
 		}
 		else if (itm.ItemType == CmdTaskPopupItem::eClearHistory)
 		{

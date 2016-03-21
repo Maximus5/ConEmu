@@ -185,9 +185,9 @@ class CSettings
 
 		//HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hCmdTasks, hViews, hInfo, hDebug, hUpdate, hSelection;
 		enum TabHwndIndex {
-			thi_Main = 0,     // "Main"
+			thi_Fonts = 0,     // "Main"
 			thi_SizePos,      //   "Size & Pos"
-			thi_Show,         //   "Appearance"
+			thi_Appear,         //   "Appearance"
 			thi_Backgr,       //   "Background"
 			thi_Confirm,      //   "Confirmations"
 			thi_Taskbar,      //   "Task bar"
@@ -232,7 +232,7 @@ class CSettings
 		DWORD BalloonStyle();
 		// IDD_SETTINGS
 		static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		// Вкладки настроек: IDD_SPG_MAIN, IDD_SPG_FEATURE, и т.д.
+		// Вкладки настроек: IDD_SPG_FONTS, IDD_SPG_FEATURE, и т.д.
 		static INT_PTR CALLBACK pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		//
 		void debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl);
@@ -308,7 +308,7 @@ class CSettings
 		static void InvalidateCtrl(HWND hCtrl, BOOL bErase);
 		// IDD_SETTINGS
 		LRESULT OnInitDialog();
-		// OnInitDialogPage_t: IDD_SPG_MAIN, и т.д.
+		// OnInitDialogPage_t: IDD_SPG_FONTS, и т.д.
 		LRESULT OnInitDialog_Main(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_Background(HWND hWnd2, bool abInitial);
 		LRESULT OnInitDialog_WndSizePos(HWND hWnd2, bool abInitial);

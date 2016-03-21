@@ -2946,7 +2946,7 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		DoDesktopModeSwitch();
 	}
 
-	HWND hWnd2 = gpSetCls->GetPage(CSettings::thi_Show); // Страничка с настройками
+	HWND hWnd2 = gpSetCls->GetPage(CSettings::thi_Appear); // Страничка с настройками
 	if (hWnd2)
 	{
 		EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
@@ -2985,7 +2985,7 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	}
 
 
-	HWND hTabsPg = gpSetCls->GetPage(CSettings::thi_Show); // Страничка с настройками
+	HWND hTabsPg = gpSetCls->GetPage(CSettings::thi_Appear); // Страничка с настройками
 	if (hTabsPg)
 	{
 		gpSetCls->checkDlgButton(hTabsPg, cbHideCaptionAlways, gpSet->isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
@@ -3013,8 +3013,8 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 
 	//if (hWnd2)
 	//	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
-	if (gpSetCls->GetPage(CSettings::thi_Show))
-		SetDlgItemInt(gpSetCls->GetPage(CSettings::thi_Show), tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
+	if (gpSetCls->GetPage(CSettings::thi_Appear))
+		SetDlgItemInt(gpSetCls->GetPage(CSettings::thi_Appear), tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 
 	// Save current rect, JIC
 	if (ghWnd)

@@ -1038,7 +1038,7 @@ void CConEmuChild::CreateDbgDlg()
 		}
 		else
 		{
-			hDlgTest = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_SPG_MAIN), mh_WndDC, DbgChildDlgProc);
+			hDlgTest = CreateDialog(g_hInstance, MAKEINTRESOURCE(IDD_SPG_FONTS), mh_WndDC, DbgChildDlgProc);
 			if (hDlgTest)
 			{
 				SetWindowPos(hDlgTest, NULL, 100,100, 0,0, SWP_NOSIZE|SWP_NOZORDER);

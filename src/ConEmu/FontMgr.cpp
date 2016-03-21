@@ -1036,7 +1036,7 @@ void CFontMgr::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD
 	{
 		wchar_t szSize[10];
 		_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", gpSet->FontSizeY);
-		SetDlgItemText(gpSetCls->GetPage(CSettings::thi_Main), tFontSizeY, szSize);
+		SetDlgItemText(gpSetCls->GetPage(CSettings::thi_Fonts), tFontSizeY, szSize);
 		gpSetCls->UpdateFontInfo();
 		gpSetCls->ShowFontErrorTip(szFontError);
 	}
@@ -1140,7 +1140,7 @@ bool CFontMgr::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,..
 			{
 				gpSetCls->UpdateFontInfo();
 
-				HWND hMainPg = gpSetCls->GetPage(CSettings::thi_Main);
+				HWND hMainPg = gpSetCls->GetPage(CSettings::thi_Fonts);
 				if (hMainPg)
 				{
 					wchar_t temp[16];
@@ -1628,7 +1628,7 @@ CEFONT CFontMgr::CreateFontIndirectMy(LOGFONT *inFont)
 	//lfOutPrecision = OUT_RASTER_PRECIS,
 	szFontError[0] = 0;
 
-	HWND hMainPg = gpSetCls->GetPage(CSettings::thi_Main);
+	HWND hMainPg = gpSetCls->GetPage(CSettings::thi_Fonts);
 
 	// Поиск по шрифтам рисованным ConEmu
 	CustomFont* pFont = NULL;
@@ -2051,7 +2051,7 @@ void CFontMgr::RecreateBorderFont(const LOGFONT *inFont)
 	{
 		gpSet->FontSizeX2 = 0;
 
-		HWND hMainPg = gpSetCls->GetPage(CSettings::thi_Main);
+		HWND hMainPg = gpSetCls->GetPage(CSettings::thi_Fonts);
 		if (hMainPg)
 			CSetDlgLists::SelectStringExact(hMainPg, tFontSizeX2, L"0");
 	}
@@ -2202,7 +2202,7 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 {
 	LOGFONT LF = {0};
 
-	HWND hMainPg = gpSetCls->GetPage(CSettings::thi_Main);
+	HWND hMainPg = gpSetCls->GetPage(CSettings::thi_Fonts);
 
 	if (abReset || (ghOpWnd == NULL))
 	{

@@ -521,16 +521,16 @@ void CSettings::InitVars_Pages()
 	ConEmuSetupPages Pages[] =
 	{
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
-		{IDD_SPG_MAIN,        0, L"Main",           thi_Main       /* OnInitDialog_Main */},
-		{IDD_SPG_WNDSIZEPOS,  1, L"Size & Pos",     thi_SizePos    /* OnInitDialog_WndSizePos */},
-		{IDD_SPG_SHOW,        1, L"Appearance",     thi_Show       /* OnInitDialog_Show */},
-		{IDD_SPG_BACK,        1, L"Background",     thi_Backgr     /* OnInitDialog_Background */},
+		{IDD_SPG_FONTS,       0, L"Main",           thi_Fonts      /* OnInitDialog_Main */},
+		{IDD_SPG_SIZEPOS,     1, L"Size & Pos",     thi_SizePos    /* OnInitDialog_WndSizePos */},
+		{IDD_SPG_APPEAR,      1, L"Appearance",     thi_Appear     /* OnInitDialog_Show */},
+		{IDD_SPG_BACKGR,      1, L"Background",     thi_Backgr     /* OnInitDialog_Background */},
 		{IDD_SPG_TABS,        1, L"Tab bar",        thi_Tabs       /* OnInitDialog_Tabs */},
 		{IDD_SPG_CONFIRM,     1, L"Confirm",        thi_Confirm    /* OnInitDialog_Confirm */},
 		{IDD_SPG_TASKBAR,     1, L"Task bar",       thi_Taskbar    /* OnInitDialog_Taskbar */},
 		{IDD_SPG_UPDATE,      1, L"Update",         thi_Update     /* OnInitDialog_Update */},
 		{IDD_SPG_STARTUP,     0, L"Startup",        thi_Startup    /* OnInitDialog_Startup */},
-		{IDD_SPG_CMDTASKS,    1, L"Tasks",          thi_Tasks      /* OnInitDialog_CmdTasks */},
+		{IDD_SPG_TASKS,       1, L"Tasks",          thi_Tasks      /* OnInitDialog_CmdTasks */},
 		{IDD_SPG_COMSPEC,     1, L"ComSpec",        thi_Comspec    /* OnInitDialog_Comspec */},
 		{IDD_SPG_ENVIRONMENT, 1, L"Environment",    thi_Environment/* OnInitDialog_Environment */},
 		{IDD_SPG_FEATURE,     0, L"Features",       thi_Ext        /* OnInitDialog_Ext */},
@@ -1284,7 +1284,7 @@ LRESULT CSettings::OnInitDialog()
 {
 	//_ASSERTE(!hMain && !hColors && !hCmdTasks && !hViews && !hExt && !hFar && !hInfo && !hDebug && !hUpdate && !hSelection);
 	//hMain = hExt = hFar = hTabs = hKeys = hViews = hColors = hCmdTasks = hInfo = hDebug = hUpdate = hSelection = NULL;
-	_ASSERTE(m_Pages && (m_Pages[0].PageIndex==thi_Main) && !m_Pages[0].hPage /*...*/);
+	_ASSERTE(m_Pages && (m_Pages[0].PageIndex==thi_Fonts) && !m_Pages[0].hPage /*...*/);
 	ClearPages();
 
 	_ASSERTE(mp_ImgBtn==NULL);
@@ -1686,7 +1686,7 @@ LRESULT CSettings::OnInitDialog_Taskbar(HWND hWnd2, bool abInitial)
 	return 0;
 }
 
-// IDD_SPG_WNDSIZEPOS / thi_SizePos
+// IDD_SPG_SIZEPOS / thi_SizePos
 LRESULT CSettings::OnInitDialog_WndSizePos(HWND hWnd2, bool abInitial)
 {
 	_ASSERTE(GetPage(thi_SizePos) == hWnd2);
@@ -2956,7 +2956,7 @@ LRESULT CSettings::OnInitDialog_Tabs(HWND hWnd2, bool abInitial)
 	if (CSetDlgFonts::EnumFontsFinished())  // Если шрифты уже считаны
 	{
 		if (abInitial)
-			OnInitDialog_CopyFonts(hWnd2, tTabFontFace, 0); // можно скопировать список с вкладки [thi_Main]
+			OnInitDialog_CopyFonts(hWnd2, tTabFontFace, 0); // можно скопировать список с вкладки [thi_Fonts]
 	}
 
 	UINT nVal = gpSet->nTabFontHeight;
@@ -2988,7 +2988,7 @@ LRESULT CSettings::OnInitDialog_Status(HWND hWnd2, bool abInitial)
 	SetDlgItemText(hWnd2, tStatusFontFace, gpSet->sStatusFontFace);
 
 	if (CSetDlgFonts::EnumFontsFinished())  // Если шрифты уже считаны
-		OnInitDialog_CopyFonts(hWnd2, tStatusFontFace, 0); // можно скопировать список с вкладки [thi_Main]
+		OnInitDialog_CopyFonts(hWnd2, tStatusFontFace, 0); // можно скопировать список с вкладки [thi_Fonts]
 
 	UINT nVal = gpSet->nStatusFontHeight;
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hWnd2, tStatusFontHeight), CSetDlgLists::eFSizesSmall, nVal, true);
@@ -4160,7 +4160,7 @@ LRESULT CSettings::OnInitDialog_Views(HWND hWnd2)
 	SetDlgItemText(hWnd2, tTilesFontName, gpSet->ThSet.Tiles.sFontName);
 
 	if (CSetDlgFonts::EnumFontsFinished())  // Если шрифты уже считаны
-		OnInitDialog_CopyFonts(hWnd2, tThumbsFontName, tTilesFontName, 0); // можно скопировать список с вкладки [thi_Main]
+		OnInitDialog_CopyFonts(hWnd2, tThumbsFontName, tTilesFontName, 0); // можно скопировать список с вкладки [thi_Fonts]
 
 	UINT nVal;
 
@@ -4226,7 +4226,7 @@ void CSettings::OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...)
 	DWORD bAlmostMonospace;
 	int nIdx, nCount, i;
 	wchar_t szFontName[128]; // не должно быть более 32
-	HWND hMainPg = GetPage(thi_Main);
+	HWND hMainPg = GetPage(thi_Fonts);
 	nCount = SendDlgItemMessage(hMainPg, tFontFace, CB_GETCOUNT, 0, 0);
 
 #ifdef _DEBUG
@@ -6661,20 +6661,20 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 
 		switch (p->PageID)
 		{
-		case IDD_SPG_MAIN:
+		case IDD_SPG_FONTS:
 			gpSetCls->OnInitDialog_Main(hWnd2, bInitial);
 			break;
-		case IDD_SPG_WNDSIZEPOS:
+		case IDD_SPG_SIZEPOS:
 			{
 			bool lbOld = bSkipSelChange; bSkipSelChange = true;
 			gpSetCls->OnInitDialog_WndSizePos(hWnd2, bInitial);
 			bSkipSelChange = lbOld;
 			}
 			break;
-		case IDD_SPG_BACK:
+		case IDD_SPG_BACKGR:
 			gpSetCls->OnInitDialog_Background(hWnd2, bInitial);
 			break;
-		case IDD_SPG_SHOW:
+		case IDD_SPG_APPEAR:
 			gpSetCls->OnInitDialog_Show(hWnd2, bInitial);
 			break;
 		case IDD_SPG_CONFIRM:
@@ -6736,7 +6736,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 			if (bInitial)
 				gpSetCls->OnInitDialog_Transparent(hWnd2);
 			break;
-		case IDD_SPG_CMDTASKS:
+		case IDD_SPG_TASKS:
 			{
 			bool lbOld = bSkipSelChange; bSkipSelChange = true;
 			gpSetCls->OnInitDialog_Tasks(hWnd2, bInitial);
@@ -6838,7 +6838,7 @@ INT_PTR CSettings::pageOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPar
 				case CBN_KILLFOCUS:
 					if (gpSetCls->mn_LastChangingFontCtrlId && LOWORD(wParam) == gpSetCls->mn_LastChangingFontCtrlId)
 					{
-						_ASSERTE(pgId == thi_Main);
+						_ASSERTE(pgId == thi_Fonts);
 						PostMessage(hWnd2, gpSetCls->mn_MsgRecreateFont, gpSetCls->mn_LastChangingFontCtrlId, 0);
 						gpSetCls->mn_LastChangingFontCtrlId = 0;
 						return 0;
@@ -8958,7 +8958,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			// In this case, the "tool" is the entire parent window.
 			tiBalloon.cbSize = 44; // был sizeof(TOOLINFO);
 			tiBalloon.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
-			tiBalloon.hwnd = GetPage(thi_Main);
+			tiBalloon.hwnd = GetPage(thi_Fonts);
 			tiBalloon.hinst = g_hInstance;
 			static wchar_t szAsterisk[] = L"*"; // eliminate GCC warning
 			tiBalloon.lpszText = szAsterisk;
@@ -9055,7 +9055,7 @@ void CSettings::RecreateFont(WORD wFromID)
 
 	if (ghOpWnd && (wFromID == tFontFace))
 	{
-		HWND hMainPg = gpSetCls->GetPage(thi_Main);
+		HWND hMainPg = gpSetCls->GetPage(thi_Fonts);
 		if (hMainPg)
 		{
 			wchar_t szSize[10];
@@ -9067,7 +9067,7 @@ void CSettings::RecreateFont(WORD wFromID)
 
 void CSettings::ShowFontErrorTip(LPCTSTR asInfo)
 {
-	ShowErrorTip(asInfo, gpSetCls->GetPage(thi_Main), tFontFace, gpFontMgr->szFontError, countof(gpFontMgr->szFontError),
+	ShowErrorTip(asInfo, gpSetCls->GetPage(thi_Fonts), tFontFace, gpFontMgr->szFontError, countof(gpFontMgr->szFontError),
 	             gpSetCls->hwndBalloon, &gpSetCls->tiBalloon, gpSetCls->hwndTip, FAILED_FONT_TIMEOUT);
 }
 
@@ -10487,7 +10487,7 @@ HWND CSettings::GetPage(CSettings::TabHwndIndex nPage)
 {
 	HWND hPage = NULL;
 
-	if (ghOpWnd && m_Pages && (nPage >= thi_Main) && (nPage < thi_Last))
+	if (ghOpWnd && m_Pages && (nPage >= thi_Fonts) && (nPage < thi_Last))
 	{
 		for (const ConEmuSetupPages* p = m_Pages; p->PageID; p++)
 		{
