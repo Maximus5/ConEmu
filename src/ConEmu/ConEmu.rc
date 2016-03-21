@@ -672,35 +672,35 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Miscellaneous options",gbFeatureMisc,4,1,375,27
-    CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,110,8
-    CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,13,99,8
-    CONTROL         "Focus in child windows",cbFocusInChildWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,13,87,8
+    CONTROL         "Auto register fonts",cbAutoRegFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,133,8
+    CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,13,118,8
+    CONTROL         "Focus in child windows",cbFocusInChildWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,267,13,110,8
     GROUPBOX        "CPU consuming",gbFeatureRetard,4,34,375,29
-    CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,47,110,8
-    CONTROL         "Retard inactive panes",cbRetardInactivePanes,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,47,99,8
+    CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,47,133,8
+    CONTROL         "Retard inactive panes",cbRetardInactivePanes,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,47,118,8
     GROUPBOX        "In-console options",gbFeatureInConsole,4,69,375,86
-    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,82,110,8
-    CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,81,76,8
-    PUSHBUTTON      "...",bDosBoxSettings,212,79,13,11
-    CONTROL         "Use Clink in prompt",cbUseClink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,81,75,8
-    PUSHBUTTON      "...",cbClinkWebPage,306,79,13,11
-    CONTROL         "Suppress bells",cbSuppressBells,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,97,87,8
-    CONTROL         "ANSI X3.64 / xterm 256 colors",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,97,110,8
-    CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,128,97,99,8
-    CONTROL         "Log console output (*)",cbAnsiLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,111,110,8
-    EDITTEXT        tAnsiLogPath,128,109,191,12,ES_AUTOHSCROLL
+    CONTROL         "Inject ConEmuHk",cbUseInjects,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,82,133,8
+    CONTROL         "DosBox (DOS apps)",cbDosBox,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,81,100,8
+    PUSHBUTTON      "...",bDosBoxSettings,248,79,13,11
+    CONTROL         "Use Clink in prompt",cbUseClink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,267,81,93,8
+    PUSHBUTTON      "...",cbClinkWebPage,361,79,13,11
+    CONTROL         "Suppress bells",cbSuppressBells,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,267,97,110,8
+    CONTROL         "ANSI X3.64 / xterm 256 colors",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,97,133,8
+    CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,148,97,118,8
+    CONTROL         "Log console output (*)",cbAnsiLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,111,133,8
+    EDITTEXT        tAnsiLogPath,148,109,226,12,ES_AUTOHSCROLL
     CONTROL         "Process '-new_console' and '-cur_console' switches",cbProcessNewConArg,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,125,187,8
-    CONTROL         "Process 'start'",cbProcessCmdStart,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,125,88,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,125,254,8
+    CONTROL         "Process 'start'",cbProcessCmdStart,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,267,125,110,8
     GROUPBOX        "Debugging options",gbFeatureDebug,4,161,375,43
     CONTROL         "Exception handler (debug)",cbConsoleExceptionHandler,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,174,110,8
-    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,174,99,8
-    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,231,174,74,8
-    PUSHBUTTON      "...",bRealConsoleSettings,306,173,13,11
-    CONTROL         "Process Ctrl-Z in ReadConsole",cbProcessCtrlZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,139,113,8
-    CONTROL         "Internal LogFiles location",cbDebugLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,189,110,8
-    EDITTEXT        tDebugLogDir,128,187,191,12,ES_AUTOHSCROLL | ES_READONLY
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,174,133,8
+    CONTROL         "Debug steps in caption",cbDebugSteps,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,174,118,8
+    CONTROL         "Show real console",cbVisible,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,267,174,93,8
+    PUSHBUTTON      "...",bRealConsoleSettings,361,173,13,11
+    CONTROL         "Process Ctrl-Z in ReadConsole",cbProcessCtrlZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,139,133,8
+    CONTROL         "Internal LogFiles location",cbDebugLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,189,133,8
+    EDITTEXT        tDebugLogDir,148,187,226,12,ES_AUTOHSCROLL | ES_READONLY
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 381, 242
