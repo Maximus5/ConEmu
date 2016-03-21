@@ -708,33 +708,33 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Used command processor",gbComspec,4,1,375,126
+    GROUPBOX        "Used command processor",gbComspec,4,1,375,149
     CONTROL         "Auto (tcc - if installed, %ComSpec% - otherwise)",rbComspecAuto,
-                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,9,12,178,8
-    CONTROL         "%ComSpec% (env.var.)",rbComspecEnvVar,"Button",BS_AUTORADIOBUTTON,189,12,98,8
-    CONTROL         "cmd",rbComspecCmd,"Button",BS_AUTORADIOBUTTON,290,12,31,8
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,9,12,189,8
+    CONTROL         "%ComSpec% (env.var.)",rbComspecEnvVar,"Button",BS_AUTORADIOBUTTON,203,12,123,8
+    CONTROL         "cmd",rbComspecCmd,"Button",BS_AUTORADIOBUTTON,330,12,44,8
     CONTROL         "Explicit executable (env.var. of ConEmu.exe allowed)",rbComspecExplicit,
-                    "Button",BS_AUTORADIOBUTTON,9,25,308,8
-    EDITTEXT        tComspecExplicit,19,36,283,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",cbComspecExplicit,306,36,13,11
-    GROUPBOX        "Choose preferred command processor platform (bits)",gbComspecBits,9,51,252,28
-    CONTROL         "Same as OS",rbComspec_OSbit,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,63,54,8
-    CONTROL         "Same as running application",rbComspec_AppBit,"Button",BS_AUTORADIOBUTTON,80,63,112,8
-    CONTROL         "x32 always",rbComspec_x32,"Button",BS_AUTORADIOBUTTON,196,63,56,8
+                    "Button",BS_AUTORADIOBUTTON,9,26,364,8
+    EDITTEXT        tComspecExplicit,19,38,337,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",cbComspecExplicit,360,38,15,12
+    GROUPBOX        "Choose preferred command processor platform (bits)",gbComspecBits,10,57,217,52
+    CONTROL         "Same as OS",rbComspec_OSbit,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,18,70,130,8
+    CONTROL         "Same as running application",rbComspec_AppBit,"Button",BS_AUTORADIOBUTTON,18,82,150,8
+    CONTROL         "x32 always",rbComspec_x32,"Button",BS_AUTORADIOBUTTON,18,94,130,8
     CONTROL         "Set ComSpec environment variable for child processes to selected value",cbComspecUpdateEnv,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,84,309,8
-    PUSHBUTTON      "Test",cbComspecTest,269,60,50,14
-    LTEXT           "Cmd.exe output codepage:",stCmdOutputCP,11,100,94,8
-    COMBOBOX        lbCmdOutputCP,108,98,81,30,CBS_DROPDOWNLIST | WS_TABSTOP
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,117,364,8
+    PUSHBUTTON      "Test",cbComspecTest,170,79,50,14
+    LTEXT           "Cmd.exe output codepage:",stCmdOutputCP,241,67,130,8
+    COMBOBOX        lbCmdOutputCP,239,79,130,44,CBS_DROPDOWNLIST | WS_TABSTOP
     CONTROL         "Support UNC paths in cmd.exe (\\\\server\\share\\folder)",cbComspecUncPaths,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,114,309,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,131,364,8
     GROUPBOX        "Automatic attach of cmd && Tcc/Le to ConEmu (new window will be started if not found)",gbCmdAutoAttach,4,168,375,65
-    LTEXT           "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\nCurrent command stored in registry ‘AutoRun’ (HKLM value is not processed here):",stCmdAutoAttach,11,178,308,16
-    EDITTEXT        tCmdAutoAttach,9,197,308,13,ES_AUTOHSCROLL | ES_READONLY
-    CONTROL         "Force new ConEmu window",cbCmdAutorunNewWnd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,216,100,10
-    PUSHBUTTON      "Register ConEmu autorun",bCmdAutoRegister,126,213,100,14
-    PUSHBUTTON      "Unregister",bCmdAutoUnregister,230,213,50,14
-    PUSHBUTTON      "Clear",bCmdAutoClear,283,213,34,14
+    LTEXT           "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\nCurrent command stored in registry ‘AutoRun’ (HKLM value is not processed here):",stCmdAutoAttach,11,178,363,16
+    EDITTEXT        tCmdAutoAttach,9,197,364,13,ES_AUTOHSCROLL | ES_READONLY
+    CONTROL         "Force new ConEmu window",cbCmdAutorunNewWnd,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,216,119,10
+    PUSHBUTTON      "Register ConEmu autorun",bCmdAutoRegister,132,213,114,14
+    PUSHBUTTON      "Unregister",bCmdAutoUnregister,247,213,66,14
+    PUSHBUTTON      "Clear",bCmdAutoClear,316,213,57,14
 END
 
 IDD_SPG_FEATURE_FAR DIALOGEX 0, 0, 381, 242
