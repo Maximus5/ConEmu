@@ -437,7 +437,6 @@ struct Settings
 		bool isAntiAlias2;
 		// "FixFarBordersRanges" ==> ParseCharRanges(...)
 		// Default: "2013-25C4"; Example: "0410-044F;2013-25C4;"
-		TODO("Convert to binary ranges?");
 		BYTE mpc_CharAltFontRanges[0x10000];
 		int ParseCharRanges(LPCWSTR asRanges, BYTE (&Chars)[0x10000], BYTE abValue = TRUE);
 		wchar_t* CreateCharRanges(BYTE (&Chars)[0x10000]); // caller must free(result)
@@ -992,7 +991,6 @@ struct Settings
 		//reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
 		bool bHideInactiveConsoleTabs;
 
-		TODO("загрузка/сохранение bHideDisabledTabs");
 		bool bHideDisabledTabs;
 
 		//reg->Load(L"ShowFarWindows", bShowFarWindows);

@@ -65,6 +65,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetCmdTask.h"
 #include "SetColorPalette.h"
 
+TODO("Convert Settings::mpc_CharAltFontRanges to binary ranges?");
+TODO("Load/Save Settings::bHideDisabledTabs?");
 
 //#define DEBUGSTRFONT(s) DEBUGSTR(s)
 

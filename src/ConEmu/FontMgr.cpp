@@ -83,6 +83,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 
 
+TODO("m_CharWidth & m_CharABC are different for Bold or Italic?");
+
+
 const int CFontMgr::FontDefWidthMin = 0;
 const int CFontMgr::FontDefWidthMax = 99;
 const int CFontMgr::FontZoom100 = 10000;

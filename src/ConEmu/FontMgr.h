@@ -92,7 +92,6 @@ public:
 
 public:
 	CEFONT  mh_Font[MAX_FONT_STYLES], mh_Font2;
-	TODO("CharWidth & CharABC are different for Bold or Italic?");
 	WORD    m_CharWidth[0x10000];
 	ABC     m_CharABC[0x10000];
 
