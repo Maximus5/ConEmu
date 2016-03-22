@@ -752,6 +752,8 @@ struct Settings
 		//reg->Load(L"TabsOnTaskBar", m_isTabsOnTaskBar);
 		BYTE m_isTabsOnTaskBar; // 0 - ConEmu only, 1 - all tabs & all OS, 2 - all tabs & Win 7, 3 - DON'T SHOW
 		public:
+		enum TabsOnTaskbar { tot_ConEmuOnly = 0, tot_AllTabsAllOS = 1, tot_AllTabsWin7 = 2, tot_DontShow = 3};
+		TabsOnTaskbar GetRawTabsOnTaskBar() { return (TabsOnTaskbar)m_isTabsOnTaskBar; };
 		bool isTabsOnTaskBar();
 		bool isWindowOnTaskBar(bool bStrictOnly = false);
 		//void SetTabsOnTaskBar(BYTE nTabsOnTaskBar);
@@ -887,6 +889,7 @@ struct Settings
 		bool isMinOnLastTabClose();
 		bool isHideOnLastTabClose();
 		//reg->Load(L"Multi.MinByEsc", isMultiMinByEsc);
+		enum MultiMinByEsc { mbe_Never = 0, mbe_Always = 1, mbe_NoConsoles = 2 };
 		BYTE isMultiMinByEsc; // 0 - Never, 1 - Always, 2 - NoConsoles
 		//reg->Load(L"MapShiftEscToEsc", isMapShiftEscToEsc);
 		bool isMapShiftEscToEsc; // used only when isMultiMinByEsc==1 and only for console apps
