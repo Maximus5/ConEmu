@@ -2472,6 +2472,11 @@
       "ru": "Настройки по умолчанию",
       "id": 21 }
     ,
+    "lng_CurClrScheme": {
+      "en": "<Current color scheme>",
+      "ru": "<Текущая цветовая схема>",
+      "id": 22 }
+    ,
     "lng_DlgAbout": {
       "en": "About",
       "ru": "О программе",
@@ -2519,6 +2524,36 @@
       "ru": "код возврата",
       "zh": "退出代码",
       "id": 17 }
+    ,
+    "lng_PasteEnterConfirm": {
+      "en": [ "Warning!\n"
+            , "\n"
+            , "Pasting multi-line text involves\n"
+            , "sending <Enter> keypresses to console!\n"
+            , "\n"
+            , "Continue?" ],
+      "ru": [ "Внимание!\n"
+            , "\n"
+            , "Вставка многострочного текста приведёт\n"
+            , "к посылке в консоль нажатий <Enter>!\n"
+            , "\n"
+            , "Продолжить?" ],
+      "id": 23 }
+    ,
+    "lng_PasteLongConfirm": {
+      "en": [ "Warning!\n"
+            , "\n"
+            , "Pasting long text (%u chars) may make the console\n"
+            , "non-responsive until the paste finishes!\n"
+            , "\n"
+            , "Continue?" ],
+      "ru": [ "Внимание!\n"
+            , "\n"
+            , "Вставка длинного текста (%u символов) может сделать\n"
+            , "консоль недоступной пока не закончится вставка текста!\n"
+            , "\n"
+            , "Продолжить?" ],
+      "id": 24 }
     ,
     "lng_Search": {
       "en": "Search",
@@ -2761,13 +2796,15 @@
       "id": 2172 }
     ,
     "cbClipConfirmEnter": {
-      "en": "Confirm <Enter> keypress",
-      "zh": "确认<Enter>按键",
+      "en": "Multi-line paste: avoid unexpected command execution by <Enter> keypress",
+      "ru": "Вставка многострочного текста: избежать посылку в консоль нажатий <Enter>",
+      "_zh": "确认<Enter>按键",
       "id": 2171 }
     ,
     "cbClipConfirmLimit": {
-      "en": "Confirm pasting more than",
-      "zh": "确认粘贴多于",
+      "en": "Long text paste: avoid non-responsive console until the paste finishes",
+      "ru": "Вставка длинного текста: избежать «зависания» консоли до окончания вставки",
+      "_zh": "确认粘贴多于",
       "id": 2225 }
     ,
     "cbClipCtrlV": {
@@ -3182,6 +3219,7 @@
     ,
     "cbExtendFonts": {
       "en": "Extend fonts",
+      "ru": "Расширение шрифтов",
       "zh": "扩展字体",
       "id": 1576 }
     ,
@@ -3274,16 +3312,19 @@
     ,
     "cbFontAsDeviceUnits": {
       "en": "Treat font height as device units",
+      "ru": "Высота шрифта - device units",
       "zh": "把字体高度作为设备单位",
       "id": 2692 }
     ,
     "cbFontAuto": {
       "en": "Auto size (fixed console size in cells)",
+      "ru": "Масштабировать шрифт при ресайзе консоли",
       "zh": "自动设置大小(固定的控制台大小-以单元格为单位)",
       "id": 1566 }
     ,
     "cbFontMonitorDpi": {
       "en": "Admit monitor dpi with font size",
+      "ru": "Учитывать DPI монитора в размере шрифта",
       "zh": "确认显示器dpi字体大小",
       "id": 2691 }
     ,
@@ -4024,6 +4065,7 @@
     ,
     "gbFeatureClipboard": {
       "en": "Pasting text behavior (with exception of Far Manager)",
+      "ru": "Настройка вставки текста (кроме Far Manager)",
       "zh": "粘贴文本行为（Far Manager除外）",
       "id": 2166 }
     ,
@@ -4112,6 +4154,21 @@
       "en": "DOS applications (ntvdm)",
       "zh": "DOS应用程序(ntvdm)",
       "id": 2895 }
+    ,
+    "gbPasteConfirm": {
+      "en": "Confirm critical actions",
+      "ru": "Подтверждение критических действий",
+      "id": 3049 }
+    ,
+    "gbPasteM1": {
+      "en": "Paste mode #1 (Shift+Ins)",
+      "ru": "Режим вставки #1 (Shift+Ins)",
+      "id": 3047 }
+    ,
+    "gbPasteM2": {
+      "en": "Paste mode #2 (Ctrl+V)",
+      "ru": "Режим вставки #2 (Ctrl+V)",
+      "id": 3048 }
     ,
     "gbPastingOverride": {
       "en": "Pasting text override (with exception of Far Manager)",
@@ -4766,6 +4823,46 @@
       "zh": "正常",
       "id": 1311 }
     ,
+    "rPasteM1FirstLine": {
+      "en": "First line",
+      "ru": "Первая строка",
+      "id": 3035 }
+    ,
+    "rPasteM1MultiLine": {
+      "en": "Multi lines",
+      "ru": "Все строки",
+      "id": 3033 }
+    ,
+    "rPasteM1Nothing": {
+      "en": "Do nothing",
+      "ru": "Игнорировать",
+      "id": 3036 }
+    ,
+    "rPasteM1SingleLine": {
+      "en": "Single line",
+      "ru": "Одной строкой",
+      "id": 3034 }
+    ,
+    "rPasteM2FirstLine": {
+      "en": "First line",
+      "ru": "Первая строка",
+      "id": 3042 }
+    ,
+    "rPasteM2MultiLine": {
+      "en": "Multi lines",
+      "ru": "Все строки",
+      "id": 3040 }
+    ,
+    "rPasteM2Nothing": {
+      "en": "Do nothing",
+      "ru": "Игнорировать",
+      "id": 3043 }
+    ,
+    "rPasteM2SingleLine": {
+      "en": "Single line",
+      "ru": "Одной строкой",
+      "id": 3041 }
+    ,
     "rStandardAA": {
       "en": "&Standard",
       "ru": "Обычное",
@@ -4798,8 +4895,9 @@
       "id": 2338 }
     ,
     "stClipConfirmLimit": {
-      "en": "chars",
-      "zh": "字符",
+      "en": "chars:",
+      "ru": "символов:",
+      "zh": "字符:",
       "id": 2227 }
     ,
     "stCloseTabMacro": {
@@ -5003,21 +5101,25 @@
     ,
     "stExtendFonts": {
       "en": "By the cost of background colors you may change the used font to bold or italic",
+      "ru": "За счет одного фонового цвета консольной палитры можно делать шрифт жирным или курсивом",
       "zh": "由于背景颜色的原因，你可以改变使用的字体为加粗或斜体",
       "id": 2836 }
     ,
     "stExtendFontsBold": {
       "en": "Bold:",
+      "ru": "Жирный:",
       "zh": "粗体：",
       "id": 2886 }
     ,
     "stExtendFontsItalic": {
       "en": "Italic:",
+      "ru": "Курсив:",
       "zh": "斜体：",
       "id": 2887 }
     ,
     "stExtendFontsNormal": {
       "en": "Normal:",
+      "ru": "Обычный:",
       "zh": "正常：",
       "id": 2888 }
     ,
