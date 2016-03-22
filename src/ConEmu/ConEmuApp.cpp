@@ -3796,32 +3796,12 @@ done:
 	//CoUninitialize();
 	OleUninitialize();
 
-	if (gpConEmu)
-	{
-		delete gpConEmu;
-		gpConEmu = NULL;
-	}
-
-	if (gpSetCls)
-	{
-		delete gpSetCls;
-		gpSetCls = NULL;
-	}
-
+	SafeDelete(gpConEmu);
+	SafeDelete(gpSetCls);
 	SafeDelete(gpFontMgr);
-
-	if (gpUpd)
-	{
-		delete gpUpd;
-		gpUpd = NULL;
-	}
-
-	if (gpLng)
-	{
-		delete gpLng;
-		gpLng = NULL;
-	}
 	SafeDelete(gpHotKeys);
+	SafeDelete(gpUpd);
+	SafeDelete(gpLng);
 
 	ShutdownGuiStep(L"Gui terminated");
 
