@@ -119,8 +119,8 @@ BEGIN
     COMBOBOX        tFontSizeX,272,13,30,89,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Cell:",stFontSizeX3,302,15,34,8
     COMBOBOX        tFontSizeX3,343,13,30,89,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,33,75,8
-    CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,47,75,8
+    CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,33,71,8
+    CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,47,71,8
     CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,72,177,8
     CONTROL         "Auto size (fixed console size in cells)",cbFontAuto,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,33,177,8
@@ -136,7 +136,7 @@ BEGIN
     COMBOBOX        tFontCharset,83,42,66,120,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     GROUPBOX        "",gbFixFarBorders,4,107,375,60
     CONTROL         "Alternative font (pseudographics, CJK, etc.)",cbFixFarBorders,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,107,181,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,107,186,8
     COMBOBOX        tFontFace2,10,119,139,118,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_SORT | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Width:",stFontSizeX2,151,120,40,8
     COMBOBOX        tFontSizeX2,195,119,30,93,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
@@ -144,15 +144,15 @@ BEGIN
     LTEXT           "Unicode ranges, the default is ""2013-25C4;"":",stUnicodeRanges,11,138,308,8
     COMBOBOX        tUnicodeRanges,10,148,270,72,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Apply",cbUnicodeRangesApply,289,148,84,12
-    LTEXT           "By the cost of background colors you may change the used font to bold or italic",stExtendFonts,12,183,305,8
+    LTEXT           "By the cost of background colors you may change the used font to bold or italic",stExtendFonts,12,183,364,8
     GROUPBOX        "",gbExtendFonts,4,172,375,44
-    CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,172,77,8
-    COMBOBOX        lbExtendFontBoldIdx,45,197,37,47,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbExtendFontItalicIdx,119,197,37,47,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbExtendFontNormalIdx,195,197,37,48,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Bold:",stExtendFontsBold,11,199,30,8
-    RTEXT           "Italic:",stExtendFontsItalic,86,199,30,8
-    RTEXT           "Normal:",stExtendFontsNormal,161,199,30,8
+    CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,172,110,8
+    COMBOBOX        lbExtendFontBoldIdx,55,197,37,47,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbExtendFontItalicIdx,139,197,37,47,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbExtendFontNormalIdx,225,197,37,48,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Bold:",stExtendFontsBold,6,199,45,8
+    RTEXT           "Italic:",stExtendFontsItalic,94,199,42,8
+    RTEXT           "Normal:",stExtendFontsNormal,178,199,43,8
 END
 
 IDD_SPG_SIZEPOS DIALOGEX 0, 0, 381, 242

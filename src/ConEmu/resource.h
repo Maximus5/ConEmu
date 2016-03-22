@@ -1014,8 +1014,6 @@
 #define vkFontOriginal                  2698
 #define cbHotKeyChord                   2699
 #define hkHotKeySelect2                 2701
-#define lbHotKeyList2                   2702
-#define lbHotKeyMod4                    2703
 #define gbHistorySettings               2704
 #define cbSaveCmdHistory                2705
 #define tCmdHistoryLocation             2706
@@ -1339,7 +1337,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        232
+#define _APS_NEXT_RESOURCE_VALUE        233
 #define _APS_NEXT_COMMAND_VALUE         40010
 #define _APS_NEXT_CONTROL_VALUE         3033
 #define _APS_NEXT_SYMED_VALUE           130
