@@ -94,7 +94,6 @@ class CSettings
 	private:
 		Settings m_Settings;
 		void ReleaseHandles();
-		void ReleaseHotkeys();
 		void InitVars_Hotkeys();
 		void InitVars_Pages();
 	private:
@@ -395,8 +394,6 @@ class CSettings
 		void SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod);
 		friend struct Settings;
 	public:
-		const ConEmuHotKey* GetHotKeyPtr(int idx);
-		const ConEmuHotKey* GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon);
 		void UpdateWinHookSettings(HMODULE hLLKeyHookDll);
 	public:
 		bool isDialogMessage(MSG &Msg);

@@ -286,21 +286,12 @@ int CSettings::QueryDpi()
 }
 
 
-void CSettings::ReleaseHotkeys()
-{
-	for (int i = m_HotKeys.size() - 1; i >= 0; i--)
-	{
-		SafeFree(m_HotKeys[i].GuiMacro);
-	}
-	m_HotKeys.clear();
-}
-
 void CSettings::InitVars_Hotkeys()
 {
-	ReleaseHotkeys();
+	gpHotKeys->ReleaseHotkeys();
 
 	// Горячие клавиши (умолчания)
-	m_HotKeys.AllocateHotkeys();
+	gpHotKeys->AllocateHotkeys();
 
 	mp_ActiveHotKey = NULL;
 }
@@ -322,102 +313,6 @@ void CSettings::SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod)
 	{
 		gpConEmu->GlobalHotKeyChanged();
 	}
-}
-
-const ConEmuHotKey* CSettings::GetHotKeyPtr(int idx)
-{
-	const ConEmuHotKey* pHK = NULL;
-
-	if (idx >= 0 && this)
-	{
-		if (idx < m_HotKeys.size())
-		{
-			pHK = &(m_HotKeys[idx]);
-		}
-		else
-		{
-			int iHotkeys = m_HotKeys.size();
-			const CommandTasks* pCmd = gpSet->CmdTaskGet(idx - iHotkeys);
-			if (pCmd)
-			{
-				_ASSERTE(pCmd->HotKey.HkType==chk_Task && pCmd->HotKey.GetTaskIndex()==(idx-iHotkeys));
-				pHK = &pCmd->HotKey;
-			}
-		}
-	}
-
-	return pHK;
-}
-
-// pRCon may be NULL
-const ConEmuHotKey* CSettings::GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon)
-{
-	// На сами модификаторы - действий не вешается
-	switch (VkState.Vk)
-	{
-	case VK_LWIN: case VK_RWIN:
-	case VK_SHIFT: case VK_LSHIFT: case VK_RSHIFT:
-	case VK_CONTROL: case VK_LCONTROL: case VK_RCONTROL:
-	case VK_MENU: case VK_LMENU: case VK_RMENU:
-		return NULL;
-	case 0:
-		_ASSERTE(VkState.Vk!=0);
-		return NULL;
-	}
-
-	const ConEmuHotKey* p = NULL;
-
-	// Теперь бежим по mp_HotKeys и сравниваем требуемые модификаторы
-	for (int i = 0;; i++)
-	{
-		const ConEmuHotKey* pi = GetHotKeyPtr(i);
-		if (!pi)
-			break;
-
-		if (pi->HkType == chk_Modifier)
-			continue;
-
-		// Hotkey was not set in settings?
-		if (!pi->Key.Vk)
-			continue;
-
-		// May be disabled by settings or context?
-		if (pi->Enabled)
-		{
-			if (!pi->Enabled())
-				continue;
-		}
-
-		// Do compare (chord keys are planned)
-		if (!pi->Key.IsEqual(VkState))
-			continue;
-
-		// The function
-		if (pi->fkey)
-		{
-			// Допускается ли этот хоткей в текущем контексте?
-			if (pi->fkey(VkState, true, pi, pRCon))
-			{
-				p = pi;
-				break; // Нашли
-			}
-		}
-		else
-		{
-			// Хоткей должен знать, что он "делает"
-			_ASSERTE(pi->fkey!=NULL);
-		}
-	}
-
-	// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
-	if (p)
-	{
-		// Поэтому проверяем, совпадает ли требование "нажатости"
-		if (p->OnKeyUp == bKeyDown)
-			p = ConEmuSkipHotKey;
-	}
-
-	return p;
 }
 
 void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
@@ -456,7 +351,7 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 		//WARNING("CConEmuCtrl:: Тут вообще наверное нужно по всем HotKeys проехаться, а не только по «избранным»");
 		for (int i = 0;; i++)
 		{
-			const ConEmuHotKey* pHK = GetHotKeyPtr(i);
+			const ConEmuHotKey* pHK = gpHotKeys->GetHotKeyPtr(i);
 			if (!pHK)
 				break;
 
@@ -607,7 +502,7 @@ CSettings::~CSettings()
 	//	gpSet = NULL;
 	//}
 
-	ReleaseHotkeys();
+	gpHotKeys->ReleaseHotkeys();
 	mp_ActiveHotKey = NULL;
 
 	SafeFree(m_Pages);
@@ -807,8 +702,8 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 
 
 	// Назначить корректные флаги для кнопок Win+Number и Win+Arrow
-	m_HotKeys.UpdateNumberModifier();
-	m_HotKeys.UpdateArrowModifier();
+	gpHotKeys->UpdateNumberModifier();
+	gpHotKeys->UpdateArrowModifier();
 
 
 	// Проверить необходимость установки хуков
@@ -2442,7 +2337,7 @@ void CSettings::FillHotKeysList(HWND hWnd2, BOOL abInitial)
 		{
 			if (abInitial)
 			{
-				ppHK = GetHotKeyPtr(iHkIdx++);
+				ppHK = gpHotKeys->GetHotKeyPtr(iHkIdx++);
 				if (!ppHK)
 					break; // кончились
 				nItem = -1; // если -1 то будет добавлен новый

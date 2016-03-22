@@ -10147,7 +10147,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		bool bDn = (messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_MBUTTONDOWN);
 		bool bUp = (messg == WM_LBUTTONUP || messg == WM_RBUTTONUP || messg == WM_MBUTTONUP);
 
-		const ConEmuHotKey* pHotKey = gpSetCls->GetHotKeyInfo(ChordFromVk(vk), bDn, pRCon);
+		const ConEmuHotKey* pHotKey = gpHotKeys->GetHotKeyInfo(ChordFromVk(vk), bDn, pRCon);
 
 		if (pHotKey)
 		{

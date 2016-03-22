@@ -86,7 +86,7 @@ const ConEmuHotKey* CConEmuCtrl::ProcessHotKey(const ConEmuChord& VkState, bool 
 	if (!(vk >= '0' && vk <= '9'))
 		ResetDoubleKeyConsoleNum();
 
-	const ConEmuHotKey* pHotKey = gpSetCls->GetHotKeyInfo(VkState, bKeyDown, pRCon);
+	const ConEmuHotKey* pHotKey = gpHotKeys->GetHotKeyInfo(VkState, bKeyDown, pRCon);
 	gpCurrentHotKey = pHotKey;
 
 	if (pHotKey == NULL && pRCon && pRCon->isSelectionPresent())

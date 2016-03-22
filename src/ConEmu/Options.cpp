@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Background.h"
 #include "CmdHistory.h"
 #include "ConEmu.h"
+#include "HotkeyList.h"
 #include "Inside.h"
 #include "LoadImg.h"
 #include "Macro.h"
@@ -5651,7 +5652,7 @@ DWORD Settings::GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK)
 		if (j == -1 && iLastFound == -1)
 			continue;
 
-		const ConEmuHotKey *pHK = gpSetCls->GetHotKeyPtr((j == -1) ? iLastFound : j);
+		const ConEmuHotKey *pHK = gpHotKeys->GetHotKeyPtr((j == -1) ? iLastFound : j);
 		if (!pHK)
 		{
 			if (j == -1)
@@ -5717,11 +5718,11 @@ void Settings::SetHotkeyById(int nDescrID, DWORD VkMod)
 			return;
 		}
 
-		for (INT_PTR i = gpSetCls->m_HotKeys.size() - 1; i >= 0; i--)
+		for (INT_PTR i = gpHotKeys->size() - 1; i >= 0; i--)
 		{
-			if (gpSetCls->m_HotKeys[i].DescrLangID == nDescrID)
+			if ((*gpHotKeys)[i].DescrLangID == nDescrID)
 			{
-				gpSetCls->m_HotKeys[i].SetVkMod(VkMod);
+				(*gpHotKeys)[i].SetVkMod(VkMod);
 				break;
 			}
 		}
@@ -5738,7 +5739,7 @@ bool Settings::isModifierExist(BYTE Mod/*VK*/, bool abStrictSingle /*= false*/)
 {
 	for (int i = 0;; i++)
 	{
-		const ConEmuHotKey *ppHK = gpSetCls->GetHotKeyPtr(i);
+		const ConEmuHotKey *ppHK = gpHotKeys->GetHotKeyPtr(i);
 		if (!ppHK)
 			break;
 
@@ -5771,7 +5772,7 @@ bool Settings::isKeyOrModifierExist(BYTE Mod/*VK*/)
 {
 	for (int i = 0;; i++)
 	{
-		const ConEmuHotKey *ppHK = gpSetCls->GetHotKeyPtr(i);
+		const ConEmuHotKey *ppHK = gpHotKeys->GetHotKeyPtr(i);
 		if (!ppHK)
 			break;
 
@@ -5832,10 +5833,10 @@ void Settings::LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const b
 	nHostkeyArrowModifier = nHostkeyNumberModifier; // Умолчание - то же что и "Multi.Modifier"
 	reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); ConEmuHotKey::TestHostkeyModifiers(nHostkeyArrowModifier);
 
-	INT_PTR iMax = gpSetCls->m_HotKeys.size();
+	INT_PTR iMax = gpHotKeys->size();
 	for (int i = 0; i < iMax; i++)
 	{
-		ConEmuHotKey *ppHK = &(gpSetCls->m_HotKeys[i]);
+		ConEmuHotKey *ppHK = &((*gpHotKeys)[i]);
 		ppHK->NotChanged = true;
 
 		if (!*ppHK->Name)
@@ -5850,7 +5851,7 @@ void Settings::LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const b
 		case vkMultiNextShift:
 			if (i > 0)
 			{
-				ConEmuHotKey *ppHK1 = &(gpSetCls->m_HotKeys[i-1]);
+				ConEmuHotKey *ppHK1 = &((*gpHotKeys)[i-1]);
 				_ASSERTE(ppHK1->DescrLangID == ((ppHK->DescrLangID == vkMultiNewShift) ? vkMultiNew : vkMultiNext));
 				ppHK->Key = ppHK1->Key;
 				if (ppHK->Key.Mod & (cvk_Shift|cvk_LShift|cvk_RShift))
@@ -5945,11 +5946,11 @@ void Settings::CheckHotkeyUnique()
 	// Go
 	for (iHK1 = 0;; iHK1++)
 	{
-		ppHK1 = gpSetCls->GetHotKeyPtr(iHK1);
+		ppHK1 = gpHotKeys->GetHotKeyPtr(iHK1);
 		if (!ppHK1)
 			break;
 		// Сразу проверить следующий за ним
-		ppHK2 = gpSetCls->GetHotKeyPtr(iHK1+1);
+		ppHK2 = gpHotKeys->GetHotKeyPtr(iHK1+1);
 		if (!ppHK2)
 			break;
 
@@ -5976,7 +5977,7 @@ void Settings::CheckHotkeyUnique()
 		//for (ConEmuHotKey *ppHK2 = ppHK1+1; ppHK2[0].DescrLangID; ++ppHK2)
 		for (iHK2 = iHK1+1;; iHK2++)
 		{
-			ppHK2 = gpSetCls->GetHotKeyPtr(iHK2);
+			ppHK2 = gpHotKeys->GetHotKeyPtr(iHK2);
 			if (!ppHK2)
 				break;
 
@@ -6084,10 +6085,10 @@ void Settings::SaveHotkeys(SettingsBase* reg, int SaveDescrLangID /*= 0*/)
 	// Таски сохраняются отдельно
 
 	// Здесь - хоткеи и макро
-	INT_PTR iMax = gpSetCls->m_HotKeys.size();
+	INT_PTR iMax = gpHotKeys->size();
 	for (INT_PTR i = 0; i < iMax; i++)
 	{
-		ConEmuHotKey *ppHK = &(gpSetCls->m_HotKeys[i]);
+		ConEmuHotKey *ppHK = &((*gpHotKeys)[i]);
 
 		if (!*ppHK->Name)
 			continue;

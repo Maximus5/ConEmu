@@ -131,6 +131,7 @@ CConEmuMain *gpConEmu = NULL;
 Settings  *gpSet = NULL;
 CSettings *gpSetCls = NULL;
 CFontMgr* gpFontMgr = NULL;
+ConEmuHotKeyList* gpHotKeys = NULL;
 //TCHAR temp[MAX_PATH]; -- низзя, очень велик шанс нарваться при многопоточности
 HICON hClassIcon = NULL, hClassIconSm = NULL;
 BOOL gbDebugLogStarted = FALSE;
@@ -3168,6 +3169,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	DEBUGSTRSTARTUP(L"Environment checked");
 
+	gpHotKeys = new ConEmuHotKeyList;
 	gpFontMgr = new CFontMgr;
 	gpSetCls = new CSettings;
 	gpConEmu = new CConEmuMain;
@@ -3819,6 +3821,7 @@ done:
 		delete gpLng;
 		gpLng = NULL;
 	}
+	SafeDelete(gpHotKeys);
 
 	ShutdownGuiStep(L"Gui terminated");
 

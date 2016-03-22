@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2015 Maximus5
+Copyright (c) 2013-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -88,6 +88,111 @@ void ConEmuHotKeyList::UpdateArrowModifier()
 		if (hk.HkType == chk_ArrHost)
 			hk.Key.Mod = Mods;
 	}
+}
+
+void ConEmuHotKeyList::ReleaseHotkeys()
+{
+	for (int i = size() - 1; i >= 0; i--)
+	{
+		SafeFree((*this)[i].GuiMacro);
+	}
+	clear();
+}
+
+const ConEmuHotKey* ConEmuHotKeyList::GetHotKeyPtr(int idx)
+{
+	const ConEmuHotKey* pHK = NULL;
+
+	if (idx >= 0 && this)
+	{
+		if (idx < size())
+		{
+			pHK = &((*this)[idx]);
+		}
+		else
+		{
+			int iHotkeys = size();
+			const CommandTasks* pCmd = gpSet->CmdTaskGet(idx - iHotkeys);
+			if (pCmd)
+			{
+				_ASSERTE(pCmd->HotKey.HkType==chk_Task && pCmd->HotKey.GetTaskIndex()==(idx-iHotkeys));
+				pHK = &pCmd->HotKey;
+			}
+		}
+	}
+
+	return pHK;
+}
+
+// pRCon may be NULL
+const ConEmuHotKey* ConEmuHotKeyList::GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon)
+{
+	// На сами модификаторы - действий не вешается
+	switch (VkState.Vk)
+	{
+	case VK_LWIN: case VK_RWIN:
+	case VK_SHIFT: case VK_LSHIFT: case VK_RSHIFT:
+	case VK_CONTROL: case VK_LCONTROL: case VK_RCONTROL:
+	case VK_MENU: case VK_LMENU: case VK_RMENU:
+		return NULL;
+	case 0:
+		_ASSERTE(VkState.Vk!=0);
+		return NULL;
+	}
+
+	const ConEmuHotKey* p = NULL;
+
+	// Теперь бежим по mp_HotKeys и сравниваем требуемые модификаторы
+	for (int i = 0;; i++)
+	{
+		const ConEmuHotKey* pi = GetHotKeyPtr(i);
+		if (!pi)
+			break;
+
+		if (pi->HkType == chk_Modifier)
+			continue;
+
+		// Hotkey was not set in settings?
+		if (!pi->Key.Vk)
+			continue;
+
+		// May be disabled by settings or context?
+		if (pi->Enabled)
+		{
+			if (!pi->Enabled())
+				continue;
+		}
+
+		// Do compare (chord keys are planned)
+		if (!pi->Key.IsEqual(VkState))
+			continue;
+
+		// The function
+		if (pi->fkey)
+		{
+			// Допускается ли этот хоткей в текущем контексте?
+			if (pi->fkey(VkState, true, pi, pRCon))
+			{
+				p = pi;
+				break; // Нашли
+			}
+		}
+		else
+		{
+			// Хоткей должен знать, что он "делает"
+			_ASSERTE(pi->fkey!=NULL);
+		}
+	}
+
+	// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
+	if (p)
+	{
+		// Поэтому проверяем, совпадает ли требование "нажатости"
+		if (p->OnKeyUp == bKeyDown)
+			p = ConEmuSkipHotKey;
+	}
+
+	return p;
 }
 
 int ConEmuHotKeyList::AllocateHotkeys()

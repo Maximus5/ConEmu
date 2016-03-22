@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2013-2015 Maximus5
+Copyright (c) 2013-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,12 @@ protected:
 		HotkeyFKey_t fkey = NULL, bool OnKeyUp = false, LPCWSTR GuiMacro = NULL);
 public:
 	int AllocateHotkeys();
+	void ReleaseHotkeys();
+	const ConEmuHotKey* GetHotKeyPtr(int idx);
+	const ConEmuHotKey* GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon);
 public:
 	void UpdateNumberModifier();
 	void UpdateArrowModifier();
 };
+
+extern ConEmuHotKeyList* gpHotKeys;
