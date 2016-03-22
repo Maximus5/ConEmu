@@ -166,3 +166,44 @@ LONG RegSetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, LPCWSTR
 
 	return lrc;
 }
+
+bool RegDeleteKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName)
+{
+	bool lbRc = false;
+	HKEY hParent = NULL;
+	HKEY hKey = NULL;
+
+	if (!asName || !*asName || !hRoot)
+		return false;
+
+	if (asParent && *asParent)
+	{
+		if (0 != RegOpenKeyEx(hRoot, asParent, 0, KEY_ALL_ACCESS, &hParent))
+			return false;
+		hRoot = hParent;
+	}
+
+	if (0 == RegOpenKeyEx(hRoot, asName, 0, KEY_ALL_ACCESS, &hKey))
+	{
+		for (DWORD i = 0; i < 255; i++)
+		{
+			wchar_t szName[MAX_PATH];
+			DWORD nMax = countof(szName);
+			if (0 != RegEnumKeyEx(hKey, 0, szName, &nMax, 0, 0, 0, 0))
+				break;
+
+			if (!RegDeleteKeyRecursive(hKey, NULL, szName))
+				break;
+		}
+
+		RegCloseKey(hKey);
+
+		if (0 == RegDeleteKey(hRoot, asName))
+			lbRc = true;
+	}
+
+	if (hParent)
+		RegCloseKey(hParent);
+
+	return lbRc;
+}
