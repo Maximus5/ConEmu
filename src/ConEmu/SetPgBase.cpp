@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include "../common/MSetter.h"
 
 #include "ConEmu.h"
 #include "DynDialog.h"
@@ -38,9 +39,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "SetDlgColors.h"
+#include "SetPgApps.h"
 #include "SetPgBase.h"
+#include "SetPgFonts.h"
+#include "SetPgKeys.h"
 
 CSetPgBase::CSetPgBase()
+	: mh_Dlg(NULL)
+	, mb_SkipSelChange(false)
+	, mn_ActivateTabMsg(WM_APP)
+	, mp_ParentDpi(NULL)
 {
 }
 
@@ -48,17 +56,24 @@ CSetPgBase::~CSetPgBase()
 {
 }
 
-HWND CSetPgBase::CreatePage(ConEmuSetupPages* p)
+HWND CSetPgBase::CreatePage(ConEmuSetupPages* p, UINT nActivateTabMsg, const CDpiForDialog* apParentDpi)
 {
-	if (gpSetCls->mp_DpiAware)
+	if (apParentDpi)
 	{
 		if (!p->pDpiAware)
 			p->pDpiAware = new CDpiForDialog();
 		p->DpiChanged = false;
 	}
+
 	wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Creating child dialog ID=%u", p->DialogID);
 	LogString(szLog);
 	SafeDelete(p->pDialog);
+	SafeDelete(p->pPage);
+
+	p->pPage = p->CreateObj();
+
+	p->pPage->mn_ActivateTabMsg = nActivateTabMsg;
+	p->pPage->mp_ParentDpi = apParentDpi;
 
 	p->pDialog = CDynDialog::ShowDialog(p->DialogID, ghOpWnd, pageOpProc, (LPARAM)p);
 	p->hPage = p->pDialog ? p->pDialog->mh_Dlg : NULL;
@@ -66,17 +81,39 @@ HWND CSetPgBase::CreatePage(ConEmuSetupPages* p)
 	return p->hPage;
 }
 
+void CSetPgBase::ProcessDpiChange(ConEmuSetupPages* p, CDpiForDialog* apDpi)
+{
+	if (!this || !p || !p->hPage || !p->pDpiAware || !apDpi)
+		return;
+
+	HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
+	RECT rcClient; GetWindowRect(hPlace, &rcClient);
+	MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
+
+	p->DpiChanged = false;
+	p->pDpiAware->SetDialogDPI(apDpi->GetCurDpi(), &rcClient);
+
+}
+
 // Общая DlgProc на _все_ вкладки
 INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	static bool bSkipSelChange = false;
-
 	TabHwndIndex pgId = thi_Last;
+	CSetPgBase* pObj = NULL;
 
 	if (messg != WM_INITDIALOG)
 	{
 		ConEmuSetupPages* pPage = NULL;
 		pgId = gpSetCls->GetPageId(hDlg, &pPage);
+
+		if ((pgId == thi_Last) || !pPage || !pPage->pPage)
+		{
+			_ASSERTE(FALSE && "Page was not created properly yet");
+			return TRUE;
+		}
+
+		pObj = pPage->pPage;
+		_ASSERTE(pObj && (pObj->mn_ActivateTabMsg != WM_APP));
 
 		if (pPage && pPage->pDpiAware && pPage->pDpiAware->ProcessDpiMessages(hDlg, messg, wParam, lParam))
 		{
@@ -84,7 +121,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 		}
 	}
 
-	if ((messg == WM_INITDIALOG) || (messg == gpSetCls->mn_ActivateTabMsg))
+	if ((messg == WM_INITDIALOG) || (pObj && (messg == pObj->mn_ActivateTabMsg)))
 	{
 		if (!lParam)
 		{
@@ -94,9 +131,11 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 
 		ConEmuSetupPages* p = (ConEmuSetupPages*)lParam;
 		_ASSERTE(p && (p->PageIndex >= thi_Fonts && p->PageIndex < thi_Last));
+		_ASSERTE(p && p->pPage);
 		_ASSERTE(p->hPage == NULL || p->hPage == hDlg);
 
 		pgId = p->PageIndex;
+		pObj = p->pPage;
 		//p->hPage = hDlg; -- later, in bInitial
 
 		bool bInitial = (messg == WM_INITDIALOG);
@@ -105,12 +144,21 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 		{
 			_ASSERTE(p->PageIndex >= 0 && p->hPage == NULL);
 			p->hPage = hDlg;
+			p->pPage->mh_Dlg = hDlg;
+
+			#ifdef _DEBUG
+			// p->pDialog is NULL on first WM_INIT
+			if (p->pDialog)
+			{
+				_ASSERTE(p->pDialog->mh_Dlg == hDlg);
+			}
+			#endif
 
 			HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
 			RECT rcClient; GetWindowRect(hPlace, &rcClient);
 			MapWindowPoints(NULL, ghOpWnd, (LPPOINT)&rcClient, 2);
 			if (p->pDpiAware)
-				p->pDpiAware->Attach(hDlg, ghOpWnd, p->pDialog);
+				p->pDpiAware->Attach(hDlg, ghOpWnd, CDynDialog::GetDlgClass(hDlg));
 			MoveWindowRect(hDlg, rcClient);
 		}
 		else
@@ -119,123 +167,9 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			// обновить контролы страничек при активации вкладки
 		}
 
-		switch (p->DialogID)
-		{
-		case IDD_SPG_FONTS:
-			gpSetCls->OnInitDialog_Main(hDlg, bInitial);
-			break;
-		case IDD_SPG_SIZEPOS:
-		{
-			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_WndSizePos(hDlg, bInitial);
-			bSkipSelChange = lbOld;
-		}
-		break;
-		case IDD_SPG_BACKGR:
-			gpSetCls->OnInitDialog_Background(hDlg, bInitial);
-			break;
-		case IDD_SPG_APPEAR:
-			gpSetCls->OnInitDialog_Show(hDlg, bInitial);
-			break;
-		case IDD_SPG_CONFIRM:
-			gpSetCls->OnInitDialog_Confirm(hDlg, bInitial);
-			break;
-		case IDD_SPG_TASKBAR:
-			gpSetCls->OnInitDialog_Taskbar(hDlg, bInitial);
-			break;
-		case IDD_SPG_CURSOR:
-			gpSetCls->OnInitDialog_Cursor(hDlg, bInitial);
-			break;
-		case IDD_SPG_STARTUP:
-			gpSetCls->OnInitDialog_Startup(hDlg, bInitial);
-			break;
-		case IDD_SPG_FEATURES:
-			gpSetCls->OnInitDialog_Ext(hDlg, bInitial);
-			break;
-		case IDD_SPG_COMSPEC:
-			gpSetCls->OnInitDialog_Comspec(hDlg, bInitial);
-			break;
-		case IDD_SPG_ENVIRONMENT:
-			gpSetCls->OnInitDialog_Environment(hDlg, bInitial);
-			break;
-		case IDD_SPG_MARKCOPY:
-			gpSetCls->OnInitDialog_MarkCopy(hDlg, bInitial);
-			break;
-		case IDD_SPG_PASTE:
-			gpSetCls->OnInitDialog_Paste(hDlg, bInitial);
-			break;
-		case IDD_SPG_HIGHLIGHT:
-			gpSetCls->OnInitDialog_Hilight(hDlg, bInitial);
-			break;
-		case IDD_SPG_FEATURE_FAR:
-			gpSetCls->OnInitDialog_Far(hDlg, bInitial);
-			break;
-		case IDD_SPG_FARMACRO:
-			gpSetCls->OnInitDialog_FarMacro(hDlg, bInitial);
-			break;
-		case IDD_SPG_KEYS:
-		{
-			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_Keys(hDlg, bInitial);
-			bSkipSelChange = lbOld;
-		}
-		break;
-		case IDD_SPG_CONTROLS:
-			gpSetCls->OnInitDialog_Control(hDlg, bInitial);
-			break;
-		case IDD_SPG_TABS:
-			gpSetCls->OnInitDialog_Tabs(hDlg, bInitial);
-			break;
-		case IDD_SPG_STATUSBAR:
-			gpSetCls->OnInitDialog_Status(hDlg, bInitial);
-			break;
-		case IDD_SPG_COLORS:
-			gpSetCls->OnInitDialog_Color(hDlg, bInitial);
-			break;
-		case IDD_SPG_TRANSPARENT:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Transparent(hDlg);
-			break;
-		case IDD_SPG_TASKS:
-		{
-			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_Tasks(hDlg, bInitial);
-			bSkipSelChange = lbOld;
-		}
-		break;
-		case IDD_SPG_APPDISTINCT:
-			gpSetCls->OnInitDialog_Apps(hDlg, bInitial);
-			break;
-		case IDD_SPG_INTEGRATION:
-			gpSetCls->OnInitDialog_Integr(hDlg, bInitial);
-			break;
-		case IDD_SPG_DEFTERM:
-		{
-			bool lbOld = bSkipSelChange; bSkipSelChange = true;
-			gpSetCls->OnInitDialog_DefTerm(hDlg, bInitial);
-			bSkipSelChange = lbOld;
-		}
-		break;
-		case IDD_SPG_VIEWS:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Views(hDlg);
-			break;
-		case IDD_SPG_DEBUG:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Debug(hDlg);
-			break;
-		case IDD_SPG_UPDATE:
-			gpSetCls->OnInitDialog_Update(hDlg, bInitial);
-			break;
-		case IDD_SPG_INFO:
-			if (bInitial)
-				gpSetCls->OnInitDialog_Info(hDlg);
-			break;
+		MSetter lockSelChange(&pObj->mb_SkipSelChange);
 
-		default:
-			// Чтобы не забыть добавить вызов инициализации
-			_ASSERTE(FALSE && "Unhandled DialogID!");
-		} // switch (((ConEmuSetupPages*)lParam)->DialogID)
+		pObj->OnInitDialog(hDlg, bInitial);
 
 		if (bInitial)
 		{
@@ -251,15 +185,24 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 	{
 		// Страничка "App distinct" в некотором смысле особенная.
 		// У многих контролов ИД дублируются с другими вкладками.
-		return gpSetCls->pageOpProc_Apps(hDlg, NULL, messg, wParam, lParam);
+		CSetPgApps* pAppsPg;
+		if (gpSetCls->GetPageObj(pAppsPg))
+		{
+			return pAppsPg->PageDlgProc(hDlg, messg, wParam, lParam);
+		}
+		else
+		{
+			_ASSERTE(pAppsPg!=NULL);
+			return 0;
+		}
 	}
 	else if (pgId == thi_Integr)
 	{
-		return gpSetCls->pageOpProc_Integr(hDlg, messg, wParam, lParam);
+		return pObj->PageDlgProc(hDlg, messg, wParam, lParam);
 	}
 	else if (pgId == thi_Startup)
 	{
-		return gpSetCls->pageOpProc_Start(hDlg, messg, wParam, lParam);
+		return pObj->PageDlgProc(hDlg, messg, wParam, lParam);
 	}
 	else
 	// All other messages
@@ -281,13 +224,13 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 				return 0;
 
 			case EN_CHANGE:
-				if (!bSkipSelChange)
+				if (!pObj->mb_SkipSelChange)
 					gpSetCls->OnEditChanged(hDlg, wParam, lParam);
 				return 0;
 
 			case CBN_EDITCHANGE:
 			case CBN_SELCHANGE/*LBN_SELCHANGE*/:
-				if (!bSkipSelChange)
+				if (!pObj->mb_SkipSelChange)
 					gpSetCls->OnComboBox(hDlg, wParam, lParam);
 				return 0;
 
@@ -308,7 +251,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			default:
 				if (HIWORD(wParam) == 0xFFFF && LOWORD(wParam) == lbConEmuHotKeys)
 				{
-					gpSetCls->OnHotkeysNotify(hDlg, wParam, 0);
+					dynamic_cast<CSetPgKeys*>(pObj)->OnHotkeysNotify(hDlg, wParam, 0);
 				}
 			} // switch (HIWORD(wParam))
 		} // WM_COMMAND
@@ -322,7 +265,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			WORD wID = GetDlgCtrlID((HWND)lParam);
 
 			if ((wID >= c0 && wID <= CSetDlgColors::MAX_COLOR_EDT_ID) || (wID >= c32 && wID <= c38))
-				return gpSetCls->ColorCtlStatic(hDlg, wID, (HWND)lParam);
+				return CSetDlgColors::ColorCtlStatic(hDlg, wID, (HWND)lParam);
 
 			return 0;
 		} // WM_CTLCOLORSTATIC
@@ -386,12 +329,12 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			else switch (((NMHDR*)lParam)->idFrom)
 			{
 			case lbActivityLog:
-				if (!bSkipSelChange)
+				if (!pObj->mb_SkipSelChange)
 					return gpSetCls->OnActivityLogNotify(hDlg, wParam, lParam);
 				break;
 			case lbConEmuHotKeys:
-				if (!bSkipSelChange)
-					return gpSetCls->OnHotkeysNotify(hDlg, wParam, lParam);
+				if (!pObj->mb_SkipSelChange)
+					return dynamic_cast<CSetPgKeys*>(pObj)->OnHotkeysNotify(hDlg, wParam, lParam);
 				break;
 			}
 			return 0;
@@ -416,13 +359,16 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			}
 			else if (messg == gpSetCls->mn_MsgLoadFontFromMain)
 			{
-				if (pgId == thi_Views)
-					gpSetCls->OnInitDialog_CopyFonts(hDlg, tThumbsFontName, tTilesFontName, 0);
-				else if (pgId == thi_Tabs)
-					gpSetCls->OnInitDialog_CopyFonts(hDlg, tTabFontFace, 0);
-				else if (pgId == thi_Status)
-					gpSetCls->OnInitDialog_CopyFonts(hDlg, tStatusFontFace, 0);
-
+				CSetPgFonts* pFonts = NULL;
+				if (gpSetCls->GetPageObj(pFonts))
+				{
+					if (pgId == thi_Views)
+						pFonts->CopyFontsTo(hDlg, tThumbsFontName, tTilesFontName, 0);
+					else if (pgId == thi_Tabs)
+						pFonts->CopyFontsTo(hDlg, tTabFontFace, 0);
+					else if (pgId == thi_Status)
+						pFonts->CopyFontsTo(hDlg, tStatusFontFace, 0);
+				}
 			}
 			else if (messg == gpSetCls->mn_MsgUpdateCounter)
 			{
@@ -430,26 +376,21 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			}
 			else if (messg == DBGMSG_LOG_ID && pgId == thi_Debug)
 			{
+				MSetter lockSelChange(&pObj->mb_SkipSelChange);
 				if (wParam == DBGMSG_LOG_SHELL_MAGIC)
 				{
-					bool lbOld = bSkipSelChange; bSkipSelChange = true;
 					DebugLogShellActivity *pShl = (DebugLogShellActivity*)lParam;
 					gpSetCls->debugLogShell(hDlg, pShl);
-					bSkipSelChange = lbOld;
 				} // DBGMSG_LOG_SHELL_MAGIC
 				else if (wParam == DBGMSG_LOG_INPUT_MAGIC)
 				{
-					bool lbOld = bSkipSelChange; bSkipSelChange = true;
 					CESERVER_REQ_PEEKREADINFO* pInfo = (CESERVER_REQ_PEEKREADINFO*)lParam;
 					gpSetCls->debugLogInfo(hDlg, pInfo);
-					bSkipSelChange = lbOld;
 				} // DBGMSG_LOG_INPUT_MAGIC
 				else if (wParam == DBGMSG_LOG_CMD_MAGIC)
 				{
-					bool lbOld = bSkipSelChange; bSkipSelChange = true;
 					CSettings::LogCommandsData* pCmd = (CSettings::LogCommandsData*)lParam;
 					gpSetCls->debugLogCommand(hDlg, pCmd);
-					bSkipSelChange = lbOld;
 				} // DBGMSG_LOG_CMD_MAGIC
 			} // if (messg == DBGMSG_LOG_ID && hDlg == gpSetCls->hDebug)
 		} // default:

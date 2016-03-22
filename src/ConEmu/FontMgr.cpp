@@ -57,6 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "ConEmuCtrl.h"
 #include "DefaultTerm.h"
+#include "DlgItemHelper.h"
 #include "DpiAware.h"
 #include "DynDialog.h"
 #include "HotkeyDlg.h"
@@ -71,8 +72,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "Recreate.h"
 #include "SearchCtrl.h"
-#include "SetColorPalette.h"
 #include "SetCmdTask.h"
+#include "SetColorPalette.h"
 #include "SetDlgLists.h"
 #include "Status.h"
 #include "TabBar.h"
@@ -1685,7 +1686,7 @@ CEFONT CFontMgr::CreateFontIndirectMy(LOGFONT *inFont)
 			gpSet->isFontAutoSize = false;
 
 			if (hMainPg)
-				CSettings::checkDlgButton(hMainPg, cbFontAuto, BST_UNCHECKED);
+				CDlgItemHelper::checkDlgButton(hMainPg, cbFontAuto, BST_UNCHECKED);
 
 			gpSetCls->ShowFontErrorTip(szRasterAutoError);
 		}
@@ -2217,13 +2218,13 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 		LF.lfClipPrecision = CLIP_DEFAULT_PRECIS;
 		LF.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
 		GetDlgItemText(hMainPg, tFontFace, LF.lfFaceName, countof(LF.lfFaceName));
-		gpSet->FontSizeY = CSettings::GetNumber(hMainPg, tFontSizeY);
-		gpSet->FontSizeX = CSettings::GetNumber(hMainPg, tFontSizeX);
-		gpSet->FontUseDpi = CSettings::IsChecked(hMainPg, cbFontMonitorDpi);
-		gpSet->FontUseUnits = CSettings::IsChecked(hMainPg, cbFontAsDeviceUnits);
+		gpSet->FontSizeY = CDlgItemHelper::GetNumber(hMainPg, tFontSizeY);
+		gpSet->FontSizeX = CDlgItemHelper::GetNumber(hMainPg, tFontSizeX);
+		gpSet->FontUseDpi = CDlgItemHelper::isChecked(hMainPg, cbFontMonitorDpi);
+		gpSet->FontUseUnits = CDlgItemHelper::isChecked(hMainPg, cbFontAsDeviceUnits);
 		EvalLogfontSizes(LF, gpSet->FontSizeY, gpSet->FontSizeX);
-		LF.lfWeight = CSettings::IsChecked(hMainPg, cbBold) ? FW_BOLD : FW_NORMAL;
-		LF.lfItalic = CSettings::IsChecked(hMainPg, cbItalic);
+		LF.lfWeight = CDlgItemHelper::isChecked(hMainPg, cbBold) ? FW_BOLD : FW_NORMAL;
+		LF.lfItalic = CDlgItemHelper::isChecked(hMainPg, cbItalic);
 		LF.lfCharSet = gpSet->mn_LoadFontCharSet;
 
 		if (gpSet->mb_CharSetWasSet)
@@ -2235,16 +2236,16 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 				LF.lfCharSet = DEFAULT_CHARSET;
 		}
 
-		if (CSettings::IsChecked(hMainPg, rNoneAA))
+		if (CDlgItemHelper::isChecked(hMainPg, rNoneAA))
 			LF.lfQuality = NONANTIALIASED_QUALITY;
-		else if (CSettings::IsChecked(hMainPg, rStandardAA))
+		else if (CDlgItemHelper::isChecked(hMainPg, rStandardAA))
 			LF.lfQuality = ANTIALIASED_QUALITY;
-		else if (CSettings::IsChecked(hMainPg, rCTAA))
+		else if (CDlgItemHelper::isChecked(hMainPg, rCTAA))
 			LF.lfQuality = CLEARTYPE_NATURAL_QUALITY;
 
 		GetDlgItemText(hMainPg, tFontFace2, LogFont2.lfFaceName, countof(LogFont2.lfFaceName));
-		gpSet->FontSizeX2 = CSettings::GetNumber(hMainPg, tFontSizeX2, FontDefWidthMin, FontDefWidthMax);
-		gpSet->FontSizeX3 = CSettings::GetNumber(hMainPg, tFontSizeX3, FontDefWidthMin, FontDefWidthMax);
+		gpSet->FontSizeX2 = CDlgItemHelper::GetNumber(hMainPg, tFontSizeX2, FontDefWidthMin, FontDefWidthMax);
+		gpSet->FontSizeX3 = CDlgItemHelper::GetNumber(hMainPg, tFontSizeX3, FontDefWidthMin, FontDefWidthMax);
 
 		if (gpSet->isLogging())
 		{

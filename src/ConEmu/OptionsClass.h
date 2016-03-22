@@ -85,7 +85,6 @@ const EvalSizeFlags
 
 class CSettings
 	: public CSetDlgButtons
-	, public CSetDlgColors
 	, public CSetDlgFonts
 {
 	public:
@@ -94,7 +93,6 @@ class CSettings
 	private:
 		Settings m_Settings;
 		void ReleaseHandles();
-		void InitVars_Hotkeys();
 		void InitVars_Pages();
 	private:
 		friend class CSetDlgButtons;
@@ -169,7 +167,7 @@ class CSettings
 		#endif
 		CDpiForDialog* mp_DpiAware;
 		CImgButtons* mp_ImgBtn;
-	protected:
+	public:
 		enum ColorShowFormat { eRgbDec = 0, eRgbHex, eBgrHex } m_ColorFormat;
 	public:
 		void SetBgImageDarker(u8 newValue, bool bUpdate);
@@ -189,6 +187,12 @@ class CSettings
 		CSetPgBase* GetActivePageObj();
 		HWND GetPage(TabHwndIndex nPage);
 		CSetPgBase* GetPageObj(TabHwndIndex nPage);
+		template <class T>
+		bool GetPageObj(T*& pObject)
+		{
+			pObject = dynamic_cast<T*>(GetPageObj(T::PageType()));
+			return (pObject != NULL);
+		};
 		TabHwndIndex GetPageId(HWND hPage);
 
 	private:
@@ -212,27 +216,12 @@ class CSettings
 		void SettingsPreSave();
 		static void Dialog(int IdShowPage = 0);
 		void UpdateWindowMode(ConEmuWindowMode WndMode);
-		void UpdatePosSizeEnabled(HWND hWnd2);
 		void UpdatePos(int x, int y, bool bGetRect = false);
 		void UpdateSize(const CESize w, const CESize h);
 		void UpdateFontInfo();
-		void UpdateLogLocation();
 		void Performance(UINT nID, BOOL bEnd);
 		void PostUpdateCounters(bool bPosted);
 		void SetArgBufferHeight(int anBufferHeight);
-	public:
-		enum ShellIntegrType
-		{
-			ShellIntgr_Inside = 0,
-			ShellIntgr_Here,
-			ShellIntgr_CmdAuto,
-		};
-		void ShellIntegration(HWND hDlg, ShellIntegrType iMode, bool bEnabled, bool bForced = false);
-	private:
-		void RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, LPCWSTR asCmd, LPCWSTR asIcon);
-		void UnregisterShell(LPCWSTR asName);
-		void UnregisterShellInvalids();
-		bool DeleteRegKeyRecursive(HKEY hRoot, LPCWSTR asParent, LPCWSTR asName);
 	public:
 		void UpdateConsoleMode(CRealConsole* pRCon);
 		bool CheckTheming();
@@ -271,59 +260,10 @@ class CSettings
 		void ExportSettings();
 		void ImportSettings();
 		void SearchForControls(); // Find setting by typed name in the "Search" box
-		static void InvalidateCtrl(HWND hCtrl, BOOL bErase);
 		// IDD_SETTINGS
 		LRESULT OnInitDialog();
-		// OnInitDialogPage_t: IDD_SPG_FONTS, и т.д.
-		LRESULT OnInitDialog_Main(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Background(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_WndSizePos(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Show(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Confirm(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Taskbar(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Cursor(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Startup(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Ext(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Comspec(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Environment(HWND hWnd2, bool abInitial);
-		//LRESULT OnInitDialog_Output(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_MarkCopy(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Paste(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Hilight(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Far(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_FarMacro(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Keys(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Control(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Tabs(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Status(HWND hWnd2, bool abInitial);
-		void OnInitDialog_StatusItems(HWND hWnd2);
-		LRESULT OnInitDialog_Color(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Transparent(HWND hWnd2);
-		LRESULT OnInitDialog_Tasks(HWND hWnd2, bool abForceReload);
-		LRESULT OnInitDialog_Apps(HWND hWnd2, bool abForceReload);
-		LRESULT OnInitDialog_Integr(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_DefTerm(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Views(HWND hWnd2);
-		void OnInitDialog_CopyFonts(HWND hWnd2, int nList1, ...); // скопировать список шрифтов с вкладки hMain
-		LRESULT OnInitDialog_Debug(HWND hWnd2);
-		LRESULT OnInitDialog_Update(HWND hWnd2, bool abInitial);
-		LRESULT OnInitDialog_Info(HWND hWnd2);
 		//
-		void InitCursorCtrls(HWND hWnd2, const AppSettings* pApp);
-		bool mb_IgnoreCmdGroupEdit, mb_IgnoreCmdGroupList;
-		//LRESULT OnButtonClicked_Apps(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		//UINT mn_AppsEnableControlsMsg;
-		WNDPROC mf_MarkCopyPreviewProc;
-		static LRESULT CALLBACK MarkCopyPreviewProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		INT_PTR pageOpProc_Integr(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		static INT_PTR CALLBACK pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		INT_PTR pageOpProc_Apps(HWND hWnd2, HWND hChild, UINT messg, WPARAM wParam, LPARAM lParam);
-		INT_PTR pageOpProc_Start(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//LRESULT OnColorButtonClicked(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		//LRESULT OnColorComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		//LRESULT OnColorEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		bool OnEditChanged_Cursor(HWND hWnd2, WPARAM wParam, LPARAM lParam, AppSettings* pApp);
 		LRESULT OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnListBoxDblClk(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnPage(LPNMHDR phdr);
@@ -331,18 +271,14 @@ class CSettings
 		INT_PTR OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		void OnSaveActivityLogFile(HWND hListView);
 		LRESULT OnActivityLogNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		void FillHotKeysList(HWND hWnd2, BOOL abInitial);
-		void FillCBList(HWND hCombo, bool abInitial, LPCWSTR* ppszPredefined, LPCWSTR pszUser);
-		LRESULT OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		static int CALLBACK HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 		wchar_t szSelectionModError[512];
-		void CheckSelectionModifiers(HWND hWnd2);
 		UINT mn_ActivateTabMsg;
 		bool mb_IgnoreSelPage;
-		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE, const AppSettings* apDistinct = NULL);
-		void setHotkeyCheckbox(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWSTR pszFrom, LPCWSTR pszTo, bool bChecked);
 	public:
+		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE, const AppSettings* apDistinct = NULL);
+		void CheckSelectionModifiers(HWND hWnd2);
 		void ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropDown);
+		void RegisterTipsFor(HWND hChildDlg);
 	private:
 		BOOL mb_IgnoreEditChanged;
 		//BOOL mb_CharSetWasSet;
@@ -356,7 +292,6 @@ class CSettings
 		HWND hwndTip, hwndBalloon;
 		static void ShowFontErrorTip(LPCTSTR asInfo);
 		TOOLINFO tiBalloon;
-		void RegisterTipsFor(HWND hChildDlg);
 		static BOOL CALLBACK RegisterTipsForChild(HWND hChild, LPARAM lParam);
 		void RecreateFont(WORD wFromID);
 #if 0
@@ -371,27 +306,19 @@ class CSettings
 		//wchar_t temp[MAX_PATH];
 		UINT mn_MsgRecreateFont;
 		UINT mn_MsgLoadFontFromMain;
-	public:
-		static int GetNumber(HWND hParent, WORD nCtrlId, int nMin = 0, int nMax = 0);
-		static INT_PTR GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCWSTR asNoDefault = NULL, bool abListBox = false);
-		static void EnableDlgItem(HWND hParent, WORD nCtrlId, BOOL bEnabled);
 	private:
 		BOOL mb_TabHotKeyRegistered;
 		void RegisterTabs();
 		void UnregisterTabs();
+
+		friend class CSetPgFonts;
 		WORD mn_LastChangingFontCtrlId;
 
 		bool mb_ThemingEnabled;
 
-	public:
-		static void SetHotkeyField(HWND hHk, BYTE vk);
 	private:
 		static void CenterMoreDlg(HWND hWnd2);
 	private:
-		DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0) { return ConEmuHotKey::MakeHotKey(Vk, vkMod1, vkMod2, vkMod3); };
-		ConEmuHotKeyList m_HotKeys; // : public MArray<ConEmuHotKey>
-		ConEmuHotKey *mp_ActiveHotKey;
-		void SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod);
 		friend struct Settings;
 	public:
 		void UpdateWinHookSettings(HMODULE hLLKeyHookDll);
@@ -399,15 +326,10 @@ class CSettings
 		bool isDialogMessage(MSG &Msg);
 	private:
 		CEHelpPopup* mp_HelpPopup;
+	public:
 		INT_PTR ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	private:
 
-		enum KeyListColumns
-		{
-			klc_Type = 0,
-			klc_Hotkey,
-			klc_Desc
-		};
 		enum LogProcessColumns
 		{
 			lpc_Time = 0,
@@ -461,10 +383,6 @@ class CSettings
 		int mn_PagesCount;
 		static void SelectTreeItem(HWND hTree, HTREEITEM hItem, bool bPost = false);
 		void ClearPages();
-		HWND CreatePage(ConEmuSetupPages* p);
-		CDynDialog*    mp_DlgDistinct2;
-		CDpiForDialog* mp_DpiDistinct2;
-		void ProcessDpiChange(ConEmuSetupPages* p);
 		TabHwndIndex GetPageId(HWND hPage, ConEmuSetupPages** pp);
 		const ConEmuSetupPages* GetPageData(TabHwndIndex nPage);
 		TabHwndIndex GetPageIdByDialogId(UINT DialogID);

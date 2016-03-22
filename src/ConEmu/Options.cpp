@@ -46,25 +46,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WRegistry.h"
 #include "../ConEmuCD/GuiHooks.h"
 #include "../ConEmuPlugin/FarDefaultMacros.h"
+
 #include "Background.h"
 #include "CmdHistory.h"
 #include "ConEmu.h"
 #include "HotkeyList.h"
 #include "Inside.h"
+#include "LngRc.h"
 #include "LoadImg.h"
 #include "Macro.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "OptionsFast.h"
 #include "RealConsole.h"
+#include "SetCmdTask.h"
+#include "SetColorPalette.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
-#include "SetCmdTask.h"
-#include "SetColorPalette.h"
 
 TODO("Convert Settings::mpc_CharAltFontRanges to binary ranges?");
 TODO("Load/Save Settings::bHideDisabledTabs?");
@@ -128,6 +130,8 @@ struct CONEMUDEFCOLORS
 
 	bool isIndexes() const { return (nIndexes[0] && nIndexes[1] && nIndexes[2] && nIndexes[3]); };
 };
+
+const wchar_t gsDefaultColorScheme[64] = L"<ConEmu>";
 
 const CONEMUDEFCOLORS DefColors[] =
 {
@@ -1747,7 +1751,9 @@ ColorPalette* Settings::PaletteGetPtr(int anIndex)
 
 	static ColorPalette StdPal = {};
 	StdPal.bPredefined = false;
-	static wchar_t szCurrentScheme[64] = L"<Current color scheme>";
+
+	static wchar_t szCurrentScheme[64] = L"";
+	lstrcpyn(szCurrentScheme, CLngRc::getRsrc(lng_CurClrScheme/*"<Current color scheme>"*/), countof(szCurrentScheme));
 	StdPal.pszName = szCurrentScheme;
 
 	StdPal.isExtendColors = AppStd.isExtendColors;

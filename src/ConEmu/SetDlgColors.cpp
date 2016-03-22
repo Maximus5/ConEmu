@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -389,4 +389,17 @@ bool CSetDlgColors::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 		return false;
 
 	return ::GetColorRef(temp, pCR);
+}
+
+void CSetDlgColors::OnSettingsLoaded(const COLORREF (&Colors)[32])
+{
+	// Init custom palette for ColorSelection dialog
+	memmove(acrCustClr, gpSet->Colors, sizeof(COLORREF)*16);
+}
+
+void CSetDlgColors::ReleaseHandles()
+{
+	gColorBoxMap.Reset();
+	SafeDeleteObject(mh_CtlColorBrush);
+	gbLastColorsOk = FALSE;
 }

@@ -28,16 +28,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#define BST(v) (int)(v & 3) // BST_UNCHECKED/BST_CHECKED/BST_INDETERMINATE
+#include "DlgItemHelper.h"
 
-class CSetDlgButtons
+class CSetDlgButtons : public CDlgItemHelper
 {
 public:
-	static bool checkDlgButton(HWND hParent, WORD nCtrlId, UINT uCheck);
-	static bool checkRadioButton(HWND hParent, int nIDFirstButton, int nIDLastButton, int nIDCheckButton);
-	static void enableDlgItems(HWND hParent, UINT* pnCtrlID, INT_PTR nCount, bool bEnabled);
-	static BYTE IsChecked(HWND hParent, WORD nCtrlId);
-	static BYTE IsChecked(WORD nCtrlId, WORD CB, BYTE uCheck);
+	static BYTE isOptChecked(WORD nCtrlId, WORD CB, BYTE uCheck);
 
 public:
 	static wchar_t* CheckButtonMacro(WORD CB, BYTE uCheck);

@@ -80,6 +80,7 @@ SRCS = \
 		CreateProcess.cpp  \
 		CustomFonts.cpp    \
 		DefaultTerm.cpp    \
+		DlgItemHelper.cpp  \
 		DpiAware.cpp       \
 		DragDrop.cpp       \
 		DragDropData.cpp   \
@@ -127,7 +128,37 @@ SRCS = \
 		SetDlgColors.cpp   \
 		SetDlgFonts.cpp    \
 		SetDlgLists.cpp    \
+		SetPgAppear.cpp    \
+		SetPgApps.cpp      \
+		SetPgBackgr.cpp    \
 		SetPgBase.cpp      \
+		SetPgColors.cpp    \
+		SetPgComspec.cpp   \
+		SetPgConfirm.cpp   \
+		SetPgCursor.cpp    \
+		SetPgDebug.cpp     \
+		SetPgDefTerm.cpp   \
+		SetPgEnvironment.cpp\
+		SetPgFar.cpp       \
+		SetPgFarMacro.cpp  \
+		SetPgFeatures.cpp  \
+		SetPgFonts.cpp     \
+		SetPgHilight.cpp   \
+		SetPgInfo.cpp      \
+		SetPgIntegr.cpp    \
+		SetPgControls.cpp \
+		SetPgKeys.cpp      \
+		SetPgMarkCopy.cpp  \
+		SetPgPaste.cpp     \
+		SetPgSizePos.cpp   \
+		SetPgStartup.cpp   \
+		SetPgStatus.cpp    \
+		SetPgTabs.cpp      \
+		SetPgTaskbar.cpp   \
+		SetPgTasks.cpp     \
+		SetPgTransparent.cpp\
+		SetPgUpdate.cpp    \
+		SetPgViews.cpp     \
 		Status.cpp         \
 		TabBar.cpp         \
 		TabCtrlBase.cpp    \

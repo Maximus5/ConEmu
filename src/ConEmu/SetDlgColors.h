@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "../common/MMap.h"
 #include "Options.h"
 
 #define getR(inColorref) (byte)(inColorref)
@@ -38,16 +39,17 @@ class CSetPgBase;
 
 class CSetDlgColors
 {
-protected:
-	friend class CSetPgBase;
-
+public:
 	static const int MAX_COLOR_EDT_ID; // c31
+
+protected:
 	static BOOL gbLastColorsOk; // FALSE
 	static ColorPalette gLastColors; // {}
 
 	static HBRUSH mh_CtlColorBrush;
 	static COLORREF acrCustClr[16]; // array of custom colors, используется в ChooseColor(...)
 
+public:
 	static bool GetColorById(WORD nID, COLORREF* color);
 	static bool GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR);
 	static bool SetColorById(WORD nID, COLORREF color);
@@ -56,6 +58,9 @@ protected:
 	static void FillBgImageColors(HWND hWnd2);
 	static INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
 	static bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
+public:
+	static void OnSettingsLoaded(const COLORREF (&Colors)[32]);
+	static void ReleaseHandles();
 
 protected:
 	static MMap<HWND,WNDPROC> gColorBoxMap;

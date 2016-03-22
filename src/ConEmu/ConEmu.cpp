@@ -87,6 +87,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Recreate.h"
 #include "RunQueue.h"
 #include "SetCmdTask.h"
+#include "SetPgInfo.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
@@ -4968,6 +4969,7 @@ bool CConEmuMain::MemoryDumpActiveProcess(bool abProcessTree /*= false*/)
 
 void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
 {
+	TODO("Move to CSetPgInfo");
 	if (!ghOpWnd)
 		return;
 
@@ -5049,7 +5051,9 @@ void CConEmuMain::UpdateCursorInfo(const ConsoleInfoArg* pInfo)
 {
 	mp_Status->OnConsoleChanged(&pInfo->sbi, &pInfo->cInfo, &pInfo->TopLeft, false);
 
-	if (!gpSetCls->GetPage(thi_Info)) return;
+	CSetPgInfo* pInfoPg;
+	if (!gpSetCls->GetPageObj(pInfoPg))
+		return;
 
 	if (!isMainThread())
 	{
@@ -5059,15 +5063,12 @@ void CConEmuMain::UpdateCursorInfo(const ConsoleInfoArg* pInfo)
 		return;
 	}
 
-	TCHAR szCursor[64];
-	_wsprintf(szCursor, SKIPLEN(countof(szCursor)) _T("%ix%i, %i %s"),
-		(int)pInfo->crCursor.X, (int)pInfo->crCursor.Y,
-		pInfo->cInfo.dwSize, pInfo->cInfo.bVisible ? L"vis" : L"hid");
-	SetDlgItemText(gpSetCls->GetPage(thi_Info), tCursorPos, szCursor);
+	pInfoPg->FillCursorInfo(pInfoPg->Dlg(), pInfo);
 }
 
 void CConEmuMain::UpdateSizes()
 {
+	TODO("Move to CSetPgInfo");
 	POINT ptCur = {}; GetCursorPos(&ptCur);
 	HWND hPoint = WindowFromPoint(ptCur);
 

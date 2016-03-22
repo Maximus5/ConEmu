@@ -134,7 +134,7 @@ public:
 	void Detach();
 
 public:
-	const DpiValue& GetCurDpi();
+	const DpiValue& GetCurDpi() const;
 	bool ProcessDpiMessages(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam);
 
 protected:

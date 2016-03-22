@@ -52,6 +52,7 @@ enum LngResources
 	lng_SelStream                 = 19,
 	lng_SelBlock                  = 20,
 	lng_BasicSettings             = 21,
+	lng_CurClrScheme              = 22,
 	// last auto-gen identifier
 	lng_NextId
 };

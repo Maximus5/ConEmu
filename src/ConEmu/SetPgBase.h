@@ -31,6 +31,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
+#include <CommCtrl.h>
+#include "Options.h"
+#include "DlgItemHelper.h"
+#include "SetDlgButtons.h"
+
 //HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hCmdTasks, hViews, hInfo, hDebug, hUpdate, hSelection;
 enum TabHwndIndex
 {
@@ -105,12 +110,17 @@ struct ConEmuSetupItem
 };
 #endif
 
+class CDpiForDialog;
+class CDynDialog;
+class CSetPgBase;
+
 struct ConEmuSetupPages
 {
 	int              DialogID;     // Page Dialog ID (IDD_SPG_FONTS, ...)
 	int              Level;        // 0, 1
 	wchar_t          PageName[64]; // Label in treeview
 	TabHwndIndex     PageIndex;    // thi_Fonts, thi_SizePos, etc.
+	CSetPgBase*    (*CreateObj)();
 	bool             Collapsed;
 	// Filled after creation
 	bool             DpiChanged;
@@ -125,17 +135,33 @@ struct ConEmuSetupPages
 };
 
 class CSetPgBase
+	: public CSetDlgButtons
 {
+protected:
+	HWND mh_Dlg;
+	bool mb_SkipSelChange;
+	UINT mn_ActivateTabMsg;
+	const CDpiForDialog* mp_ParentDpi;
+
 public:
 	CSetPgBase();
 	virtual ~CSetPgBase();
 
 public:
 	static INT_PTR CALLBACK pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
-	static HWND CreatePage(ConEmuSetupPages* p);
+	static HWND CreatePage(ConEmuSetupPages* p, UINT nActivateTabMsg, const CDpiForDialog* apParentDpi);
+	HWND Dlg() { return mh_Dlg; };
 
 public:
 	// Methods
+	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) = 0;
+	virtual TabHwndIndex GetPageType() = 0;
+	// Optional page procedure
+	virtual INT_PTR PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam) { return 0; };
+	virtual void ProcessDpiChange(ConEmuSetupPages* p, CDpiForDialog* apDpi);
+	// Events
+	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) { return 0; };
+	virtual LRESULT OnComboBox(HWND hDlg, WORD nCtrlId, WORD code) { return 0; };
 
 protected:
 	// Members

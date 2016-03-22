@@ -135,6 +135,9 @@ struct ColorPalette;
 #define HI_GOTO_EDITOR_CMD_NC  L"cmd.exe /c \"echo Starting \"%3\" & \"%3\"\" -new_console:n"
 
 
+extern const wchar_t gsDefaultColorScheme[64]; // = L"<ConEmu>";
+
+
 struct Settings
 {
 	public:
@@ -144,6 +147,10 @@ struct Settings
 		friend class CSettings;
 		friend class CSetDlgButtons;
 		friend class CSetDlgColors;
+		friend class CSetPgApps;
+		friend class CSetPgMarkCopy;
+		friend class CSetPgColors;
+		friend class CSetPgKeys;
 
 		void ResetSettings();
 		void ReleasePointers();
@@ -240,9 +247,10 @@ struct Settings
 		DWORD ProgressesGetDuration(LPCWSTR asName);
 		void ProgressesSetDuration(LPCWSTR asName, DWORD anDuration);
 
+	public:
+		AppSettings AppStd;
 	protected:
 		friend struct AppSettings;
-		AppSettings AppStd;
 		int AppCount;
 		AppSettings** Apps;
 		// Для CSettings

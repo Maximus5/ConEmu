@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2015 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -109,6 +109,7 @@ public:
 	static void FillListBoxItems(HWND hList, eFillListBoxItems eWhat, const UINT& nValue);
 	static void FillListBoxItems(HWND hList, eFillListBoxItems eWhat, const BYTE& nValue);
 	static void FillListBoxItems(HWND hList, eWordItems eWhat, UINT& nValue, bool abExact);
+	static void FillCBList(HWND hCombo, bool abInitial, LPCWSTR* ppszPredefined, LPCWSTR pszUser);
 
 	static bool GetListBoxItem(HWND hWnd, WORD nCtrlId, eFillListBoxItems eWhat, UINT& nValue);
 	static bool GetListBoxItem(HWND hWnd, WORD nCtrlId, eFillListBoxItems eWhat, BYTE& nValue);

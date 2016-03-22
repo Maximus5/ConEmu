@@ -103,6 +103,7 @@ protected:
 	bool isWndNotFSMaximized; // ставится в true, если при переходе в FullScreen - был Maximized
 	bool isQuakeMinimized;    // изврат, для случая когда "Quake" всегда показывается на таскбаре
 
+	friend class CSetPgSizePos;
 	CESize WndWidth, WndHeight;  // в символах/пикселях/процентах
 	int    wndX, wndY;           // в пикселях
 

@@ -37,10 +37,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(default: 4091)
 
 #include "ConEmu.h"
+#include "DlgItemHelper.h"
+#include "DpiAware.h"
 #include "DynDialog.h"
 #include "FindDlg.h"
+#include "FontMgr.h"
 #include "Options.h"
-#include "OptionsClass.h"
 #include "RealConsole.h"
 #include "TabBar.h"
 #include "VConChild.h"
@@ -158,13 +160,13 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 
 			SetClassLongPtr(hWnd2, GCLP_HICON, (LONG_PTR)hClassIcon);
 			SetDlgItemText(hWnd2, tFindText, gpSet->FindOptions.pszText ? gpSet->FindOptions.pszText : L"");
-			CSettings::checkDlgButton(hWnd2, cbFindMatchCase, gpSet->FindOptions.bMatchCase);
-			CSettings::checkDlgButton(hWnd2, cbFindWholeWords, gpSet->FindOptions.bMatchWholeWords);
-			CSettings::checkDlgButton(hWnd2, cbFindFreezeConsole, gpSet->FindOptions.bFreezeConsole);
+			CDlgItemHelper::checkDlgButton(hWnd2, cbFindMatchCase, gpSet->FindOptions.bMatchCase);
+			CDlgItemHelper::checkDlgButton(hWnd2, cbFindWholeWords, gpSet->FindOptions.bMatchWholeWords);
+			CDlgItemHelper::checkDlgButton(hWnd2, cbFindFreezeConsole, gpSet->FindOptions.bFreezeConsole);
 			#if 0
-			CSettings::checkDlgButton(hWnd2, cbFindHighlightAll, gpSet->FindOptions.bHighlightAll);
+			CDlgItemHelper::checkDlgButton(hWnd2, cbFindHighlightAll, gpSet->FindOptions.bHighlightAll);
 			#endif
-			CSettings::checkDlgButton(hWnd2, cbFindTransparent, gpSet->FindOptions.bTransparent);
+			CDlgItemHelper::checkDlgButton(hWnd2, cbFindTransparent, gpSet->FindOptions.bTransparent);
 
 			if (gpSet->FindOptions.pszText && *gpSet->FindOptions.pszText)
 				SendDlgItemMessage(hWnd2, tFindText, EM_SETSEL, 0, lstrlen(gpSet->FindOptions.pszText));
@@ -204,19 +206,19 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 					DestroyWindow(hWnd2);
 					return 0;
 				case cbFindMatchCase:
-					gpSet->FindOptions.bMatchCase = CSettings::IsChecked(hWnd2, cbFindMatchCase);
+					gpSet->FindOptions.bMatchCase = CDlgItemHelper::isChecked(hWnd2, cbFindMatchCase);
 					break;
 				case cbFindWholeWords:
-					gpSet->FindOptions.bMatchWholeWords = CSettings::IsChecked(hWnd2, cbFindWholeWords);
+					gpSet->FindOptions.bMatchWholeWords = CDlgItemHelper::isChecked(hWnd2, cbFindWholeWords);
 					break;
 				case cbFindFreezeConsole:
-					gpSet->FindOptions.bFreezeConsole = CSettings::IsChecked(hWnd2, cbFindFreezeConsole);
+					gpSet->FindOptions.bFreezeConsole = CDlgItemHelper::isChecked(hWnd2, cbFindFreezeConsole);
 					break;
 				case cbFindHighlightAll:
-					gpSet->FindOptions.bHighlightAll = CSettings::IsChecked(hWnd2, cbFindHighlightAll);
+					gpSet->FindOptions.bHighlightAll = CDlgItemHelper::isChecked(hWnd2, cbFindHighlightAll);
 					break;
 				case cbFindTransparent:
-					gpSet->FindOptions.bTransparent = CSettings::IsChecked(hWnd2, cbFindTransparent);
+					gpSet->FindOptions.bTransparent = CDlgItemHelper::isChecked(hWnd2, cbFindTransparent);
 					gpConEmu->mp_Find->UpdateFindDlgAlpha(true);
 					return 0;
 				case cbFindNext:

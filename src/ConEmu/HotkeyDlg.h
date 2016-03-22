@@ -46,6 +46,7 @@ public:
 	DWORD GetVkMod();
 public:
 	static DWORD dlgGetHotkey(HWND hDlg, UINT iEditCtrl = hkHotKeySelect, UINT iListCtrl = lbHotKeyList);
+	static void SetHotkeyField(HWND hHk, BYTE vk);
 public:
 	CHotKeyDialog(HWND hParent, DWORD aVkMod);
 	~CHotKeyDialog();

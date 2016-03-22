@@ -53,6 +53,7 @@ $(INTDIR)\ConfirmDlg.obj \
 $(INTDIR)\CreateProcess.obj \
 $(INTDIR)\CustomFonts.obj \
 $(INTDIR)\DefaultTerm.obj \
+$(INTDIR)\DlgItemHelper.obj \
 $(INTDIR)\DpiAware.obj \
 $(INTDIR)\DragDrop.obj \
 $(INTDIR)\DragDropData.obj \
@@ -127,7 +128,37 @@ $(INTDIR)\SetDlgColors.obj \
 $(INTDIR)\SetDlgFonts.obj \
 $(INTDIR)\SetDlgLists.obj \
 $(INTDIR)\SetEnvVar.obj \
+$(INTDIR)\SetPgAppear.obj \
+$(INTDIR)\SetPgApps.obj \
+$(INTDIR)\SetPgBackgr.obj \
 $(INTDIR)\SetPgBase.obj \
+$(INTDIR)\SetPgColors.obj \
+$(INTDIR)\SetPgComspec.obj \
+$(INTDIR)\SetPgConfirm.obj \
+$(INTDIR)\SetPgCursor.obj \
+$(INTDIR)\SetPgDebug.obj \
+$(INTDIR)\SetPgDefTerm.obj \
+$(INTDIR)\SetPgEnvironment.obj \
+$(INTDIR)\SetPgFar.obj \
+$(INTDIR)\SetPgFarMacro.obj \
+$(INTDIR)\SetPgFeatures.obj \
+$(INTDIR)\SetPgFonts.obj \
+$(INTDIR)\SetPgHilight.obj \
+$(INTDIR)\SetPgInfo.obj \
+$(INTDIR)\SetPgIntegr.obj \
+$(INTDIR)\SetPgControls.obj \
+$(INTDIR)\SetPgKeys.obj \
+$(INTDIR)\SetPgMarkCopy.obj \
+$(INTDIR)\SetPgPaste.obj \
+$(INTDIR)\SetPgSizePos.obj \
+$(INTDIR)\SetPgStartup.obj \
+$(INTDIR)\SetPgStatus.obj \
+$(INTDIR)\SetPgTabs.obj \
+$(INTDIR)\SetPgTaskbar.obj \
+$(INTDIR)\SetPgTasks.obj \
+$(INTDIR)\SetPgTransparent.obj \
+$(INTDIR)\SetPgUpdate.obj \
+$(INTDIR)\SetPgViews.obj \
 $(INTDIR)\Status.obj \
 $(INTDIR)\TabBar.obj \
 $(INTDIR)\TabCtrlBase.obj \
@@ -340,6 +371,8 @@ $(INTDIR)\CustomFonts.obj: CustomFonts.cpp CustomFonts.h
 
 $(INTDIR)\DefaultTerm.obj: DefaultTerm.cpp DefaultTerm.h
 
+$(INTDIR)\DlgItemHelper.obj: DlgItemHelper.cpp DlgItemHelper.h
+
 $(INTDIR)\DpiAware.obj: DpiAware.cpp DpiAware.h
 
 $(INTDIR)\DragDrop.obj: DragDrop.cpp BaseDragDrops.h DragDrop.h DragDropData.h
@@ -488,7 +521,67 @@ $(INTDIR)\SetDlgLists.obj: SetDlgLists.cpp SetDlgLists.h
 
 $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 
+$(INTDIR)\SetPgAppear.obj: SetPgAppear.cpp SetPgAppear.h
+
+$(INTDIR)\SetPgApps.obj: SetPgApps.cpp SetPgApps.h
+
+$(INTDIR)\SetPgBackgr.obj: SetPgBackgr.cpp SetPgBackgr.h
+
 $(INTDIR)\SetPgBase.obj: SetPgBase.cpp SetPgBase.h
+
+$(INTDIR)\SetPgColors.obj: SetPgColors.cpp SetPgColors.h
+
+$(INTDIR)\SetPgComspec.obj: SetPgComspec.cpp SetPgComspec.h
+
+$(INTDIR)\SetPgConfirm.obj: SetPgConfirm.cpp SetPgConfirm.h
+
+$(INTDIR)\SetPgCursor.obj: SetPgCursor.cpp SetPgCursor.h
+
+$(INTDIR)\SetPgDebug.obj: SetPgDebug.cpp SetPgDebug.h
+
+$(INTDIR)\SetPgDefTerm.obj: SetPgDefTerm.cpp SetPgDefTerm.h
+
+$(INTDIR)\SetPgEnvironment.obj: SetPgEnvironment.cpp SetPgEnvironment.h
+
+$(INTDIR)\SetPgFar.obj: SetPgFar.cpp SetPgFar.h
+
+$(INTDIR)\SetPgFarMacro.obj: SetPgFarMacro.cpp SetPgFarMacro.h
+
+$(INTDIR)\SetPgFeatures.obj: SetPgFeatures.cpp SetPgFeatures.h
+
+$(INTDIR)\SetPgFonts.obj: SetPgFonts.cpp SetPgFonts.h
+
+$(INTDIR)\SetPgHilight.obj: SetPgHilight.cpp SetPgHilight.h
+
+$(INTDIR)\SetPgInfo.obj: SetPgInfo.cpp SetPgInfo.h
+
+$(INTDIR)\SetPgIntegr.obj: SetPgIntegr.cpp SetPgIntegr.h
+
+$(INTDIR)\SetPgControls.obj: SetPgControls.cpp SetPgControls.h
+
+$(INTDIR)\SetPgKeys.obj: SetPgKeys.cpp SetPgKeys.h
+
+$(INTDIR)\SetPgMarkCopy.obj: SetPgMarkCopy.cpp SetPgMarkCopy.h
+
+$(INTDIR)\SetPgPaste.obj: SetPgPaste.cpp SetPgPaste.h
+
+$(INTDIR)\SetPgSizePos.obj: SetPgSizePos.cpp SetPgSizePos.h
+
+$(INTDIR)\SetPgStartup.obj: SetPgStartup.cpp SetPgStartup.h
+
+$(INTDIR)\SetPgStatus.obj: SetPgStatus.cpp SetPgStatus.h
+
+$(INTDIR)\SetPgTabs.obj: SetPgTabs.cpp SetPgTabs.h
+
+$(INTDIR)\SetPgTaskbar.obj: SetPgTaskbar.cpp SetPgTaskbar.h
+
+$(INTDIR)\SetPgTasks.obj: SetPgTasks.cpp SetPgTasks.h
+
+$(INTDIR)\SetPgTransparent.obj: SetPgTransparent.cpp SetPgTransparent.h
+
+$(INTDIR)\SetPgUpdate.obj: SetPgUpdate.cpp SetPgUpdate.h
+
+$(INTDIR)\SetPgViews.obj: SetPgViews.cpp SetPgViews.h
 
 $(INTDIR)\Status.obj: Status.cpp
 

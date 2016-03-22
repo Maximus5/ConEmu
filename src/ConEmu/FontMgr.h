@@ -98,6 +98,8 @@ public:
 	wchar_t szFontError[512];
 
 private:
+	friend class CSetPgInfo;
+	friend class CSetPgFonts;
 	LONG mn_FontZoomValue; // 100% == 10000 (FontZoom100)
 	LOGFONT LogFont, LogFont2;
 	LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2015 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#include "DlgItemHelper.h"
 #include "OptionsClass.h"
 #include "SetDlgLists.h"
 
@@ -493,7 +494,7 @@ void CSetDlgLists::EnableDlgItems(HWND hParent, const DWORD* pnCtrlIds, size_t n
 {
 	for (;nCount-- && *pnCtrlIds; ++pnCtrlIds)
 	{
-		CSettings::EnableDlgItem(hParent, *pnCtrlIds, bEnabled);
+		CDlgItemHelper::enableDlgItem(hParent, *pnCtrlIds, bEnabled);
 	}
 }
 
@@ -666,4 +667,34 @@ void CSetDlgLists::ListBoxMultiSel(HWND hDlg, UINT nCtrlID, int nItem)
 
 	DEBUGTEST(lRc =)
 	SendMessage(hCtrl, LB_SETSEL, TRUE, nItem);
+}
+
+void CSetDlgLists::FillCBList(HWND hCombo, bool abInitial, LPCWSTR* ppszPredefined, LPCWSTR pszUser)
+{
+	bool bUser = (pszUser != NULL);
+
+	if (abInitial)
+	{
+		// Variants
+		if (ppszPredefined)
+		{
+			for (LPCWSTR* ppsz = ppszPredefined; *ppsz; ppsz++)
+			{
+				SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)*ppsz);
+				if (pszUser && (lstrcmp(*ppsz, pszUser) == 0))
+					bUser = false; // This is our predefined string
+			}
+		}
+
+		// Add user defined string to list
+		if (bUser)
+		{
+			SendMessageW(hCombo, CB_ADDSTRING, 0, (LPARAM)pszUser);
+		}
+	}
+
+	if (pszUser && (abInitial || GetWindowTextLength(hCombo) == 0))
+	{
+		SetWindowText(hCombo, pszUser);
+	}
 }

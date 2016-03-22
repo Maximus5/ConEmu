@@ -95,6 +95,14 @@ DWORD CHotKeyDialog::dlgGetHotkey(HWND hDlg, UINT iEditCtrl /*= hkHotKeySelect*/
 	return nHotKey;
 }
 
+void CHotKeyDialog::SetHotkeyField(HWND hHk, BYTE vk)
+{
+	SendMessage(hHk, HKM_SETHOTKEY,
+				vk|((vk==VK_DELETE||vk==VK_UP||vk==VK_DOWN||vk==VK_LEFT||vk==VK_RIGHT
+				||vk==VK_PRIOR||vk==VK_NEXT||vk==VK_HOME||vk==VK_END
+				||vk==VK_INSERT) ? (HOTKEYF_EXT<<8) : 0), 0);
+}
+
 INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	CHotKeyDialog* pDlg = NULL;
@@ -140,7 +148,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 			SendMessage(hHk, HKM_SETRULES, HKCOMB_A|HKCOMB_C|HKCOMB_CA|HKCOMB_S|HKCOMB_SA|HKCOMB_SC|HKCOMB_SCA, 0);
 
 			BYTE vk = pDlg->m_HK.Key.Vk;
-			CSettings::SetHotkeyField(hHk, vk);
+			SetHotkeyField(hHk, vk);
 
 			// Warning! Если nVK не указан в SettingsNS::nKeysHot - nVK будет обнулен
 			CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbHotKeyList), CSetDlgLists::eKeysHot, vk, false);
@@ -190,7 +198,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 							BYTE vk = 0;
 							CSetDlgLists::GetListBoxItem(hDlg, lbHotKeyList, CSetDlgLists::eKeysHot, vk);
 
-							CSettings::SetHotkeyField(GetDlgItem(hDlg, hkHotKeySelect), vk);
+							SetHotkeyField(GetDlgItem(hDlg, hkHotKeySelect), vk);
 
 							if (pDlg->m_HK.Key.Mod == cvk_NULL)
 							{

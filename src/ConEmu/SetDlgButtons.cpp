@@ -51,6 +51,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetCmdTask.h"
 #include "SetDlgButtons.h"
 #include "SetDlgLists.h"
+#include "SetPgColors.h"
+#include "SetPgFeatures.h"
+#include "SetPgIntegr.h"
+#include "SetPgKeys.h"
+#include "SetPgSizePos.h"
+#include "SetPgStatus.h"
+#include "SetPgTasks.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
@@ -64,100 +71,7 @@ void CSetDlgButtons::UnitTests()
 }
 #endif
 
-bool CSetDlgButtons::checkDlgButton(HWND hParent, WORD nCtrlId, UINT uCheck)
-{
-	#ifdef _DEBUG
-	HWND hCheckBox = NULL;
-	if (!hParent)
-	{
-		_ASSERTE(hParent!=NULL);
-	}
-	else
-	{
-		hCheckBox = GetDlgItem(hParent, nCtrlId);
-		if (!hCheckBox)
-		{
-			//_ASSERTE(hCheckBox!=NULL && "Checkbox not found in hParent dlg");
-			wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"checkDlgButton failed\nControlID %u not found in hParent dlg", nCtrlId);
-			MsgBox(szErr, MB_SYSTEMMODAL|MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
-		}
-		else
-		{
-			_ASSERTE(uCheck==BST_UNCHECKED || uCheck==BST_CHECKED || (uCheck==BST_INDETERMINATE && (BS_3STATE&GetWindowLong(hCheckBox,GWL_STYLE))));
-		}
-	}
-	#endif
-
-	// Аналог CheckDlgButton
-	BOOL bRc = CheckDlgButton(hParent, nCtrlId, uCheck);
-	return (bRc != FALSE);
-}
-
-bool CSetDlgButtons::checkRadioButton(HWND hParent, int nIDFirstButton, int nIDLastButton, int nIDCheckButton)
-{
-	#ifdef _DEBUG
-	if (!hParent)
-	{
-		_ASSERTE(hParent!=NULL);
-	}
-	else if (!GetDlgItem(hParent, nIDFirstButton) || !GetDlgItem(hParent, nIDLastButton) || !GetDlgItem(hParent, nIDCheckButton))
-	{
-		//_ASSERTE(GetDlgItem(hParent, nIDFirstButton) && "Checkbox not found in hParent dlg");
-		//_ASSERTE(GetDlgItem(hParent, nIDLastButton) && "Checkbox not found in hParent dlg");
-		//_ASSERTE(GetDlgItem(hParent, nIDCheckButton) && "Checkbox not found in hParent dlg");
-		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"checkRadioButton failed\nControlIDs %u,%u,%u not found in hParent dlg", nIDFirstButton, nIDLastButton, nIDCheckButton);
-		MsgBox(szErr, MB_SYSTEMMODAL|MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
-	}
-	#endif
-
-	// Аналог CheckRadioButton
-	BOOL bRc = CheckRadioButton(hParent, nIDFirstButton, nIDLastButton, nIDCheckButton);
-	return (bRc != FALSE);
-}
-
-void CSetDlgButtons::enableDlgItems(HWND hParent, UINT* pnCtrlID, INT_PTR nCount, bool bEnabled)
-{
-	for (INT_PTR i = 0; i < nCount; i++)
-	{
-		HWND hItem = GetDlgItem(hParent, pnCtrlID[i]);
-		if (!hItem)
-		{
-			_ASSERTE(GetDlgItem(hParent, pnCtrlID[i])!=NULL);
-			continue;
-		}
-		EnableWindow(hItem, bEnabled);
-	}
-}
-
-// FALSE - выключена
-// TRUE (BST_CHECKED) - включена
-// BST_INDETERMINATE (2) - 3-d state
-BYTE CSetDlgButtons::IsChecked(HWND hParent, WORD nCtrlId)
-{
-	#ifdef _DEBUG
-	if (!hParent)
-	{
-		_ASSERTE(hParent!=NULL);
-	}
-	else if ((nCtrlId != IDCANCEL) && !GetDlgItem(hParent, nCtrlId))
-	{
-		//_ASSERTE(hCheckBox!=NULL && "Checkbox not found in hParent dlg");
-		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"IsChecked failed\nControlID %u not found in hParent dlg", nCtrlId);
-		MsgBox(szErr, MB_SYSTEMMODAL|MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
-	}
-	#endif
-
-	// Аналог IsDlgButtonChecked
-	int nChecked = SendDlgItemMessage(hParent, nCtrlId, BM_GETCHECK, 0, 0);
-	_ASSERTE(nChecked==0 || nChecked==1 || nChecked==2);
-
-	if (nChecked!=0 && nChecked!=1 && nChecked!=2)
-		nChecked = 0;
-
-	return LOBYTE(nChecked);
-}
-
-BYTE CSetDlgButtons::IsChecked(WORD nCtrlId, WORD CB, BYTE uCheck)
+BYTE CSetDlgButtons::isOptChecked(WORD nCtrlId, WORD CB, BYTE uCheck)
 {
 	if (nCtrlId == CB)
 		return uCheck;
@@ -214,11 +128,11 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			OnBtn_UnicodeRangesApply(hDlg, CB, uCheck);
 			break;
 		//case cbCursorColor:
-		//	gpSet->AppStd.isCursorColor = IsChecked(hDlg,cbCursorColor);
+		//	gpSet->AppStd.isCursorColor = isChecked(hDlg,cbCursorColor);
 		//	gpConEmu->Update(true);
 		//	break;
 		//case cbCursorBlink:
-		//	gpSet->AppStd.isCursorBlink = IsChecked(hDlg,cbCursorBlink);
+		//	gpSet->AppStd.isCursorBlink = isChecked(hDlg,cbCursorBlink);
 		//	if (!gpSet->AppStd.isCursorBlink) // если мигание отключается - то курсор может "замереть" в погашенном состоянии.
 		//		CVConGroup::InvalidateAll();
 		//	break;
@@ -493,7 +407,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			OnBtn_RConVisible(hDlg, CB, uCheck);
 			break;
 		//case cbLockRealConsolePos:
-		//	isLockRealConsolePos = IsChecked(hDlg, cbLockRealConsolePos);
+		//	isLockRealConsolePos = isChecked(hDlg, cbLockRealConsolePos);
 		//	break;
 		case cbUseInjects:
 			OnBtn_UseInjects(hDlg, CB, uCheck);
@@ -603,7 +517,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			break;
 
 		//case cbUseWinNumber:
-		//	gpSet->isUseWinNumber = IsChecked(hDlg, cbUseWinNumber);
+		//	gpSet->isUseWinNumber = isChecked(hDlg, cbUseWinNumber);
 		//	if (hDlg) checkDlgButton(hDlg, cbUseWinNumberK, gpSet->isUseWinNumber ? BST_CHECKED : BST_UNCHECKED);
 		//	gpConEmu->UpdateWinHookSettings();
 		//	break;
@@ -707,7 +621,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		//case cbTransparentInactive:
 		//	{
 		//		int newV = gpSet->nTransparentInactive;
-		//		if (IsChecked(hDlg, cbTransparentInactive))
+		//		if (isChecked(hDlg, cbTransparentInactive))
 		//		{
 		//			if (newV == MAX_ALPHA_VALUE) newV = 200;
 		//		}
@@ -1049,7 +963,7 @@ LRESULT CSetDlgButtons::OnButtonClicked(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
 	_ASSERTE(hDlg!=NULL);
 	WORD CB = LOWORD(wParam);
-	BYTE uCheck = IsChecked(hDlg, CB);
+	BYTE uCheck = isChecked(hDlg, CB);
 
 	ProcessButtonClick(hDlg, CB, uCheck);
 
@@ -1175,7 +1089,7 @@ void CSetDlgButtons::OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck)
 	{
 	case cbCmdGrpDefaultNew:
 		flag = CETF_NEW_DEFAULT;
-		if (IsChecked(hDlg, CB))
+		if (isChecked(hDlg, CB))
 		{
 			bDistinct = true;
 			p->Flags |= flag;
@@ -1187,7 +1101,7 @@ void CSetDlgButtons::OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck)
 		break;
 	case cbCmdGrpDefaultCmd:
 		flag = CETF_CMD_DEFAULT;
-		if (IsChecked(hDlg, CB))
+		if (isChecked(hDlg, CB))
 		{
 			bDistinct = true;
 			p->Flags |= flag;
@@ -1198,13 +1112,13 @@ void CSetDlgButtons::OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck)
 		}
 		break;
 	case cbCmdGrpTaskbar:
-		if (IsChecked(hDlg, CB))
+		if (isChecked(hDlg, CB))
 			p->Flags &= ~CETF_NO_TASKBAR;
 		else
 			p->Flags |= CETF_NO_TASKBAR;
 		break;
 	case cbCmdGrpToolbar:
-		if (IsChecked(hDlg, CB))
+		if (isChecked(hDlg, CB))
 			p->Flags |= CETF_ADD_TOOLBAR;
 		else
 			p->Flags &= ~CETF_ADD_TOOLBAR;
@@ -1236,10 +1150,14 @@ void CSetDlgButtons::OnBtn_CmdTasksAdd(HWND hDlg, WORD CB, BYTE uCheck)
 	if (!gpSet->CmdTaskGet(iCount))
 		gpSet->CmdTaskSet(iCount, L"", L"", L"");
 
-	gpSetCls->OnInitDialog_Tasks(hDlg, false);
+	CSetPgTasks* pTasksPg;
+	if (gpSetCls->GetPageObj(pTasksPg))
+		pTasksPg->OnInitDialog(hDlg, false);
 
 	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, iCount);
-	gpSetCls->OnComboBox(hDlg, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
+
+	if (pTasksPg)
+		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
 
 } // cbCmdTasksAdd
 
@@ -1304,11 +1222,15 @@ void CSetDlgButtons::OnBtn_CmdTasksDel(HWND hDlg, WORD CB, BYTE uCheck)
 			*gpSet->psStartTasksName = 0;
 	}
 
-	gpSetCls->OnInitDialog_Tasks(hDlg, false);
+	CSetPgTasks* pTasksPg;
+	if (gpSetCls->GetPageObj(pTasksPg))
+		pTasksPg->OnInitDialog(hDlg, false);
 
 	iCount = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0);
 	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, min(Selected[0],(iCount-1)));
-	gpSetCls->OnComboBox(hDlg, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
+
+	if (pTasksPg)
+		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
 
 	delete[] Selected;
 
@@ -1340,10 +1262,14 @@ void CSetDlgButtons::OnBtn_CmdTasksUpDown(HWND hDlg, WORD CB, BYTE uCheck)
 	if (!gpSet->CmdTaskXch(iCur, iChg))
 		return;
 
-	gpSetCls->OnInitDialog_Tasks(hDlg, false);
+	CSetPgTasks* pTasksPg;
+	if (gpSetCls->GetPageObj(pTasksPg))
+		pTasksPg->OnInitDialog(hDlg, false);
 
 	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, iChg);
-	gpSetCls->OnComboBox(hDlg, MAKELONG(lbCmdTasks,LBN_SELCHANGE), 0);
+
+	if (pTasksPg)
+		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
 
 } // cbCmdTasksUp || cbCmdTasksDown
 
@@ -1427,7 +1353,9 @@ void CSetDlgButtons::OnBtn_CmdGroupApp(HWND hDlg, WORD CB, BYTE uCheck)
 			if (pszFull)
 			{
 				SetDlgItemText(hDlg, tCmdGroupCommands, pszFull);
-				gpSetCls->OnEditChanged(hDlg, MAKELPARAM(tCmdGroupCommands,EN_CHANGE), 0);
+				CSetPgTasks* pTasksPg;
+				if (gpSetCls->GetPageObj(pTasksPg))
+					pTasksPg->OnEditChanged(hDlg, tCmdGroupCommands);
 			}
 			else
 			{
@@ -1545,7 +1473,9 @@ void CSetDlgButtons::OnBtn_AddDefaults(HWND hDlg, WORD CB, BYTE uCheck)
 	CreateDefaultTasks(slf_AppendTasks|((iBtn == IDNO) ? slf_RewriteExisting : slf_None));
 
 	// Обновить список на экране
-	gpSetCls->OnInitDialog_Tasks(hDlg, true);
+	CSetPgTasks* pTasksPg;
+	if (gpSetCls->GetPageObj(pTasksPg))
+		pTasksPg->OnInitDialog(hDlg, true);
 
 } // cbAddDefaults
 
@@ -1562,7 +1492,9 @@ void CSetDlgButtons::OnBtn_CmdTasksReload(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->LoadCmdTasks(NULL, true);
 
 	// Обновить список на экране
-	gpSetCls->OnInitDialog_Tasks(hDlg, true);
+	CSetPgTasks* pTasksPg;
+	if (gpSetCls->GetPageObj(pTasksPg))
+		pTasksPg->OnInitDialog(hDlg, true);
 
 } // cbCmdTasksReload
 
@@ -1634,11 +1566,11 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 		ConEmuWindowMode Mode = (ConEmuWindowMode)gpSet->_WindowMode;
 		if (hDlg)
 		{
-			if (IsChecked(hDlg, rNormal))
+			if (isChecked(hDlg, rNormal))
 				Mode = wmNormal;
-			else if (IsChecked(hDlg, rMaximized))
+			else if (isChecked(hDlg, rMaximized))
 				Mode = wmMaximized;
-			else if (IsChecked(hDlg, rFullScreen))
+			else if (isChecked(hDlg, rFullScreen))
 				Mode = wmFullScreen;
 		}
 
@@ -1696,10 +1628,14 @@ void CSetDlgButtons::OnBtn_CascadeFixed(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==rCascade || CB==rFixed);
 
 	gpSet->wndCascade = (CB == rCascade);
-	if (gpSet->isQuakeStyle)
+	if (hDlg && gpSet->isQuakeStyle)
 	{
-		gpSetCls->UpdatePosSizeEnabled(hDlg);
-		EnableWindow(GetDlgItem(hDlg, cbApplyPos), TRUE);
+		CSetPgSizePos* pObj;
+		if (gpSetCls->GetPageObj(pObj))
+		{
+			pObj->EnablePosSizeControls(hDlg);
+			enableDlgItem(hDlg, cbApplyPos, true);
+		}
 	}
 } // rCascade || rFixed
 
@@ -1896,15 +1832,15 @@ void CSetDlgButtons::OnBtn_ComspecRadio(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==rbComspecAuto || CB==rbComspecEnvVar || CB==rbComspecCmd || CB==rbComspecExplicit);
 
-	if (IsChecked(rbComspecExplicit, CB, uCheck))
+	if (isOptChecked(rbComspecExplicit, CB, uCheck))
 		gpSet->ComSpec.csType = cst_Explicit;
-	else if (IsChecked(rbComspecCmd, CB, uCheck))
+	else if (isOptChecked(rbComspecCmd, CB, uCheck))
 		gpSet->ComSpec.csType = cst_Cmd;
-	else if (IsChecked(rbComspecEnvVar, CB, uCheck))
+	else if (isOptChecked(rbComspecEnvVar, CB, uCheck))
 		gpSet->ComSpec.csType = cst_EnvVar;
 	else
 		gpSet->ComSpec.csType = cst_AutoTccCmd;
-	gpSetCls->EnableDlgItem(hDlg, cbComspecUpdateEnv, (gpSet->ComSpec.csType!=cst_EnvVar));
+	enableDlgItem(hDlg, cbComspecUpdateEnv, (gpSet->ComSpec.csType!=cst_EnvVar));
 	gpConEmu->OnGlobalSettingsChanged();
 
 } // rbComspecAuto || rbComspecEnvVar || rbComspecCmd || rbComspecExplicit
@@ -1961,9 +1897,9 @@ void CSetDlgButtons::OnBtn_ComspecBitsRadio(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==rbComspec_x32 || CB==rbComspec_OSbit || CB==rbComspec_AppBit);
 
-	if (IsChecked(rbComspec_x32, CB, uCheck))
+	if (isOptChecked(rbComspec_x32, CB, uCheck))
 		gpSet->ComSpec.csBits = csb_x32;
-	else if (IsChecked(rbComspec_AppBit, CB, uCheck))
+	else if (isOptChecked(rbComspec_AppBit, CB, uCheck))
 		gpSet->ComSpec.csBits = csb_SameApp;
 	else
 		gpSet->ComSpec.csBits = csb_SameOS;
@@ -2028,8 +1964,16 @@ void CSetDlgButtons::OnBtn_CmdAutoActions(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==bCmdAutoClear || CB==bCmdAutoRegister || CB==bCmdAutoUnregister);
 
-	gpSetCls->ShellIntegration(hDlg, CSettings::ShellIntgr_CmdAuto, CB==bCmdAutoRegister, CB==bCmdAutoClear);
-	gpSetCls->pageOpProc_Integr(hDlg, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
+	CSetPgIntegr* pIntgrPg;
+	if (gpSetCls->GetPageObj(pIntgrPg))
+	{
+		pIntgrPg->ShellIntegration(hDlg, CSetPgIntegr::ShellIntgr_CmdAuto, CB==bCmdAutoRegister, CB==bCmdAutoClear);
+		pIntgrPg->PageDlgProc(hDlg, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
+	}
+	else
+	{
+		_ASSERTE(pIntgrPg!=NULL && "CSetPgIntegr was not created!");
+	}
 
 } // bCmdAutoClear || bCmdAutoRegister || bCmdAutoUnregister
 
@@ -2248,8 +2192,8 @@ void CSetDlgButtons::OnBtn_QuakeStyles(HWND hDlg, WORD CB, BYTE uCheck)
 	BYTE NewQuakeMode = bQuake ? bAuto ? 2 : 1 : 0;
 
 	//ConEmuWindowMode NewWindowMode =
-	//	IsChecked(rMaximized, CB, uCheck) ? wmMaximized :
-	//	IsChecked(rFullScreen, CB, uCheck) ? wmFullScreen :
+	//	isOptChecked(rMaximized, CB, uCheck) ? wmMaximized :
+	//	isOptChecked(rFullScreen, CB, uCheck) ? wmFullScreen :
 	//	wmNormal;
 
 	// здесь меняются gpSet->isQuakeStyle, gpSet->isTryToCenter, gpSet->SetMinToTray
@@ -2475,7 +2419,9 @@ void CSetDlgButtons::OnBtn_DebugLog(HWND hDlg, WORD CB, BYTE uCheck)
 			gpSet->isDebugLog = 1;
 		_ASSERTE(gpSet->isLogging());
 		gpSet->EnableLogging();
-		gpSetCls->UpdateLogLocation();
+		CSetPgFeatures* pFeat = NULL;
+		if (gpSetCls->GetPageObj(pFeat))
+			pFeat->UpdateLogLocation();
 	}
 	else
 	{
@@ -2493,8 +2439,8 @@ void CSetDlgButtons::OnBtn_DragLR(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbDragL || CB==cbDragR);
 
 	gpSet->isDragEnabled =
-	    (IsChecked(cbDragL, CB, uCheck) ? DRAG_L_ALLOWED : 0) |
-	    (IsChecked(cbDragR, CB, uCheck) ? DRAG_R_ALLOWED : 0);
+	    (isOptChecked(cbDragL, CB, uCheck) ? DRAG_L_ALLOWED : 0) |
+	    (isOptChecked(cbDragR, CB, uCheck) ? DRAG_R_ALLOWED : 0);
 
 } // cbDragL || cbDragR
 
@@ -2575,11 +2521,11 @@ void CSetDlgButtons::OnBtn_TabsRadioAuto(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==rbTabsNone || CB==rbTabsAlways || CB==rbTabsAuto);
 
-	if (IsChecked(rbTabsAuto, CB, uCheck))
+	if (isOptChecked(rbTabsAuto, CB, uCheck))
 	{
 		gpSet->isTabs = 2;
 	}
-	else if (IsChecked(rbTabsAlways, CB, uCheck))
+	else if (isOptChecked(rbTabsAlways, CB, uCheck))
 	{
 		gpSet->isTabs = 1;
 		gpConEmu->ForceShowTabs(TRUE);
@@ -2688,9 +2634,9 @@ void CSetDlgButtons::OnBtn_TaskbarBtnRadio(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==rbTaskbarBtnActive || CB==rbTaskbarBtnAll || CB==rbTaskbarBtnWin7 || CB==rbTaskbarBtnHidden);
 
 	// 3state: BST_UNCHECKED/BST_CHECKED/BST_INDETERMINATE
-	gpSet->m_isTabsOnTaskBar = IsChecked(rbTaskbarBtnAll, CB, uCheck) ? 1
-		: IsChecked(rbTaskbarBtnWin7, CB, uCheck) ? 2
-		: IsChecked(rbTaskbarBtnHidden, CB, uCheck) ? 3 : 0;
+	gpSet->m_isTabsOnTaskBar = isOptChecked(rbTaskbarBtnAll, CB, uCheck) ? 1
+		: isOptChecked(rbTaskbarBtnWin7, CB, uCheck) ? 2
+		: isOptChecked(rbTaskbarBtnHidden, CB, uCheck) ? 3 : 0;
 	if ((gpSet->m_isTabsOnTaskBar == 3) && !gpSet->mb_MinToTray)
 	{
 		gpSet->SetMinToTray(true);
@@ -3102,8 +3048,8 @@ void CSetDlgButtons::OnBtn_AdminSuffixOrShield(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (hDlg)
 	{
-		bShield = IsChecked(hDlg, cbAdminShield);
-		bSuffix = IsChecked(hDlg, cbAdminSuffix);
+		bShield = isChecked(hDlg, cbAdminShield);
+		bSuffix = isChecked(hDlg, cbAdminSuffix);
 	}
 	else if (CB == cbAdminShield)
 	{
@@ -3174,8 +3120,8 @@ void CSetDlgButtons::OnBtn_CloseConEmuOptions(HWND hDlg, WORD CB, BYTE uCheck)
 	// hDlg may be NULL if called from GuiMacro
 	if (hDlg)
 	{
-		bClose = IsChecked(hDlg, cbCloseConEmuWithLastTab);
-		bQuit = IsChecked(hDlg, cbCloseConEmuOnCrossClicking);
+		bClose = isChecked(hDlg, cbCloseConEmuWithLastTab);
+		bQuit = isChecked(hDlg, cbCloseConEmuOnCrossClicking);
 	}
 	else if (CB == cbCloseConEmuWithLastTab)
 	{
@@ -3198,9 +3144,9 @@ void CSetDlgButtons::OnBtn_CloseConEmuOptions(HWND hDlg, WORD CB, BYTE uCheck)
 	{
 		checkDlgButton(hDlg, cbMinimizeOnLastTabClose, gpSet->isMinOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
 		checkDlgButton(hDlg, cbHideOnLastTabClose, gpSet->isHideOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
-		CSettings::EnableDlgItem(hDlg, cbCloseConEmuOnCrossClicking, !gpSet->isCloseOnLastTabClose());
-		CSettings::EnableDlgItem(hDlg, cbMinimizeOnLastTabClose, !gpSet->isCloseOnLastTabClose());
-		CSettings::EnableDlgItem(hDlg, cbHideOnLastTabClose, !gpSet->isCloseOnLastTabClose() && gpSet->isMinOnLastTabClose());
+		enableDlgItem(hDlg, cbCloseConEmuOnCrossClicking, !gpSet->isCloseOnLastTabClose());
+		enableDlgItem(hDlg, cbMinimizeOnLastTabClose, !gpSet->isCloseOnLastTabClose());
+		enableDlgItem(hDlg, cbHideOnLastTabClose, !gpSet->isCloseOnLastTabClose() && gpSet->isMinOnLastTabClose());
 	}
 } // cbCloseConEmuWithLastTab || cbCloseConEmuOnCrossClicking
 
@@ -3210,7 +3156,7 @@ void CSetDlgButtons::OnBtn_HideOrMinOnLastTabClose(HWND hDlg, WORD CB, BYTE uChe
 {
 	_ASSERTE(CB==cbMinimizeOnLastTabClose || CB==cbHideOnLastTabClose);
 
-	if ((hDlg && !IsChecked(hDlg, cbCloseConEmuWithLastTab))
+	if ((hDlg && !isChecked(hDlg, cbCloseConEmuWithLastTab))
 		|| (!hDlg && !gpSet->isCloseOnLastTabClose()))
 	{
 		// isMultiHideOnClose: 0 - не скрываться, 1 - в трей, 2 - просто минимизация
@@ -3221,8 +3167,8 @@ void CSetDlgButtons::OnBtn_HideOrMinOnLastTabClose(HWND hDlg, WORD CB, BYTE uChe
 		// hDlg may be NULL if called from GuiMacro
 		if (hDlg)
 		{
-			chkMin = IsChecked(hDlg, cbMinimizeOnLastTabClose);
-			chkTSA = IsChecked(hDlg, cbHideOnLastTabClose);
+			chkMin = isChecked(hDlg, cbMinimizeOnLastTabClose);
+			chkTSA = isChecked(hDlg, cbHideOnLastTabClose);
 		}
 		else if (CB == cbMinimizeOnLastTabClose)
 		{
@@ -3245,7 +3191,7 @@ void CSetDlgButtons::OnBtn_HideOrMinOnLastTabClose(HWND hDlg, WORD CB, BYTE uChe
 		if (hDlg)
 		{
 			checkDlgButton(hDlg, cbHideOnLastTabClose, gpSet->isHideOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
-			CSettings::EnableDlgItem(hDlg, cbHideOnLastTabClose, !gpSet->isCloseOnLastTabClose() && gpSet->isMinOnLastTabClose());
+			enableDlgItem(hDlg, cbHideOnLastTabClose, !gpSet->isCloseOnLastTabClose() && gpSet->isMinOnLastTabClose());
 		}
 	}
 } // cbMinimizeOnLastTabClose || cbHideOnLastTabClose
@@ -3338,8 +3284,12 @@ void CSetDlgButtons::OnBtn_HotkeysListShowOptions(HWND hDlg, WORD CB, BYTE uChec
 {
 	_ASSERTE(CB==rbHotkeysAll || CB==rbHotkeysUser || CB==rbHotkeysSystem || CB==rbHotkeysMacros || CB==cbHotkeysAssignedOnly);
 
-	gpSetCls->FillHotKeysList(hDlg, TRUE);
-	gpSetCls->OnHotkeysNotify(hDlg, MAKELONG(lbConEmuHotKeys,0xFFFF), 0);
+    CSetPgKeys* pPage;
+    if (gpSetCls->GetPageObj(pPage))
+    {
+    	pPage->FillHotKeysList(hDlg, TRUE);
+	    pPage->OnHotkeysNotify(hDlg, MAKELONG(lbConEmuHotKeys,0xFFFF), 0);
+    }
 
 } // rbHotkeysAll || rbHotkeysUser || rbHotkeysSystem || rbHotkeysMacros || cbHotkeysAssignedOnly
 
@@ -3468,7 +3418,7 @@ void CSetDlgButtons::OnBtn_ThumbBackColors(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==rbThumbBackColorIdx || CB==rbThumbBackColorRGB);
 
-	gpSet->ThSet.crBackground.UseIndex = IsChecked(rbThumbBackColorIdx, CB, uCheck);
+	gpSet->ThSet.crBackground.UseIndex = isOptChecked(rbThumbBackColorIdx, CB, uCheck);
 	CSettings::InvalidateCtrl(GetDlgItem(hDlg, c32), TRUE);
 
 } // rbThumbBackColorIdx || rbThumbBackColorRGB
@@ -3479,7 +3429,7 @@ void CSetDlgButtons::OnBtn_ThumbPreviewBoxColors(HWND hDlg, WORD CB, BYTE uCheck
 {
 	_ASSERTE(CB==rbThumbPreviewBoxColorIdx || CB==rbThumbPreviewBoxColorRGB);
 
-	gpSet->ThSet.crPreviewFrame.UseIndex = IsChecked(rbThumbPreviewBoxColorIdx, CB, uCheck);
+	gpSet->ThSet.crPreviewFrame.UseIndex = isOptChecked(rbThumbPreviewBoxColorIdx, CB, uCheck);
 	CSettings::InvalidateCtrl(GetDlgItem(hDlg, c33), TRUE);
 
 } // rbThumbPreviewBoxColorIdx || rbThumbPreviewBoxColorRGB
@@ -3490,7 +3440,7 @@ void CSetDlgButtons::OnBtn_ThumbSelectionBoxColors(HWND hDlg, WORD CB, BYTE uChe
 {
 	_ASSERTE(CB==rbThumbSelectionBoxColorIdx || CB==rbThumbSelectionBoxColorRGB);
 
-	gpSet->ThSet.crSelectFrame.UseIndex = IsChecked(rbThumbSelectionBoxColorIdx, CB, uCheck);
+	gpSet->ThSet.crSelectFrame.UseIndex = isOptChecked(rbThumbSelectionBoxColorIdx, CB, uCheck);
 	CSettings::InvalidateCtrl(GetDlgItem(hDlg, c34), TRUE);
 
 } // rbThumbSelectionBoxColorIdx || rbThumbSelectionBoxColorRGB
@@ -3671,7 +3621,9 @@ void CSetDlgButtons::OnBtn_ColorFormat(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (hDlg)
 	{
-		gpSetCls->OnInitDialog_Color(hDlg, false);
+		CSetPgColors* pColorsPg;
+		if (gpSetCls->GetPageObj(pColorsPg))
+			pColorsPg->OnInitDialog(hDlg, false);
 	}
 
 } // rbColorRgbDec || rbColorRgbHex || rbColorBgrHex
@@ -3759,8 +3711,10 @@ void CSetDlgButtons::OnBtn_ColorSchemeSaveDelete(HWND hDlg, WORD CB, BYTE uCheck
 	SetFocus(hList);
 	HWND hCB = GetDlgItem(hDlg, CB);
 	SetWindowLongPtr(hCB, GWL_STYLE, GetWindowLongPtr(hCB, GWL_STYLE) & ~BS_DEFPUSHBUTTON);
-	// Перетряхнуть
-	gpSetCls->OnInitDialog_Color(hDlg, false);
+	// Refresh
+	CSetPgColors* pColorsPg;
+	if (gpSetCls->GetPageObj(pColorsPg))
+		pColorsPg->OnInitDialog(hDlg, false);
 	SafeFree(pszName);
 
 } // cbColorSchemeSave || cbColorSchemeDelete
@@ -3910,7 +3864,7 @@ void CSetDlgButtons::OnBtn_CTSAutoCopy(HWND hDlg, WORD CB, BYTE uCheck)
 	if (hDlg)
 	{
 		CSettings::checkDlgButton(hDlg, cbCTSResetOnRelease, (gpSet->isCTSResetOnRelease && gpSet->isCTSAutoCopy));
-		CSettings::EnableDlgItem(hDlg, cbCTSResetOnRelease, gpSet->isCTSAutoCopy);
+		enableDlgItem(hDlg, cbCTSResetOnRelease, gpSet->isCTSAutoCopy);
 	}
 
 } // cbCTSAutoCopy
@@ -3949,8 +3903,8 @@ void CSetDlgButtons::OnBtn_CTSEndCopyAuto(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (hDlg)
 	{
-		bTyping = IsChecked(hDlg, cbCTSEndOnTyping);
-		bCopy = IsChecked(hDlg, cbCTSEndCopyBefore);
+		bTyping = isChecked(hDlg, cbCTSEndOnTyping);
+		bCopy = isChecked(hDlg, cbCTSEndCopyBefore);
 	}
 	else if (CB == cbCTSEndOnTyping)
 	{
@@ -3965,9 +3919,9 @@ void CSetDlgButtons::OnBtn_CTSEndCopyAuto(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (hDlg)
 	{
-		CSettings::EnableDlgItem(hDlg, cbCTSEndOnKeyPress, gpSet->isCTSEndOnTyping!=0);
-		CSettings::EnableDlgItem(hDlg, cbCTSEndCopyBefore, gpSet->isCTSEndOnTyping!=0);
-		CSettings::EnableDlgItem(hDlg, cbCTSEraseBeforeReset, gpSet->isCTSEndOnTyping!=0);
+		enableDlgItem(hDlg, cbCTSEndOnKeyPress, gpSet->isCTSEndOnTyping!=0);
+		enableDlgItem(hDlg, cbCTSEndCopyBefore, gpSet->isCTSEndOnTyping!=0);
+		enableDlgItem(hDlg, cbCTSEraseBeforeReset, gpSet->isCTSEndOnTyping!=0);
 		//checkDlgButton(hDlg, cbCTSEndOnKeyPress, gpSet->isCTSEndOnKeyPress); -- здесь не меняется -- "End on any key"
 	}
 } // cbCTSEndOnTyping || cbCTSEndCopyBefore
@@ -4194,7 +4148,7 @@ void CSetDlgButtons::OnBtn_UpdateTypeRadio(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==rbUpdateStableOnly || CB==rbUpdatePreview || CB==rbUpdateLatestAvailable);
 
-	gpSet->UpdSet.isUpdateUseBuilds = IsChecked(rbUpdateStableOnly, CB, uCheck) ? 1 : IsChecked(rbUpdateLatestAvailable, CB, uCheck) ? 2 : 3;
+	gpSet->UpdSet.isUpdateUseBuilds = isOptChecked(rbUpdateStableOnly, CB, uCheck) ? 1 : isOptChecked(rbUpdateLatestAvailable, CB, uCheck) ? 2 : 3;
 
 } // rbUpdateStableOnly || rbUpdatePreview || rbUpdateLatestAvailable
 
@@ -4426,8 +4380,8 @@ void CSetDlgButtons::OnBtn_DefTerm(HWND hDlg, WORD CB, BYTE uCheck)
 	case rbDefaultTerminalConfAlways:
 	case rbDefaultTerminalConfNever:
 		gpSet->nDefaultTerminalConfirmClose =
-			IsChecked(rbDefaultTerminalConfAuto, CB, uCheck) ? 0 :
-			IsChecked(rbDefaultTerminalConfAlways, CB, uCheck) ? 1 : 2;
+			isOptChecked(rbDefaultTerminalConfAuto, CB, uCheck) ? 0 :
+			isOptChecked(rbDefaultTerminalConfAlways, CB, uCheck) ? 1 : 2;
 		break;
 
 	#ifdef _DEBUG
@@ -4503,7 +4457,7 @@ void CSetDlgButtons::OnBtn_ColorField(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	if (CB >= c32 && CB <= c34)
 	{
-		if (gpSetCls->ColorEditDialog(hDlg, CB))
+		if (CSetDlgColors::ColorEditDialog(hDlg, CB))
 		{
 			if (CB == c32)
 			{
@@ -4527,21 +4481,21 @@ void CSetDlgButtons::OnBtn_ColorField(HWND hDlg, WORD CB, BYTE uCheck)
 	} // else if (CB >= c32 && CB <= c34)
 	else if (CB >= c35 && CB <= c37)
 	{
-		if (gpSetCls->ColorEditDialog(hDlg, CB))
+		if (CSetDlgColors::ColorEditDialog(hDlg, CB))
 		{
 			gpConEmu->mp_Status->UpdateStatusBar(true);
 		}
 	} // if (CB >= c35 && CB <= c37)
 	else if (CB == c38)
 	{
-		if (gpSetCls->ColorEditDialog(hDlg, CB))
+		if (CSetDlgColors::ColorEditDialog(hDlg, CB))
 		{
 			gpConEmu->OnTransparent();
 		}
 	} // if (CB == c38)
 	else if (CB >= c0 && CB <= CSetDlgColors::MAX_COLOR_EDT_ID)
 	{
-		if (gpSetCls->ColorEditDialog(hDlg, CB))
+		if (CSetDlgColors::ColorEditDialog(hDlg, CB))
 		{
 			gpConEmu->InvalidateAll();
 			gpConEmu->Update(true);
@@ -4682,7 +4636,9 @@ void CSetDlgButtons::OnBtn_StatusAddDel(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (bChanged)
 	{
-		gpSetCls->OnInitDialog_StatusItems(hDlg);
+		CSetPgStatus* pDlg = dynamic_cast<CSetPgStatus*>(gpSetCls->GetPageObj(thi_Status));
+		if (pDlg)
+			pDlg->UpdateStatusItems(hDlg);
 		gpConEmu->mp_Status->UpdateStatusBar(true);
 	}
 } // cbStatusAddAll || cbStatusAddSelected || cbStatusDelSelected || cbStatusDelAll

@@ -1,0 +1,103 @@
+﻿
+/*
+Copyright (c) 2016 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
+#define HIDE_USE_EXCEPTION_INFO
+#define SHOWDEBUGSTR
+
+#include "Header.h"
+
+#include "OptionsClass.h"
+#include "SetDlgLists.h"
+#include "SetDlgFonts.h"
+#include "SetPgFonts.h"
+#include "SetPgTabs.h"
+
+CSetPgTabs::CSetPgTabs()
+{
+}
+
+CSetPgTabs::~CSetPgTabs()
+{
+}
+
+LRESULT CSetPgTabs::OnInitDialog(HWND hDlg, bool abInitial)
+{
+	checkRadioButton(hDlg, rbTabsAlways, rbTabsNone, (gpSet->isTabs == 2) ? rbTabsAuto : gpSet->isTabs ? rbTabsAlways : rbTabsNone);
+
+	checkDlgButton(hDlg, cbTabsLocationBottom, (gpSet->nTabsLocation == 1) ? BST_CHECKED : BST_UNCHECKED);
+
+	checkDlgButton(hDlg, cbOneTabPerGroup, gpSet->isOneTabPerGroup);
+
+	checkDlgButton(hDlg, cbTabSelf, gpSet->isTabSelf);
+
+	checkDlgButton(hDlg, cbTabRecent, gpSet->isTabRecent);
+
+	checkDlgButton(hDlg, cbTabLazy, gpSet->isTabLazy);
+
+	checkDlgButton(hDlg, cbHideInactiveConTabs, gpSet->bHideInactiveConsoleTabs);
+	checkDlgButton(hDlg, cbHideDisabledTabs, gpSet->bHideDisabledTabs);
+	checkDlgButton(hDlg, cbShowFarWindows, gpSet->bShowFarWindows);
+
+	SetDlgItemText(hDlg, tTabFontFace, gpSet->sTabFontFace);
+
+	if (CSetDlgFonts::EnumFontsFinished())  // Если шрифты уже считаны
+	{
+		if (abInitial)
+		{
+			CSetPgFonts* pFonts = NULL;
+			if (gpSetCls->GetPageObj(pFonts))
+			{
+				pFonts->CopyFontsTo(hDlg, tTabFontFace, 0); // можно скопировать список с вкладки [thi_Fonts]
+			}
+		}
+	}
+
+	UINT nVal = gpSet->nTabFontHeight;
+	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, tTabFontHeight), CSetDlgLists::eFSizesSmall, nVal, true);
+
+	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, tTabFontCharset), CSetDlgLists::eCharSets, gpSet->nTabFontCharSet, false);
+
+	checkDlgButton(hDlg, cbMultiIterate, gpSet->isMultiIterate);
+
+	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, tTabBarDblClickAction), CSetDlgLists::eTabBarDblClickActions, gpSet->nTabBarDblClickAction);
+	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, tTabBtnDblClickAction), CSetDlgLists::eTabBtnDblClickActions, gpSet->nTabBtnDblClickAction);
+
+	SetDlgItemText(hDlg, tTabConsole, gpSet->szTabConsole);
+	SetDlgItemText(hDlg, tTabModifiedSuffix, gpSet->szTabModifiedSuffix);
+	SetDlgItemInt(hDlg, tTabFlashCounter, gpSet->nTabFlashChanged, TRUE);
+
+	SetDlgItemText(hDlg, tTabSkipWords, gpSet->pszTabSkipWords ? gpSet->pszTabSkipWords : L"");
+	SetDlgItemInt(hDlg, tTabLenMax, gpSet->nTabLenMax, FALSE);
+
+	checkDlgButton(hDlg, cbAdminShield, gpSet->isAdminShield() ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hDlg, cbAdminSuffix, gpSet->isAdminSuffix() ? BST_CHECKED : BST_UNCHECKED);
+	SetDlgItemText(hDlg, tAdminSuffix, gpSet->szAdminTitleSuffix);
+
+	return 0;
+}

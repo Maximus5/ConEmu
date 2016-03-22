@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2015 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -75,14 +75,14 @@ int CSetDlgFonts::EnumFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 
 	DWORD bAlmostMonospace = CFontMgr::IsAlmostMonospace(lplf->lfFaceName, (LPTEXTMETRIC)lpntm /*lpntm->tmMaxCharWidth, lpntm->tmAveCharWidth, lpntm->tmHeight*/) ? 1 : 0;
 
-	HWND hMainPg = gpSetCls->GetPage(thi_Fonts);
-	if (SendDlgItemMessage(hMainPg, tFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) lplf->lfFaceName)==-1)
+	HWND hFontsPg = gpSetCls->GetPage(thi_Fonts);
+	if (SendDlgItemMessage(hFontsPg, tFontFace, CB_FINDSTRINGEXACT, -1, (LPARAM) lplf->lfFaceName)==-1)
 	{
 		int nIdx;
-		nIdx = SendDlgItemMessage(hMainPg, tFontFace, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
-		SendDlgItemMessage(hMainPg, tFontFace, CB_SETITEMDATA, nIdx, bAlmostMonospace);
-		nIdx = SendDlgItemMessage(hMainPg, tFontFace2, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
-		SendDlgItemMessage(hMainPg, tFontFace2, CB_SETITEMDATA, nIdx, bAlmostMonospace);
+		nIdx = SendDlgItemMessage(hFontsPg, tFontFace, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
+		SendDlgItemMessage(hFontsPg, tFontFace, CB_SETITEMDATA, nIdx, bAlmostMonospace);
+		nIdx = SendDlgItemMessage(hFontsPg, tFontFace2, CB_ADDSTRING, 0, (LPARAM) lplf->lfFaceName);
+		SendDlgItemMessage(hFontsPg, tFontFace2, CB_SETITEMDATA, nIdx, bAlmostMonospace);
 	}
 
 	MCHKHEAP
@@ -162,20 +162,20 @@ DWORD CSetDlgFonts::EnumFontsThread(LPVOID apArg)
 
 	DeleteDC(hdc);
 
-	HWND hMainPg = gpSetCls->GetPage(thi_Fonts);
-	if (hMainPg)
+	HWND hFontsPg = gpSetCls->GetPage(thi_Fonts);
+	if (hFontsPg)
 	{
 		for (size_t sz=0; sz<countof(CFontMgr::szRasterSizes) && CFontMgr::szRasterSizes[sz].cy; sz++)
 		{
 			_wsprintf(szName, SKIPLEN(countof(szName)) L"[%s %ix%i]", CFontMgr::RASTER_FONTS_NAME, CFontMgr::szRasterSizes[sz].cx, CFontMgr::szRasterSizes[sz].cy);
-			int nIdx = SendDlgItemMessage(hMainPg, tFontFace, CB_INSERTSTRING, sz, (LPARAM)szName);
-			SendDlgItemMessage(hMainPg, tFontFace, CB_SETITEMDATA, nIdx, 1);
+			int nIdx = SendDlgItemMessage(hFontsPg, tFontFace, CB_INSERTSTRING, sz, (LPARAM)szName);
+			SendDlgItemMessage(hFontsPg, tFontFace, CB_SETITEMDATA, nIdx, 1);
 		}
 
-		GetDlgItemText(hMainPg, tFontFace, szName, countof(szName));
-		CSetDlgLists::SelectString(hMainPg, tFontFace, szName);
-		GetDlgItemText(hMainPg, tFontFace2, szName, countof(szName));
-		CSetDlgLists::SelectString(hMainPg, tFontFace2, szName);
+		GetDlgItemText(hFontsPg, tFontFace, szName, countof(szName));
+		CSetDlgLists::SelectString(hFontsPg, tFontFace, szName);
+		GetDlgItemText(hFontsPg, tFontFace2, szName, countof(szName));
+		CSetDlgLists::SelectString(hFontsPg, tFontFace2, szName);
 	}
 
 	SafeCloseHandle(mh_EnumThread);

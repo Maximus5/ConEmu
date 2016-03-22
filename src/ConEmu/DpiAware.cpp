@@ -734,7 +734,7 @@ void CDpiForDialog::Detach()
 	}
 }
 
-const DpiValue& CDpiForDialog::GetCurDpi()
+const DpiValue& CDpiForDialog::GetCurDpi() const
 {
 	return m_CurDpi;
 }

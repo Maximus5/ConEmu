@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="SettingPages">
+      <UniqueIdentifier>{04d59c4b-17b0-4ef6-800e-4464cd109775}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Attach.cpp">
@@ -371,6 +374,111 @@
     </ClCompile>
     <ClCompile Include="LngData.cpp">
       <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WSession.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateProcess.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FontMgr.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskScheduler.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgAppear.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgApps.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgBackgr.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgBase.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgColors.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgComspec.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgConfirm.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgControl.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgCursor.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgDebug.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgDefTerm.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgEnvironment.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgFar.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgFarMacro.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgFeatures.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgFonts.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgHilight.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgInfo.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgIntegr.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgKeys.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgMarkCopy.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgPaste.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgSizePos.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgStartup.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgStatus.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgTabs.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgTaskbar.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgTasks.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgTransparent.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgUpdate.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgViews.cpp">
+      <Filter>SettingPages</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -818,6 +926,111 @@
     </ClInclude>
     <ClInclude Include="LngDataRsrcs.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WSession.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CreateProcess.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FontMgr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskScheduler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgAppear.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgApps.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgBackgr.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgBase.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgColors.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgComspec.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgConfirm.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgControl.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgCursor.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgDebug.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgDefTerm.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgEnvironment.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgFar.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgFarMacro.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgFeatures.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgFonts.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgHilight.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgInfo.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgIntegr.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgKeys.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgMarkCopy.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgPaste.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgSizePos.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgStartup.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgStatus.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgTabs.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgTaskbar.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgTasks.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgTransparent.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgUpdate.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgViews.h">
+      <Filter>SettingPages</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
