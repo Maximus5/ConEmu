@@ -437,7 +437,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_INTEGRATION, 0, L"Integration",    thi_Integr     /* OnInitDialog_Integr */},
 		{IDD_SPG_DEFTERM,     1, L"Default term",   thi_DefTerm    /* OnInitDialog_DefTerm */},
 		{IDD_SPG_KEYS,        0, L"Keys & Macro",   thi_Keys       /* OnInitDialog_Keys */},
-		{IDD_SPG_CONTROL,     1, L"Controls",       thi_KeybMouse  /* OnInitDialog_Control */},
+		{IDD_SPG_CONTROLS,    1, L"Controls",       thi_Controls   /* OnInitDialog_Control */},
 		{IDD_SPG_MARKCOPY,    1, L"Mark/Copy",      thi_MarkCopy   /* OnInitDialog_MarkCopy */},
 		{IDD_SPG_PASTE,       1, L"Paste",          thi_Paste      /* OnInitDialog_Paste */},
 		{IDD_SPG_HIGHLIGHT,   1, L"Highlight",      thi_Hilight    /* OnInitDialog_Hilight */},
@@ -2113,7 +2113,7 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 	} Keys[] = {
 		{lbCTSBlockSelection, L"Block selection", thi_MarkCopy, gpSet->isCTSSelectBlock, vkCTSVkBlock},
 		{lbCTSTextSelection, L"Text selection", thi_MarkCopy, gpSet->isCTSSelectText, vkCTSVkText},
-		{lbCTSClickPromptPosition, L"Prompt position", thi_KeybMouse, gpSet->AppStd.isCTSClickPromptPosition!=0, vkCTSVkPromptClk, true},
+		{lbCTSClickPromptPosition, L"Prompt position", thi_Controls, gpSet->AppStd.isCTSClickPromptPosition!=0, vkCTSVkPromptClk, true},
 
 		// Don't check it?
 		// -- {lbFarGotoEditorVk, L"Highlight and goto", ..., gpSet->isFarGotoEditor},
@@ -5726,7 +5726,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			break;
 		} // case thi_Hilight:
 
-		case thi_KeybMouse:
+		case thi_Controls:
 		{
 			if (HIWORD(wParam) == CBN_SELCHANGE)
 			{
@@ -5759,7 +5759,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 			} // if (HIWORD(wParam) == CBN_SELCHANGE)
 
 			break;
-		} // case thi_KeybMouse:
+		} // case thi_Controls:
 
 		default:
 		{

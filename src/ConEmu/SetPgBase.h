@@ -55,7 +55,7 @@ enum TabHwndIndex
 	thi_Integr,       // "Integration"
 	thi_DefTerm,      //   "Default terminal"
 	thi_Keys,         // "Keys & Macro"
-	thi_KeybMouse,    //   "Controls"
+	thi_Controls,     //   "Controls"
 	thi_MarkCopy,     //   "Mark & Copy"
 	thi_Paste,        //   "Paste"
 	thi_Hilight,      //   "Highlight"

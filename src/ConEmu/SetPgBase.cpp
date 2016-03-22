@@ -180,7 +180,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			bSkipSelChange = lbOld;
 		}
 		break;
-		case IDD_SPG_CONTROL:
+		case IDD_SPG_CONTROLS:
 			gpSetCls->OnInitDialog_Control(hDlg, bInitial);
 			break;
 		case IDD_SPG_TABS:

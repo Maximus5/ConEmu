@@ -43,7 +43,7 @@
 #define IDD_SPG_VIEWS                   170
 #define IDD_SPG_KEYS                    171
 #define IDD_SPG_UPDATE                  172
-#define IDD_SPG_CONTROL                 173
+#define IDD_SPG_CONTROLS                173
 #define IDD_SPG_APPEAR                  174
 #define IDD_SPG_TASKBAR                 175
 #define IDD_SPG_DEFTERM                 176
