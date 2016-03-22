@@ -437,7 +437,7 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 		// Сразу установим mb_Exclusive, чтобы в других нитях случайно не прошел nonexclusive lock
 		// иначе может получиться, что nonexclusive lock мешает выполнить exclusive lock (ждут друг друга)
 		mb_Exclusive = TRUE;
-		TODO("Need to check, if MyEnterCriticalSection failed on timeout!\n");
+		TODO("Need to check, if MyEnterCriticalSection failed on timeout!");
 
 		if (!MyEnterCriticalSection(anTimeout))
 		{
