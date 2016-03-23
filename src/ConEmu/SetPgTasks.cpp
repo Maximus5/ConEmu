@@ -158,7 +158,12 @@ LRESULT CSetPgTasks::OnEditChanged(HWND hDlg, WORD nCtrlId)
 
 LRESULT CSetPgTasks::OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code)
 {
-	_ASSERTE(/*code==CBN_EDITCHANGE ||*/ code==CBN_SELCHANGE);
+	// Other codes are not interesting yet
+	if (code != CBN_SELCHANGE)
+	{
+		return 0;
+	}
+
 	switch (nCtrlId)
 	{
 	case lbCmdTasks:
