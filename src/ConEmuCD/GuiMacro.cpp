@@ -324,7 +324,11 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR*
 	pIn->GuiMacro.nSplitIndex = Inst.nSplitIndex;
 	lstrcpyW(pIn->GuiMacro.sMacro, asCmdArg);
 
+	LogString(L"DoGuiMacro: executing CECMD_GUIMACRO");
+
 	pOut = ExecuteGuiCmd(hCallWnd, pIn, ghConWnd);
+
+	LogString(L"DoGuiMacro: CECMD_GUIMACRO finished");
 
 	if (pOut)
 	{
@@ -341,6 +345,11 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR*
 
 			if (Flags & gmf_SetEnvVar)
 			{
+				if (gpLogSize)
+				{
+					CEStr lsLog(L"DoGuiMacro: set ", CEGUIMACRORETENVVAR, L"=", pszResult);
+					LogString(lsLog);
+				}
 				SetEnvironmentVariable(CEGUIMACRORETENVVAR, pszResult);
 			}
 
@@ -351,13 +360,17 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR*
 				// Transfer EnvVar to parent console processes
 				// This would work only if ‘Inject ConEmuHk’ is enabled
 				// However, it's ignored by some shells
+				LogString(L"DoGuiMacro: exporting result");
 				DoExportEnv(CEGUIMACRORETENVVAR, ea_ExportCon, true/*bSilent*/);
+				LogString(L"DoGuiMacro: DoExportEnv finished");
 			}
 
 			// Let reuse `-Silent` switch
 			if ((Flags & gmf_PrintResult)
 				&& (!gbPreferSilentMode || IsOutputRedirected()))
 			{
+				LogString(L"DoGuiMacro: printing result");
+
 				// Show macro result in StdOutput
 				_wprintf(pszResult);
 
@@ -381,6 +394,8 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR*
 
 int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, BSTR* bsResult /*= NULL*/)
 {
+	LogString(L"GuiMacro function called");
+
 	MacroInstance Inst = {};
 
 	if (asInstance && *asInstance)

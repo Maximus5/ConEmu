@@ -366,6 +366,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	CEStr szTmpPart;
 	LPCWSTR pszTmpPartStart;
 	LPCWSTR pszCmdArg;
+	wchar_t szInfo[200];
 
 	//_ASSERTE(FALSE && "Continue with exporting environment");
 
@@ -414,6 +415,8 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 
 	//_ASSERTE(FALSE && "Continue to export");
 
+	LogString(L"DoExportEnv: Loading variables to export");
+
 	// Copy variables to buffer
 	if (!pszCmdArg || !*pszCmdArg || (lstrcmp(pszCmdArg, L"*")==0) || (lstrcmp(pszCmdArg, L"\"*\"")==0)
 		|| (wcsncmp(pszCmdArg, L"* ", 2)==0) || (wcsncmp(pszCmdArg, L"\"*\" ", 4)==0))
@@ -441,6 +444,11 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 				pszBuffer += cchAdd;
 				_ASSERTE(*pszBuffer == 0);
 				iVarCount++;
+				if (gpLogSize)
+				{
+					*pszEq = L'=';
+					LogString(pszName);
+				}
 			}
 			*pszEq = L'=';
 			pszSrc = pszNext;
@@ -506,6 +514,11 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 					_ASSERTE(*pszBuffer == 0);
 					cchLeft -= cchAdd;
 					bFound = true;
+					if (gpLogSize)
+					{
+						*pszEq = L'=';
+						LogString(pszName);
+					}
 				}
 				*pszEq = L'=';
 				pszSrc = pszNext;
@@ -528,6 +541,11 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 					pszBuffer += cchAdd;
 					cchLeft -= cchAdd;
 					_ASSERTE(*pszBuffer == 0);
+					if (gpLogSize)
+					{
+						CEStr lsLog(L"Variable `", szTest, L"` was not found");
+						LogString(lsLog);
+					}
 				}
 			}
 		}
@@ -637,12 +655,14 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 			if (nTestPID == nOurParentPID)
 				continue; // Useless, we just inherited ALL those variables from our parent
 
+			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DoExportEnv: PID=%u `%s`", nTestPID, szName);
+			LogString(szInfo);
+
 			// Apply environment
 			CESERVER_REQ *pOut = ExecuteHkCmd(nTestPID, pIn, ghConWnd, FALSE, TRUE);
 
 			if (!pOut && !bSilent)
 			{
-				wchar_t szInfo[200];
 				_wsprintf(szInfo, SKIPCOUNT(szInfo)
 					WIN3264TEST(L"ConEmuC",L"ConEmuC64")
 					L": process %s PID=%u was skipped: noninteractive or lack of ConEmuHk\n",
@@ -657,6 +677,9 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	// We are trying to apply environment to parent tree even if NO server or GUI was found
 	if (nSrvPID)
 	{
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DoExportEnv: PID=%u (server)", nSrvPID);
+		LogString(szInfo);
+
 		// Server found? Try to apply environment
 		CESERVER_REQ *pOut = ExecuteSrvCmd(nSrvPID, pIn, ghConWnd);
 
@@ -683,15 +706,18 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 			_ASSERTE(pIn->hdr.nCmd == CECMD_EXPORTVARS);
 		}
 
+		LogString(L"DoExportEnv: ConEmu GUI");
+
 		// ea_ExportTab, ea_ExportGui, ea_ExportAll -> export to ConEmu window
 		ExecuteGuiCmd(ghConWnd, pIn, ghConWnd, TRUE);
 	}
 
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) WIN3264TEST(L"ConEmuC",L"ConEmuC64") L": %i %s processed", iVarCount, (iVarCount == 1) ? L"variable was" : L"variables were");
+	LogString(szInfo);
 	if (!bSilent)
 	{
-		wchar_t szVars[80];
-		_wsprintf(szVars, SKIPCOUNT(szVars) WIN3264TEST(L"ConEmuC",L"ConEmuC64") L": %i %s processed\n", iVarCount, (iVarCount == 1) ? L"variable was" : L"variables were");
-		_wprintf(szVars);
+		wcscat_c(szInfo, L"\n");
+		_wprintf(szInfo);
 	}
 
 	iRc = 0;
@@ -1035,23 +1061,27 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 	{
 	case ea_RegConFont:
 		{
+			LogString(L"DoExecAction: ea_RegConFont");
 			RegisterConsoleFontHKLM(asCmdArg);
 			iRc = CERR_EMPTY_COMSPEC_CMDLINE;
 			break;
 		}
 	case ea_InjectHooks:
 		{
+			LogString(L"DoExecAction: DoInjectHooks");
 			iRc = DoInjectHooks((LPWSTR)asCmdArg);
 			break;
 		}
 	case ea_InjectRemote:
 	case ea_InjectDefTrm:
 		{
+			LogString(L"DoExecAction: DoInjectRemote");
 			iRc = DoInjectRemote((LPWSTR)asCmdArg, (eExecAction == ea_InjectDefTrm));
 			break;
 		}
 	case ea_GuiMacro:
 		{
+			LogString(L"DoExecAction: DoGuiMacro");
 			GuiMacroFlags Flags = gmf_SetEnvVar
 				// If current RealConsole was already started in ConEmu, try to export variable
 				| ((gnRunMode != RM_GUIMACRO && ghConEmuWnd != NULL) ? gmf_ExportEnvVar : gmf_None)
@@ -1062,16 +1092,19 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 		}
 	case ea_CheckUnicodeFont:
 		{
+			LogString(L"DoExecAction: ea_CheckUnicodeFont");
 			iRc = CheckUnicodeFont();
 			break;
 		}
 	case ea_TestUnicodeCvt:
 		{
+			LogString(L"DoExecAction: ea_TestUnicodeCvt");
 			iRc = TestUnicodeCvt();
 			break;
 		}
 	case ea_OsVerInfo:
 		{
+			LogString(L"DoExecAction: ea_OsVerInfo");
 			iRc = OsVerInfo();
 			break;
 		}
@@ -1080,16 +1113,19 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 	case ea_ExportGui:
 	case ea_ExportAll:
 		{
+			LogString(L"DoExecAction: DoExportEnv");
 			iRc = DoExportEnv(asCmdArg, eExecAction, gbPreferSilentMode);
 			break;
 		}
 	case ea_ParseArgs:
 		{
+			LogString(L"DoExecAction: DoParseArgs");
 			iRc = DoParseArgs(asCmdArg);
 			break;
 		}
 	case ea_ErrorLevel:
 		{
+			LogString(L"DoExecAction: ea_ErrorLevel");
 			wchar_t* pszEnd = NULL;
 			iRc = wcstol(asCmdArg, &pszEnd, 10);
 			break;
@@ -1097,16 +1133,19 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 	case ea_OutEcho:
 	case ea_OutType:
 		{
+			LogString(L"DoExecAction: DoOutput");
 			iRc = DoOutput(eExecAction, asCmdArg);
 			break;
 		}
 	case ea_StoreCWD:
 		{
+			LogString(L"DoExecAction: DoStoreCWD");
 			iRc = DoStoreCWD(asCmdArg);
 			break;
 		}
 	case ea_DumpStruct:
 		{
+			LogString(L"DoExecAction: DoDumpStruct");
 			iRc = DoDumpStruct(asCmdArg);
 			break;
 		}
