@@ -344,7 +344,7 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR*
 				*bsResult = ::SysAllocString(pszResult);
 			}
 
-			if (Flags & gmf_SetEnvVar)
+			if (Flags & (gmf_SetEnvVar|gmf_ExportEnvVar))
 			{
 				if (gpLogSize)
 				{
