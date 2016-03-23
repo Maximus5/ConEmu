@@ -1084,9 +1084,9 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 			LogString(L"DoExecAction: DoGuiMacro");
 			GuiMacroFlags Flags = gmf_SetEnvVar
 				// If current RealConsole was already started in ConEmu, try to export variable
-				| ((gnRunMode != RM_GUIMACRO && ghConEmuWnd != NULL) ? gmf_ExportEnvVar : gmf_None)
+				| ((gbMacroExportResult && (gnRunMode != RM_GUIMACRO) && (ghConEmuWnd != NULL)) ? gmf_ExportEnvVar : gmf_None)
 				// Interactive mode, print output to console
-				| ((gnRunMode != RM_GUIMACRO) ? gmf_PrintResult : gmf_None);
+				| ((!gbPreferSilentMode && (gnRunMode != RM_GUIMACRO)) ? gmf_PrintResult : gmf_None);
 			iRc = DoGuiMacro(asCmdArg, Inst, Flags);
 			break;
 		}

@@ -40,6 +40,7 @@ struct MacroInstance
 };
 
 extern bool gbPreferSilentMode; // = false;
+extern bool gbMacroExportResult; // = false;
 
 typedef DWORD GuiMacroFlags;
 const GuiMacroFlags

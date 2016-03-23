@@ -3072,6 +3072,10 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		{
 			gbPreferSilentMode = true;
 		}
+		else if (lstrcmpi(szArg, L"/USEEXPORT")==0)
+		{
+			gbMacroExportResult = true;
+		}
 		else if (lstrcmpni(szArg, L"/EXPORT", 7)==0)
 		{
 			//_ASSERTE(FALSE && "Continue to export");

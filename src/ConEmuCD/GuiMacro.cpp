@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "GuiMacro.h"
 
 bool    gbPreferSilentMode = false;
+bool    gbMacroExportResult = false;
 
 
 BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)

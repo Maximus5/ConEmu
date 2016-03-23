@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		L"   or: ConEmuC /AUTOATTACH [/GHWND=NEW|<HWND>]\r\n" \
 		L"   or: ConEmuC /ATTACH /NOCMD\r\n" \
 		L"   or: ConEmuC /ATTACH [/GHWND=NEW|<HWND>] /[FAR|CON|TRM]PID=<PID>\r\n" \
-		L"   or: ConEmuC [/SILENT] /GUIMACRO[:PID|HWND][:T<tab>][:S<split>] <GuiMacro command>\r\n" \
+		L"   or: ConEmuC [/SILENT] [/USEEXPORT] /GUIMACRO[:PID|HWND][:T<tab>][:S<split>] <GuiMacro command>\r\n" \
 		L"   or: ConEmuC /IsConEmu | /IsAnsi | /IsAdmin | /IsTerm\r\n" \
 		L"   or: ConEmuC /DEBUGPID=<PID>[,<PID2>[,...]] [/DUMP | /MINI | /AUTOMINI | /FULL]\r\n" \
 		L"   or: ConEmuC /DEBUGEXE | /DEBUGTREE <CommandLine>\r\n" \
