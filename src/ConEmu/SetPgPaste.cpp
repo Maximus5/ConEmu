@@ -44,11 +44,108 @@ CSetPgPaste::~CSetPgPaste()
 
 LRESULT CSetPgPaste::OnInitDialog(HWND hDlg, bool abInitial)
 {
-	checkDlgButton(hDlg, cbClipShiftIns, gpSet->AppStd.isPasteAllLines);
-	checkDlgButton(hDlg, cbClipCtrlV, gpSet->AppStd.isPasteFirstLine);
+	PasteLinesMode mode;
+
+	mode = gpSet->AppStd.isPasteAllLines;
+	checkRadioButton(hDlg, rPasteM1MultiLine, rPasteM1Nothing,
+		(mode == plm_FirstLine) ? rPasteM1FirstLine
+		: (mode == plm_SingleLine) ? rPasteM1SingleLine
+		: (mode == plm_Nothing) ? rPasteM1Nothing
+		: rPasteM1MultiLine);
+
+	mode = gpSet->AppStd.isPasteFirstLine;
+	checkRadioButton(hDlg, rPasteM2MultiLine, rPasteM2Nothing,
+		(mode == plm_MultiLine) ? rPasteM2MultiLine
+		: (mode == plm_FirstLine) ? rPasteM2FirstLine
+		: (mode == plm_Nothing) ? rPasteM2Nothing
+		: rPasteM2SingleLine);
+
 	checkDlgButton(hDlg, cbClipConfirmEnter, gpSet->isPasteConfirmEnter);
+
 	checkDlgButton(hDlg, cbClipConfirmLimit, (gpSet->nPasteConfirmLonger!=0));
 	SetDlgItemInt(hDlg, tClipConfirmLimit, gpSet->nPasteConfirmLonger, FALSE);
 
 	return 0;
 }
+
+void CSetPgPaste::OnPostLocalize(HWND hDlg)
+{
+	setCtrlTitleByHotkey(hDlg, gbPasteM1, vkPasteText, L"(", L")");
+	setCtrlTitleByHotkey(hDlg, gbPasteM2, vkPasteFirstLine, L"(", L")");
+}
+
+// cbClipShiftIns, rPasteM1MultiLine, rPasteM1FirstLine, rPasteM1SingleLine, rPasteM1Nothing
+void CSetPgPaste::OnBtn_ClipShiftIns(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbClipShiftIns || CB==rPasteM1MultiLine || CB==rPasteM1FirstLine || CB==rPasteM1SingleLine || CB==rPasteM1Nothing);
+	_ASSERTE(uCheck || (CB==cbClipShiftIns));
+
+	switch (CB)
+	{
+	case rPasteM1MultiLine:
+		gpSet->AppStd.isPasteAllLines = plm_Default; break;
+	case rPasteM1FirstLine:
+		gpSet->AppStd.isPasteAllLines = plm_FirstLine; break;
+	case rPasteM1SingleLine:
+		gpSet->AppStd.isPasteAllLines = plm_SingleLine; break;
+	case rPasteM1Nothing:
+		gpSet->AppStd.isPasteAllLines = plm_Nothing; break;
+
+	default:
+		_ASSERTE(CB==cbClipShiftIns);
+		gpSet->AppStd.isPasteAllLines = uCheck ? plm_Default : plm_Nothing;
+	}
+
+} // cbClipShiftIns, rPasteM1MultiLine, rPasteM1FirstLine, rPasteM1SingleLine, rPasteM1Nothing
+
+
+// cbClipCtrlV, rPasteM2MultiLine, rPasteM2FirstLine, rPasteM2SingleLine, rPasteM2Nothing
+void CSetPgPaste::OnBtn_ClipCtrlV(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbClipCtrlV || CB==rPasteM2MultiLine || CB==rPasteM2FirstLine || CB==rPasteM2SingleLine || CB==rPasteM2Nothing);
+	_ASSERTE(uCheck || (CB==cbClipCtrlV));
+
+	switch (CB)
+	{
+	case rPasteM2MultiLine:
+		gpSet->AppStd.isPasteFirstLine = plm_MultiLine; break;
+	case rPasteM2FirstLine:
+		gpSet->AppStd.isPasteFirstLine = plm_FirstLine; break;
+	case rPasteM2SingleLine:
+		gpSet->AppStd.isPasteFirstLine = plm_Default; break;
+	case rPasteM2Nothing:
+		gpSet->AppStd.isPasteFirstLine = plm_Nothing; break;
+
+	default:
+		_ASSERTE(CB==cbClipCtrlV);
+		gpSet->AppStd.isPasteFirstLine = uCheck ? plm_Default : plm_Nothing;
+	}
+
+} // cbClipCtrlV, rPasteM2MultiLine, rPasteM2FirstLine, rPasteM2SingleLine, rPasteM2Nothing
+
+// cbClipConfirmEnter
+void CSetPgPaste::OnBtn_ClipConfirmEnter(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbClipConfirmEnter);
+
+	gpSet->isPasteConfirmEnter = uCheck;
+
+} // cbClipConfirmEnter
+
+// cbClipConfirmLimit
+void CSetPgPaste::OnBtn_ClipConfirmLimit(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbClipConfirmLimit);
+
+	if (uCheck)
+	{
+		gpSet->nPasteConfirmLonger = gpSet->nPasteConfirmLonger ? gpSet->nPasteConfirmLonger : 200;
+	}
+	else
+	{
+		gpSet->nPasteConfirmLonger = 0;
+	}
+	SetDlgItemInt(hDlg, tClipConfirmLimit, gpSet->nPasteConfirmLonger, FALSE);
+	enableDlgItem(hDlg, tClipConfirmLimit, (gpSet->nPasteConfirmLonger != 0));
+
+} // cbClipConfirmLimit

@@ -12315,7 +12315,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	}
 
 	// Теперь сформируем пакет
-	wchar_t szMsg[128];
+	wchar_t szMsg[256];
 	size_t nBufLen = _tcslen(pszBuf);
 
 	// Смотрим первую строку / наличие второй
@@ -12377,7 +12377,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		}
 		else if (gpSet->isPasteConfirmEnter && !abNoConfirm)
 		{
-			wcscpy_c(szMsg, L"Pasting text involves <Enter> keypress!\nContinue?");
+			wcscpy_c(szMsg, CLngRc::getRsrc(lng_PasteEnterConfirm/*"Pasting text involves <Enter> keypress!\nContinue?"*/));
 
 			if (MsgBox(szMsg, MB_OKCANCEL|MB_ICONEXCLAMATION, GetTitle()) != IDOK)
 			{
@@ -12402,7 +12402,9 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 
 	if (gpSet->nPasteConfirmLonger && !abNoConfirm && (nBufLen > (size_t)gpSet->nPasteConfirmLonger))
 	{
-		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"Pasting text length is %u chars!\nContinue?", LODWORD(nBufLen));
+		_wsprintf(szMsg, SKIPLEN(countof(szMsg))
+			CLngRc::getRsrc(lng_PasteLongConfirm/*"Pasting text length is %u chars!\nContinue?"*/),
+			LODWORD(nBufLen));
 
 		if (MsgBox(szMsg, MB_OKCANCEL|MB_ICONQUESTION, GetTitle()) != IDOK)
 		{

@@ -1330,13 +1330,28 @@ bool CConEmuCtrl::key_PasteTextAllApp(const ConEmuChord& VkState, bool TestOnly,
 		return false;
 
 	const AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId());
-	if (!pApp->PasteAllLines())
+	PasteLinesMode mode = pApp->PasteAllLines();
+	if (!mode)
 		return false;
 
 	if (TestOnly)
 		return true;
 
-	pRCon->Paste(pm_Standard);
+	CEPasteMode pasteMode;
+	switch (mode)
+	{
+	case plm_Default:
+	case plm_MultiLine:
+		pasteMode = pm_Standard; break;
+	case plm_SingleLine:
+		pasteMode = pm_OneLine; break;
+	case plm_FirstLine:
+		pasteMode = pm_FirstLine; break;
+	default:
+		_ASSERTE(FALSE && "Unsupported PasteLinesMode");
+		pasteMode = pm_Standard;
+	}
+	pRCon->Paste(pasteMode);
 	return true;
 }
 
@@ -1355,13 +1370,28 @@ bool CConEmuCtrl::key_PasteFirstLineAllApp(const ConEmuChord& VkState, bool Test
 		return false;
 
 	const AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId());
-	if (!pApp->PasteFirstLine())
+	PasteLinesMode mode = pApp->PasteFirstLine();
+	if (!mode)
 		return false;
 
 	if (TestOnly)
 		return true;
 
-	pRCon->Paste(pm_FirstLine);
+	CEPasteMode pasteMode;
+	switch (mode)
+	{
+	case plm_MultiLine:
+		pasteMode = pm_Standard; break;
+	case plm_Default:
+	case plm_SingleLine:
+		pasteMode = pm_OneLine; break;
+	case plm_FirstLine:
+		pasteMode = pm_FirstLine; break;
+	default:
+		_ASSERTE(FALSE && "Unsupported PasteLinesMode");
+		pasteMode = pm_Standard;
+	}
+	pRCon->Paste(pasteMode);
 	return true;
 }
 

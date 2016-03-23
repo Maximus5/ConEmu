@@ -237,11 +237,7 @@ protected:
 	static void OnBtn_CTSTrimTrailing(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSClickPromptPosition(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSDeleteLeftWord(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_ClipShiftIns(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSShiftArrowStartSel(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_ClipCtrlV(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_ClipConfirmEnter(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_ClipConfirmLimit(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_FarGotoEditor(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_HighlightMouseRow(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_HighlightMouseCol(HWND hDlg, WORD CB, BYTE uCheck);

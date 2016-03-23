@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif // __GNUC__
 
 #include "../common/WUser.h"
+
 #include "AboutDlg.h"
 #include "Background.h"
 #include "ConEmu.h"
@@ -55,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgFeatures.h"
 #include "SetPgIntegr.h"
 #include "SetPgKeys.h"
+#include "SetPgPaste.h"
 #include "SetPgSizePos.h"
 #include "SetPgStatus.h"
 #include "SetPgTasks.h"
@@ -694,20 +696,26 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbCTSDeleteLeftWord:
 			OnBtn_CTSDeleteLeftWord(hDlg, CB, uCheck);
 			break;
-		case cbClipShiftIns:
-			OnBtn_ClipShiftIns(hDlg, CB, uCheck);
-			break;
 		case cbCTSShiftArrowStartSel:
 			OnBtn_CTSShiftArrowStartSel(hDlg, CB, uCheck);
 			break;
-		case cbClipCtrlV:
-			OnBtn_ClipCtrlV(hDlg, CB, uCheck);
+		case rPasteM1MultiLine:
+		case rPasteM1FirstLine:
+		case rPasteM1SingleLine:
+		case rPasteM1Nothing:
+			CSetPgPaste::OnBtn_ClipShiftIns(hDlg, CB, uCheck);
+			break;
+		case rPasteM2MultiLine:
+		case rPasteM2FirstLine:
+		case rPasteM2SingleLine:
+		case rPasteM2Nothing:
+			CSetPgPaste::OnBtn_ClipCtrlV(hDlg, CB, uCheck);
 			break;
 		case cbClipConfirmEnter:
-			OnBtn_ClipConfirmEnter(hDlg, CB, uCheck);
+			CSetPgPaste::OnBtn_ClipConfirmEnter(hDlg, CB, uCheck);
 			break;
 		case cbClipConfirmLimit:
-			OnBtn_ClipConfirmLimit(hDlg, CB, uCheck);
+			CSetPgPaste::OnBtn_ClipConfirmLimit(hDlg, CB, uCheck);
 			break;
 		case cbFarGotoEditor:
 			OnBtn_FarGotoEditor(hDlg, CB, uCheck);
@@ -4020,16 +4028,6 @@ void CSetDlgButtons::OnBtn_CTSDeleteLeftWord(HWND hDlg, WORD CB, BYTE uCheck)
 } // cbCTSDeleteLeftWord
 
 
-// cbClipShiftIns
-void CSetDlgButtons::OnBtn_ClipShiftIns(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==cbClipShiftIns);
-
-	gpSet->AppStd.isPasteAllLines = uCheck;
-
-} // cbClipShiftIns
-
-
 // cbCTSShiftArrowStartSel
 void CSetDlgButtons::OnBtn_CTSShiftArrowStartSel(HWND hDlg, WORD CB, BYTE uCheck)
 {
@@ -4038,45 +4036,6 @@ void CSetDlgButtons::OnBtn_CTSShiftArrowStartSel(HWND hDlg, WORD CB, BYTE uCheck
 	gpSet->AppStd.isCTSShiftArrowStart = uCheck;
 
 } // cbCTSShiftArrowStartSel
-
-
-// cbClipCtrlV
-void CSetDlgButtons::OnBtn_ClipCtrlV(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==cbClipCtrlV);
-
-	gpSet->AppStd.isPasteFirstLine = uCheck;
-
-} // cbClipCtrlV
-
-
-// cbClipConfirmEnter
-void CSetDlgButtons::OnBtn_ClipConfirmEnter(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==cbClipConfirmEnter);
-
-	gpSet->isPasteConfirmEnter = uCheck;
-
-} // cbClipConfirmEnter
-
-
-// cbClipConfirmLimit
-void CSetDlgButtons::OnBtn_ClipConfirmLimit(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==cbClipConfirmLimit);
-
-	if (uCheck)
-	{
-		gpSet->nPasteConfirmLonger = gpSet->nPasteConfirmLonger ? gpSet->nPasteConfirmLonger : 200;
-	}
-	else
-	{
-		gpSet->nPasteConfirmLonger = 0;
-	}
-	SetDlgItemInt(hDlg, tClipConfirmLimit, gpSet->nPasteConfirmLonger, FALSE);
-	EnableWindow(GetDlgItem(hDlg, tClipConfirmLimit), (gpSet->nPasteConfirmLonger != 0));
-
-} // cbClipConfirmLimit
 
 
 // cbFarGotoEditor

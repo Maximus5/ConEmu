@@ -53,6 +53,8 @@ enum LngResources
 	lng_SelBlock                  = 20,
 	lng_BasicSettings             = 21,
 	lng_CurClrScheme              = 22,
+	lng_PasteEnterConfirm         = 23,
+	lng_PasteLongConfirm          = 24,
 	// last auto-gen identifier
 	lng_NextId
 };

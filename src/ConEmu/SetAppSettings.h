@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "SetTypes.h"
+
+typedef BYTE PasteLinesMode;
+const PasteLinesMode
+	plm_Default    = 1,
+	plm_MultiLine  = 2,
+	plm_SingleLine = 3,
+	plm_FirstLine  = 4,
+	plm_Nothing    = 0
+;
 
 struct AppSettings
 {
@@ -126,11 +135,11 @@ struct AppSettings
 	bool CTSShiftArrowStart() const;
 	// *** Pasting
 	//reg->Load(L"ClipboardAllLines", isPasteAllLines);
-	bool isPasteAllLines;
-	bool PasteAllLines() const;
+	PasteLinesMode isPasteAllLines;
+	PasteLinesMode PasteAllLines() const;
 	//reg->Load(L"ClipboardFirstLine", isPasteFirstLine);
-	bool isPasteFirstLine;
-	bool PasteFirstLine() const;
+	PasteLinesMode isPasteFirstLine;
+	PasteLinesMode PasteFirstLine() const;
 	// *** Prompt
 	// cbCTSClickPromptPosition
 	//reg->Load(L"ClipboardClickPromptPosition", isCTSClickPromptPosition);

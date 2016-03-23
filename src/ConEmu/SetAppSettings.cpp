@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -203,14 +203,14 @@ bool AppSettings::CTSShiftArrowStart() const
 // *** Pasting
 //reg->Load(L"ClipboardAllLines", isPasteAllLines);
 //bool isPasteAllLines;
-bool AppSettings::PasteAllLines() const
+PasteLinesMode AppSettings::PasteAllLines() const
 {
 	return (OverrideClipboard || !AppNames) ? isPasteAllLines : gpSet->AppStd.isPasteAllLines;
 }
 
 //reg->Load(L"ClipboardFirstLine", isPasteFirstLine);
 //bool isPasteFirstLine;
-bool AppSettings::PasteFirstLine() const
+PasteLinesMode AppSettings::PasteFirstLine() const
 {
 	return (OverrideClipboard || !AppNames) ? isPasteFirstLine : gpSet->AppStd.isPasteFirstLine;
 }
