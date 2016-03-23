@@ -1331,15 +1331,25 @@
 #define cbCTSEraseBeforeReset           3030
 #define cbDebugLog                      3031
 #define tDebugLogDir                    3032
+#define cbPasteM1MultiLine              3033
+#define cbPasteM1SingleLine             3034
+#define cbPasteM1FirstLine              3035
+#define cbPasteM1Nothing                3036
+#define cbPasteM2MultiLine              3040
+#define cbPasteM2SingleLine             3041
+#define cbPasteM2FirstLine              3042
+#define cbPasteM2Nothing                3043
+#define gbPasteM1                       3047
+#define gbPasteM2                       3048
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        233
+#define _APS_NEXT_RESOURCE_VALUE        234
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3033
+#define _APS_NEXT_CONTROL_VALUE         3049
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

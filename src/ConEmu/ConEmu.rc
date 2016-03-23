@@ -868,13 +868,23 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Pasting text behavior (with exception of Far Manager)",gbFeatureClipboard,4,1,375,42
-    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,117,8
-    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,14,91,8
-    CONTROL         "Confirm <Enter> keypress",cbClipConfirmEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,117,8
-    CONTROL         "Confirm pasting more than",cbClipConfirmLimit,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,134,27,105,8
-    EDITTEXT        tClipConfirmLimit,246,26,40,12,ES_AUTOHSCROLL
-    CTEXT           "chars",stClipConfirmLimit,292,27,22,8
+    GROUPBOX        "Pasting text behavior (with exception of Far Manager)",gbFeatureClipboard,4,1,375,116
+    GROUPBOX        "Paste mode #1 (default Shift+Ins)",gbPasteM1,10,13,176,45
+    CONTROL         "Multi lines",cbPasteM1MultiLine,"Button",BS_AUTORADIOBUTTON,17,26,78,8
+    CONTROL         "First line",cbPasteM1FirstLine,"Button",BS_AUTORADIOBUTTON,17,41,78,8
+    CONTROL         "Single line",cbPasteM1SingleLine,"Button",BS_AUTORADIOBUTTON,100,26,78,8
+    CONTROL         "Do nothing",cbPasteM1Nothing,"Button",BS_AUTORADIOBUTTON,100,41,78,8
+    GROUPBOX        "Paste mode #2 (default Ctrl+V)",gbPasteM2,198,13,176,45
+    CONTROL         "Multi lines",cbPasteM2MultiLine,"Button",BS_AUTORADIOBUTTON,206,26,78,8
+    CONTROL         "First line",cbPasteM2FirstLine,"Button",BS_AUTORADIOBUTTON,206,41,78,8
+    CONTROL         "Single line",cbPasteM2SingleLine,"Button",BS_AUTORADIOBUTTON,288,26,78,8
+    CONTROL         "Do nothing",cbPasteM2Nothing,"Button",BS_AUTORADIOBUTTON,288,41,78,8
+    CONTROL         "Confirm <Enter> keypress",cbClipConfirmEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,67,355,8
+    CONTROL         "Confirm pasting more than",cbClipConfirmLimit,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,81,355,8
+    RTEXT           "chars:",stClipConfirmLimit,10,98,58,8
+    EDITTEXT        tClipConfirmLimit,71,96,40,12,ES_AUTOHSCROLL
+    CONTROL         "All lines (default Shift+Ins)",cbClipShiftIns,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,253,167,117,8
+    CONTROL         "First line (default Ctrl+V)",cbClipCtrlV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,278,180,91,8
 END
 
 IDD_SPG_ENVIRONMENT DIALOGEX 0, 0, 381, 242
