@@ -432,7 +432,7 @@ function AppendExistingTranslations([string]$section,[string]$name,[string]$en_v
       }
       if ($old_en -ne $en_value) {
         $depr_en = "_"
-        Write-Host "Deprecation: $name;`n  old: '$old_en'`n  new: '$en_value'"
+        Write-Host -ForegroundColor Yellow "Deprecation: $name;`n  old: '$old_en'`n  new: '$en_value'"
       }
 
       # Append existing translations"
@@ -444,7 +444,7 @@ function AppendExistingTranslations([string]$section,[string]$name,[string]$en_v
           $jlng = EscapeJson $jres."_$($_.id)"
           if ($jlng -ne $null) {
             $depr = "_"
-            Write-Host "Already deprecated: $name / _$_.id"
+            Write-Host -ForegroundColor Yellow "Already deprecated: $name / _$($_.id)"
           }
         }
         # Append translation if found
@@ -527,19 +527,19 @@ function InitDialogList()
   $script:dialogs += @{ id = "IDD_HOTKEY";          name = "Choose hotkey"; }
   $script:dialogs += @{ id = "IDD_AFFINITY";        name = "Set active console processes affinity and priority"; }
 
-  $script:dialogs += @{ id = "IDD_SPG_MAIN";        name = "Main"; }
-  $script:dialogs += @{ id = "IDD_SPG_WNDSIZEPOS";  name = " Size & Pos"; }
-  $script:dialogs += @{ id = "IDD_SPG_SHOW";        name = " Appearance"; }
-  $script:dialogs += @{ id = "IDD_SPG_BACK";        name = " Background"; }
+  $script:dialogs += @{ id = "IDD_SPG_FONTS";       name = "Main"; }
+  $script:dialogs += @{ id = "IDD_SPG_SIZEPOS";     name = " Size & Pos"; }
+  $script:dialogs += @{ id = "IDD_SPG_APPEAR";      name = " Appearance"; }
+  $script:dialogs += @{ id = "IDD_SPG_BACKGR";      name = " Background"; }
   $script:dialogs += @{ id = "IDD_SPG_TABS";        name = " Tab bar"; }
   $script:dialogs += @{ id = "IDD_SPG_CONFIRM";     name = " Confirm"; }
   $script:dialogs += @{ id = "IDD_SPG_TASKBAR";     name = " Task bar"; }
   $script:dialogs += @{ id = "IDD_SPG_UPDATE";      name = " Update"; }
   $script:dialogs += @{ id = "IDD_SPG_STARTUP";     name = "Startup"; }
-  $script:dialogs += @{ id = "IDD_SPG_CMDTASKS";    name = " Tasks"; }
+  $script:dialogs += @{ id = "IDD_SPG_TASKS";       name = " Tasks"; }
   $script:dialogs += @{ id = "IDD_SPG_COMSPEC";     name = " ComSpec"; }
   $script:dialogs += @{ id = "IDD_SPG_ENVIRONMENT"; name = " Environment"; }
-  $script:dialogs += @{ id = "IDD_SPG_FEATURE";     name = "Features"; }
+  $script:dialogs += @{ id = "IDD_SPG_FEATURES";    name = "Features"; }
   $script:dialogs += @{ id = "IDD_SPG_CURSOR";      name = " Text cursor"; }
   $script:dialogs += @{ id = "IDD_SPG_COLORS";      name = " Colors"; }
   $script:dialogs += @{ id = "IDD_SPG_TRANSPARENT"; name = " Transparency"; }
@@ -548,7 +548,7 @@ function InitDialogList()
   $script:dialogs += @{ id = "IDD_SPG_INTEGRATION"; name = "Integration"; }
   $script:dialogs += @{ id = "IDD_SPG_DEFTERM";     name = " Default term"; }
   $script:dialogs += @{ id = "IDD_SPG_KEYS";        name = "Keys & Macro"; }
-  $script:dialogs += @{ id = "IDD_SPG_CONTROL";     name = " Controls"; }
+  $script:dialogs += @{ id = "IDD_SPG_CONTROLS";    name = " Controls"; }
   $script:dialogs += @{ id = "IDD_SPG_MARKCOPY";    name = " Mark/Copy"; }
   $script:dialogs += @{ id = "IDD_SPG_PASTE";       name = " Paste"; }
   $script:dialogs += @{ id = "IDD_SPG_HIGHLIGHT";   name = " Highlight"; }
