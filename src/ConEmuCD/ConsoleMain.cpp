@@ -3070,7 +3070,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		}
 		else if (lstrcmpi(szArg, L"/SILENT")==0)
 		{
-			gbPrefereSilentMode = true;
+			gbPreferSilentMode = true;
 		}
 		else if (lstrcmpni(szArg, L"/EXPORT", 7)==0)
 		{

@@ -1080,7 +1080,7 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 	case ea_ExportGui:
 	case ea_ExportAll:
 		{
-			iRc = DoExportEnv(asCmdArg, eExecAction, gbPrefereSilentMode);
+			iRc = DoExportEnv(asCmdArg, eExecAction, gbPreferSilentMode);
 			break;
 		}
 	case ea_ParseArgs:

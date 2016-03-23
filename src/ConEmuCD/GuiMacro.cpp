@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuC.h"
 #include "GuiMacro.h"
 
-bool    gbPrefereSilentMode = false;
+bool    gbPreferSilentMode = false;
 
 
 BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
@@ -93,7 +93,7 @@ int GuiMacroCommandLine(LPCWSTR asCmdLine)
 			ArgGuiMacro(szArg, MacroInst);
 
 			// Return result via EnvVar only
-			gbPrefereSilentMode = true;
+			gbPreferSilentMode = true;
 
 			_ASSERTE(gnRunMode == RM_GUIMACRO);
 			iRc = DoGuiMacro(lsCmdLine, MacroInst, gmf_SetEnvVar);
@@ -302,7 +302,7 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR*
 		}
 
 		bool bRedirect = false;
-		bool bPrintError = (Flags & gmf_PrintResult) && ((bRedirect = IsOutputRedirected()) || !gbPrefereSilentMode);
+		bool bPrintError = (Flags & gmf_PrintResult) && ((bRedirect = IsOutputRedirected()) || !gbPreferSilentMode);
 		if (bPrintError)
 		{
 			if (bRedirect) wcscat_c(szErrInst, L"\n"); // PowerShell... it does not insert linefeed
@@ -356,7 +356,7 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR*
 
 			// Let reuse `-Silent` switch
 			if ((Flags & gmf_PrintResult)
-				&& (!gbPrefereSilentMode || IsOutputRedirected()))
+				&& (!gbPreferSilentMode || IsOutputRedirected()))
 			{
 				// Show macro result in StdOutput
 				_wprintf(pszResult);

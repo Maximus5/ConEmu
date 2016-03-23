@@ -39,7 +39,7 @@ struct MacroInstance
 	DWORD nPID;
 };
 
-extern bool gbPrefereSilentMode; // = false;
+extern bool gbPreferSilentMode; // = false;
 
 typedef DWORD GuiMacroFlags;
 const GuiMacroFlags
