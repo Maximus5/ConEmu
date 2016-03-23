@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmu.h"
 #include "DynDialog.h"
+#include "LngRc.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
@@ -175,6 +176,9 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 		{
 			gpSetCls->RegisterTipsFor(hDlg);
 		}
+
+		pObj->OnPostLocalize(hDlg);
+
 	}
 	else if ((messg == WM_HELP) || (messg == HELP_WM_HELP))
 	{
@@ -397,4 +401,101 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 	} //switch (messg)
 
 	return 0;
+}
+
+void CSetPgBase::setHotkeyCheckbox(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWSTR pszFrom, LPCWSTR pszTo, bool bChecked)
+{
+	wchar_t szKeyFull[128] = L"";
+	gpSet->GetHotkeyNameById(iHotkeyId, szKeyFull, false);
+	if (szKeyFull[0] == 0)
+	{
+		EnableWindow(GetDlgItem(hDlg, nCtrlId), FALSE);
+		checkDlgButton(hDlg, nCtrlId, BST_UNCHECKED);
+	}
+	else
+	{
+		if (pszFrom)
+		{
+			wchar_t* ptr = (wchar_t*)wcsstr(szKeyFull, pszFrom);
+			if (ptr)
+			{
+				*ptr = 0;
+				if (pszTo)
+				{
+					wcscat_c(szKeyFull, pszTo);
+				}
+			}
+		}
+
+		CEStr lsText(GetDlgItemTextPtr(hDlg, nCtrlId));
+		LPCWSTR pszTail = lsText.IsEmpty() ? NULL : wcsstr(lsText, L" - ");
+		if (pszTail)
+		{
+			CEStr lsNew(szKeyFull, pszTail);
+			SetDlgItemText(hDlg, nCtrlId, lsNew);
+		}
+
+		checkDlgButton(hDlg, nCtrlId, bChecked);
+	}
+}
+
+/// Update GroupBox title, replacing text *between* pszFrom and pszTo with current HotKey
+/// For example, gbPasteM1 has title "Paste mode #1 (Shift+Ins)", pszFrom=L"(", pszTo=L")"
+/// Than `Shift+Ins` would be replaced with current user defined hotkey value
+void CSetPgBase::setCtrlTitleByHotkey(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWSTR pszFrom, LPCWSTR pszTo)
+{
+	if (!hDlg || !nCtrlId || (nCtrlId == (WORD)IDC_STATIC) || (iHotkeyId <= 0))
+	{
+		_ASSERTE(FALSE && "Invalid identifiers");
+		return;
+	}
+	if (!pszFrom || !*pszFrom)
+	{
+		_ASSERTE(FALSE && "Invalid anchors");
+		return;
+	}
+
+	wchar_t szKeyFull[128] = L"";
+	gpSet->GetHotkeyNameById(iHotkeyId, szKeyFull, true);
+	if (szKeyFull[0] == 0)
+	{
+		_ASSERTE(FALSE && "Failed to acquire HotKey");
+		wcscpy_c(szKeyFull, L"???");
+	}
+
+	CEStr lsLoc;
+	if (!CLngRc::getControl(nCtrlId, lsLoc))
+	{
+		if (GetString(hDlg, nCtrlId, &lsLoc.ms_Val) <= 0)
+		{
+			_ASSERTE(FALSE && "No title?");
+			return;
+		}
+	}
+
+	LPCWSTR ptr1, ptr2;
+	ptr1 = wcsstr(lsLoc, pszFrom);
+	if (!ptr1)
+	{
+		_ASSERTE(ptr1 && "pszFrom not found");
+		return;
+	}
+	ptr1 += wcslen(pszFrom);
+	if (pszTo && *pszTo)
+	{
+		ptr2 = wcsstr(ptr1, pszTo);
+	}
+	if (ptr2 == ptr1)
+	{
+		_ASSERTE(ptr2 != ptr1 && "Invalid source string");
+		return;
+	}
+
+	// Trim to hotkey beginning
+	lsLoc.ms_Val[(ptr1 - lsLoc.ms_Val)] = 0;
+	// And create new title
+	CEStr lsNew(lsLoc.ms_Val, szKeyFull, ptr2);
+
+	// Update control text
+	SetDlgItemText(hDlg, nCtrlId, lsNew);
 }

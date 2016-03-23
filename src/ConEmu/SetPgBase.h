@@ -155,6 +155,7 @@ public:
 public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) = 0;
+	virtual void OnPostLocalize(HWND hDlg) {};
 	virtual TabHwndIndex GetPageType() = 0;
 	// Optional page procedure
 	virtual INT_PTR PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam) { return 0; };
@@ -163,8 +164,8 @@ public:
 	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) { return 0; };
 	virtual LRESULT OnComboBox(HWND hDlg, WORD nCtrlId, WORD code) { return 0; };
 
-protected:
+public:
 	// Members
-
+	static void setHotkeyCheckbox(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWSTR pszFrom, LPCWSTR pszTo, bool bChecked);
+	static void setCtrlTitleByHotkey(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWSTR pszFrom, LPCWSTR pszTo);
 };
-
