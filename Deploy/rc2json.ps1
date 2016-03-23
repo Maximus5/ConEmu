@@ -26,6 +26,7 @@ $script:ignore_ctrls = @(
 $last_gen_ids_note = "// last auto-gen identifier"
 $last_gen_str_note = "{ /* empty trailing item for patch convenience */ }"
 
+$script:dlg_not_found = $FALSE
 
 
 
@@ -78,7 +79,7 @@ function FindLine($l, $rcln, $cmp)
     $l++
   }
   if ($l -ge $rcln.length) {
-    Write-Host -ForegroundColor Red ("Was not found: ``" + $cmp + "``")
+    Write-Host -ForegroundColor Red ("Was not found: ``" + $cmp.Trim() + "``")
     return -1
   }
   return $l
@@ -211,7 +212,10 @@ function WriteFileContent($file,$text)
 function ParseDialog($rcln, $dlgid, $name)
 {
   $l = FindLine 0 $rcln ($dlgid + " ")
-  if ($l -le 0) { return }
+  if ($l -le 0) {
+    $script:dlg_not_found = $TRUE
+    return
+  }
 
   $b = FindLine $l $rcln "BEGIN"
   if ($b -le 0) { return }
@@ -615,6 +619,7 @@ function UpdateConEmuL10N()
   Write-Host "Parsing dialog resources"
   InitDialogList
   $iDlgNo = 0
+  $script:dlg_not_found = $FALSE
   $script:dialogs | % {
     Write-Progress -Activity "Dialogs" -PercentComplete ($iDlgNo * 100 / $script:dialogs.Count) -Status "$($_.id): $($_.name.Trim())" -Id 1
     ParseDialog $rcln $_.id $_.name.Trim()
@@ -622,6 +627,11 @@ function UpdateConEmuL10N()
   }
   Write-Progress -Activity "Dialog Controls" -Completed -Id 2
   Write-Progress -Activity "Dialogs" -PercentComplete 100 -Completed -Id 1
+  if ($script:dlg_not_found) {
+    Write-Host -ForegroundColor Red ("Some dialogs were not found in ``" + (Split-Path $conemu_rc_file -Leaf) + "```nExiting!")
+    $host.SetShouldExit(101)
+    exit
+  }
 
   #######################################################
 
