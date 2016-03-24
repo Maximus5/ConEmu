@@ -1196,7 +1196,7 @@ bool CFontMgr::RecreateFontByDpi(int dpiX, int dpiY, LPRECT prcSuggested)
 	gpSetCls->_dpi.SetDpi(dpiX, dpiY);
 	//Raster fonts???
 	EvalLogfontSizes(LogFont, gpSet->FontSizeY, gpSet->FontSizeX);
-	RecreateFont(-1);
+	RecreateFont(true);
 
 	return true;
 }
@@ -2354,7 +2354,7 @@ void CFontMgr::SettingsLoaded(SettingsLoadedFlags slfFlags)
 	if (slfFlags & slf_OnResetReload)
 	{
 		// Шрифт пере-создать сразу, его характеристики используются при ресайзе окна
-		RecreateFont((WORD)-1);
+		RecreateFont(true);
 	}
 	else
 	{

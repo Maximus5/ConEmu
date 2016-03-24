@@ -243,7 +243,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 				return 0;
 
 			case CBN_KILLFOCUS:
-				if (gpSetCls->mn_LastChangingFontCtrlId && LOWORD(wParam) == gpSetCls->mn_LastChangingFontCtrlId)
+				if (gpSetCls->mn_LastChangingFontCtrlId && (LOWORD(wParam) == gpSetCls->mn_LastChangingFontCtrlId))
 				{
 					_ASSERTE(pgId == thi_Fonts);
 					PostMessage(hDlg, gpSetCls->mn_MsgRecreateFont, gpSetCls->mn_LastChangingFontCtrlId, 0);
@@ -359,7 +359,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 		{
 			if (messg == gpSetCls->mn_MsgRecreateFont)
 			{
-				gpSetCls->RecreateFont(wParam);
+				gpSetCls->RecreateFont(LOWORD(wParam));
 			}
 			else if (messg == gpSetCls->mn_MsgLoadFontFromMain)
 			{

@@ -2086,7 +2086,7 @@ LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tFontCharset:
 	{
 		gpSet->mb_CharSetWasSet = TRUE;
-		PostMessage(hWnd2, gpSetCls->mn_MsgRecreateFont, wParam, 0);
+		PostMessage(hWnd2, gpSetCls->mn_MsgRecreateFont, wId, 0);
 		break;
 	}
 
@@ -4311,7 +4311,8 @@ BOOL CSettings::RegisterTipsForChild(HWND hChild, LPARAM lParam)
 // Вызывается из диалога настроек
 void CSettings::RecreateFont(WORD wFromID)
 {
-	gpFontMgr->RecreateFont((wFromID == (WORD)-1), (wFromID == cbFontAsDeviceUnits || wFromID == cbFontMonitorDpi));
+	_ASSERTE(wFromID != (WORD)-1);
+	gpFontMgr->RecreateFont(false, (wFromID == cbFontAsDeviceUnits || wFromID == cbFontMonitorDpi));
 
 	if (ghOpWnd && (wFromID == tFontFace))
 	{
