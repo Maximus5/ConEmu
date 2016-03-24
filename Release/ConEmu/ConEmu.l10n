@@ -2584,6 +2584,157 @@
       "ru": " текстовое выделение",
       "zh": " 流选择",
       "id": 19 }
+    ,
+    "lng_SpgAppDistinct": {
+      "en": "App distinct",
+      "ru": "По приложениям",
+      "id": 42 }
+    ,
+    "lng_SpgAppear": {
+      "en": "Appearance",
+      "ru": "Внешний вид",
+      "id": 27 }
+    ,
+    "lng_SpgBackgr": {
+      "en": "Background",
+      "ru": "Фоновый рисунок",
+      "id": 28 }
+    ,
+    "lng_SpgColors": {
+      "en": "Colors",
+      "ru": "Цвета",
+      "id": 39 }
+    ,
+    "lng_SpgComSpec": {
+      "en": "ComSpec",
+      "ru": "ComSpec",
+      "id": 35 }
+    ,
+    "lng_SpgConfirm": {
+      "en": "Confirm",
+      "ru": "Подтверждения",
+      "id": 30 }
+    ,
+    "lng_SpgControls": {
+      "en": "Controls",
+      "ru": "Управление",
+      "id": 46 }
+    ,
+    "lng_SpgCursor": {
+      "en": "Text cursor",
+      "ru": "Курсор",
+      "id": 38 }
+    ,
+    "lng_SpgDebug": {
+      "en": "Debug",
+      "ru": "Отладка",
+      "id": 54 }
+    ,
+    "lng_SpgDefTerm": {
+      "en": "Default term",
+      "ru": "Заменить терминал",
+      "id": 44 }
+    ,
+    "lng_SpgEnvironment": {
+      "en": "Environment",
+      "ru": "Окружение",
+      "id": 36 }
+    ,
+    "lng_SpgFarMacros": {
+      "en": "Far macros",
+      "ru": "Far макросы",
+      "id": 51 }
+    ,
+    "lng_SpgFarManager": {
+      "en": "Far Manager",
+      "ru": "Far Manager",
+      "id": 50 }
+    ,
+    "lng_SpgFarViews": {
+      "en": "Panel Views",
+      "ru": "Panel Views",
+      "id": 52 }
+    ,
+    "lng_SpgFeatures": {
+      "en": "Features",
+      "ru": "Параметры",
+      "id": 37 }
+    ,
+    "lng_SpgFonts": {
+      "en": "Main",
+      "ru": "Основные",
+      "id": 25 }
+    ,
+    "lng_SpgHighlight": {
+      "en": "Highlight",
+      "ru": "Подсветка",
+      "id": 49 }
+    ,
+    "lng_SpgInfo": {
+      "en": "Info",
+      "ru": "Информация",
+      "id": 53 }
+    ,
+    "lng_SpgIntegration": {
+      "en": "Integration",
+      "ru": "Интеграция",
+      "id": 43 }
+    ,
+    "lng_SpgKeys": {
+      "en": "Keys & Macro",
+      "ru": "Кнопки & Макросы",
+      "id": 45 }
+    ,
+    "lng_SpgMarkCopy": {
+      "en": "Mark/Copy",
+      "ru": "Выделение",
+      "id": 47 }
+    ,
+    "lng_SpgPaste": {
+      "en": "Paste",
+      "ru": "Paste",
+      "ru": "Вставка",
+      "id": 48 }
+    ,
+    "lng_SpgSizePos": {
+      "en": "Size & Pos",
+      "ru": "Положение окна",
+      "id": 26 }
+    ,
+    "lng_SpgStartup": {
+      "en": "Startup",
+      "ru": "При старте",
+      "id": 33 }
+    ,
+    "lng_SpgStatusBar": {
+      "en": "Status bar",
+      "ru": "Статусная строка",
+      "id": 41 }
+    ,
+    "lng_SpgTabBar": {
+      "en": "Tab bar",
+      "ru": "Панель табов",
+      "id": 29 }
+    ,
+    "lng_SpgTaskBar": {
+      "en": "Task bar",
+      "ru": "Панель задач",
+      "id": 31 }
+    ,
+    "lng_SpgTasks": {
+      "en": "Tasks",
+      "ru": "Tasks",
+      "id": 34 }
+    ,
+    "lng_SpgTransparent": {
+      "en": "Transparency",
+      "ru": "Прозрачность",
+      "id": 40 }
+    ,
+    "lng_SpgUpdate": {
+      "en": "Update",
+      "ru": "Обновление",
+      "id": 32 }
   }
   ,
   "controls": {

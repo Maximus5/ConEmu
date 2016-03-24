@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 
 #include <CommCtrl.h>
+#include "LngDataEnum.h"
 #include "Options.h"
 #include "DlgItemHelper.h"
 #include "SetDlgButtons.h"
@@ -118,7 +119,7 @@ struct ConEmuSetupPages
 {
 	int              DialogID;     // Page Dialog ID (IDD_SPG_FONTS, ...)
 	int              Level;        // 0, 1
-	wchar_t          PageName[64]; // Label in treeview
+	LngResources     PageNameRsrc; // Label in treeview
 	TabHwndIndex     PageIndex;    // thi_Fonts, thi_SizePos, etc.
 	CSetPgBase*    (*CreateObj)();
 	bool             Collapsed;
@@ -129,6 +130,7 @@ struct ConEmuSetupPages
 	ConEmuSetupItem* pItems;
 	#endif
 	HWND             hPage;
+	wchar_t          PageName[64]; // Label in treeview
 	CSetPgBase*      pPage;
 	CDpiForDialog*   pDpiAware;
 	CDynDialog*      pDialog;

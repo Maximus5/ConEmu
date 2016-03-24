@@ -409,36 +409,36 @@ void CSettings::InitVars_Pages()
 	ConEmuSetupPages Pages[] =
 	{
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
-		{IDD_SPG_FONTS,       0, L"Main",           thi_Fonts,      CSetPgFonts::Create},
-		{IDD_SPG_SIZEPOS,     1, L"Size & Pos",     thi_SizePos,    CSetPgSizePos::Create},
-		{IDD_SPG_APPEAR,      1, L"Appearance",     thi_Appear,     CSetPgAppear::Create},
-		{IDD_SPG_BACKGR,      1, L"Background",     thi_Backgr,     CSetPgBackgr::Create},
-		{IDD_SPG_TABS,        1, L"Tab bar",        thi_Tabs,       CSetPgTabs::Create},
-		{IDD_SPG_CONFIRM,     1, L"Confirm",        thi_Confirm,    CSetPgConfirm::Create},
-		{IDD_SPG_TASKBAR,     1, L"Task bar",       thi_Taskbar,    CSetPgTaskbar::Create},
-		{IDD_SPG_UPDATE,      1, L"Update",         thi_Update,     CSetPgUpdate::Create},
-		{IDD_SPG_STARTUP,     0, L"Startup",        thi_Startup,    CSetPgStartup::Create},
-		{IDD_SPG_TASKS,       1, L"Tasks",          thi_Tasks,      CSetPgTasks::Create},
-		{IDD_SPG_COMSPEC,     1, L"ComSpec",        thi_Comspec,    CSetPgComspec::Create},
-		{IDD_SPG_ENVIRONMENT, 1, L"Environment",    thi_Environment,CSetPgEnvironment::Create},
-		{IDD_SPG_FEATURES,    0, L"Features",       thi_Features,   CSetPgFeatures::Create},
-		{IDD_SPG_CURSOR,      1, L"Text cursor",    thi_Cursor,     CSetPgCursor::Create},
-		{IDD_SPG_COLORS,      1, L"Colors",         thi_Colors,     CSetPgColors::Create},
-		{IDD_SPG_TRANSPARENT, 1, L"Transparency",   thi_Transparent,CSetPgTransparent::Create},
-		{IDD_SPG_STATUSBAR,   1, L"Status bar",     thi_Status,     CSetPgStatus::Create},
-		{IDD_SPG_APPDISTINCT, 1, L"App distinct",   thi_Apps,       CSetPgApps::Create},
-		{IDD_SPG_INTEGRATION, 0, L"Integration",    thi_Integr,     CSetPgIntegr::Create},
-		{IDD_SPG_DEFTERM,     1, L"Default term",   thi_DefTerm,    CSetPgDefTerm::Create},
-		{IDD_SPG_KEYS,        0, L"Keys & Macro",   thi_Keys,       CSetPgKeys::Create},
-		{IDD_SPG_CONTROLS,    1, L"Controls",       thi_Controls,   CSetPgControls::Create},
-		{IDD_SPG_MARKCOPY,    1, L"Mark/Copy",      thi_MarkCopy,   CSetPgMarkCopy::Create},
-		{IDD_SPG_PASTE,       1, L"Paste",          thi_Paste,      CSetPgPaste::Create},
-		{IDD_SPG_HIGHLIGHT,   1, L"Highlight",      thi_Hilight,    CSetPgHilight::Create},
-		{IDD_SPG_FEATURE_FAR, 0, L"Far Manager",    thi_Far,        CSetPgFar::Create, true/*Collapsed*/},
-		{IDD_SPG_FARMACRO,    1, L"Far macros",     thi_FarMacro,   CSetPgFarMacro::Create},
-		{IDD_SPG_VIEWS,       1, L"Views",          thi_Views,      CSetPgViews::Create},
-		{IDD_SPG_INFO,        0, L"Info",           thi_Info,       CSetPgInfo::Create, RELEASEDEBUGTEST(true,false)/*Collapsed in Release*/},
-		{IDD_SPG_DEBUG,       1, L"Debug",          thi_Debug,      CSetPgDebug::Create},
+		{IDD_SPG_FONTS,       0, lng_SpgFonts,        thi_Fonts,        CSetPgFonts::Create},
+		{IDD_SPG_SIZEPOS,     1, lng_SpgSizePos,      thi_SizePos,      CSetPgSizePos::Create},
+		{IDD_SPG_APPEAR,      1, lng_SpgAppear,       thi_Appear,       CSetPgAppear::Create},
+		{IDD_SPG_BACKGR,      1, lng_SpgBackgr,       thi_Backgr,       CSetPgBackgr::Create},
+		{IDD_SPG_TABS,        1, lng_SpgTabBar,       thi_Tabs,         CSetPgTabs::Create},
+		{IDD_SPG_CONFIRM,     1, lng_SpgConfirm,      thi_Confirm,      CSetPgConfirm::Create},
+		{IDD_SPG_TASKBAR,     1, lng_SpgTaskBar,      thi_Taskbar,      CSetPgTaskbar::Create},
+		{IDD_SPG_UPDATE,      1, lng_SpgUpdate,       thi_Update,       CSetPgUpdate::Create},
+		{IDD_SPG_STARTUP,     0, lng_SpgStartup,      thi_Startup,      CSetPgStartup::Create},
+		{IDD_SPG_TASKS,       1, lng_SpgTasks,        thi_Tasks,        CSetPgTasks::Create},
+		{IDD_SPG_COMSPEC,     1, lng_SpgComSpec,      thi_Comspec,      CSetPgComspec::Create},
+		{IDD_SPG_ENVIRONMENT, 1, lng_SpgEnvironment,  thi_Environment,  CSetPgEnvironment::Create},
+		{IDD_SPG_FEATURES,    0, lng_SpgFeatures,     thi_Features,     CSetPgFeatures::Create},
+		{IDD_SPG_CURSOR,      1, lng_SpgCursor,       thi_Cursor,       CSetPgCursor::Create},
+		{IDD_SPG_COLORS,      1, lng_SpgColors,       thi_Colors,       CSetPgColors::Create},
+		{IDD_SPG_TRANSPARENT, 1, lng_SpgTransparent,  thi_Transparent,  CSetPgTransparent::Create},
+		{IDD_SPG_STATUSBAR,   1, lng_SpgStatusBar,    thi_Status,       CSetPgStatus::Create},
+		{IDD_SPG_APPDISTINCT, 1, lng_SpgAppDistinct,  thi_Apps,         CSetPgApps::Create},
+		{IDD_SPG_INTEGRATION, 0, lng_SpgIntegration,  thi_Integr,       CSetPgIntegr::Create},
+		{IDD_SPG_DEFTERM,     1, lng_SpgDefTerm,      thi_DefTerm,      CSetPgDefTerm::Create},
+		{IDD_SPG_KEYS,        0, lng_SpgKeys,         thi_Keys,         CSetPgKeys::Create},
+		{IDD_SPG_CONTROLS,    1, lng_SpgControls,     thi_Controls,     CSetPgControls::Create},
+		{IDD_SPG_MARKCOPY,    1, lng_SpgMarkCopy,     thi_MarkCopy,     CSetPgMarkCopy::Create},
+		{IDD_SPG_PASTE,       1, lng_SpgPaste,        thi_Paste,        CSetPgPaste::Create},
+		{IDD_SPG_HIGHLIGHT,   1, lng_SpgHighlight,    thi_Hilight,      CSetPgHilight::Create},
+		{IDD_SPG_FEATURE_FAR, 0, lng_SpgFarManager,   thi_Far,          CSetPgFar::Create, true/*Collapsed*/},
+		{IDD_SPG_FARMACRO,    1, lng_SpgFarMacros,    thi_FarMacro,     CSetPgFarMacro::Create},
+		{IDD_SPG_VIEWS,       1, lng_SpgFarViews,     thi_Views,        CSetPgViews::Create},
+		{IDD_SPG_INFO,        0, lng_SpgInfo,         thi_Info,         CSetPgInfo::Create, RELEASEDEBUGTEST(true,false)/*Collapsed in Release*/},
+		{IDD_SPG_DEBUG,       1, lng_SpgDebug,        thi_Debug,        CSetPgDebug::Create},
 		// End
 		{},
 	};
@@ -456,6 +456,20 @@ void CSettings::InitVars_Pages()
 
 	m_Pages = (ConEmuSetupPages*)malloc(sizeof(Pages));
 	memmove(m_Pages, Pages, sizeof(Pages));
+}
+
+void CSettings::InitPageNames()
+{
+	if (!m_Pages)
+	{
+		_ASSERTE(m_Pages && (mn_PagesCount > 0));
+		return;
+	}
+
+	for (int i = 0; i < mn_PagesCount; i++)
+	{
+		lstrcpyn(m_Pages[i].PageName, CLngRc::getRsrc(m_Pages[i].PageNameRsrc), countof(m_Pages[i].PageName));
+	}
 }
 
 void CSettings::ReleaseHandles()
@@ -2672,6 +2686,8 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 
 		wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Creating settings dialog, IdPage=%u", IdShowPage);
 		LogString(szLog);
+
+		gpSetCls->InitPageNames();
 
 		SafeDelete(gpSetCls->mp_Dialog);
 		//2009-05-03. Нам нужен НЕмодальный диалог

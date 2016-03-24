@@ -94,6 +94,7 @@ class CSettings
 		Settings m_Settings;
 		void ReleaseHandles();
 		void InitVars_Pages();
+		void InitPageNames();
 	private:
 		friend class CSetDlgButtons;
 		friend class CSetDlgColors;
