@@ -1084,6 +1084,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClCompile Include="SetPgEnvironment.cpp" />
     <ClCompile Include="SetPgFar.cpp" />
     <ClCompile Include="SetPgFarMacro.cpp" />
+    <ClCompile Include="SetPgFast.cpp" />
     <ClCompile Include="SetPgFeatures.cpp" />
     <ClCompile Include="SetPgFonts.cpp" />
     <ClCompile Include="SetPgHilight.cpp" />
@@ -1282,6 +1283,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClInclude Include="SetPgEnvironment.h" />
     <ClInclude Include="SetPgFar.h" />
     <ClInclude Include="SetPgFarMacro.h" />
+    <ClInclude Include="SetPgFast.h" />
     <ClInclude Include="SetPgFeatures.h" />
     <ClInclude Include="SetPgFonts.h" />
     <ClInclude Include="SetPgHilight.h" />

@@ -1355,6 +1355,39 @@ BEGIN
     CTEXT           "\ncolors\npreview",stPalettePreviewFast,205,67,108,24
 END
 
+IDD_SPG_FAST DIALOGEX 0, 0, 381, 242
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Base settings",gbFastConfig,4,1,375,192
+    //LTEXT           "Choose ConEmu settings storage location (You may turn on/off portable mode here)",stStorageLocation,11,8,294,8
+    //COMBOBOX        lbStorageLocation,11,19,302,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Choose your startup task or even a shell with arguments:",stStartupShellFast,11,13,302,8
+    COMBOBOX        lbStartupShellFast,11,24,302,156,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Choose preferred color scheme:",stColorSchemeFast,11,42,190,8
+    COMBOBOX        lbColorSchemeFast,11,53,187,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "You can change following on 'Appearance' page of Settings dialog later",stSingleInstance,11,73,302,8
+    CONTROL         "Single instance mode (use existing window instead of running new instance)",cbSingleInstance,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,84,295,8
+    CONTROL         "Quake-style slide down from the top of the screen",cbQuakeFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,97,207,10
+    EDITTEXT        tQuakeKeyFast,222,96,72,12,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "...",cbQuakeKeyFast,298,96,16,13
+    LTEXT           "You can change following on 'Controls' page of Settings dialog later",stUseKeyboardHooksFast,11,114,302,8
+    CONTROL         "Install keyboard hooks (required for Win+Number, Win+Tab, PrntScrn and so on)",cbUseKeyboardHooksFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,123,295,10
+    LTEXT           "You can change following on 'Features' page of Settings dialog later",stInjectConEmuHkFast,11,140,302,8
+    CONTROL         "Inject ConEmuHk.dll into all processes started in ConEmu tabs",cbInjectConEmuHkFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,151,295,10
+    LTEXT           "You can change following on 'Update' page of Settings dialog later",stEnableAutoUpdateFast,11,167,302,8
+    CONTROL         "Enable automatic updates",cbEnableAutoUpdateFast,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,178,109,10
+    CONTROL         "Stable",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,128,178,46,10
+    CONTROL         "Preview",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,178,178,50,10
+    CONTROL         "Latest",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,232,178,71,10
+    CTEXT           "\ncolors\npreview",stPalettePreviewFast,205,42,108,24
+END
+
 IDD_SPG_TASKS DIALOGEX 0, 0, 381, 242
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT

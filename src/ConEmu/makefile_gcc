@@ -150,6 +150,7 @@ SRCS = \
 		SetPgEnvironment.cpp\
 		SetPgFar.cpp       \
 		SetPgFarMacro.cpp  \
+		SetPgFast.cpp      \
 		SetPgFeatures.cpp  \
 		SetPgFonts.cpp     \
 		SetPgHilight.cpp   \

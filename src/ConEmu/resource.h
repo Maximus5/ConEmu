@@ -58,6 +58,7 @@
 #define IDD_SPG_QUAKE                   186
 #define IDD_SPG_CHILDGUI                187
 #define IDD_SPG_ANSI                    188
+#define IDD_SPG_FAST                    189
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
 #define IDD_ATTACHDLG                   212

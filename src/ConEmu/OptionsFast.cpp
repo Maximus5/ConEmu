@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "AboutDlg.h"
 #include "ConEmu.h"
+#include "DlgItemHelper.h"
 #include "DynDialog.h"
 #include "HotkeyDlg.h"
 #include "Options.h"
@@ -39,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetCmdTask.h"
 #include "SetColorPalette.h"
 #include "SetDlgLists.h"
+#include "SetPgFast.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "Update.h"
@@ -65,7 +67,7 @@ static bool bVanilla;
 static CDpiForDialog* gp_DpiAware = NULL;
 static CEHelpPopup* gp_FastHelp = NULL;
 static int gn_FirstFarTask = -1;
-static ConEmuHotKey ghk_MinMaxKey = {};
+ConEmuHotKey ghk_MinMaxKey = {};
 static int iCreatIdx = 0;
 static CEStr szConEmuDrive;
 static SettingsLoadedFlags sAppendMode = slf_None;
@@ -139,95 +141,11 @@ void Fast_FindStartupTask(SettingsLoadedFlags slfFlags)
 	}
 }
 
-LPCWSTR Fast_GetStartupCommand(const CommandTasks*& pTask)
-{
-	pTask = NULL;
-	// Show startup task or shell command line
-	LPCWSTR pszStartup = (gpSet->nStartType == 2) ? gpSet->psStartTasksName : (gpSet->nStartType == 0) ? gpSet->psStartSingleApp : NULL;
-	// Check if that task exists
-	if ((gpSet->nStartType == 2) && pszStartup)
-	{
-		pTask = gpSet->CmdTaskGetByName(gpSet->psStartTasksName);
-		if (pTask && pTask->pszName && (lstrcmp(pTask->pszName, pszStartup) != 0))
-		{
-			// Return pTask name because it may not match exactly with gpSet->psStartTasksName
-			// because CmdTaskGetByName uses some fuzzy logic to find tasks
-			pszStartup = pTask->pszName;
-		}
-		else if (!pTask)
-		{
-			pszStartup = NULL;
-		}
-	}
-	return pszStartup;
-}
-
-
 
 
 /* **************************************** */
 /*        Fast Configuration Dialog         */
 /* **************************************** */
-
-static const ColorPalette* gp_DefaultPalette = NULL;
-static WNDPROC gpfn_DefaultColorBoxProc = NULL;
-static LRESULT CALLBACK Fast_ColorBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	LRESULT lRc = 0;
-
-	switch (uMsg)
-	{
-		case WM_PAINT:
-		{
-			if (!gp_DefaultPalette)
-			{
-				_ASSERTE(gp_DefaultPalette!=NULL);
-				break;
-			}
-			RECT rcClient = {};
-			PAINTSTRUCT ps = {};
-			if (BeginPaint(hwnd, &ps))
-			{
-				GetClientRect(hwnd, &rcClient);
-				for (int i = 0; i < 16; i++)
-				{
-					int x = (i % 8);
-					int y = (i == x) ? 0 : 1;
-					RECT rc = {(x) * rcClient.right / 8, (y) * rcClient.bottom / 2,
-						(x+1) * rcClient.right / 8, (y+1) * rcClient.bottom / 2};
-					HBRUSH hbr = CreateSolidBrush(gp_DefaultPalette->Colors[i]);
-					FillRect(ps.hdc, &rc, hbr);
-					DeleteObject(hbr);
-				}
-				EndPaint(hwnd, &ps);
-			}
-			goto wrap;
-		} // WM_PAINT
-
-		case UM_PALETTE_FAST_CHG:
-		{
-			CEStr lsValue;
-			if (CSetDlgLists::GetSelectedString(GetParent(hwnd), lbColorSchemeFast, &lsValue.ms_Val) > 0)
-			{
-				const ColorPalette* pPal = gpSet->PaletteGetByName(lsValue.ms_Val);
-				if (pPal)
-				{
-					gp_DefaultPalette = pPal;
-					InvalidateRect(hwnd, NULL, FALSE);
-				}
-			}
-			goto wrap;
-		} // UM_PALETTE_FAST_CHG
-	}
-
-	if (gpfn_DefaultColorBoxProc)
-		lRc = CallWindowProc(gpfn_DefaultColorBoxProc, hwnd, uMsg, wParam, lParam);
-	else
-		lRc = ::DefWindowProc(hwnd, uMsg, wParam, lParam);
-wrap:
-	return lRc;
-}
-
 
 
 static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -338,90 +256,12 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	}
 
 
-	// Tasks
-	const CommandTasks* pGrp = NULL;
-	for (int nGroup = 0; (pGrp = gpSet->CmdTaskGet(nGroup)) != NULL; nGroup++)
-	{
-		SendDlgItemMessage(hDlg, lbStartupShellFast, CB_ADDSTRING, 0, (LPARAM)pGrp->pszName);
-	}
-
-	// Show startup task or shell command line
-	const CommandTasks* pTask = NULL;
-	LPCWSTR pszStartup = Fast_GetStartupCommand(pTask);
-	// Show startup command or task
-	if (pszStartup && *pszStartup)
-	{
-		CSetDlgLists::SelectStringExact(hDlg, lbStartupShellFast, pszStartup);
-	}
-
-
-	// Palettes (console color sets)
-	const ColorPalette* pPal = NULL;
-	for (int nPal = 0; (pPal = gpSet->PaletteGet(nPal)) != NULL; nPal++)
-	{
-		SendDlgItemMessage(hDlg, lbColorSchemeFast, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
-	}
-	// Show active (default) palette
-	gp_DefaultPalette = gpSet->PaletteFindCurrent(true);
-	if (gp_DefaultPalette)
-	{
-		CSetDlgLists::SelectStringExact(hDlg, lbColorSchemeFast, gp_DefaultPalette->pszName);
-	}
-	else
-	{
-		_ASSERTE(FALSE && "Current paletted was not defined?");
-	}
-	// Show its colors in box
-	HWND hChild = GetDlgItem(hDlg, stPalettePreviewFast);
-	if (hChild)
-		gpfn_DefaultColorBoxProc = (WNDPROC)SetWindowLongPtr(hChild, GWLP_WNDPROC, (LONG_PTR)Fast_ColorBoxProc);
-
-
-	// Single instance
-	CheckDlgButton(hDlg, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
-
-
-	// Quake style and show/hide key
-	CheckDlgButton(hDlg, cbQuakeFast, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
-	const ConEmuHotKey* pHK = NULL;
-	if (gpSet->GetHotkeyById(vkMinimizeRestore, &pHK) && pHK)
-	{
-		wchar_t szKey[128] = L"";
-		SetDlgItemText(hDlg, tQuakeKeyFast, pHK->GetHotkeyName(szKey));
-		ghk_MinMaxKey.SetVkMod(pHK->GetVkMod());
-	}
-
-
-	// Keyhooks required for Win+Number, Win+Arrows, etc.
-	CheckDlgButton(hDlg, cbUseKeyboardHooksFast, gpSet->isKeyboardHooks(true));
+	// Tasks, etc
+	PRAGMA_ERROR("Create CSetPgFast object");
 
 
 
-	// Debug purposes only. ConEmu.exe switch "/nokeyhooks"
-	#ifdef _DEBUG
-	EnableWindow(GetDlgItem(hDlg, cbUseKeyboardHooksFast), !gpConEmu->DisableKeybHooks);
-	#endif
 
-	// Injects
-	CheckDlgButton(hDlg, cbInjectConEmuHkFast, gpSet->isUseInjects);
-
-	// Autoupdates
-	if (!gpConEmu->isUpdateAllowed())
-	{
-		EnableWindow(GetDlgItem(hDlg, cbEnableAutoUpdateFast), FALSE);
-		EnableWindow(GetDlgItem(hDlg, rbAutoUpdateStableFast), FALSE);
-		EnableWindow(GetDlgItem(hDlg, rbAutoUpdatePreviewFast), FALSE);
-		EnableWindow(GetDlgItem(hDlg, rbAutoUpdateDeveloperFast), FALSE);
-		EnableWindow(GetDlgItem(hDlg, stEnableAutoUpdateFast), FALSE);
-	}
-	else
-	{
-		if (gpSet->UpdSet.isUpdateUseBuilds != 0)
-			CheckDlgButton(hDlg, cbEnableAutoUpdateFast, gpSet->UpdSet.isUpdateCheckOnStartup|gpSet->UpdSet.isUpdateCheckHourly);
-		CheckRadioButton(hDlg, rbAutoUpdateStableFast, rbAutoUpdateDeveloperFast,
-			(gpSet->UpdSet.isUpdateUseBuilds == 1) ? rbAutoUpdateStableFast :
-			(gpSet->UpdSet.isUpdateUseBuilds == 3) ? rbAutoUpdatePreviewFast : rbAutoUpdateDeveloperFast);
-	}
 
 	// Vista - ConIme bugs
 	if (!bCheckIme)
@@ -461,34 +301,35 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 
 static INT_PTR Fast_OnCtlColorStatic(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	if (GetDlgItem(hDlg, stDisableConImeFast1) == (HWND)lParam)
+	int nCtrlId = GetDlgCtrlID((HWND)lParam);
+
+	HBRUSH hBrush;
+	COLORREF clrText;
+
+	if (nCtrlId == stDisableConImeFast1)
 	{
-		SetTextColor((HDC)wParam, 255);
-		HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-		SetBkMode((HDC)wParam, TRANSPARENT);
-		return (INT_PTR)hBrush;
+		clrText = RGB(255,0,0);
+		hBrush = GetSysColorBrush(COLOR_3DFACE);
 	}
-	else if (GetDlgItem(hDlg, stHomePage) == (HWND)lParam)
+	else if (CDlgItemHelper::isHyperlinkCtrl(nCtrlId))
 	{
-		SetTextColor((HDC)wParam, GetSysColor(COLOR_HOTLIGHT));
-		HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-		SetBkMode((HDC)wParam, TRANSPARENT);
-		return (INT_PTR)hBrush;
+		clrText = GetSysColor(COLOR_HOTLIGHT);
+		hBrush = GetSysColorBrush(COLOR_3DFACE);
 	}
 	else
 	{
-		SetTextColor((HDC)wParam, GetSysColor(COLOR_WINDOWTEXT));
-		HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-		SetBkMode((HDC)wParam, TRANSPARENT);
-		return (INT_PTR)hBrush;
+		clrText = GetSysColor(COLOR_WINDOWTEXT);
+		hBrush = GetSysColorBrush(COLOR_3DFACE);
 	}
 
-	return 0;
+	SetTextColor((HDC)wParam, clrText);
+	SetBkMode((HDC)wParam, TRANSPARENT);
+	return (INT_PTR)hBrush;
 }
 
 static INT_PTR Fast_OnSetCursor(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	if (((HWND)wParam) == GetDlgItem(hDlg, stHomePage))
+	if (CDlgItemHelper::isHyperlinkCtrl(GetDlgCtrlID((HWND)lParam)))
 	{
 		SetCursor(LoadCursor(NULL, IDC_HAND));
 		SetWindowLongPtr(hDlg, DWLP_MSGRESULT, TRUE);
@@ -811,6 +652,9 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 				}
 			}
 		}
+
+		// test resize!
+		bCheckIme = true;
 	}
 
 	// Tasks and palettes must be created before dialog, to give user opportunity to choose startup task and palette

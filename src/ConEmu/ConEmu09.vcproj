@@ -518,6 +518,7 @@
       <File RelativePath=".\SetPgEnvironment.cpp" />
       <File RelativePath=".\SetPgFar.cpp" />
       <File RelativePath=".\SetPgFarMacro.cpp" />
+      <File RelativePath=".\SetPgFast.cpp" />
       <File RelativePath=".\SetPgFeatures.cpp" />
       <File RelativePath=".\SetPgFonts.cpp" />
       <File RelativePath=".\SetPgHilight.cpp" />
@@ -712,6 +713,7 @@
       <File RelativePath=".\SetPgEnvironment.h" />
       <File RelativePath=".\SetPgFar.h" />
       <File RelativePath=".\SetPgFarMacro.h" />
+      <File RelativePath=".\SetPgFast.h" />
       <File RelativePath=".\SetPgFeatures.h" />
       <File RelativePath=".\SetPgFonts.h" />
       <File RelativePath=".\SetPgHilight.h" />

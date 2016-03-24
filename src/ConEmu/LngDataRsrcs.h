@@ -83,6 +83,7 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_SpgFarMacros,             L"Far macros" },
 	{ lng_SpgFarManager,            L"Far Manager" },
 	{ lng_SpgFarViews,              L"Panel Views" },
+	{ lng_SpgFast,                  L"Fast" },
 	{ lng_SpgFeatures,              L"Features" },
 	{ lng_SpgFonts,                 L"Main" },
 	{ lng_SpgHighlight,             L"Highlight" },

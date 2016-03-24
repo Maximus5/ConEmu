@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 enum TabHwndIndex
 {
 	thi_Fonts = 0,    // "Main"
+	thi_Fast,         //   "Fast"
 	thi_SizePos,      //   "Size & Pos"
 	thi_Appear,       //   "Appearance"
 	thi_Quake,        //   "Quake style"

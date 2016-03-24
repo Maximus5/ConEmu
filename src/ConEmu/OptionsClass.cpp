@@ -93,6 +93,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgEnvironment.h"
 #include "SetPgFar.h"
 #include "SetPgFarMacro.h"
+#include "SetPgFast.h"
 #include "SetPgFeatures.h"
 #include "SetPgFonts.h"
 #include "SetPgHilight.h"
@@ -411,6 +412,7 @@ void CSettings::InitVars_Pages()
 	{
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
 		{IDD_SPG_FONTS,       0, lng_SpgFonts,        thi_Fonts,        CSetPgFonts::Create},
+		{IDD_SPG_FAST,        1, lng_SpgFast,         thi_Fast,         CSetPgFast::Create},
 		{IDD_SPG_SIZEPOS,     1, lng_SpgSizePos,      thi_SizePos,      CSetPgSizePos::Create},
 		{IDD_SPG_APPEAR,      1, lng_SpgAppear,       thi_Appear,       CSetPgAppear::Create},
 		{IDD_SPG_QUAKE,       1, lng_SpgQuake,        thi_Quake,        CSetPgQuake::Create},

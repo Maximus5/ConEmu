@@ -2797,6 +2797,10 @@
       "zh": "面板视图",
       "id": 52 }
     ,
+    "lng_SpgFast": {
+      "en": "Fast",
+      "id": 81 }
+    ,
     "lng_SpgFeatures": {
       "en": "Features",
       "ru": "Параметры",

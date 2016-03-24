@@ -150,6 +150,7 @@ $(INTDIR)\SetPgDefTerm.obj \
 $(INTDIR)\SetPgEnvironment.obj \
 $(INTDIR)\SetPgFar.obj \
 $(INTDIR)\SetPgFarMacro.obj \
+$(INTDIR)\SetPgFast.obj \
 $(INTDIR)\SetPgFeatures.obj \
 $(INTDIR)\SetPgFonts.obj \
 $(INTDIR)\SetPgHilight.obj \
@@ -575,6 +576,8 @@ $(INTDIR)\SetPgEnvironment.obj: SetPgEnvironment.cpp SetPgEnvironment.h
 $(INTDIR)\SetPgFar.obj: SetPgFar.cpp SetPgFar.h
 
 $(INTDIR)\SetPgFarMacro.obj: SetPgFarMacro.cpp SetPgFarMacro.h
+
+$(INTDIR)\SetPgFast.obj: SetPgFast.cpp SetPgFast.h
 
 $(INTDIR)\SetPgFeatures.obj: SetPgFeatures.cpp SetPgFeatures.h
 
