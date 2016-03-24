@@ -208,7 +208,7 @@ PDB_NAME = $(OUTNAME).pdb
 PDB = $(OUTDIR)\$(PDB_NAME)
 
 # common
-CPPFLAGS=/nologo $(MP) /W3 /wd4995 $(FARSYSLOG) /EHsc $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(PDB)" /J /c /FAcs /Fa"$(CODDIR)\\"
+CPPFLAGS=/nologo $(MP) /W3 /wd4995 $(FARSYSLOG) /EHsc $(DEFINES) /GS /GR /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(PDB)" /J /c /FAcs /Fa"$(CODDIR)\\"
 LINKFLAGS=/nologo /subsystem:WINDOWS /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(MAP)" /RELEASE /nxcompat
 !ifndef NO_RELEASE_PDB
 LINKFLAGS=$(LINKFLAGS) /DEBUG /pdb:"$(PDB)"
