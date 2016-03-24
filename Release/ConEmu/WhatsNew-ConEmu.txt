@@ -20,6 +20,38 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.3.23
+* Unify LogFile names: `ConEmu-gui-...`, `ConEmu-con-...`, `ConEmu-srv-...`.
+* To start console as ‘System’ use `-new_console:aA` switch.
+* Update {Show ANSI colors} and fit in 76 chars.
+* Show compiler version and colorize output of `-Args`.
+* Try to show and re-apply `-new_console:XXX` switches in ‘Recreate’ dialog.
+* gh-581: Restart ConEmu after automatic update in the same directory it was started before.
+* Update chinese translation.
+* Update Russian translation.
+* If ConEmu started with `-detached` switch, don't close it automatically when last tab is terminated.
+* ConEmuC: Don't fall into `Press Enter or Esc to close console...` if invalid arguments were specified.
+  This is critical, especially if our process was started under non-interactive account,
+  than ExitWaitForKey causes the infinitely running process, which user can't kill easily
+* ConEmuC: Don't fall into `Press Enter or Esc to close console...` if server was not connected to GUI.
+  Avoid situation when `ConEmuC /ROOT` was started from running console (bare `cmd.exe`)
+  and ConEmuC (our started server) was not connected to GUI, then we get infinite loop
+  when ConEmuC waits for cmd termination and vice versa.
+* Avoid ‘Unknown state’ appeared in the StatusBar during console startup.
+* LogFiles may be enabled permanently via Settings -> Features -> ‘Internal LogFiles location’.
+* CmdInit.cmd: Reset colors on each prompt (`$E[m`).
+* gh-587: Fix text selection when cursor passes the selection anchor (changing selection direction).
+* gh-598: Improve pasting options for `Shift+Ins` and `Ctrl+V` (multi-line text).
+  Now, `Ctrl+V` will insert all lines, space-separated, and `Shift+Ins` insert
+  multi-line text as before. User may change actions on the ‘Paste’ settings page.
+* gh-101: Switch `-UseExport` may be specified before `-GuiMacro` to export result as env.var.
+  Without `-UseExport` specified before `-GuiMacro`, ConEmuC.exe will not try
+  to export GuiMacro result as environment variable `ConEmuMacroResult`
+  to the parent process.
+* Variable `ConEmuMacroResult` was skipped during environment exporting.
+* Settings pages names localization.
+
+
 2016.3.13
 * On WinXP/Vista the icon in the TitleBar was unexpectedly changed to active tab icon.
 * Intelligent selection: RClick over selected region will Paste selected text,
