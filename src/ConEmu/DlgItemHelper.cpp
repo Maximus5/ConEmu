@@ -240,3 +240,15 @@ INT_PTR CDlgItemHelper::GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr,
 
 	return nLen;
 }
+
+bool CDlgItemHelper::isHyperlinkCtrl(WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case stHomePage:
+	case tDefTermWikiLink:
+	case stConEmuUrl:
+		return true;
+	}
+	return false;
+}

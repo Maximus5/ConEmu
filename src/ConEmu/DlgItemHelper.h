@@ -44,4 +44,5 @@ public:
 	static void InvalidateCtrl(HWND hCtrl, BOOL bErase);
 	static int GetNumber(HWND hParent, WORD nCtrlId, int nMin = 0, int nMax = 0);
 	static INT_PTR GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCWSTR asNoDefault = NULL, bool abListBox = false);
+	static bool isHyperlinkCtrl(WORD nCtrlId);
 };
