@@ -140,13 +140,13 @@ INT_PTR CSetPgBase::OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlI
 {
 	if ((nCtrlId >= c0 && nCtrlId <= CSetDlgColors::MAX_COLOR_EDT_ID) || (nCtrlId >= c32 && nCtrlId <= c38))
 	{
-		return CSetDlgColors::ColorCtlStatic(hDlg, nCtrlId, (HWND)lParam);
+		return CSetDlgColors::ColorCtlStatic(hDlg, nCtrlId, hCtrl);
 	}
 	else if (CDlgItemHelper::isHyperlinkCtrl(nCtrlId))
 	{
-		SetTextColor((HDC)wParam, GetSysColor(COLOR_HOTLIGHT));
-		SetBkMode((HDC)wParam, TRANSPARENT);
-		hBrush = GetSysColorBrush(COLOR_3DFACE);
+		SetTextColor(hdc, GetSysColor(COLOR_HOTLIGHT));
+		SetBkMode(hdc, TRANSPARENT);
+		HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
 		return (INT_PTR)hBrush;
 	}
 
@@ -315,7 +315,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			switch (HIWORD(wParam))
 			{
 			case BN_CLICKED:
-				return pObj->OnButtonClicked(hDlg, (HWND)lParam, LOWORD(wParam));
+				return CSetDlgButtons::OnButtonClicked(hDlg, wParam, lParam);
 
 			case EN_CHANGE:
 				if (!pObj->mb_SkipSelChange)

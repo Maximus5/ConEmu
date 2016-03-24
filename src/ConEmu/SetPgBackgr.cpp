@@ -32,6 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#include "ConEmu.h"
+#include "OptionsClass.h"
 #include "SetDlgColors.h"
 #include "SetDlgLists.h"
 #include "SetPgBackgr.h"
@@ -82,7 +84,7 @@ INT_PTR CSetPgBackgr::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 		CSetDlgLists::GetListBoxItem(hDlg, lbBgPlacement, CSetDlgLists::eBgOper, bg);
 		gpSet->bgOperation = bg;
 		gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
-		NeedBackgroundUpdate();
+		gpSetCls->NeedBackgroundUpdate();
 		gpConEmu->Update(true);
 		break;
 	}

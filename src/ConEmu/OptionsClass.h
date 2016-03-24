@@ -100,6 +100,8 @@ class CSettings
 		friend class CSetDlgColors;
 		friend class CSetDlgFonts;
 		friend class CFontMgr;
+		friend class CSetPgFonts;
+		friend class CSetPgBase;
 	public:
 
 		private:
@@ -311,7 +313,6 @@ class CSettings
 		void RegisterTabs();
 		void UnregisterTabs();
 
-		friend class CSetPgFonts;
 		WORD mn_LastChangingFontCtrlId;
 
 		bool mb_ThemingEnabled;
@@ -377,7 +378,6 @@ class CSettings
 		};
 		void debugLogCommand(HWND hWnd2, LogCommandsData* apData);
 
-		friend class CSetPgBase;
 		CDynDialog *mp_Dialog;
 		ConEmuSetupPages *m_Pages;
 		int mn_PagesCount;

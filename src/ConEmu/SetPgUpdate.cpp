@@ -62,7 +62,7 @@ LRESULT CSetPgUpdate::OnInitDialog(HWND hDlg, bool abInitial)
 	SetDlgItemText(hDlg, tUpdateProxyUser, p->szUpdateProxyUser);
 	SetDlgItemText(hDlg, tUpdateProxyPassword, p->szUpdateProxyPassword);
 
-	OnButtonClicked(hDlg, cbUpdateInetTool, 0); // Enable/Disable command field, button '...' and ‘Proxy’ fields
+	OnButtonClicked(hDlg, NULL, cbUpdateInetTool); // Enable/Disable command field, button '...' and ‘Proxy’ fields
 
 	int nPackage = p->UpdateDownloadSetup(); // 1-exe, 2-7zip
 	checkRadioButton(hDlg, rbUpdateUseExe, rbUpdateUseArc, (nPackage==1) ? rbUpdateUseExe : rbUpdateUseArc);

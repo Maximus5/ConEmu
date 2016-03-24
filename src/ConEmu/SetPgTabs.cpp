@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#include "ConEmu.h"
 #include "OptionsClass.h"
 #include "SetDlgLists.h"
 #include "SetDlgFonts.h"
@@ -110,32 +111,32 @@ INT_PTR CSetPgTabs::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 	case tTabFontHeight:
 	case tTabFontCharset:
 	{
-		if (HIWORD(wParam) == CBN_EDITCHANGE)
+		if (code == CBN_EDITCHANGE)
 		{
-			switch (wId)
+			switch (nCtrlId)
 			{
 			case tTabFontFace:
-				GetDlgItemText(hWnd2, wId, gpSet->sTabFontFace, countof(gpSet->sTabFontFace)); break;
+				GetDlgItemText(hDlg, nCtrlId, gpSet->sTabFontFace, countof(gpSet->sTabFontFace)); break;
 			case tTabFontHeight:
-				gpSet->nTabFontHeight = GetNumber(hWnd2, wId); break;
+				gpSet->nTabFontHeight = GetNumber(hDlg, nCtrlId); break;
 			}
 		}
-		else if (HIWORD(wParam) == CBN_SELCHANGE)
+		else if (code == CBN_SELCHANGE)
 		{
 			UINT val;
-			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+			INT_PTR nSel = SendDlgItemMessage(hDlg, nCtrlId, CB_GETCURSEL, 0, 0);
 
-			switch (wId)
+			switch (nCtrlId)
 			{
 			case tTabFontFace:
-				SendDlgItemMessage(hWnd2, wId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->sTabFontFace);
+				SendDlgItemMessage(hDlg, nCtrlId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->sTabFontFace);
 				break;
 			case tTabFontHeight:
-				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eFSizesSmall, val))
+				if (CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eFSizesSmall, val))
 					gpSet->nTabFontHeight = val;
 				break;
 			case tTabFontCharset:
-				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eCharSets, val))
+				if (CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eCharSets, val))
 					gpSet->nTabFontCharSet = val;
 				else
 					gpSet->nTabFontCharSet = DEFAULT_CHARSET;
@@ -148,21 +149,21 @@ INT_PTR CSetPgTabs::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 	case tTabBarDblClickAction:
 	case tTabBtnDblClickAction:
 	{
-		if (HIWORD(wParam) == CBN_SELCHANGE)
+		if (code == CBN_SELCHANGE)
 		{
 			UINT val;
-			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+			INT_PTR nSel = SendDlgItemMessage(hDlg, nCtrlId, CB_GETCURSEL, 0, 0);
 
-			switch(wId)
+			switch(nCtrlId)
 			{
 			case tTabBarDblClickAction:
-				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eTabBarDblClickActions, val))
+				if (CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eTabBarDblClickActions, val))
 					gpSet->nTabBarDblClickAction = val;
 				else
 					gpSet->nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION;
 				break;
 			case tTabBtnDblClickAction:
-				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eTabBtnDblClickActions, val))
+				if (CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eTabBtnDblClickActions, val))
 					gpSet->nTabBtnDblClickAction = val;
 				else
 					gpSet->nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;

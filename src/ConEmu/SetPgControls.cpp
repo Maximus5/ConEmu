@@ -100,7 +100,7 @@ INT_PTR CSetPgControls::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 				BYTE VkMod = 0;
 				CSetDlgLists::GetListBoxItem(hDlg, lbCTSClickPromptPosition, CSetDlgLists::eKeysAct, VkMod);
 				gpSet->SetHotkeyById(vkCTSVkPromptClk, VkMod);
-				CheckSelectionModifiers(hDlg);
+				gpSetCls->CheckSelectionModifiers(hDlg);
 			} break;
 		case lbCTSActAlways:
 			{
@@ -121,5 +121,5 @@ INT_PTR CSetPgControls::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 		}
 	} // if (HIWORD(wParam) == CBN_SELCHANGE)
 
-	break;
+	return 0;
 }

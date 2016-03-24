@@ -50,7 +50,7 @@ public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
 	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) override;
-	virtual LRESULT OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code) override;
+	virtual INT_PTR OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code) override;
 
 protected:
 	// Members

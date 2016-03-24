@@ -73,7 +73,7 @@ LRESULT CSetPgHilight::OnInitDialog(HWND hDlg, bool abInitial)
 
 INT_PTR CSetPgHilight::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 {
-	switch (wId)
+	switch (nCtrlId)
 	{
 	case lbGotoEditorCmd:
 	{

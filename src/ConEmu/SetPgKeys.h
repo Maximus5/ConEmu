@@ -55,7 +55,7 @@ public:
 	static int CALLBACK HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
 	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) override;
-	virtual LRESULT OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code) override;
+	virtual INT_PTR OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code) override;
 
 	static void ReInitHotkeys();
 

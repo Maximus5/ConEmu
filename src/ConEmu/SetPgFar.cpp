@@ -107,7 +107,7 @@ INT_PTR CSetPgFar::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 	case lbLDragKey:
 	{
 		BYTE VkMod = 0;
-		CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eKeys, VkMod);
+		CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eKeys, VkMod);
 		gpSet->SetHotkeyById(vkLDragKey, VkMod);
 		break;
 	}
@@ -115,7 +115,7 @@ INT_PTR CSetPgFar::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 	case lbRDragKey:
 	{
 		BYTE VkMod = 0;
-		CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eKeys, VkMod);
+		CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eKeys, VkMod);
 		gpSet->SetHotkeyById(vkLDragKey, VkMod);
 		break;
 	}

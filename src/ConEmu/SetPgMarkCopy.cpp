@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#include "ConEmu.h"
 #include "OptionsClass.h"
 #include "SetDlgLists.h"
 #include "SetPgMarkCopy.h"
@@ -174,14 +175,14 @@ INT_PTR CSetPgMarkCopy::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 				BYTE VkMod = 0;
 				CSetDlgLists::GetListBoxItem(hDlg, lbCTSBlockSelection, CSetDlgLists::eKeysAct, VkMod);
 				gpSet->SetHotkeyById(vkCTSVkBlock, VkMod);
-				CheckSelectionModifiers(hDlg);
+				gpSetCls->CheckSelectionModifiers(hDlg);
 			} break;
 		case lbCTSTextSelection:
 			{
 				BYTE VkMod = 0;
 				CSetDlgLists::GetListBoxItem(hDlg, lbCTSTextSelection, CSetDlgLists::eKeysAct, VkMod);
 				gpSet->SetHotkeyById(vkCTSVkText, VkMod);
-				CheckSelectionModifiers(hDlg);
+				gpSetCls->CheckSelectionModifiers(hDlg);
 			} break;
 		case lbCTSEOL:
 			{

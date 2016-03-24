@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#include "ConEmu.h"
 #include "FontMgr.h"
 #include "OptionsClass.h"
 #include "SetDlgLists.h"
@@ -218,7 +219,7 @@ INT_PTR CSetPgFonts::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 	{
 	case tFontCharset:
 		gpSet->mb_CharSetWasSet = TRUE;
-		PostMessage(hDlg, gpSetCls->mn_MsgRecreateFont, wId, 0);
+		PostMessage(hDlg, gpSetCls->mn_MsgRecreateFont, nCtrlId, 0);
 		break;
 
 	case tFontFace:
@@ -227,16 +228,16 @@ INT_PTR CSetPgFonts::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 	case tFontSizeX:
 	case tFontSizeX2:
 	case tFontSizeX3:
-		if (HIWORD(wParam) == CBN_SELCHANGE)
-			PostMessage(hDlg, gpSetCls->mn_MsgRecreateFont, wId, 0);
+		if (code == CBN_SELCHANGE)
+			PostMessage(hDlg, gpSetCls->mn_MsgRecreateFont, nCtrlId, 0);
 		else
-			mn_LastChangingFontCtrlId = wId;
+			gpSetCls->mn_LastChangingFontCtrlId = nCtrlId;
 		break;
 
 	case tUnicodeRanges:
 		// Do not required actually, the button "Apply" is enabled by default
 		enableDlgItem(hDlg, cbUnicodeRangesApply, true);
-		if (HIWORD(wParam) == CBN_SELCHANGE)
+		if (code == CBN_SELCHANGE)
 			PostMessage(hDlg, WM_COMMAND, cbUnicodeRangesApply, 0);
 		break;
 
@@ -244,12 +245,12 @@ INT_PTR CSetPgFonts::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 	case lbExtendFontBoldIdx:
 	case lbExtendFontItalicIdx:
 	{
-		if (wId == lbExtendFontNormalIdx)
-			gpSet->AppStd.nFontNormalColor = GetNumber(hWnd2, wId);
-		else if (wId == lbExtendFontBoldIdx)
-			gpSet->AppStd.nFontBoldColor = GetNumber(hWnd2, wId);
-		else if (wId == lbExtendFontItalicIdx)
-			gpSet->AppStd.nFontItalicColor = GetNumber(hWnd2, wId);
+		if (nCtrlId == lbExtendFontNormalIdx)
+			gpSet->AppStd.nFontNormalColor = GetNumber(hDlg, nCtrlId);
+		else if (nCtrlId == lbExtendFontBoldIdx)
+			gpSet->AppStd.nFontBoldColor = GetNumber(hDlg, nCtrlId);
+		else if (nCtrlId == lbExtendFontItalicIdx)
+			gpSet->AppStd.nFontItalicColor = GetNumber(hDlg, nCtrlId);
 
 		if (gpSet->AppStd.isExtendFonts)
 			gpConEmu->Update(true);

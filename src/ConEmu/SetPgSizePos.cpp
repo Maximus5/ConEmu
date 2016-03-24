@@ -150,7 +150,7 @@ INT_PTR CSetPgSizePos::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 	{
 	case lbNtvdmHeight:
 	{
-		INT_PTR num = SendDlgItemMessage(hDlg, wId, CB_GETCURSEL, 0, 0);
+		INT_PTR num = SendDlgItemMessage(hDlg, nCtrlId, CB_GETCURSEL, 0, 0);
 		gpSet->ntvdmHeight = (num == 1) ? 25 : ((num == 2) ? 28 : ((num == 3) ? 43 : ((num == 4) ? 50 : 0))); //-V112
 		break;
 	}
