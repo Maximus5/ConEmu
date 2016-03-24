@@ -207,6 +207,16 @@ function WriteFileContent($file,$text)
   #[System.IO.File]::WriteAllLines($file, $text)
 }
 
+function StringIsUrl($text)
+{
+  if (($text.StartsWith("http://") -Or $text.StartsWith("https://")) -And
+      ($text.IndexOfAny(" `r`n`t") -eq -1))
+  {
+    return $TRUE
+  }
+  return $FALSE
+}
+
 
 
 function ParseDialog($rcln, $dlgid, $name)
@@ -267,6 +277,7 @@ function ParseDialog($rcln, $dlgid, $name)
     if (($_.Id -ne "IDC_STATIC") -And      # has valid ID
         -Not ($script:ignore_ctrls.Contains($_.Id)) -And
         ($_.Title.Trim() -ne "") -And      # non empty text
+        -Not (StringIsUrl $_.Title) -And   # not a just a URL
         ($_.Title -match "[a-zA-Z]{2,}"))  # with two letters at least
     {
       if ($script:ctrls.ContainsKey($_.Id)) {
