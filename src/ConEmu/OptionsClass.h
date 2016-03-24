@@ -265,7 +265,6 @@ class CSettings
 		LRESULT OnInitDialog();
 		//
 		LRESULT OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		LRESULT OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnListBoxDblClk(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnPage(LPNMHDR phdr);
 		INT_PTR OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);

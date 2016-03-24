@@ -76,3 +76,52 @@ LRESULT CSetPgFarMacro::OnInitDialog(HWND hDlg, bool abInitial)
 
 	return 0;
 }
+
+INT_PTR CSetPgFarMacro::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+{
+	switch (nCtrlId)
+	{
+	case tRClickMacro:
+	case tSafeFarCloseMacro:
+	case tCloseTabMacro:
+	case tSaveAllMacro:
+	{
+		wchar_t** ppszMacro = NULL;
+		LPCWSTR pszDefaultMacro = NULL;
+		switch (nCtrlId)
+		{
+		case tRClickMacro:
+			ppszMacro = &gpSet->sRClickMacro; pszDefaultMacro = gpSet->RClickMacroDefault(fmv_Default);
+			break;
+		case tSafeFarCloseMacro:
+			ppszMacro = &gpSet->sSafeFarCloseMacro; pszDefaultMacro = gpSet->SafeFarCloseMacroDefault(fmv_Default);
+			break;
+		case tCloseTabMacro:
+			ppszMacro = &gpSet->sTabCloseMacro; pszDefaultMacro = gpSet->TabCloseMacroDefault(fmv_Default);
+			break;
+		case tSaveAllMacro:
+			ppszMacro = &gpSet->sSaveAllMacro; pszDefaultMacro = gpSet->SaveAllMacroDefault(fmv_Default);
+			break;
+		default:
+			_ASSERTE(FALSE && "ComboBox was not processed!");
+			return 0;
+		}
+
+		if (HIWORD(wParam) == CBN_EDITCHANGE)
+		{
+			GetString(hDlg, nCtrlId, ppszMacro, pszDefaultMacro, false);
+		}
+		else if (HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			GetString(hDlg, nCtrlId, ppszMacro, pszDefaultMacro, true);
+		}
+		break;
+	} // case tRClickMacro, tSafeFarCloseMacro, tCloseTabMacro, tSaveAllMacro
+
+	default:
+		_ASSERTE(FALSE && "ComboBox was not processed!");
+		return 0;
+	}
+
+	return 0;
+}

@@ -123,3 +123,72 @@ LRESULT CSetPgViews::OnInitDialog(HWND hDlg, bool abInitial)
 
 	return 0;
 }
+
+INT_PTR CSetPgViews::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+{
+	switch (code)
+	{
+	case CBN_EDITCHANGE:
+		{
+			switch (nCtrlId)
+			{
+				case tThumbsFontName:
+					GetDlgItemText(hDlg, nCtrlId, gpSet->ThSet.Thumbs.sFontName, countof(gpSet->ThSet.Thumbs.sFontName)); break;
+				case tThumbsFontSize:
+					gpSet->ThSet.Thumbs.nFontHeight = GetNumber(hDlg, nCtrlId); break;
+				case tTilesFontName:
+					GetDlgItemText(hDlg, nCtrlId, gpSet->ThSet.Tiles.sFontName, countof(gpSet->ThSet.Tiles.sFontName)); break;
+				case tTilesFontSize:
+					gpSet->ThSet.Tiles.nFontHeight = GetNumber(hDlg, nCtrlId); break;
+				default:
+					_ASSERTE(FALSE && "EditBox was not processed");
+			}
+			break;
+		} // CBN_EDITCHANGE
+
+	case CBN_SELCHANGE:
+		{
+			UINT val;
+			INT_PTR nSel = SendDlgItemMessage(hDlg, nCtrlId, CB_GETCURSEL, 0, 0);
+
+			switch (nCtrlId)
+			{
+				case lbThumbBackColorIdx:
+					gpSet->ThSet.crBackground.ColorIdx = nSel;
+					InvalidateCtrl(GetDlgItem(hDlg, c32), TRUE);
+					break;
+				case lbThumbPreviewBoxColorIdx:
+					gpSet->ThSet.crPreviewFrame.ColorIdx = nSel;
+					InvalidateCtrl(GetDlgItem(hDlg, c33), TRUE);
+					break;
+				case lbThumbSelectionBoxColorIdx:
+					gpSet->ThSet.crSelectFrame.ColorIdx = nSel;
+					InvalidateCtrl(GetDlgItem(hDlg, c34), TRUE);
+					break;
+				case tThumbsFontName:
+					SendDlgItemMessage(hDlg, nCtrlId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->ThSet.Thumbs.sFontName);
+					break;
+				case tThumbsFontSize:
+					if (CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eFSizesSmall, val))
+						gpSet->ThSet.Thumbs.nFontHeight = val;
+					break;
+				case tTilesFontName:
+					SendDlgItemMessage(hDlg, nCtrlId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->ThSet.Tiles.sFontName);
+					break;
+				case tTilesFontSize:
+					if (CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eFSizesSmall, val))
+						gpSet->ThSet.Tiles.nFontHeight = val;
+					break;
+				case tThumbMaxZoom:
+					gpSet->ThSet.nMaxZoom = max(100,((nSel+1)*100));
+				default:
+					_ASSERTE(FALSE && "ListBox was not processed");
+			}
+
+			break;
+		} // CBN_SELCHANGE
+
+	} // switch (code)
+
+	return 0;
+}

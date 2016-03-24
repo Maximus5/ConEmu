@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#include "ConEmu.h"
 #include "OptionsClass.h"
 #include "SetDlgLists.h"
 #include "SetDlgFonts.h"
@@ -128,4 +129,58 @@ void CSetPgStatus::UpdateStatusItems(HWND hDlg)
 		SendMessage(hAvail, LB_SETCURSEL, (iCurAvail <= iMaxAvail) ? iCurAvail : iMaxAvail, 0);
 	if (iCurSeltd >= 0 && iMaxSeltd >= 0)
 		SendMessage(hSeltd, LB_SETCURSEL, (iCurSeltd <= iMaxSeltd) ? iCurSeltd : iMaxSeltd, 0);
+}
+
+INT_PTR CSetPgStatus::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+{
+	switch (nCtrlId)
+	{
+	case tStatusFontFace:
+	case tStatusFontHeight:
+	case tStatusFontCharset:
+	{
+		if (code == CBN_EDITCHANGE)
+		{
+			switch (nCtrlId)
+			{
+			case tStatusFontFace:
+				GetDlgItemText(hDlg, nCtrlId, gpSet->sStatusFontFace, countof(gpSet->sStatusFontFace)); break;
+			case tStatusFontHeight:
+				gpSet->nStatusFontHeight = GetNumber(hDlg, nCtrlId); break;
+			}
+		}
+		else if (code == CBN_SELCHANGE)
+		{
+			UINT val;
+			INT_PTR nSel = SendDlgItemMessage(hDlg, nCtrlId, CB_GETCURSEL, 0, 0);
+
+			switch (nCtrlId)
+			{
+			case tStatusFontFace:
+				SendDlgItemMessage(hDlg, nCtrlId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->sStatusFontFace);
+				break;
+			case tStatusFontHeight:
+				if (CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eFSizesSmall, val))
+					gpSet->nStatusFontHeight = val;
+				break;
+			case tStatusFontCharset:
+				if (CSetDlgLists::GetListBoxItem(hDlg, nCtrlId, CSetDlgLists::eCharSets, val))
+					gpSet->nStatusFontCharSet = val;
+				else
+					gpSet->nStatusFontCharSet = DEFAULT_CHARSET;
+			}
+		}
+		gpConEmu->RecreateControls(false, true, true);
+		break;
+	} // tStatusFontFace, tStatusFontHeight, tStatusFontCharset
+
+	case lbStatusAvailable:
+	case lbStatusSelected:
+		break;
+
+	default:
+		_ASSERTE(FALSE && "ListBox was not processed");
+	}
+
+	return 0;
 }

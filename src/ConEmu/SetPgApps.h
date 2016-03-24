@@ -50,7 +50,7 @@ public:
 public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
-	virtual void ProcessDpiChange(ConEmuSetupPages* p, CDpiForDialog* apDpi) override;
+	virtual void ProcessDpiChange(const CDpiForDialog* apDpi) override;
 
 	virtual INT_PTR PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam) override;
 	static INT_PTR CALLBACK pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);

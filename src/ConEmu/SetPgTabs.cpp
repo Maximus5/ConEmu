@@ -101,3 +101,80 @@ LRESULT CSetPgTabs::OnInitDialog(HWND hDlg, bool abInitial)
 
 	return 0;
 }
+
+INT_PTR CSetPgTabs::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+{
+	switch (nCtrlId)
+	{
+	case tTabFontFace:
+	case tTabFontHeight:
+	case tTabFontCharset:
+	{
+		if (HIWORD(wParam) == CBN_EDITCHANGE)
+		{
+			switch (wId)
+			{
+			case tTabFontFace:
+				GetDlgItemText(hWnd2, wId, gpSet->sTabFontFace, countof(gpSet->sTabFontFace)); break;
+			case tTabFontHeight:
+				gpSet->nTabFontHeight = GetNumber(hWnd2, wId); break;
+			}
+		}
+		else if (HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			UINT val;
+			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+
+			switch (wId)
+			{
+			case tTabFontFace:
+				SendDlgItemMessage(hWnd2, wId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->sTabFontFace);
+				break;
+			case tTabFontHeight:
+				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eFSizesSmall, val))
+					gpSet->nTabFontHeight = val;
+				break;
+			case tTabFontCharset:
+				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eCharSets, val))
+					gpSet->nTabFontCharSet = val;
+				else
+					gpSet->nTabFontCharSet = DEFAULT_CHARSET;
+			}
+		}
+		gpConEmu->RecreateControls(true, false, true);
+		break;
+	} // tTabFontFace, tTabFontHeight, tTabFontCharset
+
+	case tTabBarDblClickAction:
+	case tTabBtnDblClickAction:
+	{
+		if (HIWORD(wParam) == CBN_SELCHANGE)
+		{
+			UINT val;
+			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
+
+			switch(wId)
+			{
+			case tTabBarDblClickAction:
+				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eTabBarDblClickActions, val))
+					gpSet->nTabBarDblClickAction = val;
+				else
+					gpSet->nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION;
+				break;
+			case tTabBtnDblClickAction:
+				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eTabBtnDblClickActions, val))
+					gpSet->nTabBtnDblClickAction = val;
+				else
+					gpSet->nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;
+				break;
+			}
+		}
+		break;
+	} // tTabBarDblClickAction, tTabBtnDblClickAction
+
+	default:
+		_ASSERTE(FALSE && "ListBox was not processed");
+	}
+
+	return 0;
+}

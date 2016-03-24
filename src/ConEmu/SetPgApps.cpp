@@ -78,18 +78,18 @@ LRESULT CSetPgApps::OnInitDialog(HWND hDlg, bool abForceReload)
 	return 0;
 }
 
-void CSetPgApps::ProcessDpiChange(ConEmuSetupPages* p, CDpiForDialog* apDpi)
+void CSetPgApps::ProcessDpiChange(const CDpiForDialog* apDpi)
 {
-	if (!this || !p || !p->hPage || !p->pDpiAware || !apDpi)
+	if (!this || !mh_Dlg || !mp_DpiAware || !apDpi)
 		return;
 
-	CSetPgBase::ProcessDpiChange(p, apDpi);
+	CSetPgBase::ProcessDpiChange(apDpi);
 
 	if (mp_DpiDistinct2)
 	{
-		HWND hHolder = GetDlgItem(p->hPage, tAppDistinctHolder);
+		HWND hHolder = GetDlgItem(mh_Dlg, tAppDistinctHolder);
 		RECT rcPos = {}; GetWindowRect(hHolder, &rcPos);
-		MapWindowPoints(NULL, p->hPage, (LPPOINT)&rcPos, 2);
+		MapWindowPoints(NULL, mh_Dlg, (LPPOINT)&rcPos, 2);
 
 		mp_DpiDistinct2->SetDialogDPI(apDpi->GetCurDpi(), &rcPos);
 	}

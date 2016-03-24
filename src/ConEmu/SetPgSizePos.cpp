@@ -143,3 +143,21 @@ void CSetPgSizePos::EnablePosSizeControls(HWND hDlg)
 	enableDlgItem(hDlg, tWndWidth, !gpConEmu->mp_Inside);
 	enableDlgItem(hDlg, tWndHeight, !gpConEmu->mp_Inside);
 }
+
+INT_PTR CSetPgSizePos::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+{
+	switch (nCtrlId)
+	{
+	case lbNtvdmHeight:
+	{
+		INT_PTR num = SendDlgItemMessage(hDlg, wId, CB_GETCURSEL, 0, 0);
+		gpSet->ntvdmHeight = (num == 1) ? 25 : ((num == 2) ? 28 : ((num == 3) ? 43 : ((num == 4) ? 50 : 0))); //-V112
+		break;
+	}
+
+	default:
+		_ASSERTE(FALSE && "ListBox was not processed");
+	}
+
+	return 0;
+}

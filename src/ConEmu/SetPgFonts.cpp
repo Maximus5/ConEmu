@@ -211,3 +211,54 @@ void CSetPgFonts::CopyFontsTo(HWND hDlgTo, int nList1, ...)
 		CSetDlgLists::SelectString(hDlgTo, nCtrlIds[j], szFontName);
 	}
 }
+
+INT_PTR CSetPgFonts::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+{
+	switch (nCtrlId)
+	{
+	case tFontCharset:
+		gpSet->mb_CharSetWasSet = TRUE;
+		PostMessage(hDlg, gpSetCls->mn_MsgRecreateFont, wId, 0);
+		break;
+
+	case tFontFace:
+	case tFontFace2:
+	case tFontSizeY:
+	case tFontSizeX:
+	case tFontSizeX2:
+	case tFontSizeX3:
+		if (HIWORD(wParam) == CBN_SELCHANGE)
+			PostMessage(hDlg, gpSetCls->mn_MsgRecreateFont, wId, 0);
+		else
+			mn_LastChangingFontCtrlId = wId;
+		break;
+
+	case tUnicodeRanges:
+		// Do not required actually, the button "Apply" is enabled by default
+		enableDlgItem(hDlg, cbUnicodeRangesApply, true);
+		if (HIWORD(wParam) == CBN_SELCHANGE)
+			PostMessage(hDlg, WM_COMMAND, cbUnicodeRangesApply, 0);
+		break;
+
+	case lbExtendFontNormalIdx:
+	case lbExtendFontBoldIdx:
+	case lbExtendFontItalicIdx:
+	{
+		if (wId == lbExtendFontNormalIdx)
+			gpSet->AppStd.nFontNormalColor = GetNumber(hWnd2, wId);
+		else if (wId == lbExtendFontBoldIdx)
+			gpSet->AppStd.nFontBoldColor = GetNumber(hWnd2, wId);
+		else if (wId == lbExtendFontItalicIdx)
+			gpSet->AppStd.nFontItalicColor = GetNumber(hWnd2, wId);
+
+		if (gpSet->AppStd.isExtendFonts)
+			gpConEmu->Update(true);
+		break;
+	}
+
+	default:
+		_ASSERTE(FALSE && "ListBox was not processed");
+	}
+
+	return 0;
+}

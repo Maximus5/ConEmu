@@ -88,3 +88,38 @@ LRESULT CSetPgControls::OnInitDialog(HWND hDlg, bool abInitial)
 
 	return 0;
 }
+
+INT_PTR CSetPgControls::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+{
+	if (code == CBN_SELCHANGE)
+	{
+		switch (nCtrlId)
+		{
+		case lbCTSClickPromptPosition:
+			{
+				BYTE VkMod = 0;
+				CSetDlgLists::GetListBoxItem(hDlg, lbCTSClickPromptPosition, CSetDlgLists::eKeysAct, VkMod);
+				gpSet->SetHotkeyById(vkCTSVkPromptClk, VkMod);
+				CheckSelectionModifiers(hDlg);
+			} break;
+		case lbCTSActAlways:
+			{
+				BYTE VkMod = 0;
+				CSetDlgLists::GetListBoxItem(hDlg, lbCTSActAlways, CSetDlgLists::eKeysAct, VkMod);
+				gpSet->SetHotkeyById(vkCTSVkAct, VkMod);
+			} break;
+		case lbCTSRBtnAction:
+			{
+				CSetDlgLists::GetListBoxItem(hDlg, lbCTSRBtnAction, CSetDlgLists::eClipAct, gpSet->isCTSRBtnAction);
+			} break;
+		case lbCTSMBtnAction:
+			{
+				CSetDlgLists::GetListBoxItem(hDlg, lbCTSMBtnAction, CSetDlgLists::eClipAct, gpSet->isCTSMBtnAction);
+			} break;
+		default:
+			_ASSERTE(FALSE && "ListBox was not processed");
+		}
+	} // if (HIWORD(wParam) == CBN_SELCHANGE)
+
+	break;
+}

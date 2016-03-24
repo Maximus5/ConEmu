@@ -47,6 +47,8 @@ public:
 public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
+	// Events
+	virtual INT_PTR OnComboBox(HWND hDlg, WORD nCtrlId, WORD code) override;
 
 	void UpdateStatusItems(HWND hDlg);
 

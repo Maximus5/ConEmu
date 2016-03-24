@@ -156,7 +156,7 @@ LRESULT CSetPgTasks::OnEditChanged(HWND hDlg, WORD nCtrlId)
 	return 0;
 }
 
-LRESULT CSetPgTasks::OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code)
+INT_PTR CSetPgTasks::OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code)
 {
 	// Other codes are not interesting yet
 	if (code != CBN_SELCHANGE)

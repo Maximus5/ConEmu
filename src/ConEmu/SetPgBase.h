@@ -124,7 +124,6 @@ struct ConEmuSetupPages
 	CSetPgBase*    (*CreateObj)();
 	bool             Collapsed;
 	// Filled after creation
-	bool             DpiChanged;
 	HTREEITEM        hTI;
 	#if 0
 	ConEmuSetupItem* pItems;
@@ -132,8 +131,6 @@ struct ConEmuSetupPages
 	HWND             hPage;
 	wchar_t          PageName[64]; // Label in treeview
 	CSetPgBase*      pPage;
-	CDpiForDialog*   pDpiAware;
-	CDynDialog*      pDialog;
 };
 
 class CSetPgBase
@@ -141,17 +138,24 @@ class CSetPgBase
 {
 protected:
 	HWND mh_Dlg;
+	HWND mh_Parent;
 	bool mb_SkipSelChange;
+	bool mb_DpiChanged;
 	UINT mn_ActivateTabMsg;
+	CDpiForDialog* mp_DpiAware;
+	CDynDialog* mp_DynDialog;
 	const CDpiForDialog* mp_ParentDpi;
+	ConEmuSetupPages* mp_InfoPtr;
 
 public:
 	CSetPgBase();
 	virtual ~CSetPgBase();
 
+	virtual void InitObject(HWND ahParent, UINT nActivateTabMsg, const CDpiForDialog* apParentDpi, ConEmuSetupPages* apInfoPtr);
+
 public:
 	static INT_PTR CALLBACK pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
-	static HWND CreatePage(ConEmuSetupPages* p, UINT nActivateTabMsg, const CDpiForDialog* apParentDpi);
+	static HWND CreatePage(ConEmuSetupPages* p, HWND ahParent, UINT anActivateTabMsg, const CDpiForDialog* apParentDpi);
 	HWND Dlg() { return mh_Dlg; };
 
 public:
@@ -159,12 +163,16 @@ public:
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) = 0;
 	virtual void OnPostLocalize(HWND hDlg) {};
 	virtual TabHwndIndex GetPageType() = 0;
+	virtual void ProcessDpiChange(const CDpiForDialog* apDpi);
 	// Optional page procedure
 	virtual INT_PTR PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam) { return 0; };
-	virtual void ProcessDpiChange(ConEmuSetupPages* p, CDpiForDialog* apDpi);
 	// Events
+	virtual void OnDpiChanged(const CDpiForDialog* apDpi);
 	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) { return 0; };
-	virtual LRESULT OnComboBox(HWND hDlg, WORD nCtrlId, WORD code) { return 0; };
+	virtual INT_PTR OnComboBox(HWND hDlg, WORD nCtrlId, WORD code);
+	virtual INT_PTR OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlId);
+	virtual INT_PTR OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId);
+	virtual INT_PTR OnSetCursor(HWND hDlg, HWND hCtrl, WORD nCtrlId, WORD nHitTest, WORD nMouseMsg);
 
 public:
 	// Members

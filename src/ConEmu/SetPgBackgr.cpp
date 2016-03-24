@@ -71,3 +71,25 @@ LRESULT CSetPgBackgr::OnInitDialog(HWND hDlg, bool abInitial)
 
 	return 0;
 }
+
+INT_PTR CSetPgBackgr::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+{
+	switch (nCtrlId)
+	{
+	case lbBgPlacement:
+	{
+		BYTE bg = 0;
+		CSetDlgLists::GetListBoxItem(hDlg, lbBgPlacement, CSetDlgLists::eBgOper, bg);
+		gpSet->bgOperation = bg;
+		gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
+		NeedBackgroundUpdate();
+		gpConEmu->Update(true);
+		break;
+	}
+
+	default:
+		_ASSERTE(FALSE && "ListBox was not processed");
+	}
+
+	return 0;
+}

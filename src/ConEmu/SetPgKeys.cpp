@@ -558,7 +558,7 @@ LRESULT CSetPgKeys::OnEditChanged(HWND hDlg, WORD nCtrlId)
 	return 0;
 }
 
-LRESULT CSetPgKeys::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+INT_PTR CSetPgKeys::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 {
 	switch (nCtrlId)
 	{

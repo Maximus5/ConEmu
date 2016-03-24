@@ -135,7 +135,7 @@ LRESULT CSetPgColors::OnInitDialog(HWND hDlg, bool abInitial)
 	return 0;
 }
 
-LRESULT CSetPgColors::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+INT_PTR CSetPgColors::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 {
 	bool bDoUpdate = true;
 

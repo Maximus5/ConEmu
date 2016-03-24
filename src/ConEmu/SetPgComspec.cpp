@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "SetPgComspec.h"
 #include "SetPgIntegr.h"
+#include "VConGroup.h"
 
 CSetPgComspec::CSetPgComspec()
 {
@@ -74,6 +75,27 @@ LRESULT CSetPgComspec::OnInitDialog(HWND hDlg, bool abInitial)
 	CSetPgIntegr* pIntgrPg = NULL;
 	if (gpSetCls->GetPageObj(pIntgrPg))
 		pIntgrPg->PageDlgProc(hDlg, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
+
+	return 0;
+}
+
+INT_PTR CSetPgComspec::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+{
+	switch (nCtrlId)
+	{
+	case lbCmdOutputCP:
+	{
+		gpSet->nCmdOutputCP = SendDlgItemMessage(hDlg, nCtrlId, CB_GETCURSEL, 0, 0);
+
+		if (gpSet->nCmdOutputCP == -1) gpSet->nCmdOutputCP = 0;
+
+		CVConGroup::OnUpdateFarSettings();
+		break;
+	}
+
+	default:
+		_ASSERTE(FALSE && "ListBox was not processed");
+	}
 
 	return 0;
 }

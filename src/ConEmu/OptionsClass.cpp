@@ -933,7 +933,7 @@ void CSettings::SearchForControls()
 		{
 			if (m_Pages[i].hPage == NULL)
 			{
-				CSetPgBase::CreatePage(&(m_Pages[i]), mn_ActivateTabMsg, mp_DpiAware);
+				CSetPgBase::CreatePage(&(m_Pages[i]), ghOpWnd, mn_ActivateTabMsg, mp_DpiAware);
 			}
 
 			iCurTab = i;
@@ -1330,7 +1330,7 @@ LRESULT CSettings::OnInitDialog()
 
 		mb_IgnoreSelPage = false;
 
-		CSetPgBase::CreatePage(&(m_Pages[0]), mn_ActivateTabMsg, mp_DpiAware);
+		CSetPgBase::CreatePage(&(m_Pages[0]), ghOpWnd, mn_ActivateTabMsg, mp_DpiAware);
 
 		apiShowWindow(m_Pages[0].hPage, SW_SHOW);
 	}
@@ -2076,471 +2076,6 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-LRESULT CSettings::OnComboBox(HWND hWnd2, WPARAM wParam, LPARAM lParam)
-{
-	_ASSERTE(hWnd2!=NULL);
-	WORD wId = LOWORD(wParam);
-
-	switch (wId)
-	{
-	case tFontCharset:
-	{
-		gpSet->mb_CharSetWasSet = TRUE;
-		PostMessage(hWnd2, gpSetCls->mn_MsgRecreateFont, wId, 0);
-		break;
-	}
-
-	case tFontFace:
-	case tFontFace2:
-	case tFontSizeY:
-	case tFontSizeX:
-	case tFontSizeX2:
-	case tFontSizeX3:
-	{
-		if (HIWORD(wParam) == CBN_SELCHANGE)
-			PostMessage(hWnd2, mn_MsgRecreateFont, wId, 0);
-		else
-			mn_LastChangingFontCtrlId = wId;
-		break;
-	}
-
-	case tUnicodeRanges:
-		// Do not required actually, the button "Apply" is enabled by default
-		EnableWindow(GetDlgItem(hWnd2, cbUnicodeRangesApply), TRUE);
-		if (HIWORD(wParam) == CBN_SELCHANGE)
-			PostMessage(hWnd2, WM_COMMAND, cbUnicodeRangesApply, 0);
-		break;
-
-	case lbBgPlacement:
-	{
-		BYTE bg = 0;
-		CSetDlgLists::GetListBoxItem(hWnd2, lbBgPlacement, CSetDlgLists::eBgOper, bg);
-		gpSet->bgOperation = bg;
-		gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
-		NeedBackgroundUpdate();
-		gpConEmu->Update(true);
-		break;
-	}
-
-	case lbLDragKey:
-	{
-		BYTE VkMod = 0;
-		CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eKeys, VkMod);
-		gpSet->SetHotkeyById(vkLDragKey, VkMod);
-		break;
-	}
-	case lbRDragKey:
-	{
-		BYTE VkMod = 0;
-		CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eKeys, VkMod);
-		gpSet->SetHotkeyById(vkLDragKey, VkMod);
-		break;
-	}
-	case lbNtvdmHeight:
-	{
-		INT_PTR num = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
-		gpSet->ntvdmHeight = (num == 1) ? 25 : ((num == 2) ? 28 : ((num == 3) ? 43 : ((num == 4) ? 50 : 0))); //-V112
-		break;
-	}
-	case lbCmdOutputCP:
-	{
-		gpSet->nCmdOutputCP = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
-
-		if (gpSet->nCmdOutputCP == -1) gpSet->nCmdOutputCP = 0;
-
-		CVConGroup::OnUpdateFarSettings();
-		break;
-	}
-	case lbExtendFontNormalIdx:
-	case lbExtendFontBoldIdx:
-	case lbExtendFontItalicIdx:
-	{
-		if (wId == lbExtendFontNormalIdx)
-			gpSet->AppStd.nFontNormalColor = GetNumber(hWnd2, wId);
-		else if (wId == lbExtendFontBoldIdx)
-			gpSet->AppStd.nFontBoldColor = GetNumber(hWnd2, wId);
-		else if (wId == lbExtendFontItalicIdx)
-			gpSet->AppStd.nFontItalicColor = GetNumber(hWnd2, wId);
-
-		if (gpSet->AppStd.isExtendFonts)
-			gpConEmu->Update(true);
-		break;
-	}
-
-	case lbHotKeyList:
-	case lbHotKeyMod1:
-	case lbHotKeyMod2:
-	case lbHotKeyMod3:
-	{
-		CSetPgKeys* pKeysPg;
-		if (GetPageObj(pKeysPg))
-			pKeysPg->OnComboBox(hWnd2, wId, HIWORD(wParam));
-		break;
-	} // lbHotKeyList, lbHotKeyMod1, lbHotKeyMod2, lbHotKeyMod3
-
-	case tTabFontFace:
-	case tTabFontHeight:
-	case tTabFontCharset:
-	{
-		if (HIWORD(wParam) == CBN_EDITCHANGE)
-		{
-			switch (wId)
-			{
-			case tTabFontFace:
-				GetDlgItemText(hWnd2, wId, gpSet->sTabFontFace, countof(gpSet->sTabFontFace)); break;
-			case tTabFontHeight:
-				gpSet->nTabFontHeight = GetNumber(hWnd2, wId); break;
-			}
-		}
-		else if (HIWORD(wParam) == CBN_SELCHANGE)
-		{
-			UINT val;
-			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
-
-			switch (wId)
-			{
-			case tTabFontFace:
-				SendDlgItemMessage(hWnd2, wId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->sTabFontFace);
-				break;
-			case tTabFontHeight:
-				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eFSizesSmall, val))
-					gpSet->nTabFontHeight = val;
-				break;
-			case tTabFontCharset:
-				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eCharSets, val))
-					gpSet->nTabFontCharSet = val;
-				else
-					gpSet->nTabFontCharSet = DEFAULT_CHARSET;
-			}
-		}
-		gpConEmu->RecreateControls(true, false, true);
-		break;
-	} // tTabFontFace, tTabFontHeight, tTabFontCharset
-
-	case tTabBarDblClickAction:
-	case tTabBtnDblClickAction:
-	{
-		if (HIWORD(wParam) == CBN_SELCHANGE)
-		{
-			UINT val;
-			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
-
-			switch(wId)
-			{
-			case tTabBarDblClickAction:
-				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eTabBarDblClickActions, val))
-					gpSet->nTabBarDblClickAction = val;
-				else
-					gpSet->nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION;
-				break;
-			case tTabBtnDblClickAction:
-				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eTabBtnDblClickActions, val))
-					gpSet->nTabBtnDblClickAction = val;
-				else
-					gpSet->nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;
-				break;
-			}
-		}
-		break;
-	} // tTabDblClickAction
-
-	case tStatusFontFace:
-	case tStatusFontHeight:
-	case tStatusFontCharset:
-	{
-		if (HIWORD(wParam) == CBN_EDITCHANGE)
-		{
-			switch (wId)
-			{
-			case tStatusFontFace:
-				GetDlgItemText(hWnd2, wId, gpSet->sStatusFontFace, countof(gpSet->sStatusFontFace)); break;
-			case tStatusFontHeight:
-				gpSet->nStatusFontHeight = GetNumber(hWnd2, wId); break;
-			}
-		}
-		else if (HIWORD(wParam) == CBN_SELCHANGE)
-		{
-			UINT val;
-			INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
-
-			switch (wId)
-			{
-			case tStatusFontFace:
-				SendDlgItemMessage(hWnd2, wId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->sStatusFontFace);
-				break;
-			case tStatusFontHeight:
-				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eFSizesSmall, val))
-					gpSet->nStatusFontHeight = val;
-				break;
-			case tStatusFontCharset:
-				if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eCharSets, val))
-					gpSet->nStatusFontCharSet = val;
-				else
-					gpSet->nStatusFontCharSet = DEFAULT_CHARSET;
-			}
-		}
-		gpConEmu->RecreateControls(false, true, true);
-		break;
-	} // tStatusFontFace, tStatusFontHeight, tStatusFontCharset
-
-	case lbCmdTasks:
-	{
-		CSetPgTasks* pTasksPg;
-		if (GetPageObj(pTasksPg))
-			pTasksPg->OnComboBox(hWnd2, LOWORD(wParam), HIWORD(wParam));
-		break;
-	} // lbCmdTasks:
-
-
-	case lbGotoEditorCmd:
-	{
-		if ((HIWORD(wParam) == CBN_EDITCHANGE) || (HIWORD(wParam) == CBN_SELCHANGE))
-		{
-			GetString(hWnd2, lbGotoEditorCmd, &gpSet->sFarGotoEditor, NULL, (HIWORD(wParam) == CBN_SELCHANGE));
-		}
-		break;
-	} // lbGotoEditorCmd
-
-	// Far macros:
-	case tRClickMacro:
-	case tSafeFarCloseMacro:
-	case tCloseTabMacro:
-	case tSaveAllMacro:
-	{
-		wchar_t** ppszMacro = NULL;
-		LPCWSTR pszDefaultMacro = NULL;
-		switch (wId)
-		{
-			case tRClickMacro:
-				ppszMacro = &gpSet->sRClickMacro; pszDefaultMacro = gpSet->RClickMacroDefault(fmv_Default);
-				break;
-			case tSafeFarCloseMacro:
-				ppszMacro = &gpSet->sSafeFarCloseMacro; pszDefaultMacro = gpSet->SafeFarCloseMacroDefault(fmv_Default);
-				break;
-			case tCloseTabMacro:
-				ppszMacro = &gpSet->sTabCloseMacro; pszDefaultMacro = gpSet->TabCloseMacroDefault(fmv_Default);
-				break;
-			case tSaveAllMacro:
-				ppszMacro = &gpSet->sSaveAllMacro; pszDefaultMacro = gpSet->SaveAllMacroDefault(fmv_Default);
-				break;
-		}
-
-		if (HIWORD(wParam) == CBN_EDITCHANGE)
-		{
-			GetString(hWnd2, wId, ppszMacro, pszDefaultMacro, false);
-		}
-		else if (HIWORD(wParam) == CBN_SELCHANGE)
-		{
-			GetString(hWnd2, wId, ppszMacro, pszDefaultMacro, true);
-		}
-		break;
-	} // case tRClickMacro, tSafeFarCloseMacro, tCloseTabMacro, tSaveAllMacro
-
-
-	case lbStatusAvailable:
-	case lbStatusSelected:
-		break;
-
-
-	default:
-		switch (GetPageId(hWnd2))
-		{
-
-		case thi_Views:
-		{
-			if (HIWORD(wParam) == CBN_EDITCHANGE)
-			{
-				switch (wId)
-				{
-					case tThumbsFontName:
-						GetDlgItemText(hWnd2, wId, gpSet->ThSet.Thumbs.sFontName, countof(gpSet->ThSet.Thumbs.sFontName)); break;
-					case tThumbsFontSize:
-						gpSet->ThSet.Thumbs.nFontHeight = GetNumber(hWnd2, wId); break;
-					case tTilesFontName:
-						GetDlgItemText(hWnd2, wId, gpSet->ThSet.Tiles.sFontName, countof(gpSet->ThSet.Tiles.sFontName)); break;
-					case tTilesFontSize:
-						gpSet->ThSet.Tiles.nFontHeight = GetNumber(hWnd2, wId); break;
-					default:
-						_ASSERTE(FALSE && "EditBox was not processed");
-				}
-			}
-			else if (HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				UINT val;
-				INT_PTR nSel = SendDlgItemMessage(hWnd2, wId, CB_GETCURSEL, 0, 0);
-
-				switch (wId)
-				{
-					case lbThumbBackColorIdx:
-						gpSet->ThSet.crBackground.ColorIdx = nSel;
-						InvalidateCtrl(GetDlgItem(hWnd2, c32), TRUE);
-						break;
-					case lbThumbPreviewBoxColorIdx:
-						gpSet->ThSet.crPreviewFrame.ColorIdx = nSel;
-						InvalidateCtrl(GetDlgItem(hWnd2, c33), TRUE);
-						break;
-					case lbThumbSelectionBoxColorIdx:
-						gpSet->ThSet.crSelectFrame.ColorIdx = nSel;
-						InvalidateCtrl(GetDlgItem(hWnd2, c34), TRUE);
-						break;
-					case tThumbsFontName:
-						SendDlgItemMessage(hWnd2, wId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->ThSet.Thumbs.sFontName);
-						break;
-					case tThumbsFontSize:
-						if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eFSizesSmall, val))
-							gpSet->ThSet.Thumbs.nFontHeight = val;
-						break;
-					case tTilesFontName:
-						SendDlgItemMessage(hWnd2, wId, CB_GETLBTEXT, nSel, (LPARAM)gpSet->ThSet.Tiles.sFontName);
-						break;
-					case tTilesFontSize:
-						if (CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eFSizesSmall, val))
-							gpSet->ThSet.Tiles.nFontHeight = val;
-						break;
-					case tThumbMaxZoom:
-						gpSet->ThSet.nMaxZoom = max(100,((nSel+1)*100));
-					default:
-						_ASSERTE(FALSE && "ListBox was not processed");
-				}
-			}
-
-			break;
-		} // case thi_Views:
-
-		case thi_Colors:
-		{
-			CSetPgColors* pColorsPg;
-			if (GetPageObj(pColorsPg))
-				pColorsPg->OnComboBox(hWnd2, wId, HIWORD(wParam));
-			break;
-		} // case thi_Colors:
-
-		case thi_MarkCopy:
-		{
-			if (HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				switch (wId)
-				{
-				case lbCTSBlockSelection:
-					{
-						BYTE VkMod = 0;
-						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSBlockSelection, CSetDlgLists::eKeysAct, VkMod);
-						gpSet->SetHotkeyById(vkCTSVkBlock, VkMod);
-						CheckSelectionModifiers(hWnd2);
-					} break;
-				case lbCTSTextSelection:
-					{
-						BYTE VkMod = 0;
-						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSTextSelection, CSetDlgLists::eKeysAct, VkMod);
-						gpSet->SetHotkeyById(vkCTSVkText, VkMod);
-						CheckSelectionModifiers(hWnd2);
-					} break;
-				case lbCTSEOL:
-					{
-						BYTE eol = 0;
-						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSEOL, CSetDlgLists::eCRLF, eol);
-						gpSet->AppStd.isCTSEOL = eol;
-					} // lbCTSEOL
-					break;
-				case lbCopyFormat:
-					{
-						BYTE CopyFormat = 0;
-						CSetDlgLists::GetListBoxItem(hWnd2, lbCopyFormat, CSetDlgLists::eCopyFormat, CopyFormat);
-						gpSet->isCTSHtmlFormat = CopyFormat;
-					} // lbCopyFormat
-					break;
-				case lbCTSForeIdx:
-					{
-						UINT nFore = 0;
-						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSForeIdx, CSetDlgLists::eColorIdx16, nFore);
-						gpSet->isCTSColorIndex = (gpSet->isCTSColorIndex & 0xF0) | (nFore & 0xF);
-						InvalidateRect(GetDlgItem(hWnd2, stCTSPreview), NULL, FALSE);
-						gpConEmu->Update(true);
-					} break;
-				case lbCTSBackIdx:
-					{
-						UINT nBack = 0;
-						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSBackIdx, CSetDlgLists::eColorIdx16, nBack);
-						gpSet->isCTSColorIndex = (gpSet->isCTSColorIndex & 0xF) | ((nBack & 0xF) << 4);
-						InvalidateRect(GetDlgItem(hWnd2, stCTSPreview), NULL, FALSE);
-						gpConEmu->Update(true);
-					} break;
-				default:
-					_ASSERTE(FALSE && "ListBox was not processed");
-				}
-			} // if (HIWORD(wParam) == CBN_SELCHANGE)
-
-			break;
-		} // case thi_MarkCopy:
-
-		case thi_Hilight:
-		{
-			if (HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				switch (wId)
-				{
-				case lbFarGotoEditorVk:
-					{
-						BYTE VkMod = 0;
-						CSetDlgLists::GetListBoxItem(hWnd2, lbFarGotoEditorVk, CSetDlgLists::eKeysAct, VkMod);
-						gpSet->SetHotkeyById(vkFarGotoEditorVk, VkMod);
-					} break;
-				default:
-					_ASSERTE(FALSE && "ListBox was not processed");
-				}
-			}
-
-			break;
-		} // case thi_Hilight:
-
-		case thi_Controls:
-		{
-			if (HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				switch (wId)
-				{
-				case lbCTSClickPromptPosition:
-					{
-						BYTE VkMod = 0;
-						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSClickPromptPosition, CSetDlgLists::eKeysAct, VkMod);
-						gpSet->SetHotkeyById(vkCTSVkPromptClk, VkMod);
-						CheckSelectionModifiers(hWnd2);
-					} break;
-				case lbCTSActAlways:
-					{
-						BYTE VkMod = 0;
-						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSActAlways, CSetDlgLists::eKeysAct, VkMod);
-						gpSet->SetHotkeyById(vkCTSVkAct, VkMod);
-					} break;
-				case lbCTSRBtnAction:
-					{
-						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSRBtnAction, CSetDlgLists::eClipAct, gpSet->isCTSRBtnAction);
-					} break;
-				case lbCTSMBtnAction:
-					{
-						CSetDlgLists::GetListBoxItem(hWnd2, lbCTSMBtnAction, CSetDlgLists::eClipAct, gpSet->isCTSMBtnAction);
-					} break;
-				default:
-					_ASSERTE(FALSE && "ListBox was not processed");
-				}
-			} // if (HIWORD(wParam) == CBN_SELCHANGE)
-
-			break;
-		} // case thi_Controls:
-
-		default:
-		{
-			if (HIWORD(wParam) == CBN_SELCHANGE)
-			{
-				_ASSERTE(FALSE && "ListBox was not processed");
-			}
-		}
-
-		} // switch (GetPageId(hWnd2))
-	} // switch (wId)
-	return 0;
-}
-
 LRESULT CSettings::OnListBoxDblClk(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 {
 	WORD wId = LOWORD(wParam);
@@ -2639,12 +2174,12 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 					if (m_Pages[i].hPage == NULL)
 					{
 						SetCursor(LoadCursor(NULL,IDC_WAIT));
-						CSetPgBase::CreatePage(&(m_Pages[i]), mn_ActivateTabMsg, mp_DpiAware);
+						CSetPgBase::CreatePage(&(m_Pages[i]), ghOpWnd, mn_ActivateTabMsg, mp_DpiAware);
 					}
 					else
 					{
 						SendMessage(m_Pages[i].hPage, mn_ActivateTabMsg, 1, (LPARAM)&(m_Pages[i]));
-						m_Pages[i].pPage->ProcessDpiChange(&(m_Pages[i]), gpSetCls->mp_DpiAware);
+						m_Pages[i].pPage->ProcessDpiChange(gpSetCls->mp_DpiAware);
 					}
 					ShowWindow(m_Pages[i].hPage, SW_SHOW);
 					m_LastActivePageId = gpSetCls->m_Pages[i].PageIndex;
@@ -3206,13 +2741,9 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 				// Refresh the visible page and mark 'to be changed' others
 				for (ConEmuSetupPages* p = gpSetCls->m_Pages; p->DialogID; p++)
 				{
-					if (p->hPage)
+					if (p->pPage)
 					{
-						p->DpiChanged = true;
-						if (IsWindowVisible(p->hPage))
-						{
-							p->pPage->ProcessDpiChange(p, gpSetCls->mp_DpiAware);
-						}
+						p->pPage->OnDpiChanged(gpSetCls->mp_DpiAware);
 					}
 				}
 
@@ -5702,15 +5233,8 @@ void CSettings::ClearPages()
 
 	for (ConEmuSetupPages *p = m_Pages; p->DialogID; p++)
 	{
-		if (p->pDpiAware)
-		{
-			p->pDpiAware->Detach();
-			SafeDelete(p->pDpiAware);
-		}
-		SafeDelete(p->pDialog);
 		SafeDelete(p->pPage);
 		p->hPage = NULL;
-		p->DpiChanged = false;
 	}
 
 	if (mp_DpiAware)

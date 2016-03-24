@@ -99,3 +99,30 @@ LRESULT CSetPgFar::OnInitDialog(HWND hDlg, bool abInitial)
 
 	return 0;
 }
+
+INT_PTR CSetPgFar::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+{
+	switch (nCtrlId)
+	{
+	case lbLDragKey:
+	{
+		BYTE VkMod = 0;
+		CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eKeys, VkMod);
+		gpSet->SetHotkeyById(vkLDragKey, VkMod);
+		break;
+	}
+
+	case lbRDragKey:
+	{
+		BYTE VkMod = 0;
+		CSetDlgLists::GetListBoxItem(hWnd2, wId, CSetDlgLists::eKeys, VkMod);
+		gpSet->SetHotkeyById(vkLDragKey, VkMod);
+		break;
+	}
+
+	default:
+		_ASSERTE(FALSE && "ListBox was not processed");
+	}
+
+	return 0;
+}

@@ -70,3 +70,34 @@ LRESULT CSetPgHilight::OnInitDialog(HWND hDlg, bool abInitial)
 
 	return 0;
 }
+
+INT_PTR CSetPgHilight::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+{
+	switch (wId)
+	{
+	case lbGotoEditorCmd:
+	{
+		if ((code == CBN_EDITCHANGE) || (code == CBN_SELCHANGE))
+		{
+			GetString(hDlg, lbGotoEditorCmd, &gpSet->sFarGotoEditor, NULL, (code == CBN_SELCHANGE));
+		}
+		break;
+	} // lbGotoEditorCmd
+
+	case lbFarGotoEditorVk:
+	{
+		if (code == CBN_SELCHANGE)
+		{
+			BYTE VkMod = 0;
+			CSetDlgLists::GetListBoxItem(hDlg, lbFarGotoEditorVk, CSetDlgLists::eKeysAct, VkMod);
+			gpSet->SetHotkeyById(vkFarGotoEditorVk, VkMod);
+		}
+		break;
+	} // lbFarGotoEditorVk
+
+	default:
+		_ASSERTE(FALSE && "ListBox was not processed");
+	}
+
+	return 0;
+}

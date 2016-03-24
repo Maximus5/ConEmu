@@ -162,3 +162,61 @@ wrap:
 	return lRc;
 
 }
+
+INT_PTR CSetPgMarkCopy::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+{
+	if (code == CBN_SELCHANGE)
+	{
+		switch (nCtrlId)
+		{
+		case lbCTSBlockSelection:
+			{
+				BYTE VkMod = 0;
+				CSetDlgLists::GetListBoxItem(hDlg, lbCTSBlockSelection, CSetDlgLists::eKeysAct, VkMod);
+				gpSet->SetHotkeyById(vkCTSVkBlock, VkMod);
+				CheckSelectionModifiers(hDlg);
+			} break;
+		case lbCTSTextSelection:
+			{
+				BYTE VkMod = 0;
+				CSetDlgLists::GetListBoxItem(hDlg, lbCTSTextSelection, CSetDlgLists::eKeysAct, VkMod);
+				gpSet->SetHotkeyById(vkCTSVkText, VkMod);
+				CheckSelectionModifiers(hDlg);
+			} break;
+		case lbCTSEOL:
+			{
+				BYTE eol = 0;
+				CSetDlgLists::GetListBoxItem(hDlg, lbCTSEOL, CSetDlgLists::eCRLF, eol);
+				gpSet->AppStd.isCTSEOL = eol;
+			} // lbCTSEOL
+			break;
+		case lbCopyFormat:
+			{
+				BYTE CopyFormat = 0;
+				CSetDlgLists::GetListBoxItem(hDlg, lbCopyFormat, CSetDlgLists::eCopyFormat, CopyFormat);
+				gpSet->isCTSHtmlFormat = CopyFormat;
+			} // lbCopyFormat
+			break;
+		case lbCTSForeIdx:
+			{
+				UINT nFore = 0;
+				CSetDlgLists::GetListBoxItem(hDlg, lbCTSForeIdx, CSetDlgLists::eColorIdx16, nFore);
+				gpSet->isCTSColorIndex = (gpSet->isCTSColorIndex & 0xF0) | (nFore & 0xF);
+				InvalidateRect(GetDlgItem(hDlg, stCTSPreview), NULL, FALSE);
+				gpConEmu->Update(true);
+			} break;
+		case lbCTSBackIdx:
+			{
+				UINT nBack = 0;
+				CSetDlgLists::GetListBoxItem(hDlg, lbCTSBackIdx, CSetDlgLists::eColorIdx16, nBack);
+				gpSet->isCTSColorIndex = (gpSet->isCTSColorIndex & 0xF) | ((nBack & 0xF) << 4);
+				InvalidateRect(GetDlgItem(hDlg, stCTSPreview), NULL, FALSE);
+				gpConEmu->Update(true);
+			} break;
+		default:
+			_ASSERTE(FALSE && "ListBox was not processed");
+		}
+	} // if (HIWORD(wParam) == CBN_SELCHANGE)
+
+	return 0;
+}
