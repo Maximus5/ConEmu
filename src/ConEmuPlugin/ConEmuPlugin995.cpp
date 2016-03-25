@@ -526,7 +526,7 @@ void CPluginW995::SetWindow(int nTab)
 	if (!InfoW995 || !InfoW995->AdvControl)
 		return;
 
-	if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab)) //-V204
+	if (InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)(UINT_PTR)nTab))
 		InfoW995->AdvControl(InfoW995->ModuleNumber, ACTL_COMMIT, 0);
 }
 

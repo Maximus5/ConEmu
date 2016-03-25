@@ -425,7 +425,7 @@ void CPluginAnsi::SetWindow(int nTab)
 	if (!InfoA || !InfoA->AdvControl)
 		return;
 
-	if (InfoA->AdvControl(InfoA->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)nTab)) //-V204
+	if (InfoA->AdvControl(InfoA->ModuleNumber, ACTL_SETCURRENTWINDOW, (void*)(UINT_PTR)nTab))
 		InfoA->AdvControl(InfoA->ModuleNumber, ACTL_COMMIT, 0);
 }
 

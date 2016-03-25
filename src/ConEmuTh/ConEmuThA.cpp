@@ -212,9 +212,9 @@ int ShowPluginMenuA()
 
 	FarMenuItemEx items[] =
 	{
-		{MIF_USETEXTPTR | (ghConEmuRoot ? 0 : MIF_DISABLE)},
-		{MIF_USETEXTPTR | (ghConEmuRoot ? 0 : MIF_DISABLE)},
-		{MIF_USETEXTPTR | (ghConEmuRoot ? 0 : MIF_DISABLE)},
+		{MIF_USETEXTPTR | (ghConEmuRoot ? 0UL : MIF_DISABLE)},
+		{MIF_USETEXTPTR | (ghConEmuRoot ? 0UL : MIF_DISABLE)},
+		{MIF_USETEXTPTR | (ghConEmuRoot ? 0UL : MIF_DISABLE)},
 		{MIF_DISABLE /*MIF_USETEXTPTR | (ghConEmuRoot ? 0 : MIF_DISABLE)*/},
 	};
 	items[0].Text.TextPtr = InfoA->GetMsg(InfoA->ModuleNumber,CEMenuThumbnails);

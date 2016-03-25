@@ -966,7 +966,7 @@ BOOL cmd_SetParent(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	if (*out != NULL)
 	{
-		(*out)->setParent.hWnd = (HWND)GetLastError();
+		(*out)->setParent.hWnd.u = GetLastError();
 		(*out)->setParent.hParent = h;
 
 		lbRc = TRUE;
