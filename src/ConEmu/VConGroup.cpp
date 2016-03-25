@@ -5344,7 +5344,10 @@ void CVConGroup::PaintGaps(HDC hDC)
 	CVConGuard VCon;
 	if (GetActiveVCon(&VCon) < 0)
 	{
-		int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
+		const ColorPalette* pDefPal = gpSet->PaletteGet(-1);
+		BYTE nColorIdx = 0/*Black*/; // RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
+		if (pDefPal && pDefPal->nBackColorIdx <= 15)
+			nColorIdx = pDefPal->nBackColorIdx;
 		HBRUSH hBrush = CreateSolidBrush(gpSet->GetColors(-1, lbFade)[nColorIdx]);
 
 		FillRect(hDC, &rcClient, hBrush);

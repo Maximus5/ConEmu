@@ -5784,10 +5784,11 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	BYTE nDefTextAttr = (mp_RCon->GetDefaultBackColorIdx()<<4)|(mp_RCon->GetDefaultTextColorIdx());
 	_ASSERTE(nDefTextAttr<countof(lcaTableOrg));
 	lcaDef = lcaTable[nDefTextAttr]; // LtGray on Black
-	//WORD    wSetAttr = 7;
+
 	#ifdef _DEBUG
-	wSetChar = (wchar_t)8776; //wSetAttr = 12;
-	lcaDef = lcaTable[12]; // Red on Black
+	// Fill with Red '≈' on ‘errors’
+	wSetChar = (wchar_t)0x2248;
+	lcaDef = lcaTable[MAKECONCOLOR(12,CONBACKCOLOR(nDefTextAttr))];
 	#endif
 
 	int nXMax = 0, nYMax = 0;
