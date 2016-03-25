@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 #include "../common/ConsoleRead.h"
+#include "../common/MRect.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WConsole.h"
 
@@ -359,7 +360,7 @@ BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin)
 				cr.Y--;
 				xPos = csbi.dwSize.X;
 			}
-			COORD cursorFix = {xPos, cr.Y};
+			COORD cursorFix = MakeCoord(xPos, cr.Y);
 
 			wchar_t* pwszLine = (wchar_t*)malloc((csbi.dwSize.X+1)*sizeof(*pwszLine));
 

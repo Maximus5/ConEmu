@@ -1526,7 +1526,7 @@ BOOL ExtScrollLine(ExtScrollScreenParm* Info)
 		{
 			SMALL_RECT rcSrc = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, csbi.dwSize.X-1, csbi.dwCursorPosition.Y};
 			SMALL_RECT rcClip = rcSrc;
-			COORD crDst = {csbi.dwCursorPosition.X + nDir, csbi.dwCursorPosition.Y};
+			COORD crDst = MakeCoord(csbi.dwCursorPosition.X + nDir, csbi.dwCursorPosition.Y);
 			/*
 			if (nDir < 0)
 			{
@@ -1744,8 +1744,8 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 
 		if (!(Info->Flags & essf_ExtOnly))
 		{
-			SMALL_RECT rcSrc = {0, SrcLineTop, csbi.dwSize.X-1, SrcLineBottom};
-			COORD crDst = {0, SrcLineTop + nDir/*<0*/};
+			SMALL_RECT rcSrc = MakeSmallRect(0, SrcLineTop, csbi.dwSize.X-1, SrcLineBottom);
+			COORD crDst = MakeCoord(0, SrcLineTop + nDir/*<0*/);
 			AnnotationInfo t = {};
 			CHAR_INFO cFill = {{Info->FillChar}};
 			ExtPrepareColor(Info->FillAttr, t, cFill.Attributes);
@@ -1806,8 +1806,8 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 
 		if (!(Info->Flags & essf_ExtOnly))
 		{
-			SMALL_RECT rcSrc = {0, SrcLineTop, csbi.dwSize.X-1, SrcLineBottom};
-			COORD crDst = {0, SrcLineTop + nDir/*>0*/};
+			SMALL_RECT rcSrc = MakeSmallRect(0, SrcLineTop, csbi.dwSize.X-1, SrcLineBottom);
+			COORD crDst = MakeCoord(0, SrcLineTop + nDir/*>0*/);
 			AnnotationInfo t = {};
 			CHAR_INFO cFill = {{Info->FillChar}};
 			ExtPrepareColor(Info->FillAttr, t, cFill.Attributes);
