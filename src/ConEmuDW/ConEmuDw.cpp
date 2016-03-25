@@ -631,8 +631,8 @@ BOOL WINAPI GetTextAttributes(FarColor* Attributes)
 	{
 		gCurrentAttr.WasSet = false;
 		Attributes->Flags = FCF_FG_4BIT|FCF_BG_4BIT;
-		Attributes->ForegroundColor = (csbi.wAttributes & 0xF);
-		Attributes->BackgroundColor = (csbi.wAttributes & 0xF0) >> 4;
+		Attributes->ForegroundColor = CONFORECOLOR(csbi.wAttributes);
+		Attributes->BackgroundColor = CONBACKCOLOR(csbi.wAttributes);
 	}
 
 	return TRUE;

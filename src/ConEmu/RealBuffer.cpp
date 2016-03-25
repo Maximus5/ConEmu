@@ -5781,7 +5781,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	HEAPVAL
 	wchar_t wSetChar = L' ';
 	CharAttr lcaDef;
-	BYTE nDefTextAttr = (mp_RCon->GetDefaultBackColorIdx()<<4)|(mp_RCon->GetDefaultTextColorIdx());
+	BYTE nDefTextAttr = MAKECONCOLOR(mp_RCon->GetDefaultTextColorIdx(), mp_RCon->GetDefaultBackColorIdx());
 	_ASSERTE(nDefTextAttr<countof(lcaTableOrg));
 	lcaDef = lcaTable[nDefTextAttr]; // LtGray on Black
 
@@ -6260,9 +6260,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 			// для прямоугольника выделения сбрасываем прозрачность и ставим стандартный цвет выделения (lcaSel)
 			//CharAttr lcaSel = lcaTable[gpSet->isCTSColorIndex]; // Black on LtGray
-			BYTE nForeIdx = (gpSet->isCTSColorIndex & 0xF);
+			BYTE nForeIdx = CONFORECOLOR(gpSet->isCTSColorIndex);
 			COLORREF crForeColor = mp_RCon->mp_VCon->mp_Colors[nForeIdx];
-			BYTE nBackIdx = (gpSet->isCTSColorIndex & 0xF0) >> 4;
+			BYTE nBackIdx = CONBACKCOLOR(gpSet->isCTSColorIndex);
 			COLORREF crBackColor = mp_RCon->mp_VCon->mp_Colors[nBackIdx];
 			int nX1, nX2;
 

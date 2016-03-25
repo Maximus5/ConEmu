@@ -3662,7 +3662,7 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 		{
 			if (hkConsole)
 			{
-				DWORD nColors = ((mn_PopBackColorIdx & 0xF) << 4) | (mn_PopTextColorIdx & 0xF);
+				DWORD nColors = MAKECONCOLOR(mn_PopTextColorIdx, mn_PopBackColorIdx);
 				RegSetValueEx(hkConsole, L"PopupColors", 0, REG_DWORD, (LPBYTE)&nColors, sizeof(nColors));
 			}
 		}
@@ -13928,9 +13928,9 @@ void CRealConsole::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL 
 		return;
 
 	pIn->SetConColor.ChangeTextAttr = ChangeTextAttr;
-	pIn->SetConColor.NewTextAttributes = (GetDefaultBackColorIdx() << 4) | GetDefaultTextColorIdx();
+	pIn->SetConColor.NewTextAttributes = MAKECONCOLOR(GetDefaultTextColorIdx(),GetDefaultBackColorIdx());
 	pIn->SetConColor.ChangePopupAttr = ChangePopupAttr;
-	pIn->SetConColor.NewPopupAttributes = ((mn_PopBackColorIdx & 0xF) << 4) | (mn_PopTextColorIdx & 0xF);
+	pIn->SetConColor.NewPopupAttributes = MAKECONCOLOR(mn_PopTextColorIdx, mn_PopBackColorIdx);
 	pIn->SetConColor.ReFillConsole = !isFar();
 
 	if (mp_Log)
@@ -13939,9 +13939,9 @@ void CRealConsole::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL 
 		_wsprintf(szLog, SKIPCOUNT(szLog)
 			L"Color Palette: CECMD_SETCONCOLORS: Text(%s) {%u|%u} Popup(%s) {%u|%u} Refill=%s",
 			ChangeTextAttr ? L"change" : L"leave",
-			(pIn->SetConColor.NewTextAttributes & 0xF), ((pIn->SetConColor.NewTextAttributes & 0xF0) >> 4),
+			CONFORECOLOR(pIn->SetConColor.NewTextAttributes), CONBACKCOLOR(pIn->SetConColor.NewTextAttributes),
 			ChangePopupAttr ? L"change" : L"leave",
-			(pIn->SetConColor.NewPopupAttributes & 0xF), ((pIn->SetConColor.NewPopupAttributes & 0xF0) >> 4),
+			CONFORECOLOR(pIn->SetConColor.NewPopupAttributes), CONBACKCOLOR(pIn->SetConColor.NewPopupAttributes),
 			pIn->SetConColor.ReFillConsole ? L"yes" : L"no");
 		LogString(szLog);
 	}

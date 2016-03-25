@@ -1159,8 +1159,8 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 			int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ?
 			            ((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelSelectedCursor : col_PanelSelectedText) :
 				            ((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelCursor : col_PanelText));
-			pItemColor->crBack = gcrCurColors[((nFarColors[nIdx] & 0xF0)>>4)];
-			pItemColor->crFore = gcrCurColors[(nFarColors[nIdx] & 0xF)];
+			pItemColor->crBack = gcrCurColors[CONBACKCOLOR(nFarColors[nIdx])];
+			pItemColor->crFore = gcrCurColors[CONFORECOLOR(nFarColors[nIdx])];
 		}
 
 		//// Для папок - ставим белый шрифт

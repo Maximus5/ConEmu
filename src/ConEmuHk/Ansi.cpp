@@ -2841,7 +2841,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					break;
 				case 39:
 					// Reset
-					gDisplayParm.TextColor = GetDefaultTextAttr() & 0xF;
+					gDisplayParm.TextColor = CONFORECOLOR(GetDefaultTextAttr());
 					gDisplayParm.Text256 = FALSE;
 					gDisplayParm.WasSet = TRUE;
 					break;

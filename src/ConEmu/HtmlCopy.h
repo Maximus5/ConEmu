@@ -91,7 +91,7 @@ public:
 			pa++; ps++;
 			if (!nLen || (*pa != a))
 			{
-				TextAdd(asText, ps - asText, pPal[a & 0xF], pPal[(a & 0xF0)>>4]);
+				TextAdd(asText, ps - asText, pPal[CONFORECOLOR(a)], pPal[CONBACKCOLOR(a)]);
 				asText = ps; apAttr = pa;
 				a = *apAttr;
 			}

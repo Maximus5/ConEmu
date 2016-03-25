@@ -4972,8 +4972,8 @@ void CVirtualConsole::PolishPanelViews()
 		int x;
 		wchar_t *pszLine = mpsz_ConChar;
 		CharAttr *pAttrs = mpn_ConAttrEx;
-		int nFore = btPanelColor & 0xF;
-		int nBack = (btPanelColor & 0xF0) >> 4;
+		int nFore = CONFORECOLOR(btPanelColor);
+		int nBack = CONBACKCOLOR(btPanelColor);
 
 		for(x = rc.left+1; x < rc.right && pszLine[x] != L' '; x++)
 		{
@@ -4990,8 +4990,8 @@ void CVirtualConsole::PolishPanelViews()
 		// 2. Строка с именами колонок
 		pszLine = mpsz_ConChar+TextWidth;
 		pAttrs = mpn_ConAttrEx+TextWidth;
-		int nNFore = btNamesColor & 0xF;
-		int nNBack = (btNamesColor & 0xF0) >> 4;
+		int nNFore = CONFORECOLOR(btNamesColor);
+		int nNBack = CONBACKCOLOR(btNamesColor);
 
 		if ((pp->FarPanelSettings.ShowColumnTitles) && pp->tColumnTitle.nFlags) //-V112
 		{
@@ -5058,8 +5058,8 @@ void CVirtualConsole::PolishPanelViews()
 void CVirtualConsole::CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr)
 {
 	memset(pAttr, 0, sizeof(CharAttr));
-	pAttr->nForeIdx = (conAttr & 0xF);
-	pAttr->nBackIdx = (conAttr & 0xF0) >> 4;
+	pAttr->nForeIdx = CONFORECOLOR(conAttr);
+	pAttr->nBackIdx = CONBACKCOLOR(conAttr);
 	pAttr->crForeColor = pAttr->crOrigForeColor = mp_Colors[pAttr->nForeIdx];
 	pAttr->crBackColor = pAttr->crOrigBackColor = mp_Colors[pAttr->nBackIdx];
 }

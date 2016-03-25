@@ -1307,8 +1307,8 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		{
 			DlgFlags |= FR_MENUBAR;
 			// Попытаться подхватить флаг FR_ACTIVEMENUBAR даже когда меню всегда видно
-			BYTE btMenuInactiveFore = (mp_FarInfo->nFarColors[col_HMenuText] & 0xF);
-			BYTE btMenuInactiveBack = (mp_FarInfo->nFarColors[col_HMenuText] & 0xF0) >> 4;
+			BYTE btMenuInactiveFore = CONFORECOLOR(mp_FarInfo->nFarColors[col_HMenuText]);
+			BYTE btMenuInactiveBack = CONBACKCOLOR(mp_FarInfo->nFarColors[col_HMenuText]);
 			int nShift = nY1 * nWidth + nX1;
 
 			for(int nX = nX1; nX <= nX2; nX++, nShift++)
@@ -1358,8 +1358,8 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			{
 				// Нужно чтобы хотя бы в одном углу этого прямоугольника были цвета рамки панелей!
 				// Иначе - считаем что вся панель перекрыта диалогами и не видима
-				BYTE btPanelFore = (mp_FarInfo->nFarColors[col_PanelBox] & 0xF);
-				BYTE btPanelBack = (mp_FarInfo->nFarColors[col_PanelBox] & 0xF0) >> 4;
+				BYTE btPanelFore = CONFORECOLOR(mp_FarInfo->nFarColors[col_PanelBox]);
+				BYTE btPanelBack = CONBACKCOLOR(mp_FarInfo->nFarColors[col_PanelBox]);
 				int nShift = 0;
 
 				for(int i = 0; i < 4; i++) //-V112
@@ -2019,37 +2019,37 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	WARNING("Учитывать возможность наличия номеров окон, символа записи 'R', и по хорошему, ч/б режима");
 	//COLORREF crColorKey = gSet.ColorKey;
 	// реальный цвет, заданный в фаре
-	nUserBackIdx = (mp_FarInfo->nFarColors[col_CommandLineUserScreen] & 0xF0) >> 4;
+	nUserBackIdx = CONBACKCOLOR(mp_FarInfo->nFarColors[col_CommandLineUserScreen]);
 	crUserBack = mp_Colors[nUserBackIdx];
-	nMenuBackIdx = (mp_FarInfo->nFarColors[col_HMenuText] & 0xF0) >> 4;
+	nMenuBackIdx = CONBACKCOLOR(mp_FarInfo->nFarColors[col_HMenuText]);
 	crMenuTitleBack = mp_Colors[nMenuBackIdx];
 	// COL_PANELBOX
-	int nPanelBox = (mp_FarInfo->nFarColors[col_PanelBox] & 0xF0) >> 4;
+	int nPanelBox = CONBACKCOLOR(mp_FarInfo->nFarColors[col_PanelBox]);
 	crPanelsBorderBack = mp_Colors[nPanelBox];
-	nPanelBox = (mp_FarInfo->nFarColors[col_PanelBox] & 0xF);
+	nPanelBox = CONFORECOLOR(mp_FarInfo->nFarColors[col_PanelBox]);
 	crPanelsBorderFore = mp_Colors[nPanelBox];
 	// COL_PANELSCREENSNUMBER
-	int nPanelNum = (mp_FarInfo->nFarColors[col_PanelScreensNumber] & 0xF0) >> 4;
+	int nPanelNum = CONBACKCOLOR(mp_FarInfo->nFarColors[col_PanelScreensNumber]);
 	crPanelsNumberBack = mp_Colors[nPanelNum];
-	nPanelNum = (mp_FarInfo->nFarColors[col_PanelScreensNumber] & 0xF);
+	nPanelNum = CONFORECOLOR(mp_FarInfo->nFarColors[col_PanelScreensNumber]);
 	crPanelsNumberFore = mp_Colors[nPanelNum];
 	// Цвета диалогов
-	nDlgBorderBackIdx = (mp_FarInfo->nFarColors[col_DialogBox] & 0xF0) >> 4;
-	nDlgBorderForeIdx = (mp_FarInfo->nFarColors[col_DialogBox] & 0xF);
-	nErrBorderBackIdx = (mp_FarInfo->nFarColors[col_WarnDialogBox] & 0xF0) >> 4;
-	nErrBorderForeIdx = (mp_FarInfo->nFarColors[col_WarnDialogBox] & 0xF);
+	nDlgBorderBackIdx = CONBACKCOLOR(mp_FarInfo->nFarColors[col_DialogBox]);
+	nDlgBorderForeIdx = CONFORECOLOR(mp_FarInfo->nFarColors[col_DialogBox]);
+	nErrBorderBackIdx = CONBACKCOLOR(mp_FarInfo->nFarColors[col_WarnDialogBox]);
+	nErrBorderForeIdx = CONFORECOLOR(mp_FarInfo->nFarColors[col_WarnDialogBox]);
 	// Для детекта наличия PanelTabs
 	bPanelTabsSeparate = (mp_FarInfo->PanelTabs.SeparateTabs != 0);
 
 	if (mp_FarInfo->PanelTabs.ButtonColor != -1)
 	{
-		nPanelTabsBackIdx = (mp_FarInfo->PanelTabs.ButtonColor & 0xF0) >> 4;
-		nPanelTabsForeIdx = mp_FarInfo->PanelTabs.ButtonColor & 0xF;
+		nPanelTabsBackIdx = CONBACKCOLOR(mp_FarInfo->PanelTabs.ButtonColor);
+		nPanelTabsForeIdx = CONFORECOLOR(mp_FarInfo->PanelTabs.ButtonColor);
 	}
 	else
 	{
-		nPanelTabsBackIdx = (mp_FarInfo->nFarColors[col_PanelText] & 0xF0) >> 4;
-		nPanelTabsForeIdx = mp_FarInfo->nFarColors[col_PanelText] & 0xF;
+		nPanelTabsBackIdx = CONBACKCOLOR(mp_FarInfo->nFarColors[col_PanelText]);
+		nPanelTabsForeIdx = CONFORECOLOR(mp_FarInfo->nFarColors[col_PanelText]);
 	}
 
 	// При bUseColorKey Если панель погашена (или панели) то

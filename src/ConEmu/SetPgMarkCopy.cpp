@@ -76,8 +76,8 @@ LRESULT CSetPgMarkCopy::OnInitDialog(HWND hDlg, bool abInitial)
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSTextSelection), CSetDlgLists::eKeysAct, VkMod, true);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkAct);
 
-	UINT idxBack = (gpSet->isCTSColorIndex & 0xF0) >> 4;
-	UINT idxFore = (gpSet->isCTSColorIndex & 0xF);
+	UINT idxBack = CONBACKCOLOR(gpSet->isCTSColorIndex);
+	UINT idxFore = CONFORECOLOR(gpSet->isCTSColorIndex);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSForeIdx), CSetDlgLists::eColorIdx16, idxFore, false);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSBackIdx), CSetDlgLists::eColorIdx16, idxBack, false);
 
@@ -110,8 +110,8 @@ LRESULT CSetPgMarkCopy::MarkCopyPreviewProc(HWND hCtrl, UINT uMsg, WPARAM wParam
 	uint idxCon = gpSet->AppStd.nBackColorIdx;
 	if (idxCon > 15)
 		idxCon = 0;
-	uint idxBack = (gpSet->isCTSColorIndex & 0xF0) >> 4;
-	uint idxFore = (gpSet->isCTSColorIndex & 0xF);
+	uint idxBack = CONBACKCOLOR(gpSet->isCTSColorIndex);
+	uint idxFore = CONFORECOLOR(gpSet->isCTSColorIndex);
 	RECT rcClient = {};
 	CSetPgMarkCopy* pPage = NULL;
 
@@ -202,7 +202,7 @@ INT_PTR CSetPgMarkCopy::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 			{
 				UINT nFore = 0;
 				CSetDlgLists::GetListBoxItem(hDlg, lbCTSForeIdx, CSetDlgLists::eColorIdx16, nFore);
-				gpSet->isCTSColorIndex = (gpSet->isCTSColorIndex & 0xF0) | (nFore & 0xF);
+				gpSet->isCTSColorIndex = MAKECONCOLOR((nFore & 0xF), CONBACKCOLOR(gpSet->isCTSColorIndex));
 				InvalidateRect(GetDlgItem(hDlg, stCTSPreview), NULL, FALSE);
 				gpConEmu->Update(true);
 			} break;
@@ -210,7 +210,7 @@ INT_PTR CSetPgMarkCopy::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 			{
 				UINT nBack = 0;
 				CSetDlgLists::GetListBoxItem(hDlg, lbCTSBackIdx, CSetDlgLists::eColorIdx16, nBack);
-				gpSet->isCTSColorIndex = (gpSet->isCTSColorIndex & 0xF) | ((nBack & 0xF) << 4);
+				gpSet->isCTSColorIndex = MAKECONCOLOR(CONFORECOLOR(gpSet->isCTSColorIndex), (nBack & 0xF));
 				InvalidateRect(GetDlgItem(hDlg, stCTSPreview), NULL, FALSE);
 				gpConEmu->Update(true);
 			} break;
