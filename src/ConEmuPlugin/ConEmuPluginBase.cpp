@@ -1348,7 +1348,7 @@ void CPluginBase::ShowConsoleInfo()
 		L"OutputAttr=0x%02X\n"
 		,
 		TerminalMode ? L"Yes" : L"No",
-		(DWORD)FarHwnd, (DWORD)ghConEmuWndDC,
+		LODWORD(FarHwnd), LODWORD(ghConEmuWndDC),
 		gdwServerPID, GetCurrentProcessId(),
 		nConIn, nConOut,
 		csbi.dwSize.X, csbi.dwSize.Y,
@@ -2472,7 +2472,7 @@ int CPluginBase::OpenMapHeader()
 		if (!gpConMap)
 			gpConMap = new MFileMapping<CESERVER_CONSOLE_MAPPING_HDR>;
 
-		gpConMap->InitName(CECONMAPNAME, (DWORD)FarHwnd); //-V205
+		gpConMap->InitName(CECONMAPNAME, LODWORD(FarHwnd));
 
 		if (gpConMap->Open())
 		{
@@ -2716,7 +2716,7 @@ void CPluginBase::CheckConEmuDetached()
 	{
 		// ConEmu могло подцепиться
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
-		ConMap.InitName(CECONMAPNAME, (DWORD)FarHwnd); //-V205
+		ConMap.InitName(CECONMAPNAME, LODWORD(FarHwnd));
 
 		if (ConMap.Open())
 		{

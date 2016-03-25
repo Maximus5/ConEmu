@@ -1090,7 +1090,8 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	if (ghConWnd)
 	{
 		// Это событие дергается в отладочной (мной поправленной) версии фара
-		wchar_t szEvtName[64]; _wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) L"FARconEXEC:%08X", (DWORD)ghConWnd);
+		// Suppress warning C4311 'type cast': pointer truncation from 'HWND' to 'DWORD'
+		wchar_t szEvtName[64]; _wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) L"FARconEXEC:%08X", LODWORD(ghConWnd));
 		ghFarInExecuteEvent = CreateEvent(0, TRUE, FALSE, szEvtName);
 	}
 	#endif
@@ -1201,7 +1202,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		{
 			wchar_t szMsg[128];
 			msprintf(szMsg, countof(szMsg), L"ConEmuC Started, Wine detected\r\nConHWND=x%08X(%u), PID=%u\r\nCmdLine: ",
-				(DWORD)ghConWnd, (DWORD)ghConWnd, gnSelfPID);
+				LODWORD(ghConWnd), LODWORD(ghConWnd), gnSelfPID);
 			_wprintf(szMsg);
 			_wprintf(asCmdLine);
 			_wprintf(L"\r\n");
@@ -1212,7 +1213,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		CheckAndWarnHookers();
 	}
 
-	_ASSERTE(!gpSrv->hRootProcessGui || (((DWORD)gpSrv->hRootProcessGui)!=0xCCCCCCCC && IsWindow(gpSrv->hRootProcessGui)));
+	_ASSERTE(!gpSrv->hRootProcessGui || ((LODWORD(gpSrv->hRootProcessGui))!=0xCCCCCCCC && IsWindow(gpSrv->hRootProcessGui)));
 
 	//#ifdef _DEBUG
 	//CreateLogSizeFile();
