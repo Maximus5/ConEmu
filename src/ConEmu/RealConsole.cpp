@@ -13933,7 +13933,22 @@ void CRealConsole::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL 
 	pIn->SetConColor.NewPopupAttributes = ((mn_PopBackColorIdx & 0xF) << 4) | (mn_PopTextColorIdx & 0xF);
 	pIn->SetConColor.ReFillConsole = !isFar();
 
+	if (mp_Log)
+	{
+		wchar_t szLog[140];
+		_wsprintf(szLog, SKIPCOUNT(szLog)
+			L"Color Palette: CECMD_SETCONCOLORS: Text(%s) {%u|%u} Popup(%s) {%u|%u} Refill=%s",
+			ChangeTextAttr ? L"change" : L"leave",
+			(pIn->SetConColor.NewTextAttributes & 0xF), ((pIn->SetConColor.NewTextAttributes & 0xF0) >> 4),
+			ChangePopupAttr ? L"change" : L"leave",
+			(pIn->SetConColor.NewPopupAttributes & 0xF), ((pIn->SetConColor.NewPopupAttributes & 0xF0) >> 4),
+			pIn->SetConColor.ReFillConsole ? L"yes" : L"no");
+		LogString(szLog);
+	}
+
 	CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
+
+	if (mp_Log) LogString(L"Color Palette: CECMD_SETCONCOLORS finished");
 
 	ExecuteFreeResult(pIn);
 	ExecuteFreeResult(pOut);

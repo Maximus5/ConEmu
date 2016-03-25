@@ -1455,6 +1455,12 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 		return;
 	}
 
+	if (gpSet->isLogging())
+	{
+		CEStr lsLog(L"Color Palette: `", pPal->pszName, L"` ChangeDropDown=", bChangeDropDown ? L"yes" : L"no");
+		LogString(lsLog);
+	}
+
 	HWND hDlg = GetPage(thi_Colors);
 
 	if (bChangeDropDown && hDlg)
@@ -1472,15 +1478,27 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 	BOOL bTextChanged = (gpSet->AppStd.nTextColorIdx != pPal->nTextColorIdx) || (gpSet->AppStd.nBackColorIdx != pPal->nBackColorIdx);
 	BOOL bPopupChanged = (gpSet->AppStd.nPopTextColorIdx != pPal->nPopTextColorIdx) || (gpSet->AppStd.nPopBackColorIdx != pPal->nPopBackColorIdx);
 
+	// We need to change consoles contents if TEXT attributes was changed
 	if (bTextChanged || bPopupChanged)
 	{
+		wchar_t szLog[128];
+		_wsprintf(szLog, SKIPCOUNT(szLog)
+			L"Color Palette: Text {%u|%u}->{%u|%u} Popup {%u|%u}->{%u|%u}",
+			gpSet->AppStd.nTextColorIdx, gpSet->AppStd.nBackColorIdx, pPal->nTextColorIdx, pPal->nBackColorIdx,
+			gpSet->AppStd.nPopTextColorIdx, gpSet->AppStd.nPopBackColorIdx, pPal->nPopTextColorIdx, pPal->nPopBackColorIdx);
+		LogString(szLog);
+
 		gpSet->AppStd.nTextColorIdx = pPal->nTextColorIdx;
 		gpSet->AppStd.nBackColorIdx = pPal->nBackColorIdx;
 		gpSet->AppStd.nPopTextColorIdx = pPal->nPopTextColorIdx;
 		gpSet->AppStd.nPopBackColorIdx = pPal->nPopBackColorIdx;
-		// We need to change consoles contents if TEXT attributes was changed
+
 		UpdateTextColorSettings(bTextChanged, bPopupChanged);
+
+		LogString(L"Color Palette: UpdateTextColorSettings finished");
 	}
+
+	LogString(L"Color Palette: Refreshing");
 
 	gpSet->AppStd.nExtendColorIdx = pPal->nExtendColorIdx;
 	gpSet->AppStd.isExtendColors = pPal->isExtendColors;
@@ -1497,6 +1515,8 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 		gpConEmu->InvalidateAll();
 		gpConEmu->Update(true);
 	}
+
+	LogString(L"Color Palette: Finished");
 }
 
 LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)

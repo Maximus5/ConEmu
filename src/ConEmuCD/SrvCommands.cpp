@@ -1748,10 +1748,14 @@ BOOL cmd_SetFullScreen(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+// CECMD_SETCONCOLORS
 BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
+	BOOL bOk = FALSE;
 	//ghConOut
+
+	LogString(L"CECMD_SETCONCOLORS: Received");
 
 	// Need to block all requests to output buffer in other threads
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
@@ -1761,7 +1765,7 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	if ((*out) != NULL)
 	{
-		BOOL bOk = FALSE, bTextChanged = FALSE, bPopupChanged = FALSE, bNeedRepaint = TRUE;
+		BOOL bTextChanged = FALSE, bPopupChanged = FALSE, bNeedRepaint = TRUE;
 		WORD OldText = 0x07, OldPopup = 0x3E;
 
 		CONSOLE_SCREEN_BUFFER_INFO csbi5 = {};
@@ -1775,6 +1779,7 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		if (gnOsVer >= 0x600)
 		{
+			LogString(L"CECMD_SETCONCOLORS: acquiring CONSOLE_SCREEN_BUFFER_INFOEX");
 			MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi6 = {sizeof(csbi6)};
 			if (apiGetConsoleScreenBufferInfoEx(ghConOut, &csbi6))
 			{
@@ -1797,10 +1802,12 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 					if (bPopupChanged)
 					{
 						BOOL bIsVisible = IsWindowVisible(ghConWnd);
+						LogString(L"CECMD_SETCONCOLORS: applying CONSOLE_SCREEN_BUFFER_INFOEX");
 						bOk = apiSetConsoleScreenBufferInfoEx(ghConOut, &csbi6);
 						bNeedRepaint = FALSE;
 						if (!bIsVisible && IsWindowVisible(ghConWnd))
 						{
+							LogString(L"CECMD_SETCONCOLORS: RealConsole was shown unexpectedly");
 							apiShowWindow(ghConWnd, SW_HIDE);
 						}
 						if (bOk)
@@ -1811,6 +1818,7 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 					}
 					else
 					{
+						LogString(L"CECMD_SETCONCOLORS: applying ConsoleTextAttributes");
 						bOk = SetConsoleTextAttribute(ghConOut, in.SetConColor.NewTextAttributes);
 						if (bOk)
 						{
@@ -1833,6 +1841,7 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 				}
 				else
 				{
+					LogString(L"CECMD_SETCONCOLORS: applying ConsoleTextAttributes");
 					bOk = SetConsoleTextAttribute(ghConOut, in.SetConColor.NewTextAttributes);
 					if (bOk)
 					{
@@ -1866,6 +1875,8 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		lbRc = FALSE;
 	}
+
+	LogString(bOk ? L"CECMD_SETCONCOLORS: Succeeded" : L"CECMD_SETCONCOLORS: Failed");
 
 	return lbRc;
 }

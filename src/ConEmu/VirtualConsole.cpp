@@ -2567,6 +2567,13 @@ bool CVirtualConsole::ChangePalette(int aNewPaletteIdx)
 	if (!pPal)
 		return false;
 
+	if (gpSet->isLogging())
+	{
+		wchar_t szIndex[16];
+		CEStr lsLog(L"VCon[", _itow(mn_Index, szIndex, 10), L"]: Color Palette: `", pPal->pszName, L"`");
+		LogString(lsLog);
+	}
+
 	BOOL bTextChanged = (pOldPal==NULL), bPopupChanged = (pOldPal==NULL);
 	if (pOldPal)
 	{

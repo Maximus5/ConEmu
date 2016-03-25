@@ -6191,6 +6191,8 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 
 void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldText, WORD NewText)
 {
+	LogString(L"RefillConsoleAttributes started");
+
 	// Считать из консоли текущие атрибуты (построчно/поблочно)
 	// И там, где они совпадают с OldText - заменить на in.SetConColor.NewTextAttributes
 	DWORD nMaxLines = max(1,min((8000 / csbi5.dwSize.X),csbi5.dwSize.Y));
@@ -6249,6 +6251,8 @@ void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldTe
 	}
 
 	free(pnAttrs);
+
+	LogString(L"RefillConsoleAttributes finished");
 }
 
 
