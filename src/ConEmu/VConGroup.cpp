@@ -4842,7 +4842,9 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 	rcSize1 = CalcRect(CER_CONSOLE_CUR, rcCon1, CER_BACK, VCon1.VCon());
 	rcSize2 = CalcRect(CER_CONSOLE_CUR, rcCon2, CER_BACK, VCon2.VCon());
 
-	COORD sz1 = {rcSize1.right,rcSize1.bottom}, sz2 = {rcSize2.right,rcSize2.bottom};
+	// Console support only SHORT as coordinates
+	COORD sz1 = MakeCoord(rcSize1.right, rcSize1.bottom);
+	COORD sz2 = MakeCoord(rcSize2.right, rcSize2.bottom);
 
 	mp_Grp1->SetConsoleSizes(sz1, rcCon1, abSync);
 	mp_Grp2->SetConsoleSizes(sz2, rcCon2, abSync);
@@ -5178,7 +5180,7 @@ bool CVConGroup::PreReSize(uint WindowMode, RECT rcWnd, enum ConEmuRect tFrom /*
 		rcCon.bottom = DEF_CON_HEIGHT;
 	}
 
-	COORD size = {rcCon.right, rcCon.bottom};
+	COORD size = MakeCoord(rcCon.right, rcCon.bottom);
 	if (isVConExists(0))
 	{
 		SetAllConsoleWindowsSize(rcWnd, tFrom, size, bSetRedraw);

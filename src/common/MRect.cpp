@@ -34,7 +34,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 COORD MakeCoord(int X,int Y)
 {
-	COORD cr = {(SHORT)X,(SHORT)Y};
+	// Console support only SHORT as coordinates
+	_ASSERTE(X==(SHORT)X && Y==(SHORT)Y);
+	COORD cr = {LOSHORT(X), LOSHORT(Y)};
 	return cr;
 }
 

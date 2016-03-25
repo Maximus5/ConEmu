@@ -80,6 +80,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/HkFunc.h"
 #include "../common/MArray.h"
 #include "../common/MMap.h"
+#include "../common/MRect.h"
 #include "../common/MSectionSimple.h"
 #include "../common/MWow64Disable.h"
 #include "../common/ProcessSetEnv.h"
@@ -6045,7 +6046,7 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 	GetWindowRect(ghConWnd, &rcConPos);
 
 	TODO("Horizontal scrolling?");
-	COORD crHeight = {crNewSize.X, BufferHeight};
+	COORD crHeight = MakeCoord(crNewSize.X, BufferHeight);
 	SMALL_RECT rcTemp = {};
 
 	// По идее (в планах), lbCursorInScreen всегда должен быть true,

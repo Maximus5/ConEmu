@@ -61,6 +61,7 @@ $(INTDIR)\Memory.obj \
 $(INTDIR)\MFileLog.obj \
 $(INTDIR)\MModule.obj \
 $(INTDIR)\Monitors.obj \
+$(INTDIR)\MRect.obj \
 $(INTDIR)\MSection.obj \
 $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSecurity.obj \
@@ -318,6 +319,8 @@ $(INTDIR)\MFileLog.obj: ../common/MFileLog.cpp ../common/MSection.h ../common/MS
 $(INTDIR)\MModule.obj: ../common/MModule.cpp ../common/MModule.h
 
 $(INTDIR)\Monitors.obj: ../common/Monitors.cpp
+
+$(INTDIR)\MRect.obj: ../common/MRect.cpp ../common/MRect.h
 
 $(INTDIR)\MSection.obj: ../common/MSection.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
 
