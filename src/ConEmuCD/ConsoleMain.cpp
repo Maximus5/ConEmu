@@ -3209,7 +3209,8 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 				gbAttachMode |= am_Simple;
 			lbAttachGuiApp = TRUE;
 			wchar_t* pszEnd;
-			HWND hAppWnd = (HWND)wcstoul(szArg+11, &pszEnd, 16);
+			// suppress warning C4312 'type cast': conversion from 'unsigned long' to 'HWND' of greater size
+			HWND hAppWnd = (HWND)(UINT_PTR)wcstoul(szArg+11, &pszEnd, 16);
 			if (IsWindow(hAppWnd))
 				gpSrv->hRootProcessGui = hAppWnd;
 			gnRunMode = RM_SERVER;
@@ -3504,7 +3505,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 				LPCWSTR pszDescr = szArg+7;
 				if (pszDescr[0] == L'0' && (pszDescr[1] == L'x' || pszDescr[1] == L'X'))
 					pszDescr += 2; // That may be useful for calling from batch files
-				gpSrv->hGuiWnd = (HWND)wcstoul(pszDescr, &pszEnd, 16);
+				gpSrv->hGuiWnd = (HWND)(UINT_PTR)wcstoul(pszDescr, &pszEnd, 16);
 				gpSrv->bRequestNewGuiWnd = FALSE;
 
 				BOOL isWnd = gpSrv->hGuiWnd ? IsWindow(gpSrv->hGuiWnd) : FALSE;
