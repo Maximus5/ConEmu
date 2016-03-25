@@ -58,6 +58,13 @@ RECT MakeRect(int X1, int Y1,int X2,int Y2)
 	return rc;
 }
 
+SMALL_RECT MakeSmallRect(int X1, int Y1, int X2, int Y2)
+{
+	_ASSERTE(X1==LOSHORT(X1) && Y1==LOSHORT(Y1) && X2==LOSHORT(X2) && Y2==LOSHORT(Y2));
+	SMALL_RECT rc = {LOSHORT(X1), LOSHORT(Y1), LOSHORT(X2), LOSHORT(Y2)};
+	return rc;
+}
+
 bool CoordInRect(const COORD& c, const RECT& r)
 {
 	return (c.X >= r.left && c.X <= r.right) && (c.Y >= r.top && c.Y <= r.bottom);
