@@ -31,7 +31,6 @@ _*.sln
 
 /gcc
 /Debug
-/Release
 /MinGW
 /Portable_Test
 /ConEmuPortableRarInfo.txt
@@ -45,3 +44,10 @@ help
 x64
 
 /CreateRelease.cmd
+
+Release/**/*.iobj
+Release/**/*.ipdb
+Release/**/*.iobj
+Release/**/*.ipdb
+Release/**/*.exp
+Release/**/*.lib
