@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2012-2015 Maximus5
+Copyright (c) 2012-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -610,6 +610,12 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 			if (gDisplayParm.BackOrUnderline)
 				attr.Attributes.Flags |= CECF_FG_UNDERLINE;
 		}
+		else if (TextColor & 0x8)
+		{
+			// Comes from CONSOLE_SCREEN_BUFFER_INFO::wAttributes
+			attr.Attributes.ForegroundColor |= ClrMap[TextColor&0x7]
+				| 0x08;
+		}
 		else
 		{
 			attr.Attributes.ForegroundColor |= ClrMap[TextColor&0x7]
@@ -629,6 +635,12 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 					attr.Attributes.Flags |= CECF_BG_24BIT;
 				attr.Attributes.BackgroundColor = RgbMap[BackColor&0xFF];
 			}
+		}
+		else if (BackColor & 0x8)
+		{
+			// Comes from CONSOLE_SCREEN_BUFFER_INFO::wAttributes
+			attr.Attributes.BackgroundColor |= ClrMap[BackColor&0x7]
+				| 0x8;
 		}
 		else
 		{
@@ -2869,13 +2881,13 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					gDisplayParm.WasSet = TRUE;
 					break;
 				case 90: case 91: case 92: case 93: case 94: case 95: case 96: case 97:
-					gDisplayParm.TextColor = (Code.ArgV[i] - 90);
+					gDisplayParm.TextColor = (Code.ArgV[i] - 90) | 0x8;
 					gDisplayParm.Text256 = FALSE;
 					gDisplayParm.BrightOrBold |= 2;
 					gDisplayParm.WasSet = TRUE;
 					break;
 				case 100: case 101: case 102: case 103: case 104: case 105: case 106: case 107:
-					gDisplayParm.BackColor = (Code.ArgV[i] - 100);
+					gDisplayParm.BackColor = (Code.ArgV[i] - 100) | 0x8;
 					gDisplayParm.Back256 = FALSE;
 					gDisplayParm.BackOrUnderline |= 2;
 					gDisplayParm.WasSet = TRUE;
