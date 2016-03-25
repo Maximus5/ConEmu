@@ -3652,7 +3652,7 @@ void CRealConsole::PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx
 			nTextColorIdx = GetDefaultTextColorIdx();
 		if (nBackColorIdx > 15)
 			nBackColorIdx = GetDefaultBackColorIdx();
-		DWORD nColors = (nBackColorIdx << 4) | nTextColorIdx;
+		DWORD nColors = MAKECONCOLOR(nTextColorIdx, nBackColorIdx);
 		if (hkConsole)
 		{
 			RegSetValueEx(hkConsole, L"ScreenColors", 0, REG_DWORD, (LPBYTE)&nColors, sizeof(nColors));
@@ -4337,7 +4337,7 @@ BOOL CRealConsole::StartProcess()
 	BYTE nTextColorIdx /*= 7*/, nBackColorIdx /*= 0*/, nPopTextColorIdx /*= 5*/, nPopBackColorIdx /*= 15*/;
 	PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx, true, hkConsole);
 	si.dwFlags |= STARTF_USEFILLATTRIBUTE;
-	si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
+	si.dwFillAttribute = MAKECONCOLOR(nTextColorIdx, nBackColorIdx);
 
 	if (hkConsole)
 	{
@@ -4523,7 +4523,7 @@ BOOL CRealConsole::StartProcess()
 		if (nTextColorIdx <= 15 || nBackColorIdx <= 15)
 		{
 			si.dwFlags |= STARTF_USEFILLATTRIBUTE;
-			si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
+			si.dwFillAttribute = MAKECONCOLOR(nTextColorIdx, nBackColorIdx);
 		}
 	}
 

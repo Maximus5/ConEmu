@@ -330,7 +330,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
 			BYTE nPanelColorIdx = pi->nFarColors[col_PanelText];
-			COLORREF nBackColor = gcrCurColors[((nPanelColorIdx & 0xF0)>>4)]; //GetWindowLong(hwnd, 4*((nPanelColorIdx & 0xF0)>>4));
+			COLORREF nBackColor = gcrCurColors[CONBACKCOLOR(nPanelColorIdx)]; //GetWindowLong(hwnd, 4*((nPanelColorIdx & 0xF0)>>4));
 			RECT rc; GetClientRect(hwnd, &rc);
 			HBRUSH hbr = CreateSolidBrush(nBackColor);
 			_ASSERTE(wParam!=0);
@@ -1353,7 +1353,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	//	hBack[i] = CreateSolidBrush(nBackColor[i]);
 	//}
 	COLORREF crGray = gcrCurColors[8];
-	COLORREF crPanel = gcrCurColors[((nFarColors[col_PanelText] & 0xF0)>>4)]; //nBackColor[0]; //gcrColors[15];
+	COLORREF crPanel = gcrCurColors[CONBACKCOLOR(nFarColors[col_PanelText])]; //nBackColor[0]; //gcrColors[15];
 	COLORREF crBack = crPanel;
 
 	if (gThSet.crBackground.UseIndex)

@@ -331,7 +331,7 @@ INT_PTR CSetDlgColors::ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem)
 
 					if (pfi && pfi->cbSize>=sizeof(CEFAR_INFO_MAPPING))
 					{
-						cr = gpSet->Colors[(pfi->nFarColors[col_PanelText] & 0xF0)>>4];
+						cr = gpSet->Colors[CONBACKCOLOR(pfi->nFarColors[col_PanelText])];
 					}
 					else
 					{

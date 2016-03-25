@@ -379,7 +379,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 		// Расфуговка буфера CharAttr на консольные атрибуты
 		for (DWORD n = 0; n < dwConDataBufSize; n++, pcaSrc++, pnaDst++)
 		{
-			*pnaDst = (pcaSrc->nForeIdx & 0xF) | ((pcaSrc->nBackIdx & 0xF) << 4);
+			*pnaDst = MAKECONCOLOR(pcaSrc->nForeIdx, pcaSrc->nBackIdx);
 		}
 	}
 
@@ -1490,7 +1490,7 @@ BOOL CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 	}
 
 	// Evaluate default back/text color (indexes)
-	nDefTextAttr = (mp_RCon->GetDefaultBackColorIdx()<<4)|(mp_RCon->GetDefaultTextColorIdx());
+	nDefTextAttr = MAKECONCOLOR(mp_RCon->GetDefaultTextColorIdx(), mp_RCon->GetDefaultBackColorIdx());
 
 	// Если требуется увеличить или создать (первично) буфера
 	if (!con.pConChar || (con.nConBufCells < nCellCount))
@@ -1597,7 +1597,7 @@ void CRealBuffer::PreFillBuffers()
 	{
 		MSectionLock sc; sc.Lock(&csCON, TRUE);
 
-		BYTE nDefTextAttr = (mp_RCon->GetDefaultBackColorIdx()<<4)|(mp_RCon->GetDefaultTextColorIdx());
+		WORD nDefTextAttr = MAKECONCOLOR(mp_RCon->GetDefaultTextColorIdx(), mp_RCon->GetDefaultBackColorIdx());
 		wmemset((wchar_t*)con.pConAttr, nDefTextAttr, con.nConBufCells);
 
 		sc.Unlock();
@@ -4952,7 +4952,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 		if ((m_Type == rbt_Primary) && pAttrStart)
 		{
 			WORD *pAttr = pAttrStart + con.nTextWidth*srSelection_Y1 + srSelection_X1;
-			crFore = pPal[(*pAttr)&0xF]; crBack = pPal[((*pAttr)&0xF0)>>4];
+			crFore = pPal[CONFORECOLOR(*pAttr)]; crBack = pPal[CONBACKCOLOR(*pAttr)];
 		}
 		else if (pAttrStartEx)
 		{
@@ -5999,7 +5999,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 					// Если в качестве цвета "расширения" выбран цвет панелей - значит
 					// пользователь просто настроил "другую" палитру для панелей фара.
 					// К сожалению, таким образом нельзя заменить только цвета для элемента под курсором.
-					if (((pFarInfo->nFarColors[col_PanelText] & 0xF0) >> 4) != nExtendColorIdx)
+					if (CONBACKCOLOR(pFarInfo->nFarColors[col_PanelText]) != nExtendColorIdx)
 						lbStoreBackLast = true;
 					else
 						attrBackLast = FirstBackAttr;

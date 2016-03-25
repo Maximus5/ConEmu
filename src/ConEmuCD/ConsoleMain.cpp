@@ -3544,10 +3544,10 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 				DWORD nPopBackIdx = ((nColors >> 24) & 0xFF);
 
 				if ((nTextIdx <= 15) && (nBackIdx <= 15) && (nTextIdx != nBackIdx))
-					gnDefTextColors = (WORD)(nTextIdx | (nBackIdx << 4));
+					gnDefTextColors = MAKECONCOLOR(nTextIdx, nBackIdx);
 
 				if ((nPopTextIdx <= 15) && (nPopBackIdx <= 15) && (nPopTextIdx != nPopBackIdx))
-					gnDefPopupColors = (WORD)(nPopTextIdx | (nPopBackIdx << 4));
+					gnDefPopupColors = MAKECONCOLOR(nPopTextIdx, nPopBackIdx);
 
 				HANDLE hConOut = ghConOut;
 				CONSOLE_SCREEN_BUFFER_INFO csbi5 = {};

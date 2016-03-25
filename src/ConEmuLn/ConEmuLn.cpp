@@ -257,9 +257,9 @@ void PaintBack(HDC hDC, COLORREF crColor, RECT rcFill)
 
 int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 {
-	DWORD nPanelBackIdx = (pBk->nFarColors[col_PanelText] & 0xF0) >> 4;
-	DWORD nEditorBackIdx = (pBk->nFarColors[col_EditorText] & 0xF0) >> 4;
-	DWORD nViewerBackIdx = (pBk->nFarColors[col_ViewerText] & 0xF0) >> 4;
+	DWORD nPanelBackIdx = CONBACKCOLOR(pBk->nFarColors[col_PanelText]);
+	DWORD nEditorBackIdx = CONBACKCOLOR(pBk->nFarColors[col_EditorText]);
+	DWORD nViewerBackIdx = CONBACKCOLOR(pBk->nFarColors[col_ViewerText]);
 
 	if (pBk->dwLevel == 0)
 	{

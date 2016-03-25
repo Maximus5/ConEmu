@@ -1454,11 +1454,11 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 		mn_NextDlgId++;
 		DlgFlags |= mn_NextDlgId<<8;
 		// "Красненький" диалог?
-		BYTE btWarnBack = (mp_FarInfo->nFarColors[col_WarnDialogBox] & 0xF0) >> 4;
+		BYTE btWarnBack = CONBACKCOLOR(mp_FarInfo->nFarColors[col_WarnDialogBox]);
 
 		if (pAttr[nY1 * nWidth + nX1].nBackIdx == btWarnBack)
 		{
-			BYTE btNormBack = (mp_FarInfo->nFarColors[col_DialogBox] & 0xF0) >> 4;
+			BYTE btNormBack = CONBACKCOLOR(mp_FarInfo->nFarColors[col_DialogBox]);
 
 			if (btNormBack != btWarnBack)
 				DlgFlags |= FR_ERRORCOLOR;

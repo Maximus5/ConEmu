@@ -356,7 +356,7 @@ void ShowConDump(wchar_t* pszText)
 							{
 								for(int i = 0; i < nMaxX; i++)
 								{
-									((WORD*)pnSrc)[i] = pSrcEx[i].nForeIdx | (pSrcEx[i].nBackIdx << 4);
+									((WORD*)pnSrc)[i] = MAKECONCOLOR(pSrcEx[i].nForeIdx, pSrcEx[i].nBackIdx);
 								}
 
 								pSrcEx += crSize.X;

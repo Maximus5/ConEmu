@@ -1044,7 +1044,7 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 			else
 			{
 				chr.Attributes.Flags |= FCF_FG_4BIT;
-				chr.Attributes.ForegroundColor = lbRead ? (pc->Attributes & 0xF) : 7;
+				chr.Attributes.ForegroundColor = lbRead ? CONFORECOLOR(pc->Attributes) : 7;
 			}
 
 			if (pTrueColor && pTrueColor->bk_valid)
@@ -1054,7 +1054,7 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 			else
 			{
 				chr.Attributes.Flags |= FCF_BG_4BIT;
-				chr.Attributes.BackgroundColor = lbRead ? ((pc->Attributes & 0xF0)>>4) : 0;
+				chr.Attributes.BackgroundColor = lbRead ? CONBACKCOLOR(pc->Attributes) : 0;
 			}
 
 			*pFar = chr;

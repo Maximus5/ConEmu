@@ -2222,7 +2222,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 	{
 		if (pBk->dwLevel == 0)
 		{
-			DWORD nPanelBackIdx = (pBk->nFarColors[col_PanelText] & 0xF0) >> 4;
+			DWORD nPanelBackIdx = CONBACKCOLOR(pBk->nFarColors[col_PanelText]);
 			COLORREF crPanel = pBk->crPalette[nPanelBackIdx];
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"ConEmuBk: Disabled %s - {%i,%i,%i,%i) #%06X\n",
 				bLeft ? L"Left" : L"Right", rcConPanel.left, rcConPanel.top, rcConPanel.right, rcConPanel.bottom,

@@ -2876,7 +2876,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					break;
 				case 49:
 					// Reset
-					gDisplayParm.BackColor = (GetDefaultTextAttr() & 0xF0) >> 4;
+					gDisplayParm.BackColor = CONBACKCOLOR(GetDefaultTextAttr());
 					gDisplayParm.Back256 = FALSE;
 					gDisplayParm.WasSet = TRUE;
 					break;
@@ -3403,7 +3403,7 @@ void CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
 			WORD nDefAttr = GetDefaultTextAttr();
 			// Сброс только расширенных атрибутов
 			ExtFillOutputParm fill = {sizeof(fill), /*efof_ResetExt|*/efof_Attribute/*|efof_Character*/, hOut,
-				{CECF_NONE,(COLORREF)(nDefAttr&0xF),COLORREF((nDefAttr&0xF0)>>4)},
+				{CECF_NONE, CONFORECOLOR(nDefAttr), CONBACKCOLOR(nDefAttr)},
 				L' ', {0,0}, (DWORD)(csbi.dwSize.X * csbi.dwSize.Y)};
 			ExtFillOutput(&fill);
 			CEAnsi* pObj = CEAnsi::Object();

@@ -2552,7 +2552,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 		if (nTextColorIdx <= 15 && nBackColorIdx <= 15)
 		{
 			si.dwFlags |= STARTF_USEFILLATTRIBUTE;
-			si.dwFillAttribute = (nBackColorIdx << 4) | nTextColorIdx;
+			si.dwFillAttribute = MAKECONCOLOR(nTextColorIdx, nBackColorIdx);
 		}
 	}
 

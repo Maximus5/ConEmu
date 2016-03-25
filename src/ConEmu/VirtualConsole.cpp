@@ -2420,10 +2420,10 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 		m_SelfPalette.Colors[i+16] = ColorTable[i];
 	}
 
-	m_SelfPalette.nTextColorIdx = (BYTE)((wAttributes & 0x0F));
-	m_SelfPalette.nBackColorIdx = (BYTE)((wAttributes & 0xF0) >> 4);
-	m_SelfPalette.nPopTextColorIdx = (BYTE)((wPopupAttributes & 0x0F));
-	m_SelfPalette.nPopBackColorIdx = (BYTE)((wPopupAttributes & 0xF0) >> 4);
+	m_SelfPalette.nTextColorIdx = CONFORECOLOR(wAttributes);
+	m_SelfPalette.nBackColorIdx = CONBACKCOLOR(wAttributes);
+	m_SelfPalette.nPopTextColorIdx = CONFORECOLOR(wPopupAttributes);
+	m_SelfPalette.nPopBackColorIdx = CONBACKCOLOR(wPopupAttributes);
 
 	const ColorPalette* pFound = gpSet->PaletteFindByColors(true, &m_SelfPalette);
 
@@ -2756,7 +2756,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 		{
 			// Get background color of panels/editors/viewers
 			UINT nDefIdx = isEditor ? col_EditorText : isViewer ? col_ViewerText : col_PanelText;
-			BYTE bgIndex = (pFar->nFarColors[nDefIdx] & 0xF0) >> 4;
+			BYTE bgIndex = CONBACKCOLOR(pFar->nFarColors[nDefIdx]);
 			nIndexes = 1 << (DWORD)bgIndex;
 		}
 	}
