@@ -20,7 +20,7 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
-2016.3.23
+2016.3.24
 * Unify LogFile names: `ConEmu-gui-...`, `ConEmu-con-...`, `ConEmu-srv-...`.
 * To start console as ‘System’ use `-new_console:aA` switch.
 * Update {Show ANSI colors} and fit in 76 chars.
