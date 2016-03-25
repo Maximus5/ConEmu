@@ -3751,6 +3751,12 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 	}
 #endif
 
+	if (gpSet->isLogging(4))
+	{
+		wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"VCon[%i]: PaintVCon started");
+		LogString(szLog);
+	}
+
 	if (lbSimpleBlack)
 	{
 		guard.VCon()->PaintVConSimple(hPaintDc, rcClient, lbGuiVisible);
@@ -3778,6 +3784,12 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 
 		// Debug rects and (scrolllock)counter
 		PaintVConDebug(hPaintDc, rcClient);
+	}
+
+	if (gpSet->isLogging(4))
+	{
+		wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"VCon[%i]: PaintVCon finished");
+		LogString(szLog);
 	}
 }
 
