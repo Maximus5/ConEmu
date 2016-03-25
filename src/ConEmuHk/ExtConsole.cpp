@@ -310,7 +310,7 @@ static void ExtPrepareColor(const ConEmuColor& Attributes, AnnotationInfo& t, WO
 	else
 	{
 		nForeColor = -1;
-		n |= (WORD)INDEXVALUE(Attributes.ForegroundColor);
+		n |= (WORD)CONCOLORINDEX(Attributes.ForegroundColor);
 		t.fg_valid = FALSE;
 	}
 
@@ -323,7 +323,7 @@ static void ExtPrepareColor(const ConEmuColor& Attributes, AnnotationInfo& t, WO
 	}
 	else
 	{
-		n |= (WORD)(INDEXVALUE(Attributes.BackgroundColor)<<4);
+		n |= (WORD)(CONCOLORINDEX(Attributes.BackgroundColor)<<4);
 		t.bk_valid = FALSE;
 	}
 }

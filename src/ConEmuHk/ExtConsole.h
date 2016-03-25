@@ -53,14 +53,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //};
 
 
-#if 0
-#define INDEXMASK 0x0000000F
-#define COLORMASK 0x00FFFFFF
-
-#define INDEXVALUE(x) ((x)&INDEXMASK)
-#define COLORVALUE(x) ((x)&COLORMASK)
-#endif
-
 struct ExtAttributesParm
 {
 	size_t StructSize;

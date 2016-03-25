@@ -183,6 +183,8 @@ WARNING("WIN64 was not defined");
 // Console TextAttribute is WORD: bits 0..3 are text color index, bits 4..7 are background color index
 #define CONFORECOLOR(x) ((BYTE)((x) & 0xF))
 #define CONBACKCOLOR(x) ((BYTE)(((x) & 0xF0) >> 4))
+// To ensure that x is between 0..15 (console color palette)
+#define CONCOLORINDEX(x) ((x) & 0xF)
 // Make Console TextAttribute from 4bit indexes (16-color palette)
 #define MAKECONCOLOR(fore_idx,back_idx) ((BYTE)(((fore_idx) & 0xF) | (((back_idx) & 0xF) << 4)))
 
