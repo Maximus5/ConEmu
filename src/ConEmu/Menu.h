@@ -43,7 +43,7 @@ struct MenuItem
 	MenuItemType mit;
 	UINT MenuId;
 	UINT HotkeyId;
-	UINT Flags;
+	LONG Flags; // MF_xxx are declared as LONG constants
 	LPCWSTR pszText;
 };
 
