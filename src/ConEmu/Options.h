@@ -95,6 +95,7 @@ enum FarMacroVersion
 //};
 
 #define BgImageColorsDefaults (1|2)
+#define DefaultSelectionConsoleColor 0xE0
 
 #include "Hotkeys.h"
 #include "SetTypes.h"

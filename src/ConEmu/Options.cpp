@@ -722,7 +722,7 @@ void Settings::InitSettings()
 	//isCTSVkAct = 0; // т.к. по умолчанию - только BufferOnly, то вообще без модификаторов
 	isCTSRBtnAction = 3; // Auto (Выделения нет - Paste, Есть - Copy)
 	isCTSMBtnAction = 0; // <None>
-	isCTSColorIndex = 0xE0;
+	isCTSColorIndex = DefaultSelectionConsoleColor/*0xE0*/;
 	isPasteConfirmEnter = true;
 	nPasteConfirmLonger = 200;
 	isFarGotoEditor = true; //isFarGotoEditorVk = VK_LCONTROL;
@@ -2654,7 +2654,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		reg->Load(L"CTS.MBtnAction", isCTSMBtnAction); if (isCTSMBtnAction>3) isCTSMBtnAction = 0;
 
-		reg->Load(L"CTS.ColorIndex", isCTSColorIndex); if ((isCTSColorIndex & 0xF) == ((isCTSColorIndex & 0xF0)>>4)) isCTSColorIndex = 0xE0;
+		reg->Load(L"CTS.ColorIndex", isCTSColorIndex); if (CONFORECOLOR(isCTSColorIndex) == CONBACKCOLOR(isCTSColorIndex)) isCTSColorIndex = DefaultSelectionConsoleColor;
 
 		reg->Load(L"ClipboardConfirmEnter", isPasteConfirmEnter);
 		reg->Load(L"ClipboardConfirmLonger", nPasteConfirmLonger);
