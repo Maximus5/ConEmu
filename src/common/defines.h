@@ -180,8 +180,11 @@ WARNING("WIN64 was not defined");
 #define WM_WTSSESSION_CHANGE 0x02B1
 #endif
 
-#define CONFORECOLOR(x) ((x & 0xF))
-#define CONBACKCOLOR(x) ((x & 0xF0)>>4)
+// Console TextAttribute is WORD: bits 0..3 are text color index, bits 4..7 are background color index
+#define CONFORECOLOR(x) ((BYTE)((x) & 0xF))
+#define CONBACKCOLOR(x) ((BYTE)(((x) & 0xF0) >> 4))
+// Make Console TextAttribute from 4bit indexes (16-color palette)
+#define MAKECONCOLOR(fore_idx,back_idx) ((BYTE)(((fore_idx) & 0xF) | (((back_idx) & 0xF) << 4)))
 
 // Для облегчения кодинга - возвращает значение для соответствующей платформы
 #ifdef _WIN64
