@@ -413,6 +413,7 @@
       <File RelativePath="..\common\MMap.h" />
       <File RelativePath="..\common\MModule.h" />
       <File RelativePath="..\common\Monitors.h" />
+      <File RelativePath="..\common\MPerfCounter.h" />
       <File RelativePath="..\common\MRect.h" />
       <File RelativePath="..\common\MSection.h" />
       <File RelativePath="..\common\MSectionSimple.h" />
@@ -474,6 +475,7 @@
       <File RelativePath="..\common\MFileLog.cpp" />
       <File RelativePath="..\common\MModule.cpp" />
       <File RelativePath="..\common\Monitors.cpp" />
+      <File RelativePath="..\common\MPerfCounter.cpp" />
       <File RelativePath="..\common\MRect.cpp" />
       <File RelativePath="..\common\MSection.cpp" />
       <File RelativePath="..\common\MSectionSimple.cpp" />

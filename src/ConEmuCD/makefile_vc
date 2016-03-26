@@ -61,6 +61,7 @@ $(INTDIR)\Memory.obj \
 $(INTDIR)\MFileLog.obj \
 $(INTDIR)\MModule.obj \
 $(INTDIR)\Monitors.obj \
+$(INTDIR)\MPerfCounter.obj \
 $(INTDIR)\MRect.obj \
 $(INTDIR)\MSection.obj \
 $(INTDIR)\MSectionSimple.obj \
@@ -319,6 +320,8 @@ $(INTDIR)\MFileLog.obj: ../common/MFileLog.cpp ../common/MSection.h ../common/MS
 $(INTDIR)\MModule.obj: ../common/MModule.cpp ../common/MModule.h
 
 $(INTDIR)\Monitors.obj: ../common/Monitors.cpp
+
+$(INTDIR)\MPerfCounter.obj: ../common/MPerfCounter.cpp ../common/MPerfCounter.h
 
 $(INTDIR)\MRect.obj: ../common/MRect.cpp ../common/MRect.h
 

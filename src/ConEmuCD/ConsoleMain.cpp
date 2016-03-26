@@ -79,6 +79,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/execute.h"
 #include "../common/HkFunc.h"
 #include "../common/MArray.h"
+#include "../common/MPerfCounter.h"
 #include "../common/MMap.h"
 #include "../common/MRect.h"
 #include "../common/MSectionSimple.h"
@@ -6194,7 +6195,9 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 
 void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldText, WORD NewText)
 {
-	LogString(L"RefillConsoleAttributes started");
+	wchar_t szLog[140];
+	_wsprintf(szLog, SKIPCOUNT(szLog) L"RefillConsoleAttributes started Lines=%u Cols=%u Old=x%02X New=x%02X", csbi5.dwSize.Y, csbi5.dwSize.X, OldText, NewText);
+	LogString(szLog);
 
 	// Считать из консоли текущие атрибуты (построчно/поблочно)
 	// И там, где они совпадают с OldText - заменить на in.SetConColor.NewTextAttributes
@@ -6206,12 +6209,20 @@ void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldTe
 		return;
 	}
 
+	PerfCounter c_read = {0}, c_fill = {1};
+	MPerfCounter perf(2);
+
+	BOOL b;
 	COORD crRead = {0,0};
 	while (crRead.Y < csbi5.dwSize.Y)
 	{
 		DWORD nReadLn = min((int)nMaxLines,(csbi5.dwSize.Y-crRead.Y));
 		DWORD nReady = 0;
-		if (!ReadConsoleOutputAttribute(ghConOut, pnAttrs, nReadLn * csbi5.dwSize.X, crRead, &nReady))
+
+		perf.Start(c_read);
+		b = ReadConsoleOutputAttribute(ghConOut, pnAttrs, nReadLn * csbi5.dwSize.X, crRead, &nReady);
+		perf.Stop(c_read);
+		if (!b)
 			break;
 
 		bool bStarted = false;
@@ -6237,7 +6248,11 @@ void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldTe
 				{
 					bStarted = false;
 					if (iStarted < i)
+					{
+						perf.Start(c_fill);
 						FillConsoleOutputAttribute(ghConOut, NewText, i - iStarted, crFrom, &iWritten);
+						perf.Stop(c_fill);
+					}
 				}
 			}
 			// Next cell checking
@@ -6246,7 +6261,9 @@ void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldTe
 		// Если хвост остался
 		if (bStarted && (iStarted < i))
 		{
+			perf.Start(c_fill);
 			FillConsoleOutputAttribute(ghConOut, NewText, i - iStarted, crFrom, &iWritten);
+			perf.Stop(c_fill);
 		}
 
 		// Next block
@@ -6255,7 +6272,10 @@ void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldTe
 
 	free(pnAttrs);
 
-	LogString(L"RefillConsoleAttributes finished");
+	ULONG l_read_p, l_read = perf.GetCounter(c_read.ID, &l_read_p, NULL, NULL);
+	ULONG l_fill_p, l_fill = perf.GetCounter(c_fill.ID, &l_fill_p, NULL, NULL);
+	_wsprintf(szLog, SKIPCOUNT(szLog) L"RefillConsoleAttributes finished, Reads(%u, %u%%), Fills(%u, %u%%)", l_read, l_read_p, l_fill, l_fill_p);
+	LogString(szLog);
 }
 
 
