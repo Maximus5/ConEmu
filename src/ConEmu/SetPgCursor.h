@@ -49,7 +49,7 @@ public:
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
 
 	static void InitCursorCtrls(HWND hDlg, const AppSettings* pApp);
-	static bool OnEditChanged(HWND hDlg, WPARAM wParam, LPARAM lParam, AppSettings* pApp);
+	static bool OnEditChangedCursor(HWND hDlg, WORD nCtrlId, AppSettings* pApp);
 
 protected:
 	// Members

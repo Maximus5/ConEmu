@@ -1666,7 +1666,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	case tCursorMinSize:
 	case tInactiveCursorMinSize:
 	{
-		if (CSetPgCursor::OnEditChanged(hWnd2, wParam, lParam, &gpSet->AppStd))
+		if (CSetPgCursor::OnEditChangedCursor(hWnd2, LOWORD(wParam), &gpSet->AppStd))
 		{
 			gpConEmu->Update(true);
 		}

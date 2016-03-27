@@ -51,9 +51,25 @@ public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
 	virtual void ProcessDpiChange(const CDpiForDialog* apDpi) override;
+	// Events
+	virtual INT_PTR OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId) override;
+	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) override;
+	virtual INT_PTR OnComboBox(HWND hDlg, WORD nCtrlId, WORD code) override;
 
 	virtual INT_PTR PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam) override;
 	static INT_PTR CALLBACK pageOpProc_AppsChild(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+
+	void DoFillControls(const AppSettings* pApp);
+	void DoEnableControls(WORD nGroupCtrlId);
+
+protected:
+	// Methods
+	bool CreateChildDlg();
+	void DoReloadApps();
+	void DoAppAdd();
+	void DoAppDel();
+	void DoAppMove(bool bUpward);
+	void OnAppSelectionChanged();
 
 protected:
 	// Members
@@ -61,4 +77,6 @@ protected:
 	bool mb_SkipEditSet;
 	CDynDialog*    mp_DlgDistinct2;
 	CDpiForDialog* mp_DpiDistinct2;
+	HWND mh_Child;
+	bool mb_Redraw, mb_Refill;
 };

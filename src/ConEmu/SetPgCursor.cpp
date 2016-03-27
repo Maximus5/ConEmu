@@ -60,25 +60,24 @@ void CSetPgCursor::InitCursorCtrls(HWND hDlg, const AppSettings* pApp)
 	SetDlgItemInt(hDlg, tInactiveCursorMinSize, pApp->CursorInactive.MinSize, FALSE);
 }
 
-bool CSetPgCursor::OnEditChanged(HWND hDlg, WPARAM wParam, LPARAM lParam, AppSettings* pApp)
+bool CSetPgCursor::OnEditChangedCursor(HWND hDlg, WORD nCtrlId, AppSettings* pApp)
 {
 	bool bChanged = false;
-	WORD TB = LOWORD(wParam);
 
-	switch (TB)
+	switch (nCtrlId)
 	{
 		case tCursorFixedSize:
 		case tInactiveCursorFixedSize:
 		{
 			BOOL lbOk = FALSE;
-			UINT nNewVal = GetDlgItemInt(hDlg, TB, &lbOk, FALSE);
+			UINT nNewVal = GetDlgItemInt(hDlg, nCtrlId, &lbOk, FALSE);
 			if (lbOk)
 			{
-				UINT nMinSize = (TB == tCursorFixedSize) ? CURSORSIZE_MIN : 0;
+				UINT nMinSize = (nCtrlId == tCursorFixedSize) ? CURSORSIZE_MIN : 0;
 				UINT nMaxSize = CURSORSIZE_MAX;
 				if ((nNewVal >= nMinSize) && (nNewVal <= nMaxSize))
 				{
-					CECursorType* pCur = (TB == tCursorFixedSize) ? &pApp->CursorActive : &pApp->CursorInactive;
+					CECursorType* pCur = (nCtrlId == tCursorFixedSize) ? &pApp->CursorActive : &pApp->CursorInactive;
 
 					if (pCur->FixedSize != nNewVal)
 					{
@@ -95,14 +94,14 @@ bool CSetPgCursor::OnEditChanged(HWND hDlg, WPARAM wParam, LPARAM lParam, AppSet
 		case tInactiveCursorMinSize:
 		{
 			BOOL lbOk = FALSE;
-			UINT nNewVal = GetDlgItemInt(hDlg, TB, &lbOk, FALSE);
+			UINT nNewVal = GetDlgItemInt(hDlg, nCtrlId, &lbOk, FALSE);
 			if (lbOk)
 			{
-				UINT nMinSize = (TB == tCursorMinSize) ? CURSORSIZEPIX_MIN : 0;
+				UINT nMinSize = (nCtrlId == tCursorMinSize) ? CURSORSIZEPIX_MIN : 0;
 				UINT nMaxSize = CURSORSIZEPIX_MAX;
 				if ((nNewVal >= nMinSize) && (nNewVal <= nMaxSize))
 				{
-					CECursorType* pCur = (TB == tCursorMinSize) ? &pApp->CursorActive : &pApp->CursorInactive;
+					CECursorType* pCur = (nCtrlId == tCursorMinSize) ? &pApp->CursorActive : &pApp->CursorInactive;
 
 					if (pCur->MinSize != nNewVal)
 					{
