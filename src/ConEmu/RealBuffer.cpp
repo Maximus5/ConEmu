@@ -4594,14 +4594,14 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 					}
 					else
 					{
-						if ((con.m_sel.dwSelectionAnchor.Y + 1) < TextHeight())
+						if ((con.m_sel.dwSelectionAnchor.Y + 1) < GetBufferHeight())
 						{
 							con.m_sel.dwSelectionAnchor.X = 0;
 							con.m_sel.dwSelectionAnchor.Y++;
 						}
 						else
 						{
-							_ASSERTE((con.m_sel.dwSelectionAnchor.Y + 1) < TextHeight());
+							_ASSERTE((con.m_sel.dwSelectionAnchor.Y + 1) < GetBufferHeight());
 						}
 					}
 					con.m_sel.dwFlags = (con.m_sel.dwFlags & ~CONSOLE_RIGHT_ANCHOR) | CONSOLE_LEFT_ANCHOR;
