@@ -4657,7 +4657,7 @@
     ,
     "rbColorRgbHex": {
       "en": "#RRGGBB (hex)",
-      "zh": "#RRGGBB（十进制）",
+      "zh": "#RRGGBB（十六进制）",
       "id": 2721 }
     ,
     "rbComspec_AppBit": {
