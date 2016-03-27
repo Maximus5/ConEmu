@@ -2956,8 +2956,8 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					break;
 				case 18:
 				case 19:
-					// 1 8 --> Report the size of the text area in characters as CSI 8 ; height ; width t
-					// 1 9 --> Report the size of the screen in characters as CSI 9 ; height ; width t
+					// `ESC [ 1 8 t` --> Report the size of the text area in characters as `CSI 8 ; height ; width t`
+					// `ESC [ 1 9 t` --> Report the size of the screen in characters as `CSI 9 ; height ; width t`
 					if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 					{
 						msprintf(sCurInfo, countof(sCurInfo),
@@ -2967,7 +2967,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					}
 					break;
 				case 21:
-					// 2 1 --> Report xterm window�s title as OSC l title ST
+					// `ESC [ 2 1 t` --> Report terminal window title as `OSC l title ST`
 					ReportConsoleTitle();
 					break;
 				default:
