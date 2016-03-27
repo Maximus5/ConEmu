@@ -173,6 +173,7 @@ protected:
 	void WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
 	BOOL ReportString(LPCWSTR asRet);
 	void ReportConsoleTitle();
+	void ReportTerminalPixelSize();
 	static BOOL WriteAnsiLogUtf8(const char* lpBuffer, DWORD nChars);
 public:
 	static UINT GetCodePage();

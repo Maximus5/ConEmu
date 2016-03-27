@@ -2013,6 +2013,45 @@ void CEAnsi::ReportConsoleTitle()
 	ReportString(sTitle);
 }
 
+void CEAnsi::ReportTerminalPixelSize()
+{
+	// `CSI 4 ; height ; width t`
+	wchar_t szReport[64];
+	int width = 0, height = 0;
+	RECT rcWnd = {};
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+
+	if (ghConEmuWndDC && GetClientRect(ghConEmuWndDC, &rcWnd))
+	{
+		width = RectWidth(rcWnd);
+		height = RectHeight(rcWnd);
+	}
+
+	if ((width <= 0 || height <= 0) && ghConWnd && GetClientRect(ghConWnd, &rcWnd))
+	{
+		width = RectWidth(rcWnd);
+		height = RectHeight(rcWnd);
+	}
+
+	if (width <= 0 || height <= 0)
+	{
+		_ASSERTE(width > 0 && height > 0);
+		// Both DC and RealConsole windows were failed?
+		if (GetConsoleScreenBufferInfoCached(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
+		{
+			const int defCharWidth = 8, defCharHeight = 14;
+			width = (csbi.srWindow.Right - csbi.srWindow.Left + 1) * defCharWidth;
+			height = (csbi.srWindow.Bottom - csbi.srWindow.Top + 1) * defCharHeight;
+		}
+	}
+
+	if (width > 0 && height > 0)
+	{
+		_wsprintf(szReport, SKIPCOUNT(szReport) L"\x1B[4;%u;%ut", (u32)height, (u32)width);
+		ReportString(szReport);
+	}
+}
+
 BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
 {
 	BOOL lbRc = TRUE, lbApply = FALSE;
@@ -2911,6 +2950,10 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			{
 				switch (Code.ArgV[i])
 				{
+				case 14:
+					// `ESC [ 1 4 t` --> Reports terminal window size in pixels as `CSI 4 ; height ; width t`.
+					ReportTerminalPixelSize();
+					break;
 				case 18:
 				case 19:
 					// 1 8 --> Report the size of the text area in characters as CSI 8 ; height ; width t
