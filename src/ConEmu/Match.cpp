@@ -643,40 +643,58 @@ bool CMatch::MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLin
 		rnStart--;
 	}
 
-	while (((rnEnd+1) < anLineLen)
-		&& !(cmpFunc(asLine[rnEnd+1])))
-	{
-		rnEnd++;
-	}
-
-	// Now trim trailing punctuation
-	while (((rnEnd-1) > rnStart)
-		&& isCharPunctuation(asLine[rnEnd]))
-	{
-		rnEnd--;
-	}
+	const wchar_t szLeftBkt[] = L"<({[", szRightBkt[] = L">)}]";
+	int iStopOnRghtBkt = -1;
 
 	// Trim leading punctuation except of "." (accept dot-files like ".bashrc")
 	while (((rnStart+1) < rnEnd)
 		&& (asLine[rnStart] != L'.') && isCharPunctuation(asLine[rnStart]))
 	{
+		if (iStopOnRghtBkt == -1)
+		{
+			const wchar_t* pchLeftBkt = wcschr(szLeftBkt, asLine[rnStart]);
+			iStopOnRghtBkt = (int)(pchLeftBkt - szLeftBkt);
+			_ASSERTE(iStopOnRghtBkt > 0 && (size_t)iStopOnRghtBkt < wcslen(szRightBkt));
+		}
 		rnStart++;
 	}
 
-	// If part contains (leading) brackets - don't trim trailing brackets
-	const wchar_t szLeftBkt[] = L"<({[", szRightBkt[] = L">)}]";
-	for (int i = rnStart; i <= rnEnd; i++)
+	bool bStopOnBkt = false;
+
+	while (((rnEnd+1) < anLineLen)
+		&& !(cmpFunc(asLine[rnEnd+1])))
 	{
-		if (wcschr(szLeftBkt, asLine[i]))
+		if ((iStopOnRghtBkt >= 0) && (asLine[rnEnd+1] == szRightBkt[iStopOnRghtBkt]))
 		{
-			// Include trailing brackets
-			while (((rnEnd+1) < anLineLen)
-				&& wcschr(szRightBkt, asLine[rnEnd+1]))
-			{
-				rnEnd++;
-			}
-			// Done
+			bStopOnBkt = true;
 			break;
+		}
+		rnEnd++;
+	}
+
+	if (!bStopOnBkt)
+	{
+		// Now trim trailing punctuation
+		while (((rnEnd-1) > rnStart)
+			&& isCharPunctuation(asLine[rnEnd]))
+		{
+			rnEnd--;
+		}
+
+		// If part contains (leading) brackets - don't trim trailing brackets
+		for (int i = rnStart; i <= rnEnd; i++)
+		{
+			if (wcschr(szLeftBkt, asLine[i]))
+			{
+				// Include trailing brackets
+				while (((rnEnd+1) < anLineLen)
+					&& wcschr(szRightBkt, asLine[rnEnd+1]))
+				{
+					rnEnd++;
+				}
+				// Done
+				break;
+			}
 		}
 	}
 
