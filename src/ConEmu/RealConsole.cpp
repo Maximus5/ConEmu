@@ -2545,12 +2545,13 @@ wrap:
 		//ShutdownGuiStep(L"### Server was terminated\n");
 		DWORD nExitCode = 999;
 		GetExitCodeProcess(pRCon->mh_MainSrv, &nExitCode);
-		wchar_t szErrInfo[255];
+		DWORD nSrvWait = WaitForSingleObject(pRCon->mh_MainSrv, 0);
+
+		wchar_t szErrInfo[255], szCode[30];
+		_wsprintf(szCode, SKIPLEN(countof(szCode)) (nExitCode > 0 && nExitCode <= 2048) ? L"%i" : L"0x%08X", nExitCode);
 		_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
-			(nExitCode > 0 && nExitCode <= 2048) ?
-				L"Server process was terminated, ExitCode=%i" :
-				L"Server process was terminated, ExitCode=0x%08X",
-			nExitCode);
+			L"Server process was terminated, ExitCode=%s, Wait=%u",
+			szCode, nSrvWait);
 		if (nExitCode == 0xC000013A)
 			wcscat_c(szErrInfo, L" (by Ctrl+C)");
 
@@ -2632,6 +2633,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 	CRealBuffer* pLastBuf = NULL;
 	bool lbActiveBufferChanged = false;
 	DWORD nConWndCheckTick = GetTickCount();
+	wchar_t szLog[140];
 
 	while (TRUE)
 	{
@@ -2656,10 +2658,11 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 		// Проверка, вдруг осталась висеть "мертвая" консоль?
 		if (hEvents[IDEVENT_SERVERPH] == NULL && mh_MainSrv)
 		{
-			nSrvWait = WaitForSingleObject(mh_MainSrv,0);
+			nSrvWait = WaitForSingleObject(mh_MainSrv, 0);
 			if (nSrvWait == WAIT_OBJECT_0)
 			{
-				// ConEmuC was terminated!
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"Server was terminated (WAIT_OBJECT_0) PID=%u", mn_MainSrv_PID);
+				LogString(szLog);
 				_ASSERTE(bDetached == false);
 				nWait = IDEVENT_SERVERPH;
 				break;
@@ -2672,6 +2675,8 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 			{
 				if (!IsWindow(hConWnd))
 				{
+					_wsprintf(szLog, SKIPCOUNT(szLog) L"Console window 0x%08X was abnormally terminated?", LODWORD(hConWnd));
+					LogString(szLog);
 					_ASSERTE(FALSE && "Console window was abnormally terminated?");
 					nWait = IDEVENT_SERVERPH;
 					break;
@@ -2767,6 +2772,9 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				nSrvPID = getProcessId(hEvents[IDEVENT_SERVERPH]);
 			#endif
 
+			_wsprintf(szLog, SKIPCOUNT(szLog) L"Terminating MonitorThreadWorker by %s", (nWait == IDEVENT_TERM) ? L"IDEVENT_TERM" : L"IDEVENT_SERVERPH");
+			LogString(szLog);
+
 			// Чтобы однозначность кода в MonitorThread была
 			nWait = IDEVENT_SERVERPH;
 			// требование завершения нити
@@ -2826,6 +2834,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 					if (bDetached || (m_Args.RunAsAdministrator == crb_On))
 					{
 						bDetached = false;
+						LogString(L"Updating hEvents[IDEVENT_SERVERPH] with mh_MainSrv");
 						hEvents[IDEVENT_SERVERPH] = mh_MainSrv;
 						nEvents = countof(hEvents);
 					}
@@ -3097,6 +3106,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 					if (mb_InCloseConsole && mh_MainSrv && (WaitForSingleObject(mh_MainSrv, 0) == WAIT_OBJECT_0))
 					{
 						// Чтобы однозначность кода в MonitorThread была
+						LogString("Terminating MonitorThreadWorker by mb_InCloseConsole && WaitForSingleObject(mh_MainSrv)==0");
 						nWait = IDEVENT_SERVERPH;
 						// Основной сервер закрылся (консоль закрыта), идем на выход
 						break;
@@ -3372,6 +3382,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 		        && (GetTickCount() - m_ServerClosing.nRecieveTick) >= SERVERCLOSETIMEOUT)
 		{
 			// Видимо, сервер повис во время выхода?
+			LogString("Terminating MonitorThreadWorker by m_ServerClosing.nServerPID");
 			isConsoleClosing(); // функция позовет TerminateProcess(mh_MainSrv)
 			nWait = IDEVENT_SERVERPH;
 			break;
@@ -7210,8 +7221,19 @@ void CRealConsole::OnServerClosing(DWORD anSrvPID, int* pnShellExitCode)
 {
 	if (anSrvPID == mn_MainSrv_PID && mh_MainSrv)
 	{
+		wchar_t szLog[120];
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"OnServerClosing: SrvPID=%u RootExitCode=", anSrvPID);
+		if (pnShellExitCode && (*pnShellExitCode >= 0 && *pnShellExitCode <= 2048))
+			_wsprintf(szLog+wcslen(szLog), SKIPLEN(countof(szLog)-wcslen(szLog)) L"%u", *pnShellExitCode);
+		else if (pnShellExitCode)
+			_wsprintf(szLog+wcslen(szLog), SKIPLEN(countof(szLog)-wcslen(szLog)) L"0x%08X", *pnShellExitCode);
+		else
+			wcscat_c(szLog, L"Unknown");
+		LogString(szLog);
+
 		// 131017 set flags to ON
 		StopSignal();
+
 		//int nCurProcessCount = m_Processes.size();
 		//_ASSERTE(nCurProcessCount <= 1);
 		m_ServerClosing.nRecieveTick = GetTickCount();
@@ -7225,12 +7247,14 @@ void CRealConsole::OnServerClosing(DWORD anSrvPID, int* pnShellExitCode)
 	{
 		_ASSERTE(anSrvPID == mn_MainSrv_PID);
 	}
+
 	// Shell exit code
 	if (pnShellExitCode)
 	{
 		m_RootInfo.nExitCode = *pnShellExitCode;
 		m_RootInfo.bRunning = false;
 	}
+
 	// Reset starting state flags
 	UpdateStartState(rss_NotStarted, true);
 }
@@ -7508,10 +7532,12 @@ void CRealConsole::SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv)
 	else if (gpSet->isLogging())
 	{
 		wchar_t szInfo[100];
-		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"ServerPID=%u was set for VCon%i", anMainSrvPID, mp_VCon->Index()+1);
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"ServerPID=%u was set for VCon[%i]", anMainSrvPID, mp_VCon->Index()+1);
+		// Add info both to GUI and CON logs
 		gpConEmu->LogString(szInfo);
 		// RCon logging
 		CreateLogFiles();
+		LogString(szInfo);
 	}
 
 	DEBUGTEST(isServerAlive());
@@ -9449,6 +9475,8 @@ void CRealConsole::CreateLogFiles()
 	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"RCon ID=%i started", mp_VCon->ID());
 	LogString(szInfo);
 
+	LPCWSTR pszCommand = GetCmd(true);
+	LogString((pszCommand && *pszCommand) ? pszCommand : L"<No Command>");
 }
 
 void CRealConsole::LogString(LPCWSTR asText)
@@ -12772,6 +12800,8 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 	if (!this) return;
 
 	_ASSERTE(!mb_ProcessRestarted);
+
+	LogString(L"CRealConsole::CloseConsole");
 
 	// Для Terminate - спрашиваем отдельно
 	// Don't show confirmation dialog, if this method was reentered (via GuiMacro call)
