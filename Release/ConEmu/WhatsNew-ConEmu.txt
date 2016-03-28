@@ -20,6 +20,19 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.3.27
+* Add palette change logging. Ref: gh-599, searching for bottle neck
+* gh-593: Background color index was cropped to 8-color palette after `\e[9999;1H`.
+* gh-587: Fix text selection when cursor passes the selection anchor (downright).
+* Update chinese translation.
+* Improve double-click (word) selection.
+  For example, select `daily` by double-click inside brackets of `ConEmu [daily]>`.
+* ANSI: Sequence `ESC [ 1 4 t` reports terminal window size in pixels as `ESC [ 4 ; height ; width t`.
+* gh-605: Fix regressions on ‘App distinct’ settings page.
+* Log extended information during console shutdown.
+  Ref: gh-604: Last conemu versions often can't attach to started console
+
+
 2016.3.24
 * Unify LogFile names: `ConEmu-gui-...`, `ConEmu-con-...`, `ConEmu-srv-...`.
 * To start console as ‘System’ use `-new_console:aA` switch.
