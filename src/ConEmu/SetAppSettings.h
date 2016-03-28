@@ -149,17 +149,6 @@ struct AppSettings
 	BYTE isCTSDeleteLeftWord; // cbCTSDeleteLeftWord
 	BYTE CTSDeleteLeftWord() const;
 
-	bool OverrideBgImage;
-	//reg->Load(L"BackGround Image show", isShowBgImage);
-	char isShowBgImage; // cbBgImage
-	char ShowBgImage() const;
-	//reg->Load(L"BackGround Image", sBgImage, countof(sBgImage));
-	WCHAR sBgImage[MAX_PATH]; // tBgImage
-	LPCWSTR BgImage() const;
-	//reg->Load(L"bgOperation", nBgOperation);
-	BYTE nBgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
-	BYTE BgOperation() const;
-
 
 	void SetNames(LPCWSTR asAppNames);
 

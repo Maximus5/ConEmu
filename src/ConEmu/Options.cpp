@@ -591,11 +591,6 @@ void Settings::InitSettings()
 	AppStd.isCTSClickPromptPosition = 2; // Кликом мышки позиционировать курсор в Cmd Prompt (cmd.exe, Powershell.exe, ...) + vkCTSVkPromptClk
 	AppStd.isCTSDeleteLeftWord = 2; // Ctrl+BS - удалять слово слева от курсора
 
-	// пока не учитывается
-	AppStd.isShowBgImage = 0;
-	AppStd.sBgImage[0] = 0;
-	AppStd.nBgOperation = eUpLeft;
-
 	//CheckTheming(); -- сейчас - нельзя. нужно дождаться, пока главное окно будет создано
 	//mb_ThemingEnabled = (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1));
 //------------------------------------------------------------------------

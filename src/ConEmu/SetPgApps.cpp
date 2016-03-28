@@ -61,7 +61,6 @@ static struct StrDistinctControls
 		gbPasteM1, rPasteM1MultiLine, rPasteM1SingleLine, rPasteM1FirstLine, rPasteM1Nothing,
 		gbPasteM2, rPasteM2MultiLine, rPasteM2SingleLine, rPasteM2FirstLine, rPasteM2Nothing,
 		gbPromptOverride, cbCTSClickPromptPosition, cbCTSDeleteLeftWord}},
-	{cbBgImageOverride, {cbBgImage, tBgImage, bBgImage, lbBgPlacement}},
 };
 
 CSetPgApps::CSetPgApps()
@@ -621,61 +620,6 @@ INT_PTR CSetPgApps::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 		pApp->isCTSDeleteLeftWord = isChecked(mh_Child, nCtrlId);
 		break;
 
-	case cbBgImageOverride:
-		bChecked = isChecked(mh_Child, nCtrlId);
-		DoEnableControls(cbBgImageOverride);
-		mb_Redraw = true;
-		break;
-	case cbBgImage:
-		pApp->isShowBgImage = isChecked(mh_Child, nCtrlId);
-		mb_Redraw = true;
-		break;
-	case bBgImage:
-		{
-			wchar_t temp[MAX_PATH], edt[MAX_PATH];
-			if (!GetDlgItemText(mh_Child, tBgImage, edt, countof(edt)))
-				edt[0] = 0;
-			ExpandEnvironmentStrings(edt, temp, countof(temp));
-			OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));
-			ofn.lStructSize=sizeof(ofn);
-			ofn.hwndOwner = ghOpWnd;
-			ofn.lpstrFilter = L"All images (*.bmp,*.jpg,*.png)\0*.bmp;*.jpg;*.jpe;*.jpeg;*.png\0Bitmap images (*.bmp)\0*.bmp\0JPEG images (*.jpg)\0*.jpg;*.jpe;*.jpeg\0PNG images (*.png)\0*.png\0\0";
-			ofn.nFilterIndex = 1;
-			ofn.lpstrFile = temp;
-			ofn.nMaxFile = countof(temp);
-			ofn.lpstrTitle = L"Choose background image";
-			ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
-						| OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
-
-			if (GetOpenFileName(&ofn))
-			{
-				TODO("LoadBackgroundFile");
-				//if (LoadBackgroundFile(temp, true))
-				{
-					bool bUseEnvVar = false;
-					size_t nEnvLen = _tcslen(gpConEmu->ms_ConEmuExeDir);
-					if (_tcslen(temp) > nEnvLen && temp[nEnvLen] == L'\\')
-					{
-						temp[nEnvLen] = 0;
-						if (lstrcmpi(temp, gpConEmu->ms_ConEmuExeDir) == 0)
-							bUseEnvVar = true;
-						temp[nEnvLen] = L'\\';
-					}
-					if (bUseEnvVar)
-					{
-						wcscpy_c(pApp->sBgImage, L"%ConEmuDir%");
-						wcscat_c(pApp->sBgImage, temp + _tcslen(gpConEmu->ms_ConEmuExeDir));
-					}
-					else
-					{
-						wcscpy_c(pApp->sBgImage, temp);
-					}
-					SetDlgItemText(mh_Child, tBgImage, pApp->sBgImage);
-					gpConEmu->Update(true);
-				}
-			}
-		}
-		break; // bBgImage
 	}
 
 	return 0;
@@ -799,12 +743,6 @@ void CSetPgApps::DoFillControls(const AppSettings* pApp)
 	//
 	checkDlgButton(mh_Child, cbCTSDeleteLeftWord, pApp->isCTSDeleteLeftWord);
 
-
-	checkDlgButton(mh_Child, cbBgImageOverride, pApp->OverrideBgImage);
-	checkDlgButton(mh_Child, cbBgImage, BST(pApp->isShowBgImage));
-	SetDlgItemText(mh_Child, tBgImage, pApp->sBgImage);
-	b = pApp->nBgOperation;
-	CSetDlgLists::GetListBoxItem(mh_Child, lbBgPlacement, CSetDlgLists::eBgOper, b);
 }
 
 void CSetPgApps::DoEnableControls(WORD nGroupCtrlId)
@@ -888,23 +826,6 @@ LRESULT CSetPgApps::OnEditChanged(HWND hDlg, WORD nCtrlId)
 			} //case tCursorFixedSize, tInactiveCursorFixedSize, tCursorMinSize, tInactiveCursorMinSize:
 			break;
 
-		case tBgImage:
-			if (pApp)
-			{
-				wchar_t temp[MAX_PATH];
-				GetDlgItemText(mh_Child, tBgImage, temp, countof(temp));
-
-				if (wcscmp(temp, pApp->sBgImage))
-				{
-					TODO("LoadBackgroundFile");
-					//if (LoadBackgroundFile(temp, true))
-					{
-						wcscpy_c(pApp->sBgImage, temp);
-						gpConEmu->Update(true);
-					}
-				}
-			} // tBgImage
-			break;
 		}
 	}
 
@@ -1006,16 +927,6 @@ INT_PTR CSetPgApps::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 			} // lbCTSEOL
 			break;
 
-		case lbBgPlacement:
-			{
-				BYTE bg = 0;
-				CSetDlgLists::GetListBoxItem(mh_Child, lbBgPlacement, CSetDlgLists::eBgOper, bg);
-				pApp->nBgOperation = bg;
-				TODO("LoadBackgroundFile");
-				//gpSetCls->LoadBackgroundFile(gpSet->sBgImage, true);
-				gpConEmu->Update(true);
-			} // lbBgPlacement
-			break;
 		}
 	}
 

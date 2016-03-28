@@ -231,28 +231,6 @@ BYTE AppSettings::CTSDeleteLeftWord() const
 	return (OverrideClipboard || !AppNames) ? isCTSDeleteLeftWord : gpSet->AppStd.isCTSDeleteLeftWord;
 }
 
-//bool OverrideBgImage;
-//reg->Load(L"BackGround Image show", isShowBgImage);
-//char isShowBgImage; // cbBgImage
-char AppSettings::ShowBgImage() const
-{
-	return (OverrideBgImage || !AppNames) ? isShowBgImage : gpSet->AppStd.isShowBgImage;
-}
-
-//reg->Load(L"BackGround Image", sBgImage, countof(sBgImage));
-//WCHAR sBgImage[MAX_PATH]; // tBgImage
-LPCWSTR AppSettings::BgImage() const
-{
-	return (OverrideBgImage || !AppNames) ? sBgImage : gpSet->AppStd.sBgImage;
-}
-
-//reg->Load(L"bgOperation", nBgOperation);
-//BYTE nBgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
-BYTE AppSettings::BgOperation() const
-{
-	return (OverrideBgImage || !AppNames) ? nBgOperation : gpSet->AppStd.nBgOperation;
-}
-
 void AppSettings::SetNames(LPCWSTR asAppNames)
 {
 	size_t iLen = wcslen(asAppNames);

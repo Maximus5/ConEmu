@@ -705,7 +705,6 @@
 #define vkCTSVkPromptClk                2346
 #define gbPromptOverride                2347
 #define gbCopyingOverride               2348
-#define cbBgImageOverride               2350
 #define tAppDistinctHolder              2353
 #define tScrollAppearDelay              2354
 #define tScrollDisappearDelay           2355

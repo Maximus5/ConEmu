@@ -1370,7 +1370,7 @@ BEGIN
     GROUPBOX        "",IDC_STATIC,1,94,349,62
     GROUPBOX        "",IDC_STATIC,1,162,349,33
     GROUPBOX        "",IDC_STATIC,1,202,349,172
-    GROUPBOX        "",IDC_STATIC,1,380,349,31,NOT WS_VISIBLE
+    CTEXT           "End of scroll area",stAppDistinctBottom,25,390,171,8
     GROUPBOX        "Copying text override",gbCopyingOverride,7,212,339,26
     GROUPBOX        "Starting selection with arrows",gbSelectingOverride,7,243,339,28
     GROUPBOX        "Prompt override",gbPromptOverride,7,326,339,42
@@ -1397,17 +1397,11 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,202,123,8
     CONTROL         "Change prompt (cmd, powershell) text cursor position with Left Click",cbCTSClickPromptPosition,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,13,339,330,8
-    CTEXT           "End of scroll area",stAppDistinctBottom,25,418,171,8
     CONTROL         "Detect line ends",cbCTSDetectLineEnd,"Button",BS_AUTO3STATE | WS_TABSTOP,13,224,90,8
     CONTROL         "Bash margin",cbCTSBashMargin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,224,71,8
     CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTO3STATE | WS_TABSTOP,183,224,99,8
     RTEXT           "EOL:",stCTSEOL,275,224,25,8
     COMBOBOX        lbCTSEOL,304,221,40,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Background image override",cbBgImageOverride,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,7,380,142,8
-    CONTROL         "Background",cbBgImage,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_TABSTOP,7,395,65,8
-    EDITTEXT        tBgImage,76,392,182,12,ES_AUTOHSCROLL | NOT WS_VISIBLE
-    PUSHBUTTON      "...",bBgImage,263,392,16,12,NOT WS_VISIBLE
-    COMBOBOX        lbBgPlacement,283,392,61,30,CBS_DROPDOWNLIST | NOT WS_VISIBLE | WS_VSCROLL | WS_TABSTOP
     EDITTEXT        tCursorFixedSize,98,74,40,12,ES_AUTOHSCROLL
     LTEXT           "(5-100) %",stCursorFixedSize,142,76,38,8
     RTEXT           "Min size (pix):",stCursorMinSize,185,76,70,8
