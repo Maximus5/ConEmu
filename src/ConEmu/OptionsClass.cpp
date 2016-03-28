@@ -2006,6 +2006,8 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 						gpSet->ThSet.Tiles.nLabelSpacing = nVal; break;
 					case tTilesPadding:
 						gpSet->ThSet.Tiles.nLabelPadding = nVal; break;
+					default:
+						_ASSERTE(FALSE && "EditBox was not processed");
 				} // switch (TB)
 			} // if (bValOk)
 
@@ -2023,6 +2025,10 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 							// done
 						}
 					}
+				}
+				else
+				{
+					_ASSERTE(FALSE && "EditBox was not processed");
 				}
 			}
 
@@ -2065,6 +2071,10 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					}
 				}
 			}
+			else
+			{
+				_ASSERTE(FALSE && "EditBox was not processed");
+			}
 
 			break;
 		} // case thi_Colors:
@@ -2084,9 +2094,16 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 					}
 				}
 			}
+			else
+			{
+				_ASSERTE(FALSE && "EditBox was not processed");
+			}
 
 			break;
 		} // case thi_Status:
+
+		default:
+			_ASSERTE(FALSE && "EditBox was not processed");
 
 		} // switch (GetPageId(hWnd2))
 
