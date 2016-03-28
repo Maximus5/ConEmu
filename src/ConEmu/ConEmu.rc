@@ -879,8 +879,10 @@ BEGIN
     CONTROL         "Single line",rPasteM2SingleLine,"Button",BS_AUTORADIOBUTTON,288,26,78,8
     CONTROL         "Do nothing",rPasteM2Nothing,"Button",BS_AUTORADIOBUTTON,288,41,78,8
     GROUPBOX        "Confirm critical actions",gbPasteConfirm,10,67,364,64,WS_GROUP
-    CONTROL         "Multi-line paste: avoid unexpected command execution by <Enter> keypress",cbClipConfirmEnter,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,80,355,8
-    CONTROL         "Long text paste: avoid non-responsive console until the paste finishes",cbClipConfirmLimit,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,94,355,8
+    CONTROL         "Multi-line paste: avoid unexpected command execution by <Enter> keypress",cbClipConfirmEnter,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,80,355,8
+    CONTROL         "Long text paste: avoid non-responsive console until the paste finishes",cbClipConfirmLimit,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,94,355,8
     RTEXT           "chars:",stClipConfirmLimit,15,112,58,8
     EDITTEXT        tClipConfirmLimit,76,109,40,12,ES_AUTOHSCROLL
 END
