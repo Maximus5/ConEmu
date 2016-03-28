@@ -264,3 +264,11 @@ extern void _DEBUGSTR(LPCWSTR s);
 // Otherwise, no operation is performed.
 // pv MUST be either DWORD* or LONG*
 #define InterlockedCompareZero(pv,cmp) InterlockedCompareExchange((LONG*)pv,0,cmp)
+
+#if !defined(HAS_CPP11) && !defined(_WIN64)
+inline __int64 InterlockedAdd64(__int64 volatile * Addend, __int64 Value)
+{
+	*Addend += Value;
+	return *Addend;
+};
+#endif
