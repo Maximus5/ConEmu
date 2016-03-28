@@ -618,6 +618,7 @@ class CRealConsole
 		void OnServerClosing(DWORD anSrvPID, int* pnShellExitCode);
 		void Paste(CEPasteMode PasteMode = pm_Standard, LPCWSTR asText = NULL, bool abNoConfirm = false, bool abCygWin = false);
 		bool Write(LPCWSTR pszText, int nLen = -1, DWORD* pnWritten = NULL);
+		uint isLogging(uint level = 1);
 		void LogString(LPCSTR asText);
 		void LogString(LPCWSTR asText);
 		bool isActive(bool abAllowGroup);
@@ -915,9 +916,7 @@ class CRealConsole
 		BOOL mb_InCloseConsole;
 		DWORD mn_CloseConfirmedTick;
 		bool mb_CloseFarMacroPosted;
-		// Логи
-		BYTE m_UseLogs;
-		//HANDLE mh_LogInput; wchar_t *mpsz_LogInputFile/*, *mpsz_LogPackets*/; //UINT mn_LogPackets;
+		// Logging
 		MFileLog *mp_Log;
 		void CreateLogFiles();
 		void CloseLogFiles();

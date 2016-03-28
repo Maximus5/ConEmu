@@ -403,7 +403,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	//mp_ColorData = NULL;
 	mn_LastColorFarID = 0;
 	//ms_ConEmuC_DataReady[0] = 0; mh_ConEmuC_DataReady = NULL;
-	m_UseLogs = gpSet->isLogging();
 
 	mp_TrueColorerData = NULL;
 	mn_TrueColorMaxCells = 0;
@@ -2352,7 +2351,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 
 		if (PackInputRecord(piRec, msg.msg))
 		{
-			if (m_UseLogs)
+			if (isLogging())
 				LogInput(piRec);
 
 			_ASSERTE(msg.msg[0].message!=0);
@@ -3295,7 +3294,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 					lbForceUpdate = false;
 					//mp_VCon->Validate(); // сбросить флажок
 
-					if (m_UseLogs>2) LogString("mp_VCon->Update from CRealConsole::MonitorThread");
+					if (isLogging(3)) LogString("mp_VCon->Update from CRealConsole::MonitorThread");
 
 					if (mp_VCon->Update(bForce))
 					{
@@ -3316,7 +3315,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 					{
 						DEBUGSTRDRAW(L"+++ Force invalidate by lbNeedBlink\n");
 
-						if (m_UseLogs>2) LogString("Invalidating from CRealConsole::MonitorThread.1");
+						if (isLogging(3)) LogString("Invalidating from CRealConsole::MonitorThread.1");
 
 						lbNeedRedraw = true;
 					}
@@ -3325,7 +3324,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				{
 					DEBUGSTRDRAW(L"+++ Force invalidate by timeout\n");
 
-					if (m_UseLogs>2) LogString("Invalidating from CRealConsole::MonitorThread.2");
+					if (isLogging(3)) LogString("Invalidating from CRealConsole::MonitorThread.2");
 
 					lbNeedRedraw = true;
 				}
@@ -4664,7 +4663,8 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	//lstrcpy(psCurCmd, mp_ConEmu->ms_ConEmuCExeName);
 	_wcscat_c(psCurCmd, nLen, L"\" ");
 
-	if (m_UseLogs) _wcscat_c(psCurCmd, nLen, (m_UseLogs == 3) ? L" /LOG3" : (m_UseLogs == 2) ? L" /LOG2" : L" /LOG");
+	uint logLevel = isLogging();
+	if (logLevel) _wcscat_c(psCurCmd, nLen, (logLevel == 3) ? L" /LOG3" : (logLevel == 2) ? L" /LOG2" : L" /LOG");
 
 	if ((m_Args.RunAsAdministrator == crb_On) && !mp_ConEmu->mb_IsUacAdmin)
 	{
@@ -5187,8 +5187,7 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 				wchar_t szInfo[100];
 				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Changing prompt position by LClick: {%i,%i} Force=%u Margin=%u", pIn->Prompt.xPos, pIn->Prompt.yPos, pIn->Prompt.Force, pIn->Prompt.BashMargin);
 				DEBUGSTRCLICKPOS(szInfo);
-				if (mp_Log)
-					LogString(szInfo);
+				LogString(szInfo);
 				}
 
 				CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
@@ -5314,7 +5313,7 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 			DEBUGSTRWHEEL(szDbgMsg);
 		}
 		#endif
-		if (m_UseLogs>=2)
+		if (isLogging(2))
 		{
 			char szDbgMsg[128]; _wsprintfA(szDbgMsg, SKIPLEN(countof(szDbgMsg)) "WM_MOUSEWHEEL(wParam=0x%08X, x=%i, y=%i)", (DWORD)wParam, crMouse.X, crMouse.Y);
 			LogString(szDbgMsg);
@@ -5336,7 +5335,7 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 	}
 	else if (messg == WM_MOUSEHWHEEL)
 	{
-		if (m_UseLogs>=2)
+		if (isLogging(2))
 		{
 			char szDbgMsg[128]; _wsprintfA(szDbgMsg, SKIPLEN(countof(szDbgMsg)) "WM_MOUSEHWHEEL(wParam=0x%08X, x=%i, y=%i)", (DWORD)wParam, crMouse.X, crMouse.Y);
 			LogString(szDbgMsg);
@@ -7815,10 +7814,16 @@ void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
 	// Для фара могут быть настроены другие параметры фона и прочего...
 	if (bNeedUpdate)
 	{
-		if (mp_Log)
+		if (isLogging())
+		{
 			LogString(szLog);
+		}
+		#ifdef _DEBUG
 		else
+		{
 			DEBUGSTRFARPID(szLog);
+		}
+		#endif
 
 		if (tabs.RefreshFarPID(nFarPluginPID))
 			mp_ConEmu->mp_TabBar->Update();
@@ -9451,7 +9456,7 @@ void CRealConsole::OnFocus(BOOL abFocused)
 
 void CRealConsole::CreateLogFiles()
 {
-	if (!m_UseLogs || !mn_MainSrv_PID)
+	if (!isLogging() || !mn_MainSrv_PID)
 	{
 		return;
 	}
@@ -9479,6 +9484,14 @@ void CRealConsole::CreateLogFiles()
 	LogString((pszCommand && *pszCommand) ? pszCommand : L"<No Command>");
 }
 
+uint CRealConsole::isLogging(uint level /*= 1*/)
+{
+	uint logLevel = gpSet->isLogging();
+	if (!logLevel)
+		return 0;
+	return (logLevel && (level <= logLevel)) ? logLevel : 0;
+}
+
 void CRealConsole::LogString(LPCWSTR asText)
 {
 	if (!this) return;
@@ -9492,9 +9505,7 @@ void CRealConsole::LogString(LPCWSTR asText)
 	}
 	else
 	{
-		#ifdef _DEBUG
-		DEBUGSTRLOGW(asText);
-		#endif
+		mp_ConEmu->LogString(asText);
 	}
 }
 
@@ -9511,23 +9522,21 @@ void CRealConsole::LogString(LPCSTR asText)
 	}
 	else
 	{
-		#ifdef _DEBUG
-		DEBUGSTRLOGA(asText); DEBUGSTRLOGA("\n");
-		#endif
+		mp_ConEmu->LogString(asText);
 	}
 }
 
 void CRealConsole::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars /*= NULL*/)
 {
 	// Есть еще вообще-то и WM_UNICHAR, но ввод UTF-32 у нас пока не поддерживается
-	if (!this || !mp_Log || !m_UseLogs)
+	if (!this || !mp_Log || !isLogging())
 		return;
 	if (!(uMsg == WM_KEYDOWN || uMsg == WM_KEYUP || uMsg == WM_CHAR
 		|| uMsg == WM_SYSCHAR || uMsg == WM_DEADCHAR || uMsg == WM_SYSDEADCHAR
 		|| uMsg == WM_SYSKEYDOWN || uMsg == WM_SYSKEYUP
 		|| (uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST)))
 		return;
-	if ((uMsg == WM_MOUSEMOVE) && (m_UseLogs < 2))
+	if ((uMsg == WM_MOUSEMOVE) && !isLogging(2))
 		return;
 
 	char szInfo[192] = {0};
@@ -9606,7 +9615,7 @@ void CRealConsole::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR psz
 
 void CRealConsole::LogInput(INPUT_RECORD* pRec)
 {
-	if (!this || !mp_Log || !m_UseLogs) return;
+	if (!this || !mp_Log || !isLogging()) return;
 
 	char szInfo[192] = {0};
 	SYSTEMTIME st; GetLocalTime(&st);
@@ -9619,7 +9628,7 @@ void CRealConsole::LogInput(INPUT_RECORD* pRec)
 				break;*/
 		case MOUSE_EVENT: //_wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo)) "MOUSE_EVENT\r\n");
 			{
-				if ((m_UseLogs < 2) && (pRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED))
+				if (!isLogging(2) && (pRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED))
 					return; // Движения мышки логировать только при /log2
 
 				_wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo))
@@ -9689,55 +9698,7 @@ void CRealConsole::LogInput(INPUT_RECORD* pRec)
 void CRealConsole::CloseLogFiles()
 {
 	SafeDelete(mp_Log);
-
-	//SafeCloseHandle(mh_LogInput);
-
-	//if (mpsz_LogInputFile)
-	//{
-	//	//DeleteFile(mpsz_LogInputFile);
-	//	free(mpsz_LogInputFile); mpsz_LogInputFile = NULL;
-	//}
-
-	//if (mpsz_LogPackets) {
-	//    //wchar_t szMask[MAX_PATH*2]; wcscpy(szMask, mpsz_LogPackets);
-	//    //wchar_t *psz = wcsrchr(szMask, L'%');
-	//    //if (psz) {
-	//    //    wcscpy(psz, L"*.*");
-	//    //    psz = wcsrchr(szMask, L'\\');
-	//    //    if (psz) {
-	//    //        psz++;
-	//    //        WIN32_FIND_DATA fnd;
-	//    //        HANDLE hFind = FindFirstFile(szMask, &fnd);
-	//    //        if (hFind != INVALID_HANDLE_VALUE) {
-	//    //            do {
-	//    //                if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)==0) {
-	//    //                    wcscpy(psz, fnd.cFileName);
-	//    //                    DeleteFile(szMask);
-	//    //                }
-	//    //            } while (FindNextFile(hFind, &fnd));
-	//    //            FindClose(hFind);
-	//    //        }
-	//    //    }
-	//    //}
-	//    free(mpsz_LogPackets); mpsz_LogPackets = NULL;
-	//}
 }
-
-//void CRealConsole::LogPacket(CESERVER_REQ* pInfo)
-//{
-//    if (!mpsz_LogPackets || m_UseLogs<3) return;
-//
-//    wchar_t szPath[MAX_PATH];
-//    swprintf_c(szPath, mpsz_LogPackets, ++mn_LogPackets);
-//
-//    HANDLE hFile = CreateFile(szPath, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
-//    if (hFile != INVALID_HANDLE_VALUE) {
-//        DWORD dwSize = 0;
-//        WriteFile(hFile, pInfo, pInfo->hdr.cbSize, &dwSize, 0);
-//        CloseHandle(hFile);
-//    }
-//}
-
 
 
 // Послать в консоль запрос на закрытие
@@ -9797,16 +9758,13 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	_ASSERTE(m_Args.pszStartupDir==NULL || (m_Args.pszStartupDir && args->pszStartupDir));
 	SafeFree(m_Args.pszStartupDir);
 
-	if (gpSet->isLogging())
+	if (isLogging())
 	{
 		wchar_t szPrefix[128];
 		_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::RecreateProcess, hView=x%08X, Detached=%u, AsAdmin=%u, Cmd=",
 			(DWORD)(DWORD_PTR)mp_VCon->GetView(), (UINT)args->Detached, (UINT)args->RunAsAdministrator);
 		wchar_t* pszInfo = lstrmerge(szPrefix, args->pszSpecialCmd ? args->pszSpecialCmd : L"<NULL>");
-		if (mp_Log)
-			mp_Log->LogString(pszInfo ? pszInfo : szPrefix);
-		else
-			mp_ConEmu->LogString(pszInfo ? pszInfo : szPrefix);
+		LogString(pszInfo ? pszInfo : szPrefix);
 		SafeFree(pszInfo);
 	}
 
@@ -13675,7 +13633,7 @@ bool CRealConsole::GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDoma
 void CRealConsole::logProgress(LPCWSTR asFormat, int V1, int V2)
 {
 	#ifndef _DEBUG
-	if (!mp_Log)
+	if (!isLogging())
 		return;
 	#endif
 
@@ -13963,7 +13921,7 @@ void CRealConsole::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL 
 	pIn->SetConColor.NewPopupAttributes = MAKECONCOLOR(mn_PopTextColorIdx, mn_PopBackColorIdx);
 	pIn->SetConColor.ReFillConsole = !isFar();
 
-	if (mp_Log)
+	if (isLogging())
 	{
 		wchar_t szLog[140];
 		_wsprintf(szLog, SKIPCOUNT(szLog)
@@ -13978,7 +13936,7 @@ void CRealConsole::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL 
 
 	CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
 
-	if (mp_Log) LogString(L"Color Palette: CECMD_SETCONCOLORS finished");
+	if (isLogging()) LogString(L"Color Palette: CECMD_SETCONCOLORS finished");
 
 	ExecuteFreeResult(pIn);
 	ExecuteFreeResult(pOut);
@@ -15485,13 +15443,7 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ 
 	}
 	#endif
 
-	if (gpSet->isLogging())
-	{
-		if (mp_Log)
-			LogString(pszInfo);
-		else
-			mp_ConEmu->LogString(pszInfo);
-	}
+	LogString(pszInfo);
 
 	SafeFree(pszInfo);
 
@@ -15815,7 +15767,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		if (asMacro[1])
 		{
 			CEStr pszGui(asMacro+1), szRc;
-			if (m_UseLogs)
+			if (isLogging())
 			{
 				CEStr lsLog(L"CRealConsole::PostMacro: ", asMacro);
 				LogString(lsLog);
@@ -15860,7 +15812,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
 		}
 	}
 
-	if (m_UseLogs)
+	if (isLogging())
 	{
 		wchar_t szPID[32]; _wsprintf(szPID, SKIPCOUNT(szPID) L"(FarPID=%u): ", nPID);
 		CEStr lsLog(L"CRealConsole::PostMacro", szPID, asMacro);
