@@ -1185,11 +1185,12 @@ void CConEmuSize::SetWindowPosSizeParam(wchar_t acType, LPCWSTR asValue)
 
 bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
 {
+	RECT rcDesired = *prcWnd;
 	RECT rcReal = *prcWnd;
 	if (ghWnd)
 		GetWindowRect(ghWnd, &rcReal);
 	MONITORINFO mi = {sizeof(mi)};
-	HMONITOR hMon = GetNearestMonitorInfo(&mi, NULL, &rcReal);
+	HMONITOR hMon = GetNearestMonitorInfo(&mi, NULL, &rcDesired);
 
 	bool bChange = false;
 
