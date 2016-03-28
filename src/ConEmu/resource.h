@@ -1339,15 +1339,16 @@
 #define gbPasteM1                       3047
 #define gbPasteM2                       3048
 #define gbPasteConfirm                  3049
+#define stBgReplaceIndexes              3051
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        234
+#define _APS_NEXT_RESOURCE_VALUE        235
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3050
+#define _APS_NEXT_CONTROL_VALUE         3052
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
