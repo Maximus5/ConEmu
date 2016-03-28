@@ -379,29 +379,29 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "ConEmu Here - Explorer context menu integration",gbIntgrHere,4,1,375,81
-    LTEXT           "Menu item:",stIntgrHereItem,11,14,39,8
-    COMBOBOX        cbHereName,54,11,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Configuration:",stIntgrHereCfg,173,14,59,8
-    EDITTEXT        tHereConfig,238,11,79,13,ES_AUTOHSCROLL
-    LTEXT           "Command:",stIntgrHereCmd,11,31,39,8
-    EDITTEXT        tHereShell,54,29,263,13,ES_AUTOHSCROLL
-    LTEXT           "Icon file:",stIntgrHereIcon,11,49,39,8
-    EDITTEXT        tHereIcon,54,46,263,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Register",bHereRegister,213,62,50,14
-    PUSHBUTTON      "Unregister",bHereUnregister,267,62,50,14
+    LTEXT           "Menu item:",stIntgrHereItem,11,14,51,8
+    COMBOBOX        cbHereName,64,11,143,72,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Configuration:",stIntgrHereCfg,208,14,84,8
+    EDITTEXT        tHereConfig,296,11,79,13,ES_AUTOHSCROLL
+    LTEXT           "Command:",stIntgrHereCmd,11,31,51,8
+    EDITTEXT        tHereShell,64,29,311,13,ES_AUTOHSCROLL
+    LTEXT           "Icon file:",stIntgrHereIcon,11,49,51,8
+    EDITTEXT        tHereIcon,64,46,311,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Register",bHereRegister,212,62,78,14
+    PUSHBUTTON      "Unregister",bHereUnregister,294,62,81,14
     GROUPBOX        "ConEmu Inside - Explorer context menu integration",gbIntgrInside,4,91,375,96
-    LTEXT           "Menu item:",stIntgrInsideItem,11,120,39,8
-    COMBOBOX        cbInsideName,54,118,114,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Configuration:",stIntgrInsideCfg,173,120,59,8
-    EDITTEXT        tInsideConfig,238,118,79,13,ES_AUTOHSCROLL
-    LTEXT           "Command:",stIntgrInsideCmd,11,137,39,8
-    EDITTEXT        tInsideShell,54,135,263,13,ES_AUTOHSCROLL
-    LTEXT           "Icon file:",stIntgrInsideIcon,11,153,39,8
-    EDITTEXT        tInsideIcon,54,151,263,13,ES_AUTOHSCROLL
-    CONTROL         "Sync dir",cbInsideSyncDir,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,170,39,10
-    EDITTEXT        tInsideSyncDir,54,167,144,13,ES_AUTOHSCROLL
-    PUSHBUTTON      "Register",bInsideRegister,212,167,50,14
-    PUSHBUTTON      "Unregister",bInsideUnregister,267,167,50,14
+    LTEXT           "Menu item:",stIntgrInsideItem,11,120,51,8
+    COMBOBOX        cbInsideName,64,118,143,69,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Configuration:",stIntgrInsideCfg,208,120,84,8
+    EDITTEXT        tInsideConfig,296,118,79,13,ES_AUTOHSCROLL
+    LTEXT           "Command:",stIntgrInsideCmd,11,137,51,8
+    EDITTEXT        tInsideShell,64,135,311,13,ES_AUTOHSCROLL
+    LTEXT           "Icon file:",stIntgrInsideIcon,11,153,51,8
+    EDITTEXT        tInsideIcon,64,151,311,13,ES_AUTOHSCROLL
+    CONTROL         "Sync dir",cbInsideSyncDir,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,171,51,10
+    EDITTEXT        tInsideSyncDir,64,168,136,13,ES_AUTOHSCROLL
+    PUSHBUTTON      "Register",bInsideRegister,212,167,78,14
+    PUSHBUTTON      "Unregister",bInsideUnregister,294,167,81,14
     LTEXT           "Use this if you want ConEmu act as a page of Windows Explorer window",stIntgrInsideNote,11,103,232,8
 END
 
