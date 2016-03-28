@@ -1511,25 +1511,24 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "",gbBgImage,4,1,375,98
+    GROUPBOX        "",gbBgImage,4,2,375,100
     CONTROL         "Back&ground image (bmp, jpg, png, tif):",cbBgImage,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,1,139,8
-    LTEXT           "Path:",stBgImage,10,15,18,8
-    EDITTEXT        tBgImage,34,13,261,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",bBgImage,299,13,16,12
-    CONTROL         "Transparent",rbBgReplaceTransparent,"Button",BS_AUTORADIOBUTTON | WS_DISABLED | WS_GROUP,10,32,59,8
-    CONTROL         "Replace color indexes",rbBgReplaceIndexes,"Button",BS_AUTORADIOBUTTON,70,32,86,8
-    EDITTEXT        tBgImageColors,160,30,43,12,ES_AUTOHSCROLL
-    RTEXT           "Placement:",stBgPlacement,205,32,45,8
-    COMBOBOX        lbBgPlacement,254,30,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Darkening:",stDarker,10,50,36,8
-    CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,52,49,228,12
-    EDITTEXT        tDarker,285,49,30,12,ES_AUTOHSCROLL | ES_NUMBER
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,1,190,8
+    LTEXT           "Path:",stBgImage,10,15,31,8
+    EDITTEXT        tBgImage,45,13,305,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",bBgImage,356,13,16,12
+    RTEXT           "Replace color indexes:",stBgReplaceIndexes,8,32,114,8
+    EDITTEXT        tBgImageColors,124,30,76,12,ES_AUTOHSCROLL
+    RTEXT           "Placement:",stBgPlacement,201,32,105,8
+    COMBOBOX        lbBgPlacement,311,30,61,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Darkening:",stDarker,8,50,60,8
+    CONTROL         "",slDarker,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,71,49,264,12
+    EDITTEXT        tDarker,342,49,30,12,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "Allow background plugins (Far Manager)",cbBgAllowPlugin,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,67,144,10
-    LTEXT           "Darkening:",stDarkerPlugin,10,81,36,8,WS_DISABLED
-    CONTROL         "",slDarkerPlugin,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_DISABLED | WS_TABSTOP,52,80,228,12
-    EDITTEXT        tDarkerPlugin,285,80,30,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,10,73,144,10
+    RTEXT           "Darkening:",stDarkerPlugin,8,87,60,8,WS_DISABLED
+    CONTROL         "",slDarkerPlugin,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_DISABLED | WS_TABSTOP,71,86,264,12
+    EDITTEXT        tDarkerPlugin,342,86,30,12,ES_AUTOHSCROLL | ES_NUMBER | WS_DISABLED
 END
 
 IDD_AFFINITY DIALOGEX 0, 0, 327, 112
