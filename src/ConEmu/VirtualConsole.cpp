@@ -206,6 +206,26 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	mh_WndDC = NULL;
 }
 
+int CVirtualConsole::Index()
+{
+	return mn_Index;
+}
+
+LPCWSTR CVirtualConsole::IndexStr()
+{
+	return _itow(mn_Index, ms_Idx, 10);
+}
+
+int CVirtualConsole::ID()
+{
+	return mn_ID;
+}
+
+LPCWSTR CVirtualConsole::IDStr()
+{
+	return _itow(mn_ID, ms_ID, 10);
+}
+
 bool CVirtualConsole::SetFlags(VConFlags Set, VConFlags Mask, int index)
 {
 	if (!this)
@@ -2569,8 +2589,7 @@ bool CVirtualConsole::ChangePalette(int aNewPaletteIdx)
 
 	if (gpSet->isLogging())
 	{
-		wchar_t szIndex[16];
-		CEStr lsLog(L"VCon[", _itow(mn_Index, szIndex, 10), L"]: Color Palette: `", pPal->pszName, L"`");
+		CEStr lsLog(L"VCon[", IndexStr(), L"]: Color Palette: `", pPal->pszName, L"`");
 		LogString(lsLog);
 	}
 

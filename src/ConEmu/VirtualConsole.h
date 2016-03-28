@@ -71,9 +71,13 @@ class CVirtualConsole :
 		void* mp_Group; // For internal use of CVConGroup
 	protected:
 		VConFlags      mn_Flags;
-		int            mn_Index; // !!! Debug, Informational !!!
-		int            mn_ID;    // !!! Debug, Unique per session id of VCon !!!
 		bool SetFlags(VConFlags Set, VConFlags Mask, int index = -1);
+
+	private:
+		int            mn_Index;   // !!! Debug, Informational !!!
+		wchar_t        ms_Idx[16]; // !!! Debug, Informational !!!
+		int            mn_ID;      // !!! Debug, Unique per session id of VCon !!!
+		wchar_t        ms_ID[16];  // !!! Debug, Informational !!!
 
 	protected:
 		CVirtualConsole(CConEmuMain* pOwner, int index);
@@ -92,8 +96,11 @@ class CVirtualConsole :
 		bool isVisible();
 		bool isGroup();
 		bool isGroupedInput();
-		int  Index() { return mn_Index; };
-		int  ID() { return mn_ID; };
+	public:
+		int Index();
+		LPCWSTR IndexStr();
+		int ID();
+		LPCWSTR IDStr();
 	public:
 		WARNING("Сделать protected!");
 		uint TextWidth, TextHeight; // размер в символах

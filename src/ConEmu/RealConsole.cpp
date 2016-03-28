@@ -4743,8 +4743,31 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	ms_CurWorkDir.Set(lpszWorkDir);
 	ms_CurPassiveDir.Set(NULL);
 
+	if (isLogging())
+	{
+		CEStr lsLog(L"Starting VCon[", mp_VCon->IndexStr(), L"]: ", psCurCmd);
+		LogString(lsLog);
+	}
+
 	// Create process or RunAs
 	lbRc = CreateOrRunAs(this, m_Args, psCurCmd, lpszWorkDir, si, pi, mp_sei, dwLastError);
+
+	if (isLogging())
+	{
+		wchar_t szInfo[32] = L"";
+		if (!lbRc)
+		{
+			CEStr lsLog(L"VCon[", mp_VCon->IndexStr(), L"] failed, code=", _ultow(dwLastError, szInfo, 10));
+			LogString(lsLog);
+		}
+		else
+		{
+			if (pi.dwProcessId)
+				_wsprintf(szInfo, SKIPCOUNT(szInfo) L", ServerPID=%u", pi.dwProcessId);
+			CEStr lsLog(L"VCon[", mp_VCon->IndexStr(), L"] started", szInfo);
+			LogString(lsLog);
+		}
+	}
 
 	nCreateEnd = GetTickCount();
 	nCreateDuration = nCreateEnd - nCreateBegin;

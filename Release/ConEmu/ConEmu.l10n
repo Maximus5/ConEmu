@@ -2239,13 +2239,13 @@
       "id": 2512 }
     ,
     "vkTermButShell": {
-      "en": "Terminate all but shell processes in the current console",
-      "zh": "在当前控制台中结束所有进程除了shell进程",
+      "en": "Terminate (kill) all but shell processes in the current console",
+      "_zh": "在当前控制台中结束所有进程除了shell进程",
       "id": 2761 }
     ,
     "vkTerminateApp": {
-      "en": "Terminate active process in the current console",
-      "zh": "在当前控制台中终止活动进程",
+      "en": "Terminate (kill) active process in the current console",
+      "_zh": "在当前控制台中终止活动进程",
       "id": 2261 }
     ,
     "vkTileToLeft": {
@@ -2383,9 +2383,9 @@
       "id": 44001 }
     ,
     "IDM_TERMINATEBUTSHELL": {
-      "en": "Active console/pane: Terminate all except root process",
-      "ru": "Активная консоль/сплит: Завершить все процессы кроме корневого",
-      "zh": "活动的控制台/窗格：结束所有进程除了根进程",
+      "en": "Active console/pane: Terminate (kill) all except root process",
+      "ru": "Активная консоль/сплит: Завершить (убить) все процессы кроме корневого",
+      "_zh": "活动的控制台/窗格：结束所有进程除了根进程",
       "id": 43991 }
     ,
     "IDM_TERMINATECON": {
@@ -2407,15 +2407,15 @@
       "id": 43997 }
     ,
     "IDM_TERMINATEPRC": {
-      "en": "Active console/pane: Terminate active process",
-      "ru": "Активная консоль/сплит: Завершить активный процесс",
-      "zh": "活动控制台/窗格：终止活动进程",
+      "en": "Active console/pane: Terminate (kill) active process",
+      "ru": "Активная консоль/сплит: Завершить (убить) активный процесс",
+      "_zh": "活动控制台/窗格：终止活动进程",
       "id": 43988 }
     ,
     "IDM_TERMINATEPRCGROUP": {
-      "en": "Active group: Terminate active process in each pane",
-      "ru": "Активная группа: Завершить активный процесс в каждом сплите",
-      "zh": "活动组：在每个窗格中终止活动进程",
+      "en": "Active group: Terminate (kill) active process in each pane",
+      "ru": "Активная группа: Завершить (убить) активный процесс в каждом сплите",
+      "_zh": "活动组：在每个窗格中终止活动进程",
       "id": 44000 }
     ,
     "IDM_TERMINATEZOMBIES": {
@@ -2974,11 +2974,6 @@
       "zh": "背景图片（bmp, jpg, png, tif）:",
       "id": 1699 }
     ,
-    "cbBgImageOverride": {
-      "en": "Background image override",
-      "zh": "覆盖背景图片",
-      "id": 2350 }
-    ,
     "cbBold": {
       "en": "&Bold",
       "ru": "Полужирный",
@@ -3001,16 +2996,6 @@
       "ru": "Вставка длинного текста: избежать «зависания» консоли до окончания вставки",
       "zh": "长文本粘贴：避免控制台在粘贴完成前不响应",
       "id": 2225 }
-    ,
-    "cbClipCtrlV": {
-      "en": "First line (default Ctrl+V)",
-      "zh": "第一行 （默认Ctrl+V）",
-      "id": 2170 }
-    ,
-    "cbClipShiftIns": {
-      "en": "All lines (default Shift+Ins)",
-      "zh": "所有行 （默认Shift+Ins）",
-      "id": 2168 }
     ,
     "cbCloseConEmuOnCrossClicking": {
       "en": "Quit on close (e.g. caption bar cross clicking)",
@@ -3258,8 +3243,8 @@
       "id": 1522 }
     ,
     "cbCursorColor": {
-      "en": "Co&lor (inverse screen part under cursor shape)",
-      "zh": "颜色（&l）（光标形状下的逆屏幕部分）",
+      "en": "Color (inverse screen part under cursor shape)",
+      "zh": "颜色（光标形状下的逆屏幕部分）",
       "id": 1210 }
     ,
     "cbCursorIgnoreSize": {
@@ -3576,6 +3561,7 @@
     ,
     "cbHotkeysAssignedOnly": {
       "en": "&Hide unassigned",
+      "ru": "Скрыть пустые",
       "zh": "隐藏未分配（&H）",
       "id": 2514 }
     ,
@@ -4297,6 +4283,7 @@
     ,
     "gbHotkeys": {
       "en": "Hotkeys, modifiers, macros",
+      "ru": "Горячие клавиши, модификаторы, макросы",
       "zh": "热键，修改器，宏",
       "id": 3014 }
     ,
@@ -4368,11 +4355,6 @@
       "ru": "Режим вставки #2 (Ctrl+V)",
       "zh": "粘贴模式 #2 （Ctrl+V）",
       "id": 3048 }
-    ,
-    "gbPastingOverride": {
-      "en": "Pasting text override (with exception of Far Manager)",
-      "zh": "覆盖粘贴文本（Far Manager除外）",
-      "id": 2349 }
     ,
     "gbPerformance": {
       "en": "Performance counters",
@@ -4571,8 +4553,9 @@
       "id": 1 }
     ,
     "rbActivityAnsi": {
-      "en": "Ansi",
-      "zh": "Ansi",
+      "en": "ANSI",
+      "ru": "ANSI",
+      "zh": "ANSI",
       "id": 2583 }
     ,
     "rbActivityCmd": {
@@ -4606,17 +4589,20 @@
       "id": 1657 }
     ,
     "rbAppDistinctElevatedIgnore": {
-      "en": "Elevation don't matter",
-      "zh": "是否提升的无关紧要",
+      "en": "Doesn't matter",
+      "ru": "Не важно",
+      "_zh": "是否提升的无关紧要",
       "id": 2143 }
     ,
     "rbAppDistinctElevatedOff": {
       "en": "Non elevated",
+      "ru": "Не повышенные",
       "zh": "非提升的",
       "id": 2142 }
     ,
     "rbAppDistinctElevatedOn": {
       "en": "Elevated",
+      "ru": "Повышенные",
       "zh": "提升的",
       "id": 2141 }
     ,
@@ -4634,16 +4620,6 @@
       "en": "‘Stable’",
       "zh": "‘稳定’",
       "id": 2589 }
-    ,
-    "rbBgReplaceIndexes": {
-      "en": "Replace color indexes",
-      "zh": "替换颜色索引",
-      "id": 2426 }
-    ,
-    "rbBgReplaceTransparent": {
-      "en": "Transparent",
-      "zh": "透明度",
-      "id": 2425 }
     ,
     "rbColorBgrHex": {
       "en": "0xBBGGRR (hex)",
@@ -4722,131 +4698,157 @@
     ,
     "rbHotkeysAll": {
       "en": "&All hotkeys",
+      "ru": "Все",
       "zh": "所有热键（&A）",
       "id": 2447 }
     ,
     "rbHotkeysMacros": {
       "en": "&Macros",
+      "ru": "Макросы",
       "zh": "宏（&M）",
       "id": 2450 }
     ,
     "rbHotkeysSystem": {
       "en": "&System",
+      "ru": "Системные",
       "zh": "系统（&S）",
       "id": 2449 }
     ,
     "rbHotkeysUser": {
       "en": "&User defined",
+      "ru": "Пользовательские",
       "zh": "用户定义的（&U）",
       "id": 2448 }
     ,
     "rbMinByEscAlways": {
       "en": "Always",
+      "ru": "Всегда",
       "zh": "总是",
       "id": 2559 }
     ,
     "rbMinByEscEmpty": {
       "en": "If all consoles closed",
+      "ru": "Без открытых консолей",
       "zh": "如果所有控制台已关闭",
       "id": 2560 }
     ,
     "rbMinByEscNever": {
       "en": "Never",
+      "ru": "Никогда",
       "zh": "从不",
       "id": 2561 }
     ,
     "rbPriorityAbove": {
       "en": "&Above normal",
+      "ru": "Выше среднего",
       "zh": "高于（&A）正常",
       "id": 2765 }
     ,
     "rbPriorityBelow": {
       "en": "&Below normal",
+      "ru": "Ниже среднего",
       "zh": "低于（&B）正常",
       "id": 2767 }
     ,
     "rbPriorityHigh": {
       "en": "&High",
+      "ru": "Высокий",
       "zh": "高（&H）",
       "id": 2764 }
     ,
     "rbPriorityIdle": {
       "en": "&Idle",
+      "ru": "Низкий",
       "zh": "闲置（&I）",
       "id": 2768 }
     ,
     "rbPriorityNormal": {
       "en": "&Normal",
+      "ru": "Обычный",
       "zh": "正常（&N）",
       "id": 2766 }
     ,
     "rbPriorityRealtime": {
       "en": "&Realtime",
+      "ru": "Реального времени",
       "zh": "实时（&R）",
       "id": 2763 }
     ,
     "rbRecreateSplit2Bottom": {
       "en": "To &bottom",
+      "ru": "Вни&з",
       "zh": "到底部（&b）",
       "id": 2443 }
     ,
     "rbRecreateSplit2Right": {
       "en": "To ri&ght",
+      "ru": "Вп&раво",
       "zh": "到右边（&g）",
       "id": 2442 }
     ,
     "rbRecreateSplitNone": {
       "en": "&Layered",
+      "ru": "&Полный",
       "zh": "分层的（&L）",
       "id": 2441 }
     ,
     "rbScrollbarAuto": {
       "en": "Auto",
+      "ru": "Авто",
       "zh": "自动",
       "id": 2489 }
     ,
     "rbScrollbarHide": {
       "en": "Hide",
+      "ru": "Скрывать",
       "zh": "隐藏",
       "id": 2487 }
     ,
     "rbScrollbarShow": {
       "en": "Show",
+      "ru": "Показывать",
       "zh": "显示",
       "id": 2488 }
     ,
     "rbStartLastTabs": {
       "en": "Auto save/restore opened tabs",
+      "ru": "Сохранять/восстанавливать открытые консоли",
       "zh": "自动保存/恢复打开的标签页（tab）",
       "id": 2236 }
     ,
     "rbStartNamedTask": {
       "en": "Specified named task",
+      "ru": "Запускать выбранную задачу (Task)",
       "zh": "指定命名任务",
       "id": 2235 }
     ,
     "rbStartSingleApp": {
       "en": "Command line",
+      "ru": "Запускать команду",
       "zh": "命令行",
       "id": 2233 }
     ,
     "rbStartTasksFile": {
       "en": "Tasks file",
+      "ru": "Запускать файл задачи",
       "zh": "任务文件",
       "id": 2234 }
     ,
     "rbTabsAlways": {
       "en": "Always show",
+      "ru": "Всегда показывать",
       "zh": "总是显示",
       "id": 2476 }
     ,
     "rbTabsAuto": {
       "en": "Auto show",
+      "ru": "Авто-показ",
       "zh": "自动显示",
       "id": 2477 }
     ,
     "rbTabsNone": {
       "en": "Don't show",
+      "ru": "Не показывать",
       "zh": "不要显示",
       "id": 2478 }
     ,
@@ -4962,8 +4964,8 @@
       "id": 2532 }
     ,
     "rCursorH": {
-      "en": "&Horizontal (as console)",
-      "zh": "水平（&H）（类似console）",
+      "en": "Horizontal (as console)",
+      "zh": "水平（类似console）",
       "id": 2530 }
     ,
     "rCursorR": {
@@ -4972,8 +4974,8 @@
       "id": 2533 }
     ,
     "rCursorV": {
-      "en": "&Vertical (as GUI)",
-      "zh": "垂直（&V）（类似GUI）",
+      "en": "Vertical (as GUI)",
+      "zh": "垂直（类似GUI）",
       "id": 2531 }
     ,
     "rFixed": {
@@ -5100,6 +5102,10 @@
       "en": "Placement:",
       "zh": "位置：",
       "id": 2338 }
+    ,
+    "stBgReplaceIndexes": {
+      "en": "Replace color indexes:",
+      "id": 3051 }
     ,
     "stClipConfirmLimit": {
       "en": "chars:",
@@ -5293,16 +5299,19 @@
     ,
     "stExtendFontBoldIdx": {
       "en": "Bold:",
+      "ru": "Жирный:",
       "zh": "粗体：",
       "id": 2241 }
     ,
     "stExtendFontItalicIdx": {
       "en": "Italic:",
+      "ru": "Курсив:",
       "zh": "斜体：",
       "id": 2242 }
     ,
     "stExtendFontNormalIdx": {
       "en": "Replace:",
+      "ru": "Замена:",
       "zh": "替换：",
       "id": 2243 }
     ,
@@ -5311,24 +5320,6 @@
       "ru": "За счет одного фонового цвета консольной палитры можно делать шрифт жирным или курсивом",
       "zh": "由于背景颜色反差的原因，你可以改变使用的字体为加粗或斜体",
       "id": 2836 }
-    ,
-    "stExtendFontsBold": {
-      "en": "Bold:",
-      "ru": "Жирный:",
-      "zh": "粗体：",
-      "id": 2886 }
-    ,
-    "stExtendFontsItalic": {
-      "en": "Italic:",
-      "ru": "Курсив:",
-      "zh": "斜体：",
-      "id": 2887 }
-    ,
-    "stExtendFontsNormal": {
-      "en": "Normal:",
-      "ru": "Обычный:",
-      "zh": "正常：",
-      "id": 2888 }
     ,
     "stFarPanelLeft": {
       "en": "Left:",
