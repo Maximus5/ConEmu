@@ -849,17 +849,17 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Hyperlinks and compiler errors (goto editor)",gbHyperlinks,4,1,375,73
-    CONTROL         "Highlight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,13,76,8
-    COMBOBOX        lbFarGotoEditorVk,94,11,56,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "External editor, when Far not started:",stGotoEditorCmd,158,14,139,8
-    COMBOBOX        lbGotoEditorCmd,11,27,287,13,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "...",bGotoEditorCmd,301,27,16,12
-    LTEXT           "Available macros: ‘%1’ - line number, ‘%2’ - column number\n‘%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File\nUse ‘#’ prefix to run editor outside of ConEmu",stGotoEditorCmdHelp,13,44,281,24
+    CONTROL         "Highlight and goto",cbFarGotoEditor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,13,113,8
+    COMBOBOX        lbFarGotoEditorVk,125,11,56,62,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "External editor, when Far not started:",stGotoEditorCmd,182,14,169,8
+    COMBOBOX        lbGotoEditorCmd,11,27,341,150,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "...",bGotoEditorCmd,357,27,16,12
+    LTEXT           "Available macros: ‘%1’ - line number, ‘%2’ - column number\n‘%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File\nUse ‘#’ prefix to run editor outside of ConEmu",stGotoEditorCmdHelp,13,44,361,24
     GROUPBOX        "Highlight rows/columns",gbHighlightRowCol,4,80,375,43
     CONTROL         "Highlight whole row under mouse cursor",cbHighlightMouseRow,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,94,305,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,94,362,8
     CONTROL         "Highlight whole column under mouse cursor",cbHighlightMouseCol,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,107,305,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,107,362,8
 END
 
 IDD_SPG_PASTE DIALOGEX 0, 0, 381, 242
