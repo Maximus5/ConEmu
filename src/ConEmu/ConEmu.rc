@@ -213,44 +213,44 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Generic",gbShowGeneric,4,1,375,54
     CONTROL         "Single instance mode (use existing window instead of running new instance)",cbSingleInstance,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,310,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,366,8
     CONTROL         "Multiple consoles in one ConEmu window",cbMultiCon,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,170,8
-    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,183,27,128,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,202,8
+    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,213,27,164,8
     CONTROL         "Show buttons (toolbar) in tab bar",cbMultiShowButtons,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,40,170,8
-    CONTROL         "Show search field in tab bar",cbMultiShowSearch,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,183,40,128,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,40,202,8
+    CONTROL         "Show search field in tab bar",cbMultiShowSearch,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,213,40,164,8
     GROUPBOX        "Appearance",gbFeatureAppear,4,60,375,28
     CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,73,140,8
-    CONTROL         "Show balloon help tooltips",cbShowHelpTooltips,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,183,73,128,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,73,202,8
+    CONTROL         "Show balloon help tooltips",cbShowHelpTooltips,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,213,73,164,8
     GROUPBOX        "Scrollbar",gbShowScrollBar,4,104,375,29
-    CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON | WS_GROUP,10,117,30,8
-    CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,48,117,35,8
-    CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,92,117,33,8
-    RTEXT           "Appear delay:",stScrollAppear,129,117,50,8
-    EDITTEXT        tScrollAppearDelay,183,115,40,12,ES_AUTOHSCROLL
-    RTEXT           "Disappear:",stScrollDisappear,230,117,43,8
-    EDITTEXT        tScrollDisappearDelay,277,115,40,12,ES_AUTOHSCROLL
+    CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON | WS_GROUP,10,117,48,8
+    CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,61,117,54,8
+    CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,114,117,48,8
+    RTEXT           "Appear delay:",stScrollAppear,164,117,60,8
+    EDITTEXT        tScrollAppearDelay,228,115,40,12,ES_AUTOHSCROLL
+    RTEXT           "Disappear:",stScrollDisappear,272,117,58,8
+    EDITTEXT        tScrollDisappearDelay,334,115,40,12,ES_AUTOHSCROLL
     GROUPBOX        "Title bar (Caption) and border options",gbFeatureCaption,4,138,375,59
-    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,151,117,8
-    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,151,79,8
-    CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,151,94,8
-    RTEXT           "Frame width:",stFrameWidth,9,166,54,8
-    EDITTEXT        tHideCaptionAlwaysFrame,67,164,40,12,ES_AUTOHSCROLL
-    RTEXT           "Appear delay:",stFrameAppear,125,166,50,8
-    EDITTEXT        tHideCaptionAlwaysDelay,179,164,40,12,ES_AUTOHSCROLL
-    RTEXT           "Disappear:",stFrameDisappear,227,166,43,8
-    EDITTEXT        tHideCaptionAlwaysDissapear,273,164,40,12,ES_AUTOHSCROLL
-    CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,181,117,8
+    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,151,144,8
+    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,151,79,8
+    CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,268,151,106,8
+    RTEXT           "Frame width:",stFrameWidth,10,166,84,8
+    EDITTEXT        tHideCaptionAlwaysFrame,98,164,40,12,ES_AUTOHSCROLL
+    RTEXT           "Appear delay:",stFrameAppear,142,166,82,8
+    EDITTEXT        tHideCaptionAlwaysDelay,228,164,40,12,ES_AUTOHSCROLL
+    RTEXT           "Disappear:",stFrameDisappear,272,166,58,8
+    EDITTEXT        tHideCaptionAlwaysDissapear,334,164,40,12,ES_AUTOHSCROLL
+    CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,181,144,8
     CONTROL         "Hide caption of child GUI windows started in ConEmu",cbHideChildCaption,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,181,189,8
-    GROUPBOX        "Quake style",gbQuakeStyle,4,201,236,29
-    CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,214,100,8
-    CONTROL         "Auto-hide on focus lose",cbQuakeAutoHide,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,131,214,94,8
-    GROUPBOX        "Animation time",gbQuakeAnimation,247,201,76,29
-    RTEXT           "ms:",stQuakeAnimation,250,214,20,8
-    EDITTEXT        tQuakeAnimation,273,212,40,12,ES_AUTOHSCROLL
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,181,219,8
+    GROUPBOX        "Quake style",gbQuakeStyle,4,201,294,29
+    CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,214,144,8
+    CONTROL         "Auto-hide on focus lose",cbQuakeAutoHide,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,214,134,8
+    GROUPBOX        "Animation time",gbQuakeAnimation,303,201,76,29
+    RTEXT           "ms:",stQuakeAnimation,306,214,20,8
+    EDITTEXT        tQuakeAnimation,329,212,40,12,ES_AUTOHSCROLL
 END
 
 IDD_SPG_CONFIRM DIALOGEX 0, 0, 381, 242
