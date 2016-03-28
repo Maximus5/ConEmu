@@ -558,18 +558,6 @@ bool CConEmuCtrl::key_MultiBuffer(const ConEmuChord& VkState, bool TestOnly, con
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_TerminateProcess(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
-	if (!pRCon)
-		return false;
-	if (TestOnly)
-		return true;
-
-	pRCon->TerminateActiveProcess(true, 0);
-	return true;
-}
-
-// pRCon may be NULL
 bool CConEmuCtrl::key_DuplicateRoot(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (!pRCon)

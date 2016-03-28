@@ -304,10 +304,10 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		;
 	Add(vkCloseExceptCon, chk_User,  NULL,    L"CloseExceptConKey",     CConEmuCtrl::key_GuiMacro, false, L"Close(5)")
 		;
-	Add(vkTerminateApp,   chk_User,  NULL,    L"KillProcessKey",        CConEmuCtrl::key_TerminateProcess/*sort of Close*/)
-		;
+	Add(vkTerminateApp,   chk_User,  NULL,    L"KillProcessKey",        CConEmuCtrl::key_GuiMacro, false, L"Close(1)")
+		->SetHotKey(VK_PAUSE,VK_CONTROL,VK_MENU); // Ctrl+Alt+Break
 	Add(vkTermButShell,   chk_User,  NULL,    L"KillAllButShellKey",    CConEmuCtrl::key_GuiMacro, false, L"Close(10,1)")
-		->SetHotKey(VK_DELETE,VK_LWIN,VK_SHIFT);
+		->SetHotKey(VK_PAUSE,VK_CONTROL,VK_MENU); // Win+Alt+Break
 	Add(vkDuplicateRoot,  chk_User,  NULL,    L"DuplicateRootKey",      CConEmuCtrl::key_DuplicateRoot)
 		->SetHotKey('S',VK_LWIN);
 	Add(vkCloseConEmu,    chk_User,  NULL,    L"CloseConEmuKey",        CConEmuCtrl::key_GuiMacro, false, L"Close(2)")
