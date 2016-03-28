@@ -41,6 +41,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 CSetPgKeys::CSetPgKeys()
 	: mp_ActiveHotKey(NULL)
+	, mn_LastShowType(rbHotkeysAll)
+	, mb_LastHideEmpties(false)
 {
 }
 
@@ -105,9 +107,8 @@ LRESULT CSetPgKeys::OnInitDialog(HWND hDlg, bool abInitial)
 	return 0;
 }
 
-void CSetPgKeys::FillHotKeysList(HWND hDlg, BOOL abInitial)
+void CSetPgKeys::FillHotKeysList(HWND hDlg, bool abInitial)
 {
-	static UINT nLastShowType = rbHotkeysAll;
 	UINT nShowType = rbHotkeysAll;
 	if (isChecked(hDlg, rbHotkeysUser))
 		nShowType = rbHotkeysUser;
@@ -116,18 +117,24 @@ void CSetPgKeys::FillHotKeysList(HWND hDlg, BOOL abInitial)
 	else if (isChecked(hDlg, rbHotkeysSystem))
 		nShowType = rbHotkeysSystem;
 
-	static bool bLastHideEmpties = false;
 	bool bHideEmpties = (isChecked(hDlg, cbHotkeysAssignedOnly) == BST_CHECKED);
+
+	CEStr lsFilter;
+	GetString(hDlg, tHotkeysFilter, &lsFilter.ms_Val);
 
 	// Населить список всеми хоткеями
 	HWND hList = GetDlgItem(hDlg, lbConEmuHotKeys);
-	if (abInitial || (nLastShowType != nShowType) || (bLastHideEmpties != bHideEmpties))
+	if (abInitial
+		|| (mn_LastShowType != nShowType)
+		|| (mb_LastHideEmpties != bHideEmpties)
+		)
 	{
 		ListView_DeleteAllItems(hList);
-		abInitial = TRUE;
+		abInitial = true;
 	}
-	nLastShowType = nShowType;
-	bLastHideEmpties = bHideEmpties;
+	mn_LastShowType = nShowType;
+	mb_LastHideEmpties = bHideEmpties;
+	ms_LastFilter.Set(lsFilter);
 
 
 	wchar_t szName[128], szDescr[512];
@@ -200,6 +207,27 @@ void CSetPgKeys::FillHotKeysList(HWND hDlg, BOOL abInitial)
 				{
 					_ASSERTE(ppHK && ppHK->DescrLangID);
 					break;
+				}
+			}
+
+			if (!lsFilter.IsEmpty())
+			{
+				bool bMatch = false;
+				ppHK->GetDescription(szDescr, countof(szDescr));
+				ppHK->GetHotkeyName(szName);
+				if (StrStrI(szDescr, lsFilter))
+					bMatch = true;
+				else if (StrStrI(szName, lsFilter))
+					bMatch = true;
+				// Match?
+				if (!bMatch)
+				{
+					if (!abInitial)
+					{
+						ListView_DeleteItem(hList, nItem);
+						nItem--; ItemsCount--;
+					}
+					continue;
 				}
 			}
 
@@ -541,7 +569,7 @@ LRESULT CSetPgKeys::OnEditChanged(HWND hDlg, WORD nCtrlId)
 
 				SetHotkeyVkMod(mp_ActiveHotKey, nHotKey | nCurMods);
 
-				FillHotKeysList(hDlg, FALSE);
+				FillHotKeysList(hDlg, false);
 			}
 			break;
 		} // case hkHotKeySelect:
@@ -550,7 +578,25 @@ LRESULT CSetPgKeys::OnEditChanged(HWND hDlg, WORD nCtrlId)
 		if (mp_ActiveHotKey && (mp_ActiveHotKey->HkType == chk_Macro))
 		{
 			MyGetDlgItemText(hDlg, tGuiMacro, mp_ActiveHotKey->cchGuiMacroMax, mp_ActiveHotKey->GuiMacro);
-			FillHotKeysList(hDlg, FALSE);
+			FillHotKeysList(hDlg, false);
+		}
+		break;
+
+	case tHotkeysFilter:
+		{
+			CEStr lsStr;
+			GetString(hDlg, nCtrlId, &lsStr.ms_Val);
+			bool bReset = true;
+			if (!lsStr.IsEmpty()
+				&& (lsStr.GetLen() > ms_LastFilter.GetLen())
+				&& (ms_LastFilter.IsEmpty() || StrStrI(lsStr, ms_LastFilter))
+				)
+			{
+				// We may just delete some already populated hotkeys,
+				// because new filter is stronger and including previous one
+				bReset = false;
+			}
+			FillHotKeysList(hDlg, bReset);
 		}
 		break;
 
@@ -603,7 +649,7 @@ INT_PTR CSetPgKeys::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 					CHotKeyDialog::SetHotkeyField(GetDlgItem(hDlg, hkHotKeySelect), 0);
 					SetHotkeyVkMod(mp_ActiveHotKey, vk);
 				}
-				FillHotKeysList(hDlg, FALSE);
+				FillHotKeysList(hDlg, false);
 			}
 
 			break;
@@ -691,7 +737,7 @@ INT_PTR CSetPgKeys::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 			//	gpSet->nHostkeyModifier = (nModifers >> 8); // а тут они хранятся в младших (так сложилось)
 			//}
 
-			FillHotKeysList(hDlg, FALSE);
+			FillHotKeysList(hDlg, false);
 
 			break;
 		} // lbHotKeyMod1, lbHotKeyMod2, lbHotKeyMod3

@@ -1720,6 +1720,7 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 	/* *** GUI Macro - hotkeys *** */
 	case tGuiMacro:
 	case hkHotKeySelect:
+	case tHotkeysFilter:
 	{
 		CSetPgKeys* pKeysPg;
 		if (GetPageObj(pKeysPg))

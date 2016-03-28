@@ -50,7 +50,7 @@ public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
 
-	void FillHotKeysList(HWND hWnd2, BOOL abInitial);
+	void FillHotKeysList(HWND hWnd2, bool abInitial);
 	LRESULT OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 	static int CALLBACK HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
@@ -72,4 +72,7 @@ protected:
 protected:
 	// Members
 	ConEmuHotKey *mp_ActiveHotKey;
+	UINT mn_LastShowType;
+	bool mb_LastHideEmpties;
+	CEStr ms_LastFilter;
 };

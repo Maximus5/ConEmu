@@ -1161,23 +1161,24 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Hotkeys, modifiers, macros",gbHotkeys,4,1,375,232
-    CONTROL         "List1",lbConEmuHotKeys,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,8,23,367,172
-    RTEXT           "Choose hotkey:",stHotKeySelect,9,202,64,8,WS_DISABLED
-    CONTROL         "",hkHotKeySelect,"msctls_hotkey32",WS_DISABLED | WS_BORDER | WS_TABSTOP,77,200,65,13
-    EDITTEXT        tGuiMacro,77,216,279,12,ES_AUTOHSCROLL | WS_DISABLED
-    COMBOBOX        lbHotKeyList,148,200,68,79,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbHotKeyMod1,237,200,44,30,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbHotKeyMod2,284,200,44,30,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbHotKeyMod3,331,200,44,30,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Description:",stGuiMacro,9,218,64,8,WS_DISABLED
-    PUSHBUTTON      "?",cbGuiMacroHelp,359,215,16,14,WS_DISABLED
-    LTEXT           "Show:",stHotkeys,11,11,36,8
-    CONTROL         "&All hotkeys",rbHotkeysAll,"Button",BS_AUTORADIOBUTTON,50,11,51,8
-    CONTROL         "&User defined",rbHotkeysUser,"Button",BS_AUTORADIOBUTTON,109,11,64,8
-    CONTROL         "&System",rbHotkeysSystem,"Button",BS_AUTORADIOBUTTON,176,11,48,8
-    CONTROL         "&Macros",rbHotkeysMacros,"Button",BS_AUTORADIOBUTTON,228,11,56,8
-    CONTROL         "&Hide unassigned",cbHotkeysAssignedOnly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,288,11,87,8
+    GROUPBOX        "Hotkeys, modifiers, macros",gbHotkeys,4,1,375,240
+    CONTROL         "List1",lbConEmuHotKeys,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,8,45,367,157
+    RTEXT           "Choose hotkey:",stHotKeySelect,9,210,64,8,WS_DISABLED
+    CONTROL         "",hkHotKeySelect,"msctls_hotkey32",WS_DISABLED | WS_BORDER | WS_TABSTOP,77,208,65,13
+    EDITTEXT        tGuiMacro,77,224,279,12,ES_AUTOHSCROLL | WS_DISABLED
+    COMBOBOX        lbHotKeyList,148,208,68,79,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbHotKeyMod1,237,208,44,30,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbHotKeyMod2,284,208,44,30,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        lbHotKeyMod3,331,208,44,30,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Description:",stGuiMacro,9,226,64,8,WS_DISABLED
+    PUSHBUTTON      "?",cbGuiMacroHelp,359,223,16,14,WS_DISABLED
+    CONTROL         "&All hotkeys",rbHotkeysAll,"Button",BS_AUTORADIOBUTTON,11,13,82,8
+    CONTROL         "&User defined",rbHotkeysUser,"Button",BS_AUTORADIOBUTTON,11,28,82,8
+    CONTROL         "&System",rbHotkeysSystem,"Button",BS_AUTORADIOBUTTON,96,13,76,8
+    CONTROL         "&Macros",rbHotkeysMacros,"Button",BS_AUTORADIOBUTTON,96,29,76,8
+    CONTROL         "&Hide unassigned",cbHotkeysAssignedOnly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,279,11,85,8
+    EDITTEXT        tHotkeysFilter,279,27,95,12,ES_AUTOHSCROLL
+    RTEXT           "Filter :",stHotkeysFilter,174,29,100,8
 END
 
 IDD_SPG_CONTROLS DIALOGEX 0, 0, 381, 242
