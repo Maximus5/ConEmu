@@ -630,40 +630,40 @@ BEGIN
     PUSHBUTTON      "Export...",cbExportConfig,442,2,60,14
 END
 
-IDD_SPG_INFO DIALOGEX 0, 0, 328, 224
+IDD_SPG_INFO DIALOGEX 0, 0, 381, 224
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Performance counters",gbPerformance,4,1,375,30
     GROUPBOX        "Console states",IDC_CONSOLE_STATES,4,35,375,28
-    GROUPBOX        "Processes",gbInfoProcesses,4,65,185,125
-    EDITTEXT        tsTopPID,40,45,54,12,ES_AUTOHSCROLL | ES_READONLY
-    LISTBOX         lbProcesses,9,76,173,109,NOT LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    GROUPBOX        "Processes",gbInfoProcesses,4,65,204,125
+    EDITTEXT        tsTopPID,40,45,69,12,ES_AUTOHSCROLL | ES_READONLY
+    LISTBOX         lbProcesses,9,76,194,109,NOT LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
     EDITTEXT        tPerfCounters,9,13,363,12,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "Current command line",gbInfoCmdLine,4,190,375,29
     EDITTEXT        tCurCmdLine,9,201,363,12,ES_AUTOHSCROLL | ES_READONLY
-    GROUPBOX        "Sizes",gbInfoSizes,195,65,128,125
-    RTEXT           "Console (chars):",stConsoleSizeChars,199,76,60,8
-    EDITTEXT        tConSizeChr,264,74,54,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "(pixels):",stConsoleSizePixels,199,91,60,8
-    EDITTEXT        tConSizePix,264,89,54,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "DC window:",stDcWndSize,199,107,60,8
-    EDITTEXT        tDCSize,264,105,54,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Left:",stFarPanelLeft,198,139,26,8
-    EDITTEXT        tPanelLeft,228,137,90,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Right:",stFarPanelRight,197,155,27,8
-    EDITTEXT        tPanelRight,228,153,90,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Main:",stVConFontMain,200,175,20,8
-    EDITTEXT        tRealFontMain,223,173,43,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Fix:",stVConFontFix,271,175,13,8
-    EDITTEXT        tRealFontBorders,287,173,31,12,ES_AUTOHSCROLL | ES_READONLY
-    GROUPBOX        "Font",gbVConFont,195,164,128,26
-    EDITTEXT        tCursorPos,264,121,54,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Cursor (x,y,h):",stRConCursorInfo,199,123,60,8
+    GROUPBOX        "Sizes",gbInfoSizes,214,65,165,125
+    RTEXT           "Console (chars):",stConsoleSizeChars,218,76,78,8
+    EDITTEXT        tConSizeChr,299,74,75,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "(pixels):",stConsoleSizePixels,218,91,78,8
+    EDITTEXT        tConSizePix,299,89,75,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "DC window:",stDcWndSize,218,107,78,8
+    EDITTEXT        tDCSize,299,105,75,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Left:",stFarPanelLeft,217,139,66,8
+    EDITTEXT        tPanelLeft,284,137,90,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Right:",stFarPanelRight,216,155,66,8
+    EDITTEXT        tPanelRight,284,153,90,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Main:",stVConFontMain,218,175,40,8
+    EDITTEXT        tRealFontMain,262,173,46,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Fix:",stVConFontFix,310,175,29,8
+    EDITTEXT        tRealFontBorders,343,173,31,12,ES_AUTOHSCROLL | ES_READONLY
+    GROUPBOX        "Font",gbVConFont,214,164,165,26
+    EDITTEXT        tCursorPos,299,121,75,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Cursor (x,y,h):",stRConCursorInfo,218,123,78,8
     RTEXT           "Far PID:",stFarPID,8,47,29,8
-    RTEXT           "States:",stRConStates,97,47,36,8
-    EDITTEXT        tsRConFlags,136,45,181,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "States:",stRConStates,113,47,36,8
+    EDITTEXT        tsRConFlags,152,45,222,12,ES_AUTOHSCROLL | ES_READONLY
 END
 
 IDD_SPG_FEATURES DIALOGEX 0, 0, 381, 242
