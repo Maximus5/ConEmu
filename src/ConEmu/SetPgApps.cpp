@@ -113,22 +113,17 @@ LRESULT CSetPgApps::OnInitDialog(HWND hDlg, bool abInitial)
 
 	MSetter lockSelChange(&mb_SkipSelChange);
 
-	if (abInitial || !mb_SkipEditSet)
+	if (abInitial)
 	{
-		const ColorPalette* pPal;
-
 		SendDlgItemMessage(mh_Child, lbColorsOverride, CB_RESETCONTENT, 0, 0);
-		//LPCWSTR pszCurPal = CLngRc::getRsrc(lng_CurClrScheme/*"<Current color scheme>"*/, countof(szCurrentScheme));
-		//SendDlgItemMessage(mh_Child, lbColorsOverride, CB_ADDSTRING, 0, (LPARAM)pszCurPal);
-
 		int iCurPalette = 0;
+		const ColorPalette* pPal;
 		for (int i = 0; (pPal = gpSet->PaletteGet(i)) != NULL; i++)
 		{
 			SendDlgItemMessage(mh_Child, lbColorsOverride, CB_ADDSTRING, 0, (LPARAM)pPal->pszName);
 			if ((!iCurPalette) && (lstrcmp(pPal->pszName, gsDefaultColorScheme) == 0))
 				iCurPalette = i;
 		}
-
 		SendDlgItemMessage(mh_Child, lbColorsOverride, CB_SETCURSEL, iCurPalette, 0);
 
 		CSetDlgLists::FillListBox(mh_Child, lbExtendFontBoldIdx, CSetDlgLists::eColorIdx);
@@ -698,16 +693,16 @@ void CSetPgApps::DoFillControls(const AppSettings* pApp)
 		(pApp->Elevated == 2) ? rbAppDistinctElevatedOff : rbAppDistinctElevatedIgnore);
 
 	BYTE b;
-	wchar_t temp[MAX_PATH];
 
 	checkDlgButton(mh_Child, cbExtendFontsOverride, pApp->OverrideExtendFonts);
 	checkDlgButton(mh_Child, cbExtendFonts, pApp->isExtendFonts);
-	_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontBoldColor<16) ? L"%2i" : L"None", pApp->nFontBoldColor);
-	CSetDlgLists::SelectStringExact(mh_Child, lbExtendFontBoldIdx, temp);
-	_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontItalicColor<16) ? L"%2i" : L"None", pApp->nFontItalicColor);
-	CSetDlgLists::SelectStringExact(mh_Child, lbExtendFontItalicIdx, temp);
-	_wsprintf(temp, SKIPLEN(countof(temp))(pApp->nFontNormalColor<16) ? L"%2i" : L"None", pApp->nFontNormalColor);
-	CSetDlgLists::SelectStringExact(mh_Child, lbExtendFontNormalIdx, temp);
+
+	b = pApp->nFontBoldColor;
+	CSetDlgLists::FillListBoxItems(GetDlgItem(mh_Child, lbExtendFontBoldIdx), CSetDlgLists::eColorIdx, b, false);
+	b = pApp->nFontItalicColor;
+	CSetDlgLists::FillListBoxItems(GetDlgItem(mh_Child, lbExtendFontItalicIdx), CSetDlgLists::eColorIdx, b, false);
+	b = pApp->nFontNormalColor;
+	CSetDlgLists::FillListBoxItems(GetDlgItem(mh_Child, lbExtendFontNormalIdx), CSetDlgLists::eColorIdx, b, false);
 
 	checkDlgButton(mh_Child, cbCursorOverride, pApp->OverrideCursor);
 	CSetPgCursor::InitCursorCtrls(mh_Child, pApp);
@@ -723,7 +718,8 @@ void CSetPgApps::DoFillControls(const AppSettings* pApp)
 	checkDlgButton(mh_Child, cbCTSBashMargin, pApp->isCTSBashMargin);
 	checkDlgButton(mh_Child, cbCTSTrimTrailing, pApp->isCTSTrimTrailing);
 	b = pApp->isCTSEOL;
-	CSetDlgLists::GetListBoxItem(mh_Child, lbCTSEOL, CSetDlgLists::eCRLF, b);
+	CSetDlgLists::FillListBoxItems(GetDlgItem(mh_Child, lbCTSEOL), CSetDlgLists::eCRLF, b, false);
+
 	//
 	PasteLinesMode mode;
 	mode = pApp->isPasteAllLines;
