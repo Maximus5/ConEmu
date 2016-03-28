@@ -238,7 +238,6 @@
 #define tPanelRight                     1601
 #define IDC_CHOOSE_DIR                  1602
 #define IDC_STARTUP_DIR                 1603
-#define bFarHourglass                   1606
 #define bRClick                         1607
 #define bRealConsoleSettings            1608
 #define bDropSettings                   1609
@@ -769,8 +768,6 @@
 #define cbStatusHorzSep                 2422
 #define cbAddConEmu2Path                2423
 #define bCmdAutoClear                   2424
-#define rbBgReplaceTransparent          2425
-#define rbBgReplaceIndexes              2426
 #define tDarkerPlugin                   2427
 #define slDarkerPlugin                  2428
 #define cbShowWasHiddenMsg              2435

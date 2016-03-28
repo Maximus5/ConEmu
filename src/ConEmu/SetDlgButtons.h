@@ -107,7 +107,6 @@ protected:
 	static void OnBtn_FontStyles(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_BgImageEnable(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_BgImageChoose(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_BgReplaceTransparent(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_BgAllowPlugin(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_RClick(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_SafeFarClose(HWND hDlg, WORD CB, BYTE uCheck);

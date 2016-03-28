@@ -215,10 +215,6 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case bBgImage:
 			OnBtn_BgImageChoose(hDlg, CB, uCheck);
 			break;
-		case rbBgReplaceIndexes:
-		case rbBgReplaceTransparent:
-			OnBtn_BgReplaceTransparent(hDlg, CB, uCheck);
-			break;
 		case cbBgAllowPlugin:
 			OnBtn_BgAllowPlugin(hDlg, CB, uCheck);
 			break;
@@ -2095,14 +2091,6 @@ void CSetDlgButtons::OnBtn_BgImageChoose(HWND hDlg, WORD CB, BYTE uCheck)
 		}
 	}
 } // bBgImage
-
-
-// rbBgReplaceTransparent || rbBgReplaceIndexes
-void CSetDlgButtons::OnBtn_BgReplaceTransparent(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==rbBgReplaceTransparent || CB==rbBgReplaceIndexes);
-	//TODO: ...
-} // rbBgReplaceTransparent || rbBgReplaceIndexes
 
 
 // cbBgAllowPlugin

@@ -53,7 +53,6 @@ LRESULT CSetPgBackgr::OnInitDialog(HWND hDlg, bool abInitial)
 	SetDlgItemText(hDlg, tBgImage, gpSet->sBgImage);
 	//checkDlgButton(hDlg, rBgSimple, BST_CHECKED);
 
-	checkDlgButton(hDlg, rbBgReplaceIndexes, BST_CHECKED);
 	CSetDlgColors::FillBgImageColors(hDlg);
 
 	checkDlgButton(hDlg, cbBgImage, BST(gpSet->isShowBgImage));
