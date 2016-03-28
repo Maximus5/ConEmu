@@ -1370,7 +1370,7 @@ BEGIN
     GROUPBOX        "",IDC_STATIC,1,94,349,62
     GROUPBOX        "",IDC_STATIC,1,162,349,33
     GROUPBOX        "",IDC_STATIC,1,202,349,172
-    CTEXT           "End of scroll area",stAppDistinctBottom,25,390,171,8
+    CTEXT           "End of scroll area",stAppDistinctBottom,25,385,171,8
     GROUPBOX        "Copying text override",gbCopyingOverride,7,212,339,26
     GROUPBOX        "Starting selection with arrows",gbSelectingOverride,7,243,339,28
     GROUPBOX        "Prompt override",gbPromptOverride,7,326,339,42
