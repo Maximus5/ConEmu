@@ -147,12 +147,12 @@ BEGIN
     LTEXT           "By the cost of background colors you may change the used font to bold or italic",stExtendFonts,12,183,364,8
     GROUPBOX        "",gbExtendFonts,4,172,375,44
     CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,172,110,8
-    COMBOBOX        lbExtendFontBoldIdx,55,197,37,47,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbExtendFontItalicIdx,139,197,37,47,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        lbExtendFontNormalIdx,225,197,37,48,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "Bold:",stExtendFontsBold,6,199,45,8
-    RTEXT           "Italic:",stExtendFontsItalic,94,199,42,8
-    RTEXT           "Normal:",stExtendFontsNormal,178,199,43,8
+    COMBOBOX        lbExtendFontBoldIdx,55,197,37,47,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Italic:",stExtendFontsItalic,94,199,45,8
+    COMBOBOX        lbExtendFontItalicIdx,139,197,37,47,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Replace:",stExtendFontsNormal,178,199,45,8
+    COMBOBOX        lbExtendFontNormalIdx,225,197,37,48,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_SPG_SIZEPOS DIALOGEX 0, 0, 381, 242
