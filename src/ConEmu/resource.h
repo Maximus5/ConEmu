@@ -1178,9 +1178,6 @@
 #define cbFont2AA                       2883
 #define stCmdTaskAdd                    2884
 #define stKeySelect                     2885
-#define stExtendFontsBold               2886
-#define stExtendFontsItalic             2887
-#define stExtendFontsNormal             2888
 #define gbWindowSizePos                 2889
 #define gbWindowPos                     2890
 #define stWindowPosX                    2891

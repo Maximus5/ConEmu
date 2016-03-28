@@ -147,11 +147,11 @@ BEGIN
     LTEXT           "By the cost of background colors you may change the used font to bold or italic",stExtendFonts,12,183,364,8
     GROUPBOX        "",gbExtendFonts,4,172,375,44
     CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,172,110,8
-    RTEXT           "Bold:",stExtendFontsBold,6,199,45,8
+    RTEXT           "Bold:",stExtendFontBoldIdx,8,199,45,8
     COMBOBOX        lbExtendFontBoldIdx,55,197,37,47,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Italic:",stExtendFontsItalic,94,199,45,8
+    RTEXT           "Italic:",stExtendFontItalicIdx,94,199,43,8
     COMBOBOX        lbExtendFontItalicIdx,139,197,37,47,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Replace:",stExtendFontsNormal,178,199,45,8
+    RTEXT           "Replace:",stExtendFontNormalIdx,178,199,45,8
     COMBOBOX        lbExtendFontNormalIdx,225,197,37,48,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
 
@@ -1375,12 +1375,12 @@ BEGIN
     GROUPBOX        "Starting selection with arrows",gbSelectingOverride,7,243,339,28
     GROUPBOX        "Prompt override",gbPromptOverride,7,326,339,42
     CONTROL         "Extend fonts override",cbExtendFontsOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,0,116,8
-    CONTROL         "Extend",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,12,76,10
-    RTEXT           "Bold:",stExtendFontBoldIdx,84,12,45,8
-    COMBOBOX        lbExtendFontBoldIdx,133,9,37,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Italic:",stExtendFontItalicIdx,171,12,45,8
-    COMBOBOX        lbExtendFontItalicIdx,219,9,37,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Replace:",stExtendFontNormalIdx,257,12,45,8
+    CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,12,90,10
+    RTEXT           "Bold:",stExtendFontBoldIdx,95,12,40,8
+    COMBOBOX        lbExtendFontBoldIdx,137,9,37,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Italic:",stExtendFontItalicIdx,176,12,45,8
+    COMBOBOX        lbExtendFontItalicIdx,223,9,37,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Replace:",stExtendFontNormalIdx,262,12,45,8
     COMBOBOX        lbExtendFontNormalIdx,307,9,37,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     CONTROL         "Cursor override",cbCursorOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,34,115,8
     CONTROL         "Horizontal (as console)",rCursorH,"Button",BS_AUTORADIOBUTTON | WS_GROUP,7,47,108,8
