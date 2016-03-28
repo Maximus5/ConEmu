@@ -162,7 +162,13 @@ INT_PTR CSetPgBase::OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlI
 
 INT_PTR CSetPgBase::OnSetCursor(HWND hDlg, HWND hCtrl, WORD nCtrlId, WORD nHitTest, WORD nMouseMsg)
 {
-	if ((nHitTest == HTCLIENT) && CDlgItemHelper::isHyperlinkCtrl(nCtrlId))
+	if (nHitTest != HTCLIENT)
+		return FALSE;
+
+	#ifdef _DEBUG
+	LONG_PTR wId = GetWindowLongPtr(hCtrl, GWLP_ID);
+	#endif
+	if (CDlgItemHelper::isHyperlinkCtrl(nCtrlId))
 	{
 		SetCursor(LoadCursor(NULL, IDC_HAND));
 		SetWindowLongPtr(hDlg, DWLP_MSGRESULT, TRUE);
@@ -360,7 +366,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			return pObj->OnCtlColorStatic(hDlg, (HDC)wParam, (HWND)lParam, GetDlgCtrlID((HWND)lParam));
 
 		case WM_SETCURSOR:
-			return pObj->OnSetCursor(hDlg, (HWND)wParam, GetDlgCtrlID((HWND)lParam), LOWORD(lParam), HIWORD(lParam));
+			return pObj->OnSetCursor(hDlg, (HWND)wParam, GetDlgCtrlID((HWND)wParam), LOWORD(lParam), HIWORD(lParam));
 
 		case WM_HSCROLL:
 		{

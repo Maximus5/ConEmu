@@ -246,9 +246,44 @@ bool CDlgItemHelper::isHyperlinkCtrl(WORD nCtrlId)
 	switch (nCtrlId)
 	{
 	case stHomePage:
-	case tDefTermWikiLink:
+	case stDefTermWikiLink:
 	case stConEmuUrl:
 		return true;
 	}
 	return false;
+}
+
+bool CDlgItemHelper::ProcessHyperlinkCtrl(HWND hDlg, WORD nCtrlId)
+{
+	if (!isHyperlinkCtrl(nCtrlId))
+	{
+		return false;
+	}
+
+	CEStr lsUrl;
+
+	switch (nCtrlId)
+	{
+	case stConEmuUrl:
+		lsUrl = gsHomePage;
+		break;
+	case stHomePage:
+		lsUrl = gsFirstStart;
+		break;
+	default:
+		if (GetString(hDlg, nCtrlId, &lsUrl.ms_Val) <= 0)
+			return false;
+		if ((0 != wcsncmp(lsUrl, L"http://", 7))
+			&& (0 != wcsncmp(lsUrl, L"https://", 8))
+			) return false;
+	}
+
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", lsUrl, NULL, NULL, SW_SHOWNORMAL);
+	if (shellRc <= 32)
+	{
+		DisplayLastError(L"ShellExecute failed", shellRc);
+		return false;
+	}
+
+	return true;
 }

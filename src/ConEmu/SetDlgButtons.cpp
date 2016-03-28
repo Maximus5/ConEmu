@@ -869,6 +869,11 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			break;
 
 		default:
+			if (CDlgItemHelper::isHyperlinkCtrl(CB))
+			{
+				CDlgItemHelper::ProcessHyperlinkCtrl(hDlg, CB);
+				break;
+			}
 			Assert(FALSE && "Button click was not processed");
 			bProcessed = false;
 	}
