@@ -287,13 +287,13 @@ FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Create new console history settings",gbHistorySettings,4,1,375,229
     CONTROL         "Save command history (leave edit box empty to use main settings storage)",cbSaveCmdHistory,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,308,8
-    EDITTEXT        tCmdHistoryLocation,21,27,281,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "...",cbCmdHistoryLocation,305,26,13,12
-    LTEXT           "History items:",stHistoryItems,10,51,66,8
-    LISTBOX         lbHistoryItems,9,63,308,162,LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Clear history",cbHistoryClearAll,247,46,70,14
-    PUSHBUTTON      "Delete item",cbHistoryDelItem,167,46,73,14
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,363,8
+    EDITTEXT        tCmdHistoryLocation,21,27,337,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",cbCmdHistoryLocation,362,26,13,12
+    LTEXT           "History items:",stHistoryItems,10,51,212,8
+    LISTBOX         lbHistoryItems,9,63,365,162,LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | WS_VSCROLL | WS_HSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Clear history",cbHistoryClearAll,305,46,70,14
+    PUSHBUTTON      "Delete item",cbHistoryDelItem,225,46,73,14
 END
 
 IDD_SPG_TASKBAR DIALOGEX 0, 0, 381, 242
