@@ -538,8 +538,6 @@
 #define gbFeatureAppear                 2164
 #define gbFeatureCaption                2165
 #define gbFeatureClipboard              2166
-#define cbClipShiftIns                  2168
-#define cbClipCtrlV                     2170
 #define cbClipConfirmEnter              2171
 #define cbClipboardOverride             2172
 #define tFindText                       2173
@@ -708,7 +706,6 @@
 #define vkCTSVkPromptClk                2346
 #define gbPromptOverride                2347
 #define gbCopyingOverride               2348
-#define gbPastingOverride               2349
 #define cbBgImageOverride               2350
 #define tAppDistinctHolder              2353
 #define tScrollAppearDelay              2354

@@ -58,7 +58,8 @@ static struct StrDistinctControls
 	{cbClipboardOverride, {
 		gbCopyingOverride, cbCTSDetectLineEnd, cbCTSBashMargin, cbCTSTrimTrailing, stCTSEOL, lbCTSEOL,
 		gbSelectingOverride, cbCTSShiftArrowStartSel,
-		gbPastingOverride, cbClipShiftIns, cbClipCtrlV,
+		gbPasteM1, rPasteM1MultiLine, rPasteM1SingleLine, rPasteM1FirstLine, rPasteM1Nothing,
+		gbPasteM2, rPasteM2MultiLine, rPasteM2SingleLine, rPasteM2FirstLine, rPasteM2Nothing,
 		gbPromptOverride, cbCTSClickPromptPosition, cbCTSDeleteLeftWord}},
 	{cbBgImageOverride, {cbBgImage, tBgImage, bBgImage, lbBgPlacement}},
 };
@@ -570,12 +571,40 @@ INT_PTR CSetPgApps::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 		DoEnableControls(cbClipboardOverride);
 		pApp->OverrideClipboard = isChecked(mh_Child, nCtrlId);
 		break;
-	case cbClipShiftIns:
-		pApp->isPasteAllLines = isChecked(mh_Child, nCtrlId);
+
+	case rPasteM1MultiLine:
+	case rPasteM1FirstLine:
+	case rPasteM1SingleLine:
+	case rPasteM1Nothing:
+		switch (nCtrlId)
+		{
+		case rPasteM1MultiLine:
+			pApp->isPasteAllLines = plm_Default; break;
+		case rPasteM1FirstLine:
+			pApp->isPasteAllLines = plm_FirstLine; break;
+		case rPasteM1SingleLine:
+			pApp->isPasteAllLines = plm_SingleLine; break;
+		case rPasteM1Nothing:
+			pApp->isPasteAllLines = plm_Nothing; break;
+		}
 		break;
-	case cbClipCtrlV:
-		pApp->isPasteFirstLine = isChecked(mh_Child, nCtrlId);
+	case rPasteM2MultiLine:
+	case rPasteM2FirstLine:
+	case rPasteM2SingleLine:
+	case rPasteM2Nothing:
+		switch (nCtrlId)
+		{
+		case rPasteM2MultiLine:
+			gpSet->AppStd.isPasteFirstLine = plm_MultiLine; break;
+		case rPasteM2FirstLine:
+			gpSet->AppStd.isPasteFirstLine = plm_FirstLine; break;
+		case rPasteM2SingleLine:
+			gpSet->AppStd.isPasteFirstLine = plm_Default; break;
+		case rPasteM2Nothing:
+			gpSet->AppStd.isPasteFirstLine = plm_Nothing; break;
+		}
 		break;
+
 	case cbCTSDetectLineEnd:
 		pApp->isCTSDetectLineEnd = isChecked(mh_Child, nCtrlId);
 		break;
@@ -752,8 +781,19 @@ void CSetPgApps::DoFillControls(const AppSettings* pApp)
 	b = pApp->isCTSEOL;
 	CSetDlgLists::GetListBoxItem(mh_Child, lbCTSEOL, CSetDlgLists::eCRLF, b);
 	//
-	checkDlgButton(mh_Child, cbClipShiftIns, pApp->isPasteAllLines);
-	checkDlgButton(mh_Child, cbClipCtrlV, pApp->isPasteFirstLine);
+	PasteLinesMode mode;
+	mode = pApp->isPasteAllLines;
+	checkRadioButton(mh_Child, rPasteM1MultiLine, rPasteM1Nothing,
+		(mode == plm_FirstLine) ? rPasteM1FirstLine
+		: (mode == plm_SingleLine) ? rPasteM1SingleLine
+		: (mode == plm_Nothing) ? rPasteM1Nothing
+		: rPasteM1MultiLine);
+	mode = pApp->isPasteFirstLine;
+	checkRadioButton(mh_Child, rPasteM2MultiLine, rPasteM2Nothing,
+		(mode == plm_MultiLine) ? rPasteM2MultiLine
+		: (mode == plm_FirstLine) ? rPasteM2FirstLine
+		: (mode == plm_Nothing) ? rPasteM2Nothing
+		: rPasteM2SingleLine);
 	//
 	checkDlgButton(mh_Child, cbCTSClickPromptPosition, pApp->isCTSClickPromptPosition);
 	//

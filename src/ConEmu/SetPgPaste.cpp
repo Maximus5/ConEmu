@@ -77,8 +77,8 @@ void CSetPgPaste::OnPostLocalize(HWND hDlg)
 // cbClipShiftIns, rPasteM1MultiLine, rPasteM1FirstLine, rPasteM1SingleLine, rPasteM1Nothing
 void CSetPgPaste::OnBtn_ClipShiftIns(HWND hDlg, WORD CB, BYTE uCheck)
 {
-	_ASSERTE(CB==cbClipShiftIns || CB==rPasteM1MultiLine || CB==rPasteM1FirstLine || CB==rPasteM1SingleLine || CB==rPasteM1Nothing);
-	_ASSERTE(uCheck || (CB==cbClipShiftIns));
+	_ASSERTE(CB==rPasteM1MultiLine || CB==rPasteM1FirstLine || CB==rPasteM1SingleLine || CB==rPasteM1Nothing);
+	_ASSERTE(uCheck);
 
 	switch (CB)
 	{
@@ -91,9 +91,10 @@ void CSetPgPaste::OnBtn_ClipShiftIns(HWND hDlg, WORD CB, BYTE uCheck)
 	case rPasteM1Nothing:
 		gpSet->AppStd.isPasteAllLines = plm_Nothing; break;
 
+	#if defined(_DEBUG)
 	default:
-		_ASSERTE(CB==cbClipShiftIns);
-		gpSet->AppStd.isPasteAllLines = uCheck ? plm_Default : plm_Nothing;
+		_ASSERTE(FALSE && "Unsupported option");
+	#endif
 	}
 
 } // cbClipShiftIns, rPasteM1MultiLine, rPasteM1FirstLine, rPasteM1SingleLine, rPasteM1Nothing
@@ -102,8 +103,8 @@ void CSetPgPaste::OnBtn_ClipShiftIns(HWND hDlg, WORD CB, BYTE uCheck)
 // cbClipCtrlV, rPasteM2MultiLine, rPasteM2FirstLine, rPasteM2SingleLine, rPasteM2Nothing
 void CSetPgPaste::OnBtn_ClipCtrlV(HWND hDlg, WORD CB, BYTE uCheck)
 {
-	_ASSERTE(CB==cbClipCtrlV || CB==rPasteM2MultiLine || CB==rPasteM2FirstLine || CB==rPasteM2SingleLine || CB==rPasteM2Nothing);
-	_ASSERTE(uCheck || (CB==cbClipCtrlV));
+	_ASSERTE(CB==rPasteM2MultiLine || CB==rPasteM2FirstLine || CB==rPasteM2SingleLine || CB==rPasteM2Nothing);
+	_ASSERTE(uCheck);
 
 	switch (CB)
 	{
@@ -116,9 +117,10 @@ void CSetPgPaste::OnBtn_ClipCtrlV(HWND hDlg, WORD CB, BYTE uCheck)
 	case rPasteM2Nothing:
 		gpSet->AppStd.isPasteFirstLine = plm_Nothing; break;
 
+	#if defined(_DEBUG)
 	default:
-		_ASSERTE(CB==cbClipCtrlV);
-		gpSet->AppStd.isPasteFirstLine = uCheck ? plm_Default : plm_Nothing;
+		_ASSERTE(FALSE && "Unsupported option");
+	#endif
 	}
 
 } // cbClipCtrlV, rPasteM2MultiLine, rPasteM2FirstLine, rPasteM2SingleLine, rPasteM2Nothing
