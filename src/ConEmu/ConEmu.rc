@@ -168,8 +168,8 @@ BEGIN
     CONTROL         "Full screen",rFullScreen,"Button",BS_AUTORADIOBUTTON,113,50,49,8
     PUSHBUTTON      "Apply",cbApplyPos,255,21,59,12
     RTEXT           "X:",stWindowPosX,192,65,9,8
-    EDITTEXT        tWndX,206,63,43,12,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        tWndY,265,63,43,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        tWndX,206,63,43,12,ES_AUTOHSCROLL
+    EDITTEXT        tWndY,265,63,43,12,ES_AUTOHSCROLL
     CONTROL         "Fixed",rFixed,"Button",BS_AUTORADIOBUTTON,193,50,32,8
     CONTROL         "Cascade",rCascade,"Button",BS_AUTORADIOBUTTON,229,50,41,8
     CONTROL         "Auto save window size and position on exit",cbAutoSaveSizePos,
