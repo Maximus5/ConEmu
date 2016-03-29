@@ -223,3 +223,33 @@ INT_PTR CSetPgTasks::OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code)
 	}
 	return 0;
 }
+
+bool CSetPgTasks::SelectNextItem(bool bNext, bool bProcess)
+{
+	if (bProcess)
+	{
+		int iCur = CSetDlgLists::GetListboxCurSel(mh_Dlg, lbCmdTasks, true);
+		if (iCur >= 0)
+		{
+			if (bNext)
+			{
+				iCur++;
+				if (iCur >= (int)SendDlgItemMessage(mh_Dlg, lbCmdTasks, LB_GETCOUNT, 0,0))
+					goto wrap;
+			}
+			else
+			{
+				iCur--;
+				if (iCur < 0)
+					goto wrap;
+			}
+
+			CSetDlgLists::ListBoxMultiSel(mh_Dlg, lbCmdTasks, iCur);
+
+			OnComboBox(mh_Dlg, lbCmdTasks, LBN_SELCHANGE);
+		}
+	}
+
+wrap:
+	return true;
+}

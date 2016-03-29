@@ -174,6 +174,7 @@ public:
 	virtual INT_PTR OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId);
 	virtual INT_PTR OnSetCursor(HWND hDlg, HWND hCtrl, WORD nCtrlId, WORD nHitTest, WORD nMouseMsg);
 	virtual bool QueryDialogCancel() { return true; };
+	virtual bool SelectNextItem(bool bNext, bool bProcess) { return false; };
 
 public:
 	// Members

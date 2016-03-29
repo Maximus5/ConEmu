@@ -51,6 +51,7 @@ public:
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
 	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) override;
 	virtual INT_PTR OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code) override;
+	virtual bool SelectNextItem(bool bNext, bool bProcess) override;
 
 protected:
 	// Members

@@ -5133,6 +5133,21 @@ int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD F
 
 bool CSettings::isDialogMessage(MSG &Msg)
 {
+	if (((Msg.message == WM_KEYDOWN) || (Msg.message == WM_KEYUP))
+		&& ((Msg.wParam == VK_UP) || (Msg.wParam == VK_DOWN)))
+	{
+		// Is it button? WM_GETDLGCODE?
+		wchar_t szClass[64] = L""; GetClassName(Msg.hwnd, szClass, countof(szClass));
+		if (wcscmp(szClass, L"Button") == 0)
+		{
+			CSetPgBase* pg = GetActivePageObj();
+			if (pg && pg->SelectNextItem((Msg.wParam == VK_DOWN), (Msg.message == WM_KEYDOWN)))
+			{
+				return true;
+			}
+		}
+	}
+
 	if (IsDialogMessage(ghOpWnd, &Msg))
 	{
 		return true;
