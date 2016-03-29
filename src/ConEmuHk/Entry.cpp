@@ -1457,6 +1457,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	{
 		DLOG1("DefTerm::StopHookers",0);
 		gpDefTerm->StopHookers();
+		SafeDelete(gpDefTerm);
 		DLOGEND1();
 	}
 
