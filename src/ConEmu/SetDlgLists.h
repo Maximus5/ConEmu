@@ -34,12 +34,21 @@ struct ListBoxItem
 	LPCWSTR sValue;
 };
 
+enum KeysFilterValues
+{
+	hkfv_All,
+	hkfv_User,
+	hkfv_System,
+	hkfv_Macros,
+};
+
 class CSetDlgLists
 {
 public:
 	enum eFillListBoxItems
 	{
-		eBgOper, eModifiers, eKeysHot, eKeys, eKeysAct, eCharSets,
+		eBgOper, eCharSets,
+		eModifiers, eKeysHot, eKeys, eKeysAct, eKeysFilter,
 		eClipAct, eColorIdx, eColorIdx16, eColorIdxSh, eColorIdxTh,
 		eThumbMaxZoom, eCRLF, eCopyFormat,
 		eTabBtnDblClickActions, eTabBarDblClickActions,
@@ -58,6 +67,7 @@ protected:
 	static const ListBoxItem  KeysHot[]; // {{0,L""}, {VK_ESCAPE,L"Esc"}, {VK_DELETE,L"Delete"}, {VK_TAB,L"Tab"}, {VK_RETURN,L"Enter"}, {VK_SPACE,L"Space"}, {VK_BACK,L"Backspace"}, {VK_PAUSE,L"Pause"}, {VK_WHEEL_UP,L"Wheel Up"}, {VK_WHEEL_DOWN,L"Wheel Down"}, {VK_WHEEL_LEFT,L"Wheel Left"}, {VK_WHEEL_RIGHT,L"Wheel Right"}, {VK_LBUTTON,L"LButton"}, {VK_RBUTTON,L"RButton"}, {VK_MBUTTON,L"MButton"}};
 	static const ListBoxItem  Keys[]; // {{0,L"<None>"}, {VK_LCONTROL,L"Left Ctrl"}, {VK_RCONTROL,L"Right Ctrl"}, {VK_LMENU,L"Left Alt"}, {VK_RMENU,L"Right Alt"}, {VK_LSHIFT,L"Left Shift"}, {VK_RSHIFT,L"Right Shift"}};
 	static const ListBoxItem  KeysAct[]; // {{0,L"<Always>"}, {VK_CONTROL,L"Ctrl"}, {VK_LCONTROL,L"Left Ctrl"}, {VK_RCONTROL,L"Right Ctrl"}, {VK_MENU,L"Alt"}, {VK_LMENU,L"Left Alt"}, {VK_RMENU,L"Right Alt"}, {VK_SHIFT,L"Shift"}, {VK_LSHIFT,L"Left Shift"}, {VK_RSHIFT,L"Right Shift"}};
+	static const ListBoxItem  KeysFilter[]; // {{0,L"All hotkeys"}, {1,L"User defined"}, {2,L"System"}, {3,L"Macros"}};
 
 	static const DWORD  FSizesY[]; // {0, 8, 9, 10, 11, 12, 13, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
 	static const DWORD  FSizesX[]; // {0, 8, 9, 10, 11, 12, 13, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};

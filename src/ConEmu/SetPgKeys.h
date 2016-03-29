@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
+#include "SetDlgLists.h"
 #include "SetPgBase.h"
 
 struct ConEmuHotKey;
@@ -54,10 +55,13 @@ public:
 	LRESULT OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 	static int CALLBACK HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort);
 
+	virtual INT_PTR OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId) override;
 	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) override;
 	virtual INT_PTR OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code) override;
 
 	static void ReInitHotkeys();
+
+	void RefilterHotkeys(bool bReset = true);
 
 	void SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod);
 
@@ -72,7 +76,7 @@ protected:
 protected:
 	// Members
 	ConEmuHotKey *mp_ActiveHotKey;
-	UINT mn_LastShowType;
+	KeysFilterValues mn_LastShowType;
 	bool mb_LastHideEmpties;
 	CEStr ms_LastFilter;
 };

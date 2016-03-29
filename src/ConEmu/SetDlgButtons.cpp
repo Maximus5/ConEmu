@@ -528,14 +528,6 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			OnBtn_SendConsoleSpecials(hDlg, CB, uCheck);
 			break;
 
-		case rbHotkeysAll:
-		case rbHotkeysUser:
-		case rbHotkeysSystem:
-		case rbHotkeysMacros:
-		case cbHotkeysAssignedOnly:
-			OnBtn_HotkeysListShowOptions(hDlg, CB, uCheck);
-			break;
-
 		case cbInstallKeybHooks:
 			OnBtn_InstallKeybHooks(hDlg, CB, uCheck);
 			break;
@@ -866,6 +858,14 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbStatusDelSelected:
 		case cbStatusDelAll:
 			OnBtn_StatusAddDel(hDlg, CB, uCheck);
+			break;
+
+		case cbHotkeysAssignedOnly:
+			//TODO: Move to CSetPgKeys::PageDlgProc
+			if (gpSetCls->GetActivePageObj() && (gpSetCls->GetActivePageObj()->GetPageType() == thi_Keys))
+			{
+				dynamic_cast<CSetPgKeys*>(gpSetCls->GetActivePageObj())->RefilterHotkeys();
+			}
 			break;
 
 		default:
@@ -3278,21 +3278,6 @@ void CSetDlgButtons::OnBtn_SendConsoleSpecials(HWND hDlg, WORD CB, BYTE uCheck)
 	gpConEmu->UpdateWinHookSettings();
 
 } // cbSendAltTab || cbSendAltEsc || cbSendAltPrintScrn || cbSendPrintScrn || cbSendCtrlEsc
-
-
-// rbHotkeysAll || rbHotkeysUser || rbHotkeysSystem || rbHotkeysMacros || cbHotkeysAssignedOnly
-void CSetDlgButtons::OnBtn_HotkeysListShowOptions(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==rbHotkeysAll || CB==rbHotkeysUser || CB==rbHotkeysSystem || CB==rbHotkeysMacros || CB==cbHotkeysAssignedOnly);
-
-    CSetPgKeys* pPage;
-    if (gpSetCls->GetPageObj(pPage))
-    {
-    	pPage->FillHotKeysList(hDlg, TRUE);
-	    pPage->OnHotkeysNotify(hDlg, MAKELONG(lbConEmuHotKeys,0xFFFF), 0);
-    }
-
-} // rbHotkeysAll || rbHotkeysUser || rbHotkeysSystem || rbHotkeysMacros || cbHotkeysAssignedOnly
 
 
 // cbInstallKeybHooks

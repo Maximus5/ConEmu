@@ -41,6 +41,7 @@ const ListBoxItem  CSetDlgLists::Modifiers[] = {{0,L" "}, {VK_LWIN,L"Win"},  {VK
 const ListBoxItem  CSetDlgLists::KeysHot[] = {{0,L""}, {VK_ESCAPE,L"Esc"}, {VK_DELETE,L"Delete"}, {VK_TAB,L"Tab"}, {VK_RETURN,L"Enter"}, {VK_SPACE,L"Space"}, {VK_BACK,L"Backspace"}, {VK_PAUSE,L"Pause/Break"}, {VK_APPS,L"Apps"}, {VK_WHEEL_UP,L"Wheel Up"}, {VK_WHEEL_DOWN,L"Wheel Down"}, {VK_WHEEL_LEFT,L"Wheel Left"}, {VK_WHEEL_RIGHT,L"Wheel Right"}, {VK_LBUTTON,L"LButton"}, {VK_RBUTTON,L"RButton"}, {VK_MBUTTON,L"MButton"}};
 const ListBoxItem  CSetDlgLists::Keys[] = {{0,L"<None>"}, {VK_LCONTROL,L"Left Ctrl"}, {VK_RCONTROL,L"Right Ctrl"}, {VK_LMENU,L"Left Alt"}, {VK_RMENU,L"Right Alt"}, {VK_LSHIFT,L"Left Shift"}, {VK_RSHIFT,L"Right Shift"}};
 const ListBoxItem  CSetDlgLists::KeysAct[] = {{0,L"<No-Mod>"}, {VK_CONTROL,L"Ctrl"}, {VK_LCONTROL,L"Left Ctrl"}, {VK_RCONTROL,L"Right Ctrl"}, {VK_MENU,L"Alt"}, {VK_LMENU,L"Left Alt"}, {VK_RMENU,L"Right Alt"}, {VK_SHIFT,L"Shift"}, {VK_LSHIFT,L"Left Shift"}, {VK_RSHIFT,L"Right Shift"}};
+const ListBoxItem  CSetDlgLists::KeysFilter[] = {{hkfv_All,L"All hotkeys"}, {hkfv_User,L"User defined"}, {hkfv_System,L"System"}, {hkfv_Macros,L"Macros"}};
 
 const DWORD  CSetDlgLists::FSizesY[] = {8, 9, 10, 11, 12, 13, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
 const DWORD  CSetDlgLists::FSizesX[] = {0, 8, 9, 10, 11, 12, 13, 14, 16, 18, 19, 20, 24, 26, 28, 30, 32, 34, 36, 40, 46, 50, 52, 72};
@@ -99,6 +100,7 @@ uint CSetDlgLists::GetListItems(eFillListBoxItems eWhat, const ListBoxItem*& pIt
 	LST_ENUM(KeysHot);
 	LST_ENUM(Keys);
 	LST_ENUM(KeysAct);
+	LST_ENUM(KeysFilter);
 	LST_ENUM(CharSets);
 	LST_ENUM(ClipAct);
 	LST_ENUM(ColorIdx);

@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 CSetPgKeys::CSetPgKeys()
 	: mp_ActiveHotKey(NULL)
-	, mn_LastShowType(rbHotkeysAll)
+	, mn_LastShowType(hkfv_All)
 	, mb_LastHideEmpties(false)
 {
 }
@@ -58,7 +58,9 @@ LRESULT CSetPgKeys::OnInitDialog(HWND hDlg, bool abInitial)
 		return 0;
 	}
 
-	checkRadioButton(hDlg, rbHotkeysAll, rbHotkeysMacros, rbHotkeysAll);
+
+	BYTE b = mn_LastShowType;
+	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbHotKeyFilter), CSetDlgLists::eKeysFilter, b, false);
 
 	for (INT_PTR i = gpHotKeys->size() - 1; i >= 0; i--)
 	{
@@ -109,13 +111,12 @@ LRESULT CSetPgKeys::OnInitDialog(HWND hDlg, bool abInitial)
 
 void CSetPgKeys::FillHotKeysList(HWND hDlg, bool abInitial)
 {
-	UINT nShowType = rbHotkeysAll;
-	if (isChecked(hDlg, rbHotkeysUser))
-		nShowType = rbHotkeysUser;
-	else if (isChecked(hDlg, rbHotkeysMacros))
-		nShowType = rbHotkeysMacros;
-	else if (isChecked(hDlg, rbHotkeysSystem))
-		nShowType = rbHotkeysSystem;
+	HWND hList = GetDlgItem(hDlg, lbConEmuHotKeys);
+	SendMessage(hList, WM_SETREDRAW, FALSE, 0);
+
+	BYTE b = 0;
+	CSetDlgLists::GetListBoxItem(hDlg, lbHotKeyFilter, CSetDlgLists::eKeysFilter, b);
+	KeysFilterValues nShowType = (KeysFilterValues)b;
 
 	bool bHideEmpties = (isChecked(hDlg, cbHotkeysAssignedOnly) == BST_CHECKED);
 
@@ -123,7 +124,6 @@ void CSetPgKeys::FillHotKeysList(HWND hDlg, bool abInitial)
 	GetString(hDlg, tHotkeysFilter, &lsFilter.ms_Val);
 
 	// Населить список всеми хоткеями
-	HWND hList = GetDlgItem(hDlg, lbConEmuHotKeys);
 	if (abInitial
 		|| (mn_LastShowType != nShowType)
 		|| (mb_LastHideEmpties != bHideEmpties)
@@ -150,12 +150,12 @@ void CSetPgKeys::FillHotKeysList(HWND hDlg, bool abInitial)
 	// Если выбран режим "Показать только макросы"
 	// то сначала отобразить пользовательские "Macro 00"
 	// а после них все системные, которые используют Macro (для справки)
-	size_t stepMax = (nShowType == rbHotkeysMacros) ? 1 : 0;
+	size_t stepMax = (nShowType == hkfv_Macros) ? 1 : 0;
 	for (size_t step = 0; step <= stepMax; step++)
 	{
 		int iHkIdx = 0;
 
-		while (TRUE)
+		for (;;)
 		{
 			if (abInitial)
 			{
@@ -166,17 +166,17 @@ void CSetPgKeys::FillHotKeysList(HWND hDlg, bool abInitial)
 
 				switch (nShowType)
 				{
-				case rbHotkeysUser:
+				case hkfv_User:
 					if ((ppHK->HkType != chk_User) && (ppHK->HkType != chk_Global) && (ppHK->HkType != chk_Local)
 						&& (ppHK->HkType != chk_Modifier) && (ppHK->HkType != chk_Modifier2) && (ppHK->HkType != chk_Task))
 						continue;
 					break;
-				case rbHotkeysMacros:
+				case hkfv_Macros:
 					if (((step == 0) && (ppHK->HkType != chk_Macro))
 						|| ((step > 0) && ((ppHK->HkType == chk_Macro) || !ppHK->GuiMacro)))
 						continue;
 					break;
-				case rbHotkeysSystem:
+				case hkfv_System:
 					if ((ppHK->HkType != chk_System) && (ppHK->HkType != chk_ArrHost) && (ppHK->HkType != chk_NumHost))
 						continue;
 					break;
@@ -292,6 +292,8 @@ void CSetPgKeys::FillHotKeysList(HWND hDlg, bool abInitial)
 			}
 		}
 	}
+
+	SendMessage(hList, WM_SETREDRAW, TRUE, 0);
 
 	//ListView_SetSelectionMark(hList, -1);
 	gpSet->CheckHotkeyUnique();
@@ -541,6 +543,12 @@ int CSetPgKeys::HotkeysCompare(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSort
 	return nCmp;
 }
 
+void CSetPgKeys::RefilterHotkeys(bool bReset /*= true*/)
+{
+	FillHotKeysList(mh_Dlg, bReset);
+	OnHotkeysNotify(mh_Dlg, MAKELONG(lbConEmuHotKeys,0xFFFF), 0);
+}
+
 void CSetPgKeys::ReInitHotkeys()
 {
 	gpHotKeys->ReleaseHotkeys();
@@ -596,7 +604,7 @@ LRESULT CSetPgKeys::OnEditChanged(HWND hDlg, WORD nCtrlId)
 				// because new filter is stronger and including previous one
 				bReset = false;
 			}
-			FillHotKeysList(hDlg, bReset);
+			RefilterHotkeys(bReset);
 		}
 		break;
 
@@ -604,10 +612,34 @@ LRESULT CSetPgKeys::OnEditChanged(HWND hDlg, WORD nCtrlId)
 	return 0;
 }
 
+INT_PTR CSetPgKeys::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case cbHotkeysAssignedOnly:
+		{
+			RefilterHotkeys();
+			return 0;
+		} // lbHotKeyFilter
+
+	default:
+		return CSetPgBase::OnButtonClicked(hDlg, hBtn, nCtrlId);
+	}
+}
+
 INT_PTR CSetPgKeys::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 {
 	switch (nCtrlId)
 	{
+	case lbHotKeyFilter:
+		{
+			BYTE f = 0;
+			CSetDlgLists::GetListBoxItem(hDlg, lbHotKeyFilter, CSetDlgLists::eKeysFilter, f);
+			mn_LastShowType = (KeysFilterValues)f;
+			RefilterHotkeys();
+			break;
+		} // lbHotKeyFilter
+
 	case lbHotKeyList:
 		{
 			if (!mp_ActiveHotKey)

@@ -781,10 +781,6 @@
 #define tRecreateSplit                  2444
 #define stRecreateSplit                 2445
 #define rbActivityDebug                 2446
-#define rbHotkeysAll                    2447
-#define rbHotkeysUser                   2448
-#define rbHotkeysSystem                 2449
-#define rbHotkeysMacros                 2450
 #define cbComspecUncPaths               2451
 #define cbCmdTasksDir                   2452
 #define vkFontLarger                    2453
@@ -1333,7 +1329,7 @@
 #define gbPasteConfirm                  3049
 #define stBgReplaceIndexes              3051
 #define tHotkeysFilter                  3052
-#define stHotkeysFilter                 3053
+#define lbHotKeyFilter                  3053
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
