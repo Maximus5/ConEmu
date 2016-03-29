@@ -1177,7 +1177,7 @@ BEGIN
     CONTROL         "&Macros",rbHotkeysMacros,"Button",BS_AUTORADIOBUTTON,96,29,76,8
     CONTROL         "&Hide unassigned",cbHotkeysAssignedOnly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,279,11,85,8
     EDITTEXT        tHotkeysFilter,279,27,95,12,ES_AUTOHSCROLL
-    RTEXT           "Filter :",stHotkeysFilter,174,29,100,8
+    RTEXT           "Filter:",stHotkeysFilter,174,29,100,8
 END
 
 IDD_SPG_CONTROLS DIALOGEX 0, 0, 381, 242
