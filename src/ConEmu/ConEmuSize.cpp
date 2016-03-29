@@ -1202,6 +1202,8 @@ bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
 		rcFrameOnly.right = max(0, (rcFrameOnly.right - iFrameWidth));
 		rcFrameOnly.bottom = max(0, (rcFrameOnly.bottom - iFrameWidth));
 	}
+	int iLeftShift = (iFrameWidth == -1) ? 0 : rcFrameOnly.left;
+	int iRightShift = (iFrameWidth == -1) ? 0 : rcFrameOnly.right;
 
 	// Если успешно - подгоняем по экрану
 	if (mi.rcWork.right > mi.rcWork.left)
@@ -1237,10 +1239,10 @@ bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
 			{
 				// Если выбран режим "Fixed" - разрешим задавать левую координату
 				if (!gpSet->wndCascade)
-					prcWnd->left = max((mi.rcWork.left - rcFrameOnly.left),min(wndX,(mi.rcWork.right - nWidth + rcFrameOnly.right)));
+					prcWnd->left = max((mi.rcWork.left - iLeftShift),min(wndX,(mi.rcWork.right - nWidth + iRightShift)));
 				else // Иначе - центрируется по монитору
 					prcWnd->left = max(mi.rcWork.left,((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
-				prcWnd->right = min((mi.rcWork.right + rcFrameOnly.right),(prcWnd->left + nWidth));
+				prcWnd->right = min((mi.rcWork.right + iRightShift),(prcWnd->left + nWidth));
 				prcWnd->top = mi.rcWork.top - rcFrameOnly.top;
 				prcWnd->bottom = prcWnd->top + nHeight;
 
