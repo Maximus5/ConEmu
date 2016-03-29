@@ -79,7 +79,11 @@ public:
 
 };
 
+#ifndef __GNUC__
+#pragma warning( push )
+#pragma warning( disable : 4748 )
 #pragma optimize( "", off )
+#endif
 
 DWORD WINAPI apiThreadHelper(LPVOID lpParameter)
 {
@@ -137,7 +141,10 @@ DWORD WINAPI apiThreadHelper(LPVOID lpParameter)
 	return nRc;
 }
 
+#ifndef __GNUC__
 #pragma optimize( "", on )
+#pragma warning( pop )
+#endif
 
 
 HANDLE apiCreateThread(LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, LPDWORD lpThreadId, LPCSTR asThreadNameFormat /*= NULL*/, int anFormatArg /*= 0*/)
