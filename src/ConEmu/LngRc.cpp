@@ -430,25 +430,25 @@ bool CLngRc::SetResource(MArray<LngRcItem>& arr, int idx, MJsonValue* pJson)
 	return SetResource(arr, idx, lsValue.ms_Val, true);
 }
 
-bool CLngRc::getControl(LONG id, CEStr& lsText)
+LPCWSTR CLngRc::getControl(LONG id, CEStr& lsText, LPCWSTR asDefault /*= NULL*/)
 {
 	if (!gpLng)
 	{
 		_ASSERTE(gpLng != NULL);
-		return false;
+		return asDefault;
 	}
 	if (!id || (id > (u16)-1))
 	{
 		_ASSERTE(FALSE && "Control ID out of range");
-		return false;
+		return asDefault;
 	}
 
 	if (gpLng->GetResource(gpLng->m_Controls, id, lsText))
 	{
-		return true;
+		return lsText.ms_Val;
 	}
 
-	return false;
+	return asDefault;
 }
 
 bool CLngRc::GetResource(MArray<LngRcItem>& arr, int idx, CEStr& lsText)

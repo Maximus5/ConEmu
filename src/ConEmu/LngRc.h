@@ -51,7 +51,7 @@ public:
 
 public:
 	// Methods
-	static bool getControl(LONG id, CEStr& lsText);
+	static LPCWSTR getControl(LONG id, CEStr& lsText, LPCWSTR asDefault = NULL);
 	static bool getHint(UINT id, LPWSTR lpBuffer, size_t nBufferMax);
 	static LPCWSTR getRsrc(UINT id, CEStr* lpText = NULL);
 
