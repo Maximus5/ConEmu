@@ -1187,7 +1187,6 @@
 #define stNtvdmHeight                   2896
 #define gbVConAlignment                 2897
 #define stVConPadSize                   2898
-#define stVConPadSizePix                2899
 #define gbShowGeneric                   2900
 #define gbShowScrollBar                 2901
 #define stScrollAppear                  2902

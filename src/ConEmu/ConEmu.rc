@@ -189,10 +189,9 @@ BEGIN
     GROUPBOX        "DOS applications (ntvdm)",gbNtvdm,224,85,149,32
     CONTROL         "Center console in ConEmu workspace",cbTryToCenter,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,131,170,8
-    RTEXT           "Pad size:",stVConPadSize,180,131,60,8
-    EDITTEXT        tPadSize,245,130,51,12,ES_AUTOHSCROLL
+    RTEXT           "Pad size (pixels):",stVConPadSize,199,131,113,8
+    EDITTEXT        tPadSize,315,130,51,12,ES_AUTOHSCROLL
     GROUPBOX        "Alignment",gbVConAlignment,9,119,364,70
-    LTEXT           "pixels",stVConPadSizePix,301,131,68,8
     CONTROL         "Snap to desktop edges",cbSnapToDesktopEdges,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,159,170,8
     GROUPBOX        "FullScreen mode",IDC_STATIC,9,195,306,29,NOT WS_VISIBLE | WS_DISABLED
     CONTROL         "Hide tab && status bars",cbFullscreenNoBars,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,17,208,100,8
