@@ -20,6 +20,20 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.3.28
+* New default hotkeys for process termination:
+  * `Win+Alt+Break` - Terminate all but shell processes in the current console;
+  * `Ctrl+Alt+Break` - Terminate active process in the current console.
+* gh-605: Fix regressions on ‘App distinct’ settings page (EOL).
+* gh-294: Add ‘Filter’ field to ‘Keys and Macro’ settings page.
+* gh-318: With ES_NUMBER user can't enter negative value (X/Y).
+* gh-318: Get rid of gap in Quake mode when frame width is less than 3 pix.
+* gh-165: Allow to drag Quake consoles between monitors.
+* Show `Ctrl+Break` but `Pause` in the hotkeys list.
+* l10n. Update resources
+* gh-304: Use full monitor working area for maximized/fullscreen Quake mode.
+
+
 2016.3.27
 * Add palette change logging. Ref: gh-599, searching for bottle neck
 * gh-593: Background color index was cropped to 8-color palette after `\e[9999;1H`.
