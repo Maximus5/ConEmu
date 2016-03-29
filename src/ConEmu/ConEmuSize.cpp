@@ -1218,7 +1218,7 @@ bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
 				prcWnd->left = mi.rcWork.left - rcFrameOnly.left;
 				prcWnd->right = mi.rcWork.right + rcFrameOnly.right;
 				prcWnd->top = mi.rcWork.top - rcFrameOnly.top;
-				prcWnd->bottom = prcWnd->top + nHeight;
+				prcWnd->bottom = mi.rcWork.bottom + rcFrameOnly.bottom;
 
 				bChange = true;
 				break;
@@ -1229,7 +1229,7 @@ bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
 				prcWnd->left = mi.rcMonitor.left - rcFrameOnly.left;
 				prcWnd->right = mi.rcMonitor.right + rcFrameOnly.right;
 				prcWnd->top = mi.rcMonitor.top - rcFrameOnly.top;
-				prcWnd->bottom = prcWnd->top + nHeight;
+				prcWnd->bottom = mi.rcMonitor.bottom + rcFrameOnly.bottom;
 
 				bChange = true;
 				break;
