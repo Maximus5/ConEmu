@@ -5408,15 +5408,15 @@
       "zh": "描述：",
       "id": 2189 }
     ,
-    "stHotkeys": {
-      "en": "Show:",
-      "zh": "显示：",
-      "id": 3015 }
-    ,
     "stHotKeySelect": {
       "en": "Choose hotkey:",
       "zh": "选择热键：",
       "id": 1769 }
+    ,
+    "stHotkeysFilter": {
+      "en": "Filter:",
+      "ru": "Фильтр:",
+      "id": 3053 }
     ,
     "stInactiveCursorMinSize": {
       "en": "Min size (pix):",
@@ -5882,16 +5882,10 @@
       "id": 2952 }
     ,
     "stVConPadSize": {
-      "en": "Pad size:",
-      "ru": "Окантовка:",
-      "zh": "Pad大小：",
+      "en": "Pad size (pixels):",
+      "_ru": "Окантовка (пиксели):",
+      "_zh": "Pad大小：",
       "id": 2898 }
-    ,
-    "stVConPadSizePix": {
-      "en": "pixels",
-      "ru": "в пикселях",
-      "zh": "像素",
-      "id": 2899 }
     ,
     "stWndHeight": {
       "en": "Height:",
