@@ -1861,6 +1861,8 @@ LRESULT CSettings::OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam)
 				pTasksPg->OnEditChanged(hWnd2, TB);
 		}
 		break;
+	case tCmdGroupKey:
+		break; // read-only
 	/* *** Command groups *** */
 
 	case tSetCommands:
