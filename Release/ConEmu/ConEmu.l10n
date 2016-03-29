@@ -2600,6 +2600,16 @@
       "zh": " 流选择",
       "id": 19 }
     ,
+    "lng_SizeRadioCentered": {
+      "en": "Centered",
+      "ru": "По центру",
+      "id": 56 }
+    ,
+    "lng_SizeRadioFree": {
+      "en": "Free",
+      "ru": "Свободное",
+      "id": 55 }
+    ,
     "lng_SpgAppDistinct": {
       "en": "App distinct",
       "ru": "По приложениям",
