@@ -125,7 +125,7 @@ struct ConEmuHotKey
 	// Извлечь сам VK
 	static DWORD GetHotkey(DWORD VkMod);
 	// Вернуть имя клавишы (Apps, Win, Pause, ...)
-	static void GetVkKeyName(BYTE vk, wchar_t (&szName)[32]);
+	static void GetVkKeyName(BYTE vk, wchar_t (&szName)[32], bool bSingle = true);
 	// Вернуть VK по имени клавиши (Apps, Win, Pause, ...)
 	static UINT GetVkByKeyName(LPCWSTR asName, int* pnScanCode = NULL, DWORD* pnControlState = NULL);
 	// Есть ли в этом (VkMod) хоткее - модификатор Mod (VK)

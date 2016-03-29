@@ -594,7 +594,7 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 
 			if ((Key.Mod & k.Mod) && !(Key.Mod & (k.Left|k.Right)))
 			{
-				GetVkKeyName(k.Vk, szName);
+				GetVkKeyName(k.Vk, szName, (szFull[0] == 0));
 				if (szFull[0])
 					wcscat_c(szFull, L"+");
 				wcscat_c(szFull, szName);
@@ -612,7 +612,7 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 	if (HkType != chk_Modifier2)
 	{
 		szName[0] = 0;
-		GetVkKeyName(Key.Vk, szName);
+		GetVkKeyName(Key.Vk, szName, (szFull[0] == 0));
 
 		if (szName[0])
 		{
@@ -641,7 +641,7 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(DWORD aVkMod, wchar_t (&szFull)[128], bool b
 	return hk.GetHotkeyName(szFull, bShowNone);
 }
 
-void ConEmuHotKey::GetVkKeyName(BYTE vk, wchar_t (&szName)[32])
+void ConEmuHotKey::GetVkKeyName(BYTE vk, wchar_t (&szName)[32], bool bSingle /*= true*/)
 {
 	szName[0] = 0;
 
@@ -699,7 +699,8 @@ void ConEmuHotKey::GetVkKeyName(BYTE vk, wchar_t (&szName)[32])
 	case VK_END:
 		wcscat_c(szName, L"End"); break;
 	case VK_PAUSE:
-		wcscat_c(szName, L"Pause"); break;
+		// Return ‘Ctrl+Break’ but ‘Pause’
+		wcscat_c(szName, bSingle ? L"Pause" : L"Break"); break;
 	case VK_RETURN:
 		wcscat_c(szName, L"Enter"); break;
 	case VK_BACK:
