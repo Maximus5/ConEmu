@@ -53,6 +53,8 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_SelBlock,                 L" block selection" },
 	{ lng_SelChars,                 L" chars " },
 	{ lng_SelStream,                L" stream selection" },
+	{ lng_SizeRadioCentered,        L"Centered" },
+	{ lng_SizeRadioFree,            L"Free" },
 	{ lng_SpgAppDistinct,           L"App distinct" },
 	{ lng_SpgAppear,                L"Appearance" },
 	{ lng_SpgBackgr,                L"Background" },

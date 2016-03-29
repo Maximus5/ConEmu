@@ -50,6 +50,7 @@ public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
 	// Events
+	virtual void OnPostLocalize(HWND hDlg);
 	virtual INT_PTR OnComboBox(HWND hDlg, WORD nCtrlId, WORD code) override;
 
 	void FillSizeControls(HWND hDlg);

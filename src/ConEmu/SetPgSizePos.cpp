@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSetter.h"
 
 #include "ConEmu.h"
+#include "LngRc.h"
 #include "OptionsClass.h"
 #include "SetDlgLists.h"
 #include "SetPgSizePos.h"
@@ -84,8 +85,8 @@ LRESULT CSetPgSizePos::OnInitDialog(HWND hDlg, bool abInitial)
 	gpSetCls->UpdatePos(gpConEmu->wndX, gpConEmu->wndY, true);
 
 	checkRadioButton(hDlg, rCascade, rFixed, gpSet->wndCascade ? rCascade : rFixed);
-	SetDlgItemText(hDlg, rFixed, gpSet->isQuakeStyle ? L"Free" : L"Fixed");
-	SetDlgItemText(hDlg, rCascade, gpSet->isQuakeStyle ? L"Centered" : L"Cascade");
+	if (!abInitial)
+		OnPostLocalize(hDlg);
 
 	checkDlgButton(hDlg, cbLongOutput, gpSet->AutoBufferHeight);
 	TODO("Надо бы увеличить, но нужно сервер допиливать");
@@ -160,4 +161,15 @@ INT_PTR CSetPgSizePos::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 	}
 
 	return 0;
+}
+
+void CSetPgSizePos::OnPostLocalize(HWND hDlg)
+{
+	CEStr lsRsrc;
+	SetDlgItemText(hDlg, rFixed, gpSet->isQuakeStyle
+		? CLngRc::getRsrc(lng_SizeRadioFree/*"Free"*/)
+		: CLngRc::getControl(rFixed, lsRsrc, L"Fixed"));
+	SetDlgItemText(hDlg, rCascade, gpSet->isQuakeStyle
+		? CLngRc::getRsrc(lng_SizeRadioCentered/*"Centered"*/)
+		: CLngRc::getControl(rCascade, lsRsrc, L"Cascade"));
 }
