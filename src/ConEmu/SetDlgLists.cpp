@@ -147,54 +147,6 @@ uint CSetDlgLists::GetListItems(eWordItems eWhat, const DWORD*& pItems)
 	return nCount;
 }
 
-
-
-//void CSetDlgLists::FillListBoxHotKeys(HWND hList, eFillListBoxHotKeys eWhat, BYTE& vk)
-//{
-//	const ListBoxItem* pItems;
-//	uint nItems = GetHotKeyListItems(eWhat, &pItems);
-//	if (!nItems)
-//		return;
-//
-//	DWORD nValue = vk;
-//	FillListBoxItems(hList, nItems, pItems, nValue);
-//	vk = nValue;
-//}
-
-//void CSetDlgLists::GetListBoxHotKey(HWND hList, eFillListBoxHotKeys eWhat, BYTE& vk)
-//{
-//	const ListBoxItem* pItems;
-//	uint nItems = GetHotKeyListItems(eWhat, &pItems);
-//	if (!nItems)
-//		return;
-//
-//	DWORD nValue = vk;
-//	GetListBoxItem(hList, nItems, pItems, nValue);
-//	vk = nValue;
-//}
-
-//uint CSetDlgLists::GetHotKeyListItems(eFillListBoxHotKeys eWhat, const ListBoxItem** ppItems)
-//{
-//	uint nItems;
-//
-//	switch (eWhat)
-//	{
-//	case eHkModifiers:
-//		nItems = countof(CSetDlgLists::Modifiers); *ppItems = CSetDlgLists::Modifiers; break;
-//	case eHkKeysHot:
-//		nItems = countof(CSetDlgLists::KeysHot); *ppItems = CSetDlgLists::KeysHot; break;
-//	case eHkKeys:
-//		nItems = countof(CSetDlgLists::Keys); *ppItems = CSetDlgLists::Keys; break;
-//	case eHkKeysAct:
-//		nItems = countof(CSetDlgLists::KeysAct); *ppItems = CSetDlgLists::KeysAct; break;
-//	default:
-//		_ASSERTE(FALSE && "eFillListBoxHotKeys was not processed");
-//		return 0;
-//	}
-//
-//	return nItems;
-//}
-
 void CSetDlgLists::FillListBox(HWND hList, WORD nCtrlId, eFillListBoxItems eWhat)
 {
 	const ListBoxItem* Items;
