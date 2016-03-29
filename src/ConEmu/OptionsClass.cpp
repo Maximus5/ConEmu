@@ -594,6 +594,12 @@ bool CSettings::SetOption(LPCWSTR asName, LPCWSTR asValue)
 
 void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine /*= NULL*/)
 {
+	// Logging may be enabled in Settings permanently
+	if (gpSet->isLogging())
+	{
+		gpConEmu->CreateLog();
+	}
+
 	_ASSERTE(gpLng != NULL);
 	if (gpLng)
 		gpLng->Reload();
