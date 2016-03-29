@@ -68,6 +68,7 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_SpgEnvironment,           L"Environment" },
 	{ lng_SpgFarMacros,             L"Far macros" },
 	{ lng_SpgFarManager,            L"Far Manager" },
+	{ lng_SpgFarViews,              L"Panel Views" },
 	{ lng_SpgFeatures,              L"Features" },
 	{ lng_SpgFonts,                 L"Main" },
 	{ lng_SpgHighlight,             L"Highlight" },
@@ -84,6 +85,5 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_SpgTasks,                 L"Tasks" },
 	{ lng_SpgTransparent,           L"Transparency" },
 	{ lng_SpgUpdate,                L"Update" },
-	{ lng_SpgFarViews,              L"Panel Views" },
 	{ /* empty trailing item for patch convenience */ }
 };
