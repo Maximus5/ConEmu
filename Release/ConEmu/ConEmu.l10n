@@ -2528,6 +2528,35 @@
       "zh": "退出代码",
       "id": 17 }
     ,
+    "lng_HotkeysAll": {
+      "en": "All hotkeys",
+      "ru": "Все хоткеи",
+      "zh": "所有热键（&A）",
+      "id": 58 }
+    ,
+    "lng_HotkeysFilter": {
+      "en": "Filter hotkeys (Alt+F)",
+      "ru": "Фильтрация хоткеев (Alt+F)",
+      "id": 57 }
+    ,
+    "lng_HotkeysMacro": {
+      "en": "Macros",
+      "ru": "Макросы",
+      "zh": "宏",
+      "id": 61 }
+    ,
+    "lng_HotkeysSystem": {
+      "en": "System",
+      "ru": "Системные",
+      "zh": "系统",
+      "id": 60 }
+    ,
+    "lng_HotkeysUser": {
+      "en": "User defined",
+      "ru": "Пользовательские",
+      "zh": "用户定义的",
+      "id": 59 }
+    ,
     "lng_PasteEnterConfirm": {
       "en": [ "Warning!\n"
             , "\n"
@@ -4706,30 +4735,6 @@
       "zh": "从不",
       "id": 2521 }
     ,
-    "rbHotkeysAll": {
-      "en": "&All hotkeys",
-      "ru": "Все",
-      "zh": "所有热键（&A）",
-      "id": 2447 }
-    ,
-    "rbHotkeysMacros": {
-      "en": "&Macros",
-      "ru": "Макросы",
-      "zh": "宏（&M）",
-      "id": 2450 }
-    ,
-    "rbHotkeysSystem": {
-      "en": "&System",
-      "ru": "Системные",
-      "zh": "系统（&S）",
-      "id": 2449 }
-    ,
-    "rbHotkeysUser": {
-      "en": "&User defined",
-      "ru": "Пользовательские",
-      "zh": "用户定义的（&U）",
-      "id": 2448 }
-    ,
     "rbMinByEscAlways": {
       "en": "Always",
       "ru": "Всегда",
@@ -5422,11 +5427,6 @@
       "en": "Choose hotkey:",
       "zh": "选择热键：",
       "id": 1769 }
-    ,
-    "stHotkeysFilter": {
-      "en": "Filter:",
-      "ru": "Фильтр:",
-      "id": 3053 }
     ,
     "stInactiveCursorMinSize": {
       "en": "Min size (pix):",

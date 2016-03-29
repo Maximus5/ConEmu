@@ -88,6 +88,10 @@ enum LngResources
 	lng_SizeRadioFree             = 55,
 	lng_SizeRadioCentered         = 56,
 	lng_HotkeysFilter             = 57,
+	lng_HotkeysAll                = 58,
+	lng_HotkeysUser               = 59,
+	lng_HotkeysSystem             = 60,
+	lng_HotkeysMacro              = 61,
 	// last auto-gen identifier
 	lng_NextId
 };
