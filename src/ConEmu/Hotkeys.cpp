@@ -701,6 +701,9 @@ void ConEmuHotKey::GetVkKeyName(BYTE vk, wchar_t (&szName)[32], bool bSingle /*=
 	case VK_PAUSE:
 		// Return ‘Ctrl+Break’ but ‘Pause’
 		wcscat_c(szName, bSingle ? L"Pause" : L"Break"); break;
+	case VK_CANCEL:
+		// It's may be pressed with Ctrl only
+		wcscat_c(szName, L"Break"); break;
 	case VK_RETURN:
 		wcscat_c(szName, L"Enter"); break;
 	case VK_BACK:
@@ -769,7 +772,7 @@ UINT ConEmuHotKey::GetVkByKeyName(LPCWSTR asName, int* pnScanCode/*=NULL*/, DWOR
 		{L"Esc", VK_ESCAPE}, {L"\x1B", VK_ESCAPE},
 		{L"Insert", VK_INSERT}, {L"Delete", VK_DELETE}, {L"Backspace", VK_BACK},
 		{L"Enter", VK_RETURN}, {L"Return", VK_RETURN}, {L"NumpadEnter", VK_RETURN},
-		{L"Pause", VK_PAUSE},
+		{L"Pause", VK_PAUSE}, {L"Break", VK_CANCEL},
 		//{L"_", 0xbd}, {L"=", 0xbb},
 		{L"Numpad0", VK_NUMPAD0}, {L"Numpad1", VK_NUMPAD1}, {L"Numpad2", VK_NUMPAD2}, {L"Numpad3", VK_NUMPAD3}, {L"Numpad4", VK_NUMPAD4},
 		{L"Numpad5", VK_NUMPAD5}, {L"Numpad6", VK_NUMPAD6}, {L"Numpad7", VK_NUMPAD7}, {L"Numpad8", VK_NUMPAD8}, {L"Numpad9", VK_NUMPAD9},

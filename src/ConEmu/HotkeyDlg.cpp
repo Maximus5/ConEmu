@@ -100,6 +100,7 @@ void CHotKeyDialog::SetHotkeyField(HWND hHk, BYTE vk)
 	SendMessage(hHk, HKM_SETHOTKEY,
 				vk|((vk==VK_DELETE||vk==VK_UP||vk==VK_DOWN||vk==VK_LEFT||vk==VK_RIGHT
 				||vk==VK_PRIOR||vk==VK_NEXT||vk==VK_HOME||vk==VK_END
+				||vk==VK_CANCEL // VK_CANCEL is "Pause/Break" key when it's pressed with Ctrl
 				||vk==VK_INSERT) ? (HOTKEYF_EXT<<8) : 0), 0);
 }
 
