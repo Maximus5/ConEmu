@@ -225,7 +225,7 @@ static LRESULT EditIconHintPaint(HWND hEditCtrl, CEIconHintInfo* p, UINT Msg = W
 			rect.right -= HIWORD(p->nMargins);
 
 			// Draw "Search" icon
-			if (dh.pIcon)
+			if (p->bSearchIcon && dh.pIcon)
 			{
 				dh.pIcon->GetSizeForHeight(ih, iw, ih);
 				int X1 = rcClient.right - iw - 1;
@@ -405,7 +405,7 @@ static LRESULT WINAPI EditIconHintProc(HWND hEditCtrl, UINT Msg, WPARAM wParam, 
 			{
 				int iLen = GetWindowTextLength(hEditCtrl);
 				KillTimer(hEditCtrl, SEARCH_CTRL_TIMERID);
-				if (iLen > 0)
+				if ((iLen > 0) || (!hi.bSearchIcon))
 				{
 					SendMessage(GetParent(hEditCtrl), hi.nSearchMsg, GetWindowLongPtr(hEditCtrl, GWLP_ID), (LPARAM)hEditCtrl);
 				}
@@ -487,6 +487,11 @@ void EditIconHint_ResChanged(HWND hEditCtrl)
 	gpIconHints->Set(hEditCtrl, hi);
 }
 
+void EditIconHint_SetTimer(HWND hEditCtrl)
+{
+	SetTimer(hEditCtrl, SEARCH_CTRL_TIMERID, SEARCH_CTRL_TIMER, 0);
+}
+
 // That helper function called from root dialog
 bool EditIconHint_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam, INT_PTR& lResult)
 {
@@ -548,7 +553,7 @@ bool EditIconHint_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam, I
 					case EN_CHANGE:
 						// Start search delay on typing
 						if (GetWindowTextLength(hEdit) > 0)
-							SetTimer(hEdit, SEARCH_CTRL_TIMERID, SEARCH_CTRL_TIMER, 0);
+							EditIconHint_SetTimer(hEdit);
 						else
 							KillTimer(hEdit, SEARCH_CTRL_TIMERID);
 						break;
@@ -579,12 +584,16 @@ bool EditIconHint_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam, I
 		} break; // WM_COMMAND
 
 	case UM_SEARCH_FOCUS:
+	case UM_FILTER_FOCUS:
 		{
 			CEIconHintInfo hi = {};
 			HWND h = NULL;
+			BOOL bSearch = (messg == UM_SEARCH_FOCUS);
 			while (gpIconHints->GetNext(h ? &h : NULL, &h, &hi))
 			{
-				if (hi.hRootDlg == hDlg)
+				if ((hi.bSearchIcon == bSearch)
+					&& (hi.hRootDlg == hDlg)
+					&& IsWindowVisible(hi.hEditCtrl))
 				{
 					SetFocus(hi.hEditCtrl);
 				}
@@ -604,17 +613,21 @@ static bool EditIconHint_ProcessKeys(HWND hCtrl, UINT Msg, WPARAM wParam, LPARAM
 	{
 	case WM_KEYDOWN:
 	case WM_KEYUP:
+	case WM_SYSKEYDOWN:
+	case WM_SYSKEYUP:
 		// Use Ctrl+F to set focus to the search field
 		if (wParam == 'F')
 		{
-			if (isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_SHIFT))
+			bool bSearch = (isPressed(VK_CONTROL) && !isPressed(VK_MENU) && !isPressed(VK_SHIFT));
+			bool bFilter = !bSearch && (isPressed(VK_MENU) && !isPressed(VK_CONTROL) && !isPressed(VK_SHIFT));
+			if (bSearch || bFilter)
 			{
-				if (Msg == WM_KEYDOWN)
+				if ((Msg == WM_KEYDOWN) || (Msg == WM_SYSKEYDOWN))
 				{
 					CEIconHintOthers iho = {};
 					if (!gpIconOthers->Get(hCtrl, &iho))
 						break;
-					PostMessage(iho.hRootDlg, UM_SEARCH_FOCUS, 0, 0);
+					PostMessage(iho.hRootDlg, bSearch ? UM_SEARCH_FOCUS : UM_FILTER_FOCUS, 0, 0);
 				}
 				lRc = 0;
 				bProcessed = true;
@@ -628,6 +641,14 @@ static bool EditIconHint_ProcessKeys(HWND hCtrl, UINT Msg, WPARAM wParam, LPARAM
 
 static LRESULT WINAPI EditIconHintOtherProc(HWND hCtrl, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
+	#ifdef _DEBUG
+	int iDbgId = GetDlgCtrlID(hCtrl);
+	if (iDbgId == tvSetupCategories)
+	{
+		iDbgId = iDbgId;
+	}
+	#endif
+
 	LRESULT lRc = 0;
 	if (EditIconHint_ProcessKeys(hCtrl, Msg, wParam, lParam, lRc))
 		return lRc;
@@ -635,7 +656,7 @@ static LRESULT WINAPI EditIconHintOtherProc(HWND hCtrl, UINT Msg, WPARAM wParam,
 	if (!gpIconOthers->Get(hCtrl, &iho, (Msg==WM_DESTROY)))
 		return DefWindowProc(hCtrl, Msg, wParam, lParam);
 
-	WORD wID;
+	WORD wID = 0;
 
 	switch (Msg)
 	{

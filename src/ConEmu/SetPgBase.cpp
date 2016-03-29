@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
+#include "SearchCtrl.h"
 #include "SetDlgColors.h"
 #include "SetPgApps.h"
 #include "SetPgBase.h"
@@ -271,6 +272,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 
 		if (bInitial)
 		{
+			EditIconHint_Subclass(hDlg, pObj->mh_Parent);
 			gpSetCls->RegisterTipsFor(hDlg);
 		}
 
@@ -492,6 +494,10 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 					gpSetCls->debugLogCommand(hDlg, pCmd);
 				} // DBGMSG_LOG_CMD_MAGIC
 			} // if (messg == DBGMSG_LOG_ID && hDlg == gpSetCls->hDebug)
+			else
+			{
+				pObj->PageDlgProc(hDlg, messg, wParam, lParam);
+			}
 		} // default:
 	} //switch (messg)
 

@@ -32,3 +32,4 @@ void EditIconHint_Set(HWND hRootDlg, HWND hEditCtrl, bool bSearchIcon, LPCWSTR s
 void EditIconHint_Subclass(HWND hDlg, HWND hRootDlg = NULL);
 bool EditIconHint_Process(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam, INT_PTR& lResult);
 void EditIconHint_ResChanged(HWND hEditCtrl);
+void EditIconHint_SetTimer(HWND hEditCtrl);

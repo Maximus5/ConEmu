@@ -2660,8 +2660,14 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 						gpSetCls->ImportSettings();
 						break;
 
-					case IDOK:
 					case IDCANCEL:
+						{
+							// Clear the ‘Filter’ field on the Keys&Macro page, for example
+							CSetPgBase* pg = gpSetCls->GetActivePageObj();
+							if (pg && !pg->QueryDialogCancel())
+								break;
+						}
+					case IDOK:
 					case IDCLOSE:
 						// -- перенесено в WM_CLOSE
 						//if (gpSet->isTabs==1) gpConEmu->ForceShowTabs(TRUE); else

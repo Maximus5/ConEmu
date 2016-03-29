@@ -33,9 +33,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 
 #include "ConEmu.h"
+#include "LngRc.h"
 #include "OptionsClass.h"
 #include "HotkeyDlg.h"
 #include "HotkeyList.h"
+#include "SearchCtrl.h"
 #include "SetDlgLists.h"
 #include "SetPgKeys.h"
 
@@ -58,6 +60,9 @@ LRESULT CSetPgKeys::OnInitDialog(HWND hDlg, bool abInitial)
 		return 0;
 	}
 
+	EditIconHint_Set(ghOpWnd, GetDlgItem(hDlg, tHotkeysFilter), false,
+		CLngRc::getRsrc(lng_HotkeysFilter/*"Filter (Alt+F)"*/), false,
+		UM_HOTKEY_FILTER, bSaveSettings);
 
 	BYTE b = mn_LastShowType;
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbHotKeyFilter), CSetDlgLists::eKeysFilter, b, false);
@@ -549,6 +554,36 @@ void CSetPgKeys::RefilterHotkeys(bool bReset /*= true*/)
 	OnHotkeysNotify(mh_Dlg, MAKELONG(lbConEmuHotKeys,0xFFFF), 0);
 }
 
+INT_PTR CSetPgKeys::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+{
+	switch (messg)
+	{
+	case UM_HOTKEY_FILTER:
+		{
+			if (IsWindowVisible(mh_Dlg))
+			{
+				CEStr lsStr;
+				GetString(mh_Dlg, tHotkeysFilter, &lsStr.ms_Val);
+				bool bReset = true;
+				if (!lsStr.IsEmpty()
+					&& (lsStr.GetLen() > ms_LastFilter.GetLen())
+					&& (ms_LastFilter.IsEmpty() || StrStrI(lsStr, ms_LastFilter))
+					)
+				{
+					// We may just delete some already populated hotkeys,
+					// because new filter is stronger and including previous one
+					bReset = false;
+				}
+
+				RefilterHotkeys(bReset);
+			}
+		}
+		break;
+	}
+
+	return 0;
+}
+
 void CSetPgKeys::ReInitHotkeys()
 {
 	gpHotKeys->ReleaseHotkeys();
@@ -559,6 +594,25 @@ void CSetPgKeys::ReInitHotkeys()
 	CSetPgKeys* pPage;
 	if (gpSetCls->GetPageObj(pPage))
 		pPage->mp_ActiveHotKey = NULL;
+}
+
+bool CSetPgKeys::QueryDialogCancel()
+{
+	HWND hCtrl = GetFocus();
+	if (hCtrl)
+	{
+		switch (GetDlgCtrlID(hCtrl))
+		{
+		case tHotkeysFilter:
+			if (GetWindowTextLength(hCtrl) > 0)
+				SetWindowText(hCtrl, L"");
+			else
+				SetFocus(GetDlgItem(mh_Dlg, lbConEmuHotKeys));
+			break;
+		}
+	}
+
+	return true; // Allow dialog close
 }
 
 LRESULT CSetPgKeys::OnEditChanged(HWND hDlg, WORD nCtrlId)
@@ -592,19 +646,7 @@ LRESULT CSetPgKeys::OnEditChanged(HWND hDlg, WORD nCtrlId)
 
 	case tHotkeysFilter:
 		{
-			CEStr lsStr;
-			GetString(hDlg, nCtrlId, &lsStr.ms_Val);
-			bool bReset = true;
-			if (!lsStr.IsEmpty()
-				&& (lsStr.GetLen() > ms_LastFilter.GetLen())
-				&& (ms_LastFilter.IsEmpty() || StrStrI(lsStr, ms_LastFilter))
-				)
-			{
-				// We may just delete some already populated hotkeys,
-				// because new filter is stronger and including previous one
-				bReset = false;
-			}
-			RefilterHotkeys(bReset);
+			EditIconHint_SetTimer(GetDlgItem(hDlg, nCtrlId));
 		}
 		break;
 

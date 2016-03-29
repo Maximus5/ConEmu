@@ -50,6 +50,7 @@ public:
 public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
+	virtual INT_PTR PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam) override;
 
 	void FillHotKeysList(HWND hWnd2, bool abInitial);
 	LRESULT OnHotkeysNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
@@ -58,6 +59,7 @@ public:
 	virtual INT_PTR OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId) override;
 	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) override;
 	virtual INT_PTR OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code) override;
+	virtual bool QueryDialogCancel() override;
 
 	static void ReInitHotkeys();
 

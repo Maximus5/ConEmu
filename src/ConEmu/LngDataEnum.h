@@ -87,6 +87,7 @@ enum LngResources
 	lng_SpgDebug                  = 54,
 	lng_SizeRadioFree             = 55,
 	lng_SizeRadioCentered         = 56,
+	lng_HotkeysFilter             = 57,
 	// last auto-gen identifier
 	lng_NextId
 };
