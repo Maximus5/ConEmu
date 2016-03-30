@@ -13101,20 +13101,20 @@ short CRealConsole::CheckProgressInTitle()
 		if (isDigit(Title[i]))
 		{
 			if (isDigit(Title[i+1]) && isDigit(Title[i+2])
-			        && (Title[i+3] == L'%' || (Title[i+3] == L'.' && isDigit(Title[i+4]) && Title[i+7] == L'%'))
+			        && (Title[i+3] == L'%' || (isDot(Title[i+3]) && isDigit(Title[i+4]) && Title[i+7] == L'%'))
 			  )
 			{
 				// По идее больше 100% быть не должно :)
 				nNewProgress = 100*(Title[i] - L'0') + 10*(Title[i+1] - L'0') + (Title[i+2] - L'0');
 			}
 			else if (isDigit(Title[i+1])
-			        && (Title[i+2] == L'%' || (Title[i+2] == L'.' && isDigit(Title[i+3]) && Title[i+4] == L'%'))
+			        && (Title[i+2] == L'%' || (isDot(Title[i+2]) && isDigit(Title[i+3]) && Title[i+4] == L'%'))
 			       )
 			{
 				// 10 .. 99 %
 				nNewProgress = 10*(Title[i] - L'0') + (Title[i+1] - L'0');
 			}
-			else if (Title[i+1] == L'%' || (Title[i+1] == L'.' && isDigit(Title[i+2]) && Title[i+3] == L'%'))
+			else if (Title[i+1] == L'%' || (isDot(Title[i+1]) && isDigit(Title[i+2]) && Title[i+3] == L'%'))
 			{
 				// 0 .. 9 %
 				nNewProgress = (Title[i] - L'0');
