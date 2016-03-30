@@ -156,6 +156,7 @@ WARNING("WIN64 was not defined");
 
 #define isDriveLetter(c) ((c>=L'A' && c<=L'Z') || (c>=L'a' && c<=L'z'))
 #define isDigit(c) (c>=L'0' && c<=L'9')
+#define isDot(c) (c==L'.' || c==',')
 #define isAlpha(c) (IsCharAlpha(c))
 #define isSpace(c) (wcschr(L" \xA0\t\r\n",c)!=NULL)
 

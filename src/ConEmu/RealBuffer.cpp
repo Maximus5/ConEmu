@@ -7364,7 +7364,7 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 					j--;
 
 				// Может быть что-то типа "Progress 25.15%"
-				if (((i - j) <= 2) && (j >= 2) && (pszCurLine[j-1] == L'.'))
+				if (((i - j) <= 2) && (j >= 2) && isDot(pszCurLine[j-1]))
 				{
 					k = j - 1;
 					while (k > 0 && isDigit(pszCurLine[k-1]))
@@ -7426,20 +7426,20 @@ short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
 	if (isDigit(pszCurLine[nIdx]))
 	{
 		if (isDigit(pszCurLine[nIdx+1]) && isDigit(pszCurLine[nIdx+2])
-			&& (pszCurLine[nIdx+3]==L'%' || (bAllowDot && pszCurLine[nIdx+3]==L'.')
+			&& (pszCurLine[nIdx+3]==L'%' || (bAllowDot && isDot(pszCurLine[nIdx+3]))
 			|| !wcsncmp(pszCurLine+nIdx+3,szPercentEng,nPercentEngLen)
 			|| !wcsncmp(pszCurLine+nIdx+3,szPercentRus,nPercentRusLen)))
 		{
 			nProgress = 100*(pszCurLine[nIdx] - L'0') + 10*(pszCurLine[nIdx+1] - L'0') + (pszCurLine[nIdx+2] - L'0');
 		}
 		else if (isDigit(pszCurLine[nIdx+1])
-			&& (pszCurLine[nIdx+2]==L'%' || (bAllowDot && pszCurLine[nIdx+2]==L'.')
+			&& (pszCurLine[nIdx+2]==L'%' || (bAllowDot && isDot(pszCurLine[nIdx+2]))
 			|| !wcsncmp(pszCurLine+nIdx+2,szPercentEng,nPercentEngLen)
 			|| !wcsncmp(pszCurLine+nIdx+2,szPercentRus,nPercentRusLen)))
 		{
 			nProgress = 10*(pszCurLine[nIdx] - L'0') + (pszCurLine[nIdx+1] - L'0');
 		}
-		else if (pszCurLine[nIdx+1]==L'%' || (bAllowDot && pszCurLine[nIdx+1]==L'.')
+		else if (pszCurLine[nIdx+1]==L'%' || (bAllowDot && isDot(pszCurLine[nIdx+1]))
 			|| !wcsncmp(pszCurLine+nIdx+1,szPercentEng,nPercentEngLen)
 			|| !wcsncmp(pszCurLine+nIdx+1,szPercentRus,nPercentRusLen))
 		{
