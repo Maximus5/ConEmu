@@ -53,6 +53,7 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_HotkeysUser,              L"User defined" },
 	{ lng_PasteEnterConfirm,        L"Warning!\n\nPasting multi-line text involves\nsending <Enter> keypresses to console!\n\nContinue?" },
 	{ lng_PasteLongConfirm,         L"Warning!\n\nPasting long text (%u chars) may make the console\nnon-responsive until the paste finishes!\n\nContinue?" },
+	{ lng_PleaseCheckManually,      L"Please check for updates manually" },
 	{ lng_Search,                   L"Search" },
 	{ lng_SearchCtrlF,              L"Search (Ctrl+F)" },
 	{ lng_SelBlock,                 L" block selection" },

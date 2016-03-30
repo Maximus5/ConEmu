@@ -92,6 +92,7 @@ enum LngResources
 	lng_HotkeysUser               = 59,
 	lng_HotkeysSystem             = 60,
 	lng_HotkeysMacro              = 61,
+	lng_PleaseCheckManually       = 68,
 	// last auto-gen identifier
 	lng_NextId
 };
