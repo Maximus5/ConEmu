@@ -832,17 +832,15 @@ private:
 			goto wrap;
 		}
 		CloseHandle(pi.hThread);
-		if (mb_ConEmuGui)
-		{
-			// Waiting for result if called in ConEmu GUI
-			WaitForSingleObject(pi.hProcess, INFINITE);
-			GetExitCodeProcess(pi.hProcess, &nResult);
-		}
-		else
-		{
-			// Within VisualStudio and others don't wait to avoid dead locks
-			nResult = STILL_ACTIVE;
-		}
+
+		// Waiting for result, to avoid multiple hooks processed (due to closed mutex)
+		// Within VisualStudio and others don't do INFINITE wait to avoid dead locks
+		WaitForSingleObject(pi.hProcess, mb_ConEmuGui ? INFINITE : DEF_TERM_INSTALL_TIMEOUT);
+		if (!GetExitCodeProcess(pi.hProcess, &nResult))
+			nResult = (DWORD)-1;
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm[PID=%u]: Service process PID=%u finished with code=%u", nForePID, pi.dwProcessId, nResult);
+		LogHookingStatus(szInfo);
+
 		CloseHandle(pi.hProcess);
 
 		iRc = 0;
