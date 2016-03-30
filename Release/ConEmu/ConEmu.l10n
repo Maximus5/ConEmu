@@ -75,6 +75,8 @@
     "cbAutoRegFonts": {
       "en": [ "Use in ConEmu fonts, located in ConEmu folder.\r\n"
             , "*.ttf, *.otf and *.bdf files are supported." ],
+      "ru": [ "Загружать и подключать шрифты из папки ConEmu.\r\n"
+            , "Поддерживаются: *.ttf, *.otf и *.bdf." ],
       "zh": [ "用于ConEmu字体，字体位于ConEmu文件夹。\r\n"
             , "支持*.ttf、*.otf和*.bdf文件。" ],
       "id": 1550 }
@@ -2683,7 +2685,7 @@
     ,
     "lng_SpgCursor": {
       "en": "Text cursor",
-      "ru": "Курсор",
+      "ru": "Текстовый курсор",
       "zh": "文本光标",
       "id": 38 }
     ,
@@ -2803,7 +2805,7 @@
     ,
     "lng_SpgTasks": {
       "en": "Tasks",
-      "ru": "Tasks",
+      "ru": "Задачи (Tasks)",
       "zh": "任务",
       "id": 34 }
     ,
@@ -2913,71 +2915,85 @@
     ,
     "cbActivateSplitMouseOver": {
       "en": "Activate split/pane on mouse hover",
+      "ru": "Активировать сплит при наведении мышки",
       "zh": "鼠标悬停时激活分屏/窗格",
       "id": 2601 }
     ,
     "cbActivityReset": {
       "en": "&Reset",
+      "ru": "Сброс",
       "zh": "重置（&R）",
       "id": 1717 }
     ,
     "cbActivitySaveAs": {
       "en": "Save &as...",
+      "ru": "Сохранить как...",
       "zh": "另存为（&a）...",
       "id": 1746 }
     ,
     "cbAddConEmu2Path": {
       "en": "Add %ConEmuDir% to %PATH%",
+      "ru": "Добавить %ConEmuDir% в %PATH%",
       "zh": "添加%ConEmuDir%到%PATH%",
       "id": 2423 }
     ,
     "cbAddConEmuBase2Path": {
       "en": "Add %ConEmuBaseDir% to %PATH%",
+      "ru": "Добавить %ConEmuBaseDir% в %PATH%",
       "zh": "添加%ConEmuBaseDir%到%PATH%",
       "id": 2584 }
     ,
     "cbAddDefaults": {
       "en": "Add default tasks...",
+      "ru": "Создать основные задачи...",
       "zh": "添加默认任务...",
       "id": 2632 }
     ,
     "cbAdminShield": {
       "en": "Admin shield",
+      "ru": "Значок щита",
       "zh": "管理员盾牌",
       "id": 2109 }
     ,
     "cbAdminSuffix": {
       "en": "suffix",
+      "ru": "суффикс",
       "zh": "后缀",
       "id": 2110 }
     ,
     "cbAlwaysOnTop": {
       "en": "Always on top",
+      "ru": "Поверх всех окон",
       "zh": "总是置顶",
       "id": 1572 }
     ,
     "cbAlwaysShowTrayIcon": {
       "en": "Always show TSA icon",
+      "ru": "Всегда показывать иконку в TSA",
       "zh": "总是显示任务栏状态区域图标",
       "id": 1736 }
     ,
     "cbAnsiLog": {
       "en": "Log console output (*)",
+      "ru": "Логирование консольного вывода (*)",
       "zh": "记录控制台输出日志（*）",
       "id": 2679 }
     ,
     "cbAppDistinctDown": {
       "en": "Down",
+      "ru": "Вниз",
       "zh": "向下",
       "id": 2139 }
     ,
     "cbAppDistinctReload": {
       "en": "Reload...",
+      "ru": "Перечитать...",
       "zh": "重新加载...",
       "id": 2140 }
     ,
     "cbAppDistinctUp": {
       "en": "Up",
+      "ru": "Вверх",
       "zh": "向上",
       "id": 2138 }
     ,
@@ -2989,17 +3005,19 @@
     ,
     "cbApplyPos": {
       "en": "Apply",
-      "ru": "Apply",
+      "ru": "Применить",
       "zh": "应用",
       "id": 1520 }
     ,
     "cbAutoRegFonts": {
       "en": "Auto register fonts",
+      "ru": "Загружать шрифты из папки ConEmu",
       "zh": "自动注册字体",
       "id": 1550 }
     ,
     "cbAutoSaveSizePos": {
       "en": "Auto save window size and position on exit",
+      "ru": "Запоминать размер и положение окна при выходе",
       "zh": "自动保存窗口大小和位置",
       "id": 1723 }
     ,
