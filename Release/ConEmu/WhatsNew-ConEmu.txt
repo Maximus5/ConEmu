@@ -20,6 +20,15 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.3.29
+* Redesign ‘Keys & Macro’ settings page. Let `Alt+F` put focus into the ‘Filter’ field.
+* Hotkey `Ctrl+Alt+Break` was not processed properly.
+* LogFile was not created when ‘Internal LogFiles’ checkbox was on.
+* Simplify switching between Tasks on the ‘Tasks’ settings page (Up/Down keys if checkbox/button has focus).
+* gh-404, gh-322: Fix crash in the integrated applications after ConEmu update (DefTerm).
+  The effect will be noticed on the **next** update.
+
+
 2016.3.28
 * New default hotkeys for process termination:
   * `Win+Alt+Break` - Terminate all but shell processes in the current console;
