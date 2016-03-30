@@ -682,6 +682,7 @@ public:
 		if (bNotified)
 		{
 			NotifyHookingStatus(0, NULL);
+			LogHookingStatus(L"DefTerm::CheckForeground finished");
 		}
 		return lbRc;
 	};
@@ -826,7 +827,7 @@ private:
 			nErrCode = GetLastError();
 			CloseHandle(hProcess);
 			iRc = -3;
-			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm[PID=%u]: Fails to start hooking process, code=%u", nForePID, nErrCode);
+			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm[PID=%u]: Fails to start service process, code=%u", nForePID, nErrCode);
 			LogHookingStatus(szInfo);
 			goto wrap;
 		}

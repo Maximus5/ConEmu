@@ -261,7 +261,7 @@ bool CDefaultTerminal::NotifyHookingStatus(DWORD nPID, LPCWSTR sName)
 
 	if (nPID)
 	{
-		msprintf(szInfo, countof(szInfo), L"DefTerm setup: PID=%u", nPID);
+		msprintf(szInfo, countof(szInfo), L"DefTerm::Setup PID=%u", nPID);
 		if (sName && *sName)
 		{
 			wcscat_c(szInfo, L", ");
