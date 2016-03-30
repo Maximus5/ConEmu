@@ -91,5 +91,9 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_SpgTasks,                 L"Tasks" },
 	{ lng_SpgTransparent,           L"Transparency" },
 	{ lng_SpgUpdate,                L"Update" },
+	{ lng_UnknownSwitch1,           L"Unknown switch specified:" },
+	{ lng_UnknownSwitch2,           L"Visit website to get thorough switches description:" },
+	{ lng_UnknownSwitch3,           L"Or run ‘ConEmu.exe -?’ to get the brief." },
+	{ lng_UnknownSwitch4,           L"Switch ‘-new_console’ must be specified *after* ‘-cmd’ or ‘-cmdlist’!" },
 	{ /* empty trailing item for patch convenience */ }
 };

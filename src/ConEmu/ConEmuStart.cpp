@@ -1419,10 +1419,14 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 	if (psUnknown)
 	{
 		DEBUGSTRSTARTUP(L"Unknown switch, exiting!");
-		CEStr lsFail(L"Unknown switch specified:\r\n", psUnknown);
-		gpConEmu->LogString(lsFail, false, false);
+		if (gpSet->isLogging())
+		{
+			// For direct logging we do not use lng resources
+			CEStr lsLog(L"\r\n", L"Unknown switch specified: ", psUnknown, L"\r\n\r\n");
+			gpConEmu->LogString(lsLog, false, false);
+		}
 
-		LPCWSTR pszNewConWarn = NULL;
+		CEStr szNewConWarn;
 		LPCWSTR pszTestSwitch =
 			(psUnknown[0] == L'-' || psUnknown[0] == L'/')
 				? ((psUnknown[1] == L'-' || psUnknown[1] == L'/')
@@ -1431,17 +1435,22 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 		if ((lstrcmpni(pszTestSwitch, L"new_console", 11) == 0)
 			|| (lstrcmpni(pszTestSwitch, L"cur_console", 11) == 0))
 		{
-			pszNewConWarn = L"\r\n\r\n" L"Switch -new_console must be specified *after* /cmd or /cmdlist";
+			szNewConWarn = lstrmerge(L"\r\n\r\n",
+				CLngRc::getRsrc(lng_UnknownSwitch4/*"Switch -new_console must be specified *after* /cmd or /cmdlist"*/)
+				);
 		}
 
 		CEStr lsMsg(
-			lsFail,
-			pszNewConWarn,
-			L"\r\n\r\n"
-			L"Visit website to get thorough switches description:\r\n"
+			CLngRc::getRsrc(lng_UnknownSwitch1/*"Unknown switch specified:"*/),
+			L"\r\n\r\n",
+			psUnknown,
+			szNewConWarn,
+			L"\r\n\r\n",
+			CLngRc::getRsrc(lng_UnknownSwitch2/*"Visit website to get thorough switches description:"*/),
+			L"\r\n"
 			CEGUIARGSPAGE
-			L"\r\n\r\n"
-			L"Or run ‘ConEmu.exe -?’ to get the brief."
+			L"\r\n\r\n",
+			CLngRc::getRsrc(lng_UnknownSwitch3/*"Or run ‘ConEmu.exe -?’ to get the brief."*/)
 			);
 
 		MBoxA(lsMsg);
