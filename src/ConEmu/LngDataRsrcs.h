@@ -95,5 +95,7 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_UnknownSwitch2,           L"Visit website to get thorough switches description:" },
 	{ lng_UnknownSwitch3,           L"Or run ‘ConEmu.exe -?’ to get the brief." },
 	{ lng_UnknownSwitch4,           L"Switch ‘-new_console’ must be specified *after* ‘-cmd’ or ‘-cmdlist’!" },
+	{ lng_UpdateCloseMsg1,          L"Please, close all ConEmu instances before continue" },
+	{ lng_UpdateCloseMsg2,          L"ConEmu still running:" },
 	{ /* empty trailing item for patch convenience */ }
 };

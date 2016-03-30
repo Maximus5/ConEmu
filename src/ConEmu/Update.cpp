@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <commctrl.h>
 #include "AboutDlg.h"
 #include "ConfirmDlg.h"
+#include "LngRc.h"
 #include "../common/MSection.h"
 #include "../common/WFiles.h"
 #include "../common/WThreads.h"
@@ -2200,15 +2201,18 @@ void CConEmuUpdate::WaitAllInstances()
 	while (true)
 	{
 		bool bStillExists = false;
-		wchar_t szMessage[255];
-		wcscpy_c(szMessage, L"Please, close all ConEmu instances before continue");
+		CEStr szMessage(CLngRc::getRsrc(lng_UpdateCloseMsg1/*"Please, close all ConEmu instances before continue"*/));
 
 		HWND hFind = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
 		if (hFind)
 		{
 			bStillExists = true;
 			DWORD nPID; GetWindowThreadProcessId(hFind, &nPID);
-			_wsprintf(szMessage+_tcslen(szMessage), SKIPLEN(64) L"\nConEmu still running, PID=%u", nPID);
+			wchar_t szPID[16];
+			lstrmerge(&szMessage.ms_Val,
+				L"\n",
+				CLngRc::getRsrc(lng_UpdateCloseMsg2/*"ConEmu still running:"*/), L" ",
+				L"PID=", _ultow(nPID, szPID, 10));
 		}
 
 		if (!bStillExists)

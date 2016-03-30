@@ -96,6 +96,8 @@ enum LngResources
 	lng_UnknownSwitch2            = 63,
 	lng_UnknownSwitch3            = 64,
 	lng_UnknownSwitch4            = 65,
+	lng_UpdateCloseMsg1           = 66,
+	lng_UpdateCloseMsg2           = 67,
 	lng_PleaseCheckManually       = 68,
 	// last auto-gen identifier
 	lng_NextId
