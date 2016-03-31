@@ -297,7 +297,7 @@ void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel /*= NULL*/)
 			pszReady = lsBuf.ms_Val;
 	}
 
-	gpDefTerm->LogHookingStatus(pszReady);
+	gpDefTerm->LogHookingStatus(GetCurrentProcessId(), pszReady);
 }
 
 
@@ -435,21 +435,23 @@ void CDefTermHk::LogInit()
 	mp_FileLog->LogString(GetCommandLineW());
 }
 
-void CDefTermHk::LogHookingStatus(LPCWSTR asMessage)
+void CDefTermHk::LogHookingStatus(DWORD nForePID, LPCWSTR sMessage)
 {
 	if (!mp_FileLog || !mp_FileLog->IsLogOpened())
 	{
-		if (asMessage && *asMessage)
+		if (sMessage && *sMessage)
 		{
-			DebugStr(asMessage);
-			if (asMessage[lstrlen(asMessage)-1] != L'\n')
+			DebugStr(sMessage);
+			if (sMessage[lstrlen(sMessage)-1] != L'\n')
 			{
 				DebugStr(L"\n");
 			}
 		}
 		return;
 	}
-	mp_FileLog->LogString(asMessage);
+	wchar_t szPID[16];
+	CEStr lsLog(L"DefTerm[", _ultow(nForePID, szPID, 10), L"]: ", sMessage);
+	mp_FileLog->LogString(lsLog);
 }
 
 int CDefTermHk::DisplayLastError(LPCWSTR asLabel, DWORD dwError/*=0*/, DWORD dwMsgFlags/*=0*/, LPCWSTR asTitle/*=NULL*/, HWND hParent/*=NULL*/)
@@ -459,18 +461,18 @@ int CDefTermHk::DisplayLastError(LPCWSTR asLabel, DWORD dwError/*=0*/, DWORD dwM
 		wchar_t szInfo[64];
 		msprintf(szInfo, countof(szInfo), L", ErrCode=x%X(%i)", dwError, (int)dwError);
 		CEStr lsMsg = lstrmerge(asLabel, szInfo);
-		LogHookingStatus(lsMsg);
+		LogHookingStatus(GetCurrentProcessId(), lsMsg);
 	}
 	else
 	{
-		LogHookingStatus(asLabel);
+		LogHookingStatus(GetCurrentProcessId(), asLabel);
 	}
 	return 0;
 }
 
 void CDefTermHk::ShowTrayIconError(LPCWSTR asErrText)
 {
-	LogHookingStatus(asErrText);
+	LogHookingStatus(GetCurrentProcessId(), asErrText);
 	DefTermMsg(asErrText);
 }
 
@@ -480,11 +482,11 @@ HWND CDefTermHk::AllocHiddenConsole(bool bTempForVS)
 	AttachConsole_t _AttachConsole = GetAttachConsoleProc();
 	if (!_AttachConsole)
 	{
-		LogHookingStatus(L"Can't create hidden console, function does not exist");
+		LogHookingStatus(GetCurrentProcessId(), L"Can't create hidden console, function does not exist");
 		return NULL;
 	}
 
-	LogHookingStatus(L"AllocHiddenConsole");
+	LogHookingStatus(GetCurrentProcessId(), L"AllocHiddenConsole");
 
 	ReloadSettings();
 	_ASSERTEX(isDefTermEnabled() && (gbIsNetVsHost || bTempForVS));
@@ -492,7 +494,7 @@ HWND CDefTermHk::AllocHiddenConsole(bool bTempForVS)
 	if (!isDefTermEnabled())
 	{
 		// Disabled in settings or registry
-		LogHookingStatus(L"Application skipped by settings");
+		LogHookingStatus(GetCurrentProcessId(), L"Application skipped by settings");
 		return NULL;
 	}
 
@@ -536,7 +538,7 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE 
 	const CEDefTermOpt* pOpt = GetOpt();
 	if (!pOpt || !isDefTermEnabled())
 	{
-		LogHookingStatus(L"Applicatio skipped by settings");
+		LogHookingStatus(GetCurrentProcessId(), L"Applicatio skipped by settings");
 		return 0;
 	}
 
@@ -587,11 +589,11 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE 
 			si.dwFlags = STARTF_USESHOWWINDOW;
 		}
 
-		LogHookingStatus(pszCmdLine);
+		LogHookingStatus(GetCurrentProcessId(), pszCmdLine);
 
 		if (CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, nCreateFlags, NULL, pOpt->pszConEmuBaseDir, &si, &pi))
 		{
-			LogHookingStatus(L"Console server was successfully created");
+			LogHookingStatus(GetCurrentProcessId(), L"Console server was successfully created");
 			bAttachCreated = true;
 			if (phSrvProcess)
 				*phSrvProcess = pi.hProcess;
@@ -607,7 +609,7 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE 
 			if (pszErrMsg)
 			{
 				msprintf(pszErrMsg, MAX_PATH*3, L"ConEmuHk: Failed to start attach server, Err=%u! %s\n", nErr, pszCmdLine);
-				LogHookingStatus(pszErrMsg);
+				LogHookingStatus(GetCurrentProcessId(), pszErrMsg);
 				wchar_t szTitle[64];
 				msprintf(szTitle, countof(szTitle), WIN3264TEST(L"ConEmuHk",L"ConEmuHk64") L", PID=%u", GetCurrentProcessId());
 				//OutputDebugString(pszErrMsg);
@@ -634,7 +636,7 @@ void CDefTermHk::OnAllocConsoleFinished()
 
 	if (!ghConWnd || !IsWindow(ghConWnd))
 	{
-		LogHookingStatus(L"OnAllocConsoleFinished: ghConWnd must be initialized already!");
+		LogHookingStatus(GetCurrentProcessId(), L"OnAllocConsoleFinished: ghConWnd must be initialized already!");
 		_ASSERTEX(FALSE && "ghConWnd must be initialized already!");
 		return;
 	}
@@ -645,7 +647,7 @@ void CDefTermHk::OnAllocConsoleFinished()
 	if (!isDefTermEnabled())
 	{
 		// Disabled in settings or registry
-		LogHookingStatus(L"OnAllocConsoleFinished: !isDefTermEnabled()");
+		LogHookingStatus(GetCurrentProcessId(), L"OnAllocConsoleFinished: !isDefTermEnabled()");
 		return;
 	}
 
@@ -654,13 +656,13 @@ void CDefTermHk::OnAllocConsoleFinished()
 	_ASSERTEX(bConWasVisible);
 	// Чтобы минимизировать "мелькания" - сразу спрячем его
 	ShowWindow(ghConWnd, SW_HIDE);
-	LogHookingStatus(L"Console window was hidden");
+	LogHookingStatus(GetCurrentProcessId(), L"Console window was hidden");
 
 	if (!StartConsoleServer(gnSelfPID, false, NULL))
 	{
 		if (bConWasVisible)
 			ShowWindow(ghConWnd, SW_SHOW);
-		LogHookingStatus(L"Starting attach server failed?");
+		LogHookingStatus(GetCurrentProcessId(), L"Starting attach server failed?");
 	}
 }
 

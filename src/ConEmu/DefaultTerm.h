@@ -62,5 +62,6 @@ protected:
 	// sName is executable name or window class name
 	virtual bool NotifyHookingStatus(DWORD nPID, LPCWSTR sName) override;
 public:
-	virtual void LogHookingStatus(LPCWSTR sMessage) override;
+	virtual void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage) override;
+	virtual bool isLogging() override;
 };

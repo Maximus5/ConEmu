@@ -261,10 +261,10 @@ bool CDefaultTerminal::NotifyHookingStatus(DWORD nPID, LPCWSTR sName)
 
 	if (nPID)
 	{
-		msprintf(szInfo, countof(szInfo), L"DefTerm::Setup PID=%u", nPID);
+		msprintf(szInfo, countof(szInfo), L"DefTerm[%u]: Setup", nPID);
 		if (sName && *sName)
 		{
-			wcscat_c(szInfo, L", ");
+			wcscat_c(szInfo, L" ");
 			int nLen = lstrlen(szInfo);
 			lstrcpyn(szInfo+nLen, sName, countof(szInfo)-nLen);
 		}
@@ -275,7 +275,14 @@ bool CDefaultTerminal::NotifyHookingStatus(DWORD nPID, LPCWSTR sName)
 	return true;
 }
 
-void CDefaultTerminal::LogHookingStatus(LPCWSTR sMessage)
+void CDefaultTerminal::LogHookingStatus(DWORD nForePID, LPCWSTR sMessage)
 {
-	gpConEmu->LogString(sMessage);
+	wchar_t szPID[16];
+	CEStr lsLog(L"DefTerm[", _ultow(nForePID, szPID, 10), L"]: ", sMessage);
+	gpConEmu->LogString(lsLog);
+}
+
+bool CDefaultTerminal::isLogging()
+{
+	return gpSet->isLogging();
 }

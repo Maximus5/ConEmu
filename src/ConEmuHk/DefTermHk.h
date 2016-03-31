@@ -80,7 +80,7 @@ protected:
 protected:
 	MFileLog* mp_FileLog;
 	void LogInit();
-	virtual void LogHookingStatus(LPCWSTR sMessage) override;
+	virtual void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage) override;
 protected:
 	friend bool InitDefTerm();
 	friend void DefTermLogInit();
