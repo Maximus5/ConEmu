@@ -10,7 +10,8 @@ rem edit:...\Release\ConEmu\WhatsNew-ConEmu.txt
 
 setlocal
 
-set git=%~d0\Utils\Lans\GIT\cmd\git.exe
+set git=%~d0\gitsdk\cmd\git.exe
+rem set git=%~d0\Utils\Lans\GIT\cmd\git.exe
 if NOT EXIST "%git%" set git=git.exe
 
 cd /d "%~dp0.."
@@ -24,6 +25,7 @@ rem May be file was already created and prepared?
 if exist "%daily_md%" (
   type "%daily_md%" | %windir%\system32\find "build: %CurVerBuild%"
   if errorlevel 1 goto yaml
+  if "%~2" == "-force" goto yaml
   call cecho "### Changelog .daily.md was already created for build %CurVerBuild%"
   goto done
 )
@@ -74,5 +76,5 @@ if errorlevel 1 (
 if exist "%git_out%" del "%git_out%"
 if exist "%git_err%" del "%git_err%"
 
-"%git%" log "--format=%%ci (%%cn)%%n* %%B" --reverse %commit_range%
+"%git%" log "--format=%%ci (%%cn)%%n* %%B" --reverse %commit_range% --invert-grep --grep="^Internal\. "
 goto :EOF
