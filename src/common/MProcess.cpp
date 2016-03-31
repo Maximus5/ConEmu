@@ -70,11 +70,12 @@ bool isTerminalMode()
 		{
 			int nSteps = 128; // protection from recursion
 			DWORD nParentPID = P.th32ParentProcessID;
+			DEBUGTEST(DWORD nSelfParentPID = P.th32ParentProcessID);
 			while (nSteps-- > 0)
 			{
 				if (!prc.Find(nParentPID, &P))
 				{
-					_ASSERTE(FALSE && "Failed to load parent process information");
+					_ASSERTE((nParentPID != nSelfParentPID) && "Failed to load parent process information");
 					break;
 				}
 
