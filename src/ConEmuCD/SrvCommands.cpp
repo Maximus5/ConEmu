@@ -692,12 +692,12 @@ BOOL cmd_PostConMsg(CESERVER_REQ& in, CESERVER_REQ** out)
 		#ifdef _DEBUG
 		wchar_t szDbg[255];
 		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"ConEmuC: %s(0x%08X, %s, CP:%i, HKL:0x%08I64X)\n",
-		          in.Msg.bPost ? L"PostMessage" : L"SendMessage", (DWORD)hSendWnd,
+		          in.Msg.bPost ? L"PostMessage" : L"SendMessage", LODWORD(hSendWnd),
 		          (in.Msg.nMsg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" :
 		          (in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST) ? L"WM_INPUTLANGCHANGEREQUEST" :
 		          (in.Msg.nMsg == WM_SHOWWINDOW) ? L"WM_SHOWWINDOW" :
 		          L"<Other message>",
-		          (DWORD)wParam, l);
+		          LODWORD(wParam), l);
 		DEBUGLOGLANG(szDbg);
 		#endif
 
@@ -1068,7 +1068,7 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	HWND hGuiApp = NULL;
 	if (in.DataSize() >= sizeof(DWORD))
 	{
-		hGuiApp = (HWND)in.dwData[0];
+		hGuiApp = (HWND)(DWORD_PTR)in.dwData[0];
 		if (hGuiApp && !IsWindow(hGuiApp))
 			hGuiApp = NULL;
 	}
@@ -1533,7 +1533,7 @@ BOOL cmd_RedrawHWND(CESERVER_REQ& in, CESERVER_REQ** out)
 		return FALSE;
 
 	BOOL bRedraw = FALSE;
-	HWND hWnd = (HWND)in.dwData[0];
+	HWND hWnd = (HWND)(DWORD_PTR)in.dwData[0];
 
 	// We need to invalidate client and non-client areas, following lines does the trick
 	RECT rcClient = {};
