@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2016 Maximus5
+Copyright (c) 2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,21 +29,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "Common.h"
+#include <windows.h>
+#include <TlHelp32.h>
 
-bool apiSetForegroundWindow(HWND ahWnd);
-bool apiShowWindow(HWND ahWnd, int anCmdShow);
-bool apiShowWindowAsync(HWND ahWnd, int anCmdShow);
+bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
+bool GetProcessInfo(LPCWSTR asExeName, PROCESSENTRY32W* Info);
 
-// WinAPI wrappers
-void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName = false, LPDWORD pnPID = NULL);
-
-bool IsUserAdmin();
-bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
-
-HANDLE DuplicateProcessHandle(DWORD anTargetPID);
-
-void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso = true); // используется в GUI при загрузке настроек
-void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath = false);
-
-void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue);
+// Lower-cased to distinct from plugin's export
+bool isTerminalMode();

@@ -5,6 +5,7 @@ SRCS = \
 		../common/Common.cpp         \
 		../common/ConEmuCheck.cpp    \
 		../common/HkFunc.cpp         \
+		../common/MProcess.cpp       \
 		../common/MSection.cpp       \
 		../common/MSectionSimple.cpp \
 		../common/MStrDup.cpp        \

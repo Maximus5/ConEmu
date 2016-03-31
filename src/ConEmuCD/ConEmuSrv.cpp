@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleRead.h"
 #include "../common/EmergencyShow.h"
 #include "../common/execute.h"
+#include "../common/MProcess.h"
 #include "../common/MProcessBits.h"
 #include "../common/MSectionSimple.h"
 #include "../common/MStrSafe.h"

@@ -39,6 +39,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "header.h"
 
+#include "../common/WUser.h"
+
 #include "ConEmu.h"
 #include "Inside.h"
 #include "Menu.h"

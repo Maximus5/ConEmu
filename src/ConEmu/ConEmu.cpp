@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MArray.h"
 #include "../common/MFileLog.h"
 #include "../common/Monitors.h"
+#include "../common/MProcess.h"
 #include "../common/MSetter.h"
 #include "../common/MToolTip.h"
 #include "../common/MWow64Disable.h"

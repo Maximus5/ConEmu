@@ -399,6 +399,7 @@
       <File RelativePath="..\common\HkFunc.cpp" />
       <File RelativePath="..\common\MAssert.cpp" />
       <File RelativePath="..\common\Memory.cpp" />
+      <File RelativePath="..\common\MProcess.cpp" />
       <File RelativePath="..\common\MSection.cpp" />
       <File RelativePath="..\common\MSectionSimple.cpp" />
       <File RelativePath="..\common\MSecurity.cpp" />
@@ -426,11 +427,13 @@
       <File RelativePath="..\common\HkFunc.h" />
       <File RelativePath="..\common\kl_parts.h" />
       <File RelativePath="..\common\Memory.h" />
+      <File RelativePath="..\common\MProcess.h" />
       <File RelativePath="..\common\MSection.h" />
       <File RelativePath="..\common\MSectionSimple.h" />
       <File RelativePath="..\common\MSecurity.h" />
       <File RelativePath="..\common\MStrDup.h" />
       <File RelativePath="..\common\MStrSafe.h" />
+      <File RelativePath="..\common\MToolHelp.h" />
       <File RelativePath="..\common\RgnDetect.h" />
       <File RelativePath="..\common\WFiles.h" />
       <File RelativePath="..\common\WObjects.h" />

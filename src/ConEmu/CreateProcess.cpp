@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRRUN(s) //DEBUGSTR(s)
 
-#include <TlHelp32.h>
+#include "../common/MProcess.h"
 
 #include "../common/TokenHelper.h"
 #include "../common/WSession.h"

@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/FarVersion.h"
 #include "../common/HkFunc.h"
 #include "../common/MFileMapping.h"
+#include "../common/MProcess.h"
 #include "../common/MSection.h"
 #include "../common/MSetter.h"
 #include "../common/MWow64Disable.h"

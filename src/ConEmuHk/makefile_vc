@@ -94,6 +94,7 @@ $(INTDIR)\MConHandle.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\MFileLog.obj \
 $(INTDIR)\MModule.obj \
+$(INTDIR)\MProcess.obj \
 $(INTDIR)\MProcessBits.obj \
 $(INTDIR)\MRect.obj \
 $(INTDIR)\MSectionSimple.obj \
@@ -396,6 +397,8 @@ $(INTDIR)\Memory.obj: ../common/Memory.cpp
 $(INTDIR)\MFileLog.obj: ../common/MFileLog.cpp ../common/MFileLog.h
 
 $(INTDIR)\MModule.obj: ../common/MModule.cpp ../common/MModule.h
+
+$(INTDIR)\MProcess.obj: ../common/MProcess.cpp ../common/MProcess.h ../common/MToolHelp.h
 
 $(INTDIR)\MProcessBits.obj: ../common/MProcessBits.cpp ../common/MProcessBits.h
 

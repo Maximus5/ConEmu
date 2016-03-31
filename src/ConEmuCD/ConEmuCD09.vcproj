@@ -414,6 +414,7 @@
       <File RelativePath="..\common\MModule.h" />
       <File RelativePath="..\common\Monitors.h" />
       <File RelativePath="..\common\MPerfCounter.h" />
+      <File RelativePath="..\common\MProcess.h" />
       <File RelativePath="..\common\MProcessBits.h" />
       <File RelativePath="..\common\MRect.h" />
       <File RelativePath="..\common\MSection.h" />
@@ -421,6 +422,7 @@
       <File RelativePath="..\common\MSecurity.h" />
       <File RelativePath="..\common\MStrDup.h" />
       <File RelativePath="..\common\MStrSafe.h" />
+      <File RelativePath="..\common\MToolHelp.h" />
       <File RelativePath="..\common\PipeServer.h" />
       <File RelativePath="..\common\ProcessSetEnv.h" />
       <File RelativePath="..\common\RConStartArgs.h" />
@@ -477,6 +479,7 @@
       <File RelativePath="..\common\MModule.cpp" />
       <File RelativePath="..\common\Monitors.cpp" />
       <File RelativePath="..\common\MPerfCounter.cpp" />
+      <File RelativePath="..\common\MProcess.cpp" />
       <File RelativePath="..\common\MProcessBits.cpp" />
       <File RelativePath="..\common\MRect.cpp" />
       <File RelativePath="..\common\MSection.cpp" />

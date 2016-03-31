@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/CEStr.h"
+#include "../common/MProcess.h"
 #include "../common/MStrDup.h"
 #include "../common/ProcessData.h"
 #include "../common/WCodePage.h"

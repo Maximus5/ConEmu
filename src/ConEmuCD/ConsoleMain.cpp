@@ -80,6 +80,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/HkFunc.h"
 #include "../common/MArray.h"
 #include "../common/MPerfCounter.h"
+#include "../common/MProcess.h"
 #include "../common/MMap.h"
 #include "../common/MRect.h"
 #include "../common/MSectionSimple.h"

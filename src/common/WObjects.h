@@ -45,9 +45,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define KEY_WOW64_64KEY 0x0100
 #endif
 
-// WinAPI wrappers
-void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName = false, LPDWORD pnPID = NULL);
-
 // Win console defines
 typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 
@@ -83,13 +80,6 @@ bool IsWin10();
 bool IsWindows64();
 bool IsWine();
 bool IsWinPE();
-// Lower-cased to distinct from plugin's export
-bool isTerminalMode();
-
-typedef struct tagPROCESSENTRY32W PROCESSENTRY32W;
-bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
-bool GetProcessInfo(LPCWSTR asExeName, PROCESSENTRY32W* Info);
-bool GetProcessInfo(bool (*compare)(PROCESSENTRY32W* p, LPARAM lParam), LPARAM lParam, PROCESSENTRY32W* Info);
 
 wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount);
 wchar_t* ExpandEnvStr(LPCWSTR pszCommand);

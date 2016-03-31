@@ -92,6 +92,7 @@ $(INTDIR)\MGuiMacro.obj \
 $(INTDIR)\MJsonReader.obj \
 $(INTDIR)\MModule.obj \
 $(INTDIR)\Monitors.obj \
+$(INTDIR)\MProcess.obj \
 $(INTDIR)\MProcessBits.obj \
 $(INTDIR)\MRect.obj \
 $(INTDIR)\MSection.obj \
@@ -449,6 +450,8 @@ $(INTDIR)\MJsonReader.obj: ../common/MJsonReader.cpp ../common/MJsonReader.h
 $(INTDIR)\MModule.obj: ../common/MModule.cpp ../common/MModule.h
 
 $(INTDIR)\Monitors.obj: ../common/Monitors.cpp
+
+$(INTDIR)\MProcess.obj: ../common/MProcess.cpp ../common/MProcess.h ../common/MToolHelp.h
 
 $(INTDIR)\MProcessBits.obj: ../common/MProcessBits.cpp ../common/MProcessBits.h
 

@@ -37,7 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRINSIDE(s) //DEBUGSTR(s)
 
 #include "header.h"
-#include <Tlhelp32.h>
+
+#include "../common/MProcess.h"
 
 #include "ConEmu.h"
 #include "Inside.h"
