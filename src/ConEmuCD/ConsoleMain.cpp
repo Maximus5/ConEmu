@@ -5322,7 +5322,8 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bF
 		}
 
 		szFontInfo[0] = '`';
-		WideCharToMultiByte(CP_UTF8, 0, szFontName, -1, szFontInfo+1, 40, NULL, NULL);
+		int iCvt = WideCharToMultiByte(CP_UTF8, 0, szFontName, -1, szFontInfo+1, 40, NULL, NULL);
+		if (iCvt <= 0) lstrcpynA(szFontInfo+1, "??", 40); else szFontInfo[iCvt+1] = 0;
 		int iLen = lstrlenA(szFontInfo); // result of WideCharToMultiByte is not suitable (contains trailing zero)
 		_wsprintfA(szFontInfo+iLen, SKIPLEN(countof(szFontInfo)-iLen) "` %ix%i%s",
 			fontY, fontX, szState);
