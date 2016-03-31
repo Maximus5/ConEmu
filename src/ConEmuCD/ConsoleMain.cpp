@@ -4622,7 +4622,7 @@ void SendStarted()
 
 		if (!pConsoleInfo)
 		{
-			_ASSERTE(pConsoleInfo && "ConsoleMap was not initialized for AltServer/ComSpec");
+			_ASSERTE((gnRunMode == RM_COMSPEC) && (ghConWnd && !ghConEmuWnd && IsWindowVisible(ghConWnd)) && "ConsoleMap was not initialized for AltServer/ComSpec");
 		}
 		else
 		{
