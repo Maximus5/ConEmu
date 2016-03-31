@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/Monitors.h"
+#include "../common/MProcessBits.h"
 #include "../common/ProcessData.h"
 #include "../common/WThreads.h"
 #include "../common/WUser.h"

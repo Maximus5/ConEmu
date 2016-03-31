@@ -409,6 +409,7 @@
       <File RelativePath="..\common\MJsonReader.cpp" />
       <File RelativePath="..\common\MModule.cpp" />
       <File RelativePath="..\common\Monitors.cpp" />
+      <File RelativePath="..\common\MProcessBits.cpp" />
       <File RelativePath="..\common\MRect.cpp" />
       <File RelativePath="..\common\MSection.cpp" />
       <File RelativePath="..\common\MSectionSimple.cpp" />
@@ -574,6 +575,7 @@
       <File RelativePath="..\common\MModule.h" />
       <File RelativePath="..\common\Monitors.h" />
       <File RelativePath="..\common\MPipe.h" />
+      <File RelativePath="..\common\MProcessBits.h" />
       <File RelativePath="..\common\MRect.h" />
       <File RelativePath="..\common\MSection.h" />
       <File RelativePath="..\common\MSectionSimple.h" />

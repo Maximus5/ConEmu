@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Execute.h"
 #include "../common/MGuiMacro.h"
 #include "../common/MFileLog.h"
+#include "../common/MProcessBits.h"
 #include "../common/MSectionSimple.h"
 #include "../common/MSetter.h"
 #include "../common/MWow64Disable.h"

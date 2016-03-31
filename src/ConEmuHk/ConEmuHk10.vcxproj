@@ -852,6 +852,8 @@
     <ClInclude Include="..\common\MConHandle.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MFileLog.h" />
+    <ClInclude Include="..\common\MModule.h" />
+    <ClInclude Include="..\common\MProcessBits.h" />
     <ClInclude Include="..\common\MRect.h" />
     <ClInclude Include="..\common\MSection.h" />
     <ClInclude Include="..\common\MSectionSimple.h" />
@@ -917,6 +919,8 @@
     <ClCompile Include="..\common\MConHandle.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
     <ClCompile Include="..\common\MFileLog.cpp" />
+    <ClCompile Include="..\common\MModule.cpp" />
+    <ClCompile Include="..\common\MProcessBits.cpp" />
     <ClCompile Include="..\common\MRect.cpp" />
     <ClCompile Include="..\common\MSection.cpp" />
     <ClCompile Include="..\common\MSectionSimple.cpp" />

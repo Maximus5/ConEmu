@@ -410,6 +410,8 @@
       <File RelativePath="..\common\MConHandle.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MFileLog.h" />
+      <File RelativePath="..\common\MModule.h" />
+      <File RelativePath="..\common\MProcessBits.h" />
       <File RelativePath="..\common\MRect.h" />
       <File RelativePath="..\common\MSection.h" />
       <File RelativePath="..\common\MSectionSimple.h" />
@@ -475,6 +477,8 @@
       <File RelativePath="..\common\MConHandle.cpp" />
       <File RelativePath="..\common\Memory.cpp" />
       <File RelativePath="..\common\MFileLog.cpp" />
+      <File RelativePath="..\common\MModule.cpp" />
+      <File RelativePath="..\common\MProcessBits.cpp" />
       <File RelativePath="..\common\MRect.cpp" />
       <File RelativePath="..\common\MSection.cpp" />
       <File RelativePath="..\common\MSectionSimple.cpp" />

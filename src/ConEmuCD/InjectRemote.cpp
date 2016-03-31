@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmuC.h"
 #include "../common/MAssert.h"
+#include "../common/MProcessBits.h"
 #include "../common/WFiles.h"
 #include "../common/WModuleCheck.h"
 #include "Infiltrate.h"

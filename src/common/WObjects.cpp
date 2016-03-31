@@ -889,59 +889,6 @@ bool IsGDB(LPCWSTR asFilePatName)
 	return bIsGdb;
 }
 
-// Check running process bits - 32/64
-int GetProcessBits(DWORD nPID, HANDLE hProcess /*= NULL*/)
-{
-	if (!IsWindows64())
-		return 32;
-
-	int ImageBits = WIN3264TEST(32,64); //-V112
-
-	typedef BOOL (WINAPI* IsWow64Process_t)(HANDLE, PBOOL);
-	static IsWow64Process_t IsWow64Process_f = NULL;
-
-	if (!IsWow64Process_f)
-	{
-		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
-		if (hKernel)
-		{
-			IsWow64Process_f = (IsWow64Process_t)GetProcAddress(hKernel, "IsWow64Process");
-		}
-	}
-
-	if (IsWow64Process_f)
-	{
-		BOOL bWow64 = FALSE;
-		HANDLE h = hProcess ? hProcess : OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, nPID);
-
-		// IsWow64Process would be succeessfull for PROCESS_QUERY_LIMITED_INFORMATION (Vista+)
-		if ((h == NULL) && IsWin6())
-		{
-			// PROCESS_QUERY_LIMITED_INFORMATION not defined in GCC
-			h = OpenProcess(0x1000/*PROCESS_QUERY_LIMITED_INFORMATION*/, FALSE, nPID);
-		}
-
-		if (h == NULL)
-		{
-			// If it is blocked due to access rights - try to find alternative ways (by path or PERF COUNTER)
-			ImageBits = 0;
-		}
-		else if (IsWow64Process_f(h, &bWow64) && !bWow64)
-		{
-			ImageBits = 64;
-		}
-		else
-		{
-			ImageBits = 32;
-		}
-
-		if (h && (h != hProcess))
-			CloseHandle(h);
-	}
-
-	return ImageBits;
-}
-
 
 bool GetProcessInfo(bool (*compare)(PROCESSENTRY32W* p, LPARAM lParam), LPARAM lParam, PROCESSENTRY32W* Info)
 {
