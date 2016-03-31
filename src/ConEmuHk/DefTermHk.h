@@ -59,9 +59,9 @@ public:
 	// Вызывается из хуков после успешного AllocConsole (Win2k only? а смысл?)
 	void OnAllocConsoleFinished();
 
-	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false); // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
-	virtual void StopHookers();
-	virtual void ReloadSettings(); // Copy from gpSet or load from [HKCU]
+	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false) override; // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
+	virtual void StopHookers() override;
+	virtual void ReloadSettings() override; // Copy from gpSet or load from [HKCU]
 
 	size_t GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon);
 
@@ -73,14 +73,14 @@ protected:
 	DWORD   StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE phSrvProcess);
 
 protected:
-	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL);
-	virtual void ShowTrayIconError(LPCWSTR asErrText); // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
-	virtual void PostCreateThreadFinished();
+	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL) override;
+	virtual void ShowTrayIconError(LPCWSTR asErrText) override; // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
+	virtual void PostCreateThreadFinished() override;
 
 protected:
 	MFileLog* mp_FileLog;
 	void LogInit();
-	virtual void LogHookingStatus(LPCWSTR asMessage);
+	virtual void LogHookingStatus(LPCWSTR sMessage) override;
 protected:
 	friend bool InitDefTerm();
 	friend void DefTermLogInit();
