@@ -73,6 +73,7 @@ if defined ConEmuPID (
 )
 
 if /I "%VS_CLEAN_DBG%" == "NO" goto skip_clean_dbg
+call "%~dp0clean.cmd"
 call "%~dp0clean_dbg.cmd"
 :skip_clean_dbg
 
