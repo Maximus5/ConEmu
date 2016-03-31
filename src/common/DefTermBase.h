@@ -747,6 +747,7 @@ private:
 	{
 		int iRc = -1;
 		wchar_t szCmdLine[MAX_PATH*2];
+		wchar_t szConTitle[32] = L"ConEmu";
 		LPCWSTR pszSrvExe = NULL;
 		int nBits;
 		PROCESS_INFORMATION pi = {};
@@ -822,6 +823,7 @@ private:
 
 		// Run hooker
 		si.dwFlags = STARTF_USESHOWWINDOW;
+		si.lpTitle = szConTitle;
 		LogHookingStatus(nForePID, szCmdLine);
 		bStarted = CreateProcess(NULL, szCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 		if (!bStarted)
