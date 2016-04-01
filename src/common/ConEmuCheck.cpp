@@ -833,10 +833,12 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 		#else
 		if (hOwner)
 		{
+			DWORD_PTR dwResult = 0;
+			//TODO: Get off changing window title completely - prefer writing to log
 			if (hOwner == myGetConsoleWindow())
 				SetConsoleTitle(szErr);
 			else
-				SetWindowText(hOwner, szErr);
+				SendMessageTimeout(hOwner, WM_SETTEXT, 0, (LPARAM)szErr, SMTO_ABORTIFHUNG, 1000, &dwResult);
 		}
 		#endif
 
