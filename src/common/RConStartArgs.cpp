@@ -1040,7 +1040,9 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						}
 						else
 						{
-							_ASSERTE((pszEnd > pszArgEnd) && "Wrong quotation usage in -new_console?");
+							// False assertion occurred for:
+							//   `/C "C:\Temp\run_pause.cmd "-cur_console:o""`
+							// _ASSERTE((pszEnd > pszArgEnd) && "Wrong quotation usage in -new_console?");
 						}
 						lbReady = true;
 						break;
@@ -1476,9 +1478,16 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 				}
 
 				// Trim extra LEADING spaces before -new_console[:...] / -cur_console[:...]
+				// Must trim spaces from smth like this:
+				//   cmd.exe /C "C:\Temp\run.cmd -cur_console:o"
+				// but take care about this
+				//   cmd.exe /C "C:\Temp\run.cmd -cur_console:o "abc""
 				while (((pszFind - 1) >= pszSpecialCmd)
 					&& (*(pszFind-1) == L' ')
-					&& (((pszFind - 1) == pszSpecialCmd) || (*(pszFind-2) == L' ') || (/**pszEnd == L'"' ||*/ *pszEnd == 0 || *pszEnd == L' ')))
+					&& (((pszFind - 1) == pszSpecialCmd)
+						|| (*(pszFind-2) == L' ')
+						|| ((*pszEnd == L'"') && (*(pszEnd-1) != L' '))
+						|| (*pszEnd == 0) || (*pszEnd == L' ')))
 				{
 					pszFind--;
 				}
