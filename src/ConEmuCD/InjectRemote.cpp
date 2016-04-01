@@ -410,6 +410,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	LogString(L"CreateToolhelp32Snapshot(TH32CS_SNAPMODULE)");
 
 	// Hey, may be ConEmuHk.dll is already loaded?
+	//TODO: Reuse MToolHelp.h
 	hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nRemotePID);
 	if (!hSnap || (hSnap == INVALID_HANDLE_VALUE))
 	{

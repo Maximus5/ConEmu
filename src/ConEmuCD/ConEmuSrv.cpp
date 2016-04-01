@@ -402,6 +402,7 @@ int AttachRootProcess()
 
 		if (gpSrv->nProcessCount >= 2 && !gpSrv->DbgInfo.bDebuggerActive)
 		{
+			//TODO: Reuse MToolHelp.h
 			HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
 
 			if (hSnap != INVALID_HANDLE_VALUE)
@@ -2162,6 +2163,7 @@ HWND FindConEmuByPID(DWORD anSuggestedGuiPID /*= 0*/)
 	if (nConEmuPID == 0)
 	{
 		// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshot
+		//TODO: Reuse MToolHelp.h
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
 
 		if (hSnap != INVALID_HANDLE_VALUE)
@@ -2714,6 +2716,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 	if (!hGui)
 	{
+		//TODO: Reuse MToolHelp.h
 		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
 
 		if (hSnap != INVALID_HANDLE_VALUE)

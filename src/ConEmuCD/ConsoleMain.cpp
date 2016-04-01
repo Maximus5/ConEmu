@@ -6602,6 +6602,7 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 		if (!gpSrv->nConhostPID)
 		{
 			// Найти порожденный conhost.exe
+			//TODO: Reuse MToolHelp.h
 			HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 			if (h && (h != INVALID_HANDLE_VALUE))
 			{
