@@ -238,3 +238,47 @@ INT_PTR CSetPgColors::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 
 	return 0;
 }
+
+LRESULT CSetPgColors::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	COLORREF color = 0;
+
+	if (nCtrlId == tFadeLow || nCtrlId == tFadeHigh)
+	{
+		BOOL lbOk = FALSE;
+		UINT nVal = GetDlgItemInt(hDlg, nCtrlId, &lbOk, FALSE);
+
+		if (lbOk && nVal <= 255)
+		{
+			if (nCtrlId == tFadeLow)
+				gpSet->mn_FadeLow = nVal;
+			else
+				gpSet->mn_FadeHigh = nVal;
+
+			gpSet->ResetFadeColors();
+			//gpSet->mb_FadeInitialized = false;
+			//gpSet->mn_LastFadeSrc = gpSet->mn_LastFadeDst = -1;
+		}
+	}
+	else if (CSetDlgColors::GetColorById(nCtrlId - (tc0-c0), &color))
+	{
+		if (CSetDlgColors::GetColorRef(hDlg, nCtrlId, &color))
+		{
+			if (CSetDlgColors::SetColorById(nCtrlId - (tc0-c0), color))
+			{
+				gpConEmu->InvalidateAll();
+
+				if (nCtrlId >= tc0 && nCtrlId <= tc31)
+					gpConEmu->Update(true);
+
+				InvalidateCtrl(GetDlgItem(hDlg, nCtrlId - (tc0-c0)), TRUE);
+			}
+		}
+	}
+	else
+	{
+		_ASSERTE(FALSE && "EditBox was not processed");
+	}
+
+	return 0;
+}

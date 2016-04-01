@@ -151,3 +151,28 @@ void CSetPgPaste::OnBtn_ClipConfirmLimit(HWND hDlg, WORD CB, BYTE uCheck)
 	enableDlgItem(hDlg, tClipConfirmLimit, (gpSet->nPasteConfirmLonger != 0));
 
 } // cbClipConfirmLimit
+
+LRESULT CSetPgPaste::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case tClipConfirmLimit:
+	{
+		BOOL lbValOk = FALSE;
+		gpSet->nPasteConfirmLonger = GetDlgItemInt(hDlg, tClipConfirmLimit, &lbValOk, FALSE);
+		if (isChecked(hDlg, cbClipConfirmLimit) != (gpSet->nPasteConfirmLonger!=0))
+			checkDlgButton(hDlg, cbClipConfirmLimit, (gpSet->nPasteConfirmLonger!=0));
+		if (lbValOk && (gpSet->nPasteConfirmLonger == 0))
+		{
+			SetFocus(GetDlgItem(hDlg, cbClipConfirmLimit));
+			enableDlgItem(hDlg, tClipConfirmLimit, false);
+		}
+		break;
+	} // case tClipConfirmLimit:
+
+	default:
+		_ASSERTE(FALSE && "EditBox was not processed");
+	}
+
+	return 0;
+}

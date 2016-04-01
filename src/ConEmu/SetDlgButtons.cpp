@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShObjIdl_Part.h"
 #endif // __GNUC__
 
+#include "../common/MSetter.h"
 #include "../common/WUser.h"
 
 #include "AboutDlg.h"
@@ -2718,10 +2719,10 @@ void CSetDlgButtons::OnBtn_Monospace(HWND hDlg, WORD CB, BYTE uCheck)
 
 	gpSet->isMonospace = uCheck;
 
-	gpSetCls->mb_IgnoreEditChanged = TRUE;
+	MSetter lIgnoreEdit(&CSetPgBase::mb_IgnoreEditChanged);
+
 	gpFontMgr->ResetFontWidth();
 	gpConEmu->Update(true);
-	gpSetCls->mb_IgnoreEditChanged = FALSE;
 
 } // cbMonospace
 

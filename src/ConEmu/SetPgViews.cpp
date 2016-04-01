@@ -192,3 +192,77 @@ INT_PTR CSetPgViews::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 
 	return 0;
 }
+
+LRESULT CSetPgViews::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	BOOL bValOk = FALSE;
+	UINT nVal = GetDlgItemInt(hDlg, nCtrlId, &bValOk, FALSE);
+
+	if (bValOk)
+	{
+		switch (nCtrlId)
+		{
+		case tThumbLoadingTimeout:
+			gpSet->ThSet.nLoadTimeout = nVal; break;
+			//
+		case tThumbsImgSize:
+			gpSet->ThSet.Thumbs.nImgSize = nVal; break;
+			//
+		case tThumbsX1:
+			gpSet->ThSet.Thumbs.nSpaceX1 = nVal; break;
+		case tThumbsY1:
+			gpSet->ThSet.Thumbs.nSpaceY1 = nVal; break;
+		case tThumbsX2:
+			gpSet->ThSet.Thumbs.nSpaceX2 = nVal; break;
+		case tThumbsY2:
+			gpSet->ThSet.Thumbs.nSpaceY2 = nVal; break;
+			//
+		case tThumbsSpacing:
+			gpSet->ThSet.Thumbs.nLabelSpacing = nVal; break;
+		case tThumbsPadding:
+			gpSet->ThSet.Thumbs.nLabelPadding = nVal; break;
+			// ****************
+		case tTilesImgSize:
+			gpSet->ThSet.Tiles.nImgSize = nVal; break;
+			//
+		case tTilesX1:
+			gpSet->ThSet.Tiles.nSpaceX1 = nVal; break;
+		case tTilesY1:
+			gpSet->ThSet.Tiles.nSpaceY1 = nVal; break;
+		case tTilesX2:
+			gpSet->ThSet.Tiles.nSpaceX2 = nVal; break;
+		case tTilesY2:
+			gpSet->ThSet.Tiles.nSpaceY2 = nVal; break;
+			//
+		case tTilesSpacing:
+			gpSet->ThSet.Tiles.nLabelSpacing = nVal; break;
+		case tTilesPadding:
+			gpSet->ThSet.Tiles.nLabelPadding = nVal; break;
+		default:
+			_ASSERTE(FALSE && "EditBox was not processed");
+		} // switch (TB)
+	} // if (bValOk)
+
+	if (nCtrlId >= tc32 && nCtrlId <= tc38)
+	{
+		COLORREF color = 0;
+
+		if (CSetDlgColors::GetColorById(nCtrlId - (tc0-c0), &color))
+		{
+			if (CSetDlgColors::GetColorRef(hDlg, nCtrlId, &color))
+			{
+				if (CSetDlgColors::SetColorById(nCtrlId - (tc0-c0), color))
+				{
+					InvalidateCtrl(GetDlgItem(hDlg, nCtrlId - (tc0-c0)), TRUE);
+					// done
+				}
+			}
+		}
+		else
+		{
+			_ASSERTE(FALSE && "EditBox was not processed");
+		}
+	}
+
+	return 0;
+}

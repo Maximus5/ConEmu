@@ -51,3 +51,21 @@ LRESULT CSetPgEnvironment::OnInitDialog(HWND hDlg, bool abInitial)
 
 	return 0;
 }
+
+LRESULT CSetPgEnvironment::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case tSetCommands:
+	{
+		size_t cchMax = gpSet->psEnvironmentSet ? (_tcslen(gpSet->psEnvironmentSet)+1) : 0;
+		MyGetDlgItemText(hDlg, tSetCommands, cchMax, gpSet->psEnvironmentSet);
+	}
+	break;
+
+	default:
+		_ASSERTE(FALSE && "EditBox was not processed");
+	}
+
+	return 0;
+}

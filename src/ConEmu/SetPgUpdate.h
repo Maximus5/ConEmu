@@ -47,6 +47,7 @@ public:
 public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
+	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) override;
 
 protected:
 	// Members

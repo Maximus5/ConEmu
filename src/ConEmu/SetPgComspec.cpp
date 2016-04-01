@@ -285,3 +285,23 @@ void CSetPgComspec::RegisterCmdAutorun(bool bEnabled, bool bForced /*= false*/)
 		SafeFree(pszCur);
 	}
 }
+
+LRESULT CSetPgComspec::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case tComspecExplicit:
+		{
+			GetDlgItemText(hDlg, tComspecExplicit, gpSet->ComSpec.ComspecExplicit, countof(gpSet->ComSpec.ComspecExplicit));
+			break;
+		} //case tComspecExplicit:
+
+	case tCmdAutoAttach:
+		break; // Read-Only
+
+	default:
+		_ASSERTE(FALSE && "EditBox was not processed");
+	}
+
+	return 0;
+}

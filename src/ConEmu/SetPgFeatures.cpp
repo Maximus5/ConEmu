@@ -101,3 +101,21 @@ void CSetPgFeatures::UpdateLogLocation()
 		*(wchar_t*)pszName = 0;
 	SetDlgItemText(gpSetCls->GetPage(thi_Features), tDebugLogDir, lsLogPath);
 }
+
+LRESULT CSetPgFeatures::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case tAnsiLogPath:
+	{
+		SafeFree(gpSet->pszAnsiLog);
+		gpSet->pszAnsiLog = GetDlgItemTextPtr(hDlg, tAnsiLogPath);
+	}
+	break;
+
+	default:
+		_ASSERTE(FALSE && "EditBox was not processed");
+	}
+
+	return 0;
+}

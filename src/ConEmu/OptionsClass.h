@@ -266,7 +266,6 @@ class CSettings
 		// IDD_SETTINGS
 		LRESULT OnInitDialog();
 		//
-		LRESULT OnEditChanged(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnListBoxDblClk(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		LRESULT OnPage(LPNMHDR phdr);
 		INT_PTR OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -282,7 +281,6 @@ class CSettings
 		void ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropDown);
 		void RegisterTipsFor(HWND hChildDlg);
 	private:
-		BOOL mb_IgnoreEditChanged;
 		//BOOL mb_CharSetWasSet;
 		i64 mn_Freq;
 		i64 mn_FPS[256]; int mn_FPS_CUR_FRAME;

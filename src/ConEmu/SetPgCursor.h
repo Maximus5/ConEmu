@@ -47,6 +47,7 @@ public:
 public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
+	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) override;
 
 	static void InitCursorCtrls(HWND hDlg, const AppSettings* pApp);
 	static bool OnEditChangedCursor(HWND hDlg, WORD nCtrlId, AppSettings* pApp);

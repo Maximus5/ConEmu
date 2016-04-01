@@ -36,8 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class CSetPgSizePos
 	: public CSetPgBase
 {
-protected:
-	bool mb_IgnoreEditChanged;
 public:
 	static CSetPgBase* Create() { return new CSetPgSizePos(); };
 	static TabHwndIndex PageType() { return thi_SizePos; };
@@ -52,6 +50,7 @@ public:
 	// Events
 	virtual void OnPostLocalize(HWND hDlg);
 	virtual INT_PTR OnComboBox(HWND hDlg, WORD nCtrlId, WORD code) override;
+	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) override;
 
 	void FillSizeControls(HWND hDlg);
 	void EnablePosSizeControls(HWND hDlg);

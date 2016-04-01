@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#include "ConEmu.h"
 #include "OptionsClass.h"
 #include "SetPgAppear.h"
 
@@ -93,6 +94,75 @@ LRESULT CSetPgAppear::OnInitDialog(HWND hDlg, bool abInitial)
 	enableDlgItem(hDlg, cbSingleInstance, (gpSet->isQuakeStyle == 0));
 
 	checkDlgButton(hDlg, cbShowHelpTooltips, gpSet->isShowHelpTooltips);
+
+	return 0;
+}
+
+LRESULT CSetPgAppear::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case tQuakeAnimation:
+		{
+			BOOL lbOk = FALSE;
+			UINT nNewVal = GetDlgItemInt(hDlg, nCtrlId, &lbOk, FALSE);
+
+			gpSet->nQuakeAnimation = (nNewVal <= QUAKEANIMATION_MAX) ? nNewVal : QUAKEANIMATION_MAX;
+		}
+		break;
+
+	case tHideCaptionAlwaysFrame:
+		{
+			BOOL lbOk = FALSE;
+			int nNewVal = GetDlgItemInt(hDlg, nCtrlId, &lbOk, TRUE);
+
+			if (lbOk && (gpSet->nHideCaptionAlwaysFrame != ((nNewVal < 0) ? 255 : (BYTE)nNewVal)))
+			{
+				gpSet->nHideCaptionAlwaysFrame = (nNewVal < 0) ? 255 : (BYTE)nNewVal;
+				gpConEmu->OnHideCaption();
+				gpConEmu->UpdateWindowRgn();
+			}
+		}
+		break;
+
+	case tHideCaptionAlwaysDelay:
+	case tHideCaptionAlwaysDissapear:
+	case tScrollAppearDelay:
+	case tScrollDisappearDelay:
+		{
+			BOOL lbOk = FALSE;
+			UINT nNewVal = GetDlgItemInt(hDlg, nCtrlId, &lbOk, FALSE);
+
+			if (lbOk)
+			{
+				switch (nCtrlId)
+				{
+				case tHideCaptionAlwaysDelay:
+					gpSet->nHideCaptionAlwaysDelay = nNewVal;
+					break;
+				case tHideCaptionAlwaysDissapear:
+					gpSet->nHideCaptionAlwaysDisappear = nNewVal;
+					break;
+				case tScrollAppearDelay:
+					if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
+						gpSet->nScrollBarAppearDelay = nNewVal;
+					else if (nNewVal > SCROLLBAR_DELAY_MAX)
+						SetDlgItemInt(hDlg, tScrollAppearDelay, SCROLLBAR_DELAY_MAX, FALSE);
+					break;
+				case tScrollDisappearDelay:
+					if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
+						gpSet->nScrollBarDisappearDelay = nNewVal;
+					else if (nNewVal > SCROLLBAR_DELAY_MAX)
+						SetDlgItemInt(hDlg, tScrollDisappearDelay, SCROLLBAR_DELAY_MAX, FALSE);
+					break;
+				}
+			}
+		}
+		break;
+
+	default:
+		_ASSERTE(FALSE && "EditBox was not processed");
+	}
 
 	return 0;
 }

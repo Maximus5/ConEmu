@@ -148,6 +148,9 @@ protected:
 	ConEmuSetupPages* mp_InfoPtr;
 
 public:
+	static bool mb_IgnoreEditChanged;
+
+public:
 	CSetPgBase();
 	virtual ~CSetPgBase();
 

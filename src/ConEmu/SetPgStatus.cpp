@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmu.h"
 #include "OptionsClass.h"
+#include "SetDlgColors.h"
 #include "SetDlgLists.h"
 #include "SetDlgFonts.h"
 #include "SetpgFonts.h"
@@ -180,6 +181,29 @@ INT_PTR CSetPgStatus::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 
 	default:
 		_ASSERTE(FALSE && "ListBox was not processed");
+	}
+
+	return 0;
+}
+
+LRESULT CSetPgStatus::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	COLORREF color = 0;
+
+	if ((nCtrlId >= tc35) && (nCtrlId <= tc37)
+		&& CSetDlgColors::GetColorById(nCtrlId - (tc0-c0), &color))
+	{
+		if (CSetDlgColors::GetColorRef(hDlg, nCtrlId, &color))
+		{
+			if (CSetDlgColors::SetColorById(nCtrlId - (tc0-c0), color))
+			{
+				InvalidateCtrl(GetDlgItem(hDlg, nCtrlId - (tc0-c0)), TRUE);
+			}
+		}
+	}
+	else
+	{
+		_ASSERTE(FALSE && "EditBox was not processed");
 	}
 
 	return 0;
