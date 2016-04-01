@@ -2,7 +2,7 @@
 
 rem This (Cmd_Autorun /i) will install to the registry following keys
 rem   [HKEY_CURRENT_USER\Software\Microsoft\Command Processor]
-rem   "AutoRun"="\"C:\\Program Files\\FAR\\cmd_autorun.cmd\""
+rem   "AutoRun"="\"C:\\Program Files\\ConEmu\\ConEmu\\cmd_autorun.cmd\""
 rem Which cause auto attaching to ConEmu each started cmd.exe or tcc.exe
 rem If ConEmu (GUI) was not started yes, new instance will be started.
 
@@ -93,7 +93,7 @@ goto notfound
 :srv_ok
 rem Message moved to ConEmuC.exe
 rem echo ConEmu autorun (c) Maximus5
-rem echo Starting %ConEmuPath% in "Attach" mode (NewWnd=%FORCE_NEW_WND%)
+rem echo Starting %ConEmuPath% in "Async Attach" mode (/GHWND=NEW)
 call %ConEmuPath% /AUTOATTACH %FORCE_NEW_WND_CMD%
 rem echo errorlevel=%errorlevel%
 rem Issue 1003: Non zero exit codes leads to problems in some applications...
