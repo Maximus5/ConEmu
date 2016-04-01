@@ -743,7 +743,6 @@ bool isMainThread();
 
 // Predefined user messages
 #define UM_RELOAD_HERE_LIST (WM_APP+31)
-#define UM_RELOAD_AUTORUN   (WM_APP+32)
 #define UM_USER_CONTROLS    (WM_APP+33)
 #define UM_FILL_CMDLIST     (WM_APP+34)
 #define UM_SEARCH           (WM_APP+35)

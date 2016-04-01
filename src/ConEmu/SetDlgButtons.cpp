@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetDlgButtons.h"
 #include "SetDlgLists.h"
 #include "SetPgColors.h"
+#include "SetPgComspec.h"
 #include "SetPgFeatures.h"
 #include "SetPgIntegr.h"
 #include "SetPgKeys.h"
@@ -1973,15 +1974,15 @@ void CSetDlgButtons::OnBtn_CmdAutoActions(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==bCmdAutoClear || CB==bCmdAutoRegister || CB==bCmdAutoUnregister);
 
-	CSetPgIntegr* pIntgrPg;
-	if (gpSetCls->GetPageObj(pIntgrPg))
+	CSetPgComspec* pComspecPg;
+	if (gpSetCls->GetPageObj(pComspecPg))
 	{
-		pIntgrPg->ShellIntegration(hDlg, CSetPgIntegr::ShellIntgr_CmdAuto, CB==bCmdAutoRegister, CB==bCmdAutoClear);
-		pIntgrPg->PageDlgProc(hDlg, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
+		pComspecPg->RegisterCmdAutorun(CB==bCmdAutoRegister, CB==bCmdAutoClear);
+		pComspecPg->ReloadAutorun();
 	}
 	else
 	{
-		_ASSERTE(pIntgrPg!=NULL && "CSetPgIntegr was not created!");
+		_ASSERTE(pComspecPg!=NULL && "CSetPgComspec was not created!");
 	}
 
 } // bCmdAutoClear || bCmdAutoRegister || bCmdAutoUnregister

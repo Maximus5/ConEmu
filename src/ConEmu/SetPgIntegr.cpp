@@ -81,9 +81,6 @@ INT_PTR CSetPgIntegr::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 
 			PageDlgProc(hDlg, UM_RELOAD_HERE_LIST, UM_RELOAD_HERE_LIST, 0);
 
-			//-- moved to "ComSpec" page
-			//PageDlgProc(hDlg, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
-
 			// Возвращает NULL, если строка пустая
 			wchar_t* pszCurInside = GetDlgItemTextPtr(hDlg, cbInsideName);
 			_ASSERTE((pszCurInside==NULL) || (*pszCurInside!=0));
@@ -370,30 +367,6 @@ INT_PTR CSetPgIntegr::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 		}
 		break; // UM_RELOAD_HERE_LIST
 
-	case UM_RELOAD_AUTORUN:
-		if (wParam == UM_RELOAD_AUTORUN) // страховка
-		{
-			wchar_t *pszCmd = NULL;
-
-			BOOL bForceNewWnd = isChecked(hDlg, cbCmdAutorunNewWnd);
-
-			HKEY hkDir = NULL;
-			if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &hkDir))
-			{
-				pszCmd = LoadAutorunValue(hkDir, false);
-				if (pszCmd && *pszCmd)
-				{
-					bForceNewWnd = (StrStrI(pszCmd, L"/GHWND=NEW") != NULL);
-				}
-				RegCloseKey(hkDir);
-			}
-
-			SetDlgItemText(hDlg, tCmdAutoAttach, pszCmd ? pszCmd : L"");
-			checkDlgButton(hDlg, cbCmdAutorunNewWnd, bForceNewWnd);
-
-			SafeFree(pszCmd);
-		}
-		break; // UM_RELOAD_AUTORUN
 	}
 
 	return iRc;
@@ -635,6 +608,7 @@ void CSetPgIntegr::ShellIntegration(HWND hDlg, CSetPgIntegr::ShellIntegrType iMo
 			}
 		}
 		break;
+
 	case ShellIntgr_Here:
 		{
 			wchar_t szName[MAX_PATH] = {};
@@ -654,169 +628,6 @@ void CSetPgIntegr::ShellIntegration(HWND hDlg, CSetPgIntegr::ShellIntegrType iMo
 			}
 		}
 		break;
-	case ShellIntgr_CmdAuto:
-		{
-			BOOL bForceNewWnd = isChecked(hDlg, cbCmdAutorunNewWnd);
-				//checkDlgButton(, (StrStrI(pszCmd, L"/GHWND=NEW") != NULL));
 
-			HKEY hkCmd = NULL;
-			if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ|KEY_WRITE, &hkCmd))
-			{
-				wchar_t* pszCur = NULL;
-				wchar_t* pszBuf = NULL;
-				LPCWSTR  pszSet = L"";
-				wchar_t szCmd[MAX_PATH+128];
-
-				if (bEnabled)
-				{
-					pszCur = LoadAutorunValue(hkCmd, true);
-					pszSet = pszCur;
-
-					_wsprintf(szCmd, SKIPLEN(countof(szCmd)) L"\"%s\\Cmd_Autorun.cmd", gpConEmu->ms_ConEmuBaseDir);
-					if (FileExists(szCmd+1))
-					{
-						wcscat_c(szCmd, bForceNewWnd ? L"\" \"/GHWND=NEW\"" : L"\"");
-
-						if (pszCur == NULL)
-						{
-							pszSet = szCmd;
-						}
-						else
-						{
-							// Current "AutoRun" is not empty, need concatenate
-							size_t cchAll = _tcslen(szCmd) + _tcslen(pszCur) + 5;
-							pszBuf = (wchar_t*)malloc(cchAll*sizeof(*pszBuf));
-							_ASSERTE(pszBuf);
-							if (pszBuf)
-							{
-								_wcscpy_c(pszBuf, cchAll, szCmd);
-								_wcscat_c(pszBuf, cchAll, L" & "); // conveyer next command indifferent to %errorlevel%
-								_wcscat_c(pszBuf, cchAll, pszCur);
-								// Ok, Set
-								pszSet = pszBuf;
-							}
-						}
-					}
-					else
-					{
-						MsgBox(szCmd, MB_ICONSTOP, L"File not found", ghOpWnd);
-
-						pszSet = pszCur ? pszCur : L"";
-					}
-				}
-				else
-				{
-					pszCur = bForced ? NULL : LoadAutorunValue(hkCmd, true);
-					pszSet = pszCur ? pszCur : L"";
-				}
-
-				DWORD cchLen = _tcslen(pszSet)+1;
-				RegSetValueEx(hkCmd, L"AutoRun", 0, REG_SZ, (LPBYTE)pszSet, cchLen*sizeof(wchar_t));
-
-				RegCloseKey(hkCmd);
-
-				if (pszBuf && (pszBuf != pszCur) && (pszBuf != szCmd))
-					free(pszBuf);
-				SafeFree(pszCur);
-			}
-		}
-		break;
 	}
-}
-
-// Load current value of "HKCU\Software\Microsoft\Command Processor" : "AutoRun"
-// (bClear==true) - remove from it our "... Cmd_Autorun.cmd ..." part
-wchar_t* CSetPgIntegr::LoadAutorunValue(HKEY hkCmd, bool bClear)
-{
-	size_t cchCmdMax = 65535;
-	wchar_t *pszCmd = (wchar_t*)malloc(cchCmdMax*sizeof(*pszCmd));
-	if (!pszCmd)
-	{
-		_ASSERTE(pszCmd!=NULL);
-		return NULL;
-	}
-
-	_ASSERTE(hkCmd!=NULL);
-	//HKEY hkCmd = NULL;
-	//if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &hkCmd))
-
-	DWORD cbMax = (cchCmdMax-2) * sizeof(*pszCmd);
-	if (0 == RegQueryValueEx(hkCmd, L"AutoRun", NULL, NULL, (LPBYTE)pszCmd, &cbMax))
-	{
-		pszCmd[cbMax>>1] = 0;
-
-		if (bClear && *pszCmd)
-		{
-			// Просили почистить от "... Cmd_Autorun.cmd ..."
-			wchar_t* pszFind = StrStrI(pszCmd, L"\\ConEmu\\Cmd_Autorun.cmd");
-			if (pszFind)
-			{
-				// "... Cmd_Autorun.cmd ..." found, need to find possible start and end of our part ('&' separated)
-				wchar_t* pszStart = pszFind;
-				while ((pszStart > pszCmd) && (*(pszStart-1) != L'&'))
-					pszStart--;
-
-				const wchar_t* pszEnd = wcschr(pszFind, L'&');
-				if (!pszEnd)
-				{
-					pszEnd = pszFind + _tcslen(pszFind);
-				}
-				else
-				{
-					while (*pszEnd == L'&')
-						pszEnd++;
-				}
-
-				// Ok, There are another commands?
-				if ((pszStart > pszCmd) || *pszEnd)
-				{
-					// Possibilities
-					if (!*pszEnd)
-					{
-						// app1.exe && Cmd_Autorun.cmd
-						while ((pszStart > pszCmd) && ((*(pszStart-1) == L'&') || (*(pszStart-1) == L' ')))
-							pszStart--;
-						_ASSERTE(pszStart > pszCmd); // Command to left is empty?
-						*pszStart = 0; // just trim
-					}
-					else
-					{
-						// app1.exe && Cmd_Autorun.cmd & app2.exe
-						// app1.exe & Cmd_Autorun.cmd && app2.exe
-						// Cmd_Autorun.cmd & app2.exe
-						if (pszStart == pszCmd)
-						{
-							pszEnd = SkipNonPrintable(pszEnd);
-						}
-						size_t cchLeft = _tcslen(pszEnd)+1;
-						// move command (from right) to the 'Cmd_Autorun.cmd' place
-						memmove(pszStart, pszEnd, cchLeft*sizeof(wchar_t));
-					}
-				}
-				else
-				{
-					// No, we are alone
-					*pszCmd = 0;
-				}
-			}
-		}
-
-		// Skip spaces?
-		LPCWSTR pszChar = SkipNonPrintable(pszCmd);
-		if (!pszChar || !*pszChar)
-		{
-			*pszCmd = 0;
-		}
-	}
-	else
-	{
-		*pszCmd = 0;
-	}
-
-	// Done
-	if (pszCmd && (*pszCmd == 0))
-	{
-		SafeFree(pszCmd);
-	}
-	return pszCmd;
 }

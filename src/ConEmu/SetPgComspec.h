@@ -47,8 +47,14 @@ public:
 public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
+
 	// Events
 	virtual INT_PTR OnComboBox(HWND hDlg, WORD nCtrlId, WORD code) override;
+
+public:
+	void ReloadAutorun();
+	void RegisterCmdAutorun(bool bEnabled, bool bForced = false);
+	wchar_t* LoadAutorunValue(HKEY hkCmd, bool bClear);
 
 protected:
 	// Members
