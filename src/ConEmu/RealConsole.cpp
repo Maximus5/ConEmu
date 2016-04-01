@@ -4204,6 +4204,11 @@ void CRealConsole::SetRootProcessName(LPCWSTR asProcessName)
 
 	if (lstrcmp(asProcessName, ms_RootProcessName) != 0)
 	{
+		if (isLogging())
+		{
+			CEStr lsLog(L"Root process name changed. `", ms_RootProcessName, L"` -> `", asProcessName, L"`");
+			LogString(lsLog);
+		}
 		mn_RootProcessIcon = -1;
 		lstrcpyn(ms_RootProcessName, asProcessName, countof(ms_RootProcessName));
 		mb_NeedLoadRootProcessIcon = true;
