@@ -11399,12 +11399,12 @@ CEFarWindowType CRealConsole::GetActiveTabType()
 	nType = tabs.nActiveType;
 
 	#ifdef _DEBUG
-	if (isAdministrator() /*&& (gpSet->isAdminShield() || gpSet->isAdminSuffix())*/)
+	if (isAdministrator() != ((nType&fwt_Elevated)==fwt_Elevated))
 	{
-		_ASSERTE((nType&fwt_Elevated)==fwt_Elevated);
+		_ASSERTE(isAdministrator() == ((nType&fwt_Elevated)==fwt_Elevated));
 
 		#if 0
-		if (gpSet->isAdminShield())
+		if (isAdministrator() && gpSet->isAdminShield())
 		{
 			nType |= fwt_Elevated;
 		}
