@@ -370,6 +370,44 @@ bool IsAutoAttachAllowed()
 	return true;
 }
 
+void WaitForServerActivated(DWORD anServerPID, HANDLE ahServer, DWORD nTimeout = 30000)
+{
+	if (!gpSrv || !gpSrv->pConsoleMap || !gpSrv->pConsoleMap->IsValid())
+	{
+		_ASSERTE(FALSE && "ConsoleMap was not initialized!");
+		Sleep(nTimeout);
+		return;
+	}
+
+	DWORD nStartTick = GetTickCount(), nDelta = 0, nWait = STILL_ACTIVE, nSrvPID = 0, nExitCode = STILL_ACTIVE;
+	while (nDelta <= nTimeout)
+	{
+		nWait = WaitForSingleObject(ahServer, 100);
+		if (nWait == WAIT_OBJECT_0)
+		{
+			// Server was terminated unexpectedly?
+			if (!GetExitCodeProcess(ahServer, &nExitCode))
+				nExitCode = E_UNEXPECTED;
+			break;
+		}
+
+		nSrvPID = gpSrv->pConsoleMap->Ptr()->nServerPID;
+		_ASSERTE(((nSrvPID == 0) || (nSrvPID == anServerPID)) && (nSrvPID != GetCurrentProcessId()));
+
+		// Well, server was started
+		if (nSrvPID)
+		{
+			break;
+		}
+
+		nDelta = (GetTickCount() - nStartTick);
+	}
+
+	// Wait a little more, to be sure Server loads process tree
+	Sleep(1000);
+	UNREFERENCED_PARAMETER(nExitCode);
+}
+
 // Вызывается при запуске сервера: (gbNoCreateProcess && (gbAttachMode || gpSrv->DbgInfo.bDebuggerActive))
 int AttachRootProcess()
 {
@@ -392,7 +430,7 @@ int AttachRootProcess()
 	}
 
 	// "/AUTOATTACH" must be asynchronous
-	if ((gbAttachMode & am_Auto) || (gpSrv->dwRootProcess == 0 && !gpSrv->DbgInfo.bDebuggerActive))
+	if ((gbAttachMode & am_Async) || (gpSrv->dwRootProcess == 0 && !gpSrv->DbgInfo.bDebuggerActive))
 	{
 		// Нужно попытаться определить PID корневого процесса.
 		// Родительским может быть cmd (comspec, запущенный из FAR)
@@ -552,6 +590,9 @@ int AttachRootProcess()
 		//delete psNewCmd; psNewCmd = NULL;
 		AllowSetForegroundWindow(pi.dwProcessId);
 		PRINT_COMSPEC(L"Modeless server was started. PID=%i. Exiting...\n", pi.dwProcessId);
+
+		WaitForServerActivated(pi.dwProcessId, pi.hProcess, 30000);
+
 		SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
 		DisableAutoConfirmExit(); // сервер запущен другим процессом, чтобы не блокировать bat файлы
 		// менять nProcessStartTick не нужно. проверка только по флажкам
@@ -612,7 +653,7 @@ int ServerInitCheckExisting(bool abAlternative)
 	BOOL lbExist = LoadSrvMapping(ghConWnd, test);
 	_ASSERTE(!lbExist || (test.ComSpec.ConEmuExeDir[0] && test.ComSpec.ConEmuBaseDir[0]));
 
-	if (abAlternative == FALSE)
+	if (!abAlternative)
 	{
 		_ASSERTE(gnRunMode==RM_SERVER);
 		// Основной сервер! Мэппинг консоли по идее создан еще быть не должен!
@@ -958,7 +999,7 @@ void ServerInitEnvVars()
 
 
 // Создать необходимые события и нити
-int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
+int ServerInit()
 {
 	LogFunction(L"ServerInit");
 
@@ -970,8 +1011,10 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	if (gbDumpServerInitStatus) { _printf("ServerInit: started"); }
 	#define DumpInitStatus(fmt) if (gbDumpServerInitStatus) { DWORD nCurTick = GetTickCount(); _printf(" - %ums" fmt, (nCurTick-nTick)); nTick = nCurTick; }
 
-	if (anWorkMode == 0)
+	if (gnRunMode == RM_SERVER)
 	{
+		_ASSERTE(!(gbAttachMode & am_Async));
+
 		gpSrv->dwMainServerPID = GetCurrentProcessId();
 		gpSrv->hMainServer = GetCurrentProcess();
 
@@ -1017,7 +1060,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	else
 		gpSrv->bReopenHandleAllowed = TRUE;
 
-	if (anWorkMode == 0)
+	if (gnRunMode == RM_SERVER)
 	{
 		if (!gnConfirmExitParm)
 		{
@@ -1026,25 +1069,20 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	}
 	else
 	{
-		_ASSERTE(anWorkMode==1 && gnRunMode==RM_ALTSERVER);
+		_ASSERTE(gnRunMode==RM_ALTSERVER || gnRunMode==RM_AUTOATTACH);
 		// По идее, включены быть не должны, но убедимся
 		_ASSERTE(!gbAlwaysConfirmExit);
 		gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
 	}
 
 	// Remember RealConsole font at the startup moment
-	if (anWorkMode)
+	if (gnRunMode == RM_ALTSERVER)
 	{
-		_ASSERTE(gnRunMode==RM_ALTSERVER);
 		apiInitConsoleFontSize(ghConOut);
-	}
-	else
-	{
-		_ASSERTE(gnRunMode!=RM_ALTSERVER);
 	}
 
 	// Шрифт в консоли нужно менять в самом начале, иначе могут быть проблемы с установкой размера консоли
-	if ((anWorkMode == 0) && !gpSrv->DbgInfo.bDebuggerActive && !gbNoCreateProcess)
+	if ((gnRunMode == RM_SERVER) && !gpSrv->DbgInfo.bDebuggerActive && !gbNoCreateProcess)
 		//&& (!gbNoCreateProcess || (gbAttachMode && gbNoCreateProcess && gpSrv->dwRootProcess))
 		//)
 	{
@@ -1111,9 +1149,15 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	// Подготовить буфер для длинного вывода
 	// RM_SERVER - создать и считать текущее содержимое консоли
 	// RM_ALTSERVER - только создать (по факту - выполняется открытие созданного в RM_SERVER)
-	_ASSERTE(gnRunMode==RM_SERVER || gnRunMode==RM_ALTSERVER);
-	DumpInitStatus("\nServerInit: CmdOutputStore");
-	CmdOutputStore(true/*abCreateOnly*/);
+	if (gnRunMode==RM_SERVER || gnRunMode==RM_ALTSERVER)
+	{
+		DumpInitStatus("\nServerInit: CmdOutputStore");
+		CmdOutputStore(true/*abCreateOnly*/);
+	}
+	else
+	{
+		_ASSERTE(gnRunMode==RM_AUTOATTACH);
+	}
 	#if 0
 	_ASSERTE(gpcsStoredOutput==NULL && gpStoredOutput==NULL);
 	if (!gpcsStoredOutput)
@@ -1124,7 +1168,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 
 
 	// Включить по умолчанию выделение мышью
-	if ((anWorkMode == 0) && !gbNoCreateProcess && gbConsoleModeFlags /*&& !(gbParmBufferSize && gnBufferHeight == 0)*/)
+	if ((gnRunMode == RM_SERVER) && !gbNoCreateProcess && gbConsoleModeFlags /*&& !(gbParmBufferSize && gnBufferHeight == 0)*/)
 	{
 		//DumpInitStatus("\nServerInit: ServerInitConsoleMode");
 		ServerInitConsoleMode();
@@ -1150,17 +1194,15 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		SetEvent(ghFarInExecuteEvent);
 	#endif
 
-	_ASSERTE(anWorkMode!=2); // Для StandAloneGui - проверить
-
 	if (ghConEmuWndDC == NULL)
 	{
 		// в AltServer режиме HWND уже должен быть известен
-		_ASSERTE((anWorkMode==0) || ghConEmuWndDC!=NULL);
+		_ASSERTE((gnRunMode == RM_SERVER) || (gnRunMode == RM_AUTOATTACH) || (ghConEmuWndDC != NULL));
 	}
 	else
 	{
 		DumpInitStatus("\nServerInit: ServerInitCheckExisting");
-		iRc = ServerInitCheckExisting((anWorkMode==1));
+		iRc = ServerInitCheckExisting((gnRunMode != RM_SERVER));
 		if (iRc != 0)
 			goto wrap;
 	}
@@ -1245,12 +1287,15 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 	}
 
 	// Пайп возврата содержимого консоли
-	DumpInitStatus("\nServerInit: DataServerStart");
-	if (!DataServerStart())
+	if ((gnRunMode == RM_SERVER) || (gnRunMode == RM_ALTSERVER))
 	{
-		dwErr = GetLastError();
-		_printf("CreateThread(DataServerStart) failed, ErrCode=0x%08X\n", dwErr);
-		iRc = CERR_CREATEINPUTTHREAD; goto wrap;
+		DumpInitStatus("\nServerInit: DataServerStart");
+		if (!DataServerStart())
+		{
+			dwErr = GetLastError();
+			_printf("CreateThread(DataServerStart) failed, ErrCode=0x%08X\n", dwErr);
+			iRc = CERR_CREATEINPUTTHREAD; goto wrap;
+		}
 	}
 
 
@@ -1266,7 +1311,7 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 			goto wrap;
 	}
 
-	if ((gnRunMode == RM_SERVER) && gbAttachMode)
+	if ((gnRunMode == RM_SERVER) && (gbAttachMode & ~am_Async) && !(gbAttachMode & am_Async))
 	{
 		DumpInitStatus("\nServerInit: ServerInitAttach2Gui");
 		iRc = ServerInitAttach2Gui();
@@ -1285,6 +1330,13 @@ int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/)
 		iRc = AttachRootProcess();
 		if (iRc != 0)
 			goto wrap;
+
+		if (gbAttachMode & am_Async)
+		{
+			_ASSERTE(FALSE && "Not expected to be here!");
+			iRc = CERR_CARGUMENT;
+			goto wrap;
+		}
 	}
 
 
@@ -2912,6 +2964,8 @@ HWND Attach2Gui(DWORD nTimeout)
 		bCmdSet = true;
 	}
 
+	//TODO: In the (gbAttachMode & am_Async) mode dwRootProcess is expected to be determined already
+	_ASSERTE(bCmdSet || ((gbAttachMode & (am_Async|am_Simple)) && gpSrv->dwRootProcess));
 	if (!bCmdSet && gpSrv->dwRootProcess)
 	{
 		PROCESSENTRY32 pi;
@@ -2926,10 +2980,12 @@ HWND Attach2Gui(DWORD nTimeout)
 		CEStr lsExe;
 		IsNeedCmd(true, pIn->StartStop.sCmdLine, lsExe);
 		lstrcpyn(pIn->StartStop.sModuleName, lsExe, countof(pIn->StartStop.sModuleName));
+		_ASSERTE(pIn->StartStop.sModuleName[0]!=0);
 	}
 	else
 	{
-		_ASSERTE(pIn->StartStop.sCmdLine[0]!=0); // Должно быть указано, а то в ConEmu может неправильно AppDistinct инициализироваться
+		// Must be set, otherwise ConEmu will not be able to determine proper AddDistinct options
+		_ASSERTE(pIn->StartStop.sCmdLine[0]!=0);
 	}
 
 	// Если GUI запущен не от имени админа - то он обломается при попытке
@@ -3184,7 +3240,7 @@ int CreateMapHeader()
 	gpSrv->pConsoleMap->InitName(CECONMAPNAME, LODWORD(ghConWnd)); //-V205
 	gpSrv->pAppMap->InitName(CECONAPPMAPNAME, LODWORD(ghConWnd)); //-V205
 
-	if (gnRunMode == RM_SERVER)
+	if (gnRunMode == RM_SERVER || gnRunMode == RM_AUTOATTACH)
 	{
 		lbCreated = (gpSrv->pConsoleMap->Create() != NULL)
 			&& (gpSrv->pAppMap->Create() != NULL);
@@ -3215,7 +3271,7 @@ int CreateMapHeader()
 			}
 		}
 	}
-	else if (gnRunMode == RM_SERVER)
+	else if (gnRunMode == RM_SERVER || gnRunMode == RM_AUTOATTACH)
 	{
 		CESERVER_CONSOLE_APP_MAPPING init = {sizeof(CESERVER_CONSOLE_APP_MAPPING), CESERVER_REQ_VER};
 		init.HookedPids.Init();
@@ -3230,8 +3286,16 @@ int CreateMapHeader()
 	gpSrv->pConsole->hdr.crMaxConSize = crMax;
 	gpSrv->pConsole->hdr.bDataReady = FALSE;
 	gpSrv->pConsole->hdr.hConWnd = ghConWnd; _ASSERTE(ghConWnd!=NULL);
-	_ASSERTE(gpSrv->dwMainServerPID!=0);
-	gpSrv->pConsole->hdr.nServerPID = gpSrv->dwMainServerPID;
+	_ASSERTE((gpSrv->dwMainServerPID!=0) || (gbAttachMode & am_Async));
+	if (gbAttachMode & am_Async)
+	{
+		_ASSERTE(gpSrv->dwMainServerPID == 0);
+		gpSrv->pConsole->hdr.nServerPID = 0;
+	}
+	else
+	{
+		gpSrv->pConsole->hdr.nServerPID = gpSrv->dwMainServerPID;
+	}
 	gpSrv->pConsole->hdr.nAltServerPID = (gnRunMode==RM_ALTSERVER) ? GetCurrentProcessId() : gpSrv->dwAltServerPID;
 	gpSrv->pConsole->hdr.nGuiPID = gnConEmuPID;
 	gpSrv->pConsole->hdr.hConEmuRoot = ghConEmuWnd;
@@ -3374,9 +3438,9 @@ void UpdateConsoleMapHeader()
 		#endif
 
 		// Нельзя альт.серверу мэппинг менять - подерутся
-		if (gnRunMode != RM_SERVER /*&& gnRunMode != RM_ALTSERVER*/)
+		if ((gnRunMode != RM_SERVER) && (gnRunMode != RM_AUTOATTACH))
 		{
-			_ASSERTE(gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER);
+			_ASSERTE(gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER || gnRunMode == RM_AUTOATTACH);
 			// Могли измениться: gcrVisibleSize, nActiveFarPID
 			if (gpSrv->dwMainServerPID && gpSrv->dwMainServerPID != GetCurrentProcessId())
 			{

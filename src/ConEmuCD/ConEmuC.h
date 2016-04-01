@@ -273,7 +273,7 @@ void CheckCursorPos();
 BOOL ReloadFullConsoleInfo(BOOL abForceSend);
 bool CheckWasFullScreen();
 DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое консоли
-int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/); // Создать необходимые события и нити
+int ServerInit(); // Создать необходимые события и нити
 void ServerDone(int aiRc, bool abReportShutdown = false);
 BOOL ServerInitConsoleMode();
 void SetupCreateDumpOnException();
@@ -412,6 +412,7 @@ typedef enum tag_RunMode
 	RM_ALTSERVER,
 	RM_APPLICATION,
 	RM_GUIMACRO,
+	RM_AUTOATTACH,
 } RunMode;
 
 extern RunMode gnRunMode;
