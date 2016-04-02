@@ -253,8 +253,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mn_ProcessPriority = GetPriorityClass(GetCurrentProcess());
 	mp_PriorityDpiAware = NULL;
 
-	//memset(&m_PacketQueue, 0, sizeof(m_PacketQueue));
-	mn_FlushIn = mn_FlushOut = 0;
 	mb_MouseButtonDown = FALSE;
 	mb_BtnClicked = FALSE; mrc_BtnClickPos = MakeCoord(-1,-1);
 	mcr_LastMouseEventPos = MakeCoord(-1,-1);
@@ -274,7 +272,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mh_MonitorThread = NULL; mn_MonitorThreadID = 0; mb_WasForceTerminated = FALSE;
 	mpsz_PostCreateMacro = NULL;
 	mh_PostMacroThread = NULL; mn_PostMacroThreadID = 0;
-	//mh_InputThread = NULL; mn_InputThreadID = 0;
 	mp_sei = NULL;
 	mp_sei_dbg = NULL;
 	mn_MainSrv_PID = mn_ConHost_PID = 0; mh_MainSrv = NULL; mb_MainSrv_Ready = false;
@@ -1436,106 +1433,6 @@ void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 		pRet.TaskName.Set(lstrdup(m_Args.pszTaskName), wcslen(m_Args.pszTaskName)+1);
 	}
 }
-
-#if 0
-//120714 - аналогичные параметры работают в ConEmuC.exe, а в GUI они и не работали. убрал пока
-BOOL CRealConsole::AttachPID(DWORD dwPID)
-{
-	TODO("AttachPID пока работать не будет");
-	return FALSE;
-#ifdef ALLOW_ATTACHPID
-	#ifdef MSGLOGGER
-	TCHAR szMsg[100]; _wsprintf(szMsg, countof(szMsg), _T("Attach to process %i"), (int)dwPID);
-	DEBUGSTRPROC(szMsg);
-	#endif
-
-	BOOL lbRc = AttachConsole(dwPID);
-
-	if (!lbRc)
-	{
-		DEBUGSTRPROC(_T(" - failed\n"));
-		BOOL lbFailed = TRUE;
-		DWORD dwErr = GetLastError();
-
-		if (/*dwErr==0x1F || dwErr==6 &&*/ dwPID == -1)
-		{
-			// Если ConEmu запускается из FAR'а батником - то родительский процесс - CMD.EXE/TCC.EXE, а он уже скорее всего закрыт. то есть подцепиться не удастся
-			HWND hConsole = FindWindowEx(NULL,NULL,RealConsoleClass,NULL);
-			if (!hConsole)
-				hConsole = FindWindowEx(NULL,NULL,WineConsoleClass,NULL);
-
-			if (hConsole && IsWindowVisible(hConsole))
-			{
-				DWORD dwCurPID = 0;
-
-				if (GetWindowThreadProcessId(hConsole,  &dwCurPID))
-				{
-					// PROCESS_ALL_ACCESS may fails on WinXP!
-					HANDLE hProcess = OpenProcess((STANDARD_RIGHTS_REQUIRED|SYNCHRONIZE|0xFFF),FALSE,dwCurPID);
-					dwErr = GetLastError();
-
-					if (AttachConsole(dwCurPID))
-						lbFailed = FALSE;
-					else
-						dwErr = GetLastError();
-				}
-			}
-		}
-
-		if (lbFailed)
-		{
-			TCHAR szErr[255];
-			_wsprintf(szErr, countof(szErr), _T("AttachConsole failed (PID=%i)!"), dwPID);
-			DisplayLastError(szErr, dwErr);
-			return FALSE;
-		}
-	}
-
-	DEBUGSTRPROC(_T(" - OK"));
-	TODO("InitHandler в GUI наверное уже и не нужен...");
-	//InitHandlers(FALSE);
-	// Попытаться дернуть плагин для установки шрифта.
-	CConEmuPipe pipe;
-
-	//DEBUGSTRPROC(_T("CheckProcesses\n"));
-	//mp_ConEmu->CheckProcesses(0,TRUE);
-
-	if (pipe.Init(_T("DefFont.in.attach"), TRUE))
-		pipe.Execute(CMD_DEFFONT);
-
-	return TRUE;
-#endif
-}
-#endif
-
-//BOOL CRealConsole::FlushInputQueue(DWORD nTimeout /*= 500*/)
-//{
-//	if (!this) return FALSE;
-//
-//	if (nTimeout > 1000) nTimeout = 1000;
-//	DWORD dwStartTick = GetTickCount();
-//
-//	mn_FlushOut = mn_FlushIn;
-//	mn_FlushIn++;
-//
-//	_ASSERTE(mn_ConEmuC_Input_TID!=0);
-//
-//	TODO("Активной может быть нить ввода плагина фара а не сервера!");
-//
-//	//TODO("Проверка зависания нити и ее перезапуск");
-//	PostThreadMessage(mn_ConEmuC_Input_TID, INPUT_THREAD_ALIVE_MSG, mn_FlushIn, 0);
-//
-//	while (mn_FlushOut != mn_FlushIn) {
-//		if (WaitForSingleObject(mh_MainSrv, 100) == WAIT_OBJECT_0)
-//			break; // Процесс сервера завершился
-//
-//		DWORD dwCurTick = GetTickCount();
-//		DWORD dwDelta = dwCurTick - dwStartTick;
-//		if (dwDelta > nTimeout) break;
-//	}
-//
-//	return (mn_FlushOut == mn_FlushIn);
-//}
 
 void CRealConsole::ShowKeyBarHint(WORD nID)
 {
@@ -3454,8 +3351,6 @@ BOOL CRealConsole::StartMonitorThread()
 {
 	BOOL lbRc = FALSE;
 	_ASSERTE(mh_MonitorThread==NULL);
-	//_ASSERTE(mh_InputThread==NULL);
-	//_ASSERTE(mb_Detached || mh_MainSrv!=NULL); -- процесс теперь запускаем в MonitorThread
 	DWORD nCreateBegin = GetTickCount();
 	SetConStatus(L"Initializing ConEmu (4)", cso_ResetOnConsoleReady|cso_Critical);
 	mh_MonitorThread = apiCreateThread(MonitorThread, (LPVOID)this, &mn_MonitorThreadID, "RCon::MonitorThread ID=%i", mp_VCon->ID());
@@ -3473,9 +3368,7 @@ BOOL CRealConsole::StartMonitorThread()
 		LogString(szInfo);
 	}
 
-	//mh_InputThread = apiCreateThread(NULL, 0, InputThread, (LPVOID)this, 0, &mn_InputThreadID);
-
-	if (mh_MonitorThread == NULL /*|| mh_InputThread == NULL*/)
+	if (mh_MonitorThread == NULL)
 	{
 		DisplayLastError(_T("Can't create console thread!"));
 	}
@@ -6256,22 +6149,11 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		ms_VConServer_Pipe[0] = 0;
 	}
 
-	//if (mh_InputThread) {
-	//    if (WaitForSingleObject(mh_InputThread, 300) != WAIT_OBJECT_0) {
-	//        DEBUGSTRPROC(L"### Input Thread waiting timeout, terminating...\n");
-	//        apiTerminateThread(mh_InputThread, 1);
-	//    } else {
-	//        DEBUGSTRPROC(L"Input Thread closed normally\n");
-	//    }
-	//    SafeCloseHandle(mh_InputThread);
-	//}
-
 	if (!abRecreating)
 	{
 		SafeCloseHandle(mh_TermEvent);
 		mn_TermEventTick = -1;
 		SafeCloseHandle(mh_MonitorThreadEvent);
-		//SafeCloseHandle(mh_PacketArrived);
 	}
 
 	if (abRecreating)
@@ -6292,9 +6174,7 @@ void CRealConsole::StopThread(BOOL abRecreating)
 		SetActivePID(NULL);
 		SetAppDistinctPID(NULL);
 
-		//mn_FarPID = mn_FarPID_PluginDetected = 0;
 		mn_LastSetForegroundPID = 0;
-		//mn_ConEmuC_Input_TID = 0;
 		SafeCloseHandle(mh_ConInputPipe);
 		m_ConDataChanged.Close();
 		m_GetDataPipe.Close();
