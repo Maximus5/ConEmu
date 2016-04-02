@@ -5793,7 +5793,7 @@ LPCTSTR CConEmuMain::GetVConTitle(int nIdx)
 	return pszTitle;
 }
 
-// Возвращает индекс (0-based) активной консоли
+// Returns 0-based index of the active console if succeeded
 int CConEmuMain::GetActiveVCon(CVConGuard* pVCon /*= NULL*/, int* pAllCount /*= NULL*/)
 {
 	return CVConGroup::GetActiveVCon(pVCon, pAllCount);
