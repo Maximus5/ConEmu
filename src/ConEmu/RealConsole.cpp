@@ -1904,6 +1904,7 @@ bool CRealConsole::PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int 
 	}
 	else
 	{
+		// VK_MENU is expected with Alt+Numbers: char is posted with Alt release
 		_ASSERTE(vkKey!=VK_LMENU && vkKey!=VK_RMENU && vkKey!=VK_LCONTROL && vkKey!=VK_RCONTROL);
 	}
 
