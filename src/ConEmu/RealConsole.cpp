@@ -5167,6 +5167,38 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	return true;
 }
 
+// Prepare dwControlKeyState for INPUT_RECORD CAPSLOCK_ON, NUMLOCK_ON, SCROLLLOCK_ON
+void CRealConsole::AddIndicatorsCtrlState(DWORD& dwControlKeyState)
+{
+	if (GetKeyState(VK_CAPITAL) & 1)
+		dwControlKeyState |= CAPSLOCK_ON;
+
+	if (GetKeyState(VK_NUMLOCK) & 1)
+		dwControlKeyState |= NUMLOCK_ON;
+
+	if (GetKeyState(VK_SCROLL) & 1)
+		dwControlKeyState |= SCROLLLOCK_ON;
+}
+
+// Prepare dwControlKeyState for LEFT_ALT_PRESSED, RIGHT_ALT_PRESSED, LEFT_CTRL_PRESSED, RIGHT_CTRL_PRESSED, SHIFT_PRESSED
+void CRealConsole::AddModifiersCtrlState(DWORD& dwControlKeyState)
+{
+	if (isPressed(VK_LMENU))
+		dwControlKeyState |= LEFT_ALT_PRESSED;
+
+	if (isPressed(VK_RMENU))
+		dwControlKeyState |= RIGHT_ALT_PRESSED;
+
+	if (isPressed(VK_LCONTROL))
+		dwControlKeyState |= LEFT_CTRL_PRESSED;
+
+	if (isPressed(VK_RCONTROL))
+		dwControlKeyState |= RIGHT_CTRL_PRESSED;
+
+	if (isPressed(VK_SHIFT))
+		dwControlKeyState |= SHIFT_PRESSED;
+}
+
 void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool abForceSend /*= false*/)
 {
 	// По идее, мышь в консоль может пересылаться, только
@@ -5197,31 +5229,13 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 	mb_MouseButtonDown = (r.Event.MouseEvent.dwButtonState
 	                      & (FROM_LEFT_1ST_BUTTON_PRESSED|FROM_LEFT_2ND_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED)) != 0;
 
-	// Key modifiers
-	if (GetKeyState(VK_CAPITAL) & 1)
-		r.Event.MouseEvent.dwControlKeyState |= CAPSLOCK_ON;
+	// Prepare dwControlKeyState for INPUT_RECORD CAPSLOCK_ON, NUMLOCK_ON, SCROLLLOCK_ON
+	AddIndicatorsCtrlState(r.Event.MouseEvent.dwControlKeyState);
 
-	if (GetKeyState(VK_NUMLOCK) & 1)
-		r.Event.MouseEvent.dwControlKeyState |= NUMLOCK_ON;
+	// and LEFT_ALT_PRESSED, RIGHT_ALT_PRESSED, LEFT_CTRL_PRESSED, RIGHT_CTRL_PRESSED, SHIFT_PRESSED
+	AddModifiersCtrlState(r.Event.MouseEvent.dwControlKeyState);
 
-	if (GetKeyState(VK_SCROLL) & 1)
-		r.Event.MouseEvent.dwControlKeyState |= SCROLLLOCK_ON;
-
-	if (isPressed(VK_LMENU))
-		r.Event.MouseEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
-
-	if (isPressed(VK_RMENU))
-		r.Event.MouseEvent.dwControlKeyState |= RIGHT_ALT_PRESSED;
-
-	if (isPressed(VK_LCONTROL))
-		r.Event.MouseEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
-
-	if (isPressed(VK_RCONTROL))
-		r.Event.MouseEvent.dwControlKeyState |= RIGHT_CTRL_PRESSED;
-
-	if (isPressed(VK_SHIFT))
-		r.Event.MouseEvent.dwControlKeyState |= SHIFT_PRESSED;
-
+	// Mouse event flags
 	if (messg == WM_LBUTTONDBLCLK || messg == WM_RBUTTONDBLCLK || messg == WM_MBUTTONDBLCLK)
 		r.Event.MouseEvent.dwEventFlags = DOUBLE_CLICK;
 	else if (messg == WM_MOUSEMOVE)

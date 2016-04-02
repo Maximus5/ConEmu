@@ -398,6 +398,8 @@ class CRealConsole
 		bool PostCtrlBreakEvent(DWORD nEvent, DWORD nGroupId);
 		bool PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME = false);
 		bool PostKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
+		void AddIndicatorsCtrlState(DWORD& dwControlKeyState);
+		void AddModifiersCtrlState(DWORD& dwControlKeyState);
 		bool DeleteWordKeyPress(bool bTestOnly = false);
 		bool PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCode = -1);
 		bool PostLeftClickSync(COORD crDC);
