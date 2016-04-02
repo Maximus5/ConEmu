@@ -26,8 +26,36 @@ authors with proper information.
 Please read the [article on the official site](https://conemu.github.io/en/BadIssue.html)
 how to report issues properly. Brief excerpts below.
 
-* Please ensure that your problem does not belong to
-  [third-party software](https://conemu.github.io/en/ThirdPartyProblems.html).
+* **Verify issue really originates from ConEmu!**
+
+  If you catch a bug in the Adobe Reader you **would not** report it
+  on Microsoft Connect because you run Reader in Windows, would you?
+
+  ConEmu is **[terminal](https://conemu.github.io/en/TerminalVsShell.html)**,
+  if **[console application](https://conemu.github.io/en/ConsoleApplication.html)**
+  (bash, vim, cmd, whatever) gives out **broken output**, ConEmu can't
+  **magically correct** this broken output.
+
+  Do **not** compare you console application behavior with **mintty**!
+  A lot of users say ‘It works in cygwin’ or ‘It works in git bash’.
+  Wrong! Both are just a software **packages**, and you run console utilities
+  (bash, vim, git) in the [POSIX compatible](https://conemu.github.io/en/CygwinMsys.html)
+  terminal **mintty**. Bad news though, **mintty** is **not compatible** with
+  [Windows console API](https://msdn.microsoft.com/en-us/library/windows/desktop/ms681913.aspx).
+
+  So, **each** cygwin or msys (git-bash) console application has **two branches** of code,
+  and obviously, they behaves differently when they were started from **mintty**
+  and from [standard Windows console](https://conemu.github.io/en/RealConsole.html).
+
+  Of course, if the branch of code, which utilizes Windows console API,
+  has bugs, they would not be observed in mintty. So, run your console
+  tool from `Win+R` directly, without **mintty wrapper**.
+
+  Read more:
+
+  * [Third-party software problems](https://conemu.github.io/en/ThirdPartyProblems.html);
+  * [Console application](https://conemu.github.io/en/ConsoleApplication.html);
+  * [Terminal vs Shell](https://conemu.github.io/en/TerminalVsShell.html).
 
 * Attach [descriptive screenshots](https://conemu.github.io/en/BadIssue.html#Screenshot)
   demonstating all steps you are doing. And it would be better, if you comment or highlight
