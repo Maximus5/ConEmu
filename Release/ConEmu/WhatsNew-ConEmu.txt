@@ -20,6 +20,26 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.4.3
+* ComSpec setting page moved under DefTerm.
+* Avoid attempt to hook DefTerm from multiple processes in Aggressive mode.
+* Improve logging of DefTerm internals.
+* gh-604: Some improvements on cmd automatic attach.
+  The method may be registered on the ‘ComSpec’ settings page.
+  However, it's not a recommended option, because ConEmu has very slight
+  control over it, and even the logic ‘when we need to attach or not’
+  is fuzzy.
+* gh-604: Registration buttons were not processed properly on ConSpec settings page.
+* Corrections in `-new_console` switch trimming procedure.
+  * The space was not trimmed in `/C "C:\Temp\run.cmd -cur_console:o"`.
+  * Unexpected assertion removed in `/C "C:\Temp\run_pause.cmd "-cur_console:o""`
+* Don't run the command started by Shift-Enter from Far Manager via ConEmuC.exe.
+  If one needs the command to be started in new ConEmu tab,
+  than install the Macro: `ConEmu/Far3_lua/ConEmu.ShiftEnter.lua`.
+* Don't bypass MouseMove events to Far Menus when selection modifiers are pressed.
+* gh-621: Try to mimic standard Windows Alt+Numbers behavior.
+
+
 2016.3.29
 * Redesign ‘Keys & Macro’ settings page. Let `Alt+F` put focus into the ‘Filter’ field.
 * Hotkey `Ctrl+Alt+Break` was not processed properly.
