@@ -7477,20 +7477,24 @@ bool CRealConsole::ReopenServerPipes()
 
 	InitNames();
 
-	// переоткрыть event изменений в консоли
+	// Reopen console changes notification event
 	if (m_ConDataChanged.Open() == NULL)
 	{
 		bool bSrvClosed = (WaitForSingleObject(hSrvHandle, 0) == WAIT_OBJECT_0);
-		Assert(mb_InCloseConsole && "m_ConDataChanged.Open() != NULL"); UNREFERENCED_PARAMETER(bSrvClosed);
+		// -- We may not come in time due to multiple AltServers shutdown
+		//Assert(mb_InCloseConsole && "m_ConDataChanged.Open() != NULL"); UNREFERENCED_PARAMETER(bSrvClosed);
+		_wsprintf(szDbgInfo, SKIPCOUNT(szDbgInfo) L"ReopenServerPipes: m_ConDataChanged.Open() failed, MainServer is %s", GetServerPID(false), bSrvClosed ? L"Closed" : L"OK");
+		LogString(szDbgInfo);
 		return false;
 	}
 
-	// переоткрыть m_GetDataPipe
-	bool bOpened = m_GetDataPipe.Open();
-	if (!bOpened)
+	// Reopen m_GetDataPipe
+	if (!m_GetDataPipe.Open())
 	{
 		bool bSrvClosed = (WaitForSingleObject(hSrvHandle, 0) == WAIT_OBJECT_0);
-		Assert((bOpened || mb_InCloseConsole) && "m_GetDataPipe.Open() failed"); UNREFERENCED_PARAMETER(bSrvClosed);
+		//Assert((bOpened || mb_InCloseConsole) && "m_GetDataPipe.Open() failed"); UNREFERENCED_PARAMETER(bSrvClosed);
+		_wsprintf(szDbgInfo, SKIPCOUNT(szDbgInfo) L"ReopenServerPipes: m_GetDataPipe.Open() failed, MainServer is %s", GetServerPID(false), bSrvClosed ? L"Closed" : L"OK");
+		LogString(szDbgInfo);
 		return false;
 	}
 
