@@ -103,6 +103,9 @@ bool MFileLog::IsLogOpened()
 
 void MFileLog::CloseLogFile()
 {
+	if (IsLogOpened())
+		LogString(L"Closing log file");
+
 	SafeCloseHandle(mh_LogFile);
 
 	SafeFree(ms_FilePathName);
