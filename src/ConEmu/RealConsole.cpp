@@ -2621,39 +2621,6 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 		}
 		#endif
 
-		//if ((nWait == IDEVENT_SERVERPH) && (hEvents[IDEVENT_SERVERPH] != mh_MainSrv))
-		//{
-		//	// Закрылся альт.сервер, переключиться на основной
-		//	_ASSERTE(mh_MainSrv!=NULL);
-		//	if (mh_AltSrv == hAltServerHandle)
-		//	{
-		//		mh_AltSrv = NULL;
-		//		SetAltSrvPID(0, NULL);
-		//	}
-		//	SafeCloseHandle(hAltServerHandle);
-		//	hEvents[IDEVENT_SERVERPH] = mh_MainSrv;
-
-		//	if (mb_InCloseConsole && mh_MainSrv && (WaitForSingleObject(mh_MainSrv, 0) == WAIT_OBJECT_0))
-		//	{
-		//		ShutdownGuiStep(L"AltServer and MainServer are closed");
-		//		// Подтверждаем nWait, основной сервер закрылся
-		//		nWait = IDEVENT_SERVERPH;
-		//	}
-		//	else
-		//	{
-		//		ShutdownGuiStep(L"AltServer closed, executing ReopenServerPipes");
-		//		if (ReopenServerPipes())
-		//		{
-		//			// Меняем nWait, т.к. основной сервер еще не закрылся (консоль жива)
-		//			nWait = IDEVENT_MONITORTHREADEVENT;
-		//		}
-		//		else
-		//		{
-		//			ShutdownGuiStep(L"ReopenServerPipes failed, exiting from MonitorThread");
-		//		}
-		//	}
-		//}
-
 		if (nWait == IDEVENT_TERM || nWait == IDEVENT_SERVERPH)
 		{
 			//if (nWait == IDEVENT_SERVERPH) -- внизу
@@ -2988,12 +2955,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 				}
 
 				bLastAlive = bAlive;
-				//вроде не надо
-				//CVConGroup::OnUpdateFarSettings(mn_FarPID_PluginDetected);
-				// Загрузить изменения из консоли
-				//if ((HWND)mp_ConsoleInfo->hConWnd && mp_ConsoleInfo->nCurDataMapIdx
-				//	&& mp_ConsoleInfo->nPacketId
-				//	&& mn_LastConsolePacketIdx != mp_ConsoleInfo->nPacketId)
+
 				WARNING("!!! Если ожидание m_ConDataChanged будет перенесено выше - то тут нужно пользовать полученное выше значение !!!");
 
 				if (!m_ConDataChanged.Wait(0,TRUE))
@@ -5766,80 +5728,8 @@ bool CRealConsole::PostConsoleEventPipe(MSG64 *pMsg, size_t cchCount /*= 1*/)
 			LogString("PostConsoleEventPipe skipped due to OpenConsoleEventPipe failed");
 			return false;
 		}
-
-		//int nSteps = 10;
-		//while ((nSteps--) > 0)
-		//{
-		//  mh_ConInputPipe = CreateFile(
-		//     ms_ConEmuCInput_Pipe,// pipe name
-		//     GENERIC_WRITE,
-		//     0,              // no sharing
-		//     NULL,           // default security attributes
-		//     OPEN_EXISTING,  // opens existing pipe
-		//     0,              // default attributes
-		//     NULL);          // no template file
-		//
-		//  // Break if the pipe handle is valid.
-		//  if (mh_ConInputPipe != INVALID_HANDLE_VALUE)
-		//     break;
-		//
-		//  // Exit if an error other than ERROR_PIPE_BUSY occurs.
-		//  dwErr = GetLastError();
-		//  if (dwErr != ERROR_PIPE_BUSY)
-		//  {
-		//    TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_MainSrv");
-		//    dwErr = WaitForSingleObject(mh_MainSrv, 100);
-		//    if (dwErr == WAIT_OBJECT_0) {
-		//        return;
-		//    }
-		//    continue;
-		//    //DisplayLastError(L"Could not open pipe", dwErr);
-		//    //return 0;
-		//  }
-		//
-		//  // All pipe instances are busy, so wait for 0.1 second.
-		//  if (!WaitNamedPipe(ms_ConEmuCInput_Pipe, 100) )
-		//  {
-		//    dwErr = WaitForSingleObject(mh_MainSrv, 100);
-		//    if (dwErr == WAIT_OBJECT_0) {
-		//        DEBUGSTRINPUT(L" - FAILED!\n");
-		//        return;
-		//    }
-		//    //DisplayLastError(L"WaitNamedPipe failed");
-		//    //return 0;
-		//  }
-		//}
-		//if (mh_ConInputPipe == NULL || mh_ConInputPipe == INVALID_HANDLE_VALUE) {
-		//    // Не дождались появления пайпа. Возможно, ConEmuC еще не запустился
-		//    DEBUGSTRINPUT(L" - mh_ConInputPipe not found!\n");
-		//    return;
-		//}
-		//
-		//// The pipe connected; change to message-read mode.
-		//dwMode = CE_PIPE_READMODE;
-		//fSuccess = SetNamedPipeHandleState(
-		//  mh_ConInputPipe,    // pipe handle
-		//  &dwMode,  // new pipe mode
-		//  NULL,     // don't set maximum bytes
-		//  NULL);    // don't set maximum time
-		//if (!fSuccess)
-		//{
-		//  DEBUGSTRINPUT(L" - FAILED!\n");
-		//  DWORD dwErr = GetLastError();
-		//  SafeCloseHandle(mh_ConInputPipe);
-		//  if (!IsDebuggerPresent())
-		//    DisplayLastError(L"SetNamedPipeHandleState failed", dwErr);
-		//  return;
-		//}
 	}
 
-	//// Пайп есть. Проверим, что ConEmuC жив
-	//dwExitCode = 0;
-	//fSuccess = GetExitCodeProcess(mh_MainSrv, &dwExitCode);
-	//if (dwExitCode!=STILL_ACTIVE) {
-	//    //DisplayLastError(L"ConEmuC was terminated");
-	//    return;
-	//}
 
 	#ifdef _DEBUG
 	switch (pMsg->msg[0].message)
