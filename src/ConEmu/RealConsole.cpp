@@ -7452,10 +7452,8 @@ bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
 
 bool CRealConsole::ReopenServerPipes()
 {
-	#ifdef _DEBUG
-	DWORD nSrvPID = mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID;
-	#endif
-	HANDLE hSrvHandle = mh_MainSrv; // (nSrvPID == mn_MainSrv_PID) ? mh_MainSrv : mh_AltSrv;
+	DWORD nSrvPID = GetServerPID(false);
+	HANDLE hSrvHandle = mh_MainSrv;
 
 	if (isServerClosing(true))
 	{
