@@ -4863,7 +4863,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 // Инициализировать/обновить имена пайпов, событий, мэппингов и т.п.
 void CRealConsole::InitNames()
 {
-	DWORD nSrvPID = mn_AltSrv_PID ? mn_AltSrv_PID : mn_MainSrv_PID;
+	DWORD nSrvPID = GetServerPID(false);
 	// Имя пайпа для управления ConEmuC
 	_wsprintf(ms_ConEmuC_Pipe, SKIPLEN(countof(ms_ConEmuC_Pipe)) CESERVERPIPENAME, L".", nSrvPID);
 	_wsprintf(ms_MainSrv_Pipe, SKIPLEN(countof(ms_MainSrv_Pipe)) CESERVERPIPENAME, L".", mn_MainSrv_PID);
