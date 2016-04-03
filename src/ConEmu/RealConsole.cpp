@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Execute.h"
 #include "../common/MGuiMacro.h"
 #include "../common/MFileLog.h"
+#include "../common/MModule.h"
 #include "../common/MProcessBits.h"
 #include "../common/MSectionSimple.h"
 #include "../common/MSetter.h"
@@ -7234,10 +7235,14 @@ bool CRealConsole::isServerAlive()
 		BOOL fSuccess = GetExitCodeProcess(mh_MainSrv, &dwExitCode);
 		nErrCode = GetLastError();
 
-		typedef DWORD (WINAPI* GetProcessId_t)(HANDLE);
-		static GetProcessId_t getProcessId;
-		if (!getProcessId)
-			getProcessId = (GetProcessId_t)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetProcessId");
+		static bool bFnAcquired = false;
+		static DWORD (WINAPI* getProcessId)(HANDLE);
+		if (!bFnAcquired)
+		{
+			MModule kernel(GetModuleHandle(L"kernel32.dll"));
+			kernel.GetProcAddress("GetProcessId", getProcessId);
+			bFnAcquired = true;
+		}
 		if (getProcessId)
 		{
 			SetLastError(0);
