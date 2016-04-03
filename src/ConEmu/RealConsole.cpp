@@ -1340,8 +1340,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	OnServerStarted(anConemuC_PID, hProcess, rStartStop->dwKeybLayout, TRUE);
 
 	#ifdef _DEBUG
-	DWORD nSrvWait = WaitForSingleObject(mh_MainSrv, 0);
-	_ASSERTE(nSrvWait == WAIT_TIMEOUT);
+	_ASSERTE(isServerAlive());
 	#endif
 
 	// Prepare result
@@ -2352,8 +2351,7 @@ void CRealConsole::OnTimerCheck()
 	if (!mh_MainSrv)
 		return;
 
-	DWORD nWait = WaitForSingleObject(mh_MainSrv, 0);
-	if (nWait == WAIT_OBJECT_0)
+	if (!isServerAlive())
 	{
 		_ASSERTE((mn_TermEventTick!=0 && mn_TermEventTick!=(DWORD)-1) && "Server was terminated, StopSignal was not called");
 		StopSignal();
@@ -2557,8 +2555,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 		// Проверка, вдруг осталась висеть "мертвая" консоль?
 		if (hEvents[IDEVENT_SERVERPH] == NULL && mh_MainSrv)
 		{
-			nSrvWait = WaitForSingleObject(mh_MainSrv, 0);
-			if (nSrvWait == WAIT_OBJECT_0)
+			if (!isServerAlive())
 			{
 				_wsprintf(szLog, SKIPCOUNT(szLog) L"Server was terminated (WAIT_OBJECT_0) PID=%u", mn_MainSrv_PID);
 				LogString(szLog);
@@ -2964,10 +2961,10 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 					// если сменился статус (Far/не Far) - перерисовать на всякий случай,
 					// чтобы после возврата из батника, гарантированно отрисовалось в режиме фара
 					_ASSERTE(mp_RBuf==mp_ABuf);
-					if (mb_InCloseConsole && mh_MainSrv && (WaitForSingleObject(mh_MainSrv, 0) == WAIT_OBJECT_0))
+					if (mb_InCloseConsole && mh_MainSrv && !isServerAlive())
 					{
 						// Чтобы однозначность кода в MonitorThread была
-						LogString("Terminating MonitorThreadWorker by mb_InCloseConsole && WaitForSingleObject(mh_MainSrv)==0");
+						LogString("Terminating MonitorThreadWorker by mb_InCloseConsole && !isServerAlive");
 						nWait = IDEVENT_SERVERPH;
 						// Основной сервер закрылся (консоль закрыта), идем на выход
 						break;
@@ -5618,9 +5615,7 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 		if (dwErr != ERROR_PIPE_BUSY)
 		{
 			TODO("Подождать, пока появится пайп с таким именем, но только пока жив mh_MainSrv");
-			dwWait = WaitForSingleObject(mh_MainSrv, 100);
-
-			if (dwWait == WAIT_OBJECT_0)
+			if (!isServerAlive())
 			{
 				DEBUGSTRINPUT(L"ConEmuC was closed. OpenPipe FAILED!\n");
 				return FALSE;
@@ -5638,16 +5633,17 @@ BOOL CRealConsole::OpenConsoleEventPipe()
 		if (!WaitNamedPipe(ms_ConEmuCInput_Pipe, 100))
 		{
 			dwErr = GetLastError();
-			dwWait = WaitForSingleObject(mh_MainSrv, 100);
 
-			if (dwWait == WAIT_OBJECT_0)
+			if (!isServerAlive())
 			{
 				DEBUGSTRINPUT(L"ConEmuC was closed. OpenPipe FAILED!\n");
 				return FALSE;
 			}
 
 			if (!isConsoleClosing())
+			{
 				DisplayLastError(L"WaitNamedPipe failed", dwErr);
+			}
 
 			return FALSE;
 		}
@@ -7133,8 +7129,7 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc, bool ClientOnly /*= false*/)
 	// Сервер еще не отработал запуск?
 	if (!mn_ProcessCount && mh_MainSrv)
 	{
-		DWORD nWait = WaitForSingleObject(mh_MainSrv, 0);
-		if (nWait == WAIT_TIMEOUT)
+		if (isServerAlive())
 		{
 			return 1; // Чтобы GUI не закрылся
 		}
@@ -12300,7 +12295,7 @@ bool CRealConsole::isConsoleClosing()
 	        && (GetTickCount() - m_ServerClosing.nRecieveTick) >= SERVERCLOSETIMEOUT)
 	{
 		// Видимо, сервер повис во время выхода? Но проверим, вдруг он все-таки успел завершиться?
-		if (WaitForSingleObject(mh_MainSrv, 0))
+		if (isServerAlive())
 		{
 			#ifdef _DEBUG
 			wchar_t szTitle[128], szText[255];
