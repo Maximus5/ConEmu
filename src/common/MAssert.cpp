@@ -50,6 +50,23 @@ static bool MyAssertSkip(const wchar_t* pszFile, int nLine, const wchar_t* pszTe
 }
 #endif
 
+LPCWSTR StripSourceRoot(LPCWSTR pszFile)
+{
+	if (!pszFile || !*pszFile)
+		return L"";
+	if (pszFile[1] != L':' || pszFile[2] != L'\\')
+		return pszFile;
+	LPCWSTR pszStrip = wcschr(pszFile+4, L'\\');
+	if (pszStrip)
+	{
+		pszFile = pszStrip+1;
+		pszStrip = wcschr(pszFile, L'\\');
+		if (pszStrip)
+			pszFile = pszStrip+1;
+	}
+	return pszFile;
+}
+
 AppMsgBox_t AssertMsgBox = NULL;
 
 #ifdef _DEBUG
@@ -239,7 +256,7 @@ int MyAssertProc(const wchar_t* pszFile, int nLine, const wchar_t* pszTest, bool
 	msprintf(pa->szDebugInfo, countof(pa->szDebugInfo), L"Assertion in %s [%02u%02u%02u%s]\n%s\n\n%s: %i\n\nPress 'Retry' to trap.",
 	                szExeName ? szExeName : L"<HeapAllocFailed>",
 					MVV_1, MVV_2, MVV_3, szVer4,
-					pszTest ? pszTest : L"", pszFile, nLine);
+					pszTest ? pszTest : L"", StripSourceRoot(pszFile), nLine);
 	DWORD dwCode = 0;
 
 	if (gAllowAssertThread == am_Thread)

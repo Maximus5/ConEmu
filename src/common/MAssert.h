@@ -42,6 +42,8 @@ extern AppMsgBox_t AssertMsgBox;
 typedef bool (*HooksUnlockerProc_t)(bool bUnlock);
 extern HooksUnlockerProc_t gfnHooksUnlockerProc /* = NULL*/;
 
+LPCWSTR StripSourceRoot(LPCWSTR pszFile);
+
 #ifdef _DEBUG
 class CHooksUnlocker
 {
