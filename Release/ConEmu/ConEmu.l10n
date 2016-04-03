@@ -2442,33 +2442,56 @@
     ,
     "lng_AltNumberACP": {
       "en": "Type ANSI code point using decimal numbers",
+      "ru": "Введите десятичный код ANSI",
       "zh": "使用十进制数字输入ANSI代码点",
       "id": 16 }
     ,
     "lng_AltNumberExt": {
       "en": " - <Enter> to paste, <Esc> to cancel",
+      "ru": " - <Enter> для вставки, <Esc> для отмены",
       "zh": " - <Enter> 键粘贴，<Esc> 键取消",
       "id": 14 }
     ,
     "lng_AltNumberHex": {
       "en": "Type UNICODE code point using hexadecimal numbers",
+      "ru": "Введите шестнадцатеричный код UNICODE",
       "zh": "使用十六进制数字输入UNICODE代码点",
       "id": 15 }
     ,
     "lng_AltNumberStdACP": {
       "en": " - release <Alt> to paste ANSI code point",
+      "ru": " - отпустите <Alt> для вставки ANSI-символа",
       "zh": " - 释放 <Alt> 键粘贴ANSI代码点",
       "id": 12 }
     ,
     "lng_AltNumberStdOEM": {
       "en": " - release <Alt> to paste OEM code point",
+      "ru": " - отпустите <Alt> для вставки OEM-символа",
       "zh": " - 释放 <Alt> 键粘贴OEM代码点",
       "id": 11 }
     ,
     "lng_AltNumberStdUCS": {
       "en": " - release <Alt> to paste UNICODE code point",
+      "ru": " - отпустите <Alt> для вставки UNICODE-символа",
       "zh": " - 释放 <Alt> 键粘贴UNICODE代码点",
       "id": 13 }
+    ,
+    "lng_AssertAbortDescr": {
+      "en": "Press <Abort> to throw exception, ConEmu will be terminated!",
+      "ru": "<Прервать> для вызова исключения, ConEmu будет завершен!",
+      "id": 70 }
+    ,
+    "lng_AssertIgnoreDescr": {
+      "en": "Press <Ignore> to continue your work.",
+      "ru": "Нажмите <Пропустить> для продолжения работы.",
+      "id": 69 }
+    ,
+    "lng_AssertRetryDescr": {
+      "en": [ "Press <Retry> to copy text information to clipboard\r\n"
+            , "and report a bug (open project web page)." ],
+      "ru": [ "<Повтор> чтобы скопировать информацию в буфер\r\n"
+            , "и сообщить об ошибке (открыть веб-страницу проекта)." ],
+      "id": 71 }
     ,
     "lng_BasicSettings": {
       "en": "Basic settings",
@@ -2600,6 +2623,10 @@
             , "\n"
             , "继续？" ],
       "id": 24 }
+    ,
+    "lng_PleaseCheckManually": {
+      "en": "Please check for updates manually",
+      "id": 68 }
     ,
     "lng_Search": {
       "en": "Search",
@@ -2820,6 +2847,36 @@
       "ru": "Обновление",
       "zh": "更新",
       "id": 32 }
+    ,
+    "lng_UnknownSwitch1": {
+      "en": "Unknown switch specified:",
+      "ru": "Указан недопустимый ключ:",
+      "id": 62 }
+    ,
+    "lng_UnknownSwitch2": {
+      "en": "Visit website to get thorough switches description:",
+      "ru": "Посетите веб-страницу с подробным описанием ключей:",
+      "id": 63 }
+    ,
+    "lng_UnknownSwitch3": {
+      "en": "Or run ‘ConEmu.exe -?’ to get the brief.",
+      "ru": "Или запустите ‘ConEmu.exe -?’ для краткого списка.",
+      "id": 64 }
+    ,
+    "lng_UnknownSwitch4": {
+      "en": "Switch ‘-new_console’ must be specified *after* ‘-cmd’ or ‘-cmdlist’!",
+      "ru": "Ключ ‘-new_console’ должен быть указан *после* ‘-cmd’ или ‘-cmdlist’!",
+      "id": 65 }
+    ,
+    "lng_UpdateCloseMsg1": {
+      "en": "Please, close all ConEmu instances before continue",
+      "ru": "Пожалуйста закройте все открытые окна ConEmu перед продолжением",
+      "id": 66 }
+    ,
+    "lng_UpdateCloseMsg2": {
+      "en": "ConEmu still running:",
+      "ru": "ConEmu все ещё запущен:",
+      "id": 67 }
   }
   ,
   "controls": {
