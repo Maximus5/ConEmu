@@ -52,6 +52,10 @@ public:
 	};
 	void ShellIntegration(HWND hDlg, ShellIntegrType iMode, bool bEnabled, bool bForced = false);
 
+protected:
+	bool ReloadHereList(int* pnHere = NULL, int* pnInside = NULL);
+	void FillHereValues(WORD CB);
+
 public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
