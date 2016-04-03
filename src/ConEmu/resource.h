@@ -1027,7 +1027,6 @@
 #define stTabFontCharset                2731
 #define stTabBtnDblClickAction          2732
 #define stTabBarDblClickAction          2733
-#define stTabDblClkActions              2734
 #define stTabConsole                    2735
 #define stTabTemplateGroup              2736
 #define stTabTemplateDescr              2737
@@ -1330,6 +1329,8 @@
 #define stBgReplaceIndexes              3051
 #define tHotkeysFilter                  3052
 #define lbHotKeyFilter                  3053
+#define stElevatedConsolesGroup         3054
+#define gbTabDblClkActions              3055
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1338,7 +1339,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        235
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3054
+#define _APS_NEXT_CONTROL_VALUE         3056
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

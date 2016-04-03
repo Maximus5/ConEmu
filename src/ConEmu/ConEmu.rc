@@ -950,46 +950,47 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Tabs (consoles, Far Manager panels/editors/viewers)",gbTabs,4,1,375,229
-    CONTROL         "Internal CtrlTab",cbTabSelf,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,29,64,8
-    CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,29,66,8
-    CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,29,59,8
-    CONTROL         "Far windows",cbShowFarWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,43,56,8
-    CONTROL         "Active console only",cbHideInactiveConTabs,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,57,77,8
-    CONTROL         "Hide disabled tabs",cbHideDisabledTabs,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,259,28,57,8
-    COMBOBOX        tTabFontFace,55,77,121,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
-    CTEXT           "x",IDC_STATIC,181,79,8,8
-    COMBOBOX        tTabFontHeight,192,77,29,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Charset:",stTabFontCharset,224,79,35,8
-    COMBOBOX        tTabFontCharset,264,77,54,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    EDITTEXT        tTabConsole,55,130,104,12,ES_AUTOHSCROLL
-    LTEXT           "%s - Title, %c - Console #, %n - Active process name, %p - PID,\n%a - ‘Admin’, %d - current shell directory, %f - folder, %% - %",stTabTemplateDescr,57,110,261,16
-    RTEXT           "Maximum tab width (in chars):",stTabLenMax,7,183,107,8
-    EDITTEXT        tTabLenMax,119,181,40,12,ES_AUTOHSCROLL
-    EDITTEXT        tAdminSuffix,261,181,57,12,ES_AUTOHSCROLL
+    GROUPBOX        "Tabs (consoles, Far Manager panels/editors/viewers)",gbTabs,4,1,375,239
+    CONTROL         "Internal CtrlTab",cbTabSelf,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,14,107,8
+    CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,14,84,8
+    CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,296,14,80,8
+    CONTROL         "Far windows",cbShowFarWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,42,107,8
+    CONTROL         "Active console only",cbHideInactiveConTabs,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,28,107,8
+    CONTROL         "Hide disabled tabs",cbHideDisabledTabs,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,319,52,57,8
+    COMBOBOX        tTabFontFace,55,77,106,72,CBS_DROPDOWN | CBS_OWNERDRAWFIXED | CBS_AUTOHSCROLL | CBS_HASSTRINGS | WS_VSCROLL | WS_TABSTOP
+    CTEXT           "x",IDC_STATIC,166,79,8,8
+    COMBOBOX        tTabFontHeight,177,77,29,66,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Charset:",stTabFontCharset,225,79,90,8
+    COMBOBOX        tTabFontCharset,319,77,54,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        tTabConsole,58,130,106,12,ES_AUTOHSCROLL
+    LTEXT           "%s - Title, %c - Console #, %n - Active process name, %p - PID,\n%a - ‘Admin’, %d - current shell directory, %f - folder, %% - %",stTabTemplateDescr,57,110,314,16
+    RTEXT           "Maximum tab width (in chars):",stTabLenMax,8,168,123,8
+    EDITTEXT        tTabLenMax,135,166,40,12,ES_AUTOHSCROLL
+    EDITTEXT        tAdminSuffix,301,189,72,12,ES_AUTOHSCROLL
     CONTROL         "‘Host-key’+Number iterates Far windows",cbMultiIterate,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,43,155,8
-    CONTROL         "Admin shield",cbAdminShield,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,183,55,8
-    CONTROL         "suffix",cbAdminSuffix,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,223,183,34,8
-    LTEXT           "Console:",stTabConsole,10,132,41,8
-    RTEXT           "Skip words from title:",stTabSkipWords,33,166,81,8
-    EDITTEXT        tTabSkipWords,119,163,199,12,ES_AUTOHSCROLL
-    CONTROL         "Always show",rbTabsAlways,"Button",BS_AUTORADIOBUTTON,10,14,65,8
-    CONTROL         "Auto show",rbTabsAuto,"Button",BS_AUTORADIOBUTTON,75,14,57,8
-    CONTROL         "Don't show",rbTabsNone,"Button",BS_AUTORADIOBUTTON,133,14,55,8
-    CONTROL         "Tabs on bottom",cbTabsLocationBottom,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,14,75,8
-    LTEXT           "Tab button (labels):",stTabBtnDblClickAction,10,215,75,8
-    COMBOBOX        tTabBtnDblClickAction,88,213,84,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Tab bar:",stTabBarDblClickAction,176,215,52,8
-    COMBOBOX        tTabBarDblClickAction,232,213,84,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "One tab per group",cbOneTabPerGroup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,97,57,82,8
-    LTEXT           "Tab templates (Far Manager ones are located on 'Far Manager' page)",stTabTemplateGroup,10,100,304,8
-    RTEXT           "Invisible tab activity flash count:",stTabFlashCounter,9,148,223,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,42,167,8
+    CONTROL         "Admin shield",cbAdminShield,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,136,191,104,8
+    CONTROL         "suffix",cbAdminSuffix,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,244,191,51,8
+    RTEXT           "Console:",stTabConsole,8,132,46,8
+    RTEXT           "Skip words from title:",stTabSkipWords,8,151,123,8
+    EDITTEXT        tTabSkipWords,135,148,238,12,ES_AUTOHSCROLL
+    CONTROL         "Always show",rbTabsAlways,"Button",BS_AUTORADIOBUTTON,10,14,86,8
+    CONTROL         "Auto show",rbTabsAuto,"Button",BS_AUTORADIOBUTTON,10,28,86,8
+    CONTROL         "Don't show",rbTabsNone,"Button",BS_AUTORADIOBUTTON,10,42,86,8
+    CONTROL         "Tabs on bottom",cbTabsLocationBottom,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,57,86,8
+    RTEXT           "Tab button (labels):",stTabBtnDblClickAction,9,223,83,8
+    COMBOBOX        tTabBtnDblClickAction,96,221,93,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Tab bar:",stTabBarDblClickAction,192,223,83,8
+    COMBOBOX        tTabBarDblClickAction,280,221,93,67,CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Only active pane of group",cbOneTabPerGroup,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,28,166,8
+    LTEXT           "Tab templates (Far Manager ones are located on 'Far Manager' page)",stTabTemplateGroup,10,100,365,8
+    RTEXT           "Invisible tab activity flash count:",stTabFlashCounter,177,168,152,8
     LTEXT           "Tab font:",stTabFontFace,10,79,40,8
-    LTEXT           "Tab double click actions",stTabDblClkActions,10,202,76,8
-    RTEXT           "Modified suffix:",stTabModifiedSuffix,161,132,71,8
-    EDITTEXT        tTabModifiedSuffix,237,130,81,12,ES_AUTOHSCROLL
-    EDITTEXT        tTabFlashCounter,237,146,81,12,ES_AUTOHSCROLL
+    RTEXT           "Modified suffix:",stTabModifiedSuffix,180,132,83,8
+    EDITTEXT        tTabModifiedSuffix,267,130,106,12,ES_AUTOHSCROLL
+    EDITTEXT        tTabFlashCounter,333,166,40,12,ES_AUTOHSCROLL
+    RTEXT           "Elevated consoles:",stElevatedConsolesGroup,8,190,123,8
+    GROUPBOX        "Tab double click actions",gbTabDblClkActions,4,210,375,30
 END
 
 IDD_SPG_STATUSBAR DIALOGEX 0, 0, 381, 242
