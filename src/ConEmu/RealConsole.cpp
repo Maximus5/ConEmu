@@ -3981,6 +3981,9 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 
 void CRealConsole::SetSwitchActiveServer(bool bSwitch, CRealConsole::SwitchActiveServerEvt eCall, SwitchActiveServerEvt eResult)
 {
+	if (isLogging())
+		LogString(bSwitch ? L"AltServer switch was requested" : L"AltServer switch was set to false");
+
 	if (eResult == eResetEvent)
 		ResetEvent(mh_ActiveServerSwitched);
 
@@ -7374,6 +7377,12 @@ void CRealConsole::SetTerminalPID(DWORD anTerminalPID)
 
 void CRealConsole::SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/)
 {
+	if (isLogging())
+	{
+		wchar_t szLog[80];
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"AltServer changed: Old=%u New=%u", mn_AltSrv_PID, anAltSrvPID);
+		LogString(szLog);
+	}
 	//_ASSERTE((mh_AltSrv==NULL || mh_AltSrv==ahAltSrv) && "mh_AltSrv must be closed before!");
 	//mh_AltSrv = ahAltSrv;
 	mn_AltSrv_PID = anAltSrvPID;
@@ -7450,11 +7459,20 @@ bool CRealConsole::ReopenServerPipes()
 
 	if (isServerClosing(true))
 	{
+		LogString(L"!!! ReopenServerPipes was called in MainServerClosing !!!");
 		_ASSERTE(FALSE && "ReopenServerPipes was called in MainServerClosing");
 	}
 	else if (mb_InCloseConsole)
 	{
+		LogString(L"Server was reactivated");
 		m_ServerClosing.bBackActivated = TRUE;
+	}
+
+	wchar_t szDbgInfo[512];
+	if (isLogging())
+	{
+		_wsprintf(szDbgInfo, SKIPCOUNT(szDbgInfo) L"ReopenServerPipes: ServerPID=%u", GetServerPID(false));
+		LogString(szDbgInfo);
 	}
 
 	InitNames();
@@ -7483,30 +7501,29 @@ bool CRealConsole::ReopenServerPipes()
 
 	UpdateServerActive(TRUE);
 
-#ifdef _DEBUG
-	wchar_t szDbgInfo[512]; szDbgInfo[0] = 0;
-
-	MSectionLock SC; SC.Lock(&csPRC);
-	//std::vector<ConProcess>::iterator i;
-	//for (i = m_Processes.begin(); i != m_Processes.end(); ++i)
-	for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
+	if (RELEASEDEBUGTEST(isLogging(),true))
 	{
-		ConProcess* i = &(m_Processes[ii]);
-		if (i->ProcessID == nSrvPID)
+		szDbgInfo[0] = 0;
+
+		MSectionLock SC; SC.Lock(&csPRC);
+		for (INT_PTR ii = 0; ii < m_Processes.size(); ii++)
 		{
-			_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"==> Active server changed to '%s' PID=%u\n", i->Name, nSrvPID);
-			break;
+			ConProcess* i = &(m_Processes[ii]);
+			if (i->ProcessID == nSrvPID)
+			{
+				_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"==> Active server changed to '%s' PID=%u\n", i->Name, nSrvPID);
+				break;
+			}
 		}
+		SC.Unlock();
+
+		if (!*szDbgInfo)
+			_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"==> Active server changed to PID=%u\n", nSrvPID);
+
+		if (isLogging()) { LogString(szDbgInfo); } else { DEBUGSTRALTSRV(szDbgInfo); }
 	}
-	SC.Unlock();
 
-	if (!*szDbgInfo)
-		_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"==> Active server changed to PID=%u\n", nSrvPID);
-
-	DEBUGSTRALTSRV(szDbgInfo);
-#endif
-
-	return bOpened;
+	return true;
 }
 
 // Если bFullRequired - требуется чтобы сервер уже мог принимать команды
@@ -12297,8 +12314,12 @@ bool CRealConsole::isConsoleClosing()
 		// Видимо, сервер повис во время выхода? Но проверим, вдруг он все-таки успел завершиться?
 		if (isServerAlive())
 		{
+			wchar_t szText[255];
+			_wsprintf(szText, SKIPCOUNT(szText) L"Server PID=%u hangs during termination. Force kill triggered!", mn_MainSrv_PID);
+			LogString(szText);
+
 			#ifdef _DEBUG
-			wchar_t szTitle[128], szText[255];
+			wchar_t szTitle[128];
 			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu, PID=%u", GetCurrentProcessId());
 			_wsprintf(szText, SKIPLEN(countof(szText))
 			          L"This is Debug message.\n\nServer hung. PID=%u\nm_ServerClosing.nServerPID=%u\n\nPress Ok to terminate server",

@@ -854,7 +854,7 @@ BOOL cmd_FarDetached(CESERVER_REQ& in, CESERVER_REQ** out)
 	}
 
 	// Обновить мэппинг
-	UpdateConsoleMapHeader();
+	UpdateConsoleMapHeader(L"CECMD_FARDETACHED");
 
 	CsAlt.Unlock();
 
@@ -1063,7 +1063,7 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	ghConEmuWnd = NULL;
 	SetConEmuWindows(NULL, NULL, NULL);
 	gnConEmuPID = 0;
-	UpdateConsoleMapHeader();
+	UpdateConsoleMapHeader(L"CECMD_DETACHCON");
 
 	HWND hGuiApp = NULL;
 	if (in.DataSize() >= sizeof(DWORD))
@@ -1133,7 +1133,6 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		CsAlt.Lock(gpSrv->csAltSrv, TRUE, 1000);
 	}
 
-#ifdef _DEBUG
 	wchar_t szDbg[128];
 
 	switch (in.StartStop.nStarted)
@@ -1173,9 +1172,8 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			_ASSERTE(in.StartStop.nStarted==sst_ServerStart && "Unknown StartStop code!");
 	}
 
-	DEBUGSTRCMD(szDbg);
+	if (gpLogSize) { LogString(szDbg); } else { DEBUGSTRCMD(szDbg); }
 	DEBUGSTARTSTOPBOX(szDbg);
-#endif
 
 	// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
 	_ASSERTE(in.StartStop.dwPID!=0);
@@ -1266,7 +1264,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	}
 
 	// Обновить мэппинг
-	UpdateConsoleMapHeader();
+	UpdateConsoleMapHeader(L"CECMD_CMDSTARTSTOP");
 
 	CsAlt.Unlock();
 
@@ -1304,7 +1302,7 @@ BOOL cmd_SetFarPID(CESERVER_REQ& in, CESERVER_REQ** out)
 	gpSrv->nActiveFarPID = in.hdr.nSrcPID;
 
 	// Will update mapping using MainServer if this is Alternative
-	UpdateConsoleMapHeader();
+	UpdateConsoleMapHeader(L"CECMD_SETFARPID");
 
 	return lbRc;
 }
@@ -1611,14 +1609,28 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 	else
 	{
 		// dwData[0]=1-Freeze, 0-Thaw; dwData[1]=New Alt server PID
+		wchar_t szLog[80];
+
+		if (gpLogSize)
+		{
+			if (in.dwData[0] == 1)
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"AltServer: freeze requested, new AltServer=%u", in.dwData[1]);
+			else
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"AltServer: thaw requested, prev AltServer=%u", gpSrv->nPrevAltServer);
+			LogString(szLog);
+		}
+
 		if (in.dwData[0] == 1)
 		{
+			gpSrv->nPrevAltServer = in.dwData[1];
 			if (!gpSrv->hFreezeRefreshThread)
 				gpSrv->hFreezeRefreshThread = CreateEvent(NULL, TRUE, FALSE, NULL);
 			ResetEvent(gpSrv->hFreezeRefreshThread);
 		}
 		else
 		{
+			klSwap(nPrevAltServer, gpSrv->nPrevAltServer);
+
 			if (gpSrv->hFreezeRefreshThread)
 				SetEvent(gpSrv->hFreezeRefreshThread);
 
@@ -1628,6 +1640,8 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 			}
 			else
 			{
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"AltServer: Wrong gnRunMode=%u", gnRunMode);
+				LogString(szLog);
 				_ASSERTE(gnRunMode == RM_ALTSERVER);
 			}
 		}
@@ -1641,7 +1655,7 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 	if (*out != NULL)
 	{
 		(*out)->dwData[0] = lbRc;
-		(*out)->dwData[1] = nPrevAltServer; // Reserved
+		(*out)->dwData[1] = nPrevAltServer; // Informational
 	}
 
 	return TRUE;

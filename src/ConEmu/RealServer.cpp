@@ -160,7 +160,6 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	DWORD nParentFarPid = pIn->StartStop.nParentFarPID;
 	HWND  hWnd     = (HWND)pIn->StartStop.hWnd;
 
-#ifdef _DEBUG
 	wchar_t szDbg[128];
 
 	switch (nStarted)
@@ -194,8 +193,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			_ASSERTE(nStarted==sst_ServerStart && "Unknown start code");
 	}
 
-	DEBUGSTRCMD(szDbg);
-#endif
+	mp_RCon->LogString(szDbg);
 
 	_ASSERTE(pIn->StartStop.dwPID!=0);
 	DWORD nPID     = pIn->StartStop.dwPID;

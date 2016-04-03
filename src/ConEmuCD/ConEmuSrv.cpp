@@ -345,7 +345,7 @@ LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue /*
 		{
 			CopySrvMapFromGuiMap();
 
-			UpdateConsoleMapHeader();
+			UpdateConsoleMapHeader(L"guiSettings were changed");
 		}
 	}
 
@@ -843,7 +843,19 @@ wrap:
 
 bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw)
 {
-	LogFunction(L"AltServerWasStarted");
+	wchar_t szFnArg[200];
+	_wsprintf(szFnArg, SKIPCOUNT(szFnArg) L"AltServerWasStarted PID=%u H=x%p ForceThaw=%s ",
+		nPID, hAltServer, ForceThaw ? L"true" : L"false");
+	if (gpLogSize)
+	{
+		PROCESSENTRY32 AltSrv;
+		if (GetProcessInfo(nPID, &AltSrv))
+		{
+			int iLen = lstrlen(szFnArg);
+			lstrcpyn(szFnArg+iLen, PointToName(AltSrv.szExeFile), countof(szFnArg)-iLen);
+		}
+	}
+	LogFunction(szFnArg);
 
 	_ASSERTE(nPID!=0);
 
@@ -1485,9 +1497,8 @@ int ServerInit()
 
 	// Пометить мэппинг, как готовый к отдаче данных
 	gpSrv->pConsole->hdr.bDataReady = TRUE;
-	//gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
-	//DumpInitStatus("\nServerInit: UpdateConsoleMapHeader");
-	UpdateConsoleMapHeader();
+
+	UpdateConsoleMapHeader(L"ServerInit");
 
 	// Set console title in server mode
 	if (gnRunMode == RM_SERVER)
@@ -1585,8 +1596,8 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		if (gpSrv->pConsole && gpSrv->pConsoleMap)
 		{
 			gpSrv->pConsole->hdr.nServerInShutdown = GetTickCount();
-			//gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
-			UpdateConsoleMapHeader();
+
+			UpdateConsoleMapHeader(L"ServerDone");
 		}
 
 		#ifdef _DEBUG
@@ -2617,7 +2628,7 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 		#endif
 
 		gpSrv->bWasDetached = FALSE;
-		UpdateConsoleMapHeader();
+		UpdateConsoleMapHeader(L"TryConnect2Gui, !gbAttachMode");
 	}
 	else // Запуск сервера "с аттачем" (это может быть RunAsAdmin и т.п.)
 	{
@@ -3332,8 +3343,7 @@ int CreateMapHeader()
 	gpSrv->pConsole->bDataChanged = TRUE;
 
 
-	//gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
-	UpdateConsoleMapHeader();
+	UpdateConsoleMapHeader(L"CreateMapHeader");
 wrap:
 	return iRc;
 }
@@ -3367,9 +3377,10 @@ int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPI
 	return nCmp;
 };
 
-void UpdateConsoleMapHeader()
+void UpdateConsoleMapHeader(LPCWSTR asReason /*= NULL*/)
 {
-	LogFunction(L"UpdateConsoleMapHeader");
+	CEStr lsLog(L"UpdateConsoleMapHeader{", asReason, L"}");
+	LogFunction(lsLog);
 
 	WARNING("***ALT*** не нужно обновлять мэппинг одновременно и в сервере и в альт.сервере");
 
@@ -4364,8 +4375,8 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 		if (iMapCmp)
 		{
 			lbChanged = TRUE;
-			//gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
-			UpdateConsoleMapHeader();
+
+			UpdateConsoleMapHeader(L"ReloadFullConsoleInfo");
 		}
 
 		if (lbChanged)
@@ -4600,7 +4611,8 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 								}
 							}
 							// Обновить мэппинг
-							UpdateConsoleMapHeader();
+							wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"RefreshThread, new AltServer=%u", gpSrv->dwAltServerPID);
+							UpdateConsoleMapHeader(szLog);
 						}
 
 						CsAlt.Unlock();
@@ -4985,7 +4997,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			SetConEmuWindows(NULL, NULL, NULL);
 			_ASSERTE(!ghConEmuWnd && !ghConEmuWndDC && !ghConEmuWndBack);
 			gnConEmuPID = 0;
-			UpdateConsoleMapHeader();
+			UpdateConsoleMapHeader(L"RefreshThread: GUI was crashed or was detached?");
 			EmergencyShow(ghConWnd);
 		}
 

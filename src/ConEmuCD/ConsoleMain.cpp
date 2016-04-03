@@ -4940,7 +4940,7 @@ void SendStarted()
 				}
 			}
 
-			UpdateConsoleMapHeader();
+			UpdateConsoleMapHeader(L"SendStarted");
 
 			_ASSERTE(gnMainServerPID==0 || gnMainServerPID==pOut->StartStopRet.dwMainSrvPID || (gbAttachMode && gbAlienMode && (pOut->StartStopRet.dwMainSrvPID==gnSelfPID)));
 			gnMainServerPID = pOut->StartStopRet.dwMainSrvPID;
@@ -6437,7 +6437,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	gcrVisibleSize = crNewSize;
 
 	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
-		UpdateConsoleMapHeader(); // Обновить pConsoleMap.crLockedVisible
+		UpdateConsoleMapHeader(L"SetConsoleSize"); // Обновить pConsoleMap.crLockedVisible
 
 	if (gnBufferHeight)
 	{
