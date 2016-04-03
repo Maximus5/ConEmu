@@ -437,24 +437,24 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Startup options (may be overriden with ""/cmd"" or ""/cmdlist"" argument of ConEmu.exe)",gbStartupOptions,4,1,375,126
-    CONTROL         "Command line",rbStartSingleApp,"Button",BS_AUTORADIOBUTTON,9,15,290,8
-    EDITTEXT        tCmdLine,21,25,278,12,ES_AUTOHSCROLL | WS_DISABLED
-    CONTROL         "Tasks file",rbStartTasksFile,"Button",BS_AUTORADIOBUTTON,9,40,290,8
-    EDITTEXT        tStartTasksFile,21,50,278,12,ES_AUTOHSCROLL | WS_DISABLED
-    CONTROL         "Specified named task",rbStartNamedTask,"Button",BS_AUTORADIOBUTTON,9,65,290,8
-    COMBOBOX        lbStartNamedTask,21,75,296,59,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Auto save/restore opened tabs",rbStartLastTabs,"Button",BS_AUTORADIOBUTTON,9,90,290,8
-    CONTROL         "Far folders also",cbStartFarRestoreFolders,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,147,90,70,8
+    GROUPBOX        "Startup options (may be overriden with ""/cmd"" or ""/cmdlist"" argument of ConEmu.exe)",gbStartupOptions,4,1,375,143
+    CONTROL         "Command line",rbStartSingleApp,"Button",BS_AUTORADIOBUTTON,9,15,364,8
+    EDITTEXT        tCmdLine,21,27,333,12,ES_AUTOHSCROLL | WS_DISABLED
+    CONTROL         "Tasks file",rbStartTasksFile,"Button",BS_AUTORADIOBUTTON,9,45,365,8
+    EDITTEXT        tStartTasksFile,21,57,333,12,ES_AUTOHSCROLL | WS_DISABLED
+    CONTROL         "Specified named task",rbStartNamedTask,"Button",BS_AUTORADIOBUTTON,9,75,364,8
+    COMBOBOX        lbStartNamedTask,21,87,353,149,CBS_DROPDOWNLIST | WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Auto save/restore opened tabs",rbStartLastTabs,"Button",BS_AUTORADIOBUTTON,9,105,364,8
+    CONTROL         "Far folders also",cbStartFarRestoreFolders,"Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,202,106,70,8
     CONTROL         "Far editors/viewers also",cbStartFarRestoreEditors,
-                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,221,90,97,8
-    PUSHBUTTON      "...",cbCmdLine,303,25,15,13,WS_DISABLED
-    PUSHBUTTON      "...",cbStartTasksFile,303,49,15,13,WS_DISABLED
-    GROUPBOX        "Selected task contents (view only, change on Tasks page)",gbStartGroupCommands,4,133,375,97,WS_DISABLED
-    EDITTEXT        tStartGroupCommands,8,144,309,82,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | ES_WANTRETURN | WS_DISABLED | WS_VSCROLL
-    GROUPBOX        "",gbTaskStartDelay,4,100,375,27
-    RTEXT           "Delay between consoles initialization (ms):",stStartCreateDelay,9,111,263,8
-    EDITTEXT        tStartCreateDelay,277,109,40,12,ES_AUTOHSCROLL | ES_NUMBER
+                    "Button",BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,276,106,97,8
+    PUSHBUTTON      "...",cbCmdLine,359,27,15,13,WS_DISABLED
+    PUSHBUTTON      "...",cbStartTasksFile,359,57,15,13,WS_DISABLED
+    GROUPBOX        "Selected task contents (view only, change on Tasks page)",gbStartGroupCommands,4,147,375,91,WS_DISABLED
+    EDITTEXT        tStartGroupCommands,8,158,367,75,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | ES_WANTRETURN | WS_DISABLED | WS_VSCROLL
+    GROUPBOX        "",gbTaskStartDelay,4,117,375,27
+    RTEXT           "Delay between consoles initialization (ms):",stStartCreateDelay,9,128,323,8
+    EDITTEXT        tStartCreateDelay,335,126,40,12,ES_AUTOHSCROLL | ES_NUMBER
 END
 
 IDD_SPG_COLORS DIALOGEX 0, 0, 381, 242
