@@ -12325,11 +12325,12 @@ bool CRealConsole::isConsoleClosing()
 			          L"This is Debug message.\n\nServer hung. PID=%u\nm_ServerClosing.nServerPID=%u\n\nPress Ok to terminate server",
 			          mn_MainSrv_PID, m_ServerClosing.nServerPID);
 			MsgBox(szText, MB_ICONSTOP|MB_SYSTEMMODAL, szTitle);
-			#else
-			_ASSERTE(m_ServerClosing.nServerPID==0);
 			#endif
 
-			TerminateProcess(mh_MainSrv, 100);
+			if (mh_MainSrv)
+			{
+				TerminateProcess(mh_MainSrv, 100);
+			}
 		}
 
 		return true;
