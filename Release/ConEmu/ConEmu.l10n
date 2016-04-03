@@ -3797,8 +3797,8 @@
       "id": 2480 }
     ,
     "cbOneTabPerGroup": {
-      "en": "One tab per group",
-      "zh": "每组一个标签页",
+      "en": "Only active pane of group",
+      "_zh": "每组一个标签页",
       "id": 2599 }
     ,
     "cbProcessAnsi": {
@@ -4554,6 +4554,11 @@
       "en": "Font and color",
       "zh": "字体和颜色",
       "id": 2986 }
+    ,
+    "gbTabDblClkActions": {
+      "en": "Tab double click actions",
+      "zh": "标签页（Tab）双击行为",
+      "id": 3055 }
     ,
     "gbTabs": {
       "en": "Tabs (consoles, Far Manager panels/editors/viewers)",
@@ -5382,6 +5387,10 @@
       "zh": "注册表参数‘LoadConIme’多余的值！这可能会导致其他控制台应用程序挂起！ConEmu可以通过注册表禁用ConIme.exe：",
       "id": 2094 }
     ,
+    "stElevatedConsolesGroup": {
+      "en": "Elevated consoles:",
+      "id": 3054 }
+    ,
     "stEnableAutoUpdateFast": {
       "en": "You can change following on 'Update' page of Settings dialog later",
       "zh": "你可以以后在设置对话框“更新”页面改变下面内容",
@@ -5768,11 +5777,6 @@
       "en": "Console:",
       "zh": "控制台：",
       "id": 2735 }
-    ,
-    "stTabDblClkActions": {
-      "en": "Tab double click actions",
-      "zh": "标签页（Tab）双击行为",
-      "id": 2734 }
     ,
     "stTabEditor": {
       "en": "Editor:",
