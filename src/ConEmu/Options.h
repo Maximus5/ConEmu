@@ -166,10 +166,235 @@ class Settings
 	public:
 		CEOptionInt<L"DefaultBufferHeight"> DefaultBufferHeight;
 		CEOptionBool<L"AutoBufferHeight"> AutoBufferHeight; // Long console output
-
 		CEOptionBool<L"UseScrollLock"> UseScrollLock;
-
 		CEOptionInt<L"CmdOutputCP"> nCmdOutputCP;
+		private: CEOptionString<L"DefaultTerminalApps"> _psDefaultTerminalApps; // "|"-delimited
+		private: CEOptionArray<COLORREF, 0x20, ColorTableIndexName/*"ColorTableNN" decimal*/, ColorTableDefaults/*<ConEmu>*/> Colors; // L"ColorTableNN", Colors[i]
+		public: CEOptionBool<L"FontAutoSize"> isFontAutoSize;
+		CEOptionBool<L"AutoRegisterFonts"> isAutoRegisterFonts;
+		CEOptionBool<L"TrueColorerSupport"> isTrueColorer;
+		CEOptionBool<L"VividColors"> isVividColors;
+		CEOptionByte<L"BackGround Image show"> isShowBgImage;
+		CEOptionStringFixed<L"BackGround Image",MAX_PATH> sBgImage;
+		CEOptionByte<L"bgImageDarker"> bgImageDarker;
+		CEOptionDWORD<L"bgImageColors"> nBgImageColors;
+		CEOptionByte<L"bgOperation"> bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
+		CEOptionByte<L"bgPluginAllowed"> isBgPluginAllowed;
+		CEOptionByte<L"AlphaValue"> nTransparent;
+		CEOptionBool<L"AlphaValueSeparate"> isTransparentSeparate;
+		CEOptionByte<L"AlphaValueInactive"> nTransparentInactive;
+		CEOptionBool<L"UserScreenTransparent"> isUserScreenTransparent;
+		CEOptionBool<L"ColorKeyTransparent"> isColorKeyTransparent;
+		CEOptionDWORD<L"ColorKeyValue"> nColorKeyValue;
+		CEOptionBool<L"SaveCmdHistory"> isSaveCmdHistory;
+		CEOptionString<L"CmdHistoryLocation"> psHistoryLocation;
+		CEOptionByte<L"StartType"> nStartType; // 0-cmd line, 1-cmd task file, 2-named task, 3-auto saved task (*StartupTask)
+		CEOptionString<L"CmdLine"> psStartSingleApp;
+		CEOptionString<L"StartTasksFile"> psStartTasksFile;
+		CEOptionString<L"StartTasksName"> psStartTasksName;
+		CEOptionBool<L"StartFarFolders"> isStartFarFolders;
+		CEOptionBool<L"StartFarEditors"> isStartFarEditors;
+		CEOptionUInt<L"StartCreateDelay"> nStartCreateDelay; // RUNQUEUE_CREATE_LAG
+		CEOptionBool<L"StoreTaskbarkTasks"> isStoreTaskbarkTasks;
+		CEOptionBool<L"StoreTaskbarCommands"> isStoreTaskbarCommands;
+		CEOptionStringFixed<L"FontName",LF_FACESIZE> inFont;
+		CEOptionBool<L"FontBold"> isBold;
+		CEOptionBool<L"FontItalic"> isItalic;
+		CEOptionUInt<L"Anti-aliasing"> mn_AntiAlias; //загружался как Quality
+		CEOptionByte<L"FontCharSet"> mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр) // mb_CharSetWasSet = FALSE;
+		CEOptionUInt<L"FontSize"> FontSizeY;  // высота основного шрифта (загруженная из настроек!)
+		CEOptionUInt<L"FontSizeX"> FontSizeX;  // ширина основного шрифта
+		CEOptionUInt<L"FontSizeX3"> FontSizeX3; // ширина знакоместа при моноширинном режиме (не путать с FontSizeX2)
+		CEOptionBool<L"FontUseDpi"> FontUseDpi;
+		CEOptionBool<L"FontUseUnits"> FontUseUnits;
+		CEOptionBool<L"Anti-aliasing2"> isAntiAlias2;
+		CEOptionBool<L"HideCaption"> isHideCaption; // Hide caption when maximized
+		CEOptionBool<L"HideChildCaption"> isHideChildCaption; // Hide caption of child GUI applications, started in ConEmu tabs (PuTTY, Notepad, etc.)
+		CEOptionBool<L"FocusInChildWindows"> isFocusInChildWindows;
+		CEOptionBool<L"IntegralSize"> mb_IntegralSize;
+		CEOptionByte<L"QuakeStyle"> isQuakeStyle; // 0 - NoQuake, 1 - Quake, 2 - Quake+HideOnLoseFocus
+		CEOptionBool<L"Restore2ActiveMon"> isRestore2ActiveMon;
+		protected: CEOptionBool<L"HideCaptionAlways"> mb_HideCaptionAlways;
+		public: CEOptionByte<L"HideCaptionAlwaysFrame"> nHideCaptionAlwaysFrame;
+		CEOptionUInt<L"HideCaptionAlwaysDelay"> nHideCaptionAlwaysDelay;
+		CEOptionUInt<L"HideCaptionAlwaysDisappear"> nHideCaptionAlwaysDisappear;
+		CEOptionBool<L"DownShowHiddenMessage"> isDownShowHiddenMessage;
+		CEOptionBool<L"DownShowExOnTopMessage"> isDownShowExOnTopMessage;
+		CEOptionBool<L"AlwaysOnTop"> isAlwaysOnTop;
+		CEOptionBool<L"SnapToDesktopEdges"> isSnapToDesktopEdges;
+		CEOptionBool<L"ExtendUCharMap"> isExtendUCharMap;
+		CEOptionBool<L"DisableMouse"> isDisableMouse;
+		CEOptionBool<L"MouseSkipActivation"> isMouseSkipActivation;
+		CEOptionBool<L"MouseSkipMoving"> isMouseSkipMoving;
+		CEOptionBool<L"MouseDragWindow"> isMouseDragWindow;
+		CEOptionBool<L"FarHourglass"> isFarHourglass;
+		CEOptionUInt<L"FarHourglassDelay"> nFarHourglassDelay;
+		CEOptionByte<L"DisableFarFlashing"> isDisableFarFlashing; // if (isDisableFarFlashing>2) isDisableFarFlashing = 2;
+		CEOptionUInt<L"DisableAllFlashing"> isDisableAllFlashing; // if (isDisableAllFlashing>2) isDisableAllFlashing = 2;
+		CEOptionBool<L"CTSIntelligent"> isCTSIntelligent;
+		private: CEOptionString<L"CTSIntelligentExceptions"> _pszCTSIntelligentExceptions; // "|" delimited! // Don't use IntelliSel in these app-processes
+		public: CEOptionBool<L"CTS.AutoCopy"> isCTSAutoCopy;
+		CEOptionBool<L"CTS.ResetOnRelease"> isCTSResetOnRelease;
+		CEOptionBool<L"CTS.IBeam"> isCTSIBeam;
+		CEOptionByte<L"CTS.EndOnTyping"> isCTSEndOnTyping; // 0 - off, 1 - copy & reset, 2 - reset only
+		CEOptionBool<L"CTS.EndOnKeyPress"> isCTSEndOnKeyPress; // +isCTSEndOnTyping. +все, что не генерит WM_CHAR (стрелки и пр.)
+		CEOptionBool<L"CTS.EraseBeforeReset"> isCTSEraseBeforeReset;
+		CEOptionBool<L"CTS.Freeze"> isCTSFreezeBeforeSelect;
+		CEOptionBool<L"CTS.SelectBlock"> isCTSSelectBlock;
+		CEOptionBool<L"CTS.SelectText"> isCTSSelectText;
+		CEOptionByte<L"CTS.HtmlFormat"> isCTSHtmlFormat; // 0 - Plain text only, 1 - HTML formatting, 2 - Copy as HTML, 3 - ANSI sequences
+		CEOptionDWORD<L"CTS.ForceLocale"> isCTSForceLocale; // Try to bypass clipboard locale problems (pasting to old non-unicode apps)
+		CEOptionByte<L"CTS.ActMode"> isCTSActMode; // режим и модификатор разрешения действий правой и средней кнопки мышки
+		CEOptionByte<L"CTS.RBtnAction"> isCTSRBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
+		CEOptionByte<L"CTS.MBtnAction"> isCTSMBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
+		CEOptionByte<L"CTS.ColorIndex"> isCTSColorIndex;
+		CEOptionBool<L"ClipboardConfirmEnter"> isPasteConfirmEnter;
+		CEOptionUInt<L"ClipboardConfirmLonger"> nPasteConfirmLonger;
+		CEOptionBool<L"FarGotoEditorOpt"> isFarGotoEditor; // Подсвечивать и переходить на файл/строку (ошибки компилятора)
+		CEOptionString<L"FarGotoEditorPath"> sFarGotoEditor; // Команда запуска редактора
+		CEOptionBool<L"HighlightMouseRow"> isHighlightMouseRow;
+		CEOptionBool<L"HighlightMouseCol"> isHighlightMouseCol;
+		CEOptionByte<L"KeyboardHooks"> m_isKeyboardHooks; // if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
+		CEOptionByte<L"PartBrush75"> isPartBrush75; // if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
+		CEOptionByte<L"PartBrush50"> isPartBrush50; // if (isPartBrush50<5) isPartBrush50=5; else if (isPartBrush50>250) isPartBrush50=250;
+		CEOptionByte<L"PartBrush25"> isPartBrush25; if (isPartBrush25<5) isPartBrush25=5; else if (isPartBrush25>250) isPartBrush25=250;
+		CEOptionByte<L"PartBrushBlack"> isPartBrushBlack;
+		CEOptionByte<L"RightClick opens context menu"> isRClickSendKey; // 0 - не звать EMenu, 1 - звать всегда, 2 - звать по длинному клику
+		CEOptionString<L"RightClickMacro2"> sRClickMacro;
+		CEOptionBool<L"SafeFarClose"> isSafeFarClose;
+		CEOptionString<L"SafeFarCloseMacro"> sSafeFarCloseMacro;
+		CEOptionBool<L"SendAltTab"> isSendAltTab;
+		CEOptionBool<L"SendAltEsc"> isSendAltEsc;
+		CEOptionBool<L"SendAltPrintScrn"> isSendAltPrintScrn;
+		CEOptionBool<L"SendPrintScrn"> isSendPrintScrn;
+		CEOptionBool<L"SendCtrlEsc"> isSendCtrlEsc;
+		CEOptionBool<L"Min2Tray"> mb_MinToTray;
+		CEOptionBool<L"AlwaysShowTrayIcon"> mb_AlwaysShowTrayIcon;
+		CEOptionByte<L"Monospace"> isMonospace; // 0 - proportional, 1 - monospace, 2 - forcemonospace
+		CEOptionBool<L"RSelectionFix"> isRSelFix;
+		CEOptionByte<L"Dnd"> isDragEnabled;
+		CEOptionByte<L"DndDrop"> isDropEnabled;
+		CEOptionBool<L"DefCopy"> isDefCopy;
+		CEOptionByte<L"DropUseMenu"> isDropUseMenu;
+		CEOptionBool<L"DragOverlay"> isDragOverlay;
+		CEOptionBool<L"DragShowIcons"> isDragShowIcons;
+		CEOptionByte<L"DragPanel"> isDragPanel; // if (isDragPanel > 2) isDragPanel = 1; // изменение размера панелей мышкой
+		CEOptionBool<L"DragPanelBothEdges"> isDragPanelBothEdges; // таскать за обе рамки (правую-левой панели и левую-правой панели)
+		CEOptionBool<L"KeyBarRClick"> isKeyBarRClick; // Правый клик по кейбару - показать PopupMenu
+		CEOptionBool<L"DebugSteps"> isDebugSteps;
+		CEOptionByte<L"DebugLog"> isDebugLog;
+		CEOptionBool<L"EnhanceGraphics"> isEnhanceGraphics; // Progressbars and scrollbars (pseudographics)
+		CEOptionBool<L"EnhanceButtons"> isEnhanceButtons; // Buttons, CheckBoxes and RadioButtons (pseudographics)
+		CEOptionBool<L"FadeInactive"> isFadeInactive;
+		protected: CEOptionByte<L"FadeInactiveLow"> mn_FadeLow;
+		protected: CEOptionByte<L"FadeInactiveHigh"> mn_FadeHigh;
+		public: CEOptionBool<L"StatusBar.Show"> isStatusBarShow;
+		CEOptionDWORD<L"StatusBar.Flags"> isStatusBarFlags; // set of CEStatusFlags
+		CEOptionStringFixed<L"StatusFontFace",LF_FACESIZE> sStatusFontFace;
+		CEOptionUInt<L"StatusFontCharSet"> nStatusFontCharSet;
+		CEOptionInt<L"StatusFontHeight"> nStatusFontHeight;
+		CEOptionDWORD<L"StatusBar.Color.Back"> nStatusBarBack;
+		CEOptionDWORD<L"StatusBar.Color.Light"> nStatusBarLight;
+		CEOptionDWORD<L"StatusBar.Color.Dark"> nStatusBarDark;
+		CEOptionArray<bool,csi_Last,StatusColumnName,StatusColumnDefaults> isStatusColumnHidden;
+		CEOptionByte<L"Tabs"> isTabs; // 0 - don't show, 1 - always show, 2 - auto show
+		CEOptionByte<L"TabsLocation"> nTabsLocation; // 0 - top, 1 - bottom
+		CEOptionBool<L"TabIcons"> isTabIcons;
+		CEOptionBool<L"OneTabPerGroup"> isOneTabPerGroup;
+		CEOptionByte<L"ActivateSplitMouseOver"> bActivateSplitMouseOver;
+		CEOptionBool<L"TabSelf"> isTabSelf;
+		CEOptionBool<L"TabRecent"> isTabRecent;
+		CEOptionBool<L"TabLazy"> isTabLazy;
+		CEOptionInt<L"TabFlashChanged"> nTabFlashChanged;
+		CEOptionUInt<L"TabDblClick"> nTabBarDblClickAction; // 0-None, 1-Auto, 2-Maximize/Restore, 3-NewTab (SettingsNS::tabBarDefaultClickActions)
+		CEOptionUInt<L"TabBtnDblClick"> nTabBtnDblClickAction; // 0-None, 1-Maximize/Restore, 2-Close, 3-Restart, 4-Duplicate (SettingsNS::tabBtnDefaultClickActions)
+		protected: CEOptionByte<L"TabsOnTaskBar"> m_isTabsOnTaskBar; // 0 - ConEmu only, 1 - all tabs & all OS, 2 - all tabs & Win 7, 3 - DON'T SHOW
+		public: CEOptionBool<L"TaskBarOverlay"> isTaskbarOverlay;
+		CEOptionBool<L"TaskbarProgress"> isTaskbarProgress;
+		CEOptionStringFixed<L"TabFontFace",LF_FACESIZE> sTabFontFace;
+		CEOptionUInt<L"TabFontCharSet"> nTabFontCharSet;
+		CEOptionInt<L"TabFontHeight"> nTabFontHeight;
+		CEOptionString<L"TabCloseMacro"> sTabCloseMacro; //if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { if (sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; } }
+		CEOptionString<L"SaveAllEditors"> sSaveAllMacro; //if (!reg->Load(L"SaveAllEditors", &sSaveAllMacro)) { sSaveAllMacro = lstrdup(L"...
+		CEOptionInt<L"ToolbarAddSpace"> nToolbarAddSpace; // UInt?
+		CEOptionSize<L"ConWnd Width"> wndWidth;
+		CEOptionSize<L"ConWnd Height"> wndHeight;
+		CEOptionUInt<L"16bit Height"> ntvdmHeight; // в символах
+		CEOptionInt<L"ConWnd X"> _wndX; // в пикселях
+		CEOptionInt<L"ConWnd Y"> _wndY; // в пикселях
+		CEOptionDWORD<L"WindowMode"> _WindowMode; // if (WindowMode!=wmFullScreen && WindowMode!=wmMaximized && WindowMode!=wmNormal) WindowMode = wmNormal;
+		CEOptionBool<L"Cascaded"> wndCascade;
+		CEOptionBool<L"AutoSaveSizePos"> isAutoSaveSizePos;
+		CEOptionBool<L"UseCurrentSizePos"> isUseCurrentSizePos; // Show in settings dialog and save current window size/pos
+		CEOptionUInt<L"SlideShowElapse"> nSlideShowElapse;
+		CEOptionUInt<L"IconID"> nIconID;
+		CEOptionBool<L"TryToCenter"> isTryToCenter;
+		CEOptionUInt<L"CenterConsolePad"> nCenterConsolePad;
+		CEOptionByte<L"ShowScrollbar"> isAlwaysShowScrollbar; // if (isAlwaysShowScrollbar > 2) isAlwaysShowScrollbar = 2; // 0-не показывать, 1-всегда, 2-автоматически (на откусывает место от консоли)
+		CEOptionUInt<L"ScrollBarAppearDelay"> nScrollBarAppearDelay;
+		CEOptionUInt<L"ScrollBarDisappearDelay"> nScrollBarDisappearDelay;
+		CEOptionBool<L"SingleInstance"> isSingleInstance;
+		CEOptionBool<L"ShowHelpTooltips"> isShowHelpTooltips;
+		CEOptionBool<L"Multi"> mb_isMulti;
+		CEOptionBool<L"Multi.ShowButtons"> isMultiShowButtons;
+		CEOptionBool<L"Multi.ShowSearch"> isMultiShowSearch;
+		CEOptionBool<L"NumberInCaption"> isNumberInCaption;
+		private: CEOptionDWORD<L"Multi.Modifier"> nHostkeyNumberModifier; // TestHostkeyModifiers(); // Используется для 0..9, WinSize
+		private: CEOptionUInt<L"Multi.ArrowsModifier"> nHostkeyArrowModifier; // TestHostkeyModifiers(); // Используется для WinSize
+		public: CEOptionByte<L"Multi.CloseConfirm"> nCloseConfirmFlags; // CloseConfirmOptions
+		CEOptionBool<L"Multi.AutoCreate"> isMultiAutoCreate;
+		CEOptionByte<L"Multi.LeaveOnClose"> isMultiLeaveOnClose; // 0 - закрываться, 1 - оставаться, 2 - НЕ оставаться при закрытии "крестиком"
+		CEOptionByte<L"Multi.HideOnClose"> isMultiHideOnClose; // 0 - не скрываться, 1 - в трей, 2 - просто минимизация
+		CEOptionByte<L"Multi.MinByEsc"> isMultiMinByEsc; // 0 - Never, 1 - Always, 2 - NoConsoles
+		CEOptionBool<L"MapShiftEscToEsc"> isMapShiftEscToEsc; // used only when isMultiMinByEsc==1 and only for console apps
+		CEOptionBool<L"Multi.Iterate"> isMultiIterate;
+		CEOptionBool<L"Multi.NewConfirm"> isMultiNewConfirm;
+		CEOptionBool<L"Multi.DupConfirm"> isMultiDupConfirm;
+		CEOptionBool<L"Multi.DetachConfirm"> isMultiDetachConfirm;
+		CEOptionBool<L"Multi.UseNumbers"> isUseWinNumber;
+		CEOptionBool<L"Multi.UseWinTab"> isUseWinTab;
+		CEOptionBool<L"Multi.UseArrows"> isUseWinArrows;
+		CEOptionByte<L"Multi.SplitWidth"> nSplitWidth;
+		CEOptionByte<L"Multi.SplitHeight"> nSplitHeight;
+		CEOptionBool<L"FARuseASCIIsort"> isFARuseASCIIsort;
+		CEOptionBool<L"FixAltOnAltTab"> isFixAltOnAltTab;
+		CEOptionBool<L"UseAltGrayPlus"> isUseAltGrayPlus;
+		CEOptionBool<L"ShellNoZoneCheck"> isShellNoZoneCheck;
+		CEOptionStringFixed<L"TabConsole",32> szTabConsole;
+		CEOptionStringFixed<L"TabModifiedSuffix",16> szTabModifiedSuffix;
+		CEOptionString<L"TabSkipWords"> pszTabSkipWords;
+		CEOptionStringFixed<L"TabPanels",32> szTabPanels;
+		CEOptionStringFixed<L"TabEditor",32> szTabEditor;
+		CEOptionStringFixed<L"TabEditorModified",32> szTabEditorModified;
+		CEOptionStringFixed<L"TabViewer",32> szTabViewer;
+		CEOptionUInt<L"TabLenMax"> nTabLenMax; // if (nTabLenMax < 10 || nTabLenMax >= CONEMUTABMAX) nTabLenMax = 20;
+		CEOptionStringFixed<L"AdminTitleSuffix",64> szAdminTitleSuffix; // DefaultAdminTitleSuffix /* " (Admin)" */
+		CEOptionByte<L"AdminShowShield"> bAdminShield; // enum AdminTabStyle
+		CEOptionBool<L"HideInactiveConsoleTabs"> bHideInactiveConsoleTabs;
+		CEOptionBool<L"ShowFarWindows"> bShowFarWindows;
+		CEOptionUInt<L"MainTimerElapse" nMainTimerElapse; // if (nMainTimerElapse>1000) nMainTimerElapse = 1000; // периодичность, с которой из консоли считывается текст
+		CEOptionUInt<L"MainTimerInactiveElapse"> nMainTimerInactiveElapse; // if (nMainTimerInactiveElapse>10000) nMainTimerInactiveElapse = 10000; // периодичность при неактивности
+		CEOptionBool<L"SkipFocusEvents"> isSkipFocusEvents;
+		CEOptionByte<L"MonitorConsoleLang"> isMonitorConsoleLang; // bitmask. 1 - follow up console HKL (e.g. after XLat in Far Manager), 2 - use one HKL for all tabs
+		CEOptionBool<L"SleepInBackground"> isSleepInBackground;
+		CEOptionBool<L"RetardInactivePanes"> isRetardInactivePanes;
+		CEOptionBool<L"MinimizeOnLoseFocus"> mb_MinimizeOnLoseFocus;
+		CEOptionDWORD<L"AffinityMask"> nAffinity;
+		CEOptionBool<L"UseInjects"> isUseInjects; // NB. Root process is infiltrated always.
+		CEOptionBool<L"ProcessAnsi"> isProcessAnsi; // ANSI X3.64 & XTerm-256-colors Support
+		CEOptionBool<L"AnsiLog"> isAnsiLog; // Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+		CEOptionString<L"AnsiLogPath"> pszAnsiLog;
+		CEOptionBool<L"ProcessNewConArg"> isProcessNewConArg; // Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs
+		CEOptionBool<L"ProcessCmdStart"> isProcessCmdStart; // Use "start xxx.exe" to start new tab
+		CEOptionBool<L"ProcessCtrlZ"> isProcessCtrlZ; // Treat Ctrl-Z as ‘EndOfStream’. On new line press Ctrl-Z and Enter. Refer to the gh#465 for details (Go input streams).
+		CEOptionBool<L"UseClink"> mb_UseClink; // использовать расширение командной строки (ReadConsole)
+		CEOptionBool<L"SuppressBells"> isSuppressBells;
+		CEOptionBool<L"ConsoleExceptionHandler"> isConsoleExceptionHandler;
+		CEOptionBool<L"ConVisible"> isConVisible; /* *** Debugging *** */
+
+	public:
+
+
 
 		ConEmuComspec ComSpec;
 
@@ -197,7 +422,6 @@ class Settings
 		const wchar_t* GetDefaultTerminalAppsMSZ(); // "\0" delimited
 		void SetDefaultTerminalApps(const wchar_t* apszApps); // "|" delimited
 
-	private: CEOptionString<L"DefaultTerminalApps"> _psDefaultTerminalApps; // "|"-delimited
 
 	public:
 		int GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated);
@@ -281,7 +505,6 @@ class Settings
 		void SaveSizeSettings(SettingsBase* reg);
 		void PatchSizeSettings();
 
-	private: CEOptionArray<COLORREF, 0x20, ColorTableIndexName/*"ColorTableNN" decimal*/, ColorTableDefaults/*<ConEmu>*/> Colors; // L"ColorTableNN", Colors[i]
 	private:
 		COLORREF ColorsFade[0x20];
 		bool mb_FadeInitialized;
@@ -308,8 +531,6 @@ class Settings
 		inline BYTE GetFadeColorItem(BYTE c);
 
 	public:
-		CEOptionBool<L"FontAutoSize"> isFontAutoSize;
-		CEOptionBool<L"AutoRegisterFonts"> isAutoRegisterFonts;
 
 		//reg->Load(L"ConsoleFontName", ConsoleFont.lfFaceName, countof(ConsoleFont.lfFaceName));
 		//reg->Load(L"ConsoleFontWidth", ConsoleFont.lfWidth);
@@ -319,37 +540,13 @@ class Settings
 		bool NeedDialogDetect();
 
 
-		CEOptionBool<L"TrueColorerSupport"> isTrueColorer;
-
-		CEOptionBool<L"VividColors"> isVividColors;
-
-		/* *** Background image *** */
-		CEOptionByte<L"BackGround Image show"> isShowBgImage;
-		CEOptionStringFixed<L"BackGround Image",MAX_PATH> sBgImage;
-		CEOptionByte<L"bgImageDarker"> bgImageDarker;
-		CEOptionDWORD<L"bgImageColors"> nBgImageColors;
-		CEOptionByte<L"bgOperation"> bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
-		CEOptionByte<L"bgPluginAllowed"> isBgPluginAllowed;
-
-
-		//bool isBackgroundImageValid;
-
-
 
 		/* *** Transparency *** */
 		bool isTransparentAllowed();
-		CEOptionByte<L"AlphaValue"> nTransparent;
-		CEOptionBool<L"AlphaValueSeparate"> isTransparentSeparate;
-		CEOptionByte<L"AlphaValueInactive"> nTransparentInactive;
-		CEOptionBool<L"UserScreenTransparent"> isUserScreenTransparent;
-		CEOptionBool<L"ColorKeyTransparent"> isColorKeyTransparent;
-		CEOptionDWORD<L"ColorKeyValue"> nColorKeyValue;
 
 		/* *** Command Line History (from start dialog) *** */
-		CEOptionBool<L"SaveCmdHistory"> isSaveCmdHistory;
 		//reg->Load(L"CmdLineHistory", &psCmdHistory);
 		CommandHistory* pHistory;
-		CEOptionString<L"CmdHistoryLocation"> psHistoryLocation;
 		// Helpers
 		void HistoryAdd(LPCWSTR asCmd);
 		void HistoryReset();
@@ -357,31 +554,8 @@ class Settings
 		void HistorySave(SettingsBase* reg);
 		LPCWSTR HistoryGet(int index);
 
-		/* *** Startup options *** */
-		CEOptionByte<L"StartType"> nStartType; // 0-cmd line, 1-cmd task file, 2-named task, 3-auto saved task (*StartupTask)
-		CEOptionString<L"CmdLine"> psStartSingleApp;
-		CEOptionString<L"StartTasksFile"> psStartTasksFile;
-		CEOptionString<L"StartTasksName"> psStartTasksName;
-		CEOptionBool<L"StartFarFolders"> isStartFarFolders;
-		CEOptionBool<L"StartFarEditors"> isStartFarEditors;
-		CEOptionUInt<L"StartCreateDelay"> nStartCreateDelay; // RUNQUEUE_CREATE_LAG
-
-		CEOptionBool<L"StoreTaskbarkTasks"> isStoreTaskbarkTasks;
-		CEOptionBool<L"StoreTaskbarCommands"> isStoreTaskbarCommands;
-
-
 	public:
-		CEOptionStringFixed<L"FontName",LF_FACESIZE> inFont;
-		CEOptionBool<L"FontBold"> isBold;
-		CEOptionBool<L"FontItalic"> isItalic;
-		CEOptionUInt<L"Anti-aliasing"> mn_AntiAlias; //загружался как Quality
-		CEOptionByte<L"FontCharSet"> mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр) // mb_CharSetWasSet = FALSE;
 		BOOL mb_CharSetWasSet;
-		CEOptionUInt<L"FontSize"> FontSizeY;  // высота основного шрифта (загруженная из настроек!)
-		CEOptionUInt<L"FontSizeX"> FontSizeX;  // ширина основного шрифта
-		CEOptionUInt<L"FontSizeX3"> FontSizeX3; // ширина знакоместа при моноширинном режиме (не путать с FontSizeX2)
-		CEOptionBool<L"FontUseDpi"> FontUseDpi;
-		CEOptionBool<L"FontUseUnits"> FontUseUnits;
 
 		// Previously, the option was used to define different font
 		// generally for Far Manager frames (pseudographics)
@@ -393,7 +567,6 @@ class Settings
 		wchar_t inFont2[LF_FACESIZE];
 		// "FontSizeX2" : width of *alternative* font (to avoid dashed frames this may be larger than main font width)
 		UINT FontSizeX2;
-		CEOptionBool<L"Anti-aliasing2"> isAntiAlias2;
 		// "FixFarBordersRanges" ==> ParseCharRanges(...)
 		// Default: "2013-25C4"; Example: "0410-044F;2013-25C4;"
 		BYTE mpc_CharAltFontRanges[0x10000];
@@ -402,14 +575,7 @@ class Settings
 		bool CheckCharAltFont(ucs32 inChar);
 
 
-		CEOptionBool<L"HideCaption"> isHideCaption; // Hide caption when maximized
-		CEOptionBool<L"HideChildCaption"> isHideChildCaption; // Hide caption of child GUI applications, started in ConEmu tabs (PuTTY, Notepad, etc.)
-		CEOptionBool<L"FocusInChildWindows"> isFocusInChildWindows;
-		CEOptionBool<L"IntegralSize"> mb_IntegralSize;
-		CEOptionByte<L"QuakeStyle"> isQuakeStyle; // 0 - NoQuake, 1 - Quake, 2 - Quake+HideOnLoseFocus
 		UINT nQuakeAnimation;
-		CEOptionBool<L"Restore2ActiveMon"> isRestore2ActiveMon;
-		protected: CEOptionBool<L"HideCaptionAlways"> mb_HideCaptionAlways;
 		public:
 		void SetHideCaptionAlways(bool bHideCaptionAlways);
 		void SwitchHideCaptionAlways();
@@ -418,68 +584,23 @@ class Settings
 		bool isForcedHideCaptionAlways(); // true, если mb_HideCaptionAlways отключать нельзя
 		bool isCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);
 		bool isFrameHidden();
-		CEOptionByte<L"HideCaptionAlwaysFrame"> nHideCaptionAlwaysFrame;
 		int HideCaptionAlwaysFrame();
-		CEOptionUInt<L"HideCaptionAlwaysDelay"> nHideCaptionAlwaysDelay;
-		CEOptionUInt<L"HideCaptionAlwaysDisappear"> nHideCaptionAlwaysDisappear;
-		CEOptionBool<L"DownShowHiddenMessage"> isDownShowHiddenMessage;
-		CEOptionBool<L"DownShowExOnTopMessage"> isDownShowExOnTopMessage;
-		CEOptionBool<L"AlwaysOnTop"> isAlwaysOnTop;
-		CEOptionBool<L"SnapToDesktopEdges"> isSnapToDesktopEdges;
-		CEOptionBool<L"ExtendUCharMap"> isExtendUCharMap;
-		CEOptionBool<L"DisableMouse"> isDisableMouse;
-		CEOptionBool<L"MouseSkipActivation"> isMouseSkipActivation;
-		CEOptionBool<L"MouseSkipMoving"> isMouseSkipMoving;
-		CEOptionBool<L"MouseDragWindow"> isMouseDragWindow;
-		CEOptionBool<L"FarHourglass"> isFarHourglass;
-		CEOptionUInt<L"FarHourglassDelay"> nFarHourglassDelay;
-		CEOptionByte<L"DisableFarFlashing"> isDisableFarFlashing; // if (isDisableFarFlashing>2) isDisableFarFlashing = 2;
-		CEOptionUInt<L"DisableAllFlashing"> isDisableAllFlashing; // if (isDisableAllFlashing>2) isDisableAllFlashing = 2;
 		/* *** Text selection *** */
-		CEOptionBool<L"CTSIntelligent"> isCTSIntelligent;
-		private: CEOptionString<L"CTSIntelligentExceptions"> _pszCTSIntelligentExceptions; // "|" delimited! // Don't use IntelliSel in these app-processes
 		public:
 		// Service functions
 		wchar_t* GetIntelligentExceptions(); // "|" delimited
 		const wchar_t* GetIntelligentExceptionsMSZ(); // "\0" delimited
 		void SetIntelligentExceptions(const wchar_t* apszApps); // "|" delimited
-		CEOptionBool<L"CTS.AutoCopy"> isCTSAutoCopy;
-		CEOptionBool<L"CTS.ResetOnRelease"> isCTSResetOnRelease;
-		CEOptionBool<L"CTS.IBeam"> isCTSIBeam;
-		CEOptionByte<L"CTS.EndOnTyping"> isCTSEndOnTyping; // 0 - off, 1 - copy & reset, 2 - reset only
-		CEOptionBool<L"CTS.EndOnKeyPress"> isCTSEndOnKeyPress; // +isCTSEndOnTyping. +все, что не генерит WM_CHAR (стрелки и пр.)
-		CEOptionBool<L"CTS.EraseBeforeReset"> isCTSEraseBeforeReset;
-		CEOptionBool<L"CTS.Freeze"> isCTSFreezeBeforeSelect;
-		CEOptionBool<L"CTS.SelectBlock"> isCTSSelectBlock;
-		CEOptionBool<L"CTS.SelectText"> isCTSSelectText;
-		CEOptionByte<L"CTS.HtmlFormat"> isCTSHtmlFormat; // 0 - Plain text only, 1 - HTML formatting, 2 - Copy as HTML, 3 - ANSI sequences
-		CEOptionDWORD<L"CTS.ForceLocale"> isCTSForceLocale; // Try to bypass clipboard locale problems (pasting to old non-unicode apps)
 
-		CEOptionByte<L"CTS.ActMode"> isCTSActMode; // режим и модификатор разрешения действий правой и средней кнопки мышки
-		CEOptionByte<L"CTS.RBtnAction"> isCTSRBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
-		CEOptionByte<L"CTS.MBtnAction"> isCTSMBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
-		CEOptionByte<L"CTS.ColorIndex"> isCTSColorIndex;
-		CEOptionBool<L"ClipboardConfirmEnter"> isPasteConfirmEnter;
-		CEOptionUInt<L"ClipboardConfirmLonger"> nPasteConfirmLonger;
-		CEOptionBool<L"FarGotoEditorOpt"> isFarGotoEditor; // Подсвечивать и переходить на файл/строку (ошибки компилятора)
-		CEOptionString<L"FarGotoEditorPath"> sFarGotoEditor; // Команда запуска редактора
-		CEOptionBool<L"HighlightMouseRow"> isHighlightMouseRow;
-		CEOptionBool<L"HighlightMouseCol"> isHighlightMouseCol;
 
 		bool IsModifierPressed(int nDescrID, bool bAllowEmpty);
 		void IsModifierPressed(int nDescrID, bool* pbNoEmpty, bool* pbAllowEmpty);
 
-		CEOptionByte<L"KeyboardHooks"> m_isKeyboardHooks; // if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 	public:
 		bool isKeyboardHooks(bool abNoDisable = false, bool abNoDbgCheck = false);
 
 
-		CEOptionByte<L"PartBrush75"> isPartBrush75; // if (isPartBrush75<5) isPartBrush75=5; else if (isPartBrush75>250) isPartBrush75=250;
-		CEOptionByte<L"PartBrush50"> isPartBrush50; // if (isPartBrush50<5) isPartBrush50=5; else if (isPartBrush50>250) isPartBrush50=250;
-		CEOptionByte<L"PartBrush25"> isPartBrush25; if (isPartBrush25<5) isPartBrush25=5; else if (isPartBrush25>250) isPartBrush25=250;
-		CEOptionByte<L"PartBrushBlack"> isPartBrushBlack;
 
-		CEOptionByte<L"RightClick opens context menu"> isRClickSendKey; // 0 - не звать EMenu, 1 - звать всегда, 2 - звать по длинному клику
 		//Для тачскринов - удобнее по длинному тапу показывать меню,
 		// а по двойному (Press and tap) выполнять выделение файлов
 		// Поэтому, если isRClickTouch, то "длинный"/"короткий" клик инвертируется
@@ -487,44 +608,21 @@ class Settings
 		// --> isRClickSendKey==2 - звать по длинному тапу (аналог простого RClick)
 		// При этом, PressAndTap всегда посылает RClick в консоль (для выделения файлов).
 		bool isRClickTouchInvert();
-		CEOptionString<L"RightClickMacro2"> sRClickMacro;
 		LPCWSTR RClickMacro(FarMacroVersion fmv);
 		LPCWSTR RClickMacroDefault(FarMacroVersion fmv);
 
-		CEOptionBool<L"SafeFarClose"> isSafeFarClose;
-		CEOptionString<L"SafeFarCloseMacro"> sSafeFarCloseMacro;
 		LPCWSTR SafeFarCloseMacro(FarMacroVersion fmv);
 		LPCWSTR SafeFarCloseMacroDefault(FarMacroVersion fmv);
 
-		CEOptionBool<L"SendAltTab"> isSendAltTab;
-		CEOptionBool<L"SendAltEsc"> isSendAltEsc;
-		CEOptionBool<L"SendAltPrintScrn"> isSendAltPrintScrn;
-		CEOptionBool<L"SendPrintScrn"> isSendPrintScrn;
-		CEOptionBool<L"SendCtrlEsc"> isSendCtrlEsc;
 
-		CEOptionBool<L"Min2Tray"> mb_MinToTray;
 		bool isMinToTray(bool bRawOnly = false);
 		void SetMinToTray(bool bMinToTray);
-		CEOptionBool<L"AlwaysShowTrayIcon"> mb_AlwaysShowTrayIcon;
 		bool isAlwaysShowTrayIcon();
-		CEOptionByte<L"Monospace"> isMonospace; // 0 - proportional, 1 - monospace, 2 - forcemonospace
-		CEOptionBool<L"RSelectionFix"> isRSelFix;
 
 		/* *** Drag *** */
-		CEOptionByte<L"Dnd"> isDragEnabled;
-		CEOptionByte<L"DndDrop"> isDropEnabled;
-		CEOptionBool<L"DefCopy"> isDefCopy;
-		CEOptionByte<L"DropUseMenu"> isDropUseMenu;
-		CEOptionBool<L"DragOverlay"> isDragOverlay;
-		CEOptionBool<L"DragShowIcons"> isDragShowIcons;
-		CEOptionByte<L"DragPanel"> isDragPanel; // if (isDragPanel > 2) isDragPanel = 1; // изменение размера панелей мышкой
-		CEOptionBool<L"DragPanelBothEdges"> isDragPanelBothEdges; // таскать за обе рамки (правую-левой панели и левую-правой панели)
 
-		CEOptionBool<L"KeyBarRClick"> isKeyBarRClick; // Правый клик по кейбару - показать PopupMenu
 
-		CEOptionBool<L"DebugSteps"> isDebugSteps;
 
-		CEOptionByte<L"DebugLog"> isDebugLog;
 
 		// Helpers
 		bool mb_DisableLogging;
@@ -533,45 +631,20 @@ class Settings
 		void DisableLogging();
 		LPCWSTR GetLogFileName();
 
-		CEOptionBool<L"EnhanceGraphics"> isEnhanceGraphics; // Progressbars and scrollbars (pseudographics)
-		CEOptionBool<L"EnhanceButtons"> isEnhanceButtons; // Buttons, CheckBoxes and RadioButtons (pseudographics)
 
-		CEOptionBool<L"FadeInactive"> isFadeInactive;
-		protected: CEOptionByte<L"FadeInactiveLow"> mn_FadeLow;
-		protected: CEOptionByte<L"FadeInactiveHigh"> mn_FadeHigh;
 		//mn_LastFadeSrc = mn_LastFadeDst = -1;
 		COLORREF mn_LastFadeSrc;
 		//mn_LastFadeSrc = mn_LastFadeDst = -1;
 		COLORREF mn_LastFadeDst;
 		public:
 
-		CEOptionBool<L"StatusBar.Show"> isStatusBarShow;
-		CEOptionDWORD<L"StatusBar.Flags"> isStatusBarFlags; // set of CEStatusFlags
-		CEOptionStringFixed<L"StatusFontFace",LF_FACESIZE> sStatusFontFace;
-		CEOptionUInt<L"StatusFontCharSet"> nStatusFontCharSet;
-		CEOptionInt<L"StatusFontHeight"> nStatusFontHeight;
 		int StatusBarFontHeight(); // { return max(4,nStatusFontHeight); };
 		int StatusBarHeight(); // { return StatusBarFontHeight() + ((isStatusBarFlags & csf_NoVerticalPad) ? ((isStatusBarFlags & csf_HorzDelim) ? 1 : 0) : 2); };
-		CEOptionDWORD<L"StatusBar.Color.Back"> nStatusBarBack;
-		CEOptionDWORD<L"StatusBar.Color.Light"> nStatusBarLight;
-		CEOptionDWORD<L"StatusBar.Color.Dark"> nStatusBarDark;
-		CEOptionArray<bool,csi_Last,StatusColumnName,StatusColumnDefaults> isStatusColumnHidden;
 		//для информации, чтобы сохранить изменения при выходе
 		bool mb_StatusSettingsWasChanged;
 
-		CEOptionByte<L"Tabs"> isTabs; // 0 - don't show, 1 - always show, 2 - auto show
-		CEOptionByte<L"TabsLocation"> nTabsLocation; // 0 - top, 1 - bottom
-		CEOptionBool<L"TabIcons"> isTabIcons;
-		CEOptionBool<L"OneTabPerGroup"> isOneTabPerGroup;
-		CEOptionByte<L"ActivateSplitMouseOver"> bActivateSplitMouseOver;
 		bool isActivateSplitMouseOver();
-		CEOptionBool<L"TabSelf"> isTabSelf;
-		CEOptionBool<L"TabRecent"> isTabRecent;
-		CEOptionBool<L"TabLazy"> isTabLazy;
-		CEOptionInt<L"TabFlashChanged"> nTabFlashChanged;
 
-		CEOptionUInt<L"TabDblClick"> nTabBarDblClickAction; // 0-None, 1-Auto, 2-Maximize/Restore, 3-NewTab (SettingsNS::tabBarDefaultClickActions)
-		CEOptionUInt<L"TabBtnDblClick"> nTabBtnDblClickAction; // 0-None, 1-Maximize/Restore, 2-Close, 3-Restart, 4-Duplicate (SettingsNS::tabBtnDefaultClickActions)
 
 		//TODO:
 		bool isTabsInCaption;
@@ -579,40 +652,22 @@ class Settings
 		// Tab theme properties
 		//int ilDragHeight; = 10
 
-		protected: CEOptionByte<L"TabsOnTaskBar"> m_isTabsOnTaskBar; // 0 - ConEmu only, 1 - all tabs & all OS, 2 - all tabs & Win 7, 3 - DON'T SHOW
 		public:
 		enum TabsOnTaskbar { tot_ConEmuOnly = 0, tot_AllTabsAllOS = 1, tot_AllTabsWin7 = 2, tot_DontShow = 3};
 		TabsOnTaskbar GetRawTabsOnTaskBar() { return (TabsOnTaskbar)m_isTabsOnTaskBar; };
 		bool isTabsOnTaskBar();
 		bool isWindowOnTaskBar(bool bStrictOnly = false);
 		//void SetTabsOnTaskBar(BYTE nTabsOnTaskBar);
-		CEOptionBool<L"TaskBarOverlay"> isTaskbarOverlay;
-		CEOptionBool<L"TaskbarProgress"> isTaskbarProgress;
 
-		CEOptionStringFixed<L"TabFontFace",LF_FACESIZE> sTabFontFace;
-		CEOptionUInt<L"TabFontCharSet"> nTabFontCharSet;
-		CEOptionInt<L"TabFontHeight"> nTabFontHeight;
 
-		CEOptionString<L"TabCloseMacro"> sTabCloseMacro; //if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { if (sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; } }
 		LPCWSTR TabCloseMacro(FarMacroVersion fmv);
 		LPCWSTR TabCloseMacroDefault(FarMacroVersion fmv);
 
-		CEOptionString<L"SaveAllEditors"> sSaveAllMacro; //if (!reg->Load(L"SaveAllEditors", &sSaveAllMacro)) { sSaveAllMacro = lstrdup(L"...
 		LPCWSTR SaveAllMacro(FarMacroVersion fmv);
 		LPCWSTR SaveAllMacroDefault(FarMacroVersion fmv);
 
-		CEOptionInt<L"ToolbarAddSpace"> nToolbarAddSpace; // UInt?
-		CEOptionSize<L"ConWnd Width"> wndWidth;
-		CEOptionSize<L"ConWnd Height"> wndHeight;
-		CEOptionUInt<L"16bit Height"> ntvdmHeight; // в символах
-		CEOptionInt<L"ConWnd X"> _wndX; // в пикселях
-		CEOptionInt<L"ConWnd Y"> _wndY; // в пикселях
 		// Monitor information
 		RECT LastMonRect;
-		CEOptionDWORD<L"WindowMode"> _WindowMode; // if (WindowMode!=wmFullScreen && WindowMode!=wmMaximized && WindowMode!=wmNormal) WindowMode = wmNormal;
-		CEOptionBool<L"Cascaded"> wndCascade;
-		CEOptionBool<L"AutoSaveSizePos"> isAutoSaveSizePos;
-		CEOptionBool<L"UseCurrentSizePos"> isUseCurrentSizePos; // Show in settings dialog and save current window size/pos
 
 		bool isIntegralSize();
 
@@ -621,22 +676,7 @@ class Settings
 		// а то размер может в процессе закрытия консолей измениться
 		bool mb_ExitSettingsAutoSaved;
 	public:
-		CEOptionUInt<L"SlideShowElapse"> nSlideShowElapse;
-		CEOptionUInt<L"IconID"> nIconID;
-		CEOptionBool<L"TryToCenter"> isTryToCenter;
-		CEOptionUInt<L"CenterConsolePad"> nCenterConsolePad;
-		CEOptionByte<L"ShowScrollbar"> isAlwaysShowScrollbar; // if (isAlwaysShowScrollbar > 2) isAlwaysShowScrollbar = 2; // 0-не показывать, 1-всегда, 2-автоматически (на откусывает место от консоли)
-		CEOptionUInt<L"ScrollBarAppearDelay"> nScrollBarAppearDelay;
-		CEOptionUInt<L"ScrollBarDisappearDelay"> nScrollBarDisappearDelay;
 
-		CEOptionBool<L"SingleInstance"> isSingleInstance;
-		CEOptionBool<L"ShowHelpTooltips"> isShowHelpTooltips;
-		CEOptionBool<L"Multi"> mb_isMulti;
-		CEOptionBool<L"Multi.ShowButtons"> isMultiShowButtons;
-		CEOptionBool<L"Multi.ShowSearch"> isMultiShowSearch;
-		CEOptionBool<L"NumberInCaption"> isNumberInCaption;
-		private: CEOptionDWORD<L"Multi.Modifier"> nHostkeyNumberModifier; // TestHostkeyModifiers(); // Используется для 0..9, WinSize
-		private: CEOptionUInt<L"Multi.ArrowsModifier"> nHostkeyArrowModifier; // TestHostkeyModifiers(); // Используется для WinSize
 		public:
 		// Max - 3 keys, so lower 3 bytes only
 		DWORD HostkeyNumberModifier() { return (nHostkeyNumberModifier & 0xFFFFFF); };
@@ -651,10 +691,6 @@ class Settings
 			cc_Running   = 4, // When running process was detected
 			cc_FarEV     = 8, // was isCloseEditViewConfirm
 		};
-		CEOptionByte<L"Multi.CloseConfirm"> nCloseConfirmFlags; // CloseConfirmOptions
-		CEOptionBool<L"Multi.AutoCreate"> isMultiAutoCreate;
-		CEOptionByte<L"Multi.LeaveOnClose"> isMultiLeaveOnClose; // 0 - закрываться, 1 - оставаться, 2 - НЕ оставаться при закрытии "крестиком"
-		CEOptionByte<L"Multi.HideOnClose"> isMultiHideOnClose; // 0 - не скрываться, 1 - в трей, 2 - просто минимизация
 		// helpers
 		bool isCloseOnLastTabClose();
 		bool isCloseOnCrossClick();
@@ -662,21 +698,6 @@ class Settings
 		bool isHideOnLastTabClose();
 		// L"Multi.MinByEsc" isMultiMinByEsc
 		enum MultiMinByEsc { mbe_Never = 0, mbe_Always = 1, mbe_NoConsoles = 2 };
-		CEOptionByte<L"Multi.MinByEsc"> isMultiMinByEsc; // 0 - Never, 1 - Always, 2 - NoConsoles
-		CEOptionBool<L"MapShiftEscToEsc"> isMapShiftEscToEsc; // used only when isMultiMinByEsc==1 and only for console apps
-		CEOptionBool<L"Multi.Iterate"> isMultiIterate;
-		CEOptionBool<L"Multi.NewConfirm"> isMultiNewConfirm;
-		CEOptionBool<L"Multi.DupConfirm"> isMultiDupConfirm;
-		CEOptionBool<L"Multi.DetachConfirm"> isMultiDetachConfirm;
-		CEOptionBool<L"Multi.UseNumbers"> isUseWinNumber;
-		CEOptionBool<L"Multi.UseWinTab"> isUseWinTab;
-		CEOptionBool<L"Multi.UseArrows"> isUseWinArrows;
-		CEOptionByte<L"Multi.SplitWidth"> nSplitWidth;
-		CEOptionByte<L"Multi.SplitHeight"> nSplitHeight;
-		CEOptionBool<L"FARuseASCIIsort"> isFARuseASCIIsort;
-		CEOptionBool<L"FixAltOnAltTab"> isFixAltOnAltTab;
-		CEOptionBool<L"UseAltGrayPlus"> isUseAltGrayPlus;
-		CEOptionBool<L"ShellNoZoneCheck"> isShellNoZoneCheck;
 
 		// FindText: bMatchCase, bMatchWholeWords, bFreezeConsole, bHighlightAll;
 		// FindOptions.pszText may be used to pre-fill search dialog field if search-bar is hidden
@@ -712,19 +733,9 @@ class Settings
 	public:
 
 		/* *** Tab Templates *** */
-		CEOptionStringFixed<L"TabConsole",32> szTabConsole;
-		CEOptionStringFixed<L"TabModifiedSuffix",16> szTabModifiedSuffix;
-		CEOptionString<L"TabSkipWords"> pszTabSkipWords;
-		CEOptionStringFixed<L"TabPanels",32> szTabPanels;
-		CEOptionStringFixed<L"TabEditor",32> szTabEditor;
-		CEOptionStringFixed<L"TabEditorModified",32> szTabEditorModified;
-		CEOptionStringFixed<L"TabViewer",32> szTabViewer;
-		CEOptionUInt<L"TabLenMax"> nTabLenMax; // if (nTabLenMax < 10 || nTabLenMax >= CONEMUTABMAX) nTabLenMax = 20;
 
 		//TabStyle nTabStyle; // enum
 
-		CEOptionStringFixed<L"AdminTitleSuffix",64> szAdminTitleSuffix; // DefaultAdminTitleSuffix /* " (Admin)" */
-		CEOptionByte<L"AdminShowShield"> bAdminShield; // enum AdminTabStyle
 		// Old style:
 		// * Disabled: bAdminShield = false, szAdminTitleSuffix = ""
 		// * Shield:   bAdminShield = true,  szAdminTitleSuffix ignored (may be filled!)
@@ -736,46 +747,25 @@ class Settings
 		// * Shld+Suf: bAdminShield = 3,  szAdminTitleSuffix = " (Admin)"
 		bool isAdminShield();
 		bool isAdminSuffix();
-		CEOptionBool<L"HideInactiveConsoleTabs"> bHideInactiveConsoleTabs;
 
 		// L"HideDisabledTabs" -- is not saved
 		bool isHideDisabledTabs() { return false; };
 
-		CEOptionBool<L"ShowFarWindows"> bShowFarWindows;
 
 		bool NeedCreateAppWindow();
 
-		CEOptionUInt<L"MainTimerElapse" nMainTimerElapse; // if (nMainTimerElapse>1000) nMainTimerElapse = 1000; // периодичность, с которой из консоли считывается текст
-		CEOptionUInt<L"MainTimerInactiveElapse"> nMainTimerInactiveElapse; // if (nMainTimerInactiveElapse>10000) nMainTimerInactiveElapse = 10000; // периодичность при неактивности
 
 		//bool isAdvLangChange; // в Висте без ConIme в самой консоли не меняется язык, пока не послать WM_SETFOCUS. Но при этом исчезает диалог быстрого поиска
 
-		CEOptionBool<L"SkipFocusEvents"> isSkipFocusEvents;
 
 		//bool isLangChangeWsPlugin;
 
-		CEOptionByte<L"MonitorConsoleLang"> isMonitorConsoleLang; // bitmask. 1 - follow up console HKL (e.g. after XLat in Far Manager), 2 - use one HKL for all tabs
 
-		CEOptionBool<L"SleepInBackground"> isSleepInBackground;
-		CEOptionBool<L"RetardInactivePanes"> isRetardInactivePanes;
 
-		CEOptionBool<L"MinimizeOnLoseFocus"> mb_MinimizeOnLoseFocus;
 
-		CEOptionDWORD<L"AffinityMask"> nAffinity;
 
-		CEOptionBool<L"UseInjects"> isUseInjects; // NB. Root process is infiltrated always.
-		CEOptionBool<L"ProcessAnsi"> isProcessAnsi; // ANSI X3.64 & XTerm-256-colors Support
-		CEOptionBool<L"AnsiLog"> isAnsiLog; // Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
-		CEOptionString<L"AnsiLogPath"> pszAnsiLog;
-		CEOptionBool<L"ProcessNewConArg"> isProcessNewConArg; // Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs
-		CEOptionBool<L"ProcessCmdStart"> isProcessCmdStart; // Use "start xxx.exe" to start new tab
-		CEOptionBool<L"ProcessCtrlZ"> isProcessCtrlZ; // Treat Ctrl-Z as ‘EndOfStream’. On new line press Ctrl-Z and Enter. Refer to the gh#465 for details (Go input streams).
-		CEOptionBool<L"UseClink"> mb_UseClink; // использовать расширение командной строки (ReadConsole)
 		DWORD isUseClink(bool abCheckVersion = false);
-		CEOptionBool<L"SuppressBells"> isSuppressBells;
-		CEOptionBool<L"ConsoleExceptionHandler"> isConsoleExceptionHandler;
 
-		CEOptionBool<L"ConVisible"> isConVisible; /* *** Debugging *** */
 
 		/* *** Thumbnails and Tiles *** */
 		//reg->Load(L"PanView.BackColor", ThSet.crBackground.RawColor);
