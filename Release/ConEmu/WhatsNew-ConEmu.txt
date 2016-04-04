@@ -20,6 +20,11 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.4.3a
+* gh-620: ConEmu shows assertion when terminating SSH session in stermc.
+* gh-624: Defaults on Settings\Integration were lost after reactivating page.
+
+
 2016.4.3
 * ComSpec setting page moved under DefTerm.
 * Avoid attempt to hook DefTerm from multiple processes in Aggressive mode.
