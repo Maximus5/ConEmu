@@ -485,9 +485,6 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbHideInactiveConTabs:
 			OnBtn_HideInactiveConTabs(hDlg, CB, uCheck);
 			break;
-		case cbHideDisabledTabs:
-			OnBtn_HideDisabledTabs(hDlg, CB, uCheck);
-			break;
 		case cbShowFarWindows:
 			OnBtn_ShowFarWindows(hDlg, CB, uCheck);
 			break;
@@ -3084,17 +3081,6 @@ void CSetDlgButtons::OnBtn_HideInactiveConTabs(HWND hDlg, WORD CB, BYTE uCheck)
 	gpConEmu->mp_TabBar->Update(TRUE);
 
 } // cbHideInactiveConTabs
-
-
-// cbHideDisabledTabs
-void CSetDlgButtons::OnBtn_HideDisabledTabs(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==cbHideDisabledTabs);
-
-	gpSet->bHideDisabledTabs = uCheck;
-	gpConEmu->mp_TabBar->Update(TRUE);
-
-} // cbHideDisabledTabs
 
 
 // cbShowFarWindows

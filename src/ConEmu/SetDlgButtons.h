@@ -185,7 +185,6 @@ protected:
 	static void OnBtn_NumberInCaption(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_AdminSuffixOrShield(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_HideInactiveConTabs(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_HideDisabledTabs(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ShowFarWindows(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CloseConEmuOptions(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_HideOrMinOnLastTabClose(HWND hDlg, WORD CB, BYTE uCheck);

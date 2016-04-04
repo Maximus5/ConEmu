@@ -117,7 +117,6 @@ static LngPredefined gsDataHints[] = {
 	{ cbHereName,              L"What you will see in the Explorer popup menu\r\nYou can use `&` sign to set hotkey for the menu item" },
 	{ cbHideCaption,           L"Hide main window caption, when maximized (Alt-F9)" },
 	{ cbHideCaptionAlways,     L"Remove window border and caption. Only console, tabs and status bar will be shown." },
-	{ cbHideDisabledTabs,      L"Hide tabs, which can't be activated.\r\nE.g. hide Far Manager editors while executing cmd.exe" },
 	{ cbHideInactiveConTabs,   L"Show tabs from active console only" },
 	{ cbInjectConEmuHkFast,    L"Required for many features (ANSI X3.64, -new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (crash in Windows 8, telnet in Windows 7, dialogs and menus behind of ConEmu window, chcp hungs, and so on...)" },
 	{ cbInsideName,            L"What you will see in the Explorer popup menu\r\nYou can use `&` sign to set hotkey for the menu item" },

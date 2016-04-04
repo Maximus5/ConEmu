@@ -1003,7 +1003,8 @@ struct Settings
 		//reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
 		bool bHideInactiveConsoleTabs;
 
-		bool bHideDisabledTabs;
+		// L"HideDisabledTabs" -- is not saved
+		bool isHideDisabledTabs() { return false; };
 
 		//reg->Load(L"ShowFarWindows", bShowFarWindows);
 		bool bShowFarWindows;

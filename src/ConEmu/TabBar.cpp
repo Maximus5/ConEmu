@@ -625,7 +625,7 @@ int  CTabBarClass::UpdateAddTab(HANDLE hUpdate, int& tabIdx, int& nCurTab, bool&
 			break;
 
 		// bShowFarWindows проверяем, чтобы не проколоться с недоступностью единственного таба
-		if (gpSet->bHideDisabledTabs && gpSet->bShowFarWindows)
+		if (gpSet->isHideDisabledTabs() && gpSet->bShowFarWindows)
 		{
 			if (!pRCon->CanActivateFarWindow(I))
 				continue;

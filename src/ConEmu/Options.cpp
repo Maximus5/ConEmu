@@ -796,7 +796,6 @@ void Settings::InitSettings()
 	wcscpy_c(szAdminTitleSuffix, DefaultAdminTitleSuffix/*L" (Admin)"*/);
 	//
 	bHideInactiveConsoleTabs = false;
-	bHideDisabledTabs = false;
 	bShowFarWindows = true;
 	isRSelFix = true; isMouseSkipActivation = true; isMouseSkipMoving = true;
 	isFarHourglass = true; nFarHourglassDelay = 500;
@@ -2865,7 +2864,6 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"AdminShowShield", bAdminShield); if (!bAdminShield && !*szAdminTitleSuffix) bAdminShield = ats_Disabled;
 
 		reg->Load(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
-		//reg->Load(L"HideDisabledTabs", bHideDisabledTabs);
 		reg->Load(L"ShowFarWindows", bShowFarWindows);
 
 		reg->Load(L"TryToCenter", isTryToCenter);
@@ -3795,7 +3793,6 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"AdminShowShield", bAdminShield);
 
 		reg->Save(L"HideInactiveConsoleTabs", bHideInactiveConsoleTabs);
-		//reg->Save(L"HideDisabledTabs", bHideDisabledTabs);
 		reg->Save(L"ShowFarWindows", bShowFarWindows);
 		reg->Save(L"TryToCenter", isTryToCenter);
 		reg->Save(L"CenterConsolePad", nCenterConsolePad);

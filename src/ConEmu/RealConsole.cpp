@@ -11125,7 +11125,7 @@ int CRealConsole::GetTabCount(BOOL abVisibleOnly /*= FALSE*/)
 	if (((mn_ProgramStatus & CES_FARACTIVE) == 0))
 		return 1; // На время выполнения команд - ТОЛЬКО одна закладка
 
-	TODO("Обработать gpSet->bHideDisabledTabs, вдруг какие-то табы засерены");
+	//TODO("Обработать gpSet->isHideDisabledTabs(), вдруг какие-то табы засерены");
 	//if (tabs.mn_tabsCount > 1 && gpSet->bHideDisabledConsoleTabs)
 	//{
 	//	int nCount = 0;

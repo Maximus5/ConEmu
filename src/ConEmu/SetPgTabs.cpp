@@ -63,7 +63,7 @@ LRESULT CSetPgTabs::OnInitDialog(HWND hDlg, bool abInitial)
 	checkDlgButton(hDlg, cbTabLazy, gpSet->isTabLazy);
 
 	checkDlgButton(hDlg, cbHideInactiveConTabs, gpSet->bHideInactiveConsoleTabs);
-	checkDlgButton(hDlg, cbHideDisabledTabs, gpSet->bHideDisabledTabs);
+	//checkDlgButton(hDlg, cbHideDisabledTabs, gpSet->bHideDisabledTabs);
 	checkDlgButton(hDlg, cbShowFarWindows, gpSet->bShowFarWindows);
 
 	SetDlgItemText(hDlg, tTabFontFace, gpSet->sTabFontFace);
