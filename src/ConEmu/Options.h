@@ -755,7 +755,7 @@ struct Settings
 		bool isTabsInCaption;
 
 		// Tab theme properties
-		int ilDragHeight;
+		//int ilDragHeight; = 10
 
 		protected:
 		//reg->Load(L"TabsOnTaskBar", m_isTabsOnTaskBar);

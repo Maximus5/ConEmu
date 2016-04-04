@@ -779,7 +779,7 @@ void Settings::InitSettings()
 	isTabSelf = true; isTabRecent = true; isTabLazy = true;
 	nTabFlashChanged = 8;
 	nTabBarDblClickAction = TABBAR_DEFAULT_CLICK_ACTION; nTabBtnDblClickAction = TABBTN_DEFAULT_CLICK_ACTION;
-	ilDragHeight = 10;
+	//ilDragHeight = 10;
 	m_isTabsOnTaskBar = 2;
 	isTaskbarOverlay = true;
 	isTaskbarProgress = true;
