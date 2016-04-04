@@ -5,8 +5,6 @@ ClassDiagram1.cd
 
 FontRanges.cpp
 FontRanges.h
-OptionTypes.cpp
-OptionTypes.h
 RegExp.cpp
 RegExp.hpp
 

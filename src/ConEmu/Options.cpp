@@ -70,7 +70,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 
 TODO("Convert Settings::mpc_CharAltFontRanges to binary ranges?");
-TODO("Load/Save Settings::bHideDisabledTabs?");
+
+CEOptionList* gpOptionList = NULL;
 
 //#define DEBUGSTRFONT(s) DEBUGSTR(s)
 
@@ -303,27 +304,41 @@ const CONEMUDEFCOLORS DefColors[] =
 
 
 Settings::Settings()
+	: mp_OptionList(NULL)
 {
 	//gpSet = this; // -- нельзя. Settings может использоваться как копия настроек (!= gpSet)
 
-	ResetSettings();
+	if (!gpOptionList)
+	{
+		_ASSERTE(gpOptionList!=NULL);
+	}
+	else
+	{
+		_ASSERTE(mp_OptionList==NULL);
+		mp_OptionList = gpOptionList;
+		gpOptionList = NULL;
+	}
 
-	// Умолчания устанавливаются в CSettings::CSettings
-	//-- // Теперь установим умолчания настроек
-	//-- InitSettings();
+	PRAGMA_ERROR("Set all pointers to NULL");
+
+	// -- is not required, values are set in constructors
+	// ResetSettings();
 }
 
 void Settings::ResetSettings()
 {
-	#ifdef OPTION_TYPES_USED
-	PRAGMA_ERROR("memset not allowed for classes!");
+	if (!mp_OptionList)
+	{
+		_ASSERTE(mp_OptionList!=NULL);
+		return;
+	}
 
-	#else
+	for (INT_PTR i = 0; i < mp_OptionList->m_List.size(); i++)
+	{
+		mp_OptionList->m_List[i]->Reset();
+	}
 
-	// Сброс переменных (struct, допустимо)
-	memset(this, 0, sizeof(*this));
-
-	#endif
+	mb_CharSetWasSet = FALSE;
 }
 
 void Settings::ReleasePointers()
@@ -695,8 +710,8 @@ void Settings::InitSettings()
 	wcscpy_c(szTabEditorModified, L"<%c.%i>[%s] *");
 	wcscpy_c(szTabViewer, L"<%c.%i>[%s]");
 	nTabLenMax = 20;
-	nTabWidthMax = 200;
-	nTabStyle = ts_Win8;
+	//nTabWidthMax = 200;
+	//nTabStyle = ts_Win8;
 	isSafeFarClose = true;
 	sSafeFarCloseMacro = NULL; // если NULL - то используется макрос по умолчанию
 	isCTSIntelligent = true;
