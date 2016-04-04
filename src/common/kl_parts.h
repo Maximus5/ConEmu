@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #if !defined(__GNUC__)
+#pragma warning(push)
 #pragma warning(disable: 4244) // convertion to lower size
 #pragma warning(disable: 4267) // conversion from 'size_t' to 'DWORD'
 #pragma warning(disable: 4146) // unary minus operator applied to unsigned type
@@ -49,3 +50,7 @@ __forceinline u32 __cdecl klMulDivU32(u32 a, u32 b, u32 c)
 	return (a*b/c);
 #endif
 }
+
+#if !defined(__GNUC__)
+#pragma warning(pop)
+#endif
