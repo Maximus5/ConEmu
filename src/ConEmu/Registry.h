@@ -44,7 +44,7 @@ struct SettingsBase
 
 		virtual bool Load(const wchar_t *regName, wchar_t **value) = 0;
 		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize) = 0;
-		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) = 0; // required for registry type validarion (string)
+		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) = 0; // required for registry type validation (string)
 
 		virtual void Delete(const wchar_t *regName) = 0;
 
