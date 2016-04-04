@@ -378,7 +378,7 @@ class CConEmuMain
 		DWORD m_FixPosAfterStyle;
 		RECT mrc_FixPosAfterStyle;
 		DWORD m_ProcCount;
-		BOOL mb_IsUacAdmin; // ConEmu itself is started elevated
+		bool mb_IsUacAdmin; // ConEmu itself is started elevated
 		bool IsActiveConAdmin();
 		HICON GetCurrentVConIcon();
 		HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove, mh_CursorIBeam;

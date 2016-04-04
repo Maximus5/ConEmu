@@ -1062,12 +1062,12 @@ void CRealConsole::DoLockUnlock(bool bLock)
 	ExecuteFreeResult(pOut);
 }
 
-BOOL CRealConsole::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZESYNC*/)
+bool CRealConsole::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZESYNC*/)
 {
-	if (!this) return FALSE;
+	if (!this) return false;
 
 	// Всегда меняем _реальный_ буфер консоли.
-	return mp_RBuf->SetConsoleSize(sizeX, sizeY, sizeBuffer, anCmdID);
+	return (mp_RBuf->SetConsoleSize(sizeX, sizeY, sizeBuffer, anCmdID) != FALSE);
 }
 
 void CRealConsole::SyncGui2Window(const RECT rcVConBack)
@@ -1177,13 +1177,15 @@ void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	}
 	#endif
 
-	// Меняем активный буфер (пусть даже и виртуальный...)
-	mp_ABuf->SyncConsole2Window(newCon.right, newCon.bottom);
+	// Change the size of the buffer (virtuals too)
+	// Real console uses SHORT as size, so we are too
+	COORD crNewSize = MakeCoord(newCon.right, newCon.bottom);
+	mp_ABuf->SyncConsole2Window(crNewSize.X, crNewSize.Y);
 }
 
 // Вызывается при аттаче (после детача), или после RunAs?
 // sbi передавать не ссылкой, а копией, ибо та же память
-BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_SRVSTARTSTOPRET& pRet)
+bool CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 {
 	DWORD dwErr = 0;
 	HANDLE hProcess = NULL;
@@ -1275,7 +1277,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	if (!hProcess)
 	{
 		DisplayLastError(L"Can't open ConEmuC process! Attach is impossible!", dwErr = GetLastError());
-		return FALSE;
+		return false;
 	}
 
 	WARNING("TODO: Support horizontal scroll");
@@ -1321,7 +1323,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	//if (!mh_CursorChanged) {
 	//    ms_ConEmuC_Pipe[0] = 0;
 	//    DisplayLastError(L"Can't create event!");
-	//    return FALSE;
+	//    return false;
 	//}
 
 	//mh_MainSrv = hProcess;
@@ -1351,7 +1353,7 @@ BOOL CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 
 	_ASSERTE((pRet.Info.nBufferHeight == 0) || ((int)pRet.Info.nBufferHeight > (rStartStop->sbi.srWindow.Bottom-rStartStop->sbi.srWindow.Top)));
 
-	return TRUE;
+	return true;
 }
 
 void CRealConsole::QueryStartStopRet(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
@@ -3308,9 +3310,9 @@ bool CRealConsole::RefreshAfterRestore(CVirtualConsole* pVCon, LPARAM lParam)
 	return true;
 }
 
-BOOL CRealConsole::StartMonitorThread()
+bool CRealConsole::StartMonitorThread()
 {
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	_ASSERTE(mh_MonitorThread==NULL);
 	DWORD nCreateBegin = GetTickCount();
 	SetConStatus(L"Initializing ConEmu (4)", cso_ResetOnConsoleReady|cso_Critical);
@@ -3336,7 +3338,7 @@ BOOL CRealConsole::StartMonitorThread()
 	else
 	{
 		//lbRc = SetThreadPriority(mh_MonitorThread, THREAD_PRIORITY_ABOVE_NORMAL);
-		lbRc = TRUE;
+		lbRc = true;
 	}
 
 	return lbRc;
@@ -5956,9 +5958,9 @@ void CRealConsole::StartStopAppCursorKeys(DWORD nPID, bool bAppCursorKeys)
 	mp_XTerm->AppCursorKeys = bAppCursorKeys;
 }
 
-BOOL CRealConsole::GetBracketedPaste()
+bool CRealConsole::GetBracketedPaste()
 {
-	return m_Term.bBracketedPaste;
+	return (m_Term.bBracketedPaste != FALSE);
 }
 
 void CRealConsole::PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted)
@@ -6109,10 +6111,10 @@ bool CRealConsole::InScroll()
 	return mp_VCon->InScroll();
 }
 
-BOOL CRealConsole::isGuiVisible()
+bool CRealConsole::isGuiVisible()
 {
 	if (!this)
-		return FALSE;
+		return false;
 
 	if (m_ChildGui.isGuiWnd())
 	{
@@ -6120,44 +6122,44 @@ BOOL CRealConsole::isGuiVisible()
 		DWORD_PTR nStyle = GetWindowLongPtr(m_ChildGui.hGuiWnd, GWL_STYLE);
 		return (nStyle & WS_VISIBLE) != 0;
 	}
-	return FALSE;
+	return false;
 }
 
-BOOL CRealConsole::isGuiOverCon()
+bool CRealConsole::isGuiOverCon()
 {
 	if (!this)
-		return FALSE;
+		return false;
 
 	if (m_ChildGui.hGuiWnd && !m_ChildGui.bGuiExternMode)
 	{
 		return isGuiVisible();
 	}
 
-	return FALSE;
+	return false;
 }
 
 // Проверить, включен ли буфер (TRUE). Или высота окна равна высоте буфера (FALSE).
-BOOL CRealConsole::isBufferHeight()
+bool CRealConsole::isBufferHeight()
 {
 	if (!this)
-		return FALSE;
+		return false;
 
 	if (m_ChildGui.hGuiWnd)
 	{
 		return !isGuiVisible();
 	}
 
-	return mp_ABuf->isScroll();
+	return (mp_ABuf->isScroll() != 0);
 }
 
 // TRUE - если консоль "заморожена" (альтернативный буфер)
-BOOL CRealConsole::isAlternative()
+bool CRealConsole::isAlternative()
 {
 	if (!this)
-		return FALSE;
+		return false;
 
 	if (m_ChildGui.hGuiWnd)
-		return FALSE;
+		return false;
 
 	return (mp_ABuf && (mp_ABuf != mp_RBuf));
 }
@@ -6189,13 +6191,17 @@ bool CRealConsole::isDetached()
 	return (mh_MainSrv == NULL);
 }
 
-BOOL CRealConsole::isWindowVisible()
+bool CRealConsole::isWindowVisible()
 {
-	if (!this) return FALSE;
+	if (!this)
+		return false;
 
-	if (!hConWnd) return FALSE;
+	if (!hConWnd)
+		return false;
 
-	return IsWindowVisible(hConWnd);
+	if (!::IsWindowVisible(hConWnd))
+		return false;
+	return true;
 }
 
 LPCTSTR CRealConsole::GetTitle(bool abGetRenamed/*=false*/)
@@ -9535,7 +9541,7 @@ void CRealConsole::CloseLogFiles()
 
 
 // Послать в консоль запрос на закрытие
-BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
+bool CRealConsole::RecreateProcess(RConStartArgs *args)
 {
 	if (!this)
 		return false;
@@ -9627,7 +9633,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	//	if (!m_Args.pszSpecialCmd)
 	//	{
 	//		Box(_T("Can't allocate memory..."));
-	//		return FALSE;
+	//		return false;
 	//	}
 
 	//	lstrcpyW(m_Args.pszSpecialCmd, args->pszSpecialCmd);
@@ -9640,7 +9646,7 @@ BOOL CRealConsole::RecreateProcess(RConStartArgs *args)
 	//	m_Args.pszStartupDir = (wchar_t*)Alloc(nLen+1,2);
 
 	//	if (!m_Args.pszStartupDir)
-	//		return FALSE;
+	//		return false;
 
 	//	lstrcpyW(m_Args.pszStartupDir, args->pszStartupDir);
 	//}
@@ -9700,7 +9706,7 @@ void CRealConsole::RequestStartup(bool bForce)
 }
 
 // И запустить ее заново
-BOOL CRealConsole::RecreateProcessStart()
+bool CRealConsole::RecreateProcessStart()
 {
 	bool lbRc = false;
 
@@ -9723,7 +9729,7 @@ BOOL CRealConsole::RecreateProcessStart()
 		{
 			// При пересоздании сбрасывается 16битный режим, нужно отресайзиться
 			if (!PreInit())
-				return FALSE;
+				return false;
 		}
 
 		StopThread(TRUE/*abRecreate*/);
@@ -13109,7 +13115,7 @@ void CRealConsole::OnTitleChanged()
 		return;
 	#endif
 
-	wcscpy(Title, TitleCmp);
+	wcscpy_c(Title, TitleCmp);
 	SetWindowText(mp_VCon->GetView(), TitleCmp);
 
 	if (tabs.nActiveType & (fwt_Viewer|fwt_Editor))
@@ -13243,7 +13249,7 @@ bool CRealConsole::isFarPanelAllowed()
 		if (pFar)
 		{
 			// Если получено из плагина
-			return pFar->bFarPanelAllowed;
+			return (pFar->bFarPanelAllowed != FALSE);
 		}
 	}
 	// Пытаемся разобрать строку аргументов
@@ -13318,7 +13324,7 @@ bool CRealConsole::isEditor()
 {
 	if (!this) return false;
 
-	return GetFarStatus() & CES_EDITOR;
+	return ((GetFarStatus() & CES_EDITOR) == CES_EDITOR);
 }
 
 bool CRealConsole::isEditorModified()
@@ -13352,7 +13358,7 @@ bool CRealConsole::isViewer()
 {
 	if (!this) return false;
 
-	return GetFarStatus() & CES_VIEWER;
+	return ((GetFarStatus() & CES_VIEWER) == CES_VIEWER);
 }
 
 bool CRealConsole::isNtvdm()

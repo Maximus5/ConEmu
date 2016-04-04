@@ -1688,7 +1688,7 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 			if (!pRCon)
 				continue;
 
-			if (pRCon && pRCon->isFar(anWindowType & fwt_PluginRequired))
+			if (pRCon && pRCon->isFar((anWindowType & fwt_PluginRequired)==fwt_PluginRequired))
 			{
 				// Ищем что-то конкретное?
 				if (!(anWindowType & (fwt_TypeMask|fwt_Elevated|fwt_NonElevated|fwt_ModalFarWnd|fwt_NonModal|fwt_ActivateFound|fwt_ActivateOther)) && !(asName && *asName))

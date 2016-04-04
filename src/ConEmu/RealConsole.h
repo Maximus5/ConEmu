@@ -362,8 +362,8 @@ class CRealConsole
 	private:
 		void    GuiWndFocusThread(HWND hSetFocus, BOOL& bAttached, BOOL& bAttachCalled, DWORD& nErr);
 	public:
-		BOOL    isGuiVisible();
-		BOOL    isGuiOverCon();
+		bool    isGuiVisible();
+		bool    isGuiOverCon();
 		void    StoreGuiChildRect(LPRECT prcNewPos);
 		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, int anBits, RECT arcPrev);
 		static void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui, LPCWSTR pszExeName);
@@ -388,7 +388,7 @@ class CRealConsole
 
 		void DoLockUnlock(bool bLock);
 
-		BOOL SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer=0, DWORD anCmdID=CECMD_SETSIZESYNC);
+		bool SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer=0, DWORD anCmdID=CECMD_SETSIZESYNC);
 	private:
 		bool SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEvent = true);
 		bool LoadAlternativeConsole(LoadAltMode iMode = lam_Default);
@@ -456,7 +456,7 @@ class CRealConsole
 		void OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, const MSG* pDeadCharMsg);
 		const ConEmuHotKey* ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars);
 		TermEmulationType GetTermType();
-		BOOL GetBracketedPaste();
+		bool GetBracketedPaste();
 		bool ProcessXtermSubst(const INPUT_RECORD& r);
 		void ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -473,10 +473,10 @@ class CRealConsole
 		void StartStopAppCursorKeys(DWORD nPID, bool bAppCursorKeys);
 		void PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted);
 		bool InScroll();
-		BOOL isBufferHeight();
-		BOOL isAlternative();
+		bool isBufferHeight();
+		bool isAlternative();
 		HWND isPictureView(BOOL abIgnoreNonModal=FALSE);
-		BOOL isWindowVisible();
+		bool isWindowVisible();
 		LPCTSTR GetTitle(bool abGetRenamed=false);
 		LPCWSTR GetPanelTitle();
 		LPCWSTR GetTabTitle(CTab& tab);
@@ -554,10 +554,10 @@ class CRealConsole
 		void ShowGuiClientInt(bool bShow);
 		void ChildSystemMenu();
 		bool isDetached();
-		BOOL AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_SRVSTARTSTOPRET& pRet);
+		bool AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_SRVSTARTSTOPRET& pRet);
 		void QueryStartStopRet(CESERVER_REQ_SRVSTARTSTOPRET& pRet);
 		void SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet);
-		BOOL RecreateProcess(RConStartArgs *args);
+		bool RecreateProcess(RConStartArgs *args);
 		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
 		void ResetHighlightHyperlinks();
 		ExpandTextRangeType GetLastTextRangeType();
@@ -747,7 +747,7 @@ class CRealConsole
 		BOOL StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR& lpszWorkDir, bool bNeedConHostSearch, HWND hSetForeground, DWORD& nCreateBegin, DWORD& nCreateEnd, DWORD& nCreateDuration, BYTE nTextColorIdx /*= 7*/, BYTE nBackColorIdx /*= 0*/, BYTE nPopTextColorIdx /*= 5*/, BYTE nPopBackColorIdx /*= 15*/, STARTUPINFO& si, PROCESS_INFORMATION& pi, DWORD& dwLastError);
 		void ResetVarsOnStart();
 		protected:
-		BOOL StartMonitorThread();
+		bool StartMonitorThread();
 		void SetMonitorThreadEvent();
 		BOOL mb_NeedStartProcess;
 
@@ -885,7 +885,7 @@ class CRealConsole
 		void CreateLogFiles();
 		void CloseLogFiles();
 		void LogInput(INPUT_RECORD* pRec);
-		BOOL RecreateProcessStart();
+		bool RecreateProcessStart();
 		void RequestStartup(bool bForce = false);
 		//
 		MEvent m_FarAliveEvent;
