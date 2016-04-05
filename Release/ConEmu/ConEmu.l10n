@@ -735,9 +735,9 @@
             , "standard manner using Left/Right\r\n"
             , "(after CtrlTab), while Ctrl is still presses." ],
       "zh": [ "最近标签之间的切换。\r\n"
-            , "你可以仍旧在标签页之间切换以\r\n"
-            , "使用Left/Right键的标准方式\r\n"
-            , "（在CtrlTab之后）, 当Ctrl仍旧按下时。" ],
+            , "你可以仍旧在标签页之间\r\n"
+            , "使用Left/Right键的标准方式切换。\r\n"
+            , "Left/Right键在（CtrlTab按下之后）, 而Ctrl仍旧按下时。" ],
       "id": 1533 }
     ,
     "cbTabs": {
@@ -2242,12 +2242,12 @@
     ,
     "vkTermButShell": {
       "en": "Terminate (kill) all but shell processes in the current console",
-      "_zh": "在当前控制台中结束所有进程除了shell进程",
+      "zh": "在当前控制台中终止（杀死）除了shell进程以外的所有进程",
       "id": 2761 }
     ,
     "vkTerminateApp": {
       "en": "Terminate (kill) active process in the current console",
-      "_zh": "在当前控制台中终止活动进程",
+      "zh": "在当前控制台中终止（杀死）活动进程",
       "id": 2261 }
     ,
     "vkTileToLeft": {
@@ -2387,7 +2387,7 @@
     "IDM_TERMINATEBUTSHELL": {
       "en": "Active console/pane: Terminate (kill) all except root process",
       "ru": "Активная консоль/сплит: Завершить (убить) все процессы кроме корневого",
-      "_zh": "活动的控制台/窗格：结束所有进程除了根进程",
+      "zh": "活动的控制台/窗格：终止（杀死）除了根进程以外的所有进程",
       "id": 43991 }
     ,
     "IDM_TERMINATECON": {
@@ -2411,13 +2411,13 @@
     "IDM_TERMINATEPRC": {
       "en": "Active console/pane: Terminate (kill) active process",
       "ru": "Активная консоль/сплит: Завершить (убить) активный процесс",
-      "_zh": "活动控制台/窗格：终止活动进程",
+      "zh": "活动控制台/窗格：终止（杀死）活动进程",
       "id": 43988 }
     ,
     "IDM_TERMINATEPRCGROUP": {
       "en": "Active group: Terminate (kill) active process in each pane",
       "ru": "Активная группа: Завершить (убить) активный процесс в каждом сплите",
-      "_zh": "活动组：在每个窗格中终止活动进程",
+      "zh": "活动组：在每个窗格中终止（杀死）活动进程",
       "id": 44000 }
     ,
     "IDM_TERMINATEZOMBIES": {
@@ -2479,11 +2479,13 @@
     "lng_AssertAbortDescr": {
       "en": "Press <Abort> to throw exception, ConEmu will be terminated!",
       "ru": "<Прервать> для вызова исключения, ConEmu будет завершен!",
+      "zh": "按下<退出>抛出异常，同时ConEmu会被终止！",
       "id": 70 }
     ,
     "lng_AssertIgnoreDescr": {
       "en": "Press <Ignore> to continue your work.",
       "ru": "Нажмите <Пропустить> для продолжения работы.",
+      "zh": "按下<忽略>继续你的工作。",
       "id": 69 }
     ,
     "lng_AssertRetryDescr": {
@@ -2491,6 +2493,8 @@
             , "and report a bug (open project web page)." ],
       "ru": [ "<Повтор> чтобы скопировать информацию в буфер\r\n"
             , "и сообщить об ошибке (открыть веб-страницу проекта)." ],
+      "zh": [ "按下<重试>复制文本信息至剪贴板\r\n"
+            , "并报告bug（打开项目网页）。" ],
       "id": 71 }
     ,
     "lng_BasicSettings": {
@@ -2562,6 +2566,7 @@
     "lng_HotkeysFilter": {
       "en": "Filter hotkeys (Alt+F)",
       "ru": "Фильтрация хоткеев (Alt+F)",
+      "zh": "过滤器热键（Alt+F）",
       "id": 57 }
     ,
     "lng_HotkeysMacro": {
@@ -2626,6 +2631,7 @@
     ,
     "lng_PleaseCheckManually": {
       "en": "Please check for updates manually",
+      "zh": "请手动检查更新",
       "id": 68 }
     ,
     "lng_Search": {
@@ -2661,11 +2667,13 @@
     "lng_SizeRadioCentered": {
       "en": "Centered",
       "ru": "По центру",
+      "zh": "在中心",
       "id": 56 }
     ,
     "lng_SizeRadioFree": {
       "en": "Free",
       "ru": "Свободное",
+      "zh": "自由",
       "id": 55 }
     ,
     "lng_SpgAppDistinct": {
@@ -2851,31 +2859,37 @@
     "lng_UnknownSwitch1": {
       "en": "Unknown switch specified:",
       "ru": "Указан недопустимый ключ:",
+      "zh": "指定的未知开关：",
       "id": 62 }
     ,
     "lng_UnknownSwitch2": {
       "en": "Visit website to get thorough switches description:",
       "ru": "Посетите веб-страницу с подробным описанием ключей:",
+      "zh": "访问网站，以获得彻底的开关说明：",
       "id": 63 }
     ,
     "lng_UnknownSwitch3": {
       "en": "Or run ‘ConEmu.exe -?’ to get the brief.",
       "ru": "Или запустите ‘ConEmu.exe -?’ для краткого списка.",
+      "zh": "或者运行‘ConEmu.exe -?’获得简介。",
       "id": 64 }
     ,
     "lng_UnknownSwitch4": {
       "en": "Switch ‘-new_console’ must be specified *after* ‘-cmd’ or ‘-cmdlist’!",
       "ru": "Ключ ‘-new_console’ должен быть указан *после* ‘-cmd’ или ‘-cmdlist’!",
+      "zh": "开关‘-new_console’必须在‘-cmd’或者‘-cmdlist’的*后面*！",
       "id": 65 }
     ,
     "lng_UpdateCloseMsg1": {
       "en": "Please, close all ConEmu instances before continue",
       "ru": "Пожалуйста закройте все открытые окна ConEmu перед продолжением",
+      "zh": "继续之前请关闭所有ConEmu实例",
       "id": 66 }
     ,
     "lng_UpdateCloseMsg2": {
       "en": "ConEmu still running:",
       "ru": "ConEmu все ещё запущен:",
+      "zh": "ConEmu仍在运行：",
       "id": 67 }
   }
   ,
@@ -3798,7 +3812,7 @@
     ,
     "cbOneTabPerGroup": {
       "en": "Only active pane of group",
-      "_zh": "每组一个标签页",
+      "zh": "仅每组活动的窗格",
       "id": 2599 }
     ,
     "cbProcessAnsi": {
@@ -4710,7 +4724,7 @@
     "rbAppDistinctElevatedIgnore": {
       "en": "Doesn't matter",
       "ru": "Не важно",
-      "_zh": "是否提升的无关紧要",
+      "zh": "无关紧要",
       "id": 2143 }
     ,
     "rbAppDistinctElevatedOff": {
@@ -5200,6 +5214,7 @@
     ,
     "stBgReplaceIndexes": {
       "en": "Replace color indexes:",
+      "zh": "替换颜色索引：",
       "id": 3051 }
     ,
     "stClipConfirmLimit": {
@@ -5389,6 +5404,7 @@
     ,
     "stElevatedConsolesGroup": {
       "en": "Elevated consoles:",
+      "zh": "提升的控制台：",
       "id": 3054 }
     ,
     "stEnableAutoUpdateFast": {
@@ -5973,7 +5989,7 @@
     "stVConPadSize": {
       "en": "Pad size (pixels):",
       "_ru": "Окантовка (пиксели):",
-      "_zh": "Pad大小：",
+      "zh": "Pad大小（像素）：",
       "id": 2898 }
     ,
     "stWndHeight": {
