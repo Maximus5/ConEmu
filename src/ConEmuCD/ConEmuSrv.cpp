@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MProcess.h"
 #include "../common/MProcessBits.h"
 #include "../common/MSectionSimple.h"
+#include "../common/MStrDup.h"
 #include "../common/MStrSafe.h"
 #include "../common/ProcessSetEnv.h"
 #include "../common/SetEnvVar.h"
@@ -379,6 +380,7 @@ void WaitForServerActivated(DWORD anServerPID, HANDLE ahServer, DWORD nTimeout =
 		return;
 	}
 
+	HWND hDcWnd = NULL;
 	DWORD nStartTick = GetTickCount(), nDelta = 0, nWait = STILL_ACTIVE, nSrvPID = 0, nExitCode = STILL_ACTIVE;
 	while (nDelta <= nTimeout)
 	{
@@ -394,8 +396,10 @@ void WaitForServerActivated(DWORD anServerPID, HANDLE ahServer, DWORD nTimeout =
 		nSrvPID = gpSrv->pConsoleMap->Ptr()->nServerPID;
 		_ASSERTE(((nSrvPID == 0) || (nSrvPID == anServerPID)) && (nSrvPID != GetCurrentProcessId()));
 
-		// Well, server was started
-		if (nSrvPID)
+		hDcWnd = gpSrv->pConsoleMap->Ptr()->hConEmuWndDc;
+
+		// Well, server was started and attached to ConEmu
+		if (nSrvPID && hDcWnd)
 		{
 			break;
 		}
@@ -2813,21 +2817,21 @@ HWND Attach2Gui(DWORD nTimeout)
 
 	if (bNeedStartGui)
 	{
-		wchar_t szSelf[MAX_PATH+320];
-		wchar_t* pszSelf = szSelf+1, *pszSlash = NULL;
+		wchar_t szGuiExe[MAX_PATH];
+		wchar_t *pszSlash = NULL;
 
-		if (!GetModuleFileName(NULL, pszSelf, MAX_PATH))
+		if (!GetModuleFileName(NULL, szGuiExe, MAX_PATH))
 		{
 			dwErr = GetLastError();
 			_printf("GetModuleFileName failed, ErrCode=0x%08X\n", dwErr);
 			return NULL;
 		}
 
-		pszSlash = wcsrchr(pszSelf, L'\\');
+		pszSlash = wcsrchr(szGuiExe, L'\\');
 
 		if (!pszSlash)
 		{
-			_printf("Invalid GetModuleFileName, backslash not found!\n", 0, pszSelf); //-V576
+			_printf("Invalid GetModuleFileName, backslash not found!\n", 0, szGuiExe); //-V576
 			return NULL;
 		}
 
@@ -2839,7 +2843,7 @@ HWND Attach2Gui(DWORD nTimeout)
 			{
 				// Он может быть на уровень выше
 				*pszSlash = 0;
-				pszSlash = wcsrchr(pszSelf, L'\\');
+				pszSlash = wcsrchr(szGuiExe, L'\\');
 				if (!pszSlash)
 					break;
 			}
@@ -2847,7 +2851,7 @@ HWND Attach2Gui(DWORD nTimeout)
 			if (IsWindows64())
 			{
 				lstrcpyW(pszSlash+1, L"ConEmu64.exe");
-				if (FileExists(pszSelf))
+				if (FileExists(szGuiExe))
 				{
 					bExeFound = true;
 					break;
@@ -2855,7 +2859,7 @@ HWND Attach2Gui(DWORD nTimeout)
 			}
 
 			lstrcpyW(pszSlash+1, L"ConEmu.exe");
-			if (FileExists(pszSelf))
+			if (FileExists(szGuiExe))
 			{
 				bExeFound = true;
 				break;
@@ -2868,41 +2872,34 @@ HWND Attach2Gui(DWORD nTimeout)
 			return NULL;
 		}
 
-		lstrcpyn(gpSrv->guiSettings.sConEmuExe, pszSelf, countof(gpSrv->guiSettings.sConEmuExe));
-		lstrcpyn(gpSrv->guiSettings.ComSpec.ConEmuExeDir, pszSelf, countof(gpSrv->guiSettings.ComSpec.ConEmuExeDir));
+		lstrcpyn(gpSrv->guiSettings.sConEmuExe, szGuiExe, countof(gpSrv->guiSettings.sConEmuExe));
+		lstrcpyn(gpSrv->guiSettings.ComSpec.ConEmuExeDir, szGuiExe, countof(gpSrv->guiSettings.ComSpec.ConEmuExeDir));
 		wchar_t* pszCut = wcsrchr(gpSrv->guiSettings.ComSpec.ConEmuExeDir, L'\\');
 		if (pszCut)
 			*pszCut = 0;
 		if (gpSrv->pConsole)
 		{
-			lstrcpyn(gpSrv->pConsole->hdr.sConEmuExe, pszSelf, countof(gpSrv->pConsole->hdr.sConEmuExe));
+			lstrcpyn(gpSrv->pConsole->hdr.sConEmuExe, szGuiExe, countof(gpSrv->pConsole->hdr.sConEmuExe));
 			lstrcpyn(gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir, gpSrv->guiSettings.ComSpec.ConEmuExeDir, countof(gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir));
 		}
 
-		if (wcschr(pszSelf, L' '))
+		bool bNeedQuot = IsQuotationNeeded(szGuiExe);
+		CEStr lsGuiCmd(bNeedQuot ? L"\"" : NULL, szGuiExe, bNeedQuot ? L"\"" : NULL);
+
+		// "/config" and others!
+		CEStr cfgSwitches(GetEnvVar(L"ConEmuArgs"));
+		if (!cfgSwitches.IsEmpty())
 		{
-			*(--pszSelf) = L'"';
-			//lstrcpyW(pszSlash, L"ConEmu.exe\"");
-			lstrcatW(pszSlash, L"\"");
+			// `-cmd` must be in the "ConEmuArgs2" only!
+			_ASSERTE(StrStrI(cfgSwitches, L"-cmd")==NULL && StrStrI(cfgSwitches, L"/cmd")==NULL);
+			lstrmerge(&lsGuiCmd.ms_Val, L" ", cfgSwitches);
+			lstrcpyn(gpSrv->guiSettings.sConEmuArgs, cfgSwitches, countof(gpSrv->guiSettings.sConEmuArgs));
 		}
 
-		// "/config"!
-		wchar_t szConfigName[MAX_PATH] = {};
-		DWORD nCfgNameLen = GetEnvironmentVariable(ENV_CONEMU_CONFIG_W, szConfigName, countof(szConfigName));
-		if (nCfgNameLen && (nCfgNameLen < countof(szConfigName)) && *szConfigName)
-		{
-			lstrcatW(pszSelf, L" /config \"");
-			lstrcatW(pszSelf, szConfigName);
-			lstrcatW(pszSelf, L"\"");
-		}
-
-		//else
-		//{
-		//	lstrcpyW(pszSlash, L"ConEmu.exe");
-		//}
-		lstrcatW(pszSelf, L" /detached");
+		// The server called from am_Async (RM_AUTOATTACH) mode
+		lstrmerge(&lsGuiCmd.ms_Val, L" /detached");
 		#ifdef _DEBUG
-		lstrcatW(pszSelf, L" /nokeyhooks");
+		lstrmerge(&lsGuiCmd.ms_Val, L" /nokeyhooks");
 		#endif
 
 		PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
@@ -2910,13 +2907,13 @@ HWND Attach2Gui(DWORD nTimeout)
 		PRINT_COMSPEC(L"Starting GUI:\n%s\n", pszSelf);
 		// CREATE_NEW_PROCESS_GROUP - низя, перестает работать Ctrl-C
 		// Запуск GUI (conemu.exe), хуки ест-но не нужны
-		BOOL lbRc = createProcess(TRUE, NULL, pszSelf, NULL,NULL, TRUE,
+		BOOL lbRc = createProcess(TRUE, NULL, lsGuiCmd.ms_Val, NULL,NULL, TRUE,
 		                           NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
 		dwErr = GetLastError();
 
 		if (!lbRc)
 		{
-			PrintExecuteError(pszSelf, dwErr);
+			PrintExecuteError(lsGuiCmd, dwErr);
 			return NULL;
 		}
 
