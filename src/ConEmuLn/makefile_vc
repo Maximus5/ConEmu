@@ -4,8 +4,9 @@
 NAME=ConEmuLn
 DIRNAME=$(NAME)
 RELEASEDIR=..\..\Release\plugins\ConEmu\Lines
-#NEEDDEFLIB = 1
-USELIBCRT = 1
+NEEDENTRY = 1
+USE_PDB = 1
+NEEDDEFLIB = 1
 
 !include ../makefile_vc_defs
 
