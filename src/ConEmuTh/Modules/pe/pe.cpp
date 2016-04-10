@@ -63,12 +63,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define Msg(f,s)
 #endif
 
-typedef __int32 i32;
-typedef __int64 i64;
-typedef unsigned __int8 u8;
-typedef unsigned __int16 u16;
-typedef DWORD u32;
-
 #undef _T
 #define _T(x)      L ## x
 #undef _tcscpy

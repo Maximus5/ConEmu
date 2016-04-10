@@ -37,12 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../BltHelper.h"
 #include "MStream.h"
 
-typedef __int32 i32;
-typedef __int64 i64;
-typedef unsigned __int8 u8;
-typedef unsigned __int16 u16;
-typedef DWORD u32;
-
 HMODULE ghModule;
 
 //pvdInitPlugin2 ip = {0};
