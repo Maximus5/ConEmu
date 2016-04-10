@@ -4,8 +4,9 @@
 NAME=ConEmuBg
 DIRNAME=$(NAME)
 RELEASEDIR=..\..\Release\plugins\ConEmu\Background
-#NEEDDEFLIB = 1
-USELIBCRT = 1
+NEEDENTRY = 1
+USE_PDB = 1
+NEEDDEFLIB = 1
 
 !include ../makefile_vc_defs
 
@@ -58,14 +59,28 @@ NOWIN98=/OPT:NOWIN98
 
 
 !ifndef DEBUG
-CPP_OPT=/DNDEBUG /O1i /Fd$(PDB) /DHIDE_TODO /DCRTSTARTUP /DCONEMU_MINIMAL
-LINK_DEBUG=/map:"$(MAP)" 
-CPP_DEBUG=
+CPP_OPT=$(CPP_OPT) /DNDEBUG /DHIDE_TODO
 !else
-CPP_OPT=/DDEBUG /Od /Fd$(PDB) /DCRTSTARTUP /DCONEMU_MINIMAL
-LINK_DEBUG=/debug /map:"$(MAP)" /pdb:"$(PDB)"
-CPP_DEBUG=/Zi
+CPP_OPT=$(CPP_OPT) /DDEBUG /D_DEBUG
 !endif
+
+!if "$(USE_PDB)" == "1"
+CPP_OPT=$(CPP_OPT) /Fd$(PDB)
+CPP_DEBUG=/Zi
+LINK_DEBUG=/MAP:"$(MAP)" /DEBUG /PDB:$(PDB)
+!else
+CPP_DEBUG=
+LINK_DEBUG=/MAP:"$(MAP)" /PDB:$(PDB)
+!endif
+
+
+!ifndef DEBUG
+CPP_OPT=$(CPP_OPT) /O1i /DCONEMU_MINIMAL
+!else
+CPP_OPT=$(CPP_OPT) /Od /DCONEMU_MINIMAL
+!endif
+
+
 
 !ifdef AMD64
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
@@ -180,8 +195,8 @@ clean:
 	@echo $(CLR_MOD)Copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@move $(DLLFULLNAME) $(RELEASEDIR) > nul
+!ifdef USE_PDB
 	@echo moving `$(PDB)` to `$(RELEASEDIR)`
-!ifdef DEBUG
 	@move $(PDB) $(RELEASEDIR) > nul
 !else
 	@if exist $(PDB) del $(PDB) > nul
