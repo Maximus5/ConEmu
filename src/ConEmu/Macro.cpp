@@ -2920,7 +2920,9 @@ LPWSTR ConEmuMacro::GetInfo(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 		else if (lstrcmpi(pszName, L"ANSI") == 0)
 			wcscpy_c(szTemp, (gpSet->isUseInjects && gpSet->isProcessAnsi) ? L"ON" : L"OFF");
 		else if (lstrcmpi(pszName, L"Args") == 0)
-			pszVal = gpConEmu->mpsz_ConEmuArgs;
+			pszVal = gpConEmu->opt.cfgSwitches;
+		else if (lstrcmpi(pszName, L"Args2") == 0)
+			pszVal = gpConEmu->opt.cmdRunCommand;
 		else if (lstrcmpi(pszName, L"Config") == 0)
 			pszVal = gpSetCls->GetConfigName();
 		else if (lstrcmpi(pszName, L"ConfigPath") == 0)

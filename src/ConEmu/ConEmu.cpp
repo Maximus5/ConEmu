@@ -491,7 +491,6 @@ CConEmuMain::CConEmuMain()
 	}
 	_ASSERTE(*ms_ComSpecInitial);
 
-	mpsz_ConEmuArgs = NULL;
 	ms_AppID[0] = 0;
 	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = ms_ConEmuWorkDir[0] = 0;
 	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
@@ -659,7 +658,11 @@ CConEmuMain::CConEmuMain()
 	SetEnvironmentVariable(ENV_CONEMU_BUILD_W, ms_ConEmuBuild);
 	SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, L"");
 	SetEnvironmentVariable(ENV_CONEMU_ISADMIN_W, mb_IsUacAdmin ? L"ADMIN" : NULL);
-	// переменная "ConEmuArgs" заполняется в ConEmuApp.cpp:PrepareCommandLine
+
+	// Just reset it here. Variables would be set to real values
+	// later in CConEmuStart::ProcessConEmuArgsVar
+	SetEnvironmentVariableW(L"ConEmuArgs", L"");   // configuration switches
+	SetEnvironmentVariableW(L"ConEmuArgs2", L"");  // the tail with `-cmd ...` or `-cmdlist ...`
 
 	wchar_t szDrive[MAX_PATH];
 	SetEnvironmentVariable(ENV_CONEMUDRIVE_VAR_W, GetDrive(ms_ConEmuExeDir, szDrive, countof(szDrive)));
@@ -2196,7 +2199,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	//-- переехали в m_GuiInfo.ComSpec
 	//wcscpy_c(m_GuiInfo.sConEmuDir, ms_ConEmuExeDir);
 	//wcscpy_c(m_GuiInfo.sConEmuBaseDir, ms_ConEmuBaseDir);
-	_wcscpyn_c(m_GuiInfo.sConEmuArgs, countof(m_GuiInfo.sConEmuArgs), mpsz_ConEmuArgs ? mpsz_ConEmuArgs : L"", countof(m_GuiInfo.sConEmuArgs));
+	lstrcpyn(m_GuiInfo.sConEmuArgs, opt.cfgSwitches.ms_Val ? opt.cfgSwitches.ms_Val : L"", countof(m_GuiInfo.sConEmuArgs));
 
 	// AppID. It's formed of some critical parameters
 	_ASSERTE(lstrcmp(ms_AppID, ms_ConEmuBuild)!=0); // must be populated properly

@@ -2313,8 +2313,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 
 	if (gpSet->isStoreTaskbarCommands)
 	{
-		// gpConEmu->mpsz_ConEmuArgs хранит аргументы с "/cmd"
-		pszCurCmd = SkipNonPrintable(gpConEmu->mpsz_ConEmuArgs);
+		pszCurCmd = SkipNonPrintable(gpConEmu->opt.cmdLine);
 		pszCurCmdTitle = pszCurCmd;
 		if (pszCurCmdTitle && (*pszCurCmdTitle == L'/'))
 		{
@@ -3287,7 +3286,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 	if (gpConEmu->opt.FixZoneId.GetBool() && gpConEmu->opt.ExitAfterActionPrm.GetBool())
 	{
-		_ASSERTE(gpConEmu->opt.cmdNew.IsEmpty());
+		_ASSERTE(gpConEmu->opt.runCommand.IsEmpty());
 		return 0;
 	}
 	/* ******************************** */
@@ -3357,10 +3356,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// Update package was dropped on ConEmu icon?
 	// params == (uint)-1, если первый аргумент не начинается с '/'
-	if (gpConEmu->opt.cmdNew && *gpConEmu->opt.cmdNew && (gpConEmu->opt.params == -1))
+	if (!gpConEmu->opt.runCommand.IsEmpty() && (gpConEmu->opt.params == -1))
 	{
 		CEStr szPath;
-		LPCWSTR pszCmdLine = gpConEmu->opt.cmdNew;
+		LPCWSTR pszCmdLine = gpConEmu->opt.runCommand;
 		if (0 == NextArg(&pszCmdLine, szPath))
 		{
 			if (CConEmuUpdate::IsUpdatePackage(szPath))
@@ -3368,7 +3367,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 				DEBUGSTRSTARTUP(L"Update package was dropped on ConEmu, updating");
 
 				// Чтобы при запуске НОВОЙ версии опять не пошло обновление - грохнуть ком-строку
-				SafeFree(gpConEmu->mpsz_ConEmuArgs);
+				gpConEmu->opt.cmdRunCommand.Empty();
 
 				// Создание скрипта обновления, запуск будет выполнен в деструкторе gpUpd
 				CConEmuUpdate::LocalUpdate(szPath);
@@ -3380,9 +3379,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	// Store command line in our class variables to be able show it in "Fast Configuration" dialog
-	if (gpConEmu->opt.cmdNew)
+	if (gpConEmu->opt.runCommand)
 	{
-		int iArgRc = ProcessCmdArg(gpConEmu->opt.cmdNew, gpConEmu->opt.isScript, (gpConEmu->opt.params == -1), szReady, ReqSaveHistory);
+		int iArgRc = ProcessCmdArg(gpConEmu->opt.runCommand, gpConEmu->opt.isScript, (gpConEmu->opt.params == -1), szReady, ReqSaveHistory);
 		if (iArgRc != 0)
 		{
 			return iArgRc;
@@ -3396,7 +3395,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		| ((gpConEmu->opt.ResetSettings || gpSet->IsConfigNew) ? slf_DefaultSettings : slf_None);
 	// выполнить дополнительные действия в классе настроек здесь
 	DEBUGSTRSTARTUP(L"Config loaded, post checks");
-	gpSetCls->SettingsLoaded(slfFlags, gpConEmu->opt.cmdNew);
+	gpSetCls->SettingsLoaded(slfFlags, gpConEmu->opt.runCommand);
 
 	// Для gpSet->isQuakeStyle - принудительно включается gpSetCls->SingleInstanceArg
 

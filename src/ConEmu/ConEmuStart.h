@@ -150,7 +150,7 @@ protected:
 	/* Processing helpers */
 	bool GetCfgParm(LPCWSTR& cmdLineRest, CESwitch& Val, int nMaxLen, bool bExpandAndDup = false);
 	bool GetCfgParm(LPCWSTR& cmdLineRest, bool& Prm, CESwitch& Val, int nMaxLen, bool bExpandAndDup = false);
-	void ProcessConEmuArgsVar(LPCWSTR cmdLineRest);
+	void ProcessConEmuArgsVar();
 public:
 	bool ParseCommandLine(LPCWSTR pszCmdLine, int& iResult);
 	void ResetConman();
@@ -159,10 +159,13 @@ public:
 	/* Startup options configured via command line switches */
 	struct StartOptions
 	{
+	public:
 		// Some variables
-		CEStr cmdLine;
-		CEStr cmdNew;
-		bool  isScript;
+		CEStr cmdLine;       // All arguments, except our executable
+		CEStr cfgSwitches;   // e.g. "-lng ru -config test ..." (switches before "-cmd" or "-cmdlist")
+		CEStr cmdRunCommand; // e.g. "-cmd cmd.exe" or "-cmdlist cmd ||| powershell"
+		CEStr runCommand;    // The shell command line or script. e.g. "cmd.exe" or "cmd ||| powershell"
+		bool  isScript;      // if true - than `-cmdlist` was specified
 		int   params;
 		// The options
 		CESwitch Language; // sw_Str: en/ru/...
@@ -195,5 +198,14 @@ public:
 		CESwitch VisValue; // sw_Simple
 		CESwitch ResetSettings; // sw_Simple
 		CESwitch AdvLogging; // sw_Int: -log[1|2|3|4]
+	public:
+		// Suppress intellisense warning:
+		// the default constructor of "CConEmuStart::StartOptions" cannot be referenced -- it is a deleted function	ConEmu
+		StartOptions()
+		{
+			params = 0;
+			isScript = false; // true if switch ‘-cmdlist’ was used
+			SizePosPrm = false;
+		};
 	} opt;
 };

@@ -170,9 +170,6 @@ CConEmuStart::CConEmuStart(CConEmuMain* pOwner)
 	mp_ConEmu = pOwner;
 	_ASSERTE(mp_ConEmu!=NULL);
 
-	opt.params = 0;
-	opt.isScript = false; // true if switch ‘-cmdlist’ was used
-
 	m_StartDetached = crb_Undefined;
 	mb_ConEmuHere = false;
 	mb_ForceQuitOnClose = false;
@@ -528,22 +525,34 @@ bool CConEmuStart::GetCfgParm(LPCWSTR& cmdLineRest, bool& Prm, CESwitch& Val, in
 	return bRc;
 }
 
-void CConEmuStart::ProcessConEmuArgsVar(LPCWSTR cmdLineRest)
+// These variables `ConEmuArgs` and `ConEmuArgs2` are required
+// to (re)start ConEmu instance from batch with same arguments
+// Called from CConEmuStart::ParseCommandLine
+void CConEmuStart::ProcessConEmuArgsVar()
 {
-	// Эта переменная нужна для того, чтобы conemu можно было перезапустить
-	// из cmd файла с теми же аргументами (selfupdate)
-	if (!cmdLineRest || !*cmdLineRest)
+	// Full command line: config switches AND -cmd/-cmdlist
+	_ASSERTE(!opt.cmdLine.IsEmpty());
+
+	// Don't set `NULL`, it would remove var from env block!
+	LPCWSTR pszValue;
+
+	pszValue = opt.cfgSwitches.IsEmpty() ? L"" : opt.cfgSwitches.ms_Val;
+	SetEnvironmentVariableW(L"ConEmuArgs", pszValue);
+
+	if (opt.runCommand.IsEmpty())
 	{
-		// Empty command line, nothing to set.
-		// But we have to define the variable to be sure
-		SetEnvironmentVariableW(L"ConEmuArgs", L"");
+		SetEnvironmentVariableW(L"ConEmuArgs2", L"");
+		_ASSERTE(opt.cmdRunCommand.IsEmpty());
 	}
 	else
 	{
-		gpConEmu->mpsz_ConEmuArgs = lstrdup(cmdLineRest);
-		SetEnvironmentVariableW(L"ConEmuArgs", gpConEmu->mpsz_ConEmuArgs);
+		opt.cmdRunCommand.Attach(lstrmerge(opt.isScript ? L"-cmd " : L"-cmdlist ", opt.runCommand));
+		_ASSERTE(!opt.cmdRunCommand.IsEmpty());
+		SetEnvironmentVariableW(L"ConEmuArgs2", opt.cmdRunCommand);
 	}
 }
+
+
 
 /* С командной строкой (GetCommandLineW) у нас засада */
 /*
@@ -582,6 +591,11 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 	CEStr   szArg, szNext;
 	CEStr   szExeName, szExeNameOnly;
 
+	// Set %ConEmuArgs% env var
+	// It may be usefull if we need to restart ConEmu
+	// from batch/script with the same arguments (selfupdate etc.)
+	LPCWSTR pszCopyToEnvStart = NULL;
+
 	// Have to get our exectuable name and name without extension
 	szExeName.Set(PointToName(gpConEmu->ms_ConEmuExe));
 	szExeNameOnly.Set(szExeName);
@@ -608,14 +622,8 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 	}
 
 
-	// Set %ConEmuArgs% env var
-	// It may be usefull if we need to restart ConEmu
-	// from batch/script with the same arguments (selfupdate etc.)
-	ProcessConEmuArgsVar(cmdLineRest);
-
-
 	// Must be empty at the moment
-	_ASSERTE(opt.cmdNew.IsEmpty());
+	_ASSERTE(opt.runCommand.IsEmpty());
 
 	// Does the command line contain our switches?
 	// Or we need to append all switches to starting shell?
@@ -630,7 +638,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				)
 			{
 				// Save it for further use
-				opt.cmdNew.Set(cmdLineRest);
+				opt.runCommand.Set(cmdLineRest);
 				// And do not process it (no switches at all)
 				cmdLineRest = NULL;
 				opt.params = -1;
@@ -646,16 +654,9 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 	// Processing loop begin
 	if (cmdLineRest && *cmdLineRest)
 	{
-		//TCHAR *curCommand = opt.cmdLine;
-		//TODO("Если первый (после запускаемого файла) аргумент начинается НЕ с '/' - завершить разбор параметров и не заменять '""' на пробелы");
-		//if (params < 1) {
-		//	curCommand = NULL;
-		//}
-		// Parse parameters.
-		// Duplicated parameters are permitted, the first value is used.
-		//int i = 0;
+		pszCopyToEnvStart = cmdLineRest;
+		opt.cfgSwitches.Set(pszCopyToEnvStart);
 
-		//while ((i < opt.params) && curCommand && *curCommand)
 		while (NextArg(&cmdLineRest, szArg, &pszArgStart) == 0)
 		{
 			bool lbNotFound = false;
@@ -781,20 +782,20 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					// Used when ConEmu.exe is started under System account,
 					// but we need to give starting process interactive capabilities.
 
-					_ASSERTE(opt.cmdNew.IsEmpty());
+					_ASSERTE(opt.runCommand.IsEmpty());
 					pszTemp = cmdLineRest;
 					if ((NextArg(&pszTemp, szNext) == 0)
 						&& (szNext.ms_Val[0] == L'-' || szNext.ms_Val[0] == L'/')
 						&& (lstrcmpi(szNext.ms_Val+1, L"cmd") == 0))
 					{
-						opt.cmdNew.Set(pszTemp);
+						opt.runCommand.Set(pszTemp);
 					}
 					else
 					{
-						opt.cmdNew.Set(cmdLineRest);
+						opt.runCommand.Set(cmdLineRest);
 					}
 
-					if (!opt.cmdNew || !*opt.cmdNew)
+					if (opt.runCommand.IsEmpty())
 					{
 						CEStr lsMsg(L"Invalid cmd line. '", curCommand, L"' exists, command line is empty");
 						DisplayLastError(lsMsg, -1);
@@ -833,29 +834,29 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						CEStr lsLog(
 							L"Starting process",
 							L": ", curCommand,
-							L" `", opt.cmdNew.ms_Val, L"`");
+							L" `", opt.runCommand.ms_Val, L"`");
 						LogString(lsLog);
 					}
 
 					if (!klstricmp(curCommand, _T("/demote")))
 					{
-						b = CreateProcessDemoted(opt.cmdNew.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+						b = CreateProcessDemoted(opt.runCommand.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
 					}
 					else if (!klstricmp(curCommand, _T("/system")))
 					{
-						b = CreateProcessSystem(opt.cmdNew.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+						b = CreateProcessSystem(opt.runCommand.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi);
 					}
 					else if (!klstricmp(curCommand, _T("/interactive")))
 					{
-						b = CreateProcessInteractive((DWORD)-1, NULL, opt.cmdNew.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
+						b = CreateProcessInteractive((DWORD)-1, NULL, opt.runCommand.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
 						bFromScheduler = true;
 					}
 					else // -bypass, -apparent
 					{
-						b = CreateProcess(NULL, opt.cmdNew.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
+						b = CreateProcess(NULL, opt.runCommand.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
 							NULL, &si, &pi);
 						nErr = b ? 0 : GetLastError();
 						bFromScheduler = true;
@@ -883,7 +884,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					}
 
 					// If the error was not shown yet
-					if (nErr) DisplayLastError(opt.cmdNew, nErr);
+					if (nErr) DisplayLastError(opt.runCommand, nErr);
 
 					// if we were started from TaskScheduler, it would be nice to wait a little
 					// to let parent (creator of the scheduler task) know we were started successfully
@@ -1390,16 +1391,21 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					iResult = -1;
 					goto wrap;
 				}
-				else if (!klstricmp(curCommand, _T("/cmd")))
+				// Final `-cmd ...` or `-cmdlist ...`
+				else if (
+					!klstricmp(curCommand, _T("/cmd"))
+					|| !klstricmp(curCommand, _T("/cmdlist"))
+					)
 				{
-					opt.cmdNew.Set(SkipNonPrintable(cmdLineRest));
-					opt.isScript = false;
-					break;
-				}
-				else if (!klstricmp(curCommand, _T("/cmdlist")))
-				{
-					opt.cmdNew.Set(SkipNonPrintable(cmdLineRest));
-					opt.isScript = true;
+					if (opt.cfgSwitches.ms_Val)
+					{
+						_ASSERTE(pszArgStart>pszCopyToEnvStart);
+						_ASSERTE((INT_PTR)(pszArgStart - pszCopyToEnvStart) <= opt.cfgSwitches.GetLen());
+						opt.cfgSwitches.ms_Val[pszArgStart - pszCopyToEnvStart] = 0;
+					}
+
+					opt.runCommand.Set(SkipNonPrintable(cmdLineRest));
+					opt.isScript = (klstricmp(curCommand, L"/cmdlist") == 0);
 					break;
 				}
 				else
@@ -1456,6 +1462,9 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 		MBoxA(lsMsg);
 		goto wrap;
 	}
+
+	// Set "ConEmuArgs" and "ConEmuArgs2"
+	ProcessConEmuArgsVar();
 
 	// Continue normal startup
 	bRc = true;

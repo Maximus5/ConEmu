@@ -1270,9 +1270,14 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 		WRITE_BATCH_W(gpConEmu->ms_ConEmuExe);
 		WRITE_BATCH_A("\" ");
 	}
-	if (gpConEmu->mpsz_ConEmuArgs)
+	if (!gpConEmu->opt.cfgSwitches.IsEmpty())
 	{
-		WRITE_BATCH_W(gpConEmu->mpsz_ConEmuArgs);
+		WRITE_BATCH_W(gpConEmu->opt.cfgSwitches);
+		WRITE_BATCH_A(" ");
+	}
+	if (!gpConEmu->opt.cmdRunCommand.IsEmpty())
+	{
+		WRITE_BATCH_W(gpConEmu->opt.cmdRunCommand);
 	}
 	// Fin
 	WRITE_BATCH_A("\r\ngoto fin\r\n");
