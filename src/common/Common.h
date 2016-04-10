@@ -466,7 +466,7 @@ const CECMD
 	CECMD_GUICLIENTSHIFT = 71, // GuiStylesAndShifts
 	CECMD_ALTBUFFER      = 72, // CESERVER_REQ_ALTBUFFER: CmdOutputStore/Restore
 	CECMD_ALTBUFFERSTATE = 73, // Проверить, разрешен ли Alt.Buffer?
-	CECMD_STARTXTERM     = 74, // dwData[0]=TermModeCommand, dwData[1]=value (TermEmulationType for tmc_Keyboard, and so on)
+	CECMD_STARTXTERM     = 74, // dwData[0]=TermModeCommand, dwData[1]=value (TermEmulationType for tmc_Keyboard, and so on), dwData[2]=the PID (may differs from hdr's one).
 	//CECMD_DEFTERMSTARTED = 75, // Уведомить GUI, что инициализация хуков для Default Terminal была завершена -- не требуется, ConEmuC ждет успеха
 	CECMD_UPDCONMAPHDR   = 76, // AltServer не может менять CESERVER_CONSOLE_MAPPING_HDR во избежание конфликтов. Это делает только RM_MAINSERVER (req.ConInfo)
 	CECMD_SETCONSCRBUF   = 77, // CESERVER_REQ_SETCONSCRBUF - temporarily block active server reading thread to change console buffer size

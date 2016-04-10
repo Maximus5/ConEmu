@@ -2974,6 +2974,11 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 			}
 		}
 
+		if (m_Args.nPTY)
+		{
+			CEAnsi::ChangeTermMode(tmc_Keyboard, (m_Args.nPTY == 1), lpPI->dwProcessId);
+		}
+
 		if (isDefTermEnabled())
 		{
 			_ASSERTEX(!mb_NeedInjects);

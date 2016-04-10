@@ -4076,6 +4076,21 @@ void CRealConsole::SetRootProcessName(LPCWSTR asProcessName)
 
 void CRealConsole::UpdateRootInfo(const CESERVER_ROOT_INFO& RootInfo)
 {
+	// Root process was just successfully started?
+	if (!m_RootInfo.bRunning && RootInfo.bRunning && RootInfo.nPID)
+	{
+		if (m_Args.nPTY)
+		{
+			switch (m_Args.nPTY)
+			{
+			case 1:
+				// The process uses xterm keys notation
+				StartStopXTerm(RootInfo.nPID, true);
+				break;
+			}
+		}
+	}
+
 	m_RootInfo = RootInfo;
 
 	if (isActive(false))

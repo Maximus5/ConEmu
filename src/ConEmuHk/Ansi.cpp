@@ -3525,13 +3525,14 @@ void CEAnsi::StopVimTerm()
 	XTermAltBuffer(false);
 }
 
-void CEAnsi::ChangeTermMode(TermModeCommand mode, DWORD value)
+void CEAnsi::ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID /*= 0*/)
 {
-	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+3*sizeof(DWORD));
 	if (pIn)
 	{
 		pIn->dwData[0] = mode;
 		pIn->dwData[1] = value;
+		pIn->dwData[2] = nPID ? nPID : GetCurrentProcessId();
 		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 		ExecuteFreeResult(pIn);
 		ExecuteFreeResult(pOut);

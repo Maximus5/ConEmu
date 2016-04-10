@@ -1412,17 +1412,21 @@ CESERVER_REQ* CRealServer::cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	DWORD nCmd = pIn->hdr.nCmd;
 	DEBUGSTRCMD(L"GUI recieved CECMD_STARTXTERM\n");
 
-	switch (pIn->dwData[0])
+	TermModeCommand mode = (TermModeCommand)pIn->dwData[0];
+	DWORD value = pIn->dwData[1];
+	DWORD nPID = (nDataSize >= (sizeof(DWORD)*3)) ? pIn->dwData[2] : pIn->hdr.nSrcPID;
+
+	switch (mode)
 	{
 	case tmc_Keyboard:
-		_ASSERTE(pIn->dwData[1] == te_win32 || pIn->dwData[1] == te_xterm);
-		mp_RCon->StartStopXTerm(pIn->hdr.nSrcPID, (pIn->dwData[1] != te_win32));
+		_ASSERTE(value == te_win32 || value == te_xterm);
+		mp_RCon->StartStopXTerm(nPID, (value != te_win32));
 		break;
 	case tmc_BracketedPaste:
-		mp_RCon->StartStopBracketedPaste(pIn->hdr.nSrcPID, (pIn->dwData[1] != 0));
+		mp_RCon->StartStopBracketedPaste(nPID, (value != 0));
 		break;
 	case tmc_AppCursorKeys:
-		mp_RCon->StartStopAppCursorKeys(pIn->hdr.nSrcPID, (pIn->dwData[1] != 0));
+		mp_RCon->StartStopAppCursorKeys(nPID, (value != 0));
 		break;
 	default:
 		bProcessed = FALSE;

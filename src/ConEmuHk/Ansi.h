@@ -132,7 +132,7 @@ protected:
 	static int NextNumber(LPCWSTR& asMS);
 
 public:
-	static void ChangeTermMode(TermModeCommand mode, DWORD value);
+	static void ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID = 0);
 	static void StartXTermMode(bool bStart);
 	static void StorePromptBegin();
 
