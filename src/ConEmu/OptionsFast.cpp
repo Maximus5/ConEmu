@@ -2030,6 +2030,18 @@ static void CreateBashTask()
 {
 	AppFoundList App;
 
+	// New Windows 10 feature (build 14316 and higher)
+	//   User have to
+	//   a) Turn on Windows' feature ‘Windows Subsystem for Linux’
+	//      Control Panel / Programs / Turn Windows features on or off
+	//   b) Select ‘Developer mode’
+	//      Settings / Update & Security / For Developers
+	CEStr lsBashOnUbuntu(L"%windir%\\system32\\bash.exe");
+	if (FileExists(lsBashOnUbuntu))
+		App.Add(L"Bash::Bash on Ubuntu",
+			L" -new_console:p1 -new_console:C:\"%USERPROFILE%\\AppData\\Local\\lxss\\bash.ico\"", NULL, NULL,
+			lsBashOnUbuntu, NULL);
+
 	// From Git-for-Windows (aka msysGit v2)
 	bool bGitBashExist = // No sense to add both `git-cmd.exe` and `bin/bash.exe`
 		App.Add(L"Bash::Git bash",
