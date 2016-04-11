@@ -82,6 +82,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MPerfCounter.h"
 #include "../common/MProcess.h"
 #include "../common/MMap.h"
+#include "../common/MModule.h"
 #include "../common/MRect.h"
 #include "../common/MSectionSimple.h"
 #include "../common/MWow64Disable.h"
@@ -6825,6 +6826,12 @@ bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 {
 	bool bChanged = false;
 
+	if (!gpSrv)
+	{
+		_ASSERTE(gpSrv!=NULL);
+		return false;
+	}
+
 	if (pfnGetConsoleKeyboardLayoutName)
 	{
 		wchar_t szCurKeybLayout[32] = L"";
@@ -6833,8 +6840,49 @@ bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 		//wchar_t szDbgKeybLayout[KL_NAMELENGTH/*==9*/];
 		//BOOL lbGetRC = GetKeyboardLayoutName(szDbgKeybLayout); // -- не дает эффекта, поскольку "на процесс", а не на консоль
 		//#endif
-		// Возвращает строку в виде "00000419" -- может тут 16 цифр?
-		if (pfnGetConsoleKeyboardLayoutName(szCurKeybLayout))
+
+		// The expected result of GetConsoleKeyboardLayoutName is like "00000419"
+		BOOL bConApiRc;
+
+		bConApiRc = pfnGetConsoleKeyboardLayoutName(szCurKeybLayout);
+
+		DWORD nErr = bConApiRc ? 0 : GetLastError();
+
+		/*
+		if (!bConApiRc && (nErr == ERROR_GEN_FAILURE))
+		{
+			_ASSERTE(FALSE && "ConsKeybLayout failed");
+			MModule kernel(GetModuleHandle(L"kernel32.dll"));
+			BOOL (WINAPI* getLayoutName)(LPWSTR,int);
+			if (kernel.GetProcAddress("GetConsoleKeyboardLayoutNameW", getLayoutName))
+			{
+				bConApiRc = getLayoutName(szCurKeybLayout, countof(szCurKeybLayout));
+				nErr = bConApiRc ? 0 : GetLastError();
+			}
+		}
+		*/
+
+		if (!bConApiRc)
+		{
+			if (gpSrv->szKeybLayout[0])
+			{
+				// Log only first error per session
+				wcscpy_c(szCurKeybLayout, gpSrv->szKeybLayout);
+			}
+			else
+			{
+				wchar_t szErr[80];
+				_wsprintf(szErr, SKIPCOUNT(szErr) L"ConsKeybLayout failed with code=%u forcing to GetKeyboardLayoutName or 0409", nErr);
+				_ASSERTE(FALSE && "ConsKeybLayout failed");
+				LogString(szErr);
+				if (!GetKeyboardLayoutName(szCurKeybLayout) || (szCurKeybLayout[0] == 0))
+				{
+					wcscpy_c(szCurKeybLayout, L"00000419");
+				}
+			}
+		}
+
+		if (szCurKeybLayout[0])
 		{
 			if (lstrcmpW(szCurKeybLayout, gpSrv->szKeybLayout))
 			{
