@@ -438,6 +438,7 @@ void CTaskBar::Taskbar_SetOverlay(HICON ahIcon)
 		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"mp_TaskBar3->SetOverlayIcon(%s) %s code=x%08X", ahIcon?L"ICON":L"NULL", SUCCEEDED(hr)?L"succeeded":L"failed", hr);
 		LogString(szInfo);
 
+		// The HRESULT_FROM_WIN32(ERROR_TIMEOUT) may be encountered here
 		_ASSERTE(hr==S_OK);
 	}
 	else
