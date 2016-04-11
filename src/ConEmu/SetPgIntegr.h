@@ -49,9 +49,12 @@ public:
 	{
 		ShellIntgr_Inside = 0,
 		ShellIntgr_Here,
-		ShellIntgr_CmdAuto,
 	};
 	void ShellIntegration(HWND hDlg, ShellIntegrType iMode, bool bEnabled, bool bForced = false);
+
+protected:
+	bool ReloadHereList(int* pnHere = NULL, int* pnInside = NULL);
+	void FillHereValues(WORD CB);
 
 public:
 	// Methods
@@ -64,5 +67,4 @@ public:
 	static void RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, LPCWSTR asCmd, LPCWSTR asIcon);
 	static void UnregisterShell(LPCWSTR asName);
 	static void UnregisterShellInvalids();
-	static wchar_t* LoadAutorunValue(HKEY hkCmd, bool bClear);
 };

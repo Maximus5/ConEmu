@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#include "ConEmu.h"
 #include "SetPgCursor.h"
 
 CSetPgCursor::CSetPgCursor()
@@ -124,6 +125,29 @@ bool CSetPgCursor::OnEditChangedCursor(HWND hDlg, WORD nCtrlId, AppSettings* pAp
 LRESULT CSetPgCursor::OnInitDialog(HWND hDlg, bool abInitial)
 {
 	InitCursorCtrls(hDlg, &gpSet->AppStd);
+
+	return 0;
+}
+
+LRESULT CSetPgCursor::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case tCursorFixedSize:
+	case tInactiveCursorFixedSize:
+	case tCursorMinSize:
+	case tInactiveCursorMinSize:
+	{
+		if (CSetPgCursor::OnEditChangedCursor(hDlg, nCtrlId, &gpSet->AppStd))
+		{
+			gpConEmu->Update(true);
+		}
+		break;
+	} //case tCursorFixedSize, tInactiveCursorFixedSize, tCursorMinSize, tInactiveCursorMinSize
+
+	default:
+		_ASSERTE(FALSE && "EditBox was not processed");
+	}
 
 	return 0;
 }

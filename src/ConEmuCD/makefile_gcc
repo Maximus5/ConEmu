@@ -39,6 +39,8 @@ SRCS = \
 		../common/MModule.cpp        \
 		../common/Monitors.cpp       \
 		../common/MPerfCounter.cpp   \
+		../common/MProcess.cpp       \
+		../common/MProcessBits.cpp   \
 		../common/MRect.cpp          \
 		../common/MSection.cpp       \
 		../common/MSectionSimple.cpp \

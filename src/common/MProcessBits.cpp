@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2016 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,46 +26,61 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #define HIDE_USE_EXCEPTION_INFO
-#define SHOWDEBUGSTR
+#include <windows.h>
+#include "MAssert.h"
+#include "MModule.h"
+#include "MProcessBits.h"
+#include "WObjects.h"
 
-#include "Header.h"
-
-#include "SetPgEnvironment.h"
-
-CSetPgEnvironment::CSetPgEnvironment()
+/// Check running process bitness - 32/64
+int GetProcessBits(DWORD nPID, HANDLE hProcess /*= NULL*/)
 {
-}
+	if (!IsWindows64())
+		return 32;
 
-CSetPgEnvironment::~CSetPgEnvironment()
-{
-}
+	int ImageBits = WIN3264TEST(32,64); //-V112
 
-LRESULT CSetPgEnvironment::OnInitDialog(HWND hDlg, bool abInitial)
-{
-	checkDlgButton(hDlg, cbAddConEmu2Path, (gpSet->ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hDlg, cbAddConEmuBase2Path, (gpSet->ComSpec.AddConEmu2Path & CEAP_AddConEmuBaseDir) ? BST_CHECKED : BST_UNCHECKED);
+	static BOOL (WINAPI* IsWow64Process_f)(HANDLE, PBOOL) = NULL;
 
-	SetDlgItemText(hDlg, tSetCommands, gpSet->psEnvironmentSet ? gpSet->psEnvironmentSet : L"");
-
-	return 0;
-}
-
-LRESULT CSetPgEnvironment::OnEditChanged(HWND hDlg, WORD nCtrlId)
-{
-	switch (nCtrlId)
+	if (!IsWow64Process_f)
 	{
-	case tSetCommands:
-	{
-		size_t cchMax = gpSet->psEnvironmentSet ? (_tcslen(gpSet->psEnvironmentSet)+1) : 0;
-		MyGetDlgItemText(hDlg, tSetCommands, cchMax, gpSet->psEnvironmentSet);
-	}
-	break;
-
-	default:
-		_ASSERTE(FALSE && "EditBox was not processed");
+		// Kernel32.dll is always loaded due to static link
+		MModule kernel(GetModuleHandle(L"kernel32.dll"));
+		kernel.GetProcAddress("IsWow64Process", IsWow64Process_f);
+		// 64-bit OS must have this function
+		_ASSERTE(IsWow64Process_f != NULL);
 	}
 
-	return 0;
+	if (IsWow64Process_f)
+	{
+		BOOL bWow64 = FALSE;
+		HANDLE h = hProcess ? hProcess : OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, nPID);
+
+		// IsWow64Process would be succeessfull for PROCESS_QUERY_LIMITED_INFORMATION (Vista+)
+		if ((h == NULL) && IsWin6())
+		{
+			// PROCESS_QUERY_LIMITED_INFORMATION not defined in GCC
+			h = OpenProcess(0x1000/*PROCESS_QUERY_LIMITED_INFORMATION*/, FALSE, nPID);
+		}
+
+		if (h == NULL)
+		{
+			// If it is blocked due to access rights - try to find alternative ways (by path or PERF COUNTER)
+			ImageBits = 0;
+		}
+		else if (IsWow64Process_f(h, &bWow64) && !bWow64)
+		{
+			ImageBits = 64;
+		}
+		else
+		{
+			ImageBits = 32;
+		}
+
+		if (h && (h != hProcess))
+			CloseHandle(h);
+	}
+
+	return ImageBits;
 }

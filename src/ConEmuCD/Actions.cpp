@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/CEStr.h"
+#include "../common/MProcess.h"
 #include "../common/MStrDup.h"
 #include "../common/ProcessData.h"
 #include "../common/WCodePage.h"
@@ -251,6 +252,10 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 	LPWSTR pszNext = asCmdArg;
 	LPWSTR pszEnd = NULL;
 	DWORD nRemotePID = wcstoul(pszNext, &pszEnd, 10);
+	wchar_t szStr[16];
+	wchar_t szTitle[128];
+	wchar_t szInfo[120];
+	wchar_t szParentPID[32];
 
 
 	#ifdef SHOW_INJECTREM_MSGBOX
@@ -281,12 +286,20 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		{
 		CProcessData processes;
 		processes.GetProcessName(nRemotePID, lsName.GetBuffer(MAX_PATH), MAX_PATH, lsPath.GetBuffer(MAX_PATH*2), MAX_PATH*2, NULL);
+		CEStr lsLog(L"Remote: PID=", _ultow(nRemotePID, szStr, 10), L" Name=`", lsName, L"` Path=`", lsPath, L"`");
+		LogString(lsLog);
 		}
 
 		// Go to hook
 		// InjectRemote waits for thread termination
 		DWORD nErrCode = 0;
 		CINFILTRATE_EXIT_CODES iHookRc = InjectRemote(nRemotePID, abDefTermOnly, &nErrCode);
+
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"InjectRemote result: %i (%s)", iHookRc,
+			(iHookRc == CIR_OK) ? L"CIR_OK" :
+			(iHookRc == CIR_AlreadyInjected) ? L"CIR_AlreadyInjected" :
+			L"?");
+		LogString(szInfo);
 
 		if (iHookRc == CIR_OK/*0*/ || iHookRc == CIR_AlreadyInjected/*1*/)
 		{
@@ -301,18 +314,16 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 
 		// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
 		//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
-		wchar_t szTitle[128];
+
 		_wsprintf(szTitle, SKIPLEN(countof(szTitle))
 			L"%s %s, PID=%u", gsModuleName, gsVersion, nSelfPID);
 
-		wchar_t szInfo[120];
 		_wsprintf(szInfo, SKIPCOUNT(szInfo)
 			L"Injecting remote FAILED, code=%i:0x%08X\n"
 			L"%s %s, PID=%u\n"
 			L"RemotePID=%u ",
 			iHookRc, nErrCode, gsModuleName, gsVersion, nSelfPID, nRemotePID);
 
-		wchar_t szParentPID[32];
 		_wsprintf(szParentPID, SKIPCOUNT(szParentPID)
 			L"\n"
 			L"ParentPID=%u ",
@@ -324,6 +335,7 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 			szParentPID,
 			parent.szExeFile));
 
+		LogString(lsError);
 		MessageBoxW(NULL, lsError, szTitle, MB_SYSTEMMODAL);
 	}
 	else
@@ -334,6 +346,7 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u)!\n%s",
 			GetCurrentProcessId(), nRemotePID,
 			asCmdArg);
+		LogString(szDbgMsg);
 		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 	}
 

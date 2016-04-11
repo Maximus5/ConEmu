@@ -145,8 +145,13 @@ BOOL MSectionLockSimple::Lock(MSectionSimple* apS, DWORD anTimeout/*=-1*/)
 		return FALSE;
 	}
 
-	_ASSERTEX(!mb_Locked);
+	#ifdef _DEBUG
+	if (mb_Locked)
+	{
+		_ASSERTEX(!mb_Locked);
+	}
 	_ASSERTEX(apS->IsInitialized());
+	#endif
 
 	bool bLocked = false;
 	DWORD nStartTick = GetTickCount();

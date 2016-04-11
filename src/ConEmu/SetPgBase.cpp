@@ -47,6 +47,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgFonts.h"
 #include "SetPgKeys.h"
 
+bool CSetPgBase::mb_IgnoreEditChanged = false;
+
 CSetPgBase::CSetPgBase()
 	: mh_Dlg(NULL)
 	, mh_Parent(NULL)
@@ -57,6 +59,7 @@ CSetPgBase::CSetPgBase()
 	, mp_ParentDpi(NULL)
 	, mp_InfoPtr(NULL)
 {
+	mb_IgnoreEditChanged = false;
 }
 
 CSetPgBase::~CSetPgBase()
@@ -326,8 +329,9 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 				return CSetDlgButtons::OnButtonClicked(hDlg, wParam, lParam);
 
 			case EN_CHANGE:
-				if (!pObj->mb_SkipSelChange)
-					gpSetCls->OnEditChanged(hDlg, wParam, lParam);
+				// TODO: Remove duplicate condition!
+				if (!pObj->mb_SkipSelChange && !pObj->mb_IgnoreEditChanged)
+					pObj->OnEditChanged(hDlg, LOWORD(wParam));
 				return 0;
 
 			case CBN_EDITCHANGE:

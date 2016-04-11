@@ -2229,20 +2229,23 @@ int CShellProc::PrepareExecuteParms(
 	}
 	else
 	{
-		bGoChangeParm = ((bLongConsoleOutput)
-			|| (lbGuiApp && (NewConsoleFlags || bForceNewConsole)) // хотят GUI прицепить к новой вкладке в ConEmu, или новую консоль из GUI
-			// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
-			|| ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1)
-				&& (NewConsoleFlags
-					|| (bLongConsoleOutput && (aCmd == eShellExecute))
+		// хотят GUI прицепить к новой вкладке в ConEmu, или новую консоль из GUI
+		if (lbGuiApp && (NewConsoleFlags || bForceNewConsole))
+			bGoChangeParm = true;
+		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
+		else if ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1)
+				&& (NewConsoleFlags // CEF_NEWCON_SWITCH | CEF_NEWCON_PREPEND
+					|| (bLongConsoleOutput && (aCmd == eShellExecute) && (anShellFlags && (*anShellFlags & SEE_MASK_NO_CONSOLE)) && (anShowCmd && *anShowCmd))
 					|| (bCurConsoleArg && (m_Args.LongOutputDisable != crb_On))
 					#ifdef _DEBUG
 					|| lbAlwaysAddConEmuC
 					#endif
 					))
-			// если это Дос-приложение - то если включен DosBox, вставляем ConEmuC.exe /DOSBOX
-			|| ((mn_ImageBits == 16) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
-				&& m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox)));
+			bGoChangeParm = true;
+		// если это Дос-приложение - то если включен DosBox, вставляем ConEmuC.exe /DOSBOX
+		else if ((mn_ImageBits == 16) && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE)
+				&& m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
+			bGoChangeParm = true;
 	}
 
 	if (bGoChangeParm)

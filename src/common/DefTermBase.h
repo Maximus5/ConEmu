@@ -41,6 +41,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MArray.h"
 #include "MSectionSimple.h"
 #include "ConEmuCheck.h"
+#include "MProcess.h"
+#include "MProcessBits.h"
 #include "WObjects.h"
 #include "WThreads.h"
 #include "../ConEmuCD/ExitCodes.h"
@@ -629,8 +631,8 @@ public:
 
 		_ASSERTE(isDefaultTerminalAllowed());
 
-		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u <<== trying to set hooks", LODWORD(hFore), nForePID);
-		LogHookingStatus(szInfo);
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"CheckForeground x%08X <<== trying to set hooks", LODWORD(hFore));
+		LogHookingStatus(nForePID, szInfo);
 
 		bNotified = NotifyHookingStatus(nForePID, prc.szExeFile[0] ? prc.szExeFile : szClass);
 
@@ -641,8 +643,8 @@ public:
 
 		ConhostLocker(false, lbConHostLocked);
 
-		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground x%08X PID=%u <<== nResult=%i iHookerRc=%i", LODWORD(hFore), nForePID, nResult, iHookerRc);
-		LogHookingStatus(szInfo);
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"CheckForeground x%08X <<== nResult=%i iHookerRc=%i", LODWORD(hFore), nResult, iHookerRc);
+		LogHookingStatus(nForePID, szInfo);
 
 		if (iHookerRc != 0)
 		{
@@ -682,6 +684,7 @@ public:
 		if (bNotified)
 		{
 			NotifyHookingStatus(0, NULL);
+			LogHookingStatus(nForePID, L"CheckForeground finished");
 		}
 		return lbRc;
 	};
@@ -745,7 +748,9 @@ private:
 	int StartDefTermHooker(DWORD nForePID, HANDLE& hProcess, DWORD& nResult, LPCWSTR asConEmuBaseDir, DWORD& nErrCode)
 	{
 		int iRc = -1;
-		wchar_t szCmdLine[MAX_PATH*3];
+		wchar_t szCmdLine[MAX_PATH*2];
+		wchar_t szConTitle[32] = L"ConEmu";
+		LPCWSTR pszSrvExe = NULL;
 		int nBits;
 		PROCESS_INFORMATION pi = {};
 		STARTUPINFO si = {sizeof(si)};
@@ -771,8 +776,8 @@ private:
 		{
 			// Failed to hook
 			nErrCode = GetLastError();
-			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm[PID=%u]: OpenProcess fails, code=%u", nForePID, nErrCode);
-			LogHookingStatus(szInfo);
+			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"OpenProcess fails, code=%u", nErrCode);
+			LogHookingStatus(nForePID, szInfo);
 
 			if (nErrCode == ERROR_ACCESS_DENIED)
 			{
@@ -786,8 +791,8 @@ private:
 			// Hooking was started from another process (most probably in agressive mode)
 			iRc = 0;
 			nResult = CERR_HOOKS_WAS_ALREADY_SET;
-			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm[PID=%u]: Mutex already exists", nForePID);
-			LogHookingStatus(szInfo);
+			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Mutex already exists");
+			LogHookingStatus(nForePID, szInfo);
 			goto wrap;
 		}
 
@@ -796,29 +801,32 @@ private:
 		switch (nBits)
 		{
 		case 32:
-			msprintf(szCmdLine, countof(szCmdLine), L"\"%s\\%s\" /DEFTRM=%u",
-				asConEmuBaseDir, L"ConEmuC.exe", nForePID);
+			pszSrvExe = L"ConEmuC.exe";
 			break;
 		case 64:
-			msprintf(szCmdLine, countof(szCmdLine), L"\"%s\\%s\" /DEFTRM=%u",
-				asConEmuBaseDir, L"ConEmuC64.exe", nForePID);
+			pszSrvExe = L"ConEmuC64.exe";
 			break;
 		default:
-			szCmdLine[0] = 0;
+			pszSrvExe = NULL;
 		}
-		if (!*szCmdLine)
+		if (!pszSrvExe)
 		{
 			// Unsupported bitness?
 			CloseHandle(hProcess);
 			iRc = -2;
-			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm[PID=%u]: Unsupported process bitness (%i)", nForePID, nBits);
-			LogHookingStatus(szInfo);
+			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Unsupported process bitness (%i)", nBits);
+			LogHookingStatus(nForePID, szInfo);
 			goto wrap;
 		}
+		msprintf(szCmdLine, countof(szCmdLine), L"\"%s\\%s\"%s /DEFTRM=%u",
+			asConEmuBaseDir, pszSrvExe,
+			isLogging() ? L" /LOG" : L"",
+			nForePID);
 
 		// Run hooker
 		si.dwFlags = STARTF_USESHOWWINDOW;
-		LogHookingStatus(szCmdLine);
+		si.lpTitle = szConTitle;
+		LogHookingStatus(nForePID, szCmdLine);
 		bStarted = CreateProcess(NULL, szCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
 		if (!bStarted)
 		{
@@ -826,22 +834,23 @@ private:
 			nErrCode = GetLastError();
 			CloseHandle(hProcess);
 			iRc = -3;
-			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm[PID=%u]: Fails to start hooking process, code=%u", nForePID, nErrCode);
-			LogHookingStatus(szInfo);
+			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Fails to start service process, code=%u", nErrCode);
+			LogHookingStatus(nForePID, szInfo);
 			goto wrap;
 		}
 		CloseHandle(pi.hThread);
-		if (mb_ConEmuGui)
-		{
-			// Waiting for result if called in ConEmu GUI
-			WaitForSingleObject(pi.hProcess, INFINITE);
-			GetExitCodeProcess(pi.hProcess, &nResult);
-		}
-		else
-		{
-			// Within VisualStudio and others don't wait to avoid dead locks
-			nResult = STILL_ACTIVE;
-		}
+
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Service process PID=%u started", pi.dwProcessId);
+		LogHookingStatus(nForePID, szInfo);
+
+		// Waiting for result, to avoid multiple hooks processed (due to closed mutex)
+		// Within VisualStudio and others don't do INFINITE wait to avoid dead locks
+		WaitForSingleObject(pi.hProcess, mb_ConEmuGui ? INFINITE : DEF_TERM_INSTALL_TIMEOUT);
+		if (!GetExitCodeProcess(pi.hProcess, &nResult))
+			nResult = (DWORD)-1;
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Service process PID=%u finished with code=%u", pi.dwProcessId, nResult);
+		LogHookingStatus(nForePID, szInfo);
+
 		CloseHandle(pi.hProcess);
 
 		iRc = 0;
@@ -963,9 +972,13 @@ protected:
 	};
 public:
 	// Messages to be placed in log
-	virtual void LogHookingStatus(LPCWSTR sMessage)
+	virtual void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage)
 	{
 		DEBUGSTRDEFTERM(sMessage);
+	};
+	virtual bool isLogging()
+	{
+		return false;
 	};
 
 protected:

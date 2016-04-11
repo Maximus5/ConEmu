@@ -55,6 +55,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MArray.h"
 #include "../common/MFileLog.h"
 #include "../common/Monitors.h"
+#include "../common/MProcess.h"
 #include "../common/MSetter.h"
 #include "../common/MToolTip.h"
 #include "../common/MWow64Disable.h"
@@ -5792,7 +5793,7 @@ LPCTSTR CConEmuMain::GetVConTitle(int nIdx)
 	return pszTitle;
 }
 
-// Возвращает индекс (0-based) активной консоли
+// Returns 0-based index of the active console if succeeded
 int CConEmuMain::GetActiveVCon(CVConGuard* pVCon /*= NULL*/, int* pAllCount /*= NULL*/)
 {
 	return CVConGroup::GetActiveVCon(pVCon, pAllCount);

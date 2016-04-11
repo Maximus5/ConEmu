@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Sddl.h> // ConvertSidToStringSid
 #include "CmdLine.h"
 #include "MModule.h"
+#include "MProcess.h"
 #include "MStrDup.h"
 #include "WObjects.h"
 #include "WUser.h"
@@ -73,6 +74,46 @@ bool apiShowWindowAsync(HWND ahWnd, int anCmdShow)
 	bool lbRc = ::ShowWindowAsync(ahWnd, anCmdShow) ? true : false;
 
 	return lbRc;
+}
+
+void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName /*= false*/, LPDWORD pnPID /*= NULL*/)
+{
+	DWORD nPID = 0;
+
+	if (!ahWnd)
+	{
+		wcscpy_c(rsInfo, L"<NULL>");
+	}
+	else if (!IsWindow(ahWnd))
+	{
+		msprintf(rsInfo, countof(rsInfo), L"0x%08X: Invalid window handle", LODWORD(ahWnd));
+	}
+	else
+	{
+		wchar_t szClass[256], szTitle[512];
+		wchar_t szProc[120] = L"";
+
+		if (!GetClassName(ahWnd, szClass, 256)) wcscpy_c(szClass, L"<GetClassName failed>");
+		if (!GetWindowText(ahWnd, szTitle, 512)) szTitle[0] = 0;
+
+		if (bProcessName || pnPID)
+		{
+			if (GetWindowThreadProcessId(ahWnd, &nPID))
+			{
+				PROCESSENTRY32 pi = {};
+				if (bProcessName && GetProcessInfo(nPID, &pi))
+				{
+					pi.szExeFile[100] = 0;
+					msprintf(szProc, countof(szProc), L" - %s [%u]", pi.szExeFile, nPID);
+				}
+			}
+		}
+
+		msprintf(rsInfo, countof(rsInfo), L"0x%08X: %s - '%s'%s", LODWORD(ahWnd), szClass, szTitle, szProc);
+	}
+
+	if (pnPID)
+		*pnPID = nPID;
 }
 
 bool IsUserAdmin()

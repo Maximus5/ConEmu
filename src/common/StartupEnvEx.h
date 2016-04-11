@@ -322,32 +322,32 @@ public:
 			{
 				ZeroStruct(szTitle);
 				if (pfnGetConsoleKeyboardLayoutName(szTitle))
-					_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Active console layout name: '%s'", szTitle);
+					_wsprintf(szSI, SKIPLEN(countof(szSI)) L"  Active console layout name: '%s'", szTitle);
 			}
 			if (!*szSI)
-				_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Active console layout: Unknown, code=%u", GetLastError());
+				_wsprintf(szSI, SKIPLEN(countof(szSI)) L"  Active console layout: Unknown, code=%u", GetLastError());
 			dumpEnvStr(szSI, true);
 		}
 
 		// PID & TID
-		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Current PID: %u, TID: %u", GetCurrentProcessId(), GetCurrentThreadId());
+		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"  Current PID: %u, TID: %u", GetCurrentProcessId(), GetCurrentThreadId());
 		dumpEnvStr(szSI, true);
 
 		// Текущий HKL (он может отличаться от GetConsoleKeyboardLayoutNameW
 		HKL hkl[32] = {NULL};
 		hkl[0] = GetKeyboardLayout(0);
-		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Active HKL: " WIN3264TEST(L"0x%08X",L"0x%08X%08X"), WIN3264WSPRINT((DWORD_PTR)hkl[0]));
+		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"  Active HKL: " WIN3264TEST(L"0x%08X",L"0x%08X%08X"), WIN3264WSPRINT((DWORD_PTR)hkl[0]));
 		dumpEnvStr(szSI, true);
 		// Установленные в системе HKL
 		UINT nHkl = GetKeyboardLayoutList(countof(hkl), hkl);
 		if (!nHkl || (nHkl > countof(hkl)))
 		{
-			_wsprintf(szSI, SKIPLEN(countof(szSI)) L"GetKeyboardLayoutList failed, code=%u", GetLastError());
+			_wsprintf(szSI, SKIPLEN(countof(szSI)) L"  GetKeyboardLayoutList failed, code=%u", GetLastError());
 			dumpEnvStr(szSI, true);
 		}
 		else
 		{
-			wcscpy_c(szSI, L"GetKeyboardLayoutList:");
+			wcscpy_c(szSI, L"  GetKeyboardLayoutList:");
 			size_t iLen = lstrlen(szSI);
 			_ASSERTE((iLen + 1 + nHkl*17)<countof(szSI));
 

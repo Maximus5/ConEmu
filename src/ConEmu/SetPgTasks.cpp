@@ -148,6 +148,9 @@ LRESULT CSetPgTasks::OnEditChanged(HWND hDlg, WORD nCtrlId)
 		}
 		break;
 
+	case tCmdGroupKey:
+		break; // read-only
+
 	#ifdef _DEBUG
 	default:
 		_ASSERTE(FALSE && "EditBox was not processed by CSetPgTasks::OnEditChanged");

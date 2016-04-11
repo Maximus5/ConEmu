@@ -94,3 +94,103 @@ INT_PTR CSetPgBackgr::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 
 	return 0;
 }
+
+LRESULT CSetPgBackgr::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case tBgImage:
+	{
+		wchar_t temp[MAX_PATH];
+		GetDlgItemText(hDlg, tBgImage, temp, countof(temp));
+
+		if (wcscmp(temp, gpSet->sBgImage))
+		{
+			if (gpSetCls->LoadBackgroundFile(temp, true))
+			{
+				wcscpy_c(gpSet->sBgImage, temp);
+				gpSetCls->NeedBackgroundUpdate();
+				gpConEmu->Update(true);
+			}
+		}
+		break;
+	} // case tBgImage:
+
+	case tBgImageColors:
+	{
+		wchar_t temp[128] = {0};
+		GetDlgItemText(hDlg, tBgImageColors, temp, countof(temp)-1);
+		DWORD newBgColors = 0;
+
+		for (wchar_t* pc = temp; *pc; pc++)
+		{
+			if (*pc == L'*')
+			{
+				newBgColors = (DWORD)-1;
+				break;
+			}
+
+			if (*pc == L'#')
+			{
+				if (isDigit(pc[1]))
+				{
+					pc++;
+					// Получить индекс цвета (0..15)
+					int nIdx = *pc - L'0';
+
+					if (nIdx == 1 && isDigit(pc[1]))
+					{
+						pc++;
+						nIdx = nIdx*10 + (*pc - L'0');
+					}
+
+					if (nIdx >= 0 && nIdx <= 15)
+					{
+						newBgColors |= (1 << nIdx);
+					}
+				}
+			}
+		}
+
+		// Если таки изменился - обновим
+		if (newBgColors && gpSet->nBgImageColors != newBgColors)
+		{
+			gpSet->nBgImageColors = newBgColors;
+			gpSetCls->NeedBackgroundUpdate();
+			gpConEmu->Update(true);
+		}
+
+		break;
+	} // case tBgImageColors:
+
+	case tDarker:
+	{
+		DWORD newV;
+		TCHAR tmp[10];
+		GetDlgItemText(hDlg, tDarker, tmp, countof(tmp));
+		newV = _wtoi(tmp);
+
+		if (newV < 256 && newV != gpSet->bgImageDarker)
+		{
+			gpSetCls->SetBgImageDarker(newV, true);
+
+			//gpSet->bgImageDarker = newV;
+			//SendDlgItemMessage(hWnd2, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
+
+			//// Картинку может установить и плагин
+			//if (gpSet->isShowBgImage && gpSet->sBgImage[0])
+			//	LoadBackgroundFile(gpSet->sBgImage);
+			//else
+			//	NeedBackgroundUpdate();
+
+			//gpConEmu->Update(true);
+		}
+		break;
+	} //case tDarker:
+
+	default:
+		_ASSERTE(FALSE && "EditBox was not processed");
+	}
+
+	return 0;
+}

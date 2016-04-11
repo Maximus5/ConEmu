@@ -91,3 +91,40 @@ LRESULT CSetPgUpdate::OnInitDialog(HWND hDlg, bool abInitial)
 
 	return 0;
 }
+
+LRESULT CSetPgUpdate::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case tUpdateInetTool:
+		if (gpSet->UpdSet.isUpdateInetTool)
+			GetString(hDlg, nCtrlId, &gpSet->UpdSet.szUpdateInetTool);
+		break;
+	case tUpdateProxy:
+		GetString(hDlg, nCtrlId, &gpSet->UpdSet.szUpdateProxy);
+		break;
+	case tUpdateProxyUser:
+		GetString(hDlg, nCtrlId, &gpSet->UpdSet.szUpdateProxyUser);
+		break;
+	case tUpdateProxyPassword:
+		GetString(hDlg, nCtrlId, &gpSet->UpdSet.szUpdateProxyPassword);
+		break;
+	case tUpdateDownloadPath:
+		GetString(hDlg, nCtrlId, &gpSet->UpdSet.szUpdateDownloadPath);
+		break;
+	case tUpdateExeCmdLine:
+		GetString(hDlg, nCtrlId, &gpSet->UpdSet.szUpdateExeCmdLine, gpSet->UpdSet.szUpdateExeCmdLineDef);
+		break;
+	case tUpdateArcCmdLine:
+		GetString(hDlg, nCtrlId, &gpSet->UpdSet.szUpdateArcCmdLine, gpSet->UpdSet.szUpdateArcCmdLineDef);
+		break;
+	case tUpdatePostUpdateCmd:
+		GetString(hDlg, nCtrlId, &gpSet->UpdSet.szUpdatePostUpdateCmd);
+		break;
+
+	default:
+		_ASSERTE(FALSE && "EditBox was not processed");
+	}
+
+	return 0;
+}

@@ -93,8 +93,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSTARTUP(s) DEBUGSTR(WIN3264TEST(L"ConEmu.exe: ",L"ConEmu64.exe: ") s L"\n")
 #define DEBUGSTRSTARTUPLOG(s) {if (gpConEmu) gpConEmu->LogString(s);} DEBUGSTRSTARTUP(s)
 
-WARNING("Заменить все MBoxAssert, _ASSERT, _ASSERTE на WaitForSingleObject(CreateThread(out,Title,dwMsgFlags),INFINITE);");
-
 
 #ifdef MSGLOGGER
 BOOL bBlockDebugLog=false, bSendToDebugger=true, bSendToFile=false;
@@ -1575,34 +1573,37 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 	int nRet = IDRETRY;
 
 	DWORD    nPreCode = GetLastError();
-	wchar_t  szAssertInfo[4096], szCodes[128];
+	wchar_t  szLine[16], szCodes[128];
 	wchar_t  szFullInfo[1024] = L"";
 	wchar_t  szDmpFile[MAX_PATH+64] = L"";
-	size_t   cchMax = (szText ? _tcslen(szText) : 0) + (szFile ? _tcslen(szFile) : 0)
-		+ (gpConEmu ? (
-				(gpConEmu->ms_ConEmuExe ? _tcslen(gpConEmu->ms_ConEmuExe) : 0)
-				+ (gpConEmu->ms_ConEmuBuild ? _tcslen(gpConEmu->ms_ConEmuBuild) : 0)) : 0)
-		+ 300;
-	wchar_t* pszFull = (cchMax <= countof(szAssertInfo)) ? szAssertInfo : (wchar_t*)malloc(cchMax*sizeof(*pszFull));
 	wchar_t* pszDumpMessage = NULL;
+	CEStr    szFull;
 
 	#ifdef _DEBUG
 	MyAssertDumpToFile(szFile, nLine, szText);
 	#endif
 
 	LPCWSTR  pszTitle = gpConEmu ? gpConEmu->GetDefaultTitle() : NULL;
-	if (!pszTitle || !*pszTitle) pszTitle = L"?ConEmu?";
+	if (!pszTitle || !*pszTitle) { pszTitle = L"?ConEmu?"; }
 
-	if (pszFull)
+	// Prepare assertion message
 	{
-		_wsprintf(pszFull, SKIPLEN(cchMax)
-			L"Assertion in %s [%s]\r\n%s\r\nat\r\n%s:%i\r\n\r\n"
-			L"Press <Abort> to throw exception, ConEmu will be terminated!\r\n\r\n"
-			L"Press <Retry> to copy text information to clipboard\r\n"
-			L"and report a bug (open project web page)",
+		wchar_t szDashes[] = L"-----------------------\r\n", szPID[80];
+		_wsprintf(szPID, SKIPCOUNT(szPID) L"PID=%u, TID=%u" WIN3264TEST(L"",L"64"), GetCurrentProcessId(), GetCurrentThreadId());
+		CEStr lsBuild(L"ConEmu ", (gpConEmu && gpConEmu->ms_ConEmuBuild) ? gpConEmu->ms_ConEmuBuild : L"<UnknownBuild>",
+			L" [", WIN3264TEST(L"32",L"64"), RELEASEDEBUGTEST(NULL,L"D"), L"] ");
+		CEStr lsAssertion(L"Assertion: ", lsBuild, szPID, L"\r\n");
+		CEStr lsWhere(L"\r\n", StripSourceRoot(szFile), L":", _ultow(nLine, szLine, 10), L"\r\n", szDashes);
+		CEStr lsHeader(lsAssertion,
 			(gpConEmu && gpConEmu->ms_ConEmuExe) ? gpConEmu->ms_ConEmuExe : L"<NULL>",
-			(gpConEmu && gpConEmu->ms_ConEmuBuild) ? gpConEmu->ms_ConEmuBuild : L"<NULL>",
-			szText, szFile, nLine);
+			lsWhere, szText, L"\r\n", szDashes, L"\r\n");
+
+		szFull.Attach(lstrmerge(
+			lsHeader,
+			CLngRc::getRsrc(lng_AssertIgnoreDescr/*"Press <Ignore> to continue your work"*/), L"\r\n\r\n",
+			CLngRc::getRsrc(lng_AssertAbortDescr/*"Press <Abort> to throw exception, ConEmu will be terminated!"*/), L"\r\n\r\n",
+			CLngRc::getRsrc(lng_AssertRetryDescr/*"Press <Retry> to copy text information to clipboard\r\nand report a bug (open project web page)."*/),
+			NULL));
 
 		DWORD nPostCode = (DWORD)-1;
 
@@ -1614,13 +1615,13 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 		else
 		{
 			bInAssert = true;
-			nRet = MsgBox(pszFull, MB_ABORTRETRYIGNORE|MB_ICONSTOP|MB_SYSTEMMODAL|MB_DEFBUTTON3, pszTitle, NULL);
+			nRet = MsgBox(szFull, MB_ABORTRETRYIGNORE|MB_ICONSTOP|MB_SYSTEMMODAL|MB_DEFBUTTON3, pszTitle, NULL);
 			bInAssert = false;
 			nPostCode = GetLastError();
 		}
 
 		_wsprintf(szCodes, SKIPLEN(countof(szCodes)) L"\r\nPreError=%i, PostError=%i, Result=%i", nPreCode, nPostCode, nRet);
-		_wcscat_c(pszFull, cchMax, szCodes);
+		lstrmerge(&szFull.ms_Val, szCodes);
 	}
 
 	if ((nRet == IDRETRY) || (nRet == IDABORT))
@@ -1640,7 +1641,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 			//EXCEPTION_POINTERS ex0 = {&er0};
 			//if (!ExceptionInfo) ExceptionInfo = &ex0;
 
-			CreateDumpForReport(ExceptionInfo, szFullInfo, szDmpFile, pszFull);
+			CreateDumpForReport(ExceptionInfo, szFullInfo, szDmpFile, szFull.ms_Val);
 		}
 
 		if (szFullInfo[0])
@@ -1648,21 +1649,16 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 			wchar_t* pszFileMsg = szDmpFile[0] ? lstrmerge(L"\r\n\r\n" L"Memory dump was saved to\r\n", szDmpFile,
 				L"\r\n\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n",
 				CEREPORTCRASH /* https://conemu.github.io/en/Issues.html... */) : NULL;
-			pszDumpMessage = lstrmerge(pszFull, L"\r\n\r\n", szFullInfo, pszFileMsg);
+			pszDumpMessage = lstrmerge(szFull, L"\r\n\r\n", szFullInfo, pszFileMsg);
 			CopyToClipboard(pszDumpMessage ? pszDumpMessage : szFullInfo);
 			SafeFree(pszFileMsg);
 		}
-		else if (pszFull)
+		else if (szFull)
 		{
-			CopyToClipboard(pszFull);
+			CopyToClipboard(szFull);
 		}
 
-		ConEmuAbout::OnInfo_ReportCrash(pszDumpMessage ? pszDumpMessage : pszFull);
-	}
-
-	if (pszFull && pszFull != szAssertInfo)
-	{
-		free(pszFull);
+		ConEmuAbout::OnInfo_ReportCrash(pszDumpMessage ? pszDumpMessage : szFull.ms_Val);
 	}
 
 	SafeFree(pszDumpMessage);

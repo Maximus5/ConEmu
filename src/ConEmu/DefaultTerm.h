@@ -48,19 +48,20 @@ public:
 	void ApplyAndSave(bool bApply, bool bSaveToReg);
 	bool IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, bool* pbLeaveInTSA);
 
-	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false); // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
+	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false) override; // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
 
 protected:
-	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL);
-	virtual void ShowTrayIconError(LPCWSTR asErrText); // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
-	virtual void ReloadSettings(); // Copy from gpSet or load from [HKCU]
-	virtual void PreCreateThread();
-	virtual void PostCreateThreadFinished();
-	virtual void AutoClearThreads();
-	virtual void ConhostLocker(bool bLock, bool& bWasLocked);
+	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL) override;
+	virtual void ShowTrayIconError(LPCWSTR asErrText) override; // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
+	virtual void ReloadSettings() override; // Copy from gpSet or load from [HKCU]
+	virtual void PreCreateThread() override;
+	virtual void PostCreateThreadFinished() override;
+	virtual void AutoClearThreads() override;
+	virtual void ConhostLocker(bool bLock, bool& bWasLocked) override;
 	// nPID = 0 when hooking is done (remove status bar notification)
 	// sName is executable name or window class name
-	virtual bool NotifyHookingStatus(DWORD nPID, LPCWSTR sName);
+	virtual bool NotifyHookingStatus(DWORD nPID, LPCWSTR sName) override;
 public:
-	virtual void LogHookingStatus(LPCWSTR sMessage);
+	virtual void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage) override;
+	virtual bool isLogging() override;
 };

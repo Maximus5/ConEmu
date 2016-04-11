@@ -47,6 +47,7 @@ public:
 public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
+	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) override;
 	virtual void OnPostLocalize(HWND hDlg) override;
 	// Events
 	static void OnBtn_ClipShiftIns(HWND hDlg, WORD CB, BYTE uCheck);

@@ -30,34 +30,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
+#include <TlHelp32.h>
 
-#include "SetPgBase.h"
-#include "SetDlgColors.h"
+bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);
+bool GetProcessInfo(LPCWSTR asExeName, PROCESSENTRY32W* Info);
 
-class CSetPgColors
-	: public CSetPgBase
-	, public CSetDlgColors
-{
-public:
-	static CSetPgBase* Create() { return new CSetPgColors(); };
-	static TabHwndIndex PageType() { return thi_Colors; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
-public:
-	CSetPgColors();
-	virtual ~CSetPgColors();
-
-protected:
-	enum ColorShowFormat { eRgbDec = 0, eRgbHex, eBgrHex } m_ColorFormat;
-
-public:
-	// Methods
-	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
-	// Events
-	virtual INT_PTR OnComboBox(HWND hDlg, WORD nCtrlId, WORD code) override;
-	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) override;
-
-protected:
-	// Members
-
-};
-
+// Lower-cased to distinct from plugin's export
+bool isTerminalMode();

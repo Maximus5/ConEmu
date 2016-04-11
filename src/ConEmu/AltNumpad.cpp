@@ -51,6 +51,7 @@ CAltNumpad::CAltNumpad(CConEmuMain* apConEmu)
 	, mn_NumberBase(10)
 	, mn_AltNumber(0)
 	, mn_SkipVkKeyUp(0)
+	, mn_AltScanCode(-1)
 {
 }
 
@@ -132,6 +133,11 @@ bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		// Reset flag first
 		m_WaitingForAltChar = eAltCharNone;
 
+		if ((mn_AltScanCode == -1) && (messg == WM_KEYDOWN) && (wParam == VK_MENU))
+		{
+			mn_AltScanCode = (int)(WORD)((lParam & 0xFF0000) >> 16);
+		}
+
 		// The context code. The value is 1 if the ALT key is held down while the key is pressed
 		if ((messg != WM_SYSKEYDOWN) || !(lParam & (1 << 29)))
 		{
@@ -157,6 +163,7 @@ bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			if (wParam != VK_ADD)
 			{
 				// Standard, decimal, we rely on OS
+				_ASSERTE(wParam >= VK_NUMPAD0 && wParam <= VK_NUMPAD9);
 				StartCapture(10, (wParam - VK_NUMPAD0), false);
 			}
 			else
@@ -207,6 +214,9 @@ bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			|| ((wParam >= 'a') && (wParam <= 'f'))
 			)
 		{
+			// Capture mode was already started above: StartCapture(10, (wParam - VK_NUMPAD0), false)
+			_ASSERTE(mb_InAltNumber);
+
 			UINT nDigit = 0;
 			if ((wParam >= VK_NUMPAD0) && (wParam <= VK_NUMPAD9))
 				nDigit = LOBYTE(wParam - VK_NUMPAD0);
@@ -346,10 +356,50 @@ AltCharAction CAltNumpad::DumpAltNumber()
 
 void CAltNumpad::DumpChars(wchar_t* asChars)
 {
+	if (!asChars || !*asChars)
+	{
+		_ASSERTE(asChars && *asChars);
+		return;
+	}
+
 	CVConGuard VCon;
 	if (mp_ConEmu->GetActiveVCon(&VCon) < 0)
 		return;
-	VCon->RCon()->PostString(asChars, wcslen(asChars));
+	CRealConsole* pRCon = VCon->RCon();
+	_ASSERTE(pRCon);
+
+	WORD vkKey = 0;
+	int scanCode = -1;
+
+	// Try to mimic std Windows behavior, when char is posted with KeyUp event for Alt key.
+	if (!mb_External)
+	{
+		vkKey = VK_MENU;
+		scanCode = mn_AltScanCode;
+	}
+
+	if (vkKey)
+	{
+		DWORD dwCtrlState = 0;
+		pRCon->AddIndicatorsCtrlState(dwCtrlState);
+
+		// Don't post surrogate pairs with ALt KeyUp?
+		wchar_t chPost = (asChars[0] && asChars[1]) ? 0 : asChars[0];
+
+		// At least, we need to send Alt KeyUp even before posting captured "character"
+		if (pRCon->PostKeyUp(vkKey, dwCtrlState, chPost, scanCode))
+		{
+			if (chPost)
+				asChars++;
+		}
+	}
+
+	// If there is a tail (expected for surrogate pairs)
+	if (*asChars)
+	{
+		// Just post it as simple key-press
+		pRCon->PostString(asChars, wcslen(asChars));
+	}
 }
 
 // Convert collected codebase to wchar_t sequence

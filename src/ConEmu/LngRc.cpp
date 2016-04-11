@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuStart.h"
 #include "LngData.h"
 #include "LngRc.h"
+#include "Options.h"
 #include "../common/MJsonReader.h"
 #include "../common/WFiles.h"
 
@@ -168,8 +169,6 @@ bool CLngRc::LoadResouces(LPCWSTR asLanguage, LPCWSTR asFile)
 	MJsonValue jsonSection;
 	DWORD nStartTick = 0, nLoadTick = 0, nFinTick = 0, nDelTick = 0;
 	int iRc;
-	wchar_t szLog[120];
-
 	struct { LPCWSTR pszSection; MArray<LngRcItem>* arr; int idDiff; }
 	sections[] = {
 		{ L"cmnhints", &m_CmnHints, 0 },
@@ -177,6 +176,12 @@ bool CLngRc::LoadResouces(LPCWSTR asLanguage, LPCWSTR asFile)
 		{ L"controls", &m_Controls, 0 },
 		{ L"strings",  &m_Strings, 0 },
 	};
+
+	if (gpSet->isLogging())
+	{
+		CEStr lsLog(L"Loading resources: Lng=`", asLanguage, L"` File=`", asFile, L"`");
+		gpConEmu->LogString(lsLog);
+	}
 
 	iRc = ReadTextFile(asFile, 1<<24 /*16Mb max*/, lsJsonData.ms_Val, jsonDataSize, nErrCode);
 	if (iRc != 0)
@@ -226,7 +231,8 @@ wrap:
 	nDelTick = GetTickCount();
 	if (bOk)
 	{
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"Language resources duration (ms): Parse: %u; Internal: %u; Delete: %u", (nLoadTick - nStartTick), (nFinTick - nLoadTick), (nDelTick - nFinTick));
+		wchar_t szLog[120];
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"Loading resources: duration (ms): Parse: %u; Internal: %u; Delete: %u", (nLoadTick - nStartTick), (nFinTick - nLoadTick), (nDelTick - nFinTick));
 		gpConEmu->LogString(szLog);
 	}
 	return bOk;

@@ -54,6 +54,7 @@ protected:
 	UINT mn_NumberBase; // 10 or 16
 	u64  mn_AltNumber;
 	UINT mn_SkipVkKeyUp;
+	int  mn_AltScanCode;
 
 public:
 	CAltNumpad(CConEmuMain* apConEmu);

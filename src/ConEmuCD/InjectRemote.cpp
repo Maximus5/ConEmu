@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmuC.h"
 #include "../common/MAssert.h"
+#include "../common/MProcessBits.h"
 #include "../common/WFiles.h"
 #include "../common/WModuleCheck.h"
 #include "Infiltrate.h"
@@ -165,6 +166,8 @@ CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, HMODULE ptrOuterKernel, LP
 		goto wrap;
 	}
 
+	LogString(L"InfiltrateDll: CreateRemoteThread");
+
 	// Запускаем поток в процессе hProcess
 	// В принципе, на эту функцию могут ругаться антивирусы
 	hThread = _CreateRemoteThread(
@@ -181,6 +184,8 @@ CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, HMODULE ptrOuterKernel, LP
 		goto wrap;
 	}
 
+	LogString(L"InfiltrateDll: Waiting for service thread");
+
 	// Дождаться пока поток завершится
 	WaitForSingleObject(hThread, INFINITE);
 
@@ -192,6 +197,7 @@ CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, HMODULE ptrOuterKernel, LP
 		sizeof(InfiltrateArg),	// Size
 		NULL))			// We don't care
 	{
+		LogString(L"InfiltrateDll: Read result failed");
 		iRc = CIR_ReadProcessMemory/*-109*/;
 		goto wrap;
 	}
@@ -311,6 +317,8 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	MODULEENTRY32 mi = {sizeof(mi)};
 	HMODULE ptrOuterKernel = NULL;
 
+	LogString(L"...GetModuleFileName");
+
 	if (!GetModuleFileName(NULL, szSelf, MAX_PATH))
 	{
 		nErrCode = GetLastError();
@@ -329,6 +337,8 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 
 	// There is no sense to try to open TH32CS_SNAPMODULE snapshot of 64bit process from 32bit process
 	// And we can't properly evaluate kernel address procedures of 32bit process from 64bit process
+
+	LogString(L"...GetProcessBits");
 
 	// So, let determine target process bitness and if it differs
 	// from our (ConEmuC[64].exe) just restart appropriate version
@@ -352,7 +362,14 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		STARTUPINFO si = {sizeof(si)};
 
 		_wcscpy_c(pszNamePtr, 16, is32bit ? L"ConEmuC.exe" : L"ConEmuC64.exe");
-		_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /INJECT=%u", nRemotePID);
+		_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L"%s /INJECT=%u",
+			gpLogSize ? L" /LOG" : L"", nRemotePID);
+
+		if (gpLogSize)
+		{
+			CEStr lsLog(L"Different bitness!!! Starting service process: \"", szHooks, L"\" ", szArgs);
+			LogString(lsLog);
+		}
 
 		if (!CreateProcess(szHooks, szArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
 		{
@@ -360,8 +377,22 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 			iRc = CIR_CreateProcess/*-202*/;
 			goto wrap;
 		}
+
+		if (gpLogSize)
+		{
+			_wsprintf(szHooks, SKIPCOUNT(szHooks) L"Waiting for service process PID=%u termination", pi.dwProcessId);
+			LogString(szHooks);
+		}
+
 		nWrapperWait = WaitForSingleObject(pi.hProcess, INFINITE);
 		GetExitCodeProcess(pi.hProcess, &nWrapperResult);
+
+		if (gpLogSize)
+		{
+			_wsprintf(szHooks, SKIPCOUNT(szHooks) L"Service process PID=%u terminated with code=%u", pi.dwProcessId, nWrapperResult);
+			LogString(szHooks);
+		}
+
 		CloseHandle(pi.hProcess);
 		CloseHandle(pi.hThread);
 		if ((nWrapperResult != CERR_HOOKS_WAS_SET) && (nWrapperResult != CERR_HOOKS_WAS_ALREADY_SET))
@@ -376,8 +407,10 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		goto wrap;
 	}
 
+	LogString(L"CreateToolhelp32Snapshot(TH32CS_SNAPMODULE)");
 
 	// Hey, may be ConEmuHk.dll is already loaded?
+	//TODO: Reuse MToolHelp.h
 	hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, nRemotePID);
 	if (!hSnap || (hSnap == INVALID_HANDLE_VALUE))
 	{
@@ -385,7 +418,10 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		iRc = CIR_SnapshotCantBeOpened/*-113*/;
 		goto wrap;
 	}
-	else if (hSnap && Module32First(hSnap, &mi))
+
+	LogString(L"looking for ConEmuHk/ConEmuHk64");
+
+	if (hSnap && Module32First(hSnap, &mi))
 	{
 		// 130829 - Let load newer(!) ConEmuHk.dll into target process.
 		// 141201 - Also we need to be sure in kernel32.dll address
@@ -403,6 +439,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		// Go to enumeration
 		wchar_t szName[64];
 		do {
+			LogString(mi.szModule);
 			LPCWSTR pszName = PointToName(mi.szModule);
 
 			// Name of ConEmuHk*.*.dll module may be changed (copied to %APPDATA%)
@@ -429,6 +466,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 				{
 					// OK, szName is newer or equal to our build
 					bAlreadyHooked = true;
+					LogString(L"Target process is already hooked");
 				}
 			}
 
@@ -457,6 +495,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		goto wrap;
 	}
 
+	LogString(L"...OpenProcess");
 
 	// Check, if we can access that process
 	hProc = OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ, FALSE, nRemotePID);
@@ -524,7 +563,15 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		}
 	}
 
+	LogString(L"InfiltrateDll");
+
 	iRc = InfiltrateDll(hProc, ptrOuterKernel, szHooks);
+
+	if (gpLogSize)
+	{
+		_wsprintf(szHooks, SKIPCOUNT(szHooks) L"InfiltrateDll finished with code=%i", iRc);
+		LogString(szHooks);
+	}
 
 	// Если создавали временную копию - запланировать ее удаление
 	if (abDefTermOnly && (lstrcmpi(szHooks, szSelf) != 0))
@@ -543,11 +590,19 @@ wrap:
 	if ((iRc == 0) && hDefTermReady)
 	{
 		_ASSERTE(abDefTermOnly);
+		LogString(L"Waiting for hDefTermReady");
 		DWORD nWaitReady = WaitForSingleObject(hDefTermReady, CEDEFAULTTERMHOOKWAIT/*==0*/);
 		if (nWaitReady == WAIT_TIMEOUT)
 		{
 			iRc = CIR_DefTermWaitingFailed/*-300*/; // Failed to start hooking thread in remote process
+			LogString(L"...hDefTermReady timeout");
+		}
+		else if (nWaitReady == WAIT_OBJECT_0)
+		{
+			LogString(L"...hDefTermReady succeeded");
 		}
 	}
+
+	LogString(L"InjectRemote done");
 	return iRc;
 }

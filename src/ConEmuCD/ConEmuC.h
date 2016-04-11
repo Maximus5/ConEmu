@@ -273,7 +273,7 @@ void CheckCursorPos();
 BOOL ReloadFullConsoleInfo(BOOL abForceSend);
 bool CheckWasFullScreen();
 DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое консоли
-int ServerInit(int anWorkMode/*0-Server,1-AltServer,2-Reserved*/); // Создать необходимые события и нити
+int ServerInit(); // Создать необходимые события и нити
 void ServerDone(int aiRc, bool abReportShutdown = false);
 BOOL ServerInitConsoleMode();
 void SetupCreateDumpOnException();
@@ -357,7 +357,7 @@ bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw = false);
 int CreateMapHeader();
 void CloseMapHeader();
 void CopySrvMapFromGuiMap();
-void UpdateConsoleMapHeader();
+void UpdateConsoleMapHeader(LPCWSTR asReason = NULL);
 void InitAnsiLog(const ConEmuAnsiLog& AnsiLog);
 int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2);
 void FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR *pMap);
@@ -412,6 +412,7 @@ typedef enum tag_RunMode
 	RM_ALTSERVER,
 	RM_APPLICATION,
 	RM_GUIMACRO,
+	RM_AUTOATTACH,
 } RunMode;
 
 extern RunMode gnRunMode;
@@ -480,6 +481,7 @@ struct SrvInfo
 	MMap<DWORD,AltServerInfo> AltServers;
 
 	HANDLE hFreezeRefreshThread;
+	DWORD  nPrevAltServer; // Informational, only for RM_ALTSERVER
 
 	// CECMD_SETCONSCRBUF
 	HANDLE hWaitForSetConBufThread;    // Remote thread (check it for abnormal termination)

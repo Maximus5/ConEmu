@@ -92,6 +92,16 @@ enum LngResources
 	lng_HotkeysUser               = 59,
 	lng_HotkeysSystem             = 60,
 	lng_HotkeysMacro              = 61,
+	lng_UnknownSwitch1            = 62,
+	lng_UnknownSwitch2            = 63,
+	lng_UnknownSwitch3            = 64,
+	lng_UnknownSwitch4            = 65,
+	lng_UpdateCloseMsg1           = 66,
+	lng_UpdateCloseMsg2           = 67,
+	lng_PleaseCheckManually       = 68,
+	lng_AssertIgnoreDescr         = 69,
+	lng_AssertAbortDescr          = 70,
+	lng_AssertRetryDescr          = 71,
 	// last auto-gen identifier
 	lng_NextId
 };

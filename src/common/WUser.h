@@ -35,6 +35,9 @@ bool apiSetForegroundWindow(HWND ahWnd);
 bool apiShowWindow(HWND ahWnd, int anCmdShow);
 bool apiShowWindowAsync(HWND ahWnd, int anCmdShow);
 
+// WinAPI wrappers
+void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName = false, LPDWORD pnPID = NULL);
+
 bool IsUserAdmin();
 bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
 

@@ -31,33 +31,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
-#include "SetPgBase.h"
-#include "SetDlgColors.h"
-
-class CSetPgColors
-	: public CSetPgBase
-	, public CSetDlgColors
-{
-public:
-	static CSetPgBase* Create() { return new CSetPgColors(); };
-	static TabHwndIndex PageType() { return thi_Colors; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
-public:
-	CSetPgColors();
-	virtual ~CSetPgColors();
-
-protected:
-	enum ColorShowFormat { eRgbDec = 0, eRgbHex, eBgrHex } m_ColorFormat;
-
-public:
-	// Methods
-	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
-	// Events
-	virtual INT_PTR OnComboBox(HWND hDlg, WORD nCtrlId, WORD code) override;
-	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) override;
-
-protected:
-	// Members
-
-};
-
+int GetProcessBits(DWORD nPID, HANDLE hProcess = NULL);

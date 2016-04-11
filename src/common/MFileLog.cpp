@@ -103,6 +103,9 @@ bool MFileLog::IsLogOpened()
 
 void MFileLog::CloseLogFile()
 {
+	if (IsLogOpened())
+		LogString(L"Closing log file");
+
 	SafeCloseHandle(mh_LogFile);
 
 	SafeFree(ms_FilePathName);
@@ -447,5 +450,6 @@ void MFileLog::LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool b
 void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 {
 	LoadStartupEnvEx::ToString(apStartEnv, LogStartEnvInt, (LPARAM)this);
+	LogString(L"MFileLog::LogStartEnv finished", true);
 }
 #endif

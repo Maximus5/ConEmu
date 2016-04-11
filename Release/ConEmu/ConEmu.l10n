@@ -75,6 +75,8 @@
     "cbAutoRegFonts": {
       "en": [ "Use in ConEmu fonts, located in ConEmu folder.\r\n"
             , "*.ttf, *.otf and *.bdf files are supported." ],
+      "ru": [ "Загружать и подключать шрифты из папки ConEmu.\r\n"
+            , "Поддерживаются: *.ttf, *.otf и *.bdf." ],
       "zh": [ "用于ConEmu字体，字体位于ConEmu文件夹。\r\n"
             , "支持*.ttf、*.otf和*.bdf文件。" ],
       "id": 1550 }
@@ -2440,33 +2442,56 @@
     ,
     "lng_AltNumberACP": {
       "en": "Type ANSI code point using decimal numbers",
+      "ru": "Введите десятичный код ANSI",
       "zh": "使用十进制数字输入ANSI代码点",
       "id": 16 }
     ,
     "lng_AltNumberExt": {
       "en": " - <Enter> to paste, <Esc> to cancel",
+      "ru": " - <Enter> для вставки, <Esc> для отмены",
       "zh": " - <Enter> 键粘贴，<Esc> 键取消",
       "id": 14 }
     ,
     "lng_AltNumberHex": {
       "en": "Type UNICODE code point using hexadecimal numbers",
+      "ru": "Введите шестнадцатеричный код UNICODE",
       "zh": "使用十六进制数字输入UNICODE代码点",
       "id": 15 }
     ,
     "lng_AltNumberStdACP": {
       "en": " - release <Alt> to paste ANSI code point",
+      "ru": " - отпустите <Alt> для вставки ANSI-символа",
       "zh": " - 释放 <Alt> 键粘贴ANSI代码点",
       "id": 12 }
     ,
     "lng_AltNumberStdOEM": {
       "en": " - release <Alt> to paste OEM code point",
+      "ru": " - отпустите <Alt> для вставки OEM-символа",
       "zh": " - 释放 <Alt> 键粘贴OEM代码点",
       "id": 11 }
     ,
     "lng_AltNumberStdUCS": {
       "en": " - release <Alt> to paste UNICODE code point",
+      "ru": " - отпустите <Alt> для вставки UNICODE-символа",
       "zh": " - 释放 <Alt> 键粘贴UNICODE代码点",
       "id": 13 }
+    ,
+    "lng_AssertAbortDescr": {
+      "en": "Press <Abort> to throw exception, ConEmu will be terminated!",
+      "ru": "<Прервать> для вызова исключения, ConEmu будет завершен!",
+      "id": 70 }
+    ,
+    "lng_AssertIgnoreDescr": {
+      "en": "Press <Ignore> to continue your work.",
+      "ru": "Нажмите <Пропустить> для продолжения работы.",
+      "id": 69 }
+    ,
+    "lng_AssertRetryDescr": {
+      "en": [ "Press <Retry> to copy text information to clipboard\r\n"
+            , "and report a bug (open project web page)." ],
+      "ru": [ "<Повтор> чтобы скопировать информацию в буфер\r\n"
+            , "и сообщить об ошибке (открыть веб-страницу проекта)." ],
+      "id": 71 }
     ,
     "lng_BasicSettings": {
       "en": "Basic settings",
@@ -2599,6 +2624,10 @@
             , "继续？" ],
       "id": 24 }
     ,
+    "lng_PleaseCheckManually": {
+      "en": "Please check for updates manually",
+      "id": 68 }
+    ,
     "lng_Search": {
       "en": "Search",
       "ru": "Поиск",
@@ -2683,7 +2712,7 @@
     ,
     "lng_SpgCursor": {
       "en": "Text cursor",
-      "ru": "Курсор",
+      "ru": "Текстовый курсор",
       "zh": "文本光标",
       "id": 38 }
     ,
@@ -2695,7 +2724,7 @@
     ,
     "lng_SpgDefTerm": {
       "en": "Default term",
-      "ru": "Заменить терминал",
+      "ru": "Терминал ОС",
       "zh": "默认项目",
       "id": 44 }
     ,
@@ -2803,7 +2832,7 @@
     ,
     "lng_SpgTasks": {
       "en": "Tasks",
-      "ru": "Tasks",
+      "ru": "Задачи (Tasks)",
       "zh": "任务",
       "id": 34 }
     ,
@@ -2818,6 +2847,36 @@
       "ru": "Обновление",
       "zh": "更新",
       "id": 32 }
+    ,
+    "lng_UnknownSwitch1": {
+      "en": "Unknown switch specified:",
+      "ru": "Указан недопустимый ключ:",
+      "id": 62 }
+    ,
+    "lng_UnknownSwitch2": {
+      "en": "Visit website to get thorough switches description:",
+      "ru": "Посетите веб-страницу с подробным описанием ключей:",
+      "id": 63 }
+    ,
+    "lng_UnknownSwitch3": {
+      "en": "Or run ‘ConEmu.exe -?’ to get the brief.",
+      "ru": "Или запустите ‘ConEmu.exe -?’ для краткого списка.",
+      "id": 64 }
+    ,
+    "lng_UnknownSwitch4": {
+      "en": "Switch ‘-new_console’ must be specified *after* ‘-cmd’ or ‘-cmdlist’!",
+      "ru": "Ключ ‘-new_console’ должен быть указан *после* ‘-cmd’ или ‘-cmdlist’!",
+      "id": 65 }
+    ,
+    "lng_UpdateCloseMsg1": {
+      "en": "Please, close all ConEmu instances before continue",
+      "ru": "Пожалуйста закройте все открытые окна ConEmu перед продолжением",
+      "id": 66 }
+    ,
+    "lng_UpdateCloseMsg2": {
+      "en": "ConEmu still running:",
+      "ru": "ConEmu все ещё запущен:",
+      "id": 67 }
   }
   ,
   "controls": {
@@ -2865,7 +2924,7 @@
     ,
     "bHereRegister": {
       "en": "Register",
-      "ru": "Добавить",
+      "ru": "Регистрировать",
       "zh": "注册",
       "id": 2392 }
     ,
@@ -2883,7 +2942,7 @@
     ,
     "bInsideRegister": {
       "en": "Register",
-      "ru": "Добавить",
+      "ru": "Регистрировать",
       "zh": "注册",
       "id": 2387 }
     ,
@@ -2913,71 +2972,85 @@
     ,
     "cbActivateSplitMouseOver": {
       "en": "Activate split/pane on mouse hover",
+      "ru": "Активировать сплит при наведении мышки",
       "zh": "鼠标悬停时激活分屏/窗格",
       "id": 2601 }
     ,
     "cbActivityReset": {
       "en": "&Reset",
+      "ru": "Сброс",
       "zh": "重置（&R）",
       "id": 1717 }
     ,
     "cbActivitySaveAs": {
       "en": "Save &as...",
+      "ru": "Сохранить как...",
       "zh": "另存为（&a）...",
       "id": 1746 }
     ,
     "cbAddConEmu2Path": {
       "en": "Add %ConEmuDir% to %PATH%",
+      "ru": "Добавить %ConEmuDir% в %PATH%",
       "zh": "添加%ConEmuDir%到%PATH%",
       "id": 2423 }
     ,
     "cbAddConEmuBase2Path": {
       "en": "Add %ConEmuBaseDir% to %PATH%",
+      "ru": "Добавить %ConEmuBaseDir% в %PATH%",
       "zh": "添加%ConEmuBaseDir%到%PATH%",
       "id": 2584 }
     ,
     "cbAddDefaults": {
       "en": "Add default tasks...",
+      "ru": "Создать основные задачи...",
       "zh": "添加默认任务...",
       "id": 2632 }
     ,
     "cbAdminShield": {
       "en": "Admin shield",
+      "ru": "Значок щита",
       "zh": "管理员盾牌",
       "id": 2109 }
     ,
     "cbAdminSuffix": {
       "en": "suffix",
+      "ru": "суффикс",
       "zh": "后缀",
       "id": 2110 }
     ,
     "cbAlwaysOnTop": {
       "en": "Always on top",
+      "ru": "Поверх всех окон",
       "zh": "总是置顶",
       "id": 1572 }
     ,
     "cbAlwaysShowTrayIcon": {
       "en": "Always show TSA icon",
+      "ru": "Всегда показывать иконку в TSA",
       "zh": "总是显示任务栏状态区域图标",
       "id": 1736 }
     ,
     "cbAnsiLog": {
       "en": "Log console output (*)",
+      "ru": "Логирование консольного вывода (*)",
       "zh": "记录控制台输出日志（*）",
       "id": 2679 }
     ,
     "cbAppDistinctDown": {
       "en": "Down",
+      "ru": "Вниз",
       "zh": "向下",
       "id": 2139 }
     ,
     "cbAppDistinctReload": {
       "en": "Reload...",
+      "ru": "Перечитать...",
       "zh": "重新加载...",
       "id": 2140 }
     ,
     "cbAppDistinctUp": {
       "en": "Up",
+      "ru": "Вверх",
       "zh": "向上",
       "id": 2138 }
     ,
@@ -2989,17 +3062,19 @@
     ,
     "cbApplyPos": {
       "en": "Apply",
-      "ru": "Apply",
+      "ru": "Применить",
       "zh": "应用",
       "id": 1520 }
     ,
     "cbAutoRegFonts": {
       "en": "Auto register fonts",
+      "ru": "Загружать шрифты из папки ConEmu",
       "zh": "自动注册字体",
       "id": 1550 }
     ,
     "cbAutoSaveSizePos": {
       "en": "Auto save window size and position on exit",
+      "ru": "Запоминать размер и положение окна при выходе",
       "zh": "自动保存窗口大小和位置",
       "id": 1723 }
     ,
@@ -3722,8 +3797,8 @@
       "id": 2480 }
     ,
     "cbOneTabPerGroup": {
-      "en": "One tab per group",
-      "zh": "每组一个标签页",
+      "en": "Only active pane of group",
+      "_zh": "每组一个标签页",
       "id": 2599 }
     ,
     "cbProcessAnsi": {
@@ -4479,6 +4554,11 @@
       "en": "Font and color",
       "zh": "字体和颜色",
       "id": 2986 }
+    ,
+    "gbTabDblClkActions": {
+      "en": "Tab double click actions",
+      "zh": "标签页（Tab）双击行为",
+      "id": 3055 }
     ,
     "gbTabs": {
       "en": "Tabs (consoles, Far Manager panels/editors/viewers)",
@@ -5307,6 +5387,10 @@
       "zh": "注册表参数‘LoadConIme’多余的值！这可能会导致其他控制台应用程序挂起！ConEmu可以通过注册表禁用ConIme.exe：",
       "id": 2094 }
     ,
+    "stElevatedConsolesGroup": {
+      "en": "Elevated consoles:",
+      "id": 3054 }
+    ,
     "stEnableAutoUpdateFast": {
       "en": "You can change following on 'Update' page of Settings dialog later",
       "zh": "你可以以后在设置对话框“更新”页面改变下面内容",
@@ -5693,11 +5777,6 @@
       "en": "Console:",
       "zh": "控制台：",
       "id": 2735 }
-    ,
-    "stTabDblClkActions": {
-      "en": "Tab double click actions",
-      "zh": "标签页（Tab）双击行为",
-      "id": 2734 }
     ,
     "stTabEditor": {
       "en": "Editor:",

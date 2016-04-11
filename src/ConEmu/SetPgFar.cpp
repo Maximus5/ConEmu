@@ -32,9 +32,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#include "ConEmu.h"
 #include "OptionsClass.h"
 #include "SetDlgLists.h"
 #include "SetPgFar.h"
+#include "TabBar.h"
 
 CSetPgFar::CSetPgFar()
 {
@@ -122,6 +124,51 @@ INT_PTR CSetPgFar::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 
 	default:
 		_ASSERTE(FALSE && "ListBox was not processed");
+	}
+
+	return 0;
+}
+
+LRESULT CSetPgFar::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case tTabPanels:
+	case tTabViewer:
+	case tTabEditor:
+	case tTabEditorMod:
+	{
+		wchar_t temp[MAX_PATH] = L"";
+
+		if (GetDlgItemText(hDlg, nCtrlId, temp, countof(temp)) && temp[0])
+		{
+			temp[31] = 0; // JIC
+
+						  //03.04.2013, via gmail, просили не добавлять автоматом %s
+						  //if (wcsstr(temp, L"%s") || wcsstr(temp, L"%n"))
+			switch (nCtrlId)
+			{
+			case tTabPanels:
+				wcscpy_c(gpSet->szTabPanels, temp);
+				break;
+			case tTabViewer:
+				wcscpy_c(gpSet->szTabViewer, temp);
+				break;
+			case tTabEditor:
+				wcscpy_c(gpSet->szTabEditor, temp);
+				break;
+			case tTabEditorMod:
+				wcscpy_c(gpSet->szTabEditorModified, temp);
+				break;
+			}
+
+			gpConEmu->mp_TabBar->Update(TRUE);
+		}
+		break;
+	} // case tTabConsole: case tTabViewer: case tTabEditor: case tTabEditorMod:
+
+	default:
+		_ASSERTE(FALSE && "EditBox was not processed");
 	}
 
 	return 0;

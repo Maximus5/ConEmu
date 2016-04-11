@@ -50,7 +50,6 @@ enum TabHwndIndex
 	thi_Update,       //   "Update"
 	thi_Startup,      // "Startup"
 	thi_Tasks,        //   "Tasks"
-	thi_Comspec,      //   "ComSpec"
 	thi_Environment,  //   "Environment"
 	thi_Features,     // "Features"
 	thi_Cursor,       //   "Text cursor"
@@ -60,6 +59,7 @@ enum TabHwndIndex
 	thi_Apps,         //   "App distinct"
 	thi_Integr,       // "Integration"
 	thi_DefTerm,      //   "Default terminal"
+	thi_Comspec,      //   "ComSpec"
 	thi_Keys,         // "Keys & Macro"
 	thi_Controls,     //   "Controls"
 	thi_MarkCopy,     //   "Mark & Copy"
@@ -146,6 +146,9 @@ protected:
 	CDynDialog* mp_DynDialog;
 	const CDpiForDialog* mp_ParentDpi;
 	ConEmuSetupPages* mp_InfoPtr;
+
+public:
+	static bool mb_IgnoreEditChanged;
 
 public:
 	CSetPgBase();

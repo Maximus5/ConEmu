@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShObjIdl_Part.h"
 #endif // __GNUC__
 
+#include "../common/MSetter.h"
 #include "../common/WUser.h"
 
 #include "AboutDlg.h"
@@ -53,6 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetDlgButtons.h"
 #include "SetDlgLists.h"
 #include "SetPgColors.h"
+#include "SetPgComspec.h"
 #include "SetPgFeatures.h"
 #include "SetPgIntegr.h"
 #include "SetPgKeys.h"
@@ -1973,15 +1975,15 @@ void CSetDlgButtons::OnBtn_CmdAutoActions(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==bCmdAutoClear || CB==bCmdAutoRegister || CB==bCmdAutoUnregister);
 
-	CSetPgIntegr* pIntgrPg;
-	if (gpSetCls->GetPageObj(pIntgrPg))
+	CSetPgComspec* pComspecPg;
+	if (gpSetCls->GetPageObj(pComspecPg))
 	{
-		pIntgrPg->ShellIntegration(hDlg, CSetPgIntegr::ShellIntgr_CmdAuto, CB==bCmdAutoRegister, CB==bCmdAutoClear);
-		pIntgrPg->PageDlgProc(hDlg, UM_RELOAD_AUTORUN, UM_RELOAD_AUTORUN, 0);
+		pComspecPg->RegisterCmdAutorun(CB==bCmdAutoRegister, CB==bCmdAutoClear);
+		pComspecPg->ReloadAutorun();
 	}
 	else
 	{
-		_ASSERTE(pIntgrPg!=NULL && "CSetPgIntegr was not created!");
+		_ASSERTE(pComspecPg!=NULL && "CSetPgComspec was not created!");
 	}
 
 } // bCmdAutoClear || bCmdAutoRegister || bCmdAutoUnregister
@@ -2717,10 +2719,10 @@ void CSetDlgButtons::OnBtn_Monospace(HWND hDlg, WORD CB, BYTE uCheck)
 
 	gpSet->isMonospace = uCheck;
 
-	gpSetCls->mb_IgnoreEditChanged = TRUE;
+	MSetter lIgnoreEdit(&CSetPgBase::mb_IgnoreEditChanged);
+
 	gpFontMgr->ResetFontWidth();
 	gpConEmu->Update(true);
-	gpSetCls->mb_IgnoreEditChanged = FALSE;
 
 } // cbMonospace
 

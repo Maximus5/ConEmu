@@ -3388,11 +3388,10 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		}
 	}
 
-	if (bSelAllowed)
-	{
-		nModifierPressed = gpConEmu->isSelectionModifierPressed(true);
-		nModifierNoEmptyPressed = gpConEmu->isSelectionModifierPressed(false);
-	}
+	// We have to do these checks always, otherwise MouseMove events would be
+	// bypassed to Far Menus, History etc. regardless Alt/Shift are pressed.
+	nModifierPressed = gpConEmu->isSelectionModifierPressed(true);
+	nModifierNoEmptyPressed = gpConEmu->isSelectionModifierPressed(false);
 
 	if (bSelAllowed && gpSet->isCTSIntelligent
 		&& !isSelectionPresent()
@@ -3750,6 +3749,13 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	else if (con.bRClick4KeyBar)
 	{
 		con.bRClick4KeyBar = FALSE;
+	}
+
+	// Don't bypass to Far Menus, History etc. when Alt/Shift are pressed.
+	if (nModifierPressed && (messg == WM_MOUSEMOVE))
+	{
+		lbSkip = true;
+		goto wrap;
 	}
 
 	// Allow posting mouse event to console only for rbt_Primary buffer

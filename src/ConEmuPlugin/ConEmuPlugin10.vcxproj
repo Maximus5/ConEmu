@@ -911,6 +911,7 @@
     <ClCompile Include="..\common\MAssert.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
     <ClCompile Include="..\common\Monitors.cpp" />
+    <ClCompile Include="..\common\MProcess.cpp" />
     <ClCompile Include="..\common\MSection.cpp" />
     <ClCompile Include="..\common\MSectionSimple.cpp" />
     <ClCompile Include="..\common\MSecurity.cpp" />
@@ -1074,12 +1075,14 @@
     <ClInclude Include="..\common\kl_parts.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\Monitors.h" />
+    <ClInclude Include="..\common\MProcess.h" />
     <ClInclude Include="..\common\MSection.h" />
     <ClInclude Include="..\common\MSectionSimple.h" />
     <ClInclude Include="..\common\MSecurity.h" />
     <ClInclude Include="..\common\MSetter.h" />
     <ClInclude Include="..\common\MStrDup.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
+    <ClInclude Include="..\common\MToolHelp.h" />
     <ClInclude Include="..\common\plugin_helper.h" />
     <ClInclude Include="..\common\pluginA.hpp" />
     <ClInclude Include="..\common\pluginW1761.hpp" />

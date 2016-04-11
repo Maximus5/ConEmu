@@ -9,6 +9,7 @@ SRCS = \
 		../common/HkFunc.cpp         \
 		../common/Memory.cpp         \
 		../common/Monitors.cpp       \
+		../common/MProcess.cpp       \
 		../common/MSection.cpp       \
 		../common/MSectionSimple.cpp \
 		../common/MSecurity.cpp      \

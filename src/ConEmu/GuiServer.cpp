@@ -698,6 +698,8 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 		case CECMD_CMDSTARTSTOP:
 		{
+			// Logging will be done in the CRealServer::cmdStartStop
+
 			CRealServer* pRSrv = NULL;
 			CVConGuard VCon;
 

@@ -39,7 +39,10 @@ SRCS = \
 		../common/MConHandle.cpp     \
 		../common/Memory.cpp         \
 		../common/MFileLog.cpp       \
+		../common/MModule.cpp        \
 		../common/Monitors.cpp       \
+		../common/MProcess.cpp       \
+		../common/MProcessBits.cpp   \
 		../common/MRect.cpp          \
 		../common/MSectionSimple.cpp \
 		../common/MSection.cpp       \

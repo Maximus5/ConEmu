@@ -80,6 +80,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/HkFunc.h"
 #include "../common/MArray.h"
 #include "../common/MPerfCounter.h"
+#include "../common/MProcess.h"
 #include "../common/MMap.h"
 #include "../common/MRect.h"
 #include "../common/MSectionSimple.h"
@@ -1259,7 +1260,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	xf_check();
 
 
-	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
+	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER || gnRunMode == RM_AUTOATTACH)
 	{
 		if ((HANDLE)ghConOut == INVALID_HANDLE_VALUE)
 		{
@@ -1291,10 +1292,10 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	/* ******************************** */
 	/* ****** "Server-mode" init ****** */
 	/* ******************************** */
-	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
+	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER || gnRunMode == RM_AUTOATTACH)
 	{
 		_ASSERTE(anWorkMode == (gnRunMode == RM_ALTSERVER));
-		if ((iRc = ServerInit(anWorkMode)) != 0)
+		if ((iRc = ServerInit()) != 0)
 		{
 			nExitPlaceStep = 250;
 			goto wrap;
@@ -3170,14 +3171,19 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			}
 			#endif
 
-			gnRunMode = RM_SERVER;
 			gbAttachMode |= am_Auto;
 			gbAlienMode = TRUE;
 			gbNoCreateProcess = TRUE;
 			if (lstrcmpi(szArg, L"/AUTOATTACH")==0)
+			{
+				gnRunMode = RM_AUTOATTACH;
 				gbAttachMode |= am_Async;
+			}
 			if (lstrcmpi(szArg, L"/ATTACHDEFTERM")==0)
+			{
+				gnRunMode = RM_SERVER;
 				gbAttachMode |= am_DefTerm;
+			}
 
 			// Еще может быть "/GHWND=NEW" но оно ниже. Там ставится "gpSrv->bRequestNewGuiWnd=TRUE"
 
@@ -3491,7 +3497,15 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		}
 		else if (wcsncmp(szArg, L"/GHWND=", 7)==0)
 		{
-			gnRunMode = RM_SERVER;
+			if (gnRunMode == RM_UNDEFINED)
+			{
+				gnRunMode = RM_SERVER;
+			}
+			else
+			{
+				_ASSERTE(gnRunMode == RM_AUTOATTACH || gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER);
+			}
+
 			wchar_t* pszEnd = NULL;
 			if (lstrcmpi(szArg+7, L"NEW") == 0)
 			{
@@ -3874,7 +3888,9 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 	// Issue 364, например, идет билд в VS, запускается CustomStep, в этот момент автоаттач нафиг не нужен
 	// Теоретически, в Студии не должно бы быть запуска ConEmuC.exe, но он может оказаться в "COMSPEC", так что проверим.
-	if (gbAttachMode && (gnRunMode == RM_SERVER) && (gnConEmuPID == 0))
+	if (gbAttachMode
+		&& ((gnRunMode == RM_SERVER) || (gnRunMode == RM_AUTOATTACH))
+		&& (gnConEmuPID == 0))
 	{
 		//-- ассерт не нужен вроде
 		//_ASSERTE(!gbAlternativeAttach && "Alternative mode must be already processed!");
@@ -3937,7 +3953,8 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 	}
 
 	// Validate Сonsole (find it may be) or ChildGui process we need to attach into ConEmu window
-	if ((gnRunMode == RM_SERVER) && (gbNoCreateProcess && gbAttachMode))
+	if (((gnRunMode == RM_SERVER) || (gnRunMode == RM_AUTOATTACH))
+		&& (gbNoCreateProcess && gbAttachMode))
 	{
 		// Проверить процессы в консоли, подобрать тот, который будем считать "корневым"
 		int nChk = CheckAttachProcess();
@@ -4613,7 +4630,7 @@ void SendStarted()
 	DWORD nMainServerPID = 0, nAltServerPID = 0, nGuiPID = 0;
 
 	// Для ComSpec-а сразу можно проверить, а есть-ли сервер в этой консоли...
-	if (gnRunMode /*== RM_COMSPEC*/ > RM_SERVER)
+	if ((gnRunMode != RM_AUTOATTACH) && (gnRunMode /*== RM_COMSPEC*/ > RM_SERVER))
 	{
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConsoleMap;
 		ConsoleMap.InitName(CECONMAPNAME, LODWORD(hConWnd)); //-V205
@@ -4621,7 +4638,7 @@ void SendStarted()
 
 		if (!pConsoleInfo)
 		{
-			_ASSERTE(pConsoleInfo && "ConsoleMap was not initialized for AltServer/ComSpec");
+			_ASSERTE((gnRunMode == RM_COMSPEC) && (ghConWnd && !ghConEmuWnd && IsWindowVisible(ghConWnd)) && "ConsoleMap was not initialized for AltServer/ComSpec");
 		}
 		else
 		{
@@ -4923,7 +4940,7 @@ void SendStarted()
 				}
 			}
 
-			UpdateConsoleMapHeader();
+			UpdateConsoleMapHeader(L"SendStarted");
 
 			_ASSERTE(gnMainServerPID==0 || gnMainServerPID==pOut->StartStopRet.dwMainSrvPID || (gbAttachMode && gbAlienMode && (pOut->StartStopRet.dwMainSrvPID==gnSelfPID)));
 			gnMainServerPID = pOut->StartStopRet.dwMainSrvPID;
@@ -5322,7 +5339,8 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bF
 		}
 
 		szFontInfo[0] = '`';
-		WideCharToMultiByte(CP_UTF8, 0, szFontName, -1, szFontInfo+1, 40, NULL, NULL);
+		int iCvt = WideCharToMultiByte(CP_UTF8, 0, szFontName, -1, szFontInfo+1, 40, NULL, NULL);
+		if (iCvt <= 0) lstrcpynA(szFontInfo+1, "??", 40); else szFontInfo[iCvt+1] = 0;
 		int iLen = lstrlenA(szFontInfo); // result of WideCharToMultiByte is not suitable (contains trailing zero)
 		_wsprintfA(szFontInfo+iLen, SKIPLEN(countof(szFontInfo)-iLen) "` %ix%i%s",
 			fontY, fontX, szState);
@@ -6419,7 +6437,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	gcrVisibleSize = crNewSize;
 
 	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)
-		UpdateConsoleMapHeader(); // Обновить pConsoleMap.crLockedVisible
+		UpdateConsoleMapHeader(L"SetConsoleSize"); // Обновить pConsoleMap.crLockedVisible
 
 	if (gnBufferHeight)
 	{
@@ -6600,6 +6618,7 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 		if (!gpSrv->nConhostPID)
 		{
 			// Найти порожденный conhost.exe
+			//TODO: Reuse MToolHelp.h
 			HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 			if (h && (h != INVALID_HANDLE_VALUE))
 			{

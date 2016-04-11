@@ -221,3 +221,23 @@ INT_PTR CSetPgMarkCopy::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 
 	return 0;
 }
+
+LRESULT CSetPgMarkCopy::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case tCTSIntelligentExceptions:
+		// *** Console text selections - intelligent exclusions ***
+		{
+			wchar_t* pszApps = GetDlgItemTextPtr(hDlg, tCTSIntelligentExceptions);
+			gpSet->SetIntelligentExceptions(pszApps);
+			SafeFree(pszApps);
+		}
+		break;
+
+	default:
+		_ASSERTE(FALSE && "EditBox was not processed");
+	}
+
+	return 0;
+}

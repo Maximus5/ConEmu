@@ -538,6 +538,8 @@
     <ClCompile Include="..\common\MJsonReader.cpp" />
     <ClCompile Include="..\common\MModule.cpp" />
     <ClCompile Include="..\common\Monitors.cpp" />
+    <ClCompile Include="..\common\MProcess.cpp" />
+    <ClCompile Include="..\common\MProcessBits.cpp" />
     <ClCompile Include="..\common\MRect.cpp" />
     <ClCompile Include="..\common\MSection.cpp" />
     <ClCompile Include="..\common\MSectionSimple.cpp" />
@@ -704,6 +706,8 @@
     <ClInclude Include="..\common\MModule.h" />
     <ClInclude Include="..\common\Monitors.h" />
     <ClInclude Include="..\common\MPipe.h" />
+    <ClInclude Include="..\common\MProcess.h" />
+    <ClInclude Include="..\common\MProcessBits.h" />
     <ClInclude Include="..\common\MRect.h" />
     <ClInclude Include="..\common\MSection.h" />
     <ClInclude Include="..\common\MSectionSimple.h" />
@@ -713,6 +717,7 @@
     <ClInclude Include="..\common\MStrEsc.h" />
     <ClInclude Include="..\common\MStrSafe.h" />
     <ClInclude Include="..\common\MTimer.h" />
+    <ClInclude Include="..\common\MToolHelp.h" />
     <ClInclude Include="..\common\MToolTip.h" />
     <ClInclude Include="..\common\PipeServer.h" />
     <ClInclude Include="..\common\ProcessData.h" />

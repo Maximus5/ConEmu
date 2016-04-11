@@ -68,3 +68,28 @@ LRESULT CSetPgDefTerm::OnInitDialog(HWND hDlg, bool abInitial)
 
 	return 0;
 }
+
+LRESULT CSetPgDefTerm::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case tDefaultTerminal:
+	{
+		wchar_t* pszApps = GetDlgItemTextPtr(hDlg, tDefaultTerminal);
+		if (!pszApps || !*pszApps)
+		{
+			SafeFree(pszApps);
+			pszApps = lstrdup(DEFAULT_TERMINAL_APPS/*L"explorer.exe"*/);
+			SetDlgItemText(hDlg, tDefaultTerminal, pszApps);
+		}
+		gpSet->SetDefaultTerminalApps(pszApps);
+		SafeFree(pszApps);
+	}
+	break;
+
+	default:
+		_ASSERTE(FALSE && "EditBox was not processed");
+	}
+
+	return 0;
+}

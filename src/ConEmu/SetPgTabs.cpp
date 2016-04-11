@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetDlgFonts.h"
 #include "SetPgFonts.h"
 #include "SetPgTabs.h"
+#include "TabBar.h"
 
 CSetPgTabs::CSetPgTabs()
 {
@@ -175,6 +176,82 @@ INT_PTR CSetPgTabs::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 
 	default:
 		_ASSERTE(FALSE && "ListBox was not processed");
+	}
+
+	return 0;
+}
+
+LRESULT CSetPgTabs::OnEditChanged(HWND hDlg, WORD nCtrlId)
+{
+	switch (nCtrlId)
+	{
+	case tTabSkipWords:
+	{
+		SafeFree(gpSet->pszTabSkipWords);
+		gpSet->pszTabSkipWords = GetDlgItemTextPtr(hDlg, nCtrlId);
+		gpConEmu->mp_TabBar->Update(TRUE);
+		break;
+	}
+
+	case tTabConsole:
+	case tTabModifiedSuffix:
+	{
+		wchar_t temp[MAX_PATH] = L"";
+
+		if (GetDlgItemText(hDlg, nCtrlId, temp, countof(temp)) && temp[0])
+		{
+			temp[31] = 0; // JIC
+
+			//03.04.2013, via gmail, просили не добавлять автоматом %s
+			//if (wcsstr(temp, L"%s") || wcsstr(temp, L"%n"))
+			switch (nCtrlId)
+			{
+			case tTabConsole:
+				wcscpy_c(gpSet->szTabConsole, temp);
+				break;
+			case tTabModifiedSuffix:
+				lstrcpyn(gpSet->szTabModifiedSuffix, temp, countof(gpSet->szTabModifiedSuffix));
+				break;
+			}
+
+			gpConEmu->mp_TabBar->Update(TRUE);
+		}
+		break;
+	} // case tTabConsole: case tTabViewer: case tTabEditor: case tTabEditorMod:
+
+	case tTabLenMax:
+	{
+		BOOL lbOk = FALSE;
+		DWORD n = GetDlgItemInt(hDlg, tTabLenMax, &lbOk, FALSE);
+
+		if (n > 10 && n < CONEMUTABMAX)
+		{
+			gpSet->nTabLenMax = n;
+			gpConEmu->mp_TabBar->Update(TRUE);
+		}
+		break;
+	} // case tTabLenMax:
+
+	case tTabFlashCounter:
+	{
+		GetDlgItemSigned(hDlg, tTabFlashCounter, gpSet->nTabFlashChanged, -1, 0);
+		break;
+	} // case tTabFlashCounter:
+
+	case tAdminSuffix:
+	{
+		wchar_t szNew[64];
+		GetDlgItemText(hDlg, tAdminSuffix, szNew, countof(szNew));
+		if (lstrcmp(szNew, gpSet->szAdminTitleSuffix) != 0)
+		{
+			wcscpy_c(gpSet->szAdminTitleSuffix, szNew);
+			gpConEmu->mp_TabBar->Update(TRUE);
+		}
+		break;
+	} // case tAdminSuffix:
+
+	default:
+		_ASSERTE(FALSE && "EditBox was not processed");
 	}
 
 	return 0;

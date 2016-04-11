@@ -40,6 +40,7 @@ $(INTDIR)\HkFunc.obj \
 $(INTDIR)\ImgCache.obj \
 $(INTDIR)\MAssert.obj \
 $(INTDIR)\Memory.obj \
+$(INTDIR)\MProcess.obj \
 $(INTDIR)\MSection.obj \
 $(INTDIR)\MSectionSimple.obj \
 $(INTDIR)\MSecurity.obj \
@@ -229,6 +230,8 @@ $(INTDIR)\ImgCache.obj: ImgCache.cpp
 $(INTDIR)\MAssert.obj: ../common/MAssert.cpp
 
 $(INTDIR)\Memory.obj: ../common/Memory.cpp
+
+$(INTDIR)\MProcess.obj: ../common/MProcess.cpp ../common/MProcess.h ../common/MToolHelp.h
 
 $(INTDIR)\MSection.obj: ../common/MSection.cpp ../common/MSection.h
 
