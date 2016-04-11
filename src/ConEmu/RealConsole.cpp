@@ -8229,6 +8229,7 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	DWORD nInteractivePID = m_AppMap.IsValid() ? m_AppMap.Ptr()->nLastReadInputPID : 0;
 	ConProcess AppDistinctPID = {};
 	bool bAppIdProcessExists = false;
+	CESERVER_ROOT_INFO Root = {};
 
 	//std::vector<ConProcess>::reverse_iterator iter = m_Processes.rbegin();
 	//std::vector<ConProcess>::reverse_iterator rend = m_Processes.rend();
@@ -8249,6 +8250,9 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 			continue;
 
 		nClientCount++;
+
+		// Root process would be the last one in our iteration
+		Root.nPID = iter->ProcessID;
 
 		// Far Manager?
 		if (!bIsFar)
@@ -8364,6 +8368,14 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 	}
 
 	SetFarPID(dwFarPID);
+
+	// Let remember Root console process?
+	if (Root.nPID && (Root.nPID != m_RootInfo.nPID))
+	{
+		Root.bRunning = TRUE;
+		Root.nExitCode = STILL_ACTIVE;
+		UpdateRootInfo(Root);
+	}
 
 	if (mn_Terminal_PID != dwTerminalPID)
 		SetTerminalPID(dwTerminalPID);
