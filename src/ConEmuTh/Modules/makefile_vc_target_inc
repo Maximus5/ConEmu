@@ -1,8 +1,8 @@
-ALL: dirs $(INSTALL) $(DLLFULLNAME) clean
+ALL: dirs $(INSTALL) $(OUTFULLNAME) clean
 
 LINK_OBJS = $(LINK_OBJS) $(OBJDIR)\MAssert.obj $(OBJDIR)\Memory.obj $(OBJDIR)\WThreads.obj
 
-$(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
+$(OUTFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS) $(CLR_STD)
 	$(LNK) @<<
 	$(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
@@ -11,25 +11,25 @@ $(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 !ifndef __MAKE__
 .cpp{$(OBJDIR)}.obj::
 	@$(CC) @<<
-	$(CFLAGS) $<
+	$(CPPFLAGS) $<
 <<
 {../}.cpp{$(OBJDIR)}.obj::
 	$(CC) @<<
-	$(CFLAGS) $<
+	$(CPPFLAGS) $<
 <<
 {../../../common/}.cpp{$(OBJDIR)}.obj::
 	$(CC) @<<
-	$(CFLAGS) $<
+	$(CPPFLAGS) $<
 <<
 !else
 .cpp{$(OBJDIR)}.obj:
-	@$(CC) $(CFLAGS) { $< } 
+	@$(CC) $(CPPFLAGS) { $< } 
 
 {../}.cpp{$(OBJDIR)}.obj:
-	@$(CC) $(CFLAGS) { $< } 
+	@$(CC) $(CPPFLAGS) { $< } 
 
 {../../common/}.cpp{$(OBJDIR)}.obj:
-	@$(CC) $(CFLAGS) { $< } 
+	@$(CC) $(CPPFLAGS) { $< } 
 !endif
 
 $(RES): $(RC_NAME).rc
@@ -47,8 +47,8 @@ dirs:
 clean:
 	@echo $(CLR_MOD)Copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
-	@echo moving `$(DLLFULLNAME)` to `$(RELEASEDIR)`
-	@move "$(DLLFULLNAME)" $(RELEASEDIR) > nul
+	@echo moving `$(OUTFULLNAME)` to `$(RELEASEDIR)`
+	@move "$(OUTFULLNAME)" $(RELEASEDIR) > nul
 	@echo moving `$(PDBNAME)` to `$(RELEASEDIR)\$(DLLNAME).pdb`
 	@move "$(PDBNAME)" "$(RELEASEDIR)\$(DLLNAME).pdb" > nul
 	@echo moving `$(MAP)` to `$(RELEASEDIR)\$(DLLNAME).map`

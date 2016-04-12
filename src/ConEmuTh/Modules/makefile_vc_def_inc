@@ -27,7 +27,7 @@ DEF_NAME=$(NAME)
 #COMMON = ..
 COMINC = ..
 DLLNAME = $(OUTNAME).$(EXT)
-DLLFULLNAME = $(OUTDIR)\$(DLLNAME)
+OUTFULLNAME = $(OUTDIR)\$(DLLNAME)
 DEF = $(DEF_NAME).def
 MAP = $(OUTDIR)\$(OUTNAME).$(EXT).map
 RES = $(OBJDIR)\$(NAME).res
@@ -100,11 +100,11 @@ NOENTRY = /noentry
 NODEFLIB = /nodefaultlib
 !endif
 
-LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
 
 
 
-CFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
+CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
 
 !ifndef CC
 CC=$(_CL_PATH_)cl.exe

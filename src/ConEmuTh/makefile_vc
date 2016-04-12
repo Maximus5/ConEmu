@@ -2,7 +2,7 @@
 .SILENT:
 
 NAME=ConEmuTh
-DIRNAME=$(NAME)
+EXT =dll
 RELEASEDIR=..\..\Release\plugins\ConEmu\Thumbs
 NEEDENTRY = 1
 USE_PDB = 1
@@ -12,20 +12,87 @@ NEEDDEFLIB = 1
 
 USERLIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib version.lib
 
-DEF_NAME = export
+DEF_FILE = export.def
 
 SUBMODULES = gdip pe ico
 
 NEEDENTRY = 1
 
-!if defined(AMD64) || "$(CPU)" == "AMD64"
-OUTNAME = ConEmuTh.x64
-BUILD_SUFFUX=x64
-!else
+!if "$(CPU)" == "X86"
 OUTNAME = ConEmuTh
 BUILD_SUFFUX=x86
+!else
+OUTNAME = ConEmuTh.x64
+BUILD_SUFFUX=x64
 !endif                   
 
+
+
+
+
+CPP_WIDE = $(CPP_WIDE) /DUSE_SEH
+
+!ifndef DEBUG
+CPP_OPT=/DNDEBUG /O1i /Fd$(PDB) /DHIDE_TODO 
+CPP_DEBUG=
+LINK_DEBUG=/map:"$(MAP)"
+#/DCRTSTARTUP
+!else
+CPP_OPT=/DDEBUG /Od /Fd$(PDB) 
+CPP_DEBUG=/Zi
+LINK_DEBUG=/DEBUG /pdb:"$(PDB)" /map:"$(MAP)"
+#/DCRTSTARTUP
+!endif
+
+!ifdef AMD64
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
+ULOUT=-Tpd+
+LINK_MACHINE = /MACHINE:X64
+!else
+#../pvdCRT.lib
+!ifdef CPP_UNALIGN
+CPP_ALIGN=/Zp1
+!endif
+# /I"$(COMMON)"
+CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c- /LD $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 /D_WINDLL $(USERCPP)
+ULOUT=-Tpd -Re
+LINK_MACHINE = /MACHINE:X86
+!endif
+CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
+
+LIBS = $(CRTLIB) $(USERLIBS)
+
+
+
+#LINK_DEBUG=/debug /pdb:$(PDB)
+#CPP_DEBUG=/Zi
+LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
+
+
+CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
+
+
+
+
+!include ../makefile_vc_link
+
+
+build: $(SUBMODULES) "$(OUTFULLNAME)"
+
+"$(OUTFULLNAME)": $(LINK_OBJS) $(RES) $(LINK_DEP)
+	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS)$(CLR_STD)
+	$(LNK) @<<
+	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
+<<
+
+
+$(RES): $(RC_NAME).rc
+	@$(RC) $(ENV_INC_OPT) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
+
+
+
+
+################
 
 LINK_OBJS = \
 $(INTDIR)\CEStr.obj \
@@ -53,153 +120,6 @@ $(INTDIR)\WFiles.obj \
 $(INTDIR)\WObjects.obj \
 $(INTDIR)\WThreads.obj \
 $(INTDIR)\WUser.obj
-
-
-RC_NAME=$(NAME)
-
-
-#COMMON = ..
-COMINC = ..
-CPP_WIDE = $(CPP_WIDE) /DUSE_SEH
-EXT = dll
-DLLNAME = $(OUTNAME).$(EXT)
-DLLFULLNAME = $(OUTDIR)$(ADDOUTDIR)\$(DLLNAME)
-DEF = $(DEF_NAME).def
-MAP = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).map
-PDB = $(OUTDIR)$(ADDOUTDIR)\$(OUTNAME).pdb
-RES = $(INTDIR)\$(NAME).res
-
-!ifdef VC8
-COMPAT64=/Wp64
-NOWIN98=/OPT:NOWIN98
-!endif
-
-!ifndef DEBUG
-CPP_OPT=/DNDEBUG /O1i /Fd$(PDB) /DHIDE_TODO 
-CPP_DEBUG=
-LINK_DEBUG=/map:"$(MAP)"
-#/DCRTSTARTUP
-!else
-CPP_OPT=/DDEBUG /Od /Fd$(PDB) 
-CPP_DEBUG=/Zi
-LINK_DEBUG=/DEBUG /pdb:"$(PDB)" /map:"$(MAP)"
-#/DCRTSTARTUP
-!endif
-
-!ifdef AMD64
-CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
-ULOUT=-Tpd+
-LINK_MACHINE = /MACHINE:X64
-!else
-#../pvdCRT.lib
-!ifdef CPP_UNALIGN
-CPP_ALIGN=/Zp1
-!endif
-# /I"$(COMMON)"
-CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF $(CPP_ALIGN) /J /Gr /GS- /GR- /EHs-c- /LD /I"$(COMINC)" $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 /D_WINDLL $(USERCPP)
-ULOUT=-Tpd -Re
-LINK_MACHINE = /MACHINE:X86
-!endif
-CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
-
-LIBS = $(CRTLIB) $(USERLIBS)
-
-!ifdef _BIN_PATH_
-!ifndef _CL_PATH_
-_CL_PATH_=$(_BIN_PATH_)
-!endif
-!ifndef _RC_PATH_
-_RC_PATH_=$(_BIN_PATH_)
-!endif
-!ifndef _LINK_PATH_
-_LINK_PATH_=$(_BIN_PATH_)
-!endif
-!endif
-
-
-LNK=$(_LINK_PATH_)link.exe
-#LINK_DEBUG=/debug /pdb:$(PDB)
-#CPP_DEBUG=/Zi
-LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
-
-
-CFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
-
-!ifndef CC
-CC=$(_CL_PATH_)cl.exe
-!endif
-
-!ifndef LIBR
-LIBR=$(_LINK_PATH_)lib.exe
-!endif
-
-!ifndef RC
-RC=$(_RC_PATH)rc.exe
-!endif
-
-!if !defined(SRC_PATHS_DEFINED) && defined(__MAKE__)
-SRC_PATHS=.;..\common
-.path.cpp=$(SRC_PATHS)
-.path.c=$(SRC_PATHS)
-.path.hpp=$(SRC_PATHS)
-.path.h=$(SRC_PATHS)
-.path.rc=$(SRC_PATHS)
-.path.def=$(SRC_PATHS)
-!endif
-
-ALL: dirs $(INSTALL) $(DLLFULLNAME) clean $(SUBMODULES)
-
-$(DLLFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
-	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS)$(CLR_STD)
-	$(LNK) @<<
-	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
-<<
-
-!ifndef __MAKE__
-.cpp{$(INTDIR)}.obj::
-	@$(CC) @<<
-	$(CFLAGS) $<
-<<
-{../common/}.cpp{$(INTDIR)}.obj::
-	$(CC) @<<
-	$(CFLAGS) $<
-<<
-!else
-.cpp{$(INTDIR)}.obj:
-	@$(CC) $(CFLAGS) { $< } 
-
-{../common/}.cpp{$(INTDIR)}.obj:
-	@$(CC) $(CFLAGS) { $< } 
-
-!endif
-
-$(RES): $(RC_NAME).rc
-	@$(RC) /I"$(COMINC)" $(ENV_INC_OPT) $(RC_WIDE) /fo"$(RES)" $(RC_NAME).rc
-
-.PHONY: dirs
-dirs:
-!ifdef INSTALL
-	@if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
-!endif
-	@if not exist "$(INTDIR)\$(NULL)" mkdir "$(INTDIR)"
-	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
-	@if not exist "$(OUTDIR)$(ADDOUTDIR)\$(NULL)" mkdir "$(OUTDIR)$(ADDOUTDIR)"
-#	@echo cl flags: $(CFLAGS)
-#	@echo link flags: $(LINK_FLAGS) $(LIBS)
-
-.PHONY: clean
-clean:
-	@echo $(CLR_MOD)Copying release files$(CLR_STD)
-	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
-	@echo moving `$(DLLFULLNAME)` to `$(RELEASEDIR)`
-	@move $(DLLFULLNAME) $(RELEASEDIR) > nul
-	@echo moving `$(PDB)` to `$(RELEASEDIR)`
-!ifdef DEBUG
-	move $(PDB) $(RELEASEDIR) > nul
-!else
-	@if exist $(PDB) del $(PDB)
-!endif
-	move $(MAP) $(RELEASEDIR) > nul
 
 
 ################

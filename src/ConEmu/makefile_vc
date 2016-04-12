@@ -2,35 +2,121 @@
 .SILENT:
 
 NAME=ConEmu
-DIRNAME=$(NAME)
+EXT=exe
 RELEASEDIR=..\..\Release
 NEEDDEFLIB = 1
+USE_PDB = 1
 
 !include ../makefile_vc_defs
+
+#DEF_FILE = ".\$(NAME).def"
+!undef DEF_FILE
+
+
+!if "$(CPU)" == "X86"
+OUTNAME=ConEmu
+!else
+OUTNAME=ConEmu64
+!endif
 
 USERLIBS = kernel32.lib user32.lib advapi32.lib shell32.lib gdi32.lib version.lib \
            shlwapi.lib comctl32.lib comdlg32.lib winmm.lib ole32.lib oleaut32.lib \
            netapi32.lib
 
-!if defined(AMD64)
-OUTNAME=ConEmu64
-!elseif defined(IA64)
-OUTNAME=ConEmuIA64
-!else
-OUTNAME=ConEmu
-!endif
-
-LINK=link.exe
-M4=tools\m4 -P -DFARBIT=$(DIRBIT)
-GAWK=tools\gawk
-
-#DEF_FILE = ".\$(NAME).def"
-
 RES_FILE = $(INTDIR)\$(NAME).res
 
 MINGW_RES_FILE = $(NAME)MinGW.res
 
-#PCH_FILE = "$(INTDIR)\headers.pch"
+DEFINES=\
+	/DUNICODE \
+	/D_UNICODE \
+	/D$(USEDEBUG) \
+	/DHIDE_TODO \
+	/DCRTPRINTF \
+	/D_CRT_SECURE_NO_WARNINGS \
+	/D_CRT_NON_CONFORMING_SWPRINTFS \
+	/DUSE_SEH
+
+
+# common
+CPPFLAGS=/nologo $(MP) /W3 /wd4995 $(FARSYSLOG) /EHsc $(DEFINES) /GS /GR /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(PDB)" /J /c /FAcs /Fa"$(CODDIR)\\"
+LINKFLAGS=/nologo /subsystem:WINDOWS /out:"$(OUTFULLNAME)" /map:"$(MAP)" /RELEASE /nxcompat
+!ifndef NO_RELEASE_PDB
+LINKFLAGS=$(LINKFLAGS) /DEBUG /pdb:"$(PDB)"
+!endif
+RFLAGS=$(RCWIN64) /DCERC_MANIFEST /l 0x409 /d $(USEDEBUG)
+
+# config-cpecific
+!ifdef DEBUG
+CPPFLAGS=$(CPPFLAGS) /Od /Zi
+LINKFLAGS=$(LINKFLAGS)
+!else
+CPPFLAGS=$(CPPFLAGS) /O2 /Oy-
+!ifndef NO_RELEASE_PDB
+CPPFLAGS=$(CPPFLAGS) /Zi
+LINKFLAGS=$(LINKFLAGS)
+!endif
+LINKFLAGS=$(LINKFLAGS) /incremental:no /OPT:REF /OPT:ICF
+!endif
+
+# platform-specific
+!ifdef X86
+#Struct member alignment must be 8bytes even on x86 (Win7 API)
+CPPFLAGS=$(CPPFLAGS) /Zp8
+LINKFLAGS=$(LINKFLAGS) /machine:i386
+!elseifdef AMD64
+CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
+LINKFLAGS=$(LINKFLAGS) /machine:amd64
+!elseifdef IA64
+CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
+LINKFLAGS=$(LINKFLAGS) /machine:IA64
+!endif
+
+# Due to a bug(?) in MinGW windres
+# we have to prepare some resources
+!ifdef X86
+MINGWRES=$(MINGW_RES_FILE)
+!else
+MINGWRES=
+!endif
+
+
+ALL: dirs build release
+
+## .PHONY: build
+build: "$(OUTDIR)\$(OUTNAME).$(EXT)" $(MINGWRES)
+  echo `build` target
+
+# Due to bugs(?) of MinGW's windres it fails to
+# include properly our truecolor images and icons
+mingw: $(MINGW_RES_FILE)
+  echo `mingw` target
+
+
+!include ../makefile_vc_link
+
+
+
+"$(OUTFULLNAME)": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(MINGWRES) conemu.gcc.manifest
+	@echo $(CLR_BRN)linking $@ :: $(LINKFLAGS) $(LINK_LIBS)$(CLR_STD)
+	$(LNK) @<<
+	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
+<<
+
+
+$(RES_FILE): ConEmu.rc Externals.rc2 Version.h Version.rc2
+	echo compiling resource file
+	$(RC) $(RFLAGS) /fo"$(RES_FILE)" ConEmu.rc
+
+
+$(MINGW_RES_FILE): ConEmuMinGW.rc Externals.rc2
+	echo compiling mingw resource file
+	$(RC) $(RFLAGS) /fo"$(MINGW_RES_FILE)" ConEmuMINGW.rc
+
+
+
+
+################
 
 LINK_OBJS = \
 $(INTDIR)\AboutDlg.obj \
@@ -200,143 +286,6 @@ $(INTDIR)\WSession.obj \
 $(INTDIR)\WThreads.obj \
 $(INTDIR)\WUser.obj
 
-
-LINK_LIBS = $(CRTLIB) $(USERLIBS)
-
-
-DEFINES=\
-	/DUNICODE \
-	/D_UNICODE \
-	/D$(USEDEBUG) \
-	/DHIDE_TODO \
-	/DCRTPRINTF \
-	/D_CRT_SECURE_NO_WARNINGS \
-	/D_CRT_NON_CONFORMING_SWPRINTFS \
-	/DUSE_SEH
-
-MAP = $(OUTDIR)\$(OUTNAME).Gui.map
-PDB_NAME = $(OUTNAME).pdb
-PDB = $(OUTDIR)\$(PDB_NAME)
-
-# common
-CPPFLAGS=/nologo $(MP) /W3 /wd4995 $(FARSYSLOG) /EHsc $(DEFINES) /GS /GR /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(PDB)" /J /c /FAcs /Fa"$(CODDIR)\\"
-LINKFLAGS=/nologo /subsystem:WINDOWS /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(MAP)" /RELEASE /nxcompat
-!ifndef NO_RELEASE_PDB
-LINKFLAGS=$(LINKFLAGS) /DEBUG /pdb:"$(PDB)"
-!endif
-RFLAGS=$(RCWIN64) /DCERC_MANIFEST /l 0x409 /d $(USEDEBUG)
-
-# config-cpecific
-!ifdef DEBUG
-CPPFLAGS=$(CPPFLAGS) /Od /Zi
-LINKFLAGS=$(LINKFLAGS)
-!else
-CPPFLAGS=$(CPPFLAGS) /O2 /Oy-
-!ifndef NO_RELEASE_PDB
-CPPFLAGS=$(CPPFLAGS) /Zi
-LINKFLAGS=$(LINKFLAGS)
-!endif
-LINKFLAGS=$(LINKFLAGS) /incremental:no /OPT:REF /OPT:ICF
-!endif
-
-# platform-specific
-!ifdef X86
-#Struct member alignment must be 8bytes even on x86 (Win7 API)
-CPPFLAGS=$(CPPFLAGS) /Zp8
-LINKFLAGS=$(LINKFLAGS) /machine:i386
-!elseifdef AMD64
-CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
-LINKFLAGS=$(LINKFLAGS) /machine:amd64
-!elseifdef IA64
-CPPFLAGS=$(CPPFLAGS) /Zp8 /D_WIN64 /DWIN64
-LINKFLAGS=$(LINKFLAGS) /machine:IA64
-!endif
-
-# Due to a bug(?) in MinGW windres
-# we have to prepare some resources
-!ifdef X86
-MINGWRES=$(MINGW_RES_FILE)
-!else
-MINGWRES=
-!endif
-
-ALL: AllDirs build clean
-
-
-.PHONY: build
-build: "$(OUTDIR)\$(OUTNAME).exe" $(MINGWRES)
-
-# Due to bugs(?) of MinGW's windres it fails to
-# include properly our truecolor images and icons
-mingw: $(MINGW_RES_FILE)
-
-.PHONY: AllDirs
-AllDirs:
-	if not exist "$(OUTDIR)" mkdir "$(OUTDIR)"
-	if not exist "$(INTDIR)" mkdir "$(INTDIR)"
-	if not exist "$(CODDIR)" mkdir "$(CODDIR)"
-
-"$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(MINGWRES) conemu.gcc.manifest
-	@echo $(CLR_BRN)linking $@ :: $(LINKFLAGS) $(LINK_LIBS)$(CLR_STD)
-	$(LINK) @<<
-	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
-<<
-
-#$(PCH_FILE): headers.cpp headers.hpp
-#	echo making precompiled headers
-#	$(CPP) $(CPPFLAGS) headers.cpp /Yc /Fp"$(PCH_FILE)"
-
-#.c{$(INTDIR)}.obj::
-#	$(CPP) @<<
-#	$(CPPFLAGS) $<
-# << 
-
-.cpp{$(INTDIR)}.obj::
-	$(CPP) @<<
-	$(CPPFLAGS) $<
-<<
-
-{../common/}.cpp{$(INTDIR)}.obj::
-	$(CPP) @<<
-	$(CPPFLAGS) $<
-<<
-
-{../ConEmuPlugin/}.cpp{$(INTDIR)}.obj::
-	$(CPP) @<<
-	$(CPPFLAGS) $<
-<<
-
-#{UCD}.c{$(INTDIR)}.obj::
-#	$(CPP) @<<
-#	$(CPPFLAGS) $<
-# <<
-
-#{UCD}.cpp{$(INTDIR)}.obj::
-#	$(CPP) @<<
-#	$(CPPFLAGS) $<
-# <<
-
-$(RES_FILE): ConEmu.rc Externals.rc2 Version.h Version.rc2
-	echo compiling resource file
-	$(RC) $(RFLAGS) /fo"$(RES_FILE)" ConEmu.rc
-
-$(MINGW_RES_FILE): ConEmuMinGW.rc Externals.rc2
-	echo compiling mingw resource file
-	$(RC) $(RFLAGS) /fo"$(MINGW_RES_FILE)" ConEmuMINGW.rc
-
-#!ifdef USEDEPS
-#!include "$(DEPFILE)"
-#!endif
-
-MSG=echo generating $@
-
-#Far.exe.manifest: $@.m4 farversion.m4 tools.m4 vbuild.m4
-#	$(MSG)
-#	$(M4) $@.m4 > $@
-
-#ConEmuC.rc: $@.m4 farversion.m4 tools.m4 vbuild.m4 Far.exe.manifest res.hpp
-#	$(MSG)
-#	$(M4) $@.m4 > $@
 
 
 ################
@@ -677,15 +626,3 @@ $(INTDIR)\WUser.obj: ../common/WUser.cpp
 #LINK_OBJS end
 ##############
 
-.PHONY: clean
-clean:
-	@echo $(CLR_MOD)Copying release files$(CLR_STD)
-	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
-	@echo moving `$(OUTDIR)\$(OUTNAME).exe` to `$(RELEASEDIR)`
-	@move "$(OUTDIR)\$(OUTNAME).exe" $(RELEASEDIR) > nul
-	@echo moving `$(MAP)` to `$(RELEASEDIR)`
-	@move "$(MAP)" $(RELEASEDIR) > nul
-!ifndef NO_RELEASE_PDB
-	@echo copying `$(PDB)` to `$(RELEASEDIR)\$(PDB_NAME)`
-	@copy "$(PDB)" "$(RELEASEDIR)\$(PDB_NAME)" > nul
-!endif

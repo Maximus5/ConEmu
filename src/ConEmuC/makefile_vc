@@ -2,45 +2,27 @@
 .SILENT:
 
 NAME=ConEmuC
-DIRNAME=$(NAME)
+EXT=exe
 RELEASEDIR=..\..\Release\ConEmu
 NEEDDEFLIB = 1
+USE_PDB = 1
 
 !include ../makefile_vc_defs
 
-USERLIBS = kernel32.lib user32.lib shell32.lib
+DEF_FILE = .\$(NAME).def
 
-!if defined(AMD64)
-OUTNAME=ConEmuC64
-!elseif defined(IA64)
-OUTNAME=ConEmuC64
-!else
+!if "$(CPU)" == "X86"
 OUTNAME=ConEmuC
+!else
+OUTNAME=ConEmuC64
 !endif
 
-LINK=link.exe
-M4=tools\m4 -P -DFARBIT=$(DIRBIT)
-GAWK=tools\gawk
-
-DEF_FILE = .\$(NAME).def
+USERLIBS = kernel32.lib user32.lib shell32.lib
 
 RES_FILE = "$(OBJDIR)\$(NAME).res"
 
-#PCH_FILE = "$(OBJDIR)\headers.pch"
 
-LINK_OBJS = \
-$(INTDIR)\CEStr.obj \
-$(INTDIR)\CmdLine.obj \
-$(INTDIR)\ConEmuC.obj \
-$(INTDIR)\Downloader.obj \
-$(INTDIR)\HkFunc.obj \
-$(INTDIR)\MAssert.obj \
-$(INTDIR)\Memory.obj \
-$(INTDIR)\MSectionSimple.obj \
-$(INTDIR)\MStrDup.obj \
-$(INTDIR)\MStrSafe.obj \
-$(INTDIR)\WObjects.obj \
-$(INTDIR)\WThreads.obj
+
 
 
 LINK_LIBS=$(CRTLIB) $(USERLIBS)
@@ -94,99 +76,45 @@ LINKFLAGS=$(LINKFLAGS) /opt:nowin98
 RFLAGS=$(RFLAGS) 
 !endif
 
-ALL: AllDirs build clean
-#ALL: AllDirs lng depfile
-#	$(MAKE) /nologo /f makefile_vc build USEDEPS=1
 
-#.PHONY: lng
-#lng: farlang.templ
-#	echo generating language files
-#	tools\lng.generator.exe -nc -i lang.ini -ol "$(OUTDIR)" farlang.templ
+!include ../makefile_vc_link
 
-#.PHONY: depfile
-#depfile:
-#	$(GAWK) -f .\scripts\mkdep.awk mkdep.list > $(DEPFILE)
-
-cppflags:
-	@echo $(CLR_BRN)compiling $(NAME) :: $(CPPFLAGS)$(CLR_STD)
 
 .PHONY: build
-build: cppflags "$(OUTDIR)\$(OUTNAME).exe"
+build: cppflags "$(OUTFULLNAME)"
 
-.PHONY: AllDirs
-AllDirs:
-	@if not exist "$(OUTDIR)\" mkdir "$(OUTDIR)"
-	@if not exist "$(OBJDIR)\" mkdir "$(OBJDIR)"
-	@if not exist "$(CODDIR)\" mkdir "$(CODDIR)"
 
-"$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
+"$(OUTFULLNAME)": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
 	@echo $(CLR_BRN)linking $@ :: $(LINKFLAGS) $(LINK_LIBS)$(CLR_STD)
-	$(LINK) @<<
+	$(LNK) @<<
 	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
 <<
 
-#$(PCH_FILE): headers.cpp headers.hpp
-#	echo making precompiled headers
-#	$(CPP) $(CPPFLAGS) headers.cpp /Yc /Fp"$(PCH_FILE)"
 
-#.c{$(OBJDIR)}.obj::
-#	$(CPP) @<<
-#	$(CPPFLAGS) $<
-#<<
-
-.cpp{$(OBJDIR)}.obj::
-	$(CPP) @<<
-	$(CPPFLAGS) $<
-<<
-
-{../common/}.cpp{$(OBJDIR)}.obj::
-	$(CPP) @<<
-	$(CPPFLAGS) $<
-<<
-
-{../ConEmuPlugin/}.cpp{$(OBJDIR)}.obj::
-	$(CPP) @<<
-	$(CPPFLAGS) $<
-<<
-
-#{UCD}.c{$(OBJDIR)}.obj::
-#	$(CPP) @<<
-#	$(CPPFLAGS) $<
-#<<
-
-#{UCD}.cpp{$(OBJDIR)}.obj::
-#	$(CPP) @<<
-#	$(CPPFLAGS) $<
-#<<
 
 $(RES_FILE): $(NAME).rc ..\ConEmu\Version.h
-	echo compiling resource file
+	@echo compiling resource file
 	$(RC) $(RFLAGS) $(NAME).rc
 
-#!ifdef USEDEPS
-#!include "$(DEPFILE)"
-#!endif
 
-MSG=echo generating $@
 
-#Far.exe.manifest: $@.m4 farversion.m4 tools.m4 vbuild.m4
-#	$(MSG)
-#	$(M4) $@.m4 > $@
 
-#ConEmuC.rc: $@.m4 farversion.m4 tools.m4 vbuild.m4 Far.exe.manifest res.hpp
-#	$(MSG)
-#	$(M4) $@.m4 > $@
+################
 
-.PHONY: CLEAN
-CLEAN:
-	@echo $(CLR_MOD)Copying release files$(CLR_STD)
-	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
-	@echo moving `$(OUTDIR)\$(OUTNAME).exe` to `$(RELEASEDIR)`
-	@move "$(OUTDIR)\$(OUTNAME).exe" $(RELEASEDIR) > nul
-	@echo moving `$(OUTDIR)\$(OUTNAME).pdb` to `$(RELEASEDIR)`
-	@copy "$(OUTDIR)\$(OUTNAME).pdb" $(RELEASEDIR) > nul
-	@echo moving `$(OUTDIR)\$(OUTNAME).map` to `$(RELEASEDIR)`
-	@move "$(OUTDIR)\$(OUTNAME).map" $(RELEASEDIR) > nul
+LINK_OBJS = \
+$(INTDIR)\CEStr.obj \
+$(INTDIR)\CmdLine.obj \
+$(INTDIR)\ConEmuC.obj \
+$(INTDIR)\Downloader.obj \
+$(INTDIR)\HkFunc.obj \
+$(INTDIR)\MAssert.obj \
+$(INTDIR)\Memory.obj \
+$(INTDIR)\MSectionSimple.obj \
+$(INTDIR)\MStrDup.obj \
+$(INTDIR)\MStrSafe.obj \
+$(INTDIR)\WObjects.obj \
+$(INTDIR)\WThreads.obj
+
 
 ################
 #LINK_OBJS begin

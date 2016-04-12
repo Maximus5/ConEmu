@@ -32,10 +32,11 @@ CLR_STD=[m
 #!endif
 
 !ifndef DEBUG
-DIRNAME=final.$(DIRNAME)
+DIRNAME=final.$(NAME)
 USEDEBUG=NDEBUG
+# !do not unset USE_PDB here!
 !else
-DIRNAME=debug.$(DIRNAME)
+DIRNAME=debug.$(NAME)
 USEDEBUG=_DEBUG
 USE_PDB=1
 NO_OPTIMIZE=1
@@ -91,7 +92,7 @@ RCWIN64=/D_WIN64 /DWIN64
 
 !else
 
-!undef CPU
+CPU=X86
 !undef AMD64
 !undef IA64
 X86=1
@@ -172,3 +173,23 @@ MP = /MD
 !else
 MP = /MT
 !endif
+
+
+
+!ifdef _BIN_PATH_
+!ifndef _CL_PATH_
+_CL_PATH_=$(_BIN_PATH_)
+!endif
+!ifndef _RC_PATH_
+_RC_PATH_=$(_BIN_PATH_)
+!endif
+!ifndef _LINK_PATH_
+_LINK_PATH_=$(_BIN_PATH_)
+!endif
+!endif
+
+
+CPP=$(_CL_PATH_)cl.exe
+LNK=$(_LINK_PATH_)link.exe
+RC=$(_RC_PATH)rc.exe
+

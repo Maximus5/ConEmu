@@ -2,7 +2,6 @@
 .SILENT:
 
 NAME = gdip
-DIRNAME=$(NAME)
 OUTNAME = gdi+
 
 USERCPP=/D_NO_EXEPTION_=1

@@ -1,0 +1,79 @@
+
+LINK_LIBS = $(CRTLIB) $(USERLIBS)
+
+
+MAP = $(OUTDIR)\$(NAME).$(EXT).map
+PDB = $(OUTDIR)\$(NAME).$(EXT).pdb
+RES = $(INTDIR)\$(NAME).res
+
+OUTFULLNAME = $(OUTDIR)\$(OUTNAME).$(EXT)
+
+!ifndef RC_NAME
+RC_NAME=$(NAME)
+!endif
+
+.cpp{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+{../common/}.cpp{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+{../ConEmuPlugin/}.cpp{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+{../ConEmuHk/}.cpp{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+{../ConEmuCD/}.cpp{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+.c{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+{../modules/minhook/src/}.c{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+{../ConEmuC/}.cpp{$(INTDIR)}.obj::
+	$(CPP) @<<
+	$(CPPFLAGS) $<
+<<
+
+
+## .PHONY: cppflags
+cppflags:
+	@echo $(CLR_BRN)compiling `$(NAME)` :: $(CPPFLAGS)$(CLR_STD)
+
+
+## .PHONY: dirs
+dirs:
+	@if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
+	@if not exist "$(INTDIR)\$(NULL)" mkdir "$(INTDIR)"
+	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
+
+
+## .PHONY: release
+release:
+	@echo $(CLR_MOD)Copying release files$(CLR_STD)
+	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
+	@echo moving `$(OUTFULLNAME)` to `$(RELEASEDIR)`
+	@move "$(OUTFULLNAME)" $(RELEASEDIR) > nul
+	@echo moving `$(MAP)` to `$(RELEASEDIR)`
+	@move "$(MAP)" $(RELEASEDIR) > nul
+!if "$(USE_PDB)" == "1" && !defined(NO_RELEASE_PDB)
+	@echo copying `$(PDB)` to `$(RELEASEDIR)\$(PDB_NAME)`
+	@copy "$(PDB)" "$(RELEASEDIR)\$(PDB_NAME)" > nul
+!endif
