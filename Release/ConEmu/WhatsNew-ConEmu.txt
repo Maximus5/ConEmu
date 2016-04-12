@@ -20,6 +20,25 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.4.11
+* gh-629: Support xterm keyboard emulation for ‘Bash on Ubuntu on Windows’.
+  conhost does not do keypressed translation, if they were posted directly to console input.
+  That's why switch `-cur_console:p1` must be used to turn on internal xterm emulation in ConEmu.
+  So, the task {Bash-on-Ubuntu} would be:
+
+      %windir%\system32\bash.exe -cur_console:p1
+
+* New default task {Bash::Bash on Ubuntu} for Windows 10 (if the feature is turned on in Windows).
+* gh-637, gh-626: Access vialation on entering plugin ‘ConEmu Background’.
+* Environment variables: `ConEmuArgs` and `ConEmuArgs2`.
+  * `ConEmuArgs` now contains only ConEmu.exe's ‘switches’ (before `-cmd` or `-cmdlist`).
+  * New variable `ConEmuArgs2` contains the command only: `-cmd ...` or `-cmdlist ...`.
+* Reuse `ConEmuArgs` when starting new ConEmu instance from cmd autorun.
+* gh-614, gh-616: Handle commas as decimal separators in the in-console progress detection.
+  This fixes `curl -# -O` looping between 0 and 9%.
+* Do not apply the icon from {Task} if option ‘Show overlay icon’ is on, to avoid two similar icons, one over another.
+
+
 2016.4.3a
 * gh-620: ConEmu shows assertion when terminating SSH session in stermc.
 * gh-624: Defaults on Settings\Integration were lost after reactivating page.
