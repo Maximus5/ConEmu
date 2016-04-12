@@ -48,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/FarVersion.h"
 #include "../common/MSetter.h"
 #include "../common/MStrDup.h"
+#include "../common/MWow64Disable.h"
 #include "../common/StartupEnvDef.h"
 #include "../common/WFiles.h"
 #include "../common/WRegistry.h"
@@ -1994,7 +1995,6 @@ static void CreateCmdTask()
 // powershell.exe
 static void CreatePowerShellTask()
 {
-	AppFoundList App;
 	// Windows internal: PowerShell
 	// Don't use 'App.Add' here, we are creating "powershell.exe" tasks directly
 	CreateDefaultTask(L"Shells::PowerShell", L"",
@@ -2036,11 +2036,23 @@ static void CreateBashTask()
 	//      Control Panel / Programs / Turn Windows features on or off
 	//   b) Select ‘Developer mode’
 	//      Settings / Update & Security / For Developers
-	CEStr lsBashOnUbuntu(L"%windir%\\system32\\bash.exe");
-	if (FileExists(lsBashOnUbuntu))
-		App.Add(L"Bash::Bash on Ubuntu",
-			L" -new_console:p1 -new_console:C:\"%USERPROFILE%\\AppData\\Local\\lxss\\bash.ico\"", NULL, NULL,
-			lsBashOnUbuntu, NULL);
+	if (IsWin10())
+	{
+		#ifndef _WIN64
+		MWow64Disable wow; wow.Disable(); // We need 64-bit version of system32
+		#endif
+		wchar_t BashOnUbuntu[] = L"%windir%\\system32\\bash.exe";
+		CEStr lsExpanded(ExpandEnvStr(BashOnUbuntu));
+		if (FileExists(lsExpanded))
+		{
+			App.Add(L"Bash::bash",
+				L" -new_console:p1 -new_console:C:\"%USERPROFILE%\\AppData\\Local\\lxss\\bash.ico\"", // "--login -i" is not required yet
+				NULL /*L"chcp utf8 & "*/, // doesn't work either. can't type Russian or international characters.
+				NULL, // No special GUI Args, we set icon via "-new_console:C:..."
+				BashOnUbuntu,
+				NULL);
+		}
+	}
 
 	// From Git-for-Windows (aka msysGit v2)
 	bool bGitBashExist = // No sense to add both `git-cmd.exe` and `bin/bash.exe`
