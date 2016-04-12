@@ -3634,6 +3634,11 @@ void CConEmuMain::SetWindowIcon(LPCWSTR asNewIcon)
 	if (!asNewIcon || !*asNewIcon)
 		return;
 
+	// Do not apply the icon from {Task} if option "Show overlay icon" is on
+	// to avoid two similar icons, one over another...
+	if (gpSet->isTaskbarOverlay)
+		return;
+
 	HICON hOldClassIcon = hClassIcon, hOldClassIconSm = hClassIconSm;
 	hClassIcon = NULL; hClassIconSm = NULL;
 	SafeFree(mps_IconPath);
