@@ -47,6 +47,5 @@ x64
 
 Release/**/*.iobj
 Release/**/*.ipdb
-Release/**/*.iobj
 Release/**/*.exp
 Release/**/*.lib
