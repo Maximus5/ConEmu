@@ -273,6 +273,13 @@ enum RConStartState
 	rss_ProcessActive,
 };
 
+enum ChangeTermAction
+{
+	cta_Disable = 0,
+	cta_Enable = 1,
+	cta_Switch = 2,
+};
+
 struct ConEmuHotKey;
 struct ConsoleInfoArg;
 
@@ -457,6 +464,7 @@ class CRealConsole
 		const ConEmuHotKey* ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars);
 		TermEmulationType GetTermType();
 		bool GetBracketedPaste();
+		bool GetAppCursorKeys();
 		bool ProcessXtermSubst(const INPUT_RECORD& r);
 		void ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -468,6 +476,7 @@ class CRealConsole
 
 		void StopSignal();
 		void StopThread(BOOL abRecreating=FALSE);
+		bool StartStopTermMode(TermModeCommand mode, ChangeTermAction action);
 		void StartStopXTerm(DWORD nPID, bool xTerm);
 		void StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste);
 		void StartStopAppCursorKeys(DWORD nPID, bool bAppCursorKeys);

@@ -5923,6 +5923,39 @@ void CRealConsole::StopSignal()
 	}
 }
 
+bool CRealConsole::StartStopTermMode(TermModeCommand mode, ChangeTermAction action)
+{
+	if (!this)
+		return false;
+
+	bool bOk = true;
+	bool bValue = (action == cta_Enable);
+	DWORD nActivePID = GetActivePID();
+
+	switch (mode)
+	{
+	case tmc_Keyboard:
+		if (action == cta_Switch)
+			bValue = (GetTermType() == te_win32);
+		StartStopXTerm(nActivePID, bValue);
+		break;
+	case tmc_AppCursorKeys:
+		if (action == cta_Switch)
+			bValue = !GetAppCursorKeys();
+		StartStopAppCursorKeys(nActivePID, bValue);
+		break;
+	case tmc_BracketedPaste:
+		if (action == cta_Switch)
+			bValue = !GetBracketedPaste();
+		StartStopBracketedPaste(nActivePID, bValue);
+		break;
+	default:
+		bOk = false;
+	}
+
+	return bOk;
+}
+
 void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
 {
 	if (gpSet->isLogging())
@@ -5942,6 +5975,9 @@ void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
 		m_Term.Term = xTerm ? te_xterm : te_win32;
 	}
 
+	if (isActive(false) && mp_ConEmu->mp_Status)
+		mp_ConEmu->mp_Status->UpdateStatusBar(true);
+
 	if (ghOpWnd && isActive(false))
 		gpSetCls->UpdateConsoleMode(this);
 }
@@ -5957,6 +5993,9 @@ void CRealConsole::StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste)
 
 	m_Term.bBracketedPaste = bUseBracketedPaste;
 
+	if (isActive(false) && mp_ConEmu->mp_Status)
+		mp_ConEmu->mp_Status->UpdateStatusBar(true);
+
 	if (ghOpWnd && isActive(false))
 		gpSetCls->UpdateConsoleMode(this);
 }
@@ -5971,11 +6010,22 @@ void CRealConsole::StartStopAppCursorKeys(DWORD nPID, bool bAppCursorKeys)
 	_ASSERTE(mp_XTerm != NULL);
 
 	mp_XTerm->AppCursorKeys = bAppCursorKeys;
+
+	if (isActive(false) && mp_ConEmu->mp_Status)
+		mp_ConEmu->mp_Status->UpdateStatusBar(true);
+
+	if (ghOpWnd && isActive(false))
+		gpSetCls->UpdateConsoleMode(this);
 }
 
 bool CRealConsole::GetBracketedPaste()
 {
-	return (m_Term.bBracketedPaste != FALSE);
+	return (this && (m_Term.bBracketedPaste != FALSE));
+}
+
+bool CRealConsole::GetAppCursorKeys()
+{
+	return (this && mp_XTerm && mp_XTerm->AppCursorKeys);
 }
 
 void CRealConsole::PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted)

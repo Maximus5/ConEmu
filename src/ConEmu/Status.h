@@ -51,6 +51,8 @@ enum CEStatusItems
 	csi_ViewLock,
 	csi_InputLocale,
 	csi_KeyHooks,
+	csi_TermModes,
+	csi_RConModes,
 
 	csi_WindowPos,
 	csi_WindowSize,
@@ -158,6 +160,7 @@ private:
 	void ShowVConMenu(POINT pt);
 	void ShowTransparencyMenu(POINT pt);
 	void ShowZoomMenu(POINT pt);
+	void ShowTermModeMenu(POINT pt);
 
 	bool  mb_DataChanged; // данные изменились, нужна отрисовка
 	//bool  mb_Invalidated;
@@ -187,6 +190,7 @@ private:
 
 	bool ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly);
 	bool ProcessZoomMenuId(WORD nCmd);
+	bool ProcessTermModeMenuId(WORD nCmd);
 
 	bool isSettingsOpened(UINT nOpenPageID = 0);
 
@@ -236,6 +240,7 @@ public:
 	};
 	static int Transparent_IsMenuChecked(int nValue, int* pnNextValue);
 	static int Zoom_IsMenuChecked(int nValue, int* pnNextValue);
+	static int TermMode_IsMenuChecked(int nValue, int* pnNextValue);
 protected:
 	HMENU CreateStatusMenu(StatusMenuOptions* pItems, size_t nCount);
 	StatusMenuOptions* GetStatusMenuItem(WORD nMenuID, StatusMenuOptions* pItems, size_t nCount);

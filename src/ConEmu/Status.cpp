@@ -116,6 +116,14 @@ static StatusColInfo gStatusCols[] =
 						L"Current input HKL",
 						L"Active input locale identifier - GetKeyboardLayout"},
 
+	{csi_TermModes,		L"StatusBar.Hide.TMode",
+						L"Terminal modes",
+						L"Windows, Xterm, App keys, Bracketed paste, Cygwin, msys1, msys2 or clinK"},
+
+	{csi_RConModes,		L"StatusBar.Hide.RMode",
+						L"RealConsole modes",
+						L"ConsoleMode flags for ConIn and ConOut"},
+
 	{csi_WindowPos,		L"StatusBar.Hide.WPos",
 						L"ConEmu window rectangle",
 						L"(X1, Y1)-(X2, Y2): ConEmu window rectangle"},
@@ -253,6 +261,14 @@ static CStatus::StatusMenuOptions gZoomOpt[] = {
 	{7, L"Zoom 100%", 100, CStatus::Zoom_IsMenuChecked},
 	{8, L"Zoom 75%",   75, CStatus::Zoom_IsMenuChecked},
 	{9, L"Zoom 50%",   50, CStatus::Zoom_IsMenuChecked},
+};
+
+static CStatus::StatusMenuOptions gRConTermModes[] = {
+	{1, L"Windows", 1, CStatus::TermMode_IsMenuChecked},
+	{2, L"XTerm",   2, CStatus::TermMode_IsMenuChecked},
+	{0},
+	{3, L"AppKeys", 3, CStatus::TermMode_IsMenuChecked},
+	{4, L"BrPaste", 4, CStatus::TermMode_IsMenuChecked},
 };
 
 
@@ -641,6 +657,21 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 					(gpConEmu->IsKeyboardHookRegistered() || gpSet->isKeyboardHooks(false, true))
 					? L"KH" : L"––");
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"XX");
+				break;
+
+			case csi_TermModes:
+				if (pRCon)
+					pRCon->QueryTermModes(m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText), false);
+				else
+					m_Items[nDrawCount].sText[0] = 0;
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"XX");
+				break;
+			case csi_RConModes:
+				if (pRCon)
+					pRCon->QueryRConModes(m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText), false);
+				else
+					m_Items[nDrawCount].sText[0] = 0;
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"x00/x00");
 				break;
 
 			case csi_WindowStyle:
@@ -1327,6 +1358,10 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 				case csi_Zoom:
 					if (uMsg == WM_LBUTTONDOWN)
 						ShowZoomMenu(MakePoint(rcClient.right, rcClient.top));
+					break;
+				case csi_TermModes:
+					if (uMsg == WM_LBUTTONDOWN)
+						ShowTermModeMenu(MakePoint(rcClient.right, rcClient.top));
 					break;
 				case csi_SyncInside:
 					if (gpConEmu->mp_Inside)
@@ -2154,6 +2189,39 @@ bool CStatus::ProcessZoomMenuId(WORD nCmd)
 	return false;
 }
 
+bool CStatus::ProcessTermModeMenuId(WORD nCmd)
+{
+	bool bOk = false;
+	CVConGuard VCon;
+
+	if ((gpConEmu->GetActiveVCon(&VCon) >= 0))
+	{
+		CRealConsole* pRCon = VCon->RCon();
+		TermModeCommand mode;
+		ChangeTermAction action = cta_Switch;
+
+		switch (nCmd)
+		{
+		case 1: case 2:
+			mode = tmc_Keyboard;
+			action = (nCmd == 2) ? cta_Enable : cta_Disable;
+			break;
+		case 3:
+			mode = tmc_AppCursorKeys;
+			break;
+		case 4:
+			mode = tmc_BracketedPaste;
+			break;
+		default:
+			return false;
+		}
+
+		bOk = pRCon->StartStopTermMode(mode, action);
+	}
+
+	return bOk;
+}
+
 bool CStatus::isSettingsOpened(UINT nOpenPageID)
 {
 	if (ghOpWnd && IsWindow(ghOpWnd))
@@ -2239,6 +2307,23 @@ void CStatus::ShowZoomMenu(POINT pt)
 
 	// Отразить изменения в статусе
 	IsWindowChanged();
+}
+
+void CStatus::ShowTermModeMenu(POINT pt)
+{
+	mb_InPopupMenu = true;
+	HMENU hPopup = CreateStatusMenu(gRConTermModes, countof(gRConTermModes));
+
+	_ASSERTE(m_ClickedItemDesc == csi_TermModes);
+
+	int nCmd = ShowStatusBarMenu(pt, hPopup, csi_TermModes);
+
+	if (nCmd > 0)
+		ProcessTermModeMenuId(nCmd);
+
+	// Done
+	DestroyMenu(hPopup);
+	mb_InPopupMenu = false;
 }
 
 // Прямоугольник в клиентских координатах ghWnd!
@@ -2379,6 +2464,32 @@ int CStatus::Zoom_IsMenuChecked(int nValue, int* pnNextValue)
 		iChecked = (nValue < nZoom && nZoom < *pnNextValue);
 	else
 		iChecked = (nValue > nZoom);
+	return iChecked;
+}
+
+int CStatus::TermMode_IsMenuChecked(int nValue, int* pnNextValue)
+{
+	int iChecked = 0;
+
+	CVConGuard VCon;
+	if ((gpConEmu->GetActiveVCon(&VCon) >= 0))
+	{
+		CRealConsole* pRCon = VCon->RCon();
+
+		switch (nValue)
+		{
+		case 1: case 2:
+			iChecked = (pRCon->GetTermType() == ((nValue == 1) ? te_win32 : te_xterm));
+			break;
+		case 3:
+			iChecked = pRCon->GetAppCursorKeys();
+			break;
+		case 4:
+			iChecked = pRCon->GetBracketedPaste();
+			break;
+		}
+	}
+
 	return iChecked;
 }
 

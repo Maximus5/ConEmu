@@ -750,6 +750,8 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_CapsLock] = true;
 	isStatusColumnHidden[csi_ScrollLock] = true;
 	isStatusColumnHidden[csi_InputLocale] = true;
+	isStatusColumnHidden[csi_TermModes] = true;
+	isStatusColumnHidden[csi_RConModes] = true;
 	isStatusColumnHidden[csi_WindowPos] = true;
 	isStatusColumnHidden[csi_WindowSize] = true;
 	isStatusColumnHidden[csi_WindowClient] = true;
