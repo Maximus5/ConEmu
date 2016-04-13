@@ -460,7 +460,11 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 					//con.m_sbi.dwSize.Y = gpSet->DefaultBufferHeight; -- не будем менять сразу, а то SetConsoleSize просто skip
 					mp_RCon->mp_RBuf->BuferModeChangeLock();
 					mp_RCon->mp_RBuf->SetBufferHeightMode((pOut->StartStopRet.nBufferHeight != 0), TRUE); // Сразу меняем, иначе команда неправильно сформируется
-					mp_RCon->mp_RBuf->SetConsoleSize(mp_RCon->mp_RBuf->GetTextWidth()/*con.m_sbi.dwSize.X*/, mp_RCon->mp_RBuf->TextHeight(), pOut->StartStopRet.nBufferHeight, CECMD_CMDSTARTED);
+					mp_RCon->mp_RBuf->SetConsoleSize(
+						mp_RCon->mp_RBuf->GetTextWidth()/*con.m_sbi.dwSize.X*/,
+						mp_RCon->mp_RBuf->TextHeight(),
+						MakeUShort(pOut->StartStopRet.nBufferHeight),
+						CECMD_CMDSTARTED);
 					WARNING("Переделать! Размер нужно просто вернуть в сервер, а он сам разберется");
 					mp_RCon->mp_RBuf->BuferModeChangeUnlock();
 				}
