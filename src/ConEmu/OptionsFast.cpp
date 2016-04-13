@@ -2046,9 +2046,9 @@ static void CreateBashTask()
 		if (FileExists(lsExpanded))
 		{
 			App.Add(L"Bash::bash",
-				L" -new_console:p1 -new_console:C:\"%USERPROFILE%\\AppData\\Local\\lxss\\bash.ico\"", // "--login -i" is not required yet
+				L" -cur_console:p1", // "--login -i" is not required yet
 				NULL /*L"chcp utf8 & "*/, // doesn't work either. can't type Russian or international characters.
-				NULL, // No special GUI Args, we set icon via "-new_console:C:..."
+				L"-icon \"%USERPROFILE%\\AppData\\Local\\lxss\\bash.ico\"",
 				BashOnUbuntu,
 				NULL);
 		}
