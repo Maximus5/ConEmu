@@ -2412,6 +2412,8 @@ struct RequestLocalServerParm
 #include "MAssert.h"
 #include "MSecurity.h"
 
+template <typename T> bool _bool(const T V) { _ASSERTE((V)==FALSE || (V)==TRUE); return ((V) != 0); };
+
 #endif // __cplusplus
 
 // The size of the PROCESS_ALL_ACCESS flag increased on Windows Server 2008 and Windows Vista.
