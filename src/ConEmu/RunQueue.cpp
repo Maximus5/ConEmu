@@ -95,9 +95,20 @@ void CRunQueue::Terminate()
 			return; // Don't block
 
 		DWORD nWait = WaitForSingleObject(mh_Thread, RUNQUEUE_WAIT_TERMINATION);
+
+		#ifdef _DEBUG
 		if (nWait == WAIT_TIMEOUT)
 		{
 			_ASSERTE(FALSE && "Terminating RunQueue(mh_Thread) thread");
+			if (IsDebuggerPresent())
+			{
+				nWait = WaitForSingleObject(mh_Thread, 0);
+			}
+		}
+		#endif
+
+		if (nWait == WAIT_TIMEOUT)
+		{
 			apiTerminateThread(mh_Thread, 100);
 		}
 	}
