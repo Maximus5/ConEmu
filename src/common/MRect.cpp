@@ -32,11 +32,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* RECT/SMALL_RECT/COORD encapsulation */
 
+SHORT MakeShort(i32 X)
+{
+	_ASSERTE(X==LOSHORT(X));
+	return LOSHORT(X);
+}
+
+USHORT MakeUShort(u32 X)
+{
+	_ASSERTE(X==LOWORD(X));
+	return LOWORD(X);
+}
+
 COORD MakeCoord(int X,int Y)
 {
 	// Console support only SHORT as coordinates
-	_ASSERTE(X==LOSHORT(X) && Y==LOSHORT(Y));
-	COORD cr = {LOSHORT(X), LOSHORT(Y)};
+	COORD cr = {MakeShort(X), MakeShort(Y)};
 	return cr;
 }
 
