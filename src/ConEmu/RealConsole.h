@@ -693,6 +693,7 @@ class CRealConsole
 		void SetMainSrvPID(DWORD anMainSrvPID, HANDLE ahMainSrv);
 		void SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/);
 		void SetTerminalPID(DWORD anTerminalPID);
+		void SetInCloseConsole(bool InCloseConsole);
 		// Сервер и альтернативный сервер
 		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
 		u64 mn_ProcessAffinity; DWORD mn_ProcessPriority;

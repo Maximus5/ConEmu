@@ -333,7 +333,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	memset(m_FarPlugPIDs, 0, sizeof(m_FarPlugPIDs)); mn_FarPlugPIDsCount = 0;
 	memset(m_TerminatedPIDs, 0, sizeof(m_TerminatedPIDs)); mn_TerminatedIdx = 0;
 	mb_SkipFarPidChange = FALSE;
-	mn_InRecreate = 0; mb_ProcessRestarted = FALSE; mb_InCloseConsole = FALSE;
+	mn_InRecreate = 0; mb_ProcessRestarted = FALSE;
+	SetInCloseConsole(false);
 	mb_RecreateFailed = FALSE;
 	mn_StartTick = mn_RunTime = 0;
 	mb_WasVisibleOnce = false;
@@ -2976,7 +2977,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 					{
 						// Revive console after switching back to MainServer from AltServer
 						// (console was not actually closed on request)
-						mb_InCloseConsole = false;
+						SetInCloseConsole(false);
 						m_ServerClosing.bBackActivated = FALSE;
 					}
 
@@ -4013,7 +4014,7 @@ void CRealConsole::ResetVarsOnStart()
 {
 	mp_VCon->ResetOnStart();
 
-	mb_InCloseConsole = FALSE;
+	SetInCloseConsole(false);
 	mb_RecreateFailed = FALSE;
 	SetSwitchActiveServer(false, eResetEvent, eResetEvent);
 	//Drop flag after Restart console
@@ -7120,9 +7121,11 @@ void CRealConsole::OnServerClosing(DWORD anSrvPID, int* pnShellExitCode)
 
 		//int nCurProcessCount = m_Processes.size();
 		//_ASSERTE(nCurProcessCount <= 1);
+		SetInCloseConsole(true);
 		m_ServerClosing.nRecieveTick = GetTickCount();
 		m_ServerClosing.hServerProcess = mh_MainSrv;
 		m_ServerClosing.nServerPID = anSrvPID;
+
 		// Поскольку сервер закрывается, пайп более не доступен
 		ms_ConEmuC_Pipe[0] = 0;
 		ms_MainSrv_Pipe[0] = 0;
@@ -7457,6 +7460,12 @@ void CRealConsole::SetAltSrvPID(DWORD anAltSrvPID/*, HANDLE ahAltSrv*/)
 	//_ASSERTE((mh_AltSrv==NULL || mh_AltSrv==ahAltSrv) && "mh_AltSrv must be closed before!");
 	//mh_AltSrv = ahAltSrv;
 	mn_AltSrv_PID = anAltSrvPID;
+}
+
+void CRealConsole::SetInCloseConsole(bool InCloseConsole)
+{
+	if (mb_InCloseConsole != InCloseConsole)
+		mb_InCloseConsole = InCloseConsole;
 }
 
 bool CRealConsole::InitAltServer(DWORD nAltServerPID/*, HANDLE hAltServer*/)
@@ -9272,7 +9281,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
 	//  mb_Detached = FALSE; // Сброс флажка, мы уже подключились
 	//OpenColorMapping();
 	mb_ProcessRestarted = FALSE; // Консоль запущена
-	mb_InCloseConsole = FALSE;
+	SetInCloseConsole(false);
 	m_Args.Detached = crb_Off;
 	ZeroStruct(m_ServerClosing);
 	if (mn_InRecreate>=1)
@@ -9750,7 +9759,7 @@ bool CRealConsole::RecreateProcess(RConStartArgs *args)
 		CloseConsole(false, false);
 	}
 	// mb_InCloseConsole сбросим после того, как появится новое окно!
-	//mb_InCloseConsole = FALSE;
+	//SetInCloseConsole(false);
 	//if (con.pConChar && con.pConAttr)
 	//{
 	//	wmemset((wchar_t*)con.pConAttr, 7, con.nTextWidth * con.nTextHeight);
@@ -12500,7 +12509,8 @@ void CRealConsole::CloseConsoleWindow(bool abConfirm)
 			return;
 	}
 
-	mb_InCloseConsole = TRUE;
+	SetInCloseConsole(true);
+
 	if (m_ChildGui.isGuiWnd())
 	{
 		PostConsoleMessage(m_ChildGui.hGuiWnd, WM_CLOSE, 0, 0);
@@ -12742,7 +12752,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 
 				// FarMacro выполняется асинхронно, так что не будем смотреть на "isAlive"
 				{
-					mb_InCloseConsole = TRUE;
+					SetInCloseConsole(true);
 					mp_ConEmu->DebugStep(_T("ConEmu: Execute SafeFarCloseMacro"));
 
 					if (!lbCleared)
@@ -15257,10 +15267,14 @@ SkipReopen:
 	lbResult = TRUE;
 wrap:
 
-	if (!lbResult && szErr[0])
+	if (!lbResult && szErr[0] && !isServerClosing(true))
 	{
-		mp_ConEmu->DebugStep(szErr);
-		MBoxA(szErr);
+		Sleep(250);
+		if (!isServerClosing(true))
+		{
+			mp_ConEmu->DebugStep(szErr);
+			LogString(szErr);
+		}
 	}
 
 	UNREFERENCED_PARAMETER(dwErr);
