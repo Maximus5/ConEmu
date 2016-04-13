@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 
 #include "ConEmu.h"
+#include "LngRc.h"
 #include "OptionsClass.h"
 #include "SetPgInfo.h"
 #include "VConGroup.h"
@@ -54,23 +55,37 @@ LRESULT CSetPgInfo::OnInitDialog(HWND hDlg, bool abInitial)
 		pVCon = VCon.VCon();
 
 	SetDlgItemText(hDlg, tCurCmdLine, GetCommandLine());
-	// Performance
-	gpSetCls->Performance(gbPerformance, TRUE);
+
 	gpConEmu->UpdateProcessDisplay(TRUE);
+
 	gpConEmu->UpdateSizes();
+
 	if (pVCon)
 	{
 		ConsoleInfoArg cursorInfo = {};
 		pVCon->RCon()->GetConsoleInfo(&cursorInfo);
 		FillCursorInfo(hDlg, &cursorInfo);
 	}
+
 	FillFontInfo(hDlg);
+
+	return 0;
+}
+
+void CSetPgInfo::OnPostLocalize(HWND hDlg)
+{
+	CVirtualConsole* pVCon = NULL;
+	CVConGuard VCon;
+	if (CVConGroup::GetActiveVCon(&VCon) >= 0)
+		pVCon = VCon.VCon();
+
+	// Performance
+	gpSetCls->Performance(gbPerformance, TRUE);
+
 	if (pVCon)
 	{
 		FillConsoleMode(hDlg, pVCon->RCon());
 	}
-
-	return 0;
 }
 
 void CSetPgInfo::FillFontInfo(HWND hDlg)
@@ -84,38 +99,20 @@ void CSetPgInfo::FillFontInfo(HWND hDlg)
 
 void CSetPgInfo::FillConsoleMode(HWND hDlg, CRealConsole* pRCon)
 {
-	WORD nConInMode = 0, nConOutMode = 0;
-	TermEmulationType Term = te_win32;
-	BOOL bBracketedPaste = FALSE;
-	pRCon->GetConsoleModes(nConInMode, nConOutMode, Term, bBracketedPaste);
-	CEActiveAppFlags appFlags = pRCon->GetActiveAppFlags();
-
+	// E.g. "xterm|BrPaste"
 	wchar_t szFlags[128] = L"";
-	switch (Term)
-	{
-	case te_win32:
-		wcscpy_c(szFlags, L"win32"); break;
-	case te_xterm:
-		wcscpy_c(szFlags, L"xterm"); break;
-	default:
-		msprintf(szFlags, countof(szFlags), L"term=%u", Term);
-	}
-	if (bBracketedPaste)
-		wcscat_c(szFlags, L"|BrPaste");
-	if (appFlags & caf_Cygwin1)
-		wcscat_c(szFlags, L"|cygwin");
-	if (appFlags & caf_Msys1)
-		wcscat_c(szFlags, L"|msys");
-	if (appFlags & caf_Msys2)
-		wcscat_c(szFlags, L"|msys2");
-	if (appFlags & caf_Clink)
-		wcscat_c(szFlags, L"|clink");
+	pRCon->QueryRConModes(szFlags, countof(szFlags), true);
 
-	wchar_t szInfo[255];
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo))
-		L"Console states (In=x%02X, Out=x%02X, %s)",
-		nConInMode, nConOutMode, szFlags);
-	SetDlgItemText(hDlg, IDC_CONSOLE_STATES, szInfo);
+	// E.g. "In=x98, Out=x03"
+	wchar_t szModes[80];
+	pRCon->QueryRConModes(szModes, countof(szModes), true);
+
+	// "Console states"
+	CEStr lsLng; gpLng->getControl(IDC_CONSOLE_STATES, lsLng, L"Console states");
+
+	// Final: "Console states (In=x98, Out=x03, win32)"
+	CEStr lsInfo(lsLng, L" (", szModes, L", ", szFlags, L")");
+	SetDlgItemText(hDlg, IDC_CONSOLE_STATES, lsInfo);
 }
 
 void CSetPgInfo::FillCursorInfo(HWND hDlg, const ConsoleInfoArg* pInfo)

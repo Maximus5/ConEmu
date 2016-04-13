@@ -47,6 +47,8 @@ public:
 public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
+	virtual void OnPostLocalize(HWND hDlg) override;
+
 	void FillFontInfo(HWND hDlg);
 	void FillConsoleMode(HWND hDlg, CRealConsole* pRCon);
 	void FillCursorInfo(HWND hDlg, const ConsoleInfoArg* pInfo);

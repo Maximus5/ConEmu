@@ -14718,6 +14718,61 @@ bool CRealConsole::QueryPromptStart(COORD *cr)
 	return true;
 }
 
+void CRealConsole::QueryTermModes(wchar_t* pszInfo, int cchMax, bool bFull)
+{
+	if (!pszInfo || cchMax <= 0 || !this || !mp_RBuf)
+	{
+		if (pszInfo) *pszInfo = 0;
+		return;
+	}
+
+	TermEmulationType Term = m_Term.Term;;
+	BOOL bBracketedPaste = m_Term.bBracketedPaste;
+	CEActiveAppFlags appFlags = GetActiveAppFlags();
+	BOOL bAppCursorKeys = mp_XTerm ? mp_XTerm->AppCursorKeys : FALSE;
+
+	wchar_t szFlags[128] = L"";
+	switch (Term)
+	{
+	case te_win32:
+		wcscpy_c(szFlags, bFull ? L"win32" : L"W"); break;
+	case te_xterm:
+		wcscpy_c(szFlags, bFull ? L"xterm" : L"X"); break;
+	default:
+		msprintf(szFlags, countof(szFlags), bFull ? L"term=%u" : L"t=%u", Term);
+	}
+	if (bAppCursorKeys)
+		wcscat_c(szFlags, bFull ? L"|AppKeys" : L"A");
+	if (bBracketedPaste)
+		wcscat_c(szFlags, bFull ? L"|BrPaste" : L"B");
+	if (appFlags & caf_Cygwin1)
+		wcscat_c(szFlags, bFull ? L"|cygwin" : L"C");
+	if (appFlags & caf_Msys1)
+		wcscat_c(szFlags, bFull ? L"|msys" : L"1");
+	if (appFlags & caf_Msys2)
+		wcscat_c(szFlags, bFull ? L"|msys2" : L"2");
+	if (appFlags & caf_Clink)
+		wcscat_c(szFlags, bFull ? L"|clink" : L"K");
+
+	lstrcpyn(pszInfo, szFlags, cchMax);
+}
+
+void CRealConsole::QueryRConModes(wchar_t* pszInfo, int cchMax, bool bFull)
+{
+	if (!pszInfo || cchMax <= 0 || !this || !mp_RBuf)
+	{
+		if (pszInfo) *pszInfo = 0;
+		return;
+	}
+
+	// "Console states (In=x98, Out=x03, win32)"
+	wchar_t szInfo[80];
+	_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+		bFull ? L"In=x%02X, Out=x%02X" : L"x%02X,x%02X", mp_RBuf->GetConInMode(), mp_RBuf->GetConOutMode());
+
+	lstrcpyn(pszInfo, szInfo, cchMax);
+}
+
 void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr)
 {
 	if (!this) return;

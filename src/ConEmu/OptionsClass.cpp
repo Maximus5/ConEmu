@@ -3033,11 +3033,12 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 		if (ghOpWnd)
 		{
 			// Performance
-			wchar_t sTemp[128];
-			//Нихрена это не мегагерцы. Например на "AMD Athlon 64 X2 1999 MHz" здесь отображается "0.004 GHz"
-			_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"Performance counters (%I64i)", ((i64)(mn_Freq/1000)));
-			SetDlgItemText(GetPage(thi_Info), nID, sTemp);
-			// Обновить сразу (значений еще нет)
+			wchar_t sTemp[32];
+			// These are not MHz. E.g. on "AMD Athlon 64 X2 1999 MHz" we get "0.004 GHz"
+			_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L" (%I64i)", ((i64)(mn_Freq/1000)));
+			CEStr lsTemp, lsInfo(gpLng->getControl(gbPerformance, lsTemp, L"Performance counters"), sTemp);
+			SetDlgItemText(GetPage(thi_Info), nID, lsInfo);
+			// Update immediately
 			PostUpdateCounters(true);
 		}
 
