@@ -1511,7 +1511,7 @@ void CSetDlgButtons::OnBtn_CmdTaskbarTasks(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCmdTaskbarTasks);
 
-	gpSet->isStoreTaskbarkTasks = uCheck;
+	gpSet->isStoreTaskbarkTasks = _bool(uCheck);
 
 } // cbCmdTaskbarTasks
 
@@ -1520,7 +1520,7 @@ void CSetDlgButtons::OnBtn_CmdTaskbarCommands(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCmdTaskbarCommands);
 
-	gpSet->isStoreTaskbarCommands = uCheck;
+	gpSet->isStoreTaskbarCommands = _bool(uCheck);
 
 } // cbCmdTaskbarCommands
 
@@ -1653,7 +1653,7 @@ void CSetDlgButtons::OnBtn_UseCurrentSizePos(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbUseCurrentSizePos);
 
-	gpSet->isUseCurrentSizePos = uCheck;
+	gpSet->isUseCurrentSizePos = _bool(uCheck);
 	if (gpSet->isUseCurrentSizePos)
 	{
 		gpSetCls->UpdateWindowMode(gpConEmu->WindowMode);
@@ -1668,7 +1668,7 @@ void CSetDlgButtons::OnBtn_AutoSaveSizePos(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbAutoSaveSizePos);
 
-	gpSet->isAutoSaveSizePos = uCheck;
+	gpSet->isAutoSaveSizePos = _bool(uCheck);
 
 } // cbAutoSaveSizePos
 
@@ -1678,7 +1678,7 @@ void CSetDlgButtons::OnBtn_FontAuto(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbFontAuto);
 
-	gpSet->isFontAutoSize = uCheck;
+	gpSet->isFontAutoSize = _bool(uCheck);
 
 	if (gpSet->isFontAutoSize && gpFontMgr->LogFont.lfFaceName[0] == L'['
 	        && !wcsncmp(gpFontMgr->LogFont.lfFaceName+1, CFontMgr::RASTER_FONTS_NAME, _tcslen(CFontMgr::RASTER_FONTS_NAME)))
@@ -1738,7 +1738,7 @@ void CSetDlgButtons::OnBtn_SingleInstance(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbSingleInstance);
 
-	gpSet->isSingleInstance = uCheck;
+	gpSet->isSingleInstance = _bool(uCheck);
 
 } // cbSingleInstance
 
@@ -1748,7 +1748,7 @@ void CSetDlgButtons::OnBtn_ShowHelpTooltips(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbShowHelpTooltips);
 
-	gpSet->isShowHelpTooltips = uCheck;
+	gpSet->isShowHelpTooltips = _bool(uCheck);
 
 
 } // cbShowHelpTooltips
@@ -1760,7 +1760,7 @@ void CSetDlgButtons::OnBtn_MultiCon(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbMultiCon);
 
-	gpSet->mb_isMulti = uCheck;
+	gpSet->mb_isMulti = _bool(uCheck);
 	gpConEmu->UpdateWinHookSettings();
 
 } // cbMultiCon
@@ -1774,9 +1774,9 @@ void CSetDlgButtons::OnBtn_MultiShowPanes(HWND hDlg, WORD CB, BYTE uCheck)
 	switch (CB)
 	{
 	case cbMultiShowButtons:
-		gpSet->isMultiShowButtons = uCheck; break;
+		gpSet->isMultiShowButtons = _bool(uCheck); break;
 	case cbMultiShowSearch:
-		gpSet->isMultiShowSearch = uCheck; break;
+		gpSet->isMultiShowSearch = _bool(uCheck); break;
 	}
 	gpConEmu->mp_TabBar->OnShowButtonsChanged();
 
@@ -1788,7 +1788,7 @@ void CSetDlgButtons::OnBtn_MultiIterate(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbMultiIterate);
 
-	gpSet->isMultiIterate = uCheck;
+	gpSet->isMultiIterate = _bool(uCheck);
 
 } // cbMultiIterate
 
@@ -1798,7 +1798,7 @@ void CSetDlgButtons::OnBtn_NewConfirm(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbNewConfirm);
 
-	gpSet->isMultiNewConfirm = uCheck;
+	gpSet->isMultiNewConfirm = _bool(uCheck);
 
 } // cbNewConfirm
 
@@ -1808,7 +1808,7 @@ void CSetDlgButtons::OnBtn_DupConfirm(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbDupConfirm);
 
-	gpSet->isMultiDupConfirm = uCheck;
+	gpSet->isMultiDupConfirm = _bool(uCheck);
 
 } // cbDupConfirm
 
@@ -1818,7 +1818,7 @@ void CSetDlgButtons::OnBtn_ConfirmDetach(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbConfirmDetach);
 
-	gpSet->isMultiDetachConfirm = uCheck;
+	gpSet->isMultiDetachConfirm = _bool(uCheck);
 
 } // cbConfirmDetach
 
@@ -1828,7 +1828,7 @@ void CSetDlgButtons::OnBtn_LongOutput(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbLongOutput);
 
-	gpSet->AutoBufferHeight = uCheck;
+	gpSet->AutoBufferHeight = _bool(uCheck);
 	CVConGroup::OnUpdateFarSettings();
 	EnableWindow(GetDlgItem(hDlg, tLongOutputHeight), gpSet->AutoBufferHeight);
 
@@ -2124,7 +2124,7 @@ void CSetDlgButtons::OnBtn_SafeFarClose(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbSafeFarClose);
 
-	gpSet->isSafeFarClose = uCheck;
+	gpSet->isSafeFarClose = _bool(uCheck);
 
 } // cbSafeFarClose
 
@@ -2134,7 +2134,7 @@ void CSetDlgButtons::OnBtn_MinToTray(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbMinToTray);
 
-	gpSet->mb_MinToTray = uCheck;
+	gpSet->mb_MinToTray = _bool(uCheck);
 
 } // cbMinToTray
 
@@ -2176,7 +2176,7 @@ void CSetDlgButtons::OnBtn_AlwaysShowTrayIcon(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbAlwaysShowTrayIcon);
 
-	gpSet->mb_AlwaysShowTrayIcon = uCheck;
+	gpSet->mb_AlwaysShowTrayIcon = _bool(uCheck);
 	Icon.SettingsChanged();
 
 } // cbAlwaysShowTrayIcon
@@ -2207,7 +2207,7 @@ void CSetDlgButtons::OnBtn_HideCaption(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbHideCaption);
 
-	gpSet->isHideCaption = uCheck;
+	gpSet->isHideCaption = _bool(uCheck);
 	if (!gpSet->isQuakeStyle && gpConEmu->isZoomed())
 	{
 		gpConEmu->OnHideCaption();
@@ -2241,7 +2241,7 @@ void CSetDlgButtons::OnBtn_HideChildCaption(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbHideChildCaption);
 
-	gpSet->isHideChildCaption = uCheck;
+	gpSet->isHideChildCaption = _bool(uCheck);
 	gpConEmu->OnSize(true);
 
 } // cbHideChildCaption
@@ -2252,7 +2252,7 @@ void CSetDlgButtons::OnBtn_FARuseASCIIsort(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbFARuseASCIIsort);
 
-	gpSet->isFARuseASCIIsort = uCheck;
+	gpSet->isFARuseASCIIsort = _bool(uCheck);
 	CVConGroup::OnUpdateFarSettings();
 
 } // cbFARuseASCIIsort
@@ -2263,7 +2263,7 @@ void CSetDlgButtons::OnBtn_ShellNoZoneCheck(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbShellNoZoneCheck);
 
-	gpSet->isShellNoZoneCheck = uCheck;
+	gpSet->isShellNoZoneCheck = _bool(uCheck);
 	CVConGroup::OnUpdateFarSettings();
 
 } // cbShellNoZoneCheck
@@ -2274,7 +2274,7 @@ void CSetDlgButtons::OnBtn_KeyBarRClick(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbKeyBarRClick);
 
-	gpSet->isKeyBarRClick = uCheck;
+	gpSet->isKeyBarRClick = _bool(uCheck);
 
 } // cbKeyBarRClick
 
@@ -2295,7 +2295,7 @@ void CSetDlgButtons::OnBtn_DragPanelBothEdges(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbDragPanelBothEdges);
 
-	gpSet->isDragPanelBothEdges = uCheck;
+	gpSet->isDragPanelBothEdges = _bool(uCheck);
 	gpConEmu->OnSetCursor();
 
 } // cbDragPanelBothEdges
@@ -2306,7 +2306,7 @@ void CSetDlgButtons::OnBtn_TryToCenter(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbTryToCenter);
 
-	gpSet->isTryToCenter = uCheck;
+	gpSet->isTryToCenter = _bool(uCheck);
 	// ресайзим консоль, иначе после включения/отключения PAD-size
 	// размер консоли не изменится и она отрисуется с некорректным размером
 	gpConEmu->OnSize(true);
@@ -2359,7 +2359,7 @@ void CSetDlgButtons::OnBtn_FarHourglass(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbFarHourglass);
 
-	gpSet->isFarHourglass = uCheck;
+	gpSet->isFarHourglass = _bool(uCheck);
 	gpConEmu->OnSetCursor();
 
 } // cbFarHourglass
@@ -2370,7 +2370,7 @@ void CSetDlgButtons::OnBtn_ExtendUCharMap(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbExtendUCharMap);
 
-	gpSet->isExtendUCharMap = uCheck;
+	gpSet->isExtendUCharMap = _bool(uCheck);
 	gpConEmu->Update(true);
 
 } // cbExtendUCharMap
@@ -2381,7 +2381,7 @@ void CSetDlgButtons::OnBtn_FixAltOnAltTab(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbFixAltOnAltTab);
 
-	gpSet->isFixAltOnAltTab = uCheck;
+	gpSet->isFixAltOnAltTab = _bool(uCheck);
 
 } // cbFixAltOnAltTab
 
@@ -2391,7 +2391,7 @@ void CSetDlgButtons::OnBtn_AutoRegFonts(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbAutoRegFonts);
 
-	gpSet->isAutoRegisterFonts = uCheck;
+	gpSet->isAutoRegisterFonts = _bool(uCheck);
 
 } // cbAutoRegFonts
 
@@ -2401,7 +2401,7 @@ void CSetDlgButtons::OnBtn_DebugSteps(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbDebugSteps);
 
-	gpSet->isDebugSteps = uCheck;
+	gpSet->isDebugSteps = _bool(uCheck);
 
 } // cbDebugSteps
 
@@ -2480,7 +2480,7 @@ void CSetDlgButtons::OnBtn_DragImage(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbDragImage);
 
-	gpSet->isDragOverlay = uCheck;
+	gpSet->isDragOverlay = _bool(uCheck);
 
 } // cbDragImage
 
@@ -2500,7 +2500,7 @@ void CSetDlgButtons::OnBtn_EnhanceGraphics(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbEnhanceGraphics);
 
-	gpSet->isEnhanceGraphics = uCheck;
+	gpSet->isEnhanceGraphics = _bool(uCheck);
 	gpConEmu->Update(true);
 
 } // cbEnhanceGraphics
@@ -2511,7 +2511,7 @@ void CSetDlgButtons::OnBtn_EnhanceButtons(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbEnhanceButtons);
 
-	gpSet->isEnhanceButtons = uCheck;
+	gpSet->isEnhanceButtons = _bool(uCheck);
 	gpConEmu->Update(true);
 
 } // cbEnhanceButtons
@@ -2558,7 +2558,7 @@ void CSetDlgButtons::OnBtn_OneTabPerGroup(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbOneTabPerGroup);
 
-	gpSet->isOneTabPerGroup = uCheck;
+	gpSet->isOneTabPerGroup = _bool(uCheck);
 	gpConEmu->mp_TabBar->Update(TRUE);
 
 } // cbOneTabPerGroup
@@ -2581,7 +2581,7 @@ void CSetDlgButtons::OnBtn_TabSelf(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbTabSelf);
 
-	gpSet->isTabSelf = uCheck;
+	gpSet->isTabSelf = _bool(uCheck);
 
 } // cbTabSelf
 
@@ -2591,7 +2591,7 @@ void CSetDlgButtons::OnBtn_TabRecent(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbTabRecent);
 
-	gpSet->isTabRecent = uCheck;
+	gpSet->isTabRecent = _bool(uCheck);
 
 } // cbTabRecent
 
@@ -2601,7 +2601,7 @@ void CSetDlgButtons::OnBtn_TabLazy(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbTabLazy);
 
-	gpSet->isTabLazy = uCheck;
+	gpSet->isTabLazy = _bool(uCheck);
 
 } // cbTabLazy
 
@@ -2611,7 +2611,7 @@ void CSetDlgButtons::OnBtn_TaskbarOverlay(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbTaskbarOverlay);
 
-	gpSet->isTaskbarOverlay = uCheck;
+	gpSet->isTaskbarOverlay = _bool(uCheck);
 	gpConEmu->Taskbar_UpdateOverlay();
 
 } // cbTaskbarOverlay
@@ -2622,7 +2622,7 @@ void CSetDlgButtons::OnBtn_TaskbarProgress(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbTaskbarProgress);
 
-	gpSet->isTaskbarProgress = uCheck;
+	gpSet->isTaskbarProgress = _bool(uCheck);
 	gpConEmu->UpdateProgress();
 
 } // cbTaskbarProgress
@@ -2651,7 +2651,7 @@ void CSetDlgButtons::OnBtn_RSelectionFix(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbRSelectionFix);
 
-	gpSet->isRSelFix = uCheck;
+	gpSet->isRSelFix = _bool(uCheck);
 
 } // cbRSelectionFix
 
@@ -2671,7 +2671,7 @@ void CSetDlgButtons::OnBtn_SkipActivation(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbSkipActivation);
 
-	gpSet->isMouseSkipActivation = uCheck;
+	gpSet->isMouseSkipActivation = _bool(uCheck);
 
 } // cbSkipActivation
 
@@ -2681,7 +2681,7 @@ void CSetDlgButtons::OnBtn_SkipMove(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbSkipMove);
 
-	gpSet->isMouseSkipMoving = uCheck;
+	gpSet->isMouseSkipMoving = _bool(uCheck);
 
 } // cbSkipMove
 
@@ -2702,7 +2702,7 @@ void CSetDlgButtons::OnBtn_SkipFocusEvents(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbSkipFocusEvents);
 
-	gpSet->isSkipFocusEvents = uCheck;
+	gpSet->isSkipFocusEvents = _bool(uCheck);
 
 } // cbSkipFocusEvents
 
@@ -2729,7 +2729,7 @@ void CSetDlgButtons::OnBtn_ExtendFonts(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbExtendFonts);
 
-	gpSet->AppStd.isExtendFonts = uCheck;
+	gpSet->AppStd.isExtendFonts = _bool(uCheck);
 	CSetDlgLists::EnableDlgItems(hDlg, CSetDlgLists::eExtendFonts, gpSet->AppStd.isExtendFonts);
 	gpConEmu->Update(true);
 
@@ -2759,7 +2759,7 @@ void CSetDlgButtons::OnBtn_RConVisible(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbVisible);
 
-	gpSet->isConVisible = uCheck;
+	gpSet->isConVisible = _bool(uCheck);
 
 	if (gpSet->isConVisible)
 	{
@@ -2782,7 +2782,7 @@ void CSetDlgButtons::OnBtn_UseInjects(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbUseInjects);
 
-	gpSet->isUseInjects = uCheck;
+	gpSet->isUseInjects = _bool(uCheck);
 	gpConEmu->OnGlobalSettingsChanged();
 
 } // cbUseInjects
@@ -2793,7 +2793,7 @@ void CSetDlgButtons::OnBtn_ProcessAnsi(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbProcessAnsi);
 
-	gpSet->isProcessAnsi = uCheck;
+	gpSet->isProcessAnsi = _bool(uCheck);
 	gpConEmu->OnGlobalSettingsChanged();
 
 } // cbProcessAnsi
@@ -2804,7 +2804,7 @@ void CSetDlgButtons::OnBtn_AnsiLog(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbAnsiLog);
 
-	gpSet->isAnsiLog = uCheck;
+	gpSet->isAnsiLog = _bool(uCheck);
 
 } // cbAnsiLog
 
@@ -2814,7 +2814,7 @@ void CSetDlgButtons::OnBtn_ProcessNewConArg(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbProcessNewConArg);
 
-	gpSet->isProcessNewConArg = uCheck;
+	gpSet->isProcessNewConArg = _bool(uCheck);
 	gpConEmu->OnGlobalSettingsChanged();
 
 } // cbProcessNewConArg
@@ -2825,7 +2825,7 @@ void CSetDlgButtons::OnBtn_ProcessCmdStart(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbProcessCmdStart);
 
-	gpSet->isProcessCmdStart = uCheck;
+	gpSet->isProcessCmdStart = _bool(uCheck);
 	gpConEmu->OnGlobalSettingsChanged();
 
 } // cbProcessCmdStart
@@ -2847,7 +2847,7 @@ void CSetDlgButtons::OnBtn_SuppressBells(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbSuppressBells);
 
-	gpSet->isSuppressBells = uCheck;
+	gpSet->isSuppressBells = _bool(uCheck);
 	gpConEmu->OnGlobalSettingsChanged();
 
 } // cbSuppressBells
@@ -2858,7 +2858,7 @@ void CSetDlgButtons::OnBtn_ConsoleExceptionHandler(HWND hDlg, WORD CB, BYTE uChe
 {
 	_ASSERTE(CB==cbConsoleExceptionHandler);
 
-	gpSet->isConsoleExceptionHandler = uCheck;
+	gpSet->isConsoleExceptionHandler = _bool(uCheck);
 	gpConEmu->OnGlobalSettingsChanged();
 
 } // cbConsoleExceptionHandler
@@ -2869,7 +2869,7 @@ void CSetDlgButtons::OnBtn_UseClink(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbUseClink);
 
-	gpSet->mb_UseClink = uCheck;
+	gpSet->mb_UseClink = _bool(uCheck);
 
 	if (gpSet->mb_UseClink && !gpSet->isUseClink())
 	{
@@ -2911,7 +2911,7 @@ void CSetDlgButtons::OnBtn_SnapToDesktopEdges(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbSnapToDesktopEdges);
 
-	gpSet->isSnapToDesktopEdges = uCheck;
+	gpSet->isSnapToDesktopEdges = _bool(uCheck);
 	if (gpSet->isSnapToDesktopEdges)
 		gpConEmu->OnMoving();
 
@@ -2923,7 +2923,7 @@ void CSetDlgButtons::OnBtn_AlwaysOnTop(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbAlwaysOnTop);
 
-	gpSet->isAlwaysOnTop = uCheck;
+	gpSet->isAlwaysOnTop = _bool(uCheck);
 	gpConEmu->DoAlwaysOnTopSwitch();
 
 } // cbAlwaysOnTop
@@ -2934,7 +2934,7 @@ void CSetDlgButtons::OnBtn_SleepInBackground(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbSleepInBackground);
 
-	gpSet->isSleepInBackground = uCheck;
+	gpSet->isSleepInBackground = _bool(uCheck);
 	CVConGroup::OnGuiFocused(TRUE);
 
 } // cbSleepInBackground
@@ -2945,7 +2945,7 @@ void CSetDlgButtons::OnBtn_RetardInactivePanes(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbRetardInactivePanes);
 
-	gpSet->isRetardInactivePanes = uCheck;
+	gpSet->isRetardInactivePanes = _bool(uCheck);
 	CVConGroup::OnGuiFocused(TRUE);
 
 } // cbRetardInactivePanes
@@ -2956,7 +2956,7 @@ void CSetDlgButtons::OnBtn_MinimizeOnLoseFocus(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbMinimizeOnLoseFocus);
 
-	gpSet->mb_MinimizeOnLoseFocus = uCheck;
+	gpSet->mb_MinimizeOnLoseFocus = _bool(uCheck);
 
 } // cbMinimizeOnLoseFocus
 
@@ -2966,7 +2966,7 @@ void CSetDlgButtons::OnBtn_FocusInChildWindows(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbFocusInChildWindows);
 
-	gpSet->isFocusInChildWindows = uCheck;
+	gpSet->isFocusInChildWindows = _bool(uCheck);
 
 } // cbFocusInChildWindows
 
@@ -3016,7 +3016,7 @@ void CSetDlgButtons::OnBtn_TabsInCaption(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbTabsInCaption);
 
-	gpSet->isTabsInCaption = uCheck;
+	gpSet->isTabsInCaption = _bool(uCheck);
 	////RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW|RDW_FRAME);
 	////gpConEmu->OnNcMessage(ghWnd, WM_NCPAINT, 0,0);
 	//SendMessage(ghWnd, WM_NCACTIVATE, 0, 0);
@@ -3031,7 +3031,7 @@ void CSetDlgButtons::OnBtn_NumberInCaption(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbNumberInCaption);
 
-	gpSet->isNumberInCaption = uCheck;
+	gpSet->isNumberInCaption = _bool(uCheck);
 	gpConEmu->UpdateTitle();
 
 } // cbNumberInCaption
@@ -3077,7 +3077,7 @@ void CSetDlgButtons::OnBtn_HideInactiveConTabs(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbHideInactiveConTabs);
 
-	gpSet->bHideInactiveConsoleTabs = uCheck;
+	gpSet->bHideInactiveConsoleTabs = _bool(uCheck);
 	gpConEmu->mp_TabBar->Update(TRUE);
 
 } // cbHideInactiveConTabs
@@ -3088,7 +3088,7 @@ void CSetDlgButtons::OnBtn_ShowFarWindows(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbShowFarWindows);
 
-	gpSet->bShowFarWindows = uCheck;
+	gpSet->bShowFarWindows = _bool(uCheck);
 	gpConEmu->mp_TabBar->Update(TRUE);
 
 } // cbShowFarWindows
@@ -3202,7 +3202,7 @@ void CSetDlgButtons::OnBtn_MapShiftEscToEsc(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbMapShiftEscToEsc);
 
-	gpSet->isMapShiftEscToEsc = uCheck;
+	gpSet->isMapShiftEscToEsc = _bool(uCheck);
 
 } // cbMapShiftEscToEsc
 
@@ -3223,13 +3223,13 @@ void CSetDlgButtons::OnBtn_UseWinArrowNumTab(HWND hDlg, WORD CB, BYTE uCheck)
 	switch (CB)
 	{
 	case cbUseWinArrows:
-		gpSet->isUseWinArrows = uCheck;
+		gpSet->isUseWinArrows = _bool(uCheck);
 		break;
 	case cbUseWinNumber:
-		gpSet->isUseWinNumber = uCheck;
+		gpSet->isUseWinNumber = _bool(uCheck);
 		break;
 	case cbUseWinTab:
-		gpSet->isUseWinTab = uCheck;
+		gpSet->isUseWinTab = _bool(uCheck);
 		break;
 	#ifdef _DEBUG
 	default:
@@ -3248,15 +3248,15 @@ void CSetDlgButtons::OnBtn_SendConsoleSpecials(HWND hDlg, WORD CB, BYTE uCheck)
 	switch (CB)
 	{
 	case cbSendAltTab:
-		gpSet->isSendAltTab = uCheck; break;
+		gpSet->isSendAltTab = _bool(uCheck); break;
 	case cbSendAltEsc:
-		gpSet->isSendAltEsc = uCheck; break;
+		gpSet->isSendAltEsc = _bool(uCheck); break;
 	case cbSendAltPrintScrn:
-		gpSet->isSendAltPrintScrn = uCheck; break;
+		gpSet->isSendAltPrintScrn = _bool(uCheck); break;
 	case cbSendPrintScrn:
-		gpSet->isSendPrintScrn = uCheck; break;
+		gpSet->isSendPrintScrn = _bool(uCheck); break;
 	case cbSendCtrlEsc:
-		gpSet->isSendCtrlEsc = uCheck; break;
+		gpSet->isSendCtrlEsc = _bool(uCheck); break;
 	#ifdef _DEBUG
 	default:
 		_ASSERTE(FALSE && "Not handled");
@@ -3342,7 +3342,7 @@ void CSetDlgButtons::OnBtn_ThumbLoadFolders(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbThumbLoadFolders);
 
-	gpSet->ThSet.bLoadFolders = uCheck;
+	gpSet->ThSet.bLoadFolders = _bool(uCheck);
 
 } // cbThumbLoadFolders
 
@@ -3352,7 +3352,7 @@ void CSetDlgButtons::OnBtn_ThumbUsePicView2(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbThumbUsePicView2);
 
-	gpSet->ThSet.bUsePicView2 = uCheck;
+	gpSet->ThSet.bUsePicView2 = _bool(uCheck);
 
 } // cbThumbUsePicView2
 
@@ -3362,7 +3362,7 @@ void CSetDlgButtons::OnBtn_ThumbRestoreOnStartup(HWND hDlg, WORD CB, BYTE uCheck
 {
 	_ASSERTE(CB==cbThumbRestoreOnStartup);
 
-	gpSet->ThSet.bRestoreOnStartup = uCheck;
+	gpSet->ThSet.bRestoreOnStartup = _bool(uCheck);
 
 } // cbThumbRestoreOnStartup
 
@@ -3699,7 +3699,7 @@ void CSetDlgButtons::OnBtn_TrueColorer(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbTrueColorer);
 
-	gpSet->isTrueColorer = uCheck;
+	gpSet->isTrueColorer = _bool(uCheck);
 	CVConGroup::OnUpdateFarSettings();
 	gpConEmu->Update(true);
 
@@ -3711,7 +3711,7 @@ void CSetDlgButtons::OnBtn_FadeInactive(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbFadeInactive);
 
-	gpSet->isFadeInactive = uCheck;
+	gpSet->isFadeInactive = _bool(uCheck);
 	CVConGroup::InvalidateAll();
 
 } // cbFadeInactive
@@ -3754,7 +3754,7 @@ void CSetDlgButtons::OnBtn_TransparentSeparate(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbTransparentSeparate);
 
-	gpSet->isTransparentSeparate = uCheck;
+	gpSet->isTransparentSeparate = _bool(uCheck);
 
 	if (hDlg)
 	{
@@ -3776,7 +3776,7 @@ void CSetDlgButtons::OnBtn_UserScreenTransparent(HWND hDlg, WORD CB, BYTE uCheck
 {
 	_ASSERTE(CB==cbUserScreenTransparent);
 
-	gpSet->isUserScreenTransparent = uCheck;
+	gpSet->isUserScreenTransparent = _bool(uCheck);
 
 	gpConEmu->OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
 	gpConEmu->UpdateWindowRgn();
@@ -3789,7 +3789,7 @@ void CSetDlgButtons::OnBtn_ColorKeyTransparent(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbColorKeyTransparent);
 
-	gpSet->isColorKeyTransparent = uCheck;
+	gpSet->isColorKeyTransparent = _bool(uCheck);
 	gpConEmu->OnTransparent();
 
 } // cbColorKeyTransparent
@@ -3803,7 +3803,7 @@ void CSetDlgButtons::OnBtn_CTSIntelligent(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCTSIntelligent);
 
-	gpSet->isCTSIntelligent = uCheck;
+	gpSet->isCTSIntelligent = _bool(uCheck);
 
 } // cbCTSIntelligent
 
@@ -3823,7 +3823,7 @@ void CSetDlgButtons::OnBtn_CTSFreezeBeforeSelect(HWND hDlg, WORD CB, BYTE uCheck
 {
 	_ASSERTE(CB==cbCTSFreezeBeforeSelect);
 
-	gpSet->isCTSFreezeBeforeSelect = uCheck;
+	gpSet->isCTSFreezeBeforeSelect = _bool(uCheck);
 
 } // cbCTSFreezeBeforeSelect
 
@@ -3859,7 +3859,7 @@ void CSetDlgButtons::OnBtn_CTSIBeam(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCTSIBeam);
 
-	gpSet->isCTSIBeam = uCheck;
+	gpSet->isCTSIBeam = _bool(uCheck);
 	gpConEmu->OnSetCursor();
 
 } // cbCTSIBeam
@@ -3926,7 +3926,7 @@ void CSetDlgButtons::OnBtn_CTSBlockSelection(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCTSBlockSelection);
 
-	gpSet->isCTSSelectBlock = uCheck;
+	gpSet->isCTSSelectBlock = _bool(uCheck);
 	gpSetCls->CheckSelectionModifiers(hDlg);
 
 } // cbCTSBlockSelection
@@ -3937,7 +3937,7 @@ void CSetDlgButtons::OnBtn_CTSTextSelection(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCTSTextSelection);
 
-	gpSet->isCTSSelectText = uCheck;
+	gpSet->isCTSSelectText = _bool(uCheck);
 	gpSetCls->CheckSelectionModifiers(hDlg);
 
 } // cbCTSTextSelection
@@ -3948,7 +3948,7 @@ void CSetDlgButtons::OnBtn_CTSDetectLineEnd(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCTSDetectLineEnd);
 
-	gpSet->AppStd.isCTSDetectLineEnd = uCheck;
+	gpSet->AppStd.isCTSDetectLineEnd = _bool(uCheck);
 
 } // cbCTSDetectLineEnd
 
@@ -3958,7 +3958,7 @@ void CSetDlgButtons::OnBtn_CTSBashMargin(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCTSBashMargin);
 
-	gpSet->AppStd.isCTSBashMargin = uCheck;
+	gpSet->AppStd.isCTSBashMargin = _bool(uCheck);
 
 } // cbCTSBashMargin
 
@@ -3999,7 +3999,7 @@ void CSetDlgButtons::OnBtn_CTSShiftArrowStartSel(HWND hDlg, WORD CB, BYTE uCheck
 {
 	_ASSERTE(CB==cbCTSShiftArrowStartSel);
 
-	gpSet->AppStd.isCTSShiftArrowStart = uCheck;
+	gpSet->AppStd.isCTSShiftArrowStart = _bool(uCheck);
 
 } // cbCTSShiftArrowStartSel
 
@@ -4009,7 +4009,7 @@ void CSetDlgButtons::OnBtn_FarGotoEditor(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbFarGotoEditor);
 
-	gpSet->isFarGotoEditor = uCheck;
+	gpSet->isFarGotoEditor = _bool(uCheck);
 
 } // cbFarGotoEditor
 
@@ -4019,7 +4019,7 @@ void CSetDlgButtons::OnBtn_HighlightMouseRow(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbHighlightMouseRow);
 
-	gpSet->isHighlightMouseRow = uCheck;
+	gpSet->isHighlightMouseRow = _bool(uCheck);
 	gpConEmu->Update(true);
 
 } // cbHighlightMouseRow
@@ -4030,7 +4030,7 @@ void CSetDlgButtons::OnBtn_HighlightMouseCol(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbHighlightMouseCol);
 
-	gpSet->isHighlightMouseCol = uCheck;
+	gpSet->isHighlightMouseCol = _bool(uCheck);
 	gpConEmu->Update(true);
 
 } // cbHighlightMouseCol
@@ -4043,7 +4043,7 @@ void CSetDlgButtons::OnBtn_UpdateCheckOnStartup(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbUpdateCheckOnStartup);
 
-	gpSet->UpdSet.isUpdateCheckOnStartup = uCheck;
+	gpSet->UpdSet.isUpdateCheckOnStartup = _bool(uCheck);
 
 } // cbUpdateCheckOnStartup
 
@@ -4053,7 +4053,7 @@ void CSetDlgButtons::OnBtn_UpdateCheckHourly(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbUpdateCheckHourly);
 
-	gpSet->UpdSet.isUpdateCheckHourly = uCheck;
+	gpSet->UpdSet.isUpdateCheckHourly = _bool(uCheck);
 
 } // cbUpdateCheckHourly
 
@@ -4146,7 +4146,7 @@ void CSetDlgButtons::OnBtn_UpdateLeavePackages(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbUpdateLeavePackages);
 
-	gpSet->UpdSet.isUpdateLeavePackages = uCheck;
+	gpSet->UpdSet.isUpdateLeavePackages = _bool(uCheck);
 
 } // cbUpdateLeavePackages
 
@@ -4244,7 +4244,7 @@ void CSetDlgButtons::OnBtn_DefTerm(HWND hDlg, WORD CB, BYTE uCheck)
 	switch (CB)
 	{
 	case cbDefaultTerminal:
-		gpSet->isSetDefaultTerminal = uCheck;
+		gpSet->isSetDefaultTerminal = _bool(uCheck);
 		bSetupDefaultTerminal = gpSet->isSetDefaultTerminal;
 		break;
 
@@ -4290,7 +4290,7 @@ void CSetDlgButtons::OnBtn_DefTerm(HWND hDlg, WORD CB, BYTE uCheck)
 		break;
 
 	case cbDefaultTerminalNoInjects:
-		gpSet->isDefaultTerminalNoInjects = uCheck;
+		gpSet->isDefaultTerminalNoInjects = _bool(uCheck);
 		break;
 
 	case cbDefaultTerminalUseExisting:

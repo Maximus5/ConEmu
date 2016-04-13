@@ -200,7 +200,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	DWORD nSubSystem = pIn->StartStop.nSubSystem;
 	BOOL bRunViaCmdExe = pIn->StartStop.bRootIsCmdExe;
 	BOOL bUserIsAdmin = pIn->StartStop.bUserIsAdmin;
-	BOOL lbWasBuffer = pIn->StartStop.bWasBufferHeight;
+	bool lbWasBuffer = _bool(pIn->StartStop.bWasBufferHeight);
 	HANDLE hServerProcessHandle = (HANDLE)(DWORD_PTR)pIn->StartStop.hServerProcessHandle;
 	//DWORD nInputTID = pIn->StartStop.dwInputTID;
 	_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
@@ -1248,7 +1248,7 @@ CESERVER_REQ* CRealServer::cmdLockDc(LPVOID pInst, CESERVER_REQ* pIn, UINT nData
 
 	_ASSERTE(pIn->LockDc.hDcWnd == mp_RCon->mp_VCon->GetView());
 
-	mp_RCon->mp_VCon->LockDcRect(pIn->LockDc.bLock, &pIn->LockDc.Rect);
+	mp_RCon->mp_VCon->LockDcRect(_bool(pIn->LockDc.bLock), &pIn->LockDc.Rect);
 
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
 	return pOut;
