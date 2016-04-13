@@ -20,6 +20,35 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.4.13
+* Task for ‘Bash on Ubuntu on Windows’ was not created properly in 32-bit ConEmu on 64-bit Win10.
+  Also, it's named now just a {Bash::bash}.
+* New StatusBar columns: ‘Terminal modes’ and ‘RealConsole modes’ (generally for troubleshooting).
+  * ‘Terminal modes’ shows keyboard modes and some flags:
+    Windows, Xterm, App cursor keys, Bracketed paste, Cygwin, msys1, msys2 or clinK.
+    E.g. `XC` means `X`term keyboard mode and `C`ygwin active console application.
+  * ‘RealConsole modes’ shows current values of GetConsoleMode for ConIn and ConOut.
+* GuiMacro: `TermMode(<Mode>[,<Action>])`.
+  Ref gh-629: To ‘fix’ arrow keys in vim in bash on Ubuntu on Windows
+  one may set hotkey for macro `TermMode(2)` and switch keyboard mode
+  manually when vim (linux process) is started and exited.
+
+~~~
+TermMode(<Mode>[,<Action>])
+  - changes active terminal modes
+    Mode==0: Keyboard emulation (Xterm/Windows)
+    Mode==1: Bracketed paste
+    Mode==2: Application cursor keys (DECCKM)
+    Action==0: Disable mode
+    Action==1: Enable mode
+    Action==2: Switch mode (default)
+~~~
+
+* Suppress error message ‘Can't open console data file mapping. ErrCode=0x00000002’
+  when started smth from Far and close ConEmu.
+* Terminal modes and performance counters were not shown properly on first open of ‘Info’ settings page.
+
+
 2016.4.11
 * gh-629: Support xterm keyboard emulation for ‘Bash on Ubuntu on Windows’.
   conhost does not do keypressed translation, if they were posted directly to console input.
