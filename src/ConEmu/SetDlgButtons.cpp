@@ -1427,7 +1427,7 @@ void CSetDlgButtons::OnBtn_CmdTasksDir(HWND hDlg, WORD CB, BYTE uCheck)
 	TODO("Извлечь текущий каталог запуска");
 	bi.pszDisplayName = szFolder;
 	wchar_t szTitle[100];
-	bi.lpszTitle = wcscpy(szTitle, L"Choose tab startup directory");
+	bi.lpszTitle = lstrcpyn(szTitle, L"Choose tab startup directory", countof(szTitle));
 	bi.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
 	bi.lpfn = CRecreateDlg::BrowseCallbackProc;
 	bi.lParam = (LPARAM)szFolder;
