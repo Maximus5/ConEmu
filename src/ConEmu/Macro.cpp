@@ -226,6 +226,8 @@ namespace ConEmuMacro
 	LPWSTR Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// TaskAdd("Name","Commands"[,"GuiArgs"[,Flags]])
 	LPWSTR TaskAdd(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// TermMode(<Mode>[,<Action>])
+	LPWSTR TermMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Transparency
 	LPWSTR Transparency(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 		LPWSTR TransparencyHelper(int nCmd, int nValue); // helper, это не макро-фукнция
@@ -310,6 +312,7 @@ namespace ConEmuMacro
 		{Tab, {L"Tab", L"Tabs", L"TabControl"}, gmf_MainThread},
 		{Task, {L"Task"}, gmf_MainThread},
 		{TaskAdd, {L"TaskAdd"}, gmf_MainThread},
+		{TermMode, {L"TermMode"}},
 		{Transparency, {L"Transparency"}},
 		{Unfasten, {L"Unfasten"}, gmf_MainThread},
 		{Wiki, {L"Wiki"}},
@@ -3711,6 +3714,25 @@ LPWSTR ConEmuMacro::TaskAdd(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 		_wsprintf(szIndex, SKIPCOUNT(szIndex) L"%i: ", nTaskIdx+1); // 1-based index
 		return lstrmerge(szIndex, pGrp->pszName);
 	}
+
+	return lstrdup(L"Failed");
+}
+
+// Change or switch term mode
+// TermMode(<Mode>[,<Action>])
+LPWSTR ConEmuMacro::TermMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	if (!apRCon)
+		return lstrdup(L"NoActiveCon");
+
+	int Mode, Action;
+	if (!p->GetIntArg(0, Mode))
+		return lstrdup(L"InvalidArg");
+	if (!p->GetIntArg(1, Action))
+		Action = 2;
+
+	if (apRCon->StartStopTermMode((TermModeCommand)Mode, (ChangeTermAction)Action))
+		return lstrdup(L"OK");
 
 	return lstrdup(L"Failed");
 }

@@ -438,6 +438,14 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"  - start task with specified name\r\n" \
 	L"TaskAdd(\"Name\",\"Commands\"[,\"GuiArgs\"[,Flags]])\r\n" \
 	L"  - create new task and save it to settings\r\n" \
+	L"TermMode(<Mode>[,<Action>])\r\n" \
+	L"  - changes active terminal modes\r\n" \
+	L"    Mode==0: Keyboard emulation (Xterm/Windows)\r\n" \
+	L"    Mode==1: Bracketed paste\r\n" \
+	L"    Mode==2: Application cursor keys (DECCKM)\r\n" \
+	L"    Action==0: Disable mode\r\n" \
+	L"    Action==1: Enable mode\r\n" \
+	L"    Action==2: Switch mode (default)\r\n" \
 	L"Transparency(<Cmd>,<Value>)\r\n" \
 	L"  - change ConEmu transparency level absolutely or relatively\r\n" \
 	L"    Cmd==0, Value=40..255 (255==Opaque)\r\n" \
