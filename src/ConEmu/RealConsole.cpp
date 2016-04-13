@@ -7561,7 +7561,7 @@ bool CRealConsole::ReopenServerPipes()
 		bool bSrvClosed = (WaitForSingleObject(hSrvHandle, 0) == WAIT_OBJECT_0);
 		// -- We may not come in time due to multiple AltServers shutdown
 		//Assert(mb_InCloseConsole && "m_ConDataChanged.Open() != NULL"); UNREFERENCED_PARAMETER(bSrvClosed);
-		_wsprintf(szDbgInfo, SKIPCOUNT(szDbgInfo) L"ReopenServerPipes: m_ConDataChanged.Open() failed, MainServer is %s", GetServerPID(false), bSrvClosed ? L"Closed" : L"OK");
+		_wsprintf(szDbgInfo, SKIPCOUNT(szDbgInfo) L"ReopenServerPipes: m_ConDataChanged.Open() failed, MainServer (PID=%u) is %s", GetServerPID(true), bSrvClosed ? L"Closed" : L"OK");
 		LogString(szDbgInfo);
 		return false;
 	}
@@ -7571,7 +7571,7 @@ bool CRealConsole::ReopenServerPipes()
 	{
 		bool bSrvClosed = (WaitForSingleObject(hSrvHandle, 0) == WAIT_OBJECT_0);
 		//Assert((bOpened || mb_InCloseConsole) && "m_GetDataPipe.Open() failed"); UNREFERENCED_PARAMETER(bSrvClosed);
-		_wsprintf(szDbgInfo, SKIPCOUNT(szDbgInfo) L"ReopenServerPipes: m_GetDataPipe.Open() failed, MainServer is %s", GetServerPID(false), bSrvClosed ? L"Closed" : L"OK");
+		_wsprintf(szDbgInfo, SKIPCOUNT(szDbgInfo) L"ReopenServerPipes: m_GetDataPipe.Open() failed, MainServer (PID=%u) is %s", GetServerPID(true), bSrvClosed ? L"Closed" : L"OK");
 		LogString(szDbgInfo);
 		return false;
 	}
