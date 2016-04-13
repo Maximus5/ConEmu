@@ -68,7 +68,7 @@ protected:
 protected:
 	// Routines
 	void Clean(MArray<LngRcItem>& arr);
-	bool LoadResouces(LPCWSTR asLanguage, LPCWSTR asFile);
+	bool LoadResources(LPCWSTR asLanguage, LPCWSTR asFile);
 	bool LoadSection(MJsonValue* pJson, MArray<LngRcItem>& arr, int idDiff);
 	bool SetResource(MArray<LngRcItem>& arr, int idx, LPCWSTR asValue, bool bLocalized);
 	bool SetResource(MArray<LngRcItem>& arr, int idx, MJsonValue* pJson);
@@ -87,7 +87,7 @@ protected:
 	MArray<LngRcItem> m_CmnHints; // ID_GO ... _APS_NEXT_CONTROL_VALUE
 	MArray<LngRcItem> m_MnuHints; // IDM__MIN_MNU_ITEM_ID ...
 	MArray<LngRcItem> m_Controls; // ID_GO ... _APS_NEXT_CONTROL_VALUE
-	MArray<LngRcItem> m_Strings; // lng_DlgFastCfg ... lng_NextId
+	MArray<LngRcItem> m_Strings;  // lng_DlgFastCfg ... lng_NextId
 };
 
 extern CLngRc* gpLng;

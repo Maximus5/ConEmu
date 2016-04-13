@@ -136,7 +136,7 @@ void CLngRc::Reload(bool bForce /*= false*/)
 	if (bChanged)
 	{
 		if (!bExists
-			|| !LoadResouces(lsNewLng, lsNewFile))
+			|| !LoadResources(lsNewLng, lsNewFile))
 		{
 			ms_Lng.Empty();
 			ms_l10n.Empty();
@@ -160,7 +160,7 @@ void CLngRc::Clean(MArray<CLngRc::LngRcItem>& arr)
 	}
 }
 
-bool CLngRc::LoadResouces(LPCWSTR asLanguage, LPCWSTR asFile)
+bool CLngRc::LoadResources(LPCWSTR asLanguage, LPCWSTR asFile)
 {
 	bool  bOk = false;
 	CEStr lsJsonData;
