@@ -181,7 +181,15 @@ bool IsNeedDequote(LPCWSTR asCmdLine, bool abFromCmdCK, LPCWSTR* rsEndQuote/*=NU
 	return true;
 }
 
-// Returns 0 if succeeded, other number on error
+// Returns PTR to next arg or NULL on error
+LPCWSTR QueryNextArg(const wchar_t* asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/*=NULL*/)
+{
+	if (0 != NextArg(&asCmdLine, rsArg, rsArgStart))
+		return NULL;
+	return asCmdLine;
+}
+
+// Returns 0 if succeeded, otherwise the error code
 int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/*=NULL*/)
 {
 	if (!asCmdLine || !*asCmdLine)
@@ -351,6 +359,15 @@ int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/
 	return 0;
 }
 
+// Returns PTR to next line or NULL on error
+LPCWSTR QueryNextLine(const wchar_t* asLines, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES*/)
+{
+	if (0 != NextLine(&asLines, rsLine, Flags))
+		return NULL;
+	return asLines;
+}
+
+// Returns 0 if succeeded, otherwise the error code
 int NextLine(const wchar_t** asLines, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES*/)
 {
 	if (!asLines || !*asLines)

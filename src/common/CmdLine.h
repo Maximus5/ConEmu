@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define QuotationNeededChars  (L" " CmdEscapeNeededChars)
 
 int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart=NULL);
+LPCWSTR QueryNextArg(const wchar_t* asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart=NULL);
 bool DemangleArg(CEStr& rsDemangle, bool bDeQuote = true, bool bDeEscape = false);
 
 typedef DWORD NEXTLINEFLAGS;
@@ -42,6 +43,7 @@ const NEXTLINEFLAGS
 	NLF_TRIM_SPACES = 2,
 	NLF_NONE = 0;
 int NextLine(const wchar_t** asLines, CEStr &rsLine, NEXTLINEFLAGS Flags = NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES);
+LPCWSTR QueryNextLine(const wchar_t* asLines, CEStr &rsLine, NEXTLINEFLAGS Flags = NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES);
 
 bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
 LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchDriveMax);
