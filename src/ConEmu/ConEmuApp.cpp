@@ -2308,23 +2308,15 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 	LPCWSTR pszTasks[32] = {};
 	LPCWSTR pszTasksPrefix[32] = {};
 	LPCWSTR pszHistory[32] = {};
-	LPCWSTR pszCurCmd = NULL, pszCurCmdTitle = NULL;
+	LPCWSTR pszCurCmd = NULL;
 	size_t nTasksCount = 0, nHistoryCount = 0;
 
 	if (gpSet->isStoreTaskbarCommands)
 	{
-		pszCurCmd = SkipNonPrintable(gpConEmu->opt.cmdLine);
-		pszCurCmdTitle = pszCurCmd;
-		if (pszCurCmdTitle && (*pszCurCmdTitle == L'/'))
+		pszCurCmd = SkipNonPrintable(gpConEmu->opt.runCommand);
+		if (!pszCurCmd || !*pszCurCmd)
 		{
-			if (StrCmpNI(pszCurCmdTitle, L"/cmd ", 5) == 0)
-			{
-				pszCurCmdTitle = SkipNonPrintable(pszCurCmdTitle+5);
-			}
-		}
-		if (!pszCurCmdTitle || !*pszCurCmdTitle)
-		{
-			pszCurCmd = pszCurCmdTitle = NULL;
+			pszCurCmd = NULL;
 		}
 
 		// Теперь команды из истории
@@ -2332,14 +2324,14 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 		while ((pszCommand = gpSet->HistoryGet(nHistoryCount)) && (nHistoryCount < countof(pszHistory)))
 		{
 			// Текущую - к pszCommand не добавляем. Ее в конец
-			if (!pszCurCmdTitle || (lstrcmpi(pszCurCmdTitle, pszCommand) != 0))
+			if (!pszCurCmd || (lstrcmpi(pszCurCmd, pszCommand) != 0))
 			{
 				pszHistory[nHistoryCount++] = pszCommand;
 			}
 			pszCommand += _tcslen(pszCommand)+1;
 		}
 
-		if (pszCurCmdTitle)
+		if (pszCurCmd)
 			nHistoryCount++;
 	}
 
@@ -2384,7 +2376,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 				cMinSlots = 3;
 
 			// Вся история и все команды - скорее всего в TaskList не поместятся. Нужно подрезать.
-			if (cMinSlots < (nTasksCount + nHistoryCount + (pszCurCmdTitle ? 1 : 0)))
+			if (cMinSlots < (nTasksCount + nHistoryCount + (pszCurCmd ? 1 : 0)))
 			{
 				// Минимум одну позицию - оставить под историю/текущую команду
 				if (nTasksCount && (cMinSlots < (nTasksCount + 1)))
@@ -2394,10 +2386,10 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 						pszTasks[nTasksCount] = NULL;
 				}
 
-				if ((nTasksCount + (pszCurCmdTitle ? 1 : 0)) >= cMinSlots)
+				if ((nTasksCount + (pszCurCmd ? 1 : 0)) >= cMinSlots)
 					nHistoryCount = 0;
 				else
-					nHistoryCount = cMinSlots - (nTasksCount + (pszCurCmdTitle ? 1 : 0));
+					nHistoryCount = cMinSlots - (nTasksCount + (pszCurCmd ? 1 : 0));
 
 				if (nHistoryCount < countof(pszHistory))
 					pszHistory[nHistoryCount] = NULL;
@@ -2442,7 +2434,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 				}
 
 				// И команды из истории
-				if (SUCCEEDED(hr) && gpSet->isStoreTaskbarCommands && (nHistoryCount || pszCurCmdTitle))
+				if (SUCCEEDED(hr) && gpSet->isStoreTaskbarCommands && (nHistoryCount || pszCurCmd))
 				{
 					if (bNeedSeparator)
 					{
@@ -2457,9 +2449,9 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 						}
 					}
 
-					if (SUCCEEDED(hr) && pszCurCmdTitle)
+					if (SUCCEEDED(hr) && pszCurCmd)
 					{
-						hr = _CreateShellLink(pszCurCmd, NULL, pszCurCmdTitle, &psl);
+						hr = _CreateShellLink(pszCurCmd, NULL, pszCurCmd, &psl);
 
 						if (SUCCEEDED(hr))
 						{
