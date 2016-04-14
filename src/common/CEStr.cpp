@@ -115,7 +115,7 @@ LPCWSTR CEStr::Right(INT_PTR cchMaxCount) const
 	if (!ms_Val || !*ms_Val)
 		return ms_Val;
 
-	INT_PTR iLen = lstrlen(ms_Val);
+	INT_PTR iLen = GetLen();
 	if (iLen >= cchMaxCount)
 		return (ms_Val + (iLen - cchMaxCount + 1));
 	return ms_Val;
@@ -147,15 +147,23 @@ CEStr::~CEStr()
 	SafeFree(ms_Val);
 }
 
-INT_PTR CEStr::GetLen()
+INT_PTR CEStr::GetLen() const
 {
-	return (ms_Val && *ms_Val) ? lstrlen(ms_Val) : 0;
+	if (!ms_Val || !*ms_Val)
+		return 0;
+	size_t iLen = wcslen(ms_Val);
+	if ((INT_PTR)iLen < 0)
+	{
+		_ASSERTE((INT_PTR)iLen >= 0);
+		return 0;
+	}
+	return (INT_PTR)iLen;
 }
 
 INT_PTR CEStr::GetMaxCount()
 {
 	if (ms_Val && (mn_MaxCount <= 0))
-		mn_MaxCount = lstrlen(ms_Val) + 1;
+		mn_MaxCount = GetLen() + 1;
 	return mn_MaxCount;
 }
 
@@ -228,8 +236,15 @@ LPCWSTR CEStr::AttachInt(wchar_t*& asPtr)
 	SafeFree(ms_Val);
 	if (asPtr)
 	{
+		size_t len = wcslen(asPtr);
+		if ((INT_PTR)len < 0)
+		{
+			_ASSERTE((INT_PTR)len >= 0);
+			return ms_Val;
+		}
+
 		ms_Val = asPtr;
-		mn_MaxCount = lstrlen(asPtr)+1;
+		mn_MaxCount = 1 + (INT_PTR)len;
 	}
 
 	CESTRLOG1("  ms_Val=x%p", ms_Val);
@@ -237,7 +252,7 @@ LPCWSTR CEStr::AttachInt(wchar_t*& asPtr)
 	return ms_Val;
 }
 
-bool CEStr::IsEmpty()
+bool CEStr::IsEmpty() const
 {
 	return (!ms_Val || !*ms_Val);
 }

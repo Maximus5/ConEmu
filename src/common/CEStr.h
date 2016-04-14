@@ -93,14 +93,14 @@ public:
 	CEStr& operator=(wchar_t* RVAL_REF asPtr);
 	CEStr& operator=(const wchar_t* asPtr);
 
-	INT_PTR GetLen();
+	INT_PTR GetLen() const;
 	INT_PTR GetMaxCount();
 
 	wchar_t* GetBuffer(INT_PTR cchMaxLen);
 	wchar_t* Detach();
 	LPCWSTR  Attach(wchar_t* RVAL_REF asPtr);
 	void Empty();
-	bool IsEmpty();
+	bool IsEmpty() const;
 	LPCWSTR Set(LPCWSTR asNewValue, INT_PTR anChars = -1);
 	void SavePathVar(LPCWSTR asCurPath);
 	void SaveEnvVar(LPCWSTR asVarName, LPCWSTR asNewValue);
