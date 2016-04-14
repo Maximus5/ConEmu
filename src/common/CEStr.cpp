@@ -284,7 +284,11 @@ bool CEStr::IsPossibleSwitch() const
 	// But ':' removed from checks, because otherwise ConEmu will not warn
 	// on invalid usage of "-new_console:a" for example
 
-	if (wcspbrk(ms_Val+1, L"\\/|.&<>^") != NULL)
+	// Also, support smth like "-inside=\eCD /d %1"
+	LPCWSTR pszDelim = wcspbrk(ms_Val+1, L"=:");
+	LPCWSTR pszInvalids = wcspbrk(ms_Val+1, L"\\/|.&<>^");
+
+	if (pszInvalids && (!pszDelim || (pszInvalids < pszDelim)))
 		return false;
 
 	// Well, looks like a switch (`-run` for example)
@@ -308,10 +312,10 @@ bool CEStr::CompareSwitch(LPCWSTR asSwitch) const
 
 	// Support partial comparison for L"-inside=..." when (asSwitch == L"-inside=")
 	int len = lstrlen(asSwitch);
-	if ((len > 0) && (asSwitch[len-1] == L'='))
+	if ((len > 1) && ((asSwitch[len-1] == L'=') || (asSwitch[len-1] == L':')))
 	{
-		iCmp = lstrcmpni(ms_Val+1, asSwitch, len);
-		if (iCmp == 0)
+		iCmp = lstrcmpni(ms_Val+1, asSwitch, (len - 1));
+		if ((iCmp == 0) && ((ms_Val[len] == L'=') || (ms_Val[len] == L':')))
 			return true;
 	}
 
