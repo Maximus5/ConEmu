@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Tlhelp32.h>
 
 #include "../common/ConEmuCheck.h"
+#include "../common/ConsoleMixAttr.h"
 #include "../common/Execute.h"
 #include "../common/MGlobal.h"
 #include "../common/MSetter.h"
@@ -6058,6 +6059,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 					{
 						CharAttr& lca = pcaDst[nX];
 						bool hasTrueColor = false;
+						bool hasFont = false;
 
 						// If not "mono" we need only lower byte with color indexes
 						PalIndex = bForceMono ? 7 : ((*pnSrc) & 0xFF);
@@ -6097,6 +6099,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 								if (pcolSrc->fg_valid)
 								{
 									hasTrueColor = true;
+									hasFont = true;
 									lca.nFontIndex = fnt_Normal; //bold/italic/underline will be set below
 									lca.crForeColor = lbFade ? gpSet->GetFadeColor(pcolSrc->fg_color) : pcolSrc->fg_color;
 
@@ -6106,14 +6109,26 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 								else if (pcolSrc->bk_valid)
 								{
 									hasTrueColor = true;
+									hasFont = true;
 									lca.nFontIndex = fnt_Normal; //bold/italic/underline will be set below
 									lca.crBackColor = lbFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color;
 								}
 
 								// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic,..., 4 - underline, ...
 								if (pcolSrc->style)
+								{
+									hasFont = true;
 									lca.nFontIndex = pcolSrc->style & fnt_StdFontMask;
+								}
 							}
+						}
+
+						if (!hasFont
+							&& ((*pnSrc) & COMMON_LVB_UNDERSCORE)
+							&& ((nX >= ROWID_USED_CELLS) || !((*pnSrc) & (CHANGED_CONATTR & ~COMMON_LVB_UNDERSCORE)))
+							)
+						{
+							lca.nFontIndex = fnt_Underline;
 						}
 
 						if (!hasTrueColor && bExtendColors && (nY >= nExtendStartsY))
