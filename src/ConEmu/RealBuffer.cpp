@@ -6036,8 +6036,8 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				if (nCharsLeft > 0)
 					wmemset(pszDst+cnSrcLineLen, wSetChar, nCharsLeft);
 
-				// Атрибуты
-				DWORD atr = 0;
+				// Console text colors (Fg,Bg)
+				BYTE PalIndex = 0;
 
 				// While console is in recreate (shutdown console, startup new root)
 				// it's shown using monochrome (gray on black)
@@ -6060,9 +6060,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 						bool hasTrueColor = false;
 
 						// If not "mono" we need only lower byte with color indexes
-						atr = bForceMono ? 7 : ((*pnSrc) & 0xFF);
-						TODO("OPTIMIZE: lca = lcaTable[atr];");
-						lca = lcaTable[atr];
+						PalIndex = bForceMono ? 7 : ((*pnSrc) & 0xFF);
+						TODO("OPTIMIZE: lca = lcaTable[PalIndex];");
+						lca = lcaTable[PalIndex];
 						TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
 
 						bool bPair = (iTail > 0);
@@ -6175,10 +6175,10 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 				// Far2 показывает красный 'A' в правом нижнем углу консоли
 				// Этот ярко красный цвет фона может попасть в Extend Font Colors
 				if (bExtendFonts && ((nY+1) == nYMax) && mp_RCon->isFar()
-						&& (pszDst[nWidth-1] == L'A') && (atr == 0xCF))
+						&& (pszDst[nWidth-1] == L'A') && (PalIndex == 0xCF))
 				{
 					// Вернуть "родной" цвет и шрифт
-					pcaDst[nWidth-1] = lcaTable[atr];
+					pcaDst[nWidth-1] = lcaTable[PalIndex];
 				}
 
 				// Next line
