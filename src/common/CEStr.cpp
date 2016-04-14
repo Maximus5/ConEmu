@@ -252,6 +252,131 @@ LPCWSTR CEStr::AttachInt(wchar_t*& asPtr)
 	return ms_Val;
 }
 
+// Safe comparing function
+int CEStr::Compare(LPCWSTR asText, bool abCaseSensitive /*= false*/) const
+{
+	if (!ms_Val && asText)
+		return -1;
+	if (ms_Val && !asText)
+		return 1;
+	if (!ms_Val && !asText)
+		return 0;
+
+	int iCmp;
+	if (abCaseSensitive)
+		iCmp = lstrcmp(ms_Val, asText);
+	else
+		iCmp = lstrcmpi(ms_Val, asText);
+	return iCmp;
+}
+
+bool CEStr::IsPossibleSwitch() const
+{
+	// Nothing to compare?
+	if (IsEmpty())
+		return false;
+	if ((ms_Val[0] != L'-') && (ms_Val[0] != L'/'))
+		return false;
+
+	// We do not care here about "-new_console:..." or "-cur_console:..."
+	// They are processed by RConStartArgs
+
+	// But ':' removed from checks, because otherwise ConEmu will not warn
+	// on invalid usage of "-new_console:a" for example
+
+	if (wcspbrk(ms_Val+1, L"\\/|.&<>^") != NULL)
+		return false;
+
+	// Well, looks like a switch (`-run` for example)
+	return true;
+}
+
+bool CEStr::CompareSwitch(LPCWSTR asSwitch) const
+{
+	if ((asSwitch[0] == L'-') || (asSwitch[0] == L'/'))
+	{
+		asSwitch++;
+	}
+	else
+	{
+		_ASSERTE((asSwitch[0] == L'-') || (asSwitch[0] == L'/'));
+	}
+
+	int iCmp = lstrcmpi(ms_Val+1, asSwitch);
+	if (iCmp == 0)
+		return true;
+
+	// Support partial comparison for L"-inside=..." when (asSwitch == L"-inside=")
+	int len = lstrlen(asSwitch);
+	if ((len > 0) && (asSwitch[len-1] == L'='))
+	{
+		iCmp = lstrcmpni(ms_Val+1, asSwitch, len);
+		if (iCmp == 0)
+			return true;
+	}
+
+	return false;
+}
+
+bool CEStr::IsSwitch(LPCWSTR asSwitch) const
+{
+	// Not a switch?
+	if (!IsPossibleSwitch())
+	{
+		return false;
+	}
+
+	if (!asSwitch || !*asSwitch)
+	{
+		_ASSERTE(asSwitch && *asSwitch);
+		return false;
+	}
+
+	return CompareSwitch(asSwitch);
+}
+
+// Stops on first NULL
+bool CEStr::OneOfSwitches(LPCWSTR asSwitch1, LPCWSTR asSwitch2, LPCWSTR asSwitch3, LPCWSTR asSwitch4, LPCWSTR asSwitch5, LPCWSTR asSwitch6, LPCWSTR asSwitch7, LPCWSTR asSwitch8, LPCWSTR asSwitch9, LPCWSTR asSwitch10) const
+{
+	// Not a switch?
+	if (!IsPossibleSwitch())
+	{
+		return false;
+	}
+
+	LPCWSTR switches[] = {asSwitch1, asSwitch2, asSwitch3, asSwitch4, asSwitch5, asSwitch6, asSwitch7, asSwitch8, asSwitch9, asSwitch10};
+
+	for (size_t i = 0; (i < countof(switches)) && switches[i]; i++)
+	{
+		if (CompareSwitch(switches[i]))
+			return true;
+	}
+
+	return false;
+
+#if 0
+	// Variable argument list is not so safe...
+
+	bool bMatch = false;
+	va_list argptr;
+	va_start(argptr, asSwitch1);
+
+	LPCWSTR pszSwitch = va_arg( argptr, LPCWSTR );
+	while (pszSwitch)
+	{
+		if (CompareSwitch(pszSwitch))
+		{
+			bMatch = true; break;
+		}
+		pszSwitch = va_arg( argptr, LPCWSTR );
+	}
+
+	va_end(argptr);
+
+	return bMatch;
+#endif
+}
+
 bool CEStr::IsEmpty() const
 {
 	return (!ms_Val || !*ms_Val);

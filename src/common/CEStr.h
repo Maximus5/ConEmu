@@ -86,9 +86,12 @@ public:
 private:
 	LPCWSTR AttachInt(wchar_t*& asPtr);
 
+	bool CompareSwitch(LPCWSTR asSwitch) const;
+
 public:
 	operator LPCWSTR() const;
 	LPCWSTR c_str(LPCWSTR asNullSubstitute = NULL) const;
+	int Compare(LPCWSTR asText, bool abCaseSensitive = false) const;
 	LPCWSTR Right(INT_PTR cchMaxCount) const;
 	CEStr& operator=(wchar_t* RVAL_REF asPtr);
 	CEStr& operator=(const wchar_t* asPtr);
@@ -107,6 +110,13 @@ public:
 	void SetAt(INT_PTR nIdx, wchar_t wc);
 
 	void GetPosFrom(const CEStr& arg);
+
+	// If this may be supported switch like "-run"
+	bool IsPossibleSwitch() const;
+	// For example, compare if ms_Val is "-run"
+	bool IsSwitch(LPCWSTR asSwitch) const;
+	// Stops checking on first NULL
+	bool OneOfSwitches(LPCWSTR asSwitch1, LPCWSTR asSwitch2 = NULL, LPCWSTR asSwitch3 = NULL, LPCWSTR asSwitch4 = NULL, LPCWSTR asSwitch5 = NULL, LPCWSTR asSwitch6 = NULL, LPCWSTR asSwitch7 = NULL, LPCWSTR asSwitch8 = NULL, LPCWSTR asSwitch9 = NULL, LPCWSTR asSwitch10 = NULL) const;
 
 	CEStr();
 	CEStr(wchar_t* RVAL_REF asPtr);
