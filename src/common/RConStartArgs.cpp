@@ -530,7 +530,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	if (BufHeight == crb_On) cchMaxLen += 32; // -new_console:h<lines>
 	if (LongOutputDisable == crb_On) cchMaxLen++; // -new_console:o
 	if (OverwriteMode != crb_Off) cchMaxLen += 2; // -new_console:w[0|1]
-	cchMaxLen += (nPTY ? 15 : 0); // -new_console:e
+	cchMaxLen += (nPTY ? 15 : 0); // -new_console:p5
 	if (InjectsDisable == crb_On) cchMaxLen++; // -new_console:i
 	if (ForceNewWindow == crb_On) cchMaxLen++; // -new_console:N
 	if (ForceHooksServer == crb_On) cchMaxLen++; // -new_console:R
@@ -604,8 +604,10 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	else if (OverwriteMode == crb_Off)
 		wcscat_c(szAdd, L"w0");
 
-	if (nPTY)
-		wcscat_c(szAdd, (nPTY == 1) ? L"p1" : (nPTY == 2) ? L"p2" : L"p0");
+	if (nPTY == DefaultPtyFlags)
+		wcscat_c(szAdd, L"p");
+	else if (nPTY)
+		msprintf(szAdd+lstrlen(szAdd), 15, L"p%u", nPTY);
 
 	if (InjectsDisable == crb_On)
 		wcscat_c(szAdd, L"i");
@@ -1116,24 +1118,14 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					case L'p':
 						if (isDigit(*pszEnd))
 						{
-							switch (*(pszEnd++))
-							{
-								case L'0':
-									nPTY = 0; // don't change
-									break;
-								case L'1':
-									nPTY = 1; // enable PTY mode
-									break;
-								case L'2':
-									nPTY = 2; // disable PTY mode (switch to plain $CONIN, $CONOUT, $CONERR)
-									break;
-								default:
-									nPTY = 1;
-							}
+							wchar_t* pszDigits = NULL;
+							nPTY = wcstoul(pszEnd, &pszDigits, 10);
+							if (pszDigits)
+								pszEnd = pszDigits;
 						}
 						else
 						{
-							nPTY = 1; // enable PTY mode
+							nPTY = DefaultPtyFlags; // xterm + app cursor keys
 						}
 						break;
 

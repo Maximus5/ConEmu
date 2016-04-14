@@ -119,7 +119,7 @@ _DBGHLP(L"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
 _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
 		L"     n - disable 'Press Enter or Esc to close console' confirmation\r\n" \
 		L"     o - don't enable 'Long console output' when starting command from Far Manager\r\n" \
-		L"     p1 - force xterm keyboard emulation mode for started process\r\n" \
+		L"     p[N] - pty modes, N - bitmask: 1 - XTermKeys, 2 - BrPaste, 4 - AppCursorKeys; default is 1+4\r\n" \
 		L"     r - run as restricted user\r\n" \
 		L"     R - force start hooks server in the parent process\r\n" \
 		L"     s[<SplitTab>T][<Percents>](H|V)\r\n" \

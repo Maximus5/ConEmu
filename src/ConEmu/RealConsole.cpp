@@ -4082,13 +4082,12 @@ void CRealConsole::UpdateRootInfo(const CESERVER_ROOT_INFO& RootInfo)
 	{
 		if (m_Args.nPTY)
 		{
-			switch (m_Args.nPTY)
-			{
-			case 1:
-				// The process uses xterm keys notation
-				StartStopXTerm(RootInfo.nPID, true);
-				break;
-			}
+			// xterm keys notation
+			StartStopXTerm(RootInfo.nPID, ((m_Args.nPTY & 1) == 1));
+			// Bracketed paste
+			StartStopBracketedPaste(RootInfo.nPID, ((m_Args.nPTY & 2) == 2));
+			// Application cursor keys
+			StartStopAppCursorKeys(RootInfo.nPID, ((m_Args.nPTY & 4) == 4));
 		}
 	}
 
