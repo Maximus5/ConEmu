@@ -1266,7 +1266,7 @@ wchar_t* CConEmuUpdate::CreateBatchFile(LPCWSTR asPackage)
 	WRITE_BATCH_A("\" ");
 	if (bNeedRunElevation)
 	{
-		WRITE_BATCH_A("/demote /cmd \"");
+		WRITE_BATCH_A("-demote -run \"");
 		WRITE_BATCH_W(gpConEmu->ms_ConEmuExe);
 		WRITE_BATCH_A("\" ");
 	}

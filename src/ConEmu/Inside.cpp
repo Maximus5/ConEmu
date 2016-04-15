@@ -408,8 +408,20 @@ HWND CConEmuInside::InsideFindParent()
 		// Если в проводнике уже есть ConEmu - открыть в нем новую вкладку
 		gpSetCls->SingleInstanceShowHide = sih_None;
 		LPCWSTR pszCmdLine = GetCommandLine();
-		LPCWSTR pszCmd = StrStrI(pszCmdLine, L" /cmd ");
-		gpConEmu->RunSingleInstance(hExistConEmu, pszCmd ? (pszCmd + 6) : NULL);
+		CEStr lsArg;
+		LPCWSTR pszCmd = pszCmdLine;
+		while (0 == NextArg(&pszCmd, lsArg))
+		{
+			if (lsArg.OneOfSwitches(L"-runlist",L"-cmdlist"))
+			{
+				pszCmd = NULL; break;
+			}
+			else if (lsArg.OneOfSwitches(L"-run",L"-cmd"))
+			{
+				break;
+			}
+		}
+		gpConEmu->RunSingleInstance(hExistConEmu, (pszCmd && *pszCmd) ? (pszCmd) : NULL);
 
 		SetInsideParentWND(INSIDE_PARENT_NOT_FOUND);
 		return mh_InsideParentWND; // Закрыться!

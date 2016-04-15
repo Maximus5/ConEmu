@@ -3664,13 +3664,6 @@ void CRealConsole::OnStartProcessAllowed()
 		WARNING("Need to be checked, what happens on 'Run errors'");
 		return;
 	}
-
-	//// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
-	//// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
-	//if (gpSetCls->SingleInstanceArg == sgl_Enabled)
-	//{
-	//	gpSetCls->ResetCmdArg();
-	//}
 }
 
 void CRealConsole::ConHostSearchPrepare()

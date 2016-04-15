@@ -124,7 +124,7 @@ CProcessEnvCmd::~CProcessEnvCmd()
 	m_Commands.clear();
 }
 
-// May comes from Task or ConEmu's /cmd switch
+// May comes from Task or ConEmu's -run switch
 // or from Setting\Environment page where one line is a single command (bAlone == true)
 bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/, bool bAlone /*= false*/, INT_PTR anBefore /*= -1*/)
 {

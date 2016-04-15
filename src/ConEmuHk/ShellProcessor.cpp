@@ -1145,8 +1145,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 		}
 		else
 		{
-			// Запускается GUI
-			_wcscat_c((*psParam), nCchSize, L" /cmd ");
+			// Starting GUI
+			_wcscat_c((*psParam), nCchSize, L" -run ");
 		}
 
 		if (!szDefTermArg2.IsEmpty())

@@ -33,65 +33,65 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define pCmdLine \
 	L"Command line examples\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
-	L"ConEmu.exe /cmd Far.exe /w\r\n" \
-	L"ConEmu.exe /font \"Consolas\" /size 16 /bufferheight 9999 /cmd powershell\r\n" \
-	L"ConEmu.exe /config \"Hiew\" /cmd \"C:\\Tools\\HIEW32.EXE\"\r\n" \
-	L"ConEmu.exe /cmd {Shells}\r\n" \
-	L"ConEmu.exe /nosingle /cmdlist cmd ||| cmd -new_console:sV ||| cmd -new_console:sH\r\n" \
-	L"ConEmu.exe /noupdate /tsa /min /icon \"cmd.exe\" /cmd cmd /c dir c:\\ /s\r\n" \
+	L"ConEmu.exe -run Far.exe -w\r\n" \
+	L"ConEmu.exe -font \"Consolas\" -size 16 -bufferheight 32766 -run powershell\r\n" \
+	L"ConEmu.exe -config \"Hiew\" -run \"C:\\Tools\\HIEW32.EXE\"\r\n" \
+	L"ConEmu.exe -run {Shells}\r\n" \
+	L"ConEmu.exe -nosingle -runlist cmd ||| cmd -new_console:sV ||| cmd -new_console:sH\r\n" \
+	L"ConEmu.exe -noupdate -tsa -min -icon \"cmd.exe\" -run cmd /c dir c:\\ /s\r\n" \
 	L"\r\n"\
-	L"By default (started without args) this program launches \"Far.exe\", \"tcc.exe\" or \"cmd.exe\" (which can be found).\r\n" \
-	L"\r\n" \
-	L"Command line switches (case insensitive):\r\n" \
-	L"/? - This help screen.\r\n" \
-	L"/Config <configname> - Use alternative named configuration.\r\n" \
-	L"/Dir <workdir> - Set startup directory for ConEmu and consoles.\r\n" \
-	L"/Here - Force using of ‘inherited’ startup directory. An alternative to ‘/Dir’ switch.\r\n" \
-	L"/FS | /Max | /Min - (Full screen), (Maximized) or (Minimized) mode.\r\n" \
-	L"/TSA - Override (enable) minimize to taskbar status area.\r\n" \
-	L"/MinTSA - start minimized in taskbar status area, hide to TSA after console close.\r\n" \
-	L"/StartTSA - start minimized in taskbar status area, exit after console close.\r\n" \
-	L"/Detached - start ConEmu without consoles.\r\n" \
-	L"/Icon <file> - Take icon from file (exe, dll, ico).\r\n" \
-	L"/Title <title> - Set fixed(!) title for ConEmu window. You may use environment variables in <title>.\r\n" \
-	L"/Multi | /NoMulti - Enable or disable multiconsole features.\r\n" \
-	L"/Single - New console will be started in new tab of existing ConEmu.\r\n" \
-	L"/NoSingle - Force new ConEmu window even if single mode is selected in the Settings.\r\n" \
-	L"/ShowHide | /ShowHideTSA - Works like \"Minimize/Restore\" global hotkey.\r\n" \
-	L"/NoCascade - Disable ‘Cascade’ option may be set in the Settings.\r\n" \
-	L"/NoDefTerm - Don't start initialization procedure for setting up ConEmu as default terminal.\r\n" \
-	L"/NoKeyHooks - Disable SetWindowsHookEx and global hotkeys.\r\n" \
-	L"/NoMacro - Disable GuiMacro hotkeys.\r\n" \
-	L"/NoHotkey - Disable all hotkeys.\r\n" \
-	L"/NoRegFonts - Disable auto register fonts (font files from ConEmu folder).\r\n" \
-	L"/NoUpdate - Disable automatic checking for updates on startup\r\n" \
-	L"/NoCloseConfirm - Disable confirmation of ConEmu's window closing\r\n" \
-	L"/CT[0|1] - Anti-aliasing: /ct0 - off, /ct1 - standard, /ct - cleartype.\r\n" \
-	L"/Font <fontname> - Specify the font name.\r\n" \
-	L"/Size <fontsize> - Specify the font size.\r\n" \
-	L"/FontFile <fontfilename> - Loads font from file (multiple pairs allowed).\r\n" \
-	L"/FontDir <fontfolder> - Loads all fonts from folder (multiple pairs allowed).\r\n" \
-	L"/BufferHeight <lines> - Set console buffer height.\r\n" \
-	L"/Wnd{X|Y|W|H} <value> - Set window position and size.\r\n" \
-	L"/Monitor <1 | x10001 | \"\\\\.\\DISPLAY1\"> - Place window on the specified monitor.\r\n" \
-	L"/Palette <name> - Choose named color palette.\r\n" \
-	L"/Log[1|2] - Used to create debug log files.\r\n" \
-	L"/Demote /cmd <command> - Run command de-elevated.\r\n" \
-	L"/Bypass /cmd <command> - Just execute the command detached.\r\n" \
-	L"/Reset - Don't load settings from registry/xml.\r\n" \
-	L"/UpdateJumpList - Update Windows 7 taskbar jump list.\r\n" \
-	L"/LoadCfgFile <file> - Use specified xml file as configuration storage.\r\n" \
-	L"/SaveCfgFile <file> - Save configuration to the specified xml file.\r\n" \
-	L"/LoadRegistry - Use Windows registry as configuration storage.\r\n" \
-	L"/SetDefTerm - Set ConEmu as default terminal, use with \"/Exit\" switch.\r\n" \
-	L"/UpdateSrcSet <url> - Force to check version.ini by another url.\r\n" \
-	L"/AnsiLog <folder> - Force console output logging into the folder.\r\n" \
-_DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
-	L"/Exit - Don't create ConEmu window, exit after actions.\r\n" \
-	L"/QuitOnClose - Forces ConEmu window closing with last tab.\r\n" \
-	L"/GuiMacro - Execute some GuiMacro after ConEmu window creation.\r\n" \
-	/* L"/Attach [PID] - intercept console of specified process\n" */ \
-	L"/cmd <commandline>|@<taskfile>|{taskname} - Command line to start. This must be the last used switch.\r\n" \
+	L"Command line switches are case insensitive.\r\n" \
+	L"You may use either ‘/style’ or ‘-style’ switches.\r\n" \
+	L"\r\n"\
+	L"-? - This help screen.\r\n" \
+	L"-Config <configname> - Use alternative named configuration.\r\n" \
+	L"-Dir <workdir> - Set startup directory for ConEmu and consoles.\r\n" \
+	L"-Here - Force using of ‘inherited’ startup directory. An alternative to ‘-Dir’ switch.\r\n" \
+	L"-FS | -Max | -Min - (Full screen), (Maximized) or (Minimized) mode.\r\n" \
+	L"-TSA - Override (enable) minimize to taskbar status area.\r\n" \
+	L"-MinTSA - start minimized in taskbar status area, hide to TSA after console close.\r\n" \
+	L"-StartTSA - start minimized in taskbar status area, exit after console close.\r\n" \
+	L"-Detached - start ConEmu without consoles.\r\n" \
+	L"-Icon <file> - Take icon from file (exe, dll, ico).\r\n" \
+	L"-Title <title> - Set fixed(!) title for ConEmu window. You may use environment variables in <title>.\r\n" \
+	L"-Multi | -NoMulti - Enable or disable multiconsole features.\r\n" \
+	L"-Single - New console will be started in new tab of existing ConEmu.\r\n" \
+	L"-NoSingle - Force new ConEmu window even if single mode is selected in the Settings.\r\n" \
+	L"-ShowHide | -ShowHideTSA - Works like \"Minimize/Restore\" global hotkey.\r\n" \
+	L"-NoCascade - Disable ‘Cascade’ option may be set in the Settings.\r\n" \
+	L"-NoDefTerm - Don't start initialization procedure for setting up ConEmu as default terminal.\r\n" \
+	L"-NoKeyHooks - Disable SetWindowsHookEx and global hotkeys.\r\n" \
+	L"-NoMacro - Disable GuiMacro hotkeys.\r\n" \
+	L"-NoHotkey - Disable all hotkeys.\r\n" \
+	L"-NoRegFonts - Disable auto register fonts (font files from ConEmu folder).\r\n" \
+	L"-NoUpdate - Disable automatic checking for updates on startup\r\n" \
+	L"-NoCloseConfirm - Disable confirmation of ConEmu's window closing\r\n" \
+	L"-CT[0|1] - Anti-aliasing: -ct0 - off, -ct1 - standard, -ct - cleartype.\r\n" \
+	L"-Font <fontname> - Specify the font name.\r\n" \
+	L"-Size <fontsize> - Specify the font size.\r\n" \
+	L"-FontFile <fontfilename> - Loads font from file (multiple pairs allowed).\r\n" \
+	L"-FontDir <fontfolder> - Loads all fonts from folder (multiple pairs allowed).\r\n" \
+	L"-BufferHeight <lines> - Set console buffer height.\r\n" \
+	L"-Wnd{X|Y|W|H} <value> - Set window position and size.\r\n" \
+	L"-Monitor <1 | x10001 | \"\\\\.\\DISPLAY1\"> - Place window on the specified monitor.\r\n" \
+	L"-Palette <name> - Choose named color palette.\r\n" \
+	L"-Log[1|2] - Used to create debug log files.\r\n" \
+	L"-Demote -run <command> - Run command de-elevated.\r\n" \
+	L"-Bypass -run <command> - Just execute the command detached.\r\n" \
+	L"-Reset - Don't load settings from registry/xml.\r\n" \
+	L"-UpdateJumpList - Update Windows 7 taskbar jump list.\r\n" \
+	L"-LoadCfgFile <file> - Use specified xml file as configuration storage.\r\n" \
+	L"-SaveCfgFile <file> - Save configuration to the specified xml file.\r\n" \
+	L"-LoadRegistry - Use Windows registry as configuration storage.\r\n" \
+	L"-SetDefTerm - Set ConEmu as default terminal, use with \"-Exit\" switch.\r\n" \
+	L"-UpdateSrcSet <url> - Force to check version.ini by another url.\r\n" \
+	L"-AnsiLog <folder> - Force console output logging into the folder.\r\n" \
+_DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
+	L"-Exit - Don't create ConEmu window, exit after actions.\r\n" \
+	L"-QuitOnClose - Forces ConEmu window closing with last tab.\r\n" \
+	L"-GuiMacro - Execute some GuiMacro after ConEmu window creation.\r\n" \
+	/* L"-Attach [PID] - intercept console of specified process\n" */ \
+	L"-run <commandline>|@<taskfile>|{taskname} - Command line to start. This must be the last used switch.\r\n" \
 	L"\r\n" \
 	L"Read more online: https://conemu.github.io/en/CommandLine.html\r\n"
 
@@ -171,10 +171,10 @@ _DBGHLP(L"/ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"multiple consoles and simple GUI applications as one customizable GUI window " \
 	L"with various features.\r\n" \
 	L"\r\n" \
-	L"Basic application - joint use with Far Manager (a console program for managing files and " \
-	L"archives in Windows operating systems).\r\n" \
+	L"You may run any shell of your chose (Tasks are recommended) on ConEmu startup.\r\n" \
 	L"\r\n" \
-	L"By default this program launches \"Far.exe\" (if exists) or \"tcc.exe\"/\"cmd.exe\".\r\n" \
+	L"Far Manager (a console program for managing files and archives in Windows)" \
+	L"gains a lot of improvements in ConEmu: Drag and Drop, Tabs for editors and so on.\r\n" \
 	L"\r\n" \
 	L"\x00A9 2006-2008 Zoin (based on console emulator by SEt)\r\n" \
 	CECOPYRIGHTSTRING_W /*\x00A9 2009-present ConEmu.Maximus5@gmail.com*/ L"\r\n" \

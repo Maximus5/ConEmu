@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Monitors.h"
 #include "../common/StartupEnvDef.h"
 #include "../common/WFiles.h"
+#include "../ConEmuCD/ExitCodes.h"
 
 #define DEBUGSTRSTARTUP(s) DEBUGSTR(WIN3264TEST(L"ConEmu.exe: ",L"ConEmu64.exe: ") s L"\n")
 
@@ -249,7 +250,7 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 			return pszCmd;
 	}
 
-	// Current command line, specified with "/cmd" or "/cmdlist" switches
+	// Current command line, specified with "-run","-runlist" switches (or old "-cmd and "-cmdlist")
 	if ((pszCmd = GetCurCmd(pIsCmdList)) != NULL)
 		return pszCmd;
 
@@ -393,8 +394,8 @@ LPCTSTR CConEmuStart::GetDefaultCmd()
 	return szDefCmd;
 }
 
-// Если ConEmu был запущен с ключом "/single /cmd xxx" то после окончания
-// загрузки - сбросить команду, которая пришла из "/cmd" - загрузить настройку
+// If ConEmu was started with "-single -run <shell with args>", than when loading finishes,
+// drop the command that comes with "-run" and load command from settings
 void CConEmuStart::ResetCmdArg()
 {
 	//SingleInstanceArg = sgl_Default;
@@ -661,51 +662,50 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 		{
 			bool lbNotFound = false;
 
-			// ':' removed from checks because otherwise it will not warn
-			// on invalid usage of "-new_console:a" for example
-			if (szArg.ms_Val[0] == L'-' && szArg.ms_Val[1] && !wcspbrk(szArg.ms_Val+1, L"\\//|.&<>^"))
-			{
-				// Seems this is to be the "switch" too
-				// Use both notations ('-' and '/')
-				*szArg.ms_Val = L'/';
-			}
-
-			LPCWSTR curCommand = szArg.ms_Val;
-
+			TODO("Replace NeedNextArg with GetCfgParm?")
 			#define NeedNextArg() \
-				if (NextArg(&cmdLineRest, szNext) != 0) { iResult = 101; goto wrap; } \
-				curCommand = szNext.ms_Val;
+				if (NextArg(&cmdLineRest, szNext) != 0) { iResult = CERR_CARGUMENT; goto wrap; }
 
 
-			if (*curCommand != L'/')
+			if (!szArg.IsPossibleSwitch())
 			{
-				continue; // Try next switch?
+				// -- // continue; // Try next switch?
+
+				// Show error on unknown switch
+				psUnknown = pszArgStart;
+				break;
 			}
-			else
+
+			// Main processing cycle
 			{
 				opt.params++;
 
-				if (!klstricmp(curCommand, _T("/autosetup")))
+				if (szArg.IsSwitch(L"-autosetup"))
 				{
 					BOOL lbTurnOn = TRUE;
 
 					NeedNextArg();
 
-					if (*curCommand == _T('0'))
+					if (szNext.Compare(L"0") == 0)
 					{
 						lbTurnOn = FALSE;
 					}
-					else
+					else if (szNext.Compare(L"1") == 0)
 					{
 						NeedNextArg();
 
-						DWORD dwAttr = GetFileAttributes(curCommand);
+						DWORD dwAttr = GetFileAttributes(szNext);
 
 						if (dwAttr == (DWORD)-1 || (dwAttr & FILE_ATTRIBUTE_DIRECTORY))
 						{
 							iResult = 102;
 							goto wrap;
 						}
+					}
+					else
+					{
+						iResult = CERR_CARGUMENT;
+						goto wrap;
 					}
 
 					HKEY hk = NULL; DWORD dw;
@@ -720,7 +720,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					if (lbTurnOn)
 					{
-						size_t cchMax = _tcslen(curCommand);
+						size_t cchMax = szNext.GetLen();
 						LPCWSTR pszArg1 = NULL;
 						if (*cmdLineRest)
 						{
@@ -731,7 +731,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						cchMax += 16; // + quotations, spaces and so on
 
 						wchar_t* pszCmd = (wchar_t*)calloc(cchMax, sizeof(*pszCmd));
-						_wsprintf(pszCmd, SKIPLEN(cchMax) L"\"%s\"%s%s%s", curCommand,
+						_wsprintf(pszCmd, SKIPLEN(cchMax) L"\"%s\"%s%s%s", szNext.ms_Val,
 							pszArg1 ? L" \"" : L"", pszArg1 ? pszArg1 : L"", pszArg1 ? L"\"" : L"");
 
 
@@ -753,11 +753,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					iResult = nSetupRc;
 					goto wrap;
 				}
-				else if (!klstricmp(curCommand, _T("/bypass"))
-					|| !klstricmp(curCommand, _T("/apparent"))
-					|| !klstricmp(curCommand, _T("/system"))
-					|| !klstricmp(curCommand, _T("/interactive"))
-					|| !klstricmp(curCommand, _T("/demote")))
+				else if (szArg.OneOfSwitches(L"-bypass", L"-apparent", L"-system", L"-interactive", L"-demote"))
 				{
 					// -bypass
 					// Этот ключик был придуман для прозрачного запуска консоли
@@ -785,8 +781,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					_ASSERTE(opt.runCommand.IsEmpty());
 					pszTemp = cmdLineRest;
 					if ((NextArg(&pszTemp, szNext) == 0)
-						&& (szNext.ms_Val[0] == L'-' || szNext.ms_Val[0] == L'/')
-						&& (lstrcmpi(szNext.ms_Val+1, L"cmd") == 0))
+						&& szNext.OneOfSwitches(L"-run",L"-cmd"))
 					{
 						opt.runCommand.Set(pszTemp);
 					}
@@ -797,7 +792,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					if (opt.runCommand.IsEmpty())
 					{
-						CEStr lsMsg(L"Invalid cmd line. '", curCommand, L"' exists, command line is empty");
+						CEStr lsMsg(L"Invalid command line. '", szArg, L"' exists, command line is empty");
 						DisplayLastError(lsMsg, -1);
 						goto wrap;
 					}
@@ -813,8 +808,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					si.dwFlags = STARTF_USESHOWWINDOW;
 					// Only `-demote` and `-apparent` switches were implemented to start application visible
 					// All others are intended to run our server process, without blinking of course
-					if ((0 == klstricmp(curCommand, _T("/demote")))
-						|| (0 == klstricmp(curCommand, _T("/apparent"))))
+					if (szArg.OneOfSwitches(L"-demote", L"-apparent"))
 						si.wShowWindow = SW_SHOWNORMAL;
 					else
 						si.wShowWindow = SW_HIDE;
@@ -833,22 +827,22 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					{
 						CEStr lsLog(
 							L"Starting process",
-							L": ", curCommand,
+							L": ", szArg,
 							L" `", opt.runCommand.ms_Val, L"`");
 						LogString(lsLog);
 					}
 
-					if (!klstricmp(curCommand, _T("/demote")))
+					if (szArg.IsSwitch(L"-demote"))
 					{
 						b = CreateProcessDemoted(opt.runCommand.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
 					}
-					else if (!klstricmp(curCommand, _T("/system")))
+					else if (szArg.IsSwitch(L"-system"))
 					{
 						b = CreateProcessSystem(opt.runCommand.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi);
 					}
-					else if (!klstricmp(curCommand, _T("/interactive")))
+					else if (szArg.IsSwitch(L"-interactive"))
 					{
 						b = CreateProcessInteractive((DWORD)-1, NULL, opt.runCommand.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
@@ -906,24 +900,23 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					goto wrap;
 				}
-				else if (!klstricmp(curCommand, _T("/multi")))
+				else if (szArg.IsSwitch(L"-multi"))
 				{
-					gpConEmu->AppendExtraArgs(curCommand);
+					gpConEmu->AppendExtraArgs(szArg);
 					gpConEmu->opt.MultiConValue = true;
 				}
-				else if (!klstricmp(curCommand, _T("/nomulti")))
+				else if (szArg.IsSwitch(L"-NoMulti"))
 				{
-					gpConEmu->AppendExtraArgs(curCommand);
+					gpConEmu->AppendExtraArgs(szArg);
 					gpConEmu->opt.MultiConValue = false;
 				}
-				else if (!klstricmp(curCommand, _T("/visible")))
+				else if (szArg.IsSwitch(L"-visible"))
 				{
 					gpConEmu->opt.VisValue = true;
 				}
-				else if (!klstricmp(curCommand, _T("/ct")) || !klstricmp(curCommand, _T("/cleartype"))
-					|| !klstricmp(curCommand, _T("/ct0")) || !klstricmp(curCommand, _T("/ct1")) || !klstricmp(curCommand, _T("/ct2")))
+				else if (szArg.OneOfSwitches(L"-ct", L"-cleartype", L"-ct0", L"-ct1", L"-ct2"))
 				{
-					switch (curCommand[3])
+					switch (szArg[3])
 					{
 					case L'0':
 						gpConEmu->opt.ClearTypeVal = NONANTIALIASED_QUALITY; break;
@@ -934,143 +927,134 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					}
 				}
 				// Interface language
-				else if (!klstricmp(curCommand, _T("/lng")))
+				else if (szArg.IsSwitch(L"-lng"))
 				{
 					NeedNextArg();
 
 					if (!gpConEmu->opt.Language.Exists)
 					{
-						gpConEmu->opt.Language = curCommand;
-						gpConEmu->AppendExtraArgs(L"/lng", curCommand);
+						gpConEmu->opt.Language = szNext;
+						gpConEmu->AppendExtraArgs(L"-lng", szNext);
 					}
 				}
 				// Optional specific "ConEmu.l10n"
-				else if (!klstricmp(curCommand, _T("/lngfile")))
+				else if (szArg.IsSwitch(L"-lngfile"))
 				{
 					NeedNextArg();
 
 					if (!gpConEmu->opt.LanguageFile.Exists)
 					{
-						gpConEmu->opt.LanguageFile = curCommand;
-						gpConEmu->AppendExtraArgs(L"/lngfile", curCommand);
+						gpConEmu->opt.LanguageFile = szNext;
+						gpConEmu->AppendExtraArgs(L"-lngfile", szNext);
 					}
 				}
 				// имя шрифта
-				else if (!klstricmp(curCommand, _T("/font")))
+				else if (szArg.IsSwitch(L"-font"))
 				{
 					NeedNextArg();
 
 					if (!gpConEmu->opt.FontVal.Exists)
 					{
-						gpConEmu->opt.FontVal = curCommand;
-						gpConEmu->AppendExtraArgs(L"/font", curCommand);
+						gpConEmu->opt.FontVal = szNext;
+						gpConEmu->AppendExtraArgs(L"-font", szNext);
 					}
 				}
 				// Высота шрифта
-				else if (!klstricmp(curCommand, _T("/size")))
+				else if (szArg.IsSwitch(L"-size"))
 				{
 					NeedNextArg();
 
 					if (!gpConEmu->opt.SizeVal.Exists)
 					{
-						gpConEmu->opt.SizeVal.SetInt(curCommand);
+						gpConEmu->opt.SizeVal.SetInt(szNext);
 					}
 				}
 				// ADD fontname; by Mors
-				else if (!klstricmp(curCommand, _T("/fontfile")))
+				else if (szArg.IsSwitch(L"-FontFile"))
 				{
 					CESwitch szFile(sw_Str);
 					if (!GetCfgParm(cmdLineRest, szFile, MAX_PATH))
 					{
 						goto wrap;
 					}
-					gpConEmu->AppendExtraArgs(L"/fontfile", szFile.GetStr());
+					gpConEmu->AppendExtraArgs(L"-FontFile", szFile.GetStr());
 					gpFontMgr->RegisterFont(szFile.GetStr(), TRUE);
 				}
 				// Register all fonts from specified directory
-				else if (!klstricmp(curCommand, _T("/fontdir")))
+				else if (szArg.IsSwitch(L"-FontDir"))
 				{
 					CESwitch szDir(sw_Str);
 					if (!GetCfgParm(cmdLineRest, szDir, MAX_PATH))
 					{
 						goto wrap;
 					}
-					gpConEmu->AppendExtraArgs(L"/fontdir", szDir.GetStr());
+					gpConEmu->AppendExtraArgs(L"-FontDir", szDir.GetStr());
 					gpFontMgr->RegisterFontsDir(szDir.GetStr());
 				}
-				else if (!klstricmp(curCommand, _T("/fs")))
+				else if (szArg.IsSwitch(L"-fs"))
 				{
 					gpConEmu->opt.WindowModeVal = wmFullScreen;
 				}
-				else if (!klstricmp(curCommand, _T("/max")))
+				else if (szArg.IsSwitch(L"-max"))
 				{
 					gpConEmu->opt.WindowModeVal = wmMaximized;
 				}
-				else if (!klstricmp(curCommand, _T("/min"))
-					|| !klstricmp(curCommand, _T("/mintsa"))
-					|| !klstricmp(curCommand, _T("/starttsa")))
+				else if (szArg.OneOfSwitches(L"-min", L"-MinTSA", L"-StartTSA"))
 				{
 					gpConEmu->WindowStartMinimized = true;
-					if (klstricmp(curCommand, _T("/min")) != 0)
+					if (!szArg.IsSwitch(L"-min"))
 					{
 						gpConEmu->WindowStartTsa = true;
-						gpConEmu->WindowStartNoClose = (klstricmp(curCommand, _T("/mintsa")) == 0);
+						gpConEmu->WindowStartNoClose = szArg.IsSwitch(L"-MinTSA");
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/tsa")) || !klstricmp(curCommand, _T("/tray")))
+				else if (szArg.OneOfSwitches(L"-tsa", L"-tray"))
 				{
 					gpConEmu->ForceMinimizeToTray = true;
 				}
-				else if (!klstricmp(curCommand, _T("/detached")))
+				else if (szArg.IsSwitch(L"-detached"))
 				{
 					gpConEmu->m_StartDetached = crb_On;
 				}
-				else if (!klstricmp(curCommand, _T("/here")))
+				else if (szArg.IsSwitch(L"-here"))
 				{
 					gpConEmu->mb_ConEmuHere = true;
 					gpConEmu->StoreWorkDir();
 				}
-				else if (!klstricmp(curCommand, _T("/update")))
+				else if (szArg.IsSwitch(L"-update"))
 				{
 					gpConEmu->opt.AutoUpdateOnStart = true;
 				}
-				else if (!klstricmp(curCommand, _T("/noupdate")))
+				else if (szArg.IsSwitch(L"-NoUpdate"))
 				{
 					// This one has more weight than AutoUpdateOnStart
 					gpConEmu->opt.DisableAutoUpdate = true;
 				}
-				else if (!klstricmp(curCommand, _T("/nokeyhook"))
-					|| !klstricmp(curCommand, _T("/nokeyhooks"))
-					|| !klstricmp(curCommand, _T("/nokeybhook"))
-					|| !klstricmp(curCommand, _T("/nokeybhooks")))
+				else if (szArg.OneOfSwitches(L"-NoKeyHook", L"-NoKeyHooks", L"-NoKeybHook", L"-NoKeybHooks"))
 				{
 					gpConEmu->DisableKeybHooks = true;
 				}
-				else if (!klstricmp(curCommand, _T("/nocloseconfirm")))
+				else if (szArg.IsSwitch(L"-NoCloseConfirm"))
 				{
 					gpConEmu->DisableCloseConfirm = true;
 				}
-				else if (!klstricmp(curCommand, _T("/nomacro")))
+				else if (szArg.IsSwitch(L"-NoMacro"))
 				{
 					gpConEmu->DisableAllMacro = true;
 				}
-				else if (!klstricmp(curCommand, _T("/nohotkey"))
-					|| !klstricmp(curCommand, _T("/nohotkeys")))
+				else if (szArg.OneOfSwitches(L"-NoHotkey", L"-NoHotkeys"))
 				{
 					gpConEmu->DisableAllHotkeys = true;
 				}
-				else if (!klstricmp(curCommand, _T("/nodeftrm"))
-					|| !klstricmp(curCommand, _T("/nodefterm")))
+				else if (szArg.OneOfSwitches(L"-NoDefTrm", L"-NoDefTerm"))
 				{
 					gpConEmu->DisableSetDefTerm = true;
 				}
-				else if (!klstricmp(curCommand, _T("/noregfont"))
-					|| !klstricmp(curCommand, _T("/noregfonts")))
+				else if (szArg.OneOfSwitches(L"-NoRegFont", L"-NoRegFonts"))
 				{
 					gpConEmu->DisableRegisterFonts = true;
 				}
-				else if (!klstricmp(curCommand, _T("/inside"))
-					|| !lstrcmpni(curCommand, _T("/inside="), 8))
+				else if (szArg.OneOfSwitches(L"-inside", L"-inside="))
 				{
 					bool bRunAsAdmin = isPressed(VK_SHIFT);
 					bool bSyncDir = false;
@@ -1079,15 +1063,16 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					gpConEmu->mb_ConEmuHere = true;
 					gpConEmu->StoreWorkDir();
 
-					if (curCommand[7] == _T('='))
+					// Both `-inside:...` and `-inside=...` are supported
+					if (szArg.IsSwitch(L"-inside="))
 					{
 						bSyncDir = true;
-						pszSyncFmt = curCommand+8; // \eCD /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
+						pszSyncFmt = szArg.ms_Val+8; // \eCD /d %1 - \e - ESC, \b - BS, \n - ENTER, %1 - "dir", %2 - "bash dir"
 					}
 
 					CConEmuInside::InitInside(bRunAsAdmin, bSyncDir, pszSyncFmt, 0, NULL);
 				}
-				else if (!klstricmp(curCommand, _T("/insidepid")))
+				else if (szArg.IsSwitch(L"-InsidePID"))
 				{
 					NeedNextArg();
 
@@ -1095,99 +1080,96 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					wchar_t* pszEnd;
 					// Здесь указывается PID, в который нужно внедриться.
-					DWORD nInsideParentPID = wcstol(curCommand, &pszEnd, 10);
+					DWORD nInsideParentPID = wcstol(szNext, &pszEnd, 10);
 					if (nInsideParentPID)
 					{
 						CConEmuInside::InitInside(bRunAsAdmin, false, NULL, nInsideParentPID, NULL);
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/insidewnd")))
+				else if (szArg.IsSwitch(L"-InsideWnd"))
 				{
 					NeedNextArg();
 
-					if (curCommand[0] == L'0' && (curCommand[1] == L'x' || curCommand[1] == L'X'))
-						curCommand += 2;
-					else if (curCommand[0] == L'x' || curCommand[0] == L'X')
-						curCommand ++;
+					LPCWSTR pszHWnd = szNext.ms_Val;
+
+					if (pszHWnd[0] == L'0' && (pszHWnd[1] == L'x' || pszHWnd[1] == L'X'))
+						pszHWnd += 2;
+					else if (pszHWnd[0] == L'x' || pszHWnd[0] == L'X')
+						pszHWnd ++;
 
 					bool bRunAsAdmin = isPressed(VK_SHIFT);
 
 					wchar_t* pszEnd;
 					// Здесь указывается HWND, в котором нужно создаваться.
-					HWND hParent = (HWND)(DWORD_PTR)wcstoul(curCommand, &pszEnd, 16);
+					HWND hParent = (HWND)(DWORD_PTR)wcstoul(pszHWnd, &pszEnd, 16);
 					if (hParent && IsWindow(hParent))
 					{
 						CConEmuInside::InitInside(bRunAsAdmin, false, NULL, 0, hParent);
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/icon")))
+				else if (szArg.IsSwitch(L"-icon"))
 				{
 					NeedNextArg();
 
-					if (!gpConEmu->opt.IconPrm.Exists && *curCommand)
+					if (!gpConEmu->opt.IconPrm.Exists && !szNext.IsEmpty())
 					{
 						gpConEmu->opt.IconPrm = true;
-						gpConEmu->mps_IconPath = ExpandEnvStr(curCommand);
+						gpConEmu->mps_IconPath = ExpandEnvStr(szNext);
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/dir")))
+				else if (szArg.IsSwitch(L"-dir"))
 				{
 					NeedNextArg();
 
-					if (*curCommand)
+					if (!szNext.IsEmpty())
 					{
 						// Например, "%USERPROFILE%"
-						wchar_t* pszExpand = NULL;
-						if (wcschr(curCommand, L'%') && ((pszExpand = ExpandEnvStr(curCommand)) != NULL))
+						CEStr szExpand;
+						if (wcschr(szNext, L'%') && ((szExpand = ExpandEnvStr(szNext)) != NULL))
 						{
-							gpConEmu->StoreWorkDir(pszExpand);
-							SafeFree(pszExpand);
+							gpConEmu->StoreWorkDir(szExpand);
 						}
 						else
 						{
-							gpConEmu->StoreWorkDir(curCommand);
+							gpConEmu->StoreWorkDir(szNext);
 						}
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/updatejumplist")))
+				else if (szArg.IsSwitch(L"-UpdateJumpList"))
 				{
 					// Copy current Task list to Win7 Jump list (Taskbar icon)
 					gpConEmu->mb_UpdateJumpListOnStartup = true;
 				}
-				else if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0")
-					|| !klstricmp(curCommand, L"/log1") || !klstricmp(curCommand, L"/log2")
-					|| !klstricmp(curCommand, L"/log3") || !klstricmp(curCommand, L"/log4"))
+				else if (szArg.OneOfSwitches(L"-log", L"-log0", L"-log1", L"-log2", L"-log3", L"-log4"))
 				{
-					if (!klstricmp(curCommand, L"/log") || !klstricmp(curCommand, L"/log0"))
+					if (szArg.OneOfSwitches(L"-log", L"-log0"))
 						gpConEmu->opt.AdvLogging.SetInt(1);
 					else
-						gpConEmu->opt.AdvLogging.SetInt((BYTE)(curCommand[4] - L'0')); // 1..4
+						gpConEmu->opt.AdvLogging.SetInt((BYTE)(szArg[4] - L'0')); // 1..4
 					// Do create logging service
 					DEBUGSTRSTARTUP(L"Creating log file");
 					gpConEmu->CreateLog();
 				}
-				else if (!klstricmp(curCommand, _T("/single")) || !klstricmp(curCommand, _T("/reuse")))
+				else if (szArg.OneOfSwitches(L"-Single", L"-Reuse"))
 				{
 					// "/reuse" switch to be remastered
-					gpConEmu->AppendExtraArgs(curCommand);
+					gpConEmu->AppendExtraArgs(szArg);
 					gpSetCls->SingleInstanceArg = sgl_Enabled;
 				}
-				else if (!klstricmp(curCommand, _T("/nosingle")))
+				else if (szArg.IsSwitch(L"-NoSingle"))
 				{
-					gpConEmu->AppendExtraArgs(curCommand);
+					gpConEmu->AppendExtraArgs(szArg);
 					gpSetCls->SingleInstanceArg = sgl_Disabled;
 				}
-				else if (!klstricmp(curCommand, _T("/DesktopMode")))
+				else if (szArg.IsSwitch(L"-DesktopMode"))
 				{
 					gpConEmu->opt.DesktopMode = true;
 				}
-				else if (!klstricmp(curCommand, _T("/quake"))
-					|| !klstricmp(curCommand, _T("/quakeauto"))
-					|| !klstricmp(curCommand, _T("/noquake")))
+				else if (szArg.OneOfSwitches(L"-Quake", L"-QuakeAuto", L"-NoQuake"))
 				{
-					if (!klstricmp(curCommand, _T("/quake")))
+					if (szArg.IsSwitch(L"-Quake"))
 						gpConEmu->opt.QuakeMode = 1;
-					else if (!klstricmp(curCommand, _T("/quakeauto")))
+					else if (szArg.IsSwitch(L"-QuakeAuto"))
 						gpConEmu->opt.QuakeMode = 2;
 					else
 					{
@@ -1196,38 +1178,33 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 							gpSetCls->SingleInstanceArg = sgl_Disabled;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/showhide")) || !klstricmp(curCommand, _T("/showhideTSA")))
+				else if (szArg.OneOfSwitches(L"-ShowHide", L"-ShowHideTSA"))
 				{
 					gpSetCls->SingleInstanceArg = sgl_Enabled;
-					gpSetCls->SingleInstanceShowHide = !klstricmp(curCommand, _T("/showhide"))
+					gpSetCls->SingleInstanceShowHide = szArg.IsSwitch(L"-ShowHide")
 						? sih_ShowMinimize : sih_ShowHideTSA;
 				}
-				else if (!klstricmp(curCommand, _T("/reset"))
-					|| !klstricmp(curCommand, _T("/resetdefault"))
-					|| !klstricmp(curCommand, _T("/basic")))
+				else if (szArg.OneOfSwitches(L"-Reset", L"-ResetDefault", L"-Basic"))
 				{
 					gpConEmu->opt.ResetSettings = true;
-					if (!klstricmp(curCommand, _T("/resetdefault")))
+					if (szArg.IsSwitch(L"-ResetDefault"))
 					{
 						gpSetCls->isFastSetupDisabled = true;
 					}
-					else if (!klstricmp(curCommand, _T("/basic")))
+					else if (szArg.IsSwitch(L"-Basic"))
 					{
 						gpSetCls->isFastSetupDisabled = true;
 						gpSetCls->isResetBasicSettings = true;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/nocascade"))
-					|| !klstricmp(curCommand, _T("/dontcascade")))
+				else if (szArg.OneOfSwitches(L"-NoCascade", L"-DontCascade"))
 				{
-					gpConEmu->AppendExtraArgs(curCommand);
+					gpConEmu->AppendExtraArgs(szArg);
 					gpSetCls->isDontCascade = true;
 				}
-				else if (!klstricmp(curCommand, _T("/WndX")) || !klstricmp(curCommand, _T("/WndY"))
-					|| !klstricmp(curCommand, _T("/WndW")) || !klstricmp(curCommand, _T("/WndWidth"))
-					|| !klstricmp(curCommand, _T("/WndH")) || !klstricmp(curCommand, _T("/WndHeight")))
+				else if (szArg.OneOfSwitches(L"-WndX", L"-WndY", L"-WndW", L"-WndWidth", L"-WndH", L"-WndHeight"))
 				{
-					TCHAR ch = curCommand[4];
+					wchar_t ch = szArg[4];
 					CharUpperBuff(&ch, 1);
 
 					CESwitch psz(sw_Str); bool bParm = false;
@@ -1252,7 +1229,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					case _T('H'): gpConEmu->opt.sWndH.SetStr(psz.Str, sw_Str); break;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/Monitor")))
+				else if (szArg.IsSwitch(L"-Monitor"))
 				{
 					CESwitch psz(sw_Str); bool bParm = false;
 					if (!GetCfgParm(cmdLineRest, bParm, psz, 64))
@@ -1267,13 +1244,13 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						gpStartEnv->hStartMon = gpConEmu->opt.Monitor.Mon;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/Buffer")) || !klstricmp(curCommand, _T("/BufferHeight")))
+				else if (szArg.OneOfSwitches(L"-Buffer", L"-BufferHeight"))
 				{
 					NeedNextArg();
 
 					if (!gpConEmu->opt.BufferHeightVal.Exists)
 					{
-						gpConEmu->opt.BufferHeightVal.SetInt(curCommand);
+						gpConEmu->opt.BufferHeightVal.SetInt(szNext);
 
 						if (gpConEmu->opt.BufferHeightVal.GetInt() < 0)
 						{
@@ -1287,7 +1264,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 							gpConEmu->opt.BufferHeightVal = LONGOUTPUTHEIGHT_MAX;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/Config")))
+				else if (szArg.IsSwitch(L"-Config"))
 				{
 					// -- используем последний из параметров, если их несколько
 					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.ConfigVal, 127))
@@ -1295,7 +1272,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/Palette")))
+				else if (szArg.IsSwitch(L"-Palette"))
 				{
 					// -- используем последний из параметров, если их несколько
 					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.PaletteVal, MAX_PATH))
@@ -1303,12 +1280,12 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/LoadRegistry")))
+				else if (szArg.IsSwitch(L"-LoadRegistry"))
 				{
-					gpConEmu->AppendExtraArgs(curCommand);
+					gpConEmu->AppendExtraArgs(szArg);
 					gpConEmu->opt.ForceUseRegistryPrm = true;
 				}
-				else if (!klstricmp(curCommand, _T("/LoadCfgFile")) || !klstricmp(curCommand, _T("/LoadXmlFile")))
+				else if (szArg.OneOfSwitches(L"-LoadCfgFile", L"-LoadXmlFile"))
 				{
 					// -- используем последний из параметров, если их несколько
 					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.LoadCfgFile, MAX_PATH, true))
@@ -1316,7 +1293,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/SaveCfgFile")) || !klstricmp(curCommand, _T("/SaveXmlFile")))
+				else if (szArg.OneOfSwitches(L"-SaveCfgFile", L"-SaveXmlFile"))
 				{
 					// -- используем последний из параметров, если их несколько
 					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.SaveCfgFile, MAX_PATH, true))
@@ -1324,7 +1301,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/GuiMacro")))
+				else if (szArg.IsSwitch(L"-GuiMacro"))
 				{
 					// -- выполняется только последний
 					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.ExecGuiMacro, 0x8000, false))
@@ -1332,7 +1309,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/UpdateSrcSet")))
+				else if (szArg.IsSwitch(L"-UpdateSrcSet"))
 				{
 					// -- используем последний из параметров, если их несколько
 					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.UpdateSrcSet, MAX_PATH*4, false))
@@ -1340,7 +1317,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/AnsiLog")))
+				else if (szArg.IsSwitch(L"-AnsiLog"))
 				{
 					// -- используем последний из параметров, если их несколько
 					if (!GetCfgParm(cmdLineRest, gpConEmu->opt.AnsiLogPath, MAX_PATH-40, true))
@@ -1348,23 +1325,23 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 				}
-				else if (!klstricmp(curCommand, _T("/SetDefTerm")))
+				else if (szArg.IsSwitch(L"-SetDefTerm"))
 				{
 					gpConEmu->opt.SetUpDefaultTerminal = true;
 				}
-				else if (!klstricmp(curCommand, _T("/ZoneId")))
+				else if (szArg.IsSwitch(L"-ZoneId"))
 				{
 					gpConEmu->opt.FixZoneId = true;
 				}
-				else if (!klstricmp(curCommand, _T("/Exit")))
+				else if (szArg.IsSwitch(L"-Exit"))
 				{
 					gpConEmu->opt.ExitAfterActionPrm = true;
 				}
-				else if (!klstricmp(curCommand, _T("/QuitOnClose")))
+				else if (szArg.IsSwitch(L"-QuitOnClose"))
 				{
 					gpConEmu->mb_ForceQuitOnClose = true;
 				}
-				else if (!klstricmp(curCommand, _T("/Title")))
+				else if (szArg.IsSwitch(L"-Title"))
 				{
 					bool bOk = false;
 					CESwitch pszTitle(sw_Str);
@@ -1374,27 +1351,24 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					}
 					gpConEmu->SetTitleTemplate(pszTitle.GetStr());
 				}
-				else if (!klstricmp(curCommand, _T("/FindBugMode")))
+				else if (szArg.IsSwitch(L"-FindBugMode"))
 				{
 					gpConEmu->mb_FindBugMode = true;
 				}
-				else if (!klstricmp(curCommand, _T("/debug"))
-					|| !klstricmp(curCommand, _T("/debugw"))
-					|| !klstricmp(curCommand, _T("/debugi")))
+				else if (szArg.OneOfSwitches(L"-debug", L"-debugw", L"-debugi"))
 				{
 					// These switches were already processed
 				}
-				else if (!klstricmp(curCommand, _T("/?")) || !klstricmp(curCommand, _T("/h")) || !klstricmp(curCommand, _T("/help")))
+				else if (szArg.OneOfSwitches(L"-?", L"-h", L"-help"))
 				{
 					if (gpLng) gpLng->Reload();
 					ConEmuAbout::OnInfo_About();
 					iResult = -1;
 					goto wrap;
 				}
-				// Final `-cmd ...` or `-cmdlist ...`
+				// Final `-run ...` or `-runlist ...` (old names `-cmd ...` or `-cmdlist ...`)
 				else if (
-					!klstricmp(curCommand, _T("/cmd"))
-					|| !klstricmp(curCommand, _T("/cmdlist"))
+					szArg.OneOfSwitches(L"-run", L"-runlist", L"-cmd", L"-cmdlist")
 					)
 				{
 					if (opt.cfgSwitches.ms_Val)
@@ -1405,7 +1379,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					}
 
 					opt.runCommand.Set(SkipNonPrintable(cmdLineRest));
-					opt.isScript = (klstricmp(curCommand, L"/cmdlist") == 0);
+					opt.isScript = szArg.OneOfSwitches(L"-runlist", L"-cmdlist");
 					break;
 				}
 				else
@@ -1414,7 +1388,8 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					psUnknown = pszArgStart;
 					break;
 				}
-			} // (*curCommand == L'/')
+			}
+			// Main processing cycle end
 
 			// Avoid assertions in NextArg
 			szArg.Empty(); szNext.Empty();
@@ -1442,7 +1417,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 			|| (lstrcmpni(pszTestSwitch, L"cur_console", 11) == 0))
 		{
 			szNewConWarn = lstrmerge(L"\r\n\r\n",
-				CLngRc::getRsrc(lng_UnknownSwitch4/*"Switch -new_console must be specified *after* /cmd or /cmdlist"*/)
+				CLngRc::getRsrc(lng_UnknownSwitch4/*"Switch -new_console must be specified *after* -run or -runlist"*/)
 				);
 		}
 

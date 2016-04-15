@@ -94,7 +94,7 @@ public:
 
 public:
 	// Append helpers
-	bool AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd = NULL, bool bAlone = false, INT_PTR anBefore = -1); // May comes from Task or ConEmu's /cmd switch
+	bool AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd = NULL, bool bAlone = false, INT_PTR anBefore = -1); // May comes from Task or ConEmu's -run switch
 	void AddZeroedPairs(LPCWSTR asNameValueSeq); // Comes from GetEnvironmentStrings()
 	void AddLines(LPCWSTR asLines, bool bPriority); // Comes from ConEmu's settings (Environment setting page)
 protected:

@@ -2890,16 +2890,20 @@ HWND Attach2Gui(DWORD nTimeout)
 		CEStr cfgSwitches(GetEnvVar(L"ConEmuArgs"));
 		if (!cfgSwitches.IsEmpty())
 		{
-			// `-cmd` must be in the "ConEmuArgs2" only!
-			_ASSERTE(StrStrI(cfgSwitches, L"-cmd")==NULL && StrStrI(cfgSwitches, L"/cmd")==NULL);
+			// `-cmd`, `-cmdlist`, `-run` or `-runlist` must be in the "ConEmuArgs2" only!
+			#ifdef _DEBUG
+			CEStr lsFirst;
+			_ASSERTE(QueryNextArg(cfgSwitches,lsFirst) && !lsFirst.OneOfSwitches(L"-cmd",L"-cmdlist",L"-run",L"runlist"));
+			#endif
+
 			lstrmerge(&lsGuiCmd.ms_Val, L" ", cfgSwitches);
 			lstrcpyn(gpSrv->guiSettings.sConEmuArgs, cfgSwitches, countof(gpSrv->guiSettings.sConEmuArgs));
 		}
 
 		// The server called from am_Async (RM_AUTOATTACH) mode
-		lstrmerge(&lsGuiCmd.ms_Val, L" /detached");
+		lstrmerge(&lsGuiCmd.ms_Val, L" -Detached");
 		#ifdef _DEBUG
-		lstrmerge(&lsGuiCmd.ms_Val, L" /nokeyhooks");
+		lstrmerge(&lsGuiCmd.ms_Val, L" -NoKeyHooks");
 		#endif
 
 		PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));

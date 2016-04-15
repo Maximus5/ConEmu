@@ -250,7 +250,7 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig
 		}
 		if (asConfig && *asConfig)
 		{
-			_wcscat_c(pszCmd, cchMax, L"/config \"");
+			_wcscat_c(pszCmd, cchMax, L"-config \"");
 			_wcscat_c(pszCmd, cchMax, asConfig);
 			_wcscat_c(pszCmd, cchMax, L"\" ");
 		}
@@ -291,11 +291,20 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig
 
 		if (*asCmd == L'/')
 		{
-			bCmdKeyExist = (StrStrI(asCmd, L"/cmd ") != NULL);
+			CEStr lsArg;
+			LPCWSTR pszTemp = asCmd;
+			while (0 == NextArg(&pszTemp, lsArg))
+			{
+				if (lsArg.OneOfSwitches(L"-run",L"-runlist",L"-cmd",L"-cmdlist"))
+				{
+					bCmdKeyExist = true; break;
+				}
+			}
+
 		}
 
 		if (!bCmdKeyExist)
-			_wcscat_c(pszCmd, cchMax, L"/cmd ");
+			_wcscat_c(pszCmd, cchMax, L"-run ");
 		_wcscat_c(pszCmd, cchMax, asCmd);
 
 		HKEY hkRoot;
@@ -365,7 +374,7 @@ void CSetPgIntegr::UnregisterShellInvalids()
 				{
 					szCmd[cbMax>>1] = 0;
 					*pszSlash = 0;
-					//LPCWSTR pszInside = StrStrI(szCmd, L"/inside");
+					//LPCWSTR pszInside = StrStrI(szCmd, L"-inside");
 					LPCWSTR pszConEmu = StrStrI(szCmd, L"conemu");
 					if (pszConEmu)
 						lsNames.push_back(lstrdup(szName));
@@ -410,7 +419,7 @@ void CSetPgIntegr::ShellIntegration(HWND hDlg, CSetPgIntegr::ShellIntegrType iMo
 
 				if (isChecked(hDlg, cbInsideSyncDir))
 				{
-					wcscpy_c(szOpt, L"/inside=");
+					wcscpy_c(szOpt, L"-inside=");
 					int nOL = lstrlen(szOpt); _ASSERTE(nOL==8);
 					GetDlgItemText(hDlg, tInsideSyncDir, szOpt+nOL, countof(szShell)-nOL);
 					if (szOpt[8] == 0)
@@ -421,7 +430,7 @@ void CSetPgIntegr::ShellIntegration(HWND hDlg, CSetPgIntegr::ShellIntegrType iMo
 
 				//_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,0", gpConEmu->ms_ConEmuExe);
 				GetDlgItemText(hDlg, tInsideIcon, szIcon, countof(szIcon));
-				RegisterShell(szName, szOpt[0] ? szOpt : L"/inside", SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
+				RegisterShell(szName, szOpt[0] ? szOpt : L"-inside", SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
 			}
 			else if (*szName)
 			{
@@ -441,7 +450,7 @@ void CSetPgIntegr::ShellIntegration(HWND hDlg, CSetPgIntegr::ShellIntegrType iMo
 				GetDlgItemText(hDlg, tHereShell, szShell, countof(szShell));
 				//_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,0", gpConEmu->ms_ConEmuExe);
 				GetDlgItemText(hDlg, tHereIcon, szIcon, countof(szIcon));
-				RegisterShell(szName, L"/here", SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
+				RegisterShell(szName, L"-here", SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
 			}
 			else if (*szName)
 			{
@@ -495,21 +504,40 @@ bool CSetPgIntegr::ReloadHereList(int* pnHere /*= NULL*/, int* pnInside /*= NULL
 				{
 					pszCmd[cbMax>>1] = 0;
 					*pszSlash = 0;
-					LPCWSTR pszInside = StrStrI(pszCmd, L"/inside");
-					LPCWSTR pszConEmu = StrStrI(pszCmd, L"conemu");
-					if (pszConEmu)
+
+					bool bHasInside = false, bConEmu = false;
+					LPCWSTR pszTemp = pszCmd; CEStr szArg;
+					if (0 == NextArg(&pszTemp, szArg))
 					{
-						int* pnCounter = pszInside ? pnInside : pnHere;
+						if ((bConEmu = IsConEmuGui(szArg)))
+						{
+							while (0 == NextArg(&pszTemp, szArg))
+							{
+								if (szArg.IsSwitch(L"-inside"))
+								{
+									bHasInside = true; break;
+								}
+								else if (szArg.OneOfSwitches(L"-run",L"-runlist",L"-cmd",L"-cmdlist"))
+								{
+									break; // stop checking
+								}
+							}
+						}
+					}
+
+					if (bConEmu)
+					{
+						int* pnCounter = bHasInside ? pnInside : pnHere;
 						if (pnCounter)
 							++(*pnCounter);
 						iTotalCount++;
 
-						UINT nListID = pszInside ? cbInsideName : cbHereName;
+						UINT nListID = bHasInside ? cbInsideName : cbHereName;
 						SendDlgItemMessage(mh_Dlg, nListID, CB_ADDSTRING, 0, (LPARAM)szName);
 
-						if ((pszInside ? pszCurInside : pszCurHere) == NULL)
+						if ((bHasInside ? pszCurInside : pszCurHere) == NULL)
 						{
-							if (pszInside)
+							if (bHasInside)
 								pszCurInside = lstrdup(szName);
 							else
 								pszCurHere = lstrdup(szName);
@@ -577,34 +605,33 @@ void CSetPgIntegr::FillHereValues(WORD CB)
 						CEStr szArg;
 						while (0 == NextArg(&psz, szArg, &pszPrev))
 						{
-							if (*szArg != L'/')
+							if (!szArg.IsPossibleSwitch())
 								continue;
 
-							if ((lstrcmpi(szArg, L"/inside") == 0)
-								|| (lstrcmpi(szArg, L"/here") == 0)
-								)
+							if (szArg.OneOfSwitches(L"-inside", L"-here"))
 							{
 								// Nop
 							}
-							else if (lstrcmpni(szArg, L"/inside=", 8) == 0)
+							else if (szArg.IsSwitch(L"-inside="))
 							{
 								pszDirSync = lstrdup(szArg+8); // may be empty!
 							}
-							else if (lstrcmpi(szArg, L"/config") == 0)
+							else if (szArg.IsSwitch(L"-config"))
 							{
 								if (0 != NextArg(&psz, szArg))
 									break;
 								pszCfg = lstrdup(szArg);
 							}
-							else if (lstrcmpi(szArg, L"/dir") == 0)
+							else if (szArg.IsSwitch(L"-dir"))
 							{
 								if (0 != NextArg(&psz, szArg))
 									break;
 								_ASSERTE(lstrcmpi(szArg, L"%1")==0);
 							}
-							else //if (lstrcmpi(szArg, L"/cmd") == 0)
+							else //if szArg.IsSwitch(L"-cmd")
 							{
-								if (lstrcmpi(szArg, L"/cmd") == 0)
+								// ‘Drop’ only `-cmd` and `-run`, leave `-runlist`
+								if (szArg.OneOfSwitches(L"-run",L"-cmd"))
 									pszCmd = psz;
 								else
 									pszCmd = pszPrev;

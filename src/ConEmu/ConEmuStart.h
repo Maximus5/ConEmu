@@ -42,8 +42,8 @@ enum CESwitchType
 	sw_Str,     // string, may be min/max length specified
 	sw_EnvStr,  // expanded env string, may be min/max length specified
 	sw_PathStr, // path, may contains env strings, may be min/max length specified
-	sw_Cmd,     // "/cmd ..."
-	sw_CmdList, // "/cmdlist ..."
+	sw_Cmd,     // "-run ..."
+	sw_CmdList, // "-runlist ..."
 };
 
 struct CESwitch
@@ -106,12 +106,13 @@ public:
 	virtual ~CConEmuStart();
 
 private:
-	/* 'Default' command line (if nor Registry, nor /cmd specified) */
+	/* 'Default' command line (if nor Registry, nor -run specified) */
 	wchar_t  szDefCmd[MAX_PATH+32];
 	CEStr ms_DefNewTaskName;
-	/* Current command line, specified with "/cmd" or "/cmdlist" switches */
+
+	/* Command or list stored with SetCurCmd */
 	CEStr szCurCmd;
-	bool isCurCmdList; // а это если был указан /cmdlist
+	bool isCurCmdList; // true for command list (`|||` delimited)
 
 public:
 	/* OUR(!) startup info */
@@ -128,7 +129,7 @@ public:
 	bool mb_ForceQuitOnClose;
 
 public:
-	/* Store/retrieve command line, specified with "/cmd" or "/cmdlist" switches */
+	/* Store/retrieve command line, specified with "-run" or "-runlist" switches */
 	void SetCurCmd(LPCWSTR pszNewCmd, bool bIsCmdList);
 	LPCTSTR GetCurCmd(bool *pIsCmdList = NULL);
 

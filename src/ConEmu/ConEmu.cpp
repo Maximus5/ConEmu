@@ -3100,16 +3100,16 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 		_wcscat_c(pszCmdLine, cchMaxLen, L"\" ");
 		if (pszConfig && *pszConfig)
 		{
-			_wcscat_c(pszCmdLine, cchMaxLen, L"/config \"");
+			_wcscat_c(pszCmdLine, cchMaxLen, L"-Config \"");
 			_wcscat_c(pszCmdLine, cchMaxLen, pszConfig);
 			_wcscat_c(pszCmdLine, cchMaxLen, L"\" ");
 		}
-		_wcscat_c(pszCmdLine, cchMaxLen, L"/nosingle ");
+		_wcscat_c(pszCmdLine, cchMaxLen, L"-NoSingle ");
 		if (gpSet->isQuakeStyle)
-			_wcscat_c(pszCmdLine, cchMaxLen, L"/noquake ");
+			_wcscat_c(pszCmdLine, cchMaxLen, L"-NoQuake ");
 		if (args->pszAddGuiArg)
 			_wcscat_c(pszCmdLine, cchMaxLen, args->pszAddGuiArg);
-		_wcscat_c(pszCmdLine, cchMaxLen, L"/cmd ");
+		_wcscat_c(pszCmdLine, cchMaxLen, L"-run ");
 		_wcscat_c(pszCmdLine, cchMaxLen, args->pszSpecialCmd);
 		if ((args->RunAsAdministrator == crb_On) || (args->RunAsRestricted == crb_On) || args->pszUserName)
 		{

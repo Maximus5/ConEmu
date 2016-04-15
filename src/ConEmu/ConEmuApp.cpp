@@ -2101,7 +2101,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 			_ASSERTE(pszConEmuStartArgs[_tcslen(pszConEmuStartArgs)-1]==L' ');
 			_wcscat_c(pszBuf, cchMax, pszConEmuStartArgs);
 		}
-		_wcscat_c(pszBuf, cchMax, L"/cmd ");
+		_wcscat_c(pszBuf, cchMax, L"-run ");
 		_wcscat_c(pszBuf, cchMax, pszTitle);
 		pszArguments = pszBuf;
 	}
@@ -2120,11 +2120,11 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 		_wcscat_c(pszBuf, cchMax, L" ");
 		if (pszConfig)
 		{
-			_wcscat_c(pszBuf, cchMax, L"/config \"");
+			_wcscat_c(pszBuf, cchMax, L"-config \"");
 			_wcscat_c(pszBuf, cchMax, pszConfig);
 			_wcscat_c(pszBuf, cchMax, L"\" ");
 		}
-		_wcscat_c(pszBuf, cchMax, L"/cmd ");
+		_wcscat_c(pszBuf, cchMax, L"-run ");
 		_wcscat_c(pszBuf, cchMax, pszArguments);
 		pszArguments = pszBuf;
 	}
@@ -2149,13 +2149,16 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 
 			while (NextArg(&pszTemp, szTmp) == 0)
 			{
-				if (lstrcmpi(szTmp, L"/icon") == 0)
+				if (szTmp.ms_Val[0] == L'/')
+					szTmp.ms_Val[0] = L'-';
+
+				if (szTmp.IsSwitch(L"-icon"))
 				{
 					if (NextArg(&pszTemp, szTmp) == 0)
 						pszIcon = szTmp;
 					break;
 				}
-				else if (lstrcmpi(szTmp, L"/cmd") == 0)
+				else if (szTmp.OneOfSwitches(L"-run",L"-cmd"))
 				{
 					if ((*pszTemp == CmdFilePrefix)
 						|| (*pszTemp == TaskBracketLeft) || (lstrcmp(pszTemp, AutoStartTaskName) == 0))
