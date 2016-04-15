@@ -46,6 +46,31 @@ int main(int argc, char** argv)
 	}
 
 	{
+	Verify_Step("NextArg and Switch comparison");
+	LPCWSTR pszCmd = L"conemu.exe /c/dir -run -inside=0x800 /cmdlist \"-inside=\\eCD /d %1\" -bad|switch ";
+	CEStr ls;
+	Verify0((0==NextArg(&pszCmd,ls)),"NextArg conemu.exe");
+	Verify0((!ls.IsPossibleSwitch()),"!IsPossibleSwitch()");
+	Verify0((0==NextArg(&pszCmd,ls)),"NextArg /c/dir");
+	Verify0((!ls.IsPossibleSwitch()),"!IsPossibleSwitch()");
+	Verify0((0==NextArg(&pszCmd,ls)),"NextArg -run");
+	Verify0((ls.OneOfSwitches(L"/cmd",L"/run")),"OneOfSwitches(/cmd,/run)");
+	Verify0((!ls.OneOfSwitches(L"/cmd",L"/cmdlist")),"!OneOfSwitches(/cmd,/cmdlist)");
+	Verify0((ls.IsSwitch(L"-run")),"IsSwitch(-run)");
+	Verify0((0==NextArg(&pszCmd,ls)),"NextArg -inside=0x800");
+	Verify0((ls.IsSwitch(L"-inside=")),"IsSwitch(-inside=)");
+	Verify0((ls.OneOfSwitches(L"-inside",L"-inside=")),"OneOfSwitches(-inside,-inside=)");
+	Verify0((!ls.IsSwitch(L"-inside")),"!IsSwitch(-inside)");
+	Verify0((0==NextArg(&pszCmd,ls)),"NextArg /cmdlist");
+	Verify0((ls.IsSwitch(L"-cmdlist")),"IsSwitch(-cmdlist)");
+	Verify0((0==NextArg(&pszCmd,ls)),"NextArg \"-inside=\\eCD /d %1\"");
+	Verify0((ls.IsSwitch(L"-inside:")),"IsSwitch(-inside=)");
+	Verify0((0==NextArg(&pszCmd,ls)),"NextArg -bad|switch");
+	Verify0((ls.Compare(L"-bad|switch")==0),"Compare(-bad|switch)");
+	Verify0((!ls.IsPossibleSwitch()),"!IsPossibleSwitch");
+	}
+
+	{
 	Verify_Step("-new_console parser tests");
 	LPCWSTR pszTest = L"-new_console:a \\\"-new_console:c\\\" `-new_console:d:C:\\` -cur_console:b";
 	LPCWSTR pszCmp = L"\\\"-new_console:c\\\" `-new_console:d:C:\\`";

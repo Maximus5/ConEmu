@@ -37,6 +37,9 @@
     <ClInclude Include="..\..\common\WUser.h">
       <Filter>COMMON</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\common\MProcess.h">
+      <Filter>COMMON</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\test1.cpp" />
@@ -68,6 +71,9 @@
       <Filter>COMMON</Filter>
     </ClCompile>
     <ClCompile Include="..\..\common\WUser.cpp">
+      <Filter>COMMON</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\common\MProcess.cpp">
       <Filter>COMMON</Filter>
     </ClCompile>
   </ItemGroup>
