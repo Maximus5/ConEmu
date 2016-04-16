@@ -1734,6 +1734,14 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 
 		TranslateKeyPress(0, 0, *pch, -1, r, r+1);
 
+		if (*pch = 0x7F)
+		{
+			// gh-641: Posting `0x7F` (which is <BS> on xterm) causes LEFT_CTRL_PRESSED in dwControlKeyState
+			//   we are sending <BS>, but not a <Ctrl>-<BS>
+			r[0].Event.KeyEvent.dwControlKeyState &= ~(LEFT_CTRL_PRESSED|LEFT_ALT_PRESSED|SHIFT_PRESSED);
+			r[1].Event.KeyEvent.dwControlKeyState = r[0].Event.KeyEvent.dwControlKeyState;
+		}
+
 		// 130822 - Japanese+iPython - (wVirtualKeyCode!=0) fails with pyreadline
 		if (lbIsFar && (r->EventType == KEY_EVENT) && !r->Event.KeyEvent.wVirtualKeyCode)
 		{
