@@ -33,6 +33,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "TermX.h"
 
+#define X_CTRL(c) ((c) & 0x1F)
+#define X_CDEL 0x7F // alternative - X_CTRL('H') ?
+
 TermX::TermX()
 {
 	Reset();
@@ -142,7 +145,7 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 	case VK_BACK:
 		if ((Processor.Mods & xtc_Alt)) szSubst[0] = 0x1B;
 		szSubst[(Processor.Mods == xtc_Alt) ? 1 : 0] = ((Processor.Mods & (xtc_Ctrl|xtc_Alt)) == (xtc_Ctrl|xtc_Alt)) ? 0x9F
-			: (Processor.Mods & xtc_Ctrl) ? 0x1F : 0x7F;
+			: (Processor.Mods & xtc_Ctrl) ? X_CTRL('_')/*0x1F*/ : X_CDEL/*0x7F*/;
 		szSubst[(Processor.Mods == xtc_Alt) ? 2 : 1] = 0;
 		return true;
 
