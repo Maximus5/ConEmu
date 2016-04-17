@@ -42,9 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 HANDLE ghHeap = NULL;
 
-#ifdef _DEBUG
+// Debugging purposes
 void* g_LastDeletePtr = NULL;
-#endif
 
 
 // Visual Studio 2015 Universal CRT

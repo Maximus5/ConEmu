@@ -133,19 +133,15 @@ bool __cdecl xf_validate(void * _Memory = NULL);
 #endif
 #endif
 
-#ifdef _DEBUG
 extern void* g_LastDeletePtr;
-#endif
 
 template <class T>
 void SafeDelete(T*& p)
 {
 	if (!p) return;
 
-	#ifdef _DEBUG
 	_ASSERTE(g_LastDeletePtr != (void*)p);
 	g_LastDeletePtr = (void*)p;
-	#endif
 
 	#ifdef MVALIDATE_POINTERS
 	if (xf_validate((p)))
