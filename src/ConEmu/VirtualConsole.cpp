@@ -385,9 +385,10 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 		}
 
 		*pszDot = 0;
-		mpsz_LogScreen = (wchar_t*)calloc(pszDot - szFile + 64, 2);
-		wcscpy(mpsz_LogScreen, szFile);
-		wcscpy(mpsz_LogScreen+_tcslen(mpsz_LogScreen), L"\\ConEmu-VCon-%i-%i.con"/*, RCon()->GetServerPID()*/);
+		size_t cchMax = (pszDot - szFile) + 64;
+		mpsz_LogScreen = (wchar_t*)calloc(cchMax, 2);
+		_wcscpy_c(mpsz_LogScreen, cchMax, szFile);
+		_wcscat_c(mpsz_LogScreen, cchMax, L"\\ConEmu-VCon-%i-%i.con"/*, RCon()->GetServerPID()*/);
 	}
 
 	CreateView();
@@ -1331,14 +1332,14 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	}
 	else if (attr.Flags2 & CharAttr2_DoubleSpaced)
 	{
-		return 2*nFontWidth;
+		return MakeUShort(2*nFontWidth);
 	}
 	else if (gpSet->isMonospace
 	        || (gpSet->isFixFarBorders && isCharAltFont(ch))
 	        || (gpSet->isEnhanceGraphics && isCharProgress(ch))
 			)
 	{
-		return nFontWidth;
+		return MakeUShort(nFontWidth);
 	}
 
 	// Проверяем сразу, чтобы по условиям не бегать
@@ -1370,9 +1371,9 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	//#endif
 
 	if (m_DC.TextExtentPoint(&ch, 1, &sz) && sz.cx)
-		nWidth = sz.cx;
+		nWidth = MakeUShort(sz.cx);
 	else
-		nWidth = nFontWidth;
+		nWidth = MakeUShort(nFontWidth);
 
 	if (!nWidth)
 		nWidth = 1; // на всякий случай, чтобы деления на 0 не возникло
@@ -1988,8 +1989,8 @@ void CVirtualConsole::UpdateHighlightsRowCol()
 	// And MARK! (nFontHeight or cell (nFontWidth))
 
 	COORD pix;
-	pix.X = pos.X * nFontWidth;
-	pix.Y = pos.Y * nFontHeight;
+	pix.X = MakeShort(pos.X * nFontWidth);
+	pix.Y = MakeShort(pos.Y * nFontHeight);
 
 	if ((pos.X >= 0) && ConCharX)
 	{
@@ -1997,7 +1998,7 @@ void CVirtualConsole::UpdateHighlightsRowCol()
 		if ((CurChar >= 0) && (CurChar < (int)(TextWidth * TextHeight)))
 		{
 			if (ConCharX[CurChar-1])
-				pix.X = ConCharX[CurChar-1];
+				pix.X = MakeShort(ConCharX[CurChar-1]);
 		}
 	}
 
@@ -3401,9 +3402,9 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	//BOOL lbIsProgr = isCharProgress(Cursor.ch[0]);
 	BOOL lbDark = FALSE;
 	DWORD clr = (Cursor.ch != ucBox100 && Cursor.ch != ucBox75) ? Cursor.bgColor : Cursor.foreColor;
-	BYTE R = (clr & 0xFF);
-	BYTE G = (clr & 0xFF00) >> 8;
-	BYTE B = (clr & 0xFF0000) >> 16;
+	BYTE R = (BYTE)(clr & 0xFF);
+	BYTE G = (BYTE)((clr & 0xFF00) >> 8);
+	BYTE B = (BYTE)((clr & 0xFF0000) >> 16);
 	lbDark = (R <= 0xC0) && (G <= 0xC0) && (B <= 0xC0);
 	clr = lbDark ? mp_Colors[15] : mp_Colors[0];
 	HBRUSH hBr = CreateSolidBrush(clr);
@@ -4387,8 +4388,8 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y, bool StrictMonospace/*=fa
 
 	if (!this)
 	{
-		cr.Y = y / gpFontMgr->FontHeight();
-		cr.X = x / gpFontMgr->FontWidth();
+		cr.Y = MakeShort(y / gpFontMgr->FontHeight());
+		cr.X = MakeShort(x / gpFontMgr->FontWidth());
 		return cr;
 	}
 
@@ -4396,10 +4397,10 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y, bool StrictMonospace/*=fa
 
 	// Сначала приблизительный пересчет по размерам шрифта
 	if (nFontHeight)
-		cr.Y = y/nFontHeight;
+		cr.Y = MakeShort(y / nFontHeight);
 
 	if (nFontWidth)
-		cr.X = x/nFontWidth;
+		cr.X = MakeShort(x / nFontWidth);
 
 	if (!StrictMonospace)
 	{
@@ -5013,7 +5014,7 @@ void CVirtualConsole::PolishPanelViews()
 		if ((pp->FarPanelSettings.ShowColumnTitles) && pp->tColumnTitle.nFlags) //-V112
 		{
 			LPCWSTR pszNameTitle = pp->tColumnTitle.sText;
-			CharAttr ca; CharAttrFromConAttr(pp->tColumnTitle.bConAttr, &ca);
+			CharAttr ca; CharAttrFromConAttr(MakeUShort(pp->tColumnTitle.bConAttr), &ca);
 			int nNameLen = _tcslen(pszNameTitle);
 			int nX1 = rc.left + 1;
 

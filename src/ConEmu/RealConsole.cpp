@@ -1300,18 +1300,18 @@ bool CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	mp_ConEmu->AutoSizeFont(rcWnd, CER_MAINCLIENT);
 	RECT rcCon = mp_ConEmu->CalcRect(CER_CONSOLE_CUR, rcWnd, CER_MAINCLIENT, mp_VCon);
 	// Скорректировать sbi на новый, который БУДЕТ установлен после отработки сервером аттача
-	lsbi.dwSize.X = rcCon.right;
-	lsbi.srWindow.Left = 0; lsbi.srWindow.Right = rcCon.right-1;
+	lsbi.dwSize.X = MakeShort(rcCon.right);
+	lsbi.srWindow.Left = 0; lsbi.srWindow.Right = MakeShort(rcCon.right-1);
 
 	if (bCurBufHeight)
 	{
 		// sbi.dwSize.Y не трогаем
-		lsbi.srWindow.Bottom = lsbi.srWindow.Top + rcCon.bottom - 1;
+		lsbi.srWindow.Bottom = MakeShort(lsbi.srWindow.Top + rcCon.bottom - 1);
 	}
 	else
 	{
-		lsbi.dwSize.Y = rcCon.bottom;
-		lsbi.srWindow.Top = 0; lsbi.srWindow.Bottom = rcCon.bottom - 1;
+		lsbi.dwSize.Y = MakeShort(rcCon.bottom);
+		lsbi.srWindow.Top = 0; lsbi.srWindow.Bottom = MakeShort(rcCon.bottom - 1);
 	}
 
 	mp_RBuf->InitSBI(&lsbi, bCurBufHeight);
