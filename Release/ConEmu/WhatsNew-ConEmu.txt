@@ -20,6 +20,24 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.4.16
+* gh-629: Once more ‘Bash on Ubuntu on Windows’.
+  It's recommended now to run bash with `-cur_console:p` switch.
+  **Delete trailing `1`** if you have {bash} task already.
+
+    -cur_console:p[N] - pty modes, N - bitmask, default is 1+4
+       1 - XTermKeys, 2 - BrPaste, 4 - AppCursorKeys
+
+* Support underlined text attributes (fish autocompletion).
+* ConEmu.exe switches `-run` and `-runlist` are introduced to take the place of `-cmd` and `-cmdlist`.
+  * Actually, `-cmd` and `-cmdlist` are supported for compatibility reasons,
+    but `-run...` switches are more convenient to avoid confusion with `cmd.exe`.
+  * As before, both `/switch` and `-switch` notations are supported.
+  * Also, ConEmu internals were changed to `-switch` notation.
+* gh-641: Correct posting `0x7F` (which is `<BS>` on xterm) to console.
+  It was posted with LEFT_CTRL_PRESSED in dwControlKeyState. We are posting `<BS>`, but not a `<Ctrl>-<BS>`.
+
+
 2016.4.13
 * Task for ‘Bash on Ubuntu on Windows’ was not created properly in 32-bit ConEmu on 64-bit Win10.
   Also, it's named now just a {Bash::bash}.
