@@ -42,6 +42,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 HANDLE ghHeap = NULL;
 
+#ifdef _DEBUG
+void* g_LastDeletePtr = NULL;
+#endif
+
 
 // Visual Studio 2015 Universal CRT
 // http://blogs.msdn.com/b/vcblog/archive/2015/03/03/introducing-the-universal-crt.aspx

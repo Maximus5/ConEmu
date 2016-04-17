@@ -125,32 +125,34 @@ bool __cdecl xf_validate(void * _Memory = NULL);
 
 #ifdef MVALIDATE_POINTERS
 #define SafeFree(p) if ((p)!=NULL) { if (!xf_validate((p))) free((p)); (p) = NULL; }
-//#define SafeDelete(p) if ((p)!=NULL) { if (!xf_validate((p))) delete (p); (p) = NULL; }
-template <class T>
-void SafeDelete(T*& p)
-{
-	T* ps = p;
-	p = NULL;
-	if (!xf_validate((ps)))
-	{
-		delete ps;
-	}
-}
 #else
 #ifdef TRACK_MEMORY_ALLOCATIONS
 #define SafeFree(p) if ((p)!=NULL) { xf_free((p),__FILE__,__LINE__); (p) = NULL; }
 #else
 #define SafeFree(p) if ((p)!=NULL) { xf_free((p)); (p) = NULL; }
 #endif
-//#define SafeDelete(p) if ((p)!=NULL) { delete (p); (p) = NULL; }
+#endif
+
+#ifdef _DEBUG
+extern void* g_LastDeletePtr;
+#endif
+
 template <class T>
 void SafeDelete(T*& p)
 {
 	if (!p) return;
-	T* ps = p;
+
+	#ifdef _DEBUG
+	_ASSERTE(g_LastDeletePtr != (void*)p);
+	g_LastDeletePtr = (void*)p;
+	#endif
+
+	#ifdef MVALIDATE_POINTERS
+	if (xf_validate((p)))
+	#endif
+	delete p;
+
 	p = NULL;
-	delete ps;
 }
-#endif
 
 #endif // #ifndef MEMORY_HEADER_DEFINED
