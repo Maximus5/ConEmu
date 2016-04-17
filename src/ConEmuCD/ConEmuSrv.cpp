@@ -3267,7 +3267,7 @@ int CreateMapHeader()
 	{
 		_ASSERTE(FALSE && "Failed to create/open mapping!");
 		_wprintf(gpSrv->pConsoleMap->GetErrorText());
-		delete gpSrv->pConsoleMap; gpSrv->pConsoleMap = NULL;
+		SafeDelete(gpSrv->pConsoleMap);
 		iRc = CERR_CREATEMAPPINGERR; goto wrap;
 	}
 	else if (gnRunMode == RM_ALTSERVER)
@@ -3522,8 +3522,7 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 	{
 		if (gpSrv->pColorerMapping)
 		{
-			delete gpSrv->pColorerMapping;
-			gpSrv->pColorerMapping = NULL;
+			SafeDelete(gpSrv->pColorerMapping);
 		}
 		else
 		{
@@ -3587,14 +3586,8 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 	if (!pHdr)
 	{
 		dwErr = GetLastError();
-		// 111101 теперь не ошибка - мэппинг может быть отключен в ConEmu
-		//_printf("Can't map colorer data mapping. ErrCode=0x%08X\n", dwErr/*, szMapName*/);
-		//_wprintf(gpSrv->pColorerMapping->GetErrorText());
-		//_printf("\n");
-		//iRc = CERR_COLORERMAPPINGERR;
-		//CloseHandle(gpSrv->hColorerMapping); gpSrv->hColorerMapping = NULL;
-		delete gpSrv->pColorerMapping;
-		gpSrv->pColorerMapping = NULL;
+		// The TrueColor may be disabled in ConEmu settings, don't warn user about it
+		SafeDelete(gpSrv->pColorerMapping);
 		goto wrap;
 	}
 	else if ((nHdrSize = pHdr->struct_size) != sizeof(AnnotationHeader))
@@ -3606,8 +3599,7 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 
 		if (pHdr->struct_size != sizeof(AnnotationHeader))
 		{
-			delete gpSrv->pColorerMapping;
-			gpSrv->pColorerMapping = NULL;
+			SafeDelete(gpSrv->pColorerMapping);
 			goto wrap;
 		}
 	}
@@ -3639,8 +3631,7 @@ void CloseMapHeader()
 	if (gpSrv->pConsoleMap)
 	{
 		//gpSrv->pConsoleMap->CloseMap(); -- не требуется, сделает деструктор
-		delete gpSrv->pConsoleMap;
-		gpSrv->pConsoleMap = NULL;
+		SafeDelete(gpSrv->pConsoleMap);
 	}
 
 	if (gpSrv->pConsole)
