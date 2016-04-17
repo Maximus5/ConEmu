@@ -515,7 +515,7 @@ INT_PTR CSetPgApps::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 	case cbColorsOverride:
 		bChecked = isChecked(mh_Child, nCtrlId);
 		DoEnableControls(cbColorsOverride);
-		pApp->OverridePalette = bChecked;
+		pApp->OverridePalette = _bool(bChecked);
 		mb_Redraw = true;
 		// Обновить палитры
 		gpSet->PaletteSetStdIndexes();
@@ -526,7 +526,7 @@ INT_PTR CSetPgApps::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 	case cbCursorOverride:
 		bChecked = isChecked(mh_Child, nCtrlId);
 		DoEnableControls(cbCursorOverride);
-		pApp->OverrideCursor = bChecked;
+		pApp->OverrideCursor = _bool(bChecked);
 		mb_Redraw = true;
 		break;
 

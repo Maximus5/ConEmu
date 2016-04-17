@@ -2106,7 +2106,7 @@ bool CTabBarClass::CanActivateTab(int nTabIdx)
 bool CTabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	//if (!IsShown()) return FALSE; -- всегда. Табы теперь есть в памяти
-	BOOL lbAltPressed = isPressed(VK_MENU);
+	bool lbAltPressed = isPressed(VK_MENU);
 
 	if (messg == WM_KEYDOWN && wParam == VK_TAB)
 	{
@@ -2122,7 +2122,7 @@ bool CTabBarClass::OnKeyboard(UINT messg, WPARAM wParam, LPARAM lParam)
 	{
 		bool bRecent = gpSet->isTabRecent;
 		gpSet->isTabRecent = false;
-		BOOL bForward = (wParam == VK_RIGHT || wParam == VK_DOWN);
+		bool bForward = (wParam == VK_RIGHT || wParam == VK_DOWN);
 		Switch(bForward);
 		gpSet->isTabRecent = bRecent;
 

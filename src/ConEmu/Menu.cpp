@@ -1715,7 +1715,7 @@ void CConEmuMenu::ShowSysmenu(int x, int y, DWORD nFlags /*= 0*/)
 
 	bool iconic = gpConEmu->isIconic();
 	bool zoomed = gpConEmu->isZoomed();
-	bool visible = IsWindowVisible(ghWnd);
+	bool visible = _bool(::IsWindowVisible(ghWnd));
 	int style = GetWindowLong(ghWnd, GWL_STYLE);
 	HMENU systemMenu = GetSysMenu();
 
@@ -2644,7 +2644,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 
 			// ***
 			{
-				bool bIconic = ::IsIconic(hWnd);
+				bool bIconic = _bool(::IsIconic(hWnd));
 				bool bPrev = bIconic ? SetRestoreFromMinimized(true) : mb_InRestoreFromMinimized;
 				DEBUGTEST(WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl););
 

@@ -748,7 +748,7 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 			a.Type = (asString[0] == L'0' && (asString[1] == L'x' || asString[1] == L'X')) ? gmt_Hex : gmt_Int;
 
 			// If it fails - just use as string
-			bIntArg = GetNextInt(asString, a);
+			bIntArg = (GetNextInt(asString, a) != NULL);
 		}
 
 		if (!bIntArg)

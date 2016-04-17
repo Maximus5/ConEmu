@@ -130,7 +130,7 @@ void CSetPgPaste::OnBtn_ClipConfirmEnter(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbClipConfirmEnter);
 
-	gpSet->isPasteConfirmEnter = uCheck;
+	gpSet->isPasteConfirmEnter = (uCheck != BST_CHECKED);
 
 } // cbClipConfirmEnter
 

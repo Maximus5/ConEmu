@@ -1459,7 +1459,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 						}
 
 						// попытаемся найти
-						bool bSearchRc = apiSearchPath(pszSearchPath, pszSearchFile, pszExt ? NULL : L".exe", szFind);
+						bool bSearchRc = (apiSearchPath(pszSearchPath, pszSearchFile, pszExt ? NULL : L".exe", szFind) > 0);
 						if (!bSearchRc && !pszSearchPath)
 						{
 							wchar_t szRoot[MAX_PATH+1];
@@ -1468,7 +1468,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 							wchar_t* pszRootSlash = wcsrchr(szRoot, L'\\');
 							if (pszRootSlash)
 								*pszRootSlash = 0;
-							bSearchRc = apiSearchPath(szRoot, pszSearchFile, pszExt ? NULL : L".exe", szFind);
+							bSearchRc = (apiSearchPath(szRoot, pszSearchFile, pszExt ? NULL : L".exe", szFind) > 0);
 						}
 						if (bSearchRc)
 						{
@@ -10893,7 +10893,7 @@ LRESULT CConEmuMain::OnMouse_RBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 	if (!(bSelect = isConSelectMode())
 	        && (bPanel = CVConGroup::isFilePanel())
 	        && (bActive = (pVCon != NULL))
-	        && (bCoord = pVCon->RCon()->CoordInPanel(mouse.RClkCon)))
+	        && (bCoord = (pVCon->RCon()->CoordInPanel(mouse.RClkCon) > 0)))
 	{
 		if (gpSet->isDragEnabled & DRAG_R_ALLOWED)
 		{

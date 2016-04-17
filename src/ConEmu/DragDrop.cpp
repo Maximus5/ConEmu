@@ -586,8 +586,8 @@ HRESULT CDragDrop::DropFromStream(IDataObject* pDataObject, BOOL abActive)
 					nLastProgress = nProgress;
 				}
 
-				BOOL lbKnownMedium = FALSE;
-				BOOL lbFolder = FALSE;
+				bool lbKnownMedium = false;
+				bool lbFolder = false;
 				fmtetc.lindex = mn_CurFile;
 
 				// Well, here we may get different structures...

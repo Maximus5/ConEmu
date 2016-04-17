@@ -1286,7 +1286,7 @@ bool CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	//2010-03-03 переделано для аттача через пайп
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = rStartStop->sbi;
 	// Remove bRootIsCmdExe&isScroll() from expression. Use REAL scrolls from REAL console
-	BOOL bCurBufHeight = /*rStartStop->bRootIsCmdExe || mp_RBuf->isScroll() ||*/ mp_RBuf->BufferHeightTurnedOn(&lsbi);
+	bool bCurBufHeight = /*rStartStop->bRootIsCmdExe || mp_RBuf->isScroll() ||*/ mp_RBuf->BufferHeightTurnedOn(&lsbi);
 
 	// Смотрим реальный буфер - изменилось ли наличие прокрутки?
 	if (mp_RBuf->isScroll() != bCurBufHeight)
@@ -4113,7 +4113,7 @@ BOOL CRealConsole::StartProcess()
 	// Monitor thread must be started already
 	_ASSERTE(mn_MonitorThreadID!=0);
 
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	SetConStatus(L"Preparing process startup line...", cso_ResetOnConsoleReady|cso_Critical);
 
 	SetConEmuEnvVarChild(mp_VCon->GetView(), mp_VCon->GetBack());
@@ -4130,7 +4130,7 @@ BOOL CRealConsole::StartProcess()
 
 	HWND hSetForeground = (mp_ConEmu->isIconic() || !IsWindowVisible(ghWnd)) ? GetForegroundWindow() : ghWnd;
 
-	mb_UseOnlyPipeInput = FALSE;
+	mb_UseOnlyPipeInput = false;
 
 	if (mp_sei)
 	{
@@ -4145,7 +4145,7 @@ BOOL CRealConsole::StartProcess()
 	ResetVarsOnStart();
 
 	//Ready!
-	mb_InCreateRoot = TRUE;
+	mb_InCreateRoot = true;
 
 	//=====================================
 	STARTUPINFO si;
@@ -4494,7 +4494,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 								   BYTE nTextColorIdx /*= 7*/, BYTE nBackColorIdx /*= 0*/, BYTE nPopTextColorIdx /*= 5*/, BYTE nPopBackColorIdx /*= 15*/,
 								   STARTUPINFO& si, PROCESS_INFORMATION& pi, DWORD& dwLastError)
 {
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	DWORD nColors = (nTextColorIdx) | (nBackColorIdx << 8) | (nPopTextColorIdx << 16) | (nPopBackColorIdx << 24);
 
 	_ASSERTE(mn_RunTime==0 && mn_StartTick==0); // еще не должно быть установлено или должно быть сброшено
@@ -4714,7 +4714,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 				   STARTUPINFO& si, PROCESS_INFORMATION& pi, SHELLEXECUTEINFO*& pp_sei,
 				   DWORD& dwLastError, bool bExternal /*= false*/)
 {
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 
 	lpszWorkDir = pRCon->GetStartupDir();
 
@@ -4763,11 +4763,11 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 					pszChangedCmd = lstrmerge(exe, L" /PROFILECD ", pszTemp);
 			}
 
-			lbRc = CreateProcessWithLogonW(Args.pszUserName, Args.pszDomain, Args.szUserPassword,
+			lbRc = (CreateProcessWithLogonW(Args.pszUserName, Args.pszDomain, Args.szUserPassword,
 										LOGON_WITH_PROFILE, NULL, pszChangedCmd ? pszChangedCmd : psCurCmd,
 										NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
 										|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
-										, NULL, lpszWorkDir, &si, &pi);
+										, NULL, lpszWorkDir, &si, &pi) != FALSE);
 				//if (CreateProcessAsUser(Args.hLogonToken, NULL, psCurCmd, NULL, NULL, FALSE,
 				//	NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE|CREATE_NEW_CONSOLE
 				//	, NULL, Args.pszStartupDir, &si, &pi))
@@ -4779,20 +4779,20 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 		}
 		else if (Args.RunAsRestricted == crb_On)
 		{
-			lbRc = CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
+			lbRc = (CreateProcessRestricted(NULL, psCurCmd, NULL, NULL, FALSE,
 										NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
 										|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
-										, NULL, lpszWorkDir, &si, &pi, &dwLastError);
+										, NULL, lpszWorkDir, &si, &pi, &dwLastError) != FALSE);
 
 			dwLastError = GetLastError();
 		}
 		else
 		{
-			lbRc = CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE,
+			lbRc = (CreateProcess(NULL, psCurCmd, NULL, NULL, FALSE,
 										NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
 										|(bConsoleProcess ? CREATE_NEW_CONSOLE : 0)
 										//|CREATE_NEW_PROCESS_GROUP - низя! перестает срабатывать Ctrl-C
-										, NULL, lpszWorkDir, &si, &pi);
+										, NULL, lpszWorkDir, &si, &pi) != FALSE);
 
 			dwLastError = GetLastError();
 		}
@@ -4869,7 +4869,7 @@ BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 
 			pRCon->mp_ConEmu->SetIgnoreQuakeActivation(true);
 
-			lbRc = ShellExecuteEx(pp_sei);
+			lbRc = (ShellExecuteEx(pp_sei) != FALSE);
 
 			pRCon->mp_ConEmu->SetIgnoreQuakeActivation(false);
 
@@ -8285,7 +8285,7 @@ void CRealConsole::SetAppDistinctPID(const ConProcess* apProcess)
 // Возвращает TRUE если сменился статус (Far/не Far)
 BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 {
-	BOOL lbChanged = FALSE;
+	bool lbChanged = false;
 	//Warning: Должен вызываться ТОЛЬКО из ProcessAdd/ProcessDelete, т.к. сам секцию не блокирует
 	bool bIsFar = false, bIsTelnet = false, bIsCmd = false;
 	DWORD dwFarPID = 0;
@@ -8490,7 +8490,7 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 // Возвращает TRUE если сменился статус (Far/не Far)
 BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 {
-	BOOL lbChanged = FALSE;
+	bool lbChanged = false;
 	TODO("OPTIMIZE: хорошо бы от секции вообще избавиться, да и не всегда обновлять нужно...");
 	MSectionLock SPRC; SPRC.Lock(&csPRC);
 	BOOL lbRecreateOk = FALSE;
@@ -8543,7 +8543,7 @@ BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 	UINT i = 0;
 	//std::vector<ConProcess>::iterator iter, end;
 	//BOOL bAlive = FALSE;
-	BOOL bProcessChanged = FALSE, bProcessNew = FALSE, bProcessDel = FALSE;
+	bool bProcessChanged = false, bProcessNew = false, bProcessDel = false;
 	CProcessData* pProcData = NULL;
 
 	// Проверить, может какие-то процессы уже помечены как закрывающиеся - их не добавлять
@@ -8890,7 +8890,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 
 BOOL CRealConsole::WaitConsoleSize(int anWaitSize, DWORD nTimeout)
 {
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	//CESERVER_REQ *pIn = NULL, *pOut = NULL;
 	DWORD nStart = GetTickCount();
 	DWORD nDelta = 0;
@@ -9860,11 +9860,11 @@ bool CRealConsole::RecreateProcessStart()
 
 BOOL CRealConsole::IsConsoleDataChanged()
 {
-	if (!this) return FALSE;
+	if (!this) return false;
 
 	#ifdef _DEBUG
 	if (mb_DebugLocked)
-		return FALSE;
+		return false;
 	#endif
 
 	WARNING("После смены буфера - тоже вернуть TRUE!");
@@ -9953,9 +9953,9 @@ bool CRealConsole::SetFullScreen()
 BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow, BOOL abAsync/*=TRUE*/)
 {
 	if ((IsWindowVisible(hWnd) == FALSE) == (swShow == SW_HIDE))
-		return TRUE; // уже все сделано
+		return true; // уже все сделано
 
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 
 	// Вероятность зависания, поэтому кидаем команду в пайп
 	//lbRc = apiShowWindow(hWnd, swShow);
@@ -10030,11 +10030,11 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 		mp_ConEmu->LogString(sInfo);
 	}
 
-	BOOL lbRc = FALSE; DWORD dwErr = ERROR_ACCESS_DENIED/*5*/;
+	bool lbRc = false; DWORD dwErr = ERROR_ACCESS_DENIED/*5*/;
 	// It'll be better to show console window from server threads
 	if (hWnd == this->hConWnd)
 	{
-		lbRc = SetWindowPos(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags);
+		lbRc = (SetWindowPos(hWnd, hWndInsertAfter, X, Y, cx, cy, uFlags) != FALSE);
 		dwErr = GetLastError();
 	}
 
@@ -10082,7 +10082,7 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 
 BOOL CRealConsole::SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground)
 {
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	DWORD dwErr = 0;
 	HWND hLastFocus = NULL;
 
@@ -10159,7 +10159,7 @@ HWND CRealConsole::SetOtherWindowParent(HWND hWnd, HWND hParent)
 
 BOOL CRealConsole::SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOOL bRedraw)
 {
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	CESERVER_REQ in;
 	ExecutePrepareCmd(&in, CECMD_SETWINDOWRGN, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETWINDOWRGN));
 	// Собственно, аргументы
@@ -10186,7 +10186,7 @@ BOOL CRealConsole::SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOO
 
 	if (pOut) ExecuteFreeResult(pOut);
 
-	lbRc = TRUE;
+	lbRc = true;
 	return lbRc;
 }
 
@@ -11905,7 +11905,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 
 BOOL CRealConsole::IsConsoleThread()
 {
-	if (!this) return FALSE;
+	if (!this) return false;
 
 	DWORD dwCurThreadId = GetCurrentThreadId();
 	return dwCurThreadId == mn_MonitorThreadID;
@@ -11952,7 +11952,7 @@ HANDLE CRealConsole::PrepareOutputFileCreate(wchar_t* pszFilePathName)
 
 BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName)
 {
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	//CESERVER_REQ_HDR In = {0};
 	//const CESERVER_REQ *pOut = NULL;
 	//MPipe<CESERVER_REQ_HDR,CESERVER_REQ> Pipe;
@@ -14548,10 +14548,10 @@ int CRealConsole::CoordInPanel(COORD cr, BOOL abIncludeEdges /*= FALSE*/)
 
 	RECT rcPanel;
 
-	if (GetPanelRect(FALSE, &rcPanel, FALSE, abIncludeEdges) && CoordInRect(cr, rcPanel))
+	if (GetPanelRect(FALSE, &rcPanel, false, abIncludeEdges) && CoordInRect(cr, rcPanel))
 		return 1;
 
-	if (mp_RBuf->GetPanelRect(TRUE, &rcPanel, FALSE, abIncludeEdges) && CoordInRect(cr, rcPanel))
+	if (mp_RBuf->GetPanelRect(TRUE, &rcPanel, false, abIncludeEdges) && CoordInRect(cr, rcPanel))
 		return 2;
 
 	return 0;
@@ -14564,7 +14564,7 @@ BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/
 		if (prc)
 			*prc = MakeRect(-1,-1);
 
-		return FALSE;
+		return false;
 	}
 
 	return mp_RBuf->GetPanelRect(abRight, prc, abFull, abIncludeEdges);
@@ -15033,7 +15033,7 @@ bool CRealConsole::isAdministrator()
 
 BOOL CRealConsole::isMouseButtonDown()
 {
-	if (!this) return FALSE;
+	if (!this) return false;
 
 	return mb_MouseButtonDown;
 }
@@ -15202,7 +15202,7 @@ wrap:
 
 BOOL CRealConsole::OpenFarMapData()
 {
-	BOOL lbResult = FALSE;
+	bool lbResult = false;
 	wchar_t szMapName[128], szErr[512]; szErr[0] = 0;
 	DWORD dwErr = 0;
 	DWORD nFarPID = GetFarPID(TRUE);
@@ -15284,7 +15284,7 @@ wrap:
 
 BOOL CRealConsole::OpenMapHeader(BOOL abFromAttach)
 {
-	BOOL lbResult = FALSE;
+	bool lbResult = false;
 	wchar_t szErr[512]; szErr[0] = 0;
 	//int nConInfoSize = sizeof(CESERVER_CONSOLE_MAPPING_HDR);
 

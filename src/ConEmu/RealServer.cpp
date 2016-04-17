@@ -816,7 +816,7 @@ CESERVER_REQ* CRealServer::cmdGetOutputFile(LPVOID pInst, CESERVER_REQ* pIn, UIN
 
 	DEBUGSTRCMD(L"GUI recieved CECMD_GETOUTPUTFILE\n");
 	_ASSERTE(nDataSize>=4); //-V112
-	BOOL lbUnicode = pIn->OutputFile.bUnicode;
+	bool lbUnicode = (pIn->OutputFile.bUnicode != FALSE);
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_OUTPUTFILE));
 	pOut->OutputFile.bUnicode = lbUnicode;
 	pOut->OutputFile.szFilePathName[0] = 0; // Сформирует mp_RCon->PrepareOutputFile

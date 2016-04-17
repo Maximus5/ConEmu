@@ -317,7 +317,7 @@ class CVirtualConsole :
 		bool isCursorValid, drawImage, textChanged, attrChanged;
 		DWORD nBgImageColors;
 		COORD bgBmpSize; HDC hBgDc; // Это только ссылка, для удобства отрисовки
-		void PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisible);
+		void PaintVConSimple(HDC hPaintDc, RECT rcClient, bool bGuiVisible);
 		void PaintVConNormal(HDC hPaintDc, RECT rcClient);
 		void PaintVConDebug(HDC hPaintDc, RECT rcClient);
 		void UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, UINT dwSize);

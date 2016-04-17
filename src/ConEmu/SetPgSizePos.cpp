@@ -182,7 +182,7 @@ LRESULT CSetPgSizePos::OnEditChanged(HWND hDlg, WORD nCtrlId)
 		if (isChecked(hDlg, rNormal) == BST_CHECKED)
 		{
 			wchar_t *pVal = GetDlgItemTextPtr(hDlg, nCtrlId);
-			BOOL bValid = (pVal && isDigit(*pVal));
+			bool bValid = (pVal && isDigit(*pVal));
 			enableDlgItem(hDlg, cbApplyPos, bValid);
 			SafeFree(pVal);
 		}
@@ -193,7 +193,7 @@ LRESULT CSetPgSizePos::OnEditChanged(HWND hDlg, WORD nCtrlId)
 		{
 			CESize sz = {0};
 			wchar_t *pVal = GetDlgItemTextPtr(hDlg, nCtrlId);
-			BOOL bValid = (pVal && sz.SetFromString(false, pVal));
+			bool bValid = (pVal && sz.SetFromString(false, pVal));
 			enableDlgItem(hDlg, cbApplyPos, bValid);
 			SafeFree(pVal);
 		}

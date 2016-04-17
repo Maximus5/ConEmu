@@ -2593,7 +2593,7 @@ bool CVirtualConsole::ChangePalette(int aNewPaletteIdx)
 		LogString(lsLog);
 	}
 
-	BOOL bTextChanged = (pOldPal==NULL), bPopupChanged = (pOldPal==NULL);
+	bool bTextChanged = (pOldPal==NULL), bPopupChanged = (pOldPal==NULL);
 	if (pOldPal)
 	{
 		bTextChanged = (pOldPal->nTextColorIdx != pPal->nTextColorIdx) || (pOldPal->nBackColorIdx != pPal->nBackColorIdx);
@@ -2858,7 +2858,7 @@ void CVirtualConsole::UpdateText()
 	int *nDX = (int*)malloc((TextWidth+1)*sizeof(int));
 
 	bool bEnhanceGraphics = gpSet->isEnhanceGraphics;
-	bool bFixFarBorders = gpSet->isFixFarBorders;
+	bool bFixFarBorders = _bool(gpSet->isFixFarBorders);
 	bool bFontProportional = !gpFontMgr->FontMonospaced();
 	CEFONT hFont = gpFontMgr->mh_Font[0];
 	CEFONT hFont2 = gpFontMgr->mh_Font2;
@@ -3469,7 +3469,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	//------------------------------------------------------------------------
 	///| Drawing cursor |/////////////////////////////////////////////////////
 	//------------------------------------------------------------------------
-	Cursor.isVisiblePrevFromInfo = cinf.bVisible;
+	Cursor.isVisiblePrevFromInfo = _bool(cinf.bVisible);
 	BOOL lbUpdateTick = FALSE;
 	bool bForeground = mp_ConEmu->isMeForeground();
 	bool bConVisible = isVisible();
@@ -3630,7 +3630,7 @@ bool CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWid
 	if ((HDC)m_DC)
 	{
 		SetStretchBltMode(hPaintDC, HALFTONE);
-		bPaintRC = StretchBlt(hPaintDC, anX,anY,anShowWidth,anShowHeight, (HDC)m_DC, 0,0,Width,Height, SRCCOPY);
+		bPaintRC = _bool(StretchBlt(hPaintDC, anX,anY,anShowWidth,anShowHeight, (HDC)m_DC, 0,0,Width,Height, SRCCOPY));
 	}
 	else
 	{
@@ -3752,16 +3752,16 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 	WARNING("TODO: Need to calculate mrc_Back = {0,0}-{BackWidth,BackHeight}");
 	mrc_Back = mrc_Client;
 
-	BOOL lbSimpleBlack = FALSE, lbGuiVisible = FALSE;
+	bool lbSimpleBlack = false, lbGuiVisible = false;
 
 	if (!guard.VCon())
-		lbSimpleBlack = TRUE;
+		lbSimpleBlack = true;
 	else if (!mp_RCon)
-		lbSimpleBlack = TRUE;
+		lbSimpleBlack = true;
 	else if (!mp_RCon->ConWnd() && !mp_RCon->GuiWnd())
-		lbSimpleBlack = TRUE;
+		lbSimpleBlack = true;
 	else if ((lbGuiVisible = mp_RCon->isGuiOverCon()))
-		lbSimpleBlack = TRUE;
+		lbSimpleBlack = true;
 #ifdef _DEBUG
 	else
 	{
@@ -3812,7 +3812,7 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 	}
 }
 
-void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, BOOL bGuiVisible)
+void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, bool bGuiVisible)
 {
 	if (!this)
 	{
@@ -4314,13 +4314,11 @@ void CVirtualConsole::OnFontChanged()
 	//ClearPartBrushes();
 }
 
+// This function is expected to be called on resize GUI (ConEmu window)
 void CVirtualConsole::OnConsoleSizeChanged()
 {
-	// По идее эта функция вызывается при ресайзе окна GUI ConEmu
-	BOOL lbLast = mb_InPaintCall;
-	mb_InPaintCall = TRUE; // чтобы Invalidate лишний раз не дергался
+	MSetter lSet(&mb_InPaintCall); // Avoid spare Invalidate-s
 	Update(mb_RequiredForceUpdate);
-	mb_InPaintCall = lbLast;
 }
 
 void CVirtualConsole::OnConsoleSizeReset(USHORT sizeX, USHORT sizeY)
@@ -4564,7 +4562,7 @@ bool CVirtualConsole::IsPanelViews()
 bool CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 {
 	_ASSERTE(ppvi && ppvi->cbSize == sizeof(PanelViewInit));
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	PanelViewInit* pp = (ppvi->bLeftPanel) ? &m_LeftPanelView : &m_RightPanelView;
 	BOOL lbPrevRegistered = pp->bRegister;
 	*pp = *ppvi;
@@ -4605,23 +4603,23 @@ bool CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 			}
 			else
 			{
-				lbRc = TRUE;
+				lbRc = true;
 			}
 		}
 		else
 		{
-			lbRc = TRUE;
+			lbRc = true;
 
 			if (ppvi->bLeftPanel)
-				mb_LeftPanelRedraw = TRUE;
+				mb_LeftPanelRedraw = true;
 			else
-				mb_RightPanelRedraw = TRUE;
+				mb_RightPanelRedraw = true;
 		}
 
 		if (lbRc)
 		{
 			// Положение и регионы (по текущему состоянию окна)
-			lbRc = UpdatePanelView(ppvi->bLeftPanel, TRUE);
+			lbRc = UpdatePanelView(_bool(ppvi->bLeftPanel), true);
 			// Обновить флаг видимости
 			ppvi->bVisible = pp->bVisible;
 			ppvi->WorkRect = pp->WorkRect;
@@ -4631,12 +4629,12 @@ bool CVirtualConsole::RegisterPanelView(PanelViewInit* ppvi)
 			Update(true);
 
 			// Если открыто окно настроек - включить в нем кнопку "Apply"
-			if (ghOpWnd) gpSetCls->OnPanelViewAppeared(TRUE);
+			if (ghOpWnd) gpSetCls->OnPanelViewAppeared(true);
 		}
 	}
 	else
 	{
-		lbRc = TRUE;
+		lbRc = true;
 	}
 
 	return lbRc;
@@ -4724,8 +4722,8 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 	}
 
 	CRgnRects* pRgn = abLeftPanel ? &m_RgnLeftPanel : &m_RgnRightPanel;
-	BOOL lbPartHidden = FALSE;
-	BOOL lbPanelVisible = FALSE;
+	bool lbPartHidden = false;
+	bool lbPanelVisible = false;
 	SMALL_RECT rcDlg[MAX_DETECTED_DIALOGS]; DWORD rnDlgFlags[MAX_DETECTED_DIALOGS];
 	_ASSERTE(sizeof(mrc_LastDialogs) == sizeof(rcDlg));
 	const CRgnDetect* pDetect = mp_RCon->GetDetector();
@@ -4734,8 +4732,8 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 
 	if (!nDlgCount)
 	{
-		lbPartHidden = TRUE;
-		pp->bVisible = FALSE;
+		lbPartHidden = true;
+		pp->bVisible = false;
 		//if (!abTestOnly && !abOnRegister) {
 		//	if (IsWindowVisible(pp->hWnd))
 		//		mp_RCon->ShowOtherWindow(pp->hWnd, SW_HIDE);
@@ -4756,7 +4754,7 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 
 		if (!nGetRc)
 		{
-			lbPanelVisible = FALSE;
+			lbPanelVisible = false;
 		}
 		else
 		{
@@ -4783,7 +4781,7 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 				// Проверка, может регион уже пуст?
 				if (nCRC == NULLREGION)
 				{
-					lbPanelVisible = FALSE; break;
+					lbPanelVisible = false; break;
 				}
 			}
 		}
@@ -4799,7 +4797,7 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 			if (lbPanelVisible)
 			{
 				lbPartHidden = (pRgn->nRgnState == COMPLEXREGION);
-				pp->bVisible = TRUE;
+				pp->bVisible = true;
 				_ASSERTE(pRgn->nRectCount > 0);
 
 				if (pRgn->nRgnState == SIMPLEREGION)
@@ -4838,8 +4836,8 @@ bool CVirtualConsole::UpdatePanelRgn(bool abLeftPanel, bool abTestOnly, bool abO
 			}
 			else
 			{
-				lbPartHidden = TRUE;
-				pp->bVisible = FALSE;
+				lbPartHidden = true;
+				pp->bVisible = false;
 				//if (IsWindowVisible(pp->hWnd)) {
 				//	// Сбросит регион и скроет(!) окно
 				//	mp_RCon->SetOtherWindowRgn(pp->hWnd, -1, NULL, FALSE);

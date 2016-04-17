@@ -2159,8 +2159,8 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
-	bool zoomed = ::IsZoomed(ghWnd);
-	bool iconic = ::IsIconic(ghWnd);
+	bool zoomed = _bool(::IsZoomed(ghWnd));
+	bool iconic = _bool(::IsIconic(ghWnd));
 
 	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
@@ -4171,7 +4171,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			_ASSERTE(mn_IgnoreSizeChange>=0);
 
 			#ifdef _DEBUG
-			bool bZoomed = ::IsZoomed(ghWnd);
+			bool bZoomed = _bool(::IsZoomed(ghWnd));
 			_ASSERTE(bZoomed);
 			#endif
 
@@ -4362,7 +4362,7 @@ void CConEmuSize::OnConsoleResize(bool abPosted /*= false*/)
 	}
 
 	// Было ли реальное изменение размеров?
-	BOOL lbSizingToDo  = (mp_ConEmu->mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
+	bool lbSizingToDo  = (mp_ConEmu->mouse.state & MOUSE_SIZING_TODO) == MOUSE_SIZING_TODO;
 	bool lbIsSizing = isSizing();
 	bool lbLBtnPressed = isPressed(VK_LBUTTON);
 
@@ -4405,7 +4405,7 @@ void CConEmuSize::OnSizePanels(COORD cr)
 	{
 		RECT rcPanel;
 
-		if (!pRCon->GetPanelRect((mp_ConEmu->mouse.state & (MOUSE_DRAGPANEL_RIGHT|MOUSE_DRAGPANEL_SPLIT)), &rcPanel, TRUE))
+		if (!pRCon->GetPanelRect(((mp_ConEmu->mouse.state & (MOUSE_DRAGPANEL_RIGHT|MOUSE_DRAGPANEL_SPLIT)) != 0), &rcPanel, true))
 		{
 			// Во время изменения размера панелей соответствующий Rect может быть сброшен?
 #ifdef _DEBUG
@@ -4703,7 +4703,7 @@ void CConEmuSize::RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, b
 
 bool CConEmuSize::isIconic(bool abRaw /*= false*/)
 {
-	bool bIconic = ::IsIconic(ghWnd);
+	bool bIconic = _bool(::IsIconic(ghWnd));
 
 	if (!bIconic && mp_ConEmu->mp_Inside)
 		bIconic = mp_ConEmu->mp_Inside->isParentIconic();
@@ -4727,8 +4727,8 @@ bool CConEmuSize::isIconic(bool abRaw /*= false*/)
 bool CConEmuSize::isWindowNormal()
 {
 	#ifdef _DEBUG
-	bool bZoomed = ::IsZoomed(ghWnd);
-	bool bIconic = ::IsIconic(ghWnd);
+	bool bZoomed = _bool(::IsZoomed(ghWnd));
+	bool bIconic = _bool(::IsIconic(ghWnd));
 	bool bInTransition = (changeFromWindowMode == wmNormal) || mp_ConEmu->InCreateWindow()
 		|| (m_JumpMonitor.bInJump && (m_JumpMonitor.bFullScreen || m_JumpMonitor.bMaximized))
 		|| !IsWindowVisible(ghWnd);
@@ -4747,8 +4747,8 @@ bool CConEmuSize::isWindowNormal()
 bool CConEmuSize::isZoomed()
 {
 	#ifdef _DEBUG
-	bool bZoomed = ::IsZoomed(ghWnd);
-	bool bIconic = ::IsIconic(ghWnd);
+	bool bZoomed = _bool(::IsZoomed(ghWnd));
+	bool bIconic = _bool(::IsIconic(ghWnd));
 	bool bInTransition = (changeFromWindowMode == wmNormal) || mp_ConEmu->InCreateWindow()
 		|| (m_JumpMonitor.bInJump && (m_JumpMonitor.bFullScreen || m_JumpMonitor.bMaximized))
 		|| !IsWindowVisible(ghWnd);
@@ -4766,8 +4766,8 @@ bool CConEmuSize::isZoomed()
 bool CConEmuSize::isFullScreen()
 {
 	#ifdef _DEBUG
-	bool bZoomed = ::IsZoomed(ghWnd);
-	bool bIconic = ::IsIconic(ghWnd);
+	bool bZoomed = _bool(::IsZoomed(ghWnd));
+	bool bIconic = _bool(::IsIconic(ghWnd));
 	bool bInTransition = (changeFromWindowMode == wmNormal) || mp_ConEmu->InCreateWindow()
 		|| (m_JumpMonitor.bInJump && (m_JumpMonitor.bFullScreen || m_JumpMonitor.bMaximized))
 		|| !IsWindowVisible(ghWnd);

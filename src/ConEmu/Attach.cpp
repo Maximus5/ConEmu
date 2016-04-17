@@ -842,7 +842,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 		sei.lpDirectory = gpConEmu->ms_ConEmuBaseDir;
 		sei.nShow = SW_SHOWMINIMIZED;
 
-		lbCreate = ShellExecuteEx(&sei);
+		lbCreate = (ShellExecuteEx(&sei) != FALSE);
 		if (lbCreate)
 		{
 			MBoxAssert(sei.hProcess!=NULL);
@@ -856,7 +856,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 			| (abAltMode ? CREATE_NO_WINDOW : CREATE_NEW_CONSOLE)
 			| CREATE_DEFAULT_ERROR_MODE
 			| NORMAL_PRIORITY_CLASS;
-		lbCreate = CreateProcess(szSrv, szArgs, NULL, NULL, FALSE, dwFlags, NULL, NULL, &si, &pi);
+		lbCreate = (CreateProcess(szSrv, szArgs, NULL, NULL, FALSE, dwFlags, NULL, NULL, &si, &pi) != FALSE);
 	}
 
 	if (!lbCreate)

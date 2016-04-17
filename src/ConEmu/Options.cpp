@@ -3660,10 +3660,10 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"CmdOutputCP", nCmdOutputCP);
 		reg->Save(L"ComSpec.Type", (BYTE)ComSpec.csType);
 		reg->Save(L"ComSpec.Bits", (BYTE)ComSpec.csBits);
-		reg->Save(L"ComSpec.UpdateEnv", (bool)ComSpec.isUpdateEnv);
-		reg->Save(L"ComSpec.EnvAddPath", (bool)((ComSpec.AddConEmu2Path & CEAP_AddConEmuBaseDir) == CEAP_AddConEmuBaseDir));
-		reg->Save(L"ComSpec.EnvAddExePath", (bool)((ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) == CEAP_AddConEmuExeDir));
-		reg->Save(L"ComSpec.UncPaths", (bool)ComSpec.isAllowUncPaths);
+		reg->Save(L"ComSpec.UpdateEnv", _bool(ComSpec.isUpdateEnv));
+		reg->Save(L"ComSpec.EnvAddPath", _bool((ComSpec.AddConEmu2Path & CEAP_AddConEmuBaseDir) == CEAP_AddConEmuBaseDir));
+		reg->Save(L"ComSpec.EnvAddExePath", _bool((ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) == CEAP_AddConEmuExeDir));
+		reg->Save(L"ComSpec.UncPaths", _bool(ComSpec.isAllowUncPaths));
 		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
 		this->SaveMSZ(reg, L"EnvironmentSet", psEnvironmentSet, L"\r\n", false);
 		reg->Save(L"CTS.Intelligent", isCTSIntelligent);

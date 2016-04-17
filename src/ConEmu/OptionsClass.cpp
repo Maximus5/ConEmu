@@ -3450,7 +3450,7 @@ void CSettings::UpdateConsoleMode(CRealConsole* pRCon)
 	{
 		WORD nConInMode = 0, nConOutMode = 0;
 		TermEmulationType Term = te_win32;
-		BOOL bBracketedPaste = FALSE;
+		bool bBracketedPaste = false;
 		pRCon->GetConsoleModes(nConInMode, nConOutMode, Term, bBracketedPaste);
 		CEActiveAppFlags appFlags = pRCon->GetActiveAppFlags();
 

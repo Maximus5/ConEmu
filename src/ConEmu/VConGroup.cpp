@@ -1915,7 +1915,7 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 
 	if (VCon.Attach(gp_VActive))
 	{
-		BOOL lbNotFromTitle = FALSE;
+		bool lbNotFromTitle = false;
 		if (!isValid(VCon.VCon()))
 		{
 			_ASSERTE(isValid(VCon.VCon()));
@@ -5519,7 +5519,7 @@ void CVConGroup::PaintGaps(HDC hDC)
 		ReleaseDC(ghWnd, hDC);
 }
 
-DWORD CVConGroup::GetFarPID(BOOL abPluginRequired/*=FALSE*/)
+DWORD CVConGroup::GetFarPID(bool abPluginRequired /*= false*/)
 {
 	DWORD dwPID = 0;
 

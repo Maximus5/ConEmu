@@ -2717,14 +2717,14 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 // static
 BOOL CRealBuffer::BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 {
-	BOOL lbTurnedOn = FALSE;
+	bool lbTurnedOn = false;
 	TODO("!!! Скорректировать");
 
 	if (psbi->dwSize.Y <= (psbi->srWindow.Bottom - psbi->srWindow.Top + 1))
 	{
 		_ASSERTE(psbi->dwSize.Y == (psbi->srWindow.Bottom - psbi->srWindow.Top + 1))
 		// высота окна == высоте буфера,
-		lbTurnedOn = FALSE;
+		lbTurnedOn = false;
 	}
 	else
 	{
@@ -2734,7 +2734,7 @@ BOOL CRealBuffer::BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 		int nHeight = TextHeight();
 		// Высота буфера 'намного' больше высоты НАШЕГО окна
 		if (con.m_sbi.dwSize.Y > EvalBufferTurnOnSize(nHeight))
-			lbTurnedOn = TRUE;
+			lbTurnedOn = true;
 	}
 	//else if (con.m_sbi.dwSize.Y < (con.m_sbi.srWindow.Bottom-con.m_sbi.srWindow.Top+10))
 	//{
@@ -3863,7 +3863,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	else if ((messg == WM_LBUTTONDBLCLK) && (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)))
 	{
 		// Выделить слово под курсором (как в обычной консоли)
-		BOOL lbStreamSelection = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
+		bool lbStreamSelection = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
 
 		DEBUGSTRSEL(L"Selection: WM_LBUTTONDBLCLK - expanding etr_Word");
 
@@ -4718,7 +4718,7 @@ bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFo
 	if (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION)
 		bResetSelection = gpSet->isCTSResetOnRelease;
 	else if (con.m_sel.dwFlags)
-		bResetSelection = gpSet->isCTSEndOnTyping;
+		bResetSelection = (gpSet->isCTSEndOnTyping != 0);
 
 	if (!con.m_sel.dwFlags)
 	{

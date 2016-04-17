@@ -68,7 +68,7 @@ LRESULT CSetPgBackgr::OnInitDialog(HWND hDlg, bool abInitial)
 
 	checkDlgButton(hDlg, cbBgAllowPlugin, BST(gpSet->isBgPluginAllowed));
 
-	CSetDlgLists::EnableDlgItems(hDlg, CSetDlgLists::eImgCtrls, gpSet->isShowBgImage);
+	CSetDlgLists::EnableDlgItems(hDlg, CSetDlgLists::eImgCtrls, (gpSet->isShowBgImage != 0));
 
 	return 0;
 }

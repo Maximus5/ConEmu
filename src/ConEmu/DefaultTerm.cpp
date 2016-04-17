@@ -284,5 +284,5 @@ void CDefaultTerminal::LogHookingStatus(DWORD nForePID, LPCWSTR sMessage)
 
 bool CDefaultTerminal::isLogging()
 {
-	return gpSet->isLogging();
+	return (gpSet->isLogging() != 0);
 }

@@ -159,7 +159,7 @@ public:
 	static int isFarExist(CEFarWindowType anWindowType=fwt_Any, LPWSTR asName=NULL, CVConGuard* rpVCon=NULL);
 	static bool isVConHWND(HWND hChild, CVConGuard* rpVCon = NULL);
 	static bool isConsolePID(DWORD nPID);
-	static DWORD GetFarPID(BOOL abPluginRequired=FALSE);
+	static DWORD GetFarPID(bool abPluginRequired = false);
 	static void CheckTabValid(CTabID* apTab, bool& rbVConValid, bool& rbPidValid, bool& rbPassive);
 
 	static bool EnumVCon(EnumVConFlags what, EnumVConProc pfn, LPARAM lParam);

@@ -181,7 +181,7 @@ INT_PTR CSetPgTasks::OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code)
 			int iCur = (iSelCount == 1) ? Items[0] : -1;
 			if (iCur >= 0)
 				pCmd = gpSet->CmdTaskGet(iCur);
-			BOOL lbEnable = FALSE;
+			bool lbEnable = false;
 			if (pCmd)
 			{
 				_ASSERTE(pCmd->pszName);
@@ -202,7 +202,7 @@ INT_PTR CSetPgTasks::OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code)
 				checkDlgButton(hWnd2, cbCmdGrpTaskbar, ((pCmd->Flags & CETF_NO_TASKBAR) == CETF_NONE) ? BST_CHECKED : BST_UNCHECKED);
 				checkDlgButton(hWnd2, cbCmdGrpToolbar, (pCmd->Flags & CETF_ADD_TOOLBAR) ? BST_CHECKED : BST_UNCHECKED);
 
-				lbEnable = TRUE;
+				lbEnable = true;
 			}
 			else
 			{

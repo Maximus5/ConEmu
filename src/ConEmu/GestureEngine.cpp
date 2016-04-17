@@ -118,7 +118,7 @@ CGestures::CGestures()
 :   _dwArguments(0), _inRotate(false)
 {
 	DEBUGTEST(GESTUREINFO c = {sizeof(c)});
-	_isTabletPC = GetSystemMetrics(SM_TABLETPC);
+	_isTabletPC = (GetSystemMetrics(SM_TABLETPC) != FALSE);
 	_isGestures = IsWindows7;
 	if (_isGestures)
 	{
@@ -299,7 +299,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	}
 
 	#ifdef USE_DUMPGEST
-	bool bLog = gpSet->isLogging(2);
+	bool bLog = (gpSet->isLogging(2) != 0);
 	UNREFERENCED_PARAMETER(bLog);
 	bLog = true;
 	#endif
