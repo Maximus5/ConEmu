@@ -143,7 +143,7 @@ void SafeDelete(T*& p)
 	_ASSERTE(g_LastDeletePtr != (void*)p);
 	g_LastDeletePtr = (void*)p;
 
-	#ifdef MVALIDATE_POINTERS
+	#if defined(_DEBUG) || defined(TRACK_MEMORY_ALLOCATIONS) || defined(MVALIDATE_POINTERS)
 	if (xf_validate((p)))
 	#endif
 	delete p;

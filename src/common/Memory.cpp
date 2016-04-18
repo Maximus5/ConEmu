@@ -490,9 +490,10 @@ void __cdecl xf_dump()
 
 bool __cdecl xf_validate(void * _Memory /*= NULL*/)
 {
+	bool bValid = true;
 	_ASSERTE(ghHeap);
-#ifdef TRACK_MEMORY_ALLOCATIONS
 
+	#ifdef TRACK_MEMORY_ALLOCATIONS
 	if (_Memory)
 	{
 		int nCCcmp;
@@ -500,18 +501,35 @@ bool __cdecl xf_validate(void * _Memory /*= NULL*/)
 		if (p->bBlockUsed == TRUE)
 		{
 			nCCcmp = memcmp(((LPBYTE)_Memory)+p->nBlockSize, "\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC", 8);
-			_ASSERTE(nCCcmp == 0);
+			if (nCCcmp != 0)
+			{
+				_ASSERTE(nCCcmp == 0);
+				bValid = false;
+			}
 		}
 		else
 		{
 			_ASSERTE(p->bBlockUsed == TRUE);
+			bValid = false;
 		}
 		_Memory = (void*)p;
 	}
+	else
+	{
+		// Don't assert on NULL pointers (delete and free are allowed)
+		bValid = false;
+	}
+	#endif
 
-#endif
-	BOOL b = HeapValidate(ghHeap, 0, _Memory);
-	return (b!=FALSE);
+	#ifdef MVALIDATE_POINTERS
+	if (!HeapValidate(ghHeap, 0, _Memory))
+	{
+		_ASSERTE(FALSE && "HeapValidate failed");
+		bValid = false;
+	}
+	#endif
+
+	return bValid;
 }
 
 
