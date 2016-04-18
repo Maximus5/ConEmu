@@ -17,6 +17,21 @@ int main(int argc, char** argv)
 	// Tests
 
 	{
+	Verify_Step("CEStr condition checks");
+	CEStr lsVal;
+	Verify0((!lsVal),"{NULL} (!ls_Val)");
+	Verify0((lsVal.IsEmpty()),"{NULL} (ls_Val.IsEmpty())");
+
+	lsVal = L"";
+	Verify0((!lsVal),"{\"\"} (!ls_Val)");
+	Verify0((lsVal.IsEmpty()),"{\"\"} (ls_Val.IsEmpty())");
+
+	lsVal = L"abc";
+	Verify0((lsVal),"{\"abc\"} (ls_Val)");
+	Verify0((!lsVal.IsEmpty()),"{\"abc\"} (!ls_Val.IsEmpty()) ");
+	}
+
+	{
 	Verify_Step("ls1(`Test`)");
 	CEStr ls1(L"Test");
 	Verify0((ls1.ms_Val && 0==wcscmp(ls1.ms_Val,L"Test")),"ls1==`Test`");
@@ -63,7 +78,7 @@ int main(int argc, char** argv)
 	Verify0((!ls.IsSwitch(L"-inside")),"!IsSwitch(-inside)");
 	Verify0((0==NextArg(&pszCmd,ls)),"NextArg /cmdlist");
 	Verify0((ls.IsSwitch(L"-cmdlist")),"IsSwitch(-cmdlist)");
-	Verify0((0==NextArg(&pszCmd,ls)),"NextArg \"-inside=\\eCD /d %1\"");
+	Verify0((0==NextArg(&pszCmd,ls)),"NextArg \"-inside=\\eCD /d %%1\"");
 	Verify0((ls.IsSwitch(L"-inside:")),"IsSwitch(-inside=)");
 	Verify0((0==NextArg(&pszCmd,ls)),"NextArg -bad|switch");
 	Verify0((ls.Compare(L"-bad|switch")==0),"Compare(-bad|switch)");
