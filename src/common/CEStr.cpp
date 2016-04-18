@@ -213,8 +213,15 @@ wchar_t* CEStr::Detach()
 	wchar_t* psz = ms_Val;
 	ms_Val = NULL;
 	mn_MaxCount = 0;
+	Empty();
 
 	return psz;
+}
+
+void CEStr::Clear()
+{
+	wchar_t* ptr = Detach();
+	SafeFree(ptr);
 }
 
 LPCWSTR CEStr::Attach(wchar_t* RVAL_REF asPtr)

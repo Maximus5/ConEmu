@@ -102,6 +102,7 @@ public:
 	wchar_t* GetBuffer(INT_PTR cchMaxLen);
 	wchar_t* Detach();
 	LPCWSTR  Attach(wchar_t* RVAL_REF asPtr);
+	void Clear();
 	void Empty();
 	bool IsEmpty() const;
 	LPCWSTR Set(LPCWSTR asNewValue, INT_PTR anChars = -1);
