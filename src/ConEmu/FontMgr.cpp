@@ -92,7 +92,6 @@ const int CFontMgr::FontDefWidthMax = 99;
 const int CFontMgr::FontZoom100 = 10000;
 
 const wchar_t CFontMgr::RASTER_FONTS_NAME[] = L"Raster Fonts";
-const wchar_t CFontMgr::szRasterAutoError[] = L"Font auto size is not allowed for a fixed raster font size. Select 'Terminal' instead of '[Raster Fonts ...]'";
 SIZE CFontMgr::szRasterSizes[100] = {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
 
 
@@ -1688,7 +1687,7 @@ CEFONT CFontMgr::CreateFontIndirectMy(LOGFONT *inFont)
 			if (hMainPg)
 				CDlgItemHelper::checkDlgButton(hMainPg, cbFontAuto, BST_UNCHECKED);
 
-			gpSetCls->ShowFontErrorTip(szRasterAutoError);
+			gpSetCls->ShowFontErrorTip(CLngRc::getRsrc(lng_RasterAutoError)/*"Font auto size is not allowed for a fixed raster font size. Select ‘Terminal’ instead of ‘[Raster Fonts ...]’"*/);
 		}
 
 		wchar_t *pszEnd = NULL;

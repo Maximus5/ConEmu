@@ -102,6 +102,7 @@ enum LngResources
 	lng_AssertIgnoreDescr         = 69,
 	lng_AssertAbortDescr          = 70,
 	lng_AssertRetryDescr          = 71,
+	lng_RasterAutoError           = 72,
 	// last auto-gen identifier
 	lng_NextId
 };

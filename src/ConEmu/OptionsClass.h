@@ -240,15 +240,13 @@ class CSettings
 			ConFontErr_InvalidName = 0x04,
 		};
 	protected:
-		BOOL bShowConFontError, bConsoleFontChecked;
-		wchar_t sConFontError[512];
+		bool bShowConFontError, bConsoleFontChecked;
 		wchar_t sDefaultConFontName[32]; // "последний шанс", если юзер отказался выбрать нормальный шрифт
 		HWND hConFontDlg;
 		DWORD nConFontError; // 0x01 - шрифт не зарегистрирован в системе, 0x02 - не указан в реестре для консоли
 		HWND hwndConFontBalloon;
 		static bool CheckConsoleFontRegistry(LPCWSTR asFaceName);
 		static bool CheckConsoleFont(HWND ahDlg);
-		static void ShowConFontErrorTip(LPCTSTR asInfo);
 		LPCWSTR CreateConFontError(LPCWSTR asReqFont=NULL, LPCWSTR asGotFont=NULL);
 		TOOLINFO tiConFontBalloon;
 		DpiValue _dpi;
@@ -257,7 +255,13 @@ class CSettings
 	public:
 		int QueryDpi();
 	private:
-		static void ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh = false);
+		CEStr ms_BalloonErrTip;
+		CEStr ms_ConFontError;
+		void ShowErrorTip(wchar_t* asInfo, HWND hDlg, int nCtrlID, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh = false);
+	public:
+		void ShowFontErrorTip(LPCTSTR asInfo);
+		void ShowModifierErrorTip(LPCTSTR asInfo, HWND hDlg, WORD nID);
+		void ShowConFontErrorTip();
 	protected:
 		void OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage = NULL);
 		void ExportSettings();
@@ -272,7 +276,6 @@ class CSettings
 		INT_PTR OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		void OnSaveActivityLogFile(HWND hListView);
 		LRESULT OnActivityLogNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
-		wchar_t szSelectionModError[512];
 		UINT mn_ActivateTabMsg;
 		bool mb_IgnoreSelPage;
 	public:
@@ -290,7 +293,6 @@ class CSettings
 		DWORD mn_CounterTick[tPerfLast];
 		i64 mn_KbdDelayCounter, mn_KbdDelays[32/*must be power of 2*/]; LONG mn_KBD_CUR_FRAME;
 		HWND hwndTip, hwndBalloon;
-		static void ShowFontErrorTip(LPCTSTR asInfo);
 		TOOLINFO tiBalloon;
 		static BOOL CALLBACK RegisterTipsForChild(HWND hChild, LPARAM lParam);
 		void RecreateFont(WORD wFromID);

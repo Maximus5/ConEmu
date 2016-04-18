@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "DefaultTerm.h"
 #include "HotkeyDlg.h"
+#include "LngRc.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "OptionsFast.h"
@@ -1685,7 +1686,7 @@ void CSetDlgButtons::OnBtn_FontAuto(HWND hDlg, WORD CB, BYTE uCheck)
 	{
 		gpSet->isFontAutoSize = false;
 		checkDlgButton(hDlg, cbFontAuto, BST_UNCHECKED);
-		gpSetCls->ShowFontErrorTip(gpFontMgr->szRasterAutoError);
+		gpSetCls->ShowFontErrorTip(CLngRc::getRsrc(lng_RasterAutoError)/*"Font auto size is not allowed for a fixed raster font size. Select ‘Terminal’ instead of ‘[Raster Fonts ...]’"*/);
 	}
 } // cbFontAuto
 

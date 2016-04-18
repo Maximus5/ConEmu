@@ -199,8 +199,6 @@ CSettings::CSettings()
 	//isFullScreen = false;
 	//ZeroStruct(m_QuakePrevSize);
 
-	szSelectionModError[0] = 0;
-
 	// Некоторые вещи нужно делать вне InitSettings, т.к. она может быть
 	// вызвана потом из интерфейса диалога настроек
 	wcscpy_c(ConfigPath, CONEMU_ROOT_KEY L"\\.Vanilla");
@@ -229,7 +227,7 @@ CSettings::CSettings()
 	//hMain = hExt = hFar = hTabs = hKeys = hColors = hCmdTasks = hViews = hInfo = hDebug = hUpdate = hSelection = NULL;
 	m_LastActivePageId = thi_Last;
 	hwndTip = NULL; hwndBalloon = NULL;
-	hConFontDlg = NULL; hwndConFontBalloon = NULL; bShowConFontError = FALSE; sConFontError[0] = 0; bConsoleFontChecked = FALSE;
+	hConFontDlg = NULL; hwndConFontBalloon = NULL; bShowConFontError = FALSE; bConsoleFontChecked = FALSE;
 	if (gbIsDBCS)
 	{
 		wcscpy_c(sDefaultConFontName, gsDefConFont);
@@ -1425,8 +1423,7 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"You must set different\nmodifiers for\n<%s> and\n<%s>", Keys[i].Descr, Keys[j].Descr);
 				HWND hDlg = hWnd2;
 				WORD nID = (Keys[j].hPage == hWnd2) ? Keys[j].nCtrlID : Keys[i].nCtrlID;
-				ShowErrorTip(szInfo, hDlg, nID, gpSetCls->szSelectionModError, countof(gpSetCls->szSelectionModError),
-							 gpSetCls->hwndBalloon, &gpSetCls->tiBalloon, gpSetCls->hwndTip, FAILED_SELMOD_TIMEOUT, true);
+				ShowModifierErrorTip(szInfo, hDlg, nID);
 				return;
 			}
 		}
@@ -1559,9 +1556,9 @@ void CSettings::SelectTreeItem(HWND hTree, HTREEITEM hItem, bool bPost /*= false
 
 LRESULT CSettings::OnPage(LPNMHDR phdr)
 {
-	if (gpFontMgr->szFontError[0])
+	if (ms_BalloonErrTip)
 	{
-		gpFontMgr->szFontError[0] = 0;
+		ms_BalloonErrTip.Clear();
 		SendMessage(hwndBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiBalloon);
 		SendMessage(hwndTip, TTM_ACTIVATE, TRUE, 0);
 	}
@@ -3313,12 +3310,6 @@ void CSettings::RecreateFont(WORD wFromID)
 	}
 }
 
-void CSettings::ShowFontErrorTip(LPCTSTR asInfo)
-{
-	ShowErrorTip(asInfo, gpSetCls->GetPage(thi_Fonts), tFontFace, gpFontMgr->szFontError, countof(gpFontMgr->szFontError),
-	             gpSetCls->hwndBalloon, &gpSetCls->tiBalloon, gpSetCls->hwndTip, FAILED_FONT_TIMEOUT);
-}
-
 // "Умолчательная" высота буфера.
 // + ConEmu стартует в буферном режиме
 // + команда по умолчанию (если не задана в реестре или ком.строке) будет "cmd", а не "far"
@@ -3694,17 +3685,37 @@ void CSettings::NeedBackgroundUpdate()
 	#endif
 }
 
-// общая функция
-void CSettings::ShowErrorTip(LPCTSTR asInfo, HWND hDlg, int nCtrlID, wchar_t* pszBuffer, int nBufferSize, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh)
+void CSettings::ShowModifierErrorTip(LPCTSTR asInfo, HWND hDlg, WORD nID)
 {
-	if (!asInfo)
-		pszBuffer[0] = 0;
-	else if (asInfo != pszBuffer)
-		lstrcpyn(pszBuffer, asInfo, nBufferSize);
+	ms_BalloonErrTip = asInfo;
 
-	pti->lpszText = pszBuffer;
+	ShowErrorTip(ms_BalloonErrTip.ms_Val, hDlg, nID, hwndBalloon, &tiBalloon, hwndTip, FAILED_SELMOD_TIMEOUT, true);
+}
 
-	if (pszBuffer[0])
+void CSettings::ShowFontErrorTip(LPCTSTR asInfo)
+{
+	if (!ghOpWnd)
+	{
+		ms_BalloonErrTip.Clear();
+		return;
+	}
+
+	ms_BalloonErrTip = asInfo;
+
+	ShowErrorTip(ms_BalloonErrTip.ms_Val, GetPage(thi_Fonts), tFontFace, hwndBalloon, &tiBalloon, hwndTip, FAILED_FONT_TIMEOUT);
+}
+
+void CSettings::ShowConFontErrorTip()
+{
+	ShowErrorTip(ms_ConFontError.ms_Val, hConFontDlg, tConsoleFontFace, hwndConFontBalloon, &tiConFontBalloon, NULL, FAILED_CONFONT_TIMEOUT);
+}
+
+// общая функция
+void CSettings::ShowErrorTip(wchar_t* asInfo, HWND hDlg, int nCtrlID, HWND hBall, TOOLINFO *pti, HWND hTip, DWORD nTimeout, bool bLeftAligh /*= false*/)
+{
+	pti->lpszText = asInfo;
+
+	if (asInfo && *asInfo)
 	{
 		if (hTip) SendMessage(hTip, TTM_ACTIVATE, FALSE, 0);
 
@@ -4153,7 +4164,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					if (gpSetCls->nConFontError)
 					{
 						_ASSERTE(gpSetCls->nConFontError==0);
-						MsgBox(gpSetCls->sConFontError[0] ? gpSetCls->sConFontError : gpSetCls->CreateConFontError(NULL,NULL),
+						MsgBox((gpSetCls->ms_ConFontError ? gpSetCls->ms_ConFontError.c_str() : gpSetCls->CreateConFontError(NULL,NULL)),
 							MB_OK|MB_ICONSTOP, gpConEmu->GetDefaultTitle(), hWnd2);
 						return 0;
 					}
@@ -4174,7 +4185,8 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 				else if (TB == bConFontAdd2HKLM)
 				{
 					// Добавить шрифт в HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Console\TrueTypeFont
-					gpSetCls->ShowConFontErrorTip(NULL);
+					gpSetCls->ms_ConFontError.Clear();
+					gpSetCls->ShowConFontErrorTip();
 					EnableWindow(GetDlgItem(hWnd2, tConsoleFontHklmNote), TRUE);
 					wchar_t szFaceName[32] = {0};
 					bool lbFontJustRegistered = false;
@@ -4375,18 +4387,23 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 					EnableWindow(GetDlgItem(hWnd2, bConFontAdd2HKLM), FALSE);
 				}
 
-				ShowConFontErrorTip(gpSetCls->CreateConFontError(LF.lfFaceName, szCreatedFaceName));
+				gpSetCls->CreateConFontError(LF.lfFaceName, szCreatedFaceName);
+				gpSetCls->ShowConFontErrorTip();
 			}
 
 			break;
 		case WM_ACTIVATE:
 
 			if (LOWORD(wParam) == WA_INACTIVE)
-				ShowConFontErrorTip(NULL);
+			{
+				gpSetCls->ms_ConFontError.Clear();
+				gpSetCls->ShowConFontErrorTip();
+			}
 			else if (gpSetCls->bShowConFontError)
 			{
 				gpSetCls->bShowConFontError = FALSE;
-				ShowConFontErrorTip(gpSetCls->CreateConFontError(NULL,NULL));
+				gpSetCls->CreateConFontError(NULL,NULL);
+				gpSetCls->ShowConFontErrorTip();
 			}
 
 			break;
@@ -4395,34 +4412,14 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 	return 0;
 }
 
-void CSettings::ShowConFontErrorTip(LPCTSTR asInfo)
-{
-	ShowErrorTip(asInfo, gpSetCls->hConFontDlg, tConsoleFontFace, gpSetCls->sConFontError, countof(gpSetCls->sConFontError),
-	             gpSetCls->hwndConFontBalloon, &gpSetCls->tiConFontBalloon, NULL, FAILED_CONFONT_TIMEOUT);
-	//if (!asInfo)
-	//	gpSetCls->sConFontError[0] = 0;
-	//else if (asInfo != gpSetCls->sConFontError)
-	//	lstrcpyn(gpSetCls->sConFontError, asInfo, countof(gpSetCls->sConFontError));
-	//tiConFontBalloon.lpszText = gpSetCls->sConFontError;
-	//if (gpSetCls->sConFontError[0]) {
-	//	SendMessage(hwndConFontBalloon, TTM_UPDATETIPTEXT, 0, (LPARAM)&tiConFontBalloon);
-	//	RECT rcControl; GetWindowRect(GetDlgItem(hConFontDlg, tConsoleFontFace), &rcControl);
-	//	int ptx = rcControl.right - 10;
-	//	int pty = (rcControl.top + rcControl.bottom) / 2;
-	//	SendMessage(hwndConFontBalloon, TTM_TRACKPOSITION, 0, MAKELONG(ptx,pty));
-	//	SendMessage(hwndConFontBalloon, TTM_TRACKACTIVATE, TRUE, (LPARAM)&tiConFontBalloon);
-	//	SetTimer(hConFontDlg, BALLOON_MSG_TIMERID, FAILED_FONT_TIMEOUT, 0);
-	//} else {
-	//	SendMessage(hwndConFontBalloon, TTM_TRACKACTIVATE, FALSE, (LPARAM)&tiConFontBalloon);
-	//}
-}
-
 LPCWSTR CSettings::CreateConFontError(LPCWSTR asReqFont/*=NULL*/, LPCWSTR asGotFont/*=NULL*/)
 {
-	sConFontError[0] = 0;
-
 	if (!nConFontError)
+	{
 		return NULL;
+	}
+
+	wchar_t sConFontError[512] = L"";
 
 	SendMessage(gpSetCls->hwndConFontBalloon, TTM_SETTITLE, TTI_WARNING, (LPARAM)(asReqFont ? asReqFont : gpSet->ConsoleFont.lfFaceName));
 	wcscpy_c(sConFontError, L"Console font test failed!\n");
@@ -4450,7 +4447,10 @@ LPCWSTR CSettings::CreateConFontError(LPCWSTR asReqFont/*=NULL*/, LPCWSTR asGotF
 		wcscat_c(sConFontError, L"Font is not registered for use in console\n");
 
 	sConFontError[_tcslen(sConFontError)-1] = 0;
-	return sConFontError;
+
+	ms_ConFontError = sConFontError;
+
+	return ms_ConFontError.ms_Val;
 }
 
 int CSettings::EnumConFamCallBack(LPLOGFONT lplf, LPNEWTEXTMETRIC lpntm, DWORD FontType, LPVOID aFontCount)

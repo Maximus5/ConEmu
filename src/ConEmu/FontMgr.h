@@ -87,7 +87,6 @@ public:
 	static const int FontZoom100; // 10000
 
 	static const wchar_t RASTER_FONTS_NAME[]; // L"Raster Fonts";
-	static const wchar_t szRasterAutoError[]; // L"Font auto size is not allowed for a fixed raster font size. Select 'Terminal' instead of '[Raster Fonts ...]'";
 	static SIZE szRasterSizes[100]; // {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
 
 public:
