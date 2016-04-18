@@ -92,7 +92,7 @@ void CEStr::Empty()
 
 CEStr::operator LPCWSTR() const
 {
-	CESTRLOG1("CEStr::LPCWSTR()", 0);
+	CESTRLOG0("CEStr::LPCWSTR()");
 	return ms_Val;
 }
 
@@ -388,7 +388,7 @@ bool CEStr::IsEmpty() const
 
 LPCWSTR CEStr::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
 {
-	CESTRLOG2("CEStr::Set(x%p)", asNewValue, (int)anChars);
+	CESTRLOG2("CEStr::Set(x%p,%i)", asNewValue, (int)anChars);
 
 	if (asNewValue)
 	{
