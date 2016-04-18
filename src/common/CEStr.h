@@ -90,6 +90,7 @@ private:
 
 public:
 	operator LPCWSTR() const;
+	operator bool() const;
 	LPCWSTR c_str(LPCWSTR asNullSubstitute = NULL) const;
 	int Compare(LPCWSTR asText, bool abCaseSensitive = false) const;
 	LPCWSTR Right(INT_PTR cchMaxCount) const;

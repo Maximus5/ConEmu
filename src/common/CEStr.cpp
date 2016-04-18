@@ -96,6 +96,11 @@ CEStr::operator LPCWSTR() const
 	return ms_Val;
 }
 
+CEStr::operator bool() const
+{
+	return (!IsEmpty());
+}
+
 LPCWSTR CEStr::c_str(LPCWSTR asNullSubstitute /*= NULL*/) const
 {
 	CESTRLOG0("CEStr::c_str()");
