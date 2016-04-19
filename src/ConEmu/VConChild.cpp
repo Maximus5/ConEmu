@@ -1510,7 +1510,7 @@ void CConEmuChild::InvalidateBack()
 	}
 	else
 	{
-		_ASSERTE(mh_WndBack!=NULL);
+		_ASSERTE(mh_WndBack!=NULL || (mp_VCon->RCon() && mp_VCon->RCon()->isConsoleClosing()));
 	}
 }
 
