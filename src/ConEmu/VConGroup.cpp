@@ -2973,7 +2973,7 @@ void CVConGroup::OnUpdateFarSettings()
 	}
 }
 
-void CVConGroup::OnUpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/, const AppSettings* apDistinct /*= NULL*/)
+void CVConGroup::OnUpdateTextColorSettings(bool ChangeTextAttr /*= TRUE*/, bool ChangePopupAttr /*= TRUE*/, const AppSettings* apDistinct /*= NULL*/)
 {
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
@@ -5671,7 +5671,7 @@ void CVConGroup::PaneMaximizeRestore(CVirtualConsole* apVCon)
 	gpConEmu->OnSize();
 }
 
-void CVConGroup::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
+void CVConGroup::OnGuiFocused(bool abFocus, bool abForceChild /*= FALSE*/)
 {
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{

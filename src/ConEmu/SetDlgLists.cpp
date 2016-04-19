@@ -444,7 +444,7 @@ int CSetDlgLists::SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText)
 	return nIdx;
 }
 
-void CSetDlgLists::EnableDlgItems(HWND hParent, const DWORD* pnCtrlIds, size_t nCount, BOOL bEnabled)
+void CSetDlgLists::EnableDlgItems(HWND hParent, const DWORD* pnCtrlIds, size_t nCount, bool bEnabled)
 {
 	for (;nCount-- && *pnCtrlIds; ++pnCtrlIds)
 	{
@@ -452,7 +452,7 @@ void CSetDlgLists::EnableDlgItems(HWND hParent, const DWORD* pnCtrlIds, size_t n
 	}
 }
 
-void CSetDlgLists::EnableDlgItems(HWND hParent, eWordItems eWhat, BOOL bEnabled)
+void CSetDlgLists::EnableDlgItems(HWND hParent, eWordItems eWhat, bool bEnabled)
 {
 	const DWORD* pnValues;
 	uint nItems = GetListItems(eWhat, pnValues);

@@ -508,7 +508,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 	return 0;
 }
 
-void CSetPgBase::setHotkeyCheckbox(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWSTR pszFrom, LPCWSTR pszTo, bool bChecked)
+void CSetPgBase::setHotkeyCheckbox(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWSTR pszFrom, LPCWSTR pszTo, UINT uChecked)
 {
 	wchar_t szKeyFull[128] = L"";
 	gpSet->GetHotkeyNameById(iHotkeyId, szKeyFull, false);
@@ -540,7 +540,7 @@ void CSetPgBase::setHotkeyCheckbox(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWS
 			SetDlgItemText(hDlg, nCtrlId, lsNew);
 		}
 
-		checkDlgButton(hDlg, nCtrlId, bChecked);
+		checkDlgButton(hDlg, nCtrlId, uChecked);
 	}
 }
 

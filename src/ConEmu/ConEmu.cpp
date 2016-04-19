@@ -3050,7 +3050,7 @@ DWORD CConEmuMain::CheckProcesses()
 	return CVConGroup::CheckProcesses();
 }
 
-bool CConEmuMain::ConActivateNext(BOOL abNext)
+bool CConEmuMain::ConActivateNext(bool abNext)
 {
 	return CVConGroup::ConActivateNext(abNext);
 }
@@ -3801,7 +3801,7 @@ void CConEmuMain::LoadIcons()
 //	TODO("CConEmuMain::OnCopyingState()");
 //}
 
-void CConEmuMain::PostDragCopy(BOOL abMove, BOOL abReceived/*=FALSE*/)
+void CConEmuMain::PostDragCopy(bool abMove, bool abReceived/*=FALSE*/)
 {
 	if (!abReceived)
 	{
@@ -4289,7 +4289,7 @@ void CConEmuMain::RegisterHooks()
 //	return FALSE;
 //}
 
-void CConEmuMain::UnRegisterHotKeys(BOOL abFinal/*=FALSE*/)
+void CConEmuMain::UnRegisterHotKeys(bool abFinal/*=FALSE*/)
 {
 	RegisterGlobalHotKeys(false);
 
@@ -4976,7 +4976,7 @@ bool CConEmuMain::MemoryDumpActiveProcess(bool abProcessTree /*= false*/)
 	return lbRc;
 }
 
-void CConEmuMain::UpdateProcessDisplay(BOOL abForce)
+void CConEmuMain::UpdateProcessDisplay(bool abForce)
 {
 	TODO("Move to CSetPgInfo");
 	if (!ghOpWnd)
@@ -5464,7 +5464,7 @@ void CConEmuMain::UpdateWindowChild(CVirtualConsole* apVCon)
 
 bool CConEmuMain::isRightClickingPaint()
 {
-	return (bool)mb_RightClickingPaint;
+	return mb_RightClickingPaint;
 }
 
 void CConEmuMain::RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon)
@@ -5766,7 +5766,7 @@ void CConEmuMain::Update(bool isForce /*= false*/)
 }
 #endif
 
-DWORD CConEmuMain::GetFarPID(BOOL abPluginRequired/*=FALSE*/)
+DWORD CConEmuMain::GetFarPID(bool abPluginRequired/*=false*/)
 {
 	DWORD dwPID = CVConGroup::GetFarPID(abPluginRequired);
 	return dwPID;
@@ -7059,7 +7059,7 @@ void CConEmuMain::OnMainCreateFinished()
 	}
 }
 
-void CConEmuMain::PostCreate(BOOL abReceived/*=FALSE*/)
+void CConEmuMain::PostCreate(bool abReceived/*=FALSE*/)
 {
 	if (gpSet->isLogging())
 	{
@@ -7430,7 +7430,7 @@ bool CConEmuMain::IsChildFocusAllowed(HWND hChild)
 	return false;
 }
 
-LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom /*= NULL*/, BOOL abForceChild /*= FALSE*/)
+LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom /*= NULL*/, bool abForceChild /*= FALSE*/)
 {
 	// Чтобы избежать лишних вызовов по CtrlWinAltSpace при работе с GUI приложением
 	if (mb_SkipOnFocus)
@@ -11366,7 +11366,7 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 	DEBUGSTRFOREGROUND(szDbg);
 }
 
-void CConEmuMain::CheckUpdates(BOOL abShowMessages)
+void CConEmuMain::CheckUpdates(UINT abShowMessages)
 {
 	if (!isUpdateAllowed())
 		return;

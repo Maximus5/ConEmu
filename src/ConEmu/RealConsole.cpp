@@ -1124,7 +1124,7 @@ void CRealConsole::SyncGui2Window(const RECT rcVConBack)
 // Изменить размер консоли по размеру окна (главного)
 // prcNewWnd передается из CConEmuMain::OnSizing(WPARAM wParam, LPARAM lParam)
 // для опережающего ресайза консоли (во избежание мелькания отрисовки панелей)
-void CRealConsole::SyncConsole2Window(BOOL abNtvdmOff/*=FALSE*/, LPRECT prcNewWnd/*=NULL*/)
+void CRealConsole::SyncConsole2Window(bool abNtvdmOff/*=FALSE*/, LPRECT prcNewWnd/*=NULL*/)
 {
 	if (!this)
 		return;
@@ -4100,12 +4100,12 @@ void CRealConsole::UpdateRootInfo(const CESERVER_ROOT_INFO& RootInfo)
 	}
 }
 
-BOOL CRealConsole::StartProcess()
+bool CRealConsole::StartProcess()
 {
 	if (!this)
 	{
 		_ASSERTE(this);
-		return FALSE;
+		return false;
 	}
 
 	// Must be executed in Runner Thread
@@ -4488,7 +4488,7 @@ wrap:
 	return lbRc;
 }
 
-BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR& lpszWorkDir,
+bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR& lpszWorkDir,
 								   bool bNeedConHostSearch, HWND hSetForeground,
 								   DWORD& nCreateBegin, DWORD& nCreateEnd, DWORD& nCreateDuration,
 								   BYTE nTextColorIdx /*= 7*/, BYTE nBackColorIdx /*= 0*/, BYTE nPopTextColorIdx /*= 5*/, BYTE nPopBackColorIdx /*= 15*/,
@@ -4709,7 +4709,7 @@ BOOL CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 }
 
 // (Args may be != pRCon->m_Args)
-BOOL CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
+bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 				   LPWSTR psCurCmd, LPCWSTR& lpszWorkDir,
 				   STARTUPINFO& si, PROCESS_INFORMATION& pi, SHELLEXECUTEINFO*& pp_sei,
 				   DWORD& dwLastError, bool bExternal /*= false*/)
@@ -5415,7 +5415,7 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 	PostConsoleEvent(&r);
 }
 
-void CRealConsole::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=-1*/, BOOL abByMouse/*=FALSE*/, DWORD anAnchorFlag/*=0*/)
+void CRealConsole::StartSelection(bool abTextMode, SHORT anX/*=-1*/, SHORT anY/*=-1*/, bool abByMouse/*=FALSE*/, DWORD anAnchorFlag/*=0*/)
 {
 	mp_ABuf->StartSelection(abTextMode, anX, anY, abByMouse, 0, NULL, anAnchorFlag);
 }
@@ -5577,7 +5577,7 @@ void CRealConsole::DoEndFindText()
 	}
 }
 
-BOOL CRealConsole::OpenConsoleEventPipe()
+bool CRealConsole::OpenConsoleEventPipe()
 {
 	if (mh_ConInputPipe && mh_ConInputPipe!=INVALID_HANDLE_VALUE)
 	{
@@ -6054,7 +6054,7 @@ void CRealConsole::PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted)
 	}
 }
 
-void CRealConsole::StopThread(BOOL abRecreating)
+void CRealConsole::StopThread(bool abRecreating)
 {
 #ifdef _DEBUG
 	/*
@@ -8283,7 +8283,7 @@ void CRealConsole::SetAppDistinctPID(const ConProcess* apProcess)
 
 // Обновить статус запущенных программ
 // Возвращает TRUE если сменился статус (Far/не Far)
-BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
+bool CRealConsole::ProcessUpdateFlags(bool abProcessChanged)
 {
 	bool lbChanged = false;
 	//Warning: Должен вызываться ТОЛЬКО из ProcessAdd/ProcessDelete, т.к. сам секцию не блокирует
@@ -8488,7 +8488,7 @@ BOOL CRealConsole::ProcessUpdateFlags(BOOL abProcessChanged)
 }
 
 // Возвращает TRUE если сменился статус (Far/не Far)
-BOOL CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
+bool CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 {
 	bool lbChanged = false;
 	TODO("OPTIMIZE: хорошо бы от секции вообще избавиться, да и не всегда обновлять нужно...");
@@ -8888,7 +8888,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 	}
 }
 
-BOOL CRealConsole::WaitConsoleSize(int anWaitSize, DWORD nTimeout)
+bool CRealConsole::WaitConsoleSize(int anWaitSize, DWORD nTimeout)
 {
 	bool lbRc = false;
 	//CESERVER_REQ *pIn = NULL, *pOut = NULL;
@@ -9015,7 +9015,7 @@ void CRealConsole::ChildSystemMenu()
 	}
 }
 
-void CRealConsole::ShowGuiClientExt(int nMode, BOOL bDetach /*= FALSE*/) // -1 Toggle 0 - Hide 1 - Show
+void CRealConsole::ShowGuiClientExt(int nMode, bool bDetach /*= FALSE*/) // -1 Toggle 0 - Hide 1 - Show
 {
 	if (this == NULL) return;
 
@@ -9188,7 +9188,7 @@ void CRealConsole::ShowConsole(int nMode) // -1 Toggle 0 - Hide 1 - Show
 //}
 
 // Вызывается при окончании инициализации сервера из ConEmuC.exe:SendStarted (CECMD_CMDSTARTSTOP)
-void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout, BOOL abFromAttach /*= FALSE*/)
+void CRealConsole::OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout, bool abFromAttach /*= FALSE*/)
 {
 	_ASSERTE(anServerPID && (anServerPID == mn_MainSrv_PID));
 	if (ahServerHandle != NULL)
@@ -9240,7 +9240,7 @@ void CRealConsole::OnStartedSuccess()
 	}
 }
 
-void CRealConsole::SetHwnd(HWND ahConWnd, BOOL abForceApprove /*= FALSE*/)
+void CRealConsole::SetHwnd(HWND ahConWnd, bool abForceApprove /*= FALSE*/)
 {
 	// Окно разрушено? Пересоздание консоли?
 	if (hConWnd && !IsWindow(hConWnd))
@@ -9345,7 +9345,7 @@ void CRealConsole::CheckVConRConPointer(bool bForceSet)
 	SetWindowLong(hVConBack, 4, LODWORD(hVCon));
 }
 
-void CRealConsole::OnFocus(BOOL abFocused)
+void CRealConsole::OnFocus(bool abFocused)
 {
 	if (!this) return;
 
@@ -9858,7 +9858,7 @@ bool CRealConsole::RecreateProcessStart()
 	return lbRc;
 }
 
-BOOL CRealConsole::IsConsoleDataChanged()
+bool CRealConsole::IsConsoleDataChanged()
 {
 	if (!this) return false;
 
@@ -9905,7 +9905,7 @@ bool CRealConsole::IsFarHyperlinkAllowed(bool abFarRequired)
 //{
 //}
 
-BOOL CRealConsole::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData)
+bool CRealConsole::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData)
 {
 	return mp_ABuf->GetConsoleLine(nLine, pChar, pLen, pcsData);
 }
@@ -9950,7 +9950,7 @@ bool CRealConsole::SetFullScreen()
 //#define PICVIEWMSG_SHOWWINDOW_KEY 0x0101
 //#define PICVIEWMSG_SHOWWINDOW_ASC 0x56731469
 
-BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow, BOOL abAsync/*=TRUE*/)
+bool CRealConsole::ShowOtherWindow(HWND hWnd, int swShow, bool abAsync/*=TRUE*/)
 {
 	if ((IsWindowVisible(hWnd) == FALSE) == (swShow == SW_HIDE))
 		return true; // уже все сделано
@@ -10013,7 +10013,7 @@ BOOL CRealConsole::ShowOtherWindow(HWND hWnd, int swShow, BOOL abAsync/*=TRUE*/)
 	return lbRc;
 }
 
-BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
+bool CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags)
 {
 	#ifdef _DEBUG
 	if (!hWnd || !IsWindow(hWnd))
@@ -10080,7 +10080,7 @@ BOOL CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 	return lbRc;
 }
 
-BOOL CRealConsole::SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground)
+bool CRealConsole::SetOtherWindowFocus(HWND hWnd, bool abSetForeground)
 {
 	bool lbRc = false;
 	DWORD dwErr = 0;
@@ -10157,7 +10157,7 @@ HWND CRealConsole::SetOtherWindowParent(HWND hWnd, HWND hParent)
 	return h;
 }
 
-BOOL CRealConsole::SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOOL bRedraw)
+bool CRealConsole::SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, bool bRedraw)
 {
 	bool lbRc = false;
 	CESERVER_REQ in;
@@ -10190,7 +10190,7 @@ BOOL CRealConsole::SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOO
 	return lbRc;
 }
 
-void CRealConsole::ShowHideViews(BOOL abShow)
+void CRealConsole::ShowHideViews(bool abShow)
 {
 	// Все окна теперь создаются в дочернем окне, и скрывается именно оно, этого достаточно
 #if 0
@@ -10369,7 +10369,7 @@ void CRealConsole::OnDeactivate(int nNewNum)
 	mn_DeactivateTick = GetTickCount();
 }
 
-void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
+void CRealConsole::OnGuiFocused(bool abFocus, bool abForceChild /*= FALSE*/)
 {
 	if (!this)
 		return;
@@ -10470,7 +10470,7 @@ void CRealConsole::OnGuiFocused(BOOL abFocus, BOOL abForceChild /*= FALSE*/)
 
 // Обновить в сервере флаги Active & ThawRefreshThread,
 // а заодно заставить перечитать содержимое консоли (если abActive == TRUE)
-void CRealConsole::UpdateServerActive(BOOL abImmediate /*= FALSE*/)
+void CRealConsole::UpdateServerActive(bool abImmediate /*= FALSE*/)
 {
 	if (!this) return;
 
@@ -11188,7 +11188,7 @@ void CRealConsole::NeedRefreshRootProcessIcon()
 	GetDefaultAppSettingsId();
 }
 
-int CRealConsole::GetTabCount(BOOL abVisibleOnly /*= FALSE*/)
+int CRealConsole::GetTabCount(bool abVisibleOnly /*= FALSE*/)
 {
 	if (!this)
 		return 0;
@@ -11903,7 +11903,7 @@ bool CRealConsole::ActivateFarWindow(int anWndIndex)
 	return lbRc;
 }
 
-BOOL CRealConsole::IsConsoleThread()
+bool CRealConsole::IsConsoleThread()
 {
 	if (!this) return false;
 
@@ -11917,7 +11917,7 @@ void CRealConsole::SetForceRead()
 }
 
 // Вызывается из TabBar->ConEmu
-void CRealConsole::ChangeBufferHeightMode(BOOL abBufferHeight)
+void CRealConsole::ChangeBufferHeightMode(bool abBufferHeight)
 {
 	if (!this)
 		return;
@@ -11950,7 +11950,7 @@ HANDLE CRealConsole::PrepareOutputFileCreate(wchar_t* pszFilePathName)
 	return hFile;
 }
 
-BOOL CRealConsole::PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName)
+bool CRealConsole::PrepareOutputFile(bool abUnicodeText, wchar_t* pszFilePathName)
 {
 	bool lbRc = false;
 	//CESERVER_REQ_HDR In = {0};
@@ -13648,7 +13648,7 @@ void CRealConsole::setAppProgress(short AppProgressState, short AppProgress)
 		m_Progress.AppProgress = AppProgress;
 }
 
-short CRealConsole::GetProgress(int* rpnState/*1-error,2-ind*/, BOOL* rpbNotFromTitle)
+short CRealConsole::GetProgress(int* rpnState/*1-error,2-ind*/, bool* rpbNotFromTitle)
 {
 	if (!this)
 		return -1;
@@ -13826,7 +13826,7 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID /*= 0*/, FAR_REQ_FARSETCHANG
 	}
 }
 
-void CRealConsole::UpdateTextColorSettings(BOOL ChangeTextAttr /*= TRUE*/, BOOL ChangePopupAttr /*= TRUE*/, const AppSettings* apDistinct /*= NULL*/)
+void CRealConsole::UpdateTextColorSettings(bool ChangeTextAttr /*= TRUE*/, bool ChangePopupAttr /*= TRUE*/, const AppSettings* apDistinct /*= NULL*/)
 {
 	if (!this) return;
 
@@ -13916,7 +13916,7 @@ BOOL CRealConsole::FindChildGuiWindowProc(HWND hwnd, LPARAM lParam)
 
 // Заголовок окна для PictureView вообще может пользователем настраиваться, так что
 // рассчитывать на него при определения "Просмотра" - нельзя
-HWND CRealConsole::isPictureView(BOOL abIgnoreNonModal/*=FALSE*/)
+HWND CRealConsole::isPictureView(bool abIgnoreNonModal/*=FALSE*/)
 {
 	if (!this) return NULL;
 
@@ -14532,7 +14532,7 @@ int CRealConsole::GetStatusLineCount(int nLeftPanelEdge)
 }
 
 // abIncludeEdges - включать
-int CRealConsole::CoordInPanel(COORD cr, BOOL abIncludeEdges /*= FALSE*/)
+int CRealConsole::CoordInPanel(COORD cr, bool abIncludeEdges /*= FALSE*/)
 {
 	if (!this || !mp_ABuf || (mp_ABuf != mp_RBuf))
 		return 0;
@@ -14557,7 +14557,7 @@ int CRealConsole::CoordInPanel(COORD cr, BOOL abIncludeEdges /*= FALSE*/)
 	return 0;
 }
 
-BOOL CRealConsole::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/, BOOL abIncludeEdges /*= FALSE*/)
+bool CRealConsole::GetPanelRect(bool abRight, RECT* prc, bool abFull /*= FALSE*/, bool abIncludeEdges /*= FALSE*/)
 {
 	if (!this || mp_ABuf != mp_RBuf)
 	{
@@ -15031,7 +15031,7 @@ bool CRealConsole::isAdministrator()
 	return false;
 }
 
-BOOL CRealConsole::isMouseButtonDown()
+bool CRealConsole::isMouseButtonDown()
 {
 	if (!this) return false;
 
@@ -15200,7 +15200,7 @@ wrap:
 	//return lbResult;
 }
 
-BOOL CRealConsole::OpenFarMapData()
+bool CRealConsole::OpenFarMapData()
 {
 	bool lbResult = false;
 	wchar_t szMapName[128], szErr[512]; szErr[0] = 0;
@@ -15282,7 +15282,7 @@ wrap:
 	return lbResult;
 }
 
-BOOL CRealConsole::OpenMapHeader(BOOL abFromAttach)
+bool CRealConsole::OpenMapHeader(bool abFromAttach)
 {
 	bool lbResult = false;
 	wchar_t szErr[512]; szErr[0] = 0;
@@ -15672,7 +15672,7 @@ void CRealConsole::PostCommand(DWORD anCmdID, DWORD anCmdSize, LPCVOID ptrData)
 	return;
 }
 
-void CRealConsole::PostDragCopy(BOOL abMove)
+void CRealConsole::PostDragCopy(bool abMove)
 {
 	const CEFAR_INFO_MAPPING* pFarVer = GetFarInfo();
 
@@ -15743,7 +15743,7 @@ bool CRealConsole::IsFarLua()
 	return false;
 }
 
-void CRealConsole::PostMacro(LPCWSTR asMacro, BOOL abAsync /*= FALSE*/)
+void CRealConsole::PostMacro(LPCWSTR asMacro, bool abAsync /*= FALSE*/)
 {
 	if (!this || !asMacro || !*asMacro)
 	{
@@ -16129,7 +16129,7 @@ DWORD CRealConsole::GetRunTime()
 }
 
 // Можно ли к этой консоли прицепить GUI приложение
-BOOL CRealConsole::GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID)
+bool CRealConsole::GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID)
 {
 	if (!this)
 		return false;
@@ -16253,7 +16253,7 @@ DWORD CRealConsole::GetConsoleOutputCP()
 	return mp_RBuf->GetConsoleOutputCP();
 }
 
-void CRealConsole::GetConsoleModes(WORD& nConInMode, WORD& nConOutMode, TermEmulationType& Term, BOOL& bBracketedPaste)
+void CRealConsole::GetConsoleModes(WORD& nConInMode, WORD& nConOutMode, TermEmulationType& Term, bool& bBracketedPaste)
 {
 	if (this && mp_RBuf)
 	{

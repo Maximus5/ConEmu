@@ -420,16 +420,16 @@ class CRealConsole
 	private:
 		void PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool abForceSend = false);
 	public:
-		BOOL OpenConsoleEventPipe();
+		bool OpenConsoleEventPipe();
 		bool PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARAM lParam);
 		bool SetFullScreen();
-		BOOL ShowOtherWindow(HWND hWnd, int swShow, BOOL abAsync=TRUE);
-		BOOL SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
-		BOOL SetOtherWindowFocus(HWND hWnd, BOOL abSetForeground);
+		bool ShowOtherWindow(HWND hWnd, int swShow, bool abAsync = true);
+		bool SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
+		bool SetOtherWindowFocus(HWND hWnd, bool abSetForeground);
 		HWND SetOtherWindowParent(HWND hWnd, HWND hParent);
-		BOOL SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, BOOL bRedraw);
-		void PostDragCopy(BOOL abMove);
-		void PostMacro(LPCWSTR asMacro, BOOL abAsync = FALSE);
+		bool SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, bool bRedraw);
+		void PostDragCopy(bool abMove);
+		void PostMacro(LPCWSTR asMacro, bool abAsync = false);
 		wchar_t* PostponeMacro(wchar_t* RVAL_REF asMacro);
 		bool GetFarVersion(FarVersion* pfv);
 		bool IsFarLua();
@@ -471,11 +471,11 @@ class CRealConsole
 		bool OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForceSend = false);
 		bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
 		void OnScroll(UINT messg, WPARAM wParam, int x, int y, bool abFromTouch = false);
-		void OnFocus(BOOL abFocused);
+		void OnFocus(bool abFocused);
 		void OnConsoleDataChanged();
 
 		void StopSignal();
-		void StopThread(BOOL abRecreating=FALSE);
+		void StopThread(bool abRecreating = false);
 		bool StartStopTermMode(TermModeCommand mode, ChangeTermAction action);
 		void StartStopXTerm(DWORD nPID, bool xTerm);
 		void StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste);
@@ -484,7 +484,7 @@ class CRealConsole
 		bool InScroll();
 		bool isBufferHeight();
 		bool isAlternative();
-		HWND isPictureView(BOOL abIgnoreNonModal=FALSE);
+		HWND isPictureView(bool abIgnoreNonModal = false);
 		bool isWindowVisible();
 		LPCTSTR GetTitle(bool abGetRenamed=false);
 		LPCWSTR GetPanelTitle();
@@ -497,8 +497,8 @@ class CRealConsole
 		void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr = NULL);
 		DWORD GetConsoleCP();
 		DWORD GetConsoleOutputCP();
-		void GetConsoleModes(WORD& nConInMode, WORD& nConOutMode, TermEmulationType& Term, BOOL& bBracketedPaste);
-		void SyncConsole2Window(BOOL abNtvdmOff=FALSE, LPRECT prcNewWnd=NULL);
+		void GetConsoleModes(WORD& nConInMode, WORD& nConOutMode, TermEmulationType& Term, bool& bBracketedPaste);
+		void SyncConsole2Window(bool abNtvdmOff = false, LPRECT prcNewWnd=NULL);
 		void SyncGui2Window(const RECT rcVConBack);
 		HWND OnServerStarted(const HWND ahConWnd, const DWORD anServerPID, const DWORD dwKeybLayout, CESERVER_REQ_SRVSTARTSTOPRET& pRet);
 		void OnDosAppStartStop(enum StartStopType sst, DWORD anPID);
@@ -549,7 +549,7 @@ class CRealConsole
 		bool isPaused();
 		CEPauseCmd Pause(CEPauseCmd cmd);
 		void AutoCopyTimer(); // Чтобы разрулить "Auto Copy" & "Double click - select word"
-		void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE, DWORD anAnchorFlag=0);
+		void StartSelection(bool abTextMode, SHORT anX=-1, SHORT anY=-1, bool abByMouse = false, DWORD anAnchorFlag=0);
 		void ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift);
 		void ExpandSelection(SHORT anX, SHORT anY);
 		bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = NULL);
@@ -561,7 +561,7 @@ class CRealConsole
 		void CtrlWinAltSpace();
 		void ShowConsoleOrGuiClient(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowConsole(int nMode); // -1 Toggle, 0 - Hide, 1 - Show
-		void ShowGuiClientExt(int nMode, BOOL bDetach = FALSE); // -1 Toggle, 0 - Hide, 1 - Show
+		void ShowGuiClientExt(int nMode, bool bDetach = false); // -1 Toggle, 0 - Hide, 1 - Show
 		void ShowGuiClientInt(bool bShow);
 		void ChildSystemMenu();
 		bool isDetached();
@@ -576,24 +576,24 @@ class CRealConsole
 	private:
 		bool PreCreate(RConStartArgs *args);
 
-		BOOL GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData);
+		bool GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData);
 
 		CDpiForDialog* mp_RenameDpiAware;
 		static INT_PTR CALLBACK renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
-		BOOL IsConsoleDataChanged();
+		bool IsConsoleDataChanged();
 		void OnActivate(int nNewNum, int nOldNum);
 		void OnDeactivate(int nNewNum);
-		void ShowHideViews(BOOL abShow);
-		void OnGuiFocused(BOOL abFocus, BOOL abForceChild = FALSE);
-		void UpdateServerActive(BOOL abImmediate = FALSE);
+		void ShowHideViews(bool abShow);
+		void OnGuiFocused(bool abFocus, bool abForceChild = false);
+		void UpdateServerActive(bool abImmediate = false);
 		void UpdateScrollInfo();
 		void SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID);
 		void DoRenameTab();
 		bool DuplicateRoot(bool bSkipMsg = false, bool bRunAsAdmin = false, LPCWSTR asNewConsole = NULL, LPCWSTR asApp = NULL, LPCWSTR asParm = NULL);
 		void RenameTab(LPCWSTR asNewTabText = NULL);
 		void RenameWindow(LPCWSTR asNewWindowText = NULL);
-		int GetTabCount(BOOL abVisibleOnly = FALSE);
+		int GetTabCount(bool abVisibleOnly = false);
 		int GetRootProcessIcon();
 		LPCWSTR GetRootProcessName();
 		void NeedRefreshRootProcessIcon();
@@ -642,17 +642,17 @@ class CRealConsole
 		LPCWSTR GetStartupDir();
 		wchar_t* CreateCommandLine(bool abForTasks = false);
 		bool GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, bool* pbRestricted);
-		short GetProgress(int* rpnState/*1-error,2-ind*/, BOOL* rpbNotFromTitle = NULL);
+		short GetProgress(int* rpnState/*1-error,2-ind*/, bool* rpbNotFromTitle = NULL);
 		bool SetProgress(short nState, short nValue, LPCWSTR pszName = NULL);
 		void UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo);
 		void UpdateFarSettings(DWORD anFarPID = 0, FAR_REQ_FARSETCHANGED* rpSetEnvVar = NULL);
-		void UpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE, const AppSettings* apDistinct = NULL);
-		int CoordInPanel(COORD cr, BOOL abIncludeEdges = FALSE);
-		BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE, BOOL abIncludeEdges = FALSE);
+		void UpdateTextColorSettings(bool ChangeTextAttr = true, bool ChangePopupAttr = true, const AppSettings* apDistinct = NULL);
+		int CoordInPanel(COORD cr, bool abIncludeEdges = false);
+		bool GetPanelRect(bool abRight, RECT* prc, bool abFull = false, bool abIncludeEdges = false);
 		bool isAdministrator();
-		BOOL isMouseButtonDown();
+		bool isMouseButtonDown();
 		void OnConsoleLangChange(DWORD_PTR dwNewKeybLayout);
-		void ChangeBufferHeightMode(BOOL abBufferHeight); // Вызывается из TabBar->ConEmu
+		void ChangeBufferHeightMode(bool abBufferHeight); // Вызывается из TabBar->ConEmu
 		bool isAlive();
 		bool GetMaxConSize(COORD* pcrMaxConSize);
 		int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf);
@@ -665,7 +665,7 @@ class CRealConsole
 		void GetPanelDirs(CEStr& szActiveDir, CEStr& szPassive);
 
 	public:
-		BOOL IsConsoleThread();
+		bool IsConsoleThread();
 		void SetForceRead();
 		void UpdateCursorInfo();
 		bool isNeedCursorDraw();
@@ -675,7 +675,7 @@ class CRealConsole
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
 		bool InCreateRoot();
 		bool InRecreate();
-		BOOL GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID);
+		bool GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID);
 		void ShowPropertiesDialog();
 		void LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars = NULL);
 
@@ -721,8 +721,8 @@ class CRealConsole
 		wchar_t ms_ConEmuCInput_Pipe[MAX_PATH];
 		HANDLE mh_ConInputPipe; // wsprintf(ms_ConEmuCInput_Pipe, CESERVERINPUTNAME, L".", mn_ConEmuC_PID)
 
-		BOOL mb_InCreateRoot;
-		BOOL mb_UseOnlyPipeInput;
+		bool mb_InCreateRoot;
+		bool mb_UseOnlyPipeInput;
 		TCHAR ms_ConEmuC_Pipe[MAX_PATH], ms_MainSrv_Pipe[MAX_PATH], ms_VConServer_Pipe[MAX_PATH];
 		//TCHAR ms_ConEmuC_DataReady[64]; HANDLE mh_ConEmuC_DataReady;
 		void InitNames();
@@ -733,7 +733,7 @@ class CRealConsole
 		// Буфер для CRealConsole::GetTitle
 		wchar_t TempTitleRenamed[MAX_RENAME_TAB_LEN/*128*/];
 		// Принудительно дернуть OnTitleChanged, например, при изменении процентов в консоли
-		BOOL mb_ForceTitleChanged;
+		bool mb_ForceTitleChanged;
 		// Здесь сохраняется заголовок окна (с панелями), когда FAR фокус с панелей уходит (переходит в редактор...).
 		WCHAR ms_PanelTitle[CONEMUTABMAX];
 		// Процентики
@@ -753,35 +753,35 @@ class CRealConsole
 		void logProgress(LPCWSTR asFormat, int V1, int V2 = 0);
 		// method
 		short CheckProgressInTitle();
-		BOOL StartProcess();
-		static BOOL CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args, LPWSTR psCurCmd, LPCWSTR& lpszWorkDir, STARTUPINFO& si, PROCESS_INFORMATION& pi, SHELLEXECUTEINFO*& pp_sei, DWORD& dwLastError, bool bExternal = false);
+		bool StartProcess();
+		static bool CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args, LPWSTR psCurCmd, LPCWSTR& lpszWorkDir, STARTUPINFO& si, PROCESS_INFORMATION& pi, SHELLEXECUTEINFO*& pp_sei, DWORD& dwLastError, bool bExternal = false);
 		private:
-		BOOL StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR& lpszWorkDir, bool bNeedConHostSearch, HWND hSetForeground, DWORD& nCreateBegin, DWORD& nCreateEnd, DWORD& nCreateDuration, BYTE nTextColorIdx /*= 7*/, BYTE nBackColorIdx /*= 0*/, BYTE nPopTextColorIdx /*= 5*/, BYTE nPopBackColorIdx /*= 15*/, STARTUPINFO& si, PROCESS_INFORMATION& pi, DWORD& dwLastError);
+		bool StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR& lpszWorkDir, bool bNeedConHostSearch, HWND hSetForeground, DWORD& nCreateBegin, DWORD& nCreateEnd, DWORD& nCreateDuration, BYTE nTextColorIdx /*= 7*/, BYTE nBackColorIdx /*= 0*/, BYTE nPopTextColorIdx /*= 5*/, BYTE nPopBackColorIdx /*= 15*/, STARTUPINFO& si, PROCESS_INFORMATION& pi, DWORD& dwLastError);
 		void ResetVarsOnStart();
 		protected:
 		bool StartMonitorThread();
 		void SetMonitorThreadEvent();
-		BOOL mb_NeedStartProcess;
+		bool mb_NeedStartProcess;
 
 		// Нить наблюдения за консолью
 		static DWORD WINAPI MonitorThread(LPVOID lpParameter);
 		DWORD MonitorThreadWorker(bool bDetached, bool& rbChildProcessCreated);
 		static int WorkerExFilter(unsigned int code, struct _EXCEPTION_POINTERS *ep, LPCTSTR szFile, UINT nLine);
-		HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID; BOOL mb_WasForceTerminated;
+		HANDLE mh_MonitorThread; DWORD mn_MonitorThreadID; bool mb_WasForceTerminated;
 		HANDLE mh_MonitorThreadEvent;
 		HANDLE mh_UpdateServerActiveEvent;
 		DWORD mn_ServerActiveTick1, mn_ServerActiveTick2;
-		//BOOL mb_UpdateServerActive;
+		//bool mb_UpdateServerActive;
 		DWORD mn_LastUpdateServerActive;
 
 		DWORD mn_TermEventTick;
 		HANDLE mh_TermEvent;
 		MEvent mh_ApplyFinished;
 		HANDLE mh_StartExecuted;
-		BOOL mb_StartResult;
+		bool mb_StartResult;
 		RConStartState m_StartState;
 		void UpdateStartState(RConStartState state, bool force = false);
-		BOOL mb_FullRetrieveNeeded; //, mb_Detached;
+		bool mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgs m_Args;
 		SYSTEMTIME m_StartTime;
 		CEStr ms_DefTitle;
@@ -801,7 +801,7 @@ class CRealConsole
 		CESERVER_ROOT_INFO m_RootInfo;
 		void UpdateRootInfo(const CESERVER_ROOT_INFO& RootInfo);
 
-		BOOL WaitConsoleSize(int anWaitSize, DWORD nTimeout);
+		bool WaitConsoleSize(int anWaitSize, DWORD nTimeout);
 	private:
 		friend class CRealBuffer;
 		CRealBuffer* mp_RBuf; // Реальный буфер консоли
@@ -813,7 +813,7 @@ class CRealConsole
 		int mn_DefaultBufferHeight;
 		DWORD mn_LastInactiveRgnCheck;
 		#ifdef _DEBUG
-		BOOL mb_DebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контекстному меню
+		bool mb_DebugLocked; // для отладки - заморозить все нити, чтобы не мешали отладчику, ставится по контекстному меню
 		#endif
 
 
@@ -822,7 +822,7 @@ class CRealConsole
 			DWORD  nServerPID;     // PID закрывающегося сервера
 			DWORD  nRecieveTick;   // Tick, когда получено сообщение о закрытии
 			HANDLE hServerProcess; // Handle процесса сервера
-			BOOL   bBackActivated; // Main server was activated back, when AltServer was closed
+			bool   bBackActivated; // Main server was activated back, when AltServer was closed
 		} m_ServerClosing;
 		//
 		MSection csPRC; //DWORD ncsTPRC;
@@ -830,7 +830,7 @@ class CRealConsole
 		int mn_ProcessCount, mn_ProcessClientCount;
 		DWORD m_FarPlugPIDs[128];
 		UINT mn_FarPlugPIDsCount;
-		BOOL mb_SkipFarPidChange;
+		bool mb_SkipFarPidChange;
 		DWORD m_TerminatedPIDs[128]; UINT mn_TerminatedIdx;
 		//
 		DWORD mn_FarPID;
@@ -864,32 +864,32 @@ class CRealConsole
 		} tabs;
 		void CheckPanelTitle();
 		//
-		BOOL ProcessUpdate(const DWORD *apPID, UINT anCount);
-		BOOL ProcessUpdateFlags(BOOL abProcessChanged);
+		bool ProcessUpdate(const DWORD *apPID, UINT anCount);
+		bool ProcessUpdateFlags(bool abProcessChanged);
 		void ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFileName);
 		DWORD mn_ProgramStatus, mn_FarStatus;
 		DWORD mn_Comspec4Ntvdm;
-		BOOL mb_IgnoreCmdStop; // При запуске 16bit приложения не возвращать размер консоли! Это сделает OnWinEvent
-		BOOL isShowConsole;
+		bool mb_IgnoreCmdStop; // При запуске 16bit приложения не возвращать размер консоли! Это сделает OnWinEvent
+		bool isShowConsole;
 		WORD mn_SelectModeSkipVk; // пропустить "отпускание" клавиши Esc/Enter при выделении текста
 
 		friend class CRealServer;
 		friend class CGuiServer;
 		CRealServer m_RConServer;
 
-		void SetHwnd(HWND ahConWnd, BOOL abForceApprove = FALSE);
+		void SetHwnd(HWND ahConWnd, bool abForceApprove = false);
 		void CheckVConRConPointer(bool bForceSet);
 		WORD mn_LastVKeyPressed;
 		int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
 		DWORD mn_InRecreate; // Tick, когда начали пересоздание
-		BOOL mb_RecreateFailed;
+		bool mb_RecreateFailed;
 		DWORD mn_StartTick; // для определения GetRunTime()
 		DWORD mn_DeactivateTick; // чтобы не мигать сразу после "cmd -new_console" из промпта
 		DWORD mn_RunTime; // для информации
 		DWORD GetRunTime();
 		bool mb_WasVisibleOnce;
-		BOOL mb_ProcessRestarted;
-		BOOL mb_InCloseConsole;
+		bool mb_ProcessRestarted;
+		bool mb_InCloseConsole;
 		DWORD mn_CloseConfirmedTick;
 		bool mb_CloseFarMacroPosted;
 		// Logging
@@ -925,28 +925,28 @@ class CRealConsole
 		//
 		DWORD mn_LastConsoleDataIdx, mn_LastConsolePacketIdx;
 		DWORD mn_LastFarReadTick;
-		BOOL OpenFarMapData();
+		bool OpenFarMapData();
 		void CloseFarMapData(MSectionLock* pCS = NULL);
-		BOOL OpenMapHeader(BOOL abFromAttach=FALSE);
+		bool OpenMapHeader(bool abFromAttach = false);
 		void CloseMapHeader();
 		bool mb_DataChanged;
-		void OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout, BOOL abFromAttach = FALSE);
+		void OnServerStarted(DWORD anServerPID, HANDLE ahServerHandle, DWORD dwKeybLayout, bool abFromAttach = false);
 		void OnStartedSuccess();
-		BOOL mb_RConStartedSuccess;
+		bool mb_RConStartedSuccess;
 		//
 		struct TermEmulation
 		{
 			DWORD nCallTermPID; // PID процесса запросившего эмуляцию терминала
 			TermEmulationType Term;
-			BOOL  bBracketedPaste; // All "pasted" text will be wrapped in `\e[200~ ... \e[201~`
+			bool  bBracketedPaste; // All "pasted" text will be wrapped in `\e[200~ ... \e[201~`
 		} m_Term;
 		//
-		BOOL PrepareOutputFile(BOOL abUnicodeText, wchar_t* pszFilePathName);
+		bool PrepareOutputFile(bool abUnicodeText, wchar_t* pszFilePathName);
 		HANDLE PrepareOutputFileCreate(wchar_t* pszFilePathName);
 		// фикс для dblclick в редакторе
 		MOUSE_EVENT_RECORD m_LastMouse;
 		POINT m_LastMouseGuiPos; // в пикселах пикселах
-		BOOL mb_BtnClicked; COORD mrc_BtnClickPos;
+		bool mb_BtnClicked; COORD mrc_BtnClickPos;
 		//
 		wchar_t ms_Editor[32], ms_EditorRus[32], ms_Viewer[32], ms_ViewerRus[32];
 		wchar_t ms_TempPanel[32], ms_TempPanelRus[32];
@@ -956,12 +956,12 @@ class CRealConsole
 		void OnTitleChanged();
 		DWORD mn_LastInvalidateTick;
 		//
-		HWND hPictureView; BOOL mb_PicViewWasHidden;
+		HWND hPictureView; bool mb_PicViewWasHidden;
 		//
-		BOOL mb_MouseButtonDown;
+		bool mb_MouseButtonDown;
 		COORD mcr_LastMouseEventPos;
 		// для Far Manager: облегчить "попадание" тапами
-		BOOL mb_MouseTapChanged;
+		bool mb_MouseTapChanged;
 		COORD mcr_MouseTapReal, mcr_MouseTapChanged;
 		//
 		SHELLEXECUTEINFO *mp_sei, *mp_sei_dbg;

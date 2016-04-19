@@ -1907,17 +1907,17 @@ wrap:
 	return nNewSel;
 }
 
-void CTabBarClass::SwitchNext(BOOL abAltStyle/*=FALSE*/)
+void CTabBarClass::SwitchNext(bool abAltStyle/*=false*/)
 {
 	Switch(TRUE, abAltStyle);
 }
 
-void CTabBarClass::SwitchPrev(BOOL abAltStyle/*=FALSE*/)
+void CTabBarClass::SwitchPrev(bool abAltStyle/*=false*/)
 {
 	Switch(FALSE, abAltStyle);
 }
 
-void CTabBarClass::Switch(BOOL abForward, BOOL abAltStyle/*=FALSE*/)
+void CTabBarClass::Switch(bool abForward, bool abAltStyle/*=false*/)
 {
 	int nNewSel = GetNextTab(abForward, abAltStyle);
 

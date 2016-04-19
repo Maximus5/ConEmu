@@ -109,7 +109,7 @@ const DWORD gnKeyBarFlags[] = {0,
 };
 
 
-CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType/*=rbt_Primary*/)
+CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType /*= rbt_Primary*/)
 {
 	mp_RCon = apRCon;
 	m_Type = aType;
@@ -667,7 +667,7 @@ wrap:
 	return lbRc;
 }
 
-BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZESYNC*/)
+bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID /*= CECMD_SETSIZESYNC*/)
 {
 	if (!this) return FALSE;
 
@@ -687,7 +687,7 @@ BOOL CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		return FALSE; // консоль пока не создана?
 	}
 
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	BOOL fSuccess = FALSE;
 	//DWORD dwRead = 0;
 	DWORD dwTickStart = 0;
@@ -1099,9 +1099,9 @@ bool CRealBuffer::isInResize()
 	return (this && con.bLockChange2Text);
 }
 
-BOOL CRealBuffer::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DWORD anCmdID/*=CECMD_SETSIZESYNC*/)
+bool CRealBuffer::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DWORD anCmdID /*= CECMD_SETSIZESYNC*/)
 {
-	if (!this) return FALSE;
+	if (!this) return false;
 
 	if ((sizeX <= 0) || (sizeY <= 0))
 	{
@@ -1175,7 +1175,7 @@ BOOL CRealBuffer::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DW
 		sizeBuffer = BufferHeight(sizeBuffer);
 
 	_ASSERTE(!con.bBufferHeight || (sizeBuffer >= sizeY));
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	#ifdef _DEBUG
 	DWORD dwPID = mp_RCon->GetFarPID(TRUE);
 	#endif
@@ -1290,14 +1290,14 @@ void CRealBuffer::SyncConsole2Window(SHORT wndSizeX, SHORT wndSizeY)
 	}
 }
 
-BOOL CRealBuffer::isScroll(RealBufferScroll aiScroll/*=rbs_Any*/)
+bool CRealBuffer::isScroll(RealBufferScroll aiScroll /*= rbs_Any*/)
 {
 	TODO("Horizontal scroll");
 	return con.bBufferHeight;
 }
 
 // Вызывается при аттаче (CRealConsole::AttachConemuC)
-void CRealBuffer::InitSBI(CONSOLE_SCREEN_BUFFER_INFO* ap_sbi, BOOL abCurBufHeight)
+void CRealBuffer::InitSBI(CONSOLE_SCREEN_BUFFER_INFO* ap_sbi, bool abCurBufHeight)
 {
 	con.m_sbi = *ap_sbi;
 
@@ -1324,7 +1324,7 @@ bool CRealBuffer::isInitialized()
 
 bool CRealBuffer::isFarMenuOrMacro()
 {
-	BOOL lbMenuActive = false;
+	bool lbMenuActive = false;
 	MSectionLock cs; cs.Lock(&csCON);
 
 	WARNING("CantActivateInfo: Хорошо бы при отображении хинта 'Can't activate tab' сказать 'почему'");
@@ -1371,9 +1371,9 @@ bool CRealBuffer::isFarMenuOrMacro()
 	return lbMenuActive;
 }
 
-BOOL CRealBuffer::isConsoleDataChanged()
+bool CRealBuffer::isConsoleDataChanged()
 {
-	if (!this) return FALSE;
+	if (!this) return false;
 	return con.bConsoleDataChanged;
 }
 
@@ -1424,8 +1424,7 @@ bool CRealBuffer::PreInit()
 	SetTopLeft();
 
 	con.m_sbi.wAttributes = 7;
-	con.m_sbi.srWindow.Left = con.m_sbi.srWindow.Top = 0;
-	con.m_sbi.srWindow.Right = rcCon.right-1; con.m_sbi.srWindow.Bottom = rcCon.bottom-1;
+	con.m_sbi.srWindow = MakeSmallRect(0, 0, rcCon.right-1, rcCon.bottom-1);
 	con.m_sbi.dwMaximumWindowSize = con.m_sbi.dwSize;
 	con.m_ci.dwSize = 15; con.m_ci.bVisible = TRUE;
 
@@ -1435,9 +1434,9 @@ bool CRealBuffer::PreInit()
 	return true;
 }
 
-BOOL CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
+bool CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 {
-	BOOL lbRc = FALSE;
+	bool lbRc = false;
 	int nNewWidth = 0, nNewHeight = 0;
 	DWORD nCellCount = 0;
 	BYTE nDefTextAttr;
@@ -1724,7 +1723,7 @@ int CRealBuffer::GetWindowHeight()
 	return nHeight;
 }
 
-int CRealBuffer::BufferHeight(uint nNewBufferHeight/*=0*/)
+int CRealBuffer::BufferHeight(uint nNewBufferHeight /*= 0*/)
 {
 	int nBufferHeight = 0;
 
@@ -1759,7 +1758,7 @@ int CRealBuffer::BufferHeight(uint nNewBufferHeight/*=0*/)
 	return nBufferHeight;
 }
 
-BOOL CRealBuffer::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll)
+bool CRealBuffer::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll)
 {
 	TODO("Заменить на вызов ::GetConWindowSize из WObjects.cpp");
 	DWORD nScroll = 0; // enum RealBufferScroll
@@ -1892,7 +1891,7 @@ BOOL CRealBuffer::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* p
 }
 
 // Изменение значений переменной (флаг включенного скролла)
-void CRealBuffer::SetBufferHeightMode(BOOL abBufferHeight, BOOL abIgnoreLock/*=FALSE*/)
+void CRealBuffer::SetBufferHeightMode(bool abBufferHeight, bool abIgnoreLock /*= false*/)
 {
 	if (mb_BuferModeChangeLocked)
 	{
@@ -1910,7 +1909,7 @@ void CRealBuffer::SetBufferHeightMode(BOOL abBufferHeight, BOOL abIgnoreLock/*=F
 }
 
 // Вызывается из TabBar->ConEmu
-void CRealBuffer::ChangeBufferHeightMode(BOOL abBufferHeight)
+void CRealBuffer::ChangeBufferHeightMode(bool abBufferHeight)
 {
 	if (abBufferHeight && gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 1)
 	{
@@ -1923,7 +1922,7 @@ void CRealBuffer::ChangeBufferHeightMode(BOOL abBufferHeight)
 	}
 
 	_ASSERTE(!mb_BuferModeChangeLocked);
-	BOOL lb = mb_BuferModeChangeLocked; mb_BuferModeChangeLocked = TRUE;
+	MSetter lSetter(&mb_BuferModeChangeLocked);
 	con.bBufferHeight = abBufferHeight;
 
 	// Если при запуске было "conemu.exe /bufferheight 0 ..."
@@ -1943,7 +1942,6 @@ void CRealBuffer::ChangeBufferHeightMode(BOOL abBufferHeight)
 
 	USHORT nNewBufHeightSize = abBufferHeight ? con.nBufferHeight : 0;
 	SetConsoleSize(TextWidth(), TextHeight(), nNewBufHeightSize, CECMD_SETSIZESYNC);
-	mb_BuferModeChangeLocked = lb;
 }
 
 void CRealBuffer::SetChange2Size(int anChange2TextWidth, int anChange2TextHeight)
@@ -1959,25 +1957,25 @@ void CRealBuffer::SetChange2Size(int anChange2TextWidth, int anChange2TextHeight
 	con.nChange2TextHeight = anChange2TextHeight;
 }
 
-BOOL CRealBuffer::isBuferModeChangeLocked()
+bool CRealBuffer::isBuferModeChangeLocked()
 {
 	return mb_BuferModeChangeLocked;
 }
 
-BOOL CRealBuffer::BuferModeChangeLock()
+bool CRealBuffer::BuferModeChangeLock()
 {
-	BOOL lbNeedUnlock = !mb_BuferModeChangeLocked;
-	mb_BuferModeChangeLocked = TRUE;
+	bool lbNeedUnlock = !mb_BuferModeChangeLocked;
+	mb_BuferModeChangeLocked = true;
 	return lbNeedUnlock;
 }
 
 void CRealBuffer::BuferModeChangeUnlock()
 {
-	mb_BuferModeChangeLocked = FALSE;
+	mb_BuferModeChangeLocked = false;
 }
 
 // По con.m_sbi проверяет, включена ли прокрутка
-BOOL CRealBuffer::CheckBufferSize()
+bool CRealBuffer::CheckBufferSize()
 {
 	bool lbForceUpdate = false;
 
@@ -2041,7 +2039,7 @@ BOOL CRealBuffer::CheckBufferSize()
 	return lbForceUpdate;
 }
 
-BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
+bool CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 {
 	if (m_Type != rbt_Primary)
 	{
@@ -2158,9 +2156,9 @@ BOOL CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 	return lbScreenChanged;
 }
 
-BOOL CRealBuffer::IsTrueColorerBufferChanged()
+bool CRealBuffer::IsTrueColorerBufferChanged()
 {
-	BOOL lbChanged = FALSE;
+	bool lbChanged = false;
 	AnnotationHeader aHdr;
 	int nCmp = 0;
 	int nCurMax;
@@ -2208,7 +2206,7 @@ BOOL CRealBuffer::IsTrueColorerBufferChanged()
 
 	if (nCmp != 0)
 	{
-		lbChanged = TRUE;
+		lbChanged = true;
 
 		if (IFLOGCONSOLECHANGE)
 		{
@@ -2252,7 +2250,7 @@ void CRealBuffer::StorePausedState(CEPauseCmd state)
 	}
 }
 
-BOOL CRealBuffer::ApplyConsoleInfo()
+bool CRealBuffer::ApplyConsoleInfo()
 {
 	bool bBufRecreate = false;
 	bool lbChanged = false;
@@ -2521,7 +2519,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 				}
 
 				//if (con.bBufferHeight != (nNewHeight < con.m_sbi.dwSize.Y))
-				BOOL lbTurnedOn = BufferHeightTurnedOn(&con.m_sbi);
+				bool lbTurnedOn = BufferHeightTurnedOn(&con.m_sbi);
 				if (con.bBufferHeight != lbTurnedOn)
 					SetBufferHeightMode(lbTurnedOn);
 
@@ -2715,7 +2713,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 
 // По переданному CONSOLE_SCREEN_BUFFER_INFO определяет, включена ли прокрутка
 // static
-BOOL CRealBuffer::BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi)
+bool CRealBuffer::BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 {
 	bool lbTurnedOn = false;
 	TODO("!!! Скорректировать");
@@ -3774,14 +3772,14 @@ wrap:
 	return lbSkip;
 }
 
-BOOL CRealBuffer::GetRBtnDrag(COORD* pcrMouse)
+bool CRealBuffer::GetRBtnDrag(COORD* pcrMouse)
 {
 	if (pcrMouse)
 		*pcrMouse = con.crRBtnDrag;
 	return con.bRBtnDrag;
 }
 
-void CRealBuffer::SetRBtnDrag(BOOL abRBtnDrag, const COORD* pcrMouse)
+void CRealBuffer::SetRBtnDrag(bool abRBtnDrag, const COORD* pcrMouse)
 {
 	con.bRBtnDrag = abRBtnDrag;
 
@@ -3812,7 +3810,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		|| ((messg == WM_LBUTTONDBLCLK) && (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)) && (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION))
 		)
 	{
-		BOOL lbStreamSelection = FALSE;
+		bool lbStreamSelection = false;
 		BYTE vkMod = 0; // Если удерживается модификатор - его нужно "отпустить" в консоль
 		bool bTripleClick = (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION) && ((GetTickCount() - con.m_SelDblClickTick) <= GetDoubleClickTime());
 
@@ -3872,7 +3870,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		ExpandTextRange(crFrom/*[In/Out]*/, crTo/*[Out]*/, etr_Word);
 
 		// Выполнить выделение
-		StartSelection(lbStreamSelection, crFrom.X, crFrom.Y, TRUE, WM_LBUTTONDBLCLK, &crTo);
+		StartSelection(lbStreamSelection, crFrom.X, crFrom.Y, true, WM_LBUTTONDBLCLK, &crTo);
 
 		// Сейчас кнопка мышки отпущена, сброс
 		con.m_sel.dwFlags &= ~CONSOLE_MOUSE_DOWN;
@@ -4212,8 +4210,8 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 				else if (pszFrom >= pszEnd1)
 				{
 					// Прокрутить буфер вниз
-					con.m_sbi.srWindow.Bottom = min((nCharIdx / nWidth)+1, (UINT)con.m_sbi.dwSize.Y-1);
-					con.m_sbi.srWindow.Top = max(0, con.m_sbi.srWindow.Bottom-nRows);
+					con.m_sbi.srWindow.Bottom = MakeShort(min((nCharIdx / nWidth)+1, (UINT)con.m_sbi.dwSize.Y-1));
+					con.m_sbi.srWindow.Top = MakeShort(max(0, con.m_sbi.srWindow.Bottom-nRows));
 					SetTopLeft(con.m_sbi.srWindow.Top, con.TopLeft.x);
 				}
 
@@ -4232,10 +4230,10 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 			if (nCharIdx < (nWidth*nHeight))
 			{
 				bFound = true;
-				crStart.Y = nCharIdx / nWidth;
-				crStart.X = nCharIdx - (nWidth * crStart.Y);
-				crEnd.Y = (nCharIdx + nFindLen - 1) / nWidth;
-				crEnd.X = (nCharIdx + nFindLen - 1) - (nWidth * crEnd.Y);
+				crStart.Y = MakeShort(nCharIdx / nWidth);
+				crStart.X = MakeShort(nCharIdx - (nWidth * crStart.Y));
+				crEnd.Y = MakeShort((nCharIdx + nFindLen - 1) / nWidth);
+				crEnd.X = MakeShort((nCharIdx + nFindLen - 1) - (nWidth * crEnd.Y));
 			}
 		}
 
@@ -4261,7 +4259,7 @@ done:
 	UpdateSelection();
 }
 
-void CRealBuffer::StartSelection(BOOL abTextMode, SHORT anX/*=-1*/, SHORT anY/*=-1*/, BOOL abByMouse/*=FALSE*/, UINT anFromMsg/*=0*/, COORD *pcrTo/*=NULL*/, DWORD anAnchorFlag/*=0*/)
+void CRealBuffer::StartSelection(bool abTextMode, SHORT anX /*= -1*/, SHORT anY /*= -1*/, bool abByMouse /*= false*/, UINT anFromMsg /*= 0*/, COORD *pcrTo /*= NULL*/, DWORD anAnchorFlag /*= 0*/)
 {
 	_ASSERTE(anY==-1 || anY>=GetBufferPosY());
 	_ASSERTE(anAnchorFlag==0 || anAnchorFlag==CONSOLE_LEFT_ANCHOR || anAnchorFlag==CONSOLE_RIGHT_ANCHOR);
@@ -5598,7 +5596,7 @@ const CONSOLE_SCREEN_BUFFER_INFO* CRealBuffer::GetSBI()
 //	return con.bConsoleDataChanged;
 //}
 
-BOOL CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData)
+bool CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData)
 {
 	// Может быть уже заблокировано
 	MSectionLock csData;
@@ -6514,11 +6512,11 @@ void CRealBuffer::FindPanels()
 	RECT rLeftPanelFull = rLeftPanel;
 	RECT rRightPanel = rLeftPanel;
 	RECT rRightPanelFull = rLeftPanel;
-	BOOL bLeftPanel = FALSE;
-	BOOL bRightPanel = FALSE;
-	BOOL bMayBePanels = FALSE;
-	BOOL lbNeedUpdateSizes = FALSE;
-	BOOL lbPanelsChanged = FALSE;
+	bool bLeftPanel = false;
+	bool bRightPanel = false;
+	bool bMayBePanels = false;
+	bool lbNeedUpdateSizes = false;
+	bool lbPanelsChanged = false;
 	short nLastProgress = mp_RCon->m_Progress.ConsoleProgress;
 	short nNewProgress = -1;
 	/*
@@ -7244,7 +7242,7 @@ bool CRealBuffer::StoreLastTextRange(ExpandTextRangeType etr)
 	return bChanged;
 }
 
-BOOL CRealBuffer::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/, BOOL abIncludeEdges /*= FALSE*/)
+bool CRealBuffer::GetPanelRect(bool abRight, RECT* prc, bool abFull /*= false*/, bool abIncludeEdges /*= false*/)
 {
 	if (!this)
 	{
@@ -7280,12 +7278,12 @@ BOOL CRealBuffer::GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull /*= FALSE*/,
 	return TRUE;
 }
 
-BOOL CRealBuffer::isLeftPanel()
+bool CRealBuffer::isLeftPanel()
 {
 	return mb_LeftPanel;
 }
 
-BOOL CRealBuffer::isRightPanel()
+bool CRealBuffer::isRightPanel()
 {
 	return mb_RightPanel;
 }

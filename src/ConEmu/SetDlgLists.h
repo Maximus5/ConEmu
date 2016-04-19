@@ -130,8 +130,8 @@ public:
 	static int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 	static int SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 
-	static void EnableDlgItems(HWND hParent, const DWORD* pnCtrlIds, size_t nCount, BOOL bEnabled);
-	static void EnableDlgItems(HWND hParent, eWordItems eWhat, BOOL bEnabled);
+	static void EnableDlgItems(HWND hParent, const DWORD* pnCtrlIds, size_t nCount, bool bEnabled);
+	static void EnableDlgItems(HWND hParent, eWordItems eWhat, bool bEnabled);
 
 	// List box with extended selection styles
 	static int GetListboxCurSel(HWND hDlg, UINT nCtrlID, bool bSingleReq = true);

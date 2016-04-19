@@ -194,10 +194,10 @@ class CTabBarClass
 
 		// Переключение табов
 		bool IsInSwitch();
-		void Switch(BOOL abForward, BOOL abAltStyle=FALSE);
+		void Switch(bool abForward, bool abAltStyle=false);
 		void SwitchCommit();
-		void SwitchNext(BOOL abAltStyle=FALSE);
-		void SwitchPrev(BOOL abAltStyle=FALSE);
+		void SwitchNext(bool abAltStyle=false);
+		void SwitchPrev(bool abAltStyle=false);
 		void SwitchRollback();
 
 		// Из Samples\Tabs

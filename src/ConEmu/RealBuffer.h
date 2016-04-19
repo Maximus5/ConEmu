@@ -64,7 +64,7 @@ enum IntelligentSelectionState
 class CRealBuffer
 {
 public:
-	CRealBuffer(CRealConsole* apRCon, RealBufferType aType=rbt_Primary);
+	CRealBuffer(CRealConsole* apRCon, RealBufferType aType = rbt_Primary);
 	~CRealBuffer();
 
 	RealBufferType m_Type;
@@ -78,13 +78,13 @@ public:
 	void PreFillBuffers();
 
 	bool isInResize();
-	BOOL SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
+	bool SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DWORD anCmdID = CECMD_SETSIZESYNC);
 	void SyncConsole2Window(SHORT wndSizeX, SHORT wndSizeY);
 
-	BOOL isScroll(RealBufferScroll aiScroll=rbs_Any);
-	BOOL isConsoleDataChanged();
+	bool isScroll(RealBufferScroll aiScroll = rbs_Any);
+	bool isConsoleDataChanged();
 
-	void InitSBI(CONSOLE_SCREEN_BUFFER_INFO* ap_sbi, BOOL abCurBufHeight);
+	void InitSBI(CONSOLE_SCREEN_BUFFER_INFO* ap_sbi, bool abCurBufHeight);
 	void InitMaxSize(const COORD& crMaxSize);
 	COORD GetMaxSize();
 
@@ -94,7 +94,7 @@ public:
 	bool PreInit();
 	void ResetBuffer();
 
-	int BufferHeight(uint nNewBufferHeight=0);
+	int BufferHeight(uint nNewBufferHeight = 0);
 	SHORT GetBufferWidth();
 	SHORT GetBufferHeight();
 	SHORT GetBufferPosX();
@@ -106,22 +106,22 @@ public:
 	int GetWindowWidth();
 	int GetWindowHeight();
 
-	void SetBufferHeightMode(BOOL abBufferHeight, BOOL abIgnoreLock=FALSE);
-	void ChangeBufferHeightMode(BOOL abBufferHeight);
+	void SetBufferHeightMode(bool abBufferHeight, bool abIgnoreLock = false);
+	void ChangeBufferHeightMode(bool abBufferHeight);
 	void SetChange2Size(int anChange2TextWidth, int anChange2TextHeight);
 
-	BOOL isBuferModeChangeLocked();
-	BOOL BuferModeChangeLock();
+	bool isBuferModeChangeLocked();
+	bool BuferModeChangeLock();
 	void BuferModeChangeUnlock();
-	BOOL BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
+	bool BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 	void OnBufferHeight();
 
 	LRESULT DoScrollBuffer(int nDirection, short nTrackPos = -1, UINT nCount = 1);
 	void ResetTopLeft();
 
-	BOOL ApplyConsoleInfo();
+	bool ApplyConsoleInfo();
 
-	BOOL GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll);
+	bool GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll);
 
 	COORD ScreenToBuffer(COORD crMouse);
 	COORD BufferToScreen(COORD crMouse, bool bFixup = true, bool bVertOnly = false);
@@ -134,8 +134,8 @@ public:
 
 	bool OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse);
 
-	BOOL GetRBtnDrag(COORD* pcrMouse);
-	void SetRBtnDrag(BOOL abRBtnDrag, const COORD* pcrMouse = NULL);
+	bool GetRBtnDrag(COORD* pcrMouse);
+	void SetRBtnDrag(bool abRBtnDrag, const COORD* pcrMouse = NULL);
 
 private:
 	bool OnMouseSelection(UINT messg, WPARAM wParam, int x, int y);
@@ -148,7 +148,7 @@ private:
 public:
 	void OnTimerCheckSelection();
 	void MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensitive, bool abWholeWords); // <<== CRealConsole::DoFindText
-	void StartSelection(BOOL abTextMode, SHORT anX=-1, SHORT anY=-1, BOOL abByMouse=FALSE, UINT anFromMsg=0, COORD *pcrTo=NULL, DWORD anAnchorFlag = 0);
+	void StartSelection(bool abTextMode, SHORT anX=-1, SHORT anY=-1, bool abByMouse = false, UINT anFromMsg = 0, COORD *pcrTo = NULL, DWORD anAnchorFlag = 0);
 	void ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift);
 	void ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection);
 	UINT CorrectSelectionAnchor();
@@ -169,9 +169,9 @@ public:
 
 	const CONSOLE_SCREEN_BUFFER_INFO* GetSBI();
 
-	//BOOL IsConsoleDataChanged();
+	//bool IsConsoleDataChanged();
 
-	BOOL GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData = NULL);
+	bool GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData = NULL);
 	void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
 
 	void ResetConData();
@@ -205,23 +205,24 @@ public:
 	WORD  GetConOutMode();
 
 	void FindPanels();
-	BOOL GetPanelRect(BOOL abRight, RECT* prc, BOOL abFull = FALSE, BOOL abIncludeEdges = FALSE);
-	BOOL isLeftPanel();
-	BOOL isRightPanel();
+	bool GetPanelRect(bool abRight, RECT* prc, bool abFull = false, bool abIncludeEdges = false);
+	bool isLeftPanel();
+	bool isRightPanel();
 
 	const CRgnDetect* GetDetector();
 
 private:
 	void ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool& bSetApplyFinished, bool& lbChanged, bool& bBufRecreate);
-	BOOL SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID=CECMD_SETSIZESYNC);
-	BOOL InitBuffers(DWORD anCellCount = 0, int anWidth = 0, int anHeight = 0);
-	BOOL CheckBufferSize();
-	BOOL IsTrueColorerBufferChanged();
-	BOOL LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData);
+	bool SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID = CECMD_SETSIZESYNC);
+	bool InitBuffers(DWORD anCellCount = 0, int anWidth = 0, int anHeight = 0);
+	bool CheckBufferSize();
+	bool IsTrueColorerBufferChanged();
+	bool LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData);
 	bool LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, const CHAR_INFO* pData, DWORD cchMaxCellCount);
 
 	// координаты панелей в символах
-	RECT mr_LeftPanel, mr_RightPanel, mr_LeftPanelFull, mr_RightPanelFull; BOOL mb_LeftPanel, mb_RightPanel;
+	RECT mr_LeftPanel, mr_RightPanel, mr_LeftPanelFull, mr_RightPanelFull;
+	bool mb_LeftPanel, mb_RightPanel;
 
 	void PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 
@@ -242,7 +243,7 @@ protected:
 	/* ****************************************** */
 	CRgnDetect m_Rgn; DWORD mn_LastRgnFlags;
 
-	BOOL mb_BuferModeChangeLocked;
+	bool mb_BuferModeChangeLocked;
 
 	// Informational
 	COORD mcr_LastMousePos;
@@ -274,11 +275,11 @@ protected:
 		SMALL_RECT srRealWindow; // Те реальные координаты, которые видимы в RealConsole (а не то, что видимо в GUI окне)
 		COORD crMaxSize; // Максимальный размер консоли на текущем шрифте
 		TOPLEFTCOORD TopLeft; // может отличаться от m_sbi.srWindow.Top, если прокрутка заблокирована
-		DWORD TopLeftTick; BOOL InTopLeftSet;
+		DWORD TopLeftTick; bool InTopLeftSet;
 		CECI_FLAGS Flags;
 		DWORD FlagsUpdateTick;
 		DWORD LastStartInitBuffersTick, LastEndInitBuffersTick, LastStartReadBufferTick, LastEndReadBufferTick;
-		BOOL bInGetConsoleData;
+		bool bInGetConsoleData;
 		int nCreatedBufWidth, nCreatedBufHeight; // Informational
 		size_t nConBufCells; // Max buffers size (cells!)
 		bool mb_ConDataValid;
@@ -288,18 +289,18 @@ protected:
 		// Sizes
 		int nTextWidth, nTextHeight, nBufferHeight;
 		// Resize (srv) in progress
-		BOOL bLockChange2Text;
+		bool bLockChange2Text;
 		int nChange2TextWidth, nChange2TextHeight;
 		//
-		BOOL bBufferHeight; // TRUE, если есть прокрутка
+		bool bBufferHeight; // TRUE, если есть прокрутка
 		//DWORD nPacketIdx;
 		DWORD_PTR dwKeybLayout;
-		BOOL bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
+		bool bRBtnDrag; // в консоль посылается драг правой кнопкой (выделение в FAR)
 		COORD crRBtnDrag;
 		int DefaultBufferHeight;
-		BOOL bConsoleDataChanged;
+		bool bConsoleDataChanged;
 		//RClick4KeyBar
-		BOOL bRClick4KeyBar;
+		bool bRClick4KeyBar;
 		COORD crRClick4KeyBar;
 		POINT ptRClick4KeyBar;
 		int nRClickVK; // VK_F1..F12
@@ -319,9 +320,9 @@ protected:
 		wchar_t*  pszTitle;
 		COORD     crSize;
 		COORD     crCursor;
-		//BOOL      NeedApply;
+		//bool      NeedApply;
 		// ** Block 1 **
-		BOOL      Block1;
+		bool      Block1;
 		wchar_t*  pszBlock1;
 		CharAttr* pcaBlock1;
 		// ** Block 2 **

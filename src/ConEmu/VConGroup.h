@@ -176,7 +176,7 @@ public:
 	static void OnAlwaysShowScrollbar(bool abSync = true);
 	static void OnUpdateScrollInfo();
 	static void OnUpdateFarSettings();
-	static void OnUpdateTextColorSettings(BOOL ChangeTextAttr = TRUE, BOOL ChangePopupAttr = TRUE, const AppSettings* apDistinct = NULL);
+	static void OnUpdateTextColorSettings(bool ChangeTextAttr = true, bool ChangePopupAttr = true, const AppSettings* apDistinct = NULL);
 	static bool OnCloseQuery(bool* rbMsgConfirmed = NULL);
 	static bool DoCloseAllVCon(bool bMsgConfirmed = false);
 	static void CloseAllButActive(CVirtualConsole* apVCon/*may be null*/, bool abZombies, bool abNoConfirm);
@@ -190,7 +190,7 @@ public:
 	static void Update(bool isForce = false);
 	static HWND DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const DWORD dwKeybLayout, DWORD& t1, DWORD& t2, int& iFound, CESERVER_REQ_SRVSTARTSTOPRET& pRet);
 	static void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args);
-	static void OnGuiFocused(BOOL abFocus, BOOL abForceChild = FALSE);
+	static void OnGuiFocused(bool abFocus, bool abForceChild = FALSE);
 	static void GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd);
 
 	static bool Activate(CVirtualConsole* apVCon);

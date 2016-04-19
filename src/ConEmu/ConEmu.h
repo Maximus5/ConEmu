@@ -465,11 +465,11 @@ class CConEmuMain
 	public:
 		void GlobalHotKeyChanged();
 	protected:
-		void UnRegisterHotKeys(BOOL abFinal=FALSE);
+		void UnRegisterHotKeys(bool abFinal=false);
 		HBITMAP mh_RightClickingBmp; HDC mh_RightClickingDC;
 		POINT m_RightClickingSize; // {384 x 16} 24 фрейма, считаем, что четверть отведенного времени прошла до начала показа
 		int m_RightClickingFrames, m_RightClickingCurrent;
-		BOOL mb_RightClickingPaint, mb_RightClickingLSent, mb_RightClickingRegistered;
+		bool mb_RightClickingPaint, mb_RightClickingLSent, mb_RightClickingRegistered;
 		void StartRightClickingPaint();
 		void StopRightClickingPaint();
 		static LRESULT CALLBACK RightClickingProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -562,7 +562,7 @@ class CConEmuMain
 
 	public:
 		DWORD CheckProcesses();
-		DWORD GetFarPID(BOOL abPluginRequired=FALSE);
+		DWORD GetFarPID(bool abPluginRequired=false);
 
 	public:
 		LPCWSTR GetDefaultTitle(); // вернуть ms_ConEmuDefTitle
@@ -573,7 +573,7 @@ class CConEmuMain
 		int GetActiveVCon(CVConGuard* pVCon = NULL, int* pAllCount = NULL);
 		int isVConValid(CVirtualConsole* apVCon);
 		void UpdateCursorInfo(const ConsoleInfoArg* pInfo);
-		void UpdateProcessDisplay(BOOL abForce);
+		void UpdateProcessDisplay(bool abForce);
 		void UpdateSizes();
 
 	public:
@@ -589,13 +589,13 @@ class CConEmuMain
 		void AttachToDialog();
 		void CheckFocus(LPCWSTR asFrom);
 		bool CheckRequiredFiles();
-		void CheckUpdates(BOOL abShowMessages);
+		void CheckUpdates(UINT abShowMessages);
 		DWORD isSelectionModifierPressed(bool bAllowEmpty);
 		void ForceSelectionModifierPressed(DWORD nValue);
 		enum DragPanelBorder CheckPanelDrag(COORD crCon);
 		bool ConActivate(int nCon);
 		bool ConActivateByName(LPCWSTR asName);
-		bool ConActivateNext(BOOL abNext);
+		bool ConActivateNext(bool abNext);
 		bool CreateWnd(RConStartArgs *args);
 		CVirtualConsole* CreateCon(RConStartArgs *args, bool abAllowScripts = false, bool abForceCurConsole = false);
 		CVirtualConsole* CreateConGroup(LPCWSTR apszScript, bool abForceAsAdmin = false, LPCWSTR asStartupDir = NULL, const RConStartArgs *apDefArgs = NULL);
@@ -679,8 +679,8 @@ class CConEmuMain
 		void LoadIcons();
 		void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);
 		void InvalidateGaps();
-		void PostDragCopy(BOOL abMove, BOOL abReceived=FALSE);
-		void PostCreate(BOOL abReceived=FALSE);
+		void PostDragCopy(bool abMove, bool abReceived = false);
+		void PostCreate(bool abReceived = false);
 	protected:
 		void OnMainCreateFinished();
 		bool CreateStartupConsoles();
@@ -736,7 +736,7 @@ class CConEmuMain
 		LRESULT OnDestroy(HWND hWnd);
 		LRESULT OnFlashWindow(WPARAM wParam, LPARAM lParam);
 		void DoFlashWindow(CESERVER_REQ_FLASHWINFO* pFlash, bool bFromMacro);
-		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom = NULL, BOOL abForceChild = FALSE);
+		LRESULT OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, LPCWSTR asMsgFrom = NULL, bool abForceChild = false);
 		bool IsChildFocusAllowed(HWND hChild);
 		void OnHideCaption();
 		LRESULT OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
