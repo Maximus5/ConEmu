@@ -569,10 +569,10 @@ static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 			}
 
 			/* Force Single instance mode */
-			gpSet->isSingleInstance = IsDlgButtonChecked(hDlg, cbSingleInstance);
+			gpSet->isSingleInstance = CDlgItemHelper::isChecked2(hDlg, cbSingleInstance);
 
 			/* Quake mode? */
-			gpSet->isQuakeStyle = IsDlgButtonChecked(hDlg, cbQuakeFast);
+			gpSet->isQuakeStyle = CDlgItemHelper::isChecked2(hDlg, cbQuakeFast);
 
 			/* Min/Restore key */
 			gpSet->SetHotkeyById(vkMinimizeRestore, ghk_MinMaxKey.GetVkMod());
@@ -581,7 +581,7 @@ static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 			gpSet->m_isKeyboardHooks = IsDlgButtonChecked(hDlg, cbUseKeyboardHooksFast) ? 1 : 2;
 
 			/* Inject ConEmuHk.dll */
-			gpSet->isUseInjects = IsDlgButtonChecked(hDlg, cbInjectConEmuHkFast);
+			gpSet->isUseInjects = CDlgItemHelper::isChecked2(hDlg, cbInjectConEmuHkFast);
 
 			/* Auto Update settings */
 			gpSet->UpdSet.isUpdateCheckOnStartup = (IsDlgButtonChecked(hDlg, cbEnableAutoUpdateFast) == BST_CHECKED);

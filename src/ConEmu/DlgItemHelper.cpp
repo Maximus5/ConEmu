@@ -144,6 +144,11 @@ BYTE CDlgItemHelper::isChecked(HWND hParent, WORD nCtrlId)
 	return LOBYTE(nChecked);
 }
 
+bool CDlgItemHelper::isChecked2(HWND hParent, WORD nCtrlId)
+{
+	return (isChecked(hParent, nCtrlId) != BST_UNCHECKED);
+}
+
 void CDlgItemHelper::InvalidateCtrl(HWND hCtrl, BOOL bErase)
 {
 	::InvalidateRect(hCtrl, NULL, bErase);

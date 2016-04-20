@@ -552,18 +552,18 @@ INT_PTR CSetPgApps::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 	case cbExtendFontsOverride:
 		bChecked = isChecked(mh_Child, nCtrlId);
 		DoEnableControls(cbExtendFontsOverride);
-		pApp->OverrideExtendFonts = isChecked(mh_Child, nCtrlId);
+		pApp->OverrideExtendFonts = isChecked2(mh_Child, nCtrlId);
 		mb_Redraw = true;
 		break;
 	case cbExtendFonts:
-		pApp->isExtendFonts = isChecked(mh_Child, nCtrlId);
+		pApp->isExtendFonts = isChecked2(mh_Child, nCtrlId);
 		mb_Redraw = true;
 		break;
 
 	case cbClipboardOverride:
 		bChecked = isChecked(mh_Child, nCtrlId);
 		DoEnableControls(cbClipboardOverride);
-		pApp->OverrideClipboard = isChecked(mh_Child, nCtrlId);
+		pApp->OverrideClipboard = isChecked2(mh_Child, nCtrlId);
 		break;
 
 	case rPasteM1MultiLine:
@@ -600,10 +600,10 @@ INT_PTR CSetPgApps::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 		break;
 
 	case cbCTSDetectLineEnd:
-		pApp->isCTSDetectLineEnd = isChecked(mh_Child, nCtrlId);
+		pApp->isCTSDetectLineEnd = isChecked2(mh_Child, nCtrlId);
 		break;
 	case cbCTSBashMargin:
-		pApp->isCTSBashMargin = isChecked(mh_Child, nCtrlId);
+		pApp->isCTSBashMargin = isChecked2(mh_Child, nCtrlId);
 		break;
 	case cbCTSTrimTrailing:
 		pApp->isCTSTrimTrailing = isChecked(mh_Child, nCtrlId);
@@ -759,8 +759,8 @@ void CSetPgApps::DoEnableControls(WORD nGroupCtrlId)
 		if (nGroupCtrlId && (nGroupCtrlId != DistinctControls[i].nOverrideID))
 			continue;
 
-		BOOL bEnabled = bAllowed
-			? (DistinctControls[i].nOverrideID ? isChecked(mh_Child, DistinctControls[i].nOverrideID) : TRUE)
+		bool bEnabled = bAllowed
+			? (DistinctControls[i].nOverrideID ? isChecked2(mh_Child, DistinctControls[i].nOverrideID) : true)
 			: FALSE;
 
 		HWND hDlgCtrl = DistinctControls[i].nOverrideID ? mh_Child : mh_Dlg;

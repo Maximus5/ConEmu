@@ -206,19 +206,19 @@ INT_PTR CEFindDlg::findTextProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lP
 					DestroyWindow(hWnd2);
 					return 0;
 				case cbFindMatchCase:
-					gpSet->FindOptions.bMatchCase = CDlgItemHelper::isChecked(hWnd2, cbFindMatchCase);
+					gpSet->FindOptions.bMatchCase = CDlgItemHelper::isChecked2(hWnd2, cbFindMatchCase);
 					break;
 				case cbFindWholeWords:
-					gpSet->FindOptions.bMatchWholeWords = CDlgItemHelper::isChecked(hWnd2, cbFindWholeWords);
+					gpSet->FindOptions.bMatchWholeWords = CDlgItemHelper::isChecked2(hWnd2, cbFindWholeWords);
 					break;
 				case cbFindFreezeConsole:
-					gpSet->FindOptions.bFreezeConsole = CDlgItemHelper::isChecked(hWnd2, cbFindFreezeConsole);
+					gpSet->FindOptions.bFreezeConsole = CDlgItemHelper::isChecked2(hWnd2, cbFindFreezeConsole);
 					break;
 				case cbFindHighlightAll:
-					gpSet->FindOptions.bHighlightAll = CDlgItemHelper::isChecked(hWnd2, cbFindHighlightAll);
+					gpSet->FindOptions.bHighlightAll = CDlgItemHelper::isChecked2(hWnd2, cbFindHighlightAll);
 					break;
 				case cbFindTransparent:
-					gpSet->FindOptions.bTransparent = CDlgItemHelper::isChecked(hWnd2, cbFindTransparent);
+					gpSet->FindOptions.bTransparent = CDlgItemHelper::isChecked2(hWnd2, cbFindTransparent);
 					gpConEmu->mp_Find->UpdateFindDlgAlpha(true);
 					return 0;
 				case cbFindNext:

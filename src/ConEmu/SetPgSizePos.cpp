@@ -128,7 +128,7 @@ void CSetPgSizePos::FillSizeControls(HWND hDlg)
 	}
 
 	// Во избежание недоразумений - запретим элементы размера для Max/Fullscreen
-	BOOL bNormalChecked = isChecked(hDlg, rNormal);
+	bool bNormalChecked = isChecked2(hDlg, rNormal);
 	//for (size_t i = 0; i < countof(SettingsNS::nSizeCtrlId); i++)
 	//{
 	//	EnableWindow(GetDlgItem(hDlg, SettingsNS::nSizeCtrlId[i]), bNormalChecked);

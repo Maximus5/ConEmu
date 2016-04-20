@@ -135,7 +135,7 @@ INT_PTR CSetPgIntegr::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 				case cbInsideSyncDir:
 					if (gpConEmu->mp_Inside)
 					{
-						gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir = isChecked(hDlg, CB);
+						gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir = isChecked2(hDlg, CB);
 					}
 					break;
 				case bInsideRegister:

@@ -41,6 +41,7 @@ public:
 	static void enableDlgItem(HWND hParent, WORD nCtrlId, bool bEnabled);
 	static void enableDlgItems(HWND hParent, UINT* pnCtrlID, INT_PTR nCount, bool bEnabled);
 	static BYTE isChecked(HWND hParent, WORD nCtrlId);
+	static bool isChecked2(HWND hParent, WORD nCtrlId);
 	static void InvalidateCtrl(HWND hCtrl, BOOL bErase);
 	static int GetNumber(HWND hParent, WORD nCtrlId, int nMin = 0, int nMax = 0);
 	static INT_PTR GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCWSTR asNoDefault = NULL, bool abListBox = false);
