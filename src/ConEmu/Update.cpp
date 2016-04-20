@@ -186,7 +186,7 @@ CConEmuUpdate::~CConEmuUpdate()
 	SafeFree(ms_LastErrorInfo);
 }
 
-void CConEmuUpdate::StartCheckProcedure(BOOL abShowMessages)
+void CConEmuUpdate::StartCheckProcedure(UINT abShowMessages)
 {
 	//DWORD nWait = WAIT_OBJECT_0;
 

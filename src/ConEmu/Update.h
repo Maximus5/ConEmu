@@ -76,7 +76,7 @@ protected:
 	static void WINAPI ErrorCallback(const CEDownloadInfo* pError);
 	static void WINAPI LogCallback(const CEDownloadInfo* pError);
 
-	BOOL mb_ManualCallMode;
+	UINT mb_ManualCallMode; // FALSE, TRUE, 2 (click on TSA icon)
 	ConEmuUpdateSettings* mp_Set;
 
 	long mn_InShowMsgBox;
@@ -125,7 +125,7 @@ public:
 	CConEmuUpdate();
 	~CConEmuUpdate();
 
-	void StartCheckProcedure(BOOL abShowMessages);
+	void StartCheckProcedure(UINT abShowMessages);
 	void StopChecking();
 
 	static bool LocalUpdate(LPCWSTR asDownloadedPackage);
