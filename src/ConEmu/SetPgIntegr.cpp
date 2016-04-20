@@ -614,7 +614,7 @@ void CSetPgIntegr::FillHereValues(WORD CB)
 							}
 							else if (szArg.IsSwitch(L"-inside="))
 							{
-								pszDirSync = lstrdup(szArg+8); // may be empty!
+								pszDirSync = lstrdup(szArg.Mid(8)); // may be empty!
 							}
 							else if (szArg.IsSwitch(L"-config"))
 							{

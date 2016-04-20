@@ -3034,25 +3034,25 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		else if (wcsncmp(szArg, L"/REGCONFONT=", 12)==0)
 		{
 			eExecAction = ea_RegConFont;
-			lsCmdLine = szArg+12;
+			lsCmdLine = szArg.Mid(12);
 			break;
 		}
 		else if (wcsncmp(szArg, L"/SETHOOKS=", 10) == 0)
 		{
 			eExecAction = ea_InjectHooks;
-			lsCmdLine = szArg+10;
+			lsCmdLine = szArg.Mid(10);
 			break;
 		}
 		else if (wcsncmp(szArg, L"/INJECT=", 8) == 0)
 		{
 			eExecAction = ea_InjectRemote;
-			lsCmdLine = szArg+8;
+			lsCmdLine = szArg.Mid(8);
 			break;
 		}
 		else if (wcsncmp(szArg, L"/DEFTRM=", 8) == 0)
 		{
 			eExecAction = ea_InjectDefTrm;
-			lsCmdLine = szArg+8;
+			lsCmdLine = szArg.Mid(8);
 			break;
 		}
 		// /GUIMACRO[:PID|HWND] <Macro string>
@@ -3218,7 +3218,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			lbAttachGuiApp = TRUE;
 			wchar_t* pszEnd;
 			// suppress warning C4312 'type cast': conversion from 'unsigned long' to 'HWND' of greater size
-			HWND hAppWnd = (HWND)(UINT_PTR)wcstoul(szArg+11, &pszEnd, 16);
+			HWND hAppWnd = (HWND)(UINT_PTR)wcstoul(szArg.Mid(11), &pszEnd, 16);
 			if (IsWindow(hAppWnd))
 				gpSrv->hRootProcessGui = hAppWnd;
 			gnRunMode = RM_SERVER;
@@ -3437,15 +3437,15 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 			if (wcsncmp(szArg, L"/BW=", 4)==0)
 			{
-				gcrVisibleSize.X = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmVisibleSize = TRUE;
+				gcrVisibleSize.X = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg.Mid(4),&pszEnd,10); gbParmVisibleSize = TRUE;
 			}
 			else if (wcsncmp(szArg, L"/BH=", 4)==0)
 			{
-				gcrVisibleSize.Y = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmVisibleSize = TRUE;
+				gcrVisibleSize.Y = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg.Mid(4),&pszEnd,10); gbParmVisibleSize = TRUE;
 			}
 			else if (wcsncmp(szArg, L"/BZ=", 4)==0)
 			{
-				gnBufferHeight = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10); gbParmBufSize = TRUE;
+				gnBufferHeight = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg.Mid(4),&pszEnd,10); gbParmBufSize = TRUE;
 			}
 			TODO("/BX для ширины буфера?");
 		}
@@ -3455,15 +3455,15 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 			if (wcsncmp(szArg, L"/FN=", 4)==0) //-V112
 			{
-				lstrcpynW(gpSrv->szConsoleFont, szArg+4, 32); //-V112
+				lstrcpynW(gpSrv->szConsoleFont, szArg.Mid(4), 32); //-V112
 			}
 			else if (wcsncmp(szArg, L"/FW=", 4)==0) //-V112
 			{
-				gpSrv->nConFontWidth = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10);
+				gpSrv->nConFontWidth = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg.Mid(4),&pszEnd,10);
 			}
 			else if (wcsncmp(szArg, L"/FH=", 4)==0) //-V112
 			{
-				gpSrv->nConFontHeight = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg+4,&pszEnd,10);
+				gpSrv->nConFontHeight = /*_wtoi(szArg+4);*/(SHORT)wcstol(szArg.Mid(4),&pszEnd,10);
 				//} else if (wcsncmp(szArg, L"/FF=", 4)==0) {
 				//  lstrcpynW(gpSrv->szConsoleFontFile, szArg+4, MAX_PATH);
 			}
@@ -3479,7 +3479,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		{
 			gnRunMode = RM_SERVER;
 			wchar_t* pszEnd = NULL;
-			gnConEmuPID = wcstoul(szArg+5, &pszEnd, 10);
+			gnConEmuPID = wcstoul(szArg.Mid(5), &pszEnd, 10);
 
 			if (gnConEmuPID == 0)
 			{
@@ -3494,7 +3494,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		else if (wcsncmp(szArg, L"/AID=", 5)==0)
 		{
 			wchar_t* pszEnd = NULL;
-			gpSrv->dwGuiAID = wcstoul(szArg+5, &pszEnd, 10);
+			gpSrv->dwGuiAID = wcstoul(szArg.Mid(5), &pszEnd, 10);
 		}
 		else if (wcsncmp(szArg, L"/GHWND=", 7)==0)
 		{
@@ -3508,7 +3508,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			}
 
 			wchar_t* pszEnd = NULL;
-			if (lstrcmpi(szArg+7, L"NEW") == 0)
+			if (lstrcmpi(szArg.Mid(7), L"NEW") == 0)
 			{
 				gpSrv->hGuiWnd = NULL;
 				_ASSERTE(gnConEmuPID == 0);
@@ -3518,7 +3518,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			else
 			{
 				wchar_t szLog[120];
-				LPCWSTR pszDescr = szArg+7;
+				LPCWSTR pszDescr = szArg.Mid(7);
 				if (pszDescr[0] == L'0' && (pszDescr[1] == L'x' || pszDescr[1] == L'X'))
 					pszDescr += 2; // That may be useful for calling from batch files
 				gpSrv->hGuiWnd = (HWND)(UINT_PTR)wcstoul(pszDescr, &pszEnd, 16);
@@ -3551,7 +3551,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		else if (wcsncmp(szArg, L"/TA=", 4)==0)
 		{
 			wchar_t* pszEnd = NULL;
-			DWORD nColors = wcstoul(szArg+4, &pszEnd, 16);
+			DWORD nColors = wcstoul(szArg.Mid(4), &pszEnd, 16);
 			if (nColors)
 			{
 				DWORD nTextIdx = (nColors & 0xFF);
@@ -3639,7 +3639,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			gpSrv->DbgInfo.bDebugProcessTree = FALSE;
 
 			wchar_t* pszEnd = NULL;
-			gpSrv->dwRootProcess = wcstoul(szArg+10, &pszEnd, 10);
+			gpSrv->dwRootProcess = wcstoul(szArg.Mid(10), &pszEnd, 10);
 
 			if (gpSrv->dwRootProcess == 0)
 			{

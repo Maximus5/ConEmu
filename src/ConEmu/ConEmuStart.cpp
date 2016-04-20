@@ -933,7 +933,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					if (!gpConEmu->opt.Language.Exists)
 					{
-						gpConEmu->opt.Language = szNext;
+						gpConEmu->opt.Language = (LPCWSTR)szNext;
 						gpConEmu->AppendExtraArgs(L"-lng", szNext);
 					}
 				}
@@ -944,7 +944,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					if (!gpConEmu->opt.LanguageFile.Exists)
 					{
-						gpConEmu->opt.LanguageFile = szNext;
+						gpConEmu->opt.LanguageFile = (LPCWSTR)szNext;
 						gpConEmu->AppendExtraArgs(L"-lngfile", szNext);
 					}
 				}
@@ -955,7 +955,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					if (!gpConEmu->opt.FontVal.Exists)
 					{
-						gpConEmu->opt.FontVal = szNext;
+						gpConEmu->opt.FontVal = (LPCWSTR)szNext;
 						gpConEmu->AppendExtraArgs(L"-font", szNext);
 					}
 				}

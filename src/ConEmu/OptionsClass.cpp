@@ -2339,7 +2339,7 @@ void CSettings::debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl)
 			}
 			else if (szArg[0] == L'@' && szArg[2] == L':' && szArg[3] == L'\\')
 			{
-				debugLogShellText(pszParamEx, szArg+1);
+				debugLogShellText(pszParamEx, szArg.Mid(1));
 			}
 		}
 	}
