@@ -11828,7 +11828,7 @@ LRESULT CConEmuMain::OnShellHook(WPARAM wParam, LPARAM lParam)
 
 			wchar_t szDbg[128], szClass[64];
 			if (!lParam || !GetClassName((HWND)lParam, szClass, 63))
-				wcscpy(szClass, L"<NULL>");
+				wcscpy_c(szClass, L"<NULL>");
 
 			BOOL lbLBtn = isPressed(VK_LBUTTON);
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"HSHELL_WINDOWACTIVATED(lParam=0x%08X, %s, %i)\n", (DWORD)lParam, szClass, lbLBtn);

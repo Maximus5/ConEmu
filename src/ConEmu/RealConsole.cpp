@@ -4516,7 +4516,7 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		_ASSERTE(lpszCmd!=NULL);
 		lpszCmd = L"";
 	}
-	int nLen = _tcslen(lpszCmd);
+	INT_PTR nLen = _tcslen(lpszCmd);
 	nLen += _tcslen(mp_ConEmu->ms_ConEmuExe) + 360 + MAX_PATH*2;
 	MCHKHEAP;
 	psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));

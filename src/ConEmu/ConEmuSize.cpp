@@ -4444,14 +4444,14 @@ void CConEmuSize::OnSizePanels(COORD cr)
 			r.Event.KeyEvent.wVirtualKeyCode = VK_LEFT;
 			nRepeat = mp_ConEmu->mouse.LClkCon.X - cr.X;
 			mp_ConEmu->mouse.LClkCon.X = cr.X; // max(cr.X, (mp_ConEmu->mouse.LClkCon.X-1));
-			wcscpy(szKey, L"CtrlLeft");
+			wcscpy_c(szKey, L"CtrlLeft");
 		}
 		else if (cr.X > mp_ConEmu->mouse.LClkCon.X)
 		{
 			r.Event.KeyEvent.wVirtualKeyCode = VK_RIGHT;
 			nRepeat = cr.X - mp_ConEmu->mouse.LClkCon.X;
 			mp_ConEmu->mouse.LClkCon.X = cr.X; // min(cr.X, (mp_ConEmu->mouse.LClkCon.X+1));
-			wcscpy(szKey, L"CtrlRight");
+			wcscpy_c(szKey, L"CtrlRight");
 		}
 	}
 	else
@@ -4464,14 +4464,14 @@ void CConEmuSize::OnSizePanels(COORD cr)
 			r.Event.KeyEvent.wVirtualKeyCode = VK_UP;
 			nRepeat = mp_ConEmu->mouse.LClkCon.Y - cr.Y;
 			mp_ConEmu->mouse.LClkCon.Y = cr.Y; // max(cr.Y, (mp_ConEmu->mouse.LClkCon.Y-1));
-			wcscpy(szKey, bShifted ? L"CtrlShiftUp" : L"CtrlUp");
+			wcscpy_c(szKey, bShifted ? L"CtrlShiftUp" : L"CtrlUp");
 		}
 		else if (cr.Y > mp_ConEmu->mouse.LClkCon.Y)
 		{
 			r.Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
 			nRepeat = cr.Y - mp_ConEmu->mouse.LClkCon.Y;
 			mp_ConEmu->mouse.LClkCon.Y = cr.Y; // min(cr.Y, (mp_ConEmu->mouse.LClkCon.Y+1));
-			wcscpy(szKey, bShifted ? L"CtrlShiftDown" : L"CtrlDown");
+			wcscpy_c(szKey, bShifted ? L"CtrlShiftDown" : L"CtrlDown");
 		}
 
 		if (bShifted)
@@ -4496,16 +4496,16 @@ void CConEmuSize::OnSizePanels(COORD cr)
 				{
 					// "$Rep (%i)" -> "for RCounter= %i,1,-1 do Keys(\"%s\") end"
 					if (nRepeat > 1)
-						wsprintf(szMacro+1, L"for RCounter= %i,1,-1 do Keys(\"%s\") end", nRepeat, szKey);
+						_wsprintf(szMacro+1, SKIPLEN(countof(szMacro)-1) L"for RCounter= %i,1,-1 do Keys(\"%s\") end", nRepeat, szKey);
 					else
-						wsprintf(szMacro+1, L"Keys(\"%s\")", szKey);
+						_wsprintf(szMacro+1, SKIPLEN(countof(szMacro)-1) L"Keys(\"%s\")", szKey);
 				}
 				else
 				{
 					if (nRepeat > 1)
-						wsprintf(szMacro+1, L"$Rep (%i) %s $End", nRepeat, szKey);
+						_wsprintf(szMacro+1, SKIPLEN(countof(szMacro)-1) L"$Rep (%i) %s $End", nRepeat, szKey);
 					else
-						wcscpy(szMacro+1, szKey);
+						_wcscpy_c(szMacro+1, countof(szMacro)-1, szKey);
 				}
 
 				pRCon->PostMacro(szMacro);
