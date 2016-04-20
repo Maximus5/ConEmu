@@ -4292,6 +4292,8 @@ wchar_t* Settings::CreateCharRanges(BYTE (&Chars)[0x10000])
 bool Settings::CheckCharAltFont(ucs32 inChar)
 {
 	//TODO: Support character codebases >=0xFFFF
+	WARNING("Change mpc_CharAltFontRanges to interval map");
+	// !!! leave C4800 warning in place, don't forget about refactoring
 	return (isFixFarBorders && !(inChar & ~0xFFFF)) ? mpc_CharAltFontRanges[LOWORD(inChar)] : false;
 }
 
