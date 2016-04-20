@@ -535,57 +535,46 @@ bool __cdecl xf_validate(void * _Memory /*= NULL*/)
 
 void * __cdecl operator new(size_t _Size)
 {
-	void * p = xf_malloc(
-	               _Size
-#ifdef TRACK_MEMORY_ALLOCATIONS
-	               ,__FILE__,__LINE__
-#endif
-	           );
-#ifdef MVALIDATE_POINTERS
-	_ASSERTE(p != NULL);
+	void * p = xf_malloc(_Size XF_PLACE_ARGS_VAL);
 
-	if (p == NULL) InvalidOp();
+	#ifdef MVALIDATE_POINTERS
+	if (p == NULL)
+	{
+		_ASSERTE(p != NULL);
+		InvalidOp();
+	}
+	#endif
 
-#endif
+	if (g_LastDeletePtr == p)
+		g_LastDeletePtr = NULL;
+
 	return p;
 }
 
 
 void * __cdecl operator new[](size_t _Size)
 {
-	void * p = xf_malloc(
-	               _Size
-#ifdef TRACK_MEMORY_ALLOCATIONS
-	               ,__FILE__,__LINE__
-#endif
-	           );
-#ifdef MVALIDATE_POINTERS
-	_ASSERTE(p != NULL);
+	void * p = xf_malloc(_Size XF_PLACE_ARGS_VAL);
 
-	if (p == NULL) InvalidOp();
+	#ifdef MVALIDATE_POINTERS
+	if (p == NULL)
+	{
+		_ASSERTE(p != NULL);
+		InvalidOp();
+	}
+	#endif
 
-#endif
 	return p;
 }
 
 
 void __cdecl operator delete(void *p)
 {
-	xf_free(
-	           p
-#ifdef TRACK_MEMORY_ALLOCATIONS
-	           ,__FILE__,__LINE__
-#endif
-	       );
+	xf_free(p XF_PLACE_ARGS_VAL);
 }
 
 
 void __cdecl operator delete[](void *p)
 {
-	xf_free(
-	           p
-#ifdef TRACK_MEMORY_ALLOCATIONS
-	           ,__FILE__,__LINE__
-#endif
-	       );
+	xf_free(p XF_PLACE_ARGS_VAL);
 }
