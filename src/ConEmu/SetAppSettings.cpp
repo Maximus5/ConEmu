@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "SetAppSettings.h"
 
-char AppSettings::ExtendColors() const
+bool AppSettings::ExtendColors() const
 {
 	return (OverridePalette || !AppNames) ? isExtendColors : gpSet->AppStd.isExtendColors;
 }

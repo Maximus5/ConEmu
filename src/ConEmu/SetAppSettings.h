@@ -59,7 +59,7 @@ struct AppSettings
 
 	//reg->Load(L"ExtendColors", isExtendColors);
 	bool isExtendColors;
-	char ExtendColors() const;
+	bool ExtendColors() const;
 	//reg->Load(L"ExtendColorIdx", nExtendColorIdx);
 	BYTE nExtendColorIdx; // 0..15
 	BYTE ExtendColorIdx() const;

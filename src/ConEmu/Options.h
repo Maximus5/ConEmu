@@ -330,7 +330,7 @@ struct Settings
 
 		/* *** Background image *** */
 		//reg->Load(L"BackGround Image show", isShowBgImage);
-		char isShowBgImage;
+		BYTE isShowBgImage;
 		//reg->Load(L"BackGround Image", sBgImage, countof(sBgImage));
 		WCHAR sBgImage[MAX_PATH];
 		//reg->Load(L"bgImageDarker", bgImageDarker);
