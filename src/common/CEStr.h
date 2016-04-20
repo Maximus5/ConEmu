@@ -94,6 +94,7 @@ public:
 	LPCWSTR c_str(LPCWSTR asNullSubstitute = NULL) const;
 	int Compare(LPCWSTR asText, bool abCaseSensitive = false) const;
 	LPCWSTR Right(INT_PTR cchMaxCount) const;
+	LPCWSTR Mid(INT_PTR cchOffset) const;
 	CEStr& operator=(wchar_t* RVAL_REF asPtr);
 	CEStr& operator=(const wchar_t* asPtr);
 

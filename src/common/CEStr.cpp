@@ -126,6 +126,26 @@ LPCWSTR CEStr::Right(INT_PTR cchMaxCount) const
 	return ms_Val;
 }
 
+LPCWSTR CEStr::Mid(INT_PTR cchOffset) const
+{
+	CESTRLOG1("CEStr::Mid(%i)", cchOffset);
+
+	if (!ms_Val || (cchOffset < 0))
+	{
+		_ASSERTE(cchOffset >= 0);
+		return NULL;
+	}
+
+	INT_PTR iLen = GetLen();
+	if (iLen < cchOffset)
+	{
+		_ASSERTE(iLen >= cchOffset);
+		return NULL;
+	}
+
+	return (ms_Val + cchOffset);
+}
+
 CEStr& CEStr::operator=(wchar_t* RVAL_REF asPtr)
 {
 	CESTRLOG1("CEStr::=(wchar_t* RVAL_REF x%p)", asPtr);
