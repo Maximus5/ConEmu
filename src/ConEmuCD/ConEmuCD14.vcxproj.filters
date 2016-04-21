@@ -359,9 +359,4 @@
     </None>
     <None Include="!Todo.txt" />
   </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="header.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
-  </ItemGroup>
 </Project>

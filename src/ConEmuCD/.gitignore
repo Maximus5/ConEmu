@@ -1,7 +1,1 @@
-REG_*.cpp
-REG_*.h
-RE_*.cpp
-RE_*.h
-RegEditor_Lang.h
-RegHooks.h
-header.h
+.portable-reg/

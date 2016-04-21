@@ -140,9 +140,4 @@
     </None>
     <None Include="!Todo.txt" />
   </ItemGroup>
-  <ItemGroup>
-    <CustomBuildStep Include="header.h">
-      <Filter>1 - Registry</Filter>
-    </CustomBuildStep>
-  </ItemGroup>
 </Project>
