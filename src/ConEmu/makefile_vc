@@ -41,6 +41,7 @@ $(INTDIR)\BaseDragDrops.obj \
 $(INTDIR)\CEStr.obj \
 $(INTDIR)\CmdHistory.obj \
 $(INTDIR)\CmdLine.obj \
+$(INTDIR)\ColorFix.obj \
 $(INTDIR)\Common.obj \
 $(INTDIR)\ConEmu.obj \
 $(INTDIR)\ConEmuApp.obj \
@@ -349,6 +350,8 @@ $(INTDIR)\CEStr.obj: ../common/CEStr.cpp ../common/CEStr.h ../common/WUser.h
 $(INTDIR)\CmdHistory.obj: CmdHistory.cpp CmdHistory.h
 
 $(INTDIR)\CmdLine.obj: ../common/CmdLine.cpp ../common/CmdLine.h
+
+$(INTDIR)\ColorFix.obj: ColorFix.cpp ColorFix.h
 
 $(INTDIR)\Common.obj: ../common/Common.cpp ../common/Common.h
 

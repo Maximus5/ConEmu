@@ -213,6 +213,7 @@ protected:
 	static void OnBtn_ColorResetExt(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ColorSchemeSaveDelete(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_TrueColorer(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_VividColors(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_FadeInactive(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_Transparent(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_TransparentSeparate(HWND hDlg, WORD CB, BYTE uCheck);

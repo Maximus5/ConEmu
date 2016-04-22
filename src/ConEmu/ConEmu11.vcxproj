@@ -939,6 +939,7 @@
     <ClCompile Include="Background.cpp" />
     <ClCompile Include="BaseDragDrops.cpp" />
     <ClCompile Include="CmdHistory.cpp" />
+    <ClCompile Include="ColorFix.cpp" />
     <ClCompile Include="ConEmu.cpp" />
     <ClCompile Include="ConEmuApp.cpp" />
     <ClCompile Include="ConEmuCtrl.cpp" />
@@ -1119,6 +1120,7 @@
     <ClInclude Include="Background.h" />
     <ClInclude Include="BaseDragDrops.h" />
     <ClInclude Include="CmdHistory.h" />
+    <ClInclude Include="ColorFix.h" />
     <ClInclude Include="ConEmu.h" />
     <ClInclude Include="ConEmuApp.h" />
     <ClInclude Include="ConEmuCtrl.h" />

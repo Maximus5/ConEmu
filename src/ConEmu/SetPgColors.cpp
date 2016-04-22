@@ -81,6 +81,7 @@ LRESULT CSetPgColors::OnInitDialog(HWND hDlg, bool abInitial)
 	checkDlgButton(hDlg, cbExtendColors, gpSet->AppStd.isExtendColors ? BST_CHECKED : BST_UNCHECKED);
 	CSetDlgButtons::OnButtonClicked(hDlg, cbExtendColors, 0);
 	checkDlgButton(hDlg, cbTrueColorer, gpSet->isTrueColorer ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hDlg, cbVividColors, gpSet->isVividColors ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hDlg, cbFadeInactive, gpSet->isFadeInactive ? BST_CHECKED : BST_UNCHECKED);
 	SetDlgItemInt(hDlg, tFadeLow, gpSet->mn_FadeLow, FALSE);
 	SetDlgItemInt(hDlg, tFadeHigh, gpSet->mn_FadeHigh, FALSE);

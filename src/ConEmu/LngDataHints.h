@@ -180,6 +180,7 @@ static LngPredefined gsDataHints[] = {
 	{ cbUseWinNumber,          L"Enables switching of tabs (30 consoles) by their numbers (1,2,...,9,10,11,...). ‘Host-key’ is ‘Win’ key, by default." },
 	{ cbUseWinTab,             L"Disable Windows 7 Aero switch (Win+Tab) when ConEmu in foreground" },
 	{ cbVisible,               L"Show real console on startup" },
+	{ cbVividColors,           L"Change lightness of text if color difference\r\nbetween text and background is indistinguishable" },
 	{ lbCmdOutputCP,           L"Windows command processor (cmd.exe) may cause then output of internal commands to be OEM or Unicode.\r\nYou may force this selection, or use automatic selection (FAR2 -> Unicode)." },
 	{ lbCTSBlockSelection,     L"Choose modifier to starting ‘Block selection’ with mouse LeftClick+Drag" },
 	{ lbCTSEOL,                L"Choose preferred line separator (\\r\\n, \\n or \\r)" },

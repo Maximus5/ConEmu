@@ -555,6 +555,8 @@ void Settings::InitSettings()
 
 	isTrueColorer = true; // включим по умолчанию, ибо Far3
 
+	isVividColors = true;
+
 	AppStd.isExtendColors = false;
 	AppStd.nExtendColorIdx = CEDEF_ExtendColorIdx/*14*/;
 	AppStd.nTextColorIdx = AppStd.nBackColorIdx = CEDEF_BackColorAuto/*16*/;
@@ -2416,6 +2418,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		LoadAppSettings(reg, &AppStd/*, Colors*/);
 
 		reg->Load(L"TrueColorerSupport", isTrueColorer);
+		reg->Load(L"VividColors", isVividColors);
 		reg->Load(L"FadeInactive", isFadeInactive);
 		reg->Load(L"FadeInactiveLow", mn_FadeLow);
 		reg->Load(L"FadeInactiveHigh", mn_FadeHigh);
@@ -3516,6 +3519,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		SaveAppSettings(reg, &AppStd/*, Colors*/);
 
 		reg->Save(L"TrueColorerSupport", isTrueColorer);
+		reg->Save(L"VividColors", isVividColors);
 		reg->Save(L"FadeInactive", isFadeInactive);
 		reg->Save(L"FadeInactiveLow", mn_FadeLow);
 		reg->Save(L"FadeInactiveHigh", mn_FadeHigh);

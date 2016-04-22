@@ -440,6 +440,7 @@
       <File RelativePath=".\Background.cpp" />
       <File RelativePath=".\BaseDragDrops.cpp" />
       <File RelativePath=".\CmdHistory.cpp" />
+      <File RelativePath=".\ColorFix.cpp" />
       <File RelativePath=".\ConEmu.cpp" />
       <File RelativePath=".\ConEmuApp.cpp" />
       <File RelativePath=".\ConEmuCtrl.cpp" />
@@ -619,6 +620,7 @@
       <File RelativePath=".\Background.h" />
       <File RelativePath=".\BaseDragDrops.h" />
       <File RelativePath=".\CmdHistory.h" />
+      <File RelativePath=".\ColorFix.h" />
       <File RelativePath=".\ConEmu.h" />
       <File RelativePath=".\ConEmuApp.h" />
       <File RelativePath=".\ConEmuCtrl.h" />

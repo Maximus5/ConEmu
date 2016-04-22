@@ -327,6 +327,9 @@ struct Settings
 		//reg->Load(L"TrueColorerSupport", isTrueColorer);
 		bool isTrueColorer;
 
+		//reg->Load(L"VividColors", isVividColors);
+		bool isVividColors;
+
 
 		/* *** Background image *** */
 		//reg->Load(L"BackGround Image show", isShowBgImage);

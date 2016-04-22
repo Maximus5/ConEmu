@@ -5671,6 +5671,7 @@ void CRealBuffer::PrepareColorTable(const AppSettings* pApp, CharAttr** pcaTable
 
 	// Optimized, palettes are recalculated only when changes are detected
 	mp_RCon->mp_Palette->UpdateColorTable(mp_RCon->mp_VCon->GetColors()/*[16+]*/,
+		gpSet->isVividColors,
 		bExtendFonts, nFontNormalColor, nFontBoldColor, nFontItalicColor);
 
 	if (pcaTableOrg)

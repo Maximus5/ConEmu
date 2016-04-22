@@ -576,6 +576,7 @@ BEGIN
     RTEXT           "High:",stColorFadeHigh,79,223,43,8
     EDITTEXT        tFadeHigh,123,220,24,12,ES_AUTOHSCROLL
     CONTROL         "TrueMod (24bit color) support",cbTrueColorer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,209,182,8
+    CONTROL         "Adjust lightness of indistinguishable text",cbVividColors,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,223,182,8
     PUSHBUTTON      "Save",cbColorSchemeSave,276,2,50,14,WS_DISABLED
     PUSHBUTTON      "Delete...",cbColorSchemeDelete,328,2,50,14,WS_DISABLED
     RTEXT           "Text:",stColorText,7,89,42,8

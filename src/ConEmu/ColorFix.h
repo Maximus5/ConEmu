@@ -31,32 +31,35 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
-#include "../common/RgnDetect.h"
+typedef double real_type;
 
-class CRealConsole;
-
-class CRConPalette
+struct ColorFix
 {
-public:
-	CRealConsole* mp_RCon;
-	CharAttr m_TableOrg[0x100];
-	CharAttr m_TableExt[0x100];
-	COLORREF m_Colors[32];
+	// RGB
+	union
+	{
+		struct
+		{
+			BYTE r, g, b, dummy;
+		};
+		COLORREF rgb;
+	};
 
-protected:
-	bool mb_Initialized;
-	bool mb_VividColors;
-	bool mb_ExtendFonts;
-	BYTE mn_FontNormalColor, mn_FontBoldColor, mn_FontItalicColor;
+	// Lab
+	struct
+	{
+		real_type L, A, B;
+	};
 
-public:
-	CRConPalette(CRealConsole* apRCon);
-	virtual ~CRConPalette();
+	ColorFix();
+	ColorFix(COLORREF a_rgb);
+	ColorFix(real_type a_L, real_type a_a, real_type a_b);
+	ColorFix(const ColorFix& clr);
 
-public:
-	// Methods
-	void UpdateColorTable(COLORREF *apColors/*[32]*/,
-		bool bVividColors,
-		bool bExtendFonts, BYTE nFontNormalColor, BYTE nFontBoldColor, BYTE nFontItalicColor);
+	void ToLab();
+	void ToRGB();
 
+	real_type DeltaE(ColorFix color);
+
+	bool PerceivableColor(COLORREF back/*, COLORREF alt*/, ColorFix& pColor, real_type* oldDE = NULL, real_type* newDE = NULL);
 };

@@ -599,6 +599,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbTrueColorer:
 			OnBtn_TrueColorer(hDlg, CB, uCheck);
 			break;
+		case cbVividColors:
+			OnBtn_VividColors(hDlg, CB, uCheck);
+			break;
 		case cbFadeInactive:
 			OnBtn_FadeInactive(hDlg, CB, uCheck);
 			break;
@@ -3705,6 +3708,17 @@ void CSetDlgButtons::OnBtn_TrueColorer(HWND hDlg, WORD CB, BYTE uCheck)
 	gpConEmu->Update(true);
 
 } // cbTrueColorer
+
+
+// cbVividColors
+void CSetDlgButtons::OnBtn_VividColors(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbVividColors);
+
+	gpSet->isVividColors = _bool(uCheck);
+	gpConEmu->Update(true);
+
+} // cbVividColors
 
 
 // cbFadeInactive

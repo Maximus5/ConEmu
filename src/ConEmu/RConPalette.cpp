@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+#include "ColorFix.h"
 #include "Options.h"
 #include "RConPalette.h"
 #include "RealConsole.h"
@@ -40,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 CRConPalette::CRConPalette(CRealConsole* apRCon)
 	: mp_RCon(apRCon)
 	, mb_Initialized(false)
+	, mb_VividColors(false)
 	, mn_FontNormalColor(0)
 	, mn_FontBoldColor(0)
 	, mn_FontItalicColor(0)
@@ -54,9 +56,11 @@ CRConPalette::~CRConPalette()
 }
 
 void CRConPalette::UpdateColorTable(COLORREF *apColors/*[32]*/,
+		bool bVividColors,
 		bool bExtendFonts, BYTE nFontNormalColor, BYTE nFontBoldColor, BYTE nFontItalicColor)
 {
 	bool bMainChanged = !mb_Initialized
+		|| (mb_VividColors != bVividColors)
 		|| (memcmp(m_Colors, apColors, sizeof(m_Colors)) != 0);
 	bool bExtChanged = bMainChanged
 		|| ((mb_ExtendFonts != bExtendFonts)
@@ -74,6 +78,8 @@ void CRConPalette::UpdateColorTable(COLORREF *apColors/*[32]*/,
 
 	if (bMainChanged)
 	{
+		real_type oldDE = 0, newDE = 0;
+		wchar_t szLog[200];
 		u32 nColorIndex = 0;
 
 		for (u32 nBack = 0; nBack <= 0xF; nBack++)
@@ -85,6 +91,27 @@ void CRConPalette::UpdateColorTable(COLORREF *apColors/*[32]*/,
 				lca.nBackIdx = nBack;
 				lca.crForeColor = lca.crOrigForeColor = apColors[lca.nForeIdx];
 				lca.crBackColor = lca.crOrigBackColor = apColors[lca.nBackIdx];
+
+				// New feature, apply modified lightness for text colors
+				// if text color is indistinguishable with background
+				if (bVividColors && (lca.crForeColor != lca.crBackColor))
+				{
+					ColorFix textColor(lca.crForeColor);
+					ColorFix vivid;
+					if (textColor.PerceivableColor(lca.crBackColor, vivid, &oldDE, &newDE))
+					{
+						if (mp_RCon->isLogging())
+						{
+							swprintf_s(szLog, L"VividColor [Bg=%u] {%u %u %u} [Fg=%u] {%u %u %u} [DE=%.2f] >> {%u %u %u} [DE=%.2f]",
+								nBack, getR(lca.crBackColor), getG(lca.crBackColor), getB(lca.crBackColor),
+								nFore, textColor.r, textColor.g, textColor.b, oldDE,
+								vivid.r, vivid.g, vivid.b, newDE);
+							mp_RCon->LogString(szLog);
+						}
+
+						lca.crForeColor = vivid.rgb;
+					}
+				}
 
 				m_TableOrg[nColorIndex] = lca;
 			}
@@ -140,6 +167,7 @@ void CRConPalette::UpdateColorTable(COLORREF *apColors/*[32]*/,
 
 	// Done, remember settings
 	mb_Initialized = true;
+	mb_VividColors = bVividColors;
 	mb_ExtendFonts = bExtendFonts;
 	mn_FontNormalColor = nFontNormalColor;
 	mn_FontBoldColor = nFontBoldColor;
