@@ -570,12 +570,12 @@ BEGIN
     GROUPBOX        "Graphic enhancement",gbColorEnhancement,4,196,375,41
     RTEXT           "Schemes:",stColorSchemes,5,5,63,8
     COMBOBOX        lbDefaultColors,74,3,195,230,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "TrueMod (24bit color) support",cbTrueColorer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,209,182,8
     CONTROL         "Fade when inactive",cbFadeInactive,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,209,108,8
     RTEXT           "Low:",stColorFadeLow,7,223,45,8
     EDITTEXT        tFadeLow,54,220,24,12,ES_AUTOHSCROLL
     RTEXT           "High:",stColorFadeHigh,79,223,43,8
     EDITTEXT        tFadeHigh,123,220,24,12,ES_AUTOHSCROLL
+    CONTROL         "TrueMod (24bit color) support",cbTrueColorer,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,193,209,182,8
     PUSHBUTTON      "Save",cbColorSchemeSave,276,2,50,14,WS_DISABLED
     PUSHBUTTON      "Delete...",cbColorSchemeDelete,328,2,50,14,WS_DISABLED
     RTEXT           "Text:",stColorText,7,89,42,8
