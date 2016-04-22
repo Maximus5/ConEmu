@@ -509,7 +509,7 @@ HRESULT CDragDrop::FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData)
 
 	wchar_t temp[64];
 	_wsprintf(temp, SKIPLEN(countof(temp)) L"Copying %i of %i (%u%c)", (mn_CurFile+1), mn_AllFiles, (DWORD)nPrepared, KM);
-	SetWindowText(ghWnd, temp);
+	gpConEmu->SetTitle(ghWnd, temp);
 	return S_OK;
 }
 

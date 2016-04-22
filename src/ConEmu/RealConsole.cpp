@@ -13203,7 +13203,7 @@ void CRealConsole::OnTitleChanged()
 	#endif
 
 	wcscpy_c(Title, TitleCmp);
-	SetWindowText(mp_VCon->GetView(), TitleCmp);
+	mp_ConEmu->SetTitle(mp_VCon->GetView(), TitleCmp, true);
 
 	if (tabs.nActiveType & (fwt_Viewer|fwt_Editor))
 	{

@@ -3489,7 +3489,7 @@ void CConEmuMain::DebugStep(LPCWSTR asMsg, BOOL abErrorSeverity/*=FALSE*/)
 
 				if (abErrorSeverity) bWasDbgError = true;
 
-				SetWindowText(ghWnd, asMsg);
+				SetTitle(ghWnd, asMsg);
 			}
 		}
 		else
@@ -3539,6 +3539,82 @@ LPCWSTR CConEmuMain::GetDefaultTabLabel()
 void CConEmuMain::SetTitleTemplate(LPCWSTR asTemplate)
 {
 	lstrcpyn(TitleTemplate, asTemplate ? asTemplate : L"", countof(TitleTemplate));
+}
+
+// Thread-safe SetWindowText for VCon
+// abTrySync == true is allowed only for asTitle pointing to member variables
+void CConEmuMain::SetTitle(HWND ahWnd, LPCWSTR asTitle, bool abTrySync /*= false*/)
+{
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return;
+	}
+	if (!ahWnd || !asTitle)
+	{
+		return;
+	}
+
+	if (gpSet->isLogging())
+	{
+		wchar_t szHwnd[16];
+		CEStr lsMsg(L"SetTitle: hWnd=x", _ultow(LODWORD(ahWnd), szHwnd, 16), L" Title=`", asTitle, L"`");
+		LogString(lsMsg);
+	}
+
+	if (isMainThread())
+	{
+		SetWindowText(ahWnd, asTitle);
+		return;
+	}
+
+	if (!IsWindow(ahWnd))
+	{
+		return;
+	}
+
+	// Try to call with timeout? May be main thread is unlocked now...
+	if (abTrySync)
+	{
+		DWORD_PTR dwResult = 0;
+		LRESULT lRc = SendMessageTimeout(ahWnd, WM_SETTEXT, 0, (LPARAM)asTitle, SMTO_ABORTIFHUNG, 500, &dwResult);
+		if (lRc != 0)
+		{
+			return; // OK
+		}
+		UNREFERENCED_PARAMETER(dwResult);
+	}
+
+	// Well, we have to post execution to the main thread...
+	struct impl
+	{
+		HWND hWnd;
+		wchar_t* psTitle;
+		CConEmuMain* pConEmu;
+		impl(HWND ahWnd, LPCWSTR asTitle, CConEmuMain* apConEmu)
+		{
+			hWnd = ahWnd;
+			psTitle = lstrdup(asTitle);
+			pConEmu = apConEmu;
+		};
+		static LRESULT setTitle(LPARAM lParam)
+		{
+			impl* p = (impl*)lParam;
+			if (gpSet->isLogging())
+			{
+				wchar_t szHwnd[16];
+				CEStr lsMsg(L"SetTitle(async): hWnd=x", _ultow(LODWORD(p->hWnd), szHwnd, 16), L" Title=`", p->psTitle, L"`");
+				p->pConEmu->LogString(lsMsg);
+			}
+			if (IsWindow(p->hWnd))
+				SetWindowText(p->hWnd, p->psTitle);
+			free(p->psTitle);
+			SafeDelete(p);
+			return TRUE;
+		};
+	};
+
+	CallMainThread(false, impl::setTitle, (LPARAM)new impl(ahWnd, asTitle, this));
 }
 
 bool CConEmuMain::ExecuteProcessPrepare()
@@ -5184,7 +5260,7 @@ void CConEmuMain::UpdateTitle()
 		lstrcpyn(Title, pszNewTitle, countof(Title));
 
 
-	// SetWindowText(ghWnd, psTitle) вызывается здесь
+	// SetTitle(ghWnd, psTitle) вызывается здесь
 	// Там же обновится L"[%i/%i] " если несколько консолей а табы отключены
 	UpdateProgress(/*TRUE*/);
 	Icon.UpdateTitle();
@@ -5291,11 +5367,11 @@ void CConEmuMain::UpdateProgress()
 	else
 		psTitle = pszFixTitle;
 
-	SetWindowText(ghWnd, psTitle);
+	SetTitle(ghWnd, psTitle);
 
 	// Задел на будущее
 	if (ghWndApp)
-		SetWindowText(ghWndApp, psTitle);
+		SetTitle(ghWndApp, psTitle);
 }
 
 #ifndef _WIN64

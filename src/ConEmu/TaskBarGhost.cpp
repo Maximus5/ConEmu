@@ -534,7 +534,7 @@ LPCWSTR CTaskBarGhost::CheckTitle(BOOL abSkipValidation /*= FALSE*/)
 		if (wcsncmp(ms_LastTitle, pszTitle, countof(ms_LastTitle)) != 0)
 		{
 			lstrcpyn(ms_LastTitle, pszTitle, countof(ms_LastTitle));
-			SetWindowText(mh_Ghost, pszTitle);
+			gpConEmu->SetTitle(mh_Ghost, pszTitle);
 		}
 	}
 

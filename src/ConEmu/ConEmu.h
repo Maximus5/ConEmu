@@ -569,6 +569,7 @@ class CConEmuMain
 		LPCWSTR GetDefaultTabLabel(); // L"ConEmu"
 		LPCTSTR GetLastTitle(bool abUseDefault=true);
 		LPCTSTR GetVConTitle(int nIdx);
+		void SetTitle(HWND ahWnd, LPCWSTR asTitle, bool abTrySync = false);
 		void SetTitleTemplate(LPCWSTR asTemplate);
 		int GetActiveVCon(CVConGuard* pVCon = NULL, int* pAllCount = NULL);
 		int isVConValid(CVirtualConsole* apVCon);
