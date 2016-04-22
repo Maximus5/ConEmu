@@ -10,6 +10,8 @@ set commons=../common/CEStr.cpp ../common/Memory.cpp ../common/WObjects.cpp ../c
             ../common/MStrSafe.cpp ../common/MStrDup.cpp ../common/MAssert.cpp ../common/WThreads.cpp ../common/RConStartArgs.cpp ^
             ../common/MProcess.cpp
 
+set colorcmn=../ConEmu/ColorFix.cpp
+
 set cpp_def=/nologo /D_UNICODE /DUNICODE /D_DEBUG /DDEBUG /DCE_UNIT_TEST=1
 set lnk_def=/MTd /link user32.lib advapi32.lib
 
@@ -69,6 +71,10 @@ goto :EOF
 :test1
 call :test_cl_luck_9 test1.cpp %commons% %lnk_def%
 call :test_cl_luck_14 test1.cpp %commons% %lnk_def%
+goto :EOF
+:test2
+call :test_cl_luck_9 test2.cpp %colorcmn% %lnk_def%
+call :test_cl_luck_14 test2.cpp %colorcmn% %lnk_def%
 goto :EOF
 
 
