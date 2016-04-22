@@ -12,6 +12,8 @@
 #define ucRightScroll 0x25BA/*►*/
 #define ucArrowUp     0x2191 // L'↑'
 #define ucArrowDown   0x2193 // L'↓'
+#define ucTrgLeft     0xE0B2 // L''
+#define ucTrgRight    0xE0B0 // L''
 
 /* Spaces */
 #define ucSpace 0x20

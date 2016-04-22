@@ -3046,7 +3046,7 @@ void CVirtualConsole::UpdateText()
 
 			//TODO: ETO_GLYPH_INDEX, GetCharacterPlacement
 
-			// блоки 25%, 50%, 75%, 100%
+			// Blocks ░▒▓█ (25%, 50%, 75%, 100%)
 			if (bEnhanceGraphics && (part->Flags & TRF_TextProgress))
 			{
 				// It may be done on first step, but if we do not do that here,
@@ -3065,6 +3065,24 @@ void CVirtualConsole::UpdateText()
 					FillRect((HDC)m_DC, &rect, hbr);
 					nFrom = nTo;
 				}
+			}
+			// Lefward  and Rightward  triangles (used in some custom prompt layouts and status bars)
+			else if (bEnhanceGraphics && (part->Flags & TRF_TextTriangles))
+			{
+				HBRUSH hbrBack = PartBrush(ucBox100, attr.crBackColor, attr.crBackColor);
+				FillRect((HDC)m_DC, &rect, hbrBack);
+
+				HBRUSH hbrFore = PartBrush(ucBox100, attr.crBackColor, attr.crOrigForeColor);
+				bool bRight = (part->Chars[0] == ucTrgRight);
+				POINT ptTrg[] = {
+					{bRight ? rect.left : rect.right, rect.top},
+					{bRight ? rect.right : rect.left, (rect.top + rect.bottom)/2},
+					{bRight ? rect.left : rect.right, rect.bottom}
+				};
+				HRGN hrgn = CreatePolygonRgn(ptTrg, countof(ptTrg), WINDING);
+				//Polygon((HDC)m_DC, ptTrg, countof(ptTrg));
+				FillRgn((HDC)m_DC, hrgn, hbrFore);
+				DeleteObject(hrgn);
 			}
 			else if ((pszDrawLine == tmpOemWide) && (charSet == OEM_CHARSET))
 			{

@@ -56,10 +56,13 @@ const TextPartFlags
 								   // pseudographic/space parts (like '═' or '─' or ' ')
 								   // to avoid dashed frames or broken dialog borders,
 								   // especially with proportional fonts
+	TRF_TextTriangles    = 0x4000, // Lefward and Rightward triangles (used in some custom prompt layouts and status bars)
+
 	TRF_CompareMask = (
 		TRF_PosFixed|TRF_PosRecommended
 		|TRF_TextAlternative|TRF_TextPseudograph
 		|TRF_TextSeparate|TRF_TextProgress|TRF_TextScroll
+		|TRF_TextTriangles
 		|TRF_ExpandGraphics
 		),
 	// TODO: Ligatures
@@ -210,6 +213,7 @@ bool isCharPseudoFree(ucs32 inChar);
 bool isCharBorderVertical(ucs32 inChar);
 bool isCharProgress(ucs32 inChar);
 bool isCharScroll(ucs32 inChar);
+bool isCharTriangles(ucs32 inChar);
 bool isCharSeparate(ucs32 inChar);
 bool isCharSpace(ucs32 inChar);
 bool isCharSpaceSingle(ucs32 inChar);

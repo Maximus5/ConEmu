@@ -130,6 +130,11 @@ bool isCharScroll(ucs32 inChar)
 	return isScrollbar;
 }
 
+bool isCharTriangles(ucs32 inChar)
+{
+	return ((inChar == ucTrgLeft) || (inChar == ucTrgRight));
+}
+
 bool isCharSeparate(ucs32 inChar)
 {
 	// Здесь возвращаем те символы, которые нельзя рисовать вместе с обычными буквами.
@@ -557,6 +562,10 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 			if (!bPair)
 			while ((j2 < TextWidth) && (ConAttrLine[j2] == attr) && isCharScroll(ConCharLine[j2]))
 				j2++;
+		}
+		else if (bEnhanceGraphics && isCharTriangles(wc))
+		{
+			p->Flags = TRF_TextTriangles;
 		}
 		// Miscellaneous borders
 		else if (isCharPseudographics(wc))
