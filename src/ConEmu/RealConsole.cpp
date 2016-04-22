@@ -10055,7 +10055,7 @@ bool CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 
 			DWORD dwTickStart = timeGetTime();
 
-			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), &in, ghWnd);
+			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), &in, ghWnd, TRUE/*Async*/);
 
 			gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
