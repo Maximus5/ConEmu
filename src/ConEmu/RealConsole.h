@@ -233,6 +233,7 @@ class CDynDialog;
 class MFileLog;
 class CRConFiles;
 class CAltNumpad;
+class CRConPalette;
 struct AppSettings;
 struct TermX;
 
@@ -809,6 +810,8 @@ class CRealConsole
 		CRealBuffer* mp_SBuf; // Временный буфер (полный) для блокирования содержимого (выделение/прокрутка/поиск)
 		CRealBuffer* mp_ABuf; // Активный буфер консоли -- ссылка на один из mp_RBuf/mp_EBuf/mp_SBuf
 		bool mb_ABufChaged; // Сменился активный буфер, обновить консоль
+
+		CRConPalette* mp_Palette;
 
 		int mn_DefaultBufferHeight;
 		DWORD mn_LastInactiveRgnCheck;

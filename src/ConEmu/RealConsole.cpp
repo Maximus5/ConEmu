@@ -73,6 +73,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MyClipboard.h"
 #include "OptionsClass.h"
 #include "RConFiles.h"
+#include "RConPalette.h"
 #include "RealBuffer.h"
 #include "RealConsole.h"
 #include "RunQueue.h"
@@ -359,6 +360,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 
 	mn_DefaultBufferHeight = gpSetCls->bForceBufferHeight ? gpSetCls->nForceBufferHeight : gpSet->DefaultBufferHeight;
 
+	mp_Palette = new CRConPalette(this);
+
 	mp_RBuf = new CRealBuffer(this);
 	mp_EBuf = NULL;
 	mp_SBuf = NULL;
@@ -484,6 +487,8 @@ CRealConsole::~CRealConsole()
 	if (mp_SBuf)
 		{ delete mp_SBuf; mp_SBuf = NULL; }
 	mp_ABuf = NULL;
+
+	SafeDelete(mp_Palette);
 
 	SafeCloseHandle(mh_StartExecuted);
 

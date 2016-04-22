@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Menu.h"
 #include "MyClipboard.h"
 #include "OptionsClass.h"
+#include "RConPalette.h"
 #include "RealBuffer.h"
 #include "RealConsole.h"
 #include "Status.h"
@@ -504,8 +505,8 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 		WORD*     pnaDst = con.pConAttr;
 		wchar_t   ch;
 
-		CharAttr lcaTableExt[0x100], lcaTableOrg[0x100]; // crForeColor, crBackColor, nFontIndex, nForeIdx, nBackIdx, crOrigForeColor, crOrigBackColor
-		PrepareColorTable(false/*bExtendFonts*/, lcaTableExt, lcaTableOrg);
+		CharAttr *lcaTableOrg = NULL;
+		PrepareColorTable(NULL, NULL, &lcaTableOrg);
 
 		DWORD nMax = min(cchCellCount,cchMaxCellCount);
 		// Расфуговка буфера на консольные атрибуты
@@ -5650,52 +5651,32 @@ bool CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,
 	return TRUE;
 }
 
-void CRealBuffer::PrepareColorTable(bool bExtendFonts, CharAttr (&lcaTableExt)[0x100], CharAttr (&lcaTableOrg)[0x100], const AppSettings* pApp /*= NULL*/)
+void CRealBuffer::PrepareColorTable(const AppSettings* pApp, CharAttr** pcaTableExt, CharAttr** pcaTableOrg)
 {
-	CharAttr lca; // crForeColor, crBackColor, nFontIndex, nForeIdx, nBackIdx, crOrigForeColor, crOrigBackColor
-	//COLORREF lcrForegroundColors[0x100], lcrBackgroundColors[0x100];
-	//BYTE lnForegroundColors[0x100], lnBackgroundColors[0x100], lnFontByIndex[0x100];
-	int  nColorIndex = 0;
-	if (!pApp)
-		pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
-	BYTE nFontNormalColor = pApp->FontNormalColor();
-	BYTE nFontBoldColor = pApp->FontBoldColor();
-	BYTE nFontItalicColor = pApp->FontItalicColor();
+	bool bExtendFonts = false;
+	BYTE nFontNormalColor = 0;
+	BYTE nFontBoldColor = 0;
+	BYTE nFontItalicColor = 0;
 
-	for (int nBack = 0; nBack <= 0xF; nBack++)
+	if (pApp)
 	{
-		for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++)
-		{
-			memset(&lca, 0, sizeof(lca));
-			lca.nForeIdx = nFore;
-			lca.nBackIdx = nBack;
-			lca.crForeColor = lca.crOrigForeColor = mp_RCon->mp_VCon->mp_Colors[lca.nForeIdx];
-			lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_VCon->mp_Colors[lca.nBackIdx];
-			lcaTableOrg[nColorIndex] = lca;
+		// Don't query application, use passed by argument only
+		// pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 
-			if (bExtendFonts)
-			{
-				if (nBack == nFontBoldColor)  // nFontBoldColor may be -1, тогда мы сюда не попадаем
-				{
-					if (nFontNormalColor != 0xFF)
-						lca.nBackIdx = nFontNormalColor;
-
-					lca.nFontIndex = fnt_Bold;
-					lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_VCon->mp_Colors[lca.nBackIdx];
-				}
-				else if (nBack == nFontItalicColor)  // nFontItalicColor may be -1, тогда мы сюда не попадаем
-				{
-					if (nFontNormalColor != 0xFF)
-						lca.nBackIdx = nFontNormalColor;
-
-					lca.nFontIndex = fnt_Italic;
-					lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_VCon->mp_Colors[lca.nBackIdx];
-				}
-			}
-
-			lcaTableExt[nColorIndex] = lca;
-		}
+		bExtendFonts = pApp->ExtendFonts();
+		nFontNormalColor = pApp->FontNormalColor();
+		nFontBoldColor = pApp->FontBoldColor();
+		nFontItalicColor = pApp->FontItalicColor();
 	}
+
+	// Optimized, palettes are recalculated only when changes are detected
+	mp_RCon->mp_Palette->UpdateColorTable(mp_RCon->mp_VCon->GetColors()/*[16+]*/,
+		bExtendFonts, nFontNormalColor, nFontBoldColor, nFontItalicColor);
+
+	if (pcaTableOrg)
+		*pcaTableOrg = mp_RCon->mp_Palette->m_TableOrg;
+	if (pcaTableExt)
+		*pcaTableExt = bExtendFonts ? mp_RCon->mp_Palette->m_TableExt : mp_RCon->mp_Palette->m_TableOrg;
 }
 
 void CRealBuffer::ResetConData()
@@ -5762,18 +5743,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	BYTE nExtendColorIdx = pApp->ExtendColorIdx();
 	bool bExtendFonts = pApp->ExtendFonts();
 	bool lbFade = mp_RCon->mp_VCon->isFade;
-	//BOOL bUseColorKey = gpSet->isColorKey  // Должен быть включен в настройке
-	//	&& mp_RCon->isFar(TRUE/*abPluginRequired*/) // в фаре загружен плагин (чтобы с цветами не проколоться)
-	//	&& (mp_tabs && mn_tabsCount>0 && mp_tabs->Current) // Текущее окно - панели
-	//	&& !(mb_LeftPanel && mb_RightPanel) // и хотя бы одна панель погашена
-	//	&& (!con.m_ci.bVisible || con.m_ci.dwSize<30) // и сейчас НЕ включен режим граббера
-	//	;
-	CharAttr lcaTableExt[0x100], lcaTableOrg[0x100], *lcaTable; // crForeColor, crBackColor, nFontIndex, nForeIdx, nBackIdx, crOrigForeColor, crOrigBackColor
-	//COLORREF lcrForegroundColors[0x100], lcrBackgroundColors[0x100];
-	//BYTE lnForegroundColors[0x100], lnBackgroundColors[0x100], lnFontByIndex[0x100];
+	CharAttr *lcaTableExt, *lcaTableOrg, *lcaTable;
 
-	TODO("OPTIMIZE: В принципе, это можно делать не всегда, а только при изменениях");
-	PrepareColorTable(bExtendFonts, lcaTableExt, lcaTableOrg, pApp);
+	PrepareColorTable(pApp, &lcaTableExt, &lcaTableOrg);
 
 	lcaTable = lcaTableOrg;
 
@@ -5787,7 +5759,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	wchar_t wSetChar = L' ';
 	CharAttr lcaDef;
 	BYTE nDefTextAttr = MAKECONCOLOR(mp_RCon->GetDefaultTextColorIdx(), mp_RCon->GetDefaultBackColorIdx());
-	_ASSERTE(nDefTextAttr<countof(lcaTableOrg));
+	_ASSERTE(nDefTextAttr<countof(mp_RCon->mp_Palette->m_TableOrg));
 	lcaDef = lcaTable[nDefTextAttr]; // LtGray on Black
 
 	#ifdef _DEBUG
@@ -6027,7 +5999,8 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 					break;
 				}
 
-				if (nY == nExtendStartsY) lcaTable = lcaTableExt;
+				if (nY == nExtendStartsY)
+					lcaTable = lcaTableExt;
 
 				// Текст
 				memmove(pszDst, pszSrc, cbLineSize);
@@ -6135,9 +6108,11 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 							{
 								// Have to change the color to adjacent(?) cell
 								lca.nBackIdx = attrBackLast;
+								// For the background nExtendColorIdx we use upper
+								// palette range for text: 16..31 instead of 0..15
 								lca.nForeIdx += 0x10;
-								lca.crForeColor = lca.crOrigForeColor = mp_RCon->mp_VCon->mp_Colors[lca.nForeIdx];
-								lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_VCon->mp_Colors[lca.nBackIdx];
+								lca.crForeColor = lca.crOrigForeColor = mp_RCon->mp_Palette->m_Colors[lca.nForeIdx];
+								lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_Palette->m_Colors[lca.nBackIdx];
 							}
 							else if (lbStoreBackLast)
 							{
@@ -6279,10 +6254,12 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 			// для прямоугольника выделения сбрасываем прозрачность и ставим стандартный цвет выделения (lcaSel)
 			//CharAttr lcaSel = lcaTable[gpSet->isCTSColorIndex]; // Black on LtGray
+			_ASSERTE((gpSet->isCTSColorIndex >= 0x00) && (gpSet->isCTSColorIndex <= 0xFF));
 			BYTE nForeIdx = CONFORECOLOR(gpSet->isCTSColorIndex);
-			COLORREF crForeColor = mp_RCon->mp_VCon->mp_Colors[nForeIdx];
 			BYTE nBackIdx = CONBACKCOLOR(gpSet->isCTSColorIndex);
-			COLORREF crBackColor = mp_RCon->mp_VCon->mp_Colors[nBackIdx];
+			const CharAttr& lcaSel = mp_RCon->mp_Palette->m_TableOrg[gpSet->isCTSColorIndex];
+			COLORREF crForeColor = lcaSel.crForeColor;
+			COLORREF crBackColor = lcaSel.crBackColor;
 			int nX1, nX2;
 
 
@@ -6484,7 +6461,7 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 	m_Rgn.SetNeedTransparency(gpSet->isUserScreenTransparent);
 	m_Rgn.SetFarRect(&rcFarRect);
 	TODO("При загрузке дампа хорошо бы из него и палитру фара доставать/отдавать");
-	m_Rgn.PrepareTransparent(&FI, mp_RCon->mp_VCon->mp_Colors, pSbi, pChar, pAttr, nWidth, nHeight);
+	m_Rgn.PrepareTransparent(&FI, mp_RCon->mp_VCon->GetColors(), pSbi, pChar, pAttr, nWidth, nHeight);
 
 	#ifdef _DEBUG
 	int nCount = m_Rgn.GetDetectedDialogs(0,NULL,NULL);

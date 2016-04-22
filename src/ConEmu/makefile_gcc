@@ -115,6 +115,7 @@ SRCS = \
 		OptionsHelp.cpp    \
 		PushInfo.cpp       \
 		RConFiles.cpp      \
+		RConPalette.cpp    \
 		RealBuffer.cpp     \
 		RealConsole.cpp    \
 		RealServer.cpp     \

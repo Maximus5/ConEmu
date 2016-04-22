@@ -483,6 +483,7 @@
       <File RelativePath=".\OptionsHelp.cpp" />
       <File RelativePath=".\PushInfo.cpp" />
       <File RelativePath=".\RConFiles.cpp" />
+      <File RelativePath=".\RConPalette.cpp" />
       <File RelativePath=".\RealBuffer.cpp" />
       <File RelativePath=".\RealConsole.cpp" />
       <File RelativePath=".\RealServer.cpp" />
@@ -667,6 +668,7 @@
       <File RelativePath=".\OptionsHelp.h" />
       <File RelativePath=".\PushInfo.h" />
       <File RelativePath=".\RConFiles.h" />
+      <File RelativePath=".\RConPalette.h" />
       <File RelativePath=".\RealBuffer.h" />
       <File RelativePath=".\RealConsole.h" />
       <File RelativePath=".\RealServer.h" />

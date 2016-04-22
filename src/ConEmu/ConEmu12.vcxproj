@@ -1049,6 +1049,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClCompile Include="OptionsHelp.cpp" />
     <ClCompile Include="PushInfo.cpp" />
     <ClCompile Include="RConFiles.cpp" />
+    <ClCompile Include="RConPalette.cpp" />
     <ClCompile Include="RealBuffer.cpp" />
     <ClCompile Include="RealConsole.cpp" />
     <ClCompile Include="RealServer.cpp" />
@@ -1235,6 +1236,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClInclude Include="OptionsHelp.h" />
     <ClInclude Include="PushInfo.h" />
     <ClInclude Include="RConFiles.h" />
+    <ClInclude Include="RConPalette.h" />
     <ClInclude Include="RealBuffer.h" />
     <ClInclude Include="RealConsole.h" />
     <ClInclude Include="RealServer.h" />
