@@ -368,6 +368,13 @@ void CAltNumpad::DumpChars(wchar_t* asChars)
 	CRealConsole* pRCon = VCon->RCon();
 	_ASSERTE(pRCon);
 
+	// Post AltRelease?
+	if (!mb_External)
+		pRCon->PostKeyUp(VK_MENU, 0, 0);
+
+	pRCon->PostString(asChars, wcslen(asChars));
+
+#if 0
 	WORD vkKey = 0;
 	int scanCode = -1;
 
@@ -400,6 +407,7 @@ void CAltNumpad::DumpChars(wchar_t* asChars)
 		// Just post it as simple key-press
 		pRCon->PostString(asChars, wcslen(asChars));
 	}
+#endif
 }
 
 // Convert collected codebase to wchar_t sequence
