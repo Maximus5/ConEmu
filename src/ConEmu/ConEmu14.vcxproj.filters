@@ -483,6 +483,9 @@
     <ClCompile Include="..\common\MProcessBits.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ColorFix.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="DlgItemHelper.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
@@ -1054,6 +1057,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\MToolHelp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ColorFix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DlgItemHelper.h">
