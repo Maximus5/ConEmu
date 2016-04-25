@@ -5,6 +5,7 @@ Want to contribute to ConEmu? Awesome, appreciated!
 But please, be sure you are following some easy rules described below.
 
 * [Reporting issues](#reporting-issues)
+  * [Verify issue really originates from ConEmu](#verify-issue-really-originates-from-conemu)
   * [Crash reports](#crash-reports)
   * [Issue attachments](#issue-attachments)
   * [Issue template](#issue-template)
@@ -42,7 +43,7 @@ ConEmu is just a [terminal](https://conemu.github.io/en/TerminalVsShell.html) (a
 ConEmu shows the output of console applications and passes keyboard/mouse events to the app. That is more or less it.
 
 
-##### Do not compare with Cygwin or Git Bash  {#donotcompare}
+##### Do not compare with Cygwin or Git Bash
 
 A frequent misunderstanding is seeing buggy behavior running Git Bash in ConEmu, then comparing that with either Cygwin or running Git Bash outside ConEmu. This is not the same thing!
 
