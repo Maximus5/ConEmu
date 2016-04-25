@@ -408,9 +408,6 @@
     <ClCompile Include="SetPgConfirm.cpp">
       <Filter>SettingPages</Filter>
     </ClCompile>
-    <ClCompile Include="SetPgControl.cpp">
-      <Filter>SettingPages</Filter>
-    </ClCompile>
     <ClCompile Include="SetPgCursor.cpp">
       <Filter>SettingPages</Filter>
     </ClCompile>
@@ -479,6 +476,27 @@
     </ClCompile>
     <ClCompile Include="SetPgViews.cpp">
       <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MProcess.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MProcessBits.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgItemHelper.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Font.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FontPtr.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RConPalette.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgControls.cpp">
+      <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -960,9 +978,6 @@
     <ClInclude Include="SetPgConfirm.h">
       <Filter>SettingPages</Filter>
     </ClInclude>
-    <ClInclude Include="SetPgControl.h">
-      <Filter>SettingPages</Filter>
-    </ClInclude>
     <ClInclude Include="SetPgCursor.h">
       <Filter>SettingPages</Filter>
     </ClInclude>
@@ -1031,6 +1046,33 @@
     </ClInclude>
     <ClInclude Include="SetPgViews.h">
       <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MProcess.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MProcessBits.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MToolHelp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgItemHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Font.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FontInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FontPtr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RConPalette.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgControls.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
