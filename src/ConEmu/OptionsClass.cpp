@@ -487,6 +487,9 @@ void CSettings::ReleaseHandles()
 
 CSettings::~CSettings()
 {
+	// CSettings must be deleted AFTER ConEmu dtor
+	_ASSERTE(gpConEmu == NULL);
+
 	ReleaseHandles();
 
 	//if (gpSet->psCmd) {free(gpSet->psCmd); gpSet->psCmd = NULL;}
@@ -514,6 +517,8 @@ CSettings::~CSettings()
 	SafeDelete(mp_HelpPopup);
 	SafeDelete(mp_Dialog);
 	SafeDelete(mp_DpiAware);
+
+	gpSet = NULL;
 }
 
 LPCWSTR CSettings::GetConfigPath()

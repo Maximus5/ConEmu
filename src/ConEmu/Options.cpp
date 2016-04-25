@@ -5014,7 +5014,7 @@ bool Settings::NeedCreateAppWindow()
 
 uint Settings::isLogging(uint level /*= 1*/)
 {
-	if (mb_DisableLogging || !gpConEmu)
+	if (!gpConEmu || mb_DisableLogging)
 		return 0;
 	BYTE logLevel = klMax(isDebugLog, (BYTE)(gpConEmu->opt.AdvLogging.GetInt()));
 	return (logLevel && (level <= logLevel)) ? logLevel : 0;
