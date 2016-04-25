@@ -19,43 +19,70 @@ But please, be sure you are following some easy rules described below.
 
 ## Reporting issues
 
-Appreciated, without proper users' feedback authors can't know about software problem.
-But if you want to be helpful, if you want the problem to be fixed, you have to supply
-authors with proper information.
+Appreciated, without proper users' feedback authors can't know about software problem. But if you want to be helpful, if you want the problem to be fixed, you have to supply authors with proper information.
 
-Please read the [article on the official site](https://conemu.github.io/en/BadIssue.html)
-how to report issues properly. Brief excerpts below.
+Please read the [article on the official site](https://conemu.github.io/en/BadIssue.html) how to report issues properly. Brief excerpts below.
 
-* **Verify issue really originates from ConEmu!**
+### **Verify issue really originates from ConEmu!**
 
-  If you catch a bug in the Adobe Reader you **would not** report it
-  on Microsoft Connect because you run Reader in Windows, would you?
+If you catch a bug in the Adobe Reader you would not report it on Microsoft Connect because you run Reader in Windows, would you?
 
-  ConEmu is **[terminal](https://conemu.github.io/en/TerminalVsShell.html)**,
-  if **[console application](https://conemu.github.io/en/ConsoleApplication.html)**
-  (bash, vim, cmd, whatever) gives out **broken output**, ConEmu can't
-  **magically correct** this broken output.
+A lot of users say ‘It works in cygwin’ or ‘It works in git bash’, but since both of them uses the mintty terminal, it can exhibit different behavior. Read more in [Do not compare with Cygwin or Git Bash](#donotcompare).
 
-  Do **not** compare you console application behavior with **mintty**!
-  A lot of users say ‘It works in cygwin’ or ‘It works in git bash’.
-  Wrong! Both are just a software **packages**, and you run console utilities
-  (bash, vim, git) in the [POSIX compatible](https://conemu.github.io/en/CygwinMsys.html)
-  terminal **mintty**. Bad news though, **mintty** is **not compatible** with
-  [Windows console API](https://msdn.microsoft.com/en-us/library/windows/desktop/ms681913.aspx).
 
-  So, **each** cygwin or msys (git-bash) console application has **two branches** of code,
-  and obviously, they behaves differently when they were started from **mintty**
-  and from [standard Windows console](https://conemu.github.io/en/RealConsole.html).
+##### TLDR;
 
-  Of course, if the branch of code, which utilizes Windows console API,
-  has bugs, they would not be observed in mintty. So, run your console
-  tool from `Win+R` directly, without **mintty wrapper**.
+*Run the exact same console application and arguments as in your ConEmu task to reproduce outside ConEmu. If you are able to reproduce, then the problem is NOT with ConEmu.*
 
-  Read more:
 
-  * [Third-party software problems](https://conemu.github.io/en/ThirdPartyProblems.html);
-  * [Console application](https://conemu.github.io/en/ConsoleApplication.html);
-  * [Terminal vs Shell](https://conemu.github.io/en/TerminalVsShell.html).
+##### Understand how ConEmu works
+
+ConEmu is just a [terminal](https://conemu.github.io/en/TerminalVsShell.html) (also called console window) that runs console apps. Often these are CLI apps, such as CMD, Powershell, and Git Bash, but it can be any standard Windows console application.
+
+ConEmu shows the output of console applications and passes keyboard/mouse events to the app. That is more or less it.
+
+
+##### Do not compare with Cygwin or Git Bash  {#donotcompare}
+
+A frequent misunderstanding is seeing buggy behavior running Git Bash in ConEmu, then comparing that with either Cygwin or running Git Bash outside ConEmu. This is not the same thing!
+
+Both are just a software packages, and you run console utilities (bash, vim, git) in the POSIX compatible terminal mintty, but mintty is not compatible with Windows console API.
+
+So, each Cygwin or msys (git-bash) console application has two branches of code, and obviously, they behaves differently when they were started from mintty and from standard Windows console.
+
+Of course, if the branch of code, which utilizes Windows console API, has bugs, they would not be observed in mintty. So, **run your console tool from Win+R directly, without mintty wrapper.**
+
+Read more information in the article: [third-party software](https://conemu.github.io/en/ThirdPartyProblems.html).
+
+
+##### Example: #618 VI/VIM very unresponsive after upgrading to Git 2.8.0.windows.1
+
+* `vim` was unresponsive in ConEmu's Git Bash
+* `vim` worked just fine when running `Git Bash` shortcut, so the user reasoned the bug must be related to ConEmu
+* The user was convinced to **run the exact same command** as ConEmu does, to **avoid* running with the **mintty** wrapper.
+* In {Bash::Git bash} task: `"%ConEmuDir%\..\Git\git-cmd.exe" --no-cd --command=usr/bin/bash.exe -l -i`, which typically equals `"C:\Program Files\Git\git-cmd.exe" --no-cd --command=usr/bin/bash.exe -l -i`
+* User then ran this in `Win + R` and then ran `vim` from there, and saw the same behavior - outside of ConEmu
+
+
+##### Processes as seen in **task manager**:
+
+To illustrate how running the Git Bash shortcut differs from running Git Bash inside ConEmu, take a look at the output from task manager. As you can see, mintty.exe is used for the shortcuts, while git-cmd.exe is used by ConEmu, skipping the mintty wrapper.
+
+What|Name|Description|Command line
+------------|------------|-------------|-------------
+Git Bash shortcut|mintty.exe |Terminal|`usr\bin\mintty.exe -o AppID=GitForWindows.Bash -o RelaunchCommand="C:\Program Files\Git\git-bash.exe" -o RelaunchDisplayName="Git Bash" -i /mingw64/share/git/git-for-windows.ico /usr/bin/bash --login -i`
+{Git Bash} in ConEmu|git-cmd.exe|Git for Windows|`"C:\Program Files\ConEmu\..\Git\git-cmd.exe" --no-cd --command=usr/bin/bash.exe -l -i`
+Git CMD shortcut|git-cmd.exe |Git for Windows|`"C:\Program Files\Git\git-cmd.exe" --cd-to-home`
+{cmd} in ConEmu|git-cmd.exe|Git for Windows|`"C:\Program Files\ConEmu\..\Git\git-cmd.exe" --no-cd --command=usr/bin/bash.exe -l -i`
+
+
+##### Read more:
+https://conemu.github.io/en/ThirdPartyProblems.html
+https://conemu.github.io/en/ConsoleApplication.html
+https://conemu.github.io/en/TerminalVsShell.html
+
+
+### Be verbose
 
 * Attach [descriptive screenshots](https://conemu.github.io/en/BadIssue.html#Screenshot)
   demonstating all steps you are doing. And it would be better, if you comment or highlight
@@ -70,14 +97,14 @@ how to report issues properly. Brief excerpts below.
   or [MemoryDumps](https://conemu.github.io/en/MemoryDump.html).
 
 
-#### Crash reports
+### Crash reports
 
 If you are reporting a crash, ConEmu shows you a thorough message
 with information where [CrashDump](https://conemu.github.io/en/CrashDump.html)
 was saved. Please, zip the file and upload it to
 [DropBox](https://conemu.github.io/en/DropBox.html) or any other hosting.
 
-#### Issue attachments
+### Issue attachments
 
 GitHub accepts only screenshots as direct attachments.
 Please, don't try to cheat GitHub by changing file extensions,
@@ -88,7 +115,7 @@ Zip your files, upload them to
 or any other hosting (even to gist.github.com),
 and post link in the issue.
 
-#### Issue template
+### Issue template
 
 Don't omit required information! Versions are significant information!
 
