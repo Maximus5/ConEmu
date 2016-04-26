@@ -63,7 +63,9 @@ $(INTDIR)\DynDialog.obj \
 $(INTDIR)\Execute.obj \
 $(INTDIR)\FindDlg.obj \
 $(INTDIR)\FindPanel.obj \
+$(INTDIR)\Font.obj \
 $(INTDIR)\FontMgr.obj \
+$(INTDIR)\FontPtr.obj \
 $(INTDIR)\FrameHolder.obj \
 $(INTDIR)\GestureEngine.obj \
 $(INTDIR)\GuiServer.obj \
@@ -395,7 +397,11 @@ $(INTDIR)\FindDlg.obj: FindDlg.cpp FindDlg.h
 
 $(INTDIR)\FindPanel.obj: FindPanel.cpp FindPanel.h
 
+$(INTDIR)\Font.obj: Font.cpp Font.h
+
 $(INTDIR)\FontMgr.obj: FontMgr.cpp FontMgr.h
+
+$(INTDIR)\FontPtr.obj: FontPtr.cpp FontPtr.h
 
 $(INTDIR)\FrameHolder.obj: FrameHolder.cpp FrameHolder.h
 

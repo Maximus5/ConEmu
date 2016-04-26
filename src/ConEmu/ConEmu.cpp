@@ -7235,10 +7235,10 @@ void CConEmuMain::PostCreate(bool abReceived/*=FALSE*/)
 			CheckUpdates(FALSE); // Не показывать сообщение "You are using latest available version"
 		}
 
-		if (gpFontMgr->szFontError[0] && !(gpStartEnv && ((gpStartEnv->bIsWinPE == 1) || (gpStartEnv->bIsWine == 1))))
+		if (gpFontMgr->ms_FontError && !(gpStartEnv && ((gpStartEnv->bIsWinPE == 1) || (gpStartEnv->bIsWine == 1))))
 		{
-			MBoxA(gpFontMgr->szFontError);
-			gpFontMgr->szFontError[0] = 0;
+			MBoxA(gpFontMgr->ms_FontError);
+			gpFontMgr->ms_FontError.Clear();
 		}
 
 		if (!gpSetCls->CheckConsoleFontFast())

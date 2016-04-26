@@ -48,8 +48,8 @@ CSetPgFonts::~CSetPgFonts()
 
 LRESULT CSetPgFonts::OnInitDialog(HWND hDlg, bool abInitial)
 {
-	SetDlgItemText(hDlg, tFontFace, gpFontMgr->LogFont.lfFaceName);
-	SetDlgItemText(hDlg, tFontFace2, gpFontMgr->LogFont2.lfFaceName);
+	SetDlgItemText(hDlg, tFontFace, gpFontMgr->FontFaceName());
+	SetDlgItemText(hDlg, tFontFace2, gpFontMgr->BorderFontFaceName());
 
 	if (abInitial)
 	{

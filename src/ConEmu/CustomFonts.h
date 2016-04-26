@@ -30,9 +30,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "Header.h"
+#include "FontPtr.h"
+
+class CFont;
 
 #define CE_BDF_SUFFIX L" [BDF]"
 #define CE_BDF_SUFFIX_LEN 6
+
 
 // CustomFont
 
@@ -65,72 +69,6 @@ public:
 	CustomFont* GetFont(int iSize, BOOL bBold, BOOL bItalic, BOOL bUnderline);
 };
 
-// CEFONT
-
-#define CEFONT_NONE   0
-#define CEFONT_GDI    1
-#define CEFONT_CUSTOM 2
-
-struct CEFONT
-{
-	int iType;
-	union
-	{
-		HFONT hFont;
-		CustomFont* pCustomFont;
-	};
-
-	CEFONT() : iType(CEFONT_NONE), hFont(NULL) {}
-	CEFONT(HFONT hFont) : iType(CEFONT_GDI), hFont(hFont) {}
-
-	BOOL IsSet() const
-	{
-		switch (iType)
-		{
-		case CEFONT_NONE:
-			return FALSE;
-		case CEFONT_GDI:
-			return hFont != NULL;
-		case CEFONT_CUSTOM:
-			return pCustomFont != NULL;
-		}
-		_ASSERT(0);
-		return FALSE;
-	}
-
-	BOOL Delete()
-	{
-		BOOL result = FALSE;
-		switch (iType)
-		{
-		case CEFONT_NONE:
-			return FALSE;
-		case CEFONT_GDI:
-			if (hFont)
-			{
-				result = DeleteObject(hFont);
-				hFont = NULL;
-			}
-			break;
-		case CEFONT_CUSTOM:
-			if (pCustomFont)
-			{
-				result = TRUE;
-				// delete pCustomFont; // instance is owned by OptionsClass
-				pCustomFont = NULL;
-			}
-			break;
-		default:
-			_ASSERT(0);
-		}
-		return result;
-	}
-};
-
-// used in CSettings::RecreateFont
-bool operator== (const CEFONT &a, const CEFONT &b);
-bool operator!= (const CEFONT &a, const CEFONT &b);
-
 // CachedBrush (for CEDC)
 
 struct CachedSolidBrush
@@ -160,19 +98,20 @@ struct CEDC
 
 	operator HDC() const { return hDC; }
 
-	struct CEFONT SelectObject(const struct CEFONT font);
+	void SelectFont(CFont* font);
 	void SetTextColor(COLORREF color);
 	void SetBkColor(COLORREF color);
 	void SetBkMode( int iBkMode );
-	BOOL TextDraw(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lpString, UINT cbCount, const INT *lpDx);
-	BOOL TextDrawOem(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lpString, UINT cbCount, const INT *lpDx);
-	BOOL TextExtentPoint( LPCTSTR ch, int c, LPSIZE sz );
+	bool TextDraw(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lpString, UINT cbCount, const INT *lpDx);
+	bool TextDrawOem(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lpString, UINT cbCount, const INT *lpDx);
+	bool TextExtentPoint( LPCTSTR ch, int c, LPSIZE sz );
 private:
 	bool mb_ExtDc;
 	void Reset();
 
 	HBITMAP mh_OldBitmap;
-	CEFONT m_Font;
+	CFontPtr m_Font;
+	HFONT mh_OldFont;
 	COLORREF m_BkColor, m_TextColor;
 	int m_BkMode;
 

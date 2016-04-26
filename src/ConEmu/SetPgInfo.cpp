@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 
 #include "ConEmu.h"
+#include "Font.h"
 #include "LngRc.h"
 #include "OptionsClass.h"
 #include "SetPgInfo.h"
@@ -90,11 +91,15 @@ void CSetPgInfo::OnPostLocalize(HWND hDlg)
 
 void CSetPgInfo::FillFontInfo(HWND hDlg)
 {
-	wchar_t szTemp[32];
-	_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"%ix%ix%i", gpFontMgr->LogFont.lfHeight, gpFontMgr->LogFont.lfWidth, gpFontMgr->m_tm->tmAveCharWidth);
-	SetDlgItemText(hDlg, tRealFontMain, szTemp);
-	_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"%ix%i", gpFontMgr->LogFont2.lfHeight, gpFontMgr->LogFont2.lfWidth);
-	SetDlgItemText(hDlg, tRealFontBorders, szTemp);
+	CFontPtr font;
+	wchar_t szMain[32] = L"", szAlt[32] = L"";
+
+	if (gpFontMgr->QueryFont(fnt_Normal, NULL, font))
+		_wsprintf(szMain, SKIPLEN(countof(szMain)) L"%ix%ix%i", font->m_LF.lfHeight, font->m_LF.lfWidth, font->m_tm.tmAveCharWidth);
+	_wsprintf(szAlt, SKIPLEN(countof(szAlt)) L"%ix%i", gpFontMgr->BorderFontHeight(), gpFontMgr->BorderFontWidth());
+
+	SetDlgItemText(hDlg, tRealFontMain, szMain);
+	SetDlgItemText(hDlg, tRealFontBorders, szAlt);
 }
 
 void CSetPgInfo::FillConsoleMode(HWND hDlg, CRealConsole* pRCon)

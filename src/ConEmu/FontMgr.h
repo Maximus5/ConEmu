@@ -35,12 +35,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "CustomFonts.h"
 #include "DpiAware.h"
+#include "FontInfo.h"
+#include "FontPtr.h"
 #include "HotkeyList.h"
 #include "Options.h"
-#include "SetDlgButtons.h"
-#include "SetDlgColors.h"
-#include "SetDlgFonts.h"
+//#include "SetDlgButtons.h"
+//#include "SetDlgColors.h"
+//#include "SetDlgFonts.h"
 
+class CFont;
 class CFontMgr;
 
 extern CFontMgr* gpFontMgr;
@@ -81,6 +84,14 @@ private:
 	friend class CSetDlgFonts;
 	friend class CSettings;
 
+private:
+	MArray<CFont*> m_FontPtrs;
+protected:
+	WARNING("Refactoring is required. m_FontPtrs must be filled from here, and CFont must not be created outside of CFontMgr");
+	friend class CFont;
+	void FontPtrRegister(CFont* p);
+	void FontPtrUnregister(CFont* p);
+
 public:
 	static const int FontDefWidthMin; // 0
 	static const int FontDefWidthMax; // 99
@@ -90,22 +101,24 @@ public:
 	static SIZE szRasterSizes[100]; // {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12},{8,12},{16,12},{12,16},{10,18}};
 
 public:
-	CEFONT  mh_Font[MAX_FONT_STYLES], mh_Font2;
+	WARNING("Make these protected?");
+	CFontPtr  m_Font[MAX_FONT_STYLES];
+	CFontPtr  m_Font2;
+
+	WARNING("Change this to hash map and move to CFont");
 	WORD    m_CharWidth[0x10000];
 	ABC     m_CharABC[0x10000];
 
-	wchar_t szFontError[512];
+	CEStr   ms_FontError;
 
 private:
 	friend class CSetPgInfo;
 	friend class CSetPgFonts;
 	LONG mn_FontZoomValue; // 100% == 10000 (FontZoom100)
-	LOGFONT LogFont, LogFont2;
+	CLogFont LogFont;
 	LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта
-	LONG mn_FontWidth, mn_FontHeight, mn_BorderFontWidth; // реальные размеры шрифтов
-	//BYTE mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр)
-	TEXTMETRIC m_tm[MAX_FONT_STYLES+1];
-	LPOUTLINETEXTMETRIC m_otm[MAX_FONT_STYLES];
+	LONG mn_FontWidth, mn_FontHeight; // реальные размеры шрифтов
+
 	BOOL mb_Name1Ok, mb_Name2Ok;
 
 	// When font size is used as character size (negative LF.lfHeight)
@@ -120,8 +133,10 @@ public:
 	bool    AutoRecreateFont(int nFontW, int nFontH);
 	BYTE    BorderFontCharSet();
 	LPCWSTR BorderFontFaceName();
+	LONG    BorderFontHeight();
 	LONG    BorderFontWidth();
-	HFONT   CreateOtherFont(const wchar_t* asFontName);
+	bool    Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCustom = NULL);
+	bool    CreateOtherFont(const wchar_t* asFontName, CFontPtr& rpFont);
 	LONG    EvalFontHeight(LPCWSTR lfFaceName, LONG lfHeight, BYTE nFontCharSet);
 	void    EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth);
 	BOOL    FontBold();
@@ -144,6 +159,7 @@ public:
 	void    InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);
 	void    MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/);
 	bool    MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/);
+	bool    QueryFont(CEFontStyles fontStyle, CVirtualConsole* pVCon, CFontPtr& rpFont);
 	bool    RecreateFontByDpi(int dpiX, int dpiY, LPRECT prcSuggested);
 	BOOL    RegisterFont(LPCWSTR asFontFile, BOOL abDefault);
 	void    RegisterFonts();
@@ -153,18 +169,18 @@ public:
 public:
 	static bool IsAlmostMonospace(LPCWSTR asFaceName, LPTEXTMETRIC lptm, LPOUTLINETEXTMETRIC lpotm = NULL);
 	static LPOUTLINETEXTMETRIC LoadOutline(HDC hDC, HFONT hFont);
-	static void DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl = NULL);
+	static void DumpFontMetrics(LPCWSTR szType, CFontPtr& Font);
 
 public:
 	void    SettingsLoaded(SettingsLoadedFlags slfFlags);
 	void    SettingsPreSave();
 
 private:
-	CEFONT  CreateFontIndirectMy(LOGFONT *inFont);
+	bool    CreateFontGroup(CLogFont inFont);
 	LONG    EvalCellWidth();
 	bool    FindCustomFont(LPCWSTR lfFaceName, int iSize, BOOL bBold, BOOL bItalic, BOOL bUnderline, CustomFontFamily** ppCustom, CustomFont** ppFont);
 	bool    MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/);
-	void    RecreateBorderFont(const LOGFONT *inFont);
+	void    RecreateAlternativeFont();
 	void    RecreateFont(bool abReset, bool abRecreateControls = false);
 	void    ResetFontWidth();
 	void    SaveFontSizes(bool bAuto, bool bSendChanges);

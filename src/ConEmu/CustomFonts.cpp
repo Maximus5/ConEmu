@@ -29,6 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "CustomFonts.h"
+#include "Font.h"
+#include "FontPtr.h"
 #include "../common/MArray.h"
 
 #ifdef _DEBUG
@@ -37,28 +39,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #else
 	#undef DEBUG_BDF_DRAW
 #endif
-
-// used in CSettings::RecreateFont
-bool operator== (const CEFONT &a, const CEFONT &b)
-{
-	if (a.iType != b.iType)
-		return false;
-	switch (a.iType)
-	{
-	case CEFONT_GDI:
-		return a.hFont == b.hFont;
-	case CEFONT_CUSTOM:
-		return a.pCustomFont == b.pCustomFont;
-	}
-	_ASSERTE(0);
-	return FALSE;
-}
-
-// used in CSettings::RecreateFont
-bool operator!= (const CEFONT &a, const CEFONT &b)
-{
-	return !(a == b);
-}
 
 
 // CustomFontFamily
@@ -562,6 +542,7 @@ CEDC::CEDC(HDC hDc)
 	: hDC(hDc)
 	, hBitmap(NULL)
 	, mh_OldBitmap(NULL)
+	, mh_OldFont(NULL)
 {
 	mb_ExtDc = (hDc != NULL);
 	iWidth = 0;
@@ -575,7 +556,8 @@ void CEDC::Reset()
 
 	mh_OldBitmap = NULL;
 	pPixels = NULL;
-	m_Font = CEFONT();
+	m_Font.Release();
+	mh_OldFont = NULL;
 	m_BkColor = CLR_INVALID;
 	m_TextColor = CLR_INVALID;
 	m_BkMode = -1;
@@ -587,6 +569,12 @@ void CEDC::Delete()
 {
 	if (hDC)
 	{
+		if (mh_OldFont)
+		{
+			::SelectObject(hDC, mh_OldFont);
+			mh_OldFont = NULL;
+		}
+
 		if (mb_ExtDc)
 		{
 			_ASSERTEX(mh_OldBitmap==NULL);
@@ -597,6 +585,7 @@ void CEDC::Delete()
 				::SelectObject(hDC, mh_OldBitmap);
 			::DeleteDC(hDC);
 		}
+
 		hDC = NULL;
 	}
 
@@ -642,7 +631,7 @@ bool CEDC::Create(UINT Width, UINT Height)
 		BITMAPINFO bmi;
 		bmi.bmiHeader.biSize        = sizeof(bmi.bmiHeader);
 		bmi.bmiHeader.biWidth       = Width;
-		bmi.bmiHeader.biHeight      = -Height;
+		bmi.bmiHeader.biHeight      = -(i32)Height;
 		bmi.bmiHeader.biPlanes      = 1;
 		bmi.bmiHeader.biBitCount    = 32;
 		bmi.bmiHeader.biCompression = BI_RGB;
@@ -683,14 +672,28 @@ bool CEDC::Create(UINT Width, UINT Height)
 	return (hBitmap!=NULL);
 }
 
-struct CEFONT CEDC::SelectObject(const struct CEFONT font)
+void CEDC::SelectFont(CFont* font)
 {
-	CEFONT oldFont = m_Font;
+	// Already selected?
+	if (m_Font.Equal(font))
+		return;
+
 	m_Font = font;
 
-	if (font.iType == CEFONT_GDI)
+	if (font == NULL)
 	{
-		oldFont = CEFONT((HFONT)::SelectObject(hDC, font.hFont));
+		if (mh_OldFont)
+		{
+			::SelectObject(hDC, mh_OldFont);
+			mh_OldFont = NULL;
+		}
+	}
+	else if (font->iType == CEFONT_GDI)
+	{
+		HFONT hOldFont = (HFONT)::SelectObject(hDC, font->hFont);
+		if (mh_OldFont == NULL)
+			mh_OldFont = hOldFont;
+
 		if (m_TextColor != CLR_INVALID)
 			::SetTextColor(hDC, m_TextColor);
 		if (m_BkColor != CLR_INVALID)
@@ -698,26 +701,25 @@ struct CEFONT CEDC::SelectObject(const struct CEFONT font)
 		if (m_BkMode != -1)
 			::SetBkMode(hDC, m_BkColor);
 	}
-	return oldFont;
 }
 
 void CEDC::SetTextColor(COLORREF color)
 {
-	if (m_TextColor != color && m_Font.iType!=CEFONT_CUSTOM)
+	if ((m_TextColor != color) && (!m_Font.IsSet() || (m_Font->iType != CEFONT_CUSTOM)))
 		::SetTextColor(hDC, color);
 	m_TextColor = color;
 }
 
 void CEDC::SetBkColor(COLORREF color)
 {
-	if (m_BkColor != color && m_Font.iType!=CEFONT_CUSTOM)
+	if ((m_BkColor != color) && (!m_Font.IsSet() || (m_Font->iType != CEFONT_CUSTOM)))
 		::SetBkColor(hDC, color);
 	m_BkColor = color;
 }
 
 void CEDC::SetBkMode(int iBkMode)
 {
-	if (m_BkMode != iBkMode && m_Font.iType!=CEFONT_CUSTOM)
+	if ((m_BkMode != iBkMode) && (!m_Font.IsSet() || (m_Font->iType != CEFONT_CUSTOM)))
 		::SetBkMode(hDC, iBkMode);
 	m_BkMode = iBkMode;
 }
@@ -727,56 +729,73 @@ static COLORREF FlipChannels(COLORREF c)
 	return (c >> 16) | (c & 0x00FF00) | ((c & 0xFF) << 16);
 }
 
-BOOL CEDC::TextDraw(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lpString, UINT cbCount, const INT *lpDx)
+bool CEDC::TextDraw(int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lpString, UINT cbCount, const INT *lpDx)
 {
-	switch (m_Font.iType)
+	BOOL lbRc = FALSE;
+	CEFONT_TYPE iType = m_Font.IsSet() ? m_Font->iType : CEFONT_NONE;
+
+	switch (iType)
 	{
 	case CEFONT_GDI:
 	case CEFONT_NONE:
-		return ::ExtTextOut(hDC, X, Y, fuOptions, lprc, lpString, cbCount, lpDx);
-	case CEFONT_CUSTOM:
-		if (pPixels)
 		{
-			// We get here when our display has 32bit color depth (OK and fast)
-			m_Font.pCustomFont->TextDraw(pPixels + X + Y*iWidth, iWidth,
-				FlipChannels(m_TextColor), fuOptions & ETO_OPAQUE ? FlipChannels(m_BkColor) : CLR_INVALID, lpString, cbCount);
+			lbRc = ::ExtTextOut(hDC, X, Y, fuOptions, lprc, lpString, cbCount, lpDx);
+			break;
 		}
-		else
-		{
-			// We get here for non-true-color displays (compatibility, slower)
 
-			//TODO: Opaque is not used at the moment, background is painted separately
-			_ASSERTE(!(fuOptions & ETO_OPAQUE));
-			if (fuOptions & ETO_OPAQUE)
+	case CEFONT_CUSTOM:
+		{
+			_ASSERTE(m_Font.IsSet());
+			if (pPixels)
 			{
-				//hOldBrush = ::SelectObject(hDC, m_BgBrush.Get(m_BkColor));
-				LONG w, h;
-				m_Font.pCustomFont->GetBoundingBox(&w, &h);
-				RECT r = {X, Y, (LONG)(X+w*cbCount), Y+h};
-				FillRect(hDC, &r, m_BgBrush.Get(m_BkColor));
+				// We get here when our display has 32bit color depth (OK and fast)
+				m_Font->pCustomFont->TextDraw(pPixels + X + Y*iWidth, iWidth,
+					FlipChannels(m_TextColor), fuOptions & ETO_OPAQUE ? FlipChannels(m_BkColor) : CLR_INVALID, lpString, cbCount);
+			}
+			else
+			{
+				// We get here for non-true-color displays (compatibility, slower)
+
+				//TODO: Opaque is not used at the moment, background is painted separately
+				_ASSERTE(!(fuOptions & ETO_OPAQUE));
+				if (fuOptions & ETO_OPAQUE)
+				{
+					//hOldBrush = ::SelectObject(hDC, m_BgBrush.Get(m_BkColor));
+					LONG w, h;
+					m_Font->pCustomFont->GetBoundingBox(&w, &h);
+					RECT r = {X, Y, (LONG)(X+w*cbCount), Y+h};
+					FillRect(hDC, &r, m_BgBrush.Get(m_BkColor));
+				}
+
+				//TODO: Optimize: no need to switch brush if it was already selected
+				HBRUSH hOldBrush = (HBRUSH)::SelectObject(hDC, m_FgBrush.Get(m_TextColor));
+
+				m_Font->pCustomFont->TextDraw(hDC, X, Y, lpString, cbCount);
+
+				//TODO: Optimize: no need to revert brush if we paint transparent text now...
+				::SelectObject(hDC, hOldBrush);
 			}
 
-			//TODO: Optimize: no need to switch brush if it was already selected
-			HBRUSH hOldBrush = (HBRUSH)::SelectObject(hDC, m_FgBrush.Get(m_TextColor));
+			lbRc = TRUE;
+			break;
+		} // CEFONT_CUSTOM
 
-			m_Font.pCustomFont->TextDraw(hDC, X, Y, lpString, cbCount);
-
-			//TODO: Optimize: no need to revert brush if we paint transparent text now...
-			::SelectObject(hDC, hOldBrush);
-		}
-
-		return TRUE;
 	default:
-		_ASSERTE(0);
-		return FALSE;
+		{
+			_ASSERTE(iType==CEFONT_GDI || iType==CEFONT_CUSTOM);
+			lbRc = FALSE;
+		}
 	}
+
+	return (lbRc != FALSE);
 }
 
-BOOL CEDC::TextDrawOem(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lpString, UINT cbCount, const INT *lpDx)
+bool CEDC::TextDrawOem(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lpString, UINT cbCount, const INT *lpDx)
 {
 	BOOL lbRc = FALSE;
+	CEFONT_TYPE iType = m_Font.IsSet() ? m_Font->iType : CEFONT_NONE;
 
-	switch (m_Font.iType)
+	switch (iType)
 	{
 	case CEFONT_GDI:
 	case CEFONT_NONE:
@@ -784,8 +803,10 @@ BOOL CEDC::TextDrawOem(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lp
 			lbRc = ::ExtTextOutA(hDC, X, Y, fuOptions, lprc, lpString, cbCount, lpDx);
 			break;
 		}
+
 	case CEFONT_CUSTOM:
 		{
+			_ASSERTE(m_Font.IsSet());
 			wchar_t* lpWString = (wchar_t*)malloc((cbCount+1) * sizeof(wchar_t));
 			if (lpWString)
 			{
@@ -799,32 +820,49 @@ BOOL CEDC::TextDrawOem(int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lp
 				free(lpWString);
 			}
 			break;
-		}
+		} // CEFONT_CUSTOM
+
 	default:
 		{
-			_ASSERTE(FALSE && "Invalid iType");
+			_ASSERTE(iType==CEFONT_GDI || iType==CEFONT_CUSTOM);
+			lbRc = FALSE;
 		}
 	}
-	return lbRc;
+
+	return (lbRc != FALSE);
 }
 
-BOOL CEDC::TextExtentPoint(LPCTSTR ch, int c, LPSIZE sz)
+bool CEDC::TextExtentPoint(LPCTSTR ch, int c, LPSIZE sz)
 {
-	switch (m_Font.iType)
+	BOOL lbRc = FALSE;
+	CEFONT_TYPE iType = m_Font.IsSet() ? m_Font->iType : CEFONT_NONE;
+
+	switch (iType)
 	{
 	case CEFONT_GDI:
 	case CEFONT_NONE:
-		return ::GetTextExtentPoint32(hDC, ch, c, sz);
+		{
+			lbRc = ::GetTextExtentPoint32(hDC, ch, c, sz);
+			break;
+		}
+
 	case CEFONT_CUSTOM:
-		_ASSERTE(c>=1);
-		m_Font.pCustomFont->GetBoundingBox(&sz->cx, &sz->cy);
-		// All glyphs in bdf are painted in their own cells,
-		// non-printable, composites and double-width glyphs
-		// are not supported at the moment (in bdf)
-		sz->cx *= c;
-		return TRUE;
+		{
+			_ASSERTE(c>=1); _ASSERTE(m_Font.IsSet());
+			m_Font->pCustomFont->GetBoundingBox(&sz->cx, &sz->cy);
+			// All glyphs in bdf are painted in their own cells,
+			// non-printable, composites and double-width glyphs
+			// are not supported at the moment (in bdf)
+			sz->cx *= c;
+			lbRc = TRUE;
+		} // CEFONT_CUSTOM
+
 	default:
-		_ASSERTE(0);
-		return FALSE;
+		{
+			_ASSERTE(iType==CEFONT_GDI || iType==CEFONT_CUSTOM);
+			lbRc = FALSE;
+		}
 	}
+
+	return (lbRc != FALSE);
 }

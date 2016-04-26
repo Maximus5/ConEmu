@@ -33,6 +33,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 
 #include "ConEmu.h"
+#include "Font.h"
+#include "FontMgr.h"
 #include "OptionsClass.h"
 #include "SetDlgLists.h"
 #include "SetPgMarkCopy.h"
@@ -132,8 +134,9 @@ LRESULT CSetPgMarkCopy::MarkCopyPreviewProc(HWND hCtrl, UINT uMsg, WPARAM wParam
 		{
 			HFONT hOld = NULL;
 			HFONT hNew = NULL;
-			if (gpFontMgr->mh_Font[0].iType == CEFONT_GDI)
-				hNew = gpFontMgr->mh_Font[0].hFont;
+			CFontPtr pFont;
+			if (gpFontMgr->QueryFont(fnt_Normal, NULL, pFont) && (pFont->iType == CEFONT_GDI))
+				hNew = pFont->hFont;
 			else
 				hNew = (HFONT)SendMessage(GetParent(hCtrl), WM_GETFONT, 0, 0);
 			if (hNew)

@@ -68,10 +68,14 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "VirtualConsole.h"
 #include "RealConsole.h"
 #include "ConEmu.h"
+#include "Font.h"
+#include "FontMgr.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "Background.h"
 #include "ConEmuPipe.h"
+#include "FontMgr.h"
+#include "FontPtr.h"
 #include "TabID.h"
 #include "TabBar.h"
 #include "TaskBarGhost.h"
@@ -199,6 +203,7 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	, mn_Flags(vf_None)
 	, mn_Index(index) // !!! Informational !!!
 	, m_DC(NULL)
+	, m_SelectedFont(fnt_NULL)
 {
 	#pragma warning(default: 4355)
 	mn_ID = InterlockedIncrement(&gnVConLastCreatedID);
@@ -284,10 +289,10 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	//mp_BkEmfData = NULL; mn_BkEmfDataMax = 0; mb_BkEmfChanged = FALSE;
 	//mcs_BkImgData = NULL;
 	//mn_BkImgWidth = mn_BkImgHeight = 0;
-	_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gpFontMgr->mh_Font)+sizeof(mh_FontByIndex[0])));
-	memmove(mh_FontByIndex, gpFontMgr->mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0])); //-V512
-	mh_UCharMapFont = NULL; ms_LastUCharMapFont[0] = 0;
-	mh_FontByIndex[fnt_UCharMap] = NULL; // reserved for ‘Unicode CharMap’ Far plugin
+	//_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gpFontMgr->mh_Font)+sizeof(mh_FontByIndex[0])));
+	//memmove(mh_FontByIndex, gpFontMgr->mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0])); //-V512
+	ms_LastUCharMapFont[0] = 0;
+	//mh_FontByIndex[fnt_UCharMap] = NULL; // reserved for ‘Unicode CharMap’ Far plugin
 	memset(&TransparentInfo, 0, sizeof(TransparentInfo));
 	isFade = false; isForeground = true;
 	mp_Colors = gpSet->GetColors(-1);
@@ -339,7 +344,6 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	_ASSERTE((HDC)m_DC == NULL);
 	hBgDc = NULL; bgBmpSize.X = bgBmpSize.Y = 0;
 
-	hSelectedFont = NULL; hOldFont = NULL;
 	PointersInit();
 	mb_IsForceUpdate = false;
 	mb_InUpdate = false;
@@ -358,7 +362,6 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	}
 
 	hOldBrush = NULL;
-	hOldFont = NULL;
 
 	mp_ConEmu->EvalVConCreateSize(this, TextWidth, TextHeight);
 
@@ -447,11 +450,8 @@ CVirtualConsole::~CVirtualConsole()
 		mh_TransparentRgn = NULL;
 	}
 
-	if (mh_UCharMapFont)
-	{
-		DeleteObject(mh_UCharMapFont);
-		mh_UCharMapFont = NULL;
-	}
+	// No need, actually, just for clearness
+	m_UCharMapFont.Release();
 
 	SafeDelete(mp_RCon);
 
@@ -777,7 +777,8 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 	if (!pSCON)
 		_SCON.Unlock();
 	HEAPVAL
-	hSelectedFont = NULL;
+
+	SelectFont(fnt_NULL);
 
 	bool lbRc = false;
 
@@ -1160,32 +1161,49 @@ void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF cr
 	}
 }
 
-void CVirtualConsole::SelectFont(CEFONT hNew)
+bool CVirtualConsole::GetUCharMapFontPtr(CFontPtr& pFont)
 {
-	if (!hNew.IsSet())
-	{
-		if (hOldFont.IsSet())
-		{
-			m_DC.SelectObject(hOldFont);
-		}
+	pFont = m_UCharMapFont.Ptr();
+	return pFont.IsSet();
+}
 
-		hOldFont = NULL;
-		hSelectedFont = NULL;
+void CVirtualConsole::SelectFont(CEFontStyles newFont)
+{
+	if (newFont == m_SelectedFont)
+	{
+		// Already selected, nothing to do
+		return;
 	}
-	else if (hSelectedFont != hNew)
+
+	CFontPtr hFontPtr;
+
+	if (newFont != fnt_NULL)
+	{
+		if (!gpFontMgr->QueryFont(newFont, this, hFontPtr))
+		{
+			_ASSERTE(FALSE && "FontMgr failed?");
+			// Don't change active font?
+			return;
+		}
+	}
+
+	TODO("Move logic to m_DC?");
+
+	if (!hFontPtr.IsSet())
+	{
+		m_DC.SelectFont(NULL);
+	}
+	else
 	{
 		#ifdef _DEBUG
-		if (hNew == mh_UCharMapFont)
-			hNew = mh_UCharMapFont;
+		if (hFontPtr == m_UCharMapFont)
+			_ASSERTE(hFontPtr.IsSet());
 		#endif
 
-		hSelectedFont = m_DC.SelectObject(hNew);
-
-		if (!hOldFont.IsSet())
-			hOldFont = hSelectedFont;
-
-		hSelectedFont = hNew;
+		m_DC.SelectFont(hFontPtr);
 	}
+
+	m_SelectedFont = newFont;
 }
 
 void CVirtualConsole::SelectBrush(HBRUSH hNew)
@@ -1276,6 +1294,7 @@ class DcDebug
 //    }
 //}
 
+TODO("Move to CFont");
 void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 {
 	BOOL lbCharABCOk;
@@ -1292,14 +1311,14 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 		}
 		else
 		{
-			if (gpFontMgr->mh_Font2.IsSet() && gpSet->isFixFarBorders && isCharAltFont(ch))
+			if (gpFontMgr->m_Font2.IsSet() && gpSet->isFixFarBorders && isCharAltFont(ch))
 			{
-				SelectFont(gpFontMgr->mh_Font2);
+				SelectFont(fnt_Alternative);
 			}
 			else
 			{
 				TODO("Тут надо бы деление по стилям сделать");
-				SelectFont(gpFontMgr->mh_Font[0]);
+				SelectFont(fnt_Normal);
 			}
 
 			//This function succeeds only with TrueType fonts
@@ -1323,6 +1342,7 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 	*abc = gpFontMgr->m_CharABC[ch];
 }
 
+TODO("Move to CFont");
 // Возвращает ширину символа, учитывает FixBorders
 WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 {
@@ -1352,14 +1372,14 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	//bool isBorder = false; //, isVBorder = false;
 
 	// Наверное все же нужно считать именно в том шрифте, которым будет идти отображение
-	if (gpFontMgr->mh_Font2.IsSet() && gpSet->isFixFarBorders && isCharAltFont(ch))
+	if (gpSet->isFixFarBorders && gpFontMgr->m_Font2.IsSet() && isCharAltFont(ch))
 	{
-		SelectFont(gpFontMgr->mh_Font2);
+		SelectFont(fnt_Alternative);
 	}
 	else
 	{
 		TODO("Тут надо бы деление по стилям сделать");
-		SelectFont(gpFontMgr->mh_Font[0]);
+		SelectFont(fnt_Normal);
 	}
 
 	//SelectFont(gpSetCls->mh_Font[0]);
@@ -1705,7 +1725,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	}
 	m_PartBrushes.clear();
 	*/
-	SelectFont(NULL);
+	SelectFont(fnt_NULL);
 	HEAPVAL
 	return lRes;
 }
@@ -2401,18 +2421,16 @@ bool CVirtualConsole::LoadConsoleData()
 					wmemcpy(szFontName, pszStart, pszEnd-pszStart+1);
 					szFontName[pszEnd-pszStart+1] = 0;
 
-					if (!mh_UCharMapFont || lstrcmp(ms_LastUCharMapFont, szFontName))
+					if (!m_UCharMapFont.IsSet() || lstrcmp(ms_LastUCharMapFont, szFontName))
 					{
 						wcscpy_c(ms_LastUCharMapFont, szFontName);
 
-						if (mh_UCharMapFont) DeleteObject(mh_UCharMapFont);
-
-						mh_UCharMapFont = gpFontMgr->CreateOtherFont(ms_LastUCharMapFont);
+						gpFontMgr->CreateOtherFont(ms_LastUCharMapFont, m_UCharMapFont);
 					}
 				}
 
 				// Шрифт создали, теперь - пометить соответствующий регион для использования этого шрифта
-				if (mh_UCharMapFont)
+				if (m_UCharMapFont.IsSet())
 				{
 					for(int Y = rcGlyph.Top; Y <= rcGlyph.Bottom; Y++)
 					{
@@ -2821,11 +2839,11 @@ void CVirtualConsole::UpdateText()
 	_ASSERTE((HDC)m_DC!=NULL);
 
 	// Refresh fonts array
-	memmove(mh_FontByIndex, gpFontMgr->mh_Font, sizeof(gpFontMgr->mh_Font));
-	mh_FontByIndex[fnt_UCharMap] = mh_UCharMapFont ? mh_UCharMapFont : mh_FontByIndex[0];
+	//memmove(mh_FontByIndex, gpFontMgr->mh_Font, sizeof(gpFontMgr->mh_Font));
+	//mh_FontByIndex[fnt_UCharMap] = mh_UCharMapFont ? mh_UCharMapFont : mh_FontByIndex[0];
 	//mh_FontByIndex[fnt_FarBorders] = (gpSetCls->mh_Font2.IsSet() && gpSet->isFixFarBorders) ? gpSetCls->mh_Font2 : mh_FontByIndex[0];
 
-	SelectFont(mh_FontByIndex[0]);
+	SelectFont(fnt_Normal);
 
 	// pointers
 	wchar_t* ConCharLine = NULL;
@@ -2861,8 +2879,8 @@ void CVirtualConsole::UpdateText()
 	bool bEnhanceGraphics = gpSet->isEnhanceGraphics;
 	bool bFixFarBorders = _bool(gpSet->isFixFarBorders);
 	bool bFontProportional = !gpFontMgr->FontMonospaced();
-	CEFONT hFont = gpFontMgr->mh_Font[0];
-	CEFONT hFont2 = gpFontMgr->mh_Font2;
+	//CEFONT hFont = gpFontMgr->mh_Font[0];
+	//CEFONT hFont2 = gpFontMgr->mh_Font2;
 	uint partIndex;
 	VConTextPart *part, *nextPart;
 
@@ -3021,12 +3039,12 @@ void CVirtualConsole::UpdateText()
 			m_DC.SetTextColor(attr.crForeColor);
 			if (part->Flags & TRF_TextAlternative)
 			{
-				SelectFont(hFont2);
+				SelectFont(fnt_Alternative);
 				charSet = gpFontMgr->BorderFontCharSet();
 			}
 			else
 			{
-				SelectFont(mh_FontByIndex[attr.nFontIndex]);
+				SelectFont((CEFontStyles)attr.nFontIndex);
 				charSet = nFontCharSet;
 			}
 
@@ -3858,8 +3876,10 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, bool bGuiVisi
 	TODO("Переделать на StatusBar, если gpSet->isStatusBarShow");
 	if (!bGuiVisible)
 	{
+		CFontPtr pFont;
+		gpFontMgr->QueryFont(fnt_Normal, this, pFont);
 		CEDC cePaintDc(hPaintDc);
-		CEFONT hOldF = cePaintDc.SelectObject(gpFontMgr->mh_Font[0]);
+		cePaintDc.SelectFont(pFont);
 		LPCWSTR pszStarting = L"Initializing ConEmu.";
 
 		// 120721 - если показана статусная строка - не будем писать в саму консоль?
@@ -3877,8 +3897,9 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, bool bGuiVisi
 			cePaintDc.SetBkColor(pColors[0]);
 			cePaintDc.TextDraw(rcClient.left, rcClient.top, nFlags, &rcClient,
 				        pszStarting, _tcslen(pszStarting), 0);
-			cePaintDc.SelectObject(hOldF);
 		}
+
+		cePaintDc.SelectFont(NULL);
 	}
 
 	if (lbDelBrush)
@@ -4093,8 +4114,10 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 	{
 		if (mpsz_ConChar && mpn_ConAttrEx)
 		{
+			CFontPtr pFont;
+			gpFontMgr->QueryFont(fnt_Normal, this, pFont);
 			CEDC cePaintDc(hPaintDc);
-			CEFONT hOldFont = cePaintDc.SelectObject(gpFontMgr->mh_Font[0]);
+			cePaintDc.SelectFont(pFont);
 			MSectionLock SCON; SCON.Lock(&csCON);
 
 			int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
@@ -4105,7 +4128,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 			UpdateCursorDraw(hPaintDc, rcClient, csbi.dwCursorPosition, cinf.dwSize);
 
 			Cursor.isVisiblePrev = Cursor.isVisible;
-			cePaintDc.SelectObject(hOldFont);
+			cePaintDc.SelectFont(NULL);
 			SCON.Unlock();
 		}
 	}

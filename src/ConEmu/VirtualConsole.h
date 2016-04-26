@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConRelease.h"
 
 #include "Options.h"
+#include "FontPtr.h"
 #include "RealConsole.h"
 #include "VConChild.h"
 #include "CustomFonts.h"
@@ -142,9 +143,10 @@ class CVirtualConsole :
 		CEDC    m_DC;
 		HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
 		HBRUSH  CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COLORREF *pColors = NULL);
-		CEFONT  hSelectedFont, hOldFont;
-		CEFONT  mh_FontByIndex[MAX_FONT_STYLES_EX]; // pointers to Normal/Bold/Italic/Bold&Italic/...Underline
-		HFONT   mh_UCharMapFont; SMALL_RECT mrc_UCharMap;
+		CEFontStyles m_SelectedFont;
+		//CEFONT  mh_FontByIndex[MAX_FONT_STYLES_EX]; // pointers to Normal/Bold/Italic/Bold&Italic/...Underline
+		CFontPtr m_UCharMapFont;
+		SMALL_RECT mrc_UCharMap;
 		wchar_t ms_LastUCharMapFont[32];
 
 		#ifdef _DEBUG
@@ -158,6 +160,7 @@ class CVirtualConsole :
 	public:
 		bool InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC, MSectionLock *pSCON);
 		void ResetOnStart();
+		bool GetUCharMapFontPtr(CFontPtr& pFont);
 	private:
 		// Working pointers
 		bool mb_PointersAllocated;
@@ -263,7 +266,7 @@ class CVirtualConsole :
 		void UpdateCursor(bool& lRes);
 		static bool UpdateCursorGroup(CVirtualConsole* pVCon, LPARAM lParam);
 		void UpdateThumbnail(bool abNoSnapshot = FALSE);
-		void SelectFont(CEFONT hNew);
+		void SelectFont(CEFontStyles newFont);
 		void SelectBrush(HBRUSH hNew);
 		void PaintBackgroundImage(const RECT& rcText, const COLORREF crBack);
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);

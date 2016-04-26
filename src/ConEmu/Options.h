@@ -49,12 +49,9 @@ enum CEFontStyles
 
 	fnt_UCharMap    = (MAX_FONT_STYLES),   // 8
 
-	MAX_FONT_STYLES_EX = (fnt_UCharMap+1), // 9 (used in VirtualConsole arrays)
+	fnt_Alternative = (MAX_FONT_STYLES+1), // 9 (old fnt_FarBorders)
 
-	#if 0
-	fnt_FarBorders  = (MAX_FONT_STYLES+1), // 9
-	MAX_FONT_STYLES_EX = (fnt_FarBorders+1), // 10 (used in VirtualConsole arrays)
-	#endif
+	fnt_NULL        = (MAX_FONT_STYLES+2), // 10 (used in VirtualConsole SelectFont)
 };
 
 #define CURSORSIZE_MIN 5

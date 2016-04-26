@@ -60,6 +60,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DlgItemHelper.h"
 #include "DpiAware.h"
 #include "DynDialog.h"
+#include "Font.h"
+#include "FontMgr.h"
+#include "FontPtr.h"
 #include "HotkeyDlg.h"
 #include "ImgButton.h"
 #include "Inside.h"
@@ -97,16 +100,10 @@ SIZE CFontMgr::szRasterSizes[100] = {{0,0}}; // {{16,8},{6,9},{8,9},{5,12},{7,12
 
 CFontMgr::CFontMgr()
 {
-	ZeroStruct(mh_Font);
-	mh_Font2 = NULL;
-	ZeroStruct(m_tm);
-	ZeroStruct(m_otm);
 	ResetFontWidth();
-	szFontError[0] = 0;
 	mn_FontZoomValue = FontZoom100;
 	memset(&LogFont, 0, sizeof(LogFont));
-	memset(&LogFont2, 0, sizeof(LogFont2));
-	mn_FontWidth = mn_BorderFontWidth = 0; mn_FontHeight = 16; // сброшено будет в SettingsLoaded
+	mn_FontWidth = 0; mn_FontHeight = 16; // сброшено будет в SettingsLoaded
 	mb_Name1Ok = mb_Name2Ok = false;
 	mn_AutoFontWidth = mn_AutoFontHeight = -1;
 	mb_StopRegisterFonts = FALSE;
@@ -116,14 +113,63 @@ CFontMgr::~CFontMgr()
 {
 	for (int i=0; i<MAX_FONT_STYLES; i++)
 	{
-		mh_Font[i].Delete();
-
-		if (m_otm[i]) {free(m_otm[i]); m_otm[i] = NULL;}
+		m_Font[i].Release();
 	}
 
 	TODO("Очистить m_Fonts[Idx].hFonts");
 
-	mh_Font2.Delete();
+	int iRef = m_Font2.Release();
+	_ASSERTE(iRef == 1); // Expected to be in m_FontPtrs
+
+	while (!m_FontPtrs.empty())
+	{
+		CFont* p = NULL;
+		m_FontPtrs.pop_back(p);
+		if (p)
+		{
+			iRef = p->Release();
+			_ASSERTE(iRef == 0);
+		}
+	}
+
+	UNREFERENCED_PARAMETER(iRef);
+}
+
+void CFontMgr::FontPtrRegister(CFont* p)
+{
+	#ifdef _DEBUG
+	_ASSERTE(isMainThread());
+
+	for (INT_PTR i = 0; i < m_FontPtrs.size(); i++)
+	{
+		if (m_FontPtrs[i] == p)
+		{
+			_ASSERTE(FALSE && "Ptr must not be registered yet!");
+			break;
+		}
+	}
+	#endif
+
+	m_FontPtrs.push_back(p);
+}
+
+void CFontMgr::FontPtrUnregister(CFont* p)
+{
+	if (!p)
+	{
+		_ASSERTE(p!=NULL);
+		return;
+	}
+
+	_ASSERTE(isMainThread());
+	for (INT_PTR i = 0; i < m_FontPtrs.size(); i++)
+	{
+		if (m_FontPtrs[i] == p)
+		{
+			m_FontPtrs.erase(i);
+			break;
+		}
+	}
 }
 
 // Вызывается при включенном gpSet->isFontAutoSize: подгонка размера шрифта
@@ -142,21 +188,12 @@ bool CFontMgr::AutoRecreateFont(int nFontW, int nFontH)
 	// Сразу запомним, какой размер просили в последний раз
 	mn_AutoFontWidth = nFontW; mn_AutoFontHeight = nFontH;
 	// Пытаемся создать новый шрифт
-	LOGFONT LF = LogFont;
+	CLogFont LF(LogFont);
 	LF.lfWidth = nFontW;
 	LF.lfHeight = nFontH;
-	CEFONT hf = CreateFontIndirectMy(&LF);
 
-	if (hf.IsSet())
+	if (CreateFontGroup(LF))
 	{
-		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
-		CEFONT hOldF = mh_Font[0];
-
-		LogFont = LF;
-
-		mh_Font[0] = hf;
-		hOldF.Delete();
-
 		// Запомнить размер шрифта (AutoFontWidth/Height - может быть другим, он запоминается выше)
 		SaveFontSizes(false, true);
 
@@ -170,12 +207,33 @@ bool CFontMgr::AutoRecreateFont(int nFontW, int nFontH)
 
 BYTE CFontMgr::BorderFontCharSet()
 {
-	return m_tm[MAX_FONT_STYLES].tmCharSet;
+	CFontPtr font;
+	if (QueryFont(fnt_Alternative, NULL, font))
+		return font->m_tm.tmCharSet;
+	return DEFAULT_CHARSET;
 }
 
 LPCWSTR CFontMgr::BorderFontFaceName()
 {
-	return LogFont2.lfFaceName;
+	if (m_Font2.IsSet())
+		return m_Font2->m_LF.lfFaceName;
+	_ASSERTE(FALSE && "Border font was not created");
+	return FontFaceName();
+}
+
+// Returns real pixels
+LONG CFontMgr::BorderFontHeight()
+{
+	if (!gpSet->isFixFarBorders)
+	{
+		return FontHeight();
+	}
+	if (!m_Font2.IsSet() || (m_Font2->m_LF.lfHeight <= 0))
+	{
+		_ASSERTE(m_Font2.IsSet() && (m_Font2->m_LF.lfHeight > 0));
+		return FontHeight();
+	}
+	return m_Font2->m_LF.lfHeight;
 }
 
 // Returns real pixels
@@ -185,26 +243,67 @@ LONG CFontMgr::BorderFontWidth()
 	{
 		return FontCellWidth();
 	}
-	_ASSERTE(LogFont2.lfWidth);
-	_ASSERTE(mn_BorderFontWidth==LogFont2.lfWidth);
-	if (mn_BorderFontWidth <= 0)
+	if (!m_Font2.IsSet() || (m_Font2->m_LF.lfWidth <= 0))
 	{
-		_ASSERTE(mn_BorderFontWidth > 0);
+		_ASSERTE(m_Font2.IsSet() && (m_Font2->m_LF.lfWidth > 0));
 		return FontCellWidth();
 	}
-	return mn_BorderFontWidth;
+	return m_Font2->m_LF.lfWidth;
 }
 
 // Создать шрифт для отображения символов в диалоге плагина UCharMap
-HFONT CFontMgr::CreateOtherFont(const wchar_t* asFontName)
+bool CFontMgr::CreateOtherFont(const wchar_t* asFontName, CFontPtr& rpFont)
 {
-	LOGFONT otherLF = {LogFont.lfHeight};
-	otherLF.lfWeight = FW_NORMAL;
-	otherLF.lfCharSet = DEFAULT_CHARSET;
-	otherLF.lfQuality = LogFont.lfQuality;
-	wcscpy_c(otherLF.lfFaceName, asFontName);
+	CLogFont otherLF(asFontName, LogFont.lfHeight, 0, FW_NORMAL, DEFAULT_CHARSET, LogFont.lfQuality);
 	HFONT hf = CreateFontIndirect(&otherLF);
-	return hf;
+	if (hf)
+		rpFont = new CFont(hf);
+	else
+		rpFont.Release();
+	return (rpFont.IsSet());
+}
+
+// pVCon may be NULL
+bool CFontMgr::QueryFont(CEFontStyles fontStyle, CVirtualConsole* pVCon, CFontPtr& rpFont)
+{
+	TODO("Take into account per-VCon font size zoom value");
+
+	TODO("Optimization: Perhaps, we may not create all set of fonts, but");
+
+	if ((fontStyle >= fnt_Normal) && (fontStyle < MAX_FONT_STYLES))
+	{
+		_ASSERTE(MAX_FONT_STYLES == (CEFontStyles)8);
+		if (m_Font[fontStyle].IsSet())
+		{
+			rpFont = m_Font[fontStyle].Ptr();
+		}
+		else
+		{
+			_ASSERTE(FALSE && "Try to recteate the font?");
+			rpFont.Release();
+		}
+		_ASSERTE(rpFont.IsSet()); // Fonts must be created already!
+	}
+	else if ((fontStyle == fnt_Alternative) && m_Font2.IsSet())
+	{
+		rpFont = m_Font2.Ptr();
+	}
+	else if ((fontStyle == fnt_UCharMap) && pVCon)
+	{
+		pVCon->GetUCharMapFontPtr(rpFont);
+	}
+	else
+	{
+		rpFont.Release();
+	}
+
+	if (!rpFont.IsSet())
+	{
+		rpFont = m_Font[fnt_Normal].Ptr();
+		_ASSERTE(rpFont.IsSet()); // Fonts must be created already!
+	}
+
+	return (rpFont.IsSet());
 }
 
 // Do NOT take into account current zoom value here!
@@ -322,6 +421,18 @@ LPCWSTR CFontMgr::FontFaceName()
 
 LONG CFontMgr::FontHeight()
 {
+	if (m_Font[0].IsSet())
+	{
+		// We set m_LF to real *positive* font height
+		if (m_Font[0]->m_LF.lfHeight > 0)
+		{
+			return m_Font[0]->m_LF.lfHeight;
+		}
+		_ASSERTE((m_Font[0]->m_LF.lfHeight > 0) && "m_LF is expected to hold positive height only");
+	}
+
+	_ASSERTE(FALSE && "Font[0] must be created already");
+
 	const LONG defFontHeight = 12;
 
 	if (LogFont.lfHeight <= 0)
@@ -352,27 +463,38 @@ LONG CFontMgr::FontHeight()
 // Возможно скорректированный размер шрифта для выгрузки фрагмента в HTML
 LONG CFontMgr::FontHeightHtml()
 {
-	if (LogFont.lfHeight <= 0)
+	if (!m_Font[0].IsSet())
 	{
-		_ASSERTE(LogFont.lfHeight>0);
+		_ASSERTE(m_Font[0].IsSet());
 		return FontHeight();
 	}
 
+	CLogFont LF((LOGFONT)(m_Font[0]->m_LF));
+	if (LF.lfHeight <= 0)
+	{
+		_ASSERTE(LF.lfHeight>0);
+		return FontHeight();
+	}
+
+	LPOUTLINETEXTMETRIC lpoutl = m_Font[0]->mp_otm;
+	const TEXTMETRIC& tm = m_Font[0]->m_tm;
+
 	int iHeight, iLineGap = 0;
 
-	if (m_otm[0] && (m_otm[0]->otmrcFontBox.top > 0))
+	if (lpoutl->otmrcFontBox.top > 0)
 	{
-		_ASSERTE(((m_otm[0]->otmrcFontBox.top * 1.3) >= LogFont.lfHeight) && (m_otm[0]->otmrcFontBox.top <= LogFont.lfHeight));
-		iHeight = m_otm[0]->otmrcFontBox.top;
-		if ((m_otm[0]->otmTextMetrics.tmInternalLeading < (iHeight/2)) && (m_otm[0]->otmTextMetrics.tmInternalLeading > 1))
-			iLineGap = m_otm[0]->otmTextMetrics.tmInternalLeading - 1;
+		_ASSERTE(((lpoutl->otmrcFontBox.top * 1.3) >= LF.lfHeight) && (lpoutl->otmrcFontBox.top <= LF.lfHeight));
+		iHeight = lpoutl->otmrcFontBox.top;
+		if ((lpoutl->otmTextMetrics.tmInternalLeading < (iHeight/2)) && (lpoutl->otmTextMetrics.tmInternalLeading > 1))
+			iLineGap = lpoutl->otmTextMetrics.tmInternalLeading - 1;
 	}
 	else
 	{
-		_ASSERTE(mn_FontHeight==LogFont.lfHeight);
+		// Bitmap (raster) font?
+		_ASSERTE(mn_FontHeight==LF.lfHeight);
 		iHeight = mn_FontHeight;
-		if ((m_tm[0].tmInternalLeading < (iHeight/2)) && (m_tm[0].tmInternalLeading > 1))
-			iLineGap = m_tm[0].tmInternalLeading - 1;
+		if ((tm.tmInternalLeading < (iHeight/2)) && (tm.tmInternalLeading > 1))
+			iLineGap = tm.tmInternalLeading - 1;
 	}
 
 	return (iHeight - iLineGap);
@@ -385,12 +507,17 @@ BOOL CFontMgr::FontItalic()
 
 bool CFontMgr::FontMonospaced()
 {
-	if (mh_Font[0].iType == CEFONT_CUSTOM)
+	if (!m_Font[0].IsSet())
+	{
+		_ASSERTE(FALSE && "Font must be created already");
+		return true;
+	}
+	if (m_Font[0]->iType == CEFONT_CUSTOM)
 	{
 		// BDF fonts are always treated as monospaced
 		return true;
 	}
-	return IsAlmostMonospace(LogFont.lfFaceName, m_tm, m_otm[0]);
+	return m_Font[0]->mb_Monospace;
 }
 
 BYTE CFontMgr::FontQuality()
@@ -400,6 +527,18 @@ BYTE CFontMgr::FontQuality()
 
 LONG CFontMgr::FontWidth()
 {
+	if (m_Font[0].IsSet())
+	{
+		// We set m_LF to real *positive* font height
+		if (m_Font[0]->m_LF.lfWidth > 0)
+		{
+			return m_Font[0]->m_LF.lfWidth;
+		}
+		_ASSERTE((m_Font[0]->m_LF.lfWidth > 0) && "m_LF is expected to hold real width value");
+	}
+
+	_ASSERTE(FALSE && "Font[0] must be created already");
+
 	const LONG defFontWidth = 8;
 
 	if (LogFont.lfWidth <= 0)
@@ -923,7 +1062,6 @@ void CFontMgr::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, in
 	LogFont.lfCharSet = gpSet->mn_LoadFontCharSet;
 	LogFont.lfItalic = gpSet->isItalic;
 
-	lstrcpyn(LogFont2.lfFaceName, (*gpSet->inFont2) ? gpSet->inFont2 : gsDefGuiFont, countof(LogFont2.lfFaceName));
 	if (*gpSet->inFont2)
 		mb_Name2Ok = TRUE;
 
@@ -975,14 +1113,14 @@ void CFontMgr::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, in
 
 			if (iter->bHasBorders)
 			{
-				lstrcpynW(LogFont2.lfFaceName, iter->szFontName, countof(LogFont2.lfFaceName));
+				lstrcpynW(gpSet->inFont2, iter->szFontName, countof(gpSet->inFont2));
 				mb_Name2Ok = TRUE;
 				break;
 			}
 		}
 	}
 
-	mh_Font[0] = CreateFontIndirectMy(&LogFont);
+	CreateFontGroup(LogFont);
 
 	//2009-06-07 Реальный размер созданного шрифта мог измениться
 	SaveFontSizes((mn_AutoFontWidth == -1), false);
@@ -992,7 +1130,7 @@ void CFontMgr::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, in
 
 void CFontMgr::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/)
 {
-	LOGFONT LF = LogFont;
+	CLogFont LF(LogFont);
 	if (pszFontName && *pszFontName)
 		wcscpy_c(LF.lfFaceName, pszFontName);
 	if (anHeight)
@@ -1011,18 +1149,9 @@ void CFontMgr::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD
 		CVConGroup::LogString(szInfo);
 	}
 
-	CEFONT hf = CreateFontIndirectMy(&LF);
-
-	if (hf.IsSet())
+	if (CreateFontGroup(LF))
 	{
 		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
-		CEFONT hOldF = mh_Font[0];
-
-		LogFont = LF;
-
-		mh_Font[0] = hf;
-		hOldF.Delete();
-
 		SaveFontSizes((mn_AutoFontWidth == -1), true);
 
 		gpConEmu->Update(true);
@@ -1041,7 +1170,6 @@ void CFontMgr::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD
 		_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", gpSet->FontSizeY);
 		SetDlgItemText(gpSetCls->GetPage(thi_Fonts), tFontSizeY, szSize);
 		gpSetCls->UpdateFontInfo();
-		gpSetCls->ShowFontErrorTip(szFontError);
 	}
 
 	gpConEmu->OnPanelViewSettingsChanged(TRUE);
@@ -1096,10 +1224,12 @@ bool CFontMgr::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,..
 
 	int nNewHeight = LogFont.lfHeight; // Issue 1130
 	bool bWasNotZoom100 = (mn_FontZoomValue != FontZoom100);
-	LOGFONT LF = {};
+	CLogFont LF;
+	CLogFont LF_PREV(LogFont);
 
 	for (int nRetry = 0; nRetry < 10; nRetry++)
 	{
+		// The function would copy LogFont to LF and update LF's Height and Width
 		if (!MacroFontSetSizeInt(LF, nRelative/*0/1/2*/, nValue/*+-1,+-2,... | 100%*/))
 		{
 			break;
@@ -1112,24 +1242,23 @@ bool CFontMgr::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,..
 			return false;
 		}
 
-		CEFONT hf = CreateFontIndirectMy(&LF);
-
 		// Успешно, только если:
 		// шрифт изменился
 		// или хотели поставить абсолютный размер
 		// или был масштаб НЕ 100%, а стал 100% (гарантированный возврат к оригиналу)
-		if (hf.IsSet()
+
+		// Смысл в том, чтобы не пересоздавать все MAX_FONT_STYLES шрифтов, если размер "не подходит"
+		CFontPtr font;
+
+		// First - check if font creation is available for the size
+		if (Create(LF, font)
 			&& ((nRelative != 1)
-				|| (LF.lfHeight != LogFont.lfHeight)
-				|| (!bWasNotZoom100 && (mn_FontZoomValue == FontZoom100))))
+				|| (font->m_LF.lfHeight != LF_PREV.lfHeight)
+				|| (!bWasNotZoom100 && (mn_FontZoomValue == FontZoom100)))
+			// Now we may create full group of fonts
+			&& CreateFontGroup(LF))
 		{
 			// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
-			CEFONT hOldF = mh_Font[0];
-
-			LogFont = LF;
-
-			mh_Font[0] = hf;
-			hOldF.Delete();
 
 			// Запомнить размер шрифта (AutoFontWidth/Height - может быть другим, он запоминается выше)
 			SaveFontSizes(false, true);
@@ -1157,13 +1286,11 @@ bool CFontMgr::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,..
 			if (gpConEmu->mp_Status)
 				gpConEmu->mp_Status->UpdateStatusBar(true);
 
-			_wsprintf(szLog, SKIPLEN(countof(szLog)) L"-- Succeeded! New font {'%s',%i,%i} was created", LF.lfFaceName, LF.lfHeight, LF.lfWidth, LF.lfHeight, LF.lfWidth);
+			_wsprintf(szLog, SKIPLEN(countof(szLog)) L"-- Succeeded! New font {'%s',%i,%i} was created", font->m_LF.lfFaceName, font->m_LF.lfHeight, font->m_LF.lfWidth, font->m_LF.lfHeight, font->m_LF.lfWidth);
 			gpConEmu->LogString(szLog);
 
 			return true;
 		}
-
-		hf.Delete();
 
 		if (nRelative != 1)
 		{
@@ -1625,61 +1752,43 @@ void CFontMgr::UnregisterFonts()
 // void CSettings::RecreateFont(WORD wFromID)
 // -- подгонка шрифта под размер окна GUI (если включен флажок "Auto")
 // bool CFontMgr::AutoRecreateFont(int nFontW, int nFontH)
-CEFONT CFontMgr::CreateFontIndirectMy(LOGFONT *inFont)
+bool CFontMgr::CreateFontGroup(CLogFont inFont)
 {
+	bool bSucceeded = false;
+
 	//ResetFontWidth(); -- перенесено вниз, после того, как убедимся в валидности шрифта
 	//lfOutPrecision = OUT_RASTER_PRECIS,
-	szFontError[0] = 0;
+
+	ms_FontError.Clear();
 
 	HWND hMainPg = gpSetCls->GetPage(thi_Fonts);
 
-	// Поиск по шрифтам рисованным ConEmu
-	CustomFont* pFont = NULL;
+	// For *.bdf fonts
 	CustomFontFamily* pCustom = NULL;
-	if (FindCustomFont(inFont->lfFaceName, inFont->lfHeight,
-				inFont->lfWeight >= FW_BOLD, inFont->lfItalic, inFont->lfUnderline,
-				&pCustom, &pFont))
+
 	{
-		if (!pFont)
-		{
-			MBoxAssert(pFont != NULL);
-			return (HFONT)NULL;
-		}
-		// Получить реальные размеры шрифта (обновить inFont)
-		pFont->GetBoundingBox(&inFont->lfWidth, &inFont->lfHeight);
-		ResetFontWidth();
-
-		CEFONT ceFont;
-		ceFont.iType = CEFONT_CUSTOM;
-		ceFont.pCustomFont = pFont;
-
-		for (int i = 0; i < MAX_FONT_STYLES; i++)
-		{
-			SafeFree(m_otm[i]);
-			if (i)
-			{
-				mh_Font[i].iType = CEFONT_CUSTOM;
-				mh_Font[i].pCustomFont = pCustom->GetFont(inFont->lfHeight,
-					(i & AI_STYLE_BOLD     ) ? TRUE : FALSE,
-					(i & AI_STYLE_ITALIC   ) ? TRUE : FALSE,
-					(i & AI_STYLE_UNDERLINE) ? TRUE : FALSE);
-			}
-		}
-
-		RecreateBorderFont(inFont);
-
-		return ceFont;
+	CFontPtr font;
+	if (!Create(inFont, font, &pCustom))
+	{
+		goto wrap;
 	}
 
-	HFONT hFont = NULL;
-	static int nRastNameLen = _tcslen(RASTER_FONTS_NAME);
-	int nRastHeight = 0, nRastWidth = 0;
-	bool bRasterFont = false;
-	LOGFONT tmpFont = *inFont;
-	LPOUTLINETEXTMETRIC lpOutl = NULL;
+	m_Font[0] = font.Ptr();
+	bSucceeded = true;
+	}
 
-	if (inFont->lfFaceName[0] == L'[' && wcsncmp(inFont->lfFaceName+1, RASTER_FONTS_NAME, nRastNameLen) == 0)
+	#ifdef _DEBUG
+	DumpFontMetrics(L"m_Font[0]", m_Font[0]);
+	#endif
+
+	TODO("Move this into CFont");
+	ResetFontWidth();
+
+	if (m_Font[0]->mb_RasterFont)
 	{
+		gpSet->FontSizeY = m_Font[0]->m_LF.lfHeight;
+		gpSet->FontSizeX = gpSet->FontSizeX3 = m_Font[0]->m_LF.lfWidth;
+
 		if (gpSet->isFontAutoSize)
 		{
 			gpSet->isFontAutoSize = false;
@@ -1690,230 +1799,313 @@ CEFONT CFontMgr::CreateFontIndirectMy(LOGFONT *inFont)
 			gpSetCls->ShowFontErrorTip(CLngRc::getRsrc(lng_RasterAutoError)/*"Font auto size is not allowed for a fixed raster font size. Select ‘Terminal’ instead of ‘[Raster Fonts ...]’"*/);
 		}
 
-		wchar_t *pszEnd = NULL;
-		wchar_t *pszSize = inFont->lfFaceName + nRastNameLen + 2;
-		nRastWidth = wcstol(pszSize, &pszEnd, 10);
-
-		if (nRastWidth && pszEnd && *pszEnd == L'x')
+		if (hMainPg)
 		{
-			pszSize = pszEnd + 1;
-			nRastHeight = wcstol(pszSize, &pszEnd, 10);
+			wchar_t temp[32];
+			_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->FontSizeY);
+			CSetDlgLists::SelectStringExact(hMainPg, tFontSizeY, temp);
+			_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->FontSizeX);
+			CSetDlgLists::SelectStringExact(hMainPg, tFontSizeX, temp);
+			CSetDlgLists::SelectStringExact(hMainPg, tFontSizeX3, temp);
+		}
+	}
 
-			if (nRastHeight)
+	#if 0
+	// -- don't update Settings dialog here to avoid unexpected font creations on scrolling through font families
+	if (lbTM && m_tm->tmCharSet != DEFAULT_CHARSET)
+	{
+		inFont.lfCharSet = m_tm->tmCharSet;
+
+		const ListBoxItem* pCharSets = NULL;
+		uint nCount = CSetDlgLists::GetListItems(CSetDlgLists::eCharSets, pCharSets);
+		for (uint i = 0; i < nCount; i++)
+		{
+			if (pCharSets[i].nValue == m_tm->tmCharSet)
+			{
+				SendDlgItemMessage(hMainPg, tFontCharset, CB_SETCURSEL, i, 0);
+				break;
+			}
+		}
+	}
+	#endif
+
+	// Create set of bold/italic/underlined fonts
+	_ASSERTE(MAX_FONT_STYLES == 8);
+	for (int i = 1; i < MAX_FONT_STYLES; i++)
+	{
+		CLogFont tempFont(inFont);
+		tempFont.lfWeight = (i & AI_STYLE_BOLD) ? FW_BOLD : FW_NORMAL;
+		tempFont.lfItalic = (i & AI_STYLE_ITALIC   ) ? TRUE : FALSE;
+		tempFont.lfUnderline = (i & AI_STYLE_UNDERLINE) ? TRUE : FALSE;
+		Create(tempFont, m_Font[i], &pCustom);
+	}
+
+	// Fin
+	LogFont = (LOGFONT)inFont;
+
+	// Alternative font for user-defined char range
+	RecreateAlternativeFont();
+
+	// If Settings dialog is open - show tool balloon error
+	if (m_Font[0]->ms_FontError || (m_Font2.Ptr() && m_Font2->ms_FontError))
+	{
+		if (m_Font[0]->ms_FontError && (m_Font2.Ptr() && m_Font2->ms_FontError))
+		{
+			ms_FontError = lstrmerge(m_Font[0]->ms_FontError, L"\n", m_Font2->ms_FontError);
+		}
+		else if (m_Font2.Ptr() && m_Font2->ms_FontError)
+		{
+			ms_FontError.Set(m_Font2->ms_FontError);
+		}
+		else
+		{
+			ms_FontError.Set(m_Font[0]->ms_FontError);
+		}
+	}
+
+	if (ghOpWnd)
+	{
+		gpSetCls->ShowFontErrorTip(ms_FontError);
+	}
+wrap:
+	return bSucceeded;
+}
+
+bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCustom /*= NULL*/)
+{
+	bool bSucceeded = false;
+
+	if (rpFont.Ptr())
+		rpFont->ms_FontError.Clear();
+
+	WARNING("TODO: Use font cache");
+
+	rpFont.Release();
+
+	wchar_t szFontError[512] = L"";
+
+	// Search through *.bdf font (drawn by ConEmu internally)
+	bool isBdf = false;
+	CustomFont* pFont = NULL;
+	CustomFontFamily* pCustom = NULL;
+
+	// If bdf font family was already found by CreateFontGroup
+	if (ppCustom && *ppCustom)
+	{
+		pCustom = *ppCustom;
+		pFont = pCustom->GetFont(inFont.lfHeight,
+				inFont.lfWeight >= FW_BOLD, inFont.lfItalic, inFont.lfUnderline);
+	}
+
+	// bdf?
+	if (pFont
+		|| FindCustomFont(inFont.lfFaceName, inFont.lfHeight,
+				inFont.lfWeight >= FW_BOLD, inFont.lfItalic, inFont.lfUnderline,
+				&pCustom, &pFont))
+	{
+		if (!pFont)
+		{
+			MBoxAssert(pFont != NULL);
+			goto wrap;
+		}
+
+		// Get real font size (update inFont)
+		pFont->GetBoundingBox(&inFont.lfWidth, &inFont.lfHeight);
+
+		WARNING("Move ResetFontWidth to rpFont");
+		//ResetFontWidth();
+
+		TODO("Use font cache");
+		rpFont = new CFont(pFont);
+
+		if (!rpFont.IsSet())
+			goto wrap;
+
+		// Must be set in ctor
+		_ASSERTE(rpFont->mb_RasterFont && rpFont->mb_Monospace);
+
+		// rpFont->m_LF would be updated below!
+
+		// Optimization for batch creation
+		if (ppCustom)
+			*ppCustom = pCustom;
+
+		bSucceeded = true;
+	}
+	else
+	{
+		if (ppCustom)
+			*ppCustom = NULL;
+
+		HFONT hFont = NULL;
+		static int nRastNameLen = _tcslen(RASTER_FONTS_NAME);
+		int nRastHeight = 0, nRastWidth = 0;
+		bool bRasterFont = false; // Specially for [Raster Fonts WxH]
+		LOGFONT tmpFont = (LOGFONT)inFont;
+
+		if (inFont.lfFaceName[0] == L'[' && wcsncmp(inFont.lfFaceName+1, RASTER_FONTS_NAME, nRastNameLen) == 0)
+		{
+			wchar_t *pszEnd = NULL;
+			wchar_t *pszSize = inFont.lfFaceName + nRastNameLen + 2;
+			nRastWidth = wcstol(pszSize, &pszEnd, 10);
+
+			if (nRastWidth && pszEnd && *pszEnd == L'x')
+			{
+				pszSize = pszEnd + 1;
+				nRastHeight = wcstol(pszSize, &pszEnd, 10);
+
+				if (nRastHeight)
+				{
+					bRasterFont = true;
+					inFont.lfHeight = nRastHeight;
+					inFont.lfWidth = nRastWidth;
+				}
+			}
+
+			inFont.lfCharSet = OEM_CHARSET;
+			tmpFont = inFont;
+			wcscpy_c(tmpFont.lfFaceName, L"Terminal");
+		}
+		else
+		{
+			// "Terminal" + OEM == Raster Font
+			if ((wcscmp(inFont.lfFaceName, L"Terminal") == 0) && (inFont.lfCharSet = OEM_CHARSET))
 			{
 				bRasterFont = true;
-				inFont->lfHeight = gpSet->FontSizeY = nRastHeight;
-				inFont->lfWidth = nRastWidth;
-				gpSet->FontSizeX = gpSet->FontSizeX3 = nRastWidth;
-
-				if (hMainPg)
-				{
-					wchar_t temp[32];
-					_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", nRastHeight);
-					CSetDlgLists::SelectStringExact(hMainPg, tFontSizeY, temp);
-					_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", nRastWidth);
-					CSetDlgLists::SelectStringExact(hMainPg, tFontSizeX, temp);
-					CSetDlgLists::SelectStringExact(hMainPg, tFontSizeX3, temp);
-				}
 			}
 		}
 
-		inFont->lfCharSet = OEM_CHARSET;
-		tmpFont = *inFont;
-		wcscpy_c(tmpFont.lfFaceName, L"Terminal");
-	}
 
-	if (gpSet->isMonospace)
-	{
-		tmpFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
-	}
-
-	hFont = CreateFontIndirect(&tmpFont);
-
-
-	wchar_t szFontFace[32];
-	// лучше для ghWnd, может разные мониторы имеют разные параметры...
-	HDC hScreenDC = GetDC(ghWnd); // GetDC(0);
-	HDC hDC = CreateCompatibleDC(hScreenDC);
-	ReleaseDC(ghWnd, hScreenDC);
-	hScreenDC = NULL;
-	MBoxAssert(hDC);
-
-	if (hFont)
-	{
-		#ifdef _DEBUG
-		DumpFontMetrics(L"mh_Font", hDC, hFont);
-		#endif
-
-		DWORD dwFontErr = 0;
-		SetLastError(0);
-		HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
-		dwFontErr = GetLastError();
-		// Для пропорциональных шрифтов имеет смысл сохранять в реестре оптимальный lfWidth (это gpSet->FontSizeX3)
-		ZeroStruct(m_tm);
-		BOOL lbTM = GetTextMetrics(hDC, m_tm);
-
-		if (!lbTM && !bRasterFont)
+		if (gpSet->isMonospace)
 		{
-			// Считаем, что шрифт НЕ валиден!!!
+			// Preferred flags
+			tmpFont.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+		}
+
+		hFont = CreateFontIndirect(&tmpFont);
+
+		wchar_t szFontFace[32];
+		// ghWnd is preferred, different monitors may have different properties
+		HDC hScreenDC = GetDC(ghWnd); // GetDC(0);
+		HDC hDC = CreateCompatibleDC(hScreenDC);
+		ReleaseDC(ghWnd, hScreenDC);
+		hScreenDC = NULL;
+		MBoxAssert(hDC);
+
+		if (hFont)
+		{
+			rpFont = new CFont(hFont);
+		}
+
+		if (rpFont.IsSet())
+		{
+			DWORD dwFontErr = 0;
+			SetLastError(0);
+			HFONT hOldF = (HFONT)SelectObject(hDC, hFont);
 			dwFontErr = GetLastError();
-			SelectObject(hDC, hOldF);
-			DeleteDC(hDC);
-			_wsprintf(szFontError, SKIPLEN(countof(szFontError)) L"GetTextMetrics failed for non Raster font '%s'", inFont->lfFaceName);
+			BOOL lbTM = GetTextMetrics(hDC, &rpFont->m_tm);
 
-			if (dwFontErr)
+			if (!lbTM && !bRasterFont)
 			{
-				int nCurLen = _tcslen(szFontError);
-				_wsprintf(szFontError + nCurLen, SKIPLEN(countof(szFontError)-nCurLen)
-				          L"\r\nErrorCode = 0x%08X", dwFontErr);
-			}
+				// Считаем, что шрифт НЕ валиден!!!
+				dwFontErr = GetLastError();
+				SelectObject(hDC, hOldF);
+				DeleteDC(hDC);
 
-			DeleteObject(hFont);
-
-			return NULL;
-		}
-
-		// Теперь - можно и reset сделать
-		ResetFontWidth();
-
-		for (int i=0; i<MAX_FONT_STYLES; i++)
-		{
-			if (m_otm[i]) {free(m_otm[i]); m_otm[i] = NULL;}
-		}
-
-		if (!lbTM)
-		{
-			_ASSERTE(lbTM);
-		}
-
-		if (bRasterFont)
-		{
-			m_tm->tmHeight = nRastHeight;
-			m_tm->tmAveCharWidth = m_tm->tmMaxCharWidth = nRastWidth;
-		}
-
-		lpOutl = LoadOutline(hDC, NULL/*hFont*/); // шрифт УЖЕ выбран в DC
-
-		if (lpOutl)
-		{
-			m_otm[0] = lpOutl; lpOutl = NULL;
-		}
-		else
-		{
-			dwFontErr = GetLastError();
-		}
-
-		if (GetTextFace(hDC, countof(szFontFace), szFontFace))
-		{
-			if (!bRasterFont)
-			{
-				szFontFace[31] = 0;
-
-				if (lstrcmpi(inFont->lfFaceName, szFontFace))
+				_wsprintf(szFontError, SKIPLEN(countof(szFontError)) L"GetTextMetrics failed for non Raster font '%s'", inFont.lfFaceName);
+				if (dwFontErr)
 				{
 					int nCurLen = _tcslen(szFontError);
-					_wsprintf(szFontError+nCurLen, SKIPLEN(countof(szFontError)-nCurLen)
-					          L"Failed to create main font!\nRequested: %s\nCreated: %s\n", inFont->lfFaceName, szFontFace);
-					lstrcpyn(inFont->lfFaceName, szFontFace, countof(inFont->lfFaceName)); inFont->lfFaceName[countof(inFont->lfFaceName)-1] = 0;
-					wcscpy_c(tmpFont.lfFaceName, inFont->lfFaceName);
+					_wsprintf(szFontError + nCurLen, SKIPLEN(countof(szFontError)-nCurLen)
+							  L"\r\nErrorCode = 0x%08X", dwFontErr);
 				}
+
+				DeleteObject(hFont);
+
+				goto wrap;
 			}
-		}
 
-		// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
-		bool bAlmostMonospace = IsAlmostMonospace(inFont->lfFaceName, m_tm, m_otm[0] /*m_tm->tmMaxCharWidth, m_tm->tmAveCharWidth, m_tm->tmHeight*/);
-		//if (m_tm->tmMaxCharWidth && m_tm->tmAveCharWidth && m_tm->tmHeight)
-		//{
-		//	int nRelativeDelta = (m_tm->tmMaxCharWidth - m_tm->tmAveCharWidth) * 100 / m_tm->tmHeight;
-		//	// Если расхождение менее 15% высоты - считаем шрифт моноширинным
-		//	if (nRelativeDelta < 15)
-		//		bAlmostMonospace = true;
-
-		//	//if (abs(m_tm->tmMaxCharWidth - m_tm->tmAveCharWidth)<=2)
-		//	//{ -- это была попытка прикинуть среднюю ширину по английским буквам
-		//	//  -- не нужно, т.к. затевалось из-за проблем с ClearType на больших размерах
-		//	//  -- шрифтов, а это лечится аргументом pDX в TextOut
-		//	//	int nTestLen = _tcslen(TEST_FONT_WIDTH_STRING_EN);
-		//	//	SIZE szTest = {0,0};
-		//	//	if (GetTextExtentPoint32(hDC, TEST_FONT_WIDTH_STRING_EN, nTestLen, &szTest)) {
-		//	//		int nAveWidth = (szTest.cx + nTestLen - 1) / nTestLen;
-		//	//		if (nAveWidth > m_tm->tmAveCharWidth || nAveWidth > m_tm->tmMaxCharWidth)
-		//	//			m_tm->tmMaxCharWidth = m_tm->tmAveCharWidth = nAveWidth;
-		//	//	}
-		//	//}
-		//} else {
-		//	_ASSERTE(m_tm->tmMaxCharWidth);
-		//	_ASSERTE(m_tm->tmAveCharWidth);
-		//	_ASSERTE(m_tm->tmHeight);
-		//}
-
-		//if (isForceMonospace) {
-		//Maximus - у Arial'а например MaxWidth слишком большой
-		if (m_tm->tmMaxCharWidth > (m_tm->tmHeight * 15 / 10))
-			m_tm->tmMaxCharWidth = m_tm->tmHeight; // иначе зашкалит - текст очень сильно разъедется
-
-		// Лучше поставим AveCharWidth. MaxCharWidth для "условно моноширинного" Consolas почти равен высоте.
-		if (gpSet->FontSizeX3 && ((int)gpSet->FontSizeX3 > FontDefWidthMin) && ((int)gpSet->FontSizeX3 <= FontDefWidthMax))
-			inFont->lfWidth = EvalCellWidth();
-		else
-			inFont->lfWidth = m_tm->tmAveCharWidth;
-		// Обновлять реальный размер шрифта в диалоге настройки не будем, были случаи, когда
-		// tmHeight был меньше, чем запрашивалось, однако, если пытаться создать шрифт с этим "обновленным"
-		// размером - в реале создавался совсем другой шрифт...
-		inFont->lfHeight = m_tm->tmHeight;
-
-		if (lbTM && m_tm->tmCharSet != DEFAULT_CHARSET)
-		{
-			inFont->lfCharSet = m_tm->tmCharSet;
-
-			const ListBoxItem* pCharSets = NULL;
-			uint nCount = CSetDlgLists::GetListItems(CSetDlgLists::eCharSets, pCharSets);
-			for (uint i = 0; i < nCount; i++)
+			if (!lbTM)
 			{
-				if (pCharSets[i].nValue == m_tm->tmCharSet)
+				_ASSERTE(lbTM);
+			}
+
+			if (bRasterFont)
+			{
+				rpFont->m_tm.tmHeight = nRastHeight;
+				rpFont->m_tm.tmAveCharWidth = rpFont->m_tm.tmMaxCharWidth = nRastWidth;
+				rpFont->mb_Monospace = true;
+			}
+
+			rpFont->mp_otm = LoadOutline(hDC, NULL/*hFont*/); // шрифт УЖЕ выбран в DC
+
+			if (!rpFont->mp_otm)
+			{
+				dwFontErr = GetLastError();
+			}
+
+			if (GetTextFace(hDC, countof(szFontFace), szFontFace))
+			{
+				if (!bRasterFont)
 				{
-					SendDlgItemMessage(hMainPg, tFontCharset, CB_SETCURSEL, i, 0);
-					break;
+					szFontFace[31] = 0;
+
+					if (lstrcmpi(inFont.lfFaceName, szFontFace))
+					{
+						int nCurLen = _tcslen(szFontError);
+						_wsprintf(szFontError+nCurLen, SKIPLEN(countof(szFontError)-nCurLen)
+								  L"Failed to create font!\nRequested: %s\nCreated: %s\n", inFont.lfFaceName, szFontFace);
+						lstrcpyn(inFont.lfFaceName, szFontFace, countof(inFont.lfFaceName)); inFont.lfFaceName[countof(inFont.lfFaceName)-1] = 0;
+						wcscpy_c(tmpFont.lfFaceName, inFont.lfFaceName);
+					}
 				}
 			}
-		}
 
-		for (int s = 1; s < MAX_FONT_STYLES; s++)
-		{
-			mh_Font[s].Delete();
+			rpFont->mb_RasterFont = bRasterFont;
+			rpFont->mb_Monospace = bRasterFont ? true : IsAlmostMonospace(inFont.lfFaceName, &rpFont->m_tm, rpFont->mp_otm);
 
-			if (s & AI_STYLE_BOLD)
-			{
-				tmpFont.lfWeight = (inFont->lfWeight == FW_NORMAL) ? FW_BOLD : FW_NORMAL;
-			}
+			// у Arial'а например MaxWidth слишком большой (в два и более раз больше ВЫСОТЫ шрифта)
+			if (rpFont->m_tm.tmMaxCharWidth > (rpFont->m_tm.tmHeight * 15 / 10))
+				rpFont->m_tm.tmMaxCharWidth = rpFont->m_tm.tmHeight; // иначе зашкалит - текст очень сильно разъедется
+
+			// Лучше поставим AveCharWidth. MaxCharWidth для "условно моноширинного" Consolas почти равен высоте.
+			if (gpSet->FontSizeX3 && ((int)gpSet->FontSizeX3 > FontDefWidthMin) && ((int)gpSet->FontSizeX3 <= FontDefWidthMax))
+				inFont.lfWidth = EvalCellWidth();
 			else
+				inFont.lfWidth = rpFont->m_tm.tmAveCharWidth;
+
+			// Обновлять реальный размер шрифта в диалоге настройки не будем, были случаи, когда
+			// tmHeight был меньше, чем запрашивалось, однако, если пытаться создать шрифт с этим "обновленным"
+			// размером - в реале создавался совсем другой шрифт...
+			inFont.lfHeight = rpFont->m_tm.tmHeight;
+			_ASSERTE(inFont.lfHeight > 0);
+
+			if (lbTM && rpFont->m_tm.tmCharSet != DEFAULT_CHARSET)
 			{
-				tmpFont.lfWeight = inFont->lfWeight;
+				inFont.lfCharSet = rpFont->m_tm.tmCharSet;
 			}
 
-			tmpFont.lfItalic = (s & AI_STYLE_ITALIC) ? !inFont->lfItalic : inFont->lfItalic;
-			tmpFont.lfUnderline = (s & AI_STYLE_UNDERLINE) ? !inFont->lfUnderline : inFont->lfUnderline;
-			mh_Font[s] = CEFONT(CreateFontIndirect(&tmpFont));
-			SelectObject(hDC, mh_Font[s].hFont);
-			lbTM = GetTextMetrics(hDC, m_tm+s);
-			//_ASSERTE(lbTM);
-			lpOutl = LoadOutline(hDC, mh_Font[s].hFont);
+			SelectObject(hDC, hOldF);
 
-			if (lpOutl)
-			{
-				if (m_otm[s]) free(m_otm[s]);
-
-				m_otm[s] = lpOutl; lpOutl = NULL;
-			}
+			_ASSERTE(hFont != NULL);
+			bSucceeded = (hFont != NULL);
 		}
 
-		SelectObject(hDC, hOldF);
 		DeleteDC(hDC);
-
-		RecreateBorderFont(inFont);
 	}
 
-	return hFont;
+	if (bSucceeded)
+	{
+		_ASSERTE(rpFont.IsSet());
+		rpFont->m_LF = (LOGFONT)inFont;
+	}
+
+wrap:
+	if (rpFont.Ptr())
+	{
+		rpFont->ms_FontError = szFontError;
+	}
+	return bSucceeded;
 }
 
 LONG CFontMgr::EvalCellWidth()
@@ -2026,6 +2218,7 @@ bool CFontMgr::MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1/2/3*/, int nV
 
 wrap:
 	// And set the Zoom value
+	TODO("Move Zoom to VCon");
 	mn_FontZoomValue = nNewZoomValue;
 
 	// Now we can set the font
@@ -2045,47 +2238,25 @@ wrap:
 	return bChanged;
 }
 
-void CFontMgr::RecreateBorderFont(const LOGFONT *inFont)
+void CFontMgr::RecreateAlternativeFont()
 {
-	mh_Font2.Delete();
-
-	// если ширина шрифта стала больше ширины FixFarBorders - сбросить ширину FixFarBorders в 0
-	if (gpSet->FontSizeX2 && (LONG)gpSet->FontSizeX2 < inFont->lfWidth)
+	if (!m_Font[0].IsSet())
 	{
-		gpSet->FontSizeX2 = 0;
-
-		HWND hMainPg = gpSetCls->GetPage(thi_Fonts);
-		if (hMainPg)
-			CSetDlgLists::SelectStringExact(hMainPg, tFontSizeX2, L"0");
-	}
-
-	// Поиск по шрифтам рисованным ConEmu (bdf)
-	CustomFont* pFont = NULL;
-	CustomFontFamily* pCustom = NULL;
-	if (FindCustomFont(LogFont2.lfFaceName, inFont->lfHeight,
-				inFont->lfWeight >= FW_BOLD, inFont->lfItalic, inFont->lfUnderline,
-				&pCustom, &pFont))
-	{
-		if (!pFont)
-		{
-			MBoxAssert(pFont != NULL);
-			return;
-		}
-
-		// OK
-		mh_Font2.iType = CEFONT_CUSTOM;
-		mh_Font2.pCustomFont = pFont;
+		_ASSERTE(FALSE && "Must not be called before main font creation");
 		return;
 	}
 
-	wchar_t szFontFace[32];
-	// лучше для ghWnd, может разные мониторы имеют разные параметры...
-	HDC hScreenDC = GetDC(ghWnd); // GetDC(0);
-	HDC hDC = CreateCompatibleDC(hScreenDC);
-	ReleaseDC(ghWnd, hScreenDC);
-	hScreenDC = NULL;
-	MBoxAssert(hDC);
-	HFONT hOldF = NULL;
+	// If pseudographics was included in the alternative font char range
+	bool isBorderFont = false;
+
+	// Used for font creation (may contain negative lfHeight)
+	CLogFont LogFont2((LOGFONT)LogFont);
+
+	lstrcpyn(LogFont2.lfFaceName, (*gpSet->inFont2) ? gpSet->inFont2 : gsDefGuiFont, countof(LogFont2.lfFaceName));
+
+	// This structure contains ‘real’ positive values
+	CLogFont inFont((LOGFONT)m_Font[0]->m_LF);
+
 
 	// Eval first to consider DPI and FontUseUnits options
 	// Force the same height in pixels as main font
@@ -2095,15 +2266,13 @@ void CFontMgr::RecreateBorderFont(const LOGFONT *inFont)
 	// so, to avoid vertically-dashed frames...
 	if (gpSet->CheckCharAltFont(ucBoxDblVert))
 	{
-		if ((LogFont.lfHeight > 0)
-			|| ((LogFont2.lfHeight > 0) && (LogFont.lfHeight > LogFont2.lfHeight))
-			)
+		isBorderFont = true;
+
+		// Previously, it used only positive values. But generally we use negative.
+		// So, compare them by absolute value.
+		if (LogFont.lfHeight && (_abs(LogFont.lfHeight) > _abs(LogFont2.lfHeight)))
 		{
 			LogFont2.lfHeight = LogFont.lfHeight;
-		}
-		else
-		{
-			_ASSERTE(LogFont.lfHeight > 0);
 		}
 	}
 
@@ -2111,99 +2280,92 @@ void CFontMgr::RecreateBorderFont(const LOGFONT *inFont)
 	if (gpSet->FontSizeX2 <= 0)
 	{
 		// Use main font width
-		LogFont2.lfWidth = inFont->lfWidth;
+		LogFont2.lfWidth = inFont.lfWidth;
 	}
-	mn_BorderFontWidth = LogFont2.lfWidth;
+
+	// если ширина шрифта стала больше ширины FixFarBorders - сбросить ширину FixFarBorders в 0
+	if (gpSet->FontSizeX2 && (LONG)gpSet->FontSizeX2 < inFont.lfWidth)
+	{
+		gpSet->FontSizeX2 = 0;
+
+		HWND hMainPg = gpSetCls->GetPage(thi_Fonts);
+		if (hMainPg)
+			CSetDlgLists::SelectStringExact(hMainPg, tFontSizeX2, L"0");
+	}
 
 	// To avoid dashed frames, alternative font was created with NONANTIALIASED_QUALITY
 	// But now, due to user-defined ranges, the font may be used for arbitrary characters,
 	// so it's better to give user control over this
-	DWORD fdwQuality = (!gpSet->isAntiAlias2) ? NONANTIALIASED_QUALITY
+	LogFont2.lfQuality = (!gpSet->isAntiAlias2) ? NONANTIALIASED_QUALITY
 		// so, if clear-type or other anti-aliasing is ON for main font...
 		: (gpSet->mn_AntiAlias != NONANTIALIASED_QUALITY) ? gpSet->mn_AntiAlias
 		// otherwise - use clear-type
 		: CLEARTYPE_NATURAL_QUALITY;
-	// No control over alternative font charset, use default
-	DWORD fdwCharSet = DEFAULT_CHARSET;
-	mh_Font2 = CEFONT(CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
-	                             0, 0, 0, fdwCharSet, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
-	                             fdwQuality, 0, LogFont2.lfFaceName));
 
-	if (mh_Font2.IsSet())
+	LogFont2.lfCharSet = DEFAULT_CHARSET;
+
+	if (!Create(LogFont2, m_Font2))
 	{
-		hOldF = (HFONT)SelectObject(hDC, mh_Font2.hFont);
-
-		if (GetTextFace(hDC, countof(szFontFace), szFontFace))
-		{
-			szFontFace[countof(szFontFace)-1] = 0; // гарантировано ASCII-Z
-
-			// Проверяем, совпадает ли имя созданного шрифта с запрошенным?
-			if (lstrcmpi(LogFont2.lfFaceName, szFontFace))
-			{
-				if (szFontError[0]) wcscat_c(szFontError, L"\n");
-
-				int nCurLen = _tcslen(szFontError);
-				_wsprintf(szFontError+nCurLen, SKIPLEN(countof(szFontError)-nCurLen)
-				          L"Failed to create border font!\nRequested: %s\nCreated: ", LogFont2.lfFaceName);
-
-				// Lucida may be not installed too
-				// So, try to create Lucida or Courier (we need font with 'frames')
-				bool bCreated = false;
-				LPCWSTR szAltNames[] = {gsDefGuiFont, gsAltGuiFont};
-				for (size_t a = 0; a < countof(szAltNames); a++)
-				{
-					if (!a && lstrcmpi(LogFont2.lfFaceName, gsDefGuiFont) == 0)
-						continue; // It was already failed...
-
-					wcscpy_c(LogFont2.lfFaceName, szAltNames[a]);
-					SelectObject(hDC, hOldF);
-					mh_Font2.Delete();
-
-					mh_Font2 = CEFONT(CreateFont(LogFont2.lfHeight, LogFont2.lfWidth, 0, 0, FW_NORMAL,
-													0, 0, 0, fdwCharSet, OUT_TT_PRECIS, CLIP_DEFAULT_PRECIS,
-													fdwQuality, 0, LogFont2.lfFaceName));
-					hOldF = (HFONT)SelectObject(hDC, mh_Font2.hFont);
-					wchar_t szFontFace2[32];
-
-					if (GetTextFace(hDC, countof(szFontFace2), szFontFace2))
-					{
-						szFontFace2[31] = 0;
-
-						// Проверяем что создалось, и ругаемся, если что...
-						if (lstrcmpi(LogFont2.lfFaceName, szFontFace2) == 0)
-						{
-							bCreated = true;
-							wcscat_c(szFontError, szFontFace);
-							wcscat_c(szFontError, L"\nUsing: ");
-							wcscat_c(szFontError, LogFont2.lfFaceName);
-							break;
-						}
-					}
-				}
-				// Font not installed or available?
-				if (!bCreated)
-				{
-					wcscat_c(szFontError, szAltNames[0]);
-				}
-			}
-		}
-
-		GetTextMetrics(hDC, m_tm+MAX_FONT_STYLES);
-
-		#ifdef _DEBUG
-		DumpFontMetrics(L"mh_Font2", hDC, mh_Font2.hFont);
-		#endif
-
-		SelectObject(hDC, hOldF);
+		_ASSERTE(FALSE && "Alternative font creation failed");
+		return;
 	}
 
-	DeleteDC(hDC);
+	if (m_Font2->iType == CEFONT_CUSTOM)
+	{
+		// Nothing to check
+		return; // Succeeded
+	}
+
+	// Ensure, the font has pseudographics?
+	if (isBorderFont)
+	{
+		// Проверяем, совпадает ли имя созданного шрифта с запрошенным?
+		if (lstrcmpi(m_Font2->m_LF.lfFaceName, LogFont2.lfFaceName) != 0)
+		{
+			wchar_t szFontError[512] = L"";
+
+			//if (szFontError[0]) wcscat_c(szFontError, L"\n");
+
+			_wsprintf(szFontError, SKIPCOUNT(szFontError)
+			          L"Failed to create border font!\nRequested: %s\nCreated: %s",
+			          LogFont2.lfFaceName, m_Font2->m_LF.lfFaceName);
+
+			// Lucida may be not installed too
+			// So, try to create Lucida or Courier (we need font with 'frames')
+			bool bCreated = false;
+			LPCWSTR szAltNames[] = {gsDefGuiFont, gsAltGuiFont};
+			for (size_t a = 0; a < countof(szAltNames); a++)
+			{
+				if (!a && lstrcmpi(LogFont2.lfFaceName, gsDefGuiFont) == 0)
+					continue; // It was already failed...
+
+				wcscpy_c(LogFont2.lfFaceName, szAltNames[a]);
+				if (Create(LogFont2, m_Font2))
+				{
+					// Проверяем что создалось, и ругаемся, если что...
+					if (lstrcmpi(m_Font2->m_LF.lfFaceName, LogFont2.lfFaceName) == 0)
+					{
+						bCreated = true;
+						wcscat_c(szFontError, L"\nUsing: ");
+						wcscat_c(szFontError, m_Font2->m_LF.lfFaceName);
+						break;
+					}
+				}
+			}
+
+			m_Font2->ms_FontError = szFontError;
+		}
+	}
+
+	#ifdef _DEBUG
+	DumpFontMetrics(L"m_Font2", m_Font2);
+	#endif
 }
 
 // Вызывается из диалога настроек
 void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 {
-	LOGFONT LF = {0};
+	CLogFont LF;
 
 	HWND hMainPg = gpSetCls->GetPage(thi_Fonts);
 
@@ -2219,8 +2381,8 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 		GetDlgItemText(hMainPg, tFontFace, LF.lfFaceName, countof(LF.lfFaceName));
 		gpSet->FontSizeY = CDlgItemHelper::GetNumber(hMainPg, tFontSizeY);
 		gpSet->FontSizeX = CDlgItemHelper::GetNumber(hMainPg, tFontSizeX);
-		gpSet->FontUseDpi = CDlgItemHelper::isChecked(hMainPg, cbFontMonitorDpi);
-		gpSet->FontUseUnits = CDlgItemHelper::isChecked(hMainPg, cbFontAsDeviceUnits);
+		gpSet->FontUseDpi = _bool(CDlgItemHelper::isChecked(hMainPg, cbFontMonitorDpi));
+		gpSet->FontUseUnits = _bool(CDlgItemHelper::isChecked(hMainPg, cbFontAsDeviceUnits));
 		EvalLogfontSizes(LF, gpSet->FontSizeY, gpSet->FontSizeX);
 		LF.lfWeight = CDlgItemHelper::isChecked(hMainPg, cbBold) ? FW_BOLD : FW_NORMAL;
 		LF.lfItalic = CDlgItemHelper::isChecked(hMainPg, cbItalic);
@@ -2242,7 +2404,7 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 		else if (CDlgItemHelper::isChecked(hMainPg, rCTAA))
 			LF.lfQuality = CLEARTYPE_NATURAL_QUALITY;
 
-		GetDlgItemText(hMainPg, tFontFace2, LogFont2.lfFaceName, countof(LogFont2.lfFaceName));
+		GetDlgItemText(hMainPg, tFontFace2, gpSet->inFont2, countof(gpSet->inFont2));
 		gpSet->FontSizeX2 = CDlgItemHelper::GetNumber(hMainPg, tFontSizeX2, FontDefWidthMin, FontDefWidthMax);
 		gpSet->FontSizeX3 = CDlgItemHelper::GetNumber(hMainPg, tFontSizeX3, FontDefWidthMin, FontDefWidthMax);
 
@@ -2255,22 +2417,11 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 
 	_ASSERTE(LF.lfWidth >= 0 && LF.lfHeight != 0);
 
-	CEFONT hf = CreateFontIndirectMy(&LF);
-
-	_ASSERTE(LF.lfWidth >= 0 && LF.lfHeight > 0);
-
-	if (hf.IsSet())
+	if (CreateFontGroup(LF))
 	{
+		_ASSERTE(LF.lfWidth >= 0 && LF.lfHeight > 0);
+
 		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
-		CEFONT hOldF = mh_Font[0];
-
-		LogFont = LF;
-
-		mh_Font[0] = hf;
-		if (hOldF != hf)
-		{
-			hOldF.Delete();
-		}
 
 		SaveFontSizes((mn_AutoFontWidth == -1), true);
 
@@ -2293,8 +2444,6 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 	if (ghOpWnd)
 	{
 		gpSetCls->UpdateFontInfo();
-
-		gpSetCls->ShowFontErrorTip(szFontError);
 	}
 
 	if (gpConEmu->mn_StartupFinished >= CConEmuMain::ss_Started)
@@ -2311,13 +2460,19 @@ void CFontMgr::ResetFontWidth()
 
 void CFontMgr::SaveFontSizes(bool bAuto, bool bSendChanges)
 {
-	// Even if font was created with FontUseUnits option (negative lfHeight)
-	// CreateFontIndirectMy MUST return in the lfHeight & lfWidth ACTUAL
-	// bounding rectangle, so we can just store them
-	_ASSERTE(LogFont.lfWidth > 0 && LogFont.lfHeight);
+	if (!m_Font[0].IsSet())
+	{
+		_ASSERTE(FALSE && "Font was not created!");
+		return;
+	}
 
-	mn_FontWidth = LogFont.lfWidth;
-	mn_FontHeight = LogFont.lfHeight;
+	// Even if font was created with FontUseUnits option (negative lfHeight)
+	// CreateFontGroup MUST return in the lfHeight & lfWidth ACTUAL
+	// bounding rectangle, so we can just store them
+	_ASSERTE(m_Font[0]->m_LF.lfWidth > 0 && m_Font[0]->m_LF.lfHeight);
+
+	mn_FontWidth = m_Font[0]->m_LF.lfWidth;
+	mn_FontHeight = m_Font[0]->m_LF.lfHeight;
 
 	wchar_t szLog[120];
 	_wsprintf(szLog, SKIPLEN(countof(szLog))
@@ -2344,7 +2499,6 @@ void CFontMgr::SettingsLoaded(SettingsLoadedFlags slfFlags)
 	*/
 	EvalLogfontSizes(LogFont, gpSet->FontSizeY, gpSet->FontSizeX);
 	lstrcpyn(LogFont.lfFaceName, gpSet->inFont, countof(LogFont.lfFaceName));
-	lstrcpyn(LogFont2.lfFaceName, gpSet->inFont2, countof(LogFont2.lfFaceName));
 	LogFont.lfQuality = gpSet->mn_AntiAlias;
 	LogFont.lfWeight = gpSet->isBold ? FW_BOLD : FW_NORMAL;
 	LogFont.lfCharSet = (BYTE)gpSet->mn_LoadFontCharSet;
@@ -2364,7 +2518,6 @@ void CFontMgr::SettingsLoaded(SettingsLoadedFlags slfFlags)
 void CFontMgr::SettingsPreSave()
 {
 	lstrcpyn(gpSet->inFont, LogFont.lfFaceName, countof(gpSet->inFont));
-	lstrcpyn(gpSet->inFont2, LogFont2.lfFaceName, countof(gpSet->inFont2));
 	#if 0
 	// was #ifdef UPDATE_FONTSIZE_RECREATE
 	gpSet->FontSizeY = LogFont.lfHeight;
@@ -2511,22 +2664,20 @@ LPOUTLINETEXTMETRIC CFontMgr::LoadOutline(HDC hDC, HFONT hFont)
 	return pOut;
 }
 
-void CFontMgr::DumpFontMetrics(LPCWSTR szType, HDC hDC, HFONT hFont, LPOUTLINETEXTMETRIC lpOutl)
+void CFontMgr::DumpFontMetrics(LPCWSTR szType, CFontPtr& Font)
 {
-	wchar_t szFontFace[32], szFontDump[255];
-	TEXTMETRIC ltm;
+	wchar_t szFontDump[255];
 
-	if (!hFont)
+	if (!Font.IsSet())
 	{
 		_wsprintf(szFontDump, SKIPLEN(countof(szFontDump)) L"*** gpSet->%s: WAS NOT CREATED!\n", szType);
 	}
 	else
 	{
-		SelectObject(hDC, hFont); // вернуть шрифт должна вызывающая функция!
-		GetTextMetrics(hDC, &ltm);
-		GetTextFace(hDC, countof(szFontFace), szFontFace);
+		TEXTMETRIC ltm = Font->m_tm;
+		LPOUTLINETEXTMETRIC lpOutl = Font->mp_otm;
 		_wsprintf(szFontDump, SKIPLEN(countof(szFontDump)) L"*** gpSet->%s: '%s', Height=%i, Ave=%i, Max=%i, Over=%i, Angle*10=%i\n",
-		          szType, szFontFace, ltm.tmHeight, ltm.tmAveCharWidth, ltm.tmMaxCharWidth, ltm.tmOverhang,
+		          szType, Font->m_LF.lfFaceName, ltm.tmHeight, ltm.tmAveCharWidth, ltm.tmMaxCharWidth, ltm.tmOverhang,
 		          lpOutl ? lpOutl->otmItalicAngle : 0);
 	}
 
