@@ -51,14 +51,14 @@ class CConEmuChild
 	public:
 		bool isAlreadyDestroyed();
 		void DoDestroyDcWindow();
-		static void ProcessVConClosed(CVirtualConsole* apVCon, BOOL abPosted = FALSE);
+		static void ProcessVConClosed(CVirtualConsole* apVCon, bool abPosted = false);
 
 		LRESULT OnPaint();
 		LRESULT OnPaintGaps(HDC hdc);
 		HWND CreateView();
 		HWND GetView();
 		HWND GetBack();
-		BOOL ShowView(int nShowCmd);
+		bool ShowView(int nShowCmd);
 		void Invalidate();
 		bool IsInvalidatePending();
 	protected:
@@ -69,18 +69,18 @@ class CConEmuChild
 		//void Validate();
 		void Redraw(bool abRepaintNow = false);
 
-		void SetRedraw(BOOL abRedrawEnabled);
+		void SetRedraw(bool abRedrawEnabled);
 
 		void SetVConSizePos(const RECT& arcBack, bool abReSize = true);
 		void SetVConSizePos(const RECT& arcBack, const RECT& arcDC, bool abReSize = true);
 		void OnVConSizePosChanged(); // Status bar columns
 
-		void SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight);
+		void SetScroll(bool abEnabled, int anTop, int anVisible, int anHeight);
 		bool InScroll();
 
 		void CheckPostRedraw();
 
-		BOOL TrackMouse();
+		bool TrackMouse();
 		void OnAlwaysShowScrollbar(bool abSync = true);
 
 		int IsDcLocked(RECT* CurrentConLockedRect);
@@ -121,8 +121,8 @@ class CConEmuChild
 		UINT mn_MsgSavePaneSnapshot;
 		UINT mn_MsgDetachPosted;
 		UINT mn_MsgRestoreChildFocus;
-		BOOL mb_PostFullPaint;
-		BOOL mb_DisableRedraw;
+		bool mb_PostFullPaint;
+		bool mb_DisableRedraw;
 #ifdef _DEBUG
 		friend class CVirtualConsole;
 		friend class CRealConsole;
@@ -135,11 +135,11 @@ class CConEmuChild
 			BOOL  bCreated;
 		} Caret;
 		DWORD mn_LastPostRedrawTick;
-		BOOL  mb_IsPendingRedraw, mb_RedrawPosted;
+		bool  mb_IsPendingRedraw, mb_RedrawPosted;
 
 		CTimer m_TAutoCopy; // TIMER_AUTOCOPY
 
-		BOOL mb_ScrollDisabled, mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollAutoPopup, mb_VTracking;
+		bool mb_ScrollDisabled, mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollAutoPopup, mb_VTracking;
 		CTimer m_TScrollShow; // TIMER_SCROLL_SHOW
 		CTimer m_TScrollHide; // TIMER_SCROLL_HIDE
 		#ifndef SKIP_HIDE_TIMER
@@ -151,10 +151,10 @@ class CConEmuChild
 	public:
 		bool CheckMouseOverScroll(bool abCheckVisible = false);
 	protected:
-		BOOL CheckScrollAutoPopup();
-		void ShowScroll(BOOL abImmediate);
-		void HideScroll(BOOL abImmediate);
-		void MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue);
+		bool CheckScrollAutoPopup();
+		void ShowScroll(bool abImmediate);
+		void HideScroll(bool abImmediate);
+		void MySetScrollInfo(bool abSetEnabled, bool abEnableValue);
 		bool mb_ScrollRgnWasSet;
 		void UpdateScrollRgn(bool abForce = false);
 

@@ -180,7 +180,7 @@ void CConEmuChild::PostOnVConClosed()
 #endif
 }
 
-void CConEmuChild::ProcessVConClosed(CVirtualConsole* apVCon, BOOL abPosted /*= FALSE*/)
+void CConEmuChild::ProcessVConClosed(CVirtualConsole* apVCon, bool abPosted /*= false*/)
 {
 	_ASSERTE(apVCon);
 
@@ -282,10 +282,11 @@ HWND CConEmuChild::GetBack()
 	return mh_WndBack;
 }
 
-BOOL CConEmuChild::ShowView(int nShowCmd)
+// Returns the window previously "visible status"
+bool CConEmuChild::ShowView(int nShowCmd)
 {
 	if (!this || !mh_WndDC)
-		return FALSE;
+		return false;
 
 	BOOL bRc = FALSE;
 	DWORD nTID = 0, nPID = 0;
@@ -349,7 +350,7 @@ BOOL CConEmuChild::ShowView(int nShowCmd)
 		}
 	}
 
-	return bRc;
+	return (bRc != FALSE);
 }
 
 LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -752,7 +753,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				#endif
 
 				// Do not "Guard" lParam here, validation will be made in ProcessVConClosed
-				CConEmuChild::ProcessVConClosed(pVCon, TRUE);
+				CConEmuChild::ProcessVConClosed(pVCon, true);
 				return 0;
 			}
 			#ifdef _DEBUG
@@ -1429,7 +1430,7 @@ void CConEmuChild::OnVConSizePosChanged()
 	mp_VCon->mp_ConEmu->mp_Status->OnWindowReposition(NULL);
 }
 
-void CConEmuChild::SetRedraw(BOOL abRedrawEnabled)
+void CConEmuChild::SetRedraw(bool abRedrawEnabled)
 {
 	if (!this)
 	{
@@ -1547,11 +1548,11 @@ void CConEmuChild::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 	}
 }
 
-// Должна вернуть TRUE, если события мыши не нужно пропускать в консоль
-BOOL CConEmuChild::TrackMouse()
+// Returns `true` if we must not bypass mouse events to console
+bool CConEmuChild::TrackMouse()
 {
 	_ASSERTE(this);
-	BOOL lbCapture = FALSE; // По умолчанию - мышь не перехватывать
+	bool lbCapture = false; // Don't capture mouse by default
 
 	CVirtualConsole* pVCon = mp_VCon;
 	CVConGuard guard(pVCon);
@@ -1560,10 +1561,10 @@ BOOL CConEmuChild::TrackMouse()
 
 	#ifdef _DEBUG
 	CRealConsole* pRCon = pVCon->RCon();
-	BOOL lbBufferMode = pRCon->isBufferHeight() && !pRCon->GuiWnd();
+	bool lbBufferMode = pRCon->isBufferHeight() && !pRCon->GuiWnd();
 	#endif
 
-	BOOL lbOverVScroll = CheckMouseOverScroll();
+	bool lbOverVScroll = CheckMouseOverScroll();
 
 	if (pVCon->RCon()->isGuiVisible())
 	{
@@ -1670,7 +1671,7 @@ bool CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 	return lbOverVScroll;
 }
 
-BOOL CConEmuChild::CheckScrollAutoPopup()
+bool CConEmuChild::CheckScrollAutoPopup()
 {
 	return mb_ScrollAutoPopup;
 }
@@ -1686,7 +1687,7 @@ bool CConEmuChild::InScroll()
 	return (mb_VTracking != FALSE);
 }
 
-void CConEmuChild::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHeight)
+void CConEmuChild::SetScroll(bool abEnabled, int anTop, int anVisible, int anHeight)
 {
 	//int nCurPos = 0;
 	//BOOL lbScrollRc = FALSE;
@@ -1781,7 +1782,7 @@ void CConEmuChild::SetScroll(BOOL abEnabled, int anTop, int anVisible, int anHei
 	}
 }
 
-void CConEmuChild::MySetScrollInfo(BOOL abSetEnabled, BOOL abEnableValue)
+void CConEmuChild::MySetScrollInfo(bool abSetEnabled, bool abEnableValue)
 {
 	SCROLLINFO si = m_si;
 
@@ -1844,7 +1845,7 @@ void CConEmuChild::UpdateScrollRgn(bool abForce /*= false*/)
 	}
 }
 
-void CConEmuChild::ShowScroll(BOOL abImmediate)
+void CConEmuChild::ShowScroll(bool abImmediate)
 {
 	bool bTShow = false, bTCheck = false;
 
@@ -1937,7 +1938,7 @@ void CConEmuChild::ShowScroll(BOOL abImmediate)
 		m_TScrollHide.Stop();
 }
 
-void CConEmuChild::HideScroll(BOOL abImmediate)
+void CConEmuChild::HideScroll(bool abImmediate)
 {
 	bool bTHide = false;
 	mb_ScrollAutoPopup = FALSE;
