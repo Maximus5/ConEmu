@@ -191,7 +191,6 @@ void CConEmuChild::ProcessVConClosed(CVirtualConsole* apVCon, BOOL abPosted /*= 
 	{
 		apVCon->mp_RCon->LogString(L"CConEmuChild::ProcessVConClosed - posting");
 		apVCon->PostOnVConClosed();
-		//PostMessage(ghWnd, mn_MsgVConTerminated, 0, (LPARAM)apVCon);
 		return;
 	}
 
