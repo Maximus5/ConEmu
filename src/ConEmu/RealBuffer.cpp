@@ -3251,7 +3251,7 @@ bool CRealBuffer::PatchMouseCoords(int& x, int& y, COORD& crMouse)
 		return true;
 	}
 
-	int nVConHeight = mp_RCon->VCon()->Height;
+	int nVConHeight = mp_RCon->VCon()->GetVConHeight();
 
 	if (bMouse
 		&& ((crMouse.Y == con.m_sbi.srWindow.Top) && (y >= SELMOUSEAUTOSCROLLPIX))
@@ -3308,7 +3308,7 @@ bool CRealBuffer::PatchMouseCoords(int& x, int& y, COORD& crMouse)
 	else if (crMouse.X > con.m_sbi.srWindow.Right)
 	{
 		crMouse.X = con.m_sbi.srWindow.Right;
-		x = (mp_RCon->VCon()->Width - 1);
+		x = (mp_RCon->VCon()->GetVConWidth() - 1);
 	}
 
 	return true;
@@ -3322,7 +3322,7 @@ void CRealBuffer::OnTimerCheckSelection()
 
 	POINT ptCur = {}; GetCursorPos(&ptCur);
 	MapWindowPoints(NULL, mp_RCon->VCon()->GetView(), &ptCur, 1);
-	int nVConHeight = mp_RCon->VCon()->Height;
+	int nVConHeight = mp_RCon->VCon()->GetVConHeight();
 
 	if ((ptCur.y < SELMOUSEAUTOSCROLLPIX) || (ptCur.y > (nVConHeight-SELMOUSEAUTOSCROLLPIX)))
 	{

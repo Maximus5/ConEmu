@@ -81,6 +81,21 @@ class CVirtualConsole :
 		wchar_t        ms_ID[16];  // !!! Debug, Informational !!!
 
 	protected:
+		struct VConRConSizes
+		{
+			uint TextWidth, TextHeight; // размер в символах
+			uint Width, Height; // размер в пикселях
+			uint nMaxTextWidth, nMaxTextHeight; // размер в символах
+			uint LastPadSize;
+			LONG nFontHeight, nFontWidth;
+		} m_Sizes;
+
+
+		//WARNING: Move to CFontCache object
+		bool    isFontSizeChanged;
+
+
+	protected:
 		CVirtualConsole(CConEmuMain* pOwner, int index);
 		bool Constructor(RConStartArgs *args);
 	public:
@@ -103,13 +118,7 @@ class CVirtualConsole :
 		int ID();
 		LPCWSTR IDStr();
 	public:
-		WARNING("Сделать protected!");
-		uint TextWidth, TextHeight; // размер в символах
-		uint Width, Height; // размер в пикселях
 		bool LoadConsoleData();
-	private:
-		uint nMaxTextWidth, nMaxTextHeight; // размер в символах
-		uint LastPadSize;
 	private:
 		struct
 		{
@@ -131,7 +140,6 @@ class CVirtualConsole :
 		bool    mb_IsForceUpdate; // Это устанавливается в InitDC, чтобы случайно isForce не потерялся
 		bool    mb_RequiredForceUpdate; // Сменился шрифт, например...
 		bool    isForce; // а это - сейчас (устанавливается по аргументу в Update)
-		bool    isFontSizeChanged;
 		bool    mb_PaintSkippedLogged;
 		DWORD   mn_LastBitsPixel;
 	protected:
@@ -219,24 +227,6 @@ class CVirtualConsole :
 		CBackgroundInfo* mp_BgInfo; // RefRelease, global object list
 		#endif
 
-		//bool mb_NeedBgUpdate;
-		//bool mb_BgLastFade;
-		////CBackground* mp_PluginBg;
-		//MSection *mcs_BkImgData;
-		//size_t mn_BkImgDataMax;
-		//CESERVER_REQ_SETBACKGROUND* mp_BkImgData; // followed by image data
-		//bool mb_BkImgChanged; // Данные в mp_BkImgData были изменены плагином, требуется отрисовка
-		//bool mb_BkImgExist; //, mb_BkImgDelete;
-		//LONG mn_BkImgWidth, mn_BkImgHeight;
-		//// Поддержка EMF
-		//size_t mn_BkEmfDataMax;
-		//CESERVER_REQ_SETBACKGROUND* mp_BkEmfData; // followed by EMF data
-		//bool mb_BkEmfChanged; // Данные в mp_BkEmfData были изменены плагином, требуется отрисовка
-		//UINT IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData, bool* rpIsEmf) const; // возвращает размер данных, или 0 при ошибке
-		//bool PutBackgroundImage(CBackground* pBack, LONG X, LONG Y, LONG Width, LONG Height); // Положить в pBack свою картинку
-		//bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
-//public:
-		//MSection csBkImgData;
 
 		const AppSettings* mp_Set;
 
@@ -279,11 +269,10 @@ class CVirtualConsole :
 		bool Blit(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight);
 		bool StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight);
 		void UpdateInfo();
-		//void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci) { mp_RCon->GetConsoleCursorInfo(ci); };
-		//DWORD GetConsoleCP() { return mp_RCon->GetConsoleCP(); };
-		//DWORD GetConsoleOutputCP() { return mp_RCon->GetConsoleOutputCP(); };
-		//DWORD GetConsoleMode() { return mp_RCon->GetConsoleMode(); };
-		//void GetConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO *sbi) { mp_RCon->GetConsoleScreenBufferInfo(sbi); };
+		LONG GetVConWidth();
+		LONG GetVConHeight();
+		LONG GetTextWidth();
+		LONG GetTextHeight();
 		RECT GetRect();
 		RECT GetDcClientRect();
 		void OnFontChanged();
@@ -294,8 +283,6 @@ class CVirtualConsole :
 		static void ClearPartBrushes();
 		HRGN GetExclusionRgn(bool abTestOnly=false);
 		COORD FindOpaqueCell();
-		//void ShowPopupMenu(POINT ptCur, DWORD Align = TPM_LEFTALIGN);
-		//void ExecPopupMenuCmd(int nCmd);
 		bool RegisterPanelView(PanelViewInit* ppvi);
 		void OnPanelViewSettingsChanged();
 		bool IsPanelViews();
@@ -309,12 +296,10 @@ class CVirtualConsole :
 		LONG mn_AppSettingsChangCount;
 
 	protected:
-		//inline void GetCharAttr(WORD atr, BYTE& foreColorNum, BYTE& backColorNum, HFONT* pFont);
 		wchar_t* mpsz_LogScreen; DWORD mn_LogScreenIdx;
 		CONSOLE_SCREEN_BUFFER_INFO csbi; DWORD mdw_LastError;
 		CONSOLE_CURSOR_INFO	cinf;
 		COORD winSize, coord;
-		//CONSOLE_SELECTION_INFO select1, select2;
 		uint TextLen;
 		bool isCursorValid, drawImage, textChanged, attrChanged;
 		DWORD nBgImageColors;
@@ -330,7 +315,6 @@ class CVirtualConsole :
 		void CharABC(wchar_t ch, ABC *abc);
 		bool CheckChangedTextAttr();
 		bool CheckTransparentRgn(bool abHasChildWindows);
-		//void ParseLine(int row, wchar_t *ConCharLine, WORD *ConAttrLine);
 		HANDLE mh_Heap;
 		LPVOID Alloc(size_t nCount, size_t nSize);
 		void Free(LPVOID ptr);
@@ -351,8 +335,6 @@ class CVirtualConsole :
 		bool mb_InConsoleResize;
 		//
 		bool FindChanges(int row, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2);
-		LONG nFontHeight, nFontWidth;
-		BYTE nFontCharSet;
 		//bool bExtendFonts, bExtendColors;
 		//BYTE nFontNormalColor, nFontBoldColor, nFontItalicColor, nExtendColorIdx;
 		struct _TransparentInfo

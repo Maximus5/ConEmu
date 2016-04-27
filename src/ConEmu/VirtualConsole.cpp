@@ -210,12 +210,7 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	#ifdef __GNUC__
 	, GdiAlphaBlend(NULL)
 	#endif
-	, TextWidth(0)
-	, TextHeight(0)
-	, Width(0)
-	, Height(0)
-	, nMaxTextWidth(0)
-	, nMaxTextHeight(0)
+	, m_Sizes()
 	, mp_Set(NULL)
 	, mh_Heap(NULL)
 	, cinf()
@@ -249,15 +244,11 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	, mn_DialogFlags()
 	, mb_InPaintCall(false)
 	, mb_InConsoleResize(false)
-	, nFontHeight()
-	, nFontWidth()
-	, nFontCharSet()
 	, mb_ConDataChanged(false)
 	, mh_TransparentRgn(NULL)
 	, mb_ChildWindowWasFound(false)
 	, mn_BackColorIdx(RELEASEDEBUGTEST(0/*Black*/,2/*Green*/))
 	, Cursor()
-	, LastPadSize(0)
 	, mb_PaintSkippedLogged(false)
 	, isForce(true)
 	, isFontSizeChanged(true)
@@ -374,9 +365,8 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 
 	mp_Colors = gpSet->GetColors(-1);
 
-	nFontHeight = gpFontMgr->FontHeight();
-	nFontWidth = gpFontMgr->FontWidth();
-	nFontCharSet = gpFontMgr->FontCharSet();
+	m_Sizes.nFontHeight = gpFontMgr->FontHeight();
+	m_Sizes.nFontWidth = gpFontMgr->FontWidth();
 
 	Cursor.nBlinkTime = GetCaretBlinkTime();
 
@@ -392,7 +382,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 		wmemset(ms_HorzSingl, ucBoxSinglHorz, MAX_SPACES);
 	}
 
-	mp_ConEmu->EvalVConCreateSize(this, TextWidth, TextHeight);
+	mp_ConEmu->EvalVConCreateSize(this, m_Sizes.TextWidth, m_Sizes.TextHeight);
 
 	if (gpSet->isLogging(3) == 3)
 	{
@@ -650,7 +640,7 @@ bool CVirtualConsole::PointersAlloc()
 	mb_PointersAllocated = false;
 	HEAPVAL;
 
-	uint nWidthHeight = (nMaxTextWidth * nMaxTextHeight);
+	uint nWidthHeight = (m_Sizes.nMaxTextWidth * m_Sizes.nMaxTextHeight);
 #ifdef AllocArray
 #undef AllocArray
 #endif
@@ -660,10 +650,10 @@ bool CVirtualConsole::PointersAlloc()
 	AllocArray(mpn_ConAttrEx, CharAttr, nWidthHeight);
 	AllocArray(mpn_ConAttrExSave, CharAttr, nWidthHeight);
 	AllocArray(ConCharX, DWORD, nWidthHeight);
-	AllocArray(ConCharDX, DWORD, nMaxTextWidth); // задел для TEXTPARTS
-	AllocArray(pbLineChanged, bool, nMaxTextHeight);
-	AllocArray(pbBackIsPic, bool, nMaxTextHeight);
-	AllocArray(pnBackRGB, COLORREF, nMaxTextHeight);
+	AllocArray(ConCharDX, DWORD, m_Sizes.nMaxTextWidth); // задел для TEXTPARTS
+	AllocArray(pbLineChanged, bool, m_Sizes.nMaxTextHeight);
+	AllocArray(pbBackIsPic, bool, m_Sizes.nMaxTextHeight);
+	AllocArray(pnBackRGB, COLORREF, m_Sizes.nMaxTextHeight);
 	HEAPVAL;
 
 	mb_PointersAllocated = true;
@@ -672,7 +662,7 @@ bool CVirtualConsole::PointersAlloc()
 
 void CVirtualConsole::PointersZero()
 {
-	uint nWidthHeight = (nMaxTextWidth * nMaxTextHeight);
+	uint nWidthHeight = (m_Sizes.nMaxTextWidth * m_Sizes.nMaxTextHeight);
 	//100607: Сбрасывать ВСЕ не будем. Эти массивы могут использоваться и в других нитях!
 	HEAPVAL;
 	//ZeroMemory(mpsz_ConChar, nWidthHeight*sizeof(*mpsz_ConChar));
@@ -682,11 +672,11 @@ void CVirtualConsole::PointersZero()
 	ZeroMemory(mpn_ConAttrExSave, nWidthHeight*sizeof(*mpn_ConAttrExSave));
 	HEAPVAL;
 	//ZeroMemory(ConCharX, nWidthHeight*sizeof(*ConCharX));
-	ZeroMemory(ConCharDX, nMaxTextWidth*sizeof(*ConCharDX)); // задел для TEXTPARTS
+	ZeroMemory(ConCharDX, m_Sizes.nMaxTextWidth*sizeof(*ConCharDX)); // задел для TEXTPARTS
 	HEAPVAL;
-	ZeroMemory(pbLineChanged, nMaxTextHeight*sizeof(*pbLineChanged));
-	ZeroMemory(pbBackIsPic, nMaxTextHeight*sizeof(*pbBackIsPic));
-	ZeroMemory(pnBackRGB, nMaxTextHeight*sizeof(*pnBackRGB));
+	ZeroMemory(pbLineChanged, m_Sizes.nMaxTextHeight*sizeof(*pbLineChanged));
+	ZeroMemory(pbBackIsPic, m_Sizes.nMaxTextHeight*sizeof(*pbBackIsPic));
+	ZeroMemory(pnBackRGB, m_Sizes.nMaxTextHeight*sizeof(*pnBackRGB));
 	HEAPVAL;
 	// Row/Col highlights & Hyperlink underlining
 	ResetHighlightCoords();
@@ -730,13 +720,13 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 	//}
 	//if (TextHeight == 24)
 	//    TextHeight = 24;
-	_ASSERT(TextHeight >= MIN_CON_HEIGHT);
+	_ASSERT(m_Sizes.TextHeight >= MIN_CON_HEIGHT);
 #endif
 
 	// Буфер пересоздаем только если требуется его увеличение
 	if (!mb_PointersAllocated ||
-	        (nMaxTextWidth * nMaxTextHeight) < (rTextWidth * rTextHeight) ||
-	        (nMaxTextWidth < rTextWidth) // а это нужно для TextParts & tmpOem
+	        (m_Sizes.nMaxTextWidth * m_Sizes.nMaxTextHeight) < (rTextWidth * rTextHeight) ||
+	        (m_Sizes.nMaxTextWidth < rTextWidth) // а это нужно для TextParts & tmpOem
 	  )
 		lbNeedCreateBuffers = TRUE;
 
@@ -750,17 +740,17 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 
 	// InitDC вызывается только при первой инициализации или смене размера
 	mb_IsForceUpdate = true; // поэтому выставляем флажок Force
-	TextWidth = rTextWidth;
-	TextHeight = rTextHeight;
+	m_Sizes.TextWidth = rTextWidth;
+	m_Sizes.TextHeight = rTextHeight;
 
 	if (lbNeedCreateBuffers)
 	{
 		// Если увеличиваем размер - то с запасом, чтобы "два раза не ходить"...
-		if (nMaxTextWidth < TextWidth)
-			nMaxTextWidth = TextWidth+80;
+		if (m_Sizes.nMaxTextWidth < m_Sizes.TextWidth)
+			m_Sizes.nMaxTextWidth = m_Sizes.TextWidth+80;
 
-		if (nMaxTextHeight < TextHeight)
-			nMaxTextHeight = TextHeight+30;
+		if (m_Sizes.nMaxTextHeight < m_Sizes.TextHeight)
+			m_Sizes.nMaxTextHeight = m_Sizes.TextHeight+30;
 
 		DEBUGSTRDRAW(L"Relocking SCON exclusively\n");
 		(pSCON ? pSCON : &_SCON)->RelockExclusive();
@@ -798,32 +788,31 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 
 		Assert(gpFontMgr->FontWidth() && gpFontMgr->FontHeight());
 
-		nFontHeight = gpFontMgr->FontHeight();
-		nFontWidth = gpFontMgr->FontWidth();
-		nFontCharSet = gpFontMgr->FontCharSet();
+		m_Sizes.nFontHeight = gpFontMgr->FontHeight();
+		m_Sizes.nFontWidth = gpFontMgr->FontWidth();
 
-		DEBUGTEST(BOOL lbWasInitialized = TextWidth && TextHeight);
+		DEBUGTEST(BOOL lbWasInitialized = m_Sizes.TextWidth && m_Sizes.TextHeight);
 
 		// Посчитать новый размер в пикселях
-		Width = TextWidth * nFontWidth;
-		Height = TextHeight * nFontHeight;
+		m_Sizes.Width = m_Sizes.TextWidth * m_Sizes.nFontWidth;
+		m_Sizes.Height = m_Sizes.TextHeight * m_Sizes.nFontHeight;
 
-		UINT Pad = min(gpSet->nCenterConsolePad,CENTERCONSOLEPAD_MAX)*2 + max(nFontHeight,nFontWidth)*3;
+		UINT Pad = min(gpSet->nCenterConsolePad,CENTERCONSOLEPAD_MAX)*2 + max(m_Sizes.nFontHeight,m_Sizes.nFontWidth)*3;
 
 		#ifdef _DEBUG
-		if (Height > 2000)
+		if (m_Sizes.Height > 2000)
 		{
-			_ASSERTE(Height <= 2000);
+			_ASSERTE(m_Sizes.Height <= 2000);
 		}
 		#endif
 
 		if (ghOpWnd)
 			mp_ConEmu->UpdateSizes();
 
-		if (m_DC.Create(Width+Pad, Height+Pad))
+		if (m_DC.Create(m_Sizes.Width+Pad, m_Sizes.Height+Pad))
 		{
 			// Запомнить кое-что
-			LastPadSize = gpSet->nCenterConsolePad;
+			m_Sizes.LastPadSize = gpSet->nCenterConsolePad;
 			// OK
 			lbRc = true;
 		}
@@ -883,12 +872,12 @@ bool CVirtualConsole::Dump(LPCWSTR asFile)
 	LPCTSTR pszTitle = mp_ConEmu->GetLastTitle();
 	WriteFile(hFile, pszTitle, _tcslen(pszTitle)*sizeof(*pszTitle), &dw, NULL);
 	wchar_t temp[100];
-	_wsprintf(temp, SKIPCOUNT(temp) L"\r\nSize: %ix%i   Cursor: %ix%i\r\n", TextWidth, TextHeight, Cursor.x, Cursor.y);
+	_wsprintf(temp, SKIPCOUNT(temp) L"\r\nSize: %ix%i   Cursor: %ix%i\r\n", m_Sizes.TextWidth, m_Sizes.TextHeight, Cursor.x, Cursor.y);
 	WriteFile(hFile, temp, wcslen(temp)*sizeof(wchar_t), &dw, NULL);
-	WriteFile(hFile, mpsz_ConChar, TextWidth * TextHeight * sizeof(*mpsz_ConChar), &dw, NULL);
-	WriteFile(hFile, mpn_ConAttrEx, TextWidth * TextHeight * sizeof(*mpn_ConAttrEx), &dw, NULL);
-	WriteFile(hFile, mpsz_ConCharSave, TextWidth * TextHeight * sizeof(*mpsz_ConCharSave), &dw, NULL);
-	WriteFile(hFile, mpn_ConAttrExSave, TextWidth * TextHeight * sizeof(*mpn_ConAttrExSave), &dw, NULL);
+	WriteFile(hFile, mpsz_ConChar, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpsz_ConChar), &dw, NULL);
+	WriteFile(hFile, mpn_ConAttrEx, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpn_ConAttrEx), &dw, NULL);
+	WriteFile(hFile, mpsz_ConCharSave, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpsz_ConCharSave), &dw, NULL);
+	WriteFile(hFile, mpn_ConAttrExSave, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpn_ConAttrExSave), &dw, NULL);
 
 	if (mp_RCon)
 	{
@@ -954,10 +943,10 @@ void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF cr
 
 	if (op == eUpRight)
 	{
-		int xShift = max(0,((int)Width - bgBmpSize.X));
+		int xShift = max(0,((int)m_Sizes.Width - bgBmpSize.X));
 		bgX = inX - xShift; bgY = inY;
 
-		if ((bgBmpSize.X < (int)Width) || (bgBmpSize.Y < (int)Height))
+		if ((bgBmpSize.X < (int)m_Sizes.Width) || (bgBmpSize.Y < (int)m_Sizes.Height))
 		{
 			if (inY < bgBmpSize.Y)
 			{
@@ -972,10 +961,10 @@ void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF cr
 	}
 	else if (op == eDownLeft)
 	{
-		int yShift = max(0,((int)Height - bgBmpSize.Y));
+		int yShift = max(0,((int)m_Sizes.Height - bgBmpSize.Y));
 		bgX = inX; bgY = inY - yShift;
 
-		if ((bgBmpSize.X < (int)Width) || (bgBmpSize.Y < (int)Height))
+		if ((bgBmpSize.X < (int)m_Sizes.Width) || (bgBmpSize.Y < (int)m_Sizes.Height))
 		{
 			if (inY2 >= yShift)
 			{
@@ -991,11 +980,11 @@ void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF cr
 	}
 	else if (op == eDownRight)
 	{
-		int xShift = max(0,((int)Width - bgBmpSize.X));
-		int yShift = max(0,((int)Height - bgBmpSize.Y));
+		int xShift = max(0,((int)m_Sizes.Width - bgBmpSize.X));
+		int yShift = max(0,((int)m_Sizes.Height - bgBmpSize.Y));
 		bgX = inX - xShift; bgY = inY - yShift;
 
-		if ((bgBmpSize.X < (int)Width) || (bgBmpSize.Y < (int)Height))
+		if ((bgBmpSize.X < (int)m_Sizes.Width) || (bgBmpSize.Y < (int)m_Sizes.Height))
 		{
 			rcFill1 = MakeRect(inX, inY, inX2, min(yShift,inY2));
 			rcFill2 = MakeRect(inX, max(inY,yShift), min(inX2,xShift), inY2);
@@ -1004,8 +993,8 @@ void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF cr
 	}
 	else if ((op == eFit) || (op == eFill) || (op == eCenter))
 	{
-		int xShift = ((int)Width - bgBmpSize.X)/2;
-		int yShift = ((int)Height - bgBmpSize.Y)/2;
+		int xShift = ((int)m_Sizes.Width - bgBmpSize.X)/2;
+		int yShift = ((int)m_Sizes.Height - bgBmpSize.Y)/2;
 		bgX = inX - xShift; bgY = inY - yShift;
 
 		if (op == eFit)
@@ -1310,7 +1299,7 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 		{
 			WARNING("Поскольку с RTL все достаточно сложно, пока считаем шрифт моноширинным");
 			gpFontMgr->m_CharABC[ch].abcA = gpFontMgr->m_CharABC[ch].abcC = 0;
-			gpFontMgr->m_CharABC[ch].abcB = nFontWidth;
+			gpFontMgr->m_CharABC[ch].abcB = m_Sizes.nFontWidth;
 		}
 		else
 		{
@@ -1355,14 +1344,14 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	}
 	else if (attr.Flags2 & CharAttr2_DoubleSpaced)
 	{
-		return MakeUShort(2*nFontWidth);
+		return MakeUShort(2 * m_Sizes.nFontWidth);
 	}
 	else if (gpSet->isMonospace
 	        || (gpSet->isFixFarBorders && isCharAltFont(ch))
 	        || (gpSet->isEnhanceGraphics && isCharProgress(ch))
 			)
 	{
-		return MakeUShort(nFontWidth);
+		return MakeUShort(m_Sizes.nFontWidth);
 	}
 
 	// Проверяем сразу, чтобы по условиям не бегать
@@ -1396,7 +1385,7 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	if (m_DC.TextExtentPoint(&ch, 1, &sz) && sz.cx)
 		nWidth = MakeUShort(sz.cx);
 	else
-		nWidth = MakeUShort(nFontWidth);
+		nWidth = MakeUShort(m_Sizes.nFontWidth);
 
 	if (!nWidth)
 		nWidth = 1; // на всякий случай, чтобы деления на 0 не возникло
@@ -1424,10 +1413,10 @@ bool CVirtualConsole::CheckChangedTextAttr()
 			if (nLocked)
 			{
 				// Нужно проверить, были ли изменения в conLocked
-				if ((UINT)conLocked.right >= TextWidth || (UINT)conLocked.bottom >= TextHeight)
+				if ((UINT)conLocked.right >= m_Sizes.TextWidth || (UINT)conLocked.bottom >= m_Sizes.TextHeight)
 				{
 					// Хм, по идее, уже должен был быть сброшен при ресайзе консоли
-					_ASSERTE((UINT)conLocked.right < TextWidth && (UINT)conLocked.bottom < TextHeight);
+					_ASSERTE((UINT)conLocked.right < m_Sizes.TextWidth && (UINT)conLocked.bottom < m_Sizes.TextHeight);
 					LockDcRect(false);
 				}
 				else
@@ -1444,7 +1433,7 @@ bool CVirtualConsole::CheckChangedTextAttr()
 
 					for (int Y = conLocked.top; Y <= conLocked.bottom; Y++)
 					{
-						size_t nShift = Y * TextWidth + conLocked.left;
+						size_t nShift = Y * m_Sizes.TextWidth + conLocked.left;
 						lbLineChanged = 0!=memcmp(mpsz_ConChar+nShift, mpsz_ConCharSave+nShift, nChars * sizeof(*mpsz_ConChar));
 
 						if (lbLineChanged)
@@ -2012,13 +2001,13 @@ void CVirtualConsole::UpdateHighlightsRowCol()
 	// And MARK! (nFontHeight or cell (nFontWidth))
 
 	COORD pix;
-	pix.X = MakeShort(pos.X * nFontWidth);
-	pix.Y = MakeShort(pos.Y * nFontHeight);
+	pix.X = MakeShort(pos.X * m_Sizes.nFontWidth);
+	pix.Y = MakeShort(pos.Y * m_Sizes.nFontHeight);
 
 	if ((pos.X >= 0) && ConCharX)
 	{
-		int CurChar = klMax(0, klMin((int)pos.Y, (int)TextHeight-1)) * TextWidth + pos.X;
-		if ((CurChar >= 0) && (CurChar < (int)(TextWidth * TextHeight)))
+		int CurChar = klMax(0, klMin((int)pos.Y, (int)m_Sizes.TextHeight-1)) * m_Sizes.TextWidth + pos.X;
+		if ((CurChar >= 0) && (CurChar < (int)(m_Sizes.TextWidth * m_Sizes.TextHeight)))
 		{
 			if (ConCharX[CurChar-1])
 				pix.X = MakeShort(ConCharX[CurChar-1]);
@@ -2031,7 +2020,7 @@ void CVirtualConsole::UpdateHighlightsRowCol()
 
 	if (isHighlightMouseRow())
 	{
-		RECT rect = {0, pix.Y, (LONG)Width, pix.Y+nFontHeight};
+		RECT rect = {0, pix.Y, (LONG)m_Sizes.Width, pix.Y + m_Sizes.nFontHeight};
 		if (pos.Y >= 0)
 			PatInvertRect(hPaintDC, rect, hPaintDC, false);
 		m_HighlightInfo.m_Last.Y = pos.Y;
@@ -2041,7 +2030,7 @@ void CVirtualConsole::UpdateHighlightsRowCol()
 	if (isHighlightMouseCol())
 	{
 		// This will be not "precise" on other rows if using proportional font...
-		RECT rect = {pix.X, 0, pix.X+nFontWidth, (LONG)Height};
+		RECT rect = {pix.X, 0, pix.X + m_Sizes.nFontWidth, (LONG)m_Sizes.Height};
 		if (pos.X >= 0)
 			PatInvertRect(hPaintDC, rect, hPaintDC, false);
 		m_HighlightInfo.m_Last.X = pos.X;
@@ -2064,10 +2053,10 @@ void CVirtualConsole::UpdateHighlightsHyperlink()
 	_ASSERTE(m_etr.mcr_FileLineStart.Y == m_etr.mcr_FileLineEnd.Y); // May it extends to next line?
 	POINT ptEnd = ConsoleToClient(m_etr.mcr_FileLineEnd.X+1, m_etr.mcr_FileLineStart.Y);
 	// Height of "underline"?
-	int nHeight = nFontHeight / 10;
+	int nHeight = m_Sizes.nFontHeight / 10;
 	if (nHeight < 1) nHeight = 1;
 	// Just fill it (with color of the text?)
-	RECT rc = {ptStart.x, ptStart.y+nFontHeight-nHeight, ptEnd.x, ptEnd.y+nFontHeight};
+	RECT rc = {ptStart.x, ptStart.y + m_Sizes.nFontHeight-nHeight, ptEnd.x, ptEnd.y + m_Sizes.nFontHeight};
 
 	PatInvertRect(hPaintDC, rc, hPaintDC, true);
 	//FillRect((HDC)m_DC, &rc, (HBRUSH)GetStockObject(WHITE_BRUSH));
@@ -2182,12 +2171,12 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 		mb_ConDataChanged = false;
 
 		// (пере)Создать регион
-		if (mpsz_ConChar && mpn_ConAttrEx && TextWidth && TextHeight)
+		if (mpsz_ConChar && mpn_ConAttrEx && m_Sizes.TextWidth && m_Sizes.TextHeight)
 		{
 			MSectionLock SCON; SCON.Lock(&csCON);
 			CharAttr* pnAttr = mpn_ConAttrEx;
 			int nFontHeight = gpFontMgr->FontHeight();
-			int nMaxRects = TextHeight*5;
+			int nMaxRects = m_Sizes.TextHeight * 5;
 			//#ifdef _DEBUG
 			//nMaxRects = 5;
 			//#endif
@@ -2203,12 +2192,12 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 
 				if (!abHasChildWindows)
 				{
-					for(uint nY = 0; nY < TextHeight; nY++)
+					for(uint nY = 0; nY < m_Sizes.TextHeight; nY++)
 					{
 						uint nX = 0;
 						//int nYPix1 = nY * nFontHeight;
 
-						while (nX < TextWidth)
+						while (nX < m_Sizes.TextWidth)
 						{
 							// Найти первый прозрачный cell
 							#if 0
@@ -2217,11 +2206,11 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 							#else
 							WARNING("CharAttr_Transparent");
 							// хорошо бы требуемые проверки прозрачности делать здесь, а не в RgnDetect
-							while (nX < TextWidth && !(pnAttr[nX].Flags & CharAttr_Transparent))
+							while (nX < m_Sizes.TextWidth && !(pnAttr[nX].Flags & CharAttr_Transparent))
 								nX++;
 							#endif
 
-							if (nX >= TextWidth)
+							if (nX >= m_Sizes.TextWidth)
 								break;
 
 							// Найти конец прозрачного блока
@@ -2233,7 +2222,7 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 							#else
 							WARNING("CharAttr_Transparent");
 							// хорошо бы требуемые проверки прозрачности делать здесь, а не в RgnDetect
-							while (++nX < TextWidth && (pnAttr[nX].Flags & CharAttr_Transparent))
+							while (++nX < m_Sizes.TextWidth && (pnAttr[nX].Flags & CharAttr_Transparent))
 								;
 							#endif
 
@@ -2242,7 +2231,7 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 
 							if (nRectCount>=nMaxRects)
 							{
-								int nNewMaxRects = nMaxRects + max((int)TextHeight,(int)(nRectCount-nMaxRects+1));
+								int nNewMaxRects = nMaxRects + max((int)m_Sizes.TextHeight,(int)(nRectCount-nMaxRects+1));
 								_ASSERTE(nNewMaxRects > nRectCount);
 
 								HEAPVAL;
@@ -2279,14 +2268,14 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 							lpPoints[1] = ConsoleToClient(nX, nY);
 							// x - 1?
 							//if (lpPoints[1].x > lpPoints[0].x) lpPoints[1].x--;
-							lpPoints[2] = lpPoints[1]; lpPoints[2].y += nFontHeight;
+							lpPoints[2] = lpPoints[1]; lpPoints[2].y += m_Sizes.nFontHeight;
 							lpPoints[3] = lpPoints[0]; lpPoints[3].y = lpPoints[2].y;
 							lpPoints += 4;
 							nX++;
 							HEAPVAL;
 						}
 
-						pnAttr += TextWidth;
+						pnAttr += m_Sizes.TextWidth;
 					}
 				}
 
@@ -2381,7 +2370,7 @@ bool CVirtualConsole::LoadConsoleData()
 		mp_ConEmu->DebugStep(L"mp_RCon->GetConsoleData");
 		#endif
 
-		mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, TextWidth, TextHeight, m_etr); //TextLen*2);
+		mp_RCon->GetConsoleData(mpsz_ConChar, mpn_ConAttrEx, m_Sizes.TextWidth, m_Sizes.TextHeight, m_etr); //TextLen*2);
 
 		#ifdef SHOWDEBUGSTEPS
 		mp_ConEmu->DebugStep(NULL);
@@ -2414,7 +2403,7 @@ bool CVirtualConsole::LoadConsoleData()
 					&& pRgn->GetDetectedDialogs(1, &rcGlyph, NULL, FR_UCHARMAPGLYPH, FR_UCHARMAPGLYPH))
 			{
 				wchar_t szFontName[32], *pszStart, *pszEnd;
-				pszStart = mpsz_ConChar + TextWidth*(rcFull.Top+1) + rcFull.Left + 1;
+				pszStart = mpsz_ConChar + m_Sizes.TextWidth*(rcFull.Top+1) + rcFull.Left + 1;
 				pszEnd = pszStart + 31;
 
 				while (*pszEnd == L' ' && pszEnd >= pszStart) pszEnd--;
@@ -2437,7 +2426,7 @@ bool CVirtualConsole::LoadConsoleData()
 				{
 					for(int Y = rcGlyph.Top; Y <= rcGlyph.Bottom; Y++)
 					{
-						CharAttr *pAtr = mpn_ConAttrEx + (TextWidth*Y + rcGlyph.Left);
+						CharAttr *pAtr = mpn_ConAttrEx + (m_Sizes.TextWidth*Y + rcGlyph.Left);
 
 						for(int X = rcGlyph.Left; X <= rcGlyph.Right; X++, pAtr++)
 						{
@@ -2679,11 +2668,10 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 		InvalidateBack();
 	}
 
-	if ((nFontHeight != gpFontMgr->FontHeight()) || (nFontWidth != gpFontMgr->FontWidth()))
+	if ((m_Sizes.nFontHeight != gpFontMgr->FontHeight()) || (m_Sizes.nFontWidth != gpFontMgr->FontWidth()))
 		isFontSizeChanged = true;
-	nFontHeight = gpFontMgr->FontHeight();
-	nFontWidth = gpFontMgr->FontWidth();
-	nFontCharSet = gpFontMgr->FontCharSet();
+	m_Sizes.nFontHeight = gpFontMgr->FontHeight();
+	m_Sizes.nFontWidth = gpFontMgr->FontWidth();
 	winSize = MakeCoord(mp_RCon->TextWidth(),mp_RCon->TextHeight());
 	//csbi.dwCursorPosition.X -= csbi.srWindow.Left; -- горизонтальная прокрутка игнорируется!
 	csbi.dwCursorPosition.Y -= csbi.srWindow.Top;
@@ -2698,14 +2686,14 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	}
 
 	// Первая инициализация, или смена размера
-	BOOL lbSizeChanged = ((HDC)m_DC == NULL) || (TextWidth != (uint)winSize.X || TextHeight != (uint)winSize.Y)
-		|| (LastPadSize != gpSet->nCenterConsolePad)
+	BOOL lbSizeChanged = ((HDC)m_DC == NULL) || (m_Sizes.TextWidth != (uint)winSize.X || m_Sizes.TextHeight != (uint)winSize.Y)
+		|| (m_Sizes.LastPadSize != gpSet->nCenterConsolePad)
 		|| isFontSizeChanged; // или смена шрифта ('Auto' на 'Main')
 
 	#ifdef _DEBUG
 	COORD dbgWinSize = winSize;
-	_ASSERTE(!HIWORD(TextWidth)&&!HIWORD(TextHeight));
-	COORD dbgTxtSize = {LOSHORT(TextWidth),LOSHORT(TextHeight)};
+	_ASSERTE(!HIWORD(m_Sizes.TextWidth)&&!HIWORD(m_Sizes.TextHeight));
+	COORD dbgTxtSize = {LOSHORT(m_Sizes.TextWidth),LOSHORT(m_Sizes.TextHeight)};
 	#endif
 
 	_ASSERTE(isMainThread());
@@ -2734,7 +2722,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 			{
 				RECT rcBack = {}; GetClientRect(mh_WndBack, &rcBack);
 				RECT rcCon = CVConGroup::CalcRect(CER_CONSOLE_CUR, rcBack, CER_BACK, this);
-				if ((rcCon.right == TextWidth) && (rcCon.bottom == TextHeight))
+				if ((rcCon.right == (LONG)m_Sizes.TextWidth) && (rcCon.bottom == (LONG)m_Sizes.TextHeight))
 				{
 					// Просто подвинуть окошко
 					MapWindowPoints(mh_WndBack, ghWnd, (LPPOINT)&rcBack, 2);
@@ -2761,9 +2749,9 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 
 
 		#ifdef _DEBUG
-		if (TextWidth == 80 && !mp_RCon->isNtvdm())
+		if (m_Sizes.TextWidth == 80 && !mp_RCon->isNtvdm())
 		{
-			TextWidth = TextWidth;
+			m_Sizes.TextWidth = m_Sizes.TextWidth;
 		}
 		#endif
 
@@ -2785,7 +2773,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	//drawImage = (gpSet->isShowBgImage == 1 || (gpSet->isShowBgImage == 2 && !(isEditor || isViewer)) )
 	//	&& gpSet->isBackgroundImageValid;
 	drawImage = gpSetCls->IsBackgroundEnabled(this);
-	TextLen = TextWidth * TextHeight;
+	TextLen = m_Sizes.TextWidth * m_Sizes.TextHeight;
 	coord.X = csbi.srWindow.Left; coord.Y = csbi.srWindow.Top;
 
 	DWORD nIndexes = gpSet->nBgImageColors;
@@ -2863,7 +2851,7 @@ void CVirtualConsole::UpdateText()
 		ConAttrLine = mpn_ConAttrEx + i;
 		ConCharXLine = ConCharX + i;
 	}
-	int nMaxPos = Height - nFontHeight;
+	int nMaxPos = m_Sizes.Height - m_Sizes.nFontHeight;
 
 	if (!ConCharLine || !ConAttrLine || !ConCharXLine)
 	{
@@ -2877,7 +2865,7 @@ void CVirtualConsole::UpdateText()
 	else
 		m_DC.SetBkMode(TRANSPARENT);
 
-	int *nDX = (int*)malloc((TextWidth+1)*sizeof(int));
+	int *nDX = (int*)malloc((m_Sizes.TextWidth+1)*sizeof(int));
 
 	bool bEnhanceGraphics = gpSet->isEnhanceGraphics;
 	bool bFixFarBorders = _bool(gpSet->isFixFarBorders);
@@ -2892,24 +2880,28 @@ void CVirtualConsole::UpdateText()
 
 	bool bFixFrameCoord = mp_RCon->isFar();
 
-	_ASSERTE(((TextWidth * nFontWidth) >= Width));
+	_ASSERTE(((m_Sizes.TextWidth * m_Sizes.nFontWidth) >= m_Sizes.Width));
+
+	BYTE nFontCharSet = gpFontMgr->FontCharSet();
 
 	wchar_t* tmpOemWide = NULL;
 	char* tmpOem = NULL;
 	INT_PTR cchOemMax = 0;
 	if (nFontCharSet == OEM_CHARSET)
 	{
-		cchOemMax = (TextWidth*3+1);
+		cchOemMax = (m_Sizes.TextWidth*3+1);
 		tmpOemWide = (wchar_t*)Alloc(cchOemMax, sizeof(*tmpOemWide));
 		tmpOem = (char*)Alloc(cchOemMax, sizeof(*tmpOem));
 	}
 
+	_ASSERTE(m_Sizes.nFontHeight > 0 && m_Sizes.nFontWidth > 0);
+
 	//BUGBUG: хорошо бы отрисовывать последнюю строку, даже если она чуть не влазит
 	for (; pos <= nMaxPos;
-			ConCharLine += TextWidth, ConAttrLine += TextWidth, ConCharXLine += TextWidth,
-			pos += nFontHeight, row++)
+			ConCharLine += m_Sizes.TextWidth, ConAttrLine += m_Sizes.TextWidth, ConCharXLine += m_Sizes.TextWidth,
+			pos += m_Sizes.nFontHeight, row++)
 	{
-		if (row >= (int)TextHeight)
+		if (row >= (int)m_Sizes.TextHeight)
 		{
 			//_ASSERTE(row < (int)TextHeight);
 			DEBUGSTRFAIL(L"############ _ASSERTE(row < (int)TextHeight) #############\n");
@@ -2925,7 +2917,7 @@ void CVirtualConsole::UpdateText()
 			continue;
 
 		// skip not changed symbols except the old cursor or selection
-		int j = 0, end = TextWidth;
+		int j = 0, end = m_Sizes.TextWidth;
 
 		// Was cursor visible on this line?
 		if (Cursor.isVisiblePrev && row == Cursor.y
@@ -2937,13 +2929,13 @@ void CVirtualConsole::UpdateText()
 		BYTE charSet;
 		if ((nFontCharSet == OEM_CHARSET) && tmpOem && tmpOemWide)
 		{
-			int iCvt = WideCharToMultiByte(CP_OEMCP, 0, ConCharLine, TextWidth, tmpOem, cchOemMax, NULL, NULL);
+			int iCvt = WideCharToMultiByte(CP_OEMCP, 0, ConCharLine, m_Sizes.TextWidth, tmpOem, cchOemMax, NULL, NULL);
 			if (iCvt > 0 && iCvt <= cchOemMax)
 			{
 				int iWide = MultiByteToWideChar(CP_OEMCP, 0, tmpOem, iCvt, tmpOemWide, cchOemMax);
 				if ((iWide > 0) && (iWide <= cchOemMax))
 				{
-					_ASSERTE(iWide == (int)TextWidth); // Or we probably have problems with color mismatch
+					_ASSERTE(iWide == (int)m_Sizes.TextWidth); // Or we probably have problems with color mismatch
 					pszDrawLine = tmpOemWide;
 					for (int i = 0; i < iWide; i++)
 					{
@@ -2957,7 +2949,7 @@ void CVirtualConsole::UpdateText()
 		}
 
 		// May return false on memory allocation errors only
-		if (!lp.ParseLine(isForce, TextWidth, nFontWidth, row, pszDrawLine, ConAttrLine, ConCharLine2, ConAttrLine2))
+		if (!lp.ParseLine(isForce, m_Sizes.TextWidth, m_Sizes.nFontWidth, row, pszDrawLine, ConAttrLine, ConCharLine2, ConAttrLine2))
 		{
 			// Fill with background?
 			continue;
@@ -2996,7 +2988,7 @@ void CVirtualConsole::UpdateText()
 
 			rect.left = part->PositionX;
 			rect.top = pos;
-			rect.bottom = rect.top + nFontHeight;
+			rect.bottom = rect.top + m_Sizes.nFontHeight;
 			rect.right = part->PositionX + part->TotalWidth;
 
 			while (nextPart
@@ -3051,17 +3043,17 @@ void CVirtualConsole::UpdateText()
 				charSet = nFontCharSet;
 			}
 
-			const uint nRightEx = klMax((uint)1, (uint)nFontWidth / 4);
+			const uint nRightEx = klMax((uint)1, (uint)m_Sizes.nFontWidth / 4);
 			rect.left = part->PositionX;
 			rect.top = pos;
 			// For Bold and Italic we slightly extend drawing rect to avoid clipping
 			// Old note: if nextPart is VertBorder, then increase rect.right by ((FontWidth>>1)-1)
 			// Old note: to ensure, that our possible *italic* text will not be clipped
 			if (attr.nFontIndex & 3)
-				rect.right = klMin((uint)part->PositionX + part->TotalWidth + nRightEx, Width);
+				rect.right = klMin((uint)part->PositionX + part->TotalWidth + nRightEx, m_Sizes.Width);
 			else
 				rect.right = part->PositionX + part->TotalWidth;
-			rect.bottom = rect.top + nFontHeight;
+			rect.bottom = rect.top + m_Sizes.nFontHeight;
 
 			UINT nFlags = ETO_CLIPPED;
 
@@ -3118,14 +3110,14 @@ void CVirtualConsole::UpdateText()
 			}
 		}
 
-		if (rect.right < (int)Width)
+		if (rect.right < (int)m_Sizes.Width)
 		{
 			bool lbDelBrush = false;
 			HBRUSH hBr = CreateBackBrush(false, lbDelBrush);
 
 			RECT rcFill = rect;
 			rcFill.left = rect.right;
-			rcFill.right = (int)Width;
+			rcFill.right = (int)m_Sizes.Width;
 			FillRect((HDC)m_DC, &rcFill, hBr);
 
 			if (lbDelBrush)
@@ -3135,12 +3127,12 @@ void CVirtualConsole::UpdateText()
 		HEAPVALPTR(nDX);
 	}
 
-	if ((pos > nMaxPos) && (pos < (int)Height))
+	if ((pos > nMaxPos) && (pos < (int)m_Sizes.Height))
 	{
 		bool lbDelBrush = false;
 		HBRUSH hBr = CreateBackBrush(false, lbDelBrush);
 
-		RECT rcFill = {0, pos, (int)Width, (int)Height};
+		RECT rcFill = {0, pos, (int)m_Sizes.Width, (int)m_Sizes.Height};
 		FillRect((HDC)m_DC, &rcFill, hBr);
 
 		if (lbDelBrush)
@@ -3303,9 +3295,9 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 	Cursor.x = csbi.dwCursorPosition.X;
 	Cursor.y = csbi.dwCursorPosition.Y;
-	int CurChar = pos.Y * TextWidth + pos.X;
+	int CurChar = pos.Y * m_Sizes.TextWidth + pos.X;
 
-	if (CurChar < 0 || CurChar>=(int)(TextWidth * TextHeight))
+	if (CurChar < 0 || CurChar>=(int)(m_Sizes.TextWidth * m_Sizes.TextHeight))
 	{
 		return; // может быть или глюк - или размер консоли был резко уменьшен и предыдущая позиция курсора пропала с экрана
 	}
@@ -3315,12 +3307,12 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		return; // защита
 	}
 
-	POINT pix = {pos.X * nFontWidth, pos.Y * nFontHeight};
+	POINT pix = {pos.X * m_Sizes.nFontWidth, pos.Y * m_Sizes.nFontHeight};
 	if (pos.X && ConCharX[CurChar-1])
 		pix.x = ConCharX[CurChar-1];
 
-	POINT pix2 = {pix.x + nFontWidth, pix.y + nFontHeight};
-	if (((pos.X+1) < (int)TextWidth) && ((CurChar+1) < (int)(TextWidth * TextHeight)) && ConCharX[CurChar])
+	POINT pix2 = {pix.x + m_Sizes.nFontWidth, pix.y + m_Sizes.nFontHeight};
+	if (((pos.X+1) < (int)m_Sizes.TextWidth) && ((CurChar+1) < (int)(m_Sizes.TextWidth * m_Sizes.TextHeight)) && ConCharX[CurChar])
 		pix2.x = ConCharX[CurChar];
 	else if (pix2.x > rcClient.right)
 		pix2.x = max(rcClient.right,pix2.x);
@@ -3364,9 +3356,9 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 		if (dwSize)
 		{
-			nHeight = MulDiv(nFontHeight, dwSize, 100);
+			nHeight = MulDiv(m_Sizes.nFontHeight, dwSize, 100);
 
-			nHeight = min(nFontHeight,max(nHeight,MinSize));
+			nHeight = min(m_Sizes.nFontHeight, max(nHeight, MinSize));
 			//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
 		}
 
@@ -3385,7 +3377,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 		rect.left = pix.x;
 
-		rect.top = pos.Y * nFontHeight;
+		rect.top = pos.Y * m_Sizes.nFontHeight;
 		int nR = pix2.x;
 		//if (cinf.dwSize>=50)
 		//  rect.right = nR;
@@ -3670,7 +3662,7 @@ bool CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWid
 	if ((HDC)m_DC)
 	{
 		SetStretchBltMode(hPaintDC, HALFTONE);
-		bPaintRC = _bool(StretchBlt(hPaintDC, anX,anY,anShowWidth,anShowHeight, (HDC)m_DC, 0,0,Width,Height, SRCCOPY));
+		bPaintRC = _bool(StretchBlt(hPaintDC, anX, anY, anShowWidth, anShowHeight, (HDC)m_DC, 0, 0, m_Sizes.Width, m_Sizes.Height, SRCCOPY));
 	}
 	else
 	{
@@ -3966,26 +3958,26 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 	// Если окно больше готового DC - залить края (справа/снизу) фоновым цветом
 	HBRUSH hBr = NULL;
 
-	if (((ULONG)(client.right-client.left)) > Width)
+	if (((ULONG)(client.right-client.left)) > m_Sizes.Width)
 	{
 		if (!hBr) hBr = CreateSolidBrush(mp_Colors[mn_BackColorIdx]);
 
-		RECT rcFill = MakeRect(client.left+Width, client.top, client.right, client.bottom);
+		RECT rcFill = MakeRect(client.left + m_Sizes.Width, client.top, client.right, client.bottom);
 #ifndef SKIP_ALL_FILLRECT
 		FillRect(hPaintDc, &rcFill, hBr);
 #endif
-		client.right = client.left+Width;
+		client.right = client.left + m_Sizes.Width;
 	}
 
-	if (((ULONG)(client.bottom-client.top)) > Height)
+	if (((ULONG)(client.bottom-client.top)) > m_Sizes.Height)
 	{
 		if (!hBr) hBr = CreateSolidBrush(mp_Colors[mn_BackColorIdx]);
 
-		RECT rcFill = MakeRect(client.left, client.top+Height, client.right, client.bottom);
+		RECT rcFill = MakeRect(client.left, client.top + m_Sizes.Height, client.right, client.bottom);
 #ifndef SKIP_ALL_FILLRECT
 		FillRect(hPaintDc, &rcFill, hBr);
 #endif
-		client.bottom = client.top+Height;
+		client.bottom = client.top + m_Sizes.Height;
 	}
 
 	if (hBr) { DeleteObject(hBr); hBr = NULL; }
@@ -4123,7 +4115,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 			cePaintDc.SelectFont(pFont);
 			MSectionLock SCON; SCON.Lock(&csCON);
 
-			int CurChar = csbi.dwCursorPosition.Y * TextWidth + csbi.dwCursorPosition.X;
+			int CurChar = csbi.dwCursorPosition.Y * m_Sizes.TextWidth + csbi.dwCursorPosition.X;
 			Cursor.ch = mpsz_ConChar[CurChar];
 			Cursor.foreColor = mpn_ConAttrEx[CurChar].crForeColor;
 			Cursor.bgColor = mpn_ConAttrEx[CurChar].crBackColor;
@@ -4287,7 +4279,7 @@ void CVirtualConsole::UpdateInfo()
 	{
 		_wsprintf(szSize, SKIPLEN(countof(szSize)) _T("%ix%i"), mp_RCon->TextWidth(), mp_RCon->TextHeight());
 		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConSizeChr, szSize);
-		_wsprintf(szSize, SKIPLEN(countof(szSize)) _T("%ix%i"), Width, Height);
+		_wsprintf(szSize, SKIPLEN(countof(szSize)) _T("%ix%i"), m_Sizes.Width, m_Sizes.Height);
 		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConSizePix, szSize);
 		RECT rcPanel;
 		RCon()->GetPanelRect(FALSE, &rcPanel);
@@ -4309,11 +4301,35 @@ void CVirtualConsole::UpdateInfo()
 	}
 }
 
+LONG CVirtualConsole::GetVConWidth()
+{
+	_ASSERTE(this && m_Sizes.Width);
+	return (LONG)m_Sizes.Width;
+}
+
+LONG CVirtualConsole::GetVConHeight()
+{
+	_ASSERTE(this && m_Sizes.Height);
+	return (LONG)m_Sizes.Height;
+}
+
+LONG CVirtualConsole::GetTextWidth()
+{
+	_ASSERTE(this && m_Sizes.TextWidth);
+	return (LONG)m_Sizes.TextWidth;
+}
+
+LONG CVirtualConsole::GetTextHeight()
+{
+	_ASSERTE(this && m_Sizes.TextHeight);
+	return (LONG)m_Sizes.TextHeight;
+}
+
 RECT CVirtualConsole::GetRect()
 {
 	RECT rc;
 
-	if (Width == 0 || Height == 0)    // если консоль еще не загрузилась - прикидываем по размеру GUI окна
+	if (m_Sizes.Width == 0 || m_Sizes.Height == 0)    // если консоль еще не загрузилась - прикидываем по размеру GUI окна
 	{
 		//rc = MakeRect(winSize.X, winSize.Y);
 		//RECT rcWnd; Get ClientRect(ghWnd, &rcWnd);
@@ -4323,7 +4339,7 @@ RECT CVirtualConsole::GetRect()
 	}
 	else
 	{
-		rc = MakeRect(Width, Height);
+		rc = MakeRect(m_Sizes.Width, m_Sizes.Height);
 	}
 
 	return rc;
@@ -4371,14 +4387,14 @@ void CVirtualConsole::OnConsoleSizeReset(USHORT sizeX, USHORT sizeY)
 	// Это должно быть только на этапе создания новой консоли (например, появилась панель табов)
 	_ASSERTE(mp_RCon && ((mp_RCon->ConWnd()==NULL) || mp_RCon->mb_InCloseConsole));
 	// И по идее, DC еще создан быть не должен был
-	if (Width==0 && Height==0)
+	if ((m_Sizes.Width == 0) && (m_Sizes.Height == 0))
 	{
-		TextWidth = sizeX;
-		TextHeight = sizeY;
+		m_Sizes.TextWidth = sizeX;
+		m_Sizes.TextHeight = sizeY;
 	}
 	else
 	{
-		_ASSERTE((Width==0 && Height==0) || mp_RCon->mb_InCloseConsole);
+		_ASSERTE((m_Sizes.Width==0 && m_Sizes.Height==0) || mp_RCon->mb_InCloseConsole);
 	}
 }
 
@@ -4393,13 +4409,13 @@ POINT CVirtualConsole::ConsoleToClient(LONG x, LONG y)
 		return pt;
 	}
 
-	pt.y = y*nFontHeight;
+	pt.y = y * m_Sizes.nFontHeight;
 
 	if (x>0)
 	{
-		if (ConCharX && y >= 0 && y < (int)TextHeight && x < (int)TextWidth)
+		if (ConCharX && y >= 0 && y < (int)m_Sizes.TextHeight && x < (int)m_Sizes.TextWidth)
 		{
-			pt.x = ConCharX[y*TextWidth + x-1];
+			pt.x = ConCharX[y*m_Sizes.TextWidth + x-1];
 
 			if (x && !pt.x)
 			{
@@ -4412,13 +4428,13 @@ POINT CVirtualConsole::ConsoleToClient(LONG x, LONG y)
 				//  CVirtualConsole::UpdatePanelRgn(int abLeftPanel=1, int abTestOnly=0, int abOnRegister=1) -->
 				//  и вот тут она обломалась. ConCharX оказался обнулен?
 				Sleep(1);
-				pt.x = ConCharX[y*TextWidth + x-1];
+				pt.x = ConCharX[y*m_Sizes.TextWidth + x-1];
 				_ASSERTE(pt.x || x==0);
 			}
 		}
 		else
 		{
-			pt.x = x*nFontWidth;
+			pt.x = x * m_Sizes.nFontWidth;
 		}
 	}
 
@@ -4437,14 +4453,14 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y, bool StrictMonospace/*=fa
 		return cr;
 	}
 
-	_ASSERTE(nFontWidth!=0 && nFontHeight!=0);
+	_ASSERTE(m_Sizes.nFontWidth!=0 && m_Sizes.nFontHeight!=0);
 
 	// Сначала приблизительный пересчет по размерам шрифта
-	if (nFontHeight)
-		cr.Y = MakeShort(y / nFontHeight);
+	if (m_Sizes.nFontHeight)
+		cr.Y = MakeShort(y / m_Sizes.nFontHeight);
 
-	if (nFontWidth)
-		cr.X = MakeShort(x / nFontWidth);
+	if (m_Sizes.nFontWidth)
+		cr.X = MakeShort(x / m_Sizes.nFontWidth);
 
 	if (!StrictMonospace)
 	{
@@ -4453,11 +4469,11 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y, bool StrictMonospace/*=fa
 		{
 			x++; // иначе сбивается на один пиксел влево
 
-			if (ConCharX && cr.Y >= 0 && cr.Y < (int)TextHeight)
+			if (ConCharX && cr.Y >= 0 && cr.Y < (int)m_Sizes.TextHeight)
 			{
-				DWORD* ConCharXLine = ConCharX + cr.Y * TextWidth;
+				DWORD* ConCharXLine = ConCharX + cr.Y * m_Sizes.TextWidth;
 
-				for(uint i = 0; i < TextWidth; i++, ConCharXLine++)
+				for(uint i = 0; i < m_Sizes.TextWidth; i++, ConCharXLine++)
 				{
 					if (((int)*ConCharXLine) >= x)
 					{
@@ -4492,8 +4508,8 @@ bool CVirtualConsole::FindChanges(int row, const wchar_t* ConCharLine, const Cha
 	}
 
 	// Если изменений в строке вообще нет
-	if (wmemcmp(ConCharLine, ConCharLine2, TextWidth) == 0
-	        && memcmp(ConAttrLine, ConAttrLine2, TextWidth*sizeof(*ConAttrLine)) == 0)
+	if (wmemcmp(ConCharLine, ConCharLine2, m_Sizes.TextWidth) == 0
+	        && memcmp(ConAttrLine, ConAttrLine2, m_Sizes.TextWidth*sizeof(*ConAttrLine)) == 0)
 		return FALSE;
 
 	return TRUE;
@@ -4525,15 +4541,15 @@ COORD CVirtualConsole::FindOpaqueCell()
 		// По умолчанию - сбросим
 		cr.X = cr.Y = -1;
 
-		if (mpsz_ConChar && mpn_ConAttrEx && TextWidth && TextHeight)
+		if (mpsz_ConChar && mpn_ConAttrEx && m_Sizes.TextWidth && m_Sizes.TextHeight)
 		{
 			MSectionLock SCON; SCON.Lock(&csCON);
 			CharAttr* pnAttr = mpn_ConAttrEx;
 
 			// Поиск первого непрозрачного
-			for (uint y = 0; y < TextHeight; y++)
+			for (uint y = 0; y < m_Sizes.TextHeight; y++)
 			{
-				for (uint x = 0; x < TextWidth; x++, pnAttr++)
+				for (uint x = 0; x < m_Sizes.TextWidth; x++, pnAttr++)
 				{
 					#if 0
 					if (!pnAttr[x].bTransparent)
@@ -5011,19 +5027,19 @@ void CVirtualConsole::PolishPanelViews()
 		/* Так, панель видима, нужно "поправить" заголовки и разделитель перед статусом */
 		RECT rc = pp->PanelRect;
 
-		if (rc.right >= (LONG)TextWidth || rc.bottom >= (LONG)TextHeight)
+		if (rc.right >= (LONG)m_Sizes.TextWidth || rc.bottom >= (LONG)m_Sizes.TextHeight)
 		{
-			if (rc.left >= (LONG)TextWidth || rc.top >= (LONG)TextHeight)
+			if (rc.left >= (LONG)m_Sizes.TextWidth || rc.top >= (LONG)m_Sizes.TextHeight)
 			{
-				_ASSERTE(rc.right<(LONG)TextWidth && rc.bottom<(LONG)TextHeight);
+				_ASSERTE(rc.right<(LONG)m_Sizes.TextWidth && rc.bottom<(LONG)m_Sizes.TextHeight);
 				continue;
 			}
 
-			if (pp->PanelRect.right >= (LONG)TextWidth) pp->PanelRect.right = (LONG)TextWidth-1;
+			if (pp->PanelRect.right >= (LONG)m_Sizes.TextWidth) pp->PanelRect.right = (LONG)m_Sizes.TextWidth-1;
 
-			if (pp->PanelRect.bottom >= (LONG)TextHeight) pp->PanelRect.bottom = (LONG)TextHeight-1;
+			if (pp->PanelRect.bottom >= (LONG)m_Sizes.TextHeight) pp->PanelRect.bottom = (LONG)m_Sizes.TextHeight-1;
 
-			MBoxAssert(rc.right<(LONG)TextWidth && rc.bottom<(LONG)TextHeight);
+			MBoxAssert(rc.right < GetTextWidth() && rc.bottom < GetTextHeight());
 			rc = pp->PanelRect;
 		}
 
@@ -5050,8 +5066,8 @@ void CVirtualConsole::PolishPanelViews()
 		}
 
 		// 2. Строка с именами колонок
-		pszLine = mpsz_ConChar+TextWidth;
-		pAttrs = mpn_ConAttrEx+TextWidth;
+		pszLine = mpsz_ConChar + m_Sizes.TextWidth;
+		pAttrs = mpn_ConAttrEx + m_Sizes.TextWidth;
 		int nNFore = CONFORECOLOR(btNamesColor);
 		int nNBack = CONBACKCOLOR(btNamesColor);
 
@@ -5100,8 +5116,8 @@ void CVirtualConsole::PolishPanelViews()
 
 		// 3. Разделитель
 		rc = pp->WorkRect;
-		pszLine = mpsz_ConChar+TextWidth*(rc.bottom);
-		pAttrs = mpn_ConAttrEx+TextWidth*(rc.bottom);
+		pszLine = mpsz_ConChar + m_Sizes.TextWidth * (rc.bottom);
+		pAttrs = mpn_ConAttrEx + m_Sizes.TextWidth * (rc.bottom);
 
 		if ((pp->FarPanelSettings.ShowStatusLine))
 		{

@@ -793,7 +793,7 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 
 		pBgFile->PollBackgroundFile();
 
-		RECT rcWork = {0,0,(int)pVCon->Width,(int)pVCon->Height};
+		RECT rcWork = {0, 0, pVCon->GetVConWidth(), pVCon->GetVConHeight()};
 
 		// необходимо проверить размер требуемой картинки
 		// -- здесь - всегда только файловая подложка

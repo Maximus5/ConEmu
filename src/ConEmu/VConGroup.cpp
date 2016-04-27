@@ -4825,7 +4825,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 					0/*don't change scroll*/, abSync ? CECMD_SETSIZESYNC : CECMD_SETSIZENOSYNC))
 				{
 					// Debug purposes
-					rcCon = MakeRect(VCon->TextWidth,VCon->TextHeight);
+					rcCon = MakeRect(VCon->GetTextWidth(), VCon->GetTextHeight());
 				}
 			}
 		}
@@ -5743,7 +5743,7 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 			//_ASSERTE(gp_VActive!=NULL);
 			if (gp_VActive)
 			{
-				g_LastConSize = MakeCoord(gp_VActive->TextWidth,gp_VActive->TextHeight);
+				g_LastConSize = MakeCoord(gp_VActive->GetTextWidth(), gp_VActive->GetTextHeight());
 			}
 
 			//// Запомнить "идеальный" размер окна, выбранный пользователем
@@ -5755,14 +5755,14 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 			//}
 		}
 		else if (gp_VActive
-		        && (g_LastConSize.X != (int)gp_VActive->TextWidth
-		            || g_LastConSize.Y != (int)gp_VActive->TextHeight))
+		        && (g_LastConSize.X != (int)gp_VActive->GetTextWidth()
+		            || g_LastConSize.Y != (int)gp_VActive->GetTextHeight()))
 		{
 			// По идее, сюда мы попадаем только для 16-бит приложений
 			if (isNtvdm())
 				gpConEmu->SyncNtvdm();
 
-			g_LastConSize = MakeCoord(gp_VActive->TextWidth,gp_VActive->TextHeight);
+			g_LastConSize = MakeCoord(gp_VActive->GetTextWidth(), gp_VActive->GetTextHeight());
 		}
 	}
 }

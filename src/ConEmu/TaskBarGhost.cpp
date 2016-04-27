@@ -794,7 +794,7 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 	#ifdef _DEBUG
 	HWND hView = mp_VCon->GetView();
 	#endif
-	POINT ptViewSize = MakePoint(mp_VCon->Width, mp_VCon->Height);
+	POINT ptViewSize = {mp_VCon->GetVConWidth(), mp_VCon->GetVConHeight()};
 	//if (hView)
 	//{
 	//	GetWindowRect(hView, &rcView);
