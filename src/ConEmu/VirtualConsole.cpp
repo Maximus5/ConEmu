@@ -64,6 +64,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 
 #include "Header.h"
 #include <Tlhelp32.h>
+
 #include "ScreenDump.h"
 #include "VirtualConsole.h"
 #include "RealConsole.h"
@@ -81,7 +82,9 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "TaskBarGhost.h"
 #include "VConGroup.h"
 #include "VConText.h"
+
 #include "../common/MSetter.h"
+#include "../common/MModule.h"
 
 
 #ifdef _DEBUG
@@ -204,11 +207,107 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	, mn_Index(index) // !!! Informational !!!
 	, m_DC(NULL)
 	, m_SelectedFont(fnt_NULL)
+	#ifdef __GNUC__
+	, GdiAlphaBlend(NULL)
+	#endif
+	, TextWidth(0)
+	, TextHeight(0)
+	, Width(0)
+	, Height(0)
+	, nMaxTextWidth(0)
+	, nMaxTextHeight(0)
+	, mp_Set(NULL)
+	, mh_Heap(NULL)
+	, cinf()
+	, winSize()
+	, coord()
+	, TextLen()
+	, mb_RequiredForceUpdate(true)
+	, mb_LastFadeFlag(false)
+	, mn_LastBitsPixel()
+	#ifdef APPDISTINCTBACKGROUND
+	, mp_BgInfo(NULL)
+	#endif
+	, ms_LastUCharMapFont()
+	, TransparentInfo()
+	, isFade(false)
+	, isForeground(true)
+	, mp_Colors(NULL)
+	, m_SelfPalette()
+	, mn_AppSettingsChangCount()
+	, m_LeftPanelView()
+	, m_RightPanelView()
+	, mn_ConEmuFadeMsg(0)
+	, mb_LeftPanelRedraw(false)
+	, mb_RightPanelRedraw(false)
+	, mn_LastDialogsCount(0)
+	, mn_LastDialogFlags()
+	, mrc_LastDialogs()
+	, mn_DialogsCount(0)
+	, mn_DialogAllFlags(0)
+	, mrc_Dialogs()
+	, mn_DialogFlags()
+	, mb_InPaintCall(false)
+	, mb_InConsoleResize(false)
+	, nFontHeight()
+	, nFontWidth()
+	, nFontCharSet()
+	, mb_ConDataChanged(false)
+	, mh_TransparentRgn(NULL)
+	, mb_ChildWindowWasFound(false)
+	, mn_BackColorIdx(RELEASEDEBUGTEST(0/*Black*/,2/*Green*/))
+	, Cursor()
+	, LastPadSize(0)
+	, mb_PaintSkippedLogged(false)
+	, isForce(true)
+	, isFontSizeChanged(true)
+	, mrc_Client()
+	, mrc_Back()
+	, mrc_UCharMap()
+	, attrBackLast(0)
+	, mn_LogScreenIdx(0)
+	, isCursorValid(true)
+	, drawImage(true)
+	, textChanged(true)
+	, attrChanged(true)
+	, hBgDc(NULL)
+	, bgBmpSize()
+	, mb_IsForceUpdate(false)
+	, mb_InUpdate(false)
+	, hBrush0(NULL)
+	, hSelectedBrush(NULL)
+	, hOldBrush(NULL)
+	, isEditor(false)
+	, isViewer(false)
+	, isFilePanel(false)
+	, csbi()
+	, mpsz_ConChar(NULL)
+	, mpsz_ConCharSave(NULL)
+	, mpn_ConAttrEx(NULL)
+	, mpn_ConAttrExSave(NULL)
+	, ConCharX(NULL)
+	, ConCharDX(NULL)
+	, pbLineChanged(NULL)
+	, pbBackIsPic(NULL)
+	, pnBackRGB(NULL)
+	, m_etr()
+	, mb_DialogsChanged(false)
+	, mp_Bg(NULL)
+	, mpsz_LogScreen(NULL)
+	, mdw_LastError(0)
+	, nBgImageColors(0)
+	, m_HighlightInfo()
+	, mb_PointersAllocated(false)
+	, mb_DebugDumpDC(false)
 {
 	#pragma warning(default: 4355)
+
 	mn_ID = InterlockedIncrement(&gnVConLastCreatedID);
 	VConCreateLogger::Log(this, VConCreateLogger::eCreate);
-	mh_WndDC = NULL;
+	IndexStr();
+	IDStr();
+
+	_ASSERTE(mh_WndDC == NULL);
 }
 
 int CVirtualConsole::Index()
@@ -256,17 +355,9 @@ bool CVirtualConsole::SetFlags(VConFlags Set, VConFlags Mask, int index)
 
 bool CVirtualConsole::Constructor(RConStartArgs *args)
 {
-	//mh_WndDC = NULL;
-	//CreateView();
-	//mp_RCon = NULL; //new CRealConsole(this);
-	//mp_Ghost = NULL;
-	//mp_Group = NULL;
-
-	mp_Set = NULL; // указатель на настройки разделяемые по приложениям
-
 	#ifdef __GNUC__
-	HMODULE hGdi32 = GetModuleHandle(L"gdi32.dll");
-	GdiAlphaBlend = (AlphaBlend_t)(hGdi32 ? GetProcAddress(hGdi32, "GdiAlphaBlend") : NULL);
+	MModule gdi32(GetModuleHandle(L"gdi32.dll"));
+	gdi32.GetProcAddress("GdiAlphaBlend", GdiAlphaBlend);
 	#endif
 
 	mp_ConEmu->OnVConCreated(this, args);
@@ -275,85 +366,25 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2;
 	mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
 	cinf.dwSize = 15; cinf.bVisible = TRUE;
-	ZeroStruct(winSize); ZeroStruct(coord);
-	TextLen = 0;
-	mb_RequiredForceUpdate = true;
-	mb_LastFadeFlag = false;
-	mn_LastBitsPixel = 0;
-	//mb_NeedBgUpdate = FALSE; mb_BgLastFade = false;
+
 	mp_Bg = new CBackground();
 	#ifdef APPDISTINCTBACKGROUND
 	mp_BgInfo = args->pszWallpaper ? CBackgroundInfo::CreateBackgroundObject(args->pszWallpaper, false) : NULL;
 	#endif
-	//mp_BkImgData = NULL; mn_BkImgDataMax = 0; mb_BkImgChanged = FALSE; mb_BkImgExist = /*mb_BkImgDelete =*/ FALSE;
-	//mp_BkEmfData = NULL; mn_BkEmfDataMax = 0; mb_BkEmfChanged = FALSE;
-	//mcs_BkImgData = NULL;
-	//mn_BkImgWidth = mn_BkImgHeight = 0;
-	//_ASSERTE(sizeof(mh_FontByIndex) == (sizeof(gpFontMgr->mh_Font)+sizeof(mh_FontByIndex[0])));
-	//memmove(mh_FontByIndex, gpFontMgr->mh_Font, MAX_FONT_STYLES*sizeof(mh_FontByIndex[0])); //-V512
-	ms_LastUCharMapFont[0] = 0;
-	//mh_FontByIndex[fnt_UCharMap] = NULL; // reserved for ‘Unicode CharMap’ Far plugin
-	memset(&TransparentInfo, 0, sizeof(TransparentInfo));
-	isFade = false; isForeground = true;
+
 	mp_Colors = gpSet->GetColors(-1);
-	ZeroStruct(m_SelfPalette);
-	mn_AppSettingsChangCount = 0;
-	memset(&m_LeftPanelView, 0, sizeof(m_LeftPanelView));
-	memset(&m_RightPanelView, 0, sizeof(m_RightPanelView));
-	mn_ConEmuFadeMsg = /*mn_ConEmuSettingsMsg =*/ 0;
-	// Эти переменные устанавливаются в TRUE, если при следующем Redraw нужно обновить размер панелей
-	mb_LeftPanelRedraw = mb_RightPanelRedraw = FALSE;
-	mn_LastDialogsCount = 0;
-	ZeroStruct(mn_LastDialogFlags);
-	ZeroStruct(mrc_LastDialogs);
-	mn_DialogsCount = 0; mn_DialogAllFlags = 0;
-	ZeroStruct(mrc_Dialogs);
-	ZeroStruct(mn_DialogFlags);
-	//InitializeCriticalSection(&csDC); ncsTDC = 0;
-	//mb_PaintRequested = FALSE;
-	//mb_PaintLocked = FALSE;
-	//InitializeCriticalSection(&csCON); ncsTCON = 0;
-	mb_InPaintCall = FALSE;
-	mb_InConsoleResize = FALSE;
+
 	nFontHeight = gpFontMgr->FontHeight();
 	nFontWidth = gpFontMgr->FontWidth();
 	nFontCharSet = gpFontMgr->FontCharSet();
-	nLastNormalBack = 255;
-	mb_ConDataChanged = false;
-	mh_TransparentRgn = NULL;
-	mb_ChildWindowWasFound = false;
-	mn_BackColorIdx = RELEASEDEBUGTEST(0/*Black*/,2/*Green*/);
-	ZeroStruct(Cursor);
-	Cursor.nBlinkTime = GetCaretBlinkTime();
-	TextWidth = TextHeight = Width = Height = nMaxTextWidth = nMaxTextHeight = 0;
-	LastPadSize = 0;
-	mb_PaintSkippedLogged = false;
 
-	isForce = true;
-	isFontSizeChanged = true;
-	ZeroStruct(mrc_Client);
-	ZeroStruct(mrc_Back);
-	ZeroStruct(mrc_UCharMap);
-	attrBackLast = 0;
-	mn_LogScreenIdx = 0;
-	isCursorValid = true;
-	drawImage = true;
-	textChanged = true;
-	attrChanged = true;
+	Cursor.nBlinkTime = GetCaretBlinkTime();
 
 	_ASSERTE((HDC)m_DC == NULL);
-	hBgDc = NULL; bgBmpSize.X = bgBmpSize.Y = 0;
 
-	PointersInit();
-	mb_IsForceUpdate = false;
-	mb_InUpdate = false;
-	hBrush0 = NULL; hSelectedBrush = NULL; hOldBrush = NULL;
-	isEditor = false;
-	memset(&csbi, 0, sizeof(csbi)); mdw_LastError = 0;
+	ResetHighlightCoords();
 
-	//nSpaceCount = 1000;
-	//Spaces = (wchar_t*)Alloc(nSpaceCount,sizeof(wchar_t));
-	//for (UINT i=0; i<nSpaceCount; i++) Spaces[i]=L' ';
+	// Some static-s initializers
 	if (!ms_Spaces[0])
 	{
 		wmemset(ms_Spaces, L' ', MAX_SPACES);
@@ -361,23 +392,11 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 		wmemset(ms_HorzSingl, ucBoxSinglHorz, MAX_SPACES);
 	}
 
-	hOldBrush = NULL;
-
 	mp_ConEmu->EvalVConCreateSize(this, TextWidth, TextHeight);
 
-	DEBUGTEST(mb_DebugDumpDC = false);
-
-	//if (gpSet->isShowBgImage)
-	//    gpSet->LoadBackgroundFile(gpSet->sBgImage);
-
-	if (gpSet->isLogging(3) != 3)
-	{
-		mpsz_LogScreen = NULL;
-	}
-	else
+	if (gpSet->isLogging(3) == 3)
 	{
 		mn_LogScreenIdx = 0;
-		//DWORD dwErr = 0;
 		wchar_t szFile[MAX_PATH+64], *pszDot;
 		wcscpy_c(szFile, mp_ConEmu->ms_ConEmuExe);
 
@@ -395,20 +414,17 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	}
 
 	CreateView();
+
 	mp_RCon = new CRealConsole(this, mp_ConEmu);
 	if (!mp_RCon)
 	{
 		_ASSERTE(mp_RCon);
 		return false;
 	}
+
 	return mp_RCon->Construct(this, args);
 
-	//if (gpSet->isTabsOnTaskBar())
-	//{
-	//	mp_Ghost = CTaskBarGhost::Create(this);
-	//}
-
-	// InitDC звать бессмысленно - консоль еще не создана
+	// No sense to call InitDC - no console yet
 }
 
 CVirtualConsole::~CVirtualConsole()
@@ -605,19 +621,6 @@ bool CVirtualConsole::isGroupedInput()
 	if (!(mn_Flags & vf_Grouped))
 		return false;
 	return true;
-}
-
-void CVirtualConsole::PointersInit()
-{
-	mb_PointersAllocated = false;
-	mpsz_ConChar = mpsz_ConCharSave = NULL;
-	mpn_ConAttrEx = mpn_ConAttrExSave = NULL;
-	ConCharX = ConCharDX = NULL;
-	pbLineChanged = pbBackIsPic = NULL;
-	pnBackRGB = NULL;
-	// Row/Col highlights & Hyperlink underlining
-	ZeroStruct(m_HighlightInfo);
-	ResetHighlightCoords();
 }
 
 void CVirtualConsole::PointersFree()

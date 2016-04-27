@@ -175,13 +175,13 @@ class CVirtualConsole :
 		ConEmuTextRange m_etr;// Подсветка URL's и строк-ошибок-компиляторов
 
 		// функции выделения памяти
-		void PointersInit();
 		void PointersFree();
 		bool PointersAlloc();
 		void PointersZero();
 
 		// PanelViews
 		PanelViewInit m_LeftPanelView, m_RightPanelView;
+		// Set to `true`, if we have to update FarPanel sized on next Redraw
 		bool mb_LeftPanelRedraw, mb_RightPanelRedraw;
 		SMALL_RECT mrc_LastDialogs[MAX_DETECTED_DIALOGS]; int mn_LastDialogsCount; DWORD mn_LastDialogFlags[MAX_DETECTED_DIALOGS];
 		SMALL_RECT mrc_Dialogs[MAX_DETECTED_DIALOGS]; int mn_DialogsCount; DWORD mn_DialogAllFlags, mn_DialogFlags[MAX_DETECTED_DIALOGS];
@@ -192,7 +192,6 @@ class CVirtualConsole :
 		bool CheckDialogsChanged();
 		bool mb_DialogsChanged;
 		UINT mn_ConEmuFadeMsg;
-		UINT mn_ConEmuSettingsMsg;
 
 		void CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr);
 
@@ -354,7 +353,6 @@ class CVirtualConsole :
 		bool FindChanges(int row, const wchar_t* ConCharLine, const CharAttr* ConAttrLine, const wchar_t* ConCharLine2, const CharAttr* ConAttrLine2);
 		LONG nFontHeight, nFontWidth;
 		BYTE nFontCharSet;
-		BYTE nLastNormalBack;
 		//bool bExtendFonts, bExtendColors;
 		//BYTE nFontNormalColor, nFontBoldColor, nFontItalicColor, nExtendColorIdx;
 		struct _TransparentInfo

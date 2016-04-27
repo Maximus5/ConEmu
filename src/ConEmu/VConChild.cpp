@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -78,12 +78,36 @@ static HWND ghBkInDestroing = NULL;
 static UINT gn_MsgVConTerminated = 0; // gpConEmu->GetRegisteredMessage("VConTerminated");
 
 CConEmuChild::CConEmuChild(CVirtualConsole* pOwner)
+	: mp_VCon(pOwner)
+	, mn_AlreadyDestroyed(0)
+	, mn_VConTerminatedPosted(0) // Set when destroying pended
+	#ifdef _DEBUG
+	, hDlgTest(NULL)
+	#endif
+	, mb_RestoreChildFocusPending(false)
+	, mb_PostFullPaint(false)
+	, mn_LastPostRedrawTick(0)
+	, mb_IsPendingRedraw(false)
+	, mb_RedrawPosted(false)
+	, Caret()
+	, mb_DisableRedraw(false)
+	, mn_WndDCStyle(0)
+	, mn_WndDCExStyle(0)
+	, mh_WndDC(NULL)
+	, mh_WndBack(NULL)
+	, mn_InvalidateViewPending(0)
+	, mn_WmPaintCounter(0)
+	, mh_LastGuiChild(NULL)
+	, mb_ScrollVisible(false)
+	, mb_Scroll2Visible(false)
+	, mb_ScrollAutoPopup(false)
+	, mb_VTracking(false)
+	, m_si()
+	, mb_ScrollDisabled(false)
+	, m_LastAlwaysShowScrollbar()
+	, mb_ScrollRgnWasSet(false)
+	, m_LockDc()
 {
-	mp_VCon = pOwner;
-
-	mn_AlreadyDestroyed = 0;
-
-	mn_MsgVConTerminated = 0; // Set when destroying pended
 	if (!gn_MsgVConTerminated)
 		gn_MsgVConTerminated = gpConEmu->GetRegisteredMessage("VConTerminated");
 	mn_MsgTabChanged = gpConEmu->GetRegisteredMessage("CONEMUTABCHANGED",CONEMUTABCHANGED);
@@ -93,33 +117,11 @@ CConEmuChild::CConEmuChild(CVirtualConsole* pOwner)
 	mn_MsgRestoreChildFocus = gpConEmu->GetRegisteredMessage("CONEMUMSG_RESTORECHILDFOCUS",CONEMUMSG_RESTORECHILDFOCUS);
 	#ifdef _DEBUG
 	mn_MsgCreateDbgDlg = gpConEmu->GetRegisteredMessage("CConEmuChild::MsgCreateDbgDlg");
-	hDlgTest = NULL;
 	#endif
 
-	mb_RestoreChildFocusPending = false;
-
-	mb_PostFullPaint = FALSE;
-	mn_LastPostRedrawTick = 0;
-	mb_IsPendingRedraw = FALSE;
-	mb_RedrawPosted = FALSE;
-	ZeroStruct(Caret);
-	mb_DisableRedraw = FALSE;
-	mn_WndDCStyle = mn_WndDCExStyle = 0;
-	mh_WndDC = NULL;
-	mh_WndBack = NULL;
-	mn_InvalidateViewPending = 0; mn_WmPaintCounter = 0;
-	mh_LastGuiChild = NULL;
-	mb_ScrollVisible = FALSE; mb_Scroll2Visible = FALSE; /*mb_ScrollTimerSet = FALSE;*/ mb_ScrollAutoPopup = FALSE;
-	mb_VTracking = FALSE;
-
-	ZeroStruct(m_si);
 	m_si.cbSize = sizeof(m_si);
 	m_si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE /*| SIF_DISABLENOSCROLL*/;
-	mb_ScrollDisabled = FALSE;
 	m_LastAlwaysShowScrollbar = gpSet->isAlwaysShowScrollbar;
-	mb_ScrollRgnWasSet = false;
-
-	ZeroStruct(m_LockDc);
 }
 
 CConEmuChild::~CConEmuChild()
@@ -165,7 +167,7 @@ void CConEmuChild::PostOnVConClosed()
 	// Must be called FOR VALID objects ONLY (guared from outside)!
 	CVirtualConsole* pVCon = mp_VCon;
 	if (CVConGroup::isValid(pVCon)
-		&& !InterlockedExchange(&this->mn_MsgVConTerminated, gn_MsgVConTerminated))
+		&& !InterlockedExchange(&this->mn_VConTerminatedPosted, gn_MsgVConTerminated))
 	{
 		ShutdownGuiStep(L"ProcessVConClosed - repost");
 		PostMessage(this->mh_WndDC, gn_MsgVConTerminated, 0, (LPARAM)pVCon);

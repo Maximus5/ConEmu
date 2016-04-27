@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -96,7 +96,6 @@ class CConEmuChild
 
 #ifdef _DEBUG
 	public:
-		UINT    mn_MsgCreateDbgDlg;
 		HWND    hDlgTest;
 		static  INT_PTR CALLBACK DbgChildDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		void    CreateDbgDlg();
@@ -113,7 +112,10 @@ class CConEmuChild
 		HWND mh_WndDC;
 		HWND mh_WndBack; // скроллинг и фон
 		HWND mh_LastGuiChild;
-		long mn_MsgVConTerminated; // == 0, Registered when post destroing
+		long mn_VConTerminatedPosted; // == 0, set when post destroing
+		#ifdef _DEBUG
+		UINT mn_MsgCreateDbgDlg;
+		#endif
 		UINT mn_MsgTabChanged;
 		UINT mn_MsgPostFullPaint;
 		UINT mn_MsgSavePaneSnapshot;
