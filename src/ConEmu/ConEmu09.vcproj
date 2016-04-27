@@ -460,6 +460,7 @@
       <File RelativePath=".\FindDlg.cpp" />
       <File RelativePath=".\FindPanel.cpp" />
       <File RelativePath=".\Font.cpp" />
+      <File RelativePath=".\FontCache.cpp" />
       <File RelativePath=".\FontMgr.cpp" />
       <File RelativePath=".\FontPtr.cpp" />
       <File RelativePath=".\FrameHolder.cpp" />
@@ -647,6 +648,7 @@
       <File RelativePath=".\FindDlg.h" />
       <File RelativePath=".\FindPanel.h" />
       <File RelativePath=".\Font.h" />
+      <File RelativePath=".\FontCache.h" />
       <File RelativePath=".\FontInfo.h" />
       <File RelativePath=".\FontMgr.h" />
       <File RelativePath=".\FontPtr.h" />

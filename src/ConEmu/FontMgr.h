@@ -132,7 +132,6 @@ public:
 	LONG    BorderFontHeight();
 	LONG    BorderFontWidth();
 	bool    Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCustom = NULL);
-	bool    CreateOtherFont(const wchar_t* asFontName, CFontPtr& rpFont);
 	LONG    EvalFontHeight(LPCWSTR lfFaceName, LONG lfHeight, BYTE nFontCharSet);
 	void    EvalLogfontSizes(LOGFONT& LF, LONG lfHeight, LONG lfWidth);
 	BOOL    FontBold();
@@ -155,7 +154,7 @@ public:
 	void    InitFont(LPCWSTR asFontName=NULL, int anFontHeight=-1, int anQuality=-1);
 	void    MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/);
 	bool    MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/);
-	bool    QueryFont(CEFontStyles fontStyle, CVirtualConsole* pVCon, CFontPtr& rpFont);
+	bool    QueryFont(CEFontStyles fontStyle, CFontPtr& rpFont);
 	bool    RecreateFontByDpi(int dpiX, int dpiY, LPRECT prcSuggested);
 	BOOL    RegisterFont(LPCWSTR asFontFile, BOOL abDefault);
 	void    RegisterFonts();

@@ -94,7 +94,7 @@ void CSetPgInfo::FillFontInfo(HWND hDlg)
 	CFontPtr font;
 	wchar_t szMain[32] = L"", szAlt[32] = L"";
 
-	if (gpFontMgr->QueryFont(fnt_Normal, NULL, font))
+	if (gpFontMgr->QueryFont(fnt_Normal, font))
 		_wsprintf(szMain, SKIPLEN(countof(szMain)) L"%ix%ix%i", font->m_LF.lfHeight, font->m_LF.lfWidth, font->m_tm.tmAveCharWidth);
 	_wsprintf(szAlt, SKIPLEN(countof(szAlt)) L"%ix%i", gpFontMgr->BorderFontHeight(), gpFontMgr->BorderFontWidth());
 

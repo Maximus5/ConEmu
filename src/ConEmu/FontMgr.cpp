@@ -248,20 +248,8 @@ LONG CFontMgr::BorderFontWidth()
 	return m_Font2->m_LF.lfWidth;
 }
 
-// Создать шрифт для отображения символов в диалоге плагина UCharMap
-bool CFontMgr::CreateOtherFont(const wchar_t* asFontName, CFontPtr& rpFont)
-{
-	CLogFont otherLF(asFontName, LogFont.lfHeight, 0, FW_NORMAL, DEFAULT_CHARSET, LogFont.lfQuality);
-	HFONT hf = CreateFontIndirect(&otherLF);
-	if (hf)
-		rpFont = new CFont(hf);
-	else
-		rpFont.Release();
-	return (rpFont.IsSet());
-}
 
-// pVCon may be NULL
-bool CFontMgr::QueryFont(CEFontStyles fontStyle, CVirtualConsole* pVCon, CFontPtr& rpFont)
+bool CFontMgr::QueryFont(CEFontStyles fontStyle, CFontPtr& rpFont)
 {
 	TODO("Take into account per-VCon font size zoom value");
 
@@ -284,10 +272,6 @@ bool CFontMgr::QueryFont(CEFontStyles fontStyle, CVirtualConsole* pVCon, CFontPt
 	else if ((fontStyle == fnt_Alternative) && m_Font2.IsSet())
 	{
 		rpFont = m_Font2.Ptr();
-	}
-	else if ((fontStyle == fnt_UCharMap) && pVCon)
-	{
-		pVCon->GetUCharMapFontPtr(rpFont);
 	}
 	else
 	{

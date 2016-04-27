@@ -135,7 +135,7 @@ LRESULT CSetPgMarkCopy::MarkCopyPreviewProc(HWND hCtrl, UINT uMsg, WPARAM wParam
 			HFONT hOld = NULL;
 			HFONT hNew = NULL;
 			CFontPtr pFont;
-			if (gpFontMgr->QueryFont(fnt_Normal, NULL, pFont) && (pFont->iType == CEFONT_GDI))
+			if (gpFontMgr->QueryFont(fnt_Normal, pFont) && (pFont->iType == CEFONT_GDI))
 				hNew = pFont->hFont;
 			else
 				hNew = (HFONT)SendMessage(GetParent(hCtrl), WM_GETFONT, 0, 0);

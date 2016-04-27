@@ -1001,6 +1001,7 @@
     <ClCompile Include="FindDlg.cpp" />
     <ClCompile Include="FindPanel.cpp" />
     <ClCompile Include="Font.cpp" />
+    <ClCompile Include="FontCache.cpp" />
     <ClCompile Include="FontMgr.cpp" />
     <ClCompile Include="FontPtr.cpp" />
     <ClCompile Include="FrameHolder.cpp" />
@@ -1184,6 +1185,7 @@
     <ClInclude Include="FindDlg.h" />
     <ClInclude Include="FindPanel.h" />
     <ClInclude Include="Font.h" />
+    <ClInclude Include="FontCache.h" />
     <ClInclude Include="FontInfo.h" />
     <ClInclude Include="FontMgr.h" />
     <ClInclude Include="FontPtr.h" />

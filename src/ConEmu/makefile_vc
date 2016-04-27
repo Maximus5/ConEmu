@@ -64,6 +64,7 @@ $(INTDIR)\Execute.obj \
 $(INTDIR)\FindDlg.obj \
 $(INTDIR)\FindPanel.obj \
 $(INTDIR)\Font.obj \
+$(INTDIR)\FontCache.obj \
 $(INTDIR)\FontMgr.obj \
 $(INTDIR)\FontPtr.obj \
 $(INTDIR)\FrameHolder.obj \
@@ -403,6 +404,8 @@ $(INTDIR)\FindDlg.obj: FindDlg.cpp FindDlg.h
 $(INTDIR)\FindPanel.obj: FindPanel.cpp FindPanel.h
 
 $(INTDIR)\Font.obj: Font.cpp Font.h
+
+$(INTDIR)\FontCache.obj: FontCache.cpp FontCache.h
 
 $(INTDIR)\FontMgr.obj: FontMgr.cpp FontMgr.h
 

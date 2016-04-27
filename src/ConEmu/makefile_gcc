@@ -92,6 +92,7 @@ SRCS = \
 		FindDlg.cpp        \
 		FindPanel.cpp      \
 		Font.cpp           \
+		FontCache.cpp      \
 		FontMgr.cpp        \
 		FontPtr.cpp        \
 		FrameHolder.cpp    \
