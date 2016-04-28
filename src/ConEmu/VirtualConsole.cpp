@@ -3088,7 +3088,7 @@ void CVirtualConsole::UpdateText()
 				HBRUSH hbrBack = PartBrush(ucBox100, attr.crBackColor, attr.crBackColor);
 				FillRect((HDC)m_DC, &rect, hbrBack);
 
-				HBRUSH hbrFore = PartBrush(ucBox100, attr.crBackColor, attr.crOrigForeColor);
+				HBRUSH hbrFore = PartBrush(ucBox100, attr.crBackColor, attr.crForeColor);
 				bool bRight = (part->Chars[0] == ucTrgRight);
 				POINT ptTrg[] = {
 					{bRight ? rect.left : rect.right, rect.top},
