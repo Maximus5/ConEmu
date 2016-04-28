@@ -3342,13 +3342,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpSet->LoadSettings(bNeedCreateVanilla);
 	}
 
-	// Quake/NoQuake?
-	if (gpConEmu->opt.QuakeMode.Exists)
-	{
-		gpConEmu->SetQuakeMode(gpConEmu->opt.QuakeMode.GetInt());
-		gpSet->isRestore2ActiveMon = true;
-	}
-
 	// Update package was dropped on ConEmu icon?
 	// params == (uint)-1, если первый аргумент не начинается с '/'
 	if (!gpConEmu->opt.runCommand.IsEmpty() && (gpConEmu->opt.params == -1))
@@ -3412,21 +3405,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpSet->isAnsiLog = true;
 		SafeFree(gpSet->pszAnsiLog);
 		gpSet->pszAnsiLog = lstrdup(gpConEmu->opt.AnsiLogPath.GetStr());
-	}
-
-	// Forced window size or pos
-	// Call this AFTER SettingsLoaded because we (may be)
-	// don't want to change ‘xml-stored’ values
-	if (gpConEmu->opt.SizePosPrm)
-	{
-		if (gpConEmu->opt.sWndX.Exists)
-			gpConEmu->SetWindowPosSizeParam(L'X', gpConEmu->opt.sWndX.GetStr());
-		if (gpConEmu->opt.sWndY.Exists)
-			gpConEmu->SetWindowPosSizeParam(L'Y', gpConEmu->opt.sWndY.GetStr());
-		if (gpConEmu->opt.sWndW.Exists)
-			gpConEmu->SetWindowPosSizeParam(L'W', gpConEmu->opt.sWndW.GetStr());
-		if (gpConEmu->opt.sWndH.Exists)
-			gpConEmu->SetWindowPosSizeParam(L'H', gpConEmu->opt.sWndH.GetStr());
 	}
 
 	DEBUGSTRSTARTUPLOG(L"SettingsLoaded");
@@ -3607,6 +3585,28 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		gpConEmu->opt.SizeVal.Exists ? gpConEmu->opt.SizeVal.GetInt() : -1,
 		gpConEmu->opt.ClearTypeVal.Exists ? gpConEmu->opt.ClearTypeVal.GetInt() : -1
 	);
+
+	// Forced window size or pos
+	// Call this AFTER SettingsLoaded because we (may be)
+	// don't want to change ‘xml-stored’ values
+	if (gpConEmu->opt.SizePosPrm)
+	{
+		if (gpConEmu->opt.sWndX.Exists)
+			gpConEmu->SetWindowPosSizeParam(L'X', gpConEmu->opt.sWndX.GetStr());
+		if (gpConEmu->opt.sWndY.Exists)
+			gpConEmu->SetWindowPosSizeParam(L'Y', gpConEmu->opt.sWndY.GetStr());
+		if (gpConEmu->opt.sWndW.Exists)
+			gpConEmu->SetWindowPosSizeParam(L'W', gpConEmu->opt.sWndW.GetStr());
+		if (gpConEmu->opt.sWndH.Exists)
+			gpConEmu->SetWindowPosSizeParam(L'H', gpConEmu->opt.sWndH.GetStr());
+	}
+
+	// Quake/NoQuake?
+	if (gpConEmu->opt.QuakeMode.Exists)
+	{
+		gpConEmu->SetQuakeMode(gpConEmu->opt.QuakeMode.GetInt());
+		gpSet->isRestore2ActiveMon = true;
+	}
 
 	if (gpSet->wndCascade)
 	{
