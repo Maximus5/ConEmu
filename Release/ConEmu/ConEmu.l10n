@@ -443,13 +443,6 @@
       "zh": "移除窗口边界和标题栏。仅显示控制台（console）、标签页（tabs）和状态栏",
       "id": 1569 }
     ,
-    "cbHideDisabledTabs": {
-      "en": [ "Hide tabs, which can't be activated.\r\n"
-            , "E.g. hide Far Manager editors while executing cmd.exe" ],
-      "zh": [ "隐藏不能被激活的标签页（tabs）。\r\n"
-            , "例如：执行cmd.exe时隐藏Far Manager编辑器" ],
-      "id": 2051 }
-    ,
     "cbHideInactiveConTabs": {
       "en": "Show tabs from active console only",
       "zh": "仅显示活动的控制台（console）的标签页（tabs）",
@@ -786,8 +779,9 @@
       "id": 1680 }
     ,
     "cbTrueColorer": {
-      "en": "Colorer truemod support",
-      "zh": "着色truemod支持",
+      "en": [ "Enable TrueColor (aka XTerm-256) support\r\n"
+            , "https://conemu.github.io/en/Xterm256Colors.html" ],
+      "_zh": "着色truemod支持",
       "id": 1578 }
     ,
     "cbTryToCenter": {
@@ -838,6 +832,11 @@
       "en": "Show real console on startup",
       "zh": "启动时显示真实控制台（real console）",
       "id": 1545 }
+    ,
+    "cbVividColors": {
+      "en": [ "Change lightness of text if color difference\r\n"
+            , "between text and background is indistinguishable" ],
+      "id": 3056 }
     ,
     "lbCmdOutputCP": {
       "en": [ "Windows command processor (cmd.exe) may cause then output of internal commands to be OEM or Unicode.\r\n"
@@ -1112,8 +1111,8 @@
       "id": 2628 }
     ,
     "tCmdGroupName": {
-      "en": "Task name (alias), surrounded by {...}, used in ‘[+] menu’, ‘Recreate dialog’ or ‘/cmd’ argument of ConEmu.exe",
-      "zh": "任务名 （别名）, 包括在{...}里, 在‘[+] 菜单’里使用,‘重新创建对话框’或ConEmu.exe的‘/cmd’参数",
+      "en": "Task name (alias), surrounded by {...}, used in ‘[+] menu’, ‘Recreate dialog’ or ‘-run’ argument of ConEmu.exe",
+      "zh": "任务名 （别名）, 包括在{...}里, 在‘[+] 菜单’里使用,‘重新创建对话框’或ConEmu.exe的‘-run’参数",
       "id": 2117 }
     ,
     "tCursorFixedSize": {
@@ -1199,12 +1198,12 @@
             , "Use ‘%1’ macro for ‘clicked’ item\r\n"
             , "Use ‘!ConEmuWorkDir!’ for the directory,\r\n"
             , "but not a clicked file\r\n"
-            , "Use ‘/single /cmd shell’ to reuse existing ConEmu window instead of creating new one" ],
+            , "Use ‘-single -run \"shell\"’ to reuse existing ConEmu window instead of creating new one" ],
       "zh": [ "这里指定你的shell （cmd, far,等等）\r\n"
             , "使用宏‘%1’代表‘被点击’的项目\r\n"
             , "使用‘!ConEmuWorkDir!’代表所在目录，\r\n"
             , "而不是被点击的文件\r\n"
-            , "使用‘/single /cmd shell’使用现有的窗口而不是创建新ConEmu窗口" ],
+            , "使用‘-single -run \"shell\"’使用现有的窗口而不是创建新ConEmu窗口" ],
       "id": 2391 }
     ,
     "tHideCaptionAlwaysDelay": {
@@ -2634,6 +2633,10 @@
       "zh": "请手动检查更新",
       "id": 68 }
     ,
+    "lng_RasterAutoError": {
+      "en": "Font auto size is not allowed for a fixed raster font size. Select ‘Terminal’ instead of ‘[Raster Fonts ...]’",
+      "id": 72 }
+    ,
     "lng_Search": {
       "en": "Search",
       "ru": "Поиск",
@@ -3662,11 +3665,6 @@
       "zh": "隐藏ConEmu里启动的GUI窗口的标题",
       "id": 2562 }
     ,
-    "cbHideDisabledTabs": {
-      "en": "Hide disabled tabs",
-      "zh": "隐藏失效的标签页",
-      "id": 2051 }
-    ,
     "cbHideInactiveConTabs": {
       "en": "Active console only",
       "zh": "仅活动的控制台",
@@ -4185,6 +4183,10 @@
       "en": "Show real console",
       "zh": "显示真实控制台",
       "id": 1545 }
+    ,
+    "cbVividColors": {
+      "en": "Adjust lightness of indistinguishable text",
+      "id": 3056 }
     ,
     "gbActivityLog": {
       "en": "Shell activity",
