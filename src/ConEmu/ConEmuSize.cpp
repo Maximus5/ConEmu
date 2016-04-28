@@ -922,6 +922,23 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 		{
 			hMon = FindInitialMonitor(&mi);
 		}
+
+		if (wmCurMode == wmNormal)
+		{
+			RECT rcFrameOnly = CalcMargins(CEM_FRAMECAPTION);
+			int iFrameWidth = gpSet->HideCaptionAlwaysFrame();
+			if (iFrameWidth > 0)
+			{
+				rcFrameOnly.left = max(0, (rcFrameOnly.left - iFrameWidth));
+				rcFrameOnly.right = max(0, (rcFrameOnly.right - iFrameWidth));
+				rcFrameOnly.top = max(0, (rcFrameOnly.top - iFrameWidth));
+				rcFrameOnly.bottom = max(0, (rcFrameOnly.bottom - iFrameWidth));
+			}
+			mi.rcWork.left -= rcFrameOnly.left;
+			mi.rcWork.right += rcFrameOnly.right;
+			mi.rcWork.top -= rcFrameOnly.top;
+			mi.rcWork.bottom += rcFrameOnly.bottom;
+		}
 	}
 
 	int nPixelWidth = 0, nPixelHeight = 0;
@@ -1241,7 +1258,7 @@ bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
 				if (!gpSet->wndCascade)
 					prcWnd->left = max((mi.rcWork.left - iLeftShift),min(wndX,(mi.rcWork.right - nWidth + iRightShift)));
 				else // Иначе - центрируется по монитору
-					prcWnd->left = max(mi.rcWork.left,((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
+					prcWnd->left = max((mi.rcWork.left - iLeftShift),((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
 				prcWnd->right = min((mi.rcWork.right + iRightShift),(prcWnd->left + nWidth));
 				prcWnd->top = mi.rcWork.top - rcFrameOnly.top;
 				prcWnd->bottom = prcWnd->top + nHeight;
