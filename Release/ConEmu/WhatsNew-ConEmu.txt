@@ -20,6 +20,20 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.4.28
+* gh-472: One more fix for custom frame width (Quake) and ‘gaps’.
+* Revert gh-621 patch. Just post KeyUp(Alt) before pasting.
+* New feature ‘Adjust lightness of indistinguishable text’ on the ‘Colors’ settings page.
+  The idea is to make text readable if certain foreground and background colors
+  are indistinguishable for current palette. ConEmu will try to change the lightness
+  of the foreground text.
+* Draw triangles (‘’ and ‘’) internally if ‘Enhance progressbars and scrollbars’ is checked.
+  This solves two problems: cleartype artifacts in statusbars (vim airline for example);
+  and triangle color for adjusted lightness of indistinguishable text.
+* New ConEmu.exe switch `-Frame <value>` changes desired ‘Frame width’.
+* Many internal changes in font descriptors creation.
+
+
 2016.4.16
 * gh-629: Once more ‘Bash on Ubuntu on Windows’.
   It's recommended now to run bash with `-cur_console:p` switch.
