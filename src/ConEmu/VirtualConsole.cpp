@@ -223,7 +223,6 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	#ifdef APPDISTINCTBACKGROUND
 	, mp_BgInfo(NULL)
 	#endif
-	, ms_LastUCharMapFont()
 	, TransparentInfo()
 	, isFade(false)
 	, isForeground(true)
@@ -236,12 +235,8 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	, mb_LeftPanelRedraw(false)
 	, mb_RightPanelRedraw(false)
 	, mn_LastDialogsCount(0)
-	, mn_LastDialogFlags()
-	, mrc_LastDialogs()
 	, mn_DialogsCount(0)
 	, mn_DialogAllFlags(0)
-	, mrc_Dialogs()
-	, mn_DialogFlags()
 	, mb_InPaintCall(false)
 	, mb_InConsoleResize(false)
 	, mb_ConDataChanged(false)
@@ -289,7 +284,9 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	, nBgImageColors(0)
 	, m_HighlightInfo()
 	, mb_PointersAllocated(false)
+	#ifdef _DEBUG
 	, mb_DebugDumpDC(false)
+	#endif
 {
 	#pragma warning(default: 4355)
 
@@ -297,6 +294,12 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	VConCreateLogger::Log(this, VConCreateLogger::eCreate);
 	IndexStr();
 	IDStr();
+
+	ZeroStruct(ms_LastUCharMapFont);
+	ZeroStruct(mrc_LastDialogs);
+	ZeroStruct(mn_LastDialogFlags);
+	ZeroStruct(mrc_Dialogs);
+	ZeroStruct(mn_DialogFlags);
 
 	_ASSERTE(mh_WndDC == NULL);
 }
