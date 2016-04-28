@@ -1178,6 +1178,13 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 							gpSetCls->SingleInstanceArg = sgl_Disabled;
 					}
 				}
+				else if (szArg.OneOfSwitches(L"-FrameWidth", L"-Frame"))
+				{
+					NeedNextArg();
+
+					if (!gpConEmu->opt.FrameWidth.Exists)
+						gpConEmu->opt.FrameWidth.SetInt(szNext);
+				}
 				else if (szArg.OneOfSwitches(L"-ShowHide", L"-ShowHideTSA"))
 				{
 					gpSetCls->SingleInstanceArg = sgl_Enabled;

@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Background.h"
 #include "CmdHistory.h"
 #include "ConEmu.h"
+#include "ConEmuStart.h"
 #include "HotkeyList.h"
 #include "Inside.h"
 #include "LngRc.h"
@@ -4566,7 +4567,8 @@ bool Settings::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 
 int Settings::HideCaptionAlwaysFrame()
 {
-	return (gpSet->nHideCaptionAlwaysFrame > HIDECAPTIONALWAYSFRAME_MAX) ? -1 : gpSet->nHideCaptionAlwaysFrame;
+	int iFrame = gpConEmu->opt.FrameWidth.Exists ? gpConEmu->opt.FrameWidth.Int : gpSet->nHideCaptionAlwaysFrame;
+	return (iFrame > HIDECAPTIONALWAYSFRAME_MAX) ? -1 : iFrame;
 }
 
 // Функция НЕ учитывает isCaptionHidden.
