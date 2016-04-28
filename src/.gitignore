@@ -27,6 +27,7 @@ Test/
 *.sdf
 *.opendb
 *.opensdf
+*.VC.db
 *.ncb
 *.opt
 *.user
