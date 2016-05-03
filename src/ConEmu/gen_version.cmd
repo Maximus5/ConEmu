@@ -96,6 +96,7 @@ goto :EOF
 @echo #define MVV_4a "%MVV_4a%"
 @echo %MVV_git_def%
 @echo //
+@echo #include "version_stage.h"
 @echo #include "version_macro.h"
 @goto :EOF
 
@@ -109,11 +110,3 @@ echo Bad version was specified: '%*'
 :ex99
 exit /B 99
 goto :EOF
-
-rem #define MVV_1 13
-rem #define MVV_2 11
-rem #define MVV_3 7
-rem #define MVV_4 0
-rem #define MVV_4a ""
-rem 
-rem #include "version_macro.h"

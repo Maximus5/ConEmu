@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#endif
 
 #include "usetodo.hpp"
+#include "../ConEmu/version_stage.h"
 
 #ifndef EXTERNAL_HOOK_LIBRARY
 #define EXTERNAL_HOOK_LIBRARY

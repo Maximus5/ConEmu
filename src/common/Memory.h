@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 extern HANDLE ghHeap;
 
-#ifdef _DEBUG
+#if defined(_DEBUG) || (ConEmuVersionStage == CEVS_ALPHA)
 #define TRACK_MEMORY_ALLOCATIONS
 #endif
 
