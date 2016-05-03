@@ -421,6 +421,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 						gbLogProcess = (pInfo->nLoggingType == glt_Processes);
 						if (gbLogProcess)
 						{
+							CEStr lsDir;
 							int ImageBits = 0, ImageSystem = 0;
 							#ifdef _WIN64
 							ImageBits = 64;
@@ -428,7 +429,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 							ImageBits = 32;
 							#endif
 							CESERVER_REQ* pIn = ExecuteNewCmdOnCreate(pInfo, ghConWnd, eSrvLoaded,
-								L"", szExeName, szDllName, NULL, NULL, NULL, NULL,
+								L"", szExeName, szDllName, GetDirectory(lsDir), NULL, NULL, NULL, NULL,
 								ImageBits, ImageSystem,
 								GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
 							if (pIn)

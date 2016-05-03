@@ -422,7 +422,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 
 				CESERVER_REQ* pIn = ExecuteNewCmdOnCreate(
 					NULL, ghConWnd, eSrvLoaded,
-					L"", szInfo, L"", NULL, NULL, NULL, NULL,
+					L"", szInfo, L"", L"", NULL, NULL, NULL, NULL,
 					SelfImageBits, ImageSystem, NULL, NULL, NULL);
 				if (pIn)
 				{

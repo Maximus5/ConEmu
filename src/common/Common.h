@@ -1835,7 +1835,7 @@ struct CESERVER_REQ_STARTSTOP
 // CECMD_ONCREATEPROC
 struct CESERVER_REQ_ONCREATEPROCESS
 {
-	//BOOL    bUnicode;
+	DWORD   cbStructSize;
 	int     nSourceBits;
 	wchar_t sFunction[32];
 	int     nImageSubsystem;
@@ -1846,6 +1846,7 @@ struct CESERVER_REQ_ONCREATEPROCESS
 	int     nActionLen;
 	int     nFileLen;
 	int     nParamLen;
+	int     nDirLen;
 	unsigned __int64 hStdIn, hStdOut, hStdErr;
 	// Variable length tail
 	wchar_t wsValue[1];

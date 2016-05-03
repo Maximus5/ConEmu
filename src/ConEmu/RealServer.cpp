@@ -1141,6 +1141,13 @@ CESERVER_REQ* CRealServer::cmdOnCreateProc(LPVOID pInst, CESERVER_REQ* pIn, UINT
 		sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ONCREATEPROCESSRET)
 		/*+MAX_PATH*6*/);
 
+	if (pIn->OnCreateProc.cbStructSize != sizeof(pIn->OnCreateProc))
+	{
+		// Versions mismatch?
+		_ASSERTE(pIn->OnCreateProc.cbStructSize == sizeof(pIn->OnCreateProc));
+		return pOut;
+	}
+
 	BOOL lbDos = (pIn->OnCreateProc.nImageBits == 16)
 		&& (pIn->OnCreateProc.nImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE);
 
@@ -1153,6 +1160,7 @@ CESERVER_REQ* CRealServer::cmdOnCreateProc(LPVOID pInst, CESERVER_REQ* pIn, UINT
 		shl->pszAction = lstrdup(pIn->OnCreateProc.wsValue);
 		shl->pszFile   = lstrdup(pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen);
 		shl->pszParam  = lstrdup(pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen+pIn->OnCreateProc.nFileLen);
+		shl->pszDir    = lstrdup(pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen+pIn->OnCreateProc.nFileLen+pIn->OnCreateProc.nParamLen);
 		shl->bDos = lbDos;
 		shl->nImageBits = pIn->OnCreateProc.nImageBits;
 		shl->nImageSubsystem = pIn->OnCreateProc.nImageSubsystem;

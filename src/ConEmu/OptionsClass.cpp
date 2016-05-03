@@ -2339,9 +2339,32 @@ void CSettings::debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl)
 			{
 				debugLogShellText(pszParamEx, szArg);
 			}
-			else if (szArg[0] == L'@' && szArg[2] == L':' && szArg[3] == L'\\')
+			else if (szArg[0] == L'@')
 			{
-				debugLogShellText(pszParamEx, szArg.Mid(1));
+				CEStr lsPath;
+
+				if (IsFilePath(szArg.Mid(1), true))
+				{
+					// Full path to "arguments file"
+					lsPath.Set(szArg.Mid(1));
+				}
+				else if ((szArg[1] != L'\\' && szArg[1] != L'/')
+					&& (pShl->pszDir && *pShl->pszDir))
+				{
+					// Relative path to "arguments file"
+					lsPath = JoinPath(pShl->pszDir, szArg.Mid(1));
+				}
+
+				if (pShl->pszDir && *pShl->pszDir)
+				{
+					CEStr lsDir(L"\r\n\r\nCD: \"", pShl->pszDir, L"\"");
+					lstrmerge(&pszParamEx, lsDir);
+				}
+
+				if (!lsPath.IsEmpty())
+				{
+					debugLogShellText(pszParamEx, lsPath);
+				}
 			}
 		}
 	}
@@ -2385,6 +2408,8 @@ void CSettings::debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl)
 		free(pShl->pszFile);
 	if (pShl->pszParam)
 		free(pShl->pszParam);
+	if (pShl->pszDir)
+		free(pShl->pszDir);
 	free(pShl);
 }
 

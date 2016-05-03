@@ -462,7 +462,7 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 }
 
 CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
-				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
+				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
 				int mn_ImageBits, int mn_ImageSubsystem,
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr
@@ -481,7 +481,7 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 		return NULL;
 
 	return ExecuteNewCmdOnCreate(&m_SrvMapping, ghConWnd, aCmd,
-				asAction, asFile, asParam,
+				asAction, asFile, asParam, asDir,
 				anShellFlags, anCreateFlags, anStartFlags, anShowCmd,
 				mn_ImageBits, mn_ImageSubsystem,
 				hStdIn, hStdOut, hStdErr);
@@ -1415,7 +1415,7 @@ void CShellProc::CheckIsCurrentGuiClient()
 //  1: continue, changes was made
 int CShellProc::PrepareExecuteParms(
 			enum CmdOnCreateType aCmd,
-			LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
+			LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
 			DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
 			HANDLE* lphStdIn, HANDLE* lphStdOut, HANDLE* lphStdErr,
 			LPWSTR* psFile, LPWSTR* psParam, LPWSTR* psStartDir)
@@ -1973,7 +1973,7 @@ int CShellProc::PrepareExecuteParms(
 	//wchar_t szBaseDir[MAX_PATH+2]; szBaseDir[0] = 0;
 	CESERVER_REQ *pIn = NULL;
 	pIn = NewCmdOnCreate(aCmd,
-			asAction, asFile, asParam,
+			asAction, asFile, asParam, asDir,
 			anShellFlags, anCreateFlags, anStartFlags, anShowCmd,
 			mn_ImageBits, mn_ImageSubsystem,
 			hIn, hOut, hErr/*, szBaseDir, mb_DosBoxAllowed*/);
@@ -2322,7 +2322,7 @@ int CShellProc::PrepareExecuteParms(
 				#endif
 			}
 			pIn = NewCmdOnCreate(eParmsChanged,
-					asAction, *psFile, *psParam,
+					asAction, *psFile, *psParam, asDir,
 					anShellFlags, anCreateFlags, anStartFlags, anShowCmd,
 					mn_ImageBits, mn_ImageSubsystem,
 					hIn, hOut, hErr/*, szBaseDir, mb_DosBoxAllowed*/);
@@ -2506,11 +2506,12 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 	mpwsz_TempAction = str2wcs(asAction ? *asAction : NULL, mn_CP);
 	mpwsz_TempFile = str2wcs(asFile ? *asFile : NULL, mn_CP);
 	mpwsz_TempParam = str2wcs(asParam ? *asParam : NULL, mn_CP);
+	CEStr lsDir(str2wcs(asDir ? *asDir : NULL, mn_CP));
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
 
 	int liRc = PrepareExecuteParms(eShellExecute,
-					mpwsz_TempAction, mpwsz_TempFile, mpwsz_TempParam,
+					mpwsz_TempAction, mpwsz_TempFile, mpwsz_TempParam, lsDir,
 					anFlags, NULL, NULL, anShowCmd,
 					NULL, NULL, NULL, // *StdHandles
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
@@ -2569,6 +2570,7 @@ BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* as
 					asAction ? *asAction : NULL,
 					asFile ? *asFile : NULL,
 					asParam ? *asParam : NULL,
+					asDir ? *asDir : NULL,
 					anFlags, NULL, NULL, anShowCmd,
 					NULL, NULL, NULL, // *StdHandles
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
@@ -2694,11 +2696,12 @@ BOOL CShellProc::OnCreateProcessA(LPCSTR* asFile, LPCSTR* asCmdLine, LPCSTR* asD
 	mpwsz_TempParam = str2wcs(asCmdLine ? *asCmdLine : NULL, mn_CP);
 	DWORD nShowCmd = lpSI->wShowWindow;
 	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;
+	CEStr lsDir(str2wcs(asDir ? *asDir : NULL, mn_CP));
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
 
 	int liRc = PrepareExecuteParms(eCreateProcess,
-					NULL, mpwsz_TempFile, mpwsz_TempParam,
+					NULL, mpwsz_TempFile, mpwsz_TempParam, lsDir,
 					NULL, anCreationFlags, &lpSI->dwFlags, &nShowCmd,
 					&lpSI->hStdInput, &lpSI->hStdOutput, &lpSI->hStdError,
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);
@@ -2785,6 +2788,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 					NULL,
 					asFile ? *asFile : NULL,
 					asCmdLine ? *asCmdLine : NULL,
+					asDir ? *asDir : NULL,
 					NULL, anCreationFlags, &lpSI->dwFlags, &nShowCmd,
 					&lpSI->hStdInput, &lpSI->hStdOutput, &lpSI->hStdError,
 					&mpwsz_TempRetFile, &mpwsz_TempRetParam, &mpwsz_TempRetDir);

@@ -97,7 +97,7 @@ private:
 	char* wcs2str(const wchar_t* pwsz, UINT anCP);
 	int PrepareExecuteParms(
 				enum CmdOnCreateType aCmd,
-				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
+				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd, // или Shell & Create флаги
 				HANDLE* lphStdIn, HANDLE* lphStdOut, HANDLE* lphStdErr,
 				LPWSTR* psFile, LPWSTR* psParam, LPWSTR* psStartDir);
@@ -111,7 +111,7 @@ private:
 	void LogShellString(LPCWSTR asMessage);
 public:
 	CESERVER_REQ* NewCmdOnCreate(enum CmdOnCreateType aCmd,
-				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
+				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
 				int nImageBits, int nImageSubsystem,
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr

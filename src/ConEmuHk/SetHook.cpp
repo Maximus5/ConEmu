@@ -1801,7 +1801,7 @@ void LoadModuleFailed(LPCSTR asModuleA, LPCWSTR asModuleW)
 		szModule[countof(szModule)-1] = 0;
 		asModuleW = szModule;
 	}
-	pIn = ExecuteNewCmdOnCreate(NULL, ghConWnd, eLoadLibrary, L"Fail", asModuleW, szErrCode, NULL, NULL, NULL, NULL,
+	pIn = ExecuteNewCmdOnCreate(NULL, ghConWnd, eLoadLibrary, L"Fail", asModuleW, szErrCode, L"", NULL, NULL, NULL, NULL,
 		#ifdef _WIN64
 		64
 		#else
@@ -2047,10 +2047,11 @@ void LogModuleLoaded(LPCWSTR pwszModule, HMODULE hModule)
 	{
 		CESERVER_REQ* pIn = NULL;
 
+		CEStr lsDir;
 		wchar_t szInfo[64] = L"";
 		FormatModuleHandle(hModule, L"Module=0x%08X", L"Module=0x%08X%08X", szInfo, countof(szInfo));
 
-		pIn = sp->NewCmdOnCreate(eLoadLibrary, NULL, pwszModule, szInfo, NULL, NULL, NULL, NULL, WIN3264TEST(32,64), 0, NULL, NULL, NULL);
+		pIn = sp->NewCmdOnCreate(eLoadLibrary, NULL, pwszModule, szInfo, GetDirectory(lsDir), NULL, NULL, NULL, NULL, WIN3264TEST(32,64), 0, NULL, NULL, NULL);
 		if (pIn)
 		{
 			HWND hConWnd = GetRealConsoleWindow();
@@ -2087,7 +2088,7 @@ void LogModuleUnloaded(LPCWSTR pwszModule, HMODULE hModule)
 				wcscpy_c(szModule, szHandle+2);
 		}
 
-		pIn = sp->NewCmdOnCreate(eFreeLibrary, NULL, szModule, NULL, NULL, NULL, NULL, NULL,
+		pIn = sp->NewCmdOnCreate(eFreeLibrary, NULL, szModule, NULL, NULL, NULL, NULL, NULL, NULL,
 			#ifdef _WIN64
 			64
 			#else

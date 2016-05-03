@@ -102,7 +102,7 @@ void SendCurrentDirectory(HWND hConWnd, LPCWSTR asDirectory, LPCWSTR asPassiveDi
 BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& SrvMapping);
 BOOL LoadGuiMapping(DWORD nConEmuPID, ConEmuGuiMapping& GuiMapping);
 CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND hConWnd, enum CmdOnCreateType aCmd,
-				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
+				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
 				int mn_ImageBits, int mn_ImageSubsystem,
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr);

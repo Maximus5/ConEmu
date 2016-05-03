@@ -565,7 +565,7 @@ BOOL LoadGuiMapping(DWORD nConEmuPID, ConEmuGuiMapping& GuiMapping)
 
 
 CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND hConWnd, enum CmdOnCreateType aCmd,
-				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam,
+				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
 				DWORD* anShellFlags, DWORD* anCreateFlags, DWORD* anStartFlags, DWORD* anShowCmd,
 				int mn_ImageBits, int mn_ImageSubsystem,
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr)
@@ -647,10 +647,13 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND 
 	int nActionLen = (asAction ? lstrlen(asAction) : 0)+1;
 	int nFileLen = (asFile ? lstrlen(asFile) : 0)+1;
 	int nParamLen = (asParam ? lstrlen(asParam) : 0)+1;
+	int nDirLen = (asDir ? lstrlen(asDir) : 0)+1;
 	
 	pIn = ExecuteNewCmd(CECMD_ONCREATEPROC, sizeof(CESERVER_REQ_HDR)
-		+sizeof(CESERVER_REQ_ONCREATEPROCESS)+(nActionLen+nFileLen+nParamLen)*sizeof(wchar_t));
+		+sizeof(CESERVER_REQ_ONCREATEPROCESS)
+		+(nActionLen+nFileLen+nParamLen+nDirLen)*sizeof(wchar_t));
 	
+	pIn->OnCreateProc.cbStructSize = sizeof(pIn->OnCreateProc);
 	pIn->OnCreateProc.nSourceBits = WIN3264TEST(32,64); //-V112
 	//pIn->OnCreateProc.bUnicode = TRUE;
 	pIn->OnCreateProc.nImageSubsystem = mn_ImageSubsystem;
@@ -685,6 +688,7 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND 
 	pIn->OnCreateProc.nActionLen = nActionLen;
 	pIn->OnCreateProc.nFileLen = nFileLen;
 	pIn->OnCreateProc.nParamLen = nParamLen;
+	pIn->OnCreateProc.nDirLen = nDirLen;
 	
 	wchar_t* psz = pIn->OnCreateProc.wsValue;
 	if (nActionLen > 1)
@@ -696,7 +700,10 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND 
 	if (nParamLen > 1)
 		_wcscpy_c(psz, nParamLen, asParam);
 	psz += nParamLen;
-	
+	if (nDirLen > 1)
+		_wcscpy_c(psz, nDirLen, asDir);
+	psz += nDirLen;
+
 	return pIn;
 }
 
