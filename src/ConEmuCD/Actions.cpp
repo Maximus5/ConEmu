@@ -1055,7 +1055,7 @@ int DoStoreCWD(LPCWSTR asCmdArg)
 
 	if ((NextArg(&asCmdArg, szDir) != 0) || szDir.IsEmpty())
 	{
-		if (GetDirectory(szDir) <= 0)
+		if (GetDirectory(szDir) == NULL)
 			goto wrap;
 	}
 

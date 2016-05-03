@@ -47,7 +47,7 @@ LPCWSTR QueryNextLine(const wchar_t* asLines, CEStr &rsLine, NEXTLINEFLAGS Flags
 
 bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
 LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchDriveMax);
-int GetDirectory(CEStr& szDir);
+LPCWSTR GetDirectory(CEStr& szDir);
 
 bool CompareProcessNames(LPCWSTR pszProcess1, LPCWSTR pszProcess2);
 bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNames);

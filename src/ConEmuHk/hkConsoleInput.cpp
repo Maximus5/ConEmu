@@ -105,7 +105,7 @@ void PreReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFla
 			else
 			{
 				CEStr szDir;
-				if (GetDirectory(szDir) > 0)
+				if (GetDirectory(szDir))
 				{
 					// Sends CECMD_STORECURDIR into RConServer
 					SendCurrentDirectory(ghConWnd, szDir);

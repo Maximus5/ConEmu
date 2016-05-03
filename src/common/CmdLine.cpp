@@ -514,14 +514,14 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 	return szDrive;
 }
 
-int GetDirectory(CEStr& szDir)
+LPCWSTR GetDirectory(CEStr& szDir)
 {
-	int iRc = 0;
 	DWORD nLen, nMax;
 
 	nMax = GetCurrentDirectory(MAX_PATH, szDir.GetBuffer(MAX_PATH));
 	if (!nMax)
 	{
+		szDir.Empty();
 		goto wrap;
 	}
 	else if (nMax > MAX_PATH)
@@ -529,13 +529,13 @@ int GetDirectory(CEStr& szDir)
 		nLen = GetCurrentDirectory(nMax, szDir.GetBuffer(nMax));
 		if (!nLen || (nLen > nMax))
 		{
+			szDir.Empty();
 			goto wrap;
 		}
 	}
 
-	iRc = lstrlen(szDir);
 wrap:
-	return iRc;
+	return szDir.IsEmpty() ? NULL : szDir.c_str();
 }
 
 // Команды, которые не нужно пытаться развернуть в exe?
