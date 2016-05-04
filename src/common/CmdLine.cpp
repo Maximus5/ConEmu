@@ -996,14 +996,14 @@ bool CompareProcessNames(LPCWSTR pszProcess1, LPCWSTR pszProcess2)
 	CEStr lsName1, lsName2;
 	if (!pszExt1)
 	{
-		lsName1 = lstrmerge(pszName1, L".exe");
+		lsName1.Attach(lstrmerge(pszName1, L".exe"));
 		pszName1 = lsName1;
 		if (!pszName1)
 			return false;
 	}
 	if (!pszExt2)
 	{
-		lsName2 = lstrmerge(pszName2, L".exe");
+		lsName2.Attach(lstrmerge(pszName2, L".exe"));
 		pszName2 = lsName2;
 		if (!pszName2)
 			return false;
@@ -1024,7 +1024,7 @@ bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNames)
 	CEStr lsName1;
 	if (!pszExt1)
 	{
-		lsName1 = lstrmerge(pszName1, L".exe");
+		lsName1.Attach(lstrmerge(pszName1, L".exe"));
 		pszName1 = lsName1;
 		if (!pszName1)
 			return false;
