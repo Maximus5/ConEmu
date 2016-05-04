@@ -106,13 +106,25 @@ void HeapDeinitialize()
 
 
 #ifdef TRACK_MEMORY_ALLOCATIONS
-void xf_set_tag(void* _Memory, LPCSTR lpszFileName, int nLine)
+void xf_set_tag(void* _Memory, LPCSTR lpszFileName, int nLine, bool bAlloc /*= true*/)
 {
 	xf_mem_block* p = ((xf_mem_block*)_Memory)-1;
 
 	_ASSERTE(_Memory && p && p->bBlockUsed && p->nBlockSize);
 
-	msprintf(p->sCreatedFrom, countof(p->sCreatedFrom), "%s:%i", _PointToName(lpszFileName), nLine);
+	if (bAlloc)
+	{
+		p->nThreadID = GetCurrentThreadId();
+		p->nAllocTick = GetTickCount();
+		p->nFreeTick = 0;
+		p->nSrcLine = LOWORD(nLine);
+		lstrcpynA(p->sSrcFile, _PointToName(lpszFileName), countof(p->sSrcFile));
+	}
+	else
+	{
+		p->nFreeTick = GetTickCount();
+		//msprintf(p->sSrcFile, countof(p->sSrcFile), "-- %s:%i", _PointToName(lpszFileName), nLine);
+	}
 }
 #endif
 
@@ -132,7 +144,7 @@ void * __cdecl xf_malloc(size_t _Size XF_PLACE_ARGS_DEF)
 		p->bBlockUsed = TRUE;
 		p->nBlockSize = _Size;
 
-		msprintf(p->sCreatedFrom, countof(p->sCreatedFrom), "%s:%i", _PointToName(lpszFileName), nLine);
+		xf_set_tag(p+1, lpszFileName, nLine);
 
 		#ifdef _DEBUG
 		if (_Size > 0) memset(p+1, 0xFD, _Size);
@@ -168,7 +180,7 @@ void * __cdecl xf_calloc(size_t _Count, size_t _Size XF_PLACE_ARGS_DEF)
 		p->bBlockUsed = TRUE;
 		p->nBlockSize = _Count*_Size;
 
-		msprintf(p->sCreatedFrom, countof(p->sCreatedFrom), "%s:%i", _PointToName(lpszFileName), nLine);
+		xf_set_tag(p+1, lpszFileName, nLine);
 
 		memset(((LPBYTE)(p+1))+_Count*_Size, 0xCC, 8);
 	}
@@ -224,7 +236,7 @@ void* __cdecl xf_realloc(void * _Memory, size_t _Size XF_PLACE_ARGS_DEF)
 		p->bBlockUsed = TRUE;
 		p->nBlockSize = _Size;
 
-		msprintf(p->sCreatedFrom, countof(p->sCreatedFrom), "%s:%i", _PointToName(lpszFileName), nLine);
+		xf_set_tag(p+1, lpszFileName, nLine);
 
 		#ifdef _DEBUG
 		if (_Size > _Size2) memset(((LPBYTE)(p+1))+_Size2, 0xFD, _Size - _Size2);
@@ -273,7 +285,7 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF)
 	}
 
 	p->bBlockUsed = FALSE;
-	msprintf(p->sCreatedFrom, countof(p->sCreatedFrom), "-- %s:%i", _PointToName(lpszFileName), nLine);
+	xf_set_tag(p+1, lpszFileName, nLine, false);
 	_Memory = (void*)p;
 #endif
 	#ifdef _DEBUG
@@ -295,7 +307,7 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF)
 }
 
 
-#ifdef TRACK_MEMORY_ALLOCATIONS
+#if defined(TRACK_MEMORY_ALLOCATIONS) && defined(MEMORY_DUMP_CHECK)
 #ifdef FORCE_HEAP_CHECK
 void __cdecl xf_dump_chk()
 {
@@ -326,12 +338,11 @@ void __cdecl xf_dump_chk()
 	}
 
 	HeapUnlock(ghHeap);
-#endif
+#endif // #ifndef CONEMU_MINIMAL
 }
-#endif
+#endif // #ifdef FORCE_HEAP_CHECK
 
 
-#ifndef CONEMU_MINIMAL
 #include <stdlib.h>
 class CTrackBlocks
 {
@@ -418,7 +429,6 @@ protected:
 		pBlocks[cchCount++] = blk;
 	};
 };
-#endif
 
 void __cdecl xf_dump()
 {
@@ -483,9 +493,9 @@ void __cdecl xf_dump()
 		LODWORD(extBlocks.getUsedSize()), WIN3264WSPRINT(extBlocks.getUsedSize()),
 		cCount);
 	OutputDebugStringA(sBlockInfo);
-#endif
+#endif // #ifndef CONEMU_MINIMAL
 }
-#endif
+#endif // #if defined(TRACK_MEMORY_ALLOCATIONS) && defined(MEMORY_DUMP_CHECK)
 
 
 bool __cdecl xf_validate(void * _Memory /*= NULL*/)

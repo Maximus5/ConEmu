@@ -50,16 +50,15 @@ void __cdecl operator delete(void *block);
 void __cdecl operator delete[](void *ptr);
 
 #ifdef TRACK_MEMORY_ALLOCATIONS
-	typedef struct tag_xf_mem_block
+	struct xf_mem_block
 	{
-		union
-		{
-			BOOL   bBlockUsed;
-			LPVOID Padding;
-		};
+		BOOL   bBlockUsed;
+		DWORD  nThreadID, nAllocTick, nFreeTick;
 		size_t nBlockSize;
-		char   sCreatedFrom[32];
-	} xf_mem_block;
+		WORD   nSrcLine;
+		char   sSrcFile[30];
+
+	};
 
 	#define XF_PLACE_ARGS_DEF , LPCSTR lpszFileName, int nLine
 	#define XF_PLACE_ARGS_VAL , __FILE__, __LINE__
@@ -88,14 +87,19 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF);
 
 #ifdef TRACK_MEMORY_ALLOCATIONS
 
+	#ifdef MEMORY_DUMP_CHECK
 	void __cdecl xf_dump();
+	#else
+	#define xf_dump()
+	#endif
+
 	#ifdef FORCE_HEAP_CHECK
 	void __cdecl xf_dump_chk();
 	#else
 	#define xf_dump_chk()
 	#endif
 
-	void xf_set_tag(void* _Memory, LPCSTR lpszFileName, int nLine);
+	void xf_set_tag(void* _Memory, LPCSTR lpszFileName, int nLine, bool bAlloc = true);
 
 #else
 
