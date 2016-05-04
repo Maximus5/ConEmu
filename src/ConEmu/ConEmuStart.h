@@ -200,6 +200,7 @@ public:
 		CESwitch VisValue; // sw_Simple
 		CESwitch ResetSettings; // sw_Simple
 		CESwitch AdvLogging; // sw_Int: -log[1|2|3|4]
+		CESwitch Detached; // sw_Simple
 	public:
 		// Suppress intellisense warning:
 		// the default constructor of "CConEmuStart::StartOptions" cannot be referenced -- it is a deleted function	ConEmu

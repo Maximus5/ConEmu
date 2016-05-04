@@ -3128,6 +3128,11 @@ void CSetDlgButtons::OnBtn_CloseConEmuOptions(HWND hDlg, WORD CB, BYTE uCheck)
 	// Apply new value
 	gpSet->isMultiLeaveOnClose = bClose ? 0 : bQuit ? 2 : 1;
 
+	if (bClose && gpConEmu->opt.Detached)
+	{
+		gpConEmu->opt.Detached.Clear();
+	}
+
 	if (CurVal != gpSet->isMultiLeaveOnClose)
 	{
 		gpConEmu->LogString(L"isMultiLeaveOnClose changed from dialog or macro (cbCloseConEmuWithLastTab)");
@@ -3135,8 +3140,11 @@ void CSetDlgButtons::OnBtn_CloseConEmuOptions(HWND hDlg, WORD CB, BYTE uCheck)
 
 	if (hDlg)
 	{
+		checkDlgButton(hDlg, cbCloseConEmuWithLastTab, gpSet->isCloseOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
+		checkDlgButton(hDlg, cbCloseConEmuOnCrossClicking, gpSet->isCloseOnCrossClick() ? BST_CHECKED : BST_UNCHECKED);
 		checkDlgButton(hDlg, cbMinimizeOnLastTabClose, gpSet->isMinOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
 		checkDlgButton(hDlg, cbHideOnLastTabClose, gpSet->isHideOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
+		//
 		enableDlgItem(hDlg, cbCloseConEmuOnCrossClicking, !gpSet->isCloseOnLastTabClose());
 		enableDlgItem(hDlg, cbMinimizeOnLastTabClose, !gpSet->isCloseOnLastTabClose());
 		enableDlgItem(hDlg, cbHideOnLastTabClose, !gpSet->isCloseOnLastTabClose() && gpSet->isMinOnLastTabClose());

@@ -1015,6 +1015,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				else if (szArg.IsSwitch(L"-detached"))
 				{
 					gpConEmu->m_StartDetached = crb_On;
+					opt.Detached = true;
 				}
 				else if (szArg.IsSwitch(L"-here"))
 				{

@@ -5045,7 +5045,7 @@ bool Settings::isCloseOnLastTabClose()
 		return false;
 	if (gpConEmu->WindowStartNoClose)
 		return false;
-	if (gpConEmu->m_StartDetached != crb_Undefined)
+	if (gpConEmu->opt.Detached)
 		return false;
 	return true;
 }
