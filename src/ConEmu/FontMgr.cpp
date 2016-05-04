@@ -2103,7 +2103,7 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 wrap:
 	if (rpFont.Ptr())
 	{
-		rpFont->ms_FontError = szFontError;
+		rpFont->ms_FontError.Set(szFontError);
 	}
 	return bSucceeded;
 }
@@ -2353,7 +2353,7 @@ void CFontMgr::RecreateAlternativeFont()
 				}
 			}
 
-			m_Font2->ms_FontError = szFontError;
+			m_Font2->ms_FontError.Set(szFontError);
 		}
 	}
 
