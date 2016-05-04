@@ -20,6 +20,16 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.5.3
+* gh-661: If ConEmu started with `-detached` switch, option ‘Close with last tab’ couldn't be changed.
+* Improve debug shell logging (source of `@file` without paths).
+  Settings/Info/Debug has ‘Shell’ option which shows processes creation information.
+  E.g. if you run project make, and make executes `lnk @arguments`, the `arguments`
+  is usually temporary file, which contains actual agruments for linking.
+  ConEmu tries to locate the file (passed to `lnk` without path) and shows its
+  contents in Settings/Info/Debug.
+
+
 2016.4.28
 * gh-472: One more fix for custom frame width (Quake) and ‘gaps’.
 * Revert gh-621 patch. Just post KeyUp(Alt) before pasting.
