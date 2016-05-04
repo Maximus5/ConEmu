@@ -2,6 +2,7 @@
 #pragma warning(disable: 4474)
 
 bool gbVerifyFailed = false;
+bool gbVerifyStepFailed = false;
 bool gbVerifyVerbose = false;
 
 int main(int argc, char** argv)
@@ -96,7 +97,7 @@ int main(int argc, char** argv)
 
 	Verify_Step("RConStartArgs::RunArgTests()");
 	RConStartArgs::RunArgTests();
-	Verify0(!gbVerifyFailed,"RConStartArgs tests passed");
+	Verify0(!gbVerifyStepFailed,"RConStartArgs tests passed");
 	}
 
 	{
