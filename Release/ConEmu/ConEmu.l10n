@@ -940,18 +940,14 @@
       "zh": "用鼠标右键拖放，仅当按下时……",
       "id": 1503 }
     ,
-    "rbActivityCmd": {
+    "rbActivityComm": {
       "en": "Log internal ConEmu (GUI<-->Server) calls",
       "zh": "记录内部的ConEmu调用日志 （GUI<-->Server）",
       "id": 2069 }
     ,
-    "rbActivityDebug": {
-      "en": "Automatically attach ConEmu debugger to all started processes",
-      "zh": "自动附加ConEmu调试器到所有已启动的进程",
-      "id": 2446 }
-    ,
     "rbActivityDisabled": {
-      "en": "Disable debug logging. This implies on ‘Settings’ dialog close.",
+      "en": [ "Disable debug logging.\r\n"
+            , "This implies on ‘Settings’ dialog close." ],
       "zh": "禁用调试日志。这意味着‘Settings’对话框关闭。",
       "id": 1747 }
     ,
@@ -960,8 +956,14 @@
       "zh": "记录键盘和鼠标活动的日志",
       "id": 1762 }
     ,
+    "rbActivityProcess": {
+      "en": [ "Log in console progress creations.\r\n"
+            , "‘Inject ConEmuHk’ is required" ],
+      "id": 3057 }
+    ,
     "rbActivityShell": {
-      "en": "Log shell calls (progress creations, library loadings, etc.) ‘Inject ConEmuHk’ is required",
+      "en": [ "Log shell calls (progress creations, library loadings, etc.)\r\n"
+            , "‘Inject ConEmuHk’ is required" ],
       "zh": "记录shell调用（创建过程，加载库过程，等等）的日志 ，需要‘注入ConEmuHk’",
       "id": 1748 }
     ,
@@ -4687,21 +4689,10 @@
       "zh": "确定",
       "id": 1 }
     ,
-    "rbActivityAnsi": {
-      "en": "ANSI",
-      "ru": "ANSI",
-      "zh": "ANSI",
-      "id": 2583 }
-    ,
-    "rbActivityCmd": {
-      "en": "Cmd",
-      "zh": "Cmd",
+    "rbActivityComm": {
+      "en": "Comm",
+      "zh": "Comm",
       "id": 2069 }
-    ,
-    "rbActivityDebug": {
-      "en": "Debug",
-      "zh": "调试",
-      "id": 2446 }
     ,
     "rbActivityDisabled": {
       "en": "&Disabled",
@@ -4713,9 +4704,13 @@
       "zh": "输入（&I）",
       "id": 1762 }
     ,
+    "rbActivityProcess": {
+      "en": "&Exec",
+      "id": 3057 }
+    ,
     "rbActivityShell": {
-      "en": "Sh&ell",
-      "zh": "Sh&ell",
+      "en": "S&hell",
+      "zh": "S&hell",
       "id": 1748 }
     ,
     "rbAnotherUser": {
