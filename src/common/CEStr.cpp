@@ -235,8 +235,8 @@ wchar_t* CEStr::Detach()
 {
 	CESTRLOG1("CEStr::Detach()=x%p", ms_Val);
 
-	wchar_t* psz = ms_Val;
-	ms_Val = NULL;
+	wchar_t* psz = NULL;
+	klSwap(psz, ms_Val);
 	mn_MaxCount = 0;
 	Empty();
 
