@@ -52,8 +52,13 @@ void __cdecl operator delete[](void *ptr);
 #ifdef TRACK_MEMORY_ALLOCATIONS
 	struct xf_mem_block
 	{
-		BOOL   bBlockUsed;
-		DWORD  nThreadID, nAllocTick, nFreeTick;
+		union {
+			struct {
+				BOOL   bBlockUsed;
+				DWORD  nThreadID, nAllocTick, nFreeTick;
+			};
+			LPVOID Ptr;
+		};
 		size_t nBlockSize;
 		WORD   nSrcLine;
 		char   sSrcFile[30];
@@ -84,16 +89,20 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF);
 #define free(p) xf_free(p XF_PLACE_ARGS_VAL)
 
 
+#undef USE_XF_DUMP
+#undef USE_XF_DUMP_CHK
 
 #ifdef TRACK_MEMORY_ALLOCATIONS
 
 	#ifdef MEMORY_DUMP_CHECK
+	#define USE_XF_DUMP
 	void __cdecl xf_dump();
 	#else
 	#define xf_dump()
 	#endif
 
 	#ifdef FORCE_HEAP_CHECK
+	#define USE_XF_DUMP_CHK
 	void __cdecl xf_dump_chk();
 	#else
 	#define xf_dump_chk()

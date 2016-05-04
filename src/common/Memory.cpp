@@ -108,12 +108,13 @@ void HeapDeinitialize()
 #ifdef TRACK_MEMORY_ALLOCATIONS
 void xf_set_tag(void* _Memory, LPCSTR lpszFileName, int nLine, bool bAlloc /*= true*/)
 {
-	xf_mem_block* p = ((xf_mem_block*)_Memory)-1;
+	_ASSERTE(_Memory);
 
-	_ASSERTE(_Memory && p && p->bBlockUsed && p->nBlockSize);
+	xf_mem_block* p = ((xf_mem_block*)_Memory)-1;
 
 	if (bAlloc)
 	{
+		_ASSERTE(p && p->bBlockUsed && p->nBlockSize);
 		p->nThreadID = GetCurrentThreadId();
 		p->nAllocTick = GetTickCount();
 		p->nFreeTick = 0;
@@ -122,6 +123,7 @@ void xf_set_tag(void* _Memory, LPCSTR lpszFileName, int nLine, bool bAlloc /*= t
 	}
 	else
 	{
+		_ASSERTE(p && !p->bBlockUsed && p->nBlockSize);
 		p->nFreeTick = GetTickCount();
 		//msprintf(p->sSrcFile, countof(p->sSrcFile), "-- %s:%i", _PointToName(lpszFileName), nLine);
 	}
@@ -133,7 +135,7 @@ void * __cdecl xf_malloc(size_t _Size XF_PLACE_ARGS_DEF)
 	_ASSERTE(ghHeap);
 	_ASSERTE(_Size>0);
 #ifdef TRACK_MEMORY_ALLOCATIONS
-	#ifdef FORCE_HEAP_CHECK
+	#ifdef USE_XF_DUMP_CHK
 	xf_dump_chk();
 	#endif
 
@@ -169,7 +171,7 @@ void * __cdecl xf_calloc(size_t _Count, size_t _Size XF_PLACE_ARGS_DEF)
 	_ASSERTE(ghHeap);
 	_ASSERTE((_Count*_Size)>0);
 #ifdef TRACK_MEMORY_ALLOCATIONS
-	#ifdef FORCE_HEAP_CHECK
+	#ifdef USE_XF_DUMP_CHK
 	xf_dump_chk();
 	#endif
 
@@ -270,12 +272,15 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF)
 		#endif
 		return;
 	}
-#ifdef TRACK_MEMORY_ALLOCATIONS
+
+	#ifdef TRACK_MEMORY_ALLOCATIONS
 	xf_mem_block* p = ((xf_mem_block*)_Memory)-1;
 
+	#ifdef _DEBUG
+	int nCCcmp;
 	if (p->bBlockUsed == TRUE)
 	{
-		int nCCcmp = memcmp(((LPBYTE)_Memory)+p->nBlockSize, "\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC", 8);
+		nCCcmp = memcmp(((LPBYTE)_Memory)+p->nBlockSize, "\xCC\xCC\xCC\xCC\xCC\xCC\xCC\xCC", 8);
 		_ASSERTE(nCCcmp == 0);
 		memset(_Memory, 0xFD, p->nBlockSize);
 	}
@@ -283,11 +288,16 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF)
 	{
 		_ASSERTE(p->bBlockUsed == TRUE);
 	}
+	#endif
 
 	p->bBlockUsed = FALSE;
 	xf_set_tag(p+1, lpszFileName, nLine, false);
+
+	// Real heap pointer
 	_Memory = (void*)p;
-#endif
+
+	#endif // #ifdef TRACK_MEMORY_ALLOCATIONS
+
 	#ifdef _DEBUG
 	size_t _Size1 = HeapSize(ghHeap, 0, _Memory);
 	_ASSERTE(_Size1 > 0);
@@ -295,20 +305,13 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF)
 
 	HeapFree(ghHeap, 0, _Memory);
 
-	#ifdef FORCE_HEAP_CHECK
+	#ifdef USE_XF_DUMP_CHK
 	xf_dump_chk();
 	#endif
-	//#ifdef _DEBUG
-	//SIZE_T _Size2 = HeapSize(ghHeap, 0, _Memory);
-	//if (_Size1 == _Size2) {
-	//	_ASSERTE(_Size1 != _Size2);
-	//}
-	//#endif
 }
 
 
-#if defined(TRACK_MEMORY_ALLOCATIONS) && defined(MEMORY_DUMP_CHECK)
-#ifdef FORCE_HEAP_CHECK
+#ifdef USE_XF_DUMP_CHK
 void __cdecl xf_dump_chk()
 {
 #ifndef CONEMU_MINIMAL
@@ -340,7 +343,6 @@ void __cdecl xf_dump_chk()
 	HeapUnlock(ghHeap);
 #endif // #ifndef CONEMU_MINIMAL
 }
-#endif // #ifdef FORCE_HEAP_CHECK
 
 
 #include <stdlib.h>
@@ -387,8 +389,8 @@ public:
 			xf_mem_block* p = pBlocks;
 			for (size_t i = 0; i < cchCount; i++, p++)
 			{
-				msprintf(sBlockInfo, countof(sBlockInfo), "Used memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s\n",
-					WIN3264WSPRINT(p->Padding), p->nBlockSize, p->sCreatedFrom);
+				msprintf(sBlockInfo, countof(sBlockInfo), "Used memory block at 0x" WIN3264TEST("%08X","%08X%08X") ", size %u\n    Allocated from: %s:%u\n",
+					WIN3264WSPRINT(p), p->nBlockSize, p->sSrcFile, p->nSrcLine);
 				OutputDebugStringA(sBlockInfo);
 			}
 			OutputDebugStringA(ourBlocks ? "\n============== END OF OUR MEMORY BLOCKS =============\n" : "\n============== END OF EXT MEMORY BLOCKS =============\n");
@@ -397,15 +399,15 @@ public:
 	void AddBlock(const xf_mem_block* p)
 	{
 		xf_mem_block xm = *p;
-		xm.Padding = (void*)p;
+		xm.Ptr = (void*)p;
 		PushBlock(xm);
 	};
 	void AddBlock(const PROCESS_HEAP_ENTRY& ent)
 	{
 		xf_mem_block xm = {};
-		xm.Padding = ent.lpData;
+		xm.Ptr = ent.lpData;
 		xm.nBlockSize = ent.cbData;
-		lstrcpynA(xm.sCreatedFrom, "<EXTERNAL>", countof(xm.sCreatedFrom));
+		lstrcpynA(xm.sSrcFile, "<EXTERNAL>", countof(xm.sSrcFile));
 		PushBlock(xm);
 	};
 	size_t getUsedSize()
@@ -430,6 +432,7 @@ protected:
 	};
 };
 
+#if defined(USE_XF_DUMP)
 void __cdecl xf_dump()
 {
 #ifndef CONEMU_MINIMAL
@@ -495,6 +498,8 @@ void __cdecl xf_dump()
 	OutputDebugStringA(sBlockInfo);
 #endif // #ifndef CONEMU_MINIMAL
 }
+#endif // #if defined(USE_XF_DUMP)
+
 #endif // #if defined(TRACK_MEMORY_ALLOCATIONS) && defined(MEMORY_DUMP_CHECK)
 
 

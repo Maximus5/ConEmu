@@ -2441,7 +2441,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 			return 0;
 
 		case ID_DUMP_MEM_BLK:
-			#ifdef TRACK_MEMORY_ALLOCATIONS
+			#ifdef USE_XF_DUMP
 			xf_dump();
 			#else
 			_ASSERTE(FALSE && "TRACK_MEMORY_ALLOCATIONS not defined");
