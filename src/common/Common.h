@@ -1093,12 +1093,13 @@ typedef void (WINAPI* OnConEmuLoaded_t)(struct ConEmuLoadedArg* pConEmuInfo);
 enum GuiLoggingType
 {
 	glt_None = 0,
-	glt_Processes = 1,
-	glt_Input = 2,
-	glt_Commands = 3,
-	glt_Debugger = 4,
-	glt_Ansi = 5,
-	// glt_Files, ...
+	glt_Processes = 1, // CreateProcess in consoles
+	glt_Input = 2,     // Keyboard/Mouse input
+	glt_Commands = 3,  // Pipe communications
+	glt_Shell = 4,     // glt_Processes + injects/modules actions
+	// glt_Debugger,
+	// glt_Ansi
+	// glt_Files,
 };
 
 enum ComSpecType

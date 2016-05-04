@@ -526,11 +526,6 @@ BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& SrvMapping)
 	else
 	{
 		memmove(&SrvMapping, pInfo, min(pInfo->cbSize, sizeof(SrvMapping)));
-		/*bDosBoxAllowed = pInfo->bDosBox;
-		wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
-		wcscat_c(szBaseDir, L"\\");
-		if (pInfo->nLoggingType != glt_Processes)
-			return NULL;*/
 	}
 	SrvInfoMapping.CloseMap();
 
@@ -552,11 +547,6 @@ BOOL LoadGuiMapping(DWORD nConEmuPID, ConEmuGuiMapping& GuiMapping)
 	else
 	{
 		memmove(&GuiMapping, pInfo, min(pInfo->cbSize, sizeof(GuiMapping)));
-		/*bDosBoxAllowed = pInfo->bDosBox;
-		wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
-		wcscat_c(szBaseDir, L"\\");
-		if (pInfo->nLoggingType != glt_Processes)
-			return NULL;*/
 	}
 	GuiInfoMapping.CloseMap();
 
@@ -570,10 +560,10 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND 
 				int mn_ImageBits, int mn_ImageSubsystem,
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr)
 {
-	bool bEnabled = false;
+	static GuiLoggingType LastLogType = glt_None;
+
 	if (!pSrvMap)
 	{
-		DEBUGTEST(static bool bWasEnabled = false);
 		static DWORD nLastWasEnabledTick = 0;
 
 		// Чтобы проверки слишком часто не делать
@@ -585,61 +575,30 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND 
 				if (::LoadSrvMapping(hConWnd, *Info))
 				{
 					_ASSERTE(Info->ComSpec.ConEmuExeDir[0] && Info->ComSpec.ConEmuBaseDir[0]);
-					bEnabled = (Info->nLoggingType == glt_Processes);
+					LastLogType = (GuiLoggingType)Info->nLoggingType;
 				}
 				free(Info);
 			}
 
 			nLastWasEnabledTick = GetTickCount();
 		}
-
-		DEBUGTEST(bWasEnabled = bEnabled);
 	}
 	else
 	{
-		bEnabled = (pSrvMap->nLoggingType == glt_Processes);
+		LastLogType = (GuiLoggingType)pSrvMap->nLoggingType;
 	}
-	// Если логирование не просили
+
+	bool bEnabled;
+	if ((aCmd == eShellExecute) || (aCmd == eCreateProcess))
+		bEnabled = (LastLogType == glt_Processes) || (LastLogType == glt_Shell);
+	else
+		bEnabled = (LastLogType == glt_Shell);
+
+	// Was logging requested?
 	if (!bEnabled)
 	{
 		return NULL;
 	}
-
-	//szBaseDir[0] = 0;
-
-	//// Проверим, а надо ли?
-	//MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConMap;
-	//ConMap.InitName(CECONMAPNAME, (DWORD)FarHwnd);
-	//CESERVER_CONSOLE_MAPPING_HDR* p = ConMap.Open();
-	//if (p && p->hConEmuRoot && isWindow(p->hConEmuRoot))
-	//{
-
-	////	bDosBoxAllowed = pInfo->bDosBox;
-	////	wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
-	////	wcscat_c(szBaseDir, L"\\");
-	//if (p->nLoggingType != glt_Processes)
-	//	return NULL;
-
-	//DWORD dwGuiProcessId = 0;
-	//if (!ghConEmuWnd || !GetWindowThreadProcessId(ghConEmuWnd, &dwGuiProcessId))
-	//	return NULL;
-
-	//MFileMapping<ConEmuGuiMapping> GuiInfoMapping;
-	//GuiInfoMapping.InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
-	//const ConEmuGuiMapping* pInfo = GuiInfoMapping.Open();
-	//if (!pInfo)
-	//	return NULL;
-	//else if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
-	//	return NULL;
-	//else
-	//{
-	//	bDosBoxAllowed = pInfo->bDosBox;
-	//	wcscpy_c(szBaseDir, pInfo->sConEmuBaseDir);
-	//	wcscat_c(szBaseDir, L"\\");
-	//	if (pInfo->nLoggingType != glt_Processes)
-	//		return NULL;
-	//}
-	//GuiInfoMapping.CloseMap();
 
 	
 	CESERVER_REQ *pIn = NULL;
@@ -662,24 +621,27 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND 
 	pIn->OnCreateProc.hStdOut = (unsigned __int64)hStdOut;
 	pIn->OnCreateProc.hStdErr = (unsigned __int64)hStdErr;
 	
-	if (aCmd == eShellExecute)
-		wcscpy_c(pIn->OnCreateProc.sFunction, L"Shell");
-	else if (aCmd == eCreateProcess)
-		wcscpy_c(pIn->OnCreateProc.sFunction, L"Create");
-	else if (aCmd == eInjectingHooks)
-		wcscpy_c(pIn->OnCreateProc.sFunction, L"Inject");
-	else if (aCmd == eHooksLoaded)
-		wcscpy_c(pIn->OnCreateProc.sFunction, L"HkLoad");
-	else if (aCmd == eSrvLoaded)
-		wcscpy_c(pIn->OnCreateProc.sFunction, L"SrLoad");
-	else if (aCmd == eParmsChanged)
-		wcscpy_c(pIn->OnCreateProc.sFunction, L"Changed");
-	else if (aCmd == eLoadLibrary)
-		wcscpy_c(pIn->OnCreateProc.sFunction, L"LdLib");
-	else if (aCmd == eFreeLibrary)
-		wcscpy_c(pIn->OnCreateProc.sFunction, L"FrLib");
-	else
+	switch (aCmd)
+	{
+	case eShellExecute:
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"Shell"); break;
+	case eCreateProcess:
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"Create"); break;
+	case eInjectingHooks:
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"Inject"); break;
+	case eHooksLoaded:
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"HkLoad"); break;
+	case eSrvLoaded:
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"SrLoad"); break;
+	case eParmsChanged:
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"Changed"); break;
+	case eLoadLibrary:
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"LdLib"); break;
+	case eFreeLibrary:
+		wcscpy_c(pIn->OnCreateProc.sFunction, L"FrLib"); break;
+	default:
 		wcscpy_c(pIn->OnCreateProc.sFunction, L"Unknown");
+	}
 	
 	pIn->OnCreateProc.nShellFlags = anShellFlags ? *anShellFlags : 0;
 	pIn->OnCreateProc.nCreateFlags = anCreateFlags ? *anCreateFlags : 0;

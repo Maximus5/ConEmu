@@ -448,7 +448,7 @@
 #define tUpdatePostUpdateCmd            2066
 #define cbUpdateCheckHourly             2067
 #define cbUpdateConfirmDownload         2068
-#define rbActivityCmd                   2069
+#define rbActivityComm                  2069
 #define rbUpdateUseExe                  2070
 #define rbUpdateUseArc                  2071
 #define tUpdateArcCmdLine               2072
@@ -779,7 +779,6 @@
 #define rbRecreateSplit2Bottom          2443
 #define tRecreateSplit                  2444
 #define stRecreateSplit                 2445
-#define rbActivityDebug                 2446
 #define cbComspecUncPaths               2451
 #define cbCmdTasksDir                   2452
 #define vkFontLarger                    2453
@@ -893,7 +892,6 @@
 #define IDC_HELP_DESCR                  2580
 #define vkJumpNextMonitor               2581
 #define vkJumpPrevMonitor               2582
-#define rbActivityAnsi                  2583
 #define cbAddConEmuBase2Path            2584
 #define cbCloseConEmuOnCrossClicking    2585
 #define cbMinimizeOnLastTabClose        2586
@@ -1331,6 +1329,7 @@
 #define stElevatedConsolesGroup         3054
 #define gbTabDblClkActions              3055
 #define cbVividColors                   3056
+#define rbActivityProcess               3057
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1339,7 +1338,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        235
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3057
+#define _APS_NEXT_CONTROL_VALUE         3058
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

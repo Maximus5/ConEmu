@@ -574,10 +574,10 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			OnBtn_ActivitySaveAs(hDlg, CB, uCheck);
 			break;
 		case rbActivityDisabled:
+		case rbActivityProcess:
 		case rbActivityShell:
 		case rbActivityInput:
-		case rbActivityCmd:
-		case rbActivityAnsi:
+		case rbActivityComm:
 			OnBtn_DebugActivityRadio(hDlg, CB, uCheck);
 			break;
 
@@ -3458,23 +3458,23 @@ void CSetDlgButtons::OnBtn_ActivitySaveAs(HWND hDlg, WORD CB, BYTE uCheck)
 } // cbActivitySaveAs
 
 
-// rbActivityDisabled || rbActivityShell || rbActivityInput || rbActivityCmd || rbActivityAnsi
+// rbActivityDisabled || rbActivityShell || rbActivityInput || rbActivityComm || rbActivityProcess
 void CSetDlgButtons::OnBtn_DebugActivityRadio(HWND hDlg, WORD CB, BYTE uCheck)
 {
-	_ASSERTE(CB==rbActivityDisabled || CB==rbActivityShell || CB==rbActivityInput || CB==rbActivityCmd || CB==rbActivityAnsi);
+	_ASSERTE(CB==rbActivityDisabled || CB==rbActivityShell || CB==rbActivityInput || CB==rbActivityComm || CB==rbActivityProcess);
 
 	HWND hList = GetDlgItem(hDlg, lbActivityLog);
 	//HWND hDetails = GetDlgItem(hDlg, lbActivityDetails);
 	switch (CB)
 	{
-	case rbActivityShell:
+	case rbActivityProcess:
 		gpSetCls->m_ActivityLoggingType = glt_Processes; break;
+	case rbActivityShell:
+		gpSetCls->m_ActivityLoggingType = glt_Shell; break;
 	case rbActivityInput:
 		gpSetCls->m_ActivityLoggingType = glt_Input; break;
-	case rbActivityCmd:
+	case rbActivityComm:
 		gpSetCls->m_ActivityLoggingType = glt_Commands; break;
-	case rbActivityAnsi:
-		gpSetCls->m_ActivityLoggingType = glt_Ansi; break;
 	default:
 		gpSetCls->m_ActivityLoggingType = glt_None;
 	}
@@ -3490,7 +3490,8 @@ void CSetDlgButtons::OnBtn_DebugActivityRadio(HWND hDlg, WORD CB, BYTE uCheck)
 	SetDlgItemText(hDlg, ebActivityApp, L"");
 	SetDlgItemText(hDlg, ebActivityParm, L"");
 
-	if (gpSetCls->m_ActivityLoggingType == glt_Processes)
+	if ((gpSetCls->m_ActivityLoggingType == glt_Processes)
+		|| (gpSetCls->m_ActivityLoggingType == glt_Shell))
 	{
 		LVCOLUMN col = {
 			LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
@@ -3568,20 +3569,6 @@ void CSetDlgButtons::OnBtn_DebugActivityRadio(HWND hDlg, WORD CB, BYTE uCheck)
 		wcscpy_c(szTitle, L"Extra");	ListView_InsertColumn(hList, CSettings::lcc_Extra, &col);
 
 	}
-	else if (gpSetCls->m_ActivityLoggingType == glt_Ansi)
-	{
-		LVCOLUMN col = {
-			LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
-			gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
-		wchar_t szTitle[64]; col.pszText = szTitle;
-
-		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
-		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
-
-		wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, CSettings::lac_Time, &col);
-		col.cx = gpSetCls->EvalSize(500, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"Event");	ListView_InsertColumn(hList, CSettings::lac_Sequence, &col);
-	}
 	else
 	{
 		LVCOLUMN col = {
@@ -3595,7 +3582,7 @@ void CSetDlgButtons::OnBtn_DebugActivityRadio(HWND hDlg, WORD CB, BYTE uCheck)
 
 	gpConEmu->OnGlobalSettingsChanged();
 
-} // rbActivityDisabled || rbActivityShell || rbActivityInput || rbActivityCmd || rbActivityAnsi
+} // rbActivityDisabled || rbActivityShell || rbActivityInput || rbActivityComm || rbActivityProcess
 
 
 // rbColorRgbDec || rbColorRgbHex || rbColorBgrHex
