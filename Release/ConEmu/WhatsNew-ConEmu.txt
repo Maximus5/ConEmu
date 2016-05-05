@@ -20,6 +20,15 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.5.4
+* gh-660: Fix crash on ConEmu.exe exit (32-bit).
+* Separate process creation from module/inject activities.
+  On Settings/Info/Debug page new ‘Exec’ option shows only
+  ShellExecute and CreateProcess activities.
+  The ‘Shell’ options is unchanged: ‘Exec’ + injects + modules.
+* l10n: Update resources (Debug activities).
+
+
 2016.5.3
 * gh-661: If ConEmu started with `-detached` switch, option ‘Close with last tab’ couldn't be changed.
 * Improve debug shell logging (source of `@file` without paths).
