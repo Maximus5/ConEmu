@@ -289,8 +289,10 @@ int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/
 		// 09.06.2009 Maks - обломался на: cmd /c" echo Y "
 		pch = psCmdLine;
 
-		// Ищем обычным образом (до пробела/кавычки)
-		while (*pch && *pch!=L' ' && *pch!=L'"') pch++;
+		// General: Look for spacing of quote
+		while (*pch && *pch!=L'"'
+			&& *pch!=L' ' && *pch!=L'\t' && *pch!=L'\r' && *pch!=L'\n')
+			pch++;
 
 		//if (!pch) pch = psCmdLine + lstrlenW(psCmdLine); // до конца строки
 	}
