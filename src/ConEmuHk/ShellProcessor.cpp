@@ -480,8 +480,11 @@ CESERVER_REQ* CShellProc::NewCmdOnCreate(enum CmdOnCreateType aCmd,
 	if (m_SrvMapping.nLoggingType != glt_Processes)
 		return NULL;
 
+	CEStr lsDir;
+
 	return ExecuteNewCmdOnCreate(&m_SrvMapping, ghConWnd, aCmd,
-				asAction, asFile, asParam, asDir,
+				asAction, asFile, asParam,
+				(asDir && *asDir) ? asDir : GetDirectory(lsDir),
 				anShellFlags, anCreateFlags, anStartFlags, anShowCmd,
 				mn_ImageBits, mn_ImageSubsystem,
 				hStdIn, hStdOut, hStdErr);

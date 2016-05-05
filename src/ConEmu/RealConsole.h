@@ -215,7 +215,6 @@ struct DebugLogShellActivity
 	wchar_t* pszAction;
 	wchar_t* pszFile;
 	wchar_t* pszParam;
-	wchar_t* pszDir;
 	int     nImageSubsystem;
 	int     nImageBits;
 	DWORD   nShellFlags, nCreateFlags, nStartFlags, nShowCmd;

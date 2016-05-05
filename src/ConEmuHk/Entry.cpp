@@ -865,13 +865,12 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 		{
 			if (sp->LoadSrvMapping())
 			{
-				CEStr lsDir;
 				wchar_t *szExeName = (wchar_t*)calloc((MAX_PATH+1),sizeof(wchar_t));
 				//BOOL lbDosBoxAllowed = FALSE;
 				if (!GetModuleFileName(NULL, szExeName, MAX_PATH+1)) szExeName[0] = 0;
 
 				CESERVER_REQ* pIn = sp->NewCmdOnCreate(eInjectingHooks, L"",
-					szExeName, GetCommandLineW(), GetDirectory(lsDir),
+					szExeName, GetCommandLineW(), NULL,
 					NULL, NULL, NULL, NULL, // flags
 					gnImageBits, gnImageSubsystem,
 					GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));

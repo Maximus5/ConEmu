@@ -1153,14 +1153,15 @@ CESERVER_REQ* CRealServer::cmdOnCreateProc(LPVOID pInst, CESERVER_REQ* pIn, UINT
 
 	if (gpSetCls->GetPage(thi_Debug))
 	{
+		LPCWSTR pszFile = pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen;
+		LPCWSTR pszParam = pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen+pIn->OnCreateProc.nFileLen;
 		DebugLogShellActivity *shl = (DebugLogShellActivity*)calloc(sizeof(DebugLogShellActivity),1);
 		shl->nParentPID = pIn->hdr.nSrcPID;
 		shl->nParentBits = pIn->OnCreateProc.nSourceBits;
 		wcscpy_c(shl->szFunction, pIn->OnCreateProc.sFunction);
 		shl->pszAction = lstrdup(pIn->OnCreateProc.wsValue);
-		shl->pszFile   = lstrdup(pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen);
-		shl->pszParam  = lstrdup(pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen+pIn->OnCreateProc.nFileLen);
-		shl->pszDir    = lstrdup(pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen+pIn->OnCreateProc.nFileLen+pIn->OnCreateProc.nParamLen);
+		shl->pszFile   = lstrdup(pszFile);
+		shl->pszParam  = lstrdup(pszParam);
 		shl->bDos = lbDos;
 		shl->nImageBits = pIn->OnCreateProc.nImageBits;
 		shl->nImageSubsystem = pIn->OnCreateProc.nImageSubsystem;
@@ -1171,6 +1172,67 @@ CESERVER_REQ* CRealServer::cmdOnCreateProc(LPVOID pInst, CESERVER_REQ* pIn, UINT
 		shl->hStdIn = (DWORD)pIn->OnCreateProc.hStdIn;
 		shl->hStdOut = (DWORD)pIn->OnCreateProc.hStdOut;
 		shl->hStdErr = (DWORD)pIn->OnCreateProc.hStdErr;
+
+		// Append directory and bat/tmp files contents to pszParam
+		{
+			LPCWSTR pszDir = (pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen+pIn->OnCreateProc.nFileLen+pIn->OnCreateProc.nParamLen);
+			LPCWSTR pszAppFile = NULL;
+			wchar_t*& pszParamEx = shl->pszParam;
+
+			if (pszDir && *pszDir)
+			{
+				CEStr lsDir((pszParamEx && *pszParamEx) ? L"\r\n\r\n" : NULL, L"CD: \"", pszDir, L"\"");
+				lstrmerge(&pszParamEx, lsDir);
+			}
+
+			if (shl->pszFile)
+			{
+				LPCWSTR pszExt = PointToExt(shl->pszFile);
+				if (pszExt && (!lstrcmpi(pszExt, L".bat") || !lstrcmpi(pszExt, L".cmd")))
+					gpSetCls->debugLogShellText(pszParamEx, (pszAppFile = shl->pszFile));
+			}
+
+			if (pszParam && *pszParam)
+			{
+				LPCWSTR pszNext = pszParam;
+				CEStr szArg;
+				while (0 == NextArg(&pszNext, szArg))
+				{
+					if (!*szArg || (*szArg == L'-') || (*szArg == L'/'))
+						continue;
+					LPCWSTR pszExt = PointToExt(szArg);
+
+					// Perhaps process *.tmp files too? (used with VC RC compilation?)
+					if (pszExt && (!lstrcmpi(pszExt, L".bat") || !lstrcmpi(pszExt, L".cmd") /*|| !lstrcmpi(pszExt, L".tmp")*/)
+						&& (!pszAppFile || (lstrcmpi(szArg, pszAppFile) != 0)))
+					{
+						gpSetCls->debugLogShellText(pszParamEx, szArg);
+					}
+					else if (szArg[0] == L'@')
+					{
+						CEStr lsPath;
+
+						if (IsFilePath(szArg.Mid(1), true))
+						{
+							// Full path to "arguments file"
+							lsPath.Set(szArg.Mid(1));
+						}
+						else if ((szArg[1] != L'\\' && szArg[1] != L'/')
+							&& (pszDir && *pszDir))
+						{
+							// Relative path to "arguments file"
+							lsPath = JoinPath(pszDir, szArg.Mid(1));
+						}
+
+						if (!lsPath.IsEmpty())
+						{
+							gpSetCls->debugLogShellText(pszParamEx, lsPath);
+						}
+					}
+				}
+			}
+		}
+		// end of "Append directory and bat/tmp files contents to pszParam"
 
 		PostMessage(gpSetCls->GetPage(thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_SHELL_MAGIC, (LPARAM)shl);
 	}

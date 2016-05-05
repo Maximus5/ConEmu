@@ -2047,11 +2047,10 @@ void LogModuleLoaded(LPCWSTR pwszModule, HMODULE hModule)
 	{
 		CESERVER_REQ* pIn = NULL;
 
-		CEStr lsDir;
 		wchar_t szInfo[64] = L"";
 		FormatModuleHandle(hModule, L"Module=0x%08X", L"Module=0x%08X%08X", szInfo, countof(szInfo));
 
-		pIn = sp->NewCmdOnCreate(eLoadLibrary, NULL, pwszModule, szInfo, GetDirectory(lsDir), NULL, NULL, NULL, NULL, WIN3264TEST(32,64), 0, NULL, NULL, NULL);
+		pIn = sp->NewCmdOnCreate(eLoadLibrary, NULL, pwszModule, szInfo, NULL, NULL, NULL, NULL, NULL, WIN3264TEST(32,64), 0, NULL, NULL, NULL);
 		if (pIn)
 		{
 			HWND hConWnd = GetRealConsoleWindow();

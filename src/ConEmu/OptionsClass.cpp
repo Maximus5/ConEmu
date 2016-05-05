@@ -2313,66 +2313,13 @@ void CSettings::debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl)
 		ListView_SetItemText(hList, nItem, lpc_System, szTime);
 	}
 
-	wchar_t* pszParamEx = lstrdup(pShl->pszParam);
-	LPCWSTR pszAppFile = NULL;
 	if (pShl->pszFile)
-	{
 		ListView_SetItemText(hList, nItem, lpc_App, pShl->pszFile);
-		LPCWSTR pszExt = PointToExt(pShl->pszFile);
-		if (pszExt && (!lstrcmpi(pszExt, L".bat") || !lstrcmpi(pszExt, L".cmd")))
-			debugLogShellText(pszParamEx, (pszAppFile = pShl->pszFile));
-	}
-	SetDlgItemText(hWnd2, ebActivityApp, (wchar_t*)(pShl->pszFile ? pShl->pszFile : L""));
+	SetDlgItemText(hWnd2, ebActivityApp, (pShl->pszFile ? pShl->pszFile : L""));
 
-	if (pShl->pszParam && *pShl->pszParam)
-	{
-		LPCWSTR pszNext = pShl->pszParam;
-		CEStr szArg;
-		while (0 == NextArg(&pszNext, szArg))
-		{
-			if (!*szArg || (*szArg == L'-') || (*szArg == L'/'))
-				continue;
-			LPCWSTR pszExt = PointToExt(szArg);
-			TODO("наверное еще и *.tmp файлы подхватить, вроде они при компиляции ресурсов в VC гоняются");
-			if (pszExt && (!lstrcmpi(pszExt, L".bat") || !lstrcmpi(pszExt, L".cmd") /*|| !lstrcmpi(pszExt, L".tmp")*/)
-				&& (!pszAppFile || (lstrcmpi(szArg, pszAppFile) != 0)))
-			{
-				debugLogShellText(pszParamEx, szArg);
-			}
-			else if (szArg[0] == L'@')
-			{
-				CEStr lsPath;
-
-				if (IsFilePath(szArg.Mid(1), true))
-				{
-					// Full path to "arguments file"
-					lsPath.Set(szArg.Mid(1));
-				}
-				else if ((szArg[1] != L'\\' && szArg[1] != L'/')
-					&& (pShl->pszDir && *pShl->pszDir))
-				{
-					// Relative path to "arguments file"
-					lsPath = JoinPath(pShl->pszDir, szArg.Mid(1));
-				}
-
-				if (pShl->pszDir && *pShl->pszDir)
-				{
-					CEStr lsDir(L"\r\n\r\nCD: \"", pShl->pszDir, L"\"");
-					lstrmerge(&pszParamEx, lsDir);
-				}
-
-				if (!lsPath.IsEmpty())
-				{
-					debugLogShellText(pszParamEx, lsPath);
-				}
-			}
-		}
-	}
-	if (pszParamEx)
-		ListView_SetItemText(hList, nItem, lpc_Params, pszParamEx);
-	SetDlgItemText(hWnd2, ebActivityParm, (wchar_t*)(pszParamEx ? pszParamEx : L""));
-	if (pszParamEx && pszParamEx != pShl->pszParam)
-		free(pszParamEx);
+	if (pShl->pszParam)
+		ListView_SetItemText(hList, nItem, lpc_Params, pShl->pszParam);
+	SetDlgItemText(hWnd2, ebActivityParm, (pShl->pszParam ? pShl->pszParam : L""));
 
 	//TODO: CurDir?
 
@@ -2408,8 +2355,6 @@ void CSettings::debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl)
 		free(pShl->pszFile);
 	if (pShl->pszParam)
 		free(pShl->pszParam);
-	if (pShl->pszDir)
-		free(pShl->pszDir);
 	free(pShl);
 }
 
