@@ -684,20 +684,29 @@ bool MyCreateDirectory(wchar_t* asPath)
 
 	BOOL bOk = FALSE;
 	DWORD dwErr = 0;
-	wchar_t* psz1, *pszSlash;
+	wchar_t *psz1, *pszSlash, wcSave = L'\\';
 	psz1 = wcschr(asPath, L'\\');
 	pszSlash = wcsrchr(asPath, L'\\');
+	// Only one slash? This may be
+	// either "Z:\Tools"
+	// or "Z:\ConEmu.xml"
 	if (pszSlash && (pszSlash == psz1))
-		pszSlash = NULL;
+	{
+		if (*(pszSlash+1))
+			pszSlash++;
+		else
+			pszSlash = NULL;
+	}
 
 	if (pszSlash)
 	{
-		_ASSERTE(*pszSlash == L'\\');
+		wcSave = *pszSlash;
 		*pszSlash = 0;
 
-		if ((pszSlash[1] == 0) && DirectoryExists(asPath))
+		if (((wcSave != L'\\') || (pszSlash[1] == 0))
+			&& DirectoryExists(asPath))
 		{
-			*pszSlash = L'\\';
+			*pszSlash = wcSave;
 			return true;
 		}
 	}
@@ -726,7 +735,7 @@ bool MyCreateDirectory(wchar_t* asPath)
 
 	if (pszSlash)
 	{
-		*pszSlash = L'\\';
+		*pszSlash = wcSave;
 	}
 
 	return (bOk != FALSE);
