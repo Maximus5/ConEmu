@@ -33,50 +33,28 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 
 #include "OptionsClass.h"
-#include "SetPgControls.h"
+#include "SetPgMouse.h"
 #include "SetDlgLists.h"
 
-CSetPgControls::CSetPgControls()
+CSetPgMouse::CSetPgMouse()
 {
 }
 
-CSetPgControls::~CSetPgControls()
+CSetPgMouse::~CSetPgMouse()
 {
 }
 
-LRESULT CSetPgControls::OnInitDialog(HWND hDlg, bool abInitial)
+LRESULT CSetPgMouse::OnInitDialog(HWND hDlg, bool abInitial)
 {
 	checkDlgButton(hDlg, cbEnableMouse, !gpSet->isDisableMouse);
 	checkDlgButton(hDlg, cbSkipActivation, gpSet->isMouseSkipActivation);
 	checkDlgButton(hDlg, cbSkipMove, gpSet->isMouseSkipMoving);
 	checkDlgButton(hDlg, cbActivateSplitMouseOver, gpSet->bActivateSplitMouseOver);
 
-	checkDlgButton(hDlg, cbInstallKeybHooks,
-	               (gpSet->m_isKeyboardHooks == 1) ? BST_CHECKED :
-	               ((gpSet->m_isKeyboardHooks == 0) ? BST_INDETERMINATE : BST_UNCHECKED));
-
-	setHotkeyCheckbox(hDlg, cbUseWinNumber, vkConsole_1, L"+1", L"+Numbers", gpSet->isUseWinNumber);
-	setHotkeyCheckbox(hDlg, cbUseWinArrows, vkWinLeft, L"+Left", L"+Arrows", gpSet->isUseWinArrows);
-
-	checkDlgButton(hDlg, cbUseWinTab, gpSet->isUseWinTab);
-
-	checkDlgButton(hDlg, cbSendAltTab, gpSet->isSendAltTab);
-	checkDlgButton(hDlg, cbSendAltEsc, gpSet->isSendAltEsc);
-	checkDlgButton(hDlg, cbSendAltPrintScrn, gpSet->isSendAltPrintScrn);
-	checkDlgButton(hDlg, cbSendPrintScrn, gpSet->isSendPrintScrn);
-	checkDlgButton(hDlg, cbSendCtrlEsc, gpSet->isSendCtrlEsc);
-
-	checkDlgButton(hDlg, cbFixAltOnAltTab, gpSet->isFixAltOnAltTab);
-
-	checkDlgButton(hDlg, cbSkipFocusEvents, gpSet->isSkipFocusEvents);
-
 	// Prompt click
 	checkDlgButton(hDlg, cbCTSClickPromptPosition, gpSet->AppStd.isCTSClickPromptPosition);
 	UINT VkMod = gpSet->GetHotkeyById(vkCTSVkPromptClk);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSClickPromptPosition), CSetDlgLists::eKeysAct, VkMod, false);
-
-	// Ctrl+BS - del left word
-	setHotkeyCheckbox(hDlg, cbCTSDeleteLeftWord, vkDeleteLeftWord, NULL, NULL, gpSet->AppStd.isCTSDeleteLeftWord);
 
 	checkDlgButton(hDlg, (gpSet->isCTSActMode==1)?rbCTSActAlways:rbCTSActBufferOnly, BST_CHECKED);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkAct);
@@ -89,7 +67,7 @@ LRESULT CSetPgControls::OnInitDialog(HWND hDlg, bool abInitial)
 	return 0;
 }
 
-INT_PTR CSetPgControls::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+INT_PTR CSetPgMouse::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 {
 	if (code == CBN_SELCHANGE)
 	{

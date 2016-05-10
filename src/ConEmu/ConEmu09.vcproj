@@ -520,9 +520,10 @@
       <File RelativePath=".\SetPgHilight.cpp" />
       <File RelativePath=".\SetPgInfo.cpp" />
       <File RelativePath=".\SetPgIntegr.cpp" />
-      <File RelativePath=".\SetPgControls.cpp" />
+      <File RelativePath=".\SetPgKeyboard.cpp" />
       <File RelativePath=".\SetPgKeys.cpp" />
       <File RelativePath=".\SetPgMarkCopy.cpp" />
+      <File RelativePath=".\SetPgMouse.cpp" />
       <File RelativePath=".\SetPgPaste.cpp" />
       <File RelativePath=".\SetPgSizePos.cpp" />
       <File RelativePath=".\SetPgStartup.cpp" />
@@ -709,9 +710,10 @@
       <File RelativePath=".\SetPgHilight.h" />
       <File RelativePath=".\SetPgInfo.h" />
       <File RelativePath=".\SetPgIntegr.h" />
-      <File RelativePath=".\SetPgControls.h" />
+      <File RelativePath=".\SetPgKeyboard.h" />
       <File RelativePath=".\SetPgKeys.h" />
       <File RelativePath=".\SetPgMarkCopy.h" />
+      <File RelativePath=".\SetPgMouse.h" />
       <File RelativePath=".\SetPgPaste.h" />
       <File RelativePath=".\SetPgSizePos.h" />
       <File RelativePath=".\SetPgStartup.h" />

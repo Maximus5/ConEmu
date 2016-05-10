@@ -27,31 +27,47 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#pragma once
+#define HIDE_USE_EXCEPTION_INFO
+#define SHOWDEBUGSTR
 
-#include <windows.h>
+#include "Header.h"
 
-#include "SetPgBase.h"
+#include "OptionsClass.h"
+#include "SetPgKeyboard.h"
+#include "SetDlgLists.h"
 
-class CSetPgControls
-	: public CSetPgBase
+CSetPgKeyboard::CSetPgKeyboard()
 {
-public:
-	static CSetPgBase* Create() { return new CSetPgControls(); };
-	static TabHwndIndex PageType() { return thi_Controls; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
-public:
-	CSetPgControls();
-	virtual ~CSetPgControls();
+}
 
-public:
-	// Methods
-	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
-	// Events
-	virtual INT_PTR OnComboBox(HWND hDlg, WORD nCtrlId, WORD code) override;
+CSetPgKeyboard::~CSetPgKeyboard()
+{
+}
 
-protected:
-	// Members
+LRESULT CSetPgKeyboard::OnInitDialog(HWND hDlg, bool abInitial)
+{
+	checkDlgButton(hDlg, cbInstallKeybHooks,
+	               (gpSet->m_isKeyboardHooks == 1) ? BST_CHECKED :
+	               ((gpSet->m_isKeyboardHooks == 0) ? BST_INDETERMINATE : BST_UNCHECKED));
 
-};
+	setHotkeyCheckbox(hDlg, cbUseWinNumber, vkConsole_1, L"+1", L"+Numbers", gpSet->isUseWinNumber);
+	setHotkeyCheckbox(hDlg, cbUseWinArrows, vkWinLeft, L"+Left", L"+Arrows", gpSet->isUseWinArrows);
 
+	checkDlgButton(hDlg, cbUseWinTab, gpSet->isUseWinTab);
+
+	checkDlgButton(hDlg, cbSendAltTab, gpSet->isSendAltTab);
+	checkDlgButton(hDlg, cbSendAltEsc, gpSet->isSendAltEsc);
+	checkDlgButton(hDlg, cbSendAltPrintScrn, gpSet->isSendAltPrintScrn);
+	checkDlgButton(hDlg, cbSendPrintScrn, gpSet->isSendPrintScrn);
+	checkDlgButton(hDlg, cbSendCtrlEsc, gpSet->isSendCtrlEsc);
+
+	checkDlgButton(hDlg, cbFixAltOnAltTab, gpSet->isFixAltOnAltTab);
+
+	// Ctrl+BS - del left word
+	setHotkeyCheckbox(hDlg, cbCTSDeleteLeftWord, vkDeleteLeftWord, NULL, NULL, gpSet->AppStd.isCTSDeleteLeftWord);
+
+	// !!!
+	gpSetCls->CheckSelectionModifiers(hDlg);
+
+	return 0;
+}

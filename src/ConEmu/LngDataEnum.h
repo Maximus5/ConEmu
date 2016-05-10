@@ -76,7 +76,6 @@ enum LngResources
 	lng_SpgIntegration            = 43,
 	lng_SpgDefTerm                = 44,
 	lng_SpgKeys                   = 45,
-	lng_SpgControls               = 46,
 	lng_SpgMarkCopy               = 47,
 	lng_SpgPaste                  = 48,
 	lng_SpgHighlight              = 49,
@@ -103,6 +102,8 @@ enum LngResources
 	lng_AssertAbortDescr          = 70,
 	lng_AssertRetryDescr          = 71,
 	lng_RasterAutoError           = 72,
+	lng_SpgKeyboard               = 73,
+	lng_SpgMouse                  = 74,
 	// last auto-gen identifier
 	lng_NextId
 };

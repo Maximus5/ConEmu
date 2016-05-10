@@ -701,6 +701,8 @@ BEGIN
     CONTROL         "Process Ctrl-Z in ReadConsole",cbProcessCtrlZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,139,133,8
     CONTROL         "Internal LogFiles location",cbDebugLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,189,133,8
     EDITTEXT        tDebugLogDir,148,187,226,12,ES_AUTOHSCROLL | ES_READONLY
+    CONTROL         "Skip focus events (don't send to console FOCUS_EVENT, useful with Far Manager)",cbSkipFocusEvents,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,147,367,8
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 381, 242
@@ -1176,17 +1178,11 @@ BEGIN
     PUSHBUTTON      "?",cbGuiMacroHelp,359,223,16,14,WS_DISABLED
 END
 
-IDD_SPG_CONTROLS DIALOGEX 0, 0, 381, 242
+IDD_SPG_KEYBOARD DIALOGEX 0, 0, 381, 242
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Mouse options",gbCtrlMouse,4,1,375,41
-    CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,180,8
-    CONTROL         "Skip click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,192,14,180,8
-    CONTROL         "Skip mouse events in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,28,180,8
-    CONTROL         "Activate split/pane on mouse hover",cbActivateSplitMouseOver,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,192,28,180,8
     GROUPBOX        "Intercept keys",gbCtrlIntercept,4,45,375,38
     CONTROL         "Install keyboard hooks",cbInstallKeybHooks,"Button",BS_AUTO3STATE | WS_TABSTOP,10,56,180,8
     CONTROL         "Win+Tab - switch consoles (Tabs)",cbUseWinTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,192,56,180,8
@@ -1198,17 +1194,29 @@ BEGIN
     CONTROL         "PrntScrn",cbSendPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,167,96,42,8
     CONTROL         "Ctrl+Esc",cbSendCtrlEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,114,96,42,8
     CONTROL         "Alt+PrScrn",cbSendAltPrintScrn,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,221,96,47,8
+    GROUPBOX        "Miscellaneous",gbCtrlMisc,4,111,375,43
     CONTROL         "Fix Alt on AltTab/AltF9 (to avoid execution of Far Manager macro, linked to Alt-release)",cbFixAltOnAltTab,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,124,367,8
-    GROUPBOX        "Miscellaneous",gbCtrlMisc,4,111,375,43
-    CONTROL         "Skip focus events (don't send to console FOCUS_EVENT, useful with Far Manager)",cbSkipFocusEvents,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,138,367,8
+    GROUPBOX        "Read line enhancements (command prompt, ReadConsoleW)",gbCtrlPrompt,4,156,375,43
+    CONTROL         "Ctrl+BackSpace - delete word leftward to the text cursor",cbCTSDeleteLeftWord,
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,11,183,367,8
+END
+
+IDD_SPG_MOUSE DIALOGEX 0, 0, 381, 242
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Mouse options",gbCtrlMouse,4,1,375,41
+    CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,180,8
+    CONTROL         "Skip click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,192,14,180,8
+    CONTROL         "Skip mouse events in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,28,180,8
+    CONTROL         "Activate split/pane on mouse hover",cbActivateSplitMouseOver,
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,192,28,180,8
     GROUPBOX        "Read line enhancements (command prompt, ReadConsoleW)",gbCtrlPrompt,4,156,375,43
     CONTROL         "Change prompt (cmd, powershell) text cursor position with Left Click",cbCTSClickPromptPosition,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,11,170,237,8
     COMBOBOX        lbCTSClickPromptPosition,306,168,67,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Ctrl+BackSpace - delete word leftward to the text cursor",cbCTSDeleteLeftWord,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,11,183,367,8
     GROUPBOX        "Mouse button actions",gbCtrlMouseBtns,4,202,375,30
     CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,216,10,8
     COMBOBOX        lbCTSActAlways,22,213,49,30,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP

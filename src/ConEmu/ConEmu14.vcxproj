@@ -649,9 +649,10 @@
     <ClCompile Include="SetPgHilight.cpp" />
     <ClCompile Include="SetPgInfo.cpp" />
     <ClCompile Include="SetPgIntegr.cpp" />
-    <ClCompile Include="SetPgControls.cpp" />
+    <ClCompile Include="SetPgKeyboard.cpp" />
     <ClCompile Include="SetPgKeys.cpp" />
     <ClCompile Include="SetPgMarkCopy.cpp" />
+    <ClCompile Include="SetPgMouse.cpp" />
     <ClCompile Include="SetPgPaste.cpp" />
     <ClCompile Include="SetPgSizePos.cpp" />
     <ClCompile Include="SetPgStartup.cpp" />
@@ -842,9 +843,10 @@
     <ClInclude Include="SetPgHilight.h" />
     <ClInclude Include="SetPgInfo.h" />
     <ClInclude Include="SetPgIntegr.h" />
-    <ClInclude Include="SetPgControls.h" />
+    <ClInclude Include="SetPgKeyboard.h" />
     <ClInclude Include="SetPgKeys.h" />
     <ClInclude Include="SetPgMarkCopy.h" />
+    <ClInclude Include="SetPgMouse.h" />
     <ClInclude Include="SetPgPaste.h" />
     <ClInclude Include="SetPgSizePos.h" />
     <ClInclude Include="SetPgStartup.h" />

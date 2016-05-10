@@ -72,6 +72,8 @@ LRESULT CSetPgFeatures::OnInitDialog(HWND hDlg, bool abInitial)
 	checkDlgButton(hDlg, cbProcessCmdStart, gpSet->isProcessCmdStart);
 	checkDlgButton(hDlg, cbProcessCtrlZ, gpSet->isProcessCtrlZ);
 
+	checkDlgButton(hDlg, cbSkipFocusEvents, gpSet->isSkipFocusEvents);
+
 	checkDlgButton(hDlg, cbSuppressBells, gpSet->isSuppressBells);
 
 	checkDlgButton(hDlg, cbConsoleExceptionHandler, gpSet->isConsoleExceptionHandler);

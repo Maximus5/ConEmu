@@ -152,9 +152,10 @@ SRCS = \
 		SetPgHilight.cpp   \
 		SetPgInfo.cpp      \
 		SetPgIntegr.cpp    \
-		SetPgControls.cpp \
+		SetPgKeyboard.cpp  \
 		SetPgKeys.cpp      \
 		SetPgMarkCopy.cpp  \
+		SetPgMouse.cpp     \
 		SetPgPaste.cpp     \
 		SetPgSizePos.cpp   \
 		SetPgStartup.cpp   \

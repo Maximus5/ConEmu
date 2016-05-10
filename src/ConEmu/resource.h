@@ -43,7 +43,6 @@
 #define IDD_SPG_VIEWS                   170
 #define IDD_SPG_KEYS                    171
 #define IDD_SPG_UPDATE                  172
-#define IDD_SPG_CONTROLS                173
 #define IDD_SPG_APPEAR                  174
 #define IDD_SPG_TASKBAR                 175
 #define IDD_SPG_DEFTERM                 176
@@ -54,6 +53,8 @@
 #define IDD_SPG_HISTORY                 181
 #define IDD_SPG_BACKGR                  182
 #define IDD_SPG_ENVIRONMENT             183
+#define IDD_SPG_KEYBOARD                184
+#define IDD_SPG_MOUSE                   185
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
 #define IDD_ATTACHDLG                   212

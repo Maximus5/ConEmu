@@ -85,7 +85,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgColors.h"
 #include "SetPgComspec.h"
 #include "SetPgConfirm.h"
-#include "SetPgControls.h"
 #include "SetPgCursor.h"
 #include "SetPgDebug.h"
 #include "SetPgDefTerm.h"
@@ -97,8 +96,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgHilight.h"
 #include "SetPgInfo.h"
 #include "SetPgIntegr.h"
+#include "SetPgKeyboard.h"
 #include "SetPgKeys.h"
 #include "SetPgMarkCopy.h"
+#include "SetPgMouse.h"
 #include "SetPgPaste.h"
 #include "SetPgSizePos.h"
 #include "SetPgStartup.h"
@@ -428,7 +429,8 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_DEFTERM,     1, lng_SpgDefTerm,      thi_DefTerm,      CSetPgDefTerm::Create},
 		{IDD_SPG_COMSPEC,     1, lng_SpgComSpec,      thi_Comspec,      CSetPgComspec::Create},
 		{IDD_SPG_KEYS,        0, lng_SpgKeys,         thi_Keys,         CSetPgKeys::Create},
-		{IDD_SPG_CONTROLS,    1, lng_SpgControls,     thi_Controls,     CSetPgControls::Create},
+		{IDD_SPG_KEYBOARD,    1, lng_SpgKeyboard,     thi_Keyboard,     CSetPgKeyboard::Create},
+		{IDD_SPG_MOUSE,       1, lng_SpgMouse,        thi_Mouse,        CSetPgMouse::Create},
 		{IDD_SPG_MARKCOPY,    1, lng_SpgMarkCopy,     thi_MarkCopy,     CSetPgMarkCopy::Create},
 		{IDD_SPG_PASTE,       1, lng_SpgPaste,        thi_Paste,        CSetPgPaste::Create},
 		{IDD_SPG_HIGHLIGHT,   1, lng_SpgHighlight,    thi_Hilight,      CSetPgHilight::Create},
@@ -1378,7 +1380,7 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 	} Keys[] = {
 		{lbCTSBlockSelection, L"Block selection", thi_MarkCopy, gpSet->isCTSSelectBlock, vkCTSVkBlock},
 		{lbCTSTextSelection, L"Text selection", thi_MarkCopy, gpSet->isCTSSelectText, vkCTSVkText},
-		{lbCTSClickPromptPosition, L"Prompt position", thi_Controls, gpSet->AppStd.isCTSClickPromptPosition!=0, vkCTSVkPromptClk, true},
+		{lbCTSClickPromptPosition, L"Prompt position", thi_Mouse, gpSet->AppStd.isCTSClickPromptPosition!=0, vkCTSVkPromptClk, true},
 
 		// Don't check it?
 		// -- {lbFarGotoEditorVk, L"Highlight and goto", ..., gpSet->isFarGotoEditor},

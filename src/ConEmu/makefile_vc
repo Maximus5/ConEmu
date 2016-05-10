@@ -152,9 +152,10 @@ $(INTDIR)\SetPgFonts.obj \
 $(INTDIR)\SetPgHilight.obj \
 $(INTDIR)\SetPgInfo.obj \
 $(INTDIR)\SetPgIntegr.obj \
-$(INTDIR)\SetPgControls.obj \
+$(INTDIR)\SetPgKeyboard.obj \
 $(INTDIR)\SetPgKeys.obj \
 $(INTDIR)\SetPgMarkCopy.obj \
+$(INTDIR)\SetPgMouse.obj \
 $(INTDIR)\SetPgPaste.obj \
 $(INTDIR)\SetPgSizePos.obj \
 $(INTDIR)\SetPgStartup.obj \
@@ -575,11 +576,13 @@ $(INTDIR)\SetPgInfo.obj: SetPgInfo.cpp SetPgInfo.h
 
 $(INTDIR)\SetPgIntegr.obj: SetPgIntegr.cpp SetPgIntegr.h
 
-$(INTDIR)\SetPgControls.obj: SetPgControls.cpp SetPgControls.h
+$(INTDIR)\SetPgKeyboard.obj: SetPgKeyboard.cpp SetPgKeyboard.h
 
 $(INTDIR)\SetPgKeys.obj: SetPgKeys.cpp SetPgKeys.h
 
 $(INTDIR)\SetPgMarkCopy.obj: SetPgMarkCopy.cpp SetPgMarkCopy.h
+
+$(INTDIR)\SetPgMouse.obj: SetPgMouse.cpp SetPgMouse.h
 
 $(INTDIR)\SetPgPaste.obj: SetPgPaste.cpp SetPgPaste.h
 
