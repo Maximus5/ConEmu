@@ -563,7 +563,8 @@ function InitDialogList()
   $script:dialogs += @{ id = "IDD_SPG_INTEGRATION"; name = "Integration"; }
   $script:dialogs += @{ id = "IDD_SPG_DEFTERM";     name = " Default term"; }
   $script:dialogs += @{ id = "IDD_SPG_KEYS";        name = "Keys & Macro"; }
-  $script:dialogs += @{ id = "IDD_SPG_CONTROLS";    name = " Controls"; }
+  $script:dialogs += @{ id = "IDD_SPG_KEYBOARD";    name = " Keyboard"; }
+  $script:dialogs += @{ id = "IDD_SPG_MOUSE";       name = " Mouse"; }
   $script:dialogs += @{ id = "IDD_SPG_MARKCOPY";    name = " Mark/Copy"; }
   $script:dialogs += @{ id = "IDD_SPG_PASTE";       name = " Paste"; }
   $script:dialogs += @{ id = "IDD_SPG_HIGHLIGHT";   name = " Highlight"; }
