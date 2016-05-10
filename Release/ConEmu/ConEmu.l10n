@@ -2632,6 +2632,7 @@
     ,
     "lng_PleaseCheckManually": {
       "en": "Please check for updates manually",
+      "ru": "Запустите проверку новых версий из меню",
       "zh": "请手动检查更新",
       "id": 68 }
     ,
@@ -2717,12 +2718,6 @@
       "zh": "确认",
       "id": 30 }
     ,
-    "lng_SpgControls": {
-      "en": "Controls",
-      "ru": "Управление",
-      "zh": "控件",
-      "id": 46 }
-    ,
     "lng_SpgCursor": {
       "en": "Text cursor",
       "ru": "Текстовый курсор",
@@ -2795,6 +2790,11 @@
       "zh": "集成",
       "id": 43 }
     ,
+    "lng_SpgKeyboard": {
+      "en": "Keyboard",
+      "ru": "Клавиатура",
+      "id": 73 }
+    ,
     "lng_SpgKeys": {
       "en": "Keys & Macro",
       "ru": "Кнопки & Макросы",
@@ -2806,6 +2806,11 @@
       "ru": "Выделение",
       "zh": "标记/复制",
       "id": 47 }
+    ,
+    "lng_SpgMouse": {
+      "en": "Mouse",
+      "ru": "Мышь",
+      "id": 74 }
     ,
     "lng_SpgPaste": {
       "en": "Paste",
@@ -5307,7 +5312,7 @@
     ,
     "stConEmuVersion": {
       "en": "Version status:",
-      "ru": "Версия программы:",
+      "ru": "Статус версии:",
       "zh": "版本状态：",
       "id": 2683 }
     ,
