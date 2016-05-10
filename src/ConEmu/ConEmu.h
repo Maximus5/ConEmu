@@ -137,12 +137,12 @@ class CConEmuMain
 	, public CConEmuStart
 {
 	public:
-		wchar_t ms_ConEmuDefTitle[32];          // Название с версией, например "ConEmu 110117 (32)"
-		wchar_t ms_ConEmuBuild[16];             // номер сборки, например "110117" или "131129dbg"
-		wchar_t ms_ConEmuExe[MAX_PATH+1];       // полный путь к ConEmu.exe (GUI)
-		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
-		wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
-		wchar_t ms_ConEmuWorkDir[MAX_PATH+1];   // БЕЗ завершающего слеша. Папка запуска ConEmu.exe (GetCurrentDirectory)
+		wchar_t ms_ConEmuDefTitle[32];          // Full title with build number: "ConEmu 110117 [32]"
+		wchar_t ms_ConEmuBuild[16];             // Build number only: "110117" or "131129dbg"
+		wchar_t ms_ConEmuExe[MAX_PATH+1];       // FULL PATH with NAME to the ConEmu.exe (GUI): "C:\Tools\ConEmu.exe"
+		wchar_t ms_ConEmuExeDir[MAX_PATH+1];    // WITHOUT trailing slash. The folder containing ConEmu.exe
+		wchar_t ms_ConEmuBaseDir[MAX_PATH+1];   // WITHOUT trailing slash. The folder containing ConEmuC.exe, ConEmuCD.dll, ConEmuHk.dll
+		wchar_t ms_ConEmuWorkDir[MAX_PATH+1];   // WITHOUT trailing slash. Startup folder of ConEmu.exe (GetCurrentDirectory)
 		wchar_t ms_AppID[40];                   // Generated in ::UpdateAppUserModelID
 		void SetAppID(LPCWSTR asExtraArgs);
 		bool mb_ConEmuWorkDirArg;               // Was started as "ConEmu /Dir C:\abc ..." this must override "/dir" switch in task parameter
