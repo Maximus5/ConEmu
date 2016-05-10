@@ -43,8 +43,6 @@ bin
 help
 x64
 
-/CreateRelease.cmd
-
 Release/**/*.iobj
 Release/**/*.ipdb
 Release/**/*.exp

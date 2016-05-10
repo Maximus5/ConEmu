@@ -1,7 +1,9 @@
 @echo off
 
-rem Usage: git2log [<commit-sha>]
-rem If <commit-sha> is specified, script will process range: HEAD...<commit>
+rem Usage: git2log [<commit-sha>] [-force] [-skip_upd]
+rem   If <commit-sha> is specified, script will process range: HEAD...<commit>
+rem   -force    - force overwrite .daily.md
+rem   -skip_upd - Do not call UpdateDeployVersions.ps1
 
 rem === Far menu ===
 rem git2log.cmd
@@ -9,6 +11,23 @@ rem edit:...\_posts\.daily.md
 rem edit:...\Release\ConEmu\WhatsNew-ConEmu.txt
 
 setlocal
+
+set FORCE_MD=NO
+set SKIP_UPD=NO
+set COMMIT_SHA=
+
+:parm_loop
+if "%~1" == "" goto parm_done
+if /I "%~1" == "-force" (
+  set FORCE_MD=YES
+) else if /I "%~1" == "-skip_upd" (
+  set SKIP_UPD=YES
+) else (
+  set "COMMIT_SHA=%~1"
+)
+shift /1
+goto parm_loop
+:parm_done
 
 set git=%~d0\gitsdk\cmd\git.exe
 rem set git=%~d0\Utils\Lans\GIT\cmd\git.exe
@@ -25,7 +44,7 @@ rem May be file was already created and prepared?
 if exist "%daily_md%" (
   type "%daily_md%" | %windir%\system32\find "build: %CurVerBuild%"
   if errorlevel 1 goto yaml
-  if "%~2" == "-force" goto yaml
+  if "%FORCE_MD%" == "YES" goto yaml
   call cecho "### Changelog .daily.md was already created for build %CurVerBuild%"
   goto done
 )
@@ -33,7 +52,7 @@ rem Create YAML header
 :yaml
 call :out_build > %daily_md%
 rem Dump git commits into ".daily.md"
-call :do_log %1 >> %daily_md%
+call :do_log %COMMIT_SHA% >> %daily_md%
 call cecho /green "%daily_md%"
 rem Done
 :done

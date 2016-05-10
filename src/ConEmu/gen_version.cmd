@@ -43,7 +43,23 @@ if /I %MVV_3% GTR 31 goto err_parm
 set MVV_4=0
 set MVV_4a=%VR:~6,1%
 set MVV_git_def=#undef MVV_git
+
+if /I "%~2" == "ALPHA" (
+  call :gen_stage ALPHA
+  goto check_4
+)
+if /I "%~2" == "PREVIEW" (
+  call :gen_stage PREVIEW
+  goto check_4
+)
+if /I "%~2" == "STABLE" (
+  call :gen_stage STABLE
+  goto check_4
+)
+
 if NOT "%~2"=="" goto git_ci
+
+:check_4
 if "%MVV_4a%"=="" goto run
 rem translate letter in build no into 4-d number
 set Found=N
@@ -95,9 +111,24 @@ goto :EOF
 @echo #define MVV_4 %MVV_4%
 @echo #define MVV_4a "%MVV_4a%"
 @echo %MVV_git_def%
-@echo //
+@echo.
 @echo #include "version_stage.h"
 @echo #include "version_macro.h"
+@goto :EOF
+
+:gen_stage
+set verh="%~dp0version_stage.h"
+call :printstage %1 > %verh%
+goto :EOF
+
+:printstage
+@echo #pragma once
+@echo.
+@echo #define CEVS_STABLE   0
+@echo #define CEVS_PREVIEW  1
+@echo #define CEVS_ALPHA    2
+@echo.
+@echo #define ConEmuVersionStage CEVS_%1
 @goto :EOF
 
 :usage
