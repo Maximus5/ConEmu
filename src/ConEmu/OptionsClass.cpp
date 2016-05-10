@@ -1256,7 +1256,6 @@ LRESULT CSettings::OnInitDialog()
 	           ID_ALWAYSONTOP, _T("Al&ways on top..."));
 	RegisterTabs();
 	mn_LastChangingFontCtrlId = 0;
-	wchar_t szTitle[MAX_PATH*2]; szTitle[0]=0;
 
 	//wchar_t szType[8];
 	SettingsStorage Storage = {};
@@ -1288,13 +1287,25 @@ LRESULT CSettings::OnInitDialog()
 		SetDlgItemText(ghOpWnd, tStorage, gpConEmu->ConEmuXml());
 	}
 
-	LPCWSTR pszDlgTitle = CLngRc::getRsrc(lng_DlgSettings/*"Settings"*/);
+	CEStr lsCfgAdd;
 	if (ConfigName[0])
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s %s (%s) %s", gpConEmu->GetDefaultTitle(), pszDlgTitle, ConfigName, Storage.szType);
-	else
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s %s %s", gpConEmu->GetDefaultTitle(), pszDlgTitle, Storage.szType);
+		lsCfgAdd = lstrmerge(L" (", ConfigName, L")");
+	LPCWSTR psStage = (ConEmuVersionStage == CEVS_STABLE) ? L"{Stable}"
+					: (ConEmuVersionStage == CEVS_PREVIEW) ? L"{Preview}"
+					: L"{Alpha}";
+	CEStr lsDlgTitle(
+		CLngRc::getRsrc(lng_DlgSettings/*"Settings"*/),
+		lsCfgAdd,
+		L" ",
+		Storage.szType,
+		L" ",
+		gpConEmu->GetDefaultTitle(),
+		L" ",
+		psStage,
+		NULL);
 
-	SetWindowText(ghOpWnd, szTitle);
+	SetWindowText(ghOpWnd, lsDlgTitle);
+
 	MCHKHEAP
 	{
 		mb_IgnoreSelPage = true;

@@ -134,11 +134,19 @@ INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 			LPCWSTR pszActivePage = (LPCWSTR)lParam;
 
-			wchar_t* pszTitle = lstrmerge(gpConEmu->GetDefaultTitle(), L" ", CLngRc::getRsrc(lng_DlgAbout/*"About"*/));
-			if (pszTitle)
+			LPCWSTR psStage = (ConEmuVersionStage == CEVS_STABLE) ? L"{Stable}"
+							: (ConEmuVersionStage == CEVS_PREVIEW) ? L"{Preview}"
+							: L"{Alpha}";
+			CEStr lsTitle(
+				CLngRc::getRsrc(lng_DlgAbout/*"About"*/),
+				L" ",
+				gpConEmu->GetDefaultTitle(),
+				L" ",
+				psStage,
+				NULL);
+			if (lsTitle)
 			{
-				SetWindowText(hDlg, pszTitle);
-				SafeFree(pszTitle);
+				SetWindowText(hDlg, lsTitle);
 			}
 
 			if (hClassIcon)
