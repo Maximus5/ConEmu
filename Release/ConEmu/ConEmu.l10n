@@ -3091,9 +3091,9 @@
       "id": 1520 }
     ,
     "cbAutoRegFonts": {
-      "en": "Auto register fonts",
+      "en": "Auto register fonts in ConEmu folder",
       "ru": "Загружать шрифты из папки ConEmu",
-      "zh": "自动注册字体",
+      "_zh": "自动注册字体",
       "id": 1550 }
     ,
     "cbAutoSaveSizePos": {
