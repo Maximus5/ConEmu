@@ -225,8 +225,8 @@ BEGIN
     CONTROL         "Show balloon help tooltips",cbShowHelpTooltips,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,213,73,164,8
     GROUPBOX        "Scrollbar",gbShowScrollBar,4,104,375,29
     CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON | WS_GROUP,10,117,48,8
-    CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,61,117,54,8
-    CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,114,117,48,8
+    CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,61,117,60,8
+    CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,124,117,48,8
     RTEXT           "Appear delay:",stScrollAppear,164,117,60,8
     EDITTEXT        tScrollAppearDelay,228,115,40,12,ES_AUTOHSCROLL
     RTEXT           "Disappear:",stScrollDisappear,272,117,58,8
