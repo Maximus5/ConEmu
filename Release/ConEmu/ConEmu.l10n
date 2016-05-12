@@ -2818,6 +2818,11 @@
       "zh": "粘贴",
       "id": 48 }
     ,
+    "lng_SpgQuake": {
+      "en": "Quake style",
+      "ru": "Quake режим",
+      "id": 75 }
+    ,
     "lng_SpgSizePos": {
       "en": "Size & Pos",
       "ru": "Положение окна",
@@ -4503,13 +4508,14 @@
       "zh": "覆盖Prompt",
       "id": 2347 }
     ,
-    "gbQuakeAnimation": {
-      "en": "Animation time",
-      "zh": "动画时间",
-      "id": 2690 }
+    "gbQuakeFrame": {
+      "en": "ConEmu window frame options",
+      "ru": "Настройки рамки окна ConEmu",
+      "id": 3058 }
     ,
     "gbQuakeStyle": {
       "en": "Quake style",
+      "ru": "Quake режим",
       "zh": "Quake风格",
       "id": 2907 }
     ,
@@ -5664,8 +5670,9 @@
       "id": 2762 }
     ,
     "stQuakeAnimation": {
-      "en": "ms:",
-      "zh": "毫秒：",
+      "en": "Animation time (ms):",
+      "ru": "Время анимации (мс):",
+      "zh": "动画时间（毫秒）:",
       "id": 2565 }
     ,
     "stRConCursorInfo": {
