@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #define CEVS_STABLE   0
 #define CEVS_PREVIEW  1

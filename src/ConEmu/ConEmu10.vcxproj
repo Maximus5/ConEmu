@@ -1284,6 +1284,7 @@
     <ClInclude Include="VConRelease.h" />
     <ClInclude Include="VConText.h" />
     <ClInclude Include="version.h" />
+    <ClInclude Include="version_stage.h" />
     <ClInclude Include="VirtualConsole.h" />
     <ClInclude Include="WinObjBase.h" />
   </ItemGroup>

@@ -744,6 +744,7 @@
       <File RelativePath=".\VConChild.h" />
       <File RelativePath=".\VConRelease.h" />
       <File RelativePath=".\VConText.h" />
+      <File RelativePath=".\version_stage.h" />
       <File RelativePath=".\VirtualConsole.h" />
       <File RelativePath=".\WinObjBase.h" />
     </Filter>
