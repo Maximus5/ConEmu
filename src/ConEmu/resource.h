@@ -55,6 +55,7 @@
 #define IDD_SPG_ENVIRONMENT             183
 #define IDD_SPG_KEYBOARD                184
 #define IDD_SPG_MOUSE                   185
+#define IDD_SPG_QUAKE                   186
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
 #define IDD_ATTACHDLG                   212
@@ -990,7 +991,6 @@
 #define gbConfirmMisc                   2687
 #define cbDupConfirm                    2688
 #define cbConfirmDetach                 2689
-#define gbQuakeAnimation                2690
 #define cbFontMonitorDpi                2691
 #define cbFontAsDeviceUnits             2692
 #define vkAppsPgUp                      2693
@@ -1331,6 +1331,7 @@
 #define gbTabDblClkActions              3055
 #define cbVividColors                   3056
 #define rbActivityProcess               3057
+#define gbQuakeFrame                    3058
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1339,7 +1340,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        235
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3058
+#define _APS_NEXT_CONTROL_VALUE         3059
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif
