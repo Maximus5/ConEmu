@@ -1,0 +1,72 @@
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+#include "../ConEmu/version.h"
+
+#ifndef CEVER_DESCRIPTION
+	#define CEVER_DESCRIPTION   "Console Emulator" CONEMUPLTFRM
+#endif
+
+#ifndef CEVER_FILENAME
+	#define CEVER_FILENAME      "ConEmu.exe"
+#endif
+
+#ifndef CEVER_FILETYPE
+	#ifndef CEVER_DLL
+		#define CEVER_FILETYPE 0x1L
+	#else
+		#define CEVER_FILETYPE 0x2L
+	#endif
+#endif
+
+#ifndef CEVER_FILEFLAGS
+	#ifdef _DEBUG
+		#define CEVER_FILEFLAGS 0x21L
+	#else
+		#define CEVER_FILEFLAGS 0x20L
+	#endif
+#endif
+
+#undef CEVER_STAGE
+#if ConEmuVersionStage == CEVS_STABLE
+	#define CEVER_STAGE "Stable"
+#elif ConEmuVersionStage == CEVS_PREVIEW
+	#define CEVER_STAGE "Preview"
+#else
+	#define CEVER_STAGE "Alpha"
+#endif
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION CONEMUVERN
+ PRODUCTVERSION CONEMUVERN
+ FILEFLAGSMASK 0x37L
+ FILEFLAGS CEVER_FILEFLAGS
+ FILEOS 0x40004L
+ FILETYPE CEVER_FILETYPE
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "CompanyName", "ConEmu-Maximus5\0"
+            VALUE "LegalCopyright", "© ConEmu.Maximus5@gmail.com"
+            VALUE "FileDescription", CEVER_DESCRIPTION
+            VALUE "FileVersion", CONEMUVERS
+            VALUE "OriginalFilename", CEVER_FILENAME
+            VALUE "ProductName", "ConEmu"
+            VALUE "ProductVersion", CONEMUVERS
+            VALUE "SpecialBuild", CEVER_STAGE
+            #ifdef CEVER_COMMENTS
+            VALUE "Comments", CEVER_COMMENTS
+            #endif
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END

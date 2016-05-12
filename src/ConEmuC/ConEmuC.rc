@@ -8,7 +8,6 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include <windows.h>
-#include "../ConEmu/version.h"
 
 // Manifest 4 GCC
 #if defined(__GNUC__)
@@ -43,7 +42,6 @@ END
 2 TEXTINCLUDE 
 BEGIN
     "#include <windows.h>\r\n"
-    "#include ""../ConEmu/version.h""\r\n"
     "\r\n"
     "// Manifest 4 GCC\r\n"
     "#if defined(__GNUC__)\r\n"
@@ -66,37 +64,10 @@ END
 // Version
 //
 
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION CONEMUVERN
- PRODUCTVERSION CONEMUVERN
- FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x1L
-#else
- FILEFLAGS 0x0L
-#endif
- FILEOS 0x40004L
- FILETYPE 0x2L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "000004b0"
-        BEGIN
-            VALUE "CompanyName", "ConEmu-Maximus5\0"
-            VALUE "LegalCopyright", "© ConEmu.Maximus5@gmail.com"
-            VALUE "FileDescription", "ConEmu console extender" CONEMUPLTFRM "\0"
-            VALUE "FileVersion", CONEMUVERS
-            VALUE "OriginalFilename", "ConEmuC*.exe"
-            VALUE "ProductName", "ConEmu"
-            VALUE "ProductVersion", CONEMUVERS
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x0, 1200
-    END
-END
+#define CEVER_DESCRIPTION   "ConEmu console extender" CONEMUPLTFRM "\0"
+#define CEVER_FILENAME      "ConEmuC*.exe"
+#undef  CEVER_DLL
+#include "../common/version_template.rc2"
 
 
 /////////////////////////////////////////////////////////////////////////////
