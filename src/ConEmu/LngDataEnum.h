@@ -104,6 +104,7 @@ enum LngResources
 	lng_RasterAutoError           = 72,
 	lng_SpgKeyboard               = 73,
 	lng_SpgMouse                  = 74,
+	lng_SpgQuake                  = 75,
 	// last auto-gen identifier
 	lng_NextId
 };

@@ -90,6 +90,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgDefTerm.h"
 #include "SetPgEnvironment.h"
 #include "SetPgFar.h"
+#include "SetPgQuake.h"
 #include "SetPgFarMacro.h"
 #include "SetPgFeatures.h"
 #include "SetPgFonts.h"
@@ -411,6 +412,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_FONTS,       0, lng_SpgFonts,        thi_Fonts,        CSetPgFonts::Create},
 		{IDD_SPG_SIZEPOS,     1, lng_SpgSizePos,      thi_SizePos,      CSetPgSizePos::Create},
 		{IDD_SPG_APPEAR,      1, lng_SpgAppear,       thi_Appear,       CSetPgAppear::Create},
+		{IDD_SPG_QUAKE,       1, lng_SpgQuake,        thi_Quake,        CSetPgQuake::Create},
 		{IDD_SPG_BACKGR,      1, lng_SpgBackgr,       thi_Backgr,       CSetPgBackgr::Create},
 		{IDD_SPG_TABS,        1, lng_SpgTabBar,       thi_Tabs,         CSetPgTabs::Create},
 		{IDD_SPG_CONFIRM,     1, lng_SpgConfirm,      thi_Confirm,      CSetPgConfirm::Create},

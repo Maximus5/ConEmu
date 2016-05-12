@@ -1091,6 +1091,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClCompile Include="SetPgMarkCopy.cpp" />
     <ClCompile Include="SetPgMouse.cpp" />
     <ClCompile Include="SetPgPaste.cpp" />
+    <ClCompile Include="SetPgQuake.cpp" />
     <ClCompile Include="SetPgSizePos.cpp" />
     <ClCompile Include="SetPgStartup.cpp" />
     <ClCompile Include="SetPgStatus.cpp" />
@@ -1285,6 +1286,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClInclude Include="SetPgMarkCopy.h" />
     <ClInclude Include="SetPgMouse.h" />
     <ClInclude Include="SetPgPaste.h" />
+    <ClInclude Include="SetPgQuake.h" />
     <ClInclude Include="SetPgSizePos.h" />
     <ClInclude Include="SetPgStartup.h" />
     <ClInclude Include="SetPgStatus.h" />

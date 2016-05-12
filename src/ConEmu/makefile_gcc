@@ -157,6 +157,7 @@ SRCS = \
 		SetPgMarkCopy.cpp  \
 		SetPgMouse.cpp     \
 		SetPgPaste.cpp     \
+		SetPgQuake.cpp     \
 		SetPgSizePos.cpp   \
 		SetPgStartup.cpp   \
 		SetPgStatus.cpp    \

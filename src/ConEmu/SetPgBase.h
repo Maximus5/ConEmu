@@ -43,6 +43,7 @@ enum TabHwndIndex
 	thi_Fonts = 0,    // "Main"
 	thi_SizePos,      //   "Size & Pos"
 	thi_Appear,       //   "Appearance"
+	thi_Quake,        //   "Quake style"
 	thi_Backgr,       //   "Background"
 	thi_Tabs,         //   "Tabs"
 	thi_Confirm,      //   "Confirmations"

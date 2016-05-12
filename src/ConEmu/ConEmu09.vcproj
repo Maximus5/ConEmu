@@ -525,6 +525,7 @@
       <File RelativePath=".\SetPgMarkCopy.cpp" />
       <File RelativePath=".\SetPgMouse.cpp" />
       <File RelativePath=".\SetPgPaste.cpp" />
+      <File RelativePath=".\SetPgQuake.cpp" />
       <File RelativePath=".\SetPgSizePos.cpp" />
       <File RelativePath=".\SetPgStartup.cpp" />
       <File RelativePath=".\SetPgStatus.cpp" />
@@ -715,6 +716,7 @@
       <File RelativePath=".\SetPgMarkCopy.h" />
       <File RelativePath=".\SetPgMouse.h" />
       <File RelativePath=".\SetPgPaste.h" />
+      <File RelativePath=".\SetPgQuake.h" />
       <File RelativePath=".\SetPgSizePos.h" />
       <File RelativePath=".\SetPgStartup.h" />
       <File RelativePath=".\SetPgStatus.h" />

@@ -2973,23 +2973,6 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 		DoDesktopModeSwitch();
 	}
 
-	HWND hWnd2 = gpSetCls->GetPage(thi_Appear); // Страничка с настройками
-	if (hWnd2)
-	{
-		EnableWindow(GetDlgItem(hWnd2, cbQuakeAutoHide), gpSet->isQuakeStyle);
-		gpSetCls->checkDlgButton(hWnd2, cbQuakeStyle, gpSet->isQuakeStyle!=0);
-		gpSetCls->checkDlgButton(hWnd2, cbQuakeAutoHide, gpSet->isQuakeStyle==2);
-
-		EnableWindow(GetDlgItem(hWnd2, cbSingleInstance), (gpSet->isQuakeStyle == 0));
-		gpSetCls->checkDlgButton(hWnd2, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
-	}
-
-	hWnd2 = gpSetCls->GetPage(thi_SizePos); // Страничка с настройками
-	if (hWnd2)
-	{
-		gpSetCls->checkDlgButton(hWnd2, cbTryToCenter, gpSet->isTryToCenter);
-	}
-
 	//ConEmuWindowMode nNewWindowMode =
 	//	IsChecked(hWnd2, rMaximized) ? wmMaximized :
 	//	IsChecked(hWnd2, rFullScreen) ? wmFullScreen :
@@ -3012,14 +2995,6 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	}
 
 
-	HWND hTabsPg = gpSetCls->GetPage(thi_Appear); // Страничка с настройками
-	if (hTabsPg)
-	{
-		gpSetCls->checkDlgButton(hTabsPg, cbHideCaptionAlways, gpSet->isHideCaptionAlways() ? BST_CHECKED : BST_UNCHECKED);
-		EnableWindow(GetDlgItem(hTabsPg, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
-	}
-
-
 	RECT rcWnd = this->GetDefaultRect();
 	UNREFERENCED_PARAMETER(rcWnd);
 
@@ -3038,10 +3013,18 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	if (m_QuakePrevSize.bWaitReposition)
 		m_QuakePrevSize.bWaitReposition = false;
 
-	//if (hWnd2)
-	//	SetDlgItemInt(hWnd2, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
-	if (gpSetCls->GetPage(thi_Appear))
-		SetDlgItemInt(gpSetCls->GetPage(thi_Appear), tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
+	CSetPgBase* pSetPg = gpSetCls->GetActivePageObj();
+	if (pSetPg)
+	{
+		TabHwndIndex tt = pSetPg->GetPageType();
+		if ((tt == thi_Appear)
+			|| (tt == thi_Quake)
+			|| (tt == thi_SizePos)
+			)
+		{
+			pSetPg->OnInitDialog(pSetPg->Dlg(), false/*abInitial*/);
+		}
+	}
 
 	// Save current rect, JIC
 	if (ghWnd)

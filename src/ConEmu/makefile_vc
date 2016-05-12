@@ -157,6 +157,7 @@ $(INTDIR)\SetPgKeys.obj \
 $(INTDIR)\SetPgMarkCopy.obj \
 $(INTDIR)\SetPgMouse.obj \
 $(INTDIR)\SetPgPaste.obj \
+$(INTDIR)\SetPgQuake.obj \
 $(INTDIR)\SetPgSizePos.obj \
 $(INTDIR)\SetPgStartup.obj \
 $(INTDIR)\SetPgStatus.obj \
@@ -585,6 +586,8 @@ $(INTDIR)\SetPgMarkCopy.obj: SetPgMarkCopy.cpp SetPgMarkCopy.h
 $(INTDIR)\SetPgMouse.obj: SetPgMouse.cpp SetPgMouse.h
 
 $(INTDIR)\SetPgPaste.obj: SetPgPaste.cpp SetPgPaste.h
+
+$(INTDIR)\SetPgQuake.obj: SetPgQuake.cpp SetPgQuake.h
 
 $(INTDIR)\SetPgSizePos.obj: SetPgSizePos.cpp SetPgSizePos.h
 

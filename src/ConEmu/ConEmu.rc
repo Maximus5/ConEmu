@@ -244,12 +244,26 @@ BEGIN
     CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,181,144,8
     CONTROL         "Hide caption of child GUI windows started in ConEmu",cbHideChildCaption,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,181,219,8
-    GROUPBOX        "Quake style",gbQuakeStyle,4,201,294,29
-    CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,214,144,8
-    CONTROL         "Auto-hide on focus lose",cbQuakeAutoHide,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,214,134,8
-    GROUPBOX        "Animation time",gbQuakeAnimation,303,201,76,29
-    RTEXT           "ms:",stQuakeAnimation,306,214,20,8
-    EDITTEXT        tQuakeAnimation,329,212,40,12,ES_AUTOHSCROLL
+END
+
+IDD_SPG_QUAKE DIALOGEX 0, 0, 381, 242
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "Quake style",gbQuakeStyle,4,1,375,54
+    CONTROL         "Quake style slide down",cbQuakeStyle,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,180,8
+    CONTROL         "Auto-hide on focus lose",cbQuakeAutoHide,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,180,8
+    CONTROL         "Always on top",cbAlwaysOnTop,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,40,180,8
+    RTEXT           "Animation time (ms):",stQuakeAnimation,200,14,130,8
+    EDITTEXT        tQuakeAnimation,334,12,40,12,ES_AUTOHSCROLL
+    GROUPBOX        "ConEmu window frame options",gbQuakeFrame,4,64,375,30
+    RTEXT           "Frame width:",stFrameWidth,10,78,84,8
+    EDITTEXT        tHideCaptionAlwaysFrame,98,76,40,12,ES_AUTOHSCROLL
+    RTEXT           "Appear delay:",stFrameAppear,142,78,82,8
+    EDITTEXT        tHideCaptionAlwaysDelay,228,76,40,12,ES_AUTOHSCROLL
+    RTEXT           "Disappear:",stFrameDisappear,272,78,58,8
+    EDITTEXT        tHideCaptionAlwaysDissapear,334,76,40,12,ES_AUTOHSCROLL
 END
 
 IDD_SPG_CONFIRM DIALOGEX 0, 0, 381, 242

@@ -34,66 +34,49 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmu.h"
 #include "OptionsClass.h"
-#include "SetPgAppear.h"
+#include "SetPgQuake.h"
 
-CSetPgAppear::CSetPgAppear()
+CSetPgQuake::CSetPgQuake()
 {
 }
 
-CSetPgAppear::~CSetPgAppear()
+CSetPgQuake::~CSetPgQuake()
 {
 }
 
-LRESULT CSetPgAppear::OnInitDialog(HWND hDlg, bool abInitial)
+LRESULT CSetPgQuake::OnInitDialog(HWND hDlg, bool abInitial)
 {
-	checkDlgButton(hDlg, cbHideCaption, gpSet->isHideCaption);
+	// Quake style
+	checkDlgButton(hDlg, cbQuakeStyle, gpSet->isQuakeStyle ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hDlg, cbQuakeAutoHide, (gpSet->isQuakeStyle == 2) ? BST_CHECKED : BST_UNCHECKED);
+	// Show/Hide/Slide timeout
+	SetDlgItemInt(hDlg, tQuakeAnimation, gpSet->nQuakeAnimation, FALSE);
 
-	checkDlgButton(hDlg, cbHideCaptionAlways, gpSet->isHideCaptionAlways());
-	EnableWindow(GetDlgItem(hDlg, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
+	EnableWindow(GetDlgItem(hDlg, cbQuakeAutoHide), gpSet->isQuakeStyle);
 
-	// Скрытие рамки
+	// Frame hide options
 	SetDlgItemInt(hDlg, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 	SetDlgItemInt(hDlg, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
 	SetDlgItemInt(hDlg, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
 
-	// Child GUI applications
-	checkDlgButton(hDlg, cbHideChildCaption, gpSet->isHideChildCaption);
-
-	checkDlgButton(hDlg, cbEnhanceGraphics, gpSet->isEnhanceGraphics);
-
-	//checkDlgButton(hDlg, cbEnhanceButtons, gpSet->isEnhanceButtons);
-
-	//checkDlgButton(hDlg, cbAlwaysShowScrollbar, gpSet->isAlwaysShowScrollbar);
-	checkRadioButton(hDlg, rbScrollbarHide, rbScrollbarAuto, (gpSet->isAlwaysShowScrollbar==0) ? rbScrollbarHide : (gpSet->isAlwaysShowScrollbar==1) ? rbScrollbarShow : rbScrollbarAuto);
-	SetDlgItemInt(hDlg, tScrollAppearDelay, gpSet->nScrollBarAppearDelay, FALSE);
-	SetDlgItemInt(hDlg, tScrollDisappearDelay, gpSet->nScrollBarDisappearDelay, FALSE);
-
 	checkDlgButton(hDlg, cbAlwaysOnTop, gpSet->isAlwaysOnTop);
-
-	#ifdef _DEBUG
-	checkDlgButton(hDlg, cbTabsInCaption, gpSet->isTabsInCaption);
-	#else
-	ShowWindow(GetDlgItem(hDlg, cbTabsInCaption), SW_HIDE);
-	#endif
-
-	checkDlgButton(hDlg, cbNumberInCaption, gpSet->isNumberInCaption);
-
-	checkDlgButton(hDlg, cbMultiCon, gpSet->mb_isMulti);
-	checkDlgButton(hDlg, cbMultiShowButtons, gpSet->isMultiShowButtons);
-	checkDlgButton(hDlg, cbMultiShowSearch, gpSet->isMultiShowSearch);
-
-	checkDlgButton(hDlg, cbSingleInstance, gpSetCls->IsSingleInstanceArg());
-	enableDlgItem(hDlg, cbSingleInstance, (gpSet->isQuakeStyle == 0));
-
-	checkDlgButton(hDlg, cbShowHelpTooltips, gpSet->isShowHelpTooltips);
 
 	return 0;
 }
 
-LRESULT CSetPgAppear::OnEditChanged(HWND hDlg, WORD nCtrlId)
+LRESULT CSetPgQuake::OnEditChanged(HWND hDlg, WORD nCtrlId)
 {
 	switch (nCtrlId)
 	{
+	case tQuakeAnimation:
+		{
+			BOOL lbOk = FALSE;
+			UINT nNewVal = GetDlgItemInt(hDlg, nCtrlId, &lbOk, FALSE);
+
+			gpSet->nQuakeAnimation = (nNewVal <= QUAKEANIMATION_MAX) ? nNewVal : QUAKEANIMATION_MAX;
+		}
+		break;
+
 	case tHideCaptionAlwaysFrame:
 		{
 			BOOL lbOk = FALSE;
@@ -110,8 +93,6 @@ LRESULT CSetPgAppear::OnEditChanged(HWND hDlg, WORD nCtrlId)
 
 	case tHideCaptionAlwaysDelay:
 	case tHideCaptionAlwaysDissapear:
-	case tScrollAppearDelay:
-	case tScrollDisappearDelay:
 		{
 			BOOL lbOk = FALSE;
 			UINT nNewVal = GetDlgItemInt(hDlg, nCtrlId, &lbOk, FALSE);
@@ -125,18 +106,6 @@ LRESULT CSetPgAppear::OnEditChanged(HWND hDlg, WORD nCtrlId)
 					break;
 				case tHideCaptionAlwaysDissapear:
 					gpSet->nHideCaptionAlwaysDisappear = nNewVal;
-					break;
-				case tScrollAppearDelay:
-					if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
-						gpSet->nScrollBarAppearDelay = nNewVal;
-					else if (nNewVal > SCROLLBAR_DELAY_MAX)
-						SetDlgItemInt(hDlg, tScrollAppearDelay, SCROLLBAR_DELAY_MAX, FALSE);
-					break;
-				case tScrollDisappearDelay:
-					if (nNewVal >= SCROLLBAR_DELAY_MIN && nNewVal <= SCROLLBAR_DELAY_MAX)
-						gpSet->nScrollBarDisappearDelay = nNewVal;
-					else if (nNewVal > SCROLLBAR_DELAY_MAX)
-						SetDlgItemInt(hDlg, tScrollDisappearDelay, SCROLLBAR_DELAY_MAX, FALSE);
 					break;
 				}
 			}

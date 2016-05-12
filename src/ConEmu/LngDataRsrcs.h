@@ -88,6 +88,7 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_SpgMarkCopy,              L"Mark/Copy" },
 	{ lng_SpgMouse,                 L"Mouse" },
 	{ lng_SpgPaste,                 L"Paste" },
+	{ lng_SpgQuake,                 L"Quake style" },
 	{ lng_SpgSizePos,               L"Size & Pos" },
 	{ lng_SpgStartup,               L"Startup" },
 	{ lng_SpgStatusBar,             L"Status bar" },
