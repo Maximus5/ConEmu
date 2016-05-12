@@ -545,6 +545,7 @@ function InitDialogList()
   $script:dialogs += @{ id = "IDD_SPG_FONTS";       name = "Main"; }
   $script:dialogs += @{ id = "IDD_SPG_SIZEPOS";     name = " Size & Pos"; }
   $script:dialogs += @{ id = "IDD_SPG_APPEAR";      name = " Appearance"; }
+  $script:dialogs += @{ id = "IDD_SPG_QUAKE";       name = " Quake style"; }
   $script:dialogs += @{ id = "IDD_SPG_BACKGR";      name = " Background"; }
   $script:dialogs += @{ id = "IDD_SPG_TABS";        name = " Tab bar"; }
   $script:dialogs += @{ id = "IDD_SPG_CONFIRM";     name = " Confirm"; }
