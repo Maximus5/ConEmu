@@ -138,6 +138,7 @@ SRCS = \
 		SetPgApps.cpp      \
 		SetPgBackgr.cpp    \
 		SetPgBase.cpp      \
+		SetPgChildGui.cpp  \
 		SetPgColors.cpp    \
 		SetPgComspec.cpp   \
 		SetPgConfirm.cpp   \

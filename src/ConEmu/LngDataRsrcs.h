@@ -68,6 +68,7 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_SpgAppDistinct,           L"App distinct" },
 	{ lng_SpgAppear,                L"Appearance" },
 	{ lng_SpgBackgr,                L"Background" },
+	{ lng_SpgChildGui,              L"Children GUI" },
 	{ lng_SpgColors,                L"Colors" },
 	{ lng_SpgComSpec,               L"ComSpec" },
 	{ lng_SpgConfirm,               L"Confirm" },

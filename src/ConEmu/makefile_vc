@@ -138,6 +138,7 @@ $(INTDIR)\SetPgAppear.obj \
 $(INTDIR)\SetPgApps.obj \
 $(INTDIR)\SetPgBackgr.obj \
 $(INTDIR)\SetPgBase.obj \
+$(INTDIR)\SetPgChildGui.obj \
 $(INTDIR)\SetPgColors.obj \
 $(INTDIR)\SetPgComspec.obj \
 $(INTDIR)\SetPgConfirm.obj \
@@ -548,6 +549,8 @@ $(INTDIR)\SetPgApps.obj: SetPgApps.cpp SetPgApps.h
 $(INTDIR)\SetPgBackgr.obj: SetPgBackgr.cpp SetPgBackgr.h
 
 $(INTDIR)\SetPgBase.obj: SetPgBase.cpp SetPgBase.h
+
+$(INTDIR)\SetPgChildGui.obj: SetPgChildGui.cpp SetPgChildGui.h
 
 $(INTDIR)\SetPgColors.obj: SetPgColors.cpp SetPgColors.h
 

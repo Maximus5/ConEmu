@@ -105,6 +105,7 @@ enum LngResources
 	lng_SpgKeyboard               = 73,
 	lng_SpgMouse                  = 74,
 	lng_SpgQuake                  = 75,
+	lng_SpgChildGui               = 76,
 	// last auto-gen identifier
 	lng_NextId
 };

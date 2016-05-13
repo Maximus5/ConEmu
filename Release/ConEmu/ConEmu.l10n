@@ -2700,6 +2700,11 @@
       "zh": "背景",
       "id": 28 }
     ,
+    "lng_SpgChildGui": {
+      "en": "Children GUI",
+      "ru": "Дочерние GUI",
+      "id": 76 }
+    ,
     "lng_SpgColors": {
       "en": "Colors",
       "ru": "Цвета",
@@ -3625,6 +3630,7 @@
     ,
     "cbFocusInChildWindows": {
       "en": "Focus in child windows",
+      "ru": "Автоматически устанавливать фокус в дочерние окна",
       "zh": "聚焦在子窗口",
       "id": 2568 }
     ,
@@ -3674,6 +3680,7 @@
     ,
     "cbHideChildCaption": {
       "en": "Hide caption of child GUI windows started in ConEmu",
+      "ru": "Скрывать заголовок дочерних графических приложений",
       "zh": "隐藏ConEmu里启动的GUI窗口的标题",
       "id": 2562 }
     ,
@@ -4226,6 +4233,11 @@
       "ru": "Настройки раздельно по приложениям",
       "zh": "应用不同的设置",
       "id": 2317 }
+    ,
+    "gbChildGui": {
+      "en": "ChildGui in ConEmu (mintty, PuTTY, etc.)",
+      "ru": "ChildGui в ConEmu (mintty, PuTTY, и т.п.)",
+      "id": 3059 }
     ,
     "gbCmdAutoAttach": {
       "en": "Automatic attach of cmd && Tcc/Le to ConEmu (new window will be started if not found)",

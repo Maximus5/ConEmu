@@ -56,9 +56,6 @@ LRESULT CSetPgAppear::OnInitDialog(HWND hDlg, bool abInitial)
 	SetDlgItemInt(hDlg, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
 	SetDlgItemInt(hDlg, tHideCaptionAlwaysDissapear, gpSet->nHideCaptionAlwaysDisappear, FALSE);
 
-	// Child GUI applications
-	checkDlgButton(hDlg, cbHideChildCaption, gpSet->isHideChildCaption);
-
 	checkDlgButton(hDlg, cbEnhanceGraphics, gpSet->isEnhanceGraphics);
 
 	//checkDlgButton(hDlg, cbEnhanceButtons, gpSet->isEnhanceButtons);

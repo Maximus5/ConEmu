@@ -89,8 +89,6 @@ LRESULT CSetPgFeatures::OnInitDialog(HWND hDlg, bool abInitial)
 
 	checkDlgButton(hDlg, cbDisableAllFlashing, gpSet->isDisableAllFlashing);
 
-	checkDlgButton(hDlg, cbFocusInChildWindows, gpSet->isFocusInChildWindows);
-
 	return 0;
 }
 

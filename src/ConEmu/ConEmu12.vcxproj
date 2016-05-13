@@ -1072,6 +1072,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClCompile Include="SetPgApps.cpp" />
     <ClCompile Include="SetPgBackgr.cpp" />
     <ClCompile Include="SetPgBase.cpp" />
+    <ClCompile Include="SetPgChildGui.cpp" />
     <ClCompile Include="SetPgColors.cpp" />
     <ClCompile Include="SetPgComspec.cpp" />
     <ClCompile Include="SetPgConfirm.cpp" />
@@ -1267,6 +1268,7 @@ copy "$(TargetPath)" Z:\</Command>
     <ClInclude Include="SetPgApps.h" />
     <ClInclude Include="SetPgBackgr.h" />
     <ClInclude Include="SetPgBase.h" />
+    <ClInclude Include="SetPgChildGui.h" />
     <ClInclude Include="SetPgColors.h" />
     <ClInclude Include="SetPgComspec.h" />
     <ClInclude Include="SetPgConfirm.h" />

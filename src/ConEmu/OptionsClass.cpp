@@ -82,6 +82,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgApps.h"
 #include "SetPgBackgr.h"
 #include "SetPgBase.h"
+#include "SetPgChildGui.h"
 #include "SetPgColors.h"
 #include "SetPgComspec.h"
 #include "SetPgConfirm.h"
@@ -90,7 +91,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgDefTerm.h"
 #include "SetPgEnvironment.h"
 #include "SetPgFar.h"
-#include "SetPgQuake.h"
 #include "SetPgFarMacro.h"
 #include "SetPgFeatures.h"
 #include "SetPgFonts.h"
@@ -102,6 +102,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgMarkCopy.h"
 #include "SetPgMouse.h"
 #include "SetPgPaste.h"
+#include "SetPgQuake.h"
 #include "SetPgSizePos.h"
 #include "SetPgStartup.h"
 #include "SetPgStatus.h"
@@ -430,6 +431,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_INTEGRATION, 0, lng_SpgIntegration,  thi_Integr,       CSetPgIntegr::Create},
 		{IDD_SPG_DEFTERM,     1, lng_SpgDefTerm,      thi_DefTerm,      CSetPgDefTerm::Create},
 		{IDD_SPG_COMSPEC,     1, lng_SpgComSpec,      thi_Comspec,      CSetPgComspec::Create},
+		{IDD_SPG_CHILDGUI,    1, lng_SpgChildGui,     thi_ChildGui,     CSetPgChildGui::Create},
 		{IDD_SPG_KEYS,        0, lng_SpgKeys,         thi_Keys,         CSetPgKeys::Create},
 		{IDD_SPG_KEYBOARD,    1, lng_SpgKeyboard,     thi_Keyboard,     CSetPgKeyboard::Create},
 		{IDD_SPG_MOUSE,       1, lng_SpgMouse,        thi_Mouse,        CSetPgMouse::Create},

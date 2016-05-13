@@ -553,7 +553,6 @@ function InitDialogList()
   $script:dialogs += @{ id = "IDD_SPG_UPDATE";      name = " Update"; }
   $script:dialogs += @{ id = "IDD_SPG_STARTUP";     name = "Startup"; }
   $script:dialogs += @{ id = "IDD_SPG_TASKS";       name = " Tasks"; }
-  $script:dialogs += @{ id = "IDD_SPG_COMSPEC";     name = " ComSpec"; }
   $script:dialogs += @{ id = "IDD_SPG_ENVIRONMENT"; name = " Environment"; }
   $script:dialogs += @{ id = "IDD_SPG_FEATURES";    name = "Features"; }
   $script:dialogs += @{ id = "IDD_SPG_CURSOR";      name = " Text cursor"; }
@@ -563,6 +562,8 @@ function InitDialogList()
   $script:dialogs += @{ id = "IDD_SPG_APPDISTINCT"; name = " App distinct"; }
   $script:dialogs += @{ id = "IDD_SPG_INTEGRATION"; name = "Integration"; }
   $script:dialogs += @{ id = "IDD_SPG_DEFTERM";     name = " Default term"; }
+  $script:dialogs += @{ id = "IDD_SPG_COMSPEC";     name = " ComSpec"; }
+  $script:dialogs += @{ id = "IDD_SPG_CHILDGUI";    name = " Children GUI"; }
   $script:dialogs += @{ id = "IDD_SPG_KEYS";        name = "Keys & Macro"; }
   $script:dialogs += @{ id = "IDD_SPG_KEYBOARD";    name = " Keyboard"; }
   $script:dialogs += @{ id = "IDD_SPG_MOUSE";       name = " Mouse"; }

@@ -61,6 +61,7 @@ enum TabHwndIndex
 	thi_Integr,       // "Integration"
 	thi_DefTerm,      //   "Default terminal"
 	thi_Comspec,      //   "ComSpec"
+	thi_ChildGui,     //   "Children GUI"
 	thi_Keys,         // "Keys & Macro"
 	thi_Keyboard,     //   "Keyboard"
 	thi_Mouse,        //   "Mouse"

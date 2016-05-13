@@ -506,6 +506,7 @@
       <File RelativePath=".\SetPgApps.cpp" />
       <File RelativePath=".\SetPgBackgr.cpp" />
       <File RelativePath=".\SetPgBase.cpp" />
+      <File RelativePath=".\SetPgChildGui.cpp" />
       <File RelativePath=".\SetPgColors.cpp" />
       <File RelativePath=".\SetPgComspec.cpp" />
       <File RelativePath=".\SetPgConfirm.cpp" />
@@ -697,6 +698,7 @@
       <File RelativePath=".\SetPgApps.h" />
       <File RelativePath=".\SetPgBackgr.h" />
       <File RelativePath=".\SetPgBase.h" />
+      <File RelativePath=".\SetPgChildGui.h" />
       <File RelativePath=".\SetPgColors.h" />
       <File RelativePath=".\SetPgComspec.h" />
       <File RelativePath=".\SetPgConfirm.h" />

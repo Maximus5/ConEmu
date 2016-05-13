@@ -240,8 +240,6 @@ BEGIN
     RTEXT           "Disappear:",stFrameDisappear,272,166,58,8
     EDITTEXT        tHideCaptionAlwaysDissapear,334,164,40,12,ES_AUTOHSCROLL
     CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,181,144,8
-    CONTROL         "Hide caption of child GUI windows started in ConEmu",cbHideChildCaption,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,181,219,8
 END
 
 IDD_SPG_QUAKE DIALOGEX 0, 0, 381, 242
@@ -688,7 +686,6 @@ BEGIN
     CONTROL         "Auto register fonts in ConEmu folder",cbAutoRegFonts,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,13,366,8
     CONTROL         "Monitor console lang",cbMonitorConsoleLang,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,27,136,8
-    CONTROL         "Focus in child windows",cbFocusInChildWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,27,124,8
     GROUPBOX        "CPU consuming",gbFeatureRetard,4,45,375,29
     CONTROL         "Sleep in background",cbSleepInBackground,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,58,133,8
     CONTROL         "Retard inactive panes",cbRetardInactivePanes,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,58,118,8
@@ -717,6 +714,17 @@ BEGIN
     PUSHBUTTON      "...",bRealConsoleSettings,361,206,13,11
     CONTROL         "Internal LogFiles location",cbDebugLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,222,133,8
     EDITTEXT        tDebugLogDir,148,220,226,12,ES_AUTOHSCROLL | ES_READONLY
+END
+
+IDD_SPG_CHILDGUI DIALOGEX 0, 0, 381, 242
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "ChildGui in ConEmu (mintty, PuTTY, etc.)",gbChildGui,4,1,375,43
+    CONTROL         "Focus in child windows",cbFocusInChildWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,363,8
+    CONTROL         "Hide caption of child GUI windows started in ConEmu",cbHideChildCaption,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,30,363,10
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 381, 242
