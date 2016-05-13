@@ -623,7 +623,7 @@ bool IntFromString(int& rnValue, LPCWSTR asValue, int anBase /*= 10*/, LPCWSTR* 
 	}
 
 	if (rsEnd) *rsEnd = pszEnd;
-	return true;
+	return bOk;
 }
 
 bool GetDlgItemSigned(HWND hDlg, WORD nID, int& nValue, int nMin /*= 0*/, int nMax /*= 0*/)
