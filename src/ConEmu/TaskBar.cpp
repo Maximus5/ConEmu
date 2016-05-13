@@ -490,6 +490,36 @@ void CTaskBar::Taskbar_UpdateOverlay()
 
 HRESULT CTaskBar::Taskbar_MarkFullscreenWindow(HWND hwnd, BOOL fFullscreen)
 {
-	HRESULT hr = mp_TaskBar2 ? mp_TaskBar2->MarkFullscreenWindow(ghWnd, FALSE) : E_FAIL;
+	HRESULT hr = E_FAIL;
+	wchar_t szState[120] = L"";
+
+	if (gpConEmu->opt.DesktopMode)
+	{
+		wcscpy_c(szState, L" - skipped in Desktop mode");
+		goto wrap;
+	}
+	if (gpConEmu->isInside())
+	{
+		wcscpy_c(szState, L" - skipped in Inside mode");
+		goto wrap;
+	}
+	if (mp_TaskBar2)
+	{
+		wcscpy_c(szState, L" - skipped, no ITaskbarList2 interface");
+		goto wrap;
+	}
+
+	hr = mp_TaskBar2->MarkFullscreenWindow(hwnd, fFullscreen);
+
+	if (hr == S_OK)
+		wcscpy_c(szState, L" - SUCCEEDED");
+	else
+		msprintf(szState, countof(szState), L" - FAILED, code=0x%08X", (DWORD)hr);
+
+wrap:
+	if (gpSet->isLogging())
+	{
+		CEStr lsLog(L"Taskbar::MarkFullscreenWindow(", fFullscreen ? L"TRUE" : L"FALSE", L")", szState);
+	}
 	return hr;
 }

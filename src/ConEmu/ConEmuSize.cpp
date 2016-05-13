@@ -3813,13 +3813,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 	if (bWasSetFullscreen && !bNewFullScreen)
 	{
-		if (mp_ConEmu->mp_TaskBar2)
-		{
-			if (!gpConEmu->opt.DesktopMode)
-				mp_ConEmu->Taskbar_MarkFullscreenWindow(ghWnd, FALSE);
-
-			bWasSetFullscreen = false;
-		}
+		mp_ConEmu->Taskbar_MarkFullscreenWindow(ghWnd, FALSE);
+		bWasSetFullscreen = false;
 	}
 
 	bool bIconic = isIconic();
@@ -4130,13 +4125,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 			_ASSERTE(mn_IgnoreSizeChange>=0);
 
-			if (mp_ConEmu->mp_TaskBar2)
-			{
-				if (!gpConEmu->opt.DesktopMode)
-					mp_ConEmu->Taskbar_MarkFullscreenWindow(ghWnd, TRUE);
-
-				bWasSetFullscreen = true;
-			}
+			bWasSetFullscreen = SUCCEEDED(mp_ConEmu->Taskbar_MarkFullscreenWindow(ghWnd, TRUE));
 
 			// for virtual screens mi.rcMonitor. may contains negative values...
 
@@ -4228,8 +4217,7 @@ wrap:
 		bNewFullScreen = (WindowMode == wmFullScreen) || (gpSet->isQuakeStyle && (gpSet->_WindowMode == wmFullScreen));
 		if (bWasSetFullscreen != bNewFullScreen)
 		{
-			if (!gpConEmu->opt.DesktopMode)
-				mp_ConEmu->Taskbar_MarkFullscreenWindow(ghWnd, bNewFullScreen);
+			mp_ConEmu->Taskbar_MarkFullscreenWindow(ghWnd, bNewFullScreen);
 
 			bWasSetFullscreen = bNewFullScreen;
 		}
