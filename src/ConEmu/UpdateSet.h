@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2015 Maximus5
+Copyright (c) 2011-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,7 @@ public:
 	LPCWSTR UpdateVerLocation();
 	LPCWSTR UpdateVerLocationDefault();
 	void SetUpdateVerLocation(LPCWSTR asNewIniLocation);
+	bool IsVerLocationDeprecated(LPCWSTR asNewIniLocation);
 
 	bool isUpdateCheckOnStartup;
 	bool isUpdateCheckHourly;

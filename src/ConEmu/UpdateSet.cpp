@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-2015 Maximus5
+Copyright (c) 2011-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -55,11 +55,52 @@ LPCWSTR ConEmuUpdateSettings::UpdateVerLocationDefault()
 	return pszDefault;
 }
 
+bool ConEmuUpdateSettings::IsVerLocationDeprecated(LPCWSTR asNewIniLocation)
+{
+	if (!asNewIniLocation || !*asNewIniLocation)
+	{
+		_ASSERTE(asNewIniLocation && *asNewIniLocation);
+		return true;
+	}
+
+	// Allow to reset location via "ConEmu.exe -UpdateSrcSet -"
+	if (lstrcmp(asNewIniLocation, L"-") == 0)
+	{
+		return true;
+	}
+
+	// Find domain
+	LPCWSTR pszDomain = wcsstr(asNewIniLocation, L"://");
+	if (!pszDomain || !*(pszDomain+3))
+	{
+		// Invalid location
+		// If one needs to point on one's local drive,
+		// proper format is: "file:///C:\path\version.ini"
+		_ASSERTE(pszDomain != NULL);
+		return true;
+	}
+
+	// Very old versions has following URL which is not available anymore
+	// L"http://conemu-maximus5.googlecode.com/svn/trunk/ConEmu/version.ini"
+	wchar_t szDeprecatedDomain[] = L"conemu-maximus5.googlecode.com";
+	if (lstrcmpni(pszDomain+3, szDeprecatedDomain, lstrlen(szDeprecatedDomain)) == 0)
+	{
+		// Force new version to forget deprecated locations
+		return true;
+	}
+
+	return false;
+}
+
 void ConEmuUpdateSettings::SetUpdateVerLocation(LPCWSTR asNewIniLocation)
 {
 	SafeFree(szUpdateVerLocation);
-	if (asNewIniLocation && *asNewIniLocation && (lstrcmp(asNewIniLocation, L"-") != 0))
+
+	if (asNewIniLocation && *asNewIniLocation
+		&& !IsVerLocationDeprecated(asNewIniLocation))
+	{
 		szUpdateVerLocation = lstrdup(asNewIniLocation);
+	}
 
 	if (gpSetCls && ghOpWnd)
 	{
