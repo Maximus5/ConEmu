@@ -60,9 +60,10 @@ CConEmuInside::CConEmuInside()
 	mb_InsideSynchronizeCurDir = false;
 	ms_InsideSynchronizeCurDir = NULL;
 	mb_InsidePaneWasForced = false;
-	mh_InsideParentRoot = mh_InsideParentWND = mh_InsideParentRel = NULL;
+	mh_InsideParentWND = mh_InsideParentRel = NULL;
 	mh_InsideParentPath = mh_InsideParentCD = NULL; ms_InsideParentPath[0] = 0;
 	mb_TipPaneWasShown = false;
+	mh_TipPaneWndPost = NULL;
 	//mh_InsideSysMenu = NULL;
 	ZeroStruct(mrc_InsideParent);
 	ZeroStruct(mrc_InsideParentRel);
@@ -114,9 +115,9 @@ bool CConEmuInside::InitInside(bool bRunAsAdmin, bool bSyncDir, LPCWSTR pszSyncD
 CConEmuInside::~CConEmuInside()
 {
 	// If "Tip pane" was shown by ConEmu - hide pane after ConEmu close
-	if (mb_TipPaneWasShown)
+	if (mb_TipPaneWasShown && mh_TipPaneWndPost)
 	{
-		PostMessage(mh_InsideParentRoot, WM_COMMAND, EMID_TIPOFDAY/*41536*/, 0);
+		PostMessage(mh_TipPaneWndPost, WM_COMMAND, EMID_TIPOFDAY/*41536*/, 0);
 	}
 
 	SafeFree(ms_InsideSynchronizeCurDir);
@@ -124,18 +125,18 @@ CConEmuInside::~CConEmuInside()
 
 BOOL CConEmuInside::EnumInsideFindParent(HWND hwnd, LPARAM lParam)
 {
+	EnumFindParentArg* pFind = (EnumFindParentArg*)lParam;
 	DWORD nPID = 0;
 	if (IsWindowVisible(hwnd)
 		&& GetWindowThreadProcessId(hwnd, &nPID)
-		&& (nPID == (DWORD)lParam))
+		&& (nPID == pFind->nPID))
 	{
 		DWORD nNeedStyles = WS_CAPTION|WS_SYSMENU|WS_THICKFRAME|WS_MINIMIZEBOX|WS_MAXIMIZEBOX;
 		DWORD nStyles = GetWindowLong(hwnd, GWL_STYLE);
 		if ((nStyles & nNeedStyles) == nNeedStyles)
 		{
-			// Нашли
-			gpConEmu->mp_Inside->mn_InsideParentPID = nPID;
-			gpConEmu->mp_Inside->mh_InsideParentRoot = hwnd;
+			// Found, stop enumeration
+			pFind->hParentRoot = hwnd;
 			return FALSE;
 		}
 	}
@@ -205,7 +206,7 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 			}
 			else if ((gnOsVer < 0x600) && (lstrcmp(szParent, L"ExploreWClass") == 0))
 			{
-				_ASSERTE(mh_InsideParentRoot == hFrom);
+				_ASSERTE(mh_InitialRoot == hFrom);
 				hXpView = hChild;
 			}
 		}
@@ -263,7 +264,10 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 				return true; // закончить поиск
 			}
 			SetInsideParentWND(hXpPlace);
-			mh_InsideParentPath = mh_InsideParentRoot;
+			_ASSERTE(mh_InsideParentWND!=NULL);
+			HWND hRoot = GetParentRoot();
+			_ASSERTE(mh_InsideParentPath==NULL || mh_InsideParentPath==hRoot);
+			mh_InsideParentPath = hRoot;
 			m_InsideIntegration = ii_Explorer;
 			return true;
 		}
@@ -275,38 +279,74 @@ bool CConEmuInside::InsideFindShellView(HWND hFrom)
 void CConEmuInside::SetInsideParentWND(HWND hParent)
 {
 	mh_InsideParentWND = hParent;
+
 	if (!hParent || (hParent == INSIDE_PARENT_NOT_FOUND))
 	{
-		mh_InsideParentRoot = NULL;
 		mh_InsideParentRel = NULL;
 	}
 	else
 	{
+		ZeroStruct(m_InsideParentInfo);
+
 		// Store basic information about parent process (reporting purposes)
-		DWORD nPID; PROCESSENTRY32W PInfo = {};
-		if (GetWindowThreadProcessId(hParent, &nPID)
-			&& GetProcessInfo(nPID, &PInfo))
+		DWORD nPID = 0;
+		if (GetWindowThreadProcessId(hParent, &nPID))
 		{
-			m_InsideParentInfo.ParentPID = PInfo.th32ProcessID;
-			m_InsideParentInfo.ParentParentPID = PInfo.th32ParentProcessID;
-			wcscpy_c(m_InsideParentInfo.ExeName, PInfo.szExeFile);
-		}
-		else
-		{
-			ZeroStruct(m_InsideParentInfo);
+			m_InsideParentInfo.ParentPID = nPID;
+
+			PROCESSENTRY32W PInfo = {};
+			if (GetProcessInfo(nPID, &PInfo))
+			{
+				m_InsideParentInfo.ParentParentPID = PInfo.th32ParentProcessID;
+				wcscpy_c(m_InsideParentInfo.ExeName, PInfo.szExeFile);
+			}
 		}
 
-		// Detect top parent window, to call isMeForeground
-		HWND hRootParent = hParent;
-		while ((GetWindowLong(hRootParent, GWL_STYLE) & WS_CHILD) != 0)
-		{
-			HWND hNext = GetParent(hRootParent);
-			if (!hNext)
-				break;
-			hRootParent = hNext;
-		}
-		mh_InsideParentRoot = hRootParent;
+		mh_InitialRoot = GetParentRoot();
 	}
+}
+
+bool CConEmuInside::isInsideWndSet()
+{
+	if (!this || !mh_InsideParentWND || (mh_InsideParentWND == INSIDE_PARENT_NOT_FOUND))
+		return false;
+	return true;
+}
+
+bool CConEmuInside::isParentProcess(HWND hParent)
+{
+	if (!isInsideWndSet())
+	{
+		return false;
+	}
+
+	DWORD nPID = 0;
+	if (!GetWindowThreadProcessId(hParent, &nPID))
+	{
+		return false;
+	}
+
+	return (nPID == m_InsideParentInfo.ParentPID);
+}
+
+HWND CConEmuInside::GetParentRoot()
+{
+	if (!isInsideWndSet())
+	{
+		return NULL;
+	}
+
+	// Detect top parent window
+	HWND hRootParent = mh_InsideParentWND;
+	while ((GetWindowLong(hRootParent, GWL_STYLE) & WS_CHILD) != 0)
+	{
+		HWND hNext = GetParent(hRootParent);
+		if (!hNext)
+			break;
+		hRootParent = hNext;
+	}
+
+	return hRootParent;
 }
 
 // Вызывается для инициализации из Settings::LoadSettings()
@@ -314,6 +354,7 @@ HWND CConEmuInside::InsideFindParent()
 {
 	bool bFirstStep = true;
 	DWORD nParentPID = 0;
+	PROCESSENTRY32 pi = {sizeof(pi)};
 
 	if (!m_InsideIntegration)
 	{
@@ -326,17 +367,7 @@ HWND CConEmuInside::InsideFindParent()
 		{
 			if (m_InsideIntegration == ii_Simple)
 			{
-				if (mh_InsideParentRoot == NULL)
-				{
-					// Если еще не искали "корневое" окно
-					HWND hParent = mh_InsideParentWND;
-					while (hParent)
-					{
-						mh_InsideParentRoot = hParent;
-						hParent = GetParent(hParent);
-					}
-				}
-				// В этом режиме занимаем всю клиентскую область
+				// We cover all client area of mh_InsideParentWND in this mode
 				_ASSERTE(mh_InsideParentRel==NULL);
 				mh_InsideParentRel = NULL;
 			}
@@ -361,7 +392,6 @@ HWND CConEmuInside::InsideFindParent()
 
 	if (mn_InsideParentPID)
 	{
-		PROCESSENTRY32 pi = {sizeof(pi)};
 		if ((mn_InsideParentPID == GetCurrentProcessId())
 			|| !GetProcessInfo(mn_InsideParentPID, &pi))
 		{
@@ -370,6 +400,7 @@ HWND CConEmuInside::InsideFindParent()
 			SetInsideParentWND(NULL);
 			goto wrap;
 		}
+
 		nParentPID = mn_InsideParentPID;
 	}
 	else
@@ -382,11 +413,14 @@ HWND CConEmuInside::InsideFindParent()
 			SetInsideParentWND(NULL);
 			goto wrap;
 		}
+
 		nParentPID = pi.th32ParentProcessID;
 	}
 
-	EnumWindows(EnumInsideFindParent, nParentPID);
-	if (!mh_InsideParentRoot)
+	EnumFindParentArg find = {nParentPID};
+	::EnumWindows(EnumInsideFindParent, (LPARAM)&find);
+
+	if (!find.hParentRoot)
 	{
 		int nBtn = MsgBox(L"Can't find appropriate parent window!\n\nContinue in normal mode?", MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
 		if (nBtn != IDYES)
@@ -400,9 +434,11 @@ HWND CConEmuInside::InsideFindParent()
 		goto wrap;
 	}
 
+	mh_InitialRoot = find.hParentRoot;
+	mn_InsideParentPID = nParentPID;
 
 	HWND hExistConEmu;
-	if ((hExistConEmu = InsideFindConEmu(mh_InsideParentRoot)) != NULL)
+	if ((hExistConEmu = InsideFindConEmu(find.hParentRoot)) != NULL)
 	{
 		_ASSERTE(FALSE && "Continue to create tab in existing instance");
 		// Если в проводнике уже есть ConEmu - открыть в нем новую вкладку
@@ -431,10 +467,10 @@ HWND CConEmuInside::InsideFindParent()
 	// 1. в которое будем внедряться
 	// 2. по которому будем позиционироваться
 	// 3. для синхронизации текущего пути
-	InsideFindShellView(mh_InsideParentRoot);
+	InsideFindShellView(find.hParentRoot);
 
 RepeatCheck:
-	if (!mh_InsideParentWND || (!mh_InsideParentRel && (m_InsideIntegration == ii_Explorer)))
+	if (!isInsideWndSet() || (!mh_InsideParentRel && (m_InsideIntegration == ii_Explorer)))
 	{
 		wchar_t szAddMsg[128] = L"", szMsg[1024];
 		if (bFirstStep)
@@ -461,10 +497,9 @@ RepeatCheck:
 	}
 
 wrap:
-	if (!mh_InsideParentWND)
+	if (!isInsideWndSet())
 	{
 		m_InsideIntegration = ii_None;
-		mh_InsideParentRoot = NULL;
 	}
 	else
 	{
@@ -553,7 +588,8 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 			//LRESULT lSentRc = SendInput(2/*countof(keys)*/, keys, sizeof(keys[0]));
 			//lSentRc = SendMessageTimeout(mh_InsideParentRoot, WM_SYSKEYUP, 'V', 0, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &nRc);
 
-			lSendRc = SendMessageTimeout(mh_InsideParentRoot, WM_COMMAND, EMID_TIPOFDAY/*41536*/, 0, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &nRc);
+			mh_TipPaneWndPost = mh_InitialRoot;
+			lSendRc = SendMessageTimeout(mh_TipPaneWndPost, WM_COMMAND, EMID_TIPOFDAY/*41536*/, 0, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &nRc);
 			UNREFERENCED_PARAMETER(lSendRc);
 
 			mb_InsidePaneWasForced = true;
@@ -567,7 +603,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 		// Первая проверка
 		SetInsideParentWND(NULL);
 		m_InsideIntegration = ii_Auto;
-		InsideFindShellView(mh_InsideParentRoot);
+		InsideFindShellView(mh_InitialRoot);
 		if (mh_InsideParentWND && mh_InsideParentRel)
 		{
 			bRepeat = true;
@@ -577,7 +613,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 		Sleep(500);
 		SetInsideParentWND(NULL);
 		m_InsideIntegration = ii_Auto;
-		InsideFindShellView(mh_InsideParentRoot);
+		InsideFindShellView(mh_InitialRoot);
 		if (mh_InsideParentWND && mh_InsideParentRel)
 		{
 			bRepeat = true;
@@ -590,15 +626,16 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 		WORD vkPostKeys[] = {VK_ESCAPE, VK_ESCAPE, VK_ESCAPE, VK_RIGHT, VK_RIGHT, VK_RIGHT, VK_DOWN, VK_DOWN, VK_DOWN, VK_RIGHT, VK_ESCAPE, VK_ESCAPE, VK_ESCAPE, 0};
 
 		// Go
-		if (SendVkKeySequence(mh_InsideParentRoot, vkPostKeys))
+		if (SendVkKeySequence(mh_InitialRoot, vkPostKeys))
 		{
 			// Try again (Tip of the day)
-			lSendRc = SendMessageTimeout(mh_InsideParentRoot, WM_COMMAND, EMID_TIPOFDAY/*41536*/, 0, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &nRc);
+			mh_TipPaneWndPost = mh_InitialRoot;
+			lSendRc = SendMessageTimeout(mh_TipPaneWndPost, WM_COMMAND, EMID_TIPOFDAY/*41536*/, 0, SMTO_NOTIMEOUTIFNOTHUNG, 5000, &nRc);
 			// Wait and check again
 			Sleep(500);
 			SetInsideParentWND(NULL);
 			m_InsideIntegration = ii_Auto;
-			InsideFindShellView(mh_InsideParentRoot);
+			InsideFindShellView(mh_InitialRoot);
 			if (mh_InsideParentWND && mh_InsideParentRel)
 			{
 				bRepeat = true;
@@ -797,7 +834,7 @@ void CConEmuInside::InsideUpdateDir()
 
 void CConEmuInside::InsideUpdatePlacement()
 {
-	if (!mh_InsideParentWND || !IsWindow(mh_InsideParentWND))
+	if (!isInsideWndSet() || !IsWindow(mh_InsideParentWND))
 		return;
 
 	if ((m_InsideIntegration != ii_Explorer) && (m_InsideIntegration != ii_Simple))
@@ -919,8 +956,9 @@ bool CConEmuInside::GetInsideRect(RECT* prWnd)
 bool CConEmuInside::isParentIconic()
 {
 	BOOL bIconic;
-	if (mh_InsideParentRoot)
-		bIconic = ::IsIconic(mh_InsideParentRoot);
+	HWND hParent = GetParentRoot();
+	if (hParent)
+		bIconic = ::IsIconic(hParent);
 	else if (mh_InsideParentWND)
 		bIconic = ::IsIconic(mh_InsideParentWND);
 	else
@@ -951,7 +989,7 @@ bool CConEmuInside::inMinimizing(WINDOWPOS *p /*= NULL*/)
 
 HWND CConEmuInside::CheckInsideFocus()
 {
-	if (!this || !mh_InsideParentRoot)
+	if (!isInsideWndSet())
 	{
 		//_ASSERTE(FALSE && "Inside was not initialized");
 		return NULL;
@@ -959,7 +997,8 @@ HWND CConEmuInside::CheckInsideFocus()
 
 	wchar_t szInfo[512];
 	GUITHREADINFO tif = { sizeof(tif) };
-	DWORD nTID = GetWindowThreadProcessId(mh_InsideParentRoot, NULL);
+	HWND hParentWnd = GetParentRoot();
+	DWORD nTID = GetWindowThreadProcessId(hParentWnd, NULL);
 
 	if (!GetGUIThreadInfo(nTID, &tif))
 	{

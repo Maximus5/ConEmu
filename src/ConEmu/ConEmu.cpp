@@ -6021,7 +6021,7 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
 
 	if (mp_Inside)
 	{
-		if (hForeWnd == mp_Inside->mh_InsideParentRoot)
+		if (mp_Inside->isParentProcess(hForeWnd))
 		{
 			if ((hInsideFocus = mp_Inside->CheckInsideFocus()))
 			{
@@ -6052,7 +6052,7 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
 				{
 					NewState |= fgf_ConEmuDialog;
 				}
-				else if (mp_Inside && (hForeWnd == mp_Inside->mh_InsideParentRoot))
+				else if (mp_Inside && mp_Inside->isParentProcess(hForeWnd))
 				{
 					// Already processed
 				}
@@ -12343,7 +12343,7 @@ void CConEmuMain::OnTimer_ActivateSplit()
 		mouse.ptLastSplitOverCheck = ptCur;
 		if (!isIconic()
 			&& (hForeWnd == ghWnd
-				|| (mp_Inside && (hForeWnd == mp_Inside->mh_InsideParentRoot))
+				|| (mp_Inside && mp_Inside->isParentProcess(hForeWnd))
 				|| CVConGroup::isOurGuiChildWindow(hForeWnd)
 			))
 		{

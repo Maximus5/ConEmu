@@ -65,8 +65,10 @@ public:
 	bool  mb_InsidePaneWasForced;
 	DWORD mn_InsideParentPID;  // PID "родительского" процесса режима интеграции
 	HWND  mh_InsideParentWND; // Это окно используется как родительское в режиме интеграции
-	HWND  mh_InsideParentRoot; // Корневое окно режима интеграции (для проверки isMeForeground)
 	void  SetInsideParentWND(HWND hParent);
+	bool  isInsideWndSet();
+	bool  isParentProcess(HWND hParent);
+	HWND  GetParentRoot();
 
 	bool  inMinimizing(WINDOWPOS *p /*= NULL*/);
 	bool  isParentIconic();
@@ -77,12 +79,19 @@ public:
 	HWND  CheckInsideFocus();
 
 private:
+	HWND  mh_InitialRoot;
 	HWND  mh_InsideParentRel;  // Может быть NULL (ii_Simple). HWND относительно которого нужно позиционироваться
 	HWND  mh_InsideParentPath; // Win7 Text = "Address: D:\MYDOC"
 	HWND  mh_InsideParentCD;   // Edit для смены текущей папки, например -> "C:\USERS"
 	RECT  mrc_InsideParent, mrc_InsideParentRel; // для сравнения, чтоб знать, что подвинуться нада
+	HWND  mh_TipPaneWndPost;
 	bool  mb_TipPaneWasShown;
 	wchar_t ms_InsideParentPath[MAX_PATH+1];
+	struct EnumFindParentArg
+	{
+		DWORD nPID;
+		HWND  hParentRoot;
+	};
 	static BOOL CALLBACK EnumInsideFindParent(HWND hwnd, LPARAM lParam);
 	HWND  InsideFindConEmu(HWND hFrom);
 	bool  InsideFindShellView(HWND hFrom);

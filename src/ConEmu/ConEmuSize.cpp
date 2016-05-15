@@ -1818,7 +1818,7 @@ HMONITOR CConEmuSize::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPCRECT prc
 	HMONITOR hMon = NULL;
 	MONITORINFO mi = {sizeof(mi)};
 
-	HWND hWndFrom = mp_ConEmu->mp_Inside ? mp_ConEmu->mp_Inside->mh_InsideParentRoot : ghWnd;
+	HWND hWndFrom = mp_ConEmu->mp_Inside ? mp_ConEmu->mp_Inside->GetParentRoot() : ghWnd;
 
 	if (prcWnd)
 	{

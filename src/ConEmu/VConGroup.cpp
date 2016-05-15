@@ -2605,8 +2605,7 @@ bool CVConGroup::OnFlashWindow(DWORD nOpt, DWORD nFlags, DWORD nCount, HWND hCon
 
 	bool lbFlashSimple = abSimple;
 
-	HWND hWndFlash = (gpConEmu->mp_Inside && gpConEmu->mp_Inside->mh_InsideParentRoot)
-		? gpConEmu->mp_Inside->mh_InsideParentRoot : ghWnd;
+	HWND hWndFlash = gpConEmu->GetProgressHWND();
 
 	if (abFromMacro)
 	{
