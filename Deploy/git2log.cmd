@@ -29,6 +29,8 @@ shift /1
 goto parm_loop
 :parm_done
 
+echo COMMIT_SHA=`%COMMIT_SHA%`
+
 set git=%~d0\gitsdk\cmd\git.exe
 rem set git=%~d0\Utils\Lans\GIT\cmd\git.exe
 if NOT EXIST "%git%" set git=git.exe
@@ -37,7 +39,9 @@ cd /d "%~dp0.."
 call "%~dp0GetCurVer.cmd"
 
 rem Update PortableApps and Chocolatey versions
+if "%SKIP_UPD%" == "YES" goto skip_upd
 powershell -noprofile -command "%~dp0UpdateDeployVersions.ps1" %CurVerBuild%
+:skip_upd
 
 set daily_md=%~dp0..\..\ConEmu-GitHub-io\ConEmu.github.io\_posts\.daily.md
 rem May be file was already created and prepared?
@@ -80,7 +84,7 @@ if "%~1" NEQ "" (
     call cecho "Invalid commit-sha specified: %~1"
     exit /B 1
   )
-  set commit_range=HEAD...%~1
+  set commit_range=master...%~1
   goto commit_sha
 )
 
@@ -92,8 +96,9 @@ if errorlevel 1 (
   set commit_range=preview...v-preview
 )
 :commit_sha
-if exist "%git_out%" del "%git_out%"
-if exist "%git_err%" del "%git_err%"
+if exist "%git_out%" del "%git_out%" > nul
+if exist "%git_err%" del "%git_err%" > nul
 
+rem echo "%git%" log "--format=%%ci (%%cn)%%n* %%B" --reverse %commit_range% --invert-grep --grep="^Internal\. "
 "%git%" log "--format=%%ci (%%cn)%%n* %%B" --reverse %commit_range% --invert-grep --grep="^Internal\. "
 goto :EOF
