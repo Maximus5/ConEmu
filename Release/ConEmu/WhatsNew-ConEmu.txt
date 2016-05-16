@@ -20,6 +20,28 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.5.15
+* ConEmuInside: In some cases (VisualStudio pane) ConEmu failed to detect ‘focused’ state.
+* Split settings page ‘Controls’ into ‘Keyboard’ and ‘Mouse’ (alignment pending).
+* Settings page ‘Quake style’ for pull-down related options.
+* Settings for ChildGui moved to separate page (Integration / Children GUI).
+* cmderdev/cmder#929: Fullscreen was not activated properly in some cases (part of ConEmu was obscured by TaskBar).
+* gh-673: GuiMacro SetWindowPosSize: fix changing size w/o changing pos (by @jcsullins).
+* Was not able to use xml file from drive root.
+  Now it's possible to run, for example: "ConEmu -loadcfgfile Z:\ConEmu.exe".
+* Show version stage in the Settings and About dialog titles.
+  E.g.: ‘About ConEmu 160506 [64] {Preview}’.
+* More Settings/Debug/Exec improvements.
+  CD was not captured in some cases, as a consequence
+  contents of `@file` was not captured too.
+  Also, `@file` processing is doing synchronously now.
+* Avoid using of deprecated googlecode location for version information.
+  If user had old build of ConEmu installed, and old version location info
+  was stored in the xml, they would fail to receive new versions.
+  Now, old deprecated locations are ignored and ConEmu uses the default
+  place instead.
+
+
 2016.5.4
 * gh-660: Fix crash on ConEmu.exe exit (32-bit).
 * Separate process creation from module/inject activities.
