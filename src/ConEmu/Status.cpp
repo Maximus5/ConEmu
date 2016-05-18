@@ -462,6 +462,8 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	bool lbSysColor = (gpSet->isStatusBarFlags & csf_SystemColors) == csf_SystemColors;
 	bool lbFade = lbSysColor ? false : gpSet->isFadeInactive && !gpConEmu->isMeForeground(true);
 
+	DEBUGSTRPAINT(lbFade ? L"CStatus::PaintStatus: lbFade==TRUE" : L"CStatus::PaintStatus: lbFade==FALSE");
+
 	COLORREF crBack = lbSysColor ? GetSysColor(COLOR_3DFACE) : lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarBack) : gpSet->nStatusBarBack;
 	COLORREF crText = lbSysColor ? GetSysColor(COLOR_BTNTEXT) : lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarLight) : gpSet->nStatusBarLight;
 	COLORREF crDash = lbSysColor ? GetSysColor(COLOR_3DSHADOW) : lbFade ? gpSet->GetFadeColor(gpSet->nStatusBarDark) : gpSet->nStatusBarDark;
@@ -1045,6 +1047,8 @@ void CStatus::UpdateStatusBar(bool abForce /*= false*/, bool abRepaintNow /*= fa
 
 void CStatus::InvalidateStatusBar(LPRECT rcInvalidated /*= NULL*/)
 {
+	DEBUGSTRPAINT(L"CStatus::InvalidateStatusBar");
+
 	if (gpConEmu->isIconic())
 		return;
 

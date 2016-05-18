@@ -6023,20 +6023,31 @@ bool CConEmuMain::isLBDown()
 	return (mouse.state & DRAG_L_ALLOWED) == DRAG_L_ALLOWED;
 }
 
-bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
+// hForcedForeground is used during mouse activation
+bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore /*= NULL*/, HWND hForcedForeground /*= NULL*/)
 {
 	DWORD NewState = fgf_Background;
 
 	// Call this function only
-	HWND hForeWnd = getForegroundWindow();
+	HWND hForeWnd = hForcedForeground ? hForcedForeground : getForegroundWindow();
 	HWND hInsideFocus = NULL;
 	DWORD nForePID = 0;
+	bool bChanged = false;
+	HWND hOldFore = m_Foreground.hLastFore;
+	DWORD nOldState = m_Foreground.ForegroundState;
 
 	if (mp_Inside)
 	{
 		if (mp_Inside->isParentProcess(hForeWnd))
 		{
-			if ((hInsideFocus = mp_Inside->CheckInsideFocus()))
+			if (hForcedForeground)
+			{
+				// During WM_MOUSEACTIVATE activation the focus was not ajusted yet
+				// So we predict the active status to avoid fade active/inactive flickering
+				_ASSERTE(asFrom && 0==wcscmp(asFrom,L"OnActivateByMouse"));
+				NewState |= fgf_InsideParent;
+			}
+			else if ((hInsideFocus = mp_Inside->CheckInsideFocus()))
 			{
 				DWORD nInsideFocusPID = 0; GetWindowThreadProcessId(hInsideFocus, &nInsideFocusPID);
 				if (nInsideFocusPID == GetCurrentProcessId())
@@ -6103,10 +6114,7 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
 		}
 
 		// Logging
-		wchar_t szLog[120];
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"Foreground state changed (%s): State=x%02X HWND=x%08X PID=%u OldHWND=x%08X OldState=x%02X",
-			asFrom, NewState, (DWORD)(DWORD_PTR)hForeWnd, nForePID, (DWORD)(DWORD_PTR)m_Foreground.hLastFore, m_Foreground.ForegroundState);
-		LogString(szLog);
+		bChanged = true;
 
 		// And remember 'non-responsive' state to be able recheck DefTerm
 		if ((m_Foreground.nDefTermNonResponsive && !bNonResponsive) || (m_Foreground.nDefTermNonResponsive != nForePID))
@@ -6121,9 +6129,20 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore/*=NULL*/)
 	{
 		// Save new state
 		if (m_Foreground.ForegroundState != NewState)
+		{
+			bChanged = true;
 			m_Foreground.ForegroundState = NewState;
+		}
 		m_Foreground.hLastFore = hForeWnd;
 		m_Foreground.hLastInsideFocus = hInsideFocus;
+	}
+
+	if (bChanged)
+	{
+		wchar_t szLog[120];
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"Foreground state changed (%s): State=x%02X HWND=x%08X PID=%u OldHWND=x%08X OldState=x%02X",
+			asFrom, NewState, (DWORD)(DWORD_PTR)hForeWnd, nForePID, (DWORD)(DWORD_PTR)hOldFore, nOldState);
+		if (gpSet->isLogging()) { LogString(szLog); } else { DEBUGSTRFOCUS(szLog); }
 	}
 
 	// DefTerm, Recheck?
@@ -12249,12 +12268,12 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		bool bLastFade = pVCon->mb_LastFadeFlag;
 		bool bNewFade = (gpSet->isFadeInactive && !bForeground && !lbIsPicView);
 
-		// Это условие скорее всего никогда не выполнится, т.к.
-		// смена Fade обрабатывается в WM_ACTIVATE/WM_SETFOCUS/WM_KILLFOCUS
+		// We may get here during "Inside" mode, when "active-ness"
+		// is checked by timer via RecheckForegroundWindow
 		if (bLastFade != bNewFade)
 		{
 			pVCon->mb_LastFadeFlag = bNewFade;
-			pVCon->Invalidate();
+			InvalidateAll();
 		}
 
 		if (hForeWnd && (hForeWnd == pVCon->GuiWnd()))
@@ -13206,7 +13225,7 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 		apiSetForegroundWindow(ghWnd);
 	}
 
-	RecheckForegroundWindow(L"OnActivateByMouse");
+	RecheckForegroundWindow(L"OnActivateByMouse", NULL, GetRootHWND());
 
 	return result;
 }

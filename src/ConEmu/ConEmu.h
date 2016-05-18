@@ -632,7 +632,7 @@ class CConEmuMain
 			DWORD nDefTermNonResponsive;
 			DWORD nDefTermTick;
 		} m_Foreground;
-		bool RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore=NULL);
+		bool RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore = NULL, HWND hForcedForeground = NULL);
 
 	public:
 		DWORD GetWindowStyle();
