@@ -77,8 +77,6 @@ protected:
 	MArray<LPVOID> m_Ghosts;
 	void Taskbar_GhostAppend(LPVOID pVCon);
 	void Taskbar_GhostRemove(LPVOID pVCon);
-protected:
-	HWND GetProgressHWND();
 public:
 	void Taskbar_GhostReorder();
 	bool isTaskbarSmallIcons();

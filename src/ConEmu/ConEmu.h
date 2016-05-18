@@ -644,6 +644,7 @@ class CConEmuMain
 		void SetWindowStyleEx(HWND ahWnd, DWORD anStyleEx);
 		DWORD GetWorkWindowStyle();
 		DWORD GetWorkWindowStyleEx();
+		HWND GetRootHWND();
 		BOOL Init();
 		void InitInactiveDC(CVirtualConsole* apVCon);
 		void Invalidate(LPRECT lpRect, BOOL bErase = TRUE);

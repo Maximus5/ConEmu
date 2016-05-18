@@ -349,18 +349,6 @@ HRESULT CTaskBar::Taskbar_DeleteTabXP(HWND hBtn)
 	return hr;
 }
 
-// The Window shown on TaskBar to get Progress (Windows 7 and higher)
-// Also used in CVConGroup::OnFlashWindow
-HWND CTaskBar::GetProgressHWND()
-{
-	HWND hRoot = NULL;
-	if (gpConEmu->mp_Inside)
-		hRoot = gpConEmu->mp_Inside->GetParentRoot();
-	if (!hRoot)
-		hRoot = ghWnd;
-	return hRoot;
-}
-
 HRESULT CTaskBar::Taskbar_SetProgressValue(int nProgress)
 {
 	HRESULT hr = S_FALSE;
@@ -369,11 +357,11 @@ HRESULT CTaskBar::Taskbar_SetProgressValue(int nProgress)
 	{
 		if (nProgress >= 0)
 		{
-			hr = mp_TaskBar3->SetProgressValue(GetProgressHWND(), nProgress, 100);
+			hr = mp_TaskBar3->SetProgressValue(mp_ConEmu->GetRootHWND(), nProgress, 100);
 		}
 		else
 		{
-			hr = mp_TaskBar3->SetProgressState(GetProgressHWND(), TBPF_NOPROGRESS);
+			hr = mp_TaskBar3->SetProgressState(mp_ConEmu->GetRootHWND(), TBPF_NOPROGRESS);
 		}
 	}
 
@@ -386,7 +374,7 @@ HRESULT CTaskBar::Taskbar_SetProgressState(UINT/*TBPFLAG*/ nState)
 
 	if (mp_TaskBar3)
 	{
-		hr = mp_TaskBar3->SetProgressState(GetProgressHWND(), (TBPFLAG)nState);
+		hr = mp_TaskBar3->SetProgressState(mp_ConEmu->GetRootHWND(), (TBPFLAG)nState);
 	}
 
 	return hr;

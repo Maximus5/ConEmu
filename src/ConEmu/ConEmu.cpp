@@ -1835,6 +1835,18 @@ DWORD CConEmuMain::GetWorkWindowStyleEx()
 	return styleEx;
 }
 
+// The Window shown on TaskBar to get Progress (Windows 7 and higher)
+// Also used in CVConGroup::OnFlashWindow and during mouse activation
+HWND CConEmuMain::GetRootHWND()
+{
+	HWND hRoot = NULL;
+	if (gpConEmu->mp_Inside)
+		hRoot = gpConEmu->mp_Inside->GetParentRoot();
+	if (!hRoot)
+		hRoot = ghWnd;
+	return hRoot;
+}
+
 bool CConEmuMain::CreateLog()
 {
 	_ASSERTE(gpSet->isLogging());
