@@ -576,10 +576,56 @@ bool CSetPgIntegr::ReloadHereList(int* pnHere /*= NULL*/, int* pnInside /*= NULL
 	return (iTotalCount > 0);
 }
 
+void CSetPgIntegr::StripDupSwitches(LPCWSTR pszFull, CEStr& szCmd, CEStr& szDirSync, CEStr& szConfig)
+{
+	szCmd = L"";
+	szDirSync = L"";
+	szConfig = L"";
+
+	LPCWSTR psz = pszFull;
+	LPCWSTR pszPrev = pszFull;
+	CEStr szArg;
+	while (0 == NextArg(&psz, szArg, &pszPrev))
+	{
+		if (!szArg.IsPossibleSwitch())
+			continue;
+
+		if (szArg.OneOfSwitches(L"-inside", L"-here"))
+		{
+			// Nop
+		}
+		else if (szArg.IsSwitch(L"-inside:")) // Both "-inside:" and "-inside=" notations are supported
+		{
+			szDirSync.Set(szArg.Mid(8)); // may be empty!
+		}
+		else if (szArg.IsSwitch(L"-config"))
+		{
+			if (0 != NextArg(&psz, szArg))
+				break;
+			szConfig.Set(szArg);
+		}
+		else if (szArg.IsSwitch(L"-dir"))
+		{
+			if (0 != NextArg(&psz, szArg))
+				break;
+			_ASSERTE(lstrcmpi(szArg, L"%1")==0);
+		}
+		else //if (szArg.OneOfSwitches(L"-run",L"-cmd",L"-runlist",L"-cmdlist"))
+		{
+			// ‘Drop’ only `-cmd` and `-run`, leave `-runlist`
+			if (szArg.OneOfSwitches(L"-run",L"-cmd"))
+				szCmd.Set(psz);
+			else
+				szCmd.Set(pszPrev);
+			break;
+		}
+	}
+}
+
 void CSetPgIntegr::FillHereValues(WORD CB)
 {
-	wchar_t *pszCfg = NULL, *pszIco = NULL, *pszFull = NULL, *pszDirSync = NULL;
-	LPCWSTR pszCmd = NULL;
+	CEStr szCmd, szDirSync, szConfig;
+	wchar_t *pszIco = NULL, *pszFull = NULL;
 	INT_PTR iSel = SendDlgItemMessage(mh_Dlg, CB, CB_GETCURSEL, 0,0);
 	if (iSel >= 0)
 	{
@@ -610,44 +656,7 @@ void CSetPgIntegr::FillHereValues(WORD CB)
 					}
 					else
 					{
-						LPCWSTR psz = pszFull;
-						LPCWSTR pszPrev = pszFull;
-						CEStr szArg;
-						while (0 == NextArg(&psz, szArg, &pszPrev))
-						{
-							if (!szArg.IsPossibleSwitch())
-								continue;
-
-							if (szArg.OneOfSwitches(L"-inside", L"-here"))
-							{
-								// Nop
-							}
-							else if (szArg.IsSwitch(L"-inside="))
-							{
-								pszDirSync = lstrdup(szArg.Mid(8)); // may be empty!
-							}
-							else if (szArg.IsSwitch(L"-config"))
-							{
-								if (0 != NextArg(&psz, szArg))
-									break;
-								pszCfg = lstrdup(szArg);
-							}
-							else if (szArg.IsSwitch(L"-dir"))
-							{
-								if (0 != NextArg(&psz, szArg))
-									break;
-								_ASSERTE(lstrcmpi(szArg, L"%1")==0);
-							}
-							else //if szArg.IsSwitch(L"-cmd")
-							{
-								// ‘Drop’ only `-cmd` and `-run`, leave `-runlist`
-								if (szArg.OneOfSwitches(L"-run",L"-cmd"))
-									pszCmd = psz;
-								else
-									pszCmd = pszPrev;
-								break;
-							}
-						}
+						StripDupSwitches(pszFull, szCmd, szDirSync, szConfig);
 					}
 					RegCloseKey(hkCmd);
 				}
@@ -658,20 +667,18 @@ void CSetPgIntegr::FillHereValues(WORD CB)
 	}
 
 	SetDlgItemText(mh_Dlg, (CB==cbInsideName) ? tInsideConfig : tHereConfig,
-		pszCfg ? pszCfg : L"");
+		szConfig.c_str(L""));
 	SetDlgItemText(mh_Dlg, (CB==cbInsideName) ? tInsideShell : tHereShell,
-		pszCmd ? pszCmd : L"");
+		szCmd.c_str(L""));
 	SetDlgItemText(mh_Dlg, (CB==cbInsideName) ? tInsideIcon : tHereIcon,
 		pszIco ? pszIco : L"");
 
 	if (CB==cbInsideName)
 	{
-		SetDlgItemText(mh_Dlg, tInsideSyncDir, pszDirSync ? pszDirSync : L"");
-		checkDlgButton(mh_Dlg, cbInsideSyncDir, (pszDirSync && *pszDirSync) ? BST_CHECKED : BST_UNCHECKED);
+		SetDlgItemText(mh_Dlg, tInsideSyncDir, szDirSync.c_str(L""));
+		checkDlgButton(mh_Dlg, cbInsideSyncDir, szDirSync ? BST_CHECKED : BST_UNCHECKED);
 	}
 
-	SafeFree(pszCfg);
 	SafeFree(pszFull);
 	SafeFree(pszIco);
-	SafeFree(pszDirSync);
 }
