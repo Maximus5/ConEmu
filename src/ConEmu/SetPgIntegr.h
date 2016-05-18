@@ -64,7 +64,7 @@ public:
 
 public:
 	// Helpers
-	static void RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, LPCWSTR asCmd, LPCWSTR asIcon);
+	static void RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfig, LPCWSTR asCmd, LPCWSTR asIcon);
 	static void UnregisterShell(LPCWSTR asName);
 	static void UnregisterShellInvalids();
 };

@@ -193,7 +193,7 @@ INT_PTR CSetPgIntegr::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 	return iRc;
 }
 
-void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig, LPCWSTR asCmd, LPCWSTR asIcon)
+void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfig, LPCWSTR asCmd, LPCWSTR asIcon)
 {
 	if (!asName || !*asName)
 		asName = L"ConEmu";
@@ -203,8 +203,13 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig
 
 	asCmd = SkipNonPrintable(asCmd);
 
+	#ifdef _DEBUG
+	CEStr szMode(asMode);
+	_ASSERTE(szMode.IsSwitch(L"-here") || szMode.IsSwitch(L"-inside") || szMode.IsSwitch(L"-inside:"));
+	#endif
+
 	size_t cchMax = _tcslen(gpConEmu->ms_ConEmuExe)
-		+ (asOpt ? (_tcslen(asOpt) + 3) : 0)
+		+ (asMode ? (_tcslen(asMode) + 3) : 0)
 		+ (asConfig ? (_tcslen(asConfig) + 16) : 0)
 		+ _tcslen(asCmd) + 32;
 	wchar_t* pszCmd = (wchar_t*)malloc(cchMax*sizeof(*pszCmd));
@@ -240,14 +245,19 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig
 
 	for (int i = 1; i <= 6; i++)
 	{
-		_wsprintf(pszCmd, SKIPLEN(cchMax) L"\"%s\" ", gpConEmu->ms_ConEmuExe);
-		if (asOpt && *asOpt)
+		_wcscpy_c(pszCmd, cchMax, L"\"");
+		_wcscat_c(pszCmd, cchMax, gpConEmu->ms_ConEmuExe);
+		_wcscat_c(pszCmd, cchMax, L"\" ");
+
+		// `-here`, `-inside` or `-inside:cd ...`
+		if (asMode && *asMode)
 		{
-			bool bQ = (wcschr(asOpt, L' ') != NULL);
+			bool bQ = IsQuotationNeeded(asMode);
 			if (bQ) _wcscat_c(pszCmd, cchMax, L"\"");
-			_wcscat_c(pszCmd, cchMax, asOpt);
+			_wcscat_c(pszCmd, cchMax, asMode);
 			_wcscat_c(pszCmd, cchMax, bQ ? L"\" " : L" ");
 		}
+
 		if (asConfig && *asConfig)
 		{
 			_wcscat_c(pszCmd, cchMax, L"-config \"");
@@ -271,11 +281,11 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig
 			break;
 		case 4:
 			pszRoot = L"Software\\Classes\\Directory\\shell";
-			_wcscat_c(pszCmd, cchMax, L"/dir \"%1\" ");
+			_wcscat_c(pszCmd, cchMax, L"-dir \"%1\" ");
 			break;
 		case 5:
 			pszRoot = L"Software\\Classes\\Drive\\shell";
-			_wcscat_c(pszCmd, cchMax, L"/dir \"%1\" ");
+			_wcscat_c(pszCmd, cchMax, L"-dir \"%1\" ");
 			break;
 		case 6:
 			// Issue 1191: ConEmu was launched instead of explorer from taskbar pinned library icon
@@ -283,7 +293,7 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asOpt, LPCWSTR asConfig
 			//if (!bHasLibraries)
 			//	continue;
 			//pszRoot = L"Software\\Classes\\LibraryFolder\\shell";
-			//_wcscat_c(pszCmd, cchMax, L"/dir \"%1\" ");
+			//_wcscat_c(pszCmd, cchMax, L"-dir \"%1\" ");
 			//break;
 		}
 
@@ -419,7 +429,7 @@ void CSetPgIntegr::ShellIntegration(HWND hDlg, CSetPgIntegr::ShellIntegrType iMo
 
 				if (isChecked(hDlg, cbInsideSyncDir))
 				{
-					wcscpy_c(szOpt, L"-inside=");
+					wcscpy_c(szOpt, L"-inside:");
 					int nOL = lstrlen(szOpt); _ASSERTE(nOL==8);
 					GetDlgItemText(hDlg, tInsideSyncDir, szOpt+nOL, countof(szShell)-nOL);
 					if (szOpt[8] == 0)
