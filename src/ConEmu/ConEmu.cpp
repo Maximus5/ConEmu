@@ -1010,14 +1010,14 @@ void CConEmuMain::AppendExtraArgs(LPCWSTR asSwitch, LPCWSTR asSwitchValue /*= NU
 	}
 }
 
-LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs)
+LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs, LPCWSTR asOtherConfig /*= NULL*/)
 {
 	bool bSpecialXml = false;
 	LPCWSTR pszXmlFile = gpConEmu->ConEmuXml(&bSpecialXml);
 	if (pszXmlFile && (!bSpecialXml || !*pszXmlFile))
 		pszXmlFile = NULL;
 
-	LPCWSTR pszConfig = gpSetCls->GetConfigName();
+	LPCWSTR pszConfig = (asOtherConfig && *asOtherConfig) ? asOtherConfig : gpSetCls->GetConfigName();
 	if (pszConfig && !*pszConfig)
 		pszConfig = NULL;
 
@@ -1041,13 +1041,13 @@ LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs)
 
 	if (pszXmlFile && *pszXmlFile)
 	{
-		_wcscat_c(pszBuf, cchMax, L"/LoadCfgFile \"");
+		_wcscat_c(pszBuf, cchMax, L"-LoadCfgFile \"");
 		_wcscat_c(pszBuf, cchMax, pszXmlFile);
 		_wcscat_c(pszBuf, cchMax, L"\" ");
 	}
 	if (pszConfig && *pszConfig)
 	{
-		_wcscat_c(pszBuf, cchMax, L"/config \"");
+		_wcscat_c(pszBuf, cchMax, L"-config \"");
 		_wcscat_c(pszBuf, cchMax, pszConfig);
 		_wcscat_c(pszBuf, cchMax, L"\" ");
 	}
