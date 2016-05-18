@@ -286,7 +286,8 @@ const wchar_t gsFocusQuakeCheckTimer[] = L"TIMER_QUAKE_AUTOHIDE_ID";
 
 #pragma warning(disable: 4355)
 CConEmuMain::CConEmuMain()
-	: CConEmuSize(this)
+	: CTaskBar(this)
+	, CConEmuSize(this)
 	, CConEmuStart(this)
 {
 	#pragma warning(default: 4355)

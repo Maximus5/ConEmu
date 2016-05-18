@@ -60,10 +60,12 @@ typedef interface ITaskbarList2 ITaskbarList2;
 typedef interface ITaskbarList ITaskbarList;
 #endif 	/* __ITaskbarList_FWD_DEFINED__ */
 
+class CConEmuMain;
 
 class CTaskBar
 {
 protected:
+	CConEmuMain* mp_ConEmu;
 	ITaskbarList4 *mp_TaskBar4; // Win7
 	ITaskbarList3 *mp_TaskBar3; // Win7
 	ITaskbarList2 *mp_TaskBar2; // WinXP
@@ -81,7 +83,7 @@ public:
 	void Taskbar_GhostReorder();
 	bool isTaskbarSmallIcons();
 public:
-	CTaskBar();
+	CTaskBar(CConEmuMain* apOwner);
 	virtual ~CTaskBar();
 
 	void Taskbar_Init();

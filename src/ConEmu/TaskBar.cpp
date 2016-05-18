@@ -65,8 +65,9 @@ calling RegisterWindowMessage(L("TaskbarButtonCreated")). That message must
 be received by your application before it calls any ITaskbarList3 method.
 */
 
-CTaskBar::CTaskBar()
+CTaskBar::CTaskBar(CConEmuMain* apOwner)
 {
+	mp_ConEmu = apOwner;
 	mp_TaskBar1 = NULL;
 	mp_TaskBar2 = NULL;
 	mp_TaskBar3 = NULL;
@@ -130,7 +131,7 @@ void CTaskBar::Taskbar_Init()
 		hr = mp_TaskBar2->QueryInterface(IID_ITaskbarList4, (void**)&mp_TaskBar4);
 	}
 
-	//if (gpConEmu->mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
+	//if (mp_ConEmu->mb_IsUacAdmin && gpSet->isWindowOnTaskBar())
 	//{
 	//	Taskbar_SetShield(true);
 	//}
@@ -184,7 +185,7 @@ HRESULT CTaskBar::Taskbar_SetActiveTab(HWND hBtn)
 bool CTaskBar::Taskbar_GhostSnapshotRequired()
 {
 	_ASSERTE(mp_TaskBar1!=NULL);
-	return gpConEmu->IsDwm();
+	return mp_ConEmu->IsDwm();
 }
 
 void CTaskBar::Taskbar_GhostAppend(LPVOID pVCon)
@@ -334,7 +335,7 @@ HRESULT CTaskBar::Taskbar_DeleteTabXP(HWND hBtn)
 
 	// -- SkipShowWindowProc
 	//// 111127 на Vista тоже кнопку "убирать" нужно
-	//_ASSERTE(gpConEmu && (gOSVer.dwMajorVersion <= 5 || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)));
+	//_ASSERTE(mp_ConEmu && (gOSVer.dwMajorVersion <= 5 || (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)));
 
 	if (mp_TaskBar1)
 	{
@@ -432,7 +433,7 @@ void CTaskBar::Taskbar_SetOverlay(HICON ahIcon)
 	HRESULT hr = E_FAIL;
 
 	// If we use ‘Overlay icon’, don't change WM_GETICON
-	gpConEmu->SetTaskbarIcon(NULL);
+	mp_ConEmu->SetTaskbarIcon(NULL);
 
 	// WinXP does not have mp_TaskBar3
 	if (mp_TaskBar3)
@@ -468,7 +469,7 @@ void CTaskBar::Taskbar_UpdateOverlay()
 	bool bAdmin;
 	HICON hIcon;
 
-	if ((hIcon = gpConEmu->GetCurrentVConIcon()) != NULL)
+	if ((hIcon = mp_ConEmu->GetCurrentVConIcon()) != NULL)
 	{
 		LogString(L"Taskbar_UpdateOverlay executed with tab icon");
 		if (!isTaskbarSmallIcons())
@@ -478,7 +479,7 @@ void CTaskBar::Taskbar_UpdateOverlay()
 		}
 		else
 		{
-			gpConEmu->SetTaskbarIcon(hIcon);
+			mp_ConEmu->SetTaskbarIcon(hIcon);
 		}
 	}
 	else if (!IsWindows7)
@@ -488,7 +489,7 @@ void CTaskBar::Taskbar_UpdateOverlay()
 	else
 	{
 		LogString(L"Taskbar_UpdateOverlay executed with [non]admin icon");
-		bAdmin = gpConEmu->IsActiveConAdmin();
+		bAdmin = mp_ConEmu->IsActiveConAdmin();
 		Taskbar_SetShield(bAdmin);
 	}
 }
@@ -498,12 +499,12 @@ HRESULT CTaskBar::Taskbar_MarkFullscreenWindow(HWND hwnd, BOOL fFullscreen)
 	HRESULT hr = E_FAIL;
 	wchar_t szState[120] = L"";
 
-	if (gpConEmu->opt.DesktopMode)
+	if (mp_ConEmu->opt.DesktopMode)
 	{
 		wcscpy_c(szState, L" - skipped in Desktop mode");
 		goto wrap;
 	}
-	if (gpConEmu->isInside())
+	if (mp_ConEmu->isInside())
 	{
 		wcscpy_c(szState, L" - skipped in Inside mode");
 		goto wrap;
