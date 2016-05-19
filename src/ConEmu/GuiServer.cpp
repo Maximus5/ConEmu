@@ -665,6 +665,20 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			CVConGuard VCon;
 			CRealConsole* pRCon = NULL;
 
+			#if 0
+			// GuiMacro may come from API before GUI initialization finishes
+			// But we may get dead-lock here...
+			// if parent process is waiting in the main thread
+			if (gpConEmu->mn_StartupFinished < CConEmuMain::ss_Started)
+			{
+				DWORD nStartTick = GetTickCount();
+				DWORD nMaxWait = 10*1000;
+				while ((gpConEmu->mn_StartupFinished < CConEmuMain::ss_Started)
+					&& ((GetTickCount() - nStartTick)))
+					Sleep(100);
+			}
+			#endif
+
 			if (CVConGroup::GetActiveVCon(&VCon) >= 0)
 				pRCon = VCon->RCon();
 
