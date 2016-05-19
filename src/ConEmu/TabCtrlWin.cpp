@@ -1141,7 +1141,7 @@ void CTabPanelWin::OnCaptionHiddenChanged(bool bCaptionHidden)
 	if (!mh_Toolbar)
 		return;
 
-	bool lbHideBtn = !bCaptionHidden;
+	bool lbHideBtn = !bCaptionHidden || gpConEmu->isInside();
 
 	#ifdef _DEBUG
 	SIZE sz1 = {}; SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz1);
