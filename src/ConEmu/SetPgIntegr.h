@@ -55,7 +55,6 @@ public:
 protected:
 	bool ReloadHereList(int* pnHere = NULL, int* pnInside = NULL);
 	void FillHereValues(WORD CB);
-	void StripDupSwitches(LPCWSTR pszFull, CEStr& szCmd, CEStr& szDirSync, CEStr& szConfig);
 
 public:
 	// Methods
