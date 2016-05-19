@@ -1200,12 +1200,12 @@
             , "Use ‘%1’ macro for ‘clicked’ item\r\n"
             , "Use ‘!ConEmuWorkDir!’ for the directory,\r\n"
             , "but not a clicked file\r\n"
-            , "Use ‘-single -run \"shell\"’ to reuse existing ConEmu window instead of creating new one" ],
+            , "Use ‘-reuse -run \"shell\"’ to reuse existing ConEmu window instead of creating new one" ],
       "zh": [ "这里指定你的shell （cmd, far,等等）\r\n"
             , "使用宏‘%1’代表‘被点击’的项目\r\n"
             , "使用‘!ConEmuWorkDir!’代表所在目录，\r\n"
             , "而不是被点击的文件\r\n"
-            , "使用‘-single -run \"shell\"’使用现有的窗口而不是创建新ConEmu窗口" ],
+            , "使用‘-reuse -run \"shell\"’使用现有的窗口而不是创建新ConEmu窗口" ],
       "id": 2391 }
     ,
     "tHideCaptionAlwaysDelay": {
