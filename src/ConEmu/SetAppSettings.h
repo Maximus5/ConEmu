@@ -96,6 +96,7 @@ struct AppSettings
 	//reg->Load(L"CursorTypeInactive", CursorActive.Raw);
 	CECursorType CursorActive; // storage
 	CECursorType CursorInactive; // storage
+	CECursorType Cursor(bool bActive) const;
 	CECursorStyle CursorStyle(bool bActive) const;
 	////reg->Load(L"CursorBlink", isCursorBlink);
 	////bool isCursorBlink;

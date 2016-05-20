@@ -108,29 +108,31 @@ BYTE AppSettings::FontItalicColor() const
 //reg->Load(L"CursorTypeInactive", CursorActive.Raw);
 //CECursorType CursorActive; // storage
 //CECursorType CursorInactive; // storage
-CECursorStyle AppSettings::CursorStyle(bool bActive) const
+
+CECursorType AppSettings::Cursor(bool bActive) const
 {
 	return (OverrideCursor || !AppNames)
-	? ((bActive || !CursorInactive.Used) ? CursorActive.CursorType : CursorInactive.CursorType)
-	: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.CursorType : gpSet->AppStd.CursorInactive.CursorType);
+		? ((bActive || !CursorInactive.Used) ? CursorActive : CursorInactive)
+		: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive : gpSet->AppStd.CursorInactive);
+}
+
+CECursorStyle AppSettings::CursorStyle(bool bActive) const
+{
+	return Cursor(bActive).CursorType;
 }
 
 ////reg->Load(L"CursorBlink", isCursorBlink);
 ////bool isCursorBlink;
 bool AppSettings::CursorBlink(bool bActive) const
 {
-	return (OverrideCursor || !AppNames)
-	? ((bActive || !CursorInactive.Used) ? CursorActive.isBlinking : CursorInactive.isBlinking)
-	: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.isBlinking : gpSet->AppStd.CursorInactive.isBlinking);
+	return Cursor(bActive).isBlinking;
 }
 
 ////reg->Load(L"CursorColor", isCursorColor);
 ////bool isCursorColor;
 bool AppSettings::CursorColor(bool bActive) const
 {
-	return (OverrideCursor || !AppNames)
-	? ((bActive || !CursorInactive.Used) ? CursorActive.isColor : CursorInactive.isColor)
-	: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.isColor : gpSet->AppStd.CursorInactive.isColor);
+	return Cursor(bActive).isColor;
 }
 
 ////reg->Load(L"CursorBlockInactive", isCursorBlockInactive);
@@ -140,27 +142,21 @@ bool AppSettings::CursorColor(bool bActive) const
 ////bool isCursorIgnoreSize;
 bool AppSettings::CursorIgnoreSize(bool bActive) const
 {
-	return (OverrideCursor || !AppNames)
-	? ((bActive || !CursorInactive.Used) ? CursorActive.isFixedSize : CursorInactive.isFixedSize)
-	: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.isFixedSize : gpSet->AppStd.CursorInactive.isFixedSize);
+	return Cursor(bActive).isFixedSize;
 }
 
 ////reg->Load(L"CursorFixedSize", nCursorFixedSize);
 ////BYTE nCursorFixedSize; // в процентах
 BYTE AppSettings::CursorFixedSize(bool bActive) const
 {
-	return (OverrideCursor || !AppNames)
-	? ((bActive || !CursorInactive.Used) ? CursorActive.FixedSize : CursorInactive.FixedSize)
-	: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.FixedSize : gpSet->AppStd.CursorInactive.FixedSize);
+	return Cursor(bActive).FixedSize;
 }
 
 //reg->Load(L"CursorMinSize", nCursorMinSize);
 //BYTE nCursorMinSize; // в пикселях
 BYTE AppSettings::CursorMinSize(bool bActive) const
 {
-	return (OverrideCursor || !AppNames)
-	? ((bActive || !CursorInactive.Used) ? CursorActive.MinSize : CursorInactive.MinSize)
-	: ((bActive || !gpSet->AppStd.CursorInactive.Used) ? gpSet->AppStd.CursorActive.MinSize : gpSet->AppStd.CursorInactive.MinSize);
+	return Cursor(bActive).MinSize;
 }
 
 //bool OverrideClipboard;
