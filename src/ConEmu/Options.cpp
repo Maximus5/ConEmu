@@ -574,8 +574,8 @@ void Settings::InitSettings()
 		AppStd.CursorActive.isColor = true;
 		//AppStd.CursorActive.isCursorBlockInactive = true;
 		AppStd.CursorActive.isFixedSize = false;
-		AppStd.CursorActive.FixedSize = 25; // в процентах
-		AppStd.CursorActive.MinSize = 2; // в пикселях
+		AppStd.CursorActive.FixedSize = 25; // Percents
+		AppStd.CursorActive.MinSize = CURSORSIZEPIX_STD/*2*/; // Pixels
 
 		AppStd.CursorInactive.Raw = AppStd.CursorActive.Raw; // копирование
 		AppStd.CursorInactive.Used = true;

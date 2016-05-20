@@ -57,6 +57,7 @@ enum CEFontStyles
 #define CURSORSIZE_MIN 5
 #define CURSORSIZE_MAX 100
 #define CURSORSIZEPIX_MIN 1
+#define CURSORSIZEPIX_STD 2
 #define CURSORSIZEPIX_MAX 99
 
 // Animation delay used not only in Quake mode,

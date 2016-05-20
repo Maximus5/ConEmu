@@ -3334,7 +3334,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 	//bool bHollowBlock = false;
 	CECursorStyle curStyle = bInSel ? cur_Horz : mp_Set->CursorStyle(bActive);
-	int MinSize = bInSel ? 2 : mp_Set->CursorMinSize(bActive);
+	int MinSize = bInSel ? CURSORSIZEPIX_STD/*2*/ : mp_Set->CursorMinSize(bActive);
 
 	//if ((!bForeground && mp_Set->CursorBlockInactive()) || (mp_Set->CursorType() == 2)) // Hollow-Block
 	if ((curStyle == cur_Block) || (curStyle == cur_Rect))
