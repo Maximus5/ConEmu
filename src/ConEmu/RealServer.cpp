@@ -1422,6 +1422,9 @@ CESERVER_REQ* CRealServer::cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	case tmc_AppCursorKeys:
 		mp_RCon->StartStopAppCursorKeys(nPID, (value != 0));
 		break;
+	case tmc_CursorShape:
+		mp_RCon->SetCursorShape((TermCursorShapes)value);
+		break;
 	default:
 		bProcessed = FALSE;
 	}

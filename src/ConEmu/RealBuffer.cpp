@@ -6973,6 +6973,16 @@ void CRealBuffer::ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci)
 
 	*ci = con.m_ci;
 
+	if (mp_RCon->m_TermCursor.CursorShape != tcs_Default)
+	{
+		if (mp_RCon->m_TermCursor.CursorShape == tcs_BlockBlink
+			|| mp_RCon->m_TermCursor.CursorShape == tcs_BlockSteady)
+			ci->dwSize = 100;
+		else
+			ci->dwSize = 15;
+		// ci->bVisible = TRUE; // Use visibility from RealConsole?
+	}
+
 	// Если сейчас выделяется текст мышкой (ConEmu internal)
 	// то курсор нужно переключить в половину знакоместа!
 	if (isSelectionPresent())

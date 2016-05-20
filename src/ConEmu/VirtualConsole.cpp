@@ -118,13 +118,6 @@ WARNING("а перед пересылкой символа/клавиши про
 WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), но обновленное содержимое консоли не приходит в GUI - там остается обрезанная верхняя и нижняя строка");
 
 
-//Курсор, его положение, размер консоли, измененный текст, и пр...
-
-//#define VCURSORWIDTH  /*2*/ mp_Set->CursorMinSize()
-//#define HCURSORHEIGHT /*2*/ mp_Set->CursorMinSize()
-
-//#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i", _T(#V), _T(__FILE__), __LINE__); Box(szAMsg); }
-
 #ifdef _DEBUG
 //#undef HEAPVAL
 #define HEAPVAL HeapValidate(mh_Heap, 0, NULL);
@@ -3332,11 +3325,11 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	bool bInSel = mp_RCon->isSelectionPresent();
 	if (bInSel) dwSize = 50;
 
-	//bool bHollowBlock = false;
-	CECursorStyle curStyle = bInSel ? cur_Horz : mp_Set->CursorStyle(bActive);
-	int MinSize = bInSel ? CURSORSIZEPIX_STD/*2*/ : mp_Set->CursorMinSize(bActive);
+	CECursorType curType = GetCursor(bActive);
 
-	//if ((!bForeground && mp_Set->CursorBlockInactive()) || (mp_Set->CursorType() == 2)) // Hollow-Block
+	CECursorStyle curStyle = bInSel ? cur_Horz : curType.CursorType;
+	int MinSize = bInSel ? CURSORSIZEPIX_STD/*2*/ : curType.MinSize;
+
 	if ((curStyle == cur_Block) || (curStyle == cur_Rect))
 	{
 		//bHollowBlock = true;
@@ -3417,7 +3410,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	// весь символ и его не видно
 	// 110131 Если курсор мигающий - разрешим нецветной курсор для AltIns в фаре
 	bool bCursorColor = bInSel ? true
-		: (mp_Set->CursorColor(bActive) || (dwSize >= 40 && !mp_Set->CursorBlink(bGroupActive) && (curStyle != cur_Rect)));
+		: (curType.isColor || (dwSize >= 40 && !GetCursor(bGroupActive).isBlinking && (curStyle != cur_Rect)));
 
 	// Теперь в rect нужно отобразить курсор (XOR'ом попробуем?)
 	if (bCursorColor)
@@ -3475,6 +3468,37 @@ bool CVirtualConsole::UpdateCursorGroup(CVirtualConsole* pVCon, LPARAM lParam)
 	return true; // continue group
 }
 
+CECursorType CVirtualConsole::GetCursor(bool bActive)
+{
+	CECursorType ct;
+	if (this || !mp_Set || !mp_RCon)
+		ct = gpSet->AppStd.Cursor(bActive);
+	else
+		ct = mp_Set->Cursor(bActive);
+
+	TermCursorShapes termShape = mp_RCon->GetCursorShape();
+	if (termShape)
+	{
+		switch (termShape)
+		{
+		case tcs_BlockBlink:
+		case tcs_BlockSteady:
+			ct.CursorType = cur_Block; break;
+		case tcs_UnderlineBlink:
+		case tcs_UnderlineSteady:
+			ct.CursorType = cur_Horz; break;
+		default:
+			ct.CursorType = cur_Vert; break;
+		}
+		ct.isBlinking = (termShape == tcs_BlockBlink || termShape == tcs_UnderlineBlink || termShape == tcs_VBarBlink);
+		ct.isFixedSize = false;
+		ct.isColor = true;
+		ct.MinSize = CURSORSIZEPIX_STD/*2*/;
+	}
+
+	return ct;
+}
+
 void CVirtualConsole::UpdateCursor(bool& lRes)
 {
 	if (!this || !mp_RCon)
@@ -3515,7 +3539,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	// Если курсор (в консоли) видим, и находится в видимой области (при прокрутке)
 	if (cinf.bVisible && isCursorValid)
 	{
-		if (!mp_Set->CursorBlink(bGroupActive && bForeground))
+		if (!GetCursor(bGroupActive && bForeground).isBlinking)
 		{
 			Cursor.isVisible = true; // Видим всегда (даже в неактивной консоли), не мигает
 

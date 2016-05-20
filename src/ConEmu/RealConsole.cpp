@@ -319,6 +319,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	mb_DataChanged = FALSE;
 	mb_RConStartedSuccess = FALSE;
 	ZeroStruct(m_Term);
+	ZeroStruct(m_TermCursor);
 	mn_ProgramStatus = 0; mn_FarStatus = 0; mn_Comspec4Ntvdm = 0;
 	isShowConsole = gpSet->isConVisible;
 	//mb_ConsoleSelectMode = false;
@@ -15480,6 +15481,27 @@ void CRealConsole::SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ 
 			mp_VCon->Invalidate();
 		}
 	}
+}
+
+void CRealConsole::SetCursorShape(TermCursorShapes xtermShape)
+{
+	if (!this || !mp_VCon)
+	{
+		return; // Exceptional
+	}
+
+	m_TermCursor.CursorShape = (xtermShape > tcs_Default && xtermShape < tcs_Last) ? xtermShape : tcs_Default;
+
+	// Trigger force redraw
+	mp_VCon->Update(true);
+}
+
+TermCursorShapes CRealConsole::GetCursorShape()
+{
+	if (!this)
+		return tcs_Default; // Exceptional
+
+	return m_TermCursor.CursorShape;
 }
 
 void CRealConsole::UpdateCursorInfo()

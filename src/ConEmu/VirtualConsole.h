@@ -254,6 +254,7 @@ class CVirtualConsole :
 		bool Update(bool abForce = false, HDC *ahDc=NULL);
 		void UpdateCursor(bool& lRes);
 		static bool UpdateCursorGroup(CVirtualConsole* pVCon, LPARAM lParam);
+		CECursorType GetCursor(bool bActive);
 		void UpdateThumbnail(bool abNoSnapshot = FALSE);
 		void SelectFont(CEFontStyles newFont);
 		void SelectBrush(HBRUSH hNew);

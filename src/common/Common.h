@@ -360,6 +360,7 @@ enum TermModeCommand
 	tmc_Keyboard = 0,
 	tmc_BracketedPaste = 1,
 	tmc_AppCursorKeys = 2,
+	tmc_CursorShape = 3,
 };
 
 // tmc_Keyboard: used for control keys (arrows e.g.) translation
@@ -367,6 +368,18 @@ enum TermEmulationType
 {
 	te_win32 = 0,
 	te_xterm = 1,
+};
+
+enum TermCursorShapes
+{
+	tcs_Default = 0,
+	tcs_BlockBlink = 1,
+	tcs_BlockSteady = 2,
+	tcs_UnderlineBlink = 3,
+	tcs_UnderlineSteady = 4,
+	tcs_VBarBlink = 5,
+	tcs_VBarSteady = 6,
+	tcs_Last
 };
 
 //#define CONEMUMAPPING    L"ConEmuPluginData%u"

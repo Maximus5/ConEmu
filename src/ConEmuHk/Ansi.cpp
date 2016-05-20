@@ -2942,6 +2942,38 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 		}
 		break; // "[...m"
 
+	case L'q':
+		if ((Code.PvtLen == 1) && (Code.Pvt[0] == L' '))
+		{
+			/*
+			CSI Ps SP q
+				Set cursor style (DECSCUSR, VT520).
+					Ps = 0  -> ConEmu's default.
+					Ps = 1  -> blinking block.
+					Ps = 2  -> steady block.
+					Ps = 3  -> blinking underline.
+					Ps = 4  -> steady underline.
+					Ps = 5  -> blinking bar (xterm).
+					Ps = 6  -> steady bar (xterm).
+			*/
+			DWORD nStyle = ((Code.ArgC == 0) || (Code.ArgV[0] < 0) || (Code.ArgV[0] > 6))
+				? 0 : Code.ArgV[0];
+			CONSOLE_CURSOR_INFO ci = {};
+			if (GetConsoleCursorInfo(hConsoleOutput, &ci))
+			{
+				// We can't implement all possible styles in RealConsole,
+				// but we can use "Block/Underline" shapes...
+				ci.dwSize = (nStyle == 1 || nStyle == 2) ? 100 : 15;
+				SetConsoleCursorInfo(hConsoleOutput, &ci);
+			}
+			ChangeTermMode(tmc_CursorShape, nStyle);
+		}
+		else
+		{
+			DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+		}
+		break; // "[...q"
+
 	case L't':
 		if (Code.ArgC > 0 && Code.ArgC <= 3)
 		{

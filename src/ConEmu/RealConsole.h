@@ -651,6 +651,8 @@ class CRealConsole
 		bool IsConsoleThread();
 		void SetForceRead();
 		void UpdateCursorInfo();
+		void SetCursorShape(TermCursorShapes xtermShape);
+		TermCursorShapes GetCursorShape();
 		bool isNeedCursorDraw();
 		bool Detach(bool bPosted = false, bool bSendCloseConsole = false);
 		void Unfasten();
@@ -925,6 +927,10 @@ class CRealConsole
 			TermEmulationType Term;
 			bool  bBracketedPaste; // All "pasted" text will be wrapped in `\e[200~ ... \e[201~`
 		} m_Term;
+		struct TermCursor
+		{
+			TermCursorShapes CursorShape;
+		} m_TermCursor;
 		//
 		bool PrepareOutputFile(bool abUnicodeText, wchar_t* pszFilePathName);
 		HANDLE PrepareOutputFileCreate(wchar_t* pszFilePathName);
