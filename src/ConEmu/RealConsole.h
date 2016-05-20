@@ -204,24 +204,6 @@ struct ConProcess
 //}
 //
 
-#define DBGMSG_LOG_ID (WM_APP+100)
-#define DBGMSG_LOG_SHELL_MAGIC 0xD73A34
-#define DBGMSG_LOG_INPUT_MAGIC 0xD73A35
-#define DBGMSG_LOG_CMD_MAGIC   0xD73A36
-struct DebugLogShellActivity
-{
-	DWORD   nParentPID, nParentBits, nChildPID;
-	wchar_t szFunction[32];
-	wchar_t* pszAction;
-	wchar_t* pszFile;
-	wchar_t* pszParam;
-	int     nImageSubsystem;
-	int     nImageBits;
-	DWORD   nShellFlags, nCreateFlags, nStartFlags, nShowCmd;
-	BOOL    bDos;
-	DWORD   hStdIn, hStdOut, hStdErr;
-};
-
 //#define MAX_SERVER_THREADS 3
 //#define MAX_THREAD_PACKETS 100
 

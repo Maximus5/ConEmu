@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetDlgColors.h"
 #include "SetPgApps.h"
 #include "SetPgBase.h"
+#include "SetPgDebug.h"
 #include "SetPgFonts.h"
 #include "SetPgKeys.h"
 
@@ -435,7 +436,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			{
 			case lbActivityLog:
 				if (!pObj->mb_SkipSelChange)
-					return gpSetCls->OnActivityLogNotify(hDlg, wParam, lParam);
+					return ((CSetPgDebug*)pObj)->OnActivityLogNotify(wParam, lParam);
 				break;
 			case lbConEmuHotKeys:
 				if (!pObj->mb_SkipSelChange)
@@ -484,18 +485,18 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 				MSetter lockSelChange(&pObj->mb_SkipSelChange);
 				if (wParam == DBGMSG_LOG_SHELL_MAGIC)
 				{
-					DebugLogShellActivity *pShl = (DebugLogShellActivity*)lParam;
-					gpSetCls->debugLogShell(hDlg, pShl);
+					CSetPgDebug::DebugLogShellActivity *pShl = (CSetPgDebug::DebugLogShellActivity*)lParam;
+					((CSetPgDebug*)pObj)->debugLogShell(pShl);
 				} // DBGMSG_LOG_SHELL_MAGIC
 				else if (wParam == DBGMSG_LOG_INPUT_MAGIC)
 				{
 					CESERVER_REQ_PEEKREADINFO* pInfo = (CESERVER_REQ_PEEKREADINFO*)lParam;
-					gpSetCls->debugLogInfo(hDlg, pInfo);
+					((CSetPgDebug*)pObj)->debugLogInfo(pInfo);
 				} // DBGMSG_LOG_INPUT_MAGIC
 				else if (wParam == DBGMSG_LOG_CMD_MAGIC)
 				{
-					CSettings::LogCommandsData* pCmd = (CSettings::LogCommandsData*)lParam;
-					gpSetCls->debugLogCommand(hDlg, pCmd);
+					CSetPgDebug::LogCommandsData* pCmd = (CSetPgDebug::LogCommandsData*)lParam;
+					((CSetPgDebug*)pObj)->debugLogCommand(pCmd);
 				} // DBGMSG_LOG_CMD_MAGIC
 			} // if (messg == DBGMSG_LOG_ID && hDlg == gpSetCls->hDebug)
 			else

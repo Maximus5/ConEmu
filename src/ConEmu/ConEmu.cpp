@@ -88,6 +88,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Recreate.h"
 #include "RunQueue.h"
 #include "SetCmdTask.h"
+#include "SetPgDebug.h"
 #include "SetPgInfo.h"
 #include "Status.h"
 #include "TabBar.h"
@@ -2176,7 +2177,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.hGuiWnd = ghWnd;
 	m_GuiInfo.nGuiPID = GetCurrentProcessId();
 
-	m_GuiInfo.nLoggingType = gpSetCls->GetPage(thi_Debug) ? gpSetCls->m_ActivityLoggingType : glt_None;
+	m_GuiInfo.nLoggingType = CSetPgDebug::GetActivityLoggingType();
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0) ; // ((gpSet->isUseInjects == BST_CHECKED) ? 1 : (gpSet->isUseInjects == BST_INDETERMINATE) ? 3 : 0);
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_UseTrueColor,(gpSet->isTrueColorer ? CECF_UseTrueColor : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessAnsi,(gpSet->isProcessAnsi ? CECF_ProcessAnsi : 0));

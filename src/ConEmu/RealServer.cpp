@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TabBar.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
+#include "SetPgDebug.h"
 #include "VConChild.h"
 #include "VConGroup.h"
 #include "ConEmuPipe.h"
@@ -1151,91 +1152,9 @@ CESERVER_REQ* CRealServer::cmdOnCreateProc(LPVOID pInst, CESERVER_REQ* pIn, UINT
 	bool lbDos = (pIn->OnCreateProc.nImageBits == 16)
 			&& (pIn->OnCreateProc.nImageSubsystem == IMAGE_SUBSYSTEM_DOS_EXECUTABLE);
 
-	if (gpSetCls->GetPage(thi_Debug))
-	{
-		LPCWSTR pszFile = pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen;
-		LPCWSTR pszParam = pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen+pIn->OnCreateProc.nFileLen;
-		DebugLogShellActivity *shl = (DebugLogShellActivity*)calloc(sizeof(DebugLogShellActivity),1);
-		shl->nParentPID = pIn->hdr.nSrcPID;
-		shl->nParentBits = pIn->OnCreateProc.nSourceBits;
-		wcscpy_c(shl->szFunction, pIn->OnCreateProc.sFunction);
-		shl->pszAction = lstrdup(pIn->OnCreateProc.wsValue);
-		shl->pszFile   = lstrdup(pszFile);
-		shl->pszParam  = lstrdup(pszParam);
-		shl->bDos = lbDos;
-		shl->nImageBits = pIn->OnCreateProc.nImageBits;
-		shl->nImageSubsystem = pIn->OnCreateProc.nImageSubsystem;
-		shl->nShellFlags = pIn->OnCreateProc.nShellFlags;
-		shl->nCreateFlags = pIn->OnCreateProc.nCreateFlags;
-		shl->nStartFlags = pIn->OnCreateProc.nStartFlags;
-		shl->nShowCmd = pIn->OnCreateProc.nShowCmd;
-		shl->hStdIn = (DWORD)pIn->OnCreateProc.hStdIn;
-		shl->hStdOut = (DWORD)pIn->OnCreateProc.hStdOut;
-		shl->hStdErr = (DWORD)pIn->OnCreateProc.hStdErr;
+	// Log glt_Processes and glt_Shell
+	CSetPgDebug::debugLogShell(pIn->hdr.nSrcPID, &pIn->OnCreateProc);
 
-		// Append directory and bat/tmp files contents to pszParam
-		{
-			LPCWSTR pszDir = (pIn->OnCreateProc.wsValue+pIn->OnCreateProc.nActionLen+pIn->OnCreateProc.nFileLen+pIn->OnCreateProc.nParamLen);
-			LPCWSTR pszAppFile = NULL;
-			wchar_t*& pszParamEx = shl->pszParam;
-
-			if (pszDir && *pszDir)
-			{
-				CEStr lsDir((pszParamEx && *pszParamEx) ? L"\r\n\r\n" : NULL, L"CD: \"", pszDir, L"\"");
-				lstrmerge(&pszParamEx, lsDir);
-			}
-
-			if (shl->pszFile)
-			{
-				LPCWSTR pszExt = PointToExt(shl->pszFile);
-				if (pszExt && (!lstrcmpi(pszExt, L".bat") || !lstrcmpi(pszExt, L".cmd")))
-					gpSetCls->debugLogShellText(pszParamEx, (pszAppFile = shl->pszFile));
-			}
-
-			if (pszParam && *pszParam)
-			{
-				LPCWSTR pszNext = pszParam;
-				CEStr szArg;
-				while (0 == NextArg(&pszNext, szArg))
-				{
-					if (!*szArg || (*szArg == L'-') || (*szArg == L'/'))
-						continue;
-					LPCWSTR pszExt = PointToExt(szArg);
-
-					// Perhaps process *.tmp files too? (used with VC RC compilation?)
-					if (pszExt && (!lstrcmpi(pszExt, L".bat") || !lstrcmpi(pszExt, L".cmd") /*|| !lstrcmpi(pszExt, L".tmp")*/)
-						&& (!pszAppFile || (lstrcmpi(szArg, pszAppFile) != 0)))
-					{
-						gpSetCls->debugLogShellText(pszParamEx, szArg);
-					}
-					else if (szArg[0] == L'@')
-					{
-						CEStr lsPath;
-
-						if (IsFilePath(szArg.Mid(1), true))
-						{
-							// Full path to "arguments file"
-							lsPath.Set(szArg.Mid(1));
-						}
-						else if ((szArg[1] != L'\\' && szArg[1] != L'/')
-							&& (pszDir && *pszDir))
-						{
-							// Relative path to "arguments file"
-							lsPath = JoinPath(pszDir, szArg.Mid(1));
-						}
-
-						if (!lsPath.IsEmpty())
-						{
-							gpSetCls->debugLogShellText(pszParamEx, lsPath);
-						}
-					}
-				}
-			}
-		}
-		// end of "Append directory and bat/tmp files contents to pszParam"
-
-		PostMessage(gpSetCls->GetPage(thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_SHELL_MAGIC, (LPARAM)shl);
-	}
 
 	if (pIn->OnCreateProc.nImageBits > 0)
 	{
@@ -1281,7 +1200,7 @@ CESERVER_REQ* CRealServer::cmdOnPeekReadInput(LPVOID pInst, CESERVER_REQ* pIn, U
 
 	DEBUGSTRCMD(L"GUI recieved CECMD_PEEKREADINFO\n");
 
-	if (gpSetCls->GetPage(thi_Debug) && gpSetCls->m_ActivityLoggingType == glt_Input)
+	if (CSetPgDebug::GetActivityLoggingType() == glt_Input)
 	{
 		if (nDataSize >= sizeof(CESERVER_REQ_PEEKREADINFO))
 		{
@@ -1747,7 +1666,7 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 		}
 
 		DWORD dwDur = timeGetTime() - dwTimeStart;
-		gpSetCls->debugLogCommand(pIn, TRUE, dwTimeStart, dwDur, pRCon->ms_VConServer_Pipe, pOut);
+		CSetPgDebug::debugLogCommand(pIn, TRUE, dwTimeStart, dwDur, pRCon->ms_VConServer_Pipe, pOut);
 
 		ppReply = pOut;
 		if (pOut)
@@ -1763,7 +1682,7 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 	else
 	{
 		DWORD dwDur = timeGetTime() - dwTimeStart;
-		gpSetCls->debugLogCommand(pIn, TRUE, dwTimeStart, dwDur, pRCon->ms_VConServer_Pipe, NULL/*pOut*/);
+		CSetPgDebug::debugLogCommand(pIn, TRUE, dwTimeStart, dwDur, pRCon->ms_VConServer_Pipe, NULL/*pOut*/);
 
 		// Delayed write
 		_ASSERTE(ppReply==NULL);

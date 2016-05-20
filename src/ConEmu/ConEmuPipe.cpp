@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2012 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuPipeMode.h"
 #include "ConEmuPipe.h"
 #include "ConEmu.h"
-#include "OptionsClass.h"
+#include "SetPgDebug.h"
 
 WARNING("!!! Обязательно нужно сделать возможность отваливаться по таймауту!");
 
@@ -128,7 +128,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 					NULL);                  // not overlapped
 	dwErr = GetLastError();
 
-	gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_PipeName);
+	CSetPgDebug::debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_PipeName);
 
 	if (!fSuccess && dwErr == ERROR_BROKEN_PIPE)
 	{

@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetDlgLists.h"
 #include "SetPgColors.h"
 #include "SetPgComspec.h"
+#include "SetPgDebug.h"
 #include "SetPgFeatures.h"
 #include "SetPgIntegr.h"
 #include "SetPgKeys.h"
@@ -3453,7 +3454,15 @@ void CSetDlgButtons::OnBtn_ActivitySaveAs(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbActivitySaveAs);
 
-	gpSetCls->OnSaveActivityLogFile(GetDlgItem(hDlg, lbActivityLog));
+	CSetPgDebug* pDbgPg = (CSetPgDebug*)gpSetCls->GetPageObj(thi_Debug);
+	if (!pDbgPg)
+	{
+		// Expected to be recieved while Debug page is active only!
+		_ASSERTE(pDbgPg!=NULL);
+		return;
+	}
+
+	pDbgPg->OnSaveActivityLogFile();
 
 } // cbActivitySaveAs
 
@@ -3463,124 +3472,32 @@ void CSetDlgButtons::OnBtn_DebugActivityRadio(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==rbActivityDisabled || CB==rbActivityShell || CB==rbActivityInput || CB==rbActivityComm || CB==rbActivityProcess);
 
-	HWND hList = GetDlgItem(hDlg, lbActivityLog);
-	//HWND hDetails = GetDlgItem(hDlg, lbActivityDetails);
+	CSetPgDebug* pDbgPg = (CSetPgDebug*)gpSetCls->GetPageObj(thi_Debug);
+	if (!pDbgPg)
+	{
+		// Expected to be recieved while Debug page is active only!
+		_ASSERTE(pDbgPg!=NULL);
+		return;
+	}
+
+	GuiLoggingType NewLogType;
+
 	switch (CB)
 	{
 	case rbActivityProcess:
-		gpSetCls->m_ActivityLoggingType = glt_Processes; break;
+		NewLogType = glt_Processes; break;
 	case rbActivityShell:
-		gpSetCls->m_ActivityLoggingType = glt_Shell; break;
+		NewLogType = glt_Shell; break;
 	case rbActivityInput:
-		gpSetCls->m_ActivityLoggingType = glt_Input; break;
+		NewLogType = glt_Input; break;
 	case rbActivityComm:
-		gpSetCls->m_ActivityLoggingType = glt_Commands; break;
+		NewLogType = glt_Commands; break;
 	default:
-		gpSetCls->m_ActivityLoggingType = glt_None;
+		_ASSERTE(CB==rbActivityDisabled); // Unsupported yet option?
+		NewLogType = glt_None;
 	}
 
-	ListView_DeleteAllItems(hList);
-
-	for (int c = 0; (c <= 40) && ListView_DeleteColumn(hList, 0); c++)
-		;
-
-	//ListView_DeleteAllItems(hDetails);
-	//for (int c = 0; (c <= 40) && ListView_DeleteColumn(hDetails, 0); c++);
-
-	SetDlgItemText(hDlg, ebActivityApp, L"");
-	SetDlgItemText(hDlg, ebActivityParm, L"");
-
-	if ((gpSetCls->m_ActivityLoggingType == glt_Processes)
-		|| (gpSetCls->m_ActivityLoggingType == glt_Shell))
-	{
-		LVCOLUMN col = {
-			LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
-			gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
-		wchar_t szTitle[64]; col.pszText = szTitle;
-
-		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
-		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
-
-		wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, CSettings::lpc_Time, &col);
-		col.cx = gpSetCls->EvalSize(55, esf_Horizontal|esf_CanUseDpi); col.fmt = LVCFMT_RIGHT;
-		wcscpy_c(szTitle, L"PPID");		ListView_InsertColumn(hList, CSettings::lpc_PPID, &col);
-		col.cx = gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi); col.fmt = LVCFMT_LEFT;
-		wcscpy_c(szTitle, L"Func");		ListView_InsertColumn(hList, CSettings::lpc_Func, &col);
-		col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"Oper");		ListView_InsertColumn(hList, CSettings::lpc_Oper, &col);
-		col.cx = gpSetCls->EvalSize(40, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"Bits");		ListView_InsertColumn(hList, CSettings::lpc_Bits, &col);
-		wcscpy_c(szTitle, L"Syst");		ListView_InsertColumn(hList, CSettings::lpc_System, &col);
-		col.cx = gpSetCls->EvalSize(120, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"App");		ListView_InsertColumn(hList, CSettings::lpc_App, &col);
-		wcscpy_c(szTitle, L"Params");	ListView_InsertColumn(hList, CSettings::lpc_Params, &col);
-		//wcscpy_c(szTitle, L"CurDir");	ListView_InsertColumn(hList, 7, &col);
-		col.cx = gpSetCls->EvalSize(120, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"Flags");	ListView_InsertColumn(hList, CSettings::lpc_Flags, &col);
-		col.cx = gpSetCls->EvalSize(80, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"StdIn");	ListView_InsertColumn(hList, CSettings::lpc_StdIn, &col);
-		wcscpy_c(szTitle, L"StdOut");	ListView_InsertColumn(hList, CSettings::lpc_StdOut, &col);
-		wcscpy_c(szTitle, L"StdErr");	ListView_InsertColumn(hList, CSettings::lpc_StdErr, &col);
-
-	}
-	else if (gpSetCls->m_ActivityLoggingType == glt_Input)
-	{
-		LVCOLUMN col = {
-			LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
-			gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
-		wchar_t szTitle[64]; col.pszText = szTitle;
-
-		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
-		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
-
-		wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, CSettings::lic_Time, &col);
-		col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"Type");		ListView_InsertColumn(hList, CSettings::lic_Type, &col);
-		col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"##");		ListView_InsertColumn(hList, CSettings::lic_Dup, &col);
-		col.cx = gpSetCls->EvalSize(300, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"Event");	ListView_InsertColumn(hList, CSettings::lic_Event, &col);
-
-	}
-	else if (gpSetCls->m_ActivityLoggingType == glt_Commands)
-	{
-		gpSetCls->mn_ActivityCmdStartTick = timeGetTime();
-
-		LVCOLUMN col = {
-			LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
-			gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
-		wchar_t szTitle[64]; col.pszText = szTitle;
-
-		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
-		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_LABELTIP|LVS_EX_INFOTIP,LVS_EX_LABELTIP|LVS_EX_INFOTIP);
-
-		col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"In/Out");	ListView_InsertColumn(hList, CSettings::lcc_InOut, &col);
-		col.cx = gpSetCls->EvalSize(70, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"Time");		ListView_InsertColumn(hList, CSettings::lcc_Time, &col);
-		col.cx = gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"Duration");	ListView_InsertColumn(hList, CSettings::lcc_Duration, &col);
-		col.cx = gpSetCls->EvalSize(50, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"Cmd");		ListView_InsertColumn(hList, CSettings::lcc_Command, &col);
-		wcscpy_c(szTitle, L"Size");		ListView_InsertColumn(hList, CSettings::lcc_Size, &col);
-		wcscpy_c(szTitle, L"PID");		ListView_InsertColumn(hList, CSettings::lcc_PID, &col);
-		col.cx = gpSetCls->EvalSize(300, esf_Horizontal|esf_CanUseDpi);
-		wcscpy_c(szTitle, L"Pipe");		ListView_InsertColumn(hList, CSettings::lcc_Pipe, &col);
-		wcscpy_c(szTitle, L"Extra");	ListView_InsertColumn(hList, CSettings::lcc_Extra, &col);
-
-	}
-	else
-	{
-		LVCOLUMN col = {
-			LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
-			gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
-		wchar_t szTitle[4]; col.pszText = szTitle;
-		wcscpy_c(szTitle, L" ");		ListView_InsertColumn(hList, 0, &col);
-		//ListView_InsertColumn(hDetails, 0, &col);
-	}
-	ListView_DeleteAllItems(GetDlgItem(hDlg, lbActivityLog));
-
-	gpConEmu->OnGlobalSettingsChanged();
+	pDbgPg->SetLoggingType(NewLogType);
 
 } // rbActivityDisabled || rbActivityShell || rbActivityInput || rbActivityComm || rbActivityProcess
 

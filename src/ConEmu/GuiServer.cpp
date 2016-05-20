@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Macro.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
+#include "SetPgDebug.h"
 #include "VConGroup.h"
 #include "VConRelease.h"
 #include "VirtualConsole.h"
@@ -207,7 +208,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 	if (pIn->hdr.bAsync)
 		pGSrv->mp_GuiServer->BreakConnection(pInst);
 
-	gpSetCls->debugLogCommand(pIn, TRUE, timeGetTime(), 0, pGSrv ? pGSrv->ms_ServerPipe : NULL);
+	CSetPgDebug::debugLogCommand(pIn, TRUE, timeGetTime(), 0, pGSrv ? pGSrv->ms_ServerPipe : NULL);
 
 	#ifdef _DEBUG
 	UINT nDataSize = pIn->hdr.cbSize - sizeof(CESERVER_REQ_HDR);

@@ -48,8 +48,95 @@ public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
 
+	LRESULT OnActivityLogNotify(WPARAM wParam, LPARAM lParam);
+	void OnSaveActivityLogFile();
+
+public:
+	// Definitions
+	enum LogProcessColumns
+	{
+		lpc_Time = 0,
+		lpc_PPID,
+		lpc_Func,
+		lpc_Oper,
+		lpc_Bits,
+		lpc_System,
+		lpc_App,
+		lpc_Params,
+		lpc_Flags,
+		lpc_StdIn,
+		lpc_StdOut,
+		lpc_StdErr,
+	};
+	enum LogInputColumns
+	{
+		lic_Time = 0,
+		lic_Type,
+		lic_Dup,
+		lic_Event,
+	};
+	enum LogCommandsColumns
+	{
+		lcc_InOut = 0,
+		lcc_Time,
+		lcc_Duration,
+		lcc_Command,
+		lcc_Size,
+		lcc_PID,
+		lcc_Pipe,
+		lcc_Extra,
+	};
+	enum LogAnsiColumns
+	{
+		lac_Time = 0,
+		lac_Sequence,
+	};
+	struct LogCommandsData
+	{
+		BOOL  bInput, bMainThread;
+		DWORD nTick, nDur, nCmd, nSize, nPID;
+		wchar_t szPipe[64];
+		wchar_t szExtra[128];
+	};
+
+	#define DBGMSG_LOG_ID (WM_APP+100)
+	#define DBGMSG_LOG_SHELL_MAGIC 0xD73A34
+	#define DBGMSG_LOG_INPUT_MAGIC 0xD73A35
+	#define DBGMSG_LOG_CMD_MAGIC   0xD73A36
+
+	struct DebugLogShellActivity
+	{
+		DWORD   nParentPID, nParentBits, nChildPID;
+		wchar_t szFunction[32];
+		wchar_t* pszAction;
+		wchar_t* pszFile;
+		wchar_t* pszParam;
+		int     nImageSubsystem;
+		int     nImageBits;
+		DWORD   nShellFlags, nCreateFlags, nStartFlags, nShowCmd;
+		BOOL    bDos;
+		DWORD   hStdIn, hStdOut, hStdErr;
+	};
+
+public:
+	// Helpers
+	static GuiLoggingType GetActivityLoggingType();
+	void SetLoggingType(GuiLoggingType aNewLogType);
+
+	// Loggers
+	static void debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTick, DWORD anDur, LPCWSTR asPipe, CESERVER_REQ* pResult = NULL);
+	static void debugLogInfo(CESERVER_REQ_PEEKREADINFO* pInfo);
+	static void debugLogShell(DWORD nParentPID, CESERVER_REQ_ONCREATEPROCESS* pInfo);
+
+	// Called from CSetPgBase over DBGMSG_LOG_ID
+	void debugLogCommand(LogCommandsData* apData);
+	void debugLogShell(DebugLogShellActivity *pShl);
+
 protected:
 	// Members
+	GuiLoggingType m_ActivityLoggingType;
+	DWORD mn_ActivityCmdStartTick;
 
+	// Helpers
+	static void debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile);
 };
-

@@ -78,6 +78,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "RunQueue.h"
 #include "SetColorPalette.h"
+#include "SetPgDebug.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "TermX.h"
@@ -2245,7 +2246,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 		}
 	}
 
-	if (gpSetCls->GetPage(thi_Debug) && gpSetCls->m_ActivityLoggingType == glt_Input)
+	if (CSetPgDebug::GetActivityLoggingType() == glt_Input)
 	{
 		//INPUT_RECORD *prCopy = (INPUT_RECORD*)calloc(sizeof(INPUT_RECORD),1);
 		CESERVER_REQ_PEEKREADINFO* pCopy = (CESERVER_REQ_PEEKREADINFO*)malloc(sizeof(CESERVER_REQ_PEEKREADINFO));
@@ -5868,7 +5869,7 @@ bool CRealConsole::PostConsoleMessage(HWND hWnd, UINT nMsg, WPARAM wParam, LPARA
 		// сообщения рассылаем только через главный сервер. альтернативный (приложение) может висеть
 		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), &in, ghWnd);
 
-		gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+		CSetPgDebug::debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 		if (pOut)
 		{
@@ -9995,7 +9996,7 @@ bool CRealConsole::ShowOtherWindow(HWND hWnd, int swShow, bool abAsync/*=TRUE*/)
 
 			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
 
-			gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+			CSetPgDebug::debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 			if (pOut) ExecuteFreeResult(pOut);
 
@@ -10062,7 +10063,7 @@ bool CRealConsole::SetOtherWindowPos(HWND hWnd, HWND hWndInsertAfter, int X, int
 
 			CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), &in, ghWnd, TRUE/*Async*/);
 
-			gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+			CSetPgDebug::debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 			if (pOut) ExecuteFreeResult(pOut);
 
@@ -10150,7 +10151,7 @@ HWND CRealConsole::SetOtherWindowParent(HWND hWnd, HWND hParent)
 
 		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
 
-		gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+		CSetPgDebug::debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 		if (pOut)
 		{
@@ -10187,7 +10188,7 @@ bool CRealConsole::SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, boo
 
 	CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &in, ghWnd);
 
-	gpSetCls->debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+	CSetPgDebug::debugLogCommand(&in, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 	if (pOut) ExecuteFreeResult(pOut);
 
@@ -10541,7 +10542,7 @@ void CRealConsole::UpdateServerActive(bool abImmediate /*= FALSE*/)
 			pOut = ExecuteCmd(ms_MainSrv_Pipe, pIn, 500, ghWnd);
 			fSuccess = (pOut != NULL);
 
-			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_MainSrv_Pipe, pOut);
+			CSetPgDebug::debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, ms_MainSrv_Pipe, pOut);
 
 			#if 0
 			DEBUGSTRFOCUS(szInfo);
@@ -11167,7 +11168,7 @@ void CRealConsole::RenameWindow(LPCWSTR asNewWindowText /*= NULL*/)
 
 		CESERVER_REQ *pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
 
-		gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+		CSetPgDebug::debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 		ExecuteFreeResult(pOut);
 		ExecuteFreeResult(pIn);
@@ -12123,7 +12124,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 
 			CESERVER_REQ *pOut = ExecuteHkCmd(m_ChildGui.Process.ProcessID, pIn, ghWnd);
 
-			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteHkCmd", pOut);
+			CSetPgDebug::debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteHkCmd", pOut);
 
 			ExecuteFreeResult(pOut);
 			ExecuteFreeResult(pIn);
@@ -12666,7 +12667,7 @@ bool CRealConsole::TerminateActiveProcess(bool abConfirm, DWORD nPID)
 
 		CESERVER_REQ *pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
 
-		gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime() - dwTickStart, L"ExecuteSrvCmd", pOut);
+		CSetPgDebug::debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime() - dwTickStart, L"ExecuteSrvCmd", pOut);
 
 		if (pOut)
 		{
@@ -13780,7 +13781,7 @@ void CRealConsole::UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo)
 
 			CESERVER_REQ *pOut = ExecuteSrvCmd(dwServerPID, pIn, ghWnd);
 
-			gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+			CSetPgDebug::debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 			if (pOut)
 				ExecuteFreeResult(pOut);
@@ -13803,7 +13804,8 @@ void CRealConsole::UpdateFarSettings(DWORD anFarPID /*= 0*/, FAR_REQ_FARSETCHANG
 	//wchar_t *szData = pSetEnvVar->szEnv;
 	pSetEnvVar->bFARuseASCIIsort = gpSet->isFARuseASCIIsort;
 	pSetEnvVar->bShellNoZoneCheck = gpSet->isShellNoZoneCheck;
-	pSetEnvVar->bMonitorConsoleInput = (gpSetCls->m_ActivityLoggingType == glt_Input);
+	CSetPgDebug* pDbgPg = (CSetPgDebug*)gpSetCls->GetPageObj(thi_Debug);
+	pSetEnvVar->bMonitorConsoleInput = (CSetPgDebug::GetActivityLoggingType() == glt_Input);
 	pSetEnvVar->bLongConsoleOutput = gpSet->AutoBufferHeight;
 
 	mp_ConEmu->GetComSpecCopy(pSetEnvVar->ComSpec);
@@ -14411,7 +14413,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 
 	CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), &In, ghWnd);
 
-	gpSetCls->debugLogCommand(&In, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+	CSetPgDebug::debugLogCommand(&In, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 	if (pOut) ExecuteFreeResult(pOut);
 
@@ -15988,7 +15990,7 @@ bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 
 		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), pIn, ghWnd);
 
-		gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+		CSetPgDebug::debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 		if (pOut)
 			bDetached = true;
@@ -16026,7 +16028,7 @@ bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 
 		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), pIn, ghWnd);
 
-		gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
+		CSetPgDebug::debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
 		if (pOut)
 		{

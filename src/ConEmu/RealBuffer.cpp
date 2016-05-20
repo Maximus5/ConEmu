@@ -63,6 +63,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RConPalette.h"
 #include "RealBuffer.h"
 #include "RealConsole.h"
+#include "SetPgDebug.h"
 #include "Status.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
@@ -891,7 +892,7 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		}
 	}
 
-	gpSetCls->debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, mp_RCon->ms_ConEmuC_Pipe, pOut);
+	CSetPgDebug::debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, mp_RCon->ms_ConEmuC_Pipe, pOut);
 
 	if (!fSuccess || (pOut && (pOut->hdr.cbSize < nOutSize)))
 	{

@@ -51,7 +51,6 @@ class CDpiForDialog;
 class CDynDialog;
 class CImgButtons;
 struct CEHelpPopup;
-struct DebugLogShellActivity;
 struct DpiValue;
 
 enum SingleInstanceArgEnum
@@ -147,10 +146,6 @@ class CSettings
 	public:
 		char isAllowDetach;
 
-		//
-		enum GuiLoggingType m_ActivityLoggingType;
-		DWORD mn_ActivityCmdStartTick;
-
 		// Thumbnails and Tiles
 		//PanelViewSetMapping ThSet;
 		MFileMapping<PanelViewSetMapping> m_ThSetMap;
@@ -207,11 +202,6 @@ class CSettings
 		DWORD BalloonStyle();
 		// IDD_SETTINGS
 		static INT_PTR CALLBACK wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		//
-		void debugLogShell(HWND hWnd2, DebugLogShellActivity *pShl);
-		void debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile);
-		void debugLogInfo(HWND hWnd2, CESERVER_REQ_PEEKREADINFO* pInfo);
-		void debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTick, DWORD anDur, LPCWSTR asPipe, CESERVER_REQ* pResult = NULL);
 		//
 		bool SetOption(LPCWSTR asName, int anValue);
 		bool SetOption(LPCWSTR asName, LPCWSTR asValue);
@@ -274,8 +264,6 @@ class CSettings
 		LRESULT OnPage(LPNMHDR phdr);
 		INT_PTR OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 		INT_PTR OnDrawFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
-		void OnSaveActivityLogFile(HWND hListView);
-		LRESULT OnActivityLogNotify(HWND hWnd2, WPARAM wParam, LPARAM lParam);
 		UINT mn_ActivateTabMsg;
 		bool mb_IgnoreSelPage;
 	public:
@@ -330,53 +318,6 @@ class CSettings
 	public:
 		INT_PTR ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	private:
-
-		enum LogProcessColumns
-		{
-			lpc_Time = 0,
-			lpc_PPID,
-			lpc_Func,
-			lpc_Oper,
-			lpc_Bits,
-			lpc_System,
-			lpc_App,
-			lpc_Params,
-			lpc_Flags,
-			lpc_StdIn,
-			lpc_StdOut,
-			lpc_StdErr,
-		};
-		enum LogInputColumns
-		{
-			lic_Time = 0,
-			lic_Type,
-			lic_Dup,
-			lic_Event,
-		};
-		enum LogCommandsColumns
-		{
-			lcc_InOut = 0,
-			lcc_Time,
-			lcc_Duration,
-			lcc_Command,
-			lcc_Size,
-			lcc_PID,
-			lcc_Pipe,
-			lcc_Extra,
-		};
-		enum LogAnsiColumns
-		{
-			lac_Time = 0,
-			lac_Sequence,
-		};
-		struct LogCommandsData
-		{
-			BOOL  bInput, bMainThread;
-			DWORD nTick, nDur, nCmd, nSize, nPID;
-			wchar_t szPipe[64];
-			wchar_t szExtra[128];
-		};
-		void debugLogCommand(HWND hWnd2, LogCommandsData* apData);
 
 		CDynDialog *mp_Dialog;
 		ConEmuSetupPages *m_Pages;
