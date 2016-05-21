@@ -3101,8 +3101,9 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 	size_t cchMaxLen = _tcslen(ms_ConEmuExe)
 		+ _tcslen(args->pszSpecialCmd)
 		+ (pszConfig ? (_tcslen(pszConfig) + 32) : 0)
+		+ (mps_ConEmuExtraArgs ? (_tcslen(mps_ConEmuExtraArgs) + 2) : 0)
 		+ (args->pszAddGuiArg ? _tcslen(args->pszAddGuiArg) : 0)
-		+ 160; // на всякие флажки и -new_console
+		+ 170; // other flags and `-new_console`
 	if ((pszCmdLine = (wchar_t*)malloc(cchMaxLen*sizeof(*pszCmdLine))) == NULL)
 	{
 		_ASSERTE(pszCmdLine);
@@ -3112,6 +3113,15 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 		pszCmdLine[0] = L'"'; pszCmdLine[1] = 0;
 		_wcscat_c(pszCmdLine, cchMaxLen, ms_ConEmuExe);
 		_wcscat_c(pszCmdLine, cchMaxLen, L"\" ");
+		if (mps_ConEmuExtraArgs)
+		{
+			_wcscat_c(pszCmdLine, cchMaxLen, mps_ConEmuExtraArgs);
+			_wcscat_c(pszCmdLine, cchMaxLen, L" ");
+		}
+		if (gpSetCls->isResetBasicSettings)
+		{
+			_wcscat_c(pszCmdLine, cchMaxLen, L"-basic ");
+		}
 		if (pszConfig && *pszConfig)
 		{
 			_wcscat_c(pszCmdLine, cchMaxLen, L"-Config \"");
