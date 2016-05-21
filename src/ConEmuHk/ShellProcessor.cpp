@@ -1936,6 +1936,9 @@ int CShellProc::PrepareExecuteParms(
 		}
 		else if (FindImageSubsystem(ms_ExeTmp, mn_ImageSubsystem, mn_ImageBits))
 		{
+			// gh-681: NodeJSPortable.exe just runs "Server.cmd"
+			if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE)
+				mn_ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
 			lbGuiApp = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
 			lbSubsystemOk = TRUE;
 			if (gbPrepareDefaultTerminal)
