@@ -2840,7 +2840,9 @@ void CSettings::SetArgBufferHeight(int anBufferHeight)
 
 RecreateActionParm CSettings::GetDefaultCreateAction()
 {
-	return IsMulti() ? cra_CreateTab : cra_CreateWindow;
+	if (IsMulti() || !gpConEmu->isVConExists(0))
+		return cra_CreateTab;
+	return cra_CreateWindow;
 }
 
 bool CSettings::IsMulti()

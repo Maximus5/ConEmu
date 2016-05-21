@@ -370,7 +370,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 		// - Check & Disable "New window" checkbox
 		bool bForceNewWindow = (!gpSetCls->IsMulti() && gpConEmu->isVConExists(0));
 		CheckDlgButton(hDlg, cbRunInNewWindow, (pArgs->aRecreate == cra_CreateWindow || bForceNewWindow) ? BST_CHECKED : BST_UNCHECKED);
-		EnableWindow(GetDlgItem(hDlg, cbRunInNewWindow), bForceNewWindow);
+		EnableWindow(GetDlgItem(hDlg, cbRunInNewWindow), !bForceNewWindow);
 
 		//
 		SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_QUESTION), 0);
