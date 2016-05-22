@@ -3182,7 +3182,7 @@ void CVConGroup::OnUpdateProcessDisplay(HWND hInfo)
 			for (int i=0; i<nCount; i++)
 			{
 				if (gp_VCon[j] == gp_VActive)
-					_tcscpy(temp, _T("(*) "));
+					wcscpy_c(temp, L"(*) ");
 				else
 					temp[0] = 0;
 
