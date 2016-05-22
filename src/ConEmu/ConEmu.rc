@@ -1235,7 +1235,8 @@ BEGIN
     CONTROL         "Skip mouse events in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,28,180,8
     CONTROL         "Activate split/pane on mouse hover",cbActivateSplitMouseOver,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,192,28,180,8
-    CONTROL         "Ctrl+Alt - drag ConEmu window",cbMouseDragWindow,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,42,180,8
+    CONTROL         "Ctrl+Alt - drag window by client area",cbMouseDragWindow,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,42,180,8
     GROUPBOX        "Read line enhancements (command prompt, ReadConsoleW)",gbCtrlPrompt,4,64,375,45
     CONTROL         "Change prompt (cmd, powershell) text cursor position with Left Click",cbCTSClickPromptPosition,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,11,78,365,8

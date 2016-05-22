@@ -102,3 +102,8 @@ INT_PTR CSetPgMouse::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 
 	return 0;
 }
+
+void CSetPgMouse::OnPostLocalize(HWND hDlg)
+{
+	setCtrlTitleByHotkey(hDlg, cbMouseDragWindow, vkWndDragKey, NULL, L" - ");
+}
