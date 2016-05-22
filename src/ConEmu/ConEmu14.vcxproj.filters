@@ -498,8 +498,17 @@
     <ClCompile Include="RConPalette.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SetPgControls.cpp">
-      <Filter>0 - Source Files</Filter>
+    <ClCompile Include="SetPgChildGui.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgKeyboard.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgMouse.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgQuake.cpp">
+      <Filter>SettingPages</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -1077,8 +1086,20 @@
     <ClInclude Include="RConPalette.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SetPgControls.h">
+    <ClInclude Include="version_stage.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgChildGui.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgKeyboard.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgMouse.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgQuake.h">
+      <Filter>SettingPages</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
