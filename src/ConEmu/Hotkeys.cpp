@@ -630,6 +630,12 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone /*= t
 		}
 	}
 
+	if ((szFull[0] == 0)
+		&& ((HkType == chk_Modifier) || (HkType == chk_Modifier2)))
+	{
+		wcscpy_c(szFull, CLngRc::getRsrc((HkType == chk_Modifier2) ? lng_KeyNoMod/*"<No-Mod>"*/ : lng_KeyNone/*"<None>"*/));
+	}
+
 	return szFull;
 }
 
