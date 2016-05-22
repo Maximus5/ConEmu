@@ -108,6 +108,11 @@ private:
 
 	static CVConGroup* CreateVConGroup();
 	CVConGroup* SplitVConGroup(RConStartArgs::SplitType aSplitType = RConStartArgs::eSplitHorz/*eSplitVert*/, UINT anPercent10 = 500);
+
+	void PopulateSplitPanes(UINT nParent, UINT& nSplits, MArray<CVConGuard*>& VCons);
+	CVConGroup* GetLeafLeft();
+	CVConGroup* GetLeafRight();
+
 public:
 	// Если rPanes==NULL - просто вернуть количество сплитов
 	int GetGroupPanes(MArray<CVConGuard*>* rPanes);
@@ -260,7 +265,7 @@ public:
 
 	static RECT AllTextRect(SIZE* rpSplits = NULL, bool abMinimal = false);
 
-	static wchar_t* GetTasks(CVConGroup* apRoot = NULL);
+	static wchar_t* GetTasks();
 
 //public:
 //	bool ResizeConsoles(const RECT &rFrom, enum ConEmuRect tFrom);

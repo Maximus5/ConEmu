@@ -3215,7 +3215,7 @@ void Settings::SaveSettingsOnExit()
 		// Таски пишутся в отдельный ключ
 		if (bTaskAutoSave)
 		{
-			wchar_t* pszTabs = CVConGroup::GetTasks(NULL);
+			wchar_t* pszTabs = CVConGroup::GetTasks();
 			if (pszTabs && *pszTabs)
 			{
 				BOOL lbOpened = FALSE;

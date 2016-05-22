@@ -1461,7 +1461,7 @@ void CSetDlgButtons::OnBtn_CmdTasksActive(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCmdTasksActive);
 
-	wchar_t* pszTasks = CVConGroup::GetTasks(NULL); // вернуть все открытые таски
+	wchar_t* pszTasks = CVConGroup::GetTasks(); // вернуть все открытые таски
 	if (pszTasks)
 	{
 		SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszTasks);

@@ -5877,25 +5877,140 @@ bool CVConGroup::isGroup(CVirtualConsole* apVCon, CVConGroup** rpRoot /*= NULL*/
 	return true;
 }
 
-wchar_t* CVConGroup::GetTasks(CVConGroup* apRoot /*= NULL*/)
+CVConGroup* CVConGroup::GetLeafLeft()
+{
+	_ASSERTE(this);
+	CVConGroup* p = this;
+	while (p->mp_Grp1)
+		p = p->mp_Grp1;
+	return p;
+}
+
+CVConGroup* CVConGroup::GetLeafRight()
+{
+	_ASSERTE(this);
+	CVConGroup* p = mp_Grp2;
+	if (!p)
+		return NULL;
+	return p->GetLeafLeft();
+}
+
+void CVConGroup::PopulateSplitPanes(UINT nParent, UINT& nSplits, MArray<CVConGuard*>& VCons)
+{
+	UINT nSecond = 0;
+
+	// Only for the root
+	// The code may be in the caller (before recursion starts),
+	// but it's here for simplification
+	if (nSplits == 0)
+	{
+		nParent = nSplits = 1;
+
+		CVConGroup* pFirst = GetLeafLeft();
+		CVConGuard* pFirstVCon = pFirst ? new CVConGuard(pFirst->mp_Item) : NULL;
+		if (!pFirstVCon || !pFirstVCon->VCon())
+		{
+			_ASSERTE(pFirstVCon && pFirstVCon->VCon());
+			_ASSERTE(GetLeafRight() == NULL);
+			SafeDelete(pFirstVCon);
+			return;
+		}
+		// First pane, the anchor, is started layered!
+		pFirstVCon->VCon()->RCon()->SetSplitProperties(RConStartArgs::eSplitNone, DefaultSplitValue, 0);
+
+		// Remember we have processed
+		VCons.push_back(pFirstVCon);
+	}
+
+	// Now update split properties of second pane (the splitter)
+	CVConGroup* pSecond = GetLeafRight();
+	CVConGuard* pSecondVCon = pSecond ? new CVConGuard(pSecond->mp_Item) : NULL;
+	if (!pSecondVCon || !pSecondVCon->VCon())
+	{
+		// No splits?
+		_ASSERTE(m_SplitType == RConStartArgs::eSplitNone);
+		SafeDelete(pSecondVCon);
+		pSecond = NULL;
+	}
+	else
+	{
+		// Update split properties
+		_ASSERTE(m_SplitType != RConStartArgs::eSplitNone);
+		pSecondVCon->VCon()->RCon()->SetSplitProperties(m_SplitType, mn_SplitPercent10, nParent);
+		nSecond = ++nSplits;
+		// Remember we have processed
+		VCons.push_back(pSecondVCon);
+	}
+
+	if (mp_Grp1)
+	{
+		mp_Grp1->PopulateSplitPanes(nParent, nSplits, VCons);
+	}
+	if (mp_Grp2)
+	{
+		_ASSERTE(nSecond!=0);
+		mp_Grp2->PopulateSplitPanes(nSecond, nSplits, VCons);
+	}
+}
+
+wchar_t* CVConGroup::GetTasks()
 {
 	wchar_t* pszAll = NULL;
 	wchar_t* pszTask[MAX_CONSOLE_COUNT] = {};
 	size_t nTaskLen[MAX_CONSOLE_COUNT] = {};
-	size_t t = 0, i, nAllLen = 0;
+	size_t t = 0, nAllLen = 0, activeTask = (size_t)-1;
 
-	//TODO: Need to correct splits storing
-	//MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+	_ASSERTE(isMainThread());
 
-	for (i = 0; i < countof(gp_VCon); i++)
+	// Need to correct splits storing
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+	// Favor VCon tab index, but group them via splits
+	MArray<CVConGroup*> groups;
+	MArray<CVConGuard*> addVCon;
+	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
 		CVConGuard VCon;
 		if (!GetVCon(i, &VCon))
 			break;
-		if (!isInGroup(VCon.VCon(), apRoot))
+		CVConGroup* pRoot = GetRootOfVCon(VCon.VCon());
+		if (!pRoot)
+		{
+			_ASSERTE(pRoot);
+			continue;
+		}
+		// Already appended?
+		INT_PTR q = 0;
+		while (q < groups.size())
+		{
+			if (groups[q] == pRoot)
+				break;
+			q++;
+		}
+		if (q == groups.size())
+		{
+			UINT nStart = 0;
+			pRoot->PopulateSplitPanes(0, nStart, addVCon);
+			// It's ready
+			groups.push_back(pRoot);
+		}
+	}
+
+	_ASSERTE(GetConCount() == addVCon.size());
+
+
+	for (INT_PTR i = 0; i < addVCon.size(); i++)
+	{
+		CVConGuard* VCon = addVCon[i];
+		if (!VCon)
 			continue;
 
-		wchar_t* pszCmd = VCon->RCon()->CreateCommandLine(true);
+		if (VCon->VCon() == gp_VActive)
+			activeTask = t;
+
+		wchar_t* pszCmd = VCon->VCon()->RCon()->CreateCommandLine(true);
+		delete VCon;
+		addVCon[i] = NULL;
+
 		if (!pszCmd)
 			continue;
 		if (!*pszCmd)
@@ -5906,27 +6021,33 @@ wchar_t* CVConGroup::GetTasks(CVConGroup* apRoot /*= NULL*/)
 
 		size_t nLen = nTaskLen[t] = _tcslen(pszCmd);
 		pszTask[t++] = pszCmd;
-		nAllLen += nLen + 6; // + "\r\n\r\n"
+		nAllLen += nLen + 6; // + "\r\n\r\n>*"
 	}
 
-	if (nAllLen == 0)
-		return NULL; // Nothing to return
 
+	// Nothing to return?
+	if (nAllLen == 0)
+		return NULL;
+
+	// Allocate memory for result Task
 	nAllLen += 3;
 	pszAll = (wchar_t*)malloc(nAllLen*sizeof(*pszAll));
 	if (!pszAll)
 		return NULL;
 	wchar_t* psz = pszAll;
 
-	for (i = 0; i < countof(gp_VCon) && pszTask[i]; i++)
+	// All data is prepared, concatenate the result Task
+	for (size_t i = 0; i < t; i++)
 	{
+		_ASSERTE(pszTask[i] != NULL);
+
 		if (i)
 		{
 			_wcscpy_c(psz, 3, L"\r\n");
 			psz += 2;
 		}
 
-		if (gp_VCon[i] == gp_VActive)
+		if (i == activeTask)
 		{
 			*(psz++) = L'>';
 			if (pszTask[i][0] != L'*')
@@ -5942,6 +6063,7 @@ wchar_t* CVConGroup::GetTasks(CVConGroup* apRoot /*= NULL*/)
 		SafeFree(pszTask[i]);
 	}
 
+	_ASSERTE((psz > pszAll) && ((size_t)(psz - pszAll) < nAllLen));
 	*psz = 0; // ASCIIZ
 	return pszAll;
 }

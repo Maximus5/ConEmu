@@ -14291,6 +14291,19 @@ void CRealConsole::StoreGuiChildRect(LPRECT prcNewPos)
 	m_ChildGui.rcLastGuiWnd = rcChild;
 }
 
+void CRealConsole::SetSplitProperties(RConStartArgs::SplitType aSplitType, UINT aSplitValue, UINT aSplitPane)
+{
+	if (!this)
+	{
+		_ASSERTE(this!=NULL);
+		return;
+	}
+
+	m_Args.eSplit = aSplitType;
+	m_Args.nSplitValue = aSplitValue;
+	m_Args.nSplitPane = aSplitPane;
+}
+
 void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, int anBits, RECT arcPrev)
 {
 	if (!this)
