@@ -546,18 +546,15 @@ void CSetPgBase::setHotkeyCheckbox(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWS
 }
 
 /// Update GroupBox title, replacing text *between* pszFrom and pszTo with current HotKey
-/// For example, gbPasteM1 has title "Paste mode #1 (Shift+Ins)", pszFrom=L"(", pszTo=L")"
+/// Examples:
+///    gbPasteM1 has title "Paste mode #1 (Shift+Ins)", pszFrom=L"(", pszTo=L")"
+///    cbMouseDragWindow has title "Ctrl+Alt - drag ConEmu window", pszFrom=NULL, pszTo=L" - "
 /// Than `Shift+Ins` would be replaced with current user defined hotkey value
 void CSetPgBase::setCtrlTitleByHotkey(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWSTR pszFrom, LPCWSTR pszTo)
 {
 	if (!hDlg || !nCtrlId || (nCtrlId == (WORD)IDC_STATIC) || (iHotkeyId <= 0))
 	{
 		_ASSERTE(FALSE && "Invalid identifiers");
-		return;
-	}
-	if (!pszFrom || !*pszFrom)
-	{
-		_ASSERTE(FALSE && "Invalid anchors");
 		return;
 	}
 
@@ -579,29 +576,52 @@ void CSetPgBase::setCtrlTitleByHotkey(HWND hDlg, WORD nCtrlId, int iHotkeyId, LP
 		}
 	}
 
-	LPCWSTR ptr1, ptr2;
-	ptr1 = wcsstr(lsLoc, pszFrom);
-	if (!ptr1)
+	if (pszFrom && *pszFrom)
 	{
-		_ASSERTE(ptr1 && "pszFrom not found");
-		return;
-	}
-	ptr1 += wcslen(pszFrom);
-	if (pszTo && *pszTo)
-	{
-		ptr2 = wcsstr(ptr1, pszTo);
-	}
-	if (ptr2 == ptr1)
-	{
-		_ASSERTE(ptr2 != ptr1 && "Invalid source string");
-		return;
-	}
+		// "Paste mode #1 (Shift+Ins)"
+		LPCWSTR ptr1, ptr2;
+		ptr1 = wcsstr(lsLoc, pszFrom);
+		if (!ptr1)
+		{
+			_ASSERTE(ptr1 && "pszFrom not found");
+			return;
+		}
+		ptr1 += wcslen(pszFrom);
+		if (pszTo && *pszTo)
+		{
+			ptr2 = wcsstr(ptr1, pszTo);
+		}
+		if (ptr2 == ptr1)
+		{
+			_ASSERTE(ptr2 != ptr1 && "Invalid source string");
+			return;
+		}
 
-	// Trim to hotkey beginning
-	lsLoc.ms_Val[(ptr1 - lsLoc.ms_Val)] = 0;
-	// And create new title
-	CEStr lsNew(lsLoc.ms_Val, szKeyFull, ptr2);
+		// Trim to hotkey beginning
+		lsLoc.ms_Val[(ptr1 - lsLoc.ms_Val)] = 0;
+		// And create new title
+		CEStr lsNew(lsLoc.ms_Val, szKeyFull, ptr2);
+		// Update control text
+		SetDlgItemText(hDlg, nCtrlId, lsNew);
+	}
+	else if (pszTo && *pszTo)
+	{
+		// "Ctrl+Alt - drag ConEmu window"
+		LPCWSTR ptr;
+		ptr = wcsstr(lsLoc, pszTo);
+		if (!ptr)
+		{
+			_ASSERTE(ptr && "pszTo not found");
+			return;
+		}
 
-	// Update control text
-	SetDlgItemText(hDlg, nCtrlId, lsNew);
+		// Create new title
+		CEStr lsNew(szKeyFull, ptr);
+		// Update control text
+		SetDlgItemText(hDlg, nCtrlId, lsNew);
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Invalid anchors");
+	}
 }
