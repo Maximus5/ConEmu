@@ -62,7 +62,7 @@ if errorlevel 1 goto err
 
 rem This will create ".daily.md"
 call "%~dp0Deploy\git2log.cmd" -skip_upd
-farrun -new_console:b -e5 "%~dp0..\..\ConEmu-GitHub-io\ConEmu.github.io\_posts\.daily.md"
+farrun -new_console:b -e5 "%~dp0..\ConEmu-GitHub-io\ConEmu.github.io\_posts\.daily.md"
 farrun -new_console:b -e23 "%~dp0Release\ConEmu\WhatsNew-ConEmu.txt"
 
 
