@@ -499,7 +499,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		;
 	Add(vkRDragKey,       chk_Modifier, ConEmuHotKey::UseDndRKey, L"DndRKey")        // модификатор драга правой кнопкой
 		->SetHotKey(VK_LCONTROL);
-	Add(vkWndDragKey,     chk_Modifier2,NULL, L"WndDragKey", CConEmuCtrl::key_WinDragStart) // модификатор таскания окна мышкой за любое место
+	Add(vkWndDragKey,     chk_Modifier2,ConEmuHotKey::UseWndDragKey, L"WndDragKey", CConEmuCtrl::key_WinDragStart) // модификатор таскания окна мышкой за любое место
 		->SetHotKey(VK_LBUTTON,VK_CONTROL,VK_MENU);
 	/*
 		*** System (predefined, fixed)

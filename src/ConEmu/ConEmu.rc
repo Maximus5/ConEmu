@@ -1229,24 +1229,25 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Mouse options",gbCtrlMouse,4,1,375,41
+    GROUPBOX        "Mouse options",gbCtrlMouse,4,1,375,56
     CONTROL         "Send mouse events to console",cbEnableMouse,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,180,8
     CONTROL         "Skip click on activation",cbSkipActivation,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,192,14,180,8
     CONTROL         "Skip mouse events in background",cbSkipMove,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,28,180,8
     CONTROL         "Activate split/pane on mouse hover",cbActivateSplitMouseOver,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,192,28,180,8
-    GROUPBOX        "Read line enhancements (command prompt, ReadConsoleW)",gbCtrlPrompt,4,49,375,45
+    CONTROL         "Ctrl+Alt - drag ConEmu window",cbMouseDragWindow,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,42,180,8
+    GROUPBOX        "Read line enhancements (command prompt, ReadConsoleW)",gbCtrlPrompt,4,64,375,45
     CONTROL         "Change prompt (cmd, powershell) text cursor position with Left Click",cbCTSClickPromptPosition,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,11,63,365,8
-    COMBOBOX        lbCTSClickPromptPosition,23,75,78,77,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Mouse button actions",gbCtrlMouseBtns,4,98,375,31
-    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,112,10,8
-    COMBOBOX        lbCTSActAlways,23,109,58,82,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,85,112,116,8
-    RTEXT           "Right:",stCTSRBtnAction,189,112,45,8
-    COMBOBOX        lbCTSRBtnAction,235,109,44,83,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "Middle:",stCTSMBtnAction,280,112,48,8
-    COMBOBOX        lbCTSMBtnAction,329,109,44,84,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,11,78,365,8
+    COMBOBOX        lbCTSClickPromptPosition,23,90,78,77,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Mouse button actions",gbCtrlMouseBtns,4,115,375,31
+    CONTROL         "",rbCTSActAlways,"Button",BS_AUTORADIOBUTTON,11,129,10,8
+    COMBOBOX        lbCTSActAlways,23,126,58,82,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Buffer only (e.g. cmd.exe)",rbCTSActBufferOnly,"Button",BS_AUTORADIOBUTTON,85,129,116,8
+    RTEXT           "Right:",stCTSRBtnAction,189,129,45,8
+    COMBOBOX        lbCTSRBtnAction,235,126,44,83,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "Middle:",stCTSMBtnAction,280,129,48,8
+    COMBOBOX        lbCTSMBtnAction,329,126,44,84,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_SPG_UPDATE DIALOGEX 0, 0, 381, 242

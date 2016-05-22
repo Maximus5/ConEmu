@@ -127,6 +127,7 @@ static LngPredefined gsDataHints[] = {
 	{ cbMinToTray,             L"Auto minimize to Taskbar Status Area (TSA)\r\nRight click on ‘Close window button’\r\nin ConEmu title for minimize to TSA,\r\nwhen this checkbox is OFF" },
 	{ cbMonitorConsoleLang,    L"Monitor input language change in real\r\nconsole (e.g. Far Manager XLat switching support)" },
 	{ cbMonospace,             L"Check it for non proportional (monospaced) fonts" },
+	{ cbMouseDragWindow,       L"Allows to move ConEmu window via dragging it by client area." },
 	{ cbMultiCon,              L"Turn on MultiConsole\r\n(several consoles in one ConEmu)\r\nConEmu restart required" },
 	{ cbMultiIterate,          L"Iterate opened Far windows with ‘Host-key’+Number" },
 	{ cbNewConfirm,            L"Confirm new console creation.\r\nYou may change cmd line for it, or turn on \"Run as...\" feature.\r\nEven if unchecked, You may hold \"Shift\" to display dialog." },

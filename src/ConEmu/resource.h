@@ -1334,6 +1334,7 @@
 #define rbActivityProcess               3057
 #define gbQuakeFrame                    3058
 #define gbChildGui                      3059
+#define cbMouseDragWindow               3060
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1342,7 +1343,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        235
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3060
+#define _APS_NEXT_CONTROL_VALUE         3061
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

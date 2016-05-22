@@ -500,6 +500,8 @@ struct Settings
 		bool isMouseSkipActivation;
 		//reg->Load(L"MouseSkipMoving", isMouseSkipMoving);
 		bool isMouseSkipMoving;
+		//reg->Load(L"MouseDragWindow", isMouseDragWindow);
+		bool isMouseDragWindow;
 		//reg->Load(L"FarHourglass", isFarHourglass);
 		bool isFarHourglass;
 		//reg->Load(L"FarHourglassDelay", nFarHourglassDelay);

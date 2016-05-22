@@ -891,6 +891,11 @@ bool ConEmuHotKey::UseDndRKey()
 	return ((gpSet->isDragEnabled & DRAG_R_ALLOWED) == DRAG_R_ALLOWED);
 }
 
+bool ConEmuHotKey::UseWndDragKey()
+{
+	return gpSet->isMouseDragWindow;
+}
+
 /*
 bool ConEmuHotKey::DontHookJumps(const ConEmuHotKey* pHK)
 {

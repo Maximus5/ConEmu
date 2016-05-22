@@ -369,6 +369,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbSkipActivation:
 			OnBtn_SkipActivation(hDlg, CB, uCheck);
 			break;
+		case cbMouseDragWindow:
+			OnBtn_MouseDragWindow(hDlg, CB, uCheck);
+			break;
 		case cbSkipMove:
 			OnBtn_SkipMove(hDlg, CB, uCheck);
 			break;
@@ -2679,6 +2682,16 @@ void CSetDlgButtons::OnBtn_SkipActivation(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->isMouseSkipActivation = _bool(uCheck);
 
 } // cbSkipActivation
+
+
+// cbMouseDragWindow
+void CSetDlgButtons::OnBtn_MouseDragWindow(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbMouseDragWindow);
+
+	gpSet->isMouseDragWindow = _bool(uCheck);
+
+} // cbMouseDragWindow
 
 
 // cbSkipMove

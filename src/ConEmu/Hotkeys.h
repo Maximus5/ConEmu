@@ -143,5 +143,6 @@ struct ConEmuHotKey
 	static bool InSelection();
 	static bool UseDndLKey();
 	static bool UseDndRKey();
+	static bool UseWndDragKey();
 	//static bool DontHookJumps(const ConEmuHotKey* pHK);
 };

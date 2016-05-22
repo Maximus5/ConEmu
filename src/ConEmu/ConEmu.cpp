@@ -10164,6 +10164,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	//gpSet->IsModifierPressed(vkWndDragKey, false))
 	if ((messg == WM_LBUTTONDOWN)
+		&& gpSet->isMouseDragWindow
 		// 120820 - двигать можно только в "Normal"
 		&& !(isZoomed() || isFullScreen() || gpSet->isQuakeStyle)
 		&& ProcessHotKeyMsg(WM_KEYDOWN, VK_LBUTTON, 0, NULL, NULL))

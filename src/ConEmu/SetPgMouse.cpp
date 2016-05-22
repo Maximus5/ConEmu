@@ -50,6 +50,7 @@ LRESULT CSetPgMouse::OnInitDialog(HWND hDlg, bool abInitial)
 	checkDlgButton(hDlg, cbSkipActivation, gpSet->isMouseSkipActivation);
 	checkDlgButton(hDlg, cbSkipMove, gpSet->isMouseSkipMoving);
 	checkDlgButton(hDlg, cbActivateSplitMouseOver, gpSet->bActivateSplitMouseOver);
+	checkDlgButton(hDlg, cbMouseDragWindow, gpSet->isMouseDragWindow);
 
 	// Prompt click
 	checkDlgButton(hDlg, cbCTSClickPromptPosition, gpSet->AppStd.isCTSClickPromptPosition);

@@ -153,6 +153,7 @@ protected:
 	static void OnBtn_RSelectionFix(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_EnableMouse(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_SkipActivation(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_MouseDragWindow(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_SkipMove(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_MonitorConsoleLang(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_SkipFocusEvents(HWND hDlg, WORD CB, BYTE uCheck);
