@@ -20,6 +20,34 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.5.22
+* gh-682: Multi-line paste Enter confirmation setting was not being saved.
+* gh-681: Allow NodeJSPortable.exe to run node in the same ConEmu tab.
+* gh-654: Feature ‘Drag ConEmu window by client area’ may be disabled on ‘Mouse’ Settings page.
+* gh-370: Option ‘Auto save/restore opened tabs’ saved wrong split config in some cases.
+* Maximus5/conemu-inside#23: Don't show Min/Max/Close buttons in the ‘Inside’ mode
+* StatusBar was painted using wrong ‘fade’ status in some cases (ConEmuInside).
+* ConEmu ‘Here’ and ‘Inside’ improvements (Integration Settings page).
+  Now the command will be registered and displayed properly if ConEmu was
+  started with special switches like `-LoadCfgFile`, `-LngFile` and others.
+* Recommended: `-reuse` over `-single`. `-reuse` does not enforce ‘single’ mode in the started instance.
+* gh-573: Support ANSI sequence to set cursor style (DECSCUSR, VT520).
+
+  CSI Ps SP q - Set cursor style (DECSCUSR, VT520).
+		Ps = 0  -> ConEmu's default.
+		Ps = 1  -> blinking block.
+		Ps = 2  -> steady block.
+		Ps = 3  -> blinking underline.
+		Ps = 4  -> steady underline.
+		Ps = 5  -> blinking bar (xterm).
+		Ps = 6  -> steady bar (xterm).
+
+* If ‘Multiple consoles ...’ were unchecked and ConEmu window is empty
+  (either `-detached` or not closed with last closed tab)
+  than it was impossible to reuse empty window to create new console.
+* Use proper parameters for new window (e.g. started from ‘Create new console’ dialog).
+
+
 2016.5.15
 * ConEmuInside: In some cases (VisualStudio pane) ConEmu failed to detect ‘focused’ state.
 * Split settings page ‘Controls’ into ‘Keyboard’ and ‘Mouse’ (alignment pending).
