@@ -6100,7 +6100,7 @@ bool CConEmuMain::RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore /*= NULL*
 			// DefTerm checks
 			// If user want to use ConEmu as default terminal for CUI apps
 			// we need to hook GUI applications (e.g. explorer)
-			if (!(m_Foreground.ForegroundState & fgf_ConEmuAny)
+			if (!(NewState & fgf_ConEmuAny)
 				&& nForePID && mp_DefTrm->IsReady() && gpSet->isSetDefaultTerminal && isMainThread())
 			{
 				if (mp_DefTrm->IsAppMonitored(hForeWnd, nForePID))
