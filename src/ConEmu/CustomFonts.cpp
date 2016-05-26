@@ -855,6 +855,7 @@ bool CEDC::TextExtentPoint(LPCTSTR ch, int c, LPSIZE sz)
 			// are not supported at the moment (in bdf)
 			sz->cx *= c;
 			lbRc = TRUE;
+			break;
 		} // CEFONT_CUSTOM
 
 	default:
