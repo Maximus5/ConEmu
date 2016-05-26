@@ -1677,7 +1677,7 @@ void CStatus::OnWindowReposition(const RECT *prcNew)
 // отображать, чтобы лишнюю нагрузку не создавать.
 void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CONSOLE_CURSOR_INFO* pci, const TOPLEFTCOORD* pTopLeft, bool bForceUpdate)
 {
-	bool bValid = (psbi != NULL);
+	bool bValid = (psbi != NULL && pTopLeft != NULL);
 
 	// csi_ConsolePos:
 	if (bValid)
