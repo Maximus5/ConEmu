@@ -3050,34 +3050,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 		}
 		else if (mb_NeedInjects)
 		{
-			wchar_t szDbgMsg[255];
-			msprintf(szDbgMsg, countof(szDbgMsg), L"InjectHooks(x%u), ParentPID=%u, ChildPID=%u\n",
-					#ifdef _WIN64
-						64
-					#else
-						86
-					#endif
-						, GetCurrentProcessId(), lpPI->dwProcessId);
-			LogShellString(szDbgMsg);
-
-			CINJECTHK_EXIT_CODES iHookRc = InjectHooks(*lpPI, (m_SrvMapping.cbSize && (m_SrvMapping.nLoggingType == glt_Processes)));
-
-			if (iHookRc != CIH_OK/*0*/)
-			{
-				DWORD nErrCode = GetLastError();
-				// Хуки не получится установить для некоторых системных процессов типа ntvdm.exe,
-				// но при запуске dos приложений мы сюда дойти не должны
-				_ASSERTE(iHookRc == 0);
-				wchar_t szTitle[128];
-				msprintf(szTitle, countof(szTitle), L"ConEmuC, PID=%u", GetCurrentProcessId());
-				msprintf(szDbgMsg, countof(szDbgMsg), L"ConEmuC.W, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X",
-					GetCurrentProcessId(), lpPI->dwProcessId, iHookRc, nErrCode);
-				GuiMessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-			}
-
-			// Отпустить процесс
-			if (!mb_WasSuspended)
-				ResumeThread(lpPI->hThread);
+			RunInjectHooks(WIN3264TEST(L"ConEmuHk",L"ConEmuHk64"), lpPI);
 		}
 	}
 
@@ -3085,6 +3058,41 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 	{
 		FreeConsole();
 		SetServerPID(0);
+	}
+}
+
+void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
+{
+	wchar_t szDbgMsg[255];
+	msprintf(szDbgMsg, countof(szDbgMsg), L"%s: InjectHooks(x%u), ParentPID=%u (%s), ChildPID=%u\n",
+		asFrom, WIN3264TEST(32,64), GetCurrentProcessId(), gsExeName, lpPI->dwProcessId);
+	LogShellString(szDbgMsg);
+
+	LPCWSTR pszDllDir = NULL;
+	if (isDefTermEnabled() && gpDefTerm)
+		pszDllDir = gpDefTerm->GetOpt()->pszConEmuBaseDir;
+
+	CINJECTHK_EXIT_CODES iHookRc = InjectHooks(*lpPI,
+		(m_SrvMapping.cbSize && (m_SrvMapping.nLoggingType == glt_Processes)),
+		pszDllDir);
+
+	if (iHookRc != CIH_OK/*0*/)
+	{
+		DWORD nErrCode = GetLastError();
+		// Хуки не получится установить для некоторых системных процессов типа ntvdm.exe,
+		// но при запуске dos приложений мы сюда дойти не должны
+		_ASSERTE(iHookRc == 0);
+		wchar_t szTitle[128];
+		msprintf(szTitle, countof(szTitle), L"%s, PID=%u", asFrom, GetCurrentProcessId());
+		msprintf(szDbgMsg, countof(szDbgMsg), L"%s: PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X",
+			gsExeName, GetCurrentProcessId(), lpPI->dwProcessId, iHookRc, nErrCode);
+		GuiMessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
+	}
+
+	// Release process, it called was not set CREATE_SUSPENDED flag
+	if (!mb_WasSuspended)
+	{
+		ResumeThread(lpPI->hThread);
 	}
 }
 

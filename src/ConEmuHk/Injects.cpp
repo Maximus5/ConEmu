@@ -117,13 +117,13 @@ UINT_PTR GetLdrGetDllHandleByNameAddress()
 // The handle must have the PROCESS_CREATE_THREAD, PROCESS_QUERY_INFORMATION, PROCESS_VM_OPERATION, PROCESS_VM_WRITE, and PROCESS_VM_READ
 // The function may start appropriate bitness of ConEmuC.exe with "/SETHOOKS=..." switch
 // If bitness matches, use WriteProcessMemory and SetThreadContext immediately
-CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
+CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCWSTR asConEmuHkDir /*= NULL*/)
 {
 	CINJECTHK_EXIT_CODES iRc = CIH_OK/*0*/;
 #ifndef CONEMUHK_EXPORTS
 	_ASSERTE(FALSE)
 #endif
-	wchar_t szPluginPath[MAX_PATH*2], *pszSlash;
+	wchar_t szDllDir[MAX_PATH*2];
 	_ASSERTE(ghOurModule!=NULL);
 	BOOL is64bitOs = FALSE;
 	int  ImageBits = 32; //-V112
@@ -171,24 +171,28 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 		goto wrap;
 	}
 
-	if (!GetModuleFileName(ghOurModule, szPluginPath, MAX_PATH))
+	if (asConEmuHkDir && *asConEmuHkDir)
 	{
-		#ifdef _DEBUG
-		DWORD dwErr = GetLastError();
-		_CrtDbgBreak();
-		#endif
-		//_printf("GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
-		iRc = CIH_GetModuleFileName/*-501*/;
-		goto wrap;
+		lstrcpyn(szDllDir, asConEmuHkDir, countof(szDllDir));
 	}
-
-	pszSlash = wcsrchr(szPluginPath, L'\\');
-
-
-	if (!pszSlash)
-		pszSlash = szPluginPath;
-
-	*pszSlash = 0;
+	else
+	{
+		wchar_t* pszSlash;
+		if (!GetModuleFileName(ghOurModule, szDllDir, MAX_PATH))
+		{
+			#ifdef _DEBUG
+			DWORD dwErr = GetLastError();
+			_CrtDbgBreak();
+			#endif
+			//_printf("GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
+			iRc = CIH_GetModuleFileName/*-501*/;
+			goto wrap;
+		}
+		pszSlash = wcsrchr(szDllDir, L'\\');
+		if (!pszSlash)
+			pszSlash = szDllDir;
+		*pszSlash = 0;
+	}
 
 	if (hKernel)
 	{
@@ -260,7 +264,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 		wchar_t sz64helper[MAX_PATH*2];
 		msprintf(sz64helper, countof(sz64helper),
 		          L"\"%s\\ConEmuC%s.exe\" /SETHOOKS=%X,%u,%X,%u",
-		          szPluginPath, (ImageBits==64) ? L"64" : L"",
+		          szDllDir, (ImageBits==64) ? L"64" : L"",
 		          LODWORD(hProcess), pi.dwProcessId, LODWORD(hThread), pi.dwThreadId);
 		STARTUPINFO si = {sizeof(STARTUPINFO)};
 		PROCESS_INFORMATION pi64 = {NULL};
@@ -353,7 +357,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 
 			DWORD_PTR ptrAllocated = 0; DWORD nAllocated = 0;
 			InjectHookFunctions fnArg = {hKernel, gfnLoadLibrary, hNtDll, gfnLdrGetDllHandleByName};
-			iRc = InjectHookDLL(pi, &fnArg, ImageBits, szPluginPath, &ptrAllocated, &nAllocated);
+			iRc = InjectHookDLL(pi, &fnArg, ImageBits, szDllDir, &ptrAllocated, &nAllocated);
 
 			if (abLogProcess || (iRc != CIH_OK/*0*/))
 			{
