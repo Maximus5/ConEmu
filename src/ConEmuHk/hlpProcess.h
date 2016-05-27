@@ -209,6 +209,7 @@ extern bool gbSkipVirtualAllocErr;
 extern bool gbPrepareDefaultTerminal;
 extern bool gbIsNetVsHost;
 extern bool gbIsVStudio;
+extern bool gbIsVsCode;
 extern int  gnVsHostStartConsole;
 extern bool gbIsGdbHost;
 /* ************ Globals for "Default terminal ************ */

@@ -1341,6 +1341,10 @@ void InitExeName()
 	{
 		gbIsVStudio = true;
 	}
+	else if (lstrcmpi(gsExeName, L"code.exe") == 0)
+	{
+		gbIsVsCode = true;
+	}
 
 	if (gbIsNetVsHost
 		|| (lstrcmpi(gsExeName, L"chrome.exe") == 0)

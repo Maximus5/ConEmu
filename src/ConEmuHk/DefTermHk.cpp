@@ -60,6 +60,7 @@ extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хук
 bool gbPrepareDefaultTerminal = false;
 bool gbIsNetVsHost = false;
 bool gbIsVStudio = false;
+bool gbIsVsCode = false;
 int  gnVsHostStartConsole = 0;
 bool gbIsGdbHost = false;
 //ConEmuGuiMapping* gpDefaultTermParm = NULL; -- // полный путь к ConEmu.exe (GUI), "/config", параметры для "confirm" и "no-injects"
