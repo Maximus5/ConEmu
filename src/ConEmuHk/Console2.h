@@ -120,6 +120,16 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	}
 	wcscpy_c(strHookDllPath, apszHookDllPath);
 	wcscat_c(strHookDllPath, pszDllName);
+	// Dll must exist!
+	{
+		HANDLE hLib = CreateFile(strHookDllPath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, NULL);
+		if (!hLib || (hLib == INVALID_HANDLE_VALUE))
+		{
+			iRc = CIH_AsmDllNotFound/*-804*/;
+			goto wrap;
+		}
+		CloseHandle(hLib);
+	}
 
 	memLen = (lstrlen(strHookDllPath)+1)*sizeof(wchar_t);
 

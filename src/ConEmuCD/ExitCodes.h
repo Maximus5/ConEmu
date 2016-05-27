@@ -131,6 +131,7 @@ const CINJECTHK_EXIT_CODES
 	CIH_AsmBitnessNot64 = -801,
 	CIH_AsmBitmessNot32 = -802,
 	CIH_AsmBadDllPathName = -803,
+	CIH_AsmDllNotFound = -804,
 	CIH_AsmBadProcShift = -814,
 	CIH_AsmGeneralError = -1000,
 	//
