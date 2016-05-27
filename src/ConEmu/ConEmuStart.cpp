@@ -1381,7 +1381,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				{
 					if (opt.cfgSwitches.ms_Val)
 					{
-						_ASSERTE(pszArgStart>pszCopyToEnvStart);
+						_ASSERTE(pszArgStart>=pszCopyToEnvStart); // If there is only "-run cmd" in arguments
 						_ASSERTE((INT_PTR)(pszArgStart - pszCopyToEnvStart) <= opt.cfgSwitches.GetLen());
 						opt.cfgSwitches.ms_Val[pszArgStart - pszCopyToEnvStart] = 0;
 					}
