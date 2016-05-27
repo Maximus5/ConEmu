@@ -123,19 +123,10 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 #ifndef CONEMUHK_EXPORTS
 	_ASSERTE(FALSE)
 #endif
-	//DWORD dwErr = 0; //, dwWait = 0;
 	wchar_t szPluginPath[MAX_PATH*2], *pszSlash;
-	//HANDLE hFile = NULL;
-	//wchar_t* pszPathInProcess = NULL;
-	//SIZE_T write = 0;
-	//HANDLE hThread = NULL; DWORD nThreadID = 0;
-	//LPTHREAD_START_ROUTINE ptrLoadLibrary = NULL;
 	_ASSERTE(ghOurModule!=NULL);
 	BOOL is64bitOs = FALSE;
-	//BOOL isWow64process = FALSE;
 	int  ImageBits = 32; //-V112
-	//DWORD ImageSubsystem = 0;
-	//isWow64process = FALSE;
 #ifdef WIN64
 	is64bitOs = TRUE;
 #endif
@@ -143,9 +134,6 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
 	HMODULE hNtDll = NULL;
 	DEBUGTEST(int iFindAddress = 0);
-	//bool lbInj = false;
-	//UINT_PTR fnLoadLibrary = NULL;
-	//DWORD fLoadLibrary = 0;
 	DWORD nErrCode = 0, nWait = 0;
 	int SelfImageBits = WIN3264TEST(32,64);
 
@@ -197,30 +185,10 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 	pszSlash = wcsrchr(szPluginPath, L'\\');
 
 
-	//if (pszSlash) pszSlash++; else pszSlash = szPluginPath;
 	if (!pszSlash)
 		pszSlash = szPluginPath;
 
 	*pszSlash = 0;
-	//TODO("x64 injects");
-	//lstrcpy(pszSlash, L"ConEmuHk.dll");
-	//
-	//hFile = CreateFile(szPluginPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-	//if (hFile == INVALID_HANDLE_VALUE)
-	//{
-	//	dwErr = GetLastError();
-	//	_printf("\".\\ConEmuHk.dll\" not found! ErrCode=0x%08X\n", dwErr);
-	//	goto wrap;
-	//}
-	//CloseHandle(hFile); hFile = NULL;
-	//BOOL is64bitOs = FALSE, isWow64process = FALSE;
-	//int  ImageBits = 32;
-	//DWORD ImageSubsystem = 0;
-	//isWow64process = FALSE;
-	//#ifdef WIN64
-	//is64bitOs = TRUE;
-	//#endif
-	//HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
 
 	if (hKernel)
 	{
@@ -384,7 +352,6 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 			//BOOL bRead = ::ReadProcessMemory(pi.hProcess, (LPVOID)(DWORD_PTR)hKernel, &dos_hdr, sizeof(dos_hdr), &cch_dos_read);
 
 			DWORD_PTR ptrAllocated = 0; DWORD nAllocated = 0;
-			//iRc = bRead ? InjectHookDLL(pi, gfnLoadLibrary, ImageBits, szPluginPath, &ptrAllocated, &nAllocated) : -1000;
 			InjectHookFunctions fnArg = {hKernel, gfnLoadLibrary, hNtDll, gfnLdrGetDllHandleByName};
 			iRc = InjectHookDLL(pi, &fnArg, ImageBits, szPluginPath, &ptrAllocated, &nAllocated);
 
@@ -434,72 +401,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess)
 		}
 	}
 
-//#endif
-	//if (iFindAddress != 0)
-	//{
-	////	iRc = CIH_GeneralError/*-1*/;
-	//	goto wrap;
-	//}
-	//fnLoadLibrary = (UINT_PTR)fLoadLibrary;
-	//if (!lbInj)
-	//{
- 	//	iRc = CIH_GeneralError/*-1*/;
-	//	goto wrap;
-	//}
-	//WARNING("The process handle must have the PROCESS_VM_OPERATION access right!");
-	//size = (lstrlen(szPluginPath)+1)*2;
-	//TODO("Будет облом на DOS (16бит) приложениях");
-	//TODO("Проверить, сможет ли ConEmu.x64 инжектиться в 32битные приложения?");
-	//pszPathInProcess = (wchar_t*)VirtualAllocEx(hProcess, 0, size, MEM_COMMIT, PAGE_READWRITE);
-	//if (!pszPathInProcess)
-	//{
-	//	dwErr = GetLastError();
-	//	_printf("VirtualAllocEx failed! ErrCode=0x%08X\n", dwErr);
-	//	goto wrap;
-	//}
-	//if (!WriteProcessMemory(hProcess, pszPathInProcess, szPluginPath, size, &write ) || size != write)
-	//{
-	//	dwErr = GetLastError();
-	//	_printf("WriteProcessMemory failed! ErrCode=0x%08X\n", dwErr);
-	//	goto wrap;
-	//}
-	//
-	//TODO("Получить адрес LoadLibraryW в адресном пространстве запущенного процесса!");
-	//ptrLoadLibrary = (LPTHREAD_START_ROUTINE)::GetProcAddress(::GetModuleHandle(L"Kernel32.dll"), "LoadLibraryW");
-	//if (ptrLoadLibrary == NULL)
-	//{
-	//	dwErr = GetLastError();
-	//	_printf("GetProcAddress(kernel32, LoadLibraryW) failed! ErrCode=0x%08X\n", dwErr);
-	//	goto wrap;
-	//}
-	//
-	//if (ptrLoadLibrary)
-	//{
-	//	// The handle must have the PROCESS_CREATE_THREAD, PROCESS_QUERY_INFORMATION, PROCESS_VM_OPERATION, PROCESS_VM_WRITE, and PROCESS_VM_READ
-	//	hThread = CreateRemoteThread(hProcess, NULL, 0, ptrLoadLibrary, pszPathInProcess, 0, &nThreadID);
-	//	if (!hThread)
-	//	{
-	//		dwErr = GetLastError();
-	//		_printf("CreateRemoteThread failed! ErrCode=0x%08X\n", dwErr);
-	//		goto wrap;
-	//	}
-	//	// Дождаться, пока отработает
-	//	dwWait = WaitForSingleObject(hThread,
-	//		#ifdef _DEBUG
-	//					INFINITE
-	//		#else
-	//					10000
-	//		#endif
-	//		);
-	//	if (dwWait != WAIT_OBJECT_0) {
-	//		dwErr = GetLastError();
-	//		_printf("Inject tread timeout!");
-	//		goto wrap;
-	//	}
-	//}
-	//
 wrap:
-//#endif
 	if (iRc == CIH_OK/*0*/)
 	{
 		wchar_t szEvtName[64];
