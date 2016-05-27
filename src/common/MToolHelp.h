@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Common.h"
 #include "CmdLine.h"
 #include "MArray.h"
+#include "WObjects.h"
 
 template <
 	typename T,
@@ -260,6 +261,44 @@ public:
 		if (!pszName || !*pszName)
 			return false;
 		return MToolHelp::Find(cmp::compare, (LPARAM)pszName, Info);
+	};
+
+	// Visual Studio Code spawns a lot of children processes
+	// So we have a long tree of Code.exe/Code.exe/Code.exe
+	// The function will find all first-level forks of current process
+	bool FindForks(MArray<PROCESSENTRY32>& Forks)
+	{
+		CEStr lsSelfExe;
+		struct cmp
+		{
+			LPCWSTR pszName;
+			MArray<PROCESSENTRY32>* Forks;
+			DWORD nParentPID;
+			cmp() {};
+			~cmp() {};
+			static bool check(PROCESSENTRY32* p, LPARAM lParam)
+			{
+				cmp* pCmp = (cmp*)lParam;
+				// Process only first-level children
+				if (p->th32ParentProcessID != pCmp->nParentPID)
+					return false; // continue
+				// Compare names
+				LPCWSTR pszName1 = PointToName(p->szExeFile);
+				LPCWSTR pszName2 = pCmp->pszName;
+				int iCmp = lstrcmpi(pszName1, pszName2);
+				if (iCmp == 0)
+					pCmp->Forks->push_back(*p);
+				return false; // Process all processes in system...
+			};
+		} Cmp;
+		if (!GetModulePathName(NULL, lsSelfExe))
+			return false;
+		Cmp.pszName = PointToName(lsSelfExe);
+		Cmp.nParentPID = GetCurrentProcessId();
+		Cmp.Forks = &Forks;
+		PROCESSENTRY32 dummy = {};
+		MToolHelp::Find(cmp::check, (LPARAM)&Cmp, &dummy);
+		return (Forks.size() > 0);
 	};
 };
 
