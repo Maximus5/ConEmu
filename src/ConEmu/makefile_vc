@@ -114,6 +114,7 @@ $(INTDIR)\OptionsFast.obj \
 $(INTDIR)\OptionsHelp.obj \
 $(INTDIR)\ProcessSetEnv.obj \
 $(INTDIR)\PushInfo.obj \
+$(INTDIR)\RConData.obj \
 $(INTDIR)\RConFiles.obj \
 $(INTDIR)\RConPalette.obj \
 $(INTDIR)\RConStartArgs.obj \
@@ -501,6 +502,8 @@ $(INTDIR)\OptionsHelp.obj: OptionsHelp.cpp OptionsHelp.h
 $(INTDIR)\ProcessSetEnv.obj: ../common/ProcessSetEnv.cpp ../common/ProcessSetEnv.h
 
 $(INTDIR)\PushInfo.obj: PushInfo.cpp PushInfo.h
+
+$(INTDIR)\RConData.obj: RConData.cpp RConData.h
 
 $(INTDIR)\RConFiles.obj: RConFiles.cpp RConFiles.h
 

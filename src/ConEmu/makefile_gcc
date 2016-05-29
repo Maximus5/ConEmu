@@ -117,6 +117,7 @@ SRCS = \
 		OptionsFast.cpp    \
 		OptionsHelp.cpp    \
 		PushInfo.cpp       \
+		RConData.cpp       \
 		RConFiles.cpp      \
 		RConPalette.cpp    \
 		RealBuffer.cpp     \

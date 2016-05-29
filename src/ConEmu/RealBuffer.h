@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/ConsoleAnnotation.h"
 #include "../common/MSection.h"
+#include "RConData.h"
 #include "RealConsole.h"
 
 // >> Common.h
@@ -171,11 +172,10 @@ public:
 
 	//bool IsConsoleDataChanged();
 
-	bool GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData = NULL);
+	bool GetConsoleLine(CRConDataGuard& data, int nLine, const wchar_t*& rpChar, /*CharAttr*& pAttr,*/ int& rnLen, MSectionLock* pcsData = NULL);
 	void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
 
 	void ResetConData();
-	bool isConDataValid();
 
 	DWORD_PTR GetKeybLayout();
 	void  SetKeybLayout(DWORD_PTR anNewKeyboardLayout);
@@ -214,10 +214,11 @@ public:
 private:
 	void ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool& bSetApplyFinished, bool& lbChanged, bool& bBufRecreate);
 	bool SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID = CECMD_SETSIZESYNC);
-	bool InitBuffers(DWORD anCellCount = 0, int anWidth = 0, int anHeight = 0);
+	bool InitBuffers(DWORD anCellCount = 0, int anWidth = 0, int anHeight = 0, CRConDataGuard* pData = NULL);
+	bool InitBuffers(CRConDataGuard* pData);
 	bool CheckBufferSize();
 	bool IsTrueColorerBufferChanged();
-	bool LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData);
+	bool LoadDataFromSrv(CRConDataGuard& data, DWORD CharCount, CHAR_INFO* pData);
 	bool LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, const CHAR_INFO* pData, DWORD cchMaxCellCount);
 
 	// координаты панелей в символах
@@ -228,8 +229,6 @@ private:
 
 	ExpandTextRangeType ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CEStr* psText = NULL);
 	bool StoreLastTextRange(ExpandTextRangeType etr);
-
-	short CheckProgressInConsole(const wchar_t* pszCurLine);
 
 	void PrepareColorTable(const AppSettings* pApp, CharAttr** pcaTableExt, CharAttr** pcaTableOrg);
 
@@ -279,13 +278,10 @@ protected:
 		CECI_FLAGS Flags;
 		DWORD FlagsUpdateTick;
 		DWORD LastStartInitBuffersTick, LastEndInitBuffersTick, LastStartReadBufferTick, LastEndReadBufferTick;
-		bool bInGetConsoleData;
+		LONG nInGetConsoleData;
 		int nCreatedBufWidth, nCreatedBufHeight; // Informational
 		size_t nConBufCells; // Max buffers size (cells!)
 		bool mb_ConDataValid;
-		wchar_t *pConChar;
-		WORD  *pConAttr;
-		CHAR_INFO *pDataCmp;
 		// Sizes
 		int nTextWidth, nTextHeight, nBufferHeight;
 		// Resize (srv) in progress
@@ -308,6 +304,12 @@ protected:
 		ConEmuTextRange etr; // etrLast, mcr_FileLineStart, mcr_FileLineEnd
 		bool etrWasChanged;
 	} con;
+
+	MSectionSimple mcs_Data;
+	CRConDataGuard m_ConData;
+	bool GetData(CRConDataGuard& data);
+
+
 	bool SetTopLeft(int ay = -1, int ax = -1, bool abServerCall = false);
 
 	CMatch* mp_Match;

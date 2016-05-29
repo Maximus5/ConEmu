@@ -117,6 +117,8 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType /*= rbt_Prim
 	m_Type = aType;
 	mn_LastRgnFlags = -1;
 
+	mcs_Data.Init();
+
 	ZeroStruct(con);
 	con.TopLeft.Reset();
 	mp_Match = NULL;
@@ -145,13 +147,10 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType /*= rbt_Prim
 
 CRealBuffer::~CRealBuffer()
 {
-	Assert(con.bInGetConsoleData==FALSE);
+	// Is not critical anymore, it's locked just for flickering minimization
+	_ASSERTE(con.nInGetConsoleData==0);
 
-	SafeFree(con.pConChar);
-
-	SafeFree(con.pConAttr);
-
-	SafeFree(con.pDataCmp);
+	m_ConData.Release();
 
 	dump.Close();
 
@@ -181,12 +180,13 @@ void CRealBuffer::DumpConsole(HANDLE ahFile)
 	BOOL lbRc = FALSE;
 	DWORD dw = 0;
 
-	if (con.pConChar && con.pConAttr)
+	CRConDataGuard data;
+	if (GetData(data))
 	{
 		MSectionLock sc; sc.Lock(&csCON, FALSE);
-		DWORD nSize = con.nTextWidth * con.nTextHeight * 2;
-		lbRc = WriteFile(ahFile, con.pConChar, nSize, &dw, NULL);
-		lbRc = WriteFile(ahFile, con.pConAttr, nSize, &dw, NULL); //-V519
+		DWORD cchMax = klMin((DWORD)(con.nTextWidth * con.nTextHeight), LODWORD(data->nMaxCells));
+		lbRc = WriteFile(ahFile, data->pConChar, cchMax*sizeof(*data->pConChar), &dw, NULL);
+		lbRc = WriteFile(ahFile, data->pConAttr, cchMax*sizeof(*data->pConAttr), &dw, NULL);
 	}
 
 	UNREFERENCED_PARAMETER(lbRc);
@@ -204,6 +204,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	uint nY = 0;
 	DWORD dwConDataBufSize = 0;
 	DWORD dwConDataBufSizeEx = 0;
+	CRConDataGuard data;
 
 	con.m_sel.dwFlags = 0;
 	dump.Close();
@@ -362,19 +363,24 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	//dump.NeedApply = TRUE;
 
 	// Создание буферов
-	if (!InitBuffers())
+	if (!InitBuffers(&data))
 	{
 		_ASSERTE(FALSE);
 		goto wrap;
 	}
+	else if (!data.isValid(dwConDataBufSize))
+	{
+		_ASSERTE(FALSE && "Must be initialized!");
+		goto wrap;
+	}
 	else
-	// И копирование
+	// and do the copy
 	{
 		wchar_t*  pszSrc = dump.pszBlock1;
 		CharAttr* pcaSrc = dump.pcaBlock1;
-		wchar_t*  pszDst = con.pConChar;
+		wchar_t*  pszDst = data->pConChar;
 		TODO("Хорошо бы весь расширенный буфер тут хранить, а не только CHAR_ATTR");
-		WORD*     pnaDst = con.pConAttr;
+		WORD*     pnaDst = data->pConAttr;
 
 		wmemmove(pszDst, pszSrc, dwConDataBufSize);
 
@@ -496,14 +502,13 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 		goto wrap;
 	}
 	else
-	// И копирование
+	// and do the copy
 	{
 		TODO("Хорошо бы весь расширенный буфер тут хранить, а не только CHAR_INFO");
 
 		const CHAR_INFO* ptrSrc = pData;
 		CharAttr* pcaDst = dump.pcaBlock1;
 		wchar_t*  pszDst = dump.pszBlock1;
-		WORD*     pnaDst = con.pConAttr;
 		wchar_t   ch;
 
 		CharAttr *lcaTableOrg = NULL;
@@ -511,7 +516,7 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 
 		DWORD nMax = min(cchCellCount,cchMaxCellCount);
 		// Расфуговка буфера на консольные атрибуты
-		for (DWORD n = 0; n < nMax; n++, ptrSrc++, pszDst++, pcaDst++, pnaDst++)
+		for (DWORD n = 0; n < nMax; n++, ptrSrc++, pszDst++, pcaDst++)
 		{
 			ch = ptrSrc->Char.UnicodeChar;
 			//2009-09-25. Некоторые (старые?) программы умудряются засунуть в консоль символы (ASC<32)
@@ -1319,8 +1324,9 @@ COORD CRealBuffer::GetMaxSize()
 
 bool CRealBuffer::isInitialized()
 {
-	if (!con.pConChar || !con.nTextWidth || con.nTextHeight<2)
-		return false; // консоль не инициализирована, ловить нечего
+	// Was console intialized properly?
+	if (!m_ConData.Ptr() || !con.nTextWidth || con.nTextHeight<2)
+		return false;
 	return true;
 }
 
@@ -1331,34 +1337,35 @@ bool CRealBuffer::isFarMenuOrMacro()
 
 	WARNING("CantActivateInfo: Хорошо бы при отображении хинта 'Can't activate tab' сказать 'почему'");
 
-	if (con.pConChar && con.pConAttr)
+	CRConDataGuard data;
+	if (GetData(data))
 	{
 		TODO("Хорошо бы реально у фара узнать, выполняет ли он макрос");
-		if (((con.pConChar[0] == L'R') && ((con.pConAttr[0] & 0xFF) == 0x4F))
-			|| ((con.pConChar[0] == L'P') && ((con.pConAttr[0] & 0xFF) == 0x2F)))
+		if (((data->pConChar[0] == L'R') && ((data->pConAttr[0] & 0xFF) == 0x4F))
+			|| ((data->pConChar[0] == L'P') && ((data->pConAttr[0] & 0xFF) == 0x2F)))
 		{
 			// Запись макроса. Запретим наверное переключаться?
 			lbMenuActive = true;
 		}
-		else if (con.pConChar[0] == L' ' && con.pConChar[con.nTextWidth] == ucBoxDblVert)
+		else if (data->pConChar[0] == L' ' && data->pConChar[con.nTextWidth] == ucBoxDblVert)
 		{
 			lbMenuActive = true;
 		}
-		else if (con.pConChar[0] == L' ' && (con.pConChar[con.nTextWidth] == ucBoxDblDownRight ||
-		                                    (con.pConChar[con.nTextWidth] == '['
-		                                     && (con.pConChar[con.nTextWidth+1] >= L'0' && con.pConChar[con.nTextWidth+1] <= L'9'))))
+		else if (data->pConChar[0] == L' ' && (data->pConChar[con.nTextWidth] == ucBoxDblDownRight ||
+		                                    (data->pConChar[con.nTextWidth] == '['
+		                                     && (data->pConChar[con.nTextWidth+1] >= L'0' && data->pConChar[con.nTextWidth+1] <= L'9'))))
 		{
 			// Строка меню ВСЕГДА видна. Определим, активно ли меню.
 			for(int x=1; !lbMenuActive && x<con.nTextWidth; x++)
 			{
-				if (con.pConAttr[x] != con.pConAttr[0])  // неактивное меню - не подсвечивается
+				if (data->pConAttr[x] != data->pConAttr[0])  // неактивное меню - не подсвечивается
 					lbMenuActive = true;
 			}
 		}
 		else
 		{
 			// Если строка меню ВСЕГДА не видна, а только всплывает
-			wchar_t* pszLine = con.pConChar + con.nTextWidth;
+			wchar_t* pszLine = data->pConChar + con.nTextWidth;
 
 			for(int x=1; !lbMenuActive && x<(con.nTextWidth-10); x++)
 			{
@@ -1436,12 +1443,37 @@ bool CRealBuffer::PreInit()
 	return true;
 }
 
-bool CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
+bool CRealBuffer::GetData(CRConDataGuard& data)
+{
+	// m_ConData is not expected to be used in other buffer types
+	_ASSERTE(m_Type == rbt_Primary);
+
+	MSectionLockSimple cs; cs.Lock(&mcs_Data);
+	if (m_ConData.isValid())
+	{
+		data.Attach(m_ConData.Ptr());
+	}
+	else
+	{
+		data.Release();
+	}
+	cs.Unlock();
+
+	return data.isValid();
+}
+
+bool CRealBuffer::InitBuffers(CRConDataGuard* pData)
+{
+	return InitBuffers(0/*anCellCount*/, 0/*anWidth*/, 0/*anHeight*/, pData);
+}
+
+bool CRealBuffer::InitBuffers(DWORD anCellCount /*= 0*/, int anWidth /*= 0*/, int anHeight /*= 0*/, CRConDataGuard* pData /*= NULL*/)
 {
 	bool lbRc = false;
 	int nNewWidth = 0, nNewHeight = 0;
-	DWORD nCellCount = 0;
+	size_t nCellCount = 0;
 	BYTE nDefTextAttr;
+	CRConDataGuard data;
 
 	// Эта функция должна вызываться только в MonitorThread.
 	// Тогда блокировка буфера не потребуется
@@ -1462,7 +1494,11 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 	else
 	{
 		if (!GetConWindowSize(con.m_sbi, &nNewWidth, &nNewHeight, NULL))
+		{
+			if (pData)
+				pData->Release();
 			return FALSE;
+		}
 	}
 
 	// Функция вызывается с (anCellCount!=0) ТОЛЬКО из ApplyConsoleInfo()
@@ -1478,9 +1514,12 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 		else if ((con.nCreatedBufWidth == nNewWidth && con.nCreatedBufHeight == nNewHeight)
 			&& (con.nTextWidth == nNewWidth && con.nTextHeight == nNewHeight))
 		{
-			// Не будем зря передергивать буферы и прочее, т.к. размер не менялся
-			if (con.pConChar!=NULL && con.pConAttr!=NULL && con.pDataCmp!=NULL)
+			// Sizes were not changed
+			if (GetData(data)
+				&& data.isValid(nNewWidth * nNewHeight))
 			{
+				if (pData)
+					pData->Attach(data.Ptr());
 				lbRc = TRUE;
 				goto wrap;
 			}
@@ -1495,10 +1534,12 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 	nDefTextAttr = MAKECONCOLOR(mp_RCon->GetDefaultTextColorIdx(), mp_RCon->GetDefaultBackColorIdx());
 
 	// Если требуется увеличить или создать (первично) буфера
-	if (!con.pConChar || (con.nConBufCells < nCellCount))
+	// Increase buffer sizes if required
+	if (!GetData(data) || !data.isValid() || (data->nMaxCells < nCellCount))
 	{
 		// Exclusive(!) Lock
-		MSectionLock sc; sc.Lock(&csCON, TRUE);
+		MSectionLockSimple sc; sc.Lock(&mcs_Data);
+		data.Release();
 
 		wchar_t szLog[80];
 		_wsprintf(szLog, SKIPCOUNT(szLog) L"InitBuffers Width=%u Height=%u Cells=%u (begin)", nNewWidth, nNewHeight, nCellCount);
@@ -1508,48 +1549,44 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 		HEAPVAL;
 		con.LastStartInitBuffersTick = GetTickCount();
 
-		Assert(con.bInGetConsoleData==FALSE);
+		// Is not critical anymore, it's locked just for flickering minimization
+		_ASSERTE(con.nInGetConsoleData==0);
 
 		// Сначала - сброс
 		con.nConBufCells = 0;
 
-		SafeFree(con.pConChar);
 
-		SafeFree(con.pConAttr);
-
-		SafeFree(con.pDataCmp);
-
-		HEAPVAL;
-		// Выделяем памяти чуть больше, чтобы не вызывать лишние Realloc при небольших изменениях размера консоли
-		size_t cchNewCharMaxPlus = nCellCount * 3 / 2;
-		_ASSERTE(cchNewCharMaxPlus > (size_t)(nNewWidth * nNewHeight));
-
-		con.pConChar = (TCHAR*)calloc(cchNewCharMaxPlus, sizeof(*con.pConChar));
-		con.pConAttr = (WORD*)calloc(cchNewCharMaxPlus, sizeof(*con.pConAttr));
-		con.pDataCmp = (CHAR_INFO*)calloc(cchNewCharMaxPlus, sizeof(CHAR_INFO));
-
-		if (con.pConChar && con.pConAttr && con.pDataCmp)
+		CRConData* pData = CRConData::Allocate(mp_RCon, nCellCount);
+		if (pData)
 		{
-			con.nConBufCells = cchNewCharMaxPlus;
+			m_ConData.Attach(pData);
+			data.Attach(pData);
+			HEAPVAL;
+
+			con.nConBufCells = pData->nMaxCells;
 
 			HEAPVAL;
-			wmemset((wchar_t*)con.pConAttr, nDefTextAttr, cchNewCharMaxPlus);
+			wmemset((wchar_t*)pData->pConAttr, nDefTextAttr, pData->nMaxCells);
+
+			pData->Release();
+
+			con.LastEndInitBuffersTick = GetTickCount();
 
 			HEAPVAL;
 			lbRc = TRUE;
 		}
 		else
 		{
-			_ASSERTE(con.pConChar!=NULL);
-			_ASSERTE(con.pConAttr!=NULL);
-			_ASSERTE(con.pDataCmp!=NULL);
+			con.LastEndInitBuffersTick = (DWORD)-1;
 		}
 
-		con.LastEndInitBuffersTick = GetTickCount();
-
-		Assert(con.bInGetConsoleData==FALSE);
-
 		sc.Unlock();
+
+		_ASSERTE(data.isValid(nCellCount) && "Failed to allocate data");
+
+		// Is not critical anymore, it's locked just for flickering minimization
+		_ASSERTE(con.nInGetConsoleData==0);
+		
 		HEAPVAL
 
 		_wsprintf(szLog, SKIPCOUNT(szLog) L"InitBuffers Width=%u Height=%u Cells=%u (done)", nNewWidth, nNewHeight, nCellCount);
@@ -1560,15 +1597,15 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 		HEAPVAL
 		MSectionLock sc; sc.Lock(&csCON);
 
-		size_t nFillCount = anCellCount ? min(anCellCount,con.nConBufCells) : con.nConBufCells;
+		size_t nFillCount = nCellCount ? klMin(nCellCount,con.nConBufCells) : con.nConBufCells;
 
-		if (nFillCount && con.pConChar && con.pConAttr && con.pDataCmp)
+		if (GetData(data) && data.isValid(nFillCount))
 		{
-			memset(con.pConChar, 0, nFillCount * sizeof(*con.pConChar));
+			memset(data->pConChar, 0, nFillCount * sizeof(*data->pConChar));
 
-			wmemset((wchar_t*)con.pConAttr, nDefTextAttr, nFillCount);
+			wmemset((wchar_t*)data->pConAttr, nDefTextAttr, nFillCount);
 
-			memset(con.pDataCmp, 0, nFillCount * sizeof(CHAR_INFO));
+			memset(data->pDataCmp, 0, nFillCount * sizeof(*data->pDataCmp));
 		}
 
 		sc.Unlock();
@@ -1577,7 +1614,7 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 	}
 	else
 	{
-		lbRc = TRUE;
+		lbRc = (GetData(data) && data.isValid(nCellCount));
 	}
 
 wrap:
@@ -1598,19 +1635,29 @@ wrap:
 	if (this == mp_RCon->mp_ABuf)
 		mp_RCon->mb_DataChanged = TRUE;
 
+	if (pData)
+	{
+		if (lbRc)
+		{
+			_ASSERTE(data.isValid());
+			pData->Attach(data.Ptr());
+		}
+		else
+		{
+			pData->Release();
+		}
+	}
+
 	return lbRc;
 }
 
 void CRealBuffer::PreFillBuffers()
 {
-	if (con.pConChar && con.pConAttr)
+	CRConDataGuard data;
+	if (GetData(data))
 	{
-		MSectionLock sc; sc.Lock(&csCON, TRUE);
-
 		WORD nDefTextAttr = MAKECONCOLOR(mp_RCon->GetDefaultTextColorIdx(), mp_RCon->GetDefaultBackColorIdx());
-		wmemset((wchar_t*)con.pConAttr, nDefTextAttr, con.nConBufCells);
-
-		sc.Unlock();
+		wmemset((wchar_t*)data->pConAttr, nDefTextAttr, data->nMaxCells);
 	}
 }
 
@@ -2049,7 +2096,7 @@ bool CRealBuffer::CheckBufferSize()
 	return lbForceUpdate;
 }
 
-bool CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
+bool CRealBuffer::LoadDataFromSrv(CRConDataGuard& data, DWORD CharCount, CHAR_INFO* pData)
 {
 	if (m_Type != rbt_Primary)
 	{
@@ -2059,20 +2106,22 @@ bool CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 
 	DWORD nCharCmp = min(CharCount, con.nConBufCells);
 
-	if (!nCharCmp || !con.pDataCmp)
+	if (!nCharCmp || !data.isValid(CharCount))
 	{
-		Assert(nCharCmp && con.pDataCmp);
+		Assert(nCharCmp && data.isValid(CharCount));
 		return FALSE;
 	}
+
+	_ASSERTE(nCharCmp <= data->nMaxCells);
 
 	HEAPVAL;
 	bool lbScreenChanged = false;
 	bool bTopChanged = false;
 	bool bRestChanged = false;
-	wchar_t* lpChar = con.pConChar;
-	WORD* lpAttr = con.pConAttr;
+	wchar_t* lpChar = data->pConChar;
+	WORD* lpAttr = data->pConAttr;
 
-	_ASSERTE(sizeof(*con.pDataCmp) == sizeof(*pData));
+	_ASSERTE(sizeof(*data->pDataCmp) == sizeof(*pData));
 
 	// Tricky... Ignore top line (with clocks) in Far manager to skip gpSet->nTabFlashChanged
 	// Do not take into account gpSet->nTabFlashChanged
@@ -2081,12 +2130,12 @@ bool CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 	{
 		DWORD nTopCmp = min(nCharCmp, (DWORD)con.nTextWidth);
 		DWORD nRestCmp = nCharCmp - nTopCmp;
-		bTopChanged = (memcmp(con.pDataCmp, pData, nTopCmp*sizeof(*pData)) != 0);
-		bRestChanged = nRestCmp ? (memcmp(con.pDataCmp+nTopCmp, pData+nTopCmp, nRestCmp*sizeof(*pData)) != 0) : false;
+		bTopChanged = (memcmp(data->pDataCmp, pData, nTopCmp*sizeof(*pData)) != 0);
+		bRestChanged = nRestCmp ? (memcmp(data->pDataCmp+nTopCmp, pData+nTopCmp, nRestCmp*sizeof(*pData)) != 0) : false;
 	}
 	else
 	{
-		bRestChanged = (memcmp(con.pDataCmp, pData, nCharCmp*sizeof(*pData)) != 0);
+		bRestChanged = (memcmp(data->pDataCmp, pData, nCharCmp*sizeof(*pData)) != 0);
 	}
 	lbScreenChanged = (bRestChanged || bTopChanged);
 
@@ -2098,7 +2147,7 @@ bool CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 			char sInfo[128];
 			_wsprintfA(sInfo, SKIPLEN(countof(sInfo)) "DataCmp was changed, width=%u, height=%u, count=%u", con.nTextWidth, con.nTextHeight, CharCount);
 
-			const CHAR_INFO* lp1 = con.pDataCmp;
+			const CHAR_INFO* lp1 = data->pDataCmp;
 			const CHAR_INFO* lp2 = pData;
 			INT_PTR idx = -1;
 
@@ -2106,7 +2155,7 @@ bool CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 			{
 				if (memcmp(lp1, lp2, sizeof(*lp2)) != 0)
 				{
-					idx = (lp1 - con.pDataCmp);
+					idx = (lp1 - data->pDataCmp);
 					int y = con.nTextWidth ? (idx / con.nTextWidth) : 0;
 					int x = con.nTextWidth ? (idx - y * con.nTextWidth) : idx;
 
@@ -2125,10 +2174,10 @@ bool CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 		}
 
 
-		memmove(con.pDataCmp, pData, nCharCmp*sizeof(CHAR_INFO));
+		memmove(data->pDataCmp, pData, nCharCmp*sizeof(CHAR_INFO));
 		HEAPVAL;
 
-		CHAR_INFO* lpCur = con.pDataCmp;
+		CHAR_INFO* lpCur = data->pDataCmp;
 		wchar_t ch;
 
 		// Расфуговка буфера CHAR_INFO на текст и атрибуты
@@ -2144,13 +2193,13 @@ bool CRealBuffer::LoadDataFromSrv(DWORD CharCount, CHAR_INFO* pData)
 		}
 
 		// Для использования строковых функций - гарантируем ASCIIZ буфера
-		if (lpChar < (con.pConChar + con.nConBufCells))
+		if (lpChar < (data->pConChar + con.nConBufCells))
 		{
 			*lpChar = 0;
 		}
 		else
 		{
-			_ASSERTE(lpChar < (con.pConChar + con.nConBufCells));
+			_ASSERTE(lpChar < (data->pConChar + con.nConBufCells));
 		}
 
 		con.mb_ConDataValid = true;
@@ -2620,20 +2669,18 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 
 			if (bBufRecreate || bNeedLoadData)
 			{
+				CRConDataGuard data;
 				sc.Lock(&csCON);
 
-				if (InitBuffers(CharCount, nNewWidth, nNewHeight))
+				if (InitBuffers(CharCount, nNewWidth, nNewHeight, &data))
 				{
 					if (bNeedLoadData && nCalcCount && pData)
 					{
-						#if 0
-						bool bCorner = (pData[0].Char.UnicodeChar == L'╔');
-						if (con.bLockChange2Text && mp_RCon->isFar() && !bCorner)
-						{
-							bSetApplyFinished = false;
-						}
-						#endif
-						if (LoadDataFromSrv(nCalcCount, pData))
+						data->m_sbi = con.m_sbi;
+						data->nWidth = nNewWidth;
+						data->nHeight = nNewHeight;
+
+						if (LoadDataFromSrv(data, nCalcCount, pData))
 						{
 							LOGCONSOLECHANGE("ApplyConsoleInfo: InitBuffers&LoadDataFromSrv -> changed");
 							lbChanged = true;
@@ -2667,42 +2714,48 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 			SetChange2Size(-1, -1);
 		}
 
-	#ifdef _DEBUG
-		wchar_t szCursorInfo[60];
-		_wsprintf(szCursorInfo, SKIPLEN(countof(szCursorInfo)) L"Cursor (X=%i, Y=%i, Vis:%i, H:%i)\n",
-					con.m_sbi.dwCursorPosition.X, con.m_sbi.dwCursorPosition.Y,
-					con.m_ci.bVisible, con.m_ci.dwSize);
-		DEBUGSTRPKT(szCursorInfo);
-
-		// Данные уже должны быть заполнены, и там не должно быть лажы
-		if (con.pConChar)
+		#ifdef _DEBUG
 		{
-			BOOL lbDataValid = TRUE; uint n = 0;
-			_ASSERTE(con.nTextWidth == con.m_sbi.dwSize.X);
+			wchar_t szCursorInfo[60];
+			_wsprintf(szCursorInfo, SKIPLEN(countof(szCursorInfo)) L"Cursor (X=%i, Y=%i, Vis:%i, H:%i)\n",
+						con.m_sbi.dwCursorPosition.X, con.m_sbi.dwCursorPosition.Y,
+						con.m_ci.bVisible, con.m_ci.dwSize);
+			DEBUGSTRPKT(szCursorInfo);
+
 			uint TextLen = con.nTextWidth * con.nTextHeight;
 
-			while (n < TextLen)
+			// Must be filled!
+			CRConDataGuard data;
+			if (GetData(data) && data.isValid(TextLen))
 			{
-				if (con.pConChar[n] == 0)
+				BOOL lbDataValid = TRUE; uint n = 0;
+				_ASSERTE(con.nTextWidth == con.m_sbi.dwSize.X);
+
+				wchar_t* pConChar = data->pConChar;
+				WORD* pConAttr = data->pConAttr;
+				while (n < TextLen)
 				{
-					lbDataValid = FALSE; break;
-				}
-				else if (con.pConChar[n] != L' ')
-				{
-					// 0 - может быть только для пробела. Иначе символ будет скрытым, чего по идее, быть не должно
-					if (con.pConAttr[n] == 0)
+					if (pConChar[n] == 0)
 					{
 						lbDataValid = FALSE; break;
 					}
+					else if (pConChar[n] != L' ')
+					{
+						// 0 - может быть только для пробела. Иначе символ будет скрытым, чего по идее, быть не должно
+						if (pConAttr[n] == 0)
+						{
+							lbDataValid = FALSE; break;
+						}
+					}
+
+					n++;
 				}
-
-				n++;
 			}
-		}
 
-		//_ASSERTE(lbDataValid);
-		HEAPVAL;
-	#endif
+			//_ASSERTE(lbDataValid);
+			HEAPVAL;
+		}
+		#endif
 
 		// Проверка буфера TrueColor
 		if (!lbChanged && gpSet->isTrueColorer && mp_RCon->mp_TrueColorerData)
@@ -3649,10 +3702,11 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		if (messg == WM_RBUTTONDOWN)
 		{
 			MSectionLock csData;
-			wchar_t* pChar = NULL;
+			const wchar_t* pChar = NULL;
 			int nLen = 0;
 			COORD lcrScr = BufferToScreen(crMouse);
-			if (GetConsoleLine(lcrScr.Y, &pChar, &nLen, &csData) && (*pChar == L'1'))
+			CRConDataGuard data;
+			if (GetConsoleLine(data, lcrScr.Y, pChar, nLen, &csData) && (*pChar == L'1'))
 			{
 				// Т.к. ширина баров переменная, ищем
 				int x, k, px = 0, vk = 0;
@@ -4054,12 +4108,15 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 	LPCWSTR pszFrom = NULL, pszDataStart = NULL, pszEnd = NULL;
 	LPCWSTR pszFrom1 = NULL, pszEnd1 = NULL;
 	size_t nWidth = 0, nHeight = 0;
+	CRConDataGuard data;
 
 	if (m_Type == rbt_Primary)
 	{
-		pszDataStart = pszFrom = pszFrom1 = con.pConChar;
 		nWidth = this->GetTextWidth();
 		nHeight = this->GetTextHeight();
+		if (!GetData(data) || !data.isValid(nWidth*nHeight))
+			goto done;
+		pszDataStart = pszFrom = pszFrom1 = data->pConChar;
 		_ASSERTE(pszFrom[nWidth*nHeight] == 0); // Должно быть ASCIIZ
 		pszEnd = pszEnd1 = pszFrom + (nWidth * nHeight);
 	}
@@ -4133,7 +4190,7 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 					if (abWholeWords)
 					{
 						#define isWordDelim(ch) (!ch || (wcschr(szWordDelim,ch)!=NULL) || (ch>=0x2100 && ch<0x2800) || (ch<=32))
-						if (pszFrom > con.pConChar)
+						if (pszFrom > pszDataStart)
 						{
 							if (!isWordDelim(*(pszFrom-1)))
 							{
@@ -4481,11 +4538,12 @@ void CRealBuffer::ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift)
 	{
 		//TODO: Extend to text line ending first
 		SHORT X = (GetBufferWidth() - 1);
-		wchar_t* pszLine = NULL; int nLineLen = 0;
+		const wchar_t* pszLine = NULL; int nLineLen = 0;
 		COORD lcrScr = BufferToScreen(cr);
 		// Find last non-spacing character
 		MSectionLock csData; csData.Lock(&csCON);
-		if (GetConsoleLine(lcrScr.Y, &pszLine, &nLineLen, &csData))
+		CRConDataGuard data;
+		if (GetConsoleLine(data, lcrScr.Y, pszLine, nLineLen, &csData))
 		{
 			SHORT newX = X;
 			while ((newX > 0) && (pszLine[newX] == 0 || pszLine[newX] == L' ' || pszLine[newX] == L'\t'))
@@ -4839,6 +4897,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	WORD* pAttrStart = NULL;
 	CharAttr* pAttrStartEx = NULL;
 	int nTextWidth = 0, nTextHeight = 0;
+	CRConDataGuard data;
 
 	if ((CopyMode == cm_CopyInt) && phUnicode)
 		nFormat = 0; // Выделен текст для того чтобы сразу его вставить, не трогая Clipboard
@@ -4847,10 +4906,12 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 
 	if (m_Type == rbt_Primary)
 	{
-		pszDataStart = con.pConChar;
-		pAttrStart = con.pConAttr;
 		nTextWidth = this->GetTextWidth();
 		nTextHeight = this->GetTextHeight();
+		if (!GetData(data) || !data.isValid(nTextWidth*nTextHeight))
+			return false;
+		pszDataStart = data->pConChar;
+		pAttrStart = data->pConAttr;
 		_ASSERTE(pszDataStart[nTextWidth*nTextHeight] == 0); // Должно быть ASCIIZ
 
 		// Выделение "с прокруткой" обрабатываем только в альтернативных буферах,
@@ -5606,7 +5667,7 @@ const CONSOLE_SCREEN_BUFFER_INFO* CRealBuffer::GetSBI()
 //	return con.bConsoleDataChanged;
 //}
 
-bool CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData)
+bool CRealBuffer::GetConsoleLine(CRConDataGuard& data, int nLine, const wchar_t*& rpChar, /*CharAttr*& pAttr,*/ int& rnLen, MSectionLock* pcsData)
 {
 	// Может быть уже заблокировано
 	MSectionLock csData;
@@ -5628,33 +5689,30 @@ bool CRealBuffer::GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,
 
 	if ((m_Type == rbt_DumpScreen) || (m_Type == rbt_Alternative) || (m_Type == rbt_Selection) || (m_Type == rbt_Find))
 	{
+		// Is not used here
+		data.Release();
+
 		if (!dump.pszBlock1)
 			return FALSE;
 
-		if (pChar)
-			*pChar = dump.pszBlock1 + ((con.m_sbi.srWindow.Top + nLine) * dump.crSize.X) + con.m_sbi.srWindow.Left;
-		if (pLen)
-			*pLen = dump.crSize.X;
+		rpChar = dump.pszBlock1 + ((con.m_sbi.srWindow.Top + nLine) * dump.crSize.X) + con.m_sbi.srWindow.Left;
+		rnLen = dump.crSize.X;
+	}
+	else if (!GetData(data))
+	{
+		return FALSE;
 	}
 	else
 	{
-		// Вернуть данные
-		if (!con.pConChar || !con.pConAttr)
-			return FALSE;
-
-		if ((nLine >= con.nCreatedBufHeight)
-			|| ((size_t)((nLine + 1) * con.nTextWidth) > con.nConBufCells))
+		if ((nLine >= data->nHeight)
+			|| ((size_t)((nLine + 1) * data->nWidth) > data->nMaxCells))
 		{
-			_ASSERTE((nLine<con.nCreatedBufHeight) && ((size_t)((nLine + 1) * con.nTextWidth) > con.nConBufCells));
+			_ASSERTE((nLine < data->nHeight) && ((size_t)((nLine + 1) * data->nWidth) > data->nMaxCells));
 			return FALSE;
 		}
 
-		if (pChar)
-			*pChar = con.pConChar + (nLine * con.nCreatedBufWidth);
-		//if (pAttr)
-		//	*pAttr = con.pConAttr + (nLine * con.nTextWidth);
-		if (pLen)
-			*pLen = con.nCreatedBufWidth;
+		rpChar = data->pConChar + (nLine * data->nWidth);
+		rnLen = data->nWidth;
 	}
 
 	return TRUE;
@@ -5692,28 +5750,6 @@ void CRealBuffer::PrepareColorTable(const AppSettings* pApp, CharAttr** pcaTable
 void CRealBuffer::ResetConData()
 {
 	con.mb_ConDataValid = false;
-}
-
-bool CRealBuffer::isConDataValid()
-{
-	if (m_Type == rbt_Primary)
-	{
-		if (!con.pConChar || !con.pConAttr)
-			return false;
-		_ASSERTE(!con.mb_ConDataValid || *con.pConChar);
-	}
-	else
-	{
-		if (!dump.pszBlock1 || !dump.pcaBlock1)
-			return false;
-	}
-
-	if (!con.mb_ConDataValid)
-	{
-		return false;
-	}
-
-	return true;
 }
 
 // nWidth и nHeight это размеры, которые хочет получить VCon (оно могло еще не среагировать на изменения?
@@ -5761,7 +5797,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 	// NonExclusive lock (need to ensure that buffers will not be recreated during processing)
 	MSectionLock csData; csData.Lock(&csCON);
-	con.bInGetConsoleData = TRUE;
+	MSetter lInGetData(&con.nInGetConsoleData);
 
 	con.LastStartReadBufferTick = GetTickCount();
 
@@ -5852,12 +5888,16 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	}
 	else
 	{
-		if (!isConDataValid())
+		CRConDataGuard data;
+
+		if (!GetData(data)
+			|| !con.mb_ConDataValid
+			|| !data.isValid())
 		{
 			// Return totally clear buffer, no need to erase "bottom"
 			nYMax = nHeight;
 			// Under debug, show "warning" char if only buffer was not initialized
-			wchar_t wc = (con.pConChar && con.pConAttr) ? L' ' : wSetChar;
+			wchar_t wc = (data.isValid()) ? L' ' : wSetChar;
 			wmemset(pChar, wc, cwDstBufSize);
 			// And Attributes
 			for (DWORD i = 0; i < cwDstBufSize; i++)
@@ -5870,330 +5910,27 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 		{
 			bDataValid = true;
 
-			TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
-			//_ASSERTE(*con.pConChar!=ucBoxDblVert);
-			nYMax = min(nHeight,con.nCreatedBufHeight);
-
-			wchar_t  *pszSrc = con.pConChar;
-			WORD     *pnSrc = con.pConAttr;
-
-			// Т.к. есть блокировка (csData), то con.pConChar и con.pConAttr
-			// не должны меняться во время выполнения этой функции
-			const wchar_t* const pszSrcStart = con.pConChar;
-			WORD* const pnSrcStart = con.pConAttr;
-			size_t nSrcCells = (con.nCreatedBufWidth * con.nCreatedBufHeight);
-
-			Assert(pszSrcStart==pszSrc && pnSrcStart==pnSrc);
-
-			const AnnotationInfo *pcolSrc = NULL;
-			const AnnotationInfo *pcolEnd = NULL;
-			BOOL bUseColorData = FALSE, bStartUseColorData = FALSE;
-
 			if (lbAllowHilightFileLine)
 			{
 				// Если мышь сместилась - нужно посчитать
 				// Даже если мышь не двигалась - текст мог измениться.
 				/*if ((con.etr.mcr_FileLineStart.X == con.etr.mcr_FileLineEnd.X)
-					|| (con.etr.mcr_FileLineStart.Y != mcr_LastMousePos.Y)
-					|| (con.etr.mcr_FileLineStart.X > mcr_LastMousePos.X || con.etr.mcr_FileLineEnd.X < mcr_LastMousePos.X))*/
+				|| (con.etr.mcr_FileLineStart.Y != mcr_LastMousePos.Y)
+				|| (con.etr.mcr_FileLineStart.X > mcr_LastMousePos.X || con.etr.mcr_FileLineEnd.X < mcr_LastMousePos.X))*/
 				if ((mp_RCon->mp_ABuf == this) && gpConEmu->isMeForeground())
 				{
 					ProcessFarHyperlink(false);
 				}
 			}
 
-			if (gpSet->isTrueColorer
-				&& mp_RCon->m_TrueColorerMap.IsValid()
-				&& mp_RCon->mp_TrueColorerData
-				/*&& mp_RCon->isFar()*/)
-			{
-				pcolSrc = mp_RCon->mp_TrueColorerData;
-				pcolEnd = mp_RCon->mp_TrueColorerData + mp_RCon->m_TrueColorerMap.Ptr()->bufferSize;
-				bUseColorData = TRUE;
-				WARNING("Если far/w - pcolSrc нужно поднять вверх, bStartUseColorData=TRUE, bUseColorData=FALSE");
-				if (con.bBufferHeight)
-				{
-					{
-						int nShiftRows = (con.m_sbi.dwSize.Y - nHeight) - con.m_sbi.srWindow.Top;
-
-						if (nShiftRows > 0)
-						{
-							#ifdef _DEBUG
-							if (con.nCreatedBufWidth != (con.m_sbi.srWindow.Right - con.m_sbi.srWindow.Left + 1))
-							{
-								_ASSERTE(con.nCreatedBufWidth == (con.m_sbi.srWindow.Right - con.m_sbi.srWindow.Left + 1));
-							}
-							#endif
-							pcolSrc -= nShiftRows*con.nCreatedBufWidth;
-							DEBUGSTRTRUEMOD(L"TrueMod skipped due to nShiftRows, bStartUseColorData was set");
-							bUseColorData = FALSE;
-							bStartUseColorData = TRUE;
-						}
-						#ifdef _DEBUG
-						else if (nShiftRows < 0)
-						{
-							//_ASSERTE(nShiftRows>=0);
-							wchar_t szLog[200];
-							_wsprintf(szLog, SKIPCOUNT(szLog) L"!!! CRealBuffer::GetConsoleData !!! "
-								L"nShiftRows=%i nWidth=%i nHeight=%i Rect={%i,%i}-{%i,%i} Buf={%i,%i}",
-								nShiftRows, nWidth, nHeight,
-								con.m_sbi.srWindow.Left, con.m_sbi.srWindow.Top, con.m_sbi.srWindow.Right, con.m_sbi.srWindow.Bottom,
-								con.m_sbi.dwSize.X, con.m_sbi.dwSize.Y);
-							mp_RCon->LogString(szLog);
-						}
-						#endif
-					}
-				}
-			}
-			else
-			{
-				DEBUGSTRTRUEMOD(L"TrueMod is not allowed here");
-			}
-
-			DWORD cbDstLineSize = nWidth * 2;
-			DWORD cnSrcLineLen = con.nCreatedBufWidth;
-			DWORD cbSrcLineSize = cnSrcLineLen * 2;
-
-			#ifdef _DEBUG
-			if (con.nTextWidth != con.m_sbi.dwSize.X)
-			{
-				_ASSERTE(con.nTextWidth == con.m_sbi.dwSize.X || con.nCreatedBufWidth == con.m_sbi.dwSize.X);
-			}
-			if (con.nCreatedBufWidth != con.m_sbi.dwSize.X)
-			{
-				_ASSERTE(con.nCreatedBufWidth == con.m_sbi.dwSize.X);
-			}
-			#endif
-
-			DWORD cbLineSize = min(cbDstLineSize,cbSrcLineSize);
-			int nCharsLeft = max(0, (nWidth-con.nCreatedBufWidth));
-			//int nY, nX;
-			//120331 - Нехорошо заменять на "черный" с самого начала
-			BYTE attrBackLast = 0;
-			int nExtendStartsY = 0;
-			//int nPrevDlgBorder = -1;
-
-			bool lbStoreBackLast = false;
-			if (bExtendColors)
-			{
-				BYTE FirstBackAttr = lcaTable[(*pnSrc) & 0xFF].nBackIdx;
-				if (FirstBackAttr != nExtendColorIdx)
-					attrBackLast = FirstBackAttr;
-
-				const CEFAR_INFO_MAPPING* pFarInfo = lbIsFar ? mp_RCon->GetFarInfo() : NULL;
-				if (pFarInfo)
-				{
-					// Если в качестве цвета "расширения" выбран цвет панелей - значит
-					// пользователь просто настроил "другую" палитру для панелей фара.
-					// К сожалению, таким образом нельзя заменить только цвета для элемента под курсором.
-					if (CONBACKCOLOR(pFarInfo->nFarColors[col_PanelText]) != nExtendColorIdx)
-						lbStoreBackLast = true;
-					else
-						attrBackLast = FirstBackAttr;
-
-					if (pFarInfo->FarInterfaceSettings.AlwaysShowMenuBar || mp_RCon->isEditor() || mp_RCon->isViewer())
-						nExtendStartsY = 1; // пропустить обработку строки меню
-				}
-				else
-				{
-					lbStoreBackLast = true;
-				}
-			}
-
-			// Собственно данные
-			for (nY = 0; nY < nYMax; nY++)
-			{
-				if ((pszSrcStart != con.pConChar) || (pnSrcStart != con.pConAttr))
-				{
-					Assert(pszSrcStart==con.pConChar && pnSrcStart==con.pConAttr);
-					break;
-				}
-
-				if (nY == nExtendStartsY)
-					lcaTable = lcaTableExt;
-
-				// Текст
-				memmove(pszDst, pszSrc, cbLineSize);
-
-				if (nCharsLeft > 0)
-					wmemset(pszDst+cnSrcLineLen, wSetChar, nCharsLeft);
-
-				// Console text colors (Fg,Bg)
-				BYTE PalIndex = 0;
-
-				// While console is in recreate (shutdown console, startup new root)
-				// it's shown using monochrome (gray on black)
-				bool bForceMono = (mp_RCon->mn_InRecreate != 0);
-
-				{
-					#if 0
-					bool lbHilightFileLine = lbAllowHilightFileLine
-							&& (con.m_sel.dwFlags == 0)
-							&& (nY == con.etr.mcr_FileLineStart.Y)
-							&& (con.etr.mcr_FileLineStart.X < con.etr.mcr_FileLineEnd.X);
-					#endif
-					int iTail = cnSrcLineLen;
-					wchar_t* pch = pszDst;
-					for (nX = 0;
-							// Don't forget to advance same pointers at the and if bPair
-							iTail-- > 0; nX++, pnSrc++, pcolSrc++, pch++)
-					{
-						CharAttr& lca = pcaDst[nX];
-						bool hasTrueColor = false;
-						bool hasFont = false;
-
-						// If not "mono" we need only lower byte with color indexes
-						PalIndex = bForceMono ? 7 : ((*pnSrc) & 0xFF);
-						TODO("OPTIMIZE: lca = lcaTable[PalIndex];");
-						lca = lcaTable[PalIndex];
-						TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
-
-						bool bPair = (iTail > 0);
-						ucs32 wwch = ucs32_from_wchar(pch, bPair);
-						_ASSERTE(wwch >= 0);
-
-						// Colorer & Far - TrueMod
-						TODO("OPTIMIZE: вынести проверку bUseColorData за циклы");
-
-						if (bStartUseColorData && !bUseColorData)
-						{
-							// В случае "far /w" буфер цвета может начаться НИЖЕ верхней видимой границы,
-							// если буфер немного прокручен вверх
-							if (pcolSrc >= mp_RCon->mp_TrueColorerData)
-							{
-								DEBUGSTRTRUEMOD(L"TrueMod forced back due bStartUseColorData");
-								bUseColorData = TRUE;
-							}
-						}
-
-						if (bUseColorData)
-						{
-							if (pcolSrc >= pcolEnd)
-							{
-								DEBUGSTRTRUEMOD(L"TrueMod stopped - out of buffer");
-								bUseColorData = FALSE;
-							}
-							else
-							{
-								TODO("OPTIMIZE: доступ к битовым полям тяжело идет...");
-
-								if (pcolSrc->fg_valid)
-								{
-									hasTrueColor = true;
-									hasFont = true;
-									lca.nFontIndex = fnt_Normal; //bold/italic/underline will be set below
-									lca.crForeColor = lbFade ? gpSet->GetFadeColor(pcolSrc->fg_color) : pcolSrc->fg_color;
-
-									if (pcolSrc->bk_valid)
-										lca.crBackColor = lbFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color;
-								}
-								else if (pcolSrc->bk_valid)
-								{
-									hasTrueColor = true;
-									hasFont = true;
-									lca.nFontIndex = fnt_Normal; //bold/italic/underline will be set below
-									lca.crBackColor = lbFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color;
-								}
-
-								// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic,..., 4 - underline, ...
-								if (pcolSrc->style)
-								{
-									hasFont = true;
-									lca.nFontIndex = pcolSrc->style & fnt_StdFontMask;
-								}
-							}
-						}
-
-						if (!hasFont
-							&& ((*pnSrc) & COMMON_LVB_UNDERSCORE)
-							&& ((nX >= ROWID_USED_CELLS) || !((*pnSrc) & (CHANGED_CONATTR & ~COMMON_LVB_UNDERSCORE)))
-							)
-						{
-							lca.nFontIndex = fnt_Underline;
-						}
-
-						if (!hasTrueColor && bExtendColors && (nY >= nExtendStartsY))
-						{
-							if (lca.nBackIdx == nExtendColorIdx)
-							{
-								// Have to change the color to adjacent(?) cell
-								lca.nBackIdx = attrBackLast;
-								// For the background nExtendColorIdx we use upper
-								// palette range for text: 16..31 instead of 0..15
-								lca.nForeIdx += 0x10;
-								lca.crForeColor = lca.crOrigForeColor = mp_RCon->mp_Palette->m_Colors[lca.nForeIdx];
-								lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_Palette->m_Colors[lca.nBackIdx];
-							}
-							else if (lbStoreBackLast)
-							{
-								// Remember last "normal" background
-								attrBackLast = lca.nBackIdx;
-							}
-						}
-
-						switch (get_wcwidth(wwch))
-						{
-						case 0:
-							lca.Flags2 |= CharAttr2_Combining;
-							break;
-						case 2:
-							lca.Flags2 |= CharAttr2_DoubleSpaced;
-							break;
-						}
-
-						if (bPair)
-						{
-							CharAttr& lca2 = pcaDst[nX+1];
-							lca2 = lca;
-							lca2.Flags2 = (lca.Flags2 & ~(CharAttr2_Combining)) | CharAttr2_NonSpacing;
-							// advance +1 character
-							nX++; pnSrc++; pcolSrc++; pch++; iTail--;
-						}
-					}
-
-					#if 0
-					if (lbHilightFileLine)
-					{
-						int nFrom = con.etr.mcr_FileLineStart.X;
-						int nTo = min(con.etr.mcr_FileLineEnd.X,(int)cnSrcLineLen);
-						for (nX = nFrom; nX <= nTo; nX++)
-						{
-							pcaDst[nX].nFontIndex |= fnt_Underline; // Paint it underlined?
-						}
-					}
-					#endif
-				}
-
-				// Залить остаток (если запрошен больший участок, чем есть консоль
-				for (nX = cnSrcLineLen; nX < nWidth; nX++)
-				{
-					pcaDst[nX] = lcaDef;
-				}
-
-				// Far2 показывает красный 'A' в правом нижнем углу консоли
-				// Этот ярко красный цвет фона может попасть в Extend Font Colors
-				if (bExtendFonts && ((nY+1) == nYMax) && mp_RCon->isFar()
-						&& (pszDst[nWidth-1] == L'A') && (PalIndex == 0xCF))
-				{
-					// Вернуть "родной" цвет и шрифт
-					pcaDst[nWidth-1] = lcaTable[PalIndex];
-				}
-
-				// Next line
-				pszDst += nWidth;
-				pcaDst += nWidth;
-				pszSrc += cnSrcLineLen;
-			}
-
-			#ifndef __GNUC__
-			UNREFERENCED_PARAMETER(pszSrcStart);
-			UNREFERENCED_PARAMETER(pnSrcStart);
-			#endif
-			UNREFERENCED_PARAMETER(nSrcCells);
+			// And the data
+			nYMax = data->GetConsoleData(pChar, pAttr, nWidth, nHeight, wSetChar, lcaDef,
+				lcaTable, lcaTableExt, lbFade, bExtendColors, nExtendColorIdx, bExtendFonts);
+			pszDst = pChar + nWidth*nYMax;
 		}
 	} // rbt_Primary
 
-	// Если вдруг запросили большую высоту, чем текущая в консоли - почистить низ
+	// Clean the bottom, if requested height is greater than real one
 	for (nY = nYMax; nY < nHeight; nY++)
 	{
 		wmemset(pszDst, wSetChar, nWidth);
@@ -6340,7 +6077,6 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 	//FIN
 	HEAPVAL
-	con.bInGetConsoleData = FALSE;
 	csData.Unlock();
 	return;
 }
@@ -6360,7 +6096,11 @@ int CRealBuffer::GetStatusLineCount(int nLeftPanelEdge)
 	if (!this)
 		return 0;
 
-	if (!mp_RCon->isFar() || !con.pConChar || !con.nTextWidth)
+	if (!mp_RCon->isFar())
+		return 0;
+
+	CRConDataGuard data;
+	if (!GetData(data) || !data->nWidth)
 		return 0;
 
 	int nBottom, nLeft;
@@ -6377,9 +6117,16 @@ int CRealBuffer::GetStatusLineCount(int nLeftPanelEdge)
 	if (nBottom < 5)
 		return 0; // минимальная высота панели
 
+	size_t maxCells = data->nWidth * data->nHeight;
+
 	for (int i = 2; i <= 11 && i < nBottom; i++)
 	{
-		if (con.pConChar[con.nTextWidth*(nBottom-i)+nLeft] == ucBoxDblVertSinglRight)
+		size_t idx = data->nWidth*(nBottom-i)+nLeft;
+		if (idx >= maxCells)
+		{
+			break;
+		}
+		if (data->pConChar[idx] == ucBoxDblVertSinglRight)
 		{
 			return (i - 1);
 		}
@@ -6534,238 +6281,19 @@ void CRealBuffer::FindPanels()
 
 	if (bMayBePanels && con.nTextHeight >= MIN_CON_HEIGHT && con.nTextWidth >= MIN_CON_WIDTH)
 	{
-		uint nY = 0;
-		BOOL lbIsMenu = FALSE;
-
-		if (con.pConChar[0] == L' ')
+		CRConDataGuard data;
+		if (GetData(data))
 		{
-			lbIsMenu = TRUE;
-
-			for (int i=0; i<con.nTextWidth; i++)
-			{
-				if (con.pConChar[i]==ucBoxDblHorz || con.pConChar[i]==ucBoxDblDownRight || con.pConChar[i]==ucBoxDblDownLeft)
-				{
-					lbIsMenu = FALSE; break;
-				}
-			}
-
-			if (lbIsMenu)
-				nY ++; // скорее всего, первая строка - меню
-		}
-		else if ((((con.pConChar[0] == L'R') && ((con.pConAttr[0] & 0xFF) == 0x4F))
-					|| ((con.pConChar[0] == L'P') && ((con.pConAttr[0] & 0xFF) == 0x2F)))
-			&& con.pConChar[1] == L' ')
-		{
-			for(int i=1; i<con.nTextWidth; i++)
-			{
-				if (con.pConChar[i]==ucBoxDblHorz || con.pConChar[i]==ucBoxDblDownRight || con.pConChar[i]==ucBoxDblDownLeft)
-				{
-					lbIsMenu = FALSE; break;
-				}
-			}
-
-			if (lbIsMenu)
-				nY ++; // скорее всего, первая строка - меню, при включенной записи макроса
-		}
-
-		uint nIdx = nY*con.nTextWidth;
-		// Левая панель
-		BOOL bFirstCharOk = (nY == 0)
-		                    && (
-		                        (con.pConChar[0] == L'R' && (con.pConAttr[0] & 0xFF) == 0x4F) // символ записи макроса
-		                        || (con.pConChar[0] == L'P' && (con.pConAttr[0] & 0xFF) == 0x2F) // символ воспроизведения макроса
-		                    );
-
-		bool bFarShowColNames = true;
-		bool bFarShowSortLetter = true;
-		bool bFarShowStatus = true;
-		const CEFAR_INFO_MAPPING *pFar = NULL;
-		if (mp_RCon->m_FarInfo.cbSize)
-		{
-			pFar = &mp_RCon->m_FarInfo;
-			if (pFar)
-			{
-				if ((pFar->FarPanelSettings.ShowColumnTitles) == 0) //-V112
-					bFarShowColNames = false;
-				if ((pFar->FarPanelSettings.ShowSortModeLetter) == 0)
-					bFarShowSortLetter = false;
-				if ((pFar->FarPanelSettings.ShowStatusLine) == 0)
-					bFarShowStatus = false;
-			}
-		}
-
-		// Проверяем левую панель
-		bool bContinue = false;
-		if (con.pConChar[nIdx+con.nTextWidth] == ucBoxDblVert) // двойная рамка продолжается вниз
-		{
-			if ((bFirstCharOk || con.pConChar[nIdx] != ucBoxDblDownRight)
-						&& (con.pConChar[nIdx+1]>=L'0' && con.pConChar[nIdx+1]<=L'9')) // открыто несколько редакторов/вьюверов
-				bContinue = true;
-			else if (((bFirstCharOk || con.pConChar[nIdx] == ucBoxDblDownRight)
-						&& (((con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == L' ') && (bFarShowColNames || !bFarShowSortLetter))
-							|| con.pConChar[nIdx+1] == ucBoxSinglDownDblHorz // доп.окон нет, только рамка
-							|| con.pConChar[nIdx+1] == ucBoxDblDownDblHorz
-							|| (con.pConChar[nIdx+1] == L'[' && con.pConChar[nIdx+2] == ucLeftScroll) // ScreenGadgets, default
-							|| (!bFarShowColNames && !(con.pConChar[nIdx+1] == ucBoxDblHorz || con.pConChar[nIdx+1] == L' ')
-							&& con.pConChar[nIdx+1] != ucBoxSinglDownDblHorz && con.pConChar[nIdx+1] != ucBoxDblDownDblHorz)
-					)))
-				bContinue = true;
-		}
-
-		if (bContinue)
-		{
-			for (int i=2; !bLeftPanel && i<con.nTextWidth; i++)
-			{
-				// Найти правый край левой панели
-				if (con.pConChar[nIdx+i] == ucBoxDblDownLeft
-						&& ((con.pConChar[nIdx+i-1] == ucBoxDblHorz || con.pConChar[nIdx+i-1] == L' ')
-							|| con.pConChar[nIdx+i-1] == ucBoxSinglDownDblHorz // правый угол панели
-							|| con.pConChar[nIdx+i-1] == ucBoxDblDownDblHorz
-							|| (con.pConChar[nIdx+i-1] == L']' && con.pConChar[nIdx+i-2] == L'\\') // ScreenGadgets, default
-						)
-						// МОЖЕТ быть закрыто AltHistory
-						/*&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert*/)
-				{
-					uint nBottom = con.nTextHeight - 1;
-
-					while(nBottom > 4) //-V112
-					{
-						if (con.pConChar[con.nTextWidth*nBottom] == ucBoxDblUpRight
-						        /*&& con.pConChar[con.nTextWidth*nBottom+i] == ucBoxDblUpLeft*/)
-						{
-							rLeftPanel.left = 1;
-							rLeftPanel.top = nY + (bFarShowColNames ? 2 : 1);
-							rLeftPanel.right = i-1;
-							if (bFarShowStatus)
-							{
-								rLeftPanel.bottom = nBottom - 3;
-								for (int j = (nBottom - 3); j > (int)(nBottom - 13) && j > rLeftPanel.top; j--)
-								{
-									if (con.pConChar[con.nTextWidth*j] == ucBoxDblVertSinglRight)
-									{
-										rLeftPanel.bottom = j - 1; break;
-									}
-								}
-							}
-							else
-							{
-								rLeftPanel.bottom = nBottom - 1;
-							}
-							rLeftPanelFull.left = 0;
-							rLeftPanelFull.top = nY;
-							rLeftPanelFull.right = i;
-							rLeftPanelFull.bottom = nBottom;
-							bLeftPanel = TRUE;
-							break;
-						}
-
-						nBottom --;
-					}
-				}
-			}
-		}
-
-		// (Если есть левая панель и она не FullScreen) или левой панели нет вообще
-		if ((bLeftPanel && rLeftPanelFull.right < con.nTextWidth) || !bLeftPanel)
-		{
-			if (bLeftPanel)
-			{
-				// Положение известно, нужно только проверить наличие
-				if (con.pConChar[nIdx+rLeftPanelFull.right+1] == ucBoxDblDownRight
-				        /*&& con.pConChar[nIdx+rLeftPanelFull.right+1+con.nTextWidth] == ucBoxDblVert*/
-				        /*&& con.pConChar[nIdx+con.nTextWidth*2] == ucBoxDblVert*/
-				        /*&& con.pConChar[(rLeftPanelFull.bottom+3)*con.nTextWidth+rLeftPanelFull.right+1] == ucBoxDblUpRight*/
-				        && con.pConChar[(rLeftPanelFull.bottom+1)*con.nTextWidth-1] == ucBoxDblUpLeft
-				  )
-				{
-					rRightPanel = rLeftPanel; // bottom & top берем из rLeftPanel
-					rRightPanel.left = rLeftPanelFull.right+2;
-					rRightPanel.right = con.nTextWidth-2;
-					rRightPanelFull = rLeftPanelFull;
-					rRightPanelFull.left = rLeftPanelFull.right+1;
-					rRightPanelFull.right = con.nTextWidth-1;
-					bRightPanel = TRUE;
-				}
-			}
-
-			// Начиная с FAR2 build 1295 панели могут быть разной высоты
-			// или левой панели нет
-			// или активная панель в FullScreen режиме
-			if (!bRightPanel)
-			{
-				// нужно определить положение панели
-				if (((con.pConChar[nIdx+con.nTextWidth-1]>=L'0' && con.pConChar[nIdx+con.nTextWidth-1]<=L'9')  // справа часы
-						|| con.pConChar[nIdx+con.nTextWidth-1] == ucBoxDblDownLeft) // или рамка
-						&& (con.pConChar[nIdx+con.nTextWidth*2-1] == ucBoxDblVert // ну и правая граница панели
-							|| con.pConChar[nIdx+con.nTextWidth*2-1] == ucUpScroll) // или стрелка скроллбара
-						)
-				{
-					int iMinFindX = bLeftPanel ? (rLeftPanelFull.right+1) : 0;
-					for(int i=con.nTextWidth-3; !bRightPanel && i>=iMinFindX; i--)
-					{
-						// ищем левую границу правой панели
-						if (con.pConChar[nIdx+i] == ucBoxDblDownRight
-								&& (((con.pConChar[nIdx+i+1] == ucBoxDblHorz || con.pConChar[nIdx+i+1] == L' ') && bFarShowColNames)
-									|| con.pConChar[nIdx+i+1] == ucBoxSinglDownDblHorz // правый угол панели
-									|| con.pConChar[nIdx+i+1] == ucBoxDblDownDblHorz
-									|| (con.pConChar[nIdx+i-1] == L']' && con.pConChar[nIdx+i-2] == L'\\') // ScreenGadgets, default
-									|| (!bFarShowColNames && !(con.pConChar[nIdx+i+1] == ucBoxDblHorz || con.pConChar[nIdx+i+1] == L' ')
-										&& con.pConChar[nIdx+i+1] != ucBoxSinglDownDblHorz && con.pConChar[nIdx+i+1] != ucBoxDblDownDblHorz)
-									)
-								// МОЖЕТ быть закрыто AltHistory
-								/*&& con.pConChar[nIdx+i+con.nTextWidth] == ucBoxDblVert*/)
-						{
-							uint nBottom = con.nTextHeight - 1;
-
-							while(nBottom > 4) //-V112
-							{
-								if (/*con.pConChar[con.nTextWidth*nBottom+i] == ucBoxDblUpRight
-									&&*/ con.pConChar[con.nTextWidth*(nBottom+1)-1] == ucBoxDblUpLeft)
-								{
-									rRightPanel.left = i+1;
-									rRightPanel.top = nY + (bFarShowColNames ? 2 : 1);
-									rRightPanel.right = con.nTextWidth-2;
-									//rRightPanel.bottom = nBottom - 3;
-									if (bFarShowStatus)
-									{
-										rRightPanel.bottom = nBottom - 3;
-										for (int j = (nBottom - 3); j > (int)(nBottom - 13) && j > rRightPanel.top; j--)
-										{
-											if (con.pConChar[con.nTextWidth*j+i] == ucBoxDblVertSinglRight)
-											{
-												rRightPanel.bottom = j - 1; break;
-											}
-										}
-									}
-									else
-									{
-										rRightPanel.bottom = nBottom - 1;
-									}
-									rRightPanelFull.left = i;
-									rRightPanelFull.top = nY;
-									rRightPanelFull.right = con.nTextWidth-1;
-									rRightPanelFull.bottom = nBottom;
-									bRightPanel = TRUE;
-									break;
-								}
-
-								nBottom --;
-							}
-						}
-					}
-				}
-			}
+			data->FindPanels(bLeftPanel, rLeftPanel, rLeftPanelFull, bRightPanel, rRightPanel, rRightPanelFull);
 		}
 	}
 
-#ifdef _DEBUG
-
+	#ifdef _DEBUG
 	if (bLeftPanel && !bRightPanel && rLeftPanelFull.right > 120)
 	{
 		bLeftPanel = bLeftPanel;
 	}
-
-#endif
+	#endif
 
 	if (mp_RCon->isActive(false))
 		lbNeedUpdateSizes = (memcmp(&mr_LeftPanel,&rLeftPanel,sizeof(mr_LeftPanel)) || memcmp(&mr_RightPanel,&rRightPanel,sizeof(mr_RightPanel)));
@@ -6794,9 +6322,13 @@ void CRealBuffer::FindPanels()
 			&&*/ con.m_sbi.dwCursorPosition.X >= 0 && con.m_sbi.dwCursorPosition.X < con.nTextWidth
 		    && nY >= 0 && nY < con.nTextHeight)
 		{
-			int nIdx = nY * con.nTextWidth;
-			// Обработка прогресса NeroCMD и пр. консольных программ (если курсор находится в видимой области)
-			nNewProgress = CheckProgressInConsole(con.pConChar+nIdx);
+			// NeroCMD, wget, chkdsk and other utilities printing operation progress (percentage) in the console output
+			CRConDataGuard data;
+			if (GetData(data))
+			{
+				_ASSERTE(nY >= 0);
+				nNewProgress = data->CheckProgressInConsole((UINT)nY);
+			}
 		}
 	}
 
@@ -6831,8 +6363,11 @@ bool CRealBuffer::isSelectionAllowed()
 	}
 	#endif
 
-	if (!con.pConChar || !con.pConAttr)
-		return false; // Если данных консоли еще нет
+	{
+	CRConDataGuard data;
+	if (!GetData(data))
+		return false; // if there are not data in console?
+	}
 
 	if (con.m_sel.dwFlags != 0)
 		return true; // Если выделение было запущено через меню
@@ -7084,12 +6619,13 @@ void CRealBuffer::ResetBuffer()
 	con.m_ci.dwSize = 15;
 	con.m_sbi.dwCursorPosition = MakeCoord(0,con.m_sbi.srWindow.Top);
 
-	if (con.pConChar && con.pConAttr)
+	CRConDataGuard data;
+	if (GetData(data))
 	{
 		MSectionLock sc; sc.Lock(&csCON);
-		DWORD OneBufferSize = con.nTextWidth*con.nTextHeight*sizeof(wchar_t);
-		memset(con.pConChar,0,OneBufferSize);
-		memset(con.pConAttr,0,OneBufferSize);
+		DWORD OneBufferSize = data->nWidth * data->nHeight;
+		memset(data->pConChar, 0, OneBufferSize * sizeof(*data->pConChar));
+		memset(data->pConAttr, 0, OneBufferSize * sizeof(*data->pConAttr));
 	}
 }
 
@@ -7178,11 +6714,12 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 	// Lock buffer to acquire line from screen
 	{
 	MSectionLock csData; csData.Lock(&csCON);
-	wchar_t* pChar = NULL;
+	CRConDataGuard data;
+	const wchar_t* pChar = NULL;
 	int nLen = 0;
 
 	// GetConsoleLine requires visual-screen-buffer coordinates (but not absolute ones, coming from crFrom/crTo)
-	if (mp_RCon->mp_VCon && GetConsoleLine(lcrFrom.Y, &pChar, /*NULL,*/ &nLen, &csData) && pChar)
+	if (mp_RCon->mp_VCon && GetConsoleLine(data, lcrFrom.Y, pChar, /*NULL,*/ nLen, &csData) && pChar)
 	{
 		_ASSERTE(lcrFrom.Y>=0 && lcrFrom.Y<GetTextHeight());
 		_ASSERTE(lcrTo.Y>=0 && lcrTo.Y<GetTextHeight());
@@ -7283,199 +6820,6 @@ bool CRealBuffer::isLeftPanel()
 bool CRealBuffer::isRightPanel()
 {
 	return mb_RightPanel;
-}
-
-short CRealBuffer::CheckProgressInConsole(const wchar_t* pszCurLine)
-{
-	// Обработка прогресса NeroCMD и пр. консольных программ (если курсор находится в видимой области)
-	//Плагин Update
-	//"Downloading Far                                               99%"
-	//NeroCMD
-	//"012% ########.................................................................."
-	//ChkDsk
-	//"Completed: 25%"
-	//Rar
-	// ...       Vista x86\Vista x86.7z         6%
-	//aria2c
-	//[#1 SIZE:0B/9.1MiB(0%) CN:1 SPD:1.2KiBs ETA:2h1m11s]
-	int nIdx = 0;
-	bool bAllowDot = false;
-	short nProgress = -1;
-
-	const wchar_t *szPercentEng = L" percent";
-	const wchar_t *szComplEng  = L"Completed:";
-	static wchar_t szPercentRus[16] = {}, szComplRus[16] = {};
-	static int nPercentEngLen = lstrlen(szPercentEng), nComplEngLen = lstrlen(szComplEng);
-	static int nPercentRusLen, nComplRusLen;
-
-	if (szPercentRus[0] == 0)
-	{
-		szPercentRus[0] = L' ';
-		TODO("Хорошо бы и другие национальные названия обрабатывать, брать из настройки");
-		lstrcpy(szPercentRus,L"процент");
-		lstrcpy(szComplRus,L"Завершено:");
-
-		nPercentRusLen = lstrlen(szPercentRus);
-		nComplRusLen = lstrlen(szComplEng);
-	}
-
-	// Сначала проверим, может цифры идут в начале строки (лидирующие пробелы)?
-	if (pszCurLine[nIdx] == L' ' && isDigit(pszCurLine[nIdx+1]))
-		nIdx++; // один лидирующий пробел перед цифрой
-	else if (pszCurLine[nIdx] == L' ' && pszCurLine[nIdx+1] == L' ' && isDigit(pszCurLine[nIdx+2]))
-		nIdx += 2; // два лидирующих пробела перед цифрой
-	else if (!isDigit(pszCurLine[nIdx]))
-	{
-		// Строка начинается НЕ с цифры. Может начинается одним из известных префиксов (ChkDsk)?
-
-		if (!wcsncmp(pszCurLine, szComplRus, nComplRusLen))
-		{
-			nIdx += nComplRusLen;
-
-			if (pszCurLine[nIdx] == L' ') nIdx++;
-
-			if (pszCurLine[nIdx] == L' ') nIdx++;
-
-			bAllowDot = true;
-		}
-		else if (!wcsncmp(pszCurLine, szComplEng, nComplEngLen))
-		{
-			nIdx += nComplEngLen;
-
-			if (pszCurLine[nIdx] == L' ') nIdx++;
-
-			if (pszCurLine[nIdx] == L' ') nIdx++;
-
-			bAllowDot = true;
-		}
-		else if (!wcsncmp(pszCurLine, L"[#", 2))
-		{
-			const wchar_t* p = wcsstr(pszCurLine, L"%) ");
-			while ((p > pszCurLine) && (p[-1] != L'('))
-				p--;
-			if (p > pszCurLine)
-				nIdx = p - pszCurLine;
-		}
-
-		// Известных префиксов не найдено, проверяем, может процент есть в конце строки?
-		if (!nIdx)
-		{
-			//TODO("Не работает с одной цифрой");
-			// Creating archive T:\From_Work\VMWare\VMWare.part006.rar
-			// ...       Vista x86\Vista x86.7z         6%
-			int i = GetTextWidth() - 1;
-
-			// Откусить trailing spaces
-			while(i>3 && pszCurLine[i] == L' ')
-				i--;
-
-			// Теперь, если дошли до '%' и перед ним - цифра
-			if (i >= 3 && pszCurLine[i] == L'%' && isDigit(pszCurLine[i-1]))
-			{
-				//i -= 2;
-				i--;
-
-				int j = i, k = -1;
-				while (j > 0 && isDigit(pszCurLine[j-1]))
-					j--;
-
-				// Может быть что-то типа "Progress 25.15%"
-				if (((i - j) <= 2) && (j >= 2) && isDot(pszCurLine[j-1]))
-				{
-					k = j - 1;
-					while (k > 0 && isDigit(pszCurLine[k-1]))
-						k--;
-				}
-
-				if (k >= 0)
-				{
-					if (((j - k) <= 3) // 2 цифры + точка
-						|| (((j - k) <= 4) && (pszCurLine[k] == L'1'))) // "100.0%"
-					{
-						nIdx = i = k;
-						bAllowDot = true;
-					}
-				}
-				else
-				{
-					if (((j - i) <= 2) // 2 цифры + точка
-						|| (((j - i) <= 3) && (pszCurLine[j] == L'1'))) // "100%"
-					{
-						nIdx = i = j;
-					}
-				}
-
-				#if 0
-				// Две цифры перед '%'?
-				if (isDigit(pszCurLine[i-1]))
-					i--;
-
-				// Три цифры допускается только для '100%'
-				if (pszCurLine[i-1] == L'1' && !isDigit(pszCurLine[i-2]))
-				{
-					nIdx = i - 1;
-				}
-				// final check
-				else if (!isDigit(pszCurLine[i-1]))
-				{
-					nIdx = i;
-				}
-				#endif
-
-				// Может ошибочно детектировать прогресс, если его ввести в prompt
-				// Допустим, что если в строке есть символ '>' - то это не прогресс
-				while (i>=0)
-				{
-					if (pszCurLine[i] == L'>')
-					{
-						nIdx = 0;
-						break;
-					}
-
-					i--;
-				}
-			}
-		}
-	}
-
-	// Менять nProgress только если нашли проценты в строке с курсором
-	if (isDigit(pszCurLine[nIdx]))
-	{
-		if (isDigit(pszCurLine[nIdx+1]) && isDigit(pszCurLine[nIdx+2])
-			&& (pszCurLine[nIdx+3]==L'%' || (bAllowDot && isDot(pszCurLine[nIdx+3]))
-			|| !wcsncmp(pszCurLine+nIdx+3,szPercentEng,nPercentEngLen)
-			|| !wcsncmp(pszCurLine+nIdx+3,szPercentRus,nPercentRusLen)))
-		{
-			nProgress = 100*(pszCurLine[nIdx] - L'0') + 10*(pszCurLine[nIdx+1] - L'0') + (pszCurLine[nIdx+2] - L'0');
-		}
-		else if (isDigit(pszCurLine[nIdx+1])
-			&& (pszCurLine[nIdx+2]==L'%' || (bAllowDot && isDot(pszCurLine[nIdx+2]))
-			|| !wcsncmp(pszCurLine+nIdx+2,szPercentEng,nPercentEngLen)
-			|| !wcsncmp(pszCurLine+nIdx+2,szPercentRus,nPercentRusLen)))
-		{
-			nProgress = 10*(pszCurLine[nIdx] - L'0') + (pszCurLine[nIdx+1] - L'0');
-		}
-		else if (pszCurLine[nIdx+1]==L'%' || (bAllowDot && isDot(pszCurLine[nIdx+1]))
-			|| !wcsncmp(pszCurLine+nIdx+1,szPercentEng,nPercentEngLen)
-			|| !wcsncmp(pszCurLine+nIdx+1,szPercentRus,nPercentRusLen))
-		{
-			nProgress = (pszCurLine[nIdx] - L'0');
-		}
-	}
-
-	if (nProgress != -1)
-	{
-		mp_RCon->setLastConsoleProgress(nProgress, true); // его обновляем всегда
-	}
-	else
-	{
-		DWORD nDelta = GetTickCount() - mp_RCon->m_Progress.LastConProgrTick;
-		if (nDelta < CONSOLEPROGRESSTIMEOUT) // Если таймаут предыдущего значения еще не наступил
-			nProgress = mp_RCon->m_Progress.ConsoleProgress; // возъмем предыдущее значение
-		mp_RCon->setLastConsoleProgress(-1, false); // его обновляем всегда
-	}
-
-	return nProgress;
 }
 
 void CRealBuffer::ResetTopLeft()

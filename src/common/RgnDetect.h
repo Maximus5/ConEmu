@@ -215,7 +215,6 @@ class CRgnDetect
 		bool mb_SBI_Loaded;
 		CharAttr mca_Table[0x100];
 		bool mb_TableCreated;
-		//void GetConsoleData(const CHAR_INFO *pCharInfo, const COLORREF *apColors, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
 
 	protected:
 		// Доп.переменные

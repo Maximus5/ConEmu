@@ -560,8 +560,6 @@ class CRealConsole
 	private:
 		bool PreCreate(RConStartArgs *args);
 
-		bool GetConsoleLine(int nLine, wchar_t** pChar, /*CharAttr** pAttr,*/ int* pLen, MSectionLock* pcsData);
-
 		CDpiForDialog* mp_RenameDpiAware;
 		static INT_PTR CALLBACK renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
@@ -790,6 +788,7 @@ class CRealConsole
 		bool WaitConsoleSize(int anWaitSize, DWORD nTimeout);
 	private:
 		friend class CRealBuffer;
+		friend class CRConData;
 		CRealBuffer* mp_RBuf; // Реальный буфер консоли
 		CRealBuffer* mp_EBuf; // Сохранение данных после выполненной команды в Far
 		CRealBuffer* mp_SBuf; // Временный буфер (полный) для блокирования содержимого (выделение/прокрутка/поиск)

@@ -2433,44 +2433,6 @@ bool CRgnDetect::ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr)
 	return lbRectOK;
 }
 
-//void CRgnDetect::GetConsoleData(const CHAR_INFO *pCharInfo, const COLORREF *apColors, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
-//{
-//    DWORD cwDstBufSize = nWidth * nHeight;
-//
-//    _ASSERT(nWidth != 0 && nHeight != 0);
-//    if (nWidth == 0 || nHeight == 0)
-//        return;
-//
-//
-//    if (!mb_TableCreated) {
-//    	mb_TableCreated = true;
-//        // формирование умолчательных цветов, по атрибутам консоли
-//	    int  nColorIndex = 0;
-//	    CharAttr lca;
-//
-//	    for (int nBack = 0; nBack <= 0xF; nBack++) {
-//	    	for (int nFore = 0; nFore <= 0xF; nFore++, nColorIndex++) {
-//				memset(&lca, 0, sizeof(lca));
-//	    		lca.nForeIdx = nFore;
-//	    		lca.nBackIdx = nBack;
-//		    	lca.crForeColor = lca.crOrigForeColor = mp_Colors[lca.nForeIdx];
-//		    	lca.crBackColor = lca.crOrigBackColor = mp_Colors[lca.nBackIdx];
-//		    	mca_Table[nColorIndex] = lca;
-//			}
-//		}
-//    }
-//
-//
-//	// Расфуговка буфера CHAR_INFO на текст и атрибуты
-//	for (DWORD n = 0; n < CharCount; n++, pCharInfo++) {
-//		TODO("OPTIMIZE: *(lpAttr++) = lpCur->Attributes;");
-//		*(pAttr++) = mca_Table[pCharInfo->Attributes & 0xFF];
-//
-//		TODO("OPTIMIZE: ch = lpCur->Char.UnicodeChar;");
-//		*(pChar++) = pCharInfo->Char.UnicodeChar;
-//	}
-//}
-
 
 
 

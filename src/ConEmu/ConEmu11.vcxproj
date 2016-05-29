@@ -984,6 +984,7 @@
     <ClCompile Include="OptionsFast.cpp" />
     <ClCompile Include="OptionsHelp.cpp" />
     <ClCompile Include="PushInfo.cpp" />
+    <ClCompile Include="RConData.cpp" />
     <ClCompile Include="RConFiles.cpp" />
     <ClCompile Include="RConPalette.cpp" />
     <ClCompile Include="RealBuffer.cpp" />
@@ -1178,6 +1179,7 @@
     <ClInclude Include="OptionsFast.h" />
     <ClInclude Include="OptionsHelp.h" />
     <ClInclude Include="PushInfo.h" />
+    <ClInclude Include="RConData.h" />
     <ClInclude Include="RConFiles.h" />
     <ClInclude Include="RConPalette.h" />
     <ClInclude Include="RealBuffer.h" />
