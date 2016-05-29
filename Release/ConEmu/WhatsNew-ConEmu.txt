@@ -20,6 +20,12 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.5.29
+* gh-457: Support DefTerm feature for Idle (Pythonw.exe) and VisualStudio Code (code.exe).
+* DefTerm: ConEmu crashed if it's closed during DefTerm initialization.
+* DefTerm: Don't warn user if requested process is already closed.
+
+
 2016.5.22
 * gh-682: Multi-line paste Enter confirmation setting was not being saved.
 * gh-681: Allow NodeJSPortable.exe to run node in the same ConEmu tab.
