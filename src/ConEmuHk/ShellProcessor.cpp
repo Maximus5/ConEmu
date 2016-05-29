@@ -605,7 +605,7 @@ void CShellProc::CheckHooksDisabled()
 	mb_Opt_SkipCmdStart = bHooksSkipCmdStart;
 }
 
-BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
+BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode,
 				LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asExeFile,
 				ChangeExecFlags Flags, const RConStartArgs& args,
 				DWORD& ImageBits, DWORD& ImageSubsystem,
@@ -949,7 +949,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 	if (gbPrepareDefaultTerminal)
 	{
 		lbUseDosBox = FALSE; // Don't set now
-		if (aCmd == eShellExecute)
+		if (bConsoleMode)
 		{
 			// Тут предполагается запуск как "runas", запускаемся через "ConEmuC.exe"
 			pszOurExe = lstrmerge(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\", (ImageBits == 32) ? L"ConEmuC.exe" : L"ConEmuC64.exe"); //-V112
@@ -1080,7 +1080,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 		// "runas" (Shell) - запуск сервера
 		// CreateProcess - запуск через GUI (ConEmu.exe)
 		_ASSERTEX(aCmd==eCreateProcess || aCmd==eShellExecute);
-		nCchSize += gpDefTerm->GetSrvAddArgs((aCmd == eCreateProcess), szDefTermArg, szDefTermArg2);
+		nCchSize += gpDefTerm->GetSrvAddArgs(!bConsoleMode, szDefTermArg, szDefTermArg2);
 	}
 
 	if (Flags & CEF_NEWCON_PREPEND)
@@ -1141,7 +1141,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd,
 			_wcscat_c((*psParam), nCchSize, szDefTermArg);
 		}
 
-		if (aCmd == eShellExecute)
+		if (bConsoleMode)
 		{
 			// Здесь предполагается "runas", поэтому запускается сервер (ConEmuC.exe)
 			_wcscat_c((*psParam), nCchSize, L" /ATTACHDEFTERM /ROOT ");
@@ -1528,6 +1528,12 @@ int CShellProc::PrepareExecuteParms(
 
 
 	BOOL bGoChangeParm = FALSE;
+	bool bConsoleMode = false;
+	if ((aCmd == eShellExecute) && (asAction && (lstrcmpi(asAction, L"runas") == 0)))
+	{
+		// Always run ConEmuC instead of GUI
+		bConsoleMode = true;
+	}
 
 	// DefTerm logging
 	wchar_t szInfo[140];
@@ -2284,7 +2290,7 @@ int CShellProc::PrepareExecuteParms(
 			goto wrap;
 		}
 
-		lbChanged = ChangeExecuteParms(aCmd, asFile, asParam, ms_ExeTmp,
+		lbChanged = ChangeExecuteParms(aCmd, bConsoleMode, asFile, asParam, ms_ExeTmp,
 			NewConsoleFlags, m_Args, mn_ImageBits, mn_ImageSubsystem, psFile, psParam);
 
 		if (!lbChanged)
