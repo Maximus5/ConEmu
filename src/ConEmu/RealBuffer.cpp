@@ -1500,6 +1500,11 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 		// Exclusive(!) Lock
 		MSectionLock sc; sc.Lock(&csCON, TRUE);
 
+		wchar_t szLog[80];
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"InitBuffers Width=%u Height=%u Cells=%u (begin)", nNewWidth, nNewHeight, nCellCount);
+		mp_RCon->LogString(szLog);
+
+
 		HEAPVAL;
 		con.LastStartInitBuffersTick = GetTickCount();
 
@@ -1546,6 +1551,9 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount, int anWidth, int anHeight)
 
 		sc.Unlock();
 		HEAPVAL
+
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"InitBuffers Width=%u Height=%u Cells=%u (done)", nNewWidth, nNewHeight, nCellCount);
+		mp_RCon->LogString(szLog);
 	}
 	else if (con.nTextWidth!=nNewWidth || con.nTextHeight!=nNewHeight)
 	{
