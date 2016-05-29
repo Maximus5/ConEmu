@@ -788,14 +788,6 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	//}
 
 
-	print_timings(L"GetImageSubsystem");
-
-
-	// Необходимо определить битность и тип (CUI/GUI) процесса, в который нас загрузили
-	gnImageBits = WIN3264TEST(32,64);
-	gnImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-	// Определим тип (CUI/GUI)
-	GetImageSubsystem(gnImageSubsystem, gnImageBits);
 	// *.vshost.exe is used for debugging purpose in VC#
 	// And that PE is compiled as GUI executable, console allocated with AllocConsole
 	if (gbIsNetVsHost && (gnImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI) && ghConWnd)
@@ -1754,9 +1746,19 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 			}
 		}
 	}
+	DLOGEND1();
+
+	// Detect our executable type (CUI/GUI)
+	DLOG1_("GetImageSubsystem",ul_reason_for_call);
+	gnImageBits = WIN3264TEST(32,64);
+	gnImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+	GetImageSubsystem(gnImageSubsystem, gnImageBits);
+	DLOGEND1();
 
 	if (!gbSelfIsRootConsoleProcess && !gbConEmuCProcess)
 	{
+		DLOG1_("CEDEFAULTTERMHOOK",ul_reason_for_call);
+
 		msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOK, gnSelfPID);
 		gEvtDefTerm.hProcessFlag = OpenEvent(SYNCHRONIZE|EVENT_MODIFY_STATE, FALSE, szEvtName);
 		if (gEvtDefTerm.hProcessFlag)
@@ -1764,8 +1766,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 			gEvtDefTerm.nWait = WaitForSingleObject(gEvtDefTerm.hProcessFlag, 0);
 			gEvtDefTerm.nErrCode = GetLastError();
 			gbPrepareDefaultTerminal = (gEvtDefTerm.nWait == WAIT_OBJECT_0);
-			//SafeCloseHandle(gEvtDefTerm.hProcessFlag);
-			// Если ждут, что мы отметимся...
+			// Caller may wait when we are ready
 			if (gbPrepareDefaultTerminal)
 			{
 				msprintf(szEvtName, countof(szEvtName), CEDEFAULTTERMHOOKOK, gnSelfPID);
@@ -1780,9 +1781,18 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 			gEvtDefTerm.nErrCode = GetLastError();
 			// Event has not been created or is inaccessible
 		}
-	}
-	DLOGEND1();
 
+		if (!gbPrepareDefaultTerminal
+			&& (gnImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+			&& (ghConWnd == NULL))
+		{
+			// Forcing DefTerm for detached console processes
+			// Especially for Code, which starts "cmd /c start /wait"
+			gbPrepareDefaultTerminal = true;
+		}
+
+		DLOGEND1();
+	}
 
 
 	DLOG1_("DllMain.MainThreadId",ul_reason_for_call);

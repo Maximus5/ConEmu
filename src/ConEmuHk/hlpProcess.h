@@ -45,6 +45,8 @@ extern HWND    ghConEmuWnd;   // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern DWORD   gnGuiPID;
 extern DWORD   gnServerPID;   // ConEmuC server PID (initialized on startup, during Dll loading)
+extern DWORD   gnImageSubsystem;
+extern DWORD   gnImageBits;
 
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
