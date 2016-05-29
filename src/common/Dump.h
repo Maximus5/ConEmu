@@ -65,6 +65,13 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 	DWORD nSharingOption;
 	wchar_t szVer4[8] = L"";
 
+	// Sequential dumps must not overwrite each other
+	static LONG nDumpIndex = 0;
+	wchar_t szDumpIndex[16] = L"";
+	if (nDumpIndex)
+		_wsprintf(szDumpIndex, SKIPCOUNT(szDumpIndex) L"-%i", nDumpIndex);
+	InterlockedIncrement(&nDumpIndex);
+
 	SetCursor(LoadCursor(NULL, IDC_WAIT));
 
 	if (pszComment)
@@ -94,7 +101,7 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 
 	nLen = lstrlen(dmpfile);
 	lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
-	_wsprintf(dmpfile+nLen, SKIPLEN(countof(dmpfile)-nLen) L"\\Trap-%02u%02u%02u%s-%u.dmp", MVV_1, MVV_2, MVV_3, szVer4, GetCurrentProcessId());
+	_wsprintf(dmpfile+nLen, SKIPLEN(countof(dmpfile)-nLen) L"\\Trap-%02u%02u%02u%s-%u%s.dmp", MVV_1, MVV_2, MVV_3, szVer4, GetCurrentProcessId(), szDumpIndex);
 	
 	nSharingOption = /*FILE_SHARE_READ;
 	if (IsWindowsXP)
