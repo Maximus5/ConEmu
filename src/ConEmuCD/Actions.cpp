@@ -305,6 +305,11 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		{
 			return iHookRc ? CERR_HOOKS_WAS_ALREADY_SET : CERR_HOOKS_WAS_SET;
 		}
+		else if ((iHookRc == CIR_ProcessWasTerminated) || (iHookRc == CIR_OpenProcess))
+		{
+			// Don't show error message to user. These codes are logged to file only.
+			return CERR_HOOKS_FAILED;
+		}
 
 		DWORD nSelfPID = GetCurrentProcessId();
 		PROCESSENTRY32 self = {sizeof(self)}, parent = {sizeof(parent)};

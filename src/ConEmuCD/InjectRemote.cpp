@@ -307,6 +307,8 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	int  nBits;
 	DWORD nWrapperWait = (DWORD)-1, nWrapperResult = (DWORD)-1;
 	HANDLE hProc = NULL;
+	HANDLE hProcInfo = NULL;
+	DWORD nProcWait = (DWORD)-1, nProcExitCode = (DWORD)-1;
 	wchar_t szSelf[MAX_PATH+16], szHooks[MAX_PATH+16];
 	wchar_t *pszNamePtr, szArgs[32];
 	wchar_t szName[64];
@@ -316,6 +318,50 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	HANDLE hSnap = NULL;
 	MODULEENTRY32 mi = {sizeof(mi)};
 	HMODULE ptrOuterKernel = NULL;
+
+	{
+		wchar_t szLog[128];
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"...OpenProcess(preliminary) PID=%u", nRemotePID);
+		LogString(szLog);
+		HANDLE h = OpenProcess(SYNCHRONIZE
+			|PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ,
+			FALSE, nRemotePID);
+		if (h)
+		{
+			hProc = h;
+		}
+		else
+		{
+			h = OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, nRemotePID);
+			if ((h == NULL) && IsWin6())
+			{
+				// PROCESS_QUERY_LIMITED_INFORMATION not defined in GCC
+				h = OpenProcess(SYNCHRONIZE|0x1000/*PROCESS_QUERY_LIMITED_INFORMATION*/, FALSE, nRemotePID);
+			}
+		}
+		if (h)
+		{
+			hProcInfo = h;
+			nProcWait = WaitForSingleObject(h, 0);
+			if (nProcWait == WAIT_OBJECT_0)
+			{
+				// Process was terminated already, injection was not in time?
+				GetExitCodeProcess(h, &nProcExitCode);
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"Process PID=%u was already terminated, exitcode=%u, exiting", nRemotePID, nProcExitCode);
+				LogString(szLog);
+				iRc = CIR_ProcessWasTerminated/*-205*/;
+				goto wrap;
+			}
+		}
+		else
+		{
+			nErrCode = GetLastError();
+			_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to open process handle PID=%u, code=%u, exiting", nRemotePID, nErrCode);
+			LogString(szLog);
+			iRc = CIR_OpenProcess/*-201*/;
+			goto wrap;
+		}
+	}
 
 	LogString(L"...GetModuleFileName");
 
@@ -342,7 +388,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 
 	// So, let determine target process bitness and if it differs
 	// from our (ConEmuC[64].exe) just restart appropriate version
-	nBits = GetProcessBits(nRemotePID, NULL/*it will open hProcess with bare PROCESS_QUERY_INFORMATION*/);
+	nBits = GetProcessBits(nRemotePID, hProcInfo/*it will open process handle with bare PROCESS_QUERY_INFORMATION if hProcInfo is NULL*/);
 	if (nBits == 0)
 	{
 		// Do not even expected, ConEmu GUI must run ConEmuC elevated if required.
@@ -498,7 +544,8 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	LogString(L"...OpenProcess");
 
 	// Check, if we can access that process
-	hProc = OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ, FALSE, nRemotePID);
+	if (!hProc)
+		hProc = OpenProcess(PROCESS_CREATE_THREAD|PROCESS_QUERY_INFORMATION|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ, FALSE, nRemotePID);
 	if (hProc == NULL)
 	{
 		nErrCode = GetLastError();
@@ -583,6 +630,8 @@ wrap:
 		*pnErrCode = nErrCode;
 	if (hProc != NULL)
 		CloseHandle(hProc);
+	if (hProcInfo && (hProcInfo != hProc))
+		CloseHandle(hProcInfo);
 	// But check the result of the operation
 
 	//_ASSERTE(FALSE && "WaitForSingleObject(hDefTermReady)");

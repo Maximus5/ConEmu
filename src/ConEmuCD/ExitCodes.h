@@ -90,6 +90,7 @@ const CINFILTRATE_EXIT_CODES
 	CIR_CreateProcess = -202,
 	CIR_WrapperResult = -203,
 	CIR_GetProcessBits = -204,
+	CIR_ProcessWasTerminated = -205,
 	//
 	CIR_ConEmuHkNotFound = -250,
 	// Prepare hook module (copy proper ConEmuHk[64] to %TEMP%)
