@@ -4217,6 +4217,8 @@ void CConEmuMain::RegisterHotKeys()
 
 HMODULE CConEmuMain::LoadConEmuCD()
 {
+	_ASSERTE(mn_StartupFinished < ss_Destroying);
+
 	if (!mh_LLKeyHookDll)
 	{
 		wchar_t szConEmuDll[MAX_PATH+32];
@@ -4263,6 +4265,12 @@ bool CConEmuMain::IsKeyboardHookRegistered()
 
 void CConEmuMain::RegisterHooks()
 {
+	// If we are in termination state - nothing to do!
+	if (mn_StartupFinished >= ss_Destroying)
+	{
+		return;
+	}
+
 	// Must be executed in main thread only
 	if (!isMainThread())
 	{
