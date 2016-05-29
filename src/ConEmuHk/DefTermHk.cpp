@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Common.h"
 #include "../common/MFileLog.h"
 #include "../common/MStrDup.h"
+#include "../common/MToolHelp.h"
 #include "hlpConsole.h"
 #include "hlpProcess.h"
 #include "DefTermHk.h"
@@ -251,6 +252,21 @@ DWORD CDefTermHk::InitDefTermContinue(LPVOID ahPrevHooks)
 				}
 			} while (Process32Next(hSnap, &pe));
 			CloseHandle(hSnap);
+		}
+	}
+	else
+	{
+		MToolHelpProcess findForks;
+		MArray<PROCESSENTRY32> Forks;
+		TODO("OPTIMIZE: Try to find and process children from all levels, BUT ONLY from ROOT process?");
+		if (findForks.FindForks(Forks))
+		{
+			PROCESSENTRY32 p;
+			while (Forks.pop_back(p))
+			{
+				DefTermLogString(L"Forked process found, hooking");
+				gpDefTerm->StartDefTermHooker(p.th32ProcessID);
+			}
 		}
 	}
 

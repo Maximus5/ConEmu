@@ -1585,6 +1585,13 @@ int CShellProc::PrepareExecuteParms(
 	}
 	else if (aCmd == eCreateProcess)
 	{
+		// If Std console handles were defined - force run console server instead of GUI
+		if ((anStartFlags && ((*anStartFlags) & STARTF_USESTDHANDLES))
+			&& (hIn || hOut || hErr))
+		{
+			bConsoleMode = true;
+		}
+
 		// Creating hidden
 		if (anShowCmd && *anShowCmd == 0)
 		{
@@ -1736,6 +1743,17 @@ int CShellProc::PrepareExecuteParms(
 				&& !lbGnuDebugger
 				)
 			{
+				if (gbIsVsCode
+					&& (lstrcmpi(PointToName(ms_ExeTmp), L"cmd.exe") == 0))
+				{
+					// :: Code.exe >> "cmd /c start /wait" >> "cmd.exe"
+					// :: have to hook both cmd to get second in ConEmu tab
+					// :: first cmd is started with CREATE_NO_WINDOW flag!
+					LogShellString(L"Forcing mb_NeedInjects for cmd.exe started from VisuaStudio Code");
+					mb_NeedInjects = true;
+					bConsoleMode = true;
+				}
+
 				// Creating process without console window, not our case
 				LogExit(0);
 				return 0;
@@ -1963,6 +1981,14 @@ int CShellProc::PrepareExecuteParms(
 				{
 					bDebugWasRequested = true;
 					mb_PostInjectWasRequested = true;
+				}
+				else if (lstrcmpi(gsExeName, ms_ExeTmp))
+				{
+					// Idle from (Pythonw.exe, gh-457), VisualStudio Code (code.exe), and so on
+					// -- bVsNetHostRequested = true;
+					CEStr lsMsg(L"Forcing mb_NeedInjects for `", gsExeName, L"` started from `", gsExeName, L"`");
+					LogShellString(lsMsg);
+					mb_NeedInjects = true;
 				}
 			}
 		}
@@ -2813,15 +2839,9 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 	// а если выставлен mb_NeedInjects - строго включить _Suspended
 	if (mb_NeedInjects)
 	{
-		if (gbPrepareDefaultTerminal)
-		{
-			_ASSERTEX(!gbPrepareDefaultTerminal && "Not injects must be in gbPrepareDefaultTerminal");
-			mb_NeedInjects = FALSE;
-		}
-		else
-		{
-			(*anCreationFlags) |= CREATE_SUSPENDED;
-		}
+		// In DefTerm (gbPrepareDefaultTerminal) mb_NeedInjects is allowed too in some cases...
+		// code.exe -> "cmd /c start /wait" -> cmd.exe
+		(*anCreationFlags) |= CREATE_SUSPENDED;
 	}
 
 	if (lbRc)
@@ -2997,7 +3017,6 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 
 		if (isDefTermEnabled())
 		{
-			_ASSERTEX(!mb_NeedInjects);
 			// Starting .Net debugging session from VS or CodeBlocks console app (gdb)
 			if (mb_PostInjectWasRequested)
 			{
@@ -3052,6 +3071,11 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 					}
 					free(pszCmdLine);
 				}
+			}
+			else if (mb_NeedInjects)
+			{
+				// code.exe -> "cmd /c start /wait" -> cmd.exe
+				RunInjectHooks(WIN3264TEST(L"DefTerm",L"DefTerm64"), lpPI);
 			}
 		}
 		else if (mb_NeedInjects)
