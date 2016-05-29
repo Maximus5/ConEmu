@@ -326,6 +326,7 @@ CDefTermHk::CDefTermHk()
 CDefTermHk::~CDefTermHk()
 {
 	SafeDelete(mp_FileLog);
+	StopHookers();
 }
 
 void CDefTermHk::StartDefTerm()
@@ -338,6 +339,7 @@ void CDefTermHk::StopHookers()
 	if (!gbPrepareDefaultTerminal)
 		return;
 	gbPrepareDefaultTerminal = false;
+	mb_Termination = true;
 
 	SetEvent(mh_StopEvent);
 
@@ -453,6 +455,11 @@ void CDefTermHk::LogHookingStatus(DWORD nForePID, LPCWSTR sMessage)
 	wchar_t szPID[16];
 	CEStr lsLog(L"DefTerm[", _ultow(nForePID, szPID, 10), L"]: ", sMessage);
 	mp_FileLog->LogString(lsLog);
+}
+
+CDefTermBase* CDefTermHk::GetInterface()
+{
+	return this;
 }
 
 int CDefTermHk::DisplayLastError(LPCWSTR asLabel, DWORD dwError/*=0*/, DWORD dwMsgFlags/*=0*/, LPCWSTR asTitle/*=NULL*/, HWND hParent/*=NULL*/)

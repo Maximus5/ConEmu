@@ -294,6 +294,11 @@ protected:
 		HWND hFore;
 		DWORD nForePID;
 	};
+	struct ThreadHandle
+	{
+		HANDLE hThread;
+		DWORD nThreadId, nCreatorThreadId;
+	};
 
 private:
 	bool   mb_ConEmuGui;
@@ -303,12 +308,13 @@ private:
 	HWND   mh_LastWnd;
 	HWND   mh_LastIgnoredWnd;
 	HWND   mh_LastCall;
-	MArray<HANDLE> m_Threads;
+	MArray<ThreadHandle> m_Threads;
 	MArray<ProcessInfo> m_Processed;
 protected:
 	HANDLE mh_PostThread;
 	DWORD  mn_PostThreadId;
 	MSectionSimple* mcs;
+	bool   mb_Termination;
 protected:
 	// Shell may not like injecting immediately after start-up
 	// If so, set (mb_ExplorerHookAllowed = false) in constructor
@@ -323,6 +329,7 @@ public:
 	};
 
 protected:
+	virtual CDefTermBase* GetInterface() = 0;
 	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false) = 0; // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
 	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL) = 0;
 	virtual void ShowTrayIconError(LPCWSTR asErrText) = 0; // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
@@ -331,6 +338,8 @@ protected:
 protected:
 	virtual void StopHookers()
 	{
+		mb_Termination = true;
+
 		ClearThreads(true);
 
 		ClearProcessed(true);
@@ -349,12 +358,14 @@ public:
 		mb_PostCreatedThread = false;
 		mb_Initialized = false;
 		mb_ExplorerHookAllowed = true;
+		mb_Termination = false;
 		mcs = new MSectionSimple(true);
 	};
 
 	virtual ~CDefTermBase()
 	{
-		StopHookers();
+		// StopHookers(); -- Have to be called in the ancestor destructor!
+		_ASSERTE(mcs==NULL);
 	};
 
 public:
@@ -484,6 +495,11 @@ public:
 
 	bool CheckForeground(HWND hFore, DWORD nForePID, bool bRunInThread = true, bool bSkipShell = true)
 	{
+		if (mb_Termination)
+		{
+			return false;
+		}
+
 		if (!isDefaultTerminalAllowed())
 		{
 			#ifdef USEDEBUGSTRDEFTERM
@@ -553,7 +569,7 @@ public:
 				_ASSERTE(pArg);
 				goto wrap;
 			}
-			pArg->pTerm = this;
+			pArg->pTerm = GetInterface();
 			pArg->hFore = hFore;
 			pArg->nForePID = nForePID;
 
@@ -563,7 +579,8 @@ public:
 			_ASSERTE(hPostThread!=NULL);
 			if (hPostThread)
 			{
-				m_Threads.push_back(hPostThread);
+				ThreadHandle th = {hPostThread, nThreadId, GetCurrentThreadId()};
+				m_Threads.push_back(th);
 
 				#ifdef USEDEBUGSTRDEFTERM
 				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DefTerm::CheckForeground created TID=%u", nThreadId);
@@ -574,6 +591,9 @@ public:
 			lbRc = (hPostThread != NULL); // вернуть OK?
 			goto wrap;
 		}
+
+		if (mb_Termination)
+			goto wrap;
 
 		// To be sure that application is responsive (started successfully and is not hunged)
 		// However, that does not guarantee that explorer.exe will be hooked properly
@@ -597,6 +617,9 @@ public:
 		// Clear dead processes and windows
 		ClearProcessed(false);
 
+		if (mb_Termination)
+			goto wrap;
+
 		// Check if app is monitored by window class and process name
 		bMonitored = IsAppMonitored(hFore, nForePID, bSkipShell, &prc, szClass);
 
@@ -608,7 +631,7 @@ public:
 
 		// That is hooked executable/classname
 		// But may be it was processed already?
-		for (INT_PTR i = m_Processed.size(); i--;)
+		for (INT_PTR i = m_Processed.size(); i-- && !mb_Termination;)
 		{
 			if (m_Processed[i].nPID == nForePID)
 			{
@@ -622,7 +645,7 @@ public:
 		}
 
 		// May be hooked already?
-		if (!bMonitored)
+		if (!bMonitored || mb_Termination)
 		{
 			mh_LastWnd = hFore;
 			lbRc = true;
@@ -747,6 +770,9 @@ public:
 private:
 	int StartDefTermHooker(DWORD nForePID, HANDLE& hProcess, DWORD& nResult, LPCWSTR asConEmuBaseDir, DWORD& nErrCode)
 	{
+		if (mb_Termination)
+			return -1;
+
 		int iRc = -1;
 		wchar_t szCmdLine[MAX_PATH*2];
 		wchar_t szConTitle[32] = L"ConEmu";
@@ -759,6 +785,7 @@ private:
 		wchar_t szMutexName[64];
 		DWORD nMutexCreated = 0;
 		wchar_t szInfo[120];
+		DWORD nWaitStartTick = (DWORD)-1, nWaitDelta = (DWORD)-1;
 
 		nErrCode = 0;
 
@@ -823,6 +850,12 @@ private:
 			isLogging() ? L" /LOG" : L"",
 			nForePID);
 
+		if (mb_Termination)
+		{
+			iRc = -1;
+			goto wrap;
+		}
+
 		// Run hooker
 		si.dwFlags = STARTF_USESHOWWINDOW;
 		si.lpTitle = szConTitle;
@@ -845,7 +878,15 @@ private:
 
 		// Waiting for result, to avoid multiple hooks processed (due to closed mutex)
 		// Within VisualStudio and others don't do INFINITE wait to avoid dead locks
-		WaitForSingleObject(pi.hProcess, mb_ConEmuGui ? INFINITE : DEF_TERM_INSTALL_TIMEOUT);
+		nWaitStartTick = GetTickCount();
+		while (!mb_Termination)
+		{
+			if (WaitForSingleObject(pi.hProcess, 100) == WAIT_OBJECT_0)
+				break;
+			nWaitDelta = GetTickCount() - nWaitStartTick;
+			if (!mb_ConEmuGui && (nWaitDelta >= DEF_TERM_INSTALL_TIMEOUT))
+				break;
+		}
 		if (!GetExitCodeProcess(pi.hProcess, &nResult))
 			nResult = (DWORD)-1;
 		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Service process PID=%u finished with code=%u", pi.dwProcessId, nResult);
@@ -883,7 +924,11 @@ protected:
 			return;
 		}
 
-		_ASSERTE(mh_PostThread==NULL || WaitForSingleObject(mh_PostThread,0)==WAIT_OBJECT_0);
+		#ifdef _DEBUG
+		DWORD nDbgWait = mh_PostThread ? WaitForSingleObject(mh_PostThread,0) : WAIT_OBJECT_0;
+		DWORD nDbgExitCode = (DWORD)-1; if (mh_PostThread) GetExitCodeThread(mh_PostThread, &nDbgExitCode);
+		_ASSERTE(nDbgWait==WAIT_OBJECT_0);
+		#endif
 
 		if (mb_PostCreatedThread)
 		{
@@ -908,7 +953,7 @@ protected:
 		// Этот процесс занимает некоторое время, чтобы не блокировать основной поток - запускаем фоновый
 		mb_PostCreatedThread = true;
 		DWORD  nWait = WAIT_FAILED;
-		HANDLE hPostThread = apiCreateThread(PostCreatedThread, this, &mn_PostThreadId, "DefTerm::PostCreatedThread");
+		HANDLE hPostThread = apiCreateThread(PostCreatedThread, GetInterface(), &mn_PostThreadId, "DefTerm::PostCreatedThread");
 
 		if (hPostThread)
 		{
@@ -939,7 +984,8 @@ protected:
 				mh_PostThread = hPostThread;
 			}
 
-			m_Threads.push_back(hPostThread);
+			ThreadHandle th = {hPostThread, mn_PostThreadId, GetCurrentThreadId()};
+			m_Threads.push_back(th);
 		}
 		else
 		{
@@ -1053,14 +1099,22 @@ protected:
 protected:
 	void ClearThreads(bool bForceTerminate)
 	{
+		_ASSERTE((!bForceTerminate || mb_Termination) && "Termination state is expected here!");
+
 		for (INT_PTR i = m_Threads.size(); i--;)
 		{
-			HANDLE hThread = m_Threads[i];
-			if (WaitForSingleObject(hThread, 0) != WAIT_OBJECT_0)
+			const ThreadHandle& th = m_Threads[i];
+			HANDLE hThread = th.hThread;
+			// mb_Termination: The thread may be was not properly started yet, what for a while...
+			if (WaitForSingleObject(hThread, bForceTerminate ? 2500 : 0) != WAIT_OBJECT_0)
 			{
 				if (bForceTerminate)
 				{
+					#ifdef _DEBUG
+					SuspendThread(hThread);
 					_ASSERTE(FALSE && "Terminating DefTermBase hooker thread");
+					ResumeThread(hThread); // superfluous?
+					#endif
 					apiTerminateThread(hThread, 100);
 				}
 				else
@@ -1100,7 +1154,7 @@ protected:
 	{
 		bool bRc = false;
 		ThreadArg* pArg = (ThreadArg*)lpParameter;
-		if (pArg)
+		if (pArg && !pArg->pTerm->mb_Termination)
 		{
 			bRc = pArg->pTerm->CheckForeground(pArg->hFore, pArg->nForePID, false, !pArg->pTerm->mb_ExplorerHookAllowed);
 			free(pArg);
@@ -1137,6 +1191,9 @@ protected:
 	// Поставить хук в процесс шелла (explorer.exe)
 	bool CheckShellWindow()
 	{
+		if (mb_Termination)
+			return false;
+
 		bool bHooked = false;
 		HWND hFore = GetForegroundWindow();
 		HWND hDesktop = GetDesktopWindow(); //csrss.exe on Windows 8

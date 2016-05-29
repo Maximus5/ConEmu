@@ -48,6 +48,7 @@ CDefaultTerminal::CDefaultTerminal()
 
 CDefaultTerminal::~CDefaultTerminal()
 {
+	StopHookers();
 }
 
 bool CDefaultTerminal::isDefaultTerminalAllowed(bool bDontCheckName /*= false*/)
@@ -199,6 +200,11 @@ void CDefaultTerminal::PreCreateThread()
 
 void CDefaultTerminal::PostCreateThreadFinished()
 {
+}
+
+CDefTermBase* CDefaultTerminal::GetInterface()
+{
+	return this;
 }
 
 int CDefaultTerminal::DisplayLastError(LPCWSTR asLabel, DWORD dwError/*=0*/, DWORD dwMsgFlags/*=0*/, LPCWSTR asTitle/*=NULL*/, HWND hParent/*=NULL*/)

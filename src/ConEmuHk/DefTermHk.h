@@ -73,6 +73,7 @@ protected:
 	DWORD   StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE phSrvProcess);
 
 protected:
+	virtual CDefTermBase* GetInterface() override;
 	virtual int  DisplayLastError(LPCWSTR asLabel, DWORD dwError=0, DWORD dwMsgFlags=0, LPCWSTR asTitle=NULL, HWND hParent=NULL) override;
 	virtual void ShowTrayIconError(LPCWSTR asErrText) override; // Icon.ShowTrayIcon(asErrText, tsa_Default_Term);
 	virtual void PostCreateThreadFinished() override;
