@@ -355,6 +355,7 @@ HWND CConEmuInside::InsideFindParent()
 	bool bFirstStep = true;
 	DWORD nParentPID = 0;
 	PROCESSENTRY32 pi = {sizeof(pi)};
+	EnumFindParentArg find = {};
 
 	if (!m_InsideIntegration)
 	{
@@ -417,8 +418,10 @@ HWND CConEmuInside::InsideFindParent()
 		nParentPID = pi.th32ParentProcessID;
 	}
 
-	EnumFindParentArg find = {nParentPID};
+	// Do window enumeration
+	find.nPID = nParentPID;
 	::EnumWindows(EnumInsideFindParent, (LPARAM)&find);
+
 
 	if (!find.hParentRoot)
 	{
