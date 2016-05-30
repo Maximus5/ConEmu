@@ -135,20 +135,11 @@ LRESULT CSetPgApps::OnInitDialog(HWND hDlg, bool abInitial)
 	SendDlgItemMessage(hDlg, lbAppDistinct, LB_RESETCONTENT, 0,0);
 
 	int nApp = 0;
-	wchar_t szItem[1024];
 	const AppSettings* pApp = NULL;
 	while ((pApp = gpSet->GetAppSettings(nApp)) && pApp->AppNames)
 	{
-		_wsprintf(szItem, SKIPLEN(countof(szItem)) L"%i\t%s\t", nApp+1,
-			(pApp->Elevated == 1) ? L"E" : (pApp->Elevated == 2) ? L"N" : L"*");
-		int nPrefix = lstrlen(szItem);
-		lstrcpyn(szItem+nPrefix, pApp->AppNames, countof(szItem)-nPrefix);
-
-		INT_PTR iIndex = SendDlgItemMessage(hDlg, lbAppDistinct, LB_ADDSTRING, 0, (LPARAM)szItem);
-		UNREFERENCED_PARAMETER(iIndex);
-		//SendDlgItemMessage(hDlg, lbAppDistinct, LB_SETITEMDATA, iIndex, (LPARAM)pApp);
-
 		nApp++;
+		SetListAppName(pApp, nApp);
 	}
 
 	lockSelChange.Unlock();
@@ -156,6 +147,54 @@ LRESULT CSetPgApps::OnInitDialog(HWND hDlg, bool abInitial)
 	OnAppSelectionChanged();
 
 	return 0;
+}
+
+INT_PTR CSetPgApps::SetListAppName(const AppSettings* pApp, int nAppIndex/*1-based*/, INT_PTR iBefore/*0-based*/)
+{
+	INT_PTR iCount, iIndex;
+	wchar_t szItem[1024];
+
+	_wsprintf(szItem, SKIPLEN(countof(szItem)) L"%i\t%s\t", nAppIndex,
+		(pApp->Elevated == 1) ? L"E" : (pApp->Elevated == 2) ? L"N" : L"*");
+	int nPrefix = lstrlen(szItem);
+	if (pApp->AppNames)
+		lstrcpyn(szItem+nPrefix, pApp->AppNames, countof(szItem)-nPrefix);
+
+	iIndex = SendDlgItemMessage(mh_Dlg, lbAppDistinct, LB_INSERTSTRING, iBefore, (LPARAM)szItem);
+	if ((iBefore >= 0) && (iIndex >= 0))
+	{
+		_ASSERTE(iIndex == iBefore);
+
+		iCount = SendDlgItemMessage(mh_Dlg, lbAppDistinct, LB_GETCOUNT, 0, 0);
+		if (iCount <= (iIndex+1))
+		{
+			_ASSERTE(iCount > (iIndex+1));
+		}
+		else
+		{
+			SendDlgItemMessage(mh_Dlg, lbAppDistinct, LB_DELETESTRING, iIndex+1, 0);
+			SendDlgItemMessage(mh_Dlg, lbAppDistinct, LB_SETCURSEL, iIndex,0);
+		}
+	}
+
+	return iIndex;
+}
+
+void CSetPgApps::NotifyVCon()
+{
+	// Tell all RCon-s that application settings were changed
+	struct impl
+	{
+		static bool ResetAppId(CVirtualConsole* pVCon, LPARAM lParam)
+		{
+			pVCon->RCon()->ResetActiveAppSettingsId();
+			return true;
+		};
+	};
+	CVConGroup::EnumVCon(evf_All, impl::ResetAppId, 0);
+
+	// And update VCon-s. We need to update consoles if only visible settings were changes...
+	gpConEmu->Update(true);
 }
 
 void CSetPgApps::ProcessDpiChange(const CDpiForDialog* apDpi)
@@ -338,22 +377,8 @@ INT_PTR CSetPgApps::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPa
 	if (mb_Redraw)
 	{
 		mb_Redraw = false;
-
-		// Tell all RCon-s that application settings were changed
-		struct impl
-		{
-			static bool ResetAppId(CVirtualConsole* pVCon, LPARAM lParam)
-			{
-				pVCon->RCon()->ResetActiveAppSettingsId();
-				return true;
-			};
-		};
-		CVConGroup::EnumVCon(evf_All, impl::ResetAppId, 0);
-
-		// And update VCon-s. We need to update consoles if only visible settings were changes...
-		gpConEmu->Update(true);
-
-	} // mb_Redraw
+		NotifyVCon();
+	}
 
 
 	if (mb_Refill)
@@ -793,22 +818,15 @@ LRESULT CSetPgApps::OnEditChanged(HWND hDlg, WORD nCtrlId)
 		case tAppDistinctName:
 			if (!mb_SkipEditChange)
 			{
-				AppSettings* pApp = gpSet->GetAppSettingsPtr(iCur);
-				if (!pApp || !pApp->AppNames)
+				_ASSERTE(pApp && pApp->AppNames);
+				wchar_t* pszApps = NULL;
+				if (GetString(hDlg, nCtrlId, &pszApps))
 				{
-					_ASSERTE(pApp && pApp->AppNames);
+					pApp->SetNames(pszApps);
+					MSetter lockSelChange(&mb_SkipSelChange);
+					SetListAppName(pApp, iCur+1, iCur);
 				}
-				else
-				{
-					wchar_t* pszApps = NULL;
-					if (GetString(hDlg, nCtrlId, &pszApps))
-					{
-						pApp->SetNames(pszApps);
-						mb_Refill = true;
-						mb_Redraw = true;
-					}
-					SafeFree(pszApps);
-				}
+				SafeFree(pszApps);
 			} // tAppDistinctName
 			break;
 

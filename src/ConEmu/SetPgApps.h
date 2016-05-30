@@ -70,6 +70,9 @@ protected:
 	void DoAppDel();
 	void DoAppMove(bool bUpward);
 	void OnAppSelectionChanged();
+	// Helper
+	INT_PTR SetListAppName(const AppSettings* pApp, int nAppIndex/*1-based*/, INT_PTR iBefore = -1/*0-based*/);
+	void NotifyVCon();
 
 protected:
 	// Members
