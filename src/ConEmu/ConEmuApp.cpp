@@ -112,6 +112,10 @@ const CLSID CLSID_ShellWindows = {0x9BA05972, 0xF6A8, 0x11CF, {0xA4, 0x42, 0x00,
 const IID IID_IShellWindows = {0x85CB6900, 0x4D95, 0x11CF, {0x96, 0x0C, 0x00, 0x80, 0xC7, 0xF4, 0xEE, 0x85}};
 #endif
 
+// Debugging purposes
+DWORD gnLastMsgTick = (DWORD)-1;
+SYSTEMTIME gstLastTimer = {};
+
 
 //externs
 HINSTANCE g_hInstance=NULL;
@@ -1876,6 +1880,8 @@ bool ProcessMessage(MSG& Msg)
 	#endif
 
 	MSetter nestedLevel(&gnMessageNestingLevel);
+
+	gnLastMsgTick = GetTickCount();
 
 	if (Msg.message == WM_QUIT)
 	{

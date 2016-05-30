@@ -11991,6 +11991,9 @@ LRESULT CConEmuMain::OnTimer(WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
 
+	extern SYSTEMTIME gstLastTimer;
+	GetLocalTime(&gstLastTimer);
+
 #ifdef _DEBUG
 	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"ConEmu:MainTimer(%u)\n", wParam);
 	DEBUGSTRTIMER(szDbg);
