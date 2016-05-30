@@ -104,18 +104,15 @@ void CVConRelease::DeleteFromMainThread()
 
 
 CVConGuard::CVConGuard()
+	: CRefGuard<CVirtualConsole>()
+	, mi_Valid(0)
 {
-	mp_Ref = NULL;
-	mi_Valid = 0;
-	mn_Tick = GetTickCount();
 }
 
 CVConGuard::CVConGuard(CVirtualConsole* apRef)
+	: CRefGuard<CVirtualConsole>()
+	, mi_Valid(0)
 {
-	mp_Ref = NULL;
-	mi_Valid = 0;
-	mn_Tick = GetTickCount();
-
 	Attach(apRef);
 }
 
@@ -132,36 +129,7 @@ bool CVConGuard::Attach(CVirtualConsole* apRef)
 	return (mp_Ref != NULL);
 }
 
-void CVConGuard::Release()
-{
-	if (mp_Ref)
-	{
-		mp_Ref->Release();
-		mp_Ref = NULL;
-	}
-}
-
 CVConGuard::~CVConGuard()
 {
-	Release();
-}
-
-// Dereference
-CVirtualConsole* CVConGuard::operator->() const
-{
-	_ASSERTE(mp_Ref!=NULL);
-	return mp_Ref;
-}
-
-// Releases any current VCon and loads specified
-CVConGuard& CVConGuard::operator=(CVirtualConsole* apRef)
-{
-	Attach(apRef);
-
-	return *this;
-}
-
-CVirtualConsole* CVConGuard::VCon()
-{
-	return mp_Ref;
+	// inherited virtual destructor
 }

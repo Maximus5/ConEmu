@@ -83,23 +83,14 @@ static COORD g_LastConSize = {0,0}; // console size after last resize (in column
 /* Group Guard */
 
 CGroupGuard::CGroupGuard(CVConGroup* apRef)
+	: CRefGuard<CVConGroup>()
 {
-	mp_Ref = NULL;
 	Attach(apRef);
 }
 
 CGroupGuard::~CGroupGuard()
 {
-	Release();
-}
-
-void CGroupGuard::Release()
-{
-	if (mp_Ref)
-	{
-		mp_Ref->Release();
-		mp_Ref = NULL;
-	}
+	// inherited virtual destructor
 }
 
 bool CGroupGuard::Attach(CVConGroup* apRef)
@@ -131,25 +122,6 @@ bool CGroupGuard::Attach(CVConGroup* apRef)
 	return (mp_Ref != NULL);
 }
 
-// Dereference
-CVConGroup* CGroupGuard::operator->() const
-{
-	_ASSERTE(mp_Ref!=NULL);
-	return mp_Ref;
-}
-
-// Releases any current VCon and loads specified
-CGroupGuard& CGroupGuard::operator=(CVConGroup* apRef)
-{
-	Attach(apRef);
-	return *this;
-}
-
-// Ptr, No Asserts
-CVConGroup* CGroupGuard::VGroup()
-{
-	return mp_Ref;
-}
 
 
 
@@ -1626,14 +1598,14 @@ bool CVConGroup::isVConHWND(HWND hChild, CVConGuard* rpVCon /*= NULL*/)
 			CVConGuard VConI(gp_VCon[i]);
 			if (VConI.VCon() && (VConI->GetView() == hChild))
 			{
-				VCon = VConI.VCon();
+				VCon.Attach(VConI.VCon());
 				break;
 			}
 		}
 	}
 
 	if (rpVCon)
-		*rpVCon = VCon.VCon();
+		rpVCon->Attach(VCon.VCon());
 
 	bool bFound = (VCon.VCon() != NULL);
 	return bFound;
@@ -1672,14 +1644,14 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 	CVConGuard VCon;
 
 	if (rpVCon)
-		*rpVCon = NULL;
+		rpVCon->Release();
 
 	for (INT_PTR i = -1; !iFound && (i < (INT_PTR)countof(gp_VCon)); i++)
 	{
 		if (i == -1)
-			VCon = gp_VActive;
+			VCon.Attach(gp_VActive);
 		else
-			VCon = gp_VCon[i];
+			VCon.Attach(gp_VCon[i]);
 
 		if (VCon.VCon())
 		{
@@ -1814,7 +1786,7 @@ int CVConGroup::isFarExist(CEFarWindowType anWindowType/*=fwt_Any*/, LPWSTR asNa
 	{
 		if (rpVCon)
 		{
-			*rpVCon = VCon.VCon();
+			rpVCon->Attach(VCon.VCon());
 			if (lbLocked)
 				iFound = 0; // Failed (FALSE!)
 		}
@@ -1872,7 +1844,7 @@ int CVConGroup::GetActiveVCon(CVConGuard* pVCon /*= NULL*/, int* pAllCount /*= N
 			if (VCon.VCon() == gp_VActive)
 			{
 				if (pVCon)
-					*pVCon = VCon.VCon();
+					pVCon->Attach(VCon.VCon());
 				nFound = i;
 			}
 		}
@@ -2348,12 +2320,12 @@ bool CVConGroup::GetVCon(int nIdx, CVConGuard* pVCon /*= NULL*/, bool bFromCycle
 	{
 		_ASSERTE((nIdx>=0) && (nIdx<(int)MAX_CONSOLE_COUNT || (bFromCycle && nIdx==(int)MAX_CONSOLE_COUNT)));
 		if (pVCon)
-			*pVCon = NULL;
+			pVCon->Release();
 	}
 	else
 	{
 		if (pVCon)
-			*pVCon = gp_VCon[nIdx];
+			pVCon->Attach(gp_VCon[nIdx]);
 		bFound = true;
 	}
 
@@ -2369,7 +2341,7 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon()->isMouseSelectionPresent())
 	{
 		if (pVCon)
-			*pVCon = VCon.VCon();
+			pVCon->Attach(VCon.VCon());
 		return true;
 	}
 
@@ -2388,7 +2360,7 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 				if (PtInRect(&rcView, ptScreen))
 				{
 					if (pVCon)
-						*pVCon = VCon.VCon();
+						pVCon->Attach(VCon.VCon());
 					bFound = true;
 					break;
 				}
@@ -3505,7 +3477,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 
 		for (size_t i = 0; i < countof(gp_VCon); i++)
 		{
-			VCon = gp_VCon[i];
+			VCon.Attach(gp_VCon[i]);
 			CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
 			if (pRCon != NULL)
 			{
@@ -3534,7 +3506,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 	{
 		for (size_t i = 0; i < countof(gp_VCon); i++)
 		{
-			VCon = gp_VCon[i];
+			VCon.Attach(gp_VCon[i]);
 			CRealConsole* pRCon = VCon.VCon() ? VCon->RCon() : NULL;
 			if (pRCon != NULL)
 			{
@@ -3558,7 +3530,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 			static LRESULT createVConProc(LPARAM lParam)
 			{
 				createVCon* p = (createVCon*)lParam;
-				p->VCon = gpConEmu->CreateCon(p->pArgs);
+				p->VCon.Attach(gpConEmu->CreateCon(p->pArgs));
 				if (!p->VCon.VCon())
 					return 0;
 				if (p->pStartStop && p->pStartStop->bPalletteLoaded)
@@ -3579,12 +3551,12 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 		}
 
 		// Execute this in MainThread
-		VCon = (CVirtualConsole*)gpConEmu->CallMainThread(true, createVCon::createVConProc, (LPARAM)&impl);
+		VCon.Attach((CVirtualConsole*)gpConEmu->CallMainThread(true, createVCon::createVConProc, (LPARAM)&impl));
 
 		if (VCon.VCon() && !isValid(VCon.VCon()))
 		{
 			_ASSERTE(FALSE && "MsgCreateCon failed");
-			VCon = NULL;
+			VCon.Release();
 		}
 
 		bFound = (VCon.VCon() != NULL);
@@ -5869,9 +5841,9 @@ bool CVConGroup::isGroup(CVirtualConsole* apVCon, CVConGroup** rpRoot /*= NULL*/
 	if (rpActiveVCon)
 	{
 		if (isActiveGroupVCon(apVCon))
-			*rpActiveVCon = apVCon;
+			rpActiveVCon->Attach(apVCon);
 		else
-			*rpActiveVCon = (CVirtualConsole*)pGr->mp_ActiveGroupVConPtr;
+			rpActiveVCon->Attach((CVirtualConsole*)pGr->mp_ActiveGroupVConPtr);
 	}
 
 	return true;

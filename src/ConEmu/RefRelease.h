@@ -136,3 +136,89 @@ protected:
 		#endif
 	};
 };
+
+template <class T>
+class CRefGuard
+{
+protected:
+	T *mp_Ref;
+	DWORD mn_Tick;
+
+protected:
+	#if defined(HAS_CPP11)
+	// Use strict `Attach` instead of `=` to avoid
+	// unexpected differences in compiler implementations
+	CRefGuard<T>& operator=(CRefGuard<T>&& guard)
+	{
+		this->Attach(guard.Ptr());
+		return this;
+	};
+	#endif
+
+public:
+	CRefGuard()
+	{
+		mp_Ref = NULL;
+		mn_Tick = GetTickCount();
+	};
+
+	CRefGuard(T* apRef)
+	{
+		mp_Ref = NULL;
+		mn_Tick = GetTickCount();
+
+		Attach(apRef);
+	};
+
+	virtual ~CRefGuard()
+	{
+		Release();
+	};
+
+	virtual void Release()
+	{
+		if (mp_Ref)
+		{
+			mp_Ref->Release();
+			mp_Ref = NULL;
+		}
+	};
+
+	virtual bool Attach(T* apRef)
+	{
+		if (mp_Ref != apRef)
+		{
+			if (apRef)
+				apRef->AddRef();
+
+			klSwap(mp_Ref, apRef);
+
+			if (apRef)
+				apRef->Release();
+		}
+
+		return (mp_Ref != NULL);
+	};
+
+
+public:
+	// Dereference
+	T* operator->() const
+	{
+		_ASSERTE(mp_Ref!=NULL);
+		return mp_Ref;
+	};
+
+	// Releases any current VCon and loads specified
+	CRefGuard& operator=(T* apRef)
+	{
+		Attach(apRef);
+		return *this;
+	};
+
+	// Ptr, No Asserts
+	T* Ptr()
+	{
+		return mp_Ref;
+	};
+};

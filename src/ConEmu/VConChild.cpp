@@ -371,7 +371,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 	if (messg == WM_CREATE || messg == WM_NCCREATE)
 	{
 		LPCREATESTRUCT lp = (LPCREATESTRUCT)lParam;
-		guard = (CVirtualConsole*)lp->lpCreateParams;
+		guard.Attach((CVirtualConsole*)lp->lpCreateParams);
 		pVCon = guard.VCon();
 		if (pVCon)
 		{
@@ -809,7 +809,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 	if (messg == WM_CREATE || messg == WM_NCCREATE)
 	{
 		LPCREATESTRUCT lp = (LPCREATESTRUCT)lParam;
-		guard = (CVirtualConsole*)lp->lpCreateParams;
+		guard.Attach((CVirtualConsole*)lp->lpCreateParams);
 		pVCon = guard.VCon();
 		if (pVCon)
 			gVConBkMap.Set(hWnd, pVCon);

@@ -29,7 +29,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "RefRelease.h"
-#include "VConRelease.h"
 #include "../common/RConStartArgs.h"
 #include "../common/MArray.h"
 
@@ -272,26 +271,11 @@ public:
 //	bool ResizeViews(bool bResizeRCon=true, WPARAM wParam=0, WORD newClientWidth=(WORD)-1, WORD newClientHeight=(WORD)-1);
 };
 
-class CGroupGuard
+class CGroupGuard : public CRefGuard<CVConGroup>
 {
-private:
-	CVConGroup *mp_Ref;
-
 public:
 	CGroupGuard(CVConGroup* apRef);
-	~CGroupGuard();
-
-	void Release();
-	bool Attach(CVConGroup* apRef);
-
-
-public:
-	// Dereference
-	CVConGroup* operator->() const;
-
-	// Releases any current VCon and loads specified
-	CGroupGuard& operator=(CVConGroup* apRef);
-
-	// Ptr, No Asserts
-	CVConGroup* VGroup();
+	virtual ~CGroupGuard();
+	virtual bool Attach(CVConGroup* apRef) override;
+	CVConGroup* VGroup() { return Ptr(); };
 };

@@ -44,29 +44,14 @@ public:
 	void DeleteFromMainThread();
 };
 
-class CVConGuard
+class CVConGuard : public CRefGuard<CVirtualConsole>
 {
 private:
-	CVirtualConsole *mp_Ref;
 	int mi_Valid;
-	DWORD mn_Tick;
-
 public:
 	CVConGuard();
 	CVConGuard(CVirtualConsole* apRef);
-	~CVConGuard();
-	void Release();
-
-	bool Attach(CVirtualConsole* apRef);
-
-
-public:
-	// Dereference
-	CVirtualConsole* operator->() const;
-
-	// Releases any current VCon and loads specified
-	CVConGuard& operator=(CVirtualConsole* apRef);
-
-	// Ptr, No Asserts
-	CVirtualConsole* VCon();
+	virtual ~CVConGuard();
+	virtual bool Attach(CVirtualConsole* apRef) override;
+	CVirtualConsole* VCon() { return Ptr(); };
 };

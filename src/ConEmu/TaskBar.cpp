@@ -244,7 +244,7 @@ void CTaskBar::Taskbar_GhostReorder()
 		for (int j = i+1; CVConGroup::GetVCon(j, &VNext, true); j++)
 		{
 			mp_TaskBar3->SetTabOrder(VCon.VCon()->GhostWnd(), VNext.VCon()->GhostWnd());
-			VCon = VNext.VCon();
+			VCon.Attach(VNext.VCon());
 		}
 		// All done
 		break;

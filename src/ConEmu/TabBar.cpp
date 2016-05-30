@@ -377,7 +377,7 @@ bool CTabBarClass::GetVConFromTab(int nTabIdx, CVConGuard* rpVCon, DWORD* rpWndI
 		}
 		else
 		{
-			VCon = (CVirtualConsole*)tab->Info.pVCon;
+			VCon.Attach((CVirtualConsole*)tab->Info.pVCon);
 			lbRc = true;
 		}
 	}
@@ -854,7 +854,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 					// И показывать таб нужно от "активной" консоли, а не от первой в группе
 					if (pVCon != pGrVCon)
 					{
-						guard = pGrVCon;
+						guard.Attach(pGrVCon);
 						pVCon = pGrVCon;
 					}
 
