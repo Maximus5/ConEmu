@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Status.h"
 #include "TrayIcon.h"
 #include "../ConEmuCD/ExitCodes.h"
+#include "../common/WRegistry.h"
 
 #define StartupValueName L"ConEmuDefaultTerminal"
 
@@ -58,39 +59,24 @@ bool CDefaultTerminal::isDefaultTerminalAllowed(bool bDontCheckName /*= false*/)
 	return true;
 }
 
-bool CDefaultTerminal::IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, bool* pbLeaveInTSA)
+bool CDefaultTerminal::IsRegisteredOsStartup(CEStr* rszData, bool* pbLeaveInTSA)
 {
-	LPCWSTR ValueName = StartupValueName /* L"ConEmuDefaultTerminal" */;
 	bool bCurState = false, bLeaveTSA = gpSet->isRegisterOnOsStartupTSA;
-	bool brsValueAllocated = false;
-	HKEY hk;
-	DWORD nSize, nType = 0;
-	LONG lRc;
-	if (0 == (lRc = RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_READ, &hk)))
-	{
-		if (!rsValue)
-		{
-			cchMax = MAX_PATH*3;
-			rsValue = (wchar_t*)calloc(cchMax+1,sizeof(*rsValue));
-			brsValueAllocated = true;
-		}
+	LPCWSTR ValueName = StartupValueName /* L"ConEmuDefaultTerminal" */;
+	CEStr lsData;
+	int iLen;
 
-		nSize = cchMax*sizeof(*rsValue);
-		if ((0 == (lRc = RegQueryValueEx(hk, ValueName, NULL, &nType, (LPBYTE)rsValue, &nSize)) && (nType == REG_SZ) && (nSize > sizeof(wchar_t))))
-		{
-			bCurState = true;
-			if (rsValue)
-			{
-				bLeaveTSA = (StrStrI(rsValue, L"/Exit") == NULL);
-			}
-		}
-		RegCloseKey(hk);
+	iLen = RegGetStringValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", ValueName, lsData);
+	if (iLen > 0)
+	{
+		bCurState = true;
+		bLeaveTSA = (StrStrI(lsData.c_str(L""), L"/Exit") == NULL);
 	}
 
+	if (rszData)
+		rszData->Set(lsData.c_str());
 	if (pbLeaveInTSA)
 		*pbLeaveInTSA = bLeaveTSA;
-	if (brsValueAllocated)
-		SafeFree(rsValue);
 	return bCurState;
 }
 
@@ -110,23 +96,23 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 	LPCWSTR ValueName = StartupValueName;
 	bool bCurState = false;
 	bool bNeedState = gpSet->isSetDefaultTerminal && gpSet->isRegisterOnOsStartup;
-	HKEY hk;
-	DWORD nSize; //, nType = 0;
-	wchar_t szCurValue[MAX_PATH*3] = {};
-	wchar_t szNeedValue[MAX_PATH*2+80] = {};
 	LONG lRc;
 	bool bPrevTSA = false;
 
-	LPCWSTR pszConfigName = gpSetCls->GetConfigName();
-	if (pszConfigName && !*pszConfigName)
-		pszConfigName = NULL;
+	// Need to acquire proper startup (config+xml at least) arguments
+	CEStr szAddArgs;
+	LPCWSTR pszAddArgs = gpConEmu->MakeConEmuStartArgs(szAddArgs);
 
-	_wsprintf(szNeedValue, SKIPLEN(countof(szNeedValue)) L"\"%s\" %s%s%s/SetDefTerm /Detached /MinTSA%s",
-		gpConEmu->ms_ConEmuExe,
-		pszConfigName ? L"/Config \"" : L"", pszConfigName ? pszConfigName : L"", pszConfigName ? L"\" " : L"",
-		gpSet->isRegisterOnOsStartupTSA ? L"" : L" /Exit");
+	// Allocate memory
+	CEStr szNeedValue(
+		L"\"", gpConEmu->ms_ConEmuExe, L"\" ",
+		pszAddArgs, // -config, -loadcfgfile and others...
+		L"-SetDefTerm -Detached -MinTSA",
+		gpSet->isRegisterOnOsStartupTSA ? NULL : L" -Exit");
 
-	if (IsRegisteredOsStartup(szCurValue, countof(szCurValue)-1, &bPrevTSA) && *szCurValue)
+	// Compare with current
+	CEStr szCurValue;
+	if (IsRegisteredOsStartup(&szCurValue, &bPrevTSA) && !szCurValue.IsEmpty())
 	{
 		bCurState = true;
 	}
@@ -134,28 +120,19 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 	if ((bCurState != bNeedState)
 		|| (bNeedState && (lstrcmpi(szNeedValue, szCurValue) != 0)))
 	{
-		if (0 == (lRc = RegCreateKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hk, NULL)))
+		if (bNeedState)
 		{
-			if (bNeedState)
+			if (0 != (RegSetStringValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", ValueName, szNeedValue)))
 			{
-				nSize = ((DWORD)_tcslen(szNeedValue)+1) * sizeof(szNeedValue[0]);
-				if (0 != (lRc = RegSetValueEx(hk, ValueName, 0, REG_SZ, (LPBYTE)szNeedValue, nSize)))
-				{
-					DisplayLastError(L"Failed to set ConEmuDefaultTerminal value in HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", lRc);
-				}
+				DisplayLastError(L"Failed to set ConEmuDefaultTerminal value in HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", lRc);
 			}
-			else
-			{
-				if (0 != (lRc = RegDeleteValue(hk, ValueName)))
-				{
-					DisplayLastError(L"Failed to remove ConEmuDefaultTerminal value from HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", lRc);
-				}
-			}
-			RegCloseKey(hk);
 		}
 		else
 		{
-			DisplayLastError(L"Failed to open HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run for write", lRc);
+			if (0 != (RegSetStringValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", ValueName, NULL)))
+			{
+				DisplayLastError(L"Failed to remove ConEmuDefaultTerminal value from HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", lRc);
+			}
 		}
 	}
 }

@@ -50,7 +50,7 @@ LRESULT CSetPgDefTerm::OnInitDialog(HWND hDlg, bool abInitial)
 	// Default terminal apps
 	CheckDlgButton(hDlg, cbDefaultTerminal, gpSet->isSetDefaultTerminal);
 	bool bLeaveInTSA = gpSet->isRegisterOnOsStartupTSA;
-	bool bRegister = gpSet->isRegisterOnOsStartup || gpConEmu->mp_DefTrm->IsRegisteredOsStartup(NULL,0,&bLeaveInTSA);
+	bool bRegister = gpSet->isRegisterOnOsStartup || gpConEmu->mp_DefTrm->IsRegisteredOsStartup(NULL, &bLeaveInTSA);
 	CheckDlgButton(hDlg, cbDefaultTerminalStartup, bRegister);
 	CheckDlgButton(hDlg, cbDefaultTerminalTSA, bLeaveInTSA);
 	EnableWindow(GetDlgItem(hDlg, cbDefaultTerminalTSA), bRegister);

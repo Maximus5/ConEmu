@@ -46,7 +46,7 @@ public:
 
 	void CheckRegisterOsStartup();
 	void ApplyAndSave(bool bApply, bool bSaveToReg);
-	bool IsRegisteredOsStartup(wchar_t* rsValue, DWORD cchMax, bool* pbLeaveInTSA);
+	bool IsRegisteredOsStartup(CEStr* rszData, bool* pbLeaveInTSA);
 
 	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false) override; // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
 
