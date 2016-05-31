@@ -1011,6 +1011,7 @@ void CConEmuMain::AppendExtraArgs(LPCWSTR asSwitch, LPCWSTR asSwitchValue /*= NU
 	}
 }
 
+// Returns either NULL string, or arguments with *trailing space*
 LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs, LPCWSTR asOtherConfig /*= NULL*/)
 {
 	bool bSpecialXml = false;
@@ -1027,6 +1028,7 @@ LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs, LPCWSTR asOtherConfig /*
 	size_t cchMax =
 		+ (pszConfig ? (_tcslen(pszConfig) + 16) : 0)
 		+ (pszXmlFile ? (_tcslen(pszXmlFile) + 32) : 0)
+		+ (gpSetCls->isResetBasicSettings ? 7 : 0)
 		+ (pszAddArgs ? (_tcslen(pszAddArgs) + 1) : 0);
 	if (!cchMax)
 	{
@@ -1057,6 +1059,10 @@ LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs, LPCWSTR asOtherConfig /*
 		_wcscat_c(pszBuf, cchMax, pszAddArgs);
 		if (pszAddArgs[_tcslen(pszAddArgs)-1] != L' ')
 			_wcscat_c(pszBuf, cchMax, L" ");
+	}
+	if (gpSetCls->isResetBasicSettings)
+	{
+		_wcscat_c(pszBuf, cchMax, L"-basic ");
 	}
 
 	return rsArgs.ms_Val;
