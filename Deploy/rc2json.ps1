@@ -14,8 +14,23 @@ $resource_h_file = ($path + "\..\src\ConEmu\resource.h")
 $menuids_h_file = ($path + "\..\src\ConEmu\MenuIds.h")
 # ID-s for gsDataRsrcs
 $rsrsids_h_file = ($path + "\..\src\ConEmu\LngDataEnum.h")
+# Hotkeys
+$conemu_hotkeys_file = Join-Path $path "..\src\ConEmu\HotkeyList.cpp"
+# Status bar columns
+$conemu_status_file = Join-Path $path "..\src\ConEmu\Status.cpp"
 
 $target_l10n = ($path + "\..\Release\ConEmu\ConEmu.l10n")
+
+$conemu_page_automsg = "*This page was generated automatically from ConEmu sources*"
+$conemu_page_hotkeymark = "{% comment %} LIST OF HOTKEYS {% endcomment %}"
+
+$dest_md = ($path + "\..\..\ConEmu-GitHub-io\ConEmu.github.io\en\")
+
+$conemu_hotkeys_md = Join-Path $dest_md "KeyboardShortcuts.md"
+
+$md_img_path = "/img/"
+
+$linedelta = 7
 
 $script:ignore_ctrls = @(
   "tAppDistinctHolder", "tDefTermWikiLink",
@@ -219,18 +234,18 @@ function StringIsUrl($text)
 
 
 
-function ParseDialog($rcln, $dlgid, $name)
+function ParseDialogData($rcln, $dlgid, $name)
 {
   $l = FindLine 0 $rcln ($dlgid + " ")
   if ($l -le 0) {
     $script:dlg_not_found = $TRUE
-    return
+    return $null
   }
 
   $b = FindLine $l $rcln "BEGIN"
-  if ($b -le 0) { return }
+  if ($b -le 0) { return $null }
   $e = FindLine $b $rcln "END"
-  if ($e -le 0) { return }
+  if ($e -le 0) { return $null }
 
   $supported = "|GROUPBOX|CONTROL|RTEXT|LTEXT|CTEXT|PUSHBUTTON|DEFPUSHBUTTON|EDITTEXT|COMBOBOX|LISTBOX|"
   $ignored = "|ICON|";
@@ -269,6 +284,13 @@ function ParseDialog($rcln, $dlgid, $name)
     $h = ParseLine $ln
     $items_arg += $h
   }
+
+  return $items_arg
+}
+
+function ParseDialog($rcln, $dlgid, $name)
+{
+  $items_arg = ParseDialogData $rcln $dlgid $name
 
   #Write-Host ("  Controls: " + $items_arg.Count)
   Write-Progress -Activity "Dialog Controls" -Status "Controls: $($items_arg.Count)" -ParentId 1 -Id 2
@@ -528,54 +550,54 @@ function InitDialogList()
   $script:dialogs = @()
 
   # $script:dialogs += @{ id = "IDD_CMDPROMPT";     name = "Commands history and execution"; } ### is not used yet
-  $script:dialogs += @{ id = "IDD_FIND";            name = "Find text"; }
-  $script:dialogs += @{ id = "IDD_ATTACHDLG";       name = "Choose window or console application for attach"; }
-  $script:dialogs += @{ id = "IDD_SETTINGS";        name = "Settings"; }
-  $script:dialogs += @{ id = "IDD_RESTART";         name = "ConEmu"; }
-  $script:dialogs += @{ id = "IDD_MORE_CONFONT";    name = "Real console font"; }
+  $script:dialogs += @{ id = "IDD_FIND";            name = "Find text"; file = $null; }
+  $script:dialogs += @{ id = "IDD_ATTACHDLG";       name = "Choose window or console application for attach"; file = $null; }
+  $script:dialogs += @{ id = "IDD_SETTINGS";        name = "Settings"; file = $null; }
+  $script:dialogs += @{ id = "IDD_RESTART";         name = "ConEmu"; file = $null; }
+  $script:dialogs += @{ id = "IDD_MORE_CONFONT";    name = "Real console font"; file = $null; }
   # $script:dialogs += @{ id = "IDD_MORE_DOSBOX";   name = "DosBox settings"; }  ### is not used yet
-  $script:dialogs += @{ id = "IDD_FAST_CONFIG";     name = "ConEmu fast configuration"; }
-  $script:dialogs += @{ id = "IDD_ABOUT";           name = "About"; }
+  $script:dialogs += @{ id = "IDD_FAST_CONFIG";     name = "ConEmu fast configuration"; file = $null; }
+  $script:dialogs += @{ id = "IDD_ABOUT";           name = "About"; file = $null; }
   # $script:dialogs += @{ id = "IDD_ACTION";        name = "Choose action"; }    ### is not used yet
-  $script:dialogs += @{ id = "IDD_RENAMETAB";       name = "Rename tab"; }
-  $script:dialogs += @{ id = "IDD_HELP";            name = "Item description"; }
-  $script:dialogs += @{ id = "IDD_HOTKEY";          name = "Choose hotkey"; }
-  $script:dialogs += @{ id = "IDD_AFFINITY";        name = "Set active console processes affinity and priority"; }
+  $script:dialogs += @{ id = "IDD_RENAMETAB";       name = "Rename tab"; file = $null; }
+  $script:dialogs += @{ id = "IDD_HELP";            name = "Item description"; file = $null; }
+  $script:dialogs += @{ id = "IDD_HOTKEY";          name = "Choose hotkey"; file = $null; }
+  $script:dialogs += @{ id = "IDD_AFFINITY";        name = "Set active console processes affinity and priority"; file = $null; }
 
-  $script:dialogs += @{ id = "IDD_SPG_FONTS";       name = "Main"; }
-  $script:dialogs += @{ id = "IDD_SPG_SIZEPOS";     name = " Size & Pos"; }
-  $script:dialogs += @{ id = "IDD_SPG_APPEAR";      name = " Appearance"; }
-  $script:dialogs += @{ id = "IDD_SPG_QUAKE";       name = " Quake style"; }
-  $script:dialogs += @{ id = "IDD_SPG_BACKGR";      name = " Background"; }
-  $script:dialogs += @{ id = "IDD_SPG_TABS";        name = " Tab bar"; }
-  $script:dialogs += @{ id = "IDD_SPG_CONFIRM";     name = " Confirm"; }
-  $script:dialogs += @{ id = "IDD_SPG_TASKBAR";     name = " Task bar"; }
-  $script:dialogs += @{ id = "IDD_SPG_UPDATE";      name = " Update"; }
-  $script:dialogs += @{ id = "IDD_SPG_STARTUP";     name = "Startup"; }
-  $script:dialogs += @{ id = "IDD_SPG_TASKS";       name = " Tasks"; }
-  $script:dialogs += @{ id = "IDD_SPG_ENVIRONMENT"; name = " Environment"; }
-  $script:dialogs += @{ id = "IDD_SPG_FEATURES";    name = "Features"; }
-  $script:dialogs += @{ id = "IDD_SPG_CURSOR";      name = " Text cursor"; }
-  $script:dialogs += @{ id = "IDD_SPG_COLORS";      name = " Colors"; }
-  $script:dialogs += @{ id = "IDD_SPG_TRANSPARENT"; name = " Transparency"; }
-  $script:dialogs += @{ id = "IDD_SPG_STATUSBAR";   name = " Status bar"; }
-  $script:dialogs += @{ id = "IDD_SPG_APPDISTINCT"; name = " App distinct"; }
-  $script:dialogs += @{ id = "IDD_SPG_INTEGRATION"; name = "Integration"; }
-  $script:dialogs += @{ id = "IDD_SPG_DEFTERM";     name = " Default term"; }
-  $script:dialogs += @{ id = "IDD_SPG_COMSPEC";     name = " ComSpec"; }
-  $script:dialogs += @{ id = "IDD_SPG_CHILDGUI";    name = " Children GUI"; }
-  $script:dialogs += @{ id = "IDD_SPG_KEYS";        name = "Keys & Macro"; }
-  $script:dialogs += @{ id = "IDD_SPG_KEYBOARD";    name = " Keyboard"; }
-  $script:dialogs += @{ id = "IDD_SPG_MOUSE";       name = " Mouse"; }
-  $script:dialogs += @{ id = "IDD_SPG_MARKCOPY";    name = " Mark/Copy"; }
-  $script:dialogs += @{ id = "IDD_SPG_PASTE";       name = " Paste"; }
-  $script:dialogs += @{ id = "IDD_SPG_HIGHLIGHT";   name = " Highlight"; }
-  $script:dialogs += @{ id = "IDD_SPG_FEATURE_FAR"; name = "Far Manager"; }
-  $script:dialogs += @{ id = "IDD_SPG_FARMACRO";    name = " Far macros"; }
-  $script:dialogs += @{ id = "IDD_SPG_VIEWS";       name = " Views"; }
-  $script:dialogs += @{ id = "IDD_SPG_INFO";        name = "Info"; }
-  $script:dialogs += @{ id = "IDD_SPG_DEBUG";       name = " Debug"; }
-  $script:dialogs += @{ id = "IDD_SPG_APPDISTINCT2";name = " <App distinct>"; }
+  $script:dialogs += @{ id = "IDD_SPG_FONTS";       name = "Main"; file = "Settings-Main"; }
+  $script:dialogs += @{ id = "IDD_SPG_SIZEPOS";     name = " Size & Pos"; file = "Settings-SizePos"; }
+  $script:dialogs += @{ id = "IDD_SPG_APPEAR";      name = " Appearance"; file = "Settings-Appearance"; }
+  $script:dialogs += @{ id = "IDD_SPG_QUAKE";       name = " Quake style"; file = "Settings-Quake"; } # NEW
+  $script:dialogs += @{ id = "IDD_SPG_BACKGR";      name = " Background"; file = "Settings-Background"; }
+  $script:dialogs += @{ id = "IDD_SPG_TABS";        name = " Tab bar"; file = "Settings-TabBar"; }
+  $script:dialogs += @{ id = "IDD_SPG_CONFIRM";     name = " Confirm"; file = "Settings-Confirm"; }
+  $script:dialogs += @{ id = "IDD_SPG_TASKBAR";     name = " Task bar"; file = "Settings-TaskBar"; }
+  $script:dialogs += @{ id = "IDD_SPG_UPDATE";      name = " Update"; file = "Settings-Update"; }
+  $script:dialogs += @{ id = "IDD_SPG_STARTUP";     name = "Startup"; file = "Settings-Startup"; }
+  $script:dialogs += @{ id = "IDD_SPG_TASKS";       name = " Tasks"; file = "Settings-Tasks"; }
+  $script:dialogs += @{ id = "IDD_SPG_ENVIRONMENT"; name = " Environment"; file = "Settings-Environment"; }
+  $script:dialogs += @{ id = "IDD_SPG_FEATURES";    name = "Features"; file = "Settings-Features"; }
+  $script:dialogs += @{ id = "IDD_SPG_CURSOR";      name = " Text cursor"; file = "Settings-TextCursor"; }
+  $script:dialogs += @{ id = "IDD_SPG_COLORS";      name = " Colors"; file = "Settings-Colors,Settings-Colors2"; }
+  $script:dialogs += @{ id = "IDD_SPG_TRANSPARENT"; name = " Transparency"; file = "Settings-Transparency"; } # manual?
+  $script:dialogs += @{ id = "IDD_SPG_STATUSBAR";   name = " Status bar"; file = "Settings-StatusBar"; }
+  $script:dialogs += @{ id = "IDD_SPG_APPDISTINCT"; name = " App distinct"; file = "Settings-AppDistinct,Settings-AppDistinct2"; }
+  $script:dialogs += @{ id = "IDD_SPG_INTEGRATION"; name = "Integration"; file ="Settings-Integration"; } # manual?
+  $script:dialogs += @{ id = "IDD_SPG_DEFTERM";     name = " Default term"; file = "Settings-DefTerm"; }
+  $script:dialogs += @{ id = "IDD_SPG_COMSPEC";     name = " ComSpec"; file = "Settings-Comspec"; }
+  $script:dialogs += @{ id = "IDD_SPG_CHILDGUI";    name = " Children GUI"; file = "Settings-ChildGui"; } # NEW
+  $script:dialogs += @{ id = "IDD_SPG_KEYS";        name = "Keys & Macro"; file = "Settings-Hotkeys,Settings-Hotkeys2"; }
+  $script:dialogs += @{ id = "IDD_SPG_KEYBOARD";    name = " Keyboard"; file = "Settings-Keyboard"; } # NEW
+  $script:dialogs += @{ id = "IDD_SPG_MOUSE";       name = " Mouse"; file = "Settings-Mouse"; } # NEW
+  $script:dialogs += @{ id = "IDD_SPG_MARKCOPY";    name = " Mark/Copy"; file = "Settings-MarkCopy"; }
+  $script:dialogs += @{ id = "IDD_SPG_PASTE";       name = " Paste"; file = "Settings-Paste"; }
+  $script:dialogs += @{ id = "IDD_SPG_HIGHLIGHT";   name = " Highlight"; file = "Settings-Highlight"; }
+  $script:dialogs += @{ id = "IDD_SPG_FEATURE_FAR"; name = "Far Manager"; file = "Settings-Far"; }
+  $script:dialogs += @{ id = "IDD_SPG_FARMACRO";    name = " Far macros"; file = "Settings-Far-Macros"; }
+  $script:dialogs += @{ id = "IDD_SPG_VIEWS";       name = " Views"; file = "Settings-Far-View"; }
+  $script:dialogs += @{ id = "IDD_SPG_INFO";        name = "Info"; file = "Settings-Info"; }
+  $script:dialogs += @{ id = "IDD_SPG_DEBUG";       name = " Debug"; file = "Settings-Debug"; }
+  $script:dialogs += @{ id = "IDD_SPG_APPDISTINCT2";name = " <App distinct>"; file = $null; } # ONLY rc2json
 }
 
 
@@ -940,6 +962,710 @@ function NewLngResourceLoop()
 
 
 
+################################################
+##############  Wiki Generation  ###############
+################################################
+
+function InitKeyNames()
+{
+  $script:KeysFriendly = @()
+  $script:KeysFriendly += @{ Key = "VK_LWIN" ; Name = "Win" }
+  $script:KeysFriendly += @{ Key = "VK_APPS" ; Name = "Apps" }
+  $script:KeysFriendly += @{ Key = "VK_CONTROL" ; Name = "Ctrl" }
+  $script:KeysFriendly += @{ Key = "VK_LCONTROL" ; Name = "RCtrl" }
+  $script:KeysFriendly += @{ Key = "VK_RCONTROL" ; Name = "LCtrl" }
+  $script:KeysFriendly += @{ Key = "VK_MENU" ; Name = "Alt" }
+  $script:KeysFriendly += @{ Key = "VK_LMENU" ; Name = "RAlt" }
+  $script:KeysFriendly += @{ Key = "VK_RMENU" ; Name = "LAlt" }
+  $script:KeysFriendly += @{ Key = "VK_SHIFT" ; Name = "Shift" }
+  $script:KeysFriendly += @{ Key = "VK_LSHIFT" ; Name = "RShift" }
+  $script:KeysFriendly += @{ Key = "VK_RSHIFT" ; Name = "LShift" }
+  $script:KeysFriendly += @{ Key = "VK_OEM_3/*~*/" ; Name = "'~'" }
+  $script:KeysFriendly += @{ Key = "192/*VK_ªøû¹ôð*/" ; Name = "'~'" }
+  $script:KeysFriendly += @{ Key = "VK_UP" ; Name = "UpArrow" }
+  $script:KeysFriendly += @{ Key = "VK_DOWN" ; Name = "DownArrow" }
+  $script:KeysFriendly += @{ Key = "VK_LEFT" ; Name = "LeftArrow" }
+  $script:KeysFriendly += @{ Key = "VK_RIGHT" ; Name = "RightArrow" }
+  $script:KeysFriendly += @{ Key = "VK_SPACE" ; Name = "Space" }
+  $script:KeysFriendly += @{ Key = "VK_RETURN" ; Name = "Enter" }
+  $script:KeysFriendly += @{ Key = "VK_PAUSE" ; Name = "Break" } # will be replaced with "Pause" if single
+  $script:KeysFriendly += @{ Key = "VK_CANCEL" ; Name = "Break" }
+  $script:KeysFriendly += @{ Key = "VK_LBUTTON" ; Name = "LeftMouseButton" }
+  $script:KeysFriendly += @{ Key = "VK_RBUTTON" ; Name = "RightMouseButton" }
+  $script:KeysFriendly += @{ Key = "VK_MBUTTON" ; Name = "MiddleMouseButton" }
+  $script:KeysFriendly += @{ Key = "VK_ESCAPE" ; Name = "Esc" }
+  $script:KeysFriendly += @{ Key = "VK_WHEEL_DOWN" ; Name = "WheelDown" }
+  $script:KeysFriendly += @{ Key = "VK_WHEEL_UP" ; Name = "WheelUp" }
+  $script:KeysFriendly += @{ Key = "VK_INSERT" ; Name = "Ins" }
+  $script:KeysFriendly += @{ Key = "VK_TAB" ; Name = "Tab" }
+  $script:KeysFriendly += @{ Key = "VK_HOME" ; Name = "Home" }
+  $script:KeysFriendly += @{ Key = "VK_END" ; Name = "End" }
+  $script:KeysFriendly += @{ Key = "0xbd/* -_ */" ; Name = "'-_'" }
+  $script:KeysFriendly += @{ Key = "0xbb/* =+ */" ; Name = "'+='" }
+  $script:KeysFriendly += @{ Key = "VK_DELETE" ; Name = "Delete" }
+  $script:KeysFriendly += @{ Key = "VK_PRIOR" ; Name = "PageUp" }
+  $script:KeysFriendly += @{ Key = "VK_NEXT" ; Name = "PageDown" }
+  $script:KeysFriendly += @{ Key = "CEHOTKEY_ARRHOSTKEY" ; Name = "Win(configurable)" }
+}
+
+function FriendlyKeys($token)
+{
+  #Write-Host $token
+  if (($token -eq "0") -Or ($token -eq "")) { return "*NoDefault*" }
+  $mk = "MakeHotKey("
+  if ($token.StartsWith($mk)) {
+    $token = $token.SubString($mk.Length).Trim().TrimEnd(")").Replace(",","|")
+  }
+  for ($i = 0; $i -lt $script:KeysFriendly.Length; $i++) {
+    $k = $script:KeysFriendly[$i]["Key"]
+    $n = $script:KeysFriendly[$i]["Name"]
+    #Write-Host ($k + " - " + $n)
+    $token = $token.Replace($k,$n)
+  }
+  $token = $token.Replace("VK_","")
+  #$token = $token.Replace("VK_LWIN","Win").Replace("VK_CONTROL","Ctrl").Replace("VK_LCONTROL","LCtrl").Replace("VK_RCONTROL","RCtrl")
+  #$token = $token.Replace("VK_MENU","Alt").Replace("VK_LMENU","LAlt").Replace("VK_RMENU","RAlt")
+  #$token = $token.Replace("VK_SHIFT","Shift").Replace("VK_LSHIFT","LShift").Replace("VK_RSHIFT","RShift")
+  #$token = $token.Replace("VK_APPS","Apps").Replace("VK_LSHIFT","LShift").Replace("VK_RSHIFT","RShift")
+  $i = $token.IndexOf("|")
+  if ($i -gt 0) {
+    $token = ($token.SubString($i+1)+"|"+$token.SubString(0,$i))
+  }
+  $i = $token.IndexOf(",")
+  if ($i -gt 0) {
+    $key = $token.SubString(0, $i).Trim()
+    $mod = $token.SubString($i+1).Trim()
+  } else {
+    $key = $token.Trim()
+    $mod = ""
+  }
+  if (($key.StartsWith("'")) -And ($key.EndsWith("'"))) {
+    if ($key.Length -eq 3) {
+      $key = $key.SubString(1,1)
+    } else {
+      $key = "‘"+$key.Trim("'")+"’"
+    }
+  }
+  # ready
+  if ($mod -ne "") { $ready = ($mod.Replace(",","+") + "+" + $key) } else { $ready = $key }
+  # Show "Pause" instead of single "Break"
+  if ($ready -eq "Break") { $ready = "Pause" }
+  return $ready
+}
+
+function SplitHotkey($line)
+{
+  # 0             1         2     3               4                          5      6                       7
+  # vkMultiClose, chk_User, NULL, L"Multi.Close", CConEmuCtrl::key_GuiMacro, false, L"Close(0)")->SetHotKey(VK_DELETE,VK_LWIN);
+  $tokens = @()
+  for ($i = 0; $i -le 8; $i++) { $tokens += @("") }
+
+  #Write-Host -ForegroundColor DarkYellow "--`n$line"
+
+  # First - cut of hotkeys themself
+  $l = $line.IndexOf(")->SetHotKey(")
+  if ($l -gt 0) {
+    $keys = $line.SubString($l + ")->SetHotKey(".Length)
+    $l2 = $keys.LastIndexOf(")")
+    if ($l2 -gt 0) {
+      $keys = $keys.Remove($l2)
+    }
+    $tokens[7] = $keys
+    $line = $line.Remove($l)
+    #Write-Host $line
+  }
+  # Now we are ready to parse the line
+  for ($i = 0; ($i -le 5) -And ($line -ne ""); $i++) {
+    $l = $line.IndexOf(",")
+    if ($l -gt 0) {
+      $tokens[$i] = $line.SubString(0, $l).Trim()
+      $line = $line.Remove(0, $l+1).Trim()
+    } else {
+      $tokens[$i] = $line.Trim()
+      $line = ""
+    }
+  }
+  if (($line -ne "") -And ($line.StartsWith("L`""))) {
+    $macro = $line.SubString(1).TrimEnd(' );')
+    if ($macro.EndsWith("*/")) {
+      $l = $macro.IndexOf("/*")
+      if ($l -gt 0) {
+        $macro = $macro.Substring(0, $l).TrimEnd()
+      } else {
+        $macro = ""
+      }
+    }
+    #Write-Host -ForegroundColor DarkYellow "Macro: $macro"
+    $tokens[6] = $macro
+  }
+  if (($tokens[3] -ne "") -And ($tokens[3].StartsWith("L`""))) {
+    $tokens[3] = $tokens[3].Remove(0,1) #.Trim("`"")
+    if ($tokens[3] -eq "`"`"") { $tokens[3] = "" }
+  }
+  
+  #Write-Host ($tokens[0] + "; " + $tokens[3] + "; " + $tokens[1] + "; " + $tokens[7] + "; " + $tokens[3] + "; " + $tokens[6] + ";")
+
+  $hk = @{}
+  $hk.Add("Id",$tokens[0])
+  $hk.Add("Type",$tokens[1].SubString(4))
+  $hk.Add("Save",$tokens[3].Replace("`"","``"))
+  $hk.Add("Hotkey",(FriendlyKeys $tokens[7]))
+  $hk.Add("Macro",$tokens[6].Replace("`"","``"))
+
+  #Write-Host -ForegroundColor Yellow (":: " + $hk.Id + " :: " + $hk.Hotkey + " :: " + $hk.Macro + " ::")
+
+  #if ($hk.ContainsKey("Disable")) { $d = "Possible" } else { $d = "" }
+  #if ($hk.ContainsKey("Hotkey")) { $k = $hk["Hotkey"] } else { $k = "" }
+  #Write-Host ($hk["Id"].PadRight(25) + "`t" + $d.PadRight(10) + "`t" + $k.PadRight(30) + "`t" + $hk["Macro"])
+
+  return $hk
+}
+
+function ParseHotkeys($hkln)
+{
+  #Write-Host $hkln
+  $hk_lines = $hkln `
+    | Where { $_.StartsWith("`tAdd`(vk") -Or $_.StartsWith("`t`t->SetHotKey") } `
+    | Where { $_.IndexOf("vkGuiMacro") -eq -1 } `
+    | Where { $_.IndexOf("vkConsole_") -eq -1 } # NEED TO BE ADDED MANUALLY !!!
+
+  $script:hotkeys = @()
+
+  #Write-Host -ForegroundColor DarkYellow "--`nParsing hotkeys..."
+
+  for ($i = 0; $i -lt $hk_lines.Count; $i++) {
+    $s = $hk_lines[$i]
+
+    #Write-Host -ForegroundColor DarkYellow "--`n$s"
+
+    $l = $s.LastIndexOf("//")
+    if ($l -gt 0) { $s = $s.Remove($l).Trim() }
+
+    $l = $s.LastIndexOf(")")
+    if ($l -gt 0) {
+      $line = $s.Trim().Remove(0,4)
+      #Write-Host -ForegroundColor DarkYellow "--`n$line|"
+      if ((($i+1) -lt $hk_lines.Count) -And ($hk_lines[$i+1].StartsWith("`t`t->SetHotKey"))) {
+        $i++
+        $s = $hk_lines[$i].Remove(0,2)
+
+        $l = $s.LastIndexOf("//")
+        if ($l -gt 0) { $s = $s.Remove($l).Trim() }
+
+        $line += $s
+      }
+      #$line
+      $hk = SplitHotkey $line
+
+      #Write-Host "---"
+      #$hk
+      #Write-Host "***"
+
+      $script:hotkeys += $hk
+    }
+  }
+
+  return
+}
+
+function EscMd($txt)
+{
+  return $txt.Replace("&&","(and)").Replace("&","").Replace("*","``*``").TrimEnd(":")
+}
+
+function ReplaceRN($txt)
+{
+  return $txt.Replace("\`"","`"").
+    Replace("\\r","<r>").Replace("\\n","<n>").
+    Replace("\r\n"," ").Replace("\n"," ").
+    Replace("<r>","\r").Replace("<n>","\n")
+    #.Replace("`r`n"," ").Replace("`r"," ").Replace("`n"," ")
+}
+
+function WriteWiki($items_arg, $hints, $hotkeys, $dlgid, $name, $flname)
+{
+  $script:items = $items_arg
+
+  $file_base = ($dest_md + $flname[0].Replace("-",""))
+  $file_md = "$file_base.md"
+  $file_html = "$file_base.html"
+
+  if ([System.IO.File]::Exists($file_html)) {
+    $src_content = ReadFileContent $file_html
+  } elseif ([System.IO.File]::Exists($file_md)) {
+    $src_content = ReadFileContent $file_md
+  } else {
+    Write-Host -ForegroundColor Red "Target file was not prepared (absent): $file_md"
+    return
+  }
+  if ($src_content -eq "") {
+    Write-Host -ForegroundColor Red "Target file was not prepared (empty): $file_md"
+    return
+  }
+  $yaml_end = $src_content.IndexOf("`n---",3)
+  if (($yaml_end -le 0) -Or ($yaml_end -eq $NULL)) {
+    Write-Host -ForegroundColor Red "Target file was not prepared (no yaml, length=$($src_content.Length)): $file_md"
+    #Write-Host ($src_content.SubString(0, 200))
+    return
+  }
+  
+  $file_table = ($dest_md + "\..\..project\tables\" + $flname[0].Replace("-","") + ".md")
+
+  $yaml_header = $src_content.SubString(0,$yaml_end+4)
+
+  $md_automsg = "$conemu_page_automsg`r`n{% comment %} $dlgid {% endcomment %}`r`n`r`n"
+
+  # <img src="http://conemu-maximus5.googlecode.com/svn/files/ConEmuAnsi.png" title="ANSI X3.64 and Xterm 256 colors in ConEmu">
+
+  $script:md = ("$yaml_header" + "`r`n`r`n" + "# Settings: $name" + "`r`n`r`n" + $md_automsg)
+
+  $script:table = ("# Settings: " + $name + "`r`n")
+  $script:table = $md_automsg
+
+
+  # Screenshots
+  for ($i = 0; $i -lt $flname.Length; $i++) {
+    $img = ("![ConEmu Settings: $name]($md_img_path$($flname[$i]).png)`r`n`r`n")
+    $script:md += $img
+    $script:table += $img
+  }
+
+  $script:table += "| CtrlType | Text | ID | Position | Description |`r`n"
+  $script:table += "|:---|:---|:---|:---|:---|`r`n"
+
+  $script:ctrl_type = ""
+  $script:ctrl_name = ""
+  $script:ctrl_id = ""
+  $script:ctrl_alt = ""
+  $script:ctrl_desc = ""
+  $script:list = @()
+  $script:descs = @()
+  $script:radio = $FALSE
+  $script:track = $FALSE
+  $script:dirty = $FALSE
+  $script:wasgroup = $FALSE
+
+  function HeaderFromId($ctrlid)
+  {
+    if (($ctrlid -ne "") -And ($ctrlid -ne "IDC_STATIC")) {
+      if ($script:res_id.Contains($ctrlid)) {
+        return "  {#id$($script:res_id[$ctrlid])}"
+      } else {
+        return "  {#id$ctrlid}"
+      }
+    }
+    return ""
+  }
+
+  function DumpWiki()
+  {
+    if ($script:dirty) {
+      $label = ""
+      $alt = ""
+      $desc = ""
+
+      $add_md   = ""
+
+      if ($script:radio) {
+
+        if ($script:ctrl_alt -ne "") {
+          $add_md   += ("**" + (EscMd $script:ctrl_alt) + "**`r`n`r`n") # Bold
+        }
+
+        if ($script:list.Length -gt 0) {
+          $add_md   += "`r`n"
+        }
+        for ($i = 0; $i -lt $script:list.Length; $i++) {
+          $add_md   += ("* **" + (EscMd $script:list[$i]) + "**") # Bold
+          if ($script:descs[$i] -ne "") {
+            $add_md   += (" " + (EscMd $script:descs[$i]))
+          }
+          $add_md   += "`r`n"
+        }
+
+      } else {
+
+        $desc = $script:ctrl_desc
+
+        if (($script:ctrl_type.Contains("TEXT")) -And ($desc -eq ""))  {
+          $desc = $script:ctrl_type
+        }
+        elseif ($script:ctrl_name -ne "") {
+          $label = ReplaceRN $script:ctrl_name
+          if ($script:ctrl_alt -ne "") { $alt = ReplaceRN $script:ctrl_alt }
+        }
+        elseif ($script:ctrl_alt -ne "") {
+          $label = ReplaceRN $script:ctrl_alt
+        }
+        else {
+          if ($script:ctrl_type -eq "EDIT") {
+            $script:ctrl_name = "Edit box"
+          }
+        }
+
+        if ($label -ne "") {
+          if ($script:wasgroup) {
+            StartGroup $label $script:ctrl_id
+          } else {
+            $add_md   += ("#### " + (EscMd $label)) # H4
+            if ($script:ctrl_id -ne "") {
+              $add_md += (HeaderFromId $script:ctrl_id)
+            }
+            $add_md   += "`r`n"
+          }
+        }
+
+        if ($alt -ne "") {
+          $add_md   += ("*" + (EscMd $alt) + "*  `r`n") # Italic
+        }
+
+        if (($desc -ne "") -And ($desc -ne $label) -And ($desc -ne $alt)) {
+          $add_md   += (EscMd $desc)
+        }
+
+      }
+
+      if ($add_md -ne "") {
+        # Write-Host -ForegroundColor Gray $add_md
+        $script:md += $add_md
+      }
+    }
+
+    $script:md   += "`r`n`r`n"
+
+    $script:ctrl_type = ""
+    $script:ctrl_name = ""
+    $script:ctrl_id = ""
+    $script:ctrl_alt = ""
+    $script:ctrl_desc = ""
+    $script:list = @()
+    $script:descs = @()
+    $script:radio = $FALSE
+    $script:track = $FALSE
+    $script:dirty = $FALSE
+    $script:wasgroup = $FALSE
+  }
+
+  function StartGroup($grptxt,$grpid="")
+  {
+    if ($grptxt -eq "") { $grptxt = "Group" }
+    ### github md
+    $script:md += ("## "+ (EscMd $grptxt))
+    if ($grpid -ne "") { $script:md += (HeaderFromId $grpid) }
+    $script:md += "`r`n`r`n"
+    # clean
+    $script:wasgroup = $FALSE
+  }
+
+  function GetHint($item_Id)
+  {
+    $hint = ""
+    if (($item_Id -ne "") -And ($hints.ContainsKey($item_Id))) {
+      $hint = ReplaceRN $hints[$item_Id]
+    }
+    return $hint
+  }
+
+  $script:wasgroup = $FALSE
+
+  function AddTable()
+  {
+    # For debugging (information separate md file)
+    $script:table += ("| " + $script:items[$i].Type + " | " + $script:items[$i].Title + " | " + `
+      $script:items[$i].Id + " | (" + $script:items[$i].Y2 + ":" + [int]($script:items[$i].Y2/$linedelta) + ") " + `
+      $script:items[$i].x+","+$script:items[$i].y+","+$script:items[$i].Width+","+$script:items[$i].Height + `
+      " | " + (GetHint $script:items[$i].Id) + `
+      " |`r`n")
+  }
+
+  function ParseGroupbox($sgTitle,$iFrom,$xFrom,$xTo,$yTo)
+  {
+    #Write-Host ("  GroupBox: " + $sgTitle + " iFrom=" + $iFrom + " x={" + $xFrom + ".." + $xTo + "} yTo=" + $yTo)
+    $iDbg = 0
+
+    for ($i = $iFrom; $i -lt $script:items.length; $i++) {
+
+      if (($script:items[$i].x -lt $xFrom) -Or (($script:items[$i].x + $script:items[$i].Width) -gt $xTo) -Or (($script:items[$i].y + $script:items[$i].Height) -gt $yTo)) {
+        continue # outside of processed GroupBox
+      }
+
+      #Write-Host ("    Item: " + $script:items[$i].Id + " " + $script:items[$i].Type + " " + $script:items[$i].Title)
+
+      if ($script:items[$i].Type -eq "GROUPBOX") {
+        # If any is pending...
+        DumpWiki
+        # Process current group
+        $script:wasgroup = ($script:items[$i].Title.Trim() -eq "")
+        if ($script:wasgroup) {
+          # That is last element???
+          if (($i+1) -ge $script:items.length) { $script:wasgroup = $FALSE }
+          # If next element is BELOW group Y
+          elseif (($script:items[$i].y) -lt ($script:items[$i+1].y)) { $script:wasgroup = $FALSE }
+        }
+        # Start new heading
+        if (-Not $script:wasgroup) {
+          StartGroup $script:items[$i].Title $script:items[$i].Id
+        }
+
+        # For debugging (information separate wiki file)
+        AddTable
+
+        $script:items[$i].Id = ""
+
+        ParseGroupbox $script:items[$i].Title ($i+1) $script:items[$i].x ($script:items[$i].x + $script:items[$i].Width) ($script:items[$i].y + $script:items[$i].Height)
+
+        continue
+      }
+
+      if ($script:items[$i].Id -eq "") {
+        continue # already processed
+      }
+
+      if (($script:ctrl_type.Contains("TEXT")) -And ($script:items[$i].Type.Contains("TEXT"))) {
+        DumpWiki
+      } elseif (($script:radio) -And (-Not $script:items[$i].Type.Contains("RADIO"))) {
+        DumpWiki
+      }
+
+      # For debugging (information separate wiki file)
+      AddTable
+
+      if ($script:items[$i].Type.Contains("TEXT")) {
+        $txt = $script:items[$i].Title.Trim()
+        if (($txt -eq "") -Or ($txt.CompareTo("x") -eq 0)) {
+          continue
+        }
+        $hint = (GetHint $script:items[$i].Id)
+        if ($hint -ne "") {
+          Write-Host -ForegroundColor Red ("Hint skipped: " + $hint)
+        }
+        DumpWiki
+        # Static text
+        $script:dirty = $TRUE
+        $script:ctrl_type = $script:items[$i].Type
+        $script:ctrl_alt = $script:items[$i].Title
+      }
+      elseif ($script:items[$i].Type -eq "RADIOBUTTON") {
+        if ((-Not $script:ctrl_type.Contains("TEXT")) -And ($script:ctrl_type -ne "RADIOBUTTON")) {
+          DumpWiki
+        }
+        # Radio buttons
+        $script:dirty = $TRUE
+        $script:radio = $TRUE
+        $script:ctrl_type = $script:items[$i].Type
+        $script:list += $script:items[$i].Title
+        $script:descs += (GetHint $script:items[$i].Id)
+      }
+      elseif ($script:items[$i].Type -eq "CHECKBOX") {
+        if (($script:dirty) -And (-Not $script:ctrl_type.Contains("TEXT"))) {
+          DumpWiki
+        }
+        # Check box
+        $script:dirty = $TRUE
+        $script:ctrl_type = $script:items[$i].Type
+        $script:ctrl_name = $script:items[$i].Title
+        $script:ctrl_id = $script:items[$i].Id
+        $script:ctrl_desc = (GetHint $script:items[$i].Id)
+      }
+      elseif ($script:items[$i].Type.Contains("BOX")) {
+        if (-Not $script:ctrl_type.Contains("TEXT")) {
+          DumpWiki
+        }
+        # Combo or list box
+        $script:dirty = $TRUE
+        $script:ctrl_type = $script:items[$i].Type
+        $script:ctrl_name = $script:items[$i].Title
+        $script:ctrl_id = $script:items[$i].Id
+        $script:ctrl_desc = (GetHint $script:items[$i].Id)
+        if ($script:items[$i].Type -eq "DROPDOWNBOX") {
+          # TODO : ListBox items (retrieve from sources) ?
+        }
+      }
+      elseif ($script:items[$i].Type -eq "TRACKBAR") {
+        if (-Not $script:ctrl_type.Contains("TEXT")) {
+          DumpWiki
+        }
+        # Trackbar (may be followed by text)
+        # Transparent .. Opaque
+        # Darkening: ... [255]
+        $script:dirty = $TRUE
+        $script:ctrl_type = $script:items[$i].Type
+        $script:track = $TRUE
+        $script:ctrl_desc = (GetHint $script:items[$i].Id)
+      }
+      elseif ($script:items[$i].Type -eq "EDIT") {
+        if (($script:dirty) -And (-Not $script:ctrl_type.Contains("TEXT"))) {
+          DumpWiki
+        }
+        $script:dirty = $TRUE
+        $script:ctrl_type = $script:items[$i].Type
+        #if ($script:ctrl_name -eq "") { $script:ctrl_name = "Edit box" }
+        $script:ctrl_desc = (GetHint $script:items[$i].Id)
+      }
+      elseif ($script:items[$i].Type.Contains("BUTTON")) {
+        DumpWiki
+        if ($script:items[$i].Title.Trim().Trim('.').Length -ge 1) {
+          $script:dirty = $TRUE
+          $script:ctrl_type = $script:items[$i].Type
+          $script:ctrl_name = $script:items[$i].Title
+          $script:ctrl_id = $script:items[$i].Id
+          $script:ctrl_desc = (GetHint $script:items[$i].Id)
+        }
+      }
+      else {
+        if (-Not $script:ctrl_type.Contains("TEXT")) {
+          DumpWiki
+        }
+        $hint = (GetHint $script:items[$i].Id)
+        if ($hint -ne "") {
+          $script:dirty = $TRUE
+          $script:ctrl_type = $script:items[$i].Type
+          $script:ctrl_desc = $hint
+        }
+      }
+
+      $script:items[$i].Id = ""
+    }
+
+    DumpWiki
+  }
+
+  ParseGroupbox "" 0 0 9999 9999
+
+  # Informational
+  Set-Content -Path $file_table -Value $script:table -Encoding UTF8
+
+  # github md (!NO BOM!)
+  # [System.IO.File]::WriteAllLines($file_md, $script:md)
+  $file_md
+  $old_cont = ReadFileContent $file_md
+  if (($old_cont -ne "") -And -Not ($old_cont.Contains($conemu_page_automsg))) {
+    Write-Host "  File was changed manually, writing automatic content to:"
+    $file_md = $file_md.SubString(0, $file_md.Length-3) + "-auto.md"
+    Write-Host "  $file_md"
+  }
+  #Set-Content -Path $file_md -Value $script:md -Encoding UTF8
+  WriteFileContent $file_md $script:md
+}
+
+function WriteHotkeys($hints, $hotkeys, $flname)
+{
+  function GetHint($item_Id)
+  {
+    $hint = ""
+    if (($item_Id -ne "") -And ($hints.ContainsKey($item_Id))) {
+      $hint = ReplaceRN $hints[$item_Id]
+    }
+    return $hint
+  }
+
+  ### github md
+  $apps = "``Apps`` key is a key between RWin and RCtrl."
+  $script:keys_md   = ("$conemu_page_hotkeymark`r`n`r`n" + "*Note* "+$apps+"`r`n`r`n" +
+    "| **Hotkey** | **SaveName/GuiMacro** | **Description** |`r`n" +
+    "|:---|:---|:---|:---|`r`n")
+
+  #Write-Host $hotkeys
+
+  Write-Host "Hotkey count: $($hotkeys.Length)"
+  for ($i = 0; $i -lt $hotkeys.Length; $i++) {
+    $hk = $hotkeys[$i]
+    if ($hk.Id.StartsWith("vkPicView")) { continue }
+    #Write-Host "HK[$i]---------------"
+    #$hk
+    if ($($hk.Save) -ne "") { $svgm = $($hk.Save).TrimEnd(")") } else { $svgm = "``-``" }
+    if ($($hk.Macro) -ne "") { $svgm += " <br/> $($hk.Macro)" }
+    $script:keys_md += ("| $($hk.Hotkey) | $svgm | " + (GetHint $hk.Id) + " |`r`n")
+  }
+
+  $flname
+  $old_cont = ReadFileContent $flname
+  $l = $old_cont.IndexOf($conemu_page_hotkeymark)
+  if ($l -le 0) {
+    Write-Host "  File was changed manually, required marker not found"
+    return
+  }
+  $new_cont = $old_cont.SubString(0, $l) + $script:keys_md
+  
+  WriteFileContent $flname $new_cont
+}
+
+function ParseDialogWiki($rcln, $hints, $hotkeys, $dlgid, $name, $flname)
+{
+  $items_arg = ParseDialogData $rcln $dlgid $name
+
+  Write-Host ("  Controls: " + $items_arg.Count)
+
+  WriteWiki ($items_arg | sort {((1000*[int]($_.Y2/$linedelta))+[int]$_.X)}) $hints $hotkeys $dlgid $name $flname.Split(",")
+}
+
+function GenerateWikiFiles()
+{
+  InitializeJsonData
+
+  InitDialogList
+
+  InitKeyNames
+
+  # Query source files
+  Write-Host -NoNewLine ("Reading: " + $conemu_rc_file)
+  $rcln  = Get-Content $conemu_rc_file
+  Write-Host (" Lines: " + $rcln.Length)
+
+  Write-Host -NoNewLine ("Reading: " + $hints_h_file)
+  $rchints = Get-Content $hints_h_file
+  Write-Host (" Lines: " + $rchints.Length)
+
+  Write-Host -NoNewLine ("Reading: " + $rsrcs_h_file)
+  $strdata = Get-Content $rsrcs_h_file
+  Write-Host (" Lines: " + $strdata.Length)
+
+  Write-Host -NoNewLine ("Reading: " + $resource_h_file)
+  $resh  = Get-Content $resource_h_file
+  Write-Host (" Lines: " + $resh.Length)
+  ParseResIds $resh
+
+  Write-Host -NoNewLine ("Reading: " + $menuids_h_file)
+  $menuh  = Get-Content $menuids_h_file
+  Write-Host (" Lines: " + $menuh.Length)
+  ParseResIdsHex $menuh
+
+  Write-Host -NoNewLine ("Reading: " + $rsrsids_h_file)
+  $rsrch  = Get-Content $rsrsids_h_file
+  Write-Host (" Lines: " + $rsrch.Length)
+  ParseResIdsEnum $rsrch
+
+  Write-Host -NoNewLine ("Reading: " + $conemu_hotkeys_file)
+  $hkln  = Get-Content $conemu_hotkeys_file
+  if ($hkln -eq $null) { return }
+  Write-Host (" Lines: " + $hkln.Length)
+
+
+  # Preparse hints and hotkeys
+  $script:hints = ParseLngData $rchints
+  # Prepare string resources
+  $script:rsrcs = ParseLngData $strdata
+  #Write-Host -ForegroundColor Red "`n`nHints list"
+
+  ParseHotkeys $hkln
+  #Write-Host ("Count: " + $script:hotkeys.Length)
+  WriteHotkeys $script:hints $script:hotkeys $conemu_hotkeys_md
+
+  #Write-Host -ForegroundColor Red "`n`nHotkeys list"
+  #$hotkeys
+
+  # Parse sources and write wiki/md pages
+  for ($p = 0; $p -lt $script:dialogs.length; $p++) {
+    $dlg = $script:dialogs[$p]
+    if (($dlg.file -ne $null) -And ($dlg.file -ne "")) {
+      ParseDialogWiki $rcln $script:hints $script:hotkeys $dlg.id $dlg.name.Trim() $dlg.file
+    }
+  }
+}
+
+
+
+
 #################################################
 ##############  Main entry point  ###############
 #################################################
@@ -957,4 +1683,6 @@ if ($mode -eq "auto") {
       NewCtrlHint $id $str
     }
   }
+} elseif ($mode -eq "wiki") {
+  GenerateWikiFiles
 }
