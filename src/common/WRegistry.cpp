@@ -155,8 +155,15 @@ LONG RegSetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, LPCWSTR
 
 	if (hkChild)
 	{
-		cbSize = pszData ? ((lstrlen(pszData)+1)*sizeof(*pszData)) : 0;
-		lrc = RegSetValueEx(hkChild, pszValueName, 0, REG_SZ, (const BYTE*)pszData, cbSize);
+		if (pszData)
+		{
+			cbSize = (lstrlen(pszData)+1)*sizeof(*pszData);
+			lrc = RegSetValueEx(hkChild, pszValueName, 0, REG_SZ, (const BYTE*)pszData, cbSize);
+		}
+		else
+		{
+			lrc = RegDeleteValue(hkChild, pszValueName);
+		}
 	}
 
 	if (hkChild && (hkChild != hk))
