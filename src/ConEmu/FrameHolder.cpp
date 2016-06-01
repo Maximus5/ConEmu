@@ -623,7 +623,10 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg)
 
 		if (hdc != NULL)
 		{
-			lRc = OnPaint(hWnd, hdc, uMsg);
+			if (!gpConEmu->isIconic() && !gpConEmu->InMinimizing())
+			{
+				OnPaint(hWnd, hdc, uMsg);
+			}
 
 			EndPaint(hWnd, &ps);
 		}
