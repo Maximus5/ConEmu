@@ -481,7 +481,7 @@ LONG CFontMgr::FontHeightHtml()
 
 	int iHeight, iLineGap = 0;
 
-	if (lpoutl->otmrcFontBox.top > 0)
+	if (lpoutl && (lpoutl->otmrcFontBox.top > 0))
 	{
 		_ASSERTE(((lpoutl->otmrcFontBox.top * 1.3) >= LF.lfHeight) && (lpoutl->otmrcFontBox.top <= LF.lfHeight));
 		iHeight = lpoutl->otmrcFontBox.top;
