@@ -1345,7 +1345,7 @@ LPWSTR ConEmuMacro::GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bC
 	else if (!bColonDelim)
 	{
 		// Powershell style (one word == one string arg)
-		_ASSERTE(*rsArguments != L' ' && *rsArguments != L' ');
+		_ASSERTE(*rsArguments != L' ');
 		rsString = rsArguments;
 		rsArguments = wcspbrk(rsString+1, bEndBracket ? L" )" : L" ");
 		if (rsArguments)
