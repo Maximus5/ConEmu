@@ -1488,7 +1488,7 @@ void CConEmuSize::UpdateIdealRect(RECT rcNewIdeal)
 
 	if (memcmp(&mr_Ideal.rcIdeal, &rcNewIdeal, sizeof(rcNewIdeal)) != 0)
 	{
-		wchar_t szLog[120];
+		wchar_t szLog[255];
 		_wsprintf(szLog, SKIPCOUNT(szLog) L"UpdateIdealRect Cur={%i,%i}-{%i,%i} New={%i,%i}-{%i,%i}",
 			LOGRECTCOORDS(mr_Ideal.rcIdeal), LOGRECTCOORDS(rcNewIdeal));
 		LogString(szLog);
@@ -1679,7 +1679,7 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 		{
 			if (memcmp(&mrc_StoredNormalRect, &rcNormal, sizeof(rcNormal)) != 0)
 			{
-				wchar_t szLog[120];
+				wchar_t szLog[255];
 				_wsprintf(szLog, SKIPCOUNT(szLog) L"UpdateNormalRect Cur={%i,%i}-{%i,%i} (%ix%i) New={%i,%i}-{%i,%i} (%ix%i)",
 					LOGRECTCOORDS(mrc_StoredNormalRect), LOGRECTSIZE(mrc_StoredNormalRect),
 					LOGRECTCOORDS(rcNormal), LOGRECTSIZE(rcNormal));
@@ -1864,7 +1864,7 @@ HMONITOR CConEmuSize::GetPrimaryMonitor(MONITORINFO* pmi /*= NULL*/)
 
 	if (gpSet->isLogging(2))
 	{
-		wchar_t szInfo[128];
+		wchar_t szInfo[255];
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"  GetPrimaryMonitor=%u -> hMon=x%08X Work=({%i,%i}-{%i,%i}) Area=({%i,%i}-{%i,%i})",
 			(hMon!=NULL), LODWORD(hMon), LOGRECTCOORDS(mi.rcWork), LOGRECTCOORDS(mi.rcMonitor));
 		LogString(szInfo);
@@ -3440,7 +3440,7 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 		if (m_TileMode != CurTile)
 		{
 			// Сменился!
-			wchar_t szTile[100], szNewTile[32], szOldTile[32];
+			wchar_t szTile[255], szNewTile[32], szOldTile[32];
 			_wsprintf(szTile, SKIPLEN(countof(szTile)) L"Tile mode was changed externally: Our=%s, New=%s",
 				FormatTileMode(m_TileMode,szOldTile,countof(szOldTile)), FormatTileMode(CurTile,szNewTile,countof(szNewTile)));
 			LogString(szTile);
@@ -3517,7 +3517,7 @@ bool CConEmuSize::JumpNextMonitor(bool Next)
 		return false;
 	}
 
-	wchar_t szInfo[100];
+	wchar_t szInfo[255];
 	RECT rcMain;
 
 	HWND hJump = getForegroundWindow();
@@ -3623,7 +3623,7 @@ void CConEmuSize::EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, 
 
 bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd, LPRECT prcNewPos /*= NULL*/)
 {
-	wchar_t szInfo[100];
+	wchar_t szInfo[255];
 	RECT rcMain = {};
 	bool bFullScreen = false;
 	bool bMaximized = false;
@@ -3766,7 +3766,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			inMode = (WindowMode != wmNormal) ? wmNormal : wmMaximized; // FullScreen на Desktop-е невозможен
 	}
 
-	wchar_t szInfo[200];
+	wchar_t szInfo[255];
 
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode begin: CurMode=%s inMode=%s", GetWindowModeName(GetWindowMode()), GetWindowModeName(inMode));
 	LogString(szInfo);
@@ -4362,7 +4362,8 @@ void CConEmuSize::OnConsoleResize(bool abPosted /*= false*/)
 
 	if (gpSet->isLogging())
 	{
-		wchar_t szInfo[160]; wsprintf(szInfo, L"OnConsoleResize: mouse.state=0x%08X, SizingToDo=%i, IsSizing=%i, LBtnPressed=%i, PostUpdateWindowSize=%i",
+		wchar_t szInfo[255];
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"OnConsoleResize: mouse.state=0x%08X, SizingToDo=%i, IsSizing=%i, LBtnPressed=%i, PostUpdateWindowSize=%i",
 		                            mp_ConEmu->mouse.state, (int)lbSizingToDo, (int)lbIsSizing, (int)lbLBtnPressed, (int)0/*mb_PostUpdateWindowSize*/);
 		LogString(szInfo, TRUE);
 	}
@@ -4560,7 +4561,7 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 {
 	LRESULT lRc = FALSE;
 
-	wchar_t szInfo[120], szPrefix[40];
+	wchar_t szInfo[255], szPrefix[40];
 	RECT rc = {}; if (prcSuggested) rc = *prcSuggested;
 	static UINT oldDpiX, oldDpiY;
 	bool bChanged = (dpiX != oldDpiX) || (dpiY != oldDpiY);
@@ -4652,7 +4653,7 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 
 LRESULT CConEmuSize::OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHeight)
 {
-	wchar_t szInfo[100];
+	wchar_t szInfo[255];
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"WM_DISPLAYCHANGED: bpp=%u, size={%u,%u}\r\n",
 		bpp, screenWidth, screenHeight);
 	DEBUGSTRDPI(szInfo);
@@ -4794,7 +4795,8 @@ bool CConEmuSize::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int c
 		}
 	}
 
-	wchar_t szInfo[128]; _wsprintf(szInfo, SKIPCOUNT(szInfo) L"setWindowPos: {%i,%i} (%ix%i) Flags=x%X After=x%X", X, Y, cx, cy, uFlags, LODWORD(hWndInsertAfter));
+	wchar_t szInfo[255];
+	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"setWindowPos: {%i,%i} (%ix%i) Flags=x%X After=x%X", X, Y, cx, cy, uFlags, LODWORD(hWndInsertAfter));
 	if (gpSet->isLogging())
 	{
 		LogString(szInfo);
@@ -4848,7 +4850,7 @@ void CConEmuSize::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 
 	if (gpSet->isLogging())
 	{
-		wchar_t szInfo[128];
+		wchar_t szInfo[255];
 		RECT rcBox = {};
 		int nRgn = hRgn ? GetRgnBox(hRgn, &rcBox) : NULLREGION;
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
@@ -5102,7 +5104,7 @@ void CConEmuSize::EndSizing(UINT nMouseMsg/*=0*/)
 	{
 		if (m_TileMode != cwc_Current)
 		{
-			wchar_t szTile[100], szOldTile[32];
+			wchar_t szTile[255], szOldTile[32];
 			_wsprintf(szTile, SKIPLEN(countof(szTile)) L"Tile mode was stopped on resizing: Was=%s, New=cwc_Current",
 				FormatTileMode(m_TileMode,szOldTile,countof(szOldTile)));
 			LogString(szTile);
@@ -5139,7 +5141,7 @@ void CConEmuSize::CheckTopMostState()
 	{
 		if (gpSet->isLogging())
 		{
-			wchar_t szInfo[200];
+			wchar_t szInfo[255];
 			RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
 			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 				L"Some external program brought ConEmu OnTop: HWND=x%08X, StyleEx=x%08X, Rect={%i,%i}-{%i,%i}",
