@@ -338,7 +338,7 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 
 	size_t cchTextLen = asText ? lstrlen(asText) : 0;
 	size_t cchThrdLen = asThreadName ? lstrlen(asThreadName) : 0;
-	size_t cchMax = (cchTextLen + cchThrdLen)*3 + 32;
+	size_t cchMax = (cchTextLen + cchThrdLen)*3 + 80;
 	char szBuffer[1024];
 	char *pszBuffer, *pszTemp = NULL;
 	if (cchMax < countof(szBuffer))
