@@ -2282,6 +2282,11 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 				if (!lbRgnChanged && TransparentInfo.nRectCount)
 				{
 					_ASSERTE(TransparentInfo.pAllPoints && TransparentInfo.pAllCounts);
+					if (nRectCount > nMaxRects)
+					{
+						_ASSERTE(nRectCount <= nMaxRects); // Must not be, we (re)allocate enough rectangles
+						nRectCount = nMaxRects;
+					}
 					lbRgnChanged = memcmp(TransparentInfo.pAllPoints, lpAllPoints, sizeof(POINT)*4*nRectCount)!=0;
 				}
 
