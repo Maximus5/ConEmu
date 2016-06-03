@@ -14782,7 +14782,7 @@ bool CRealConsole::QueryPromptStart(COORD *cr)
 	// TODO: It would be nice to check m_AppMap.Ptr()->nPreReadRowID?
 
 	CONSOLE_SCREEN_BUFFER_INFO csbiPreRead = m_AppMap.Ptr()->csbiPreRead;
-	if (!csbiPreRead.dwCursorPosition.X && !csbiPreRead.dwCursorPosition.X)
+	if (!csbiPreRead.dwCursorPosition.X && !csbiPreRead.dwCursorPosition.Y)
 		return false;
 
 	if (cr)
