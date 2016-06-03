@@ -579,7 +579,7 @@ void CSetPgBase::setCtrlTitleByHotkey(HWND hDlg, WORD nCtrlId, int iHotkeyId, LP
 	if (pszFrom && *pszFrom)
 	{
 		// "Paste mode #1 (Shift+Ins)"
-		LPCWSTR ptr1, ptr2;
+		LPCWSTR ptr1, ptr2 = NULL;
 		ptr1 = wcsstr(lsLoc, pszFrom);
 		if (!ptr1)
 		{
@@ -591,9 +591,9 @@ void CSetPgBase::setCtrlTitleByHotkey(HWND hDlg, WORD nCtrlId, int iHotkeyId, LP
 		{
 			ptr2 = wcsstr(ptr1, pszTo);
 		}
-		if (ptr2 == ptr1)
+		if (!ptr2 || (ptr2 == ptr1))
 		{
-			_ASSERTE(ptr2 != ptr1 && "Invalid source string");
+			_ASSERTE(ptr2 && (ptr2 != ptr1) && "Invalid source string");
 			return;
 		}
 
