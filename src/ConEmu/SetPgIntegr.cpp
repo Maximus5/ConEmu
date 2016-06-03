@@ -120,7 +120,7 @@ struct SwitchParser
 
 	bool IsIgnored(Switch* ps, MArray<Switch*>& Skip)
 	{
-		if (ps)
+		if (!ps)
 		{
 			return true;
 		}
