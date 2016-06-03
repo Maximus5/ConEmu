@@ -1741,7 +1741,7 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 
 		TranslateKeyPress(0, 0, *pch, -1, r, r+1);
 
-		if (*pch = 0x7F)
+		if (*pch == 0x7F)
 		{
 			// gh-641: Posting `0x7F` (which is <BS> on xterm) causes LEFT_CTRL_PRESSED in dwControlKeyState
 			//   we are sending <BS>, but not a <Ctrl>-<BS>
