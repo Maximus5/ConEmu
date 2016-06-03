@@ -117,9 +117,12 @@ CProcessEnvCmd::~CProcessEnvCmd()
 	for (INT_PTR i = 0; i < m_Commands.size(); i++)
 	{
 		Command* p = m_Commands[i];
-		SafeFree(p->pszName);
-		SafeFree(p->pszValue);
-		SafeFree(p);
+		if (p)
+		{
+			SafeFree(p->pszName);
+			SafeFree(p->pszValue);
+			SafeFree(p);
+		}
 	}
 	m_Commands.clear();
 }
