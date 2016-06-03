@@ -240,7 +240,7 @@ protected:
 			{
 				SIZE_T sz = sizeof(szProcessName);//min(sizeof(szProcessName), Data.BaseDllName.MaximumLength*2);
 
-				if (ReadProcessMemory(hProcess, Data.BaseDllName.Buffer, szProcessName, sz,0))
+				if (Data.BaseDllName.Buffer && ReadProcessMemory(hProcess, Data.BaseDllName.Buffer, szProcessName, sz,0))
 					lstrcpyn(pProcessName, szProcessName, cbProcessName);
 				else
 					*pProcessName = 0;
@@ -250,7 +250,7 @@ protected:
 			{
 				SIZE_T sz = sizeof(szProcessName);//min(sizeof(szProcessName), Data.FullDllName.MaximumLength*2);
 
-				if (ReadProcessMemory(hProcess, Data.FullDllName.Buffer, szProcessName, sz,0))
+				if (Data.FullDllName.Buffer && ReadProcessMemory(hProcess, Data.FullDllName.Buffer, szProcessName, sz,0))
 					lstrcpyn(pFullPath, szProcessName, cbFullPath);
 				else
 					*pFullPath = 0;
