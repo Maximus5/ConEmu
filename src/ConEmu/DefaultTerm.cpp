@@ -122,14 +122,14 @@ void CDefaultTerminal::CheckRegisterOsStartup()
 	{
 		if (bNeedState)
 		{
-			if (0 != (RegSetStringValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", ValueName, szNeedValue)))
+			if (0 != (lRc = RegSetStringValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", ValueName, szNeedValue)))
 			{
 				DisplayLastError(L"Failed to set ConEmuDefaultTerminal value in HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", lRc);
 			}
 		}
 		else
 		{
-			if (0 != (RegSetStringValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", ValueName, NULL)))
+			if (0 != (lRc = RegSetStringValue(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run", ValueName, NULL)))
 			{
 				DisplayLastError(L"Failed to remove ConEmuDefaultTerminal value from HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run", lRc);
 			}
