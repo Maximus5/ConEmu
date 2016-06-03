@@ -1969,7 +1969,7 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 		else
 		{
 			// "Terminal" + OEM == Raster Font
-			if ((wcscmp(inFont.lfFaceName, L"Terminal") == 0) && (inFont.lfCharSet = OEM_CHARSET))
+			if ((wcscmp(inFont.lfFaceName, L"Terminal") == 0) && (inFont.lfCharSet == OEM_CHARSET))
 			{
 				bRasterFont = true;
 			}
