@@ -13379,7 +13379,7 @@ bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/, bool abSkipEditVi
 	DWORD dwFlags = mp_ABuf ? mp_ABuf->GetDetector()->GetFlags() : FR_FREEDLG_MASK;
 
 	// We need to polish panel frames even if there are F2/F11/anything
-	if (!abSkipDialogCheck & ((dwFlags & FR_FREEDLG_MASK) != 0))
+	if (!abSkipDialogCheck && ((dwFlags & FR_FREEDLG_MASK) != 0))
 		return false;
 
 	// нужно для DragDrop
