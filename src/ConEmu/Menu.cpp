@@ -1698,10 +1698,11 @@ void CConEmuMenu::ShowSysmenu(int x, int y, DWORD nFlags /*= 0*/)
 
 	if ((x == -32000) || (y == -32000))
 	{
-		RECT rect, cRect;
+		RECT rect = {}, cRect = {};
 		GetWindowRect(ghWnd, &rect);
 		cRect = gpConEmu->GetGuiClientRect();
-		WINDOWINFO wInfo;   GetWindowInfo(ghWnd, &wInfo);
+		WINDOWINFO wInfo = {sizeof(wInfo)};
+		GetWindowInfo(ghWnd, &wInfo);
 		int nTabShift =
 		    ((gpSet->isCaptionHidden()) && gpConEmu->mp_TabBar->IsTabsShown() && (gpSet->nTabsLocation != 1))
 		    ? gpConEmu->mp_TabBar->GetTabbarHeight() : 0;
