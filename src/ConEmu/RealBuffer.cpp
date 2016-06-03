@@ -6142,13 +6142,15 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 		return;
 
 	TODO("Хорошо бы m_FarInfo тоже в дамп скидывать.");
-	CEFAR_INFO_MAPPING FI;
+	CEFAR_INFO_MAPPING* pFI = (CEFAR_INFO_MAPPING*)malloc(sizeof(CEFAR_INFO_MAPPING));
+	if (!pFI)
+		return;
 	SMALL_RECT rcFarRect = {};
 	const CONSOLE_SCREEN_BUFFER_INFO* pSbi = GetSBI();
 
 	if ((m_Type == rbt_Primary) && mp_RCon->GetFarPID())
 	{
-		FI = mp_RCon->m_FarInfo;
+		*pFI = mp_RCon->m_FarInfo;
 
 		// На (mp_RCon->isViewer() || mp_RCon->isEditor()) ориентироваться
 		// нельзя, т.к. CheckFarStates еще не был вызван
@@ -6160,7 +6162,7 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 
 			if (pSbi)
 			{
-				if (FI.bBufferSupport)
+				if (pFI->bBufferSupport)
 				{
 					rcFarRect.Left = 0;
 					rcFarRect.Right = GetTextWidth() - 1;
@@ -6176,31 +6178,31 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 
 			if (mb_LeftPanel)
 			{
-				FI.bFarLeftPanel = true;
-				FI.FarLeftPanel.PanelRect = mr_LeftPanelFull;
+				pFI->bFarLeftPanel = true;
+				pFI->FarLeftPanel.PanelRect = mr_LeftPanelFull;
 			}
 			else
 			{
-				FI.bFarLeftPanel = false;
+				pFI->bFarLeftPanel = false;
 			}
 
 			if (mb_RightPanel)
 			{
-				FI.bFarRightPanel = true;
-				FI.FarRightPanel.PanelRect = mr_RightPanelFull;
+				pFI->bFarRightPanel = true;
+				pFI->FarRightPanel.PanelRect = mr_RightPanelFull;
 			}
 			else
 			{
-				FI.bFarRightPanel = false;
+				pFI->bFarRightPanel = false;
 			}
 
-			FI.bViewerOrEditor = false;
+			pFI->bViewerOrEditor = false;
 		}
 		else
 		{
-			FI.bViewerOrEditor = true;
-			FI.bFarLeftPanel = false;
-			FI.bFarRightPanel = false;
+			pFI->bViewerOrEditor = true;
+			pFI->bFarLeftPanel = false;
+			pFI->bFarRightPanel = false;
 		}
 
 		//if (!FI.bFarLeftPanel && !FI.bFarRightPanel)
@@ -6211,14 +6213,14 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 	}
 	else
 	{
-		ZeroStruct(FI);
+		memset(pFI, 0, sizeof(*pFI));
 		TODO("Загружать CEFAR_INFO_MAPPING из дампа");
 	}
 
 	m_Rgn.SetNeedTransparency(gpSet->isUserScreenTransparent);
 	m_Rgn.SetFarRect(&rcFarRect);
 	TODO("При загрузке дампа хорошо бы из него и палитру фара доставать/отдавать");
-	m_Rgn.PrepareTransparent(&FI, mp_RCon->mp_VCon->GetColors(), pSbi, pChar, pAttr, nWidth, nHeight);
+	m_Rgn.PrepareTransparent(pFI, mp_RCon->mp_VCon->GetColors(), pSbi, pChar, pAttr, nWidth, nHeight);
 
 	#ifdef _DEBUG
 	int nCount = m_Rgn.GetDetectedDialogs(0,NULL,NULL);
