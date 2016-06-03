@@ -1067,7 +1067,7 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hPar
 		wcscpy_c(szFolder, asDefFolder);
 	bi.pszDisplayName = szFolder;
 	wchar_t szTitle[100];
-	bi.lpszTitle = lstrcpyn(szTitle, asTitle ? asTitle : L"Choose folder", sizeof(szTitle));
+	bi.lpszTitle = lstrcpyn(szTitle, asTitle ? asTitle : L"Choose folder", countof(szTitle));
 	bi.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
 	bi.lpfn = CRecreateDlg::BrowseCallbackProc;
 	bi.lParam = (LPARAM)szFolder;
