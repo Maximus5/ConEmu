@@ -281,7 +281,8 @@ bool SettingsRegistry::Load(const wchar_t *regName, wchar_t *value, int maxLen)
 
 		if (RegQueryValueExW(regMy, regName, NULL, NULL, (LPBYTE)value, &len) == ERROR_SUCCESS)
 		{
-			value[maxLen-1] = 0; // на всякий случай, чтобы ASCIIZ был однозначно
+			if (value)
+				value[maxLen-1] = 0; // на всякий случай, чтобы ASCIIZ был однозначно
 			return true;
 		}
 	}
