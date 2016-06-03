@@ -1330,7 +1330,7 @@ void CVConGroup::StopSplitDragging()
 			SetRectEmpty(&mp_GroupSplitDragging->mrc_DragSplitter);
 		}
 		mp_GroupSplitDragging = NULL;
-		SetCapture(NULL);
+		ReleaseCapture();
 		gpConEmu->OnSize();
 	}
 }

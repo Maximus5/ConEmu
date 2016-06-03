@@ -152,7 +152,7 @@ LRESULT CSetDlgColors::ColorBoxProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM
 		if (bHooked)
 		{
 			bHooked = false;
-			SetCapture(NULL);
+			ReleaseCapture();
 		}
 		if (bClicked)
 		{
@@ -200,7 +200,7 @@ LRESULT CSetDlgColors::ColorBoxProc(HWND hCtrl, UINT uMsg, WPARAM wParam, LPARAM
 		if (bHooked)
 		{
 			bHooked = false;
-			SetCapture(NULL);
+			ReleaseCapture();
 		}
 		gColorBoxMap.Get(hCtrl, NULL, true);
 		break;
