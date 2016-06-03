@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
+#include "../common/MArray.h"
 #include "../common/WThreads.h"
 
 
@@ -936,15 +937,19 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 	STGMEDIUM stg[20];
 	LPCWSTR psz[20];
 	SIZE_T memsize[20];
-	wchar_t szName[20][MAX_PATH*2];
+	struct name_t { wchar_t str[MAX_PATH*2]; };
+	MArray<name_t> szNames;
 	LPWSTR pszData[20];
 	ULONG nCnt = countof(fmt);
 	UINT i;
 	DWORD nWritten;
+
 	memset(fmt, 0, sizeof(fmt));
 	memset(stg, 0, sizeof(stg));
 	memset(psz, 0, sizeof(psz));
 	memset(pszData, 0, sizeof(pszData));
+	if (!szNames.alloc(nCnt))
+		return;
 
 	if (hDumpFile) WriteFile(hDumpFile, "\xFF\xFE", 2, &nWritten, NULL);
 
@@ -957,8 +962,8 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 
 		if (hDumpFile)
 		{
-			_wsprintf(szName[0], SKIPLEN(countof(szName[0])) L"Drag object contains %i formats\n\n", nCnt);
-			WriteFile(hDumpFile, szName[0], (DWORD)_tcslen(szName[0])*2, &nWritten, NULL);
+			_wsprintf(szNames[0].str, SKIPLEN(countof(szNames[0].str)) L"Drag object contains %i formats\n\n", nCnt);
+			WriteFile(hDumpFile, szNames[0].str, (DWORD)_tcslen(szNames[0].str)*2, &nWritten, NULL);
 		}
 
 		pEnum->Release();
@@ -969,40 +974,40 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 		*/
 		for (i = 0; i < nCnt; i++)
 		{
-			szName[i][0] = 0;
+			szNames[i].str[0] = 0;
 
-			if (!GetClipboardFormatName(fmt[i].cfFormat, szName[i], MAX_PATH))
+			if (!GetClipboardFormatName(fmt[i].cfFormat, szNames[i].str, MAX_PATH))
 			{
 				switch(fmt[i].cfFormat)
 				{
-					case 1: wcscpy_c(szName[i], L"CF_TEXT"); break;
-					case 2: wcscpy_c(szName[i], L"CF_BITMAP"); break;
-					case 3: wcscpy_c(szName[i], L"CF_METAFILEPICT"); break;
-					case 4: wcscpy_c(szName[i], L"CF_SYLK"); break;
-					case 5: wcscpy_c(szName[i], L"CF_DIF"); break;
-					case 6: wcscpy_c(szName[i], L"CF_TIFF"); break;
-					case 7: wcscpy_c(szName[i], L"CF_OEMTEXT"); break;
-					case 8: wcscpy_c(szName[i], L"CF_DIB"); break;
-					case 9: wcscpy_c(szName[i], L"CF_PALETTE"); break;
-					case 10: wcscpy_c(szName[i], L"CF_PENDATA"); break;
-					case 11: wcscpy_c(szName[i], L"CF_RIFF"); break;
-					case 12: wcscpy_c(szName[i], L"CF_WAVE"); break;
-					case 13: wcscpy_c(szName[i], L"CF_UNICODETEXT"); break;
-					case 14: wcscpy_c(szName[i], L"CF_ENHMETAFILE"); break;
-					case 15: wcscpy_c(szName[i], L"CF_HDROP"); break;
-					case 16: wcscpy_c(szName[i], L"CF_LOCALE"); break;
-					case 17: wcscpy_c(szName[i], L"CF_DIBV5"); break;
-					case 0x0080: wcscpy_c(szName[i], L"CF_OWNERDISPLAY"); break;
-					case 0x0081: wcscpy_c(szName[i], L"CF_DSPTEXT"); break;
-					case 0x0082: wcscpy_c(szName[i], L"CF_DSPBITMAP"); break;
-					case 0x0083: wcscpy_c(szName[i], L"CF_DSPMETAFILEPICT"); break;
-					case 0x008E: wcscpy_c(szName[i], L"CF_DSPENHMETAFILE"); break;
-					default: _wsprintf(szName[i], SKIPLEN(countof(szName[i])) L"ClipFormatID=%i", fmt[i].cfFormat);
+					case 1: wcscpy_c(szNames[i].str, L"CF_TEXT"); break;
+					case 2: wcscpy_c(szNames[i].str, L"CF_BITMAP"); break;
+					case 3: wcscpy_c(szNames[i].str, L"CF_METAFILEPICT"); break;
+					case 4: wcscpy_c(szNames[i].str, L"CF_SYLK"); break;
+					case 5: wcscpy_c(szNames[i].str, L"CF_DIF"); break;
+					case 6: wcscpy_c(szNames[i].str, L"CF_TIFF"); break;
+					case 7: wcscpy_c(szNames[i].str, L"CF_OEMTEXT"); break;
+					case 8: wcscpy_c(szNames[i].str, L"CF_DIB"); break;
+					case 9: wcscpy_c(szNames[i].str, L"CF_PALETTE"); break;
+					case 10: wcscpy_c(szNames[i].str, L"CF_PENDATA"); break;
+					case 11: wcscpy_c(szNames[i].str, L"CF_RIFF"); break;
+					case 12: wcscpy_c(szNames[i].str, L"CF_WAVE"); break;
+					case 13: wcscpy_c(szNames[i].str, L"CF_UNICODETEXT"); break;
+					case 14: wcscpy_c(szNames[i].str, L"CF_ENHMETAFILE"); break;
+					case 15: wcscpy_c(szNames[i].str, L"CF_HDROP"); break;
+					case 16: wcscpy_c(szNames[i].str, L"CF_LOCALE"); break;
+					case 17: wcscpy_c(szNames[i].str, L"CF_DIBV5"); break;
+					case 0x0080: wcscpy_c(szNames[i].str, L"CF_OWNERDISPLAY"); break;
+					case 0x0081: wcscpy_c(szNames[i].str, L"CF_DSPTEXT"); break;
+					case 0x0082: wcscpy_c(szNames[i].str, L"CF_DSPBITMAP"); break;
+					case 0x0083: wcscpy_c(szNames[i].str, L"CF_DSPMETAFILEPICT"); break;
+					case 0x008E: wcscpy_c(szNames[i].str, L"CF_DSPENHMETAFILE"); break;
+					default: _wsprintf(szNames[i].str, SKIPCOUNT(szNames[i].str) L"ClipFormatID=%i", fmt[i].cfFormat);
 				}
 			}
 
-			INT_PTR nCurLen = _tcslen(szName[i]);
-			_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", tymed=0x%02X", fmt[i].tymed);
+			INT_PTR nCurLen = _tcslen(szNames[i].str);
+			_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", tymed=0x%02X", fmt[i].tymed);
 			fmt[i].tymed = TYMED_HGLOBAL;
 			stg[i].tymed = 0; //TYMED_HGLOBAL;
 			size_t nDataSize = 0;
@@ -1020,27 +1025,27 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 						if (psz[i])
 						{
 							memsize[i] = GlobalSize(stg[i].hGlobal);
-							nCurLen = _tcslen(szName[i]);
-							_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", DataSize=%i", (DWORD)(memsize[i]));
+							nCurLen = _tcslen(szNames[i].str);
+							_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", DataSize=%i", (DWORD)(memsize[i]));
 
 							if (memsize[i] == 1)
 							{
-								nCurLen = _tcslen(szName[i]);
-								_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
+								nCurLen = _tcslen(szNames[i].str);
+								_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
 							}
 							else if (memsize[i] == sizeof(DWORD))
 							{
-								nCurLen = _tcslen(szName[i]);
-								_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
+								nCurLen = _tcslen(szNames[i].str);
+								_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
 							}
 							else if (memsize[i] == sizeof(u64))
 							{
-								nCurLen = _tcslen(szName[i]);
-								_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
+								nCurLen = _tcslen(szNames[i].str);
+								_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
 							}
 							else
 							{
-								wcscat_c(szName[i], L", ");
+								wcscat_c(szNames[i].str, L", ");
 								const wchar_t* pwsz = (const wchar_t*)(psz[i]);
 								const char* pasz = (const char*)(psz[i]);
 								nDataSize = (memsize[i]+1)*2;
@@ -1054,7 +1059,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 									MultiByteToWideChar(CP_ACP, 0, pasz, memsize[i], pszData[i], memsize[i]);
 									//} else {
 									//	int nMaxLen = min(200,memsize[i]);
-									//	wchar_t* pwszDst = szName[i]+_tcslen(szName[i]);
+									//	wchar_t* pwszDst = szNames[i].str+_tcslen(szNames[i].str);
 									//	MultiByteToWideChar(CP_ACP, 0, pasz, nMaxLen, pwszDst, nMaxLen);
 									//	pwszDst[nMaxLen] = 0;
 									//}
@@ -1067,82 +1072,82 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 									nDataSize = ((memsize[i]>>1)+1)<<1; // было больше, с учетом возможного MultiByteToWideChar
 									//} else {
 									//	int nMaxLen = min(200,memsize[i]/2);
-									//	lstrcpyn(szName[i]+_tcslen(szName[i]), pwsz, nMaxLen);
+									//	lstrcpyn(szNames[i].str+_tcslen(szNames[i].str), pwsz, nMaxLen);
 									//}
 								}
 							}
 						}
 						else
 						{
-							wcscat_c(szName[i], L", hGlobal not available");
+							wcscat_c(szNames[i].str, L", hGlobal not available");
 							stg[i].hGlobal = NULL;
 						}
 					}
 				}
 				else if (stg[i].tymed == TYMED_FILE)
 				{
-					wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_FILE");
+					wcscat_c(szNames[i].str, L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_FILE");
 					ReleaseStgMedium(stg+i);
 					stg[i].hGlobal = NULL;
 				}
 				else if (stg[i].tymed == TYMED_ISTREAM)
 				{
-					wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTREAM");
+					wcscat_c(szNames[i].str, L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTREAM");
 					ReleaseStgMedium(stg+i);
 					stg[i].hGlobal = NULL;
 				}
 				else if (stg[i].tymed == TYMED_ISTORAGE)
 				{
-					wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTORAGE");
+					wcscat_c(szNames[i].str, L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ISTORAGE");
 					ReleaseStgMedium(stg+i);
 					stg[i].hGlobal = NULL;
 				}
 				else if (stg[i].tymed == TYMED_GDI)
 				{
-					wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_GDI");
+					wcscat_c(szNames[i].str, L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_GDI");
 					ReleaseStgMedium(stg+i);
 					stg[i].hGlobal = NULL;
 				}
 				else if (stg[i].tymed == TYMED_MFPICT)
 				{
-					wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_MFPICT");
+					wcscat_c(szNames[i].str, L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_MFPICT");
 					ReleaseStgMedium(stg+i);
 					stg[i].hGlobal = NULL;
 				}
 				else if (stg[i].tymed == TYMED_ENHMF)
 				{
-					wcscat_c(szName[i], L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ENHMF");
+					wcscat_c(szNames[i].str, L", Error in source! TYMED_HGLOBAL was requested, but got TYMED_ENHMF");
 					ReleaseStgMedium(stg+i);
 					stg[i].hGlobal = NULL;
 				}
 				else
 				{
-					nCurLen = _tcslen(szName[i]);
-					_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Error in source! TYMED_HGLOBAL was requested, but got (%i)", stg[i].tymed);
+					nCurLen = _tcslen(szNames[i].str);
+					_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", Error in source! TYMED_HGLOBAL was requested, but got (%i)", stg[i].tymed);
 					ReleaseStgMedium(stg+i);
 					stg[i].hGlobal = NULL;
 				}
 			}
 			else
 			{
-				nCurLen = _tcslen(szName[i]);
-				_wsprintf(szName[i]+nCurLen, SKIPLEN(countof(szName[i])-nCurLen) L", Can't get TYMED_HGLOBAL, rc=0x%08X", (DWORD)hr);
+				nCurLen = _tcslen(szNames[i].str);
+				_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", Can't get TYMED_HGLOBAL, rc=0x%08X", (DWORD)hr);
 				ReleaseStgMedium(stg+i);
 				stg[i].hGlobal = NULL;
 			}
 
 
 			//#ifdef _DEBUG
-			//if (wcscmp(szName[i], L"DragImageBits") == 0)
+			//if (wcscmp(szNames[i].str, L"DragImageBits") == 0)
 			//{
 			//	stg[i].tymed = TYMED_HGLOBAL;
 			//}
 			//#endif
-			wcscat_c(szName[i], L"\n");
+			wcscat_c(szNames[i].str, L"\n");
 
 			if (hDumpFile)
 			{
-				WriteFile(hDumpFile, szName[i], (DWORD)2*_tcslen(szName[i]), &nWritten, NULL);
+				WriteFile(hDumpFile, szNames[i].str, (DWORD)2*_tcslen(szNames[i].str), &nWritten, NULL);
 
 				if (nDataSize && pszData[i])
 				{
@@ -1155,7 +1160,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 			else
 			{
 				// Послать в отладчик
-				OutputDebugStringW(szName[i]);
+				OutputDebugStringW(szNames[i].str);
 
 				if (nDataSize && pszData[i])
 				{
