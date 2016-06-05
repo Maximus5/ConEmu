@@ -173,6 +173,7 @@ static LngPredefined gsDataHints[] = {
 	{ cbThumbUsePicView2,      L"Try to use PicView2 plugin to generate previews (FAR2 only)" },
 	{ cbTrueColorer,           L"Enable TrueColor (aka XTerm-256) support\r\nhttps://conemu.github.io/en/Xterm256Colors.html" },
 	{ cbTryToCenter,           L"Draw console content in center of ConEmu window. Use together with ‘Pad size’" },
+	{ cbUseAltGrayPlus,        L"Use Alt+NumpadAdd+HexNumbers to enter unicode symbol by its hex codebase\r\nIgnored in Far Manager\r\nHas no effect on explicit shortcut" },
 	{ cbUseClink,              L"Use clink to extend command prompt (cmd.exe)\r\nhttps://mridgers.github.io/clink/" },
 	{ cbUseInjects,            L"Allow injecting ConEmuHk.dll in every process of ConEmu console window.\r\nRequired for many features (ANSI X3.64, -new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (telnet in Windows 7, dialogs and menus behind of ConEmu window, chcp hungs, and so on...)" },
 	{ cbUseKeyboardHooksFast,  L"Required for some keyboard combinations. When checked, ConEmu will install keyboard hook when ConEmu is foreground window. So, You must allow that in antiviral software (AVP for example)" },

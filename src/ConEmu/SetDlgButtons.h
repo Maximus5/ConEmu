@@ -193,6 +193,7 @@ protected:
 	static void OnBtn_MapShiftEscToEsc(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_GuiMacroHelp(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_UseWinArrowNumTab(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_UseAltGrayPlus(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_SendConsoleSpecials(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_InstallKeybHooks(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_DosBox(HWND hDlg, WORD CB, BYTE uCheck);

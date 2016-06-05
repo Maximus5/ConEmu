@@ -73,6 +73,19 @@ bool CAltNumpad::isAltNumpad()
 	return true;
 }
 
+bool CAltNumpad::isUseAltGrayPlus()
+{
+	if (!gpSet->isUseAltGrayPlus)
+		return false;
+	// Far Manager - bypass Alt+GrayAdd to console
+	CVConGuard VCon;
+	if (mp_ConEmu->GetActiveVCon(&VCon) < 0)
+		return false;
+	if (VCon->RCon()->isFar())
+		return false;
+	return true;
+}
+
 bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	//messg == WM_SYSKEYDOWN(UP), wParam == VK_NUMPAD0..VK_NUMPAD9, lParam == (ex. 0x20490001)
@@ -153,6 +166,11 @@ bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		}
 		// No other modifiers are down
 		else if (!isAltNumpad())
+		{
+			_ASSERTE(bSkip == false); // bypass to console
+		}
+		// If user have chosen to bypass Alt+GrayPlus to consol
+		else if ((wParam == VK_ADD) && !isUseAltGrayPlus())
 		{
 			_ASSERTE(bSkip == false); // bypass to console
 		}

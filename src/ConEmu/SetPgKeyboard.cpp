@@ -55,6 +55,8 @@ LRESULT CSetPgKeyboard::OnInitDialog(HWND hDlg, bool abInitial)
 
 	checkDlgButton(hDlg, cbUseWinTab, gpSet->isUseWinTab);
 
+	checkDlgButton(hDlg, cbUseAltGrayPlus, gpSet->isUseAltGrayPlus);
+
 	checkDlgButton(hDlg, cbSendAltTab, gpSet->isSendAltTab);
 	checkDlgButton(hDlg, cbSendAltEsc, gpSet->isSendAltEsc);
 	checkDlgButton(hDlg, cbSendAltPrintScrn, gpSet->isSendAltPrintScrn);

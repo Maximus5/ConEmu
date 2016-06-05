@@ -413,6 +413,7 @@ void Settings::InitSettings()
 	//nSplitClr1 = nSplitClr2 = RGB(160,160,160);
 	m_isKeyboardHooks = 0;
 	isFARuseASCIIsort = false; isFixAltOnAltTab = false; isShellNoZoneCheck = false;
+	isUseAltGrayPlus = true;
 	isFadeInactive = true; mn_FadeLow = DEFAULT_FADE_LOW; mn_FadeHigh = DEFAULT_FADE_HIGH; mb_FadeInitialized = false;
 	mn_LastFadeSrc = mn_LastFadeDst = -1;
 	nMainTimerElapse = 10;
@@ -2733,6 +2734,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"ShellNoZoneCheck", isShellNoZoneCheck);
 		reg->Load(L"FixAltOnAltTab", isFixAltOnAltTab);
 
+		reg->Load(L"UseAltGrayPlus", isUseAltGrayPlus);
+
 		reg->Load(L"BackGround Image show", isShowBgImage);
 		if (isShowBgImage!=0 && isShowBgImage!=1 && isShowBgImage!=2) isShowBgImage = 0;
 		reg->Load(L"BackGround Image", sBgImage, countof(sBgImage));
@@ -3742,6 +3745,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"FARuseASCIIsort", isFARuseASCIIsort);
 		reg->Save(L"ShellNoZoneCheck", isShellNoZoneCheck);
 		reg->Save(L"FixAltOnAltTab", isFixAltOnAltTab);
+		reg->Save(L"UseAltGrayPlus", isUseAltGrayPlus);
 		reg->Save(L"DisableMouse", isDisableMouse);
 		reg->Save(L"RSelectionFix", isRSelFix);
 		reg->Save(L"MouseSkipActivation", isMouseSkipActivation);

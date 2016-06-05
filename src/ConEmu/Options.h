@@ -931,6 +931,8 @@ struct Settings
 		bool isFARuseASCIIsort;
 		//reg->Load(L"FixAltOnAltTab", isFixAltOnAltTab);
 		bool isFixAltOnAltTab;
+		//"UseAltGrayPlus"
+		bool isUseAltGrayPlus;
 		//reg->Load(L"ShellNoZoneCheck", isShellNoZoneCheck);
 		bool isShellNoZoneCheck;
 

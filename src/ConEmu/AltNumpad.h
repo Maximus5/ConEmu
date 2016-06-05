@@ -70,6 +70,7 @@ protected:
 	void DumpChars(wchar_t* asChars);
 	AltCharAction DumpAltNumber();
 	bool isAltNumpad();
+	bool isUseAltGrayPlus();
 	void DumpStatus();
 protected:
 	ucs32 GetChars(wchar_t (&wszChars)[3]);

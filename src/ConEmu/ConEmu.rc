@@ -1222,6 +1222,8 @@ BEGIN
     GROUPBOX        "Read line enhancements (command prompt, ReadConsoleW)",gbCtrlPrompt,4,120,375,30
     CONTROL         "Ctrl+BackSpace - delete word leftward to the text cursor",cbCTSDeleteLeftWord,
                     "Button",BS_AUTO3STATE | WS_TABSTOP,10,134,365,8
+    CONTROL         "Alt+NumpadAdd - unicode hex codebase",cbUseAltGrayPlus,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,38,180,8
 END
 
 IDD_SPG_MOUSE DIALOGEX 0, 0, 381, 242

@@ -517,6 +517,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbUseWinTab:
 			OnBtn_UseWinArrowNumTab(hDlg, CB, uCheck);
 			break;
+		case cbUseAltGrayPlus:
+			OnBtn_UseAltGrayPlus(hDlg, CB, uCheck);
+			break;
 
 		//case cbUseWinNumber:
 		//	gpSet->isUseWinNumber = isChecked(hDlg, cbUseWinNumber);
@@ -3266,6 +3269,16 @@ void CSetDlgButtons::OnBtn_UseWinArrowNumTab(HWND hDlg, WORD CB, BYTE uCheck)
 	gpConEmu->UpdateWinHookSettings();
 
 } // cbUseWinArrows || cbUseWinNumber || cbUseWinTab
+
+
+// cbUseAltGrayPlus
+void CSetDlgButtons::OnBtn_UseAltGrayPlus(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbUseAltGrayPlus);
+
+	gpSet->isUseAltGrayPlus = _bool(uCheck);
+
+} // cbUseAltGrayPlus
 
 
 // cbSendAltTab || cbSendAltEsc || cbSendAltPrintScrn || cbSendPrintScrn || cbSendCtrlEsc
