@@ -106,6 +106,20 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 		}
 	}
 
+	// gh-629: Arrow keys not working in Bash for Windows
+	if (gbIsBashProcess && IsWin10())
+	{
+		// 0x200 is undocumented mode
+		if ((dwMode & 0x200) || (CEAnsi::gbWasXTermOutput && !(dwMode & 0x200)))
+		{
+			if (!HandleKeeper::IsOutputHandle(hConsoleHandle))
+			{
+				_ASSERT(HandleKeeper::IsInputHandle(hConsoleHandle));
+				CEAnsi::StartXTermMode((dwMode & 0x200) == 0x200);
+			}
+		}
+	}
+
 	#ifdef _DEBUG
 	if ((gnExeFlags & (caf_Cygwin1|caf_Msys1|caf_Msys2))
 		&& (dwMode & ENABLE_PROCESSED_INPUT)

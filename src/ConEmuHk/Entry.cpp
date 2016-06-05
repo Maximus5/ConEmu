@@ -1273,6 +1273,7 @@ void InitExeName()
 		)
 	{
 		//_ASSERTEX(FALSE && "settings gbIsBashProcess");
+		//bash.exe may be Bash On Windows (subsystem for Linux)
 		gbIsBashProcess = true;
 
 		TODO("Start redirection of ConIn/ConOut to our pipes to achieve PTTY in bash");

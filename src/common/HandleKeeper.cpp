@@ -299,3 +299,11 @@ bool HandleKeeper::IsOutputHandle(HANDLE hFile)
 		return false;
 	return (Info.is_output || Info.is_error);
 }
+
+bool HandleKeeper::IsInputHandle(HANDLE hFile)
+{
+	HandleInformation Info = {};
+	if (!QueryHandleInfo(hFile, Info))
+		return false;
+	return (Info.is_input);
+}
