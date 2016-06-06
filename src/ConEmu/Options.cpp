@@ -1020,7 +1020,7 @@ void Settings::FreeApps(int NewAppCount, AppSettings** NewApps/*, Settings::CEAp
 	//SafeFree(OldAppColors);
 }
 
-void Settings::LoadAppsSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
+void Settings::LoadAppsSettings(bool bAppendMode, SettingsBase* reg, bool abFromOpDlg /*= false*/)
 {
 	bool lbDelete = false;
 	if (!reg)
@@ -1263,7 +1263,7 @@ void Settings::FreeCmdTasks()
 	}
 }
 
-void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
+void Settings::LoadCmdTasks(bool bAppendMode, SettingsBase* reg, bool abFromOpDlg /*= false*/)
 {
 	bool lbDelete = false;
 	if (!reg)
@@ -3030,8 +3030,8 @@ void Settings::LoadSettings(bool bAppendMode, SettingsBase* reg)
 		/* Load all children objects */
 		LoadHotkeys(bAppendMode, reg, bSendAltEnter, bSendAltSpace, bSendAltF9);
 		LoadPalettes(bAppendMode, reg);
-		LoadAppsSettings(reg);
-		LoadCmdTasks(reg);
+		LoadAppsSettings(bAppendMode, reg);
+		LoadCmdTasks(bAppendMode, reg);
 }
 
 void Settings::PatchSizeSettings()
