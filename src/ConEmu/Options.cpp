@@ -3008,7 +3008,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->CloseKey();
 
 		/* Load all children objects */
-		LoadHotkeys(reg, bSendAltEnter, bSendAltSpace, bSendAltF9);
+		LoadHotkeys(false/*bAppendMode*/, reg, bSendAltEnter, bSendAltSpace, bSendAltF9);
 		LoadPalettes(false/*bAppendMode*/, reg);
 		LoadAppsSettings(reg);
 		LoadCmdTasks(reg);
@@ -5845,7 +5845,7 @@ bool Settings::isKeyOrModifierExist(BYTE Mod/*VK*/)
 	return false;
 }
 
-void Settings::LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const bool& bSendAltSpace, const bool& bSendAltF9)
+void Settings::LoadHotkeys(bool bAppendMode, SettingsBase* reg, const bool& bSendAltEnter, const bool& bSendAltSpace, const bool& bSendAltF9)
 {
 	if (!reg)
 	{
@@ -5948,25 +5948,28 @@ void Settings::LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const b
 		{
 			wcscpy_c(szMacroName, ppHK->Name);
 			wcscat_c(szMacroName, L".Text");
-			_ASSERTE(ppHK->GuiMacro == NULL);
+			_ASSERTE(bAppendMode || (ppHK->GuiMacro == NULL));
 			wchar_t* pszMacro = NULL;
-			reg->Load(szMacroName, &pszMacro);
-			if (MacroVersion < GUI_MACRO_VERSION)
+			if (reg->Load(szMacroName, &pszMacro))
 			{
-				ppHK->GuiMacro = ConEmuMacro::ConvertMacro(pszMacro, MacroVersion, true);
-				SafeFree(pszMacro);
-			}
-			else
-			{
-				ppHK->GuiMacro = pszMacro;
+				SafeFree(ppHK->GuiMacro);
+				if (MacroVersion < GUI_MACRO_VERSION)
+				{
+					ppHK->GuiMacro = ConEmuMacro::ConvertMacro(pszMacro, MacroVersion, true);
+					SafeFree(pszMacro);
+				}
+				else
+				{
+					ppHK->GuiMacro = pszMacro;
+				}
 			}
 		}
 	}
 
 	reg->CloseKey();
 
-	// Для совместимости настроек
-	if (bSendAltSpace || bSendAltEnter || bSendAltF9)
+	// For compatibility (very old versions)
+	if (!bAppendMode && (bSendAltSpace || bSendAltEnter || bSendAltF9))
 	{
 		ConEmuHotKey* pHK;
 		// Если раньше был включен флажок "Send Alt+Space to console"
