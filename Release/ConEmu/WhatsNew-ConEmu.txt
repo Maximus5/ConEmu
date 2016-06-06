@@ -20,6 +20,20 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.6.5
+* User was enable to enter list of executables on AppDistinct settings page (regression).
+* Option ‘New window’ in the create new console dialog started ConEmu with wrong arguments (no xml, etc.)
+* DefTerm. Option ‘Register on OS startup’ did not use specified xml file.
+* gh-698: Fix crash on copy selected text in HTML format if raster font is used.
+* Fix conditon for `<BS>` key posting (ref: gh-641).
+* gh-667: Alt+GrayPlus+HexNumbers changes.
+  * Alt+GrayPlus is bypassed to Far Manager by default. User still may
+    set up explicit hotkey for ‘Start Alt+Number mode’ action.
+  * Option ‘Alt+NumpadAdd - unicode hex codebase’ on the ‘Keyboard’ page
+    (has no effect in Far Manager).
+* gh-629: Try to enable xterm keyboard emulation automatically (BashOnWindows).
+
+
 2016.5.29
 * gh-457: Support DefTerm feature for Idle (Pythonw.exe) and VisualStudio Code (code.exe).
 * DefTerm: ConEmu crashed if it's closed during DefTerm initialization.
