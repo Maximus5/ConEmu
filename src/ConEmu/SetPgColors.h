@@ -56,6 +56,9 @@ public:
 	virtual INT_PTR OnComboBox(HWND hDlg, WORD nCtrlId, WORD code) override;
 	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) override;
 
+	// Helpers
+	void ColorSchemeSaveDelete(WORD CB, BYTE uCheck);
+
 protected:
 	// Members
 
