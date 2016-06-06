@@ -3609,29 +3609,12 @@ void CSetDlgButtons::OnBtn_ColorSchemeSaveDelete(HWND hDlg, WORD CB, BYTE uCheck
 		return;
 	}
 
-	HWND hList = GetDlgItem(hDlg, lbDefaultColors);
-	int nLen = GetWindowTextLength(hList);
-	if (nLen < 1)
-		return;
-
-	wchar_t* pszName = (wchar_t*)malloc((nLen+1)*sizeof(wchar_t));
-	GetWindowText(hList, pszName, nLen+1);
-	if (*pszName != L'<')
-	{
-		if (CB == cbColorSchemeSave)
-			gpSet->PaletteSaveAs(pszName);
-		else
-			gpSet->PaletteDelete(pszName);
-	}
-	// Поставить фокус в список, а то кнопки могут "задизэблиться"
-	SetFocus(hList);
-	HWND hCB = GetDlgItem(hDlg, CB);
-	SetWindowLongPtr(hCB, GWL_STYLE, GetWindowLongPtr(hCB, GWL_STYLE) & ~BS_DEFPUSHBUTTON);
-	// Refresh
 	CSetPgColors* pColorsPg;
 	if (gpSetCls->GetPageObj(pColorsPg))
-		pColorsPg->OnInitDialog(hDlg, false);
-	SafeFree(pszName);
+	{
+		_ASSERTE(pColorsPg->Dlg() == hDlg);
+		pColorsPg->ColorSchemeSaveDelete(CB, uCheck);
+	}
 
 } // cbColorSchemeSave || cbColorSchemeDelete
 

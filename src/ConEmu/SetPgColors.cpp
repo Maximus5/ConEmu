@@ -283,3 +283,38 @@ LRESULT CSetPgColors::OnEditChanged(HWND hDlg, WORD nCtrlId)
 
 	return 0;
 }
+
+void CSetPgColors::ColorSchemeSaveDelete(WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbColorSchemeSave || CB==cbColorSchemeDelete);
+
+	if (!mh_Dlg)
+	{
+		_ASSERTE(mh_Dlg!=NULL);
+		return;
+	}
+
+	HWND hList = GetDlgItem(mh_Dlg, lbDefaultColors);
+	int nLen = GetWindowTextLength(hList);
+	if (nLen < 1)
+		return;
+
+	wchar_t* pszName = (wchar_t*)malloc((nLen+1)*sizeof(wchar_t));
+	GetWindowText(hList, pszName, nLen+1);
+	if (*pszName != L'<')
+	{
+		if (CB == cbColorSchemeSave)
+			gpSet->PaletteSaveAs(pszName);
+		else
+			gpSet->PaletteDelete(pszName);
+	}
+	// Set focus in list, buttons may become disabled now
+	SetFocus(hList);
+	HWND hCB = GetDlgItem(mh_Dlg, CB);
+	SetWindowLongPtr(hCB, GWL_STYLE, GetWindowLongPtr(hCB, GWL_STYLE) & ~BS_DEFPUSHBUTTON);
+	// Refresh
+	OnInitDialog(mh_Dlg, false);
+
+	SafeFree(pszName);
+
+} // cbColorSchemeSave || cbColorSchemeDelete
