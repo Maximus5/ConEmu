@@ -262,7 +262,7 @@ struct Settings
 		CommandTasks* StartupTask;
 		void FreeCmdTasks();
 
-		int PaletteCount;
+		int PaletteCount, PaletteAllocated;
 		ColorPalette** Palettes;
 		ColorPalette* PaletteGetPtr(int anIndex); // 0-based, index of Palettes
 		void SavePalettes(SettingsBase* reg);
@@ -1103,7 +1103,7 @@ struct Settings
 		void InitVanillaFontSettings();
 		bool SaveVanilla(SettingsBase* reg);
 		void LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg = false);
-		void LoadPalettes(SettingsBase* reg);
+		void LoadPalettes(bool bAppendMode, SettingsBase* reg);
 		void CreatePredefinedPalettes(int iAddUserCount);
 		void LoadProgresses(SettingsBase* reg);
 		BOOL SaveSettings(BOOL abSilent = FALSE, const SettingsStorage* apStorage = NULL);

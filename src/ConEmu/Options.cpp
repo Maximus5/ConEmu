@@ -354,7 +354,7 @@ void Settings::ReleasePointers()
 	CmdTaskCount = 0;
 
 	FreePalettes();
-	PaletteCount = 0;
+	_ASSERTE(PaletteCount == 0 && PaletteAllocated == 0);
 
 	FreeApps();
 	AppStd.FreeApps();
@@ -1403,6 +1403,7 @@ bool Settings::SaveCmdTasks(SettingsBase* reg)
 
 void Settings::SortPalettes()
 {
+	_ASSERTE(PaletteAllocated >= PaletteCount);
 	for (int i = 0; (i+1) < PaletteCount; i++)
 	{
 		int iMin = i;
@@ -1445,14 +1446,25 @@ void Settings::FreePalettes()
 		SafeFree(Palettes);
 	}
 	PaletteCount = 0;
+	PaletteAllocated = 0;
 }
 
 void Settings::CreatePredefinedPalettes(int iAddUserCount)
 {
 	_ASSERTE(Palettes == NULL);
 
+	int NewAllocated = (iAddUserCount + countof(DefColors));
+
 	// Predefined
-	Palettes = (ColorPalette**)calloc((iAddUserCount + countof(DefColors)), sizeof(ColorPalette*));
+	Palettes = (ColorPalette**)calloc(NewAllocated, sizeof(ColorPalette*));
+	if (Palettes == NULL)
+	{
+		PaletteAllocated = 0;
+		_ASSERTE(Palettes!=NULL);
+		return;
+	}
+	PaletteAllocated = NewAllocated;
+
 	for (size_t n = 0; n < countof(DefColors); n++)
 	{
 		Palettes[n] = (ColorPalette*)calloc(1, sizeof(ColorPalette));
@@ -1481,11 +1493,12 @@ void Settings::CreatePredefinedPalettes(int iAddUserCount)
 		memmove(Palettes[n]->Colors+0x10, DefColors[0].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
 	}
 
-	// Инициализировали "Палитрами по умолчанию"
+	// Initialized with "Predefined palettes"
 	PaletteCount = (int)countof(DefColors);
+	_ASSERTE(PaletteAllocated >= PaletteCount);
 }
 
-void Settings::LoadPalettes(SettingsBase* reg)
+void Settings::LoadPalettes(bool bAppendMode, SettingsBase* reg)
 {
 	TCHAR ColorName[] = L"ColorTable00";
 
@@ -1502,7 +1515,10 @@ void Settings::LoadPalettes(SettingsBase* reg)
 	}
 
 
-	FreePalettes();
+	if (!bAppendMode)
+	{
+		FreePalettes();
+	}
 
 
 	BOOL lbOpened = FALSE;
@@ -1520,11 +1536,14 @@ void Settings::LoadPalettes(SettingsBase* reg)
 	}
 
 
-	// Predefined
-	CreatePredefinedPalettes(UserCount);
-	_ASSERTE(Palettes!=NULL);
-	// Was initialize with "Default palettes"
-	_ASSERTE(PaletteCount == (int)countof(DefColors));
+	if (!bAppendMode)
+	{
+		// Predefined
+		CreatePredefinedPalettes(UserCount);
+		_ASSERTE(Palettes!=NULL);
+		// Was initialize with "Default palettes"
+		_ASSERTE(PaletteCount == (int)countof(DefColors));
+	}
 
 	// User
 	for (int i = 0; i < UserCount; i++)
@@ -1534,27 +1553,41 @@ void Settings::LoadPalettes(SettingsBase* reg)
 		lbOpened = reg->OpenKey(szColorKey, KEY_READ);
 		if (lbOpened)
 		{
-			Palettes[PaletteCount] = (ColorPalette*)calloc(1, sizeof(ColorPalette));
+			_ASSERTE(bAppendMode || (PaletteCount < PaletteAllocated));
 
-			reg->Load(L"Name", &Palettes[PaletteCount]->pszName);
-			reg->Load(L"ExtendColors", Palettes[PaletteCount]->isExtendColors);
-			reg->Load(L"ExtendColorIdx", Palettes[PaletteCount]->nExtendColorIdx);
+			CEStr lsName;
+			bool bExtendColors = false;
+			BYTE nExtendColorIdx = 0, nTextColorIdx = 0, nBackColorIdx = 0, nPopTextColorIdx = 0, nPopBackColorIdx;
+			COLORREF palColors[0x20] = {};
 
-			reg->Load(L"TextColorIdx", Palettes[PaletteCount]->nTextColorIdx); MinMax(Palettes[PaletteCount]->nTextColorIdx,16);
-			reg->Load(L"BackColorIdx", Palettes[PaletteCount]->nBackColorIdx); MinMax(Palettes[PaletteCount]->nBackColorIdx,16);
-			reg->Load(L"PopTextColorIdx", Palettes[PaletteCount]->nPopTextColorIdx); MinMax(Palettes[PaletteCount]->nPopTextColorIdx,16);
-			reg->Load(L"PopBackColorIdx", Palettes[PaletteCount]->nPopBackColorIdx); MinMax(Palettes[PaletteCount]->nPopBackColorIdx,16);
+			reg->Load(L"Name", &lsName.ms_Val);
+			reg->Load(L"ExtendColors", bExtendColors);
+			reg->Load(L"ExtendColorIdx", nExtendColorIdx);
 
-			_ASSERTE(countof(Colors) == countof(Palettes[PaletteCount]->Colors));
-			for (size_t k = 0; k < countof(Palettes[PaletteCount]->Colors)/*0x20*/; k++)
+			reg->Load(L"TextColorIdx", nTextColorIdx); MinMax(nTextColorIdx,16);
+			reg->Load(L"BackColorIdx", nBackColorIdx); MinMax(nBackColorIdx,16);
+			reg->Load(L"PopTextColorIdx", nPopTextColorIdx); MinMax(nPopTextColorIdx,16);
+			reg->Load(L"PopBackColorIdx", nPopBackColorIdx); MinMax(nPopBackColorIdx,16);
+
+			_ASSERTE(countof(Colors) == countof(palColors));
+			_ASSERTE(ColorName[10]==L'0' && ColorName[11]==L'0' && ColorName[12]==0);
+			for (size_t k = 0; k < countof(palColors)/*0x20*/; k++)
 			{
 				ColorName[10] = k/10 + '0';
 				ColorName[11] = k%10 + '0';
-				reg->Load(ColorName, Palettes[PaletteCount]->Colors[k]);
+				reg->Load(ColorName, palColors[k]);
 			}
 
-			PaletteCount++;
+			// Only user palettes are allowed here
+			int iNewIndex = PaletteGetIndex(lsName);
+			if ((iNewIndex < 0) || (Palettes && !Palettes[iNewIndex]->bPredefined))
+			{
+				PaletteSaveAs(lsName, bExtendColors, nExtendColorIdx,
+						nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx,
+						palColors, false/*abSaveSettings*/);
+			}
 
+			// Done with this key
 			reg->CloseKey();
 		}
 	}
@@ -1897,24 +1930,32 @@ void Settings::PaletteSaveAs(LPCWSTR asName, bool abExtendColors, BYTE anExtendC
 
 	if (nIndex == -1)
 	{
-		// Добавляем новую палитру
+		// Add new palette
 		bNewPalette = true;
 		nIndex = PaletteCount;
 
-		ColorPalette** ppNew = (ColorPalette**)calloc(nIndex+1,sizeof(ColorPalette*));
-		if (!ppNew)
+		// If there are not empty cells yet
+		if (PaletteCount >= PaletteAllocated)
 		{
-			_ASSERTE(ppNew!=NULL);
-			return;
+			_ASSERTE(PaletteAllocated == PaletteCount);
+			ColorPalette** ppNew = (ColorPalette**)calloc(nIndex+1,sizeof(ColorPalette*));
+			if (!ppNew)
+			{
+				_ASSERTE(ppNew!=NULL);
+				return;
+			}
+			PaletteAllocated = nIndex+1;
+
+			if ((PaletteCount > 0) && Palettes)
+			{
+				memmove(ppNew, Palettes, PaletteCount*sizeof(ColorPalette*));
+			}
+			SafeFree(Palettes);
+			Palettes = ppNew;
 		}
-		if ((PaletteCount > 0) && Palettes)
-		{
-			memmove(ppNew, Palettes, PaletteCount*sizeof(ColorPalette*));
-		}
-		SafeFree(Palettes);
-		Palettes = ppNew;
 
 		PaletteCount = nIndex+1;
+		_ASSERTE(PaletteCount <= PaletteAllocated);
 	}
 
 	_ASSERTE(Palettes);
@@ -2968,7 +3009,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		/* Load all children objects */
 		LoadHotkeys(reg, bSendAltEnter, bSendAltSpace, bSendAltF9);
-		LoadPalettes(reg);
+		LoadPalettes(false/*bAppendMode*/, reg);
 		LoadAppsSettings(reg);
 		LoadCmdTasks(reg);
 	}
