@@ -1098,6 +1098,7 @@ struct Settings
 
 	public:
 		void LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* apStorage = NULL);
+		void LoadSettings(bool bAppendMode, SettingsBase* reg);
 		void InitSettings();
 		void InitVanilla();
 		void InitVanillaFontSettings();

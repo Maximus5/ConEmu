@@ -2424,6 +2424,26 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 				|| reg->Load(L"TabFontHeight", dw));
 		}
 
+		LoadSettings(false/*bAppendMode*/, reg);
+	}
+
+	// сервис больше не нужен
+	delete reg;
+	reg = NULL;
+
+wrap:
+	// In some cases for some options we must apply vanilla defaults
+	if (bInitVanillaFontSizes)
+	{
+		// For example, user had pressed ‘Esc’ in the ‘Fast settings’ dialog
+		// So, config will be not totally ‘new’ but font settings are ‘new’ actually
+		InitVanillaFontSettings();
+	}
+}
+
+// Key must be opened at the moment of call
+void Settings::LoadSettings(bool bAppendMode, SettingsBase* reg)
+{
 		bool bCmdLine = reg->Load(L"CmdLine", &psStartSingleApp);
 		reg->Load(L"StartTasksFile", &psStartTasksFile);
 		reg->Load(L"StartTasksName", &psStartTasksName);
@@ -3008,24 +3028,10 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->CloseKey();
 
 		/* Load all children objects */
-		LoadHotkeys(false/*bAppendMode*/, reg, bSendAltEnter, bSendAltSpace, bSendAltF9);
-		LoadPalettes(false/*bAppendMode*/, reg);
+		LoadHotkeys(bAppendMode, reg, bSendAltEnter, bSendAltSpace, bSendAltF9);
+		LoadPalettes(bAppendMode, reg);
 		LoadAppsSettings(reg);
 		LoadCmdTasks(reg);
-	}
-
-	// сервис больше не нужен
-	delete reg;
-	reg = NULL;
-
-wrap:
-	// In some cases for some options we must apply vanilla defaults
-	if (bInitVanillaFontSizes)
-	{
-		// For example, user had pressed ‘Esc’ in the ‘Fast settings’ dialog
-		// So, config will be not totally ‘new’ but font settings are ‘new’ actually
-		InitVanillaFontSettings();
-	}
 }
 
 void Settings::PatchSizeSettings()
