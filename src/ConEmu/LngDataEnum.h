@@ -108,6 +108,7 @@ enum LngResources
 	lng_SpgChildGui               = 76,
 	lng_KeyNone                   = 77,
 	lng_KeyNoMod                  = 78,
+	lng_HotkeyDuplicated          = 79,
 	// last auto-gen identifier
 	lng_NextId
 };

@@ -647,6 +647,25 @@ LPCWSTR ConEmuHotKey::GetHotkeyName(DWORD aVkMod, wchar_t (&szFull)[128], bool b
 	return hk.GetHotkeyName(szFull, bShowNone);
 }
 
+LPCWSTR ConEmuHotKey::CreateNotUniqueWarning(LPCWSTR asHotkey, LPCWSTR asDescr1, LPCWSTR asDescr2, CEStr& rsWarning)
+{
+	CEStr lsFmt(CLngRc::getRsrc(lng_HotkeyDuplicated/*"Hotkey <%s> is not unique"*/));
+	wchar_t* ptrPoint = lsFmt.ms_Val ? (wchar_t*)wcsstr(lsFmt.ms_Val, L"%s") : NULL;
+	if (!ptrPoint)
+	{
+		rsWarning.Attach(lstrmerge(L"Hotkey <", asHotkey, L"> is not unique",
+			L"\n", asDescr1, L"\n", asDescr2));
+	}
+	else
+	{
+		_ASSERTE(ptrPoint[0] == L'%' && ptrPoint[1] == L's' && ptrPoint[2]);
+		*ptrPoint = 0;
+		rsWarning.Attach(lstrmerge(lsFmt.ms_Val, asHotkey, ptrPoint+2,
+			L"\n", asDescr1, L"\n", asDescr2));
+	}
+	return rsWarning.ms_Val;
+}
+
 void ConEmuHotKey::GetVkKeyName(BYTE vk, wchar_t (&szName)[32], bool bSingle /*= true*/)
 {
 	szName[0] = 0;

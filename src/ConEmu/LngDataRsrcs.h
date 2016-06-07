@@ -49,6 +49,7 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_DlgRenameTab,             L"Rename tab" },
 	{ lng_DlgSettings,              L"Settings" },
 	{ lng_ExitCode,                 L"exit code" },
+	{ lng_HotkeyDuplicated,         L"Hotkey <%s> is not unique" },
 	{ lng_HotkeysAll,               L"All hotkeys" },
 	{ lng_HotkeysFilter,            L"Filter hotkeys (Alt+F)" },
 	{ lng_HotkeysMacro,             L"Macros" },

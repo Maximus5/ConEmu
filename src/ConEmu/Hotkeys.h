@@ -111,6 +111,9 @@ struct ConEmuHotKey
 	LPCWSTR GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone = true) const;
 	static LPCWSTR GetHotkeyName(DWORD aVkMod, wchar_t (&szFull)[128], bool bShowNone = true);
 
+	// Duplicate hotkeys
+	static LPCWSTR CreateNotUniqueWarning(LPCWSTR asHotkey, LPCWSTR asDescr1, LPCWSTR asDescr2, CEStr& rsWarning);
+
 	#ifdef _DEBUG
 	static void HotkeyNameUnitTests();
 	#endif

@@ -5949,8 +5949,8 @@ void Settings::LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const b
 
 void Settings::CheckHotkeyUnique()
 {
-	// Проверка уникальности
-	wchar_t* pszFailMsg = NULL;
+	// Check for duplicates
+	CEStr szFailMsg;
 
 	// Некоторые хоткеи имеют "локальное" действие
 	// А некоторые проверять не хочется
@@ -6042,20 +6042,15 @@ void Settings::CheckHotkeyUnique()
 
 			ppHK1->GetHotkeyName(szKey);
 
-			int nAllLen = lstrlen(szDescr1) + lstrlen(szDescr2) + lstrlen(szKey) + 256;
-			pszFailMsg = (wchar_t*)malloc(nAllLen*sizeof(*pszFailMsg));
-			_wsprintf(pszFailMsg, SKIPLEN(nAllLen)
-				L"Hotkey <%s> is not unique\n%s\n%s",
-				szKey, szDescr1, szDescr2);
+			ConEmuHotKey::CreateNotUniqueWarning(szKey, szDescr1, szDescr2, szFailMsg);
 
 			goto wrap;
 		}
 	}
 wrap:
-	if (pszFailMsg)
+	if (szFailMsg)
 	{
-		Icon.ShowTrayIcon(pszFailMsg, tsa_Config_Error);
-		free(pszFailMsg);
+		Icon.ShowTrayIcon(szFailMsg, tsa_Config_Error);
 	}
 }
 
