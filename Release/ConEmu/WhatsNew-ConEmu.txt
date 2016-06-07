@@ -20,6 +20,13 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.6.7
+* Settings simplification: radio buttons were removed from ‘Settings/Mouse/Mouse button actions’.
+  In Far Manager RBtn and MBtn clicks are bypassed to console if `<No-Mod>` is selected.
+* Non-unique hotkey modifier check was improved.
+* Warning fixes (from Michael Lukashov).
+
+
 2016.6.5
 * User was enable to enter list of executables on AppDistinct settings page (regression).
 * Option ‘New window’ in the create new console dialog started ConEmu with wrong arguments (no xml, etc.)
