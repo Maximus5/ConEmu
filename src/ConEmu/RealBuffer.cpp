@@ -3592,45 +3592,49 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		}
 
 		if (((gpSet->isCTSRBtnAction == 2/*Paste*/) || ((gpSet->isCTSRBtnAction == 3/*Auto*/) && !isSelectionPresent()))
-				&& (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONUP)
-		        && ((gpSet->isCTSActMode == 2 && mp_RCon->isBufferHeight() && !mp_RCon->isFarBufferSupported())
-		            || (gpSet->isCTSActMode == 1 && gpSet->IsModifierPressed(vkCTSVkAct, true))))
+				&& (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONUP))
 		{
-			if (messg == WM_RBUTTONUP)
+			if (((gpSet->isCTSActMode == 2 && mp_RCon->isBufferHeight() && !mp_RCon->isFarBufferSupported())
+		            || (gpSet->isCTSActMode == 1 && gpSet->IsModifierPressed(vkCTSVkAct, true))))
 			{
-				// If Paste was requested - no need to use Windows clipboard,
-				// and if selection exists copy it first and paste internally
-				if (isSelectionPresent() && gpSet->isCTSIntelligent)
+				if (messg == WM_RBUTTONUP)
 				{
-					DEBUGSTRSEL(L"Selection: DoCopyPaste#R");
-					DoCopyPaste(true, true);
+					// If Paste was requested - no need to use Windows clipboard,
+					// and if selection exists copy it first and paste internally
+					if (isSelectionPresent() && gpSet->isCTSIntelligent)
+					{
+						DEBUGSTRSEL(L"Selection: DoCopyPaste#R");
+						DoCopyPaste(true, true);
+					}
+					else
+					{
+						// Paste is useless in "Alternative mode" or while selection is present...
+						DEBUGSTRSEL(L"Selection: DoSelectionFinalize#R");
+						DoSelectionFinalize(false);
+						// And Paste itself
+						DEBUGSTRSEL(L"Selection: Paste#R");
+						mp_RCon->Paste();
+					}
 				}
-				else
-				{
-					// Paste is useless in "Alternative mode" or while selection is present...
-					DEBUGSTRSEL(L"Selection: DoSelectionFinalize#R");
-					DoSelectionFinalize(false);
-					// And Paste itself
-					DEBUGSTRSEL(L"Selection: Paste#R");
-					mp_RCon->Paste();
-				}
-			}
 
-			goto wrap;
+				goto wrap;
+			}
 		}
 
 		if (((gpSet->isCTSMBtnAction == 2) || ((gpSet->isCTSMBtnAction == 3) && !isSelectionPresent()))
-				&& (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONUP)
-		        && ((gpSet->isCTSActMode == 2 && mp_RCon->isBufferHeight() && !mp_RCon->isFarBufferSupported())
-		            || (gpSet->isCTSActMode == 1 && gpSet->IsModifierPressed(vkCTSVkAct, true))))
+				&& (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONUP))
 		{
-			if (messg == WM_MBUTTONUP)
+			if (((gpSet->isCTSActMode == 2 && mp_RCon->isBufferHeight() && !mp_RCon->isFarBufferSupported())
+		            || (gpSet->isCTSActMode == 1 && gpSet->IsModifierPressed(vkCTSVkAct, true))))
 			{
-				DEBUGSTRSEL(L"Selection: Paste#M");
-				mp_RCon->Paste();
-			}
+				if (messg == WM_MBUTTONUP)
+				{
+					DEBUGSTRSEL(L"Selection: Paste#M");
+					mp_RCon->Paste();
+				}
 
-			goto wrap;
+				goto wrap;
+			}
 		}
 	}
 
