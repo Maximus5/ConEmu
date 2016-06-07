@@ -349,6 +349,7 @@ void Settings::ReleasePointers()
 	SafeFree(pszCTSIntelligentExceptions);
 	SafeFree(sFarGotoEditor);
 	SafeFree(pszTabSkipWords);
+	SafeFree(psEnvironmentSet);
 
 	FreeCmdTasks();
 	CmdTaskCount = 0;
