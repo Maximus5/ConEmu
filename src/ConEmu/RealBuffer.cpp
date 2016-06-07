@@ -6222,6 +6222,8 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 	TODO("При загрузке дампа хорошо бы из него и палитру фара доставать/отдавать");
 	m_Rgn.PrepareTransparent(pFI, mp_RCon->mp_VCon->GetColors(), pSbi, pChar, pAttr, nWidth, nHeight);
 
+	free(pFI);
+
 	#ifdef _DEBUG
 	int nCount = m_Rgn.GetDetectedDialogs(0,NULL,NULL);
 
