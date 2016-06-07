@@ -14000,7 +14000,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 					if (pArg->bNeedFree)
 					{
-						free(pArg);
+						delete pArg;
 					}
 				}
 				return lFnRc;
