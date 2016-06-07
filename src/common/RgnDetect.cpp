@@ -78,6 +78,10 @@ CRgnDetect::CRgnDetect()
 
 CRgnDetect::~CRgnDetect()
 {
+	if (mb_SelfBuffers && mp_FarInfo)
+	{
+		free((CEFAR_INFO_MAPPING *)mp_FarInfo); mp_FarInfo = NULL;
+	}
 	if (mpsz_Chars)
 	{
 		free(mpsz_Chars); mpsz_Chars = NULL;
@@ -1987,7 +1991,12 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
                                     wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight)
 {
 	_ASSERTE(pAttr!=mp_Attrs);
+	if (mb_SelfBuffers && mp_FarInfo)
+	{
+		free((CEFAR_INFO_MAPPING *)mp_FarInfo);
+	}
 	mp_FarInfo = apFarInfo;
+	mb_SelfBuffers = TRUE;
 	mp_Colors = apColors;
 	_ASSERTE(mp_Colors && (mp_Colors[1] || mp_Colors[2]));
 	_ASSERTE(pChar[nWidth*nHeight] == 0); // Должен быть ASCIIZ
