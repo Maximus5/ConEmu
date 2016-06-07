@@ -484,6 +484,11 @@
       <File RelativePath=".\OptionsClass.cpp" />
       <File RelativePath=".\OptionsFast.cpp" />
       <File RelativePath=".\OptionsHelp.cpp" />
+      <File RelativePath=".\OptTypeApps.cpp" />
+      <File RelativePath=".\OptTypeColors.cpp" />
+      <File RelativePath=".\OptTypeComSpec.cpp" />
+      <File RelativePath=".\OptTypeHistory.cpp" />
+      <File RelativePath=".\OptTypeTasks.cpp" />
       <File RelativePath=".\PushInfo.cpp" />
       <File RelativePath=".\RConData.cpp" />
       <File RelativePath=".\RConFiles.cpp" />
@@ -677,6 +682,11 @@
       <File RelativePath=".\OptionsClass.h" />
       <File RelativePath=".\OptionsFast.h" />
       <File RelativePath=".\OptionsHelp.h" />
+      <File RelativePath=".\OptTypeApps.h" />
+      <File RelativePath=".\OptTypeColors.h" />
+      <File RelativePath=".\OptTypeComSpec.h" />
+      <File RelativePath=".\OptTypeHistory.h" />
+      <File RelativePath=".\OptTypeTasks.h" />
       <File RelativePath=".\PushInfo.h" />
       <File RelativePath=".\RConData.h" />
       <File RelativePath=".\RConFiles.h" />

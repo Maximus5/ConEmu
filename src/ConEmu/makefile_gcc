@@ -116,6 +116,11 @@ SRCS = \
 		OptionsClass.cpp   \
 		OptionsFast.cpp    \
 		OptionsHelp.cpp    \
+		OptTypeApps.cpp    \
+		OptTypeColors.cpp  \
+		OptTypeComSpec.cpp \
+		OptTypeHistory.cpp \
+		OptTypeTasks.cpp   \
 		PushInfo.cpp       \
 		RConData.cpp       \
 		RConFiles.cpp      \

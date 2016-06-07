@@ -1025,6 +1025,11 @@
     <ClCompile Include="OptionsClass.cpp" />
     <ClCompile Include="OptionsFast.cpp" />
     <ClCompile Include="OptionsHelp.cpp" />
+    <ClCompile Include="OptTypeApps.cpp" />
+    <ClCompile Include="OptTypeColors.cpp" />
+    <ClCompile Include="OptTypeComSpec.cpp" />
+    <ClCompile Include="OptTypeHistory.cpp" />
+    <ClCompile Include="OptTypeTasks.cpp" />
     <ClCompile Include="PushInfo.cpp" />
     <ClCompile Include="RConData.cpp" />
     <ClCompile Include="RConFiles.cpp" />
@@ -1214,6 +1219,11 @@
     <ClInclude Include="OptionsClass.h" />
     <ClInclude Include="OptionsFast.h" />
     <ClInclude Include="OptionsHelp.h" />
+    <ClInclude Include="OptTypeApps.h" />
+    <ClInclude Include="OptTypeColors.h" />
+    <ClInclude Include="OptTypeComSpec.h" />
+    <ClInclude Include="OptTypeHistory.h" />
+    <ClInclude Include="OptTypeTasks.h" />
     <ClInclude Include="PushInfo.h" />
     <ClInclude Include="RConData.h" />
     <ClInclude Include="RConFiles.h" />

@@ -164,86 +164,87 @@ class Settings
 		bool IsConfigPartial; // true, if config has no task or start command
 
 	public:
-		CEOptionInt<L"DefaultBufferHeight"> DefaultBufferHeight;
-		CEOptionBool<L"AutoBufferHeight"> AutoBufferHeight; // Long console output
-		CEOptionBool<L"UseScrollLock"> UseScrollLock;
-		CEOptionInt<L"CmdOutputCP"> nCmdOutputCP;
-		private: CEOptionString<L"DefaultTerminalApps"> _psDefaultTerminalApps; // "|"-delimited
+		CEOptionInt<L"DefaultBufferHeight", 1000> DefaultBufferHeight;
+		CEOptionBool<L"AutoBufferHeight", true> AutoBufferHeight; // Long console output
+		CEOptionBool<L"UseScrollLock", true> UseScrollLock;
+		CEOptionInt<L"CmdOutputCP", 0> nCmdOutputCP;
+		CEOptionComSpec ComSpec; // Defaults are set in CEOptionComSpec::Reset
+		CEOptionStringDelim<L"DefaultTerminalApps", L"explorer.exe"> DefaultTerminalApps; // Stored as "|"-delimited string
 		private: CEOptionArray<COLORREF, 0x20, ColorTableIndexName/*"ColorTableNN" decimal*/, ColorTableDefaults/*<ConEmu>*/> Colors; // L"ColorTableNN", Colors[i]
-		public: CEOptionBool<L"FontAutoSize"> isFontAutoSize;
-		CEOptionBool<L"AutoRegisterFonts"> isAutoRegisterFonts;
-		CEOptionBool<L"TrueColorerSupport"> isTrueColorer;
-		CEOptionBool<L"VividColors"> isVividColors;
-		CEOptionByte<L"BackGround Image show"> isShowBgImage;
-		CEOptionStringFixed<L"BackGround Image",MAX_PATH> sBgImage;
-		CEOptionByte<L"bgImageDarker"> bgImageDarker;
-		CEOptionDWORD<L"bgImageColors"> nBgImageColors;
-		CEOptionByte<L"bgOperation"> bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
-		CEOptionByte<L"bgPluginAllowed"> isBgPluginAllowed;
-		CEOptionByte<L"AlphaValue"> nTransparent;
-		CEOptionBool<L"AlphaValueSeparate"> isTransparentSeparate;
-		CEOptionByte<L"AlphaValueInactive"> nTransparentInactive;
-		CEOptionBool<L"UserScreenTransparent"> isUserScreenTransparent;
-		CEOptionBool<L"ColorKeyTransparent"> isColorKeyTransparent;
-		CEOptionDWORD<L"ColorKeyValue"> nColorKeyValue;
-		CEOptionBool<L"SaveCmdHistory"> isSaveCmdHistory;
-		CEOptionString<L"CmdHistoryLocation"> psHistoryLocation;
-		CEOptionByte<L"StartType"> nStartType; // 0-cmd line, 1-cmd task file, 2-named task, 3-auto saved task (*StartupTask)
+		public: CEOptionBool<L"FontAutoSize", false> isFontAutoSize;
+		CEOptionBool<L"AutoRegisterFonts", true> isAutoRegisterFonts;
+		CEOptionBool<L"TrueColorerSupport", true> isTrueColorer;
+		CEOptionBool<L"VividColors", true> isVividColors;
+		CEOptionByte<L"BackGround Image show", 0> isShowBgImage;
+		CEOptionStringFixed<L"BackGround Image",MAX_PATH, L"%USERPROFILE%\\back.jpg"> sBgImage;
+		CEOptionByte<L"bgImageDarker", 255> bgImageDarker;
+		CEOptionDWORD<L"bgImageColors", (DWORD)-1> nBgImageColors;
+		CEOptionByteEnum<L"bgOperation",BackgroundOp, eUpLeft> bgOperation; // BackgroundOp {eUpLeft = 0, eStretch = 1, eTile = 2, ...}
+		CEOptionByte<L"bgPluginAllowed", 1> isBgPluginAllowed;
+		CEOptionByte<L"AlphaValue", 255> nTransparent;
+		CEOptionBool<L"AlphaValueSeparate", false> isTransparentSeparate;
+		CEOptionByte<L"AlphaValueInactive", 255> nTransparentInactive;
+		CEOptionBool<L"UserScreenTransparent", false> isUserScreenTransparent;
+		CEOptionBool<L"ColorKeyTransparent", false> isColorKeyTransparent;
+		CEOptionDWORD<L"ColorKeyValue", RGB(1,1,1)> nColorKeyValue;
+		CEOptionBool<L"SaveCmdHistory", true> isSaveCmdHistory;
+		//TODO: CEOptionString<L"CmdHistoryLocation"> psHistoryLocation;
+		CEOptionByteEnum<L"StartType",StartupType, start_Command> nStartType; // !!! POST VALIDATION IS REQUIRED !!!
 		CEOptionString<L"CmdLine"> psStartSingleApp;
 		CEOptionString<L"StartTasksFile"> psStartTasksFile;
 		CEOptionString<L"StartTasksName"> psStartTasksName;
 		CEOptionBool<L"StartFarFolders"> isStartFarFolders;
 		CEOptionBool<L"StartFarEditors"> isStartFarEditors;
-		CEOptionUInt<L"StartCreateDelay"> nStartCreateDelay; // RUNQUEUE_CREATE_LAG
+		CEOptionUInt<L"StartCreateDelay", RUNQUEUE_CREATE_LAG_DEF> nStartCreateDelay; // RUNQUEUE_CREATE_LAG
 		CEOptionBool<L"StoreTaskbarkTasks"> isStoreTaskbarkTasks;
 		CEOptionBool<L"StoreTaskbarCommands"> isStoreTaskbarCommands;
 		CEOptionStringFixed<L"FontName",LF_FACESIZE> inFont;
-		CEOptionBool<L"FontBold"> isBold;
-		CEOptionBool<L"FontItalic"> isItalic;
-		CEOptionUInt<L"Anti-aliasing"> mn_AntiAlias; //загружался как Quality
-		CEOptionByte<L"FontCharSet"> mn_LoadFontCharSet; // То что загружено изначально (или уже сохранено в реестр) // mb_CharSetWasSet = FALSE;
-		CEOptionUInt<L"FontSize"> FontSizeY;  // высота основного шрифта (загруженная из настроек!)
+		CEOptionBool<L"FontBold", false> isBold;
+		CEOptionBool<L"FontItalic", false> isItalic;
+		CEOptionUInt<L"Anti-aliasing", CLEARTYPE_NATURAL_QUALITY, get_antialias_default, antialias_validate> mn_AntiAlias;
+		CEOptionByte<L"FontCharSet", DEFAULT_CHARSET> mn_LoadFontCharSet; // Loaded or Saved to settings // !!! mb_CharSetWasSet = FALSE;
+		CEOptionUInt<L"FontSize",DEF_FONTSIZEY_P> FontSizeY;  // высота основного шрифта (загруженная из настроек!)
 		CEOptionUInt<L"FontSizeX"> FontSizeX;  // ширина основного шрифта
-		CEOptionUInt<L"FontSizeX3"> FontSizeX3; // ширина знакоместа при моноширинном режиме (не путать с FontSizeX2)
-		CEOptionBool<L"FontUseDpi"> FontUseDpi;
-		CEOptionBool<L"FontUseUnits"> FontUseUnits;
-		CEOptionBool<L"Anti-aliasing2"> isAntiAlias2;
-		CEOptionBool<L"HideCaption"> isHideCaption; // Hide caption when maximized
-		CEOptionBool<L"HideChildCaption"> isHideChildCaption; // Hide caption of child GUI applications, started in ConEmu tabs (PuTTY, Notepad, etc.)
-		CEOptionBool<L"FocusInChildWindows"> isFocusInChildWindows;
-		CEOptionBool<L"IntegralSize"> mb_IntegralSize;
-		CEOptionByte<L"QuakeStyle"> isQuakeStyle; // 0 - NoQuake, 1 - Quake, 2 - Quake+HideOnLoseFocus
-		CEOptionBool<L"Restore2ActiveMon"> isRestore2ActiveMon;
-		protected: CEOptionBool<L"HideCaptionAlways"> mb_HideCaptionAlways;
-		public: CEOptionByte<L"HideCaptionAlwaysFrame"> nHideCaptionAlwaysFrame;
-		CEOptionUInt<L"HideCaptionAlwaysDelay"> nHideCaptionAlwaysDelay;
-		CEOptionUInt<L"HideCaptionAlwaysDisappear"> nHideCaptionAlwaysDisappear;
-		CEOptionBool<L"DownShowHiddenMessage"> isDownShowHiddenMessage;
-		CEOptionBool<L"DownShowExOnTopMessage"> isDownShowExOnTopMessage;
-		CEOptionBool<L"AlwaysOnTop"> isAlwaysOnTop;
-		CEOptionBool<L"SnapToDesktopEdges"> isSnapToDesktopEdges;
-		CEOptionBool<L"ExtendUCharMap"> isExtendUCharMap;
-		CEOptionBool<L"DisableMouse"> isDisableMouse;
-		CEOptionBool<L"MouseSkipActivation"> isMouseSkipActivation;
-		CEOptionBool<L"MouseSkipMoving"> isMouseSkipMoving;
-		CEOptionBool<L"MouseDragWindow"> isMouseDragWindow;
-		CEOptionBool<L"FarHourglass"> isFarHourglass;
-		CEOptionUInt<L"FarHourglassDelay"> nFarHourglassDelay;
-		CEOptionByte<L"DisableFarFlashing"> isDisableFarFlashing; // if (isDisableFarFlashing>2) isDisableFarFlashing = 2;
-		CEOptionUInt<L"DisableAllFlashing"> isDisableAllFlashing; // if (isDisableAllFlashing>2) isDisableAllFlashing = 2;
-		CEOptionBool<L"CTSIntelligent"> isCTSIntelligent;
-		private: CEOptionString<L"CTSIntelligentExceptions"> _pszCTSIntelligentExceptions; // "|" delimited! // Don't use IntelliSel in these app-processes
-		public: CEOptionBool<L"CTS.AutoCopy"> isCTSAutoCopy;
-		CEOptionBool<L"CTS.ResetOnRelease"> isCTSResetOnRelease;
-		CEOptionBool<L"CTS.IBeam"> isCTSIBeam;
-		CEOptionByte<L"CTS.EndOnTyping"> isCTSEndOnTyping; // 0 - off, 1 - copy & reset, 2 - reset only
-		CEOptionBool<L"CTS.EndOnKeyPress"> isCTSEndOnKeyPress; // +isCTSEndOnTyping. +все, что не генерит WM_CHAR (стрелки и пр.)
-		CEOptionBool<L"CTS.EraseBeforeReset"> isCTSEraseBeforeReset;
-		CEOptionBool<L"CTS.Freeze"> isCTSFreezeBeforeSelect;
-		CEOptionBool<L"CTS.SelectBlock"> isCTSSelectBlock;
-		CEOptionBool<L"CTS.SelectText"> isCTSSelectText;
-		CEOptionByte<L"CTS.HtmlFormat"> isCTSHtmlFormat; // 0 - Plain text only, 1 - HTML formatting, 2 - Copy as HTML, 3 - ANSI sequences
-		CEOptionDWORD<L"CTS.ForceLocale"> isCTSForceLocale; // Try to bypass clipboard locale problems (pasting to old non-unicode apps)
+		CEOptionUInt<L"FontSizeX3",0> FontSizeX3; // ширина знакоместа при моноширинном режиме (не путать с FontSizeX2)
+		CEOptionBool<L"FontUseDpi",true> FontUseDpi;
+		CEOptionBool<L"FontUseUnits",false> FontUseUnits;
+		CEOptionBool<L"Anti-aliasing2",false> isAntiAlias2; // disabled by default to avoid dashed framed
+		CEOptionBool<L"HideCaption",false> isHideCaption; // Hide caption when maximized
+		CEOptionBool<L"HideChildCaption",true> isHideChildCaption; // Hide caption of child GUI applications, started in ConEmu tabs (PuTTY, Notepad, etc.)
+		CEOptionBool<L"FocusInChildWindows",true> isFocusInChildWindows;
+		CEOptionBool<L"IntegralSize",false> mb_IntegralSize;
+		CEOptionByteEnum<L"QuakeStyle",ConEmuQuakeMode, quake_Disabled> isQuakeStyle;
+		CEOptionBool<L"Restore2ActiveMon",false> isRestore2ActiveMon;
+		protected: CEOptionBool<L"HideCaptionAlways",false> mb_HideCaptionAlways;
+		public: CEOptionByte<L"HideCaptionAlwaysFrame",HIDECAPTIONALWAYSFRAME_DEF> nHideCaptionAlwaysFrame;
+		CEOptionUInt<L"HideCaptionAlwaysDelay",2000> nHideCaptionAlwaysDelay;
+		CEOptionUInt<L"HideCaptionAlwaysDisappear",2000> nHideCaptionAlwaysDisappear;
+		CEOptionBool<L"DownShowHiddenMessage",false> isDownShowHiddenMessage;
+		CEOptionBool<L"DownShowExOnTopMessage",false> isDownShowExOnTopMessage;
+		CEOptionBool<L"AlwaysOnTop",false> isAlwaysOnTop;
+		CEOptionBool<L"SnapToDesktopEdges",false> isSnapToDesktopEdges;
+		CEOptionBool<L"ExtendUCharMap",true> isExtendUCharMap; // !!! FAR
+		CEOptionBool<L"DisableMouse",false> isDisableMouse;
+		CEOptionBool<L"MouseSkipActivation",true> isMouseSkipActivation;
+		CEOptionBool<L"MouseSkipMoving",true> isMouseSkipMoving;
+		CEOptionBool<L"MouseDragWindow",true> isMouseDragWindow;
+		CEOptionBool<L"FarHourglass",true> isFarHourglass;
+		CEOptionUInt<L"FarHourglassDelay",500> nFarHourglassDelay;
+		CEOptionByte<L"DisableFarFlashing",false> isDisableFarFlashing; // if (isDisableFarFlashing>2) isDisableFarFlashing = 2;
+		CEOptionUInt<L"DisableAllFlashing",false> isDisableAllFlashing; // if (isDisableAllFlashing>2) isDisableAllFlashing = 2;
+		CEOptionBool<L"CTSIntelligent",true> isCTSIntelligent;
+		private: CEOptionStringDelim<L"CTSIntelligentExceptions", L"far|vim"> _pszCTSIntelligentExceptions; // !!! "|" delimited! // Don't use IntelliSel in these app-processes
+		public: CEOptionBool<L"CTS.AutoCopy",true> isCTSAutoCopy;
+		CEOptionBool<L"CTS.ResetOnRelease",false> isCTSResetOnRelease;
+		CEOptionBool<L"CTS.IBeam",true> isCTSIBeam;
+		CEOptionByteEnum<L"CTS.EndOnTyping",CTSEndOnTyping, ceot_Off> isCTSEndOnTyping;
+		CEOptionBool<L"CTS.EndOnKeyPress",false> isCTSEndOnKeyPress; // +isCTSEndOnTyping. +все, что не генерит WM_CHAR (стрелки и пр.)
+		CEOptionBool<L"CTS.EraseBeforeReset",true> isCTSEraseBeforeReset;
+		CEOptionBool<L"CTS.Freeze",false> isCTSFreezeBeforeSelect;
+		CEOptionBool<L"CTS.SelectBlock",true> isCTSSelectBlock;
+		CEOptionBool<L"CTS.SelectText",true> isCTSSelectText;
+		CEOptionByteEnum<L"CTS.HtmlFormat",CTSCopyFormat, CTSFormatText> isCTSHtmlFormat; // MinMax(CTSFormatANSI)
+		CEOptionDWORD<L"CTS.ForceLocale", RELEASEDEBUGTEST(0,0x0419/*russian in debug*/)> isCTSForceLocale; // Try to bypass clipboard locale problems (pasting to old non-unicode apps)
 		CEOptionByte<L"CTS.ActMode"> isCTSActMode; // режим и модификатор разрешения действий правой и средней кнопки мышки
 		CEOptionByte<L"CTS.RBtnAction"> isCTSRBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
 		CEOptionByte<L"CTS.MBtnAction"> isCTSMBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
@@ -393,10 +394,6 @@ class Settings
 		CEOptionBool<L"ConVisible"> isConVisible; /* *** Debugging *** */
 
 	public:
-
-
-
-		ConEmuComspec ComSpec;
 
 		//reg->LoadMSZ(L"EnvironmentSet", psEnvironmentSet);
 		wchar_t* psEnvironmentSet; // commands: multiline, "\r\n" separated
@@ -821,4 +818,9 @@ class Settings
 		wchar_t* GetStoragePlaceDescr(const SettingsStorage* apStorage, LPCWSTR asPrefix);
 
 		void GetSettingsType(SettingsStorage& Storage, bool& ReadOnly);
+
+	protected:
+		// defaults
+		static u32 antialias_default();
+		static bool antialias_validate(u32& val);
 };

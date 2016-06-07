@@ -6204,3 +6204,21 @@ void Settings::SaveHotkeys(SettingsBase* reg, int SaveDescrLangID /*= 0*/)
 
 	reg->CloseKey();
 }
+
+u32 Settings::antialias_default()
+{
+	u32 value;
+	BOOL bClearType = FALSE;
+	if (SystemParametersInfo(SPI_GETCLEARTYPE, 0, &bClearType, 0) && bClearType)
+		value = CLEARTYPE_NATURAL_QUALITY;
+	else
+		value = ANTIALIASED_QUALITY;
+	return value;
+}
+bool Settings::antialias_validate(u32& val)
+{
+	// Must be explicitly defined, 0 - not allowed
+	if (val != NONANTIALIASED_QUALITY && val != ANTIALIASED_QUALITY && val != CLEARTYPE_NATURAL_QUALITY)
+		val = NONANTIALIASED_QUALITY;
+	return true;
+}

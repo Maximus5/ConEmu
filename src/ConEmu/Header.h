@@ -433,6 +433,13 @@ enum ConEmuWindowMode
 	wmFullScreen = rFullScreen,
 };
 
+enum ConEmuQuakeMode
+{
+	quake_Disabled = 0,
+	quake_Standard = 1,
+	quake_HideOnLoseFocus = 2,
+};
+
 LPCWSTR GetWindowModeName(ConEmuWindowMode wm);
 
 enum ExpandTextRangeType
@@ -477,6 +484,14 @@ enum BackgroundOp
 	eCenter = 8,
 	//
 	eOpLast = eCenter,
+};
+
+enum StartupType
+{
+	start_Command = 0,
+	start_File = 1, // @cmd task file
+	start_Task = 2, // {named task}
+	start_Auto = 3, // <auto saved task> (*StartupTask)
 };
 
 enum ToolbarMainBitmapIdx
@@ -533,7 +548,21 @@ enum CECopyMode
 	cm_CopyInt = 3, // Copy current selection into internal CEStr
 };
 
-#define CTSFormatDefault 0xFF /* use gpSet->isCTSHtmlFormat */
+enum CTSEndOnTyping
+{
+	ceot_Off = 0,
+	ceot_CopyReset = 1,
+	ceot_Reset = 2,
+};
+
+enum CTSCopyFormat
+{
+	CTSFormatText = 0,
+	CTSFormatHtmlData = 1,   // ready to paste formatted text in word processing
+	CTSFormatHtmlText = 2,   // RAW HTML copied to clipboard
+	CTSFormatANSI = 3,       // ANSI sequences
+	CTSFormatDefault = 0xFF, // default arg for functions, use gpSet->isCTSHtmlFormat
+};
 
 enum CEPasteMode
 {

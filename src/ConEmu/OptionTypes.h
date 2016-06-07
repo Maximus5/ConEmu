@@ -379,7 +379,7 @@ template <const wchar_t* OptionName, const wchar_t* Default = NULL>
 class CEOptionStringMSZ : public CEOptionBaseImpl<wchar_t*, OptionName>;
 
 
-// Simple 'u8' ('BYTE'), may be subclassed as `enum`?
+// Simple 'u8' ('BYTE')
 template <const wchar_t* OptionName, u8 Default = 0, bool (*validate_fn)(u8& value)=NULL>
 class CEOptionByte : public CEOptionBaseImpl<u8, OptionName, validate_fn>
 {
@@ -391,6 +391,40 @@ public:
 
 	virtual ~CEOptionByte()
 	{
+	};
+};
+
+// Enum, stored as simple 'u8' ('BYTE')
+template <const wchar_t* OptionName, typename T, const T Default = (const T)0, bool (*validate_fn)(T& value)=NULL>
+class CEOptionByteEnum : public CEOptionBaseImpl<T, OptionName, validate_fn>
+{
+public:
+	CEOptionByteEnum()
+	{
+		Reset();
+	};
+
+	virtual ~CEOptionByteEnum()
+	{
+	};
+
+	virtual bool Load(SettingsBase* reg) override
+	{
+		if (!reg)
+			return false;
+		u8 value;
+		if (!reg->Load(ms_Name, &value))
+			return false;
+		return Set(value);
+	};
+
+	virtual bool Save(SettingsBase* reg) const override
+	{
+		if (!reg)
+			return false;
+		if (!reg->Save(ms_Name, (u8)m_Value))
+			return false;
+		return true;
 	};
 };
 
@@ -415,7 +449,7 @@ public:
 };
 
 // Simple 'u32' ('UINT'), stored as decimal unsigned integer
-template <const wchar_t* OptionName, u32 Default = 0, bool (*validate_fn)(u32& value)=NULL>
+template <const wchar_t* OptionName, u32 Default = 0, u32 (*get_default)(), bool (*validate_fn)(u32& value)=NULL>
 class CEOptionUInt : public CEOptionBaseImpl<u32, OptionName, validate_fn>
 {
 public:
@@ -430,7 +464,7 @@ public:
 
 	virtual void Reset() override
 	{
-		Set(Default);
+		Set(get_default ? get_default() : Default);
 	};
 };
 
@@ -458,3 +492,9 @@ public:
 // CESize
 template <const wchar_t* OptionName, DWORD Default = 0, bool (*validate_fn)(DWORD& value)=NULL>
 class CEOptionSize : public CEOptionBaseImpl<DWORD, OptionName, validate_fn>;
+
+
+
+// ComSpec
+// class CEOptionComSpec : public CEOptionBase, public ConEmuComspec
+#include "OptTypeComSpec.h"

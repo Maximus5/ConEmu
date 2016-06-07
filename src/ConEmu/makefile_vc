@@ -112,6 +112,11 @@ $(INTDIR)\Options.obj \
 $(INTDIR)\OptionsClass.obj \
 $(INTDIR)\OptionsFast.obj \
 $(INTDIR)\OptionsHelp.obj \
+$(INTDIR)\OptTypeApps.obj \
+$(INTDIR)\OptTypeColors.obj \
+$(INTDIR)\OptTypeComSpec.obj \
+$(INTDIR)\OptTypeHistory.obj \
+$(INTDIR)\OptTypeTasks.obj \
 $(INTDIR)\ProcessSetEnv.obj \
 $(INTDIR)\PushInfo.obj \
 $(INTDIR)\RConData.obj \
@@ -498,6 +503,16 @@ $(INTDIR)\OptionsClass.obj: OptionsClass.cpp OptionsClass.h Options.h Background
 $(INTDIR)\OptionsFast.obj: OptionsFast.cpp OptionsFast.h Options.h
 
 $(INTDIR)\OptionsHelp.obj: OptionsHelp.cpp OptionsHelp.h
+
+$(INTDIR)\OptTypeApps.obj: OptTypeApps.cpp OptTypeApps.h
+
+$(INTDIR)\OptTypeColors.obj: OptTypeColors.cpp OptTypeColors.h
+
+$(INTDIR)\OptTypeComSpec.obj: OptTypeComSpec.cpp OptTypeComSpec.h
+
+$(INTDIR)\OptTypeHistory.obj: OptTypeHistory.cpp OptTypeHistory.h
+
+$(INTDIR)\OptTypeTasks.obj: OptTypeTasks.cpp OptTypeTasks.h
 
 $(INTDIR)\ProcessSetEnv.obj: ../common/ProcessSetEnv.cpp ../common/ProcessSetEnv.h
 
