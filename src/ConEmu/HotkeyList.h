@@ -42,6 +42,7 @@ public:
 	void ReleaseHotkeys();
 	const ConEmuHotKey* GetHotKeyPtr(int idx);
 	const ConEmuHotKey* GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon);
+	const ConEmuHotKey* FindHotKey(const ConEmuChord& VkState, CRealConsole* pRCon);
 public:
 	void UpdateNumberModifier();
 	void UpdateArrowModifier();

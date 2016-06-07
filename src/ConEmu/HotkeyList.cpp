@@ -125,7 +125,8 @@ const ConEmuHotKey* ConEmuHotKeyList::GetHotKeyPtr(int idx)
 }
 
 // pRCon may be NULL
-const ConEmuHotKey* ConEmuHotKeyList::GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon)
+// Returns either NULL or valid pointer to ConEmuHotKey
+const ConEmuHotKey* ConEmuHotKeyList::FindHotKey(const ConEmuChord& VkState, CRealConsole* pRCon)
 {
 	// На сами модификаторы - действий не вешается
 	switch (VkState.Vk)
@@ -183,6 +184,15 @@ const ConEmuHotKey* ConEmuHotKeyList::GetHotKeyInfo(const ConEmuChord& VkState, 
 			_ASSERTE(pi->fkey!=NULL);
 		}
 	}
+
+	return p;
+}
+
+// pRCon may be NULL
+// Returns: NULL, ConEmuSkipHotKey, or valid pointer to ConEmuHotKey
+const ConEmuHotKey* ConEmuHotKeyList::GetHotKeyInfo(const ConEmuChord& VkState, bool bKeyDown, CRealConsole* pRCon)
+{
+	const ConEmuHotKey* p = FindHotKey(VkState, pRCon);
 
 	// Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
 	if (p)
