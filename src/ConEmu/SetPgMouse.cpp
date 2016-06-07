@@ -86,6 +86,7 @@ INT_PTR CSetPgMouse::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 				BYTE VkMod = 0;
 				CSetDlgLists::GetListBoxItem(hDlg, lbCTSActAlways, CSetDlgLists::eKeysAct, VkMod);
 				gpSet->SetHotkeyById(vkCTSVkAct, VkMod);
+				gpSetCls->CheckSelectionModifiers(hDlg);
 			} break;
 		case lbCTSRBtnAction:
 			{

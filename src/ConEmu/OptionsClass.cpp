@@ -1383,6 +1383,7 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 {
 	struct {
 		WORD nCtrlID;
+		UINT nMouseBtn;
 		LPCWSTR Descr;
 		TabHwndIndex nDlgID;
 		bool bEnabled;
@@ -1392,15 +1393,17 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 		BYTE Vk;
 		HWND hPage;
 	} Keys[] = {
-		{lbCTSBlockSelection, L"Block selection", thi_MarkCopy, gpSet->isCTSSelectBlock, vkCTSVkBlock},
-		{lbCTSTextSelection, L"Text selection", thi_MarkCopy, gpSet->isCTSSelectText, vkCTSVkText},
-		{lbCTSClickPromptPosition, L"Prompt position", thi_Mouse, gpSet->AppStd.isCTSClickPromptPosition!=0, vkCTSVkPromptClk, true},
+		{lbCTSBlockSelection, VK_LBUTTON, L"Block selection", thi_MarkCopy, gpSet->isCTSSelectBlock, vkCTSVkBlock},
+		{lbCTSTextSelection, VK_LBUTTON, L"Text selection", thi_MarkCopy, gpSet->isCTSSelectText, vkCTSVkText},
+		{lbCTSClickPromptPosition, VK_LBUTTON, L"Prompt position", thi_Mouse, gpSet->AppStd.isCTSClickPromptPosition!=0, vkCTSVkPromptClk, true},
+		{lbCTSActAlways, VK_MBUTTON, L"Mouse button actions", thi_Mouse, gpSet->isCTSActMode!=2, vkCTSVkAct},
+		{lbCTSActAlways, VK_RBUTTON, L"Mouse button actions", thi_Mouse, gpSet->isCTSActMode!=2, vkCTSVkAct},
 
 		// Don't check it?
 		// -- {lbFarGotoEditorVk, L"Highlight and goto", ..., gpSet->isFarGotoEditor},
 
 		// Far manager only
-		{lbLDragKey, L"Far Manager LDrag", thi_Far, (gpSet->isDragEnabled & DRAG_L_ALLOWED)!=0, vkLDragKey},
+		{lbLDragKey, VK_LBUTTON, L"Far Manager LDrag", thi_Far, (gpSet->isDragEnabled & DRAG_L_ALLOWED)!=0, vkLDragKey},
 		{0},
 	};
 
@@ -1437,16 +1440,41 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 				continue;
 
 			if ((Keys[i].Vk == Keys[j].Vk)
+				&& (Keys[i].nMouseBtn == Keys[j].nMouseBtn)
 				&& ((Keys[i].hPage == hWnd2) || (Keys[j].hPage == hWnd2))
 				)
 			{
-				wchar_t szInfo[255];
-				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"You must set different\nmodifiers for\n<%s> and\n<%s>", Keys[i].Descr, Keys[j].Descr);
+				wchar_t szMod[32] = L"";
+				ConEmuHotKey::GetVkKeyName(Keys[i].Vk, szMod, true);
+				CEStr szInfo;
+				ConEmuHotKey::CreateNotUniqueWarning(szMod, Keys[i].Descr, Keys[j].Descr, szInfo);
 				HWND hDlg = hWnd2;
 				WORD nID = (Keys[j].hPage == hWnd2) ? Keys[j].nCtrlID : Keys[i].nCtrlID;
 				ShowModifierErrorTip(szInfo, hDlg, nID);
 				return;
 			}
+		}
+	}
+
+	// At last, compare with explicitly set hotkeys
+	for (size_t i = 0; Keys[i+1].nCtrlID; i++)
+	{
+		if (!Keys[i].bEnabled)
+			continue;
+		ConEmuHotKey check;
+		check.SetVkMod(ConEmuHotKey::MakeHotKey(Keys[i].nMouseBtn, Keys[i].Vk));
+		const ConEmuHotKey* pFound = gpHotKeys->FindHotKey(check.Key, NULL);
+		if (pFound)
+		{
+			wchar_t szMod[32] = L"", szDescr2[512];
+			ConEmuHotKey::GetVkKeyName(Keys[i].Vk, szMod, true);
+			pFound->GetDescription(szDescr2, countof(szDescr2));
+			CEStr szFailMsg;
+			ConEmuHotKey::CreateNotUniqueWarning(szMod, Keys[i].Descr, szDescr2, szFailMsg);
+			HWND hDlg = hWnd2;
+			WORD nID = Keys[i].nCtrlID;
+			ShowModifierErrorTip(szFailMsg, hDlg, nID);
+			return;
 		}
 	}
 }
