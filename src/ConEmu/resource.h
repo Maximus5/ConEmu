@@ -346,8 +346,6 @@
 #define cbBgAllowPlugin                 1734
 #define cbTabsInCaption                 1735
 #define cbAlwaysShowTrayIcon            1736
-#define rbCTSActAlways                  1737
-#define rbCTSActBufferOnly              1738
 #define cbLogShellActivity              1740
 #define cbLogInputActivity              1741
 #define lbActivityLog                   1742
@@ -1336,6 +1334,7 @@
 #define gbChildGui                      3059
 #define cbMouseDragWindow               3060
 #define cbUseAltGrayPlus                3061
+#define stCTSRMCondition                3062
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1344,7 +1343,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        235
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3062
+#define _APS_NEXT_CONTROL_VALUE         3063
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

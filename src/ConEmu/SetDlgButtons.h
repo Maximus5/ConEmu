@@ -222,7 +222,6 @@ protected:
 	static void OnBtn_UserScreenTransparent(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ColorKeyTransparent(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSIntelligent(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_CTSActConditionRadio(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSFreezeBeforeSelect(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSAutoCopy(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CTSResetOnRelease(HWND hDlg, WORD CB, BYTE uCheck);

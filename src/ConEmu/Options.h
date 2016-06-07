@@ -544,20 +544,6 @@ struct Settings
 		//reg->Load(L"CTS.ForceLocale", isCTSForceLocale);
 		DWORD isCTSForceLocale; // Try to bypass clipboard locale problems (pasting to old non-unicode apps)
 
-		////reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
-		//BYTE isCTSClickPromptPosition; // & vkCTSVkPromptClk
-		//reg->Load(L"CTS.VkBlock", isCTSVkBlock);
-		//BYTE isCTSVkBlock; // модификатор запуска выделения мышкой
-		//reg->Load(L"CTS.VkBlockStart", vmCTSVkBlockStart);
-		//DWORD vmCTSVkBlockStart; // кнопка начала выделения вертикального блока
-		//reg->Load(L"CTS.VkText", isCTSVkText);
-		//BYTE isCTSVkText; // модификатор запуска выделения мышкой
-		//reg->Load(L"CTS.VkTextStart", vmCTSVkTextStart);
-		//DWORD vmCTSVkTextStart; // кнопка начала выделения текстового блока
-		//reg->Load(L"CTS.ActMode", isCTSActMode);
-		BYTE isCTSActMode; // режим и модификатор разрешения действий правой и средней кнопки мышки
-		//reg->Load(L"CTS.VkAct", isCTSVkAct);
-		//BYTE isCTSVkAct; // режим и модификатор разрешения действий правой и средней кнопки мышки
 		//reg->Load(L"CTS.RBtnAction", isCTSRBtnAction);
 		BYTE isCTSRBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
 		//reg->Load(L"CTS.MBtnAction", isCTSMBtnAction);

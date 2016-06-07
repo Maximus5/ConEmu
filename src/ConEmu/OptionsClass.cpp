@@ -1396,8 +1396,8 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 		{lbCTSBlockSelection, VK_LBUTTON, L"Block selection", thi_MarkCopy, gpSet->isCTSSelectBlock, vkCTSVkBlock},
 		{lbCTSTextSelection, VK_LBUTTON, L"Text selection", thi_MarkCopy, gpSet->isCTSSelectText, vkCTSVkText},
 		{lbCTSClickPromptPosition, VK_LBUTTON, L"Prompt position", thi_Mouse, gpSet->AppStd.isCTSClickPromptPosition!=0, vkCTSVkPromptClk, true},
-		{lbCTSActAlways, VK_MBUTTON, L"Mouse button actions", thi_Mouse, gpSet->isCTSActMode!=2, vkCTSVkAct},
-		{lbCTSActAlways, VK_RBUTTON, L"Mouse button actions", thi_Mouse, gpSet->isCTSActMode!=2, vkCTSVkAct},
+		{lbCTSActAlways, VK_MBUTTON, L"Mouse button actions", thi_Mouse, true/*gpSet->isCTSActMode!=2*/, vkCTSVkAct},
+		{lbCTSActAlways, VK_RBUTTON, L"Mouse button actions", thi_Mouse, true/*gpSet->isCTSActMode!=2*/, vkCTSVkAct},
 
 		// Don't check it?
 		// -- {lbFarGotoEditorVk, L"Highlight and goto", ..., gpSet->isFarGotoEditor},
@@ -1461,6 +1461,8 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 	{
 		if (!Keys[i].bEnabled)
 			continue;
+		//if (!Keys[i].Vk) // Check or skip?
+		//	continue;
 		ConEmuHotKey check;
 		check.SetVkMod(ConEmuHotKey::MakeHotKey(Keys[i].nMouseBtn, Keys[i].Vk));
 		const ConEmuHotKey* pFound = gpHotKeys->FindHotKey(check.Key, NULL);

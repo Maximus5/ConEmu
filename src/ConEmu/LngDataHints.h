@@ -183,6 +183,7 @@ static LngPredefined gsDataHints[] = {
 	{ cbUserScreenTransparent, L"Turn on ‘User screen’ transparency, when panel(s) is lifted up or hided. You may temporary reveal ‘User screen’ by depressing Ctrl-Alt-Shift." },
 	{ cbVisible,               L"Show real console on startup" },
 	{ cbVividColors,           L"Change lightness of text if color difference\r\nbetween text and background is indistinguishable" },
+	{ lbCTSActAlways,          L"Choose required pressed modifier for actions\r\n<No-Mod> is ignored in Far Manager to bypass\r\n mouse button clicks to console" },
 	{ lbCTSBlockSelection,     L"Choose modifier to starting ‘Block selection’ with mouse LeftClick+Drag" },
 	{ lbCTSEOL,                L"Choose preferred line separator (\\r\\n, \\n or \\r)" },
 	{ lbCTSTextSelection,      L"Choose modifier to starting ‘Text selection’ with mouse LeftClick+Drag" },

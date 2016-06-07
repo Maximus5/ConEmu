@@ -716,10 +716,6 @@ void Settings::InitSettings()
 	#ifdef _DEBUG
 	isCTSForceLocale = 0x0419; // russian locale
 	#endif
-	//vmCTSVkBlockStart = 0; // при желании, пользователь может назначить hotkey запуска выделения
-	//vmCTSVkTextStart = 0;  // при желании, пользователь может назначить hotkey запуска выделения
-	isCTSActMode = 2; // BufferOnly
-	//isCTSVkAct = 0; // т.к. по умолчанию - только BufferOnly, то вообще без модификаторов
 	isCTSRBtnAction = 3; // Auto (Выделения нет - Paste, Есть - Copy)
 	isCTSMBtnAction = 0; // <None>
 	isCTSColorIndex = DefaultSelectionConsoleColor/*0xE0*/;
@@ -2645,13 +2641,6 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"CTS.SelectText", isCTSSelectText);
 		reg->Load(L"CTS.HtmlFormat", isCTSHtmlFormat);
 		reg->Load(L"CTS.ForceLocale", isCTSForceLocale);
-		//reg->Load(L"CTS.ClickPromptPosition", isCTSClickPromptPosition); if (isCTSClickPromptPosition > 2) isCTSClickPromptPosition = 2;
-		//reg->Load(L"CTS.VkText", isCTSVkText);
-		//LoadVkMod(reg, L"CTS.VkTextStart", vmCTSVkTextStart, vmCTSVkTextStart);
-
-		reg->Load(L"CTS.ActMode", isCTSActMode); if (!isCTSActMode || isCTSActMode>2) isCTSActMode = 2;
-
-		//reg->Load(L"CTS.VkAct", isCTSVkAct);
 
 		reg->Load(L"CTS.RBtnAction", isCTSRBtnAction); if (isCTSRBtnAction>3) isCTSRBtnAction = 0;
 
@@ -3691,16 +3680,9 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"CTS.EraseBeforeReset", isCTSEraseBeforeReset);
 		reg->Save(L"CTS.Freeze", isCTSFreezeBeforeSelect);
 		reg->Save(L"CTS.SelectBlock", isCTSSelectBlock);
-		//reg->Save(L"CTS.VkBlock", isCTSVkBlock);
-		//reg->Save(L"CTS.VkBlockStart", vmCTSVkBlockStart);
 		reg->Save(L"CTS.SelectText", isCTSSelectText);
 		reg->Save(L"CTS.HtmlFormat", isCTSHtmlFormat);
 		reg->Save(L"CTS.ForceLocale", isCTSForceLocale);
-		//reg->Save(L"CTS.ClickPromptPosition", isCTSClickPromptPosition);
-		//reg->Save(L"CTS.VkText", isCTSVkText);
-		//reg->Save(L"CTS.VkTextStart", vmCTSVkTextStart);
-		reg->Save(L"CTS.ActMode", isCTSActMode);
-		//reg->Save(L"CTS.VkAct", isCTSVkAct);
 		reg->Save(L"CTS.RBtnAction", isCTSRBtnAction);
 		reg->Save(L"CTS.MBtnAction", isCTSMBtnAction);
 		reg->Save(L"CTS.ColorIndex", isCTSColorIndex);
@@ -3710,7 +3692,6 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 
 		reg->Save(L"FarGotoEditorOpt", isFarGotoEditor);
 		reg->Save(L"FarGotoEditorPath", sFarGotoEditor);
-		//reg->Save(L"FarGotoEditorVk", isFarGotoEditorVk);
 
 		reg->Save(L"HighlightMouseRow", isHighlightMouseRow);
 		reg->Save(L"HighlightMouseCol", isHighlightMouseCol);

@@ -3594,8 +3594,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		if (((gpSet->isCTSRBtnAction == 2/*Paste*/) || ((gpSet->isCTSRBtnAction == 3/*Auto*/) && !isSelectionPresent()))
 				&& (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONUP))
 		{
-			if (((gpSet->isCTSActMode == 2 && mp_RCon->isBufferHeight() && !mp_RCon->isFarBufferSupported())
-		            || (gpSet->isCTSActMode == 1 && gpSet->IsModifierPressed(vkCTSVkAct, true))))
+			if (gpSet->IsModifierPressed(vkCTSVkAct, !mp_RCon->isFar()))
 			{
 				if (messg == WM_RBUTTONUP)
 				{
@@ -3624,8 +3623,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		if (((gpSet->isCTSMBtnAction == 2) || ((gpSet->isCTSMBtnAction == 3) && !isSelectionPresent()))
 				&& (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONUP))
 		{
-			if (((gpSet->isCTSActMode == 2 && mp_RCon->isBufferHeight() && !mp_RCon->isFarBufferSupported())
-		            || (gpSet->isCTSActMode == 1 && gpSet->IsModifierPressed(vkCTSVkAct, true))))
+			if (gpSet->IsModifierPressed(vkCTSVkAct, !mp_RCon->isFar()))
 			{
 				if (messg == WM_MBUTTONUP)
 				{

@@ -648,9 +648,6 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbCTSIntelligent:
 			OnBtn_CTSIntelligent(hDlg, CB, uCheck);
 			break;
-		case rbCTSActAlways: case rbCTSActBufferOnly:
-			OnBtn_CTSActConditionRadio(hDlg, CB, uCheck);
-			break;
 		case cbCTSFreezeBeforeSelect:
 			OnBtn_CTSFreezeBeforeSelect(hDlg, CB, uCheck);
 			break;
@@ -3742,16 +3739,6 @@ void CSetDlgButtons::OnBtn_CTSIntelligent(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->isCTSIntelligent = _bool(uCheck);
 
 } // cbCTSIntelligent
-
-
-// rbCTSActAlways || rbCTSActBufferOnly
-void CSetDlgButtons::OnBtn_CTSActConditionRadio(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB== rbCTSActAlways || CB==rbCTSActBufferOnly);
-
-	gpSet->isCTSActMode = (CB==rbCTSActAlways) ? 1 : 2;
-
-} // rbCTSActAlways || rbCTSActBufferOnly
 
 
 // cbCTSFreezeBeforeSelect

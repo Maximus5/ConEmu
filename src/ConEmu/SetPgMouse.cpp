@@ -57,7 +57,6 @@ LRESULT CSetPgMouse::OnInitDialog(HWND hDlg, bool abInitial)
 	UINT VkMod = gpSet->GetHotkeyById(vkCTSVkPromptClk);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSClickPromptPosition), CSetDlgLists::eKeysAct, VkMod, false);
 
-	checkDlgButton(hDlg, (gpSet->isCTSActMode==1)?rbCTSActAlways:rbCTSActBufferOnly, BST_CHECKED);
 	VkMod = gpSet->GetHotkeyById(vkCTSVkAct);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSActAlways), CSetDlgLists::eKeysAct, VkMod, false);
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSRBtnAction), CSetDlgLists::eClipAct, gpSet->isCTSRBtnAction, false);
