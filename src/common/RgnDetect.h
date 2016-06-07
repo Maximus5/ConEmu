@@ -184,7 +184,6 @@ class CRgnDetect
 
 	protected:
 		// Members
-		bool    mb_SelfBuffers;
 		const CEFAR_INFO_MAPPING *mp_FarInfo;
 		const COLORREF *mp_Colors;
 		CONSOLE_SCREEN_BUFFER_INFO m_sbi;

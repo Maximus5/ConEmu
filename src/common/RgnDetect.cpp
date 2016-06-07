@@ -51,7 +51,6 @@ static bool gbInTransparentAssert = false;
 
 CRgnDetect::CRgnDetect()
 {
-	mb_SelfBuffers = FALSE;
 	mn_DetectCallCount = 0;
 	mn_AllFlagsSaved = 0;
 	memset(&m_DetectedDialogs, 0, sizeof(m_DetectedDialogs));
