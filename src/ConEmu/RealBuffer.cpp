@@ -4813,7 +4813,15 @@ bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFo
 			{
 				if (mp_RCon->LoadAlternativeConsole(lam_FullBuffer) && (mp_RCon->mp_ABuf != this))
 				{
-					bRc = mp_RCon->mp_ABuf->DoSelectionCopyInt(CopyMode, lbStreamMode, con.m_sel.srSelection.Left, con.m_sel.srSelection.Top, con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, nFormat, pszDstFile);
+					CONSOLE_SELECTION_INFO sel = con.m_sel;
+					DoSelectionStop();
+
+					_ASSERTE(mp_RCon->mp_ABuf->m_Type==rbt_Alternative);
+					mp_RCon->mp_ABuf->m_Type = rbt_Selection; // Изменить, чтобы по завершении выделения - буфер закрыть
+					mp_RCon->mp_ABuf->con.m_sel = sel;
+
+					bRc = mp_RCon->mp_ABuf->DoSelectionCopyInt(CopyMode, lbStreamMode, sel.srSelection.Left, sel.srSelection.Top, sel.srSelection.Right, sel.srSelection.Bottom, nFormat, pszDstFile);
+
 					lbProcessed = true;
 					bufType = rbt_Selection;
 				}
