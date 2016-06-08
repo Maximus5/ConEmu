@@ -1846,7 +1846,9 @@ int CVConGroup::GetActiveVCon(CVConGuard* pVCon /*= NULL*/, int* pAllCount /*= N
 				if (pVCon)
 					pVCon->Attach(VCon.VCon());
 				nFound = i;
-				break; // Found
+				// Continue enumeration if we need to fill pAllCount
+				if (!pAllCount)
+					break;
 			}
 		}
 	}
