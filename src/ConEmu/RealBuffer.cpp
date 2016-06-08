@@ -495,13 +495,6 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 
 	//dump.NeedApply = TRUE;
 
-	// Создание буферов
-	if (!InitBuffers())
-	{
-		_ASSERTE(FALSE);
-		goto wrap;
-	}
-	else
 	// and do the copy
 	{
 		TODO("Хорошо бы весь расширенный буфер тут хранить, а не только CHAR_INFO");
