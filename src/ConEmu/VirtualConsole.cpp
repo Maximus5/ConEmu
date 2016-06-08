@@ -852,8 +852,8 @@ bool CVirtualConsole::Dump(LPCWSTR asFile)
 	if (!this || !mp_RCon)
 		return FALSE;
 
-	// Она сделает снимок нашего буфера (hDC) в png файл
-	DumpImage((HDC)m_DC, NULL, m_DC.iWidth, m_DC.iHeight, asFile);
+	// Saves a copy of our latest render to the png-file (it changes extension automatically to .png)
+	DumpImage(m_DC.hDC, m_DC.hBitmap, m_DC.iWidth, m_DC.iHeight, asFile);
 
 	HANDLE hFile = CreateFile(asFile, GENERIC_WRITE, FILE_SHARE_READ,
 	                          NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
