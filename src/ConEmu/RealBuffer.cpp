@@ -4517,14 +4517,27 @@ void CRealBuffer::ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift)
 	case VK_HOME:
 	{
 		// Extend to prompt starting position first
+		// C:\Users> dir c:\...
+		// Sequential keypresses Shift-Home, Shift-Home, Shift-Home
+		// must select/unselect prompt part ("C:\Users> ") in read line...
 		SHORT X = 0;
 		if (mp_RCon->QueryPromptStart(&crPromptBegin)
-			&& (cr.Y == crPromptBegin.Y))
+			&& (crPromptBegin.Y >= 0) && (crPromptBegin.X >= 0) // validation
+			&& (cr.Y >= crPromptBegin.Y)) // compare with current row
 		{
-			if (cr.X > crPromptBegin.X)
+			if (cr.Y > crPromptBegin.Y)
+			{
 				X = crPromptBegin.X;
+				cr.Y = crPromptBegin.Y;
+			}
+			else if (cr.X > crPromptBegin.X)
+			{
+				X = crPromptBegin.X;
+			}
 			else if (cr.X == 0)
+			{
 				X = crPromptBegin.X;
+			}
 		}
 		cr.X = X;
 		break;
