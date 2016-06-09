@@ -1866,6 +1866,80 @@ void CEAnsi::DoMessage(LPCWSTR asMsg, INT_PTR cchLen)
 	}
 }
 
+bool CEAnsi::IsAnsiExecAllowed(LPCWSTR asCmd)
+{
+	// Invalid command or macro?
+	if (!asCmd || !*asCmd)
+		return false;
+
+	// We need to check settings
+	CESERVER_CONSOLE_MAPPING_HDR* pMap = GetConMap();
+	if (!pMap)
+		return false;
+
+	if ((pMap->Flags & CECF_AnsiExecAny) != 0)
+	{
+		// Allowed in any process
+	}
+	else if ((pMap->Flags & CECF_AnsiExecCmd) != 0)
+	{
+		// Allowed in Cmd.exe only
+		if (!gbIsCmdProcess)
+			return false;
+	}
+	else
+	{
+		// Disallowed everywhere
+		return false;
+	}
+
+	// Now we need to ask GUI, if the command (asCmd) is allowed
+	bool bAllowed = false;
+	INT_PTR cchLen = wcslen(asCmd) + 1;
+	CESERVER_REQ* pOut = NULL;
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ALLOWANSIEXEC, sizeof(CESERVER_REQ_HDR)+sizeof(wchar_t)*cchLen);
+
+	if (pIn)
+	{
+		_ASSERTE(sizeof(pIn->wData[0])==sizeof(*asCmd));
+		memmove(pIn->wData, asCmd, cchLen*sizeof(pIn->wData[0]));
+
+		pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+		if (pOut && (pOut->DataSize() == sizeof(pOut->dwData[0])))
+		{
+			bAllowed = (pOut->dwData[0] == TRUE);
+		}
+	}
+
+	ExecuteFreeResult(pOut);
+	ExecuteFreeResult(pIn);
+
+	return bAllowed;
+}
+
+// ESC ] 9 ; 6 ; "macro" ST        Execute some GuiMacro
+void CEAnsi::DoGuiMacro(LPCWSTR asCmd, INT_PTR cchLen)
+{
+	CESERVER_REQ* pOut = NULL;
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+sizeof(wchar_t)*(cchLen + 1));
+
+	if (pIn)
+	{
+		EscCopyCtrlString(pIn->GuiMacro.sMacro, asCmd, cchLen);
+
+		if (IsAnsiExecAllowed(pIn->GuiMacro.sMacro))
+		{
+			pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+		}
+	}
+
+	// EnvVar "ConEmuMacroResult"
+	SetEnvironmentVariable(CEGUIMACRORETENVVAR, pOut && pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : NULL);
+
+	ExecuteFreeResult(pOut);
+	ExecuteFreeResult(pIn);
+}
+
 // ESC ] 9 ; 7 ; "cmd" ST        Run some process with arguments
 void CEAnsi::DoProcess(LPCWSTR asCmd, INT_PTR cchLen)
 {
@@ -1876,15 +1950,18 @@ void CEAnsi::DoProcess(LPCWSTR asCmd, INT_PTR cchLen)
 	{
 		EscCopyCtrlString(pszCmdLine, asCmd, cchLen);
 
-		STARTUPINFO si = {sizeof(si)};
-		PROCESS_INFORMATION pi = {};
-
-		BOOL bCreated = OnCreateProcessW(NULL, pszCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-		if (bCreated)
+		if (IsAnsiExecAllowed(pszCmdLine))
 		{
-			WaitForSingleObject(pi.hProcess, INFINITE);
-			CloseHandle(pi.hProcess);
-			CloseHandle(pi.hThread);
+			STARTUPINFO si = {sizeof(si)};
+			PROCESS_INFORMATION pi = {};
+
+			BOOL bCreated = OnCreateProcessW(NULL, pszCmdLine, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+			if (bCreated)
+			{
+				WaitForSingleObject(pi.hProcess, INFINITE);
+				CloseHandle(pi.hProcess);
+				CloseHandle(pi.hThread);
+			}
 		}
 
 		free(pszCmdLine);
@@ -3254,20 +3331,7 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 			}
 			else if (Code.ArgSZ[2] == L'6' && Code.ArgSZ[3] == L';')
 			{
-				CESERVER_REQ* pOut = NULL;
-				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GUIMACRO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+sizeof(wchar_t)*(Code.cchArgSZ));
-
-				if (pIn)
-				{
-					EscCopyCtrlString(pIn->GuiMacro.sMacro, Code.ArgSZ+4, Code.cchArgSZ-4);
-					pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-				}
-
-				// EnvVar "ConEmuMacroResult"
-				SetEnvironmentVariable(CEGUIMACRORETENVVAR, pOut && pOut->GuiMacro.nSucceeded ? pOut->GuiMacro.sMacro : NULL);
-
-				ExecuteFreeResult(pOut);
-				ExecuteFreeResult(pIn);
+				DoGuiMacro(Code.ArgSZ+4, Code.cchArgSZ - 4);
 			}
 			else if (Code.ArgSZ[2] == L'7' && Code.ArgSZ[3] == L';')
 			{

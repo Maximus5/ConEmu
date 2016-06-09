@@ -78,6 +78,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetColorPalette.h"
 #include "SetDlgColors.h"
 #include "SetDlgLists.h"
+#include "SetPgANSI.h"
 #include "SetPgAppear.h"
 #include "SetPgApps.h"
 #include "SetPgBackgr.h"
@@ -431,6 +432,7 @@ void CSettings::InitVars_Pages()
 		{IDD_SPG_DEFTERM,     1, lng_SpgDefTerm,      thi_DefTerm,      CSetPgDefTerm::Create},
 		{IDD_SPG_COMSPEC,     1, lng_SpgComSpec,      thi_Comspec,      CSetPgComspec::Create},
 		{IDD_SPG_CHILDGUI,    1, lng_SpgChildGui,     thi_ChildGui,     CSetPgChildGui::Create},
+		{IDD_SPG_ANSI,        1, lng_SpgANSI,         thi_ANSI,         CSetPgANSI::Create},
 		{IDD_SPG_KEYS,        0, lng_SpgKeys,         thi_Keys,         CSetPgKeys::Create},
 		{IDD_SPG_KEYBOARD,    1, lng_SpgKeyboard,     thi_Keyboard,     CSetPgKeyboard::Create},
 		{IDD_SPG_MOUSE,       1, lng_SpgMouse,        thi_Mouse,        CSetPgMouse::Create},

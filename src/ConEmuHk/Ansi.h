@@ -203,8 +203,10 @@ public:
 	void EscCopyCtrlString(wchar_t* pszDst, LPCWSTR asMsg, INT_PTR cchMaxLen);
 	void DoMessage(LPCWSTR asMsg, INT_PTR cchLen);
 	void DoProcess(LPCWSTR asCmd, INT_PTR cchLen);
+	void DoGuiMacro(LPCWSTR asCmd, INT_PTR cchLen);
 	void DoPrintEnv(LPCWSTR asCmd, INT_PTR cchLen);
 	void DoSendCWD(LPCWSTR asCmd, INT_PTR cchLen);
+	bool IsAnsiExecAllowed(LPCWSTR asCmd);
 
 	int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CEAnsi_MaxPrevPart], DWORD& cchPrevPart, LPCWSTR& lpStart, LPCWSTR& lpNext, AnsiEscCode& Code, BOOL ReEntrance = FALSE);
 

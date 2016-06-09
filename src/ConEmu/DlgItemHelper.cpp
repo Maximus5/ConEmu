@@ -253,6 +253,7 @@ bool CDlgItemHelper::isHyperlinkCtrl(WORD nCtrlId)
 	case stHomePage:
 	case stDefTermWikiLink:
 	case stConEmuUrl:
+	case stAnsiSecureExecUrl:
 		return true;
 	}
 	return false;

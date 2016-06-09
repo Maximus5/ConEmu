@@ -420,6 +420,11 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbProcessAnsi:
 			OnBtn_ProcessAnsi(hDlg, CB, uCheck);
 			break;
+		case rbAnsiSecureAny:
+		case rbAnsiSecureCmd:
+		case rbAnsiSecureOff:
+			OnBtn_AnsiSecureRadio(hDlg, CB, uCheck);
+			break;
 		case cbAnsiLog:
 			OnBtn_AnsiLog(hDlg, CB, uCheck);
 			break;
@@ -2815,6 +2820,23 @@ void CSetDlgButtons::OnBtn_ProcessAnsi(HWND hDlg, WORD CB, BYTE uCheck)
 	gpConEmu->OnGlobalSettingsChanged();
 
 } // cbProcessAnsi
+
+
+// rbAnsiSecureAny, rbAnsiSecureCmd, rbAnsiSecureOff
+void CSetDlgButtons::OnBtn_AnsiSecureRadio(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==rbAnsiSecureAny || CB==rbAnsiSecureCmd || CB==rbAnsiSecureOff);
+
+	if (isOptChecked(rbAnsiSecureAny, CB, uCheck))
+		gpSet->isAnsiExec = ansi_Allowed;
+	else if (isOptChecked(rbAnsiSecureCmd, CB, uCheck))
+		gpSet->isAnsiExec = ansi_CmdOnly;
+	else
+		gpSet->isAnsiExec = ansi_Disabled;
+
+	gpConEmu->OnGlobalSettingsChanged();
+
+} // rbAnsiSecureAny, rbAnsiSecureCmd, rbAnsiSecureOff
 
 
 // cbAnsiLog

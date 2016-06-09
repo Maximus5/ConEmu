@@ -503,6 +503,7 @@
       <File RelativePath=".\SetDlgColors.cpp" />
       <File RelativePath=".\SetDlgFonts.cpp" />
       <File RelativePath=".\SetDlgLists.cpp" />
+      <File RelativePath=".\SetPgANSI.cpp" />
       <File RelativePath=".\SetPgAppear.cpp" />
       <File RelativePath=".\SetPgApps.cpp" />
       <File RelativePath=".\SetPgBackgr.cpp" />
@@ -696,6 +697,7 @@
       <File RelativePath=".\SetDlgColors.h" />
       <File RelativePath=".\SetDlgFonts.h" />
       <File RelativePath=".\SetDlgLists.h" />
+      <File RelativePath=".\SetPgANSI.h" />
       <File RelativePath=".\SetPgAppear.h" />
       <File RelativePath=".\SetPgApps.h" />
       <File RelativePath=".\SetPgBackgr.h" />

@@ -2187,6 +2187,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0) ; // ((gpSet->isUseInjects == BST_CHECKED) ? 1 : (gpSet->isUseInjects == BST_INDETERMINATE) ? 3 : 0);
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_UseTrueColor,(gpSet->isTrueColorer ? CECF_UseTrueColor : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessAnsi,(gpSet->isProcessAnsi ? CECF_ProcessAnsi : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_AnsiExecAny|CECF_AnsiExecCmd,((gpSet->isAnsiExec==ansi_Allowed) ? CECF_AnsiExecAny : (gpSet->isAnsiExec==ansi_CmdOnly) ? CECF_AnsiExecCmd : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_SuppressBells,(gpSet->isSuppressBells ? CECF_SuppressBells : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ConExcHandler,(gpSet->isConsoleExceptionHandler ? CECF_ConExcHandler : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessNewCon,(gpSet->isProcessNewConArg ? CECF_ProcessNewCon : 0));

@@ -479,6 +479,13 @@ enum BackgroundOp
 	eOpLast = eCenter,
 };
 
+enum AnsiExecutionPerm
+{
+	ansi_Allowed  = 0,
+	ansi_CmdOnly  = 1, // Default
+	ansi_Disabled = 2,
+};
+
 enum ToolbarMainBitmapIdx
 {
 	BID_FIST_CON = 0,

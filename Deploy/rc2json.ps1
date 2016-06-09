@@ -586,6 +586,7 @@ function InitDialogList()
   $script:dialogs += @{ id = "IDD_SPG_DEFTERM";     name = " Default term"; file = "Settings-DefTerm"; }
   $script:dialogs += @{ id = "IDD_SPG_COMSPEC";     name = " ComSpec"; file = "Settings-Comspec"; }
   $script:dialogs += @{ id = "IDD_SPG_CHILDGUI";    name = " Children GUI"; file = "Settings-ChildGui"; } # NEW
+  $script:dialogs += @{ id = "IDD_SPG_ANSI";        name = " ANSI execution"; file = "Settings-ANSI"; } # NEW
   $script:dialogs += @{ id = "IDD_SPG_KEYS";        name = "Keys & Macro"; file = "Settings-Hotkeys,Settings-Hotkeys2"; }
   $script:dialogs += @{ id = "IDD_SPG_KEYBOARD";    name = " Keyboard"; file = "Settings-Keyboard"; } # NEW
   $script:dialogs += @{ id = "IDD_SPG_MOUSE";       name = " Mouse"; file = "Settings-Mouse"; } # NEW

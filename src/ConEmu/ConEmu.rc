@@ -695,7 +695,7 @@ BEGIN
     PUSHBUTTON      "...",bDosBoxSettings,248,87,13,11
     CONTROL         "Use Clink in prompt",cbUseClink,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,267,89,93,8
     PUSHBUTTON      "...",cbClinkWebPage,361,87,13,11
-    CONTROL         "ANSI X3.64 / xterm 256 colors",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,104,133,8
+    CONTROL         "ANSI and xterm sequences",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,104,133,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,148,104,118,8
     CONTROL         "Suppress bells",cbSuppressBells,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,267,104,110,8
     CONTROL         "Process '-new_console' and '-cur_console' switches",cbProcessNewConArg,
@@ -725,6 +725,24 @@ BEGIN
     CONTROL         "Focus in child windows",cbFocusInChildWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,363,8
     CONTROL         "Hide caption of child GUI windows started in ConEmu",cbHideChildCaption,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,30,363,10
+END
+
+IDD_SPG_ANSI DIALOGEX 0, 0, 381, 242
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "ANSI sequences",gbChildGui,4,1,375,237
+    CONTROL         "ANSI and xterm sequences",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,15,354,8
+    GROUPBOX        "Allow GuiMacro and Process execution",gbAnsiSecureExec,4,30,375,208
+    LTEXT           "Use `^]]9;6;""*macro*""^]\\` for GuiMacro execution",stAnsiSecureExec1,11,41,350,8
+    LTEXT           "https://conemu.github.io/en/AnsiEscapeCodes.html",stAnsiSecureExecUrl,11,64,350,8
+    LTEXT           "Use `^]]9;7;""*cmd*""^]\\` for process creation (required for GitShowBranch.cmd)",stAnsiSecureExec2,11,52,350,8
+    CONTROL         "Allow anywhere",rbAnsiSecureAny,"Button",BS_AUTORADIOBUTTON,11,81,109,8
+    CONTROL         "Allow in cmd.exe only",rbAnsiSecureCmd,"Button",BS_AUTORADIOBUTTON,123,81,109,8
+    CONTROL         "Disallow everywhere",rbAnsiSecureOff,"Button",BS_AUTORADIOBUTTON,237,81,109,8
+    EDITTEXT        tAnsiSecure,11,112,360,119,ES_MULTILINE | ES_AUTOHSCROLL | WS_VSCROLL
+    LTEXT           "List of allowed commands (you may use `*`)",stAnsiSecureExec3,11,100,350,8
 END
 
 IDD_SPG_COMSPEC DIALOGEX 0, 0, 381, 242

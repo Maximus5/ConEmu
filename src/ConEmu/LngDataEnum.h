@@ -109,6 +109,7 @@ enum LngResources
 	lng_KeyNone                   = 77,
 	lng_KeyNoMod                  = 78,
 	lng_HotkeyDuplicated          = 79,
+	lng_SpgANSI                   = 80,
 	// last auto-gen identifier
 	lng_NextId
 };

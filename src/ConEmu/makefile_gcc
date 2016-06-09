@@ -135,6 +135,7 @@ SRCS = \
 		SetDlgColors.cpp   \
 		SetDlgFonts.cpp    \
 		SetDlgLists.cpp    \
+		SetPgANSI.cpp      \
 		SetPgAppear.cpp    \
 		SetPgApps.cpp      \
 		SetPgBackgr.cpp    \

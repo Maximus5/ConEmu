@@ -1513,6 +1513,48 @@ CESERVER_REQ* CRealServer::cmdGetTaskCmd(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	return pOut;
 }
 
+CESERVER_REQ* CRealServer::cmdIsAnsiExecAllowed(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	bool bAllowed = false;
+
+	if ((gpSet->isAnsiExec != ansi_Allowed) && (gpSet->isAnsiExec != ansi_CmdOnly))
+	{
+		_ASSERTE((gpSet->isAnsiExec == ansi_Allowed) || (gpSet->isAnsiExec == ansi_CmdOnly));
+	}
+	else if (nDataSize > sizeof(wchar_t))
+	{
+		LPCWSTR pszExec = (LPCWSTR)pIn->wData;
+		CEStr lsAllowed((LPCWSTR)gpSet->psAnsiAllowed);
+		LPCWSTR pszFrom = lsAllowed.ms_Val;
+		CEStr lsCmd;
+		while (!bAllowed && (0 == NextLine(&pszFrom, lsCmd)))
+		{
+			_ASSERTE(!lsCmd.IsEmpty());
+			if (lsCmd.Compare(pszExec, true) == 0)
+			{
+				bAllowed = true;
+			}
+			else if (wcschr(lsCmd.ms_Val, L'*'))
+			{
+				// Mask?
+				// TODO: RegExp
+				if (CompareFileMask(pszExec, lsCmd.ms_Val))
+				{
+					bAllowed = true;
+				}
+			}
+		}
+	}
+
+	CESERVER_REQ* pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(DWORD));
+	if (!pOut)
+		return NULL;
+
+	pOut->dwData[0] = bAllowed;
+	_ASSERTE(pOut->dwData[0]==FALSE || pOut->dwData[0]==TRUE);
+	return pOut;
+}
+
 // Эта функция пайп не закрывает!
 //void CRealServer::ServerThreadCommand(HANDLE hPipe)
 BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam)
@@ -1639,6 +1681,9 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 		break;
 	case CECMD_GETTASKCMD:
 		pOut = pRSrv->cmdGetTaskCmd(pInst, pIn, nDataSize);
+		break;
+	case CECMD_ALLOWANSIEXEC:
+		pOut = pRSrv->cmdIsAnsiExecAllowed(pInst, pIn, nDataSize);
 		break;
 	case CECMD_GETROOTINFO:
 		_ASSERTE(!pIn->RootInfo.bRunning && pIn->RootInfo.nPID);

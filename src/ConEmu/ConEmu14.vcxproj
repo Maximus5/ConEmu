@@ -632,6 +632,7 @@
     <ClCompile Include="SetDlgColors.cpp" />
     <ClCompile Include="SetDlgFonts.cpp" />
     <ClCompile Include="SetDlgLists.cpp" />
+    <ClCompile Include="SetPgANSI.cpp" />
     <ClCompile Include="SetPgAppear.cpp" />
     <ClCompile Include="SetPgApps.cpp" />
     <ClCompile Include="SetPgBackgr.cpp" />
@@ -829,6 +830,7 @@
     <ClInclude Include="SetDlgColors.h" />
     <ClInclude Include="SetDlgFonts.h" />
     <ClInclude Include="SetDlgLists.h" />
+    <ClInclude Include="SetPgANSI.h" />
     <ClInclude Include="SetPgAppear.h" />
     <ClInclude Include="SetPgApps.h" />
     <ClInclude Include="SetPgBackgr.h" />

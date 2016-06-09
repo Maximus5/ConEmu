@@ -498,6 +498,7 @@ const CECMD
 	CECMD_GETROOTINFO    = 90, // CESERVER_ROOT_INFO
 	CECMD_WRITETEXT      = 91, // wData[] == LPCWSTR
 	CECMD_GETTASKCMD     = 92, // CESERVER_REQ_TASK
+	CECMD_ALLOWANSIEXEC  = 93, // IN: wData[] - GuiMacro or CmdLine; OUT: TRUE/FALSE
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1184,6 +1185,9 @@ const ConEmuConsoleFlags
 	CECF_ProcessCtrlZ    = 0x00001000, // Return 0 bytes from ReadConsole if Ctrl-Z was only entered on the line
 
 	CECF_RetardNAPanes   = 0x00002000, // Retard inactive panes
+
+	CECF_AnsiExecAny     = 0x00004000, // AnsiExecutionPerm::ansi_Allowed
+	CECF_AnsiExecCmd     = 0x00008000, // AnsiExecutionPerm::ansi_CmdOnly
 
 	CECF_Empty = 0
 	;

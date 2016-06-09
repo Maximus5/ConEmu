@@ -344,6 +344,7 @@ void Settings::ReleasePointers()
 	SafeFree(psHistoryLocation);
 	SafeFree(psDefaultTerminalApps);
 
+	SafeFree(psAnsiAllowed);
 	SafeFree(pszAnsiLog);
 
 	SafeFree(pszCTSIntelligentExceptions);
@@ -671,6 +672,8 @@ void Settings::InitSettings()
 	SetDefaultTerminalApps(L"explorer.exe"/* to default value */); // "|"-delimited string -> MSZ
 
 	isProcessAnsi = true;
+	isAnsiExec = ansi_CmdOnly;
+	psAnsiAllowed = lstrdup(L"cmd -cur_console:R /cGitShowBranch.cmd\r\n");
 	isAnsiLog = false;
 	pszAnsiLog = lstrdup(L"%ConEmuDir%\\Logs\\");
 	isProcessNewConArg = true;
@@ -2448,6 +2451,9 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		}
 
 		reg->Load(L"ProcessAnsi", isProcessAnsi);
+		reg->Load(L"AnsiExecution", isAnsiExec); if (isAnsiExec > ansi_Disabled) isAnsiExec = ansi_Disabled;
+		this->LoadMSZ(reg, L"AnsiAllowedCommands", psAnsiAllowed, L"\r\n", true);
+
 		reg->Load(L"AnsiLog", isAnsiLog);
 		reg->Load(L"AnsiLogPath", &pszAnsiLog);
 		reg->Load(L"ProcessNewConArg", isProcessNewConArg);
@@ -3545,6 +3551,9 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		}
 
 		reg->Save(L"ProcessAnsi", isProcessAnsi);
+		reg->Save(L"AnsiExecution", isAnsiExec);
+		this->SaveMSZ(reg, L"AnsiAllowedCommands", psAnsiAllowed, L"\r\n", false);
+
 		reg->Save(L"AnsiLog", isAnsiLog);
 		reg->Save(L"AnsiLogPath", pszAnsiLog);
 		reg->Save(L"ProcessNewConArg", isProcessNewConArg);
