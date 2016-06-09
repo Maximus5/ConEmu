@@ -149,6 +149,12 @@ INT_PTR CSetPgBase::OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlI
 	}
 	else if (CDlgItemHelper::isHyperlinkCtrl(nCtrlId))
 	{
+		_ASSERTE(hCtrl!=NULL);
+		// Check appropriate flags
+		DWORD nStyle = GetWindowLong(hCtrl, GWL_STYLE);
+		if (!(nStyle & SS_NOTIFY))
+			SetWindowLong(hCtrl, GWL_STYLE, nStyle|SS_NOTIFY);
+		// And the colors
 		SetTextColor(hdc, GetSysColor(COLOR_HOTLIGHT));
 		SetBkMode(hdc, TRANSPARENT);
 		HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
