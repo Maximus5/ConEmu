@@ -20,6 +20,24 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.6.9
+* gh-712: Total consoles count was not displayed in the title properly (regression 7ed745b).
+* gh-678: Selection vanished from screen after multiple page selection.
+* System menu item ‘Debug’ -> ‘Dump screen’ saved empty png file.
+* Fix Shift-Home selection in cmd.exe prompt after Tab-completion.
+  First Shift-Home is expected to select the typed command without prompt.
+  Sequential Shift-Home keypresses select and unselect prompt part.
+* Let Shift-Home select multiline commands in cmd.exe prompt.
+* gh-687: Settings page ‘Integration’ -> ‘ANSI execution’ to control allowed code and macro.
+  This allows [ConEmu specific OSC](https://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC)
+  to be executed: `^]]9;6;"*macro*"^]\` and `^]]9;7;"*cmd*"^]\`.
+  Since now, they allowed by default in `cmd.exe` only (were implemented for `GitShowBranch.cmd`).
+  User may also disable or enable they for any process.
+  Also, there is a list of allowed commands. Commands are case-sensitive, one line - one command.
+  User may use `*` to allow bunch of commands by ‘mask’.
+
+
+
 2016.6.7
 * Settings simplification: radio buttons were removed from ‘Settings/Mouse/Mouse button actions’.
   In Far Manager RBtn and MBtn clicks are bypassed to console if `<No-Mod>` is selected.
