@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 #include "../common/CmdLine.h"
+#include "../common/MRect.h"
 
 #include "Ansi.h"
 #include "hkConsoleInput.h"
@@ -138,8 +139,44 @@ void PostReadConsoleInput(HANDLE hConIn, DWORD nFlags/*enum CEReadConsoleInputFl
 	}
 }
 
+// Helper function: support Tab-completion in cmd.exe and others
+COORD FixupReadStartCursorPos(DWORD nNumberOfCharsToRead, CONSOLE_SCREEN_BUFFER_INFO& csbi, const MY_CONSOLE_READCONSOLE_CONTROL* pInputControl)
+{
+	COORD crStartCursorPos = csbi.dwCursorPosition;
+
+	if (pInputControl && (pInputControl->nLength >= sizeof(*pInputControl)))
+	{
+		if (pInputControl->nInitialChars < nNumberOfCharsToRead)
+		{
+			// Part of input is already "printed" to the buffer, take it into account
+			int nNewX = (int)crStartCursorPos.X - pInputControl->nInitialChars;
+			int nNewY = (int)crStartCursorPos.Y;
+			if (nNewX < 0)
+			{
+				int nRows = klMin(nNewY, (int)((-nNewX) / csbi.dwSize.X));
+				if ((nRows < nNewY) && ((nNewX + (nRows * csbi.dwSize.X)) < 0))
+					nRows++;
+				_ASSERTE(((nNewY - nRows) >= 0) && ((nNewX + (nRows * csbi.dwSize.X)) >= 0));
+				nNewX += (nRows * csbi.dwSize.X);
+				nNewY -= nRows;
+			}
+			if (nNewX >= 0 && nNewY >= 0)
+			{
+				crStartCursorPos = MakeCoord(nNewX, nNewY);
+				csbi.dwCursorPosition = crStartCursorPos;
+			}
+			else
+			{
+				_ASSERTE(nNewX >= 0 && nNewY >= 0);
+			}
+		}
+	}
+
+	return crStartCursorPos;
+}
+
 // Helper function
-void OnReadConsoleStart(bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
+void OnReadConsoleStart(bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, MY_CONSOLE_READCONSOLE_CONTROL* pInputControl)
 {
 	if (gReadConsoleInfo.InReadConsoleTID)
 		gReadConsoleInfo.LastReadConsoleTID = gReadConsoleInfo.InReadConsoleTID;
@@ -167,7 +204,8 @@ void OnReadConsoleStart(bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 				gReadConsoleInfo.InReadConsoleTID = GetCurrentThreadId();
 				gReadConsoleInfo.bIsUnicode = bUnicode;
 				gReadConsoleInfo.hConsoleInput = hConsoleInput;
-				gReadConsoleInfo.crStartCursorPos = csbi.dwCursorPosition;
+				// Support Tab-completion in cmd.exe and others
+				gReadConsoleInfo.crStartCursorPos = FixupReadStartCursorPos(nNumberOfCharsToRead, csbi, pInputControl);
 				gReadConsoleInfo.nConInMode = nConIn;
 				gReadConsoleInfo.nConOutMode = nConOut;
 
@@ -185,7 +223,7 @@ void OnReadConsoleStart(bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DW
 }
 
 // Helper function
-void OnReadConsoleEnd(BOOL bSucceeded, bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, LPVOID pInputControl)
+void OnReadConsoleEnd(BOOL bSucceeded, bool bUnicode, HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead, LPDWORD lpNumberOfCharsRead, MY_CONSOLE_READCONSOLE_CONTROL* pInputControl)
 {
 	if (bSucceeded && !gbWasSucceededInRead && lpNumberOfCharsRead && *lpNumberOfCharsRead)
 		gbWasSucceededInRead = TRUE;
@@ -339,7 +377,8 @@ BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 	ORIGINAL_KRNL(ReadConsoleA);
 	BOOL lbRc = FALSE;
 
-	OnReadConsoleStart(false, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+	_ASSERTE(pInputControl==NULL); // pInputControl is expected to be NULL in ANSI version
+	OnReadConsoleStart(false, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, (MY_CONSOLE_READCONSOLE_CONTROL*)pInputControl);
 
 	lbRc = F(ReadConsoleA)(hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
 	DWORD nErr = GetLastError();
@@ -361,7 +400,7 @@ BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 		}
 	}
 
-	OnReadConsoleEnd(lbRc, false, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, pInputControl);
+	OnReadConsoleEnd(lbRc, false, hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, (MY_CONSOLE_READCONSOLE_CONTROL*)pInputControl);
 	SetLastError(nErr);
 
 	return lbRc;
