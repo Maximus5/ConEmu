@@ -106,7 +106,7 @@ void CSetPgInfo::FillConsoleMode(HWND hDlg, CRealConsole* pRCon)
 {
 	// E.g. "xterm|BrPaste"
 	wchar_t szFlags[128] = L"";
-	pRCon->QueryRConModes(szFlags, countof(szFlags), true);
+	pRCon->QueryTermModes(szFlags, countof(szFlags), true);
 
 	// E.g. "In=x98, Out=x03"
 	wchar_t szModes[80];
