@@ -1027,7 +1027,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	COORD crScrollCursor;
 	if (ScrollRegion)
 	{
-		_ASSERTEX(Info->Region.left==0 && Info->Region.right==0); // Not used yet
+		_ASSERTEX(Info->Region.left==-1 && Info->Region.right==-1); // Not used yet
+		Info->Region.left = 0; Info->Region.right = (csbi.dwSize.X - 1);
 		_ASSERTEX(Info->Region.top>=0 && Info->Region.bottom>=Info->Region.top);
 		ScrollTop = Info->Region.top;
 		ScrollBottom = Info->Region.bottom+1;

@@ -929,7 +929,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
 		write.Region.top = gDisplayOpt.ScrollStart;
 		write.Region.bottom = gDisplayOpt.ScrollEnd;
-		write.Region.left = write.Region.right = 0; // not used yet
+		write.Region.left = write.Region.right = -1; // not used yet
 	}
 
 	if (gbWasXTermOutput)
