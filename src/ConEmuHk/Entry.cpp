@@ -1304,7 +1304,8 @@ void InitExeName()
 	{
 		gbDosBoxProcess = true;
 	}
-	else if (lstrcmpi(gsExeName, L"vim.exe") == 0)
+	else if ((lstrcmpi(gsExeName, L"vim.exe") == 0)
+		|| (lstrcmpi(gsExeName, L"vimd.exe") == 0))
 	{
 		gbIsVimProcess = true;
 		//CEAnsi::StartVimTerm(true);

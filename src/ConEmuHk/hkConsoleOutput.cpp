@@ -91,6 +91,17 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 	}
 	#endif
 
+	#ifdef _DEBUG
+	if (dwMode == 0)
+	{
+		if (HandleKeeper::IsOutputHandle(hConsoleHandle))
+		{
+			// Official (Win32) Vim tries to reset ConsoleMode on start
+			_ASSERTE(gbIsVimProcess); // expected to be set in official Vim
+		}
+	}
+	#endif
+
 	if (gbIsVimProcess)
 	{
 		if ((dwMode & (ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT)) != (ENABLE_WRAP_AT_EOL_OUTPUT|ENABLE_PROCESSED_OUTPUT))

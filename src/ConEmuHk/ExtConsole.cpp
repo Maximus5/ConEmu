@@ -1052,7 +1052,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	else
 	{
 		bWrap = (Mode & ENABLE_WRAP_AT_EOL_OUTPUT) != 0;
-		_ASSERTE((Mode & ENABLE_PROCESSED_OUTPUT) != 0);
+		//_ASSERTE((Mode & ENABLE_PROCESSED_OUTPUT) != 0);
 	}
 
 	_ASSERTE(srWork.Bottom == (csbi.dwSize.Y - 1));
@@ -1240,7 +1240,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		// При смене строки
 		if (y2 > y)
 		{
-			_ASSERTE(bWrap && L"для !Wrap - доделать");
+			//_ASSERTE(bWrap && L"для !Wrap - доделать");
 			if (y2 >= ScrollBottom/*csbi.dwSize.Y*/)
 			{
 				// Экран прокрутился на одну строку вверх
