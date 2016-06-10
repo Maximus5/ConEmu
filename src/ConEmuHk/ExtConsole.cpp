@@ -1039,6 +1039,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		ScrollBottom = csbi.dwSize.Y;
 	}
 
+	GetConsoleModeCached(h, &Mode);
+
 	if ((Info->Flags & ewtf_WrapAt))
 	{
 		if ((Info->WrapAtCol > 0) && (Info->WrapAtCol < WrapAtCol))
@@ -1049,7 +1051,6 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	}
 	else
 	{
-		GetConsoleModeCached(h, &Mode);
 		bWrap = (Mode & ENABLE_WRAP_AT_EOL_OUTPUT) != 0;
 		_ASSERTE((Mode & ENABLE_PROCESSED_OUTPUT) != 0);
 	}
