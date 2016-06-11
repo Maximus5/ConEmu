@@ -203,6 +203,7 @@ bool is_char_cjk(ucs32 ucs)
 	return (ucs >= 0x1100
 		&& ((ucs <= 0x115f) ||                  /* Hangul Jamo init. consonants */
 			(ucs == 0x2329 || ucs == 0x232a) || /* Angular brackets */
+			(ucs >= 0x2700 && ucs <= 0x27BF) || /* Dingbats (gh-722) */
 			(ucs >= 0x2e80 && ucs <= 0xa4cf &&
 				ucs != 0x303f) ||               /* CJK ... Yi */
 			(ucs >= 0xac00 && ucs <= 0xd7a3) || /* Hangul Syllables */
