@@ -65,6 +65,7 @@ int CheckUnicodeFont()
 	WORD nDefColor = 7;
 	DWORD nColorLen = lstrlen(szColor);
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	CONSOLE_CURSOR_INFO ci = {};
 	_ASSERTE(nLen<=35); // ниже на 2 буфер множится
 
 	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
@@ -126,6 +127,22 @@ int CheckUnicodeFont()
 		LODWORD(hIn), nInMode, LODWORD(hOut), nOutMode, LODWORD(hErr), nErrMode);
 	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
 
+
+	if (GetConsoleScreenBufferInfo(hOut, &csbi))
+		nDefColor = csbi.wAttributes;
+	msprintf(szInfo, countof(szInfo), L"Buffer={%i,%i} Window={%i,%i}-{%i,%i} MaxSize={%i,%i}\r\n",
+		csbi.dwSize.X, csbi.dwSize.Y,
+		csbi.srWindow.Left, csbi.srWindow.Top, csbi.srWindow.Right, csbi.srWindow.Bottom,
+		csbi.dwMaximumWindowSize.X, csbi.dwMaximumWindowSize.Y);
+	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+
+	if (GetConsoleCursorInfo(hOut, &ci))
+		msprintf(szInfo, countof(szInfo), L"Cursor: Pos={%i,%i} Size=%i%% %s\r\n",
+			csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, ci.dwSize, ci.bVisible ? L"Visible" : L"Hidden");
+	else
+		lstrcpyn(szInfo, L"CursorInfo failed\r\n", countof(szInfo));
+	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+
 	DWORD nCP = GetConsoleCP();
 	DWORD nOutCP = GetConsoleOutputCP();
 	CPINFOEX cpinfo = {};
@@ -160,8 +177,6 @@ int CheckUnicodeFont()
 
 
 	// Simlify checking of ConEmu's "colorization"
-	if (GetConsoleScreenBufferInfo(hOut, &csbi))
-		nDefColor = csbi.wAttributes;
 	WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
 	WORD nColor = 7;
 	for (DWORD n = 0; n < nColorLen; n++)
