@@ -3337,7 +3337,6 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 	if ((curStyle == cur_Block) || (curStyle == cur_Rect))
 	{
-		//bHollowBlock = true;
 		dwSize = 100; // percents
 		rect.left = pix.x;
 		rect.right = pix2.x;
@@ -3349,18 +3348,13 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		rect.left = pix.x; /*Cursor.x * nFontWidth;*/
 		rect.right = pix2.x;
 
-		//rect.top = (Cursor.y+1) * nFontHeight - MulDiv(nFontHeight, cinf.dwSize, 100);
 		rect.bottom = pix2.y;
 		rect.top = pix.y;
-		//if (cinf.dwSize<50)
 		int nHeight = 0;
 
 		if (dwSize)
 		{
-			nHeight = MulDiv(m_Sizes.nFontHeight, dwSize, 100);
-
-			nHeight = min(m_Sizes.nFontHeight, max(nHeight, MinSize));
-			//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
+			nHeight = klMin((int)m_Sizes.nFontHeight, klMax(MulDiv(m_Sizes.nFontHeight, dwSize, 100), MinSize));
 		}
 
 		if (!nHeight)
@@ -3369,7 +3363,6 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 			return;
 		}
 
-		//if (nHeight < HCURSORHEIGHT) nHeight = HCURSORHEIGHT;
 		rect.top = max(rect.top, (rect.bottom-nHeight));
 	}
 	else // Vertical
@@ -3380,20 +3373,13 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 		rect.top = pos.Y * m_Sizes.nFontHeight;
 		int nR = pix2.x;
-		//if (cinf.dwSize>=50)
-		//  rect.right = nR;
-		//else
-		//  rect.right = min(nR, (rect.left+VCURSORWIDTH));
-		int nWidth = 0;
+		int nWidth = MinSize;
 
 		if (dwSize)
 		{
 			int nMaxWidth = (nR - rect.left);
 
-			nWidth = MulDiv(nMaxWidth, dwSize, 100);
-
-			nWidth = min(nMaxWidth,max(nWidth,MinSize));
-			//if (nWidth < VCURSORWIDTH) nWidth = VCURSORWIDTH;
+			nWidth = klMin(nMaxWidth, klMax(MulDiv(nMaxWidth, dwSize, 100), MinSize));
 		}
 
 		if (!nWidth)
