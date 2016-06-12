@@ -196,6 +196,7 @@ public:
 	void ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
 	void ConsoleCursorPos(COORD* pcr);
 	void GetCursorInfo(COORD* pcr, CONSOLE_CURSOR_INFO* pci);
+	bool isCursorVisible();
 
 	bool ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr);
 

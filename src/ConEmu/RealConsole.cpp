@@ -15545,14 +15545,7 @@ bool CRealConsole::isNeedCursorDraw()
 		if (!hConWnd || !mb_RConStartedSuccess)
 			return false;
 
-		// Remove cursor from screen while selecting text with mouse
-		CONSOLE_SELECTION_INFO sel = {};
-		if (mp_ABuf->GetConsoleSelectionInfo(&sel) && (sel.dwFlags & CONSOLE_MOUSE_SELECTION))
-			return false;
-
-		COORD cr; CONSOLE_CURSOR_INFO ci;
-		mp_ABuf->GetCursorInfo(&cr, &ci);
-		if (!ci.bVisible || !ci.dwSize)
+		if (!mp_ABuf->isCursorVisible())
 			return false;
 	}
 

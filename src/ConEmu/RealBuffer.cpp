@@ -6577,6 +6577,19 @@ void CRealBuffer::GetCursorInfo(COORD* pcr, CONSOLE_CURSOR_INFO* pci)
 	}
 }
 
+bool CRealBuffer::isCursorVisible()
+{
+	// Remove cursor from screen while selecting text with mouse
+	if (isSelectionPresent() && (con.m_sel.dwFlags & CONSOLE_MOUSE_SELECTION))
+		return false;
+
+	// Console cursor is hidden?
+	if (!con.m_ci.bVisible)
+		return false;
+
+	return true;
+}
+
 void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* psbi, SMALL_RECT* psrRealWindow /*= NULL*/, TOPLEFTCOORD* pTopLeft /*= NULL*/)
 {
 	if (!this) return;
