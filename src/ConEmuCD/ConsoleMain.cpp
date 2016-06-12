@@ -5312,6 +5312,7 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bF
 	static CONSOLE_SCREEN_BUFFER_INFO lsbiLast = {};
 	bool bWriteLog = false;
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {};
+	CONSOLE_CURSOR_INFO ci = {(DWORD)-1};
 
 	HANDLE hCon = ghConOut;
 	BOOL bHandleOK = (hCon != NULL);
@@ -5320,8 +5321,11 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bF
 
 	// В дебажный лог помещаем реальные значения
 	BOOL bConsoleOK = GetConsoleScreenBufferInfo(hCon, &lsbi);
-	char szInfo[300]; szInfo[0] = 0;
+	char szInfo[400]; szInfo[0] = 0;
 	DWORD nErrCode = GetLastError();
+
+	// Cursor information (gh-718)
+	GetConsoleCursorInfo(hCon, &ci);
 
 	int fontX = 0, fontY = 0; wchar_t szFontName[LF_FACESIZE] = L""; char szFontInfo[60] = "<NA>";
 	if (apiGetConsoleFontSize(hCon, fontY, fontX, szFontName))
@@ -5364,8 +5368,11 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bF
 	{
 		bWriteLog = true;
 
-		_wsprintfA(szInfo, SKIPCOUNT(szInfo) "CurSize={%i,%i,%i} ChangeTo={%i,%i,%i} %s (skipped=%i) {%u:%u:x%X:%u} %s %s",
-		           lsbi.dwSize.X, lsbi.srWindow.Bottom-lsbi.srWindow.Top+1, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, newBufferHeight, (pszLabel ? pszLabel : ""), nSkipped,
+		_wsprintfA(szInfo, SKIPCOUNT(szInfo) "CurSize={%i,%i,%i} ChangeTo={%i,%i,%i} Cursor={%i,%i,%i%%%c} ConRect={%i,%i}-{%i,%i} %s (skipped=%i) {%u:%u:x%X:%u} %s %s",
+		           lsbi.dwSize.X, lsbi.srWindow.Bottom-lsbi.srWindow.Top+1, lsbi.dwSize.Y, pcrSize->X, pcrSize->Y, newBufferHeight,
+		           lsbi.dwCursorPosition.X, lsbi.dwCursorPosition.Y, ci.dwSize, ci.bVisible ? L'V' : L'H',
+		           lsbi.srWindow.Left, lsbi.srWindow.Top, lsbi.srWindow.Right, lsbi.srWindow.Bottom,
+		           (pszLabel ? pszLabel : ""), nSkipped,
 		           bConsoleOK, bHandleOK, (DWORD)(DWORD_PTR)hCon, nErrCode,
 				   szWindowInfo, szFontInfo);
 	}
@@ -5379,8 +5386,11 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bF
 		else if (((GetTickCount() - nLastWriteTick) >= TickDelta) || (nSkipped >= SkipDelta))
 			bWriteLog = true;
 
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%i,%i,%i} %s (skipped=%i) {%u:%u:x%X:%u} %s %s",
-		           lsbi.dwSize.X, lsbi.srWindow.Bottom-lsbi.srWindow.Top+1, lsbi.dwSize.Y, (pszLabel ? pszLabel : ""), nSkipped,
+		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CurSize={%i,%i,%i} Cursor={%i,%i,%i%%%c} ConRect={%i,%i}-{%i,%i} %s (skipped=%i) {%u:%u:x%X:%u} %s %s",
+		           lsbi.dwSize.X, lsbi.srWindow.Bottom-lsbi.srWindow.Top+1, lsbi.dwSize.Y,
+		           lsbi.dwCursorPosition.X, lsbi.dwCursorPosition.Y, ci.dwSize, ci.bVisible ? L'V' : L'H',
+		           lsbi.srWindow.Left, lsbi.srWindow.Top, lsbi.srWindow.Right, lsbi.srWindow.Bottom,
+		           (pszLabel ? pszLabel : ""), nSkipped,
 		           bConsoleOK, bHandleOK, (DWORD)(DWORD_PTR)hCon, nErrCode,
 				   szWindowInfo, szFontInfo);
 	}
