@@ -20,6 +20,12 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.6.10
+* Terminal modes were not displayed on Settings/Info page.
+* gh-716: Cygwin/msys connector output was broken after starting nano.
+* gh-722: Treat Unicode range U+2700..U+27BF as double width glyphs.
+
+
 2016.6.9
 * gh-712: Total consoles count was not displayed in the title properly (regression 7ed745b).
 * gh-678: Selection vanished from screen after multiple page selection.
