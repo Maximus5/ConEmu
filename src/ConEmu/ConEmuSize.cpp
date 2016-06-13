@@ -5678,7 +5678,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		|| (ShowHideType == sih_ShowHideTSA)
 		|| (ShowHideType == sih_HideTSA))
 	{
-		if ((bVis && (bIsForeground || gpSet->isAlwaysOnTop) && !bIsIconic)
+		if ((bVis && bIsForeground && !bIsIconic)
 			|| (ShowHideType == sih_HideTSA) || (ShowHideType == sih_Minimize))
 		{
 			// если видимо - спрятать
