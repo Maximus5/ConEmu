@@ -1777,8 +1777,30 @@ static void CreateFarTasks()
 			if (FI.FarVer.dwVerMajor >= 2)
 				lstrmerge(&pszCommand, L" /w");
 
+			// Don't duplicate plugin folders (ConEmu) to avoid doubled lines in F11 (Far 1.x and Far 2.x problem)
+			bool bDontDuplicate = false;
+			if (FI.FarVer.dwVerMajor <= 2)
+			{
+				// .szExpanded is expected to be full path,
+				// but .szFullPath may be even a "far.exe", if it exists in ConEmu folder
+				LPCWSTR pszFarPath = FI.szExpanded ? FI.szExpanded : FI.szFullPath;
+				LPCWSTR pszFarExeName = PointToName(pszFarPath);
+				if (pszFarExeName && (pszFarExeName > pszFarPath))
+				{
+					CEStr lsFarPath; lsFarPath.Set(pszFarPath, (pszFarExeName - pszFarPath) - 1);
+					_ASSERTE(lsFarPath.GetLen() > 0);
+					int iCmp = lstrcmpi(gpConEmu->ms_ConEmuExeDir, lsFarPath);
+					if (iCmp == 0)
+					{
+						bDontDuplicate = true;
+					}
+				}
+			}
+
 			// Force Far to use proper plugins folders
-			lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FARHOME%\\Plugins\"");
+			if (!bDontDuplicate)
+				lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FARHOME%\\Plugins\"");
+
 
 			// Suggest this task as ConEmu startup default
 			if (gn_FirstFarTask == -1)
