@@ -114,6 +114,62 @@ void CStartEnv::Echo(LPCWSTR asSwitches, LPCWSTR asText)
 
 void CStartEnv::Set(LPCWSTR asName, LPCWSTR asValue)
 {
+	// Validate the name
+	if (!asName || !*asName)
+	{
+		_ASSERTE(asName && *asName);
+		return;
+	}
+
+	// Don't append variable twice
+	if (asValue && *asValue && wcschr(asValue, L'%'))
+	{
+		CEStr lsCurValue(GetEnvVar(asName));
+		if (!lsCurValue.IsEmpty())
+		{
+			// Example: PATH=%ConEmuBaseDir%\Scripts;%PATH%;C:\Tools\Arc
+			CEStr lsSelfName(L"%", asName, L"%");
+			wchar_t* pchName = lsSelfName.IsEmpty() ? NULL : StrStrI(asValue, lsSelfName);
+			if (pchName)
+			{
+				bool bDiffFound = false;
+				int iCmp;
+				INT_PTR iSelfLen = lsSelfName.GetLen();
+				INT_PTR iCurLen = lsCurValue.GetLen();
+				// Prefix
+				if (pchName > asValue)
+				{
+					CEStr lsNewPrefix;
+					lsNewPrefix.Set(asValue, (pchName - asValue));
+					INT_PTR iPLen = lsNewPrefix.GetLen();
+					_ASSERTE(iPLen == (pchName - asValue));
+					iCmp = (iCurLen >= iPLen && iPLen > 0)
+						? wcsncmp(lsCurValue, lsNewPrefix, iPLen)
+						: -1;
+					if (iCmp != 0)
+						bDiffFound = true;
+				}
+				// Suffix
+				if (pchName[iSelfLen])
+				{
+					CEStr lsNewSuffix;
+					lsNewSuffix.Set(pchName+iSelfLen);
+					INT_PTR iSLen = lsNewSuffix.GetLen();
+					iCmp = (iCurLen >= iSLen && iSLen > 0)
+						? wcsncmp(lsCurValue.c_str() + iCurLen - iSLen, lsNewSuffix, iSLen)
+						: -1;
+					if (iCmp != 0)
+						bDiffFound = true;
+				}
+				if (!bDiffFound)
+				{
+					// Nothing new to append
+					return;
+				}
+			}
+		}
+	}
+
 	// Expand value
 	wchar_t* pszExpanded = ExpandEnvStr(asValue);
 	LPCWSTR pszSet = pszExpanded ? pszExpanded : asValue;
