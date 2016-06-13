@@ -96,8 +96,9 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 	{
 		if (HandleKeeper::IsOutputHandle(hConsoleHandle))
 		{
-			// Official (Win32) Vim tries to reset ConsoleMode on start
-			_ASSERTE(gbIsVimProcess); // expected to be set in official Vim
+			// Official (Win32) Vim tries to reset ConsoleMode on start, gbIsVimProcess expected to be set
+			// Also occurred in cmd.exe (call from cmd.exe!_ResetConsoleMode()), will be set to `3` after this
+			_ASSERTE(gbIsVimProcess || gbIsCmdProcess);
 		}
 	}
 	#endif
