@@ -191,3 +191,76 @@ void CStartEnv::Type(LPCWSTR asSwitches, LPCWSTR asFile)
 	CEStr lsFull = lstrmerge(asSwitches, (asSwitches && *asSwitches) ? L" " : NULL, L"\"", asFile, L"\"");
 	DoOutput(ea_OutType, lsFull);
 }
+
+#ifdef _DEBUG
+void CStartEnv::UnitTests()
+{
+	CStartEnv setEnv;
+	wchar_t szTempName[80]; SYSTEMTIME st = {}; GetLocalTime(&st);
+	_wsprintf(szTempName, SKIPCOUNT(szTempName) L"ce_temp_%u%u%u%u", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+	SetEnvironmentVariable(szTempName, NULL);
+
+	const wchar_t szInit[] = L"initial", szPref[] = L"abc;", szSuff[] = L";def";
+	wchar_t* pchValue;
+	int iCmp;
+
+	// ce_temp="initial"
+	setEnv.Set(szTempName, szInit);
+	pchValue = GetEnvVar(szTempName);
+	iCmp = pchValue ? wcscmp(pchValue, szInit) : -1;
+	_ASSERTE(iCmp==0);
+	SafeFree(pchValue);
+
+	// ce_temp="abc;initial"
+	CEStr lsSet1(szPref, L"%", szTempName, L"%");
+	CEStr lsCmd1(szPref, szInit);
+	setEnv.Set(szTempName, lsSet1);
+	pchValue = GetEnvVar(szTempName);
+	iCmp = pchValue ? wcscmp(pchValue, lsCmd1) : -1;
+	_ASSERTE(iCmp==0);
+	SafeFree(pchValue);
+	setEnv.Set(szTempName, lsSet1);
+	pchValue = GetEnvVar(szTempName);
+	iCmp = pchValue ? wcscmp(pchValue, lsCmd1) : -1;
+	_ASSERTE(iCmp==0);
+	SafeFree(pchValue);
+
+	// ce_temp="abc;initial;def"
+	CEStr lsSet2(L"%", szTempName, L"%", szSuff);
+	CEStr lsCmd2(szPref, szInit, szSuff);
+	setEnv.Set(szTempName, lsSet2);
+	pchValue = GetEnvVar(szTempName);
+	iCmp = pchValue ? wcscmp(pchValue, lsCmd2) : -1;
+	_ASSERTE(iCmp==0);
+	SafeFree(pchValue);
+	setEnv.Set(szTempName, lsSet2);
+	pchValue = GetEnvVar(szTempName);
+	iCmp = pchValue ? wcscmp(pchValue, lsCmd2) : -1;
+	_ASSERTE(iCmp==0);
+	SafeFree(pchValue);
+
+	// ce_temp="initial"
+	setEnv.Set(szTempName, szInit);
+	pchValue = GetEnvVar(szTempName);
+	iCmp = pchValue ? wcscmp(pchValue, szInit) : -1;
+	_ASSERTE(iCmp==0);
+	SafeFree(pchValue);
+
+	// ce_temp="abc;initial;def"
+	CEStr lsSet3(szPref, L"%", szTempName, L"%", szSuff);
+	CEStr lsCmd3(szPref, szInit, szSuff);
+	setEnv.Set(szTempName, lsSet3);
+	pchValue = GetEnvVar(szTempName);
+	iCmp = pchValue ? wcscmp(pchValue, lsCmd3) : -1;
+	_ASSERTE(iCmp==0);
+	SafeFree(pchValue);
+	setEnv.Set(szTempName, lsSet3);
+	pchValue = GetEnvVar(szTempName);
+	iCmp = pchValue ? wcscmp(pchValue, lsCmd3) : -1;
+	_ASSERTE(iCmp==0);
+	SafeFree(pchValue);
+
+	// Drop temp variable
+	SetEnvironmentVariable(szTempName, NULL);
+}
+#endif

@@ -2864,6 +2864,10 @@ DWORD WaitForRootConsoleProcess(DWORD nTimeout)
 
 void ApplyProcessSetEnvCmd()
 {
+	#ifdef _DEBUG
+	CStartEnv::UnitTests();
+	#endif
+
 	if (gpSetEnv)
 	{
 		CStartEnv setEnv;

@@ -50,4 +50,9 @@ public:
 	virtual void Set(LPCWSTR asName, LPCWSTR asValue);
 	virtual void Title(LPCWSTR asTitle);
 	virtual void Type(LPCWSTR asSwitches, LPCWSTR asFile);
+
+#ifdef _DEBUG
+public:
+	static void UnitTests();
+#endif
 };
