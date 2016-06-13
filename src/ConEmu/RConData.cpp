@@ -656,7 +656,7 @@ bool CRConData::FindPanels(bool& bLeftPanel, RECT& rLeftPanel, RECT& rLeftPanelF
 short CRConData::CheckProgressInConsole(UINT nCursorLine)
 {
 	if (!isValid(true, nWidth*(nCursorLine+1)))
-		return false;
+		return -1;
 
 	const wchar_t* pszCurLine = pConChar + (nWidth * nCursorLine);
 
