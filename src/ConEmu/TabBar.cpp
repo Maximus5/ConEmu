@@ -1435,7 +1435,11 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	bool bIsFar = pRCon ? pRCon->isFar() : false;
 
 	// Far 4040 - new "Desktop" window type has "0" index
-	if (apVCon && (pTab->Info.nFarWindowID == 0 || pTab->Type() == fwt_Panels))
+	if (apVCon
+		&& (!gpSet->bShowFarWindows
+			|| (pTab->Info.nFarWindowID == 0)
+			|| (pTab->Flags() & fwt_ModalFarWnd)
+			|| (pTab->Type() == fwt_Panels)))
 	{
 		iTabIcon = apVCon->RCon()->GetRootProcessIcon();
 	}
