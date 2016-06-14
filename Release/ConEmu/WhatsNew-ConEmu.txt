@@ -20,10 +20,24 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
-2016.6.10
+2016.6.12
 * Terminal modes were not displayed on Settings/Info page.
 * gh-716: Cygwin/msys connector output was broken after starting nano.
 * gh-722: Treat Unicode range U+2700..U+27BF as double width glyphs.
+* gh-718: Minimal cursor size option was ignored for invalid console cursor size (zero size).
+* gh-719: Write cursor information and console window rect to log file.
+* Print more console information in `ConEmuC -checkunicode`.
+* gh-723: Let ‘Minimize/Restore’ hotkey act in spite of ‘Always on top’ mode.
+* Don't process (append) environment variable twice (ref gh-724).
+  Example: `PATH=%ConEmuBaseDir%\Scripts;%PATH%;C:\Tools\Arc`
+  So, do not add `%ConEmuBaseDir%\Scripts;` and `;C:\Tools\Arc`
+  if they already exist in PATH. Only explicit comparison is done,
+  so, if `C:\Tools\Arc` is in the middle of current `%PATH%`,
+  it would be processed (appended).
+* Fix: Console progress `0%` was detected during tab startup (regression 69439a3).
+* Default task {Far}: don't double plugin folders to avoid doubled lines in F11 (Far 1.x and Far 2.x `/p` switch problem).
+* gh-700: Show tab icon for Far editors and viewers if ‘Far windows’ option is off.
+
 
 
 2016.6.9
