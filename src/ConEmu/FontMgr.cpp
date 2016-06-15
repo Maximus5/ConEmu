@@ -438,7 +438,7 @@ LONG CFontMgr::FontHeight()
 	if (LogFont.lfHeight <= 0)
 	{
 		// Сюда мы должны попадать только для примерных расчетов во время старта!
-		_ASSERTE(LogFont.lfHeight>0 || gpConEmu->mn_StartupFinished<=CConEmuMain::ss_Starting);
+		_ASSERTE(LogFont.lfHeight>0 || gpConEmu->mn_StartupFinished<CConEmuMain::ss_WindowCreated);
 		int iEvalHeight = 0;
 		if (gpSet->FontSizeY)
 		{

@@ -2053,6 +2053,9 @@ BOOL CConEmuMain::CreateMainWindow()
 		return FALSE;
 	}
 
+	if (mn_StartupFinished < ss_WindowCreated)
+		mn_StartupFinished = ss_WindowCreated;
+
 	//if (gpSet->isHideCaptionAlways)
 	//	OnHideCaption();
 #ifdef _DEBUG
@@ -4207,6 +4210,12 @@ void CConEmuMain::RegisterGlobalHotKeys(bool bRegister)
 
 void CConEmuMain::RegisterHotKeys()
 {
+	// If we are in termination or non-initialized state - nothing to do!
+	if ((mn_StartupFinished < ss_PostCreate2Called) || (mn_StartupFinished >= ss_Destroying))
+	{
+		return;
+	}
+
 	if (isIconic())
 	{
 		UnRegisterHotKeys();
@@ -4271,8 +4280,8 @@ bool CConEmuMain::IsKeyboardHookRegistered()
 
 void CConEmuMain::RegisterHooks()
 {
-	// If we are in termination state - nothing to do!
-	if (mn_StartupFinished >= ss_Destroying)
+	// If we are in termination or non-initialized state - nothing to do!
+	if ((mn_StartupFinished < ss_PostCreate2Called) || (mn_StartupFinished >= ss_Destroying))
 	{
 		return;
 	}
@@ -8182,6 +8191,11 @@ void CConEmuMain::OnHideCaption()
 
 void CConEmuMain::OnGlobalSettingsChanged()
 {
+	if (mn_StartupFinished < ss_WindowCreated)
+	{
+		return;
+	}
+
 	UpdateGuiInfoMapping();
 
 	// и отослать в серверы

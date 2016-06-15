@@ -264,6 +264,7 @@ class CConEmuMain
 
 		enum StartupStage {
 			ss_Starting,
+			ss_WindowCreated,
 			ss_PostCreate1Called,
 			ss_PostCreate1Finished,
 			ss_PostCreate2Called,
