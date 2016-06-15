@@ -802,6 +802,130 @@ LONG_PTR WINAPI OnSetWindowLongPtrW(HWND hWnd, int nIndex, LONG_PTR dwNewLong)
 #endif
 
 
+bool PreGetWindowLong(HWND hWnd, int nIndex, LONG_PTR& lRc)
+{
+	bool bContinue = true;
+
+	if (ghConEmuWndDC && ghConWnd
+		&& (hWnd == ghConEmuWndDC)
+		&& (nIndex == GWL_STYLE
+			|| nIndex == GWL_EXSTYLE)
+		)
+	{
+		bContinue = false;
+
+		ORIGINAL_EX(GetWindowLongW);
+		if (F(GetWindowLongW))
+		{
+			lRc = F(GetWindowLongW)(ghConWnd, nIndex);
+		}
+		else
+		{
+			lRc = 0;
+		}
+
+		if (nIndex == GWL_STYLE)
+		{
+			HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
+			CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+			if (GetConsoleScreenBufferInfoCached(hConOut, &csbi))
+			{
+				if (csbi.dwSize.X > (csbi.srWindow.Right - csbi.srWindow.Left + 1))
+					lRc |= WS_HSCROLL;
+				else
+					lRc &= ~WS_HSCROLL;
+
+				if (csbi.dwSize.Y > (csbi.srWindow.Bottom - csbi.srWindow.Top + 1))
+					lRc |= WS_VSCROLL;
+				else
+					lRc &= ~WS_VSCROLL;
+			}
+		}
+	}
+
+	return bContinue;
+}
+
+#ifdef WIN64
+bool PreGetWindowLong(HWND hWnd, int nIndex, LONG& lRc)
+{
+	LONG_PTR lRc64 = 0;
+	bool bContinue = PreGetWindowLong(hWnd, nIndex, lRc64);
+	if (!bContinue)
+		lRc = (LONG)LODWORD(lRc64);
+	return bContinue;
+}
+#endif
+
+
+LONG WINAPI OnGetWindowLongA(HWND hWnd, int nIndex)
+{
+	//typedef LONG (WINAPI* OnGetWindowLongA_t)(HWND hWnd, int nIndex);
+	ORIGINAL_EX(GetWindowLongA);
+	LONG lRc = 0;
+
+	if (PreGetWindowLong(hWnd, nIndex, lRc)
+		&& F(GetWindowLongA))
+	{
+		lRc = F(GetWindowLongA)(hWnd, nIndex);
+	}
+
+	return lRc;
+}
+
+
+LONG WINAPI OnGetWindowLongW(HWND hWnd, int nIndex)
+{
+	//typedef LONG (WINAPI* OnGetWindowLongW_t)(HWND hWnd, int nIndex);
+	ORIGINAL_EX(GetWindowLongW);
+	LONG lRc = 0;
+
+	if (PreGetWindowLong(hWnd, nIndex, lRc)
+		&& F(GetWindowLongW))
+	{
+		lRc = F(GetWindowLongW)(hWnd, nIndex);
+	}
+
+	return lRc;
+}
+
+
+#ifdef WIN64
+LONG_PTR WINAPI OnGetWindowLongPtrA(HWND hWnd, int nIndex)
+{
+	//typedef LONG_PTR (WINAPI* OnGetWindowLongPtrA_t)(HWND hWnd, int nIndex);
+	ORIGINAL_EX(GetWindowLongPtrA);
+	LONG_PTR lRc = 0;
+
+	if (PreGetWindowLong(hWnd, nIndex, lRc)
+		&& F(GetWindowLongPtrA))
+	{
+		lRc = F(GetWindowLongPtrA)(hWnd, nIndex);
+	}
+
+	return lRc;
+}
+#endif
+
+
+#ifdef WIN64
+LONG_PTR WINAPI OnGetWindowLongPtrW(HWND hWnd, int nIndex)
+{
+	//typedef LONG_PTR (WINAPI* OnGetWindowLongPtrW_t)(HWND hWnd, int nIndex);
+	ORIGINAL_EX(GetWindowLongPtrW);
+	LONG_PTR lRc = 0;
+
+	if (PreGetWindowLong(hWnd, nIndex, lRc)
+		&& F(GetWindowLongPtrW))
+	{
+		lRc = F(GetWindowLongPtrW)(hWnd, nIndex);
+	}
+
+	return lRc;
+}
+#endif
+
+
 int WINAPI OnGetWindowTextLengthA(HWND hWnd)
 {
 	//typedef int (WINAPI* OnGetWindowTextLengthA_t)(HWND hWnd);

@@ -563,6 +563,12 @@ bool InitHooksUser32()
 		HOOK_ITEM_BY_NAME(SetWindowLongPtrA,	user32),
 		HOOK_ITEM_BY_NAME(SetWindowLongPtrW,	user32),
 		#endif
+		HOOK_ITEM_BY_NAME(GetWindowLongA,		user32),
+		HOOK_ITEM_BY_NAME(GetWindowLongW,		user32),
+		#ifdef WIN64
+		HOOK_ITEM_BY_NAME(GetWindowLongPtrA,	user32),
+		HOOK_ITEM_BY_NAME(GetWindowLongPtrW,	user32),
+		#endif
 		HOOK_ITEM_BY_NAME(GetWindowTextLengthA,	user32),
 		HOOK_ITEM_BY_NAME(GetWindowTextLengthW,	user32),
 		HOOK_ITEM_BY_NAME(GetWindowTextA,		user32),

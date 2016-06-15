@@ -75,3 +75,11 @@ HOOK_PROTOTYPE(SetWindowLongW,LONG,WINAPI,(HWND hWnd, int nIndex, LONG dwNewLong
 HOOK_PROTOTYPE(SetWindowLongPtrA,LONG_PTR,WINAPI,(HWND hWnd, int nIndex, LONG_PTR dwNewLong));
 HOOK_PROTOTYPE(SetWindowLongPtrW,LONG_PTR,WINAPI,(HWND hWnd, int nIndex, LONG_PTR dwNewLong));
 #endif
+
+HOOK_PROTOTYPE(GetWindowLongA,LONG,WINAPI,(HWND hWnd, int nIndex));
+HOOK_PROTOTYPE(GetWindowLongW,LONG,WINAPI,(HWND hWnd, int nIndex));
+
+#ifdef WIN64
+HOOK_PROTOTYPE(GetWindowLongPtrA,LONG_PTR,WINAPI,(HWND hWnd, int nIndex));
+HOOK_PROTOTYPE(GetWindowLongPtrW,LONG_PTR,WINAPI,(HWND hWnd, int nIndex));
+#endif
