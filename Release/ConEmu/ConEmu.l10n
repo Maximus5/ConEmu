@@ -513,6 +513,10 @@
       "zh": "为无比例（等宽）字体选中此处",
       "id": 2283 }
     ,
+    "cbMouseDragWindow": {
+      "en": "Allows to move ConEmu window via dragging it by client area.",
+      "id": 3060 }
+    ,
     "cbMultiCon": {
       "en": [ "Turn on MultiConsole\r\n"
             , "(several consoles in one ConEmu)\r\n"
@@ -789,6 +793,12 @@
       "zh": "在ConEmu窗口中间绘制console内容。与“Pad大小”结合使用",
       "id": 1570 }
     ,
+    "cbUseAltGrayPlus": {
+      "en": [ "Use Alt+NumpadAdd+HexNumbers to enter unicode symbol by its hex codebase\r\n"
+            , "Ignored in Far Manager\r\n"
+            , "Has no effect on explicit shortcut" ],
+      "id": 3061 }
+    ,
     "cbUseClink": {
       "en": [ "Use clink to extend command prompt (cmd.exe)\r\n"
             , "https://mridgers.github.io/clink/" ],
@@ -873,6 +883,12 @@
       "en": "Specify default foreground (font) text color for new consoles",
       "zh": "为新的控制台（console）指定默认的前台（字体）文本颜色",
       "id": 2398 }
+    ,
+    "lbCTSActAlways": {
+      "en": [ "Choose required pressed modifier for actions\r\n"
+            , "<No-Mod> is ignored in Far Manager to bypass\r\n"
+            , " mouse button clicks to console" ],
+      "id": 1645 }
     ,
     "lbCTSBlockSelection": {
       "en": "Choose modifier to starting ‘Block selection’ with mouse LeftClick+Drag",
@@ -1200,8 +1216,8 @@
             , "Use ‘%1’ macro for ‘clicked’ item\r\n"
             , "Use ‘!ConEmuWorkDir!’ for the directory,\r\n"
             , "but not a clicked file\r\n"
-            , "Use ‘-reuse -run \"shell\"’ to reuse existing ConEmu window instead of creating new one" ],
-      "zh": [ "这里指定你的shell （cmd, far,等等）\r\n"
+            , "Use ‘-reuse’ to reuse the existing ConEmu window instead of creating new one. E.g. ‘-reuse -run {cmd}’" ],
+      "_zh": [ "这里指定你的shell （cmd, far,等等）\r\n"
             , "使用宏‘%1’代表‘被点击’的项目\r\n"
             , "使用‘!ConEmuWorkDir!’代表所在目录，\r\n"
             , "而不是被点击的文件\r\n"
@@ -2558,6 +2574,10 @@
       "zh": "退出代码",
       "id": 17 }
     ,
+    "lng_HotkeyDuplicated": {
+      "en": "Hotkey <%s> is not unique",
+      "id": 79 }
+    ,
     "lng_HotkeysAll": {
       "en": "All hotkeys",
       "ru": "Все хоткеи",
@@ -2587,6 +2607,14 @@
       "ru": "Пользовательские",
       "zh": "用户定义的",
       "id": 59 }
+    ,
+    "lng_KeyNoMod": {
+      "en": "<No-Mod>",
+      "id": 78 }
+    ,
+    "lng_KeyNone": {
+      "en": "<None>",
+      "id": 77 }
     ,
     "lng_PasteEnterConfirm": {
       "en": [ "Warning!\n"
@@ -2681,6 +2709,10 @@
       "ru": "Свободное",
       "zh": "自由",
       "id": 55 }
+    ,
+    "lng_SpgANSI": {
+      "en": "ANSI execution",
+      "id": 80 }
     ,
     "lng_SpgAppDistinct": {
       "en": "App distinct",
@@ -3797,6 +3829,10 @@
       "zh": "等宽（&M）",
       "id": 2283 }
     ,
+    "cbMouseDragWindow": {
+      "en": "Ctrl+Alt - drag window by client area",
+      "id": 3060 }
+    ,
     "cbMultiCon": {
       "en": "Multiple consoles in one ConEmu window",
       "zh": "多个consoles在一个ConEmu窗口里",
@@ -3833,8 +3869,8 @@
       "id": 2599 }
     ,
     "cbProcessAnsi": {
-      "en": "ANSI X3.64 / xterm 256 colors",
-      "zh": "ANSI X3.64 / xterm 256 色",
+      "en": "ANSI and xterm sequences",
+      "_zh": "ANSI X3.64 / xterm 256 色",
       "id": 2253 }
     ,
     "cbProcessCmdStart": {
@@ -4158,6 +4194,10 @@
       "zh": "代理",
       "id": 2059 }
     ,
+    "cbUseAltGrayPlus": {
+      "en": "Alt+NumpadAdd - unicode hex codebase",
+      "id": 3061 }
+    ,
     "cbUseClink": {
       "en": "Use Clink in prompt",
       "zh": "命令行提示符里使用Clink",
@@ -4221,6 +4261,14 @@
       "en": "Alpha transparency",
       "zh": "Alpha透明度",
       "id": 2936 }
+    ,
+    "gbAnsiSecureExec": {
+      "en": "Allow GuiMacro and Process execution",
+      "id": 3063 }
+    ,
+    "gbAnsiSequences": {
+      "en": "ANSI sequences",
+      "id": 3072 }
     ,
     "gbAntiAliasing": {
       "en": "Anti-aliasing",
@@ -4741,6 +4789,18 @@
       "zh": "另一个（&A）用户",
       "id": 1657 }
     ,
+    "rbAnsiSecureAny": {
+      "en": "Allow anywhere",
+      "id": 3067 }
+    ,
+    "rbAnsiSecureCmd": {
+      "en": "Allow in cmd.exe only",
+      "id": 3068 }
+    ,
+    "rbAnsiSecureOff": {
+      "en": "Disallow everywhere",
+      "id": 3069 }
+    ,
     "rbAppDistinctElevatedIgnore": {
       "en": "Doesn't matter",
       "ru": "Не важно",
@@ -4823,11 +4883,6 @@
       "en": "Explicit executable (env.var. of ConEmu.exe allowed)",
       "zh": "显式可执行文件（允许使用ConEmu.exe的env.var.）",
       "id": 2151 }
-    ,
-    "rbCTSActBufferOnly": {
-      "en": "Buffer only (e.g. cmd.exe)",
-      "zh": "仅缓存 （比如 cmd.exe）",
-      "id": 1738 }
     ,
     "rbCurrentUser": {
       "en": "Run as current &user <UserName>",
@@ -5212,6 +5267,18 @@
       "zh": "关联",
       "id": 2769 }
     ,
+    "stAnsiSecureExec1": {
+      "en": "Use `^]]9;6;\"*macro*\"^]\\` for GuiMacro execution",
+      "id": 3064 }
+    ,
+    "stAnsiSecureExec2": {
+      "en": "Use `^]]9;7;\"*cmd*\"^]\\` for process creation (required for GitShowBranch.cmd)",
+      "id": 3065 }
+    ,
+    "stAnsiSecureExec3": {
+      "en": "List of allowed commands (you may use `*`)",
+      "id": 3071 }
+    ,
     "stAppDistinctBottom": {
       "en": "End of scroll area",
       "zh": "滚动区域末尾",
@@ -5375,6 +5442,10 @@
       "en": "Right:",
       "zh": "右：",
       "id": 3022 }
+    ,
+    "stCTSRMCondition": {
+      "en": "Condition:",
+      "id": 3062 }
     ,
     "stCTSTextColor": {
       "en": "Foreground:",
