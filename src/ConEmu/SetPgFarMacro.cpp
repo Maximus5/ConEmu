@@ -109,7 +109,7 @@ INT_PTR CSetPgFarMacro::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 				return 0;
 			}
 
-			GetString(hDlg, nCtrlId, ppszMacro, pszDefaultMacro, false);
+			GetString(hDlg, nCtrlId, ppszMacro, pszDefaultMacro, (code == CBN_SELCHANGE));
 		}
 
 		break;
