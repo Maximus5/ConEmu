@@ -32,11 +32,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 
 #include "SetPgBase.h"
+#include "DlgItemHelper.h"
 
 struct ColorPalette;
 
 class CSetPgFast
 	: public CSetPgBase
+	, public CDlgItemHelper
 {
 public:
 	static CSetPgBase* Create() { return new CSetPgFast(); };
@@ -57,10 +59,12 @@ public:
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
 	// Events
 	virtual INT_PTR OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId) override;
-	//virtual INT_PTR OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlId) override;
+	virtual INT_PTR OnComboBox(HWND hDlg, WORD nCtrlId, WORD code) override;
 
 protected:
 	// Members
 	static const ColorPalette* gp_DefaultPalette;
 	static WNDPROC gpfn_DefaultColorBoxProc;
+public: // temporary, used in OptionsFast.cpp
+	static ConEmuHotKey ghk_MinMaxKey;
 };

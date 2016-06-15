@@ -33,12 +33,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 
 #include "AboutDlg.h"
+#include "ConEmu.h"
 #include "HotkeyDlg.h"
 #include "Options.h"
+#include "OptionsClass.h"
 #include "SetColorPalette.h"
+#include "SetDlgButtons.h"
 #include "SetDlgLists.h"
 #include "SetPgFast.h"
 
+ConEmuHotKey CSetPgFast::ghk_MinMaxKey = {};
 const ColorPalette* CSetPgFast::gp_DefaultPalette = NULL;
 WNDPROC CSetPgFast::gpfn_DefaultColorBoxProc = NULL;
 
@@ -125,7 +129,7 @@ LRESULT CSetPgFast::OnInitDialog(HWND hDlg, bool abInitial)
 	#endif
 
 	// Injects
-	сheckDlgButton(hDlg, cbInjectConEmuHkFast, gpSet->isUseInjects);
+	checkDlgButton(hDlg, cbInjectConEmuHkFast, gpSet->isUseInjects);
 
 
 
@@ -141,8 +145,8 @@ LRESULT CSetPgFast::OnInitDialog(HWND hDlg, bool abInitial)
 	else
 	{
 		if (gpSet->UpdSet.isUpdateUseBuilds != 0)
-			сheckDlgButton(hDlg, cbEnableAutoUpdateFast, gpSet->UpdSet.isUpdateCheckOnStartup|gpSet->UpdSet.isUpdateCheckHourly);
-		сheckRadioButton(hDlg, rbAutoUpdateStableFast, rbAutoUpdateDeveloperFast,
+			checkDlgButton(hDlg, cbEnableAutoUpdateFast, gpSet->UpdSet.isUpdateCheckOnStartup|gpSet->UpdSet.isUpdateCheckHourly);
+		checkRadioButton(hDlg, rbAutoUpdateStableFast, rbAutoUpdateDeveloperFast,
 			(gpSet->UpdSet.isUpdateUseBuilds == 1) ? rbAutoUpdateStableFast :
 			(gpSet->UpdSet.isUpdateUseBuilds == 3) ? rbAutoUpdatePreviewFast : rbAutoUpdateDeveloperFast);
 	}
@@ -250,48 +254,12 @@ LPCWSTR CSetPgFast::GetStartupCommand(const CommandTasks*& pTask)
 	return pszStartup;
 }
 
-/*
-INT_PTR CSetPgFast::OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlId)
-{
-	if (GetDlgItem(hDlg, stDisableConImeFast1) == (HWND)lParam)
-	{
-		SetTextColor((HDC)wParam, 255);
-		HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-		SetBkMode((HDC)wParam, TRANSPARENT);
-		return (INT_PTR)hBrush;
-	}
-	else if (GetDlgItem(hDlg, stHomePage) == (HWND)lParam)
-	{
-		SetTextColor((HDC)wParam, GetSysColor(COLOR_HOTLIGHT));
-		HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-		SetBkMode((HDC)wParam, TRANSPARENT);
-		return (INT_PTR)hBrush;
-	}
-	else
-	{
-		SetTextColor((HDC)wParam, GetSysColor(COLOR_WINDOWTEXT));
-		HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
-		SetBkMode((HDC)wParam, TRANSPARENT);
-		return (INT_PTR)hBrush;
-	}
-
-	return CSetPgBase::OnCtlColorStatic(hDlg, hdc, hCtrl, nCtrlId)
-}
-*/
-
 INT_PTR CSetPgFast::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 {
 	switch (nCtrlId)
 	{
-	case stHomePage:
-		{
-			ConEmuAbout::OnInfo_FirstStartPage();
-			return 1;
-		}
-
 	case cbQuakeKeyFast:
 		{
-			extern ConEmuHotKey ghk_MinMaxKey;
 			DWORD VkMod = ghk_MinMaxKey.GetVkMod();
 			if (CHotKeyDialog::EditHotKey(hDlg, VkMod))
 			{
@@ -301,7 +269,94 @@ INT_PTR CSetPgFast::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 			}
 			return 1;
 		}
+
+	case cbSingleInstance:
+	case cbQuakeFast:
+	case cbUseKeyboardHooksFast:
+	case cbInjectConEmuHkFast:
+		CSetDlgButtons::OnButtonClicked(hDlg, CB, uCheck);
+		break;
+	case cbEnableAutoUpdateFast:
+		break;
+	case rbAutoUpdateStableFast:
+	case rbAutoUpdatePreviewFast:
+	case rbAutoUpdateDeveloperFast:
+		break;
 	}
 
 	return CSetPgBase::OnButtonClicked(hDlg, hBtn, nCtrlId);
+}
+
+INT_PTR CSetPgFast::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
+{
+	CEStr lsValue;
+
+	switch (nCtrlId)
+	{
+	case lbStartupShellFast:
+	{
+		if ((code == CBN_EDITCHANGE) || (code == CBN_SELCHANGE))
+		{
+			GetString(hDlg, nCtrlId, &lsValue.ms_Value, NULL, (code == CBN_SELCHANGE));
+
+			if (!lsValue.IsEmpty())
+			{
+				if (*lsValue.ms_Val == TaskBracketLeft)
+				{
+					if (lsValue.ms_Val[lstrlen(lsValue.ms_Val)-1] != TaskBracketRight)
+					{
+						_ASSERTE(FALSE && "Doesn't match '{...}'");
+					}
+					else
+					{
+						gpSet->nStartType = 2;
+						SafeFree(gpSet->psStartTasksName);
+						gpSet->psStartTasksName = lstrdup(lsValue.ms_Val);
+					}
+				}
+				else if (lstrcmp(lsValue.ms_Val, AutoStartTaskName) == 0)
+				{
+					// Not shown yet in list?
+					gpSet->nStartType = 3;
+				}
+				else if (*lsValue.ms_Val == CmdFilePrefix)
+				{
+					gpSet->nStartType = 1;
+					SafeFree(gpSet->psStartTasksFile);
+					gpSet->psStartTasksFile = lstrdup(lsValue.ms_Val);
+				}
+				else
+				{
+					gpSet->nStartType = 0;
+					SafeFree(gpSet->psStartSingleApp);
+					gpSet->psStartSingleApp = lstrdup(lsValue.ms_Val);
+				}
+			}
+		}
+		break;
+	} // lbStartupShellFast
+
+	case lbColorSchemeFast:
+	{
+		if (code == CBN_SELCHANGE)
+		{
+			// Default pallette changed
+			if (CSetDlgLists::GetSelectedString(hDlg, lbColorSchemeFast, &lsValue.ms_Val) > 0)
+			{
+				const ColorPalette* pPal = gpSet->PaletteGetByName(lsValue.ms_Val);
+				if (pPal)
+				{
+					gpSetCls->ChangeCurrentPalette(pPal, false);
+				}
+			}
+			SendDlgItemMessage(hDlg, stPalettePreviewFast, UM_PALETTE_FAST_CHG, wParam, lParam);
+		}
+		break;
+	} // lbColorSchemeFast
+
+	default:
+		_ASSERTE(FALSE && "ComboBox was not processed");
+	}
+
+	return 0;
 }

@@ -67,7 +67,6 @@ static bool bVanilla;
 static CDpiForDialog* gp_DpiAware = NULL;
 static CEHelpPopup* gp_FastHelp = NULL;
 static int gn_FirstFarTask = -1;
-ConEmuHotKey ghk_MinMaxKey = {};
 static int iCreatIdx = 0;
 static CEStr szConEmuDrive;
 static SettingsLoadedFlags sAppendMode = slf_None;
@@ -257,7 +256,7 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 
 
 	// Tasks, etc
-	PRAGMA_ERROR("Create CSetPgFast object");
+	//PRAGMA_ERROR("Create CSetPgFast object");
 
 
 
@@ -416,7 +415,7 @@ static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 			gpSet->isQuakeStyle = CDlgItemHelper::isChecked2(hDlg, cbQuakeFast);
 
 			/* Min/Restore key */
-			gpSet->SetHotkeyById(vkMinimizeRestore, ghk_MinMaxKey.GetVkMod());
+			gpSet->SetHotkeyById(vkMinimizeRestore, CSetPgFast::ghk_MinMaxKey.GetVkMod());
 
 			/* Install Keyboard hooks */
 			gpSet->m_isKeyboardHooks = IsDlgButtonChecked(hDlg, cbUseKeyboardHooksFast) ? 1 : 2;
@@ -500,12 +499,12 @@ static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM
 
 		case cbQuakeKeyFast:
 		{
-			DWORD VkMod = ghk_MinMaxKey.GetVkMod();
+			DWORD VkMod = CSetPgFast::ghk_MinMaxKey.GetVkMod();
 			if (CHotKeyDialog::EditHotKey(hDlg, VkMod))
 			{
-				ghk_MinMaxKey.SetVkMod(VkMod);
+				CSetPgFast::ghk_MinMaxKey.SetVkMod(VkMod);
 				wchar_t szKey[128] = L"";
-				SetDlgItemText(hDlg, tQuakeKeyFast, ghk_MinMaxKey.GetHotkeyName(szKey));
+				SetDlgItemText(hDlg, tQuakeKeyFast, CSetPgFast::ghk_MinMaxKey.GetHotkeyName(szKey));
 			}
 			return 1;
 		}

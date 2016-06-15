@@ -242,6 +242,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			break;
 		case cbQuakeStyle:
 		case cbQuakeAutoHide:
+		case cbQuakeFast:
 			OnBtn_QuakeStyles(hDlg, CB, uCheck);
 			break;
 		case cbHideCaption:
@@ -415,6 +416,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		//	isLockRealConsolePos = isChecked(hDlg, cbLockRealConsolePos);
 		//	break;
 		case cbUseInjects:
+		case cbInjectConEmuHkFast:
 			OnBtn_UseInjects(hDlg, CB, uCheck);
 			break;
 		case cbProcessAnsi:
@@ -541,6 +543,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			break;
 
 		case cbInstallKeybHooks:
+		case cbUseKeyboardHooksFast:
 			OnBtn_InstallKeybHooks(hDlg, CB, uCheck);
 			break;
 
@@ -2195,12 +2198,12 @@ void CSetDlgButtons::OnBtn_AlwaysShowTrayIcon(HWND hDlg, WORD CB, BYTE uCheck)
 } // cbAlwaysShowTrayIcon
 
 
-// cbQuakeAutoHide || cbQuakeStyle
+// cbQuakeAutoHide || cbQuakeStyle || cbQuakeFast
 void CSetDlgButtons::OnBtn_QuakeStyles(HWND hDlg, WORD CB, BYTE uCheck)
 {
-	_ASSERTE(CB==cbQuakeAutoHide || CB==cbQuakeStyle);
+	_ASSERTE(CB==cbQuakeAutoHide || CB==cbQuakeStyle || CB == cbQuakeFast);
 
-	bool bQuake = (CB == cbQuakeStyle) ? (uCheck != 0) : (gpSet->isQuakeStyle != 0);
+	bool bQuake = (CB == cbQuakeStyle || CB == cbQuakeFast) ? (uCheck != 0) : (gpSet->isQuakeStyle != 0);
 	bool bAuto = (CB == cbQuakeAutoHide) ? (uCheck != 0) : (gpSet->isQuakeStyle == 2);
 	BYTE NewQuakeMode = bQuake ? bAuto ? 2 : 1 : 0;
 
@@ -2212,7 +2215,7 @@ void CSetDlgButtons::OnBtn_QuakeStyles(HWND hDlg, WORD CB, BYTE uCheck)
 	// здесь меняются gpSet->isQuakeStyle, gpSet->isTryToCenter, gpSet->SetMinToTray
 	gpConEmu->SetQuakeMode(NewQuakeMode, (ConEmuWindowMode)gpSet->_WindowMode, true);
 
-} // cbQuakeAutoHide || cbQuakeStyle
+} // cbQuakeAutoHide || cbQuakeStyle || cbQuakeFast
 
 
 // cbHideCaption
@@ -2800,15 +2803,15 @@ void CSetDlgButtons::OnBtn_RConVisible(HWND hDlg, WORD CB, BYTE uCheck)
 } // cbVisible
 
 
-// cbUseInjects
+// cbUseInjects || cbInjectConEmuHkFast
 void CSetDlgButtons::OnBtn_UseInjects(HWND hDlg, WORD CB, BYTE uCheck)
 {
-	_ASSERTE(CB==cbUseInjects);
+	_ASSERTE(CB==cbUseInjects || CB==cbInjectConEmuHkFast);
 
 	gpSet->isUseInjects = _bool(uCheck);
 	gpConEmu->OnGlobalSettingsChanged();
 
-} // cbUseInjects
+} // cbUseInjects || cbInjectConEmuHkFast
 
 
 // cbProcessAnsi
@@ -3326,10 +3329,10 @@ void CSetDlgButtons::OnBtn_SendConsoleSpecials(HWND hDlg, WORD CB, BYTE uCheck)
 } // cbSendAltTab || cbSendAltEsc || cbSendAltPrintScrn || cbSendPrintScrn || cbSendCtrlEsc
 
 
-// cbInstallKeybHooks
+// cbInstallKeybHooks || cbUseKeyboardHooksFast
 void CSetDlgButtons::OnBtn_InstallKeybHooks(HWND hDlg, WORD CB, BYTE uCheck)
 {
-	_ASSERTE(CB==cbInstallKeybHooks);
+	_ASSERTE(CB==cbInstallKeybHooks || CB==cbUseKeyboardHooksFast);
 
 	switch (uCheck)
 	{
@@ -3340,7 +3343,7 @@ void CSetDlgButtons::OnBtn_InstallKeybHooks(HWND hDlg, WORD CB, BYTE uCheck)
 		// Запрос при старте
 	case BST_INDETERMINATE: gpSet->m_isKeyboardHooks = 0; break;
 	}
-} // cbInstallKeybHooks
+} // cbInstallKeybHooks || cbUseKeyboardHooksFast
 
 
 // cbDosBox
