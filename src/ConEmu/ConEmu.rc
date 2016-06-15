@@ -732,7 +732,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "ANSI sequences",gbChildGui,4,1,375,237
+    GROUPBOX        "ANSI sequences",gbAnsiSequences,4,1,375,237
     CONTROL         "ANSI and xterm sequences",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,15,354,8
     GROUPBOX        "Allow GuiMacro and Process execution",gbAnsiSecureExec,4,30,375,208
     LTEXT           "Use `^]]9;6;""*macro*""^]\\` for GuiMacro execution",stAnsiSecureExec1,11,41,350,8
