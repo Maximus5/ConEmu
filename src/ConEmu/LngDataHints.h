@@ -246,7 +246,7 @@ static LngPredefined gsDataHints[] = {
 	{ tFontSizeY,              L"Main font height" },
 	{ tHereConfig,             L"Allows to set different font, palette and other settings for your ConEmu instance" },
 	{ tHereIcon,               L"‘C:\\Far\\far.exe,0’, ‘powershell.exe’, ‘C:\\Images\\Icon.ico’" },
-	{ tHereShell,              L"Specify your shell here (cmd, far, etc.)\r\nUse ‘%1’ macro for ‘clicked’ item\r\nUse ‘!ConEmuWorkDir!’ for the directory,\r\nbut not a clicked file\r\nUse ‘-reuse -run \"shell\"’ to reuse existing ConEmu window instead of creating new one" },
+	{ tHereShell,              L"Specify your shell here (cmd, far, etc.)\r\nUse ‘%1’ macro for ‘clicked’ item\r\nUse ‘!ConEmuWorkDir!’ for the directory,\r\nbut not a clicked file\r\nUse ‘-reuse’ to reuse the existing ConEmu window instead of creating new one. E.g. ‘-reuse -run {cmd}’" },
 	{ tHideCaptionAlwaysDelay, L"Delay in milliseconds, for a Frame appearance" },
 	{ tHideCaptionAlwaysDissapear,L"Delay in milliseconds, for a Frame disappearance" },
 	{ tHideCaptionAlwaysFrame, L"While caption and frame are hidden, ConEmu may keep small part of frame (in pixels) around console part. Default is 1 pixel." },
