@@ -37,36 +37,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuC.h"
 #include "UnicodeTest.h"
 
-// Returns:
-// * CERR_UNICODE_CHK_OKAY(142), if RealConsole supports
-//   unicode characters output.
-// * CERR_UNICODE_CHK_FAILED(141), if RealConsole CAN'T
-//   output/store unicode characters.
-// This function is called by: ConEmuC.exe /CHECKUNICODE
-int CheckUnicodeFont()
+void PrintConsoleInfo()
 {
-	int iRc = CERR_UNICODE_CHK_FAILED;
-
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
 
-
-	wchar_t szText[80] = UnicodeTestString;
-	wchar_t szColor[32] = ColorTestString;
-	CHAR_INFO cWrite[80];
-	CHAR_INFO cRead[80] = {};
-	WORD aWrite[80], aRead[80] = {};
-	wchar_t sAttrWrite[80] = {}, sAttrRead[80] = {}, sAttrBlock[80] = {};
 	wchar_t szInfo[1024]; DWORD nTmp;
-	wchar_t szCheck[80] = L"", szBlock[80] = L"";
-	BOOL bInfo = FALSE, bWrite = FALSE, bRead = FALSE, bCheck = FALSE;
-	DWORD nLen = lstrlen(szText), nWrite = 0, nRead = 0, nErr = 0;
-	WORD nDefColor = 7;
-	DWORD nColorLen = lstrlen(szColor);
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	CONSOLE_CURSOR_INFO ci = {};
-	_ASSERTE(nLen<=35); // ниже на 2 буфер множится
 
 	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
 	//msprintf не умеет "%02u"
@@ -129,18 +108,21 @@ int CheckUnicodeFont()
 
 
 	if (GetConsoleScreenBufferInfo(hOut, &csbi))
-		nDefColor = csbi.wAttributes;
-	msprintf(szInfo, countof(szInfo), L"Buffer={%i,%i} Window={%i,%i}-{%i,%i} MaxSize={%i,%i}\r\n",
-		csbi.dwSize.X, csbi.dwSize.Y,
-		csbi.srWindow.Left, csbi.srWindow.Top, csbi.srWindow.Right, csbi.srWindow.Bottom,
-		csbi.dwMaximumWindowSize.X, csbi.dwMaximumWindowSize.Y);
+		msprintf(szInfo, countof(szInfo), L"Buffer={%i,%i} Window={%i,%i}-{%i,%i} MaxSize={%i,%i}\r\n",
+			csbi.dwSize.X, csbi.dwSize.Y,
+			csbi.srWindow.Left, csbi.srWindow.Top, csbi.srWindow.Right, csbi.srWindow.Bottom,
+			csbi.dwMaximumWindowSize.X, csbi.dwMaximumWindowSize.Y);
+	else
+		msprintf(szInfo, countof(szInfo), L"GetConsoleScreenBufferInfo failed, code=%u\r\n",
+			GetLastError());
 	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
 
 	if (GetConsoleCursorInfo(hOut, &ci))
 		msprintf(szInfo, countof(szInfo), L"Cursor: Pos={%i,%i} Size=%i%% %s\r\n",
 			csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, ci.dwSize, ci.bVisible ? L"Visible" : L"Hidden");
 	else
-		lstrcpyn(szInfo, L"CursorInfo failed\r\n", countof(szInfo));
+		msprintf(szInfo, countof(szInfo), L"GetConsoleCursorInfo failed, code=%u\r\n",
+			GetLastError());
 	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
 
 	DWORD nCP = GetConsoleCP();
@@ -174,7 +156,43 @@ int CheckUnicodeFont()
 		}
 		WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
 	}
+}
 
+// Returns:
+// * CERR_UNICODE_CHK_OKAY(142), if RealConsole supports
+//   unicode characters output.
+// * CERR_UNICODE_CHK_FAILED(141), if RealConsole CAN'T
+//   output/store unicode characters.
+// This function is called by: ConEmuC.exe /CHECKUNICODE
+int CheckUnicodeFont()
+{
+	// Print version and console information first
+	PrintConsoleInfo();
+
+	int iRc = CERR_UNICODE_CHK_FAILED;
+
+	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
+
+	wchar_t szText[80] = UnicodeTestString;
+	wchar_t szColor[32] = ColorTestString;
+	CHAR_INFO cWrite[80];
+	CHAR_INFO cRead[80] = {};
+	WORD aWrite[80], aRead[80] = {};
+	wchar_t sAttrWrite[80] = {}, sAttrRead[80] = {}, sAttrBlock[80] = {};
+	wchar_t szInfo[1024]; DWORD nTmp;
+	wchar_t szCheck[80] = L"", szBlock[80] = L"";
+	BOOL bInfo = FALSE, bWrite = FALSE, bRead = FALSE, bCheck = FALSE;
+	DWORD nLen = lstrlen(szText), nWrite = 0, nRead = 0, nErr = 0;
+	WORD nDefColor = 7;
+	DWORD nColorLen = lstrlen(szColor);
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	CONSOLE_CURSOR_INFO ci = {};
+	_ASSERTE(nLen<=35); // ниже на 2 буфер множится
+
+	if (GetConsoleScreenBufferInfo(hOut, &csbi))
+		nDefColor = csbi.wAttributes;
 
 	// Simlify checking of ConEmu's "colorization"
 	WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);

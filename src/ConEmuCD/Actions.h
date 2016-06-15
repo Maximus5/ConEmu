@@ -51,6 +51,7 @@ enum ConEmuExecAction
 	ea_InjectDefTrm,
 	ea_GuiMacro,
 	ea_CheckUnicodeFont,
+	ea_PrintConsoleInfo,
 	ea_TestUnicodeCvt,
 	ea_OsVerInfo,
 	ea_ExportCon,  // export env.vars to processes of active console

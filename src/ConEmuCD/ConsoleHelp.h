@@ -87,6 +87,7 @@ _DBGHLP(L"     /INJECT=PID{10}\r\n") \
 _DBGHLP(L"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
         L"     /Args <Command line> -> printf NextArg's\r\n" \
         L"     /CheckUnicode -> Some unicode printouts\r\n" \
+        L"     /ConInfo -> Current console tech info\r\n" \
         L"     /OsVerInfo -> Show OS information, returns OsVer as errorlevel\r\n" \
         L"     /ErrorLevel <number> -> exit with specified errorlevel\r\n" \
         L"     /Result -> print errorlevel of /C <command>\r\n" \

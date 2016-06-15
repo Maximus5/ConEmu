@@ -1114,6 +1114,13 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 			iRc = CheckUnicodeFont();
 			break;
 		}
+	case ea_PrintConsoleInfo:
+		{
+			LogString(L"DoExecAction: ea_PrintConsoleInfo");
+			PrintConsoleInfo();
+			iRc = 0;
+			break;
+		}
 	case ea_TestUnicodeCvt:
 		{
 			LogString(L"DoExecAction: ea_TestUnicodeCvt");

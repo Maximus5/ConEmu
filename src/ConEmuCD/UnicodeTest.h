@@ -39,4 +39,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // This function is called by: ConEmuC.exe /CHECKUNICODE
 int CheckUnicodeFont();
 
+void PrintConsoleInfo();
+
 int TestUnicodeCvt();

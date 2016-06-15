@@ -3001,6 +3001,11 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			eExecAction = ea_ParseArgs;
 			break;
 		}
+		else if (lstrcmpi(szArg, L"/ConInfo")==0)
+		{
+			eExecAction = ea_PrintConsoleInfo;
+			break;
+		}
 		else if (lstrcmpi(szArg, L"/CheckUnicode")==0)
 		{
 			eExecAction = ea_CheckUnicodeFont;
