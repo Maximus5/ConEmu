@@ -510,6 +510,15 @@
     <ClCompile Include="SetPgQuake.cpp">
       <Filter>SettingPages</Filter>
     </ClCompile>
+    <ClCompile Include="RConData.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgANSI.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SetPgFast.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Attach.h">
@@ -1100,6 +1109,15 @@
     </ClInclude>
     <ClInclude Include="SetPgQuake.h">
       <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="RConData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgANSI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SetPgFast.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
