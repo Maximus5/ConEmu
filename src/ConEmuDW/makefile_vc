@@ -86,14 +86,8 @@ CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
 !include ../makefile_vc_link
 
 
-
+.PHONY: build
 build: old_clean "$(OUTFULLNAME)"
-
-"$(OUTFULLNAME)": $(LINK_OBJS) $(RES) $(LINK_DEP)
-	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS)$(CLR_STD)
-	$(LNK) @<<
-	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
-<<
 
 
 $(RES): $(RC_NAME).rc
@@ -159,3 +153,11 @@ $(INTDIR)\WThreads.obj: ../common/WThreads.cpp
 
 #LINK_OBJS end
 ##############
+
+
+
+"$(OUTFULLNAME)": $(LINK_OBJS) $(RES) $(LINK_DEP)
+	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS)$(CLR_STD)
+	$(LNK) @<<
+	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
+<<

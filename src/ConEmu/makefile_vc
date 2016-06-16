@@ -83,7 +83,7 @@ MINGWRES=
 
 ALL: dirs build release
 
-## .PHONY: build
+.PHONY: build
 build: "$(OUTDIR)\$(OUTNAME).$(EXT)" $(MINGWRES)
   echo `build` target
 
@@ -95,13 +95,6 @@ mingw: $(MINGW_RES_FILE)
 
 !include ../makefile_vc_link
 
-
-
-"$(OUTFULLNAME)": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(MINGWRES) conemu.gcc.manifest
-	@echo $(CLR_BRN)linking $@ :: $(LINKFLAGS) $(LINK_LIBS)$(CLR_STD)
-	$(LNK) @<<
-	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
-<<
 
 
 $(RES_FILE): ConEmu.rc Externals.rc2 Version.h Version.rc2
@@ -626,3 +619,10 @@ $(INTDIR)\WUser.obj: ../common/WUser.cpp
 #LINK_OBJS end
 ##############
 
+
+
+"$(OUTFULLNAME)": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(MINGWRES) conemu.gcc.manifest
+	@echo $(CLR_BRN)linking $@ :: $(LINKFLAGS) $(LINK_LIBS)$(CLR_STD)
+	$(LNK) @<<
+	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
+<<

@@ -79,18 +79,8 @@ RFLAGS=$(RFLAGS)
 
 !include ../makefile_vc_link
 
-
 .PHONY: build
-build: cppflags "$(OUTFULLNAME)"
-
-
-"$(OUTFULLNAME)": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
-	@echo $(CLR_BRN)linking $@ :: $(LINKFLAGS) $(LINK_LIBS)$(CLR_STD)
-	$(LNK) @<<
-	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
-<<
-
-
+build: cppflags dirs "$(OUTFULLNAME)"
 
 $(RES_FILE): $(NAME).rc ..\ConEmu\Version.h
 	@echo compiling resource file
@@ -145,3 +135,11 @@ $(INTDIR)\WThreads.obj: ../common/WThreads.cpp ../common/WThreads.h
 
 #LINK_OBJS end
 ##############
+
+
+
+"$(OUTFULLNAME)": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
+	@echo $(CLR_BRN)linking $@ :: $(LINKFLAGS) $(LINK_LIBS)$(CLR_STD)
+	$(LNK) @<<
+	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
+<<

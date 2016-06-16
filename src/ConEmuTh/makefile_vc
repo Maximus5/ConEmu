@@ -77,13 +77,9 @@ CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
 !include ../makefile_vc_link
 
 
+.PHONY: build
 build: $(SUBMODULES) "$(OUTFULLNAME)"
 
-"$(OUTFULLNAME)": $(LINK_OBJS) $(RES) $(LINK_DEP)
-	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS)$(CLR_STD)
-	$(LNK) @<<
-	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
-<<
 
 
 $(RES): $(RC_NAME).rc
@@ -187,3 +183,11 @@ $(SUBMODULES): $(FICTIVE)
 	@cd Modules\$@
 	@$(MAKE) -s -f makefile_vc $(_MDEFS)
 	@cd ..\..
+
+
+
+"$(OUTFULLNAME)": $(LINK_OBJS) $(RES) $(LINK_DEP)
+	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS)$(CLR_STD)
+	$(LNK) @<<
+	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
+<<

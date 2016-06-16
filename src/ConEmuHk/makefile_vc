@@ -111,13 +111,9 @@ CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
 
 
 
+.PHONY: build
 build: "$(OUTFULLNAME)"
 
-"$(OUTFULLNAME)": $(LINK_OBJS) $(RES) $(LINK_DEP)
-	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS)$(CLR_STD)
-	$(LNK) @<<
-	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
-<<
 
 
 
@@ -328,3 +324,11 @@ $(INTDIR)\WThreads.obj: ../common/WThreads.cpp ../common/WThreads.h
 
 #LINK_OBJS end
 ##############
+
+
+
+"$(OUTFULLNAME)": $(LINK_OBJS) $(RES) $(LINK_DEP)
+	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS)$(CLR_STD)
+	$(LNK) @<<
+	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
+<<

@@ -124,8 +124,8 @@ OUTDIR=$(WORKDIR)
 
 ## *.obj dir
 OBJDIR=$(OUTDIR)\obj$(ADDOBJDIR)
-INTDIR=$(OUTDIR)\obj$(ADDOBJDIR)
-CODDIR=$(OUTDIR)\cod$(ADDOBJDIR)
+INTDIR=$(OBJDIR)
+CODDIR=$(OBJDIR)
 
 !if defined(NEEDDEFLIB)
 # standard static multithreading libraries
