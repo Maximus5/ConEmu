@@ -274,7 +274,7 @@ INT_PTR CSetPgFast::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 	case cbQuakeFast:
 	case cbUseKeyboardHooksFast:
 	case cbInjectConEmuHkFast:
-		CSetDlgButtons::OnButtonClicked(hDlg, CB, uCheck);
+		CSetDlgButtons::OnButtonClicked(hDlg, nCtrlId, 0);
 		break;
 	case cbEnableAutoUpdateFast:
 		break;
@@ -297,7 +297,7 @@ INT_PTR CSetPgFast::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 	{
 		if ((code == CBN_EDITCHANGE) || (code == CBN_SELCHANGE))
 		{
-			GetString(hDlg, nCtrlId, &lsValue.ms_Value, NULL, (code == CBN_SELCHANGE));
+			GetString(hDlg, nCtrlId, &lsValue.ms_Val, NULL, (code == CBN_SELCHANGE));
 
 			if (!lsValue.IsEmpty())
 			{
@@ -349,7 +349,7 @@ INT_PTR CSetPgFast::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 					gpSetCls->ChangeCurrentPalette(pPal, false);
 				}
 			}
-			SendDlgItemMessage(hDlg, stPalettePreviewFast, UM_PALETTE_FAST_CHG, wParam, lParam);
+			SendDlgItemMessage(hDlg, stPalettePreviewFast, UM_PALETTE_FAST_CHG, 0, 0);
 		}
 		break;
 	} // lbColorSchemeFast
