@@ -311,41 +311,41 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Taskbar status area (TSA)",gbTaskBarNotify,4,1,375,29
-    CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,89,8
-    CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,14,89,8
+    CONTROL         "Always show TSA icon",cbAlwaysShowTrayIcon,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,175,8
+    CONTROL         "Auto minimize to TSA",cbMinToTray,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,190,14,175,8
     GROUPBOX        "Taskbar buttons",gbTaskBarButton,4,34,375,55
     CONTROL         "Show all consoles (Win7 and higher)",rbTaskbarBtnWin7,
-                    "Button",BS_AUTORADIOBUTTON | WS_GROUP,11,46,137,8
-    CONTROL         "Show all consoles (all OS)",rbTaskbarBtnAll,"Button",BS_AUTORADIOBUTTON,158,46,160,8
+                    "Button",BS_AUTORADIOBUTTON | WS_GROUP,11,46,175,8
+    CONTROL         "Show all consoles (all OS)",rbTaskbarBtnAll,"Button",BS_AUTORADIOBUTTON,190,46,175,8
     CONTROL         "Active console only (ConEmu window)",rbTaskbarBtnActive,
-                    "Button",BS_AUTORADIOBUTTON,11,59,140,8
+                    "Button",BS_AUTORADIOBUTTON,11,59,175,8
     CONTROL         "Don't show ConEmu window on Taskbar",rbTaskbarBtnHidden,
-                    "Button",BS_AUTORADIOBUTTON,158,59,159,8
+                    "Button",BS_AUTORADIOBUTTON,190,59,175,8
     CONTROL         "Show overlay icon (Win7 and higher)",cbTaskbarOverlay,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,74,143,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,74,175,8
     CONTROL         "Show progress indicator (Win7 and higher)",cbTaskbarProgress,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,158,74,159,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,190,74,175,8
     GROUPBOX        "Action on closing last console (tab) and 'cross clicking'",gbWndCloseAction,4,93,375,42
+    CONTROL         "Close ConEmu with last tab",cbCloseConEmuWithLastTab,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,106,175,8
+    CONTROL         "Quit on close (e.g. caption bar cross clicking)",cbCloseConEmuOnCrossClicking,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,190,106,175,8
+    CONTROL         "Minimize on closing last tab",cbMinimizeOnLastTabClose,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,120,175,8
+    CONTROL         "Hide to the TSA",cbHideOnLastTabClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,190,120,175,8
     GROUPBOX        "Minimize ConEmu automatically",gbMinimizeAction,4,140,375,57
     CONTROL         "Minimize on focus lose (not in Quake style)",cbMinimizeOnLoseFocus,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,153,199,8
     GROUPBOX        "Minimize when Esc pressed",gbMinimizeOnEsc,4,168,375,29
-    CONTROL         "If all consoles closed",rbMinByEscEmpty,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,181,99,8
-    CONTROL         "Always",rbMinByEscAlways,"Button",BS_AUTORADIOBUTTON,113,181,42,8
-    CONTROL         "Never",rbMinByEscNever,"Button",BS_AUTORADIOBUTTON,161,181,38,8
-    CONTROL         "Map Shift+Esc to Esc",cbMapShiftEscToEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,218,181,101,8
-    CONTROL         "Quit on close (e.g. caption bar cross clicking)",cbCloseConEmuOnCrossClicking,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,106,168,8
-    CONTROL         "Minimize on closing last tab",cbMinimizeOnLastTabClose,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,120,110,8
-    CONTROL         "Hide to the TSA",cbHideOnLastTabClose,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,129,120,66,8
-    CONTROL         "Close ConEmu with last tab",cbCloseConEmuWithLastTab,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,106,113,8
+    CONTROL         "If all consoles closed",rbMinByEscEmpty,"Button",BS_AUTORADIOBUTTON | WS_GROUP,11,181,105,8
+    CONTROL         "Always",rbMinByEscAlways,"Button",BS_AUTORADIOBUTTON,120,181,55,8
+    CONTROL         "Never",rbMinByEscNever,"Button",BS_AUTORADIOBUTTON,180,181,55,8
+    CONTROL         "Map Shift+Esc to Esc",cbMapShiftEscToEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,240,181,130,8
     GROUPBOX        "Windows 7 taskbar (Jump list)",gbCmdTasks7,4,202,375,29
-    CONTROL         "Add ConEmu tasks to taskbar",cbCmdTaskbarTasks,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,215,114,8
-    CONTROL         "Add commands from history, too",cbCmdTaskbarCommands,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,128,215,123,8
-    PUSHBUTTON      "Update Now!",cbCmdTaskbarUpdate,259,211,58,14
+    CONTROL         "Add ConEmu Tasks",cbCmdTaskbarTasks,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,215,104,8
+    CONTROL         "Add commands from history",cbCmdTaskbarCommands,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,118,215,123,8
+    PUSHBUTTON      "Update Now!",cbCmdTaskbarUpdate,308,211,65,14
 END
 
 IDD_SPG_CURSOR DIALOGEX 0, 0, 381, 242
