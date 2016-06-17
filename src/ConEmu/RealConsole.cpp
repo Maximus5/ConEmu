@@ -12298,7 +12298,8 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	// Convert Windows style path from clipboard to cygwin style?
 	if (pszBuf && *pszBuf
 		&& (abCygWin
-			|| ((PasteMode == pm_FirstLine) && IsFilePath(pszBuf, true) && isCygwinMsys())
+			|| (((PasteMode == pm_FirstLine) || (PasteMode == pm_OneLine))
+				&& IsFilePath(pszBuf, true) && isCygwinMsys())
 		))
 	{
 		wchar_t* pszCygWin = DupCygwinPath(pszBuf, false);
