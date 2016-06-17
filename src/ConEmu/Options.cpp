@@ -5346,9 +5346,11 @@ int Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR
 	}
 
 	// New task?
+	bool bNewTask = false;
 	CEStr lsName;
 	if (CmdTasks[anIndex] == NULL)
 	{
+		bNewTask = true;
 		CmdTasks[anIndex] = (CommandTasks*)calloc(1, sizeof(CommandTasks));
 		if (!CmdTasks[anIndex])
 		{
@@ -5394,6 +5396,8 @@ int Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR
 
 	if (aFlags != CETF_DONT_CHANGE)
 		CmdTasks[anIndex]->Flags = (aFlags & CETF_FLAGS_MASK);
+	else if (bNewTask)
+		CmdTasks[anIndex]->Flags = CETF_DEFAULT4NEW;
 
 	if (anIndex >= CmdTaskCount)
 		CmdTaskCount = anIndex+1;

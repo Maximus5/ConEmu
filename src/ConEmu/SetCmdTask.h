@@ -37,6 +37,7 @@ const CETASKFLAGS
 	CETF_NO_TASKBAR     = 0x0004,
 	CETF_ADD_TOOLBAR    = 0x0008,
 	CETF_FLAGS_MASK     = 0xFFFF, // Supported flags mask
+	CETF_DEFAULT4NEW    = CETF_NO_TASKBAR, // Default flags for newly created task
 	CETF_MAKE_UNIQUE    = 0x40000000,
 	CETF_DONT_CHANGE    = 0x80000000,
 	CETF_NONE           = 0;
