@@ -55,6 +55,7 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_HotkeysMacro,             L"Macros" },
 	{ lng_HotkeysSystem,            L"System" },
 	{ lng_HotkeysUser,              L"User defined" },
+	{ lng_JumpListUpdated,          L"Taskbar jump list was updated successfully" },
 	{ lng_KeyNoMod,                 L"<No-Mod>" },
 	{ lng_KeyNone,                  L"<None>" },
 	{ lng_PasteEnterConfirm,        L"Warning!\n\nPasting multi-line text involves\nsending <Enter> keypresses to console!\n\nContinue?" },

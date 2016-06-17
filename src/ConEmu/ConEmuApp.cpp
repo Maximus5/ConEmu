@@ -2298,18 +2298,25 @@ HRESULT _CreateSeparatorLink(IShellLink **ppsl)
 
 bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 {
-	// Добавляем Tasks, они есть только в Win7+
-	if (gnOsVer < 0x601)
+	// Jump Lists appears in Windows 7
+	if (!IsWin7())
+	{
+		LogString(L"Jump Lists: Are supported only in Windows 7 or higher");
 		return false;
+	}
 
-	// -- т.к. работа с TaskList занимает некоторое время - обновление будет делать только по запросу
-	//if (!bForce && !gpSet->isStoreTaskbarkTasks && !gpSet->isStoreTaskbarCommands)
+	// Updating takes some time, do it only when really required (requested)
+	TODO("Option for automatic update of Jump Lists");
 	if (!bForce)
-		return false; // сохранять не просили
+	{
+		LogString(L"Jump Lists: Update skipped");
+		return false;
+	}
 
 	bool bSucceeded = false;
 
 #ifdef __GNUC__
+	// MsgBox logs the text itself
 	MBoxA(L"Sorry, UpdateWin7TaskList is not available in GCC!");
 #else
 	SetCursor(LoadCursor(NULL, IDC_WAIT));
@@ -2320,6 +2327,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 	LPCWSTR pszCurCmd = NULL;
 	size_t nTasksCount = 0, nHistoryCount = 0;
 
+	// Add commands from history
 	if (gpSet->isStoreTaskbarCommands)
 	{
 		pszCurCmd = SkipNonPrintable(gpConEmu->opt.runCommand);
@@ -2344,6 +2352,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 			nHistoryCount++;
 	}
 
+	// Add ConEmu Tasks to TaskBar
 	if (gpSet->isStoreTaskbarkTasks)
 	{
 		int nGroup = 0;
@@ -2359,8 +2368,6 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 		}
 	}
 
-
-	//bool lbRc = false;
 
 	// The visible categories are controlled via the ICustomDestinationList interface.  If not customized,
 	// applications will get the Recent category by default.
@@ -2387,6 +2394,9 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 
 			// And we tries to add all Tasks with flag ‘Taskbar jump lists’
 
+			wchar_t szInfo[128];
+			msprintf(szInfo, countof(szInfo), L"Jump Lists update started, Tasks: %u, History: %u", nTasksCount, nHistoryCount);
+			LogString(szInfo);
 
 			IObjectCollection *poc = NULL;
 			hr = CoCreateInstance(CLSID_EnumerableObjectCollection, NULL, CLSCTX_INPROC, IID_PPV_ARGS(&poc));
@@ -2400,9 +2410,11 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 				bool bNeedSeparator = false;
 				bool bEmpty = true;
 
-				// Если просили - добавляем наши внутренние "Tasks"
+
+				// Add ConEmu's Tasks
 				if (SUCCEEDED(hr) && gpSet->isStoreTaskbarkTasks && nTasksCount)
 				{
+					LogString(L"Jump Lists: Tasks");
 					for (size_t i = 0; (i < countof(pszTasks)) && pszTasks[i]; i++)
 					{
 						hr = _CreateShellLink(NULL, pszTasksPrefix[i], pszTasks[i], &psl);
@@ -2413,6 +2425,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 							psl->Release();
 							if (SUCCEEDED(hr))
 							{
+								LogString(pszTasks[i]);
 								bNeedSeparator = true;
 								bEmpty = false;
 							}
@@ -2424,11 +2437,14 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 							break;
 						}
 					}
-				}
+				} // if (SUCCEEDED(hr) && gpSet->isStoreTaskbarkTasks && nTasksCount)
 
-				// И команды из истории
+
+				// Add commands from History
 				if (SUCCEEDED(hr) && gpSet->isStoreTaskbarCommands && (nHistoryCount || pszCurCmd))
 				{
+					LogString(L"Jump Lists: History");
+
 					if (bNeedSeparator)
 					{
 						bNeedSeparator = false; // один раз
@@ -2451,7 +2467,10 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 							hr = poc->AddObject(psl);
 							psl->Release();
 							if (SUCCEEDED(hr))
+							{
+								LogString(pszCurCmd);
 								bEmpty = false;
+							}
 						}
 
 						if (FAILED(hr))
@@ -2469,7 +2488,10 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 							hr = poc->AddObject(psl);
 							psl->Release();
 							if (SUCCEEDED(hr))
+							{
+								LogString(pszHistory[i]);
 								bEmpty = false;
+							}
 						}
 
 						if (FAILED(hr))
@@ -2478,9 +2500,10 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 							break;
 						}
 					}
-				}
+				} // if (SUCCEEDED(hr) && gpSet->isStoreTaskbarCommands && (nHistoryCount || pszCurCmd))
 
 
+				// Now we are ready to put items to Jump List
 				if (SUCCEEDED(hr))
 				{
 					IObjectArray * poa = NULL;
@@ -2509,9 +2532,12 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 							}
 							else
 							{
+								LogString(L"Jump Lists: Updated successfully");
+
 								if (!bNoSuccMsg)
 								{
-									MsgBox(L"Taskbar jump list was updated successfully", MB_ICONINFORMATION, gpConEmu->GetDefaultTitle(), ghOpWnd, true);
+									MsgBox(CLngRc::getRsrc(lng_JumpListUpdated/*"Taskbar jump list was updated successfully"*/),
+										MB_ICONINFORMATION, gpConEmu->GetDefaultTitle(), ghOpWnd, true);
 								}
 
 								bSucceeded = true;
@@ -2519,7 +2545,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 						}
 						poa->Release();
 					}
-				}
+				} // End of apply
 				poc->Release();
 			}
 
@@ -2570,7 +2596,7 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 	#endif
 
 	SetCursor(LoadCursor(NULL, IDC_ARROW));
-#endif
+#endif // __GNUC__
 
 	return bSucceeded;
 }
