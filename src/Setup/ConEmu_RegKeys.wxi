@@ -13,30 +13,4 @@
       <RegistrySearch Id="CEInstallDirOld" Root="HKLM" Key="$(var.RegKeyOld)" Name="$(var.CEInstallDir)" Type="directory" Win64="$(var.Win64)" />
     </Property>
 
-	<!--new-->
-    <Property Id="FARMANAGERFOLDER3">
-      <RegistrySearch Id="FarInstallDir3" Root="HKLM" Key="Software\Far Manager" Name="$(var.FarInstallDir)" Type="directory" Win64="$(var.Win64)" />
-    </Property>
-
-    <Property Id="FARMANAGERFOLDER2">
-      <RegistrySearch Id="FarInstallDir2" Root="HKLM" Key="Software\Far2" Name="$(var.FarInstallDir)" Type="directory" Win64="$(var.Win64)" />
-    </Property>
-
-    <Property Id="FARMANAGERFOLDER1">
-      <RegistrySearch Id="FarInstallDir1" Root="HKLM" Key="Software\Far" Name="$(var.FarInstallDir)" Type="directory" Win64="$(var.Win64)" />
-    </Property>
-
-	<!--new-->
-    <Property Id="FARMANAGERFOLDERUSER3">
-      <RegistrySearch Id="FarInstallDirUser3" Root="HKCU" Key="Software\Far Manager" Name="$(var.FarInstallDir)" Type="directory" Win64="$(var.Win64)" />
-    </Property>
-
-    <Property Id="FARMANAGERFOLDERUSER2">
-      <RegistrySearch Id="FarInstallDirUser2" Root="HKCU" Key="Software\Far2" Name="$(var.FarInstallDir)" Type="directory" Win64="$(var.Win64)" />
-    </Property>
-
-    <Property Id="FARMANAGERFOLDERUSER1">
-      <RegistrySearch Id="FarInstallDirUser1" Root="HKCU" Key="Software\Far" Name="$(var.FarInstallDir)" Type="directory" Win64="$(var.Win64)" />
-    </Property>
-
 </Include>

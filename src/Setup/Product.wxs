@@ -114,25 +114,6 @@
 
     <?include ConEmu_Features.wxi ?>
 
-    <!--
-    <UI>
-      <ProgressText Action="AppSearch" Template="Property: [1], Signature: [2]">Searching for installed applications</ProgressText>
-    </UI>
-    <InstallExecuteSequence>
-      <Custom Action="SetARPINSTALLLOCATION" After="AppSearch" />
-    </InstallExecuteSequence>
-    <InstallUISequence>
-      <Custom Action="SetARPINSTALLLOCATION" After="AppSearch" />
-      <! - -<Show Dialog="FatalError" OnExit="error" />
-      <Show Dialog="UserExit" OnExit="cancel" />
-      <Show Dialog="ExitDialog" OnExit="success" />- - >
-    </InstallUISequence>
-    <AdminUISequence>
-      <! - -<Show Dialog="FatalError" OnExit="error" />
-      <Show Dialog="UserExit" OnExit="cancel" />
-      <Show Dialog="ExitDialog" OnExit="success" />- - >
-    </AdminUISequence>
-    -->
     <UI>
       <ProgressText Action="InstallValidate">Validating install</ProgressText>
     </UI>

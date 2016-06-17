@@ -3,23 +3,4 @@
 
     <Custom Action="SetConEmuInstallDirCEOld" After="AppSearch">APPLICATIONFOLDEROLD AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
 
-    <Custom Action="SetConEmuInstallDirFarM3" After="SetConEmuInstallDirCEOld">FARMANAGERFOLDER3 AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
-    <Custom Action="SetConEmuInstallDirFarM2" After="SetConEmuInstallDirFarM3">FARMANAGERFOLDER2 AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
-    <Custom Action="SetConEmuInstallDirFarM1" After="SetConEmuInstallDirFarM2">FARMANAGERFOLDER1 AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
-    <Custom Action="SetConEmuInstallDirFarU3" After="SetConEmuInstallDirFarM1">FARMANAGERFOLDERUSER3 AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
-    <Custom Action="SetConEmuInstallDirFarU2" After="SetConEmuInstallDirFarU3">FARMANAGERFOLDERUSER2 AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
-    <Custom Action="SetConEmuInstallDirFarU1" After="SetConEmuInstallDirFarU2">FARMANAGERFOLDERUSER1 AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>
-
-    <!--
-    <Custom Action="SetConEmuPluginDirOld" After="SetConEmuInstallDirFarU1">FARPLUGINSCONEMUOLD AND NOT INSTALLPATH AND NOT FARPLUGINSCONEMU</Custom>
-    <Custom Action="SetConEmuPluginDirApp" After="SetConEmuPluginDirOld">APPLICATIONFOLDER AND NOT INSTALLPATH AND NOT FARPLUGINSCONEMU</Custom>
-    -->
-
-    <!--<Custom Action="SetExtConsoleFolderM3" After="SetConEmuPluginDirApp">FARMANAGERFOLDER3 AND NOT INSTALLPATH AND NOT EXTCONSOLEFOLDER</Custom>
-    <Custom Action="SetExtConsoleFolderU3" After="SetExtConsoleFolderM3">FARMANAGERFOLDERUSER3 AND NOT INSTALLPATH AND NOT EXTCONSOLEFOLDER</Custom>-->
-
-    <!--<Custom Action="SetExtConsoleDirFarM" After="SetConEmuPluginDirOld">FARMANAGERFOLDER AND NOT INSTALLPATH AND NOT EXTCONSOLEFOLDER</Custom>
-    <Custom Action="SetExtConsoleDirFarU" After="SetExtConsoleDirFarM">FARMANAGERFOLDERUSER AND NOT INSTALLPATH AND NOT EXTCONSOLEFOLDER</Custom>
-    <Custom Action="SetConEmuInstallDir" After="SetConEmuInstallDirFarU">FARMANAGERFOLDER AND NOT INSTALLPATH AND NOT APPLICATIONFOLDER</Custom>-->
-
 </Include>

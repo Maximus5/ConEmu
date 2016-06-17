@@ -1,30 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Include>
 
-    <CustomAction Id="SetConEmuInstallDirFarM3" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDER3]" Execute="firstSequence" />
-    <CustomAction Id="SetConEmuInstallDirFarM2" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDER2]" Execute="firstSequence" />
-    <CustomAction Id="SetConEmuInstallDirFarM1" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDER1]" Execute="firstSequence" />
-    <CustomAction Id="SetConEmuInstallDirFarU3" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDERUSER3]" Execute="firstSequence" />
-    <CustomAction Id="SetConEmuInstallDirFarU2" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDERUSER2]" Execute="firstSequence" />
-    <CustomAction Id="SetConEmuInstallDirFarU1" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDERUSER1]" Execute="firstSequence" />
-
     <CustomAction Id="SetConEmuInstallDirCEOld" Property="APPLICATIONFOLDER" Value="[APPLICATIONFOLDEROLD]" Execute="firstSequence" />
-
-    <!--
-    <CustomAction Id="SetConEmuPluginDirOld" Property="FARPLUGINSCONEMU" Value="[FARPLUGINSCONEMUOLD]" Execute="firstSequence" />
-    <CustomAction Id="SetConEmuPluginDirApp" Property="FARPLUGINSCONEMU" Value="[APPLICATIONFOLDER]\Plugins" Execute="firstSequence" />
-    -->
-
-    <!--<CustomAction Id="SetExtConsoleFolderM3" Property="EXTCONSOLEFOLDER" Value="[FARMANAGERFOLDER3]" Execute="firstSequence" />
-    <CustomAction Id="SetExtConsoleFolderU3" Property="EXTCONSOLEFOLDER" Value="[FARMANAGERFOLDERUSER3]" Execute="firstSequence" />-->
-
-    <!--
-    <CustomAction Id="SetExtConsoleDirFarM" Property="EXTCONSOLEFOLDER" Value="[FARMANAGERFOLDER]" Execute="firstSequence" />
-    <CustomAction Id="SetExtConsoleDirFarU" Property="EXTCONSOLEFOLDER" Value="[FARMANAGERFOLDERUSER]" Execute="firstSequence" />
-    -->
-    <!--
-    <CustomAction Id="SetConEmuInstallDir" Property="APPLICATIONFOLDER" Value="[FARMANAGERFOLDER]" Execute="firstSequence" />
-    <CustomAction Id="UpdateFeatureState" BinaryKey="CustomActions.dll" DllEntry="UpdateFeatureState" />
-    -->
 
 </Include>
