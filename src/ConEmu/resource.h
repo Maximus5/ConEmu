@@ -1346,6 +1346,7 @@
 #define tAnsiSecure                     3070
 #define stAnsiSecureExec3               3071
 #define gbAnsiSequences                 3072
+#define cbJumpListAutoUpdate            3073
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1354,7 +1355,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        235
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3073
+#define _APS_NEXT_CONTROL_VALUE         3074
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

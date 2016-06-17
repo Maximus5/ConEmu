@@ -81,6 +81,7 @@ LRESULT CSetPgTaskbar::OnInitDialog(HWND hDlg, bool abInitial)
 
 	checkDlgButton(hDlg, cbCmdTaskbarTasks, gpSet->isStoreTaskbarkTasks);
 	checkDlgButton(hDlg, cbCmdTaskbarCommands, gpSet->isStoreTaskbarCommands);
+	checkDlgButton(hDlg, cbJumpListAutoUpdate, gpSet->isJumpListAutoUpdate);
 	EnableWindow(GetDlgItem(hDlg, cbCmdTaskbarUpdate), (gnOsVer >= 0x601));
 
 	return 0;

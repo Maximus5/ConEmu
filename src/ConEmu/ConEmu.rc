@@ -345,6 +345,7 @@ BEGIN
     CONTROL         "Add ConEmu Tasks",cbCmdTaskbarTasks,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,215,104,8
     CONTROL         "Add commands from history",cbCmdTaskbarCommands,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,118,215,123,8
+    CONTROL         "Autoupdate",cbJumpListAutoUpdate,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,245,215,60,8
     PUSHBUTTON      "Update Now!",cbCmdTaskbarUpdate,308,211,65,14
 END
 

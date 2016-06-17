@@ -394,9 +394,12 @@ struct Settings
 		UINT nStartCreateDelay; // RUNQUEUE_CREATE_LAG
 
 		//reg->Load(L"StoreTaskbarkTasks", isStoreTaskbarkTasks);
-		bool isStoreTaskbarkTasks;
+		bool isStoreTaskbarkTasks; // default is true
 		//reg->Load(L"StoreTaskbarCommands", isStoreTaskbarCommands);
 		bool isStoreTaskbarCommands;
+
+		// "JumpListAutoUpdate"
+		bool isJumpListAutoUpdate; // default is true
 
 
 	//	/* Command Line ("/cmd" arg) */

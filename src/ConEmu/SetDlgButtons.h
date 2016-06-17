@@ -74,6 +74,7 @@ protected:
 	static void OnBtn_CmdTasksReload(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CmdTaskbarTasks(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CmdTaskbarCommands(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_JumpListAutoUpdate(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CmdTaskbarUpdate(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_NoneStandardCleartype(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_NormalFullscreenMaximized(HWND hDlg, WORD CB, BYTE uCheck);

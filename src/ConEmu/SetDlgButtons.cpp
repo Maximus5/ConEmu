@@ -812,6 +812,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbCmdTaskbarCommands:
 			OnBtn_CmdTaskbarCommands(hDlg, CB, uCheck);
 			break;
+		case cbJumpListAutoUpdate:
+			OnBtn_JumpListAutoUpdate(hDlg, CB, uCheck);
+			break;
 		case cbCmdTaskbarUpdate:
 			OnBtn_CmdTaskbarUpdate(hDlg, CB, uCheck);
 			break;
@@ -1104,6 +1107,7 @@ void CSetDlgButtons::OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck)
 		return;
 
 	bool bDistinct = false;
+	bool bUpdate = false;
 	CETASKFLAGS flag = CETF_NONE;
 
 	switch (CB)
@@ -1137,6 +1141,7 @@ void CSetDlgButtons::OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck)
 			p->Flags &= ~CETF_NO_TASKBAR;
 		else
 			p->Flags |= CETF_NO_TASKBAR;
+		bUpdate = true;
 		break;
 	case cbCmdGrpToolbar:
 		if (isChecked(hDlg, CB))
@@ -1154,6 +1159,18 @@ void CSetDlgButtons::OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck)
 		{
 			if (pGrp != p)
 				pGrp->Flags &= ~flag;
+		}
+	}
+
+	if (bUpdate)
+	{
+		if (gpSet->isJumpListAutoUpdate)
+		{
+			UpdateWin7TaskList(true/*bForce*/, true/*bNoSuccMsg*/);
+		}
+		else
+		{
+			TODO("Show hint to press ‘Update now’ button");
 		}
 	}
 
@@ -1536,6 +1553,15 @@ void CSetDlgButtons::OnBtn_CmdTaskbarCommands(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->isStoreTaskbarCommands = _bool(uCheck);
 
 } // cbCmdTaskbarCommands
+
+// cbJumpListAutoUpdate
+void CSetDlgButtons::OnBtn_JumpListAutoUpdate(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbJumpListAutoUpdate);
+
+	gpSet->isJumpListAutoUpdate = _bool(uCheck);
+
+} // cbJumpListAutoUpdate
 
 
 // cbCmdTaskbarUpdate - Находится в IDD_SPG_TASKBAR!

@@ -790,6 +790,9 @@ void Settings::InitSettings()
 	isTaskbarOverlay = true;
 	isTaskbarProgress = true;
 
+	isStoreTaskbarkTasks = true;
+	isJumpListAutoUpdate = true;
+
 	isTabsInCaption = false; //cbTabsInCaption
 	#if defined(CONEMU_TABBAR_EX)
 	isTabsInCaption = true;
@@ -2493,6 +2496,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		reg->Load(L"StoreTaskbarkTasks", isStoreTaskbarkTasks);
 		reg->Load(L"StoreTaskbarCommands", isStoreTaskbarCommands);
+		reg->Load(L"JumpListAutoUpdate", isJumpListAutoUpdate);
 
 		reg->Load(L"SaveCmdHistory", isSaveCmdHistory);
 		HistoryLoad(reg); // L"CmdLineHistory"
@@ -3570,6 +3574,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 
 		reg->Save(L"StoreTaskbarkTasks", isStoreTaskbarkTasks);
 		reg->Save(L"StoreTaskbarCommands", isStoreTaskbarCommands);
+		reg->Save(L"JumpListAutoUpdate", isJumpListAutoUpdate);
 
 		reg->Save(L"SaveCmdHistory", isSaveCmdHistory);
 		// Пишем всегда, даже если (!isSaveCmdHistory), т.к. история могла быть "преднастроена"
