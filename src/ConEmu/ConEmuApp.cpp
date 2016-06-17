@@ -2381,28 +2381,12 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 		}
 		else
 		{
-			if (cMinSlots < 3)
-				cMinSlots = 3;
+			// cMinSlots actually must control only ‘last items’ in jump lists
+			if ((nHistoryCount > 0) && (nHistoryCount > klMax(cMinSlots,(UINT)3)))
+				nHistoryCount = klMax(cMinSlots,(UINT)3);
 
-			// Вся история и все команды - скорее всего в TaskList не поместятся. Нужно подрезать.
-			if (cMinSlots < (nTasksCount + nHistoryCount + (pszCurCmd ? 1 : 0)))
-			{
-				// Минимум одну позицию - оставить под историю/текущую команду
-				if (nTasksCount && (cMinSlots < (nTasksCount + 1)))
-				{
-					nTasksCount = cMinSlots-1;
-					if (nTasksCount < countof(pszTasks))
-						pszTasks[nTasksCount] = NULL;
-				}
+			// And we tries to add all Tasks with flag ‘Taskbar jump lists’
 
-				if ((nTasksCount + (pszCurCmd ? 1 : 0)) >= cMinSlots)
-					nHistoryCount = 0;
-				else
-					nHistoryCount = cMinSlots - (nTasksCount + (pszCurCmd ? 1 : 0));
-
-				if (nHistoryCount < countof(pszHistory))
-					pszHistory[nHistoryCount] = NULL;
-			}
 
 			IObjectCollection *poc = NULL;
 			hr = CoCreateInstance(CLSID_EnumerableObjectCollection, NULL, CLSCTX_INPROC, IID_PPV_ARGS(&poc));
