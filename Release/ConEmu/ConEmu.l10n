@@ -123,6 +123,21 @@
       "zh": "关闭ConEmu窗口时需要确认 （cross clicking）",
       "id": 2757 }
     ,
+    "cbCmdTaskbarCommands": {
+      "en": "Show in TaskBar Jump List commands used to run consoles (history)",
+      "ru": "Показать в списке переходов команды запуска консолей (история)",
+      "id": 2133 }
+    ,
+    "cbCmdTaskbarTasks": {
+      "en": "Show in TaskBar Jump List eligible Tasks (check Task properties)",
+      "ru": "Показать в списке переходов разрешенные Задачи (Tasks, Список переходов)",
+      "id": 2132 }
+    ,
+    "cbCmdTaskbarUpdate": {
+      "en": "Don't forget to update Jump Lists, especially if ‘Autoupdate’ is unchecked",
+      "ru": "Не забудьте обновить список переходов, особенно если опция ‘Сразу’ отключена",
+      "id": 2320 }
+    ,
     "cbComspecTest": {
       "en": "Show ‘calculated’ ComSpec path",
       "zh": "显示ComSpec路径的“计算值”",
@@ -475,6 +490,11 @@
       "ru": "Курсивное начертание текста в консоли",
       "zh": "主字体斜体",
       "id": 2280 }
+    ,
+    "cbJumpListAutoUpdate": {
+      "en": "If checked, Jump Lists will be updated automatically when user (un)check the ‘Taskbar jump lists’ checkbox in Task properties.",
+      "ru": "Если включено, Списки переходов будут обновляться автоматически при смене флажка «Список переходов» в свойствах Задачи (Task).",
+      "id": 3073 }
     ,
     "cbLongOutput": {
       "en": [ "Autoexpand bufferheight to specified\r\n"
@@ -2608,6 +2628,11 @@
       "zh": "用户定义的",
       "id": 59 }
     ,
+    "lng_JumpListUpdated": {
+      "en": "Taskbar jump list was updated successfully",
+      "ru": "Списки переходов панели задач обновлены успешно",
+      "id": 81 }
+    ,
     "lng_KeyNoMod": {
       "en": "<No-Mod>",
       "id": 78 }
@@ -3224,6 +3249,7 @@
     ,
     "cbCmdGrpTaskbar": {
       "en": "Taskbar jump lists",
+      "ru": "Список переходов",
       "zh": "任务栏跳转列表",
       "id": 2752 }
     ,
@@ -3233,17 +3259,20 @@
       "id": 2753 }
     ,
     "cbCmdTaskbarCommands": {
-      "en": "Add commands from history, too",
-      "zh": "从历史添加命令",
+      "en": "Add commands from history",
+      "ru": "Добавить команды из истории",
+      "_zh": "从历史添加命令",
       "id": 2133 }
     ,
     "cbCmdTaskbarTasks": {
-      "en": "Add ConEmu tasks to taskbar",
-      "zh": "添加ConEmu任务至任务栏",
+      "en": "Add ConEmu Tasks",
+      "ru": "Добавить Задачи (Tasks)",
+      "_zh": "添加ConEmu任务至任务栏",
       "id": 2132 }
     ,
     "cbCmdTaskbarUpdate": {
       "en": "Update Now!",
+      "ru": "Обновить!",
       "zh": "现在更新！",
       "id": 2320 }
     ,
@@ -3788,6 +3817,11 @@
       "zh": "斜体（&I）",
       "id": 2280 }
     ,
+    "cbJumpListAutoUpdate": {
+      "en": "Autoupdate",
+      "ru": "Сразу",
+      "id": 3073 }
+    ,
     "cbKeyBarRClick": {
       "en": "KeyBar RClick",
       "zh": "KeyBar RClick",
@@ -4299,6 +4333,7 @@
     ,
     "gbCmdTasks7": {
       "en": "Windows 7 taskbar (Jump list)",
+      "ru": "Панель задач Windows 7 (списки переходов)",
       "zh": "Windows 7任务栏（跳转列表）",
       "id": 2134 }
     ,
