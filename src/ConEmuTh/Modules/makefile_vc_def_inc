@@ -100,7 +100,7 @@ NOENTRY = /noentry
 NODEFLIB = /nodefaultlib
 !endif
 
-LINK_FLAGS=/nologo /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/nologo /subsystem:windows$(SUBSVER) /dll /release /merge:.rdata=.text $(LINK_MACHINE) $(NOWIN98) $(NOENTRY) $(NODEFLIB) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(DLLFULLNAME)" $(LINK_DEBUG)
 
 
 
