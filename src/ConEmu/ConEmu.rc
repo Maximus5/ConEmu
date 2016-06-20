@@ -119,13 +119,14 @@ BEGIN
     COMBOBOX        tFontSizeX3,343,13,30,89,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     CONTROL         "&Bold",cbBold,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,33,71,8
     CONTROL         "&Italic",cbItalic,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,47,71,8
-    CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,72,177,8
     CONTROL         "Auto size (fixed console size in cells)",cbFontAuto,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,33,177,8
-    CONTROL         "Admit monitor dpi with font size",cbFontMonitorDpi,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,59,177,8
     CONTROL         "Treat font height as device units",cbFontAsDeviceUnits,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,47,177,8
+    CONTROL         "Admit monitor dpi with font size",cbFontMonitorDpi,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,59,177,8
+    CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,72,177,8
+    CONTROL         "Compress long strings to fit space",cbCompressLongStrings,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,84,177,8
     GROUPBOX        "Anti-aliasing",gbAntiAliasing,10,66,171,28,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,79,36,8
     CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,56,79,59,8

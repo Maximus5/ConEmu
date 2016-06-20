@@ -3004,6 +3004,12 @@ void CVirtualConsole::UpdateText()
 				}
 			}
 
+			// If this part failed to fit in space
+			if (!part->TotalWidth)
+			{
+				continue;
+			}
+
 			if (part)
 			{
 				rect.right = part->PositionX + part->TotalWidth;

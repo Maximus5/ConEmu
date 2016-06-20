@@ -213,6 +213,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbFontMonitorDpi:
 			OnBtn_FontStyles(hDlg, CB, uCheck);
 			break;
+		case cbCompressLongStrings:
+			OnBtn_CompressLongStrings(hDlg, CB, uCheck);
+			break;
 		case cbBgImage:
 			OnBtn_BgImageEnable(hDlg, CB, uCheck);
 			break;
@@ -2033,6 +2036,17 @@ void CSetDlgButtons::OnBtn_FontStyles(HWND hDlg, WORD CB, BYTE uCheck)
 	PostMessage(hDlg, gpSetCls->mn_MsgRecreateFont, CB, 0);
 
 } // cbFontMonitorDpi || cbBold || cbItalic || cbFontAsDeviceUnits
+
+
+// cbCompressLongStrings
+void CSetDlgButtons::OnBtn_CompressLongStrings(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbCompressLongStrings);
+
+	gpSet->isCompressLongStrings = _bool(uCheck);
+	gpConEmu->Update(true);
+
+} // cbCompressLongStrings
 
 
 // cbBgImage

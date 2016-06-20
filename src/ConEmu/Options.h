@@ -436,6 +436,9 @@ struct Settings
 		//reg->Load(L"FontUseUnits", FontUseUnits);
 		bool FontUseUnits;
 
+		// "CompressLongStrings"
+		bool isCompressLongStrings; // default is true
+
 		// Previously, the option was used to define different font
 		// generally for Far Manager frames (pseudographics)
 		// Now user may use it for any range of characters (CJK, etc.)

@@ -3331,6 +3331,10 @@
       "zh": "覆盖调色板",
       "id": 2146 }
     ,
+    "cbCompressLongStrings": {
+      "en": "Compress long strings to fit space",
+      "id": 3074 }
+    ,
     "cbComspecTest": {
       "en": "Test",
       "zh": "测试",

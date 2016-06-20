@@ -57,6 +57,7 @@ const TextPartFlags
 								   // to avoid dashed frames or broken dialog borders,
 								   // especially with proportional fonts
 	TRF_TextTriangles    = 0x4000, // Lefward and Rightward triangles (used in some custom prompt layouts and status bars)
+	TRF_Cropped          = 0x8000, // Text part overruns allowed space and is not displayed at all
 
 	TRF_CompareMask = (
 		TRF_PosFixed|TRF_PosRecommended
@@ -64,6 +65,7 @@ const TextPartFlags
 		|TRF_TextSeparate|TRF_TextProgress|TRF_TextScroll
 		|TRF_TextTriangles
 		|TRF_ExpandGraphics
+		|TRF_Cropped
 		),
 	// TODO: Ligatures
 	// End of flags

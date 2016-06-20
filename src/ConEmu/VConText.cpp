@@ -736,7 +736,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 	{
 		VConTextPart& part = TextParts[k];
 		_ASSERTE(part.Flags != TRF_None);
-		_ASSERTE(((int)part.TotalWidth > 0) || ((part.Length==1) && (part.CharFlags[0]==TCF_WidthZero)));
+		_ASSERTE(((int)part.TotalWidth > 0) || (part.Flags & TRF_Cropped) || ((part.Length==1) && (part.CharFlags[0]==TCF_WidthZero)));
 
 		if (part.Flags & (TRF_PosFixed|TRF_PosRecommended))
 		{
@@ -884,7 +884,12 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 	// method and options
 	uint nShrinkParts = (1 << TCF_WidthFree);
 
-	if ((AllWidths[TCF_WidthFree].MinWidth + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width) <= ReqWidth)
+	if (!gpSet->isCompressLongStrings)
+	{
+		// Do not shrink, just crop
+		nShrinkParts = 0;
+	}
+	else if ((AllWidths[TCF_WidthFree].MinWidth + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width) <= ReqWidth)
 	{
 		AllWidths[TCF_WidthFree].ReqWidth = ReqWidth - (AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width);
 	}
@@ -988,7 +993,31 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 
 		// Run part shrink
 		part.TotalWidth = 0;
-		if ((part.Flags & TRF_SizeFree) && (nShrinkParts & (1 << TCF_WidthFree)))
+
+		_ASSERTE(!(part.Flags & TRF_Cropped));
+
+		if (!nShrinkParts)
+		{
+			for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
+			{
+				if ((PosX + part.TotalWidth + *pcw) <= right)
+				{
+					part.TotalWidth += *pcw;
+				}
+				else if ((PosX + part.TotalWidth) < right)
+				{
+					*pcw = right - (PosX + part.TotalWidth);
+					part.TotalWidth += *pcw;
+				}
+				else
+				{
+					*pcw = 0;
+				}
+			}
+			if (part.TotalWidth == 0)
+				part.Flags |= TRF_Cropped;
+		}
+		else if ((part.Flags & TRF_SizeFree) && (nShrinkParts & (1 << TCF_WidthFree)))
 		{
 			VConTextPartWidth& aw = AllWidths[TCF_WidthFree];
 			int iShrinkLeft = part.Length;

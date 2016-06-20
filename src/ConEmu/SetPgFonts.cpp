@@ -150,6 +150,7 @@ LRESULT CSetPgFonts::OnInitDialog(HWND hDlg, bool abInitial)
 
 	checkDlgButton(hDlg, cbFontMonitorDpi, gpSet->FontUseDpi ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hDlg, cbFontAsDeviceUnits, gpSet->FontUseUnits ? BST_CHECKED : BST_UNCHECKED);
+	checkDlgButton(hDlg, cbCompressLongStrings, gpSet->isCompressLongStrings ? BST_CHECKED : BST_UNCHECKED);
 
 	gpSetCls->mn_LastChangingFontCtrlId = 0;
 	return 0;

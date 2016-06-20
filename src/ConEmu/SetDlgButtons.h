@@ -106,6 +106,7 @@ protected:
 	static void OnBtn_CmdAutorunNewWnd(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CmdAutoActions(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_FontStyles(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_CompressLongStrings(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_BgImageEnable(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_BgImageChoose(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_BgAllowPlugin(HWND hDlg, WORD CB, BYTE uCheck);

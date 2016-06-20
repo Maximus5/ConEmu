@@ -488,6 +488,8 @@ void Settings::InitSettings()
 	}
 	/* ********** Font initialization ends ********** */
 
+	isCompressLongStrings = true;
+
 	isTryToCenter = false;
 	nCenterConsolePad = 0;
 	isAlwaysShowScrollbar = 2;
@@ -2552,6 +2554,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"FontSizeX2", FontSizeX2);
 		reg->Load(L"FontCharSet", mn_LoadFontCharSet); mb_CharSetWasSet = FALSE;
 
+		reg->Load(L"CompressLongStrings", isCompressLongStrings);
+
 		reg->Load(L"Anti-aliasing", mn_AntiAlias);
 		// Must be explicitly defined, 0 - not allowed
 		if (mn_AntiAlias!=NONANTIALIASED_QUALITY && mn_AntiAlias!=ANTIALIASED_QUALITY && mn_AntiAlias!=CLEARTYPE_NATURAL_QUALITY)
@@ -3636,6 +3640,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"FontItalic", isItalic);
 
 		reg->Save(L"Monospace", isMonospace);
+
+		reg->Save(L"CompressLongStrings", isCompressLongStrings);
 
 		reg->Save(L"BackGround Image show", isShowBgImage);
 		reg->Save(L"BackGround Image", sBgImage);
