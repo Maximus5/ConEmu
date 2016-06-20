@@ -20,6 +20,20 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.6.19
+* Command ‘ConEmuC -ConInfo’ prints current console tech info.
+* Let intercept GetWindowLong(GWL_STYLE) for console window handle (ref gh-727, gh-719).
+  Far 3.0 since build 4698 tries to query GWL_STYLE for console window?
+* l10n. New language resources.
+* gh-735: Add all marked tasks to Jump List, use TaskBar history limit value only for History items.
+* gh-740: Conversion to linux path on paste was not working for ‘Single line’ mode.
+* Option ‘Autoupdate’ on Settings/TaskBar/Windows 7 Taskbar.
+  If checked, Jump Lists will be updated automatically when user check
+  the ‘Taskbar jump lists’ checkbox in Task properties.
+* Do not add new Tasks to Jump List by default, let user explicitly check ‘Taskbar jump lists’.
+* Installer (MSI): Don't suggest Far Manager's folder by default.
+
+
 2016.6.12
 * Terminal modes were not displayed on Settings/Info page.
 * gh-716: Cygwin/msys connector output was broken after starting nano.
