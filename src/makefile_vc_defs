@@ -206,17 +206,23 @@ RC=$(_RC_PATH)rc.exe
 
 # Release binary
 !ifdef X86
+!ifndef OUTNAME
 OUTNAME=$(NAME)
+!endif
 !elseifdef AMD64
 !ifndef X64SUFF
 X64SUFF=64
 !endif
+!ifndef OUTNAME
 OUTNAME=$(NAME)$(X64SUFF)
+!endif
 !elseifdef IA64
 !ifndef IA64SUFF
 IA64SUFF=64i
 !endif
+!ifndef OUTNAME
 OUTNAME=$(NAME)$(IA64SUFF)
+!endif
 !endif
 OUTFULLNAME = $(OUTDIR)\$(OUTNAME).$(EXT)
 
