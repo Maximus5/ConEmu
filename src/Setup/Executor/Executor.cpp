@@ -79,13 +79,15 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	sei.nShow = SW_SHOWNORMAL;
 	if (!ShellExecuteEx(&sei))
 	{
-		iInstRc = ReportError(32, L"Installer failed\n%s", pszMsi);
+		//iInstRc = ReportError(32, L"Installer failed\n%s", pszMsi);
+		iInstRc = MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, GetLastError());
 	}
 	else
 	{
 		if (!sei.hProcess)
 		{
-			iInstRc = ReportError(33, L"Installer failed\n%s", pszMsi);
+			//iInstRc = ReportError(33, L"Installer failed\n%s", pszMsi);
+			iInstRc = MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WINDOWS, GetLastError());
 		}
 		else
 		{
@@ -93,10 +95,15 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 			DWORD nCode = 0;
 			SetLastError(0);
 			//1602 - seems like "user cancelled"
-			if (!GetExitCodeProcess(sei.hProcess, &nCode) || (nCode != 0 && nCode != 1602))
+			if (!GetExitCodeProcess(sei.hProcess, &nCode) /*|| (nCode != 0 && nCode != 1602)*/)
 			{
-				wchar_t szFormat[128]; wsprintf(szFormat, L"Installer failed\n%%s\nExitCode=%u", nCode);
-				iInstRc = ReportError(nCode ? nCode : 34, szFormat, pszMsi);
+				//wchar_t szFormat[128]; wsprintf(szFormat, L"Installer failed\n%%s\nExitCode=%u", nCode);
+				//iInstRc = ReportError(nCode ? nCode : 34, szFormat, pszMsi);
+				iInstRc = MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, GetLastError());
+			}
+			else
+			{
+				iInstRc = nCode;
 			}
 		}
 	}

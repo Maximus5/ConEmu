@@ -14,6 +14,9 @@
 #include "VersionI.h"
 #include "NextArg.h"
 
+// String resources (messages)
+#include "Setupper.h"
+
 
 // Global Variables:
 HINSTANCE hInst;
@@ -28,7 +31,6 @@ wchar_t gsTempFolder[MAX_PATH-24];
 wchar_t gsMsiFile[MAX_PATH];
 wchar_t gsCabFile[MAX_PATH];
 wchar_t gsExeFile[MAX_PATH];
-const wchar_t gsWWW[] = L"Project page: <a href=\"https://conemu.github.io/\">https://conemu.github.io/</a>";
 bool gbExtractOnly = false;
 bool gbUseElevation = false;
 bool gbAlreadyAdmin = false;
@@ -347,11 +349,11 @@ int ExportFile(int ResID, wchar_t* FilePath)
 {
 	HRSRC hResInfo = FindResource(hInst, MAKEINTRESOURCE(ResID), L"DATA");
 	if (!hResInfo)
-		return ReportError(1, L"FindResource(%i) failed", (void*)ResID);
+		return ReportError(1, msgFindResourceFailed, (void*)ResID);
 		
 	HGLOBAL hGbl = LoadResource(hInst, hResInfo);
 	if (!hGbl)
-		return ReportError(2, L"LoadResource(%i) failed", (void*)ResID);
+		return ReportError(2, msgLoadResourceFailed, (void*)ResID);
 		
 	DWORD nResSize = hResInfo ? SizeofResource(hInst, hResInfo) : 0;
 	LPVOID pRes = hGbl ? LockResource(hGbl) : NULL;
@@ -360,21 +362,21 @@ int ExportFile(int ResID, wchar_t* FilePath)
 	
 	if (!nResSize || !pRes)
 	{
-		iRc = ReportError(3, L"LoadResource(%i) failed", (void*)ResID);
+		iRc = ReportError(3, msgLoadResourceFailed, (void*)ResID);
 	}
 	else
 	{
 		HANDLE hFile = CreateFile(FilePath, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (!hFile || hFile == INVALID_HANDLE_VALUE)
 		{
-			iRc = ReportError(4, L"CreateFile(%s) failed", FilePath);
+			iRc = ReportError(4, msgCreateFileFailed, FilePath);
 		}
 		else
 		{
 			DWORD nWritten = 0;
 			if (!WriteFile(hFile, pRes, nResSize, &nWritten, NULL) || nWritten != nResSize)
 			{
-				iRc = ReportError(5, L"WriteFile(%s) failed", FilePath);
+				iRc = ReportError(5, msgWriteFileFailed, FilePath);
 			}
 			
 			CloseHandle(hFile);
@@ -400,8 +402,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	
 	int nInstallVer = 0;
 	
-	wsprintf(gsTitle, L"ConEmu %s installer", CONEMUVERL);
-	lstrcpyn(gsRunAsAdm, L"Run installer as administrator", countof(gsRunAsAdm));
+	wsprintf(gsTitle, msgConEmuInstaller, CONEMUVERL);
+	lstrcpyn(gsRunAsAdm, msgRunSetupAsAdmin, countof(gsRunAsAdm));
 
 	wchar_t szArg[MAX_PATH+1];
 	LPCWSTR pszCmdToken = GetCommandLine();
@@ -414,13 +416,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 		if (lstrcmp(szArg, L"/?") == 0 || lstrcmp(szArg, L"-?") == 0 || lstrcmp(szArg, L"-h") == 0
 			|| lstrcmp(szArg, L"-help") == 0 || lstrcmp(szArg, L"--help") == 0)
 		{
-			MessageBox(NULL,
-				L"Usage:\n"
-				L"   ConEmuSetup [/p:x86[,adm] | /p:x64[,adm]] [<msi args>]\n"
-				L"   ConEmuSetup [/e[:<extract path>]] [/p:x86 | /p:x64]\n"
-				L"Example (run x64 auto update as administrator):\n"
-				L"   ConEmuSetup /p:x64,adm /qr",
-				gsTitle, MB_ICONINFORMATION);
+			MessageBox(NULL, msgUsageExample, gsTitle, MB_ICONINFORMATION);
 			return 1;
 		}
 		
@@ -478,7 +474,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 		bool bInstalled;
 		HKEY hk;
 	
-		lstrcpyn(gsMessage, L"Choose version to install", countof(gsMessage));
+		lstrcpyn(gsMessage, msgChooseInstallVer, countof(gsMessage));
 		
 			szInstallPath[0] = 0; bInstalled = false;
 			struct {HKEY hk; LPCWSTR path; LPCWSTR name; bool our;}
@@ -512,7 +508,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 				int nLen = lstrlen(szInstallPath);
 				lstrcat(szInstallPath, (nLen > 0 && szInstallPath[nLen-1] != L'\\') ? L"\\ConEmu" : L"ConEmu");
 			}
-			wsprintf(gsVer86, L"%s x86\n%s installation folder is\n%s", CONEMUVERL, bInstalled ? L"Current" : L"Default", szInstallPath);
+			wsprintf(gsVer86, msgInstallFolderIs, CONEMUVERL, L"x86", bInstalled ? msgPathCurrent : msgPathDefault, szInstallPath);
 
 			
 		if (isWin64)
@@ -549,9 +545,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 					int nLen = lstrlen(szInstallPath);
 					lstrcat(szInstallPath, (nLen > 0 && szInstallPath[nLen-1] != L'\\') ? L"\\ConEmu" : L"ConEmu");
 				}
-				wsprintf(gsVer64, L"%s x64\n%s installation folder is\n%s", CONEMUVERL, bInstalled ? L"Current" : L"Default", szInstallPath);
+				wsprintf(gsVer64, msgInstallFolderIs, CONEMUVERL, L"x64", bInstalled ? msgPathCurrent : msgPathDefault, szInstallPath);
 
-			wsprintf(gsFull, L"%s\n\nPress `Yes` to install x64 version\nPress `No` to install x86 version", gsMessage);
+			wsprintf(gsFull, msgInstallConfirm, gsMessage);
 		}
 		else
 		{
@@ -574,10 +570,10 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 			lstrcpy(pszSubDir, CONEMUVERL);
 		}
 		
-		lstrcpyn(gsMessage, L"Choose version to extract", countof(gsMessage));
-		wsprintf(gsVer86, L"%s x86\nExtract installation files to\n%s", CONEMUVERL, szPath);
-		wsprintf(gsVer64, L"%s x64\nExtract installation files to\n%s", CONEMUVERL, szPath);
-		wsprintf(gsFull, L"%s\n\nPress `Yes` to extract x64 version\nPress `No` to extract x86 version\n\n%s", gsMessage, szPath);
+		lstrcpyn(gsMessage, msgChooseExtractVer, countof(gsMessage));
+		wsprintf(gsVer86, msgExtractX86X64, CONEMUVERL, L"x86", szPath);
+		wsprintf(gsVer64, msgExtractX86X64, CONEMUVERL, L"x64", szPath);
+		wsprintf(gsFull, msgExtractConfirm, gsMessage, szPath);
 	}
 	
 	if (nInstallVer == 0)
@@ -614,7 +610,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 			}
 			if (!lbCreated)
 			{
-				return ReportError(10, L"Can't create temp folder\n%s", gsTempFolder);
+				return ReportError(10, msgTempFolderFailed, gsTempFolder);
 			}
 		}
 	}
@@ -647,7 +643,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	if (gbExtractOnly)
 	{
 		wchar_t szMessage[MAX_PATH*2];
-		wsprintf(szMessage, L"Installation files was extracted successfully\n%s", gsTempFolder);
+		wsprintf(szMessage, msgExtractedSuccessfully, gsTempFolder);
 		MessageBox(NULL, szMessage, gsTitle, MB_ICONINFORMATION);
 		return 0;
 	}
@@ -664,6 +660,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	}
 	else
 	{
+		// Executor has `<requestedExecutionLevel level="requireAdministrator" ...>` in manifest
 		sei.lpFile = gsExeFile;
 		int nMaxLen = lstrlen(gsMsiFile) + (pszCmdToken ? lstrlen(pszCmdToken) : 0) + 64;
 		pszParms = (wchar_t*)malloc(nMaxLen*sizeof(wchar_t));
@@ -696,24 +693,43 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	
 	if (!lbExecute)
 	{
-		iInstRc = ReportError(20, L"Installer failed\n%s", gsMsiFile);
+		iInstRc = ReportError(20, msgInstallerFailed, gsMsiFile);
 	}
 	else
 	{
 		if (!sei.hProcess)
 		{
-			iInstRc = ReportError(21, L"Installer failed\n%s", gsMsiFile);
+			iInstRc = ReportError(21, msgInstallerFailed, gsMsiFile);
 		}
 		else
 		{
 			WaitForSingleObject(sei.hProcess, INFINITE);
 			DWORD nCode = 0;
 			SetLastError(0);
-			//1602 - это похоже "Отмена" пользователем
-			if (!GetExitCodeProcess(sei.hProcess, &nCode) || (nCode != 0 && nCode != 1602))
+			wchar_t szFormat[256];
+			if (GetExitCodeProcess(sei.hProcess, &nCode))
 			{
-				wchar_t szFormat[128]; wsprintf(szFormat, L"Installer failed\n%%s\nExitCode=%u", nCode);
-				iInstRc = ReportError(100+nCode, szFormat, gsMsiFile);
+				switch (nCode)
+				{
+				case 0:
+					iInstRc = 0;
+					break;
+				case 1602: // cancelled by user
+					iInstRc = 0; // don't show any errors
+					break;
+				case 3010: // reboot is required
+					wsprintf(szFormat, msgRebootRequired, nCode);
+					iInstRc = ReportError(100+nCode, szFormat, gsMsiFile);
+					break;
+				default:
+					wsprintf(szFormat, msgInstallerFailedEx, nCode);
+					iInstRc = ReportError(100+nCode, szFormat, gsMsiFile);
+				}
+			}
+			else
+			{
+				lstrcpyn(szFormat, msgExitCodeFailed, countof(szFormat));
+				iInstRc = ReportError(30, szFormat, gsMsiFile);
 			}
 		}
 	}
