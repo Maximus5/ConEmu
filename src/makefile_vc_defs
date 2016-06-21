@@ -211,3 +211,10 @@ IA64SUFF=64i
 OUTNAME=$(NAME)$(IA64SUFF)
 !endif
 OUTFULLNAME = $(OUTDIR)\$(OUTNAME).$(EXT)
+
+
+!ifndef NO_RELEASE_PDB
+LINK_DEBUG = /DEBUG /pdb:"$(PDB)" /map:"$(MAP)"
+!else
+LINK_DEBUG =
+!endif

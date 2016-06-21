@@ -36,7 +36,7 @@ DEFINES=\
 
 # common
 CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHs-c- $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(OBJDIR)/" /Fd"$(OBJDIR)/" /J /c /FAcs /Fa"$(CODDIR)/"
-LINKFLAGS=/nologo /subsystem:console /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /RELEASE /nxcompat /DEBUG /pdb:"$(OUTDIR)\$(OUTNAME).pdb"
+LINKFLAGS=/nologo /subsystem:console /out:"$(OUTDIR)\$(OUTNAME).exe" /RELEASE /nxcompat $(LINK_DEBUG)
 RFLAGS=$(RCWIN64) /l 0x409 /fo"$(RES_FILE)" /d "SELF_MANIFEST" /d $(USEDEBUG) /nologo
 
 # config-cpecific

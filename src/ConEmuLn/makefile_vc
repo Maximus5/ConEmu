@@ -21,11 +21,9 @@ USERLIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib version.lib
 
 !ifndef DEBUG
 CPP_OPT=/DNDEBUG /O1i /Fd$(PDB) /DHIDE_TODO
-LINK_DEBUG=/map:"$(MAP)" 
 CPP_DEBUG=
 !else
 CPP_OPT=/DDEBUG /Od /Fd$(PDB)
-LINK_DEBUG=/debug /map:"$(MAP)" /pdb:"$(PDB)"
 CPP_DEBUG=/Zi
 !endif
 

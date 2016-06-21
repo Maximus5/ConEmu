@@ -5,7 +5,7 @@ LINK_OBJS = $(LINK_OBJS) $(OBJDIR)\MAssert.obj $(OBJDIR)\Memory.obj $(OBJDIR)\WT
 $(OUTFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS) $(CLR_STD)
 	$(LNK) @<<
-	$(LINK_FLAGS) $(LINK_DEBUG) $(LIBS) $(LINK_OBJS) $(RES)
+	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 <<
 
 !ifndef __MAKE__

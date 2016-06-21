@@ -62,10 +62,8 @@ LIBS = $(CRTLIB) $(USERLIBS)
 
 
 !ifndef USE_PDB
-LINK_DEBUG=/map:"$(MAP)" /pdb:$(PDBNAME)
 CPP_DEBUG=
 !else
-LINK_DEBUG=/map:"$(MAP)" /debug /pdb:$(PDBNAME)
 CPP_DEBUG=/Zi
 !endif
 

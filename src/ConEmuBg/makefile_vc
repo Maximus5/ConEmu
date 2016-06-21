@@ -27,10 +27,8 @@ CPP_OPT=$(CPP_OPT) /DDEBUG /D_DEBUG
 !if "$(USE_PDB)" == "1"
 CPP_OPT=$(CPP_OPT) /Fd$(PDB)
 CPP_DEBUG=/Zi
-LINK_DEBUG=/MAP:"$(MAP)" /DEBUG /PDB:$(PDB)
 !else
 CPP_DEBUG=
-LINK_DEBUG=/MAP:"$(MAP)" /PDB:$(PDB)
 !endif
 
 
