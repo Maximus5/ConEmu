@@ -49,8 +49,8 @@ clean:
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@echo moving `$(OUTFULLNAME)` to `$(RELEASEDIR)`
 	@move "$(OUTFULLNAME)" $(RELEASEDIR) > nul
-	@echo moving `$(PDBNAME)` to `$(RELEASEDIR)\$(DLLNAME).pdb`
-	@move "$(PDBNAME)" "$(RELEASEDIR)\$(DLLNAME).pdb" > nul
+	@echo moving `$(PDB)` to `$(RELEASEDIR)\$(DLLNAME).pdb`
+	@move "$(PDB)" "$(RELEASEDIR)\$(DLLNAME).pdb" > nul
 	@echo moving `$(MAP)` to `$(RELEASEDIR)\$(DLLNAME).map`
 	@move "$(MAP)" "$(RELEASEDIR)\$(DLLNAME).map" > nul
 	@cmd /c del /Q $(OBJDIR)\*.* > nul

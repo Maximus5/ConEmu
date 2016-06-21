@@ -32,11 +32,11 @@ CLR_STD=[m
 #!endif
 
 !ifndef DEBUG
-DIRNAME=final.$(NAME)
+DIRNAME=final.$(NAME).$(EXT)
 USEDEBUG=NDEBUG
 # !do not unset USE_PDB here!
 !else
-DIRNAME=debug.$(NAME)
+DIRNAME=debug.$(NAME).$(EXT)
 USEDEBUG=_DEBUG
 USE_PDB=1
 NO_OPTIMIZE=1
