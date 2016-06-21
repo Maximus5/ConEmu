@@ -34,7 +34,7 @@ DEFINES=\
 
 # common
 CPPFLAGS=/nologo $(MP) /W3 /wd4995 $(FARSYSLOG) /EHsc $(DEFINES) /GS /GR /Gy /GF /Fo"$(INTDIR)\\" /Fd"$(PDB)" /J /c /FAcs /Fa"$(CODDIR)\\"
-LINKFLAGS=/nologo /subsystem:$(SUBSYSTEM) /out:"$(OUTFULLNAME)" /RELEASE /nxcompat $(LINK_DEBUG)
+LINKFLAGS=/nologo /subsystem:$(SUBSYSTEM)$(LINKOSVER) /out:"$(OUTFULLNAME)" /RELEASE /nxcompat $(LINK_DEBUG)
 RFLAGS=$(RCWIN64) /DCERC_MANIFEST /l 0x409 /d $(USEDEBUG)
 
 # config-cpecific
@@ -97,7 +97,7 @@ $(MINGW_RES_FILE): ConEmuMinGW.rc Externals.rc2
 
 ################
 
-LINK_OBJS = \
+LINK_OBJS = $(CRT_FIX_OBJS) \
 $(INTDIR)\AboutDlg.obj \
 $(INTDIR)\AltNumpad.obj \
 $(INTDIR)\Attach.obj \

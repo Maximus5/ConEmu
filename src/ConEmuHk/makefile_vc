@@ -19,10 +19,6 @@ NEEDDEFLIB = 1
 ALL: dirs build release
 
 USERLIBS = kernel32.lib user32.lib
-!if "$(VC)" == "14"
-# SystemFunction036 ???
-USERLIBS = $(USERLIBS) advapi32.lib
-!endif
 
 
 #!if defined(DONT_USE_SEH)
@@ -94,7 +90,7 @@ CPP_DEBUG=/Zi
 #/merge:.rdata=.text /SUBSYSTEM:WINDOWS
 #/ENTRY:_DllMainCRTStartup
 #/ENTRY:DllMain
-LINK_FLAGS=/nologo /DLL /subsystem:$(SUBSYSTEM) /RELEASE $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF_FILE)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/nologo /DLL /subsystem:$(SUBSYSTEM)$(LINKOSVER) /RELEASE $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF_FILE)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
 
 
 CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
@@ -120,7 +116,7 @@ $(RES): $(RC_NAME).rc
 
 ################
 
-LINK_OBJS = \
+LINK_OBJS = $(CRT_FIX_OBJS) \
 $(INTDIR)\Ansi.obj \
 $(INTDIR)\CEStr.obj \
 $(INTDIR)\CmdLine.obj \

@@ -82,7 +82,8 @@ AMD64=1
 DIRBIT=64
 RCWIN64=/D_WIN64 /DWIN64
 BIT_DESCR=x64
-SUBSVER=5.02
+LINKOSVER=,"5.02"
+!undef FIXOSVER
 
 !elseif defined(IA64) || "$(CPU)" == "IA64" || "$(PLATFORM)" == "Itanium"
 
@@ -93,7 +94,8 @@ IA64=1
 DIRBIT=IA64
 RCWIN64=/D_WIN64 /DWIN64
 BIT_DESCR=IA64
-!undef SUBSVER
+!undef LINKOSVER
+!undef FIXOSVER
 
 !else
 
@@ -104,7 +106,8 @@ X86=1
 DIRBIT=32
 RCWIN64=
 BIT_DESCR=x86
-SUBSVER=5.00
+LINKOSVER=,"5.01"
+FIXOSVER=5.00
 
 !endif
 
@@ -231,4 +234,12 @@ OUTFULLNAME = $(OUTDIR)\$(OUTNAME).$(EXT)
 LINK_DEBUG = /DEBUG /pdb:"$(PDB)" /map:"$(MAP)"
 !else
 LINK_DEBUG =
+!endif
+
+!if "$(VC)"=="9" || !defined(X86)
+CRT_FIX_FILES =
+!else
+CRT_FIX_OBJS = \
+  $(INTDIR)\crt_fix.obj \
+  $(INTDIR)\crt_fix_wrap.obj
 !endif

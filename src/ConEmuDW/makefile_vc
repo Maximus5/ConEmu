@@ -69,9 +69,9 @@ CPP_DEBUG=/Zi
 !endif
 
 
-#/merge:.rdata=.text /SUBSYSTEM:WINDOWS$(SUBSVER)
+#/merge:.rdata=.text
 #/ENTRY:_DllMainCRTStartup
-LINK_FLAGS=/nologo /DLL /subsystem:$(SUBSYSTEM) /RELEASE $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF_FILE)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/nologo /DLL /subsystem:$(SUBSYSTEM)$(LINKOSVER) /RELEASE $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF_FILE)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
 
 
 CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
@@ -99,7 +99,7 @@ old_clean:
 
 ################
 
-LINK_OBJS = \
+LINK_OBJS = $(CRT_FIX_OBJS) \
 	$(INTDIR)\CEStr.obj \
 	$(INTDIR)\CmdLine.obj \
 	$(INTDIR)\ConEmuDw.obj \

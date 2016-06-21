@@ -49,6 +49,10 @@ RC_NAME=$(NAME)
 	$(CPPFLAGS) $<
 <<
 
+# echo ml /nologo /c /Fo$@ $<
+{$(COMMONSRCDIR)/}.asm{$(INTDIR)}.obj::
+    ml /c /Fo"$(OBJDIR)/" $<
+
 
 #ALL: dirs build release
 
@@ -67,9 +71,9 @@ dirs:
 
 
 release:
-!if defined(SUBSVER)
-	@echo $(CLR_BRN)downgrading required OS version to $(SUBSVER)$(CLR_STD)
-	@editbin /SUBSYSTEM:$(SUBSYSTEM),$(SUBSVER) /osversion:$(SUBSVER) $(OUTFULLNAME) > "$(WORKDIR)\editbin.log"
+!if defined(FIXOSVER)
+	@echo $(CLR_BRN)downgrading required OS version to $(FIXOSVER)$(CLR_STD)
+	@editbin /SUBSYSTEM:$(SUBSYSTEM),$(FIXOSVER) /osversion:$(FIXOSVER) $(OUTFULLNAME) > "$(WORKDIR)\editbin.log"
 !endif
 	@echo $(CLR_MOD)copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
@@ -85,3 +89,7 @@ release:
 clean:
 	@echo $(CLR_BRN)erasing temp directories$(CLR_STD)
 	@if exist "$(OBJDIR)\$(NULL)" rmdir /Q /S "$(OBJDIR)"
+
+$(INTDIR)\crt_fix.obj: ../common/crt_fix.asm
+
+$(INTDIR)\crt_fix_wrap.obj: ../common/crt_fix_wrap.cpp

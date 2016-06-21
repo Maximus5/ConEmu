@@ -68,7 +68,7 @@ LIBS = $(CRTLIB) $(USERLIBS)
 
 
 
-LINK_FLAGS=/nologo /subsystem:$(SUBSYSTEM) /DYNAMICBASE /dll /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF_FILE)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/nologo /subsystem:$(SUBSYSTEM)$(LINKOSVER) /DYNAMICBASE /dll /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF_FILE)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
 
 
 CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
@@ -89,7 +89,7 @@ $(RES): $(RC_NAME).rc
 
 ################
 
-LINK_OBJS = \
+LINK_OBJS = $(CRT_FIX_OBJS) \
 $(INTDIR)\ConEmuBg.obj \
 $(INTDIR)\ConEmuBg995.obj \
 $(INTDIR)\ConEmuBg1900.obj \

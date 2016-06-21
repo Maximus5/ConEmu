@@ -1,6 +1,6 @@
 ALL: dirs $(INSTALL) $(OUTFULLNAME) clean
 
-LINK_OBJS = $(LINK_OBJS) $(OBJDIR)\MAssert.obj $(OBJDIR)\Memory.obj $(OBJDIR)\WThreads.obj
+LINK_OBJS = $(CRT_FIX_OBJS) $(LINK_OBJS) $(OBJDIR)\MAssert.obj $(OBJDIR)\Memory.obj $(OBJDIR)\WThreads.obj
 
 $(OUTFULLNAME) : $(LINK_OBJS) $(RES) $(LINK_DEP)
 	@echo $(CLR_BRN)linking $@$(CLR_STD)
@@ -46,9 +46,9 @@ dirs:
 
 .PHONY: clean
 clean:
-!if defined(SUBSVER)
-	@echo $(CLR_BRN)downgrading required OS version to $(SUBSVER)$(CLR_STD)
-	@editbin /SUBSYSTEM:$(SUBSYSTEM),$(SUBSVER) /osversion:$(SUBSVER) $(OUTFULLNAME) > "$(WORKDIR)\editbin.log"
+!if defined(FIXOSVER)
+	@echo $(CLR_BRN)downgrading required OS version to $(FIXOSVER)$(CLR_STD)
+	@editbin /SUBSYSTEM:$(SUBSYSTEM),$(FIXOSVER) /osversion:$(FIXOSVER) $(OUTFULLNAME) > "$(WORKDIR)\editbin.log"
 !endif
 	@echo $(CLR_MOD)Copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
