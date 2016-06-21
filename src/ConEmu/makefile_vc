@@ -3,21 +3,15 @@
 
 NAME=ConEmu
 EXT=exe
+X64SUFF=64
 RELEASEDIR=..\..\Release
 NEEDDEFLIB = 1
 USE_PDB = 1
+!undef DEF_FILE
 
 !include ../makefile_vc_defs
 
-#DEF_FILE = ".\$(NAME).def"
-!undef DEF_FILE
-
-
-!if "$(CPU)" == "X86"
-OUTNAME=ConEmu
-!else
-OUTNAME=ConEmu64
-!endif
+ALL: dirs build release
 
 USERLIBS = kernel32.lib user32.lib advapi32.lib shell32.lib gdi32.lib version.lib \
            shlwapi.lib comctl32.lib comdlg32.lib winmm.lib ole32.lib oleaut32.lib \
@@ -81,16 +75,11 @@ MINGWRES=
 !endif
 
 
-ALL: dirs build release
-
-.PHONY: build
 build: "$(OUTDIR)\$(OUTNAME).$(EXT)" $(MINGWRES)
-  echo `build` target
 
 # Due to bugs(?) of MinGW's windres it fails to
 # include properly our truecolor images and icons
 mingw: $(MINGW_RES_FILE)
-  echo `mingw` target
 
 
 !include ../makefile_vc_link
@@ -98,12 +87,12 @@ mingw: $(MINGW_RES_FILE)
 
 
 $(RES_FILE): ConEmu.rc Externals.rc2 Version.h Version.rc2
-	echo compiling resource file
+	@echo $(CLR_MOD)echo compiling resource file$(CLR_STD)
 	$(RC) $(RFLAGS) /fo"$(RES_FILE)" ConEmu.rc
 
 
 $(MINGW_RES_FILE): ConEmuMinGW.rc Externals.rc2
-	echo compiling mingw resource file
+	@echo $(CLR_MOD)compiling mingw resource file$(CLR_STD)
 	$(RC) $(RFLAGS) /fo"$(MINGW_RES_FILE)" ConEmuMINGW.rc
 
 
@@ -622,7 +611,8 @@ $(INTDIR)\WUser.obj: ../common/WUser.cpp
 
 
 "$(OUTFULLNAME)": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(MINGWRES) conemu.gcc.manifest
-	@echo $(CLR_BRN)linking $@ :: $(LINKFLAGS) $(LINK_LIBS)$(CLR_STD)
+	@echo $(CLR_BRN)linking $@$(CLR_STD)
+	@echo :: $(LINKFLAGS) $(LINK_LIBS)
 	$(LNK) @<<
 	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
 <<

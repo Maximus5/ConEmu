@@ -3,22 +3,19 @@
 
 NAME=ConEmuDw
 EXT =dll
+X64SUFF=64
 RELEASEDIR=..\..\Release\ConEmu
 NEEDENTRY=1
 USE_PDB = 1
 NEEDDEFLIB = 1
+DEF_FILE = export.def
 
 !include ../makefile_vc_defs
 
+ALL: dirs build release
+
 USERLIBS = kernel32.lib user32.lib gdi32.lib version.lib comdlg32.lib
 
-DEF_FILE = export.def
-
-!if "$(CPU)" == "X86"
-OUTNAME = ExtendedConsole
-!else
-OUTNAME = ExtendedConsole64
-!endif
 
 CPPWINVER=/D_WIN32_WINNT=0x0500
 
@@ -75,7 +72,7 @@ CPP_DEBUG=/Zi
 
 #/merge:.rdata=.text /SUBSYSTEM:WINDOWS
 #/ENTRY:_DllMainCRTStartup
-LINK_FLAGS=/nologo /DLL /RELEASE $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/nologo /DLL /RELEASE $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF_FILE)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
 
 
 CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)

@@ -1,12 +1,14 @@
 
 .SILENT:
 
-NAME = ConEmuCD
-EXT = dll
+NAME=ConEmuCD
+EXT=dll
+X64SUFF=64
 RELEASEDIR=..\..\Release\ConEmu
 NEEDENTRY = 1
 NO_OPTIMIZE = 1
 USE_PDB = 1
+DEF_FILE = export.def
 
 #Issue 1876
 NEEDDEFLIB = 1
@@ -14,15 +16,10 @@ NEEDDEFLIB = 1
 
 !include ../makefile_vc_defs
 
+ALL: dirs build release
+
 USERLIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib shlwapi.lib oleaut32.lib
 
-DEF_FILE = export.def
-
-!if "$(CPU)" == "X86"
-OUTNAME = ConEmuCD
-!else
-OUTNAME = ConEmuCD64
-!endif
 
 # !!! WindowsXP для ConsoleAlias !!!
 CPPWINVER=/D_WIN32_WINNT=0x0501
@@ -75,7 +72,7 @@ CPP_DEBUG=/Zi
 
 #/merge:.rdata=.text /SUBSYSTEM:WINDOWS
 #/ENTRY:_DllMainCRTStartup
-LINK_FLAGS=/nologo /DLL /RELEASE $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/nologo /DLL /RELEASE $(BASEADDRESS) $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF_FILE)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
 
 
 CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)

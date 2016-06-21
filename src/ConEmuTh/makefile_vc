@@ -3,31 +3,23 @@
 
 NAME=ConEmuTh
 EXT =dll
+X64SUFF=.x64
 RELEASEDIR=..\..\Release\plugins\ConEmu\Thumbs
 NEEDENTRY = 1
 USE_PDB = 1
 NEEDDEFLIB = 1
+DEF_FILE = export.def
 
 !include ../makefile_vc_defs
 
+ALL: dirs build release
+
 USERLIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib ole32.lib version.lib
 
-DEF_FILE = export.def
 
 SUBMODULES = gdip pe ico
 
 NEEDENTRY = 1
-
-!if "$(CPU)" == "X86"
-OUTNAME = ConEmuTh
-BUILD_SUFFUX=x86
-!else
-OUTNAME = ConEmuTh.x64
-BUILD_SUFFUX=x64
-!endif                   
-
-
-
 
 
 CPP_WIDE = $(CPP_WIDE) /DUSE_SEH
@@ -35,14 +27,13 @@ CPP_WIDE = $(CPP_WIDE) /DUSE_SEH
 !ifndef DEBUG
 CPP_OPT=/DNDEBUG /O1i /Fd$(PDB) /DHIDE_TODO 
 CPP_DEBUG=
-LINK_DEBUG=/map:"$(MAP)"
 #/DCRTSTARTUP
 !else
 CPP_OPT=/DDEBUG /Od /Fd$(PDB) 
 CPP_DEBUG=/Zi
-LINK_DEBUG=/DEBUG /pdb:"$(PDB)" /map:"$(MAP)"
 #/DCRTSTARTUP
 !endif
+LINK_DEBUG=/DEBUG /pdb:"$(PDB)" /map:"$(MAP)"
 
 !ifdef AMD64
 CPP_PROJ_NO=/nologo /c /W3 /wd4995 /Gy /GF /Zp8 /J $(COMPAT64) /GS- /Gr /GR- /EHs-c- /LD $(ENV_INC_OPT) $(CPP_WIDE) /D_CRT_SECURE_NO_WARNINGS /D_CRT_NONSTDC_NO_WARNINGS /D_CRT_NON_CONFORMING_SWPRINTFS /D_WIN32_WINNT=0x0500 $(USERCPP)
@@ -66,7 +57,7 @@ LIBS = $(CRTLIB) $(USERLIBS)
 
 #LINK_DEBUG=/debug /pdb:$(PDB)
 #CPP_DEBUG=/Zi
-LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF_FILE)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
 
 
 CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
@@ -77,8 +68,7 @@ CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
 !include ../makefile_vc_link
 
 
-.PHONY: build
-build: $(SUBMODULES) "$(OUTFULLNAME)"
+build: $(SUBMODULES) printname "$(OUTFULLNAME)"
 
 
 
@@ -179,15 +169,17 @@ FICTIVE=_fictive_
 $(FICTIVE):
 
 $(SUBMODULES): $(FICTIVE)
-	@echo $(CLR_MOD)===========$@.$(BUILD_SUFFUX)$(CLR_STD)
+	@echo $(CLR_MOD)===========$@.$(BIT_DESCR)$(CLR_STD)
 	@cd Modules\$@
 	@$(MAKE) -s -f makefile_vc $(_MDEFS)
 	@cd ..\..
 
-
+printname:
+	@echo $(CLR_MOD)===========$(NAME).$(BIT_DESCR)$(CLR_STD)
 
 "$(OUTFULLNAME)": $(LINK_OBJS) $(RES) $(LINK_DEP)
-	@echo $(CLR_BRN)linking $@ :: $(LINK_FLAGS) $(LIBS)$(CLR_STD)
+	@echo $(CLR_BRN)linking $@$(CLR_STD)
+	@echo :: $(LINK_FLAGS) $(LIBS)
 	$(LNK) @<<
 	$(LINK_FLAGS) $(LIBS) $(LINK_OBJS) $(RES)
 <<

@@ -80,6 +80,7 @@ AMD64=1
 !undef X86
 DIRBIT=64
 RCWIN64=/D_WIN64 /DWIN64
+BIT_DESCR=x64
 
 !elseif defined(IA64) || "$(CPU)" == "IA64" || "$(PLATFORM)" == "Itanium"
 
@@ -89,6 +90,7 @@ IA64=1
 !undef X86
 DIRBIT=IA64
 RCWIN64=/D_WIN64 /DWIN64
+BIT_DESCR=IA64
 
 !else
 
@@ -98,6 +100,7 @@ CPU=X86
 X86=1
 DIRBIT=32
 RCWIN64=
+BIT_DESCR=x86
 
 !endif
 
@@ -193,3 +196,18 @@ CPP=$(_CL_PATH_)cl.exe
 LNK=$(_LINK_PATH_)link.exe
 RC=$(_RC_PATH)rc.exe
 
+# Release binary
+!ifdef X86
+OUTNAME=$(NAME)
+!elseifdef AMD64
+!ifndef X64SUFF
+X64SUFF=64
+!endif
+OUTNAME=$(NAME)$(X64SUFF)
+!elseifdef IA64
+!ifndef IA64SUFF
+IA64SUFF=64i
+!endif
+OUTNAME=$(NAME)$(IA64SUFF)
+!endif
+OUTFULLNAME = $(OUTDIR)\$(OUTNAME).$(EXT)

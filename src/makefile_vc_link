@@ -1,12 +1,9 @@
 
 LINK_LIBS = $(CRTLIB) $(USERLIBS)
 
-
 MAP = $(OUTDIR)\$(NAME).$(EXT).map
 PDB = $(OUTDIR)\$(NAME).$(EXT).pdb
 RES = $(INTDIR)\$(NAME).res
-
-OUTFULLNAME = $(OUTDIR)\$(OUTNAME).$(EXT)
 
 !ifndef RC_NAME
 RC_NAME=$(NAME)
@@ -53,27 +50,33 @@ RC_NAME=$(NAME)
 <<
 
 
-## .PHONY: cppflags
-cppflags:
+#ALL: dirs build release
+
+
+printcpp:
 	@echo $(CLR_BRN)compiling `$(NAME)` :: $(CPPFLAGS)$(CLR_STD)
 
 
-## .PHONY: dirs
 dirs:
+	@echo $(CLR_MOD)creating temp directories$(CLR_STD)
+	@echo :: $(OUTDIR)
 	@if not exist "$(WORKDIR)\$(NULL)" mkdir "$(WORKDIR)"
 	@if not exist "$(INTDIR)\$(NULL)" mkdir "$(INTDIR)"
 	@if not exist "$(OUTDIR)\$(NULL)" mkdir "$(OUTDIR)"
 
 
-## .PHONY: release
 release:
-	@echo $(CLR_MOD)Copying release files$(CLR_STD)
+	@echo $(CLR_MOD)copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@echo moving `$(OUTFULLNAME)` to `$(RELEASEDIR)`
-	@move "$(OUTFULLNAME)" $(RELEASEDIR) > nul
+	@move "$(OUTFULLNAME)" "$(RELEASEDIR)\$(NULL)" > nul
 	@echo moving `$(MAP)` to `$(RELEASEDIR)`
-	@move "$(MAP)" $(RELEASEDIR) > nul
+	@move "$(MAP)" "$(RELEASEDIR)\$(NULL)" > nul
 !if "$(USE_PDB)" == "1" && !defined(NO_RELEASE_PDB)
-	@echo copying `$(PDB)` to `$(RELEASEDIR)\$(PDB_NAME)`
-	@copy "$(PDB)" "$(RELEASEDIR)\$(PDB_NAME)" > nul
+	@echo copying `$(PDB)` to `$(RELEASEDIR)`
+	@copy "$(PDB)" "$(RELEASEDIR)\$(NULL)" > nul
 !endif
+
+clean:
+	@echo $(CLR_BRN)erasing temp directories$(CLR_STD)
+	@if exist "$(OBJDIR)\$(NULL)" rmdir /Q /S "$(OBJDIR)"

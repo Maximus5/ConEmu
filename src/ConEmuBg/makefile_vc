@@ -2,7 +2,8 @@
 .SILENT:
 
 NAME=ConEmuBg
-EXT = dll
+EXT=dll
+X64SUFF=.x64
 RELEASEDIR=..\..\Release\plugins\ConEmu\Background
 NEEDENTRY = 1
 USE_PDB = 1
@@ -10,15 +11,11 @@ NEEDDEFLIB = 1
 
 !include ../makefile_vc_defs
 
+ALL: dirs build release
+
 USERLIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib ole32.lib version.lib
 
 DEF_FILE = export.def
-
-!if "$(CPU)" == "X86"
-OUTNAME = ConEmuBg
-!else
-OUTNAME = ConEmuBg.x64
-!endif                   
 
 
 !ifndef DEBUG
@@ -73,7 +70,7 @@ LIBS = $(CRTLIB) $(USERLIBS)
 
 
 
-LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/nologo /SUBSYSTEM:WINDOWS /DYNAMICBASE /dll /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF_FILE)" /out:"$(OUTFULLNAME)" $(LINK_DEBUG)
 
 
 CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)

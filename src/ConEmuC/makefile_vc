@@ -3,19 +3,15 @@
 
 NAME=ConEmuC
 EXT=exe
+X64SUFF=64
 RELEASEDIR=..\..\Release\ConEmu
 NEEDDEFLIB = 1
 USE_PDB = 1
+!undef DEF_FILE
 
 !include ../makefile_vc_defs
 
-DEF_FILE = .\$(NAME).def
-
-!if "$(CPU)" == "X86"
-OUTNAME=ConEmuC
-!else
-OUTNAME=ConEmuC64
-!endif
+ALL: dirs build release
 
 USERLIBS = kernel32.lib user32.lib shell32.lib
 
@@ -40,8 +36,8 @@ DEFINES=\
 
 # common
 CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHs-c- $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(OBJDIR)/" /Fd"$(OBJDIR)/" /J /c /FAcs /Fa"$(CODDIR)/"
-LINKFLAGS=/nologo /subsystem:console /def:"$(DEF_FILE)" /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /RELEASE /nxcompat /DEBUG /pdb:"$(OUTDIR)\$(OUTNAME).pdb"
-RFLAGS=$(RCWIN64) /l 0x409 /fo"$(RES_FILE)" /d "SELF_MANIFEST" /d $(USEDEBUG)
+LINKFLAGS=/nologo /subsystem:console /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /RELEASE /nxcompat /DEBUG /pdb:"$(OUTDIR)\$(OUTNAME).pdb"
+RFLAGS=$(RCWIN64) /l 0x409 /fo"$(RES_FILE)" /d "SELF_MANIFEST" /d $(USEDEBUG) /nologo
 
 # config-cpecific
 !ifdef DEBUG
@@ -79,11 +75,11 @@ RFLAGS=$(RFLAGS)
 
 !include ../makefile_vc_link
 
-.PHONY: build
-build: cppflags dirs "$(OUTFULLNAME)"
+
+build: dirs printcpp "$(OUTFULLNAME)"
 
 $(RES_FILE): $(NAME).rc ..\ConEmu\Version.h
-	@echo compiling resource file
+	@echo $(CLR_BRN)compiling resource file$(CLR_STD)
 	$(RC) $(RFLAGS) $(NAME).rc
 
 

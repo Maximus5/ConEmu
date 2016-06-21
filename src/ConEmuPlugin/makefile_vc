@@ -3,23 +3,19 @@
 
 NAME=ConEmu
 EXT =dll
+X64SUFF=.x64
 RELEASEDIR=..\..\Release\plugins\ConEmu
 NEEDENTRY = 1
 USE_PDB = 1
 NO_OPTIMIZE = 1
 NEEDDEFLIB = 1
+DEF_FILE = export.release.def
 
 !include ../makefile_vc_defs
 
+ALL: dirs build release
+
 USERLIBS = kernel32.lib user32.lib gdi32.lib advapi32.lib shell32.lib version.lib
-
-DEF_FILE = export.release.def
-
-!if "$(CPU)" == "X86"
-OUTNAME = ConEmu
-!else
-OUTNAME = ConEmu.x64
-!endif
 
 
 
@@ -68,7 +64,7 @@ CPP_PROJ=$(CPP_PROJ_NO) /Fo"$(INTDIR)\\"
 LIBS = $(CRTLIB) $(USERLIBS)
 
 
-LINK_FLAGS=/NOLOGO /SUBSYSTEM:WINDOWS /DYNAMICBASE /DLL /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /DEF:"$(DEF)" /OUT:"$(OUTFULLNAME)" $(LINK_DEBUG)
+LINK_FLAGS=/NOLOGO /SUBSYSTEM:WINDOWS /DYNAMICBASE /DLL /RELEASE $(LINK_MACHINE) $(NOWIN98) $(ENV_LIB_OPT) /def:"$(DEF_FILE)" /OUT:"$(OUTFULLNAME)" $(LINK_DEBUG)
 
 
 CPPFLAGS = $(MP) $(CPP_PROJ) $(CPP_DEBUG) $(CPP_OPT)
