@@ -79,7 +79,7 @@ AMD64=1
 !undef X86
 DIRBIT=64
 RCWIN64=/D_WIN64 /DWIN64
-SUBSVER=",5.02"
+SUBSVER=,"5.02"
 
 !elseif defined(IA64) || "$(CPU)" == "IA64" || "$(PLATFORM)" == "Itanium"
 
@@ -99,7 +99,7 @@ RCWIN64=/D_WIN64 /DWIN64
 X86=1
 DIRBIT=32
 RCWIN64=
-SUBSVER=",5.00"
+SUBSVER=,"5.00"
 
 !endif
 
