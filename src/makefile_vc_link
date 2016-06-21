@@ -54,7 +54,8 @@ RC_NAME=$(NAME)
 
 
 printcpp:
-	@echo $(CLR_BRN)compiling `$(NAME)` :: $(CPPFLAGS)$(CLR_STD)
+	@echo $(CLR_BRN)compiling `$(NAME)`$(CLR_STD)
+	@echo/  $(CPPFLAGS)
 
 
 dirs:
@@ -66,6 +67,10 @@ dirs:
 
 
 release:
+!if defined(SUBSVER)
+	@echo $(CLR_BRN)downgrading required OS version to $(SUBSVER)$(CLR_STD)
+	@editbin /SUBSYSTEM:$(SUBSYSTEM),$(SUBSVER) /osversion:$(SUBSVER) $(OUTFULLNAME) > "$(WORKDIR)\editbin.log"
+!endif
 	@echo $(CLR_MOD)copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@echo moving `$(OUTFULLNAME)` to `$(RELEASEDIR)`

@@ -71,6 +71,7 @@ VC=9
 !endif
 
 
+
 ## Platform
 !if defined(AMD64) || "$(CPU)" == "AMD64" || "$(PLATFORM)" == "x64"
 
@@ -81,6 +82,7 @@ AMD64=1
 DIRBIT=64
 RCWIN64=/D_WIN64 /DWIN64
 BIT_DESCR=x64
+SUBSVER=5.02
 
 !elseif defined(IA64) || "$(CPU)" == "IA64" || "$(PLATFORM)" == "Itanium"
 
@@ -91,6 +93,7 @@ IA64=1
 DIRBIT=IA64
 RCWIN64=/D_WIN64 /DWIN64
 BIT_DESCR=IA64
+!undef SUBSVER
 
 !else
 
@@ -101,7 +104,12 @@ X86=1
 DIRBIT=32
 RCWIN64=
 BIT_DESCR=x86
+SUBSVER=5.00
 
+!endif
+
+!if "$(SUBSYSTEM)" != "console"
+SUBSYSTEM=windows
 !endif
 
 

@@ -8,6 +8,7 @@ RELEASEDIR=..\..\Release\ConEmu
 NEEDDEFLIB = 1
 USE_PDB = 1
 !undef DEF_FILE
+SUBSYSTEM=console
 
 !include ../makefile_vc_defs
 
@@ -36,7 +37,7 @@ DEFINES=\
 
 # common
 CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHs-c- $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(OBJDIR)/" /Fd"$(OBJDIR)/" /J /c /FAcs /Fa"$(CODDIR)/"
-LINKFLAGS=/nologo /subsystem:console /out:"$(OUTDIR)\$(OUTNAME).exe" /RELEASE /nxcompat $(LINK_DEBUG)
+LINKFLAGS=/nologo /subsystem:$(SUBSYSTEM) /out:"$(OUTDIR)\$(OUTNAME).exe" /RELEASE /nxcompat $(LINK_DEBUG)
 RFLAGS=$(RCWIN64) /l 0x409 /fo"$(RES_FILE)" /d "SELF_MANIFEST" /d $(USEDEBUG) /nologo
 
 # config-cpecific
@@ -135,7 +136,8 @@ $(INTDIR)\WThreads.obj: ../common/WThreads.cpp ../common/WThreads.h
 
 
 "$(OUTFULLNAME)": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
-	@echo $(CLR_BRN)linking $@ :: $(LINKFLAGS) $(LINK_LIBS)$(CLR_STD)
+	@echo $(CLR_BRN)linking $@$(CLR_STD)
+	@echo/  $(LINKFLAGS) $(LINK_LIBS)
 	$(LNK) @<<
 	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
 <<

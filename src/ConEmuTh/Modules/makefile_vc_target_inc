@@ -45,6 +45,10 @@ dirs:
 
 .PHONY: clean
 clean:
+!if defined(SUBSVER)
+	@echo $(CLR_BRN)downgrading required OS version to $(SUBSVER)$(CLR_STD)
+	@editbin /SUBSYSTEM:$(SUBSYSTEM),$(SUBSVER) /osversion:$(SUBSVER) $(OUTFULLNAME) > "$(WORKDIR)\editbin.log"
+!endif
 	@echo $(CLR_MOD)Copying release files$(CLR_STD)
 	@if not exist "$(RELEASEDIR)\$(NULL)" mkdir "$(RELEASEDIR)"
 	@echo moving `$(OUTFULLNAME)` to `$(RELEASEDIR)`
