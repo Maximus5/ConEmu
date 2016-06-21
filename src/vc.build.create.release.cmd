@@ -1,6 +1,6 @@
 @echo off
 rem Compile x86
-call "%~dp0vc.build.release.cmd" 9 x86 nosign
+call "%~dp0vc.build.release.cmd" 14 x86 nosign
 if errorlevel 1 goto err
 rem Compile x64
 call "%~dp0vc.build.release.cmd" 14 x64 nosign noclean
