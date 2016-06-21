@@ -120,8 +120,10 @@ if exist "%~dp0sign2.bat" (
   call "%~dp0sign2.bat"
   cd /d "%~dp0"
   
-  call "%~dp0scan.release.avp.bat"
-  cd /d "%~dp0"
+  if exist "%~dp0scan.release.avp.bat" (
+    call "%~dp0scan.release.avp.bat"
+    cd /d "%~dp0"
+  )
 )
 :skip_sign
 
