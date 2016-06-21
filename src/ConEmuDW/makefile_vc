@@ -1,7 +1,7 @@
 
 .SILENT:
 
-NAME=ConEmuDw
+NAME=ExtendedConsole
 EXT =dll
 X64SUFF=64
 RELEASEDIR=..\..\Release\ConEmu
@@ -9,6 +9,7 @@ NEEDENTRY=1
 USE_PDB = 1
 NEEDDEFLIB = 1
 DEF_FILE = export.def
+RC_NAME = ConEmuDw
 
 !include ../makefile_vc_defs
 
