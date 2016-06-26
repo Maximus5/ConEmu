@@ -2992,29 +2992,39 @@ void CVirtualConsole::UpdateText()
 			rect.bottom = rect.top + m_Sizes.nFontHeight;
 			rect.right = part->PositionX + part->TotalWidth;
 
-			while (nextPart
-				&& (nextPart->Attrs[0].crBackColor == attr.crBackColor)
-				&& (nextPart->Attrs[0].nBackIdx == attr.nBackIdx)
-				)
+			if (nextPart)
 			{
-				if (!lp.GetNextPart(partIndex, part, nextPart))
+				while (nextPart
+					&& (nextPart->Attrs[0].crBackColor == attr.crBackColor)
+					&& (nextPart->Attrs[0].nBackIdx == attr.nBackIdx)
+					)
 				{
-					_ASSERTE(FALSE && "Must not be here because nextPart!=NULL");
-					break;
+					if (!lp.GetNextPart(partIndex, part, nextPart))
+					{
+						_ASSERTE(FALSE && "Must not be here because nextPart!=NULL");
+						break;
+					}
+				}
+
+				if (!part)
+				{
+					_ASSERTE(FALSE && "part must be !NULL if nextPart was detected previously");
 				}
 			}
 
-			// If this part failed to fit in space
-			if (!part->TotalWidth)
-			{
-				continue;
-			}
-
+			// Take last part and set .right to its coords (doesn't matter if .TotalWidth == 0)
 			if (part)
 			{
 				rect.right = part->PositionX + part->TotalWidth;
 			}
 
+			// If these parts failed to fit in space
+			if (rect.left == rect.right)
+			{
+				continue;
+			}
+
+			// Fill the space with background (erase previously printed text)
 			if (drawImage && ISBGIMGCOLOR(attr.nBackIdx))
 			{
 				PaintBackgroundImage(rect, attr.crBackColor);
@@ -3025,6 +3035,7 @@ void CVirtualConsole::UpdateText()
 				FillRect((HDC)m_DC, &rect, hbr);
 			}
 
+			// Fin of the sequence?
 			if (!nextPart)
 			{
 				break;
