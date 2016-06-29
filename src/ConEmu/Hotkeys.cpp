@@ -812,7 +812,7 @@ UINT ConEmuHotKey::GetVkByKeyName(LPCWSTR asName, int* pnScanCode/*=NULL*/, DWOR
 	if (asName[0] == L'F' && isDigit(asName[1]) && (asName[2] == 0 || isDigit(asName[2])))
 	{
 		wchar_t* pEnd;
-		long iNo = wcstol(asName, &pEnd, 10);
+		long iNo = wcstol(asName+1, &pEnd, 10);
 		if (iNo < 1 || iNo > 24)
 			return 0;
 		return (VK_F1 + (iNo-1));
