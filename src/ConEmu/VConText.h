@@ -148,6 +148,7 @@ protected:
 	void ReleaseMemory();
 
 	TextPartFlags isDialogBorderCoord(uint j);
+	void CropParts(uint part1, uint part2, uint right);
 	void DistributeParts(uint part1, uint part2, uint right);
 	void DistributePartsFree(uint part1, uint part2, uint right);
 	void DoShrink(uint& charWidth, int& ShrinkLeft, uint& NeedWidth, uint& TotalWidth);
