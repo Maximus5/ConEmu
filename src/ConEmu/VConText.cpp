@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "VConText.h"
+#include <math.h>
 
 #include "../common/wcchars.h"
 #include "../common/wcwidth.h"
@@ -303,7 +304,7 @@ bool isCharPunctuation(ucs32 inChar)
 
 
 //TODO: 1 pixel for all shrinkable characters? prefer some function of Length...
-#define MIN_SIZEFREE_WIDTH 1
+#define MIN_SIZEFREE_WIDTH ((FontWidth+1) >> 1)
 #define DEF_SINGLE_MUL 8
 #define DEF_SINGLE_DIV 10
 #define DEF_DOUBLE_MUL 7
@@ -360,17 +361,15 @@ void VConTextPart::Done(uint anLen, uint FontWidth)
 
 	ZeroStruct(AllWidths);
 
-	//TODO: Continuous spaces must be processed separately
-
 	if (Flags & TRF_SizeFree)
 	{
+		// spaces, horizontal lines (frames), etc. They may be shrinked freely
 		VConTextPartWidth& aw = AllWidths[TCF_WidthFree];
 		for (uint left = anLen; left--; pch++, pca++, pcf++, pcw++)
 		{
 			_ASSERTE(!(pca->Flags2 & (CharAttr2_NonSpacing|CharAttr2_Combining|CharAttr2_DoubleSpaced)));
 			*pcw = FontWidth; // if non-shrinked
 			*pcf = TCF_WidthFree;
-			TotalWidth += FontWidth;
 			aw.Count++;
 			aw.Width += FontWidth;
 		}
@@ -393,9 +392,7 @@ void VConTextPart::Done(uint anLen, uint FontWidth)
 			{
 				*pcw = FontWidth2;
 				*pcf = TCF_WidthDouble;
-				TotalWidth += FontWidth2;
 				// Even double-width space have to be same width as ‘normal’ CJK glyph
-				MinWidth += FontWidth2M;
 				VConTextPartWidth& aw = AllWidths[TCF_WidthDouble];
 				aw.Count++;
 				aw.Width += FontWidth2;
@@ -701,7 +698,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 					}
 				}
 			}
-			// Overlaps?
+			// Overlaps? Or may be lesser?
 			if (k && (part.PositionX != PosX))
 			{
 				_ASSERTE(k>0); // We can't get here for k==0
@@ -722,7 +719,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 			PosX += part.TotalWidth;
 		}
 	}
-	// If last part goes out of screen - redistribute
+	// If last part does not end on screen edge - redistribute
 	if (PosX != (TextWidth * FontWidth))
 	{
 		DistributeParts(prevFixedPart + 1, PartsCount - 1, (TextWidth * FontWidth));
@@ -884,9 +881,10 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 
 
 	// If possible - shrink only last part
-	// TRF_SizeFree - Spaces or horizontal frames. It does not matter, how many *real* characters we may write
+	// TRF_SizeFree - Spaces or horizontal frames. It does not matter, how many *real* characters we have to write
+	// TODO: However, this may shift cells and "columns" would be not aligned
 	if ((TextParts[part2].Flags & TRF_SizeFree)
-		&& ((TextParts[part2].PositionX + MIN_SIZEFREE_WIDTH) < right)
+		&& ((TextParts[part2].PositionX + MIN_SIZEFREE_WIDTH) <= right)
 		)
 		part1 = part2;
 
@@ -897,159 +895,175 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 	}
 
 
-	const uint suggMul = 4, suggDiv = 5;
-	uint FontWidth2 = (FontWidth * 2);
-	uint FontWidth2m = (FontWidth2 * suggMul / suggDiv);
 	uint ReqWidth = (right - TextParts[part1].PositionX);
-
-	// unused?
 	uint FullWidth = (TextParts[part2].PositionX + TextParts[part2].TotalWidth - TextParts[part1].PositionX);
 
-	// 1) shrink only TCF_WidthFree chars
-	// 2) also shrink TCF_WidthDouble (if exist) a little
-	// 3) shrink all possibilities
+	// 1) ...
+	// 2) ...
+	// 3) ...
 
-	WARNING("Change the algorithm");
-	// a) count all TCF_WidthFree, TCF_WidthNormal, TCF_WidthDouble separatedly
-	// b) so we able to find most suitable way to shrink either part with its own factor (especially useful when both CJK and single-cell chars exists)
-
-	VConTextPartWidth AllWidths[TCF_WidthLast] = {};
-
-	// Count all widths for parts and check if we may do shrink with TCF_WidthFree chars only
-	bool bHasFreeOverlaps = HasFreeOverlaps(part1, part2, right, AllWidths);
-
-	uint nAllWidths = (AllWidths[TCF_WidthFree].Width + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width);
-	_ASSERTE(nAllWidths == FullWidth); // At the moment, they must match
-
-	// What we may to shrink?
-	if (nAllWidths <= ReqWidth)
+	struct Shrinker
 	{
-		if ((nAllWidths != ReqWidth) && !bHasFreeOverlaps)
+		uint cell_width;
+
+		// constants for selected method
+		uint indent_elast; // = 100;
+		uint space_elast;  // = 100;
+		uint single_elast; // = 300;
+		uint cjk_elast;    // = 101;
+		uint ascii_elast;  // = 150;
+		uint rigid_elast;  // = 10000;
+
+		// Restrict compression
+		float indent_min_shrink = 0.0; // %cell
+		float space_min_shrink = 0.5;  // %cell
+		float text_min_shrink = 0.5;   // %part
+
+		// Temporary storage for changed parts widths
+		struct part_data
 		{
-			DistributePartsFree(part1, part2, right);
-		}
-		else
+			uint    old_width;
+			uint    new_width;
+			double  part_elast;
+		};
+		size_t data_count;
+		part_data* data;
+
+		Shrinker()
 		{
-			_ASSERTE(FALSE && "Already fit, nothing to shrink");
-		}
-		return;
-	}
+			data = NULL;
 
-	// Only spaces and horizontal frames
-	if (!bHasFreeOverlaps
-		&& ((AllWidths[TCF_WidthFree].MinWidth + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width) <= ReqWidth)
-		)
-	{
-		DistributePartsFree(part1, part2, right);
-		return;
-	}
+			// Default values;
+			indent_elast = 100;
+			space_elast  = 100;
+			single_elast = 300;
+			cjk_elast    = 101;
+			ascii_elast  = 150;
+			rigid_elast  = 10000;
+		};
 
-	uint nAllMin = AllWidths[TCF_WidthFree].MinWidth + AllWidths[TCF_WidthNormal].MinWidth + AllWidths[TCF_WidthDouble].MinWidth;
-	if (!nAllMin)
-	{
-		_ASSERTE(nAllMin!=NULL); // Must not be zero!
-		return;
-	}
-
-	// *Process* the shrink
-
-	// Leftmost char coord
-	uint PosX = TextParts[part1].PositionX;
-
-	for (uint k = part1; k <= part2; k++)
-	{
-		// method and options
-		uint nShrinkParts = (1 << TCF_WidthFree);
-
-		if ((AllWidths[TCF_WidthFree].MinWidth + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width) <= ReqWidth)
+		~Shrinker()
 		{
-			AllWidths[TCF_WidthFree].ReqWidth = ReqWidth - (AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].Width);
-		}
-		else if ((AllWidths[TCF_WidthFree].MinWidth + AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthDouble].MinWidth) <= ReqWidth)
-		{
-			// Spaces and double-space glyphs
-			// Actually, with monospaced fonts we would have fit problems,
-			// when double-space glyphs takes only one cell in console.
-			// That is non-DBCS systems or UTF-8(?) on DBCS system
-			nShrinkParts |= (1 << TCF_WidthDouble);
-			AllWidths[TCF_WidthFree].ReqWidth = AllWidths[TCF_WidthFree].MinWidth;
-			AllWidths[TCF_WidthDouble].ReqWidth = ReqWidth - (AllWidths[TCF_WidthNormal].Width + AllWidths[TCF_WidthFree].ReqWidth);
-		}
-		else
-		{
-			// Shrink all types
-			nShrinkParts |= (1 << TCF_WidthNormal) | (1 << TCF_WidthDouble);
+			delete[] data;
+		};
 
-			// And we may apply a larger coefficient to dominating type of chars
-
-			// Count each double-space glyph as 2 cells (preferred)
-			AllWidths[TCF_WidthDouble].Count *= 2;
-			// Count "all" cells
-			int nAllCells = AllWidths[TCF_WidthDouble].Count + AllWidths[TCF_WidthNormal].Count + AllWidths[TCF_WidthFree].Count;
-			if (nAllCells <= 0)
+		void init(VConTextPart* parts, uint l, uint r, uint a_font_width)
+		{
+			if (data == NULL)
 			{
-				_ASSERTE(nAllCells > 0);
+				data_count = (r-l+1);
+				data = new part_data[data_count];
+			}
+			_ASSERTE(data_count == (r-l+1));
+
+			cell_width = a_font_width;
+		};
+
+		// Calculate value of the part
+		float sum_k(float len1, float k1_base, float len2, float k2_base)
+		{
+			float k = 1 / ( (len1 / k1_base) + (len2 / k2_base) );
+			return k;
+		};
+
+		void get_total(VConTextPart* parts, uint l, uint r, float& total_k, uint& total_l)
+		{
+			_ASSERTE(data!=NULL);
+
+			total_l = 0;
+			double k_den = 0.0;
+			for (int i = l; i <= r; i++)
+			{
+				// Empty or non-spacing part?
+				if (!parts[i].Length || !parts[i].TotalWidth)
+				{
+					data[i-l].old_width = data[i-l].new_width = 0;
+					data[i-l].part_elast = 0.0;
+					continue;
+				}
+				data[i-l].old_width = data[i-l].new_width = parts[i].TotalWidth;
+
+				// Restrict compression to some percentage using rigid_elast coefficient
+				if ((i == 0) && (parts[i].Flags & TRF_TextSpacing))
+					data[i-l].part_elast = sum_k(
+							(indent_min_shrink*cell_width), rigid_elast,
+							(parts[i].Length - indent_min_shrink)*cell_width, indent_elast
+							);
+				else if (parts[i].Flags & TRF_SizeFree)
+					data[i-l].part_elast = sum_k(
+							(space_min_shrink*cell_width), rigid_elast,
+							(parts[i].Length - space_min_shrink)*cell_width, space_elast
+							);
+				// Double-width (full-width, CJK, etc.)
+				else if (parts[i].Flags & TRF_TextCJK)
+					data[i-l].part_elast = sum_k(
+						(text_min_shrink*parts[i].TotalWidth), rigid_elast,
+						((1 - text_min_shrink)*parts[i].TotalWidth), cjk_elast
+						);
+				else
+					data[i-l].part_elast = sum_k(
+						(text_min_shrink*parts[i].TotalWidth), rigid_elast,
+						((1 - text_min_shrink)*parts[i].TotalWidth), ascii_elast
+						);
+
+				k_den += (1.0 / data[i-l].part_elast);
+				total_l += parts[i].TotalWidth;
+			}
+			_ASSERTE(total_l > 0 && k_den > 0);
+			total_k = (k_den > 0.0) ? (1 / k_den) : 1;
+			//printf("total: %i..%i: k=%.5f\n", l, r, total_k);
+		};
+
+		void eval_compression(VConTextPart* parts, uint l, uint r, uint a_req_len)
+		{
+			_ASSERTE(l<=r && a_req_len>0);
+
+			if (l == r)
+			{
+				data[r-l].new_width = a_req_len;
 				return;
 			}
 
-			// Sort types by cells used
-			uint nMost = TCF_WidthFree;
-			if ((AllWidths[TCF_WidthDouble].Count >= AllWidths[TCF_WidthNormal].Count) && (AllWidths[TCF_WidthDouble].Count >= AllWidths[TCF_WidthFree].Count))
-				nMost = TCF_WidthDouble;
-			else if ((AllWidths[TCF_WidthNormal].Count >= AllWidths[TCF_WidthDouble].Count) && (AllWidths[TCF_WidthNormal].Count >= AllWidths[TCF_WidthFree].Count))
-				nMost = TCF_WidthNormal;
-			uint nOther1 = (nMost != TCF_WidthDouble) ? TCF_WidthDouble : TCF_WidthNormal;
-			uint nFlags = (1 << nMost) | (1 << nOther1);
-			uint nOther2 = (!(nFlags & (1 << TCF_WidthDouble))) ? TCF_WidthDouble
-				: (!(nFlags & (1 << TCF_WidthNormal))) ? TCF_WidthNormal
-				: TCF_WidthFree;
-			if (AllWidths[nOther1].Count < AllWidths[nOther2].Count)
-				klSwap(nOther1, nOther2);
+			float total_k = 1.0; uint total_l = 0; uint delta;
+			uint req_len = a_req_len;
 
-			uint nMostMul = (nMost == TCF_WidthDouble) ? 9 : 10;
-			uint nMostDiv = 10;
+			get_total(parts, l, r, total_k, total_l);
 
-			// Apply denominators
-			AllWidths[nMost].ReqWidth = ReqWidth * AllWidths[nMost].Count * nMostMul / (nAllCells * nMostDiv);
-			_ASSERTE(AllWidths[nMost].ReqWidth <= ReqWidth);
-
-			// And prepare lesser types
-			if ((ReqWidth - AllWidths[nMost].ReqWidth) >= (AllWidths[nOther1].Width + AllWidths[nOther2].MinWidth))
+			float F = total_k * (total_l - req_len);
+			uint half_cell = cell_width/2;
+			for (uint i = l; (i < r) && (req_len < total_l); i++)
 			{
-				AllWidths[nOther1].ReqWidth = AllWidths[nOther1].Width;
-				AllWidths[nOther2].ReqWidth = ReqWidth - (AllWidths[nMost].ReqWidth + AllWidths[nOther1].ReqWidth);
+				float d = (F / data[i-l].part_elast);
+				delta = floor(d + 0.5);
+				//printf("#%i: float=%.3f delta=%u\n", i+1, d, delta);
+				_ASSERTE((delta+half_cell) < parts[i].TotalWidth);
+				_ASSERTE(parts[i].TotalWidth > half_cell);
+				if (delta > (parts[i].TotalWidth - half_cell))
+					delta = (parts[i].TotalWidth - half_cell);
+				data[i-l].new_width = (parts[i].TotalWidth - delta);
+				total_l -= delta;
 			}
-			else if (AllWidths[nOther1].Count > 0 && AllWidths[nOther2].Count > 0)
+			// Let last part lasts to the end of dedicated space
+			if (l < r)
 			{
-				_ASSERTE(AllWidths[nMost].Count > 0);
-				AllWidths[nOther1].ReqWidth = ReqWidth * AllWidths[nOther1].Count / nAllCells;
-				AllWidths[nOther2].ReqWidth = ReqWidth - (AllWidths[nMost].ReqWidth + AllWidths[nOther1].ReqWidth);
+				if (a_req_len < total_l)
+				{
+					delta = (total_l - a_req_len);
+					_ASSERTE(delta < parts[r].TotalWidth);
+					data[r-l].new_width = (delta < parts[r].TotalWidth) ? (parts[r].TotalWidth - delta) : half_cell;
+				}
 			}
-			else if (AllWidths[nOther1].Count > 0)
-			{
-				_ASSERTE(AllWidths[nMost].Count > 0 && AllWidths[nOther2].Count == 0);
-				AllWidths[nOther1].ReqWidth = ReqWidth - (AllWidths[nMost].ReqWidth);
-				_ASSERTE(AllWidths[nOther2].Width == 0);
-				AllWidths[nOther2].ReqWidth = 0;
-			}
-			else
-			{
-				_ASSERTE(AllWidths[nMost].Count > 0 && AllWidths[nOther1].Count == 0 && AllWidths[nOther2].Count == 0);
-				_ASSERTE(AllWidths[nOther1].Width == 0 && AllWidths[nOther2].Width == 0);
-				AllWidths[nOther1].ReqWidth = AllWidths[nOther2].ReqWidth = 0;
-			}
-			// Return *char* count
-			AllWidths[TCF_WidthDouble].Count /= 2;
-		}
+		};
+	} shrinker;
 
-		// Debug validations
-		_ASSERTE((int)AllWidths[TCF_WidthFree].ReqWidth >= 0);
-		_ASSERTE((int)AllWidths[TCF_WidthNormal].ReqWidth >= 0);
-		_ASSERTE((int)AllWidths[TCF_WidthDouble].ReqWidth >= 0);
+	shrinker.init(TextParts, part1, part2, FontWidth);
 
+	shrinker.eval_compression(TextParts, part1, part2, right - TextParts[part1].PositionX);
 
-		/* ******************************************************* */
-
+	// Leftmost char coord
+	uint PosX = TextParts[part1].PositionX;
+	for (uint k = part1; k <= part2; k++)
+	{
 		VConTextPart& part = TextParts[k];
 		if (!part.Flags)
 		{
@@ -1057,62 +1071,20 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 			continue;
 		}
 
-		// Update new leftmost coord for this part
-		part.PositionX = PosX;
-
 		// Prepare loops
 		TextCharType* pcf = part.CharFlags; // character flags (zero/free/normal/double)
 		uint* pcw = part.CharWidth; // pointer to character width
-
-		// Run part shrink
-		part.TotalWidth = 0;
-
-		_ASSERTE(!(part.Flags & TRF_Cropped));
-
-		if ((part.Flags & TRF_SizeFree) && (nShrinkParts & (1 << TCF_WidthFree)))
+		int ShrinkLeft = part.Length;
+		uint NeedWidth = shrinker.data[k-part1].new_width;
+		uint NewPartWidth = 0;
+		for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
 		{
-			VConTextPartWidth& aw = AllWidths[TCF_WidthFree];
-			int iShrinkLeft = part.Length;
-			_ASSERTE(AllWidths[TCF_WidthFree].Count>0);
-			uint partReqWidth = (AllWidths[TCF_WidthFree].Count > 0) ? (aw.ReqWidth / AllWidths[TCF_WidthFree].Count) : 0;
-			for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
-			{
-				_ASSERTE(*pcf == TCF_WidthFree);
-				DoShrink(*pcw, iShrinkLeft, partReqWidth, part.TotalWidth);
-			}
-			aw.Count -= part.Length;
-			aw.Width -= klMin(part.TotalWidth, aw.Width);
-			aw.MinWidth -= klMin(part.TotalWidth, aw.MinWidth);
-			aw.ReqWidth -= klMin(part.TotalWidth, aw.ReqWidth);
+			DoShrink(*pcw, ShrinkLeft, NeedWidth, NewPartWidth);
 		}
-		else
-		{
-			#ifdef _DEBUG
-			int iShrinkLen = part.Length;
-			#endif
-			for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
-			{
-				VConTextPartWidth& aw = AllWidths[*pcf];
-				if (nShrinkParts & (1 << *pcf))
-				{
-					DoShrink(*pcw, aw.Count, aw.ReqWidth, part.TotalWidth);
-					aw.Width -= klMin(*pcw, aw.Width);
-					aw.MinWidth -= klMin(*pcw, aw.MinWidth);
-				}
-				else
-				{
-					part.TotalWidth += *pcw;
-					aw.Count--;
-					aw.Width -= klMin(*pcw, aw.Width);
-					aw.MinWidth -= klMin(*pcw, aw.MinWidth);
-					aw.ReqWidth -= klMin(*pcw, aw.ReqWidth);
-				}
-			}
-		}
+		part.TotalWidth = NewPartWidth;
 
-		PosX += part.TotalWidth;
-
-		/* ******************************************************* */
+		// Advance coord
+		PosX += NewPartWidth;
 	}
 
 	// End of shrink (no more parts, no more methods)
@@ -1370,118 +1342,6 @@ TextPartFlags CVConLine::isDialogBorderCoord(uint j)
 	}
 
 	return dlgBorder;
-}
-
-bool CVConLine::HasFreeOverlaps(const uint part1, const uint part2, const uint right, VConTextPartWidth (&AllWidths)[TCF_WidthLast])
-{
-	bool bHasFreeOverlaps = false;
-	ZeroStruct(AllWidths);
-
-	// Count all widths for parts
-	uint checkOverlapX = TextParts[part1].PositionX;
-	for (uint k = part1; k <= part2; k++)
-	{
-		VConTextPart& part = TextParts[k];
-		if (!part.Flags)
-		{
-			_ASSERTE(part.Flags); // Part must not be dropped yet!
-			continue;
-		}
-		if (part.Flags & TRF_SizeFree)
-		{
-			// They are counted specially, series of spaces or horz.frames may be shrinked
-			// forcedly up to one cell almost without meaning loss
-			_ASSERTE(part.AllWidths[TCF_WidthFree].MinWidth && part.AllWidths[TCF_WidthFree].MinWidth <= FontWidth);
-			AllWidths[TCF_WidthFree].Count += 1;
-			AllWidths[TCF_WidthFree].Width += part.AllWidths[TCF_WidthFree].Width;
-			AllWidths[TCF_WidthFree].MinWidth += part.AllWidths[TCF_WidthFree].MinWidth;
-		}
-		else for (uint t = TCF_WidthFree; t < TCF_WidthLast; t++)
-		{
-			AllWidths[t].Count += part.AllWidths[t].Count;
-			AllWidths[t].Width += part.AllWidths[t].Width;
-			AllWidths[t].MinWidth += part.AllWidths[t].MinWidth;
-		}
-		// If possible, shrink TCF_WidthFree in such a way that
-		// we'll get next part placed on its preferred CellPosX
-		if (!bHasFreeOverlaps)
-		{
-			if (!(part.Flags & TRF_SizeFree))
-			{
-				checkOverlapX += part.TotalWidth;
-			}
-			else
-			{
-				uint nextX = (k == part2) ? right : GetNextPartX(k);
-				if ((checkOverlapX + MIN_SIZEFREE_WIDTH) > nextX)
-				{
-					// we can't shrink *only* free-size parts between fixed pos of others
-					bHasFreeOverlaps = true;
-				}
-				else
-				{
-					checkOverlapX = nextX;
-				}
-			}
-		}
-	}
-
-	return bHasFreeOverlaps;
-}
-
-void CVConLine::DistributePartsFree(uint part1, uint part2, uint right)
-{
-	// Try to enlarge only "free" parts with (Length>=3)?
-
-	uint PosX = TextParts[part1].PositionX;
-
-	for (uint k = part1; k <= part2; k++)
-	{
-		VConTextPart& part = TextParts[k];
-		if (!part.Flags)
-		{
-			_ASSERTE(part.Flags); // Part must not be dropped yet!
-			continue;
-		}
-
-		// Update new leftmost coord for this part
-		part.PositionX = PosX;
-
-		if (!(part.Flags & TRF_SizeFree))
-		{
-			PosX += part.TotalWidth;
-			continue;
-		}
-
-		// Prepare loops
-		TextCharType* pcf = part.CharFlags; // character flags (zero/free/normal/double)
-		uint* pcw = part.CharWidth; // pointer to character width
-
-		// Run part shrink
-		uint X;
-		uint nextPartX = (k == part2) ? right : GetNextPartX(k);
-		if (part.PositionX >= nextPartX)
-		{
-			_ASSERTE(nextPartX > part.PositionX);
-			return;
-		}
-		part.TotalWidth = 0;
-		uint NeedPartWidth = nextPartX - part.PositionX;
-		for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
-		{
-			switch (*pcf)
-			{
-			case TCF_WidthFree:
-				X = klMulDivU32(c+1, NeedPartWidth, part.Length);
-				*pcw = X - part.TotalWidth;
-			case TCF_WidthNormal:
-			case TCF_WidthDouble:
-				part.TotalWidth += *pcw;
-				break;
-			}
-		}
-		PosX = nextPartX;
-	}
 }
 
 uint CVConLine::GetNextPartX(const uint part)
