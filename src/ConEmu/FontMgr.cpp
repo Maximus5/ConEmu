@@ -2362,7 +2362,8 @@ void CFontMgr::RecreateAlternativeFont()
 	#endif
 }
 
-// Вызывается из диалога настроек
+// abReset = true : during initialization
+// abReset = false : when calling from Settings dialog
 void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 {
 	CLogFont LF;
@@ -2419,13 +2420,12 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 
 	if (CreateFontGroup(LF))
 	{
-		_ASSERTE(LF.lfWidth >= 0 && LF.lfHeight > 0);
+		_ASSERTE(m_Font[0].IsSet() && m_Font[0]->m_LF.lfWidth >= 0 && m_Font[0]->m_LF.lfHeight > 0);
 
 		// SaveFontSizes выполним после обновления LogFont, т.к. там зовется gpConEmu->OnPanelViewSettingsChanged
 
 		SaveFontSizes((mn_AutoFontWidth == -1), true);
 
-		if (abReset)
 		{
 			if (abRecreateControls)
 				gpConEmu->RecreateControls(true, true, false);
