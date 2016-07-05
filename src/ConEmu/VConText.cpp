@@ -215,6 +215,7 @@ bool isCharSpace(ucs32 inChar)
 // Same as isCharSpace, but without ‘CJK Wide Space’
 bool isCharSpaceSingle(ucs32 inChar)
 {
+	//TODO: Tabs (\t 0x09)?
 	bool isSpace = (inChar == ucSpace || inChar == ucNoBreakSpace
 		|| (((inChar >= 0x2000) && (inChar <= 0x3000))
 			&& ((inChar <= 0x200A)      // 0x2000..0x200A - Different typographical non-zero spaces
