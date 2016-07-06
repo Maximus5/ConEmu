@@ -842,7 +842,12 @@ bool CEDC::TextExtentPoint(LPCTSTR ch, int c, LPSIZE sz)
 	case CEFONT_GDI:
 	case CEFONT_NONE:
 		{
-			lbRc = ::GetTextExtentPoint32(hDC, ch, c, sz);
+			// GetTextExtentPoint32 fails on some symbols. Example, U+27F6 (⟶)
+			// * it **may** be painted by ExtTextOut in **some** sequences (surrounding glyphs matter?)
+			// * but GetTextExtentPoint32 always returns width of "absent" glyph (codepoint does not exist in almost any font...)
+			RECT rc = {};
+			lbRc = (::DrawText(hDC, ch, c, &rc, DT_CALCRECT|DT_NOPREFIX) != 0);
+			sz->cx = rc.right; sz->cy = rc.bottom;
 			break;
 		}
 
