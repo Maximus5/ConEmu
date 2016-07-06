@@ -30,8 +30,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
+#include <unordered_map>
 
 #include "../common/CEStr.h"
+#include "../common/wcwidth.h"
 #include "CustomFonts.h"
 #include "FontInfo.h"
 #include "FontPtr.h"
@@ -66,6 +68,9 @@ public:
 
 	CEStr ms_FontError;
 
+	std::unordered_map<ucs32,WORD> m_CharWidth;
+	//TODO: std::unordered_map<ucs32,ABC> m_CharABC;
+
 public:
 	CFont();
 	CFont(HFONT ahGdiFont);
@@ -79,7 +84,7 @@ public:
 	// Methods
 	bool Equal(const CFont* p) const;
 	bool IsSet() const;
-	void ResetFontWidth() {};
+	void ResetFontWidth();
 
 protected:
 	friend class CFontMgr;

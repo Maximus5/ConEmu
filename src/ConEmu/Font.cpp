@@ -132,6 +132,11 @@ bool CFont::IsSet() const
 	return false;
 }
 
+void CFont::ResetFontWidth()
+{
+	m_CharWidth.clear();
+}
+
 bool CFont::Delete()
 {
 	BOOL result = FALSE;

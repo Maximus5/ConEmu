@@ -1282,6 +1282,7 @@ class DcDebug
 //    }
 //}
 
+#if 0
 TODO("Move to CFont");
 void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 {
@@ -1329,8 +1330,9 @@ void CVirtualConsole::CharABC(wchar_t ch, ABC *abc)
 
 	*abc = gpFontMgr->m_CharABC[ch];
 }
+#endif
 
-TODO("Move to CFont");
+TODO("Replace wchar_t with ucs32");
 // Возвращает ширину символа, учитывает FixBorders
 WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 {
@@ -1342,49 +1344,48 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 	{
 		return MakeUShort(2 * m_Sizes.nFontWidth);
 	}
-	else if (gpSet->isMonospace
-	        || (gpSet->isFixFarBorders && isCharAltFont(ch))
-	        || (gpSet->isEnhanceGraphics && isCharProgress(ch))
-			)
+	else if (gpSet->isEnhanceGraphics && isCharProgress(ch))
 	{
+		// Font mapper is not used in this case
 		return MakeUShort(m_Sizes.nFontWidth);
 	}
 
-	// Проверяем сразу, чтобы по условиям не бегать
-	WORD& nWidth = gpFontMgr->m_CharWidth[ch];
+	TODO("fnt_UCharMap, m_UCharMapFont");
 
-	if (nWidth)
-		return nWidth;
+	TODO("Use FontLinks to acquire proper font!");
 
-	//nWidth = nFontWidth;
-	//bool isBorder = false; //, isVBorder = false;
+	CEFontStyles newFont = fnt_Normal;
+	if (gpSet->isFixFarBorders && isCharAltFont(ch))
+		newFont = fnt_Alternative;
 
-	// Наверное все же нужно считать именно в том шрифте, которым будет идти отображение
-	if (gpSet->isFixFarBorders && gpFontMgr->m_Font2.IsSet() && isCharAltFont(ch))
+	CFontPtr hFontPtr;
+	if (!gpFontMgr->QueryFont(newFont, this, hFontPtr))
 	{
-		SelectFont(fnt_Alternative);
-	}
-	else
-	{
-		TODO("Тут надо бы деление по стилям сделать");
-		SelectFont(fnt_Normal);
+		_ASSERTE(FALSE && "Font must be created already");
+		return MakeUShort(m_Sizes.nFontWidth);
 	}
 
-	//SelectFont(gpSetCls->mh_Font[0]);
-	SIZE sz;
-	//This function succeeds only with TrueType fonts
-	//#ifdef _DEBUG
-	//ABC abc;
-	//BOOL lb1 = GetCharABCWidths((HDC)m_DC, ch, ch, &abc);
-	//#endif
+	TODO("Surrogates!");
+	ucs32 wwch = ch;
+	std::unordered_map<ucs32,WORD>::iterator exist = hFontPtr->m_CharWidth.find(wwch);
+	if (exist != hFontPtr->m_CharWidth.end())
+	{
+		return exist->second;
+	}
 
+	SelectFont(hFontPtr);
+
+	SIZE sz; WORD nWidth;
 	if (m_DC.TextExtentPoint(&ch, 1, &sz) && sz.cx)
 		nWidth = MakeUShort(sz.cx);
 	else
 		nWidth = MakeUShort(m_Sizes.nFontWidth);
 
 	if (!nWidth)
-		nWidth = 1; // на всякий случай, чтобы деления на 0 не возникло
+		nWidth = 1; // JIC, avoid devision by zero
+
+	// Store in font hash map
+	hFontPtr->m_CharWidth[wwch] = nWidth;
 
 	return nWidth;
 }

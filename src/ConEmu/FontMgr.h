@@ -105,10 +105,6 @@ public:
 	CFontPtr  m_Font[MAX_FONT_STYLES];
 	CFontPtr  m_Font2;
 
-	WARNING("Change this to hash map and move to CFont");
-	WORD    m_CharWidth[0x10000];
-	ABC     m_CharABC[0x10000];
-
 	CEStr   ms_FontError;
 
 private:

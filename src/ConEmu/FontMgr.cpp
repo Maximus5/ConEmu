@@ -87,9 +87,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 
 
-TODO("m_CharWidth & m_CharABC are different for Bold or Italic?");
-
-
 const int CFontMgr::FontDefWidthMin = 0;
 const int CFontMgr::FontDefWidthMax = 99;
 const int CFontMgr::FontZoom100 = 10000;
@@ -2454,8 +2451,14 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 
 void CFontMgr::ResetFontWidth()
 {
-	memset(m_CharWidth, 0, sizeof(m_CharWidth));
-	memset(m_CharABC, 0, sizeof(m_CharABC));
+	TODO("Use m_FontPtrs instead?");
+	for (size_t i = 0; i < countof(m_Font); i++)
+	{
+		if (m_Font[i].IsSet())
+			m_Font[i]->ResetFontWidth();
+	}
+	if (m_Font2.IsSet())
+		m_Font2->ResetFontWidth();
 }
 
 void CFontMgr::SaveFontSizes(bool bAuto, bool bSendChanges)
