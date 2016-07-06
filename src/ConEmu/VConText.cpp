@@ -315,7 +315,7 @@ void VConTextPart::Init(uint anIndex, uint anCell, CVConLine* pLine)
 {
 	Flags = TRF_None;
 	Length = 1; // initially, we'll enlarge it later
-	TotalWidth = MinWidth = 0;
+	TotalWidth = 0;
 	Index = anIndex;
 	Cell = anCell; // May differs from anIndex on DBCS systems
 	PositionX = CellPosX = Cell * pLine->FontWidth;
@@ -325,11 +325,10 @@ void VConTextPart::Init(uint anIndex, uint anCell, CVConLine* pLine)
 	CharWidth = pLine->TempCharWidth + anIndex;
 }
 
-void VConTextPart::Done(uint anLen, uint FontWidth)
+void VConTextPart::SetLen(uint anLen, uint FontWidth)
 {
-	_ASSERTE(anLen>0 && anLen<=0xFFFF && FontWidth>0 && FontWidth<=0xFFFF);
+	_ASSERTE(anLen>0 && anLen<=0xFFFF);
 	Length = anLen;
-	TotalWidth = MinWidth = 0;
 
 	// May this part be shrinked freely?
 	if (Flags & TRF_TextSpacing)
@@ -350,79 +349,58 @@ void VConTextPart::Done(uint anLen, uint FontWidth)
 			Flags |= TRF_SizeFree;
 	}
 
-	// Helper - double cell characters
 	uint FontWidth2 = 2*FontWidth;
-	uint FontWidth2M = FontWidth2 * DEF_DOUBLE_MUL / DEF_DOUBLE_DIV;
-	uint FontWidthM = FontWidth * DEF_SINGLE_MUL / DEF_SINGLE_DIV;
 
-	const wchar_t* pch = Chars;
 	const CharAttr* pca = Attrs;
 	TextCharType* pcf = CharFlags;
 	uint* pcw = CharWidth;
 
-	ZeroStruct(AllWidths);
+	// Preliminary character widths estimation
 
 	if (Flags & TRF_SizeFree)
 	{
 		// spaces, horizontal lines (frames), etc. They may be shrinked freely
-		VConTextPartWidth& aw = AllWidths[TCF_WidthFree];
-		for (uint left = anLen; left--; pch++, pca++, pcf++, pcw++)
+		for (uint left = anLen; left--; pca++, pcf++)
 		{
-			_ASSERTE(!(pca->Flags2 & (CharAttr2_NonSpacing|CharAttr2_Combining|CharAttr2_DoubleSpaced)));
 			*pcw = FontWidth; // if non-shrinked
 			*pcf = TCF_WidthFree;
-			aw.Count++;
-			aw.Width += FontWidth;
 		}
-		aw.MinWidth += FontWidth;
 	}
 	else
 	{
 		//WARNING: We rely here on pca->Flags2, but not on self evaluated data?
-		for (uint left = anLen; left--; pch++, pca++, pcf++, pcw++)
+		for (uint left = anLen; left--; pca++, pcf++, pcw++)
 		{
 			if (pca->Flags2 & (CharAttr2_NonSpacing|CharAttr2_Combining))
 			{
 				// zero-width
 				*pcw = 0;
 				*pcf = TCF_WidthZero;
-				VConTextPartWidth& aw = AllWidths[TCF_WidthZero];
-				aw.Count++; // Informational
 			}
 			else if (pca->Flags2 & CharAttr2_DoubleSpaced)
 			{
 				*pcw = FontWidth2;
 				*pcf = TCF_WidthDouble;
-				// Even double-width space have to be same width as ‘normal’ CJK glyph
-				VConTextPartWidth& aw = AllWidths[TCF_WidthDouble];
-				aw.Count++;
-				aw.Width += FontWidth2;
-				aw.MinWidth += FontWidth2M;
 			}
-			else /*if (gpSet->isMonospace
-					|| (gpSet->isFixFarBorders && isCharAltFont(ch))
-					|| (gpSet->isEnhanceGraphics && isCharProgress(ch))
-					)*/
+			else
 			{
-				//TODO: Caller must process fonts and set "real" character widths for proportinal fonts
 				*pcw = FontWidth;
 				*pcf = TCF_WidthNormal;
-				VConTextPartWidth& aw = AllWidths[TCF_WidthNormal];
-				aw.Count++;
-				aw.Width += FontWidth;
-				aw.MinWidth += FontWidthM;
 			}
 		}
 	}
+}
 
-	TotalWidth = AllWidths[TCF_WidthFree].Width
-		+  AllWidths[TCF_WidthNormal].Width
-		+  AllWidths[TCF_WidthDouble].Width
-		;
-	MinWidth = AllWidths[TCF_WidthFree].MinWidth
-		+  AllWidths[TCF_WidthNormal].MinWidth
-		+  AllWidths[TCF_WidthDouble].MinWidth
-		;
+void VConTextPart::Done()
+{
+	_ASSERTE(Length>0 && Length<=0xFFFF);
+	TotalWidth = 0;
+
+	uint* pcw = CharWidth;
+	for (uint left = Length; left--; pcw++)
+	{
+		TotalWidth += *pcw; // if non-shrinked
+	}
 }
 
 
@@ -446,7 +424,6 @@ CVConLine::CVConLine(CRealConsole* apRCon)
 	, TempCharFlags(NULL)
 	, TempCharWidth(NULL)
 	, TotalLineWidth(0)
-	, MinLineWidth(0)
 	, isFixFrameCoord(true)
 	, NextDialog(true)
 	, NextDialogX(0)
@@ -644,9 +621,12 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 
 		/* *** We shall prepare this token (default/initial widths must be set) *** */
 		_ASSERTE(j2>j);
-		p->Done(j2-j, FontWidth);
+		p->SetLen(j2-j, FontWidth);
+
+		#if 0
 		TotalLineWidth += p->TotalWidth;
 		MinLineWidth += p->MinWidth;
+		#endif
 
 		/* Next part */
 		j = j2;
@@ -674,6 +654,15 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 		_ASSERTE(TextParts[k].Chars && TextParts[k].Attrs && TextParts[k].CharFlags);
 	}
 	#endif
+
+	// VirtualConsole has set proper character widths, adopt them
+	TotalLineWidth = 0;
+	for (uint k = 0; k < PartsCount; k++)
+	{
+		VConTextPart& part = TextParts[k];
+		part.Done();
+		TotalLineWidth += part.TotalWidth;
+	}
 
 	uint PosX, CharIdx;
 	int prevFixedPart; // !SIGNED!
@@ -729,7 +718,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 
 	/* Fill all X coordinates */
 	PosX = CharIdx = 0;
-	TotalLineWidth = MinLineWidth = 0;
+	TotalLineWidth = 0;
 	for (uint k = 0; k < PartsCount; k++)
 	{
 		VConTextPart& part = TextParts[k];
@@ -748,7 +737,6 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 			part.PositionX = PosX;
 		}
 		TotalLineWidth += part.TotalWidth;
-		MinLineWidth += part.MinWidth;
 
 		uint charPosX = PosX;
 		uint* ptrWidth = part.CharWidth;
@@ -791,7 +779,6 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 					break;
 				part.Length += part2.Length;
 				part.TotalWidth += part2.TotalWidth;
-				part.MinWidth += part2.MinWidth;
 				// "Hide" this part from list
 				part2.Flags = TRF_None;
 				k = k2;

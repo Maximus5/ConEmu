@@ -381,6 +381,7 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 
 			if (bPair)
 			{
+				lca.Flags2 |= CharAttr2_Surrogate;
 				CharAttr& lca2 = pcaDst[nX+1];
 				lca2 = lca;
 				lca2.Flags2 = (lca.Flags2 & ~(CharAttr2_Combining)) | CharAttr2_NonSpacing;

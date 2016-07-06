@@ -53,6 +53,7 @@ typedef struct tag_CharAttr
 			#define CharAttr2_Combining     2 // combining characters, drawn over previous one
 			#define CharAttr2_DoubleSpaced  4 // DBCS glyphs used full (double) space
 			#define CharAttr2_DialogCorner  8
+			#define CharAttr2_Surrogate    16 // high-surrogate pair
 			unsigned int Flags2 : 8; // вспомогательные флаги CharAttr_XXX
 			unsigned int nForeIdx : 8; // Only 5 bits are used at the moment (0..15 base colors + 15..31 extended colors)
 			unsigned int nBackIdx : 8; // Used to ExtendColors and ExtendFonts

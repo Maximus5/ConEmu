@@ -203,8 +203,6 @@ bool is_char_cjk(ucs32 ucs)
 	return (ucs >= 0x1100
 		&& ((ucs <= 0x115f) ||                  /* Hangul Jamo init. consonants */
 			(ucs == 0x2329 || ucs == 0x232a) || /* Angular brackets */
-			//BUG: Remove this, need to reuse is_char_ambiguous!
-			(ucs >= 0x2700 && ucs <= 0x27BF) || /* Dingbats (gh-722) */
 			(ucs >= 0x2e80 && ucs <= 0xa4cf &&
 				ucs != 0x303f) ||               /* CJK ... Yi */
 			(ucs >= 0xac00 && ucs <= 0xd7a3) || /* Hangul Syllables */
@@ -287,6 +285,7 @@ bool is_char_ambiguous(ucs32 ucs)
 		{ 0x273D, 0x273D }, { 0x2776, 0x277F }, { 0xE000, 0xF8FF },
 		{ 0xFFFD, 0xFFFD }, { 0xF0000, 0xFFFFD }, { 0x100000, 0x10FFFD }
 	};
+	//TODO: Add (0x2700 ... 0x27BF) Dingbats (gh-722)?
 
 	/* binary search in table of non-spacing characters */
 	return bisearch(ucs, ambiguous, countof(ambiguous));

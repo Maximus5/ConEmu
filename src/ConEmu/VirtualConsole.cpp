@@ -2963,20 +2963,19 @@ void CVirtualConsole::UpdateText()
 
 		// Calculate proper widths for proportional fonts
 		//TODO: Evaluate width for monospace fonts too! Linked fonts may be used for some char ranges!
-		if (bFontProportional)
+		//if (bFontProportional)
 		{
 			partIndex = 0;
 			while (lp.GetNextPart(partIndex, part, nextPart))
 			{
-				part->TotalWidth = 0;
-				for (uint i = 0; i < part->Length; i++)
+				TextCharType* pcf = part->CharFlags;
+				uint* pcw = part->CharWidth;
+				for (uint i = 0; i < part->Length; i++, pcf++, pcw++)
 				{
-					if (part->CharFlags[i] >= TCF_WidthFree)
+					if (*pcf >= TCF_WidthFree)
 					{
-						//TODO: Use ucs32 (surrogates) to evaluate width
-						WORD cw = CharWidth(part->Chars[i], part->Attrs[i]);
-						part->CharWidth[i] = cw;
-						part->TotalWidth += cw;
+						TODO("Use ucs32 (surrogates) to evaluate width");
+						*pcw = CharWidth(part->Chars[i], part->Attrs[i]);
 					}
 				}
 			}

@@ -84,6 +84,7 @@ enum TextCharType
 class CVConLine;
 class CRealConsole;
 
+#if 0
 // Used as array[TextCharType::TCF_WidthLast]
 struct VConTextPartWidth
 {
@@ -92,6 +93,7 @@ struct VConTextPartWidth
 	uint MinWidth; // Some parts (continuous spaces, horz frames) may be hard shrinked
 	uint ReqWidth; // For internal purposes
 };
+#endif
 
 struct VConTextPart
 {
@@ -107,14 +109,16 @@ struct VConTextPart
 	// Cell in the RealConsole. It may differs from Index on DBCS systems
 	uint Cell;
 	// Helper, to ensure our text parts fit in the terminal window
-	uint TotalWidth, MinWidth;
+	uint TotalWidth;
 	// Final position in VCon
 	uint PositionX;
 	// Preferred position calculated by Cell*FontWidth
 	uint CellPosX;
 
+	#if 0
 	// Chars distribution
 	VConTextPartWidth AllWidths[TCF_WidthLast];
+	#endif
 
 	// CharFlags is a pointer to buffer+idx from CVConLine
 	TextCharType* CharFlags;
@@ -126,7 +130,8 @@ struct VConTextPart
 
 
 	void Init(uint anIndex, uint anCell, CVConLine* pLine);
-	void Done(uint anLen, uint FontWidth);
+	void SetLen(uint anLen, uint FontWidth);
+	void Done();
 };
 
 class CVConLine
@@ -196,7 +201,7 @@ protected:
 	uint* TempCharWidth/*[MaxBufferSize]*/;
 
 	// Just for information
-	uint TotalLineWidth, MinLineWidth;
+	uint TotalLineWidth;
 
 	// Pseudographics alignments
 	bool isFixFrameCoord;
