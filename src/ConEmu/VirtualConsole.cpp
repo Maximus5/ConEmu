@@ -1175,6 +1175,12 @@ void CVirtualConsole::SelectFont(CEFontStyles newFont)
 		}
 	}
 
+	SelectFont(hFontPtr);
+	m_SelectedFont = newFont;
+}
+
+void CVirtualConsole::SelectFont(const CFontPtr& hFontPtr)
+{
 	TODO("Move logic to m_DC?");
 
 	if (!hFontPtr.IsSet())
@@ -1190,8 +1196,6 @@ void CVirtualConsole::SelectFont(CEFontStyles newFont)
 
 		m_DC.SelectFont(hFontPtr);
 	}
-
-	m_SelectedFont = newFont;
 }
 
 void CVirtualConsole::SelectBrush(HBRUSH hNew)

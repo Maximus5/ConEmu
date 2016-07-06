@@ -313,6 +313,7 @@ class CVirtualConsole :
 		void UpdateText();
 		void PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC, bool bFill);
 		WORD CharWidth(wchar_t ch, const CharAttr& attr);
+		void SelectFont(const CFontPtr& hFontPtr);
 		#if 0
 		void CharABC(wchar_t ch, ABC *abc);
 		#endif
