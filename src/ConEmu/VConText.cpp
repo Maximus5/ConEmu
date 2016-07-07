@@ -850,6 +850,160 @@ void CVConLine::CropParts(uint part1, uint part2, uint right)
 	_ASSERTE(PosX <= right);
 }
 
+struct Shrinker
+{
+	uint cell_width;
+
+	// constants for selected method
+	uint indent_elast; // = 100;
+	uint space_elast;  // = 100;
+	uint single_elast; // = 300;
+	uint cjk_elast;    // = 101;
+	uint ascii_elast;  // = 150;
+	uint rigid_elast;  // = 10000;
+
+	// Restrict compression
+	float indent_min_shrink = 0.0; // %cell
+	float space_min_shrink = 0.5;  // %cell
+	float text_min_shrink = 0.5;   // %part
+
+	// Temporary storage for changed parts widths
+	struct part_data
+	{
+		uint    old_width;
+		uint    new_width;
+		double  part_elast;
+	};
+	size_t data_count;
+	part_data* data;
+
+	Shrinker()
+	{
+		data = NULL;
+
+		// Default values;
+		indent_elast = 100;
+		space_elast  = 100;
+		single_elast = 300;
+		cjk_elast    = 101;
+		ascii_elast  = 150;
+		rigid_elast  = 10000;
+	};
+
+	~Shrinker()
+	{
+		delete[] data;
+	};
+
+	void init(VConTextPart* parts, uint l, uint r, uint a_font_width)
+	{
+		if (data == NULL)
+		{
+			data_count = (r-l+1);
+			data = new part_data[data_count];
+		}
+		_ASSERTE(data_count == (r-l+1));
+
+		cell_width = a_font_width;
+	};
+
+	// Calculate value of the part
+	float sum_k(float len1, float k1_base, float len2, float k2_base)
+	{
+		float k = 1 / ( (len1 / k1_base) + (len2 / k2_base) );
+		return k;
+	};
+
+	void get_total(VConTextPart* parts, uint l, uint r, float& total_k, uint& total_l)
+	{
+		_ASSERTE(data!=NULL);
+
+		total_l = 0;
+		double k_den = 0.0;
+		for (int i = l; i <= r; i++)
+		{
+			// Empty or non-spacing part?
+			if (!parts[i].Length || !parts[i].TotalWidth)
+			{
+				data[i-l].old_width = data[i-l].new_width = 0;
+				data[i-l].part_elast = 0.0;
+				continue;
+			}
+			data[i-l].old_width = data[i-l].new_width = parts[i].TotalWidth;
+
+			// Restrict compression to some percentage using rigid_elast coefficient
+			if ((i == 0) && (parts[i].Flags & TRF_TextSpacing))
+				data[i-l].part_elast = sum_k(
+						(indent_min_shrink*cell_width), rigid_elast,
+						(parts[i].Length - indent_min_shrink)*cell_width, indent_elast
+						);
+			else if (parts[i].Flags & TRF_SizeFree)
+				data[i-l].part_elast = sum_k(
+						(space_min_shrink*cell_width), rigid_elast,
+						(parts[i].Length - space_min_shrink)*cell_width, space_elast
+						);
+			// Double-width (full-width, CJK, etc.)
+			else if (parts[i].Flags & TRF_TextCJK)
+				data[i-l].part_elast = sum_k(
+					(text_min_shrink*parts[i].TotalWidth), rigid_elast,
+					((1 - text_min_shrink)*parts[i].TotalWidth), cjk_elast
+					);
+			else
+				data[i-l].part_elast = sum_k(
+					(text_min_shrink*parts[i].TotalWidth), rigid_elast,
+					((1 - text_min_shrink)*parts[i].TotalWidth), ascii_elast
+					);
+
+			k_den += (1.0 / data[i-l].part_elast);
+			total_l += parts[i].TotalWidth;
+		}
+		_ASSERTE(total_l > 0 && k_den > 0);
+		total_k = (k_den > 0.0) ? (1 / k_den) : 1;
+		//printf("total: %i..%i: k=%.5f\n", l, r, total_k);
+	};
+
+	void eval_compression(VConTextPart* parts, uint l, uint r, uint a_req_len)
+	{
+		_ASSERTE(l<=r && a_req_len>0);
+
+		if (l == r)
+		{
+			data[r-l].new_width = a_req_len;
+			return;
+		}
+
+		float total_k = 1.0; uint total_l = 0; uint delta;
+		uint req_len = a_req_len;
+
+		get_total(parts, l, r, total_k, total_l);
+
+		float F = total_k * (total_l - req_len);
+		uint half_cell = cell_width/2;
+		for (uint i = l; (i < r) && (req_len < total_l); i++)
+		{
+			float d = (F / data[i-l].part_elast);
+			delta = floor(d + 0.5);
+			//printf("#%i: float=%.3f delta=%u\n", i+1, d, delta);
+			_ASSERTE((delta+half_cell) < parts[i].TotalWidth);
+			_ASSERTE(parts[i].TotalWidth > half_cell);
+			if (delta > (parts[i].TotalWidth - half_cell))
+				delta = (parts[i].TotalWidth - half_cell);
+			data[i-l].new_width = (parts[i].TotalWidth - delta);
+			total_l -= delta;
+		}
+		// Let last part lasts to the end of dedicated space
+		if (l < r)
+		{
+			if (a_req_len < total_l)
+			{
+				delta = (total_l - a_req_len);
+				_ASSERTE(delta < parts[r].TotalWidth);
+				data[r-l].new_width = (delta < parts[r].TotalWidth) ? (parts[r].TotalWidth - delta) : half_cell;
+			}
+		}
+	};
+};
+
 // Shrink lengths of [part1..part2] (including)
 // They must not exceed `right` X coordinate
 void CVConLine::DistributeParts(uint part1, uint part2, uint right)
@@ -890,162 +1044,8 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 	// 2) ...
 	// 3) ...
 
-	struct Shrinker
-	{
-		uint cell_width;
-
-		// constants for selected method
-		uint indent_elast; // = 100;
-		uint space_elast;  // = 100;
-		uint single_elast; // = 300;
-		uint cjk_elast;    // = 101;
-		uint ascii_elast;  // = 150;
-		uint rigid_elast;  // = 10000;
-
-		// Restrict compression
-		float indent_min_shrink = 0.0; // %cell
-		float space_min_shrink = 0.5;  // %cell
-		float text_min_shrink = 0.5;   // %part
-
-		// Temporary storage for changed parts widths
-		struct part_data
-		{
-			uint    old_width;
-			uint    new_width;
-			double  part_elast;
-		};
-		size_t data_count;
-		part_data* data;
-
-		Shrinker()
-		{
-			data = NULL;
-
-			// Default values;
-			indent_elast = 100;
-			space_elast  = 100;
-			single_elast = 300;
-			cjk_elast    = 101;
-			ascii_elast  = 150;
-			rigid_elast  = 10000;
-		};
-
-		~Shrinker()
-		{
-			delete[] data;
-		};
-
-		void init(VConTextPart* parts, uint l, uint r, uint a_font_width)
-		{
-			if (data == NULL)
-			{
-				data_count = (r-l+1);
-				data = new part_data[data_count];
-			}
-			_ASSERTE(data_count == (r-l+1));
-
-			cell_width = a_font_width;
-		};
-
-		// Calculate value of the part
-		float sum_k(float len1, float k1_base, float len2, float k2_base)
-		{
-			float k = 1 / ( (len1 / k1_base) + (len2 / k2_base) );
-			return k;
-		};
-
-		void get_total(VConTextPart* parts, uint l, uint r, float& total_k, uint& total_l)
-		{
-			_ASSERTE(data!=NULL);
-
-			total_l = 0;
-			double k_den = 0.0;
-			for (int i = l; i <= r; i++)
-			{
-				// Empty or non-spacing part?
-				if (!parts[i].Length || !parts[i].TotalWidth)
-				{
-					data[i-l].old_width = data[i-l].new_width = 0;
-					data[i-l].part_elast = 0.0;
-					continue;
-				}
-				data[i-l].old_width = data[i-l].new_width = parts[i].TotalWidth;
-
-				// Restrict compression to some percentage using rigid_elast coefficient
-				if ((i == 0) && (parts[i].Flags & TRF_TextSpacing))
-					data[i-l].part_elast = sum_k(
-							(indent_min_shrink*cell_width), rigid_elast,
-							(parts[i].Length - indent_min_shrink)*cell_width, indent_elast
-							);
-				else if (parts[i].Flags & TRF_SizeFree)
-					data[i-l].part_elast = sum_k(
-							(space_min_shrink*cell_width), rigid_elast,
-							(parts[i].Length - space_min_shrink)*cell_width, space_elast
-							);
-				// Double-width (full-width, CJK, etc.)
-				else if (parts[i].Flags & TRF_TextCJK)
-					data[i-l].part_elast = sum_k(
-						(text_min_shrink*parts[i].TotalWidth), rigid_elast,
-						((1 - text_min_shrink)*parts[i].TotalWidth), cjk_elast
-						);
-				else
-					data[i-l].part_elast = sum_k(
-						(text_min_shrink*parts[i].TotalWidth), rigid_elast,
-						((1 - text_min_shrink)*parts[i].TotalWidth), ascii_elast
-						);
-
-				k_den += (1.0 / data[i-l].part_elast);
-				total_l += parts[i].TotalWidth;
-			}
-			_ASSERTE(total_l > 0 && k_den > 0);
-			total_k = (k_den > 0.0) ? (1 / k_den) : 1;
-			//printf("total: %i..%i: k=%.5f\n", l, r, total_k);
-		};
-
-		void eval_compression(VConTextPart* parts, uint l, uint r, uint a_req_len)
-		{
-			_ASSERTE(l<=r && a_req_len>0);
-
-			if (l == r)
-			{
-				data[r-l].new_width = a_req_len;
-				return;
-			}
-
-			float total_k = 1.0; uint total_l = 0; uint delta;
-			uint req_len = a_req_len;
-
-			get_total(parts, l, r, total_k, total_l);
-
-			float F = total_k * (total_l - req_len);
-			uint half_cell = cell_width/2;
-			for (uint i = l; (i < r) && (req_len < total_l); i++)
-			{
-				float d = (F / data[i-l].part_elast);
-				delta = floor(d + 0.5);
-				//printf("#%i: float=%.3f delta=%u\n", i+1, d, delta);
-				_ASSERTE((delta+half_cell) < parts[i].TotalWidth);
-				_ASSERTE(parts[i].TotalWidth > half_cell);
-				if (delta > (parts[i].TotalWidth - half_cell))
-					delta = (parts[i].TotalWidth - half_cell);
-				data[i-l].new_width = (parts[i].TotalWidth - delta);
-				total_l -= delta;
-			}
-			// Let last part lasts to the end of dedicated space
-			if (l < r)
-			{
-				if (a_req_len < total_l)
-				{
-					delta = (total_l - a_req_len);
-					_ASSERTE(delta < parts[r].TotalWidth);
-					data[r-l].new_width = (delta < parts[r].TotalWidth) ? (parts[r].TotalWidth - delta) : half_cell;
-				}
-			}
-		};
-	} shrinker;
-
+	Shrinker shrinker;
 	shrinker.init(TextParts, part1, part2, FontWidth);
-
 	shrinker.eval_compression(TextParts, part1, part2, right - TextParts[part1].PositionX);
 
 	// Leftmost char coord
