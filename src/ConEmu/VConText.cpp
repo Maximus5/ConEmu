@@ -857,6 +857,7 @@ struct Shrinker
 	// constants for selected method
 	uint indent_elast; // = 100;
 	uint space_elast;  // = 100;
+	uint s_tail_elast; // = 10;
 	uint single_elast; // = 300;
 	uint cjk_elast;    // = 101;
 	uint ascii_elast;  // = 150;
@@ -873,6 +874,7 @@ struct Shrinker
 		uint    old_width;
 		uint    new_width;
 		double  part_elast;
+		float   delta;
 	};
 	size_t data_count;
 	part_data* data;
@@ -884,6 +886,7 @@ struct Shrinker
 		// Default values;
 		indent_elast = 100;
 		space_elast  = 100;
+		s_tail_elast = 50;
 		single_elast = 300;
 		cjk_elast    = 101;
 		ascii_elast  = 150;
@@ -914,7 +917,7 @@ struct Shrinker
 		return k;
 	};
 
-	void get_total(VConTextPart* parts, uint l, uint r, float& total_k, uint& total_l)
+	void get_total(VConTextPart* parts, uint l, uint r, float& total_k, int& total_l)
 	{
 		_ASSERTE(data!=NULL);
 
@@ -940,7 +943,7 @@ struct Shrinker
 			else if (parts[i].Flags & TRF_SizeFree)
 				data[i-l].part_elast = sum_k(
 						(space_min_shrink*cell_width), rigid_elast,
-						(parts[i].Length - space_min_shrink)*cell_width, space_elast
+						(parts[i].Length - space_min_shrink)*cell_width, (i < r) ? space_elast : s_tail_elast
 						);
 			// Double-width (full-width, CJK, etc.)
 			else if (parts[i].Flags & TRF_TextCJK)
@@ -962,27 +965,29 @@ struct Shrinker
 		//printf("total: %i..%i: k=%.5f\n", l, r, total_k);
 	};
 
-	void eval_compression(VConTextPart* parts, uint l, uint r, uint a_req_len)
+	void eval_compression(VConTextPart* parts, uint l, uint r, int a_req_len)
 	{
 		_ASSERTE(l<=r && a_req_len>0);
 
 		if (l == r)
 		{
+			data[r-l].old_width = parts[l].TotalWidth;
 			data[r-l].new_width = a_req_len;
 			return;
 		}
 
-		float total_k = 1.0; uint total_l = 0; uint delta;
-		uint req_len = a_req_len;
+		float total_k = 1.0; int total_l = 0; int delta;
+		int req_len = a_req_len;
 
 		get_total(parts, l, r, total_k, total_l);
 
 		float F = total_k * (total_l - req_len);
+		float add_half = (F > 0) ? 0.5 : -0.5;
 		uint half_cell = cell_width/2;
 		for (uint i = l; (i < r) && (req_len < total_l); i++)
 		{
-			float d = (F / data[i-l].part_elast);
-			delta = floor(d + 0.5);
+			data[i-l].delta = (F / data[i-l].part_elast);
+			delta = floor(data[i-l].delta + add_half);
 			//printf("#%i: float=%.3f delta=%u\n", i+1, d, delta);
 			_ASSERTE((delta+half_cell) < parts[i].TotalWidth);
 			_ASSERTE(parts[i].TotalWidth > half_cell);
@@ -994,6 +999,7 @@ struct Shrinker
 		// Let last part lasts to the end of dedicated space
 		if (l < r)
 		{
+			data[r].delta = (F / data[r].part_elast);
 			if (a_req_len < total_l)
 			{
 				delta = (total_l - a_req_len);
