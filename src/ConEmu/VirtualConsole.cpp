@@ -1371,7 +1371,7 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 
 	TODO("Surrogates!");
 	ucs32 wwch = ch;
-	std::unordered_map<ucs32,WORD>::iterator exist = hFontPtr->m_CharWidth.find(wwch);
+	std::unordered_map<ucs32,WORD>::const_iterator exist = hFontPtr->m_CharWidth.find(wwch);
 	if (exist != hFontPtr->m_CharWidth.end())
 	{
 		return exist->second;
@@ -2966,16 +2966,23 @@ void CVirtualConsole::UpdateText()
 		//if (bFontProportional)
 		{
 			partIndex = 0;
+			_ASSERTE(m_Sizes.nFontWidth > 0);
+			uint nChWidth = static_cast<uint>(m_Sizes.nFontWidth);
+			uint nChWidthAndHalf = nChWidth * 8 / 6;
 			while (lp.GetNextPart(partIndex, part, nextPart))
 			{
-				TextCharType* pcf = part->CharFlags;
-				uint* pcw = part->CharWidth;
+				TextCharType *pcf = part->CharFlags;
+				uint cw, *pcw = part->CharWidth;
+				bool bDoubled;
 				for (uint i = 0; i < part->Length; i++, pcf++, pcw++)
 				{
 					if (*pcf >= TCF_WidthFree)
 					{
 						TODO("Use ucs32 (surrogates) to evaluate width");
-						*pcw = CharWidth(part->Chars[i], part->Attrs[i]);
+						cw = CharWidth(part->Chars[i], part->Attrs[i]);
+						if ((bDoubled = (cw >= nChWidthAndHalf)))
+							*pcf = TCF_WidthDouble;
+						*pcw = bFontProportional ? cw : bDoubled ? cw : nChWidth;
 					}
 				}
 			}
