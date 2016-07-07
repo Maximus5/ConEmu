@@ -1090,6 +1090,14 @@ bool IsGitBashHelper(LPCWSTR pszProcessName)
 	return CheckProcessName(pszProcessName, lsNameExt);
 }
 
+bool IsConsoleHelper(LPCWSTR pszProcessName)
+{
+	if (IsTerminalServer(pszProcessName)
+		|| IsGitBashHelper(pszProcessName))
+		return true;
+	return false;
+}
+
 bool IsFarExe(LPCWSTR asModuleName)
 {
 	LPCWSTR lsNameExt[] = {L"far.exe", L"far64.exe", NULL};

@@ -7267,6 +7267,10 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc, bool ClientOnly /*= false*/)
 					continue;
 				}
 				_ASSERTE(!IsConsoleService(prc.Name));
+				if (IsConsoleHelper(prc.Name))
+				{
+					continue;
+				}
 			}
 			//(*ppPrc)[i] = *iter;
 			(*ppPrc)[nCount++] = prc;
@@ -8330,7 +8334,8 @@ bool CRealConsole::ProcessUpdateFlags(bool abProcessChanged)
 		if (iter->IsConHost || !iter->ProcessID)
 			continue;
 
-		nClientCount++;
+		if (!IsConsoleHelper(iter->Name))
+			nClientCount++;
 
 		// Root process would be the last one in our iteration
 		Root.nPID = iter->ProcessID;

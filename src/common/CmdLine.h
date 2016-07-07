@@ -58,6 +58,7 @@ bool IsCmdProcessor(LPCWSTR asModuleName);
 bool IsConEmuGui(LPCWSTR pszProcessName);
 bool IsConsoleService(LPCWSTR pszProcessName);
 bool IsConsoleServer(LPCWSTR pszProcessName);
+bool IsConsoleHelper(LPCWSTR pszProcessName);
 bool IsTerminalServer(LPCWSTR pszProcessName);
 bool IsGitBashHelper(LPCWSTR pszProcessName);
 bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
