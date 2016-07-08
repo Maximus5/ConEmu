@@ -20,6 +20,22 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.7.7
+* gh-752: Fn keys were not processed by Keys GuiMacro.
+* gh-742: Improve installer error reporting, don't show error code twice.
+* gh-739: New option ‘Compress long strings to fit space’ is turned on by default.
+  By unchecking that option you'll get ‘old’ behavior, when ConEmu just trims text,
+  which overruns dedicated space. Read comments in the issue for details:
+  https://github.com/Maximus5/ConEmu/issues/739
+* In some cases old text was not cleared properly with a consequent garbage on the screen.
+* gh-741: Text compression/expansion logic changed, using ‘elasticity’ now.
+* In some cases Font changes were not applied properly.
+* gh-741, gh-722: Glyphs widths evaluation and alignment were changed.
+  So, symbols are expected to be painted properly, uncropped.
+  Examples: U+276F (❯), U+2794 (➔), U+27F6 (⟶).
+* gh-761: Support ‘Terminate all but shell’ for git-cmd.exe.
+
+
 2016.6.19
 * Command ‘ConEmuC -ConInfo’ prints current console tech info.
 * Let intercept GetWindowLong(GWL_STYLE) for console window handle (ref gh-727, gh-719).
