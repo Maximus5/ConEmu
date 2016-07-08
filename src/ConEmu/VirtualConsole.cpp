@@ -1371,7 +1371,7 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 
 	TODO("Surrogates!");
 	ucs32 wwch = ch;
-	std::unordered_map<ucs32,WORD>::const_iterator exist = hFontPtr->m_CharWidth.find(wwch);
+	char_width_map::const_iterator exist = hFontPtr->m_CharWidth.find(wwch);
 	if (exist != hFontPtr->m_CharWidth.end())
 	{
 		return exist->second;

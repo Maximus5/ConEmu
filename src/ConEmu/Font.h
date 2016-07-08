@@ -30,7 +30,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
-#include <unordered_map>
 
 #include "../common/CEStr.h"
 #include "../common/wcwidth.h"
@@ -47,6 +46,14 @@ enum CEFONT_TYPE
 };
 
 class CFontMgr;
+
+#ifdef HAS_CPP11
+#include <unordered_map>
+typedef std::unordered_map<ucs32,WORD> char_width_map;
+#else
+#include <hash_map>
+typedef stdext::hash_map<ucs32,WORD> char_width_map;
+#endif
 
 class CFont : public CRefRelease
 {
@@ -68,7 +75,7 @@ public:
 
 	CEStr ms_FontError;
 
-	std::unordered_map<ucs32,WORD> m_CharWidth;
+	char_width_map m_CharWidth;
 	//TODO: std::unordered_map<ucs32,ABC> m_CharABC;
 
 public:
