@@ -864,9 +864,9 @@ struct Shrinker
 	uint rigid_elast;  // = 10000;
 
 	// Restrict compression
-	float indent_min_shrink = 0.0; // %cell
-	float space_min_shrink = 0.5;  // %cell
-	float text_min_shrink = 0.5;   // %part
+	float indent_min_shrink; // = 0.5;  // %cell
+	float space_min_shrink;  // = 0.5;  // %cell
+	float text_min_shrink;   // = 0.5;  // %part
 
 	// Temporary storage for changed parts widths
 	struct part_data
@@ -891,6 +891,10 @@ struct Shrinker
 		cjk_elast    = 101;
 		ascii_elast  = 150;
 		rigid_elast  = 10000;
+		//
+		indent_min_shrink = 0.5; // %cell
+		space_min_shrink = 0.5;  // %cell
+		text_min_shrink = 0.5;   // %part
 	};
 
 	~Shrinker()
