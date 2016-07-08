@@ -22,8 +22,6 @@ LINK=link.exe
 M4=tools\m4 -P -DFARBIT=$(DIRBIT)
 GAWK=tools\gawk
 
-DEF_FILE = .\$(NAME).def
-
 RES_FILE = "$(OBJDIR)\$(NAME).res"
 
 #PCH_FILE = "$(OBJDIR)\headers.pch"
@@ -58,7 +56,7 @@ DEFINES=\
 
 # common
 CPPFLAGS=/nologo $(MP) /W3 $(FARSYSLOG) /EHs-c- $(DEFINES) /GS- /GR- /Gy /GF /Fo"$(OBJDIR)/" /Fd"$(OBJDIR)/" /J /c /FAcs /Fa"$(CODDIR)/"
-LINKFLAGS=/nologo /subsystem:console$(SUBSVER) /def:"$(DEF_FILE)" /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /RELEASE /nxcompat /DEBUG /pdb:"$(OUTDIR)\$(OUTNAME).pdb"
+LINKFLAGS=/nologo /subsystem:console$(SUBSVER) /out:"$(OUTDIR)\$(OUTNAME).exe" /map:"$(OUTDIR)\$(OUTNAME).map" /RELEASE /nxcompat /DEBUG /pdb:"$(OUTDIR)\$(OUTNAME).pdb"
 RFLAGS=$(RCWIN64) /l 0x409 /fo"$(RES_FILE)" /d "SELF_MANIFEST" /d $(USEDEBUG)
 
 # config-cpecific
@@ -119,7 +117,7 @@ AllDirs:
 	@if not exist "$(OBJDIR)\" mkdir "$(OBJDIR)"
 	@if not exist "$(CODDIR)\" mkdir "$(CODDIR)"
 
-"$(OUTDIR)\$(OUTNAME).exe": $(DEF_FILE) $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
+"$(OUTDIR)\$(OUTNAME).exe": $(LINK_OBJS) $(RES_FILE) $(NAME).exe.manifest $(NAME).rc
 	@echo $(CLR_BRN)linking $@ :: $(LINKFLAGS) $(LINK_LIBS)$(CLR_STD)
 	$(LINK) @<<
 	$(LINKFLAGS) $(LINK_OBJS) $(RES_FILE) $(LINK_LIBS)
