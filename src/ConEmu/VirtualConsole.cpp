@@ -2984,6 +2984,8 @@ void CVirtualConsole::UpdateText()
 			}
 		}
 
+		SelectFont(fnt_NULL);
+
 		// Final preparations
 		lp.PolishParts(ConCharXLine);
 
