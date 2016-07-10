@@ -265,7 +265,6 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	, mpn_ConAttrEx(NULL)
 	, mpn_ConAttrExSave(NULL)
 	, ConCharX(NULL)
-	, ConCharDX(NULL)
 	, pbLineChanged(NULL)
 	, pbBackIsPic(NULL)
 	, pnBackRGB(NULL)
@@ -621,7 +620,6 @@ void CVirtualConsole::PointersFree()
 	SafeFree(mpn_ConAttrEx);
 	SafeFree(mpn_ConAttrExSave);
 	SafeFree(ConCharX);
-	SafeFree(ConCharDX);
 	SafeFree(pbLineChanged);
 	SafeFree(pbBackIsPic);
 	SafeFree(pnBackRGB);
@@ -646,7 +644,6 @@ bool CVirtualConsole::PointersAlloc()
 	AllocArray(mpn_ConAttrEx, CharAttr, nWidthHeight);
 	AllocArray(mpn_ConAttrExSave, CharAttr, nWidthHeight);
 	AllocArray(ConCharX, DWORD, nWidthHeight);
-	AllocArray(ConCharDX, DWORD, m_Sizes.nMaxTextWidth); // задел для TEXTPARTS
 	AllocArray(pbLineChanged, bool, m_Sizes.nMaxTextHeight);
 	AllocArray(pbBackIsPic, bool, m_Sizes.nMaxTextHeight);
 	AllocArray(pnBackRGB, COLORREF, m_Sizes.nMaxTextHeight);
@@ -668,7 +665,6 @@ void CVirtualConsole::PointersZero()
 	ZeroMemory(mpn_ConAttrExSave, nWidthHeight*sizeof(*mpn_ConAttrExSave));
 	HEAPVAL;
 	//ZeroMemory(ConCharX, nWidthHeight*sizeof(*ConCharX));
-	ZeroMemory(ConCharDX, m_Sizes.nMaxTextWidth*sizeof(*ConCharDX)); // задел для TEXTPARTS
 	HEAPVAL;
 	ZeroMemory(pbLineChanged, m_Sizes.nMaxTextHeight*sizeof(*pbLineChanged));
 	ZeroMemory(pbBackIsPic, m_Sizes.nMaxTextHeight*sizeof(*pbBackIsPic));

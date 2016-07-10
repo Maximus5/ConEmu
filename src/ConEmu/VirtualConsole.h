@@ -176,7 +176,6 @@ class CVirtualConsole :
 		// CharAttr определен в "common/RgnDetect.h"
 		CharAttr *mpn_ConAttrEx, *mpn_ConAttrExSave; // nMaxTextWidth * nMaxTextHeight
 		DWORD *ConCharX;      // nMaxTextWidth * nMaxTextHeight
-		DWORD *ConCharDX;     // nMaxTextWidth
 		bool *pbLineChanged;  // nMaxTextHeight
 		bool *pbBackIsPic;    // nMaxTextHeight :: заполняется если *pbLineChanged
 		COLORREF* pnBackRGB;  // nMaxTextHeight :: заполняется если *pbLineChanged и НЕ *pbBackIsPic
