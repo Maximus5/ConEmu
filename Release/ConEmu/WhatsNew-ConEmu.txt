@@ -20,6 +20,15 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.7.10
+* gh-766: ConEmuSetup improvements and error handling.
+  * Don't show MessageBox in auto mode (chocolatey, autoupdate);
+  * Log error messages to log-file in the exe's folder;
+  * In case TEMP directory is inaccessible, just use exe's folder.
+* gh-740: Try to convert paths to cygwin style if clipboard doesn't contain `\n` while pasting to cygwin/msys shells.
+* In some cases ‘Alternative font’ was not used for first cell in a row (1536b94 regression).
+
+
 2016.7.7
 * gh-752: Fn keys were not processed by Keys GuiMacro.
 * gh-742: Improve installer error reporting, don't show error code twice.
