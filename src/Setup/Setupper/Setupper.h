@@ -34,3 +34,19 @@ const wchar_t msgInstallFolderIs[] = L"%s %s\n%s installation folder is\n%s";
 const wchar_t msgPathCurrent[] = L"Current";
 const wchar_t msgPathDefault[] = L"Default";
 const wchar_t msgInstallConfirm[] = L"%s\n\nPress `Yes` to install x64 version\nPress `No` to install x86 version";
+
+enum exit_codes
+{
+	exit_Succeeded       = 0,
+	exit_Cancelled       = 1,
+	exit_FindResource    = 5,
+	exit_LoadResource    = 6,
+	exit_LockResource    = 7,
+	exit_CreateFile      = 8,
+	exit_WriteFile       = 9,
+	exit_CreateDirectory = 10,
+	exit_ShellExecuteEx  = 20,
+	exit_NullProcess     = 21,
+	exit_ExitCodeProcess = 22,
+	exit_AddWin32Code    = 100,
+};

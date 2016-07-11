@@ -13,6 +13,7 @@ GenVersion.exe %1
 set CAB_NAME=ConEmu.cab
 
 if "%~2"=="no_msi" goto no_msi
+if "%~2"=="setupper" goto setupper
 
 echo Creating x86 installer
 set MSI_PLAT=x86
@@ -37,6 +38,7 @@ if errorlevel 1 goto errs
 if not exist "%~dp0Setupper\Executor.exe" goto errs
 call "%~dp0..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu %~1 Installer" /du %ConEmuHttp% "%~dp0Setupper\Executor.exe"
 
+:setupper
 call "%~dp0Setupper\gccbuild.cmd" /nosign
 if errorlevel 1 goto errs
 if not exist "%~dp0Setupper\Setupper.exe" goto errs

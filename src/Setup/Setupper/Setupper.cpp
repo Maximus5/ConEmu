@@ -1,5 +1,32 @@
 // NO BOM! Compiled with old gcc!
 
+/*
+Copyright (c) 2016 Maximus5
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+3. The name of the authors may not be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ''AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #undef TEST_BUILD
 
 #include <windows.h>
@@ -16,6 +43,10 @@
 
 // String resources (messages)
 #include "Setupper.h"
+
+#ifdef __GNUC__
+#include "gcc_fix.h"
+#endif
 
 
 // Global Variables:
@@ -34,124 +65,11 @@ wchar_t gsExeFile[MAX_PATH];
 bool gbExtractOnly = false;
 bool gbUseElevation = false;
 bool gbAlreadyAdmin = false;
+bool gbAutoMode = false;
 BOOL isWin64 = FALSE;
-
 
 #define countof(a) (sizeof((a))/(sizeof(*(a))))
 
-#ifdef __GNUC__
-
-enum _TASKDIALOG_FLAGS
-{
-    TDF_ENABLE_HYPERLINKS               = 0x0001,
-    TDF_USE_HICON_MAIN                  = 0x0002,
-    TDF_USE_HICON_FOOTER                = 0x0004,
-    TDF_ALLOW_DIALOG_CANCELLATION       = 0x0008,
-    TDF_USE_COMMAND_LINKS               = 0x0010,
-    TDF_USE_COMMAND_LINKS_NO_ICON       = 0x0020,
-    TDF_EXPAND_FOOTER_AREA              = 0x0040,
-    TDF_EXPANDED_BY_DEFAULT             = 0x0080,
-    TDF_VERIFICATION_FLAG_CHECKED       = 0x0100,
-    TDF_SHOW_PROGRESS_BAR               = 0x0200,
-    TDF_SHOW_MARQUEE_PROGRESS_BAR       = 0x0400,
-    TDF_CALLBACK_TIMER                  = 0x0800,
-    TDF_POSITION_RELATIVE_TO_WINDOW     = 0x1000,
-    TDF_RTL_LAYOUT                      = 0x2000,
-    TDF_NO_DEFAULT_RADIO_BUTTON         = 0x4000,
-    TDF_CAN_BE_MINIMIZED                = 0x8000
-};
-typedef int TASKDIALOG_FLAGS;                         // Note: _TASKDIALOG_FLAGS is an int
-
-enum _TASKDIALOG_COMMON_BUTTON_FLAGS
-{
-    TDCBF_OK_BUTTON            = 0x0001, // selected control return value IDOK
-    TDCBF_YES_BUTTON           = 0x0002, // selected control return value IDYES
-    TDCBF_NO_BUTTON            = 0x0004, // selected control return value IDNO
-    TDCBF_CANCEL_BUTTON        = 0x0008, // selected control return value IDCANCEL
-    TDCBF_RETRY_BUTTON         = 0x0010, // selected control return value IDRETRY
-    TDCBF_CLOSE_BUTTON         = 0x0020  // selected control return value IDCLOSE
-};
-typedef int TASKDIALOG_COMMON_BUTTON_FLAGS;           // Note: _TASKDIALOG_COMMON_BUTTON_FLAGS is an int
-
-typedef enum _TASKDIALOG_MESSAGES
-{
-    TDM_NAVIGATE_PAGE                   = WM_USER+101,
-    TDM_CLICK_BUTTON                    = WM_USER+102, // wParam = Button ID
-    TDM_SET_MARQUEE_PROGRESS_BAR        = WM_USER+103, // wParam = 0 (nonMarque) wParam != 0 (Marquee)
-    TDM_SET_PROGRESS_BAR_STATE          = WM_USER+104, // wParam = new progress state
-    TDM_SET_PROGRESS_BAR_RANGE          = WM_USER+105, // lParam = MAKELPARAM(nMinRange, nMaxRange)
-    TDM_SET_PROGRESS_BAR_POS            = WM_USER+106, // wParam = new position
-    TDM_SET_PROGRESS_BAR_MARQUEE        = WM_USER+107, // wParam = 0 (stop marquee), wParam != 0 (start marquee), lparam = speed (milliseconds between repaints)
-    TDM_SET_ELEMENT_TEXT                = WM_USER+108, // wParam = element (TASKDIALOG_ELEMENTS), lParam = new element text (LPCWSTR)
-    TDM_CLICK_RADIO_BUTTON              = WM_USER+110, // wParam = Radio Button ID
-    TDM_ENABLE_BUTTON                   = WM_USER+111, // lParam = 0 (disable), lParam != 0 (enable), wParam = Button ID
-    TDM_ENABLE_RADIO_BUTTON             = WM_USER+112, // lParam = 0 (disable), lParam != 0 (enable), wParam = Radio Button ID
-    TDM_CLICK_VERIFICATION              = WM_USER+113, // wParam = 0 (unchecked), 1 (checked), lParam = 1 (set key focus)
-    TDM_UPDATE_ELEMENT_TEXT             = WM_USER+114, // wParam = element (TASKDIALOG_ELEMENTS), lParam = new element text (LPCWSTR)
-    TDM_SET_BUTTON_ELEVATION_REQUIRED_STATE = WM_USER+115, // wParam = Button ID, lParam = 0 (elevation not required), lParam != 0 (elevation required)
-    TDM_UPDATE_ICON                     = WM_USER+116  // wParam = icon element (TASKDIALOG_ICON_ELEMENTS), lParam = new icon (hIcon if TDF_USE_HICON_* was set, PCWSTR otherwise)
-} TASKDIALOG_MESSAGES;
-
-typedef enum _TASKDIALOG_NOTIFICATIONS
-{
-    TDN_CREATED                         = 0,
-    TDN_NAVIGATED                       = 1,
-    TDN_BUTTON_CLICKED                  = 2,            // wParam = Button ID
-    TDN_HYPERLINK_CLICKED               = 3,            // lParam = (LPCWSTR)pszHREF
-    TDN_TIMER                           = 4,            // wParam = Milliseconds since dialog created or timer reset
-    TDN_DESTROYED                       = 5,
-    TDN_RADIO_BUTTON_CLICKED            = 6,            // wParam = Radio Button ID
-    TDN_DIALOG_CONSTRUCTED              = 7,
-    TDN_VERIFICATION_CLICKED            = 8,             // wParam = 1 if checkbox checked, 0 if not, lParam is unused and always 0
-    TDN_HELP                            = 9,
-    TDN_EXPANDO_BUTTON_CLICKED          = 10            // wParam = 0 (dialog is now collapsed), wParam != 0 (dialog is now expanded)
-} TASKDIALOG_NOTIFICATIONS;
-
-typedef struct _TASKDIALOG_BUTTON
-{
-    int     nButtonID;
-    PCWSTR  pszButtonText;
-} TASKDIALOG_BUTTON;
-
-typedef HRESULT (WINAPI *PFTASKDIALOGCALLBACK)( HWND hwnd,  UINT msg,  WPARAM wParam,  LPARAM lParam,  LONG_PTR lpRefData);
-
-typedef struct _TASKDIALOGCONFIG
-{
-    UINT        cbSize;
-    HWND        hwndParent;
-    HINSTANCE   hInstance;                              // used for MAKEINTRESOURCE() strings
-    TASKDIALOG_FLAGS                dwFlags;            // TASKDIALOG_FLAGS (TDF_XXX) flags
-    TASKDIALOG_COMMON_BUTTON_FLAGS  dwCommonButtons;    // TASKDIALOG_COMMON_BUTTON (TDCBF_XXX) flags
-    PCWSTR      pszWindowTitle;                         // string or MAKEINTRESOURCE()
-    union
-    {
-        HICON   hMainIcon;
-        PCWSTR  pszMainIcon;
-    } DUMMYUNIONNAME;
-    PCWSTR      pszMainInstruction;
-    PCWSTR      pszContent;
-    UINT        cButtons;
-    const TASKDIALOG_BUTTON  *pButtons;
-    int         nDefaultButton;
-    UINT        cRadioButtons;
-    const TASKDIALOG_BUTTON  *pRadioButtons;
-    int         nDefaultRadioButton;
-    PCWSTR      pszVerificationText;
-    PCWSTR      pszExpandedInformation;
-    PCWSTR      pszExpandedControlText;
-    PCWSTR      pszCollapsedControlText;
-    union
-    {
-        HICON   hFooterIcon;
-        PCWSTR  pszFooterIcon;
-    } DUMMYUNIONNAME2;
-    PCWSTR      pszFooter;
-    PFTASKDIALOGCALLBACK pfCallback;
-    LONG_PTR    lpCallbackData;
-    UINT        cxWidth;                                // width of the Task Dialog's client area in DLU's. If 0, Task Dialog will calculate the ideal width.
-} TASKDIALOGCONFIG;
-
-#endif
 
 
 BOOL IsWindows64()
@@ -246,7 +164,7 @@ HRESULT CALLBACK Callback(HWND hwnd, UINT uNotification, WPARAM wParam, LPARAM l
 int ChooseVersion()
 {
 	int nInstallVer = 0; // IDCANCEL/Ver86/Ver64
-	
+
 	#ifndef TEST_BUILD
 	if (!isWin64 && (gOSVer.dwMajorVersion <= 5))
 		nInstallVer = Ver86;
@@ -257,12 +175,12 @@ int ChooseVersion()
 	    HRESULT hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 	    if (SUCCEEDED(hr))
 	    {
-			
+
 			int nButtonPressed                  = 0;
 			TASKDIALOGCONFIG config             = {0};
-			const TASKDIALOG_BUTTON buttons[]   = { 
+			const TASKDIALOG_BUTTON buttons[]   = {
 			                                        { Ver64, gsVer64 },
-			                                        { Ver86, gsVer86 },			                                        
+			                                        { Ver86, gsVer86 },
 			                                      };
 			config.cbSize                       = sizeof(config);
 			config.hInstance                    = hInst;
@@ -277,15 +195,15 @@ int ChooseVersion()
 			config.nDefaultButton               = isWin64 ? Ver64 : Ver86;
 			config.pszFooter                    = gsWWW;
 			config.pfCallback                   = Callback;
-			
+
 			gbAlreadyAdmin = IsUserAdmin();
-			
+
 			if (!gbAlreadyAdmin)
 			{
 				config.dwFlags |= TDF_VERIFICATION_FLAG_CHECKED;
 				config.pszVerificationText = gsRunAsAdm;
 			}
-			
+
 			HMODULE hDll = LoadLibrary(L"comctl32.dll");
 			typedef HRESULT (WINAPI* TaskDialogIndirect_t)(const TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioButton, BOOL *pfVerificationFlagChecked);
 			TaskDialogIndirect_t TaskDialogIndirect_f = (TaskDialogIndirect_t)(hDll?GetProcAddress(hDll, "TaskDialogIndirect"):NULL);
@@ -306,11 +224,11 @@ int ChooseVersion()
 			        break; // should never happen
 				}
 			}
-			
+
 			CoUninitialize();
 		}
 	}
-	
+
 	if (!nInstallVer)
 	{
 		// "Old" UI Controls dialog
@@ -328,9 +246,124 @@ int ChooseVersion()
 			break;
 		}
 	}
-	
+
 	return nInstallVer;
 }
+
+// Helper class to log errors as UTF-8 text file
+class CErrLog
+{
+protected:
+	HANDLE mh_File;
+	wchar_t ms_Temp[512];
+
+	bool Valid()
+	{
+		return (mh_File && (mh_File != INVALID_HANDLE_VALUE));
+	}
+
+public:
+	// UTF-8 is expected here
+	void Write(LPCSTR asText)
+	{
+		if (!Valid() || !asText || !*asText)
+			return;
+		DWORD nLen = lstrlenA(asText);
+		WriteFile(mh_File, asText, nLen, &nLen, NULL);
+	};
+
+	// Unicode
+	void Write(LPCWSTR asText)
+	{
+		if (!Valid() || !asText || !*asText)
+			return;
+		DWORD nLen = lstrlen(asText);
+		char* pszUtf8 = (char*)malloc(nLen*3+1);
+		if (pszUtf8)
+		{
+			int nCvt = WideCharToMultiByte(CP_UTF8, 0, asText, nLen, pszUtf8, nLen*3, NULL, NULL);
+			if (nCvt > 0)
+			{
+				pszUtf8[nCvt] = 0;
+				Write(pszUtf8);
+			}
+			free(pszUtf8);
+		}
+	};
+
+	void DumpEnvVars()
+	{
+		LPWCH pszEnvVars = GetEnvironmentStrings();
+		if (pszEnvVars)
+		{
+			Write(L"Environment variables:\r\n");
+			for (LPWCH psz = pszEnvVars; *psz; psz += (lstrlen(psz)+1))
+			{
+				Write(psz);
+				Write(L"\r\n");
+			}
+		}
+	};
+
+public:
+	CErrLog()
+		: mh_File(NULL)
+	{
+		wchar_t szName[32] = L""; // ConEmu.160707.123456999.log
+		SYSTEMTIME st = {}; GetLocalTime(&st);
+		wsprintf(szName, L"ConEmu.%s.%02u%02u%02u%03u.log", CONEMUVERL, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+		wchar_t szPath[MAX_PATH+1] = L"";
+		if (GetModuleFileName(NULL, szPath, countof(szPath)-lstrlen(szName)-1) > 0)
+		{
+			wchar_t* pszSlash = (wchar_t*)wcsrchr(szPath, L'\\');
+			if (!pszSlash)
+				lstrcpyn(szPath, szName, countof(szPath));
+			else
+				lstrcpyn(pszSlash+1, szName, countof(szPath)-(pszSlash-szPath)-2);
+			mh_File = CreateFile(szPath, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+			if (Valid())
+			{
+				wsprintf(ms_Temp, L"ConEmu Setup %s on %u-%u-%u %02u:%02u:%02u\r\n", CONEMUVERL,
+					st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+				Write(ms_Temp);
+
+				wsprintf(ms_Temp, L"OS Version: %u.%u (build %u) %s\r\n",
+					gOSVer.dwMajorVersion, gOSVer.dwMinorVersion, gOSVer.dwBuildNumber, gOSVer.szCSDVersion);
+				Write(ms_Temp);
+
+				Write(L"Command line: `");
+				Write(GetCommandLine());
+				Write(L"`\r\n");
+
+				DWORD n = GetCurrentDirectory(countof(ms_Temp), ms_Temp);
+				if (n && n < countof(ms_Temp))
+				{
+					Write(L"Current dir: `");
+					Write(ms_Temp);
+					Write(L"`\r\n");
+				}
+
+				n = GetTempPath(countof(ms_Temp), ms_Temp);
+				if (n && n < countof(ms_Temp))
+				{
+					Write(L"GetTempPath: `");
+					Write(ms_Temp);
+					Write(L"`\r\n");
+				}
+
+				DumpEnvVars();
+
+				Write(L"\r\n\r\n");
+			}
+		}
+	};
+
+	~CErrLog()
+	{
+		if (Valid())
+			CloseHandle(mh_File);
+	};
+};
 
 int ReportError(int nErr, LPCWSTR asLabel, void* pArg)
 {
@@ -341,7 +374,27 @@ int ReportError(int nErr, LPCWSTR asLabel, void* pArg)
 	{
 		wsprintf(szMessage+lstrlen(szMessage), HIWORD(nLastErr) ? L"\nErrorCode=0x%08X" : L"\nErrorCode=%u", nLastErr);
 	}
-	MessageBox(NULL, szMessage, gsTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+
+	// Log the problem to the file
+	{
+		// DO NOT WARN USER IN AUTOMATIC MODE !!! (gbAutoMode == true)
+		// Instead, try to write time, title, message and nErr to "our-exe-name.log" file
+		CErrLog eLog;
+		eLog.Write(gsTitle);
+		eLog.Write(L"\r\n");
+		eLog.Write(szMessage);
+		eLog.Write(L"\r\n");
+		wchar_t szCode[80];
+		wsprintf(szCode, L"ReportError code=%i\r\n", nErr);
+		eLog.Write(szCode);
+	}
+
+	// Show UI message box in ‘manual’ mode only
+	if (!gbAutoMode)
+	{
+		MessageBox(NULL, szMessage, gsTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+	}
+
 	return nErr;
 }
 
@@ -349,45 +402,230 @@ int ExportFile(int ResID, wchar_t* FilePath)
 {
 	HRSRC hResInfo = FindResource(hInst, MAKEINTRESOURCE(ResID), L"DATA");
 	if (!hResInfo)
-		return ReportError(1, msgFindResourceFailed, (void*)ResID);
-		
+		return ReportError(exit_FindResource, msgFindResourceFailed, (void*)ResID);
+
 	HGLOBAL hGbl = LoadResource(hInst, hResInfo);
 	if (!hGbl)
-		return ReportError(2, msgLoadResourceFailed, (void*)ResID);
-		
+		return ReportError(exit_LoadResource, msgLoadResourceFailed, (void*)ResID);
+
 	DWORD nResSize = hResInfo ? SizeofResource(hInst, hResInfo) : 0;
 	LPVOID pRes = hGbl ? LockResource(hGbl) : NULL;
-	
+
 	int iRc = 0;
-	
+
 	if (!nResSize || !pRes)
 	{
-		iRc = ReportError(3, msgLoadResourceFailed, (void*)ResID);
+		iRc = ReportError(exit_LockResource, msgLoadResourceFailed, (void*)ResID);
 	}
 	else
 	{
 		HANDLE hFile = CreateFile(FilePath, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (!hFile || hFile == INVALID_HANDLE_VALUE)
 		{
-			iRc = ReportError(4, msgCreateFileFailed, FilePath);
+			iRc = ReportError(exit_CreateFile, msgCreateFileFailed, FilePath);
 		}
 		else
 		{
 			DWORD nWritten = 0;
 			if (!WriteFile(hFile, pRes, nResSize, &nWritten, NULL) || nWritten != nResSize)
 			{
-				iRc = ReportError(5, msgWriteFileFailed, FilePath);
+				iRc = ReportError(exit_WriteFile, msgWriteFileFailed, FilePath);
 			}
-			
+
 			CloseHandle(hFile);
-			
+
 			if (iRc != 0)
 				DeleteFile(FilePath);
 		}
 	}
-	
+
 	return iRc;
 }
+
+class CTempDir
+{
+protected:
+	bool mb_RemoveDir;
+	wchar_t ms_SelfPath[MAX_PATH+1];
+
+public:
+	CTempDir()
+	{
+		gsTempFolder[0] = 0;
+		mb_RemoveDir = false;
+
+		ms_SelfPath[0] = 0;
+		DWORD n = GetModuleFileName(NULL, ms_SelfPath, countof(ms_SelfPath));
+		if (!n || (n >= countof(ms_SelfPath)))
+		{
+			ms_SelfPath[0] = 0;
+		}
+		else
+		{
+			wchar_t *pch = wcsrchr(ms_SelfPath, L'\\');
+			if (pch)
+				*(pch+1) = 0;
+			else
+				ms_SelfPath[0] = 0;
+		}
+	};
+
+	void DontRemove()
+	{
+		mb_RemoveDir = false;
+	}
+
+	bool IsDotsName(LPCWSTR asName)
+	{
+		return (asName && (asName[0] == L'.' && (asName[1] == 0 || (asName[1] == L'.' && asName[2] == 0))));
+	};
+
+	bool DirectoryExists(LPCWSTR asPath)
+	{
+		if (!asPath || !*asPath)
+			return false;
+
+		bool lbFound = false;
+
+		HANDLE hFind = CreateFile(asPath, 0, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+		if (hFind && hFind != INVALID_HANDLE_VALUE)
+		{
+			BY_HANDLE_FILE_INFORMATION fi = {0};
+
+			if (GetFileInformationByHandle(hFind, &fi) && (fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+			{
+				lbFound = true;
+			}
+			CloseHandle(hFind);
+
+			return lbFound;
+		}
+
+		// Try to use FindFirstFile?
+		WIN32_FIND_DATAW fnd = {0};
+		hFind = FindFirstFile(asPath, &fnd);
+		if (hFind == INVALID_HANDLE_VALUE)
+		{
+			return false;
+		}
+
+		do
+		{
+			if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+			{
+				// Each find returns "." and ".." items
+				// We do not need them
+				if (!IsDotsName(fnd.cFileName))
+				{
+					lbFound = TRUE;
+					break;
+				}
+			}
+		}
+		while (FindNextFile(hFind, &fnd));
+
+		FindClose(hFind);
+		return (lbFound != FALSE);
+	};
+
+	bool Acquire()
+	{
+		if (gsTempFolder[0])
+		{
+			if (IsDotsName(gsTempFolder))
+				return true;
+
+			if (DirectoryExists(gsTempFolder))
+				return true;
+
+			if (CreateDirectory(gsTempFolder, NULL))
+			{
+				SetCurrentDirectory(gsTempFolder);
+				mb_RemoveDir = true; // would be reset on success
+				return true;
+			}
+
+			ReportError(exit_CreateDirectory, msgTempFolderFailed, gsTempFolder);
+			if (gbExtractOnly || !gbAutoMode)
+				return false;
+		}
+		else
+		{
+			// + "ConEmu160707" (CONEMUVERL) or "ConEmu160707_123456" (CONEMUVERL, hhmmss)
+			DWORD cchMax = countof(gsTempFolder) - 20;
+			DWORD n = GetTempPath(cchMax, gsTempFolder);
+
+			if (n && (n < cchMax))
+			{
+				wchar_t* pszSubDir = gsTempFolder+lstrlen(gsTempFolder);
+				lstrcpy(pszSubDir, L"ConEmu");
+				pszSubDir += 6;
+				lstrcpy(pszSubDir, CONEMUVERL);
+				pszSubDir += lstrlen(pszSubDir);
+				if (CreateDirectory(gsTempFolder, NULL))
+				{
+					SetCurrentDirectory(gsTempFolder);
+					mb_RemoveDir = true;
+					return true;
+				}
+
+				SYSTEMTIME st = {}; GetLocalTime(&st);
+				wsprintf(pszSubDir, L"_%02i%02i%02i", st.wHour, st.wMinute, st.wSecond);
+				if (CreateDirectory(gsTempFolder, NULL))
+				{
+					SetCurrentDirectory(gsTempFolder);
+                    mb_RemoveDir = true;
+					return true;
+				}
+			}
+		}
+
+		ReportError(exit_CreateDirectory, msgTempFolderFailed, gsTempFolder);
+		if (!gbAutoMode)
+			return false;
+
+		// Failed to get/create TEMP path?
+		// Use our executable folder instead, set temp folder to L"."
+		gsTempFolder[0] = L'.'; gsTempFolder[1] = 0;
+		// And just change our current directory (it may be any folder ATM, e.g. system32)
+		if (ms_SelfPath[0])
+		{
+			if (SetCurrentDirectory(ms_SelfPath))
+			{
+				DWORD n = GetCurrentDirectory(countof(gsTempFolder), gsTempFolder);
+				if (!n || (n > countof(gsTempFolder)))
+				{
+					// Fail again?
+					gsTempFolder[0] = L'.'; gsTempFolder[1] = 0;
+				}
+			}
+		}
+		// if the path is invalid - just do not change cd,
+		// use current, set by user when they run our exe
+		return true;
+	};
+
+	~CTempDir()
+	{
+		//MessageBox(NULL, L"~CTempDir()", gsTitle, MB_ICONINFORMATION);
+		if (mb_RemoveDir
+			&& (gsTempFolder[0])
+			&& (!IsDotsName(gsTempFolder))
+			)
+		{
+			// non-empty directory will not be removed,
+			// that is expected behavior
+			BOOL b;
+			if (ms_SelfPath[0])
+				b = SetCurrentDirectory(ms_SelfPath);
+			b = RemoveDirectory(gsTempFolder);
+			//if (!b)
+			//{
+			//	ReportError(99, L"RemoveDirectory(%s) failed", gsTempFolder);
+			//}
+		}
+	};
+};
 
 #ifdef __GNUC__
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -397,29 +635,29 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 {
 	hInst = hInstance;
 	isWin64 = IsWindows64();
-	
+
 	GetVersionEx(&gOSVer);
-	
+
 	int nInstallVer = 0;
-	
+
 	wsprintf(gsTitle, msgConEmuInstaller, CONEMUVERL);
 	lstrcpyn(gsRunAsAdm, msgRunSetupAsAdmin, countof(gsRunAsAdm));
 
 	wchar_t szArg[MAX_PATH+1];
 	LPCWSTR pszCmdToken = GetCommandLine();
 	LPCWSTR pszCmdLineW = pszCmdToken;
-	
-	gsTempFolder[0] = 0;
-	
+
+	CTempDir temp_dir; // gsTempFolder[0] = 0;
+
 	while (0 == NextArg(&pszCmdToken, szArg))
 	{
 		if (lstrcmp(szArg, L"/?") == 0 || lstrcmp(szArg, L"-?") == 0 || lstrcmp(szArg, L"-h") == 0
 			|| lstrcmp(szArg, L"-help") == 0 || lstrcmp(szArg, L"--help") == 0)
 		{
 			MessageBox(NULL, msgUsageExample, gsTitle, MB_ICONINFORMATION);
-			return 1;
+			return exit_Cancelled;
 		}
-		
+
 		if (*szArg == L'/')
 		{
 			if (szArg[1] == L'e' || szArg[1] == L'E')
@@ -431,7 +669,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 				}
 				continue;
 			}
-		
+
 		    if (memcmp(szArg, L"/p:x", 4*sizeof(*szArg)) == 0)
 		    {
 		    	gbAlreadyAdmin = IsUserAdmin();
@@ -463,26 +701,34 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 			pszCmdToken = pszCmdLineW;
 			break;
 		}
-			
+
 		pszCmdLineW = pszCmdToken;
 	}
-	
+
+	if (!temp_dir.Acquire())
+	{
+		return exit_CreateDirectory;
+	}
 
 	if (!gbExtractOnly)
 	{
+		// If pszCmdToken is not empty - set global var
+		gbAutoMode = (pszCmdToken && *pszCmdToken);
+
 		wchar_t szInstallPath[MAX_PATH+32];
 		bool bInstalled;
 		HKEY hk;
-	
+
 		lstrcpyn(gsMessage, msgChooseInstallVer, countof(gsMessage));
-		
+
 			szInstallPath[0] = 0; bInstalled = false;
 			struct {HKEY hk; LPCWSTR path; LPCWSTR name; bool our;}
 				Keys[] = {
 					{HKEY_LOCAL_MACHINE,L"SOFTWARE\\ConEmu",L"InstallDir",true},
-					{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far Manager",L"InstallDir"},
-					{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far2",L"InstallDir"},
-					{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far",L"InstallDir"},
+					//Current installer does not use FarManager installation dir anymore
+					//{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far Manager",L"InstallDir"},
+					//{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far2",L"InstallDir"},
+					//{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far",L"InstallDir"},
 				};
 			for (size_t s = 0; s < countof(Keys); s++)
 			{
@@ -510,17 +756,18 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 			}
 			wsprintf(gsVer86, msgInstallFolderIs, CONEMUVERL, L"x86", bInstalled ? msgPathCurrent : msgPathDefault, szInstallPath);
 
-			
+
 		if (isWin64)
 		{
-			
+
 				szInstallPath[0] = 0; bInstalled = false;
 				struct {HKEY hk; LPCWSTR path; LPCWSTR name; bool our;}
 					Keys[] = {
 						{HKEY_LOCAL_MACHINE,L"SOFTWARE\\ConEmu",L"InstallDir_x64",true},
-						{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far Manager",L"InstallDir_x64"},
-						{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far2",L"InstallDir_x64"},
-						{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far",L"InstallDir_x64"},
+						//Current installer does not use FarManager installation dir anymore
+						//{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far Manager",L"InstallDir_x64"},
+						//{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far2",L"InstallDir_x64"},
+						//{HKEY_LOCAL_MACHINE,L"SOFTWARE\\Far",L"InstallDir_x64"},
 					};
 				for (size_t s = 0; s < countof(Keys); s++)
 				{
@@ -556,68 +803,27 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	}
 	else
 	{
-		wchar_t szPath[MAX_PATH+1];
-		if (*gsTempFolder)
-		{
-			lstrcpy(szPath, gsTempFolder);
-		}
-		else
-		{
-			GetTempPath(countof(szPath) - 14, szPath);
-			wchar_t* pszSubDir = szPath+lstrlen(szPath);
-			lstrcpy(pszSubDir, L"ConEmu");
-			pszSubDir += 6;
-			lstrcpy(pszSubDir, CONEMUVERL);
-		}
-		
+		LPCWSTR szPath = gsTempFolder;
 		lstrcpyn(gsMessage, msgChooseExtractVer, countof(gsMessage));
 		wsprintf(gsVer86, msgExtractX86X64, CONEMUVERL, L"x86", szPath);
 		wsprintf(gsVer64, msgExtractX86X64, CONEMUVERL, L"x64", szPath);
 		wsprintf(gsFull, msgExtractConfirm, gsMessage, szPath);
 	}
-	
+
 	if (nInstallVer == 0)
+	{
 		nInstallVer = ChooseVersion(); // IDCANCEL/Ver86/Ver64
-		
-	if (nInstallVer != Ver86 && nInstallVer != Ver64)
-		return 1;
-	
-	if (gbExtractOnly && *gsTempFolder)
-	{
-		CreateDirectory(gsTempFolder, NULL);
-	}
-	else
-	{
-		GetTempPath(countof(gsTempFolder) - 14, gsTempFolder);
-		
-		wchar_t* pszSubDir = gsTempFolder+lstrlen(gsTempFolder);
-		lstrcpy(pszSubDir, L"ConEmu");
-		pszSubDir += 6;
-		lstrcpy(pszSubDir, CONEMUVERL);
-		pszSubDir += lstrlen(pszSubDir);
-		if (!CreateDirectory(gsTempFolder, NULL))
-		{
-			bool lbCreated = false;
-			SYSTEMTIME st = {}; GetLocalTime(&st);
-			for (int i = 0; i < 100; i++)
-			{
-				wsprintf(pszSubDir, L"_%02i%02i%02i%i", st.wHour, st.wMinute, st.wSecond, i);
-				if (CreateDirectory(gsTempFolder, NULL))
-				{
-					lbCreated = true;
-					break;
-				}
-			}
-			if (!lbCreated)
-			{
-				return ReportError(10, msgTempFolderFailed, gsTempFolder);
-			}
-		}
 	}
 
+	if (nInstallVer != Ver86 && nInstallVer != Ver64)
+	{
+		return exit_Cancelled;
+	}
+
+	// Preparing full paths
 	wsprintf(gsMsiFile, L"%s\\ConEmu.%s.%s.msi", gsTempFolder, CONEMUVERL, (nInstallVer == Ver86) ? L"x86" : L"x64");
 	wsprintf(gsCabFile, L"%s\\ConEmu.cab", gsTempFolder);
-	
+
 	bool lbNeedExe = false;
 	if (!gbExtractOnly && gOSVer.dwMajorVersion >= 6)
 		lbNeedExe = true;
@@ -626,7 +832,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 		gsExeFile[0] = 0;
 	else
 		wsprintf(gsExeFile, L"%s\\ConEmuSetup.exe", gsTempFolder);
-	
+
 	int iExpMsi = ExportFile(nInstallVer, gsMsiFile);
 	int iExpCab = (iExpMsi == 0) ? ExportFile(CABFILE, gsCabFile) : -1;
 	int iExpExe = (!lbNeedExe) ? 0 : (iExpCab == 0) ? ExportFile(EXEFILE, gsExeFile) : -1;
@@ -636,19 +842,19 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 		DeleteFile(gsCabFile);
 		if (*gsExeFile)
 			DeleteFile(gsExeFile);
-		RemoveDirectory(gsTempFolder);
 		return (iExpMsi != 0) ? iExpMsi : iExpCab;
 	}
-	
+
 	if (gbExtractOnly)
 	{
+		temp_dir.DontRemove();
 		wchar_t szMessage[MAX_PATH*2];
 		wsprintf(szMessage, msgExtractedSuccessfully, gsTempFolder);
 		MessageBox(NULL, szMessage, gsTitle, MB_ICONINFORMATION);
-		return 0;
+		return exit_Succeeded;
 	}
 
-	int iInstRc = 0;
+	int iInstRc = exit_Succeeded;
 	SHELLEXECUTEINFO sei = {sizeof(sei)};
 	wchar_t* pszParms = NULL;
 	sei.fMask = SEE_MASK_NOCLOSEPROCESS|/*SEE_MASK_NOASYNC*/0x00000100; //|/*SEE_MASK_NOZONECHECKS*/0x00800000;
@@ -669,9 +875,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	}
 	sei.lpDirectory = gsTempFolder;
 	sei.nShow = SW_SHOWNORMAL;
-	
+
 	BOOL lbExecute = ShellExecuteEx(&sei);
-	
+
 	#if 0
 	if (!lbExecute && lbNeedExe)
 	{
@@ -685,21 +891,21 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 			sei.lpParameters = pszCmdToken;
 			sei.lpDirectory = gsTempFolder;
 			sei.nShow = SW_SHOWNORMAL;
-			
+
 			lbExecute = ShellExecuteEx(&sei);
 		}
 	}
 	#endif
-	
+
 	if (!lbExecute)
 	{
-		iInstRc = ReportError(20, msgInstallerFailed, gsMsiFile);
+		iInstRc = ReportError(exit_ShellExecuteEx, msgInstallerFailed, gsMsiFile);
 	}
 	else
 	{
 		if (!sei.hProcess)
 		{
-			iInstRc = ReportError(21, msgInstallerFailed, gsMsiFile);
+			iInstRc = ReportError(exit_NullProcess, msgInstallerFailed, gsMsiFile);
 		}
 		else
 		{
@@ -712,33 +918,32 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 				switch (nCode)
 				{
 				case 0:
-					iInstRc = 0;
+					iInstRc = exit_Succeeded;
 					break;
 				case 1602: // cancelled by user
-					iInstRc = 0; // don't show any errors
+					iInstRc = exit_Cancelled; // don't show any errors
 					break;
 				case 3010: // reboot is required
 					wsprintf(szFormat, msgRebootRequired, nCode);
-					iInstRc = ReportError(100+nCode, szFormat, gsMsiFile);
+					iInstRc = ReportError(exit_AddWin32Code+nCode, szFormat, gsMsiFile);
 					break;
 				default:
 					wsprintf(szFormat, msgInstallerFailedEx, nCode);
-					iInstRc = ReportError(100+nCode, szFormat, gsMsiFile);
+					iInstRc = ReportError(exit_AddWin32Code+nCode, szFormat, gsMsiFile);
 				}
 			}
 			else
 			{
 				lstrcpyn(szFormat, msgExitCodeFailed, countof(szFormat));
-				iInstRc = ReportError(30, szFormat, gsMsiFile);
+				iInstRc = ReportError(exit_ExitCodeProcess, szFormat, gsMsiFile);
 			}
 		}
 	}
-	
+
 	DeleteFile(gsMsiFile);
 	DeleteFile(gsCabFile);
 	if (*gsExeFile)
 		DeleteFile(gsExeFile);
-	RemoveDirectory(gsTempFolder);
-	
+
 	return iInstRc;
 }
