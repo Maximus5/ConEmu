@@ -1117,10 +1117,11 @@ void CFontMgr::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, in
 		}
 	}
 
-	CreateFontGroup(LogFont);
-
-	//2009-06-07 Реальный размер созданного шрифта мог измениться
-	SaveFontSizes((mn_AutoFontWidth == -1), false);
+	if (CreateFontGroup(LogFont)
+	{
+		//2009-06-07 Реальный размер созданного шрифта мог измениться
+		SaveFontSizes((mn_AutoFontWidth == -1), false);
+	}
 
 	MCHKHEAP
 }
