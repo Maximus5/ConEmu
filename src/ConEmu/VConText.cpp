@@ -909,7 +909,11 @@ struct Shrinker
 			data_count = (r-l+1);
 			data = new part_data[data_count];
 		}
-		_ASSERTE(data_count == (r-l+1));
+		#ifdef _DEBUG
+		if (data_count != (r-l+1)) {
+			_ASSERTE(data_count == (r-l+1));
+		}
+		#endif
 
 		cell_width = a_font_width;
 	};
@@ -969,48 +973,76 @@ struct Shrinker
 		//printf("total: %i..%i: k=%.5f\n", l, r, total_k);
 	};
 
-	void eval_compression(VConTextPart* parts, uint l, uint r, int a_req_len)
+	// returns `true` if there was critical compression ratio
+	bool eval_compression(VConTextPart* parts, uint l, uint r, int a_req_len)
 	{
 		_ASSERTE(l<=r && a_req_len>0);
 
 		if (l == r)
 		{
-			data[r-l].old_width = parts[l].TotalWidth;
-			data[r-l].new_width = a_req_len;
-			return;
+			_ASSERTE(data!=NULL);
+			data[0].old_width = parts[l].TotalWidth;
+			data[0].new_width = a_req_len;
+			return ((data[0].new_width * 2) < data[0].old_width);
 		}
 
+		bool bCritical = false;
 		float total_k = 1.0; int total_l = 0; int delta;
 		int req_len = a_req_len;
 
 		get_total(parts, l, r, total_k, total_l);
 
+		#ifdef _DEBUG
+		if (!data || (data_count < (r-l+1))) {
+			_ASSERTE(data && (data_count >= (r-l+1)));
+		}
+		#endif
+
 		float F = total_k * (total_l - req_len);
 		float add_half = (F > 0) ? 0.5 : -0.5;
-		uint half_cell = cell_width/2;
+		uint half_cell = (cell_width > 3) ? (cell_width/2) : 1;
 		for (uint i = l; (i < r) && (req_len < total_l); i++)
 		{
+			if (!parts[i].TotalWidth)
+			{
+				_ASSERTE(parts[i].CharFlags[0] == TCF_WidthZero);
+				continue;
+			}
 			data[i-l].delta = (F / data[i-l].part_elast);
 			delta = floor(data[i-l].delta + add_half);
 			//printf("#%i: float=%.3f delta=%u\n", i+1, d, delta);
-			_ASSERTE((delta+half_cell) < parts[i].TotalWidth);
+			_ASSERTE((delta+half_cell-1) <= parts[i].TotalWidth);
 			_ASSERTE(parts[i].TotalWidth > half_cell);
-			if (delta > (parts[i].TotalWidth - half_cell))
-				delta = (parts[i].TotalWidth - half_cell);
-			data[i-l].new_width = (parts[i].TotalWidth - delta);
+			if ((delta + half_cell) <= (parts[i].TotalWidth + 1))
+			{
+				data[i-l].new_width = (parts[i].TotalWidth - delta);
+			}
+			else
+			{
+				data[i-l].new_width = half_cell;
+				delta = data[i-l].old_width - data[i-l].new_width;
+				bCritical = true;
+			}
+
 			total_l -= delta;
 		}
 		// Let last part lasts to the end of dedicated space
 		if (l < r)
 		{
-			data[r].delta = (F / data[r].part_elast);
+			data[r-l].delta = (F / data[r-l].part_elast);
 			if (a_req_len < total_l)
 			{
 				delta = (total_l - a_req_len);
-				_ASSERTE(delta < parts[r].TotalWidth);
+				if ((delta + half_cell) >= parts[r].TotalWidth)
+				{
+					bCritical = true;
+					//_ASSERTE(delta < parts[r].TotalWidth);
+				}
 				data[r-l].new_width = (delta < parts[r].TotalWidth) ? (parts[r].TotalWidth - delta) : half_cell;
 			}
 		}
+
+		return bCritical;
 	};
 };
 
