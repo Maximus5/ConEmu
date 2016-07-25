@@ -20,6 +20,10 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.7.24
+* gh-780: Fix crash on drawing certain text data.
+
+
 2016.7.10
 * gh-766: ConEmuSetup improvements and error handling.
   * Don't show MessageBox in auto mode (chocolatey, autoupdate);
