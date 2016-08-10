@@ -497,7 +497,7 @@ HRESULT CTaskBar::Taskbar_MarkFullscreenWindow(HWND hwnd, BOOL fFullscreen)
 		wcscpy_c(szState, L" - skipped in Inside mode");
 		goto wrap;
 	}
-	if (mp_TaskBar2)
+	if (!mp_TaskBar2)
 	{
 		wcscpy_c(szState, L" - skipped, no ITaskbarList2 interface");
 		goto wrap;
