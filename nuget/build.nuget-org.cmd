@@ -1,6 +1,10 @@
 @echo off
 cd /d "%~dp0"
 
+rem EXPECTED TO BE CALLED AFTER build.cmd
+rem The version in the package is updated by
+rem build.cmd -> UpdatePackageVersions.ps1
+
 setlocal
 set PATH=%~d0\Nuget\bin;%PATH%                           
 rem ??? what would be the path to Nuget.exe cmdline tool?..

@@ -4,6 +4,13 @@ cd /d "%~dp0"
 setlocal
 set PATH=%~d0\Chocolatey\bin;%PATH%
 
+call "%~dp0..\Deploy\GetCurVer.cmd"
+powershell -noprofile -command "%~dp0Deploy\UpdatePackageVersions.ps1" %CurVerBuild%
+if errorlevel 1 (
+  call cecho "Failed to update Chocolatey and Nuget packages"
+  exit /b 100
+)
+
 if exist "ConEmu.*.nupkg" del "ConEmu.*.nupkg"
 if exist "chocolatey\ConEmu.*.nupkg" del "chocolatey\ConEmu.*.nupkg"
 

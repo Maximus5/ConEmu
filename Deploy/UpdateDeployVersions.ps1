@@ -1,13 +1,9 @@
 ﻿param([string]$build="")
 
-# This file will update PortableApps and Chocolatey versions
+# This file will update PortableApps and installer versions
 
 $Script_File_path = split-path -parent $MyInvocation.MyCommand.Definition
 $PortableApps = Join-Path $Script_File_path "..\PortableApps\App\AppInfo\appinfo.ini"
-$NuSpec = Join-Path $Script_File_path "..\nuget\chocolatey\ConEmu.nuspec"
-$NuInstall = Join-Path $Script_File_path "..\nuget\chocolatey\tools\chocolateyInstall.ps1"
-$NuUnInstall = Join-Path $Script_File_path "..\nuget\chocolatey\tools\chocolateyUninstall.ps1"
-$ConEmuCoreNuget = Join-Path $Script_File_path "..\nuget\ConEmu.Core\ConEmu.Core.nuspec"
 $wix = Join-Path $Script_File_path "..\src\Setup\Version.wxi"
 $setupper = Join-Path $Script_File_path "..\src\Setup\Setupper\VersionI.h"
 $WhatsNew = Join-Path $Script_File_path "..\Release\ConEmu\WhatsNew-ConEmu.txt"
@@ -88,51 +84,6 @@ Write-Host -ForegroundColor Green $PortableApps
 [profileapi]::WritePrivateProfileString('Version','DisplayVersion',$build,$PortableApps) | Out-Null
 
 
-#
-# Helper to update NuSpec-s
-#
-function NuSpec-SetBuild([string]$XmlFile) {
-  Write-Host -ForegroundColor Green $XmlFile
-  $xml = Get-Content -Raw $XmlFile -Encoding UTF8
-  $m = ([regex]'<version>\d+\.\d+\.\d+\..<\/version>').Matches($xml)
-  if (($m -eq $null) -Or ($m.Count -ne 1)) {
-    Write-Host -ForegroundColor Red "Proper <version>...</version> tag was not found in:`r`n$XmlFile"
-    $host.SetShouldExit(101)
-    return $FALSE
-  }
-  $xml = $xml.Replace($m[0].Value, "<version>$build_dot4</version>").Trim()
-  Set-Content $XmlFile $xml -Encoding UTF8
-  return $TRUE
-}
-
-
-
-#
-# Chocolatey.org
-#
-if (-Not (NuSpec-SetBuild $NuSpec)) {
-  exit 
-}
-
-@($NuInstall, $NuUnInstall) | % {
-  Write-Host -ForegroundColor Green $_
-  $txt = Get-Content -Raw $_
-  $m = ([regex]"[$]version = '\d+\.\d+\.\d+'").Matches($txt)
-  if (($m -eq $null) -Or ($m.Count -ne 1)) {
-    Write-Host -ForegroundColor Red "Proper `$version define was not found in:`r`n$_"
-    $host.SetShouldExit(101)
-    exit 
-  }
-  $txt = $txt.Replace($m[0].Value, "`$version = '$build_dot3'").Trim()
-  Set-Content $_ $txt -Encoding Ascii
-}
-
-#
-# Nuget.org ConEmu.Core
-#
-if (-Not (NuSpec-SetBuild $ConEmuCoreNuget)) {
-  exit 
-}
 
 
 #
