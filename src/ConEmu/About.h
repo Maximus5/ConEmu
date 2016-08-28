@@ -251,8 +251,9 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"    Action==0: Debug active process\r\n" \
 	L"    Action==1: Active process memory dump\r\n" \
 	L"    Action==2: Active process tree memory dump\r\n" \
-	L"Detach\r\n" \
+	L"Detach([<Flags>])\r\n" \
 	L"  - Detach active RealConsole from ConEmu\r\n" \
+	L"    Flags=1: don't show confirm message\r\n" \
 	L"FindEditor(\"<FullEditFileName>\")\r\n" \
 	L"FindViewer(\"<FullViewerFileName>\")\r\n" \
 	L"FindFarWindow(<WindowType>,\"<WindowTitle>\")\r\n" \

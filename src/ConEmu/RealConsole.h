@@ -653,7 +653,7 @@ class CRealConsole
 		void SetCursorShape(TermCursorShapes xtermShape);
 		TermCursorShapes GetCursorShape();
 		bool isNeedCursorDraw();
-		bool Detach(bool bPosted = false, bool bSendCloseConsole = false);
+		bool Detach(bool bPosted = false, bool bSendCloseConsole = false, bool bDontConfirm = false);
 		void Unfasten();
 		void AdminDuplicate();
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее

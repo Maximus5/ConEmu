@@ -1627,7 +1627,9 @@ LPWSTR ConEmuMacro::Detach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	LPWSTR pszResult = NULL;
 	if (apRCon)
 	{
-		apRCon->Detach();
+		int iDontConfirm = 0;
+		p->GetIntArg(0, iDontConfirm);
+		apRCon->Detach(false, false, (iDontConfirm == 1));
 		pszResult = lstrdup(L"OK");
 	}
 	return pszResult ? pszResult : lstrdup(L"Failed");

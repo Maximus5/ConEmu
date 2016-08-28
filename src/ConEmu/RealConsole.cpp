@@ -15955,7 +15955,7 @@ void CRealConsole::ProcessPostponedMacro()
 	SafeFree(pszResult);
 }
 
-bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= false*/)
+bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= false*/, bool bDontConfirm /*= false*/)
 {
 	if (!this)
 		return false;
@@ -15968,7 +15968,7 @@ bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	{
 		if (!bPosted)
 		{
-			if (MsgBox(L"Detach GUI application from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES)
+			if (!bDontConfirm && MsgBox(L"Detach GUI application from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES)
 				return false;
 
 			RECT rcGui = {};
