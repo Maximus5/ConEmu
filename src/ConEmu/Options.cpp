@@ -5520,7 +5520,7 @@ wchar_t* Settings::LineDelimited2MSZ(const wchar_t* apszApps, bool bLowerCase /*
 	wchar_t* pszDst = NULL;
 
 	// "|" delimited String -> MSZ
-	if (*apszApps)
+	if (apszApps && *apszApps)
 	{
 		INT_PTR nLen = _tcslen(apszApps);
 		pszDst = (wchar_t*)malloc((nLen+3)*sizeof(*pszDst));
