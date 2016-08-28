@@ -553,7 +553,10 @@ public:
 		{
 			// + "ConEmu160707" (CONEMUVERL) or "ConEmu160707_123456" (CONEMUVERL, hhmmss)
 			DWORD cchMax = countof(gsTempFolder) - 20;
-			DWORD n = GetTempPath(cchMax, gsTempFolder);
+			//DWORD n = GetTempPath(cchMax, gsTempFolder);
+			DWORD n = GetEnvironmentVariable(L"TEMP", gsTempFolder, cchMax);
+			if (!n)
+				n = GetTempPath(cchMax, gsTempFolder);
 
 			if (n && (n < cchMax))
 			{
