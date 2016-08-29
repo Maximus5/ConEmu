@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.8.28
+* gi-821: Fixed crash on startup if Explorer is not started.
+* Support sha256 checksum in chocolatey package.
+* gh-832: Fix crash on erasing ‘Settings->Keys & Macro->Mark/Copy->Exceptions’.
+* gh-766: Prefer 'TEMP' env.var over GetTempPath function.
+* GuiMacro: Let Detach(1) do the work without confirmation.
+
+
 2016.7.24
 * gh-780: Fix crash on drawing certain text data.
 
