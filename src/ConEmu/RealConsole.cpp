@@ -15968,8 +15968,12 @@ bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	{
 		if (!bPosted)
 		{
-			if (!bDontConfirm && MsgBox(L"Detach GUI application from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES)
+			if (!bDontConfirm && gpSet->isMultiDetachConfirm
+				&& MsgBox(CLngRc::getRsrc(lng_DetachGuiConfirm/*"Detach GUI application from ConEmu?"*/),
+					MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES)
+			{
 				return false;
+			}
 
 			RECT rcGui = {};
 			GetWindowRect(m_ChildGui.hGuiWnd, &rcGui); // Логичнее все же оставить приложение в том же месте а не ставить в m_ChildGui.rcPreGuiWndRect
@@ -16029,8 +16033,9 @@ bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	{
 		if (!bPosted)
 		{
-			if (gpSet->isMultiDetachConfirm
-				&& (MsgBox(L"Detach console from ConEmu?", MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES))
+			if (!bDontConfirm && gpSet->isMultiDetachConfirm
+				&& (MsgBox(CLngRc::getRsrc(lng_DetachConConfirm/*"Detach console from ConEmu?"*/),
+					MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2, GetTitle()) != IDYES))
 			{
 				return false;
 			}

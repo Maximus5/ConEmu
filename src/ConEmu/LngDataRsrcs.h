@@ -41,6 +41,8 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_AssertRetryDescr,         L"Press <Retry> to copy text information to clipboard\r\nand report a bug (open project web page)." },
 	{ lng_BasicSettings,            L"Basic settings" },
 	{ lng_CurClrScheme,             L"<Current color scheme>" },
+	{ lng_DetachConConfirm,         L"Detach console from ConEmu?" },
+	{ lng_DetachGuiConfirm,         L"Detach GUI application from ConEmu?" },
 	{ lng_DlgAbout,                 L"About" },
 	{ lng_DlgAffinity,              L"Set active console processes affinity and priority" },
 	{ lng_DlgAttach,                L"Attach: Choose window or console application" },

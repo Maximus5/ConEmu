@@ -111,6 +111,8 @@ enum LngResources
 	lng_HotkeyDuplicated          = 79,
 	lng_SpgANSI                   = 80,
 	lng_JumpListUpdated           = 81,
+	lng_DetachGuiConfirm          = 82,
+	lng_DetachConConfirm          = 83,
 	// last auto-gen identifier
 	lng_NextId
 };
