@@ -647,6 +647,15 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 		}
 	}
 
+	struct RunAsAdmin
+	{
+		static bool Check(LPCWSTR asSwitch)
+		{
+			bool bRunAsAdmin = false; // isPressed(VK_SHIFT);
+			return bRunAsAdmin;
+		};
+	};
+
 
 	// Let parse the reset
 	szArg.Empty();
@@ -1057,7 +1066,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				}
 				else if (szArg.OneOfSwitches(L"-inside", L"-inside="))
 				{
-					bool bRunAsAdmin = isPressed(VK_SHIFT);
+					bool bRunAsAdmin = RunAsAdmin::Check(szArg.ms_Val);
 					bool bSyncDir = false;
 					LPCWSTR pszSyncFmt = NULL;
 
@@ -1077,7 +1086,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				{
 					NeedNextArg();
 
-					bool bRunAsAdmin = isPressed(VK_SHIFT);
+					bool bRunAsAdmin = RunAsAdmin::Check(szArg.ms_Val);
 
 					wchar_t* pszEnd;
 					// Здесь указывается PID, в который нужно внедриться.
@@ -1098,7 +1107,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					else if (pszHWnd[0] == L'x' || pszHWnd[0] == L'X')
 						pszHWnd ++;
 
-					bool bRunAsAdmin = isPressed(VK_SHIFT);
+					bool bRunAsAdmin = RunAsAdmin::Check(szArg.ms_Val);
 
 					wchar_t* pszEnd;
 					// Здесь указывается HWND, в котором нужно создаваться.
