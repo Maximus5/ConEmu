@@ -264,7 +264,7 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 			wmemset(pszDst+cnSrcLineLen, wSetChar, nCharsLeft);
 
 		// Console text colors (Fg,Bg)
-		BYTE PalIndex = 0;
+		BYTE PalIndex = MAKECONCOLOR(7,0);
 
 		// While console is in recreate (shutdown console, startup new root)
 		// it's shown using monochrome (gray on black)
@@ -281,7 +281,13 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 			bool hasFont = false;
 
 			// If not "mono" we need only lower byte with color indexes
-			PalIndex = bForceMono ? 7 : ((*pnSrc) & 0xFF);
+			if (!bForceMono)
+			{
+				if (((*pnSrc) & COMMON_LVB_REVERSE_VIDEO) && (((*pnSrc) & CHANGED_CONATTR) == COMMON_LVB_REVERSE_VIDEO))
+					PalIndex = MAKECONCOLOR(CONBACKCOLOR(*pnSrc), CONFORECOLOR(*pnSrc)); // Inverse
+				else
+					PalIndex = ((*pnSrc) & 0xFF);
+			}
 			TODO("OPTIMIZE: lca = lcaTable[PalIndex];");
 			lca = lcaTable[PalIndex];
 			TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
