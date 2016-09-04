@@ -92,16 +92,16 @@ rem pause>nul
 cd /d "%~dp0src"
 
 rem touch
-call :tch common *.cpp *.hpp *.h
-call :tch ConEmu *.cpp *.h
-call :tch ConEmuBg *.cpp *.h
-call :tch ConEmuC *.cpp *.h
-call :tch ConEmuCD *.cpp *.h
-call :tch ConEmuDW *.cpp *.h
-call :tch ConEmuHk *.cpp *.h
-call :tch ConEmuLn *.cpp *.h
-call :tch ConEmuPlugin *.cpp *.h
-call :tch ConEmuTh *.cpp *.h
+rem call :tch common *.cpp *.hpp *.h
+rem call :tch ConEmu *.cpp *.h
+rem call :tch ConEmuBg *.cpp *.h
+rem call :tch ConEmuC *.cpp *.h
+rem call :tch ConEmuCD *.cpp *.h
+rem call :tch ConEmuDW *.cpp *.h
+rem call :tch ConEmuHk *.cpp *.h
+rem call :tch ConEmuLn *.cpp *.h
+rem call :tch ConEmuPlugin *.cpp *.h
+rem call :tch ConEmuTh *.cpp *.h
 
 rem Compile x86
 call "%~dp0src\vc.build.release.cmd" 9 x86 nosign
