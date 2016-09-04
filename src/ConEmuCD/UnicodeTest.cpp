@@ -191,6 +191,11 @@ int CheckUnicodeFont()
 	CONSOLE_CURSOR_INFO ci = {};
 	_ASSERTE(nLen<=35); // ниже на 2 буфер множится
 
+	const WORD N = 0x07, H = N|COMMON_LVB_REVERSE_VIDEO;
+	CHAR_INFO cHighlight[] = {{{'N'},N},{{'o'},N},{{'r'},N},{{'m'},N},{{'a'},N},{{'l'},N},
+		{{' '},N},
+		{{'R'},H},{{'e'},H},{{'v'},H},{{'e'},H},{{'r'},H},{{'s'},H},{{'e'},H}};
+
 	if (GetConsoleScreenBufferInfo(hOut, &csbi))
 		nDefColor = csbi.wAttributes;
 
@@ -205,6 +210,12 @@ int CheckUnicodeFont()
 	}
 	WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
 
+	// Test of "Reverse video"
+	GetConsoleScreenBufferInfo(hOut, &csbi);
+	COORD crHiSize = {countof(cHighlight), 1}, cr0 = {};
+	SMALL_RECT srHiPos = {0, csbi.dwCursorPosition.Y, crHiSize.X-1, csbi.dwCursorPosition.Y};
+	WriteConsoleOutputW(hOut, cHighlight, crHiSize, cr0, &srHiPos);
+	WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
 
 	WriteConsoleW(hOut, L"\r\nCheck ", 8, &nTmp, NULL);
 
