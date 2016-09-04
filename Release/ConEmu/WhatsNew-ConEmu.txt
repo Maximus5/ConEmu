@@ -20,6 +20,23 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.9.4
+* GuiMacro: Detach(1) didn't disable confirmation.
+* gh-841: Support COMMON_LVB_REVERSE_VIDEO console attribute.
+* gitextensions/gitextensions#3263: Inside mode: Don't run console ‘As Admin’ if Shift is pressed.
+
+  Remove ambiguous option to run started elevated console (Run As Admin).
+  If ConEmu was started by some shortcut with `Shift` key,
+  user faced the unexpected UAC confirmation.
+
+  If user want to run elevated console, they may use special Task
+  with `-cur_console:a` switch. Example: {cmd (Admin)}.
+
+  If developer want to run ConEmu console in elevated mode,
+  they may add `-cur_console:a` switch *after* `-run` switch.
+  Example: `ConEmu.exe -run cmd.exe -cur_console:a /k <some command>`.
+
+
 2016.8.28
 * gi-821: Fixed crash on startup if Explorer is not started.
 * Support sha256 checksum in chocolatey package.

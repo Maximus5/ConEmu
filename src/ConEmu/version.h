@@ -1,7 +1,7 @@
-// 160828
+// 160904
 #define MVV_1 16
-#define MVV_2 8
-#define MVV_3 28
+#define MVV_2 9
+#define MVV_3 4
 #define MVV_4 0
 #define MVV_4a ""
 #undef MVV_git
