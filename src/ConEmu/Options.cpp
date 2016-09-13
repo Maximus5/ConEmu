@@ -678,6 +678,7 @@ void Settings::InitSettings()
 	psAnsiAllowed = lstrdup(L"cmd -cur_console:R /cGitShowBranch.cmd\r\n");
 	isAnsiLog = false;
 	pszAnsiLog = lstrdup(L"%ConEmuDir%\\Logs\\");
+	isKillSshAgent = true;
 	isProcessNewConArg = true;
 	isProcessCmdStart = false; // gh#420
 	isProcessCtrlZ = false; // gh#465, golang/go#6303
@@ -2461,6 +2462,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		reg->Load(L"AnsiLog", isAnsiLog);
 		reg->Load(L"AnsiLogPath", &pszAnsiLog);
+		reg->Load(L"KillSshAgent", isKillSshAgent);
 		reg->Load(L"ProcessNewConArg", isProcessNewConArg);
 		reg->Load(L"ProcessCmdStart", isProcessCmdStart);
 		reg->Load(L"ProcessCtrlZ", isProcessCtrlZ);
@@ -3564,6 +3566,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 
 		reg->Save(L"AnsiLog", isAnsiLog);
 		reg->Save(L"AnsiLogPath", pszAnsiLog);
+		reg->Save(L"KillSshAgent", isKillSshAgent);
 		reg->Save(L"ProcessNewConArg", isProcessNewConArg);
 		reg->Save(L"ProcessCmdStart", isProcessCmdStart);
 		reg->Save(L"ProcessCtrlZ", isProcessCtrlZ);

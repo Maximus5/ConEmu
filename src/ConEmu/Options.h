@@ -1048,6 +1048,8 @@ struct Settings
 		bool isAnsiLog; // Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
 		//reg->Load(L"AnsiLogPath", &pszAnsiLog);
 		wchar_t* pszAnsiLog;
+		//reg->Load(L"KillSshAgent", isKillSshAgent)
+		bool isKillSshAgent; // Terminate all `ssh-agent.exe` processes started from ConEmu consoles on ConEmu termination.
 		//reg->Load(L"ProcessNewConArg", isProcessNewConArg)
 		bool isProcessNewConArg; // Enable processing of '-new_console' and '-cur_console' switches in your shell prompt, scripts etc. started in ConEmu tabs
 		//reg->Load(L"ProcessCmdStart", isProcessCmdStart)
