@@ -20,6 +20,12 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.9.13
+* Add option to kill `ssh-agent.exe` processes started from ConEmu's consoles
+  on ConEmu termination. Read more at: https://conemu.github.io/en/SshAgent.html
+* Installer was signed without timestamp.
+
+
 2016.9.4
 * GuiMacro: Detach(1) didn't disable confirmation.
 * gh-841: Support COMMON_LVB_REVERSE_VIDEO console attribute.
