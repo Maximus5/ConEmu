@@ -703,7 +703,8 @@ BEGIN
     CONTROL         "Process '-new_console' and '-cur_console' switches",cbProcessNewConArg,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,118,254,8
     CONTROL         "Process 'start'",cbProcessCmdStart,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,267,118,110,8
-    CONTROL         "Process Ctrl-Z in ReadConsole",cbProcessCtrlZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,132,363,8
+    CONTROL         "Process Ctrl-Z in ReadConsole",cbProcessCtrlZ,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,132,133,8
+    CONTROL         "Kill ssh-agent with ConEmu",cbKillSshAgent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,132,118,8
     CONTROL         "Skip focus events (don't send to console FOCUS_EVENT, useful with Far Manager)",cbSkipFocusEvents,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,146,364,8
     CONTROL         "Log console output (*)",cbAnsiLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,160,360,8

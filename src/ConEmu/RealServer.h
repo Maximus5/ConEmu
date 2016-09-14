@@ -87,6 +87,7 @@ protected:
 	CESERVER_REQ* cmdExportEnvVarAll(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	CESERVER_REQ* cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	CESERVER_REQ* cmdPortableStarted(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
+	CESERVER_REQ* cmdSshAgentStarted(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	CESERVER_REQ* cmdQueryPalette(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	CESERVER_REQ* cmdGetTaskCmd(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);
 	CESERVER_REQ* cmdIsAnsiExecAllowed(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize);

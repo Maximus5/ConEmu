@@ -1447,6 +1447,17 @@ CESERVER_REQ* CRealServer::cmdPortableStarted(LPVOID pInst, CESERVER_REQ* pIn, U
 	return pOut;
 }
 
+CESERVER_REQ* CRealServer::cmdSshAgentStarted(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
+{
+	DWORD nCmd = pIn->hdr.nCmd;
+	DEBUGSTRCMD(L"GUI recieved CECMD_SSHAGENTSTART\n");
+
+	mp_RCon->mp_ConEmu->RegisterSshAgent(pIn->dwData[0]);
+
+	CESERVER_REQ* pOut = ExecuteNewCmd(nCmd, sizeof(CESERVER_REQ_HDR));
+	return pOut;
+}
+
 CESERVER_REQ* CRealServer::cmdQueryPalette(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
 	COLORREF* pcrColors = mp_RCon->VCon()->GetColors(false);
@@ -1671,6 +1682,9 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 		break;
 	case CECMD_PORTABLESTART:
 		pOut = pRSrv->cmdPortableStarted(pInst, pIn, nDataSize);
+		break;
+	case CECMD_SSHAGENTSTART:
+		pOut = pRSrv->cmdSshAgentStarted(pInst, pIn, nDataSize);
 		break;
 	case CECMD_STORECURDIR:
 		pRSrv->mp_RCon->StoreCurWorkDir(&pIn->CurDir);

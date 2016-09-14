@@ -499,6 +499,7 @@ const CECMD
 	CECMD_WRITETEXT      = 91, // wData[] == LPCWSTR
 	CECMD_GETTASKCMD     = 92, // CESERVER_REQ_TASK
 	CECMD_ALLOWANSIEXEC  = 93, // IN: wData[] - GuiMacro or CmdLine; OUT: TRUE/FALSE
+	CECMD_SSHAGENTSTART  = 94, // dwData[0] - PID of ssh-agent.exe started from one of the ConEmu console processes
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,

@@ -1090,6 +1090,12 @@ bool IsGitBashHelper(LPCWSTR pszProcessName)
 	return CheckProcessName(pszProcessName, lsNameExt);
 }
 
+bool IsSshAgentHelper(LPCWSTR pszProcessName)
+{
+	LPCWSTR lsNameExt[] = { L"ssh-agent.exe", NULL };
+	return CheckProcessName(pszProcessName, lsNameExt);
+}
+
 bool IsConsoleHelper(LPCWSTR pszProcessName)
 {
 	if (IsTerminalServer(pszProcessName)

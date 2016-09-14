@@ -798,6 +798,19 @@ class CConEmuMain
 		ImmSetCompositionWindow_t _ImmSetCompositionWindow;
 		ImmGetContext_t _ImmGetContext;
 
+	protected:
+		struct SshAgent
+		{
+			HANDLE hAgent;
+			DWORD  nAgentPID;
+			DWORD  nExitCode;
+		};
+		MArray<SshAgent> m_SshAgents;
+		MSectionSimple* m_SshAgentsLock;
+		void TerminateSshAgents();
+	public:
+		void RegisterSshAgent(DWORD SshAgentPID);
+
 	public:
 		// Windows7 - lock creating new consoles (ConHost search related)
 		bool LockConhostStart();

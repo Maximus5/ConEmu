@@ -1348,15 +1348,16 @@
 #define gbAnsiSequences                 3072
 #define cbJumpListAutoUpdate            3073
 #define cbCompressLongStrings           3074
+#define cbKillSshAgent                  3075
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        235
+#define _APS_NEXT_RESOURCE_VALUE        236
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3075
+#define _APS_NEXT_CONTROL_VALUE         3076
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

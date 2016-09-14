@@ -431,6 +431,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbAnsiLog:
 			OnBtn_AnsiLog(hDlg, CB, uCheck);
 			break;
+		case cbKillSshAgent:
+			OnBtn_KillSshAgent(hDlg, CB, uCheck);
+			break;
 		case cbProcessNewConArg:
 			OnBtn_ProcessNewConArg(hDlg, CB, uCheck);
 			break;
@@ -2887,6 +2890,16 @@ void CSetDlgButtons::OnBtn_AnsiLog(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->isAnsiLog = _bool(uCheck);
 
 } // cbAnsiLog
+
+
+// cbKillSshAgent
+void CSetDlgButtons::OnBtn_KillSshAgent(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbKillSshAgent);
+
+	gpSet->isKillSshAgent = _bool(uCheck);
+
+} // cbKillSshAgent
 
 
 // cbProcessNewConArg

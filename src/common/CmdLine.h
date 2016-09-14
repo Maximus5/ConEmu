@@ -61,6 +61,7 @@ bool IsConsoleServer(LPCWSTR pszProcessName);
 bool IsConsoleHelper(LPCWSTR pszProcessName);
 bool IsTerminalServer(LPCWSTR pszProcessName);
 bool IsGitBashHelper(LPCWSTR pszProcessName);
+bool IsSshAgentHelper(LPCWSTR pszProcessName);
 bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 			   LPCWSTR* rsArguments = NULL, BOOL* rpbNeedCutStartEndQuot = NULL,
 			   BOOL* rpbRootIsCmdExe = NULL, BOOL* rpbAlwaysConfirmExit = NULL, BOOL* rpbAutoDisableConfirmExit = NULL);

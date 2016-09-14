@@ -354,6 +354,8 @@ CConEmuMain::CConEmuMain()
 	}
 	m_LockConhostStart.wait = false;
 
+	m_SshAgentsLock = new MSectionSimple(true);
+
 	mn_StartupFinished = ss_Starting;
 	//isRestoreFromMinimized = false;
 	WindowStartMinimized = false;
@@ -1595,6 +1597,9 @@ void CConEmuMain::DeinitOnDestroy(HWND hWnd, bool abForce /*= false*/)
 	// Function cares about single execution
 	gpSet->SaveSettingsOnExit();
 
+	// Kill all ssh-agents.exe processes started from ConEmu consoles
+	TerminateSshAgents();
+
 	// Required before ResetEvent(mh_ConEmuAliveEvent),
 	// to avoid problems in another instance with hotkey registering
 	RegisterMinRestore(false);
@@ -1651,6 +1656,57 @@ void CConEmuMain::DeinitOnDestroy(HWND hWnd, bool abForce /*= false*/)
 	SetKillTimer(false, TIMER_ACTIVATESPLIT_ID, 0);
 
 	CVConGroup::StopSignalAll();
+}
+
+// Kill all ssh-agents.exe processes started from ConEmu consoles
+void CConEmuMain::TerminateSshAgents()
+{
+	_ASSERTE(isMainThread());
+	wchar_t szLog[128];
+
+	MSectionLockSimple lock; lock.Lock(m_SshAgentsLock);
+	for (INT_PTR i = 0; i < m_SshAgents.size(); i++)
+	{
+		if (m_SshAgents[i].hAgent != NULL)
+		{
+			DWORD nWait = WaitForSingleObject(m_SshAgents[i].hAgent, 0);
+			if (nWait == WAIT_OBJECT_0)
+			{
+				GetExitCodeProcess(m_SshAgents[i].hAgent, &m_SshAgents[i].nExitCode);
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"ssh-agent.exe with PID %u has been already terminated with code %u", m_SshAgents[i].nAgentPID, m_SshAgents[i].nExitCode);
+			}
+			else
+			{
+				TerminateProcess(m_SshAgents[i].hAgent, 1);
+				_wsprintf(szLog, SKIPCOUNT(szLog) L"ssh-agent.exe with PID %u was killed on ConEmu termination", m_SshAgents[i].nAgentPID);
+			}
+			LogString(szLog);
+			SafeCloseHandle(m_SshAgents[i].hAgent);
+		}
+	}
+}
+
+// Comes from one of console processes running in ConEmu tabs.
+// It's expected (at the moment at least) that console, spawned ssh-agent.exe,
+// must be started under the same credentials as ConEmu.
+void CConEmuMain::RegisterSshAgent(DWORD SshAgentPID)
+{
+	wchar_t szLog[128];
+
+	MSectionLockSimple lock; lock.Lock(m_SshAgentsLock);
+	SshAgent agent = {OpenProcess(SYNCHRONIZE|PROCESS_TERMINATE, FALSE, SshAgentPID), SshAgentPID};
+	if (agent.hAgent == NULL)
+	{
+		DWORD code = GetLastError();
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to open handle for ssh-agent.exe with PID %u, errorcode 0x%08X (%u)", SshAgentPID, code, code);
+	}
+	else
+	{
+		_wsprintf(szLog, SKIPCOUNT(szLog) L"ssh-agent.exe with PID %u has been started", SshAgentPID);
+		m_SshAgents.push_back(agent);
+	}
+	lock.Unlock();
+	LogString(szLog);
 }
 
 bool CConEmuMain::IsResetBasicSettings()
@@ -2579,6 +2635,8 @@ CConEmuMain::~CConEmuMain()
 	{
 		LogString(L"WARNING!!! TerminateThread was called, process would be terminated forcedly");
 	}
+
+	SafeDelete(m_SshAgentsLock);
 
 	SafeDelete(mp_Log);
 	SafeDelete(mpcs_Log);

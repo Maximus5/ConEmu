@@ -127,6 +127,7 @@ static LngPredefined gsDataHints[] = {
 	{ cbInstallKeybHooks,      L"Allows interception of Win+Number, Win+Arrows, Alt+Esc, Alt+Tab, etc." },
 	{ cbItalic,                L"Main font italic" },
 	{ cbJumpListAutoUpdate,    L"If checked, Jump Lists will be updated automatically when user (un)check the ‘Taskbar jump lists’ checkbox in Task properties." },
+	{ cbKillSshAgent,          L"Terminate all `ssh-agent.exe` processes started from ConEmu's consoles on ConEmu termination." },
 	{ cbLongOutput,            L"Autoexpand bufferheight to specified\r\nnumber of lines, while Far executes\r\nconsole commands. Full console output\r\n(up to specified count of lines) will be\r\navailable via Far macro (CtrlO.reg)" },
 	{ cbMinToTray,             L"Auto minimize to Taskbar Status Area (TSA)\r\nRight click on ‘Close window button’\r\nin ConEmu title for minimize to TSA,\r\nwhen this checkbox is OFF" },
 	{ cbMonitorConsoleLang,    L"Monitor input language change in real\r\nconsole (e.g. Far Manager XLat switching support)" },
