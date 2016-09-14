@@ -126,7 +126,8 @@ BEGIN
     CONTROL         "Admit monitor dpi with font size",cbFontMonitorDpi,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,59,177,8
     CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,72,177,8
-    CONTROL         "Compress long strings to fit space",cbCompressLongStrings,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,84,177,8
+    CONTROL         "Compress long strings to fit space",cbCompressLongStrings,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,84,177,8
     GROUPBOX        "Anti-aliasing",gbAntiAliasing,10,66,171,28,WS_GROUP
     CONTROL         "&None",rNoneAA,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,79,36,8
     CONTROL         "&Standard",rStandardAA,"Button",BS_AUTORADIOBUTTON,56,79,59,8
@@ -344,8 +345,7 @@ BEGIN
     CONTROL         "Map Shift+Esc to Esc",cbMapShiftEscToEsc,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,240,181,130,8
     GROUPBOX        "Windows 7 taskbar (Jump list)",gbCmdTasks7,4,202,375,29
     CONTROL         "Add ConEmu Tasks",cbCmdTaskbarTasks,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,215,104,8
-    CONTROL         "Add commands from history",cbCmdTaskbarCommands,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,118,215,123,8
+    CONTROL         "Add commands from history",cbCmdTaskbarCommands,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,118,215,123,8
     CONTROL         "Autoupdate",cbJumpListAutoUpdate,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,245,215,60,8
     PUSHBUTTON      "Update Now!",cbCmdTaskbarUpdate,308,211,65,14
 END
