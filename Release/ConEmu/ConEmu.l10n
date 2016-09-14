@@ -496,6 +496,10 @@
       "ru": "Если включено, Списки переходов будут обновляться автоматически при смене флажка «Список переходов» в свойствах Задачи (Task).",
       "id": 3073 }
     ,
+    "cbKillSshAgent": {
+      "en": "Terminate all `ssh-agent.exe` processes started from ConEmu's consoles on ConEmu termination.",
+      "id": 3075 }
+    ,
     "cbLongOutput": {
       "en": [ "Autoexpand bufferheight to specified\r\n"
             , "number of lines, while Far executes\r\n"
@@ -2546,6 +2550,14 @@
       "zh": "<当前的配色方案>",
       "id": 22 }
     ,
+    "lng_DetachConConfirm": {
+      "en": "Detach console from ConEmu?",
+      "id": 83 }
+    ,
+    "lng_DetachGuiConfirm": {
+      "en": "Detach GUI application from ConEmu?",
+      "id": 82 }
+    ,
     "lng_DlgAbout": {
       "en": "About",
       "ru": "О программе",
@@ -3830,6 +3842,10 @@
       "en": "KeyBar RClick",
       "zh": "KeyBar RClick",
       "id": 2114 }
+    ,
+    "cbKillSshAgent": {
+      "en": "Kill ssh-agent with ConEmu",
+      "id": 3075 }
     ,
     "cbLongOutput": {
       "en": "Long console output",
