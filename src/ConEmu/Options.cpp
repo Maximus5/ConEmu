@@ -677,7 +677,7 @@ void Settings::InitSettings()
 	isAnsiExec = ansi_CmdOnly;
 	psAnsiAllowed = lstrdup(L"cmd -cur_console:R /cGitShowBranch.cmd\r\n");
 	isAnsiLog = false;
-	pszAnsiLog = lstrdup(L"%ConEmuDir%\\Logs\\");
+	pszAnsiLog = lstrdup(L"%UserProfile%\\ConEmu\\Logs\\");
 	isKillSshAgent = true;
 	isProcessNewConArg = true;
 	isProcessCmdStart = false; // gh#420
