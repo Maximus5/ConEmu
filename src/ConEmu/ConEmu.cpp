@@ -1661,6 +1661,11 @@ void CConEmuMain::DeinitOnDestroy(HWND hWnd, bool abForce /*= false*/)
 // Kill all ssh-agents.exe processes started from ConEmu consoles
 void CConEmuMain::TerminateSshAgents()
 {
+	if (!gpSet->isKillSshAgent)
+	{
+		return;
+	}
+
 	_ASSERTE(isMainThread());
 	wchar_t szLog[128];
 
