@@ -20,6 +20,11 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.9.14
+* gh-863: Unchecking option ‘Kill ssh-agent with ConEmu’ had no effect.
+* Suggest `%UserProfile%\ConEmu\Logs` as default location for ANSI logs.
+
+
 2016.9.13
 * Add option to kill `ssh-agent.exe` processes started from ConEmu's consoles
   on ConEmu termination. Read more at: https://conemu.github.io/en/SshAgent.html
