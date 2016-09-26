@@ -570,12 +570,13 @@ bool CRealConsole::PreCreate(RConStartArgs *args)
 	if (gpSet->isLogging())
 	{
 		wchar_t szPrefix[128];
-		_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::PreCreate, hView=x%08X, hBack=x%08X, Detached=%u, AsAdmin=%u, Cmd=",
+		_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) L"CRealConsole::PreCreate, hView=x%08X, hBack=x%08X, Detached=%u, AsAdmin=%u, PTY=x%04X",
 			(DWORD)(DWORD_PTR)mp_VCon->GetView(), (DWORD)(DWORD_PTR)mp_VCon->GetBack(),
-			(UINT)args->Detached, (UINT)args->RunAsAdministrator);
-		wchar_t* pszInfo = lstrmerge(szPrefix, args->pszSpecialCmd ? args->pszSpecialCmd : L"<NULL>");
-		mp_ConEmu->LogString(pszInfo ? pszInfo : szPrefix);
-		SafeFree(pszInfo);
+			(UINT)args->Detached, args->nPTY, (UINT)args->RunAsAdministrator);
+		CEStr szInfo, szNewCon;
+		szNewCon = args->CreateCommandLine();
+		szInfo = lstrmerge(szPrefix, L", Cmd=‘", args->pszSpecialCmd, L"’, NewCon=‘", szNewCon.ms_Val, L"’");
+		mp_ConEmu->LogString(szInfo ? szInfo.ms_Val : szPrefix);
 	}
 
 	bool bCopied = m_Args.AssignFrom(args);
@@ -4085,6 +4086,15 @@ void CRealConsole::SetRootProcessName(LPCWSTR asProcessName)
 
 void CRealConsole::UpdateRootInfo(const CESERVER_ROOT_INFO& RootInfo)
 {
+	if (gpSet->isLogging())
+	{
+		wchar_t szInfo[120];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"UpdateRootInfo(Running=%s PID=%u ExitCode=%u UpTime=%u) PTY=x%04X",
+			RootInfo.bRunning ? L"Yes" : L"No", RootInfo.nPID, RootInfo.nExitCode, RootInfo.nUpTime,
+			m_Args.nPTY);
+		LogString(szInfo);
+	}
+
 	// Root process was just successfully started?
 	if (!m_RootInfo.bRunning && RootInfo.bRunning && RootInfo.nPID)
 	{
@@ -4633,7 +4643,8 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	if (isLogging())
 	{
-		CEStr lsLog(L"Starting VCon[", mp_VCon->IndexStr(), L"]: ", psCurCmd);
+		CEStr szNewCon; szNewCon = m_Args.CreateCommandLine();
+		CEStr lsLog(L"Starting VCon[", mp_VCon->IndexStr(), L"]: Cmd=‘", psCurCmd, L"’, NewCon=‘", szNewCon.ms_Val, L"’");
 		LogString(lsLog);
 	}
 
@@ -6011,6 +6022,13 @@ void CRealConsole::StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste)
 // Generally for XTerm emulation: ESC [ ? 1 h/l
 void CRealConsole::StartStopAppCursorKeys(DWORD nPID, bool bAppCursorKeys)
 {
+	if (gpSet->isLogging())
+	{
+		wchar_t szInfo[100];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"StartStopAppCursorKeys(nPID=%u, Enabled=%s)", nPID, bAppCursorKeys ? L"YES" : L"NO");
+		LogString(szInfo);
+	}
+
 	if (!mp_XTerm)
 	{
 		inew(mp_XTerm, new TermX);
