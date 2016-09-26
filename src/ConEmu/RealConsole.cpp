@@ -4567,12 +4567,12 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	if ((m_Args.RunAsAdministrator == crb_On) && !mp_ConEmu->mb_IsUacAdmin)
 	{
 		m_Args.Detached = crb_On;
-		_wcscat_c(psCurCmd, nLen, L" /ADMIN ");
+		_wcscat_c(psCurCmd, nLen, L" /ADMIN");
 	}
 
 	if (!bIsFirstConsole)
 	{
-		_wcscat_c(psCurCmd, nLen, L"/OMITHOOKSWARN");
+		_wcscat_c(psCurCmd, nLen, L" /OMITHOOKSWARN");
 	}
 
 	// Console modes (insert/overwrite)
@@ -4587,7 +4587,7 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 			nMode |= ENABLE_INSERT_MODE; // Turn bit ON (Insert mode)
 
 		nCurLen = _tcslen(psCurCmd);
-		_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen) L" /CINMODE=%X ", nMode);
+		_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen) L" /CINMODE=%X", nMode);
 	}
 
 	_ASSERTE(mp_RBuf==mp_ABuf);
@@ -4602,7 +4602,7 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 
 	nCurLen = _tcslen(psCurCmd);
 	_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen)
-		        L"/AID=%u /GID=%u /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i /TA=%08X",
+		        L" /AID=%u /GID=%u /GHWND=%08X /BW=%i /BH=%i /BZ=%i \"/FN=%s\" /FW=%i /FH=%i /TA=%08X",
 		        nAID, GetCurrentProcessId(), LODWORD(ghWnd), nWndWidth, nWndHeight, mn_DefaultBufferHeight,
 		        gpSet->ConsoleFont.lfFaceName, gpSet->ConsoleFont.lfWidth, gpSet->ConsoleFont.lfHeight,
 		        nColors);
