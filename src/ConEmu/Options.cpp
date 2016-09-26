@@ -375,7 +375,8 @@ Settings::~Settings()
 
 void Settings::InitSettings()
 {
-	if (gpConEmu) gpConEmu->LogString(L"Settings::InitSettings()");
+	//TODO: Has no effect - called from CSettings ctor
+	if (gpConEmu) gpConEmu->LogString(gpConEmu->IsResetBasicSettings() ? L"Settings::InitSettings(basic)" : L"Settings::InitSettings()");
 	MCHKHEAP
 
 	// Освободить память, т.к. функция может быть вызвана из окна интерфейса настроек
