@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "Common.h"
 #include "ConsoleRead.h"
+#include "WObjects.h"
 
 //#define DUMP_TEST_READS
 #undef DUMP_TEST_READS
@@ -75,6 +76,7 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 
 	DWORD nTick1 = GetTickCount(), nTick2 = 0, nTick3 = 0, nTick4 = 0, nTick5 = 0;
 
+	/*
 	static bool bDBCS = false, bDBCS_Checked = false;
 	if (!bDBCS_Checked)
 	{
@@ -94,9 +96,13 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 
 		if (!AreCpInfoLeads(nCP, &MaxCharSize) || MaxCharSize < 2)
 		{
-			bDBCS_CP = false;
+			if (!IsWin10())
+				bDBCS_CP = false;
 		}
 	}
+	*/
+
+	bool bDBCS_CP = IsConsoleDoubleByteCP();
 
 	size_t nBufWidth = bufSize.X;
 	int nWidth = (rgn.Right - rgn.Left + 1);
@@ -283,4 +289,49 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 	UNREFERENCED_PARAMETER(sbi_tmp.dwSize.Y);
 	UNREFERENCED_PARAMETER(bSbiTmp);
 	return lbRc;
+}
+
+bool IsConsoleDoubleByteCP()
+{
+	static bool bDBCS = false, bDBCS_Checked = false;
+	if (!bDBCS_Checked)
+	{
+		bDBCS = (GetSystemMetrics(SM_DBCSENABLED) != 0);
+		bDBCS_Checked = true;
+	}
+
+	static bool  bDBCS_CP = false;
+	static DWORD nLastCP = 0;
+	UINT   MaxCharSize = 0;
+	DWORD  nCP;
+	#ifdef _DEBUG
+	DWORD  nCP1;
+	//DWORD  nMode;
+	#endif
+
+	if (bDBCS)
+	{
+		nCP = GetConsoleOutputCP();
+		#ifdef _DEBUG
+		nCP1 = GetConsoleCP();
+		_ASSERTE(nCP1==nCP);
+		//GetConsoleMode(hOut, &nMode);
+		#endif
+
+		if (!nLastCP || (nLastCP != nCP))
+		{
+			bool bNewVal = true;
+			if (!AreCpInfoLeads(nCP, &MaxCharSize) || MaxCharSize < 2)
+			{
+				// gh-879: Windows 10 (since 14931) has changed behavior for double-cell glyphs
+				// Now they are doubled (COMMON_LVB_LEADING_BYTE/COMMON_LVB_TRAILING_BYTE) even for UTF-8 codepage
+				if (!IsWin10())
+					bNewVal = false;
+			}
+			bDBCS_CP = bNewVal;
+			nLastCP = nCP;
+		}
+	}
+
+	return bDBCS_CP;
 }
