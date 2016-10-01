@@ -309,6 +309,7 @@ protected:
 	MSectionSimple mcs_Data;
 	CRConDataGuard m_ConData;
 	bool GetData(CRConDataGuard& data);
+	bool isDataValid();
 
 
 	bool SetTopLeft(int ay = -1, int ax = -1, bool abServerCall = false);
