@@ -41,3 +41,6 @@ extern LONG gnInReadConsoleOutput;
 
 BOOL AreCpInfoLeads(DWORD nCP, UINT* pnMaxCharSize);
 BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_RECT rgn, COORD* lpCursor = NULL);
+
+bool IsConsoleDoubleByteCP();
+

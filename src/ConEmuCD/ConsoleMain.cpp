@@ -5545,6 +5545,7 @@ static void UndoConsoleWindowZoom()
 	UNREFERENCED_PARAMETER(lbRc);
 }
 
+// TODO: Optimize - combine ReadConsoleData/ReadConsoleInfo
 void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INFO& csbi)
 {
 	if (!gbIsDBCS || csbi.dwSize.X <= 0 || csbi.dwCursorPosition.X <= 0)
@@ -5552,45 +5553,40 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 
 	// Issue 577: Chinese display error on Chinese
 	// -- GetConsoleScreenBufferInfo возвращает координаты курсора в DBCS, а нам нужен wchar_t !!!
-	DWORD nCP = GetConsoleOutputCP();
-	if ((nCP != CP_UTF8) && (nCP != CP_UTF7))
+	if (IsConsoleDoubleByteCP())
 	{
-		UINT MaxCharSize = 0;
-		if (AreCpInfoLeads(nCP, &MaxCharSize) && (MaxCharSize > 1))
+		WORD Attrs[200];
+		LONG cchMax = countof(Attrs);
+		WORD* pAttrs = (csbi.dwCursorPosition.X <= cchMax) ? Attrs : (WORD*)calloc(csbi.dwCursorPosition.X, sizeof(*pAttrs));
+		if (pAttrs)
+			cchMax = csbi.dwCursorPosition.X;
+		else
+			pAttrs = Attrs; // memory allocation fail? try part of line?
+		COORD crRead = {0, csbi.dwCursorPosition.Y};
+		//120830 - DBCS uses 2 cells per hieroglyph
+		DWORD nRead = 0;
+		// TODO: Optimize
+		if (ReadConsoleOutputAttribute(ahConOut, pAttrs, cchMax, crRead, &nRead) && nRead)
 		{
-			_ASSERTE(MaxCharSize==2);
-			WORD Attrs[200];
-			LONG cchMax = countof(Attrs);
-			WORD* pAttrs = (csbi.dwCursorPosition.X <= cchMax) ? Attrs : (WORD*)calloc(csbi.dwCursorPosition.X, sizeof(*pAttrs));
-			if (pAttrs)
-				cchMax = csbi.dwCursorPosition.X;
-			else
-				pAttrs = Attrs; // memory allocation fail? try part of line?
-			COORD crRead = {0, csbi.dwCursorPosition.Y};
-			//120830 - DBCS uses 2 cells per hieroglyph
-			DWORD nRead = 0;
-			if (ReadConsoleOutputAttribute(ahConOut, pAttrs, cchMax, crRead, &nRead) && nRead)
+			_ASSERTE(nRead==cchMax);
+			int nXShift = 0;
+			LPWORD p = pAttrs, pEnd = pAttrs+nRead;
+			while (p < pEnd)
 			{
-				_ASSERTE(nRead==cchMax);
-				int nXShift = 0;
-				LPWORD p = pAttrs, pEnd = pAttrs+nRead;
-				while (p < pEnd)
+				if ((*p) & COMMON_LVB_LEADING_BYTE)
 				{
-					if ((*p) & COMMON_LVB_LEADING_BYTE)
-					{
-						nXShift++;
-						p++;
-						_ASSERTE((p < pEnd) && ((*p) & COMMON_LVB_TRAILING_BYTE));
-					}
+					nXShift++;
 					p++;
+					_ASSERTE((p < pEnd) && ((*p) & COMMON_LVB_TRAILING_BYTE));
 				}
-				_ASSERTE(nXShift <= csbi.dwCursorPosition.X);
-				csbi.dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
+				p++;
 			}
-			if (pAttrs && (pAttrs != Attrs))
-			{
-				free(pAttrs);
-			}
+			_ASSERTE(nXShift <= csbi.dwCursorPosition.X);
+			csbi.dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
+		}
+		if (pAttrs && (pAttrs != Attrs))
+		{
+			free(pAttrs);
 		}
 	}
 }
