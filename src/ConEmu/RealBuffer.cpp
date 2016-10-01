@@ -1439,7 +1439,7 @@ bool CRealBuffer::PreInit()
 bool CRealBuffer::GetData(CRConDataGuard& data)
 {
 	// m_ConData is not expected to be used in other buffer types
-	_ASSERTE(m_Type == rbt_Primary || m_Type == rbt_DumpScreen);
+	_ASSERTE(m_Type == rbt_Primary);
 
 	MSectionLockSimple cs; cs.Lock(&mcs_Data);
 	if (m_ConData.isValid())
@@ -1453,6 +1453,24 @@ bool CRealBuffer::GetData(CRConDataGuard& data)
 	cs.Unlock();
 
 	return data.isValid();
+}
+
+/// Only for the moment, informational
+bool CRealBuffer::isDataValid()
+{
+	bool bValid = false;
+
+	if ((m_Type == rbt_DumpScreen) || (m_Type == rbt_Alternative) || (m_Type == rbt_Selection) || (m_Type == rbt_Find))
+	{
+		bValid = ((dump.crSize.X > 0) && (dump.crSize.Y > 0) && dump.pszBlock1 && dump.pcaBlock1);
+	}
+	else
+	{
+		CRConDataGuard data;
+		bValid = GetData(data);
+	}
+
+	return bValid;
 }
 
 bool CRealBuffer::InitBuffers(CRConDataGuard* pData)
@@ -5987,7 +6005,8 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 		if (mn_LastRgnFlags != m_Rgn.GetFlags())
 		{
 			// Попытаться найти панели и обновить флаги
-			FindPanels();
+			if (m_Type == rbt_Primary)
+				FindPanels();
 
 			WARNING("Не думаю, что это хорошее место для обновления мышиного курсора");
 			// Обновить мышиный курсор
@@ -6383,11 +6402,9 @@ bool CRealBuffer::isSelectionAllowed()
 	}
 	#endif
 
-	{
-	CRConDataGuard data;
-	if (!GetData(data))
+	// gh-871
+	if (!isDataValid())
 		return false; // if there are not data in console?
-	}
 
 	if (con.m_sel.dwFlags != 0)
 		return true; // Если выделение было запущено через меню
