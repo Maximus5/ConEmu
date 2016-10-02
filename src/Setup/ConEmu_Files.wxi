@@ -163,6 +163,9 @@
       <Component Id="utf_8_test.cmd" Guid="$(var.Guid.utf_8_test.cmd)" Win64="$(var.Win64)">
         <File Id="utf_8_test.cmd" Source="..\..\Release\ConEmu\Addons\utf-8-test.cmd"  KeyPath="yes" />
       </Component>
+      <Component Id="wsl_con.cmd" Guid="$(var.Guid.wsl_con.cmd)" Win64="$(var.Win64)">
+        <File Id="wsl_con.cmd" Source="..\..\Release\ConEmu\wsl\wsl-con.cmd"  KeyPath="yes" />
+      </Component>
       <Component Id="Disable_ConIme.reg" Guid="$(var.Guid.Disable_ConIme.reg)" Win64="$(var.Win64)">
         <File Id="Disable_ConIme.reg" Source="..\..\Release\ConEmu\Addons\Disable_ConIme.reg"  KeyPath="yes" />
       </Component>

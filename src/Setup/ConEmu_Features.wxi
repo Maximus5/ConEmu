@@ -202,6 +202,10 @@
       </Feature>
       -->
     </Feature>
+    <Feature Id="FWSL" AllowAdvertise="no" Title="WSL sample" Level="1"
+             Description="Demonstrates ability to use 256 colors in Windows Subsystem for Linux started in ConEmu tab">
+      <ComponentRef Id="wsl_con.cmd"/>
+    </Feature>
     <Feature Id="FClink" AllowAdvertise="no" Title="clink readme" Level="1"
              Description="clink - bash style completion readme.txt">
       <ComponentRef Id="clink_readme.txt"/>
