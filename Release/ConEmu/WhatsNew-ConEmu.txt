@@ -20,6 +20,17 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.10.2
+* gh-879: Fix doubled CJK glyphs on Windows 10 build 14931.
+  Windows 10 (since 14931) has changed behavior for double-cell glyphs. Now they are
+  doubled (COMMON_LVB_LEADING_BYTE/COMMON_LVB_TRAILING_BYTE) even for UTF-8 codepage.
+* gh-871: Selection was not working in Alternative mode.
+* Turn on certain StatusBar columns on `-basic` switch.
+* Switch `/OMITHOOKSWARN` was passed improperly to server when `/log` was defined.
+* Sample file demonstrates ability to use 256 colors in Windows Subsystem for Linux
+  started in ConEmu tab.
+
+
 2016.9.14
 * gh-863: Unchecking option ‘Kill ssh-agent with ConEmu’ had no effect.
 * Suggest `%UserProfile%\ConEmu\Logs` as default location for ANSI logs.
