@@ -6591,6 +6591,8 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	_ASSERTE(ghWnd == hWnd);
 	ghWnd = hWnd;
 
+	CDpiAware::setNonClientDPIScaling(hWnd);
+
 	RECT rcWndS = {}, rcWndT = {}, rcBeforeResize = {}, rcAfterResize = {};
 
 	GetWindowRect(ghWnd, &rcWndS);

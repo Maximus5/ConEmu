@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2014-2015 Maximus5
+Copyright (c) 2014-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DpiAware.h"
 #include "DynDialog.h"
 #include "SearchCtrl.h"
+#include "../common/MModule.h"
 #include "../common/Monitors.h"
 #include "../common/StartupEnvDef.h"
 
@@ -134,6 +135,9 @@ HRESULT CDpiAware::setProcessDPIAwareness()
 	if ((fWin81 = (SetProcessDPIAwareness_t)GetProcAddress(hUser, "SetProcessDpiAwarenessInternal")) != NULL)
 	{
 		hr = fWin81(Process_Per_Monitor_DPI_Aware);
+
+		// if SUCCEEDED(hr) EnableNonClientDpiScaling (hWnd)
+
 		goto wrap;
 	}
 
@@ -144,6 +148,21 @@ HRESULT CDpiAware::setProcessDPIAwareness()
 	}
 
 wrap:
+	return hr;
+}
+
+HRESULT CDpiAware::setNonClientDPIScaling(HWND hWnd)
+{
+	HRESULT hr = E_UNEXPECTED;
+	MModule user32(L"User32.dll");
+	BOOL (WINAPI* EnableNonClientDpiScaling)(HWND hwnd);
+	if (user32.GetProcAddress("EnableNonClientDpiScaling", EnableNonClientDpiScaling))
+	{
+		if (EnableNonClientDpiScaling(hWnd))
+			hr = S_OK;
+		else
+			hr = HRESULT_FROM_WIN32(GetLastError());
+	}
 	return hr;
 }
 
