@@ -102,7 +102,7 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 	}
 	*/
 
-	bool bDBCS_CP = IsConsoleDoubleByteCP();
+	bool bDBCS_CP = IsConsoleDoubleCellCP();
 
 	size_t nBufWidth = bufSize.X;
 	int nWidth = (rgn.Right - rgn.Left + 1);
@@ -291,7 +291,7 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 	return lbRc;
 }
 
-bool IsConsoleDoubleByteCP()
+bool IsConsoleDoubleCellCP()
 {
 	static bool bDBCS = false, bDBCS_Checked = false;
 	if (!bDBCS_Checked)
