@@ -5553,7 +5553,7 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 
 	// Issue 577: Chinese display error on Chinese
 	// -- GetConsoleScreenBufferInfo возвращает координаты курсора в DBCS, а нам нужен wchar_t !!!
-	if (IsConsoleDoubleByteCP())
+	if (IsConsoleDoubleCellCP())
 	{
 		WORD Attrs[200];
 		LONG cchMax = countof(Attrs);
