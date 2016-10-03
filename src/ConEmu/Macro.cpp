@@ -3223,12 +3223,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				size_t nAllLen;
 				RConStartArgs *pArgs = new RConStartArgs;
 
-				if (bNewTaskGroup)
-				{
-					_ASSERTE(pszParm==NULL || *pszParm==0);
-					pArgs->pszSpecialCmd = lstrdup(pszFile);
-				}
-				else
+				// It's allowed now to append user arguments to named task contents
 				{
 					nAllLen = _tcslen(pszFile) + (pszParm ? _tcslen(pszParm) : 0) + 16;
 
