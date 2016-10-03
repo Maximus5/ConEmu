@@ -1623,9 +1623,16 @@ const CECI_FLAGS
 	CECI_Paused = 1,
 	CECI_None   = 0;
 
-struct CESERVER_REQ_CONINFO_INFO
+// Assigned on Startup or by SetConsoleScreenBufferInfoEx
+struct CESERVER_CONSOLE_PALETTE
 {
-	CESERVER_REQ_HDR cmd;
+	BOOL bPalletteLoaded;
+	WORD wAttributes, wPopupAttributes;
+	COLORREF ColorTable[16];
+};
+
+struct CESERVER_REQ_CONSOLE_STATE
+{
 	HWND2 hConWnd;
 	DWORD nPacketId;
 	DWORD nSrvUpdateTick; // GetTickCount(), когда консоль была считана в последний раз в сервере
@@ -1644,8 +1651,11 @@ struct CESERVER_REQ_CONINFO_INFO
 	SMALL_RECT srRealWindow; // Те реальные координаты, которые видимы в RealConsole (а не то, что видимо в GUI окне)
 	COORD crMaxSize; // Максимальный размер консоли в символах (для текущего выбранного шрифта)
 	CECI_FLAGS Flags;
-	DWORD nDataShift; // Для удобства - сдвиг начала данных (data) От начала info
 	DWORD nDataCount; // Для удобства - количество ячеек (data)
+	CESERVER_CONSOLE_PALETTE ConsolePalette;
+
+	// Usually followed by
+	// CHAR_INFO  data[N];
 };
 
 //typedef struct tag_CESERVER_REQ_CONINFO_DATA {
@@ -1659,7 +1669,7 @@ struct CESERVER_REQ_CONINFO_FULL
 	DWORD cbMaxSize;    // размер всего буфера CESERVER_REQ_CONINFO_FULL (скорее всего будет меньше реальных данных)
 	BOOL  bDataChanged; // Выставляется в TRUE, при изменениях содержимого консоли (а не только положение курсора...)
 	CESERVER_CONSOLE_MAPPING_HDR  hdr;
-	CESERVER_REQ_CONINFO_INFO info;
+	CESERVER_REQ_CONSOLE_STATE ConState;
 	CHAR_INFO  data[1];
 };
 
@@ -1844,9 +1854,7 @@ struct CESERVER_REQ_STARTSTOP
 	// Если был успешный вызов функций типа ReadConsole/ReadConsoleInput
 	BOOL bWasSucceededInRead;
 	// Self console palette? Useful after Win+G
-	BOOL bPalletteLoaded;
-	WORD wAttributes, wPopupAttributes;
-	COLORREF ColorTable[16];
+	CESERVER_CONSOLE_PALETTE Palette;
 	// CmdLine
 	wchar_t sCmdLine[1]; // variable length
 };
@@ -1912,6 +1920,8 @@ struct CESERVER_REQ_SRVSTARTSTOPRET
 	ConEmuAnsiLog AnsiLog;
 	// Avoid spare calls, let do all in one place
 	ConEmuGuiMapping GuiMapping;
+	// Let server know current GUI palette
+	CESERVER_CONSOLE_PALETTE Palette;
 	// Initialization block of commands:
 	// # environment variables may be inherited from parent console,
 	// # environment, codepage, aliases and so on may come from ConEmu settings
@@ -2270,6 +2280,7 @@ struct CESERVER_REQ
 		ConEmuGuiMapping GuiInfo;
 		CESERVER_REQ_CONINFO ReqConInfo;
 		CESERVER_CONSOLE_MAPPING_HDR ConInfo;
+		CESERVER_REQ_CONSOLE_STATE ConState;
 		CESERVER_REQ_SETSIZE SetSize;
 		CESERVER_REQ_RETSIZE SetSizeRet;
 		CESERVER_REQ_OUTPUTFILE OutputFile;

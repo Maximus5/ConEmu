@@ -302,6 +302,7 @@ extern "C" {
 
 int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount);
 BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi);
+bool MyLoadConsolePalette(HANDLE ahConOut, CESERVER_CONSOLE_PALETTE& Palette);
 BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc);
 void CmdOutputStore(bool abCreateOnly = false);
 void CmdOutputRestore(bool abSimpleMode);
@@ -564,6 +565,7 @@ struct SrvInfo
 	DWORD dwConsoleCP, dwConsoleOutputCP;
 	WORD dwConsoleInMode, dwConsoleOutMode;
 	DWORD dwSbiRc; CONSOLE_SCREEN_BUFFER_INFO sbi; // MyGetConsoleScreenBufferInfo
+	CESERVER_CONSOLE_PALETTE ConsolePalette;
 	DWORD dwDisplayMode;
 	BOOL  bAltBufferEnabled;
 	//USHORT nUsedHeight; // Высота, используемая в GUI - вместо него используем gcrBufferSize.Y

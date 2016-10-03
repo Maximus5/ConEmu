@@ -1428,11 +1428,11 @@ BOOL cmd_Pause(CESERVER_REQ& in, CESERVER_REQ** out)
 	switch (cmd)
 	{
 	case CEPause_On:
-		SetConEmuFlags(gpSrv->pConsole->info.Flags, CECI_Paused, CECI_Paused);
+		SetConEmuFlags(gpSrv->pConsole->ConState.Flags, CECI_Paused, CECI_Paused);
 		bOk = apiPauseConsoleOutput(ghConWnd, true);
 		break;
 	case CEPause_Off:
-		SetConEmuFlags(gpSrv->pConsole->info.Flags, CECI_Paused, CECI_None);
+		SetConEmuFlags(gpSrv->pConsole->ConState.Flags, CECI_Paused, CECI_None);
 		bOk = apiPauseConsoleOutput(ghConWnd, false);
 		break;
 	}

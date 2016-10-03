@@ -1437,6 +1437,17 @@ void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 		pRet.PaletteName.Set(lstrdup(pszPalette), wcslen(pszPalette)+1);
 	}
 
+	if (pPal)
+	{
+		_ASSERTE((mn_TextColorIdx || mn_BackColorIdx) && (mn_PopTextColorIdx || mn_PopBackColorIdx));
+		_ASSERTE(sizeof(pRet.Palette.ColorTable)*2 == sizeof(pPal->Colors));
+
+		pRet.Palette.bPalletteLoaded = true;
+		pRet.Palette.wAttributes = MAKECONCOLOR(mn_TextColorIdx, mn_BackColorIdx);
+		pRet.Palette.wPopupAttributes = MAKECONCOLOR(mn_PopTextColorIdx, mn_PopBackColorIdx);
+		memmove(pRet.Palette.ColorTable, pPal->Colors, sizeof(pRet.Palette.ColorTable));
+	}
+
 	// Task name
 	_ASSERTE(pRet.TaskName.psz == NULL);
 	if (m_Args.pszTaskName && *m_Args.pszTaskName)
@@ -16133,7 +16144,9 @@ void CRealConsole::Unfasten()
 	LPCWSTR pszConEmuStartArgs = gpConEmu->MakeConEmuStartArgs(lsTempBuf);
 	wchar_t szMacro[64];
 	_wsprintf(szMacro, SKIPCOUNT(szMacro) L"-GuiMacro \"Attach %u\"", nAttachPID);
-	CEStr lsRunArgs(L"\"", gpConEmu->ms_ConEmuExe, L"\" -Detached ", pszConEmuStartArgs, szMacro);
+	CEStr lsRunArgs(L"\"", gpConEmu->ms_ConEmuExe, L"\" -Detached ",
+		pszConEmuStartArgs, (pszConEmuStartArgs ? L" " : NULL),
+		szMacro);
 
 	STARTUPINFO si = {sizeof(si)};
 	PROCESS_INFORMATION pi = {};

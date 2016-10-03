@@ -354,14 +354,12 @@ BOOL WINAPI DataServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 
 	if (gpSrv->pConsole->bDataChanged == FALSE)
 	{
-		pcbReplySize = sizeof(gpSrv->pConsole->info);
+		pcbReplySize = sizeof(gpSrv->pConsole->ConState);
 		if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 		{
 			// Отдаем только инфу, без текста/атрибутов
-			memmove(ppReply->Data, (&gpSrv->pConsole->info.cmd)+1, pcbReplySize - sizeof(ppReply->hdr));
-			_ASSERTE(sizeof(gpSrv->pConsole->info.cmd) == sizeof(ppReply->hdr));
-			((CESERVER_REQ_CONINFO_INFO*)ppReply)->nDataShift = 0;
-			((CESERVER_REQ_CONINFO_INFO*)ppReply)->nDataCount = 0;
+			memmove(&ppReply->ConState, &gpSrv->pConsole->ConState, pcbReplySize);
+			ppReply->ConState.nDataCount = 0;
 			lbRc = TRUE;
 		}
 	}
@@ -370,29 +368,24 @@ BOOL WINAPI DataServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		_ASSERTE(pIn->hdr.nCmd == CECMD_CONSOLEDATA);
 		gpSrv->pConsole->bDataChanged = FALSE;
 
-		#if 0
-		DWORD ccCells = gpSrv->pConsole->info.crWindow.X * gpSrv->pConsole->info.crWindow.Y;
-		#else
-		SMALL_RECT rc = gpSrv->pConsole->info.sbi.srWindow;
+		SMALL_RECT rc = gpSrv->pConsole->ConState.sbi.srWindow;
 		int iWidth = rc.Right - rc.Left + 1;
 		int iHeight = rc.Bottom - rc.Top + 1;
 		DWORD ccCells = iWidth * iHeight;
-		#endif
 
 		// Такого быть не должно, ReadConsoleData корректирует возможный размер
-		if (ccCells > (size_t)(gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y))
+		if (ccCells > (size_t)(gpSrv->pConsole->ConState.crMaxSize.X * gpSrv->pConsole->ConState.crMaxSize.Y))
 		{
-			_ASSERTE(ccCells <= (size_t)(gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y));
-			ccCells = (gpSrv->pConsole->info.crMaxSize.X * gpSrv->pConsole->info.crMaxSize.Y);
+			_ASSERTE(ccCells <= (size_t)(gpSrv->pConsole->ConState.crMaxSize.X * gpSrv->pConsole->ConState.crMaxSize.Y));
+			ccCells = (gpSrv->pConsole->ConState.crMaxSize.X * gpSrv->pConsole->ConState.crMaxSize.Y);
 		}
 
-		gpSrv->pConsole->info.nDataShift = (DWORD)(((LPBYTE)gpSrv->pConsole->data) - ((LPBYTE)&(gpSrv->pConsole->info)));
-		gpSrv->pConsole->info.nDataCount = ccCells;
-		pcbReplySize = sizeof(gpSrv->pConsole->info) + ccCells * sizeof(CHAR_INFO);
+		gpSrv->pConsole->ConState.nDataCount = ccCells;
+		size_t cbDataSize = sizeof(gpSrv->pConsole->ConState) + ccCells * sizeof(CHAR_INFO);
+		pcbReplySize = sizeof(CESERVER_REQ_HDR) + cbDataSize;
 		if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 		{
-			memmove(ppReply->Data, (&gpSrv->pConsole->info.cmd)+1, pcbReplySize - sizeof(ppReply->hdr));
-			_ASSERTE(sizeof(gpSrv->pConsole->info.cmd) == sizeof(ppReply->hdr));
+			memmove(&ppReply->ConState, &gpSrv->pConsole->ConState, cbDataSize);
 			lbRc = TRUE;
 		}
 		//fSuccess = WriteFile(gpSrv->hGetDataPipe, &(gpSrv->pConsole->info), cbWrite, &cbBytesWritten, NULL);

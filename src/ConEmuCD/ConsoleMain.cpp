@@ -5592,6 +5592,55 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 }
 
 
+/**
+Reload current console palette, IF it WAS NOT specified explicitly before
+
+@param ahConOut << (HANDLE)ghConOut
+@result true if palette was successfully retrieved
+**/
+bool MyLoadConsolePalette(HANDLE ahConOut, CESERVER_CONSOLE_PALETTE& Palette)
+{
+	bool bRc = false;
+
+	if (gpSrv->ConsolePalette.bPalletteLoaded)
+	{
+		Palette = gpSrv->ConsolePalette;
+		bRc = true;
+	}
+	else
+	{
+		Palette.bPalletteLoaded = false;
+	}
+
+	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+	MY_CONSOLE_SCREEN_BUFFER_INFOEX sbi_ex = {sizeof(sbi_ex)};
+
+	if (apiGetConsoleScreenBufferInfoEx(ahConOut, &sbi_ex))
+	{
+		Palette.wAttributes = sbi_ex.wAttributes;
+		Palette.wPopupAttributes = sbi_ex.wPopupAttributes;
+
+		if (!bRc)
+		{
+			_ASSERTE(sizeof(Palette.ColorTable) == sizeof(sbi_ex.ColorTable));
+			memmove(Palette.ColorTable, sbi_ex.ColorTable, sizeof(Palette.ColorTable));
+
+			// Store for future use?
+			// -- gpSrv->ConsolePalette = Palette;
+
+			bRc = true;
+		}
+	}
+	else if (GetConsoleScreenBufferInfo(ahConOut, &sbi))
+	{
+		Palette.wAttributes = Palette.wPopupAttributes = sbi.wAttributes;
+		// Load palette from registry?
+	}
+
+	return bRc;
+}
+
+
 WARNING("Use MyGetConsoleScreenBufferInfo instead of GetConsoleScreenBufferInfo");
 
 // Действует аналогично функции WinApi (GetConsoleScreenBufferInfo), но в режиме сервера:
@@ -5735,13 +5784,13 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		if (gpSrv->pConsole && gpSrv->TopLeft.isLocked())
 		{
 			// Был видим в той области, которая ушла в GUI
-			if (CoordInSmallRect(gpSrv->pConsole->info.sbi.dwCursorPosition, gpSrv->pConsole->info.sbi.srWindow)
+			if (CoordInSmallRect(gpSrv->pConsole->ConState.sbi.dwCursorPosition, gpSrv->pConsole->ConState.sbi.srWindow)
 				// и видим сейчас в RealConsole
 				&& CoordInSmallRect(csbi.dwCursorPosition, srRealWindow)
 				// но стал НЕ видим в скорректированном (по TopLeft) прямоугольнике
 				&& !CoordInSmallRect(csbi.dwCursorPosition, csbi.srWindow)
 				// И TopLeft в GUI не менялся
-				&& gpSrv->TopLeft.Equal(gpSrv->pConsole->info.TopLeft))
+				&& gpSrv->TopLeft.Equal(gpSrv->pConsole->ConState.TopLeft))
 			{
 				// Сбросить блокировку и вернуть реальное положение в консоли
 				gpSrv->TopLeft.Reset();
@@ -5751,8 +5800,8 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 
 		if (gpSrv->pConsole)
 		{
-			gpSrv->pConsole->info.TopLeft = gpSrv->TopLeft;
-			gpSrv->pConsole->info.srRealWindow = srRealWindow;
+			gpSrv->pConsole->ConState.TopLeft = gpSrv->TopLeft;
+			gpSrv->pConsole->ConState.srRealWindow = srRealWindow;
 		}
 	}
 

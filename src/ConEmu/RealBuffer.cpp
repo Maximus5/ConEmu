@@ -2343,7 +2343,7 @@ bool CRealBuffer::ApplyConsoleInfo()
 	bool bSetApplyFinished = !con.bLockChange2Text;
 	mp_RCon->mh_ApplyFinished.Reset();
 
-	const CESERVER_REQ_CONINFO_INFO* pInfo = NULL;
+	const CESERVER_REQ* pInfo = NULL;
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_CONSOLEDATA, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO));
 
 	// Request exact TopLeft position if it is locked in GUI
@@ -2379,9 +2379,9 @@ bool CRealBuffer::ApplyConsoleInfo()
 		}
 		#endif
 	}
-	else if (pInfo->cmd.cbSize < sizeof(CESERVER_REQ_CONINFO_INFO))
+	else if (pInfo->hdr.cbSize < sizeof(CESERVER_REQ_CONSOLE_STATE))
 	{
-		_ASSERTE(pInfo->cmd.cbSize >= sizeof(CESERVER_REQ_CONINFO_INFO));
+		_ASSERTE(pInfo->hdr.cbSize >= sizeof(CESERVER_REQ_CONSOLE_STATE));
 	}
 	else
 	{
@@ -2406,7 +2406,7 @@ bool CRealBuffer::ApplyConsoleInfo()
 	return lbChanged;
 }
 
-void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool& bSetApplyFinished, bool& lbChanged, bool& bBufRecreate)
+void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFinished, bool& lbChanged, bool& bBufRecreate)
 {
 	bool bNeedLoadData = false;
 
@@ -2427,7 +2427,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 		}
 
 		#ifdef _DEBUG
-		HWND hWnd = pInfo->hConWnd;
+		HWND hWnd = pInfo->ConState.hConWnd;
 		if (!hWnd || (hWnd != mp_RCon->hConWnd))
 		{
 			// Wine bug ? Incomplete packet?
@@ -2436,11 +2436,11 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 		}
 		#endif
 
-		if (con.Flags != pInfo->Flags)
+		if (con.Flags != pInfo->ConState.Flags)
 		{
-			if (!con.FlagsUpdateTick || (pInfo->nSrvUpdateTick > con.FlagsUpdateTick))
+			if (!con.FlagsUpdateTick || (pInfo->ConState.nSrvUpdateTick > con.FlagsUpdateTick))
 			{
-				con.Flags = pInfo->Flags;
+				con.Flags = pInfo->ConState.Flags;
 			}
 		}
 
@@ -2449,7 +2449,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 		//}
 		// 3
 		// Здесь у нас реальные процессы консоли, надо обновиться
-		if (mp_RCon->ProcessUpdate(pInfo->nProcesses, countof(pInfo->nProcesses)))
+		if (mp_RCon->ProcessUpdate(pInfo->ConState.nProcesses, countof(pInfo->ConState.nProcesses)))
 		{
 			//120325 - нет смысла перерисовывать консоль, если данные в ней не менялись.
 			//  это приводит 1) к лишнему мельканию; 2) глюкам отрисовки в запущенных консольных приложениях
@@ -2458,31 +2458,31 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 		// Теперь нужно открыть секцию - начинаем изменение переменных класса
 		MSectionLock sc;
 		// 4
-		DWORD dwCiSize = pInfo->dwCiSize;
+		DWORD dwCiSize = pInfo->ConState.dwCiSize;
 
 		if (dwCiSize != 0)
 		{
 			_ASSERTE(dwCiSize == sizeof(con.m_ci));
 
-			if (memcmp(&con.m_ci, &pInfo->ci, sizeof(con.m_ci))!=0)
+			if (memcmp(&con.m_ci, &pInfo->ConState.ci, sizeof(con.m_ci))!=0)
 			{
 				LOGCONSOLECHANGE("ApplyConsoleInfo: CursorInfo changed");
 				lbChanged = true;
 			}
 
-			con.m_ci = pInfo->ci;
+			con.m_ci = pInfo->ConState.ci;
 		}
 
 		// Show changes on the Settings/Info page
-		bool bConCP = (con.m_dwConsoleCP != pInfo->dwConsoleCP);
-		bool bConOutCP = (con.m_dwConsoleOutputCP != pInfo->dwConsoleOutputCP);
-		bool bConMode = (con.m_dwConsoleInMode != pInfo->dwConsoleInMode) || (con.m_dwConsoleOutMode != pInfo->dwConsoleOutMode);
+		bool bConCP = (con.m_dwConsoleCP != pInfo->ConState.dwConsoleCP);
+		bool bConOutCP = (con.m_dwConsoleOutputCP != pInfo->ConState.dwConsoleOutputCP);
+		bool bConMode = (con.m_dwConsoleInMode != pInfo->ConState.dwConsoleInMode) || (con.m_dwConsoleOutMode != pInfo->ConState.dwConsoleOutMode);
 
 		// 5, 6, 7
-		con.m_dwConsoleCP = pInfo->dwConsoleCP;
-		con.m_dwConsoleOutputCP = pInfo->dwConsoleOutputCP;
-		con.m_dwConsoleInMode = pInfo->dwConsoleInMode;
-		con.m_dwConsoleOutMode = pInfo->dwConsoleOutMode;
+		con.m_dwConsoleCP = pInfo->ConState.dwConsoleCP;
+		con.m_dwConsoleOutputCP = pInfo->ConState.dwConsoleOutputCP;
+		con.m_dwConsoleInMode = pInfo->ConState.dwConsoleInMode;
+		con.m_dwConsoleOutMode = pInfo->ConState.dwConsoleOutMode;
 
 		if (ghOpWnd
 			&& (bConMode || bConCP || bConOutCP)
@@ -2495,7 +2495,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 		}
 
 		// 8
-		DWORD dwSbiSize = pInfo->dwSbiSize;
+		DWORD dwSbiSize = pInfo->ConState.dwSbiSize;
 		int nNewWidth = 0, nNewHeight = 0;
 
 		if (dwSbiSize != 0)
@@ -2503,7 +2503,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 			HEAPVAL
 			_ASSERTE(dwSbiSize == sizeof(con.m_sbi));
 
-			if (memcmp(&con.m_sbi, &pInfo->sbi, sizeof(con.m_sbi))!=0)
+			if (memcmp(&con.m_sbi, &pInfo->ConState.sbi, sizeof(con.m_sbi))!=0)
 			{
 				LOGCONSOLECHANGE("ApplyConsoleInfo: ScreenBufferInfo changed");
 				lbChanged = true;
@@ -2514,10 +2514,10 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 
 			#ifdef _DEBUG
 			wchar_t szCursorDbg[255]; szCursorDbg[0] = 0;
-			if (pInfo->sbi.dwCursorPosition.X != con.m_sbi.dwCursorPosition.X || pInfo->sbi.dwCursorPosition.Y != con.m_sbi.dwCursorPosition.Y)
-				_wsprintf(szCursorDbg, SKIPLEN(countof(szCursorDbg)) L"CursorPos changed to %ux%u. ", pInfo->sbi.dwCursorPosition.X, pInfo->sbi.dwCursorPosition.Y);
+			if (pInfo->ConState.sbi.dwCursorPosition.X != con.m_sbi.dwCursorPosition.X || pInfo->ConState.sbi.dwCursorPosition.Y != con.m_sbi.dwCursorPosition.Y)
+				_wsprintf(szCursorDbg, SKIPLEN(countof(szCursorDbg)) L"CursorPos changed to %ux%u. ", pInfo->ConState.sbi.dwCursorPosition.X, pInfo->ConState.sbi.dwCursorPosition.Y);
 			else
-				_wsprintf(szCursorDbg, SKIPLEN(countof(szCursorDbg)) L"CursorPos is %ux%u. ", pInfo->sbi.dwCursorPosition.X, pInfo->sbi.dwCursorPosition.Y);
+				_wsprintf(szCursorDbg, SKIPLEN(countof(szCursorDbg)) L"CursorPos is %ux%u. ", pInfo->ConState.sbi.dwCursorPosition.X, pInfo->ConState.sbi.dwCursorPosition.Y);
 			#endif
 
 			#if 0
@@ -2553,30 +2553,30 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 			#endif
 			#endif
 
-			con.m_sbi = pInfo->sbi;
-			con.srRealWindow = pInfo->srRealWindow;
+			con.m_sbi = pInfo->ConState.sbi;
+			con.srRealWindow = pInfo->ConState.srRealWindow;
 
 			// Если мышкой тащат ползунок скроллера - не менять TopVisible
 			if (!mp_RCon->InScroll()
 				&& con.TopLeft.isLocked()
-				&& !pInfo->TopLeft.isLocked())
+				&& !pInfo->ConState.TopLeft.isLocked())
 			{
 				// Сброс позиции прокрутки, она поменялась
 				// в результате действий пользователя в консоли
 				DEBUGTEST(DWORD nCurTick = GetTickCount());
 				if (!con.InTopLeftSet
 					&& (!con.TopLeftTick
-						|| ((int)(pInfo->nSrvUpdateTick - con.TopLeftTick) > 0))
+						|| ((int)(pInfo->ConState.nSrvUpdateTick - con.TopLeftTick) > 0))
 					)
 				{
 					// Сбрасывать не будем, просто откорректируем текущее положение
-					SetTopLeft(pInfo->srRealWindow.Top, -1, false);
+					SetTopLeft(pInfo->ConState.srRealWindow.Top, -1, false);
 				}
 			}
 
 
 			DWORD nScroll;
-			if (GetConWindowSize(pInfo->sbi, &nNewWidth, &nNewHeight, &nScroll))
+			if (GetConWindowSize(pInfo->ConState.sbi, &nNewWidth, &nNewHeight, &nScroll))
 			{
 				// Far sync resize (avoid panel flickering)
 				// refresh VCon only when server return new size/data
@@ -2643,28 +2643,28 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ_CONINFO_INFO* pInfo, bool&
 			CHAR_INFO *pData = NULL;
 
 			// Если вместе с заголовком пришли измененные данные
-			if (pInfo->nDataShift && pInfo->nDataCount)
+			if (pInfo->ConState.nDataCount)
 			{
 				LOGCONSOLECHANGE("ApplyConsoleInfo: Console contents received");
 
-				mp_RCon->mn_LastConsolePacketIdx = pInfo->nPacketId;
+				mp_RCon->mn_LastConsolePacketIdx = pInfo->ConState.nPacketId;
 
-				if (CharCount < pInfo->nDataCount)
-					CharCount = pInfo->nDataCount;
+				if (CharCount < pInfo->ConState.nDataCount)
+					CharCount = pInfo->ConState.nDataCount;
 
 				#ifdef _DEBUG
-				if (pInfo->nDataCount != (nNewWidth * nNewHeight))
+				if (pInfo->ConState.nDataCount != (nNewWidth * nNewHeight))
 				{
 					// Это может случиться во время пересоздания консоли (когда фар падал)
-					_ASSERTE(pInfo->nDataCount == (nNewWidth * nNewHeight));
+					_ASSERTE(pInfo->ConState.nDataCount == (nNewWidth * nNewHeight));
 				}
 				#endif
 
 
-				pData = (CHAR_INFO*)(((LPBYTE)pInfo) + pInfo->nDataShift);
+				pData = (CHAR_INFO*)((&pInfo->ConState)+1);
 
 				// Проверка размера!
-				nCalcCount = (pInfo->cmd.cbSize - pInfo->nDataShift) / sizeof(CHAR_INFO);
+				nCalcCount = (pInfo->hdr.cbSize - sizeof(pInfo->hdr) - sizeof(pInfo->ConState)) / sizeof(CHAR_INFO);
 				#ifdef _DEBUG
 				if (nCalcCount != CharCount)
 				{
