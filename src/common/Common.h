@@ -2422,6 +2422,9 @@ const RequestLocalServerFlags
 	slsf_FarCommitForce    = 32,
 	slsf_GetCursorEvent    = 64,
 	slsf_ReinitWindows     = 128,
+	slsf_OnFreeConsole     = 256,
+	slsf_OnAllocConsole    = 512,
+	slsf__EventsOnly       = (slsf_GetFarCommitEvent|slsf_FarCommitForce|slsf_GetCursorEvent|slsf_OnFreeConsole|slsf_OnAllocConsole),
 	slsf_None              = 0;
 struct RequestLocalServerParm
 {

@@ -1623,16 +1623,14 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 		if (in.dwData[0] == 1)
 		{
 			gpSrv->nPrevAltServer = in.dwData[1];
-			if (!gpSrv->hFreezeRefreshThread)
-				gpSrv->hFreezeRefreshThread = CreateEvent(NULL, TRUE, FALSE, NULL);
-			ResetEvent(gpSrv->hFreezeRefreshThread);
+
+			FreezeRefreshThread();
 		}
 		else
 		{
 			klSwap(nPrevAltServer, gpSrv->nPrevAltServer);
 
-			if (gpSrv->hFreezeRefreshThread)
-				SetEvent(gpSrv->hFreezeRefreshThread);
+			ThawRefreshThread();
 
 			if (gnRunMode == RM_ALTSERVER)
 			{

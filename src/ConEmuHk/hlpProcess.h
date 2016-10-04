@@ -93,6 +93,8 @@ const ConEmuHkDllState
 	ds_DllStopped              = 0x00000200,
 	ds_HooksStarting           = 0x00001000,
 	ds_HooksStopping           = 0x00002000,
+	ds_HooksCommon             = 0x00004000, // InitHooksCommon() was called
+	ds_HooksDefTerm            = 0x00008000, // InitHooksDefTerm() was called
 	ds_HooksStarted            = 0x00010000,
 	ds_HooksStartFailed        = 0x00020000,
 	ds_HooksStopped            = 0x00040000,

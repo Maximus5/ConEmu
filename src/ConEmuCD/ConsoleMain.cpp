@@ -311,6 +311,59 @@ UINT gnMsgSwitchCon = 0;
 UINT gnMsgHookedKey = 0;
 //UINT gnMsgConsoleHookedKey = 0;
 
+void LoadSrvInfoMap(LPCWSTR pszExeName = NULL, LPCWSTR pszDllName = NULL)
+{
+	if (ghConWnd)
+	{
+		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConInfo;
+		ConInfo.InitName(CECONMAPNAME, LODWORD(ghConWnd)); //-V205
+		CESERVER_CONSOLE_MAPPING_HDR *pInfo = ConInfo.Open();
+		if (pInfo)
+		{
+			if (pInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
+			{
+				if (pInfo->hConEmuRoot && IsWindow(pInfo->hConEmuRoot))
+				{
+					SetConEmuWindows(pInfo->hConEmuRoot, pInfo->hConEmuWndDc, pInfo->hConEmuWndBack);
+				}
+				if (pInfo->nServerPID && pInfo->nServerPID != gnSelfPID)
+				{
+					gnMainServerPID = pInfo->nServerPID;
+					gnAltServerPID = pInfo->nAltServerPID;
+				}
+
+				gbLogProcess = (pInfo->nLoggingType == glt_Processes);
+				if (pszExeName && gbLogProcess)
+				{
+					CEStr lsDir;
+					int ImageBits = 0, ImageSystem = 0;
+					#ifdef _WIN64
+					ImageBits = 64;
+					#else
+					ImageBits = 32;
+					#endif
+					CESERVER_REQ* pIn = ExecuteNewCmdOnCreate(pInfo, ghConWnd, eSrvLoaded,
+						L"", pszExeName, pszDllName, GetDirectory(lsDir), NULL, NULL, NULL, NULL,
+						ImageBits, ImageSystem,
+						GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
+					if (pIn)
+					{
+						CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+						ExecuteFreeResult(pIn);
+						if (pOut) ExecuteFreeResult(pOut);
+					}
+				}
+
+				ConInfo.CloseMap();
+			}
+			else
+			{
+				_ASSERTE(pInfo->cbSize == sizeof(CESERVER_CONSOLE_MAPPING_HDR));
+			}
+		}
+	}
+}
+
 #if defined(__GNUC__)
 extern "C"
 #endif
@@ -400,54 +453,8 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			// Открыть мэппинг консоли и попытаться получить HWND GUI, PID сервера, и пр...
 			if (ghConWnd)
-			{
-				MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> ConInfo;
-				ConInfo.InitName(CECONMAPNAME, LODWORD(ghConWnd)); //-V205
-				CESERVER_CONSOLE_MAPPING_HDR *pInfo = ConInfo.Open();
-				if (pInfo)
-				{
-					if (pInfo->cbSize >= sizeof(CESERVER_CONSOLE_MAPPING_HDR))
-					{
-						if (pInfo->hConEmuRoot && IsWindow(pInfo->hConEmuRoot))
-						{
-							SetConEmuWindows(pInfo->hConEmuRoot, pInfo->hConEmuWndDc, pInfo->hConEmuWndBack);
-						}
-						if (pInfo->nServerPID && pInfo->nServerPID != gnSelfPID)
-						{
-							gnMainServerPID = pInfo->nServerPID;
-							gnAltServerPID = pInfo->nAltServerPID;
-						}
+				LoadSrvInfoMap(szExeName, szDllName);
 
-						gbLogProcess = (pInfo->nLoggingType == glt_Processes);
-						if (gbLogProcess)
-						{
-							CEStr lsDir;
-							int ImageBits = 0, ImageSystem = 0;
-							#ifdef _WIN64
-							ImageBits = 64;
-							#else
-							ImageBits = 32;
-							#endif
-							CESERVER_REQ* pIn = ExecuteNewCmdOnCreate(pInfo, ghConWnd, eSrvLoaded,
-								L"", szExeName, szDllName, GetDirectory(lsDir), NULL, NULL, NULL, NULL,
-								ImageBits, ImageSystem,
-								GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
-							if (pIn)
-							{
-								CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-								ExecuteFreeResult(pIn);
-								if (pOut) ExecuteFreeResult(pOut);
-							}
-						}
-
-						ConInfo.CloseMap();
-					}
-					else
-					{
-						_ASSERTE(pInfo->cbSize == sizeof(CESERVER_CONSOLE_MAPPING_HDR));
-					}
-				}
-			}
 
 			//if (!gbSkipInjects && ghConWnd)
 			//{
@@ -2220,7 +2227,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	}
 
 	// Если больше ничего кроме регистрации событий нет
-	if ((Parm->Flags & (slsf_GetFarCommitEvent|slsf_FarCommitForce|slsf_GetCursorEvent)) == Parm->Flags)
+	if ((Parm->Flags & slsf__EventsOnly) == Parm->Flags)
 	{
 		goto DoEvents;
 	}
@@ -2284,10 +2291,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	}
 
 	// Если поток RefreshThread был "заморожен" при запуске другого сервера
-	if (gpSrv->hFreezeRefreshThread)
-	{
-		SetEvent(gpSrv->hFreezeRefreshThread);
-	}
+	ThawRefreshThread();
 
 	TODO("Инициализация TrueColor буфера - Parm->ppAnnotation");
 
@@ -2322,6 +2326,20 @@ DoEvents:
 		_ASSERTE(Parm->hCursorChangeEvent!=NULL);
 
 		gpSrv->bCursorChangeRegistered = TRUE;
+	}
+
+	if (Parm->Flags & slsf_OnFreeConsole)
+	{
+		FreezeRefreshThread();
+	}
+
+	if (Parm->Flags & slsf_OnAllocConsole)
+	{
+		ghConWnd = GetConEmuHWND(2);
+		LoadSrvInfoMap();
+		//TODO: Request AltServer state from MainServer?
+
+		ThawRefreshThread();
 	}
 
 wrap:

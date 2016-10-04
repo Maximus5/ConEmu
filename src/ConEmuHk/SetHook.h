@@ -223,6 +223,10 @@ int  InitHooks(HookItem* apHooks);
 bool SetAllHooks();
 void UnsetAllHooks();
 
+// following two are defined in ConEmuHooks.cpp, but declared here
+bool InitHooksCommon();
+bool InitHooksDefTerm();
+
 bool SetImports(LPCWSTR asModule, HMODULE Module, BOOL abForceHooks);
 void UnsetImports();
 

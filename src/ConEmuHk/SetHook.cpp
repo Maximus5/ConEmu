@@ -130,9 +130,6 @@ HMODULE* ghSysDll[] = {
 
 // Forwards
 
-bool InitHooksCommon();
-bool InitHooksDefTerm();
-
 void LogModuleLoaded(LPCWSTR pwszModule, HMODULE hModule);
 void LogModuleUnloaded(LPCWSTR pwszModule, HMODULE hModule);
 
@@ -419,7 +416,8 @@ void* __cdecl GetOriginalAddress(void* OurFunction, DWORD nFnID /*= 0*/, void* A
 	}
 
 	// That is strange. Try to find via pointer
-	_ASSERTE(abAllowNulls && "Function index was not detected");
+	// gh-888: Due AllocConsole from DefTerm (GUI app) only limited list of functions may be hooked
+	_ASSERTE((abAllowNulls || gbPrepareDefaultTerminal) && "Function index was not detected");
 	for (int i = 0; gpHooks[i].NewAddress; i++)
 	{
 		if (gpHooks[i].NewAddress == OurFunction)
@@ -437,15 +435,17 @@ wrap:
 	// Not yet hooked?
 	if (!lpfn && !abAllowNulls && ApiFunction)
 	{
-		if (!HooksWereSet)
+		#ifdef _DEBUG
+		if (HooksWereSet)
 		{
-			if (ph) *ph = NULL;
-			lpfn = ApiFunction;
+			static bool asserted = false;
+			_ASSERT(asserted && "The function was not hooked before");
+			if (gbPrepareDefaultTerminal)
+				asserted = true;
 		}
-		else
-		{
-			_ASSERT(!HooksWereSet);
-		}
+		#endif
+		if (ph) *ph = NULL;
+		lpfn = ApiFunction;
 	}
 
 	_ASSERT(lpfn || (!HooksWereSet || abAllowNulls));
@@ -657,7 +657,7 @@ int InitHooks(HookItem* apHooks)
 			{
 				if (gpHooks[j].NewAddress == apHooks[i].NewAddress)
 				{
-					_ASSERTEX(FALSE && "Function NewAddress is not unique! Skipped!");
+					_ASSERTEX((gnDllState & ds_HooksStarted) && "Function NewAddress is not unique! Skipped!");
 					skip = true; break;
 				}
 

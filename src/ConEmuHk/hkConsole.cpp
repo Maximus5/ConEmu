@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015 Maximus5
+Copyright (c) 2015-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 #include "../common/HandleKeeper.h"
+#include "../common/MModule.h"
 #include "../common/WConsole.h"
 
 #include "Ansi.h"
@@ -408,6 +409,18 @@ BOOL WINAPI OnAllocConsole(void)
 				SetConsoleScreenBufferSize(hStdOut, crLocked);
 			}
 		}
+
+		if (lbRc)
+		{
+			int (WINAPI* fnRequestLocalServer)(/*[IN/OUT]*/RequestLocalServerParm* Parm);
+			MModule server(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
+			if (server.GetProcAddress("PrivateEntry",fnRequestLocalServer))
+			{
+				RequestLocalServerParm args = {sizeof(args)};
+				args.Flags = slsf_OnAllocConsole;
+				fnRequestLocalServer(&args);
+			}
+		}
 	}
 
 	//InitializeConsoleInputSemaphore();
@@ -420,9 +433,6 @@ BOOL WINAPI OnAllocConsole(void)
 
 	HWND hNewConWnd = GetRealConsoleWindow();
 
-	// Обновить ghConWnd и мэппинг
-	OnConWndChanged(hNewConWnd);
-
 	#ifdef _DEBUG
 	//_ASSERTEX(lbRc && ghConWnd);
 	wchar_t szAlloc[500], szFile[MAX_PATH];
@@ -434,20 +444,31 @@ BOOL WINAPI OnAllocConsole(void)
 	//MessageBox(NULL, szAlloc, L"OnAllocConsole called", MB_SYSTEMMODAL);
 	#endif
 
-	if (hNewConWnd && (hNewConWnd != hOldConWnd) && gpDefTerm && gbIsNetVsHost)
+	if (hNewConWnd)
 	{
-		DefTermMsg(L"Calling gpDefTerm->OnAllocConsoleFinished");
-		gpDefTerm->OnAllocConsoleFinished();
-		SetLastError(0);
-	}
-	else if (hNewConWnd)
-	{
-		DefTermMsg(L"Console was already allocated");
+		if (gpDefTerm)
+		{
+			// This would start ConEmuC (console server) attached to our process
+			DefTermMsg(L"Calling gpDefTerm->OnAllocConsoleFinished");
+			// This would call OnConWndChanged too
+			gpDefTerm->OnAllocConsoleFinished(hNewConWnd);
+		}
+		else
+		{
+			DefTermMsg(L"Console was already allocated");
+			// Refresh ghConWnd, mapping, ServerPID, etc.
+			OnConWndChanged(hNewConWnd);
+		}
 	}
 	else
 	{
 		DefTermMsg(L"Something was wrong");
 	}
+
+
+	// On success - reset LastError (our functions may interfere)
+	if (lbRc)
+		SetLastError(0);
 
 	TODO("Можно бы по настройке установить параметры. Кодовую страницу, например");
 
@@ -470,6 +491,18 @@ BOOL WINAPI OnFreeConsole(void)
 	}
 
 	//ReleaseConsoleInputSemaphore();
+
+	if (ghConWnd)
+	{
+		int (WINAPI* fnRequestLocalServer)(/*[IN/OUT]*/RequestLocalServerParm* Parm);
+		MModule server(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
+		if (server.GetProcAddress("PrivateEntry",fnRequestLocalServer))
+		{
+			RequestLocalServerParm args = {sizeof(args)};
+			args.Flags = slsf_OnFreeConsole;
+			fnRequestLocalServer(&args);
+		}
+	}
 
 	lbRc = F(FreeConsole)();
 

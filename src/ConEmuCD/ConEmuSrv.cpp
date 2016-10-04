@@ -2305,6 +2305,13 @@ void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 	{
 		_wsprintfA(szInfo+lstrlenA(szInfo), SKIPLEN(30) "ConEmuWnd=x%08X ", (DWORD)(DWORD_PTR)hRootWnd);
 		ghConEmuWnd = hRootWnd;
+
+		// Than check GuiPID
+		DWORD nGuiPid = 0;
+		if (GetWindowThreadProcessId(hRootWnd, &nGuiPid) && nGuiPid)
+		{
+			gnConEmuPID = nGuiPid;
+		}
 	}
 	// Do AllowSetForegroundWindow
 	if (hRootWnd)
@@ -4479,6 +4486,60 @@ void ShowSleepIndicator(SleepIndicatorType SleepType, bool bSleeping)
 }
 
 
+bool FreezeRefreshThread()
+{
+	MSectionLockSimple csControl;
+	csControl.Lock(&gpSrv->csRefreshControl, LOCK_REFRESH_CONTROL_TIMEOUT);
+	if (!gpSrv->hFreezeRefreshThread)
+		gpSrv->hFreezeRefreshThread = CreateEvent(NULL, TRUE, FALSE, NULL);
+
+	if (GetCurrentThreadId() == gpSrv->dwRefreshThread)
+	{
+		_ASSERTE(GetCurrentThreadId() != gpSrv->dwRefreshThread);
+		return false;
+	}
+	
+	gpSrv->nRefreshFreezeRequests++;
+	ResetEvent(gpSrv->hFreezeRefreshThread);
+
+	csControl.Unlock();
+
+	// wait while refresh thread becomes freezed
+	DWORD nStartTick = GetTickCount(), nCurTick = 0; //TODO: replace with service class
+	DWORD nWait = (DWORD)-1;
+	HANDLE hWait[] = {gpSrv->hRefreshThread, ghQuitEvent};
+	while (gpSrv->hRefreshThread && (gpSrv->nRefreshIsFreezed <= 0))
+	{
+		nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, 100);
+		if ((nWait == WAIT_OBJECT_0) || (nWait == (WAIT_OBJECT_0+1)))
+			break;
+		if (((nCurTick = GetTickCount()) - nStartTick) > LOCK_REFRESH_CONTROL_TIMEOUT)
+			break;
+	}
+
+	return (gpSrv->nRefreshIsFreezed > 0) || (gpSrv->hRefreshThread == NULL);
+}
+
+bool ThawRefreshThread()
+{
+	MSectionLockSimple csControl;
+	csControl.Lock(&gpSrv->csRefreshControl, LOCK_REFRESH_CONTROL_TIMEOUT);
+
+	if (gpSrv->nRefreshFreezeRequests > 0)
+	{
+		gpSrv->nRefreshFreezeRequests--;
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Unbalanced FreezeRefreshThread/ThawRefreshThread calls");
+	}
+
+	// decrease counter, if == 0 thaw the thread
+	if (gpSrv->hFreezeRefreshThread && (gpSrv->nRefreshFreezeRequests == 0))
+		SetEvent(gpSrv->hFreezeRefreshThread);
+
+	return (gpSrv->nRefreshFreezeRequests == 0);
+}
 
 
 DWORD WINAPI RefreshThread(LPVOID lpvParam)
@@ -4525,13 +4586,17 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		//lbForceSend = FALSE;
 		MCHKHEAP;
 
+
 		if (gpSrv->hFreezeRefreshThread)
 		{
 			HANDLE hFreeze[2] = {gpSrv->hFreezeRefreshThread, ghQuitEvent};
+			InterlockedIncrement(&gpSrv->nRefreshIsFreezed);
 			nFreezeWait = WaitForMultipleObjects(countof(hFreeze), hFreeze, FALSE, INFINITE);
+			InterlockedDecrement(&gpSrv->nRefreshIsFreezed);
 			if (nFreezeWait == (WAIT_OBJECT_0+1))
 				break; // затребовано завершение потока
 		}
+
 
 		if (gpSrv->hWaitForSetConBufThread)
 		{

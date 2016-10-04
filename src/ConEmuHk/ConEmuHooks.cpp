@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2015 Maximus5
+Copyright (c) 2009-2016 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -705,6 +705,12 @@ bool InitHooksDefTerm()
 		HOOK_ITEM_BY_NAME(ShellExecuteExW,		shell32),
 		{0}
 	};
+	HookItem HooksAllocConsole[] =
+	{
+		// gh-888, gh-55: Allow to use ConEmu as default console in third-party applications
+		HOOK_ITEM_BY_NAME(AllocConsole,			kernel32), // Only for "*.vshost.exe"?
+		{0}
+	};
 	HookItem HooksCmdLine[] =
 	{
 		// Issue 1125: "Run as administrator" too. Must be last export
@@ -714,7 +720,7 @@ bool InitHooksDefTerm()
 	HookItem HooksVshost[] =
 	{
 		// Issue 1312: .Net applications runs in "*.vshost.exe" helper GUI application when debugging
-		HOOK_ITEM_BY_NAME(AllocConsole,			kernel32), // Only for "*.vshost.exe"?
+		// AllocConsole moved to HooksCommon
 		HOOK_ITEM_BY_NAME(ShowWindow,			user32),
 		/* ************************ */
 		{0}
@@ -737,6 +743,12 @@ bool InitHooksDefTerm()
 	if (InitHooks(HooksCommon) < 0)
 		goto wrap;
 
+	if (gbIsNetVsHost || gbPrepareDefaultTerminal)
+	{
+		if (InitHooks(HooksAllocConsole) < 0)
+			goto wrap;
+	}
+
 	// Windows 7. There is new undocumented function "ShellExecCmdLine" used by Explorer
 	if (IsWin7())
 	{
@@ -758,6 +770,8 @@ bool InitHooksDefTerm()
 			goto wrap;
 	}
 
+	gnDllState |= ds_HooksDefTerm;
+
 	lbRc = true;
 wrap:
 	HLOGEND1();
@@ -773,8 +787,11 @@ wrap:
 
 bool InitHooksCommon()
 {
-	if (!InitHooksLibrary())
-		return false;
+	if (!(gnDllState & ds_HooksDefTerm))
+	{
+		if (!InitHooksLibrary())
+			return false;
+	}
 
 	if (!InitHooksKernel())
 		return false;
@@ -796,6 +813,8 @@ bool InitHooksCommon()
 
 	if (!InitHooksCmdExe())
 		return false;
+
+	gnDllState |= ds_HooksCommon;
 
 	return true;
 }

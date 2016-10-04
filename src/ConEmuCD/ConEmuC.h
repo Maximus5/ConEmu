@@ -218,6 +218,7 @@ extern wchar_t gszDbgModLabel[6];
 #define LOCK_REOPENCONOUT_TIMEOUT 250
 #define WAIT_SETCONSCRBUF_MAX_TIMEOUT 60000
 #define WAIT_SETCONSCRBUF_MIN_TIMEOUT 15000
+#define LOCK_REFRESH_CONTROL_TIMEOUT 2500
 
 //#define IMAGE_SUBSYSTEM_DOS_EXECUTABLE  255
 
@@ -272,7 +273,9 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out);
 void CheckCursorPos();
 BOOL ReloadFullConsoleInfo(BOOL abForceSend);
 bool CheckWasFullScreen();
-DWORD WINAPI RefreshThread(LPVOID lpvParam); // Нить, перечитывающая содержимое консоли
+DWORD WINAPI RefreshThread(LPVOID lpvParam); // Thread reloading console contents
+bool FreezeRefreshThread();
+bool ThawRefreshThread();
 int ServerInit(); // Создать необходимые события и нити
 void ServerDone(int aiRc, bool abReportShutdown = false);
 BOOL ServerInitConsoleMode();
@@ -481,7 +484,15 @@ struct SrvInfo
 	DWORD dwAltServerPID; DWORD dwPrevAltServerPID;
 	MMap<DWORD,AltServerInfo> AltServers;
 
+	// Refresh thread
+	HANDLE hRefreshThread;
+	DWORD  dwRefreshThread;
+	BOOL   bRefreshTermination;
+	LONG   nRefreshFreezeRequests;
+	LONG   nRefreshIsFreezed; // atomic
 	HANDLE hFreezeRefreshThread;
+	MSectionSimple csRefreshControl;
+
 	DWORD  nPrevAltServer; // Informational, only for RM_ALTSERVER
 
 	// CECMD_SETCONSCRBUF
@@ -500,7 +511,6 @@ struct SrvInfo
 	BOOL   bStationLocked; // Don't read console output while station is locked
 	//
 	PipeServer<CESERVER_REQ> CmdServer;
-	HANDLE hRefreshThread;  DWORD dwRefreshThread;  BOOL bRefreshTermination;
 	PipeServer<MSG64> InputServer;
 	PipeServer<CESERVER_REQ> DataServer;
 	bool   bServerForcedTermination;

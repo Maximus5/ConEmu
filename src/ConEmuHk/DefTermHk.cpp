@@ -517,7 +517,7 @@ HWND CDefTermHk::AllocHiddenConsole(bool bTempForVS)
 	LogHookingStatus(GetCurrentProcessId(), L"AllocHiddenConsole");
 
 	ReloadSettings();
-	_ASSERTEX(isDefTermEnabled() && (gbIsNetVsHost || bTempForVS));
+	_ASSERTEX(isDefTermEnabled() && (gbIsNetVsHost || bTempForVS || gbPrepareDefaultTerminal));
 
 	if (!isDefTermEnabled())
 	{
@@ -654,7 +654,7 @@ DWORD CDefTermHk::StartConsoleServer(DWORD nAttachPID, bool bNewConWnd, PHANDLE 
 	return pi.dwProcessId;
 }
 
-void CDefTermHk::OnAllocConsoleFinished()
+void CDefTermHk::OnAllocConsoleFinished(HWND hNewConWnd)
 {
 	if (!gbPrepareDefaultTerminal || !this)
 	{
@@ -662,36 +662,52 @@ void CDefTermHk::OnAllocConsoleFinished()
 		return;
 	}
 
-	if (!ghConWnd || !IsWindow(ghConWnd))
+	if (!hNewConWnd || !IsWindow(hNewConWnd))
 	{
-		LogHookingStatus(GetCurrentProcessId(), L"OnAllocConsoleFinished: ghConWnd must be initialized already!");
-		_ASSERTEX(FALSE && "ghConWnd must be initialized already!");
+		LogHookingStatus(GetCurrentProcessId(), L"OnAllocConsoleFinished: hNewConWnd must be initialized already!");
+		_ASSERTEX(FALSE && "hNewConWnd must be initialized already!");
 		return;
 	}
 
 	ReloadSettings();
-	_ASSERTEX(isDefTermEnabled() && gbIsNetVsHost);
 
 	if (!isDefTermEnabled())
 	{
+		_ASSERTEX(isDefTermEnabled());
 		// Disabled in settings or registry
 		LogHookingStatus(GetCurrentProcessId(), L"OnAllocConsoleFinished: !isDefTermEnabled()");
 		return;
 	}
 
-	// По идее, после AllocConsole окно RealConsole всегда видимо
-	BOOL bConWasVisible = IsWindowVisible(ghConWnd);
-	_ASSERTEX(bConWasVisible);
-	// Чтобы минимизировать "мелькания" - сразу спрячем его
-	ShowWindow(ghConWnd, SW_HIDE);
-	LogHookingStatus(GetCurrentProcessId(), L"Console window was hidden");
-
-	if (!StartConsoleServer(gnSelfPID, false, NULL))
+	// VsConsoleHost has some specifics (debugging managed apps)
+	if (gbIsNetVsHost)
 	{
-		if (bConWasVisible)
-			ShowWindow(ghConWnd, SW_SHOW);
-		LogHookingStatus(GetCurrentProcessId(), L"Starting attach server failed?");
+		// По идее, после AllocConsole окно RealConsole всегда видимо
+		BOOL bConWasVisible = IsWindowVisible(hNewConWnd);
+		_ASSERTEX(bConWasVisible);
+		// Чтобы минимизировать "мелькания" - сразу спрячем его
+		ShowWindow(hNewConWnd, SW_HIDE);
+		LogHookingStatus(GetCurrentProcessId(), L"Console window was hidden");
+
+		if (!StartConsoleServer(gnSelfPID, false, NULL))
+		{
+			if (bConWasVisible)
+				ShowWindow(hNewConWnd, SW_SHOW);
+			LogHookingStatus(GetCurrentProcessId(), L"Starting attach server failed?");
+		}
 	}
+
+	// If required - hook full set of console functions
+	if (!(gnDllState & ds_HooksCommon))
+	{
+		// Add to list all **absent** functions
+		InitHooksCommon();
+		// Set hooks on all functions weren't hooked before
+		SetAllHooks();
+	}
+
+	// Refresh ghConWnd, mapping, ServerPID, etc.
+	OnConWndChanged(hNewConWnd);
 }
 
 size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)

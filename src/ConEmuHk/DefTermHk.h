@@ -57,7 +57,7 @@ public:
 	// Запустить сервер, и подцепиться к его консоли
 	HWND AllocHiddenConsole(bool bTempForVS);
 	// Вызывается из хуков после успешного AllocConsole (Win2k only? а смысл?)
-	void OnAllocConsoleFinished();
+	void OnAllocConsoleFinished(HWND hNewConWnd);
 
 	virtual bool isDefaultTerminalAllowed(bool bDontCheckName = false) override; // !(gpConEmu->DisableSetDefTerm || !gpSet->isSetDefaultTerminal)
 	virtual void StopHookers() override;
