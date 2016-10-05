@@ -2283,22 +2283,22 @@ template <class T> void DumpExportsSection(PEData *pData, PBYTE pImageBase, T * 
 						//pRoot->printf("  %s", GetPtrFromRVA(pszFuncNames[j], pNTHeader, pImageBase) );
 						if (pszFuncName && *pszFuncName == 'S')
 						{
-							if (!strcmp(pszFuncName, "SetStartupInfo"))
+							if (!lstrcmpA(pszFuncName, "SetStartupInfo"))
 							{
 								//pRoot->AddFlags(_T("FAR1"));
 								pData->nFlags |= PE_Far1;
 							}
-							else if (!strcmp(pszFuncName, "SetStartupInfoW"))
+							else if (!lstrcmpA(pszFuncName, "SetStartupInfoW"))
 							{
 								//pRoot->AddFlags(_T("FAR2"));
 								pData->nFlags |= PE_Far2;
 							}
-							else if (!strcmp(pszFuncName, "GetGlobalInfoW"))
+							else if (!lstrcmpA(pszFuncName, "GetGlobalInfoW"))
 							{
 								//pRoot->AddFlags(_T("FAR3"));
 								pData->nFlags |= PE_Far3;
 							}
-							else if (!strcmp(pszFuncName, "OpenPluginW") || !strcmp(pszFuncName, "OpenFilePluginW"))
+							else if (!lstrcmpA(pszFuncName, "OpenPluginW") || !lstrcmpA(pszFuncName, "OpenFilePluginW"))
 							{
 								lbOpenPluginW = true;
 							}
