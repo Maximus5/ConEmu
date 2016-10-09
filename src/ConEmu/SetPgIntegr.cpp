@@ -476,6 +476,8 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfi
 
 	asCmd = SkipNonPrintable(asCmd);
 
+	bool isExtendedItem = isPressed(VK_SHIFT);
+
 	#ifdef _DEBUG
 	CEStr szMode(asMode);
 	_ASSERTE(szMode.IsSwitch(L"-here") || szMode.IsSwitch(L"-inside") || szMode.IsSwitch(L"-inside:"));
@@ -613,6 +615,13 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfi
 						iSucceeded++;
 					RegCloseKey(hkCmd);
 				}
+
+				// Extended item - Explorer shows them when 'Shift' is pressed
+				wchar_t szDummy[1] = {0};
+				if (isExtendedItem)
+					RegSetValueEx(hkConEmu, L"Extended", 0, REG_SZ, reinterpret_cast<LPBYTE>(szDummy), 1*sizeof(szDummy[0]));
+				else
+					RegDeleteValue(hkConEmu, L"Extended");
 
 				RegCloseKey(hkConEmu);
 			}
