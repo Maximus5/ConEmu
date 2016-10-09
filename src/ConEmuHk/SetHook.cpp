@@ -906,12 +906,6 @@ bool StartupHooks()
 	}
 	HLOGEND1();
 
-	extern FARPROC CallWriteConsoleW;
-	CallWriteConsoleW = (FARPROC)GetOriginalAddress((LPVOID)OnWriteConsoleW, HOOK_FN_ID(WriteConsoleW), NULL, NULL, gbPrepareDefaultTerminal);
-
-	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp
-	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress((LPVOID)OnGetConsoleWindow, HOOK_FN_ID(GetConsoleWindow), NULL, NULL, gbPrepareDefaultTerminal);
-
 	print_timings(L"SetAllHooks - done");
 
 	return lbRc;
@@ -1691,6 +1685,14 @@ bool SetAllHooks()
 	_ASSERTE(status == MH_OK);
 
 	DebugString(L"SetAllHooks finished\n");
+
+	extern FARPROC CallWriteConsoleW;
+	CallWriteConsoleW = (FARPROC)GetOriginalAddress((LPVOID)OnWriteConsoleW, HOOK_FN_ID(WriteConsoleW), NULL, NULL, gbPrepareDefaultTerminal);
+
+	extern GetConsoleWindow_T gfGetRealConsoleWindow; // from ConEmuCheck.cpp
+	gfGetRealConsoleWindow = (GetConsoleWindow_T)GetOriginalAddress((LPVOID)OnGetConsoleWindow, HOOK_FN_ID(GetConsoleWindow), NULL, NULL, gbPrepareDefaultTerminal);
+
+	DebugString(L"Functions prepared\n");
 
 	return true;
 }
