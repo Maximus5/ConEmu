@@ -268,6 +268,20 @@ public:
 
 		HWND hConWnd = GetConsoleWindow();
 
+		FILETIME CreationTime = {}, ExitTime = {}, KernelTime = {}, UserTime = {};
+		wchar_t szStartTime[32] = L"";
+		if (GetProcessTimes(GetCurrentProcess(), &CreationTime, &ExitTime, &KernelTime, &UserTime))
+		{
+			FILETIME lft = {};
+			SYSTEMTIME st = {};
+			if (FileTimeToLocalFileTime(&CreationTime, &lft)
+				&& FileTimeToSystemTime(&lft, &st))
+					_wsprintf(szStartTime, SKIPLEN(countof(szStartTime))
+						L"%u-%02u-%02u %02u:%02u:%02u.%03u",
+						st.wYear, st.wMonth, st.wDay,
+						st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+		}
+
 		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%u.%u.%u.x%u", osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, bWin64 ? 64 : 32);
 		if ((osv.dwMajorVersion == 6) && (osv.dwMinorVersion == 3))
 		{
@@ -285,12 +299,14 @@ public:
 			L"  OsVer: %s, Product: %u, SP: %u.%u, Suite: 0x%X, SM_SERVERR2: %u\r\n"
 			L"  CSDVersion: %s, ReactOS: %u (%s), Rsrv: %u\r\n"
 			L"  DBCS: %u, WINE: %u, PE: %u, Remote: %u, ACP: %u, OEMCP: %u, Admin: %u\r\n"
+			L"  StartTime: %s\r\n"
 			, szBuild, WIN3264TEST(32,64),
 			szTitle,
 			osv.wProductType, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask, GetSystemMetrics(89/*SM_SERVERR2*/),
 			osv.szCSDVersion, apStartEnv->bIsReactOS, pszReactOS, osv.wReserved,
 			apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->bIsWinPE, apStartEnv->bIsRemote,
-			apStartEnv->nAnsiCP, apStartEnv->nOEMCP, apStartEnv->bIsAdmin);
+			apStartEnv->nAnsiCP, apStartEnv->nOEMCP, apStartEnv->bIsAdmin,
+			szStartTime);
 		DumpEnvStr(szSI, lParam, true, false);
 
 		lstrcpyn(szDesktop, apStartEnv->si.lpDesktop ? apStartEnv->si.lpDesktop : L"<NULL>", countof(szDesktop));
