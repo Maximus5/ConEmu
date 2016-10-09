@@ -203,6 +203,9 @@
 
     <!-- Macroses -->
     <DirectoryRef Id="ConEmuFar3Lua">
+      <Component Id="CtrlNumber.lua3" Guid="$(var.Guid.CtrlNumber.lua3)" Win64="$(var.Win64)">
+        <File Id="CtrlNumber.lua3" Source="..\..\Release\ConEmu\Far3_lua\ConEmu.CtrlNumber.lua"  KeyPath="yes" />
+      </Component>
       <Component Id="CtrlO.lua3" Guid="$(var.Guid.CtrlO.lua3)" Win64="$(var.Win64)">
         <File Id="CtrlO.lua3" Source="..\..\Release\ConEmu\Far3_lua\ConEmu.CtrlO.lua"  KeyPath="yes" />
       </Component>

@@ -1,3 +1,4 @@
+ConEmu.CtrlNumber.lua ConEmu: Emulate `Ctrl+Number` on `LCtrl+Shift+Number` keypress
 ConEmu.CtrlO.lua ConEmu: Show output of last console command
 ConEmu.CtrlShiftT.lua ConEmu: Switch tabs visibility
 ConEmu.Editor.lua ConEmu: Auto switch to Editor/Viewer Tab

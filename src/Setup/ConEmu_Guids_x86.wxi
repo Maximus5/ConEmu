@@ -74,6 +74,7 @@
 	<?define Guid.ConEmuInside.reg = "DCCA7E45-6FC3-48C4-852F-A178550954A5" ?>
 	<?define Guid.ConEmuInsideUninstall.reg = "03978C0D-C502-40AA-BECF-C7E853252196" ?>
 
+	<?define Guid.CtrlNumber.lua3 = "055D605B-7BC6-4E84-A9BC-18921E2E3888" ?>
 	<?define Guid.CtrlO.lua3 = "B0AD7E8D-9C41-4420-A2F8-2B94F7D18A6C" ?>
 	<?define Guid.CtrlShiftT.lua3 = "4CA1CAF6-E314-4400-A916-30C1F9E5E464" ?>
 	<?define Guid.ShiftEnter.lua3 = "19995D8F-0DFD-4962-9AC0-41B9359CF047" ?>

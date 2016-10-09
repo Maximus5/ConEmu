@@ -98,6 +98,7 @@
       </Feature>
       <Feature Id="FConEmuAddonsMacroLua3" AllowAdvertise="no" Title="Far3 macros (*.lua)" Level="1"
                Description="Sample macros (in lua-files), useful with ConEmu">
+        <ComponentRef Id="CtrlNumber.lua3"/>
         <ComponentRef Id="CtrlO.lua3"/>
         <ComponentRef Id="CtrlShiftT.lua3"/>
         <ComponentRef Id="Editor.lua3"/>
