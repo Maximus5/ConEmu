@@ -3158,7 +3158,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 			else if (bActive)
 			{
 				// Если в консоли заголовок не менялся, но он отличается от заголовка в ConEmu
-				mp_ConEmu->CheckNeedUpdateTitle(GetTitle());
+				mp_ConEmu->CheckNeedUpdateTitle(GetTitle(true));
 			}
 
 			if (!bVisible)
