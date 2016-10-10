@@ -20,6 +20,19 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.10.9
+* GuiMacro: Allow {Task} arguments in `Shell` function.
+* Reuse previous palette on Unfasten/Re-Attach.
+* gh-888: Allow to use ConEmu as default console in third-party applications.
+* DefTerm. Reinit some functions in SetAllHook
+* gh-830: Fix: Significant dwm.exe CPU time when renamed ConEmu tab is active.
+* gh-886: Settings / Integration: When ‘Shift’ is pressed during ‘Register’ button click,
+  ConEmu's ‘Here’ and ‘Inside’ items are registered as ‘extended’ menu items,
+  and they are shown by Explorer only when ‘Shift’ is pressed.
+* Show process startup time in SysInfo and LogFiles.
+* Far macro emulating `Ctrl+Number` on `LCtrl+Shift+Number` keypress.
+
+
 2016.10.2
 * gh-879: Fix doubled CJK glyphs on Windows 10 build 14931.
   Windows 10 (since 14931) has changed behavior for double-cell glyphs. Now they are
