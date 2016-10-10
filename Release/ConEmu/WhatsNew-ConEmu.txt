@@ -20,6 +20,10 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.10.9a
+* gh-896: Fix regression: cygwin/msys process creation was broken.
+
+
 2016.10.9
 * GuiMacro: Allow {Task} arguments in `Shell` function.
 * Reuse previous palette on Unfasten/Re-Attach.
