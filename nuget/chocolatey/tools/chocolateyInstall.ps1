@@ -1,5 +1,5 @@
 $package = 'ConEmu'
-$version = '16.10.09'
+$version = '16.10.09a'
 $sha256 = 'DDF575FC846F9B02A4C1B8BC8032C9FF0BC4211E90BE18CC955F37583B1F08AC'
 
 $isSytem32Bit = (($Env:PROCESSOR_ARCHITECTURE -eq 'x86') -and `
