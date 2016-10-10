@@ -891,15 +891,7 @@ bool StartupHooks()
 	print_timings(L"SetAllHooks");
 	HLOG1("SetAllHooks",0);
 	bool lbRc = SetAllHooks();
-	if (lbRc)
-	{
-		gnDllState |= ds_HooksStarted;
-
-		//_ASSERTE(FALSE); -- it must TRIGGER OnCreateFileW
-		SetImports(WIN3264TEST(L"ConEmuHk",L"ConEmuHk64"), ghOurModule, TRUE);
-		//_ASSERTE(FALSE); -- it must BYPASS OnCreateFileW and call trampolined function
-	}
-	else
+	if (!lbRc)
 	{
 		gnDllState &= ~ds_HooksStarted;
 		gnDllState |= ds_HooksStartFailed;
@@ -1685,6 +1677,12 @@ bool SetAllHooks()
 	_ASSERTE(status == MH_OK);
 
 	DebugString(L"SetAllHooks finished\n");
+
+
+	SetImports(WIN3264TEST(L"ConEmuHk",L"ConEmuHk64"), ghOurModule, TRUE);
+
+	DebugString(L"SetImports finished\n");
+
 
 	extern FARPROC CallWriteConsoleW;
 	CallWriteConsoleW = (FARPROC)GetOriginalAddress((LPVOID)OnWriteConsoleW, HOOK_FN_ID(WriteConsoleW), NULL, NULL, gbPrepareDefaultTerminal);

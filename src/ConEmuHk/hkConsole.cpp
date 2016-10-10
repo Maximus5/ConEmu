@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/HandleKeeper.h"
 #include "../common/MModule.h"
 #include "../common/WConsole.h"
+#include "../common/WErrGuard.h"
 
 #include "Ansi.h"
 #include "DefTermHk.h"
@@ -494,8 +495,9 @@ BOOL WINAPI OnFreeConsole(void)
 
 	if (ghConWnd)
 	{
+		CLastErrorGuard guard;
 		int (WINAPI* fnRequestLocalServer)(/*[IN/OUT]*/RequestLocalServerParm* Parm);
-		MModule server(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
+		MModule server(GetModuleHandle(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll")));
 		if (server.GetProcAddress("PrivateEntry",fnRequestLocalServer))
 		{
 			RequestLocalServerParm args = {sizeof(args)};
