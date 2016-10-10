@@ -37,7 +37,7 @@ $ver4 = $build.SubString(6,1)
 $ver4n = ([byte][char]$ver4) - ([byte][char]'a') + 1
 }
 
-$build_dot3 = "$($build.SubString(0,2)).$($build.SubString(2,2)).$($build.SubString(4,2))"
+$build_dot3 = "$($build.SubString(0,2)).$($build.SubString(2,2)).$($build.SubString(4,2))$ver4"
 $build_year3 = "20$($build.SubString(0,2)).$($build.SubString(2,2).TrimStart('0')).$($build.SubString(4,2).TrimStart('0'))$ver4"
 $build_dot4 = "$($build.SubString(0,2)).$($build.SubString(2,2).TrimStart('0')).$($build.SubString(4,2).TrimStart('0')).$ver4n"
 $build_comma = "$($build.SubString(0,2)),$($build.SubString(2,2).TrimStart('0')),$($build.SubString(4,2).TrimStart('0')),$ver4n"
@@ -79,7 +79,7 @@ if (-Not (NuSpec-SetBuild $NuSpec)) {
   $txt = Get-Content -Raw $_
 
   # Example: $version = '16.07.24'
-  $m = ([regex]"[$]version = '\d+\.\d+\.\d+'").Matches($txt)
+  $m = ([regex]"[$]version = '\d+\.\d+\.\d+\w?'").Matches($txt)
   if (($m -eq $null) -Or ($m.Count -ne 1)) {
     Write-Host -ForegroundColor Red "Proper `$version define was not found in:`r`n$_"
     $host.SetShouldExit(101)
