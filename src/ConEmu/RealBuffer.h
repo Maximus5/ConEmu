@@ -62,6 +62,17 @@ enum IntelligentSelectionState
 	IS_LBtnReleased,
 };
 
+struct ConsoleLinePtr
+{
+	const wchar_t* pChar;
+	const WORD* pAttr; // [may be NULL] - attributes from WinAPI
+	const CharAttr* pAttrEx; // [may be NULL] - extended attributes
+	int nLen;
+
+	void clear();
+	bool get(int index, wchar_t& chr, CharAttr& atr);
+};
+
 class CRealBuffer
 {
 public:
@@ -172,7 +183,8 @@ public:
 
 	//bool IsConsoleDataChanged();
 
-	bool GetConsoleLine(CRConDataGuard& data, int nLine, const wchar_t*& rpChar, /*CharAttr*& pAttr,*/ int& rnLen, MSectionLock* pcsData = NULL);
+	bool GetConsoleLine(/*[OUT]*/CRConDataGuard& data, int nLine, const wchar_t*& rpChar, /*CharAttr*& pAttr,*/ int& rnLen, MSectionLock* pcsData = NULL);
+	bool GetConsoleLine(int nLine, /*[OUT]*/CRConDataGuard& data, ConsoleLinePtr& rpLine, MSectionLock* pcsData = NULL);
 	void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
 
 	void ResetConData();
@@ -192,6 +204,7 @@ public:
 	bool isPaused();
 	void StorePausedState(CEPauseCmd state);
 
+	void QueryCellInfo(wchar_t* pszInfo, int cchMax);
 	void ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* psbi, SMALL_RECT* psrRealWindow = NULL, TOPLEFTCOORD* pTopLeft = NULL);
 	void ConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci);
 	void ConsoleCursorPos(COORD* pcr);

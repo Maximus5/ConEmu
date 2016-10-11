@@ -204,6 +204,10 @@ static StatusColInfo gStatusCols[] =
 						L"Cursor information",
 						L"Col, Row, Height (visible|hidden): Console cursor, 0-based"},
 
+	{csi_CellInfo,		L"StatusBar.Hide.CellI",
+						L"Cell information",
+						L"Cell information: Char, Code, Attributes"},
+
 	{csi_ConEmuPID,		L"StatusBar.Hide.ConEmuPID",
 						L"ConEmu GUI PID",
 						L"ConEmu GUI PID"},
@@ -674,6 +678,13 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				else
 					m_Items[nDrawCount].sText[0] = 0;
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"x00/x00");
+				break;
+			case csi_CellInfo:
+				if (pRCon)
+					pRCon->QueryCellInfo(m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText));
+				else
+					m_Items[nDrawCount].sText[0] = 0;
+				wcscpy_c(m_Items[nDrawCount].szFormat, L" ");
 				break;
 
 			case csi_WindowStyle:
