@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    161
+#define CESERVER_REQ_VER    162
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
