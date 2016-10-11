@@ -18,6 +18,7 @@
           <Directory Id="KeyEventsDir" Name="KeyEvents"/>
           <Directory Id="DosBox" Name="DosBox"/>
           <Directory Id="clink" Name="clink"/>
+          <Directory Id="WSL" Name="wsl"/>
           <!--
           <Directory Id="Portable" Name="Portable"/>
           -->
