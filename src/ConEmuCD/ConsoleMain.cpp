@@ -1111,7 +1111,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	#if defined(SHOW_STARTED_MSGBOX) || defined(SHOW_COMSPEC_STARTED_MSGBOX)
 	if (!IsDebuggerPresent())
 	{
-		wchar_t szTitle[100]; _wsprintf(szTitle, SKIPCOUNT(szTitle) L"ConEmuCD[%u]: PID=%u", WIN3264TEST(32,64) GetCurrentProcessId());
+		wchar_t szTitle[100]; _wsprintf(szTitle, SKIPCOUNT(szTitle) L"ConEmuCD[%u]: PID=%u", WIN3264TEST(32,64), GetCurrentProcessId());
 		MessageBox(NULL, asCmdLine, szTitle, MB_SYSTEMMODAL);
 	}
 	#endif
