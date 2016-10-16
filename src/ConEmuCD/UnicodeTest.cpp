@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "../common/Common.h"
+#include "../common/UnicodeChars.h"
 #include "../common/WCodePage.h"
 #include "../ConEmu/version.h"
 
@@ -177,13 +178,13 @@ int CheckUnicodeFont()
 
 	wchar_t szText[80] = UnicodeTestString;
 	wchar_t szColor[32] = ColorTestString;
-	CHAR_INFO cWrite[80];
+
 	CHAR_INFO cRead[80] = {};
-	WORD aWrite[80], aRead[80] = {};
-	wchar_t sAttrWrite[80] = {}, sAttrRead[80] = {}, sAttrBlock[80] = {};
+	WORD aRead[80] = {};
+	wchar_t sAttrRead[80] = {}, sAttrBlock[80] = {};
 	wchar_t szInfo[1024]; DWORD nTmp;
 	wchar_t szCheck[80] = L"", szBlock[80] = L"";
-	BOOL bInfo = FALSE, bWrite = FALSE, bRead = FALSE, bCheck = FALSE;
+	BOOL bInfo = FALSE, bWrite = FALSE, bRead = FALSE, bReadAttr = FALSE, bCheck = FALSE, bBlkRead = FALSE;
 	DWORD nLen = lstrlen(szText), nWrite = 0, nRead = 0, nErr = 0;
 	WORD nDefColor = 7;
 	DWORD nColorLen = lstrlen(szColor);
@@ -191,45 +192,65 @@ int CheckUnicodeFont()
 	CONSOLE_CURSOR_INFO ci = {};
 	_ASSERTE(nLen<=35); // ниже на 2 буфер множится
 
-	const WORD N = 0x07, H = N|COMMON_LVB_REVERSE_VIDEO;
-	CHAR_INFO cHighlight[] = {{{'N'},N},{{'o'},N},{{'r'},N},{{'m'},N},{{'a'},N},{{'l'},N},
-		{{' '},N},
-		{{'R'},H},{{'e'},H},{{'v'},H},{{'e'},H},{{'r'},H},{{'s'},H},{{'e'},H}};
+
+	struct WriteInvoke
+	{
+		HANDLE out;
+		DWORD  written;
+		BOOL   result;
+
+		void operator()(const wchar_t* txt, int len = -1)
+		{
+			result = WriteConsoleW(out, txt, (len < 0) ? lstrlen(txt) : len, &written, NULL);
+		};
+	} write = {hOut};
+
 
 	if (GetConsoleScreenBufferInfo(hOut, &csbi))
 		nDefColor = csbi.wAttributes;
 
 	// Simlify checking of ConEmu's "colorization"
-	WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
+	write(L"\r\n");
 	WORD nColor = 7;
 	for (DWORD n = 0; n < nColorLen; n++)
 	{
 		SetConsoleTextAttribute(hOut, nColor);
-		WriteConsoleW(hOut, szColor+n, 1, &nTmp, NULL);
+		write(szColor+n, 1);
 		nColor++; if (nColor == 16) nColor = 7;
 	}
-	WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
+	SetConsoleTextAttribute(hOut, 7);
+	write(L"\r\n");
 
 	// Test of "Reverse video"
 	GetConsoleScreenBufferInfo(hOut, &csbi);
+	const WORD N = 0x07, H = N|COMMON_LVB_REVERSE_VIDEO;
+	// "Normal" + ' ' + "Reverse"
+	CHAR_INFO cHighlight[] = {{{'N'},N},{{'o'},N},{{'r'},N},{{'m'},N},{{'a'},N},{{'l'},N},
+		{{' '},N},
+		{{'R'},H},{{'e'},H},{{'v'},H},{{'e'},H},{{'r'},H},{{'s'},H},{{'e'},H}};
 	COORD crHiSize = {countof(cHighlight), 1}, cr0 = {};
+	COORD crBeforePos = csbi.dwCursorPosition, crAfterPos = {countof(cHighlight), csbi.dwCursorPosition.Y};
 	SMALL_RECT srHiPos = {0, csbi.dwCursorPosition.Y, crHiSize.X-1, csbi.dwCursorPosition.Y};
+	SetConsoleCursorPosition(hOut, crAfterPos);
 	WriteConsoleOutputW(hOut, cHighlight, crHiSize, cr0, &srHiPos);
-	WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
+	GetConsoleScreenBufferInfo(hOut, &csbi);
+	ReadConsoleOutputAttribute(hOut, aRead, countof(cHighlight), crBeforePos, &nTmp);
+	msprintf(szInfo, countof(szInfo), L" x%X x%X ", static_cast<UINT>(aRead[0]), static_cast<UINT>(aRead[countof(cHighlight)-1]));
+	write(szInfo);
+	msprintf(szInfo, countof(szInfo), L"Normal:x%X ", static_cast<UINT>(csbi.wAttributes));
+	write(szInfo);
+	SetConsoleTextAttribute(hOut, H);
+	GetConsoleScreenBufferInfo(hOut, &csbi);
+	msprintf(szInfo, countof(szInfo), L"Reverse:x%X", static_cast<UINT>(csbi.wAttributes));
+	write(szInfo);
+	SetConsoleTextAttribute(hOut, N);
+	write(L"\r\n");
 
-	WriteConsoleW(hOut, L"\r\nCheck ", 8, &nTmp, NULL);
+	write(L"\r\nCheck ");
 
 
 	if ((bInfo = GetConsoleScreenBufferInfo(hOut, &csbi)) != FALSE)
 	{
-		for (DWORD i = 0; i < nLen; i++)
-		{
-			cWrite[i].Char.UnicodeChar = szText[i];
-			aWrite[i] = 10 + (i % 6);
-			cWrite[i].Attributes = aWrite[i];
-			msprintf(sAttrWrite+i, 2, L"%X", aWrite[i]);
-		}
-
 		COORD cr0 = {0,0};
 		if ((bWrite = WriteConsoleOutputCharacterW(hOut, szText, nLen, csbi.dwCursorPosition, &nWrite)) != FALSE)
 		{
@@ -243,58 +264,85 @@ int CheckUnicodeFont()
 				}
 			}
 
-			if (ReadConsoleOutputAttribute(hOut, aRead, nLen, csbi.dwCursorPosition, &nTmp))
-			{
-				for (UINT i = 0; i < nTmp; i++)
-				{
-					msprintf(sAttrRead+i, 2, L"%X", aRead[i] & 0xF);
-				}
-			}
+			bReadAttr = ReadConsoleOutputAttribute(hOut, aRead, nLen*2, csbi.dwCursorPosition, &nTmp);
 
 			COORD crBufSize = {(SHORT)sizeof(cRead),1};
 			SMALL_RECT rcRead = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, csbi.dwCursorPosition.X+(SHORT)nLen*2, csbi.dwCursorPosition.Y};
-			if (ReadConsoleOutputW(hOut, cRead, crBufSize, cr0, &rcRead))
-			{
-				for (UINT i = 0; i < nTmp; i++)
-				{
-					szBlock[i] = cRead[i].Char.UnicodeChar;
-					msprintf(sAttrBlock+i, 2, L"%X", cRead[i].Attributes & 0xF);
-				}
-			}
+			bBlkRead = ReadConsoleOutputW(hOut, cRead, crBufSize, cr0, &rcRead);
 		}
 	}
 
-	//if (!bRead || !bCheck)
+	nErr = GetLastError();
+
+	write(L"\r\n"); // don't overwrite the text
+
+	write(L"Text: "); write(szText); write(L"\r\n");
+
+	wchar_t* ptr;
+	write(L"Read:");
+	ptr = szInfo;
+	for (UINT i = 0; i < nLen*2; i++)
 	{
-		nErr = GetLastError();
-
-		msprintf(szInfo, countof(szInfo),
-			L"\r\n" // чтобы не затереть сам текст
-			L"Text: %s\r\n"
-			L"Read: %s\r\n"
-			L"Blck: %s\r\n"
-			L"Attr: %s\r\n"
-			L"Read: %s\r\n"
-			L"Blck: %s\r\n"
-			L"Info: %u,%u,%u,%u,%u,%u\r\n"
-			L"\r\n%s\r\n",
-			szText, szCheck, szBlock, sAttrWrite, sAttrRead, sAttrBlock,
-			nErr, bInfo, bWrite, nWrite, bRead, nRead,
-			bCheck ? L"Unicode check succeeded" :
-			bRead ? L"Unicode check FAILED!" : L"Unicode is not supported in this console!"
-			);
-		//MessageBoxW(NULL, szInfo, szTitle, MB_ICONEXCLAMATION|MB_ICONERROR);
+		if (szCheck[i] <= L' ')
+			break;
+		msprintf(ptr, countof(szInfo)-(ptr-szInfo), L" %c:x%X", szCheck[i], aRead[i]);
+		ptr += lstrlen(ptr);
 	}
-	//else
-	//{
-	//	lstrcpyn(szInfo, L"\r\nUnicode check succeeded\r\n", countof(szInfo));
-	//}
+	*ptr = 0;
+	write(szInfo);
+	write(L"\r\n");
+	write(L"Blck:");
+	ptr = szInfo;
+	for (UINT i = 0; i < nLen*2; i++)
+	{
+		if (szCheck[i] <= L' ')
+			break;
+		msprintf(ptr, countof(szInfo)-(ptr-szInfo), L" %c:x%X", cRead[i].Char.UnicodeChar, cRead[i].Attributes);
+		ptr += lstrlen(ptr);
+	}
+	*ptr = 0;
+	write(szInfo);
+	write(L"\r\n");
 
-	//WriteConsoleW(hOut, L"\r\n", 2, &nTmp, NULL);
-	//WriteConsoleW(hOut, szCheck, nRead, &nTmp, NULL);
 
-	//LPCWSTR pszText = bCheck ? L"\r\nUnicode check succeeded\r\n" : L"\r\nUnicode check FAILED!\r\n";
-	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nWrite, NULL);
+	msprintf(szInfo, countof(szInfo),
+		L"Info: %u,%u,%u,%u,%u,%u,%u,%u\r\n"
+		L"\r\n",
+		nErr, bInfo, bWrite, nWrite, bRead, bReadAttr, nRead, bBlkRead
+		);
+	write(szInfo);
+
+
+	wchar_t szUpp[] = {ucBoxDblDownRight, ucBoxDblHorz, ucBoxDblDownDblHorz, ucBoxDblDownLeft, 0};
+	wchar_t szMid[] = {ucBoxDblVert, ucSpace, ucBoxDblVert, ucBoxDblVert, 0};
+	wchar_t szBot[] = {ucBoxDblUpRight, ucBoxDblHorz, ucBoxDblUpDblHorz, ucBoxDblUpLeft, 0};
+	wchar_t szChs[] = L"中文";
+	int nMid = csbi.dwSize.X / 2;
+	write(szUpp, 1);
+		for (int X = 2; X < nMid; X++) write(szUpp+1, 1);
+		write(szUpp+2, 1);
+		for (int X = nMid+1; X < csbi.dwSize.X; X++) write(szUpp+1, 1);
+		write(szUpp+3, 1);
+	write(szMid, 1);
+		write(szChs, 2);
+		for (int X = 4; X < nMid; X++) write(szMid+1, 1);
+		write(szMid+2, 1);
+		write(szChs, 1);
+		for (int X = nMid+3; X < csbi.dwSize.X; X++) write(szMid+1, 1);
+		write(szChs+1, 1);
+		write(szMid+3, 1);
+	write(szBot, 1);
+		for (int X = 2; X < nMid; X++) write(szBot+1, 1);
+		write(szBot+2, 1);
+		for (int X = nMid+1; X < csbi.dwSize.X; X++) write(szBot+1, 1);
+		write(szBot+3, 1);
+	write(L"\r\n");
+
+
+	write(bCheck ? L"Unicode check succeeded" :
+		bRead ? L"Unicode check FAILED!"
+		: L"Unicode is not supported in this console!");
+	write(L"\r\n");
 
 	return iRc;
 }

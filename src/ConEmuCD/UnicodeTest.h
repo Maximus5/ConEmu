@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#define UnicodeTestString L"AÀΑ╬豈Ａꊠ黠だ➀ጀะڰЯ0123456789"
+#define UnicodeTestString L"AÀΑ╬豈Ａꊠ黠だ➀ጀะڰЯ09"
 #define ColorTestString L"123456789也不是可运行的程序１２３４５６７８９"
 
 // Returns:
