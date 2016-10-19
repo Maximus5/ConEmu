@@ -258,13 +258,9 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 	wchar_t szParentPID[32];
 
 
-	#ifdef SHOW_INJECTREM_MSGBOX
-	wchar_t szDbgMsg[512], szTitle[128];
-	PROCESSENTRY32 pinf;
-	GetProcessInfo(nRemotePID, &pinf);
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuCD PID=%u", GetCurrentProcessId());
-	_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"Hooking PID=%s {%s}\nConEmuCD PID=%u. Continue with injects?", asCmdArg ? asCmdArg : L"", pinf.szExeFile, GetCurrentProcessId());
-	if (MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL|MB_OKCANCEL) != IDOK)
+	#ifdef _DEBUG
+	extern int ShowInjectRemoteMsg(int nRemotePID, LPCWSTR asCmdArg);
+	if (ShowInjectRemoteMsg(nRemotePID, asCmdArg) != IDOK)
 	{
 		return CERR_HOOKS_FAILED;
 	}
