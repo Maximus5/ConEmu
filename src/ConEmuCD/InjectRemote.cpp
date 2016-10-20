@@ -105,7 +105,7 @@ CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, HMODULE ptrOuterKernel, LP
 	lstrcpyn(dat.szConEmuHk, asConEmuHk, countof(dat.szConEmuHk));
 
 	// Kernel-процедуры
-	hKernel = LoadLibrary(L"Kernel32.dll");
+	hKernel = LoadLibrary(gfLoadLibrary.szModule);
 	if (!hKernel)
 	{
 		iRc = CIR_LoadKernel/*-104*/;
@@ -119,9 +119,7 @@ CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, HMODULE ptrOuterKernel, LP
 	FuncName[11] = 'e'; FuncName[13] = 'h'; FuncName[15] = 'e'; FuncName[17] = 'd'; FuncName[18] = 0;
 	_CreateRemoteThread = (CreateRemoteThread_t)GetProcAddress(hKernel, FuncName);
 
-	// Functions for external process. MUST BE SAME ADDRESSES AS CURRENT PROCESS.
-	// kernel32.dll компонуется таким образом, что всегда загружается по одному определенному адресу в памяти
-	// Поэтому адреса процедур для приложений одинаковой битности совпадают (в разных процессах)
+	// Functions for external process
 	dat._GetLastError = (GetLastError_t)GetProcAddress(hKernel, "GetLastError");
 	dat._SetLastError = (SetLastError_t)GetProcAddress(hKernel, "SetLastError");
 	dat._LoadLibraryW = (LoadLibraryW_t)GetLoadLibraryAddress(); // GetProcAddress(hKernel, "LoadLibraryW");
@@ -132,8 +130,7 @@ CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, HMODULE ptrOuterKernel, LP
 	}
 	else
 	{
-		// Проверим, что адреса этих функций действительно лежат в модуле Kernel32.dll
-		// и не были кем-то перехвачены до нас.
+		// Functions must be inside Kernel32.dll|KernelBase.dll, they must not be ‘forwarded’ to another module
 		FARPROC proc[] = {(FARPROC)dat._GetLastError, (FARPROC)dat._SetLastError, (FARPROC)dat._LoadLibraryW};
 		if (!CheckCallbackPtr(hKernel, countof(proc), proc, TRUE, TRUE))
 		{
@@ -144,7 +141,7 @@ CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, HMODULE ptrOuterKernel, LP
 		}
 	}
 
-	// Kernel может быть загружен по другому адресу
+	// Take into account real Kernel32.dll|KernelBase.dll base address in remote process
 	if (ptrOuterKernel != hKernel)
 	{
 		INT_PTR ptrDiff = ((INT_PTR)ptrOuterKernel - (INT_PTR)hKernel);
@@ -312,6 +309,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	wchar_t szSelf[MAX_PATH+16], szHooks[MAX_PATH+16];
 	wchar_t *pszNamePtr, szArgs[32];
 	wchar_t szName[64];
+	wchar_t szKernelName[64];
 	HANDLE hEvent = NULL;
 	HANDLE hDefTermReady = NULL;
 	bool bAlreadyHooked = false;
@@ -453,6 +451,19 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		goto wrap;
 	}
 
+
+	LogString(L"...GetLoadLibraryAddress/gfLoadLibrary");
+
+	if (!GetLoadLibraryAddress())
+	{
+		nErrCode = GetLastError();
+		iRc = CIR_GetLoadLibraryAddress/*-114*/;
+		goto wrap;
+	}
+	wcscpy_c(szKernelName, gfLoadLibrary.szModule);
+	CharLowerBuff(szKernelName, wcslen(szKernelName));
+
+
 	LogString(L"CreateToolhelp32Snapshot(TH32CS_SNAPMODULE)");
 
 	// Hey, may be ConEmuHk.dll is already loaded?
@@ -470,7 +481,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	if (hSnap && Module32First(hSnap, &mi))
 	{
 		// 130829 - Let load newer(!) ConEmuHk.dll into target process.
-		// 141201 - Also we need to be sure in kernel32.dll address
+		// 141201 - Also we need to be sure in kernel32.dll|KernelBase.dll address
 
 		LPCWSTR pszConEmuHk = WIN3264TEST(L"conemuhk.", L"conemuhk64.");
 		size_t nDllNameLen = lstrlen(pszConEmuHk);
@@ -496,7 +507,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 			CharLowerBuff(szName, lstrlen(szName));
 
 			if (!ptrOuterKernel
-				&& (lstrcmp(szName, L"kernel32.dll") == 0))
+				&& (lstrcmp(szName, szKernelName) == 0))
 			{
 				ptrOuterKernel = mi.hModule;
 			}

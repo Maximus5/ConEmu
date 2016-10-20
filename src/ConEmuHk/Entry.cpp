@@ -718,23 +718,16 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	#endif
 
 
-	// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
-	// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
-	//HMODULE hKernel = ::GetModuleHandle(L"kernel32.dll");
-	//if (hKernel)
-	//{
-	//	gfnLoadLibrary = (UINT_PTR)::GetProcAddress(hKernel, "LoadLibraryW");
-	//	_ASSERTE(gfnLoadLibrary!=NULL);
-	//}
-	//else
-	//{
-	//	_ASSERTE(hKernel!=NULL);
-	//	gfnLoadLibrary = NULL;
-	//}
-	if (!GetLoadLibraryAddress())
+	// Preload some function pointers to get proper addresses,
+	// before some other hooking dlls may replace them
+	GetLoadLibraryAddress();
+	_ASSERTE(gfLoadLibrary.fnPtr!=0);
+	if (IsWin7())
 	{
-		_ASSERTE(gfnLoadLibrary!=0);
+		GetLdrGetDllHandleByNameAddress();
+		_ASSERTE(gfLdrGetDllHandleByName.fnPtr!=0);
 	}
+
 
 	ghUser32 = GetModuleHandle(user32);
 	if (ghUser32) ghUser32 = LoadLibrary(user32); // если подлинкован - увеличить счетчик

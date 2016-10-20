@@ -33,31 +33,32 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
 #include "../common/WModuleCheck.h"
-#include "../ConEmuCD/ExitCodes.h"
+#include "Injects.h"
 #include "Console2.h"
 #include "hlpProcess.h"
 
 extern HMODULE ghOurModule;
 extern HWND ghConWnd;
-UINT_PTR gfnLoadLibrary = 0;
-UINT_PTR gfnLdrGetDllHandleByName = 0;
-//extern HMODULE ghPsApi;
+
+InjectsFnPtr gfLoadLibrary;
+InjectsFnPtr gfLdrGetDllHandleByName;
 
 HANDLE ghSkipSetThreadContextForThread = NULL;
 
 HANDLE ghInjectsInMainThread = NULL;
 
-// Проверить, что gfnLoadLibrary лежит в пределах модуля hKernel!
+// Проверить, что gfLoadLibrary лежит в пределах модуля hKernel!
 UINT_PTR GetLoadLibraryAddress()
 {
-	if (gfnLoadLibrary)
-		return gfnLoadLibrary;
+	if (gfLoadLibrary.fnPtr)
+		return gfLoadLibrary.fnPtr;
 
 	UINT_PTR fnLoadLibrary = 0;
-	HMODULE hKernel = ::GetModuleHandle(L"kernel32.dll");
-	if (!hKernel || LDR_IS_RESOURCE(hKernel))
+	HMODULE hKernel32 = ::GetModuleHandle(L"kernel32.dll");
+	HMODULE hKernelBase = IsWin8() ? ::GetModuleHandle(L"KernelBase.dll") : NULL;
+	if (!hKernel32 || LDR_IS_RESOURCE(hKernel32))
 	{
-		_ASSERTE(hKernel && !LDR_IS_RESOURCE(hKernel));
+		_ASSERTE(hKernel32 && !LDR_IS_RESOURCE(hKernel32));
 		return 0;
 	}
 
@@ -72,9 +73,12 @@ UINT_PTR GetLoadLibraryAddress()
 		}
 	}
 
+	UINT_PTR fnKernel32 = (UINT_PTR)::GetProcAddress(hKernel32, "LoadLibraryW");
+	UINT_PTR fnKernelBase = hKernelBase ? (UINT_PTR)::GetProcAddress(hKernelBase, "LoadLibraryW") : 0L;
+	HMODULE hKernel = fnKernelBase ? hKernelBase : hKernel32;
 	if (!fnLoadLibrary)
 	{
-		fnLoadLibrary = (UINT_PTR)::GetProcAddress(hKernel, "LoadLibraryW");
+		fnLoadLibrary = fnKernelBase ? fnKernelBase : fnKernel32;
 	}
 
 	// Функция должна быть именно в Kernel32.dll (а не в какой либо другой библиотеке, мало ли кто захукал...)
@@ -84,14 +88,14 @@ UINT_PTR GetLoadLibraryAddress()
 		return 0;
 	}
 
-	gfnLoadLibrary = fnLoadLibrary;
+	gfLoadLibrary = InjectsFnPtr(hKernel, fnLoadLibrary, (hKernel==hKernel32) ? L"Kernel32.dll" : L"KernelBase.dll");
 	return fnLoadLibrary;
 }
 
 UINT_PTR GetLdrGetDllHandleByNameAddress()
 {
-	if (gfnLdrGetDllHandleByName)
-		return gfnLdrGetDllHandleByName;
+	if (gfLdrGetDllHandleByName.fnPtr)
+		return gfLdrGetDllHandleByName.fnPtr;
 
 	UINT_PTR fnLdrGetDllHandleByName = 0;
 	HMODULE hNtDll = ::GetModuleHandle(L"ntdll.dll");
@@ -110,7 +114,7 @@ UINT_PTR GetLdrGetDllHandleByNameAddress()
 		return 0;
 	}
 
-	gfnLdrGetDllHandleByName = fnLdrGetDllHandleByName;
+	gfLdrGetDllHandleByName = InjectsFnPtr(hNtDll, fnLdrGetDllHandleByName, L"ntdll.dll");
 	return fnLdrGetDllHandleByName;
 }
 
@@ -322,13 +326,13 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 		//fnLoadLibrary = (UINT_PTR)::GetProcAddress(::GetModuleHandle(L"kernel32.dll"), "LoadLibraryW");
 		if (!GetLoadLibraryAddress())
 		{
-			_ASSERTE(gfnLoadLibrary!=NULL);
+			_ASSERTE(gfLoadLibrary.fnPtr!=NULL);
 			iRc = CIH_GetLoadLibraryAddress/*-503*/;
 			goto wrap;
 		}
 		else if (bOsWin7 && !GetLdrGetDllHandleByNameAddress())
 		{
-			_ASSERTE(gfnLdrGetDllHandleByName!=NULL);
+			_ASSERTE(gfLdrGetDllHandleByName.fnPtr!=NULL);
 			iRc = CIH_GetLdrHandleAddress/*-514*/;
 			goto wrap;
 		}
@@ -356,7 +360,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 			//BOOL bRead = ::ReadProcessMemory(pi.hProcess, (LPVOID)(DWORD_PTR)hKernel, &dos_hdr, sizeof(dos_hdr), &cch_dos_read);
 
 			DWORD_PTR ptrAllocated = 0; DWORD nAllocated = 0;
-			InjectHookFunctions fnArg = {hKernel, gfnLoadLibrary, hNtDll, gfnLdrGetDllHandleByName};
+			InjectHookFunctions fnArg = {gfLoadLibrary.module, gfLoadLibrary.fnPtr, gfLoadLibrary.szModule, gfLdrGetDllHandleByName.module, gfLdrGetDllHandleByName.fnPtr};
 			iRc = InjectHookDLL(pi, &fnArg, ImageBits, szDllDir, &ptrAllocated, &nAllocated);
 
 			if (abLogProcess || (iRc != CIH_OK/*0*/))

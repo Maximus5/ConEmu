@@ -321,7 +321,6 @@ int ShowInjectRemoteMsg(int nRemotePID, LPCWSTR asCmdArg)
 }
 #endif
 
-//extern UINT_PTR gfnLoadLibrary;
 //UINT gnMsgActivateCon = 0;
 UINT gnMsgSwitchCon = 0;
 UINT gnMsgHookedKey = 0;
@@ -440,10 +439,11 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			gpStartEnv = LoadStartupEnvEx::Create();
 			/* *** DEBUG PURPOSES */
 
-			// Поскольку процедура в принципе может быть кем-то перехвачена, сразу найдем адрес
-			// iFindAddress = FindKernelAddress(pi.hProcess, pi.dwProcessId, &fLoadLibrary);
-			//gfnLoadLibrary = (UINT_PTR)::GetProcAddress(::GetModuleHandle(L"kernel32.dll"), "LoadLibraryW");
-			GetLoadLibraryAddress(); // Загрузить gfnLoadLibrary
+			// Preload some function pointers to get proper addresses,
+			// before some other hooking dlls may replace them
+			GetLoadLibraryAddress(); // gfLoadLibrary
+			if (IsWin7()) // and gfLdrGetDllHandleByName
+				GetLdrGetDllHandleByNameAddress();
 
 			//#ifndef TESTLINK
 			gpLocalSecurity = LocalSecurity();

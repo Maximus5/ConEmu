@@ -18,6 +18,7 @@ struct InjectHookFunctions
 {
 	HMODULE  hKernel;
 	UINT_PTR fnLoadLibrary;
+	LPCWSTR  szKernelName;
 	// Win7+
 	HMODULE  hNtDll;
 	UINT_PTR fnLdrGetDllHandleByName;
@@ -30,8 +31,8 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	CONTEXT		context = {};
 	void*		mem		 = NULL;
 	size_t		memLen	 = 0;
-	size_t		pstrLen  = 54; // UNICODE_STRING ( "kernel32.dll" )
 	size_t		codeSize = 0;
+	size_t		cbTotal  = 0;
 	BYTE* 		code	 = NULL;
 	wchar_t 	strHookDllPath[MAX_PATH*2] = {};
 	DWORD 		dwErrCode = 0;
@@ -44,6 +45,8 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	DWORD_PTR   nLoadLibraryProcShift;
 #endif
 
+
+	// Placeholder for "kernel32.dll" or "kernelbase.dll"
 	typedef struct _UNICODE_STRING {
 		USHORT Length;
 		USHORT MaximumLength;
@@ -54,6 +57,11 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	} USTR, *PUSTR;
 
 	PUSTR pStr = NULL;
+
+	_ASSERTE(pfn->szKernelName && *pfn->szKernelName);
+	size_t pnKernelNameLen = lstrlen(pfn->szKernelName);
+	size_t pstrSize = sizeof(USTR) + 8/*alignment*/ + sizeof(wchar_t)*(pnKernelNameLen+1); // UNICODE_STRING ( "kernel32.dll" | "kernelbase.dll" )
+
 
 	//OSVERSIONINFO osv = {sizeof(osv)};
 	//GetVersionEx(&osv);
@@ -140,20 +148,21 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 		goto wrap;
 	}
 
-	code = (BYTE*)malloc(codeSize + memLen + pstrLen);
+	code = (BYTE*)malloc(codeSize + memLen + pstrSize);
 	memmove(code + codeSize, strHookDllPath, memLen);
 
 	pStr = (PUSTR)((((DWORD_PTR)(code + codeSize + memLen + 7))>>3)<<3);
-	pStr->Length = 24; pStr->MaximumLength = 26;
+	pStr->Length = pnKernelNameLen*sizeof(wchar_t);
+	pStr->MaximumLength = (pnKernelNameLen+1)*sizeof(wchar_t);
 	#ifdef _WIN64
 	pStr->Pad = 0;
 	#endif
-	pStr->Buffer = (PWSTR)(((LPBYTE)pStr)+16); // адрес будет обновлен после VirtualAlloc
-	memmove(pStr->Buffer, L"kernel32.dll", pStr->MaximumLength);
+	pStr->Buffer = (PWSTR)(((LPBYTE)pStr)+sizeof(*pStr)); // адрес будет обновлен после VirtualAlloc
+	memmove(pStr->Buffer, pfn->szKernelName, pStr->MaximumLength);
 
-	memLen = codeSize + memLen + pstrLen;
+	cbTotal = codeSize + memLen + pstrSize;
 
-	// Query current context of suspended process	
+	// Query current context of suspended process
 	context.ContextFlags = CONTEXT_FULL;
 
 	SetLastError(0);
@@ -188,16 +197,16 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	OutputDebugString(strHookDllPath);
 	#endif
 
-	//mem = ::VirtualAllocEx(pi.hProcess, NULL, memLen, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	//mem = ::VirtualAllocEx(pi.hProcess, NULL, cbTotal, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	//#ifdef _WIN64
 	//if (!mem) -- не работает, нужен NULL
-	//	mem = ::VirtualAllocEx(pi.hProcess, (LPVOID)0x6FFFFF0000000000, memLen, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	//	mem = ::VirtualAllocEx(pi.hProcess, (LPVOID)0x6FFFFF0000000000, cbTotal, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	//#endif
 	//if (!mem) -- не работает, нужен NULL
-	//	mem = ::VirtualAllocEx(pi.hProcess, (LPVOID)0x6FFFFF00, memLen, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	//	mem = ::VirtualAllocEx(pi.hProcess, (LPVOID)0x6FFFFF00, cbTotal, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	//if (!mem)
 	// MEM_TOP_DOWN - память выделяется в верхних адресах, разницы в работе не заметил
-	mem = ::VirtualAllocEx(pi.hProcess, NULL, memLen, 
+	mem = ::VirtualAllocEx(pi.hProcess, NULL, cbTotal,
 			MEM_COMMIT|MEM_RESERVE/*|MEM_TOP_DOWN*/, PAGE_EXECUTE_READWRITE|PAGE_NOCACHE);
 
 	if (!mem)
@@ -279,7 +288,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	*ip.pB++ = 0x8D;
 	*ip.pB++ = 0x05;
 	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- указатель на адрес процедуры (code+8) [OUT]  // GCC do the INC before rvalue eval
-	*ip.pB++ = 0x33;                    // xor         rdx,rdx 
+	*ip.pB++ = 0x33;                    // xor         rdx,rdx
 	*ip.pB++ = 0xD2;
 	*ip.pB++ = 0x48;                    // lea         rcx,&UNICODE_STRING
 	*ip.pB++ = 0x8D;
@@ -383,14 +392,14 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 		goto wrap;
 	}
 
-	if (!::WriteProcessMemory(pi.hProcess, mem, code, memLen, NULL))
+	if (!::WriteProcessMemory(pi.hProcess, mem, code, cbTotal, NULL))
 	{
 		dwErrCode = GetLastError();
 		iRc = CIH_AsmWriteProcessMemory/*-730*/;
 		goto wrap;
 	}
 
-	if (!::FlushInstructionCache(pi.hProcess, mem, memLen))
+	if (!::FlushInstructionCache(pi.hProcess, mem, cbTotal))
 	{
 		dwErrCode = GetLastError();
 		iRc = CIH_AsmFlushInstructionCode/*-731*/;
@@ -437,14 +446,14 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	if (ptrAllocated)
 		*ptrAllocated = (DWORD_PTR)mem;
 	if (pnAllocated)
-		*pnAllocated = (DWORD)memLen;
+		*pnAllocated = (DWORD)cbTotal;
 
 	iRc = CIH_OK/*0*/; // OK
 wrap:
 
 	if (code != NULL)
 		free(code);
-		
+
 #ifdef _DEBUG
 	if (iRc != CIH_OK/*0*/)
 	{
