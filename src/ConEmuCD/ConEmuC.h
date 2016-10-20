@@ -641,6 +641,7 @@ struct SrvInfo
 	{
 		csColorerMappingCreate.Init();
 		csReadConsoleInfo.Init();
+		csRefreshControl.Init();
 		AltServers.Init();
 		TopLeft.Reset();
 	};
@@ -648,6 +649,7 @@ struct SrvInfo
 	{
 		csColorerMappingCreate.Close();
 		csReadConsoleInfo.Close();
+		csRefreshControl.Close();
 		AltServers.Release();
 	};
 };

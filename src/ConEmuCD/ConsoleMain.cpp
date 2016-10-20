@@ -2307,7 +2307,10 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	}
 
 	// Если поток RefreshThread был "заморожен" при запуске другого сервера
-	ThawRefreshThread();
+	if ((gpSrv->nRefreshFreezeRequests > 0) && !(Parm->Flags & slsf_OnAllocConsole))
+	{
+		ThawRefreshThread();
+	}
 
 	TODO("Инициализация TrueColor буфера - Parm->ppAnnotation");
 
