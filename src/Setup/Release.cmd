@@ -7,7 +7,8 @@ cd /d "%~dp0"
 
 set path=%~d0\Utils\Lans\WiX\bin;%PATH%
 
-echo Preparing version...
+set "BUILD_NO=%~1"
+echo Preparing version %BUILD_NO%...
 GenVersion.exe %1
 
 set CAB_NAME=ConEmu.cab
@@ -43,8 +44,15 @@ call "%~dp0Setupper\gccbuild.cmd" /nosign
 if errorlevel 1 goto errs
 if not exist "%~dp0Setupper\Setupper.exe" goto errs
 
-move "%~dp0Setupper\Setupper.exe" "%~dp0ConEmuSetup.%1.exe"
-call "%~dp0..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu %~1 Installer" /du %ConEmuHttp% "%~dp0ConEmuSetup.%1.exe"
+set "ConEmuInstaller=%~dp0ConEmuSetup.%1.exe"
+move "%~dp0Setupper\Setupper.exe" "%ConEmuInstaller%"
+if errorlevel 1 (
+  timeout /t 5
+  move "%~dp0Setupper\Setupper.exe" "%ConEmuInstaller%"
+  if errorlevel 1 goto errs
+)
+call "%~dp0..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu %~1 Installer" /du %ConEmuHttp% "%ConEmuInstaller%"
+if errorlevel 1 goto errs
 
 goto fin
 

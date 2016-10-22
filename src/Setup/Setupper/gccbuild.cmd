@@ -12,8 +12,10 @@ if exist "%~dp0Release.x86" rd /S /Q "%~dp0Release.x86"
 
 mingw32-make -f makefile_gcc WIDE=1
 
-if errorlevel 1 goto :EOF
+if errorlevel 1 exit /b 1
 
-if not "%~1"=="/nosign" call "%~dp0..\..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu ?????? Installer" /du %ConEmuHttp% Setupper.exe
+if "%~1"=="/nosign" goto no_sign
+call "%~dp0..\..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu Installer" /du %ConEmuHttp% Setupper.exe
+:no_sign
 
 rd /S /Q %~dp0Release.gcc
