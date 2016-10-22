@@ -20,6 +20,15 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.10.22
+* gh-910: Fix regression: slower startup.
+* File `wsl-con.cmd` was created by msi in wrong folder.
+* Far Macro. Some improvements in ConEmu.CtrlNumber.lua
+* Console test (ConEmuC -checkunicode) improved.
+* gh-919: Fix misprint.
+* Some internal changes in hooking: support KernelBase for installing injects.
+
+
 2016.10.9a
 * gh-896: Fix regression: cygwin/msys process creation was broken.
 
