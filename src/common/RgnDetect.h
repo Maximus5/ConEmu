@@ -59,6 +59,7 @@ typedef struct tag_CharAttr
 			unsigned int nBackIdx : 8; // Used to ExtendColors and ExtendFonts
 			unsigned int crOrigForeColor : 24;
 			unsigned int crOrigBackColor : 24; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
+			unsigned int ConAttr : 16; // original console attribute from CHAR_INFO
 			//bool bDialog;
 			//bool bDialogVBorder;
 			//bool bDialogCorner;

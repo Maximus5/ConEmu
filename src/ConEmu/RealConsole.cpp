@@ -14880,6 +14880,17 @@ void CRealConsole::QueryRConModes(wchar_t* pszInfo, int cchMax, bool bFull)
 	lstrcpyn(pszInfo, szInfo, cchMax);
 }
 
+void CRealConsole::QueryCellInfo(wchar_t* pszInfo, int cchMax)
+{
+	if (!pszInfo || cchMax <= 0 || !this || !mp_ABuf)
+	{
+		if (pszInfo) *pszInfo = 0;
+		return;
+	}
+
+	mp_ABuf->QueryCellInfo(pszInfo, cchMax);
+}
+
 void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr)
 {
 	if (!this) return;

@@ -779,6 +779,7 @@ void Settings::InitSettings()
 	isStatusColumnHidden[csi_CursorX] = true;
 	isStatusColumnHidden[csi_CursorY] = true;
 	isStatusColumnHidden[csi_CursorSize] = true;
+	isStatusColumnHidden[csi_CellInfo] = true; // adjusted in InitVanilla()
 	isStatusColumnHidden[csi_ConEmuHWND] = true;
 	isStatusColumnHidden[csi_ConEmuView] = true;
 	isStatusColumnHidden[csi_ServerHWND] = true;
@@ -890,6 +891,7 @@ void Settings::InitVanilla()
 		isStatusColumnHidden[csi_BufferSize] = false;
 		isStatusColumnHidden[csi_ConsoleSize] = true;
 		isStatusColumnHidden[csi_NumLock] = true;
+		isStatusColumnHidden[csi_CellInfo] = false;
 	}
 }
 
