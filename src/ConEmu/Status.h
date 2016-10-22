@@ -75,6 +75,7 @@ enum CEStatusItems
 	csi_CursorY,
 	csi_CursorSize,
 	csi_CursorInfo,
+	csi_CellInfo,
 	csi_ConEmuPID,
 	csi_ConEmuHWND,
 	csi_ConEmuView,

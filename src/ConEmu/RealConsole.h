@@ -478,6 +478,7 @@ class CRealConsole
 		bool QueryPromptStart(COORD *cr);
 		void QueryTermModes(wchar_t* pszInfo, int cchMax, bool bFull);
 		void QueryRConModes(wchar_t* pszInfo, int cchMax, bool bFull);
+		void QueryCellInfo(wchar_t* pszInfo, int cchMax);
 		void GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr = NULL);
 		DWORD GetConsoleCP();
 		DWORD GetConsoleOutputCP();

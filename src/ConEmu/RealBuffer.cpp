@@ -111,6 +111,34 @@ const DWORD gnKeyBarFlags[] = {0,
 };
 
 
+void ConsoleLinePtr::clear()
+{
+	pChar = NULL;
+	pAttr = NULL;
+	pAttrEx = NULL;
+	nLen = 0;
+}
+
+bool ConsoleLinePtr::get(int index, wchar_t& chr, CharAttr& atr)
+{
+	if (index < 0 || index > nLen)
+		return false;
+	if (!pChar || !(pAttr || pAttrEx))
+		return false;
+
+	chr = pChar[index];
+
+	if (pAttrEx != NULL)
+	{
+		atr = pAttrEx[index];
+	}
+	else if (pAttr)
+	{
+	}
+}
+
+
+
 CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType /*= rbt_Primary*/)
 {
 	mp_RCon = apRCon;
@@ -5701,7 +5729,17 @@ const CONSOLE_SCREEN_BUFFER_INFO* CRealBuffer::GetSBI()
 //	return con.bConsoleDataChanged;
 //}
 
-bool CRealBuffer::GetConsoleLine(CRConDataGuard& data, int nLine, const wchar_t*& rpChar, /*CharAttr*& pAttr,*/ int& rnLen, MSectionLock* pcsData)
+bool CRealBuffer::GetConsoleLine(/*[OUT]*/CRConDataGuard& data, int nLine, const wchar_t*& rpChar, int& rnLen, MSectionLock* pcsData /*= NULL*/)
+{
+	ConsoleLinePtr line = {};
+	if (!GetConsoleLine(nLine, data, line, pcsData))
+		return false;
+	rpChar = line.pChar;
+	rnLen = line.nLen;
+	return true;
+}
+
+bool GetConsoleLine(int nLine, /*[OUT]*/CRConDataGuard& data, ConsoleLinePtr& rpLine, MSectionLock* pcsData /*= NULL*/)
 {
 	// Может быть уже заблокировано
 	MSectionLock csData;
@@ -5714,6 +5752,8 @@ bool CRealBuffer::GetConsoleLine(CRConDataGuard& data, int nLine, const wchar_t*
 	{
 		csData.Lock(&csCON);
 	}
+
+	rpLine.clear();
 
 	if (nLine < 0 || nLine >= GetWindowHeight())
 	{
@@ -5729,8 +5769,10 @@ bool CRealBuffer::GetConsoleLine(CRConDataGuard& data, int nLine, const wchar_t*
 		if (!dump.pszBlock1)
 			return FALSE;
 
-		rpChar = dump.pszBlock1 + ((con.m_sbi.srWindow.Top + nLine) * dump.crSize.X) + con.m_sbi.srWindow.Left;
-		rnLen = dump.crSize.X;
+		size_t lineShift = ((con.m_sbi.srWindow.Top + nLine) * dump.crSize.X) + con.m_sbi.srWindow.Left;
+		rpLine.pChar = dump.pszBlock1 + lineShift;
+		rpLine.pAttrEx = dump.pcaBlock1 + lineShift;
+		rpLine.nLen = dump.crSize.X;
 	}
 	else if (!GetData(data))
 	{
@@ -5745,8 +5787,8 @@ bool CRealBuffer::GetConsoleLine(CRConDataGuard& data, int nLine, const wchar_t*
 			return FALSE;
 		}
 
-		rpChar = data->pConChar + (nLine * data->nWidth);
-		rnLen = data->nWidth;
+		rpLine.pChar = data->pConChar + (nLine * data->nWidth);
+		rpLine.nLen = data->nWidth;
 	}
 
 	return TRUE;
@@ -6631,6 +6673,16 @@ void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* psbi, SMAL
 	{
 		ConsoleCursorPos(&(psbi->dwCursorPosition));
 	}
+}
+
+void CRealBuffer::QueryCellInfo(wchar_t* pszInfo, int cchMax)
+{
+	if (!pszInfo || cchMax <= 0 || !this || !mp_ABuf)
+	{
+		if (pszInfo) *pszInfo = 0;
+		return;
+	}
+
 }
 
 void CRealBuffer::ConsoleCursorPos(COORD *pcr)
