@@ -280,7 +280,7 @@
     <LinkKeyFile />
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">
-    <OutDir>C:\ConEmu\ConEmu\</OutDir>
+    <OutDir>$(ConEmuDebugDir)ConEmu\</OutDir>
     <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuC64</TargetName>
     <TargetExt>.exe</TargetExt>

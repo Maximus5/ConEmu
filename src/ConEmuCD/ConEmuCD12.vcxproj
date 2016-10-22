@@ -247,7 +247,7 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">
-    <OutDir>C:\ConEmu\ConEmu\</OutDir>
+    <OutDir>$(ConEmuDebugDir)ConEmu\</OutDir>
     <IntDir>$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <TargetName>ConEmuCD64</TargetName>
     <TargetExt>.dll</TargetExt>
