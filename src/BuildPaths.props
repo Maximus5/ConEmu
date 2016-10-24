@@ -1,11 +1,48 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ImportGroup Label="PropertySheets" />
-  <!--<PropertyGroup Condition="'$(CompileConfig)' == 'DEBUG'" >-->
+  <Choose>
+    <When Condition=" '$(Configuration)'=='Debug' ">
+      <PropertyGroup>
+        <DefaultRootOutDir>$(SolutionDir)../Debug/</DefaultRootOutDir>
+        <RootIntDir>$(SolutionDir)/_VCBUILD/</RootIntDir>
+      </PropertyGroup>
+    </When>
+    <When Condition=" '$(Configuration)'=='Release' ">
+      <PropertyGroup>
+        <DefaultRootOutDir>$(SolutionDir)../Release/</DefaultRootOutDir>
+        <RootIntDir>$(SolutionDir)/_VCBUILD/</RootIntDir>
+      </PropertyGroup>
+    </When>
+    <When Condition=" '$(Configuration)'=='Remote' ">
+      <PropertyGroup>
+        <DefaultRootOutDir>Z:/</DefaultRootOutDir>
+        <RootIntDir>$(SolutionDir)/_VCBUILD/</RootIntDir>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <DefaultRootOutDir>$(SolutionDir)../build/$(Configuration)/</DefaultRootOutDir>
+        <RootIntDir>$(SolutionDir)/_VCBUILD/</RootIntDir>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+  <ItemGroup>
+    <BuildMacro Include="RootOutDir">
+      <Value>$(RootOutDir)</Value>
+    </BuildMacro>
+    <BuildMacro Include="RootIntDir">
+      <Value>$(RootIntDir)</Value>
+    </BuildMacro>
+  </ItemGroup>
+  <!--
+  <PropertyGroup Condition="'$(CompileConfig)' == 'DEBUG'" >
+  -->
+  <!--
   <PropertyGroup Label="UserMacros">
     <ConEmuDebugDir>$(SolutionDir)..\Debug\</ConEmuDebugDir>
   </PropertyGroup>
-  <PropertyGroup />
-  <ItemDefinitionGroup />
-  <ItemGroup/>
+  -->
+  <PropertyGroup Label="UserMacros">
+    <RootOutDir>$(DefaultRootOutDir)</RootOutDir>
+  </PropertyGroup>
 </Project>
