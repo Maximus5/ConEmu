@@ -14906,7 +14906,7 @@ void CRealConsole::QueryCellInfo(wchar_t* pszInfo, int cchMax)
 		return;
 	}
 
-	mp_ABuf->QueryCellInfo(pszInfo, cchMax)
+	mp_ABuf->QueryCellInfo(pszInfo, cchMax);
 }
 
 void CRealConsole::GetConsoleCursorInfo(CONSOLE_CURSOR_INFO *ci, COORD *cr)

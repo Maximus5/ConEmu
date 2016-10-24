@@ -135,6 +135,9 @@ bool ConsoleLinePtr::get(int index, wchar_t& chr, CharAttr& atr)
 	else if (pAttr)
 	{
 	}
+
+	_ASSERTE(FALSE && "Complete ConsoleLinePtr::get"); // #TODO
+	return false;
 }
 
 
@@ -5739,7 +5742,7 @@ bool CRealBuffer::GetConsoleLine(/*[OUT]*/CRConDataGuard& data, int nLine, const
 	return true;
 }
 
-bool GetConsoleLine(int nLine, /*[OUT]*/CRConDataGuard& data, ConsoleLinePtr& rpLine, MSectionLock* pcsData /*= NULL*/)
+bool CRealBuffer::GetConsoleLine(int nLine, /*[OUT]*/CRConDataGuard& data, ConsoleLinePtr& rpLine, MSectionLock* pcsData /*= NULL*/)
 {
 	// Может быть уже заблокировано
 	MSectionLock csData;
@@ -6677,12 +6680,13 @@ void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* psbi, SMAL
 
 void CRealBuffer::QueryCellInfo(wchar_t* pszInfo, int cchMax)
 {
-	if (!pszInfo || cchMax <= 0 || !this || !mp_ABuf)
+	if (!pszInfo || cchMax <= 0 || !this)
 	{
 		if (pszInfo) *pszInfo = 0;
 		return;
 	}
 
+	_ASSERTE(FALSE && "Complete CRealBuffer::QueryCellInfo"); // #TODO
 }
 
 void CRealBuffer::ConsoleCursorPos(COORD *pcr)
