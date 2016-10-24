@@ -2068,7 +2068,7 @@ static void CreateBashTask()
 		if (FileExists(lsExpanded))
 		{
 			App.Add(L"Bash::bash",
-				L" -cur_console:p", // "--login -i" is not required yet
+				L" -cur_console:pm:/mnt", // "--login -i" is not required yet
 				NULL /*L"chcp utf8 & "*/, // doesn't work either. can't type Russian or international characters.
 				L"-icon \"%USERPROFILE%\\AppData\\Local\\lxss\\bash.ico\"",
 				BashOnUbuntu,
@@ -2105,7 +2105,7 @@ static void CreateBashTask()
 	// HKLM\SOFTWARE\Cygwin\setup\rootdir
 	// HKCU\Software\Cygwin\setup\rootdir
 	App.Add(L"Bash::CygWin bash",
-		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\Cygwin.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
+		L" --login -i -new_console:m:/cygdrive -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\Cygwin.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
 		L"[SOFTWARE\\Cygwin\\setup:rootdir]\\bin\\bash.exe",
 		L"\\CygWin\\bin\\bash.exe", NULL);
 	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},

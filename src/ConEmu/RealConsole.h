@@ -449,6 +449,7 @@ class CRealConsole
 		TermEmulationType GetTermType();
 		bool GetBracketedPaste();
 		bool GetAppCursorKeys();
+		LPCWSTR GetMntPrefix();
 		bool ProcessXtermSubst(const INPUT_RECORD& r);
 		void ProcessKeyboard(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars);
 		void OnKeyboardIme(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

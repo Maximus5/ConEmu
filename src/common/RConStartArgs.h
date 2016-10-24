@@ -64,6 +64,7 @@ struct RConStartArgs
 	wchar_t* pszIconFile;   // "-new_console:C:<icon>"
 	wchar_t* pszPalette;    // "-new_console:P:<palette>"
 	wchar_t* pszWallpaper;  // "-new_console:W:<wallpaper>"
+	wchar_t* pszMntRoot;    // "-new_console:m:<mntroot>" - explicit prefix for mount root: /cygdrive or /mnt
 	
 	RConBoolArg     RunAsAdministrator; // -new_console:a
 	RConBoolArg     RunAsSystem;        // -new_console:A

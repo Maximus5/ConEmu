@@ -282,6 +282,7 @@ RConStartArgs::RConStartArgs()
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = pszRenameTab = NULL;
 	pszAddGuiArg = NULL;
 	pszIconFile = pszPalette = pszWallpaper = NULL;
+	pszMntRoot = NULL;
 	BufHeight = crb_Undefined; nBufHeight = 0; LongOutputDisable = crb_Undefined;
 	OverwriteMode = crb_Undefined;
 	nPTY = 0;
@@ -329,6 +330,7 @@ bool RConStartArgs::AssignFrom(const struct RConStartArgs* args, bool abConcat /
 		{&this->pszIconFile, args->pszIconFile},
 		{&this->pszPalette, args->pszPalette},
 		{&this->pszWallpaper, args->pszWallpaper},
+		{&this->pszMntRoot, args->pszMntRoot},
 		{NULL}
 	};
 
@@ -488,6 +490,7 @@ RConStartArgs::~RConStartArgs()
 	SafeFree(pszIconFile);
 	SafeFree(pszPalette);
 	SafeFree(pszWallpaper);
+	SafeFree(pszMntRoot);
 
 	CleanSecure();
 
@@ -514,6 +517,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	cchMaxLen += (pszStartupDir ? (lstrlen(pszStartupDir) + 20) : 0); // "-new_console:d:..."
 	cchMaxLen += (pszIconFile   ? (lstrlen(pszIconFile) + 20) : 0); // "-new_console:C:..."
 	cchMaxLen += (pszWallpaper  ? (lstrlen(pszWallpaper) + 20) : 0); // "-new_console:W:..."
+	cchMaxLen += (pszMntRoot    ? (lstrlen(pszMntRoot) + 20) : 0); // "-new_console:W:..."
 	// Some values may contain 'invalid' symbols (like '<', '>' and so on). They will be escaped. Thats why "len*2".
 	cchMaxLen += (pszRenameTab  ? (lstrlen(pszRenameTab)*2 + 20) : 0); // "-new_console:t:..."
 	cchMaxLen += (pszPalette    ? (lstrlen(pszPalette)*2 + 20) : 0); // "-new_console:P:..."
@@ -659,6 +663,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 		{L'C', false, this->pszIconFile},
 		{L'P', true,  this->pszPalette},
 		{L'W', false, this->pszWallpaper},
+		{L'm', false, this->pszMntRoot},
 		{0}
 	};
 
@@ -1296,6 +1301,8 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						// P:<Palette>. MUST be last option
 					case L'W':
 						// W:<Wallpaper>. MUST be last option
+					case L'm':
+						// m:<mntroot>. MUST be last option
 						{
 							if (cOpt == L'u')
 							{
@@ -1334,6 +1341,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							case L'C': pptr = &pszIconFile; break;
 							case L'P': pptr = &pszPalette; break;
 							case L'W': pptr = &pszWallpaper; break;
+							case L'm': pptr = &pszMntRoot; break;
 							}
 
 							if (pszEnd > pszTab)
