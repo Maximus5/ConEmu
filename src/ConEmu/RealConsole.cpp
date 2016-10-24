@@ -12336,7 +12336,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 				&& IsFilePath(pszBuf, true) && isCygwinMsys())
 		))
 	{
-		wchar_t* pszCygWin = DupCygwinPath(pszBuf, false);
+		wchar_t* pszCygWin = DupCygwinPath(pszBuf, false, GetMntPrefix());
 		if (pszCygWin)
 		{
 			SafeFree(pszBuf);
@@ -14628,6 +14628,24 @@ CEActiveAppFlags CRealConsole::GetActiveAppFlags()
 
 	CEActiveAppFlags nActiveAppFlags = m_AppMap.Ptr()->nActiveAppFlags;
 	return nActiveAppFlags;
+}
+
+LPCWSTR CRealConsole::GetMntPrefix()
+{
+	// Prefer RConStartArg parameter. Even if ‘empty’ prefix was specified!
+	if (m_Args.pszMntRoot)
+		return m_Args.pszMntRoot;
+
+	WORD conInMode = mp_RBuf ? mp_RBuf->GetConInMode() : 0;
+	CEActiveAppFlags activeAppFlags = GetActiveAppFlags();
+	TermEmulationType termMode = GetTermType();
+
+	if (conInMode & 0x200/*ENABLE_VIRTUAL_TERMINAL_INPUT*/)
+		return L"/mnt";
+	if (activeAppFlags & caf_Cygwin1)
+		return L"/cygdrive";
+	// caf_Msys1|caf_Msys2 - no prefix?
+	return NULL;
 }
 
 bool CRealConsole::isCygwinMsys()

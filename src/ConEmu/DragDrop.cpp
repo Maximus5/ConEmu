@@ -1022,7 +1022,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 	}
 	else
 	{
-		bCygwinPaths = pRCon->isCygwinMsys();
+		bCygwinPaths = pRCon->isCygwinMsys() || (pRCon->GetTermType() == te_xterm);
 	}
 
 	size_t cchMacro = MAX_DROP_PATH*2+80;
@@ -1081,7 +1081,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		}
 		else if (bCygwinPaths)
 		{
-			wchar_t* pszCygwin = DupCygwinPath(pszText, false);
+			wchar_t* pszCygwin = DupCygwinPath(pszText, false, pRCon->GetMntPrefix());
 			if (pszCygwin)
 			{
 				_wcscpy_c(pszText, MAX_DROP_PATH, pszCygwin);

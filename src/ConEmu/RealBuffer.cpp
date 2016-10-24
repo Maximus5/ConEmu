@@ -3187,7 +3187,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 									//%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File
 
 									CEStr szSlashed; szSlashed.Attach(MakeStraightSlashPath(pszWinPath));
-									CEStr szCygwin;  szCygwin.Attach(DupCygwinPath(pszWinPath, false));
+									CEStr szCygwin;  szCygwin.Attach(DupCygwinPath(pszWinPath, false, mp_RCon->GetMntPrefix()));
 									LPCWSTR pszVal[] = {szRow, szCol, pszWinPath, (LPCWSTR)szSlashed, (LPCWSTR)szCygwin};
 									//_ASSERTE(countof(pszVar)==countof(pszVal));
 									wchar_t* pszCmd = ExpandMacroValues(gpSet->sFarGotoEditor, pszVal, countof(pszVal));

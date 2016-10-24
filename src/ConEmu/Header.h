@@ -249,7 +249,7 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst);
 //#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
 
 wchar_t* getFocusedExplorerWindowPath();
-wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote);
+wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix = NULL);
 wchar_t* MakeWinPath(LPCWSTR asAnyPath);
 wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath);
 bool FixDirEndSlash(wchar_t* rsPath);

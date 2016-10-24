@@ -903,7 +903,7 @@ bool GetColorRef(LPCWSTR pszText, COLORREF* pCR)
 	return result;
 }
 
-wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote)
+wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix /*= NULL*/)
 {
 	if (!asWinPath)
 	{
@@ -919,11 +919,16 @@ wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote)
 		}
 	}
 
-	size_t cchLen = _tcslen(asWinPath) + (bAutoQuote ? 3 : 1) + 1/*Possible space-termination on paste*/;
+	size_t cchLen = _tcslen(asWinPath)
+		+ (bAutoQuote ? 3 : 1) // two or zero quotes + null-termination
+		+ (asMntPrefix ? _tcslen(asMntPrefix) : 0) // '/cygwin' or '/mnt' prefix
+		+ 1/*Possible space-termination on paste*/;
 	wchar_t* pszResult = (wchar_t*)malloc(cchLen*sizeof(*pszResult));
 	if (!pszResult)
 		return NULL;
 	wchar_t* psz = pszResult;
+
+	TODO("Replace quotation with escaping"); // e.g. instead of "/C/Program Files/" type /C/Program\ Files/
 
 	if (bAutoQuote)
 	{
@@ -934,10 +939,16 @@ wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote)
 		*(psz++) = *(asWinPath++);
 	}
 
+	// Drive letter!
 	if (asWinPath[0] && (asWinPath[1] == L':'))
 	{
+		// '/cygwin' or '/mnt' prefix
+		LPCWSTR pszPrefix = asMntPrefix;
+		if (pszPrefix)
+			while (*pszPrefix)
+				*(psz++) = *(pszPrefix++);
 		*(psz++) = L'/';
-		*(psz++) = asWinPath[0];
+		*(psz++) = static_cast<wchar_t>(tolower(asWinPath[0]));
 		asWinPath += 2;
 	}
 	else
@@ -1079,6 +1090,7 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hPar
 		{
 			if (nFlags & sff_Cygwin)
 			{
+				//TODO: Favor current console GetMntPrefix()
 				pszResult = DupCygwinPath(szFolder, (nFlags & sff_AutoQuote));
 			}
 			else if ((nFlags & sff_AutoQuote) && (wcschr(szFolder, L' ') != NULL))
@@ -1137,6 +1149,7 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDef
 
 		if (nFlags & sff_Cygwin)
 		{
+			//TODO: Favor current console GetMntPrefix()
 			pszResult = DupCygwinPath(pszName, (nFlags & sff_AutoQuote));
 		}
 		else
