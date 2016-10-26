@@ -6,6 +6,7 @@ Tools
 .build/
 .codeblocks/
 .vs
+.vahashtags
 Icons/
 CE2-preview.sln
 compile.txt
