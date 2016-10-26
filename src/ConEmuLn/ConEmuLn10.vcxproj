@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug_C|Win32">
-      <Configuration>Debug_C</Configuration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug_C|x64">
-      <Configuration>Debug_C</Configuration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Debug_E|Win32">
@@ -41,12 +41,12 @@
       <Configuration>Debug_F</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug_R|Win32">
-      <Configuration>Debug_R</Configuration>
+    <ProjectConfiguration Include="Remote|Win32">
+      <Configuration>Remote</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug_R|x64">
-      <Configuration>Debug_R</Configuration>
+    <ProjectConfiguration Include="Remote|x64">
+      <Configuration>Remote</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Instrument|Win32">
@@ -98,7 +98,7 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -107,7 +107,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -137,7 +137,7 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -146,7 +146,7 @@
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'" Label="Configuration">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -174,13 +174,13 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
@@ -201,13 +201,13 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Instrument|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'" Label="PropertySheets">
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
@@ -233,24 +233,24 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)\_VCBUILD\$(PlatformName)\$(ConfigurationName)\$(ProjectName)</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Instrument|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Instrument|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Instrument|x64'">false</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">true</LinkIncremental>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
-    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
-    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">true</LinkIncremental>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_F|Win32'">true</LinkIncremental>
@@ -275,12 +275,12 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">C:\Temp\CE\$(ProjectName).$(Platform).$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">$(SolutionDir)\_VCBUILD\$(Configuration).$(ProjectName).$(Platform)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug_F3|x64'">true</LinkIncremental>
-    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'" />
-    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'" />
-    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'" />
-    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'" />
@@ -305,12 +305,12 @@
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'" />
-    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'" />
-    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'" />
-    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'" />
-    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Remote|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Remote|x64'" />
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'" />
@@ -463,7 +463,7 @@
       </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -496,7 +496,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Midl>
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
@@ -589,7 +589,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
       <Command>copy $(TargetPath) $(SolutionDir)..\Plugins\ConEmu\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -618,7 +618,7 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
       <Command>copy "$(ProjectDir)..\..\Release\plugins\ConEmu\Lines\ConEmuLn_*.lng" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
     <Midl>
       <TargetEnvironment>X64</TargetEnvironment>
     </Midl>
@@ -904,14 +904,14 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
     <CustomBuildStep Include="export.def" />
     <CustomBuild Include="Lang.templ">
       <FileType>Document</FileType>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">true</ExcludedFromBuild>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">%(RootDir)%(Directory)lang.cmd "$(TargetDir)"
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(RootDir)%(Directory)lang.cmd "$(TargetDir)"
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug_C|Win32'">ConEmuLn_Lang.h;%(Outputs)</Outputs>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">true</ExcludedFromBuild>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">%(RootDir)%(Directory)lang.cmd "$(TargetDir)"
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ConEmuLn_Lang.h;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(RootDir)%(Directory)lang.cmd "$(TargetDir)"
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug_C|x64'">ConEmuLn_Lang.h;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ConEmuLn_Lang.h;%(Outputs)</Outputs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">true</ExcludedFromBuild>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug_E|Win32'">%(RootDir)%(Directory)lang.cmd "$(TargetDir)"
 </Command>
@@ -944,14 +944,14 @@ if exist C:\Utils\FAR170\Plugins\ConEmu\Lines\ConEmuLn.dll copy "$(TargetDir)Con
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">%(RootDir)%(Directory)lang.cmd "$(TargetDir)"
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug_F|x64'">ConEmuLn_Lang.h;%(Outputs)</Outputs>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">true</ExcludedFromBuild>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">%(RootDir)%(Directory)lang.cmd "$(TargetDir)"
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">true</ExcludedFromBuild>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">%(RootDir)%(Directory)lang.cmd "$(TargetDir)"
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug_R|Win32'">ConEmuLn_Lang.h;%(Outputs)</Outputs>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">true</ExcludedFromBuild>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">%(RootDir)%(Directory)lang.cmd "$(TargetDir)"
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">ConEmuLn_Lang.h;%(Outputs)</Outputs>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">true</ExcludedFromBuild>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">%(RootDir)%(Directory)lang.cmd "$(TargetDir)"
 </Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug_R|x64'">ConEmuLn_Lang.h;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">ConEmuLn_Lang.h;%(Outputs)</Outputs>
       <Command Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">%(RootDir)%(Directory)lang.cmd "$(TargetDir)"
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Instrument|Win32'">ConEmuLn_Lang.h;%(Outputs)</Outputs>
