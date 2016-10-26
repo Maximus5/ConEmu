@@ -13,7 +13,7 @@
     <RootOutDirRelease>$(RootOutDirRelease)</RootOutDirRelease>
     <RootOutDirRemote>$(RootOutDirRemote)</RootOutDirRemote>
     <RootOutDirDefault>$(RootOutDirDefault)</RootOutDirDefault>
-    <RootIntDir>$(SolutionDir)/_VCBUILD/</RootIntDir>
+    <RootIntDir>$(SolutionDir)_VCBUILD/</RootIntDir>
   </PropertyGroup>
   <!-- Now choose proper variable for RootOutDir -->
   <Choose>
