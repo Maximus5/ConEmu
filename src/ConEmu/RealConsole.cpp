@@ -7234,21 +7234,22 @@ int CRealConsole::GetProcesses(ConProcess** ppPrc, bool ClientOnly /*= false*/)
 		}
 	}
 
+
+	// The following block protect ConEmu window from unexpected termination
 	if (isDetached())
 	{
-		return 1; // Чтобы GUI не захлопнулся
+		return 1;
 	}
-
-	// Сервер еще не отработал запуск?
-	if (!mn_ProcessCount && mh_MainSrv)
+	if (!mn_ProcessCount)
 	{
-		if (isServerAlive())
-		{
-			return 1; // Чтобы GUI не закрылся
-		}
+		if (mb_NeedStartProcess || mb_InCreateRoot)
+			return 1;
+		if (mh_MainSrv && isServerAlive())
+			return 1;
 	}
 
-	// Если хотят узнать только количество процессов
+
+	// If the process count was requested only
 	if (ppPrc == NULL || mn_ProcessCount == 0)
 	{
 		if (ppPrc) *ppPrc = NULL;
