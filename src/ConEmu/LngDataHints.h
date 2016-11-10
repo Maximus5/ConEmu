@@ -111,7 +111,7 @@ static LngPredefined gsDataHints[] = {
 	{ cbExtendUCharMap,        L"Show glyphs from selected font in ‘Unicode CharMap’ plugin (FAR2 only)" },
 	{ cbFARuseASCIIsort,       L"Hook Far string sort functions.\r\n!!!HIGHLY EXPERIMENTAL!!!" },
 	{ cbFadeInactive,          L"When ConEmu loses focus, its contents may be faded. You may specify most bright color." },
-	{ cbFarHourglass,          L"Show AppStarting cursor (arrow with a small hourglass) when Far is not responding (during long operations)" },
+	{ cbFarHourglass,          L"Show AppStarting mouse cursor (arrow with a small hourglass or circle) when Far is busy (not responding during long operations)" },
 	{ cbFixAltOnAltTab,        L"When You set a macro on Alt (RAlt) it can unexpectedly activates on AltTab or AltF9. This issue can be fixed by sending to console Control depress before Alt release." },
 	{ cbFixFarBorders,         L"You can specify additional font for drawing pseudographics or specified range of symbols.\r\nE.g. main - \"Fixedsys\", additional - \"Lucida Console\".\r\nYou may force this font for specified range of symbols, search \"Settings-ConEmu.reg\" for \"FixFarBordersRanges\" option." },
 	{ cbFocusInChildWindows,   L"Set focus in xshell/putty/notepad/etc. when ConEmu is activated or tab switched." },
