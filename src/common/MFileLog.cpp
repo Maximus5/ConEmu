@@ -62,6 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 MFileLog::MFileLog(LPCWSTR asName, LPCWSTR asDir /*= NULL*/, DWORD anPID /*= 0*/)
 {
+	mp_Acquired = NULL;
 	mpcs_Lock = new MSectionSimple(true);
 	mh_LogFile = NULL;
 	ms_FilePathName = NULL;
@@ -91,6 +92,14 @@ HRESULT MFileLog::InitFileName(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/)
 
 MFileLog::~MFileLog()
 {
+	if (mp_Acquired)
+	{
+		_ASSERTE(mp_Acquired==NULL && "Must be already released!");
+		mp_Acquired->pLog = NULL;
+		mp_Acquired->hLogFile = NULL;
+		mp_Acquired->lock.Unlock();
+		mp_Acquired = NULL;
+	}
 	CloseLogFile();
 	SafeFree(ms_DefPath);
 	SafeDelete(mpcs_Lock);
@@ -282,6 +291,30 @@ LPCWSTR MFileLog::GetLogFileName()
 	return (ms_FilePathName ? ms_FilePathName : L"<NullFileName>");
 }
 
+bool MFileLog::AcquireHandle(LPCWSTR asText, MFileLogHandle& Acquired)
+{
+	LogString((asText && *asText) ? asText : L"Acquiring LogFile handle", true, NULL, false);
+	if (!IsLogOpened())
+	{
+		LogString(" - FAILED (log was not opened)");
+		return false;
+	}
+	if (InterlockedCompareExchangePointer(&mp_Acquired, &Acquired, NULL))
+	{
+		LogString(" - FAILED (already acquired)");
+		return false;
+	}
+	if (!mp_Acquired->lock.Lock(mpcs_Lock, 500))
+	{
+		InterlockedExchangePointer(&mp_Acquired, NULL);
+		LogString(" - FAILED (can't lock)");
+		return false;
+	}
+	mp_Acquired->pLog = this;
+	mp_Acquired->hLogFile = mh_LogFile;
+	return true;
+}
+
 void MFileLog::LogString(LPCSTR asText, bool abWriteTime /*= true*/, LPCSTR asThreadName /*= NULL*/, bool abNewLine /*= true*/, UINT anCP /*= CP_ACP*/)
 {
 	if (!this)
@@ -453,3 +486,26 @@ void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
 	LogString(L"MFileLog::LogStartEnv finished", true);
 }
 #endif
+
+
+MFileLogHandle::MFileLogHandle()
+	: pLog(NULL)
+	, hLogFile(NULL)
+{
+}
+
+MFileLogHandle::~MFileLogHandle()
+{
+	if (pLog)
+	{
+		InterlockedExchangePointer(&pLog->mp_Acquired, NULL);
+		pLog = NULL;
+		hLogFile = NULL;
+	}
+	lock.Unlock();
+}
+
+MFileLogHandle::operator HANDLE() const
+{
+	return hLogFile;
+}

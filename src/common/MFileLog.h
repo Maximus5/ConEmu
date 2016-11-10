@@ -33,6 +33,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct CEStartupEnv;
 struct MSectionSimple;
+class MFileLog;
+
+class MFileLogHandle
+{
+	MFileLog* pLog;
+	HANDLE hLogFile;
+	MSectionLockSimple lock;
+	friend class MFileLog;
+public:
+	MFileLogHandle();
+	~MFileLogHandle();
+	operator HANDLE() const;
+};
 
 class MFileLog
 {
@@ -49,6 +62,8 @@ class MFileLog
 		#endif
 	protected:
 		MSectionSimple* mpcs_Lock;
+		MFileLogHandle* mp_Acquired;
+		friend class MFileLogHandle;
 	public:
 		MFileLog(LPCWSTR asName, LPCWSTR asDir = NULL, DWORD anPID = 0);
 		~MFileLog();
@@ -58,6 +73,7 @@ class MFileLog
 		LPCWSTR GetLogFileName();
 		void LogString(LPCSTR asText, bool abWriteTime = true, LPCSTR asThreadName = NULL, bool abNewLine = true, UINT anCP = CP_ACP);
 		void LogString(LPCWSTR asText, bool abWriteTime = true, LPCWSTR asThreadName = NULL, bool abNewLine = true);
+		bool AcquireHandle(LPCWSTR asText, MFileLogHandle& Acquired);
 
 		#if !defined(CONEMU_MINIMAL)
 		void LogStartEnv(CEStartupEnv* apStartEnv);

@@ -1532,6 +1532,8 @@ DWORD CDragDrop::ShellOpThreadProc(LPVOID lpParameter)
 		}
 		else
 		{
+			// TODO# gh-946 use MBoxA instead of DisplayLastError, hr is not LastError codes
+			// TODO# gh-946 show contents of sfop->fop for troubleshooting
 			DisplayLastError(_T("Shell operation failed"), hr);
 		}
 	}
@@ -1763,6 +1765,7 @@ HRESULT STDMETHODCALLTYPE CDragDrop::DragEnter(IDataObject* pDataObject, DWORD g
 	mb_selfdrag = (pDataObject == mp_DataObject);
 	mb_DragWithinNow = TRUE;
 
+	// TODO# gh-946 take into account LogFiles too. Acquire LogFile handle object to dump contents directly: MFileLogHandle
 	if (gbDebugLogStarted
 		#ifdef DUMP_DRAGGED_ITEMS_INFO
 		|| IsDebuggerPresent()
