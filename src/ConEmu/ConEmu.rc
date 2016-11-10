@@ -798,7 +798,7 @@ BEGIN
     CONTROL         "Copy by default",cbDnDCopy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,107,27,102,8
     CONTROL         "Use drop menu",cbDropUseMenu,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,213,27,162,8
     GROUPBOX        "Far Manager options",gbFarOptions,4,48,375,79
-    CONTROL         "Hourglass if not responding",cbFarHourglass,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,60,181,8
+    CONTROL         "Change mouse cursor if busy",cbFarHourglass,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,60,181,8
     CONTROL         "Extend Unicode CharMap",cbExtendUCharMap,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,9,74,181,8
     CONTROL         "Resize panels by mouse",cbDragPanel,"Button",BS_AUTO3STATE | WS_TABSTOP,9,100,181,8
     CONTROL         "use both panel edges",cbDragPanelBothEdges,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,113,173,8
