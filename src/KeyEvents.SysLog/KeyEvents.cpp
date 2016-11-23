@@ -278,8 +278,10 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	INPUT_RECORD r, rl = {};
 	HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleCtrlHandler(HandlerRoutine, TRUE);
-	DWORD dw = 0;
+	DWORD dw = 0, dwSave = 0;
+	DWORD dwPrevIn = 0, dwPrevOut = 0, dwCurIn = 0, dwCurOut = 0;
 	BOOL lbEscPressed = FALSE;
     HMODULE hKernel = GetModuleHandleW (L"kernel32.dll");
     wchar_t szFormat[1024];
@@ -291,14 +293,24 @@ int _tmain(int argc, _TCHAR* argv[])
     if (hKernel)
         pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress (hKernel, "GetConsoleKeyboardLayoutNameW");
 
-	GetConsoleMode(h, &dw);
-	printf("Current console mode = 0x%08X\n\n", (unsigned int)dw);
+	GetConsoleMode(h, &dwPrevIn);
+	GetConsoleMode(hOut, &dwPrevOut);
+
+	printf("Current console mode = 0x%08X\n\n", (unsigned int)dwPrevIn);
+	dw = dwSave = dwPrevIn;
 	if (!(dw & ENABLE_MOUSE_INPUT))
 	{
 	    SetConsoleMode(h, dw|ENABLE_MOUSE_INPUT);
 		GetConsoleMode(h, &dw);
 		printf("No ENABLE_MOUSE_INPUT, changing to = 0x%08X\n\n", (unsigned int)dw);
 	}
+	if ((dw & ENABLE_QUICK_EDIT_MODE))
+	{
+	    SetConsoleMode(h, dw & ~ENABLE_QUICK_EDIT_MODE);
+		GetConsoleMode(h, &dw);
+		printf("Was ENABLE_QUICK_EDIT_MODE, changing to = 0x%08X\n\n", (unsigned int)dw);
+	}
+	dwPrevIn = dw;
 
 	printf("Press 'Esc' twice to exit program\nPress 'Enter' to insert empty line\n\n");
 	
@@ -307,6 +319,19 @@ int _tmain(int argc, _TCHAR* argv[])
 		memset(&r, 0, sizeof(r)); dw = 0;
 		if (ReadConsoleInput(h, &r, 1, &dw))
 		{
+			GetConsoleMode(h, &dwCurIn);
+			GetConsoleMode(hOut, &dwCurOut);
+			if (dwCurIn != dwPrevIn)
+			{
+				printf("\nConIN mode changed to 0x%08X\n\n", dwCurIn);
+				dwPrevIn = dwCurIn;
+			}
+			if (dwCurOut != dwPrevOut)
+			{
+				printf("\nConOUT mode changed to 0x%08X\n\n", dwCurOut);
+				dwPrevOut = dwCurOut;
+			}
+
 			if ((r.EventType == MOUSE_EVENT)
 				&& (rl.EventType == MOUSE_EVENT)
 				&& (r.Event.MouseEvent.dwEventFlags == MOUSE_MOVED)
@@ -347,6 +372,11 @@ int _tmain(int argc, _TCHAR* argv[])
 				}
 			}
 		}
+	}
+	if (dw != dwSave)
+	{
+		printf("Reverting mode to = 0x%08X\n\n", (unsigned int)dwSave);
+		SetConsoleMode(h, dwSave);
 	}
 	return 0;
 }
