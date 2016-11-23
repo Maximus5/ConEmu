@@ -1,1 +1,6 @@
 syslog.cpp
+*12.sln
+*12.vcproj
+*12.vcxproj
+*.ilk
+*.obj
