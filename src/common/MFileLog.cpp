@@ -299,14 +299,14 @@ bool MFileLog::AcquireHandle(LPCWSTR asText, MFileLogHandle& Acquired)
 		LogString(" - FAILED (log was not opened)");
 		return false;
 	}
-	if (InterlockedCompareExchangePointer(&mp_Acquired, &Acquired, NULL))
+	if (InterlockedCompareExchangePointer((PVOID*)&mp_Acquired, &Acquired, NULL))
 	{
 		LogString(" - FAILED (already acquired)");
 		return false;
 	}
 	if (!mp_Acquired->lock.Lock(mpcs_Lock, 500))
 	{
-		InterlockedExchangePointer(&mp_Acquired, NULL);
+		InterlockedExchangePointer((PVOID*)&mp_Acquired, NULL);
 		LogString(" - FAILED (can't lock)");
 		return false;
 	}
@@ -498,7 +498,7 @@ MFileLogHandle::~MFileLogHandle()
 {
 	if (pLog)
 	{
-		InterlockedExchangePointer(&pLog->mp_Acquired, NULL);
+		InterlockedExchangePointer((PVOID*)&pLog->mp_Acquired, NULL);
 		pLog = NULL;
 		hLogFile = NULL;
 	}
