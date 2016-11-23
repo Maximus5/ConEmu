@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 		L"   or: ConEmuC /ATTACH /NOCMD\r\n" \
 		L"   or: ConEmuC /ATTACH [/GHWND=NEW|<HWND>] /[FAR|CON|TRM]PID=<PID>\r\n" \
 		L"   or: ConEmuC [/SILENT] [/USEEXPORT] /GUIMACRO[:PID|HWND][:T<tab>][:S<split>] <GuiMacro command>\r\n" \
-		L"   or: ConEmuC /IsConEmu | /IsAnsi | /IsAdmin | /IsTerm\r\n" \
+		L"   or: ConEmuC /IsConEmu | /IsAnsi | /IsAdmin | /IsRedirect | /IsTerm\r\n" \
 		L"   or: ConEmuC /DEBUGPID=<PID>[,<PID2>[,...]] [/DUMP | /MINI | /AUTOMINI | /FULL]\r\n" \
 		L"   or: ConEmuC /DEBUGEXE | /DEBUGTREE <CommandLine>\r\n" \
 		L"   or: ConEmuC [/SILENT] /EXPORT[=CON|GUI|ALL] [Var1 [Var2 [...]]]\r\n" \
@@ -71,6 +71,7 @@ _DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n")
 		L"     /IsAdmin        - returns 1 as errorlevel if current user has elevated privileges, 2 if not\r\n" \
 		L"     /IsAnsi         - returns 1 as errorlevel if ANSI are processed, 2 if not\r\n" \
 		L"     /IsConEmu       - returns 1 as errorlevel if running in ConEmu tab, 2 if not\r\n" \
+		L"     /IsRedirect     - returns 1 as errorlevel if CONOUT is redirected, 2 if not\r\n" \
 		L"     /IsTerm         - returns 1 as errorlevel if running in telnet, 2 if not\r\n" \
 		L"     /Log[N]         - create (debug) log file, N is number from 0 to 3\r\n" \
 		L"     /Echo | /Type   - https://conemu.github.io/en/ConEmuC.html#EchoAndType\r\n" \

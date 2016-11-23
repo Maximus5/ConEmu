@@ -155,6 +155,9 @@ bool DoStateCheck(ConEmuStateCheck eStateCheck)
 	case ec_IsAdmin:
 		bOn = IsUserAdmin();
 		break;
+	case ec_IsRedirect:
+		bOn = IsOutputRedirected();
+		break;
 	case ec_IsTerm:
 		bOn = isTerminalMode();
 		break;
