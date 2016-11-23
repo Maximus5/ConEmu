@@ -3161,6 +3161,11 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			eStateCheck = ec_IsAdmin;
 			break;
 		}
+		else if (lstrcmpi(szArg, L"/IsRedirect")==0)
+		{
+			eStateCheck = ec_IsRedirect;
+			break;
+		}
 		else if ((wcscmp(szArg, L"/CONFIRM")==0)
 			|| (wcscmp(szArg, L"/CONFHALT")==0)
 			|| (wcscmp(szArg, L"/ECONFIRM")==0))

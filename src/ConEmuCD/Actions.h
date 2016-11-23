@@ -40,6 +40,7 @@ enum ConEmuStateCheck
 	ec_IsTerm,
 	ec_IsAnsi,
 	ec_IsAdmin,
+	ec_IsRedirect,
 };
 
 enum ConEmuExecAction
