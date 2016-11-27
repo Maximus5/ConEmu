@@ -5186,6 +5186,7 @@ void CVirtualConsole::CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr)
 	pAttr->nBackIdx = CONBACKCOLOR(conAttr);
 	pAttr->crForeColor = pAttr->crOrigForeColor = mp_Colors[pAttr->nForeIdx];
 	pAttr->crBackColor = pAttr->crOrigBackColor = mp_Colors[pAttr->nBackIdx];
+	pAttr->ConAttr = conAttr;
 }
 
 // вызывается при получении нового Background (CECMD_SETBACKGROUND) из плагина

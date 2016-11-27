@@ -1498,7 +1498,7 @@ bool CRealBuffer::isDataValid()
 	else
 	{
 		CRConDataGuard data;
-		bValid = GetData(data);
+		bValid = GetData(data) && (data->nWidth && data->nHeight);
 	}
 
 	return bValid;
@@ -5791,6 +5791,7 @@ bool CRealBuffer::GetConsoleLine(int nLine, /*[OUT]*/CRConDataGuard& data, Conso
 		}
 
 		rpLine.pChar = data->pConChar + (nLine * data->nWidth);
+		rpLine.pAttr = data->pConAttr ? (data->pConAttr + (nLine * data->nWidth)) : NULL;
 		rpLine.nLen = data->nWidth;
 	}
 
@@ -6680,13 +6681,30 @@ void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* psbi, SMAL
 
 void CRealBuffer::QueryCellInfo(wchar_t* pszInfo, int cchMax)
 {
-	if (!pszInfo || cchMax <= 0 || !this)
+	if (!pszInfo || cchMax <= 0 || !this || !isDataValid())
 	{
 		if (pszInfo) *pszInfo = 0;
 		return;
 	}
 
-	_ASSERTE(FALSE && "Complete CRealBuffer::QueryCellInfo"); // #TODO
+	COORD crPos = {};
+	CRConDataGuard data;
+	ConsoleLinePtr line;
+	MSectionLock csLock;
+	ConsoleCursorPos(&crPos);
+	COORD lcrScr = BufferToScreen(crPos);
+	if (!GetConsoleLine(lcrScr.Y, data, line, &csLock))
+	{
+		if (pszInfo) *pszInfo = 0;
+		return;
+	}
+
+	wchar_t szInfo[256];
+	wchar_t wch = (line.pChar && line.nLen > lcrScr.X && lcrScr.X >= 0) ? line.pChar[lcrScr.X] : 0xFFFF;
+	WORD attr = (line.pAttr && line.nLen > lcrScr.X && lcrScr.X >= 0) ? line.pAttr[lcrScr.X] : 0;
+	// #TODO Attributes from RealConsole (WORD)
+	msprintf(szInfo, countof(szInfo), L"U+%02X A:%02X", wch, attr);
+	lstrcpyn(pszInfo, szInfo, cchMax);
 }
 
 void CRealBuffer::ConsoleCursorPos(COORD *pcr)

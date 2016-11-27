@@ -684,7 +684,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 					pRCon->QueryCellInfo(m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText));
 				else
 					m_Items[nDrawCount].sText[0] = 0;
-				wcscpy_c(m_Items[nDrawCount].szFormat, L" ");
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"U+FF A:FF");
 				break;
 
 			case csi_WindowStyle:

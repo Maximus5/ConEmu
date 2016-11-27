@@ -292,6 +292,8 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 			lca = lcaTable[PalIndex];
 			TODO("OPTIMIZE: вынести проверку bExtendColors за циклы");
 
+			lca.ConAttr = *pnSrc;
+
 			bool bPair = (iTail > 0);
 			ucs32 wwch = ucs32_from_wchar(pch, bPair);
 			_ASSERTE(wwch >= 0);
