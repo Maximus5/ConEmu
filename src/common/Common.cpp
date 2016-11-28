@@ -268,7 +268,7 @@ void TranslateKeyPress(WORD vkKey, DWORD dwControlState, wchar_t wch, int ScanCo
 				if (vk & 2)
 					dwControlState |= LEFT_CTRL_PRESSED;
 				if (vk & 4)
-					dwControlState |= LEFT_ALT_PRESSED;
+					dwControlState |= ((vk & 6) == 6) ? RIGHT_ALT_PRESSED : LEFT_ALT_PRESSED;
 			}
 		}
 	}
