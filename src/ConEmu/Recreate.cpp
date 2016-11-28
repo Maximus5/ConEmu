@@ -206,6 +206,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 		}
 	}
 	SetDlgItemText(hDlg, IDC_RESTART_CMD, pszSetCmd);
+	// TODO: gh-959: enable autocorrection of cbRunAsAdmin by IDC_RESTART_CMD task contents (first line)
 	}
 
 	// "%CD%" was specified as startup dir? In Task parameters for example...
@@ -862,6 +863,8 @@ INT_PTR CRecreateDlg::RecreateDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				if (lParam)
 					return pDlg->OnComboSetFocus(hDlg, messg, wParam, lParam);
 				break;
+
+			// TODO: gh-959: enable autocorrection of cbRunAsAdmin by IDC_RESTART_CMD task contents (first line)
 
 			} // switch (HIWORD(wParam))
 			break;
