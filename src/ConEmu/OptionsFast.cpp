@@ -1799,7 +1799,7 @@ static void CreateFarTasks()
 
 			// Force Far to use proper plugins folders
 			if (!bDontDuplicate)
-				lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FARHOME%\\Plugins\"");
+				lstrmerge(&pszCommand, L" /p\"%ConEmuDir%\\Plugins\\ConEmu;%FARHOME%\\Plugins;%FARPROFILE%\\Plugins\"");
 
 
 			// Suggest this task as ConEmu startup default
