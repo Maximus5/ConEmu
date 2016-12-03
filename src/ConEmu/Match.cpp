@@ -717,8 +717,8 @@ bool CMatch::MatchAny()
 	const wchar_t* pszSlashes = L"/\\";
 	const wchar_t* pszUrl = L":/\\:%#ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz;?@&=+$,-_.!~*'()0123456789";
 	const wchar_t* pszUrlTrimRight = L".,;";
-	const wchar_t* pszProtocol = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_.";
-	const wchar_t* pszEMail = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
+	const wchar_t* pszProtocol = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_+-.";
+	const wchar_t* pszEMail = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_+-.";
 	const wchar_t* pszUrlDelim = L"\\\"<>{}[]^`'\r\n" MATCH_SPACINGS;
 	const wchar_t* pszUrlFileDelim = L"\"<>^\r\n" MATCH_SPACINGS;
 	const wchar_t* pszEndBrackets = L">])}";
