@@ -20,6 +20,28 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.12.3
+* StatusBar. new column ‘Cell Info’ shows information about cell under cursor: UCS & ConAttr.
+  CellInfo is turned on by default in ‘-basic’ mode to simplify bugreporting.
+* gh-809: Support mount root for unix-path conversion.
+  ConEmu tries to choose mount root automatically, if user have not defined
+  it explicitly with ‘-cur_console:m:/mnt’ switch.
+  For example, to use ‘/cygdrive’ just run your console with switch:
+  ‘-cur_console:m:/cygdrive’.
+* In some cases ConEmu window was closed unexpectedly during initialization.
+  That happend if delay between consoles initialization was greater
+  than first console run duration. So, ConEmu was closed before second
+  console process was created.
+* gh-943: Rename option to ‘Change mouse cursor if busy’.
+* Add switch `ConEmuC -IsRedirect` to determine if CONOUT is redirected.
+* Force enable mouse events processing in KeyEvents.
+* gh-964: Let default {Far} task load plugins from FARPROFILE.
+* gh-927: Appropriate behavior while posting chars with AltGr pressed.
+  Example: `print("*")` when Lithuanian keyboard layout is selected.
+* Support clickable links like 'example-protocol://someurl'.
+  Origin: http://superuser.com/q/1152465/139371
+
+
 2016.10.22
 * gh-910: Fix regression: slower startup.
 * File `wsl-con.cmd` was created by msi in wrong folder.
