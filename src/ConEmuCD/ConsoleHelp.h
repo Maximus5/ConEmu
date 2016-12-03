@@ -100,6 +100,8 @@ _DBGHLP(L"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
 		L"       - specify icon used in tab\r\n" \
 		L"  Switch: -new_console:d:\"dir\"\r\n" \
 		L"       - specify working directory\r\n" \
+		L"  Switch: -new_console:m:/mnt\r\n" \
+		L"       - specify /mnt prefix for Unix-path conversion\r\n" \
 		L"  Switch: -new_console:P:\"palettename\"\r\n" \
 		L"       - set fixed palette for tab\r\n" \
 		L"  Switch: -new_console:t:\"tabname\"\r\n" \
