@@ -12342,6 +12342,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 		{
 			SafeFree(pszBuf);
 			pszBuf = pszCygWin;
+			nBufLen = wcslen(pszBuf);
 		}
 	}
 
