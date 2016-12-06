@@ -134,6 +134,12 @@ void RConStartArgs::RunArgTests()
 
 		switch (i)
 		{
+		case 22:
+			pszCmp = L"bash -cur_console:m:\"\"";
+			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, L"bash") && arg.pszMntRoot && *arg.pszMntRoot==0);
+			break;
 		case 21:
 			pszCmp = L"cmd '-new_console' `-new_console` \\\"-new_console\\\"";
 			arg.pszSpecialCmd = lstrdup(pszCmp);
@@ -670,9 +676,9 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	wchar_t szCat[32];
 	for (CopyValues* p = values; p->cOpt; p++)
 	{
-		if (p->pVal && *p->pVal)
+		if (p->pVal)
 		{
-			bool bQuot = wcspbrk(p->pVal, L" \"") != NULL;
+			bool bQuot = !*p->pVal || (wcspbrk(p->pVal, L" \"") != NULL);
 
 			if (bQuot)
 				msprintf(szCat, countof(szCat), (NewConsole == crb_On) ? L"-new_console:%c:\"" : L"-cur_console:%c:\"", p->cOpt);
@@ -1342,6 +1348,9 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							case L'P': pptr = &pszPalette; break;
 							case L'W': pptr = &pszWallpaper; break;
 							case L'm': pptr = &pszMntRoot; break;
+							default:
+								_ASSERTE(FALSE && "Unprocessed option");
+								return -1;
 							}
 
 							if (pszEnd > pszTab)
@@ -1360,7 +1369,8 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 									{
 										lbLocalQuot = false;
 									}
-									else if (*pS == L'"' && *(pS+1) != L'"')
+									else if (*pS == L'"' && ((*(pS+1) != L'"')
+											|| (*(pS+1) == L'"' && (!*(pS+2) || isSpace(*(pS+2)) || *(pS+2) == L':'))))
 									{
 										// Remember, that last processed switch was local-quoted
 										lbWasQuot = true;
@@ -1453,6 +1463,10 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 									}
 									break;
 								}
+							}
+							else
+							{
+								SafeFree(*pptr);
 							}
 							SafeFree(lpszTemp);
 						} // L't':
