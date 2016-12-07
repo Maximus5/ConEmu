@@ -20,6 +20,16 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2016.12.6
+* gh-970: Pasting windows path in cygwin produces truncated result (77eb4e6 regression).
+* Allow to pass empty string via -cur_console:m:"" (set no mount prefix for Unix path conversion).
+* gh-552: Templates %m...m, %M...M - show mark ‘...’ for active (m) and inactive (M) tab.
+  So, if you want to see ‘• ’ mark on the active tab (to emboss active tab)
+  just change your console tab template to smth like: ‘%m• m<%c> %s’.
+  https://conemu.github.io/en/SettingsTabBar.html#id2106
+* Don't show Assertions in ‘Stable’ releases.
+
+
 2016.12.3
 * StatusBar. new column ‘Cell Info’ shows information about cell under cursor: UCS & ConAttr.
   CellInfo is turned on by default in ‘-basic’ mode to simplify bugreporting.
