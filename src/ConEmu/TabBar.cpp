@@ -1590,6 +1590,21 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 			LPCTSTR pszText = NULL;
 			switch (*pszFmt)
 			{
+				case _T('m'): case _T('M'): // %m...m, %M...M - mark ‘...’ for active (m) and inactive (M) tab
+					{
+						TCHAR m = *(pszFmt++);
+						TCHAR* pm = szTmp;
+						for (size_t i = 0; i < countof(szTmp) && *pszFmt && *pszFmt != m; ++pszFmt, ++pm)
+							*pm = *pszFmt;
+						*pm = 0;
+						pszText = szTmp;
+						while (*pszFmt && *pszFmt != m)
+							++pszFmt;
+						bool isTabActive = (pRCon && pRCon->isActive(false)) && ((pTab->Flags() & fwt_CurrentFarWnd) == fwt_CurrentFarWnd);
+						if (isTabActive != (m == _T('m')))
+							szTmp[0] = 0;
+					}
+					break;
 				case _T('s'): case _T('S'): // %s - Title
 					pszText = fileName;
 					break;
