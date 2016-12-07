@@ -135,5 +135,11 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND ahParent =
 void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS ExceptionInfo = NULL);
 void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 
+#include "../ConEmu/version_stage.h"
+#if ConEmuVersionStage == CEVS_STABLE
+#define Assert(V)
+#define AssertMsg(V)
+#else
 #define Assert(V) if ((V)==FALSE) { AssertBox(_T(#V), _T(__FILE__), __LINE__); }
 #define AssertMsg(V) AssertBox(V, _T(__FILE__), __LINE__);
+#endif

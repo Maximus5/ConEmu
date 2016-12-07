@@ -2438,7 +2438,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 			return 0;
 		case ID_DEBUG_ASSERT:
 			_ASSERT(FALSE && "This is DEBUG test assertion");
-			Assert(FALSE && "This is RELEASE test assertion");
+			AssertBox(_T("FALSE && \"This is RELEASE test assertion\""), _T(__FILE__), __LINE__);
 			return 0;
 
 		case ID_DUMP_MEM_BLK:
