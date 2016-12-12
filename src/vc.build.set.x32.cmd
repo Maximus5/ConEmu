@@ -2,20 +2,36 @@
 
 call "%~dp0vc.build.set.any.cmd" %*
 
-if exist "%VS_COMNTOOLS%..\..\VC\BIN\vcvars32.bat" (
-  call "%VS_COMNTOOLS%..\..\VC\BIN\vcvars32.bat"
-) else (
+if NOT defined VS_COMNTOOLS (
   echo VS_COMNTOOLS NOT DEFINED!
   exit /B 100
   goto :EOF
 )
 
-if errorlevel 1 (
-echo !!! x86 build failed !!!
-exit /B 1
-goto :EOF
+set LIB=
+
+:bin
+if exist "%VS_COMNTOOLS%..\..\VC\BIN\vcvars32.bat" (
+  echo trying BIN\vcvars32.bat
+  call "%VS_COMNTOOLS%..\..\VC\BIN\vcvars32.bat"
+  if defined LIB goto next
 )
 
+:vcvarsall
+if exist "%VS_COMNTOOLS%..\..\VC\vcvarsall.bat" (
+  echo trying vcvarsall.bat
+  call "%VS_COMNTOOLS%..\..\VC\vcvarsall.bat" x86
+  if defined LIB goto next
+)
+
+:not_found
+echo !!! x64 build failed !!!
+exit /B 1
+goto :EOF
+
+:next
+set VS
+set LIB
 if "%VS_VERSION%" NEQ "9" goto skip_ddk_check
 if exist C:\WinDDK\7600.16385.1\lib\Crt\i386 set LIB=%LIB%;C:\WinDDK\7600.16385.1\lib\Crt\i386
 :skip_ddk_check
