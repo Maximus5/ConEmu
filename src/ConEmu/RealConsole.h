@@ -523,6 +523,7 @@ class CRealConsole
 		bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 		bool isConSelectMode();
 		bool isCygwinMsys();
+		bool isUnixFS();
 		bool isFar(bool abPluginRequired=false);
 		bool isFarBufferSupported();
 		bool isSendMouseAllowed();

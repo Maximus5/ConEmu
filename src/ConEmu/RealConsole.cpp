@@ -12334,7 +12334,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	if (pszBuf && *pszBuf
 		&& (abCygWin
 			|| (((PasteMode == pm_FirstLine) || (PasteMode == pm_OneLine) || !(wcschr(pszBuf, L'\n') || wcschr(pszBuf, L'\r')))
-				&& IsFilePath(pszBuf, true) && isCygwinMsys())
+				&& IsFilePath(pszBuf, true) && isUnixFS())
 		))
 	{
 		wchar_t* pszCygWin = DupCygwinPath(pszBuf, false, GetMntPrefix());
@@ -14653,9 +14653,18 @@ LPCWSTR CRealConsole::GetMntPrefix()
 bool CRealConsole::isCygwinMsys()
 {
 	CEActiveAppFlags nActiveAppFlags = GetActiveAppFlags();
-	if (!(nActiveAppFlags & (caf_Cygwin1|caf_Msys1|caf_Msys2)))
-		return false;
-	return true;
+	if ((nActiveAppFlags & (caf_Cygwin1|caf_Msys1|caf_Msys2)))
+		return true;
+	return false;
+}
+
+bool CRealConsole::isUnixFS()
+{
+	if (isCygwinMsys())
+		return true;
+	if (GetTermType() == te_xterm)
+		return true;
+	return false;
 }
 
 bool CRealConsole::isFar(bool abPluginRequired/*=false*/)

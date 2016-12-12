@@ -1022,7 +1022,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 	}
 	else
 	{
-		bCygwinPaths = pRCon->isCygwinMsys() || (pRCon->GetTermType() == te_xterm);
+		bCygwinPaths = pRCon->isUnixFS();
 	}
 
 	size_t cchMacro = MAX_DROP_PATH*2+80;
