@@ -932,34 +932,48 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 		write.Region.left = write.Region.right = -1; // not used yet
 	}
 
-	if (gbWasXTermOutput)
+	DWORD nWriteFrom = 0, nWriteTo = nNumberOfCharsToWrite;
+	while (nWriteTo > nWriteFrom && nWriteFrom < nNumberOfCharsToWrite)
 	{
-		// top - writes all lines using full console width
-		// and thereafter some ANSI-s and "\r\n"
-		int iDontWrap = 0;
-		for (DWORD n = 0; (n < nNumberOfCharsToWrite) && (iDontWrap < 3); n++)
+		if (gbWasXTermOutput)
 		{
-			iDontWrap |= (lpBuffer[n] == L'\r' || lpBuffer[n] == L'\n') ? 1 : 2;
+			// top:  writes all lines using full console width
+			//       and thereafter some ANSI-s and "\r\n"
+			// fish: writes in one call "(Width-1)*Spaces,\r,Space,\r"
+			DWORD ChrSet = (lpBuffer[nWriteFrom] == L'\r' || lpBuffer[nWriteFrom] == L'\n') ? 1 : 2;
+			for (DWORD n = nWriteFrom+1; (n < nWriteTo); n++)
+			{
+				DWORD AddChrSet = (lpBuffer[n] == L'\r' || lpBuffer[n] == L'\n') ? 1 : 2;
+				if (ChrSet != AddChrSet)
+				{
+					// If only printable chars are written
+					// ExtWriteText will check (AI) if it must not wrap&scroll
+					if (ChrSet == 2)
+						write.Flags |= ewtf_DontWrap;
+					nWriteTo = n;
+					break;
+				}
+				// Expected to be the same
+				_ASSERTE(ChrSet == AddChrSet);
+				ChrSet |= AddChrSet;
+			}
 		}
-		// If only printable chars are written
-		if (iDontWrap == 2)
+		_ASSERTE(nWriteTo<=nNumberOfCharsToWrite);
+
+		//lbRc = _WriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nTotalWritten, NULL);
+		write.Buffer = lpBuffer + nWriteFrom;
+		write.NumberOfCharsToWrite = nWriteTo - nWriteFrom;
+
+		lbRc = ExtWriteText(&write);
+		if (lbRc)
 		{
-			// ExtWriteText will check (AI) if it must not wrap&scroll
-			write.Flags |= ewtf_DontWrap;
+			if (write.NumberOfCharsWritten)
+				nTotalWritten += write.NumberOfCharsWritten;
+			if (write.ScrolledRowsUp > 0)
+				gDisplayCursor.StoredCursorPos.Y = max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)write.ScrolledRowsUp));
 		}
-	}
 
-	//lbRc = _WriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nTotalWritten, NULL);
-	write.Buffer = lpBuffer;
-	write.NumberOfCharsToWrite = nNumberOfCharsToWrite;
-
-	lbRc = ExtWriteText(&write);
-	if (lbRc)
-	{
-		if (write.NumberOfCharsWritten)
-			nTotalWritten += write.NumberOfCharsWritten;
-		if (write.ScrolledRowsUp > 0)
-			gDisplayCursor.StoredCursorPos.Y = max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)write.ScrolledRowsUp));
+		nWriteFrom = nWriteTo; nWriteTo = nNumberOfCharsToWrite;
 	}
 
 	if (lpNumberOfCharsWritten)

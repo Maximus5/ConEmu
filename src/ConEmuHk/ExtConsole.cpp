@@ -1294,9 +1294,28 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	{
 		// Printing (NOT including pCur) using extended attributes
 		SHORT ForceDumpX = (x2 > x) ? (min(x2, WrapAtCol)-1) : -1;
-		lbRc = IntWriteText(h, x, ForceDumpX, pFrom, (DWORD)(pCur - pFrom),
+		DWORD nSplit1 = 0;
+		DWORD toWrite = (DWORD)(pCur - pFrom);
+		if (bRevertMode && (toWrite > 1))
+		{
+			// Win-8.1 bug: When cursor is on cell 1 (0-based) and we write {Width-1} spaces
+			//              the cursor after write operation goes to wrong position.
+			//              For example, when Width=110, CursorX becomes 101.
+			if ((toWrite + x) == (DWORD)csbi.dwSize.X)
+			{
+				toWrite--; nSplit1++;
+			}
+		}
+		lbRc = IntWriteText(h, x, ForceDumpX, pFrom, toWrite,
 					 (pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : NULL,
 					 (pTrueColorEnd), AIColor, csbi, (WriteConsoleW_t)Info->Private);
+		if (nSplit1)
+		{
+
+			lbRc |= IntWriteText(h, x+toWrite, ForceDumpX, pFrom+toWrite, nSplit1,
+					 (pTrueColorStart && (nLinePosition >= 0)) ? (pTrueColorStart + nLinePosition) : NULL,
+					 (pTrueColorEnd), AIColor, csbi, (WriteConsoleW_t)Info->Private);
+		}
 	}
 
 	if (bRevertMode)
