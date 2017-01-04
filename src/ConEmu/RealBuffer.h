@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2016 Maximus5
+Copyright (c) 2009-2017 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -62,16 +62,7 @@ enum IntelligentSelectionState
 	IS_LBtnReleased,
 };
 
-struct ConsoleLinePtr
-{
-	const wchar_t* pChar;
-	const WORD* pAttr; // [may be NULL] - attributes from WinAPI
-	const CharAttr* pAttrEx; // [may be NULL] - extended attributes
-	int nLen;
-
-	void clear();
-	bool get(int index, wchar_t& chr, CharAttr& atr);
-};
+struct ConsoleLinePtr;
 
 class CRealBuffer
 {

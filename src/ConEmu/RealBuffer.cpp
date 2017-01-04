@@ -6,7 +6,7 @@
 //TODO: ChangeXXX - послать в консоль и установить значение переменной
 
 /*
-Copyright (c) 2009-2016 Maximus5
+Copyright (c) 2009-2017 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -110,35 +110,6 @@ const DWORD gnKeyBarFlags[] = {0,
 	RIGHT_ALT_PRESSED|SHIFT_PRESSED
 };
 
-
-void ConsoleLinePtr::clear()
-{
-	pChar = NULL;
-	pAttr = NULL;
-	pAttrEx = NULL;
-	nLen = 0;
-}
-
-bool ConsoleLinePtr::get(int index, wchar_t& chr, CharAttr& atr)
-{
-	if (index < 0 || index > nLen)
-		return false;
-	if (!pChar || !(pAttr || pAttrEx))
-		return false;
-
-	chr = pChar[index];
-
-	if (pAttrEx != NULL)
-	{
-		atr = pAttrEx[index];
-	}
-	else if (pAttr)
-	{
-	}
-
-	_ASSERTE(FALSE && "Complete ConsoleLinePtr::get"); // #TODO
-	return false;
-}
 
 
 
@@ -1598,21 +1569,19 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount /*= 0*/, int anWidth /*= 0*/, in
 		con.nConBufCells = 0;
 
 
-		CRConData* pData = CRConData::Allocate(mp_RCon, nCellCount);
-		if (pData)
+		if (CRConData::Allocate(data, mp_RCon, nCellCount))
 		{
-			m_ConData.Attach(pData);
-			data.Attach(pData);
 			HEAPVAL;
 
-			con.nConBufCells = pData->nMaxCells;
+			con.nConBufCells = data->nMaxCells;
 
 			HEAPVAL;
-			wmemset((wchar_t*)pData->pConAttr, nDefTextAttr, pData->nMaxCells);
-
-			pData->Release();
+			wmemset((wchar_t*)data->pConAttr, nDefTextAttr, data->nMaxCells);
 
 			con.LastEndInitBuffersTick = GetTickCount();
+
+			HEAPVAL;
+			m_ConData.Attach(data.Ptr());
 
 			HEAPVAL;
 			lbRc = TRUE;
@@ -5766,36 +5735,38 @@ bool CRealBuffer::GetConsoleLine(int nLine, /*[OUT]*/CRConDataGuard& data, Conso
 
 	if ((m_Type == rbt_DumpScreen) || (m_Type == rbt_Alternative) || (m_Type == rbt_Selection) || (m_Type == rbt_Find))
 	{
-		// Is not used here
-		data.Release();
-
 		if (!dump.pszBlock1)
-			return FALSE;
+		{
+			data.Release();
+			return false;
+		}
 
-		size_t lineShift = ((con.m_sbi.srWindow.Top + nLine) * dump.crSize.X) + con.m_sbi.srWindow.Left;
-		rpLine.pChar = dump.pszBlock1 + lineShift;
-		rpLine.pAttrEx = dump.pcaBlock1 + lineShift;
-		rpLine.nLen = dump.crSize.X;
-	}
-	else if (!GetData(data))
-	{
-		return FALSE;
+		if ((nLine < 0) || (nLine >= dump.crSize.Y))
+		{
+			_ASSERTE((nLine >= 0) && (nLine < dump.crSize.Y));
+			return false;
+		}
+
+		if (!CRConData::Allocate(data, mp_RCon, dump.pszBlock1, dump.pcaBlock1, con.m_sbi, dump.crSize))
+			return false;
 	}
 	else
 	{
-		if ((nLine >= data->nHeight)
+		if (!GetData(data))
+			return false;
+
+		if ((nLine < 0) || (static_cast<UINT>(nLine) >= data->nHeight)
 			|| ((size_t)((nLine + 1) * data->nWidth) > data->nMaxCells))
 		{
-			_ASSERTE((nLine < data->nHeight) && ((size_t)((nLine + 1) * data->nWidth) > data->nMaxCells));
+			_ASSERTE((nLine >= 0) && (static_cast<UINT>(nLine) < data->nHeight) && ((size_t)((nLine + 1) * data->nWidth) > data->nMaxCells));
 			return FALSE;
 		}
-
-		rpLine.pChar = data->pConChar + (nLine * data->nWidth);
-		rpLine.pAttr = data->pConAttr ? (data->pConAttr + (nLine * data->nWidth)) : NULL;
-		rpLine.nLen = data->nWidth;
 	}
 
-	return TRUE;
+	if (!data->GetConsoleLine(nLine, rpLine))
+		return false;
+
+	return true;
 }
 
 void CRealBuffer::PrepareColorTable(const AppSettings* pApp, CharAttr** pcaTableExt, CharAttr** pcaTableOrg)

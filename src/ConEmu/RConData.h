@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2016 Maximus5
+Copyright (c) 2016-2017 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RgnDetect.h" // struct CharAttr
 
 class CRealConsole;
+class CRConData;
+class CRConDataGuard;
+
+struct ConsoleLinePtr
+{
+	const wchar_t* pChar;
+	const WORD* pAttr; // [may be NULL] - attributes from WinAPI
+	const CharAttr* pAttrEx; // [may be NULL] - extended attributes
+	int nLen;
+
+	void clear();
+	bool get(int index, wchar_t& chr, CharAttr& atr);
+};
 
 class CRConData : public CRefRelease
 {
@@ -51,20 +64,27 @@ public:
 	WORD*      pConAttr;
 	CHAR_INFO* pDataCmp;
 	CONSOLE_SCREEN_BUFFER_INFO m_sbi;
+protected:
+	bool       bExternal;
+	wchar_t*   pszBlock1;
+	CharAttr*  pcaBlock1;
 
 public:
-	static CRConData* Allocate(CRealConsole* apRCon, size_t anMaxCells);
+	static bool Allocate(CRConDataGuard& data, CRealConsole* apRCon, size_t anMaxCells);
+	static bool Allocate(CRConDataGuard& data, CRealConsole* apRCon, wchar_t* apszBlock1, CharAttr* apcaBlock1, const CONSOLE_SCREEN_BUFFER_INFO& asbi, const COORD& acrSize);
 
 public:
 	bool isValid(bool bCheckSizes, size_t anCellsRequired);
 	UINT GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, UINT anHeight,
 		wchar_t wSetChar, CharAttr lcaDef, CharAttr *lcaTable, CharAttr *lcaTableExt,
 		bool bFade, bool bExtendColors, BYTE nExtendColorIdx, bool bExtendFonts);
+	bool GetConsoleLine(int nLine, ConsoleLinePtr& rpLine) const;
 	bool FindPanels(bool& bLeftPanel, RECT& rLeftPanel, RECT& rLeftPanelFull, bool& bRightPanel, RECT& rRightPanel, RECT& rRightPanelFull);
 	short CheckProgressInConsole(UINT nCursorLine);
 
 protected:
 	CRConData(CRealConsole* apRCon);
+	CRConData(CRealConsole* apRCon, wchar_t* apszBlock1, CharAttr* apcaBlock1, const CONSOLE_SCREEN_BUFFER_INFO& asbi, const COORD& acrSize);
 	virtual ~CRConData();
 	virtual void FinalRelease() override;
 };

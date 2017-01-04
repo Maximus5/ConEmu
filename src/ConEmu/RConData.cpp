@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2016 Maximus5
+Copyright (c) 2016-2017 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,39 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTRUEMOD(s) //DEBUGSTR(s)
 
 
+
+void ConsoleLinePtr::clear()
+{
+	pChar = NULL;
+	pAttr = NULL;
+	pAttrEx = NULL;
+	nLen = 0;
+}
+
+bool ConsoleLinePtr::get(int index, wchar_t& chr, CharAttr& atr)
+{
+	if (index < 0 || index > nLen)
+		return false;
+	if (!pChar || !(pAttr || pAttrEx))
+		return false;
+
+	chr = pChar[index];
+
+	if (pAttrEx != NULL)
+	{
+		atr = pAttrEx[index];
+	}
+	else if (pAttr)
+	{
+	}
+
+	_ASSERTE(FALSE && "Complete ConsoleLinePtr::get"); // #TODO
+	return false;
+}
+
+
+
+
 bool CRConDataGuard::isValid(size_t anCellsRequired /*= 0*/)
 {
 	if (!mp_Ref || !mp_Ref->isValid(false, anCellsRequired))
@@ -53,12 +86,13 @@ bool CRConDataGuard::isValid(size_t anCellsRequired /*= 0*/)
 
 /////////////////////////////////////////////////
 
-CRConData* CRConData::Allocate(CRealConsole* apRCon, size_t anMaxCells)
+bool CRConData::Allocate(CRConDataGuard& data, CRealConsole* apRCon, size_t anMaxCells)
 {
 	if (!anMaxCells)
 	{
 		_ASSERTE(anMaxCells > 0);
-		return NULL;
+		data.Release();
+		return false;
 	}
 
 	// Allocate slightly more than requested, to avoid
@@ -74,13 +108,31 @@ CRConData* CRConData::Allocate(CRealConsole* apRCon, size_t anMaxCells)
 		if (p)
 			delete p;
 		p = NULL;
+		data.Release();
+		return false;
 	}
 	else
 	{
 		p->nMaxCells = cchNewCharMaxPlus;
 	}
 
-	return p;
+	data.Attach(p);
+	p->Release();
+	return true;
+}
+
+bool CRConData::Allocate(CRConDataGuard& data, CRealConsole* apRCon, wchar_t* apszBlock1, CharAttr* apcaBlock1, const CONSOLE_SCREEN_BUFFER_INFO& asbi, const COORD& acrSize)
+{
+	if (!apszBlock1 || acrSize.X <= 0 || acrSize.Y <= 0)
+	{
+		_ASSERTE(apszBlock1 && acrSize.X > 0 && acrSize.Y > 0);
+		data.Release();
+		return false;
+	}
+	CRConData* p = new CRConData(apRCon, apszBlock1, apcaBlock1, asbi, acrSize);
+	data.Attach(p);
+	p->Release();
+	return true;
 }
 
 CRConData::CRConData(CRealConsole* apRCon)
@@ -90,8 +142,25 @@ CRConData::CRConData(CRealConsole* apRCon)
 	, pConChar(NULL)
 	, pConAttr(NULL)
 	, pDataCmp(NULL)
+	, m_sbi()
+	, bExternal(false)
+	, pszBlock1(NULL)
+	, pcaBlock1(NULL)
 {
-	ZeroStruct(m_sbi);
+}
+
+CRConData::CRConData(CRealConsole* apRCon, wchar_t* apszBlock1, CharAttr* apcaBlock1, const CONSOLE_SCREEN_BUFFER_INFO& sbi, const COORD& acrSize)
+	: mp_RCon(apRCon)
+	, nMaxCells(acrSize.X * acrSize.Y)
+	, nWidth(acrSize.X), nHeight(acrSize.Y)
+	, pConChar(NULL)
+	, pConAttr(NULL)
+	, pDataCmp(NULL)
+	, m_sbi(sbi)
+	, bExternal(true)
+	, pszBlock1(apszBlock1)
+	, pcaBlock1(apcaBlock1)
+{
 }
 
 CRConData::~CRConData()
@@ -99,6 +168,7 @@ CRConData::~CRConData()
 	SafeFree(pConChar);
 	SafeFree(pConAttr);
 	SafeFree(pDataCmp);
+	// pszBlock1 & pcaBlock1 are external pointers (loading console data from dumps)
 }
 
 bool CRConData::isValid(bool bCheckSizes, size_t anCellsRequired)
@@ -426,6 +496,39 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 	UNREFERENCED_PARAMETER(nSrcCells);
 
 	return nYMax;
+}
+
+bool CRConData::GetConsoleLine(int nLine, ConsoleLinePtr& rpLine) const
+{
+	if (!bExternal)
+	{
+		if ((nLine < 0) || (static_cast<UINT>(nLine) >= nHeight)
+			|| ((size_t)((nLine + 1) * nWidth) > nMaxCells))
+		{
+			// _ASSERTE((nLine >= 0) && (nLine < nHeight) && ((size_t)((nLine + 1) * nWidth) > nMaxCells));
+			return false;
+		}
+
+		size_t lineShift = nLine * nWidth;
+		rpLine.pChar = pConChar ? (pConChar + lineShift) : NULL;
+		rpLine.pAttr = pConAttr ? (pConAttr + lineShift) : NULL;
+		rpLine.nLen = nWidth;
+	}
+	else
+	{
+		if ((nLine < 0) || (static_cast<UINT>(nLine) >= nHeight))
+		{
+			// _ASSERTE((nLine >= 0) && (nLine < nHeight));
+			return false;
+		}
+
+		size_t lineShift = ((m_sbi.srWindow.Top + nLine) * nWidth) + m_sbi.srWindow.Left;
+		rpLine.pChar = pszBlock1 ? (pszBlock1 + lineShift) : NULL;
+		rpLine.pAttrEx = pcaBlock1 ? (pcaBlock1 + lineShift) : NULL;
+		rpLine.nLen = nWidth;
+	}
+
+	return true;
 }
 
 bool CRConData::FindPanels(bool& bLeftPanel, RECT& rLeftPanel, RECT& rLeftPanelFull, bool& bRightPanel, RECT& rRightPanel, RECT& rRightPanelFull)
