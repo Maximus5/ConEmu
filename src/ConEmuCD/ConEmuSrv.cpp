@@ -1336,7 +1336,11 @@ int ServerInit()
 			goto wrap;
 	}
 
+	// Ensure the console has proper size before further steps (echo for example)
+	ServerInitConsoleSize();
+
 	// Ensure that "set" commands in the command line will override ConEmu's default environment (settings page)
+	// This function also process all other "configuration" and "output" commands like 'echo', 'type', 'chcp' etc.
 	ApplyProcessSetEnvCmd();
 
 	// Если "корневой" процесс консоли запущен не нами (аттач или дебаг)
@@ -1366,12 +1370,6 @@ int ServerInit()
 	_ASSERTE(gpSrv->pConsole!=NULL);
 	//gpSrv->pConsole->hdr.bConsoleActive = TRUE;
 	//gpSrv->pConsole->hdr.bThawRefreshThread = TRUE;
-
-	// Если указаны параметры ((gbParmVisibleSize || gbParmBufSize) && gcrVisibleSize.X && gcrVisibleSize.Y)
-	//       - установить размер
-	// Иначе - получить текущие размеры из консольного окна
-	//DumpInitStatus("\nServerInit: ServerInitConsoleSize");
-	ServerInitConsoleSize();
 
 	//// Minimized окошко нужно развернуть!
 	//if (IsIconic(ghConWnd))
