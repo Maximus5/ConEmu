@@ -3456,7 +3456,9 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			bSelAllowed = isSelectionAllowed();
 			#ifdef _DEBUG
 			if (bSelAllowed)
+			{
 				DEBUGSTRSEL(L"Selection: isSelectionAllowed()==true");
+			}
 			#endif
 		}
 	}
@@ -3700,7 +3702,10 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	{
 		// Ручная обработка выделения, на консоль полагаться не следует...
 		#ifdef _DEBUG
-		if (messg != WM_MOUSEMOVE) DEBUGSTRSEL(L"Seletion: (con.m_sel.dwFlags != 0)");
+		if (messg != WM_MOUSEMOVE)
+		{
+			DEBUGSTRSEL(L"Seletion: (con.m_sel.dwFlags != 0)");
+		}
 		#endif
 		OnMouseSelection(messg, wParam, x, y);
 		goto wrap;
