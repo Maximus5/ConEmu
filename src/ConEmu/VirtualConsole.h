@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2016 Maximus5
+Copyright (c) 2009-2017 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -348,13 +348,20 @@ class CVirtualConsole :
 		} TransparentInfo;
 		//static HMENU mh_PopupMenu, mh_TerminatePopup, mh_DebugPopup, mh_EditPopup;
 
+		struct HighlightRect
+		{
+			COLORREF crPatColor;
+			DWORD    StockBrush;
+			RECT     rcPaint;
+		};
 		struct _HighlightInfo
 		{
 			COORD m_Last;
 			COORD m_Cur;
 			// store last paint coords
-			RECT  mrc_LastRow, mrc_LastCol;
-			RECT  mrc_LastHyperlink;
+			MArray<HighlightRect> LastRect;
+			//RECT  mrc_LastRow, mrc_LastCol;
+			//RECT  mrc_LastHyperlink;
 			// true - if VCon visible & enabled in settings & highlight exist
 			bool  mb_Exists;
 			// true - if Invalidate was called, but UpdateHighlights still not

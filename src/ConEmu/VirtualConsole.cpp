@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2016 Maximus5
+Copyright (c) 2009-2017 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -1742,9 +1742,7 @@ void CVirtualConsole::PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC,
 void CVirtualConsole::ResetHighlightCoords()
 {
 	ResetHighlightHyperlinks();
-	ZeroStruct(m_HighlightInfo.mrc_LastRow);
-	ZeroStruct(m_HighlightInfo.mrc_LastCol);
-	ZeroStruct(m_HighlightInfo.mrc_LastHyperlink);
+	m_HighlightInfo.LastRect.eraseall();
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
 	m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
 }
@@ -1865,9 +1863,10 @@ bool CVirtualConsole::WasHighlightRowColChanged()
 	// If cursor goes out of VCon - leave row/col marks?
 	if (!CalcHighlightRowCol(&crPos))
 	{
-		if (!IsRectEmpty(&m_HighlightInfo.mrc_LastRow)
-			|| !IsRectEmpty(&m_HighlightInfo.mrc_LastCol))
+		for (INT_PTR i = 0; !bInvalidate && i < m_HighlightInfo.LastRect.size(); ++i)
 		{
+			if (!m_HighlightInfo.LastRect[i].crPatColor)
+				continue;
 			bInvalidate = true;
 		}
 		goto wrap;
@@ -1969,9 +1968,7 @@ bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 
 void CVirtualConsole::UpdateHighlights()
 {
-	ZeroStruct(m_HighlightInfo.mrc_LastRow);
-	ZeroStruct(m_HighlightInfo.mrc_LastCol);
-	ZeroStruct(m_HighlightInfo.mrc_LastHyperlink);
+	m_HighlightInfo.LastRect.eraseall();
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
 
 	// During any popup menus (system, tab, etc.) don't highlight row/col
@@ -2012,26 +2009,30 @@ void CVirtualConsole::UpdateHighlightsRowCol()
 	}
 
 	HDC hPaintDC = (HDC)m_DC;
-	HBRUSH hBr = CreateSolidBrush(HILIGHT_PAT_COLOR);
+	HighlightRect hrPaint = {};
+	hrPaint.crPatColor = HILIGHT_PAT_COLOR;
+	HBRUSH hBr = CreateSolidBrush(hrPaint.crPatColor);
 	HBRUSH hOld = (HBRUSH)SelectObject(hPaintDC, hBr);
+
+	_ASSERTE(m_HighlightInfo.LastRect.empty());
 
 	if (isHighlightMouseRow())
 	{
-		RECT rect = {0, pix.Y, (LONG)m_Sizes.Width, pix.Y + m_Sizes.nFontHeight};
+		hrPaint.rcPaint = MakeRect(0, pix.Y, (LONG)m_Sizes.Width, pix.Y + m_Sizes.nFontHeight);
 		if (pos.Y >= 0)
-			PatInvertRect(hPaintDC, rect, hPaintDC, false);
+			PatInvertRect(hPaintDC, hrPaint.rcPaint, hPaintDC, false);
 		m_HighlightInfo.m_Last.Y = pos.Y;
-		m_HighlightInfo.mrc_LastRow = rect;
+		m_HighlightInfo.LastRect.push_back(hrPaint);
 	}
 
 	if (isHighlightMouseCol())
 	{
 		// This will be not "precise" on other rows if using proportional font...
-		RECT rect = {pix.X, 0, pix.X + m_Sizes.nFontWidth, (LONG)m_Sizes.Height};
+		hrPaint.rcPaint = MakeRect(pix.X, 0, pix.X + m_Sizes.nFontWidth, (LONG)m_Sizes.Height);
 		if (pos.X >= 0)
-			PatInvertRect(hPaintDC, rect, hPaintDC, false);
+			PatInvertRect(hPaintDC, hrPaint.rcPaint, hPaintDC, false);
 		m_HighlightInfo.m_Last.X = pos.X;
-		m_HighlightInfo.mrc_LastCol = rect;
+		m_HighlightInfo.LastRect.push_back(hrPaint);
 	}
 
 	SelectObject(hPaintDC, hOld);
@@ -2043,64 +2044,55 @@ void CVirtualConsole::UpdateHighlightsHyperlink()
 	_ASSERTE(this && isHighlightHyperlink());
 
 	HDC hPaintDC = (HDC)m_DC;
-	HBRUSH hBr = (HBRUSH)GetStockObject(WHITE_BRUSH);
+	HighlightRect hrPaint = {};
+	hrPaint.StockBrush = WHITE_BRUSH;
+	HBRUSH hBr = (HBRUSH)GetStockObject(hrPaint.StockBrush);
 	HBRUSH hOld = (HBRUSH)SelectObject(hPaintDC, hBr);
 
-	POINT ptStart = ConsoleToClient(m_etr.mcr_FileLineStart.X, m_etr.mcr_FileLineStart.Y);
-	_ASSERTE(m_etr.mcr_FileLineStart.Y == m_etr.mcr_FileLineEnd.Y); // May it extends to next line?
-	POINT ptEnd = ConsoleToClient(m_etr.mcr_FileLineEnd.X+1, m_etr.mcr_FileLineStart.Y);
+	// Support multi-line hyperlinks
+	int nWidth = GetTextWidth();
 	// Height of "underline"?
 	int nHeight = m_Sizes.nFontHeight / 10;
 	if (nHeight < 1) nHeight = 1;
-	// Just fill it (with color of the text?)
-	RECT rc = {ptStart.x, ptStart.y + m_Sizes.nFontHeight-nHeight, ptEnd.x, ptEnd.y + m_Sizes.nFontHeight};
 
-	PatInvertRect(hPaintDC, rc, hPaintDC, true);
-	//FillRect((HDC)m_DC, &rc, (HBRUSH)GetStockObject(WHITE_BRUSH));
+	for (SHORT Y = m_etr.mcr_FileLineStart.Y; Y <= m_etr.mcr_FileLineEnd.Y; ++Y)
+	{
+		POINT ptStart = ConsoleToClient((Y > m_etr.mcr_FileLineStart.Y) ? 0 : m_etr.mcr_FileLineStart.X, Y);
+		POINT ptEnd = ConsoleToClient((Y < m_etr.mcr_FileLineEnd.Y) ? nWidth : m_etr.mcr_FileLineEnd.X+1, Y);
+		// Just fill it (with color of the text?)
+		hrPaint.rcPaint = MakeRect(ptStart.x, ptStart.y + m_Sizes.nFontHeight-nHeight, ptEnd.x, ptEnd.y + m_Sizes.nFontHeight);
 
-	m_HighlightInfo.mrc_LastHyperlink = rc;
+		PatInvertRect(hPaintDC, hrPaint.rcPaint, hPaintDC, true);
+		//FillRect((HDC)m_DC, &rc, (HBRUSH)GetStockObject(WHITE_BRUSH));
+
+		m_HighlightInfo.LastRect.push_back(hrPaint);
+	}
 
 	SelectObject(hPaintDC, hOld);
 }
 
 void CVirtualConsole::UndoHighlights()
 {
-	if (!IsRectEmpty(&m_HighlightInfo.mrc_LastRow) || !IsRectEmpty(&m_HighlightInfo.mrc_LastCol))
+	if (m_HighlightInfo.LastRect.empty())
+		return;
+
+	HDC hPaintDC = (HDC)m_DC;
+
+	for (INT_PTR i = 0; i < m_HighlightInfo.LastRect.size(); ++i)
 	{
-		HDC hPaintDC = (HDC)m_DC;
-		HBRUSH hBr = CreateSolidBrush(HILIGHT_PAT_COLOR);
+		const HighlightRect& cur = m_HighlightInfo.LastRect[i];
+		bool UseFill = (cur.crPatColor == 0);
+		HBRUSH hBr = UseFill ? (HBRUSH)GetStockObject(cur.StockBrush) : CreateSolidBrush(cur.crPatColor);
 		HBRUSH hOld = (HBRUSH)SelectObject(hPaintDC, hBr);
 
-		if (!IsRectEmpty(&m_HighlightInfo.mrc_LastRow))
-		{
-			RECT rect = m_HighlightInfo.mrc_LastRow;
-			PatInvertRect(hPaintDC, rect, hPaintDC, false);
-			ZeroStruct(m_HighlightInfo.mrc_LastRow);
-		}
-
-		if (!IsRectEmpty(&m_HighlightInfo.mrc_LastCol))
-		{
-			RECT rect = m_HighlightInfo.mrc_LastCol;
-			PatInvertRect(hPaintDC, rect, hPaintDC, false);
-			ZeroStruct(m_HighlightInfo.mrc_LastCol);
-		}
+		PatInvertRect(hPaintDC, cur.rcPaint, hPaintDC, UseFill);
 
 		SelectObject(hPaintDC, hOld);
-		DeleteObject(hBr);
+		if (!UseFill)
+			DeleteObject(hBr);
 	}
 
-	if (!IsRectEmpty(&m_HighlightInfo.mrc_LastHyperlink))
-	{
-		HDC hPaintDC = (HDC)m_DC;
-		HBRUSH hBr = (HBRUSH)GetStockObject(WHITE_BRUSH);
-		HBRUSH hOld = (HBRUSH)SelectObject(hPaintDC, hBr);
-
-		RECT rect = m_HighlightInfo.mrc_LastHyperlink;
-		PatInvertRect(hPaintDC, rect, hPaintDC, true);
-		ZeroStruct(m_HighlightInfo.mrc_LastHyperlink);
-
-		SelectObject(hPaintDC, hOld);
-	}
+	m_HighlightInfo.LastRect.eraseall();
 }
 
 bool CVirtualConsole::CheckTransparent()
@@ -3177,9 +3169,7 @@ void CVirtualConsole::UpdateText()
 
 	// Screen updated, reset until next "UpdateHighlights()" call
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
-	ZeroStruct(m_HighlightInfo.mrc_LastRow);
-	ZeroStruct(m_HighlightInfo.mrc_LastCol);
-	ZeroStruct(m_HighlightInfo.mrc_LastHyperlink);
+	m_HighlightInfo.LastRect.eraseall();
 
 	return;
 }
