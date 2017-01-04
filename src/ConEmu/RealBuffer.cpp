@@ -6822,10 +6822,11 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 		if (!mp_Match)
 			mp_Match = new CMatch(mp_RCon);
 
-		if (mp_Match && (mp_Match->Match(etr, pChar, nLen, lcrFrom.X) > 0))
+		if (mp_Match && (mp_Match->Match(etr, pChar, nLen, lcrFrom.X, data, lcrFrom.Y) > 0))
 		{
 			lcrFrom.X = mp_Match->mn_MatchLeft;
-			lcrTo.X = mp_Match->mn_MatchRight;
+			lcrTo.X = mp_Match->mn_MatchRight % data->nWidth;
+			lcrTo.Y += (mp_Match->mn_MatchRight - lcrTo.X) / data->nWidth;
 			if (psText)
 				psText->Set(mp_Match->ms_Match.ms_Val);
 			result = mp_Match->m_Type;

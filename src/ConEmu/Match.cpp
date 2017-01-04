@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2016 Maximus5
+Copyright (c) 2014-2017 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "Match.h"
+#include "RConData.h"
 #include "RealConsole.h"
 #include "VConText.h"
 
@@ -241,10 +242,11 @@ void CMatch::UnitTests()
 void CMatch::UnitTestMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anMatchStart, int anMatchEnd, LPCWSTR asMatchText)
 {
 	int iRc, iCmp;
+	CRConDataGuard data;
 
 	for (int i = anMatchStart; i <= anMatchEnd; i++)
 	{
-		iRc = Match(etr, asLine, anLineLen, i);
+		iRc = Match(etr, asLine, anLineLen, i, data, 0);
 
 		if (iRc <= 0)
 		{
@@ -269,10 +271,11 @@ void CMatch::UnitTestMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLineLe
 void CMatch::UnitTestNoMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anStart, int anEnd)
 {
 	int iRc;
+	CRConDataGuard data;
 
 	for (int i = anStart; i <= anEnd; i++)
 	{
-		iRc = Match(etr, asLine, anLineLen, i);
+		iRc = Match(etr, asLine, anLineLen, i, data, 0);
 
 		if (iRc > 0)
 		{
@@ -284,7 +287,7 @@ void CMatch::UnitTestNoMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLine
 #endif
 
 // Returns the length of matched string
-int CMatch::Match(ExpandTextRangeType etr, LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/)
+int CMatch::Match(ExpandTextRangeType etr, LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/, CRConDataGuard& data, int nFromLine)
 {
 	m_Type = etr_None;
 	ms_Match.Empty();
@@ -305,7 +308,7 @@ int CMatch::Match(ExpandTextRangeType etr, LPCWSTR asLine/*This may be NOT 0-ter
 
 	if (etr == etr_Word)
 	{
-		if (MatchWord(m_SrcLine.ms_Val, anLineLen, anFrom, mn_MatchLeft, mn_MatchRight))
+		if (MatchWord(m_SrcLine.ms_Val, anLineLen, anFrom, mn_MatchLeft, mn_MatchRight, data, nFromLine))
 		{
 			_ASSERTE(mn_MatchRight >= mn_MatchLeft);
 			iRc = (mn_MatchRight - mn_MatchLeft + 1);
@@ -314,13 +317,13 @@ int CMatch::Match(ExpandTextRangeType etr, LPCWSTR asLine/*This may be NOT 0-ter
 	}
 	else if (etr == etr_AnyClickable)
 	{
-		if (MatchAny())
+		if (MatchAny(data, nFromLine))
 		{
 			_ASSERTE(mn_MatchRight >= mn_MatchLeft);
 			_ASSERTE(m_Type != etr_None);
 			iRc = (mn_MatchRight - mn_MatchLeft + 1);
 		}
-		else if (MatchFileNoExt())
+		else if (MatchFileNoExt(data, nFromLine))
 		{
 			_ASSERTE(mn_MatchRight >= mn_MatchLeft);
 			_ASSERTE(m_Type == etr_File);
@@ -574,7 +577,7 @@ wrap:
 	return lbRc;
 }
 
-bool CMatch::MatchFileNoExt()
+bool CMatch::MatchFileNoExt(CRConDataGuard& data, int nFromLine)
 {
 	LPCWSTR pszLine = m_SrcLine.ms_Val;
 	if (!pszLine || !*pszLine || (mn_SrcFrom < 0) || (mn_SrcLength <= mn_SrcFrom))
@@ -614,7 +617,7 @@ bool CMatch::MatchFileNoExt()
 	return true;
 }
 
-bool CMatch::MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/, int& rnStart, int& rnEnd)
+bool CMatch::MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/, int& rnStart, int& rnEnd, CRConDataGuard& data, int nFromLine)
 {
 	rnStart = rnEnd = anFrom;
 
@@ -704,7 +707,33 @@ bool CMatch::MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLin
 	return true;
 }
 
-bool CMatch::MatchAny()
+// Used for URL wrapped on several lines
+bool CMatch::GetNextLine(CRConDataGuard& data, int nLine)
+{
+	// Perhaps not only for "URL"?
+
+	if (!data.isValid())
+		return false;
+
+	ConsoleLinePtr line;
+	if (!data->GetConsoleLine(nLine, line) || line.nLen <= 0 || !line.pChar)
+		return false;
+
+	// ConsoleLinePtr doesn't contain Z-terminated strings, only RAW characters
+	CEStr add;
+	wchar_t* ptr = add.GetBuffer(line.nLen);
+	if (!ptr)
+		return false;
+	wmemmove(ptr, line.pChar, line.nLen);
+	ptr[line.nLen] = 0;
+	// Append new data
+	if (!lstrmerge(&m_SrcLine.ms_Val, ptr))
+		return false;
+	mn_SrcLength += line.nLen;
+	return true;
+}
+
+bool CMatch::MatchAny(CRConDataGuard& data, int nFromLine)
 {
 	bool bFound = false;
 
@@ -829,14 +858,29 @@ bool CMatch::MatchAny()
 	// C:\VC\unicode_far\macro.cpp  1251 Ln 5951/8291 Col 51 Ch 39 0043h 13:54
 	// InfoW1900->SettingsControl(sc.Handle, SCTL_FREE, 0, 0);
 
-	// Нас на интересуют строки типа "11.05.2010 10:20:35"
+	// Нас не интересуют строки типа "11.05.2010 10:20:35"
 	// В имени файла должна быть хотя бы одна буква (расширение), причем английская
 	// Поехали
 	if (bUrlMode)
 	{
 		LPCWSTR pszDelim = (wcsncmp(m_SrcLine.ms_Val+mn_MatchLeft, L"file://", 7) == 0) ? pszUrlFileDelim : pszUrlDelim;
-		while (((mn_MatchRight+1) < mn_SrcLength) && !wcschr(pszDelim, m_SrcLine.ms_Val[mn_MatchRight+1]))
+		int nextLine = 1;
+		while (true)
+		{
+			if ((mn_MatchRight+1) >= mn_SrcLength && data.isValid())
+			{
+				if (!GetNextLine(data, nextLine+nFromLine))
+					break;
+				++nextLine;
+			}
+
+			if (((mn_MatchRight+1) >= mn_SrcLength) || wcschr(pszDelim, m_SrcLine.ms_Val[mn_MatchRight+1]))
+			{
+				break;
+			}
+
 			mn_MatchRight++;
+		}
 		DEBUGTEST(int i4break = 0);
 	}
 	else while ((mn_MatchRight+1) < mn_SrcLength)

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2016 Maximus5
+Copyright (c) 2014-2017 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CMatch;
 class CRealConsole;
+class CRConDataGuard;
 
 typedef int (*CMatchGetNextPart)(LPARAM lParam, CMatch* pMatch);
 
@@ -66,17 +67,18 @@ public:
 
 public:
 	// Returns the length of matched string
-	int Match(ExpandTextRangeType etr, LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/);
+	int Match(ExpandTextRangeType etr, LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/, CRConDataGuard& data, int nFromLine);
 
 protected:
 	static bool IsFileLineTerminator(LPCWSTR pChar, LPCWSTR pszTermint);
 	static bool FindRangeStart(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool& bUrlMode, LPCWSTR pszBreak, LPCWSTR pszUrlDelim, LPCWSTR pszSpacing, LPCWSTR pszUrl, LPCWSTR pszProtocol, LPCWSTR pChar, int nLen);
 	static bool CheckValidUrl(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool& bUrlMode, LPCWSTR pszUrlDelim, LPCWSTR pszUrl, LPCWSTR pszProtocol, LPCWSTR pChar, int nLen);
 protected:
-	bool MatchAny();
-	bool MatchFileNoExt();
-	bool MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/, int& rnStart, int& rnEnd);
+	bool MatchAny(CRConDataGuard& data, int nFromLine);
+	bool MatchFileNoExt(CRConDataGuard& data, int nFromLine);
+	bool MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLineLen/*Length of buffer*/, int anFrom/*Cursor pos*/, int& rnStart, int& rnEnd, CRConDataGuard& data, int nFromLine);
 	void StoreMatchText(LPCWSTR asPrefix, LPCWSTR pszTrimRight);
+	bool GetNextLine(CRConDataGuard& data, int nLine);
 protected:
 	CEStr ms_FileCheck;
 	bool IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPCWSTR pszSpacing, int& rnLen);
