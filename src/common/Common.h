@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-2016 Maximus5
+Copyright (c) 2009-2017 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -96,8 +96,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CTRL(x) ((x)&0x1F)
 
 
-#define CECOPYRIGHTSTRING_A "(c) 2009-2016, ConEmu.Maximus5@gmail.com"
-#define CECOPYRIGHTSTRING_W L"© 2009-2016 ConEmu.Maximus5@gmail.com"
+#define CECOPYRIGHTSTRING_A "(c) 2009-2017, ConEmu.Maximus5@gmail.com"
+#define CECOPYRIGHTSTRING_W L"© 2009-2017 ConEmu.Maximus5@gmail.com"
 
 
 #define CEHOMEPAGE_A    "https://conemu.github.io/"

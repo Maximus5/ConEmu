@@ -1,6 +1,6 @@
 
 /*
-Copyright (c) 2014-2015 Maximus5
+Copyright (c) 2014-2017 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
