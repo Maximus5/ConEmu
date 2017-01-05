@@ -5108,8 +5108,18 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 		bool bWasSendClickToReadCon = false;
 		if (nActivePID && (mp_ABuf->m_Type == rbt_Primary) && !isFar() && !isNtvdm())
 		{
-			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_MOUSECLICK, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PROMPTACTION));
-			if (pIn)
+			bool allow_click = true;
+			CESERVER_REQ* pIn = NULL;
+			COORD crPrompt = {};
+			COORD crCursor = {};
+
+			GetConsoleCursorInfo(NULL, &crCursor);
+			if (QueryPromptStart(&crPrompt))
+				allow_click = (crMouse.Y >= crPrompt.Y);
+			else
+				allow_click = (crMouse.Y >= crCursor.Y);
+
+			if (allow_click && (pIn = ExecuteNewCmd(CECMD_MOUSECLICK, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PROMPTACTION))))
 			{
 				pIn->Prompt.xPos = crMouse.X;
 				pIn->Prompt.yPos = crMouse.Y;
