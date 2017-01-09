@@ -10221,9 +10221,15 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				#if 0
 				bWasSendToChildGui = true;
 				#endif
+				LogString(L"-- forwarding to ChildGui\n", true, false);
 				VCon->RCon()->PostConsoleMessage(hGuiChild, messg, wParam, lParam);
 				return 0;
 			}
+		}
+		else
+		{
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"-- !GetVConFromPoint: {%i,%i}\n", ptCurScreen.x, ptCurScreen.y);
+			LogString(szDbg, true, false);
 		}
 	}
 
@@ -10282,10 +10288,16 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 	// Обработать клики на StatusBar
 	if (mp_Status->ProcessStatusMessage(hWnd, messg, wParam, lParam, ptCurClient, lRc))
+	{
+		LogString(L"-- mouse event skipped (StatusBar event)\n", true, false);
 		return lRc;
+	}
 
 	if (!bContinue)
+	{
+		LogString(L"-- mouse event skipped\n", true, false);
 		return 0;
+	}
 
 	if (mp_Inside && ((messg == WM_LBUTTONDOWN) || (messg == WM_RBUTTONDOWN)))
 	{
@@ -10318,7 +10330,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 
 	//enum DragPanelBorder dpb = DPB_NONE; //CConEmuMain::CheckPanelDrag(COORD crCon)
-	if (((messg == WM_MOUSEWHEEL) || (messg == 0x020E/*WM_MOUSEHWHEEL*/)) && HIWORD(wParam))
+	if (isWheelEvent(messg) && HIWORD(wParam))
 	{
 		BYTE vk = 0;
 		if (messg == WM_MOUSEWHEEL)
@@ -10330,6 +10342,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		if (vk && ProcessHotKeyMsg(WM_KEYDOWN, vk, 0, NULL, pRCon))
 		{
 			// назначено, в консоль не пропускаем
+			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"-- %s skipped (HotKey)\n", (messg == WM_MOUSEWHEEL) ? L"Wheel" : L"HWheel");
+			LogString(szDbg, true, false);
 			return 0;
 		}
 	}
@@ -10410,10 +10424,18 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	}
 
 	if (!pVCon)
+	{
+		if (isWheelEvent(messg))
+			LogString(L"-- skipped (!pVCon)\n", true, false);
 		return 0;
+	}
 
 	if (gpFontMgr->FontWidth()==0 || gpFontMgr->FontHeight()==0)
+	{
+		if (isWheelEvent(messg))
+			LogString(L"-- skipped (bad font size)\n", true, false);
 		return 0;
+	}
 
 	if ((messg==WM_LBUTTONUP || messg==WM_MOUSEMOVE) && (mouse.state & MOUSE_SIZING_DBLCKL))
 	{
@@ -10427,6 +10449,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	//-- Но если мышка над скроллом - то обработкой Wheel занимается RealConsole и слать таки нужно...
 	if (TrackMouse())
 	{
+		if (isWheelEvent(messg))
+			LogString(L"-- skipped (over ScrollBar)\n", true, false);
 		if (pRCon && ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL)))
 			pRCon->OnScroll(messg, wParam, ptCurClient.x, ptCurClient.y);
 		return 0;
@@ -10435,13 +10459,16 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	// Selection, copy/pase
 	if (pRCon && pRCon->OnMouseSelection(messg, wParam, ptCurClient.x - dcRect.left, ptCurClient.y - dcRect.top))
 	{
+		if (isWheelEvent(messg))
+			LogString(L"-- skipped (over ScrollBar)\n", true, false);
 		return 0;
 	}
 
-	if (pRCon && ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL)))
+	if (pRCon && isWheelEvent(messg))
 	{
 		if (pRCon->isInternalScroll())
 		{
+			LogString(L"-- skipped (isInternalScroll)\n", true, false);
 			pRCon->OnScroll(messg, wParam, ptCurClient.x, ptCurClient.y);
 			return 0;
 		}
@@ -10482,6 +10509,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (gpSet->isMouseSkipMoving && !isMeForeground(false,false))
 	{
 		DEBUGLOGFILE("ConEmu is not foreground window, mouse event skipped");
+		if (isWheelEvent(messg))
+			LogString(L"-- skipped (no focus)\n", true, false);
 		return 0;
 	}
 
@@ -10513,6 +10542,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		#endif
 
 		DEBUGLOGFILE("ConEmu was not foreground window, mouse activation event skipped");
+		LogString(L"-- skipped (activation event skipped)\n", true, false);
 		return 0;
 	}
 
@@ -10565,7 +10595,11 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	if (mp_DragDrop && mp_DragDrop->IsDragStarting())
 	{
 		if (mp_DragDrop->ForwardMessage(messg, wParam, lParam))
+		{
+			if (isWheelEvent(messg))
+				LogString(L"-- skipped (Drag&Drop)\n", true, false);
 			return 0;
+		}
 	}
 
 	// -- поскольку выделялка у нас теперь своя - этого похоже не требуется. лишние движения окна

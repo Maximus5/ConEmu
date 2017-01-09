@@ -167,6 +167,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
 //#define SafeFree(p) { if ((p)!=NULL) { LPVOID pp = (p); (p) = NULL; free(pp); } }
 
+#define isWheelEvent(messg) ((messg == WM_MOUSEWHEEL) || (messg == WM_MOUSEHWHEEL/*0x020E*/))
+
 #ifdef MSGLOGGER
 BOOL POSTMESSAGE(HWND h,UINT m,WPARAM w,LPARAM l,BOOL extra);
 LRESULT SENDMESSAGE(HWND h,UINT m,WPARAM w,LPARAM l);
