@@ -5040,6 +5040,8 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	// Buffer may process mouse events by itself (selections/copy/paste, scroll, ...)
 	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse))
 	{
+		if (isWheelEvent(messg))
+			mp_ConEmu->LogString(L"-- skipped (mp_ABuf)\n", true, false);
 		return true;
 	}
 
@@ -5153,6 +5155,8 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 	// If user has disabled posting mouse events to console
 	if (gpSet->isDisableMouse)
 	{
+		if (isWheelEvent(messg))
+			mp_ConEmu->LogString(L"-- skipped (isDisableMouse)\n", true, false);
 		return false;
 	}
 
