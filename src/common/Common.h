@@ -466,7 +466,6 @@ const CECMD
 	CECMD_ACTIVATETAB    = 58, // dwData[0]=0-based console, dwData[1]=0-based tab number
 	CECMD_FREEZEALTSRV   = 59, // dwData[0]=1-Freeze, 0-Thaw; dwData[1]=New Alt server PID
 	CECMD_SETFULLSCREEN  = 60, // SetConsoleDisplayMode(CONSOLE_FULLSCREEN_MODE) -> CESERVER_REQ_FULLSCREEN
-	CECMD_MOUSECLICK     = 61, // CESERVER_REQ_PROMPTACTION - обработка клика, если консоль в ReadConsoleW
 	CECMD_PROMPTCMD      = 62, // wData - это LPCWSTR (GUI -> ConEmuHk)
 	CECMD_SETTABTITLE    = 63, // wData - это LPCWSTR, посылается в GUI
 	CECMD_SETPROGRESS    = 64, // wData[0]: 0 - remove, 1 - set, 2 - error. Для "1": wData[1] - 0..100%.
@@ -475,7 +474,6 @@ const CECMD
 	CECMD_EXPORTVARS     = 67, // wData - same as GetEnvironmentStringsW returns, but may be less (selected vars only)
 	CECMD_EXPORTVARSALL  = 68, // same as CECMD_EXPORTVARS, but apply environment to all tabs
 	CECMD_DUPLICATE      = 69, // CESERVER_REQ_DUPLICATE. sent to root console process (cmd, far, powershell), processed with ConEmuHk - Create new tab reproducing current state.
-	CECMD_BSDELETEWORD   = 70, // CESERVER_REQ_PROMPTACTION - default action for Ctrl+BS (prompt) - delete word to the left of the cursor
 	CECMD_GUICLIENTSHIFT = 71, // GuiStylesAndShifts
 	CECMD_ALTBUFFER      = 72, // CESERVER_REQ_ALTBUFFER: CmdOutputStore/Restore
 	CECMD_ALTBUFFERSTATE = 73, // Проверить, разрешен ли Alt.Buffer?
@@ -2183,13 +2181,6 @@ struct CESERVER_REQ_SETCONSOLORS
 	BOOL  ReFillConsole;
 };
 
-struct CESERVER_REQ_PROMPTACTION
-{
-	BOOL  Force;
-	BOOL  BashMargin;
-	SHORT xPos, yPos; // Only for CECMD_MOUSECLICK
-};
-
 struct CESERVER_REQ_DUPLICATE
 {
 	HWND2 hGuiWnd;
@@ -2319,7 +2310,6 @@ struct CESERVER_REQ
 		CESERVER_REQ_GETALLTABS GetAllTabs;
 		CESERVER_REQ_FULLSCREEN FullScreenRet;
 		CESERVER_REQ_SETCONSOLORS SetConColor;
-		CESERVER_REQ_PROMPTACTION Prompt;
 		CESERVER_REQ_DUPLICATE Duplicate;
 		CESERVER_REQ_ALTBUFFER AltBuf;
 		CESERVER_REQ_SETCONSCRBUF SetConScrBuf;

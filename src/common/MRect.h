@@ -44,6 +44,7 @@ bool IntersectSmallRect(const RECT& rc1, const SMALL_RECT& rc2, LPRECT lprcDest 
 bool PtDiffTest(int x1, int y1, int x2, int y2, UINT maxDx, UINT maxDy);
 bool PtDiffTest(POINT C, int aX, int aY, UINT D);
 
+int  CoordCompare(const COORD& cr1, const COORD& cr2);
 bool CoordEqual(const COORD& cr1, const COORD& cr2);
 bool operator ==(const COORD& cr1, const COORD& cr2);
 bool operator !=(const COORD& cr1, const COORD& cr2);

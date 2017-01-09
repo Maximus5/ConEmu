@@ -35,9 +35,6 @@ BOOL IsVisibleRectLocked(COORD& crLocked);
 void LockServerReadingThread(bool bLock, COORD dwSize, CESERVER_REQ*& pIn, CESERVER_REQ*& pOut);
 BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo, BOOL bForced = FALSE);
 BOOL GetConsoleModeCached(HANDLE hConsoleHandle, LPDWORD lpMode, BOOL bForced = FALSE);
-bool IsPromptActionAllowed(bool bForce, bool bBashMargin, HANDLE* phConIn);
-BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin);
-BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin);
 BOOL OnExecutePromptCmd(LPCWSTR asCmd);
 
 // Function AttachConsole exists in WinXP and above, need dynamic link

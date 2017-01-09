@@ -402,6 +402,10 @@ class CRealConsole
 		friend class CAltNumpad;
 		bool PostString(wchar_t* pszChars, size_t cchCount);
 	private:
+		bool ChangePromptPosition(const AppSettings* pApp, COORD crMouse);
+		bool IsPromptActionAllowed(bool bFromMouse, const AppSettings* pApp);
+		int  EvalPromptCtrlBSCount(const AppSettings* pApp);
+		int  EvalPromptLeftRightCount(const AppSettings* pApp, COORD crMouse, WORD& vkKey);
 		void PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool abForceSend = false);
 	public:
 		bool OpenConsoleEventPipe();
@@ -895,7 +899,7 @@ class CRealConsole
 		MEvent m_ConDataChanged;
 		// CECONMAPNAME
 		MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> m_ConsoleMap;
-		// CECONAPPMAPNAME
+		// CECONAPPMAPNAME -- ReadOnly
 		MFileMapping<CESERVER_CONSOLE_APP_MAPPING> m_AppMap;
 		// CEFARMAPNAME: FarVer and others
 		CEFAR_INFO_MAPPING m_FarInfo;

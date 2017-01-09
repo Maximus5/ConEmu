@@ -111,6 +111,16 @@ bool PtDiffTest(POINT C, int aX, int aY, UINT D)
 	return PtDiffTest(C.x, C.y, aX, aY, D, D);
 }
 
+int CoordCompare(const COORD& cr1, const COORD& cr2)
+{
+	if ((cr1.Y < cr2.Y) || ((cr1.Y == cr2.Y) && (cr1.X < cr2.X)))
+		return -1;
+	else if ((cr1.Y > cr2.Y) || ((cr1.Y == cr2.Y) && (cr1.X > cr2.X)))
+		return 1;
+	else
+		return 0;
+}
+
 bool CoordEqual(const COORD& cr1, const COORD& cr2)
 {
 	return ((cr1.X == cr2.X) && (cr1.Y == cr2.Y));
