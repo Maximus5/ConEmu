@@ -5460,6 +5460,17 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bF
 	}
 }
 
+void LogModeChange(LPCWSTR asName, DWORD oldVal, DWORD newVal)
+{
+	if (!gpLogSize) return;
+
+	LPCWSTR pszLabel = asName ? asName : L"???";
+	CEStr lsInfo;
+	INT_PTR cchLen = lstrlen(pszLabel) + 80;
+	_wsprintf(lsInfo.GetBuffer(cchLen), SKIPLEN(cchLen) L"Mode %s changed: old=x%04X new=x%04X", pszLabel, oldVal, newVal);
+	LogString(lsInfo);
+}
+
 int CLogFunction::m_FnLevel = 0; // Simple, without per-thread devision
 CLogFunction::CLogFunction() : mb_Logged(false)
 {

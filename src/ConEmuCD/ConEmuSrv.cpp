@@ -627,6 +627,7 @@ BOOL ServerInitConsoleMode()
 	HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
 	DWORD dwFlags = 0;
 	bConRc = GetConsoleMode(h, &dwFlags);
+	LogModeChange(L"[GetConInMode]", 0, dwFlags);
 
 	// This can be passed with "/CINMODE=..." or "-cur_console:w" switches
 	if (!gnConsoleModeFlags)
@@ -644,6 +645,7 @@ BOOL ServerInitConsoleMode()
 	}
 
 	bConRc = SetConsoleMode(h, dwFlags); //-V519
+	LogModeChange(L"[SetConInMode]", 0, dwFlags);
 
 	return bConRc;
 }
@@ -3887,6 +3889,7 @@ static int ReadConsoleInfo()
 
 	if (gpSrv->dwConsoleCP!=ldwConsoleCP)
 	{
+		LogModeChange(L"ConCP", gpSrv->dwConsoleCP, ldwConsoleCP);
 		gpSrv->dwConsoleCP = ldwConsoleCP; lbChanged = TRUE;
 	}
 
@@ -3894,6 +3897,7 @@ static int ReadConsoleInfo()
 
 	if (gpSrv->dwConsoleOutputCP!=ldwConsoleOutputCP)
 	{
+		LogModeChange(L"ConOutCP", gpSrv->dwConsoleOutputCP, ldwConsoleOutputCP);
 		gpSrv->dwConsoleOutputCP = ldwConsoleOutputCP; lbChanged = TRUE;
 	}
 
@@ -3904,6 +3908,7 @@ static int ReadConsoleInfo()
 	if (gpSrv->dwConsoleInMode != LOWORD(ldwConsoleMode))
 	{
 		_ASSERTE(LOWORD(ldwConsoleMode) == ldwConsoleMode);
+		LogModeChange(L"ConInMode", gpSrv->dwConsoleInMode, ldwConsoleMode);
 		gpSrv->dwConsoleInMode = LOWORD(ldwConsoleMode); lbChanged = TRUE;
 	}
 
@@ -3914,6 +3919,7 @@ static int ReadConsoleInfo()
 	if (gpSrv->dwConsoleOutMode != LOWORD(ldwConsoleMode))
 	{
 		_ASSERTE(LOWORD(ldwConsoleMode) == ldwConsoleMode);
+		LogModeChange(L"ConOutMode", gpSrv->dwConsoleOutMode, ldwConsoleMode);
 		gpSrv->dwConsoleOutMode = LOWORD(ldwConsoleMode); lbChanged = TRUE;
 	}
 
