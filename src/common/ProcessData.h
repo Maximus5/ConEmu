@@ -321,9 +321,9 @@ protected:
 		szSubKey[0] = 0;
 
 		// Get the buffer size for the counter names
-		DWORD dwType, dwSize;
+		DWORD dwType = 0, dwSize = 0;
 
-		if (0 == (rc = RegQueryValueEx(hKeyNames, L"Counters", 0, &dwType, NULL, &dwSize)))
+		if (0 == (rc = RegQueryValueEx(hKeyNames, L"Counters", 0, &dwType, NULL, &dwSize)) && dwSize)
 		{
 			// Allocate the counter names buffer
 			wchar_t* buf = (wchar_t*)malloc(dwSize*sizeof(wchar_t));
@@ -338,8 +338,8 @@ protected:
 					// the buffer contains multiple null terminated strings and then
 					// finally null terminated at the end.  the strings are in pairs of
 					// counter number and counter name.
-
-					for (wchar_t* p = buf; *p; p += lstrlen(p)+1)
+					wchar_t* buf_end = (wchar_t*)(((char*)buf)+dwSize);
+					for (wchar_t* p = buf; p < buf_end && *p; p += lstrlen(p)+1)
 					{
 						if (lstrcmpi(p, L"Process")==0)
 							_wsprintf(szSubKey, SKIPLEN(countof(szSubKey)) L"%i", getcounter(p));
