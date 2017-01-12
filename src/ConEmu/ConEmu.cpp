@@ -176,6 +176,24 @@ const wchar_t* gsWhatsNew    = CEWHATSNEW;    //L"https://conemu.github.io/en/Wh
 #define gsPortableApps_DefaultXml   L"\\..\\DefaultData\\settings\\ConEmu.xml"
 #define gsPortableApps_ConEmuXmlDir L"\\..\\..\\Data\\settings"
 
+ENCDS lpEnableNonClientDpiScaling = &Stub_EnableNonClientDpiScaling;
+
+BOOL __stdcall Impl_EnableNonClientDpiScaling(HWND hWnd) {
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
+}
+
+BOOL __stdcall Stub_EnableNonClientDpiScaling(HWND hWnd) {
+	ENCDS func = (ENCDS)GetProcAddress(GetModuleHandle(L"user32.dll"), "EnableNonClientDpiScaling");
+	if (!func)
+	{
+		func = &Impl_EnableNonClientDpiScaling;
+	}
+
+	lpEnableNonClientDpiScaling = func;
+	return func(hWnd);
+}
+
 static struct RegisteredHotKeys
 {
 	int DescrID;
@@ -13383,6 +13401,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = this->OnCreate(hWnd, (LPCREATESTRUCT)lParam);
 			break;
 
+		case WM_NCCREATE:
+			lpEnableNonClientDpiScaling(hWnd);
+			return DefWindowProc(hWnd, messg, wParam, lParam);
+
 		case WM_SETHOTKEY:
 			gnWndSetHotkeyOk = wParam;
 			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
@@ -13506,6 +13528,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case /*0x02E0*/ WM_DPICHANGED:
 		{
 			// Update window DPI, recreate fonts and toolbars
+			RECT* const prcNewWindow = (RECT*)lParam;
+			SetWindowPos(hWnd, NULL, prcNewWindow->left, prcNewWindow->top, prcNewWindow->right - prcNewWindow->left, prcNewWindow->bottom - prcNewWindow->top, SWP_NOZORDER | SWP_NOACTIVATE);
+			
 			OnDpiChanged(LOWORD(wParam), HIWORD(wParam), (LPRECT)lParam, true, dcs_Api);
 			// Call windows defaults?
 			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
