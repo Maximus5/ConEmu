@@ -43,6 +43,61 @@ static bool gbSkipSetDialogDPI = false;
 //#define DPI_DEBUG_CUSTOM 144 // 96, 120, 144, 192 - these are standard dpi-s
 #undef DPI_DEBUG_CUSTOM
 
+// EnableNonClientDpiScaling only exists in Windows 10 build >= 14393
+ENCDS lpEnableNonClientDpiScaling = &Stub_EnableNonClientDpiScaling;
+
+BOOL __stdcall Impl_EnableNonClientDpiScaling(HWND hWnd) {
+	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
+}
+
+BOOL __stdcall Stub_EnableNonClientDpiScaling(HWND hWnd) {
+	ENCDS func = (ENCDS)GetProcAddress(GetModuleHandle(L"user32.dll"), "EnableNonClientDpiScaling");
+	if (!func)
+	{
+		func = &Impl_EnableNonClientDpiScaling;
+	}
+
+	lpEnableNonClientDpiScaling = func;
+	return func(hWnd);
+}
+
+
+GSMFD lpGetSystemMetricsForDpi = &Stub_GetSystemMetricsForDpi;
+
+int __stdcall Impl_GetSystemMetricsForDpi(int nIndex, UINT dpi) {
+	return GetSystemMetrics(nIndex);
+}
+
+int __stdcall Stub_GetSystemMetricsForDpi(int nIndex, UINT dpi) {
+	GSMFD func = (GSMFD)GetProcAddress(GetModuleHandle(L"user32.dll"), "GetSystemMetricsForDpi");
+	if (!func)
+	{
+		func = &Impl_GetSystemMetricsForDpi;
+	}
+
+	lpGetSystemMetricsForDpi = func;
+	return func(nIndex, dpi);
+}
+
+GDFW lpGetDpiForWindow = &Stub_GetDpiForWindow;
+
+UINT __stdcall Impl_GetDpiForWindow(HWND hWnd) {
+	return 0;
+}
+
+UINT __stdcall Stub_GetDpiForWindow(HWND hWnd) {
+	GDFW func = (GDFW)GetProcAddress(GetModuleHandle(L"user32.dll"), "GetDpiForWindow");
+	if (!func)
+	{
+		func = &Impl_GetDpiForWindow;
+	}
+
+	lpGetDpiForWindow = func;
+	return func(hWnd);
+}
+
+
 /*
 struct DpiValue
 	int Ydpi;
@@ -381,6 +436,13 @@ void CDpiAware::CenterDialog(HWND hDialog)
 	}
 }
 
+void CDpiAware::EnableNonClientDpiScaling(HWND hWnd) {
+	lpEnableNonClientDpiScaling(hWnd);
+}
+
+UINT CDpiAware::GetDpiAwareMetrics(int nIndex, HWND hWnd) {
+	return lpGetSystemMetricsForDpi(nIndex, lpGetDpiForWindow(hWnd));
+}
 
 /*
 class CDpiForDialog - handle per-monitor dpi for our resource-based dialogs

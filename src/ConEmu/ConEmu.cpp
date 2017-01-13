@@ -176,24 +176,6 @@ const wchar_t* gsWhatsNew    = CEWHATSNEW;    //L"https://conemu.github.io/en/Wh
 #define gsPortableApps_DefaultXml   L"\\..\\DefaultData\\settings\\ConEmu.xml"
 #define gsPortableApps_ConEmuXmlDir L"\\..\\..\\Data\\settings"
 
-ENCDS lpEnableNonClientDpiScaling = &Stub_EnableNonClientDpiScaling;
-
-BOOL __stdcall Impl_EnableNonClientDpiScaling(HWND hWnd) {
-	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-	return FALSE;
-}
-
-BOOL __stdcall Stub_EnableNonClientDpiScaling(HWND hWnd) {
-	ENCDS func = (ENCDS)GetProcAddress(GetModuleHandle(L"user32.dll"), "EnableNonClientDpiScaling");
-	if (!func)
-	{
-		func = &Impl_EnableNonClientDpiScaling;
-	}
-
-	lpEnableNonClientDpiScaling = func;
-	return func(hWnd);
-}
-
 static struct RegisteredHotKeys
 {
 	int DescrID;
@@ -8203,7 +8185,7 @@ void CConEmuMain::OnHideCaption()
 			AdjustWindowRectEx(&rcBefore, nStyle, FALSE, nStyleEx);
 			if (isZoomed())
 			{
-				int nCapY = GetSystemMetrics(SM_CYCAPTION);
+				int nCapY = CDpiAware::GetDpiAwareMetrics(SM_CYCAPTION, ghWnd);
 				if (gpSet->isCaptionHidden())
 					rcAfter.top -= nCapY;
 				else
@@ -13402,7 +13384,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			break;
 
 		case WM_NCCREATE:
-			lpEnableNonClientDpiScaling(hWnd);
+			CDpiAware::EnableNonClientDpiScaling(hWnd);
 			return DefWindowProc(hWnd, messg, wParam, lParam);
 
 		case WM_SETHOTKEY:

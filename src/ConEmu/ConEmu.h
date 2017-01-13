@@ -102,12 +102,6 @@ typedef BOOL (WINAPI* ImmSetCompositionFontW_t)(HIMC hIMC, LPLOGFONT lplf);
 typedef BOOL (WINAPI* ImmSetCompositionWindow_t)(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm);
 typedef HIMC (WINAPI* ImmGetContext_t)(HWND hWnd);
 
-// Optional support for EnableNonClientDpiScaling (when present)
-typedef BOOL(__stdcall *ENCDS)(HWND);
-BOOL __stdcall Impl_EnableNonClientDpiScaling(HWND hWnd);
-BOOL __stdcall Stub_EnableNonClientDpiScaling(HWND hWnd);
-
-
 
 //struct GuiShellExecuteExArg
 //{
