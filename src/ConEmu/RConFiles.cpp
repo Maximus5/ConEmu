@@ -83,6 +83,30 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 					if (!*pszSlash)
 						break;
 					bFound = FileExistSubDir(pszDir, pszSlash, 1, szFull);
+					if (!bFound)
+					{
+						// Try to go to parent folder (useful while browsing git-diff-s)
+						CEStr lsParent = pszDir;
+						MBoxAssert(lsParent.ms_Val && !wcschr(lsParent.ms_Val, L'/')); // WinPath is expected
+						for (int i = 6; i >= 0; --i)
+						{
+							wchar_t* pszDirSlash = wcsrchr(lsParent.ms_Val, L'\\');
+							// Stop on the network server's root and drive letter
+							if (!pszDirSlash || (pszDirSlash - lsParent.ms_Val) <= 2 || *(pszDirSlash-1) == L':')
+								break;
+							*pszDirSlash = 0;
+							// Does it exist?
+							if ((bFound = FileExistSubDir(lsParent, pszSlash, 1, szFull)))
+								break;
+							// Don't try to go upper, if current folder already contains ".git" (root of the repo)
+							if (i > 0)
+							{
+								CEStr szGit(JoinPath(lsParent, L".git"));
+								if (DirectoryExists(szGit))
+									break;
+							}
+						}
+					}
 				}
 			}
 		}
@@ -90,10 +114,12 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 		if (!bFound)
 		{
 			// If there is "src" subfolder in the current folder
-			CEStr szSrc(JoinPath(pszDir, L"src"));
-			if (DirectoryExists(szSrc))
+			const wchar_t* predefined[] = {L"trunk", L"src", L"source", L"sources", NULL};
+			for (size_t i = 0; !bFound && predefined[i]; ++i)
 			{
-				bFound = FileExistSubDir(szSrc, pszWinPath, 1, szFull);
+				CEStr szSrc(JoinPath(pszDir, predefined[i]));
+				if (DirectoryExists(szSrc))
+					bFound = FileExistSubDir(szSrc, pszWinPath, 1, szFull);
 			}
 		}
 
