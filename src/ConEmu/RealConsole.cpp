@@ -4849,6 +4849,9 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		else
 			nMode |= ENABLE_INSERT_MODE; // Turn bit ON (Insert mode)
 
+		// gh-1007: disable ENABLE_QUICK_EDIT_MODE by default
+		nMode |= (ENABLE_QUICK_EDIT_MODE << 16);
+
 		nCurLen = _tcslen(psCurCmd);
 		_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen) L" /CINMODE=%X", nMode);
 	}
