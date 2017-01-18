@@ -86,28 +86,17 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 					if (!bFound)
 					{
 						// Try to go to parent folder (useful while browsing git-diff-s)
-						CEStr lsParent = pszDir;
-						MBoxAssert(lsParent.ms_Val && !wcschr(lsParent.ms_Val, L'/')); // WinPath is expected
-						for (int i = 6; i >= 0; --i)
-						{
-							wchar_t* pszDirSlash = wcsrchr(lsParent.ms_Val, L'\\');
-							// Stop on the network server's root and drive letter
-							if (!pszDirSlash || (pszDirSlash - lsParent.ms_Val) <= 2 || *(pszDirSlash-1) == L':')
-								break;
-							*pszDirSlash = 0;
-							// Does it exist?
-							if ((bFound = FileExistSubDir(lsParent, pszSlash, 1, szFull)))
-								break;
-							// Don't try to go upper, if current folder already contains ".git" (root of the repo)
-							if (i > 0)
-							{
-								CEStr szGit(JoinPath(lsParent, L".git"));
-								if (DirectoryExists(szGit))
-									break;
-							}
-						}
+						bFound = CheckParentFolders(pszDir, pszSlash, szFull);
 					}
 				}
+			}
+			else
+			{
+				// let's try to check some paths from #include
+				// for example: #include "src/common/Common.h"
+				LPCWSTR pszSlash = pszWinPath;
+				while (*pszSlash == L'\\') pszSlash++;
+				bFound = CheckParentFolders(pszDir, pszSlash, szFull);
 			}
 		}
 
@@ -136,6 +125,35 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 	}
 
 	return szFull;
+}
+
+bool CRConFiles::CheckParentFolders(LPCWSTR asParentDir, LPCWSTR asFilePath, CEStr& szFull)
+{
+	bool bFound = false;
+
+	// Try to go to parent folder (useful while browsing git-diff-s or #include-s)
+	CEStr lsParent = asParentDir;
+	MBoxAssert(lsParent.ms_Val && !wcschr(lsParent.ms_Val, L'/')); // WinPath is expected
+	for (int i = 6; i >= 0; --i)
+	{
+		wchar_t* pszDirSlash = wcsrchr(lsParent.ms_Val, L'\\');
+		// Stop on the network server's root and drive letter
+		if (!pszDirSlash || (pszDirSlash - lsParent.ms_Val) <= 2 || *(pszDirSlash-1) == L':')
+			break;
+		*pszDirSlash = 0;
+		// Does it exist?
+		if ((bFound = FileExistSubDir(lsParent, asFilePath, 1, szFull)))
+			break;
+		// Don't try to go upper, if current folder already contains ".git" (root of the repo)
+		if (i > 0)
+		{
+			CEStr szGit(JoinPath(lsParent, L".git"));
+			if (DirectoryExists(szGit))
+				break;
+		}
+	}
+
+	return bFound;
 }
 
 void CRConFiles::ResetCache()

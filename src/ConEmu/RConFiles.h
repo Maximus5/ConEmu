@@ -40,6 +40,8 @@ class CRConFiles
 private:
 	CRealConsole* mp_RCon;
 
+	bool CheckParentFolders(LPCWSTR asParentDir, LPCWSTR asFilePath, CEStr& szFull);
+
 public:
 	CRConFiles(CRealConsole* apRCon);
 	~CRConFiles();
