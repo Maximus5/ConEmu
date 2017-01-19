@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuSize.h"
 #include "DpiAware.h"
+#include "DwmApi_Part.h"
 #include "HooksUnlocker.h"
 #include "Inside.h"
 #include "Menu.h"
@@ -132,6 +133,39 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 			rc.top = mp_ConEmu->GetCaptionDragHeight() + mp_ConEmu->GetFrameHeight();
 		}
 		#endif
+	}
+
+	// Windows 10 breaks desktop coordinate system
+	if ((mg & ((DWORD)CEM_WIN10FRAME)) && IsWin10())
+	{
+		bool dwmSucceeded = false;
+		if (ghWnd && !isIconic())
+		{
+			RECT rcVisible = {}, rcReal = {};
+			if (SUCCEEDED(mp_ConEmu->DwmGetWindowAttribute(ghWnd, DWMWA_EXTENDED_FRAME_BOUNDS, &rcVisible, sizeof(rcVisible)))
+				&& GetWindowRect(ghWnd, &rcReal))
+			{
+				// rcVisible is expected to be smaller than rcReal
+				if (rcVisible.left >= rcReal.left && rcVisible.right <= rcReal.right
+					&& rcVisible.top >= rcReal.top && rcVisible.bottom <= rcReal.bottom)
+				{
+					dwmSucceeded = true;
+					rc.left += (rcVisible.left - rcReal.left);
+					rc.top += (rcVisible.top - rcReal.top);
+					rc.right += (rcReal.right - rcVisible.right);
+					rc.bottom += (rcReal.bottom - rcVisible.bottom);
+					// Debug purposes
+					wchar_t szInfo[140];
+					_wsprintf(szInfo, SKIPCOUNT(szLog) L"DWMWA_EXTENDED_FRAME_BOUNDS Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
+						LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal), LOGRECTCOORDS(rc));
+					LogString(szInfo);
+				}
+			}
+		}
+		if (!dwmSucceeded)
+		{
+			rc.left += 7; rc.right += 7; rc.bottom += 7;
+		}
 	}
 
 	// Разница между размером всего окна и клиентской области окна (рамка + заголовок)
@@ -247,15 +281,9 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 			if (lbTabActive)  //TODO: + IsAllowed()?
 			{
 				RECT rcTab = mp_ConEmu->mp_TabBar->GetMargins(true);
-				// !!! AddMargins использовать нельзя! он расчитан на вычитание
-				//AddMargins(rc, rcTab, FALSE);
-				_ASSERTE(rcTab.top==0 || rcTab.bottom==0);
-				rc.top += rcTab.top;
-				rc.bottom += rcTab.bottom;
-			}// else { -- раз таба нет - значит дополнительные отступы не нужны
-
-			//    rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
-			//}
+				MBoxAssert(rcTab.top==0 || rcTab.bottom==0);
+				AddMargins(rc, rcTab, rcop_MathAdd);
+			}
 		}
 		else
 		{
@@ -280,20 +308,7 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 				{
 					rc.top += rcTab.top ? rcTab.top : rcTab.bottom;
 				}
-
-				//}
-				//else
-				//{
-				//	_ASSERTE(FALSE && "For deletion!");
-				//	// !!! AddMargins использовать нельзя! он расчитан на вычитание
-				//	//AddMargins(rc, rcTab, FALSE);
-				//	rc.top += rcTab.top;
-				//	rc.bottom += rcTab.bottom;
-				//}
-			}// else { -- раз таба нет - значит дополнительные отступы не нужны
-
-			//    rc = MakeRect(0,0); // раз таба нет - значит дополнительные отступы не нужны
-			//}
+			}
 		}
 
 		//#if defined(CONEMU_TABBAR_EX)
@@ -533,31 +548,23 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			{
 				case CER_MAIN:
 				{
-					//rcShift = CalcMargins(CEM_BACK);
-					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
 					rcShift = CalcMargins(tTabAction|CEM_ALL_MARGINS);
-					AddMargins(rc, rcShift, TRUE/*abExpand*/);
-					//rcShift = CalcMargins(CEM_FRAME);
-					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
+					AddMargins(rc, rcShift, rcop_AddSize);
 					WARNING("Неправильно получается при DoubleView");
 					tFromNow = CER_MAINCLIENT;
 				} break;
 				case CER_MAINCLIENT:
 				{
-					//rcShift = CalcMargins(CEM_BACK);
-					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
 					rcShift = CalcMargins(tTabAction);
-					AddMargins(rc, rcShift, TRUE/*abExpand*/);
+					AddMargins(rc, rcShift, rcop_AddSize);
 					WARNING("Неправильно получается при DoubleView");
 					tFromNow = CER_MAINCLIENT;
 				} break;
 				case CER_TAB:
 				{
-					//rcShift = CalcMargins(CEM_BACK);
-					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
 					_ASSERTE(tWhat!=CER_TAB); // вроде этого быть не должно?
 					rcShift = CalcMargins(tTabAction);
-					AddMargins(rc, rcShift, TRUE/*abExpand*/);
+					AddMargins(rc, rcShift, rcop_AddSize);
 					WARNING("Неправильно получается при DoubleView");
 					tFromNow = CER_MAINCLIENT;
 				} break;
@@ -568,10 +575,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 				} break;
 				case CER_BACK:
 				{
-					//rcShift = CalcMargins(CEM_BACK);
-					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
 					rcShift = CalcMargins(tTabAction|CEM_CLIENT_MARGINS);
-					//AddMargins(rc, rcShift, TRUE/*abExpand*/);
 					rc.top += rcShift.top; rc.bottom += rcShift.top;
 					_ASSERTE(rcShift.left == 0 && rcShift.right == 0 && rcShift.bottom == 0);
 					WARNING("Неправильно получается при DoubleView");
@@ -603,7 +607,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			              (rFrom.bottom-rFrom.top) * gpFontMgr->FontHeight());
 
 			RECT rcScroll = CalcMargins(CEM_SCROLL|CEM_PAD);
-			AddMargins(rc, rcScroll, TRUE);
+			AddMargins(rc, rcScroll, rcop_AddSize);
 
 			if (tWhat != CER_DC)
 				rc = CalcRect(tWhat, rc, CER_DC, pVCon, tTabAction);
@@ -634,7 +638,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 				_ASSERTE((tFrom==tWhat) && "Unhandled tFrom/tWhat");
 				ZeroStruct(rcShift);
 			}
-			AddMargins(rc, rcShift, false/*abExpand*/);
+			AddMargins(rc, rcShift);
 			tFromNow = CER_MAINCLIENT;
 			break;
 		}
@@ -780,17 +784,20 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			break;
 	}
 
-	//AddMargins(rc, rcAddShift);
 	_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
 	return rc; // Посчитали, возвращаем
 }
 
 /*!!!static!!*/
-void CConEmuSize::AddMargins(RECT& rc, const RECT& rcAddShift, bool abExpand /*= false*/)
+void CConEmuSize::AddMargins(RECT& rc, const RECT& rcAddShift, RectOperations rect_op /*= rcop_Shrink*/)
 {
-	if (!abExpand)
+	MBoxAssert(rcAddShift.left>=0 && rcAddShift.top>=0 && rcAddShift.right>=rcAddShift && rcAddShift.bottom>=0);
+
+	// The code below has a lot of "if"s, they are intended for debugging purposes (breakpoints)
+
+	switch (rect_op)
 	{
-		// подвинуть все грани на rcAddShift (left сдвигается на left, и т.п.)
+	case rcop_Shrink:
 		if (rcAddShift.left)
 			rc.left += rcAddShift.left;
 
@@ -802,15 +809,48 @@ void CConEmuSize::AddMargins(RECT& rc, const RECT& rcAddShift, bool abExpand /*=
 
 		if (rcAddShift.bottom)
 			rc.bottom -= rcAddShift.bottom;
-	}
-	else
-	{
-		// поправить только правую и нижнюю грань
+
+		break;
+
+	case rcop_Enlarge:
+		if (rcAddShift.left)
+			rc.left -= rcAddShift.left;
+
+		if (rcAddShift.top)
+			rc.top -= rcAddShift.top;
+
+		if (rcAddShift.right)
+			rc.right += rcAddShift.right;
+
+		if (rcAddShift.bottom)
+			rc.bottom += rcAddShift.bottom;
+
+		break;
+
+	case rcop_MathAdd:
+		if (rcAddShift.left)
+			rc.left += rcAddShift.left;
+
+		if (rcAddShift.top)
+			rc.top += rcAddShift.top;
+
+		if (rcAddShift.right)
+			rc.right += rcAddShift.right;
+
+		if (rcAddShift.bottom)
+			rc.bottom += rcAddShift.bottom;
+
+		break;
+
+	case rcop_AddSize:
+		// change only right and bottom edges
 		if (rcAddShift.right || rcAddShift.left)
 			rc.right += rcAddShift.right + rcAddShift.left;
 
 		if (rcAddShift.bottom || rcAddShift.top)
 			rc.bottom += rcAddShift.bottom + rcAddShift.top;
+
+		break;
 	}
 }
 
@@ -1587,7 +1627,7 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	{
 		// May be work rect will cover our window without margins?
 		RECT rcTest = rcWork;
-		AddMargins(rcTest, rcMargins, TRUE);
+		AddMargins(rcTest, rcMargins, rcop_AddSize);
 
 		BOOL bIn2 = IntersectRect(&rcInter, &rcTest, &rcStore);
 		if (bIn2 && EqualRect(&rcInter, &rcStore))
@@ -3262,6 +3302,9 @@ RECT CConEmuSize::GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi)
 {
 	RECT rcNewWnd;
 
+	// gh-284
+	RECT rcWin10 = CalcMargins(CEM_WIN10FRAME);
+
 	switch (Tile)
 	{
 	case cwc_Current:
@@ -3274,6 +3317,7 @@ RECT CConEmuSize::GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi)
 		rcNewWnd.top = mi.rcWork.top;
 		rcNewWnd.bottom = mi.rcWork.bottom;
 		rcNewWnd.right = (mi.rcWork.left + mi.rcWork.right) >> 1;
+		AddMargins(rcNewWnd, rcWin10, rcop_Enlarge);
 		break;
 
 	case cwc_TileRight:
@@ -3281,18 +3325,21 @@ RECT CConEmuSize::GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi)
 		rcNewWnd.top = mi.rcWork.top;
 		rcNewWnd.bottom = mi.rcWork.bottom;
 		rcNewWnd.left = (mi.rcWork.left + mi.rcWork.right) >> 1;
+		AddMargins(rcNewWnd, rcWin10, rcop_Enlarge);
 		break;
 
 	case cwc_TileHeight:
 		rcNewWnd = GetDefaultRect();
 		rcNewWnd.top = mi.rcWork.top;
 		rcNewWnd.bottom = mi.rcWork.bottom;
+		AddMargins(rcNewWnd, rcWin10, rcop_Enlarge);
 		break;
 
 	case cwc_TileWidth:
 		rcNewWnd = GetDefaultRect();
 		rcNewWnd.left = mi.rcWork.left;
 		rcNewWnd.right = mi.rcWork.right;
+		AddMargins(rcNewWnd, rcWin10, rcop_Enlarge);
 		break;
 
 	default:
@@ -3333,10 +3380,16 @@ void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, 
 		DEBUGSTRSIZE(szInfo);
 }
 
-ConEmuWindowCommand CConEmuSize::EvalTileMode(const RECT& rcWnd, MONITORINFO* pmi /*= NULL*/)
+ConEmuWindowCommand CConEmuSize::EvalTileMode(const RECT& arcWnd, MONITORINFO* pmi /*= NULL*/)
 {
 	ConEmuWindowCommand CurTile = cwc_Current;
 
+	// gh-284
+	RECT rcWnd = arcWnd;
+	RECT rcWin10 = CalcMargins(CEM_WIN10FRAME);
+	AddMargins(rcWnd, rcWin10, rcop_Shrink);
+
+	// Where we are
 	MONITORINFO mi = {};
 	GetNearestMonitorInfo(&mi, NULL, &rcWnd, ghWnd);
 	if (pmi)

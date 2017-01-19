@@ -4478,7 +4478,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		RECT rcCalcDC = MakeRect(0, 0, (rcCalcCon.right * gpFontMgr->FontWidth()), (rcCalcCon.bottom * gpFontMgr->FontHeight()));
 
 		RECT rcScrollPad = gpConEmu->CalcMargins(CEM_SCROLL|CEM_PAD);
-		gpConEmu->AddMargins(rcCalcBack, rcScrollPad, FALSE);
+		gpConEmu->AddMargins(rcCalcBack, rcScrollPad);
 
 		int nDeltaX = (rcCalcBack.right - rcCalcBack.left) - (rcCalcDC.right - rcCalcDC.left);
 		int nDeltaY = (rcCalcBack.bottom - rcCalcBack.top) - (rcCalcDC.bottom - rcCalcDC.top);
@@ -5392,7 +5392,7 @@ void CVConGroup::PaintGaps(HDC hDC)
 		//DeleteObject(h);
 
 		////RECT rcMargins = gpConEmu->CalcMargins(CEM_TAB); // Откусить площадь, занятую строкой табов
-		////AddMargins(rcClient, rcMargins, FALSE);
+		////AddMargins(rcClient, rcMargins);
 		////// На старте при /max - ghWnd DC еще не изменил свое положение
 		//////RECT offsetRect; Get ClientRect(ghWnd DC, &offsetRect);
 		////RECT rcWndClient; Get ClientRect(ghWnd, &rcWndClient);

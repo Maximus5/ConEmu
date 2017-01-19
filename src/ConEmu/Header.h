@@ -367,6 +367,7 @@ enum ConEmuMargins
 	CEM_SCROLL = 0x0020, // Если полоса прокрутки всегда (!!!) видна - то ее ширина/высота
 	CEM_STATUS = 0x0040, // Высота строки статуса
 	CEM_PAD = 0x0080, // Ширина "отступа" от краев
+	CEM_WIN10FRAME = 0x0100, // Specially created by MS frame margins in Win10
 	// Маска для получения всех отступов
 	CEM_ALL_MARGINS = CEM_FRAMECAPTION|CEM_TAB|/*CEM_SCROLL|*/CEM_STATUS/*|CEM_PAD*/,
 	CEM_CLIENT_MARGINS = CEM_TAB|/*CEM_SCROLL|*/CEM_STATUS/*|CEM_PAD*/,

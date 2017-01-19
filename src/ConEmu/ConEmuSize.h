@@ -40,6 +40,14 @@ enum DpiChangeSource
 	dcs_Internal,
 };
 
+enum RectOperations
+{
+	rcop_Shrink,
+	rcop_Enlarge,
+	rcop_AddSize,
+	rcop_MathAdd,
+};
+
 class CConEmuSize
 {
 private:
@@ -138,7 +146,7 @@ public:
 	virtual ~CConEmuSize();
 
 protected:
-	static void AddMargins(RECT& rc, const RECT& rcAddShift, bool abExpand = false);
+	static void AddMargins(RECT& rc, const RECT& rcAddShift, RectOperations rect_op = rcop_Shrink);
 
 private:
 	HMONITOR FindInitialMonitor(MONITORINFO* pmi = NULL);
