@@ -20,6 +20,36 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.1.18
+* Pasted paths to WSL bash were not converted to Unix style (/mnt/...).
+* connector#10: Unicode \u23CE ⏎ character preceding every prompt in ConEmu.
+  Ref: gh-586, Maximus5/connector#10, fish-shell/fish-shell#789
+  Check: Maximus5/connector#19
+* ConEmu's `echo` and `type` commands were cropped sometimes.
+  If RealConsole (conhost window) was created larger than expected by ConEmu GUI,
+  than `echo` and `type` printed text using this larger size and after shrinking
+  conhost window (up to Windows 8.1) part of data was cropped.
+* gh-451: Support multi-line (wrapped) hyperlinks (URLs) for Ctrl+Click.
+* gh-986: Don't change prompt text cursor position by LClick *above* the prompt.
+* gh-1007: Add more logging to mouse wheel processing.
+* Moving some prompt features to GUI (Click & CtrlBS).
+  Ref: gh-986, gh-317, gh-845
+  Now ‘Change prompt text cursor position with Left Click’
+  and ‘Ctrl+Backspace - delete word leftward to the text cursor’
+  are process by ConEmu GUI without posting command to ConEmuHk.
+  The feature requires properly reported by the shell prompt start pos.
+  For bare cmd.exe it's done automatically by ConEmuHk.
+  All other shells must report the start of the prompt with ANSI.
+  * https://conemu.github.io/en/AnsiEscapeCodes.html#ConEmu_specific_OSC
+  * https://conemu.github.io/en/CygwinMsysConnector.html
+  For example, while using bash and connector you may add to the end
+  of your `PS1` the following sequence: `\[\033]9;12\007\]`.
+* Improve hyperlink detector on 'git diff' outputs.
+* gh-1007: Disable ENABLE_QUICK_EDIT_MODE by default.
+* Add logging of console mode changes.
+* Improve hyperlink detector on #include-s with absolute paths.
+
+
 2016.12.6
 * gh-970: Pasting windows path in cygwin produces truncated result (77eb4e6 regression).
 * Allow to pass empty string via -cur_console:m:"" (set no mount prefix for Unix path conversion).
