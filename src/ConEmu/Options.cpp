@@ -4589,6 +4589,8 @@ bool Settings::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 
 int Settings::HideCaptionAlwaysFrame()
 {
+	if (gpConEmu->isInside())
+		return 0;
 	int iFrame = gpConEmu->opt.FrameWidth.Exists ? gpConEmu->opt.FrameWidth.Int : gpSet->nHideCaptionAlwaysFrame;
 	return (iFrame > HIDECAPTIONALWAYSFRAME_MAX) ? -1 : iFrame;
 }

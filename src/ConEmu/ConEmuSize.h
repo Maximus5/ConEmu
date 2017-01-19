@@ -40,6 +40,15 @@ enum DpiChangeSource
 	dcs_Internal,
 };
 
+enum RectOperations
+{
+	rcop_Shrink,
+	rcop_Enlarge,
+	rcop_AddSize,
+	rcop_MathAdd,
+	rcop_MathSub,
+};
+
 class CConEmuSize
 {
 private:
@@ -138,7 +147,7 @@ public:
 	virtual ~CConEmuSize();
 
 protected:
-	static void AddMargins(RECT& rc, const RECT& rcAddShift, bool abExpand = false);
+	static void AddMargins(RECT& rc, const RECT& rcAddShift, RectOperations rect_op = rcop_Shrink);
 
 private:
 	HMONITOR FindInitialMonitor(MONITORINFO* pmi = NULL);
@@ -233,6 +242,14 @@ public:
 	HRGN CreateWindowRgn(bool abTestOnly, bool abRoundTitle, int anX, int anY, int anWndWidth, int anWndHeight);
 
 protected:
+	RECT CalcMargins_Win10Frame();
+	RECT CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode = wmCurrent);
+	RECT CalcMargins_TabBar(DWORD/*enum ConEmuMargins*/ mg);
+	RECT CalcMargins_StatusBar();
+	RECT CalcMargins_Padding();
+	RECT CalcMargins_Scrolling();
+	RECT CalcMargins_VisibleFrame(LPRECT prcFrame = NULL);
+	RECT CalcMargins_InvisibleFrame();
 	static LRESULT OnDpiChangedCall(LPARAM lParam);
 	bool FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBorders */, bool bPopupDlg = false);
 	RECT GetVirtualScreenRect(bool abFullScreen);
