@@ -266,7 +266,9 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 	}
 	else
 	{
-		//TODO: Shell icons for registered files (cmd, bat, sh, pl, py, ...)
+		SHFILEINFO sfi;
+		if (SHGetFileInfo(szLoadFile, 0, &sfi, sizeof(sfi), SHGFI_ICON | SHGFI_SMALLICON) != 0)
+			hFileIcon = sfi.hIcon;
 	}
 
 	if (hFileIcon)

@@ -696,7 +696,7 @@ void Settings::InitSettings()
 	wcscpy_c(szTabConsole, L"<%c> %s");
 	wcscpy_c(szTabModifiedSuffix, L"[*]");
 	wchar_t szTabSkipWords[64];
-	wcscpy_c(szTabSkipWords, L"Administrator:|Администратор:");
+	wcscpy_c(szTabSkipWords, L"Administrator:|Администратор:|管理员:");
 	pszTabSkipWords = lstrdup(szTabSkipWords);
 	wcscpy_c(szTabPanels, szTabConsole); // Раньше была только настройка "TabConsole". Унаследовать ее в "TabPanels"
 	wcscpy_c(szTabEditor, L"<%c.%i>{%s}");
