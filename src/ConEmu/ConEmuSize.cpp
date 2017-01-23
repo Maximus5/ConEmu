@@ -196,8 +196,9 @@ RECT CConEmuSize::CalcMargins_Win10Frame()
 	if (IsWin10())
 	{
 		bool dwmSucceeded = false;
+		DWORD dwStyle = mp_ConEmu->FixWindowStyle(0);
 		// TODO: Does DWM return proper values for minimized windows?
-		if (ghWnd && !isIconic())
+		if (ghWnd && (dwStyle & WS_THICKFRAME) && !isIconic())
 		{
 			RECT rcVisible = {}, rcReal = {};
 			if (SUCCEEDED(mp_ConEmu->DwmGetWindowAttribute(ghWnd, DWMWA_EXTENDED_FRAME_BOUNDS, &rcVisible, sizeof(rcVisible)))
