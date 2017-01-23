@@ -358,7 +358,9 @@ enum ConEmuMargins
 	CEM_FRAMEONLY = 0x0001,
 	CEM_CAPTION = 0x0002,
 	CEM_FRAMECAPTION = (CEM_FRAMEONLY|CEM_CAPTION),
+	#if 0
 	CEM_CLIENTSHIFT = 0x0004, // Если клиентская часть "расширена" на рамку
+	#endif
 	// Высота таба (пока только .top)
 	CEM_TAB = 0x0010,
 	CEM_TABACTIVATE = 0x1010,   // Принудительно считать, что таб есть (при включении таба)
@@ -368,6 +370,8 @@ enum ConEmuMargins
 	CEM_STATUS = 0x0040, // Высота строки статуса
 	CEM_PAD = 0x0080, // Ширина "отступа" от краев
 	CEM_WIN10FRAME = 0x0100, // Specially created by MS frame margins in Win10
+	CEM_VISIBLE_FRAME = 0x0200, // Takes into account HideCaptionAlwaysFrame() and CEM_WIN10FRAME
+	CEM_INVISIBLE_FRAME = 0x400, // Takes into account HideCaptionAlwaysFrame() and CEM_WIN10FRAME
 	// Маска для получения всех отступов
 	CEM_ALL_MARGINS = CEM_FRAMECAPTION|CEM_TAB|/*CEM_SCROLL|*/CEM_STATUS/*|CEM_PAD*/,
 	CEM_CLIENT_MARGINS = CEM_TAB|/*CEM_SCROLL|*/CEM_STATUS/*|CEM_PAD*/,

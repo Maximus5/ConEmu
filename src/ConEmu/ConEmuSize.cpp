@@ -116,13 +116,9 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 	RECT rc = {};
 
 	DEBUGTEST(FrameDrawStyle fdt = mp_ConEmu->DrawType());
-	ConEmuWindowMode wm = (wmNewMode == wmCurrent) ? WindowMode : wmNewMode;
+	DEBUGTEST(ConEmuWindowMode wm = (wmNewMode == wmCurrent) ? WindowMode : wmNewMode);
 
-	//if ((wmNewMode == wmCurrent) || (wmNewMode == wmNotChanging))
-	//{
-	//	wmNewMode = mp_ConEmu->WindowMode;
-	//}
-
+	#if 0
 	if ((mg & ((DWORD)CEM_CLIENTSHIFT)) && (mp_ConEmu->mp_Inside == NULL))
 	{
 		_ASSERTE(mg == (DWORD)CEM_CLIENTSHIFT); // Can not be combined with other flags!
@@ -134,11 +130,73 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 		}
 		#endif
 	}
+	#endif
 
 	// Windows 10 breaks desktop coordinate system
 	if ((mg & ((DWORD)CEM_WIN10FRAME)) && IsWin10())
 	{
+		RECT rcHiddenFrame = CalcMargins_Win10Frame();
+		AddMargins(rc, rcHiddenFrame, rcop_MathAdd);
+	}
+
+	// Difference between whole window size and its client area (frame + caption)
+	if (mg & ((DWORD)CEM_FRAMECAPTION))
+	{
+		// CEM_FRAMEONLY|CEM_CAPTION
+		RECT rcFrameCaption = CalcMargins_FrameCaption(mg, wmNewMode);
+		AddMargins(rc, rcFrameCaption, rcop_MathAdd);
+	}
+
+	// Сколько занимают табы (по идее меняется только rc.top or rc.bottom)
+	if (mg & ((DWORD)CEM_TAB))
+	{
+		RECT rcTab = CalcMargins_TabBar(mg);
+		AddMargins(rc, rcTab, rcop_MathAdd);
+	}
+
+	if (mg & ((DWORD)CEM_PAD))
+	{
+		RECT rcPad = CalcMargins_Padding();
+		AddMargins(rc, rcPad, rcop_MathAdd);
+	}
+
+	if (mg & ((DWORD)CEM_SCROLL))
+	{
+		RECT rcScroll = CalcMargins_Scrolling();
+		AddMargins(rc, rcScroll, rcop_MathAdd);
+	}
+
+	if (mg & ((DWORD)CEM_STATUS))
+	{
+		RECT rcStatus = CalcMargins_StatusBar();
+		AddMargins(rc, rcStatus, rcop_MathAdd);
+	}
+
+	if (mg & ((DWORD)CEM_VISIBLE_FRAME))
+	{
+		MBoxAssert(mg == CEM_VISIBLE_FRAME); // Nothing else yet allowed
+		RECT rcFrameOnly = CalcMargins_VisibleFrame();
+		AddMargins(rc, rcFrameOnly, rcop_MathAdd);
+	}
+
+	if (mg & ((DWORD)CEM_INVISIBLE_FRAME))
+	{
+		MBoxAssert(mg == CEM_INVISIBLE_FRAME); // Nothing else yet allowed
+		RECT rcFrameOnly = CalcMargins_InvisibleFrame();
+		AddMargins(rc, rcFrameOnly, rcop_MathAdd);
+	}
+
+	return rc;
+}
+
+RECT CConEmuSize::CalcMargins_Win10Frame()
+{
+	RECT rc = {};
+
+	if (IsWin10())
+	{
 		bool dwmSucceeded = false;
+		// TODO: Does DWM return proper values for minimized windows?
 		if (ghWnd && !isIconic())
 		{
 			RECT rcVisible = {}, rcReal = {};
@@ -156,23 +214,32 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 					rc.bottom += (rcReal.bottom - rcVisible.bottom);
 					// Debug purposes
 					wchar_t szInfo[140];
-					_wsprintf(szInfo, SKIPCOUNT(szLog) L"DWMWA_EXTENDED_FRAME_BOUNDS Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
+					_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
 						LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal), LOGRECTCOORDS(rc));
 					LogString(szInfo);
 				}
 			}
 		}
+
+		// Default values if API fails
 		if (!dwmSucceeded)
 		{
 			rc.left += 7; rc.right += 7; rc.bottom += 7;
 		}
 	}
 
-	// Разница между размером всего окна и клиентской области окна (рамка + заголовок)
+	return rc;
+}
+
+RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode /*= wmCurrent*/)
+{
+	RECT rc = {};
+
+	ConEmuWindowMode wm = (wmNewMode == wmCurrent) ? WindowMode : wmNewMode;
+
+	// Difference between whole window size and its client area (frame + caption)
 	if ((mg & ((DWORD)CEM_FRAMECAPTION)) && (mp_ConEmu->mp_Inside == NULL))
 	{
-		// т.к. это первая обработка - можно ставить rc простым приравниванием
-		_ASSERTE(rc.left==0 && rc.top==0 && rc.right==0 && rc.bottom==0);
 		DWORD dwStyle = mp_ConEmu->GetWindowStyle();
 		if (wmNewMode != wmCurrent)
 			dwStyle = mp_ConEmu->FixWindowStyle(dwStyle, wmNewMode);
@@ -269,7 +336,14 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 		}
 	}
 
-	// Сколько занимают табы (по идее меняется только rc.top)
+	return rc;
+}
+
+RECT CConEmuSize::CalcMargins_TabBar(DWORD/*enum ConEmuMargins*/ mg)
+{
+	RECT rc = {};
+
+	// The place (height) used by TabBar. Only rc.top or rc.bottom may be set
 	if (mg & ((DWORD)CEM_TAB))
 	{
 		if (ghWnd)
@@ -321,32 +395,27 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 		#endif
 	}
 
-	//    //case CEM_BACK:  // Отступы от краев окна фона (с прокруткой) до окна с отрисовкой (DC)
-	//    //{
-	//    //    if (apVCon && apVCon->RCon()->isBufferHeight()) { //TODO: а показывается ли сейчас прокрутка?
-	//    //        rc = MakeRect(0,0,GetSystemMetrics(SM_CXVSCROLL),0);
-	//    //    } else {
-	//    //        rc = MakeRect(0,0); // раз прокрутки нет - значит дополнительные отступы не нужны
-	//    //    }
-	//    //}   break;
-	//default:
-	//    _ASSERTE(mg==CEM_FRAME || mg==CEM_TAB);
-	//}
+	return rc;
+}
 
-	//if (mg & ((DWORD)CEM_CLIENT))
-	//{
-	//	TODO("Переделать на ручной расчет, необходимо для DoubleView. Должен зависеть от apVCon");
-	//	RECT rcDC; GetWindowRect(ghWnd DC, &rcDC);
-	//	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
-	//	RECT rcFrameTab = CalcMargins(CEM_FRAMETAB);
-	//	// ставим результат
-	//	rc.left += (rcDC.left - rcWnd.left - rcFrameTab.left);
-	//	rc.top += (rcDC.top - rcWnd.top - rcFrameTab.top);
-	//	rc.right -= (rcDC.right - rcWnd.right - rcFrameTab.right);
-	//	rc.bottom -= (rcDC.bottom - rcWnd.bottom - rcFrameTab.bottom);
-	//}
+RECT CConEmuSize::CalcMargins_StatusBar()
+{
+	RECT rc = {};
 
-	if ((mg & ((DWORD)CEM_PAD)) && gpSet->isTryToCenter)
+	if (gpSet->isStatusBarShow)
+	{
+		TODO("Зависимость от темы/шрифта");
+		rc.bottom += gpSet->StatusBarHeight();
+	}
+
+	return rc;
+}
+
+RECT CConEmuSize::CalcMargins_Padding()
+{
+	RECT rc = {};
+
+	if (gpSet->isTryToCenter)
 	{
 		rc.left += gpSet->nCenterConsolePad;
 		rc.top += gpSet->nCenterConsolePad;
@@ -354,18 +423,74 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 		rc.bottom += gpSet->nCenterConsolePad;
 	}
 
-	if ((mg & ((DWORD)CEM_SCROLL)) && (gpSet->isAlwaysShowScrollbar == 1))
+	return rc;
+}
+
+RECT CConEmuSize::CalcMargins_Scrolling()
+{
+	RECT rc = {};
+
+	// TODO: Horizontal scroll
+	if ((gpSet->isAlwaysShowScrollbar == 1))
 	{
 		rc.right += GetSystemMetrics(SM_CXVSCROLL);
 	}
 
-	if ((mg & ((DWORD)CEM_STATUS)) && gpSet->isStatusBarShow)
+	return rc;
+}
+
+RECT CConEmuSize::CalcMargins_VisibleFrame(LPRECT prcFrame /*= NULL*/)
+{
+	RECT rcFrameOnly = {};
+	int iFrameWidth = gpSet->HideCaptionAlwaysFrame();
+
+	const RECT rcReal = CalcMargins_FrameCaption(CEM_FRAMEONLY);
+	if (prcFrame)
+		*prcFrame = rcReal;
+
+	// 0 means we hide frame completely
+	if (iFrameWidth != 0)
 	{
-		TODO("Зависимость от темы/шрифта");
-		rc.bottom += gpSet->StatusBarHeight();
+		rcFrameOnly = rcReal;
+
+		DWORD dwStyle = mp_ConEmu->FixWindowStyle(0);
+
+		// Windows 10 DWM hides portions of the actual frame
+		if ((dwStyle & WS_THICKFRAME) && IsWin10())
+		{
+			// BUGBUG: During m_ForceShowFrame DwmGetWindowAttribute returns yet old values (fixed frame), but we need estimated values for changes styles
+			const RECT rcWin10 = CalcMargins_Win10Frame();
+			MBoxAssert(rcWin10.left>0 && rcWin10.top>=0 && rcWin10.right>0 && rcWin10.bottom>0);
+			MBoxAssert(rcWin10.left<=rcReal.left && rcWin10.top<=rcReal.top && rcWin10.right<=rcReal.right && rcWin10.bottom<=rcReal.bottom);
+			AddMargins(rcFrameOnly, rcWin10, rcop_MathSub);
+		}
+
+		// If user asks to hide frame partially
+		if (iFrameWidth > 0)
+		{
+			rcFrameOnly.left = klMin<int>(rcFrameOnly.left, iFrameWidth);
+			rcFrameOnly.right = klMin<int>(rcFrameOnly.right, iFrameWidth);
+			rcFrameOnly.top = klMin<int>(rcFrameOnly.top, iFrameWidth);
+			rcFrameOnly.bottom = klMin<int>(rcFrameOnly.bottom, iFrameWidth);
+		}
+
+		// Quake - hides top edge
+		if (gpSet->isQuakeStyle)
+		{
+			rcFrameOnly.top = 0;
+		}
 	}
 
-	return rc;
+	return rcFrameOnly;
+}
+
+RECT CConEmuSize::CalcMargins_InvisibleFrame()
+{
+	RECT rcFrameOnly = {};
+	const RECT rcVisible = CalcMargins_VisibleFrame(&rcFrameOnly);
+	RECT rcInvisible = rcFrameOnly;
+	AddMargins(rcInvisible, rcVisible, rcop_MathSub);
+	return rcInvisible;
 }
 
 RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NULL*/)
@@ -791,7 +916,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 /*!!!static!!*/
 void CConEmuSize::AddMargins(RECT& rc, const RECT& rcAddShift, RectOperations rect_op /*= rcop_Shrink*/)
 {
-	MBoxAssert(rcAddShift.left>=0 && rcAddShift.top>=0 && rcAddShift.right>=rcAddShift && rcAddShift.bottom>=0);
+	MBoxAssert(rcAddShift.left>=0 && rcAddShift.top>=0 && rcAddShift.right>=0 && rcAddShift.bottom>=0);
 
 	// The code below has a lot of "if"s, they are intended for debugging purposes (breakpoints)
 
@@ -839,6 +964,21 @@ void CConEmuSize::AddMargins(RECT& rc, const RECT& rcAddShift, RectOperations re
 
 		if (rcAddShift.bottom)
 			rc.bottom += rcAddShift.bottom;
+
+		break;
+
+	case rcop_MathSub:
+		if (rcAddShift.left)
+			rc.left -= rcAddShift.left;
+
+		if (rcAddShift.top)
+			rc.top -= rcAddShift.top;
+
+		if (rcAddShift.right)
+			rc.right -= rcAddShift.right;
+
+		if (rcAddShift.bottom)
+			rc.bottom -= rcAddShift.bottom;
 
 		break;
 
@@ -963,21 +1103,13 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 			hMon = FindInitialMonitor(&mi);
 		}
 
+		// was gh-472: One more fix for custom frame width (Quake) and ‘gaps’ (36d34ba)
 		if (wmCurMode == wmNormal)
 		{
-			RECT rcFrameOnly = CalcMargins(CEM_FRAMECAPTION);
-			int iFrameWidth = gpSet->HideCaptionAlwaysFrame();
-			if (iFrameWidth > 0)
-			{
-				rcFrameOnly.left = max(0, (rcFrameOnly.left - iFrameWidth));
-				rcFrameOnly.right = max(0, (rcFrameOnly.right - iFrameWidth));
-				rcFrameOnly.top = max(0, (rcFrameOnly.top - iFrameWidth));
-				rcFrameOnly.bottom = max(0, (rcFrameOnly.bottom - iFrameWidth));
-			}
-			mi.rcWork.left -= rcFrameOnly.left;
-			mi.rcWork.right += rcFrameOnly.right;
-			mi.rcWork.top -= rcFrameOnly.top;
-			mi.rcWork.bottom += rcFrameOnly.bottom;
+			// Was CEM_FRAMECAPTION, but if user set 100% for Height,
+			// the window become larger than working area on Title bar height
+			RECT rcInvisible = CalcMargins_InvisibleFrame();
+			AddMargins(mi.rcWork, rcInvisible, rcop_Enlarge);
 		}
 	}
 
@@ -1576,7 +1708,7 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	}
 
 
-	RECT rcFrame = CalcMargins(CEM_FRAMEONLY);
+	RECT rcFrame = CalcMargins_VisibleFrame();
 
 
 	// We prefer nearest monitor
@@ -1590,6 +1722,8 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	// Get work area (may be FullScreen)
 	rcWork = (wndMode == wmFullScreen) ? mi.rcMonitor : mi.rcWork;
 
+	RECT rcInvisible = CalcMargins_InvisibleFrame();
+	AddMargins(rcWork, rcInvisible, rcop_Enlarge);
 
 	RECT rcInter = rcWnd;
 	BOOL bIn = IntersectRect(&rcInter, &rcWork, &rcStore);

@@ -2059,14 +2059,22 @@ BOOL CConEmuMain::CreateMainWindow()
 		{
 			// We get here on "clean configuration"
 			// Correct position to be inside working area
+			RECT rcDefault = rcWnd;
 			if (FixWindowRect(rcWnd, CEB_ALL))
 			{
 				this->wndX = rcWnd.left;
 				this->wndY = rcWnd.top;
 				RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN);
-				_ASSERTE(this->WndWidth.Style == ss_Standard && this->WndHeight.Style == ss_Standard);
-				this->WndWidth.Set(true, ss_Standard, rcCon.right);
-				this->WndHeight.Set(false, ss_Standard, rcCon.bottom);
+				if ((rcDefault.right - rcDefault.left) > (rcWnd.right - rcWnd.left))
+				{
+					_ASSERTE(this->WndWidth.Style == ss_Standard);
+					this->WndWidth.Set(true, ss_Standard, rcCon.right);
+				}
+				if ((rcDefault.bottom - rcDefault.top) > (rcWnd.bottom - rcWnd.top))
+				{ 
+					_ASSERTE(this->WndHeight.Style == ss_Standard);
+					this->WndHeight.Set(false, ss_Standard, rcCon.bottom);
+				}
 			}
 		}
 		UpdateIdealRect(rcWnd);
@@ -13560,10 +13568,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			if (!isIconic())
 			{
 				WORD newClientWidth = LOWORD(lParam), newClientHeight = HIWORD(lParam);
+				#if defined(CONEMU_TABBAR_EX)
 				RECT rcShift = CalcMargins(CEM_CLIENTSHIFT);
 				_ASSERTE(rcShift.left==0 && rcShift.bottom==0 && rcShift.right==0); // Only top shift allowed
 				if ((UINT)rcShift.top > newClientHeight)
 					newClientHeight -= rcShift.top;
+				#endif
 				result = this->OnSize(HIWORD(wParam)!=2, LOWORD(wParam), newClientWidth, newClientHeight);
 			}
 		} break;
