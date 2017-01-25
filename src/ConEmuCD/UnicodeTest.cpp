@@ -252,6 +252,8 @@ int CheckUnicodeFont()
 	if ((bInfo = GetConsoleScreenBufferInfo(hOut, &csbi)) != FALSE)
 	{
 		COORD cr0 = {0,0};
+		WORD intens[17] = {}; for (size_t i = 0; i < countof(intens); ++i) intens[i] = N|FOREGROUND_INTENSITY; intens[countof(intens)-1] = 1;
+		WriteConsoleOutputAttribute(hOut, intens, countof(intens), csbi.dwCursorPosition, &nWrite);
 		if ((bWrite = WriteConsoleOutputCharacterW(hOut, szText, nLen, csbi.dwCursorPosition, &nWrite)) != FALSE)
 		{
 			if (((bRead = ReadConsoleOutputCharacterW(hOut, szCheck, nLen*2, csbi.dwCursorPosition, &nRead)) != FALSE)
