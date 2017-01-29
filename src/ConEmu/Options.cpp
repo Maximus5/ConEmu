@@ -3161,7 +3161,7 @@ void Settings::SaveSizeSettings(SettingsBase* reg)
 	reg->Save(L"WindowMode", saveMode);
 
 	// Avoid to call our evaluation function (they rely on monitor information)
-	RECT rcWnd = {isUseCurrentSizePos ? gpConEmu->wndX : _wndX, isUseCurrentSizePos ? gpConEmu->wndY : _wndY};
+	RECT rcWnd = {isUseCurrentSizePos ? gpConEmu->WndPos.x : _wndX, isUseCurrentSizePos ? gpConEmu->WndPos.y : _wndY};
 	rcWnd.right = rcWnd.left + 500; rcWnd.bottom = rcWnd.top + 300;
 	HMONITOR hMon = MonitorFromRect(&rcWnd, MONITOR_DEFAULTTONULL);
 	MONITORINFO mi = {sizeof(mi)};
@@ -3546,12 +3546,6 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"FadeInactiveLow", mn_FadeLow);
 		reg->Save(L"FadeInactiveHigh", mn_FadeHigh);
 
-		/*if (!isFullScreen && !gpConEmu->isZoomed() && !gpConEmu->isIconic())
-		{
-			RECT rcPos; GetWindowRect(ghWnd, &rcPos);
-			wndX = rcPos.left;
-			wndY = rcPos.top;
-		}*/
 		reg->Save(L"ConVisible", isConVisible);
 
 		reg->Save(L"UseInjects", isUseInjects);

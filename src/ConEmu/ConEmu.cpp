@@ -2062,8 +2062,9 @@ BOOL CConEmuMain::CreateMainWindow()
 			RECT rcDefault = rcWnd;
 			if (FixWindowRect(rcWnd, CEB_ALL))
 			{
-				this->wndX = rcWnd.left;
-				this->wndY = rcWnd.top;
+				// We store "visual" position, which may differs from real window placement
+				this->WndPos = VisualPosFromReal(rcWnd.left, rcWnd.top);
+				// Size may be set in cells, pixels or percents
 				RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN);
 				if ((rcDefault.right - rcDefault.left) > (rcWnd.right - rcWnd.left))
 				{
@@ -2098,17 +2099,15 @@ BOOL CConEmuMain::CreateMainWindow()
 			this->mp_Inside ? L" Inside" : L"",
 			opt.DesktopMode ? L" Desktop" : L"",
 			LODWORD(hParent),
-			this->wndX, this->wndY, nWidth, nHeight, style, styleEx,
+			this->WndPos.x, this->WndPos.y, nWidth, nHeight, style, styleEx,
 			GetWindowModeName(gpSet->isQuakeStyle ? (ConEmuWindowMode)gpSet->_WindowMode : WindowMode));
 		LogString(szCreate);
 	}
 
-	//if (this->WindowMode == wmMaximized) style |= WS_MAXIMIZE;
-	//style |= WS_VISIBLE;
-	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
-	WARNING("На ноуте вылезает за пределы рабочей области");
+
+	POINT ptCreate = this->RealPosFromVisual(WndPos.x, WndPos.y);
 	ghWnd = CreateWindowEx(styleEx, gsClassNameParent, GetCmd(), style,
-	                       this->wndX, this->wndY, nWidth, nHeight, hParent, NULL, (HINSTANCE)g_hInstance, NULL);
+	                       ptCreate.x, ptCreate.y, nWidth, nHeight, hParent, NULL, (HINSTANCE)g_hInstance, NULL);
 
 	if (!ghWnd)
 	{

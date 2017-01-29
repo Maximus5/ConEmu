@@ -1702,7 +1702,7 @@ void CSetDlgButtons::OnBtn_UseCurrentSizePos(HWND hDlg, WORD CB, BYTE uCheck)
 	if (gpSet->isUseCurrentSizePos)
 	{
 		gpSetCls->UpdateWindowMode(gpConEmu->WindowMode);
-		gpSetCls->UpdatePos(gpConEmu->wndX, gpConEmu->wndY, true);
+		gpSetCls->UpdatePos(gpConEmu->WndPos.x, gpConEmu->WndPos.y, true);
 		gpSetCls->UpdateSize(gpConEmu->WndWidth, gpConEmu->WndHeight);
 	}
 } // cbUseCurrentSizePos

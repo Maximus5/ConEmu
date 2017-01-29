@@ -618,8 +618,8 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 
 	if ((ghWnd == NULL) || (slfFlags & slf_OnResetReload))
 	{
-		gpConEmu->wndX = gpSet->_wndX;
-		gpConEmu->wndY = gpSet->_wndY;
+		gpConEmu->WndPos.x = gpSet->_wndX;
+		gpConEmu->WndPos.y = gpSet->_wndY;
 		gpConEmu->WndWidth.Raw = gpSet->wndWidth.Raw;
 		gpConEmu->WndHeight.Raw = gpSet->wndHeight.Raw;
 	}
@@ -2358,21 +2358,29 @@ void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 {
 	int x = ax, y = ay;
 
-	if (!gpConEmu->isFullScreen()
+	if (bGetRect
+		&& !gpConEmu->isFullScreen()
 		&& !gpConEmu->isZoomed()
 		&& !gpConEmu->isIconic()
 		&& (gpConEmu->GetTileMode(false) == cwc_Current))
 	{
 		RECT rc; GetWindowRect(ghWnd, &rc);
-		x = rc.left; y = rc.top;
+		POINT newPos = gpConEmu->VisualPosFromReal(rc.left, rc.top);
+		_ASSERTE(x==newPos.x && y==newPos.y);
+		x = newPos.x; y = newPos.y;
+	}
+	else
+	{
+		POINT newPos = gpConEmu->VisualPosFromReal(ax, ay);
+		x = newPos.x; y = newPos.y;
 	}
 
-	if ((gpConEmu->wndX != x) || (gpConEmu->wndY != y))
+	if ((gpConEmu->WndPos.x != x) || (gpConEmu->WndPos.y != y))
 	{
-		if (gpConEmu->wndX != x)
-			gpConEmu->wndX = x;
-		if (gpConEmu->wndY != y)
-			gpConEmu->wndY = y;
+		if (gpConEmu->WndPos.x != x)
+			gpConEmu->WndPos.x = x;
+		if (gpConEmu->WndPos.y != y)
+			gpConEmu->WndPos.y = y;
 	}
 
 	if (gpSet->isUseCurrentSizePos)
@@ -2387,12 +2395,12 @@ void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 	if (hSizePosPg)
 	{
 		MSetter lIgnoreEdit(&CSetPgBase::mb_IgnoreEditChanged);
-		SetDlgItemInt(hSizePosPg, tWndX, gpSet->isUseCurrentSizePos ? gpConEmu->wndX : gpSet->_wndX, TRUE);
-		SetDlgItemInt(hSizePosPg, tWndY, gpSet->isUseCurrentSizePos ? gpConEmu->wndY : gpSet->_wndY, TRUE);
+		SetDlgItemInt(hSizePosPg, tWndX, gpSet->isUseCurrentSizePos ? x : gpSet->_wndX, TRUE);
+		SetDlgItemInt(hSizePosPg, tWndY, gpSet->isUseCurrentSizePos ? y : gpSet->_wndY, TRUE);
 	}
 
 	wchar_t szLabel[128];
-	_wsprintf(szLabel, SKIPLEN(countof(szLabel)) L"UpdatePos A={%i,%i} C={%i,%i} S={%i,%i}", ax,ay, gpConEmu->wndX, gpConEmu->wndY, gpSet->_wndX, gpSet->_wndY);
+	_wsprintf(szLabel, SKIPLEN(countof(szLabel)) L"UpdatePos A={%i,%i} C={%i,%i} S={%i,%i}", ax,ay, x, y, gpSet->_wndX, gpSet->_wndY);
 	gpConEmu->LogWindowPos(szLabel);
 }
 

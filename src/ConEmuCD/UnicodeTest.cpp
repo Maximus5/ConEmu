@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "../common/Common.h"
+#include "../common/ConsoleRead.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WCodePage.h"
 #include "../ConEmu/version.h"
@@ -169,6 +170,8 @@ int CheckUnicodeFont()
 {
 	// Print version and console information first
 	PrintConsoleInfo();
+
+	_ASSERTE(FALSE && "Continue to CheckUnicodeFont");
 
 	int iRc = CERR_UNICODE_CHK_FAILED;
 
@@ -320,6 +323,7 @@ int CheckUnicodeFont()
 	wchar_t szBot[] = {ucBoxDblUpRight, ucBoxDblHorz, ucBoxDblUpDblHorz, ucBoxDblUpLeft, 0};
 	wchar_t szChs[] = L"中文";
 	int nMid = csbi.dwSize.X / 2;
+	int nDbcsShift = IsConsoleDoubleCellCP() ? 2 : 0;
 	write(szUpp, 1);
 		for (int X = 2; X < nMid; X++) write(szUpp+1, 1);
 		write(szUpp+2, 1);
@@ -327,10 +331,10 @@ int CheckUnicodeFont()
 		write(szUpp+3, 1);
 	write(szMid, 1);
 		write(szChs, 2);
-		for (int X = 4; X < nMid; X++) write(szMid+1, 1);
+		for (int X = 4; X < nMid - nDbcsShift; X++) write(szMid+1, 1);
 		write(szMid+2, 1);
 		write(szChs, 1);
-		for (int X = nMid+3; X < csbi.dwSize.X; X++) write(szMid+1, 1);
+		for (int X = nMid+3; X < csbi.dwSize.X - nDbcsShift; X++) write(szMid+1, 1);
 		write(szChs+1, 1);
 		write(szMid+3, 1);
 	write(szBot, 1);
