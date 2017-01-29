@@ -1781,6 +1781,8 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 		rcMargins.left = 0;
 	if (!(nBorders & CEB_TOP))
 		rcMargins.top = 0;
+	else if (IsWin10())
+		rcMargins.top = klMin<LONG>(rcMargins.top, 1);
 	if (!(nBorders & CEB_RIGHT))
 		rcMargins.right = 0;
 	if (!(nBorders & CEB_BOTTOM))
@@ -1810,6 +1812,9 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 		int nHeight = rcStore.bottom-rcStore.top;
 
 		// All is bad. Windows is totally out of screen.
+		bool overWidth = (rcStore.left < rcWork.left) || (rcStore.right > rcWork.right);
+		bool overHeight = (rcStore.top < rcWork.top) || (rcStore.bottom > rcWork.bottom);
+
 		rcWnd.left = max(rcWork.left-rcMargins.left,min(rcStore.left,rcWork.right-nWidth+rcMargins.right));
 		rcWnd.top = max(rcWork.top-rcMargins.top,min(rcStore.top,rcWork.bottom-nHeight+rcMargins.bottom));
 
@@ -1839,6 +1844,18 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 			rcWnd.bottom = min(rcWork.bottom+rcMargins.bottom,rcWnd.top+rcStore.bottom-rcStore.top);
 		}
 
+		// Final corrections
+		int newWidth = RectWidth(rcWnd), newHeight = RectHeight(rcWnd);
+		if ((rcWnd.left < rcStore.left) && ((rcStore.left + newWidth) <= rcWork.right))
+		{
+			rcWnd.left = rcStore.left; rcWnd.right = rcWnd.left + newWidth;
+		}
+		if ((rcWnd.top < rcStore.top) && ((rcStore.top + newHeight) <= rcWork.bottom))
+		{
+			rcWnd.top = rcStore.top; rcWnd.bottom = rcWnd.top + newHeight;
+		}
+
+		// Done
 		bChanged = (memcmp(&rcWnd, &rcStore, sizeof(rcWnd)) != 0);
 	}
 
