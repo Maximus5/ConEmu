@@ -81,7 +81,7 @@ LRESULT CSetPgSizePos::OnInitDialog(HWND hDlg, bool abInitial)
 	EnablePosSizeControls(hDlg);
 	MCHKHEAP
 
-	gpSetCls->UpdatePos(gpConEmu->wndX, gpConEmu->wndY, true);
+	gpSetCls->UpdatePos(gpConEmu->WndPos.x, gpConEmu->WndPos.y, true);
 
 	checkRadioButton(hDlg, rCascade, rFixed, gpSet->wndCascade ? rCascade : rFixed);
 	if (!abInitial)

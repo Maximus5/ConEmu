@@ -85,7 +85,7 @@ CConEmuSize::CConEmuSize(CConEmuMain* pOwner)
 	mn_QuakePercent = 0; // 0 - отключен
 	WindowMode = wmNormal;
 	WndWidth = gpSet->wndWidth; WndHeight = gpSet->wndHeight;
-	wndX = gpSet->_wndX; wndY = gpSet->_wndY;
+	WndPos = MakePoint(gpSet->_wndX, gpSet->_wndY);
 	ZeroStruct(m_JumpMonitor);
 	ZeroStruct(m_QuakePrevSize);
 	ZeroStruct(mr_Ideal);
@@ -204,28 +204,40 @@ RECT CConEmuSize::CalcMargins_Win10Frame()
 			if (SUCCEEDED(mp_ConEmu->DwmGetWindowAttribute(ghWnd, DWMWA_EXTENDED_FRAME_BOUNDS, &rcVisible, sizeof(rcVisible)))
 				&& GetWindowRect(ghWnd, &rcReal))
 			{
+				// Debug purposes
+				wchar_t szInfo[140];
+
 				// rcVisible is expected to be smaller than rcReal
-				if (rcVisible.left >= rcReal.left && rcVisible.right <= rcReal.right
+				if (rcVisible.left > rcReal.left && rcVisible.right < rcReal.right
+					&& rcVisible.right > rcVisible.left && rcVisible.bottom > rcVisible.top
 					&& rcVisible.top >= rcReal.top && rcVisible.bottom <= rcReal.bottom)
 				{
 					dwmSucceeded = true;
-					rc.left += (rcVisible.left - rcReal.left);
-					rc.top += (rcVisible.top - rcReal.top);
-					rc.right += (rcReal.right - rcVisible.right);
-					rc.bottom += (rcReal.bottom - rcVisible.bottom);
-					// Debug purposes
-					wchar_t szInfo[140];
+					rc = MakeRect(
+							(rcVisible.left - rcReal.left),
+							(rcVisible.top - rcReal.top),
+							(rcReal.right - rcVisible.right),
+							(rcReal.bottom - rcVisible.bottom)
+						);
 					_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
 						LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal), LOGRECTCOORDS(rc));
-					LogString(szInfo);
 				}
+				else
+				{
+					_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS {FAIL} Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
+						LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal),
+						(rcVisible.left - rcReal.left), (rcVisible.top - rcReal.top), (rcReal.right - rcVisible.right), (rcReal.bottom - rcVisible.bottom));
+				}
+
+				// Debug purposes
+				LogString(szInfo);
 			}
 		}
 
 		// Default values if API fails
 		if (!dwmSucceeded)
 		{
-			rc.left += 7; rc.right += 7; rc.bottom += 7;
+			rc = MakeRect(7, 0, 7, 7);
 		}
 	}
 
@@ -1251,7 +1263,7 @@ HMONITOR CConEmuSize::FindInitialMonitor(MONITORINFO* pmi /*= NULL*/)
 	}
 
 	// No need to get strict coordinates, just find the default monitor
-	RECT rcDef = {wndX, wndY, wndX + iWidth, wndY + iHeight};
+	RECT rcDef = {WndPos.x, WndPos.y, WndPos.x + iWidth, WndPos.y + iHeight};
 
 	MONITORINFO mi = {sizeof(mi)};
 	HMONITOR hMon = GetNearestMonitorInfo(&mi, NULL, &rcDef);
@@ -1290,23 +1302,23 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 	HWND hDlg = gpSetCls->GetPage(thi_SizePos); // ‘Size & Pos’ settings page
 
 	if (!asX || !*asX || !IntFromString(newX, asX))
-		newX = gpConEmu->wndX;
+		newX = WndPos.x;
 
 	if (!asY || !*asY || !IntFromString(newY, asY))
-		newY = gpConEmu->wndY;
+		newY = WndPos.y;
 
 	if (!asW || !*asW || !newW.SetFromString(true, asW))
-		newW.Raw = gpConEmu->WndWidth.Raw;
+		newW.Raw = WndWidth.Raw;
 
 	if (!asH || !*asH || !newH.SetFromString(false, asH))
-		newH.Raw = gpConEmu->WndHeight.Raw;
+		newH.Raw = WndHeight.Raw;
 
 	// Чтобы GetDefaultRect сработал правильно - сразу обновим значения
 	if (!gpSet->wndCascade)
 	{
-		gpConEmu->wndX = newX;
+		WndPos.x = newX;
 		if (!gpSet->isQuakeStyle)
-			gpConEmu->wndY = newY;
+			WndPos.y = newY;
 	}
 	gpSet->_wndX = newX;
 	if (!gpSet->isQuakeStyle)
@@ -1353,14 +1365,14 @@ void CConEmuSize::SetWindowPosSizeParam(wchar_t acType, LPCWSTR asValue)
 	switch (acType)
 	{
 	case L'X':
-		wndX = wcstol(asValue, &pch, 10);
+		WndPos.x = wcstol(asValue, &pch, 10);
 		if (gpSet->isUseCurrentSizePos)
-			gpSet->_wndX = wndX;
+			gpSet->_wndX = WndPos.x;
 		break;
 	case L'Y':
-		wndY = wcstol(asValue, &pch, 10);
+		WndPos.y = wcstol(asValue, &pch, 10);
 		if (gpSet->isUseCurrentSizePos)
-			gpSet->_wndY = wndY;
+			gpSet->_wndY = WndPos.y;
 		break;
 	case L'W':
 		if (WndWidth.SetFromString(true, asValue) && gpSet->isUseCurrentSizePos)
@@ -1427,9 +1439,10 @@ bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
 
 			case wmNormal:
 			{
-				// Если выбран режим "Fixed" - разрешим задавать левую координату
+				// If "Fixed" mode was selected, let user set the left corner coordinate
+				POINT pt = RealPosFromVisual(WndPos.x, WndPos.y);
 				if (!gpSet->wndCascade)
-					prcWnd->left = max((mi.rcWork.left - iLeftShift),min(wndX,(mi.rcWork.right - nWidth + iRightShift)));
+					prcWnd->left = max((mi.rcWork.left - iLeftShift),min(pt.x,(mi.rcWork.right - nWidth + iRightShift)));
 				else // Иначе - центрируется по монитору
 					prcWnd->left = max((mi.rcWork.left - iLeftShift),((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
 				prcWnd->right = min((mi.rcWork.right + iRightShift),(prcWnd->left + nWidth));
@@ -1459,6 +1472,20 @@ bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
 	return bChange;
 }
 
+POINT CConEmuSize::VisualPosFromReal(const int x, const int y)
+{
+	RECT rcInvisible = CalcMargins_InvisibleFrame();
+	MBoxAssert(rcInvisible.left>=0 && rcInvisible.top>=0);
+	return MakePoint(x + rcInvisible.left, y + rcInvisible.top);
+}
+
+POINT CConEmuSize::RealPosFromVisual(const int x, const int y)
+{
+	RECT rcInvisible = CalcMargins_InvisibleFrame();
+	MBoxAssert(rcInvisible.left>=0 && rcInvisible.top>=0);
+	return MakePoint(x - rcInvisible.left, y - rcInvisible.top);
+}
+
 // Вызывается при старте программы, для вычисления mrc_Ideal - размера окна по умолчанию
 RECT CConEmuSize::GetDefaultRect()
 {
@@ -1470,8 +1497,7 @@ RECT CConEmuSize::GetDefaultRect()
 		{
 			WindowMode = wmNormal;
 
-			this->wndX = rcWnd.left;
-			this->wndY = rcWnd.top;
+			this->WndPos = VisualPosFromReal(rcWnd.left, rcWnd.top);
 			RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN);
 			// In the "Inside" mode we are interested only in "cells"
 			this->WndWidth.Set(true, ss_Standard, rcCon.right);
@@ -1492,11 +1518,13 @@ RECT CConEmuSize::GetDefaultRect()
 	// Расчет размеров
 	SIZE szConPixels = GetDefaultSize(false);
 
+	POINT wndPos = RealPosFromVisual(WndPos.x, WndPos.y);
+
 	// >> rcWnd
-	rcWnd.left = this->wndX;
-	rcWnd.top = this->wndY;
-	rcWnd.right = this->wndX + szConPixels.cx;
-	rcWnd.bottom = this->wndY + szConPixels.cy;
+	rcWnd.left = wndPos.x;
+	rcWnd.top = wndPos.y;
+	rcWnd.right = wndPos.x + szConPixels.cx;
+	rcWnd.bottom = wndPos.y + szConPixels.cy;
 
 	// Go
 	if (gpSet->isQuakeStyle)
@@ -1966,13 +1994,14 @@ void CConEmuSize::CascadedPosFix()
 
 			if (nDefWidth > 0 && nDefHeight > 0)
 			{
-				wndX = min(rcWnd.left + nShift, mi.rcWork.right - nDefWidth);
-				wndY = min(rcWnd.top + nShift, mi.rcWork.bottom - nDefHeight);
+				WndPos = VisualPosFromReal(
+					klMin(rcWnd.left + nShift, mi.rcWork.right - nDefWidth),
+					klMin(rcWnd.top + nShift, mi.rcWork.bottom - nDefHeight)
+				);
 			}
 			else
 			{
-				wndX = rcWnd.left + nShift;
-				wndY = rcWnd.top + nShift;
+				WndPos = VisualPosFromReal(rcWnd.left + nShift, rcWnd.top + nShift);
 			}
 			break; // нашли, сдвинулись, выходим
 		}
@@ -2509,8 +2538,11 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 					p->cx = rc.right - rc.left; // + 1;
 				}
 
-				if (wndX != p->x)
-					wndX = p->x;
+				// We are in Quake style, update the coordinate
+				_ASSERTE(gpSet->isQuakeStyle);
+				POINT newPos = VisualPosFromReal(p->x, p->y);
+				if (WndPos.x != newPos.x)
+					WndPos.x = newPos.x;
 
 				RECT rcFixup = {p->x, p->y, p->x + p->cx, p->y + p->cy};
 				if (CheckQuakeRect(&rcFixup))
@@ -2951,8 +2983,13 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 			case WMSZ_LEFT:
 			case WMSZ_TOPLEFT:
 			case WMSZ_BOTTOMLEFT:
+				{
 				// Save left coordinate if user drags left frame edge
-				wndX = pRect->left;
+				// We are in Quake style, update the coordinate
+				POINT newPos = VisualPosFromReal(pRect->left, pRect->top);
+				WndPos.x = newPos.x;
+				break;
+				}
 			}
 			// And final corrections (especially for centered mode)
 			CheckQuakeRect(pRect);
@@ -3089,7 +3126,7 @@ bool CConEmuSize::SizeWindow(const CESize sizeW, const CESize sizeH)
 	return bSizeOK;
 }
 
-void CConEmuSize::QuakePrevSize::Save(const CESize& awndWidth, const CESize& awndHeight, const int& awndX, const int& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo, const bool& abAlwaysShowTrayIcon)
+void CConEmuSize::QuakePrevSize::Save(const CESize& awndWidth, const CESize& awndHeight, const LONG& awndX, const LONG& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo, const bool& abAlwaysShowTrayIcon)
 {
 	wndWidth = awndWidth;
 	wndHeight = awndHeight;
@@ -3103,7 +3140,7 @@ void CConEmuSize::QuakePrevSize::Save(const CESize& awndWidth, const CESize& awn
 	bWasSaved = true;
 }
 
-ConEmuWindowMode CConEmuSize::QuakePrevSize::Restore(CESize& rwndWidth, CESize& rwndHeight, int& rwndX, int& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo, bool& rbAlwaysShowTrayIcon)
+ConEmuWindowMode CConEmuSize::QuakePrevSize::Restore(CESize& rwndWidth, CESize& rwndHeight, LONG& rwndX, LONG& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo, bool& rbAlwaysShowTrayIcon)
 {
 	rwndWidth = wndWidth;
 	rwndHeight = wndHeight;
@@ -3159,12 +3196,12 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 
 	if (gpSet->isQuakeStyle && !bPrevStyle)
 	{
-		m_QuakePrevSize.Save(this->WndWidth, this->WndHeight, this->wndX, this->wndY, gpSet->nHideCaptionAlwaysFrame, this->WindowMode, mr_Ideal, gpSet->mb_MinToTray);
+		m_QuakePrevSize.Save(this->WndWidth, this->WndHeight, this->WndPos.x, this->WndPos.y, gpSet->nHideCaptionAlwaysFrame, this->WindowMode, mr_Ideal, gpSet->mb_MinToTray);
 	}
 	else if (!gpSet->isQuakeStyle)
 	{
 		if (m_QuakePrevSize.bWasSaved)
-			nNewWindowMode = m_QuakePrevSize.Restore(this->WndWidth, this->WndHeight, this->wndX, this->wndY, gpSet->nHideCaptionAlwaysFrame, mr_Ideal, gpSet->mb_MinToTray);
+			nNewWindowMode = m_QuakePrevSize.Restore(this->WndWidth, this->WndHeight, this->WndPos.x, this->WndPos.y, gpSet->nHideCaptionAlwaysFrame, mr_Ideal, gpSet->mb_MinToTray);
 		else
 			m_QuakePrevSize.SetNonQuakeDefaults();
 	}
@@ -3438,7 +3475,7 @@ RECT CConEmuSize::GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi)
 	RECT rcNewWnd;
 
 	// gh-284
-	RECT rcWin10 = CalcMargins(CEM_WIN10FRAME);
+	RECT rcWin10 = CalcMargins_InvisibleFrame();
 
 	switch (Tile)
 	{
@@ -3465,20 +3502,18 @@ RECT CConEmuSize::GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi)
 
 	case cwc_TileHeight:
 		rcNewWnd = GetDefaultRect();
-		rcNewWnd.top = mi.rcWork.top;
-		rcNewWnd.bottom = mi.rcWork.bottom;
-		AddMargins(rcNewWnd, rcWin10, rcop_Enlarge);
+		rcNewWnd.top = mi.rcWork.top - rcWin10.top;
+		rcNewWnd.bottom = mi.rcWork.bottom + rcWin10.bottom;
 		break;
 
 	case cwc_TileWidth:
 		rcNewWnd = GetDefaultRect();
-		rcNewWnd.left = mi.rcWork.left;
-		rcNewWnd.right = mi.rcWork.right;
-		AddMargins(rcNewWnd, rcWin10, rcop_Enlarge);
+		rcNewWnd.left = mi.rcWork.left - rcWin10.left;
+		rcNewWnd.right = mi.rcWork.right + rcWin10.right;
 		break;
 
 	default:
-		_ASSERTE(FALSE && "Must not get here");
+		AssertMsg(FALSE && "Must not get here");
 		rcNewWnd = GetDefaultRect();
 	}
 

@@ -77,7 +77,7 @@ protected:
 		bool bWasSaved;
 		bool bWaitReposition; // Требуется смена позиции при OnHideCaption
 		CESize wndWidth, wndHeight; // Консоль
-		int wndX, wndY; // GUI
+		LONG wndX, wndY; // GUI (Visual Position)
 		DWORD nFrame; // it's BYTE, DWORD here for alignment
 		ConEmuWindowMode WindowMode;
 		IdealRectInfo rcIdealInfo;
@@ -85,8 +85,8 @@ protected:
 		// Used in GetDefaultRect/GetDefaultSize after Quake was slided up (hidden)
 		RECT PreSlidedSize;
 		// helper methods
-		void Save(const CESize& awndWidth, const CESize& awndHeight, const int& awndX, const int& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo, const bool& abMinToTray);
-		ConEmuWindowMode Restore(CESize& rwndWidth, CESize& rwndHeight, int& rwndX, int& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo, bool& rbMinToTray);
+		void Save(const CESize& awndWidth, const CESize& awndHeight, const LONG& awndX, const LONG& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo, const bool& abMinToTray);
+		ConEmuWindowMode Restore(CESize& rwndWidth, CESize& rwndHeight, LONG& rwndX, LONG& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo, bool& rbMinToTray);
 		void SetNonQuakeDefaults();
 	} m_QuakePrevSize;
 
@@ -113,8 +113,14 @@ protected:
 	bool isQuakeMinimized;    // изврат, для случая когда "Quake" всегда показывается на таскбаре
 
 	friend class CSetPgSizePos;
-	CESize WndWidth, WndHeight;  // в символах/пикселях/процентах
-	int    wndX, wndY;           // в пикселях
+	// The size of the main window (cells/pixels/percents)
+	CESize WndWidth, WndHeight;
+	// Visual position of the upper-left corner (in pixels)
+	// May differs from its real one (obtained from GetWindowRect) due to invisible parts of the frame
+	POINT WndPos;
+	// Processing functions
+	POINT VisualPosFromReal(const int x, const int y);
+	POINT RealPosFromVisual(const int x, const int y);
 
 	bool mb_LockWindowRgn;
 	bool mb_LockShowWindow;
