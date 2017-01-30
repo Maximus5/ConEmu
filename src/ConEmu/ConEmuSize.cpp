@@ -1550,6 +1550,142 @@ RECT CConEmuSize::GetGuiClientRect()
 	return rcClient;
 }
 
+void CConEmuSize::ReloadMonitorInfo()
+{
+	struct Invoke
+	{
+		static BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
+		{
+			CConEmuSize* p = reinterpret_cast<CConEmuSize*>(dwData);
+			MonitorInfoCache mi = {hMonitor};
+			mi.mi.cbSize = sizeof(mi.mi);
+			GetMonitorInfoSafe(hMonitor, mi.mi);
+			p->monitors.push_back(mi);
+			return TRUE;
+		};
+	};
+	monitors.clear();
+	EnumDisplayMonitors(NULL, NULL, Invoke::MonitorEnumProc, reinterpret_cast<LPARAM>(this));
+	if (monitors.empty())
+	{
+		MonitorInfoCache mi = {};
+		mi.hMon = GetPrimaryMonitorInfo(&mi.mi);
+		monitors.push_back(mi);
+	}
+
+	// *** Query information about invisible parts of Win10 frame ***
+	if (IsWin10())
+	{
+		struct Win10Invoke
+		{
+			static LRESULT CALLBACK FrameTestProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+			{
+				LRESULT result = 0;
+
+				if (!gnWndSetHotkey && (messg == WM_SETHOTKEY))
+				{
+					gnWndSetHotkey = wParam;
+				}
+
+				switch (messg)
+				{
+				case WM_PAINT:
+					{
+						PAINTSTRUCT ps = {};
+						BeginPaint(hWnd, &ps);
+						EndPaint(hWnd, &ps);
+					}
+					result = 0;
+					break;
+
+				case WM_ERASEBKGND:
+					result = TRUE;
+					break;
+
+				default:
+					result = DefWindowProc(hWnd, messg, wParam, lParam);
+				}
+
+				return result;
+			};
+		};
+
+		const wchar_t szFrameClass[] = L"ConEmuWin10FrameCheck";
+		WNDCLASSEX wc = {sizeof(WNDCLASSEX), 0, Win10Invoke::FrameTestProc, 0, 0,
+						 g_hInstance, hClassIcon, LoadCursor(NULL, IDC_ARROW),
+						 NULL /*(HBRUSH)COLOR_BACKGROUND*/,
+						 NULL, szFrameClass, hClassIconSm
+						};// | CS_DROPSHADOW
+
+		if (RegisterClassEx(&wc))
+		{
+			DWORD style = WS_OVERLAPPED | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+			DWORD exStyle = WS_EX_LAYERED;
+			HWND hFrame = CreateWindowEx(exStyle, szFrameClass, L"", style, 100, 100, 400, 200, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
+			if (hFrame)
+			{
+				SetLayeredWindowAttributes(hFrame, 0, 0, LWA_ALPHA);
+				ShowWindow(hFrame, SW_SHOWNA);
+
+				for (INT_PTR i = 0; i < monitors.size(); ++i)
+				{
+					const RECT& rc = monitors[i].mi.rcWork;
+					MoveWindow(hFrame, rc.left+RectWidth(rc)/4, rc.top+RectHeight(rc)/4, RectWidth(rc)/2, RectHeight(rc)/2, FALSE);
+
+					RECT rcReal = {}, rcVisible = {};
+					if (GetWindowRect(hFrame, &rcReal)
+						&& SUCCEEDED(mp_ConEmu->DwmGetWindowAttribute(hFrame, DWMWA_EXTENDED_FRAME_BOUNDS, &rcVisible, sizeof(rcVisible))))
+					{
+						wchar_t szInfo[140];
+
+						// rcVisible is expected to be smaller than rcReal
+						if (rcVisible.left > rcReal.left && rcVisible.right < rcReal.right
+							&& rcVisible.right > rcVisible.left && rcVisible.bottom > rcVisible.top
+							&& rcVisible.top >= rcReal.top && rcVisible.bottom <= rcReal.bottom)
+						{
+							monitors[i].HasWin10Frame = true;
+							RECT rc = MakeRect(
+									(rcVisible.left - rcReal.left),
+									(rcVisible.top - rcReal.top),
+									(rcReal.right - rcVisible.right),
+									(rcReal.bottom - rcVisible.bottom)
+								);
+							monitors[i].Win10Frame = rc;
+							_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
+								LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal), LOGRECTCOORDS(rc));
+						}
+						else
+						{
+							_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS {FAIL} Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
+								LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal),
+								(rcVisible.left - rcReal.left), (rcVisible.top - rcReal.top), (rcReal.right - rcVisible.right), (rcReal.bottom - rcVisible.bottom));
+						}
+
+						// Debug purposes
+						LogString(szInfo);
+					}
+				}
+				DestroyWindow(hFrame);
+			}
+			UnregisterClass(szFrameClass, g_hInstance);
+		}
+
+		for (INT_PTR i = 0; i < monitors.size(); ++i)
+		{
+			// Default values for Win10
+			if (!monitors[i].HasWin10Frame && IsWin10())
+			{
+				monitors[i].Win10Frame = MakeRect(7, 0, 7, 7);
+			}
+			// Per-monitor DPI
+			DpiValue dpi;
+			CDpiAware::QueryDpiForMonitor(monitors[i].hMon, &dpi);
+			monitors[i].Xdpi = dpi.Xdpi;
+			monitors[i].Ydpi = dpi.Ydpi;
+		}
+	}
+}
+
 RECT CConEmuSize::GetVirtualScreenRect(bool abFullScreen)
 {
 	RECT rcScreen = MakeRect(800,600);

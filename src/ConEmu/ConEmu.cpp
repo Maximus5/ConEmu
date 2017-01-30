@@ -1996,6 +1996,8 @@ BOOL CConEmuMain::CreateMainWindow()
 		return FALSE;
 	}
 
+	ReloadMonitorInfo();
+
 	// 2009-06-11 Возможно, что CS_SAVEBITS приводит к глюкам отрисовки
 	// банально не прорисовываются некоторые части экрана (драйвер видюхи глючит?)
 	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC/*|CS_SAVEBITS*/, CConEmuMain::MainWndProc, 0, 16,
@@ -13541,6 +13543,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		case WM_DISPLAYCHANGE:
 		{
+			ReloadMonitorInfo();
 			OnDisplayChanged(LOWORD(wParam), LOWORD(lParam), HIWORD(lParam));
 			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
 		} break;

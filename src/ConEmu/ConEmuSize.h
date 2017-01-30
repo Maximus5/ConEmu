@@ -148,6 +148,21 @@ protected:
 	//void SetPostUpdateWindowSize(bool bValue);
 	//bool isPostUpdateWindowSize() { return mb_PostUpdateWindowSize; };
 
+protected:
+	struct MonitorInfoCache
+	{
+		HMONITOR hMon;
+		MONITORINFO mi;
+		// if DWMWA_EXTENDED_FRAME_BOUNDS succeeded
+		bool HasWin10Frame;
+		RECT Win10Frame;
+		// Per-monitor DPI
+		int Xdpi, Ydpi;
+	};
+	MArray<MonitorInfoCache> monitors;
+public:
+	void ReloadMonitorInfo();
+
 public:
 	CConEmuSize(CConEmuMain* pOwner);
 	virtual ~CConEmuSize();
