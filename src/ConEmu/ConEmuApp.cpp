@@ -1394,9 +1394,8 @@ BOOL CheckCreateAppWindow()
 LRESULT CALLBACK SkipShowWindowProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result = 0;
-	//static UINT nMsgBtnCreated = 0;
 
-	if (messg == WM_SETHOTKEY)
+	if (!gnWndSetHotkey && (messg == WM_SETHOTKEY))
 	{
 		gnWndSetHotkey = wParam;
 	}
@@ -1409,24 +1408,17 @@ LRESULT CALLBACK SkipShowWindowProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM
 			BeginPaint(hWnd, &ps);
 			EndPaint(hWnd, &ps);
 		}
-		return 0;
+		result = 0;
+		break;
 
 	case WM_ERASEBKGND:
-		return TRUE;
+		result = TRUE;
+		break;
 
-	//default:
-	//	if (!nMsgBtnCreated)
-	//	{
-	//		nMsgBtnCreated = RegisterWindowMessage(L"TaskbarButtonCreated");
-	//	}
-
-	//	if (messg == nMsgBtnCreated)
-	//	{
-	//		gpConEmu->Taskbar_DeleteTabXP(hWnd);
-	//	}
+	default:
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
 	}
 
-	result = DefWindowProc(hWnd, messg, wParam, lParam);
 	return result;
 }
 
