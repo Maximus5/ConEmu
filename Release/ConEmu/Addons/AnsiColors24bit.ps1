@@ -36,7 +36,7 @@ while ($l -lt $h) {
     Write-Host -NoNewLine (([char]27)+"[48;2;"+$r+";255;"+$b+"m ")
     $c++
   }
-  Write-Host -NoNewLine (([char]27)+"[m ")
+  Write-Host (([char]27)+"[m ")
   $l++
 }
 
