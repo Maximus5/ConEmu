@@ -1,5 +1,8 @@
 @echo off
 
+rem Add new l10n resource or update existing
+rem Usage: str-add <id> "<str>" [-force]
+
 setlocal
 
 set new_con=
