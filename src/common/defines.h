@@ -159,7 +159,7 @@ WARNING("WIN64 was not defined");
 #define isDigit(c) (c>=L'0' && c<=L'9')
 #define isDot(c) (c==L'.' || c==',')
 #define isAlpha(c) (IsCharAlpha(c))
-#define isSpace(c) (wcschr(L" \xA0\t\r\n",c)!=NULL)
+#define isSpace(c) (c==L' ' || c==L'\xA0' || c==L'\t' || c==L'\r' || c==L'\n')
 
 #define LODWORD(ull) ((DWORD)((ULONGLONG)(ull) & 0x00000000ffffffff))
 #define LOLONG(ull)  ((LONG)LODWORD(ull))
