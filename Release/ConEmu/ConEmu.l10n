@@ -401,8 +401,8 @@
       "id": 1581 }
     ,
     "cbFarHourglass": {
-      "en": "Show AppStarting cursor (arrow with a small hourglass) when Far is not responding (during long operations)",
-      "zh": "在需要较长时间操作的过程中，如果Far不响应，显示程序启动光标（带一个小沙漏的箭头）",
+      "en": "Show AppStarting mouse cursor (arrow with a small hourglass or circle) when Far is busy (not responding during long operations)",
+      "_zh": "在需要较长时间操作的过程中，如果Far不响应，显示程序启动光标（带一个小沙漏的箭头）",
       "id": 1563 }
     ,
     "cbFARuseASCIIsort": {
@@ -419,9 +419,8 @@
     ,
     "cbFixFarBorders": {
       "en": [ "You can specify additional font for drawing pseudographics or specified range of symbols.\r\n"
-            , "E.g. main - \"Fixedsys\", additional - \"Lucida Console\".\r\n"
-            , "You may force this font for specified range of symbols, search \"Settings-ConEmu.reg\" for \"FixFarBordersRanges\" option." ],
-      "zh": [ "你可以为错误代码页或指定范围内的符号指定额外的字体。\r\n"
+            , "E.g. main - \"Consolas\", additional - \"Segoe UI\"." ],
+      "_zh": [ "你可以为错误代码页或指定范围内的符号指定额外的字体。\r\n"
             , "例如：主要 - \"Fixedsys\", 额外 - \"Lucida Console\".\r\n"
             , "你可以为指定范围的符号强制使用此字体，可在\"Settings-ConEmu.reg\" 中查找\"FixFarBordersRanges\"选项。" ],
       "id": 1207 }
@@ -430,6 +429,11 @@
       "en": "Set focus in xshell/putty/notepad/etc. when ConEmu is activated or tab switched.",
       "zh": "当ConEmu激活时或者切换标签页时，聚焦在xshell/putty/notepad/等窗口上。",
       "id": 2568 }
+    ,
+    "cbFont2AA": {
+      "en": [ "Enable or disable ‘Clear Type’ for alternative font.\n"
+            , "Accurate pseudographics looks better." ],
+      "id": 2883 }
     ,
     "cbFontAuto": {
       "en": "Automatic font resize for the fixed real console width",
@@ -817,6 +821,10 @@
       "zh": "在ConEmu窗口中间绘制console内容。与“Pad大小”结合使用",
       "id": 1570 }
     ,
+    "cbUnicodeRangesApply": {
+      "en": "Don't forger to apply manually entered UCS range to observe the result.",
+      "id": 2838 }
+    ,
     "cbUseAltGrayPlus": {
       "en": [ "Use Alt+NumpadAdd+HexNumbers to enter unicode symbol by its hex codebase\r\n"
             , "Ignored in Far Manager\r\n"
@@ -1190,9 +1198,8 @@
     ,
     "tFontFace2": {
       "en": [ "Font face used to draw pseudographics or specified range of symbols.\r\n"
-            , "E.g. main - \"Fixedsys\", additional - \"Lucida Console\".\r\n"
-            , "You may force this font for specified range of symbols, search \"Settings-ConEmu.reg\" for \"FixFarBordersRanges\" option." ],
-      "zh": [ "用于绘制错误代码页或指定范围的符号的字体。\r\n"
+            , "E.g. main - \"Consolas\", additional - \"Segoe UI\"." ],
+      "_zh": [ "用于绘制错误代码页或指定范围的符号的字体。\r\n"
             , "例如 主要 - \"Fixedsys\", 额外 - \"Lucida Console\".\r\n"
             , "你可以为指定范围的符号强制使用此字体，查找\"Settings-ConEmu.reg\"中的\"FixFarBordersRanges\"选项。" ],
       "id": 1514 }
@@ -1208,9 +1215,9 @@
     ,
     "tFontSizeX2": {
       "en": [ "WIDTH for pseudographics font.\r\n"
-            , "It must be wider than main font,\r\n"
-            , "otherwise, You may get \"dashed\" borders." ],
-      "zh": [ "错误代码页字体的宽度。\r\n"
+            , "It must be wider than main font\r\n"
+            , "to avoid \"dashed\" pseudographics (frames)." ],
+      "_zh": [ "错误代码页字体的宽度。\r\n"
             , "它必须比主字体宽，\r\n"
             , "否则，你可能会得到“破碎”的边界。" ],
       "id": 2284 }
@@ -1549,6 +1556,11 @@
       "en": "Spacing in pixels from the bottom side of preview to the bottom side of cell",
       "zh": "预览的底部到单元底部的间距（像素）",
       "id": 1712 }
+    ,
+    "tUnicodeRanges": {
+      "en": [ "Define your own UCS range or\n"
+            , "choose predefined one from the list." ],
+      "id": 2835 }
     ,
     "tUpdateVerLocation": {
       "en": [ "URL to retrieve latest version information,\r\n"
@@ -2970,9 +2982,9 @@
       "id": 65 }
     ,
     "lng_UpdateCloseMsg1": {
-      "en": "Please, close all ConEmu instances before continue",
-      "ru": "Пожалуйста закройте все открытые окна ConEmu перед продолжением",
-      "zh": "继续之前请关闭所有ConEmu实例",
+      "en": "Please, close all ConEmu instances before continuing",
+      "_ru": "Пожалуйста закройте все открытые окна ConEmu перед продолжением",
+      "_zh": "继续之前请关闭所有ConEmu实例",
       "id": 66 }
     ,
     "lng_UpdateCloseMsg2": {
@@ -3650,8 +3662,8 @@
       "id": 1765 }
     ,
     "cbFarHourglass": {
-      "en": "Hourglass if not responding",
-      "zh": "如果没有响应，鼠标变沙漏形状",
+      "en": "Change mouse cursor if busy",
+      "_zh": "如果没有响应，鼠标变沙漏形状",
       "id": 1563 }
     ,
     "cbFARuseASCIIsort": {
@@ -5599,8 +5611,9 @@
     ,
     "stFarTabTemplates": {
       "en": [ "%s - Title, %c - Console #, %n - Active process name, %p - PID, %a - ‘Admin’, %% - %,\n"
+            , "%m...m, %M...M - mark ‘...’ for active (m) and inactive (M) tab\n"
             , "%i - Far window number (you can see it in standard F12 menu)" ],
-      "zh": [ "%s - 标题, %c - 控制台 #, %n - 活动的进程名, %p - PID, %a - ‘Admin’, %% - %,\n"
+      "_zh": [ "%s - 标题, %c - 控制台 #, %n - 活动的进程名, %p - PID, %a - ‘Admin’, %% - %,\n"
             , "%i - Far窗口编号（你能在标准的F12菜单里看见）" ],
       "id": 2960 }
     ,
@@ -5988,8 +6001,9 @@
     ,
     "stTabTemplateDescr": {
       "en": [ "%s - Title, %c - Console #, %n - Active process name, %p - PID,\n"
+            , "%m...m, %M...M - mark ‘...’ for active (m) and inactive (M) tab\n"
             , "%a - ‘Admin’, %d - current shell directory, %f - folder, %% - %" ],
-      "zh": [ "%s - 标题, %c - Console #, %n - 激活的进程名, %p - PID,\n"
+      "_zh": [ "%s - 标题, %c - Console #, %n - 激活的进程名, %p - PID,\n"
             , "%a - ‘管理员’, %d - 当前shell目录, %f - 文件夹, %% - %" ],
       "id": 2737 }
     ,
