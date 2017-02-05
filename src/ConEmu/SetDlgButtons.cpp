@@ -1765,8 +1765,14 @@ void CSetDlgButtons::OnBtn_UnicodeRangesApply(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbUnicodeRangesApply);
 
 	wchar_t* pszNameAndRange = GetDlgItemTextPtr(hDlg, tUnicodeRanges);
-	LPCWSTR pszRanges = pszNameAndRange ? wcsstr(pszNameAndRange, L": ") : NULL;
-	if (pszRanges) pszRanges += 2; else pszRanges = L"";
+	LPCWSTR pszRanges = pszNameAndRange ? pszNameAndRange : L"";
+	// Strip possible descriptions from predefined subsets
+	LPCWSTR pszColon = wcschr(pszRanges, L':');
+	if (pszColon)
+		pszRanges = pszColon + 1;
+	while (isSpace(*pszRanges))
+		++pszRanges;
+	// Now parse text ranges
 	gpSet->ParseCharRanges(pszRanges, gpSet->mpc_CharAltFontRanges);
 	SafeFree(pszNameAndRange);
 
