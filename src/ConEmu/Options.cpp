@@ -1392,10 +1392,14 @@ bool Settings::SaveCmdTasks(SettingsBase* reg)
 
 	if (lbOpened && CmdTasks && CmdTaskCount > 0)
 	{
+		int nProcessed = 0;
 		//int nSucceeded = 0;
 		for (int i = 0; i < CmdTaskCount; i++)
 		{
-			_wsprintf(pszCmdKey, SKIPLEN(32) L"\\Task%i", i+1); // 1-based
+			if (CmdTasks[i] == NULL)
+				continue;
+
+			_wsprintf(pszCmdKey, SKIPLEN(32) L"\\Task%i", nProcessed+1); // 1-based
 
 			lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
 			if (!lbOpened)
@@ -1404,8 +1408,23 @@ bool Settings::SaveCmdTasks(SettingsBase* reg)
 			}
 			else
 			{
-				CmdTasks[i]->SaveCmdTask(reg, false/*CmdTasks[i] == StartupTask*/);
+				if (CmdTasks[i]->SaveCmdTask(reg, false/*CmdTasks[i] == StartupTask*/))
+					nProcessed++;
 
+				reg->CloseKey();
+			}
+		}
+		// invalid tasks were skipped?
+		if (nProcessed != CmdTaskCount)
+		{
+			// Update the "Count" value
+			// TODO: remove Count at all, use enumeration of children keys
+			*pszCmdKey = 0;
+			lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
+			if (lbOpened)
+			{
+				lbRc = true;
+				reg->Save(L"Count", nProcessed);
 				reg->CloseKey();
 			}
 		}
