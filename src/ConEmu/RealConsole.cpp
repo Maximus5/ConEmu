@@ -2050,7 +2050,7 @@ int CRealConsole::EvalPromptLeftRightCount(const AppSettings* pApp, COORD crMous
 	// Query cursor's line
 	CRConDataGuard data;
 	ConsoleLinePtr line = {};
-	if (!mp_RBuf->GetConsoleLine(crCursor.Y, data, line))
+	if (!mp_RBuf->GetConsoleLine(mp_RBuf->BufferToScreen(crCursor).Y, data, line))
 		return 0;
 
 	// must be already checked, just query the coords
@@ -2076,9 +2076,15 @@ int CRealConsole::EvalPromptLeftRightCount(const AppSettings* pApp, COORD crMous
 	switch (CoordCompare(crClick, crCursor))
 	{
 	case -1:
-		crMin = crClick; crMax = crCursor; bForward = false; vkKey = VK_LEFT; break;
+		crMin = mp_RBuf->BufferToScreen(crClick);
+		crMax = mp_RBuf->BufferToScreen(crCursor);
+		bForward = false; vkKey = VK_LEFT;
+		break;
 	case 1:
-		crMin = crCursor; crMax = crClick; bForward = true; vkKey = VK_RIGHT; break;
+		crMin = mp_RBuf->BufferToScreen(crCursor);
+		crMax = mp_RBuf->BufferToScreen(crClick);
+		bForward = true; vkKey = VK_RIGHT;
+		break;
 	default:
 		// Nothing to do
 		return 0;
@@ -2188,9 +2194,14 @@ bool CRealConsole::ChangePromptPosition(const AppSettings* pApp, COORD crMouse)
 		INPUT_RECORD r[2] = {};
 		const DWORD dwControlState = 0;
 		TranslateKeyPress(vkKey, dwControlState, 0, -1, &r[0], &r[1]);
-		r[0].Event.KeyEvent.wRepeatCount = nKeyCount;
-		PostConsoleEvent(&r[0]);
-		PostConsoleEvent(&r[1]);
+		for (int repeats = nKeyCount; repeats > 0;)
+		{
+			INPUT_RECORD rs[2] = {r[0], r[1]};
+			rs[0].Event.KeyEvent.wRepeatCount = klMin<int>(255, repeats);
+			repeats -= rs[0].Event.KeyEvent.wRepeatCount;
+			PostConsoleEvent(&rs[0]);
+			PostConsoleEvent(&rs[1]);
+		}
 	}
 
 	return true;

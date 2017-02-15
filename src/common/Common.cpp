@@ -108,6 +108,7 @@ BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64::MsgStr* pMsg)
 		lParam |= ((DWORD_PTR)piRec->Event.KeyEvent.wVirtualKeyCode & 0xFF) << 16;
 		lParam |= ((DWORD_PTR)piRec->Event.KeyEvent.wVirtualScanCode & 0xFF) << 24;
 		wParam |= (DWORD_PTR)piRec->Event.KeyEvent.dwControlKeyState & 0xFFFF;
+		_ASSERTE(piRec->Event.KeyEvent.wRepeatCount<=255); // can't pack more repeats
 		wParam |= ((DWORD_PTR)piRec->Event.KeyEvent.wRepeatCount & 0xFF) << 16;
 	}
 	else if (piRec->EventType == MOUSE_EVENT)
