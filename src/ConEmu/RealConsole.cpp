@@ -2057,6 +2057,9 @@ int CRealConsole::EvalPromptLeftRightCount(const AppSettings* pApp, COORD crMous
 	COORD crPrompt = {};
 	if (!QueryPromptStart(&crPrompt))
 		return 0;
+	// Don't change cursor position if user clicks line above the prompt
+	if (crMouse.Y < crPrompt.Y)
+		return 0;
 
 	// get proper coords from crMouse/crPrompt
 	bool bForward = true;
