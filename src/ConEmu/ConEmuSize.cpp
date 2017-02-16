@@ -1853,7 +1853,7 @@ void CConEmuSize::UpdateInsideRect(RECT rcNewPos)
 // Return true, when rect was changed
 bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBorders */, bool bPopupDlg /*= false*/)
 {
-	RECT rcStore = rcWnd;
+	const RECT rcStore = rcWnd;
 	RECT rcWork;
 
 	// When we live inside parent window - size must be strict
@@ -1887,6 +1887,7 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	// Get work area (may be FullScreen)
 	rcWork = (wndMode == wmFullScreen) ? mi.rcMonitor : mi.rcWork;
 
+	// TODO: Проверить в Windows 10 с её невидимыми рамками
 	RECT rcInvisible = CalcMargins_InvisibleFrame();
 	AddMargins(rcWork, rcInvisible, rcop_Enlarge);
 
@@ -1924,11 +1925,11 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	if (!(nBorders & CEB_BOTTOM))
 		rcMargins.bottom = 0;
 
-	if (!IsRectEmpty(&rcMargins))
+	if (IsRectEmpty(&rcMargins))
 	{
 		// May be work rect will cover our window without margins?
 		RECT rcTest = rcWork;
-		AddMargins(rcTest, rcMargins, rcop_AddSize);
+		AddMargins(rcTest, rcMargins, rcop_Enlarge);
 
 		BOOL bIn2 = IntersectRect(&rcInter, &rcTest, &rcStore);
 		if (bIn2 && EqualRect(&rcInter, &rcStore))
