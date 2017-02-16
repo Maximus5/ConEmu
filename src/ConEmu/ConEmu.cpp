@@ -8206,7 +8206,7 @@ void CConEmuMain::OnHideCaption()
 			if (WindowMode == wmNormal)
 			{
 				// we need to check window location, caption must not be "Out-of-screen"
-				FixWindowRect(rcAfter, 0);
+				FixWindowRect(rcAfter, CEB_ALL);
 			}
 		}
 
