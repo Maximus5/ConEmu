@@ -103,7 +103,7 @@ bool CRConData::Allocate(CRConDataGuard& data, CRealConsole* apRCon, size_t anMa
 	if (!p
 		|| !(p->pConChar = (wchar_t*)calloc(cchNewCharMaxPlus, sizeof(*p->pConChar)))
 		|| !(p->pConAttr = (WORD*)calloc(cchNewCharMaxPlus, sizeof(*p->pConAttr)))
-		|| !(p->pDataCmp = (CHAR_INFO*)calloc(cchNewCharMaxPlus, sizeof(p->pDataCmp))))
+		|| !(p->pDataCmp = (CHAR_INFO*)calloc(cchNewCharMaxPlus, sizeof(*p->pDataCmp))))
 	{
 		if (p)
 			delete p;
