@@ -686,6 +686,7 @@ void CSetPgIntegr::UnregisterShellInvalids()
 		while (lsNames.pop_back(pszName))
 		{
 			RegDeleteKeyRecursive(HKEY_CURRENT_USER, L"Software\\Classes\\LibraryFolder\\shell", pszName);
+			SafeFree(pszName);
 		}
 
 		// If there is no other "commands" - try to delete "shell" subkey.
