@@ -230,7 +230,7 @@ int DoInjectHooks(LPWSTR asCmdArg)
 		DWORD nErrCode = GetLastError();
 		//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
 		wchar_t szDbgMsg[255], szTitle[128];
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
+		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC[%u], PID=%u", WIN3264TEST(32,64), GetCurrentProcessId());
 		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
 		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 	}

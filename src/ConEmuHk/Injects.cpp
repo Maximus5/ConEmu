@@ -330,7 +330,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 			iRc = CIH_GetLoadLibraryAddress/*-503*/;
 			goto wrap;
 		}
-		else if (bOsWin7 && !GetLdrGetDllHandleByNameAddress())
+		else if (bOsWin7 && !GetLdrGetDllHandleByNameAddress() && !IsWine())
 		{
 			_ASSERTE(gfLdrGetDllHandleByName.fnPtr!=NULL);
 			iRc = CIH_GetLdrHandleAddress/*-514*/;
