@@ -2263,7 +2263,7 @@ void CFontMgr::RecreateAlternativeFont()
 	// Force the same height in pixels as main font
 	EvalLogfontSizes(LogFont2, gpSet->FontSizeY, gpSet->FontSizeX2);
 
-	// Font for pseudographics may differs a lot in height,
+	// Font for pseudographics may differ a lot in height,
 	// so, to avoid vertically-dashed frames...
 	if (gpSet->CheckCharAltFont(ucBoxDblVert))
 	{

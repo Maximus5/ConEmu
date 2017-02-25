@@ -141,7 +141,7 @@ protected:
 	// The size of the main window (cells/pixels/percents)
 	CESize WndWidth, WndHeight;
 	// Visual position of the upper-left corner (in pixels)
-	// May differs from its real one (obtained from GetWindowRect) due to invisible parts of the frame
+	// May differ from its real one (obtained from GetWindowRect) due to invisible parts of the frame
 	POINT WndPos;
 	// Processing functions
 	POINT VisualPosFromReal(const int x, const int y);
