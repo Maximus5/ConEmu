@@ -1117,10 +1117,11 @@ void CFontMgr::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, in
 		}
 	}
 
-	CreateFontGroup(LogFont);
-
-	//2009-06-07 Реальный размер созданного шрифта мог измениться
-	SaveFontSizes((mn_AutoFontWidth == -1), false);
+	if (CreateFontGroup(LogFont)
+	{
+		//2009-06-07 Реальный размер созданного шрифта мог измениться
+		SaveFontSizes((mn_AutoFontWidth == -1), false);
+	}
 
 	MCHKHEAP
 }
@@ -2259,7 +2260,7 @@ void CFontMgr::RecreateAlternativeFont()
 	// Force the same height in pixels as main font
 	EvalLogfontSizes(LogFont2, gpSet->FontSizeY, gpSet->FontSizeX2);
 
-	// Font for pseudographics may differs a lot in height,
+	// Font for pseudographics may differ a lot in height,
 	// so, to avoid vertically-dashed frames...
 	if (gpSet->CheckCharAltFont(ucBoxDblVert))
 	{

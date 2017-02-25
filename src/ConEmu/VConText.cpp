@@ -317,7 +317,7 @@ void VConTextPart::Init(uint anIndex, uint anCell, CVConLine* pLine)
 	Length = 1; // initially, we'll enlarge it later
 	TotalWidth = 0;
 	Index = anIndex;
-	Cell = anCell; // May differs from anIndex on DBCS systems
+	Cell = anCell; // May differ from anIndex on DBCS systems
 	PositionX = CellPosX = Cell * pLine->FontWidth;
 	Chars = pLine->ConCharLine + anIndex;
 	Attrs = pLine->ConAttrLine + anIndex;
@@ -484,7 +484,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 
 		VConTextPart* p = TextParts+(PartsCount++);
 
-		//TODO: DBCS cell number, it may differs from j
+		//TODO: DBCS cell number, it may differ from j
 		p->Init(j, j, this);
 
 		// Process Far Dialogs to justify rectangles and frames
