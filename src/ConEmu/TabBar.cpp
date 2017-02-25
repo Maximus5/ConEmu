@@ -1761,7 +1761,7 @@ void CTabBarClass::PrintRecentStack()
 int CTabBarClass::GetNextTab(bool abForward, bool abAltStyle/*=false*/)
 {
 	// We need "visible" position (selected tab from tabbar)
-	// It may differs from actual active tab during switching
+	// It may differ from actual active tab during switching
 	int nCurSel = GetCurSel();
 	int nCurCount = GetItemCount();
 

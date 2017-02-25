@@ -106,7 +106,7 @@ struct VConTextPart
 
 	// Index in CVConLine.ConCharLine
 	uint Index;
-	// Cell in the RealConsole. It may differs from Index on DBCS systems
+	// Cell in the RealConsole. It may differ from Index on DBCS systems
 	uint Cell;
 	// Helper, to ensure our text parts fit in the terminal window
 	uint TotalWidth;

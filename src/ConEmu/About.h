@@ -277,7 +277,7 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"     returns - \"OK\", or \"InvalidArg\"\r\n" \
 	L"GetInfo(\"<Opt1>\"[,\"<Opt2>\"[,...]])\r\n" \
 	L"  - Returns values of some ConEmu environment variables\r\n" \
-	L"    Processed in GUI so the result may differs from RealConsole env.vars\r\n" \
+	L"    Processed in GUI so the result may differ from RealConsole env.vars\r\n" \
 	L"    \"PID\": returns %ConEmuPID% and so on\r\n" \
 	L"  - Returns additional information about RealConsole\r\n" \
 	L"    \"Root\": XML with RootProcess info\r\n" \

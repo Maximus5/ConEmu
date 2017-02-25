@@ -2064,7 +2064,7 @@ BOOL CConEmuMain::CreateMainWindow()
 			RECT rcDefault = rcWnd;
 			if (FixWindowRect(rcWnd, CEB_ALL))
 			{
-				// We store "visual" position, which may differs from real window placement
+				// We store "visual" position, which may differ from real window placement
 				this->WndPos = VisualPosFromReal(rcWnd.left, rcWnd.top);
 				// Size may be set in cells, pixels or percents
 				RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN);

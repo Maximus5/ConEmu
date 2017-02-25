@@ -4149,7 +4149,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 				{
 					pIn->NewCmd.hFromConWnd = ghConWnd;
 
-					// ghConWnd may differs from parent process, but ENV_CONEMUDRAW_VAR_W would be inherited
+					// ghConWnd may differ from parent process, but ENV_CONEMUDRAW_VAR_W would be inherited
 					wchar_t* pszDcWnd = GetEnvVar(ENV_CONEMUDRAW_VAR_W);
 					if (pszDcWnd && (pszDcWnd[0] == L'0') && (pszDcWnd[1] == L'x'))
 					{
