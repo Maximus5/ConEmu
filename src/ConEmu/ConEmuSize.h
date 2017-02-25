@@ -100,6 +100,31 @@ protected:
 		bool bFullScreen, bMaximized;
 	} m_JumpMonitor;
 
+	enum SnappingMagnetFlags
+	{
+		smf_None    = 0,
+		smf_Left    = 0x0001,
+		smf_Right   = 0x0002,
+		smf_Top     = 0x0004,
+		smf_Bottom  = 0x0008,
+		/* *** */
+		smf_Horz    = (smf_Left|smf_Right),
+		smf_Vert    = (smf_Top|smf_Bottom),
+	};
+	struct {
+		// set of SnappingMagnetFlags
+		DWORD LastFlags;
+		// if window was magnetted, then contains last shift value
+		int   CorrectionX, CorrectionY;
+		// clear states
+		void  reset(DWORD flags = smf_None, int newX = 0, int newY = 0)
+		{
+			LastFlags = flags;
+			CorrectionX = (flags & smf_Horz) ? newX : 0;
+			CorrectionY = (flags & smf_Vert) ? newY : 0;
+		};
+	} m_Snapping;
+
 	LONG mn_InResize;
 	RECT mrc_StoredNormalRect;
 

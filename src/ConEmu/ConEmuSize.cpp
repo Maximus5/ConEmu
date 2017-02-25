@@ -86,6 +86,7 @@ CConEmuSize::CConEmuSize(CConEmuMain* pOwner)
 	WindowMode = wmNormal;
 	WndWidth = gpSet->wndWidth; WndHeight = gpSet->wndHeight;
 	WndPos = MakePoint(gpSet->_wndX, gpSet->_wndY);
+	m_Snapping.reset();
 	ZeroStruct(m_JumpMonitor);
 	ZeroStruct(m_QuakePrevSize);
 	ZeroStruct(mr_Ideal);
@@ -929,7 +930,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 /*!!!static!!*/
 void CConEmuSize::AddMargins(RECT& rc, const RECT& rcAddShift, RectOperations rect_op /*= rcop_Shrink*/)
 {
-	MBoxAssert(rcAddShift.left>=0 && rcAddShift.top>=0 && rcAddShift.right>=0 && rcAddShift.bottom>=0);
+	MBoxAssert((rect_op==rcop_MathAdd || rect_op==rcop_MathSub) || (rcAddShift.left>=0 && rcAddShift.top>=0 && rcAddShift.right>=0 && rcAddShift.bottom>=0));
 
 	// The code below has a lot of "if"s, they are intended for debugging purposes (breakpoints)
 
@@ -3173,13 +3174,28 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 
 LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/)
 {
-	if (!gpSet->isSnapToDesktopEdges)
-		return FALSE;
+	BOOL bModified = FALSE;
+	HMONITOR hMon = NULL;
+	MONITORINFO mi = {sizeof(mi)};
+	RECT rcCur = {};
+	RECT rcShift;
+	RECT rcUnshifted;
+	RECT rcWnd;
+	int nMagnetSize;
+	bool magnet_left, magnet_right, magnet_top, magnet_bottom;
+	int nWidth, nHeight;
+	POINT ptShift = {};
+	DWORD SnappingFlags = smf_None;
 
-	if (isIconic() || isZoomed() || isFullScreen() || gpSet->isQuakeStyle)
-		return FALSE;
+	if (!gpSet->isSnapToDesktopEdges && !m_TileMode)
+		goto wrap;
 
-	HMONITOR hMon;
+	if (isIconic() || isZoomed() || isFullScreen())
+	{
+		// TODO: Restore normal rect after exiting maximized mode by dragging the TabBar
+		goto wrap;
+	}
+
 	if (bWmMove && isPressed(VK_LBUTTON))
 	{
 		// Если двигаем мышкой - то дать возможность прыгнуть на монитор под мышкой
@@ -3195,37 +3211,103 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 		hMon = MonitorFromWindow(ghWnd, MONITOR_DEFAULTTONEAREST);
 	}
 
-	MONITORINFO mi = {sizeof(mi)};
 	if (!GetMonitorInfo(hMon, &mi))
-		return FALSE;
-
-	RECT rcShift = {};
-	if (gpSet->isHideCaptionAlways())
 	{
-		rcShift = CalcMargins(CEM_FRAMECAPTION);
-		mi.rcWork.left -= rcShift.left;
-		mi.rcWork.top -= rcShift.top;
-		mi.rcWork.right += rcShift.right;
-		mi.rcWork.bottom += rcShift.bottom;
+		AssertMsg(FALSE && "GetMonitorInfo failed");
+		goto wrap;
 	}
 
-	RECT rcCur = {};
+	rcShift = CalcMargins_InvisibleFrame();
+	AddMargins(mi.rcWork, rcShift, rcop_Enlarge);
+
 	if (prcWnd)
 		rcCur = *prcWnd;
 	else
 		GetWindowRect(ghWnd, &rcCur);
 
-	int nWidth = rcCur.right - rcCur.left;
-	int nHeight = rcCur.bottom - rcCur.top;
+	// TODO: Configure or get from Windows default title bar height
+	nMagnetSize = 15;
 
-	RECT rcWnd = {};
-	rcWnd.left = max(mi.rcWork.left, min(rcCur.left, mi.rcWork.right - nWidth));
-	rcWnd.top = max(mi.rcWork.top, min(rcCur.top, mi.rcWork.bottom - nHeight));
-	rcWnd.right = min(mi.rcWork.right, rcWnd.left + nWidth);
-	rcWnd.bottom = min(mi.rcWork.bottom, rcWnd.top + nHeight);
+	// Evaluate
+	rcUnshifted = rcCur;
+	if (m_Snapping.LastFlags)
+	{
+		rcUnshifted.left += m_Snapping.CorrectionX;
+		rcUnshifted.right += m_Snapping.CorrectionX;
+		rcUnshifted.top += m_Snapping.CorrectionY;
+		rcUnshifted.bottom += m_Snapping.CorrectionY;
+	}
+	// TODO: current tile mode
+	magnet_left = (_abs(mi.rcWork.left - rcUnshifted.left) <= nMagnetSize);
+	magnet_right = (_abs(mi.rcWork.right - rcUnshifted.right) <= nMagnetSize);
+	magnet_top = (_abs(mi.rcWork.top - rcUnshifted.top) <= nMagnetSize);
+	magnet_bottom = (_abs(mi.rcWork.bottom - rcUnshifted.bottom) <= nMagnetSize);
+
+	// If the window edges are far from monitor's working area
+	if (!magnet_left && !magnet_right && !magnet_top && !magnet_bottom)
+	{
+		if (m_Snapping.LastFlags)
+		{
+			rcWnd = rcUnshifted;
+			SnappingFlags = smf_None;
+			goto modified;
+		}
+		goto wrap;
+	}
+
+	nWidth = rcCur.right - rcCur.left;
+	nHeight = rcCur.bottom - rcCur.top;
+
+	rcWnd = rcCur;
+	if (magnet_left)
+	{
+		rcWnd.left = mi.rcWork.left;
+		rcWnd.right = klMin<int>(mi.rcWork.right, rcWnd.left + nWidth);
+		ptShift.x = rcUnshifted.left - rcWnd.left;
+		SnappingFlags |= smf_Left;
+	}
+	// TODO: tile width
+	else if (magnet_right)
+	{
+		rcWnd.right = mi.rcWork.right;
+		rcWnd.left = klMax<int>(mi.rcWork.left, mi.rcWork.right - nWidth);
+		ptShift.x = rcUnshifted.right - rcWnd.right;
+		SnappingFlags |= smf_Right;
+	}
+	// no-mod horz
+	if (!(SnappingFlags & smf_Horz) && (m_Snapping.LastFlags & smf_Horz))
+	{
+		rcWnd.left = rcUnshifted.left;
+		rcWnd.right = rcUnshifted.right;
+	}
+
+	if (magnet_top)
+	{
+		rcWnd.top = mi.rcWork.top;
+		rcWnd.bottom = min(mi.rcWork.bottom, rcWnd.top + nHeight);
+		ptShift.y = rcUnshifted.top - rcWnd.top;
+		SnappingFlags |= smf_Top;
+	}
+	// TODO: Tile height
+	else if (magnet_bottom)
+	{
+		rcWnd.bottom = mi.rcWork.bottom;
+		rcWnd.top = klMax<int>(mi.rcWork.top, mi.rcWork.bottom - nHeight);
+		ptShift.y = rcUnshifted.bottom - rcWnd.bottom;
+		SnappingFlags |= smf_Bottom;
+	}
+	// no-mod vert
+	if (!(SnappingFlags & smf_Vert) && (m_Snapping.LastFlags & smf_Vert))
+	{
+		rcWnd.top = rcUnshifted.top;
+		rcWnd.bottom = rcUnshifted.bottom;
+	}
 
 	if (memcmp(&rcWnd, &rcCur, sizeof(rcWnd)) == 0)
-		return FALSE;
+		goto wrap;
+
+modified:
+	bModified = TRUE;
 
 	if (prcWnd == NULL)
 	{
@@ -3237,10 +3319,12 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 		*prcWnd = rcWnd;
 	}
 
+wrap:
+	m_Snapping.reset(SnappingFlags, ptShift.x, ptShift.y);
+
 	if (gpSet->isLogging())
 		mp_ConEmu->LogWindowPos(L"OnMoving.end");
-
-	return TRUE;
+	return bModified;
 }
 
 // Например при вызове из диалога "Settings..." и нажатия кнопки "Apply" (Size & Pos)

@@ -644,7 +644,7 @@ void Settings::InitSettings()
 	isHideChildCaption = true;
 	isFocusInChildWindows = true;
 	nHideCaptionAlwaysFrame = HIDECAPTIONALWAYSFRAME_DEF; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
-	isSnapToDesktopEdges = false;
+	isSnapToDesktopEdges = true;
 	isAlwaysOnTop = false;
 	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
 	isRetardInactivePanes = false; // не включать "засыпание в видимых-но-неактивных сплитах"
