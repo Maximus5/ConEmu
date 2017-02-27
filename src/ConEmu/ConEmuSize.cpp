@@ -1013,7 +1013,9 @@ void CConEmuSize::AddMargins(RECT& rc, const RECT& rcAddShift, RectOperations re
 // hMon может быть указан при переносе окна между мониторами например
 SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, const CESize* pSizeH /*= NULL*/, HMONITOR hMon /*= NULL*/)
 {
-	//WARNING! Function must NOT call CalcRect to avoid cycling!
+	NestedCallAssert(1);
+
+	//WARNING! Function must NOT call CalcRect to avoid nested loops!
 
 	_ASSERTE(mp_ConEmu->mp_Inside == NULL); // Must not be called in "Inside"?
 
@@ -1490,6 +1492,8 @@ POINT CConEmuSize::RealPosFromVisual(const int x, const int y)
 // Вызывается при старте программы, для вычисления mrc_Ideal - размера окна по умолчанию
 RECT CConEmuSize::GetDefaultRect()
 {
+	NestedCallAssert(2);
+
 	RECT rcWnd = {};
 
 	if (mp_ConEmu->mp_Inside)
