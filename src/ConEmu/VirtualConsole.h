@@ -369,6 +369,14 @@ class CVirtualConsole :
 			bool  mb_SelfSettings;
 			bool  mb_HighlightRow;
 			bool  mb_HighlightCol;
+
+			// required in VC12 coz MArray
+			_HighlightInfo()
+				: m_Last(), m_Cur()
+				, mb_Exists(), mb_ChangeDetected()
+				, mb_SelfSettings(), mb_HighlightRow(), mb_HighlightCol()
+			{
+			};
 		} m_HighlightInfo;
 		void ResetHighlightCoords();
 		void ResetHighlightHyperlinks();
