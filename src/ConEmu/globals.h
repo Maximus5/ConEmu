@@ -143,3 +143,22 @@ void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 #define Assert(V) if ((V)==FALSE) { AssertBox(_T(#V), _T(__FILE__), __LINE__); }
 #define AssertMsg(V) AssertBox(V, _T(__FILE__), __LINE__);
 #endif
+
+struct NestedCallCounter
+{
+	LONG& ncl;
+	NestedCallCounter(LONG& NestedCallLevel)
+		: ncl(NestedCallLevel)
+	{
+		InterlockedIncrement(&ncl);
+	};
+	~NestedCallCounter()
+	{
+		InterlockedDecrement(&ncl);
+	};
+};
+
+#define NestedCallAssert(level) \
+	static LONG NestedCallLevel = 0; \
+	NestedCallCounter ncCounter(NestedCallLevel); \
+	Assert(NestedCallLevel <= level);
