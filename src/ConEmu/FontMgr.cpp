@@ -1117,7 +1117,11 @@ void CFontMgr::InitFont(LPCWSTR asFontName/*=NULL*/, int anFontHeight/*=-1*/, in
 		}
 	}
 
-	CreateFontGroup(LogFont);
+	if (!CreateFontGroup(LogFont))
+	{
+		// The font must be created, otherwise we can't draw anything
+		AssertBox(FALSE && "Can't create main font");
+	}
 
 	//2009-06-07 Реальный размер созданного шрифта мог измениться
 	SaveFontSizes((mn_AutoFontWidth == -1), false);
