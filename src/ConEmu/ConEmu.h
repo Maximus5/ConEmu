@@ -244,7 +244,7 @@ class CConEmuMain
 		void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
 		void LogString(LPCSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
 		void LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		void LogWindowPos(LPCWSTR asPrefix);
+		void LogWindowPos(LPCWSTR asPrefix, LPRECT prcWnd = NULL);
 
 	public:
 		bool  WindowStartMinimized; // ключик "/min" или "Свернуть" в свойствах ярлыка

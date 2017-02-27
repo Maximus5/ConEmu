@@ -3323,7 +3323,7 @@ wrap:
 	m_Snapping.reset(SnappingFlags, ptShift.x, ptShift.y);
 
 	if (gpSet->isLogging())
-		mp_ConEmu->LogWindowPos(L"OnMoving.end");
+		mp_ConEmu->LogWindowPos(L"OnMoving.end", prcWnd);
 	return bModified;
 }
 

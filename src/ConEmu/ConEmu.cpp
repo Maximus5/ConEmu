@@ -12941,14 +12941,18 @@ void CConEmuMain::OnRConStartedSuccess(CRealConsole* apRCon)
 	}
 }
 
-void CConEmuMain::LogWindowPos(LPCWSTR asPrefix)
+void CConEmuMain::LogWindowPos(LPCWSTR asPrefix, LPRECT prcWnd /*= NULL*/)
 {
 	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[255];
-		RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
-		MONITORINFO mi;
-		HMONITOR hMon = GetNearestMonitor(&mi);
+		RECT rcWnd = {};
+		if (ghWnd && !prcWnd)
+			GetWindowRect(ghWnd, &rcWnd);
+		else if (prcWnd)
+			rcWnd = *prcWnd;
+		MONITORINFO mi = {sizeof(mi)};
+		HMONITOR hMon = GetNearestMonitor(&mi, &rcWnd);
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"%s: %s %s WindowMode=%s Rect={%i,%i}-{%i,%i} Mon(x%08X)=({%i,%i}-{%i,%i}),({%i,%i}-{%i,%i})",
 			asPrefix ? asPrefix : L"WindowPos",
 			::IsWindowVisible(ghWnd) ? L"Visible" : L"Hidden",
