@@ -20,6 +20,29 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.2.27
+* gh-284, gh-472, gh-1000: Fix gaps in Windows 10 on snapping. Halt window size changing on show/hide the frame.
+* gh-945: Temporary fix for doubled CJK on non-CJK Win10 14959+.
+* Due to invisible part of the frame in Windows 10 (ref broken coordinate system)
+  the ‘physical’ coordinates do not match ‘visual’ ones anymore.
+  Let show ‘virtual’ 0x0 coordinate in the settings, if the window
+  is docked to the upper-left corner of the screen without gaps.
+* Improve default pos/size if the window exceeds monitor's working area on startup.
+* gh-988: Alternative font unicode range was not parsed properly without 'prefix: '.
+* gh-988: Hints for alternative font's controls were updated.
+* Update AnsiColors24bit.ps1 for powershell in WSL
+  Powershell is available for linux and also woks in Bash on Windows (WSL), see https://github.com/PowerShell/PowerShell
+  [Console]::SetWindowPosition(0,$y) and [Console]::SetCursorPosition(0,$y) do not work there, so an escape sequence is used instead.
+* Fix crash on exporting some manually edited configurations.
+  ref: https://groups.google.com/d/msg/conemu_ml/yDzPaCnd_5U/2AgUZEazCAAJ
+* gh-1044: Don't move the cursor by click above the line with prompt.
+* Prompt click position fix for multiline prompts.
+* gh-1000: Retain client size during changing window border on mouse hover.
+* Try to install injects in Wine without LdrGetDllHandleByName.
+  ref: https://groups.google.com/d/msg/conemu_ml/owVNAuQzC_s/xWnKfyysCwAJ
+* gh-318: Snap to desktop edges now works with magnetic effect.
+
+
 2017.1.18
 * Pasted paths to WSL bash were not converted to Unix style (/mnt/...).
 * connector#10: Unicode \u23CE ⏎ character preceding every prompt in ConEmu.
