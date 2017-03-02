@@ -1147,6 +1147,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		bool bForceDumpScroll = false;
 		bool bSkipBELL = false;
 
+		WARNING("Refactoring required: use an object to cache symbols and write them on request");
+
 		// Обработка символов, которые двигают курсор
 		switch (*pCur)
 		{
