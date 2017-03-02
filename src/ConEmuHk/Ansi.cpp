@@ -1770,7 +1770,7 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const int LinesCount)
 
 	ExtScrollScreenParm scrl = {
 		sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
-		LinesCount, {}, L' ', {0, TopLine, 0, BottomLine}};
+		LinesCount, {}, L' ', {0, TopLine, csbi.dwSize.X-1, BottomLine}};
 	BOOL lbRc = ExtScrollScreen(&scrl);
 	return lbRc;
 }
@@ -1811,7 +1811,7 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const int LinesCount)
 
 	ExtScrollScreenParm scrl = {
 		sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
-		-LinesCount, {}, L' ', {0, TopLine, 0, BottomLine}};
+		-LinesCount, {}, L' ', {0, TopLine, csbi.dwSize.X-1, BottomLine}};
 	BOOL lbRc = ExtScrollScreen(&scrl);
 	return lbRc;
 }

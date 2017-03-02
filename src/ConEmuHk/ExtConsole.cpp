@@ -1023,12 +1023,13 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 
 	// "Working lines" may be defined (Vim and others)
 	LONG  ScrollTop, ScrollBottom;
-	bool  ScrollRegion = ((Info->Flags & ewtf_Region) != 0);
+	bool  bScrollRegion = ((Info->Flags & ewtf_Region) != 0);
+	RECT  rcScrollRegion = Info->Region;
 	COORD crScrollCursor;
-	if (ScrollRegion)
+	if (bScrollRegion)
 	{
 		_ASSERTEX(Info->Region.left==-1 && Info->Region.right==-1); // Not used yet
-		Info->Region.left = 0; Info->Region.right = (csbi.dwSize.X - 1);
+		rcScrollRegion.left = 0; rcScrollRegion.right = (csbi.dwSize.X - 1);
 		_ASSERTEX(Info->Region.top>=0 && Info->Region.bottom>=Info->Region.top);
 		ScrollTop = Info->Region.top;
 		ScrollBottom = Info->Region.bottom+1;
@@ -1256,10 +1257,10 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 				// расширенный буфер - прокрутить
 				_ASSERTE((y-y2) == -1); // Должен быть сдвиг на одну строку
 				ExtScrollScreenParm Shift = {sizeof(Shift), essf_None, h, y-y2, DefClr.Attributes, L' '};
-				if (ScrollRegion)
+				if (bScrollRegion)
 				{
 					Shift.Flags |= essf_Region;
-					Shift.Region = Info->Region;
+					Shift.Region = rcScrollRegion;
 					//Shift.Region.top += (y2-y);
 					if (ScrollBottom >= csbi.dwSize.Y)
 						Shift.Flags |= essf_ExtOnly;
@@ -1273,7 +1274,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 				Info->ScrolledRowsUp++;
 
 				// координату - "отмотать" (она как бы не изменилась)
-				if (ScrollRegion && (ScrollBottom < csbi.dwSize.Y))
+				if (bScrollRegion && (ScrollBottom < csbi.dwSize.Y))
 				{
 					y2 = LOSHORT(ScrollBottom) - 1;
 					_ASSERTEX((int)y2 == (int)(ScrollBottom - 1));
