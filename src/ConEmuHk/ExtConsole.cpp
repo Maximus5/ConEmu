@@ -1115,6 +1115,9 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 	}
 	#endif
 
+	bool bAutoLfNl = ((Info->Flags & ewtf_NoLfNl) == 0);
+	bool bNonAutoLfNl = false;
+
 	const wchar_t *pCur = pFrom;
 	SHORT x = csbi.dwCursorPosition.X, y = csbi.dwCursorPosition.Y; // 0-based
 	SHORT x2 = x, y2 = y;
@@ -1158,6 +1161,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			if (x2 > 0)
 				ForceDumpX = x2-1;
 			x2 = 0;
+			bNonAutoLfNl = false;
 			BSRN = true;
 			// "\r\n"? Do not break in two physical writes
 			if (((pCur+1) < pEnd) && (*(pCur+1) == L'\n'))
@@ -1169,7 +1173,11 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		case L'\n':
 			if (x2 > 0)
 				ForceDumpX = x2-1;
-			x2 = 0; y2++;
+			if (bAutoLfNl)
+				x2 = 0;
+			else if (x2)
+				bNonAutoLfNl = true;
+			y2++;
 			if (y2 >= ScrollBottom)
 				bForceDumpScroll = true;
 			_ASSERTE(bWrap);
@@ -1274,6 +1282,8 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 					crScrollCursor.Y = y2;
 
 					SetConsoleCursorPosition(Info->ConsoleOutput, crScrollCursor);
+
+					bNonAutoLfNl = false; // already processed
 				}
 				else
 				{
@@ -1288,10 +1298,22 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			}
 			y = y2;
 		}
+
+		// xterm-compatible '\n': just move cursor downward, don't do CR
+		if (bNonAutoLfNl)
+		{
+			_ASSERTE(x2>0);
+			bNonAutoLfNl = false;
+			crScrollCursor.X = x2;
+			crScrollCursor.Y = y2;
+			SetConsoleCursorPosition(Info->ConsoleOutput, crScrollCursor);
+		}
 	}
 
 	if (pCur > pFrom)
 	{
+		_ASSERTE(!bNonAutoLfNl && "bNonAutoLfNl must be processed already");
+
 		// Printing (NOT including pCur) using extended attributes
 		SHORT ForceDumpX = (x2 > x) ? (min(x2, WrapAtCol)-1) : -1;
 		DWORD nSplit1 = 0;

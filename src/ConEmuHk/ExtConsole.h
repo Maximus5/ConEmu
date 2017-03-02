@@ -83,6 +83,8 @@ static const EXTREADWRITEFLAGS
 
 	ewtf_NoBells = 0x0000000000000200ULL, // CECF_SuppressBells
 
+	ewtf_NoLfNl  = 0x0000000000000400ULL, // Don't do automatic CR after LF
+
 	ewtf_None    = 0x0000000000000000ULL;
 
 struct ExtWriteTextParm

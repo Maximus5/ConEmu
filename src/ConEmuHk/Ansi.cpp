@@ -932,11 +932,15 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 		write.Region.left = write.Region.right = -1; // not used yet
 	}
 
+	if (gbWasXTermOutput && !gDisplayOpt.AutoLfNl)
+		write.Flags |= ewtf_NoLfNl;
+
 	DWORD nWriteFrom = 0, nWriteTo = nNumberOfCharsToWrite;
 	while (nWriteTo > nWriteFrom && nWriteFrom < nNumberOfCharsToWrite)
 	{
 		if (gbWasXTermOutput)
 		{
+			write.Flags &= ~ewtf_DontWrap;
 			// top:  writes all lines using full console width
 			//       and thereafter some ANSI-s and "\r\n"
 			// fish: writes in one call "(Width-1)*Spaces,\r,Space,\r"
@@ -957,6 +961,9 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 				_ASSERTE(ChrSet == AddChrSet);
 				ChrSet |= AddChrSet;
 			}
+			// Perhaps, we shall do that always
+			if (ChrSet == 2)
+				write.Flags |= ewtf_DontWrap;
 		}
 		_ASSERTE(nWriteTo<=nNumberOfCharsToWrite);
 
