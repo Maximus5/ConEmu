@@ -2283,12 +2283,15 @@ void SendStopped()
 
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-		// НЕ MyGet..., а то можем заблокироваться...
-		// ghConOut может быть NULL, если ошибка произошла во время разбора аргументов
-		GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
+		// May be set to NULL in some cases (connector+wslbridge)
+		if (hOut != NULL)
+		{
+			// НЕ MyGet..., а то можем заблокироваться...
+			// ghConOut может быть NULL, если ошибка произошла во время разбора аргументов
+			GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
 
-		pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
-
+			pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
+		}
 
 		if (ghAttachGuiClient == NULL)
 			pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd, TRUE/*bAsyncNoResult*/);
