@@ -1985,6 +1985,8 @@ int CRealConsole::EvalPromptCtrlBSCount(const AppSettings* pApp)
 {
 	COORD crCursor = {};
 	mp_RBuf->GetCursorInfo(&crCursor, NULL);
+	// Primary buffer works with visual coords
+	crCursor = mp_RBuf->BufferToScreen(crCursor);
 
 	CRConDataGuard data;
 	ConsoleLinePtr line = {};
