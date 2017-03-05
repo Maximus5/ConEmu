@@ -291,6 +291,31 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 	return lbRc;
 }
 
+// Returns true if the line is filled exclusively with spaces (0x20)
+bool IsConsoleLineEmpty(HANDLE hOut, SHORT row, SHORT len /*= -1*/)
+{
+	if (len <= 0)
+	{
+		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+		if (!GetConsoleScreenBufferInfo(hOut, &csbi))
+			return false;
+		len = csbi.dwSize.X;
+	}
+
+	CEStr lsLine;
+	COORD crRead = {0, row};
+	DWORD nRead = 0;
+	wchar_t* pch = lsLine.GetBuffer(len);
+	if (!pch || !ReadConsoleOutputCharacterW(hOut, pch, len, crRead, &nRead) || !nRead)
+		return false;
+	for (DWORD n = 0; n < nRead; ++n)
+	{
+		if (pch[n] != L' ')
+			return false;
+	}
+	return true;
+}
+
 bool IsConsoleDoubleCellCP()
 {
 	static bool bDBCS = false, bDBCS_Checked = false;

@@ -119,7 +119,7 @@ public:
 	bool BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 	void OnBufferHeight();
 
-	LRESULT DoScrollBuffer(int nDirection, short nTrackPos = -1, UINT nCount = 1);
+	LRESULT DoScrollBuffer(int nDirection, short nTrackPos = -1, UINT nCount = 1, bool abOnlyVirtual = false);
 	void ResetTopLeft();
 
 	bool ApplyConsoleInfo();
@@ -316,7 +316,7 @@ protected:
 	bool isDataValid();
 
 
-	bool SetTopLeft(int ay = -1, int ax = -1, bool abServerCall = false);
+	bool SetTopLeft(int ay = -1, int ax = -1, bool abServerCall = false, bool abOnlyVirtual = false);
 
 	CMatch* mp_Match;
 

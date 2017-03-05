@@ -921,6 +921,25 @@ bool ConEmuHotKey::UseWndDragKey()
 	return gpSet->isMouseDragWindow;
 }
 
+bool ConEmuHotKey::UsePromptFind()
+{
+	CVConGuard VCon;
+	if (gpConEmu->GetActiveVCon(&VCon) < 0 || !VCon->RCon())
+		return false;
+	CRealConsole* pRCon = VCon->RCon();
+	if (!pRCon->isFar())
+		return true;
+	// Even if Far we may search for the prompt, if we are in panels and they are OFF
+	if (!pRCon->isFarPanelAllowed())
+		return false;
+	DWORD dwFlags = pRCon->GetActiveDlgFlags();
+	if (((dwFlags & FR_FREEDLG_MASK) != 0)
+		|| pRCon->isEditor() || pRCon->isViewer()
+		|| pRCon->isFilePanel(true, true, true))
+		return true;
+	return false;
+}
+
 /*
 bool ConEmuHotKey::DontHookJumps(const ConEmuHotKey* pHK)
 {

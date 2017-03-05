@@ -200,11 +200,18 @@ bool FindConsoleRowId(HANDLE hConOut, const CEConsoleMark& Mark, SHORT nFromRow,
 	return false;
 }
 
-bool FindConsoleRowId(HANDLE hConOut, SHORT nFromRow, SHORT* pnRow/*=NULL*/, CEConsoleMark* pMark/*=NULL*/)
+bool FindConsoleRowId(HANDLE hConOut, SHORT nFromRow, bool bUpWard, SHORT* pnRow/*=NULL*/, CEConsoleMark* pMark/*=NULL*/)
 {
 	CEConsoleMark RowId = {};
 
-	for (SHORT nRow = nFromRow; nRow >= 0; nRow--)
+	// While searching downward we need to know the size of the buffer
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	if (!bUpWard && !GetConsoleScreenBufferInfo(hConOut, &csbi))
+		return false;
+
+	for (SHORT nRow = nFromRow;
+		(bUpWard && (nRow >= 0)) || (!bUpWard && nRow < csbi.dwSize.Y);
+		nRow += (bUpWard ? -1 : +1))
 	{
 		if (ReadConsoleRowId(hConOut, nRow, &RowId))
 		{

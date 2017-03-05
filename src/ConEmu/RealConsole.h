@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SB_HALFPAGEUP   32
 #define SB_HALFPAGEDOWN 33
 #define SB_GOTOCURSOR   34
+#define SB_PROMPTUP     35
+#define SB_PROMPTDOWN   36
 
 #define CES_CMDACTIVE      0x01
 #define CES_TELNETACTIVE   0x02
@@ -508,6 +510,7 @@ class CRealConsole
 		DWORD GetRunningPID();
 		LPCWSTR GetActiveProcessName();
 		CEActiveAppFlags GetActiveAppFlags();
+		DWORD GetActiveDlgFlags();
 		int GetActiveAppSettingsId(bool bReload = false);
 	private:
 		int GetDefaultAppSettingsId();

@@ -864,7 +864,7 @@ void CEAnsi::OnReadConsoleAfter(bool bFinal, bool bNoLineFeed)
 	if (!GetConsoleScreenBufferInfo(hConOut, &csbi))
 		goto wrap;
 
-	if (!FindConsoleRowId(hConOut, csbi.dwCursorPosition.Y, &nMarkedRow, &Test))
+	if (!FindConsoleRowId(hConOut, csbi.dwCursorPosition.Y, true, &nMarkedRow, &Test))
 		goto wrap;
 
 	for (int i = 1; i >= 0; i--)
@@ -2685,6 +2685,9 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			//	  X11 Mouse Reporting (default off): Set reporting mode to 2 (or reset to
 			//	  0) -- see below.
 
+			//ESC [ ? 7711 h
+			//    mimic mintty code, same as "ESC ] 9 ; 12 ST"
+
 			switch (Code.ArgV[0])
 			{
 			case 1:
@@ -2809,6 +2812,16 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					ChangeTermMode(tmc_BracketedPaste, (Code.Action == L'h'));
 				else
 					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
+				break;
+			case 7711:
+				if ((Code.Action == L'h') && (Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
+				{
+					StorePromptBegin();
+				}
+				else
+				{
+					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
+				}
 				break;
 			default:
 				DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);

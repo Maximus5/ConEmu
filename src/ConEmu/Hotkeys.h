@@ -147,5 +147,6 @@ struct ConEmuHotKey
 	static bool UseDndLKey();
 	static bool UseDndRKey();
 	static bool UseWndDragKey();
+	static bool UsePromptFind();
 	//static bool DontHookJumps(const ConEmuHotKey* pHK);
 };

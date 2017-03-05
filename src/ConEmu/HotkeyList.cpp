@@ -427,6 +427,10 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_HOME,VK_APPS);
 	Add(vkAppsEnd,        chk_User,  NULL,    L"Key.BufBottom",         CConEmuCtrl::key_GuiMacro, false, L"Scroll(3,+1)") // Buffer scroll
 		->SetHotKey(VK_END,VK_APPS);
+	Add(vkFindPrevPrompt, chk_User, ConEmuHotKey::UsePromptFind, L"Key.BufPrUp", CConEmuCtrl::key_GuiMacro, false, L"Scroll(5,-1)") // Buffer scroll: Find prompt upward
+		->SetHotKey(VK_PRIOR,VK_CONTROL,VK_MENU);
+	Add(vkFindNextPrompt, chk_User, ConEmuHotKey::UsePromptFind, L"Key.BufPrDn", CConEmuCtrl::key_GuiMacro, false, L"Scroll(5,+1)") // Buffer scroll: Find prompt downward
+		->SetHotKey(VK_NEXT,VK_CONTROL,VK_MENU);
 	Add(vkAppsBS,         chk_User,  NULL,    L"Key.BufCursor",         CConEmuCtrl::key_GuiMacro, false, L"Scroll(4)") // Buffer scroll
 		->SetHotKey(VK_BACK,VK_APPS);
 	Add(vkResetTerminal,  chk_User,  NULL,    L"Key.ResetTerm",         CConEmuCtrl::key_GuiMacro, false, L"Write(\"\\ec\")") // Reset terminal

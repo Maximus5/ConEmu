@@ -473,6 +473,7 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	TOPLEFTCOORD NewTopLeft; NewTopLeft.Reset();
 	if (mp_RCon->mp_ABuf && (mp_RCon->mp_ABuf != this))
 		mp_RCon->mp_ABuf->ConsoleScreenBufferInfo(NULL, NULL, &NewTopLeft);
+	Assert(m_Type != rbt_Primary); // Dumps must NOT be loaded into Primary buffer
 	SetTopLeft(NewTopLeft.y, NewTopLeft.x, false);
 
 	if (NewTopLeft.isLocked() && NewTopLeft.x >= 0)
@@ -6932,7 +6933,7 @@ void CRealBuffer::ResetTopLeft()
 	}
 }
 
-LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UINT nCount /*= 1*/)
+LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UINT nCount /*= 1*/, bool abOnlyVirtual /*= false*/)
 {
 	if (!this) return 0;
 
@@ -7042,8 +7043,10 @@ LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UI
 			con.m_sbi.srWindow.Top = nNewTop;
 			con.m_sbi.srWindow.Bottom = nNewTop + nVisible - 1;
 
-			SetTopLeft(nNewTop, con.TopLeft.x, true);
+			SetTopLeft(nNewTop, con.TopLeft.x, true, abOnlyVirtual);
 
+			// in rbt_Primary the server must reload new viewport and sent console data back to us
+			// otherwise we would not know what we need to show to user
 			if (m_Type != rbt_Primary)
 			{
 				mp_RCon->mb_DataChanged = TRUE; // Переменная используется внутри класса
@@ -7054,7 +7057,9 @@ LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UI
 	return 0;
 }
 
-bool CRealBuffer::SetTopLeft(int ay /*= -1*/, int ax /*= -1*/, bool abServerCall /*= false*/)
+// abServerCall - pass new TopLeft into the server to let it reload viewport and send it back to GUI
+// abOnlyVirtual - if true - don't call SetConsoleWindowInfo
+bool CRealBuffer::SetTopLeft(int ay /*= -1*/, int ax /*= -1*/, bool abServerCall /*= false*/, bool abOnlyVirtual /*= false*/)
 {
 	bool bChanged = false;
 	bool bLockChanged = false;
@@ -7087,6 +7092,7 @@ bool CRealBuffer::SetTopLeft(int ay /*= -1*/, int ax /*= -1*/, bool abServerCall
 		{
 			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETTOPLEFT, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO));
 			pIn->ReqConInfo.TopLeft = con.TopLeft;
+			pIn->ReqConInfo.VirtualOnly = abOnlyVirtual;
 			CESERVER_REQ *pOut = ExecuteSrvCmd(nSrvPID, pIn, ghWnd);
 			ExecuteFreeResult(pOut);
 			ExecuteFreeResult(pIn);

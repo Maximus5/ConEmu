@@ -2752,6 +2752,7 @@ LPWSTR ConEmuMacro::Rename(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 //  Type: 2; Value: ‘-1’=HalfPgUp, ‘+1’=HalfPgDown
 //  Type: 3; Value: ‘-1’=Top, ‘+1’=Bottom
 //  Type: 4; No arguments; Go to cursor line
+//  Type: 5; Value: ‘-1’=PrevPrompt, ‘+1’=NextPrompt - search for executed prompts
 LPWSTR ConEmuMacro::Scroll(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
 	if (!apRCon)
@@ -2759,7 +2760,7 @@ LPWSTR ConEmuMacro::Scroll(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 	int nType = 0, nDir = 0, nCount = 1;
 
-	if (!p->GetIntArg(0, nType) || (nType < 0 || nType > 4))
+	if (!p->GetIntArg(0, nType))
 		return lstrdup(L"InvalidArg");
 	if (nType != 4)
 	{
@@ -2786,6 +2787,12 @@ LPWSTR ConEmuMacro::Scroll(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	case 4:
 		apRCon->DoScroll(SB_GOTOCURSOR);
 		break;
+	case 5:
+		// Don't scroll RealConsole, just virtually position our view rect
+		apRCon->DoScroll((nDir < 0) ? SB_PROMPTUP : SB_PROMPTDOWN, 1);
+		break;
+	default:
+		return lstrdup(L"InvalidArg");
 	}
 
 	return lstrdup(L"OK");

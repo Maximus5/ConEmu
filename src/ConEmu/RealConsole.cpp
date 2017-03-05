@@ -6641,6 +6641,7 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
 	SMALL_RECT srRealWindow = {};
 	int nVisible = 0;
+	bool bOnlyVirtual = false;
 
 	mp_ABuf->ConsoleScreenBufferInfo(&sbi, &srRealWindow);
 
@@ -6695,6 +6696,10 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 			// Let it set to one from the bottom
 			nTrackPos = max(0,sbi.dwCursorPosition.Y-nVisible+2);
 			nCount = 1;
+			// it would be better to scroll console physically, if the cursor
+			// is visible in the current region, so when user types new command
+			// they would not be surprised by unexpected scroll to the "real" viewport
+			// bOnlyVirtual = true;
 		}
 		else
 		{
@@ -6703,11 +6708,39 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 			goto wrap;
 		}
 		break;
+	case SB_PROMPTUP:
+	case SB_PROMPTDOWN:
+		if (GetServerPID())
+		{
+			bool bFound = false;
+			CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_FINDNEXTROWID, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*2);
+			if (pIn)
+			{
+				pIn->dwData[0] = mp_ABuf->GetBufferPosY();
+				pIn->dwData[1] = (nDirection == SB_PROMPTUP);
+				CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(), pIn, ghWnd);
+				if (pOut && (pOut->DataSize() >= sizeof(DWORD)*2))
+				{
+					if (pOut->dwData[1] != DWORD(-1))
+					{
+						nDirection = SB_THUMBPOSITION;
+						nTrackPos = pOut->dwData[0];
+						nCount = 1;
+						bFound = true;
+					}
+				}
+				ExecuteFreeResult(pOut);
+				ExecuteFreeResult(pIn);
+			}
+			if (!bFound)
+				goto wrap;
+		}
+		break;
 	case SB_ENDSCROLL:
 		goto wrap;
 	}
 
-	lRc = mp_ABuf->DoScrollBuffer(nDirection, nTrackPos, nCount);
+	lRc = mp_ABuf->DoScrollBuffer(nDirection, nTrackPos, nCount, bOnlyVirtual);
 wrap:
 	return lRc;
 }
@@ -13652,6 +13685,12 @@ bool CRealConsole::isFarPanelAllowed()
 	return true;
 }
 
+DWORD CRealConsole::GetActiveDlgFlags()
+{
+	DWORD dwFlags = (this && mp_ABuf) ? mp_ABuf->GetDetector()->GetFlags() : FR_FREEDLG_MASK;
+	return dwFlags;
+}
+
 bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/, bool abSkipEditViewCheck /*= false*/, bool abSkipDialogCheck /*= false*/)
 {
 	if (!this) return false;
@@ -13666,7 +13705,7 @@ bool CRealConsole::isFilePanel(bool abPluginAllowed/*=false*/, bool abSkipEditVi
 	}
 
 	// Если висят какие-либо диалоги - считаем что это НЕ панель
-	DWORD dwFlags = mp_ABuf ? mp_ABuf->GetDetector()->GetFlags() : FR_FREEDLG_MASK;
+	DWORD dwFlags = GetActiveDlgFlags();
 
 	// We need to polish panel frames even if there are F2/F11/anything
 	if (!abSkipDialogCheck && ((dwFlags & FR_FREEDLG_MASK) != 0))

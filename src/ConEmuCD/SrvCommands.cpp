@@ -1464,6 +1464,70 @@ BOOL cmd_Pause(CESERVER_REQ& in, CESERVER_REQ** out)
 	return TRUE;
 }
 
+// CECMD_FINDNEXTROWID
+BOOL cmd_FindNextRowId(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	// IN:  dwData[0] - from row, dwData[1] - search upward (TRUE/FALSE)
+	// OUT: dwData[0] - found row or DWORD(-1), dwData[1] - rowid
+	size_t cbInSize = in.DataSize();
+	if ((cbInSize < sizeof(DWORD)*2) || !gpSrv || !gpSrv->pConsole)
+		return FALSE;
+
+	SHORT newRow = -1, newRowId = -1, findRow = -1;
+	CEConsoleMark rowMark, rowMark2;
+	SHORT fromRow = LOSHORT(in.dwData[0]);
+	bool  bUpWard = (in.dwData[1] != FALSE);
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	GetConsoleScreenBufferInfo(ghConOut, &csbi);
+
+	// Skip our first marked line
+	if (ReadConsoleRowId(ghConOut, fromRow, &rowMark2))
+	{
+		if (bUpWard && (fromRow > 0))
+			fromRow--;
+		else if (!bUpWard && ((fromRow + 1) < csbi.dwSize.Y))
+			fromRow++;
+	}
+
+	if (!FindConsoleRowId(ghConOut, fromRow, bUpWard, &findRow, &rowMark))
+	{
+		newRow = bUpWard ? 0 : (csbi.dwSize.Y - 1);
+	}
+	else
+	{
+		newRow = findRow;
+		newRowId = rowMark.RowId;
+		// We mark two rows to ensure that tab-completion routine would not break our row mark
+		if (bUpWard)
+		{
+			if (newRow > 0)
+			{
+				if (ReadConsoleRowId(ghConOut, newRow - 1, &rowMark2))
+				{
+					// Line above the prompt may be empty, no sense to scroll to it
+					if (!IsConsoleLineEmpty(ghConOut, newRow - 1, csbi.dwSize.X))
+					{
+						newRow--;
+						newRowId = rowMark2.RowId;
+					}
+				}
+			}
+		}
+	}
+
+	int nOutSize = sizeof(CESERVER_REQ_HDR) + 2*sizeof(DWORD);
+	*out = ExecuteNewCmd(CECMD_FINDNEXTROWID,nOutSize);
+
+	if (*out != NULL)
+	{
+		(*out)->dwData[0] = newRow;
+		(*out)->dwData[1] = newRowId;
+	}
+
+	return TRUE;
+}
+
 BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
@@ -2242,12 +2306,12 @@ BOOL cmd_SetTopLeft(CESERVER_REQ& in, CESERVER_REQ** out)
 	BOOL lbRc = TRUE;
 	BOOL lbGenRc = FALSE;
 
-	if (in.DataSize() >= sizeof(in.ReqConInfo.TopLeft))
+	if (in.DataSize() >= sizeof(in.ReqConInfo))
 	{
 		gpSrv->TopLeft = in.ReqConInfo.TopLeft;
 
 		// May be we can scroll the console down?
-		if (in.ReqConInfo.TopLeft.isLocked())
+		if (!in.ReqConInfo.VirtualOnly && in.ReqConInfo.TopLeft.isLocked())
 		{
 			// We need real (uncorrected) position
 			CONSOLE_SCREEN_BUFFER_INFO csbi = {};
@@ -2658,6 +2722,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_WRITETEXT:
 		{
 			lbRc = cmd_WriteText(in, out);
+		} break;
+		case CECMD_FINDNEXTROWID:
+		{
+			lbRc = cmd_FindNextRowId(in, out);
 		} break;
 		default:
 		{

@@ -83,5 +83,5 @@ struct CEConsoleMark
 WORD ReadConsoleRowId(HANDLE hConOut, SHORT nRow, CEConsoleMark* pMark = NULL);
 bool WriteConsoleRowId(HANDLE hConOut, SHORT nRow, WORD RowId, CEConsoleMark* pMark = NULL);
 bool FindConsoleRowId(HANDLE hConOut, const CEConsoleMark& Mark, SHORT nFromRow, SHORT* pnRow = NULL);
-bool FindConsoleRowId(HANDLE hConOut, SHORT nFromRow, SHORT* pnRow = NULL, CEConsoleMark* pMark = NULL);
+bool FindConsoleRowId(HANDLE hConOut, SHORT nFromRow, bool bUpWard, SHORT* pnRow = NULL, CEConsoleMark* pMark = NULL);
 WORD GetRowIdFromAttrs(const WORD* pnAttrs4); // count == ROWID_USED_CELLS

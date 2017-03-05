@@ -498,6 +498,7 @@ const CECMD
 	CECMD_GETTASKCMD     = 92, // CESERVER_REQ_TASK
 	CECMD_ALLOWANSIEXEC  = 93, // IN: wData[] - GuiMacro or CmdLine; OUT: TRUE/FALSE
 	CECMD_SSHAGENTSTART  = 94, // dwData[0] - PID of ssh-agent.exe started from one of the ConEmu console processes
+	CECMD_FINDNEXTROWID  = 95, // IN: dwData[0] - from row, dwData[1] - search upward (TRUE/FALSE); OUT: dwData[0] - found row or DWORD(-1), dwData[1] - rowid
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
@@ -1606,6 +1607,7 @@ struct TOPLEFTCOORD
 struct CESERVER_REQ_CONINFO
 {
 	TOPLEFTCOORD TopLeft;
+	BOOL VirtualOnly; // if true - don't call SetConsoleWindowInfo
 };
 
 enum CEPauseCmd

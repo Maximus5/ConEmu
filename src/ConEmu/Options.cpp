@@ -5992,6 +5992,8 @@ void Settings::CheckHotkeyUnique()
 	int iHK1, iHK2;
 	const ConEmuHotKey *ppHK1, *ppHK2;
 
+	WARNING("Refactoring: create the list of enabled keys, sort them, and find non-unique easy");
+
 	// Go
 	for (iHK1 = 0;; iHK1++)
 	{
