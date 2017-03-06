@@ -20,6 +20,15 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.3.5
+* Microsoft/BashOnWindows#1668: Fix wrong ANSI processing from Vim started in tmux.
+* gh-1055: Fix ‘Delete word lefward to the cursor’ at the bottom of the screen.
+* gh-787: Keyboard shortcut to scroll by prompts.
+  Ctrl+Alt+PgUp/PgDn will jump between commands entered in the shell prompt.
+  Take into account that prompt must pass to ConEmu the code
+  `ESC]9;12ESC\` (ConEmu default) or `ESC[?7711h` (mintty implementation).
+
+
 2017.2.27
 * gh-284, gh-472, gh-1000: Fix gaps in Windows 10 on snapping. Halt window size changing on show/hide the frame.
 * gh-945: Temporary fix for doubled CJK on non-CJK Win10 14959+.
