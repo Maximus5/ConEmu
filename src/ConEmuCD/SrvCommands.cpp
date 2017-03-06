@@ -1485,9 +1485,15 @@ BOOL cmd_FindNextRowId(CESERVER_REQ& in, CESERVER_REQ** out)
 	if (ReadConsoleRowId(ghConOut, fromRow, &rowMark2))
 	{
 		if (bUpWard && (fromRow > 0))
-			fromRow--;
+		{
+			fromRow -= 1;
+			if (IsConsoleLineEmpty(ghConOut, fromRow, csbi.dwSize.X))
+				fromRow -= 1;
+		}
 		else if (!bUpWard && ((fromRow + 1) < csbi.dwSize.Y))
-			fromRow++;
+		{
+			fromRow += 2;
+		}
 	}
 
 	if (!FindConsoleRowId(ghConOut, fromRow, bUpWard, &findRow, &rowMark))
@@ -1511,6 +1517,19 @@ BOOL cmd_FindNextRowId(CESERVER_REQ& in, CESERVER_REQ** out)
 						newRow--;
 						newRowId = rowMark2.RowId;
 					}
+				}
+			}
+		}
+		else
+		{
+			if ((newRow + 1) < csbi.dwSize.Y)
+			{
+				if (IsConsoleLineEmpty(ghConOut, newRow, csbi.dwSize.X))
+				{
+					// We need the row below, but its rowid may be damaged (doesn't matter, just show it)
+					newRow++;
+					if (ReadConsoleRowId(ghConOut, newRow - 1, &rowMark2))
+						newRowId = rowMark2.RowId;
 				}
 			}
 		}
