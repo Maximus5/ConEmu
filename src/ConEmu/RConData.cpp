@@ -708,16 +708,16 @@ bool CRConData::FindPanels(bool& bLeftPanel, RECT& rLeftPanel, RECT& rLeftPanelF
 				int iMinFindX = bLeftPanel ? (rLeftPanelFull.right+1) : 0;
 				for(int i=nWidth-3; !bRightPanel && i>=iMinFindX; i--)
 				{
-					// ищем левую границу правой панели
+					// we look for LEFT edge of the RIGHT panel
 					if (pConChar[nIdx+i] == ucBoxDblDownRight
 						&& (((pConChar[nIdx+i+1] == ucBoxDblHorz || pConChar[nIdx+i+1] == L' ') && bFarShowColNames)
-							|| pConChar[nIdx+i+1] == ucBoxSinglDownDblHorz // правый угол панели
+							|| pConChar[nIdx+i+1] == ucBoxSinglDownDblHorz // right corner
 							|| pConChar[nIdx+i+1] == ucBoxDblDownDblHorz
-							|| (pConChar[nIdx+i-1] == L']' && pConChar[nIdx+i-2] == L'\\') // ScreenGadgets, default
+							|| ((i > 10) && (pConChar[nIdx+i-1] == L']' && pConChar[nIdx+i-2] == L'\\')) // ScreenGadgets, default: "╔[◄|►]...[…][\]╗╔[◄|►]═══"
 							|| (!bFarShowColNames && !(pConChar[nIdx+i+1] == ucBoxDblHorz || pConChar[nIdx+i+1] == L' ')
 								&& pConChar[nIdx+i+1] != ucBoxSinglDownDblHorz && pConChar[nIdx+i+1] != ucBoxDblDownDblHorz)
 							)
-						// МОЖЕТ быть закрыто AltHistory
+						// May be covered by AltHistory
 						/*&& pConChar[nIdx+i+nWidth] == ucBoxDblVert*/)
 					{
 						uint nBottom = nHeight - 1;
