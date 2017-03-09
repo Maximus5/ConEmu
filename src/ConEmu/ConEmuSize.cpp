@@ -3217,7 +3217,7 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 
 	if (!GetMonitorInfo(hMon, &mi))
 	{
-		AssertMsg(FALSE && "GetMonitorInfo failed");
+		AssertMsg(L"GetMonitorInfo failed");
 		goto wrap;
 	}
 
@@ -3755,7 +3755,7 @@ RECT CConEmuSize::GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi)
 		break;
 
 	default:
-		AssertMsg(FALSE && "Must not get here");
+		AssertMsg(L"Must not get here");
 		rcNewWnd = GetDefaultRect();
 	}
 

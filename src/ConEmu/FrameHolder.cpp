@@ -404,6 +404,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			//GetWindowText(hWnd, ms_LastCaption, countof(ms_LastCaption));
 			//SetWindowText(hWnd, L"");
 		}
+		// While dragging by caption we get here wParam==SC_MOVE|HTCAPTION
 		lResult = gpConEmu->mp_Menu->OnSysCommand(hWnd, wParam, lParam, WM_SYSCOMMAND);
 		if (wParam == SC_MAXIMIZE || wParam == SC_MINIMIZE || wParam == SC_RESTORE)
 		{
