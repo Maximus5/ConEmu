@@ -182,7 +182,7 @@ LRESULT CSetPgSizePos::OnEditChanged(HWND hDlg, WORD nCtrlId)
 		if (isChecked(hDlg, rNormal) == BST_CHECKED)
 		{
 			wchar_t *pVal = GetDlgItemTextPtr(hDlg, nCtrlId);
-			bool bValid = (pVal && isDigit(*pVal));
+			bool bValid = (pVal && (isDigit(pVal[0]) || (pVal[0]==L'-' && isDigit(pVal[1]))));
 			enableDlgItem(hDlg, cbApplyPos, bValid);
 			SafeFree(pVal);
 		}
