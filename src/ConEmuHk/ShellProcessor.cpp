@@ -2266,7 +2266,7 @@ int CShellProc::PrepareExecuteParms(
 	else
 	{
 		// хотят GUI прицепить к новой вкладке в ConEmu, или новую консоль из GUI
-		if (lbGuiApp && (NewConsoleFlags || bForceNewConsole))
+		if ((bLongConsoleOutput) || (lbGuiApp && (NewConsoleFlags || bForceNewConsole)))
 			bGoChangeParm = true;
 		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
 		else if ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1)
