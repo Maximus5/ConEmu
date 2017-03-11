@@ -1139,7 +1139,7 @@ bool CConEmuMain::CheckRequiredFiles()
 			_wcscat_c(pszMsg, cchMax, L"\n");
 			if (*szRequired)
 			{
-				_wcscat_c(pszMsg, cchMax, L"\nConEmu will exits now");
+				_wcscat_c(pszMsg, cchMax, L"\nConEmu will exit now");
 			}
 			MsgBox(pszMsg, MB_SYSTEMMODAL|(*szRequired ? MB_ICONSTOP : MB_ICONWARNING), GetDefaultTitle(), NULL);
 			free(pszMsg);
