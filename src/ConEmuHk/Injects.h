@@ -7,8 +7,8 @@ struct InjectsFnPtr
 	UINT_PTR fnPtr;
 	wchar_t  szModule[32];
 
-	InjectsFnPtr() : module(NULL), fnPtr(0) { szModule[0] = 0; };
-	InjectsFnPtr(HMODULE m, UINT_PTR f, LPCWSTR n) : module(m), fnPtr(f) { lstrcpyn(szModule, n, countof(szModule)); };
+	InjectsFnPtr() : module(NULL), fnPtr(0) { szModule[0] = 0; }
+	InjectsFnPtr(HMODULE m, UINT_PTR f, LPCWSTR n) : module(m), fnPtr(f) { lstrcpyn(szModule, n, countof(szModule)); }
 };
 
 extern InjectsFnPtr gfLoadLibrary;

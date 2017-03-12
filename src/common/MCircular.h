@@ -45,7 +45,7 @@ struct MCircular
 		_ASSERTE(sizeof(VAL_T) >= sizeof(LONG));
 		if (!nCount)
 			nCount = VAL_C;
-	};
+	}
 	void AddValue(const VAL_T& val)
 	{
 		// Init nCount [Informational]
@@ -54,7 +54,7 @@ struct MCircular
 		LONG lIdx = (InterlockedIncrement(&nIndex) - 1) & (VAL_C - 1);
 		// ‘Old’ values are expected to be overwritten
 		Values[lIdx] = val;
-	};
+	}
 	bool HasValue(const VAL_T& val)
 	{
 		LONG hash = *((LONG*)&val);
@@ -64,7 +64,7 @@ struct MCircular
 				return true;
 		}
 		return false;
-	};
+	}
 	void DelValue(const VAL_T& val)
 	{
 		LONG hash = *((LONG*)&val);
@@ -73,5 +73,5 @@ struct MCircular
 			if (InterlockedCompareExchange((LONG*)(Values + i), 0, hash) == hash)
 				break;
 		}
-	};
+	}
 };

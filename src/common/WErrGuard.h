@@ -43,7 +43,7 @@ public:
 	{
 		mn_LastError = GetLastError();
 		// RtlGetLastNtStatus?
-	};
+	}
 	~CLastErrorGuard()
 	{
 		SetLastError(mn_LastError);

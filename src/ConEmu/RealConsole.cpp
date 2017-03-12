@@ -8317,7 +8317,7 @@ DWORD CRealConsole::GetLoadedPID()
 				}
 			}
 			return TRUE; // Continue search
-		};
+		}
 	} impl = {ms_RootProcessName};
 
 	EnumWindows(Impl::EnumProc, (LPARAM)&impl);

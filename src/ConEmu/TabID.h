@@ -133,7 +133,7 @@ public:
 	HRGN     rgnTab;  // точный регион таба, для реакции на мышку
 	bool     Clipped; // текст был обрезан при отрисовке, показывать тултип
 public:
-	TabDrawInfo() {memset(&rcTab, 0, sizeof(rcTab)); rgnTab = NULL; Clipped=false;};
+	TabDrawInfo() {memset(&rcTab, 0, sizeof(rcTab)); rgnTab = NULL; Clipped=false;}
 };
 
 struct TabInfo
@@ -175,8 +175,8 @@ public:
 	CTabID(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType anType, int anPID, int anFarWindowID, int anViewEditID);
 public:
 	TabInfo Info;
-	CEFarWindowType Type()  { return (Info.Type &  fwt_TypeMask); };
-	CEFarWindowType Flags() { return (Info.Type & ~fwt_TypeMask); };
+	CEFarWindowType Type()  { return (Info.Type &  fwt_TypeMask); }
+	CEFarWindowType Flags() { return (Info.Type & ~fwt_TypeMask); }
 
 	// Имя и переименованное юзером
 	TabName Name, Renamed;
@@ -254,7 +254,7 @@ protected:
 	#ifdef TAB_REF_PLACE
 	TabRefPlace m_rp;
 	public:
-	void SetPlace(LPCSTR asPlace, int anLine) { m_rp.SetPlace(asPlace,anLine); };
+	void SetPlace(LPCSTR asPlace, int anLine) { m_rp.SetPlace(asPlace,anLine); }
 	#endif
 public:
 	CTabStack();

@@ -485,7 +485,7 @@ void CImgCache::Reset()
 
 	mp_DrawDibBytes = NULL;
 	nPreviewSize = 0;
-};
+}
 void CImgCache::Init(COLORREF acrBack)
 {
 	// Инициализация (или сброс если изменились размеры превьюшек)
@@ -508,7 +508,7 @@ void CImgCache::Init(COLORREF acrBack)
 	//nYIcon = GetSystemMetrics(SM_CYICON);
 	//nXIconSpace = (nPreviewSize - nXIcon) >> 1;
 	//nYIconSpace = (nPreviewSize - nYIcon) >> 1;
-};
+}
 BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, ImgLoadType aLoadType)
 {
 	_ASSERTE(pItem && pnIndex);
@@ -628,7 +628,7 @@ BOOL CImgCache::FindInCache(CePluginPanelItem* pItem, int* pnIndex, ImgLoadType 
 	}
 
 	return lbReady;
-};
+}
 BOOL CImgCache::RequestItem(CePluginPanelItem* pItem, ImgLoadType aLoadType)
 {
 	int nIndex = -1;

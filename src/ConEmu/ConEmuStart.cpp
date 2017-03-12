@@ -653,7 +653,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 		{
 			bool bRunAsAdmin = false; // isPressed(VK_SHIFT);
 			return bRunAsAdmin;
-		};
+		}
 	};
 
 

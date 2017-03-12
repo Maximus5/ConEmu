@@ -273,7 +273,7 @@ namespace InputLogger
 	Event g_evt[BUFFER_INFO_SIZE];
 	LONG g_evtidx = -1;
 	LONG g_overflow = 0;
-};
+}
 
 
 

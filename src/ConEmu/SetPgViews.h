@@ -39,9 +39,9 @@ class CSetPgViews
 	, public CSetDlgColors
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgViews(); };
-	static TabHwndIndex PageType() { return thi_Views; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgViews(); }
+	static TabHwndIndex PageType() { return thi_Views; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgViews();
 	virtual ~CSetPgViews();

@@ -190,7 +190,7 @@ class CSettings
 		{
 			pObject = dynamic_cast<T*>(GetPageObj(T::PageType()));
 			return (pObject != NULL);
-		};
+		}
 		TabHwndIndex GetPageId(HWND hPage);
 
 	private:

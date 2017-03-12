@@ -42,7 +42,7 @@ namespace HandleKeeper
 	static bool InitHandleStorage();
 	static void FillHandleInfo(HandleInformation& Info, DWORD access);
 	static bool CheckConName(HandleSource source, DWORD access, const VOID* as_name, HandleInformation& Info);
-};
+}
 
 // MT-Safe, lock-free
 static bool HandleKeeper::InitHandleStorage()

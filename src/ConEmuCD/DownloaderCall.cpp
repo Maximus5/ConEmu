@@ -78,7 +78,7 @@ struct LineBuffer
 		cchUsed += cbSize;
 		_ASSERTE(cchUsed < cchMax);
 		ptrData[cchUsed] = 0;
-	};
+	}
 
 	bool GetLine(CEStr& szLine)
 	{
@@ -117,7 +117,7 @@ struct LineBuffer
 		ptrData[cchUsed] = 0;
 		// Succeeded
 		return true;
-	};
+	}
 };
 
 class CDownloader
@@ -160,7 +160,7 @@ public:
 			m_Proxy.szProxyUser = lstrdup(asProxyUser);
 		if (asProxyPassword)
 			m_Proxy.szProxyPassword = lstrdup(asProxyPassword);
-	};
+	}
 
 	// Logging, errors, download progress
 	void SetCallback(CEDownloadCommand cb, FDownloadCallback afnErrCallback, LPARAM lParam)
@@ -172,7 +172,7 @@ public:
 		}
 		mfn_Callback[cb] = afnErrCallback;
 		m_CallbackLParam[cb] = lParam;
-	};
+	}
 
 	void SetCmdStringFormat(LPCWSTR asFormat)
 	{
@@ -196,20 +196,20 @@ public:
 		}
 
 		CloseHandles();
-	};
+	}
 
 	void RequestTerminate()
 	{
 		mb_RequestTerminate = true;
 		CloseInternet(true);
-	};
+	}
 
 protected:
 	void CloseHandles()
 	{
 		SafeCloseHandle(m_PI.hProcess);
 		SafeCloseHandle(m_PI.hThread);
-	};
+	}
 
 protected:
 	bool CalcFileHash(LPCWSTR asFile, DWORD& size, DWORD& crc)
@@ -256,7 +256,7 @@ protected:
 		delete[] buf;
 		SafeCloseHandle(hFile);
 		return bRc;
-	};
+	}
 
 protected:
 	/* *** The part related to stdin/out redirection *** */
@@ -369,7 +369,7 @@ protected:
 		}
 
 		return 0;
-	};
+	}
 
 	UINT ExecuteDownloader(LPWSTR pszCommand, LPWSTR szCmdDirectory)
 	{
@@ -470,7 +470,7 @@ protected:
 		}
 		// Exit
 		return iRc;
-	};
+	}
 
 	wchar_t* CreateCommand(LPCWSTR asSource, LPCWSTR asTarget, UINT& iRc)
 	{
@@ -621,7 +621,7 @@ public:
 		SafeFree(szCmdDirectory);
 		CloseHandles();
 		return iRc;
-	};
+	}
 
 public:
 	CDownloader()
@@ -638,14 +638,14 @@ public:
 		mb_Terminating = false;
 		mh_PipeErrRead = mh_PipeErrWrite = mh_PipeErrThread = NULL;
 		mn_PipeErrThreadId = 0;
-	};
+	}
 
 	~CDownloader()
 	{
 		CloseInternet(true);
 		SetProxy(NULL, NULL, NULL);
 		SafeFree(szCmdStringFormat);
-	};
+	}
 };
 
 static CDownloader* gpInet = NULL;

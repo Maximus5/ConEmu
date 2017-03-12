@@ -246,22 +246,22 @@ inline int wcscpy_add(wchar_t* Buffer, wchar_t* /*BufferStart*/, const wchar_t *
 {
 	lstrcpyW(Buffer, Str);
 	return S_OK;
-};
+}
 inline int wcscpy_add(int Shift, wchar_t* BufferStart, const wchar_t *Str)
 {
 	lstrcpyW(BufferStart+Shift, Str);
 	return S_OK;
-};
+}
 inline int wcscat_add(wchar_t* Buffer, wchar_t* /*BufferStart*/, const wchar_t *Str)
 {
 	lstrcatW(Buffer, Str);
 	return S_OK;
-};
+}
 inline int wcscat_add(int Shift, wchar_t* BufferStart, const wchar_t* Str)
 {
 	lstrcatW(BufferStart+Shift, Str);
 	return S_OK;
-};
+}
 inline int wcscpy_c(wchar_t* Dst, const wchar_t *Src)
 {
 	lstrcpyW(Dst, Src);
@@ -288,7 +288,7 @@ int wcscpy_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t *Str
 
 	int nRc = StringCchCopyW(Buffer, SizeLeft, Str);
 	return nRc;
-};
+}
 template <size_t size>
 int wcscpy_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t* Str)
 {
@@ -302,7 +302,7 @@ int wcscpy_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t* Str)
 
 	int nRc = StringCchCopyW(BufferStart+Shift, SizeLeft, Str);
 	return nRc;
-};
+}
 template <size_t size>
 int wcscat_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t* Str)
 {
@@ -316,7 +316,7 @@ int wcscat_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t* Str
 
 	int nRc = StringCchCatW(Buffer, SizeLeft, Str);
 	return nRc;
-};
+}
 template <size_t size>
 int wcscat_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t *Str)
 {
@@ -330,7 +330,7 @@ int wcscat_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t *Str)
 
 	int nRc = StringCchCatW(BufferStart+Shift, SizeLeft, Str);
 	return nRc;
-};
+}
 template <size_t size>
 int wcscpy_c(wchar_t (&Dst)[size], const wchar_t *Src)
 {

@@ -39,11 +39,11 @@ struct CLogFont : public LOGFONT
 	{
 		LOGFONT LF = {};
 		*((LOGFONT*)this) = LF;
-	};
+	}
 	CLogFont(const LOGFONT& LF)
 	{
 		*((LOGFONT*)this) = LF;
-	};
+	}
 	// draft
 	CLogFont(LPCWSTR asFamily, LONG anHeight, LONG anWidth = 0, LONG anWeight = FW_NORMAL, BYTE anCharset = DEFAULT_CHARSET, BYTE anQuality = gpSet->mn_AntiAlias /*, ... */)
 	{
@@ -55,5 +55,5 @@ struct CLogFont : public LOGFONT
 		LF.lfCharSet = anCharset;
 		LF.lfQuality = anQuality;
 		*((LOGFONT*)this) = LF;
-	};
+	}
 };

@@ -50,4 +50,4 @@ namespace ConEmuMacro
 	#ifdef _DEBUG
 	void UnitTests();
 	#endif
-};
+}

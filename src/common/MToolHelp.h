@@ -66,7 +66,7 @@ protected:
 	virtual bool Filter(T* lp)
 	{
 		return true;
-	};
+	}
 
 	bool getNext()
 	{
@@ -119,7 +119,7 @@ protected:
 
 		m_Items.push_back(m_Item);
 		return true;
-	};
+	}
 
 public:
 	MToolHelp(DWORD dwFlags = 0, DWORD th32ProcessID = 0)
@@ -134,12 +134,12 @@ public:
 	{
 		ZeroStruct(m_Item);
 		*((LPDWORD)&m_Item) = sizeof(T);
-	};
+	}
 
 	virtual ~MToolHelp()
 	{
 		Close();
-	};
+	}
 
 	void Close(bool bReset = false)
 	{
@@ -155,7 +155,7 @@ public:
 		mn_Position = 0;
 
 		m_Items.eraseall();
-	};
+	}
 
 	bool Open()
 	{
@@ -167,26 +167,26 @@ public:
 		_ASSERTE(!mb_EndOfList && !mb_Started && (mn_Position == 0));
 
 		return mb_Valid;
-	};
+	}
 
 	bool Open(DWORD dwFlags, DWORD th32ProcessID)
 	{
 		m_Flags = dwFlags;
 		m_ByProcessId = th32ProcessID;
 		return Open();
-	};
+	}
 
 	bool LoadAll()
 	{
 		while (getNext())
 			;
 		return (m_Items.size() > 0);
-	};
+	}
 
 	void Reset()
 	{
 		mn_Position = 0;
-	};
+	}
 
 	bool Next(T* lp)
 	{
@@ -202,7 +202,7 @@ public:
 		memmove(lp, &(m_Items[mn_Position]), sizeof(T));
 		mn_Position++;
 		return true;
-	};
+	}
 
 	bool Find(bool (*compare)(T* p, LPARAM lParam), LPARAM lParam, T* lp)
 	{
@@ -219,7 +219,7 @@ public:
 			}
 		}
 		return false;
-	};
+	}
 };
 
 class MToolHelpProcess : public MToolHelp<PROCESSENTRY32, Process32First, Process32Next>
@@ -228,7 +228,7 @@ public:
 	MToolHelpProcess()
 		: MToolHelp(TH32CS_SNAPPROCESS, 0)
 	{
-	};
+	}
 
 	// Inherited
 	// bool Next(PROCESSENTRY32* lp);
@@ -240,10 +240,10 @@ public:
 			static bool compare(PROCESSENTRY32* p, LPARAM lParam)
 			{
 				return (p->th32ProcessID == LODWORD(lParam));
-			};
+			}
 		};
 		return MToolHelp::Find(cmp::compare, (LPARAM)(DWORD_PTR)nPID, Info);
-	};
+	}
 
 	bool Find(LPCWSTR asExeName, PROCESSENTRY32* Info)
 	{
@@ -255,13 +255,13 @@ public:
 				LPCWSTR pszName2 = (LPCWSTR)lParam;
 				int iCmp = lstrcmpi(pszName1, pszName2);
 				return (iCmp == 0);
-			};
+			}
 		};
 		LPCWSTR pszName = PointToName(asExeName);
 		if (!pszName || !*pszName)
 			return false;
 		return MToolHelp::Find(cmp::compare, (LPARAM)pszName, Info);
-	};
+	}
 
 	// Visual Studio Code spawns a lot of children processes
 	// So we have a long tree of Code.exe/Code.exe/Code.exe
@@ -274,8 +274,8 @@ public:
 			LPCWSTR pszName;
 			MArray<PROCESSENTRY32>* Forks;
 			DWORD nParentPID;
-			cmp() {};
-			~cmp() {};
+			cmp() {}
+			~cmp() {}
 			static bool check(PROCESSENTRY32* p, LPARAM lParam)
 			{
 				cmp* pCmp = (cmp*)lParam;
@@ -289,7 +289,7 @@ public:
 				if (iCmp == 0)
 					pCmp->Forks->push_back(*p);
 				return false; // Process all processes in system...
-			};
+			}
 		} Cmp;
 		if (!GetModulePathName(NULL, lsSelfExe))
 			return false;
@@ -299,7 +299,7 @@ public:
 		PROCESSENTRY32 dummy = {};
 		MToolHelp::Find(cmp::check, (LPARAM)&Cmp, &dummy);
 		return (Forks.size() > 0);
-	};
+	}
 };
 
 class MToolHelpModule : public MToolHelp<MODULEENTRY32, Module32First, Module32Next>
@@ -308,7 +308,7 @@ public:
 	MToolHelpModule(DWORD th32ProcessID, bool SnapModule32 = false)
 		: MToolHelp(TH32CS_SNAPMODULE|(SnapModule32 ? TH32CS_SNAPMODULE32 : 0), th32ProcessID)
 	{
-	};
+	}
 
 	// Inherited
 	// bool Next(MODULEENTRY32* lp);
@@ -322,7 +322,7 @@ public:
 	MToolHelpThread(DWORD th32ProcessID)
 		: MToolHelp(TH32CS_SNAPTHREAD, th32ProcessID)
 	{
-	};
+	}
 
 	// Inherited
 	// bool Next(THREADENTRY32* lp);
@@ -331,5 +331,5 @@ protected:
 	virtual bool Filter(THREADENTRY32* lp)
 	{
 		return (lp->th32OwnerProcessID == m_ByProcessId);
-	};
+	}
 };

@@ -376,7 +376,7 @@ class CVirtualConsole :
 				, mb_Exists(), mb_ChangeDetected()
 				, mb_SelfSettings(), mb_HighlightRow(), mb_HighlightCol()
 			{
-			};
+			}
 		} m_HighlightInfo;
 		void ResetHighlightCoords();
 		void ResetHighlightHyperlinks();

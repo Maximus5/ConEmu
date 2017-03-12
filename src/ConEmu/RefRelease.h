@@ -57,7 +57,7 @@ public:
 		m_Locks.Init(32,true);
 		m_Locks.Set(GetCurrentThreadId(), 1);
 		#endif
-	};
+	}
 
 	void AddRef()
 	{
@@ -80,7 +80,7 @@ public:
 		m_Locks.Set(nTID, nLocks);
 		CS.Unlock();
 		#endif
-	};
+	}
 
 	int Release()
 	{
@@ -119,7 +119,7 @@ public:
 		}
 
 		return mn_RefCount;
-	};
+	}
 
 #ifdef _DEBUG
 	int RefCount()
@@ -134,7 +134,7 @@ protected:
 		#ifdef _DEBUG
 		m_Locks.Release();
 		#endif
-	};
+	}
 };
 
 template <class T>
@@ -152,7 +152,7 @@ protected:
 	{
 		this->Attach(guard.Ptr());
 		return this;
-	};
+	}
 	#endif
 
 public:
@@ -160,7 +160,7 @@ public:
 	{
 		mp_Ref = NULL;
 		mn_Tick = GetTickCount();
-	};
+	}
 
 	CRefGuard(T* apRef)
 	{
@@ -168,12 +168,12 @@ public:
 		mn_Tick = GetTickCount();
 
 		Attach(apRef);
-	};
+	}
 
 	virtual ~CRefGuard()
 	{
 		Release();
-	};
+	}
 
 	virtual void Release()
 	{
@@ -182,7 +182,7 @@ public:
 			mp_Ref->Release();
 			mp_Ref = NULL;
 		}
-	};
+	}
 
 	virtual bool Attach(T* apRef)
 	{
@@ -198,7 +198,7 @@ public:
 		}
 
 		return (mp_Ref != NULL);
-	};
+	}
 
 
 public:
@@ -207,18 +207,18 @@ public:
 	{
 		_ASSERTE(mp_Ref!=NULL);
 		return mp_Ref;
-	};
+	}
 
 	// Releases any current VCon and loads specified
 	CRefGuard& operator=(T* apRef)
 	{
 		Attach(apRef);
 		return *this;
-	};
+	}
 
 	// Ptr, No Asserts
 	T* Ptr()
 	{
 		return mp_Ref;
-	};
+	}
 };

@@ -209,6 +209,6 @@ public:
 			params = 0;
 			isScript = false; // true if switch ‘-cmdlist’ was used
 			SizePosPrm = false;
-		};
+		}
 	} opt;
 };

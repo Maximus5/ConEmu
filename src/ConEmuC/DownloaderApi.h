@@ -96,7 +96,7 @@ struct CEDownloadInfo
 		if (bAppendNewLine) _wcscat_c(pszAll, cchTotal, L"\n");
 		// Done
 		return pszAll;
-	};
+	}
 };
 
 typedef void (WINAPI* FDownloadCallback)(const CEDownloadInfo* pError);

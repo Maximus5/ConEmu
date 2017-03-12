@@ -189,7 +189,7 @@ void CSetPgApps::NotifyVCon()
 		{
 			pVCon->RCon()->ResetActiveAppSettingsId();
 			return true;
-		};
+		}
 	};
 	CVConGroup::EnumVCon(evf_All, impl::ResetAppId, 0);
 

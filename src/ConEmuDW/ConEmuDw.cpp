@@ -1530,7 +1530,7 @@ struct ColorParam
 				*cr = nClr;
 			}
 		}
-	};
+	}
 	void Ref2Far(BOOL Transparent, COLORREF cr, BOOL Foreground, FarColor* p)
 	{
 		int Color = (cr & 0x00FFFFFF);
@@ -1590,7 +1590,7 @@ struct ColorParam
 				p->Flags &= ~FCF_BG_4BIT; //TODO: Остальные флаги?
 			p->BackgroundColor = Color | SetTransparent(Transparent);
 		}
-	};
+	}
 };
 
 

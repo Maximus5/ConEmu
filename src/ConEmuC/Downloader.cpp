@@ -225,12 +225,12 @@ public:
 		_FtpSetCurrentDirectoryW = NULL;
 		_FtpOpenFileW = NULL;
 		//_DeleteUrlCacheEntryW = NULL;
-	};
+	}
 	~CWinInet()
 	{
 		if (_hWinInet)
 			FreeLibrary(_hWinInet);
-	};
+	}
 	bool Init(CDownloader* pUpd)
 	{
 		if (_hWinInet)

@@ -277,5 +277,5 @@ public:
 	CGroupGuard(CVConGroup* apRef);
 	virtual ~CGroupGuard();
 	virtual bool Attach(CVConGroup* apRef) override;
-	CVConGroup* VGroup() { return Ptr(); };
+	CVConGroup* VGroup() { return Ptr(); }
 };

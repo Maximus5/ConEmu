@@ -49,7 +49,7 @@ void CVConRelease::FinalRelease()
 		return;
 	}
 	DeleteFromMainThread();
-};
+}
 
 void CVConRelease::DeleteFromMainThread()
 {

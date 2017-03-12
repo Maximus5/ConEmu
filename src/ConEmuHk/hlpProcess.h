@@ -234,7 +234,7 @@ extern "C" {
 	FARPROC WINAPI GetLoadLibraryW();
 	BOOL WINAPI RequestTrampolines(HMODULE hModule);
 #if defined(__GNUC__)
-};
+}
 #endif
 
 void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate = ds_Undefined);

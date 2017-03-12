@@ -53,5 +53,5 @@ public:
 	CVConGuard(CVirtualConsole* apRef);
 	virtual ~CVConGuard();
 	virtual bool Attach(CVirtualConsole* apRef) override;
-	CVirtualConsole* VCon() { return Ptr(); };
+	CVirtualConsole* VCon() { return Ptr(); }
 };

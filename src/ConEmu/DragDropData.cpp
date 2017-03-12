@@ -875,7 +875,7 @@ template <class T> LPITEMIDLIST PidlGetNextItem(
 	}
 	else
 		return NULL;
-};
+}
 template <class T> void PidlDump(
 	T pidl, HANDLE hDumpFile = NULL
 )

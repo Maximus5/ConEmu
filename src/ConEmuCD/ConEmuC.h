@@ -645,14 +645,14 @@ struct SrvInfo
 		csRefreshControl.Init();
 		AltServers.Init();
 		TopLeft.Reset();
-	};
+	}
 	void FinalizeFields()
 	{
 		csColorerMappingCreate.Close();
 		csReadConsoleInfo.Close();
 		csRefreshControl.Close();
 		AltServers.Release();
-	};
+	}
 };
 
 extern SrvInfo *gpSrv;

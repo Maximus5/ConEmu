@@ -75,7 +75,7 @@ struct ConEmuInOutPipe
 
 	wrap:
 		return (bRc != FALSE);
-	};
+	}
 
 	DWORD CEIO_ThreadProcExec()
 	{
@@ -126,13 +126,13 @@ struct ConEmuInOutPipe
 		}
 
 		return 0;
-	};
+	}
 
 	static DWORD WINAPI CEIO_ThreadProc(LPVOID lpParameter)
 	{
 		ConEmuInOutPipe* p = (ConEmuInOutPipe*)lpParameter;
 		return p->CEIO_ThreadProcExec();
-	};
+	}
 
 	bool CEIO_RunThread()
 	{
@@ -147,7 +147,7 @@ struct ConEmuInOutPipe
 			_ASSERTEX(hThread==NULL);
 		}
 		return (hThread!=NULL);
-	};
+	}
 
 	void CEIO_Terminate()
 	{

@@ -38,7 +38,7 @@ protected:
 	
 public:
 	CPluginW2800();
-	virtual ~CPluginW2800() {};
+	virtual ~CPluginW2800() {}
 
 public:
 	virtual bool    CheckPanelExist() override;

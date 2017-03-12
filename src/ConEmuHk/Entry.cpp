@@ -205,7 +205,7 @@ struct DllMainCallInfo
 		InterlockedIncrement(&nCallCount);
 		nLastCallTick = GetTickCount();
 		nLastCallTID = GetCurrentThreadId();
-	};
+	}
 } gDllMainCallInfo[4] = {};
 
 

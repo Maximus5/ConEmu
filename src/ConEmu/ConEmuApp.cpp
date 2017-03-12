@@ -153,7 +153,7 @@ DontEnable::DontEnable(bool abLock /*= true*/)
 		nPrev = InterlockedIncrement(&gnDontEnable) - 1;
 	}
 	InterlockedIncrement(&gnDontEnableCount);
-};
+}
 DontEnable::~DontEnable()
 {
 	if (bLocked)
@@ -162,11 +162,11 @@ DontEnable::~DontEnable()
 	}
 	InterlockedDecrement(&gnDontEnableCount);
 	_ASSERTE(gnDontEnable>=0);
-};
+}
 bool DontEnable::isDontEnable()
 {
 	return (gnDontEnable > 0);
-};
+}
 
 
 const TCHAR *const gsClassName = VirtualConsoleClass; // окна отрисовки

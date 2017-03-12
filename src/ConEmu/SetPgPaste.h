@@ -37,9 +37,9 @@ class CSetPgPaste
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgPaste(); };
-	static TabHwndIndex PageType() { return thi_Paste; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgPaste(); }
+	static TabHwndIndex PageType() { return thi_Paste; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgPaste();
 	virtual ~CSetPgPaste();

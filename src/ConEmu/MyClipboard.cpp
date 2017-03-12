@@ -142,7 +142,7 @@ bool CopyToClipboard(LPCWSTR asText)
 					Formats[idx] = (cp == CP_ACP) ? CF_TEXT : CF_OEMTEXT;
 					idx++;
 				}
-			};
+			}
 
 			void AddData(const void* ptrData, size_t cbDataSize, UINT Format)
 			{
@@ -161,7 +161,7 @@ bool CopyToClipboard(LPCWSTR asText)
 				Hglbs[idx] = hglbCopy;
 				Formats[idx] = Format;
 				idx++;
-			};
+			}
 		} data = {};
 
 		if (gpSet->isCTSForceLocale)

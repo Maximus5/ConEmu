@@ -153,7 +153,7 @@ void CTaskSchedulerBase::DisplaySchedulerError(LPCWSTR pszStep)
 	_wsprintf(szInfo, SKIPCOUNT(szInfo) L" Please check scheduler log.\n" L"HR=%u, TaskName=\"", (DWORD)hr);
 	CEStr szErr(L"Scheduler: ", pszStep, szInfo, bsTaskName, L"\"\n", bsApplication, L" ", bsArguments);
 	DisplayLastError(szErr, (DWORD)hr);
-};
+}
 
 
 #if !defined(CE_HAS_SCHEDULER_V2)

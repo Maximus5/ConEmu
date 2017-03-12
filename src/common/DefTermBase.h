@@ -86,7 +86,7 @@ public:
 		pszzHookedApps = NULL;
 		bExternalPointers = false;
 		ZeroStruct(ftLastCheck);
-	};
+	}
 
 	~CEDefTermOpt()
 	{
@@ -101,7 +101,7 @@ public:
 			if (pszzHookedApps)
 				free(pszzHookedApps);
 		}
-	};
+	}
 
 public:
 	bool Serialize(bool bSave=false)
@@ -326,7 +326,7 @@ public:
 	const CEDefTermOpt* GetOpt()
 	{
 		return &m_Opt;
-	};
+	}
 
 protected:
 	virtual CDefTermBase* GetInterface() = 0;
@@ -360,19 +360,19 @@ public:
 		mb_ExplorerHookAllowed = true;
 		mb_Termination = false;
 		mcs = new MSectionSimple(true);
-	};
+	}
 
 	virtual ~CDefTermBase()
 	{
 		// StopHookers(); -- Have to be called in the ancestor destructor!
 		_ASSERTE(mcs==NULL);
-	};
+	}
 
 public:
 	bool IsReady()
 	{
 		return (this && mb_Initialized && mb_ReadyToHook);
-	};
+	}
 
 	static bool IsShellTrayWindowClass(LPCWSTR asClassName)
 	{
@@ -380,7 +380,7 @@ public:
 			&& ((lstrcmp(asClassName, L"Shell_TrayWnd") == 0)
 				);
 		return bShellTrayWnd;
-	};
+	}
 
 	static bool IsExplorerWindowClass(LPCWSTR asClassName)
 	{
@@ -389,7 +389,7 @@ public:
 				|| (lstrcmp(asClassName, L"ExploreWClass") == 0)
 				);
 		return bShellWnd;
-	};
+	}
 
 	static bool IsWindowResponsive(HWND hFore)
 	{
@@ -710,7 +710,7 @@ public:
 			LogHookingStatus(nForePID, L"CheckForeground finished");
 		}
 		return lbRc;
-	};
+	}
 
 public:
 	void OnHookedListChanged()
@@ -728,7 +728,7 @@ public:
 		// Если проводника в списке НЕ было, а сейчас появился...
 		// Проверить процесс шелла
 		CheckShellWindow();
-	};
+	}
 
 public:
 	int StartDefTermHooker(DWORD nPID, HANDLE hDefProcess = NULL)
@@ -996,17 +996,17 @@ protected:
 			_ASSERTE(hPostThread!=NULL);
 			mb_PostCreatedThread = false;
 		}
-	};
+	}
 
 protected:
 	virtual void PreCreateThread()
 	{
-	};
+	}
 
 protected:
 	virtual void PostCreateThreadFinished()
 	{
-	};
+	}
 
 protected:
 	// nPID = 0 when hooking is done (remove status bar notification)
@@ -1015,17 +1015,17 @@ protected:
 	{
 		// descendant must return true if status bar was changed
 		return false;
-	};
+	}
 public:
 	// Messages to be placed in log
 	virtual void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage)
 	{
 		DEBUGSTRDEFTERM(sMessage);
-	};
+	}
 	virtual bool isLogging()
 	{
 		return false;
-	};
+	}
 
 protected:
 	virtual void AutoClearThreads()
@@ -1035,12 +1035,12 @@ protected:
 
 		// Clear finished threads
 		ClearThreads(false);
-	};
+	}
 
 protected:
 	virtual void ConhostLocker(bool bLock, bool& bWasLocked)
 	{
-	};
+	}
 
 protected:
 	void ClearProcessed(bool bForceAll)
@@ -1094,7 +1094,7 @@ protected:
 		{
 			mh_LastIgnoredWnd = NULL;
 		}
-	};
+	}
 
 protected:
 	void ClearThreads(bool bForceTerminate)
@@ -1126,7 +1126,7 @@ protected:
 
 			m_Threads.erase(i);
 		}
-	};
+	}
 
 protected:
 	static DWORD WINAPI PostCreatedThread(LPVOID lpParameter)
@@ -1145,7 +1145,7 @@ protected:
 		pTerm->mb_PostCreatedThread = false;
 
 		return 0;
-	};
+	}
 
 protected:
 	// Чтобы избежать возможного зависания ConEmu.exe в процессе установки
@@ -1160,7 +1160,7 @@ protected:
 			free(pArg);
 		}
 		return bRc;
-	};
+	}
 
 protected:
 	// exe-шник в списке обрабатываемых?
@@ -1185,7 +1185,7 @@ protected:
 		}
 
 		return bMonitored;
-	};
+	}
 
 protected:
 	// Поставить хук в процесс шелла (explorer.exe)
@@ -1240,5 +1240,5 @@ protected:
 		}
 
 		return bHooked;
-	};
+	}
 };

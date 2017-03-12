@@ -163,25 +163,25 @@ public:
 public:
 	static INT_PTR CALLBACK pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	static HWND CreatePage(ConEmuSetupPages* p, HWND ahParent, UINT anActivateTabMsg, const CDpiForDialog* apParentDpi);
-	HWND Dlg() { return mh_Dlg; };
+	HWND Dlg() { return mh_Dlg; }
 
 public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) = 0;
-	virtual void OnPostLocalize(HWND hDlg) {};
+	virtual void OnPostLocalize(HWND hDlg) {}
 	virtual TabHwndIndex GetPageType() = 0;
 	virtual void ProcessDpiChange(const CDpiForDialog* apDpi);
 	// Optional page procedure
-	virtual INT_PTR PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam) { return 0; };
+	virtual INT_PTR PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam) { return 0; }
 	// Events
 	virtual void OnDpiChanged(const CDpiForDialog* apDpi);
-	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) { return 0; };
+	virtual LRESULT OnEditChanged(HWND hDlg, WORD nCtrlId) { return 0; }
 	virtual INT_PTR OnComboBox(HWND hDlg, WORD nCtrlId, WORD code);
 	virtual INT_PTR OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlId);
 	virtual INT_PTR OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId);
 	virtual INT_PTR OnSetCursor(HWND hDlg, HWND hCtrl, WORD nCtrlId, WORD nHitTest, WORD nMouseMsg);
-	virtual bool QueryDialogCancel() { return true; };
-	virtual bool SelectNextItem(bool bNext, bool bProcess) { return false; };
+	virtual bool QueryDialogCancel() { return true; }
+	virtual bool SelectNextItem(bool bNext, bool bProcess) { return false; }
 
 public:
 	// Members

@@ -800,7 +800,7 @@ struct ICODecoder
 		}
 
 		return TRUE;
-	};
+	}
 
 	void Close()
 	{
@@ -817,7 +817,7 @@ struct ICODecoder
 		}
 
 		FREE(this);
-	};
+	}
 };
 
 struct ICOImage
@@ -934,7 +934,7 @@ struct ICOImage
 		//pImageInfo->pComments = NULL;
 		//pImageInfo->pImageContext = pIcon;
 		return TRUE;
-	};
+	}
 
 	BOOL PageDecode(struct CET_LoadInfo* pLoadPreview)
 	{
@@ -1135,7 +1135,7 @@ struct ICOImage
 		}
 
 		return FALSE;
-	};
+	}
 
 	void Close()
 	{
@@ -1152,7 +1152,7 @@ struct ICOImage
 		}
 
 		FREE(this);
-	};
+	}
 };
 
 

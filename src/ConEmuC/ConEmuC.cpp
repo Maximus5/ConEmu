@@ -205,11 +205,11 @@ int DoParseArgs(LPCWSTR asCmdLine)
 			: hOut(ahOut), defAttr(adefAttr)
 		{
 			SetConsoleTextAttribute(hOut, fore|(defAttr & 0xF0));
-		};
+		}
 		~Highlighter()
 		{
 			SetConsoleTextAttribute(hOut, defAttr);
-		};
+		}
 	};
 	#undef HL
 	#define HL(fore) Highlighter hl(hOut, csbi.wAttributes, fore)
@@ -360,7 +360,7 @@ bool ProcessCommandLine(int& iRc, HMODULE& hConEmu)
 			{
 				bHelpRequested = true;
 				break;
-			};
+			}
 
 			// ToDo: /IsConEmu may be processed partially?
 

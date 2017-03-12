@@ -37,9 +37,9 @@ class CSetPgHilight
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgHilight(); };
-	static TabHwndIndex PageType() { return thi_Hilight; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgHilight(); }
+	static TabHwndIndex PageType() { return thi_Hilight; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgHilight();
 	virtual ~CSetPgHilight();

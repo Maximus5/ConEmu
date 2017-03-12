@@ -319,20 +319,20 @@ class CConEmuMain
 					nWheelScrollChars = 3;
 				if (!SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &nWheelScrollLines, 0) || !nWheelScrollLines)
 					nWheelScrollLines = 3;
-			};
+			}
 			UINT GetWheelScrollChars()
 			{
 				if (!nWheelScrollChars)
 					ReloadWheelScroll();
 				_ASSERTE(nWheelScrollChars<=3);
 				return nWheelScrollChars;
-			};
+			}
 			UINT GetWheelScrollLines()
 			{
 				if (!nWheelScrollLines)
 					ReloadWheelScroll();
 				return nWheelScrollLines;
-			};
+			}
 		} mouse;
 		struct SessionInfo
 		{

@@ -92,7 +92,7 @@ CHooksUnlocker::CHooksUnlocker()
 			mb_Processed = gfnHooksUnlockerProc(true);
 		}
 	}
-};
+}
 
 CHooksUnlocker::~CHooksUnlocker()
 {
@@ -113,7 +113,7 @@ CHooksUnlocker::~CHooksUnlocker()
 			}
 		}
 	}
-};
+}
 
 #include "WThreads.h"
 

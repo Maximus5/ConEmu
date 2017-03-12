@@ -141,7 +141,7 @@ MConHandle::MConHandle(LPCWSTR asName)
 	//	else if (!lstrcmpW(ms_Name, L"CONIN$"))
 	//		mn_StdMode = STD_INPUT_HANDLE;
 	//}
-};
+}
 
 #include <intrin.h>
 
@@ -157,7 +157,7 @@ void MConHandle::LogHandle(UINT evt, HANDLE h)
 MConHandle::~MConHandle()
 {
 	Close();
-};
+}
 
 void MConHandle::SetBufferPtr(HANDLE* ppOutBuffer)
 {
@@ -238,7 +238,7 @@ MConHandle::operator const HANDLE()
 
 	LogHandle(Event::e_GetHandle, mh_Handle);
 	return mh_Handle;
-};
+}
 
 void MConHandle::Close()
 {
@@ -264,4 +264,4 @@ void MConHandle::Close()
 			CloseHandle(h);
 		}
 	}
-};
+}

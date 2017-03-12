@@ -316,7 +316,7 @@ class CRealConsole
 			ConProcess Process;
 			CESERVER_REQ_PORTABLESTARTED paf;
 			// some helpers
-			bool    isGuiWnd() { return (hGuiWnd && (hGuiWnd != (HWND)INVALID_HANDLE_VALUE)); };
+			bool    isGuiWnd() { return (hGuiWnd && (hGuiWnd != (HWND)INVALID_HANDLE_VALUE)); }
 		} m_ChildGui;
 		void setGuiWndPID(HWND ahGuiWnd, DWORD anPID, int anBits, LPCWSTR asProcessName);
 		void setGuiWnd(HWND ahGuiWnd);
@@ -368,9 +368,9 @@ class CRealConsole
 
 		CVirtualConsole* VCon();
 
-		BYTE GetConsoleKeyShortcuts() { return this ? m_ConsoleKeyShortcuts : 0; };
-		BYTE GetDefaultTextColorIdx() { return this ? (mn_TextColorIdx & 0xF) : 7; };
-		BYTE GetDefaultBackColorIdx() { return this ? (mn_BackColorIdx & 0xF) : 0; };
+		BYTE GetConsoleKeyShortcuts() { return this ? m_ConsoleKeyShortcuts : 0; }
+		BYTE GetDefaultTextColorIdx() { return this ? (mn_TextColorIdx & 0xF) : 7; }
+		BYTE GetDefaultBackColorIdx() { return this ? (mn_BackColorIdx & 0xF) : 0; }
 
 		bool PreInit();
 		void DumpConsole(HANDLE ahFile);

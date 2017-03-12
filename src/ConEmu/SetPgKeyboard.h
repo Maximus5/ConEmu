@@ -37,9 +37,9 @@ class CSetPgKeyboard
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgKeyboard(); };
-	static TabHwndIndex PageType() { return thi_Keyboard; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgKeyboard(); }
+	static TabHwndIndex PageType() { return thi_Keyboard; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgKeyboard();
 	virtual ~CSetPgKeyboard();

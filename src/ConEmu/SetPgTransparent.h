@@ -39,9 +39,9 @@ class CSetPgTransparent
 	, protected CSetDlgColors
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgTransparent(); };
-	static TabHwndIndex PageType() { return thi_Transparent; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgTransparent(); }
+	static TabHwndIndex PageType() { return thi_Transparent; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgTransparent();
 	virtual ~CSetPgTransparent();

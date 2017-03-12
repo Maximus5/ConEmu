@@ -83,7 +83,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //				HRESULT hr = CoInitialize(NULL);
 //				gbMStreamCoInitialized = TRUE;
 //			}
-//		};
+//		}
 //		MStream()
 //		{
 //			mn_RefCount = 1;
@@ -102,7 +102,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //				HRESULT hr = CoInitialize(NULL);
 //				gbMStreamCoInitialized = TRUE;
 //			}
-//		};
+//		}
 //		HRESULT SaveAsData(
 //		    void** rpData,
 //		    long*  rnDataSize
@@ -121,7 +121,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //
 //			*rnDataSize = mn_DataLen;
 //			return S_OK;
-//		};
+//		}
 //	private:
 //		~MStream()
 //		{
@@ -132,7 +132,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //				mp_Data=NULL;
 //				mn_DataSize = 0; mn_DataPos = 0; mn_DataLen = 0;
 //			}
-//		};
+//		}
 //	public:
 //		virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject)
 //		{
@@ -195,7 +195,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //			if (pcbRead) *pcbRead=dwRead;
 //
 //			return S_OK;
-//		};
+//		}
 //
 //		virtual /* [local] */ HRESULT STDMETHODCALLTYPE Write(
 //		    /* [size_is][in] */ const void *pv,
@@ -245,7 +245,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //			if (pcbWritten) *pcbWritten=dwWritten;
 //
 //			return S_OK;
-//		};
+//		}
 //	public:
 //		/* IStream */
 //		virtual /* [local] */ HRESULT STDMETHODCALLTYPE Seek(
@@ -291,7 +291,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //			}
 //
 //			return S_OK;
-//		};
+//		}
 //
 //		virtual HRESULT STDMETHODCALLTYPE SetSize(
 //		    /* [in] */ ULARGE_INTEGER libNewSize)
@@ -336,7 +336,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //			}
 //
 //			return hr;
-//		};
+//		}
 //
 //		virtual /* [local] */ HRESULT STDMETHODCALLTYPE CopyTo(
 //		    /* [unique][in] */ IStream *pstm,
@@ -345,7 +345,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //		    /* [out] */ ULARGE_INTEGER *pcbWritten)
 //		{
 //			return STG_E_INVALIDFUNCTION;
-//		};
+//		}
 //
 //		virtual HRESULT STDMETHODCALLTYPE Commit(
 //		    /* [in] */ DWORD grfCommitFlags)
@@ -360,12 +360,12 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //			}
 //
 //			return S_OK;
-//		};
+//		}
 //
 //		virtual HRESULT STDMETHODCALLTYPE Revert(void)
 //		{
 //			return STG_E_INVALIDFUNCTION;
-//		};
+//		}
 //
 //		virtual HRESULT STDMETHODCALLTYPE LockRegion(
 //		    /* [in] */ ULARGE_INTEGER libOffset,
@@ -373,7 +373,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //		    /* [in] */ DWORD dwLockType)
 //		{
 //			return STG_E_INVALIDFUNCTION;
-//		};
+//		}
 //
 //		virtual HRESULT STDMETHODCALLTYPE UnlockRegion(
 //		    /* [in] */ ULARGE_INTEGER libOffset,
@@ -381,20 +381,20 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //		    /* [in] */ DWORD dwLockType)
 //		{
 //			return STG_E_INVALIDFUNCTION;
-//		};
+//		}
 //
 //		virtual HRESULT STDMETHODCALLTYPE Stat(
 //		    /* [out] */ STATSTG *pstatstg,
 //		    /* [in] */ DWORD grfStatFlag)
 //		{
 //			return STG_E_INVALIDFUNCTION;
-//		};
+//		}
 //
 //		virtual HRESULT STDMETHODCALLTYPE Clone(
 //		    /* [out] */ IStream **ppstm)
 //		{
 //			return STG_E_INVALIDFUNCTION;
-//		};
+//		}
 //};
 
 static bool InitializeGdiPlus()

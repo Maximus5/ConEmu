@@ -165,7 +165,7 @@ class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 			}
 
 			return S_FALSE;
-		};
+		}
 
 		//// Вызывается при успешном завершении обработки элемента при асинхронной обработке.
 		//// Если элемент обработан успешно (Status == eItemReady), вызывается OnItemReady
@@ -185,7 +185,7 @@ class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 		{
 			TODO("Вернуть TRUE при ExitFar");
 			return CQueueProcessor<IMAGE_CACHE_INFO*>::IsTerminationRequested();
-		};
+		}
 		// Здесь потомок может выполнить CoInitialize например
 		virtual HRESULT OnThreadStarted()
 		{
@@ -197,17 +197,17 @@ class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 		{
 			CoUninitialize();
 			return;
-		};
+		}
 		// Можно переопределить для изменения логики сравнения (используется при поиске)
 		virtual bool IsEqual(const IMAGE_CACHE_INFO*& pItem1, LONG_PTR lParam1, IMAGE_CACHE_INFO*& pItem2, LONG_PTR lParam2)
 		{
 			return (pItem1 == pItem2) && (lParam1 == lParam2);
-		};
+		}
 		// Если элемент потерял актуальность - стал НЕ высокоприоритетным
 		virtual bool CheckHighPriority(const IMAGE_CACHE_INFO*& pItem)
 		{
 			// Перекрыть в потомке и вернуть false, если, например, был запрос
 			// для текущей картинки, но пользователь уже улистал с нее на другую
 			return true;
-		};
+		}
 };

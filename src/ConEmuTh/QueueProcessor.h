@@ -130,7 +130,7 @@ class CQueueProcessor
 
 			mn_MaxCount = anInitialCount;
 			// Done
-		};
+		}
 	private:
 		// Полная очистка очереди. НЕ допускается во время жизни нити!
 		void ClearQueue()
@@ -158,7 +158,7 @@ class CQueueProcessor
 				free(mpp_Queue);
 				mpp_Queue = NULL;
 			}
-		};
+		}
 	private:
 		// Warning!!! Должна вызываться ВНУТРИ CriticalSection
 		void CheckWaitingCount()
@@ -267,7 +267,7 @@ class CQueueProcessor
 			CheckWaitingCount();
 			CS.Unlock();
 			return p;
-		};
+		}
 	public:
 		CQueueProcessor()
 		{
@@ -279,7 +279,7 @@ class CQueueProcessor
 			mp_Active = mp_SynchRequest = NULL;
 			mh_Alive = NULL; mn_AliveTick = NULL;
 			mb_TerminateRequested = false;
-		};
+		}
 		virtual ~CQueueProcessor()
 		{
 			Terminate(250);
@@ -303,7 +303,7 @@ class CQueueProcessor
 				CloseHandle(mh_Waiting);
 				mh_Waiting = NULL;
 			}
-		};
+		}
 
 	public:
 		// Запрос на завершение очереди
@@ -311,7 +311,7 @@ class CQueueProcessor
 		{
 			mb_TerminateRequested = true;
 			SetEvent(mh_Waiting);
-		};
+		}
 
 	public:
 		// Немедленное завершение очереди. Очереди дается nTimeout на корректный останов.
@@ -341,7 +341,7 @@ class CQueueProcessor
 				_ASSERTE(nWait == WAIT_OBJECT_0);
 				apiTerminateThread(mh_Queue, 100);
 			}
-		};
+		}
 	public:
 		// Если понадобится определить "живость" нити обработки
 		bool IsAlive()
@@ -476,7 +476,7 @@ class CQueueProcessor
 			//p->Status = eItemEmpty;
 			//// Возврат значения
 			//return p->Result;
-		};
+		}
 
 		// Перед помещением более актуальных элементов в очередь можно
 		// уменьшить приоритет текущих элементов на количество ступеней
@@ -508,7 +508,7 @@ class CQueueProcessor
 				// Больше не требуется
 				CS.Unlock();
 			}
-		};
+		}
 
 		// Очищаются все ячейки, с приоритетом равным или ниже указанного
 		// альтернатива функции DiscountPriority
@@ -548,7 +548,7 @@ class CQueueProcessor
 			}
 
 			//mn_Count = 0; -- !!! нельзя !!!
-		};
+		}
 
 		// Если требуется останов обработки только активного элемента -
 		// появился другой, высоко-приоритетный, который ожидает обработки
@@ -563,7 +563,7 @@ class CQueueProcessor
 				return false;
 
 			return mp_Active->StopRequested;
-		};
+		}
 
 	protected:
 		/* *** Подлежит! обязательному переопределению в потомках *** */
@@ -575,7 +575,7 @@ class CQueueProcessor
 		virtual HRESULT ProcessItem(T& pItem, LONG_PTR lParam)
 		{
 			return E_NOINTERFACE;
-		};
+		}
 
 	protected:
 		/* *** Можно переопределить в потомках *** */
@@ -585,12 +585,12 @@ class CQueueProcessor
 		virtual void OnItemReady(T& pItem, LONG_PTR lParam)
 		{
 			return;
-		};
+		}
 		// Иначе (Status == eItemFailed) - OnItemFailed
 		virtual void OnItemFailed(T& pItem, LONG_PTR lParam)
 		{
 			return;
-		};
+		}
 		// После завершения этих функций ячейка стирается!
 
 	protected:
@@ -600,7 +600,7 @@ class CQueueProcessor
 		virtual bool IsTerminationRequested()
 		{
 			return mb_TerminateRequested;
-		};
+		}
 		// Здесь потомок может выполнить CoInitialize например
 		virtual HRESULT OnThreadStarted()
 		{
@@ -610,13 +610,13 @@ class CQueueProcessor
 		virtual void OnThreadStopped()
 		{
 			return;
-		};
+		}
 		// Если требуются специфические действия по копированию элемента - переопределить
 		virtual void CopyItem(const T* pSrc, T* pDst)
 		{
 			if (pSrc != pDst)
 				memmove(pDst, pSrc, sizeof(T));
-		};
+		}
 		// Если элемент уже был запрошен с другими параметрами, а сейчас пришел новый запрос
 		virtual void ApplyChanges(T& pDst, const T& pSrc)
 		{
@@ -627,19 +627,19 @@ class CQueueProcessor
 		{
 			int i = memcmp(pItem1, pItem2, sizeof(T));
 			return (i == 0) && (lParam1 == lParam2);
-		};
+		}
 		// Если в T определены какие-то указатели - освободить их
 		virtual void FreeItem(const T& pItem)
 		{
 			return;
-		};
+		}
 		// Если элемент потерял актуальность - стал НЕ высокоприоритетным
 		virtual bool CheckHighPriority(const T& pItem)
 		{
 			// Перекрыть в потомке и вернуть false, если, например, был запрос
 			// для текущей картинки, но пользователь уже улистал с нее на другую
 			return true;
-		};
+		}
 
 	protected:
 		/* *** Эти функции не переопределяются *** */
@@ -771,7 +771,7 @@ class CQueueProcessor
 			}
 
 			return IsTerminationRequested();
-		};
+		}
 		static DWORD CALLBACK ProcessingThread(LPVOID pParam)
 		{
 			CQueueProcessor<T>* pThis = (CQueueProcessor<T>*)pParam;
@@ -783,7 +783,7 @@ class CQueueProcessor
 			}
 
 			return 0;
-		};
+		}
 		HRESULT CheckThread()
 		{
 			// Может нить уже запустили?
@@ -815,5 +815,5 @@ class CQueueProcessor
 			}
 
 			return (mh_Queue == NULL) ? E_UNEXPECTED : S_OK;
-		};
+		}
 };

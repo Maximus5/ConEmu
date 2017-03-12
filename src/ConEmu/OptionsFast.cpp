@@ -1033,7 +1033,7 @@ public:
 
 		VarDef v = {asName, psValue};
 		Vars.push_back(v);
-	};
+	}
 
 	void Process(int nBackSteps, LPCWSTR asName)
 	{
@@ -1069,7 +1069,7 @@ public:
 		Process(3, L"ConEmuDir");
 		Process(0, L"WinDir");
 		Process(0, L"ConEmuDrive");
-	};
+	}
 
 	~CVarDefs()
 	{
@@ -1079,7 +1079,7 @@ public:
 			SafeFree(v.pszName);
 			SafeFree(v.pszValue);
 		}
-	};
+	}
 };
 
 static CVarDefs *spVars = NULL;
@@ -1151,7 +1151,7 @@ public:
 			SafeFree(szArgs);
 			SafeFree(szPrefix);
 			SafeFree(szGuiArg);
-		};
+		}
 	};
 	MArray<AppInfo> Installed;
 
@@ -1214,7 +1214,7 @@ protected:
 		}
 
 		return iAdded;
-	}; // AddAppPath(LPCWSTR szPath)
+	} // AddAppPath(LPCWSTR szPath)
 
 	void Clean()
 	{
@@ -1350,7 +1350,7 @@ public:
 
 				// Equal?
 				return 0;
-			};
+			}
 		};
 		Installed.sort(impl::SortRoutine);
 
@@ -1521,18 +1521,18 @@ public:
 		Clean();
 
 		return bCreated;
-	};
+	}
 
 public:
 	AppFoundList(int anMaxFoundInstances = -1)
 		: mn_MaxFoundInstances(anMaxFoundInstances)
 	{
-	};
+	}
 
 	virtual ~AppFoundList()
 	{
 		Clean();
-	};
+	}
 };
 
 class FarVerList : public AppFoundList
@@ -1590,7 +1590,7 @@ protected:
 				}
 			}
 		}
-	}; // ScanRegistry()
+	} // ScanRegistry()
 
 public:
 	void FindInstalledVersions()
@@ -1679,7 +1679,7 @@ public:
 
 					// Equal?
 					return 0;
-				};
+				}
 			};
 			Installed.sort(impl::SortRoutine);
 
@@ -1733,7 +1733,7 @@ public:
 					break;
 			}
 		}
-	};
+	}
 
 public:
 	FarVerList()
@@ -1745,9 +1745,9 @@ public:
 			FarExe[i++] = szFar64Name;
 		FarExe[i++] = szFar32Name;
 		FarExe[i] = NULL;
-	};
+	}
 
-	~FarVerList() {};
+	~FarVerList() {}
 };
 
 static void CreateFarTasks()

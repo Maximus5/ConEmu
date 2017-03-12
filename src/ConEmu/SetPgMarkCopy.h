@@ -37,9 +37,9 @@ class CSetPgMarkCopy
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgMarkCopy(); };
-	static TabHwndIndex PageType() { return thi_MarkCopy; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgMarkCopy(); }
+	static TabHwndIndex PageType() { return thi_MarkCopy; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgMarkCopy();
 	virtual ~CSetPgMarkCopy();

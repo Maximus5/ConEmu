@@ -131,7 +131,7 @@ T* xf_interlocked_new(T*& pv, T* RVAL_REF pNew XF_PLACE_ARGS_DEF)
 		delete pNew;
 	}
 	return pv;
-};
+}
 #define inew(pv,pn) xf_interlocked_new(pv, pn XF_PLACE_ARGS_VAL)
 
 bool __cdecl xf_validate(void * _Memory = NULL);

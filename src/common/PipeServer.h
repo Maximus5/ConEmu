@@ -216,7 +216,7 @@ struct PipeServer
 				ptrRequest = (T*)malloc(anSize);
 				cbMaxReadSize = anSize;
 				return ptrRequest;
-			};
+			}
 			// Answer (to client)
 			DWORD cbReplySize, cbMaxReplySize;
 			T* ptrReply; // !!! Память выделяется в mfn_PipeServerCommand
@@ -1162,7 +1162,7 @@ struct PipeServer
 
 			UNREFERENCED_PARAMETER(dwTID);
 			return 0;
-		};
+		}
 		bool StartPipeInstance(PipeInst* pPipe)
 		{
 			PLOG("StartPipeInstance");
@@ -1226,7 +1226,7 @@ struct PipeServer
 
 			PLOG("StartPipeInstance.Done");
 			return true;
-		};
+		}
 		static DWORD WINAPI _PipeServerThread(LPVOID lpvParam)
 		{
 			DWORD nResult = 101;
@@ -1269,7 +1269,7 @@ struct PipeServer
 			//	apiTerminateThread(GetCurrentThread(), 100);
 			//}
 			return nResult;
-		};
+		}
 		static void TerminatePipeThread(HANDLE& hThread, const PipeInst& pipe, bool& rbForceTerminated)
 		{
 			if (!hThread)
@@ -1327,34 +1327,34 @@ struct PipeServer
 			// Звать ПЕРЕД StartPipeServer
 			_ASSERTEX(mb_Initialized==FALSE);
 			mn_Priority = nPriority;
-		};
+		}
 
 		void SetInputOnly(bool bInputOnly)
 		{
 			// Звать ПЕРЕД StartPipeServer
 			_ASSERTEX(mb_Initialized==FALSE);
 			mb_InputOnly = bInputOnly;
-		};
+		}
 
 		void SetOverlapped(bool bOverlapped)
 		{
 			// Звать ПЕРЕД StartPipeServer
 			_ASSERTEX(mb_Initialized==FALSE);
 			mb_Overlapped = bOverlapped;
-		};
+		}
 
 		void SetLoopCommands(bool bLoopCommands)
 		{
 			// Звать ПЕРЕД StartPipeServer
 			_ASSERTEX(mb_Initialized==FALSE);
 			mb_LoopCommands = bLoopCommands;
-		};
+		}
 
 		void SetDummyAnswerSize(int anDummyAnswerSize)
 		{
 			// Звать ПЕРЕД StartPipeServer
 			mn_DummyAnswerSize = anDummyAnswerSize;
-		};
+		}
 
 		void SetMaxCount(int nMaxCount)
 		{
@@ -1365,7 +1365,7 @@ struct PipeServer
 				return;
 			}
 			mn_MaxCount = nMaxCount;
-		};
+		}
 		
 		bool StartPipeServer(
 			    bool abForceTerminate,
@@ -1446,7 +1446,7 @@ struct PipeServer
 			//#endif
 			
 			return true;
-		};
+		}
 
 		void StopPipeServer(bool bFromDllMain, bool& rbForceTerminated)
 		{
@@ -1636,7 +1636,7 @@ struct PipeServer
 			mb_Initialized = FALSE;
 
 			PLOG3(-1,"StopPipeServer done",0);
-		};
+		}
 
 		bool DelayedWrite(LPVOID pInstance, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite)
 		{
@@ -1647,19 +1647,19 @@ struct PipeServer
 			int iRc = PipeServerWrite(pPipe, lpBuffer, nNumberOfBytesToWrite, &dwWritten, TRUE);
 
 			return (iRc == 1);
-		};
+		}
 
 		void BreakConnection(LPVOID pInstance)
 		{
 			PipeInst* pPipe = (PipeInst*)pInstance;
 			PLOG("BreakConnection");
 			pPipe->bBreakConnection = true;
-		};
+		}
 
 		HANDLE GetPipeHandle(LPVOID pInstance)
 		{
 			return pInstance ? ((PipeInst*)pInstance)->hPipeInst : NULL;
-		};
+		}
 
 		bool IsPipeThread(DWORD TID)
 		{
@@ -1673,7 +1673,7 @@ struct PipeServer
 			}
 
 			return false;
-		};
+		}
 };
 
 #undef PLOG

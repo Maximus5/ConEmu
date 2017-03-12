@@ -151,11 +151,11 @@ struct NestedCallCounter
 		: ncl(NestedCallLevel)
 	{
 		InterlockedIncrement(&ncl);
-	};
+	}
 	~NestedCallCounter()
 	{
 		InterlockedDecrement(&ncl);
-	};
+	}
 };
 
 #define NestedCallAssert(level) \

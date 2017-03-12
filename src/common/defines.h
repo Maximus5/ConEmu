@@ -272,5 +272,5 @@ inline __int64 InterlockedAdd64(__int64 volatile * Addend, __int64 Value)
 {
 	*Addend += Value;
 	return *Addend;
-};
+}
 #endif

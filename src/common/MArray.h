@@ -67,11 +67,11 @@ class MArray
 				return;
 			}
 			MCHKHEAP;
-		};
+		}
 		~MArray()
 		{
 			clear();
-		};
+		}
 
 		const _Ty & operator[](INT_PTR _Index) const
 		{
@@ -83,7 +83,7 @@ class MArray
 			_Ty _Item = ((_Ty*)mp_Elements)[_Index];
 			#endif
 			return ((_Ty*)mp_Elements)[_Index];
-		};
+		}
 		_Ty & operator[](INT_PTR _Index)
 		{
 			#ifdef _DEBUG
@@ -94,7 +94,7 @@ class MArray
 			_Ty _Item = ((_Ty*)mp_Elements)[_Index];
 			#endif
 			return ((_Ty*)mp_Elements)[_Index];
-		};
+		}
 
 		INT_PTR push_back(const _Ty& _Item)
 		{
@@ -116,7 +116,7 @@ class MArray
 				&_Item, mn_TySize);
 			MCHKHEAP;
 			return nPos;
-		};
+		}
 		void insert(INT_PTR nPosBefore, const _Ty& _Item)
 		{
 			if (mn_TySize==0)
@@ -145,7 +145,7 @@ class MArray
 				&_Item, mn_TySize);
 			mn_Elements++;
 			MCHKHEAP;
-		};
+		}
 		bool pop_back(_Ty& _Item)
 		{
 			if ((mn_TySize==0) || (mn_Elements<=0))
@@ -161,13 +161,13 @@ class MArray
 			MCHKHEAP;
 			mn_Elements--;
 			return true;
-		};
+		}
 		_Ty* detach()
 		{
 			_Ty* p = mp_Elements;  mp_Elements = NULL;
 			clear();
 			return p;
-		};
+		}
 		void clear()
 		{
 			if (mp_Elements)
@@ -177,7 +177,7 @@ class MArray
 			}
 			mn_MaxSize = 0; mn_Elements = 0;
 			MCHKHEAP;
-		};
+		}
 		void erase(INT_PTR _Index)
 		{
 			#ifdef _DEBUG
@@ -197,21 +197,21 @@ class MArray
 				MCHKHEAP;
 			}
 			mn_Elements--;
-		};
+		}
 		void eraseall()
 		{
 			mn_Elements = 0;
-		};
+		}
 
 		INT_PTR size() const
 		{
 			return mn_Elements;
-		};
+		}
 
 		bool empty() const
 		{
 			return (mn_Elements == 0);
-		};
+		}
 
 		void addsize(INT_PTR nElements)
 		{
@@ -259,7 +259,7 @@ class MArray
 				}
 			}
 			MCHKHEAP;
-		};
+		}
 
 		#ifndef NOMARRAYSORT
 		void sort(int(*MARRAYSORTCALLBACK)(_Ty &e1, _Ty &e2))
@@ -289,7 +289,7 @@ class MArray
 				}
 			}
 			MCHKHEAP;
-		};
+		}
 		#endif
 
 		bool alloc(INT_PTR _nCount)
@@ -310,7 +310,7 @@ class MArray
 				//mn_Elements = min(_nCount,mn_MaxSize);
 			}
 			return true;
-		};
+		}
 		void set_at(INT_PTR _Index, _Ty & _Item)
 		{
 			if (mn_TySize==0)
@@ -343,7 +343,7 @@ class MArray
 				((_Ty*)mp_Elements)+(_Index),
 				&_Item, mn_TySize);
 			MCHKHEAP;
-		};
+		}
 };
 
 //#pragma warning( default : 4101 )

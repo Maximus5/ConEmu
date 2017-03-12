@@ -37,9 +37,9 @@ class CSetPgANSI
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgANSI(); };
-	static TabHwndIndex PageType() { return thi_ANSI; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgANSI(); }
+	static TabHwndIndex PageType() { return thi_ANSI; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgANSI();
 	virtual ~CSetPgANSI();
