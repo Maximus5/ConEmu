@@ -1252,7 +1252,7 @@ struct PipeServer
 			// we possibly get in deadlock on "normal" thread termination
 			// LdrShutdownThread in THIS thread fails to enter into critical section,
 			// because it already locked by MAIN thread (DllMain)
-			// So, StopPipeServer will fails on wait for pipe threads
+			// So, StopPipeServer will fail on wait for pipe threads
 			if (pPipe->pServer->mb_StopFromDllMain)
 			{
 				//WaitForSingleObject(pPipe->hThread, INFINITE); -- don't enter infinite lock
@@ -1558,7 +1558,7 @@ struct PipeServer
 							// we possibly get in deadlock on "normal" thread termination
 							// LdrShutdownThread in PIPE thread fails to enter into critical section,
 							// because it already locked by THIS thread (DllMain)
-							// So, StopPipeServer will fails on wait for pipe threads
+							// So, StopPipeServer will fail on wait for pipe threads
 							if (!mb_StopFromDllMain)
 							{
 								SuspendThread(m_Pipes[i].hThread);

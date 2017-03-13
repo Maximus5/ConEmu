@@ -624,7 +624,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 		}
 
 		// Last chance - try to post key sequence "F10 Left Left Down Down Down Left"
-		// This will opens popup menu containing "Tip of the day" menuitem
+		// This will open popup menu containing "Tip of the day" menuitem
 		// "Esc Esc Esc" it and post {WM_COMMAND,EMID_TIPOFDAY} again
 		WORD vkPostKeys[] = {VK_ESCAPE, VK_ESCAPE, VK_ESCAPE, VK_RIGHT, VK_RIGHT, VK_RIGHT, VK_DOWN, VK_DOWN, VK_DOWN, VK_RIGHT, VK_ESCAPE, VK_ESCAPE, VK_ESCAPE, 0};
 
