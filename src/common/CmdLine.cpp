@@ -238,7 +238,7 @@ int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/
 		{
 			// To be correctly parsed something like this:
 			// reg.exe add "HKCU\MyCo" /ve /t REG_EXPAND_SZ /d "\"C:\ConEmu\ConEmuPortable.exe\" /Dir \"%V\" /cmd \"cmd.exe\" \"-new_console:nC:cmd.exe\" \"-cur_console:d:%V\"" /f
-			// But must not fails with ‘simple’ command like (no escapes in "C:\"):
+			// But must not fail with ‘simple’ command like (no escapes in "C:\"):
 			// /dir "C:\" /icon "cmd.exe" /single
 
 			// Prev version fails while getting strings for -GuiMacro, example:

@@ -1571,7 +1571,7 @@ BOOL CConEmuMain::Init()
 
 void CConEmuMain::DeinitOnDestroy(HWND hWnd, bool abForce /*= false*/)
 {
-	// May it hangs in some cases?
+	// May it hang in some cases?
 	session.SetSessionNotification(false);
 
 	// Ensure "RCon starting queue" is terminated

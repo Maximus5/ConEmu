@@ -2375,7 +2375,7 @@ BOOL LoadThSet(DWORD anGuiPid/* =-1 */)
 		ThSetMap.GetTo(&gThSet);
 		ThSetMap.CloseMap();
 
-		// Palette may ba AppDistict
+		// Palette may be AppDistict
 		HWND hRealConWnd = gfGetFarHWND2 ? gfGetFarHWND2(3) : NULL;
 		if (hRealConWnd)
 		{

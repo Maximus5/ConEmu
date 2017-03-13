@@ -282,7 +282,7 @@ HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = NULL)
 			token.Enable(1, SE_DEBUG_NAME);
 
 			// Сначала - пробуем "все права"
-			// PROCESS_ALL_ACCESS (defined in new SDK) may fails on WinXP!
+			// PROCESS_ALL_ACCESS (defined in new SDK) may fail on WinXP!
 			hProcess = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, nPID);
 			if (!hProcess)
 			{
@@ -948,7 +948,7 @@ void ProcessDebugEvent()
 					{
 						_printf(CE_CONEMUC_NAME_A ": Press Ctrl+Break to create minidump of debugging process\n");
 					}
-					//else // -- wrong way, HandlerRoutine will/may fails on first attach
+					//else // -- wrong way, HandlerRoutine will/may fail on first attach
 					//{
 					//	// Сразу сделать дамп и выйти
 					//	HandlerRoutine(CTRL_BREAK_EVENT);

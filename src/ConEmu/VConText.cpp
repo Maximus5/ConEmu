@@ -545,7 +545,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 		// Miscellaneous borders
 		else if (isCharPseudographics(wc))
 		{
-			// Processed separately from isCharAltFont, because last may covert larger range
+			// Processed separately from isCharAltFont, because last may cover larger range
 			p->Flags = TRF_TextPseudograph;
 			if (bUseAlternativeFont && isCharAltFont(wc))
 			{
@@ -573,7 +573,7 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 		}
 		else if (isCharCJK(wc)) // Double-width characters (CJK, etc.)
 		{
-			// Processed separately from isCharAltFont, because last may covert larger range
+			// Processed separately from isCharAltFont, because last may cover larger range
 			p->Flags = TRF_TextCJK;
 			if (bUseAlternativeFont && isCharAltFont(wc))
 			{

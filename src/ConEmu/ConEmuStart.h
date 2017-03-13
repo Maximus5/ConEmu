@@ -41,7 +41,7 @@ enum CESwitchType
 	sw_FnSet,   // "/log1" -> Int=1
 	sw_Str,     // string, may be min/max length specified
 	sw_EnvStr,  // expanded env string, may be min/max length specified
-	sw_PathStr, // path, may contains env strings, may be min/max length specified
+	sw_PathStr, // path, may contain env strings, may be min/max length specified
 	sw_Cmd,     // "-run ..."
 	sw_CmdList, // "-runlist ..."
 };

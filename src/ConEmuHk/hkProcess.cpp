@@ -648,7 +648,7 @@ HRESULT WINAPI OnShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszSt
 	HRESULT hr = S_OK;
 
 	// This is used from "Run" dialog too. We need to process command internally, because
-	// otherwise Win can pass CREATE_SUSPENDED into CreateProcessW, so console will flickers.
+	// otherwise Win can pass CREATE_SUSPENDED into CreateProcessW, so console will flicker.
 	// From Win7 start menu: "cmd" and Ctrl+Shift+Enter - dwSeclFlags==0x79
 	if (nShow && pwszCommand && pwszStartDir)
 	{

@@ -100,7 +100,7 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 #define pAboutTasks \
 	L"You may set up most used shells as ConEmu's ‘Tasks’ (‘Settings’ dialog ‘Tasks’ page).\r\n" \
 	L"\r\n" \
-	L"Each Task may contains one or more commands, " \
+	L"Each Task may contain one or more commands, " \
 	L"each command will be started in separate ConEmu tab or pane.\r\n" \
 	L"Delimit Task Commands with empty lines.\r\n" \
 	L"\r\n" \

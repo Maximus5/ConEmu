@@ -86,7 +86,7 @@ bool CGuiServer::Start()
 	mp_GuiServer->SetLoopCommands(false);
 	mp_GuiServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 
-	// Issue 1828: FindWindowEx may fails in some cases, only PID will be working...
+	// Issue 1828: FindWindowEx may fail in some cases, only PID will be working...
 	_wsprintf(ms_ServerPipePID, SKIPLEN(countof(ms_ServerPipePID)) CESERVERPIPENAME, L".", GetCurrentProcessId());
 
 	mp_GuiServerPID->SetOverlapped(true);

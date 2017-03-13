@@ -627,7 +627,7 @@ BOOL CheckProcessCount(BOOL abForce/*=FALSE*/)
 		}
 	}
 
-	// Wine related: GetConsoleProcessList may fails
+	// Wine related: GetConsoleProcessList may fail
 	// or ChildGui related: GUI app started in tab and (optionally) it starts another app (console or gui)
 	if (!bProcFound)
 	{

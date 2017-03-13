@@ -275,7 +275,7 @@ void CRunQueue::AdvanceQueue()
 	if (m_RunQueue.empty())
 		return;
 
-	// Execution will starts after group (task or -cmdlist) creates all RCon's
+	// Execution will start after group (task or -cmdlist) creates all RCon's
 	// AdvanceQueue will be called from CVConGroup::OnCreateGroupEnd()
 	if (CVConGroup::InCreateGroup())
 		return;

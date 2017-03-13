@@ -223,7 +223,7 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 					else if (Inst.hConEmuWnd && !Inst.nPID)
 						_wsprintf(szLog, SKIPLEN(countof(szLog)) L"First found requested, instance found HWND=x%08X", (DWORD)(DWORD_PTR)Inst.hConEmuWnd);
 					else
-						_wsprintf(szLog, SKIPLEN(countof(szLog)) L"No instances was found (requested PID=%u) GuiMacro will fails", Inst.nPID);
+						_wsprintf(szLog, SKIPLEN(countof(szLog)) L"No instances was found (requested PID=%u) GuiMacro will fail", Inst.nPID);
 					gpLogSize->LogString(szLog);
 				}
 
@@ -286,7 +286,7 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 
 int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR* bsResult /*= NULL*/)
 {
-	// If neither hMacroInstance nor ghConEmuWnd was set - Macro will fails most likely
+	// If neither hMacroInstance nor ghConEmuWnd was set - Macro will fail most likely
 	_ASSERTE(Inst.hConEmuWnd!=NULL || ghConEmuWnd!=NULL);
 
 	wchar_t szErrInst[80] = L"FAILED:Specified ConEmu instance is not found";

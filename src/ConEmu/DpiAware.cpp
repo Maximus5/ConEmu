@@ -452,10 +452,10 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, CDynDialog* apDlgTempl
 	LogString(szLog);
 
 	// Up to Windows 8 - OS will care of dialog scaling
-	// And what will happens in Windows 8.1?
+	// And what will happen in Windows 8.1?
 	// If `Per-monitor` dpi was choosed in the OS settings,
 	// we need to re-scale our dialog manually!
-	// But if one dpi was choosed for all monitors?
+	// But if one dpi was chosen for all monitors?
 
 	CDpiAware::QueryDpiForMonitor(NULL, &m_InitDpi); // Whole desktop DPI (in most cases that will be Primary monitor DPI)
 	m_CurDpi.SetDpi(m_InitDpi);

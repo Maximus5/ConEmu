@@ -385,7 +385,7 @@ BOOL WINAPI OnReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 
 	// gh#465: For consistence with OnReadConsoleW
 	if (lbRc && lpBuffer && lpNumberOfCharsRead && *lpNumberOfCharsRead
-		// pInputControl has no evvect on ANSI version
+		// pInputControl has no effect on ANSI version
 		&& (*lpNumberOfCharsRead <= 3))
 	{
 		// To avoid checking of the mapping, we check result first
