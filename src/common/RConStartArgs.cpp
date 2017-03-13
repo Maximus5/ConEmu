@@ -81,7 +81,7 @@ void RConStartArgs::RunArgTests()
 		{L"\"This is test\" Next-arg \t\n \"Third Arg +++++++++++++++++++\" ++", {L"This is test", L"Next-arg", L"Third Arg +++++++++++++++++++"}},
 		{L"\"\"cmd\"\"", {L"cmd"}},
 		{L"\"\"c:\\Windows\\System32\\cmd.exe\" /?\"", {L"c:\\Windows\\System32\\cmd.exe", L"/?"}},
-		// Following example is crazy, but quotation issues may happens
+		// Following example is crazy, but quotation issues may happen
 		//{L"First Sec\"\"ond \"Thi\"rd\" \"Fo\"\"rth\"", {L"First", L"Sec\"\"ond", L"Thi\"rd", L"Fo\"\"rth"}},
 		{L"First \"Fo\"\"rth\"", {L"First", L"Fo\"rth"}},
 		// Multiple commands

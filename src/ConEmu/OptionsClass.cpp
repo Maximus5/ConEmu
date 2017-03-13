@@ -349,7 +349,7 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 			if (!pHK)
 				break;
 
-			// chk_Local may fails to be registered by RegisterHotKey
+			// chk_Local may fail to be registered by RegisterHotKey
 			// so it's better to try both ways if possible
 			if ((pHK->HkType == chk_Modifier) || (pHK->HkType == chk_Global))
 				continue;
@@ -1087,7 +1087,7 @@ void CSettings::SearchForControls()
 								|| (lstrcmpi(szClass, L"Static") == 0))
 						&& GetWindowText(hCtrl, szText, countof(szText)) && *szText)
 					{
-						// The control's text may has (&) accelerator confusing the search
+						// The control's text may have (&) accelerator confusing the search
 						wchar_t* p = wcschr(szText, L'&');
 						while (p)
 						{

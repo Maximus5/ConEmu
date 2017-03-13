@@ -835,7 +835,7 @@ wrap:
 
 bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
 {
-	// That may occures if Basic settings and "Export" button was pressed
+	// That may occur if Basic settings and "Export" button was pressed
 	_ASSERTE(!gpConEmu->IsResetBasicSettings() || ((access & KEY_WRITE)!=KEY_WRITE));
 
 	bool lbRc = false;
@@ -1217,7 +1217,7 @@ IXMLDOMNode* SettingsXML::FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, c
 	else
 	{
 		long lFound = 0;
-		// key[@name="abc"], but it is case-sensitive, and may fails in theory
+		// key[@name="abc"], but it is case-sensitive, and may fail in theory
 		bsText = lstrmerge(asType, L"[@name=\"", asName, L"\"]");
 		hr = apFrom->selectNodes(bsText, &pList);
 		if (SUCCEEDED(hr) && pList)

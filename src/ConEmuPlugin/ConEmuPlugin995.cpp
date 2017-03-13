@@ -145,7 +145,7 @@ wchar_t* CPluginW995::GetPanelDir(GetPanelDirFlags Flags, wchar_t* pszBuffer /*=
 			}
 		}
 	}
-	// May happens on Far termination
+	// May happen on Far termination
 	//_ASSERTE(nSize>0);
 
 wrap:

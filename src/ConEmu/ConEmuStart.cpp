@@ -593,7 +593,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 	CEStr   szExeName, szExeNameOnly;
 
 	// Set %ConEmuArgs% env var
-	// It may be usefull if we need to restart ConEmu
+	// It may be useful if we need to restart ConEmu
 	// from batch/script with the same arguments (selfupdate etc.)
 	LPCWSTR pszCopyToEnvStart = NULL;
 

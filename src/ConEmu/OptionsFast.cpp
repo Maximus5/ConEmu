@@ -1087,7 +1087,7 @@ static CVarDefs *spVars = NULL;
 static bool UnExpandEnvStrings(LPCWSTR asSource, wchar_t* rsUnExpanded, INT_PTR cchMax)
 {
 	// Don't use PathUnExpandEnvStrings because it uses %SystemDrive% instead of %ConEmuDrive%,
-	// and %ProgramFiles% but it may fails on 64-bit OS due to bitness differences
+	// and %ProgramFiles% but it may fail on 64-bit OS due to bitness differences
 	// - if (UnExpandEnvStrings(szFound, szUnexpand, countof(szUnexpand)) && (lstrcmp(szFound, szUnexpand) != 0)) ;
 	if (!spVars)
 	{

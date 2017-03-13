@@ -3820,7 +3820,7 @@ wrap:
 	// HeapDeinitialize() - Нельзя. Еще живут глобальные объекты
 	DEBUGSTRSTARTUP(L"WinMain exit");
 	// If TerminateThread was called at least once,
-	// normal process shutdown may hangs
+	// normal process shutdown may hang
 	if (wasTerminateThreadCalled())
 	{
 		TerminateProcess(GetCurrentProcess(), iMainRc);
