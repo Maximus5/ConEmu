@@ -236,7 +236,7 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 
 	if (asWorkDir && *asWorkDir)
 	{
-		// Executable (or icon) file may be not availbale by %PATH%, let "cd" to it...
+		// Executable (or icon) file may be not available by %PATH%, let "cd" to it...
 		bDirChanged = gpConEmu->ChangeWorkDir(asWorkDir);
 	}
 

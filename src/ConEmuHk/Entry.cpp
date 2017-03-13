@@ -610,7 +610,7 @@ ShowExeMsgBox gbShowExeMsgBox = smb_None;
 //	C:\Program Files (x86)\Avecto\Privilege Guard Client\PGHook.dll
 //
 //	Some debugging shows that PGHook.dll was started (or starts?) background thread
-//	and exception occures when that thread exits, example stack:
+//	and exception occurs when that thread exits, example stack:
 //	>	msys-1.0.dll!6085e0e9()	Unknown
 // 		[Frames below may be incorrect and/or missing, no symbols loaded for msys-1.0.dll]
 // 		ntdll.dll!_LdrxCallInitRoutine@16()
@@ -621,7 +621,7 @@ ShowExeMsgBox gbShowExeMsgBox = smb_None;
 //	Avecto is not available to download/testing, so I tries to ‘emulate’ the problem and was ‘succeeded’.
 //	* My test thread waits for Main thread, when is loads (LoadLibrary) the "advapi32"
 //	* Main thread (at the moment of loading "advapi32") waits for test thread when it starts to load (LoadLibrary) "comdlg32"
-//	* And when test thread exists - crash occures almost all times.
+//	* And when test thread exists - crash occurs almost all times.
 //
 //	The test command that calls ssh was (example)
 //	  git clone git@github.com:Maximus5/FarPl.git

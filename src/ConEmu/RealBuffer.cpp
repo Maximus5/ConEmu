@@ -1170,7 +1170,7 @@ bool CRealBuffer::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DW
 	{
 		if ((crFixed.X != sizeX) || (crFixed.Y != sizeY))
 		{
-			_ASSERTE(FALSE && "NTVDM may fails if size will be changed");
+			_ASSERTE(FALSE && "NTVDM may fail if size will be changed");
 		}
 	}
 
@@ -2912,7 +2912,7 @@ bool CRealBuffer::ProcessFarHyperlink(bool bUpdateScreen)
 {
 	bool bChanged = false;
 
-	// Console may scrolls after last check time
+	// Console may scroll after last check time
 	if (bUpdateScreen)
 	{
 		POINT ptCur = {}; GetCursorPos(&ptCur);
@@ -3233,7 +3233,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 												SafeCloseHandle(pi.hThread);
 
 												// If Ctrl (or any other key) is still pressed during external editor startup,
-												// started application may fails to get the focus - it starts below ConEmu window
+												// started application may fail to get the focus - it starts below ConEmu window
 												if (hProcess && pi.dwProcessId)
 												{
 													HWND hFore;

@@ -160,7 +160,7 @@ void FixSshThreads(int iStep)
 			// Was initialized?
 			if (!pThInfo)
 				break;
-			// May occures in several threads simultaneously
+			// May occurs in several threads simultaneously
 			long n = InterlockedIncrement(&gnFixSshThreadsResumeOk);
 			if (n > 1)
 				break;

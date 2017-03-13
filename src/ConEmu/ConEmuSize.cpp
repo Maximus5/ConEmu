@@ -1960,7 +1960,7 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 		rcWnd.left = max(rcWork.left-rcMargins.left,min(rcStore.left,rcWork.right-nWidth+rcMargins.right));
 		rcWnd.top = max(rcWork.top-rcMargins.top,min(rcStore.top,rcWork.bottom-nHeight+rcMargins.bottom));
 
-		// Add Width/Height. They may exceeds monitor in wmNormal.
+		// Add Width/Height. They may exceed monitor in wmNormal.
 		if ((wndMode == wmNormal) && !IsCantExceedMonitor())
 		{
 			rcWnd.right = rcWnd.left+nWidth;
@@ -4592,7 +4592,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 			bWasSetFullscreen = SUCCEEDED(mp_ConEmu->Taskbar_MarkFullscreenWindow(ghWnd, TRUE));
 
-			// for virtual screens mi.rcMonitor. may contains negative values...
+			// for virtual screens mi.rcMonitor. may contain negative values...
 
 			// Already restored, need to clear the flag to avoid incorrect sizing
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(false);
@@ -4694,7 +4694,7 @@ wrap:
 	DWORD_PTR dwStyleDbg2 = GetWindowLongPtr(ghWnd, GWL_STYLE);
 	#endif
 
-	// Transparency styles may was changed occasionally, check them
+	// Transparency styles may be changed occasionally, check them
 	mp_ConEmu->OnTransparent();
 
 	TODO("Что-то курсор иногда остается APPSTARTING...");

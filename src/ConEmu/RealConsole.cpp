@@ -10969,7 +10969,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID)
 		if (anTabsCount == 1 && (apTabs[0].Type == fwt_Viewer || apTabs[0].Type == fwt_Editor))
 			apTabs[0].Modal = 1;
 
-		// Far may fails sometimes when closing modal editor (when editor can't save changes on ShiftF10)
+		// Far may fail sometimes when closing modal editor (when editor can't save changes on ShiftF10)
 		int nModalTab = -1;
 		for (int i = (anTabsCount-1); i >= 0; i--)
 		{
@@ -10991,7 +10991,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID)
 			}
 		}
 
-		// Find active tab. Start from the tail (Far can fails during opening new editor/viewer)
+		// Find active tab. Start from the tail (Far can fail during opening new editor/viewer)
 		int nActiveTab = -1;
 		for (int i = (anTabsCount-1); i >= 0; i--)
 		{
@@ -11092,7 +11092,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID)
 		#ifdef _DEBUG
 		_ASSERTE(nPID || ((TypeAndFlags & fwt_TypeMask) == fwt_Panels));
 		if (nPID && !GetFarPID())
-			int nDbg = 0; // That may happens with "edit:<git log", if processes were not updated yet (in MonitorThread)
+			int nDbg = 0; // That may happen with "edit:<git log", if processes were not updated yet (in MonitorThread)
 		#endif
 
 		bHasModal |= bModal;

@@ -92,12 +92,12 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 			bool bAlt = isPressed(VK_MENU), bShift = isPressed(VK_SHIFT), bCtrl = isPressed(VK_CONTROL);
 			if (bAlt || bShift || !bCtrl)
 			{
-				msprintf(szLog, countof(szLog), L"  ---  CtrlC/CtrlBreak may fails because of bad Alt/Shift/Ctrl state (%u,%u,%u)!", (UINT)bAlt, (UINT)bShift, (UINT)bCtrl);
+				msprintf(szLog, countof(szLog), L"  ---  CtrlC/CtrlBreak may fail because of bad Alt/Shift/Ctrl state (%u,%u,%u)!", (UINT)bAlt, (UINT)bShift, (UINT)bCtrl);
 				LogString(szLog);
 			}
 			if (!lbProcessEvent)
 			{
-				LogString(L"  ---  CtrlC/CtrlBreak may fails because of disabled ENABLE_PROCESSED_INPUT!");
+				LogString(L"  ---  CtrlC/CtrlBreak may fail because of disabled ENABLE_PROCESSED_INPUT!");
 			}
 			}
 
@@ -681,7 +681,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 		fSuccess = WriteConsoleInput(hIn, pr, nCount, &cbWritten);
 	}
 
-	// Error ERROR_INVALID_HANDLE may occurs when ConEmu was Attached to some external console with redirected input.
+	// Error ERROR_INVALID_HANDLE may occur when ConEmu was Attached to some external console with redirected input.
 
 #ifdef _DEBUG
 	DWORD dwErr = GetLastError();

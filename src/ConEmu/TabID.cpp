@@ -841,7 +841,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 		RequestSize(mn_UpdatePos+1, pUpdateLock);
 		if (nIndex != -1 && nIndex != mn_UpdatePos)
 		{
-			//_ASSERTE(nIndex > mn_UpdatePos); -- may happens when creating new split from active "far /e ..." tab
+			//_ASSERTE(nIndex > mn_UpdatePos); -- may happen when creating new split from active "far /e ..." tab
 			// Do NOT release tab here! Behavior can differs by arguments of UpdateEnd!
 			CTabID* p = mpp_Stack[mn_UpdatePos];
 			mpp_Stack[mn_UpdatePos] = mpp_Stack[nIndex];

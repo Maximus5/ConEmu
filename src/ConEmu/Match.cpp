@@ -461,7 +461,7 @@ bool CMatch::FindRangeStart(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool
 
 	// Курсор над комментарием?
 	// Попробуем найти начало имени файла
-	// 131026 Allows '?', otherwise links like http://go.com/fwlink/?LinkID=1 may fails
+	// 131026 Allows '?', otherwise links like http://go.com/fwlink/?LinkID=1 may fail
 	while ((crFrom > 0)
 		&& ((pChar[crFrom-1]==L'?') || !wcschr(bUrlMode ? pszUrlDelim : pszBreak, pChar[crFrom-1])))
 	{
