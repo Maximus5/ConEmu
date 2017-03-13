@@ -684,7 +684,7 @@ void ConEmuAbout::OnInfo_ThrowTrapException(bool bMainThread)
 {
 	if (bMainThread)
 	{
-		if (MsgBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's main thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
+		if (MsgBox(L"Are you sure?\nApplication will terminate after that!\nThrow exception in ConEmu's main thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
 		{
 			//#ifdef _DEBUG
 			//MyAssertTrap();
@@ -697,7 +697,7 @@ void ConEmuAbout::OnInfo_ThrowTrapException(bool bMainThread)
 	}
 	else
 	{
-		if (MsgBox(L"Are you sure?\nApplication will terminates after that!\nThrow exception in ConEmu's monitor thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
+		if (MsgBox(L"Are you sure?\nApplication will terminate after that!\nThrow exception in ConEmu's monitor thread?", MB_ICONEXCLAMATION|MB_YESNO|MB_DEFBUTTON2)==IDYES)
 		{
 			CVConGuard VCon;
 			if ((gpConEmu->GetActiveVCon(&VCon) >= 0) && VCon->RCon())

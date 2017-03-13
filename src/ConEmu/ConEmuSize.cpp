@@ -5166,7 +5166,7 @@ bool CConEmuSize::isIconic(bool abRaw /*= false*/)
 	{
 		bIconic = (gpSet->isQuakeStyle && isQuakeMinimized)
 			// Don't assume "iconic" while creating window
-			// otherwise "StoreNormalRect" will fails
+		  // otherwise "StoreNormalRect" will fail
 			|| (!mp_ConEmu->InCreateWindow() && !IsWindowVisible(ghWnd));
 		// Issue 1792: Win+D/D
 		if (!bIconic)
