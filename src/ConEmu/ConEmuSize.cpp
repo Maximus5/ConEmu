@@ -3185,11 +3185,14 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 	RECT rcShift;
 	RECT rcUnshifted;
 	RECT rcWnd;
+	RECT rcWorkFix;
 	int nMagnetSize;
 	bool magnet_left, magnet_right, magnet_top, magnet_bottom;
 	int nWidth, nHeight;
 	POINT ptShift = {};
 	DWORD SnappingFlags = smf_None;
+	POINT ptCur = {};
+	bool drag_by_mouse = false;
 
 	if (!gpSet->isSnapToDesktopEdges && !m_TileMode)
 		goto wrap;
@@ -3202,8 +3205,9 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 
 	if (bWmMove && isPressed(VK_LBUTTON))
 	{
-		// Если двигаем мышкой - то дать возможность прыгнуть на монитор под мышкой
-		POINT ptCur = {}; GetCursorPos(&ptCur);
+		// Prefer the monitor under mouse cursor
+		drag_by_mouse = true;
+		GetCursorPos(&ptCur);
 		hMon = MonitorFromPoint(ptCur, MONITOR_DEFAULTTONEAREST);
 	}
 	else if (prcWnd)
@@ -3221,16 +3225,41 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 		goto wrap;
 	}
 
+	// Acquire window caption height and take into account DPI
+	nMagnetSize = gpSetCls->EvalSize(GetSystemMetrics(SM_CYCAPTION)*2/3, esf_CanUseDpi|esf_Vertical);
+
+	// Windows aero snap feature
+	if (drag_by_mouse && prcWnd && IsWin7())
+	{
+		// We receive TWO OnMoving messages, first with proposed "aero snapped" rect,
+		// and second with "real" window rect. We shall not reset snap flags on first.
+		const RECT rc = mi.rcWork;
+		// mouse cursor reaches the top of the screen --> maximize
+		if (memcmp(prcWnd, &rc, sizeof(rc)) == 0)
+			goto wrap_no_reset;
+		// corners and left/right screen edges
+		if ((ptCur.x >= (rc.right - nMagnetSize)) && (ptCur.x < rc.right))
+		{
+			if (prcWnd->right == mi.rcWork.right
+				&& (prcWnd->top == mi.rcWork.top || prcWnd->bottom == mi.rcWork.bottom))
+				goto wrap_no_reset;
+		}
+		if ((ptCur.x >= rc.left) && (ptCur.x < rc.left + nMagnetSize))
+		{
+			if (prcWnd->left == mi.rcWork.left
+				&& (prcWnd->top == mi.rcWork.top || prcWnd->bottom == mi.rcWork.bottom))
+				goto wrap_no_reset;
+		}
+	}
+
 	rcShift = CalcMargins_InvisibleFrame();
-	AddMargins(mi.rcWork, rcShift, rcop_Enlarge);
+	rcWorkFix = mi.rcWork;
+	AddMargins(rcWorkFix, rcShift, rcop_Enlarge);
 
 	if (prcWnd)
 		rcCur = *prcWnd;
 	else
 		GetWindowRect(ghWnd, &rcCur);
-
-	// TODO: Configure or get from Windows default title bar height
-	nMagnetSize = 15;
 
 	// Evaluate
 	rcUnshifted = rcCur;
@@ -3242,10 +3271,10 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 		rcUnshifted.bottom += m_Snapping.CorrectionY;
 	}
 	// TODO: current tile mode
-	magnet_left = (_abs(mi.rcWork.left - rcUnshifted.left) <= nMagnetSize);
-	magnet_right = (_abs(mi.rcWork.right - rcUnshifted.right) <= nMagnetSize);
-	magnet_top = (_abs(mi.rcWork.top - rcUnshifted.top) <= nMagnetSize);
-	magnet_bottom = (_abs(mi.rcWork.bottom - rcUnshifted.bottom) <= nMagnetSize);
+	magnet_left = (_abs(rcWorkFix.left - rcUnshifted.left) <= nMagnetSize);
+	magnet_right = (_abs(rcWorkFix.right - rcUnshifted.right) <= nMagnetSize);
+	magnet_top = (_abs(rcWorkFix.top - rcUnshifted.top) <= nMagnetSize);
+	magnet_bottom = (_abs(rcWorkFix.bottom - rcUnshifted.bottom) <= nMagnetSize);
 
 	// If the window edges are far from monitor's working area
 	if (!magnet_left && !magnet_right && !magnet_top && !magnet_bottom)
@@ -3265,16 +3294,16 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 	rcWnd = rcCur;
 	if (magnet_left)
 	{
-		rcWnd.left = mi.rcWork.left;
-		rcWnd.right = klMin<int>(mi.rcWork.right, rcWnd.left + nWidth);
+		rcWnd.left = rcWorkFix.left;
+		rcWnd.right = klMin<int>(rcWorkFix.right, rcWnd.left + nWidth);
 		ptShift.x = rcUnshifted.left - rcWnd.left;
 		SnappingFlags |= smf_Left;
 	}
 	// TODO: tile width
 	else if (magnet_right)
 	{
-		rcWnd.right = mi.rcWork.right;
-		rcWnd.left = klMax<int>(mi.rcWork.left, mi.rcWork.right - nWidth);
+		rcWnd.right = rcWorkFix.right;
+		rcWnd.left = klMax<int>(rcWorkFix.left, rcWorkFix.right - nWidth);
 		ptShift.x = rcUnshifted.right - rcWnd.right;
 		SnappingFlags |= smf_Right;
 	}
@@ -3287,16 +3316,16 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 
 	if (magnet_top)
 	{
-		rcWnd.top = mi.rcWork.top;
-		rcWnd.bottom = min(mi.rcWork.bottom, rcWnd.top + nHeight);
+		rcWnd.top = rcWorkFix.top;
+		rcWnd.bottom = min(rcWorkFix.bottom, rcWnd.top + nHeight);
 		ptShift.y = rcUnshifted.top - rcWnd.top;
 		SnappingFlags |= smf_Top;
 	}
 	// TODO: Tile height
 	else if (magnet_bottom)
 	{
-		rcWnd.bottom = mi.rcWork.bottom;
-		rcWnd.top = klMax<int>(mi.rcWork.top, mi.rcWork.bottom - nHeight);
+		rcWnd.bottom = rcWorkFix.bottom;
+		rcWnd.top = klMax<int>(rcWorkFix.top, rcWorkFix.bottom - nHeight);
 		ptShift.y = rcUnshifted.bottom - rcWnd.bottom;
 		SnappingFlags |= smf_Bottom;
 	}
@@ -3325,7 +3354,7 @@ modified:
 
 wrap:
 	m_Snapping.reset(SnappingFlags, ptShift.x, ptShift.y);
-
+wrap_no_reset:
 	if (gpSet->isLogging())
 		mp_ConEmu->LogWindowPos(L"OnMoving.end", prcWnd);
 	return bModified;
