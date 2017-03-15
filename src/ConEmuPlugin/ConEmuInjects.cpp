@@ -156,6 +156,7 @@ bool StartupHooks(HMODULE ahOurDll)
 	SetHookCallbacks("GetNumberOfConsoleInputEvents", kernel32, ghPluginModule, NULL, CPluginBase::OnGetNumberOfConsoleInputEventsPost, NULL);
 	SetHookCallbacks("ShellExecuteExW", shell32, ghPluginModule, NULL, NULL, CPluginBase::OnShellExecuteExW_Except);
 	gFarMode.OnCurDirChanged = CPluginBase::OnCurDirChanged;
+	gFarMode.FarVer = gFarVersion;
 
 	SetFarHookMode(&gFarMode);
 

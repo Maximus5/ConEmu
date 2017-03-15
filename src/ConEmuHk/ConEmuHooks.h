@@ -42,6 +42,7 @@ struct HookModeFar
 	BOOL  bMonitorConsoleInput; // on (Read/Peek)ConsoleInput(A/W) послать инфу в GUI/Settings/Debug
 	BOOL  bPopupMenuPos;        // on EMenu call показать меню в позиции мышиного курсора
 	BOOL  bLongConsoleOutput;   // increase buffer height during console applications execution (ignored in "far.exe /w")
+	FarVersion FarVer;
 	void  (WINAPI* OnCurDirChanged)();
 };
 

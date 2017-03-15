@@ -142,7 +142,6 @@ BOOL  gbPlugKeyChanged=FALSE;
 HKEY  ghRegMonitorKey=NULL; HANDLE ghRegMonitorEvt=NULL;
 HANDLE ghPluginSemaphore = NULL;
 wchar_t gsFarLang[64] = {0};
-BOOL FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID, bool bFromAttach = false);
 BOOL gbNeedPostTabSend = FALSE;
 BOOL gbNeedPostEditCheck = FALSE; // проверить, может в активном редакторе изменился статус
 int lastModifiedStateW = -1;
@@ -150,7 +149,6 @@ BOOL gbNeedPostReloadFarInfo = FALSE;
 DWORD gnNeedPostTabSendTick = 0;
 #define NEEDPOSTTABSENDDELTA 100
 #define MONITORENVVARDELTA 1000
-void UpdateEnvVar(const wchar_t* pszList);
 BOOL StartupHooks();
 MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> *gpConMap;
 const CESERVER_CONSOLE_MAPPING_HDR *gpConMapInfo = NULL;

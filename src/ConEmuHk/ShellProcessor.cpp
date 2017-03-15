@@ -2271,7 +2271,10 @@ int CShellProc::PrepareExecuteParms(
 		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
 		else if ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1)
 				&& (NewConsoleFlags // CEF_NEWCON_SWITCH | CEF_NEWCON_PREPEND
-					|| (bLongConsoleOutput && (aCmd == eShellExecute) && (anShellFlags && (*anShellFlags & SEE_MASK_NO_CONSOLE)) && (anShowCmd && *anShowCmd))
+					|| (bLongConsoleOutput &&
+						((gFarMode.FarVer.dwVerMajor >= 3) && (aCmd == eShellExecute) && (anShellFlags && (*anShellFlags & SEE_MASK_NO_CONSOLE)) && (anShowCmd && *anShowCmd))
+						|| ((gFarMode.FarVer.dwVerMajor <= 2) && (aCmd == eCreateProcess) && (anCreateFlags && (*anCreateFlags & CREATE_DEFAULT_ERROR_MODE)))
+						)
 					|| (bCurConsoleArg && (m_Args.LongOutputDisable != crb_On))
 					#ifdef _DEBUG
 					|| lbAlwaysAddConEmuC
