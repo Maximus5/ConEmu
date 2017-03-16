@@ -5722,7 +5722,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 	if (!lbRc)
 	{
 		nErrCode = GetLastError();
-		if (gpLogSize) LogSize(NULL, 0, ":MyGetConsoleScreenBufferInfo");
+		if (gpLogSize) LogSize(NULL, 0, ":MyGetConsoleScreenBufferInfo(FAIL)");
 		_ASSERTE(FALSE && "GetConsoleScreenBufferInfo failed, conhost was destroyed?");
 		goto wrap;
 	}
@@ -5733,8 +5733,16 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 		)
 	{
 		nErrCode = GetLastError();
-		if (gpLogSize) LogSize(NULL, 0, ":MyGetConsoleScreenBufferInfo");
+		if (gpLogSize) LogSize(NULL, 0, ":MyGetConsoleScreenBufferInfo(dwSize)");
 		_ASSERTE(FALSE && "GetConsoleScreenBufferInfo failed, conhost was destroyed?");
+		goto wrap;
+	}
+
+	if (csbi.srWindow.Left < 0 || csbi.srWindow.Top < 0 || csbi.srWindow.Right < csbi.srWindow.Left || csbi.srWindow.Bottom < csbi.srWindow.Top)
+	{
+		nErrCode = GetLastError();
+		if (gpLogSize) LogSize(NULL, 0, ":MyGetConsoleScreenBufferInfo(srWindow)");
+		_ASSERTE(FALSE && "GetConsoleScreenBufferInfo failed, Invalid srWindow coordinates");
 		goto wrap;
 	}
 
