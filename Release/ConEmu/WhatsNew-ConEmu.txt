@@ -20,6 +20,16 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.3.16
+* gh-787: Improve scroll by prompts by skipping empty lines above prompts.
+* gh-1058: Apply button was not auto-enabled on entering negative X coord in the Settings dialog.
+* gh-1061: Fix GUI crash if Far panels has no column titles.
+* Make magnetic snap to edges friendly for Windows Aero Snap feature.
+* gh-1047: Display ampersands (&) in tab titles.
+* gh-688, gh-1063: Fix ‘Long console output’ in Far 1.x and 2.x.
+* gh-1067: Log errors in GetConsoleScreenBufferInfo.
+
+
 2017.3.5
 * Microsoft/BashOnWindows#1668: Fix wrong ANSI processing from Vim started in tmux.
 * gh-1055: Fix ‘Delete word lefward to the cursor’ at the bottom of the screen.
