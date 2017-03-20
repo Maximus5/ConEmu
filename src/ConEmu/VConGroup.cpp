@@ -5148,7 +5148,7 @@ bool CVConGroup::PreReSize(uint WindowMode, RECT rcWnd, enum ConEmuRect tFrom /*
 
 	if (!rcCon.right || !rcCon.bottom)
 	{
-		Assert(rcCon.right && rcCon.bottom);
+		//Assert(rcCon.right && rcCon.bottom); // <- this assertion will always fail.
 		// Исключительная ситуация, сюда попадать мы не должны
 		rcCon.right = DEF_CON_WIDTH;
 		rcCon.bottom = DEF_CON_HEIGHT;
