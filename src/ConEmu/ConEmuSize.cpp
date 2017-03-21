@@ -6312,8 +6312,8 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 		_ASSERTE(mn_IgnoreSizeChange>=0);
 
-		// Страховка, коррекция позиции для Quake
-		if (gpSet->isQuakeStyle)
+		// Correct Quake position or Move window to "active monitor" (ref gh-255)
+		if (gpSet->isQuakeStyle || gpSet->isRestore2ActiveMon)
 		{
 			RECT rcWnd = GetDefaultRect();
 
