@@ -552,7 +552,7 @@ bool CPluginAnsi::OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempF
 	{
 		iRc = InfoA->Editor(szFileName, pszTitle, 0,0,-1,-1,
 		                     EF_NONMODAL|EF_IMMEDIATERETURN
-		                     |(abDeleteTempFile ? (EF_DELETEONLYFILEONCLOSE|EF_DISABLEHISTORY) : 0)
+		                     |(abDeleteTempFile ? (EF_DELETEONCLOSE|EF_DELETEONLYFILEONCLOSE|EF_DISABLEHISTORY) : 0)
 		                     |EF_ENABLE_F6,
 		                     anStartLine, anStartChar);
 		lbRc = (iRc != EEC_OPEN_ERROR);
