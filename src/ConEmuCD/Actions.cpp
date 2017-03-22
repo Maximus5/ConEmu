@@ -955,7 +955,7 @@ int WriteOutput(LPCWSTR pszText, DWORD cchLen, DWORD& dwWritten, bool bProcessed
 			COORD crBottom = {0, csbi.dwSize.Y-1};
 			SetConsoleCursorPosition(hOut, crBottom);
 			SHORT Y1 = crBottom.Y - (csbi.srWindow.Bottom-csbi.srWindow.Top);
-			SMALL_RECT srWindow = {0, Y1, csbi.srWindow.Right-srWindow.Left, crBottom.Y};
+			SMALL_RECT srWindow = {0, Y1, csbi.srWindow.Right-csbi.srWindow.Left, crBottom.Y};
 			SetConsoleWindowInfo(hOut, TRUE, &srWindow);
 		}
 	}
