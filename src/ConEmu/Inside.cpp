@@ -60,7 +60,7 @@ CConEmuInside::CConEmuInside()
 	mb_InsideSynchronizeCurDir = false;
 	ms_InsideSynchronizeCurDir = NULL;
 	mb_InsidePaneWasForced = false;
-	mh_InsideParentWND = mh_InsideParentRel = NULL;
+	mh_InsideParentWND = mh_InitialRoot = mh_InsideParentRel = NULL;
 	mh_InsideParentPath = mh_InsideParentCD = NULL; ms_InsideParentPath[0] = 0;
 	mb_TipPaneWasShown = false;
 	mh_TipPaneWndPost = NULL;
