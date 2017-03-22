@@ -42,6 +42,7 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, CProcessEnvCmd* pSetEnv = NULL, CStart
 class CStartEnvBase
 {
 public:
+	virtual ~CStartEnvBase() {}
 	// Methods
 	virtual void Alias(LPCWSTR asName, LPCWSTR asValue) = 0;
 	virtual void ChCp(LPCWSTR asCP) = 0;
