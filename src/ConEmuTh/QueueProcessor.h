@@ -530,7 +530,7 @@ class CQueueProcessor
 					if (mpp_Queue[i])
 					{
 						if (mpp_Queue[i]->Status != eItemEmpty
-						        mpp_Queue[i]->Status != eItemPassed
+						        && mpp_Queue[i]->Status != eItemPassed
 						        && mpp_Queue[i]->Status != eItemProcessing
 						        && mpp_Queue[i]->Priority >= priority
 						  )
