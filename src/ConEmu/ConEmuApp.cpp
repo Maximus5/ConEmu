@@ -3123,6 +3123,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		CDpiAware::setProcessDPIAwareness();
 	}
 
+
+	// lpCmdLine is not a UNICODE string, that's why we have to use GetCommandLineW()
+	// However, cygwin breaks normal way of creating Windows' processes,
+	// and GetCommandLineW will be useless in cygwin's builds (returns only exe full path)
+	CEStr lsCvtCmdLine;
+	if (lpCmdLine && *lpCmdLine)
+	{
+		int iLen = lstrlenA(lpCmdLine);
+		MultiByteToWideChar(CP_ACP, 0, lpCmdLine, -1, lsCvtCmdLine.GetBuffer(iLen), iLen+1);
+	}
+	// Prepared command line
+	CEStr lsCommandLine;
+	#if !defined(__CYGWIN__)
+	lsCommandLine.Set(GetCommandLineW());
+	#else
+	lsCommandLine.Set(lsCvtCmdLine.ms_Val);
+	#endif
+	if (lsCommandLine.IsEmpty())
+	{
+		lsCommandLine.Set(L"");
+	}
+
+	// -debug, -debugi, -debugw
+	CheckForDebugArgs(lsCommandLine);
+
+
 	/* *** DEBUG PURPOSES */
 	gpStartEnv = LoadStartupEnvEx::Create();
 	if (gnOsVer >= 0x600)
@@ -3187,21 +3213,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	CLngRc::Initialize();
 	gVConDcMap.Init(MAX_CONSOLE_COUNT,true);
 	gVConBkMap.Init(MAX_CONSOLE_COUNT,true);
-	/*int nCmp;
-	nCmp = StrCmpI(L" ", L"A"); // -1
-	nCmp = StrCmpI(L" ", L"+");
-	nCmp = StrCmpI(L" ", L"-");
-	nCmp = wcscmp(L" ", L"-");
-	nCmp = wcsicmp(L" ", L"-");
-	nCmp = lstrcmp(L" ", L"-");
-	nCmp = lstrcmpi(L" ", L"-");
-	nCmp = StrCmpI(L" ", L"\\");*/
 	gpLocalSecurity = LocalSecurity();
 
 	#ifdef _DEBUG
 	gAllowAssertThread = am_Thread;
-	//wchar_t szDbg[64];
-	//msprintf(szDbg, countof(szDbg), L"xx=0x%X.", 0);
 	#endif
 
 	#if defined(_DEBUG)
@@ -3216,49 +3231,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// our icon (shortcut on the desktop or TaskBar)
 	gpStartEnv->hStartMon = GetStartupMonitor();
 
-//#ifdef _DEBUG
-//	wchar_t* pszShort = GetShortFileNameEx(L"T:\\VCProject\\FarPlugin\\ConEmu\\Maximus5\\Debug\\Far2x86\\ConEmu\\ConEmu.exe");
-//	if (pszShort) free(pszShort);
-//	pszShort = GetShortFileNameEx(L"\\\\MAX\\X-change\\GoogleDesktopEnterprise\\AdminGuide.pdf");
-//	if (pszShort) free(pszShort);
-//
-//
-//	DWORD ImageSubsystem, ImageBits;
-//	GetImageSubsystem(ImageSubsystem,ImageBits);
-//
-//	//wchar_t szConEmuBaseDir[MAX_PATH+1], szConEmuExe[MAX_PATH+1];
-//	//BOOL lbDbgFind = FindConEmuBaseDir(szConEmuBaseDir, szConEmuExe);
-//
-//	wchar_t szDebug[1024] = {};
-//	msprintf(szDebug, countof(szDebug), L"Test %u %i %s 0x%X %c 0x%08X*",
-//		987654321, -1234, L"abcdef", 0xAB1298, L'Z', 0xAB1298);
-//	msprintf(szDebug, countof(szDebug), L"<%c%c>%u.%s",
-//		'я', (wchar_t)0x44F, 0x44F, L"End");
-//#endif
 
-	// lpCmdLine is not a UNICODE string, that's why we have to use GetCommandLineW()
-	// However, cygwin breaks normal way of creating Windows' processes,
-	// and GetCommandLineW will be useless in cygwin's builds (returns only exe full path)
-	CEStr lsCvtCmdLine;
-	if (lpCmdLine && *lpCmdLine)
-	{
-		int iLen = lstrlenA(lpCmdLine);
-		MultiByteToWideChar(CP_ACP, 0, lpCmdLine, -1, lsCvtCmdLine.GetBuffer(iLen), iLen+1);
-	}
-	// Prepared command line
-	CEStr lsCommandLine;
-	#if !defined(__CYGWIN__)
-	lsCommandLine.Set(GetCommandLineW());
-	#else
-	lsCommandLine.Set(lsCvtCmdLine.ms_Val);
-	#endif
-	if (lsCommandLine.IsEmpty())
-	{
-		lsCommandLine.Set(L"");
-	}
-
-	// -debug, -debugi, -debugw
-	CheckForDebugArgs(lsCommandLine);
 
 #ifdef DEBUG_MSG_HOOKS
 	ghDbgHook = SetWindowsHookEx(WH_CALLWNDPROC, DbgCallWndProc, NULL, GetCurrentThreadId());
