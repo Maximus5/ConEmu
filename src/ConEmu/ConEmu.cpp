@@ -2052,16 +2052,19 @@ BOOL CConEmuMain::CreateMainWindow()
 
 	// WindowMode may be changed in SettingsLoaded
 
+	// If we determine "Startup monitor" by AI or user-specified "-monitor" switch
+	bool MonChanged = FixPosByStartupMonitor(gpStartEnv->hStartMon);
+
 	// Evaluate window sized for Normal mode
 	if ((this->WndWidth.Value && this->WndHeight.Value) || mp_Inside)
 	{
 		MBoxAssert(gpFontMgr->FontWidth() && gpFontMgr->FontHeight());
 		RECT rcWnd = GetDefaultRect();
-		if (gpSet->IsConfigNew)
+		if (gpSet->IsConfigNew || MonChanged)
 		{
-			// We get here on "clean configuration"
-			// Correct position to be inside working area
-			RECT rcDefault = rcWnd;
+			// We get here on "clean configuration" or if we forced our window to "Current monitor"
+			// Correct position to appear inside working area
+			const RECT rcDefault = rcWnd;
 			if (FixWindowRect(rcWnd, CEB_ALL))
 			{
 				// We store "visual" position, which may differ from real window placement

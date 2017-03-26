@@ -614,8 +614,6 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	if (gpLng)
 		gpLng->Reload();
 
-	gpSet->PatchSizeSettings();
-
 	if ((ghWnd == NULL) || (slfFlags & slf_OnResetReload))
 	{
 		gpConEmu->WndPos.x = gpSet->_wndX;

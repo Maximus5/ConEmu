@@ -279,7 +279,6 @@ struct Settings
 
 		void LoadSizeSettings(SettingsBase* reg);
 		void SaveSizeSettings(SettingsBase* reg);
-		void PatchSizeSettings();
 
 	private:
 		// reg->Load(L"ColorTableNN", Colors[i]);

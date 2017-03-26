@@ -2004,6 +2004,98 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	return bChanged;
 }
 
+bool CConEmuSize::FixPosByStartupMonitor(const HMONITOR hStartMon)
+{
+	#define PSS_SKIP_PREFIX L"PatchSizeSettings skipping: "
+	wchar_t szInfo[280];
+
+	// If we haven't to change anything
+	if (!hStartMon)
+	{
+		LogString(PSS_SKIP_PREFIX L"hStartMon is NULL");
+		return false;
+	}
+	if (!gpConEmu->opt.Monitor.Exists && !gpSet->isRestore2ActiveMon)
+	{
+		LogString(PSS_SKIP_PREFIX L"Neither `-Monitor` switch nor `Restore to active monitor` option were specified");
+		return false;
+	}
+
+	// Perhaps, we shall not care of DPI in per-monitor-dpi systems
+	// That is because we evaluate changed X/Y coordinates proportionally
+
+	// NB. _wndX and _wndY may slightly exceed monitor rect.
+	const RECT rcWnd = {gpSet->_wndX, gpSet->_wndY, gpSet->_wndX+500, gpSet->_wndY+300};
+	RECT rcPrevMonitor = gpSet->LastMonRect;
+	RECT rcInter = {};
+
+	// Find HMONITOR where our window is supposed to be (due to settings)
+	HMONITOR hCurMon = MonitorFromRect(&rcWnd, MONITOR_DEFAULTTONULL);
+
+	// For new config (or old versions) rcPrevMonitor would be empty
+	// So, evaluate it by rcWnd
+	if (IsRectEmpty(&rcPrevMonitor) && hCurMon)
+	{
+		MONITORINFO miLast = {sizeof(miLast)};
+		if (GetMonitorInfo(hCurMon, &miLast))
+		{
+			rcPrevMonitor = (gpSet->_WindowMode == wmFullScreen) ? miLast.rcMonitor : miLast.rcWork;
+		}
+	}
+
+	// If rcWnd lays completely out of rcLastMon,
+	// that would be an error in saved settings
+	// We can't move window "properly"
+	if (!IntersectRect(&rcInter, &rcWnd, &rcPrevMonitor))
+	{
+		_wsprintf(szInfo, SKIPCOUNT(szInfo) PSS_SKIP_PREFIX L"Bad rects were stored: LastMon={%i,%i}-{%i,%i} Pos={%i,%i}", LOGRECTCOORDS(rcPrevMonitor), gpSet->_wndX, gpSet->_wndY);
+		LogString(szInfo);
+		return false;
+	}
+
+
+	// So, user asked to place our window to exact monitor?
+	if (hStartMon == hCurMon)
+	{
+		LogString(PSS_SKIP_PREFIX L"Same monitor");
+		return false; // already there
+	}
+
+	#ifdef _DEBUG
+	// Find stored HMONITOR, if it exists. If NOT - move our window to the nearest
+	HMONITOR hLastMon = MonitorFromRect(&rcPrevMonitor, MONITOR_DEFAULTTONEAREST);
+	#endif
+
+	// Retrieve information about monitor where use want to get our window
+	MONITORINFO mi = {sizeof(mi)};
+	if (!GetMonitorInfo(hStartMon, &mi))
+	{
+		LogString(PSS_SKIP_PREFIX L"GetMonitorInfo failed");
+		return false;
+	}
+	RECT rcNewMon = (gpSet->_WindowMode == wmFullScreen) ? mi.rcMonitor : mi.rcWork;
+	if (IsRectEmpty(&rcNewMon))
+	{
+		LogString(PSS_SKIP_PREFIX L"GetMonitorInfo failed (NULL RECT)");
+		return false;
+	}
+
+	// Now, we are ready to reposition our window
+	WndPos.x = rcNewMon.left + ((rcWnd.left - rcPrevMonitor.left) * RectWidth(rcNewMon) / RectWidth(rcPrevMonitor));
+	WndPos.y = rcNewMon.top + ((rcWnd.top - rcPrevMonitor.top) * RectHeight(rcNewMon) / RectHeight(rcPrevMonitor));
+	// Leave LastMonRect unchanged, because we change our internal WndPos instead
+	// -- And update monitor rect
+	// gpSet->LastMonRect = rcNewMon;
+
+	// Log changes
+	msprintf(szInfo, countof(szInfo), L"PatchSizeSettings changes: OldPos={%i,%i} NewPos={%i,%i} OldMon={%i,%i}-{%i,%i} NewMon=%08X:{%i,%i}-{%i,%i}",
+		rcWnd.left, rcWnd.top, WndPos.x, WndPos.y, LOGRECTCOORDS(rcPrevMonitor), LODWORD(hStartMon), LOGRECTCOORDS(rcNewMon));
+	LogString(szInfo);
+
+	// WinPos was modified
+	return true;
+}
+
 void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 {
 	mp_ConEmu->mouse.bCheckNormalRect = false;

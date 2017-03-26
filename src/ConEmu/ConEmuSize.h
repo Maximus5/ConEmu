@@ -298,6 +298,7 @@ protected:
 	RECT CalcMargins_InvisibleFrame();
 	static LRESULT OnDpiChangedCall(LPARAM lParam);
 	bool FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBorders */, bool bPopupDlg = false);
+	bool FixPosByStartupMonitor(const HMONITOR hStartMon);
 	RECT GetVirtualScreenRect(bool abFullScreen);
 	void StoreNormalRect(RECT* prcWnd);
 	void UpdateIdealRect(RECT rcNewIdeal);
