@@ -1950,8 +1950,8 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBor
 	// "bIn == false" when ConEmu is totally "Out-of-screen"
 	if (!bIn || !(nBorders & CEB_ALLOW_PARTIAL))
 	{
-		int nWidth = rcStore.right-rcStore.left;
-		int nHeight = rcStore.bottom-rcStore.top;
+		int nWidth = rcStore.right - rcStore.left - (rcInvisible.left + rcInvisible.right);
+		int nHeight = rcStore.bottom - rcStore.top - (rcInvisible.top + rcInvisible.bottom);
 
 		// All is bad. Windows is totally out of screen.
 		bool overWidth = (rcStore.left < rcWork.left) || (rcStore.right > rcWork.right);
