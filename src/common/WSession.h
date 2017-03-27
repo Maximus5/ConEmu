@@ -32,4 +32,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Common.h"
 
 LPCWSTR apiQuerySessionID();
+BOOL apiQuerySessionID(DWORD nPID, DWORD& nSessionID);
 DWORD apiGetConsoleSessionID();

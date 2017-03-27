@@ -57,6 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RgnDetect.h"
 #include "../common/SetEnvVar.h"
 #include "../common/WFiles.h"
+#include "../common/WSession.h"
 #include "../common/WThreads.h"
 #include "../common/WUser.h"
 #include "AltNumpad.h"
@@ -4813,7 +4814,7 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		lpszCmd = L"";
 	}
 	INT_PTR nLen = _tcslen(lpszCmd);
-	nLen += _tcslen(mp_ConEmu->ms_ConEmuExe) + 360 + MAX_PATH*2;
+	nLen += _tcslen(mp_ConEmu->ms_ConEmuExe) + 380 + MAX_PATH*2;
 	MCHKHEAP;
 	psCurCmd = (wchar_t*)malloc(nLen*sizeof(wchar_t));
 	_ASSERTE(psCurCmd);
@@ -4830,7 +4831,10 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		_wcscat_c(psCurCmd, nLen, L"\" ");
 		if (gpSet->isLogging())
 			_wcscat_c(psCurCmd, nLen, L"-log ");
-		_wcscat_c(psCurCmd, nLen, L"-system -cmd ");
+		DWORD nSessionID = (DWORD)-1;
+		apiQuerySessionID(GetCurrentProcessId(), nSessionID);
+		INT_PTR curLen = _tcslen(psCurCmd);
+		msprintf(psCurCmd+curLen, nLen-curLen, L"-system:%u -cmd ", nSessionID);
 	}
 
 	_wcscat_c(psCurCmd, nLen, L"\"");

@@ -762,7 +762,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					iResult = nSetupRc;
 					goto wrap;
 				}
-				else if (szArg.OneOfSwitches(L"-bypass", L"-apparent", L"-system", L"-interactive", L"-demote"))
+				else if (szArg.OneOfSwitches(L"-bypass", L"-apparent", L"-system:", L"-interactive:", L"-demote"))
 				{
 					// -bypass
 					// Этот ключик был придуман для прозрачного запуска консоли
@@ -846,14 +846,16 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						b = CreateProcessDemoted(opt.runCommand.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
 					}
-					else if (szArg.IsSwitch(L"-system"))
+					else if (szArg.IsSwitch(L"-system:"))
 					{
-						b = CreateProcessSystem(opt.runCommand.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
+						DWORD nSessionID = wcstoul(szArg.ms_Val+wcslen(L"-system:"), NULL, 10);
+						b = CreateProcessSystem(nSessionID, opt.runCommand.ms_Val, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi);
 					}
-					else if (szArg.IsSwitch(L"-interactive"))
+					else if (szArg.IsSwitch(L"-interactive:"))
 					{
-						b = CreateProcessInteractive((DWORD)-1, NULL, opt.runCommand.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
+						DWORD nSessionID = wcstoul(szArg.ms_Val+wcslen(L"-interactive:"), NULL, 10);
+						b = CreateProcessInteractive(nSessionID, NULL, opt.runCommand.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL,
 							szCurDir, &si, &pi, &nErr);
 						bFromScheduler = true;
 					}

@@ -810,7 +810,7 @@ TaskSchedulerState CTaskScheduler1::GetState()
 /// The function starts new process using Windows Task Scheduler
 /// This allows to run process ‘Demoted’ (bAsSystem == false)
 /// or under ‘System’ account (bAsSystem == true)
-BOOL CreateProcessScheduled(bool bAsSystem, LPWSTR lpCommandLine,
+BOOL CreateProcessScheduled(bool bAsSystem, DWORD anSessionId, LPWSTR lpCommandLine,
 						   LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 						   BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 						   LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
@@ -830,10 +830,13 @@ BOOL CreateProcessScheduled(bool bAsSystem, LPWSTR lpCommandLine,
 		DisplayLastError(L"GetModuleFileName(NULL) failed");
 		return FALSE;
 	}
+	wchar_t szInteractive[32] = L" ";
+	if (bAsSystem)
+		msprintf(szInteractive, countof(szInteractive), L"-interactive:%u ", anSessionId); // with trailing space
 	CEStr szCommand(
 		gpSet->isLogging() ? L"-log " : NULL,
 		lpCurrentDirectory ? L"-dir \"" : NULL, lpCurrentDirectory, lpCurrentDirectory ? L"\" " : NULL,
-		bAsSystem ? L"-interactive " : L"-apparent ",
+		bAsSystem ? szInteractive : L"-apparent ",
 		lpCommandLine);
 	LPCWSTR pszCmdArgs = szCommand;
 

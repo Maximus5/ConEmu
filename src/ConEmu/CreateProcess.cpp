@@ -126,6 +126,33 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 	wchar_t szLog[128];
 	DWORD nErrCode = 0, nCurSession = (DWORD)-1, nNewSessionId = (DWORD)-1, nRetSize = 0;
 
+
+	#if 0
+	// The switch "/GID=1234" contains expected PID which session we have to "obtain"
+	// bug unfortunately ProcessIdToSessionId fails...
+	DWORD nParentPID = 0;
+	if (anSessionId == (DWORD)-1)
+	{
+		LPCWSTR pszLine = lpCommandLine;
+		CEStr szArg;
+		while (NextArg(&pszLine, szArg) == 0)
+		{
+			if (!szArg.IsSwitch(L"/GID="))
+				continue;
+			nParentPID = wcstoul(szArg.ms_Val+5, NULL, 10);
+			break;
+		}
+		if (nParentPID == 0)
+		{
+			LogString(L"Switch `/GID=???` was not found, exiting");
+			goto wrap;
+		}
+		msprintf(szLog, countof(szLog), L"Adopting SessionID from PID=%u", nParentPID);
+		LogString(szLog);
+	}
+	#endif
+
+
 	if (!OpenProcessToken(GetCurrentProcess(),
 	                    TOKEN_DUPLICATE | TOKEN_ADJUST_SESSIONID | TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY | TOKEN_EXECUTE,
 	                    &hToken))
@@ -142,7 +169,30 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 	else
 		_wsprintf(szLog, SKIPCOUNT(szLog) L"Current TokenSessionId is %u", nCurSession);
 	LogString(szLog);
-	nNewSessionId = (anSessionId == (DWORD)-1) ? apiGetConsoleSessionID() : anSessionId;
+	if (anSessionId == (DWORD)-1)
+	{
+		#if 1
+		LogString(L"ProcessIdToSessionId is failing to obtain SessionID of GUI process, exiting");
+		goto wrap;
+		#else
+		HANDLE hParent = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, nParentPID);
+		BOOL bObtained = hParent && apiQuerySessionID(nParentPID, nNewSessionId);
+		DWORD nErrCode = GetLastError();
+		if (hParent) CloseHandle(hParent);
+		if (!bObtained)
+		{
+			_wsprintf(szLog, SKIPCOUNT(szLog) L"ProcessIdToSessionId failed, code=%u", nErrCode);
+			LogString(szLog);
+			goto wrap;
+		}
+		if (!nNewSessionId)
+			nNewSessionId = 1; // apiQuerySessionID returns 0 instead of correct 1
+		#endif
+	}
+	else
+	{
+		nNewSessionId = anSessionId;
+	}
 
 	if (nNewSessionId != nCurSession)
 	{
@@ -218,7 +268,7 @@ wrap:
 
 /// The function starts new process using Windows Task Scheduler
 /// This allows to run process under ‘LocalSystem’ account
-BOOL CreateProcessSystem(LPWSTR lpCommandLine,
+BOOL CreateProcessSystem(DWORD anSessionId, LPWSTR lpCommandLine,
 						 LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 						 BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 						 LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,
@@ -226,7 +276,7 @@ BOOL CreateProcessSystem(LPWSTR lpCommandLine,
 {
 	BOOL lbRc;
 
-	lbRc = CreateProcessScheduled(true, lpCommandLine,
+	lbRc = CreateProcessScheduled(true, anSessionId, lpCommandLine,
 						   lpProcessAttributes, lpThreadAttributes,
 						   bInheritHandles, dwCreationFlags, lpEnvironment,
 						   lpCurrentDirectory, lpStartupInfo, lpProcessInformation,
@@ -249,7 +299,7 @@ BOOL CreateProcessDemoted(LPWSTR lpCommandLine,
 
 	if (IsWin6())
 	{
-		lbRc = CreateProcessScheduled(false, lpCommandLine,
+		lbRc = CreateProcessScheduled(false, 0/*doesn't matter*/, lpCommandLine,
 						   lpProcessAttributes, lpThreadAttributes,
 						   bInheritHandles, dwCreationFlags, lpEnvironment,
 						   lpCurrentDirectory, lpStartupInfo, lpProcessInformation,

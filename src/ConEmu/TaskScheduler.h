@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /// The function starts new process using Windows Task Scheduler
 /// This allows to run process ‘Demoted’ (bAsSystem == false)
 /// or under ‘System’ account (bAsSystem == true)
-BOOL CreateProcessScheduled(bool bAsSystem, LPWSTR lpCommandLine,
+BOOL CreateProcessScheduled(bool bAsSystem, DWORD anSessionId, LPWSTR lpCommandLine,
 						   LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes,
 						   BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment,
 						   LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation,

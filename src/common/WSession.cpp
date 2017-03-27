@@ -33,21 +33,28 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Common.h"
 #include "MModule.h"
+#include "WSession.h"
+
+BOOL apiQuerySessionID(DWORD nPID, DWORD& nSessionID)
+{
+	BOOL bSucceeded = FALSE;
+	typedef BOOL (WINAPI* ProcessIdToSessionId_t)(DWORD dwProcessId, DWORD *pSessionId);
+	ProcessIdToSessionId_t processIdToSessionId = NULL;
+	MModule kernel32(L"kernel32.dll");
+	if (kernel32.GetProcAddress("ProcessIdToSessionId", processIdToSessionId))
+	{
+		bSucceeded = processIdToSessionId(GetCurrentProcessId(), &nSessionID);
+	}
+	return bSucceeded;
+}
 
 LPCWSTR apiQuerySessionID()
 {
 	static wchar_t szSessionId[16] = L"";
 	if (!*szSessionId)
 	{
-		BOOL bSucceeded = FALSE;
 		DWORD nSessionId = 0;
-		typedef BOOL (WINAPI* ProcessIdToSessionId_t)(DWORD dwProcessId, DWORD *pSessionId);
-		ProcessIdToSessionId_t processIdToSessionId = NULL;
-		MModule kernel32(L"kernel32.dll");
-		if (kernel32.GetProcAddress("ProcessIdToSessionId", processIdToSessionId))
-		{
-			bSucceeded = processIdToSessionId(GetCurrentProcessId(), &nSessionId);
-		}
+		BOOL bSucceeded = apiQuerySessionID(GetCurrentProcessId(), nSessionId);
 		if (bSucceeded)
 			_wsprintf(szSessionId, SKIPCOUNT(szSessionId) L"%u", nSessionId);
 		else
