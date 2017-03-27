@@ -1642,7 +1642,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 
 	if (Info->Flags & essf_Region)
 	{
-		_ASSERTEX(Info->Region.left==0 && Info->Region.right==(csbi.dwSize.X-1)); // Not used yet!
+		_ASSERTEX(Info->Region.left==0 && (Info->Region.right==0 || Info->Region.right==(csbi.dwSize.X-1))); // Not used yet!
 		if ((Info->Region.top < 0) || (Info->Region.bottom < Info->Region.top))
 		{
 			_ASSERTEX(Info->Region.top>=0 && Info->Region.bottom>=Info->Region.top); // Invalid scroll region was requested?
