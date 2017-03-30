@@ -1628,7 +1628,11 @@ int CShellProc::PrepareExecuteParms(
 			#endif
 		}
 	}
-	BOOL bLongConsoleOutput = gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput && !bDetachedOrHidden;
+
+	// Used to automatically increase the height of the console (backscroll) buffer when starting smth from Far Manager prompt,
+	// save output to our server internal buffer, and revert the height to original size.
+	// Was useful until ‘Far -w’ appeared.
+	BOOL bLongConsoleOutput = gFarMode.FarVer.dwVerMajor && gFarMode.bFarHookMode && gFarMode.bLongConsoleOutput && !bDetachedOrHidden;
 
 	// Current application is GUI subsystem run in ConEmu tab?
 	CheckIsCurrentGuiClient();
@@ -2272,8 +2276,8 @@ int CShellProc::PrepareExecuteParms(
 		else if ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1)
 				&& (NewConsoleFlags // CEF_NEWCON_SWITCH | CEF_NEWCON_PREPEND
 					|| (bLongConsoleOutput &&
-						((gFarMode.FarVer.dwVerMajor >= 3) && (aCmd == eShellExecute) && (anShellFlags && (*anShellFlags & SEE_MASK_NO_CONSOLE)) && (anShowCmd && *anShowCmd))
-						|| ((gFarMode.FarVer.dwVerMajor <= 2) && (aCmd == eCreateProcess) && (anCreateFlags && (*anCreateFlags & CREATE_DEFAULT_ERROR_MODE)))
+						(((gFarMode.FarVer.dwVerMajor >= 3) && (aCmd == eShellExecute) && (anShellFlags && (*anShellFlags & SEE_MASK_NO_CONSOLE)) && (anShowCmd && *anShowCmd))
+						|| ((gFarMode.FarVer.dwVerMajor <= 2) && (aCmd == eCreateProcess) && (anCreateFlags && (*anCreateFlags & CREATE_DEFAULT_ERROR_MODE))))
 						)
 					|| (bCurConsoleArg && (m_Args.LongOutputDisable != crb_On))
 					#ifdef _DEBUG
