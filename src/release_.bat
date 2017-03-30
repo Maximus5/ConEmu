@@ -13,13 +13,15 @@ if errorlevel 1 goto err
 
 if "%~1" == "build_x86" (
   cmd /c ""%~0" build_x64 -new_console:sVb"
-  call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
+  rem call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
+  call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvars64.bat"
   msbuild /m:3 /p:Configuration=Release,Platform=Win32 CE14.sln
   goto err
 )
 
 if "%~1" == "build_x64" (
-  call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
+  rem call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
+  call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvars64.bat"
   msbuild /m:3 /p:Configuration=Release,Platform=x64 CE14.sln
   goto err
 )
