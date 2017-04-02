@@ -4823,9 +4823,10 @@ void SendStarted()
 
 			lbRc1 = GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi);
 
-			if (!lbRc1) dwErr1 = GetLastError();
-
-			pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
+			if (!lbRc1)
+				dwErr1 = GetLastError();
+			else
+				pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
 		}
 
 		// Если (для ComSpec) указан параметр "-cur_console:h<N>"
