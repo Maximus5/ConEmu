@@ -20,6 +20,10 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.4.2
+* gh-1085, gh-1087: Git 1.9.5 had failed to rebase (regression: 597d81f; ref: gh-688, gh-1063).
+
+
 2017.3.26
 * Move window to active monitor by ‘Minimize/Restore’ hotkey if ‘Restore to active monitor’ is checked (ref gh-255).
 * Don't force ConEmu window to ‘active monitor’ unless `-monitor XXX` switch or ‘Restore to active monitor’ are specified.
