@@ -1560,7 +1560,7 @@ bool CPluginBase::StartDebugger()
 	return lbRc;
 }
 
-bool CPluginBase::Attach2Gui()
+bool CPluginBase::Attach2Gui(bool bLeaveOpened /*= false*/)
 {
 	bool lbRc = false;
 	DWORD dwServerPID = 0;
@@ -1685,9 +1685,9 @@ bool CPluginBase::Attach2Gui()
 	//if (IsWindows64())
 	//	wsprintf(szCmdLine+lstrlenW(szCmdLine), L"ConEmuC64.exe\" /ATTACH /PID=%i", dwSelfPID);
 	//else
-	wsprintf(szCmdLine+lstrlenW(szCmdLine), L"\" /ATTACH /FARPID=%i", dwSelfPID);
+	wsprintf(szCmdLine+lstrlenW(szCmdLine), L"\" /ATTACH /FARPID=%i %s", dwSelfPID, bLeaveOpened ? L"/CONFIRM " : L"");
 	if (gdwPreDetachGuiPID)
-		wsprintf(szCmdLine+lstrlenW(szCmdLine), L" /GID=%i", gdwPreDetachGuiPID);
+		wsprintf(szCmdLine+lstrlenW(szCmdLine), L"/GID=%i", gdwPreDetachGuiPID);
 
 	if (!CreateProcess(NULL, szCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL,
 	                  NULL, &si, &pi))

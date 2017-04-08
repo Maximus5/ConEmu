@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    162
+#define CESERVER_REQ_VER    163
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -2151,6 +2151,7 @@ struct CESERVER_REQ_START
 	HWND2 hGuiWnd; // In-ghWnd
 	HWND2 hAppWnd; // Hooked application window (для GUI режима)
 	DWORD nValue;  // Error codes
+	BOOL  bLeave;  // Leave tab opened after process exit
 };
 
 // CECMD_LOCKDC

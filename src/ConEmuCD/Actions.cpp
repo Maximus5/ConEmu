@@ -30,6 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
+#define SHOW_ATTACH_MSGBOX
+
 #include "../common/Common.h"
 #include "../common/CmdLine.h"
 #include "../common/ConEmuCheck.h"

@@ -4781,15 +4781,14 @@
       "zh": "可选（&A）模式",
       "id": 2405 }
     ,
+    "IDC_ATTACH_LEAVE_OPEN": {
+      "en": "&Leave opened",
+      "id": 3078 }
+    ,
     "IDC_CONSOLE_STATES": {
       "en": "Console states",
       "zh": "Console 状态",
       "id": 1560 }
-    ,
-    "IDC_NEWCONSOLE": {
-      "en": "&New",
-      "zh": "新建（&N）",
-      "id": 1775 }
     ,
     "IDC_REFRESH": {
       "en": "&Refresh",

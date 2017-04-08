@@ -2706,11 +2706,11 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 	case CECMD_STARTSERVER:
 		{
 			int nErrCode = -1;
-			wchar_t szSelf[MAX_PATH+16], *pszNamePtr, szCmdLine[MAX_PATH+128];
+			wchar_t szSrvPathName[MAX_PATH+16], *pszNamePtr, szCmdLine[MAX_PATH+140];
 			PROCESS_INFORMATION pi = {};
 			STARTUPINFO si = {sizeof(si)};
 
-			if (GetModuleFileName(ghOurModule, szSelf, MAX_PATH) && ((pszNamePtr = (wchar_t*)PointToName(szSelf)) != NULL))
+			if (GetModuleFileName(ghOurModule, szSrvPathName, MAX_PATH) && ((pszNamePtr = (wchar_t*)PointToName(szSrvPathName)) != NULL))
 			{
 				// Запускаем сервер той же битности, что и текущий процесс
 				_wcscpy_c(pszNamePtr, 16, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
@@ -2719,18 +2719,20 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 				{
 					_ASSERTEX(pCmd->NewServer.hAppWnd!=0);
 					msprintf(szCmdLine, countof(szCmdLine),
-							L"\"%s\" /GID=%u /GHWND=%08X /GUIATTACH=%08X /PID=%u",
-							szSelf,
-							pCmd->NewServer.nGuiPID, (DWORD)pCmd->NewServer.hGuiWnd, (DWORD)pCmd->NewServer.hAppWnd, GetCurrentProcessId());
+							L"\"%s\" /GID=%u /GHWND=%08X /GUIATTACH=%08X /PID=%u %s",
+							szSrvPathName,
+							pCmd->NewServer.nGuiPID, (DWORD)pCmd->NewServer.hGuiWnd, (DWORD)pCmd->NewServer.hAppWnd, GetCurrentProcessId(),
+							pCmd->NewServer.bLeave ? L"/CONFIRM" : L"");
 					gbAttachGuiClient = TRUE;
 				}
 				else
 				{
 					_ASSERTEX(pCmd->NewServer.hAppWnd==0);
 					msprintf(szCmdLine, countof(szCmdLine),
-						L"\"%s\" /GID=%u /GHWND=%08X /ATTACH /PID=%u",
-						szSelf,
-						pCmd->NewServer.nGuiPID, (DWORD)pCmd->NewServer.hGuiWnd, GetCurrentProcessId());
+						L"\"%s\" /GID=%u /GHWND=%08X /ATTACH /PID=%u %s",
+						szSrvPathName,
+						pCmd->NewServer.nGuiPID, (DWORD)pCmd->NewServer.hGuiWnd, GetCurrentProcessId(),
+						pCmd->NewServer.bLeave ? L"/CONFIRM" : L"");
 				}
 
 				if (IsWindowVisible(ghConWnd))

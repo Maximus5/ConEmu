@@ -45,6 +45,7 @@ struct AttachParm
 	DWORD nPID, nBits;
 	AttachProcessType nType;
 	BOOL  bAlternativeMode;
+	BOOL  bLeaveOpened;
 };
 
 class CAttachDlg
@@ -63,7 +64,7 @@ protected:
 	DWORD mn_ExplorerPID;
 protected:
 	bool OnStartAttach();
-	static bool StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType, BOOL abAltMode);
+	static bool StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType, BOOL abAltMode, BOOL abLeaveOpened);
 protected:
 	struct AttachWndInfo {
 		DWORD nPID;

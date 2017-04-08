@@ -134,7 +134,7 @@ public:
 	bool isModalEditorViewer();
 	void ShowConsoleInfo();
 	bool StartDebugger();
-	bool Attach2Gui();
+	bool Attach2Gui(bool bLeaveOpened = false);
 	bool FindServerCmd(DWORD nServerCmd, DWORD &dwServerPID, bool bFromAttach = false);
 	int ShowMessage(int aiMsg, int aiButtons);
 	bool UpdateConEmuTabs(bool abSendChanges);
