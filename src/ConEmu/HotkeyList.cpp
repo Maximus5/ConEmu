@@ -252,7 +252,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	Add(vkMultiNewPopup2, chk_User,  NULL,    L"Multi.NewConsolePopup2",CConEmuCtrl::key_MultiNewPopupMenu2)
 		;
 	Add(vkMultiNewAttach, chk_User,  NULL,    L"Multi.NewAttach",       CConEmuCtrl::key_MultiNewAttach, true/*OnKeyUp*/)
-		->SetHotKey('G',VK_LWIN);
+		->SetHotKey('G',VK_LWIN,VK_SHIFT);
 	/*
 			Splitters
 	*/
