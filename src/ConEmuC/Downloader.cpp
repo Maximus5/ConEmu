@@ -2011,7 +2011,7 @@ wrap:
 	_wsprintf(szResult, SKIPCOUNT(szResult)
 		L"Exit with code %s (%i)",
 		(iRc==CERR_DOWNLOAD_SUCCEEDED) ? L"CERR_DOWNLOAD_SUCCEEDED" :
-		(iRc==CERR_DOWNLOAD_SUCCEEDED) ? L"CERR_DOWNLOAD_FAILED" :
+		(iRc==CERR_DOWNLOAD_FAILED) ? L"CERR_DOWNLOAD_FAILED" :
 		(iRc==CERR_CARGUMENT) ? L"CERR_CARGUMENT" :
 		L"OtherExitCode",
 		iRc);
