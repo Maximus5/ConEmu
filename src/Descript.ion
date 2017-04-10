@@ -7,5 +7,6 @@ CE10.sln VC2010
 CE11.sln VC2012
 CE12.sln VC2013
 CE14.sln VC2015
+CE17.sln VC2017
 vc.build.create.release.cmd VC9-x86, VC14-x64
 vc.build.release.cmd [9|10|11|12|14 [core] [x86|x64] [noclean] [nofull] [dosign|nosign]]]
