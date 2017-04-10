@@ -670,6 +670,7 @@
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="UnitTests.h" />
     <ClInclude Include="Update.h" />
+    <ClInclude Include="UpdateConst.h" />
     <ClInclude Include="UpdateSet.h" />
     <ClInclude Include="VConChild.h" />
     <ClInclude Include="VConGroup.h" />

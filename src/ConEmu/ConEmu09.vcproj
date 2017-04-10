@@ -746,6 +746,7 @@
       <File RelativePath=".\TrayIcon.h" />
       <File RelativePath=".\UnitTests.h" />
       <File RelativePath=".\Update.h" />
+      <File RelativePath=".\UpdateConst.h" />
       <File RelativePath=".\UpdateSet.h" />
       <File RelativePath=".\VConChild.h" />
       <File RelativePath=".\VConRelease.h" />

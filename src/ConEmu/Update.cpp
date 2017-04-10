@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <shlobj.h>
 #pragma warning(default: 4091)
 #include "Update.h"
+#include "UpdateConst.h"
 #include "UpdateSet.h"
 #include "Options.h"
 #include "OptionsClass.h"
@@ -52,25 +53,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 CConEmuUpdate* gpUpd = NULL;
 
 #define UPDATETHREADTIMEOUT 2500
-
-#define sectionConEmuStable  L"ConEmu_Stable_2"
-#define sectionConEmuPreview L"ConEmu_Preview_2"
-#define sectionConEmuDevel   L"ConEmu_Devel_2"
-
-#define szWhatsNewLabel L"Whats new (project wiki page)"
-
-#define szRetryVersionIniCheck \
-	L"ConEmu is unable to load current version information from servers.\n" \
-	L"You may either check and download new versions manually from\n" \
-	CEDOWNLPAGE /* http://www.fosshub.com/ConEmu.html */ L"\n" \
-	L"or let ConEmu retry the check.\n"
-
-#define szRetryPackageDownload \
-	L"ConEmu is unable to download update package.\n" \
-	L"You may either download new versions manually from\n" \
-	CEDOWNLPAGE /* http://www.fosshub.com/ConEmu.html */ L"\n" \
-	L"or let ConEmu retry the downloading.\n"
-
 
 
 CConEmuUpdate::CConEmuUpdate()
