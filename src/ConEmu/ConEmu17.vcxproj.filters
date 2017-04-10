@@ -16,17 +16,47 @@
     <Filter Include="SettingPages">
       <UniqueIdentifier>{04d59c4b-17b0-4ef6-800e-4464cd109775}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Updater">
+      <UniqueIdentifier>{9fbffb58-c34b-4255-ac11-8038925b085b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Settings">
+      <UniqueIdentifier>{6d03b29b-77fb-4bcf-b238-19af1ee12977}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Localization">
+      <UniqueIdentifier>{dfdd67c3-8daa-45c6-a3d3-cd80d2b9aab4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Helpers">
+      <UniqueIdentifier>{c1a8fde6-8de3-4f26-8394-b7695b0a1fb4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UIControls">
+      <UniqueIdentifier>{08b7bfa2-1781-4e1b-ae93-9b26e2c2c596}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UIServices">
+      <UniqueIdentifier>{bbd56eee-b5dc-48dd-8a45-5423895257d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Texts">
+      <UniqueIdentifier>{89255e3b-b6a8-47c5-bea7-2c98bc5108b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="About">
+      <UniqueIdentifier>{9212ad2d-2568-412f-9bf9-3b3002ba23be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input">
+      <UniqueIdentifier>{a8933729-8a31-4ee3-a6f9-ca50ee517b8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Macro">
+      <UniqueIdentifier>{94e2a792-bf12-4559-8a94-68b4b0e36928}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="InterProcess">
+      <UniqueIdentifier>{7ba5f2b0-ba5a-4f06-a66c-c25893a917f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RunConsole">
+      <UniqueIdentifier>{e3625eb9-e9a5-4acd-af43-2fddb5f71f64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ConsoleData">
+      <UniqueIdentifier>{f9408159-93c6-4b94-bba7-02873edc4663}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Attach.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Background.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BaseDragDrops.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\Common.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
@@ -42,97 +72,7 @@
     <ClCompile Include="ConEmuPipe.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CustomFonts.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DragDrop.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DragDropData.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DwmHelper.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="FrameHolder.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GestureEngine.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GuiServer.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="LoadImg.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Macro.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MAssert.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\Memory.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MSecurity.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MStrSafe.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Options.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OptionsClass.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OptionsFast.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\RConStartArgs.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RealBuffer.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RealConsole.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RealServer.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Recreate.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Registry.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\RgnDetect.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ScreenDump.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TabBar.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TabID.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TaskBar.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TaskBarGhost.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TrayIcon.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Update.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UpdateSet.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="VConChild.cpp">
@@ -144,25 +84,10 @@
     <ClCompile Include="VirtualConsole.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\WObjects.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\execute.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ConEmuCtrl.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Status.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="VConGroup.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DefaultTerm.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Menu.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Inside.cpp">
@@ -171,76 +96,10 @@
     <ClCompile Include="ConfirmDlg.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FindDlg.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="OptionsHelp.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RunQueue.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Hotkeys.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\Monitors.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IconList.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\CmdLine.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\SetEnvVar.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AboutDlg.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TabCtrlBase.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TabCtrlWin.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SearchCtrl.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MEvent.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MFileLog.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MSection.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MSectionSimple.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MSetter.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MTimer.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MToolTip.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\ProcessSetEnv.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\WFiles.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\WRegistry.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\WUser.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CmdHistory.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuSize.cpp">
@@ -249,142 +108,13 @@
     <ClCompile Include="ConEmuStart.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DpiAware.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DynDialog.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FindPanel.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="HooksUnlocker.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HotkeyChord.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HotkeyDlg.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HotkeyList.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Match.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MyClipboard.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RConFiles.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SetAppSettings.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SetCmdTask.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SetColorPalette.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SetDlgButtons.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SetDlgColors.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SetDlgFonts.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SetDlgLists.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TermX.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ToolImg.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="UnitTests.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\WThreads.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PushInfo.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\HkFunc.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\md5.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MGlobal.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\WConsoleInfo.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="WinObjBase.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\wcchars.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\wcwidth.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\CEStr.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="AltNumpad.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="VConText.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MStrDup.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ImgButton.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MJsonReader.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="LngRc.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MGuiMacro.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MBSTR.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MModule.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MRect.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MStrEsc.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="LngData.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\WSession.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CreateProcess.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FontMgr.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TaskScheduler.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SetPgAppear.cpp">
@@ -477,27 +207,6 @@
     <ClCompile Include="SetPgViews.cpp">
       <Filter>SettingPages</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\MProcess.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\MProcessBits.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ColorFix.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DlgItemHelper.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Font.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FontPtr.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RConPalette.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SetPgChildGui.cpp">
       <Filter>SettingPages</Filter>
     </ClCompile>
@@ -510,23 +219,344 @@
     <ClCompile Include="SetPgQuake.cpp">
       <Filter>SettingPages</Filter>
     </ClCompile>
-    <ClCompile Include="RConData.cpp">
-      <Filter>0 - Source Files</Filter>
+    <ClCompile Include="Update.cpp">
+      <Filter>Updater</Filter>
+    </ClCompile>
+    <ClCompile Include="UpdateSet.cpp">
+      <Filter>Updater</Filter>
+    </ClCompile>
+    <ClCompile Include="Options.cpp">
+      <Filter>Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="OptionsClass.cpp">
+      <Filter>Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="OptionsFast.cpp">
+      <Filter>Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="OptionsHelp.cpp">
+      <Filter>Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="Hotkeys.cpp">
+      <Filter>Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="HotkeyList.cpp">
+      <Filter>Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="HotkeyDlg.cpp">
+      <Filter>Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="HotkeyChord.cpp">
+      <Filter>Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="SetAppSettings.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetCmdTask.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetColorPalette.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetDlgButtons.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetDlgColors.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetDlgFonts.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SetDlgLists.cpp">
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\SetEnvVar.cpp">
+      <Filter>SettingPages</Filter>
     </ClCompile>
     <ClCompile Include="SetPgANSI.cpp">
-      <Filter>0 - Source Files</Filter>
+      <Filter>SettingPages</Filter>
+    </ClCompile>
+    <ClCompile Include="SearchCtrl.cpp">
+      <Filter>UIControls</Filter>
+    </ClCompile>
+    <ClCompile Include="Status.cpp">
+      <Filter>UIControls</Filter>
+    </ClCompile>
+    <ClCompile Include="TabBar.cpp">
+      <Filter>UIControls</Filter>
+    </ClCompile>
+    <ClCompile Include="TabCtrlBase.cpp">
+      <Filter>UIControls</Filter>
+    </ClCompile>
+    <ClCompile Include="TabCtrlWin.cpp">
+      <Filter>UIControls</Filter>
+    </ClCompile>
+    <ClCompile Include="TrayIcon.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskBarGhost.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskBar.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="TabID.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WUser.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WThreads.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WSession.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WRegistry.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WObjects.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="WinObjBase.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WFiles.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="LngData.cpp">
+      <Filter>Localization</Filter>
+    </ClCompile>
+    <ClCompile Include="LngRc.cpp">
+      <Filter>Localization</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\wcwidth.cpp">
+      <Filter>Texts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\wcchars.cpp">
+      <Filter>Texts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\RgnDetect.cpp">
+      <Filter>Texts</Filter>
+    </ClCompile>
+    <ClCompile Include="AboutDlg.cpp">
+      <Filter>About</Filter>
+    </ClCompile>
+    <ClCompile Include="PushInfo.cpp">
+      <Filter>About</Filter>
+    </ClCompile>
+    <ClCompile Include="Registry.cpp">
+      <Filter>Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WConsoleInfo.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="TaskScheduler.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="AltNumpad.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Match.cpp">
+      <Filter>Texts</Filter>
+    </ClCompile>
+    <ClCompile Include="VConText.cpp">
+      <Filter>Texts</Filter>
+    </ClCompile>
+    <ClCompile Include="Attach.cpp">
+      <Filter>RunConsole</Filter>
+    </ClCompile>
+    <ClCompile Include="Recreate.cpp">
+      <Filter>RunConsole</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MGuiMacro.cpp">
+      <Filter>Macro</Filter>
+    </ClCompile>
+    <ClCompile Include="Macro.cpp">
+      <Filter>Macro</Filter>
+    </ClCompile>
+    <ClCompile Include="TermX.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MAssert.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MBSTR.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\md5.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\Memory.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MEvent.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MFileLog.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MGlobal.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MJsonReader.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MModule.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MProcess.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MProcessBits.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MRect.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MSectionSimple.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MSection.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MSecurity.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MSetter.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MTimer.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="MyClipboard.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MStrDup.cpp">
+      <Filter>Texts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MStrEsc.cpp">
+      <Filter>Texts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MStrSafe.cpp">
+      <Filter>Texts</Filter>
+    </ClCompile>
+    <ClCompile Include="GestureEngine.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="RunQueue.cpp">
+      <Filter>RunConsole</Filter>
+    </ClCompile>
+    <ClCompile Include="RealServer.cpp">
+      <Filter>InterProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="GuiServer.cpp">
+      <Filter>InterProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="FindDlg.cpp">
+      <Filter>UIControls</Filter>
+    </ClCompile>
+    <ClCompile Include="FindPanel.cpp">
+      <Filter>UIControls</Filter>
+    </ClCompile>
+    <ClCompile Include="CmdHistory.cpp">
+      <Filter>Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="RealBuffer.cpp">
+      <Filter>ConsoleData</Filter>
+    </ClCompile>
+    <ClCompile Include="RealConsole.cpp">
+      <Filter>ConsoleData</Filter>
+    </ClCompile>
+    <ClCompile Include="RConData.cpp">
+      <Filter>ConsoleData</Filter>
+    </ClCompile>
+    <ClCompile Include="RConFiles.cpp">
+      <Filter>ConsoleData</Filter>
+    </ClCompile>
+    <ClCompile Include="RConPalette.cpp">
+      <Filter>ConsoleData</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MToolTip.cpp">
+      <Filter>UIControls</Filter>
+    </ClCompile>
+    <ClCompile Include="ToolImg.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="ImgButton.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="LoadImg.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="IconList.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="ScreenDump.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\RConStartArgs.cpp">
+      <Filter>ConsoleData</Filter>
+    </ClCompile>
+    <ClCompile Include="BaseDragDrops.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="DragDrop.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="DragDropData.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\CEStr.cpp">
+      <Filter>Texts</Filter>
+    </ClCompile>
+    <ClCompile Include="Background.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\CmdLine.cpp">
+      <Filter>Texts</Filter>
+    </ClCompile>
+    <ClCompile Include="ColorFix.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomFonts.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="DpiAware.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="DlgItemHelper.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="DwmHelper.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="DynDialog.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="Font.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="FontMgr.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="FontPtr.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="Menu.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\execute.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateProcess.cpp">
+      <Filter>RunConsole</Filter>
+    </ClCompile>
+    <ClCompile Include="DefaultTerm.cpp">
+      <Filter>RunConsole</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Attach.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Background.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BaseDragDrops.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ConEmu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -542,115 +572,16 @@
     <ClInclude Include="..\common\ConsoleAnnotation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CustomFonts.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\defines.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DragDrop.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DragDropData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DwmHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FrameHolder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GestureEngine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="globals.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GuiServer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Header.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LoadImg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Macro.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\Memory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MenuIds.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MSecurity.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MStrSafe.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Options.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="OptionsClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="OptionsFast.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\PipeServer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\RConStartArgs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RealBuffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RealConsole.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RealServer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Recreate.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Registry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\RgnDetect.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ScreenDump.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TabBar.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TabID.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TaskBar.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TaskBarGhost.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TrayIcon.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\UnicodeChars.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Update.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UpdateSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VConChild.h">
@@ -662,25 +593,10 @@
     <ClInclude Include="VirtualConsole.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\WObjects.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ConEmuCtrl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ConEmuCD\GuiHooks.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Status.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="VConGroup.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DefaultTerm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Menu.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="version.h" />
@@ -690,94 +606,16 @@
     <ClInclude Include="ConfirmDlg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FindDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MPipe.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="OptionsHelp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RunQueue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Hotkeys.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\Monitors.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\ConEmuCD\ConsoleHelp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="About.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IconList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HtmlCopy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\CmdLine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RefRelease.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\SetEnvVar.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MAssert.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\Dump.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AboutDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TabCtrlBase.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TabCtrlWin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SearchCtrl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\ConEmuColors.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\DefTermBase.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\execute.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MArray.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MEvent.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MFileLog.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MSection.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MSectionSimple.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MSetter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MTimer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MToolTip.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\ProcessData.h">
@@ -795,19 +633,7 @@
     <ClInclude Include="..\common\StartupEnvEx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\WFiles.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\WRegistry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\WUser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\ConEmuCD\ExitCodes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CmdHistory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ConEmuSize.h">
@@ -816,163 +642,16 @@
     <ClInclude Include="ConEmuStart.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DpiAware.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DynDialog.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FindPanel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="HooksUnlocker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HotkeyChord.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HotkeyDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HotkeyList.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Match.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MyClipboard.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RConFiles.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SetAppSettings.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SetCmdTask.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SetColorPalette.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SetDlgButtons.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SetDlgColors.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SetDlgFonts.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SetDlgLists.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SetTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TermX.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ToolImg.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UnitTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\WThreads.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PushInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\HkFunc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\MCircular.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\md5.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MGlobal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\WConsoleInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WinObjBase.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\Common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\wcchars.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\wcwidth.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\CEStr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AltNumpad.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VConText.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MStrDup.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ImgButton.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\kl_parts.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MJsonReader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LngRc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MGuiMacro.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MBSTR.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MModule.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MRect.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MStrEsc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LngData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LngDataEnum.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LngDataHints.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LngDataRsrcs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\WSession.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CreateProcess.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FontMgr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TaskScheduler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SetPgAppear.h">
@@ -1065,34 +744,7 @@
     <ClInclude Include="SetPgViews.h">
       <Filter>SettingPages</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\MProcess.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MProcessBits.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\MToolHelp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ColorFix.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DlgItemHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Font.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FontInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FontPtr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RConPalette.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="version_stage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SetPgChildGui.h">
@@ -1107,11 +759,399 @@
     <ClInclude Include="SetPgQuake.h">
       <Filter>SettingPages</Filter>
     </ClInclude>
-    <ClInclude Include="RConData.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Update.h">
+      <Filter>Updater</Filter>
+    </ClInclude>
+    <ClInclude Include="UpdateConst.h">
+      <Filter>Updater</Filter>
+    </ClInclude>
+    <ClInclude Include="UpdateSet.h">
+      <Filter>Updater</Filter>
+    </ClInclude>
+    <ClInclude Include="Options.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="OptionsClass.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="OptionsFast.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="OptionsHelp.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="HotkeyChord.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="HotkeyDlg.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="HotkeyList.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="Hotkeys.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="SetAppSettings.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetCmdTask.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetColorPalette.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetDlgButtons.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetDlgColors.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetDlgFonts.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetDlgLists.h">
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\SetEnvVar.h">
+      <Filter>SettingPages</Filter>
     </ClInclude>
     <ClInclude Include="SetPgANSI.h">
-      <Filter>Header Files</Filter>
+      <Filter>SettingPages</Filter>
+    </ClInclude>
+    <ClInclude Include="SetTypes.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="SearchCtrl.h">
+      <Filter>UIControls</Filter>
+    </ClInclude>
+    <ClInclude Include="Status.h">
+      <Filter>UIControls</Filter>
+    </ClInclude>
+    <ClInclude Include="TabBar.h">
+      <Filter>UIControls</Filter>
+    </ClInclude>
+    <ClInclude Include="TabCtrlBase.h">
+      <Filter>UIControls</Filter>
+    </ClInclude>
+    <ClInclude Include="TabCtrlWin.h">
+      <Filter>UIControls</Filter>
+    </ClInclude>
+    <ClInclude Include="TrayIcon.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskBarGhost.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="TaskBar.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="TabID.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="LngData.h">
+      <Filter>Localization</Filter>
+    </ClInclude>
+    <ClInclude Include="LngDataEnum.h">
+      <Filter>Localization</Filter>
+    </ClInclude>
+    <ClInclude Include="LngDataHints.h">
+      <Filter>Localization</Filter>
+    </ClInclude>
+    <ClInclude Include="LngDataRsrcs.h">
+      <Filter>Localization</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WUser.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WThreads.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WSession.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WRegistry.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WObjects.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="WinObjBase.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WFiles.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="ToolImg.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\wcwidth.h">
+      <Filter>Texts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\wcchars.h">
+      <Filter>Texts</Filter>
+    </ClInclude>
+    <ClInclude Include="version_stage.h" />
+    <ClInclude Include="TaskScheduler.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Monitors.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\RgnDetect.h">
+      <Filter>Texts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\UnicodeChars.h">
+      <Filter>Texts</Filter>
+    </ClInclude>
+    <ClInclude Include="About.h">
+      <Filter>About</Filter>
+    </ClInclude>
+    <ClInclude Include="AboutDlg.h">
+      <Filter>About</Filter>
+    </ClInclude>
+    <ClInclude Include="PushInfo.h">
+      <Filter>About</Filter>
+    </ClInclude>
+    <ClInclude Include="LngRc.h">
+      <Filter>Localization</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WConsoleInfo.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="TermX.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Registry.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="AltNumpad.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Match.h">
+      <Filter>Texts</Filter>
+    </ClInclude>
+    <ClInclude Include="VConText.h">
+      <Filter>Texts</Filter>
+    </ClInclude>
+    <ClInclude Include="Recreate.h">
+      <Filter>RunConsole</Filter>
+    </ClInclude>
+    <ClInclude Include="Attach.h">
+      <Filter>RunConsole</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MGuiMacro.h">
+      <Filter>Macro</Filter>
+    </ClInclude>
+    <ClInclude Include="Macro.h">
+      <Filter>Macro</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MArray.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MAssert.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MBSTR.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MCircular.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\md5.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Memory.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MEvent.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MFileLog.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MGlobal.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MJsonReader.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MModule.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MProcess.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MProcessBits.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MRect.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MSection.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MSectionSimple.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MSecurity.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MSetter.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MTimer.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="MyClipboard.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MStrDup.h">
+      <Filter>Texts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MStrEsc.h">
+      <Filter>Texts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MStrSafe.h">
+      <Filter>Texts</Filter>
+    </ClInclude>
+    <ClInclude Include="GestureEngine.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="RunQueue.h">
+      <Filter>RunConsole</Filter>
+    </ClInclude>
+    <ClInclude Include="RealServer.h">
+      <Filter>InterProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MPipe.h">
+      <Filter>InterProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\PipeServer.h">
+      <Filter>InterProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="GuiServer.h">
+      <Filter>InterProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\kl_parts.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ConEmuCD\GuiHooks.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="FindDlg.h">
+      <Filter>UIControls</Filter>
+    </ClInclude>
+    <ClInclude Include="FindPanel.h">
+      <Filter>UIControls</Filter>
+    </ClInclude>
+    <ClInclude Include="CmdHistory.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MToolTip.h">
+      <Filter>UIControls</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadImg.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="ImgButton.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="IconList.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="HtmlCopy.h">
+      <Filter>Texts</Filter>
+    </ClInclude>
+    <ClInclude Include="ScreenDump.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="RConData.h">
+      <Filter>ConsoleData</Filter>
+    </ClInclude>
+    <ClInclude Include="RConFiles.h">
+      <Filter>ConsoleData</Filter>
+    </ClInclude>
+    <ClInclude Include="RConPalette.h">
+      <Filter>ConsoleData</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\RConStartArgs.h">
+      <Filter>ConsoleData</Filter>
+    </ClInclude>
+    <ClInclude Include="RealBuffer.h">
+      <Filter>ConsoleData</Filter>
+    </ClInclude>
+    <ClInclude Include="RealConsole.h">
+      <Filter>ConsoleData</Filter>
+    </ClInclude>
+    <ClInclude Include="DragDrop.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="DragDropData.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="BaseDragDrops.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="Background.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\CEStr.h">
+      <Filter>Texts</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\CmdLine.h">
+      <Filter>Texts</Filter>
+    </ClInclude>
+    <ClInclude Include="ColorFix.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="DwmHelper.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="DynDialog.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="DlgItemHelper.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="DpiAware.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="Font.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="FontInfo.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="FontMgr.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="FontPtr.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomFonts.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="Menu.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="MenuIds.h">
+      <Filter>UIServices</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\execute.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="CreateProcess.h">
+      <Filter>RunConsole</Filter>
+    </ClInclude>
+    <ClInclude Include="DefaultTerm.h">
+      <Filter>RunConsole</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\DefTermBase.h">
+      <Filter>RunConsole</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
