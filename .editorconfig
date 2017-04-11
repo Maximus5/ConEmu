@@ -1,0 +1,22 @@
+# EditorConfig is awesome: http://EditorConfig.org
+; Top-most EditorConfig file
+root = true
+
+; 2 space indentation
+[*]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+; Tab indentation (no size specified)
+[*.{cpp,h,def,manifest}]
+indent_style = tab
+
+; Tab indentation (no size specified)
+[makefile*]
+indent_style = tab
+
+; 4 space indentation
+[*.rc]
+indent_style = space
+indent_size = 4
