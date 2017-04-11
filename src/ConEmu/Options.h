@@ -144,7 +144,7 @@ struct TabBtnDblClick
 		Last
 	};
 };
-#define TABBTN_DEFAULT_CLICK_ACTION  TabBtnDblClick::NoAction
+#define TABBTN_DEFAULT_CLICK_ACTION  TabBtnDblClick::RenameTab
 
 // ‘%1’ - line number, ‘%2’ - column number, ‘%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File
 #define HI_GOTO_EDITOR_FAR     L"far.exe /e%1:%2 \"%3\""
