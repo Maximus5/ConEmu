@@ -11,6 +11,10 @@ trim_trailing_whitespace = true
 ; Tab indentation (no size specified)
 [*.{cpp,h,def,manifest}]
 indent_style = tab
+insert_final_newline = true
+trim_trailing_whitespace = true
+charset = utf-8
+end_of_line = crlf
 
 ; Tab indentation (no size specified)
 [makefile*]
