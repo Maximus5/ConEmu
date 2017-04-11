@@ -70,19 +70,20 @@ const DWORD CSetDlgLists::ExtendFonts[] = {lbExtendFontBoldIdx, lbExtendFontItal
 
 const ListBoxItem CSetDlgLists::TabBtnDblClickActions[] =
 {// gpSet->nTabBtnDblClickAction
-	{ 0, L"No action" },
-	{ 1, L"Max/restore window" },
-	{ 5, L"Max/restore pane" },
-	{ 2, L"Close tab" },
-	{ 3, L"Restart tab" },
-	{ 4, L"Duplicate tab" },
+	{ TabBtnDblClick::NoAction,         L"No action"          },
+	{ TabBtnDblClick::MaxRestoreWindow, L"Max/restore window" },
+	{ TabBtnDblClick::MaxRestorePane,   L"Max/restore pane"   },
+	{ TabBtnDblClick::CloseTab,         L"Close tab"          },
+	{ TabBtnDblClick::RestartTab,       L"Restart tab"        },
+	{ TabBtnDblClick::DuplicateTab,     L"Duplicate tab"      },
+	{ TabBtnDblClick::RenameTab,        L"Rename tab"         },
 };
 const ListBoxItem CSetDlgLists::TabBarDblClickActions[] =
 {// gpSet->nTabBarDblClickAction
-	{ 0, L"No action" },
-	{ 1, L"Auto" },
-	{ 2, L"Max/restore window" },
-	{ 3, L"Open new shell" },
+	{ TabBarDblClick::NoAction,         L"No action"          },
+	{ TabBarDblClick::Auto,             L"Auto"               },
+	{ TabBarDblClick::MaxRestoreWindow, L"Max/restore window" },
+	{ TabBarDblClick::OpenNewShell,     L"Open new shell"     },
 };
 
 

@@ -291,8 +291,8 @@ LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
 
 	if (uMsg == WM_LBUTTONDBLCLK)
 	{
-		if ((gpSet->nTabBarDblClickAction == 2)
-			|| ((gpSet->nTabBarDblClickAction == 1) && gpSet->isCaptionHidden()))
+		if ((gpSet->nTabBarDblClickAction == TabBarDblClick::MaxRestoreWindow)
+			|| ((gpSet->nTabBarDblClickAction == TabBarDblClick::Auto) && gpSet->isCaptionHidden()))
 		{
 			LogString(L"ToolBar: ReBar double click: DoMaximizeRestore");
 			// Чтобы клик случайно не провалился в консоль
@@ -300,8 +300,8 @@ LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
 			// Аналог AltF9
 			gpConEmu->DoMaximizeRestore();
 		}
-		else if ((gpSet->nTabBarDblClickAction == 3)
-			|| ((gpSet->nTabBarDblClickAction == 1) && !gpSet->isCaptionHidden()))
+		else if ((gpSet->nTabBarDblClickAction == TabBarDblClick::OpenNewShell)
+			|| ((gpSet->nTabBarDblClickAction == TabBarDblClick::Auto) && !gpSet->isCaptionHidden()))
 		{
 			LogString(L"ToolBar: ReBar double click: RecreateAction");
 			gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
@@ -543,23 +543,26 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 					{
 						switch (gpSet->nTabBtnDblClickAction)
 						{
-						case 1:
+						case TabBtnDblClick::MaxRestoreWindow:
 							// Чтобы клик случайно не провалился в консоль
 							gpConEmu->mouse.state |= MOUSE_SIZING_DBLCKL;
 							// Аналог AltF9
 							gpConEmu->DoMaximizeRestore();
 							break;
-						case 2:
+						case TabBtnDblClick::CloseTab:
 							VCon->RCon()->CloseTab();
 							break;
-						case 3:
+						case TabBtnDblClick::RestartTab:
 							gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, VCon.VCon(), IDM_RESTART);
 							break;
-						case 4:
+						case TabBtnDblClick::DuplicateTab:
 							gpConEmu->mp_Menu->ExecPopupMenuCmd(tmp_None, VCon.VCon(), IDM_DUPLICATE);
 							break;
-						case 5:
+						case TabBtnDblClick::MaxRestorePane:
 							CVConGroup::PaneMaximizeRestore(VCon.VCon());
+							break;
+						case TabBtnDblClick::RenameTab:
+							VCon->RCon()->DoRenameTab();
 							break;
 						#ifdef _DEBUG
 						default:

@@ -94,20 +94,7 @@ protected:
 	static const DWORD ExtendFonts[]; // {lbExtendFontBoldIdx, lbExtendFontItalicIdx, lbExtendFontNormalIdx};
 
 	static const ListBoxItem TabBtnDblClickActions[];
-							//{// gpSet->nTabBtnDblClickAction
-							//	{ 0, L"No action" },
-							//	{ 1, L"Maximize/restore window size" },
-							//	{ 2, L"Close tab" },
-							//	{ 3, L"Restart tab" },
-							//	{ 4, L"Duplicate tab" },
-							//};
 	static const ListBoxItem TabBarDblClickActions[];
-							//{// gpSet->nTabBarDblClickAction
-							//	{ 0, L"No action" },
-							//	{ 1, L"Auto" },
-							//	{ 2, L"Maximize/restore window size" },
-							//	{ 3, L"Open new shell" },
-							//};
 
 public:
 	static uint GetListItems(eFillListBoxItems eWhat, const ListBoxItem*& pItems);
