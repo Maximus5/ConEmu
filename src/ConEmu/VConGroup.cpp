@@ -2458,6 +2458,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 	{
 		int nBtn = IDCANCEL;
 
+		// if we are closing group of panes
 		if (rpPanes)
 		{
 			// Use TaskDialog?
@@ -2502,14 +2503,11 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 				nBtn = MsgBox(szText, MB_OKCANCEL|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle(), ghWnd);
 			}
 		}
-		else if (nConsoles == 1)
+		else if ((nConsoles == 1) && (gpSet->nCloseConfirmFlags & Settings::cc_Console) && VCon.VCon())
 		{
-			if (VCon.VCon())
+			if (VCon->RCon()->isCloseTabConfirmed(fwt_Panels, NULL, true))
 			{
-				if (VCon->RCon()->isCloseTabConfirmed(fwt_Panels, NULL, true))
-				{
-					nBtn = IDOK;
-				}
+				nBtn = IDOK;
 			}
 		}
 		else
