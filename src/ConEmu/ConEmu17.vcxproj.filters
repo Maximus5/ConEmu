@@ -1,14 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="0 - Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
@@ -46,76 +38,50 @@
     <Filter Include="Macro">
       <UniqueIdentifier>{94e2a792-bf12-4559-8a94-68b4b0e36928}</UniqueIdentifier>
     </Filter>
-    <Filter Include="InterProcess">
-      <UniqueIdentifier>{7ba5f2b0-ba5a-4f06-a66c-c25893a917f9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="RunConsole">
-      <UniqueIdentifier>{e3625eb9-e9a5-4acd-af43-2fddb5f71f64}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ConsoleData">
       <UniqueIdentifier>{f9408159-93c6-4b94-bba7-02873edc4663}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Communications">
+      <UniqueIdentifier>{7ba5f2b0-ba5a-4f06-a66c-c25893a917f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Processes">
+      <UniqueIdentifier>{e3625eb9-e9a5-4acd-af43-2fddb5f71f64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\common\Common.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ConEmu.cpp">
-      <Filter>0 - Source Files</Filter>
+      <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuApp.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\ConEmuCheck.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmuPipe.cpp">
-      <Filter>0 - Source Files</Filter>
+      <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="FrameHolder.cpp">
-      <Filter>0 - Source Files</Filter>
+      <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="VConChild.cpp">
-      <Filter>0 - Source Files</Filter>
+      <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="VConRelease.cpp">
-      <Filter>0 - Source Files</Filter>
+      <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="VirtualConsole.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmuCtrl.cpp">
-      <Filter>0 - Source Files</Filter>
+      <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="VConGroup.cpp">
-      <Filter>0 - Source Files</Filter>
+      <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="Inside.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ConfirmDlg.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\Monitors.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\ProcessSetEnv.cpp">
-      <Filter>0 - Source Files</Filter>
+      <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuSize.cpp">
-      <Filter>0 - Source Files</Filter>
+      <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuStart.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HooksUnlocker.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="UnitTests.cpp">
-      <Filter>0 - Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\HkFunc.cpp">
-      <Filter>0 - Source Files</Filter>
+      <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="SetPgAppear.cpp">
       <Filter>SettingPages</Filter>
@@ -364,10 +330,10 @@
       <Filter>Texts</Filter>
     </ClCompile>
     <ClCompile Include="Attach.cpp">
-      <Filter>RunConsole</Filter>
+      <Filter>Processes</Filter>
     </ClCompile>
     <ClCompile Include="Recreate.cpp">
-      <Filter>RunConsole</Filter>
+      <Filter>Processes</Filter>
     </ClCompile>
     <ClCompile Include="..\common\MGuiMacro.cpp">
       <Filter>Macro</Filter>
@@ -445,13 +411,13 @@
       <Filter>Input</Filter>
     </ClCompile>
     <ClCompile Include="RunQueue.cpp">
-      <Filter>RunConsole</Filter>
+      <Filter>Processes</Filter>
     </ClCompile>
     <ClCompile Include="RealServer.cpp">
-      <Filter>InterProcess</Filter>
+      <Filter>Communications</Filter>
     </ClCompile>
     <ClCompile Include="GuiServer.cpp">
-      <Filter>InterProcess</Filter>
+      <Filter>Communications</Filter>
     </ClCompile>
     <ClCompile Include="FindDlg.cpp">
       <Filter>UIControls</Filter>
@@ -550,110 +516,44 @@
       <Filter>Helpers</Filter>
     </ClCompile>
     <ClCompile Include="CreateProcess.cpp">
-      <Filter>RunConsole</Filter>
+      <Filter>Processes</Filter>
     </ClCompile>
     <ClCompile Include="DefaultTerm.cpp">
-      <Filter>RunConsole</Filter>
+      <Filter>Processes</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCtrl.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="HooksUnlocker.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\ProcessSetEnv.cpp">
+      <Filter>Processes</Filter>
+    </ClCompile>
+    <ClCompile Include="UnitTests.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\Common.cpp">
+      <Filter>Communications</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuPipe.cpp">
+      <Filter>Communications</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\ConEmuCheck.cpp">
+      <Filter>Communications</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\HkFunc.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\Monitors.cpp">
+      <Filter>UIServices</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfirmDlg.cpp">
+      <Filter>UIControls</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ConEmu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ConEmuApp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\ConEmuCheck.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ConEmuPipe.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\ConsoleAnnotation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\defines.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FrameHolder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="globals.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Header.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VConChild.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VConRelease.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VirtualConsole.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ConEmuCtrl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VConGroup.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="version.h" />
-    <ClInclude Include="Inside.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ConfirmDlg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ConEmuCD\ConsoleHelp.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RefRelease.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\Dump.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\ConEmuColors.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\ProcessData.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\ProcessSetEnv.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\StartupEnv.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\StartupEnvDef.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\StartupEnvEx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ConEmuCD\ExitCodes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ConEmuSize.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ConEmuStart.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HooksUnlocker.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UnitTests.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\HkFunc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\Common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SetPgAppear.h">
       <Filter>SettingPages</Filter>
     </ClInclude>
@@ -743,9 +643,6 @@
     </ClInclude>
     <ClInclude Include="SetPgViews.h">
       <Filter>SettingPages</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\MToolHelp.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SetPgChildGui.h">
       <Filter>SettingPages</Filter>
@@ -938,10 +835,10 @@
       <Filter>Texts</Filter>
     </ClInclude>
     <ClInclude Include="Recreate.h">
-      <Filter>RunConsole</Filter>
+      <Filter>Processes</Filter>
     </ClInclude>
     <ClInclude Include="Attach.h">
-      <Filter>RunConsole</Filter>
+      <Filter>Processes</Filter>
     </ClInclude>
     <ClInclude Include="..\common\MGuiMacro.h">
       <Filter>Macro</Filter>
@@ -1022,19 +919,19 @@
       <Filter>Input</Filter>
     </ClInclude>
     <ClInclude Include="RunQueue.h">
-      <Filter>RunConsole</Filter>
+      <Filter>Processes</Filter>
     </ClInclude>
     <ClInclude Include="RealServer.h">
-      <Filter>InterProcess</Filter>
+      <Filter>Communications</Filter>
     </ClInclude>
     <ClInclude Include="..\common\MPipe.h">
-      <Filter>InterProcess</Filter>
+      <Filter>Communications</Filter>
     </ClInclude>
     <ClInclude Include="..\common\PipeServer.h">
-      <Filter>InterProcess</Filter>
+      <Filter>Communications</Filter>
     </ClInclude>
     <ClInclude Include="GuiServer.h">
-      <Filter>InterProcess</Filter>
+      <Filter>Communications</Filter>
     </ClInclude>
     <ClInclude Include="..\common\kl_parts.h">
       <Filter>Helpers</Filter>
@@ -1145,13 +1042,112 @@
       <Filter>Helpers</Filter>
     </ClInclude>
     <ClInclude Include="CreateProcess.h">
-      <Filter>RunConsole</Filter>
+      <Filter>Processes</Filter>
     </ClInclude>
     <ClInclude Include="DefaultTerm.h">
-      <Filter>RunConsole</Filter>
+      <Filter>Processes</Filter>
     </ClInclude>
     <ClInclude Include="..\common\DefTermBase.h">
-      <Filter>RunConsole</Filter>
+      <Filter>Processes</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCtrl.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="HooksUnlocker.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\ProcessSetEnv.h">
+      <Filter>Processes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\ProcessData.h">
+      <Filter>Processes</Filter>
+    </ClInclude>
+    <ClInclude Include="UnitTests.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Common.h">
+      <Filter>Communications</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuPipe.h">
+      <Filter>Communications</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\ConEmuCheck.h">
+      <Filter>Communications</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\HkFunc.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\ConEmuColors.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\StartupEnvEx.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="RefRelease.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\StartupEnv.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\StartupEnvDef.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfirmDlg.h">
+      <Filter>UIControls</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ConEmuCD\ConsoleHelp.h">
+      <Filter>About</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\ConsoleAnnotation.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MToolHelp.h">
+      <Filter>Processes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ConEmuCD\ExitCodes.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\Dump.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuApp.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuSize.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuStart.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\defines.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameHolder.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="globals.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Header.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="Inside.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="VConChild.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="VConGroup.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="VConRelease.h">
+      <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="VirtualConsole.h">
+      <Filter>Main</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
