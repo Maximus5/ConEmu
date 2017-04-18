@@ -273,6 +273,7 @@ class CVirtualConsole :
 		LONG GetVConHeight();
 		LONG GetTextWidth();
 		LONG GetTextHeight();
+		SIZE GetCellSize();
 		RECT GetRect();
 		RECT GetDcClientRect();
 		void OnFontChanged();

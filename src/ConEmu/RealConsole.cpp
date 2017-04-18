@@ -158,6 +158,8 @@ WARNING("Часто после разблокирования компьютер
 
 #define CHECK_CONHWND_TIMEOUT 500
 
+#define WAIT_THREAD_DETACH_TIMEOUT 5000
+
 #define HIGHLIGHT_RUNTIME_MIN 10000
 #define HIGHLIGHT_INVISIBLE_MIN 2000
 
@@ -339,6 +341,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
 	memset(m_TerminatedPIDs, 0, sizeof(m_TerminatedPIDs)); mn_TerminatedIdx = 0;
 	mb_SkipFarPidChange = FALSE;
 	mn_InRecreate = 0; mb_ProcessRestarted = FALSE;
+	mb_InDetach = false;
 	SetInCloseConsole(false);
 	mb_RecreateFailed = FALSE;
 	mn_StartTick = mn_RunTime = 0;
@@ -2772,7 +2775,7 @@ wrap:
 
 	ShutdownGuiStep(L"StopSignal");
 
-	if (pRCon->mn_InRecreate != (DWORD)-1)
+	if (!pRCon->mb_InDetach && (pRCon->mn_InRecreate != (DWORD)-1))
 	{
 		pRCon->StopSignal();
 	}
@@ -2902,6 +2905,12 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 			int nDbg = nWaitItems[EVENTS_COUNT-1];
 			UNREFERENCED_PARAMETER(nDbg);
 			#endif
+		}
+
+		// Explicit detach was requested
+		if (mb_InDetach)
+		{
+			break;
 		}
 
 		// Обновить флаги после ожидания
@@ -16321,7 +16330,25 @@ void CRealConsole::ProcessPostponedMacro()
 	SafeFree(pszResult);
 }
 
-bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= false*/, bool bDontConfirm /*= false*/)
+DWORD CRealConsole::InitiateDetach()
+{
+	DWORD nServerPID = GetServerPID(true);
+	mb_InDetach = true;
+	wchar_t szLog[80] = L"";
+	if (mh_MonitorThread)
+	{
+		SetMonitorThreadEvent();
+		if (GetCurrentThreadId() != mn_MonitorThreadID)
+		{
+			DWORD nWait = WaitForSingleObject(mh_MonitorThread, WAIT_THREAD_DETACH_TIMEOUT);
+			msprintf(szLog, countof(szLog), L"InitiateDetach: WaitResult=%u", nWait);
+			LogString(szLog);
+		}
+	}
+	return nServerPID;
+}
+
+bool CRealConsole::DetachRCon(bool bPosted /*= false*/, bool bSendCloseConsole /*= false*/, bool bDontConfirm /*= false*/)
 {
 	if (!this)
 		return false;
@@ -16329,6 +16356,14 @@ bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 	bool bDetached = false;
 
 	LogString(L"CRealConsole::Detach");
+
+	if (InRecreate())
+	{
+		LogString(L"CRealConsole::Detach - Restricted, InRecreate!");
+		goto wrap;
+	}
+
+	SIZE cellSize = mp_VCon->GetCellSize();
 
 	if (m_ChildGui.hGuiWnd)
 	{
@@ -16378,12 +16413,15 @@ bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 		//CloseConsole(false, false);
 
 		// Inform server about close
-		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR)+4*sizeof(DWORD));
 		pIn->dwData[0] = LODWORD(lhGuiWnd); // HWND handles can't be larger than DWORD to not harm 32bit apps
 		pIn->dwData[1] = bSendCloseConsole;
+		pIn->dwData[2] = cellSize.cy;
+		pIn->dwData[3] = cellSize.cx;
 		DWORD dwTickStart = timeGetTime();
 
-		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), pIn, ghWnd);
+		DWORD nServerPID = InitiateDetach();
+		CESERVER_REQ *pOut = ExecuteSrvCmd(nServerPID, pIn, ghWnd);
 
 		CSetPgDebug::debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
@@ -16417,12 +16455,15 @@ bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 			SetOtherWindowPos(hConWnd, HWND_NOTOPMOST, rcScreen.left, rcScreen.top, 0,0, SWP_NOSIZE);
 
 		// Уведомить сервер, что он больше не наш
-		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DETACHCON, sizeof(CESERVER_REQ_HDR)+4*sizeof(DWORD));
 		DWORD dwTickStart = timeGetTime();
 		pIn->dwData[0] = 0;
 		pIn->dwData[1] = bSendCloseConsole;
+		pIn->dwData[2] = cellSize.cy;
+		pIn->dwData[3] = cellSize.cx;
 
-		CESERVER_REQ *pOut = ExecuteSrvCmd(GetServerPID(true), pIn, ghWnd);
+		DWORD nServerPID = InitiateDetach();
+		CESERVER_REQ *pOut = ExecuteSrvCmd(nServerPID, pIn, ghWnd);
 
 		CSetPgDebug::debugLogCommand(pIn, FALSE, dwTickStart, timeGetTime()-dwTickStart, L"ExecuteSrvCmd", pOut);
 
@@ -16450,6 +16491,7 @@ bool CRealConsole::Detach(bool bPosted /*= false*/, bool bSendCloseConsole /*= f
 
 	CConEmuChild::ProcessVConClosed(mp_VCon);
 
+wrap:
 	return bDetached;
 }
 
@@ -16472,7 +16514,7 @@ void CRealConsole::Unfasten()
 		return;
 	}
 
-	if (!Detach(true, false))
+	if (!DetachRCon(true, false))
 	{
 		return;
 	}

@@ -713,7 +713,7 @@ void CVConGroup::OnDestroyConEmu()
 			if (!VCon->RCon()->isDetached()
 				&& VCon->RCon()->ConWnd())
 			{
-				VCon->RCon()->Detach(true, true);
+				VCon->RCon()->DetachRCon(true, true);
 			}
 		}
 	}
@@ -2415,15 +2415,23 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 	else
 		i = (int)countof(gp_VCon) - 1;
 
-	while (i >= 0)
+	for (; i >= 0; --i)
 	{
 		CRealConsole* pRCon = NULL;
-
+		CVConGuard iVCon;
 		CVirtualConsole* pVCon;
+
 		if (rpPanes)
-			pVCon = (*rpPanes)[i--]->VCon();
+		{
+			if (!(pVCon = (*rpPanes)[i]->VCon()))
+				continue;
+		}
 		else
-			pVCon = gp_VCon[i--];
+		{
+			if (!GetVCon(i, &iVCon, true))
+				continue;
+			pVCon = iVCon.VCon();
+		}
 
 		if (pVCon && ((pRCon = pVCon->RCon()) != NULL))
 		{

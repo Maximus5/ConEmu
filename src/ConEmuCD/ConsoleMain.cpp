@@ -1946,7 +1946,7 @@ wrap:
 		}
 
 		// Post information to GUI
-		if (gnMainServerPID)
+		if (gnMainServerPID && !gpSrv->bWasDetached)
 		{
 			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETROOTINFO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_ROOT_INFO));
 			if (pIn && GetRootInfo(pIn))

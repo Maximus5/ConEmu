@@ -376,6 +376,11 @@ BOOL apiSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BU
 }
 
 
+#ifdef _DEBUG
+// When detaching RCon, we set user-friendly font
+bool g_IgnoreSetLargeFont = false;
+#endif
+
 
 // Vista+ Kernel32::GetCurrentConsoleFontEx
 BOOL apiGetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx)
@@ -404,7 +409,7 @@ BOOL apiGetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_C
 	if (lbRc && (lpConsoleCurrentFontEx->dwFontSize.Y > 10))
 	{
 		static bool bWarned = false;
-		if (!bWarned)
+		if (!bWarned && !g_IgnoreSetLargeFont)
 		{
 			_ASSERTE(FALSE && "GetCurrentConsoleFontEx detects large RealConsole font");
 			bWarned = TRUE;
@@ -440,7 +445,7 @@ BOOL apiSetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_C
 	if (lpConsoleCurrentFontEx->dwFontSize.Y > 10)
 	{
 		static bool bWarned = false;
-		if (!bWarned)
+		if (!bWarned && !g_IgnoreSetLargeFont)
 		{
 			_ASSERTE(FALSE && "Going to set large RealConsole font");
 			bWarned = TRUE;
@@ -535,7 +540,7 @@ BOOL apiSetConsoleFontSize(HANDLE hOutput, int inSizeY, int inSizeX, const wchar
 			if (apiGetCurrentConsoleFontEx(hConOut, FALSE, &cfiSet))
 			{
 				// Win10 can't set "Lucida Console 3x5" and we get "4x6"
-				_ASSERTE(_abs(cfiSet.dwFontSize.X-cfi.dwFontSize.X)<=1 && _abs(cfiSet.dwFontSize.Y-cfi.dwFontSize.Y)<=1);
+				_ASSERTE(_abs(cfiSet.dwFontSize.X-cfi.dwFontSize.X)<=2 && _abs(cfiSet.dwFontSize.Y-cfi.dwFontSize.Y)<=1);
 				g_LastSetConsoleFont = cfiSet;
 			}
 			else

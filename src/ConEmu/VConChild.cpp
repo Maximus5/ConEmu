@@ -722,7 +722,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			}
 			else if (messg == pVCon->mn_MsgDetachPosted)
 			{
-				pVCon->RCon()->Detach(true, (lParam == 1));
+				pVCon->RCon()->DetachRCon(true, (lParam == 1));
 			}
 			else if (messg == gn_MsgVConTerminated)
 			{

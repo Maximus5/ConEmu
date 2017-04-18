@@ -71,6 +71,10 @@ struct MY_CONSOLE_FONT_INFOEX
 
 extern MY_CONSOLE_FONT_INFOEX g_LastSetConsoleFont;
 
+#ifdef _DEBUG
+extern bool g_IgnoreSetLargeFont;
+#endif
+
 void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName, WORD anTextColors = 0, WORD anPopupColors = 0);
 
 BOOL apiGetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);

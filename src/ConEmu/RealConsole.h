@@ -663,7 +663,7 @@ class CRealConsole
 		void SetCursorShape(TermCursorShapes xtermShape);
 		TermCursorShapes GetCursorShape();
 		bool isNeedCursorDraw();
-		bool Detach(bool bPosted = false, bool bSendCloseConsole = false, bool bDontConfirm = false);
+		bool DetachRCon(bool bPosted = false, bool bSendCloseConsole = false, bool bDontConfirm = false);
 		void Unfasten();
 		void AdminDuplicate();
 		const CEFAR_INFO_MAPPING *GetFarInfo(); // FarVer и прочее
@@ -880,6 +880,8 @@ class CRealConsole
 		int mn_Focused; //-1 после запуска, 1 - в фокусе, 0 - не в фокусе
 		DWORD mn_InRecreate; // Tick, когда начали пересоздание
 		bool mb_RecreateFailed;
+		bool mb_InDetach; // DetachRCon was initiated
+		DWORD InitiateDetach();
 		DWORD mn_StartTick; // для определения GetRunTime()
 		DWORD mn_DeactivateTick; // чтобы не мигать сразу после "cmd -new_console" из промпта
 		DWORD mn_RunTime; // для информации

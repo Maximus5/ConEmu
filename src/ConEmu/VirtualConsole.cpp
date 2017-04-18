@@ -4361,6 +4361,12 @@ LONG CVirtualConsole::GetTextHeight()
 	return (LONG)m_Sizes.TextHeight;
 }
 
+SIZE CVirtualConsole::GetCellSize()
+{
+	SIZE sz = {m_Sizes.nFontWidth, m_Sizes.nFontHeight};
+	return sz;
+}
+
 RECT CVirtualConsole::GetRect()
 {
 	RECT rc;

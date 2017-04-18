@@ -1001,7 +1001,7 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 				apVCon->RCon()->CloseTab();
 			break;
 		case IDM_DETACH:
-			apVCon->RCon()->Detach();
+			apVCon->RCon()->DetachRCon();
 			break;
 		case IDM_UNFASTEN:
 			apVCon->RCon()->Unfasten();

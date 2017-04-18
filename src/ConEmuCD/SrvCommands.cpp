@@ -1060,6 +1060,7 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	//}
 
 	gpSrv->bWasDetached = TRUE;
+	g_IgnoreSetLargeFont = true;
 	ghConEmuWnd = NULL;
 	SetConEmuWindows(NULL, NULL, NULL);
 	gnConEmuPID = 0;
@@ -1083,7 +1084,7 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		// Без мелькания консольного окошка почему-то пока не получается
 		// Наверх выносится ConEmu вместо "отцепленного" GUI приложения
-		EmergencyShow(ghConWnd);
+		EmergencyShow(ghConWnd, (int)in.dwData[2], (int)in.dwData[3]);
 	}
 
 	if (hGuiApp != NULL)
