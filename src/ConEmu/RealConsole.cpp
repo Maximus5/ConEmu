@@ -9204,6 +9204,7 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 				|| lstrcmpi(ConPrc.Name, _T("conemuc64.exe"))==0);
 
 	ConPrc.IsConHost = lstrcmpi(ConPrc.Name, _T("conhost.exe"))==0
+				|| lstrcmpi(ConPrc.Name, _T("System"))==0
 				|| lstrcmpi(ConPrc.Name, _T("csrss.exe"))==0;
 	ConPrc.IsTermSrv = IsTerminalServer(ConPrc.Name);
 
