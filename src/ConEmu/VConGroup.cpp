@@ -2440,7 +2440,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 			// Прогрессы (копирование, удаление, и т.п.)
 			if (pRCon->GetProgress(NULL) != -1)
 				nProgress ++;
-			else if ((gpSet->nCloseConfirmFlags & Settings::cc_Running) && pRCon->GetRunningPID())
+			else if ((gpConEmu->CloseConfirmFlags() & Settings::cc_Running) && pRCon->GetRunningPID())
 				nProgress ++;
 
 			// Несохраненные редакторы
@@ -2451,7 +2451,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 		}
 	}
 
-	bool bCloseConfirmSet = (gpSet->nCloseConfirmFlags & Settings::cc_Window) != 0;
+	bool bCloseConfirmSet = (gpConEmu->CloseConfirmFlags() & Settings::cc_Window) != 0;
 	if (bCloseConfirmSet && gpUpd)
 	{
 		// Если только что был запрос на обновление-и-закрытие, то нет смысла подтверждать закрытие
@@ -2511,7 +2511,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 				nBtn = MsgBox(szText, MB_OKCANCEL|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle(), ghWnd);
 			}
 		}
-		else if ((nConsoles == 1) && (gpSet->nCloseConfirmFlags & Settings::cc_Console) && VCon.VCon())
+		else if ((nConsoles == 1) && (gpConEmu->CloseConfirmFlags() & Settings::cc_Console) && VCon.VCon())
 		{
 			if (VCon->RCon()->isCloseTabConfirmed(fwt_Panels, NULL, true))
 			{
@@ -2786,7 +2786,7 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 	int nConCount = 0, nDetachedCount = 0;
 	bool lbProceed = false;
 
-	bool bConfirmEach = (bMsgConfirmed || !(gpSet->nCloseConfirmFlags & Settings::cc_Window)) ? false : true;
+	bool bConfirmEach = (bMsgConfirmed || !(gpConEmu->CloseConfirmFlags() & Settings::cc_Window)) ? false : true;
 
 	// Сохраним размер перед закрытием консолей, а то они могут напакостить и "вернуть" старый размер
 	gpSet->SaveSettingsOnExit();

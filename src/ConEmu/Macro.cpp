@@ -1539,13 +1539,16 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		break;
 	case 2: // close ConEmu window (2), no confirm (2,1)
 	{
-		BYTE bPrevConfirm = gpSet->nCloseConfirmFlags;
-		if (nFlags & 1)
-			gpSet->nCloseConfirmFlags = Settings::cc_None;
-		bool bClosed = gpConEmu->OnScClose();
-		if (bClosed)
+		bool bClose = true, bMsgConfirmed = false;
+		if (!(nFlags & 1) && gpSet->nCloseConfirmFlags && !CVConGroup::OnCloseQuery(&bMsgConfirmed))
+			bClose = false;
+		else
+			gpConEmu->SilentMacroClose = true;
+		if (bClose)
+		{
+			gpConEmu->PostScClose();
 			pszResult = lstrdup(L"OK");
-		gpSet->nCloseConfirmFlags = bPrevConfirm;
+		}
 		break;
 	}
 	case 3: // close active tab (3)

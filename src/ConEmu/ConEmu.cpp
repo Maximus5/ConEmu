@@ -370,6 +370,7 @@ CConEmuMain::CConEmuMain()
 	DisableSetDefTerm = false;
 	DisableRegisterFonts = false;
 	DisableCloseConfirm = false;
+	SilentMacroClose = false;
 	//mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
 	//mb_PassSysCommand = false;
 	mb_ExternalHidden = FALSE;
@@ -6559,6 +6560,13 @@ void CConEmuMain::OnBufferHeight() //BOOL abBufferHeight)
 //	return lbProceed;
 //}
 
+BYTE CConEmuMain::CloseConfirmFlags()
+{
+	if (SilentMacroClose)
+		return Settings::cc_None;
+	return gpSet->nCloseConfirmFlags;
+}
+
 void CConEmuMain::PostScClose()
 {
 	// Post mn_MsgPostScClose instead of WM_SYSCOMMAND(SC_CLOSE) to ensure that it is our message
@@ -6592,7 +6600,7 @@ bool CConEmuMain::isScClosing()
 
 bool CConEmuMain::isCloseConfirmed()
 {
-	if (!(gpSet->nCloseConfirmFlags & Settings::cc_Window))
+	if (!(CloseConfirmFlags() & Settings::cc_Window))
 		return false;
 	return DisableCloseConfirm ? true : mb_ScClosePending;
 }

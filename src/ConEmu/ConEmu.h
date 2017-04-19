@@ -257,6 +257,7 @@ class CConEmuMain
 		bool  DisableSetDefTerm;    // ключик "/nodeftrm"
 		bool  DisableRegisterFonts; // ключик "/noregfont"
 		bool  DisableCloseConfirm;  // ключик "/nocloseconfirm"
+		bool  SilentMacroClose;     // closing from GuiMacro (no confirmations at all)
 
 		BOOL  mb_ExternalHidden;
 
@@ -402,6 +403,7 @@ class CConEmuMain
 		void PostScClose();
 		bool OnScClose();
 		bool isScClosing();
+		BYTE CloseConfirmFlags(); // CloseConfirmOptions
 	protected:
 		bool mb_ScClosePending; // Устанавливается в TRUE в CVConGroup::CloseQuery
 	protected:
