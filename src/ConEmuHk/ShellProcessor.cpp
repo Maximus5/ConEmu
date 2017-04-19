@@ -2991,7 +2991,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 		CShellProc::mn_LastStartedPID = lpPI->dwProcessId;
 
 		// ssh-agent.exe is intended to do self-fork to detach from current console
-		if (lpPI->dwProcessId && IsSshAgentHelper(ms_ExeTmp))
+		if (lpPI->dwProcessId && !ms_ExeTmp.IsEmpty() && IsSshAgentHelper(ms_ExeTmp))
 		{
 			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SSHAGENTSTART, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
 			if (pIn)
