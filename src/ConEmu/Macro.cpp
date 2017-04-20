@@ -3286,7 +3286,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				{
 					if (apRCon)
 						apRCon->GetConsoleCurDir(szRConCD);
-					else
+					if (szRConCD.IsEmpty())
 						szRConCD.Set(gpConEmu->WorkDir());
 					pszDir = szRConCD.ms_Val;
 				}
