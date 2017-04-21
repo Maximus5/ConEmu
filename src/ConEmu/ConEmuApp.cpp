@@ -2821,7 +2821,7 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 		L"This may cause blocking or access denied errors!");
 
 	int iBtn = abAutoUnblock ? IDYES
-		: ConfirmDialog(lsMsg, L"Warning!", NULL, NULL, MB_YESNOCANCEL,
+		: ConfirmDialog(lsMsg, L"Warning!", NULL, NULL, MB_YESNOCANCEL, ghWnd,
 			L"Unblock and Continue", L"Let ConEmu try to unblock these files" L"\r\n" L"You may see SmartScreen and UAC confirmations",
 			L"Visit home page and Exit", CEZONEID /* https://conemu.github.io/en/ZoneId.html */,
 			L"Ignore and Continue", L"You may face further warnings");

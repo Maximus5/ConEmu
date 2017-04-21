@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Background.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
+#include "ConfirmDlg.h"
 #include "DefaultTerm.h"
 #include "HotkeyDlg.h"
 #include "LngRc.h"
@@ -774,7 +775,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			break;
 		/* *** Update settings *** */
 
-		/* *** Command groups *** */
+		/* *** Tasks *** */
 		case cbCmdGrpDefaultNew:
 		case cbCmdGrpDefaultCmd:
 		case cbCmdGrpTaskbar:
@@ -826,7 +827,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			break;
 		case stCmdGroupCommands:
 			break; // если нужен тултип для StaticText - нужен стиль SS_NOTIFY, а тогда нужно этот ID просто пропустить, чтобы ассерта не было
-		/* *** Command groups *** */
+		/* *** Tasks *** */
 
 
 		/* *** Default terminal *** */
@@ -1244,7 +1245,7 @@ void CSetDlgButtons::OnBtn_CmdTasksDel(HWND hDlg, WORD CB, BYTE uCheck)
 	if (iCount > 1)
 		_wsprintf(szOthers, SKIPCOUNT(szOthers) L"\n" L"and %i other task(s)", (iCount-1));
 
-	_wsprintf(pszMsg, SKIPLEN(cchMax) L"%sDelete command group\n%s%s?",
+	_wsprintf(pszMsg, SKIPLEN(cchMax) L"%sDelete Task\n%s%s?",
 		bIsStartup ? L"Warning! You about to delete startup task!\n\n" : L"",
 		p->pszName ? p->pszName : L"{???}",
 		szOthers);
@@ -1506,10 +1507,13 @@ void CSetDlgButtons::OnBtn_AddDefaults(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbAddDefaults);
 
-	int iBtn = MsgBox(
-		L"Do you want to ADD NEW default tasks in your task list?\n\n"
-		L"Choose <No> to REWRITE EXISTING tasks with defaults too."
-		, MB_YESNOCANCEL|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle(), ghOpWnd);
+	int iBtn = ConfirmDialog(L"Do you want to add new default tasks in your task list?",
+		L"Default tasks", gpConEmu->GetDefaultTitle(),
+		CEWIKIBASE L"Tasks.html#add-default-tasks",
+		MB_YESNOCANCEL|MB_ICONEXCLAMATION, ghOpWnd,
+		L"Add new tasks", L"Append absent tasks for newly installed shells",
+		L"Recreate default tasks", L"Add new and REWRITE EXISTING tasks with defaults",
+		L"Cancel");
 	if (iBtn == IDCANCEL)
 		return;
 
@@ -1528,8 +1532,13 @@ void CSetDlgButtons::OnBtn_CmdTasksReload(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCmdTasksReload);
 
-	if (MsgBox(L"Warning! All unsaved changes will be lost!\n\nReload command groups from settings?",
-			MB_YESNO|MB_ICONEXCLAMATION, gpConEmu->GetDefaultTitle(), ghOpWnd) != IDYES)
+	int iBtn = ConfirmDialog(L"All unsaved changes will be lost!\n\nReload Tasks from settings?",
+		L"Warning!", gpConEmu->GetDefaultTitle(),
+		CEWIKIBASE L"Tasks.html",
+		MB_YESNO|MB_ICONEXCLAMATION, ghOpWnd,
+		L"Reload Tasks", NULL,
+		L"Cancel", NULL);
+	if (iBtn != IDYES)
 		return;
 
 	// Обновить группы команд

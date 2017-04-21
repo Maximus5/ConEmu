@@ -327,7 +327,7 @@ wrap:
 
 // uType - flags from MsgBox, i.e. MB_YESNOCANCEL
 int ConfirmDialog(LPCWSTR asMessage,
-	LPCWSTR asMainLabel, LPCWSTR asCaption, LPCWSTR asUrl, UINT uType,
+	LPCWSTR asMainLabel, LPCWSTR asCaption, LPCWSTR asUrl, UINT uType, HWND ahParent,
 	LPCWSTR asBtn1Name /*= NULL*/, LPCWSTR asBtn1Hint /*= NULL*/,
 	LPCWSTR asBtn2Name /*= NULL*/, LPCWSTR asBtn2Hint /*= NULL*/,
 	LPCWSTR asBtn3Name /*= NULL*/, LPCWSTR asBtn3Hint /*= NULL*/)
@@ -428,7 +428,7 @@ int ConfirmDialog(LPCWSTR asMessage,
 			buttons[2].pszButtonText = lsBtn3.ms_Val;
 		}
 
-		config.hwndParent                   = ghWnd;
+		config.hwndParent                   = ahParent;
 		config.dwFlags                      = /*TDF_USE_HICON_MAIN|*/TDF_USE_COMMAND_LINKS|TDF_ALLOW_DIALOG_CANCELLATION
 		                                      |TDF_ENABLE_HYPERLINKS; //|TDIF_SIZE_TO_CONTENT|TDF_CAN_BE_MINIMIZED;
 		config.pszWindowTitle               = asCaption ? asCaption : gpConEmu->GetDefaultTitle();
@@ -495,7 +495,7 @@ int ConfirmDialog(LPCWSTR asMessage,
 	}
 
 	// Show dialog
-	nBtn = MsgBox(szText, uType, asCaption, ghWnd);
+	nBtn = MsgBox(szText, uType, asCaption, ahParent);
 wrap:
 	InterlockedDecrement(&lCounter);
 	return nBtn;
