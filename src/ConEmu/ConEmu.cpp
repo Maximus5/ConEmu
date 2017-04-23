@@ -662,6 +662,8 @@ CConEmuMain::CConEmuMain()
 	SetEnvironmentVariable(ENV_CONEMUBASEDIR_VAR_W, ms_ConEmuBaseDir);
 	SetEnvironmentVariable(ENV_CONEMU_BUILD_W, ms_ConEmuBuild);
 	SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, L"");
+	SetEnvironmentVariable(ENV_CONEMU_EXEARGS_W, L"");
+	SetEnvironmentVariable(ENV_CONEMU_EXEARGS2_W, L"");
 	SetEnvironmentVariable(ENV_CONEMU_ISADMIN_W, mb_IsUacAdmin ? L"ADMIN" : NULL);
 
 	// Just reset it here. Variables would be set to real values

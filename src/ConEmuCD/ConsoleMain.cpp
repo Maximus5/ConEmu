@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#define WINE_PRINT_PROC_INFO
 //	#define USE_PIPE_DEBUG_BOXES
 //	#define SHOW_SETCONTITLE_MSGBOX
+	#define SHOW_LOADCFGFILE_MSGBOX
 
 //	#define DEBUG_ISSUE_623
 
@@ -3005,6 +3006,23 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 	BOOL lbAttachGuiApp = FALSE;
 
+	struct {
+		CEStr szConEmuAddArgs;
+		void Append(LPCWSTR asSwitch, LPCWSTR asValue)
+		{
+			lstrmerge(&szConEmuAddArgs.ms_Val, asSwitch);
+			if (asValue && *asValue)
+			{
+				bool needQuot = IsQuotationNeeded(asValue);
+				lstrmerge(&szConEmuAddArgs.ms_Val,
+					needQuot ? L" \"" : L" ",
+					asValue,
+					needQuot ? L"\"" : NULL);
+			}
+			SetEnvironmentVariable(ENV_CONEMU_EXEARGS_W, szConEmuAddArgs);
+		}
+	} AddArgs;
+
 	while ((iRc = NextArg(&lsCmdLine, szArg, &pszArgStarts)) == 0)
 	{
 		xf_check();
@@ -3823,6 +3841,21 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			}
 			// Reuse config if starting "ConEmu.exe" from console server!
 			SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, szArg);
+			AddArgs.Append(L"-config", szArg);
+		}
+		else if (lstrcmpi(szArg, L"/LoadCfgFile")==0)
+		{
+			// Reuse specified xml file if starting "ConEmu.exe" from console server!
+			#ifdef SHOW_LOADCFGFILE_MSGBOX
+			MessageBox(NULL, szArg, L"/LoadCfgFile", MB_SYSTEMMODAL);
+			#endif
+			if ((iRc = NextArg(&lsCmdLine, szArg)) != 0)
+			{
+				_ASSERTE(FALSE && "Xml file name was not specified!");
+				_wprintf(L"Xml file name was not specified!\r\n");
+				break;
+			}
+			AddArgs.Append(L"-LoadCfgFile", szArg);
 		}
 		else if (lstrcmpi(szArg, L"/ASYNC") == 0 || lstrcmpi(szArg, L"/FORK") == 0)
 		{

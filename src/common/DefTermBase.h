@@ -65,6 +65,7 @@ public:
 	ConEmuConsoleFlags nConsoleFlags; // Used for populating m_SrvMapping in ShellProcessor
 	wchar_t* pszConEmuExe; // Полный путь к ConEmu.exe
 	wchar_t* pszConEmuBaseDir; // %ConEmuBaseDir%
+	wchar_t* pszCfgFile; // " /LoadCfgFile "...""
 	wchar_t* pszConfigName; // " /CONFIG "...""
 	wchar_t* pszzHookedApps; // ASCIIZZ
 	bool     bExternalPointers;
@@ -82,6 +83,7 @@ public:
 		nConsoleFlags = CECF_Empty;
 		pszConEmuExe = NULL;
 		pszConEmuBaseDir = NULL;
+		pszCfgFile = NULL;
 		pszConfigName = NULL;
 		pszzHookedApps = NULL;
 		bExternalPointers = false;
@@ -96,6 +98,8 @@ public:
 				free(pszConEmuExe);
 			if (pszConEmuBaseDir)
 				free(pszConEmuBaseDir);
+			if (pszCfgFile)
+				free(pszCfgFile);
 			if (pszConfigName)
 				free(pszConfigName);
 			if (pszzHookedApps)
@@ -177,6 +181,7 @@ public:
 			{L"DefTerm-Flags",     &nConsoleFlags, sizeof(nConsoleFlags), REG_DWORD},
 			{L"DefTerm-ConEmuExe", &pszConEmuExe, 0, REG_SZ},
 			{L"DefTerm-BaseDir",   &pszConEmuBaseDir, 0, REG_SZ},
+			{L"DefTerm-CfgFile",   &pszCfgFile, 0, REG_SZ},
 			{L"DefTerm-Config",    &pszConfigName, 0, REG_SZ},
 			{L"DefTerm-AppList",   &pszzHookedApps, 0, REG_MULTI_SZ},
 		};

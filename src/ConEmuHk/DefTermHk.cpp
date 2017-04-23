@@ -718,7 +718,10 @@ size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
 	if (!this)
 		return 0;
 
-	size_t cchMax = 64 + ((m_Opt.pszConfigName && *m_Opt.pszConfigName) ? lstrlen(m_Opt.pszConfigName) : 0);
+	size_t cchMax = 64
+		+ ((m_Opt.pszCfgFile && *m_Opt.pszCfgFile) ? (20 + lstrlen(m_Opt.pszCfgFile)) : 0)
+		+ ((m_Opt.pszConfigName && *m_Opt.pszConfigName) ? (12 + lstrlen(m_Opt.pszConfigName)) : 0)
+		;
 	wchar_t* psz = rsArgs.GetBuffer(cchMax);
 	size_t cchNew = 32; // "-new_console:ni"
 	wchar_t* pszNew = rsNewCon.GetBuffer(cchNew);
@@ -761,7 +764,13 @@ size_t CDefTermHk::GetSrvAddArgs(bool bGuiArgs, CEStr& rsArgs, CEStr& rsNewCon)
 			wcscat_c(szNewConSw, L"n");
 	}
 
-	// That switch must be processed in server too!
+	// That switches must be processed in server too!
+	if (m_Opt.pszCfgFile && *m_Opt.pszCfgFile)
+	{
+		_wcscat_c(psz, cchMax, L" /LoadCfgFile \"");
+		_wcscat_c(psz, cchMax, m_Opt.pszCfgFile);
+		_wcscat_c(psz, cchMax, L"\"");
+	}
 	if (m_Opt.pszConfigName && *m_Opt.pszConfigName)
 	{
 		_wcscat_c(psz, cchMax, L" /CONFIG \"");

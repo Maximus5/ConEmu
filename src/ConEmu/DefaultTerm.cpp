@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Tlhelp32.h>
 #include "DefaultTerm.h"
 #include "ConEmu.h"
+#include "ConEmuStart.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "Status.h"
@@ -211,6 +212,7 @@ void CDefaultTerminal::ReloadSettings()
 	m_Opt.bExternalPointers = true;
 	m_Opt.pszConEmuExe = gpConEmu->ms_ConEmuExe;
 	m_Opt.pszConEmuBaseDir = gpConEmu->ms_ConEmuBaseDir;
+	m_Opt.pszCfgFile = gpConEmu->opt.LoadCfgFile.Exists ? (wchar_t*)gpConEmu->opt.LoadCfgFile.GetStr() : NULL;
 	m_Opt.pszConfigName = (wchar_t*)gpSetCls->GetConfigName();
 	m_Opt.pszzHookedApps = (wchar_t*)gpSet->GetDefaultTerminalAppsMSZ(); // ASCIIZZ
 }
