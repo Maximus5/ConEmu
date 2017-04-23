@@ -1,5 +1,6 @@
 .svn
 .svnignore
+.wsl
 Descript.ion
 
 _*.sln
@@ -34,6 +35,7 @@ _*.sln
 /MinGW
 /Portable_Test
 /ConEmuPortableRarInfo.txt
+/Debug
 
 /Release/ConEmu/WhatsNew-ConEmu-Portable.txt
 /Release/ConEmu/Portable/
@@ -47,3 +49,7 @@ Release/**/*.iobj
 Release/**/*.ipdb
 Release/**/*.exp
 Release/**/*.lib
+/src/ConEmu/graphics.src
+/src/ConEmu/graphics.src
+/src/WebInstall
+/src/WebInstall
