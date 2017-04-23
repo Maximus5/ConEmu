@@ -201,6 +201,7 @@ public:
 		CESwitch ResetSettings; // sw_Simple
 		CESwitch AdvLogging; // sw_Int: -log[1|2|3|4]
 		CESwitch Detached; // sw_Simple
+		CESwitch NoAutoClose; // checked by isCloseOnLastTabClose()
 	public:
 		// Suppress intellisense warning:
 		// the default constructor of "CConEmuStart::StartOptions" cannot be referenced -- it is a deleted function	ConEmu

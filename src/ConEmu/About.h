@@ -52,6 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"-MinTSA - start minimized in taskbar status area, hide to TSA after console close.\r\n" \
 	L"-StartTSA - start minimized in taskbar status area, exit after console close.\r\n" \
 	L"-Detached - start ConEmu without consoles.\r\n" \
+	L"-NoAutoClose - don't close ConEmu window automatically with last tab.\r\n" \
 	L"-Icon <file> - Take icon from file (exe, dll, ico).\r\n" \
 	L"-Title <title> - Set fixed(!) title for ConEmu window. You may use environment variables in <title>.\r\n" \
 	L"-Multi | -NoMulti - Enable or disable multiconsole features.\r\n" \

@@ -3232,9 +3232,9 @@ void CSetDlgButtons::OnBtn_CloseConEmuOptions(HWND hDlg, WORD CB, BYTE uCheck)
 	// Apply new value
 	gpSet->isMultiLeaveOnClose = bClose ? 0 : bQuit ? 2 : 1;
 
-	if (bClose && gpConEmu->opt.Detached)
+	if (bClose && gpConEmu->opt.NoAutoClose)
 	{
-		gpConEmu->opt.Detached.Clear();
+		gpConEmu->opt.NoAutoClose.Clear();
 	}
 
 	if (CurVal != gpSet->isMultiLeaveOnClose)
