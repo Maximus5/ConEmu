@@ -3900,7 +3900,20 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 							if (lpOutl->otmTextMetrics.tmHeight != LF.lfHeight)
 							{
 								_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", lpOutl->otmTextMetrics.tmHeight);
-								CSetDlgLists::SelectStringExact(hWnd2, tConsoleFontSizeY, temp);
+								if (TB == tConsoleFontSizeY)
+								{
+									CEStr lsMsg(L"The created font height differs: ", temp);
+									gpSetCls->ShowModifierErrorTip(lsMsg, hWnd2, TB);
+								}
+								else
+								{
+									CSetDlgLists::SelectStringExact(hWnd2, tConsoleFontSizeY, temp);
+									gpSetCls->ShowModifierErrorTip(L"", hWnd2, TB);
+								}
+							}
+							else
+							{
+								gpSetCls->ShowModifierErrorTip(L"", hWnd2, TB);
 							}
 
 							free(lpOutl); lpOutl = NULL;
