@@ -11075,9 +11075,9 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID)
 	_ASSERTE(anTabsCount>0 && apTabs!=NULL);
 
 	// Started "as admin"
-	if (isAdministrator() && (gpSet->isAdminShield() || gpSet->isAdminSuffix()))
+	if (mp_ConEmu->mb_IsUacAdmin && (m_Args.RunAsRestricted != crb_On) && (m_Args.RunAsAdministrator != crb_Off))
 	{
-		// В идеале - иконкой на закладке (если пользователь это выбрал) или суффиксом (добавляется в GetTab)
+		// Mark tabs as elevated (overlay icon on tab or suffix appended by GetTab)
 		for (int i = 0; i < anTabsCount; i++)
 		{
 			apTabs[i].Type |= fwt_Elevated;

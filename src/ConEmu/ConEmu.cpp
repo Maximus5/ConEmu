@@ -3338,7 +3338,7 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 
 	// don't reset one that may come from apDefArgs
 	if (pArgs && (pArgs->RunAsAdministrator == crb_Undefined))
-		pArgs->RunAsAdministrator = crb_Off;
+		pArgs->RunAsAdministrator = mb_IsUacAdmin ? crb_On : crb_Off;
 
 	// Process some more specials
 	if (apszLine && *apszLine)
