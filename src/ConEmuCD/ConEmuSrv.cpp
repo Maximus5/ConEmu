@@ -147,6 +147,11 @@ void ServerInitFont()
 	{
 		if (gpLogSize) LogSize(NULL, 0, ":SetConsoleFontSizeTo.before");
 
+		#ifdef _DEBUG
+		if (gpSrv->nConFontHeight >= 10)
+			g_IgnoreSetLargeFont = true;
+		#endif
+
 		SetConsoleFontSizeTo(ghConWnd, gpSrv->nConFontHeight, gpSrv->nConFontWidth, gpSrv->szConsoleFont, gnDefTextColors, gnDefPopupColors);
 
 		if (gpLogSize)
