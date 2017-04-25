@@ -9044,11 +9044,15 @@ bool CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 								cp.Alive = true;
 								cp.inConsole = true;
 
-								bool bIsWowProcess = false;
-								if (bIsWin64)
+								if (cp.Bits)
 								{
+									// Bitness is already detected
+								}
+								else if (bIsWin64)
+								{
+									// We can't check bitness via TH32CS_SNAPMODULE if the CURRENT process is 32-bit
 									#if 0
-									// Это работает только если ТЕКУЩИЙ процесс - 64-битный
+									bool bIsWowProcess = false;
 									MODULEENTRY32 mi = {sizeof(mi)};
 									HANDLE hMod = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, cp.ProcessID);
 									DWORD nErrCode = (hMod == INVALID_HANDLE_VALUE) ? GetLastError() : 0;
@@ -9067,6 +9071,7 @@ bool CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 									}
 									UNREFERENCED_PARAMETER(nErrCode);
 									#endif
+
 									cp.Bits = GetProcessBits(cp.ProcessID);
 									// Will fail with elevated consoles/processes
 									if (cp.Bits == 0)
@@ -9081,7 +9086,6 @@ bool CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 								{
 									cp.Bits = 32;
 								}
-								UNREFERENCED_PARAMETER(bIsWowProcess);
 
 
 								SPRC.RelockExclusive(300); // Заблокировать, если это еще не сделано
@@ -9220,6 +9224,11 @@ void CRealConsole::ProcessCheckName(struct ConProcess &ConPrc, LPWSTR asFullFile
 	ConPrc.IsFar = IsFarExe(ConPrc.Name);
 	ConPrc.IsNtvdm = lstrcmpi(ConPrc.Name, _T("ntvdm.exe"))==0;
 	ConPrc.IsTelnet = lstrcmpi(ConPrc.Name, _T("telnet.exe"))==0;
+
+	if (ConPrc.IsConHost)
+	{
+		ConPrc.Bits = IsWindows64() ? 64 : 32;
+	}
 
 	ConPrc.NameChecked = true;
 
