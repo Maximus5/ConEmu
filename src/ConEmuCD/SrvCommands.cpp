@@ -1060,7 +1060,9 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	//}
 
 	gpSrv->bWasDetached = TRUE;
+	#ifdef _DEBUG
 	g_IgnoreSetLargeFont = true;
+	#endif
 	ghConEmuWnd = NULL;
 	SetConEmuWindows(NULL, NULL, NULL);
 	gnConEmuPID = 0;
