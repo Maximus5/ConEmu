@@ -45,7 +45,7 @@ struct ConfirmCloseParam
 	LPCWSTR asSingleConsole;
 	LPCWSTR asSingleTitle;
 
-	ConfirmCloseParam() { memset(this,0,sizeof(*this)); };
+	ConfirmCloseParam() { memset(this,0,sizeof(*this)); }
 };
 int ConfirmCloseConsoles(const ConfirmCloseParam& Parm);
 

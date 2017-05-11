@@ -3047,7 +3047,7 @@ LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			{
 				pVCon->RCon()->DoLockUnlock(lParam == WTS_SESSION_LOCK);
 				return true; // continue;
-			};
+			}
 		};
 		CVConGroup::EnumVCon(evf_All, impl::DoLockUnlock, (LPARAM)nSessionCode);
 
@@ -3294,7 +3294,7 @@ void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
 			delete p->pArgs;
 			delete p;
 			return (LRESULT)pVCon;
-		};
+		}
 	} *Impl = new impl;
 	Impl->pObj = this;
 	Impl->pArgs = pArgs;
@@ -3704,7 +3704,7 @@ void CConEmuMain::SetTitle(HWND ahWnd, LPCWSTR asTitle, bool abTrySync /*= false
 			hWnd = ahWnd;
 			psTitle = lstrdup(asTitle);
 			pConEmu = apConEmu;
-		};
+		}
 		static LRESULT setTitle(LPARAM lParam)
 		{
 			impl* p = (impl*)lParam;
@@ -3719,7 +3719,7 @@ void CConEmuMain::SetTitle(HWND ahWnd, LPCWSTR asTitle, bool abTrySync /*= false
 			free(p->psTitle);
 			SafeDelete(p);
 			return TRUE;
-		};
+		}
 	};
 
 	CallMainThread(false, impl::setTitle, (LPARAM)new impl(ahWnd, asTitle, this));
@@ -13222,7 +13222,7 @@ UINT CConEmuMain::GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal)
 				return true;
 			}
 			return false; // continue iterations
-		};
+		}
 	} Impl = { asLocal };
 
 	if (m__AppMsgs.EnumKeysValues(impl::EnumMsg, (LPARAM)&Impl))
@@ -13253,7 +13253,7 @@ public:
 		, nCallTick(GetTickCount())
 		, nReceiveTick(0)
 	{
-	};
+	}
 };
 
 LRESULT CConEmuMain::CallMainThread(bool bSync, CallMainThreadFn fn, LPARAM lParam)

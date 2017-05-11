@@ -37,9 +37,9 @@ class CSetPgInfo
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgInfo(); };
-	static TabHwndIndex PageType() { return thi_Info; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgInfo(); }
+	static TabHwndIndex PageType() { return thi_Info; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgInfo();
 	virtual ~CSetPgInfo();

@@ -140,7 +140,7 @@ public:
 		mn_LastError = 0;
 		#endif
 		mh_AdvApi = NULL;
-	};
+	}
 	~MNullDesc()
 	{
 		#ifndef CONEMU_MINIMAL
@@ -150,7 +150,7 @@ public:
 		memset(&m_LocalSecurity, 0, sizeof(m_LocalSecurity));
 		LocalFree(mp_LocalDesc); mp_LocalDesc = NULL;
 		LocalFree(mp_ACL); mp_ACL = NULL;
-	};
+	}
 public:
 	#ifndef CONEMU_MINIMAL
 	SECURITY_ATTRIBUTES* NullSecurity()
@@ -207,7 +207,7 @@ public:
 	wrap:
 		UnloadAdvApi();
 		return lpSec;
-	};
+	}
 	#endif // CONEMU_MINIMAL
 	SECURITY_ATTRIBUTES* LocalSecurity()
 	{
@@ -323,7 +323,7 @@ public:
 	wrap:
 		UnloadAdvApi();
 		return lpSec;
-	};
+	}
 };
 
 

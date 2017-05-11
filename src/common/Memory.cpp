@@ -373,12 +373,12 @@ public:
 		cchCount = cbUsedSize = 0;
 		cchMaxCount = 2048;
 		pBlocks = (xf_mem_block*)HeapAlloc(hHeap, 0, cchMaxCount*sizeof(*pBlocks));
-	};
+	}
 	~CTrackBlocks()
 	{
 		// No need to free "pBlocks", we destroy heap completely
 		HeapDestroy(hHeap);
-	};
+	}
 	void DumpBlocks()
 	{
 		if (pBlocks && cchCount)
@@ -395,13 +395,13 @@ public:
 			}
 			OutputDebugStringA(ourBlocks ? "\n============== END OF OUR MEMORY BLOCKS =============\n" : "\n============== END OF EXT MEMORY BLOCKS =============\n");
 		}
-	};
+	}
 	void AddBlock(const xf_mem_block* p)
 	{
 		xf_mem_block xm = *p;
 		xm.Ptr = (void*)p;
 		PushBlock(xm);
-	};
+	}
 	void AddBlock(const PROCESS_HEAP_ENTRY& ent)
 	{
 		xf_mem_block xm = {};
@@ -409,11 +409,11 @@ public:
 		xm.nBlockSize = ent.cbData;
 		lstrcpynA(xm.sSrcFile, "<EXTERNAL>", countof(xm.sSrcFile));
 		PushBlock(xm);
-	};
+	}
 	size_t getUsedSize()
 	{
 		return cbUsedSize;
-	};
+	}
 protected:
 	void PushBlock(const xf_mem_block& blk)
 	{
@@ -429,7 +429,7 @@ protected:
 			cchMaxCount *= 2;
 		}
 		pBlocks[cchCount++] = blk;
-	};
+	}
 };
 
 #if defined(USE_XF_DUMP)

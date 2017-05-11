@@ -205,7 +205,7 @@ int CheckUnicodeFont()
 		void operator()(const wchar_t* txt, int len = -1)
 		{
 			result = WriteConsoleW(out, txt, (len < 0) ? lstrlen(txt) : len, &written, NULL);
-		};
+		}
 	} write = {hOut};
 
 

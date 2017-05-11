@@ -1243,7 +1243,7 @@ class DcDebug
 			mh_OrigDc = *ahDcVar;
 			mh_Dc = *ahPaintDC;
 			*mh_DcVar = mh_Dc;
-		};
+		}
 		~DcDebug()
 		{
 			if (mb_Attached && mh_DcVar)
@@ -1251,7 +1251,7 @@ class DcDebug
 				mb_Attached = FALSE;
 				*mh_DcVar = mh_OrigDc;
 			}
-		};
+		}
 	protected:
 		BOOL mb_Attached;
 		HDC mh_OrigDc, mh_Dc;

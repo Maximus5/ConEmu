@@ -393,7 +393,7 @@ void ConEmuCharBuffer::Inc(size_t Cells /*= 1*/)
 		_ASSERTE(BufferType==(int)ewtf_FarClr && "Invalid type specified!");
 	#endif
 	};
-};
+}
 
 
 #if 0

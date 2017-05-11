@@ -37,9 +37,9 @@ class CSetPgBackgr
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgBackgr(); };
-	static TabHwndIndex PageType() { return thi_Backgr; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgBackgr(); }
+	static TabHwndIndex PageType() { return thi_Backgr; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgBackgr();
 	virtual ~CSetPgBackgr();

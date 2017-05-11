@@ -37,9 +37,9 @@ class CSetPgComspec
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgComspec(); };
-	static TabHwndIndex PageType() { return thi_Comspec; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgComspec(); }
+	static TabHwndIndex PageType() { return thi_Comspec; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgComspec();
 	virtual ~CSetPgComspec();

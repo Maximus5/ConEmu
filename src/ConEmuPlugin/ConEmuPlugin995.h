@@ -38,7 +38,7 @@ protected:
 	
 public:
 	CPluginW995();
-	virtual ~CPluginW995() {};
+	virtual ~CPluginW995() {}
 
 public:
 	virtual bool    CheckPanelExist() override;
@@ -65,14 +65,14 @@ public:
 	#if 0
 	virtual bool    LoadPlugin(wchar_t* pszPluginPath) override;
 	#endif
-	virtual HANDLE  Open(const void* apInfo) override { return InvalidPanelHandle; }; // Was not used in Far 2.x
+	virtual HANDLE  Open(const void* apInfo) override { return InvalidPanelHandle; } // Was not used in Far 2.x
 	virtual bool    OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP = false, int anStartLine = 0, int anStartChar = 1) override;
 	virtual INT_PTR PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2);
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec, bool abShowParseErrors) override;
-	virtual int     ProcessEditorEventPtr(void* p) override { return 0; }; // Was not used in Far 2.x
+	virtual int     ProcessEditorEventPtr(void* p) override { return 0; } // Was not used in Far 2.x
 	virtual int     ProcessEditorInputPtr(LPCVOID Rec) override;
-	virtual int     ProcessSynchroEventPtr(void* p) override { return 0; }; // Was not used in Far 2.x
-	virtual int     ProcessViewerEventPtr(void* p) override { return 0; }; // Was not used in Far 2.x
+	virtual int     ProcessSynchroEventPtr(void* p) override { return 0; } // Was not used in Far 2.x
+	virtual int     ProcessViewerEventPtr(void* p) override { return 0; } // Was not used in Far 2.x
 	virtual void    RedrawAll() override;
 	virtual void    SetStartupInfoPtr(void *aInfo) override;
 	virtual void    SetWindow(int nTab) override;

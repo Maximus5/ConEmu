@@ -279,7 +279,7 @@ protected:
 				}
 			}
 		}
-	};
+	}
 
 protected:
 	wchar_t szSubKey[1024];
@@ -298,7 +298,7 @@ protected:
 		wchar_t *pe = NULL;
 		int n = wcstol(p2+1, &pe, 10);
 		return n;
-	};
+	}
 
 	bool LoadPerfData()
 	{
@@ -397,7 +397,7 @@ protected:
 		}
 
 		return (mp_ProcPerfData != NULL);
-	};
+	}
 
 	bool FindProcessName(DWORD anPID, wchar_t* pProcessName, DWORD cbProcessName)
 	{
@@ -449,7 +449,7 @@ protected:
 		}
 
 		return lbFound;
-	};
+	}
 
 protected:
 	HMODULE mh_Kernel;
@@ -469,7 +469,7 @@ protected:
 		if (!QueryFullProcessImageNameW_f(hProcess, dwFlags, lpExeName, &dwSize))
 			return false;
 		return true;
-	};
+	}
 
 	DWORD getModuleFileNameEx(HANDLE hProcess, HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 	{
@@ -490,7 +490,7 @@ protected:
 		}
 
 		return nRc;
-	};
+	}
 
 public:
 
@@ -507,7 +507,7 @@ public:
 		IsWow64Process_f = (IsWow64Process_t)(mh_Kernel ? GetProcAddress(mh_Kernel, "IsWow64Process") : NULL);
 
 		mb_Is64BitOs = IsWindows64();
-	};
+	}
 
 	~CProcessData()
 	{
@@ -520,7 +520,7 @@ public:
 		{
 			FreeLibrary(mh_Psapi);
 		}
-	};
+	}
 
 public:
 	bool GetProcessName(DWORD anPID, wchar_t* pProcessName, DWORD cbProcessName, wchar_t* pProcessPath, DWORD cbProcessPath, int* pnProcessBits)
@@ -662,5 +662,5 @@ public:
 		SafeCloseHandle(h);
 
 		return lbFound;
-	};
+	}
 };

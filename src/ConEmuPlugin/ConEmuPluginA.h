@@ -38,15 +38,15 @@ protected:
 	wchar_t ms_TempMsgBuf[512];
 public:
 	CPluginAnsi();
-	virtual ~CPluginAnsi() {};
+	virtual ~CPluginAnsi() {}
 
 public:
 	virtual bool    CheckPanelExist() override;
-	virtual bool    ExecuteSynchroApi() override { return false; };
+	virtual bool    ExecuteSynchroApi() override { return false; }
 	virtual void    ExitFar() override;
 	virtual int     GetActiveWindowType() override;
 	virtual DWORD   GetEditorModifiedState() override;
-	virtual bool    GetFarRect(SMALL_RECT& rcFar) override { return false; };
+	virtual bool    GetFarRect(SMALL_RECT& rcFar) override { return false; }
 	virtual int     GetMacroArea() override;
 	virtual LPCWSTR GetMsg(int aiMsg, wchar_t* psMsg = NULL, size_t cchMsgMax = 0) override;
 	virtual LPWSTR  GetPanelDir(GetPanelDirFlags Flags, wchar_t* pszBuffer = NULL, int cchBufferMax = 0) override;
@@ -63,23 +63,23 @@ public:
 	//virtual void    LoadPanelDirs() override;
 	//virtual void    LoadPanelTabsSettings() override;
 	#if 0
-	virtual bool    LoadPlugin(wchar_t* pszPluginPath) override { return false; }; // Not implemented ANSI
+	virtual bool    LoadPlugin(wchar_t* pszPluginPath) override { return false; } // Not implemented ANSI
 	#endif
-	virtual HANDLE  Open(const void* apInfo) override { return InvalidPanelHandle; }; // Was not used in ANSI
+	virtual HANDLE  Open(const void* apInfo) override { return InvalidPanelHandle; } // Was not used in ANSI
 	virtual bool    OpenEditor(LPCWSTR asFileName, bool abView, bool abDeleteTempFile, bool abDetectCP = false, int anStartLine = 0, int anStartChar = 1) override;
 	virtual INT_PTR PanelControlApi(HANDLE hPanel, int Command, INT_PTR Param1, void* Param2) override;
 	virtual void    PostMacroApi(const wchar_t* asMacro, INPUT_RECORD* apRec, bool abShowParseErrors) override;
-	virtual int     ProcessEditorEventPtr(void* p) { return 0; }; // Not implemented in ANSI
-	virtual int     ProcessEditorInputPtr(LPCVOID Rec) override { return 0; }; // No need in ANSI
-	virtual int     ProcessSynchroEventPtr(void* p) { return 0; }; // Not implemented in ANSI
-	virtual int     ProcessViewerEventPtr(void* p) { return 0; }; // Not implemented in ANSI
+	virtual int     ProcessEditorEventPtr(void* p) { return 0; } // Not implemented in ANSI
+	virtual int     ProcessEditorInputPtr(LPCVOID Rec) override { return 0; } // No need in ANSI
+	virtual int     ProcessSynchroEventPtr(void* p) { return 0; } // Not implemented in ANSI
+	virtual int     ProcessViewerEventPtr(void* p) { return 0; } // Not implemented in ANSI
 	virtual void    RedrawAll() override;
 	virtual void    SetStartupInfoPtr(void *aInfo) override;
 	virtual void    SetWindow(int nTab) override;
 	virtual int     ShowMessage(LPCWSTR asMsg, int aiButtons, bool bWarning) override;
 	virtual int     ShowPluginMenu(ConEmuPluginMenuItem* apItems, int Count, int TitleMsgId = CEPluginName) override;
 	virtual void    ShowUserScreen(bool bUserScreen) override;
-	virtual void    StopWaitEndSynchro() override { return; };
+	virtual void    StopWaitEndSynchro() override { return; }
 	virtual bool    UpdateConEmuTabsApi(int windowCount) override;
-	virtual void    WaitEndSynchro() override { return; };
+	virtual void    WaitEndSynchro() override { return; }
 };

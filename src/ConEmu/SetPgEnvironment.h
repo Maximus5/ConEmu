@@ -37,9 +37,9 @@ class CSetPgEnvironment
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgEnvironment(); };
-	static TabHwndIndex PageType() { return thi_Environment; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgEnvironment(); }
+	static TabHwndIndex PageType() { return thi_Environment; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgEnvironment();
 	virtual ~CSetPgEnvironment();

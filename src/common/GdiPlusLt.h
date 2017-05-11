@@ -120,4 +120,4 @@ public:
     const BYTE* SigMask;
 };
 
-};
+}

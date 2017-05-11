@@ -54,11 +54,11 @@ struct Switch
 	{
 		szSwitch.Attach((wchar_t* RVAL_REF)asSwitch);
 		szOpt.Attach((wchar_t* RVAL_REF)asOpt);
-	};
+	}
 
 	~Switch()
 	{
-	};
+	}
 };
 
 struct SwitchParser
@@ -77,12 +77,12 @@ struct SwitchParser
 			L"-NoCascade", L"-DontCascade",
 			NULL};
 		return ppszSkipStd;
-	};
+	}
 
 	SwitchParser()
 		: bCmdList(false)
 	{
-	};
+	}
 
 	void ReleaseVectors()
 	{
@@ -91,12 +91,12 @@ struct SwitchParser
 			SafeDelete(p);
 		while (ourSwitches.pop_back(p))
 			SafeDelete(p);
-	};
+	}
 
 	~SwitchParser()
 	{
 		ReleaseVectors();
-	};
+	}
 
 	bool IsIgnored(Switch* ps, LPCWSTR* ppszSkip)
 	{
@@ -116,7 +116,7 @@ struct SwitchParser
 		}
 
 		return false;
-	};
+	}
 
 	bool IsIgnored(Switch* ps, MArray<Switch*>& Skip)
 	{
@@ -139,7 +139,7 @@ struct SwitchParser
 		}
 
 		return false;
-	};
+	}
 
 	Switch* GetNextSwitch(LPCWSTR& rpsz, CEStr& szArg)
 	{
@@ -153,7 +153,7 @@ struct SwitchParser
 
 		Switch* ps = new Switch(szArg.Detach(), szNext.Detach());
 		return ps;
-	};
+	}
 
 	Switch* GetNextPair(LPCWSTR& rpsz)
 	{
@@ -175,7 +175,7 @@ struct SwitchParser
 		rpsz = psz;
 
 		return GetNextSwitch(rpsz, szArg);
-	};
+	}
 
 	// Parse switches stored in gpConEmu during initialization (AppendExtraArgs)
 	// These are, for example, `-lngfile`, `-fontdir`, and so on.
@@ -202,7 +202,7 @@ struct SwitchParser
 			}
 			stdSwitches.push_back(ps);
 		}
-	};
+	}
 
 	// pszFull comes from registry's [HKCR\Directory\shell\...\command]
 	// Example:
@@ -279,7 +279,7 @@ struct SwitchParser
 				}
 			}
 		}
-	};
+	}
 
 	// Create the command to show on the Integration settings page
 	LPCWSTR CreateCommand(CEStr& rsReady)
@@ -311,7 +311,7 @@ struct SwitchParser
 		}
 
 		return rsReady.c_str(L"");
-	};
+	}
 };
 
 

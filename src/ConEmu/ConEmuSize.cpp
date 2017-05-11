@@ -1567,7 +1567,7 @@ void CConEmuSize::ReloadMonitorInfo()
 			GetMonitorInfoSafe(hMonitor, mi.mi);
 			p->monitors.push_back(mi);
 			return TRUE;
-		};
+		}
 	};
 	monitors.clear();
 	EnumDisplayMonitors(NULL, NULL, Invoke::MonitorEnumProc, reinterpret_cast<LPARAM>(this));
@@ -1612,7 +1612,7 @@ void CConEmuSize::ReloadMonitorInfo()
 				}
 
 				return result;
-			};
+			}
 		};
 
 		const wchar_t szFrameClass[] = L"ConEmuWin10FrameCheck";
@@ -5133,7 +5133,7 @@ struct OnDpiChangedArg
 			ZeroStruct(rcSuggested);
 		bResizeWindow = abResize;
 		src = asrc;
-	};
+	}
 };
 
 LRESULT CConEmuSize::OnDpiChangedCall(LPARAM lParam)

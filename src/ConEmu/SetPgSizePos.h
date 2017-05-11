@@ -37,9 +37,9 @@ class CSetPgSizePos
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgSizePos(); };
-	static TabHwndIndex PageType() { return thi_SizePos; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgSizePos(); }
+	static TabHwndIndex PageType() { return thi_SizePos; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgSizePos();
 	virtual ~CSetPgSizePos();

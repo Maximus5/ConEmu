@@ -37,9 +37,9 @@ class CSetPgQuake
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgQuake(); };
-	static TabHwndIndex PageType() { return thi_Quake; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgQuake(); }
+	static TabHwndIndex PageType() { return thi_Quake; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgQuake();
 	virtual ~CSetPgQuake();

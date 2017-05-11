@@ -37,9 +37,9 @@ class CSetPgCursor
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgCursor(); };
-	static TabHwndIndex PageType() { return thi_Cursor; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgCursor(); }
+	static TabHwndIndex PageType() { return thi_Cursor; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgCursor();
 	virtual ~CSetPgCursor();

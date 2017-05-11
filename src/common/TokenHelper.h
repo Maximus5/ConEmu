@@ -50,7 +50,7 @@ public:
 			dwErr = GetLastError();
 			hToken = NULL;
 		}
-	};
+	}
 	void Release()
 	{
 		if (bEnabled && tp_prev)
@@ -75,7 +75,7 @@ public:
 		{
 			free(tp); tp = NULL;
 		}
-	};
+	}
 	~CAdjustProcessToken()
 	{
 		Release();
@@ -83,7 +83,7 @@ public:
 		{
 			CloseHandle(hToken); hToken = NULL;
 		}
-	};
+	}
 	// Возвращает 1, если все привилегии успешно подняты
 	//  0 - если частично?
 	// -1 - при ошибке, или если hToken уже был инициализирован
@@ -148,7 +148,7 @@ public:
 		}
 
 		return 1;
-	};
+	}
 	int Enable(int nCount, ... /*LPCTSTR lpszPrivilege = SE_BACKUP_NAME, ...*/ )
 	{
 		va_list argptr;
@@ -165,9 +165,9 @@ public:
 		free(pszList);
 		va_end(argptr);
 		return lRc;
-	};
+	}
 	DWORD LastErrorCode()
 	{
 		return dwErr;
-	};
+	}
 };

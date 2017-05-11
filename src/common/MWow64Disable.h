@@ -49,7 +49,7 @@ class MWow64Disable
 			{
 				mb_Disabled = _Wow64DisableWow64FsRedirection(&m_OldValue);
 			}
-		};
+		}
 		void Restore()
 		{
 			if (mb_Disabled)
@@ -59,7 +59,7 @@ class MWow64Disable
 				if (_Wow64RevertWow64FsRedirection)
 					_Wow64RevertWow64FsRedirection(m_OldValue);
 			}
-		};
+		}
 	public:
 		MWow64Disable()
 		{
@@ -76,9 +76,9 @@ class MWow64Disable
 				_Wow64DisableWow64FsRedirection = NULL;
 				_Wow64RevertWow64FsRedirection = NULL;
 			}
-		};
+		}
 		~MWow64Disable()
 		{
 			Restore();
-		};
+		}
 };

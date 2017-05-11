@@ -619,4 +619,4 @@ void MSectionLock::Unlock()
 BOOL MSectionLock::isLocked(BOOL abExclusiveOnly/*=FALSE*/)
 {
 	return (mp_S!=NULL) && mb_Locked && (!abExclusiveOnly || mb_Exclusive);
-};
+}

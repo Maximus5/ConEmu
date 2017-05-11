@@ -590,7 +590,7 @@ union CESize
 			_wsprintf(TempSZ, SKIPLEN(countof(TempSZ)) L"%i", Value);
 		}
 		return TempSZ;
-	};
+	}
 
 	bool IsValid(bool IsWidth) const
 	{
@@ -614,7 +614,7 @@ union CESize
 				bValid = (Value >= MIN_CON_HEIGHT);
 		}
 		return bValid;
-	};
+	}
 
 	bool Set(bool IsWidth, CESizeStyle NewStyle, int NewValue)
 	{
@@ -642,7 +642,7 @@ union CESize
 		Value = NewValue;
 		Style = NewStyle;
 		return true;
-	};
+	}
 
 	void SetFromRaw(bool IsWidth, DWORD aRaw)
 	{
@@ -651,7 +651,7 @@ union CESize
 		{
 			this->Set(IsWidth, v.Style, v.Value);
 		}
-	};
+	}
 
 	bool SetFromString(bool IsWidth, const wchar_t* sValue)
 	{
@@ -676,7 +676,7 @@ union CESize
 		}
 		// Done
 		return Set(IsWidth, NewStyle, NewValue);
-	};
+	}
 };
 
 

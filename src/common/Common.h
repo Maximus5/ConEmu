@@ -623,16 +623,16 @@ struct HWND2
 	operator HWND() const
 	{
 		return (HWND)(DWORD_PTR)u; //-V204
-	};
+	}
 	operator DWORD() const
 	{
 		return (DWORD)u;
-	};
+	}
 	struct HWND2& operator=(HWND h)
 	{
 		u = (DWORD)(DWORD_PTR)h; //-V205
 		return *this;
-	};
+	}
 };
 
 // Для унификации x86/x64. Хранить здесь реальный HKEY нельзя.
@@ -643,17 +643,17 @@ struct HKEY2
 	operator HKEY() const
 	{
 		return (HKEY)(DWORD_PTR)(LONG)u;
-	};
+	}
 	operator DWORD() const
 	{
 		return u;
-	};
+	}
 	struct HKEY2& operator=(HKEY h)
 	{
 		//_ASSERTE(((DWORD_PTR)h) < 0x100000000LL);
 		u = (DWORD)(LONG)(LONG_PTR)h;
 		return *this;
-	};
+	}
 };
 
 struct HANDLE2
@@ -662,16 +662,16 @@ struct HANDLE2
 	operator HANDLE() const
 	{
 		return (HANDLE)(DWORD_PTR)u;
-	};
+	}
 	operator DWORD_PTR() const
 	{
 		return (DWORD_PTR)u;
-	};
+	}
 	struct HANDLE2& operator=(HANDLE h)
 	{
 		u = (DWORD_PTR)h;
 		return *this;
-	};
+	}
 };
 
 struct STRPTR2
@@ -1061,13 +1061,13 @@ struct FarVersion
 	bool IsFarLua() const
 	{
 		return ((dwVerMajor > 3) || ((dwVerMajor == 3) && (dwBuild >= 2851)));
-	};
+	}
 
 	// Userscreen is now 'Desktop' window with index '0'
 	bool IsDesktop() const
 	{
 		return ((dwVerMajor > 3) || ((dwVerMajor == 3) && (dwBuild >= 4039)));
-	};
+	}
 };
 
 
@@ -1524,7 +1524,7 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	// --> ComSpec.ConEmuBaseDir:  wchar_t  sConEmuBaseDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 	//
 	DWORD nAltServerPID;  //
-	DWORD ActiveServerPID() const { return nAltServerPID ? nAltServerPID : nServerPID; };
+	DWORD ActiveServerPID() const { return nAltServerPID ? nAltServerPID : nServerPID; }
 
 	// Root(!) ConEmu window
 	HWND2 hConEmuRoot;
@@ -1603,9 +1603,9 @@ struct TOPLEFTCOORD
 	int y;
 	int x;
 
-	bool isLocked() const { return (y >= 0 || x >= 0); };
-	void Reset() { y = x = -1; };
-	bool Equal(const TOPLEFTCOORD& tl) const { return (tl.x==x && tl.y==y); };
+	bool isLocked() const { return (y >= 0 || x >= 0); }
+	void Reset() { y = x = -1; }
+	bool Equal(const TOPLEFTCOORD& tl) const { return (tl.x==x && tl.y==y); }
 };
 
 struct CESERVER_REQ_CONINFO
@@ -2328,7 +2328,7 @@ struct CESERVER_REQ
 		CESERVER_REQ_TASK GetTask;
 	};
 
-	DWORD DataSize() { return (this && (hdr.cbSize >= sizeof(hdr))) ? (hdr.cbSize - sizeof(hdr)) : 0; };
+	DWORD DataSize() { return (this && (hdr.cbSize >= sizeof(hdr))) ? (hdr.cbSize - sizeof(hdr)) : 0; }
 };
 
 
@@ -2443,7 +2443,7 @@ struct RequestLocalServerParm
 #include "MAssert.h"
 #include "MSecurity.h"
 
-template <typename T> bool _bool(const T V) { _ASSERTE((V)==FALSE || (V)==TRUE); return ((V) != 0); };
+template <typename T> bool _bool(const T V) { _ASSERTE((V)==FALSE || (V)==TRUE); return ((V) != 0); }
 
 #endif // __cplusplus
 

@@ -37,9 +37,9 @@ class CSetPgChildGui
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgChildGui(); };
-	static TabHwndIndex PageType() { return thi_ChildGui; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgChildGui(); }
+	static TabHwndIndex PageType() { return thi_ChildGui; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgChildGui();
 	virtual ~CSetPgChildGui();

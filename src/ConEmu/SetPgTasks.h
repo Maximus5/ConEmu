@@ -39,9 +39,9 @@ class CSetPgTasks
 	, protected CSetDlgLists
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgTasks(); };
-	static TabHwndIndex PageType() { return thi_Tasks; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgTasks(); }
+	static TabHwndIndex PageType() { return thi_Tasks; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgTasks();
 	virtual ~CSetPgTasks();

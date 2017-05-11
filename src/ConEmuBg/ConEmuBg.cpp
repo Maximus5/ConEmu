@@ -342,7 +342,7 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 			{
 				free(gpszXmlFile);
 				gpszXmlFile = NULL;
-			};
+			}
 			ReportFail(L"Can't initialize name of xml file");
 			lbChanged = false;
 			goto wrap;
@@ -537,7 +537,7 @@ struct CachedImage
 		BitBlt(hDc, 0, 0, nWidth, nHeight, ahDc, 0, 0, SRCCOPY); // PATINVERT/PATPAINT?
 
 		return true;
-	};
+	}
 
 	// Деструктор
 	void Close()
@@ -565,7 +565,7 @@ struct CachedImage
 		}
 
 		free(this);
-	};
+	}
 };
 
 struct GDIPlusDecoder
@@ -689,7 +689,7 @@ struct GDIPlusDecoder
 		}
 
 		return result;
-	};
+	}
 
 	// При использовании в фаре GdiPlus иногда может зависать на FreeLibrary.
 	// Причины пока не выяснены
@@ -751,7 +751,7 @@ struct GDIPlusDecoder
 		}
 
 		free(this);
-	};
+	}
 
 	CachedImage* GetImage(LPCWSTR asRelativeName)
 	{

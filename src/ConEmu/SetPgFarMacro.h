@@ -37,9 +37,9 @@ class CSetPgFarMacro
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgFarMacro(); };
-	static TabHwndIndex PageType() { return thi_FarMacro; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgFarMacro(); }
+	static TabHwndIndex PageType() { return thi_FarMacro; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgFarMacro();
 	virtual ~CSetPgFarMacro();

@@ -895,12 +895,12 @@ struct Shrinker
 		indent_min_shrink = 0.5; // %cell
 		space_min_shrink = 0.5;  // %cell
 		text_min_shrink = 0.5;   // %part
-	};
+	}
 
 	~Shrinker()
 	{
 		delete[] data;
-	};
+	}
 
 	void init(VConTextPart* parts, uint l, uint r, uint a_font_width)
 	{
@@ -916,14 +916,14 @@ struct Shrinker
 		#endif
 
 		cell_width = a_font_width;
-	};
+	}
 
 	// Calculate value of the part
 	float sum_k(float len1, float k1_base, float len2, float k2_base)
 	{
 		float k = 1 / ( (len1 / k1_base) + (len2 / k2_base) );
 		return k;
-	};
+	}
 
 	void get_total(VConTextPart* parts, uint l, uint r, float& total_k, int& total_l)
 	{
@@ -971,7 +971,7 @@ struct Shrinker
 		_ASSERTE(total_l > 0 && k_den > 0);
 		total_k = (k_den > 0.0) ? (1 / k_den) : 1;
 		//printf("total: %i..%i: k=%.5f\n", l, r, total_k);
-	};
+	}
 
 	// returns `true` if there was critical compression ratio
 	bool eval_compression(VConTextPart* parts, uint l, uint r, int a_req_len)
@@ -1043,7 +1043,7 @@ struct Shrinker
 		}
 
 		return bCritical;
-	};
+	}
 };
 
 // Shrink lengths of [part1..part2] (including)

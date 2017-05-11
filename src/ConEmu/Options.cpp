@@ -129,7 +129,7 @@ struct CONEMUDEFCOLORS
 	DWORD clrBackground;
 	} Bk;
 
-	bool isIndexes() const { return (nIndexes[0] && nIndexes[1] && nIndexes[2] && nIndexes[3]); };
+	bool isIndexes() const { return (nIndexes[0] && nIndexes[1] && nIndexes[2] && nIndexes[3]); }
 };
 
 const wchar_t gsDefaultColorScheme[64] = L"<ConEmu>";

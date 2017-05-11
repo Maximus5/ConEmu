@@ -283,7 +283,7 @@ struct GDIPlusDecoder
 		}
 
 		return result;
-	};
+	}
 
 	// При использовании в фаре GdiPlus иногда может зависать на FreeLibrary.
 	// Причины пока не выяснены
@@ -338,7 +338,7 @@ struct GDIPlusDecoder
 		}
 
 		FREE(this);
-	};
+	}
 };
 
 #define DEFINE_GUID_(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
@@ -361,7 +361,7 @@ struct GDIPlusData
 	GDIPlusData()
 	{
 		nMagic = eGdiStr_Bits;
-	};
+	}
 
 	void Close()
 	{
@@ -371,7 +371,7 @@ struct GDIPlusData
 		DeleteObject(hDIB);
 		DeleteDC(hCompDc1);
 		FREE(this);
-	};
+	}
 };
 
 struct GDIPlusImage
@@ -393,7 +393,7 @@ struct GDIPlusImage
 	{
 		nMagic = eGdiStr_Image;
 		szTempFile[0] = 0;
-	};
+	}
 
 
 	//Gdiplus::GpBitmap* OpenBitmapFromStream(const u8 *pBuffer, i64 lFileSize)
@@ -536,7 +536,7 @@ struct GDIPlusImage
 		}
 
 		return result;
-	};
+	}
 	bool SelectPage(UINT iPage)
 	{
 		bool result = false;
@@ -554,7 +554,7 @@ struct GDIPlusImage
 		nActivePage = iPage;
 		result = true;
 		return result;
-	};
+	}
 	void Close()
 	{
 		if (!gdi) return;
@@ -579,14 +579,14 @@ struct GDIPlusImage
 		}
 
 		FREE(this);
-	};
+	}
 	static BOOL CALLBACK DrawImageAbortCallback(GDIPlusDecoder *pGDI)
 	{
 		if (pGDI)
 			return pGDI->bCancelled;
 
 		return FALSE;
-	};
+	}
 	bool GetExifTagValueAsInt(PROPID pid, int& nValue)
 	{
 		bool bExists = false;
@@ -618,7 +618,7 @@ struct GDIPlusImage
 		}
 
 		return bExists;
-	};
+	}
 	void CalculateShowSize(int& nCanvasWidth, int& nCanvasHeight, int& nShowWidth, int& nShowHeight, BOOL& lbAllowThumb)
 	{
 		nShowWidth = lWidth;
@@ -669,7 +669,7 @@ struct GDIPlusImage
 
 		nCanvasWidth  = nShowWidth;
 		nCanvasHeight = nShowHeight;
-	};
+	}
 	bool GetPageBits(CET_LoadInfo *pDecodeInfo)
 	{
 		bool result = false;
@@ -832,7 +832,7 @@ struct GDIPlusImage
 		}
 
 		return result;
-	};
+	}
 };
 
 

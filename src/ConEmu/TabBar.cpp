@@ -409,7 +409,7 @@ void CTabBarClass::HighlightTab(const CTabID* apTab, bool abHighlight)
 			if ((i->iTab = i->pTabs->GetIndexByTab(i->pTab)) >= 0)
 				i->pRebar->HighlightTab(i->iTab, i->bHighlight);
 			return 0;
-		};
+		}
 	} Impl = {apTab, abHighlight, mp_Rebar, &m_Tabs};
 
 	gpConEmu->CallMainThread(true, impl::Execute, (LPARAM)&Impl);

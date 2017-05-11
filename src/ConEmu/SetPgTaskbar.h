@@ -37,9 +37,9 @@ class CSetPgTaskbar
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgTaskbar(); };
-	static TabHwndIndex PageType() { return thi_Taskbar; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgTaskbar(); }
+	static TabHwndIndex PageType() { return thi_Taskbar; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgTaskbar();
 	virtual ~CSetPgTaskbar();

@@ -37,9 +37,9 @@ class CSetPgDefTerm
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgDefTerm(); };
-	static TabHwndIndex PageType() { return thi_DefTerm; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgDefTerm(); }
+	static TabHwndIndex PageType() { return thi_DefTerm; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgDefTerm();
 	virtual ~CSetPgDefTerm();

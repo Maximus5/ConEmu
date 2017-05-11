@@ -71,11 +71,11 @@ class CTabBarClass
 		//	bool operator==(struct tag_FAR_WND_ID c)
 		//	{
 		//		return (this->pVCon==c.pVCon) && (this->nFarWindowId==c.nFarWindowId);
-		//	};
+		//	}
 		//	bool operator!=(struct tag_FAR_WND_ID c)
 		//	{
 		//		return (this->pVCon!=c.pVCon) || (this->nFarWindowId!=c.nFarWindowId);
-		//	};
+		//	}
 		//} VConTabs;
 
 	private:
@@ -201,15 +201,15 @@ class CTabBarClass
 		void SwitchRollback();
 
 		// Из Samples\Tabs
-		bool ProcessNcTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; };
-		bool ProcessTabKeyboardEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; };
+		bool ProcessNcTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; }
+		bool ProcessTabKeyboardEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; }
 		bool Toolbar_GetBtnRect(int nCmd, RECT* rcBtnRect);
-		int  GetHoverTab() { return -1; };
-		int  TabBtnFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
-		int  TabFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; };
-		void HoverTab(int anTab) {};
-		void PaintTabs(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs) {};
-		void Toolbar_UnHover() {};
+		int  GetHoverTab() { return -1; }
+		int  TabBtnFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; }
+		int  TabFromCursor(POINT point, DWORD *pnFlags = NULL) { return -1; }
+		void HoverTab(int anTab) {}
+		void PaintTabs(const PaintDC& dc, const RECT &rcCaption, const RECT &rcTabs) {}
+		void Toolbar_UnHover() {}
 };
 
 #endif // #if !defined(CONEMU_TABBAR_EX)

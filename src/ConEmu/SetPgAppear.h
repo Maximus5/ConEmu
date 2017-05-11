@@ -37,9 +37,9 @@ class CSetPgAppear
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgAppear(); };
-	static TabHwndIndex PageType() { return thi_Appear; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgAppear(); }
+	static TabHwndIndex PageType() { return thi_Appear; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgAppear();
 	virtual ~CSetPgAppear();

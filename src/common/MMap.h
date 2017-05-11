@@ -61,7 +61,7 @@ protected:
 		pItems->pItems = (MapItem*)(pItems+1);
 		pItems->nCount = mn_ItemsInBlock;
 		return pItems;
-	};
+	}
 
 	LONG UsedHash(const KEY_T& key)
 	{
@@ -105,14 +105,14 @@ protected:
 		}
 
 		return false;
-	};
+	}
 
 public:
 	MMap()
 	{
 		mp_FirstBlock = NULL;
 		mn_MaxCount = 0;
-	};
+	}
 	~MMap()
 	{
 		// Don't use ‘Release()’ if heap is already deinitialized
@@ -121,7 +121,7 @@ public:
 		{
 			Release();
 		}
-	};
+	}
 
 public:
 	bool Init(size_t nMaxCount = 256, bool bOnCreate = false)
@@ -145,12 +145,12 @@ public:
 		mn_MaxCount = nMaxCount;
 
 		return true;
-	};
+	}
 
 	bool Initialized()
 	{
 		return (mp_FirstBlock != NULL);
-	};
+	}
 
 	void Release()
 	{
@@ -166,7 +166,7 @@ public:
 			}
 			mp_FirstBlock = NULL;
 		}
-	};
+	}
 
 	void Reset()
 	{
@@ -179,7 +179,7 @@ public:
 				pBlock = pBlock->pNextBlock;
 			}
 		}
-	};
+	}
 
 	bool Get(const KEY_T& key, VAL_T* val, bool Remove = false)
 	{
@@ -212,7 +212,7 @@ public:
 		}
 
 		return false;
-	};
+	}
 
 	/// Returns copy of all keys/values in map
 	/// @param  pKeys - [in] pointer to (KEY_T*), may be NULL
@@ -282,13 +282,13 @@ public:
 		}
 
 		return nAllCount;
-	};
+	}
 
 	/// Call this function to release memory, allocated by GetValues or GetKeys
 	void ReleasePointer(void* ptr)
 	{
 		free(ptr);
-	};
+	}
 
 	typedef bool(*MMapEnumCallback)(const KEY_T& next_key, const VAL_T& next_val, LPARAM lParam);
 
@@ -326,7 +326,7 @@ public:
 		}
 
 		return false;
-	};
+	}
 
 	/// Simple one-by-one enumerator
 	/// @param  prev     - [IN]  pass NULL to get first element,
@@ -396,7 +396,7 @@ public:
 
 		// No more elements
 		return false;
-	};
+	}
 
 	bool Set(const KEY_T& key, const VAL_T& val)
 	{
@@ -472,7 +472,7 @@ public:
 		mn_MaxCount += pBlock->nCount;
 
 		return true;
-	};
+	}
 
 	bool Del(const KEY_T& key)
 	{
@@ -483,5 +483,5 @@ public:
 		}
 
 		return Get(key, NULL, true);
-	};
+	}
 };

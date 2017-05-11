@@ -38,7 +38,7 @@ class MStream : public IStream
 			mn_RefCount = 1; mb_SelfAlloc=TRUE;
 			mn_DataSize = 0; mn_DataPos = 0; mn_DataLen = 0;
 			mp_Data = NULL;
-		};
+		}
 		~MStream()
 		{
 			if (mp_Data!=NULL)
@@ -48,14 +48,14 @@ class MStream : public IStream
 				mp_Data=NULL;
 				mn_DataSize = 0; mn_DataPos = 0; mn_DataLen = 0;
 			}
-		};
+		}
 		void SetData(LPCVOID apData, DWORD anLen)
 		{
 			if (mp_Data && mb_SelfAlloc) HeapFree(GetProcessHeap(), 0, mp_Data);
 
 			mb_SelfAlloc=FALSE; mp_Data = (char*)apData; mn_DataSize = anLen;
 			mn_DataPos = 0; mn_DataLen = anLen;
-		};
+		}
 	public:
 		virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject)
 		{
@@ -119,7 +119,7 @@ class MStream : public IStream
 			if (pcbRead) *pcbRead=dwRead;
 
 			return S_OK;
-		};
+		}
 
 		virtual /* [local] */ HRESULT STDMETHODCALLTYPE Write(
 		    /* [size_is][in] */ const void *pv,
@@ -169,7 +169,7 @@ class MStream : public IStream
 			if (pcbWritten) *pcbWritten=dwWritten;
 
 			return S_OK;
-		};
+		}
 	public:
 		/* Wrapper */
 		HRESULT STDMETHODCALLTYPE Seek(
@@ -231,7 +231,7 @@ class MStream : public IStream
 			}
 
 			return S_OK;
-		};
+		}
 
 		virtual HRESULT STDMETHODCALLTYPE SetSize(
 		    /* [in] */ ULARGE_INTEGER libNewSize)
@@ -276,7 +276,7 @@ class MStream : public IStream
 			}
 
 			return hr;
-		};
+		}
 
 		virtual /* [local] */ HRESULT STDMETHODCALLTYPE CopyTo(
 		    /* [unique][in] */ IStream *pstm,
@@ -285,7 +285,7 @@ class MStream : public IStream
 		    /* [out] */ ULARGE_INTEGER *pcbWritten)
 		{
 			return STG_E_INVALIDFUNCTION;
-		};
+		}
 
 		virtual HRESULT STDMETHODCALLTYPE Commit(
 		    /* [in] */ DWORD grfCommitFlags)
@@ -300,12 +300,12 @@ class MStream : public IStream
 			}
 
 			return S_OK;
-		};
+		}
 
 		virtual HRESULT STDMETHODCALLTYPE Revert(void)
 		{
 			return STG_E_INVALIDFUNCTION;
-		};
+		}
 
 		virtual HRESULT STDMETHODCALLTYPE LockRegion(
 		    /* [in] */ ULARGE_INTEGER libOffset,
@@ -313,7 +313,7 @@ class MStream : public IStream
 		    /* [in] */ DWORD dwLockType)
 		{
 			return STG_E_INVALIDFUNCTION;
-		};
+		}
 
 		virtual HRESULT STDMETHODCALLTYPE UnlockRegion(
 		    /* [in] */ ULARGE_INTEGER libOffset,
@@ -321,7 +321,7 @@ class MStream : public IStream
 		    /* [in] */ DWORD dwLockType)
 		{
 			return STG_E_INVALIDFUNCTION;
-		};
+		}
 
 		virtual HRESULT STDMETHODCALLTYPE Stat(
 		    /* [out] */ STATSTG *pstatstg,
@@ -336,11 +336,11 @@ class MStream : public IStream
 			pstatstg->grfLocksSupported = LOCK_EXCLUSIVE;
 			pstatstg->grfStateBits = 0;
 			return S_OK;
-		};
+		}
 
 		virtual HRESULT STDMETHODCALLTYPE Clone(
 		    /* [out] */ IStream **ppstm)
 		{
 			return STG_E_INVALIDFUNCTION;
-		};
+		}
 };

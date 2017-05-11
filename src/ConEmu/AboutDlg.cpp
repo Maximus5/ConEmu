@@ -92,7 +92,7 @@ namespace ConEmuAbout
 	void LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine);
 
 	DWORD nTextSelStart = 0, nTextSelEnd = 0;
-};
+}
 
 INT_PTR WINAPI ConEmuAbout::aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {

@@ -351,7 +351,7 @@ void CVConGroup::FinalRelease()
 	CVConGroup* pGroup = (CVConGroup*)this;
 	delete pGroup;
 	MCHKHEAP;
-};
+}
 
 void CVConGroup::RemoveGroup()
 {
@@ -727,7 +727,7 @@ void CVConGroup::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 		{
 			pVCon->OnAlwaysShowScrollbar(lParam!=0);
 			return true;
-		};
+		}
 	};
 	EnumVCon(evf_All, impl::ShowScroll, (LPARAM)abSync);
 }
@@ -914,7 +914,7 @@ struct ReSizeSplitterHelperArg
 	ReSizeSplitterHelperArg(CVirtualConsole* apVCon, int aiHorz, int aiVert)
 	{
 		pVCon = apVCon; iHorz = aiHorz; iVert = aiVert;
-	};
+	}
 };
 
 LPARAM CVConGroup::ReSizeSplitterHelper(LPARAM lParam)
@@ -3545,7 +3545,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 				if (p->pStartStop && p->pStartStop->Palette.bPalletteLoaded)
 					p->VCon->SetSelfPalette(p->pStartStop->Palette.wAttributes, p->pStartStop->Palette.wPopupAttributes, p->pStartStop->Palette.ColorTable);
 				return (LRESULT)p->VCon.VCon();
-			};
+			}
 		} impl = {new RConStartArgs(), pStartStop};
 
 		impl.pArgs->Detached = crb_On;
@@ -3702,7 +3702,7 @@ bool CVConGroup::GetVConByHWND(HWND hConWnd, HWND hDcWnd, CVConGuard* pVCon /*= 
 				return false;
 			}
 			return true;
-		};
+		}
 	} Impl = {hConWnd, hDcWnd, pVCon};
 	EnumVCon(evf_All, impl::FindCon, (LPARAM)&Impl);
 	return Impl.bFound;
@@ -3763,7 +3763,7 @@ bool CVConGroup::GetVConByName(LPCWSTR asName, CVConGuard* rpVCon /*= NULL*/)
 				return false; // Found, stop iterations
 			}
 			return true;
-		};
+		}
 	} Impl = {asName};
 
 	// Try only renamed tabs first

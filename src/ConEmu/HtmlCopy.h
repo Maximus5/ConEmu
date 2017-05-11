@@ -70,13 +70,13 @@ public:
 	{
 		mn_AllItemsLen = 0;
 		bCopyRawCodes = false;
-	};
+	}
 	virtual ~CFormatCopy()
 	{
 		for (int i = 0; i < m_Items.size(); i++)
 			free(m_Items[i].ptr);
 		m_Items.clear();
-	};
+	}
 public:
 	virtual HGLOBAL CreateResult() = 0;
 
@@ -97,7 +97,7 @@ public:
 			}
 		}
 		ParEnd();
-	};
+	}
 
 	virtual void LineAdd(LPCWSTR asText, const CharAttr* apAttr, INT_PTR nLen)
 	{
@@ -116,7 +116,7 @@ public:
 			}
 		}
 		ParEnd();
-	};
+	}
 
 protected:
 	virtual void ParBegin() = 0;
@@ -149,7 +149,7 @@ protected:
 				mn_AllItemsLen += nUtfLen;
 			}
 		}
-	};
+	}
 
 	HGLOBAL CreateResultInternal(const char* pszHdr = NULL, INT_PTR nHdrLen = 0)
 	{
@@ -214,7 +214,7 @@ protected:
 		}
 
 		return hCopy;
-	};
+	}
 };
 
 class CHtmlCopy : public CFormatCopy
@@ -230,7 +230,7 @@ protected:
 		_wsprintf(rsBuf, SKIPLEN(8) L"#%02X%02X%02X",
 			(UINT)(clr & 0xFF), (UINT)((clr & 0xFF00)>>8), (UINT)((clr & 0xFF0000)>>16));
 		return rsBuf;
-	};
+	}
 public:
 	CHtmlCopy(bool abPlainHtml, LPCWSTR asBuild, LPCWSTR asFont, int anFontHeight, COLORREF crFore, COLORREF crBack)
 		: CFormatCopy()
@@ -255,11 +255,11 @@ public:
 			L"<DIV class=\"%s\" style=\"font-family: '%s'; font-size: %upx; text-align: start; text-indent: 0px; margin: 0;\">\r\n",
 			asBuild, asFont, anFontHeight);
 		RawAdd(szTemp, _tcslen(szTemp));
-	};
+	}
 
 	virtual ~CHtmlCopy()
 	{
-	};
+	}
 
 protected:
 	virtual void ParBegin() override
@@ -267,14 +267,14 @@ protected:
 		if (mb_ParOpened)
 			ParEnd();
 		mb_ParOpened = true;
-	};
+	}
 	virtual void ParEnd() override
 	{
 		if (!mb_ParOpened)
 			return;
 		mb_ParOpened = false;
 		RawAdd(L"<br>\r\n", 6);
-	};
+	}
 
 	virtual void TextAdd(LPCWSTR asText, INT_PTR cchLen, COLORREF crFore, COLORREF crBack, bool Bold = false, bool Italic = false, bool Underline = false) override
 	{
@@ -348,7 +348,7 @@ protected:
 
 		// Fin
 		RawAdd(L"</span>", 7);
-	};
+	}
 
 public:
 	virtual HGLOBAL CreateResult() override
@@ -393,7 +393,7 @@ public:
 		// Just compile all string to one block
 		HGLOBAL hCopy = CreateResultInternal(bCopyRawCodes ? NULL : szHdr, nHdrLen);
 		return hCopy;
-	};
+	}
 };
 
 class CAnsiCopy : public CFormatCopy
@@ -490,7 +490,7 @@ protected:
 			wcscat_c(rsBuf, szBIU + 1);
 		}
 		return rsBuf;
-	};
+	}
 public:
 	CAnsiCopy(COLORREF* pclrPalette/*[16]*/, COLORREF crFore, COLORREF crBack)
 		: CFormatCopy()
@@ -512,11 +512,11 @@ public:
 		// Unset Bold/Italic/Underline
 		RawAdd(szTemp, _tcslen(szTemp));
 		#endif
-	};
+	}
 
 	virtual ~CAnsiCopy()
 	{
-	};
+	}
 
 protected:
 	virtual void ParBegin() override
@@ -524,14 +524,14 @@ protected:
 		if (mb_ParOpened)
 			ParEnd();
 		mb_ParOpened = true;
-	};
+	}
 	virtual void ParEnd() override
 	{
 		if (!mb_ParOpened)
 			return;
 		mb_ParOpened = false;
 		RawAdd(L"\x1B[m\r\n", 5);
-	};
+	}
 
 	virtual void TextAdd(LPCWSTR asText, INT_PTR cchLen, COLORREF crFore, COLORREF crBack, bool Bold = false, bool Italic = false, bool Underline = false) override
 	{
@@ -576,7 +576,7 @@ protected:
 		}
 
 		// Fin
-	};
+	}
 
 public:
 	virtual HGLOBAL CreateResult() override
@@ -591,5 +591,5 @@ public:
 		// Just compile all string to one block
 		HGLOBAL hCopy = CreateResultInternal(NULL, 0);
 		return hCopy;
-	};
+	}
 };

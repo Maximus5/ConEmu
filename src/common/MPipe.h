@@ -59,7 +59,7 @@ class MPipe
 		void SaveErrorCode(DWORD nCode)
 		{
 			mn_ErrCode = nCode;
-		};
+		}
 		T_OUT* AllocateBuffer(DWORD nAllSize, T_OUT* pPart, DWORD cbPart)
 		{
 			if (!mp_Out || (int)mn_MaxOutSize < nAllSize)
@@ -104,20 +104,20 @@ class MPipe
 			_CancelIo = hKernel ? (CancelIo_t)GetProcAddress(hKernel,"CancelIo") : NULL;
 			_CancelIoEx = hKernel ? (CancelIoEx_t)GetProcAddress(hKernel,"CancelIoEx") : NULL;
 			_ASSERTE(mh_Heap!=NULL);
-		};
+		}
 		void SetTimeout(DWORD anTimeout)
 		{
 			//TODO: Если anTimeout!=-1 - создавать нить и выполнять команду в ней. Ожидать нить не более и прибить ее, если пришел Timeout
-		};
+		}
 		void SetTermEvent(HANDLE hTermEvent)
 		{
 			mh_TermEvent = hTermEvent;
-		};
+		}
 		virtual ~MPipe()
 		{
 			ReleaseBuffer();
 			_ASSERTE(mn_CloseCount==mn_OpenCount);
-		};
+		}
 		void ReleaseBuffer()
 		{
 			if (mp_Out && mp_Out != &m_Tmp)
@@ -128,7 +128,7 @@ class MPipe
 					_ASSERTE(mh_Heap!=NULL);
 			}
 			mp_Out = NULL;
-		};
+		}
 		void Close()
 		{
 			if (mh_Pipe && mh_Pipe != INVALID_HANDLE_VALUE)
@@ -147,7 +147,7 @@ class MPipe
 			}
 
 			mh_Pipe = NULL;
-		};
+		}
 		void InitName(const wchar_t* asModule, const wchar_t *aszTemplate, const wchar_t *Parm1, DWORD Parm2)
 		{
 			msprintf(ms_PipeName, countof(ms_PipeName), aszTemplate, Parm1, Parm2);
@@ -155,7 +155,7 @@ class MPipe
 
 			if (mh_Pipe)
 				Close();
-		};
+		}
 		BOOL Open()
 		{
 			if (mh_Pipe && mh_Pipe != INVALID_HANDLE_VALUE)
@@ -179,7 +179,7 @@ class MPipe
 
 			InterlockedIncrement(&mn_OpenCount);
 			return (mh_Pipe!=NULL);
-		};
+		}
 		BOOL Transact(const T_IN* apIn, DWORD anInSize, const T_OUT** rpOut)
 		{
 			if (!apIn || !rpOut)
@@ -430,14 +430,14 @@ class MPipe
 			}
 
 			return TRUE;
-		};
+		}
 		// Informational
 		LPCWSTR GetErrorText()
 		{
 			return ms_Error;
-		};
+		}
 		DWORD GetErrorCode()
 		{
 			return mn_ErrCode;
-		};
+		}
 };

@@ -58,7 +58,7 @@ struct dE00
 	static real_type _abs(real_type v)
 	{
 		return (v < 0) ? (-v) : (v);
-	};
+	}
 
 	dE00(ColorFix ax1, ColorFix ax2, real_type weight_lightness = 1, real_type weight_chroma = 1, real_type weight_hue = 1)
 	{
@@ -195,7 +195,7 @@ struct dE00
 	        pow(hue, 2) +
 	        this->RsubT * chroma * hue
 	    );
-	};
+	}
 
 	/**
 	 * Returns the RT variable calculation.
@@ -219,7 +219,7 @@ struct dE00
 	                )
 	            )
 	        ));
-	};
+	}
 
 	/**
 	 * Returns the T variable calculation.
@@ -233,7 +233,7 @@ struct dE00
 	        0.24 * cos(this->degreesToRadians(2 * this->HBarPrime)) +
 	        0.32 * cos(this->degreesToRadians(3 * this->HBarPrime + 6)) -
 	        0.20 * cos(this->degreesToRadians(4 * this->HBarPrime - 63));
-	};
+	}
 
 	/**
 	 * Returns the H Bar Prime variable calculation.
@@ -247,7 +247,7 @@ struct dE00
 	    }
 	    
 	    return (this->hPrime1 + this->hPrime2) / 2;
-	};
+	}
 
 	/**
 	 * Returns the Delta h Prime variable calculation.
@@ -271,7 +271,7 @@ struct dE00
 	    } else {
 	        return this->hPrime2 - this->hPrime1 - 360;
 	    }
-	};
+	}
 
 	/**
 	 * Returns the h Prime 1 variable calculation.
@@ -291,7 +291,7 @@ struct dE00
 	real_type gethPrime2()
 	{
 	    return this->_gethPrimeFn(this->x2.B, this->aPrime2);
-	};
+	}
 
 	/**
 	 * A helper function to calculate the h Prime 1 and h Prime 2 values.
@@ -314,7 +314,7 @@ struct dE00
 	    } else {
 	        return hueAngle + 360;
 	    }
-	};
+	}
 
 	/**
 	 * Gives the radian equivalent of a specified degree angle.
@@ -324,7 +324,7 @@ struct dE00
 	real_type radiansToDegrees(real_type radians)
 	{
 	    return radians * (180 / M_PI);
-	};
+	}
 
 	/**
 	 * Gives the degree equivalent of a specified radian.
@@ -334,7 +334,7 @@ struct dE00
 	real_type degreesToRadians(real_type degrees)
 	{
 	    return degrees * (M_PI / 180);
-	};
+	}
 };
 
 
@@ -381,7 +381,7 @@ namespace ColorSpace
 		l_s = ( 116. * var_Y ) - 16.;
 		a_s = 500. * ( var_X - var_Y );
 		b_s = 200. * ( var_Y - var_Z );
-	};
+	}
 
 	// http://www.easyrgb.com/index.php?X=MATH&H=01#text1
 	void lab2rgb( real_type l_s, real_type a_s, real_type b_s, real_type& R, real_type& G, real_type& B )
@@ -420,14 +420,14 @@ namespace ColorSpace
 		R = var_R * 255.;
 		G = var_G * 255.;
 		B = var_B * 255.;
-	};
+	}
 
 	real_type DeltaE(ColorFix lab1, ColorFix lab2)
 	{
 		dE00 delta(lab1, lab2);
 		real_type de = delta.getDeltaE();
 		return de;
-	};
+	}
 
 	BYTE min_max(real_type v)
 	{
@@ -444,8 +444,8 @@ namespace ColorSpace
 		real_type _r = 0, _g = 0, _b = 0;
 		lab2rgb(l_s, a_s, b_s, _r, _g, _b);
 		rgb = RGB(min_max(_r), min_max(_g), min_max(_b));
-	};
-};
+	}
+}
 
 
 

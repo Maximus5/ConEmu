@@ -3387,7 +3387,7 @@ int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPI
 	#endif
 	int nCmp = memcmp(p1, p2, p1->cbSize);
 	return nCmp;
-};
+}
 
 void UpdateConsoleMapHeader(LPCWSTR asReason /*= NULL*/)
 {

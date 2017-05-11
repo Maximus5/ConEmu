@@ -52,7 +52,7 @@ public:
 	{
 		pfn = mh_Module ? (FUNCTIONTYPE*)::GetProcAddress(mh_Module, asFunction) : NULL;
 		return (pfn != NULL);
-	};
+	}
 public:
 	operator HMODULE();
 };

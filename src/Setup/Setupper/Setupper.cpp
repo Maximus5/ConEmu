@@ -270,7 +270,7 @@ public:
 			return;
 		DWORD nLen = lstrlenA(asText);
 		WriteFile(mh_File, asText, nLen, &nLen, NULL);
-	};
+	}
 
 	// Unicode
 	void Write(LPCWSTR asText)
@@ -289,7 +289,7 @@ public:
 			}
 			free(pszUtf8);
 		}
-	};
+	}
 
 	void DumpEnvVars()
 	{
@@ -303,7 +303,7 @@ public:
 				Write(L"\r\n");
 			}
 		}
-	};
+	}
 
 public:
 	CErrLog()
@@ -356,13 +356,13 @@ public:
 				Write(L"\r\n\r\n");
 			}
 		}
-	};
+	}
 
 	~CErrLog()
 	{
 		if (Valid())
 			CloseHandle(mh_File);
-	};
+	}
 };
 
 int ReportError(int nErr, LPCWSTR asLabel, void* pArg)
@@ -468,7 +468,7 @@ public:
 			else
 				ms_SelfPath[0] = 0;
 		}
-	};
+	}
 
 	void DontRemove()
 	{
@@ -478,7 +478,7 @@ public:
 	bool IsDotsName(LPCWSTR asName)
 	{
 		return (asName && (asName[0] == L'.' && (asName[1] == 0 || (asName[1] == L'.' && asName[2] == 0))));
-	};
+	}
 
 	bool DirectoryExists(LPCWSTR asPath)
 	{
@@ -526,7 +526,7 @@ public:
 
 		FindClose(hFind);
 		return (lbFound != FALSE);
-	};
+	}
 
 	bool Acquire()
 	{
@@ -606,7 +606,7 @@ public:
 		// if the path is invalid - just do not change cd,
 		// use current, set by user when they run our exe
 		return true;
-	};
+	}
 
 	~CTempDir()
 	{
@@ -627,7 +627,7 @@ public:
 			//	ReportError(99, L"RemoveDirectory(%s) failed", gsTempFolder);
 			//}
 		}
-	};
+	}
 };
 
 #ifdef __GNUC__

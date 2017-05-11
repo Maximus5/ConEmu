@@ -46,19 +46,19 @@ public:
 	T* Ptr()
 	{
 		return mp_Data;
-	};
+	}
 	operator T*()
 	{
 		return mp_Data;
-	};
+	}
 	bool IsValid()
 	{
 		return (mp_Data!=NULL);
-	};
+	}
 	LPCWSTR GetErrorText()
 	{
 		return ms_Error;
-	};
+	}
 	#ifndef CONEMU_MINIMAL
 	bool SetFrom(const T* pSrc, int nSize=-1)
 	{
@@ -97,7 +97,7 @@ public:
 		//			msprintf(ms_MapName, SKIPLEN(countof(ms_MapName)) aszTemplate, Parm1, Parm2);
 		//#endif
 		return ms_MapName;
-	};
+	}
 	void ClosePtr()
 	{
 		if (mp_Data)
@@ -105,7 +105,7 @@ public:
 			UnmapViewOfFile((void*)mp_Data);
 			mp_Data = NULL;
 		}
-	};
+	}
 	void CloseMap()
 	{
 		if (mp_Data) ClosePtr();
@@ -118,7 +118,7 @@ public:
 
 		mh_Mapping = NULL; mb_WriteAllowed = FALSE; mp_Data = NULL;
 		mn_Size = -1; mn_LastError = 0;
-	};
+	}
 protected:
 	// mn_Size и nSize используется фактически только при CreateFileMapping или операциях копирования
 	T* InternalOpenCreate(BOOL abCreate,BOOL abReadWrite,int nSize)
@@ -173,20 +173,20 @@ protected:
 		}
 
 		return mp_Data;
-	};
+	}
 public:
 	#ifndef CONEMU_MINIMAL
 	T* Create(int nSize=-1)
 	{
 		_ASSERTE(nSize==-1 || nSize>=sizeof(T));
 		return InternalOpenCreate(TRUE/*abCreate*/,TRUE/*abReadWrite*/,nSize);
-	};
+	}
 	#endif
 	T* Open(BOOL abReadWrite=FALSE/*FALSE - только Read*/,int nSize=-1)
 	{
 		_ASSERTE(nSize==-1 || nSize>=(INT_PTR)sizeof(T));
 		return InternalOpenCreate(FALSE/*abCreate*/,abReadWrite,nSize);
-	};
+	}
 	const T* ReopenForRead()
 	{
 		if (mh_Mapping)
@@ -206,7 +206,7 @@ public:
 			}
 		}
 		return mp_Data;
-	};
+	}
 public:
 	MFileMapping()
 	{
@@ -214,9 +214,9 @@ public:
 		mn_Size = -1; ms_MapName[0] = 0;
 		ms_Error[0] = 0;
 		mn_LastError = 0;
-	};
+	}
 	~MFileMapping()
 	{
 		if (mh_Mapping) CloseMap();
-	};
+	}
 };

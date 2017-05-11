@@ -29,7 +29,7 @@ class CBaseDropTarget : public IDropTarget
 		//HWND	m_hWnd;
 
 	public:
-		virtual void DragFeedBack(DWORD dwEffect) {};
+		virtual void DragFeedBack(DWORD dwEffect) {}
 };
 
 

@@ -45,7 +45,7 @@ struct LngPredefined
 	{
 		int iDiff = (int)((INT_PTR)((LngPredefined*)p1)->id - (INT_PTR)((LngPredefined*)p2)->id);
 		return iDiff;
-	};
+	}
 };
 
 // LngPredefined gsDataHints

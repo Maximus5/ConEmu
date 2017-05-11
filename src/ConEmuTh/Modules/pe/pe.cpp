@@ -141,12 +141,12 @@ struct PEData
 		szVersion = szVersionN;
 		pMappedFileBase = NULL; FileSize.QuadPart = 0; pNTHeader32 = NULL; pNTHeader64 = NULL; bIs64Bit = false;
 		FileFullSize.QuadPart = 0;
-	};
+	}
 
 	void Close()
 	{
 		FREE(this);
-	};
+	}
 };
 
 //PEData *gpCurData = NULL;

@@ -85,4 +85,4 @@ namespace HandleKeeper
 	bool IsAnsiCapable(HANDLE hFile, bool *pbIsConOut = NULL);
 	bool IsOutputHandle(HANDLE hFile);
 	bool IsInputHandle(HANDLE hFile);
-};
+}

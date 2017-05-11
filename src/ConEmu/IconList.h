@@ -66,5 +66,5 @@ public:
 	operator HIMAGELIST() const
 	{
 		return (HIMAGELIST)mh_TabIcons;
-	};
+	}
 };

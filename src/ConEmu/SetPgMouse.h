@@ -37,9 +37,9 @@ class CSetPgMouse
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgMouse(); };
-	static TabHwndIndex PageType() { return thi_Mouse; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgMouse(); }
+	static TabHwndIndex PageType() { return thi_Mouse; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgMouse();
 	virtual ~CSetPgMouse();

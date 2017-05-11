@@ -120,7 +120,7 @@ HMONITOR MonitorFromParam(LPCWSTR asMonitor)
 				}
 			}
 			return TRUE; // Continue enum
-		};
+		}
 	} Impl = {};
 
 	if (isDigit(asMonitor[0]))

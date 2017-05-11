@@ -46,4 +46,4 @@ namespace ConEmuAbout
 
 	void OnInfo_DonateLink();
 	void OnInfo_FlattrLink();
-};
+}

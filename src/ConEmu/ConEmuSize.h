@@ -122,7 +122,7 @@ protected:
 			LastFlags = flags;
 			CorrectionX = (flags & smf_Horz) ? newX : 0;
 			CorrectionY = (flags & smf_Vert) ? newY : 0;
-		};
+		}
 	} m_Snapping;
 
 	LONG mn_InResize;

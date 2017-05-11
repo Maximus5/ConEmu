@@ -94,7 +94,7 @@ struct ConsoleSectionHelper
 		: pConsoleInfo(NULL)
 		, hSection(NULL)
 	{
-	};
+	}
 
 	CONSOLE_INFO* CreateConsoleData()
 	{
@@ -143,7 +143,7 @@ struct ConsoleSectionHelper
 			LocalFree(pConsoleInfo);
 			pConsoleInfo = NULL;
 		}
-	};
+	}
 };
 // gh-515 noted a crash, from OnShutdownConsole, so it was changed to ctor/dtor
 ConsoleSectionHelper gsMapHelper;

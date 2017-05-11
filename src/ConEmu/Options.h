@@ -264,7 +264,7 @@ struct Settings
 			void FreePtr()
 			{
 				SafeFree(pszName);
-			};
+			}
 		};
 
 		DWORD ProgressesGetDuration(LPCWSTR asName);
@@ -780,7 +780,7 @@ struct Settings
 		BYTE m_isTabsOnTaskBar; // 0 - ConEmu only, 1 - all tabs & all OS, 2 - all tabs & Win 7, 3 - DON'T SHOW
 		public:
 		enum TabsOnTaskbar { tot_ConEmuOnly = 0, tot_AllTabsAllOS = 1, tot_AllTabsWin7 = 2, tot_DontShow = 3};
-		TabsOnTaskbar GetRawTabsOnTaskBar() { return (TabsOnTaskbar)m_isTabsOnTaskBar; };
+		TabsOnTaskbar GetRawTabsOnTaskBar() { return (TabsOnTaskbar)m_isTabsOnTaskBar; }
 		bool isTabsOnTaskBar();
 		bool isWindowOnTaskBar(bool bStrictOnly = false);
 		//void SetTabsOnTaskBar(BYTE nTabsOnTaskBar);
@@ -875,8 +875,8 @@ struct Settings
 		DWORD nHostkeyArrowModifier; // Используется для WinSize
 		public:
 		// Max - 3 keys, so lower 3 bytes only
-		DWORD HostkeyNumberModifier() { return (nHostkeyNumberModifier & 0xFFFFFF); };
-		DWORD HostkeyArrowModifier()  { return (nHostkeyArrowModifier  & 0xFFFFFF); };
+		DWORD HostkeyNumberModifier() { return (nHostkeyNumberModifier & 0xFFFFFF); }
+		DWORD HostkeyArrowModifier()  { return (nHostkeyArrowModifier  & 0xFFFFFF); }
 		//
 		public:
 		//reg->Load(L"Multi.NewConsole", vmMultiNew);
@@ -1024,7 +1024,7 @@ struct Settings
 		bool bHideInactiveConsoleTabs;
 
 		// L"HideDisabledTabs" -- is not saved
-		bool isHideDisabledTabs() { return false; };
+		bool isHideDisabledTabs() { return false; }
 
 		//reg->Load(L"ShowFarWindows", bShowFarWindows);
 		bool bShowFarWindows;

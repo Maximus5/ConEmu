@@ -40,9 +40,9 @@ class CSetPgApps
 	: public CSetPgBase
 {
 public:
-	static CSetPgBase* Create() { return new CSetPgApps(); };
-	static TabHwndIndex PageType() { return thi_Apps; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	static CSetPgBase* Create() { return new CSetPgApps(); }
+	static TabHwndIndex PageType() { return thi_Apps; }
+	virtual TabHwndIndex GetPageType() override { return PageType(); }
 public:
 	CSetPgApps();
 	virtual ~CSetPgApps();

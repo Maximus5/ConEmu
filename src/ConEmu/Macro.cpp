@@ -326,7 +326,7 @@ namespace ConEmuMacro
 		// End
 		{NULL}
 	};
-};
+}
 
 
 
@@ -3206,7 +3206,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				static LRESULT CallNewConsoleDlg(LPARAM lParam)
 				{
 					return (LRESULT)gpConEmu->RecreateAction(cra_CreateTab, true);
-				};
+				}
 			};
 			pszRc = gpConEmu->CallMainThread(true, Impl::CallNewConsoleDlg, 0) ? lstrdup(L"CREATED") : lstrdup(L"FAILED");
 		}

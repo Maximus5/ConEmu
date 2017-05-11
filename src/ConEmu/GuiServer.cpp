@@ -471,7 +471,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 						}
 
 						return (LRESULT)hWndDC;
-					};
+					}
 				} arg = {hConWnd, pIn->hdr.nSrcPID, pIn->SrvStartStop.dwKeybLayout, nStartTick};
 
 				gpConEmu->CallMainThread(true, arg.OnSrvStarted, (LPARAM)&arg);

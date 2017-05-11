@@ -67,11 +67,11 @@ public:
 public:
 	MProcList()
 	{
-	};
+	}
 
 	~MProcList()
 	{
-	};
+	}
 protected:
 	static MSection* mp_Section;
 public:
