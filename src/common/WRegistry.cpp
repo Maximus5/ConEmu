@@ -40,11 +40,11 @@ int RegEnumKeys(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumKeysCallback fn, LPAR
 {
 	int iRc = -1;
 	HKEY hk = NULL, hkChild = NULL;
-	bool bContinue = true;
 	LONG lrc;
+	bool bContinue = true;
 	bool ib64 = IsWindows64();
 
-	for (int s = 0; s < (ib64 ? 2 : 1); s++)
+	for (int s = 0; s < (ib64 ? 2 : 1) && bContinue; s++)
 	{
 		DWORD samDesired = KEY_READ;
 		if (ib64)
@@ -57,7 +57,8 @@ int RegEnumKeys(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumKeysCallback fn, LPAR
 
 		if (0 == (lrc = RegOpenKeyEx(hkRoot, pszParentPath, 0, samDesired, &hk)))
 		{
-			iRc = 0;
+			if (iRc < 0) iRc = 0;
+
 			UINT n = 0;
 			wchar_t szSubKey[MAX_PATH] = L""; DWORD cchMax = countof(szSubKey) - 1;
 
@@ -65,15 +66,68 @@ int RegEnumKeys(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumKeysCallback fn, LPAR
 			{
 				if (0 == (lrc = RegOpenKeyEx(hk, szSubKey, 0, samDesired, &hkChild)))
 				{
+					iRc++;
 					if (fn != NULL)
 					{
 						if (!fn(hkChild, szSubKey, lParam))
+						{
+							bContinue = false;
 							break;
+						}
 					}
-					iRc++;
 					RegCloseKey(hkChild);
 				}
 				cchMax = countof(szSubKey) - 1;
+			}
+
+			RegCloseKey(hk);
+		}
+	}
+
+	return iRc;
+}
+
+int RegEnumValues(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumValuesCallback fn, LPARAM lParam)
+{
+	int iRc = -1;
+	HKEY hk = NULL;
+	LONG lrc;
+	bool bContinue = true;
+	bool ib64 = IsWindows64();
+
+	for (int s = 0; s < (ib64 ? 2 : 1) && bContinue; s++)
+	{
+		DWORD samDesired = KEY_READ;
+		if (ib64)
+		{
+			if (s == 0)
+				samDesired |= WIN3264TEST(KEY_WOW64_32KEY,KEY_WOW64_64KEY);
+			else
+				samDesired |= WIN3264TEST(KEY_WOW64_64KEY,KEY_WOW64_32KEY);
+		}
+
+		if (0 == (lrc = RegOpenKeyEx(hkRoot, pszParentPath, 0, samDesired, &hk)))
+		{
+			if (iRc < 0) iRc = 0;
+
+			CEStr lsName;
+			const DWORD cchNameMax = 16383;
+			wchar_t* pszName = lsName.GetBuffer(cchNameMax+1);
+			DWORD idx = 0, cchName = cchNameMax, dwType = 0;
+
+			while ((iRc = RegEnumValue(hk, idx++, pszName, &cchName, NULL, &dwType, NULL, NULL)) == 0)
+			{
+				iRc++;
+				pszName[min(cchNameMax,cchName)] = 0;
+				if (fn != NULL)
+				{
+					if (!fn(hk, pszName, dwType, lParam))
+					{
+						bContinue = FALSE;
+						break;
+					}
+				}
+				cchName = cchNameMax; dwType = 0;
 			}
 
 			RegCloseKey(hk);
