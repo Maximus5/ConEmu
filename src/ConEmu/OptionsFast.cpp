@@ -1152,6 +1152,17 @@ public:
 			SafeFree(szPrefix);
 			SafeFree(szGuiArg);
 		};
+		bool CompareArgs(LPCWSTR asArgs = NULL, LPCWSTR asPrefix = NULL, LPCWSTR asGuiArg = NULL) const
+		{
+			#define cmp_arg(s,v) \
+				if ((s != NULL) != (v != NULL)) return false; \
+				if (s && wcscmp(s, v) != 0) return false;
+			cmp_arg(szArgs, asArgs);
+			cmp_arg(szPrefix, asPrefix);
+			cmp_arg(szGuiArg, asGuiArg);
+			#undef cmp_arg
+			return true;
+		};
 	};
 	MArray<AppInfo> Installed;
 
@@ -1172,7 +1183,10 @@ protected:
 		// Use GetImageSubsystem as condition because many exe-s may not have VersionInfo at all
 		if (GetImageSubsystem(pszPath, FI.dwSubsystem, FI.dwBits, FileAttrs))
 		{
-			LoadAppVersion(pszPath, FI.Ver, ErrText);
+			if (FI.dwSubsystem && FI.dwSubsystem <= IMAGE_SUBSYSTEM_WINDOWS_CUI)
+				LoadAppVersion(pszPath, FI.Ver, ErrText);
+			else
+				ZeroStruct(FI.Ver);
 
 			// App instance found, add it to Installed array?
 			bool bAlready = false;
@@ -1181,18 +1195,27 @@ protected:
 				AppInfo& ai = Installed[a];
 				if (lstrcmpi(ai.szFullPath, szPath) == 0)
 				{
-					bAlready = true; break; // Do not add twice same path
+					if (ai.CompareArgs(asArgs, asPrefix, asGuiArg))
+					{
+						bAlready = true; break; // Do not add twice same path
+					}
 				}
 				else if (pszOptFull && (lstrcmpi(ai.szFullPath, pszOptFull) == 0))
 				{
-					// Store path with environment variables (unexpanded) or without path at all (just "Far.exe" for example)
-					SafeFree(ai.szFullPath);
-					ai.szFullPath = lstrdup(szPath);
-					bAlready = true; break; // Do not add twice same path
+					if (ai.CompareArgs(asArgs, asPrefix, asGuiArg))
+					{
+						// Store path with environment variables (unexpanded) or without path at all (just "Far.exe" for example)
+						SafeFree(ai.szFullPath);
+						ai.szFullPath = lstrdup(szPath);
+						bAlready = true; break; // Do not add twice same path
+					}
 				}
 				else if (pszOptFull && ai.szExpanded && (lstrcmpi(ai.szExpanded, pszOptFull) == 0))
 				{
-					bAlready = true; break; // Do not add twice same path
+					if (ai.CompareArgs(asArgs, asPrefix, asGuiArg))
+					{
+						bAlready = true; break; // Do not add twice same path
+					}
 				}
 			}
 			// New instance, add it
@@ -1249,11 +1272,12 @@ public:
 		CEStr szFound, szArgs, szOptFull;
 		wchar_t szUnexpand[MAX_PATH+32];
 
-		while (asExePath)
+		LPCWSTR pszExePathNext = asExePath;
+		while (pszExePathNext)
 		{
 			bool bNeedQuot = false;
-			LPCWSTR pszExePath = asExePath;
-			asExePath = va_arg( argptr, LPCWSTR );
+			LPCWSTR pszExePath = pszExePathNext;
+			pszExePathNext = va_arg( argptr, LPCWSTR );
 
 			// Return expanded env string
 			TODO("Repace with list of 'drives'");
@@ -1891,69 +1915,145 @@ static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 }
 
 // Visual Studio C++
+static void CreateVCTask(AppFoundList& App, LPCWSTR pszVer, LPCWSTR pszDir)
+{
+	// "12.0" = "C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\"
+	// %comspec% /k ""C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat"" x86
+
+	// "15.0" = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Professional\\"
+	// --> ...\2017\Professional\VC\Auxiliary\Build\vcvarsall.bat [x86|x64]
+	// --> ...\2017\Professional\VC\Auxiliary\Build\vcvars32.bat
+	// --> ...\2017\Professional\VC\Auxiliary\Build\vcvars64.bat
+	// --> ...\2017\Professional\VC\Auxiliary\Build\vcvarsamd64_x86.bat
+	// --> ...\2017\Professional\VC\Auxiliary\Build\vcvarsx86_amd64.bat
+
+
+	CEStr pszVcVarsBat;
+	for (int i = 0;; ++i)
+	{
+		switch (i)
+		{
+		case 0:
+			pszVcVarsBat.Attach(JoinPath(pszDir, L"vcvarsall.bat"));
+			break;
+		case 1:
+			pszVcVarsBat.Attach(JoinPath(pszDir, L"VC\\Auxiliary\\Build\\vcvarsall.bat"));
+			break;
+		default:
+			return;
+		}
+
+		if (FileExists(pszVcVarsBat))
+			break;
+	}
+
+	int iVer = wcstol(pszVer, NULL, 10);
+	CEStr pszPrefix(L"cmd /k \"");
+	CEStr pszSuffix(L"-new_console:t:\"VS ", pszVer, L"\"");
+
+	CEStr lsIcon; LPCWSTR pszIconSource = NULL;
+	LPCWSTR pszIconSources[] = {
+		L"%CommonProgramFiles(x86)%\\microsoft shared\\MSEnv\\VSFileHandler.dll",
+		L"%CommonProgramFiles%\\microsoft shared\\MSEnv\\VSFileHandler.dll",
+		NULL};
+	for (int i = 0; pszIconSources[i]; i++)
+	{
+		if (lsIcon.Attach(ExpandEnvStr(pszIconSources[i]))
+			&& FileExists(lsIcon))
+		{
+			pszIconSource = pszIconSources[i];
+			break;
+		}
+	}
+
+	if (iVer && pszIconSource)
+	{
+		LPCWSTR pszIconSfx;
+		switch (iVer)
+		{
+		case 15: pszIconSfx = L",38\""; break;
+		case 14: pszIconSfx = L",33\""; break;
+		case 12: pszIconSfx = L",28\""; break;
+		case 11: pszIconSfx = L",23\""; break;
+		case 10: pszIconSfx = L",16\""; break;
+		case 9:  pszIconSfx = L",10\""; break;
+		default: pszIconSfx = L"\"";
+		}
+		lstrmerge(&pszSuffix.ms_Val, L" -new_console:C:\"", pszIconSource, pszIconSfx);
+	}
+
+	LPCWSTR pszPlatforms[] = {L"x86", L"x64"};
+	for (size_t p = 0; p < countof(pszPlatforms); ++p)
+	{
+		CEStr pszName(L"SDK::VS ", pszVer, L" ", pszPlatforms[p], L" tools prompt");
+		CEStr pszSuffixReady(L"\" ", pszPlatforms[p], L" ", pszSuffix);
+		App.Add(pszName, pszSuffixReady, pszPrefix, NULL/*asGuiArg*/, pszVcVarsBat, NULL);
+	}
+}
+
+// Visual Studio C++
 static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 {
+	AppFoundList *App = (AppFoundList*)lParam;
+
 	//[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\11.0\Setup\VC]
 	//"ProductDir"="C:\\Program Files (x86)\\Microsoft Visual Studio 11.0\\VC\\"
 	//[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\12.0\Setup\VC]
 	//"ProductDir"="C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\"
 	// %comspec% /k ""C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat"" x86
 
-	CEStr pszDir;
-	if (wcschr(pszVer, L'.'))
+	if (wcschr(pszVer, L'.') && isDigit(*pszVer))
 	{
-		int iVer = wcstol(pszVer, NULL, 10);
-
+		CEStr pszDir;
 		if (RegGetStringValue(hkVer, L"Setup\\VC", L"ProductDir", pszDir) > 0)
 		{
-			CEStr pszVcVarsBat(JoinPath(pszDir, L"vcvarsall.bat"));
-			if (FileExists(pszVcVarsBat))
-			{
-				CEStr pszName(L"SDK::VS ", pszVer, L" x86 tools prompt");
-				CEStr pszFull(L"cmd /k \"\"", pszVcVarsBat, L"\"\" x86 -new_console:t:\"VS ", pszVer, L"\"");
-
-				CEStr lsIcon; LPCWSTR pszIconSource = NULL;
-				LPCWSTR pszIconSources[] = {
-					L"%CommonProgramFiles(x86)%\\microsoft shared\\MSEnv\\VSFileHandler.dll",
-					L"%CommonProgramFiles%\\microsoft shared\\MSEnv\\VSFileHandler.dll",
-					NULL};
-				for (int i = 0; pszIconSources[i]; i++)
-				{
-					if (lsIcon.Attach(ExpandEnvStr(pszIconSources[i]))
-						&& FileExists(lsIcon))
-					{
-						pszIconSource = pszIconSources[i];
-						break;
-					}
-				}
-
-				if (iVer && pszIconSource)
-				{
-					LPCWSTR pszIconSfx;
-					switch (iVer)
-					{
-					case 14: pszIconSfx = L",33\""; break;
-					case 12: pszIconSfx = L",28\""; break;
-					case 11: pszIconSfx = L",23\""; break;
-					case 10: pszIconSfx = L",16\""; break;
-					case 9:  pszIconSfx = L",10\""; break;
-					default: pszIconSfx = L"\"";
-					}
-					lstrmerge(&pszFull.ms_Val, L" -new_console:C:\"", pszIconSource, pszIconSfx);
-				}
-
-				SettingsLoadedFlags old = sAppendMode;
-				if (!(sAppendMode & slf_AppendTasks))
-					sAppendMode = (slf_AppendTasks | slf_RewriteExisting);
-
-				CreateDefaultTask(pszName, L"", pszFull);
-
-				sAppendMode = old;
-			}
+			CreateVCTask(*App, pszVer, pszDir);
 		}
 	}
 
 	return true; // continue reg enum
+}
+
+static bool WINAPI CreateVCTasks(HKEY hkVS, LPCWSTR pszVer, DWORD dwType, LPARAM lParam)
+{
+	AppFoundList *App = (AppFoundList*)lParam;
+
+	//[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\SxS\VS7]
+	//"12.0"="C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\"
+	//"15.0"="C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Professional\\"
+	// --> ...\2017\Professional\VC\Auxiliary\Build\vcvarsall.bat [x86|x64]
+	// --> ...\2017\Professional\VC\Auxiliary\Build\vcvars32.bat
+	// --> ...\2017\Professional\VC\Auxiliary\Build\vcvars64.bat
+	// --> ...\2017\Professional\VC\Auxiliary\Build\vcvarsamd64_x86.bat
+	// --> ...\2017\Professional\VC\Auxiliary\Build\vcvarsx86_amd64.bat
+
+	if (wcschr(pszVer, L'.') && isDigit(*pszVer))
+	{
+		CEStr pszDir;
+		if (RegGetStringValue(hkVS, NULL, pszVer, pszDir) > 0)
+		{
+			CreateVCTask(*App, pszVer, pszDir);
+		}
+	}
+
+	return true; // continue reg enum
+}
+
+static void CreateVisualStudioTasks()
+{
+	AppFoundList App;
+
+	SettingsLoadedFlags old = sAppendMode;
+	if (!(sAppendMode & slf_AppendTasks))
+		sAppendMode = (slf_AppendTasks | slf_RewriteExisting);
+
+	// Visual Studio prompt: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio
+	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, (LPARAM)&App);
+	RegEnumValues(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio\\SxS\\VS7", CreateVCTasks, (LPARAM)&App);
+
+	App.Commit();
+
+	sAppendMode = old;
 }
 
 static void CreateChocolateyTask()
@@ -2242,8 +2342,8 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// Windows SDK: HKLM\SOFTWARE\Microsoft\Microsoft SDKs\Windows
 	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Microsoft SDKs\\Windows", CreateWinSdkTasks, 0);
 
-	// Visual Studio prompt: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio
-	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, 0);
+	// Visual Studio prompt
+	CreateVisualStudioTasks();
 
 	// Docker Toolbox
 	CreateDockerTask();
