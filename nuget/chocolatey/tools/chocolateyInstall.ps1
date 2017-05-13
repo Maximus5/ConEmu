@@ -148,8 +148,10 @@ function ConEmuPreUpdate() {
   if (isConEmu) {
     # Note, old ConEmu versions weren't able to detach without confirmation
     log "Detaching from ConEmu"
-    Write-Host -ForegroundColor Yellow "Please choose <Yes> in the confirmation dialog"
+    $warn_msg = "Please choose <Yes> in the confirmation dialog"
+    Write-Host -ForegroundColor Green -NoNewLine $warn_msg
     $macro_rc = & $script:ConEmuC -GuiMacro:$script:CE_PID detach 3
+    Write-Host -NoNewLine ("`r".PadRight($warn_msg.length+1)+"`r")
 
     $wait_delay = 10000
     $wait_ms = 250
@@ -157,6 +159,8 @@ function ConEmuPreUpdate() {
 
     # log "Code=$LASTEXITCODE" # may be always 0 and "OK"
     # Sleep for 10 sec waiting for detach
+    $warn_msg = "Waiting for detach"
+    Write-Host -ForegroundColor Green -NoNewLine $warn_msg
     for ($i = 0; $i -lt $wait_count; $i++) {
       if (-Not (isWindowAlive $script:CE_WND)) {
         log "Detached successfully"
@@ -165,13 +169,17 @@ function ConEmuPreUpdate() {
       # Write-Host -NoNewLine "."
       Sleep -m $wait_ms
     }
-    # Write-Host "i=$i"
+    Write-Host -NoNewLine ("`r".PadRight($warn_msg.length+1)+"`r")
+    if ($i -eq $wait_count) {
+      throw "Detach failed, please try to run update outside of ConEmu"
+    }
     
 
     if (isProcessAlive $script:CE_PID) {
       Sleep -s 1
       if (isProcessAlive $script:CE_PID) {
-        log "Requesting ConEmu termination"
+        $warn_msg = "Requesting ConEmu termination"
+        Write-Host -ForegroundColor Green -NoNewLine $warn_msg
         $macro_rc = & $script:ConEmuC -GuiMacro:$script:CE_PID close 2
         for ($i = 0; $i -lt $wait_count; $i++) {
           if (-Not (isProcessAlive $script:CE_PID)) {
@@ -181,7 +189,10 @@ function ConEmuPreUpdate() {
           # Write-Host -NoNewLine "."
           Sleep -m $wait_ms
         }
-        # Write-Host "i=$i"
+        Write-Host -NoNewLine ("`r".PadRight($warn_msg.length+1)+"`r")
+        if ($i -eq $wait_count) {
+          throw "ConEmu process still alive, please try to run update outside of ConEmu"
+        }
       }
     }
 
@@ -196,6 +207,16 @@ function ConEmuPreUpdate() {
     log "Console is ready to update ConEmu"
 
   } else {
+    $is_conemu = $FALSE
+    try {
+      & ConEmuC.exe -IsConEmu
+      $is_conemu = ($LASTEXITCODE -eq 1)
+    } catch {
+    }
+    if ($is_conemu) {
+      throw "Can't detect proper ConEmu environment variables! Please restart console!"
+    }
+
     log "PowerShell was not stared from ConEmu"
   }
 }
@@ -209,6 +230,9 @@ function ConEmuPostUpdate() {
       # On Failure
       restoreFiles
     }
+  }
+  if ($script:CE_PID -ne 0) {
+    Write-Host -ForegroundColor Green "Console restart is strongly recommended to gain proper ConEmu environment"
     # Reattach
     $rc = Start-Process -FilePath $script:ConEmuC -ArgumentList @("/ATTACH","/NOCMD") -NoNewWindow
     for ($i = 0; $i -lt 100; $i++) {
