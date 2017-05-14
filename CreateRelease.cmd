@@ -103,11 +103,8 @@ rem call :tch ConEmuLn *.cpp *.h
 rem call :tch ConEmuPlugin *.cpp *.h
 rem call :tch ConEmuTh *.cpp *.h
 
-rem Compile x86
-call "%~dp0src\vc.build.release.cmd" 9 x86 nosign
-if errorlevel 1 goto err
-rem Compile x64
-call "%~dp0src\vc.build.release.cmd" 14 x64 nosign noclean
+rem Compile x86/x64
+call "%~dp0src\ms.build.release.cmd"
 if errorlevel 1 goto err
 rem Sign code
 call "%~dp0src\vc.build.release.cmd" dosign
