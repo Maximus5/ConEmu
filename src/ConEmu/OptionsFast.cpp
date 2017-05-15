@@ -1152,17 +1152,6 @@ public:
 			SafeFree(szPrefix);
 			SafeFree(szGuiArg);
 		};
-		bool CompareArgs(LPCWSTR asArgs = NULL, LPCWSTR asPrefix = NULL, LPCWSTR asGuiArg = NULL) const
-		{
-			#define cmp_arg(s,v) \
-				if ((s != NULL) != (v != NULL)) return false; \
-				if (s && wcscmp(s, v) != 0) return false;
-			cmp_arg(szArgs, asArgs);
-			cmp_arg(szPrefix, asPrefix);
-			cmp_arg(szGuiArg, asGuiArg);
-			#undef cmp_arg
-			return true;
-		};
 	};
 	MArray<AppInfo> Installed;
 
@@ -1195,27 +1184,18 @@ protected:
 				AppInfo& ai = Installed[a];
 				if (lstrcmpi(ai.szFullPath, szPath) == 0)
 				{
-					if (ai.CompareArgs(asArgs, asPrefix, asGuiArg))
-					{
-						bAlready = true; break; // Do not add twice same path
-					}
+					bAlready = true; break; // Do not add twice same path
 				}
 				else if (pszOptFull && (lstrcmpi(ai.szFullPath, pszOptFull) == 0))
 				{
-					if (ai.CompareArgs(asArgs, asPrefix, asGuiArg))
-					{
-						// Store path with environment variables (unexpanded) or without path at all (just "Far.exe" for example)
-						SafeFree(ai.szFullPath);
-						ai.szFullPath = lstrdup(szPath);
-						bAlready = true; break; // Do not add twice same path
-					}
+					// Store path with environment variables (unexpanded) or without path at all (just "Far.exe" for example)
+					SafeFree(ai.szFullPath);
+					ai.szFullPath = lstrdup(szPath);
+					bAlready = true; break; // Do not add twice same path
 				}
 				else if (pszOptFull && ai.szExpanded && (lstrcmpi(ai.szExpanded, pszOptFull) == 0))
 				{
-					if (ai.CompareArgs(asArgs, asPrefix, asGuiArg))
-					{
-						bAlready = true; break; // Do not add twice same path
-					}
+					bAlready = true; break; // Do not add twice same path
 				}
 			}
 			// New instance, add it
@@ -1915,7 +1895,7 @@ static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 }
 
 // Visual Studio C++
-static void CreateVCTask(AppFoundList& App, LPCWSTR pszVer, LPCWSTR pszDir)
+static void CreateVCTask(AppFoundList& App, LPCWSTR pszPlatform, LPCWSTR pszVer, LPCWSTR pszDir)
 {
 	// "12.0" = "C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\"
 	// %comspec% /k ""C:\Program Files (x86)\Microsoft Visual Studio 11.0\VC\vcvarsall.bat"" x86
@@ -1982,13 +1962,9 @@ static void CreateVCTask(AppFoundList& App, LPCWSTR pszVer, LPCWSTR pszDir)
 		lstrmerge(&pszSuffix.ms_Val, L" -new_console:C:\"", pszIconSource, pszIconSfx);
 	}
 
-	LPCWSTR pszPlatforms[] = {L"x86", L"x64"};
-	for (size_t p = 0; p < countof(pszPlatforms); ++p)
-	{
-		CEStr pszName(L"SDK::VS ", pszVer, L" ", pszPlatforms[p], L" tools prompt");
-		CEStr pszSuffixReady(L"\" ", pszPlatforms[p], L" ", pszSuffix);
-		App.Add(pszName, pszSuffixReady, pszPrefix, NULL/*asGuiArg*/, pszVcVarsBat, NULL);
-	}
+	CEStr pszName(L"SDK::VS ", pszVer, L" ", pszPlatform, L" tools prompt");
+	CEStr pszSuffixReady(L"\" ", pszPlatform, L" ", pszSuffix);
+	App.Add(pszName, pszSuffixReady, pszPrefix, NULL/*asGuiArg*/, pszVcVarsBat, NULL);
 }
 
 // Visual Studio C++
@@ -2007,7 +1983,8 @@ static bool WINAPI CreateVCTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 		CEStr pszDir;
 		if (RegGetStringValue(hkVer, L"Setup\\VC", L"ProductDir", pszDir) > 0)
 		{
-			CreateVCTask(*App, pszVer, pszDir);
+			CreateVCTask(App[0], L"x86", pszVer, pszDir);
+			CreateVCTask(App[1], L"x64", pszVer, pszDir);
 		}
 	}
 
@@ -2032,7 +2009,8 @@ static bool WINAPI CreateVCTasks(HKEY hkVS, LPCWSTR pszVer, DWORD dwType, LPARAM
 		CEStr pszDir;
 		if (RegGetStringValue(hkVS, NULL, pszVer, pszDir) > 0)
 		{
-			CreateVCTask(*App, pszVer, pszDir);
+			CreateVCTask(App[0], L"x86", pszVer, pszDir);
+			CreateVCTask(App[1], L"x64", pszVer, pszDir);
 		}
 	}
 
@@ -2041,17 +2019,18 @@ static bool WINAPI CreateVCTasks(HKEY hkVS, LPCWSTR pszVer, DWORD dwType, LPARAM
 
 static void CreateVisualStudioTasks()
 {
-	AppFoundList App;
+	AppFoundList App[2];
 
 	SettingsLoadedFlags old = sAppendMode;
 	if (!(sAppendMode & slf_AppendTasks))
 		sAppendMode = (slf_AppendTasks | slf_RewriteExisting);
 
 	// Visual Studio prompt: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio
-	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, (LPARAM)&App);
-	RegEnumValues(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio\\SxS\\VS7", CreateVCTasks, (LPARAM)&App);
+	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, (LPARAM)App);
+	RegEnumValues(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio\\SxS\\VS7", CreateVCTasks, (LPARAM)App);
 
-	App.Commit();
+	App[0].Commit();
+	App[1].Commit();
 
 	sAppendMode = old;
 }
