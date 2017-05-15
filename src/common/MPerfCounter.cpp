@@ -66,6 +66,17 @@ void MPerfCounter::Start(PerfCounter& counter)
 	}
 }
 
+#if defined(_WIN64)
+#define iAdd64(Addend,Value) InterlockedAdd64(Addend, Value)
+#else
+// Reads and writes to 64-bit values are not guaranteed to be atomic on 32-bit Windows. 
+inline __int64 iAdd64(__int64 volatile * Addend, __int64 Value)
+{
+	*Addend += Value;
+	return *Addend;
+};
+#endif
+
 void MPerfCounter::Stop(PerfCounter& counter)
 {
 	if (counter.ID >= (UINT)m_Counters.size())
@@ -86,8 +97,8 @@ void MPerfCounter::Stop(PerfCounter& counter)
 		LONGLONG duration = tick.QuadPart - counter.Start.QuadPart;
 		p->Stop.QuadPart = tick.QuadPart;
 		InterlockedIncrement(&p->Count);
-		InterlockedAdd64(&p->Duration.QuadPart, duration);
-		InterlockedAdd64(&m_Total.QuadPart, duration);
+		iAdd64(&p->Duration.QuadPart, duration);
+		iAdd64(&m_Total.QuadPart, duration);
 	}
 	counter.Initialized = FALSE;
 }
