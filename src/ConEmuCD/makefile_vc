@@ -81,6 +81,7 @@ $(INTDIR)\UnicodeTest.obj \
 $(INTDIR)\WCodePage.obj \
 $(INTDIR)\WConsole.obj \
 $(INTDIR)\WConsoleInfo.obj \
+$(INTDIR)\wcwidth.obj \
 $(INTDIR)\WFiles.obj \
 $(INTDIR)\WModuleCheck.obj \
 $(INTDIR)\WObjects.obj \
@@ -362,6 +363,8 @@ $(INTDIR)\WCodePage.obj: ../common/WCodePage.cpp ../common/WCodePage.h
 $(INTDIR)\WConsole.obj: ../common/WConsole.cpp ../common/WConsole.h
 
 $(INTDIR)\WConsoleInfo.obj: ../common/WConsoleInfo.cpp ../common/WConsoleInfo.h
+
+$(INTDIR)\wcwidth.obj: ../common/wcwidth.cpp ../common/wcwidth.h
 
 $(INTDIR)\WFiles.obj: ../common/WFiles.cpp ../common/WFiles.h
 

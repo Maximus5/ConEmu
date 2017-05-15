@@ -53,6 +53,7 @@ SRCS = \
 		../common/WCodePage.cpp      \
 		../common/WConsole.cpp       \
 		../common/WConsoleInfo.cpp   \
+		../common/wcwidth.cpp        \
 		../common/WFiles.cpp         \
 		../common/WModuleCheck.cpp   \
 		../common/WObjects.cpp       \

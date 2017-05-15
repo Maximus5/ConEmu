@@ -92,6 +92,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RConStartArgs.h"
 #include "../common/SetEnvVar.h"
 #include "../common/StartupEnvEx.h"
+#include "../common/wcwidth.h"
 #include "../common/WCodePage.h"
 #include "../common/WConsole.h"
 #include "../common/WFiles.h"
@@ -5642,39 +5643,69 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 	// -- GetConsoleScreenBufferInfo возвращает координаты курсора в DBCS, а нам нужен wchar_t !!!
 	if (IsConsoleDoubleCellCP())
 	{
-		WORD Attrs[200];
-		LONG cchMax = countof(Attrs);
-		WORD* pAttrs = (csbi.dwCursorPosition.X <= cchMax) ? Attrs : (WORD*)calloc(csbi.dwCursorPosition.X, sizeof(*pAttrs));
-		if (pAttrs)
+		CHAR Chars[200];
+		LONG cchMax = countof(Chars);
+		LPSTR pChars = (csbi.dwCursorPosition.X <= cchMax) ? Chars : (LPSTR)calloc(csbi.dwCursorPosition.X, sizeof(*pChars));
+		if (pChars)
 			cchMax = csbi.dwCursorPosition.X;
 		else
-			pAttrs = Attrs; // memory allocation fail? try part of line?
+			pChars = Chars; // memory allocation fail? try part of line?
 		COORD crRead = {0, csbi.dwCursorPosition.Y};
 		//120830 - DBCS uses 2 cells per hieroglyph
 		DWORD nRead = 0;
 		// TODO: Optimize
-		if (ReadConsoleOutputAttribute(ahConOut, pAttrs, cchMax, crRead, &nRead) && nRead)
+		BOOL bRead = ReadConsoleOutputCharacterA(ahConOut, pChars, cchMax, crRead, &nRead);
+		if (bRead && nRead)
 		{
 			_ASSERTE(nRead==cchMax);
 			int nXShift = 0;
-			LPWORD p = pAttrs, pEnd = pAttrs+nRead;
+			LPSTR p = pChars, pEnd = pChars+nRead;
 			while (p < pEnd)
 			{
-				if ((*p) & COMMON_LVB_LEADING_BYTE)
+				if (IsDBCSLeadByte(*p))
 				{
 					nXShift++;
 					p++;
-					_ASSERTE((p < pEnd) && ((*p) & COMMON_LVB_TRAILING_BYTE));
+					_ASSERTE(p < pEnd);
 				}
 				p++;
 			}
 			_ASSERTE(nXShift <= csbi.dwCursorPosition.X);
 			csbi.dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
 		}
-		if (pAttrs && (pAttrs != Attrs))
+		else if (IsWin10() && (GetConsoleOutputCP() == CP_UTF8))
 		{
-			free(pAttrs);
+			// Temporary workaround for conhost bug!
+			CHAR_INFO CharsEx[200];
+			CHAR_INFO* pCharsEx = (csbi.dwCursorPosition.X <= cchMax) ? CharsEx
+				: (CHAR_INFO*)calloc(csbi.dwCursorPosition.X, sizeof(*pCharsEx));
+			if (pCharsEx)
+			{
+				COORD bufSize = {cchMax, 1}; COORD bufCoord = {0,0};
+				SMALL_RECT rgn = MakeSmallRect(0, csbi.dwCursorPosition.Y, cchMax-1, csbi.dwCursorPosition.Y);
+				bRead = ReadConsoleOutputW(ahConOut, CharsEx, bufSize, bufCoord, &rgn);
+				if (bRead)
+				{
+					int nXShift = 0;
+					CHAR_INFO *p = pCharsEx, *pEnd = pCharsEx+cchMax;
+					while ((p + nXShift) < pEnd)
+					{
+						if (get_wcwidth(p->Char.UnicodeChar) == 2)
+						{
+							nXShift++;
+							_ASSERTE(p < pEnd);
+						}
+						p++;
+					}
+					_ASSERTE(nXShift <= csbi.dwCursorPosition.X);
+					csbi.dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
+				}
+				if (pCharsEx != CharsEx)
+					free(pCharsEx);
+			}
 		}
+		if (pChars != Chars)
+			free(pChars);
 	}
 }
 

@@ -356,6 +356,7 @@
     <ClInclude Include="..\common\WCodePage.h" />
     <ClInclude Include="..\common\WConsole.h" />
     <ClInclude Include="..\common\WConsoleInfo.h" />
+    <ClInclude Include="..\common\wcwidth.h" />
     <ClInclude Include="..\common\WFiles.h" />
     <ClInclude Include="..\common\WModuleCheck.h" />
     <ClInclude Include="..\common\WObjects.h" />
@@ -415,6 +416,7 @@
     <ClCompile Include="..\common\WCodePage.cpp" />
     <ClCompile Include="..\common\WConsole.cpp" />
     <ClCompile Include="..\common\WConsoleInfo.cpp" />
+    <ClCompile Include="..\common\wcwidth.cpp" />
     <ClCompile Include="..\common\WFiles.cpp" />
     <ClCompile Include="..\common\WModuleCheck.cpp" />
     <ClCompile Include="..\common\WObjects.cpp" />

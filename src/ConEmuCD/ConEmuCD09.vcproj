@@ -433,6 +433,7 @@
       <File RelativePath="..\common\WCodePage.h" />
       <File RelativePath="..\common\WConsole.h" />
       <File RelativePath="..\common\WConsoleInfo.h" />
+      <File RelativePath="..\common\wcwidth.h" />
       <File RelativePath="..\common\WFiles.h" />
       <File RelativePath="..\common\WModuleCheck.h" />
       <File RelativePath="..\common\WObjects.h" />
@@ -493,6 +494,7 @@
       <File RelativePath="..\common\WCodePage.cpp" />
       <File RelativePath="..\common\WConsole.cpp" />
       <File RelativePath="..\common\WConsoleInfo.cpp" />
+      <File RelativePath="..\common\wcwidth.cpp" />
       <File RelativePath="..\common\WFiles.cpp" />
       <File RelativePath="..\common\WModuleCheck.cpp" />
       <File RelativePath="..\common\WObjects.cpp" />
