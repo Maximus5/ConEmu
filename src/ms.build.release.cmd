@@ -7,6 +7,8 @@ cd /d "%~dp0"
 set "x32_build_flag=%~dp0.x32_build_flag"
 set "x64_build_flag=%~dp0.x64_build_flag"
 set build_flag=
+set build_multi=
+rem set build_multi=/m
 
 set target=clean,build
 rem set target=build
@@ -76,7 +78,8 @@ exit /b 1
 :build_x32
 set "build_flag=%x32_build_flag%"
 call "%VSInstallDir%\VC\Auxiliary\Build\vcvars32.bat"
-msbuild CE17.sln /m /p:Configuration=Release,Platform=Win32 /t:%target%
+cd /d "%~dp0"
+msbuild CE17.sln %build_multi% /p:Configuration=Release,Platform=Win32 /t:%target%
 if errorlevel 1 goto err
 del "%build_flag%" > nul
 echo Success > "%build_flag%.success"
@@ -86,7 +89,8 @@ goto done
 :build_x64
 set "build_flag=%x64_build_flag%"
 call "%VSInstallDir%\VC\Auxiliary\Build\vcvars64.bat"
-msbuild CE17.sln /m /p:Configuration=Release,Platform=x64 /t:%target%
+cd /d "%~dp0"
+msbuild CE17.sln %build_multi% /p:Configuration=Release,Platform=x64 /t:%target%
 if errorlevel 1 goto err
 del "%build_flag%" > nul
 echo Success > "%build_flag%.success"
