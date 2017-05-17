@@ -316,6 +316,37 @@ bool IsConsoleLineEmpty(HANDLE hOut, SHORT row, SHORT len /*= -1*/)
 	return true;
 }
 
+bool IsWin10LegacyConsole()
+{
+	static bool bIsLegacy10 = false, bChecked = false;
+
+	if (!bChecked)
+	{
+		if (IsWin10())
+		{
+			HKEY hk;
+			LONG lrc;
+			bool bForceV2 = false;
+			DWORD value = 0, dwType = 0, dwSize = sizeof(value);
+
+			if (0 == (lrc = RegOpenKeyEx(HKEY_CURRENT_USER, L"Console", 0, KEY_READ, &hk)))
+			{
+				if (0 == (lrc = RegQueryValueEx(hk, L"ForceV2", NULL, &dwType, (LPBYTE)&value, &dwSize)))
+				{
+					bForceV2 = ((dwType == REG_DWORD) && dwSize && (value != 0));
+				}
+				RegCloseKey(hk);
+			}
+
+			bIsLegacy10 = !bForceV2;
+		}
+
+		bChecked = true;
+	}
+
+	return bIsLegacy10;
+}
+
 bool IsConsoleDoubleCellCP()
 {
 	static bool bDBCS = false, bDBCS_Checked = false;

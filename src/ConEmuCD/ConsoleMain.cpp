@@ -5633,15 +5633,41 @@ static void UndoConsoleWindowZoom()
 	UNREFERENCED_PARAMETER(lbRc);
 }
 
+bool static NeedLegacyCursorCorrection()
+{
+	static bool bNeedCorrection = false, bChecked = false;
+
+	if (!bChecked)
+	{
+		if (IsWin10() && (GetSystemMetrics(SM_DBCSENABLED) == 0) && !IsWin10LegacyConsole())
+		{
+			OSVERSIONINFOEXW osvi = { sizeof(osvi), 10, 0, 15063 };
+			DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_EQUAL), VER_MINORVERSION, VER_EQUAL), VER_BUILDNUMBER, VER_EQUAL);
+			BOOL ibIsWin = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_BUILDNUMBER, dwlConditionMask);
+			if (ibIsWin)
+			{
+				bNeedCorrection = true;
+			}
+		}
+	}
+
+	return bNeedCorrection;
+}
+
 // TODO: Optimize - combine ReadConsoleData/ReadConsoleInfo
 void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INFO& csbi)
 {
-	if (!gbIsDBCS || csbi.dwSize.X <= 0 || csbi.dwCursorPosition.X <= 0)
+	if (csbi.dwSize.X <= 0 || csbi.dwCursorPosition.X <= 0)
 		return;
 
 	// Issue 577: Chinese display error on Chinese
-	// -- GetConsoleScreenBufferInfo возвращает координаты курсора в DBCS, а нам нужен wchar_t !!!
-	if (IsConsoleDoubleCellCP())
+	// -- GetConsoleScreenBufferInfo returns DBCS cursor coordinates, but we require wchar_t !!!
+	if (!IsConsoleDoubleCellCP()
+	// gh-1057: In NON DBCS systems there are cursor problems too (Win10 stable build 15063)
+		&& !NeedLegacyCursorCorrection())
+		return;
+
+	// The correction process
 	{
 		CHAR Chars[200];
 		LONG cchMax = countof(Chars);
@@ -5654,8 +5680,9 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 		//120830 - DBCS uses 2 cells per hieroglyph
 		DWORD nRead = 0;
 		// TODO: Optimize
-		BOOL bRead = ReadConsoleOutputCharacterA(ahConOut, pChars, cchMax, crRead, &nRead);
-		if (bRead && nRead)
+		BOOL bRead = NeedLegacyCursorCorrection() ? FALSE : ReadConsoleOutputCharacterA(ahConOut, pChars, cchMax, crRead, &nRead);
+		// ReadConsoleOutputCharacterA may return "???" instead of DBCS codes in Non-DBCS systems
+		if (bRead && (nRead == cchMax))
 		{
 			_ASSERTE(nRead==cchMax);
 			int nXShift = 0;
@@ -5673,7 +5700,7 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 			_ASSERTE(nXShift <= csbi.dwCursorPosition.X);
 			csbi.dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
 		}
-		else if (IsWin10() && (GetConsoleOutputCP() == CP_UTF8))
+		else if (IsWin10() && (NeedLegacyCursorCorrection() || (GetConsoleOutputCP() == CP_UTF8)))
 		{
 			// Temporary workaround for conhost bug!
 			CHAR_INFO CharsEx[200];
@@ -5874,7 +5901,7 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 
 	// Issue 577: Chinese display error on Chinese
 	// -- GetConsoleScreenBufferInfo возвращает координаты курсора в DBCS, а нам нужен wchar_t !!!
-	if (gbIsDBCS && csbi.dwSize.X && csbi.dwCursorPosition.X)
+	if (csbi.dwSize.X && csbi.dwCursorPosition.X)
 	{
 		CorrectDBCSCursorPosition(ahConOut, csbi);
 	}

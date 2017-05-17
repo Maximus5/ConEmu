@@ -44,4 +44,4 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 bool IsConsoleLineEmpty(HANDLE hOut, SHORT row, SHORT len = -1);
 
 bool IsConsoleDoubleCellCP();
-
+bool IsWin10LegacyConsole();
