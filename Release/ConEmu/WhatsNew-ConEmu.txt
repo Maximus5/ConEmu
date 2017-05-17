@@ -20,6 +20,39 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.5.17
+* gh-1039: Use `Win+Shift+G` as default hotkey for ‘Attach to...’ action.
+* Add option ‘Leave opened’ in the ‘Attach to...’ dialog (Win+Shift+G).
+  Would be useful to examine output of some long running script after it finishes.
+* gh-1098: Add ‘Rename tab’ option for ‘Double click on tab’.
+* Use ‘Rename tab’ as default option for ‘Double click on tab’.
+* gh-1097: Don't count ‘System’ process as running process (close confirmation).
+* Cross-click closing confirmation was not shown if ‘Confirm tab’=Off and ‘Confirm window’=On.
+* Detach improvements:
+  * GuiMacro: Detach(3) for seamless updating from Chocolatey
+  * Try to set the console font to same size as ConEmu uses
+  * No debug assertions
+* GuiMacro: Close(2) is asynchronous now.
+  This is because of GuiServer thread waiting for synchronous macro completion,
+  but this thread is required to be terminated when ConEmu window is closing...
+* Use Win7 TaskDialog for ‘Add default tasks’ confirmation.
+* DefTerm: Take into account xml file specified by -loadcfgfile switch.
+  Default Terminal options have to be saved by ‘Apply’ button on the settings page.
+* gh-661: When ConEmu started with ‘-Detached’ switch (implied by DefTerm in some cases) option ‘Close ConEmu with last tab’ was unchecked.
+  If old behavior is required, the switch ‘-NoAutoClose’ may be used.
+* Admin shield was not shown on TabBar if ConEmu was started under Admin.
+* Real console font size dialog: show hint if created font height differs.
+* gh-1012, gh-1121: Dirty workaround for AVDefender/Bitdefender bug raising a crash in the RegQueryValueEx.
+  Warning! ConEmu physically can't fix 3rd-paty bugs!
+  This commit just skips process bitness detection if we already may be sure about it.
+  But the bug/crash may appear in some other situations,
+  so it's better to report the problem to the authors.
+* gh-156, gh-805: Detach powershell console during Chocolatey's update ConEmu package.
+* gh-1135, gh-1021: Create default tasks for Visual Studio 2017 and x64 targets.
+* gh-1051, gh-1111, gh-1138: Workaround for Windows 10 bug with cursor position after CJK glyphs (Also: gh-1083, gh-1096).
+* gh-1051, gh-1111, gh-1138: More Win10 bug workarounds (cursor position after CJK).
+
+
 2017.4.2
 * gh-1085, gh-1087: Git 1.9.5 had failed to rebase (regression: 597d81f; ref: gh-688, gh-1063).
 
