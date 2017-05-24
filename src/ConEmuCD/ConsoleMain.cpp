@@ -5704,13 +5704,13 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 		{
 			// Temporary workaround for conhost bug!
 			CHAR_INFO CharsEx[200];
-			CHAR_INFO* pCharsEx = (csbi.dwCursorPosition.X <= cchMax) ? CharsEx
-				: (CHAR_INFO*)calloc(csbi.dwCursorPosition.X, sizeof(*pCharsEx));
+			CHAR_INFO* pCharsEx = (cchMax <= countof(CharsEx)) ? CharsEx
+				: (CHAR_INFO*)calloc(cchMax, sizeof(*pCharsEx));
 			if (pCharsEx)
 			{
 				COORD bufSize = {cchMax, 1}; COORD bufCoord = {0,0};
 				SMALL_RECT rgn = MakeSmallRect(0, csbi.dwCursorPosition.Y, cchMax-1, csbi.dwCursorPosition.Y);
-				bRead = ReadConsoleOutputW(ahConOut, CharsEx, bufSize, bufCoord, &rgn);
+				bRead = ReadConsoleOutputW(ahConOut, pCharsEx, bufSize, bufCoord, &rgn);
 				if (bRead)
 				{
 					int nXShift = 0;
