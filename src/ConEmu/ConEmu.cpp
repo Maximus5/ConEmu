@@ -49,6 +49,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ShObjIdl_Part.h"
 //#include <lm.h>
 //#include "../common/ConEmuCheck.h"
+#include <Psapi.h> //needed for Vim ScrollFix
 
 #include "../common/execute.h"
 #include "../common/md5.h"
@@ -10247,6 +10248,46 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				VCon->RCon()->PostConsoleMessage(hGuiChild, messg, wParam, lParam);
 				return 0;
 			}
+
+			//ckech if vim is running
+			DWORD currentProcess = pRCon->GetRunningPID();
+			if (currentProcess)
+			{
+				HANDLE currentProcessHandle = OpenProcess(
+					PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+					FALSE,
+					currentProcess
+					);
+
+				TCHAR Buffer[MAX_PATH];
+				if (currentProcessHandle)
+				{
+					TCHAR vimBaseName[] = _T("vim.exe");
+					if (GetModuleBaseName(currentProcessHandle, NULL, Buffer, MAX_PATH) > 0) //vim is running  -> send F6 and F7 instead of mouse wheel events 
+					{
+						if (!_tcscmp(Buffer, vimBaseName))
+						{
+							short scrollValue = (int)(short)HIWORD(wParam);
+
+							int i;
+							int scrollSize = 3; //gvim default
+							for (i = 0; i < scrollSize; i++)
+							{
+								if (scrollValue > 0)
+								{
+									VCon->RCon()->PostKeyPress(VK_F6, 0, 0);
+									VCon->RCon()->PostKeyUp(VK_F6, 0, 0);
+								}
+								else if (scrollValue < 0)
+								{
+									VCon->RCon()->PostKeyPress(VK_F7, 0, 0);
+									VCon->RCon()->PostKeyUp(VK_F7, 0, 0);
+								}
+							}
+						}
+					}
+				}
+			}//
 		}
 		else
 		{

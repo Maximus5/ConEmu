@@ -1,3 +1,40 @@
+Download binary for 32 and 64bit Windows: (http://xumbu.org/downloads/opensource/prebuild/ConEmu_VimScrollPack.zip)
+
+
+## About this Fork
+
+If you use Vim in Windows cmd.exe and you have problems to scroll
+by using the mouse wheel, you can try this ConEmu Fork.
+
+
+You have to add following lines to your vimrc file:
+
+```
+if !has("gui_running")
+    set mouse=a
+    inoremap <F6> <C-x><C-Y>
+    inoremap <F7> <C-x><C-e>
+    nnoremap <F6> <C-Y>
+    nnoremap <F7> <C-e>
+
+    snoremap <F6> <C-Y>
+    snoremap <F7> <C-e>
+   
+    vnoremap <F6> <C-Y> 
+    vnoremap <F7> <C-e  
+endif
+```
+
+Thats all.
+Now you should be able to scroll inside Vim just like you do it in GVim.
+
+________
+
+
+
+
+
+
 ## About ConEmu
 [ConEmu-Maximus5](https://conemu.github.io) is a Windows console emulator with tabs, which represents
 multiple consoles as one customizable GUI window with various features.
