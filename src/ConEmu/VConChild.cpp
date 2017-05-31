@@ -779,7 +779,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 	// Logger
 	MSG msgStr = {hWnd, messg, wParam, lParam};
 	ConEmuMsgLogger::Log(msgStr, ConEmuMsgLogger::msgBack);
-
+	_ASSERTE(gpConEmu);
 	gpConEmu->mp_HandleMonitor->DoCheck();
 
 	if (gpSet->isLogging(4))
@@ -984,7 +984,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 
 			if (pVCon && (messg == pVCon->mn_MsgRestoreChildFocus))
 			{
-				if (!gpConEmu->CanSetChildFocus())
+				if (gpConEmu && !gpConEmu->CanSetChildFocus())
 				{
 					// Клик по иконке открывает системное меню
 					//_ASSERTE(FALSE && "Must not get here?");
