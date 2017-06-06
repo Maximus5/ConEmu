@@ -20,6 +20,10 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.6.5
+* gh-1149: Fix crash in wide consoles, when the cursor goes over 200 col (f8907a1 regression).
+
+
 2017.5.17
 * gh-1039: Use `Win+Shift+G` as default hotkey for ‘Attach to...’ action.
 * Add option ‘Leave opened’ in the ‘Attach to...’ dialog (Win+Shift+G).
