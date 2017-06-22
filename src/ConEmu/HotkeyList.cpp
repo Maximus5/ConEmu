@@ -283,9 +283,9 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	Add(vkSplitFocusRight,chk_User,  NULL,    L"Multi.SplitFocusR",     CConEmuCtrl::key_GuiMacro, false, L"Split(2,1,0)")
 		->SetHotKey(VK_RIGHT,VK_APPS);
 	Add(vkMultiNext,      chk_User,  NULL,    L"Multi.Next",            CConEmuCtrl::key_MultiNext)
-		->SetHotKey('Q',VK_LWIN);
-	Add(vkMultiNextShift, chk_User,  NULL,    L"Multi.NextShift",       CConEmuCtrl::key_MultiNextShift)
 		->SetHotKey('Q',VK_LWIN,VK_SHIFT);
+	Add(vkMultiNextShift, chk_User,  NULL,    L"Multi.NextShift",       CConEmuCtrl::key_MultiPrev)
+		;
 	Add(vkMultiRecreate,  chk_User,  NULL,    L"Multi.Recreate",        CConEmuCtrl::key_MultiRecreate)
 		->SetHotKey(192/*VK_тильда*/,VK_LWIN);
 	Add(vkMultiAltCon,    chk_User,  NULL,    L"Multi.AltCon",          CConEmuCtrl::key_AlternativeBuffer)

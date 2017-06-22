@@ -521,7 +521,7 @@ bool CConEmuCtrl::key_MultiNext(const ConEmuChord& VkState, bool TestOnly, const
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiNextShift(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_MultiPrev(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
 		return true;
