@@ -387,7 +387,7 @@ void Settings::InitSettings()
 
 	nStartCreateDelay = RUNQUEUE_CREATE_LAG_DEF;
 	isAutoRegisterFonts = true;
-	nHostkeyNumberModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyNumberModifier);
+	nHostkeyNumberModifier = VK_LCONTROL; //TestHostkeyModifiers(nHostkeyNumberModifier);
 	nHostkeyArrowModifier = VK_LWIN; //TestHostkeyModifiers(nHostkeyArrowModifier);
 	isSingleInstance = false;
 	isShowHelpTooltips = true;
