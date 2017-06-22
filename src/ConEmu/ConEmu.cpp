@@ -394,6 +394,7 @@ CConEmuMain::CConEmuMain()
 	mb_InImeComposition = false; mb_ImeMethodChanged = false;
 	ZeroStruct(m_Pressed);
 	mb_MouseCaptured = FALSE;
+	mb_GroupInputFlag = false;
 	mb_HotKeyRegistered = false;
 	mh_LLKeyHookDll = NULL;
 	mph_HookedGhostWnd = NULL;
@@ -788,6 +789,11 @@ void CConEmuMain::RegisterMessages()
 	mn_MsgPostScClose = RegisterMessage("ScClose");
 	mn_MsgOurSysCommand = RegisterMessage("UM_SYSCOMMAND");
 	mn_MsgCallMainThread = RegisterMessage("CallMainThread");
+}
+
+bool CConEmuMain::isInputGrouped() const
+{
+	return mb_GroupInputFlag;
 }
 
 bool CConEmuMain::isMingwMode()

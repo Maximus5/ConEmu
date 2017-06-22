@@ -294,8 +294,10 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_PAUSE);
 	Add(vkMultiBuffer,    chk_User,  NULL,    L"Multi.Scroll",          CConEmuCtrl::key_MultiBuffer)
 		;
-	Add(vkMultiGroup,     chk_User,  NULL,    L"Multi.GroupInput",      CConEmuCtrl::key_GuiMacro, false, L"GroupInput")
+	Add(vkMultiGroup,     chk_User,  NULL,    L"Multi.GroupInput",      CConEmuCtrl::key_GuiMacro, false, L"GroupInput(0)")
 		->SetHotKey('G', VK_APPS);
+	Add(vkMultiGroupAll,  chk_User,  NULL,    L"Multi.GroupInputAll",   CConEmuCtrl::key_GuiMacro, false, L"GroupInput(3)")
+		->SetHotKey('G', VK_APPS, VK_SHIFT);
 	Add(vkConDetach,      chk_User,  NULL,    L"Multi.Detach",          CConEmuCtrl::key_GuiMacro, false, L"Detach")
 		;
 	Add(vkConUnfasten,    chk_User,  NULL,    L"Multi.Unfasten",        CConEmuCtrl::key_GuiMacro, false, L"Unfasten")

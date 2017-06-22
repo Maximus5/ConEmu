@@ -1710,7 +1710,11 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 		return false;
 	}
 
-	if (mp_VCon->isGroupedInput())
+	// If user want to type simultaneously into visible or all consoles
+	EnumVConFlags is_grouped = mp_VCon->isGroupedInput();
+
+	// Call OnKeysSending to reset top-left in the buffer if was locked (after scroll)
+	if (is_grouped)
 	{
 		struct implKeys
 		{
@@ -1720,13 +1724,14 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 				return true;
 			}
 		};
-		CVConGroup::EnumVCon(evf_Visible, implKeys::DoKeysSending, 0);
+		CVConGroup::EnumVCon(is_grouped, implKeys::DoKeysSending, 0);
 	}
 	else
 	{
 		OnKeysSending();
 	}
 
+	// Prepare character buffer to post data
 	wchar_t szLog[80];
 	wchar_t* pszEnd = pszChars + cchCount;
 	INPUT_RECORD r[2];
@@ -1802,7 +1807,7 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 		_wsprintf(szLog, SKIPCOUNT(szLog) L"PostString was prepared %u key events", (DWORD)cchSucceeded);
 		gpConEmu->LogString(szLog);
 
-		if (mp_VCon->isGroupedInput())
+		if (is_grouped)
 		{
 			struct implPost
 			{
@@ -1816,7 +1821,7 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 					return true;
 				}
 			} impl = {pirChars, cchSucceeded};
-			CVConGroup::EnumVCon(evf_Visible, implPost::DoPost, (LPARAM)&impl);
+			CVConGroup::EnumVCon(is_grouped, implPost::DoPost, (LPARAM)&impl);
 			lbRc = true;
 		}
 		else
@@ -6856,11 +6861,12 @@ void CRealConsole::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPara
 		return;
 	}
 
-	// флажок на уровне группы
-	if (mp_VCon->isGroupedInput())
+	// If user want to type simultaneously into visible or all consoles
+	EnumVConFlags is_grouped = mp_VCon->isGroupedInput();
+	if (is_grouped)
 	{
 		KeyboardIntArg args = {hWnd, messg, wParam, lParam, pszChars, pDeadCharMsg};
-		CVConGroup::EnumVCon(evf_Visible, OnKeyboardBackCall, (LPARAM)&args);
+		CVConGroup::EnumVCon(is_grouped, OnKeyboardBackCall, (LPARAM)&args);
 		return; // Done
 	}
 

@@ -2245,9 +2245,18 @@ LPWSTR ConEmuMacro::GroupInput(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 	int nCommand = 0;
 	p->GetIntArg(0, nCommand);
 
-	if (apRCon && (nCommand >= 0 && nCommand <= 2))
+	// Active splits (visible panes)
+	if (nCommand >= 0 && nCommand <= 2)
 	{
+		// 0 - toggle, 1 - group, 2 - ungroup
 		CVConGroup::GroupInput(apRCon->VCon(), (GroupInputCmd)nCommand);
+		return lstrdup(L"OK");
+	}
+	// All VCons (active/inactive/invisible)
+	else if (nCommand >= 3 && nCommand <= 5)
+	{
+		// 3 - toggle, 4 - group, 5 - ungroup
+		CVConGroup::ResetGroupInput(apRCon->Owner(), (GroupInputCmd)(nCommand-3));
 		return lstrdup(L"OK");
 	}
 

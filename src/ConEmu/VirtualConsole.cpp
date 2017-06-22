@@ -604,13 +604,15 @@ bool CVirtualConsole::isGroup()
 	return CVConGroup::isGroup(this);
 }
 
-bool CVirtualConsole::isGroupedInput()
+EnumVConFlags CVirtualConsole::isGroupedInput()
 {
 	if (!this)
-		return false;
-	if (!(mn_Flags & vf_Grouped))
-		return false;
-	return true;
+		return evf_None;
+	if (mp_ConEmu->isInputGrouped())
+		return evf_All;
+	if ((mn_Flags & vf_Grouped))
+		return evf_Visible;
+	return evf_None;
 }
 
 void CVirtualConsole::PointersFree()
@@ -3626,7 +3628,7 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 		Cursor.nLastBlink = GetTickCount();
 	}
 
-	// Из активной консоли - дернем курсоры остальных видимых сплитов
+	// From the active console - trigger cursor redraw in other VISIBLE panes
 	if (bConActive && isGroupedInput())
 	{
 		CVConGroup::EnumVCon(evf_Visible, UpdateCursorGroup, (LPARAM)(CVirtualConsole*)this);

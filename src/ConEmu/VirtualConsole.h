@@ -53,7 +53,7 @@ const VConFlags
 	vf_Active    = 0x0001,
 	vf_Visible   = 0x0002,
 	vf_Maximized = 0x0008,
-	vf_Grouped   = 0x0010,
+	vf_Grouped   = 0x0010, // simultaneous input for active split group
 	vf_None      = 0
 ;
 
@@ -112,7 +112,7 @@ class CVirtualConsole :
 		bool isActive(bool abAllowGroup);
 		bool isVisible();
 		bool isGroup();
-		bool isGroupedInput();
+		EnumVConFlags isGroupedInput();
 	public:
 		int Index();
 		LPCWSTR IndexStr();

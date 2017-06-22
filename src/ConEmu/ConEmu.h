@@ -434,6 +434,10 @@ class CConEmuMain
 		} m_Pressed;
 	public:
 		void OnTabbarActivated(bool bTabbarVisible, bool bInAutoShowHide);
+	public:
+		bool isInputGrouped() const;
+	protected:
+		bool mb_GroupInputFlag;
 	protected:
 		BOOL mb_MouseCaptured;
 		void CheckActiveLayoutName();

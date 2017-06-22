@@ -290,6 +290,10 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"     Cmd==0: switch mode (default)\r\n" \
 	L"     Cmd==1: group\r\n" \
 	L"     Cmd==2: un-group\r\n" \
+	L"  - Group keyboard input for all consoles\r\n" \
+	L"     Cmd==3: switch mode\r\n" \
+	L"     Cmd==4: group\r\n" \
+	L"     Cmd==5: un-group\r\n" \
 	L"HighlightMouse(<What>[,<Act>])\r\n" \
 	L"  - change highlighting in the ACTIVE console only\r\n" \
 	L"    What==0: switch off/row/col/row+col/off/...\r\n" \

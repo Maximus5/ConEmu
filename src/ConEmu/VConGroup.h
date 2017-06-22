@@ -183,6 +183,8 @@ public:
 	static HWND DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const DWORD dwKeybLayout, DWORD& t1, DWORD& t2, int& iFound, CESERVER_REQ_SRVSTARTSTOPRET& pRet);
 	static void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args);
 	static void OnGuiFocused(bool abFocus, bool abForceChild = FALSE);
+
+	static void ResetGroupInput(CConEmuMain* pOwner, GroupInputCmd cmd);
 	static void GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd);
 
 	static bool Activate(CVirtualConsole* apVCon);

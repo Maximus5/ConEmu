@@ -400,6 +400,7 @@ static LngPredefined gsDataHints[] = {
 	{ vkMultiClose,            L"Close active console" },
 	{ vkMultiCmd,              L"Create new ‘cmd.exe’ console" },
 	{ vkMultiGroup,            L"Group keyboard input for visible splits" },
+	{ vkMultiGroupAll,         L"Group keyboard input for all consoles" },
 	{ vkMultiNew,              L"Create new console or new window (check ‘Multiple consoles in one ConEmu window’)" },
 	{ vkMultiNewAttach,        L"Attach existing Console or GUI application" },
 	{ vkMultiNewPopup,         L"Show create new console popup menu" },

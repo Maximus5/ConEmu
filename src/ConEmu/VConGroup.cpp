@@ -5562,6 +5562,35 @@ void CVConGroup::setActiveVConAndFlags(CVirtualConsole* apNewVConActive)
 	}
 }
 
+void CVConGroup::ResetGroupInput(CConEmuMain* pOwner, GroupInputCmd cmd)
+{
+	bool set_group;
+	if (cmd == gic_Switch)
+		set_group = !pOwner->mb_GroupInputFlag;
+	else
+		set_group = (cmd == gic_Enable);
+	// global flag for gpConEmu
+	pOwner->mb_GroupInputFlag = set_group;
+
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
+	CVConGuard VCon;
+	for (size_t i = 0; i < countof(gp_VGroups); i++)
+	{
+		if (gp_VGroups[i])
+		{
+			gp_VGroups[i]->mb_GroupInputFlag = false;
+
+			if (gp_VGroups[i]->mp_Item && VCon.Attach(gp_VGroups[i]->mp_Item))
+			{
+				VCon->SetFlags(vf_None, vf_Grouped);
+			}
+		}
+	}
+
+	lockGroups.Unlock();
+}
+
 void CVConGroup::GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd)
 {
 	CVConGuard VCon;
@@ -5570,6 +5599,7 @@ void CVConGroup::GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd)
 	if (!VCon.Attach(apVCon))
 		return;
 
+	// We'll set group input for active splits
 	CVConGroup* pGr = ((CVConGroup*)VCon->mp_Group);
 	_ASSERTE(pGr);
 	if (pGr && (cmd == gic_Switch))
@@ -5577,6 +5607,11 @@ void CVConGroup::GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd)
 	else
 		bGrouped = (cmd == gic_Enable);
 
+	// Reset "all consoles are grouped" flag
+	if (VCon->Owner()->mb_GroupInputFlag)
+		ResetGroupInput(VCon->Owner(), gic_Disable);
+
+	// And for active group...
 	CVConGroup* pActiveGrp = GetRootOfVCon(VCon.VCon());
 
 	VConFlags Set = bGrouped ? vf_Grouped : vf_None;
