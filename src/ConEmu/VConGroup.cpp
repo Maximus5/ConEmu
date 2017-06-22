@@ -3314,8 +3314,54 @@ wrap:
 	return pNext;
 }
 
+bool CVConGroup::ExchangePanes(CVirtualConsole* apVCon, int nHorz /*= 0*/, int nVert /*= 0*/)
+{
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
+	CVConGuard VCon1(apVCon);
+	if (!isValid(apVCon))
+		return false;
+	CVConGroup* pGrp = (CVConGroup*)apVCon->mp_Group;
+	if (!pGrp || !pGrp->mp_Parent)
+		return false;
+	RECT wasRect = pGrp->mrc_Full;
+
+	bool bChanged = false;
+	CVConGroup* pNext = pGrp->FindNextPane(wasRect, nHorz, nVert);
+	if (pNext)
+	{
+		if ((pNext != pGrp) && (pNext->mp_Item) && pGrp->mp_Parent && pNext->mp_Parent)
+		{
+			CVConGuard VCon2(pNext->mp_Item);
+			CVConGroup*& g1 = (pGrp->mp_Parent->mp_Grp1 == pGrp) ? pGrp->mp_Parent->mp_Grp1 : pGrp->mp_Parent->mp_Grp2;
+			_ASSERTE(g1 == pGrp);
+			CVConGroup*& g2 = (pNext->mp_Parent->mp_Grp1 == pNext) ? pNext->mp_Parent->mp_Grp1 : pNext->mp_Parent->mp_Grp2;
+			_ASSERTE(g2 == pNext);
+
+			klSwap(g1, g2);
+			klSwap(g1->mp_Parent, g2->mp_Parent);
+
+			lockGroups.Unlock();
+
+			TODO("Swap Tabs (gp_VCon) too?");
+
+			apVCon->Owner()->OnSize();
+			bChanged = true;
+		}
+		else
+		{
+			//_ASSERTE(pNext != pGrp); -- that means, no pane in requested direction...
+			_ASSERTE(pNext->mp_Item);
+		}
+	}
+
+	return bChanged;
+}
+
 bool CVConGroup::ActivateNextPane(CVirtualConsole* apVCon, int nHorz /*= 0*/, int nVert /*= 0*/)
 {
+	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
+
 	CVConGuard guard(apVCon);
 	if (!isValid(apVCon))
 		return false;

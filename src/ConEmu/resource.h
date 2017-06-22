@@ -1352,6 +1352,11 @@
 #define vkFindNextPrompt                3077
 #define IDC_ATTACH_LEAVE_OPEN           3078
 #define vkMultiGroupAll                 3079
+#define vkSplitSwapUp                   3080
+#define vkSplitSwapDown                 3081
+#define vkSplitSwapLeft                 3082
+#define vkSplitSwapRight                3083
+#define vkSplitSwap                     3084
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1360,7 +1365,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        236
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3080
+#define _APS_NEXT_CONTROL_VALUE         3085
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

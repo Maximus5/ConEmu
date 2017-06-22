@@ -3450,6 +3450,11 @@ LPWSTR ConEmuMacro::Split(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			// Maximize/Restore active pane
 			CVConGroup::PaneMaximizeRestore(apRCon->VCon());
 		}
+		else if (nCmd == 4)
+		{
+			// Exchange active with nearest pane using preferred direction defined by Horz and Vert parameters
+			pszResult = CVConGroup::ExchangePanes(apRCon->VCon(), nHorz, nVert) ? lstrdup(L"OK") : lstrdup(L"Failed");
+		}
 	}
 
 	return pszResult ? pszResult : lstrdup(L"InvalidArg");

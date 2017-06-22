@@ -190,6 +190,7 @@ public:
 	static bool Activate(CVirtualConsole* apVCon);
 	static void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);
 
+	static bool ExchangePanes(CVirtualConsole* apVCon, int nHorz = 0, int nVert = 0);
 	static bool ActivateNextPane(CVirtualConsole* apVCon, int nHorz = 0, int nVert = 0);
 	static bool PaneActivateNext(bool abNext);
 	static void PaneMaximizeRestore(CVirtualConsole* apVCon);

@@ -422,6 +422,7 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"    Cmd=1, Horz=-1..1, Vert=-1..1: Move splitter between panes (aka resize panes)\r\n" \
 	L"    Cmd=2, Horz=-1..1, Vert=-1..1: Put cursor to the nearest pane\r\n" \
 	L"    Cmd=3, Maximize/restore active pane\r\n" \
+	L"    Cmd=4, Horz=-1..1, Vert=-1..1: Swap nearest panes\r\n" \
 	L"Status(0[,<Parm>])\r\n" \
 	L"  - Show/Hide status bar, Parm=1 - Show, Parm=2 - Hide\r\n" \
 	L"Status(1[,\"<Text>\"])\r\n" \
