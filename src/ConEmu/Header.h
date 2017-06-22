@@ -679,6 +679,23 @@ union CESize
 	};
 };
 
+// this is NOT a bitmask field!
+// only exact values are allowed!
+enum EnumVConFlags
+{
+	evf_None    = 0,
+	evf_Active  = 1,
+	evf_Visible = 2,
+	evf_All     = 3,
+};
+
+enum GroupInputCmd
+{
+	gic_Switch  = 0,
+	gic_Enable  = 1,
+	gic_Disable = 2,
+};
+
 
 bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval);
 #define LockFrequentExecute(Interval,LastExecuteTick) if (CheckLockFrequentExecute(LastExecuteTick,Interval))

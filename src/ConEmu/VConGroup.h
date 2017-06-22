@@ -37,22 +37,10 @@ class CVConGuard;
 class CTabID;
 struct AppSettings;
 
-// this is NOT a bitmask field!
-// only exact values are allowed!
-enum EnumVConFlags
-{
-	evf_Active  = 1,
-	evf_Visible = 2,
-	evf_All     = 3,
-};
+
+// used with enum EnumVConFlags, callback for EnumVCon
 typedef bool (*EnumVConProc)(CVirtualConsole* pVCon, LPARAM lParam);
 
-enum GroupInputCmd
-{
-	gic_Switch  = 0,
-	gic_Enable  = 1,
-	gic_Disable = 2,
-};
 
 class CVConGroup : public CRefRelease
 {
