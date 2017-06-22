@@ -562,6 +562,11 @@ CRealConsole::~CRealConsole()
 	MCHKHEAP;
 }
 
+CConEmuMain* CRealConsole::Owner()
+{
+	return this ? mp_ConEmu : NULL;
+}
+
 CVirtualConsole* CRealConsole::VCon()
 {
 	return this ? mp_VCon : NULL;

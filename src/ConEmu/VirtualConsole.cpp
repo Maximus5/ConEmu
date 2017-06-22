@@ -296,6 +296,11 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	_ASSERTE(mh_WndDC == NULL);
 }
 
+CConEmuMain* CVirtualConsole::Owner()
+{
+	return this ? mp_ConEmu : NULL;
+}
+
 int CVirtualConsole::Index()
 {
 	return mn_Index;

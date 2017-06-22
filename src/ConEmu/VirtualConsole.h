@@ -104,7 +104,8 @@ class CVirtualConsole :
 		virtual ~CVirtualConsole();
 		friend class CVConRelease;
 	public:
-		CRealConsole *RCon();
+		CConEmuMain* Owner();
+		CRealConsole* RCon();
 		HWND GuiWnd();
 		void setFocus();
 		HWND GhostWnd();

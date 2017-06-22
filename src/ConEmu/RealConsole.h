@@ -367,6 +367,7 @@ class CRealConsole
 		~CRealConsole();
 
 		CVirtualConsole* VCon();
+		CConEmuMain* Owner();
 
 		BYTE GetConsoleKeyShortcuts() { return this ? m_ConsoleKeyShortcuts : 0; };
 		BYTE GetDefaultTextColorIdx() { return this ? (mn_TextColorIdx & 0xF) : 7; };
