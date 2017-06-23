@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.6.22
+* gh-136: Swap nearest panes with `Apps+Alt+X`, swap in direction with `Apps+Alt+Arrow`.
+* Let `Apps+Shift+G` group input for all consoles (instead of only visible panes like `Apps+G` does).
+* Use by default `Ctrl+Numbers` to switch consoles (instead of `Win+Numbers`).
+* Use by default `Win+Shift+Q` for ‘Switch next console’ by default. Leave hotkey `Win+Q` to Windows.
+  The `Win+Shift+Q` may be useful to switch Tabs when ChildGui is active.
+
+
 2017.6.5
 * gh-1149: Fix crash in wide consoles, when the cursor goes over 200 col (f8907a1 regression).
 
