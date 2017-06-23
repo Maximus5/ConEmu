@@ -217,6 +217,7 @@ extern HHOOK ghGuiClientRetHook;
 
 CEStartupEnv* gpStartEnv = NULL;
 bool    gbConEmuCProcess = false;
+bool    gbConEmuConnector = false;
 DWORD   gnSelfPID = 0;
 BOOL    gbSelfIsRootConsoleProcess = FALSE;
 BOOL    gbForceStartPipeServer = FALSE;
@@ -1026,7 +1027,10 @@ DWORD DllStart_Continue()
 		//{
 		#endif
 
-		if (!gbConEmuCProcess)
+		// Don't use injects while running cygwin/msys from our connector
+		// This will eliminate any chanses of BLODA
+		// AND speed up numerous process creation (forking), e.g. during project builds
+		if (!gbConEmuCProcess && !gbConEmuConnector)
 		{
 			DLOG0("StartupHooks",0);
 			print_timings(L"StartupHooks");
@@ -1224,6 +1228,10 @@ void InitExeName()
 	if (IsConsoleServer(gsExeName)) // ConEmuC.exe|| ConEmuC64.exe
 	{
 		gbConEmuCProcess = true;
+	}
+	else if (IsTerminalServer(gsExeName)) // connector
+	{
+		gbConEmuConnector = true;
 	}
 	else if (lstrcmpi(gsExeName, L"powershell.exe") == 0)
 	{
@@ -1704,7 +1712,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 
 	bool bCurrentThreadIsMain = false;
 	wchar_t szEvtName[64];
-	if (gbConEmuCProcess)
+	if (gbConEmuCProcess || gbConEmuConnector)
 	{
 		bCurrentThreadIsMain = true;
 	}
@@ -1750,7 +1758,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	GetImageSubsystem(gnImageSubsystem, gnImageBits);
 	DLOGEND1();
 
-	if (!gbSelfIsRootConsoleProcess && !gbConEmuCProcess)
+	if (!gbSelfIsRootConsoleProcess && !gbConEmuCProcess && !gbConEmuConnector)
 	{
 		DLOG1_("CEDEFAULTTERMHOOK",ul_reason_for_call);
 
