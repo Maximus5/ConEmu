@@ -186,6 +186,7 @@ public:
 
 	static void ResetGroupInput(CConEmuMain* pOwner, GroupInputCmd cmd);
 	static void GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd);
+	static void GroupSelectedInput(CVirtualConsole* apVCon);
 
 	static bool Activate(CVirtualConsole* apVCon);
 	static void MoveActiveTab(CVirtualConsole* apVCon, bool bLeftward);

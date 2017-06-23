@@ -308,6 +308,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey('G', VK_APPS);
 	Add(vkMultiGroupAll,  chk_User,  NULL,    L"Multi.GroupInputAll",   CConEmuCtrl::key_GuiMacro, false, L"GroupInput(3)")
 		->SetHotKey('G', VK_APPS, VK_SHIFT);
+	Add(vkMultiGroupKey,  chk_User,  NULL,    L"Multi.GroupInputKey",   CConEmuCtrl::key_GuiMacro, false, L"GroupInput(6)")
+		->SetHotKey('G', VK_APPS, VK_MENU);
 	Add(vkConDetach,      chk_User,  NULL,    L"Multi.Detach",          CConEmuCtrl::key_GuiMacro, false, L"Detach")
 		;
 	Add(vkConUnfasten,    chk_User,  NULL,    L"Multi.Unfasten",        CConEmuCtrl::key_GuiMacro, false, L"Unfasten")

@@ -2259,6 +2259,12 @@ LPWSTR ConEmuMacro::GroupInput(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 		CVConGroup::ResetGroupInput(apRCon->Owner(), (GroupInputCmd)(nCommand-3));
 		return lstrdup(L"OK");
 	}
+	// Toggle group mode on active console
+	else if (nCommand == 6)
+	{
+		CVConGroup::GroupSelectedInput(apRCon->VCon());
+		return lstrdup(L"OK");
+	}
 
 	return lstrdup(L"InvalidArg");
 }

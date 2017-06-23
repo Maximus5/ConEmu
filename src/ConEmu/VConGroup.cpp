@@ -1818,6 +1818,10 @@ bool CVConGroup::EnumVCon(EnumVConFlags what, EnumVConProc pfn, LPARAM lParam)
 			if (!VCon->isActive(false))
 				continue;
 			break;
+		case evf_GroupSet:
+			if (VCon->isGroupedInput() != evf_GroupSet)
+				continue;
+			break;
 		}
 
 		// And call the callback
@@ -5629,7 +5633,7 @@ void CVConGroup::ResetGroupInput(CConEmuMain* pOwner, GroupInputCmd cmd)
 
 			if (gp_VGroups[i]->mp_Item && VCon.Attach(gp_VGroups[i]->mp_Item))
 			{
-				VCon->SetFlags(vf_None, vf_Grouped);
+				VCon->SetFlags(vf_None, vf_GroupSplit|evf_GroupSet);
 			}
 		}
 	}
@@ -5660,7 +5664,7 @@ void CVConGroup::GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd)
 	// And for active group...
 	CVConGroup* pActiveGrp = GetRootOfVCon(VCon.VCon());
 
-	VConFlags Set = bGrouped ? vf_Grouped : vf_None;
+	VConFlags Set = bGrouped ? vf_GroupSplit : vf_None;
 
 	// !!!   Do NOT use EnumVCon here because   !!!
 	// !!! EnumVCon uses flags must be set here !!!
@@ -5681,9 +5685,27 @@ void CVConGroup::GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd)
 				pGr = pGr->mp_Parent;
 			}
 
-			VCon->SetFlags(Set, vf_Grouped, (int)i);
+			VCon->SetFlags(Set, vf_GroupSplit|evf_GroupSet, (int)i);
 		}
 	}
+}
+
+void CVConGroup::GroupSelectedInput(CVirtualConsole* apVCon)
+{
+	CVConGuard VCon;
+	if (!VCon.Attach(apVCon))
+		return;
+
+	if (VCon->Owner()->mb_GroupInputFlag)
+	{
+		ResetGroupInput(VCon->Owner(), gic_Disable);
+	}
+	else if (VCon->isGroupedInput() == evf_Visible)
+	{
+		GroupInput(apVCon, gic_Disable);
+	}
+
+	VCon->SetFlags(vf_GroupSet, vf_GroupSplit|vf_GroupSet);
 }
 
 void CVConGroup::PaneMaximizeRestore(CVirtualConsole* apVCon)

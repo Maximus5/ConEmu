@@ -683,10 +683,11 @@ union CESize
 // only exact values are allowed!
 enum EnumVConFlags
 {
-	evf_None    = 0,
-	evf_Active  = 1,
-	evf_Visible = 2,
-	evf_All     = 3,
+	evf_None     = 0,
+	evf_Active   = 1,
+	evf_Visible  = 2,
+	evf_GroupSet = 3, // Consoles with flag vf_GroupSet
+	evf_All      = 4,
 };
 
 enum GroupInputCmd

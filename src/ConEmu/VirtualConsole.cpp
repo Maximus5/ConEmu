@@ -610,8 +610,10 @@ EnumVConFlags CVirtualConsole::isGroupedInput()
 		return evf_None;
 	if (mp_ConEmu->isInputGrouped())
 		return evf_All;
-	if ((mn_Flags & vf_Grouped))
+	if ((mn_Flags & vf_GroupSplit))
 		return evf_Visible;
+	if ((mn_Flags & vf_GroupSet))
+		return evf_GroupSet;
 	return evf_None;
 }
 
