@@ -193,8 +193,12 @@ WARNING("WIN64 was not defined");
 // Для облегчения кодинга - возвращает значение для соответствующей платформы
 #ifdef _WIN64
 	#define WIN3264TEST(v32,v64) v64
+	#define WIN32TEST(v32)
+	#define WIN64TEST(v64) v64
 #else
 	#define WIN3264TEST(v32,v64) v32
+	#define WIN32TEST(v32) v32
+	#define WIN64TEST(v64)
 #endif
 // Чтобы можно было пользовать 64битные значения в wsprintf
 #ifdef _WIN64
