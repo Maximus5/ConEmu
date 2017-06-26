@@ -2158,53 +2158,137 @@ static void CreateBashTask()
 	// From Git-for-Windows (aka msysGit v2)
 	bool bGitBashExist = // No sense to add both `git-cmd.exe` and `bin/bash.exe`
 		App.Add(L"Bash::Git bash",
-			L" --no-cd --command=usr/bin/bash.exe -l -i", NULL, NULL,
+			L" --no-cd --command=/usr/bin/bash.exe -l -i", NULL, L"git",
 			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\git-cmd.exe",
 			L"%ProgramFiles%\\Git\\git-cmd.exe", L"%ProgramW6432%\\Git\\git-cmd.exe",
-#ifdef _WIN64
-			L"%ProgramFiles(x86)%\\Git\\git-cmd.exe",
-#endif
+			WIN64TEST(NULL, L"%ProgramFiles(x86)%\\Git\\git-cmd.exe"),
 			NULL);
 	App.Add(L"Bash::GitSDK bash",
-		L" --no-cd --command=usr/bin/bash.exe -l -i", NULL, NULL,
+		L" --no-cd --command=/usr/bin/bash.exe -l -i", NULL, L"git",
 		L"\\GitSDK\\git-cmd.exe",
 		NULL);
 	// From msysGit
 	if (!bGitBashExist) // Skip if `git-cmd.exe` was already found
 		App.Add(L"Bash::Git bash",
-			L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL, NULL,
+			L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL,  L"msys1",
 			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\bash.exe",
 			L"%ProgramFiles%\\Git\\bin\\bash.exe", L"%ProgramW6432%\\Git\\bin\\bash.exe",
-#ifdef _WIN64
-			L"%ProgramFiles(x86)%\\Git\\bin\\bash.exe",
-#endif
+			WIN64TEST(NULL, L"%ProgramFiles(x86)%\\Git\\bin\\bash.exe"),
 			NULL);
 	// For cygwin we can check registry keys
 	// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
 	// HKLM\SOFTWARE\Cygwin\setup\rootdir
 	// HKCU\Software\Cygwin\setup\rootdir
 	App.Add(L"Bash::CygWin bash",
-		L" --login -i -new_console:m:/cygdrive -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\Cygwin.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
+		L" --login -i -new_console:m:/cygdrive -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\Cygwin.ico\"", L"set CHERE_INVOKING=1 & ", L"cygwin",
 		L"[SOFTWARE\\Cygwin\\setup:rootdir]\\bin\\bash.exe",
 		L"\\CygWin\\bin\\bash.exe", NULL);
 	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
 	App.Add(L"Bash::MinGW bash",
-		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\msys.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
+		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\msys.ico\"", L"set CHERE_INVOKING=1 & ", L"msys1",
 		L"\\MinGW\\msys\\1.0\\bin\\bash.exe", NULL);
 	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
 	// MSys2 project: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MSYS2 32bit'
 	App.Add(L"Bash::Msys2-64",
-		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
+		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", L"msys64",
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 64bit:InstallLocation]\\usr\\bin\\bash.exe",
 		L"msys64\\usr\\bin\\bash.exe",
 		NULL);
 	App.Add(L"Bash::Msys2-32",
-		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", NULL,
+		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", L"msys32",
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 32bit:InstallLocation]\\usr\\bin\\bash.exe",
 		L"msys32\\usr\\bin\\bash.exe",
 		NULL);
 	// Last chance for bash
 	App.Add(L"Bash::bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"bash.exe", NULL);
+
+	// Force connector
+	CEStr szBaseDir(ExpandEnvStr(L"%ConEmuBaseDir%"));
+	bool bNeedQuot = IsQuotationNeeded(szBaseDir);
+	for (INT_PTR i = 0; i < App.Installed.size(); ++i)
+	{
+		AppFoundList::AppInfo& ai = App.Installed[i];
+		if (!ai.szGuiArg)
+			continue;
+		DWORD bits = ai.dwBits;
+		CEStr szConnector;
+		LPCWSTR szConnectorName = NULL;
+		bool msys_git_2 = false;
+		if (wcscmp(ai.szGuiArg, L"cygwin") == 0)
+			szConnectorName = bits==32 ? L"conemu-cyg-32.exe"
+				: bits==64 ? L"conemu-cyg-64.exe"
+				: NULL;
+		else if (wcscmp(ai.szGuiArg, L"msys1") == 0)
+			szConnectorName = bits==32 ? L"conemu-msys-32.exe"
+				: NULL;
+		else if (wcscmp(ai.szGuiArg, L"msys32") == 0)
+			szConnectorName = bits==32 ? L"conemu-msys2-32.exe"
+				: NULL;
+		else if (wcscmp(ai.szGuiArg, L"msys64") == 0)
+			szConnectorName = bits==64 ? L"conemu-msys2-64.exe"
+				: NULL;
+		else if ((msys_git_2 = (wcscmp(ai.szGuiArg, L"git") == 0)))
+			szConnectorName = bits==64 ? L"conemu-msys2-64.exe"
+				: bits==32 ? L"conemu-msys2-32.exe"
+				: NULL;
+
+		SafeFree(ai.szGuiArg);
+
+		if (szConnectorName)
+		{
+			CEStr szConnector(JoinPath(szBaseDir, szConnectorName));
+			if (FileExists(szConnector))
+			{
+				_ASSERTE(ai.szPrefix && *ai.szPrefix && ai.szPrefix[wcslen(ai.szPrefix)-1]==L' ');
+
+				CEStr szBinPath;
+				szBinPath.Set(ai.szFullPath);
+				wchar_t* ptrFound = wcsrchr(szBinPath.ms_Val, L'\\');
+				if (ptrFound) *ptrFound = 0;
+
+				if (!msys_git_2)
+				{
+					lstrmerge(&ai.szPrefix,
+						// TODO: Optimize: Don't add PATH if required cygwin1.dll/msys2.dll is already on path
+						L"set \"PATH=", szBinPath, L";%PATH%\" & ",
+						// Change main executable
+						bNeedQuot ? L"\"" : L"", L"%ConEmuBaseDir%\\", szConnectorName, bNeedQuot ? L"\" " : L" ",
+						// Force xterm mode
+						L"-new_console:p "
+						);
+				}
+				else
+				{
+					_ASSERTE(ai.szArgs && wcsstr(ai.szArgs, L"--command=/usr/bin/bash.exe"));
+					const wchar_t* cmd_ptr = L"--command=";
+					wchar_t* pszCmd = wcsstr(ai.szArgs, cmd_ptr);
+					if (pszCmd)
+					{
+						pszCmd += wcslen(cmd_ptr);
+						_ASSERTE(ai.szPrefix == NULL || !*ai.szPrefix);
+						lstrmerge(&ai.szPrefix,
+							// TODO: Optimize: Don't add PATH if required cygwin1.dll/msys2.dll is already on path
+							L"set \"PATH=", szBinPath, L"\\usr\\bin;%PATH%\" & ");
+						// Insert connector between "--command=" and "/usr/bin/bash.exe"
+						_ASSERTE(*pszCmd == L'/');
+						*pszCmd = 0;
+						CEStr lsArgs(
+							// git-cmd options
+							ai.szArgs,
+							// Change main executable
+							bNeedQuot ? L"\"" : L"", L"%ConEmuBaseDir%\\", szConnectorName, bNeedQuot ? L"\" " : L" ",
+							// And the tail of the command: "/usr/bin/bash.exe -l -i"
+							L"/", pszCmd+1,
+							// Force xterm mode
+							L" -new_console:p");
+						SafeFree(ai.szArgs);
+						ai.szArgs = lsArgs.Detach();
+					}
+				}
+			}
+		}
+	}
+
 	// Create all bash tasks
 	App.Commit();
 }
