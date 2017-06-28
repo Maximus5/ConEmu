@@ -50,6 +50,22 @@
       <Component Id="ConEmuHk64.dll" Guid="$(var.Guid.ConEmuHk64.dll)" Win64="$(var.Win64)">
         <File Id="ConEmuHk64.dll" Source="..\..\Release\ConEmu\ConEmuHk64.dll"  KeyPath="yes" />
       </Component>
+      <!-- cygwin/msys connector -->
+      <Component Id="conemu_cyg_32.exe" Guid="$(var.Guid.conemu_cyg_32.exe)" Win64="$(var.Win64)">
+        <File Id="conemu_cyg_32.exe" Source="..\..\Release\ConEmu\conemu-cyg-32.exe"  KeyPath="yes" />
+      </Component>
+      <Component Id="conemu_cyg_64.exe" Guid="$(var.Guid.conemu_cyg_64.exe)" Win64="$(var.Win64)">
+        <File Id="conemu_cyg_64.exe" Source="..\..\Release\ConEmu\conemu-cyg-64.exe"  KeyPath="yes" />
+      </Component>
+      <Component Id="conemu_msys_32.exe" Guid="$(var.Guid.conemu_msys_32.exe)" Win64="$(var.Win64)">
+        <File Id="conemu_msys_32.exe" Source="..\..\Release\ConEmu\conemu-msys-32.exe"  KeyPath="yes" />
+      </Component>
+      <Component Id="conemu_msys2_32.exe" Guid="$(var.Guid.conemu_msys2_32.exe)" Win64="$(var.Win64)">
+        <File Id="conemu_msys2_32.exe" Source="..\..\Release\ConEmu\conemu-msys2-32.exe"  KeyPath="yes" />
+      </Component>
+      <Component Id="conemu_msys2_64.exe" Guid="$(var.Guid.conemu_msys2_64.exe)" Win64="$(var.Win64)">
+        <File Id="conemu_msys2_64.exe" Source="..\..\Release\ConEmu\conemu-msys2-64.exe"  KeyPath="yes" />
+      </Component>
 
       <!-- Cmd Extensions -->
       <Component Id="Attach.cmd" Guid="$(var.Guid.Attach.cmd)" Win64="$(var.Win64)">

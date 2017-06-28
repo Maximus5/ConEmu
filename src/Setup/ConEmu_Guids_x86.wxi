@@ -27,6 +27,12 @@
 	<?define Guid.ConEmuCD64.dll = "1AC86089-DA0D-44CC-A391-A4537A6C4196" ?>
 	<?define Guid.ConEmuHk.dll = "6B716C2D-C03D-4299-9177-C994C8E3A9CA" ?>
 	<?define Guid.ConEmuHk64.dll = "0A976845-7CB8-49D4-B96E-BB01B677ECB8" ?>
+	<!-- cygwin/msys connector -->
+	<?define Guid.conemu_cyg_32.exe = "88D4B0A3-D52E-4466-85CD-A2FD126BE8B3" ?>
+	<?define Guid.conemu_cyg_64.exe = "175C157E-EA75-461B-ADF8-336CDC5A1F56" ?>
+	<?define Guid.conemu_msys_32.exe = "5BB73329-5489-4A55-BCF1-CFC4FBCFB7A5" ?>
+	<?define Guid.conemu_msys2_32.exe = "46EF06F0-3508-4317-A313-199C4645D0DC" ?>
+	<?define Guid.conemu_msys2_64.exe = "1BD2B9A3-7FAC-44A1-BA59-96B23A31DE66" ?>
 	<!-- ExtendedConsole for Far3 -->
 	<?define Guid.ExtendedConsole.dll = "537F9767-B8F9-4FB5-8377-27105392311A" ?>
 	<?define Guid.ExtendedConsole64.dll = "92B68F0B-9B34-4E4B-A83F-18B1A19C1F06" ?>

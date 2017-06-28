@@ -39,6 +39,16 @@
         <ComponentRef Id="ConEmuCD64.dll" />
         <ComponentRef Id="ConEmuHk64.dll" />
       </Feature>
+      <!-- cygwin/msys connector -->
+      <Feature Id="FConnector" AllowAdvertise="no" Level="1"
+               Title="cygwin/msys connector"
+               Description="Provides POSIX enabled pty inside ConEmu.\nMore info: https://goo.gl/S9zLq5">
+        <ComponentRef Id="conemu_cyg_32.exe" />
+        <ComponentRef Id="conemu_cyg_64.exe" />
+        <ComponentRef Id="conemu_msys_32.exe" />
+        <ComponentRef Id="conemu_msys2_32.exe" />
+        <ComponentRef Id="conemu_msys2_64.exe" />
+      </Feature>
       <!-- RGB Console for Far3 -->
       <Feature Id="FExtendedConsole" AllowAdvertise="no" Title="Far3 ExtendedConsole" Level="1"
                Description="RGB support for Far3">
