@@ -79,7 +79,7 @@ goto :EOF
 
 :wsl_ready
 if "%~1" == "-run" goto do_run
-ConEmuC -c "-new_console:D:%~dp0" "%~0" -new_console:n:h9999:C:"%LOCALAPPDATA%\lxss\bash.ico" -run
+ConEmuC -c "-new_console:d:%~dp0" "%~0" -new_console:n:h9999:C:"%LOCALAPPDATA%\lxss\bash.ico" -run
 goto :EOF
 
 :do_run
