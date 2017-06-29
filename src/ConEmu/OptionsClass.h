@@ -308,7 +308,7 @@ class CSettings
 	private:
 		static void CenterMoreDlg(HWND hWnd2);
 	private:
-		friend struct Settings;
+		friend class Settings;
 	public:
 		void UpdateWinHookSettings(HMODULE hLLKeyHookDll);
 	public:

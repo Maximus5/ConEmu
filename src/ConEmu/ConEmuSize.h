@@ -246,5 +246,5 @@ protected:
 
 	friend class CSettings;
 	friend class CSetDlgButtons;
-	friend struct Settings;
+	friend class Settings;
 };

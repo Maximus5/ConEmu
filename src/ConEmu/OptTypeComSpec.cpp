@@ -80,13 +80,13 @@ bool CEOptionComSpec::Save(SettingsBase* reg) const
 {
 	if (!reg)
 		return false;
-	reg->Save(L"ComSpec.Type", (BYTE)ComSpec.csType);
-	reg->Save(L"ComSpec.Bits", (BYTE)ComSpec.csBits);
-	reg->Save(L"ComSpec.UpdateEnv", _bool(ComSpec.isUpdateEnv));
-	reg->Save(L"ComSpec.EnvAddPath", _bool((ComSpec.AddConEmu2Path & CEAP_AddConEmuBaseDir) == CEAP_AddConEmuBaseDir));
-	reg->Save(L"ComSpec.EnvAddExePath", _bool((ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) == CEAP_AddConEmuExeDir));
-	reg->Save(L"ComSpec.UncPaths", _bool(ComSpec.isAllowUncPaths));
-	reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
+	reg->Save(L"ComSpec.Type", (BYTE)this->csType);
+	reg->Save(L"ComSpec.Bits", (BYTE)this->csBits);
+	reg->Save(L"ComSpec.UpdateEnv", _bool(this->isUpdateEnv));
+	reg->Save(L"ComSpec.EnvAddPath", _bool((this->AddConEmu2Path & CEAP_AddConEmuBaseDir) == CEAP_AddConEmuBaseDir));
+	reg->Save(L"ComSpec.EnvAddExePath", _bool((this->AddConEmu2Path & CEAP_AddConEmuExeDir) == CEAP_AddConEmuExeDir));
+	reg->Save(L"ComSpec.UncPaths", _bool(this->isAllowUncPaths));
+	reg->Save(L"ComSpec.Path", this->ComspecExplicit);
 	return true;
 }
 
@@ -98,8 +98,8 @@ void CEOptionComSpec::Reset()
 	// ConEmuComspec has not pointers at the moment, so it's valid.
 	ConEmuComspec ComSpec = {};
 
-	ComSpec.AddConEmu2Path = CEAP_AddAll;
-	ComSpec.isAllowUncPaths = FALSE;
+	this->AddConEmu2Path = CEAP_AddAll;
+	this->isAllowUncPaths = FALSE;
 
 	// Load defaults from windows registry (Command Processor settings)
 	SettingsRegistry UncChk;
@@ -108,7 +108,7 @@ void CEOptionComSpec::Reset()
 		DWORD DisableUNCCheck = 0;
 		if (UncChk.Load(L"DisableUNCCheck", (LPBYTE)&DisableUNCCheck, sizeof(DisableUNCCheck)))
 		{
-			ComSpec.isAllowUncPaths = (DisableUNCCheck == 1);
+			this->isAllowUncPaths = (DisableUNCCheck == 1);
 		}
 	}
 

@@ -134,7 +134,7 @@ struct CEOptionArrayType
 
 
 // Base class
-template <typename T, const wchar_t* OptionName, bool (*validate_fn)(T& value)=NULL>
+template <typename T, bool (*validate_fn)(T& value)=NULL>
 class CEOptionBaseImpl : public CEOptionBase
 {
 public:
@@ -142,7 +142,7 @@ public:
 protected:
 	CEStr ms_Name;
 public:
-	CEOptionBaseImpl()
+	CEOptionBaseImpl(const wchar_t* OptionName)
 		: m_Value()
 		, ms_Name(OptionName)
 	{
@@ -236,7 +236,7 @@ public:
 		return bAllOk;
 	};
 
-	virtual bool Set(CEOptionArrayType<T,MaxSize>::type RVAL_REF value)
+	virtual bool Set(typename CEOptionArrayType<T,MaxSize>::type RVAL_REF value)
 	{
 		memmove(m_Value, value, sizeof(m_Value));
 		return true;
@@ -266,11 +266,12 @@ public:
 
 
 // Simple `bool`
-template <const wchar_t* OptionName, bool Default = false, bool (*validate_fn)(bool& value)=NULL>
-class CEOptionBool : public CEOptionBaseImpl<bool, OptionName, validate_fn>
+template <bool Default = false, bool (*validate_fn)(bool& value)=NULL>
+class CEOptionBool : public CEOptionBaseImpl<bool, validate_fn>
 {
 public:
-	CEOptionBool()
+	CEOptionBool(const wchar_t* OptionName)
+		: CEOptionBaseImpl(OptionName)
 	{
 		Reset();
 	};
@@ -361,7 +362,7 @@ public:
 		return true;
 	};
 
-	virtual bool Set(CEOptionArrayType<wchar_t,MaxSize>::type RVAL_REF value)
+	virtual bool Set(typename CEOptionArrayType<wchar_t,MaxSize>::type RVAL_REF value)
 	{
 		return Set((const wchar_t*)value);
 	};
@@ -374,17 +375,26 @@ public:
 
 
 
-// TODO: Replace with "CEOptionStringArray"
+// #OPT_TODO Replace with "CEOptionStringArray"
 template <const wchar_t* OptionName, const wchar_t* Default = NULL>
-class CEOptionStringMSZ : public CEOptionBaseImpl<wchar_t*, OptionName>;
+class CEOptionStringMSZ : public CEOptionBaseImpl<wchar_t*, OptionName>
+{
+};
+
+// #OPT_TODO Required for "DefaultTerminalApps"
+template <const wchar_t* OptionName, const wchar_t* Default = NULL>
+class CEOptionStringDelim : public CEOptionBaseImpl<wchar_t*, OptionName>
+{
+};
 
 
 // Simple 'u8' ('BYTE')
-template <const wchar_t* OptionName, u8 Default = 0, bool (*validate_fn)(u8& value)=NULL>
-class CEOptionByte : public CEOptionBaseImpl<u8, OptionName, validate_fn>
+template <u8 Default = 0, bool (*validate_fn)(u8& value)=NULL>
+class CEOptionByte : public CEOptionBaseImpl<u8, validate_fn>
 {
 public:
-	CEOptionByte()
+	CEOptionByte(const wchar_t* OptionName)
+		: CEOptionBaseImpl(OptionName)
 	{
 		Reset();
 	};
@@ -392,14 +402,20 @@ public:
 	virtual ~CEOptionByte()
 	{
 	};
+
+	virtual void Reset() override
+	{
+		Set(Default);
+	};
 };
 
 // Enum, stored as simple 'u8' ('BYTE')
-template <const wchar_t* OptionName, typename T, const T Default = (const T)0, bool (*validate_fn)(T& value)=NULL>
-class CEOptionByteEnum : public CEOptionBaseImpl<T, OptionName, validate_fn>
+template <typename T, const T Default = (const T)0, bool (*validate_fn)(T& value)=NULL>
+class CEOptionByteEnum : public CEOptionBaseImpl<T, validate_fn>
 {
 public:
-	CEOptionByteEnum()
+	CEOptionByteEnum(const wchar_t* OptionName)
+		: CEOptionBaseImpl(OptionName)
 	{
 		Reset();
 	};
@@ -426,14 +442,20 @@ public:
 			return false;
 		return true;
 	};
+
+	virtual void Reset() override
+	{
+		Set(Default);
+	};
 };
 
 // Simple 'i32' ('int'), stored as decimal signed integer
-template <const wchar_t* OptionName, i32 Default = 0, bool (*validate_fn)(i32& value)=NULL>
-class CEOptionInt : public CEOptionBaseImpl<i32, OptionName, validate_fn>
+template <i32 Default = 0, bool (*validate_fn)(i32& value)=NULL>
+class CEOptionInt : public CEOptionBaseImpl<i32, validate_fn>
 {
 public:
-	CEOptionInt()
+	CEOptionInt(const wchar_t* OptionName)
+		: CEOptionBaseImpl(OptionName)
 	{
 		Reset();
 	};
@@ -449,11 +471,12 @@ public:
 };
 
 // Simple 'u32' ('UINT'), stored as decimal unsigned integer
-template <const wchar_t* OptionName, u32 Default = 0, u32 (*get_default)(), bool (*validate_fn)(u32& value)=NULL>
-class CEOptionUInt : public CEOptionBaseImpl<u32, OptionName, validate_fn>
+template <u32 Default = 0, u32 (*get_default)()=NULL, bool (*validate_fn)(u32& value)=NULL>
+class CEOptionUInt : public CEOptionBaseImpl<u32, validate_fn>
 {
 public:
-	CEOptionUInt()
+	CEOptionUInt(const wchar_t* OptionName)
+		: CEOptionBaseImpl(OptionName)
 	{
 		Reset();
 	};
@@ -469,11 +492,12 @@ public:
 };
 
 // Simple 'DWORD', stored as hexadecimal unsigned integer
-template <const wchar_t* OptionName, DWORD Default = 0, bool (*validate_fn)(DWORD& value)=NULL>
-class CEOptionDWORD : public CEOptionBaseImpl<DWORD, OptionName, validate_fn>
+template <DWORD Default = 0, bool (*validate_fn)(DWORD& value)=NULL>
+class CEOptionDWORD : public CEOptionBaseImpl<DWORD, validate_fn>
 {
 public:
-	CEOptionDWORD()
+	CEOptionDWORD(const wchar_t* OptionName)
+		: CEOptionBaseImpl(OptionName)
 	{
 		Reset();
 	};
@@ -490,8 +514,20 @@ public:
 
 
 // CESize
-template <const wchar_t* OptionName, DWORD Default = 0, bool (*validate_fn)(DWORD& value)=NULL>
-class CEOptionSize : public CEOptionBaseImpl<DWORD, OptionName, validate_fn>;
+// #OPT_TODO CESize - add to inherited classes?
+template <DWORD Default = 0, bool (*validate_fn)(DWORD& value)=NULL>
+class CEOptionSize : public CEOptionBaseImpl<DWORD, validate_fn>
+{
+public:
+	CEOptionSize(const wchar_t* OptionName)
+		: CEOptionBaseImpl(OptionName)
+	{
+	};
+
+	virtual ~CEOptionSize()
+	{
+	};
+};
 
 
 

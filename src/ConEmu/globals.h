@@ -36,7 +36,7 @@ extern const TCHAR *const gsClassNameBack;
 extern const TCHAR *const gsClassNameApp;
 
 
-struct Settings;
+class Settings;
 class CSettings;
 class TrayIcon;
 class TabBarClass;
