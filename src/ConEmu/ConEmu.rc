@@ -996,7 +996,7 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Tabs (consoles, Far Manager panels/editors/viewers)",gbTabs,4,1,375,239
-    CONTROL         "Internal CtrlTab",cbTabSelf,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,14,107,8
+    CONTROL         "Internal Ctrl+Tab",cbTabSelf,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,14,107,8
     CONTROL         "Lazy tab switch",cbTabLazy,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,209,14,84,8
     CONTROL         "Recent mode",cbTabRecent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,296,14,80,8
     CONTROL         "Far windows",cbShowFarWindows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,99,42,107,8
