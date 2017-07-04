@@ -188,6 +188,7 @@ public:
 	bool isSelectionAllowed();
 	bool isSelectionPresent();
 	bool isMouseSelectionPresent();
+	bool isMouseClickExtension();
 	bool isMouseInsideSelection(int x, int y);
 	bool GetConsoleSelectionInfo(CONSOLE_SELECTION_INFO *sel);
 	int  GetSelectionCellsCount();
