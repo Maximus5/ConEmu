@@ -7,19 +7,21 @@
 Macro
 {
   area="Shell";
-  key="/LCtrlShift[0-9]/";
+  key="/[LR]CtrlShift[0-9]/";
   description="Panels: Switch panel modes with LCtrl+Shift+Number";
 action = function()
-  -- BUG? Following is expected to be working, but not... Far Panels ignores it
+  -- BUG? Following is expected to be working, but it doesn't... Far Panels ignores LCtrl+key posted this way
   -- Keys("LCtrl"..akey(1):sub(-1))
   Keys("Ctrl"..akey(1):sub(-1))
+  -- it would be nice to have macro API
+  -- far.PanelControl(far.Flags.FCTL_SETVIEWMODE, mf.atoi(akey(1):sub(-1)))
 end
 }
 
 Macro
 {
   area="Shell";
-  key="/RCtrlShift[0-9]/";
+--  key="/RCtrlShift[0-9]/";
   description="Panels: No action";
 action = function()
   return
