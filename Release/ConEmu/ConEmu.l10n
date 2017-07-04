@@ -1698,53 +1698,53 @@
       "id": 2839 }
     ,
     "vkConsole_1": {
-      "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
-      "zh": "以数字激活控制台 （使用‘Host-key’+数字来切换控制台）",
+      "en": "Activate console by number (may be disabled)",
+      "zh": "以数字激活控制台 （可被禁用）",
       "id": 2031 }
     ,
     "vkConsole_10": {
-      "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
-      "zh": "以数字激活控制台 （使用‘Host-key’+数字来切换控制台）",
+      "en": "Activate console by number (may be disabled)",
+      "zh": "以数字激活控制台 （可被禁用）",
       "id": 2040 }
     ,
     "vkConsole_2": {
-      "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
-      "zh": "以数字激活控制台 （使用‘Host-key’+数字来切换控制台）",
+      "en": "Activate console by number (may be disabled)",
+      "zh": "以数字激活控制台 （可被禁用）",
       "id": 2032 }
     ,
     "vkConsole_3": {
-      "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
-      "zh": "以数字激活控制台 （使用‘Host-key’+数字来切换控制台）",
+      "en": "Activate console by number (may be disabled)",
+      "zh": "以数字激活控制台 （可被禁用）",
       "id": 2033 }
     ,
     "vkConsole_4": {
-      "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
-      "zh": "以数字激活控制台 （使用‘Host-key’+数字来切换控制台）",
+      "en": "Activate console by number (may be disabled)",
+      "zh": "以数字激活控制台 （可被禁用）",
       "id": 2034 }
     ,
     "vkConsole_5": {
-      "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
-      "zh": "以数字激活控制台 （使用‘Host-key’+数字来切换控制台）",
+      "en": "Activate console by number (may be disabled)",
+      "zh": "以数字激活控制台 （可被禁用）",
       "id": 2035 }
     ,
     "vkConsole_6": {
-      "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
-      "zh": "以数字激活控制台 （使用‘Host-key’+数字来切换控制台）",
+      "en": "Activate console by number (may be disabled)",
+      "zh": "以数字激活控制台 （可被禁用）",
       "id": 2036 }
     ,
     "vkConsole_7": {
-      "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
-      "zh": "以数字激活控制台 （使用‘Host-key’+数字来切换控制台）",
+      "en": "Activate console by number (may be disabled)",
+      "zh": "以数字激活控制台 （可被禁用）",
       "id": 2037 }
     ,
     "vkConsole_8": {
-      "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
-      "zh": "以数字激活控制台 （使用‘Host-key’+数字来切换控制台）",
+      "en": "Activate console by number (may be disabled)",
+      "zh": "以数字激活控制台 （可被禁用）",
       "id": 2038 }
     ,
     "vkConsole_9": {
-      "en": "Activate console by number (Use ‘Host-key’+Number to switch consoles)",
-      "zh": "以数字激活控制台 （使用‘Host-key’+数字来切换控制台）",
+      "en": "Activate console by number (may be disabled)",
+      "zh": "以数字激活控制台 （可被禁用）",
       "id": 2039 }
     ,
     "vkConUnfasten": {
@@ -2057,6 +2057,14 @@
       "zh": "可见的分屏组键盘输入",
       "id": 2728 }
     ,
+    "vkMultiGroupAll": {
+      "en": "Group keyboard input for all consoles",
+      "id": 3079 }
+    ,
+    "vkMultiGroupKey": {
+      "en": "Add active console into group keyboard input",
+      "id": 3085 }
+    ,
     "vkMultiNew": {
       "en": "Create new console or new window (check ‘Multiple consoles in one ConEmu window’)",
       "zh": "创建新的控制台或新的窗口 （选中 ‘多个consoles在一个ConEmu窗口里’）",
@@ -2262,6 +2270,26 @@
       "en": "Split: Move splitter upward",
       "zh": "分屏：向上移动分离器",
       "id": 2606 }
+    ,
+    "vkSplitSwap": {
+      "en": "Split: Exchange with nearest pane",
+      "id": 3084 }
+    ,
+    "vkSplitSwapDown": {
+      "en": "Split: Exchange with nearest pane downward",
+      "id": 3081 }
+    ,
+    "vkSplitSwapLeft": {
+      "en": "Split: Exchange with nearest pane leftward",
+      "id": 3082 }
+    ,
+    "vkSplitSwapRight": {
+      "en": "Split: Exchange with nearest pane rightward",
+      "id": 3083 }
+    ,
+    "vkSplitSwapUp": {
+      "en": "Split: Exchange with nearest pane upward",
+      "id": 3080 }
     ,
     "vkSystemMenu": {
       "en": "Show ConEmu System menu",
@@ -4140,8 +4168,8 @@
       "id": 1533 }
     ,
     "cbTabSelf": {
-      "en": "Internal CtrlTab",
-      "zh": "内部CtrlTab",
+      "en": "Internal Ctrl+Tab",
+      "zh": "内部Ctrl+Tab",
       "id": 1531 }
     ,
     "cbTabsInCaption": {
