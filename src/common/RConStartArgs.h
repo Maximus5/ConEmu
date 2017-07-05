@@ -69,6 +69,7 @@ struct RConStartArgs
 	RConBoolArg     RunAsAdministrator; // -new_console:a
 	RConBoolArg     RunAsSystem;        // -new_console:A
 	RConBoolArg     RunAsRestricted;    // -new_console:r
+	RConBoolArg     RunAsNetOnly;       // -new_console:M
 	wchar_t* pszUserName, *pszDomain, szUserPassword[MAX_PATH]; // "-new_console:u:<user>:<pwd>"
 	RConBoolArg     UseEmptyPassword;   // для GUI
 	RConBoolArg     ForceUserDialog;    // -new_console:u

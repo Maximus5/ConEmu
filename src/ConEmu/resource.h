@@ -271,6 +271,8 @@
 #define cbUseWinNumber                  1648
 #define cbInstallKeybHooks              1649
 #define cbRunAsRestricted               1650
+#define cbRunAsRestricted2              1651
+#define cbRunAsNetOnly                  1651
 #define tRunAsUser                      1652
 #define tRunAsPassword                  1653
 #define cbSafeFarClose                  1654
@@ -1363,7 +1365,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        236
+#define _APS_NEXT_RESOURCE_VALUE        237
 #define _APS_NEXT_COMMAND_VALUE         40010
 #define _APS_NEXT_CONTROL_VALUE         3085
 #define _APS_NEXT_SYMED_VALUE           130
