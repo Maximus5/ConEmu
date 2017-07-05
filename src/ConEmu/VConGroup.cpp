@@ -5633,7 +5633,7 @@ void CVConGroup::ResetGroupInput(CConEmuMain* pOwner, GroupInputCmd cmd)
 
 			if (gp_VGroups[i]->mp_Item && VCon.Attach(gp_VGroups[i]->mp_Item))
 			{
-				VCon->SetFlags(vf_None, vf_GroupSplit|evf_GroupSet);
+				VCon->SetFlags(vf_None, vf_GroupSplit|vf_GroupSet);
 			}
 		}
 	}
@@ -5705,7 +5705,7 @@ void CVConGroup::GroupSelectedInput(CVirtualConsole* apVCon)
 		GroupInput(apVCon, gic_Disable);
 	}
 
-	VCon->SetFlags(vf_GroupSet, vf_GroupSplit|vf_GroupSet);
+	VCon->SetFlags((VCon->isGroupedInput() != evf_GroupSet) ? vf_GroupSet : vf_None, vf_GroupSplit|vf_GroupSet);
 }
 
 void CVConGroup::PaneMaximizeRestore(CVirtualConsole* apVCon)
