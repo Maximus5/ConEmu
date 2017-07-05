@@ -699,7 +699,7 @@ BEGIN
     PUSHBUTTON      "...",cbClinkWebPage,361,87,13,11
     CONTROL         "ANSI and xterm sequences",cbProcessAnsi,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,104,133,8
     CONTROL         "Disable all flashing",cbDisableAllFlashing,"Button",BS_AUTO3STATE | WS_TABSTOP,148,104,118,8
-    CONTROL         "Suppress bells",cbSuppressBells,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,267,104,110,8
+    CONTROL         "Suppress bells (beeps)",cbSuppressBells,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,267,104,110,8
     CONTROL         "Process '-new_console' and '-cur_console' switches",cbProcessNewConArg,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,118,254,8
     CONTROL         "Process 'start'",cbProcessCmdStart,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,267,118,110,8
