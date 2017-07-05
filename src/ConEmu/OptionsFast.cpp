@@ -2161,7 +2161,7 @@ static void CreateBashTask()
 			L" --no-cd --command=/usr/bin/bash.exe -l -i", NULL, L"git",
 			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\git-cmd.exe",
 			L"%ProgramFiles%\\Git\\git-cmd.exe", L"%ProgramW6432%\\Git\\git-cmd.exe",
-			WIN64TEST(NULL, L"%ProgramFiles(x86)%\\Git\\git-cmd.exe"),
+			WIN3264TEST(NULL,L"%ProgramFiles(x86)%\\Git\\git-cmd.exe"),
 			NULL);
 	App.Add(L"Bash::GitSDK bash",
 		L" --no-cd --command=/usr/bin/bash.exe -l -i", NULL, L"git",
@@ -2173,7 +2173,7 @@ static void CreateBashTask()
 			L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL,  L"msys1",
 			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\bash.exe",
 			L"%ProgramFiles%\\Git\\bin\\bash.exe", L"%ProgramW6432%\\Git\\bin\\bash.exe",
-			WIN64TEST(NULL, L"%ProgramFiles(x86)%\\Git\\bin\\bash.exe"),
+			WIN3264TEST(NULL,L"%ProgramFiles(x86)%\\Git\\bin\\bash.exe"),
 			NULL);
 	// For cygwin we can check registry keys
 	// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
