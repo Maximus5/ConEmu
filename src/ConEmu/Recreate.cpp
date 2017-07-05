@@ -263,6 +263,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	const wchar_t *pszDomain = pArgs->pszDomain;
 	bool bResticted = (pArgs->RunAsRestricted == crb_On);
 	int nChecked = rbCurrentUser;
+	int nNetOnly = cbRunAsNetOnly;
 	DWORD nUserNameLen = countof(ms_CurUser);
 
 	if (!GetUserName(ms_CurUser, &nUserNameLen))
@@ -276,12 +277,12 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 
 	CVConGuard VCon;
 	CVirtualConsole* pVCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon.VCon() : NULL;
-
+	EnableWindow(GetDlgItem(hDlg, cbRunAsNetOnly), FALSE);
 	if ((pArgs->pszUserName && *pArgs->pszUserName)
 		|| ((pArgs->aRecreate == cra_RecreateTab) && pVCon && pVCon->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted)))
 	{
 		nChecked = rbAnotherUser;
-
+		CheckDlgButton(hDlg, cbRunAsNetOnly, pArgs->RunAsNetOnly ? BST_CHECKED : BST_UNCHECKED);
 		if (bResticted)
 		{
 			CheckDlgButton(hDlg, cbRunAsRestricted, BST_CHECKED);
@@ -318,6 +319,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 			}
 
 			SetDlgItemText(hDlg, tRunAsPassword, pArgs->szUserPassword);
+			EnableWindow(GetDlgItem(hDlg, cbRunAsNetOnly), TRUE);
 		}
 	}
 
@@ -488,9 +490,11 @@ INT_PTR CRecreateDlg::OnUserControls(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 		//BOOL lbText = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0) == 0;
 		EnableWindow(GetDlgItem(hDlg, tRunAsUser), FALSE);
 		EnableWindow(GetDlgItem(hDlg, tRunAsPassword), FALSE);
+		EnableWindow(GetDlgItem(hDlg, cbRunAsNetOnly), FALSE);
 	}
 	else
 	{
+		EnableWindow(GetDlgItem(hDlg, cbRunAsNetOnly), TRUE);
 		if (SendDlgItemMessage(hDlg, tRunAsUser, CB_GETCOUNT, 0, 0) == 0)
 		{
 			DWORD dwLevel = 3, dwEntriesRead = 0, dwTotalEntries = 0, dwResumeHandle = 0;
@@ -638,6 +642,7 @@ INT_PTR CRecreateDlg::OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 	case rbCurrentUser:
 	case rbAnotherUser:
+	case cbRunAsNetOnly:
 	case cbRunAsRestricted:
 	{
 		RecreateDlgProc(hDlg, UM_USER_CONTROLS, LOWORD(wParam), 0);
@@ -677,6 +682,7 @@ INT_PTR CRecreateDlg::OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		{
 			pArgs->RunAsRestricted = crb_Off;
 			pArgs->pszUserName = GetDlgItemTextPtr(hDlg, tRunAsUser);
+			pArgs->RunAsNetOnly = SendDlgItemMessage(hDlg, cbRunAsNetOnly, BM_GETCHECK, 0, 0) ? crb_On : crb_Off;
 
 			if (pArgs->pszUserName)
 			{
@@ -694,6 +700,7 @@ INT_PTR CRecreateDlg::OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 		else
 		{
 			pArgs->RunAsRestricted = SendDlgItemMessage(hDlg, cbRunAsRestricted, BM_GETCHECK, 0, 0) ? crb_On : crb_Off;
+			pArgs->RunAsNetOnly = crb_Off;
 		}
 
 		// Vista+ (As Admin...)

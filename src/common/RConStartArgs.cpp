@@ -281,7 +281,7 @@ void RConStartArgs::RunArgTests()
 RConStartArgs::RConStartArgs()
 {
 	Detached = NewConsole = crb_Undefined;
-	RunAsAdministrator = RunAsSystem = RunAsRestricted = crb_Undefined;
+	RunAsAdministrator = RunAsSystem = RunAsRestricted = RunAsNetOnly = crb_Undefined;
 	ForceUserDialog = BackgroundTab = ForegroungTab = NoDefaultTerm = ForceDosBox = ForceInherit = crb_Undefined;
 	eSplit = eSplitNone; nSplitValue = DefaultSplitValue; nSplitPane = 0;
 	aRecreate = cra_CreateTab;
@@ -424,9 +424,10 @@ bool RConStartArgs::AssignUserArgs(const struct RConStartArgs* args, bool abConc
 {
 	if (!abConcat || (args->RunAsRestricted || args->RunAsAdministrator || args->RunAsSystem || args->pszUserName))
 	{
-		this->RunAsRestricted = args->RunAsRestricted;
+		this->RunAsRestricted    = args->RunAsRestricted;
 		this->RunAsAdministrator = args->RunAsAdministrator;
-		this->RunAsSystem = args->RunAsSystem;
+		this->RunAsSystem        = args->RunAsSystem;
+		this->RunAsNetOnly       = args->RunAsNetOnly;
 	}
 	else
 	{
@@ -461,7 +462,7 @@ bool RConStartArgs::AssignUserArgs(const struct RConStartArgs* args, bool abConc
 
 bool RConStartArgs::HasInheritedArgs() const
 {
-	if (RunAsAdministrator || RunAsSystem || RunAsRestricted || pszUserName)
+	if (RunAsAdministrator || RunAsSystem || RunAsRestricted || pszUserName || RunAsNetOnly)
 		return true;
 	return false;
 }
@@ -483,6 +484,7 @@ void RConStartArgs::CleanSecure()
 	RunAsAdministrator = crb_Undefined;
 	RunAsSystem = crb_Undefined;
 	RunAsRestricted = crb_Undefined;
+	RunAsNetOnly = crb_Undefined;
 	UseEmptyPassword = crb_Undefined;
 	ForceUserDialog = crb_Undefined;
 }
@@ -531,6 +533,7 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	if (RunAsAdministrator == crb_On) cchMaxLen++; // -new_console:a
 	if (RunAsSystem == crb_On) cchMaxLen++; // -new_console:A
 	if (RunAsRestricted == crb_On) cchMaxLen++; // -new_console:r
+	if (RunAsNetOnly == crb_On) cchMaxLen++; // -new_console:e
 	cchMaxLen += (pszUserName ? (lstrlen(pszUserName) + 32 // "-new_console:u:<user>:<pwd>"
 						+ (pszDomain ? lstrlen(pszDomain) : 0)
 						+ (szUserPassword ? lstrlen(szUserPassword) : 0)) : 0);
@@ -576,6 +579,11 @@ wchar_t* RConStartArgs::CreateCommandLine(bool abForTasks /*= false*/) const
 	if (RunAsSystem == crb_On)
 	{
 		wcscat_c(szAdd, L"A");
+	}
+
+	if (RunAsNetOnly == crb_On)
+	{
+		wcscat_c(szAdd, L"e");
 	}
 
 	if ((ForceUserDialog == crb_On) && !(pszUserName && *pszUserName))
@@ -813,7 +821,7 @@ HANDLE RConStartArgs::CheckUserToken()
 	// gpedit.msc - Конфигурация компьютера - Конфигурация Windows - Локальные политики - Параметры безопасности - Учетные записи
 	// Ограничить использование пустых паролей только для консольного входа -> "Отключить". 
 	LPWSTR pszPassword = (UseEmptyPassword == crb_On) ? NULL : szUserPassword;
-	DWORD nFlags = LOGON32_LOGON_INTERACTIVE;
+	DWORD nFlags = RunAsNetOnly ? LOGON32_LOGON_NEW_CREDENTIALS : LOGON32_LOGON_INTERACTIVE;
 	BOOL lbRc = LogonUser(pszUserName, pszDomain, pszPassword, nFlags, LOGON32_PROVIDER_DEFAULT, &hLogonToken);
 
 	if (!lbRc || !hLogonToken)
@@ -1093,6 +1101,11 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					case L'A':
 						// A - Run console as System account
 						RunAsSystem = crb_On;
+						break;
+
+					case L'e':
+						// e - Run console wih NetOnly flag
+						RunAsNetOnly = crb_On;
 						break;
 
 					case L'r':

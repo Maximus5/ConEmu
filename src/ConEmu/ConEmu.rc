@@ -870,7 +870,7 @@ BEGIN
     GROUPBOX        "",gbRunAsOptions,4,61,300,73
     CONTROL         "Run as current &user <UserName>",rbCurrentUser,"Button",BS_AUTORADIOBUTTON,11,70,150,8
     CONTROL         "Restricte&d current user",cbRunAsRestricted,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,83,137,10
-    CONTROL         "&Another user",rbAnotherUser,"Button",BS_AUTORADIOBUTTON,11,100,60,8
+    CONTROL         "&Another user",rbAnotherUser,"Button",BS_AUTORADIOBUTTON,11,100,85,8
     LTEXT           "User &name:",stRunAsUser,23,114,40,8
     COMBOBOX        tRunAsUser,67,112,93,30,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     RTEXT           "&Password:",stRunAsPassword,161,114,39,8
@@ -885,6 +885,7 @@ BEGIN
     CONTROL         "To &bottom",rbRecreateSplit2Bottom,"Button",BS_AUTORADIOBUTTON,210,73,49,8
     RTEXT           "%:",stRecreateSplit,209,87,11,8
     EDITTEXT        tRecreateSplit,224,84,31,12,ES_AUTOHSCROLL
+    CONTROL         "NetOnly",cbRunAsNetOnly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,101,100,91,10
 END
 
 IDD_SPG_HIGHLIGHT DIALOGEX 0, 0, 381, 242
@@ -1655,6 +1656,31 @@ BEGIN
     CONTROL         "63",cbAffinity63,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,200,92,24,10
 END
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_RESTART, DIALOG
+    BEGIN
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_RESTART AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
