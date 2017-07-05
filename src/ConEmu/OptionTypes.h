@@ -107,22 +107,6 @@ public:
 
 extern CEOptionList* gpOptionList;
 
-class CEOptionBase
-{
-public:
-	CEOptionBase()
-	{
-		// #pragma warning(disable: 4355)
-		if (gpOptionList)
-			gpOptionList->Register(this);
-		// #pragma warning(default: 4355)
-	};
-	virtual ~CEOptionBase() {};
-	virtual bool Load(SettingsBase* reg) = 0;
-	virtual bool Save(SettingsBase* reg) const = 0;
-	virtual void Reset() = 0;
-};
-
 
 // For arrays declarations
 template <typename T, int MaxSize>
@@ -133,19 +117,54 @@ struct CEOptionArrayType
 };
 
 
+// Prototype
+class CEOptionBase
+{
+protected:
+	CEStr ms_Name;
+public:
+	CEOptionBase(LPCWSTR OptionName)
+		: ms_Name(OptionName)
+	{
+		// #pragma warning(disable: 4355)
+		if (gpOptionList)
+			gpOptionList->Register(this);
+		// #pragma warning(default: 4355)
+	};
+	virtual ~CEOptionBase()
+	{
+	};
+
+	virtual bool Load(SettingsBase* reg) = 0;
+	virtual bool Save(SettingsBase* reg) const = 0;
+	virtual void Reset() = 0;
+
+	virtual LPCWSTR Name()
+	{
+		return ms_Name;
+	};
+};
+
+
+
 // Base class
-template <typename T, bool (*validate_fn)(T& value)=NULL>
+template <typename T>
 class CEOptionBaseImpl : public CEOptionBase
 {
 public:
 	T m_Value;
+	const T m_Default;
 protected:
-	CEStr ms_Name;
+	bool (*validate_fn)(T& value);
 public:
-	CEOptionBaseImpl(const wchar_t* OptionName)
-		: m_Value()
+	CEOptionBaseImpl(LPCWSTR OptionName, const T& Default = T(), bool (*_validate_fn)(T& value) = NULL)
+		: CEOptionBase(OptionName)
+		, m_Value()
+		, m_Default(Default)
 		, ms_Name(OptionName)
+		, validate_fn(_validate_fn)
 	{
+		Reset();
 	};
 
 	virtual ~CEOptionBaseImpl()
@@ -166,12 +185,12 @@ public:
 	{
 		if (!reg)
 			return false;
-		if (!reg->Save(ms_Name, m_Value))
-			return false;
+		// #OPT_TODO Serializators doesn't return error codes
+		reg->Save(ms_Name, m_Value);
 		return true;
 	};
 
-	operator T&()
+	operator const T&() const
 	{
 		return m_Value;
 	};
@@ -186,19 +205,32 @@ public:
 		m_Value = value;
 		return true;
 	};
+
+	virtual void Reset() override
+	{
+		m_Value = m_Default;
+	}
+
 };
 
 
 
 
 // Simple 'wchar_t[NN]' property
-template <typename T, int MaxSize,
-	LPCWSTR (*get_name)(int index) = NULL,
-	void (*set_default)(typename CEOptionArrayType<T,MaxSize>::type& value) = NULL>
-class CEOptionArray : public CEOptionBaseImpl<typename CEOptionArrayType<T,MaxSize>::type, NULL>
+template <typename T, int MaxSize>
+class CEOptionArray : public CEOptionBase
 {
 public:
-	CEOptionArray()
+	typedef typename CEOptionArrayType<T,MaxSize>::type arr_type;
+	arr_type m_Value;
+protected:
+	LPCWSTR (*get_name)(int index);
+	void (*set_default)(arr_type& value);
+public:
+	CEOptionArray(LPCWSTR OptionName, LPCWSTR (*_get_name)(int index) = NULL, void (*_set_default)(arr_type& value) = NULL)
+		: CEOptionBase(OptionName)
+		, get_name(_get_name)
+		, set_default(_set_default)
 	{
 		_ASSERTE(MaxSize > 0);
 		Reset();
@@ -230,13 +262,14 @@ public:
 		for (int i = 0; i < MaxSize; i++)
 		{
 			LPCWSTR pszName = get_name(i);
-			if (!reg->Save(pszName, m_Value[i]))
-				bAllOk = false;
+			// #OPT_TODO Serializators doesn't return error codes
+			reg->Save(pszName, m_Value[i]);
+			// if (was error) bAllOk = false;
 		}
 		return bAllOk;
 	};
 
-	virtual bool Set(typename CEOptionArrayType<T,MaxSize>::type RVAL_REF value)
+	virtual bool Set(arr_type RVAL_REF value)
 	{
 		memmove(m_Value, value, sizeof(m_Value));
 		return true;
@@ -266,33 +299,30 @@ public:
 
 
 // Simple `bool`
-template <bool Default = false, bool (*validate_fn)(bool& value)=NULL>
-class CEOptionBool : public CEOptionBaseImpl<bool, validate_fn>
+class CEOptionBool : public CEOptionBaseImpl<bool>
 {
 public:
-	CEOptionBool(const wchar_t* OptionName)
-		: CEOptionBaseImpl(OptionName)
+	CEOptionBool(LPCWSTR OptionName, const bool Default = false, bool (*_validate_fn)(bool& value) = NULL)
+		: CEOptionBaseImpl(OptionName, Default, _validate_fn)
 	{
-		Reset();
 	};
 
 	virtual ~CEOptionBool()
 	{
 	};
-
-	virtual void Reset() override
-	{
-		Set(Default);
-	};
 };
 
 // Simple 'wchar_t*' property
-template <const wchar_t* OptionName, const wchar_t* Default = NULL>
-class CEOptionString : public CEOptionBaseImpl<wchar_t*, OptionName>
+class CEOptionString : public CEOptionBase
 {
 public:
-	CEOptionString()
-		: m_Value(NULL)
+	wchar_t* m_Value;
+	CEStr m_Default;
+public:
+	CEOptionString(LPCWSTR OptionName, LPCWSTR Default = NULL)
+		: CEOptionBase(OptionName)
+		, m_Value()
+		, m_Default(Default)
 	{
 		Reset();
 	};
@@ -302,37 +332,57 @@ public:
 		SafeFree(m_Value);
 	};
 
-	// It ‘captures’ the `value`. Sort of `std::move` from C++11.
-	virtual bool Set(wchar_t* RVAL_REF value) override
+	virtual bool Load(SettingsBase* reg) override
 	{
-		_ASSERTE(validate_fn==NULL);
+		if (!reg)
+			return false;
+		wchar_t* value = NULL;
+		if (!reg->Load(ms_Name, &value))
+			return false;
+		return Set(STD_MOVE(value));
+	};
+
+	virtual bool Save(SettingsBase* reg) const override
+	{
+		if (!reg)
+			return false;
+		// #OPT_TODO Serializators doesn't return error codes
+		reg->Save(ms_Name, m_Value);
+		return true;
+	};
+
+	// It ‘captures’ the `value`. Sort of `std::move` from C++11.
+	virtual bool Set(wchar_t* RVAL_REF value)
+	{
 		if (m_Value != value)
 		{
+			if (!value)
+				value = lstrdup(L"");
 			LPVOID p = InterlockedExchangePointer((PVOID*)&m_Value, value);
 			SafeFree(p);
+			value = NULL; // capturing
 		}
 		return true;
 	};
 
 	virtual void Reset() override
 	{
-		if (!Default)
+		if (m_Value && m_Default.ms_Val)
 		{
-			SafeFree(m_Value);
-			return;
-		}
-		if (m_Value && Default)
-		{
-			if (wcscmp(m_Value, Default) == 0)
+			if (wcscmp(m_Value, m_Default.ms_Val) == 0)
 				return;
 		}
-		Set(lstrdup(Default));
+		SafeFree(m_Value);
+		Set(lstrdup(m_Default));
+		_ASSERTE(m_Value != NULL);
 	};
 };
 
 
+// #NEW_OPTIONS  finished here
+
 // Simple 'wchar_t[NN]' property
-template <const wchar_t* OptionName, int MaxSize, const wchar_t* Default = L"">
+template <LPCWSTR OptionName, int MaxSize, LPCWSTR Default = L"">
 class CEOptionStringFixed : public CEOptionBaseImpl<typename CEOptionArrayType<wchar_t,MaxSize>::type, OptionName>
 {
 public:
@@ -355,7 +405,7 @@ public:
 		return true;
 	};
 
-	virtual bool Set(const wchar_t* value)
+	virtual bool Set(LPCWSTR value)
 	{
 		_ASSERTE(validate_fn==NULL);
 		lstrcpyn(m_Value, value, MaxSize);
@@ -364,7 +414,7 @@ public:
 
 	virtual bool Set(typename CEOptionArrayType<wchar_t,MaxSize>::type RVAL_REF value)
 	{
-		return Set((const wchar_t*)value);
+		return Set((LPCWSTR)value);
 	};
 
 	virtual void Reset() override
@@ -376,13 +426,13 @@ public:
 
 
 // #OPT_TODO Replace with "CEOptionStringArray"
-template <const wchar_t* OptionName, const wchar_t* Default = NULL>
+template <LPCWSTR OptionName, LPCWSTR Default = NULL>
 class CEOptionStringMSZ : public CEOptionBaseImpl<wchar_t*, OptionName>
 {
 };
 
 // #OPT_TODO Required for "DefaultTerminalApps"
-template <const wchar_t* OptionName, const wchar_t* Default = NULL>
+template <LPCWSTR OptionName, LPCWSTR Default = NULL>
 class CEOptionStringDelim : public CEOptionBaseImpl<wchar_t*, OptionName>
 {
 };
@@ -393,7 +443,7 @@ template <u8 Default = 0, bool (*validate_fn)(u8& value)=NULL>
 class CEOptionByte : public CEOptionBaseImpl<u8, validate_fn>
 {
 public:
-	CEOptionByte(const wchar_t* OptionName)
+	CEOptionByte(LPCWSTR OptionName)
 		: CEOptionBaseImpl(OptionName)
 	{
 		Reset();
@@ -414,7 +464,7 @@ template <typename T, const T Default = (const T)0, bool (*validate_fn)(T& value
 class CEOptionByteEnum : public CEOptionBaseImpl<T, validate_fn>
 {
 public:
-	CEOptionByteEnum(const wchar_t* OptionName)
+	CEOptionByteEnum(LPCWSTR OptionName)
 		: CEOptionBaseImpl(OptionName)
 	{
 		Reset();
@@ -438,8 +488,8 @@ public:
 	{
 		if (!reg)
 			return false;
-		if (!reg->Save(ms_Name, (u8)m_Value))
-			return false;
+		// #OPT_TODO Serializators doesn't return error codes
+		reg->Save(ms_Name, (u8)m_Value);
 		return true;
 	};
 
@@ -454,7 +504,7 @@ template <i32 Default = 0, bool (*validate_fn)(i32& value)=NULL>
 class CEOptionInt : public CEOptionBaseImpl<i32, validate_fn>
 {
 public:
-	CEOptionInt(const wchar_t* OptionName)
+	CEOptionInt(LPCWSTR OptionName)
 		: CEOptionBaseImpl(OptionName)
 	{
 		Reset();
@@ -475,7 +525,7 @@ template <u32 Default = 0, u32 (*get_default)()=NULL, bool (*validate_fn)(u32& v
 class CEOptionUInt : public CEOptionBaseImpl<u32, validate_fn>
 {
 public:
-	CEOptionUInt(const wchar_t* OptionName)
+	CEOptionUInt(LPCWSTR OptionName)
 		: CEOptionBaseImpl(OptionName)
 	{
 		Reset();
@@ -496,7 +546,7 @@ template <DWORD Default = 0, bool (*validate_fn)(DWORD& value)=NULL>
 class CEOptionDWORD : public CEOptionBaseImpl<DWORD, validate_fn>
 {
 public:
-	CEOptionDWORD(const wchar_t* OptionName)
+	CEOptionDWORD(LPCWSTR OptionName)
 		: CEOptionBaseImpl(OptionName)
 	{
 		Reset();
@@ -519,7 +569,7 @@ template <DWORD Default = 0, bool (*validate_fn)(DWORD& value)=NULL>
 class CEOptionSize : public CEOptionBaseImpl<DWORD, validate_fn>
 {
 public:
-	CEOptionSize(const wchar_t* OptionName)
+	CEOptionSize(LPCWSTR OptionName)
 		: CEOptionBaseImpl(OptionName)
 	{
 	};

@@ -137,10 +137,13 @@ WARNING("WIN64 was not defined");
 #endif
 
 #if defined(HAS_CPP11)
+	#include <utility>
 	#define RVAL_REF &&
+	#define STD_MOVE(v) std::move(v)
 	#define FN_DELETE = delete
 #else
 	#define RVAL_REF
+	#define STD_MOVE(v) v
 	#define FN_DELETE
 #endif
 
