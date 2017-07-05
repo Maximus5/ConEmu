@@ -2616,6 +2616,10 @@
       "zh": "Attach: 选择窗口或控制台应用程序",
       "id": 5 }
     ,
+    "lng_DlgCreateNewConsole": {
+      "en": "Create new console",
+      "id": 85 }
+    ,
     "lng_DlgFastCfg": {
       "en": "fast configuration",
       "ru": "быстрая настройка",
@@ -2633,6 +2637,10 @@
       "ru": "Переименовать таб",
       "zh": "重命名标签页（tab）",
       "id": 3 }
+    ,
+    "lng_DlgRestartConsole": {
+      "en": "Restart console",
+      "id": 84 }
     ,
     "lng_DlgSettings": {
       "en": "Settings",
@@ -4022,14 +4030,18 @@
       "zh": "以管理员身份运行（&R）",
       "id": 1547 }
     ,
+    "cbRunAsNetOnly": {
+      "en": "Use credentials for network resources onl&y",
+      "id": 1651 }
+    ,
     "cbRunAsRestricted": {
       "en": "Restricte&d current user",
       "zh": "受限的（&d）当前用户",
       "id": 1650 }
     ,
     "cbRunInNewWindow": {
-      "en": "New &window",
-      "zh": "新建（&w）窗口",
+      "en": "Create new &window",
+      "_zh": "新建（&w）窗口",
       "id": 2330 }
     ,
     "cbSafeFarClose": {
@@ -4153,8 +4165,8 @@
       "id": 2421 }
     ,
     "cbSuppressBells": {
-      "en": "Suppress bells",
-      "zh": "抑制bell声",
+      "en": "Suppress bells (beeps)",
+      "_zh": "抑制bell声",
       "id": 2598 }
     ,
     "cbTabLazy": {
@@ -4822,11 +4834,6 @@
       "en": "&Refresh",
       "zh": "刷新（&R）",
       "id": 1776 }
-    ,
-    "IDC_RESTART_MSG": {
-      "en": "About to restart console",
-      "zh": "将要重启控制台",
-      "id": 1529 }
     ,
     "IDC_START": {
       "en": "Re&start",
@@ -5862,6 +5869,10 @@
       "en": "States:",
       "zh": "状态：",
       "id": 2941 }
+    ,
+    "stRestartCmd": {
+      "en": "Startup command or {Task} name; -new_console switches:",
+      "id": 3086 }
     ,
     "stRunAsPassword": {
       "en": "&Password:",

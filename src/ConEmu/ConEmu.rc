@@ -853,39 +853,41 @@ BEGIN
     EDITTEXT        ebActivityParm,8,182,368,53,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY | WS_VSCROLL
 END
 
-IDD_RESTART DIALOGEX 0, 0, 310, 167
+IDD_RESTART DIALOGEX 0, 0, 311, 184
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "ConEmu"
+CAPTION "Create new console"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "Re&start",IDC_START,147,147,50,14
-    PUSHBUTTON      "&Terminate",IDC_TERMINATE,201,147,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,254,147,50,14
-    GROUPBOX        "About to restart console",IDC_RESTART_MSG,4,5,300,129
+    DEFPUSHBUTTON   "Re&start",IDC_START,147,162,50,14
+    PUSHBUTTON      "&Terminate",IDC_TERMINATE,201,162,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,254,162,50,14
+    GROUPBOX        "",gbStartCommand,4,0,300,146
+    LTEXT           "Startup command or {Task} name; -new_console switches:",stRestartCmd,10,8,268,8
     COMBOBOX        IDC_RESTART_CMD,10,19,269,50,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Startup &directory for new process:",stStartupDir,10,36,268,8
     COMBOBOX        IDC_STARTUP_DIR,10,46,269,50,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "...",IDC_CHOOSE,284,19,14,13
     PUSHBUTTON      "...",IDC_CHOOSE_DIR,284,46,14,13
-    GROUPBOX        "",gbRunAsOptions,4,61,300,73
-    CONTROL         "Run as current &user <UserName>",rbCurrentUser,"Button",BS_AUTORADIOBUTTON,11,70,150,8
-    CONTROL         "Restricte&d current user",cbRunAsRestricted,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,83,137,10
-    CONTROL         "&Another user",rbAnotherUser,"Button",BS_AUTORADIOBUTTON,11,100,85,8
-    LTEXT           "User &name:",stRunAsUser,23,114,40,8
-    COMBOBOX        tRunAsUser,67,112,93,30,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    RTEXT           "&Password:",stRunAsPassword,161,114,39,8
-    EDITTEXT        tRunAsPassword,205,112,91,13,ES_PASSWORD | ES_AUTOHSCROLL
-    ICON            "ConEmu.ico",IDC_RESTART_ICON,6,141,20,20
-    CONTROL         "&Run as administrator",cbRunAsAdmin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,61,149,82,8
-    CONTROL         "New &window",cbRunInNewWindow,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,149,60,8
-    CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,129,157,8
+    GROUPBOX        "",gbRunAsOptions,4,61,300,85
+    CONTROL         "Run as current &user <UserName>",rbCurrentUser,"Button",BS_AUTORADIOBUTTON,11,70,193,8
+    CONTROL         "Restricte&d current user",cbRunAsRestricted,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,83,180,10
+    CONTROL         "&Another user",rbAnotherUser,"Button",BS_AUTORADIOBUTTON,11,99,189,8
+    RTEXT           "User &name:",stRunAsUser,6,126,57,8
+    COMBOBOX        tRunAsUser,67,124,93,30,CBS_DROPDOWN | CBS_AUTOHSCROLL | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    RTEXT           "&Password:",stRunAsPassword,161,126,39,8
+    EDITTEXT        tRunAsPassword,205,124,91,13,ES_PASSWORD | ES_AUTOHSCROLL
+    ICON            "ConEmu.ico",IDC_RESTART_ICON,6,156,20,20
+    CONTROL         "&Run as administrator",cbRunAsAdmin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,39,169,105,8
+    CONTROL         "Create new &window",cbRunInNewWindow,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,39,157,105,8
+    CTEXT           "Warning, unsaved work may be lost!",IDC_WARNING,57,141,157,8
     GROUPBOX        "New console split",gbRecreateSplit,206,61,98,40
     CONTROL         "&Layered",rbRecreateSplitNone,"Button",BS_AUTORADIOBUTTON,261,87,39,8
     CONTROL         "To ri&ght",rbRecreateSplit2Right,"Button",BS_AUTORADIOBUTTON,261,73,39,8
     CONTROL         "To &bottom",rbRecreateSplit2Bottom,"Button",BS_AUTORADIOBUTTON,210,73,49,8
     RTEXT           "%:",stRecreateSplit,209,87,11,8
     EDITTEXT        tRecreateSplit,224,84,31,12,ES_AUTOHSCROLL
-    CONTROL         "NetOnly",cbRunAsNetOnly,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,101,100,91,10
+    CONTROL         "Use credentials for network resources onl&y",cbRunAsNetOnly,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,23,112,273,10
 END
 
 IDD_SPG_HIGHLIGHT DIALOGEX 0, 0, 381, 242
@@ -1657,30 +1659,6 @@ BEGIN
 END
 
 
-/////////////////////////////////////////////////////////////////////////////
-//
-// DESIGNINFO
-//
-
-#ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO
-BEGIN
-    IDD_RESTART, DIALOG
-    BEGIN
-    END
-END
-#endif    // APSTUDIO_INVOKED
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// AFX_DIALOG_LAYOUT
-//
-
-IDD_RESTART AFX_DIALOG_LAYOUT
-BEGIN
-    0
-END
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////

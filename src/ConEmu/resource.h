@@ -184,7 +184,7 @@
 #define IDC_TERMINATE                   1525
 #define IDC_RESTART_CMD                 1527
 #define IDC_CHOOSE                      1528
-#define IDC_RESTART_MSG                 1529
+#define gbStartCommand                  1529
 #define IDC_WARNING                     1530
 #define cbTabSelf                       1531
 #define cbTabLazy                       1532
@@ -1359,15 +1359,16 @@
 #define vkSplitSwapRight                3083
 #define vkSplitSwap                     3084
 #define vkMultiGroupKey                 3085
+#define stRestartCmd                    3086
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        237
+#define _APS_NEXT_RESOURCE_VALUE        238
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3086
+#define _APS_NEXT_CONTROL_VALUE         3087
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

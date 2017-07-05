@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "DpiAware.h"
 #include "DynDialog.h"
+#include "LngRc.h"
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "Recreate.h"
@@ -354,20 +355,15 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	//}
 	SetClassLongPtr(hDlg, GCLP_HICON, (LONG_PTR)hClassIcon);
 
-	RECT rcBtnBox = {0};
 	if (pArgs->aRecreate == cra_RecreateTab)
 	{
-		//GCC hack. иначе не собирается
-		SetDlgItemTextA(hDlg, IDC_RESTART_MSG, "About to restart console");
+		SetWindowText(hDlg, CLngRc::getRsrc(lng_DlgRestartConsole/*"Restart console"*/));
 		SendDlgItemMessage(hDlg, IDC_RESTART_ICON, STM_SETICON, (WPARAM)LoadIcon(NULL,IDI_EXCLAMATION), 0);
-		// Выровнять флажок по кнопке
-		GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
 		lbRc = TRUE;
 	}
 	else
 	{
-		//GCC hack. иначе не собирается
-		SetDlgItemTextA(hDlg, IDC_RESTART_MSG,  "Create new console");
+		SetWindowText(hDlg, CLngRc::getRsrc(lng_DlgCreateNewConsole/*"Create new console"*/));
 
 		// If we disallowed to create "Multiple consoles in one window"
 		// - Check & Disable "New window" checkbox
@@ -383,29 +379,33 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 		SetWindowPos(GetDlgItem(hDlg, IDC_START), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 		SetDlgItemText(hDlg, IDC_START, (pArgs->aRecreate == cra_EditTab) ? L"&Save" : L"&Start");
 		DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
-		// Выровнять флажок по кнопке
-		GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
 	}
 
-	if (rcBtnBox.left)
+	// Align "New window" and "Run as administrator" checkboxes
 	{
-		// Выровнять флажок по кнопке
-		MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtnBox, 2);
-		RECT rcBox; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
-		POINT pt;
-		pt.x = rcBtnBox.left - (rcBox.right - rcBox.left) - 5;
-		pt.y = rcBtnBox.top + ((rcBtnBox.bottom-rcBtnBox.top) - (rcBox.bottom-rcBox.top))/2;
+		RECT rcBox = {}; GetWindowRect(GetDlgItem(hDlg, cbRunAsAdmin), &rcBox);
+		MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBox, 2);
+		const int chk_height = (rcBox.bottom - rcBox.top);
+
+		POINT pt = {rcBox.left};
+		if (!bRunInNewWindow_Hidden)
+		{
+			RECT rcIcoBox = {}; GetWindowRect(GetDlgItem(hDlg, IDC_RESTART_ICON), &rcIcoBox);
+			MapWindowPoints(NULL, hDlg, (LPPOINT)&rcIcoBox, 2);
+			const int ico_height = (rcIcoBox.bottom - rcIcoBox.top);
+			const int h2 = (chk_height * 5) / 2;
+			pt.y = rcIcoBox.top + (ico_height - h2)/2;
+			SetWindowPos(GetDlgItem(hDlg, cbRunInNewWindow), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+			pt.y += (h2 - chk_height);
+		}
+		else
+		{
+			RECT rcBtnBox = {}; GetWindowRect(GetDlgItem(hDlg, IDC_START), &rcBtnBox);
+			MapWindowPoints(NULL, hDlg, (LPPOINT)&rcBtnBox, 2);
+			const int btn_height = (rcBtnBox.bottom - rcBtnBox.top);
+			pt.y = rcBtnBox.top + (btn_height - chk_height)/2;
+		}
 		SetWindowPos(GetDlgItem(hDlg, cbRunAsAdmin), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-	}
-
-	// Correct cbRunInNewWindow position
-	if (!bRunInNewWindow_Hidden)
-	{
-		POINT pt = {};
-		MapWindowPoints(GetDlgItem(hDlg, cbRunAsAdmin), hDlg, &pt, 1);
-		RECT rcBox2; GetWindowRect(GetDlgItem(hDlg, cbRunInNewWindow), &rcBox2);
-		SetWindowPos(GetDlgItem(hDlg, cbRunInNewWindow), NULL,
-			pt.x-(rcBox2.right-rcBox2.left), pt.y, 0,0, SWP_NOSIZE);
 	}
 
 	// Dpi aware processing at the end of sequence

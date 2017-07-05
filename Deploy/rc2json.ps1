@@ -35,7 +35,7 @@ $linedelta = 7
 $script:ignore_ctrls = @(
   "tAppDistinctHolder", "tDefTermWikiLink",
   "stConEmuUrl", "tvSetupCategories", "stSetCommands2", "stHomePage", "stDisableConImeFast3", "stDisableConImeFast2",
-  "lbActivityLog", "lbConEmuHotKeys", "IDI_ICON1", "IDI_ICON2", "IDI_ICON3", "stConEmuAbout"
+  "lbActivityLog", "lbConEmuHotKeys", "IDI_ICON1", "IDI_ICON2", "IDI_ICON3", "stConEmuAbout", "IDD_RESTART"
 )
 
 $last_gen_ids_note = "// last auto-gen identifier"
