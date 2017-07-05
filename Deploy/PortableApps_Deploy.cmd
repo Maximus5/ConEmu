@@ -65,7 +65,8 @@ echo Updating ini files with version info
 echo Creating PortableApps.com installer
 start "Portable" /MIN /WAIT "%~d0\Portable\PortableApps\PortableApps.comInstaller\PortableApps.comInstaller.exe" "%AppSetup%"
 if errorlevel 1 goto err
-echo Installer created successfully
+timeout /t 3
+echo PortableApps.com installer created successfully
 
 if exist "%~dp0..\..\ConEmu-key\sign_any.bat" (
 call cecho /green "Signing..."

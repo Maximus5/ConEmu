@@ -20,6 +20,30 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.7.5
+* Cygwin/Msys connector is updated to version 1.0 (https://conemu.github.io/en/CygwinMsysConnector.html).
+  Hooks are not injected into cygwin/msys applications if they were runned from connector.
+  As a result some speed up execution and elimination of any BLODA conditions is expected.
+  If one needs ConEmuHk to be loaded into some process, e.g. while starting
+  non-cygwin application like cmd.exe from cygwin shell, they may use ConEmuC.exe
+  as loader. For example, run "ConEmuC.exe -c cmd.exe" instead of "cmd.exe".
+* Use connector in new default cygwin/msys/git-for-windows tasks.
+* gh-1008: Add hotkey `Apps+Alt+G` to group input for selected panes.
+  So one may add or remove console to input group by activating it
+  and pressing the `Apps+Alt+G` (configurable). Consoles may belong
+  to different splits/tabs.
+* Far Macro: ConEmu.CtrlNumber.lua to switch panel modes by `Ctrl+Shift+Numbers`.
+* Use `Shift+LClick` or `Alt+LClick` to mark the end of selection.
+  User may start selection (by `Shift+LClick`, `Shift+Arrow` or any other way)
+  and after that extend it by `Shift+LClick` to clicked postion.
+  To create block selection use `Alt+LClick` to mark one selection corner
+  and second `Alt+LClick` to mark opposite corner.
+  Inspired by https://superuser.com/q/1218047/139371
+* Option ‘Use credentials for network resources only’ in ‘Create new console’ dialog (from Peter.Maksimov).
+  Switch `-new_console:e` is available in Tasks and command lines.
+* Create/restart console dialog redesign.
+
+
 2017.6.22
 * gh-136: Swap nearest panes with `Apps+Alt+X`, swap in direction with `Apps+Alt+Arrow`.
 * Let `Apps+Shift+G` group input for all consoles (instead of only visible panes like `Apps+G` does).
