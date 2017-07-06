@@ -47,6 +47,7 @@ public:
 public:
 	static DWORD dlgGetHotkey(HWND hDlg, UINT iEditCtrl = hkHotKeySelect, UINT iListCtrl = lbHotKeyList);
 	static void SetHotkeyField(HWND hHk, BYTE vk);
+	static void FillModifierBoxes(const ConEmuHotKey& HK, HWND hDlg);
 public:
 	CHotKeyDialog(HWND hParent, DWORD aVkMod);
 	~CHotKeyDialog();

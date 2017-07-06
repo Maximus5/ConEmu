@@ -74,7 +74,9 @@ DWORD CHotKeyDialog::GetVkMod()
 
 DWORD CHotKeyDialog::dlgGetHotkey(HWND hDlg, UINT iEditCtrl /*= hkHotKeySelect*/, UINT iListCtrl /*= lbHotKeyList*/)
 {
-	DWORD nHotKey = 0xFF & SendDlgItemMessage(hDlg, iEditCtrl, HKM_GETHOTKEY, 0, 0);
+	DWORD nCtrlValue = SendDlgItemMessage(hDlg, iEditCtrl, HKM_GETHOTKEY, 0, 0);
+	DWORD nHotKey = LOBYTE(nCtrlValue);
+	DWORD nCtrlMods = HIBYTE(LOWORD(nCtrlValue));
 
 	bool bList = false;
 	const ListBoxItem* pItems = NULL;
@@ -92,6 +94,17 @@ DWORD CHotKeyDialog::dlgGetHotkey(HWND hDlg, UINT iEditCtrl /*= hkHotKeySelect*/
 	if (!bList)
 		SendDlgItemMessage(hDlg, iListCtrl, CB_SETCURSEL, 0, 0);
 
+	if (nCtrlValue != nHotKey)
+	{
+		SetHotkeyField(GetDlgItem(hDlg, iEditCtrl), nHotKey);
+		if (nCtrlMods & HOTKEYF_ALT)
+			nHotKey |= cvk_Alt;
+		if (nCtrlMods & HOTKEYF_CONTROL)
+			nHotKey |= cvk_Ctrl;
+		if (nCtrlMods & HOTKEYF_SHIFT)
+			nHotKey |= cvk_Shift;
+	}
+
 	return nHotKey;
 }
 
@@ -102,6 +115,16 @@ void CHotKeyDialog::SetHotkeyField(HWND hHk, BYTE vk)
 				||vk==VK_PRIOR||vk==VK_NEXT||vk==VK_HOME||vk==VK_END
 				||vk==VK_CANCEL // VK_CANCEL is "Pause/Break" key when it's pressed with Ctrl
 				||vk==VK_INSERT) ? (HOTKEYF_EXT<<8) : 0), 0);
+}
+
+void CHotKeyDialog::FillModifierBoxes(const ConEmuHotKey& HK, HWND hDlg)
+{
+	BYTE Mods[3];
+	HK.Key.GetModifiers(Mods);
+	for (int n = 0; n < 3; n++)
+	{
+		CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbHotKeyMod1+n), CSetDlgLists::eModifiers, Mods[n], false);
+	}
 }
 
 INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -154,12 +177,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 			// Warning! Если nVK не указан в SettingsNS::nKeysHot - nVK будет обнулен
 			CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbHotKeyList), CSetDlgLists::eKeysHot, vk, false);
 
-			BYTE Mods[3];
-			pDlg->m_HK.Key.GetModifiers(Mods);
-			for (int n = 0; n < 3; n++)
-			{
-				CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbHotKeyMod1+n), CSetDlgLists::eModifiers, Mods[n], false);
-			}
+			FillModifierBoxes(pDlg->m_HK, hDlg);
 
 			SetFocus(GetDlgItem(hDlg,hkHotKeySelect));
 
@@ -185,8 +203,10 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 
 				case EN_CHANGE:
 				{
-					UINT nHotKey = dlgGetHotkey(hDlg, hkHotKeySelect, lbHotKeyList);
-					pDlg->m_HK.Key.Set(LOBYTE(nHotKey), pDlg->m_HK.Key.Mod);
+					DWORD nHotKey = dlgGetHotkey(hDlg, hkHotKeySelect, lbHotKeyList);
+					DWORD nMods = (nHotKey & cvk_ALLMASK) ? (nHotKey & cvk_ALLMASK) : pDlg->m_HK.Key.Mod;
+					pDlg->m_HK.Key.Set(LOBYTE(nHotKey), nMods);
+					FillModifierBoxes(pDlg->m_HK, hDlg);
 					break;
 				} // EN_CHANGE
 

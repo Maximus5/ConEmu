@@ -621,15 +621,28 @@ LRESULT CSetPgKeys::OnEditChanged(HWND hDlg, WORD nCtrlId)
 	{
 	case hkHotKeySelect:
 		{
-			UINT nHotKey = CHotKeyDialog::dlgGetHotkey(hDlg, hkHotKeySelect, lbHotKeyList);
+			DWORD hHotKeyMods = CHotKeyDialog::dlgGetHotkey(hDlg, hkHotKeySelect, lbHotKeyList);
+			DWORD nHotKey = LOBYTE(hHotKeyMods);
 
 			if (mp_ActiveHotKey && mp_ActiveHotKey->CanChangeVK())
 			{
-				DWORD nCurMods = (CEHOTKEY_MODMASK & mp_ActiveHotKey->GetVkMod());
-				if (!nCurMods)
-					nCurMods = CEHOTKEY_NOMOD;
+				if (!(hHotKeyMods & cvk_ALLMASK))
+				{
+					DWORD nCurMods = (CEHOTKEY_MODMASK & mp_ActiveHotKey->GetVkMod());
+					if (!nCurMods)
+						nCurMods = CEHOTKEY_NOMOD;
 
-				SetHotkeyVkMod(mp_ActiveHotKey, nHotKey | nCurMods);
+					SetHotkeyVkMod(mp_ActiveHotKey, nHotKey | nCurMods);
+				}
+				else
+				{
+					mp_ActiveHotKey->Key.Set(LOBYTE(hHotKeyMods), (hHotKeyMods & cvk_ALLMASK));
+				}
+
+				if (hHotKeyMods & CEHOTKEY_MODMASK)
+				{
+					CHotKeyDialog::FillModifierBoxes(*mp_ActiveHotKey, hDlg);
+				}
 
 				FillHotKeysList(hDlg, false);
 			}
