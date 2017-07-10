@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.7.9
+* gh-1175: Take into account modifier keys (Ctrl,Alt,Shift) pressed in the hotkey settings field.
+* New environment variable `ConEmuBaseDirShort` contains short path like `C:\PROGRA~1\ConEmu\ConEmu`.
+* gh-1082: New environment variable `ConEmuCfgDir` contains directory where xml file was loaded from.
+* gh-1178: Use short path to connector for launching from git-cmd. Recreate defult tasks to obtain changes
+  or edit task command manually (change `%ConEmuBaseDir%` to `%ConEmuBaseDirShort%`).
+
+
 2017.7.5
 * Cygwin/Msys connector is updated to version 1.0 (https://conemu.github.io/en/CygwinMsysConnector.html).
   Hooks are not injected into cygwin/msys applications if they were runned from connector.
