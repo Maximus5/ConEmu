@@ -665,6 +665,7 @@ CConEmuMain::CConEmuMain()
 	SetEnvironmentVariable(ENV_CONEMUBASEDIRSHORT_VAR_W, BaseShort.IsEmpty() ? ms_ConEmuBaseDir : BaseShort.ms_Val);
 	SetEnvironmentVariable(ENV_CONEMU_BUILD_W, ms_ConEmuBuild);
 	SetEnvironmentVariable(ENV_CONEMU_CONFIG_W, L"");
+	SetEnvironmentVariable(ENV_CONEMUCFGDIR_VAR_W, L"");
 	SetEnvironmentVariable(ENV_CONEMU_EXEARGS_W, L"");
 	SetEnvironmentVariable(ENV_CONEMU_EXEARGS2_W, L"");
 	SetEnvironmentVariable(ENV_CONEMU_ISADMIN_W, mb_IsUacAdmin ? L"ADMIN" : NULL);

@@ -614,6 +614,27 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	if (gpLng)
 		gpLng->Reload();
 
+	// Expose the directory where xml file was loaded from
+	SettingsStorage Storage = {}; bool ReadOnly = false;
+	gpSet->GetSettingsType(Storage, ReadOnly);
+	CEStr CfgFilePath;
+	CfgFilePath.Set((gpConEmu->IsResetBasicSettings() || (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_XML) != 0))
+		? L"" : gpConEmu->ConEmuXml());
+	if (!CfgFilePath.IsEmpty())
+	{
+		wchar_t* p = wcsrchr(CfgFilePath.ms_Val, L'\\');
+		if (!p)
+		{
+			_ASSERTE(p!=NULL);
+			CfgFilePath.Empty();
+		}
+		else
+		{
+			*p = 0;
+		}
+	}
+	SetEnvironmentVariable(ENV_CONEMUCFGDIR_VAR_W, CfgFilePath.IsEmpty() ? L"" : CfgFilePath.ms_Val);
+
 	if ((ghWnd == NULL) || (slfFlags & slf_OnResetReload))
 	{
 		gpConEmu->WndPos.x = gpSet->_wndX;

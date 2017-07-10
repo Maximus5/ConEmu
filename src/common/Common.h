@@ -161,6 +161,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define ENV_CONEMU_BUILD_W               _CRT_WIDE(ENV_CONEMU_BUILD_A)
 #define ENV_CONEMU_CONFIG_A            "ConEmuConfig"
 #define ENV_CONEMU_CONFIG_W              _CRT_WIDE(ENV_CONEMU_CONFIG_A)
+#define ENV_CONEMUCFGDIR_VAR_A         "ConEmuCfgDir"
+#define ENV_CONEMUCFGDIR_VAR_W           _CRT_WIDE(ENV_CONEMUCFGDIR_VAR_A)
 #define ENV_CONEMU_EXEARGS_A           "ConEmuArgs"
 #define ENV_CONEMU_EXEARGS_W              _CRT_WIDE(ENV_CONEMU_EXEARGS_A)
 #define ENV_CONEMU_EXEARGS2_A          "ConEmuArgs2"
