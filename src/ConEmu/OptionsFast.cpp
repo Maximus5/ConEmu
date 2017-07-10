@@ -2239,7 +2239,8 @@ static void CreateBashTask()
 			CEStr szConnector(JoinPath(szBaseDir, szConnectorName));
 			if (FileExists(szConnector))
 			{
-				_ASSERTE(ai.szPrefix && *ai.szPrefix && ai.szPrefix[wcslen(ai.szPrefix)-1]==L' ');
+				// For git-cmd ai.szPrefix is empty by default
+				_ASSERTE(!ai.szPrefix || (*ai.szPrefix && ai.szPrefix[wcslen(ai.szPrefix)-1]==L' '));
 
 				CEStr szBinPath;
 				szBinPath.Set(ai.szFullPath);
@@ -2252,7 +2253,9 @@ static void CreateBashTask()
 						// TODO: Optimize: Don't add PATH if required cygwin1.dll/msys2.dll is already on path
 						L"set \"PATH=", szBinPath, L";%PATH%\" & ",
 						// Change main executable
-						bNeedQuot ? L"\"" : L"", L"%ConEmuBaseDir%\\", szConnectorName, bNeedQuot ? L"\" " : L" ",
+						/*bNeedQuot ? L"\"" :*/ L"",
+						L"%ConEmuBaseDirShort%\\", szConnectorName,
+						/*bNeedQuot ? L"\" " :*/ L" ",
 						// Force xterm mode
 						L"-new_console:p "
 						);
@@ -2276,7 +2279,9 @@ static void CreateBashTask()
 							// git-cmd options
 							ai.szArgs,
 							// Change main executable
-							bNeedQuot ? L"\"" : L"", L"%ConEmuBaseDir%\\", szConnectorName, bNeedQuot ? L"\" " : L" ",
+							/*bNeedQuot ? L"\"" :*/ L"",
+							L"%ConEmuBaseDirShort%\\", szConnectorName,
+							/*bNeedQuot ? L"\" " :*/ L" ",
 							// And the tail of the command: "/usr/bin/bash.exe -l -i"
 							L"/", pszCmd+1,
 							// Force xterm mode
