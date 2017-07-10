@@ -42,7 +42,7 @@
       <!-- cygwin/msys connector -->
       <Feature Id="FConnector" AllowAdvertise="no" Level="1"
                Title="cygwin/msys connector"
-               Description="Provides POSIX enabled pty inside ConEmu.\nMore info: https://goo.gl/S9zLq5">
+               Description="Provides POSIX enabled pty inside ConEmu.&#13;&#10;More info: https://goo.gl/S9zLq5">
         <ComponentRef Id="conemu_cyg_32.exe" />
         <ComponentRef Id="conemu_cyg_64.exe" />
         <ComponentRef Id="conemu_msys_32.exe" />
