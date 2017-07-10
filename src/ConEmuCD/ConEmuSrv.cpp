@@ -336,16 +336,14 @@ LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue /*
 
 		UpdateComspec(&gpSrv->guiSettings.ComSpec); // isAddConEmu2Path, ...
 
-		_ASSERTE(gpSrv->guiSettings.ComSpec.ConEmuExeDir[0]!=0 && gpSrv->guiSettings.ComSpec.ConEmuBaseDir[0]!=0);
-		SetEnvironmentVariableW(ENV_CONEMUDIR_VAR_W, gpSrv->guiSettings.ComSpec.ConEmuExeDir);
-		SetEnvironmentVariableW(ENV_CONEMUBASEDIR_VAR_W, gpSrv->guiSettings.ComSpec.ConEmuBaseDir);
+		SetConEmuFolders(gpSrv->guiSettings.ComSpec.ConEmuExeDir, gpSrv->guiSettings.ComSpec.ConEmuBaseDir);
 
 		// Не будем ставить сами, эту переменную заполняет Gui при своем запуске
 		// соответственно, переменная наследуется серверами
 		//SetEnvironmentVariableW(L"ConEmuArgs", pInfo->sConEmuArgs);
 
 		//wchar_t szHWND[16]; _wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
-		//SetEnvironmentVariableW(ENV_CONEMUHWND_VAR_W, szHWND);
+		//SetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, szHWND);
 		SetConEmuWindows(gpSrv->guiSettings.hGuiWnd, ghConEmuWndDC, ghConEmuWndBack);
 
 		if (gpSrv->pConsole)
@@ -972,16 +970,14 @@ void ServerInitEnvVars()
 
 	if (gpSrv && (gpSrv->guiSettings.cbSize == sizeof(gpSrv->guiSettings)))
 	{
-		_ASSERTE(gpSrv->guiSettings.ComSpec.ConEmuExeDir[0]!=0 && gpSrv->guiSettings.ComSpec.ConEmuBaseDir[0]!=0);
-		SetEnvironmentVariableW(ENV_CONEMUDIR_VAR_W, gpSrv->guiSettings.ComSpec.ConEmuExeDir);
-		SetEnvironmentVariableW(ENV_CONEMUBASEDIR_VAR_W, gpSrv->guiSettings.ComSpec.ConEmuBaseDir);
+		SetConEmuFolders(gpSrv->guiSettings.ComSpec.ConEmuExeDir, gpSrv->guiSettings.ComSpec.ConEmuBaseDir);
 
 		// Не будем ставить сами, эту переменную заполняет Gui при своем запуске
 		// соответственно, переменная наследуется серверами
 		//SetEnvironmentVariableW(L"ConEmuArgs", pInfo->sConEmuArgs);
 
 		//wchar_t szHWND[16]; _wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
-		//SetEnvironmentVariableW(ENV_CONEMUHWND_VAR_W, szHWND);
+		//SetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, szHWND);
 		SetConEmuWindows(gpSrv->guiSettings.hGuiWnd, ghConEmuWndDC, ghConEmuWndBack);
 
 		#ifdef _DEBUG
@@ -2291,6 +2287,15 @@ HWND FindConEmuByPID(DWORD anSuggestedGuiPID /*= 0*/)
 	}
 
 	return hConEmuWnd;
+}
+
+void SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir)
+{
+	_ASSERTE(asExeDir && *asExeDir!=0 && asBaseDir && *asBaseDir);
+	SetEnvironmentVariable(ENV_CONEMUDIR_VAR_W, asExeDir);
+	SetEnvironmentVariable(ENV_CONEMUBASEDIR_VAR_W, asBaseDir);
+	CEStr BaseShort(GetShortFileNameEx(asBaseDir, false));
+	SetEnvironmentVariable(ENV_CONEMUBASEDIRSHORT_VAR_W, BaseShort.IsEmpty() ? asBaseDir : BaseShort.ms_Val);
 }
 
 void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)

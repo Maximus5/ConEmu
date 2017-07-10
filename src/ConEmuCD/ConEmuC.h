@@ -134,6 +134,7 @@ extern HWND    ghConEmuWnd; // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern HWND    ghConEmuWndBack; // ConEmu Back window
 extern void    SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd);
+extern void    SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir);
 extern DWORD   gnMainServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
 extern DWORD   gnAltServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
 extern BOOL    gbLogProcess; // (pInfo->nLoggingType == glt_Processes)
