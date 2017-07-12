@@ -35,7 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptTypeComSpec.h"
 
 CEOptionComSpec::CEOptionComSpec()
-	: ConEmuComspec()
+	: CEOptionBase(L"ComSpec") // It's saved field-by-field by class methods
+	, ConEmuComspec()
 {
 	Reset();
 }

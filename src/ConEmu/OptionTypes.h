@@ -101,6 +101,7 @@ public:
 	void Register(CEOptionBase* pOption)
 	{
 		_ASSERTE(this!=NULL);
+		// #OPT_TODO Use std::map instead of list? Check correctness on ctor/move/init in Options
 		m_List.push_back(pOption);
 	};
 };
@@ -195,7 +196,7 @@ public:
 		return m_Value;
 	};
 
-	virtual bool Set(T RVAL_REF value)
+	virtual bool Set(T value)
 	{
 		if (validate_fn)
 		{
@@ -269,8 +270,10 @@ public:
 		return bAllOk;
 	};
 
-	virtual bool Set(arr_type RVAL_REF value)
+	virtual bool Set(arr_type value)
 	{
+		if (m_Value == value)
+			return true;
 		memmove(m_Value, value, sizeof(m_Value));
 		return true;
 	};
@@ -352,16 +355,23 @@ public:
 	};
 
 	// It ‘captures’ the `value`. Sort of `std::move` from C++11.
-	virtual bool Set(wchar_t* RVAL_REF value)
+	virtual bool Set(const wchar_t* value)
 	{
-		if (m_Value != value)
-		{
-			if (!value)
-				value = lstrdup(L"");
-			LPVOID p = InterlockedExchangePointer((PVOID*)&m_Value, value);
-			SafeFree(p);
-			value = NULL; // capturing
-		}
+		if (m_Value == value)
+			return true;
+		return Set(STD_MOVE(lstrdup(value)));
+	}
+
+	// It ‘captures’ the `value`!
+	virtual bool Set(wchar_t*&& value)
+	{
+		if (m_Value == value)
+			return true;
+		if (!value)
+			value = lstrdup(L"");
+		LPVOID p = InterlockedExchangePointer((PVOID*)&m_Value, value);
+		SafeFree(p);
+		value = NULL; // capturing
 		return true;
 	};
 
@@ -379,20 +389,24 @@ public:
 };
 
 
-// #NEW_OPTIONS  finished here
 
 // Simple 'wchar_t[NN]' property
-template <LPCWSTR OptionName, int MaxSize, LPCWSTR Default = L"">
-class CEOptionStringFixed : public CEOptionBaseImpl<typename CEOptionArrayType<wchar_t,MaxSize>::type, OptionName>
+template <int MaxSize>
+class CEOptionStrFix : public CEOptionBase
 {
 public:
-	CEOptionStringFixed()
+	wchar_t m_Value[MaxSize];
+	CEStr m_Default;
+public:
+	CEOptionStrFix(LPCWSTR OptionName, LPCWSTR Default = NULL)
+		: CEOptionBase(OptionName)
+		, m_Value()
+		, m_Default(Default)
 	{
-		_ASSERTE(MaxSize > 0);
 		Reset();
 	};
 
-	virtual ~CEOptionStringFixed()
+	virtual ~CEOptionStrFix()
 	{
 	};
 
@@ -405,25 +419,31 @@ public:
 		return true;
 	};
 
-	virtual bool Set(LPCWSTR value)
+	virtual bool Save(SettingsBase* reg) const override
 	{
-		_ASSERTE(validate_fn==NULL);
-		lstrcpyn(m_Value, value, MaxSize);
+		if (!reg)
+			return false;
+		// #OPT_TODO Serializators doesn't return error codes
+		reg->Save(ms_Name, m_Value);
 		return true;
 	};
 
-	virtual bool Set(typename CEOptionArrayType<wchar_t,MaxSize>::type RVAL_REF value)
+	// It ‘captures’ the `value`. Sort of `std::move` from C++11.
+	virtual bool Set(const wchar_t* value)
 	{
-		return Set((LPCWSTR)value);
+		lstrcpyn(m_Value, value ? value : L"", MaxSize);
+		return true;
 	};
 
 	virtual void Reset() override
 	{
-		Set(Default);
+		Set(m_Default.ms_Val);
 	};
+
 };
 
 
+// #NEW_OPTIONS  finished here
 
 // #OPT_TODO Replace with "CEOptionStringArray"
 template <LPCWSTR OptionName, LPCWSTR Default = NULL>
@@ -439,38 +459,30 @@ class CEOptionStringDelim : public CEOptionBaseImpl<wchar_t*, OptionName>
 
 
 // Simple 'u8' ('BYTE')
-template <u8 Default = 0, bool (*validate_fn)(u8& value)=NULL>
-class CEOptionByte : public CEOptionBaseImpl<u8, validate_fn>
+class CEOptionByte : public CEOptionBaseImpl<u8>
 {
 public:
-	CEOptionByte(LPCWSTR OptionName)
-		: CEOptionBaseImpl(OptionName)
+	CEOptionByte(LPCWSTR OptionName, const u8 Default = 0, bool (*_validate_fn)(u8& value) = NULL)
+		: CEOptionBaseImpl(OptionName, Default, _validate_fn)
 	{
-		Reset();
 	};
 
 	virtual ~CEOptionByte()
 	{
 	};
-
-	virtual void Reset() override
-	{
-		Set(Default);
-	};
 };
 
 // Enum, stored as simple 'u8' ('BYTE')
-template <typename T, const T Default = (const T)0, bool (*validate_fn)(T& value)=NULL>
-class CEOptionByteEnum : public CEOptionBaseImpl<T, validate_fn>
+template <typename T>
+class CEOptionEnum : public CEOptionBaseImpl<T>
 {
 public:
-	CEOptionByteEnum(LPCWSTR OptionName)
-		: CEOptionBaseImpl(OptionName)
+	CEOptionEnum(LPCWSTR OptionName, const T Default = T(), bool (*_validate_fn)(T& value)=NULL)
+		: CEOptionBaseImpl(OptionName, Default, _validate_fn)
 	{
-		Reset();
 	};
 
-	virtual ~CEOptionByteEnum()
+	virtual ~CEOptionEnum()
 	{
 	};
 
@@ -481,7 +493,7 @@ public:
 		u8 value;
 		if (!reg->Load(ms_Name, &value))
 			return false;
-		return Set(value);
+		return Set(reinterpret_cast<T>(value));
 	};
 
 	virtual bool Save(SettingsBase* reg) const override
@@ -500,82 +512,64 @@ public:
 };
 
 // Simple 'i32' ('int'), stored as decimal signed integer
-template <i32 Default = 0, bool (*validate_fn)(i32& value)=NULL>
-class CEOptionInt : public CEOptionBaseImpl<i32, validate_fn>
+class CEOptionInt : public CEOptionBaseImpl<i32>
 {
 public:
-	CEOptionInt(LPCWSTR OptionName)
-		: CEOptionBaseImpl(OptionName)
+	CEOptionInt(LPCWSTR OptionName, const i32 Default = 0, bool (*_validate_fn)(i32& value) = NULL)
+		: CEOptionBaseImpl(OptionName, Default, _validate_fn)
 	{
-		Reset();
 	};
 
 	virtual ~CEOptionInt()
 	{
 	};
-
-	virtual void Reset() override
-	{
-		Set(Default);
-	};
 };
 
 // Simple 'u32' ('UINT'), stored as decimal unsigned integer
-template <u32 Default = 0, u32 (*get_default)()=NULL, bool (*validate_fn)(u32& value)=NULL>
-class CEOptionUInt : public CEOptionBaseImpl<u32, validate_fn>
+class CEOptionUInt : public CEOptionBaseImpl<u32>
 {
 public:
-	CEOptionUInt(LPCWSTR OptionName)
-		: CEOptionBaseImpl(OptionName)
+	CEOptionUInt(LPCWSTR OptionName, const u32 Default = 0, bool (*_validate_fn)(u32& value) = NULL)
+		: CEOptionBaseImpl(OptionName, Default, _validate_fn)
 	{
-		Reset();
 	};
 
 	virtual ~CEOptionUInt()
 	{
 	};
-
-	virtual void Reset() override
-	{
-		Set(get_default ? get_default() : Default);
-	};
 };
 
 // Simple 'DWORD', stored as hexadecimal unsigned integer
-template <DWORD Default = 0, bool (*validate_fn)(DWORD& value)=NULL>
-class CEOptionDWORD : public CEOptionBaseImpl<DWORD, validate_fn>
+class CEOptionDWORD : public CEOptionBaseImpl<DWORD>
 {
 public:
-	CEOptionDWORD(LPCWSTR OptionName)
-		: CEOptionBaseImpl(OptionName)
+	CEOptionDWORD(LPCWSTR OptionName, const DWORD Default = 0, bool (*_validate_fn)(DWORD& value)=NULL)
+		: CEOptionBaseImpl(OptionName, Default, _validate_fn)
 	{
-		Reset();
 	};
 
 	virtual ~CEOptionDWORD()
 	{
 	};
-
-	virtual void Reset() override
-	{
-		Set(Default);
-	};
 };
 
 
 // CESize
-// #OPT_TODO CESize - add to inherited classes?
-template <DWORD Default = 0, bool (*validate_fn)(DWORD& value)=NULL>
-class CEOptionSize : public CEOptionBaseImpl<DWORD, validate_fn>
+class CEOptionSize : public CEOptionBaseImpl<CESize>
 {
 public:
-	CEOptionSize(LPCWSTR OptionName)
-		: CEOptionBaseImpl(OptionName)
+	CEOptionSize(LPCWSTR OptionName, const CESize Default = CESize(), bool (*_validate_fn)(CESize& value)=NULL)
+		: CEOptionBaseImpl(OptionName, Default, _validate_fn)
 	{
 	};
 
 	virtual ~CEOptionSize()
 	{
+	};
+
+	CESize* operator->()
+	{
+		return &m_Value;
 	};
 };
 

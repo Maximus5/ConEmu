@@ -109,16 +109,6 @@ CEOptionList* gpOptionList = NULL;
 
 #define MAX_SPLITTER_SIZE 32
 
-// That is positive value for LF.lfHeight
-#define DEF_INSIDESIZEY_P 10
-#define DEF_FONTSIZEY_P   16
-#define DEF_TABFONTY_P    16
-#define DEF_STATUSFONTY_P 14
-// That is positive value for LF.lfHeight
-#define DEF_INSIDESIZEY_U 9
-#define DEF_FONTSIZEY_U   14
-#define DEF_TABFONTY_U    13
-#define DEF_STATUSFONTY_U 12
 
 struct CONEMUDEFCOLORS
 {
