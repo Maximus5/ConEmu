@@ -183,15 +183,154 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 	// Alt+Char
 	if ((Processor.Mods & xtc_Alt) && k.uChar.UnicodeChar
 		// connector/gh#4: AltGr+Char
-		&& ((k.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED))
+		&& (((k.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED))
 				!= (LEFT_CTRL_PRESSED|RIGHT_ALT_PRESSED))
+		// or just a Alt+Char
+			|| !(Processor.Mods & xtc_Ctrl))
 		)
 	{
 		szSubst[0] = L'\033'; szSubst[1] = k.uChar.UnicodeChar; szSubst[2] = 0;
 		return true;
 	}
 
-	// Ctrl+Char? A-->1, ..., J-->10, ...
+	// Ctrl+Char: A-->1, ..., J-->10, ...
+	if (Processor.Mods & (xtc_Alt | xtc_Ctrl))
+	{
+		wchar_t key_char = k.uChar.UnicodeChar;
+		if (!key_char)
+		{
+			switch (k.wVirtualKeyCode)
+			{
+			case VK_OEM_2:
+				key_char = L'?'; break; // Ctrl+/ -> \x1F
+			case VK_OEM_3:
+				key_char = L'~'; break;
+			case VK_OEM_4:
+				key_char = L'['; break;
+			case VK_OEM_5:
+				key_char = L'\\'; break;
+			case VK_OEM_6:
+				key_char = L']'; break;
+			case VK_OEM_COMMA:
+				key_char = L','; break;
+			case VK_OEM_PERIOD:
+				key_char = L'.'; break;
+			case VK_OEM_MINUS:
+				key_char = L'-'; break;
+			case VK_OEM_PLUS:
+				key_char = L'='; break;
+			default:
+				if (k.wVirtualKeyCode >= L'0' && k.wVirtualKeyCode <= L'9')
+					key_char = k.wVirtualKeyCode;
+				else if (k.wVirtualKeyCode >= L'A' && k.wVirtualKeyCode <= L'Z')
+					key_char = k.wVirtualKeyCode;
+			}
+		}
+
+
+		if (key_char)
+		{
+			szSubst[0] = szSubst[1] = szSubst[2] = szSubst[3] = 0;
+			if ((Processor.Mods == xtc_Ctrl) && (key_char == L'2' || key_char == L' '))
+			{
+				// Must send '\x00' but it's not a valid ASCIIZ string, have to be processed in connector
+				return false;
+			}
+			else if (key_char >= L'A' && key_char <= L'Z')
+			{
+				if (Processor.Mods == xtc_Ctrl)
+				{
+					// In vt220: If XOFF support is enabled, then CTRL-S is a "hold screen" local function and CTRL-Q is an "unhold screen" local function.
+					szSubst[0] = (wchar_t)(1 + (key_char - L'A'));
+				}
+				else if ((Processor.Mods == (xtc_Ctrl|xtc_Alt))
+					|| (Processor.Mods == (xtc_Ctrl|xtc_Alt|xtc_Shift)))
+				{
+					szSubst[0] = 0x1B;
+					szSubst[1] = (wchar_t)(1 + (key_char - L'A'));
+				}
+				// doesn't work, "showkey -a" receives "<x1B><xC3><x82><x01>"
+				//else if (Processor.Mods == (xtc_Ctrl|xtc_Alt|xtc_Shift))
+				//{
+				//	szSubst[0] = 0x1B; szSubst[1] = 0xC2;
+				//	szSubst[2] = (wchar_t)(1 + (key_char - L'A'));
+				//}
+			}
+			else if ((Processor.Mods == xtc_Ctrl) && (key_char == L'1' || key_char == L'9' || key_char == L'0'))
+			{
+				// Strangely Ctrl+1, Ctrl+9, Ctrl+0 generate only 1, 9 and 0.
+				szSubst[0] = key_char;
+			}
+			else if ((Processor.Mods == xtc_Ctrl) && (key_char >= L'3' && key_char <= L'7'))
+			{
+				szSubst[0] = (wchar_t)(0x1B + (key_char - L'3'));
+			}
+			else switch (key_char)
+			{
+			case L',':
+				szSubst[0] = 0x2C; break;
+			//	Processor.SetKey(szSubst, L'l'); break;
+			case L'.':
+				szSubst[0] = 0x2E; break;
+			//	Processor.SetKey(szSubst, L'n'); break;
+			//case L'-':
+			//	Processor.SetKey(szSubst, L'm'); break;
+			//case L'0':
+			//	Processor.SetKey(szSubst, L'p'); break;
+			//case L'1':
+			//	Processor.SetKey(szSubst, L'q'); break;
+			// case L'2': // processed above
+			//case L'3':
+			//	Processor.SetKey(szSubst, L's'); break;
+			//case L'4':
+			//	Processor.SetKey(szSubst, L't'); break;
+			//case L'5':
+			//	Processor.SetKey(szSubst, L'u'); break;
+			//case L'6':
+			case L'~':
+				szSubst[0] = 0x1E;
+				break;
+			//case L'7':
+			//	Processor.SetKey(szSubst, L'w'); break;
+			case L'8':
+				szSubst[0] = 0x1B;
+				if ((Processor.Mods == (xtc_Ctrl|xtc_Alt)) || (Processor.Mods == (xtc_Ctrl|xtc_Alt|xtc_Shift)))
+					szSubst[1] = 0x7F;
+				else
+					szSubst[0] = 0x7F;
+				break;
+				//Processor.SetKey(szSubst, L'x'); break;
+			//case L'9':
+			//	Processor.SetKey(szSubst, L'y'); break;
+			//case L'=':
+			//	Processor.SetKey(szSubst, L'X'); break;
+			case L'[':
+			case L'\\':
+			case L']':
+			{
+				wchar_t c = (key_char == L'[') ? 0x1B : (key_char == L'\\') ? 0x1C : 0x1D;
+				szSubst[0] = 0x1B;
+				if (Processor.Mods == xtc_Alt)
+					szSubst[1] = 0x40 + c;
+				else if ((Processor.Mods == (xtc_Ctrl|xtc_Alt)) || (Processor.Mods == (xtc_Ctrl|xtc_Alt|xtc_Shift)))
+					szSubst[1] = c;
+				else
+					szSubst[0] = c;
+				break;
+			}
+			case L'?':
+				if (!(Processor.Mods & xtc_Alt))
+					szSubst[0] = (Processor.Mods & xtc_Shift) ? 0x7F : 0x1F;
+				else
+				{
+					szSubst[0] = 0x1B; szSubst[1] = (Processor.Mods & xtc_Shift) ? 0x3F : 0x2F;
+				}
+				break;
+			}
+			if (szSubst[0])
+				return true;
+		}
+	}
 
 	return false;
 }
