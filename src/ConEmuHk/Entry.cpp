@@ -2694,23 +2694,6 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			}
 		} // CECMD_LANGCHANGE
 		break;
-	case CECMD_PROMPTCMD:
-		{
-			BOOL bProcessed = FALSE;
-			if ((gReadConsoleInfo.InReadConsoleTID || gReadConsoleInfo.LastReadConsoleInputTID)
-				&& (pCmd->DataSize() >= 2*sizeof(wchar_t)))
-			{
-				bProcessed = OnExecutePromptCmd((LPCWSTR)pCmd->wData);
-			}
-
-			lbRc = TRUE;
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
-			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
-			{
-				ppReply->dwData[0] = bProcessed;
-			}
-		}
-		break;
 	case CECMD_STARTSERVER:
 		{
 			int nErrCode = -1;

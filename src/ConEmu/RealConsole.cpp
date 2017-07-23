@@ -1513,7 +1513,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 
 		if (CD && isFar(true))
 		{
-			// Передать макросом!
+			// Change folder using Far Macro
 			cchMax = cchMax*2 + 128;
 			wchar_t* pszMacro = (wchar_t*)malloc(cchMax*sizeof(*pszMacro));
 			if (pszMacro)
@@ -1567,10 +1567,10 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 				cchMax += _tcslen(pszFormat);
 			}
 
-			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_PROMPTCMD, sizeof(CESERVER_REQ_HDR)+sizeof(wchar_t)*cchMax);
-			if (pIn)
+			wchar_t* pszData = (wchar_t*)calloc(cchMax, sizeof(wchar_t));
+			if (pszData)
 			{
-				wchar_t* psz = (wchar_t*)pIn->wData;
+				wchar_t* psz = pszData;
 				if (CD)
 				{
 					_ASSERTE(pszFormat!=NULL); // уже должен был быть подготовлен выше
@@ -1621,33 +1621,14 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 								if ((pszDst+4) < pszEnd)
 								{
 									_ASSERTE(asCmd && (*asCmd != L'"') && (*asCmd != L'/'));
-									LPCWSTR pszText = asCmd;
+									wchar_t* pszCygWin = DupCygwinPath(asCmd, false, GetMntPrefix());
+									LPCWSTR pszText = pszCygWin ? pszCygWin : asCmd;
 
 									*(pszDst++) = L'"';
 
-									if (pszText[0] && (pszText[1] == L':'))
-									{
-										*(pszDst++) = L'/';
-										*(pszDst++) = pszText[0];
-										pszText += 2;
-									}
-									else
-									{
-										// А bash понимает сетевые пути?
-										_ASSERTE(pszText[0] == L'\\' && pszText[1] == L'\\');
-									}
-
 									while (*pszText && (pszDst < pszEnd))
 									{
-										if (*pszText == L'\\')
-										{
-											*(pszDst++) = L'/';
-											pszText++;
-										}
-										else
-										{
-											*(pszDst++) = *(pszText++);
-										}
+										*(pszDst++) = *(pszText++);
 									}
 
 									// Done, quote
@@ -1655,6 +1636,8 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 									{
 										*(pszDst++) = L'"';
 									}
+
+									free(pszCygWin);
 								}
 								break;
 							default:
@@ -1673,13 +1656,8 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 					_wsprintf(psz, SKIPLEN(cchMax) L"%c%s%c", 27, asCmd, L'\n');
 				}
 
-				CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
-				if (pOut && (pOut->DataSize() >= sizeof(DWORD)))
-				{
-					lbRc = (pOut->dwData[0] != 0);
-				}
-				ExecuteFreeResult(pOut);
-				ExecuteFreeResult(pIn);
+				PostString(pszData, wcslen(pszData));
+				free(pszData);
 			}
 		}
 	}
