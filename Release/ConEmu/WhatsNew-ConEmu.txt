@@ -20,6 +20,11 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.7.23
+* gh-1198, gh-1136, gh-1009: XTerm keyboard emulation for Ctrl+key.
+* gh-1200: 'Sync dir' feature was broken for bash.
+
+
 2017.7.9
 * gh-1175: Take into account modifier keys (Ctrl,Alt,Shift) pressed in the hotkey settings field.
 * New environment variable `ConEmuBaseDirShort` contains short path like `C:\PROGRA~1\ConEmu\ConEmu`.
