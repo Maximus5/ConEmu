@@ -5063,7 +5063,7 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
 				if (NextArg(&pszTemp, exe) == 0)
 					pszChangedCmd = lstrmerge(exe, L" /PROFILECD ", pszTemp);
 			}
-			DWORD nFlags = Args.RunAsNetOnly ? LOGON_NETCREDENTIALS_ONLY : LOGON_WITH_PROFILE;
+			DWORD nFlags = (Args.RunAsNetOnly == crb_On) ? LOGON_NETCREDENTIALS_ONLY : LOGON_WITH_PROFILE;
 			lbRc = (CreateProcessWithLogonW(Args.pszUserName, Args.pszDomain, Args.szUserPassword,
 										nFlags, NULL, pszChangedCmd ? pszChangedCmd : psCurCmd,
 										NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE

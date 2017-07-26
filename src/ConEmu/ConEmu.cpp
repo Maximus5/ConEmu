@@ -3248,7 +3248,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 
 		if ((args->RunAsAdministrator != crb_On) && (args->RunAsRestricted != crb_On) && (args->pszUserName && *args->pszUserName))
 		{
-			DWORD nFlags = args->RunAsNetOnly ? LOGON_NETCREDENTIALS_ONLY : LOGON_WITH_PROFILE;
+			DWORD nFlags = (args->RunAsNetOnly == crb_On) ? LOGON_NETCREDENTIALS_ONLY : LOGON_WITH_PROFILE;
 			bStart = CreateProcessWithLogonW(args->pszUserName, args->pszDomain, args->szUserPassword,
 		                           nFlags, NULL, pszCmdLine,
 		                           NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE

@@ -283,7 +283,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 		|| ((pArgs->aRecreate == cra_RecreateTab) && pVCon && pVCon->RCon()->GetUserPwd(&pszUser, &pszDomain, &bResticted)))
 	{
 		nChecked = rbAnotherUser;
-		CheckDlgButton(hDlg, cbRunAsNetOnly, pArgs->RunAsNetOnly ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg, cbRunAsNetOnly, (pArgs->RunAsNetOnly == crb_On) ? BST_CHECKED : BST_UNCHECKED);
 		if (bResticted)
 		{
 			CheckDlgButton(hDlg, cbRunAsRestricted, BST_CHECKED);
