@@ -32,3 +32,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Common.h"
 
 BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out);
+bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc);

@@ -2545,6 +2545,34 @@ bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 }
 
 
+BOOL cmd_StartXTerm(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE;
+
+	LogString("CECMD_STARTXTERM");
+
+	// We must add the PID immediately, otherwise the flag
+	// may be reseted unexpectedly due to "process termination"
+	if (in.DataSize() >= 3*sizeof(DWORD))
+	{
+		MSectionLock CS; CS.Lock(gpSrv->csProc);
+		ProcessAdd(in.dwData[2], &CS);
+	}
+
+	if (!ProcessAltSrvCommand(in, out, lbRc))
+	{
+		// Inform the GUI
+		CESERVER_REQ* pGuiOut = ExecuteGuiCmd(ghConWnd, &in, ghConWnd);
+		ExecuteFreeResult(pGuiOut);
+
+		*out = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR));
+	}
+
+	lbRc = ((*out) != NULL);
+	return lbRc;
+}
+
+
 /// Main routine to process CECMD
 BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 {
@@ -2559,6 +2587,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_CMDFINISHED:
 		{
 			lbRc = cmd_SetSizeXXX_CmdStartedFinished(in, out);
+		} break;
+		case CECMD_STARTXTERM:
+		{
+			lbRc = cmd_StartXTerm(in, out);
 		} break;
 		case CECMD_ATTACH2GUI:
 		{

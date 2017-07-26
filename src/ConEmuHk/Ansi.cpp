@@ -3663,7 +3663,7 @@ void CEAnsi::ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID /*= 0*
 		pIn->dwData[0] = mode;
 		pIn->dwData[1] = value;
 		pIn->dwData[2] = nPID ? nPID : GetCurrentProcessId();
-		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+		CESERVER_REQ* pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
 		ExecuteFreeResult(pIn);
 		ExecuteFreeResult(pOut);
 	}
