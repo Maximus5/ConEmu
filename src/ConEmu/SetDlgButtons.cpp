@@ -785,6 +785,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbCmdTasksAdd:
 			OnBtn_CmdTasksAdd(hDlg, CB, uCheck);
 			break;
+		case cbCmdTasksDup:
+			OnBtn_CmdTasksDup(hDlg, CB, uCheck);
+			break;
 		case cbCmdTasksDel:
 			OnBtn_CmdTasksDel(hDlg, CB, uCheck);
 			break;
@@ -1205,6 +1208,46 @@ void CSetDlgButtons::OnBtn_CmdTasksAdd(HWND hDlg, WORD CB, BYTE uCheck)
 		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
 
 } // cbCmdTasksAdd
+
+
+// cbCmdTasksDup
+void CSetDlgButtons::OnBtn_CmdTasksDup(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbCmdTasksDup);
+
+	// Get the one selected task
+	int *Selected = NULL, iCount = CSetDlgLists::GetListboxSelection(hDlg, lbCmdTasks, Selected);
+	if (iCount != 1 || Selected[0] < 0)
+		return;
+	int iSelected = Selected[0];
+	delete[] Selected;
+	const CommandTasks* pSrc = gpSet->CmdTaskGet(iSelected);
+	if (!pSrc)
+		return;
+
+	iCount = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0);
+	if (iCount < 0)
+		return;
+	// ensure the cell is empty and create new task with the same GuiArgs and Commands
+	if (gpSet->CmdTaskGet(iCount))
+		return;
+	gpSet->CmdTaskSet(iCount, L"", pSrc->pszGuiArgs, pSrc->pszCommands);
+	while (iSelected < (iCount - 1))
+	{
+		gpSet->CmdTaskXch(iCount, iCount - 1);
+		--iCount;
+	}
+
+	CSetPgTasks* pTasksPg;
+	if (gpSetCls->GetPageObj(pTasksPg))
+		pTasksPg->OnInitDialog(hDlg, false);
+
+	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, iCount);
+
+	if (pTasksPg)
+		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
+
+} // cbCmdTasksDup
 
 
 // cbCmdTasksDel

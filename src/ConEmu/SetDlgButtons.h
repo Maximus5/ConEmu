@@ -64,6 +64,7 @@ protected:
 	static void OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CmdTasksAdd(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CmdTasksDel(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_CmdTasksDup(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CmdTasksUpDown(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CmdGroupKey(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_CmdGroupApp(HWND hDlg, WORD CB, BYTE uCheck);
