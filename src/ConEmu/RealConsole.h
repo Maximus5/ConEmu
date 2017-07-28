@@ -471,6 +471,7 @@ class CRealConsole
 		void StopThread(bool abRecreating = false);
 		bool StartStopTermMode(TermModeCommand mode, ChangeTermAction action);
 		void StartStopXTerm(DWORD nPID, bool xTerm);
+		void StartStopXMouse(DWORD nPID, TermMouseMode MouseMode);
 		void StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste);
 		void StartStopAppCursorKeys(DWORD nPID, bool bAppCursorKeys);
 		void PortableStarted(CESERVER_REQ_PORTABLESTARTED* pStarted);
@@ -937,9 +938,10 @@ class CRealConsole
 		//
 		struct TermEmulation
 		{
-			DWORD nCallTermPID; // PID процесса запросившего эмуляцию терминала
-			TermEmulationType Term;
-			bool  bBracketedPaste; // All "pasted" text will be wrapped in `\e[200~ ... \e[201~`
+			DWORD       nCallTermPID; // PID of requested application
+			TermEmulationType   Term; // win32 or xterm
+			bool     bBracketedPaste; // All "pasted" text will be wrapped in `\e[200~ ... \e[201~`
+			TermMouseMode nMouseMode; // mask of enum TermMouseMode
 		} m_Term;
 		struct TermCursor
 		{

@@ -2760,14 +2760,44 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				else
 					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
 				break;
-			case 12:   /* SRM: set echo mode */
+			case 9:    /* X10_MOUSE */
 			case 1000: /* VT200_MOUSE */
 			case 1002: /* BTN_EVENT_MOUSE */
 			case 1003: /* ANY_EVENT_MOUSE */
 			case 1004: /* FOCUS_EVENT_MOUSE */
 			case 1005: /* Xterm's UTF8 encoding for mouse positions */
 			case 1006: /* Xterm's CSI-style mouse encoding */
-				// xmux/screen?
+			case 1015: /* Urxvt's CSI-style mouse encoding */
+				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
+				{
+					static DWORD LastMode = 0;
+					TermMouseMode ModeMask = (Code.ArgV[0] == 9) ? tmm_X10
+						: (Code.ArgV[0] == 1000) ? tmm_VT200
+						: (Code.ArgV[0] == 1002) ? tmm_BTN
+						: (Code.ArgV[0] == 1003) ? tmm_ANY
+						: (Code.ArgV[0] == 1004) ? tmm_FOCUS
+						: (Code.ArgV[0] == 1005) ? tmm_UTF8
+						: (Code.ArgV[0] == 1006) ? tmm_XTERM
+						: (Code.ArgV[0] == 1000) ? tmm_URXVT
+						: tmm_None;
+					DWORD Mode = (Code.Action == L'h')
+						? (LastMode | ModeMask)
+						: (LastMode & ~ModeMask);
+					LastMode = Mode;
+					ChangeTermMode(tmc_MouseMode, Mode);
+				}
+				else
+					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
+				break;
+			case 12:   /* SRM: set echo mode */
+				// tmux/screen?
+				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
+					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored); // ignored for now
+				else
+					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
+				break;
+			case 7786: /* 'V': Mousewheel reporting */
+			case 7787: /* 'W': Application mousewheel mode */
 				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
 					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored); // ignored for now
 				else

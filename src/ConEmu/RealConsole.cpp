@@ -6250,6 +6250,7 @@ void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
 	{
 		m_Term.nCallTermPID = nPID;
 		m_Term.Term = xTerm ? te_xterm : te_win32;
+		m_Term.nMouseMode = tmm_None;
 	}
 
 	if (isActive(false) && mp_ConEmu->mp_Status)
@@ -6257,6 +6258,18 @@ void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
 
 	if (ghOpWnd && isActive(false))
 		gpSetCls->UpdateConsoleMode(this);
+}
+
+void CRealConsole::StartStopXMouse(DWORD nPID, TermMouseMode MouseMode)
+{
+	if (gpSet->isLogging())
+	{
+		wchar_t szInfo[100];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"StartStopXMouse(nPID=%u, Mode=0x%02X)", nPID, (DWORD)MouseMode);
+		LogString(szInfo);
+	}
+
+	m_Term.nMouseMode = MouseMode;
 }
 
 void CRealConsole::StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste)
@@ -7047,17 +7060,24 @@ bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
 		{
 		case KEY_EVENT:
 			// Key need to be translated?
-			bProcessed = mp_XTerm->GetSubstitute(r.Event.KeyEvent, szSubstKeys);
-			// But only key presses are sent to terminal
-			bSend = (bProcessed && r.Event.KeyEvent.bKeyDown && szSubstKeys[0]);
-			if (r.Event.KeyEvent.wRepeatCount)
-				nRepeatCount = r.Event.KeyEvent.wRepeatCount;
+			{
+				bProcessed = mp_XTerm->GetSubstitute(r.Event.KeyEvent, szSubstKeys);
+				// But only key presses are sent to terminal
+				bSend = (bProcessed && r.Event.KeyEvent.bKeyDown && szSubstKeys[0]);
+				if (r.Event.KeyEvent.wRepeatCount)
+					nRepeatCount = r.Event.KeyEvent.wRepeatCount;
+			}
 			break; // KEY_EVENT
 
 		case MOUSE_EVENT:
 			// Mouse event need to be translated?
-			bProcessed = mp_XTerm->GetSubstitute(r.Event.MouseEvent, szSubstKeys);
-			bSend = (bProcessed && szSubstKeys[0]);
+			{
+				INPUT_RECORD rc = r;
+				// xTerm requires "visible" coordinates
+				rc.Event.MouseEvent.dwMousePosition = BufferToScreen(r.Event.MouseEvent.dwMousePosition);
+				bProcessed = mp_XTerm->GetSubstitute(rc.Event.MouseEvent, m_Term.nMouseMode, szSubstKeys);
+				bSend = (bProcessed && szSubstKeys[0]);
+			}
 			break; // MOUSE_EVENT
 		}
 

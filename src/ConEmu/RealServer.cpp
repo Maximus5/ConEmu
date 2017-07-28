@@ -1416,6 +1416,9 @@ CESERVER_REQ* CRealServer::cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 		_ASSERTE(value == te_win32 || value == te_xterm);
 		mp_RCon->StartStopXTerm(nPID, (value != te_win32));
 		break;
+	case tmc_MouseMode:
+		mp_RCon->StartStopXMouse(nPID, (TermMouseMode)value);
+		break;
 	case tmc_BracketedPaste:
 		mp_RCon->StartStopBracketedPaste(nPID, (value != 0));
 		break;

@@ -3470,6 +3470,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	nModifierNoEmptyPressed = gpConEmu->isSelectionModifierPressed(false);
 
 	if (bSelAllowed && gpSet->isCTSIntelligent
+		&& !mp_RCon->m_Term.nMouseMode
 		&& !isSelectionPresent()
 		&& !nModifierPressed)
 	{
@@ -3610,7 +3611,8 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		if (((gpSet->isCTSRBtnAction == 2/*Paste*/) || ((gpSet->isCTSRBtnAction == 3/*Auto*/) && !isSelectionPresent()))
 				&& (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONUP))
 		{
-			if (gpSet->IsModifierPressed(vkCTSVkAct, !mp_RCon->isFar()))
+			bool bAllowAutoPaste = !mp_RCon->isFar() && !mp_RCon->m_Term.nMouseMode;
+			if (gpSet->IsModifierPressed(vkCTSVkAct, bAllowAutoPaste))
 			{
 				if (messg == WM_RBUTTONUP)
 				{

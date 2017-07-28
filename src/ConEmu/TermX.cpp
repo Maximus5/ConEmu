@@ -44,6 +44,8 @@ TermX::TermX()
 void TermX::Reset()
 {
 	AppCursorKeys = false;
+	MouseButtons = 0;
+	LastMousePos = MakeCoord(-1,-1);
 }
 
 bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
@@ -335,7 +337,7 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 	return false;
 }
 
-bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, wchar_t (&szSubst)[16])
+bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, wchar_t (&szSubst)[16])
 {
 	if (m.dwEventFlags & MOUSE_WHEELED)
 	{
@@ -363,6 +365,51 @@ bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, wchar_t (&szSubst)[16])
 				wcscpy_c(szSubst, L"\033[65~"); // <S-MouseUp>
 			return true;
 		}
+	}
+
+	if (!MouseMode)
+		return false;
+
+	BYTE NewBtns = (m.dwButtonState & 0x1F);
+	if ((NewBtns != MouseButtons)
+		|| ((LastMousePos != m.dwMousePosition)
+			&& ((MouseMode & tmm_ANY)
+				|| ((MouseMode & tmm_BTN) && NewBtns)))
+		)
+	{
+		wcscpy_c(szSubst, L"\033[M");
+		if (NewBtns & FROM_LEFT_1ST_BUTTON_PRESSED)
+			szSubst[3] = 0; // MB1 pressed
+		else if (NewBtns & FROM_LEFT_2ND_BUTTON_PRESSED)
+			szSubst[3] = 1; // MB2 pressed
+		else if (NewBtns & RIGHTMOST_BUTTON_PRESSED)
+			szSubst[3] = 2; // MB3 pressed
+		else if (NewBtns & FROM_LEFT_3RD_BUTTON_PRESSED)
+			szSubst[3] = 64; // MB4 pressed
+		else if (NewBtns & FROM_LEFT_4TH_BUTTON_PRESSED)
+			szSubst[3] = 64 + 1; // MB5 pressed
+		else
+			szSubst[3] = 3; // release
+		if (m.dwControlKeyState & SHIFT_PRESSED)
+			szSubst[3] |= 4;
+		if (m.dwControlKeyState & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED))
+			szSubst[3] |= 8;
+		if (m.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED))
+			szSubst[3] |= 16;
+		szSubst[3] += 32;
+
+		// #XTERM_MOUSE Unfortunately, szSubst is too short to pass "missed" coordinates
+		// Like we do for Far events, MouseMove with RBtn pressed in tmm_ANY|tmm_BTN
+		// modes would send all intermediate coordinates between two events
+
+		// And coords. Must be in "screen" coordinate space: (1,1) is upper left character position
+		szSubst[4] = klMin(255, m.dwMousePosition.X + 1 + 32); // no way to pass coordinate
+		szSubst[5] = klMin(255, m.dwMousePosition.Y + 1 + 32); // larger than (255 - 32)
+		szSubst[6] = 0;
+
+		MouseButtons = NewBtns;
+		LastMousePos = m.dwMousePosition;
+		return true;
 	}
 
 	return false;

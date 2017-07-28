@@ -369,6 +369,7 @@ enum TermModeCommand
 	tmc_BracketedPaste = 1,
 	tmc_AppCursorKeys = 2,
 	tmc_CursorShape = 3,
+	tmc_MouseMode = 4,
 };
 
 // tmc_Keyboard: used for control keys (arrows e.g.) translation
@@ -388,6 +389,19 @@ enum TermCursorShapes
 	tcs_VBarBlink = 5,
 	tcs_VBarSteady = 6,
 	tcs_Last
+};
+
+enum TermMouseMode
+{
+	tmm_None    = 0,
+	tmm_X10     = 0x0001,
+	tmm_VT200   = 0x0002,
+	tmm_BTN     = 0x0004, /* BTN_EVENT_MOUSE */
+	tmm_ANY     = 0x0008, /* ANY_EVENT_MOUSE */
+	tmm_FOCUS   = 0x0010, /* FOCUS_EVENT_MOUSE */
+	tmm_UTF8    = 0x0020, /* Xterm's UTF8 encoding for mouse positions */
+	tmm_XTERM   = 0x0040, /* Xterm's CSI-style mouse encoding */
+	tmm_URXVT   = 0x0080, /* Urxvt's CSI-style mouse encoding */
 };
 
 //#define CONEMUMAPPING    L"ConEmuPluginData%u"
