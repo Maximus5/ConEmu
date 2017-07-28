@@ -2131,6 +2131,8 @@ static void CreateBashTask()
 {
 	AppFoundList App;
 
+	bool bash_found = false;
+
 	// New Windows 10 feature (build 14316 and higher)
 	//   User have to
 	//   a) Turn on Windows' feature ‘Windows Subsystem for Linux’
@@ -2146,11 +2148,30 @@ static void CreateBashTask()
 		CEStr lsExpanded(ExpandEnvStr(BashOnUbuntu));
 		if (FileExists(lsExpanded))
 		{
-			App.Add(L"Bash::bash",
-				L" -cur_console:pm:/mnt", // "--login -i" is not required yet
-				NULL /*L"chcp utf8 & "*/, // doesn't work either. can't type Russian or international characters.
+			// Prefer to run WSL via connector+wsl_bridge
+			const wchar_t* reqFiles[] = {L"conemu-msys2-64.exe", L"wsl\\msys-2.0.dll", L"wsl\\wslbridge.exe", L"wsl\\wslbridge-backend"};
+			bool use_bridge = true;
+			CEStr szBaseDir(ExpandEnvStr(L"%ConEmuBaseDir%"));
+			for (size_t i = 0; i < countof(reqFiles); ++i)
+			{
+				DWORD dwSubsystem = 0, dwBits = 0, FileAttrs = 0;
+				CEStr lsPath(szBaseDir, L"\\", reqFiles[i]);
+				if (!FileExists(lsPath))
+				{
+					use_bridge = false;
+					break;
+				}
+				// for Windows binaries
+				if (wcschr(lsPath, L'.') == NULL)
+					continue;
+				if (!GetImageSubsystem(lsPath, dwSubsystem, dwBits, FileAttrs) || (dwBits != 64))
+					use_bridge = false;
+			}
+			bash_found |= App.Add(L"Bash::bash",
+				use_bridge ? L" --wsl -cur_console:pm:/mnt" : L" -cur_console:pm:/mnt", // "--login -i" is not required yet
+				use_bridge ? L"set \"PATH=%ConEmuBaseDirShort%\\wsl;%PATH%\" & " : NULL,
 				L"-icon \"%USERPROFILE%\\AppData\\Local\\lxss\\bash.ico\"",
-				BashOnUbuntu,
+				use_bridge ? L"%ConEmuBaseDirShort%\\conemu-msys2-64.exe" : BashOnUbuntu,
 				NULL);
 		}
 	}
@@ -2163,13 +2184,14 @@ static void CreateBashTask()
 			L"%ProgramFiles%\\Git\\git-cmd.exe", L"%ProgramW6432%\\Git\\git-cmd.exe",
 			WIN3264TEST(NULL,L"%ProgramFiles(x86)%\\Git\\git-cmd.exe"),
 			NULL);
-	App.Add(L"Bash::GitSDK bash",
+	bash_found |= bGitBashExist;
+	bash_found |= App.Add(L"Bash::GitSDK bash",
 		L" --no-cd --command=/usr/bin/bash.exe -l -i", NULL, L"git",
 		L"\\GitSDK\\git-cmd.exe",
 		NULL);
 	// From msysGit
 	if (!bGitBashExist) // Skip if `git-cmd.exe` was already found
-		App.Add(L"Bash::Git bash",
+		bash_found |= App.Add(L"Bash::Git bash",
 			L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL,  L"msys1",
 			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\bash.exe",
 			L"%ProgramFiles%\\Git\\bin\\bash.exe", L"%ProgramW6432%\\Git\\bin\\bash.exe",
@@ -2179,28 +2201,29 @@ static void CreateBashTask()
 	// HKLM\SOFTWARE\Wow6432Node\Cygwin\setup\rootdir
 	// HKLM\SOFTWARE\Cygwin\setup\rootdir
 	// HKCU\Software\Cygwin\setup\rootdir
-	App.Add(L"Bash::CygWin bash",
+	bash_found |= App.Add(L"Bash::CygWin bash",
 		L" --login -i -new_console:m:/cygdrive -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\Cygwin.ico\"", L"set CHERE_INVOKING=1 & ", L"cygwin",
 		L"[SOFTWARE\\Cygwin\\setup:rootdir]\\bin\\bash.exe",
 		L"\\CygWin\\bin\\bash.exe", NULL);
 	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
-	App.Add(L"Bash::MinGW bash",
+	bash_found |= App.Add(L"Bash::MinGW bash",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\msys.ico\"", L"set CHERE_INVOKING=1 & ", L"msys1",
 		L"\\MinGW\\msys\\1.0\\bin\\bash.exe", NULL);
 	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
 	// MSys2 project: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MSYS2 32bit'
-	App.Add(L"Bash::Msys2-64",
+	bash_found |= App.Add(L"Bash::Msys2-64",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", L"msys64",
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 64bit:InstallLocation]\\usr\\bin\\bash.exe",
 		L"msys64\\usr\\bin\\bash.exe",
 		NULL);
-	App.Add(L"Bash::Msys2-32",
+	bash_found |= App.Add(L"Bash::Msys2-32",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", L"msys32",
 		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 32bit:InstallLocation]\\usr\\bin\\bash.exe",
 		L"msys32\\usr\\bin\\bash.exe",
 		NULL);
 	// Last chance for bash
-	App.Add(L"Bash::bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"bash.exe", NULL);
+	if (!bash_found)
+		App.Add(L"Bash::bash", L" --login -i", L"set CHERE_INVOKING=1 & ", NULL, L"bash.exe", NULL);
 
 	// Force connector
 	CEStr szBaseDir(ExpandEnvStr(L"%ConEmuBaseDir%"));
