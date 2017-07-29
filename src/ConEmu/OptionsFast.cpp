@@ -957,32 +957,90 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 	{
 		// L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\bash.exe",
 		//   "InstallLocation"="C:\\Utils\\Lans\\GIT\\"
-		CEStr lsBuf, lsVal;
+		CEStr lsBuf, lsVal, lsValName;
 		lsBuf.Set(asSearchPath+1);
 		wchar_t *pszFile = wcschr(lsBuf.ms_Val, L']');
 		if (pszFile)
 		{
-			*(pszFile++) = 0;
-			wchar_t* pszValName = wcsrchr(lsBuf.ms_Val, L':');
-			if (pszValName) *(pszValName++) = 0;
+			MArray<wchar_t*> RegFiles;
+
 			HKEY roots[] = {HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
 			DWORD bits[] = {KEY_WOW64_64KEY, KEY_WOW64_32KEY, 0};
-			// Evaluate HKLM, HKCU, 32bit and 64bit in all variants
-			for (size_t r = 0; r < countof(roots); ++r)
+
+			*(pszFile++) = 0;
+			wchar_t* pszValName = wcsrchr(lsBuf.ms_Val, L':');
+			if (pszValName)
 			{
-				for (size_t b = IsWindows64() ? 0 : 1; b < countof(bits); ++b)
+				*pszValName = 0;
+				lsValName.Set(pszValName+1);
+
+				pszValName = wcsrchr(lsBuf.ms_Val, L':');
+				if (pszValName && *(pszValName - 1) == L'*' && *(pszValName - 2) == L'\\')
 				{
 					// #DEF_TASK L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*:DisplayName=MSYS2 64bit:InstallLocation]\\usr\\bin\\bash.exe",
-					if (RegGetStringValue(roots[r], lsBuf.ms_Val, pszValName, lsVal, bits[b]) > 0)
+					struct SearchImpl
 					{
-						rsFound.Attach(JoinPath(lsVal, pszFile));
-						if (FileExists(rsFound))
+						LPCWSTR pszValName, pszFile;
+						CEStr lsCheckName, lsCheckValue;
+						MArray<wchar_t*>* RegFiles;
+
+						static bool WINAPI Enum(HKEY hk, LPCWSTR pszSubkeyName, LPARAM lParam)
 						{
-							foundFiles.Add(rsFound, NULL);
-							bFound = true;
-							// #DEF_TASK Continue enumration
+							SearchImpl* i = (SearchImpl*)lParam;
+							CEStr lsPath;
+							if (RegGetStringValue(hk, NULL, i->lsCheckName, lsPath) <= 0)
+								return true;
+							if (lsPath.Compare(i->lsCheckValue) != 0)
+								return true;
+							if (RegGetStringValue(hk, NULL, i->pszValName, lsPath) > 0)
+							{
+								i->RegFiles->push_back(JoinPath(lsPath, i->pszFile));
+							}
+							return true;
+						}
+					} impl;
+					impl.RegFiles = &RegFiles;
+					impl.pszValName = lsValName;
+					impl.pszFile = pszFile;
+
+					*(pszValName - 2) = 0;
+					impl.lsCheckName.Set(++pszValName);
+					pszValName = wcschr(impl.lsCheckName.ms_Val, L'=');
+					if (pszValName)
+					{
+						*pszValName = 0;
+						impl.lsCheckValue.Set(++pszValName);
+
+						for (size_t r = 0; r < countof(roots); ++r)
+						{
+							RegEnumKeys(roots[r], lsBuf, SearchImpl::Enum, (LPARAM)&impl);
 						}
 					}
+				}
+				else
+				{
+					// Evaluate HKLM, HKCU, 32bit and 64bit in all variants
+					for (size_t r = 0; r < countof(roots); ++r)
+					{
+						for (size_t b = IsWindows64() ? 0 : 1; b < countof(bits); ++b)
+						{
+							if (RegGetStringValue(roots[r], lsBuf, lsValName, lsVal, bits[b]) > 0)
+							{
+								RegFiles.push_back(JoinPath(lsVal, pszFile));
+							}
+						}
+					}
+				}
+			}
+
+			// When keys population is done
+			for (INT_PTR i = 0; i < RegFiles.size(); ++i)
+			{
+				rsFound.Attach(STD_MOVE(RegFiles[i]));
+				if (FileExists(rsFound))
+				{
+					foundFiles.Add(rsFound, NULL);
+					bFound = true;
 				}
 			}
 		}
@@ -2304,14 +2362,16 @@ static void CreateBashTask()
 		L"\\MinGW\\msys\\1.0\\bin\\bash.exe", NULL);
 	//{L"MinGW mintty", L"\\MinGW\\msys\\1.0\\bin\\mintty.exe", L" -"},
 	// MSys2 project: 'HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\MSYS2 32bit'
+	// Perhaps for Msys2 we shall use "sh.exe" instead of "bash.exe"?
+	//   the "bash.exe" may be is used for legacy emulation?
 	bash_found |= App.Add(L"Bash::Msys2-64",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", L"msys64",
-		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 64bit:InstallLocation]\\usr\\bin\\bash.exe",
+		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*:DisplayName=MSYS2 64bit:InstallLocation]\\usr\\bin\\bash.exe",
 		L"msys64\\usr\\bin\\bash.exe",
 		NULL);
 	bash_found |= App.Add(L"Bash::Msys2-32",
 		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\..\\msys2.ico\"", L"set CHERE_INVOKING=1 & ", L"msys32",
-		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MSYS2 32bit:InstallLocation]\\usr\\bin\\bash.exe",
+		L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*:DisplayName=MSYS2 32bit:InstallLocation]\\usr\\bin\\bash.exe",
 		L"msys32\\usr\\bin\\bash.exe",
 		NULL);
 	// Last chance for bash
