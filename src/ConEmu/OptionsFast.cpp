@@ -891,19 +891,63 @@ static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asComman
 	gpSet->CmdTaskSet(iCreatIdx++, lsName, asGuiArg, asCommands, aFlags);
 }
 
+struct FoundFile
+{
+	wchar_t* rsFound;
+	wchar_t* rsOptionalFull;
+	bool bNeedQuot;
+};
+
+class FoundFiles : public MArray<FoundFile>
+{
+public:
+	FoundFiles()
+	{
+	}
+
+	~FoundFiles()
+	{
+		for (INT_PTR i = 0; i < size(); ++i)
+		{
+			FoundFile& f = (*this)[i];
+			SafeFree(f.rsFound);
+			SafeFree(f.rsOptionalFull);
+		}
+		this->eraseall();
+	}
+
+	void Add(const wchar_t* asFound, const wchar_t* asOptionalFull)
+	{
+		if (!asFound || !*asFound)
+		{
+			_ASSERTE(asFound && *asFound);
+			return;
+		}
+		for (INT_PTR i = 0; i < size(); ++i)
+		{
+			FoundFile& f = (*this)[i];
+			if ((lstrcmpi(f.rsFound, asFound) == 0)
+				|| (f.rsOptionalFull && asOptionalFull && (lstrcmpi(f.rsOptionalFull, asOptionalFull) == 0)))
+				return;
+		}
+		FoundFile ff = {lstrdup(asFound), (asOptionalFull && *asOptionalFull) ? lstrdup(asOptionalFull) : NULL};
+		ff.bNeedQuot = IsQuotationNeeded(ff.rsOptionalFull ? ff.rsOptionalFull : ff.rsFound);
+		this->push_back(ff);
+	}
+};
+
 // Search on asFirstDrive and all (other) fixed drive letters
 // asFirstDrive may be letter ("C:") or network (\\server\share)
 // asSearchPath is path to executable (\cygwin\bin\bash.exe)
-static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFound, bool& bNeedQuot, CEStr& rsOptionalFull)
+static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFiles& foundFiles)
 {
+	_ASSERTE(foundFiles.size() == 0);
 	bool bFound = false;
 	wchar_t* pszExpanded = NULL;
 	wchar_t szDrive[4]; // L"C:"
 	CEStr szTemp;
 
-	bNeedQuot = false;
-
-	rsOptionalFull.Empty();
+	CEStr rsFound;
 
 	if (!asSearchPath || !*asSearchPath)
 		goto wrap;
@@ -921,13 +965,24 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 			*(pszFile++) = 0;
 			wchar_t* pszValName = wcsrchr(lsBuf.ms_Val, L':');
 			if (pszValName) *(pszValName++) = 0;
-			if (RegGetStringValue(NULL, lsBuf.ms_Val, pszValName, lsVal) > 0)
+			HKEY roots[] = {HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
+			DWORD bits[] = {KEY_WOW64_64KEY, KEY_WOW64_32KEY, 0};
+			// Evaluate HKLM, HKCU, 32bit and 64bit in all variants
+			for (size_t r = 0; r < countof(roots); ++r)
 			{
-				rsFound.Attach(JoinPath(lsVal, pszFile));
-				if (FileExists(rsFound))
+				for (size_t b = IsWindows64() ? 0 : 1; b < countof(bits); ++b)
 				{
-					bNeedQuot = IsQuotationNeeded(rsFound);
-					bFound = true;
+					// #DEF_TASK L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*:DisplayName=MSYS2 64bit:InstallLocation]\\usr\\bin\\bash.exe",
+					if (RegGetStringValue(roots[r], lsBuf.ms_Val, pszValName, lsVal, bits[b]) > 0)
+					{
+						rsFound.Attach(JoinPath(lsVal, pszFile));
+						if (FileExists(rsFound))
+						{
+							foundFiles.Add(rsFound, NULL);
+							bFound = true;
+							// #DEF_TASK Continue enumration
+						}
+					}
 				}
 			}
 		}
@@ -940,9 +995,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 		pszExpanded = ExpandEnvStr(asSearchPath);
 		if (pszExpanded && FileExists(pszExpanded))
 		{
-			bNeedQuot = IsQuotationNeeded(pszExpanded);
-			rsOptionalFull.Set(pszExpanded);
-			rsFound.Set(asSearchPath);
+			foundFiles.Add(asSearchPath, pszExpanded);
 			bFound = true;
 		}
 		goto wrap;
@@ -954,15 +1007,13 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 		if (apiSearchPath(NULL, asSearchPath, NULL, szTemp))
 		{
 			// OK, create task with just a name of exe file
-			bNeedQuot = IsQuotationNeeded(szTemp);
-			rsOptionalFull.Set(szTemp);
-			rsFound.Set(asSearchPath);
+			foundFiles.Add(asSearchPath, szTemp);
 			bFound = true;
 		}
 		// Search in [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
 		else if (SearchAppPaths(asSearchPath, rsFound, false/*abSetPath*/))
 		{
-			bNeedQuot = IsQuotationNeeded(rsFound);
+			foundFiles.Add(rsFound, NULL);
 			bFound = true;
 		}
 		goto wrap;
@@ -972,8 +1023,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 	if (IsFilePath(asSearchPath, true)
 		&& FileExists(asSearchPath))
 	{
-		bNeedQuot = IsQuotationNeeded(asSearchPath);
-		rsFound.Set(asSearchPath);
+		foundFiles.Add(asSearchPath, NULL);
 		bFound = true;
 		goto wrap;
 	}
@@ -985,7 +1035,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 		rsFound.Attach(JoinPath(asFirstDrive, asSearchPath));
 		if (FileExists(rsFound))
 		{
-			bNeedQuot = IsQuotationNeeded(rsFound);
+			foundFiles.Add(rsFound, NULL);
 			bFound = true;
 			goto wrap;
 		}
@@ -1002,7 +1052,7 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 		rsFound.Attach(JoinPath(szDrive, asSearchPath));
 		if (FileExists(rsFound))
 		{
-			bNeedQuot = IsQuotationNeeded(rsFound);
+			foundFiles.Add(rsFound, NULL);
 			bFound = true;
 			goto wrap;
 		}
@@ -1010,7 +1060,8 @@ static bool FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, CEStr& rsFo
 
 wrap:
 	SafeFree(pszExpanded);
-	return bFound;
+	_ASSERTE(bFound == (foundFiles.size() != 0));
+	return foundFiles.size();
 }
 
 class CVarDefs
@@ -1249,35 +1300,40 @@ public:
 		bool bCreated = false;
 		va_list argptr;
 		va_start(argptr, asExePath);
-		CEStr szFound, szArgs, szOptFull;
+		CEStr szArgs;
 		wchar_t szUnexpand[MAX_PATH+32];
 
 		LPCWSTR pszExePathNext = asExePath;
 		while (pszExePathNext)
 		{
-			bool bNeedQuot = false;
 			LPCWSTR pszExePath = pszExePathNext;
 			pszExePathNext = va_arg( argptr, LPCWSTR );
 
 			// Return expanded env string
-			TODO("Repace with list of 'drives'");
-			if (!FindOnDrives(szConEmuDrive, pszExePath, szFound, bNeedQuot, szOptFull))
+			FoundFiles files;
+			if (!FindOnDrives(szConEmuDrive, pszExePath, files))
 				continue;
-
-			LPCWSTR pszFound = szFound;
-			// Don't use PathUnExpandEnvStrings because it do not do what we need
-			if (UnExpandEnvStrings(szFound, szUnexpand, countof(szUnexpand)) && (lstrcmp(szFound, szUnexpand) != 0))
+			for (INT_PTR i = 0; i < files.size(); ++i)
 			{
-				pszFound = szUnexpand;
-			}
+				FoundFile& f = files[i];
+				LPCWSTR szFound = f.rsFound;
+				LPCWSTR szOptFull = f.rsOptionalFull;
 
-			if (AddAppPath(asName, pszFound, szOptFull.IsEmpty() ? szFound : szOptFull, bNeedQuot, asArgs, asPrefix, asGuiArg) >= 0)
-			{
-				bCreated = true;
-
-				if (Trim())
+				LPCWSTR pszFound = szFound;
+				// Don't use PathUnExpandEnvStrings because it do not do what we need
+				if (UnExpandEnvStrings(szFound, szUnexpand, countof(szUnexpand)) && (lstrcmp(szFound, szUnexpand) != 0))
 				{
-					break;
+					pszFound = szUnexpand;
+				}
+
+				if (AddAppPath(asName, pszFound, (szOptFull && *szOptFull) ? szOptFull : szFound, f.bNeedQuot, asArgs, asPrefix, asGuiArg) >= 0)
+				{
+					bCreated = true;
+
+					if (Trim())
+					{
+						break;
+					}
 				}
 			}
 		}
@@ -1627,8 +1683,15 @@ public:
 		// Find in %Path% and on drives
 		for (i = 0; FarExe[i]; i++)
 		{
-			if (FindOnDrives(szConEmuDrive, FarExe[i], szFound, bNeedQuot, szOptFull))
-				AddAppPath(L"Far", szFound, szOptFull.IsEmpty() ? NULL : szOptFull.ms_Val, true);
+			FoundFiles files;
+			if (FindOnDrives(szConEmuDrive, FarExe[i], files))
+			{
+				for (INT_PTR i = 0; i < files.size(); ++i)
+				{
+					const FoundFile& f = files[i];
+					AddAppPath(L"Far", f.rsFound, f.rsOptionalFull, true);
+				}
+			}
 		}
 
 		// [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
@@ -2119,7 +2182,8 @@ static void CreateHelperTasks()
 
 	// Type ANSI color codes
 	// cmd /k type "%ConEmuBaseDir%\Addons\AnsiColors16t.ans" -cur_console:n
-	if (FindOnDrives(NULL, L"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans", szFound, bNeedQuot, szOptFull))
+	FoundFiles files;
+	if (FindOnDrives(NULL, L"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans", files))
 	{
 		// Don't use 'App.Add' here, we are creating "cmd.exe" tasks directly
 		CreateDefaultTask(L"Helper::Show ANSI colors", L"", L"cmd.exe /k type \"%ConEmuBaseDir%\\Addons\\AnsiColors16t.ans\" -cur_console:n");
@@ -2208,6 +2272,7 @@ static void CreateBashTask()
 	bool bGitBashExist = // No sense to add both `git-cmd.exe` and `bin/bash.exe`
 		App.Add(L"Bash::Git bash",
 			L" --no-cd --command=/usr/bin/bash.exe -l -i", NULL, L"git",
+			L"[SOFTWARE\\GitForWindows:InstallPath]\\git-cmd.exe",
 			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\git-cmd.exe",
 			L"%ProgramFiles%\\Git\\git-cmd.exe", L"%ProgramW6432%\\Git\\git-cmd.exe",
 			WIN3264TEST(NULL,L"%ProgramFiles(x86)%\\Git\\git-cmd.exe"),
@@ -2218,7 +2283,7 @@ static void CreateBashTask()
 		L"\\GitSDK\\git-cmd.exe",
 		NULL);
 	// From msysGit
-	if (!bGitBashExist) // Skip if `git-cmd.exe` was already found
+	if (!bGitBashExist) // Skip if `git-cmd.exe` was already found (from MSYS2 or Git-for-Windows)
 		bash_found |= App.Add(L"Bash::Git bash",
 			L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\etc\\git.ico\"", NULL,  L"msys1",
 			L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Git_is1:InstallLocation]\\bin\\bash.exe",
