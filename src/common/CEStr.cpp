@@ -276,6 +276,7 @@ LPCWSTR CEStr::AttachInt(wchar_t*& asPtr)
 		}
 
 		ms_Val = asPtr;
+		asPtr = NULL;
 		mn_MaxCount = 1 + (INT_PTR)len;
 	}
 
