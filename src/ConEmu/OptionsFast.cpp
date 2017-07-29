@@ -2149,29 +2149,57 @@ static void CreateBashTask()
 		if (FileExists(lsExpanded))
 		{
 			// Prefer to run WSL via connector+wsl_bridge
-			const wchar_t* reqFiles[] = {L"conemu-msys2-64.exe", L"wsl\\msys-2.0.dll", L"wsl\\wslbridge.exe", L"wsl\\wslbridge-backend"};
-			bool use_bridge = true;
+			bool use_bridge = false;
+			CEStr lsConnector;
+			const wchar_t* bridgeFiles[] = {L"wsl\\wslbridge.exe", L"wsl\\wslbridge-backend"};
+			const wchar_t* apiFiles[] = {L"wsl\\msys-2.0.dll", L"wsl\\cygwin1.dll"};
+			const wchar_t* connFiles32[] = {L"conemu-msys2-32.exe", L"conemu-cyg-32.exe"};
+			const wchar_t* connFiles64[] = {L"conemu-msys2-64.exe", L"conemu-cyg-64.exe"};
 			CEStr szBaseDir(ExpandEnvStr(L"%ConEmuBaseDir%"));
-			for (size_t i = 0; i < countof(reqFiles); ++i)
+			// Check for wslbridge files
+			DWORD bridge_bits = 0, bridge_api = -1;
+			DWORD dwSubsystem = 0, dwBits = 0, FileAttrs = 0;
+			for (size_t i = 0; i < countof(bridgeFiles); ++i)
 			{
-				DWORD dwSubsystem = 0, dwBits = 0, FileAttrs = 0;
-				CEStr lsPath(szBaseDir, L"\\", reqFiles[i]);
+				CEStr lsPath(szBaseDir, L"\\", bridgeFiles[i]);
 				if (!FileExists(lsPath))
 				{
-					use_bridge = false;
 					break;
 				}
 				// for Windows binaries
-				if (wcschr(lsPath, L'.') == NULL)
-					continue;
-				if (!GetImageSubsystem(lsPath, dwSubsystem, dwBits, FileAttrs) || (dwBits != 64))
-					use_bridge = false;
+				else if (wcschr(lsPath, L'.') != NULL)
+				{
+					if (GetImageSubsystem(lsPath, dwSubsystem, dwBits, FileAttrs) && (dwBits == 64 || dwBits == 32))
+						bridge_bits = dwBits;
+				}
 			}
+			// wslbridge.exe found?
+			if (bridge_bits == 32 || bridge_bits == 64)
+			{
+				// Check for appropriate API (cygwin1 or msys2)
+				for (size_t i = 0; i < countof(apiFiles); ++i)
+				{
+					CEStr lsPath(szBaseDir, L"\\", apiFiles[i]);
+					if (GetImageSubsystem(lsPath, dwSubsystem, dwBits, FileAttrs) && (dwBits == bridge_bits))
+					{
+						LPCWSTR pszConnectorName = (dwBits == 32) ? connFiles32[i] : connFiles64[i];
+						lsConnector.Attach(JoinPath(szBaseDir, pszConnectorName));
+						if (FileExists(lsConnector))
+						{
+							bridge_api = (DWORD)i;
+							use_bridge = true;
+							lsConnector.Attach(JoinPath(L"%ConEmuBaseDirShort%", pszConnectorName));
+						}
+						break;
+					}
+				}
+			}
+			// Create the task
 			bash_found |= App.Add(L"Bash::bash",
 				use_bridge ? L" --wsl -cur_console:pm:/mnt" : L" -cur_console:pm:/mnt", // "--login -i" is not required yet
 				use_bridge ? L"set \"PATH=%ConEmuBaseDirShort%\\wsl;%PATH%\" & " : NULL,
 				L"-icon \"%USERPROFILE%\\AppData\\Local\\lxss\\bash.ico\"",
-				use_bridge ? L"%ConEmuBaseDirShort%\\conemu-msys2-64.exe" : BashOnUbuntu,
+				use_bridge ? lsConnector.ms_Val : BashOnUbuntu,
 				NULL);
 		}
 	}
