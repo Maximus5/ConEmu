@@ -3076,6 +3076,13 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					// Something strange and unknown... (received from ssh)
 					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
 					break;
+				case 312:
+				case 315:
+				case 414:
+				case 3130:
+					// Something strange and unknown... (received from vim on WSL)
+					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
+					break;
 				default:
 					DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
 				}

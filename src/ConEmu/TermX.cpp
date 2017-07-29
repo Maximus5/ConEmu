@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include "../common/MStrSafe.h"
 #include "TermX.h"
 
 #define X_CTRL(c) ((c) & 0x1F)
@@ -339,7 +340,8 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 
 bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, wchar_t (&szSubst)[16])
 {
-	if (m.dwEventFlags & MOUSE_WHEELED)
+	if ((m.dwEventFlags & MOUSE_WHEELED)
+		&& !MouseMode)
 	{
 		// If the high word of the dwButtonState member contains
 		// a positive value, the wheel was rotated forward, away from the user.
@@ -372,40 +374,94 @@ bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, 
 
 	BYTE NewBtns = (m.dwButtonState & 0x1F);
 	if ((NewBtns != MouseButtons)
+		|| ((m.dwEventFlags & MOUSE_WHEELED) && HIWORD(m.dwButtonState))
 		|| ((LastMousePos != m.dwMousePosition)
 			&& ((MouseMode & tmm_ANY)
 				|| ((MouseMode & tmm_BTN) && NewBtns)))
 		)
 	{
-		wcscpy_c(szSubst, L"\033[M");
-		if (NewBtns & FROM_LEFT_1ST_BUTTON_PRESSED)
-			szSubst[3] = 0; // MB1 pressed
-		else if (NewBtns & FROM_LEFT_2ND_BUTTON_PRESSED)
-			szSubst[3] = 1; // MB2 pressed
-		else if (NewBtns & RIGHTMOST_BUTTON_PRESSED)
-			szSubst[3] = 2; // MB3 pressed
-		else if (NewBtns & FROM_LEFT_3RD_BUTTON_PRESSED)
-			szSubst[3] = 64; // MB4 pressed
-		else if (NewBtns & FROM_LEFT_4TH_BUTTON_PRESSED)
-			szSubst[3] = 64 + 1; // MB5 pressed
-		else
-			szSubst[3] = 3; // release
-		if (m.dwControlKeyState & SHIFT_PRESSED)
-			szSubst[3] |= 4;
-		if (m.dwControlKeyState & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED))
-			szSubst[3] |= 8;
-		if (m.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED))
-			szSubst[3] |= 16;
-		szSubst[3] += 32;
-
 		// #XTERM_MOUSE Unfortunately, szSubst is too short to pass "missed" coordinates
 		// Like we do for Far events, MouseMove with RBtn pressed in tmm_ANY|tmm_BTN
 		// modes would send all intermediate coordinates between two events
 
-		// And coords. Must be in "screen" coordinate space: (1,1) is upper left character position
-		szSubst[4] = klMin(255, m.dwMousePosition.X + 1 + 32); // no way to pass coordinate
-		szSubst[5] = klMin(255, m.dwMousePosition.Y + 1 + 32); // larger than (255 - 32)
-		szSubst[6] = 0;
+		BYTE code; bool released = false;
+		if (NewBtns & FROM_LEFT_1ST_BUTTON_PRESSED)
+			code = 0; // MB1 pressed
+		else if (NewBtns & FROM_LEFT_2ND_BUTTON_PRESSED)
+			code = 1; // MB2 pressed
+		else if (NewBtns & RIGHTMOST_BUTTON_PRESSED)
+			code = 2; // MB3 pressed
+		else if (NewBtns & FROM_LEFT_3RD_BUTTON_PRESSED)
+			code = 64; // MB4 pressed
+		else if (NewBtns & FROM_LEFT_4TH_BUTTON_PRESSED)
+			code = 64 + 1; // MB5 pressed
+		else if (m.dwEventFlags & MOUSE_WHEELED)
+		{
+			// #XTERM_MOUSE Post multiple events if dir contains multiple notches
+			short dir = (short)HIWORD(m.dwButtonState);
+			if (dir > 0)
+				code = 64; // MB4
+			else if (dir < 0)
+				code = 64 + 1; // MB5
+		}
+		else
+		{
+			released = true;
+			code = 3;
+		}
+
+		if (m.dwControlKeyState & SHIFT_PRESSED)
+			code |= 4;
+		if (m.dwControlKeyState & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED))
+			code |= 8;
+		if (m.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED))
+			code |= 16;
+
+		if ((m.dwEventFlags & MOUSE_MOVED)
+			&& (MouseMode & (tmm_BTN|tmm_ANY)))
+			code |= 32;
+
+		// (1,1) is upper left character position
+		SHORT coord[] = {klMax<SHORT>(0, m.dwMousePosition.X) + 1,
+			klMax<SHORT>(0, m.dwMousePosition.Y) + 1};
+
+		if (MouseMode & tmm_XTERM)
+		{
+			msprintf(szSubst, countof(szSubst), L"\033[<%u;%u;%u%c",
+				code, coord[0], coord[1], released ? 'm' : 'M');
+		}
+		else if (MouseMode & tmm_URXVT)
+		{
+			msprintf(szSubst, countof(szSubst), L"\033[%u;%u;%uM", code + 0x20, coord[0], coord[1]);
+		}
+		else
+		{
+			wcscpy_c(szSubst, L"\033[M");
+			size_t i = wcslen(szSubst);
+			szSubst[i++] = code + 32;
+
+			// And coords. Must be in "screen" coordinate space
+			for (size_t s = 0; s < 2; ++s)
+			{
+				// (1,1) is upper left character position
+				if (!(MouseMode & tmm_UTF8))
+					szSubst[i++] = klMin<unsigned>(255, coord[s] + 32);
+				else if (coord[s] < 0x80)
+					szSubst[i++] = coord[s];
+				else if (coord[s] < 0x800)
+				{
+					// xterm #262: positions from 96 to 2015 are encoded as a two-byte UTF-8 sequence
+					szSubst[i++] = 0xC0 + (coord[s] >> 6);
+					szSubst[i++] = 0x80 + (coord[s] & 0x3F);
+				}
+				else
+				{
+					// #XTERM_MOUSE Xterm reports out-of-range positions as a NUL byte.
+					szSubst[i++] = 1; // It's impossible to post NUL byte ATM
+				}
+			}
+			szSubst[i++] = 0;
+		}
 
 		MouseButtons = NewBtns;
 		LastMousePos = m.dwMousePosition;
