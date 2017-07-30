@@ -1224,7 +1224,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		#endif
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_SETTINGS,   MenuAccel(vkWinAltP,L"Sett&ings..."));
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, IDM_ATTACHTO,  MenuAccel(vkMultiNewAttach,L"Attach t&o..."));
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_NEWCONSOLE, MenuAccel(vkMultiNew,L"New console..."));
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_NEWCONSOLE, MenuAccel(vkMultiNew,L"New console"));
 	}
 }
 
@@ -1997,7 +1997,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, b
 		if (abAddNew)
 		{
 			AppendMenu(hMenu,  MF_SEPARATOR, 0, L"");
-			AppendMenu(hMenu,  MF_STRING|MF_ENABLED, ID_NEWCONSOLE,        MenuAccel(vkMultiNew,L"New console..."));
+			AppendMenu(hMenu,  MF_STRING|MF_ENABLED, ID_NEWCONSOLE,        MenuAccel(vkMultiNew,L"New console"));
 			AppendMenu(hMenu,  MF_STRING|MF_ENABLED, IDM_ATTACHTO,         MenuAccel(vkMultiNewAttach,L"Attach to..."));
 		}
 		#if 0
