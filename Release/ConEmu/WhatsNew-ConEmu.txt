@@ -20,6 +20,20 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.7.30
+* Unchecked option ‘Use credentials for network resources only’ was ignored (f9805dccf regression).
+  Entered credentials were used only for network resources regardless of the option value.
+* gh-811, gh-1199: Fix race while starting applications requesting XTerm emulation (WSL, cygwin, msys).
+* gh-1194: Button ‘Clone’ in Settings/Tasks.
+* Use conemu-cyg-64.exe with wslbridge.exe to run WSL bash.
+  This concerns to {Bash::bash} task created by default,
+  if cygwin's wslbridge files exist in `%ConEmuBaseDir%/wsl`.
+  Connector version 1.2 is required. wslbridge added to ConEmu distro.
+* gh-648, gh-1117: Support xterm mouse emulation (mc, WSL, etc.) Connector is required!
+* Try to find all installations of cygwin (32bit and 64bit) to create default tasks.
+* Find MSYS2 installations to create default tasks {Bash::Msys2-32} and {Bash::Msys2-64}.
+
+
 2017.7.23
 * gh-1198, gh-1136, gh-1009: XTerm keyboard emulation for Ctrl+key.
 * gh-1200: 'Sync dir' feature was broken for bash.
