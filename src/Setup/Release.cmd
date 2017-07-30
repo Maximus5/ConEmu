@@ -27,7 +27,7 @@ set MSI_PLAT=x64
 set MSI_NAME=ConEmu.%1.%MSI_PLAT%.msi
 call :create_msi
 
-call "%~dp0..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu %~1 Installer" /du %ConEmuHttp% %~dp0%CAB_NAME%
+rem call "%~dp0..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu %~1 Installer" /du %ConEmuHttp% %~dp0%CAB_NAME% %~dp0ConEmu.%1.x86.msi %~dp0ConEmu.%1.x64.msi
 
 :no_msi
 
@@ -37,7 +37,8 @@ echo Creating ConEmuSetup.%1.exe
 call "%~dp0Executor\gccbuild.cmd" /nosign
 if errorlevel 1 goto errs
 if not exist "%~dp0Setupper\Executor.exe" goto errs
-call "%~dp0..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu %~1 Installer" /du %ConEmuHttp% "%~dp0Setupper\Executor.exe"
+call "%~dp0..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu %~1 Installer" /du %ConEmuHttp% "%~dp0Setupper\Executor.exe" "%~dp0%CAB_NAME%" "%~dp0ConEmu.%1.x86.msi" "%~dp0ConEmu.%1.x64.msi"
+if errorlevel 1 goto errs
 
 :setupper
 call "%~dp0Setupper\gccbuild.cmd" /nosign
@@ -63,9 +64,9 @@ if errorlevel 1 goto err
 echo Linking...
 Light.exe -nologo -dcl:high  -cultures:null -out %~dp0bin\Release\%MSI_NAME% -pdbout %~dp0bin\Release\ConEmu.wixpdb -ext WixUIExtension obj\Release\Product.wixobj
 if errorlevel 1 goto err
-echo Signing...
-call "%~dp0..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu %~1 Installer" /du %ConEmuHttp% %~dp0bin\Release\%MSI_NAME%
-if errorlevel 1 goto err
+rem echo Signing...
+rem call "%~dp0..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu %~1 Installer" /du %ConEmuHttp% %~dp0bin\Release\%MSI_NAME%
+rem if errorlevel 1 goto err
 echo Succeeded.
 
 move %~dp0bin\Release\%MSI_NAME% %MSI_NAME%

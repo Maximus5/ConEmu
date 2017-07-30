@@ -88,6 +88,9 @@ rem echo .
 rem echo Press Enter to continue if version is OK: "%BUILD_NO%"
 rem pause>nul
 
+rem Give a time to editors to be started
+timeout /t 15
+
 :do_build
 cd /d "%~dp0src"
 
