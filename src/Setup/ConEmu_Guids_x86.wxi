@@ -138,7 +138,15 @@
 	<?define Guid.CallPlugin.txt = "E59E49D3-541B-489A-B46D-F0915397A3F7" ?>
 	<?define Guid.RevokeMouseInput.ps1 = "76B9E76D-6367-46EB-BD7E-5C4EF2DB669D" ?>
 	<?define Guid.utf_8_test.cmd = "DC6442DC-E399-4C77-80C4-C36C50A73D2A" ?>
+
 	<?define Guid.wsl_con.cmd = "ABB7E80E-C443-4C3C-A865-7A2F51C083F7" ?>
+	<?define Guid.wslbridge.exe = "E6880A1E-47C0-45D1-8C38-4D2D89B27977" ?>
+	<?define Guid.wsl.cygwin1.dll = "513B06CA-03DA-40A9-8A90-0FDE87B06ACF" ?>
+	<?define Guid.wsl.256colors2.pl = "C8749D5A-8F52-4F14-9F31-9F80A56974BF" ?>
+	<?define Guid.wsl.hashlist.sha256 = "9C5F54EC-B6F9-45B5-9E3B-909FE5860034" ?>
+	<?define Guid.wsl.README.md = "BF0EF055-A180-43B7-9349-9E9EB82008B4" ?>
+	<?define Guid.wsl_boot.sh = "7E6FC6B0-A1E3-4B57-A4A3-EBCEE32FD194" ?>
+	<?define Guid.wslbridge_backend = "D96D266B-6653-414D-B18D-39365BAA7994" ?>
 	
 	<?define Guid.AnsiColors16.ans = "D0B94B0D-E1C4-4CD4-9E6B-5AD30BD299D6" ?>
 	<?define Guid.AnsiColors16t.ans = "590BFE53-BB03-492B-A713-82AD42C682C9" ?>

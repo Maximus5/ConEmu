@@ -215,9 +215,30 @@
     </DirectoryRef>
 
     <!-- Windows Subsystem for Linux -->
-    <DirectoryRef Id="CONEMUADDONSDIR">
+    <DirectoryRef Id="WSL">
       <Component Id="wsl_con.cmd" Guid="$(var.Guid.wsl_con.cmd)" Win64="$(var.Win64)">
         <File Id="wsl_con.cmd" Source="..\..\Release\ConEmu\wsl\wsl-con.cmd"  KeyPath="yes" />
+      </Component>
+      <Component Id="wslbridge.exe" Guid="$(var.Guid.wslbridge.exe)" Win64="$(var.Win64)">
+        <File Id="wslbridge.exe" Source="..\..\Release\ConEmu\wsl\wslbridge.exe"  KeyPath="yes" />
+      </Component>
+      <Component Id="wsl.cygwin1.dll" Guid="$(var.Guid.wsl.cygwin1.dll)" Win64="$(var.Win64)">
+        <File Id="wsl.cygwin1.dll" Source="..\..\Release\ConEmu\wsl\cygwin1.dll"  KeyPath="yes" />
+      </Component>
+      <Component Id="wsl.256colors2.pl" Guid="$(var.Guid.wsl.256colors2.pl)" Win64="$(var.Win64)">
+        <File Id="wsl.256colors2.pl" Source="..\..\Release\ConEmu\wsl\256colors2.pl"  KeyPath="yes" />
+      </Component>
+      <Component Id="wsl.hashlist.sha256" Guid="$(var.Guid.wsl.hashlist.sha256)" Win64="$(var.Win64)">
+        <File Id="wsl.hashlist.sha256" Source="..\..\Release\ConEmu\wsl\hashlist.sha256"  KeyPath="yes" />
+      </Component>
+      <Component Id="wsl.README.md" Guid="$(var.Guid.wsl.README.md)" Win64="$(var.Win64)">
+        <File Id="wsl.README.md" Source="..\..\Release\ConEmu\wsl\README.md"  KeyPath="yes" />
+      </Component>
+      <Component Id="wsl_boot.sh" Guid="$(var.Guid.wsl_boot.sh)" Win64="$(var.Win64)">
+        <File Id="wsl_boot.sh" Source="..\..\Release\ConEmu\wsl\wsl-boot.sh"  KeyPath="yes" />
+      </Component>
+      <Component Id="wslbridge_backend" Guid="$(var.Guid.wslbridge_backend)" Win64="$(var.Win64)">
+        <File Id="wslbridge_backend" Source="..\..\Release\ConEmu\wsl\wslbridge-backend"  KeyPath="yes" />
       </Component>
     </DirectoryRef>
 

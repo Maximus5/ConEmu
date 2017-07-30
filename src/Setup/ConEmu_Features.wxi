@@ -216,6 +216,13 @@
     <Feature Id="FWSL" AllowAdvertise="no" Title="WSL sample" Level="1"
              Description="Demonstrates ability to use 256 colors in Windows Subsystem for Linux started in ConEmu tab">
       <ComponentRef Id="wsl_con.cmd"/>
+      <ComponentRef Id="wslbridge.exe"/>
+      <ComponentRef Id="wsl.cygwin1.dll"/>
+      <ComponentRef Id="wsl.256colors2.pl"/>
+      <ComponentRef Id="wsl.hashlist.sha256"/>
+      <ComponentRef Id="wsl.README.md"/>
+      <ComponentRef Id="wsl_boot.sh"/>
+      <ComponentRef Id="wslbridge_backend"/>
     </Feature>
     <Feature Id="FClink" AllowAdvertise="no" Title="clink readme" Level="1"
              Description="clink - bash style completion readme.txt">
