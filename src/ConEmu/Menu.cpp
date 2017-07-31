@@ -295,17 +295,24 @@ bool CConEmuMenu::CreateOrUpdateMenu(HMENU& hMenu, const MenuItem* Items, size_t
 		else if (bNew)
 		{
 			AppendMenu(hMenu,
-				MF_STRING|Items[i].Flags,
+				((Items[i].mit == mit_Popup) ? MF_POPUP : MF_STRING)|Items[i].Flags,
 				Items[i].MenuId,
 				Items[i].HotkeyId ? MenuAccel(Items[i].HotkeyId,Items[i].pszText) : Items[i].pszText);
 		}
-		else if (Items[i].mit == mit_Command)
-		{
-			EnableMenuItem(hMenu, Items[i].MenuId, MF_BYCOMMAND|Items[i].Flags);
-		}
 		else
 		{
-			CheckMenuItem(hMenu, Items[i].MenuId, MF_BYCOMMAND|Items[i].Flags);
+			MENUITEMINFO mi = {sizeof(mi), MIIM_STRING};
+			CEStr lsItemText(Items[i].HotkeyId ? MenuAccel(Items[i].HotkeyId,Items[i].pszText) : Items[i].pszText);
+			mi.dwTypeData = lsItemText.ms_Val;
+			if (Items[i].mit == mit_Popup)
+				SetMenuItemInfo(hMenu, (DWORD)i, TRUE, &mi);
+			else
+				SetMenuItemInfo(hMenu, Items[i].MenuId, FALSE, &mi);
+
+			if (Items[i].mit == mit_Command)
+				EnableMenuItem(hMenu, Items[i].MenuId, MF_BYCOMMAND|Items[i].Flags);
+			else if (Items[i].mit == mit_Option)
+				CheckMenuItem(hMenu, Items[i].MenuId, MF_BYCOMMAND|Items[i].Flags);
 		}
 	}
 
@@ -1928,6 +1935,7 @@ HMENU CConEmuMenu::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 	return h;
 }
 
+// abAddNew - if "false" the result is inserted as PopupMenu into top-level menu (SysMenu->Active Console)
 // abFromConsole - menu was triggered by either mouse click on the *console surface*, or hotkey presses in the console
 HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, bool abAddNew, bool abFromConsole)
 {
@@ -1938,40 +1946,47 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, b
 	if (!apVCon && (CVConGroup::GetActiveVCon(&VCon) >= 0))
 		apVCon = VCon.VCon();
 
+	UINT con_flags = (apVCon ? MF_ENABLED : MF_GRAYED);
+	UINT close_flags = ((apVCon && apVCon->RCon()->CanCloseTab()) ? MF_ENABLED : MF_GRAYED);
+	UINT gui_flags = ((apVCon && apVCon->GuiWnd()) ? MF_ENABLED : MF_GRAYED);
+
+	// "Close or &kill"
 	HMENU& hTerminate = mh_TerminatePopup;
-	if (!hTerminate)
 	{
-		// "Close or &kill"
-		hTerminate = CreatePopupMenu();
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATECON,     MenuAccel(vkMultiClose,L"Close active &console"));
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEPRC,     MenuAccel(vkTerminateApp,L"Kill &active process"));
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEBUTSHELL,MenuAccel(vkTermButShell,L"Kill all but &shell"));
-		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEGROUP,   MenuAccel(vkCloseGroup,L"Close active &group"));
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEPRCGROUP,MenuAccel(vkCloseGroupPrc,L"Kill active &processes"));
-		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEALLCON,  MenuAccel(vkCloseAllCon,L"Close &all consoles"));
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATEZOMBIES, MenuAccel(vkCloseZombies,L"Close all &zombies"));
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_TERMINATECONEXPT, MenuAccel(vkCloseExceptCon,L"Close e&xcept active"));
-		AppendMenu(hTerminate, MF_SEPARATOR, 0, L"");
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_DETACH,           MenuAccel(vkConDetach,L"Detach"));
-		AppendMenu(hTerminate, MF_STRING|MF_ENABLED, IDM_UNFASTEN,         MenuAccel(vkConUnfasten,L"Unfasten"));
+		MenuItem TerminateItems[] = {
+			{ mit_Command,   IDM_TERMINATECON,      vkMultiClose,     con_flags,  L"Close active &console"  },
+			{ mit_Command,   IDM_TERMINATEPRC,      vkTerminateApp,   con_flags,  L"Kill &active process"   },
+			{ mit_Command,   IDM_TERMINATEBUTSHELL, vkTermButShell,   con_flags,  L"Kill all but &shell"    },
+			{ mit_Separator },
+			{ mit_Command,   IDM_TERMINATEGROUP,    vkCloseGroup,     con_flags,  L"Close active &group"    },
+			{ mit_Command,   IDM_TERMINATEPRCGROUP, vkCloseGroupPrc,  con_flags,  L"Kill active &processes" },
+			{ mit_Separator },
+			{ mit_Command,   IDM_TERMINATEALLCON,   vkCloseAllCon,    MF_ENABLED, L"Close &all consoles"    },
+			{ mit_Command,   IDM_TERMINATEZOMBIES,  vkCloseZombies,   MF_ENABLED, L"Close all &zombies"     },
+			{ mit_Command,   IDM_TERMINATECONEXPT,  vkCloseExceptCon, MF_ENABLED, L"Close e&xcept active"   },
+			{ mit_Separator },
+			{ mit_Command,   IDM_DETACH,            vkConDetach,      con_flags,  L"Detach"                 },
+			{ mit_Command,   IDM_UNFASTEN,          vkConUnfasten,    con_flags,  L"Unfasten"               }
+		};
+		CreateOrUpdateMenu(hTerminate, TerminateItems, countof(TerminateItems));
 	}
 
+	// "&Restart or duplicate"
 	HMENU& hRestart = mh_RestartPopup;
-	if (!hRestart)
 	{
-		// "&Restart or duplicate"
-		hRestart = CreatePopupMenu();
-		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_DUPLICATE,        MenuAccel(vkDuplicateRoot,L"Duplica&te root..."));
-		//AppendMenu(hMenu,  MF_STRING|MF_ENABLED, IDM_ADMIN_DUPLICATE,  MenuAccel(vkDuplicateRootAs,L"Duplica&te as Admin..."));
-		AppendMenu(hRestart, MF_SEPARATOR, 0, L"");
-		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_SPLIT2RIGHT,      MenuAccel(vkSplitNewConH,L"Split to ri&ght"));
-		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_SPLIT2BOTTOM,     MenuAccel(vkSplitNewConV,L"Split to &bottom"));
-		AppendMenu(hRestart, MF_SEPARATOR, 0, L"");
-		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_RESTARTDLG,       MenuAccel(vkMultiRecreate,L"&Restart..."));
-		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_RESTART,          L"&Restart");
-		AppendMenu(hRestart, MF_STRING|MF_ENABLED, IDM_RESTARTAS,        L"Restart as Admin");
+		MenuItem RestartItems[] = {
+
+			{ mit_Command,   IDM_DUPLICATE,        vkDuplicateRoot,   con_flags,  L"Duplica&te root..."     },
+			//{ mit_Command, IDM_ADMIN_DUPLICATE,  vkDuplicateRootAs, con_flags,  L"Duplica&te as Admin..." },
+			{ mit_Separator },
+			{ mit_Command,   IDM_SPLIT2RIGHT,      vkSplitNewConH,    con_flags,  L"Split to ri&ght"        },
+			{ mit_Command,   IDM_SPLIT2BOTTOM,     vkSplitNewConV,    con_flags,  L"Split to &bottom"       },
+			{ mit_Separator },
+			{ mit_Command,   IDM_RESTARTDLG,       vkMultiRecreate,   con_flags,  L"&Restart..."            },
+			{ mit_Command,   IDM_RESTART,          0,                 con_flags,  L"&Restart"               },
+			{ mit_Command,   IDM_RESTARTAS,        0,                 con_flags,  L"Restart as Admin"       }
+		};
+		CreateOrUpdateMenu(hRestart, RestartItems, countof(RestartItems));
 	}
 
 	CEStr lsCloseText;
@@ -1981,96 +1996,24 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, b
 		lsCloseText.Set(L"&Close tab group");
 	else
 		lsCloseText.Set(L"&Close tab");
-	lsCloseText.Set(MenuAccel(vkCloseTab, lsCloseText.ms_Val));
 
-	if (!hMenu)
+	// Root menu if (abAddNew == true) or (SysMenu->Active Console) if (abAddNew == false)
 	{
-		hMenu = CreatePopupMenu();
+		MenuItem VConItems[] = {
+			{ mit_Command,   IDM_CLOSE,            vkCloseTab,        close_flags, lsCloseText },
+			{ mit_Command,   IDM_RENAMETAB,        vkRenameTab,       con_flags,   L"Rena&me tab..." },
+			{ mit_Command,   IDM_CHANGEAFFINITY,   vkAffinity,        con_flags,   L"A&ffinity/priority..." },
+			{ mit_Popup,     (UINT_PTR)hRestart,   0,                 MF_ENABLED,  L"&Restart or duplicate" },
+			{ mit_Popup,     (UINT_PTR)hTerminate, 0,                 MF_ENABLED,  L"Close or &kill" },
+			{ mit_Command,   IDM_CHILDSYSMENU,     vkChildSystemMenu, gui_flags,   L"Child system menu..." },
+			// abAddNew - if "false" the result is inserted as PopupMenu into top-level menu 
+			// These three items are visible in the popup menu (Shift+RClick on VCon)
+			{ mit_Separator },
+			{ mit_Command,   ID_NEWCONSOLE,        vkMultiNew,        MF_ENABLED,  L"New console..." },
+			{ mit_Command,   IDM_ATTACHTO,         vkMultiNewAttach,  MF_ENABLED,  L"Attach to..." }
+		};
 
-		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_CLOSE,            lsCloseText);
-		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_RENAMETAB,        MenuAccel(vkRenameTab,L"Rena&me tab..."));
-		AppendMenu(hMenu,      MF_STRING|MF_ENABLED, IDM_CHANGEAFFINITY,   MenuAccel(vkAffinity,L"A&ffinity/priority..."));
-		AppendMenu(hMenu,      MF_POPUP|MF_ENABLED, (UINT_PTR)hRestart,    L"&Restart or duplicate");
-		AppendMenu(hMenu,      MF_POPUP|MF_ENABLED, (UINT_PTR)hTerminate,  L"Close or &kill");
-		AppendMenu(hMenu,      MF_STRING|((apVCon && apVCon->GuiWnd())?MF_ENABLED:0),
-		                                             IDM_CHILDSYSMENU,     MenuAccel(vkChildSystemMenu,L"Child system menu..."));
-		if (abAddNew)
-		{
-			AppendMenu(hMenu,  MF_SEPARATOR, 0, L"");
-			AppendMenu(hMenu,  MF_STRING|MF_ENABLED, ID_NEWCONSOLE,        MenuAccel(vkMultiNew,L"New console..."));
-			AppendMenu(hMenu,  MF_STRING|MF_ENABLED, IDM_ATTACHTO,         MenuAccel(vkMultiNewAttach,L"Attach to..."));
-		}
-		#if 0
-		// Смысл выносить избранный макро заточенный только под редактор Far?
-		AppendMenu(hMenu, MF_SEPARATOR, 0, L"");
-		AppendMenu(hMenu, MF_STRING|MF_ENABLED,     IDM_SAVE,      L"&Save");
-		AppendMenu(hMenu, MF_STRING|MF_ENABLED,     IDM_SAVEALL,   L"Save &all");
-		#endif
-	}
-	else
-	{
-		MENUITEMINFO mi = {sizeof(mi)};
-		wchar_t szText[255]; wcscpy_c(szText, lsCloseText);
-		mi.fMask = MIIM_STRING; mi.dwTypeData = szText;
-		SetMenuItemInfo(hMenu, IDM_CLOSE, FALSE, &mi);
-	}
-
-	if (apVCon)
-	{
-		//bool lbIsFar = apVCon->RCon()->isFar(TRUE/* abPluginRequired */)!=FALSE;
-		//#ifdef _DEBUG
-		//bool lbIsPanels = lbIsFar && apVCon->RCon()->isFilePanel(false/* abPluginAllowed */)!=FALSE;
-		//#endif
-		//bool lbIsEditorModified = lbIsFar && apVCon->RCon()->isEditorModified()!=FALSE;
-		//bool lbHaveModified = lbIsFar && apVCon->RCon()->GetModifiedEditors()!=0;
-		bool lbCanCloseTab = apVCon->RCon()->CanCloseTab();
-
-		//if (lbHaveModified)
-		//{
-		//	if (!gpSet->sSaveAllMacro || !*gpSet->sSaveAllMacro)
-		//		lbHaveModified = false;
-		//}
-
-		EnableMenuItem(hMenu,      IDM_CLOSE,             MF_BYCOMMAND|(lbCanCloseTab ? MF_ENABLED : MF_GRAYED));
-		EnableMenuItem(hMenu,      IDM_DETACH,            MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hMenu,      IDM_DUPLICATE,         MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hMenu,      IDM_SPLIT2RIGHT,       MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hMenu,      IDM_SPLIT2BOTTOM,      MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hMenu,      IDM_RENAMETAB,         MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hMenu,      IDM_CHANGEAFFINITY,    MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hTerminate, IDM_TERMINATECON,      MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hTerminate, IDM_TERMINATEGROUP,    MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hTerminate, IDM_TERMINATEPRCGROUP, MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hTerminate, IDM_TERMINATEPRC,      MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hTerminate, IDM_TERMINATEBUTSHELL, MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hMenu,      IDM_CHILDSYSMENU,      MF_BYCOMMAND|((apVCon && apVCon->GuiWnd()) ? 0 : MF_GRAYED));
-		EnableMenuItem(hMenu,      IDM_RESTARTDLG,        MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hMenu,      IDM_RESTART,           MF_BYCOMMAND|MF_ENABLED);
-		EnableMenuItem(hMenu,      IDM_RESTARTAS,         MF_BYCOMMAND|MF_ENABLED);
-		//EnableMenuItem(hMenu,    IDM_ADMIN_DUPLICATE,   MF_BYCOMMAND|(lbIsPanels ? MF_ENABLED : MF_GRAYED));
-		//EnableMenuItem(hMenu,      IDM_SAVE,              MF_BYCOMMAND|(lbIsEditorModified ? MF_ENABLED : MF_GRAYED));
-		//EnableMenuItem(hMenu,      IDM_SAVEALL,           MF_BYCOMMAND|(lbHaveModified ? MF_ENABLED : MF_GRAYED));
-	}
-	else
-	{
-		EnableMenuItem(hMenu,      IDM_CLOSE,             MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hMenu,      IDM_DETACH,            MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hMenu,      IDM_DUPLICATE,         MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hMenu,      IDM_SPLIT2RIGHT,       MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hMenu,      IDM_SPLIT2BOTTOM,      MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hMenu,      IDM_RENAMETAB,         MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hMenu,      IDM_CHANGEAFFINITY,    MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hTerminate, IDM_TERMINATECON,      MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hTerminate, IDM_TERMINATEGROUP,    MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hTerminate, IDM_TERMINATEPRCGROUP, MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hTerminate, IDM_TERMINATEPRC,      MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hTerminate, IDM_TERMINATEBUTSHELL, MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hMenu,      IDM_CHILDSYSMENU,      MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hMenu,      IDM_RESTARTDLG,        MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hMenu,      IDM_RESTART,           MF_BYCOMMAND|MF_GRAYED);
-		EnableMenuItem(hMenu,      IDM_RESTARTAS,         MF_BYCOMMAND|MF_GRAYED);
-		//EnableMenuItem(hMenu,      IDM_SAVE,              MF_BYCOMMAND|MF_GRAYED);
-		//EnableMenuItem(hMenu,      IDM_SAVEALL,           MF_BYCOMMAND|MF_GRAYED);
+		CreateOrUpdateMenu(hMenu, VConItems, countof(VConItems) - (abAddNew ? 0 : 3));
 	}
 
 	return hMenu;

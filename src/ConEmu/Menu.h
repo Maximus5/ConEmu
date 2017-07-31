@@ -36,15 +36,16 @@ enum MenuItemType
 	mit_Separator,
 	mit_Command,
 	mit_Option,
+	mit_Popup,
 };
 
 struct MenuItem
 {
 	MenuItemType mit;
-	UINT MenuId;
-	UINT HotkeyId;
-	LONG Flags; // MF_xxx are declared as LONG constants
-	LPCWSTR pszText;
+	UINT_PTR     MenuId;  // HMENU for mit_Popup is here
+	UINT         HotkeyId;
+	LONG         Flags; // MF_xxx are declared as LONG constants
+	LPCWSTR      pszText;
 };
 
 class CConEmuMenu
