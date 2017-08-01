@@ -137,10 +137,6 @@ class CSettings
 		bool AutoScroll;
 		#endif
 
-		//bool AutoBufferHeight;
-		//bool FarSyncSize;
-		//int nCmdOutputCP;
-
 		LONG EvalSize(LONG nSize, EvalSizeFlags Flags);
 
 	public:

@@ -880,13 +880,6 @@
             , "between text and background is indistinguishable" ],
       "id": 3056 }
     ,
-    "lbCmdOutputCP": {
-      "en": [ "Windows command processor (cmd.exe) may cause then output of internal commands to be OEM or Unicode.\r\n"
-            , "You may force this selection, or use automatic selection (FAR2 -> Unicode)." ],
-      "zh": [ "Windows 命令行 （cmd.exe） 可能导致内部命令的输出为OEM或者Unicode.\r\n"
-            , "你可以强制选择，或者使用自动选择 （FAR2 -> Unicode）。" ],
-      "id": 1558 }
-    ,
     "lbColorsOverride": {
       "en": [ "You may choose one of predefined color schemes.\r\n"
             , "Each scheme customize 32 colors (16+16)\r\n"
@@ -3351,6 +3344,10 @@
       "zh": "向下（&D）",
       "id": 2127 }
     ,
+    "cbCmdTasksDup": {
+      "en": "Clone",
+      "id": 3087 }
+    ,
     "cbCmdTasksParm": {
       "en": "File path...",
       "zh": "文件路径...",
@@ -5445,11 +5442,6 @@
       "en": "&Hotkey:",
       "zh": "热键（&H）:",
       "id": 3024 }
-    ,
-    "stCmdOutputCP": {
-      "en": "Cmd.exe output codepage:",
-      "zh": "Cmd.exe输出代码页",
-      "id": 2954 }
     ,
     "stCmdTaskAdd": {
       "en": "Add:",

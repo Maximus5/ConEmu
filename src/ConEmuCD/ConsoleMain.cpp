@@ -228,7 +228,6 @@ BOOL  gbDumpServerInitStatus = FALSE;
 BOOL  gbNoCreateProcess = FALSE;
 BOOL  gbDontInjectConEmuHk = FALSE;
 BOOL  gbAsyncRun = FALSE;
-int   gnCmdUnicodeMode = 0;
 UINT  gnPTYmode = 0; // 1 enable PTY, 2 - disable PTY (work as plain console), 0 - don't change
 BOOL  gbRootIsCmdExe = TRUE;
 BOOL  gbAttachFromFar = FALSE;
@@ -2463,21 +2462,6 @@ void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=NULL*
 	_printf("\n");
 }
 
-void CheckUnicodeMode()
-{
-	if (gnCmdUnicodeMode) return;
-
-	wchar_t szValue[16] = {0};
-
-	if (GetEnvironmentVariable(L"ConEmuOutput", szValue, sizeof(szValue)/sizeof(szValue[0])))
-	{
-		if (lstrcmpi(szValue, L"UNICODE") == 0)
-			gnCmdUnicodeMode = 2;
-		else if (lstrcmpi(szValue, L"ANSI") == 0)
-			gnCmdUnicodeMode = 1;
-	}
-}
-
 int CheckAttachProcess()
 {
 	LogFunction(L"CheckAttachProcess");
@@ -3824,14 +3808,6 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		{
 			lbNeedCdToProfileDir = true;
 		}
-		else if (wcscmp(szArg, L"/A")==0 || wcscmp(szArg, L"/a")==0)
-		{
-			gnCmdUnicodeMode = 1;
-		}
-		else if (wcscmp(szArg, L"/U")==0 || wcscmp(szArg, L"/u")==0)
-		{
-			gnCmdUnicodeMode = 2;
-		}
 		else if (lstrcmpi(szArg, L"/CONFIG")==0)
 		{
 			if ((iRc = NextArg(&lsCmdLine, szArg)) != 0)
@@ -4357,14 +4333,9 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 	// ====
 	if (gbRunViaCmdExe)
 	{
-		CheckUnicodeMode();
-
-		// -- для унификации - окавычиваем всегда
+		// -- always quotate
 		gpszRunCmd[0] = L'"';
 		_wcscpy_c(gpszRunCmd+1, nCchLen-1, gszComSpec);
-
-		if (gnCmdUnicodeMode)
-			_wcscat_c(gpszRunCmd, nCchLen, (gnCmdUnicodeMode == 2) ? L" /U" : L" /A");
 
 		_wcscat_c(gpszRunCmd, nCchLen, gpSrv->bK ? L"\" /K " : L"\" /C ");
 

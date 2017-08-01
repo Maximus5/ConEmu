@@ -192,9 +192,6 @@ struct Settings
 		//reg->Load(L"UseScrollLock", UseScrollLock);
 		bool UseScrollLock;
 
-		//reg->Load(L"CmdOutputCP", nCmdOutputCP);
-		int nCmdOutputCP;
-
 		ConEmuComspec ComSpec;
 
 		//reg->LoadMSZ(L"EnvironmentSet", psEnvironmentSet);

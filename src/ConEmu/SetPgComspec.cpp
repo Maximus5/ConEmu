@@ -62,16 +62,6 @@ LRESULT CSetPgComspec::OnInitDialog(HWND hDlg, bool abInitial)
 
 	checkDlgButton(hDlg, cbComspecUncPaths, gpSet->ComSpec.isAllowUncPaths ? BST_CHECKED : BST_UNCHECKED);
 
-	// Cmd.exe output cp
-	if (abInitial)
-	{
-		SendDlgItemMessage(hDlg, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Undefined");
-		SendDlgItemMessage(hDlg, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Automatic");
-		SendDlgItemMessage(hDlg, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"Unicode (/U)");
-		SendDlgItemMessage(hDlg, lbCmdOutputCP, CB_ADDSTRING, 0, (LPARAM) L"OEM (/A)");
-	}
-	SendDlgItemMessage(hDlg, lbCmdOutputCP, CB_SETCURSEL, gpSet->nCmdOutputCP, 0);
-
 	// Autorun (autoattach) with "cmd.exe" or "tcc.exe"
 	ReloadAutorun();
 
@@ -80,21 +70,12 @@ LRESULT CSetPgComspec::OnInitDialog(HWND hDlg, bool abInitial)
 
 INT_PTR CSetPgComspec::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 {
-	switch (nCtrlId)
-	{
-	case lbCmdOutputCP:
-	{
-		gpSet->nCmdOutputCP = SendDlgItemMessage(hDlg, nCtrlId, CB_GETCURSEL, 0, 0);
+	//switch (nCtrlId)
+	//{
 
-		if (gpSet->nCmdOutputCP == -1) gpSet->nCmdOutputCP = 0;
-
-		CVConGroup::OnUpdateFarSettings();
-		break;
-	}
-
-	default:
+	//default:
 		_ASSERTE(FALSE && "ListBox was not processed");
-	}
+	//}
 
 	return 0;
 }

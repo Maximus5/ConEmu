@@ -425,7 +425,6 @@ extern RunMode gnRunMode;
 
 extern BOOL gbDumpServerInitStatus;
 extern BOOL gbNoCreateProcess;
-extern int  gnCmdUnicodeMode;
 extern BOOL gbUseDosBox;
 extern BOOL gbRootIsCmdExe;
 extern BOOL gbAttachFromFar;
