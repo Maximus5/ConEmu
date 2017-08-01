@@ -747,43 +747,6 @@ void Settings::InitSettings()
 	nStatusBarLight = RGB(255,255,255);
 	nStatusBarDark = RGB(160,160,160);
 	#endif
-	//nHideStatusColumns = ces_CursorInfo;
-	_ASSERTE(countof(isStatusColumnHidden)>csi_Last);
-	memset(isStatusColumnHidden, 0, sizeof(isStatusColumnHidden));
-	// выставим те колонки, которые не нужны "юзеру" по умолчанию
-	isStatusColumnHidden[csi_ConsoleTitle] = true;
-	#ifndef _DEBUG
-	isStatusColumnHidden[csi_KeyHooks] = true;
-	isStatusColumnHidden[csi_ViewLock] = true;
-	#endif
-	isStatusColumnHidden[csi_CapsLock] = true;
-	isStatusColumnHidden[csi_ScrollLock] = true;
-	isStatusColumnHidden[csi_InputLocale] = true;
-	isStatusColumnHidden[csi_TermModes] = true;
-	isStatusColumnHidden[csi_RConModes] = true;
-	isStatusColumnHidden[csi_WindowPos] = true;
-	isStatusColumnHidden[csi_WindowSize] = true;
-	isStatusColumnHidden[csi_WindowClient] = true;
-	isStatusColumnHidden[csi_WindowWork] = true;
-	isStatusColumnHidden[csi_WindowBack] = true;
-	isStatusColumnHidden[csi_WindowDC] = true;
-	isStatusColumnHidden[csi_WindowStyle] = true;
-	isStatusColumnHidden[csi_WindowStyleEx] = true;
-	isStatusColumnHidden[csi_HwndFore] = true;
-	isStatusColumnHidden[csi_HwndFocus] = true;
-	isStatusColumnHidden[csi_Zoom] = true;
-	isStatusColumnHidden[csi_DPI] = true;
-	isStatusColumnHidden[csi_ConEmuPID] = true;
-	isStatusColumnHidden[csi_ConsolePos] = true;
-	isStatusColumnHidden[csi_BufferSize] = true;
-	//isStatusColumnHidden[csi_CursorInfo] = true; -- show one info col instead of three cursor columns (by default)
-	isStatusColumnHidden[csi_CursorX] = true;
-	isStatusColumnHidden[csi_CursorY] = true;
-	isStatusColumnHidden[csi_CursorSize] = true;
-	isStatusColumnHidden[csi_ConEmuHWND] = true;
-	isStatusColumnHidden[csi_ConEmuView] = true;
-	isStatusColumnHidden[csi_ServerHWND] = true;
-	isStatusColumnHidden[csi_Time] = true;
 
 	isTabs = 1; nTabsLocation = 0; isTabIcons = true; isOneTabPerGroup = false;
 	bActivateSplitMouseOver = 1; // 1 - always, 2 - Regarding Windows settings (Active window tracking)
@@ -3258,6 +3221,55 @@ void Settings::SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF*
 	reg->Save(L"ClipboardFirstLine", pApp->isPasteFirstLine);
 	reg->Save(L"ClipboardClickPromptPosition", pApp->isCTSClickPromptPosition);
 	reg->Save(L"ClipboardDeleteLeftWord", pApp->isCTSDeleteLeftWord);
+}
+
+// Helper method to avoid #include in header
+void Settings::StatusColumnName(int index)
+{
+	// Name for serializing isStatusColumnHidden items
+	return CStatus::GetSettingName((CEStatusItems)index);
+}
+
+void Settings::StatusColumnDefaults(CEOptionArray<bool,csi_Last>::arr_type& columns)
+{
+	_ASSERTE(countof(isStatusColumnHidden.m_Value) >= csi_Last);
+
+	memset(isStatusColumnHidden.m_Value, 0, sizeof(isStatusColumnHidden.m_Value));
+
+	// hide columns which user do not need by default
+	isStatusColumnHidden[csi_ConsoleTitle] = true;
+	#ifndef _DEBUG
+	isStatusColumnHidden[csi_KeyHooks] = true;
+	isStatusColumnHidden[csi_ViewLock] = true;
+	#endif
+	isStatusColumnHidden[csi_CapsLock] = true;
+	isStatusColumnHidden[csi_ScrollLock] = true;
+	isStatusColumnHidden[csi_InputLocale] = true;
+	isStatusColumnHidden[csi_TermModes] = true;
+	isStatusColumnHidden[csi_RConModes] = true;
+	isStatusColumnHidden[csi_WindowPos] = true;
+	isStatusColumnHidden[csi_WindowSize] = true;
+	isStatusColumnHidden[csi_WindowClient] = true;
+	isStatusColumnHidden[csi_WindowWork] = true;
+	isStatusColumnHidden[csi_WindowBack] = true;
+	isStatusColumnHidden[csi_WindowDC] = true;
+	isStatusColumnHidden[csi_WindowStyle] = true;
+	isStatusColumnHidden[csi_WindowStyleEx] = true;
+	isStatusColumnHidden[csi_HwndFore] = true;
+	isStatusColumnHidden[csi_HwndFocus] = true;
+	isStatusColumnHidden[csi_Zoom] = true;
+	isStatusColumnHidden[csi_DPI] = true;
+	isStatusColumnHidden[csi_ConEmuPID] = true;
+	isStatusColumnHidden[csi_ConsolePos] = true;
+	isStatusColumnHidden[csi_BufferSize] = true;
+	//isStatusColumnHidden[csi_CursorInfo] = true; -- show one info col instead of three cursor columns (by default)
+	isStatusColumnHidden[csi_CursorX] = true;
+	isStatusColumnHidden[csi_CursorY] = true;
+	isStatusColumnHidden[csi_CursorSize] = true;
+	isStatusColumnHidden[csi_ConEmuHWND] = true;
+	isStatusColumnHidden[csi_ConEmuView] = true;
+	isStatusColumnHidden[csi_ServerHWND] = true;
+	isStatusColumnHidden[csi_Time] = true;
 }
 
 void Settings::SaveStatusSettings(SettingsBase* reg)

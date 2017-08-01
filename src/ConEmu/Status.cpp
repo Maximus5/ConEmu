@@ -1928,14 +1928,25 @@ void CStatus::OnServerChanged(DWORD nMainServerPID, DWORD nAltServerPID)
 	OnDataChanged(Changed, countof(Changed));
 }
 
+// static!
 LPCWSTR CStatus::GetSettingName(CEStatusItems nID)
 {
-	_ASSERTE(this);
 	if (nID <= csi_Info || nID >= csi_Last)
 		return NULL;
 
-	_ASSERTE(m_Values[nID].sSettingName!=NULL && m_Values[nID].sSettingName[0]!=0);
-	return m_Values[nID].sSettingName;
+	static bool processed = false;
+	static LPCWSTR sSettingNames[csi_Last];
+	if (!processed)
+	{
+		for (INT_PTR i = 0; i < countof(gStatusCols); ++i)
+		{
+			sSettingNames[gStatusCols[i].nID] = gStatusCols[i].sSettingName;
+		}
+		processed = true;
+	}
+
+	_ASSERTE(sSettingNames[nID]!=NULL && sSettingNames[nID][0]!=0);
+	return sSettingNames[nID];
 }
 
 bool CStatus::IsTimeChanged()

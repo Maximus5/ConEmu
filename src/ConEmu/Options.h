@@ -177,6 +177,19 @@ class Settings
 	public:
 		enum TabsOnTaskbar { tot_ConEmuOnly = 0, tot_AllTabsAllOS = 1, tot_AllTabsWin7 = 2, tot_DontShow = 3};
 
+	protected:
+		/* *** helper methods for option initializations *** */
+		// isStatusColumnHidden
+		static void StatusColumnName(int index);
+		static void StatusColumnDefaults(CEOptionArray<bool,csi_Last>::arr_type& columns);
+
+	public:
+		/* *** some short names *** */
+		using CEOptionStr16 = CEOptionStrFix<16>;
+		using CEOptionStr32 = CEOptionStrFix<32>;
+		using CEOptionStr64 = CEOptionStrFix<64>;
+		using CEOptionFName = CEOptionStrFix<LF_FACESIZE>;
+
 	public:
 		public:  CEOptionInt    DefaultBufferHeight = CEOptionInt(L"DefaultBufferHeight", 1000);
 		public:  CEOptionBool   AutoBufferHeight = CEOptionBool(L"AutoBufferHeight", true); // Long console output
@@ -213,7 +226,7 @@ class Settings
 		public:  CEOptionUInt   nStartCreateDelay = CEOptionUInt(L"StartCreateDelay", RUNQUEUE_CREATE_LAG_DEF); // RUNQUEUE_CREATE_LAG
 		public:  CEOptionBool   isStoreTaskbarkTasks = CEOptionBool(L"StoreTaskbarkTasks");
 		public:  CEOptionBool   isStoreTaskbarCommands = CEOptionBool(L"StoreTaskbarCommands");
-		public:  CEOptionStrFix<LF_FACESIZE> inFont = CEOptionStrFix<LF_FACESIZE>(L"FontName");
+		public:  CEOptionFName  inFont = CEOptionFName(L"FontName");
 		public:  CEOptionBool   isBold = CEOptionBool(L"FontBold", false);
 		public:  CEOptionBool   isItalic = CEOptionBool(L"FontItalic", false);
 		public:  CEOptionUInt   mn_AntiAlias = CEOptionUInt(L"Anti-aliasing", CLEARTYPE_NATURAL_QUALITY, get_antialias_default, antialias_validate);
@@ -306,13 +319,13 @@ class Settings
 		private: CEOptionByte   mn_FadeHigh = CEOptionByte(L"FadeInactiveHigh");
 		public:  CEOptionBool   isStatusBarShow = CEOptionBool(L"StatusBar.Show");
 		public:  CEOptionDWORD  isStatusBarFlags = CEOptionDWORD(L"StatusBar.Flags"); // set of CEStatusFlags
-		public:  CEOptionStrFix<LF_FACESIZE> sStatusFontFace = CEOptionStrFix<LF_FACESIZE>(L"StatusFontFace");
+		public:  CEOptionFName  sStatusFontFace = CEOptionFName(L"StatusFontFace");
 		public:  CEOptionUInt   nStatusFontCharSet = CEOptionUInt(L"StatusFontCharSet");
 		public:  CEOptionInt    nStatusFontHeight = CEOptionInt(L"StatusFontHeight");
 		public:  CEOptionDWORD  nStatusBarBack = CEOptionDWORD(L"StatusBar.Color.Back");
 		public:  CEOptionDWORD  nStatusBarLight = CEOptionDWORD(L"StatusBar.Color.Light");
 		public:  CEOptionDWORD  nStatusBarDark = CEOptionDWORD(L"StatusBar.Color.Dark");
-		public:  CEOptionArray<bool,csi_Last,StatusColumnName,StatusColumnDefaults> isStatusColumnHidden;
+		public:  CEOptionArray<bool,csi_Last> isStatusColumnHidden = CEOptionArray<bool,csi_Last>(StatusColumnName, StatusColumnDefaults);
 		public:  CEOptionByte   isTabs = CEOptionByte(L"Tabs"); // 0 - don't show, 1 - always show, 2 - auto show
 		public:  CEOptionByte   nTabsLocation = CEOptionByte(L"TabsLocation"); // 0 - top, 1 - bottom
 		public:  CEOptionBool   isTabIcons = CEOptionBool(L"TabIcons");
@@ -327,7 +340,7 @@ class Settings
 		private: CEOptionEnum<TabsOnTaskbar> m_isTabsOnTaskBar = CEOptionEnum<TabsOnTaskbar>(L"TabsOnTaskBar"); // 0 - ConEmu only, 1 - all tabs & all OS, 2 - all tabs & Win 7, 3 - DON'T SHOW
 		public:  CEOptionBool   isTaskbarOverlay = CEOptionBool(L"TaskBarOverlay");
 		public:  CEOptionBool   isTaskbarProgress = CEOptionBool(L"TaskbarProgress");
-		public:  CEOptionStrFix<LF_FACESIZE> sTabFontFace = CEOptionStrFix<LF_FACESIZE>(L"TabFontFace");
+		public:  CEOptionFName  sTabFontFace = CEOptionFName(L"TabFontFace");
 		public:  CEOptionUInt   nTabFontCharSet = CEOptionUInt(L"TabFontCharSet");
 		public:  CEOptionInt    nTabFontHeight = CEOptionInt(L"TabFontHeight");
 		public:  CEOptionString sTabCloseMacro = CEOptionString(L"TabCloseMacro"); //if (!reg->Load(L"TabCloseMacro", &sTabCloseMacro) || (sTabCloseMacro && !*sTabCloseMacro)) { if (sTabCloseMacro) { free(sTabCloseMacro); sTabCloseMacro = NULL; } }
@@ -376,15 +389,15 @@ class Settings
 		public:  CEOptionBool   isFixAltOnAltTab = CEOptionBool(L"FixAltOnAltTab");
 		public:  CEOptionBool   isUseAltGrayPlus = CEOptionBool(L"UseAltGrayPlus");
 		public:  CEOptionBool   isShellNoZoneCheck = CEOptionBool(L"ShellNoZoneCheck");
-		public:  CEOptionStrFix<32> szTabConsole = CEOptionStrFix<32>(L"TabConsole");
-		public:  CEOptionStrFix<16> szTabModifiedSuffix = CEOptionStrFix<16>(L"TabModifiedSuffix");
+		public:  CEOptionStr32  szTabConsole = CEOptionStr32(L"TabConsole");
+		public:  CEOptionStr16  szTabModifiedSuffix = CEOptionStr16(L"TabModifiedSuffix");
 		public:  CEOptionString pszTabSkipWords = CEOptionString(L"TabSkipWords");
-		public:  CEOptionStrFix<32> szTabPanels = CEOptionStrFix<32>(L"TabPanels");
-		public:  CEOptionStrFix<32> szTabEditor = CEOptionStrFix<32>(L"TabEditor");
-		public:  CEOptionStrFix<32> szTabEditorModified = CEOptionStrFix<32>(L"TabEditorModified");
-		public:  CEOptionStrFix<32> szTabViewer = CEOptionStrFix<32>(L"TabViewer");
+		public:  CEOptionStr32  szTabPanels = CEOptionStr32(L"TabPanels");
+		public:  CEOptionStr32  szTabEditor = CEOptionStr32(L"TabEditor");
+		public:  CEOptionStr32  szTabEditorModified = CEOptionStr32(L"TabEditorModified");
+		public:  CEOptionStr32  szTabViewer = CEOptionStr32(L"TabViewer");
 		public:  CEOptionUInt   nTabLenMax = CEOptionUInt(L"TabLenMax", 20); // if (nTabLenMax < 10 || nTabLenMax >= CONEMUTABMAX) nTabLenMax = 20;
-		public:  CEOptionStrFix<64> szAdminTitleSuffix = CEOptionStrFix<64>(L"AdminTitleSuffix"); // DefaultAdminTitleSuffix /* " (Admin)" */
+		public:  CEOptionStr64  szAdminTitleSuffix = CEOptionStr64(L"AdminTitleSuffix"); // DefaultAdminTitleSuffix /* " (Admin)" */
 		public:  CEOptionByte   bAdminShield = CEOptionByte(L"AdminShowShield"); // enum AdminTabStyle
 		public:  CEOptionBool   bHideInactiveConsoleTabs = CEOptionBool(L"HideInactiveConsoleTabs");
 		public:  CEOptionBool   bShowFarWindows = CEOptionBool(L"ShowFarWindows");

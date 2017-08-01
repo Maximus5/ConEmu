@@ -222,14 +222,14 @@ template <typename T, int MaxSize>
 class CEOptionArray : public CEOptionBase
 {
 public:
-	typedef typename CEOptionArrayType<T,MaxSize>::type arr_type;
+	using arr_type = CEOptionArrayType<T,MaxSize>::type;
 	arr_type m_Value;
 protected:
 	LPCWSTR (*get_name)(int index);
 	void (*set_default)(arr_type& value);
 public:
-	CEOptionArray(LPCWSTR OptionName, LPCWSTR (*_get_name)(int index) = NULL, void (*_set_default)(arr_type& value) = NULL)
-		: CEOptionBase(OptionName)
+	CEOptionArray(LPCWSTR (*_get_name)(int index), void (*_set_default)(arr_type& value) = NULL)
+		: CEOptionBase(L"")
 		, get_name(_get_name)
 		, set_default(_set_default)
 	{
@@ -246,11 +246,20 @@ public:
 		if (!reg || !get_name)
 			return false;
 		bool bAllOk = true;
+		if (set_default)
+			set_default(m_Value);
 		for (int i = 0; i < MaxSize; i++)
 		{
 			LPCWSTR pszName = get_name(i);
-			if (!reg->Load(pszName, m_Value[i]))
+			if (!pszName || !*pszName)
+			{
+				if (!set_default)
+					m_Value[i] = T();
+			}
+			else if (!reg->Load(pszName, m_Value[i]))
+			{
 				bAllOk = false;
+			}
 		}
 		return bAllOk;
 	};
@@ -263,9 +272,12 @@ public:
 		for (int i = 0; i < MaxSize; i++)
 		{
 			LPCWSTR pszName = get_name(i);
-			// #OPT_TODO Serializators doesn't return error codes
-			reg->Save(pszName, m_Value[i]);
-			// if (was error) bAllOk = false;
+			if (pszName && *pszName)
+			{
+				// #OPT_TODO Serializators doesn't return error codes
+				reg->Save(pszName, m_Value[i]);
+				// if (was error) bAllOk = false;
+			}
 		}
 		return bAllOk;
 	};
@@ -444,14 +456,207 @@ public:
 
 
 // #NEW_OPTIONS  finished here
+class CEOptionStringArray : public CEOptionBase
+{
+protected:
+	MArray<wchar_t*> Items;
+	const int MaxItemCount;
 
-// #OPT_TODO Replace with "CEOptionStringArray"
+public:
+	CEOptionStringArray(int anMaxItemCount = -1)
+		: CEOptionBase(L"")
+		, MaxItemCount(anMaxItemCount)
+	{
+	};
+
+	virtual ~CEOptionStringArray()
+	{
+		Reset();
+	};
+
+	virtual void Reset() override
+	{
+		INT_PTR iCount = Items.size();
+
+		for (INT_PTR i = 0; i < iCount; i++)
+		{
+			wchar_t* p = Items[i];
+			SafeFree(p);
+		}
+
+		Items.eraseall();
+	};
+
+	LPCWSTR Get(int index) const
+	{
+		if (index < 0 || index >= Items.size())
+			return NULL;
+
+		LPCWSTR pszItem = Items[index];
+		if (!pszItem || !*pszItem)
+		{
+			_ASSERTE(pszItem && *pszItem);
+			return NULL;
+		}
+
+		return pszItem;
+	};
+
+	LPCWSTR operator[](int index) const
+	{
+		return Get(index);
+	};
+
+	int Compare(int index, LPCWSTR asCommand)
+	{
+		int iCmp;
+
+		LPCWSTR pszItem = Get(index);
+
+		if (!pszItem || !*pszItem)
+			iCmp = -1;
+		else if (!asCommand || !*asCommand)
+			iCmp = 1;
+		else
+			iCmp = lstrcmp(pszItem, asCommand);
+
+		return iCmp;
+	};
+
+	void Add(LPCWSTR asValue, bool bFront = true)
+	{
+		if (!asValue || !*asValue)
+		{
+			_ASSERTE(asValue && *asValue);
+			return;
+		}
+
+		wchar_t* p;
+		INT_PTR iCount;
+
+		// bFront==false is used during History loading,
+		// no need to remove duplicates from settings
+		if (bFront)
+		{
+			// Already on first place?
+			if (!Items.empty())
+			{
+				p = Items[0];
+				if (p && lstrcmp(p, asValue) == 0)
+				{
+					return;
+				}
+			}
+
+			// First, remove asValue from list, if it was there already
+			iCount = Items.size();
+			while (iCount > 0)
+			{
+				p = Items[--iCount];
+				if (!p || lstrcmp(p, asValue) == 0)
+				{
+					SafeFree(p);
+					Items.erase(iCount);
+				}
+			}
+
+			// Second, trim history tail to MaxItemCount
+			iCount = Items.size();
+			while ((iCount > 0) && (iCount >= MaxItemCount))
+			{
+				p = Items[--iCount];
+				SafeFree(p);
+				Items.erase(iCount);
+			}
+		}
+
+		p = lstrdup(asValue);
+		if (!p)
+			return;
+
+		if (bFront)
+			Items.insert(0, p);
+		else
+			Items.push_back(p);
+	};
+
+	// delimiter==NULL - creates MSZ data
+	// otherwise it may be, for example, L"\r\n", "|", etc.
+	// returns size in BYTES!
+	UINT GetData(wchar_t*& rsMSZ, LPCWSTR delimiter = NULL)
+	{
+		_ASSERTE(rsMSZ==NULL);
+		SafeFree(rsMSZ);
+
+		if (Items.size() <= 0)
+		{
+			return 0;
+		}
+
+		UINT delim_len = delimiter ? wcslen(delimiter) : 1;
+		INT_PTR iCount = Items.size();
+		UINT cchMax = 0;
+		MArray<int> len;
+		len.alloc(iCount);
+
+		for (INT_PTR i = 0; i < iCount; i++)
+		{
+			// skipping empty lines!
+			UINT iLen = Items[i] ? wcslen(Items[i]) : 0;
+			if (iLen)
+				cchMax += iLen + delim_len;
+			len.push_back(iLen);
+		}
+
+		if (!cchMax)
+		{
+			_ASSERTE(FALSE && "Length failed for non-empty array");
+			return 0;
+		}
+
+		cchMax = (cchMax + 1) * sizeof(*rsMSZ);
+
+		rsMSZ = (wchar_t*)malloc(cchMax);
+		if (!rsMSZ)
+		{
+			_ASSERTE(rsMSZ!=NULL);
+			return 0;
+		}
+
+		wchar_t* p = rsMSZ;
+		for (INT_PTR i = 0; i < iCount; i++)
+		{
+			int iSize = len[i];
+			if (iSize)
+				_wcscpy_c(p, iSize+1, Items[i]);
+			p += iSize;
+			if (!delimiter)
+			{
+				p++; // MSZZ
+			}
+			else if (delim_len)
+			{
+				_wcscpy_c(p, delim_len+1, delimiter);
+				p += delim_len;
+			}
+		}
+
+		*p = 0;
+		_ASSERTE((p > rsMSZ) && (*(p) == 0 && *(p-1) == 0));
+
+		return cchMax;
+	};
+
+};
+
+// #OPT_TODO Reuse "CEOptionStringArray"
 template <LPCWSTR OptionName, LPCWSTR Default = NULL>
 class CEOptionStringMSZ : public CEOptionBaseImpl<wchar_t*, OptionName>
 {
 };
 
 // #OPT_TODO Required for "DefaultTerminalApps"
+// #OPT_TODO Reuse "CEOptionStringArray"
 template <LPCWSTR OptionName, LPCWSTR Default = NULL>
 class CEOptionStringDelim : public CEOptionBaseImpl<wchar_t*, OptionName>
 {

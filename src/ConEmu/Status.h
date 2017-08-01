@@ -224,7 +224,7 @@ public:
 	bool ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, POINT ptCurClient, LRESULT& lResult);
 	void ProcessMenuHighlight(HMENU hMenu, WORD nID, WORD nFlags);
 
-	LPCWSTR GetSettingName(CEStatusItems nID);
+	static LPCWSTR GetSettingName(CEStatusItems nID);
 
 	bool GetStatusBarClientRect(RECT* rc);
 	bool GetStatusBarItemRect(CEStatusItems nID, RECT* rc);
