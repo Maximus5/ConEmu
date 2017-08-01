@@ -375,18 +375,7 @@ int NextLine(const wchar_t** asLines, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF
 	if (!asLines || !*asLines)
 		return CERR_CMDLINEEMPTY;
 
-	const wchar_t* psz = *asLines;
-	//const wchar_t szSpaces[] = L" \t";
-	//const wchar_t szLines[] = L"\r\n";
-	//const wchar_t szSpacesLines[] = L" \t\r\n";
-
-	if ((Flags & (NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES)) == (NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES))
-		psz = SkipNonPrintable(psz);
-	else if (Flags & NLF_TRIM_SPACES)
-		while (*psz == L' ' || *psz == L'\t') psz++;
-	else if (Flags & NLF_SKIP_EMPTY_LINES)
-		while (*psz == L'\r' || *psz == L'\n') psz++;
-
+	const wchar_t* psz = SkipNonPrintable(*asLines, Flags);
 	if (!*psz)
 	{
 		*asLines = psz;
@@ -396,7 +385,7 @@ int NextLine(const wchar_t** asLines, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF
 	const wchar_t* pszEnd = wcspbrk(psz, L"\r\n");
 	if (!pszEnd)
 	{
-		pszEnd = psz + lstrlen(psz);
+		pszEnd = psz + wcslen(psz);
 	}
 
 	const wchar_t* pszTrim = pszEnd;
@@ -406,6 +395,52 @@ int NextLine(const wchar_t** asLines, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF
 	if (Flags & NLF_TRIM_SPACES)
 	{
 		while ((pszTrim > psz) && ((*(pszTrim-1) == L' ') || (*(pszTrim-1) == L'\t')))
+			pszTrim--;
+	}
+
+	_ASSERTE(pszTrim >= psz);
+	rsLine.Set(psz, pszTrim-psz);
+	psz = pszEnd;
+
+	*asLines = psz;
+	return 0;
+}
+
+// Returns PTR to next line or NULL on error
+LPCWSTR QueryNextToken(const wchar_t* asLines, LPCWSTR asDelimiter, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES*/)
+{
+	if (0 != NextToken(&asLines, asDelimiter, rsLine, Flags))
+		return NULL;
+	return asLines;
+}
+
+// Returns 0 if succeeded, otherwise the error code
+int NextToken(const wchar_t** asLines, LPCWSTR asDelimiter, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES*/)
+{
+	if (!asLines || !*asLines)
+		return CERR_CMDLINEEMPTY;
+	if (!asDelimiter || !*asDelimiter)
+		return CERR_BADDELIMITER;
+
+	const wchar_t* psz = SkipNonPrintable(*asLines, Flags);
+	if (!*psz)
+	{
+		*asLines = psz;
+		return CERR_CMDLINEEMPTY;
+	}
+
+	const wchar_t* pszEnd = wcsstr(psz, asDelimiter);
+	if (!pszEnd)
+	{
+		pszEnd = psz + wcslen(psz);
+	}
+
+	const wchar_t* pszTrim = pszEnd;
+	pszEnd += wcslen(asDelimiter);
+
+	if (Flags & NLF_TRIM_SPACES)
+	{
+		while ((pszTrim > psz) && (isBlank(*(pszTrim-1))))
 			pszTrim--;
 	}
 
@@ -432,12 +467,19 @@ int AddEndSlash(wchar_t* rsPath, int cchMax)
 	return nLen;
 }
 
-const wchar_t* SkipNonPrintable(const wchar_t* asParams)
+const wchar_t* SkipNonPrintable(const wchar_t* asParams, NEXTLINEFLAGS Flags /*= NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES*/)
 {
 	if (!asParams)
 		return NULL;
 	const wchar_t* psz = asParams;
-	while (*psz == L' ' || *psz == L'\t' || *psz == L'\r' || *psz == L'\n') psz++;
+
+	if ((Flags & (NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES)) == (NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES))
+		while (isSpace(*psz)) psz++;
+	else if (Flags & NLF_TRIM_SPACES)
+		while (isBlank(*psz)) psz++;
+	else if (Flags & NLF_SKIP_EMPTY_LINES)
+		while (isCRLF(*psz)) psz++;
+
 	return psz;
 }
 

@@ -44,6 +44,8 @@ const NEXTLINEFLAGS
 	NLF_NONE = 0;
 int NextLine(const wchar_t** asLines, CEStr &rsLine, NEXTLINEFLAGS Flags = NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES);
 LPCWSTR QueryNextLine(const wchar_t* asLines, CEStr &rsLine, NEXTLINEFLAGS Flags = NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES);
+int NextToken(const wchar_t** asLines, LPCWSTR asDelimiter, CEStr &rsLine, NEXTLINEFLAGS Flags = NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES);
+LPCWSTR QueryNextToken(const wchar_t* asLines, LPCWSTR asDelimiter, CEStr &rsLine, NEXTLINEFLAGS Flags = NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES);
 
 bool CompareFileMask(const wchar_t* asFileName, const wchar_t* asMask);
 LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchDriveMax);
@@ -65,7 +67,7 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 			   BOOL* rpbRootIsCmdExe = NULL, BOOL* rpbAlwaysConfirmExit = NULL, BOOL* rpbAutoDisableConfirmExit = NULL);
 
 bool IsQuotationNeeded(LPCWSTR pszPath);
-const wchar_t* SkipNonPrintable(const wchar_t* asParams);
+const wchar_t* SkipNonPrintable(const wchar_t* asParams, NEXTLINEFLAGS Flags = NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES);
 
 int AddEndSlash(wchar_t* rsPath, int cchMax);
 wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams);
