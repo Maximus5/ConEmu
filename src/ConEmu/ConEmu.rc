@@ -748,8 +748,6 @@ BEGIN
     CONTROL         "Set ComSpec environment variable for child processes to selected value",cbComspecUpdateEnv,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,117,364,8
     PUSHBUTTON      "Test",cbComspecTest,170,79,50,14
-    LTEXT           "Cmd.exe output codepage:",stCmdOutputCP,241,67,130,8
-    COMBOBOX        lbCmdOutputCP,239,79,130,44,CBS_DROPDOWNLIST | WS_TABSTOP
     CONTROL         "Support UNC paths in cmd.exe (\\\\server\\share\\folder)",cbComspecUncPaths,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,131,364,8
     GROUPBOX        "Automatic attach of cmd && Tcc/Le to ConEmu (new window will be started if not found)",gbCmdAutoAttach,4,168,375,65

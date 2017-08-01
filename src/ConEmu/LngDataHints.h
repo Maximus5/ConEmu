@@ -186,7 +186,6 @@ static LngPredefined gsDataHints[] = {
 	{ lbCTSBlockSelection,     L"Choose modifier to starting ‘Block selection’ with mouse LeftClick+Drag" },
 	{ lbCTSEOL,                L"Choose preferred line separator (\\r\\n, \\n or \\r)" },
 	{ lbCTSTextSelection,      L"Choose modifier to starting ‘Text selection’ with mouse LeftClick+Drag" },
-	{ lbCmdOutputCP,           L"Windows command processor (cmd.exe) may cause then output of internal commands to be OEM or Unicode.\r\nYou may force this selection, or use automatic selection (FAR2 -> Unicode)." },
 	{ lbColorsOverride,        L"You may choose one of predefined color schemes.\r\nEach scheme customize 32 colors (16+16)\r\nand extend foreground options." },
 	{ lbConClrBack,            L"Specify default background text color for new consoles" },
 	{ lbConClrPopBack,         L"Specify default background popup color for new consoles" },

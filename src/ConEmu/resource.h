@@ -204,7 +204,6 @@
 #define cbDebugSteps                    1551
 #define cbDragIcons                     1553
 #define lbDefaultColors                 1554
-#define lbCmdOutputCP                   1558
 #define lbNtvdmHeight                   1559
 #define IDC_CONSOLE_STATES              1560
 #define cbFARuseASCIIsort               1561
@@ -1235,7 +1234,6 @@
 #define gbVConFont                      2951
 #define stVConFontMain                  2952
 #define stVConFontFix                   2953
-#define stCmdOutputCP                   2954
 #define gbCmdAutoAttach                 2955
 #define stCmdAutoAttach                 2956
 #define gbFarDragDrop                   2957

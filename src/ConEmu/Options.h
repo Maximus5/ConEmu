@@ -194,7 +194,6 @@ class Settings
 		public:  CEOptionInt    DefaultBufferHeight = CEOptionInt(L"DefaultBufferHeight", 1000);
 		public:  CEOptionBool   AutoBufferHeight = CEOptionBool(L"AutoBufferHeight", true); // Long console output
 		public:  CEOptionBool   UseScrollLock = CEOptionBool(L"UseScrollLock", true);
-		public:  CEOptionInt    nCmdOutputCP = CEOptionInt(L"CmdOutputCP", 0);
 		public:  CEOptionComSpec ComSpec; // Defaults are set in CEOptionComSpec::Reset
 		public:  CEOptionStringDelim DefaultTerminalApps = CEOptionStringDelim(L"DefaultTerminalApps", L"explorer.exe"); // Stored as "|"-delimited string
 		// #OPT_TODO ColorTableIndexName - not implemented

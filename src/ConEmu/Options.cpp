@@ -431,7 +431,6 @@ void Settings::InitSettings()
 	DefaultBufferHeight = 1000; AutoBufferHeight = true;
 	UseScrollLock = true;
 	isSaveCmdHistory = true;
-	nCmdOutputCP = 0;
 	ComSpec.AddConEmu2Path = CEAP_AddAll;
 	{
 		ComSpec.isAllowUncPaths = FALSE;
@@ -2376,7 +2375,6 @@ void Settings::LoadSettings(bool bAppendMode, SettingsBase* reg)
 		reg->Load(L"UseScrollLock", UseScrollLock);
 
 		//reg->Load(L"FarSyncSize", FarSyncSize);
-		reg->Load(L"CmdOutputCP", nCmdOutputCP);
 
 		BYTE nVal = ComSpec.csType;
 		reg->Load(L"ComSpec.Type", nVal);
@@ -3489,7 +3487,6 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"DefaultBufferHeight", DefaultBufferHeight);
 		reg->Save(L"AutoBufferHeight", AutoBufferHeight);
 		reg->Save(L"UseScrollLock", UseScrollLock);
-		reg->Save(L"CmdOutputCP", nCmdOutputCP);
 		reg->Save(L"ComSpec.Type", (BYTE)ComSpec.csType);
 		reg->Save(L"ComSpec.Bits", (BYTE)ComSpec.csBits);
 		reg->Save(L"ComSpec.UpdateEnv", _bool(ComSpec.isUpdateEnv));
