@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
-#include "SetTypes.h"
+#include "SettingTypes.h"
 
 typedef BYTE PasteLinesMode;
 const PasteLinesMode

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2016 Maximus5
+Copyright (c) 2016-2017 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -34,28 +34,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/kl_parts.h"
 #include "../common/CEStr.h"
 #include "../common/MArray.h"
+#include "SettingTypes.h"
 
-
-#if 0
-enum CEOptionType
-{
-	eot_Undefined = 0, // CEOption - must not be
-	eot_Simple,
-	eot_Array,
-	eot_Composite,
-};
-
-enum CEOptionDataType
-{
-	eodt_Undefined = 0, // must be defined!
-	eodt_Bool,    // Simple `bool`
-	eodt_String,  // has MaxLength template property
-	eodt_Byte,    // Simple 'u8' ('BYTE'), may be subclassed as `enum`?
-	eodt_Int,     // Simple 'i32' ('int'), stored as decimal signed integer
-	eodt_UInt,    // Simple 'u32' ('UINT'), stored as decimal unsigned integer
-	eodt_DWORD,   // Simple 'DWORD', stored as hexadecimal unsigned integer
-};
-#endif
 
 
 
@@ -222,7 +202,7 @@ template <typename T, int MaxSize>
 class CEOptionArray : public CEOptionBase
 {
 public:
-	using arr_type = CEOptionArrayType<T,MaxSize>::type;
+	using arr_type = typename CEOptionArrayType<T,MaxSize>::type ;
 	arr_type m_Value;
 protected:
 	LPCWSTR (*get_name)(int index);
@@ -455,7 +435,7 @@ public:
 };
 
 
-// #NEW_OPTIONS  finished here
+
 class CEOptionStringArray : public CEOptionBase
 {
 protected:
@@ -463,10 +443,11 @@ protected:
 	const int MaxItemCount;
 
 public:
-	CEOptionStringArray(int anMaxItemCount = -1)
-		: CEOptionBase(L"")
+	CEOptionStringArray(LPCWSTR OptionName = L"", int anMaxItemCount = -1)
+		: CEOptionBase(OptionName)
 		, MaxItemCount(anMaxItemCount)
 	{
+		_ASSERTE(anMaxItemCount==-1 || anMaxItemCount>0);
 	};
 
 	virtual ~CEOptionStringArray()
@@ -474,7 +455,7 @@ public:
 		Reset();
 	};
 
-	virtual void Reset() override
+	virtual void Clear()
 	{
 		INT_PTR iCount = Items.size();
 
@@ -485,6 +466,16 @@ public:
 		}
 
 		Items.eraseall();
+	};
+
+	virtual void Reset() override
+	{
+		Clear();
+	};
+
+	int Length() const
+	{
+		return Items.size();
 	};
 
 	LPCWSTR Get(int index) const
@@ -523,7 +514,7 @@ public:
 		return iCmp;
 	};
 
-	void Add(LPCWSTR asValue, bool bFront = true)
+	void Add(LPCWSTR asValue, bool bFront)
 	{
 		if (!asValue || !*asValue)
 		{
@@ -570,6 +561,12 @@ public:
 			}
 		}
 
+		if (Items.size() >= ((MaxItemCount < 0) ? INT_MAX : MaxItemCount))
+		{
+			_ASSERTE(FALSE && "MaxItemCount reached");
+			return;
+		}
+
 		p = lstrdup(asValue);
 		if (!p)
 			return;
@@ -583,7 +580,7 @@ public:
 	// delimiter==NULL - creates MSZ data
 	// otherwise it may be, for example, L"\r\n", "|", etc.
 	// returns size in BYTES!
-	UINT GetData(wchar_t*& rsMSZ, LPCWSTR delimiter = NULL)
+	UINT GetData(wchar_t*& rsMSZ, LPCWSTR delimiter) const
 	{
 		_ASSERTE(rsMSZ==NULL);
 		SafeFree(rsMSZ);
@@ -596,15 +593,13 @@ public:
 		UINT delim_len = delimiter ? wcslen(delimiter) : 1;
 		INT_PTR iCount = Items.size();
 		UINT cchMax = 0;
-		MArray<int> len;
+		MArray<UINT> len;
 		len.alloc(iCount);
 
 		for (INT_PTR i = 0; i < iCount; i++)
 		{
-			// skipping empty lines!
 			UINT iLen = Items[i] ? wcslen(Items[i]) : 0;
-			if (iLen)
-				cchMax += iLen + delim_len;
+			cchMax += (iLen ? iLen : 1) + delim_len;
 			len.push_back(iLen);
 		}
 
@@ -628,11 +623,18 @@ public:
 		{
 			int iSize = len[i];
 			if (iSize)
+			{
 				_wcscpy_c(p, iSize+1, Items[i]);
-			p += iSize;
+				p += iSize;
+			}
+			else if (!delimiter)
+			{
+				// Registry limitation: we can't store empty strings inside MSZZ
+				*(p++) = L' ';
+			}
 			if (!delimiter)
 			{
-				p++; // MSZZ
+				*(p++) = 0; // MSZZ
 			}
 			else if (delim_len)
 			{
@@ -647,19 +649,172 @@ public:
 		return cchMax;
 	};
 
+	size_t SetData(LPCWSTR pszData, LPCWSTR pszDelimiter)
+	{
+		Clear();
+		if (!pszData || !*pszData)
+			return 0;
+
+		enum { delim_zero, delim_line, delim_token } delim_type;
+		if (!pszDelimiter || !*pszDelimiter)
+			delim_type = delim_zero;
+		else if (wcscmp(pszDelimiter, L"\r\n") == 0)
+			delim_type = delim_line;
+		else
+			delim_type = delim_token;
+
+		CEStr lsToken;
+		LPCWSTR pszToken = pszData;
+		while (pszToken && *pszToken)
+		{
+			bool ok;
+			switch (delim_type)
+			{
+			case delim_zero:
+				lsToken.Set(pszToken);
+				pszToken += wcslen(pszToken)+1;
+				ok = true;
+				break;
+			case delim_token:
+				ok = (0 == NextToken(&pszToken, pszDelimiter, lsToken, NLF_NONE));
+				break;
+			case delim_line:
+				ok = (0 == NextLine(&pszToken, lsToken, NLF_TRIM_SPACES));
+				break;
+			}
+			Items.push_back(lsToken.Detach());
+		}
+
+		return (pszToken - pszData);
+	};
+
 };
 
-// #OPT_TODO Reuse "CEOptionStringArray"
-template <LPCWSTR OptionName, LPCWSTR Default = NULL>
-class CEOptionStringMSZ : public CEOptionBaseImpl<wchar_t*, OptionName>
+
+class CEOptionStringMSZ : public CEOptionStringArray
 {
+protected:
+	wchar_t* mpszz_Default;
+public:
+	CEOptionStringMSZ(LPCWSTR OptionName, LPCWSTR pszzDefault, int anMaxItemCount = -1)
+		: CEOptionStringArray(OptionName, anMaxItemCount)
+		, mpszz_Default(NULL)
+	{
+		if (pszzDefault && *pszzDefault)
+		{
+			size_t cchCount = CEOptionStringArray::SetData(pszzDefault, NULL);
+			if (cchCount)
+			{
+				mpszz_Default = (wchar_t*)malloc((cchCount + 1) * sizeof(*mpszz_Default));
+				memmove(mpszz_Default, pszzDefault, cchCount * sizeof(*mpszz_Default));
+				// Empty strings (as elements) are not allowed
+				_ASSERTE(cchCount > 0 && mpszz_Default[cchCount-1] == 0 && mpszz_Default[cchCount-2] != 0);
+				mpszz_Default[cchCount] = 0;
+			}
+		}
+	};
+
+	~CEOptionStringMSZ()
+	{
+		SafeFree(mpszz_Default);
+	};
+
+	void SetData(LPCWSTR pszzMSZ)
+	{
+		CEOptionStringArray::SetData(pszzMSZ, NULL);
+	};
+
+	virtual void Reset() override
+	{
+		SetData(mpszz_Default);
+	};
+
+	virtual bool Load(SettingsBase* reg) override
+	{
+		if (!reg)
+			return false;
+
+		wchar_t* pszz = NULL;
+		bool load = reg->Load(ms_Name, &pszz);
+		SetData(pszz);
+		SafeFree(pszz);
+		return load;
+	};
+
+	virtual bool Save(SettingsBase* reg) const override
+	{
+		if (!reg)
+			return false;
+		// #OPT_TODO Serializators doesn't return error codes
+		wchar_t* pszz = NULL;
+		UINT szzDataSize = GetData(pszz, NULL/*delimiter*/);
+		reg->SaveMSZ(ms_Name, pszz, szzDataSize);
+		SafeFree(pszz);
+		return true;
+	};
+
 };
 
+// #NEW_OPTIONS  finished here
 // #OPT_TODO Required for "DefaultTerminalApps"
 // #OPT_TODO Reuse "CEOptionStringArray"
-template <LPCWSTR OptionName, LPCWSTR Default = NULL>
-class CEOptionStringDelim : public CEOptionBaseImpl<wchar_t*, OptionName>
+class CEOptionStringDelim : public CEOptionStringArray
 {
+protected:
+	wchar_t* mpsz_Default;
+	wchar_t  ms_Delimiter[4];
+public:
+	CEOptionStringDelim(LPCWSTR OptionName, LPCWSTR pszDefault, LPCWSTR pszDelimiter, int anMaxItemCount = -1)
+		: CEOptionStringArray(OptionName, anMaxItemCount)
+	{
+		_ASSERTE(pszDelimiter && *pszDelimiter);
+		lstrcpyn(ms_Delimiter, pszDelimiter, countof(ms_Delimiter));
+		if (pszDefault && *pszDefault)
+		{
+			size_t cchCount = CEOptionStringArray::SetData(pszDefault, ms_Delimiter);
+			mpsz_Default = lstrdup(pszDefault);
+		}
+	};
+
+	~CEOptionStringDelim()
+	{
+		SafeFree(mpsz_Default);
+	};
+
+	void SetData(LPCWSTR pszzMSZ)
+	{
+		CEOptionStringArray::SetData(pszzMSZ, ms_Delimiter);
+	};
+
+	virtual void Reset() override
+	{
+		SetData(mpsz_Default);
+	};
+
+	virtual bool Load(SettingsBase* reg) override
+	{
+		if (!reg)
+			return false;
+
+		wchar_t* pszz = NULL;
+		bool load = reg->Load(ms_Name, &pszz);
+		SetData(pszz);
+		SafeFree(pszz);
+		return load;
+	};
+
+	virtual bool Save(SettingsBase* reg) const override
+	{
+		if (!reg)
+			return false;
+		// #OPT_TODO Serializators doesn't return error codes
+		wchar_t* pszz = NULL;
+		UINT szzDataSize = GetData(pszz, ms_Delimiter);
+		reg->Save(ms_Name, pszz);
+		SafeFree(pszz);
+		return true;
+	};
+
 };
 
 

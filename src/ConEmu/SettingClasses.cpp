@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2016 Maximus5
+Copyright (c) 2016-2017 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,20 +27,4 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#pragma once
-
-#include <windows.h>
-#include "../common/Common.h"
-#include "SettingClasses.h"
-
-class CEOptionComSpec : public CEOptionBase, public ConEmuComspec
-{
-public:
-	CEOptionComSpec();
-
-	virtual ~CEOptionComSpec();
-
-	virtual bool Load(SettingsBase* reg) override;
-	virtual bool Save(SettingsBase* reg) const override;
-	virtual void Reset() override;
-};
+#include "Header.h"

@@ -288,6 +288,7 @@ struct SettingsStorage
 
 #define APP_MODEL_ID_PREFIX L"Maximus5.ConEmu."
 
+#include "SettingTypes.h"
 #include "Registry.h"
 
 #include "../common/MRect.h"
@@ -424,22 +425,6 @@ enum TrackMenuPlace
 	tmp_SearchPopup,
 };
 
-enum ConEmuWindowMode
-{
-	wmCurrent = 0,
-	wmNotChanging = -1,
-	wmNormal = rNormal,
-	wmMaximized = rMaximized,
-	wmFullScreen = rFullScreen,
-};
-
-enum ConEmuQuakeMode
-{
-	quake_Disabled = 0,
-	quake_Standard = 1,
-	quake_HideOnLoseFocus = 2,
-};
-
 LPCWSTR GetWindowModeName(ConEmuWindowMode wm);
 
 enum ExpandTextRangeType
@@ -469,29 +454,6 @@ struct ConEmuTextRange
 {
 	COORD mcr_FileLineStart, mcr_FileLineEnd;
 	ExpandTextRangeType etrLast;
-};
-
-enum BackgroundOp
-{
-	eUpLeft = 0,
-	eStretch = 1,
-	eTile = 2,
-	eUpRight = 3,
-	eDownLeft = 4,
-	eDownRight = 5,
-	eFit = 6, // Stretch aspect ratio (Fit)
-	eFill = 7, // Stretch aspect ratio (Fill)
-	eCenter = 8,
-	//
-	eOpLast = eCenter,
-};
-
-enum StartupType
-{
-	start_Command = 0,
-	start_File = 1, // @cmd task file
-	start_Task = 2, // {named task}
-	start_Auto = 3, // <auto saved task> (*StartupTask)
 };
 
 enum ToolbarMainBitmapIdx
@@ -530,168 +492,6 @@ enum SwitchGuiFocusOp
 	sgf_FocusGui,
 	sgf_FocusChild,
 	sgf_Last
-};
-
-enum CEStatusFlags
-{
-	csf_VertDelim           = 0x00000001,
-	csf_HorzDelim           = 0x00000002,
-	csf_SystemColors        = 0x00000004,
-	csf_NoVerticalPad       = 0x00000008,
-};
-
-enum CECopyMode
-{
-	cm_CopySel = 0, // Copy current selection (old bCopyAll==false)
-	cm_CopyAll = 1, // Copy full buffer (old bCopyAll==true)
-	cm_CopyVis = 2, // Copy visible screen area
-	cm_CopyInt = 3, // Copy current selection into internal CEStr
-};
-
-enum CTSEndOnTyping
-{
-	ceot_Off = 0,
-	ceot_CopyReset = 1,
-	ceot_Reset = 2,
-};
-
-enum CTSCopyFormat
-{
-	CTSFormatText = 0,
-	CTSFormatHtmlData = 1,   // ready to paste formatted text in word processing
-	CTSFormatHtmlText = 2,   // RAW HTML copied to clipboard
-	CTSFormatANSI = 3,       // ANSI sequences
-	CTSFormatDefault = 0xFF, // default arg for functions, use gpSet->isCTSHtmlFormat
-};
-
-enum CEPasteMode
-{
-	pm_Standard  = 0, // Paste with possible "Return" keypresses
-	pm_FirstLine = 1, // Paste only first line from the clipboard
-	pm_OneLine   = 2, // Paste all lines from the clipboard, but delimit them with SPACES (cmd-line safe!)
-};
-
-enum CESizeStyle
-{
-	ss_Standard = 0,
-	ss_Pixels   = 1,
-	ss_Percents = 2,
-};
-
-union CESize
-{
-	DWORD Raw;
-
-	struct
-	{
-		int         Value: 24;
-		CESizeStyle Style: 8;
-
-		wchar_t TempSZ[12];
-	};
-
-	const wchar_t* AsString()
-	{
-		switch (Style)
-		{
-		case ss_Pixels:
-			_wsprintf(TempSZ, SKIPLEN(countof(TempSZ)) L"%ipx", Value);
-			break;
-		case ss_Percents:
-			_wsprintf(TempSZ, SKIPLEN(countof(TempSZ)) L"%i%%", Value);
-			break;
-		//case ss_Standard:
-		default:
-			_wsprintf(TempSZ, SKIPLEN(countof(TempSZ)) L"%i", Value);
-		}
-		return TempSZ;
-	};
-
-	bool IsValid(bool IsWidth) const
-	{
-		bool bValid;
-		switch (Style)
-		{
-		case ss_Percents:
-			bValid = (Value >= 1 && Value <= 100);
-			break;
-		case ss_Pixels:
-			// Treat width/height as values for font size 4x2 (minimal)
-			if (IsWidth)
-				bValid = (Value >= (MIN_CON_WIDTH*4));
-			else
-				bValid = (Value >= (MIN_CON_HEIGHT*2));
-			break;
-		default:
-			if (IsWidth)
-				bValid = (Value >= MIN_CON_WIDTH);
-			else
-				bValid = (Value >= MIN_CON_HEIGHT);
-		}
-		return bValid;
-	};
-
-	bool Set(bool IsWidth, CESizeStyle NewStyle, int NewValue)
-	{
-		if (NewStyle == ss_Standard)
-		{
-			int nDef = IsWidth ? 80 : 25;
-			int nMax = IsWidth ? 1000 : 500;
-			if (NewValue <= 0) NewValue = nDef; else if (NewValue > nMax) NewValue = nMax;
-		}
-		else if (NewStyle == ss_Percents)
-		{
-			int nDef = IsWidth ? 50 : 30;
-			int nMax = 100;
-			if (NewValue <= 0) NewValue = nDef; else if (NewValue > nMax) NewValue = nMax;
-		}
-
-		if (!NewValue)
-		{
-			// Size can't be empty
-			_ASSERTE(NewValue);
-			// Fail
-			return false;
-		}
-
-		Value = NewValue;
-		Style = NewStyle;
-		return true;
-	};
-
-	void SetFromRaw(bool IsWidth, DWORD aRaw)
-	{
-		CESize v; v.Raw = aRaw;
-		if (v.Style == ss_Standard || v.Style == ss_Pixels || v.Style == ss_Percents)
-		{
-			this->Set(IsWidth, v.Style, v.Value);
-		}
-	};
-
-	bool SetFromString(bool IsWidth, const wchar_t* sValue)
-	{
-		if (!sValue || !*sValue)
-			return false;
-		wchar_t* pszEnd = NULL;
-		// Try to convert
-		int NewValue = wcstol(sValue, &pszEnd, 10);
-		if (!NewValue)
-			return false;
-
-		CESizeStyle NewStyle = ss_Standard;
-		if (pszEnd)
-		{
-			switch (*SkipNonPrintable(pszEnd))
-			{
-			case L'%':
-				NewStyle = ss_Percents; break;
-			case L'p':
-				NewStyle = ss_Pixels; break;
-			}
-		}
-		// Done
-		return Set(IsWidth, NewStyle, NewValue);
-	};
 };
 
 

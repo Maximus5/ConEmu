@@ -671,6 +671,8 @@
     <ClCompile Include="SetPgTransparent.cpp" />
     <ClCompile Include="SetPgUpdate.cpp" />
     <ClCompile Include="SetPgViews.cpp" />
+    <ClCompile Include="SettingClasses.cpp" />
+    <ClCompile Include="SettingTypes.cpp" />
     <ClCompile Include="Status.cpp" />
     <ClCompile Include="TabBar.cpp" />
     <ClCompile Include="TabCtrlBase.cpp" />
@@ -873,7 +875,8 @@
     <ClInclude Include="SetPgTransparent.h" />
     <ClInclude Include="SetPgUpdate.h" />
     <ClInclude Include="SetPgViews.h" />
-    <ClInclude Include="SetTypes.h" />
+    <ClInclude Include="SettingClasses.h" />
+    <ClInclude Include="SettingTypes.h" />
     <ClInclude Include="Status.h" />
     <ClInclude Include="TabBar.h" />
     <ClInclude Include="TabCtrlBase.h" />

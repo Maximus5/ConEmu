@@ -542,6 +542,8 @@
       <File RelativePath=".\SetPgTransparent.cpp" />
       <File RelativePath=".\SetPgUpdate.cpp" />
       <File RelativePath=".\SetPgViews.cpp" />
+      <File RelativePath=".\SettingClasses.cpp" />
+      <File RelativePath=".\SettingTypes.cpp" />
       <File RelativePath=".\Status.cpp" />
       <File RelativePath=".\TabBar.cpp" />
       <File RelativePath=".\TabCtrlBase.cpp" />
@@ -740,7 +742,8 @@
       <File RelativePath=".\SetPgTransparent.h" />
       <File RelativePath=".\SetPgUpdate.h" />
       <File RelativePath=".\SetPgViews.h" />
-      <File RelativePath=".\SetTypes.h" />
+      <File RelativePath=".\SettingClasses.h" />
+      <File RelativePath=".\SettingTypes.h" />
       <File RelativePath=".\Status.h" />
       <File RelativePath=".\TabBar.h" />
       <File RelativePath=".\TabCtrlBase.h" />

@@ -630,14 +630,9 @@ void Settings::InitSettings()
 	ParseCharRanges(L"2013-25C4", mpc_CharAltFontRanges);
 
 	// [Debug] Максимальный видимый размер подкорректируется в CConEmuMain::CreateMainWindow()
-	wndWidth.Set(true, ss_Standard, DEF_CON_WIDTH);    // RELEASEDEBUGTEST(80,110)
-	wndHeight.Set(false, ss_Standard, DEF_CON_HEIGHT); // RELEASEDEBUGTEST(25,35)
+	wndWidth->Set(true, ss_Standard, DEF_CON_WIDTH);    // RELEASEDEBUGTEST(80,110)
+	wndHeight->Set(false, ss_Standard, DEF_CON_HEIGHT); // RELEASEDEBUGTEST(25,35)
 
-	ntvdmHeight = 0; // Подбирать автоматически
-	mb_IntegralSize = false;
-	_WindowMode = wmNormal;
-	isUseCurrentSizePos = true; // Show in settings dialog and save current window size/pos
-	//isFullScreen = false;
 	isHideCaption = false; mb_HideCaptionAlways = false; isQuakeStyle = false; nQuakeAnimation = QUAKEANIMATION_DEF;
 	isRestore2ActiveMon = false;
 	isHideChildCaption = true;
@@ -3222,7 +3217,7 @@ void Settings::SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF*
 }
 
 // Helper method to avoid #include in header
-void Settings::StatusColumnName(int index)
+LPCWSTR Settings::StatusColumnName(int index)
 {
 	// Name for serializing isStatusColumnHidden items
 	return CStatus::GetSettingName((CEStatusItems)index);
@@ -5977,5 +5972,10 @@ bool Settings::antialias_validate(u32& val)
 	// Must be explicitly defined, 0 - not allowed
 	if (val != NONANTIALIASED_QUALITY && val != ANTIALIASED_QUALITY && val != CLEARTYPE_NATURAL_QUALITY)
 		val = NONANTIALIASED_QUALITY;
+	return true;
+}
+bool Settings::quake_animation_validate(u32& val)
+{
+	MinMax(val, QUAKEANIMATION_MAX);
 	return true;
 }

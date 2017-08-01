@@ -666,7 +666,7 @@
     <ClInclude Include="SetColorPalette.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SetTypes.h">
+    <ClInclude Include="SettingTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="HooksUnlocker.h">

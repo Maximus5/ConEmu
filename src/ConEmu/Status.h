@@ -30,70 +30,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // --> Header.h
 //enum CEStatusFlags
-//{
-//	csf_VertDelim           = 0x00000001,
-//	csf_HorzDelim           = 0x00000002,
-//	csf_SystemColors        = 0x00000004,
-//	csf_NoVerticalPad       = 0x00000008,
-//};
 
-
-// Добавлять можно в любое место, настройки именованые
-enum CEStatusItems
-{
-	csi_Info = 0,
-
-	csi_ActiveVCon,
-
-	csi_CapsLock,
-	csi_NumLock,
-	csi_ScrollLock,
-	csi_ViewLock,
-	csi_InputLocale,
-	csi_KeyHooks,
-	csi_TermModes,
-	csi_RConModes,
-
-	csi_WindowPos,
-	csi_WindowSize,
-	csi_WindowClient,
-	csi_WindowWork,
-	csi_WindowBack,
-	csi_WindowDC,
-	csi_WindowStyle,
-	csi_WindowStyleEx,
-	csi_HwndFore,
-	csi_HwndFocus,
-	csi_Zoom,
-	csi_DPI,
-
-	csi_ActiveBuffer,
-	csi_ConsolePos,
-	csi_ConsoleSize,
-	csi_BufferSize,
-	csi_CursorX,
-	csi_CursorY,
-	csi_CursorSize,
-	csi_CursorInfo,
-	csi_ConEmuPID,
-	csi_ConEmuHWND,
-	csi_ConEmuView,
-	csi_Server,
-	csi_ServerHWND,
-	csi_Transparency,
-
-	csi_NewVCon,
-	csi_SyncInside,
-	csi_ActiveProcess,
-	csi_ConsoleTitle,
-
-	csi_Time,
-
-	csi_SizeGrip,
-
-	//
-	csi_Last
-};
+// --> Header.h
+//enum CEStatusItems
 
 struct StatusColInfo
 {
