@@ -69,6 +69,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/HandleKeeper.h"
 #include "../common/PipeServer.h"
 #include "../common/ConEmuInOut.h"
+#include "../common/WErrGuard.h"
 
 #include "../ConEmuCD/ExitCodes.h"
 
@@ -440,6 +441,8 @@ CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate/*=FALSE*/)
 	static bool bLastAnsi = false;
 	bool bAnsi = false;
 	bool bAnsiLog = false;
+
+	CLastErrorGuard errGuard;
 
 	if (gpConInfo && gpAppMap && !abForceRecreate)
 		goto wrap;

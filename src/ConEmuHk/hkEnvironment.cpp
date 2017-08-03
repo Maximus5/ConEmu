@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include "../common/Common.h"
+#include "../common/WErrGuard.h"
 
 #include "Ansi.h"
 #include "hkEnvironment.h"
@@ -49,6 +50,7 @@ void CheckVariables()
 
 void CheckAnsiConVar(LPCWSTR asName)
 {
+	CLastErrorGuard errGuard;
 	bool bAnsi = false;
 	CEAnsi::GetFeatures(&bAnsi, NULL);
 
