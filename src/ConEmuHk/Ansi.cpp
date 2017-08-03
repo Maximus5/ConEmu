@@ -1725,7 +1725,8 @@ BOOL CEAnsi::ReverseLF(HANDLE hConsoleOutput, BOOL& bApply)
 		bApply = FALSE;
 	}
 
-	if (csbi.dwCursorPosition.Y == csbi.srWindow.Top)
+	if ((csbi.dwCursorPosition.Y == csbi.srWindow.Top)
+		|| (gDisplayOpt.ScrollRegion && csbi.dwCursorPosition.Y == gDisplayOpt.ScrollStart))
 	{
 		LinesInsert(hConsoleOutput, 1);
 	}
