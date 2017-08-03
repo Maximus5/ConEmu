@@ -2407,6 +2407,8 @@ static void CreateBashTask()
 			szConnectorName = bits==64 ? L"conemu-msys2-64.exe"
 				: bits==32 ? L"conemu-msys2-32.exe"
 				: NULL;
+		else
+			continue;
 
 		SafeFree(ai.szGuiArg);
 
