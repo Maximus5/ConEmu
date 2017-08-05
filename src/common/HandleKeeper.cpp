@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace HandleKeeper
 {
 	static MMap<HANDLE,HandleInformation>* gp_Handles = NULL;
+	static bool gb_IsConnector = false;
 
 	static bool InitHandleStorage();
 	static void FillHandleInfo(HandleInformation& Info, DWORD access);
@@ -83,6 +84,11 @@ void HandleKeeper::ReleaseHandleStorage()
 	}
 }
 
+void HandleKeeper::SetConnectorMode(bool isConnector)
+{
+	gb_IsConnector = isConnector;
+}
+
 // Check if handle has console capabilities
 static void HandleKeeper::FillHandleInfo(HandleInformation& Info, DWORD access)
 {
@@ -94,7 +100,12 @@ static void HandleKeeper::FillHandleInfo(HandleInformation& Info, DWORD access)
 	b1 = GetConsoleMode(Info.h, &m);
 	if (!b1)
 	{
-		DEBUGTEST(err = GetLastError());
+		#ifdef _DEBUG
+		Info.errorPlace = 1;
+		Info.errorCode = GetLastError();
+		#endif
+		// In connector mode all handles are expected to be AnsiCapable!
+		_ASSERTE(!gb_IsConnector);
 	}
 	else
 	{
@@ -103,7 +114,12 @@ static void HandleKeeper::FillHandleInfo(HandleInformation& Info, DWORD access)
 		if (b2)
 		{
 			if (!Info.is_output && !Info.is_error)
-				Info.is_output = true;
+			{
+				if (Info.source == hs_StdErr)
+					Info.is_error = true;
+				else
+					Info.is_output = true;
+			}
 
 			_ASSERTE(Info.is_input==false);
 			Info.is_input = false;
@@ -116,6 +132,14 @@ static void HandleKeeper::FillHandleInfo(HandleInformation& Info, DWORD access)
 		}
 		else
 		{
+			#ifdef _DEBUG
+			Info.errorPlace = 2;
+			Info.errorCode = GetLastError();
+			#endif
+			if (Info.source == hs_StdIn && !Info.is_input)
+				Info.is_input = true;
+			// In connector mode all handles are expected to be AnsiCapable!
+			_ASSERTE(!gb_IsConnector);
 			_ASSERTE(Info.is_ansi == false);
 			//_ASSERTE(Info.is_output == false && Info.is_error == false); -- STD_OUTPUT_HANDLE can be "virtual"
 		}
@@ -254,15 +278,31 @@ bool HandleKeeper::AllocHandleInfo(HANDLE h, HandleSource source, DWORD access, 
 	return true;
 }
 
-bool HandleKeeper::QueryHandleInfo(HANDLE h, HandleInformation& Info)
+bool HandleKeeper::QueryHandleInfo(HANDLE h, HandleInformation& Info, bool AnsiOutExpected)
 {
 	if (!h || (h == INVALID_HANDLE_VALUE))
 		return false;
 	bool bFound = false;
+
 	if (gp_Handles)
+	{
 		bFound = gp_Handles->Get(h, &Info);
+	}
+
+	if (bFound && AnsiOutExpected)
+	{
+		// Force to refresh handle information
+		if (gb_IsConnector && (!Info.is_ansi || !(Info.is_output || Info.is_error)))
+		{
+			// In connector mode all handles are expected to be AnsiCapable!
+			_ASSERTE((Info.is_ansi && (Info.is_output || Info.is_error)) || !gb_IsConnector);
+			bFound = false;
+		}
+	}
+
 	if (!bFound)
 		bFound = AllocHandleInfo(h, hs_Unknown, 0, NULL, &Info);
+
 	return bFound;
 }
 
@@ -285,7 +325,7 @@ void HandleKeeper::CloseHandleInfo(HANDLE h)
 bool HandleKeeper::IsAnsiCapable(HANDLE hFile, bool *pbIsConOut)
 {
 	HandleInformation Info = {};
-	if (!QueryHandleInfo(hFile, Info))
+	if (!QueryHandleInfo(hFile, Info, true))
 		return false;
 	if (pbIsConOut)
 		*pbIsConOut = (Info.is_output || Info.is_error);
@@ -295,7 +335,7 @@ bool HandleKeeper::IsAnsiCapable(HANDLE hFile, bool *pbIsConOut)
 bool HandleKeeper::IsOutputHandle(HANDLE hFile)
 {
 	HandleInformation Info = {};
-	if (!QueryHandleInfo(hFile, Info))
+	if (!QueryHandleInfo(hFile, Info, true))
 		return false;
 	return (Info.is_output || Info.is_error);
 }
@@ -303,7 +343,7 @@ bool HandleKeeper::IsOutputHandle(HANDLE hFile)
 bool HandleKeeper::IsInputHandle(HANDLE hFile)
 {
 	HandleInformation Info = {};
-	if (!QueryHandleInfo(hFile, Info))
+	if (!QueryHandleInfo(hFile, Info, false))
 		return false;
 	return (Info.is_input);
 }

@@ -54,10 +54,12 @@ struct HandleInformation
 	void    *file_name_ptr;
 	};
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	BOOL wasConnector;
+	unsigned int errorCode, errorPlace;
 	#endif
 
 	// enum HandleSource
-	unsigned int source     : 3;
+	HandleSource source     : 3;
 
 	// ‘General’ console handle "CON"
 	unsigned int is_con     : 1;
@@ -77,8 +79,9 @@ namespace HandleKeeper
 {
 	bool PreCreateHandle(HandleSource source, DWORD& dwDesiredAccess, DWORD& dwShareMode, const void** as_name);
 	bool AllocHandleInfo(HANDLE h, HandleSource source, DWORD access = 0, const void* as_name = NULL, HandleInformation* pInfo = NULL);
-	bool QueryHandleInfo(HANDLE h, HandleInformation& Info);
+	bool QueryHandleInfo(HANDLE h, HandleInformation& Info, bool AnsiOutExpected);
 	void CloseHandleInfo(HANDLE h);
+	void SetConnectorMode(bool isConnector);
 
 	void ReleaseHandleStorage();
 

@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "../common/defines.h"
 #include "../common/Common.h"
+#include "../common/HandleKeeper.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "Connector.h"
 #include "hkConsole.h"
@@ -133,6 +134,7 @@ int WINAPI RequestTermConnector(/*[IN/OUT]*/RequestTermConnectorParm* Parm)
 
 		CEAnsi::StartXTermMode(true);
 		gbWasStarted = true;
+		HandleKeeper::SetConnectorMode(true);
 		iRc = 0;
 		break;
 	}
@@ -173,6 +175,7 @@ int WINAPI RequestTermConnector(/*[IN/OUT]*/RequestTermConnectorParm* Parm)
 		}
 
 		gbWasStarted = false;
+		HandleKeeper::SetConnectorMode(false);
 		iRc = 0;
 		break;
 	}

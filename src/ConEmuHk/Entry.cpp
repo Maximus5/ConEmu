@@ -1705,9 +1705,14 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 
 	if (ghConWnd)
 	{
-		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_INPUT_HANDLE), hs_StdIn);
-		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_OUTPUT_HANDLE), hs_StdOut);
-		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_ERROR_HANDLE), hs_StdErr);
+		HandleInformation Info = {};
+		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_INPUT_HANDLE), hs_StdIn, 0, NULL, &Info);
+		_ASSERTE(!gbConEmuConnector || (Info.is_input));
+		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_OUTPUT_HANDLE), hs_StdOut, 0, NULL, &Info);
+		_ASSERTE(!gbConEmuConnector || (Info.is_ansi && Info.is_output));
+		HandleKeeper::AllocHandleInfo(GetStdHandle(STD_ERROR_HANDLE), hs_StdErr, 0, NULL, &Info);
+		_ASSERTE(!gbConEmuConnector || (Info.is_ansi && Info.is_error));
+		ZeroStruct(Info); // for debug breakpoint
 	}
 
 

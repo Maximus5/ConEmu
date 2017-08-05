@@ -381,6 +381,7 @@ bool IsConsoleDoubleCellCP()
 		nCP = GetConsoleOutputCP();
 		#ifdef _DEBUG
 		nCP1 = GetConsoleCP();
+		// May occur in some case due race
 		_ASSERTE(nCP1==nCP);
 		//GetConsoleMode(hOut, &nMode);
 		#endif
