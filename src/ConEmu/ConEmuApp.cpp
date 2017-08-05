@@ -986,36 +986,48 @@ wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix /
 // \\server\share/path/file
 // /cygdrive/C/Src/file.c
 // ..\folder/file.c
-wchar_t* MakeWinPath(LPCWSTR asAnyPath)
+LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath)
 {
 	// Drop spare prefix, point to "/" after "/cygdrive"
-	int iSkip = startswith(asAnyPath, L"/cygdrive/", true);
-	LPCWSTR pszSrc = asAnyPath + ((iSkip > 0) ? (iSkip-1) : 0);
+	int iSkip = startswith(asAnyPath, pszMntPrefix ? pszMntPrefix : L"/cygdrive", true);
+	if (iSkip > 0 && asAnyPath[iSkip] != L'/')
+		iSkip = 0;
+	LPCWSTR pszSrc = asAnyPath + ((iSkip > 0) ? iSkip : 0);
 
 	// Prepare buffer
 	int iLen = lstrlen(pszSrc);
 	if (iLen < 1)
 	{
 		_ASSERTE(lstrlen(pszSrc) > 0);
+		szWinPath.Clear();
 		return NULL;
+	}
+
+	// #CYGDRIVE In some cases we may try to select real location of "~" folder (cygwin and msys)
+	if (pszSrc[0] == L'~' && (pszSrc[1] == 0 || pszSrc[1] == L'/'))
+	{
+		szWinPath.Set(pszSrc);
+		return szWinPath;
 	}
 
 	// Диск в cygwin формате?
 	wchar_t cDrive = 0;
 	if ((pszSrc[0] == L'/' || pszSrc[0] == L'\\')
 		&& isDriveLetter(pszSrc[1])
-		&& (pszSrc[2] == L'/' || pszSrc[2] == L'\\'))
+		&& (pszSrc[2] == L'/' || pszSrc[2] == L'\\' || pszSrc[2] == 0))
 	{
 		cDrive = pszSrc[1];
 		CharUpperBuff(&cDrive, 1);
 		pszSrc += 2;
+		iLen++;
 	}
 
 	// Формируем буфер
-	wchar_t* pszRc = (wchar_t*)malloc((iLen+1)*sizeof(wchar_t));
+	wchar_t* pszRc = szWinPath.GetBuffer(iLen);
 	if (!pszRc)
 	{
 		_ASSERTE(pszRc && "malloc failed");
+		szWinPath.Clear();
 		return NULL;
 	}
 	// Make path
@@ -1024,9 +1036,17 @@ wchar_t* MakeWinPath(LPCWSTR asAnyPath)
 	{
 		*(pszDst++) = cDrive;
 		*(pszDst++) = L':';
+		*(pszDst) = 0;
 		iLen -= 2;
 	}
-	_wcscpy_c(pszDst, iLen+1, pszSrc);
+	else
+	{
+		*(pszDst) = 0;
+	}
+	if (*pszSrc)
+		_wcscpy_c(pszDst, iLen+1, pszSrc);
+	else
+		_wcscpy_c(pszDst, iLen+1, L"\\");
 	// Convert slashes
 	pszDst = wcschr(pszDst, L'/');
 	while (pszDst)

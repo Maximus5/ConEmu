@@ -2119,7 +2119,7 @@ LPWSTR ConEmuMacro::Copy(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			// Cygwin style path?
 			if (wcschr(pszTemp, L'/'))
 			{
-				if (szDstBuf.Attach(MakeWinPath(pszTemp)))
+				if (MakeWinPath(pszTemp, apRCon ? apRCon->GetMntPrefix() : NULL, szDstBuf))
 					pszDstFile = szDstBuf.ms_Val;
 			}
 		}
@@ -2186,7 +2186,7 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		if ((nCommand >= 4) && (nCommand <= 7))
 		{
 			CEStr szDir;
-			LPCWSTR pszDefPath = apRCon->GetConsoleCurDir(szDir);
+			LPCWSTR pszDefPath = apRCon->GetConsoleCurDir(szDir, true);
 
 			if ((nCommand == 4) || (nCommand == 6))
 				pszChooseBuf = SelectFile(L"Choose file pathname for paste", pszText, pszDefPath, ghWnd, NULL, sff_AutoQuote|((nCommand == 6)?sff_Cygwin:sff_Default));
@@ -3300,7 +3300,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				if (pszDir && (lstrcmpi(pszDir, L"%CD%") == 0))
 				{
 					if (apRCon)
-						apRCon->GetConsoleCurDir(szRConCD);
+						apRCon->GetConsoleCurDir(szRConCD, true);
 					if (szRConCD.IsEmpty())
 						szRConCD.Set(gpConEmu->WorkDir());
 					pszDir = szRConCD.ms_Val;

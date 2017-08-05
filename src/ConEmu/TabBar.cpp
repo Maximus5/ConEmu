@@ -1646,7 +1646,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 						// CTabBarClass::Update will be triggered from CRealConsole::StoreCurWorkDir
 						// https://conemu.github.io/en/ShellWorkDir.html
 						bDynamic = true;
-						pszText = pRCon ? pRCon->GetConsoleCurDir(szArg) : NULL;
+						pszText = pRCon ? pRCon->GetConsoleCurDir(szArg, false) : NULL;
 						if (pszText && (*pszFmt == _T('f') || *pszFmt == _T('F')))
 						{
 							pszText = PointToName(pszText);

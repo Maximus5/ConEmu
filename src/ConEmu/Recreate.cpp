@@ -923,7 +923,7 @@ void CRecreateDlg::InitVars()
 	if (pRCon)
 	{
 		ms_RConStartDir.Set(pRCon->GetStartupDir());
-		pRCon->GetConsoleCurDir(ms_RConCurDir);
+		pRCon->GetConsoleCurDir(ms_RConCurDir, true);
 	}
 
 	// Если уже передана команда через параметры - из текущей консоли не извлекать

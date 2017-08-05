@@ -656,7 +656,7 @@ class CRealConsole
 		void GetStartTime(SYSTEMTIME& st);
 		LPCWSTR GetConsoleStartDir(CEStr& szDir);
 		LPCWSTR GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull);
-		LPCWSTR GetConsoleCurDir(CEStr& szDir);
+		LPCWSTR GetConsoleCurDir(CEStr& szDir, bool NeedRealPath);
 		void GetPanelDirs(CEStr& szActiveDir, CEStr& szPassive);
 
 	public:

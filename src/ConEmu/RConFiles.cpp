@@ -47,7 +47,7 @@ CRConFiles::~CRConFiles()
 LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 {
 	CEStr szWinPath;
-	LPCWSTR pszWinPath = szWinPath.Attach(MakeWinPath(asSrc));
+	LPCWSTR pszWinPath = MakeWinPath(asSrc, mp_RCon ? mp_RCon->GetMntPrefix() : NULL, szWinPath);
 	if (!pszWinPath || !*pszWinPath)
 	{
 		_ASSERTE(pszWinPath && *pszWinPath);
@@ -63,8 +63,13 @@ LPCWSTR CRConFiles::GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull)
 	else
 	{
 		CEStr szDir;
-		LPCWSTR pszDir = mp_RCon->GetConsoleCurDir(szDir);
-		_ASSERTE(pszDir && wcschr(pszDir,L'/')==NULL);
+		LPCWSTR pszDir = mp_RCon->GetConsoleCurDir(szDir, true);
+		// We may get empty dir here if we are in "~" subdir
+		if (!pszDir || !*pszDir)
+		{
+			_ASSERTE(pszDir && *pszDir && wcschr(pszDir,L'/')==NULL);
+			return NULL;
+		}
 
 		// Попытаться просканировать один-два уровеня подпапок
 		bool bFound = FileExistSubDir(pszDir, pszWinPath, 1, szFull);

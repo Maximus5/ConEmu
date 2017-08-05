@@ -8114,7 +8114,7 @@ LPCWSTR CRealConsole::GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo)
 	else if (lstrcmpi(asWhat, L"WorkDir") == 0)
 		pszVal = GetConsoleStartDir(rsInfo);
 	else if (lstrcmpi(asWhat, L"CurDir") == 0)
-		pszVal = GetConsoleCurDir(rsInfo);
+		pszVal = GetConsoleCurDir(rsInfo, false);
 	else if (lstrcmpi(asWhat, L"ActivePID") == 0)
 		msprintf(szTemp, countof(szTemp), L"%u", GetActivePID());
 	else if (lstrcmpi(asWhat, L"RootName") == 0)
@@ -13884,7 +13884,7 @@ wchar_t* CRealConsole::CreateCommandLine(bool abForTasks /*= false*/)
 	// thats why we save the value before showing the current one
 	wchar_t* pszDirSave = m_Args.pszStartupDir;
 	CEStr szCurDir;
-	m_Args.pszStartupDir = GetConsoleCurDir(szCurDir) ? szCurDir.ms_Val : NULL;
+	m_Args.pszStartupDir = GetConsoleCurDir(szCurDir, true) ? szCurDir.ms_Val : NULL;
 
 	SafeFree(m_Args.pszRenameTab);
 	CTab tab(__FILE__,__LINE__);
@@ -15344,7 +15344,7 @@ LPCWSTR CRealConsole::GetConsoleStartDir(CEStr& szDir)
 	return szDir.IsEmpty() ? NULL : (LPCWSTR)szDir;
 }
 
-LPCWSTR CRealConsole::GetConsoleCurDir(CEStr& szDir)
+LPCWSTR CRealConsole::GetConsoleCurDir(CEStr& szDir, bool NeedRealPath)
 {
 	if (!this)
 	{
@@ -15367,7 +15367,9 @@ LPCWSTR CRealConsole::GetConsoleCurDir(CEStr& szDir)
 	// If it is not a Far with plugin - try to take the ms_CurWorkDir
 	{
 		MSectionLockSimple CS; CS.Lock(mpcs_CurWorkDir);
-		if (!ms_CurWorkDir.IsEmpty())
+		// Is path (received from console) valid?
+		if (!ms_CurWorkDir.IsEmpty()
+			&& (!NeedRealPath || (ms_CurWorkDir[0] != L'~')))
 		{
 			szDir.Set(ms_CurWorkDir);
 			goto wrap;
@@ -15400,22 +15402,21 @@ void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 	{
 		int iCch = i ? pNewCurDir->iPassiveCch : pNewCurDir->iActiveCch;
 
-		wchar_t* pszWinPath = NULL;
+		CEStr szWinPath;
 		if (iCch)
 		{
-			pszWinPath = *pszArg ? MakeWinPath(pszArg) : NULL;
+			if (*pszArg)
+				MakeWinPath(pszArg, GetMntPrefix(), szWinPath);
 			pszArg += iCch;
 		}
 
-		if (pszWinPath)
+		if (!szWinPath.IsEmpty())
 		{
 			if (i)
-				ms_CurPassiveDir.Set(pszWinPath);
+				ms_CurPassiveDir.Set(szWinPath);
 			else
-				ms_CurWorkDir.Set(pszWinPath);
+				ms_CurWorkDir.Set(szWinPath);
 		}
-
-		SafeFree(pszWinPath);
 	}
 
 	if (mp_Files)

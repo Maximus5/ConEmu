@@ -4337,7 +4337,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgs *args, bool abAllowScripts 
 			CEStr lsActiveDir;
 			CVConGuard vActive;
 			if ((GetActiveVCon(&vActive) >= 0) && (vActive->RCon()))
-				vActive->RCon()->GetConsoleCurDir(lsActiveDir);
+				vActive->RCon()->GetConsoleCurDir(lsActiveDir, true);
 			if (lsActiveDir.IsEmpty())
 				lsActiveDir.Set(gpConEmu->WorkDir());
 			SafeFree(args->pszStartupDir);

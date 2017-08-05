@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Memory.h"
 #include "../common/MAssert.h"
 #include "../common/MStrDup.h"
+#include "../common/CEStr.h"
 
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 #define wmemmove_s(d,ds,s,ss) wmemmove(d,s,ss)
@@ -252,7 +253,7 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst);
 
 wchar_t* getFocusedExplorerWindowPath();
 wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix = NULL);
-wchar_t* MakeWinPath(LPCWSTR asAnyPath);
+LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath);
 wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath);
 bool FixDirEndSlash(wchar_t* rsPath);
 enum CESelectFileFlags

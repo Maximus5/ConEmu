@@ -3142,7 +3142,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 								//_ASSERTE(pszWinPath!=NULL); // must not be here!
 								//pszWinPath = cmd.szFile; -- file not found, do not open absent files!
 								CEStr szDir;
-								wchar_t* pszErrMsg = lstrmerge(L"File '", cmd.szFile, L"' not found!\nDirectory: ", mp_RCon->GetConsoleCurDir(szDir));
+								wchar_t* pszErrMsg = lstrmerge(L"File '", cmd.szFile, L"' not found!\nDirectory: ", mp_RCon->GetConsoleCurDir(szDir, false));
 								if (pszErrMsg)
 								{
 									MsgBox(pszErrMsg, MB_ICONSTOP);
