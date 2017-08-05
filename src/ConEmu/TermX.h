@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <windows.h>
+#include "../common/CEStr.h"
 
 struct TermX
 {
@@ -37,8 +38,8 @@ struct TermX
 	BYTE   MouseButtons;
 	COORD  LastMousePos;
 
-	bool GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16]);
-	bool GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, wchar_t (&szSubst)[16]);
+	bool GetSubstitute(const KEY_EVENT_RECORD& k, CEStr& lsSubst);
+	bool GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, CEStr& lsSubst);
 
 	TermX();
 	void Reset();

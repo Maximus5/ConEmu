@@ -7053,7 +7053,7 @@ bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
 
 	bool bProcessed = false;
 	bool bSend = false;
-	wchar_t szSubstKeys[16] = L"";
+	CEStr szSubstKeys;
 	WORD nRepeatCount = 1;
 
 	// Till now, this may be ‘te_xterm’ or ‘te_win32’ only
@@ -7091,7 +7091,7 @@ bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
 		{
 			for (WORD n = 0; n < nRepeatCount; ++n)
 			{
-				if (!PostString(szSubstKeys, _tcslen(szSubstKeys)))
+				if (!PostString(szSubstKeys.ms_Val, szSubstKeys.GetLen()))
 					break;
 			}
 		}

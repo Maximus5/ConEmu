@@ -49,9 +49,10 @@ void TermX::Reset()
 	LastMousePos = MakeCoord(-1,-1);
 }
 
-bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
+bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, CEStr& lsSubst)
 {
-	_ASSERTE(szSubst[0] == 0);
+	_ASSERTE(lsSubst.IsEmpty());
+	wchar_t szSubst[16] = L"";
 
 	static UINT F1Codes[24] = {
 		11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 23, 24,
@@ -70,8 +71,9 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 	struct processor
 	{
 		XTermCtrls Mods;
+		wchar_t szSubst[16];
 
-		void SetKey(wchar_t (&szSubst)[16], wchar_t c, wchar_t prefix=L'O')
+		void SetKey(CEStr& lsSubst, wchar_t c, wchar_t prefix=L'O')
 		{
 			if (!Mods)
 			{
@@ -82,9 +84,10 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 			{
 				msprintf(szSubst, countof(szSubst), L"\033[1;%c%c", Mods+L'1', c);
 			}
+			lsSubst.Set(szSubst);
 		}
 
-		void SetFKey(wchar_t (&szSubst)[16], UINT fn)
+		void SetFKey(CEStr& lsSubst, UINT fn)
 		{
 			if (!Mods)
 			{
@@ -94,9 +97,10 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 			{
 				msprintf(szSubst, countof(szSubst), L"\033[%u;%c~", fn, Mods+L'1');
 			}
+			lsSubst.Set(szSubst);
 		}
 
-		void SetTilde(wchar_t (&szSubst)[16], wchar_t c)
+		void SetTilde(CEStr& lsSubst, wchar_t c)
 		{
 			if (!Mods)
 			{
@@ -106,6 +110,7 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 			{
 				msprintf(szSubst, countof(szSubst), L"\033[%c;%c~", c, Mods+L'1');
 			}
+			lsSubst.Set(szSubst);
 		}
 	} Processor = {xtc_None};
 
@@ -120,36 +125,37 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 	{
 	case VK_END:  case VK_HOME:  case VK_LEFT:
 	case VK_UP:   case VK_RIGHT: case VK_DOWN:
-		Processor.SetKey(szSubst, ArrowCodes[(k.wVirtualKeyCode-VK_END)], AppCursorKeys ? L'O' : L'[');
+		Processor.SetKey(lsSubst, ArrowCodes[(k.wVirtualKeyCode-VK_END)], AppCursorKeys ? L'O' : L'[');
 		return true;
 
 	case VK_F1: case VK_F2: case VK_F3: case VK_F4:
-		Processor.SetKey(szSubst, F1F4Codes[(k.wVirtualKeyCode-VK_F1)]);
+		Processor.SetKey(lsSubst, F1F4Codes[(k.wVirtualKeyCode-VK_F1)]);
 		return true;
 	case VK_F5: case VK_F6: case VK_F7: case VK_F8:
 	case VK_F9: case VK_F10: case VK_F11: case VK_F12: case VK_F13: case VK_F14: case VK_F15: case VK_F16:
 	case VK_F17: case VK_F18: case VK_F19: case VK_F20: case VK_F21: case VK_F22: case VK_F23: case VK_F24:
 		// "\033[11;*~" .. L"\033[15;*~", and so on: F1Codes[]
-		Processor.SetFKey(szSubst, F1Codes[(k.wVirtualKeyCode-VK_F1)]);
+		Processor.SetFKey(lsSubst, F1Codes[(k.wVirtualKeyCode-VK_F1)]);
 		return true;
 
 	case VK_INSERT:
-		Processor.SetTilde(szSubst, L'2');
+		Processor.SetTilde(lsSubst, L'2');
 		return true;
 	case VK_PRIOR:
-		Processor.SetTilde(szSubst, L'5');
+		Processor.SetTilde(lsSubst, L'5');
 		return true;
 	case VK_NEXT:
-		Processor.SetTilde(szSubst, L'6');
+		Processor.SetTilde(lsSubst, L'6');
 		return true;
 	case VK_DELETE:
-		Processor.SetTilde(szSubst, L'3');
+		Processor.SetTilde(lsSubst, L'3');
 		return true;
 	case VK_BACK:
 		if ((Processor.Mods & xtc_Alt)) szSubst[0] = 0x1B;
 		szSubst[(Processor.Mods == xtc_Alt) ? 1 : 0] = ((Processor.Mods & (xtc_Ctrl|xtc_Alt)) == (xtc_Ctrl|xtc_Alt)) ? 0x9F
 			: (Processor.Mods & xtc_Ctrl) ? X_CTRL('_')/*0x1F*/ : X_CDEL/*0x7F*/;
 		szSubst[(Processor.Mods == xtc_Alt) ? 2 : 1] = 0;
+		lsSubst.Set(szSubst);
 		return true;
 
 	case VK_TAB:
@@ -157,6 +163,7 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 		{
 			wcscpy_c(szSubst, (k.dwControlKeyState & SHIFT_PRESSED) ? L"\033[Z" : L"\t");
 		}
+		lsSubst.Set(szSubst);
 		return true;
 
 	/* NumPad with NumLock ON */
@@ -180,6 +187,7 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 			// Just a digits '0'..'9' and symbols +-/*.
 			szSubst[0] = k.uChar.UnicodeChar; szSubst[1] = 0;
 		}
+		lsSubst.Set(szSubst);
 		return true;
 	}
 
@@ -193,6 +201,7 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 		)
 	{
 		szSubst[0] = L'\033'; szSubst[1] = k.uChar.UnicodeChar; szSubst[2] = 0;
+		lsSubst.Set(szSubst);
 		return true;
 	}
 
@@ -272,29 +281,29 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 			{
 			case L',':
 				szSubst[0] = 0x2C; break;
-			//	Processor.SetKey(szSubst, L'l'); break;
+			//	Processor.SetKey(lsSubst, L'l'); break;
 			case L'.':
 				szSubst[0] = 0x2E; break;
-			//	Processor.SetKey(szSubst, L'n'); break;
+			//	Processor.SetKey(lsSubst, L'n'); break;
 			//case L'-':
-			//	Processor.SetKey(szSubst, L'm'); break;
+			//	Processor.SetKey(lsSubst, L'm'); break;
 			//case L'0':
-			//	Processor.SetKey(szSubst, L'p'); break;
+			//	Processor.SetKey(lsSubst, L'p'); break;
 			//case L'1':
-			//	Processor.SetKey(szSubst, L'q'); break;
+			//	Processor.SetKey(lsSubst, L'q'); break;
 			// case L'2': // processed above
 			//case L'3':
-			//	Processor.SetKey(szSubst, L's'); break;
+			//	Processor.SetKey(lsSubst, L's'); break;
 			//case L'4':
-			//	Processor.SetKey(szSubst, L't'); break;
+			//	Processor.SetKey(lsSubst, L't'); break;
 			//case L'5':
-			//	Processor.SetKey(szSubst, L'u'); break;
+			//	Processor.SetKey(lsSubst, L'u'); break;
 			//case L'6':
 			case L'~':
 				szSubst[0] = 0x1E;
 				break;
 			//case L'7':
-			//	Processor.SetKey(szSubst, L'w'); break;
+			//	Processor.SetKey(lsSubst, L'w'); break;
 			case L'8':
 				szSubst[0] = 0x1B;
 				if ((Processor.Mods == (xtc_Ctrl|xtc_Alt)) || (Processor.Mods == (xtc_Ctrl|xtc_Alt|xtc_Shift)))
@@ -302,11 +311,11 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 				else
 					szSubst[0] = 0x7F;
 				break;
-				//Processor.SetKey(szSubst, L'x'); break;
+				//Processor.SetKey(lsSubst, L'x'); break;
 			//case L'9':
-			//	Processor.SetKey(szSubst, L'y'); break;
+			//	Processor.SetKey(lsSubst, L'y'); break;
 			//case L'=':
-			//	Processor.SetKey(szSubst, L'X'); break;
+			//	Processor.SetKey(lsSubst, L'X'); break;
 			case L'[':
 			case L'\\':
 			case L']':
@@ -331,15 +340,28 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, wchar_t (&szSubst)[16])
 				break;
 			}
 			if (szSubst[0])
+			{
+				lsSubst.Set(szSubst);
 				return true;
+			}
 		}
 	}
 
 	return false;
 }
 
-bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, wchar_t (&szSubst)[16])
+bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, CEStr& lsSubst)
 {
+	_ASSERTE(lsSubst.IsEmpty());
+
+	if (!MouseMode)
+	{
+		lsSubst.Clear();
+		return false;
+	}
+
+	wchar_t szSubst[16] = L"";
+
 	if ((m.dwEventFlags & MOUSE_WHEELED)
 		&& !MouseMode)
 	{
@@ -357,7 +379,6 @@ bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, 
 				wcscpy_c(szSubst, L"\033[62~"); // <MouseDown>
 			else
 				wcscpy_c(szSubst, L"\033[63~"); // <MouseUp>
-			return true;
 		}
 		else if (mods == SHIFT_PRESSED)
 		{
@@ -365,12 +386,16 @@ bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, 
 				wcscpy_c(szSubst, L"\033[64~"); // <S-MouseDown>
 			else
 				wcscpy_c(szSubst, L"\033[65~"); // <S-MouseUp>
-			return true;
 		}
+		else
+			return false;
+		lsSubst.Set(szSubst);
+		return true;
 	}
 
 	if (!MouseMode)
 		return false;
+
 
 	BYTE NewBtns = (m.dwButtonState & 0x1F);
 	if ((NewBtns != MouseButtons)
@@ -465,6 +490,7 @@ bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, 
 
 		MouseButtons = NewBtns;
 		LastMousePos = m.dwMousePosition;
+		lsSubst.Set(szSubst);
 		return true;
 	}
 
