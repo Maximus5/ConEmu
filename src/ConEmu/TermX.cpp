@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "../common/MStrSafe.h"
+#include "ConEmu.h"
 #include "TermX.h"
 
 #define X_CTRL(c) ((c) & 0x1F)
@@ -362,8 +363,12 @@ bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, 
 
 	wchar_t szSubst[16] = L"";
 
+	// Deprecated. Mouse events mimic xterm behavior now.
+	#if 0
+	// http://conemu.github.io/en/VimXterm.html#Vim-scrolling-using-mouse-Wheel
+	// https://github.com/Maximus5/ConEmu/issues/1007
 	if ((m.dwEventFlags & MOUSE_WHEELED)
-		&& !MouseMode)
+		&& (MouseMode & tmm_VIM))
 	{
 		// If the high word of the dwButtonState member contains
 		// a positive value, the wheel was rotated forward, away from the user.
@@ -392,8 +397,43 @@ bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, 
 		lsSubst.Set(szSubst);
 		return true;
 	}
+	#endif
 
-	if (!MouseMode)
+	if ((m.dwEventFlags & MOUSE_WHEELED)
+		&& (MouseMode & tmm_SCROLL))
+	{
+		KEY_EVENT_RECORD k = {TRUE, 1};
+		short dir = (short)HIWORD(m.dwButtonState);
+		DWORD mods = (m.dwControlKeyState & (LEFT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_ALT_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED));
+		UINT nCount = 1;
+		if (mods == 0)
+		{
+			k.wVirtualKeyCode = (dir > 0) ? VK_UP : VK_DOWN;
+			nCount = gpConEmu->mouse.GetWheelScrollLines();
+		}
+		else if (mods == SHIFT_PRESSED)
+		{
+			k.wVirtualKeyCode = (dir > 0) ? VK_PRIOR : VK_NEXT;
+		}
+		else
+			return false;
+		CEStr lsPart;
+		if (!GetSubstitute(k, lsPart) || lsPart.IsEmpty())
+			return false;
+		if (nCount > 1)
+		{
+			INT_PTR l = lsPart.GetLen();
+			wchar_t* ptr = lsSubst.GetBuffer(l*nCount);
+			for (UINT i = 1; i <= nCount; ++i, ptr += l)
+				wcscpy_s(ptr, l+1, lsPart);
+		}
+		else
+		{
+			lsSubst.Attach(lsPart.Detach());
+		}
+		return true;
+	}
+	if (!(MouseMode & ~(tmm_VIM|tmm_SCROLL)))
 		return false;
 
 

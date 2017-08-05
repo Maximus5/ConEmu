@@ -402,6 +402,9 @@ enum TermMouseMode
 	tmm_UTF8    = 0x0020, /* Xterm's UTF8 encoding for mouse positions */
 	tmm_XTERM   = 0x0040, /* Xterm's CSI-style mouse encoding */
 	tmm_URXVT   = 0x0080, /* Urxvt's CSI-style mouse encoding */
+	/* **** ConEmu internals *** */
+	tmm_VIM     = 0x1000, /* DEPRECATED: Used to emulate wheel via \033[62~ ... \033[65~ */
+	tmm_SCROLL  = 0x2000, /* Send Up/Down/PgUp/PgDn instead of wheel events */
 };
 
 //#define CONEMUMAPPING    L"ConEmuPluginData%u"

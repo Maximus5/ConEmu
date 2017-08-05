@@ -7081,7 +7081,16 @@ bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
 				INPUT_RECORD rc = r;
 				// xTerm requires "visible" coordinates
 				rc.Event.MouseEvent.dwMousePosition = BufferToScreen(r.Event.MouseEvent.dwMousePosition);
-				bProcessed = mp_XTerm->GetSubstitute(rc.Event.MouseEvent, m_Term.nMouseMode, szSubstKeys);
+				TermMouseMode mode = m_Term.nMouseMode;
+				if (!mode)
+				{
+					//LPCWSTR pszPrcName = GetActiveProcessName();
+					//if (pszPrcName && CompareProcessNames(pszPrcName, L"vim"))
+					//	mode = tmm_VIM;
+					//else
+					mode = tmm_SCROLL;
+				}
+				bProcessed = mp_XTerm->GetSubstitute(rc.Event.MouseEvent, mode, szSubstKeys);
 				bSend = (bProcessed && szSubstKeys[0]);
 			}
 			break; // MOUSE_EVENT
