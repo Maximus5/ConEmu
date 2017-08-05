@@ -3002,42 +3002,10 @@ void CSettings::UnregisterTabs()
 // Показать в "Инфо" текущий режим консоли
 void CSettings::UpdateConsoleMode(CRealConsole* pRCon)
 {
+	CSetPgInfo* pInfoPg;
 	HWND hInfoPg = GetPage(thi_Info);
-	if (hInfoPg && IsWindow(hInfoPg))
-	{
-		WORD nConInMode = 0, nConOutMode = 0;
-		TermEmulationType Term = te_win32;
-		bool bBracketedPaste = false;
-		pRCon->GetConsoleModes(nConInMode, nConOutMode, Term, bBracketedPaste);
-		CEActiveAppFlags appFlags = pRCon->GetActiveAppFlags();
-
-		wchar_t szFlags[128] = L"";
-		switch (Term)
-		{
-		case te_win32:
-			wcscpy_c(szFlags, L"win32"); break;
-		case te_xterm:
-			wcscpy_c(szFlags, L"xterm"); break;
-		default:
-			msprintf(szFlags, countof(szFlags), L"term=%u", Term);
-		}
-		if (bBracketedPaste)
-			wcscat_c(szFlags, L"|BrPaste");
-		if (appFlags & caf_Cygwin1)
-			wcscat_c(szFlags, L"|cygwin");
-		if (appFlags & caf_Msys1)
-			wcscat_c(szFlags, L"|msys");
-		if (appFlags & caf_Msys2)
-			wcscat_c(szFlags, L"|msys2");
-		if (appFlags & caf_Clink)
-			wcscat_c(szFlags, L"|clink");
-
-		wchar_t szInfo[255];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
-			L"Console states (In=x%02X, Out=x%02X, %s)",
-			nConInMode, nConOutMode, szFlags);
-		SetDlgItemText(hInfoPg, IDC_CONSOLE_STATES, szInfo);
-	}
+	if (GetPageObj(pInfoPg) && IsWindow(hInfoPg))
+		pInfoPg->FillConsoleMode(hInfoPg, pRCon);
 }
 
 

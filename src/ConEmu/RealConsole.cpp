@@ -6270,6 +6270,12 @@ void CRealConsole::StartStopXMouse(DWORD nPID, TermMouseMode MouseMode)
 	}
 
 	m_Term.nMouseMode = MouseMode;
+
+	if (isActive(false) && mp_ConEmu->mp_Status)
+		mp_ConEmu->mp_Status->UpdateStatusBar(true);
+
+	if (ghOpWnd && isActive(false))
+		gpSetCls->UpdateConsoleMode(this);
 }
 
 void CRealConsole::StartStopBracketedPaste(DWORD nPID, bool bUseBracketedPaste)
@@ -15190,6 +15196,7 @@ void CRealConsole::QueryTermModes(wchar_t* pszInfo, int cchMax, bool bFull)
 	BOOL bBracketedPaste = m_Term.bBracketedPaste;
 	CEActiveAppFlags appFlags = GetActiveAppFlags();
 	BOOL bAppCursorKeys = mp_XTerm ? mp_XTerm->AppCursorKeys : FALSE;
+	TermMouseMode MouseFlags = m_Term.nMouseMode;
 
 	wchar_t szFlags[128] = L"";
 	switch (Term)
@@ -15213,6 +15220,15 @@ void CRealConsole::QueryTermModes(wchar_t* pszInfo, int cchMax, bool bFull)
 		wcscat_c(szFlags, bFull ? L"|msys2" : L"2");
 	if (appFlags & caf_Clink)
 		wcscat_c(szFlags, bFull ? L"|clink" : L"K");
+
+	if (MouseFlags && !bFull)
+		wcscat_c(szFlags, L"M");
+	else if (MouseFlags)
+	{
+		wchar_t szHex[20];
+		msprintf(szHex, countof(szHex), L"|mouse=x%02X", MouseFlags);
+		wcscat_c(szFlags, szHex);
+	}
 
 	lstrcpyn(pszInfo, szFlags, cchMax);
 }
