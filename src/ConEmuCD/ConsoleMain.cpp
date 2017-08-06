@@ -3504,7 +3504,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			}
 			TODO("/BX для ширины буфера?");
 		}
-		else if (wcsncmp(szArg, L"/F", 2)==0)
+		else if (wcsncmp(szArg, L"/F", 2)==0 && szArg[2] && szArg[3] == L'=')
 		{
 			wchar_t* pszEnd = NULL;
 
