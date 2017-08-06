@@ -53,6 +53,15 @@ void TermX::Reset()
 bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, CEStr& lsSubst)
 {
 	_ASSERTE(lsSubst.IsEmpty());
+
+	// Bypass AltGr+keys to console intact
+	if (k.uChar.UnicodeChar
+		&& ((k.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_ALT_PRESSED)) == (LEFT_CTRL_PRESSED|RIGHT_ALT_PRESSED)))
+	{
+		lsSubst.Clear();
+		return false;
+	}
+
 	wchar_t szSubst[16] = L"";
 
 	static UINT F1Codes[24] = {
