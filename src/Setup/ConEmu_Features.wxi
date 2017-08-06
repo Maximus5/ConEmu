@@ -213,8 +213,9 @@
       </Feature>
       -->
     </Feature>
-    <Feature Id="FWSL" AllowAdvertise="no" Title="WSL sample" Level="1"
-             Description="Demonstrates ability to use 256 colors in Windows Subsystem for Linux started in ConEmu tab">
+    <Feature Id="FWSL" AllowAdvertise="no" Title="WSL support" Level="1"
+             Description="Components for Bash on Ubuntu on Windows (Windows Subsystem for Linux):
+wslbridge, cygwin library and wsl_con.cmd demonstrating ability to use 256 colors in WSL started in ConEmu tab">
       <ComponentRef Id="wsl_con.cmd"/>
       <ComponentRef Id="wslbridge.exe"/>
       <ComponentRef Id="wsl.cygwin1.dll"/>
