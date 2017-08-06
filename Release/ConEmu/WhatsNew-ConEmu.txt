@@ -20,6 +20,23 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.8.5
+* gh-1211: Pressing `Enter` in nano editor didn't insert new line.
+* Fix missed icon for `{Bash::bash}` task.
+* gh-1209: Node and `undefined` in the `process.env.foobar`.
+* Show proper terminal modes in Settings/Info dialog page.
+* Conversion from POSIX to native paths improved.
+  * Proper prefix is used (autodetected or specified via `-new_console:p:/mnt` switch).
+  * Paths `~` and subpaths are ignored for now, we can't even map `~` from WSL to native.
+* XTerm mouse wheel emulation changes.
+  * VIM emulation `\e[62~` .. `[65~` is removed.
+  * If console application has not requested mouse events, ConEmu
+    sends Wheel events as Up/Down arrow key presses, and Shift+Wheel
+    events as PgUp/PgDn key presses.
+* In come cases when using Connector ANSI sequences were not processed by ConEmu.
+* gh-999: Fix ‘RuntimeError: Failed to beep’ when running Python in ConEmu.
+
+
 2017.7.30
 * Unchecked option ‘Use credentials for network resources only’ was ignored (f9805dccf regression).
   Entered credentials were used only for network resources regardless of the option value.
