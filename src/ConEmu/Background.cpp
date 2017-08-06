@@ -1190,7 +1190,7 @@ bool CBackgroundInfo::PollBackgroundFile()
 		&& wcspbrk(ms_BgImage, L"%\\.")) // только для файлов!
 	{
 		WIN32_FIND_DATA fnd = {0};
-		HANDLE hFind = FindFirstFile(gpSet->sBgImage, &fnd);
+		HANDLE hFind = FindFirstFile(ms_BgImage, &fnd);
 
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
