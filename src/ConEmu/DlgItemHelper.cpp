@@ -251,7 +251,7 @@ bool CDlgItemHelper::isHyperlinkCtrl(WORD nCtrlId)
 	switch (nCtrlId)
 	{
 	case stHomePage:
-	case stDefTermWikiLink:
+	case stSetPgWikiLink:
 	case stConEmuUrl:
 	case stAnsiSecureExecUrl:
 		return true;

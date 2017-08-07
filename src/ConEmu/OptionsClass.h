@@ -249,6 +249,7 @@ class CSettings
 		void ShowModifierErrorTip(LPCTSTR asInfo, HWND hDlg, WORD nID);
 		void ShowConFontErrorTip();
 	protected:
+		INT_PTR OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlId);
 		void OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage = NULL);
 		void ExportSettings();
 		void ImportSettings();

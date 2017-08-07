@@ -125,6 +125,7 @@ struct ConEmuSetupPages
 	int              Level;        // 0, 1
 	LngResources     PageNameRsrc; // Label in treeview
 	TabHwndIndex     PageIndex;    // thi_Fonts, thi_SizePos, etc.
+	LPCWSTR          wikiPage;     // "SettingsMain.html", etc.
 	CSetPgBase*    (*CreateObj)();
 	bool             Collapsed;
 	// Filled after creation

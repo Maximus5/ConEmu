@@ -1001,6 +1001,13 @@ LRESULT CSetDlgButtons::OnButtonClicked(HWND hDlg, WPARAM wParam, LPARAM lParam)
 {
 	_ASSERTE(hDlg!=NULL);
 	WORD CB = LOWORD(wParam);
+
+	if (CDlgItemHelper::isHyperlinkCtrl(CB))
+	{
+		CDlgItemHelper::ProcessHyperlinkCtrl(hDlg, CB);
+		return 0;
+	}
+
 	BYTE uCheck = isChecked(hDlg, CB);
 
 	ProcessButtonClick(hDlg, CB, uCheck);

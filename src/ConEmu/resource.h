@@ -985,7 +985,7 @@
 #define tAboutSearch                    2682
 #define stConEmuVersion                 2683
 #define cbDefTermAgressive              2684
-#define stDefTermWikiLink               2685
+#define stSetPgWikiLink                 2685
 #define gbConfirmActions                2686
 #define gbConfirmMisc                   2687
 #define cbDupConfirm                    2688

@@ -410,40 +410,40 @@ void CSettings::InitVars_Pages()
 	ConEmuSetupPages Pages[] =
 	{
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
-		{IDD_SPG_FONTS,       0, lng_SpgFonts,        thi_Fonts,        CSetPgFonts::Create},
-		{IDD_SPG_SIZEPOS,     1, lng_SpgSizePos,      thi_SizePos,      CSetPgSizePos::Create},
-		{IDD_SPG_APPEAR,      1, lng_SpgAppear,       thi_Appear,       CSetPgAppear::Create},
-		{IDD_SPG_QUAKE,       1, lng_SpgQuake,        thi_Quake,        CSetPgQuake::Create},
-		{IDD_SPG_BACKGR,      1, lng_SpgBackgr,       thi_Backgr,       CSetPgBackgr::Create},
-		{IDD_SPG_TABS,        1, lng_SpgTabBar,       thi_Tabs,         CSetPgTabs::Create},
-		{IDD_SPG_CONFIRM,     1, lng_SpgConfirm,      thi_Confirm,      CSetPgConfirm::Create},
-		{IDD_SPG_TASKBAR,     1, lng_SpgTaskBar,      thi_Taskbar,      CSetPgTaskbar::Create},
-		{IDD_SPG_UPDATE,      1, lng_SpgUpdate,       thi_Update,       CSetPgUpdate::Create},
-		{IDD_SPG_STARTUP,     0, lng_SpgStartup,      thi_Startup,      CSetPgStartup::Create},
-		{IDD_SPG_TASKS,       1, lng_SpgTasks,        thi_Tasks,        CSetPgTasks::Create},
-		{IDD_SPG_ENVIRONMENT, 1, lng_SpgEnvironment,  thi_Environment,  CSetPgEnvironment::Create},
-		{IDD_SPG_FEATURES,    0, lng_SpgFeatures,     thi_Features,     CSetPgFeatures::Create},
-		{IDD_SPG_CURSOR,      1, lng_SpgCursor,       thi_Cursor,       CSetPgCursor::Create},
-		{IDD_SPG_COLORS,      1, lng_SpgColors,       thi_Colors,       CSetPgColors::Create},
-		{IDD_SPG_TRANSPARENT, 1, lng_SpgTransparent,  thi_Transparent,  CSetPgTransparent::Create},
-		{IDD_SPG_STATUSBAR,   1, lng_SpgStatusBar,    thi_Status,       CSetPgStatus::Create},
-		{IDD_SPG_APPDISTINCT, 1, lng_SpgAppDistinct,  thi_Apps,         CSetPgApps::Create},
-		{IDD_SPG_INTEGRATION, 0, lng_SpgIntegration,  thi_Integr,       CSetPgIntegr::Create},
-		{IDD_SPG_DEFTERM,     1, lng_SpgDefTerm,      thi_DefTerm,      CSetPgDefTerm::Create},
-		{IDD_SPG_COMSPEC,     1, lng_SpgComSpec,      thi_Comspec,      CSetPgComspec::Create},
-		{IDD_SPG_CHILDGUI,    1, lng_SpgChildGui,     thi_ChildGui,     CSetPgChildGui::Create},
-		{IDD_SPG_ANSI,        1, lng_SpgANSI,         thi_ANSI,         CSetPgANSI::Create},
-		{IDD_SPG_KEYS,        0, lng_SpgKeys,         thi_Keys,         CSetPgKeys::Create},
-		{IDD_SPG_KEYBOARD,    1, lng_SpgKeyboard,     thi_Keyboard,     CSetPgKeyboard::Create},
-		{IDD_SPG_MOUSE,       1, lng_SpgMouse,        thi_Mouse,        CSetPgMouse::Create},
-		{IDD_SPG_MARKCOPY,    1, lng_SpgMarkCopy,     thi_MarkCopy,     CSetPgMarkCopy::Create},
-		{IDD_SPG_PASTE,       1, lng_SpgPaste,        thi_Paste,        CSetPgPaste::Create},
-		{IDD_SPG_HIGHLIGHT,   1, lng_SpgHighlight,    thi_Hilight,      CSetPgHilight::Create},
-		{IDD_SPG_FEATURE_FAR, 0, lng_SpgFarManager,   thi_Far,          CSetPgFar::Create, true/*Collapsed*/},
-		{IDD_SPG_FARMACRO,    1, lng_SpgFarMacros,    thi_FarMacro,     CSetPgFarMacro::Create},
-		{IDD_SPG_VIEWS,       1, lng_SpgFarViews,     thi_Views,        CSetPgViews::Create},
-		{IDD_SPG_INFO,        0, lng_SpgInfo,         thi_Info,         CSetPgInfo::Create, RELEASEDEBUGTEST(true,false)/*Collapsed in Release*/},
-		{IDD_SPG_DEBUG,       1, lng_SpgDebug,        thi_Debug,        CSetPgDebug::Create},
+		{IDD_SPG_FONTS,       0, lng_SpgFonts,        thi_Fonts,        L"SettingsMain.html",         CSetPgFonts::Create},
+		{IDD_SPG_SIZEPOS,     1, lng_SpgSizePos,      thi_SizePos,      L"SettingsSizePos.html",      CSetPgSizePos::Create},
+		{IDD_SPG_APPEAR,      1, lng_SpgAppear,       thi_Appear,       L"SettingsAppearance.html",   CSetPgAppear::Create},
+		{IDD_SPG_QUAKE,       1, lng_SpgQuake,        thi_Quake,        L"SettingsQuake.html",        CSetPgQuake::Create},
+		{IDD_SPG_BACKGR,      1, lng_SpgBackgr,       thi_Backgr,       L"SettingsBackground.html",   CSetPgBackgr::Create},
+		{IDD_SPG_TABS,        1, lng_SpgTabBar,       thi_Tabs,         L"SettingsTabBar.html",       CSetPgTabs::Create},
+		{IDD_SPG_CONFIRM,     1, lng_SpgConfirm,      thi_Confirm,      L"SettingsConfirm.html",      CSetPgConfirm::Create},
+		{IDD_SPG_TASKBAR,     1, lng_SpgTaskBar,      thi_Taskbar,      L"SettingsTaskBar.html",      CSetPgTaskbar::Create},
+		{IDD_SPG_UPDATE,      1, lng_SpgUpdate,       thi_Update,       L"SettingsUpdate.html",       CSetPgUpdate::Create},
+		{IDD_SPG_STARTUP,     0, lng_SpgStartup,      thi_Startup,      L"SettingsStartup.html",      CSetPgStartup::Create},
+		{IDD_SPG_TASKS,       1, lng_SpgTasks,        thi_Tasks,        L"SettingsTasks.html",        CSetPgTasks::Create},
+		{IDD_SPG_ENVIRONMENT, 1, lng_SpgEnvironment,  thi_Environment,  L"SettingsEnvironment.html",  CSetPgEnvironment::Create},
+		{IDD_SPG_FEATURES,    0, lng_SpgFeatures,     thi_Features,     L"SettingsFeatures.html",     CSetPgFeatures::Create},
+		{IDD_SPG_CURSOR,      1, lng_SpgCursor,       thi_Cursor,       L"SettingsTextCursor.html",   CSetPgCursor::Create},
+		{IDD_SPG_COLORS,      1, lng_SpgColors,       thi_Colors,       L"SettingsColors.html",       CSetPgColors::Create},
+		{IDD_SPG_TRANSPARENT, 1, lng_SpgTransparent,  thi_Transparent,  L"SettingsTransparency.html", CSetPgTransparent::Create},
+		{IDD_SPG_STATUSBAR,   1, lng_SpgStatusBar,    thi_Status,       L"SettingsStatusBar.html",    CSetPgStatus::Create},
+		{IDD_SPG_APPDISTINCT, 1, lng_SpgAppDistinct,  thi_Apps,         L"SettingsAppDistinct.html",  CSetPgApps::Create},
+		{IDD_SPG_INTEGRATION, 0, lng_SpgIntegration,  thi_Integr,       L"SettingsIntegration.html",  CSetPgIntegr::Create},
+		{IDD_SPG_DEFTERM,     1, lng_SpgDefTerm,      thi_DefTerm,      L"SettingsDefTerm.html",      CSetPgDefTerm::Create},
+		{IDD_SPG_COMSPEC,     1, lng_SpgComSpec,      thi_Comspec,      L"SettingsComspec.html",      CSetPgComspec::Create},
+		{IDD_SPG_CHILDGUI,    1, lng_SpgChildGui,     thi_ChildGui,     L"SettingsChildGui.html",     CSetPgChildGui::Create},
+		{IDD_SPG_ANSI,        1, lng_SpgANSI,         thi_ANSI,         L"SettingsANSI.html",         CSetPgANSI::Create},
+		{IDD_SPG_KEYS,        0, lng_SpgKeys,         thi_Keys,         L"SettingsHotkeys.html",      CSetPgKeys::Create},
+		{IDD_SPG_KEYBOARD,    1, lng_SpgKeyboard,     thi_Keyboard,     L"SettingsKeyboard.html",     CSetPgKeyboard::Create},
+		{IDD_SPG_MOUSE,       1, lng_SpgMouse,        thi_Mouse,        L"SettingsMouse.html",        CSetPgMouse::Create},
+		{IDD_SPG_MARKCOPY,    1, lng_SpgMarkCopy,     thi_MarkCopy,     L"SettingsMarkCopy.html",     CSetPgMarkCopy::Create},
+		{IDD_SPG_PASTE,       1, lng_SpgPaste,        thi_Paste,        L"SettingsPaste.html",        CSetPgPaste::Create},
+		{IDD_SPG_HIGHLIGHT,   1, lng_SpgHighlight,    thi_Hilight,      L"SettingsHighlight.html",    CSetPgHilight::Create},
+		{IDD_SPG_FEATURE_FAR, 0, lng_SpgFarManager,   thi_Far,          L"SettingsFar.html",          CSetPgFar::Create,       true/*Collapsed*/},
+		{IDD_SPG_FARMACRO,    1, lng_SpgFarMacros,    thi_FarMacro,     L"SettingsFarMacros.html",    CSetPgFarMacro::Create},
+		{IDD_SPG_VIEWS,       1, lng_SpgFarViews,     thi_Views,        L"SettingsFarView.html",      CSetPgViews::Create},
+		{IDD_SPG_INFO,        0, lng_SpgInfo,         thi_Info,         L"SettingsInfo.html",         CSetPgInfo::Create,      RELEASEDEBUGTEST(true,false)/*Collapsed in Release*/},
+		{IDD_SPG_DEBUG,       1, lng_SpgDebug,        thi_Debug,        L"SettingsDebug.html",        CSetPgDebug::Create},
 		// End
 		{},
 	};
@@ -1378,6 +1378,9 @@ LRESULT CSettings::OnInitDialog()
 
 		CSetPgBase::CreatePage(&(m_Pages[0]), ghOpWnd, mn_ActivateTabMsg, mp_DpiAware);
 
+		CEStr lsUrl(CEWIKIBASE, m_Pages[0].wikiPage);
+		SetDlgItemText(ghOpWnd, stSetPgWikiLink, lsUrl);
+
 		apiShowWindow(m_Pages[0].hPage, SW_SHOW);
 	}
 	MCHKHEAP
@@ -1700,6 +1703,10 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 						SendMessage(m_Pages[i].hPage, mn_ActivateTabMsg, 1, (LPARAM)&(m_Pages[i]));
 						m_Pages[i].pPage->ProcessDpiChange(gpSetCls->mp_DpiAware);
 					}
+
+					CEStr lsUrl(CEWIKIBASE, m_Pages[i].wikiPage);
+					SetDlgItemText(ghOpWnd, stSetPgWikiLink, lsUrl);
+
 					ShowWindow(m_Pages[i].hPage, SW_SHOW);
 					m_LastActivePageId = gpSetCls->m_Pages[i].PageIndex;
 				}
@@ -2065,6 +2072,19 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 			}
 
 			break;
+
+		case WM_CTLCOLORSTATIC:
+			return gpSetCls->OnCtlColorStatic(hWnd2, (HDC)wParam, (HWND)lParam, GetDlgCtrlID((HWND)lParam));
+
+		case WM_SETCURSOR:
+			if (CDlgItemHelper::isHyperlinkCtrl(GetDlgCtrlID((HWND)wParam)))
+			{
+				SetCursor(LoadCursor(NULL, IDC_HAND));
+				SetWindowLongPtr(hWnd2, DWLP_MSGRESULT, TRUE);
+				return TRUE;
+			}
+			break;
+
 		//case WM_GETICON:
 
 		//	if (wParam==ICON_BIG)
@@ -2279,6 +2299,25 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 	}
 
 	return 0;
+}
+
+INT_PTR CSettings::OnCtlColorStatic(HWND hDlg, HDC hdc, HWND hCtrl, WORD nCtrlId)
+{
+	if (CDlgItemHelper::isHyperlinkCtrl(nCtrlId))
+	{
+		_ASSERTE(hCtrl!=NULL);
+		// Check appropriate flags
+		DWORD nStyle = GetWindowLong(hCtrl, GWL_STYLE);
+		if (!(nStyle & SS_NOTIFY))
+			SetWindowLong(hCtrl, GWL_STYLE, nStyle|SS_NOTIFY);
+		// And the colors
+		SetTextColor(hdc, GetSysColor(COLOR_HOTLIGHT));
+		SetBkMode(hdc, TRANSPARENT);
+		HBRUSH hBrush = GetSysColorBrush(COLOR_3DFACE);
+		return (INT_PTR)hBrush;
+	}
+
+	return FALSE;
 }
 
 INT_PTR CSettings::OnMeasureFontItem(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
