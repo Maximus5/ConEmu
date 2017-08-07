@@ -127,6 +127,8 @@ public:
 	bool mb_ConEmuHere;
 	/* switch -QuitOnClose: close ConEmu with last tab or cross-clicking */
 	bool mb_ForceQuitOnClose;
+	/* Settings dialog was requested on startup */
+	bool mb_SettingsRequested;
 
 public:
 	/* Store/retrieve command line, specified with "-run" or "-runlist" switches */

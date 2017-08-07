@@ -7287,6 +7287,12 @@ void CConEmuMain::OnMainCreateFinished()
 	{
 		SafeDelete(mp_PushInfo);
 	}
+
+	if (mb_SettingsRequested)
+	{
+		// CSettings::Dialog();
+		PostMessage(ghWnd, WM_SYSCOMMAND, ID_SETTINGS, 0);
+	}
 }
 
 void CConEmuMain::PostCreate(bool abReceived/*=FALSE*/)

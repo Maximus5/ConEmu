@@ -174,6 +174,7 @@ CConEmuStart::CConEmuStart(CConEmuMain* pOwner)
 	m_StartDetached = crb_Undefined;
 	mb_ConEmuHere = false;
 	mb_ForceQuitOnClose = false;
+	mb_SettingsRequested = false;
 	isCurCmdList = false;
 	SetDefaultCmd(L"far");
 	mn_ShellExitCode = STILL_ACTIVE;
@@ -1373,6 +1374,10 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 					gpConEmu->SetTitleTemplate(pszTitle.GetStr());
+				}
+				else if (szArg.IsSwitch(L"-Settings"))
+				{
+					gpConEmu->mb_SettingsRequested = true;
 				}
 				else if (szArg.IsSwitch(L"-FindBugMode"))
 				{

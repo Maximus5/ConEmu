@@ -86,6 +86,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"-LoadCfgFile <file> - Use specified xml file as configuration storage.\r\n" \
 	L"-SaveCfgFile <file> - Save configuration to the specified xml file.\r\n" \
 	L"-LoadRegistry - Use Windows registry as configuration storage.\r\n" \
+	L"-Settings - Open settings dialog after ConEmu startup.\r\n" \
 	L"-SetDefTerm - Set ConEmu as default terminal, use with \"-Exit\" switch.\r\n" \
 	L"-UpdateSrcSet <url> - Force to check version.ini by another url.\r\n" \
 	L"-AnsiLog <folder> - Force console output logging into the folder.\r\n" \
