@@ -919,10 +919,21 @@ wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix /
 		}
 	}
 
+	// Some chars must be escaped
+	const wchar_t* posixSpec = bAutoQuote ? L"$" : L" ()$";
+
 	size_t cchLen = _tcslen(asWinPath)
 		+ (bAutoQuote ? 3 : 1) // two or zero quotes + null-termination
 		+ (asMntPrefix ? _tcslen(asMntPrefix) : 0) // '/cygwin' or '/mnt' prefix
 		+ 1/*Possible space-termination on paste*/;
+	if (wcspbrk(asWinPath, posixSpec) != NULL)
+	{
+		for (const wchar_t *pch = asWinPath; *pch; ++pch)
+		{
+			if (wcschr(posixSpec, *pch))
+				++cchLen;
+		}
+	}
 	wchar_t* pszResult = (wchar_t*)malloc(cchLen*sizeof(*pszResult));
 	if (!pszResult)
 		return NULL;
@@ -966,6 +977,8 @@ wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix /
 		}
 		else
 		{
+			if (wcschr(posixSpec, *asWinPath))
+				*(psz++) = L'\\';
 			*(psz++) = *(asWinPath++);
 		}
 	}
