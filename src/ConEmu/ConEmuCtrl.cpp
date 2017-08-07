@@ -1339,7 +1339,7 @@ bool CConEmuCtrl::key_PasteTextAllApp(const ConEmuChord& VkState, bool TestOnly,
 		_ASSERTE(FALSE && "Unsupported PasteLinesMode");
 		pasteMode = pm_Standard;
 	}
-	pRCon->Paste(pasteMode);
+	pRCon->Paste(pasteMode, NULL, false/*default*/, pApp->PosixAllLines());
 	return true;
 }
 
@@ -1379,7 +1379,7 @@ bool CConEmuCtrl::key_PasteFirstLineAllApp(const ConEmuChord& VkState, bool Test
 		_ASSERTE(FALSE && "Unsupported PasteLinesMode");
 		pasteMode = pm_Standard;
 	}
-	pRCon->Paste(pasteMode);
+	pRCon->Paste(pasteMode, NULL, false/*default*/, pApp->PosixFirstLine());
 	return true;
 }
 

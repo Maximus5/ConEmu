@@ -1359,15 +1359,17 @@
 #define vkMultiGroupKey                 3085
 #define stRestartCmd                    3086
 #define cbCmdTasksDup                   3087
+#define cbPasteM1Posix                  3088
+#define cbPasteM2Posix                  3089
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        239
+#define _APS_NEXT_RESOURCE_VALUE        240
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3088
+#define _APS_NEXT_CONTROL_VALUE         3090
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

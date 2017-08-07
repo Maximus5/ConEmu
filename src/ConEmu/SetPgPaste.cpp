@@ -52,6 +52,7 @@ LRESULT CSetPgPaste::OnInitDialog(HWND hDlg, bool abInitial)
 		: (mode == plm_SingleLine) ? rPasteM1SingleLine
 		: (mode == plm_Nothing) ? rPasteM1Nothing
 		: rPasteM1MultiLine);
+	checkDlgButton(hDlg, cbPasteM1Posix, (gpSet->AppStd.isPosixAllLines != pxm_Intact) ? BST_CHECKED : BST_UNCHECKED);
 
 	mode = gpSet->AppStd.isPasteFirstLine;
 	checkRadioButton(hDlg, rPasteM2MultiLine, rPasteM2Nothing,
@@ -59,6 +60,7 @@ LRESULT CSetPgPaste::OnInitDialog(HWND hDlg, bool abInitial)
 		: (mode == plm_FirstLine) ? rPasteM2FirstLine
 		: (mode == plm_Nothing) ? rPasteM2Nothing
 		: rPasteM2SingleLine);
+	checkDlgButton(hDlg, cbPasteM2Posix, (gpSet->AppStd.isPosixFirstLine != pxm_Intact) ? BST_CHECKED : BST_UNCHECKED);
 
 	checkDlgButton(hDlg, cbClipConfirmEnter, gpSet->isPasteConfirmEnter);
 
@@ -124,6 +126,23 @@ void CSetPgPaste::OnBtn_ClipCtrlV(HWND hDlg, WORD CB, BYTE uCheck)
 	}
 
 } // cbClipCtrlV, rPasteM2MultiLine, rPasteM2FirstLine, rPasteM2SingleLine, rPasteM2Nothing
+
+
+// cbPasteM1Posix, cbPasteM2Posix
+void CSetPgPaste::OnBtn_ClipPosixCvt(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbPasteM1Posix || CB==cbPasteM2Posix);
+
+	switch (CB)
+	{
+	case cbPasteM1Posix:
+		gpSet->AppStd.isPosixAllLines = uCheck ? pxm_Auto : pxm_Intact; break;
+	case cbPasteM2Posix:
+		gpSet->AppStd.isPosixFirstLine = uCheck ? pxm_Auto : pxm_Intact; break;
+	}
+
+}// cbPasteM1Posix, cbPasteM2Posix
+
 
 // cbClipConfirmEnter
 void CSetPgPaste::OnBtn_ClipConfirmEnter(HWND hDlg, WORD CB, BYTE uCheck)

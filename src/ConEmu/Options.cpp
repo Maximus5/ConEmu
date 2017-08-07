@@ -593,7 +593,9 @@ void Settings::InitSettings()
 	AppStd.isCTSEOL = 0;
 	AppStd.isCTSShiftArrowStart = true;
 	AppStd.isPasteAllLines = true;
+	AppStd.isPosixAllLines = pxm_Auto;
 	AppStd.isPasteFirstLine = true;
+	AppStd.isPosixFirstLine = pxm_Auto;
 
 	// 0 - off, 1 - force, 2 - try to detect "ReadConsole" (don't use 2 in bash)
 	AppStd.isCTSClickPromptPosition = 2; // Кликом мышки позиционировать курсор в Cmd Prompt (cmd.exe, Powershell.exe, ...) + vkCTSVkPromptClk
@@ -1254,7 +1256,9 @@ void Settings::LoadAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF*
 	reg->Load(L"ClipboardEOL", pApp->isCTSEOL); MinMax(pApp->isCTSEOL,2);
 	reg->Load(L"ClipboardArrowStart", pApp->isCTSShiftArrowStart);
 	reg->Load(L"ClipboardAllLines", pApp->isPasteAllLines);
+	reg->Load(L"ClipboardAllLinesPosix", pApp->isPosixAllLines);
 	reg->Load(L"ClipboardFirstLine", pApp->isPasteFirstLine);
+	reg->Load(L"ClipboardFirstLinePosix", pApp->isPosixFirstLine);
 	reg->Load(L"ClipboardClickPromptPosition", pApp->isCTSClickPromptPosition); MinMax(pApp->isCTSClickPromptPosition,2);
 	reg->Load(L"ClipboardDeleteLeftWord", pApp->isCTSDeleteLeftWord); MinMax(pApp->isCTSDeleteLeftWord,2);
 }
@@ -3402,7 +3406,9 @@ void Settings::SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF*
 	reg->Save(L"ClipboardEOL", pApp->isCTSEOL);
 	reg->Save(L"ClipboardArrowStart", pApp->isCTSShiftArrowStart);
 	reg->Save(L"ClipboardAllLines", pApp->isPasteAllLines);
+	reg->Save(L"ClipboardAllLinesPosix", pApp->isPosixAllLines);
 	reg->Save(L"ClipboardFirstLine", pApp->isPasteFirstLine);
+	reg->Save(L"ClipboardFirstLinePosix", pApp->isPosixFirstLine);
 	reg->Save(L"ClipboardClickPromptPosition", pApp->isCTSClickPromptPosition);
 	reg->Save(L"ClipboardDeleteLeftWord", pApp->isCTSDeleteLeftWord);
 }

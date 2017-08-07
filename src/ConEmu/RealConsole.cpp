@@ -12527,7 +12527,7 @@ void CRealConsole::SwitchKeyboardLayout(WPARAM wParam, DWORD_PTR dwNewKeyboardLa
 	PostConsoleMessage(hConWnd, WM_INPUTLANGCHANGEREQUEST, wParam, (LPARAM)dwNewKeyboardLayout);
 }
 
-void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText /*= NULL*/, bool abNoConfirm /*= false*/, bool abCygWin /*= false*/)
+void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText /*= NULL*/, bool abNoConfirm /*= false*/, PosixPasteMode posixMode /*= pxm_Auto*/)
 {
 	if (!this)
 		return;
@@ -12665,10 +12665,14 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 
 	// Convert Windows style path from clipboard to cygwin style?
 	if (pszBuf && *pszBuf
-		&& (abCygWin
-			|| (((PasteMode == pm_FirstLine) || (PasteMode == pm_OneLine) || !(wcschr(pszBuf, L'\n') || wcschr(pszBuf, L'\r')))
-				&& IsFilePath(pszBuf, true) && isUnixFS())
-		))
+			// if POSIX was explicitly requested
+		&& ((posixMode == pxm_Convert)
+			// or was NOT prohibited and autoconversion is allowed
+			|| ((posixMode != pxm_Intact) && isPosixConvertAllowed() && isUnixFS()
+				&& ((PasteMode == pm_FirstLine) || (PasteMode == pm_OneLine) || !(wcschr(pszBuf, L'\n') || wcschr(pszBuf, L'\r')))
+			))
+			// check the path validity at last
+		&& IsFilePath(pszBuf, true))
 	{
 		wchar_t* pszCygWin = DupCygwinPath(pszBuf, false, GetMntPrefix());
 		if (pszCygWin)
@@ -14974,7 +14978,7 @@ CEActiveAppFlags CRealConsole::GetActiveAppFlags()
 LPCWSTR CRealConsole::GetMntPrefix()
 {
 	// Prefer RConStartArg parameter. Even if ‘empty’ prefix was specified!
-	if (m_Args.pszMntRoot)
+	if (m_Args.pszMntRoot && (wcscmp(m_Args.pszMntRoot, L"-") != 0))
 		return m_Args.pszMntRoot;
 
 	WORD conInMode = mp_RBuf ? mp_RBuf->GetConInMode() : 0;
@@ -15004,6 +15008,18 @@ bool CRealConsole::isUnixFS()
 	if (GetTermType() == te_xterm)
 		return true;
 	return false;
+}
+
+// If autoconversion of pasted Windows paths is allowed in console?
+bool CRealConsole::isPosixConvertAllowed()
+{
+	if (!isUnixFS())
+		return false;
+	// We check here explicitly for m_Args.pszMntRoot!
+	// User may disable conversion via "-new_console:p:-" for ssh tasks for example
+	if (m_Args.pszMntRoot && (wcscmp(m_Args.pszMntRoot, L"-") == 0))
+		return false;
+	return true;
 }
 
 bool CRealConsole::isFar(bool abPluginRequired/*=false*/)

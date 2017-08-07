@@ -718,6 +718,10 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case rPasteM2Nothing:
 			CSetPgPaste::OnBtn_ClipCtrlV(hDlg, CB, uCheck);
 			break;
+		case cbPasteM1Posix:
+		case cbPasteM2Posix:
+			CSetPgPaste::OnBtn_ClipPosixCvt(hDlg, CB, uCheck);
+			break;
 		case cbClipConfirmEnter:
 			CSetPgPaste::OnBtn_ClipConfirmEnter(hDlg, CB, uCheck);
 			break;

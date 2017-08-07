@@ -52,6 +52,7 @@ public:
 	// Events
 	static void OnBtn_ClipShiftIns(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ClipCtrlV(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_ClipPosixCvt(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ClipConfirmEnter(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ClipConfirmLimit(HWND hDlg, WORD CB, BYTE uCheck);
 

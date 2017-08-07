@@ -534,6 +534,7 @@ class CRealConsole
 		bool isConSelectMode();
 		bool isCygwinMsys();
 		bool isUnixFS();
+		bool isPosixConvertAllowed();
 		bool isFar(bool abPluginRequired=false);
 		bool isFarBufferSupported();
 		bool isSendMouseAllowed();
@@ -615,7 +616,7 @@ class CRealConsole
 		bool isConsoleClosing();
 		bool isConsoleReady();
 		void OnServerClosing(DWORD anSrvPID, int* pnShellExitCode);
-		void Paste(CEPasteMode PasteMode = pm_Standard, LPCWSTR asText = NULL, bool abNoConfirm = false, bool abCygWin = false);
+		void Paste(CEPasteMode PasteMode = pm_Standard, LPCWSTR asText = NULL, bool abNoConfirm = false, PosixPasteMode posixMode = pxm_Auto);
 		bool Write(LPCWSTR pszText, int nLen = -1, DWORD* pnWritten = NULL);
 		uint isLogging(uint level = 1);
 		void LogString(LPCSTR asText);

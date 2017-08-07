@@ -1129,10 +1129,10 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		}
 		else
 		{
-			pRCon->Paste(pm_Standard, pszText, true, false);
+			pRCon->Paste(pm_Standard, pszText, true, pxm_Auto);
 
 			if (!bDontAddSpace)
-				pRCon->Paste(pm_Standard, L" ", true, false);
+				pRCon->Paste(pm_Standard, L" ", true, pxm_Auto);
 		}
 
 		if (((i + 1) < iQuantity)

@@ -2159,6 +2159,7 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	{
 		CEPasteMode PasteMode = (nCommand & 1) ? pm_FirstLine : pm_Standard;
 		bool bNoConfirm = (nCommand & 2) != 0;
+		PosixPasteMode ppm = pxm_Intact;
 
 		wchar_t* pszChooseBuf = NULL;
 
@@ -2203,6 +2204,7 @@ LPWSTR ConEmuMacro::Paste(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		else if (nCommand == 8)
 		{
 			PasteMode = pm_FirstLine;
+			ppm = pxm_Convert;
 			bNoConfirm = true;
 		}
 		else if (nCommand == 9 || nCommand == 10)

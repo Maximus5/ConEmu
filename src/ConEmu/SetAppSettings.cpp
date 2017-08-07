@@ -204,11 +204,21 @@ PasteLinesMode AppSettings::PasteAllLines() const
 	return (OverrideClipboard || !AppNames) ? isPasteAllLines : gpSet->AppStd.isPasteAllLines;
 }
 
+PosixPasteMode AppSettings::PosixAllLines() const
+{
+	return (OverrideClipboard || !AppNames) ? isPosixAllLines : gpSet->AppStd.isPosixAllLines;
+}
+
 //reg->Load(L"ClipboardFirstLine", isPasteFirstLine);
 //bool isPasteFirstLine;
 PasteLinesMode AppSettings::PasteFirstLine() const
 {
 	return (OverrideClipboard || !AppNames) ? isPasteFirstLine : gpSet->AppStd.isPasteFirstLine;
+}
+
+PosixPasteMode AppSettings::PosixFirstLine() const
+{
+	return (OverrideClipboard || !AppNames) ? isPosixFirstLine : gpSet->AppStd.isPosixFirstLine;
 }
 
 // *** Prompt

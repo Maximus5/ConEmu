@@ -138,9 +138,13 @@ struct AppSettings
 	//reg->Load(L"ClipboardAllLines", isPasteAllLines);
 	PasteLinesMode isPasteAllLines;
 	PasteLinesMode PasteAllLines() const;
+	PosixPasteMode isPosixAllLines;
+	PosixPasteMode PosixAllLines() const;
 	//reg->Load(L"ClipboardFirstLine", isPasteFirstLine);
 	PasteLinesMode isPasteFirstLine;
 	PasteLinesMode PasteFirstLine() const;
+	PosixPasteMode isPosixFirstLine;
+	PosixPasteMode PosixFirstLine() const;
 	// *** Prompt
 	// cbCTSClickPromptPosition
 	//reg->Load(L"ClipboardClickPromptPosition", isCTSClickPromptPosition);

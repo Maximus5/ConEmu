@@ -443,6 +443,14 @@ enum ConEmuWindowMode
 
 LPCWSTR GetWindowModeName(ConEmuWindowMode wm);
 
+// Allow or not to convert pasted Windows path into Posix notation
+typedef BYTE PosixPasteMode;
+const PosixPasteMode
+	pxm_Convert    = 1,  // always try to convert
+	pxm_Intact     = 2,  // never convert
+	pxm_Auto       = 0   // autoselect on certain conditions and m_Args.pszMntRoot value
+;
+
 enum ExpandTextRangeType
 {
 	// Used for DblClick word selection, for example

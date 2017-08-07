@@ -334,7 +334,7 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"     Cmd==5: select and parse folder pathname, Text - default\r\n" \
 	L"     Cmd==6: select and parse cygwin file pathname, Text - default\r\n" \
 	L"     Cmd==7: select and parse cygwin folder pathname, Text - default\r\n" \
-	L"     Cmd==8: paste path from clipboard converted to CygWin style\r\n" \
+	L"     Cmd==8: paste path from clipboard converted to POSIX style\r\n" \
 	L"     Cmd==9: paste all lines space-separated\r\n" \
 	L"     Cmd==10: paste all lines space-separated, without confirmations\r\n" \
 	L"PasteExplorerPath (<DoCd>,<SetFocus>)\r\n" \

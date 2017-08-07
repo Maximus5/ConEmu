@@ -912,24 +912,28 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Pasting text behavior (with exception of Far Manager)",gbFeatureClipboard,4,1,375,140
-    GROUPBOX        "Paste mode #1 (Shift+Ins)",gbPasteM1,10,13,176,45,WS_GROUP
+    GROUPBOX        "Pasting text behavior (with exception of Far Manager)",gbFeatureClipboard,4,1,375,166
+    GROUPBOX        "Paste mode #1 (Shift+Ins)",gbPasteM1,10,13,176,58,WS_GROUP
     CONTROL         "Multi lines",rPasteM1MultiLine,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,26,78,8
     CONTROL         "First line",rPasteM1FirstLine,"Button",BS_AUTORADIOBUTTON,17,41,78,8
     CONTROL         "Single line",rPasteM1SingleLine,"Button",BS_AUTORADIOBUTTON,100,26,78,8
     CONTROL         "Do nothing",rPasteM1Nothing,"Button",BS_AUTORADIOBUTTON,100,41,78,8
-    GROUPBOX        "Paste mode #2 (Ctrl+V)",gbPasteM2,198,13,176,45,WS_GROUP
+    GROUPBOX        "Paste mode #2 (Ctrl+V)",gbPasteM2,198,13,176,58,WS_GROUP
     CONTROL         "Multi lines",rPasteM2MultiLine,"Button",BS_AUTORADIOBUTTON | WS_GROUP,206,26,78,8
     CONTROL         "First line",rPasteM2FirstLine,"Button",BS_AUTORADIOBUTTON,206,41,78,8
     CONTROL         "Single line",rPasteM2SingleLine,"Button",BS_AUTORADIOBUTTON,288,26,78,8
     CONTROL         "Do nothing",rPasteM2Nothing,"Button",BS_AUTORADIOBUTTON,288,41,78,8
-    GROUPBOX        "Confirm critical actions",gbPasteConfirm,10,67,364,64,WS_GROUP
+    GROUPBOX        "Confirm critical actions",gbPasteConfirm,10,80,364,64,WS_GROUP
     CONTROL         "Multi-line paste: avoid unexpected command execution by <Enter> keypress",cbClipConfirmEnter,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,80,355,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,93,355,8
     CONTROL         "Long text paste: avoid non-responsive console until the paste finishes",cbClipConfirmLimit,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,94,355,8
-    RTEXT           "chars:",stClipConfirmLimit,15,112,58,8
-    EDITTEXT        tClipConfirmLimit,76,109,40,12,ES_AUTOHSCROLL
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,107,355,8
+    RTEXT           "chars:",stClipConfirmLimit,15,125,58,8
+    EDITTEXT        tClipConfirmLimit,76,122,40,12,ES_AUTOHSCROLL
+    CONTROL         "Allow Windows to POSIX path conversion",cbPasteM1Posix,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,56,163,10
+    CONTROL         "Allow Windows to POSIX path conversion",cbPasteM2Posix,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,206,56,163,10
 END
 
 IDD_SPG_ENVIRONMENT DIALOGEX 0, 0, 381, 242
@@ -1421,11 +1425,11 @@ BEGIN
     GROUPBOX        "",IDC_STATIC,1,34,349,122
     GROUPBOX        "",IDC_STATIC,1,94,349,62
     GROUPBOX        "",IDC_STATIC,1,162,349,33
-    GROUPBOX        "",IDC_STATIC,1,202,349,172
-    CTEXT           "End of scroll area",stAppDistinctBottom,25,385,171,8
+    GROUPBOX        "",IDC_STATIC,1,202,349,182
+    CTEXT           "End of scroll area",stAppDistinctBottom,25,390,171,8
     GROUPBOX        "Copying text override",gbCopyingOverride,7,212,339,26
     GROUPBOX        "Starting selection with arrows",gbSelectingOverride,7,243,339,28
-    GROUPBOX        "Prompt override",gbPromptOverride,7,326,339,42
+    GROUPBOX        "Prompt override",gbPromptOverride,7,335,339,42
     CONTROL         "Extend fonts override",cbExtendFontsOverride,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,0,116,8
     CONTROL         "Extend fonts",cbExtendFonts,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,12,90,10
     RTEXT           "Bold:",stExtendFontBoldIdx,95,12,40,8
@@ -1448,7 +1452,7 @@ BEGIN
     CONTROL         "Clipboard (Copy/Paste) override",cbClipboardOverride,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,202,123,8
     CONTROL         "Change prompt (cmd, powershell) text cursor position with Left Click",cbCTSClickPromptPosition,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,13,339,330,8
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,13,348,330,8
     CONTROL         "Detect line ends",cbCTSDetectLineEnd,"Button",BS_AUTO3STATE | WS_TABSTOP,13,224,90,8
     CONTROL         "Bash margin",cbCTSBashMargin,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,105,224,71,8
     CONTROL         "Trim trailing spaces",cbCTSTrimTrailing,"Button",BS_AUTO3STATE | WS_TABSTOP,183,224,99,8
@@ -1459,7 +1463,7 @@ BEGIN
     RTEXT           "Min size (pix):",stCursorMinSize,185,76,70,8
     EDITTEXT        tCursorMinSize,260,74,40,12,ES_AUTOHSCROLL
     CONTROL         "Ctrl+BackSpace - delete word leftward to the text cursor",cbCTSDeleteLeftWord,
-                    "Button",BS_AUTO3STATE | WS_TABSTOP,13,353,330,8
+                    "Button",BS_AUTO3STATE | WS_TABSTOP,13,362,330,8
     CONTROL         "Start selection with Shift+Arrow (Text = Left/Right/Home/End, Block = Up/Down)",cbCTSShiftArrowStartSel,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,256,330,8
     CONTROL         "Inactive console Text Cursor",cbInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,94,120,8
@@ -1475,16 +1479,20 @@ BEGIN
     LTEXT           "(0-100) %",stInactiveCursorFixedSize,142,139,38,8
     RTEXT           "Min size (pix):",stInactiveCursorMinSize,185,139,70,8
     EDITTEXT        tInactiveCursorMinSize,260,137,40,12,ES_AUTOHSCROLL
-    GROUPBOX        "Paste mode #1 (Shift+Ins)",gbPasteM1,7,276,167,45,WS_GROUP
+    GROUPBOX        "Paste mode #1 (Shift+Ins)",gbPasteM1,7,276,167,55,WS_GROUP
     CONTROL         "Multi lines",rPasteM1MultiLine,"Button",BS_AUTORADIOBUTTON | WS_GROUP,13,289,78,8
     CONTROL         "First line",rPasteM1FirstLine,"Button",BS_AUTORADIOBUTTON,13,304,78,8
     CONTROL         "Single line",rPasteM1SingleLine,"Button",BS_AUTORADIOBUTTON,93,289,78,8
     CONTROL         "Do nothing",rPasteM1Nothing,"Button",BS_AUTORADIOBUTTON,93,304,78,8
-    GROUPBOX        "Paste mode #2 (Ctrl+V)",gbPasteM2,180,276,166,45,WS_GROUP
+    GROUPBOX        "Paste mode #2 (Ctrl+V)",gbPasteM2,180,276,166,55,WS_GROUP
     CONTROL         "Multi lines",rPasteM2MultiLine,"Button",BS_AUTORADIOBUTTON | WS_GROUP,186,289,78,8
     CONTROL         "First line",rPasteM2FirstLine,"Button",BS_AUTORADIOBUTTON,186,304,78,8
     CONTROL         "Single line",rPasteM2SingleLine,"Button",BS_AUTORADIOBUTTON,264,289,78,8
     CONTROL         "Do nothing",rPasteM2Nothing,"Button",BS_AUTORADIOBUTTON,264,304,78,8
+    CONTROL         "Allow Windows to POSIX path conversion",cbPasteM1Posix,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,316,156,10
+    CONTROL         "Allow Windows to POSIX path conversion",cbPasteM2Posix,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,186,316,155,10
 END
 
 IDD_ABOUT DIALOGEX 0, 0, 425, 205
@@ -1658,6 +1666,30 @@ BEGIN
 END
 
 
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_SPG_PASTE, DIALOG
+    BEGIN
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_SPG_PASTE AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 #endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
