@@ -20,6 +20,18 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.8.7
+* Switch `-fork` was not working (e.g. `ConEmuC -fork -c powershell`).
+* gh-1220: Fix AltGr+Key sent with XTerm keyboard emulation (e.g. tilde and square brackets on german keyboard).
+* gh-740: Flexible config allowing or disallowing POSIX paths conversion.
+  * If mount prefix is disabled with `-new_console:p:-` switch than autoconversion is disabled.
+  * GuiMacro `Paste` doesn't do autoconversion with exception of mode `Paste(8)` which does.
+  * Checkboxes ‘Allow Windows to POSIX path conversion’ on ‘Paste’ and ‘App distinct’ setting pages.
+* Add `-settings` switch to ConEmu.exe.
+* Escape special symbols in POSIX path autoconversion on paste (e.g. `/c/Program\ Files \(x86\)/Adobe/`).
+* Add wiki link to each settings page.
+
+
 2017.8.5
 * gh-1211: Pressing `Enter` in nano editor didn't insert new line.
 * Fix missed icon for `{Bash::bash}` task.
