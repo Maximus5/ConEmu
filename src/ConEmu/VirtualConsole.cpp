@@ -361,6 +361,7 @@ bool CVirtualConsole::Constructor(RConStartArgs *args)
 	mp_Bg = new CBackground();
 	#ifdef APPDISTINCTBACKGROUND
 	mp_BgInfo = args->pszWallpaper ? CBackgroundInfo::CreateBackgroundObject(args->pszWallpaper, false) : NULL;
+	mp_BgInfo->MonitorBackgroundFile(this, mp_Bg);
 	#endif
 
 	mp_Colors = gpSet->GetColors(-1);

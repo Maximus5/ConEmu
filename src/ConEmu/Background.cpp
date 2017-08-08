@@ -1209,6 +1209,32 @@ bool CBackgroundInfo::PollBackgroundFile()
 	return lbChanged;
 }
 
+bool CBackgroundInfo::PollBackgroundFileOnly()
+{
+	bool lbChanged = false;
+
+	if (gpSet->isShowBgImage && ms_BgImage[0] && wcspbrk(ms_BgImage, L"%\\.")) // только для файлов!
+	{
+		WIN32_FIND_DATA fnd = { 0 };
+		HANDLE hFind = FindFirstFile(ms_BgImage, &fnd); // TODO: CPG gpSet->sBgImage
+
+		if (hFind != INVALID_HANDLE_VALUE)
+		{
+			if (fnd.ftLastWriteTime.dwHighDateTime != ftBgModified.dwHighDateTime
+				|| fnd.ftLastWriteTime.dwLowDateTime != ftBgModified.dwLowDateTime)
+			{
+				//NeedBackgroundUpdate(); //--поставит LoadBackgroundFile, если у него получится файл открыть
+				lbChanged = true;
+				nBgModifiedTick = 0;
+			}
+
+			FindClose(hFind);
+		}
+	}
+
+	return lbChanged;
+}
+
 bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 {
 	// Пустой путь - значит БЕЗ обоев
@@ -1270,5 +1296,108 @@ bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 	}
 
 	return lRes;
+}
+
+struct MonitorBackgroundFileArgs
+{
+	CVirtualConsole* pVCon;
+	CBackground* pBackground;
+	CBackgroundInfo* pBackgroundInfo;
+};
+
+bool CanLoadImageFile(const wchar_t* imageFile)
+{
+	wchar_t* exPath = ExpandEnvStr(imageFile);
+
+	if (!exPath || !*exPath)
+	{
+		SafeFree(exPath);
+		return false;
+	}
+
+	BY_HANDLE_FILE_INFORMATION inf = { 0 };
+	BITMAPFILEHEADER* pBkImgData = LoadImageEx(exPath, inf);
+
+	SafeFree(exPath);
+
+	if (pBkImgData)
+	{
+		SafeFree(pBkImgData);
+		return true;
+	}
+
+	return false;
+}
+
+void MonitorBackgroundImageFileWorker(CVirtualConsole* pVCon, CBackground* pBackground, CBackgroundInfo* pBackgroundInfo)
+{
+	if (!pVCon || !pBackground || !pBackgroundInfo || !pBackgroundInfo->ImageFile())
+		return;
+
+	wchar_t* folder = _wcsdup(pBackgroundInfo->ImageFile());
+	wchar_t* pszFound = wcsrchr(folder, '\\');
+	if (pszFound)
+		*pszFound = L'\0';
+
+	HANDLE hChange = FindFirstChangeNotification(folder, false, FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE);
+	while (hChange != INVALID_HANDLE_VALUE)
+	{
+		WaitForSingleObject(hChange, -1);
+		if (!FindNextChangeNotification(hChange))
+		{
+			FindCloseChangeNotification(hChange);
+			hChange = INVALID_HANDLE_VALUE;
+			break;
+		}
+
+		// Image file may still be in use Wait for image file to be able to load
+		for (int idx = 0; idx < 8 && !CanLoadImageFile(pBackgroundInfo->ImageFile()); idx++)
+		{
+			Sleep(250);
+		}
+
+		if (pBackgroundInfo->PollBackgroundFileOnly())
+		{
+			gpConEmu->InvalidateAll();
+			pBackground->NeedBackgroundUpdate();
+		}
+	}
+
+	free(folder);
+}
+
+DWORD MonitorBackgroundImageFile(MonitorBackgroundFileArgs* pArgs)
+{
+	if (pArgs)
+	{
+		CVirtualConsole* pVCon = pArgs->pVCon;
+		CBackground* pBackground = pArgs->pBackground;
+		CBackgroundInfo* pBackgroundInfo = pArgs->pBackgroundInfo;
+
+		delete pArgs;
+		pArgs = nullptr;
+
+		MonitorBackgroundImageFileWorker(pVCon, pBackground, pBackgroundInfo);
+	}
+	return 0;
+}
+
+void CBackgroundInfo::MonitorBackgroundFile(CVirtualConsole* pVCon, CBackground* pBackground)
+{
+	MonitorBackgroundFileArgs* pArgs = new MonitorBackgroundFileArgs();
+	pArgs->pBackground = pBackground;
+	pArgs->pVCon = pVCon;
+	pArgs->pBackgroundInfo = this;
+
+	HANDLE hThread = apiCreateThread((LPTHREAD_START_ROUTINE)MonitorBackgroundImageFile, pArgs, nullptr, "MonitorBackgroundImageFile");
+	if (!hThread)
+	{
+		delete pArgs;
+
+		wchar_t szItem[1024];
+		DWORD dwErr = GetLastError();
+		_wsprintf(szItem, SKIPLEN(countof(szItem)) L"ConEmu MonitorBackgroundImageFile, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+		DisplayLastError(L"Can't start MonitorBackgroundImageFile thread", dwErr, 0, szItem);
+	}
 }
 #endif

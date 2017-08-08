@@ -115,9 +115,13 @@ public:
 
 	//void NeedBackgroundUpdate();
 
+	const wchar_t* ImageFile() const { return ms_BgImage; }
+
 	bool PollBackgroundFile(/* const Settings::AppSettings* pApp */);
+	bool PollBackgroundFileOnly();
 	bool LoadBackgroundFile(bool abShowErrors);
 	//bool PrepareBackground(HDC* phBgDc, COORD* pbgBmpSize);
+	void MonitorBackgroundFile(CVirtualConsole* pVCon, CBackground* pBackground);
 };
 
 #endif
