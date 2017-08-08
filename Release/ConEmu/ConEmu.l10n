@@ -3967,6 +3967,14 @@
       "zh": "仅每组活动的窗格",
       "id": 2599 }
     ,
+    "cbPasteM1Posix": {
+      "en": "Allow Windows to POSIX path conversion",
+      "id": 3088 }
+    ,
+    "cbPasteM2Posix": {
+      "en": "Allow Windows to POSIX path conversion",
+      "id": 3089 }
+    ,
     "cbProcessAnsi": {
       "en": "ANSI and xterm sequences",
       "_zh": "ANSI X3.64 / xterm 256 色",
