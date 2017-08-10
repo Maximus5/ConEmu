@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../../../common/Defines.h"
 #include "../../../common/Memory.h"
 #include "../ThumbSDK.h"
-#include "MStream.h"
+#include "../MStream.h"
 
 #pragma comment(lib, "gdiplus.lib")
 

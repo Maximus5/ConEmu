@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#include "../PVD2Helper.h"
 //#include "../BltHelper.h"
-#include "MStream.h"
+#include "../MStream.h"
 
 HMODULE ghModule;
 
