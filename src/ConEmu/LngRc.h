@@ -72,7 +72,7 @@ protected:
 	bool LoadSection(MJsonValue* pJson, MArray<LngRcItem>& arr, int idDiff);
 	bool SetResource(MArray<LngRcItem>& arr, int idx, LPCWSTR asValue, bool bLocalized);
 	bool SetResource(MArray<LngRcItem>& arr, int idx, MJsonValue* pJson);
-	bool GetResource(MArray<LngRcItem>& arr, int idx, CEStr& lsText);
+	bool GetResource(MArray<LngRcItem>& arr, int idx, CEStr& lsText, LPCWSTR asDefault);
 
 	static bool loadString(UINT id, LPWSTR lpBuffer, size_t nBufferMax);
 

@@ -449,15 +449,12 @@ LPCWSTR CLngRc::getControl(LONG id, CEStr& lsText, LPCWSTR asDefault /*= NULL*/)
 		return asDefault;
 	}
 
-	if (gpLng->GetResource(gpLng->m_Controls, id, lsText))
-	{
-		return lsText.ms_Val;
-	}
+	gpLng->GetResource(gpLng->m_Controls, id, lsText, asDefault);
 
-	return asDefault;
+	return lsText.ms_Val;
 }
 
-bool CLngRc::GetResource(MArray<LngRcItem>& arr, int idx, CEStr& lsText)
+bool CLngRc::GetResource(MArray<LngRcItem>& arr, int idx, CEStr& lsText, LPCWSTR asDefault)
 {
 	bool bFound = false;
 
@@ -471,6 +468,9 @@ bool CLngRc::GetResource(MArray<LngRcItem>& arr, int idx, CEStr& lsText)
 			bFound = true;
 		}
 	}
+
+	if (!bFound)
+		lsText.Set(asDefault);
 
 	return bFound;
 }
