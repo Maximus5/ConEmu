@@ -36,6 +36,13 @@ workspace "premake-CE"
 
   filter{}
 
+
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
 project "common"
   kind "StaticLib"
   language "C++"
@@ -63,11 +70,15 @@ project "common"
     targetsuffix "32"
   filter "platforms:x64"
     targetsuffix "64"
-
   filter {}
-
 -- end of "common"
 
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
 project "ConEmu"
   kind "WindowedApp"
   language "C++"
@@ -83,10 +94,12 @@ project "ConEmu"
     "netapi32",
   }
 
-  pchheader "Header.h"
-  pchsource "Header.cpp"
+  -- we can't use pch because SHOWDEBUGSTR is defined or not per source file
+  -- pchheader "Header.h"
+  -- pchsource "src/ConEmu/Header.cpp"
 
   files {
+    "src/common/*.h",
     "src/ConEmu/*.cpp",
     "src/ConEmu/*.h",
     "src/ConEmu/*.rc",
@@ -94,7 +107,7 @@ project "ConEmu"
     "src/ConEmu/*.bmp",
     "src/ConEmu/*.cur",
     "src/ConEmu/*.ico",
-    "src/ConEmu/conemu.manifest",
+    "src/ConEmu/conemu.gcc.manifest",
   }
   removefiles {
     "**/ConEmuMinGW.rc",
@@ -107,10 +120,12 @@ project "ConEmu"
   }
 
   vpaths {
-    ["Resources"] = {"**/*.rc", "**/*.manifest", "**/*.bmp", "**/*.cur", "**/*.ico"},
-    ["Settings"]  = {"**/SetPg*.*"},
-    ["Headers"]   = {"**/*.h"},
-    ["Sources"]   = {"**/*.cpp"},
+    { ["Common"]    = {"src/common/*.h"} },
+    { ["Resources"] = {"**/*.rc", "**/*.rc2", "**/*.manifest", "**/*.bmp", "**/*.cur", "**/*.ico"} },
+    { ["Exports"]   = {"**.def"} },
+    { ["Settings"]  = {"**/SetPg*.*"} },
+    { ["Headers"]   = {"**/*.h"} },
+    { ["Sources"]   = {"**/*.cpp"} },
   }
 
   -- targetdir "../%{cfg.buildcfg}"
@@ -118,5 +133,432 @@ project "ConEmu"
   targetname "ConEmu"
   filter "platforms:x64"
     targetsuffix "64"
-
+  filter {}
 -- end of "ConEmu"
+
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "ConEmuC"
+  kind "ConsoleApp"
+  language "C++"
+
+  links {
+    "common",
+  }
+
+  files {
+    "src/ConEmuC/*.cpp",
+    "src/ConEmuC/*.h",
+    "src/ConEmuC/*.rc",
+    "src/ConEmuC/ConEmuC.exe.manifest",
+  }
+
+  vpaths {
+    { ["Headers"] = {"**.h"} },
+    { ["Sources"] = {"**.cpp"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Exports"]   = {"**.def"} },
+  }
+
+  targetname "ConEmuC"
+  filter "platforms:Win32"
+    targetsuffix ""
+  filter "platforms:x64"
+    targetsuffix "64"
+  filter {}
+-- end of "ConEmuC"
+
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "ConEmuCD"
+  kind "SharedLib"
+  language "C++"
+
+  links {
+    "common",
+  }
+
+  files {
+    "src/common/Common.h",
+    "src/ConEmuCD/*.cpp",
+    "src/ConEmuCD/*.h",
+    "src/ConEmuCD/*.rc",
+  }
+
+  filter "action:vs*"
+    files "src/ConEmuCD/export.def"
+  filter "action:gmake"
+    files "src/ConEmuCD/export.gcc.def"
+  filter {}
+
+  vpaths {
+    { ["Interface"] = {"**/Common.h", "**/SrvCommands.*"} },
+    { ["Headers"] = {"**.h"} },
+    { ["Sources"] = {"**.cpp"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Exports"]   = {"**.def"} },
+  }
+
+  targetname "ConEmuCD"
+  filter "platforms:Win32"
+    targetsuffix ""
+  filter "platforms:x64"
+    targetsuffix "64"
+  filter {}
+-- end of "ConEmuCD"
+
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "ConEmuHk"
+  kind "SharedLib"
+  language "C++"
+
+  links {
+    "common",
+  }
+
+  files {
+    "src/ConEmuHk/*.cpp",
+    "src/ConEmuHk/*.h",
+    "src/ConEmuHk/*.rc",
+  }
+
+  filter "action:vs*"
+    files "src/ConEmuHk/export.def"
+  filter "action:gmake"
+    files "src/ConEmuHk/export.gcc.def"
+  filter {}
+
+  vpaths {
+    { ["Hooks"] = {"**/hk*.*"} },
+    { ["Headers"] = {"**.h"} },
+    { ["Sources"] = {"**.cpp"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Exports"]   = {"**.def"} },
+  }
+
+  targetname "ConEmuHk"
+  filter "platforms:Win32"
+    targetsuffix ""
+  filter "platforms:x64"
+    targetsuffix "64"
+  filter {}
+-- end of "ConEmuHk"
+
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "Far.ConEmuPlugin"
+  kind "SharedLib"
+  language "C++"
+
+  links {
+    "common",
+  }
+
+  files {
+    "src/ConEmuPlugin/*.cpp",
+    "src/ConEmuPlugin/*.h",
+    "src/ConEmuPlugin/*.rc",
+  }
+
+  filter "action:vs*"
+    files "src/ConEmuPlugin/export.def"
+  filter "action:gmake"
+    files "src/ConEmuPlugin/export.gcc.def"
+  filter {}
+
+  vpaths {
+    { ["Headers"] = {"**.h"} },
+    { ["Sources"] = {"**.cpp"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Exports"]   = {"**.def"} },
+  }
+
+  targetname "ConEmu"
+  filter "platforms:Win32"
+    targetsuffix ""
+  filter "platforms:x64"
+    targetsuffix ".x64"
+  filter {}
+-- end of "Far.ConEmuPlugin"
+
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "Far.ConEmuBg"
+  kind "SharedLib"
+  language "C++"
+
+  links {
+    "common",
+  }
+
+  files {
+    "src/ConEmuBg/*.cpp",
+    "src/ConEmuBg/*.h",
+    "src/ConEmuBg/*.rc",
+  }
+
+  filter "action:vs*"
+    files "src/ConEmuBg/export.def"
+  filter "action:gmake"
+    files "src/ConEmuBg/export.gcc.def"
+  filter {}
+
+  vpaths {
+    { ["Headers"] = {"**.h"} },
+    { ["Sources"] = {"**.cpp"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Exports"]   = {"**.def"} },
+  }
+
+  targetname "ConEmuBg"
+  filter "platforms:Win32"
+    targetsuffix ""
+  filter "platforms:x64"
+    targetsuffix ".x64"
+  filter {}
+-- end of "Far.ConEmuBg"
+
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "Far.ConEmuLn"
+  kind "SharedLib"
+  language "C++"
+
+  links {
+    "common",
+  }
+
+  files {
+    "src/ConEmuLn/*.cpp",
+    "src/ConEmuLn/*.h",
+    "src/ConEmuLn/*.rc",
+  }
+
+  filter "action:vs*"
+    files "src/ConEmuLn/export.def"
+  filter "action:gmake"
+    files "src/ConEmuLn/export.gcc.def"
+  filter {}
+
+  vpaths {
+    { ["Headers"] = {"**.h"} },
+    { ["Sources"] = {"**.cpp"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Exports"]   = {"**.def"} },
+  }
+
+  targetname "ConEmuLn"
+  filter "platforms:Win32"
+    targetsuffix ""
+  filter "platforms:x64"
+    targetsuffix ".x64"
+  filter {}
+-- end of "Far.ConEmuLn"
+
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "Far.ConEmuTh"
+  kind "SharedLib"
+  language "C++"
+
+  links {
+    "common",
+  }
+
+  files {
+    "src/ConEmuTh/*.cpp",
+    "src/ConEmuTh/*.h",
+    "src/ConEmuTh/*.rc",
+  }
+
+  filter "action:vs*"
+    files "src/ConEmuTh/export.def"
+  filter "action:gmake"
+    files "src/ConEmuTh/export.gcc.def"
+  filter {}
+
+  vpaths {
+    { ["Headers"] = {"**.h"} },
+    { ["Sources"] = {"**.cpp"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Exports"]   = {"**.def"} },
+  }
+
+  targetname "ConEmuTh"
+  filter "platforms:Win32"
+    targetsuffix ""
+  filter "platforms:x64"
+    targetsuffix ".x64"
+  filter {}
+-- end of "Far.ConEmuTh"
+
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "Far.ConEmuTh.gdi+"
+  kind "SharedLib"
+  language "C++"
+
+  files {
+    "src/ConEmuTh/Modules/gdip/*.cpp",
+    "src/ConEmuTh/Modules/gdip/*.h",
+    "src/ConEmuTh/Modules/gdip/*.rc",
+    "src/ConEmuTh/Modules/gdip/gdip.def",
+    "src/ConEmuTh/Modules/ThumbSDK.h",
+    "src/ConEmuTh/Modules/MStream.h",
+  }
+
+  vpaths {
+    { ["Headers"] = {"**.h"} },
+    { ["Sources"] = {"**.cpp"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Exports"]   = {"**.def"} },
+  }
+
+  targetname "gdi+"
+  filter "platforms:Win32"
+    targetextension "t32"
+  filter "platforms:x64"
+    targetextension "t64"
+  filter {}
+-- end of "Far.ConEmuTh.gdi+"
+
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "Far.ConEmuTh.ico"
+  kind "SharedLib"
+  language "C++"
+
+  files {
+    "src/ConEmuTh/Modules/ico/*.cpp",
+    "src/ConEmuTh/Modules/ico/*.h",
+    "src/ConEmuTh/Modules/ico/*.rc",
+    "src/ConEmuTh/Modules/ico/ico.def",
+    "src/ConEmuTh/Modules/ThumbSDK.h",
+    "src/ConEmuTh/Modules/MStream.h",
+  }
+
+  vpaths {
+    { ["Headers"] = {"**.h"} },
+    { ["Sources"] = {"**.cpp"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Exports"]   = {"**.def"} },
+  }
+
+  targetname "ico"
+  filter "platforms:Win32"
+    targetextension "t32"
+  filter "platforms:x64"
+    targetextension "t64"
+  filter {}
+-- end of "Far.ConEmuTh.ico"
+
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "Far.ConEmuTh.pe"
+  kind "SharedLib"
+  language "C++"
+
+  files {
+    "src/ConEmuTh/Modules/pe/*.cpp",
+    "src/ConEmuTh/Modules/pe/*.h",
+    "src/ConEmuTh/Modules/pe/*.rc",
+    "src/ConEmuTh/Modules/pe/pe.def",
+    "src/ConEmuTh/Modules/ThumbSDK.h",
+  }
+
+  vpaths {
+    { ["Headers"] = {"**.h"} },
+    { ["Sources"] = {"**.cpp"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Exports"]   = {"**.def"} },
+  }
+
+  targetname "pe"
+  filter "platforms:Win32"
+    targetextension "t32"
+  filter "platforms:x64"
+    targetextension "t64"
+  filter {}
+-- end of "Far.ConEmuTh.pe"
+
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "Far.ExtendedConsole"
+  kind "SharedLib"
+  language "C++"
+
+  links {
+    "common",
+  }
+
+  files {
+    "src/ConEmuDW/*.cpp",
+    "src/ConEmuDW/*.h",
+    "src/ConEmuDW/*.rc",
+  }
+
+  filter "action:vs*"
+    files "src/ConEmuDW/export.def"
+  filter "action:gmake"
+    files "src/ConEmuDW/export.gcc.def"
+  filter {}
+
+  vpaths {
+    { ["Headers"] = {"**.h"} },
+    { ["Sources"] = {"**.cpp"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Exports"]   = {"**.def"} },
+  }
+
+  targetname "ExtendedConsole"
+  filter "platforms:Win32"
+    targetsuffix ""
+  filter "platforms:x64"
+    targetsuffix "64"
+  filter {}
+-- end of "Far.ExtendedConsole"
