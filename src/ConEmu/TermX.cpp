@@ -540,8 +540,13 @@ bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, 
 		MouseButtons = NewBtns;
 		LastMousePos = m.dwMousePosition;
 		lsSubst.Set(szSubst);
-		return true;
+	}
+	else
+	{
+		// If XTerm emulation for mouse was requested - don't try to send
+		// unprocessed mouse events in Windows way
+		lsSubst.Clear();
 	}
 
-	return false;
+	return true;
 }

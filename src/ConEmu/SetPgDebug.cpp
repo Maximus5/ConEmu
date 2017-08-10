@@ -132,7 +132,7 @@ void CSetPgDebug::SetLoggingType(GuiLoggingType aNewLogType)
 	{
 		LVCOLUMN col = {
 			LVCF_WIDTH|LVCF_TEXT|LVCF_FMT, LVCFMT_LEFT,
-			gpSetCls->EvalSize(60, esf_Horizontal|esf_CanUseDpi)};
+			gpSetCls->EvalSize(80, esf_Horizontal|esf_CanUseDpi)};
 		wchar_t szTitle[64]; col.pszText = szTitle;
 
 		ListView_SetExtendedListViewStyleEx(hList,LVS_EX_FULLROWSELECT,LVS_EX_FULLROWSELECT);
@@ -394,13 +394,41 @@ void CSetPgDebug::debugLogShellText(wchar_t* &pszParamEx, LPCWSTR asFile)
 	}
 }
 
+void CSetPgDebug::debugLogString(CSetPgDebug::LogRConString* pInfo)
+{
+	CSetPgDebug* pDbgPg = (CSetPgDebug*)gpSetCls->GetPageObj(thi_Debug);
+	if (!pDbgPg)
+		goto wrap;
+	if (pDbgPg->GetActivityLoggingType() != glt_Input)
+		goto wrap;
+
+	{
+		SYSTEMTIME st; GetLocalTime(&st);
+		wchar_t szTime[255]; _wsprintf(szTime, SKIPLEN(countof(szTime)) L"%02i:%02i:%02i.%03i", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+		HWND hList = GetDlgItem(pDbgPg->Dlg(), lbActivityLog);
+		LVITEM lvi = {LVIF_TEXT|LVIF_STATE};
+		lvi.state = lvi.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
+		lvi.pszText = szTime;
+
+		int nItem = ListView_InsertItem(hList, &lvi);
+
+		ListView_SetItemText(hList, nItem, lic_Dup, L"1");
+
+		ListView_SetItemText(hList, nItem, lic_Type, L"X.Key");
+		ListView_SetItemText(hList, nItem, lic_Event, pInfo->pszString);
+	}
+
+wrap:
+	free(pInfo);
+}
+
 void CSetPgDebug::debugLogInfo(CESERVER_REQ_PEEKREADINFO* pInfo)
 {
 	CSetPgDebug* pDbgPg = (CSetPgDebug*)gpSetCls->GetPageObj(thi_Debug);
 	if (!pDbgPg)
-		return;
+		goto wrap;
 	if (pDbgPg->GetActivityLoggingType() != glt_Input)
-		return;
+		goto wrap;
 
 	for (UINT nIdx = 0; nIdx < pInfo->nCount; nIdx++)
 	{
@@ -524,6 +552,7 @@ void CSetPgDebug::debugLogInfo(CESERVER_REQ_PEEKREADINFO* pInfo)
 			ListView_SetItemText(hList, nItem, lic_Type, szTime);
 		}
 	}
+wrap:
 	free(pInfo);
 }
 
@@ -571,6 +600,25 @@ void CSetPgDebug::debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTic
 	}
 
 	PostMessage(pDbgPg->Dlg(), DBGMSG_LOG_ID, DBGMSG_LOG_CMD_MAGIC, (LPARAM)pData);
+}
+
+void CSetPgDebug::debugLog(WPARAM wParam, LPARAM lParam)
+{
+	switch (wParam)
+	{
+	case DBGMSG_LOG_SHELL_MAGIC:
+		debugLogShell((DebugLogShellActivity*)lParam);
+		break;
+	case DBGMSG_LOG_INPUT_MAGIC:
+		debugLogInfo((CESERVER_REQ_PEEKREADINFO*)lParam);
+		break;
+	case DBGMSG_LOG_STR_MAGIC:
+		debugLogString((LogRConString*)lParam);
+		break;
+	case DBGMSG_LOG_CMD_MAGIC:
+		debugLogCommand((LogCommandsData*)lParam);
+		break;
+	}
 }
 
 void CSetPgDebug::debugLogCommand(LogCommandsData* apData)

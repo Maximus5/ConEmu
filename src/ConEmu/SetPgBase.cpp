@@ -490,21 +490,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			else if (messg == DBGMSG_LOG_ID && pgId == thi_Debug)
 			{
 				MSetter lockSelChange(&pObj->mb_SkipSelChange);
-				if (wParam == DBGMSG_LOG_SHELL_MAGIC)
-				{
-					CSetPgDebug::DebugLogShellActivity *pShl = (CSetPgDebug::DebugLogShellActivity*)lParam;
-					((CSetPgDebug*)pObj)->debugLogShell(pShl);
-				} // DBGMSG_LOG_SHELL_MAGIC
-				else if (wParam == DBGMSG_LOG_INPUT_MAGIC)
-				{
-					CESERVER_REQ_PEEKREADINFO* pInfo = (CESERVER_REQ_PEEKREADINFO*)lParam;
-					((CSetPgDebug*)pObj)->debugLogInfo(pInfo);
-				} // DBGMSG_LOG_INPUT_MAGIC
-				else if (wParam == DBGMSG_LOG_CMD_MAGIC)
-				{
-					CSetPgDebug::LogCommandsData* pCmd = (CSetPgDebug::LogCommandsData*)lParam;
-					((CSetPgDebug*)pObj)->debugLogCommand(pCmd);
-				} // DBGMSG_LOG_CMD_MAGIC
+				((CSetPgDebug*)pObj)->debugLog(wParam, lParam);
 			} // if (messg == DBGMSG_LOG_ID && hDlg == gpSetCls->hDebug)
 			else
 			{

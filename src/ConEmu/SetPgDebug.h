@@ -99,10 +99,17 @@ public:
 		wchar_t szExtra[128];
 	};
 
+	struct LogRConString
+	{
+		DWORD        nServerPID;
+		wchar_t*     pszString;
+	};
+
 	#define DBGMSG_LOG_ID (WM_APP+100)
 	#define DBGMSG_LOG_SHELL_MAGIC 0xD73A34
 	#define DBGMSG_LOG_INPUT_MAGIC 0xD73A35
 	#define DBGMSG_LOG_CMD_MAGIC   0xD73A36
+	#define DBGMSG_LOG_STR_MAGIC   0xD73A37
 
 	struct DebugLogShellActivity
 	{
@@ -125,12 +132,14 @@ public:
 
 	// Loggers
 	static void debugLogCommand(CESERVER_REQ* pInfo, BOOL abInput, DWORD anTick, DWORD anDur, LPCWSTR asPipe, CESERVER_REQ* pResult = NULL);
-	static void debugLogInfo(CESERVER_REQ_PEEKREADINFO* pInfo);
 	static void debugLogShell(DWORD nParentPID, CESERVER_REQ_ONCREATEPROCESS* pInfo);
 
-	// Called from CSetPgBase over DBGMSG_LOG_ID
+	// Called from DBGMSG_LOG_ID
+	void debugLog(WPARAM wParam, LPARAM lParam);
 	void debugLogCommand(LogCommandsData* apData);
 	void debugLogShell(DebugLogShellActivity *pShl);
+	void debugLogString(LogRConString* pInfo);
+	void debugLogInfo(CESERVER_REQ_PEEKREADINFO* pInfo);
 
 protected:
 	// Members

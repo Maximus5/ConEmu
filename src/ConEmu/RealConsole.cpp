@@ -1709,6 +1709,53 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 		OnKeysSending();
 	}
 
+	if (CSetPgDebug::GetActivityLoggingType() == glt_Input)
+	{
+		// "\" --> "\\", all chars [0..31] -> "\xXX"
+		CSetPgDebug::LogRConString* pCopy = (CSetPgDebug::LogRConString*)malloc(sizeof(CSetPgDebug::LogRConString) + (cchCount+1)*4*sizeof(wchar_t));
+		if (pCopy)
+		{
+			pCopy->nServerPID = GetServerPID();
+			pCopy->pszString = (wchar_t*)(pCopy+1);
+			wchar_t* psz = pCopy->pszString;
+			for (size_t i = 0; i < cchCount; ++i)
+			{
+				switch (pszChars[i])
+				{
+				case 0x1B:
+					*(psz++) = L'\\'; *(psz++) = L'e';
+					break;
+				case L'\r':
+					*(psz++) = L'\\'; *(psz++) = L'r';
+					break;
+				case L'\n':
+					*(psz++) = L'\\'; *(psz++) = L'n';
+					break;
+				case L'\t':
+					*(psz++) = L'\\'; *(psz++) = L't';
+					break;
+				case L'\\':
+					*(psz++) = L'\\'; *(psz++) = L'\\';
+					break;
+				default:
+					if ((unsigned)(pszChars[i]) <= 31)
+					{
+						wchar_t szHex[5];
+						_wsprintf(szHex, SKIPLEN(countof(szHex)) L"\\x%02X", (unsigned)(pszChars[i]));
+						wcscpy_s(psz, 5, szHex);
+						psz += 4;
+					}
+					else
+					{
+						*(psz++) = pszChars[i];
+					}
+				}
+			}
+			*(psz) = 0;
+			PostMessage(gpSetCls->GetPage(thi_Debug), DBGMSG_LOG_ID, DBGMSG_LOG_STR_MAGIC, (LPARAM)pCopy);
+		}
+	}
+
 	// Prepare character buffer to post data
 	wchar_t szLog[80];
 	wchar_t* pszEnd = pszChars + cchCount;
@@ -7091,7 +7138,7 @@ bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
 					mode = tmm_SCROLL;
 				}
 				bProcessed = mp_XTerm->GetSubstitute(rc.Event.MouseEvent, mode, szSubstKeys);
-				bSend = (bProcessed && szSubstKeys[0]);
+				bSend = (bProcessed && !szSubstKeys.IsEmpty());
 			}
 			break; // MOUSE_EVENT
 		}
