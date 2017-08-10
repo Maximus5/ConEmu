@@ -37,6 +37,7 @@ struct TermX
 	bool   AppCursorKeys;
 	BYTE   MouseButtons;
 	COORD  LastMousePos;
+	WORD   LastDeadCharVK;
 
 	bool GetSubstitute(const KEY_EVENT_RECORD& k, CEStr& lsSubst);
 	bool GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, CEStr& lsSubst);

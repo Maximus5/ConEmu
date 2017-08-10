@@ -48,6 +48,7 @@ void TermX::Reset()
 	AppCursorKeys = false;
 	MouseButtons = 0;
 	LastMousePos = MakeCoord(-1,-1);
+	LastDeadCharVK = 0;
 }
 
 bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, CEStr& lsSubst)
@@ -55,11 +56,22 @@ bool TermX::GetSubstitute(const KEY_EVENT_RECORD& k, CEStr& lsSubst)
 	_ASSERTE(lsSubst.IsEmpty());
 
 	// Bypass AltGr+keys to console intact
-	if (k.uChar.UnicodeChar
-		&& ((k.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_ALT_PRESSED)) == (LEFT_CTRL_PRESSED|RIGHT_ALT_PRESSED)))
+	if ((k.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_ALT_PRESSED)) == (LEFT_CTRL_PRESSED|RIGHT_ALT_PRESSED))
 	{
-		lsSubst.Clear();
-		return false;
+		if (k.uChar.UnicodeChar)
+		{
+			wchar_t szData[3] = {k.uChar.UnicodeChar};
+			if (LastDeadCharVK == k.wVirtualKeyCode)
+				szData[1] = k.uChar.UnicodeChar;
+			lsSubst.Set(szData);
+			LastDeadCharVK = 0;
+		}
+		else
+		{
+			LastDeadCharVK = k.wVirtualKeyCode;
+			lsSubst.Clear();
+		}
+		return true;
 	}
 
 	wchar_t szSubst[16] = L"";

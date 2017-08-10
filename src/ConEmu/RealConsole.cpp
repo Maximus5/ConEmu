@@ -7116,7 +7116,7 @@ bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
 			{
 				bProcessed = mp_XTerm->GetSubstitute(r.Event.KeyEvent, szSubstKeys);
 				// But only key presses are sent to terminal
-				bSend = (bProcessed && r.Event.KeyEvent.bKeyDown && szSubstKeys[0]);
+				bSend = (bProcessed && r.Event.KeyEvent.bKeyDown && !szSubstKeys.IsEmpty());
 				if (r.Event.KeyEvent.wRepeatCount)
 					nRepeatCount = r.Event.KeyEvent.wRepeatCount;
 			}
