@@ -233,7 +233,21 @@ project "ConEmuHk"
     "src/ConEmuHk/*.cpp",
     "src/ConEmuHk/*.h",
     "src/ConEmuHk/*.rc",
+    "src/ConEmuHk/hde.c",
+    "src/modules/minhook/src/**.c",
+    "src/modules/minhook/src/**.h",
+    "src/modules/minhook/include/*.h",
+    "src/modules/minhook/LICENSE.txt",
   }
+
+  removefiles {
+    "**/CETaskBar_.*",
+    "**/*-orig.*",
+  }
+
+  filter { "files:**/HDE/*.*" }
+    flags {"ExcludeFromBuild"}
+  flags {}
 
   filter "action:vs*"
     files "src/ConEmuHk/export.def"
@@ -242,6 +256,9 @@ project "ConEmuHk"
   filter {}
 
   vpaths {
+    { ["MinHook/HDE"] = {"**/minhook/src/HDE/*.*"} },
+    { ["MinHook/Trampoline"] = {"**/minhook/src/*.*"} },
+    { ["MinHook"] = {"**/minhook/**.*", "**/hde.c"} },
     { ["Hooks"] = {"**/hk*.*"} },
     { ["Headers"] = {"**.h"} },
     { ["Sources"] = {"**.cpp"} },
