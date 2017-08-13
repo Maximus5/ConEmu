@@ -1489,7 +1489,7 @@ CESERVER_REQ* CRealServer::cmdGetTaskCmd(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 		LPCWSTR pszTemp = pTask->pszCommands;
 		if (0 == NextLine(&pszTemp, lsData))
 		{
-			RConStartArgs args;
+			RConStartArgsEx args;
 			LPCWSTR pszRaw = gpConEmu->ParseScriptLineOptions(lsData.ms_Val, NULL, NULL);
 			if (pszRaw)
 			{

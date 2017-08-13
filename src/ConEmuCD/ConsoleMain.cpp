@@ -263,7 +263,7 @@ SHORT gnBufferWidth = 0; // Определяется в MyGetConsoleScreenBuffer
 wchar_t* gpszPrevConTitle = NULL;
 #endif
 
-MFileLog* gpLogSize = NULL;
+MFileLogEx* gpLogSize = NULL;
 
 
 BOOL gbInRecreateRoot = FALSE;
@@ -5273,7 +5273,7 @@ void CreateLogSizeFile(int nLevel, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleI
 		}
 	}
 
-	gpLogSize = new MFileLog(L"ConEmu-srv", pszDir, GetCurrentProcessId());
+	gpLogSize = new MFileLogEx(L"ConEmu-srv", pszDir, GetCurrentProcessId());
 
 	if (!gpLogSize)
 		return;

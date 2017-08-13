@@ -347,6 +347,7 @@
     <ClCompile Include="..\common\MStrSafe.cpp" />
     <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="..\common\WConsole.cpp" />
+    <ClCompile Include="..\common\WConsoleEx.cpp" />
     <ClCompile Include="..\common\WFiles.cpp" />
     <ClCompile Include="..\common\WModuleCheck.cpp" />
     <ClCompile Include="..\common\WObjects.cpp" />
@@ -428,6 +429,7 @@
     <ClInclude Include="..\common\pluginW2800.hpp" />
     <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="..\common\WConsole.h" />
+    <ClInclude Include="..\common\WConsoleEx.h" />
     <ClInclude Include="..\common\WFiles.h" />
     <ClInclude Include="..\common\WModuleCheck.h" />
     <ClInclude Include="..\common\WObjects.h" />

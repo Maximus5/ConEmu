@@ -3171,7 +3171,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		bool bDontDuplicate = false;
 		if (bNewConsoleVerb)
 		{
-			RConStartArgs args; args.pszSpecialCmd = lstrmerge(L"\"-", pszOper, L"\"");
+			RConStartArgsEx args; args.pszSpecialCmd = lstrmerge(L"\"-", pszOper, L"\"");
 			args.ProcessNewConArg();
 			// new_console:I
 			bForceDuplicate = (args.ForceInherit == crb_On) && (apRCon != NULL);
@@ -3248,7 +3248,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			if (bNewOper || (pszParm && wcsstr(pszParm, L"-new_console")))
 			{
 				size_t nAllLen;
-				RConStartArgs *pArgs = new RConStartArgs;
+				RConStartArgsEx *pArgs = new RConStartArgsEx;
 
 				// It's allowed now to append user arguments to named task contents
 				{
@@ -3688,7 +3688,7 @@ LPWSTR ConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 	if (pszName && *pszName)
 	{
-		RConStartArgs *pArgs = new RConStartArgs;
+		RConStartArgsEx *pArgs = new RConStartArgsEx;
 		pArgs->pszSpecialCmd = lstrdup(pszName);
 
 		LPWSTR pszDir = NULL;

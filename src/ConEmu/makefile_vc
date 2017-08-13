@@ -90,6 +90,7 @@ $(INTDIR)\Memory.obj \
 $(INTDIR)\Menu.obj \
 $(INTDIR)\MEvent.obj \
 $(INTDIR)\MFileLog.obj \
+$(INTDIR)\MFileLogEx.obj \
 $(INTDIR)\MGlobal.obj \
 $(INTDIR)\MGuiMacro.obj \
 $(INTDIR)\MJsonReader.obj \
@@ -118,6 +119,7 @@ $(INTDIR)\RConData.obj \
 $(INTDIR)\RConFiles.obj \
 $(INTDIR)\RConPalette.obj \
 $(INTDIR)\RConStartArgs.obj \
+$(INTDIR)\RConStartArgsEx.obj \
 $(INTDIR)\RealBuffer.obj \
 $(INTDIR)\RealConsole.obj \
 $(INTDIR)\RealServer.obj \
@@ -412,6 +414,8 @@ $(INTDIR)\FrameHolder.obj: FrameHolder.cpp FrameHolder.h
 
 $(INTDIR)\GestureEngine.obj: GestureEngine.cpp GestureEngine.h
 
+$(INTDIR)\MFileLogEx.obj: ../common/MFileLogEx.cpp ../common/MFileLogEx.h
+
 $(INTDIR)\MGuiMacro.obj: ../common/MGuiMacro.cpp ../common/MGuiMacro.h
 
 $(INTDIR)\GuiServer.obj: GuiServer.cpp GuiServer.h ConEmu.h RealConsole.h VirtualConsole.h
@@ -511,6 +515,8 @@ $(INTDIR)\RConFiles.obj: RConFiles.cpp RConFiles.h
 $(INTDIR)\RConPalette.obj: RConPalette.cpp RConPalette.h
 
 $(INTDIR)\RConStartArgs.obj: ../common/RConStartArgs.cpp ../common/RConStartArgs.h
+
+$(INTDIR)\RConStartArgsEx.obj: ../common/RConStartArgsEx.cpp ../common/RConStartArgsEx.h
 
 $(INTDIR)\RealBuffer.obj: RealBuffer.cpp RealBuffer.h RealConsole.h  ../common/Common.h
 

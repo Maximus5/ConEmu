@@ -896,6 +896,7 @@
     <ClCompile Include="..\common\Common.cpp" />
     <ClCompile Include="..\common\ConEmuCheck.cpp" />
     <ClCompile Include="..\common\execute.cpp" />
+    <ClCompile Include="..\common\MFileLogEx.cpp" />
     <ClCompile Include="..\common\MGuiMacro.cpp" />
     <ClCompile Include="..\common\HkFunc.cpp" />
     <ClCompile Include="..\common\MAssert.cpp" />
@@ -922,6 +923,7 @@
     <ClCompile Include="..\common\MToolTip.cpp" />
     <ClCompile Include="..\common\ProcessSetEnv.cpp" />
     <ClCompile Include="..\common\RConStartArgs.cpp" />
+    <ClCompile Include="..\common\RConStartArgsEx.cpp" />
     <ClCompile Include="..\common\RgnDetect.cpp" />
     <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="..\common\wcchars.cpp" />
@@ -1069,6 +1071,7 @@
     <ClInclude Include="..\common\DefTermBase.h" />
     <ClInclude Include="..\common\Dump.h" />
     <ClInclude Include="..\common\execute.h" />
+    <ClInclude Include="..\common\MFileLogEx.h" />
     <ClInclude Include="..\common\MGuiMacro.h" />
     <ClInclude Include="..\common\HkFunc.h" />
     <ClInclude Include="..\common\kl_parts.h" />
@@ -1102,6 +1105,7 @@
     <ClInclude Include="..\common\ProcessData.h" />
     <ClInclude Include="..\common\ProcessSetEnv.h" />
     <ClInclude Include="..\common\RConStartArgs.h" />
+    <ClInclude Include="..\common\RConStartArgsEx.h" />
     <ClInclude Include="..\common\RgnDetect.h" />
     <ClInclude Include="..\common\SetEnvVar.h" />
     <ClInclude Include="..\common\StartupEnv.h" />

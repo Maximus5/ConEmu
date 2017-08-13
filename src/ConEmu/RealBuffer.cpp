@@ -3170,7 +3170,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 									}
 									else
 									{
-										RConStartArgs args;
+										RConStartArgsEx args;
 										bool bRunOutside = (pszCmd[0] == L'#');
 										if (bRunOutside)
 										{
@@ -3191,7 +3191,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 												|| (mp_RCon->m_Args.pszUserName != NULL))
 											? crb_On : crb_Off;
 										args.BufHeight = crb_On;
-										//args.eConfirmation = RConStartArgs::eConfNever;
+										//args.eConfirmation = RConStartArgsEx::eConfNever;
 
 										if (bRunOutside)
 										{

@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-2017 Maximus5
+Copyright (c) 2009-2017 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,45 +26,18 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #pragma once
 
-struct ConEmuHotKey;
+#include "MFileLog.h"
 
-typedef DWORD CETASKFLAGS;
-const CETASKFLAGS
-	CETF_NEW_DEFAULT    = 0x0001,
-	CETF_CMD_DEFAULT    = 0x0002,
-	CETF_NO_TASKBAR     = 0x0004,
-	CETF_ADD_TOOLBAR    = 0x0008,
-	CETF_FLAGS_MASK     = 0xFFFF, // Supported flags mask
-	CETF_DEFAULT4NEW    = CETF_NO_TASKBAR, // Default flags for newly created task
-	CETF_MAKE_UNIQUE    = 0x40000000,
-	CETF_DONT_CHANGE    = 0x80000000,
-	CETF_NONE           = 0;
-
-struct CommandTasks
+class MFileLogEx : public MFileLog
 {
-	size_t   cchNameMax;
-	wchar_t* pszName;
-	size_t   cchGuiArgMax;
-	wchar_t* pszGuiArgs;
-	size_t   cchCmdMax;
-	wchar_t* pszCommands; // "\r\n" separated commands
+protected:
+	static void LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine);
+public:
+	MFileLogEx(LPCWSTR asName, LPCWSTR asDir = NULL, DWORD anPID = 0);
+	virtual ~MFileLogEx();
 
-	ConEmuHotKey HotKey;
-
-	CETASKFLAGS Flags;
-
-	void FreePtr();
-
-	void SetName(LPCWSTR asName, int anCmdIndex);
-
-	void SetGuiArg(LPCWSTR asGuiArg);
-
-	void SetCommands(LPCWSTR asCommands);
-
-	void ParseGuiArgs(RConStartArgsEx* pArgs) const;
-
-	bool LoadCmdTask(SettingsBase* reg, int iIndex);
-	bool SaveCmdTask(SettingsBase* reg, bool isStartup);
+	void LogStartEnv(CEStartupEnv* apStartEnv);
 };

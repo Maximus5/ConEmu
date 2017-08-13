@@ -282,7 +282,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 					// Issue 1275: When minimized into TSA (on all VCon are closed) we need to restore and run new tab
 					|| (pszCommand[0] && !CVConGroup::isVConExists(0));
 
-				RConStartArgs rTest;
+				RConStartArgsEx rTest;
 				if (pszCommand[0])
 				{
 					rTest.pszSpecialCmd = lstrdup(pszCommand);
@@ -294,7 +294,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				// Может быть пусто
 				if (bCreateTab && pszCommand[0])
 				{
-					RConStartArgs *pArgs = new RConStartArgs;
+					RConStartArgsEx *pArgs = new RConStartArgsEx;
 
 					// New tab must be started with same credentials that calling tab if others was not specified
 					{
@@ -304,7 +304,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 							if ((pIn->NewCmd.hFromConWnd || pIn->NewCmd.hFromDcWnd)
 								&& CVConGroup::GetVConByHWND(pIn->NewCmd.hFromConWnd, pIn->NewCmd.hFromDcWnd, &VCon))
 							{
-								const RConStartArgs& r = VCon->RCon()->GetArgs();
+								const RConStartArgsEx& r = VCon->RCon()->GetArgs();
 								if (r.HasInheritedArgs())
 								{
 									pArgs->AssignInheritedArgs(&r);

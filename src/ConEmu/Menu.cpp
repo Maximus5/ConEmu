@@ -610,7 +610,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			|| (itm.ItemType == CmdTaskPopupItem::eTaskAll)
 			|| (itm.ItemType == CmdTaskPopupItem::eTaskPopup))
 		{
-			RConStartArgs con;
+			RConStartArgsEx con;
 			if ((itm.ItemType == CmdTaskPopupItem::eTaskAll) || (itm.ItemType == CmdTaskPopupItem::eTaskPopup))
 			{
 				const CommandTasks* pGrp = (const CommandTasks*)itm.pGrp;
@@ -778,7 +778,7 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 				PostMessage(hMenuWnd, WM_CLOSE, 0, 0);
 			}
 
-			RConStartArgs con;
+			RConStartArgsEx con;
 
 			// May be directory was set in task properties?
 			pGrp->ParseGuiArgs(&con);

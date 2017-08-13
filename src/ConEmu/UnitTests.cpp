@@ -259,7 +259,7 @@ void DebugNeedCmdUnitTests()
 	for (INT_PTR i = 0; i < countof(Tests); i++)
 	{
 		szExe.Empty();
-		RConStartArgs rcs; rcs.pszSpecialCmd = lstrdup(Tests[i].pszCmd);
+		RConStartArgsEx rcs; rcs.pszSpecialCmd = lstrdup(Tests[i].pszCmd);
 		rcs.ProcessNewConArg();
 		b = IsNeedCmd(TRUE, rcs.pszSpecialCmd, szExe, &psArgs, &bNeedCut, &bRootIsCmd, &bAlwaysConfirm, &bAutoDisable);
 		_ASSERTE(b == Tests[i].bNeed);
@@ -268,7 +268,7 @@ void DebugNeedCmdUnitTests()
 
 void DebugCmdParserTests()
 {
-	RConStartArgs::RunArgTests();
+	RConStartArgsEx::RunArgTests();
 
 	struct strTests { wchar_t szTest[100], szCmp[100]; }
 	Tests[] = {

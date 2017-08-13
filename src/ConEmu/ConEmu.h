@@ -67,7 +67,7 @@ class CTabBarClass;
 class CToolTip;
 class CVConGroup;
 class CVConGuard;
-class MFileLog;
+class MFileLogEx;
 struct MSectionSimple;
 struct MSectionLockSimple;
 enum ConEmuWindowMode;
@@ -235,7 +235,7 @@ class CConEmuMain
 		CConEmuInside *mp_Inside;
 		CStatus *mp_Status;
 		CToolTip *mp_Tip;
-		MFileLog *mp_Log; MSectionSimple* mpcs_Log; // mcs_Log - для создания
+		MFileLogEx *mp_Log; MSectionSimple* mpcs_Log; // mcs_Log - для создания
 		CDefaultTerminal *mp_DefTrm;
 		CEFindDlg *mp_Find;
 		CRunQueue *mp_RunQueue;
@@ -484,12 +484,12 @@ class CConEmuMain
 		HWND mh_RightClickingWnd;
 		bool PatchMouseEvent(UINT messg, POINT& ptCurClient, POINT& ptCurScreen, WPARAM wParam, bool& isPrivate);
 	public:
-		wchar_t* LoadConsoleBatch(LPCWSTR asSource, RConStartArgs* pArgs = NULL);
+		wchar_t* LoadConsoleBatch(LPCWSTR asSource, RConStartArgsEx* pArgs = NULL);
 		static wchar_t IsConsoleBatchOrTask(LPCWSTR asSource);
 	private:
 		wchar_t* LoadConsoleBatch_File(LPCWSTR asSource);
 		wchar_t* LoadConsoleBatch_Drops(LPCWSTR asSource);
-		wchar_t* LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pArgs = NULL);
+		wchar_t* LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgsEx* pArgs = NULL);
 	public:
 		void RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon);
 		void RegisterMinRestore(bool abRegister);
@@ -596,10 +596,10 @@ class CConEmuMain
 		bool ConActivate(int nCon);
 		bool ConActivateByName(LPCWSTR asName);
 		bool ConActivateNext(bool abNext);
-		bool CreateWnd(RConStartArgs *args);
-		CVirtualConsole* CreateCon(RConStartArgs *args, bool abAllowScripts = false, bool abForceCurConsole = false);
-		CVirtualConsole* CreateConGroup(LPCWSTR apszScript, bool abForceAsAdmin = false, LPCWSTR asStartupDir = NULL, const RConStartArgs *apDefArgs = NULL);
-		LPCWSTR ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive, RConStartArgs* pArgs);
+		bool CreateWnd(RConStartArgsEx *args);
+		CVirtualConsole* CreateCon(RConStartArgsEx *args, bool abAllowScripts = false, bool abForceCurConsole = false);
+		CVirtualConsole* CreateConGroup(LPCWSTR apszScript, bool abForceAsAdmin = false, LPCWSTR asStartupDir = NULL, const RConStartArgsEx *apDefArgs = NULL);
+		LPCWSTR ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive, RConStartArgsEx* pArgs);
 		void CreateGhostVCon(CVirtualConsole* apVCon);
 		BOOL CreateMainWindow();
 		BOOL CreateWorkWindow();
@@ -686,7 +686,7 @@ class CConEmuMain
 		void OnMainCreateFinished();
 		bool CreateStartupConsoles();
 	public:
-		void PostCreateCon(RConStartArgs *pArgs);
+		void PostCreateCon(RConStartArgsEx *pArgs);
 		HWND PostCreateView(CConEmuChild* pChild);
 		void PostFontSetSize(int nRelative/*0/1/2*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,... | 100%*/);
 		void PostMacro(LPCWSTR asMacro);
@@ -695,7 +695,7 @@ class CConEmuMain
 		void PostChangeCurPalette(LPCWSTR pszPalette, bool bChangeDropDown, bool abPosted);
 		LRESULT SyncExecMacro(WPARAM wParam, LPARAM lParam);
 		bool RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, RConBoolArg bRunAs = crb_Undefined);
-		int RecreateDlg(RConStartArgs* apArg, bool abDontAutoSelCmd = false);
+		int RecreateDlg(RConStartArgsEx* apArg, bool abDontAutoSelCmd = false);
 		void RequestPostUpdateTabs();
 		int RunSingleInstance(HWND hConEmuWnd = NULL, LPCWSTR apszCmd = NULL);
 		void SetDragCursor(HCURSOR hCur);
@@ -774,7 +774,7 @@ class CConEmuMain
 		void OnTransparent();
 		void OnTransparent(bool abFromFocus/* = false*/, bool bSetFocus/* = false*/);
 		void OnTransparentSeparate(bool bSetFocus);
-		void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args);
+		void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgsEx *args);
 		void OnAllVConClosed();
 		void OnAllGhostClosed();
 		void OnGhostCreated(CVirtualConsole* apVCon, HWND ahGhost);

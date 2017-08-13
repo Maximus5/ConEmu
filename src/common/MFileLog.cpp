@@ -26,10 +26,6 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-//#ifdef _DEBUG
-//#define USE_LOCK_SECTION
-//#endif
-
 //#define USE_FORCE_FLASH_LOG
 #undef USE_FORCE_FLASH_LOG
 
@@ -37,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <windows.h>
 #include "defines.h"
 #include "MAssert.h"
+#include "MModule.h"
 #include "MFileLog.h"
 #include "MSectionSimple.h"
 #include "MStrDup.h"
@@ -44,10 +41,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #pragma warning(disable: 4091)
 #include <shlobj.h>
-
-#if !defined(CONEMU_MINIMAL)
-#include "StartupEnvEx.h"
-#endif
 
 #ifdef _DEBUG
 #define DebugString(x) //OutputDebugString(x)
@@ -209,25 +202,14 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 			HRESULT hFolderRc = E_NOTIMPL;
 
 			// To avoid static link in ConEmuHk
-			#if !defined(CONEMU_MINIMAL)
-				_SHGetFolderPath = SHGetFolderPathW;
-			#else
-				HMODULE hShell32 = LoadLibrary(L"Shell32.dll");
-				_SHGetFolderPath = hShell32 ? (SHGetFolderPathW_t)GetProcAddress(hShell32, "SHGetFolderPathW") : NULL;
-				_ASSERTEX(_SHGetFolderPath!=NULL);
-			#endif
+			MModule hShell32(L"Shell32.dll");
+			hShell32.GetProcAddress("SHGetFolderPathW", _SHGetFolderPath);
+			_ASSERTEX(_SHGetFolderPath!=NULL);
 
 			if (_SHGetFolderPath)
 			{
 				hFolderRc = _SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY|CSIDL_FLAG_CREATE, NULL, 0/*SHGFP_TYPE_CURRENT*/, szDesktop);
 			}
-
-			#if defined(CONEMU_MINIMAL)
-			if (hShell32)
-			{
-				FreeLibrary(hShell32);
-			}
-			#endif
 
 			// Check the result
 			if (hFolderRc == S_OK)
@@ -472,20 +454,6 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 	FlushFileBuffers(mh_LogFile);
 #endif
 }
-
-#if !defined(CONEMU_MINIMAL)
-void MFileLog::LogStartEnvInt(LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine)
-{
-	MFileLog* p = (MFileLog*)lParam;
-	p->LogString(asText, bFirst, NULL, bNewLine);
-}
-
-void MFileLog::LogStartEnv(CEStartupEnv* apStartEnv)
-{
-	LoadStartupEnvEx::ToString(apStartEnv, LogStartEnvInt, (LPARAM)this);
-	LogString(L"MFileLog::LogStartEnv finished", true);
-}
-#endif
 
 
 MFileLogHandle::MFileLogHandle()

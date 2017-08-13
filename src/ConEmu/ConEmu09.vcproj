@@ -397,6 +397,7 @@
       <File RelativePath="..\common\Common.cpp" />
       <File RelativePath="..\common\ConEmuCheck.cpp" />
       <File RelativePath="..\common\execute.cpp" />
+      <File RelativePath="..\common\MFileLogEx.cpp" />
       <File RelativePath="..\common\MGuiMacro.cpp" />
       <File RelativePath="..\common\HkFunc.cpp" />
       <File RelativePath="..\common\MAssert.cpp" />
@@ -423,6 +424,7 @@
       <File RelativePath="..\common\MToolTip.cpp" />
       <File RelativePath="..\common\ProcessSetEnv.cpp" />
       <File RelativePath="..\common\RConStartArgs.cpp" />
+      <File RelativePath="..\common\RConStartArgsEx.cpp" />
       <File RelativePath="..\common\RgnDetect.cpp" />
       <File RelativePath="..\common\SetEnvVar.cpp" />
       <File RelativePath="..\common\wcchars.cpp" />
@@ -570,6 +572,7 @@
       <File RelativePath="..\common\defines.h" />
       <File RelativePath="..\common\Dump.h" />
       <File RelativePath="..\common\execute.h" />
+      <File RelativePath="..\common\MFileLogEx.h" />
       <File RelativePath="..\common\MGuiMacro.h" />
       <File RelativePath="..\common\HkFunc.h" />
       <File RelativePath="..\common\kl_parts.h" />
@@ -602,6 +605,7 @@
       <File RelativePath="..\common\ProcessData.h" />
       <File RelativePath="..\common\ProcessSetEnv.h" />
       <File RelativePath="..\common\RConStartArgs.h" />
+      <File RelativePath="..\common\RConStartArgsEx.h" />
       <File RelativePath="..\common\RgnDetect.h" />
       <File RelativePath="..\common\SetEnvVar.h" />
       <File RelativePath="..\common\StartupEnv.h" />

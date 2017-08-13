@@ -70,20 +70,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CES_OPER_ERROR   0x040000
 //... and so on
 
-//// Undocumented console message
-//#define WM_SETCONSOLEINFO           (WM_USER+201)
-//// and others
-//#define SC_RESTORE_SECRET 0x0000f122
-//#define SC_MAXIMIZE_SECRET 0x0000f032
-//#define SC_PROPERTIES_SECRET 0x0000fff7
-//#define SC_MARK_SECRET 0x0000fff2
-//#define SC_COPY_ENTER_SECRET 0x0000fff0
-//#define SC_PASTE_SECRET 0x0000fff1
-//#define SC_SELECTALL_SECRET 0x0000fff5
-//#define SC_SCROLL_SECRET 0x0000fff3
-//#define SC_FIND_SECRET 0x0000fff4
-
-//#define MAX_TITLE_SIZE 0x400
 
 #define FAR_ALIVE_TIMEOUT gpSet->nFarHourglassDelay //1000
 
@@ -105,50 +91,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SERVERCLOSETIMEOUT 2000
 #define UPDATESERVERACTIVETIMEOUT 2500
 
-/*#pragma pack(push, 1)
-
-
-//
-//  Structure to send console via WM_SETCONSOLEINFO
-//
-typedef struct _CONSOLE_INFO
-{
-    ULONG       Length;
-    COORD       ScreenBufferSize;
-    COORD       WindowSize;
-    ULONG       WindowPosX;
-    ULONG       WindowPosY;
-
-    COORD       FontSize;
-    ULONG       FontFamily;
-    ULONG       FontWeight;
-    WCHAR       FaceName[32];
-
-    ULONG       CursorSize;
-    ULONG       FullScreen;
-    ULONG       QuickEdit;
-    ULONG       AutoPosition;
-    ULONG       InsertMode;
-
-    USHORT      ScreenColors;
-    USHORT      PopupColors;
-    ULONG       HistoryNoDup;
-    ULONG       HistoryBufferSize;
-    ULONG       NumberOfHistoryBuffers;
-
-    COLORREF    ColorTable[16];
-
-    ULONG       CodePage;
-    HWND        Hwnd;
-
-    WCHAR       ConsoleTitle[0x100];
-
-} CONSOLE_INFO;
-
-#pragma pack(pop)*/
-
-//#include "../common/ProcList.h"
-
 struct ConProcess
 {
 	DWORD ProcessID, ParentPID; //, InputTID;
@@ -165,50 +107,6 @@ struct ConProcess
 	wchar_t Name[64]; // чтобы полная инфа об ошибке влезала
 };
 
-//#include <pshpack1.h>
-//typedef struct tag_CharAttr
-//{
-//	TODO("OPTIMIZE: Заменить бы битовые поля на один DWORD, в котором хранить некий общий ИД стиля, заполняемый при формировании буфера");
-//	union {
-//		// Собственно цвета/шрифты
-//		struct {
-//			unsigned int crForeColor : 24; // чтобы в ui64 поместился и nFontIndex
-//			unsigned int nFontIndex : 8; // 0 - normal, 1 - bold, 2 - italic
-//			unsigned int crBackColor : 32; // Старший байт зарезервируем, вдруг для прозрачности понадобится
-//			unsigned int nForeIdx : 8;
-//			unsigned int nBackIdx : 8; // может понадобиться для ExtendColors
-//			unsigned int crOrigForeColor : 32;
-//			unsigned int crOrigBackColor : 32; // Реальные цвета в консоли, crForeColor и crBackColor могут быть изменены колорером
-//			// вспомогательные флаги
-//			unsigned int bDialog : 1;
-//			unsigned int bDialogVBorder : 1;
-//			unsigned int bDialogCorner : 1;
-//			unsigned int bSomeFilled : 1;
-//			unsigned int bTransparent : 1; // UserScreen
-//		};
-//		// А это для сравнения (поиск изменений)
-//		unsigned __int64 All;
-//		// для сравнения, когда фон не важен
-//		unsigned int ForeFont;
-//	};
-//	//
-//	//DWORD dwAttrubutes; // может когда понадобятся дополнительные флаги...
-//	//
-//    ///**
-//    // * Used exclusively by ConsoleView to append annotations to each character
-//    // */
-//    //AnnotationInfo annotationInfo;
-//} CharAttr;
-//#include <poppack.h>
-//
-//inline bool operator==(const CharAttr& s1, const CharAttr& s2)
-//{
-//    return s1.All == s2.All;
-//}
-//
-
-//#define MAX_SERVER_THREADS 3
-//#define MAX_THREAD_PACKETS 100
 
 class CVirtualConsole;
 class CRgnDetect;
@@ -359,12 +257,12 @@ class CRealConsole
 		bool    isGuiOverCon();
 		void    StoreGuiChildRect(LPRECT prcNewPos);
 		void    SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, int anBits, RECT arcPrev);
-		void    SetSplitProperties(RConStartArgs::SplitType aSplitType, UINT aSplitValue, UINT aSplitPane);
+		void    SetSplitProperties(RConStartArgsEx::SplitType aSplitType, UINT aSplitValue, UINT aSplitPane);
 		static void CorrectGuiChildRect(DWORD anStyle, DWORD anStyleEx, RECT& rcGui, LPCWSTR pszExeName);
 		static bool CanCutChildFrame(LPCWSTR pszExeName);
 
 		CRealConsole(CVirtualConsole* pVCon, CConEmuMain* pOwner);
-		bool Construct(CVirtualConsole* apVCon, RConStartArgs *args);
+		bool Construct(CVirtualConsole* apVCon, RConStartArgsEx *args);
 		~CRealConsole();
 
 		CVirtualConsole* VCon();
@@ -566,13 +464,13 @@ class CRealConsole
 		bool AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESERVER_REQ_STARTSTOP* rStartStop, CESERVER_REQ_SRVSTARTSTOPRET& pRet);
 		void QueryStartStopRet(CESERVER_REQ_SRVSTARTSTOPRET& pRet);
 		void SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet);
-		bool RecreateProcess(RConStartArgs *args);
+		bool RecreateProcess(RConStartArgsEx *args);
 		void GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, ConEmuTextRange& etr);
 		void ResetHighlightHyperlinks();
 		ExpandTextRangeType GetLastTextRangeType();
 		bool IsFarHyperlinkAllowed(bool abFarRequired);
 	private:
-		bool PreCreate(RConStartArgs *args);
+		bool PreCreate(RConStartArgsEx *args);
 
 		CDpiForDialog* mp_RenameDpiAware;
 		static INT_PTR CALLBACK renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
@@ -632,7 +530,7 @@ class CRealConsole
 		bool isVisible();
 		bool isNtvdm();
 		bool isFixAndCenter(COORD* lpcrConSize = NULL);
-		const RConStartArgs& GetArgs();
+		const RConStartArgsEx& GetArgs();
 		void SetPaletteName(LPCWSTR asPaletteName);
 		LPCWSTR GetCmd(bool bThisOnly = false);
 		LPCWSTR GetStartupDir();
@@ -752,7 +650,7 @@ class CRealConsole
 		// method
 		short CheckProgressInTitle();
 		bool StartProcess();
-		static bool CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args, LPWSTR psCurCmd, LPCWSTR& lpszWorkDir, STARTUPINFO& si, PROCESS_INFORMATION& pi, SHELLEXECUTEINFO*& pp_sei, DWORD& dwLastError, bool bExternal = false);
+		static bool CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args, LPWSTR psCurCmd, LPCWSTR& lpszWorkDir, STARTUPINFO& si, PROCESS_INFORMATION& pi, SHELLEXECUTEINFO*& pp_sei, DWORD& dwLastError, bool bExternal = false);
 		private:
 		bool StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR& lpszWorkDir, bool bNeedConHostSearch, HWND hSetForeground, DWORD& nCreateBegin, DWORD& nCreateEnd, DWORD& nCreateDuration, BYTE nTextColorIdx /*= 7*/, BYTE nBackColorIdx /*= 0*/, BYTE nPopTextColorIdx /*= 5*/, BYTE nPopBackColorIdx /*= 15*/, STARTUPINFO& si, PROCESS_INFORMATION& pi, DWORD& dwLastError);
 		void ResetVarsOnStart();
@@ -780,7 +678,7 @@ class CRealConsole
 		RConStartState m_StartState;
 		void UpdateStartState(RConStartState state, bool force = false);
 		bool mb_FullRetrieveNeeded; //, mb_Detached;
-		RConStartArgs m_Args;
+		RConStartArgsEx m_Args;
 		SYSTEMTIME m_StartTime;
 		CEStr ms_DefTitle;
 		CEStr ms_StartWorkDir;

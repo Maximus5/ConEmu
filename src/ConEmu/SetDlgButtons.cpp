@@ -1401,7 +1401,7 @@ void CSetDlgButtons::OnBtn_CmdGroupApp(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbCmdGroupApp);
 
 	// Добавить команду в группу
-	RConStartArgs args;
+	RConStartArgsEx args;
 	args.aRecreate = cra_EditTab;
 	int nDlgRc = gpConEmu->RecreateDlg(&args);
 

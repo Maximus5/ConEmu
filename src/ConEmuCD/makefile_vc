@@ -59,6 +59,7 @@ $(INTDIR)\MAssert.obj \
 $(INTDIR)\MConHandle.obj \
 $(INTDIR)\Memory.obj \
 $(INTDIR)\MFileLog.obj \
+$(INTDIR)\MFileLogEx.obj \
 $(INTDIR)\MModule.obj \
 $(INTDIR)\Monitors.obj \
 $(INTDIR)\MPerfCounter.obj \
@@ -80,6 +81,7 @@ $(INTDIR)\StartEnv.obj \
 $(INTDIR)\UnicodeTest.obj \
 $(INTDIR)\WCodePage.obj \
 $(INTDIR)\WConsole.obj \
+$(INTDIR)\WConsoleEx.obj \
 $(INTDIR)\WConsoleInfo.obj \
 $(INTDIR)\wcwidth.obj \
 $(INTDIR)\WFiles.obj \
@@ -320,6 +322,8 @@ $(INTDIR)\Memory.obj: ../common/Memory.cpp
 
 $(INTDIR)\MFileLog.obj: ../common/MFileLog.cpp ../common/MSection.h ../common/MSectionSimple.h ../common/StartupEnv.h ../common/StartupEnvDef.h ../common/MFileLog.h ../common/MConHandle.h
 
+$(INTDIR)\MFileLogEx.obj: ../common/MFileLogEx.cpp ../common/MFileLogEx.h
+
 $(INTDIR)\MModule.obj: ../common/MModule.cpp ../common/MModule.h
 
 $(INTDIR)\Monitors.obj: ../common/Monitors.cpp
@@ -361,6 +365,8 @@ $(INTDIR)\UnicodeTest.obj: UnicodeTest.cpp UnicodeTest.h
 $(INTDIR)\WCodePage.obj: ../common/WCodePage.cpp ../common/WCodePage.h
 
 $(INTDIR)\WConsole.obj: ../common/WConsole.cpp ../common/WConsole.h
+
+$(INTDIR)\WConsoleEx.obj: ../common/WConsoleEx.cpp ../common/WConsoleEx.h
 
 $(INTDIR)\WConsoleInfo.obj: ../common/WConsoleInfo.cpp ../common/WConsoleInfo.h
 

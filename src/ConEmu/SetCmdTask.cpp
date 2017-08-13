@@ -139,7 +139,7 @@ void CommandTasks::SetCommands(LPCWSTR asCommands)
 	_wcscpy_c(pszCommands, cchCmdMax, asCommands);
 }
 
-void CommandTasks::ParseGuiArgs(RConStartArgs* pArgs) const
+void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 {
 	if (!pArgs)
 	{

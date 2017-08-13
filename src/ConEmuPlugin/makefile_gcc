@@ -18,6 +18,7 @@ SRCS = \
 		../common/MStrSafe.cpp       \
 		../common/SetEnvVar.cpp      \
 		../common/WConsole.cpp     \
+		../common/WConsoleEx.cpp     \
 		../common/WFiles.cpp       \
 		../common/WModuleCheck.cpp   \
 		../common/WObjects.cpp     \

@@ -551,6 +551,12 @@
     <ClCompile Include="ConfirmDlg.cpp">
       <Filter>UIControls</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\MFileLogEx.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\RConStartArgsEx.cpp">
+      <Filter>ConsoleData</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="version.h" />
@@ -1148,6 +1154,12 @@
     </ClInclude>
     <ClInclude Include="VirtualConsole.h">
       <Filter>Main</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MFileLogEx.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\RConStartArgsEx.h">
+      <Filter>ConsoleData</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

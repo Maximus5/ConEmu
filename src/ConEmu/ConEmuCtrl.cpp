@@ -588,7 +588,7 @@ bool CConEmuCtrl::key_MultiCmd(const ConEmuChord& VkState, bool TestOnly, const 
 	if (TestOnly)
 		return true;
 
-	RConStartArgs args;
+	RConStartArgsEx args;
 
 	// User choosed default task?
 	int nGroup = 0;

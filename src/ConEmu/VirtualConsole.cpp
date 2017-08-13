@@ -344,7 +344,7 @@ bool CVirtualConsole::SetFlags(VConFlags Set, VConFlags Mask, int index)
 	return bChanged;
 }
 
-bool CVirtualConsole::Constructor(RConStartArgs *args)
+bool CVirtualConsole::Constructor(RConStartArgsEx *args)
 {
 	#ifdef __GNUC__
 	MModule gdi32(GetModuleHandle(L"gdi32.dll"));

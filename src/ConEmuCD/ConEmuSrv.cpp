@@ -45,7 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ProcessSetEnv.h"
 #include "../common/SetEnvVar.h"
 #include "../common/StartupEnvDef.h"
-#include "../common/WConsole.h"
+#include "../common/WConsoleEx.h"
 #include "../common/WConsoleInfo.h"
 #include "../common/WFiles.h"
 #include "../common/WThreads.h"

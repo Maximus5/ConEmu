@@ -182,7 +182,7 @@ extern HANDLE ghFarInExecuteEvent;
 #include "../common/ConEmuCheck.h"
 #include "../common/MConHandle.h"
 #include "../common/MFileMapping.h"
-#include "../common/MFileLog.h"
+#include "../common/MFileLogEx.h"
 #include "../common/MSection.h"
 #include "../common/WObjects.h"
 #include "../common/ConsoleAnnotation.h"
@@ -701,8 +701,8 @@ extern SHORT gnBufferHeight, gnBufferWidth;
 
 //extern HANDLE ghLogSize;
 //extern wchar_t* wpszLogSizeFile;
-class MFileLog;
-extern MFileLog* gpLogSize;
+class MFileLogEx;
+extern MFileLogEx* gpLogSize;
 
 
 extern BOOL gbInRecreateRoot;

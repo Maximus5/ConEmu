@@ -204,6 +204,15 @@
     <ClInclude Include="..\common\MToolHelp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\MFileLogEx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\WConsoleEx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\wcwidth.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmuCD.rc">
@@ -377,6 +386,15 @@
       <Filter>0 - Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\common\MRect.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\MFileLogEx.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\WConsoleEx.cpp">
+      <Filter>0 - Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\wcwidth.cpp">
       <Filter>0 - Source Files</Filter>
     </ClCompile>
   </ItemGroup>

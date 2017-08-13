@@ -53,7 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/execute.h"
 #include "../common/md5.h"
 #include "../common/MArray.h"
-#include "../common/MFileLog.h"
+#include "../common/MFileLogEx.h"
 #include "../common/Monitors.h"
 #include "../common/MProcess.h"
 #include "../common/MSetter.h"
@@ -1941,7 +1941,7 @@ bool CConEmuMain::CreateLog()
 	MSectionLockSimple CS;
 	CS.Lock(mpcs_Log);
 
-	mp_Log = new MFileLog(L"ConEmu-gui", ms_ConEmuExeDir, GetCurrentProcessId());
+	mp_Log = new MFileLogEx(L"ConEmu-gui", ms_ConEmuExeDir, GetCurrentProcessId());
 
 	HRESULT hr = mp_Log ? mp_Log->CreateLogFile(L"ConEmu-gui", GetCurrentProcessId(), gpSet->isLogging()) : E_UNEXPECTED;
 	if (hr != 0)
@@ -3175,7 +3175,7 @@ bool CConEmuMain::ConActivateByName(LPCWSTR asName)
 	return CVConGroup::ConActivateByName(asName);
 }
 
-bool CConEmuMain::CreateWnd(RConStartArgs *args)
+bool CConEmuMain::CreateWnd(RConStartArgsEx *args)
 {
 	if (!args || !args->pszSpecialCmd || !*args->pszSpecialCmd)
 	{
@@ -3221,7 +3221,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 		if (gpSet->isQuakeStyle)
 			_wcscat_c(pszCmdLine, cchMaxLen, L"-NoQuake ");
 
-		// Some arguments may be defined in the RConStartArgs
+		// Some arguments may be defined in the RConStartArgsEx
 		if (args->pszAddGuiArg)
 			_wcscat_c(pszCmdLine, cchMaxLen, args->pszAddGuiArg);
 
@@ -3274,7 +3274,7 @@ bool CConEmuMain::CreateWnd(RConStartArgs *args)
 }
 
 // Also, called from mn_MsgCreateCon
-CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, bool abAllowScripts /*= false*/, bool abForceCurConsole /*= false*/)
+CVirtualConsole* CConEmuMain::CreateCon(RConStartArgsEx *args, bool abAllowScripts /*= false*/, bool abForceCurConsole /*= false*/)
 {
 	_ASSERTE(args!=NULL);
 	if (!isMainThread())
@@ -3291,13 +3291,13 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgs *args, bool abAllowScripts
 
 // args должен быть выделен через "new"
 // по завершении - на него будет вызван "delete"
-void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
+void CConEmuMain::PostCreateCon(RConStartArgsEx *pArgs)
 {
 	_ASSERTE((pArgs->pszStartupDir == NULL) || (*pArgs->pszStartupDir != 0));
 
 	struct impl {
 		CConEmuMain* pObj;
-		RConStartArgs *pArgs;
+		RConStartArgsEx *pArgs;
 
 		static LRESULT CreateConMainThread(LPARAM lParam)
 		{
@@ -3315,7 +3315,7 @@ void CConEmuMain::PostCreateCon(RConStartArgs *pArgs)
 	CallMainThread(false, impl::CreateConMainThread, (LPARAM)Impl);
 }
 
-LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive, RConStartArgs* pArgs)
+LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive, RConStartArgsEx* pArgs)
 {
 	if (!apszLine)
 	{
@@ -3436,7 +3436,7 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 
 // Возвращает указатель на АКТИВНУЮ консоль (при создании группы)
 // apszScript содержит строки команд, разделенные \r\n
-CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsAdmin /*= false*/, LPCWSTR asStartupDir /*= NULL*/, const RConStartArgs *apDefArgs /*= NULL*/)
+CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsAdmin /*= false*/, LPCWSTR asStartupDir /*= NULL*/, const RConStartArgsEx *apDefArgs /*= NULL*/)
 {
 	CVirtualConsole* pVConResult = NULL;
 	// Поехали
@@ -3454,7 +3454,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 		lbSetActive = false;
 
 		// Prepare arguments
-		RConStartArgs args;
+		RConStartArgsEx args;
 
 		if (apDefArgs)
 		{
@@ -3533,7 +3533,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 			{
 				lbOneCreated = true;
 
-				const RConStartArgs& modArgs = pVCon->RCon()->GetArgs();
+				const RConStartArgsEx& modArgs = pVCon->RCon()->GetArgs();
 				if (modArgs.ForegroungTab == crb_On)
 					lbSetActive = true;
 
@@ -4633,14 +4633,14 @@ bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 	bool bExecRc = false;
 	FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
 	FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
-	RConStartArgs args;
+	RConStartArgsEx args;
 
 	if (aRecreate == cra_RecreateTab)
 	{
 		CVConGuard VCon;
 		if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
 		{
-			const RConStartArgs& CurArgs = VCon->RCon()->GetArgs();
+			const RConStartArgsEx& CurArgs = VCon->RCon()->GetArgs();
 			args.AssignFrom(&CurArgs);
 			//args.pszSpecialCmd = CurArgs.CreateCommandLine();
 		}
@@ -4768,7 +4768,7 @@ bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 	return bExecRc;
 }
 
-int CConEmuMain::RecreateDlg(RConStartArgs* apArg, bool abDontAutoSelCmd /*= false*/)
+int CConEmuMain::RecreateDlg(RConStartArgsEx* apArg, bool abDontAutoSelCmd /*= false*/)
 {
 	static LONG lnInCall = 0;
 	if (lnInCall > 0)
@@ -4902,7 +4902,7 @@ int CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd /
 				// Task? That may have "/dir" switch in task parameters
 				if (lpszCmd && (*lpszCmd == TaskBracketLeft) && !mb_ConEmuWorkDirArg)
 				{
-					RConStartArgs args;
+					RConStartArgsEx args;
 					wchar_t* pszDataW = LoadConsoleBatch(lpszCmd, &args);
 					SafeFree(pszDataW);
 					if (args.pszStartupDir && *args.pszStartupDir)
@@ -6755,7 +6755,7 @@ wchar_t CConEmuMain::IsConsoleBatchOrTask(LPCWSTR asSource)
 	return Supported;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgs* pArgs /*= NULL*/)
+wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgsEx* pArgs /*= NULL*/)
 {
 	if (pArgs && pArgs->pszTaskName)
 	{
@@ -6997,7 +6997,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 	return pszDataW;
 }
 
-wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pArgs /*= NULL*/)
+wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgsEx* pArgs /*= NULL*/)
 {
 	wchar_t* pszDataW = NULL;
 
@@ -7030,7 +7030,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 
 			if (pArgs && pGrp->pszGuiArgs)
 			{
-				RConStartArgs parsedArgs;
+				RConStartArgsEx parsedArgs;
 				pGrp->ParseGuiArgs(&parsedArgs);
 
 				if (lstrempty(pArgs->pszStartupDir) && lstrnempty(parsedArgs.pszStartupDir))
@@ -7063,7 +7063,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgs* pAr
 			{
 				LPCWSTR pszDefCmd = GetDefaultCmd();
 
-				RConStartArgs args;
+				RConStartArgsEx args;
 				args.aRecreate = (mn_StartupFinished >= ss_Started) ? cra_EditTab : cra_CreateTab;
 				if (pszDefCmd && *pszDefCmd)
 				{
@@ -7138,7 +7138,7 @@ bool CConEmuMain::CreateStartupConsoles()
 	}
 	else if ((*pszCmd == CmdFilePrefix || *pszCmd == TaskBracketLeft || lstrcmpi(pszCmd, AutoStartTaskName) == 0) && (m_StartDetached != crb_On))
 	{
-		RConStartArgs args;
+		RConStartArgsEx args;
 		// Was "/dir" specified in the app switches?
 		if (mb_ConEmuWorkDirArg)
 			args.pszStartupDir = lstrdup(ms_ConEmuWorkDir);
@@ -7164,7 +7164,7 @@ bool CConEmuMain::CreateStartupConsoles()
 
 	if (!lbCreated && (m_StartDetached != crb_On))
 	{
-		RConStartArgs args;
+		RConStartArgsEx args;
 		args.Detached = crb_Off;
 
 		if (args.Detached != crb_On)
@@ -11774,10 +11774,10 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 	}
 #endif
 
-	RConStartArgs::SplitType split = CVConGroup::isSplitterDragging();
+	RConStartArgsEx::SplitType split = CVConGroup::isSplitterDragging();
 	if (split)
 	{
-		SetCursor((split == RConStartArgs::eSplitVert) ? mh_SplitV : mh_SplitH);
+		SetCursor((split == RConStartArgsEx::eSplitVert) ? mh_SplitV : mh_SplitH);
 		return TRUE;
 	}
 
@@ -12821,7 +12821,7 @@ LRESULT CConEmuMain::OnUpdateScrollInfo(BOOL abPosted/* = FALSE*/)
 }
 
 // Чтобы при создании ПЕРВОЙ консоли на экране сразу можно было что-то нарисовать
-void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgs *args)
+void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgsEx *args)
 {
 	if (mn_StartupFinished == ss_PostCreate2Called)
 		mn_StartupFinished = ss_VConAreCreated;

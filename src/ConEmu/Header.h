@@ -126,9 +126,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define ACTIVATE_TAB_CRITICAL  1000
 #define POST_UPDATE_TIMEOUT   2000
 
-// Undocumented console message
-#define WM_SETCONSOLEINFO           (WM_USER+201)
-// and others
+// Undocumented messages
 #define SC_RESTORE_SECRET 0x0000f122
 #define SC_MAXIMIZE_SECRET 0x0000f032
 #define SC_PROPERTIES_SECRET 0x0000fff7
@@ -266,7 +264,7 @@ enum CESelectFileFlags
 wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder = NULL, HWND hParent = ghWnd, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote /*bool bAutoQuote = true, bool bCygwin = false*/);
 wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = NULL, LPCWSTR asDefPath = NULL, HWND hParent = ghWnd, LPCWSTR asFilter = NULL, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote /*bool abAutoQuote = true, bool bCygwin = false, bool bSaveNewFile = false*/);
 
-#include "../common/RConStartArgs.h"
+#include "../common/RConStartArgsEx.h"
 
 
 bool isKey(DWORD wp,DWORD vk);

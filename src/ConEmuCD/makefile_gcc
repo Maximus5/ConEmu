@@ -36,6 +36,7 @@ SRCS = \
 		../common/MConHandle.cpp     \
 		../common/Memory.cpp         \
 		../common/MFileLog.cpp       \
+		../common/MFileLogEx.cpp     \
 		../common/MModule.cpp        \
 		../common/Monitors.cpp       \
 		../common/MPerfCounter.cpp   \
@@ -52,6 +53,7 @@ SRCS = \
 		../common/SetEnvVar.cpp      \
 		../common/WCodePage.cpp      \
 		../common/WConsole.cpp       \
+		../common/WConsoleEx.cpp     \
 		../common/WConsoleInfo.cpp   \
 		../common/wcwidth.cpp        \
 		../common/WFiles.cpp         \

@@ -333,6 +333,7 @@
     <ClInclude Include="..\common\MConHandle.h" />
     <ClInclude Include="..\common\Memory.h" />
     <ClInclude Include="..\common\MFileLog.h" />
+    <ClInclude Include="..\common\MFileLogEx.h" />
     <ClInclude Include="..\common\MMap.h" />
     <ClInclude Include="..\common\MModule.h" />
     <ClInclude Include="..\common\Monitors.h" />
@@ -355,6 +356,7 @@
     <ClInclude Include="..\common\StartupEnvEx.h" />
     <ClInclude Include="..\common\WCodePage.h" />
     <ClInclude Include="..\common\WConsole.h" />
+    <ClInclude Include="..\common\WConsoleEx.h" />
     <ClInclude Include="..\common\WConsoleInfo.h" />
     <ClInclude Include="..\common\wcwidth.h" />
     <ClInclude Include="..\common\WFiles.h" />
@@ -399,6 +401,7 @@
     <ClCompile Include="..\common\MConHandle.cpp" />
     <ClCompile Include="..\common\Memory.cpp" />
     <ClCompile Include="..\common\MFileLog.cpp" />
+    <ClCompile Include="..\common\MFileLogEx.cpp" />
     <ClCompile Include="..\common\MModule.cpp" />
     <ClCompile Include="..\common\Monitors.cpp" />
     <ClCompile Include="..\common\MPerfCounter.cpp" />
@@ -415,6 +418,7 @@
     <ClCompile Include="..\common\SetEnvVar.cpp" />
     <ClCompile Include="..\common\WCodePage.cpp" />
     <ClCompile Include="..\common\WConsole.cpp" />
+    <ClCompile Include="..\common\WConsoleEx.cpp" />
     <ClCompile Include="..\common\WConsoleInfo.cpp" />
     <ClCompile Include="..\common\wcwidth.cpp" />
     <ClCompile Include="..\common\WFiles.cpp" />

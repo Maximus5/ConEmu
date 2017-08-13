@@ -187,7 +187,7 @@ CRealConsole::CRealConsole(CVirtualConsole* pVCon, CConEmuMain* pOwner)
 {
 }
 
-bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgs *args)
+bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 {
 	// Can't use Assert while object was not initialized yet
 	#ifdef _DEBUG
@@ -572,7 +572,7 @@ CVirtualConsole* CRealConsole::VCon()
 	return this ? mp_VCon : NULL;
 }
 
-bool CRealConsole::PreCreate(RConStartArgs *args)
+bool CRealConsole::PreCreate(RConStartArgsEx *args)
 {
 	_ASSERTE(args!=NULL);
 
@@ -4266,7 +4266,7 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 	#endif
 
 	// CreateOrRunAs needs to know how "original" process was started...
-	RConStartArgs Args;
+	RConStartArgsEx Args;
 	Args.AssignFrom(&m_Args);
 	SafeFree(Args.pszSpecialCmd);
 
@@ -4700,7 +4700,7 @@ bool CRealConsole::StartProcess()
 
 		if (nBrc == IDYES)
 		{
-			RConStartArgs args;
+			RConStartArgsEx args;
 			args.AssignFrom(&m_Args);
 			args.aRecreate = cra_CreateTab; // cra_EditTab; -- button "Start" is expected instead of ambiguous "Save"
 
@@ -5057,7 +5057,7 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 }
 
 // (Args may be != pRCon->m_Args)
-bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgs& Args,
+bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 				   LPWSTR psCurCmd, LPCWSTR& lpszWorkDir,
 				   STARTUPINFO& si, PROCESS_INFORMATION& pi, SHELLEXECUTEINFO*& pp_sei,
 				   DWORD& dwLastError, bool bExternal /*= false*/)
@@ -10049,7 +10049,7 @@ void CRealConsole::CloseLogFiles()
 
 
 // Послать в консоль запрос на закрытие
-bool CRealConsole::RecreateProcess(RConStartArgs *args)
+bool CRealConsole::RecreateProcess(RConStartArgsEx *args)
 {
 	if (!this)
 		return false;
@@ -11422,7 +11422,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 			|| ((MsgBox(szConfirm, MB_OKCANCEL|MB_ICONQUESTION) == IDOK)))
 		{
 			bool bRootCmdRedefined = false;
-			RConStartArgs args;
+			RConStartArgsEx args;
 			args.AssignFrom(&m_Args);
 
 			// If user want to run anything else, just inheriting current console state
@@ -11457,7 +11457,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 
 			// Reset "split" settings, the actual must be passed within asNewConsole switches
 			// and the will be processed during the following mp_ConEmu->CreateCon(&args) call
-			args.eSplit = RConStartArgs::eSplitNone;
+			args.eSplit = RConStartArgsEx::eSplitNone;
 
 			// Create (detached) tab ready for attach
 			CVirtualConsole *pVCon = mp_ConEmu->CreateCon(&args);
@@ -13907,7 +13907,7 @@ bool CRealConsole::isFixAndCenter(COORD* lpcrConSize /*= NULL*/)
 	return true;
 }
 
-const RConStartArgs& CRealConsole::GetArgs()
+const RConStartArgsEx& CRealConsole::GetArgs()
 {
 	return m_Args;
 }
@@ -14709,7 +14709,7 @@ void CRealConsole::StoreGuiChildRect(LPRECT prcNewPos)
 	m_ChildGui.rcLastGuiWnd = rcChild;
 }
 
-void CRealConsole::SetSplitProperties(RConStartArgs::SplitType aSplitType, UINT aSplitValue, UINT aSplitPane)
+void CRealConsole::SetSplitProperties(RConStartArgsEx::SplitType aSplitType, UINT aSplitValue, UINT aSplitPane)
 {
 	if (!this)
 	{

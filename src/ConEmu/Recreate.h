@@ -35,7 +35,7 @@ class CRecreateDlg
 protected:
 	HWND   mh_Dlg;
 	int    mn_DlgRc;
-	RConStartArgs* mp_Args;
+	RConStartArgsEx* mp_Args;
 	HWND   mh_Parent;
 	bool   mb_DontAutoSelCmd;
 	// Defaults
@@ -68,7 +68,7 @@ public:
 	CRecreateDlg();
 	~CRecreateDlg();
 
-	int RecreateDlg(RConStartArgs* apArgs, bool abDontAutoSelCmd = false);
+	int RecreateDlg(RConStartArgsEx* apArgs, bool abDontAutoSelCmd = false);
 	HWND GetHWND();
 	void Close();
 

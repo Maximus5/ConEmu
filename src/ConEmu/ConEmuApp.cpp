@@ -2189,7 +2189,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 			CEStr szBatch;
 			LPCWSTR pszTemp = pszArguments;
 			LPCWSTR pszIcon = NULL;
-			RConStartArgs args;
+			RConStartArgsEx args;
 
 			while (NextArg(&pszTemp, szTmp) == 0)
 			{

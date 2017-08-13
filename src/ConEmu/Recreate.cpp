@@ -76,7 +76,7 @@ HWND CRecreateDlg::GetHWND()
 }
 
 // Открыть диалог с подтверждением параметров создания/закрытия/пересоздания консоли
-int CRecreateDlg::RecreateDlg(RConStartArgs* apArgs, bool abDontAutoSelCmd /*= false*/)
+int CRecreateDlg::RecreateDlg(RConStartArgsEx* apArgs, bool abDontAutoSelCmd /*= false*/)
 {
 	if (!this)
 	{
@@ -179,7 +179,7 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	//SetWindowPos(ghOpWnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
 	//#endif
 
-	RConStartArgs* pArgs = mp_Args;
+	RConStartArgsEx* pArgs = mp_Args;
 	_ASSERTE(pArgs);
 
 	// Fill command and task drop down
@@ -191,11 +191,11 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	CEStr lsTempCmd, lsAppend;
 	if (!mpsz_DefCmd && pArgs)
 	{
-		RConStartArgs tempArgs;
+		RConStartArgsEx tempArgs;
 		tempArgs.AssignFrom(pArgs);
 		tempArgs.CleanSecure();
 		tempArgs.RunAsSystem = pArgs->RunAsSystem;
-		tempArgs.eSplit = RConStartArgs::eSplitNone;
+		tempArgs.eSplit = RConStartArgsEx::eSplitNone;
 		SafeFree(tempArgs.pszSpecialCmd);
 		SafeFree(tempArgs.pszStartupDir);
 		tempArgs.NewConsole = pArgs->NewConsole;
@@ -452,7 +452,7 @@ INT_PTR CRecreateDlg::OnCtlColorStatic(HWND hDlg, UINT messg, WPARAM wParam, LPA
 
 INT_PTR CRecreateDlg::OnFillCmdList(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	RConStartArgs* pArgs = mp_Args;
+	RConStartArgsEx* pArgs = mp_Args;
 	_ASSERTE(pArgs);
 
 	AddCommandList(pArgs->pszSpecialCmd);
@@ -653,15 +653,15 @@ INT_PTR CRecreateDlg::OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 	case rbRecreateSplit2Right:
 	case rbRecreateSplit2Bottom:
 	{
-		RConStartArgs* pArgs = mp_Args;
+		RConStartArgsEx* pArgs = mp_Args;
 		switch (LOWORD(wParam))
 		{
 		case rbRecreateSplitNone:
-			pArgs->eSplit = RConStartArgs::eSplitNone; break;
+			pArgs->eSplit = RConStartArgsEx::eSplitNone; break;
 		case rbRecreateSplit2Right:
-			pArgs->eSplit = RConStartArgs::eSplitHorz; break;
+			pArgs->eSplit = RConStartArgsEx::eSplitHorz; break;
 		case rbRecreateSplit2Bottom:
-			pArgs->eSplit = RConStartArgs::eSplitVert; break;
+			pArgs->eSplit = RConStartArgsEx::eSplitVert; break;
 		}
 		EnableWindow(GetDlgItem(hDlg, tRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
 		EnableWindow(GetDlgItem(hDlg, stRecreateSplit), (pArgs->eSplit != pArgs->eSplitNone));
@@ -672,7 +672,7 @@ INT_PTR CRecreateDlg::OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 
 	case IDC_START:
 	{
-		RConStartArgs* pArgs = mp_Args;
+		RConStartArgsEx* pArgs = mp_Args;
 		_ASSERTE(pArgs);
 		SafeFree(pArgs->pszUserName);
 		SafeFree(pArgs->pszDomain);
@@ -755,7 +755,7 @@ INT_PTR CRecreateDlg::OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 				pArgs->aRecreate = cra_CreateTab;
 		}
 		if (((pArgs->aRecreate == cra_CreateTab) || (pArgs->aRecreate == cra_EditTab))
-			&& (pArgs->eSplit != RConStartArgs::eSplitNone))
+			&& (pArgs->eSplit != RConStartArgsEx::eSplitNone))
 		{
 			BOOL bOk = FALSE;
 			int nPercent = GetDlgItemInt(hDlg, tRecreateSplit, &bOk, FALSE);

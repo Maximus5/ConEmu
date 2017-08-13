@@ -29,6 +29,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <Windows.h>
+
 #ifndef COMMON_LVB_LEADING_BYTE
 #define COMMON_LVB_LEADING_BYTE    0x0100 // Leading Byte of DBCS
 #define COMMON_LVB_TRAILING_BYTE   0x0200 // Trailing Byte of DBCS
@@ -74,8 +76,6 @@ extern MY_CONSOLE_FONT_INFOEX g_LastSetConsoleFont;
 #ifdef _DEBUG
 extern bool g_IgnoreSetLargeFont;
 #endif
-
-void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t *asFontName, WORD anTextColors = 0, WORD anPopupColors = 0);
 
 BOOL apiGetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
 BOOL apiSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);

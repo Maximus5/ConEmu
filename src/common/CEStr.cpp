@@ -312,7 +312,7 @@ bool CEStr::IsPossibleSwitch() const
 		return false;
 
 	// We do not care here about "-new_console:..." or "-cur_console:..."
-	// They are processed by RConStartArgs
+	// They are processed by RConStartArgsEx
 
 	// But ':' removed from checks, because otherwise ConEmu will not warn
 	// on invalid usage of "-new_console:a" for example

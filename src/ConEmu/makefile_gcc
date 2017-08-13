@@ -36,6 +36,7 @@ SRCS = \
 		../common/Memory.cpp         \
 		../common/MEvent.cpp         \
 		../common/MFileLog.cpp       \
+		../common/MFileLogEx.cpp     \
 		../common/MGlobal.cpp        \
 		../common/MGuiMacro.cpp      \
 		../common/MJsonReader.cpp    \
@@ -55,6 +56,7 @@ SRCS = \
 		../common/MToolTip.cpp       \
 		../common/ProcessSetEnv.cpp  \
 		../common/RConStartArgs.cpp  \
+		../common/RConStartArgsEx.cpp\
 		../common/RgnDetect.cpp      \
 		../common/SetEnvVar.cpp      \
 		../common/wcchars.cpp        \

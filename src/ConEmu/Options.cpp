@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #include <TlHelp32.h>
 #endif
-#include "../common/MFileLog.h"
+#include "../common/MFileLogEx.h"
 #include "../common/Monitors.h"
 #include "../common/StartupEnvDef.h"
 #include "../common/WRegistry.h"

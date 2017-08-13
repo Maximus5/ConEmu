@@ -52,6 +52,7 @@ $(INTDIR)\PluginBackground.obj \
 $(INTDIR)\PluginSrv.obj \
 $(INTDIR)\SetEnvVar.obj \
 $(INTDIR)\WConsole.obj \
+$(INTDIR)\WConsoleEx.obj \
 $(INTDIR)\WFiles.obj \
 $(INTDIR)\WModuleCheck.obj \
 $(INTDIR)\WObjects.obj \
@@ -280,6 +281,8 @@ $(INTDIR)\PluginSrv.obj: PluginSrv.cpp ../common/PipeServer.h
 $(INTDIR)\SetEnvVar.obj: ../common/SetEnvVar.cpp
 
 $(INTDIR)\WConsole.obj: ../common/WConsole.cpp
+
+$(INTDIR)\WConsoleEx.obj: ../common/WConsoleEx.cpp ../common/WConsoleEx.h
 
 $(INTDIR)\WFiles.obj: ../common/WFiles.cpp ../common/WFiles.h
 

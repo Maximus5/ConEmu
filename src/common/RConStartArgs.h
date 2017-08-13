@@ -48,6 +48,14 @@ enum RConBoolArg
 
 struct RConStartArgs
 {
+public:
+	RConStartArgs();
+	virtual ~RConStartArgs();
+
+	int  ProcessNewConArg(bool bForceCurConsole = false);
+	void AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax);
+
+public:
 	RConBoolArg     Detached; // internal use
 	RConBoolArg     NewConsole; // TRUE==-new_console, FALSE==-cur_console
 	RConBoolArg     BackgroundTab;      // -new_console:b
@@ -120,33 +128,4 @@ struct RConStartArgs
 	wchar_t* pszTaskName;
 	#endif
 
-	RConStartArgs();
-	~RConStartArgs();
-
-	int ProcessNewConArg(bool bForceCurConsole = false);
-
-	void AppendServerArgs(wchar_t* rsServerCmdLine, INT_PTR cchMax);
-
-
-	// Hide unused (in dll's) methods
-#ifndef CONEMU_MINIMAL
-	bool CheckUserToken(HWND hPwd);
-	HANDLE CheckUserToken();
-	wchar_t* CreateCommandLine(bool abForTasks = false) const;
-	bool AssignFrom(const struct RConStartArgs* args, bool abConcat = false);
-	bool AssignUserArgs(const struct RConStartArgs* args, bool abConcat = false);
-	bool HasInheritedArgs() const;
-	bool AssignInheritedArgs(const struct RConStartArgs* args, bool abConcat = false);
-#endif
-
-	#if 0
-	// Case insensitive search
-	HMODULE hShlwapi;
-	typedef LPWSTR (WINAPI* StrStrI_t)(LPWSTR pszFirst, LPCWSTR pszSrch);
-	StrStrI_t WcsStrI;
-	#endif
-
-#ifdef _DEBUG
-	static void RunArgTests();
-#endif
 };

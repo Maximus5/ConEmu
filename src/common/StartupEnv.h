@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "StartupEnvDef.h"
 #include "ConEmuCheck.h"
+#include "WObjects.h"
 
 class LoadStartupEnv
 {

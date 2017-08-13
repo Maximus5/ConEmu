@@ -410,6 +410,7 @@
       <File RelativePath="..\common\MConHandle.h" />
       <File RelativePath="..\common\Memory.h" />
       <File RelativePath="..\common\MFileLog.h" />
+      <File RelativePath="..\common\MFileLogEx.h" />
       <File RelativePath="..\common\MMap.h" />
       <File RelativePath="..\common\MModule.h" />
       <File RelativePath="..\common\Monitors.h" />
@@ -432,6 +433,7 @@
       <File RelativePath="..\common\StartupEnvEx.h" />
       <File RelativePath="..\common\WCodePage.h" />
       <File RelativePath="..\common\WConsole.h" />
+      <File RelativePath="..\common\WConsoleEx.h" />
       <File RelativePath="..\common\WConsoleInfo.h" />
       <File RelativePath="..\common\wcwidth.h" />
       <File RelativePath="..\common\WFiles.h" />
@@ -477,6 +479,7 @@
       <File RelativePath="..\common\MConHandle.cpp" />
       <File RelativePath="..\common\Memory.cpp" />
       <File RelativePath="..\common\MFileLog.cpp" />
+      <File RelativePath="..\common\MFileLogEx.cpp" />
       <File RelativePath="..\common\MModule.cpp" />
       <File RelativePath="..\common\Monitors.cpp" />
       <File RelativePath="..\common\MPerfCounter.cpp" />
@@ -493,6 +496,7 @@
       <File RelativePath="..\common\SetEnvVar.cpp" />
       <File RelativePath="..\common\WCodePage.cpp" />
       <File RelativePath="..\common\WConsole.cpp" />
+      <File RelativePath="..\common\WConsoleEx.cpp" />
       <File RelativePath="..\common\WConsoleInfo.cpp" />
       <File RelativePath="..\common\wcwidth.cpp" />
       <File RelativePath="..\common\WFiles.cpp" />
