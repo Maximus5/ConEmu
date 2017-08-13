@@ -36,6 +36,7 @@ _*.sln
 /Portable_Test
 /ConEmuPortableRarInfo.txt
 /Debug
+/build
 
 /Release/ConEmu/WhatsNew-ConEmu-Portable.txt
 /Release/ConEmu/Portable/

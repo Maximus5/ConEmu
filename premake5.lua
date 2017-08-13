@@ -24,7 +24,8 @@ workspace "premake-CE"
 
   filter "configurations:Release"
     defines { "NDEBUG", "HIDE_TODO" }
-    optimize "On"
+    optimize "Size"
+    symbols "On"
 
   filter "configurations:Debug"
     defines { "_DEBUG", "HIDE_TODO", "MSGLOGGER" }
@@ -37,29 +38,62 @@ workspace "premake-CE"
   filter{}
 
 
+local common_remove = {
+  "**/ExecPty.*",
+  "**/ProcList.*",
+  "**/Processes.*",
+  "**/base64.*",
+  "**/*.bak",
+  "**/!*.*",
+  "**/_*.*",
+}
 
+local common_kernel = {
+  "src/common/CEStr.*",
+  "src/common/CmdLine.*",
+  "src/common/Common.cpp",
+  "src/common/Common.h",
+  "src/common/ConEmuCheck.*",
+  "src/common/ConsoleMixAttr.*",
+  "src/common/ConsoleRead.*",
+  "src/common/Execute.*",
+  "src/common/HandleKeeper.*",
+  "src/common/HkFunc.*",
+  "src/common/InQueue.*",
+  "src/common/MAssert.*",
+  "src/common/MConHandle.*",
+  "src/common/Memory.*",
+  "src/common/MFileLog.*",
+  "src/common/MModule.*",
+  "src/common/MProcess.*",
+  "src/common/MProcessBits.*",
+  "src/common/MRect.*",
+  "src/common/MSection.*",
+  "src/common/MSectionSimple.*",
+  "src/common/MSecurity.*",
+  "src/common/MStrDup.*",
+  "src/common/MStrSafe.*",
+  "src/common/RConStartArgs.*",
+  "src/common/WCodePage.*",
+  "src/common/WConsole.*",
+  "src/common/WModuleCheck.*",
+  "src/common/WObjects.*",
+  "src/common/WThreads.*",
+
+}
 
 
 -- ############################### --
 -- ############################### --
 -- ############################### --
-project "common"
+project "common-kernel"
   kind "StaticLib"
   language "C++"
+  exceptionhandling "Off"
 
-  files {
-    "src/common/*.cpp",
-    "src/common/*.h",
-  }
+  files (common_kernel)
 
-  removefiles {
-    "**/ExecPty.*",
-    "**/ProcList.*",
-    "**/Processes.*",
-    "**/base64.*",
-    "**/!*.*",
-    "**/_*.*",
-  }
+  removefiles (common_remove)
 
   vpaths {
     ["Headers"] = {"**.h"},
@@ -71,7 +105,38 @@ project "common"
   filter "platforms:x64"
     targetsuffix "64"
   filter {}
--- end of "common"
+-- end of "common-kernel"
+
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "common-user"
+  kind "StaticLib"
+  language "C++"
+  exceptionhandling "Off"
+
+  files {
+    "src/common/*.cpp",
+    "src/common/*.h",
+  }
+
+  removefiles (common_remove)
+  removefiles (common_kernel)
+
+  vpaths {
+    ["Headers"] = {"**.h"},
+    ["Sources"] = {"**.cpp"},
+  }
+
+  filter "platforms:Win32"
+    targetsuffix "32"
+  filter "platforms:x64"
+    targetsuffix "64"
+  filter {}
+-- end of "common-user"
 
 
 
@@ -82,10 +147,12 @@ project "common"
 project "ConEmu"
   kind "WindowedApp"
   language "C++"
+  exceptionhandling "Off"
   flags { "WinMain" }
 
   links {
-    "common",
+    "common-kernel",
+    "common-user",
     "comctl32",
     "shlwapi",
     "version",
@@ -145,9 +212,10 @@ project "ConEmu"
 project "ConEmuC"
   kind "ConsoleApp"
   language "C++"
+  exceptionhandling "Off"
 
   links {
-    "common",
+    "common-kernel",
   }
 
   files {
@@ -181,15 +249,24 @@ project "ConEmuC"
 project "ConEmuCD"
   kind "SharedLib"
   language "C++"
+  exceptionhandling "Off"
+
+  configuration { "vs*" }
+    linkoptions { "/DYNAMICBASE:NO", "/FIXED:NO", "/BASE:0x6F780000" }
+  configuration { "gmake" }
+    linkoptions { "--image-base=0x6F780000" }
+  configuration {}
 
   links {
-    "common",
+    "common-kernel",
+    "common-user",
   }
 
   files {
     "src/common/Common.h",
     "src/ConEmuCD/*.cpp",
     "src/ConEmuCD/*.h",
+    "src/ConEmuHk/Injects.*",
     "src/ConEmuCD/*.rc",
   }
 
@@ -224,9 +301,22 @@ project "ConEmuCD"
 project "ConEmuHk"
   kind "SharedLib"
   language "C++"
+  exceptionhandling "Off"
+
+  configuration { "vs*" }
+    linkoptions { "/DYNAMICBASE:NO", "/FIXED:NO", "/BASE:0x7E110000" }
+  configuration { "gmake" }
+    linkoptions { "--image-base=0x7E110000" }
+  configuration {}
+
+  --filter { "configurations:Release" }
+  --  optimize "Full"
+  --filter {}
+
+  defines { "CONEMU_MINIMAL" }
 
   links {
-    "common",
+    "common-kernel",
   }
 
   files {
@@ -283,9 +373,12 @@ project "ConEmuHk"
 project "Far.ConEmuPlugin"
   kind "SharedLib"
   language "C++"
+  exceptionhandling "Off"
 
   links {
-    "common",
+    "common-kernel",
+    "common-user",
+    "version",
   }
 
   files {
@@ -324,9 +417,12 @@ project "Far.ConEmuPlugin"
 project "Far.ConEmuBg"
   kind "SharedLib"
   language "C++"
+  exceptionhandling "Off"
 
   links {
-    "common",
+    "common-kernel",
+    "common-user",
+    "version",
   }
 
   files {
@@ -365,9 +461,12 @@ project "Far.ConEmuBg"
 project "Far.ConEmuLn"
   kind "SharedLib"
   language "C++"
+  exceptionhandling "Off"
 
   links {
-    "common",
+    "common-kernel",
+    "common-user",
+    "version",
   }
 
   files {
@@ -406,9 +505,12 @@ project "Far.ConEmuLn"
 project "Far.ConEmuTh"
   kind "SharedLib"
   language "C++"
+  exceptionhandling "Off"
 
   links {
-    "common",
+    "common-kernel",
+    "common-user",
+    "version",
   }
 
   files {
@@ -447,6 +549,11 @@ project "Far.ConEmuTh"
 project "Far.ConEmuTh.gdi+"
   kind "SharedLib"
   language "C++"
+  exceptionhandling "Off"
+
+  links {
+    "common-kernel",
+  }
 
   files {
     "src/ConEmuTh/Modules/gdip/*.cpp",
@@ -466,9 +573,9 @@ project "Far.ConEmuTh.gdi+"
 
   targetname "gdi+"
   filter "platforms:Win32"
-    targetextension "t32"
+    targetextension ".t32"
   filter "platforms:x64"
-    targetextension "t64"
+    targetextension ".t64"
   filter {}
 -- end of "Far.ConEmuTh.gdi+"
 
@@ -481,6 +588,11 @@ project "Far.ConEmuTh.gdi+"
 project "Far.ConEmuTh.ico"
   kind "SharedLib"
   language "C++"
+  exceptionhandling "Off"
+
+  links {
+    "common-kernel",
+  }
 
   files {
     "src/ConEmuTh/Modules/ico/*.cpp",
@@ -489,6 +601,10 @@ project "Far.ConEmuTh.ico"
     "src/ConEmuTh/Modules/ico/ico.def",
     "src/ConEmuTh/Modules/ThumbSDK.h",
     "src/ConEmuTh/Modules/MStream.h",
+  }
+
+  removefiles {
+    "**/!*.*",
   }
 
   vpaths {
@@ -500,9 +616,9 @@ project "Far.ConEmuTh.ico"
 
   targetname "ico"
   filter "platforms:Win32"
-    targetextension "t32"
+    targetextension ".t32"
   filter "platforms:x64"
-    targetextension "t64"
+    targetextension ".t64"
   filter {}
 -- end of "Far.ConEmuTh.ico"
 
@@ -515,6 +631,11 @@ project "Far.ConEmuTh.ico"
 project "Far.ConEmuTh.pe"
   kind "SharedLib"
   language "C++"
+  exceptionhandling "Off"
+
+  links {
+    "common-kernel",
+  }
 
   files {
     "src/ConEmuTh/Modules/pe/*.cpp",
@@ -533,9 +654,9 @@ project "Far.ConEmuTh.pe"
 
   targetname "pe"
   filter "platforms:Win32"
-    targetextension "t32"
+    targetextension ".t32"
   filter "platforms:x64"
-    targetextension "t64"
+    targetextension ".t64"
   filter {}
 -- end of "Far.ConEmuTh.pe"
 
@@ -548,15 +669,20 @@ project "Far.ConEmuTh.pe"
 project "Far.ExtendedConsole"
   kind "SharedLib"
   language "C++"
+  exceptionhandling "Off"
 
   links {
-    "common",
+    "common-kernel",
   }
 
   files {
     "src/ConEmuDW/*.cpp",
     "src/ConEmuDW/*.h",
     "src/ConEmuDW/*.rc",
+  }
+
+  removefiles {
+    "**/!*.*",
   }
 
   filter "action:vs*"
