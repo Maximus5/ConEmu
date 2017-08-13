@@ -91,32 +91,32 @@ void TestShellProcessor()
 		case 0:
 			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
 			pszParam = L"mingw32-make \"1.cpp\" ";
-			sp->OnCreateProcessW(&pszFile, &pszParam, &nCreateFlags, &si);
+			sp->OnCreateProcessW(&pszFile, &pszParam, NULL, &nCreateFlags, &si);
 			break;
 		case 1:
 			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
 			pszParam = L"\"mingw32-make.exe\" \"1.cpp\" ";
-			sp->OnCreateProcessW(&pszFile, &pszParam, &nCreateFlags, &si);
+			sp->OnCreateProcessW(&pszFile, &pszParam, NULL, &nCreateFlags, &si);
 			break;
 		case 2:
 			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
 			pszParam = L"\"C:\\GCC\\mingw\\bin\\mingw32-make.exe\" \"1.cpp\" ";
-			sp->OnCreateProcessW(&pszFile, &pszParam, &nCreateFlags, &si);
+			sp->OnCreateProcessW(&pszFile, &pszParam, NULL, &nCreateFlags, &si);
 			break;
 		case 3:
 			pszFile = L"F:\\VCProject\\FarPlugin\\ConEmu\\Bugs\\DOS\\Prince\\PRINCE.EXE";
 			pszParam = L"prince megahit";
-			sp->OnCreateProcessW(&pszFile, &pszParam, &nCreateFlags, &si);
+			sp->OnCreateProcessW(&pszFile, &pszParam, NULL, &nCreateFlags, &si);
 			break;
 		case 4:
 			pszFile = NULL;
 			pszParam = L" \"F:\\VCProject\\FarPlugin\\ConEmu\\Bugs\\DOS\\Prince\\PRINCE.EXE\"";
-			sp->OnCreateProcessW(&pszFile, &pszParam, &nCreateFlags, &si);
+			sp->OnCreateProcessW(&pszFile, &pszParam, NULL, &nCreateFlags, &si);
 			break;
 		case 5:
 			pszFile = L"C:\\GCC\\mingw\\bin\\mingw32-make.exe";
 			pszParam = L" \"1.cpp\" ";
-			sp->OnShellExecuteW(NULL, &pszFile, &pszParam, &nCreateFlags, &nShowCmd);
+			sp->OnShellExecuteW(NULL, &pszFile, &pszParam, NULL, &nCreateFlags, &nShowCmd);
 			break;
 		default:
 			break;
@@ -618,8 +618,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 	wchar_t *szComspec = NULL;
 	wchar_t *pszOurExe = NULL; // ConEmuC64.exe или ConEmu64.exe (для DefTerm)
 	BOOL lbUseDosBox = FALSE;
-	size_t cchDosBoxExe = MAX_PATH+16, cchDosBoxCfg = MAX_PATH+16;
-	wchar_t *szDosBoxExe = NULL, *szDosBoxCfg = NULL;
+	CEStr szDosBoxExe, szDosBoxCfg;
 	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
 	int nCchSize = 0;
 	BOOL lbEndQuote = FALSE, lbCheckEndQuote = FALSE;
@@ -908,13 +907,6 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 
 
 	lbUseDosBox = FALSE;
-	szDosBoxExe = (wchar_t*)calloc(cchDosBoxExe, sizeof(*szDosBoxExe));
-	szDosBoxCfg = (wchar_t*)calloc(cchDosBoxCfg, sizeof(*szDosBoxCfg));
-	if (!szDosBoxExe || !szDosBoxCfg)
-	{
-		_ASSERTE(szDosBoxExe && szDosBoxCfg);
-		goto wrap;
-	}
 
 	if ((ImageBits != 16) && lbComSpec && asParam && *asParam)
 	{
@@ -967,10 +959,8 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 	{
 		if (m_SrvMapping.cbSize && (m_SrvMapping.Flags & CECF_DosBox))
 		{
-			wcscpy_c(szDosBoxExe, m_SrvMapping.ComSpec.ConEmuBaseDir);
-			wcscat_c(szDosBoxExe, L"\\DosBox\\DosBox.exe");
-			wcscpy_c(szDosBoxCfg, m_SrvMapping.ComSpec.ConEmuBaseDir);
-			wcscat_c(szDosBoxCfg, L"\\DosBox\\DosBox.conf");
+			szDosBoxExe.Attach(JoinPath(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\DosBox\\DosBox.exe"));
+			szDosBoxCfg.Attach(JoinPath(m_SrvMapping.ComSpec.ConEmuBaseDir, L"\\DosBox\\DosBox.conf"));
 
 			if (!FileExists(szDosBoxExe) || !FileExists(szDosBoxCfg))
 			{
@@ -1398,10 +1388,6 @@ wrap:
 		free(szComspec);
 	if (pszOurExe)
 		free(pszOurExe);
-	if (szDosBoxExe)
-		free(szDosBoxExe);
-	if (szDosBoxCfg)
-		free(szDosBoxCfg);
 	return TRUE;
 }
 
