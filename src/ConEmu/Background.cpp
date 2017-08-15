@@ -220,7 +220,7 @@ bool CBackground::FillBackground(
 					if (nHigh < 255)
 					{
 						// Затемнение фона
-						bf.SourceConstantAlpha = nHigh * bf.SourceConstantAlpha / 255;
+						bf.SourceConstantAlpha = LOBYTE(nHigh * bf.SourceConstantAlpha / 255);
 					}
 
 					//// "коэффициент" вернется в виде RGB (R==G==B)
@@ -827,16 +827,16 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 					if (ldVCon > ldImg)
 					{
 						if (gpSet->bgOperation == eFit)
-							lMaxBgWidth = lMaxBgHeight * ldImg;
+							lMaxBgWidth = (LONG)(lMaxBgHeight * ldImg);
 						else
-							lMaxBgHeight = lMaxBgWidth / ldImg;
+							lMaxBgHeight = (LONG)(lMaxBgWidth / ldImg);
 					}
 					else
 					{
 						if (gpSet->bgOperation == eFill)
-							lMaxBgWidth = lMaxBgHeight * ldImg;
+							lMaxBgWidth = (LONG)(lMaxBgHeight * ldImg);
 						else
-							lMaxBgHeight = lMaxBgWidth / ldImg;
+							lMaxBgHeight = (LONG)(lMaxBgWidth / ldImg);
 					}
 				}
 			}

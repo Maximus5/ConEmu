@@ -272,10 +272,11 @@ namespace ConEmuMsgLogger
 		case WM_MOVING:
 		case WM_SIZING:
 			e.msg = Event::Sizing;
-			e.x = ((LPRECT)msg.lParam)->left;
-			e.y = ((LPRECT)msg.lParam)->top;
-			e.w = ((LPRECT)msg.lParam)->right - e.x;
-			e.h = ((LPRECT)msg.lParam)->bottom - e.y;
+			// minimize memory use for lock-free logging
+			e.x = LOSHORT(((LPRECT)msg.lParam)->left);
+			e.y = LOSHORT(((LPRECT)msg.lParam)->top);
+			e.w = LOSHORT(((LPRECT)msg.lParam)->right - e.x);
+			e.h = LOSHORT(((LPRECT)msg.lParam)->bottom - e.y);
 			break;
 		}
 	} // void LogPos(const MSG& msg)
