@@ -37,6 +37,8 @@ workspace "premake-CE"
 
   filter{}
 
+  local ConEmuDir = "%{cfg.buildcfg}/"
+
 
 local common_remove = {
   "**/ExecPty.*",
@@ -100,6 +102,7 @@ project "common-kernel"
     ["Sources"] = {"**.cpp"},
   }
 
+  targetdir "%{cfg.objdir}"
   filter "platforms:Win32"
     targetsuffix "32"
   filter "platforms:x64"
@@ -116,7 +119,7 @@ project "common-kernel"
 project "common-user"
   kind "StaticLib"
   language "C++"
-  exceptionhandling "Off"
+  --exceptionhandling "Off"
 
   files {
     "src/common/*.cpp",
@@ -131,6 +134,7 @@ project "common-user"
     ["Sources"] = {"**.cpp"},
   }
 
+  targetdir "%{cfg.objdir}"
   filter "platforms:Win32"
     targetsuffix "32"
   filter "platforms:x64"
@@ -147,7 +151,7 @@ project "common-user"
 project "ConEmu"
   kind "WindowedApp"
   language "C++"
-  exceptionhandling "Off"
+  --exceptionhandling "Off"
   flags { "WinMain" }
 
   links {
@@ -195,8 +199,7 @@ project "ConEmu"
     { ["Sources"]   = {"**/*.cpp"} },
   }
 
-  -- targetdir "../%{cfg.buildcfg}"
-
+  targetdir (ConEmuDir)
   targetname "ConEmu"
   filter "platforms:x64"
     targetsuffix "64"
@@ -218,6 +221,11 @@ project "ConEmuC"
     "common-kernel",
   }
 
+  dependson {
+    "ConEmuCD",
+    "ConEmuHk",
+  }
+
   files {
     "src/ConEmuC/*.cpp",
     "src/ConEmuC/*.h",
@@ -232,6 +240,7 @@ project "ConEmuC"
     { ["Exports"]   = {"**.def"} },
   }
 
+  targetdir (ConEmuDir.."ConEmu/")
   targetname "ConEmuC"
   filter "platforms:Win32"
     targetsuffix ""
@@ -249,7 +258,7 @@ project "ConEmuC"
 project "ConEmuCD"
   kind "SharedLib"
   language "C++"
-  exceptionhandling "Off"
+  --exceptionhandling "Off"
 
   configuration { "vs*" }
     linkoptions { "/DYNAMICBASE:NO", "/FIXED:NO", "/BASE:0x6F780000" }
@@ -284,6 +293,7 @@ project "ConEmuCD"
     { ["Exports"]   = {"**.def"} },
   }
 
+  targetdir (ConEmuDir.."ConEmu/")
   targetname "ConEmuCD"
   filter "platforms:Win32"
     targetsuffix ""
@@ -356,6 +366,7 @@ project "ConEmuHk"
     { ["Exports"]   = {"**.def"} },
   }
 
+  targetdir (ConEmuDir.."ConEmu/")
   targetname "ConEmuHk"
   filter "platforms:Win32"
     targetsuffix ""
@@ -373,7 +384,7 @@ project "ConEmuHk"
 project "Far.ConEmuPlugin"
   kind "SharedLib"
   language "C++"
-  exceptionhandling "Off"
+  --exceptionhandling "Off"
 
   links {
     "common-kernel",
@@ -385,6 +396,7 @@ project "Far.ConEmuPlugin"
     "src/ConEmuPlugin/*.cpp",
     "src/ConEmuPlugin/*.h",
     "src/ConEmuPlugin/*.rc",
+    "src/ConEmuPlugin/Lang.templ",
   }
 
   filter "action:vs*"
@@ -396,10 +408,11 @@ project "Far.ConEmuPlugin"
   vpaths {
     { ["Headers"] = {"**.h"} },
     { ["Sources"] = {"**.cpp"} },
-    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest", "**.templ"} },
     { ["Exports"]   = {"**.def"} },
   }
 
+  targetdir (ConEmuDir.."plugins/ConEmu/")
   targetname "ConEmu"
   filter "platforms:Win32"
     targetsuffix ""
@@ -417,7 +430,7 @@ project "Far.ConEmuPlugin"
 project "Far.ConEmuBg"
   kind "SharedLib"
   language "C++"
-  exceptionhandling "Off"
+  --exceptionhandling "Off"
 
   links {
     "common-kernel",
@@ -429,6 +442,7 @@ project "Far.ConEmuBg"
     "src/ConEmuBg/*.cpp",
     "src/ConEmuBg/*.h",
     "src/ConEmuBg/*.rc",
+    "src/ConEmuBg/Lang.templ",
   }
 
   filter "action:vs*"
@@ -440,10 +454,11 @@ project "Far.ConEmuBg"
   vpaths {
     { ["Headers"] = {"**.h"} },
     { ["Sources"] = {"**.cpp"} },
-    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest", "**.templ"} },
     { ["Exports"]   = {"**.def"} },
   }
 
+  targetdir (ConEmuDir.."plugins/ConEmu/Background/")
   targetname "ConEmuBg"
   filter "platforms:Win32"
     targetsuffix ""
@@ -461,7 +476,7 @@ project "Far.ConEmuBg"
 project "Far.ConEmuLn"
   kind "SharedLib"
   language "C++"
-  exceptionhandling "Off"
+  --exceptionhandling "Off"
 
   links {
     "common-kernel",
@@ -473,6 +488,7 @@ project "Far.ConEmuLn"
     "src/ConEmuLn/*.cpp",
     "src/ConEmuLn/*.h",
     "src/ConEmuLn/*.rc",
+    "src/ConEmuLn/Lang.templ",
   }
 
   filter "action:vs*"
@@ -484,10 +500,11 @@ project "Far.ConEmuLn"
   vpaths {
     { ["Headers"] = {"**.h"} },
     { ["Sources"] = {"**.cpp"} },
-    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest", "**.templ"} },
     { ["Exports"]   = {"**.def"} },
   }
 
+  targetdir (ConEmuDir.."plugins/ConEmu/Lines/")
   targetname "ConEmuLn"
   filter "platforms:Win32"
     targetsuffix ""
@@ -505,7 +522,7 @@ project "Far.ConEmuLn"
 project "Far.ConEmuTh"
   kind "SharedLib"
   language "C++"
-  exceptionhandling "Off"
+  --exceptionhandling "Off"
 
   links {
     "common-kernel",
@@ -517,6 +534,7 @@ project "Far.ConEmuTh"
     "src/ConEmuTh/*.cpp",
     "src/ConEmuTh/*.h",
     "src/ConEmuTh/*.rc",
+    "src/ConEmuTh/Lang.templ",
   }
 
   filter "action:vs*"
@@ -528,10 +546,11 @@ project "Far.ConEmuTh"
   vpaths {
     { ["Headers"] = {"**.h"} },
     { ["Sources"] = {"**.cpp"} },
-    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
+    { ["Resources"] = {"**.rc", "**.rc2", "**.manifest", "**.templ", "**.templ"} },
     { ["Exports"]   = {"**.def"} },
   }
 
+  targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
   targetname "ConEmuTh"
   filter "platforms:Win32"
     targetsuffix ""
@@ -571,6 +590,7 @@ project "Far.ConEmuTh.gdi+"
     { ["Exports"]   = {"**.def"} },
   }
 
+  targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
   targetname "gdi+"
   filter "platforms:Win32"
     targetextension ".t32"
@@ -614,6 +634,7 @@ project "Far.ConEmuTh.ico"
     { ["Exports"]   = {"**.def"} },
   }
 
+  targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
   targetname "ico"
   filter "platforms:Win32"
     targetextension ".t32"
@@ -652,6 +673,7 @@ project "Far.ConEmuTh.pe"
     { ["Exports"]   = {"**.def"} },
   }
 
+  targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
   targetname "pe"
   filter "platforms:Win32"
     targetextension ".t32"
@@ -698,6 +720,7 @@ project "Far.ExtendedConsole"
     { ["Exports"]   = {"**.def"} },
   }
 
+  targetdir (ConEmuDir.."ConEmu/")
   targetname "ExtendedConsole"
   filter "platforms:Win32"
     targetsuffix ""
