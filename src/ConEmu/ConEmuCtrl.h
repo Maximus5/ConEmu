@@ -45,7 +45,7 @@ public:
 
 	bool ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars, CRealConsole* pRCon);
 	const ConEmuHotKey* ProcessHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars, CRealConsole* pRCon);
-	ConEmuChord ChordFromVk(BYTE Vk);
+	ConEmuChord ChordFromVk(DWORD Vk);
 
 	void UpdateControlKeyState();
 	DWORD GetControlKeyState(LPARAM lParam);

@@ -369,11 +369,11 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 }
 
 // Warning! UpdateControlKeyState() must be called already!
-ConEmuChord CConEmuCtrl::ChordFromVk(BYTE Vk)
+ConEmuChord CConEmuCtrl::ChordFromVk(DWORD Vk)
 {
 	_ASSERTE((Vk & 0xFF) == Vk);
 
-	ConEmuChord chord = {Vk};
+	ConEmuChord chord = {LOBYTE(Vk)};
 
 	if (bWin)
 		chord.Mod |= cvk_Win;
