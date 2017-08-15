@@ -405,6 +405,12 @@ bool ConProcess::ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS /*
 	return lbChanged;
 }
 
+void ConProcess::StartStopXTermMode(TermModeCommand cmd, DWORD value, DWORD pid)
+{
+	MSectionLock CS; CS.Lock(csProc);
+	gpSrv->processes->ProcessAdd(pid, &CS);
+}
+
 #ifdef _DEBUG
 void ConProcess::DumpProcInfo(LPCWSTR sLabel, DWORD nCount, DWORD* pPID)
 {

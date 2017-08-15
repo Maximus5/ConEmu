@@ -46,6 +46,8 @@ public:
 	void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS);
 	bool ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS);
 
+	void StartStopXTermMode(TermModeCommand cmd, DWORD value, DWORD pid);
+
 	// returns true if process list was changed since last query
 	bool GetProcesses(DWORD* processes, UINT count);
 

@@ -2555,8 +2555,7 @@ BOOL cmd_StartXTerm(CESERVER_REQ& in, CESERVER_REQ** out)
 	// may be reseted unexpectedly due to "process termination"
 	if (in.DataSize() >= 3*sizeof(DWORD))
 	{
-		MSectionLock CS; CS.Lock(gpSrv->processes->csProc);
-		gpSrv->processes->ProcessAdd(in.dwData[2], &CS);
+		gpSrv->processes->StartStopXTermMode((TermModeCommand)in.dwData[0], in.dwData[1], in.dwData[2]);
 	}
 
 	if (!ProcessAltSrvCommand(in, out, lbRc))
