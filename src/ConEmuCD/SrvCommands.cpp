@@ -108,7 +108,7 @@ void OnAltServerChanged(int nStep, StartStopType nStarted, DWORD nAltServerPID, 
 				// Переключаемся на "старый" (если был)
 				if (AS.bPrevFound && AS.info.nPrevPID)
 				{
-					// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+					// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
 					_ASSERTE(AS.info.hPrev!=NULL);
 					// Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer
 					// Активировать альтернативный сервер (повторно), отпустить его нити чтения
@@ -119,14 +119,14 @@ void OnAltServerChanged(int nStep, StartStopType nStarted, DWORD nAltServerPID, 
 				}
 				else
 				{
-					// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+					// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
 					_ASSERTE(AS.info.hPrev==NULL);
 					AS.AltServerChanged = true;
 				}
 			}
 			else
 			{
-				// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+				// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
 				_ASSERTE(((nAltServerPID == gpSrv->dwAltServerPID) || !gpSrv->dwAltServerPID || ((nStarted != sst_AltServerStop) && (nAltServerPID != gpSrv->dwAltServerPID) && !AS.bPrevFound)) && "Expected active alt.server!");
 			}
 		}
@@ -825,13 +825,13 @@ BOOL cmd_FarDetached(CESERVER_REQ& in, CESERVER_REQ** out)
 	gbAutoDisableConfirmExit = FALSE;
 	gbAlwaysConfirmExit = TRUE;
 
-	MSectionLock CS; CS.Lock(gpSrv->csProc);
-	UINT nPrevCount = gpSrv->nProcessCount;
+	MSectionLock CS; CS.Lock(gpSrv->processes->csProc);
+	UINT nPrevCount = gpSrv->processes->nProcessCount;
 	_ASSERTE(in.hdr.nSrcPID!=0);
 	DWORD nPID = in.hdr.nSrcPID;
 	DWORD nPrevAltServerPID = gpSrv->dwAltServerPID;
 
-	BOOL lbChanged = ProcessRemove(in.hdr.nSrcPID, nPrevCount, &CS);
+	BOOL lbChanged = gpSrv->processes->ProcessRemove(in.hdr.nSrcPID, nPrevCount, &CS);
 
 	MSectionLock CsAlt;
 	CsAlt.Lock(gpSrv->csAltSrv, TRUE, 1000);
@@ -843,7 +843,7 @@ BOOL cmd_FarDetached(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	// ***
 	if (lbChanged)
-		ProcessCountChanged(TRUE, nPrevCount, &CS);
+		gpSrv->processes->ProcessCountChanged(TRUE, nPrevCount, &CS);
 	CS.Unlock();
 	// ***
 
@@ -1113,25 +1113,25 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 
-	MSectionLock CS; CS.Lock(gpSrv->csProc);
+	MSectionLock CS; CS.Lock(gpSrv->processes->csProc);
 
-	UINT nPrevCount = gpSrv->nProcessCount;
+	UINT nPrevCount = gpSrv->processes->nProcessCount;
 	BOOL lbChanged = FALSE;
 
 	_ASSERTE(in.StartStop.dwPID!=0);
 	DWORD nPID = in.StartStop.dwPID;
 	DWORD nPrevAltServerPID = gpSrv->dwAltServerPID;
 
-	if (!gpSrv->nProcessStartTick && (gpSrv->dwRootProcess == in.StartStop.dwPID))
+	if (!gpSrv->processes->nProcessStartTick && (gpSrv->dwRootProcess == in.StartStop.dwPID))
 	{
-		gpSrv->nProcessStartTick = GetTickCount();
+		gpSrv->processes->nProcessStartTick = GetTickCount();
 	}
 
 	MSectionLock CsAlt;
 	if (((in.StartStop.nStarted == sst_AltServerStop) || (in.StartStop.nStarted == sst_AppStop))
 		&& in.StartStop.dwPID && (in.StartStop.dwPID == gpSrv->dwAltServerPID))
 	{
-		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
 		_ASSERTE(GetCurrentThreadId() != gpSrv->dwRefreshThread);
 		CsAlt.Lock(gpSrv->csAltSrv, TRUE, 1000);
 	}
@@ -1171,14 +1171,14 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(App16Stop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		default:
-			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
 			_ASSERTE(in.StartStop.nStarted==sst_ServerStart && "Unknown StartStop code!");
 	}
 
 	if (gpLogSize) { LogString(szDbg); } else { DEBUGSTRCMD(szDbg); }
 	DEBUGSTARTSTOPBOX(szDbg);
 
-	// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+	// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
 	_ASSERTE(in.StartStop.dwPID!=0);
 
 
@@ -1198,7 +1198,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	if (in.StartStop.nStarted == sst_AltServerStart)
 	{
 		// Перевести нить монитора в режим ожидания завершения AltServer, инициализировать gpSrv->dwAltServerPID, gpSrv->hAltServer
-		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
 		_ASSERTE(in.StartStop.hServerProcessHandle!=0);
 
 		OnAltServerChanged(1, sst_AltServerStart, in.StartStop.dwPID, &in.StartStop, AS);
@@ -1208,9 +1208,9 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			|| (in.StartStop.nStarted == sst_AppStart))
 	{
 		// Добавить процесс в список
-		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
-		_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
-		lbChanged = ProcessAdd(nPID, &CS);
+		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
+		_ASSERTE(gpSrv->processes->pnProcesses[0] == gnSelfPID);
+		lbChanged = gpSrv->processes->ProcessAdd(nPID, &CS);
 	}
 	else if ((in.StartStop.nStarted == sst_AltServerStop)
 			|| (in.StartStop.nStarted == sst_ComspecStop)
@@ -1220,9 +1220,9 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		if (nPID != gpSrv->dwRootProcess)
 		{
 			// Удалить процесс из списка
-			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
-			_ASSERTE(gpSrv->pnProcesses[0] == gnSelfPID);
-			lbChanged = ProcessRemove(nPID, nPrevCount, &CS);
+			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
+			_ASSERTE(gpSrv->processes->pnProcesses[0] == gnSelfPID);
+			lbChanged = gpSrv->processes->ProcessRemove(nPID, nPrevCount, &CS);
 		}
 		else
 		{
@@ -1244,19 +1244,19 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			OnAltServerChanged(1, in.StartStop.nStarted, nAltPID, NULL, AS);
 
-			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
 			_ASSERTE(in.StartStop.nStarted==sst_ComspecStop || in.StartStop.nOtherPID==AS.info.nPrevPID);
 		}
 	}
 	else
 	{
-		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->csProc в других потоках. Но ассертов быть не должно )
+		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
 		_ASSERTE(in.StartStop.nStarted==sst_AppStart || in.StartStop.nStarted==sst_AppStop || in.StartStop.nStarted==sst_ComspecStart || in.StartStop.nStarted==sst_ComspecStop);
 	}
 
 	// ***
 	if (lbChanged)
-		ProcessCountChanged(TRUE, nPrevCount, &CS);
+		gpSrv->processes->ProcessCountChanged(TRUE, nPrevCount, &CS);
 	CS.Unlock();
 	// ***
 
@@ -1374,11 +1374,11 @@ BOOL cmd_AffinityPriority(CESERVER_REQ& in, CESERVER_REQ** out)
 	DWORD_PTR nAffinity = (DWORD_PTR)in.qwData[0];
 	DWORD nPriority = (DWORD)in.qwData[1];
 
-	MSectionLock CS; CS.Lock(gpSrv->csProc);
-	CheckProcessCount(TRUE);
-	for (UINT i = 0; i < gpSrv->nProcessCount; i++)
+	MSectionLock CS; CS.Lock(gpSrv->processes->csProc);
+	gpSrv->processes->CheckProcessCount(TRUE);
+	for (UINT i = 0; i < gpSrv->processes->nProcessCount; i++)
 	{
-		DWORD nPID = gpSrv->pnProcesses[i];
+		DWORD nPID = gpSrv->processes->pnProcesses[i];
 		if (nPID == gnSelfPID) continue;
 
 		HANDLE hProcess = OpenProcess(PROCESS_SET_INFORMATION, FALSE, nPID);
@@ -1594,7 +1594,7 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 		}
 		// Смысла в подтверждении нет - GUI приложение в консоль ничего не выводит
 		gbAlwaysConfirmExit = FALSE;
-		CheckProcessCount(TRUE);
+		gpSrv->processes->CheckProcessCount(TRUE);
 		lbRc = TRUE;
 	}
 
@@ -2271,7 +2271,7 @@ BOOL cmd_PortableStarted(CESERVER_REQ& in, CESERVER_REQ** out)
 	if (in.DataSize() == sizeof(gpSrv->Portable))
 	{
 		gpSrv->Portable = in.PortableStarted;
-		CheckProcessCount(TRUE);
+		gpSrv->processes->CheckProcessCount(TRUE);
 		// For example, CommandPromptPortable.exe starts cmd.exe
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_PORTABLESTART, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_PORTABLESTARTED));
 		if (pIn)
@@ -2453,7 +2453,7 @@ BOOL cmd_GetRootInfo(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	if (*out)
 	{
-		GetRootInfo(*out);
+		gpSrv->processes->GetRootInfo(*out);
 	}
 
 	lbRc = ((*out) != NULL);
@@ -2555,8 +2555,8 @@ BOOL cmd_StartXTerm(CESERVER_REQ& in, CESERVER_REQ** out)
 	// may be reseted unexpectedly due to "process termination"
 	if (in.DataSize() >= 3*sizeof(DWORD))
 	{
-		MSectionLock CS; CS.Lock(gpSrv->csProc);
-		ProcessAdd(in.dwData[2], &CS);
+		MSectionLock CS; CS.Lock(gpSrv->processes->csProc);
+		gpSrv->processes->ProcessAdd(in.dwData[2], &CS);
 	}
 
 	if (!ProcessAltSrvCommand(in, out, lbRc))

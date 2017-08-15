@@ -1351,7 +1351,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	// We need to set `0` before CreateProcess, otherwise we may get timeout,
 	// due to misc antivirus software, BEFORE CreateProcess finishes
 	if (!(gbAttachMode & am_Modes))
-		gpSrv->nProcessStartTick = 0;
+		gpSrv->processes->nProcessStartTick = 0;
 
 	if (gbNoCreateProcess)
 	{
@@ -1654,8 +1654,8 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	}
 	else
 	{
-		if (!gpSrv->nProcessStartTick) // Уже мог быть проинициализирован из cmd_CmdStartStop
-			gpSrv->nProcessStartTick = GetTickCount();
+		if (!gpSrv->processes->nProcessStartTick) // Уже мог быть проинициализирован из cmd_CmdStartStop
+			gpSrv->processes->nProcessStartTick = GetTickCount();
 	}
 
 	if (pi.dwProcessId)
@@ -1683,12 +1683,12 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		gpSrv->dwRootThread  = pi.dwThreadId;
 		gpSrv->dwRootStartTime = GetTickCount();
 		// Скорее всего процесс в консольном списке уже будет
-		CheckProcessCount(TRUE);
+		gpSrv->processes->CheckProcessCount(TRUE);
 
 		#ifdef _DEBUG
-		if (gpSrv->nProcessCount && !gpSrv->DbgInfo.bDebuggerActive)
+		if (gpSrv->processes->nProcessCount && !gpSrv->DbgInfo.bDebuggerActive)
 		{
-			_ASSERTE(gpSrv->pnProcesses[gpSrv->nProcessCount-1]!=0);
+			_ASSERTE(gpSrv->processes->pnProcesses[gpSrv->processes->nProcessCount-1]!=0);
 		}
 		#endif
 
@@ -1723,8 +1723,8 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 		if (nWait != WAIT_OBJECT_0)  // Если таймаут
 		{
-			iRc = gpSrv->nProcessCount
-				+ (((gpSrv->nProcessCount==1) && gbUseDosBox && (WaitForSingleObject(ghDosBoxProcess,0)==WAIT_TIMEOUT)) ? 1 : 0);
+			iRc = gpSrv->processes->nProcessCount
+				+ (((gpSrv->processes->nProcessCount==1) && gbUseDosBox && (WaitForSingleObject(ghDosBoxProcess,0)==WAIT_TIMEOUT)) ? 1 : 0);
 
 			// И процессов в консоли все еще нет
 			if (iRc == 1 && !gpSrv->DbgInfo.bDebuggerActive)
@@ -1757,7 +1757,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 							}
 						}
 
-						if ((nWait != WAIT_OBJECT_0) && (gpSrv->nProcessCount > 1))
+						if ((nWait != WAIT_OBJECT_0) && (gpSrv->processes->nProcessCount > 1))
 						{
 							gbTerminateOnCtrlBreak = FALSE;
 							gbCtrlBreakStopWaitingShown = FALSE; // сбросим, чтобы ассерты не лезли
@@ -1950,7 +1950,7 @@ wrap:
 		if (gnMainServerPID && !gpSrv->bWasDetached)
 		{
 			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETROOTINFO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_ROOT_INFO));
-			if (pIn && GetRootInfo(pIn))
+			if (pIn && gpSrv->processes->GetRootInfo(pIn))
 			{
 				CESERVER_REQ *pSrvOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd, TRUE/*async*/);
 				ExecuteFreeResult(pSrvOut);
@@ -2001,7 +2001,7 @@ wrap:
 				{
 					if ((nProcesses[i] != gpSrv->dwRootProcess)
 						#ifndef WIN64
-						&& (nProcesses[i] != gpSrv->nNtvdmPID)
+						&& (nProcesses[i] != gpSrv->processes->nNtvdmPID)
 						#endif
 						)
 					{
@@ -2081,7 +2081,7 @@ wrap:
 
 		// During the wait, new process may be started in our console
 		{
-			int nCount = gpSrv->nProcessCount;
+			int nCount = gpSrv->processes->nProcessCount;
 
 			if ((gpSrv->ConnectInfo.bConnected && (nCount > 1))
 				|| gpSrv->DbgInfo.bDebuggerActive)
@@ -4521,7 +4521,7 @@ int ExitWaitForKey(DWORD vkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontS
 		{
 			if (gnRunMode == RM_SERVER)
 			{
-				int nCount = gpSrv->nProcessCount;
+				int nCount = gpSrv->processes->nProcessCount;
 
 				if (nCount > 1)
 				{
@@ -4638,7 +4638,7 @@ bool isConEmuTerminated()
 	//TODO: Same as in ConEmu, it must check server presence via pipe
 	// For now, don't annoy user with RealConsole if all processes were finished
 	if (gbInExitWaitForKey // We are waiting for Enter or Esc
-		&& (gpSrv->nProcessCount <= 1) // No active processes are found in console (except our SrvPID)
+		&& (gpSrv->processes->nProcessCount <= 1) // No active processes are found in console (except our SrvPID)
 		)
 	{
 		// Let RealConsole remain invisible, ConEmu will deal the situation
@@ -6777,7 +6777,7 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 	if (!rpdwPID || (nMaxCount < 3))
 	{
 		_ASSERTE(rpdwPID && (nMaxCount >= 3));
-		return gpSrv->nProcessCount;
+		return gpSrv->processes->nProcessCount;
 	}
 
 
@@ -6805,7 +6805,7 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 		}
 		#endif
 
-		if (!gpSrv->nConhostPID)
+		if (!gpSrv->processes->nConhostPID)
 		{
 			// Найти порожденный conhost.exe
 			//TODO: Reuse MToolHelp.h
@@ -6821,7 +6821,7 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 						if ((PI.th32ParentProcessID == nSrvPID)
 							&& (lstrcmpi(PI.szExeFile, L"conhost.exe") == 0))
 						{
-							gpSrv->nConhostPID = PI.th32ProcessID;
+							gpSrv->processes->nConhostPID = PI.th32ProcessID;
 							break;
 						}
 					} while (Process32Next(h, &PI));
@@ -6830,26 +6830,26 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 				CloseHandle(h);
 			}
 
-			if (!gpSrv->nConhostPID)
-				gpSrv->nConhostPID = (UINT)-1;
+			if (!gpSrv->processes->nConhostPID)
+				gpSrv->processes->nConhostPID = (UINT)-1;
 		}
 
-		if (gpSrv->nConhostPID && (gpSrv->nConhostPID != (UINT)-1))
+		if (gpSrv->processes->nConhostPID && (gpSrv->processes->nConhostPID != (UINT)-1))
 		{
-			rpdwPID[nRetCount++] = gpSrv->nConhostPID;
+			rpdwPID[nRetCount++] = gpSrv->processes->nConhostPID;
 		}
 	}
 
 
 	MSectionLock CS;
 	UINT nCurCount = 0;
-	if (CS.Lock(gpSrv->csProc, TRUE/*abExclusive*/, 200))
+	if (CS.Lock(gpSrv->processes->csProc, TRUE/*abExclusive*/, 200))
 	{
-		nCurCount = gpSrv->nProcessCount;
+		nCurCount = gpSrv->processes->nProcessCount;
 
 		for (INT_PTR i1 = (nCurCount-1); (i1 >= 0) && (nRetCount < nMaxCount); i1--)
 		{
-			DWORD PID = gpSrv->pnProcesses[i1];
+			DWORD PID = gpSrv->processes->pnProcesses[i1];
 			if (PID && PID != gnSelfPID)
 			{
 				rpdwPID[nRetCount++] = PID;
@@ -6868,13 +6868,13 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 	//	rpdwPID[0] = gnSelfPID;
 
 	//	for(int i1=0, i2=(nMaxCount-1); i1<(int)nSize && i2>0; i1++, i2--)
-	//		rpdwPID[i2] = gpSrv->pnProcesses[i1]; //-V108
+	//		rpdwPID[i2] = gpSrv->processes->pnProcesses[i1]; //-V108
 
 	//	nSize = nMaxCount;
 	//}
 	//else
 	//{
-	//	memmove(rpdwPID, gpSrv->pnProcesses, sizeof(DWORD)*nSize);
+	//	memmove(rpdwPID, gpSrv->processes->pnProcesses, sizeof(DWORD)*nSize);
 
 	//	for (UINT i=nSize; i<nMaxCount; i++)
 	//		rpdwPID[i] = 0; //-V108

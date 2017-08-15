@@ -443,7 +443,7 @@ extern BOOL  gbVisibleOnStartup;
 #ifndef __GNUC__
 #pragma message("ComEmuC compiled in X86 mode")
 #endif
-#define NTVDMACTIVE (gpSrv->bNtvdmActive)
+#define NTVDMACTIVE (gpSrv->processes->bNtvdmActive)
 #endif
 
 #include "../common/PipeServer.h"
@@ -456,6 +456,8 @@ struct AltServerInfo
 	HANDLE hPrev;
 	DWORD  nPrevPID;
 };
+
+struct ConProcess;
 
 #include "Debugger.h"
 
@@ -470,6 +472,9 @@ struct SrvInfo
 	HANDLE hRootProcess, hRootThread;
 	DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
 	DWORD dwParentFarPID;
+
+	// Full information about our console processes
+	ConProcess* processes;
 
 	CESERVER_REQ_PORTABLESTARTED Portable;
 
@@ -523,20 +528,7 @@ struct SrvInfo
 	BOOL bReopenHandleAllowed;
 	UINT nMaxFPS;
 	//
-	MSection *csProc;
 	MSection *csAltSrv;
-	// Список процессов нам нужен, чтобы определить, когда консоль уже не нужна.
-	// Например, запустили FAR, он запустил Update, FAR перезапущен...
-	UINT nProcessCount, nMaxProcesses;
-	UINT nConhostPID; // Windows 7 and higher: "conhost.exe"
-	DWORD *pnProcesses, *pnProcessesGet, *pnProcessesCopy, nProcessStartTick;
-	DWORD nLastRetProcesses[CONSOLE_PROCESSES_MAX/*20*/];
-	DWORD nLastFoundPID; // Informational! Retrieved by CheckProcessCount/pfnGetConsoleProcessList
-	DWORD dwProcessLastCheckTick;
-#ifndef WIN64
-	BOOL bNtvdmActive; DWORD nNtvdmPID;
-#endif
-	//BOOL bTelnetActive;
 	//
 	wchar_t szPipename[MAX_PATH], szInputname[MAX_PATH], szGuiPipeName[MAX_PATH], szQueryname[MAX_PATH];
 	wchar_t szGetDataPipe[MAX_PATH], szDataReadyEvent[64];
@@ -593,10 +585,6 @@ struct SrvInfo
 	HANDLE hCursorChangeEvent; // ServerMode, перечитать консоль (облегченный режим), т.к. был изменен курсор, - отослать в GUI
 	BOOL   bFarCommitRegistered; // Загружен (в этом! процессе) ExtendedConsole.dll
 	BOOL   bCursorChangeRegistered; // Загружен (в этом! процессе) ExtendedConsole.dll
-	#ifdef USE_COMMIT_EVENT
-	HANDLE hExtConsoleCommit; // Event для синхронизации (выставляется по Commit);
-	DWORD  nExtConsolePID;
-	#endif
 	BOOL bForceConsoleRead; // Пнуть нить опроса консоли RefreshThread чтобы она без задержек перечитала содержимое
 	// Смена размера консоли через RefreshThread
 	LONG nRequestChangeSize;

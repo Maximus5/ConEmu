@@ -88,6 +88,7 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn);
 
 void SrvInfo::InitFields()
 {
+	processes = new ConProcess;
 	csColorerMappingCreate.Init();
 	csReadConsoleInfo.Init();
 	csRefreshControl.Init();
@@ -100,6 +101,7 @@ void SrvInfo::FinalizeFields()
 	csReadConsoleInfo.Close();
 	csRefreshControl.Close();
 	AltServers.Release();
+	SafeDelete(processes);
 }
 
 
@@ -465,7 +467,7 @@ int AttachRootProcess()
 		DWORD dwServerPID = 0; // Вдруг в этой консоли уже есть сервер?
 		_ASSERTE(!gpSrv->DbgInfo.bDebuggerActive);
 
-		if (gpSrv->nProcessCount >= 2 && !gpSrv->DbgInfo.bDebuggerActive)
+		if (gpSrv->processes->nProcessCount >= 2 && !gpSrv->DbgInfo.bDebuggerActive)
 		{
 			//TODO: Reuse MToolHelp.h
 			HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
@@ -478,10 +480,10 @@ int AttachRootProcess()
 				{
 					do
 					{
-						for (UINT i = 0; i < gpSrv->nProcessCount; i++)
+						for (UINT i = 0; i < gpSrv->processes->nProcessCount; i++)
 						{
 							if (prc.th32ProcessID != gnSelfPID
-							        && prc.th32ProcessID == gpSrv->pnProcesses[i])
+							        && prc.th32ProcessID == gpSrv->processes->pnProcesses[i])
 							{
 								if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0
 								        /*|| lstrcmpiW(prc.szExeFile, L"conemuc64.exe")==0*/)
@@ -1261,7 +1263,7 @@ int ServerInit()
 	}
 
 	gpSrv->csAltSrv = new MSection();
-	gpSrv->csProc = new MSection();
+	gpSrv->processes->csProc = new MSection();
 	gpSrv->nMainTimerElapse = 10;
 	gpSrv->TopLeft.Reset(); // блокировка прокрутки не включена
 	// Инициализация имен пайпов
@@ -1270,25 +1272,21 @@ int ServerInit()
 	_wsprintf(gpSrv->szQueryname, SKIPLEN(countof(gpSrv->szQueryname)) CESERVERQUERYNAME, L".", gnSelfPID);
 	_wsprintf(gpSrv->szGetDataPipe, SKIPLEN(countof(gpSrv->szGetDataPipe)) CESERVERREADNAME, L".", gnSelfPID);
 	_wsprintf(gpSrv->szDataReadyEvent, SKIPLEN(countof(gpSrv->szDataReadyEvent)) CEDATAREADYEVENT, gnSelfPID);
-	gpSrv->nMaxProcesses = START_MAX_PROCESSES; gpSrv->nProcessCount = 0;
-	gpSrv->pnProcesses = (DWORD*)calloc(START_MAX_PROCESSES, sizeof(DWORD));
-	gpSrv->pnProcessesGet = (DWORD*)calloc(START_MAX_PROCESSES, sizeof(DWORD));
-	gpSrv->pnProcessesCopy = (DWORD*)calloc(START_MAX_PROCESSES, sizeof(DWORD));
 	MCHKHEAP;
 
-	if (gpSrv->pnProcesses == NULL || gpSrv->pnProcessesGet == NULL || gpSrv->pnProcessesCopy == NULL)
+	if (gpSrv->processes->pnProcesses == NULL || gpSrv->processes->pnProcessesGet == NULL || gpSrv->processes->pnProcessesCopy == NULL)
 	{
-		_printf("Can't allocate %i DWORDS!\n", gpSrv->nMaxProcesses);
+		_printf("Can't allocate %i DWORDS!\n", gpSrv->processes->nMaxProcesses);
 		iRc = CERR_NOTENOUGHMEM1; goto wrap;
 	}
 
 	//DumpInitStatus("\nServerInit: CheckProcessCount");
-	CheckProcessCount(TRUE); // Сначала добавит себя
+	gpSrv->processes->CheckProcessCount(TRUE); // Сначала добавит себя
 
 	// в принципе, серверный режим может быть вызван из фара, чтобы подцепиться к GUI.
 	// больше двух процессов в консоли вполне может быть, например, еще не отвалился
 	// предыдущий conemuc.exe, из которого этот запущен немодально.
-	_ASSERTE(gpSrv->DbgInfo.bDebuggerActive || (gpSrv->nProcessCount<=2) || ((gpSrv->nProcessCount>2) && gbAttachMode && gpSrv->dwRootProcess));
+	_ASSERTE(gpSrv->DbgInfo.bDebuggerActive || (gpSrv->processes->nProcessCount<=2) || ((gpSrv->processes->nProcessCount>2) && gbAttachMode && gpSrv->dwRootProcess));
 
 	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
 	if (gnRunMode == RM_SERVER)
@@ -1626,9 +1624,9 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		}
 
 		#ifdef _DEBUG
-		int nCurProcCount = gpSrv->nProcessCount;
+		int nCurProcCount = gpSrv->processes->nProcessCount;
 		DWORD nCurProcs[20];
-		memmove(nCurProcs, gpSrv->pnProcesses, min(nCurProcCount,20)*sizeof(DWORD));
+		memmove(nCurProcs, gpSrv->processes->pnProcesses, min(nCurProcCount,20)*sizeof(DWORD));
 		_ASSERTE(nCurProcCount <= 1);
 		#endif
 
@@ -1775,13 +1773,6 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 	SafeCloseHandle(gpSrv->hRootThread);
 
 	SafeDelete(gpSrv->csAltSrv);
-	SafeDelete(gpSrv->csProc);
-
-	SafeFree(gpSrv->pnProcesses);
-
-	SafeFree(gpSrv->pnProcessesGet);
-
-	SafeFree(gpSrv->pnProcessesCopy);
 
 	//SafeFree(gpSrv->pInputQueue);
 	gpSrv->InputQueue.Release();
@@ -2831,7 +2822,7 @@ HWND Attach2Gui(DWORD nTimeout)
 			{
 				do
 				{
-					for (UINT i = 0; i < gpSrv->nProcessCount; i++)
+					for (UINT i = 0; i < gpSrv->processes->nProcessCount; i++)
 					{
 						if (lstrcmpiW(prc.szExeFile, L"conemu.exe")==0
 							|| lstrcmpiW(prc.szExeFile, L"conemu64.exe")==0)
@@ -4115,20 +4106,16 @@ static int ReadConsoleInfo()
 	//CheckProcessCount(); -- уже должно быть вызвано !!!
 	//2010-05-26 Изменения в списке процессов не приходили в GUI до любого чиха в консоль.
 	#ifdef _DEBUG
-	_ASSERTE(gpSrv->pnProcesses!=NULL);
-	if (!gpSrv->nProcessCount)
+	_ASSERTE(gpSrv->processes->pnProcesses!=NULL);
+	if (!gpSrv->processes->nProcessCount)
 	{
-		_ASSERTE(gpSrv->nProcessCount); //CheckProcessCount(); -- must be already initialized !!!
+		_ASSERTE(gpSrv->processes->nProcessCount); //CheckProcessCount(); -- must be already initialized !!!
 	}
 	#endif
 
-	DWORD nCurProcCount = GetProcessCount(gpSrv->pConsole->ConState.nProcesses, countof(gpSrv->pConsole->ConState.nProcesses));
-	_ASSERTE(nCurProcCount && gpSrv->pConsole->ConState.nProcesses[0]);
-	if (nCurProcCount
-		&& memcmp(gpSrv->nLastRetProcesses, gpSrv->pConsole->ConState.nProcesses, sizeof(gpSrv->nLastRetProcesses)))
+	if (gpSrv->processes->GetProcesses(gpSrv->pConsole->ConState.nProcesses, countof(gpSrv->pConsole->ConState.nProcesses)))
 	{
 		// Process list was changed
-		memmove(gpSrv->nLastRetProcesses, gpSrv->pConsole->ConState.nProcesses, sizeof(gpSrv->nLastRetProcesses));
 		lbChanged = TRUE;
 	}
 
@@ -4830,7 +4817,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		//lbProcessChanged = CheckProcessCount();
 		// Функция срабатывает только через интервал CHECK_PROCESSES_TIMEOUT (внутри защита от частых вызовов)
 		// #define CHECK_PROCESSES_TIMEOUT 500
-		CheckProcessCount();
+		gpSrv->processes->CheckProcessCount();
 
 		// While station is locked - no sense to scan console contents
 		if (gpSrv->bStationLocked)

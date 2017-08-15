@@ -34,8 +34,43 @@ extern DWORD  gnDosBoxPID;
 
 class MSectionLock;
 
-BOOL CheckProcessCount(BOOL abForce = FALSE);
-BOOL ProcessAdd(DWORD nPID, MSectionLock *pCS);
-BOOL ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS);
-void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS);
-bool GetRootInfo(CESERVER_REQ* pReq);
+struct ConProcess
+{
+public:
+	ConProcess();
+	~ConProcess();
+
+	bool CheckProcessCount(BOOL abForce = FALSE);
+	bool GetRootInfo(CESERVER_REQ* pReq);
+	bool ProcessAdd(DWORD nPID, MSectionLock *pCS);
+	void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS);
+	bool ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS);
+
+	// returns true if process list was changed since last query
+	bool GetProcesses(DWORD* processes, UINT count);
+
+	#ifdef _DEBUG
+	void DumpProcInfo(LPCWSTR sLabel, DWORD nCount, DWORD* pPID);
+	#endif
+
+public:
+	MSection *csProc;
+
+	UINT nProcessCount, nMaxProcesses;
+	UINT nConhostPID; // Windows 7 and higher: "conhost.exe"
+	DWORD *pnProcesses, *pnProcessesGet, *pnProcessesCopy, nProcessStartTick;
+	DWORD nLastRetProcesses[CONSOLE_PROCESSES_MAX/*20*/];
+	DWORD nLastFoundPID; // Informational! Retrieved by CheckProcessCount/pfnGetConsoleProcessList
+	DWORD dwProcessLastCheckTick;
+
+	#ifndef WIN64
+	// Only 32-bit Windows versions have ntvdm (old 16-bit DOS subsystem)
+	BOOL bNtvdmActive; DWORD nNtvdmPID;
+	#endif
+
+	#ifdef USE_COMMIT_EVENT
+	HANDLE hExtConsoleCommit; // Event для синхронизации (выставляется по Commit);
+	DWORD  nExtConsolePID;
+	#endif
+
+};
