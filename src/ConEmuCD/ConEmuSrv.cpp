@@ -85,6 +85,25 @@ extern OSVERSIONINFO gOSVer;
 bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn);
 
 
+
+void SrvInfo::InitFields()
+{
+	csColorerMappingCreate.Init();
+	csReadConsoleInfo.Init();
+	csRefreshControl.Init();
+	AltServers.Init();
+	TopLeft.Reset();
+}
+void SrvInfo::FinalizeFields()
+{
+	csColorerMappingCreate.Close();
+	csReadConsoleInfo.Close();
+	csRefreshControl.Close();
+	AltServers.Release();
+}
+
+
+
 // Установить мелкий шрифт, иначе может быть невозможно увеличение размера GUI окна
 void ServerInitFont()
 {

@@ -464,6 +464,9 @@ extern FGetConsoleDisplayMode pfnGetConsoleDisplayMode;
 
 struct SrvInfo
 {
+	void InitFields();
+	void FinalizeFields();
+
 	HANDLE hRootProcess, hRootThread;
 	DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
 	DWORD dwParentFarPID;
@@ -638,21 +641,6 @@ struct SrvInfo
 	wchar_t *pszPreAliases;
 	DWORD nPreAliasSize;
 
-	void InitFields()
-	{
-		csColorerMappingCreate.Init();
-		csReadConsoleInfo.Init();
-		csRefreshControl.Init();
-		AltServers.Init();
-		TopLeft.Reset();
-	};
-	void FinalizeFields()
-	{
-		csColorerMappingCreate.Close();
-		csReadConsoleInfo.Close();
-		csRefreshControl.Close();
-		AltServers.Release();
-	};
 };
 
 extern SrvInfo *gpSrv;
