@@ -102,7 +102,8 @@ project "common-kernel"
     ["Sources"] = {"**.cpp"},
   }
 
-  targetdir "%{cfg.objdir}"
+  -- doesn't work
+  --targetdir "%{cfg.objdir}"
   filter "platforms:Win32"
     targetsuffix "32"
   filter "platforms:x64"
@@ -134,7 +135,8 @@ project "common-user"
     ["Sources"] = {"**.cpp"},
   }
 
-  targetdir "%{cfg.objdir}"
+  -- doesn't work
+  --targetdir "%{cfg.objdir}"
   filter "platforms:Win32"
     targetsuffix "32"
   filter "platforms:x64"
@@ -286,7 +288,8 @@ project "ConEmuCD"
   filter {}
 
   vpaths {
-    { ["Interface"] = {"**/Common.h", "**/SrvCommands.*"} },
+    { ["Interface"] = {"**/Common.h", "**/SrvCommands.*", "**/Queue.*", "**/SrvPipes.*"} },
+    { ["Automation"] = {"**/Actions.*", "**/GuiMacro.*"} },
     { ["Headers"] = {"**.h"} },
     { ["Sources"] = {"**.cpp"} },
     { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
