@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/execute.h"
 #endif
 
-#include "ConEmuC.h"
+#include "ConEmuSrv.h"
 #include "GuiHooks.h"
 
 

@@ -446,7 +446,7 @@
       <File RelativePath="..\ConEmuHk\Injects.h" />
       <File RelativePath=".\Actions.h" />
       <File RelativePath=".\ConProcess.h" />
-      <File RelativePath=".\ConEmuC.h" />
+      <File RelativePath=".\ConEmuSrv.h" />
       <File RelativePath=".\ConsoleHelp.h" />
       <File RelativePath=".\Debugger.h" />
       <File RelativePath=".\DownloaderCall.h" />

@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WFiles.h"
 #include "../common/WThreads.h"
 #include "crc32.h"
-#include "ConEmuC.h"
+#include "ConEmuSrv.h"
 #include "ExitCodes.h"
 #include "DownloaderCall.h"
 

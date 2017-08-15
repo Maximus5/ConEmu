@@ -47,7 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuHk/Injects.h"
 #include "../ConEmu/version.h"
 
-#include "ConEmuC.h"
+#include "ConEmuSrv.h"
 #include "Actions.h"
 #include "GuiMacro.h"
 #include "MapDump.h"

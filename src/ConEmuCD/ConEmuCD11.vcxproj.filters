@@ -21,7 +21,7 @@
     <ClInclude Include="..\common\common.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ConEmuC.h">
+    <ClInclude Include="ConEmuSrv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\common\ConEmuCheck.h">

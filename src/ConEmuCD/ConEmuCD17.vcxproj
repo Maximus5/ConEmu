@@ -367,7 +367,7 @@
     <ClInclude Include="..\common\WUser.h" />
     <ClInclude Include="..\ConEmuHk\Injects.h" />
     <ClInclude Include="Actions.h" />
-    <ClInclude Include="ConEmuC.h" />
+    <ClInclude Include="ConEmuSrv.h" />
     <ClInclude Include="ConProcess.h" />
     <ClInclude Include="ConsoleHelp.h" />
     <ClInclude Include="Debugger.h" />

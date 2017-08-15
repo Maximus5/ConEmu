@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
-#include "ConEmuC.h"
+#include "ConEmuSrv.h"
 #include "../common/MStrDup.h"
 
 #include "Actions.h"

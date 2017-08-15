@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRFIN(x) DEBUGSTR(x)
 #define DEBUGSTRCP(x) DEBUGSTR(x)
 
-#include "ConEmuC.h"
+#include "ConEmuSrv.h"
 #pragma warning(disable: 4091)
 #include <ShlObj.h>
 #pragma warning(default: 4091)

@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ProcessData.h"
 
 #include "Actions.h"
-#include "ConEmuC.h"
+#include "ConEmuSrv.h"
 #include "GuiMacro.h"
 
 bool    gbPreferSilentMode = false;

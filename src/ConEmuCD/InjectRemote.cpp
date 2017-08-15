@@ -26,7 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "ConEmuC.h"
+#include "ConEmuSrv.h"
 #include "../common/MAssert.h"
 #include "../common/MProcessBits.h"
 #include "../common/WFiles.h"

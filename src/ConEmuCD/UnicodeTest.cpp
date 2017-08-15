@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WCodePage.h"
 #include "../ConEmu/version.h"
 
-#include "ConEmuC.h"
+#include "ConEmuSrv.h"
 #include "UnicodeTest.h"
 
 void PrintConsoleInfo()

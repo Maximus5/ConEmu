@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 #include "../common/MStrDup.h"
 #include <stdlib.h>
-#include "ConEmuC.h"
+#include "ConEmuSrv.h"
 #include "MapDump.h"
 
 enum MapDumpEnum
