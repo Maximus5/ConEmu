@@ -20,6 +20,11 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.8.14
+* gh-1224: Process dead chars AltGr+~ and AltGr+` in XTerm emulation.
+* Settings\Debug: Show XTerm keyboard and mouse sequences in ‘Input’ mode.
+
+
 2017.8.7
 * Switch `-fork` was not working (e.g. `ConEmuC -fork -c powershell`).
 * gh-1220: Fix AltGr+Key sent with XTerm keyboard emulation (e.g. tilde and square brackets on german keyboard).
