@@ -6,6 +6,16 @@
 #include <tchar.h>
 #include <TlHelp32.h>
 
+#if defined(_MSC_VER) && (_MSC_VER >= 1900)
+	#if defined(_DEBUG)
+		#pragma comment(lib, "libvcruntimed.lib")
+		#pragma comment(lib, "libucrtd.lib")
+	#else
+		#pragma comment(lib, "libvcruntime.lib")
+		#pragma comment(lib, "libucrt.lib")
+	#endif
+#endif
+
 bool gbExit = false;
 CRITICAL_SECTION cs;
 HANDLE hInThread = NULL;
@@ -250,7 +260,7 @@ DWORD WINAPI ProcessSrvThread(LPVOID lpParameter)
 	LPCTSTR asName = (LPCTSTR)lpParameter;
 	HANDLE hPipeIn;
 	TCHAR szName[MAX_PATH] = _T("\\\\.\\pipe\\");
-	_tcscat(szName, asName);
+	_tcscat_s(szName, asName);
 
 	BOOL b; DWORD nRead, nWrite; char c;
 
@@ -311,14 +321,15 @@ DWORD WINAPI ProcessSrvThread(LPVOID lpParameter)
 					width = max(csbi.dwSize.X,20);
 					height = max(25,(csbi.dwSize.Y-csbi.dwCursorPosition.Y-1));
 				}
-				char* szText = (char*)malloc(width+20);
+				size_t cchMax = width+20;
+				char* szText = (char*)malloc(cchMax);
 				for (int i = 1; i <= height; i++)
 				{
-					sprintf(szText, "Line %-4u ", i);
+					sprintf_s(szText, cchMax, "Line %-4u ", i);
 					char* psz = szText + strlen(szText);
 					for (int j = 1; (psz - szText) < width; j++)
 					{
-						sprintf(psz, "Word %u ", j);
+						sprintf_s(psz, cchMax - (psz - szText), "Word %u ", j);
 						psz += strlen(psz);
 					}
 					psz = szText+width-1;
@@ -364,7 +375,7 @@ int ProcessInput(LPCTSTR asName)
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	TCHAR szName[MAX_PATH] = _T("\\\\.\\pipe\\");
-	_tcscat(szName, asName);
+	_tcscat_s(szName, asName);
 	DWORD nRead, nWrite;
 	INPUT_RECORD r;
 	BOOL b;
@@ -483,7 +494,6 @@ int ProcessInput(LPCTSTR asName)
 				{
 					if (r.Event.KeyEvent.dwControlKeyState & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED))
 					{
-						char szText[100];
 						switch (r.Event.KeyEvent.uChar.AsciiChar)
 						{
 						case 'x': case 'X':
