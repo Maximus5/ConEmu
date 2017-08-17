@@ -17,6 +17,7 @@ if "%VS_VERSION%" == "10" goto ver_10
 if "%VS_VERSION%" == "11" goto ver_11
 if "%VS_VERSION%" == "12" goto ver_12
 if "%VS_VERSION%" == "14" goto ver_14
+if /I "%VS_VERSION%" GEQ "15" goto ver_15
 
 :ver_9
 if "%VS90COMNTOOLS%"=="" if "%PROCESSOR_ARCHITEW6432%"=="AMD64" set VS90COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 9.0\VC\BIN\
@@ -51,6 +52,13 @@ if "%VS140COMNTOOLS%"=="" if "%PROCESSOR_ARCHITEW6432%"=="AMD64" set VS140COMNTO
 if "%VS140COMNTOOLS%"=="" if "%PROCESSOR_ARCHITECTURE%"=="AMD64" set VS140COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\BIN\
 if "%VS140COMNTOOLS%"=="" set VS140COMNTOOLS=C:\Program Files\Microsoft Visual Studio 14.0\VC\BIN\
 set VS_COMNTOOLS=%VS140COMNTOOLS%
+goto done
+
+:ver_15
+set VS_COMNTOOLS=
+for /f "usebackq tokens=1* delims=: " %%i in (`tools\vswhere -version %VS_VERSION% -requires Microsoft.Component.MSBuild`) do (
+  if /i "%%i"=="installationPath" set VS_COMNTOOLS=%%j
+)
 goto done
 
 :done

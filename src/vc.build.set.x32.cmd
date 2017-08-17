@@ -25,7 +25,7 @@ if exist "%VS_COMNTOOLS%..\..\VC\vcvarsall.bat" (
 )
 
 :not_found
-echo !!! x64 build failed !!!
+echo !!! VC version %~1 (x32) not found !!!
 exit /B 1
 goto :EOF
 
