@@ -90,14 +90,14 @@ int main(int argc, char** argv)
 	Verify_Step("-new_console parser tests");
 	LPCWSTR pszTest = L"-new_console:a \\\"-new_console:c\\\" `-new_console:d:C:\\` -cur_console:b";
 	LPCWSTR pszCmp = L"\\\"-new_console:c\\\" `-new_console:d:C:\\`";
-	RConStartArgs arg; arg.pszSpecialCmd = lstrdup(pszTest);
+	RConStartArgsEx arg; arg.pszSpecialCmd = lstrdup(pszTest);
 	arg.ProcessNewConArg();
 	int iCmp = lstrcmp(arg.pszSpecialCmd, pszCmp);
 	Verify0((iCmp==0),"arg.pszSpecialCmd==\\\"-new_console:c\\\" `-new_console:d:C:\\`");
 
-	Verify_Step("RConStartArgs::RunArgTests()");
-	RConStartArgs::RunArgTests();
-	Verify0(!gbVerifyStepFailed,"RConStartArgs tests passed");
+	Verify_Step("RConStartArgsEx::RunArgTests()");
+	RConStartArgsEx::RunArgTests();
+	Verify0(!gbVerifyStepFailed,"RConStartArgsEx tests passed");
 	}
 
 	{

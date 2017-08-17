@@ -7,8 +7,8 @@ if exist "%~dp0*.obj" del /Q "%~dp0*.obj" > nul
 if exist "%~dp0tests.fail" del /Q "%~dp0tests.fail" > nul
 
 set commons=../common/CEStr.cpp ../common/Memory.cpp ../common/WObjects.cpp ../common/WUser.cpp ../common/CmdLine.cpp ^
-            ../common/MStrSafe.cpp ../common/MStrDup.cpp ../common/MAssert.cpp ../common/WThreads.cpp ../common/RConStartArgs.cpp ^
-            ../common/MProcess.cpp
+            ../common/MStrSafe.cpp ../common/MStrDup.cpp ../common/MAssert.cpp ../common/WThreads.cpp ^
+            ../common/MProcess.cpp ../common/RConStartArgs.cpp ../common/RConStartArgsEx.cpp
 
 set colorcmn=../ConEmu/ColorFix.cpp
 
@@ -82,7 +82,7 @@ goto :EOF
 call cecho /yellow "  VC9  cl test %~1"
 setlocal
 call "%~dp0..\vc.build.set.x32.cmd" 9 > nul
-if errorlevel 1 goto err
+if errorlevel 1 goto vars_err
 set VS_VERSION > "build-out.log"
 call :build_std /Fe"vc-test-9.exe" %*
 if errorlevel 1 (
@@ -100,7 +100,7 @@ goto :EOF
 call cecho /yellow "  VC14 cl test %~1"
 setlocal
 call "%~dp0..\vc.build.set.x32.cmd" 14 > nul
-if errorlevel 1 goto err
+if errorlevel 1 goto vars_err
 set VS_VERSION > "build-out.log"
 call :build_std /Fe"vc-test-14.exe" %*
 if errorlevel 1 (
@@ -133,7 +133,7 @@ goto :EOF
 call cecho /yellow "  VC9  cl test %~1"
 setlocal
 call "%~dp0..\vc.build.set.x32.cmd" 9 > nul
-if errorlevel 1 goto err
+if errorlevel 1 goto vars_err
 set VS_VERSION > "build-out.log"
 call :build_err %*
 if errorlevel 1 (
@@ -151,7 +151,7 @@ goto :EOF
 call cecho /yellow "  VC14 cl test %~1"
 setlocal
 call "%~dp0..\vc.build.set.x32.cmd" 14 > nul
-if errorlevel 1 goto err
+if errorlevel 1 goto vars_err
 set VS_VERSION > "build-out.log"
 call :build_err %*
 if errorlevel 1 (
@@ -176,6 +176,11 @@ goto :EOF
 :build_err
 if exist *.obj del /Q *.obj > nul
 cl /c %cpp_def% %* 1>> "build-out.log"
+goto :EOF
+
+:vars_err
+call cecho "Failed to set up VC environment"
+echo Failed to set up VC environment >> "tests.fail"
 goto :EOF
 
 :end
