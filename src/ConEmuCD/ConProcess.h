@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "../common/MArray.h"
+
 extern BOOL   gbUseDosBox;
 extern HANDLE ghDosBoxProcess;
 extern DWORD  gnDosBoxPID;
@@ -75,4 +77,22 @@ public:
 	DWORD  nExtConsolePID;
 	#endif
 
+protected:
+	// Hold all XTermMode requests
+	struct XTermRequest
+	{
+		// the process was requested the mode
+		DWORD pid;
+		// TermModeCommand's mode arguments (if required)
+		DWORD modes[tmc_Last];
+		// time of request, required to avoid race
+		// zero if process was found in GetConsoleProcessList
+		DWORD tick;
+	};
+	MArray<XTermRequest> xRequests;
+	// create=false used to erasing on reset
+	INT_PTR GetXRequestIndex(DWORD pid, bool create, MSectionLock& CS);
+
+	// Some flags (only tmc_CursorShape yet) are *console* life-time
+	DWORD xFixedRequests[tmc_Last];
 };

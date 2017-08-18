@@ -45,6 +45,7 @@ ConProcess::ConProcess()
 	pnProcesses = (DWORD*)calloc(START_MAX_PROCESSES, sizeof(DWORD));
 	pnProcessesGet = (DWORD*)calloc(START_MAX_PROCESSES, sizeof(DWORD));
 	pnProcessesCopy = (DWORD*)calloc(START_MAX_PROCESSES, sizeof(DWORD));
+	ZeroStruct(xFixedRequests);
 }
 
 ConProcess::~ConProcess()
@@ -403,6 +404,12 @@ bool ConProcess::ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS /*
 	}
 
 	return lbChanged;
+}
+
+// create=false used to erasing on reset
+INT_PTR ConProcess::GetXRequestIndex(DWORD pid, bool create, MSectionLock& CS)
+{
+return -1;
 }
 
 void ConProcess::StartStopXTermMode(TermModeCommand cmd, DWORD value, DWORD pid)

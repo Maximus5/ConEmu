@@ -363,13 +363,18 @@ enum RealBufferScroll
 };
 
 // CECMD_STARTXTERM: what we want to change
+// lifetime:
+//   `process` - mode would be reset on called process termination
+//   `console` - survive on process termination
 enum TermModeCommand
 {
-	tmc_Keyboard = 0,
-	tmc_BracketedPaste = 1,
-	tmc_AppCursorKeys = 2,
-	tmc_CursorShape = 3,
-	tmc_MouseMode = 4,
+	tmc_Keyboard       = 0, // TermEmulationType    - process life-time
+	tmc_BracketedPaste = 1, // true/false           - process life-time
+	tmc_AppCursorKeys  = 2, // true/false           - process life-time
+	tmc_CursorShape    = 3, // TermCursorShapes     - ***console*** life-time
+	tmc_MouseMode      = 4, // set of TermMouseMode - process life-time
+	// for array mapping purposes, reserved for 16 flags
+	tmc_Last = 16
 };
 
 // tmc_Keyboard: used for control keys (arrows e.g.) translation
