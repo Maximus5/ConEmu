@@ -2,6 +2,7 @@ workspace "premake-CE"
   configurations { "Release", "Debug", "Remote" }
   platforms { "Win32", "x64" }
   location "build"
+  --basedir "%{cfg.location}"
   startproject "ConEmu"
   flags { "StaticRuntime" }
 
@@ -102,6 +103,8 @@ project "common-kernel"
     ["Sources"] = {"**.cpp"},
   }
 
+  implibdir "lib1"
+  objdir "obj1"
   -- doesn't work
   --targetdir "%{cfg.objdir}"
   filter "platforms:Win32"
@@ -135,6 +138,7 @@ project "common-user"
     ["Sources"] = {"**.cpp"},
   }
 
+  implibdir "lib1"
   -- doesn't work
   --targetdir "%{cfg.objdir}"
   filter "platforms:Win32"
@@ -296,6 +300,7 @@ project "ConEmuCD"
     { ["Exports"]   = {"**.def"} },
   }
 
+  implibdir "lib1"
   targetdir (ConEmuDir.."ConEmu/")
   targetname "ConEmuCD"
   filter "platforms:Win32"
@@ -369,6 +374,7 @@ project "ConEmuHk"
     { ["Exports"]   = {"**.def"} },
   }
 
+  implibdir "lib1"
   targetdir (ConEmuDir.."ConEmu/")
   targetname "ConEmuHk"
   filter "platforms:Win32"
@@ -415,6 +421,7 @@ project "Far.ConEmuPlugin"
     { ["Exports"]   = {"**.def"} },
   }
 
+  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/")
   targetname "ConEmu"
   filter "platforms:Win32"
@@ -461,6 +468,7 @@ project "Far.ConEmuBg"
     { ["Exports"]   = {"**.def"} },
   }
 
+  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/Background/")
   targetname "ConEmuBg"
   filter "platforms:Win32"
@@ -507,6 +515,7 @@ project "Far.ConEmuLn"
     { ["Exports"]   = {"**.def"} },
   }
 
+  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/Lines/")
   targetname "ConEmuLn"
   filter "platforms:Win32"
@@ -553,6 +562,7 @@ project "Far.ConEmuTh"
     { ["Exports"]   = {"**.def"} },
   }
 
+  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
   targetname "ConEmuTh"
   filter "platforms:Win32"
@@ -593,6 +603,7 @@ project "Far.ConEmuTh.gdi+"
     { ["Exports"]   = {"**.def"} },
   }
 
+  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
   targetname "gdi+"
   filter "platforms:Win32"
@@ -637,6 +648,7 @@ project "Far.ConEmuTh.ico"
     { ["Exports"]   = {"**.def"} },
   }
 
+  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
   targetname "ico"
   filter "platforms:Win32"
@@ -676,6 +688,7 @@ project "Far.ConEmuTh.pe"
     { ["Exports"]   = {"**.def"} },
   }
 
+  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
   targetname "pe"
   filter "platforms:Win32"
@@ -723,6 +736,7 @@ project "Far.ExtendedConsole"
     { ["Exports"]   = {"**.def"} },
   }
 
+  implibdir "lib1"
   targetdir (ConEmuDir.."ConEmu/")
   targetname "ExtendedConsole"
   filter "platforms:Win32"
