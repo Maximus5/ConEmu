@@ -20,6 +20,11 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.8.19
+* gh-1164, gh-1216, gh-1219: Workaround for Window 10 conhost bug when content is erased on resize.
+* gh-1212: After ‘Unfasten’, unfastened console loses arrow key capability.
+
+
 2017.8.14
 * gh-1224: Process dead chars AltGr+~ and AltGr+` in XTerm emulation.
 * Settings\Debug: Show XTerm keyboard and mouse sequences in ‘Input’ mode.
