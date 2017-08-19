@@ -4251,7 +4251,22 @@ static BOOL ReadConsoleData()
 
 		//if (ReadConsoleOutput(hOut, gpSrv->pConsoleDataCopy, bufSize, bufCoord, &rgn))
 		if (MyReadConsoleOutput(hOut, gpSrv->pConsoleDataCopy, bufSize, rgn))
+		{
 			lbRc = TRUE;
+
+			//gh-1164, gh-1216, gh-1219: workaround for Window 10 conhost bug
+			if (IsWin10())
+			{
+				WORD defAttr = gpSrv->sbi.wAttributes;
+				//if (CONFORECOLOR(defAttr) == CONBACKCOLOR(defAttr))
+				//	defAttr = 7; // Really? There would be nothing visible at all...
+				for (int i = (bufSize.X * bufSize.Y) - 1; i >= 0; --i)
+				{
+					if (!gpSrv->pConsoleDataCopy[i].Attributes)
+						gpSrv->pConsoleDataCopy[i].Attributes = defAttr;
+				}
+			}
+		}
 	}
 
 	//if (!lbRc)
