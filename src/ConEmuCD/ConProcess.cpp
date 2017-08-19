@@ -34,6 +34,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSection.h"
 #include "../common/ProcessData.h"
 
+#define XTERM_PID_TIMEOUT 2500
+
 BOOL   gbUseDosBox = FALSE;
 HANDLE ghDosBoxProcess = NULL;
 DWORD  gnDosBoxPID = 0;
@@ -46,13 +48,18 @@ ConProcess::ConProcess()
 	pnProcessesGet = (DWORD*)calloc(START_MAX_PROCESSES, sizeof(DWORD));
 	pnProcessesCopy = (DWORD*)calloc(START_MAX_PROCESSES, sizeof(DWORD));
 	ZeroStruct(xFixedRequests);
+
+	// Let use pid==0 for SetConsoleMode requests
+	XTermRequest x{};
+	xRequests.push_back(x);
+	csProc = new MSection();
 }
 
 ConProcess::~ConProcess()
 {
 }
 
-void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS)
+void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock& CS)
 {
 	int nExitPlaceAdd = 2; // 2,3,4,5,6,7,8,9 +(nExitPlaceStep)
 	bool bPrevCount2 = (anPrevCount>1);
@@ -91,9 +98,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 
 
 	// Use section, if was not locked before
-	MSectionLock CS;
-	if (!pCS)
-		CS.Lock(csProc);
+	CS.Lock(csProc);
 
 #ifdef USE_COMMIT_EVENT
 	// Если кто-то регистрировался как "ExtendedConsole.dll"
@@ -121,6 +126,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 	}
 #endif
 
+	// NTVDM block
 #ifndef WIN64
 	// Найти "ntvdm.exe"
 	if (abChanged && !nNtvdmPID && !IsWindows64())
@@ -239,6 +245,9 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 		}
 	}
 
+	// e.g. if 'bash.exe' was killed in console
+	CheckXRequests(CS);
+
 	// Только для x86. На x64 ntvdm.exe не бывает.
 	#ifndef WIN64
 	WARNING("bNtvdmActive нигде не устанавливается");
@@ -296,11 +305,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 			_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
 			// !!! ****
 
-
-			if (pCS)
-				pCS->Unlock();
-			else
-				CS.Unlock();
+			CS.Unlock();
 
 			//2010-03-06 это не нужно, проверки делаются по другому
 			//if (!gbAlwaysConfirmExit && (dwProcessLastCheckTick - nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT) {
@@ -329,14 +334,9 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 	UNREFERENCED_PARAMETER(nWaitDbg1); UNREFERENCED_PARAMETER(nWaitDbg2); UNREFERENCED_PARAMETER(bForcedTo2);
 }
 
-bool ConProcess::ProcessAdd(DWORD nPID, MSectionLock *pCS /*= NULL*/)
+bool ConProcess::ProcessAdd(DWORD nPID, MSectionLock& CS)
 {
-	MSectionLock CS;
-	if ((pCS == NULL) && (csProc != NULL))
-	{
-		pCS = &CS;
-		CS.Lock(csProc);
-	}
+	CS.Lock(csProc);
 
 	UINT nPrevCount = nProcessCount;
 	BOOL lbChanged = FALSE;
@@ -357,7 +357,7 @@ bool ConProcess::ProcessAdd(DWORD nPID, MSectionLock *pCS /*= NULL*/)
 	{
 		if (nPrevCount < nMaxProcesses)
 		{
-			pCS->RelockExclusive(200);
+			CS.RelockExclusive(200);
 			pnProcesses[nProcessCount++] = nPID;
 			nLastFoundPID = nPID;
 			lbChanged = TRUE;
@@ -371,26 +371,24 @@ bool ConProcess::ProcessAdd(DWORD nPID, MSectionLock *pCS /*= NULL*/)
 	return lbChanged;
 }
 
-bool ConProcess::ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS /*= NULL*/)
+// We receive this via CECMD_FARDETACHED or sst_AltServerStop/sst_ComspecStop/sst_AppStop
+// So, the process leaves the console indeed
+bool ConProcess::ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock& CS)
 {
-	BOOL lbChanged = FALSE;
+	bool lbChanged = false;
+	_ASSERTE(nPID != 0);
 
-	MSectionLock CS;
-	if ((pCS == NULL) && (csProc != NULL))
-	{
-		pCS = &CS;
-		CS.Lock(csProc);
-	}
+	CS.Lock(csProc);
 
-	// Удалить процесс из списка
+	// Remove it from our list
 	_ASSERTE(pnProcesses[0] == gnSelfPID);
 	DWORD nChange = 0;
 	for (DWORD n = 0; n < nPrevCount; n++)
 	{
 		if (pnProcesses[n] == nPID)
 		{
-			pCS->RelockExclusive(200);
-			lbChanged = TRUE;
+			CS.RelockExclusive(200);
+			lbChanged = true;
 			if (nLastFoundPID == nPID)
 				nLastFoundPID = 0;
 			nProcessCount--;
@@ -403,19 +401,246 @@ bool ConProcess::ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS /*
 		nChange++;
 	}
 
+	for (INT_PTR i = 0; i < xRequests.size(); ++i)
+	{
+		if (xRequests[i].pid != nPID)
+			continue;
+		xRequests.erase(i);
+		break;
+	}
+
 	return lbChanged;
 }
 
 // create=false used to erasing on reset
-INT_PTR ConProcess::GetXRequestIndex(DWORD pid, bool create, MSectionLock& CS)
+INT_PTR ConProcess::GetXRequestIndex(DWORD pid, bool create)
 {
-return -1;
+	// csProc must be locked exclusively!
+
+	for (INT_PTR i = 0; i < xRequests.size(); ++i)
+	{
+		if (xRequests[i].pid == pid)
+		{
+			// pid==0 is used to 
+			if (create && pid)
+			{
+				// Move it to the end of the queue
+				while ((i+1) < xRequests.size())
+				{
+					klSwap(xRequests[i], xRequests[i+1]);
+					++i;
+				}
+				// Update the last alive tick of the process
+				if (xRequests[i].tick)
+				{
+					DWORD t = GetTickCount();
+					if (!t) t = 1;
+					xRequests[i].tick = t;
+				}
+			}
+			return i;
+		}
+	}
+
+	if (create)
+	{
+		XTermRequest x{pid, GetTickCount()};
+		if (!x.tick) x.tick++;
+		if (pid)
+		{
+			xRequests.push_back(x);
+		}
+		else
+		{
+			_ASSERTE(FALSE && "pid==0 must be created explicitly");
+			xRequests.insert(0, x);
+		}
+		return (xRequests.size() - 1);
+	}
+
+	return -1;
 }
 
-void ConProcess::StartStopXTermMode(TermModeCommand cmd, DWORD value, DWORD pid)
+void ConProcess::RefreshXRequests(MSectionLock& CS)
 {
-	MSectionLock CS; CS.Lock(csProc);
-	gpSrv->processes->ProcessAdd(pid, &CS);
+	// Use section, if was not locked before
+	CS.Lock(csProc);
+
+	for (int m = 0; m < tmc_Last; ++m)
+	{
+		// ***console*** life-time
+		if (m == tmc_CursorShape)
+			continue;
+
+		DWORD value = 0, pid = 0;
+		for (INT_PTR i = xRequests.size() - 1; !value && i >= 0; --i)
+		{
+			const XTermRequest& x = xRequests[i];
+			if (x.modes[m])
+			{
+				value = x.modes[m];
+				pid = x.pid;
+			}
+		}
+
+		if (xFixedRequests[m] != value)
+		{
+			// Update
+			xFixedRequests[m] = value;
+			// and inform the GUI
+			CESERVER_REQ* in = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*3);
+			if (in)
+			{
+				in->dwData[0] = (TermModeCommand)m;
+				in->dwData[1] = value;
+				in->dwData[2] = pid;
+				CESERVER_REQ* pGuiOut = ExecuteGuiCmd(ghConWnd, in, ghConWnd);
+				ExecuteFreeResult(pGuiOut);
+			}
+		}
+	}
+}
+
+void ConProcess::OnAttached()
+{
+	for (int m = 0; m < tmc_Last; ++m)
+	{
+		// Only if some mode was turned ON
+		if (!xFixedRequests[m])
+			continue;
+		// Inform the GUI
+		CESERVER_REQ* in = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)*3);
+		if (in)
+		{
+			in->dwData[0] = (TermModeCommand)m;
+			in->dwData[1] = xFixedRequests[m];
+			in->dwData[2] = gnSelfPID; // doesn't matter
+			CESERVER_REQ* pGuiOut = ExecuteGuiCmd(ghConWnd, in, ghConWnd);
+			ExecuteFreeResult(pGuiOut);
+		}
+	}
+}
+
+void ConProcess::CheckXRequests(MSectionLock& CS)
+{
+	bool bWasSet = false;
+	for (int m = 0; m < tmc_Last; ++m)
+	{
+		if (xFixedRequests[m])
+		{
+			bWasSet = true; break;
+		}
+	}
+	// If modes were not requested, there is nothing to clear
+	if (!bWasSet)
+	{
+		return;
+	}
+
+	if (!CS.isLocked())
+		CS.Lock(csProc, true);
+	else
+		CS.RelockExclusive();
+
+	bool bChanged = false;
+	// Go down to zero to simplify erase procedure
+	for (INT_PTR i = xRequests.size() - 1; i >= 0; --i)
+	{
+		XTermRequest& x = xRequests[i];
+		if (!x.pid)
+			continue;
+		bool alive = false;
+		for (UINT n = 0; n < nProcessCount; ++n)
+		{
+			if (pnProcesses[n] == x.pid)
+			{
+				alive = true;
+				break;
+			}
+		}
+		if (!alive)
+		{
+			// Did process appeared in console?
+			if (x.tick)
+			{
+				if (x.pid == gpSrv->dwRootProcess && gbRootWasFoundInCon)
+					x.tick = 0;
+				else
+				{
+					DWORD nCurTick = GetTickCount();
+					if ((nCurTick - x.tick) > XTERM_PID_TIMEOUT)
+						x.tick = 0;
+				}
+			}
+			// Was terminated
+			if (!x.tick)
+			{
+				bChanged = true;
+				xRequests.erase(i);
+			}
+		}
+	}
+
+	if (bChanged)
+	{
+		RefreshXRequests(CS);
+	}
+}
+
+void ConProcess::StartStopXTermMode(const TermModeCommand cmd, const DWORD value, const DWORD pid)
+{
+	if ((unsigned)cmd >= tmc_Last)
+	{
+		_ASSERTE((unsigned)cmd < tmc_Last);
+		return;
+	}
+
+	// some modes has console life time
+	if (cmd == tmc_CursorShape)
+	{
+		xFixedRequests[cmd] = value;
+		return;
+	}
+
+	// If some process requests the mode, force check process list first
+	// Due to race, the pid *may* not be yet retrieved from conhost
+	// by CheckProcessCount, but we try to do our best )
+	if (value && pid)
+	{
+		CheckProcessCount(true);
+	}
+
+	// others are linked to the calling process life
+	MSectionLock CS; CS.Lock(csProc, true);
+	INT_PTR idx = GetXRequestIndex(pid, (value != 0));
+	if (idx >= 0)
+	{
+		xRequests[idx].modes[cmd] = value;
+		// Modified, update xFixedRequests
+		if (value)
+		{
+			xFixedRequests[cmd] = value;
+		}
+		else
+		{
+			DWORD new_value = 0;
+			for (INT_PTR i = xRequests.size() - 1; i >= 0; --i)
+			{
+				const XTermRequest& x = xRequests[i];
+				if (x.modes[cmd])
+				{
+					new_value = x.modes[cmd];
+					break;
+				}
+			}
+			xFixedRequests[cmd] = new_value;
+		}
+	}
+
+	if (value)
+	{
+		gpSrv->processes->ProcessAdd(pid, CS);
+	}
 }
 
 #ifdef _DEBUG
@@ -709,7 +934,7 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 
 	dwProcessLastCheckTick = GetTickCount();
 
-	ProcessCountChanged(lbChanged, nPrevCount, &CS);
+	ProcessCountChanged(lbChanged, nPrevCount, CS);
 
 
 	return lbChanged;

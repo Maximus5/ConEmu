@@ -124,9 +124,6 @@ UINT_PTR GetLdrGetDllHandleByNameAddress()
 CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCWSTR asConEmuHkDir /*= NULL*/)
 {
 	CINJECTHK_EXIT_CODES iRc = CIH_OK/*0*/;
-#ifndef CONEMUHK_EXPORTS
-	_ASSERTE(FALSE)
-#endif
 	wchar_t szDllDir[MAX_PATH*2];
 	_ASSERTE(ghOurModule!=NULL);
 	BOOL is64bitOs = FALSE;

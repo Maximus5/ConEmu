@@ -1263,7 +1263,6 @@ int ServerInit()
 	}
 
 	gpSrv->csAltSrv = new MSection();
-	gpSrv->processes->csProc = new MSection();
 	gpSrv->nMainTimerElapse = 10;
 	gpSrv->TopLeft.Reset(); // блокировка прокрутки не включена
 	// Инициализация имен пайпов
@@ -2729,6 +2728,7 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 	if (ghConEmuWnd)
 	{
 		CheckConEmuHwnd();
+		gpSrv->processes->OnAttached();
 		gpSrv->ConnectInfo.bConnected = TRUE;
 		bConnected = true;
 	}
@@ -2749,7 +2749,7 @@ HWND Attach2Gui(DWORD nTimeout)
 {
 	LogFunction(L"Attach2Gui");
 
-	if (isTerminalMode())
+	if (!gpSrv->bWasDetached && isTerminalMode())
 	{
 		_ASSERTE(FALSE && "Attach is not allowed in telnet");
 		return NULL;
@@ -4296,6 +4296,10 @@ static BOOL ReadConsoleData()
 		lbChanged = TRUE;
 		LogString("ReadConsoleData: content was changed");
 	}
+	else if (gpSrv->bWasReattached)
+	{
+		gpSrv->pConsole->bDataChanged = TRUE;
+	}
 
 
 	if (!lbChanged && gpSrv->pColorerMapping)
@@ -4406,7 +4410,7 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 
 		//if (memcmp(&(gpSrv->pConsole->hdr), gpSrv->pConsoleMap->Ptr(), gpSrv->pConsole->hdr.cbSize))
 		int iMapCmp = Compare(&gpSrv->pConsole->hdr, gpSrv->pConsoleMap->Ptr());
-		if (iMapCmp)
+		if (iMapCmp || gpSrv->bWasReattached)
 		{
 			lbChanged = TRUE;
 

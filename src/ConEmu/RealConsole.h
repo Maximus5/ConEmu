@@ -837,7 +837,7 @@ class CRealConsole
 		//
 		struct TermEmulation
 		{
-			DWORD       nCallTermPID; // PID of requested application
+			// nCallTermPID was removed because modes are maintained by server
 			TermEmulationType   Term; // win32 or xterm
 			bool     bBracketedPaste; // All "pasted" text will be wrapped in `\e[200~ ... \e[201~`
 			TermMouseMode nMouseMode; // mask of enum TermMouseMode

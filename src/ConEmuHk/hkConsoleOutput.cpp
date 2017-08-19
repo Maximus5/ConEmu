@@ -128,6 +128,8 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 			{
 				_ASSERT(HandleKeeper::IsInputHandle(hConsoleHandle));
 				CEAnsi::StartXTermMode((dwMode & 0x200) == 0x200);
+				if (dwMode & 0x200)
+					CEAnsi::ChangeTermMode(tmc_AppCursorKeys, true);
 			}
 		}
 	}

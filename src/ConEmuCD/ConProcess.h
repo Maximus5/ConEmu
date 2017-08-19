@@ -44,11 +44,12 @@ public:
 
 	bool CheckProcessCount(BOOL abForce = FALSE);
 	bool GetRootInfo(CESERVER_REQ* pReq);
-	bool ProcessAdd(DWORD nPID, MSectionLock *pCS);
-	void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock *pCS);
-	bool ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock *pCS);
+	bool ProcessAdd(DWORD nPID, MSectionLock& CS);
+	void ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionLock& CS);
+	bool ProcessRemove(DWORD nPID, UINT nPrevCount, MSectionLock& CS);
 
-	void StartStopXTermMode(TermModeCommand cmd, DWORD value, DWORD pid);
+	void StartStopXTermMode(const TermModeCommand cmd, const DWORD value, const DWORD pid);
+	void OnAttached();
 
 	// returns true if process list was changed since last query
 	bool GetProcesses(DWORD* processes, UINT count);
@@ -83,16 +84,20 @@ protected:
 	{
 		// the process was requested the mode
 		DWORD pid;
-		// TermModeCommand's mode arguments (if required)
-		DWORD modes[tmc_Last];
 		// time of request, required to avoid race
 		// zero if process was found in GetConsoleProcessList
 		DWORD tick;
+		// TermModeCommand's mode arguments (if required)
+		DWORD modes[tmc_Last];
 	};
 	MArray<XTermRequest> xRequests;
-	// create=false used to erasing on reset
-	INT_PTR GetXRequestIndex(DWORD pid, bool create, MSectionLock& CS);
-
 	// Some flags (only tmc_CursorShape yet) are *console* life-time
+	// And we store here current projection of xRequests
 	DWORD xFixedRequests[tmc_Last];
+	// create=false used to erasing on reset
+	INT_PTR GetXRequestIndex(DWORD pid, bool create);
+	// Force update xFixedRequests and inform GUI
+	void RefreshXRequests(MSectionLock& CS);
+	// Check PID liveliness in xRequests
+	void CheckXRequests(MSectionLock& CS);
 };

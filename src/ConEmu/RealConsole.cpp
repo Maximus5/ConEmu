@@ -6289,15 +6289,16 @@ void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
 		LogString(szInfo);
 	}
 
-	if (!nPID && !xTerm)
+	if (!nPID || !xTerm)
 	{
 		ZeroStruct(m_Term);
+		if (mp_XTerm)
+			mp_XTerm->AppCursorKeys = false;
 	}
 	else
 	{
-		m_Term.nCallTermPID = nPID;
-		m_Term.Term = xTerm ? te_xterm : te_win32;
-		m_Term.nMouseMode = tmm_None;
+		_ASSERTE(xTerm);
+		m_Term.Term = te_xterm;
 	}
 
 	if (isActive(false) && mp_ConEmu->mp_Status)
@@ -7077,11 +7078,6 @@ TermEmulationType CRealConsole::GetTermType()
 	if (!m_Term.Term)
 	{
 		return te_win32;
-	}
-
-	if (!isProcessExist(m_Term.nCallTermPID))
-	{
-		StartStopXTerm(0, false/*te_win32*/);
 	}
 
 	if (m_Term.Term)

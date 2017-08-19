@@ -831,7 +831,7 @@ BOOL cmd_FarDetached(CESERVER_REQ& in, CESERVER_REQ** out)
 	DWORD nPID = in.hdr.nSrcPID;
 	DWORD nPrevAltServerPID = gpSrv->dwAltServerPID;
 
-	BOOL lbChanged = gpSrv->processes->ProcessRemove(in.hdr.nSrcPID, nPrevCount, &CS);
+	BOOL lbChanged = gpSrv->processes->ProcessRemove(in.hdr.nSrcPID, nPrevCount, CS);
 
 	MSectionLock CsAlt;
 	CsAlt.Lock(gpSrv->csAltSrv, TRUE, 1000);
@@ -843,7 +843,7 @@ BOOL cmd_FarDetached(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	// ***
 	if (lbChanged)
-		gpSrv->processes->ProcessCountChanged(TRUE, nPrevCount, &CS);
+		gpSrv->processes->ProcessCountChanged(TRUE, nPrevCount, CS);
 	CS.Unlock();
 	// ***
 
@@ -1102,6 +1102,8 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 		SetTerminateEvent(ste_CmdDetachCon);
 	}
 
+	gbAttachMode = am_None;
+
 	int nOutSize = sizeof(CESERVER_REQ_HDR);
 	*out = ExecuteNewCmd(CECMD_DETACHCON,nOutSize);
 	lbRc = (*out != NULL);
@@ -1210,7 +1212,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		// Добавить процесс в список
 		// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
 		_ASSERTE(gpSrv->processes->pnProcesses[0] == gnSelfPID);
-		lbChanged = gpSrv->processes->ProcessAdd(nPID, &CS);
+		lbChanged = gpSrv->processes->ProcessAdd(nPID, CS);
 	}
 	else if ((in.StartStop.nStarted == sst_AltServerStop)
 			|| (in.StartStop.nStarted == sst_ComspecStop)
@@ -1222,7 +1224,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			// Удалить процесс из списка
 			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
 			_ASSERTE(gpSrv->processes->pnProcesses[0] == gnSelfPID);
-			lbChanged = gpSrv->processes->ProcessRemove(nPID, nPrevCount, &CS);
+			lbChanged = gpSrv->processes->ProcessRemove(nPID, nPrevCount, CS);
 		}
 		else
 		{
@@ -1256,7 +1258,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	// ***
 	if (lbChanged)
-		gpSrv->processes->ProcessCountChanged(TRUE, nPrevCount, &CS);
+		gpSrv->processes->ProcessCountChanged(TRUE, nPrevCount, CS);
 	CS.Unlock();
 	// ***
 
@@ -2558,15 +2560,11 @@ BOOL cmd_StartXTerm(CESERVER_REQ& in, CESERVER_REQ** out)
 		gpSrv->processes->StartStopXTermMode((TermModeCommand)in.dwData[0], in.dwData[1], in.dwData[2]);
 	}
 
-	if (!ProcessAltSrvCommand(in, out, lbRc))
-	{
-		// Inform the GUI
-		CESERVER_REQ* pGuiOut = ExecuteGuiCmd(ghConWnd, &in, ghConWnd);
-		ExecuteFreeResult(pGuiOut);
+	// Inform the GUI
+	CESERVER_REQ* pGuiOut = ExecuteGuiCmd(ghConWnd, &in, ghConWnd);
+	ExecuteFreeResult(pGuiOut);
 
-		*out = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR));
-	}
-
+	*out = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR));
 	lbRc = ((*out) != NULL);
 	return lbRc;
 }
