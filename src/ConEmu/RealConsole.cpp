@@ -11151,7 +11151,7 @@ void CRealConsole::SetTabs(ConEmuTab* apTabs, int anTabsCount, DWORD anFarPID)
 	_ASSERTE(anTabsCount>0 && apTabs!=NULL);
 
 	// Started "as admin"
-	if (mp_ConEmu->mb_IsUacAdmin && (m_Args.RunAsRestricted != crb_On) && (m_Args.RunAsAdministrator != crb_Off))
+	if (isAdministrator())
 	{
 		// Mark tabs as elevated (overlay icon on tab or suffix appended by GetTab)
 		for (int i = 0; i < anTabsCount; i++)
@@ -15521,7 +15521,7 @@ bool CRealConsole::isAdministrator()
 	if (m_Args.RunAsAdministrator == crb_On)
 		return true;
 
-	if (mp_ConEmu->mb_IsUacAdmin && (m_Args.RunAsAdministrator != crb_On) && (m_Args.RunAsRestricted != crb_On) && !m_Args.pszUserName)
+	if (mp_ConEmu->mb_IsUacAdmin && (m_Args.RunAsAdministrator != crb_Off) && (m_Args.RunAsRestricted != crb_On) && !m_Args.pszUserName)
 		return true;
 
 	return false;
