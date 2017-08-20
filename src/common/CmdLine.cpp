@@ -704,10 +704,22 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 			szTemp.Set(pwszCopy, (pchEnd - pwszCopy));
 			_ASSERTE(szTemp[(pchEnd - pwszCopy)] == 0);
 
+			// Argument was quoted?
+			if (!szTemp.IsEmpty())
+			{
+				INT_PTR len = szTemp.GetLen();
+				if ((len > 2) && (szTemp[0] == L'"') && (szTemp[len-1] == L'"'))
+				{
+					memmove(szTemp.ms_Val, szTemp.ms_Val+1, (len-2)*sizeof(*szTemp.ms_Val));
+					szTemp.ms_Val[len-2] = 0;
+				}
+			}
+
 			// If this is a full path without environment variables
-			if (((IsFilePath(szTemp, true) && !wcschr(szTemp, L'%'))
-				// or file/dir may be found via env.var. substitution or searching in %PATH%
-				|| FileExistsSearch((LPCWSTR)szTemp, szTemp))
+			if (!szTemp.IsEmpty()
+				&& ((IsFilePath(szTemp, true) && !wcschr(szTemp, L'%'))
+					// or file/dir may be found via env.var. substitution or searching in %PATH%
+					|| FileExistsSearch((LPCWSTR)szTemp, szTemp))
 				// Than check if it is a FILE (not a directory)
 				&& FileExists(szTemp, &nTempSize) && nTempSize)
 			{

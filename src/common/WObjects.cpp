@@ -277,8 +277,10 @@ bool FileExistsSearch(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath/*= true
 	// В противном случае, в частности, может быть запущен "far" не из папки с ConEmu, а зарегистрированный
 	// в реестре, если на машине их несколько установлено.
 
-	#if !defined(CONEMU_MINIMAL)
-	_ASSERTE(gfnSearchAppPaths!=NULL);
+	#if defined(_DEBUG)
+	CEStr lsExecutable;
+	GetModulePathName(NULL, lsExecutable);
+	_ASSERTE(gfnSearchAppPaths!=NULL || (!IsConsoleServer(lsExecutable) && !IsConEmuGui(lsExecutable)));
 	#endif
 
 	// В ConEmuHk этот блок не активен, потому что может быть "только" перехват CreateProcess,
