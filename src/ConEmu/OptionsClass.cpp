@@ -178,7 +178,6 @@ CSettings::CSettings()
 	, mp_DpiAware()
 	, mp_ImgBtn()
 	, mn_LastChangingFontCtrlId()
-	, mp_HelpPopup()
 {
 	// Prepare global pointers
 	gpSetCls = this;
@@ -281,8 +280,6 @@ CSettings::CSettings()
 	mn_MsgRecreateFont = RegisterWindowMessage(L"Settings::RecreateFont");
 	mn_MsgLoadFontFromMain = RegisterWindowMessage(L"Settings::LoadFontNames");
 	mn_ActivateTabMsg = RegisterWindowMessage(L"Settings::ActivateTab");
-
-	mp_HelpPopup = new CEHelpPopup;
 
 	// Settings pages definitions
 	InitVars_Pages();
@@ -521,7 +518,6 @@ CSettings::~CSettings()
 
 	SafeFree(m_Pages);
 
-	SafeDelete(mp_HelpPopup);
 	SafeDelete(mp_Dialog);
 	SafeDelete(mp_DpiAware);
 
@@ -1372,7 +1368,7 @@ LRESULT CSettings::OnInitDialog()
 		TreeView_SelectItem(GetDlgItem(ghOpWnd, tvSetupCategories), gpSetCls->m_Pages[0].hTI);
 
 		HWND hPlace = GetDlgItem(ghOpWnd, tSetupPagePlace);
-		ShowWindow(hPlace, SW_HIDE);
+		apiShowWindow(hPlace, SW_HIDE);
 
 		mb_IgnoreSelPage = false;
 
@@ -1382,6 +1378,7 @@ LRESULT CSettings::OnInitDialog()
 		SetDlgItemText(ghOpWnd, stSetPgWikiLink, lsUrl);
 
 		apiShowWindow(m_Pages[0].hPage, SW_SHOW);
+		m_LastActivePageId = gpSetCls->m_Pages[0].PageIndex;
 	}
 	MCHKHEAP
 	{
@@ -1707,7 +1704,7 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 					CEStr lsUrl(CEWIKIBASE, m_Pages[i].wikiPage);
 					SetDlgItemText(ghOpWnd, stSetPgWikiLink, lsUrl);
 
-					ShowWindow(m_Pages[i].hPage, SW_SHOW);
+					apiShowWindow(m_Pages[i].hPage, SW_SHOW);
 					m_LastActivePageId = gpSetCls->m_Pages[i].PageIndex;
 				}
 				else if (p->itemOld.hItem == m_Pages[i].hTI)
@@ -1716,7 +1713,7 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 				}
 			}
 			if (hCurrent)
-				ShowWindow(hCurrent, SW_HIDE);
+				apiShowWindow(hCurrent, SW_HIDE);
 		} // TVN_SELCHANGED
 		break;
 	}
@@ -1999,19 +1996,10 @@ INT_PTR CSettings::ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM 
 
 	_ASSERTE((lpnmtdi->uFlags & TTF_IDISHWND) == TTF_IDISHWND);
 
-	if (mp_HelpPopup->mh_Popup)
-	{
-		POINT MousePos = {}; GetCursorPos(&MousePos);
-		mp_HelpPopup->ShowItemHelp(0, (HWND)lpnmtdi->hdr.idFrom, MousePos);
-
-		szHint[0] = 0;
-		lpnmtdi->lpszText = szHint;
-	}
-	else
 	{
 		if (gpSet->isShowHelpTooltips)
 		{
-			mp_HelpPopup->GetItemHelp(0, (HWND)lpnmtdi->hdr.idFrom, szHint, countof(szHint));
+			CEHelpPopup::GetItemHelp(0, (HWND)lpnmtdi->hdr.idFrom, szHint, countof(szHint));
 
 			lpnmtdi->lpszText = szHint;
 		}
@@ -2265,19 +2253,11 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 		case WM_HELP:
 			if ((wParam == 0) && (lParam != 0))
 			{
-				// Показать хинт?
+				// Open wiki page
 				HELPINFO* hi = (HELPINFO*)lParam;
 				if (hi->cbSize >= sizeof(HELPINFO))
 				{
-					switch (hi->iCtrlId)
-					{
-					case tCmdGroupCommands:
-						// Some controls are processed personally
-						ConEmuAbout::OnInfo_About(L"-new_console");
-						break;
-					default:
-						gpSetCls->mp_HelpPopup->ShowItemHelp(hi);
-					}
+					CEHelpPopup::OpenSettingsWiki(hWnd2, hi->iCtrlId);
 				}
 			}
 			return TRUE;
@@ -4143,14 +4123,6 @@ bool CSettings::isDialogMessage(MSG &Msg)
 		return true;
 	}
 
-	if (mp_HelpPopup && mp_HelpPopup->mh_Popup)
-	{
-		if (IsDialogMessage(mp_HelpPopup->mh_Popup, &Msg))
-		{
-			return true;
-		}
-	}
-
 	return false;
 }
 
@@ -4236,6 +4208,16 @@ CSetPgBase* CSettings::GetActivePageObj()
 	if (!p->hPage || !IsWindowVisible(p->hPage))
 		return NULL;
 	return p->pPage;
+}
+
+LPCWSTR CSettings::GetActivePageWiki(CEStr& lsWiki)
+{
+	lsWiki.Clear();
+	const ConEmuSetupPages* p = (m_LastActivePageId != thi_Last) ? GetPageData(m_LastActivePageId) : NULL;
+	if (!p)
+		return NULL;
+	lsWiki.Attach(lstrmerge(CEWIKIBASE, p->wikiPage));
+	return lsWiki;
 }
 
 HWND CSettings::GetPage(TabHwndIndex nPage)

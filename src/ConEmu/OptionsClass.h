@@ -188,6 +188,7 @@ class CSettings
 			return (pObject != NULL);
 		};
 		TabHwndIndex GetPageId(HWND hPage);
+		LPCWSTR GetActivePageWiki(CEStr& lsWiki);
 
 	private:
 		TabHwndIndex m_LastActivePageId;
@@ -310,8 +311,6 @@ class CSettings
 		void UpdateWinHookSettings(HMODULE hLLKeyHookDll);
 	public:
 		bool isDialogMessage(MSG &Msg);
-	private:
-		CEHelpPopup* mp_HelpPopup;
 	public:
 		INT_PTR ProcessTipHelp(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
 	private:

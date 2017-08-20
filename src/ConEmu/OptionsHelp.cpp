@@ -34,16 +34,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DpiAware.h"
 #include "DynDialog.h"
 #include "LngRc.h"
+#include "OptionsClass.h"
 #include "OptionsHelp.h"
 
 //#define DEBUGSTRFONT(s) DEBUGSTR(s)
-
-CEHelpPopup::CEHelpPopup()
-{
-	mh_Popup = NULL;
-	mp_Dlg = NULL;
-	mp_DpiAware = NULL;
-}
 
 bool CEHelpPopup::GetItemHelp(int wID /* = 0*/, HWND hCtrl, wchar_t* rsHelp, DWORD cchHelpMax)
 {
@@ -104,111 +98,32 @@ bool CEHelpPopup::GetItemHelp(int wID /* = 0*/, HWND hCtrl, wchar_t* rsHelp, DWO
 	return (*rsHelp != 0);
 }
 
-void CEHelpPopup::ShowItemHelp(HELPINFO* hi)
+bool CEHelpPopup::OpenSettingsWiki(HWND hDlg, WORD nCtrlId)
 {
-	ShowItemHelp(hi->iCtrlId, (HWND)hi->hItemHandle, hi->MousePos);
-}
+	CEStr lsUrl;
+	wchar_t szId[20];
+	msprintf(szId, countof(szId), L"#id%i", nCtrlId);
 
-void CEHelpPopup::ShowItemHelp(int wID /* = 0*/, HWND hCtrl, POINT MousePos)
-{
-	wchar_t szHint[2000];
-
-	if (!GetItemHelp(wID, hCtrl, szHint, countof(szHint)))
-		return;
-
-	if (!*szHint)
-		return;
-
-	if (!mh_Popup || !IsWindow(mh_Popup))
+	//if (nCtrlId == tCmdGroupCommands)
+	//{
+	//	// Some controls are processed personally
+	//	lsUrl.Attach(lstrmerge(CEWIKIBASE, L"NewConsole.html", szId));
+	//}
+	//else
+	if (hDlg == ghOpWnd)
 	{
-		if (!mp_DpiAware)
-			mp_DpiAware = new CDpiForDialog();
-		// (CreateDialog)
-		SafeDelete(mp_Dlg);
-		mp_Dlg = CDynDialog::ShowDialog(IDD_HELP, ghOpWnd, helpProc, (LPARAM)this);
-		mh_Popup = mp_Dlg ? mp_Dlg->mh_Dlg : NULL;
-		if (!mh_Popup)
-		{
-			DisplayLastError(L"Can't create help text dialog", GetLastError());
-			return;
-		}
-
-		SetWindowPos(mh_Popup, HWND_TOPMOST, MousePos.x + 10, MousePos.y + 20, 0, 0, SWP_NOSIZE|SWP_NOACTIVATE);
+		lsUrl.Attach(lstrmerge(CEWIKIBASE, L"Settings.html", szId));
+	}
+	else if (hDlg == ghFastCfg)
+	{
+		lsUrl.Attach(lstrmerge(CEWIKIBASE, L"SettingsFast.html", szId));
+	}
+	else if (gpSetCls->GetActivePageWiki(lsUrl))
+	{
+		lstrmerge(&lsUrl.ms_Val, szId);
 	}
 
-	if (mh_Popup && IsWindow(mh_Popup))
-	{
-		if (!IsWindowVisible(mh_Popup))
-			ShowWindow(mh_Popup, SW_SHOWNA);
-		//SetForegroundWindow(mh_Popup);
-		SetDlgItemText(mh_Popup, IDC_HELP_DESCR, szHint);
-		return;
-	}
-}
-
-INT_PTR CEHelpPopup::helpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam)
-{
-	CEHelpPopup* pPopup = NULL;
-
-	switch (messg)
-	{
-		case WM_INITDIALOG:
-		{
-			pPopup = (CEHelpPopup*)lParam;
-			SetWindowLongPtr(hWnd2, DWLP_USER, (LONG_PTR)pPopup);
-			pPopup->mh_Popup = hWnd2;
-			if (pPopup->mp_DpiAware)
-				pPopup->mp_DpiAware->Attach(hWnd2, ghOpWnd, pPopup->mp_Dlg);
-			helpProc(hWnd2, WM_SIZE, 0, 0);
-
-			break;
-		}
-
-		case WM_SIZE:
-		{
-			RECT rcClient; GetClientRect(hWnd2, &rcClient);
-			MoveWindowRect(GetDlgItem(hWnd2, IDC_HELP_DESCR), rcClient, TRUE);
-			break;
-		}
-
-		case WM_COMMAND:
-			if (HIWORD(wParam) == BN_CLICKED)
-			{
-				switch (LOWORD(wParam))
-				{
-				case IDCLOSE:
-				case IDCANCEL:
-					DestroyWindow(hWnd2);
-					return 0;
-				default:
-					return 0;
-				}
-			}
-			break;
-
-		case WM_CLOSE:
-			DestroyWindow(hWnd2);
-			break;
-
-		case WM_DESTROY:
-		{
-			pPopup = (CEHelpPopup*)GetWindowLongPtr(hWnd2, DWLP_USER);
-			if (pPopup)
-			{
-				if (pPopup->mp_DpiAware)
-					pPopup->mp_DpiAware->Detach();
-				pPopup->mh_Popup = NULL;
-				SafeDelete(pPopup->mp_Dlg);
-			}
-			break;
-		}
-
-		default:
-			if (pPopup && pPopup->mp_DpiAware && pPopup->mp_DpiAware->ProcessDpiMessages(hWnd2, messg, wParam, lParam))
-			{
-				return TRUE;
-			}
-	}
-
-	return 0;
+	if (lsUrl.IsEmpty())
+		return false;
+	return CDlgItemHelper::OpenHyperlink(lsUrl, ghOpWnd);
 }

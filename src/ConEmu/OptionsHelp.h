@@ -34,16 +34,8 @@ class CDynDialog;
 
 struct CEHelpPopup
 {
-	HWND mh_Popup;
-	CDynDialog* mp_Dlg;
-	CDpiForDialog* mp_DpiAware;
-
-	CEHelpPopup();
-
-	void ShowItemHelp(HELPINFO* hi);
-	void ShowItemHelp(int wID /* = 0*/, HWND hCtrl, POINT MousePos);
-
-	bool GetItemHelp(int wID /* = 0*/, HWND hCtrl, wchar_t* rsHelp, DWORD cchHelpMax);
-
-	static INT_PTR CALLBACK helpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lParam);
+	// Prepare text for tooltip
+	static bool GetItemHelp(int wID /* = 0*/, HWND hCtrl, wchar_t* rsHelp, DWORD cchHelpMax);
+	// As is, goto our web site
+	static bool OpenSettingsWiki(HWND hDlg, WORD nCtrlId);
 };

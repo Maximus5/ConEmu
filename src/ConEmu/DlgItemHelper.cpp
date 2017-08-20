@@ -284,7 +284,12 @@ bool CDlgItemHelper::ProcessHyperlinkCtrl(HWND hDlg, WORD nCtrlId)
 			) return false;
 	}
 
-	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(ghWnd, L"open", lsUrl, NULL, NULL, SW_SHOWNORMAL);
+	return OpenHyperlink(lsUrl, hDlg);
+}
+
+bool CDlgItemHelper::OpenHyperlink(CEStr& url, HWND hParent)
+{
+	DWORD shellRc = (DWORD)(INT_PTR)ShellExecute(hParent, L"open", url, NULL, NULL, SW_SHOWNORMAL);
 	if (shellRc <= 32)
 	{
 		DisplayLastError(L"ShellExecute failed", shellRc);

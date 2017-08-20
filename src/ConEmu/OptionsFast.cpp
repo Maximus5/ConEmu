@@ -57,13 +57,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FOUND_APP_PATH_CHR L'\1'
 #define FOUND_APP_PATH_STR L"\1"
 
+HWND ghFastCfg = NULL;
 static bool bCheckHooks, bCheckUpdate, bCheckIme;
 // Если файл конфигурации пуст, то после вызова CheckOptionsFast
 // все равно будет SaveSettings(TRUE/*abSilent*/);
 // Поэтому выбранные настройки здесь можно не сохранять (кроме StopWarningConIme)
 static bool bVanilla;
 static CDpiForDialog* gp_DpiAware = NULL;
-static CEHelpPopup* gp_FastHelp = NULL;
 static int gn_FirstFarTask = -1;
 static ConEmuHotKey ghk_MinMaxKey = {};
 static int iCreatIdx = 0;
@@ -232,6 +232,8 @@ wrap:
 
 static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	ghFastCfg = hDlg;
+
 	SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hClassIcon);
 	SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hClassIconSm);
 
@@ -693,10 +695,11 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 	case HELP_WM_HELP:
 		break;
 	case WM_HELP:
-		if (gp_FastHelp && (wParam == 0) && (lParam != 0))
+		if ((wParam == 0) && (lParam != 0))
 		{
 			HELPINFO* hi = (HELPINFO*)lParam;
-			gp_FastHelp->ShowItemHelp(hi);
+			if (hi->cbSize >= sizeof(HELPINFO))
+				CEHelpPopup::OpenSettingsWiki(hDlg, hi->iCtrlId);
 		}
 		return TRUE;
 
@@ -848,14 +851,13 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 		}
 
 		gp_DpiAware = new CDpiForDialog();
-		gp_FastHelp = new CEHelpPopup;
 
 		// Modal dialog (CreateDialog)
 
 		CDynDialog::ExecuteDialog(IDD_FAST_CONFIG, NULL, CheckOptionsFastProc, (LPARAM)asTitle);
 
-		SafeDelete(gp_FastHelp);
 		SafeDelete(gp_DpiAware);
+		ghFastCfg = NULL;
 	}
 }
 

@@ -102,7 +102,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 
 #define CEHOMEPAGE_A    "https://conemu.github.io/"
 #define CEHOMEPAGE     _CRT_WIDE(CEHOMEPAGE_A)
-#define CEDOWNLPAGE    L"http://www.fosshub.com/ConEmu.html"
+#define CEDOWNLPAGE    L"https://www.fosshub.com/ConEmu.html"
 #define CEFLATTRPAGE   L"http://flattr.com/thing/2002773/Maximus5ConEmu-on-GitHub"
 #define CEDONATEPAGE   L"https://conemu.github.io/donate.html"
 #define CEWIKIBASE     L"https://conemu.github.io/en/"

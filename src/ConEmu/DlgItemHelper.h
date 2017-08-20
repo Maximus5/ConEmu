@@ -47,4 +47,6 @@ public:
 	static INT_PTR GetString(HWND hParent, WORD nCtrlId, wchar_t** ppszStr, LPCWSTR asNoDefault = NULL, bool abListBox = false);
 	static bool isHyperlinkCtrl(WORD nCtrlId);
 	static bool ProcessHyperlinkCtrl(HWND hDlg, WORD nCtrlId);
+	static bool OpenSettingsWiki(HWND hDlg, WORD nCtrlId);
+	static bool OpenHyperlink(CEStr& url, HWND hParent);
 };

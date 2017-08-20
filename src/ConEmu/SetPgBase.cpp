@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LngRc.h"
 #include "Options.h"
 #include "OptionsClass.h"
+#include "OptionsHelp.h"
 #include "RealConsole.h"
 #include "SearchCtrl.h"
 #include "SetDlgColors.h"
@@ -293,7 +294,16 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 	else if ((messg == WM_HELP) || (messg == HELP_WM_HELP))
 	{
 		_ASSERTE(messg == WM_HELP);
-		return gpSetCls->wndOpProc(hDlg, messg, wParam, lParam);
+		if ((wParam == 0) && (lParam != 0))
+		{
+			// Open wiki page
+			HELPINFO* hi = (HELPINFO*)lParam;
+			if (hi->cbSize >= sizeof(HELPINFO))
+			{
+				CEHelpPopup::OpenSettingsWiki(hDlg, hi->iCtrlId);
+			}
+		}
+		return TRUE;
 	}
 	else if (pgId == thi_Apps)
 	{

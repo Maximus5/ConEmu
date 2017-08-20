@@ -166,7 +166,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define CONEMU_ANIMATE_DURATION_MAX 5000
 
 const wchar_t* gsHomePage    = CEHOMEPAGE;    //L"https://conemu.github.io";
-const wchar_t* gsDownlPage   = CEDOWNLPAGE;   //L"http://www.fosshub.com/ConEmu.html";
+const wchar_t* gsDownlPage   = CEDOWNLPAGE;   //L"https://www.fosshub.com/ConEmu.html";
 const wchar_t* gsFirstStart  = CEFIRSTSTART;  //L"https://conemu.github.io/en/SettingsFast.html";
 const wchar_t* gsReportBug   = CEREPORTBUG;   //L"https://conemu.github.io/en/Issues.html";
 const wchar_t* gsReportCrash = CEREPORTCRASH; //L"https://conemu.github.io/en/Issues.html";
