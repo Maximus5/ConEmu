@@ -2968,6 +2968,7 @@ HWND Attach2Gui(DWORD nTimeout)
 		+cchCmdMax*sizeof(wchar_t);
 	pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, nInSize);
 	pIn->StartStop.nStarted = sst_ServerStart;
+	wcscpy_c(pIn->StartStop.sIcon, gpSrv->pConsole->hdr.sIcon);
 	pIn->StartStop.hWnd = ghConWnd;
 	pIn->StartStop.dwPID = gnSelfPID;
 	pIn->StartStop.dwAID = gpSrv->dwGuiAID;

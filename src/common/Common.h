@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    163
+#define CESERVER_REQ_VER    164
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1576,6 +1576,9 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	// И какая прокрутка допустима
 	RealBufferScroll rbsAllowed; // пока любая - rbs_Any
 
+	// Specified Tab Icon (full path)
+	wchar_t sIcon[MAX_PATH+1];
+
 	ConEmuComspec ComSpec;
 };
 
@@ -1884,6 +1887,8 @@ struct CESERVER_REQ_STARTSTOP
 	BOOL bWasSucceededInRead;
 	// Self console palette? Useful after Win+G
 	CESERVER_CONSOLE_PALETTE Palette;
+	// Specified Tab Icon (full path)
+	wchar_t sIcon[MAX_PATH+1];
 	// CmdLine
 	wchar_t sCmdLine[1]; // variable length
 };
