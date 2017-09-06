@@ -2151,18 +2151,39 @@ int CRealConsole::EvalPromptLeftRightCount(const AppSettings* pApp, COORD crMous
 	 | blue)%an %Cgreen%ad  %Creset%s" %*          |
 	 * *** end of sample *** */
 
+	auto isDirty = [](const wchar_t* pLine, int minX, int maxX)
+	{
+		bool dirty = false;
+		for (int x = minX; x < maxX; ++x)
+		{
+			if (!isSpace(pLine[x]))
+			{
+				dirty = true; break;
+			}
+		}
+		return dirty;
+	};
+
+	// When going forward and *clicked* line is empty - do nothing
+	// to avoid unexpected cursor movement when user clicks on empty field of terminal
+	if (crMax.Y > crMin.Y)
+	{
+		if (!data->GetConsoleLine(crMax.Y, line) || line.nLen <= 0 || !line.pChar)
+			return 0;
+		if (!isDirty(line.pChar, 0, line.nLen))
+			return 0;
+	}
+
+	int prevLineSpaces = 0;
+
 	// Here we need to count characters
 	// *from* current text cursor position (crCursor)
 	// *to*   clicked position (crClick)
 	for (int Y = crMin.Y; Y <= crMax.Y; ++Y)
 	{
 		// acquire the line
-		if (Y > crMin.Y)
-		{
-			if ((!data->GetConsoleLine(Y, line) || !line.pChar))
-				break;
-		}
-
+		if (!data->GetConsoleLine(Y, line))
+			line.pChar = NULL;
 		// validate line data
 		if (line.nLen <= 0 || !line.pChar)
 		{
@@ -2177,6 +2198,18 @@ int CRealConsole::EvalPromptLeftRightCount(const AppSettings* pApp, COORD crMous
 		{
 			MBoxAssert(minX >= 0 && maxX >= 0 && maxX >= minX && maxX < line.nLen);
 			continue; // next line
+		}
+
+		// Does line contain any text?
+		bool dirty = isDirty(line.pChar, minX, maxX);
+
+		// Don't try do advance cursor forward if there are no text anymore
+		if (bForward && !dirty)
+		{
+			// If prev line ended with spaces, truncate it from our result
+			_ASSERTE(prevLineSpaces <= nKeyCount);
+			nKeyCount -= prevLineSpaces;
+			break;
 		}
 
 		// Some shells take into account some terminals inability to set cursor *after* last cell,
@@ -2198,11 +2231,14 @@ int CRealConsole::EvalPromptLeftRightCount(const AppSettings* pApp, COORD crMous
 			}
 		}
 
-		// Trailing spaces on the last line
-		if (bForward && (Y == crMax.Y))
+		// Trailing spaces on the line
+		prevLineSpaces = 0;
+		if (bForward)
 		{
-			while ((maxX > minX) && isSpace(line.pChar[maxX-1]))
-				--maxX;
+			for (int x = maxX - 1; x >= minX && isSpace(line.pChar[x]); --x)
+				++prevLineSpaces;
+			if (Y == crMax.Y)
+				maxX -= prevLineSpaces;
 		}
 
 		// The line is dirty?
