@@ -4881,16 +4881,13 @@ int CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd /
 
 				pIn->NewCmd.isAdvLogging = gpSet->isLogging();
 
-				pIn->NewCmd.ShowHide = gpSetCls->SingleInstanceShowHide;
-				if (gpSetCls->SingleInstanceShowHide == sih_None)
-				{
-					if (m_StartDetached == crb_On)
-						pIn->NewCmd.ShowHide = sih_StartDetached;
-				}
-				else
-				{
-					_ASSERTE(m_StartDetached==crb_Undefined);
-				}
+				if (gpConEmu->WindowStartMinimized)
+					pIn->NewCmd.ShowHide = sih_Minimize;
+				if (pIn->NewCmd.ShowHide == sih_None)
+					pIn->NewCmd.ShowHide = gpSetCls->SingleInstanceShowHide;
+				if ((pIn->NewCmd.ShowHide == sih_None) && (m_StartDetached == crb_On))
+					pIn->NewCmd.ShowHide = sih_StartDetached;
+				_ASSERTE(pIn->NewCmd.ShowHide != sih_None || m_StartDetached == crb_Undefined);
 
 				//GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
 				lstrcpyn(pIn->NewCmd.szCurDir, WorkDir(), countof(pIn->NewCmd.szCurDir));

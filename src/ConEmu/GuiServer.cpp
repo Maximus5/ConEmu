@@ -279,6 +279,8 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			if (bAccepted)
 			{
 				bool bCreateTab = (pIn->NewCmd.ShowHide == sih_None || pIn->NewCmd.ShowHide == sih_StartDetached)
+					// gh-1245: User may run "ConEmu.exe -reuse -min -run cmd"
+					|| (pIn->NewCmd.ShowHide == sih_Minimize && pszCommand[0])
 					// Issue 1275: When minimized into TSA (on all VCon are closed) we need to restore and run new tab
 					|| (pszCommand[0] && !CVConGroup::isVConExists(0));
 
@@ -357,7 +359,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				// gh#151: Do animation after starting tab creation
 				if (!bSkipActivation && (rTest.BackgroundTab != crb_On))
 				{
-					gpConEmu->DoMinimizeRestore(bCreateTab ? sih_SetForeground : pIn->NewCmd.ShowHide);
+					gpConEmu->DoMinimizeRestore((bCreateTab && pIn->NewCmd.ShowHide != sih_Minimize) ? sih_SetForeground : pIn->NewCmd.ShowHide);
 				}
 			}
 
