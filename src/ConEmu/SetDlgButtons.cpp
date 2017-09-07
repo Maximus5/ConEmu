@@ -1528,14 +1528,10 @@ void CSetDlgButtons::OnBtn_CmdTasksDir(HWND hDlg, WORD CB, BYTE uCheck)
 	{
 		if (SHGetPathFromIDList(pRc, szFolder))
 		{
-			wchar_t szFull[MAX_PATH+32];
-			bool bQuot = wcschr(szFolder, L' ') != NULL;
-			wcscpy_c(szFull, bQuot ? L" \"-new_console:d:" : L" -new_console:d:");
-			wcscat_c(szFull, szFolder);
-			if (bQuot)
-				wcscat_c(szFull, L"\"");
+			bool bQuot = IsQuotationNeeded(szFolder);
+			CEStr lsFull(L" -new_console:d:", bQuot ? L"\"" : NULL, szFolder, bQuot ? L"\" " : L" ");
 
-			SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)szFull);
+			SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)lsFull.ms_Val);
 		}
 
 		CoTaskMemFree(pRc);
