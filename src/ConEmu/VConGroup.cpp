@@ -5685,7 +5685,7 @@ void CVConGroup::GroupInput(CVirtualConsole* apVCon, GroupInputCmd cmd)
 				pGr = pGr->mp_Parent;
 			}
 
-			VCon->SetFlags(Set, vf_GroupSplit|evf_GroupSet, (int)i);
+			VCon->SetFlags(Set, vf_GroupSplit|vf_GroupSet, (int)i);
 		}
 	}
 }
