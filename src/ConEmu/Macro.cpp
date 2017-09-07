@@ -3113,14 +3113,24 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 		if (p->GetIntArg(1, nValue))
 			pszResult = gpSetCls->SetOption(pszName, nValue) ? lstrdup(L"OK") : NULL;
 	}
-	else if (!lstrcmpi(pszName, L"FarGotoEditorPath"))
+	else if (!lstrcmpi(pszName, L"FarGotoEditorPath")
+		|| !lstrcmpi(pszName, L"Scheme"))
 	{
 		if (p->GetStrArg(1, pszValue))
 			pszResult = gpSetCls->SetOption(pszName, pszValue) ? lstrdup(L"OK") : NULL;
 	}
+	else if (!lstrcmpi(pszName, L"VConScheme"))
+	{
+		if (apRCon && p->GetStrArg(1, pszValue))
+		{
+			CVConGuard VCon(apRCon ? apRCon->VCon() : NULL);
+			pszResult = VCon->ChangePalette(pszValue) ? lstrdup(L"OK") : NULL;
+		}
+	}
 	else
 	{
 		//TODO: More options on demand
+		_ASSERTE(FALSE && "Option is not supported yet");
 	}
 
 	return pszResult ? pszResult : lstrdup(L"UnknownOption");

@@ -590,6 +590,15 @@ bool CSettings::SetOption(LPCWSTR asName, LPCWSTR asValue)
 			lbRc = true;
 		}
 	}
+	else if (!lstrcmpi(asName, L"Scheme"))
+	{
+		const ColorPalette* pPal = gpSet->PaletteGetByName(asValue);
+		if (pPal)
+		{
+			ChangeCurrentPalette(pPal, true);
+			lbRc = true;
+		}
+	}
 	else
 	{
 		_ASSERTE(FALSE && "Unsupported parameter name");

@@ -2593,11 +2593,22 @@ int CVirtualConsole::GetPaletteIndex()
 
 bool CVirtualConsole::ChangePalette(int aNewPaletteIdx)
 {
+	const ColorPalette* pPal = gpSet->PaletteGet(aNewPaletteIdx);
+	return ChangePalette(pPal);
+}
+
+bool CVirtualConsole::ChangePalette(LPCWSTR asNewPalette)
+{
+	const ColorPalette* pPal = gpSet->PaletteGetByName(asNewPalette);
+	return ChangePalette(pPal);
+}
+
+bool CVirtualConsole::ChangePalette(const ColorPalette* pPal)
+{
 	if (!this || !mp_RCon)
 		return false;
 
 	const ColorPalette* pOldPal = gpSet->PaletteGet(GetPaletteIndex());
-	const ColorPalette* pPal = gpSet->PaletteGet(aNewPaletteIdx);
 	if (!pPal)
 		return false;
 

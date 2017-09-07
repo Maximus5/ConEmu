@@ -407,6 +407,9 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"      Value: path to the executable with arguments\r\n" \
 	L"    \"QuakeAutoHide\": auto hide on focus lose, Quake mode\r\n" \
 	L"      Value: 2 - switch auto-hide, 1 - enable, 0 - disable\r\n" \
+	L"    \"Scheme\": switch color scheme for the whole ConEmu window\r\n" \
+	L"    \"VConScheme\": switch color scheme for the active console\r\n" \
+	L"      Value: color palette name, e.g. \"<Solarized>\"\r\n" \
 	L"Settings([<PageResourceId>])\r\n" \
 	L"  - Show ‘Settings’ dialog with specified page activated (optionally)\r\n" \
 	L"      PageResourceId: integer DialogID from ‘resource.h’\r\n" \

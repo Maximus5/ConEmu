@@ -266,6 +266,8 @@ class CVirtualConsole :
 		COLORREF* GetColors(bool bFade);
 		int GetPaletteIndex();
 		bool ChangePalette(int aNewPaletteIdx);
+		bool ChangePalette(LPCWSTR asNewPalette);
+		bool ChangePalette(const ColorPalette* pPal);
 		void PaintVCon(HDC hPaintDc);
 		bool PrintClient(HDC hPrintDc, bool bAllowRepaint, const LPRECT PaintRect);
 		bool Blit(HDC hPaintDC, int anX, int anY, int anShowWidth, int anShowHeight);
