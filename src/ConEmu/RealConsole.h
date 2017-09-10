@@ -211,6 +211,7 @@ class CRealConsole
 			bool    bChildConAttached;  // TRUE if ChildGui started CONSOLE application (CommandPromptPortable.exe). Don't confuse with Putty/plink-proxy.
 			bool    bInGuiAttaching;
 			bool    bInSetFocus;
+			bool    bCreateHidden;
 			DWORD   nGuiWndStyle, nGuiWndStylEx; // Исходные стили окна ДО подцепления в ConEmu
 			ConProcess Process;
 			CESERVER_REQ_PORTABLESTARTED paf;

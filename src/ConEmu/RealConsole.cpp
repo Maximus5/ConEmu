@@ -6572,7 +6572,15 @@ bool CRealConsole::isGuiVisible()
 	{
 		// IsWindowVisible не подходит, т.к. учитывает видимость и mh_WndDC
 		DWORD_PTR nStyle = GetWindowLongPtr(m_ChildGui.hGuiWnd, GWL_STYLE);
-		return (nStyle & WS_VISIBLE) != 0;
+		if ((nStyle & WS_VISIBLE) != 0)
+		{
+			if (m_ChildGui.bCreateHidden)
+				m_ChildGui.bCreateHidden = false;
+			return true;
+		}
+		// Avoid ScrollBar force show during ChildGui startup
+		if (m_ChildGui.bCreateHidden)
+			return true;
 	}
 	return false;
 }
@@ -14839,6 +14847,9 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	_ASSERTE((m_ChildGui.hGuiWnd==NULL && ahGuiWnd==NULL) || (ahGuiWnd && IsWindow(ahGuiWnd))); // Проверить, чтобы мусор не пришел...
 	m_ChildGui.nGuiAttachFlags = anFlags;
 	setGuiWndPID(ahGuiWnd, anAppPID, anBits, PointToName(asAppFileName)); // устанавливает mn_GuiWndPID
+	if (ahGuiWnd)
+		mp_VCon->HideScroll(true);
+	m_ChildGui.bCreateHidden = ((anStyle & WS_VISIBLE) == 0);
 	m_ChildGui.nGuiWndStyle = anStyle; m_ChildGui.nGuiWndStylEx = anStyleEx;
 	m_ChildGui.bGuiExternMode = false;
 	GuiWndFocusStore();
