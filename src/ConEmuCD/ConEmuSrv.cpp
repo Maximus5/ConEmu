@@ -4138,6 +4138,7 @@ static BOOL ReadConsoleData()
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 
 	BOOL lbRc = FALSE, lbChanged = FALSE;
+	bool lbDataChanged = false;
 #ifdef _DEBUG
 	CONSOLE_SCREEN_BUFFER_INFO dbgSbi = gpSrv->sbi;
 #endif
@@ -4233,6 +4234,8 @@ static BOOL ReadConsoleData()
 		//_ASSERTE(gpSrv->nConsoleDataSize >= (nCurSize+nHdrSize));
 	}
 
+	if (gpSrv->pConsole->ConState.crWindow.X != TextWidth || gpSrv->pConsole->ConState.crWindow.Y != TextHeight)
+		lbDataChanged = true;
 	gpSrv->pConsole->ConState.crWindow = MakeCoord(TextWidth, TextHeight);
 
 	gpSrv->pConsole->ConState.sbi.srWindow = rgn;
@@ -4289,7 +4292,11 @@ static BOOL ReadConsoleData()
 	//gpSrv->pConsoleDataCopy->crBufSize.X = TextWidth;
 	//gpSrv->pConsoleDataCopy->crBufSize.Y = TextHeight;
 
-	if (memcmp(gpSrv->pConsole->data, gpSrv->pConsoleDataCopy, nCurSize))
+	// Not only the contents may be changed, but window height too
+	// In result, on height decrease ConEmu content was erased on update
+	if (!lbDataChanged)
+		lbDataChanged = (memcmp(gpSrv->pConsole->data, gpSrv->pConsoleDataCopy, nCurSize) != 0);
+	if (lbDataChanged)
 	{
 		InputLogger::Log(InputLogger::Event::evt_ConDataChanged);
 		memmove(gpSrv->pConsole->data, gpSrv->pConsoleDataCopy, nCurSize);
