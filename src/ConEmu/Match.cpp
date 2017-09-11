@@ -656,8 +656,11 @@ bool CMatch::MatchWord(LPCWSTR asLine/*This may be NOT 0-terminated*/, int anLin
 		if (iStopOnRghtBkt == -1)
 		{
 			const wchar_t* pchLeftBkt = wcschr(szLeftBkt, asLine[rnStart]);
-			iStopOnRghtBkt = (int)(pchLeftBkt - szLeftBkt);
-			_ASSERTE(iStopOnRghtBkt > 0 && (size_t)iStopOnRghtBkt < wcslen(szRightBkt));
+			if (pchLeftBkt)
+			{
+				iStopOnRghtBkt = (int)(pchLeftBkt - szLeftBkt);
+				_ASSERTE(iStopOnRghtBkt > 0 && (size_t)iStopOnRghtBkt < wcslen(szRightBkt));
+			}
 		}
 		rnStart++;
 	}
