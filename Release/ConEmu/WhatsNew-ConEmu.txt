@@ -20,6 +20,25 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.9.10
+* gh-1227: Let ‘Context help’ button open corresponding page on conemu.github.io.
+* gh-1213, gh-1246: Clicking anywere below the prompt line caused prolonged cursor blinking.
+  ConEmu tried to move text cursor to the clicked position, which caused numerous ‘Right arrow’ clicks.
+  Since now ConEmu would not try to advance text cursor forward, if user clicks on the empty
+  space (line) below the prompt.
+* gh-1247: Button `Startup dir...` on Tasks settings page didn't insert space-separator.
+* gh-1243: GroupInput blocked input on terminals.
+* gh-1245: When user runs `ConEmu -reuse -min -run ...` don't restore existing window, but minimize it.
+* ConEmu content was erased on decreasing window height or splitting.
+* gh-1249: Fix the gap on the right of the child GUI window, when scrollbar is set to be always shown.
+* gh-1241: Fix crash on text selection (mouse double click).
+* gh-1244: GuiMacro: Use SetOption to change color palettes.
+  * `SetOption("Scheme", "<SchemeName>")` changes color palette for the whole ConEmu window
+  * `SetOption("VConScheme", "<SchemeName>")` changes color palette for the active console
+  For example, user may execute from the active shell prompt:
+  ConEmuC -GuiMacro SetOption Scheme "<Tomorrow>"
+
+
 2017.8.19
 * gh-1164, gh-1216, gh-1219: Workaround for Window 10 conhost bug when content is erased on resize.
 * gh-1212: After ‘Unfasten’, unfastened console loses arrow key capability.

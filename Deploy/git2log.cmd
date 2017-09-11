@@ -65,6 +65,10 @@ goto :EOF
 :out_build
 echo ---
 echo build: %CurVerBuild%
+if /I "%CurVerStage%" == "ALPHA"   echo stage: alpha
+if /I "%CurVerStage%" == "PREVIEW" echo stage: preview
+if /I "%CurVerStage%" == "STABLE"  echo stage: stable
+rem add new line to the end of .daily.md
 echo ---^
 
 
