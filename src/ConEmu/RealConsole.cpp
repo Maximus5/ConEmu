@@ -14847,11 +14847,11 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	_ASSERTE((m_ChildGui.hGuiWnd==NULL && ahGuiWnd==NULL) || (ahGuiWnd && IsWindow(ahGuiWnd))); // Проверить, чтобы мусор не пришел...
 	m_ChildGui.nGuiAttachFlags = anFlags;
 	setGuiWndPID(ahGuiWnd, anAppPID, anBits, PointToName(asAppFileName)); // устанавливает mn_GuiWndPID
-	if (ahGuiWnd)
-		mp_VCon->HideScroll(true);
 	m_ChildGui.bCreateHidden = ((anStyle & WS_VISIBLE) == 0);
 	m_ChildGui.nGuiWndStyle = anStyle; m_ChildGui.nGuiWndStylEx = anStyleEx;
 	m_ChildGui.bGuiExternMode = false;
+	if (ahGuiWnd)
+		mp_VCon->TrackMouse();
 	GuiWndFocusStore();
 	ShowWindow(GetView(), SW_HIDE); // Остается видим только Back, в нем создается GuiClient
 

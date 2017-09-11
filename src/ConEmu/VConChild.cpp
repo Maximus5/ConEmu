@@ -1529,7 +1529,7 @@ void CConEmuChild::OnAlwaysShowScrollbar(bool abSync /*= true*/)
 	{
 		CVConGuard VCon(mp_VCon);
 
-		if (gpSet->isAlwaysShowScrollbar == 1)
+		if (gpSet->isAlwaysShowScrollbar == 1 && !VCon->RCon()->isGuiVisible())
 			ShowScroll(TRUE);
 		else if (!m_si.nMax)
 			HideScroll(TRUE);
