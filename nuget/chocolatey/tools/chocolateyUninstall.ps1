@@ -1,5 +1,5 @@
 $package = 'ConEmu'
-$version = '17.08.19'
+$version = '17.09.10'
 
 
 $isSytem32Bit = (($Env:PROCESSOR_ARCHITECTURE -eq 'x86') -and `
