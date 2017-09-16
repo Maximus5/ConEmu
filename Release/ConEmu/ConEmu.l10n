@@ -92,7 +92,7 @@
       "en": [ "Show background image instead standard\r\n"
             , "colors #0 and #1 (black and blue)\r\n"
             , "3rd-state - don't draw in viewer/editor" ],
-      "zh": [ "现实背景图片取代标准背景\r\n"
+      "zh": [ "显示背景图片取代标准背景\r\n"
             , "颜色 #0 和 #1 （黑和蓝）\r\n"
             , "第三种情况 - 不要在视图/编辑器（viewer/editor）中绘制" ],
       "id": 1699 }
@@ -125,16 +125,19 @@
     ,
     "cbCmdTaskbarCommands": {
       "en": "Show in TaskBar Jump List commands used to run consoles (history)",
+      "zh": "在任务栏快速跳转列表中显示用于运行终端的命令（通过使用历史）",
       "ru": "Показать в списке переходов команды запуска консолей (история)",
       "id": 2133 }
     ,
     "cbCmdTaskbarTasks": {
       "en": "Show in TaskBar Jump List eligible Tasks (check Task properties)",
+      "zh": "在任务栏快速跳转列表中显示符合条件的任务（通过检查任务属性）",
       "ru": "Показать в списке переходов разрешенные Задачи (Tasks, Список переходов)",
       "id": 2132 }
     ,
     "cbCmdTaskbarUpdate": {
       "en": "Don't forget to update Jump Lists, especially if ‘Autoupdate’ is unchecked",
+      "zh": "别忘了更新快速跳转列表，尤其是当“自动更新”未选中时",
       "ru": "Не забудьте обновить список переходов, особенно если опция ‘Сразу’ отключена",
       "id": 2320 }
     ,
@@ -201,7 +204,7 @@
       "en": [ "When ‘Off’ - only characters ends selection\r\n"
             , "When ‘On’ - any key ends selection (Arrows, PgUp, End, etc.)" ],
       "zh": [ "当为‘Off’时 - 仅字符键结束选择\r\n"
-            , "当为‘On’时 - 任意键结束选择（Arrows, PgUp, End,等）" ],
+            , "当为‘On’时 - 任意键结束选择（Arrows, PgUp, End等）" ],
       "id": 2436 }
     ,
     "cbCTSEndOnTyping": {
@@ -230,12 +233,12 @@
     ,
     "cbCTSResetOnRelease": {
       "en": "Reset selection region on left mouse button up (when selecting with mouse)",
-      "zh": "鼠标左键向上时重置选择区域（当用鼠标选择时）",
+      "zh": "鼠标左键松开时重置选择区域（当用鼠标选择时）",
       "id": 3029 }
     ,
     "cbCTSShiftArrowStartSel": {
       "en": "Start text selection with Shift+Left/Right/Home/End or block selection with Shift+Up/Down",
-      "zh": "以Shift+Left/Right/Home/End键开始文本选择，或者，按下Shift+Up/Down键开始块状模式选择",
+      "zh": "以Shift+Left/Right/Home/End键开始文本选择，或者以Shift+Up/Down键开始块状模式选择",
       "id": 2553 }
     ,
     "cbCTSTextSelection": {
@@ -251,8 +254,8 @@
     "cbCursorBlink": {
       "en": [ "When \"Blinking\" is ON - cursor blinks\r\n"
             , "with standard cursor blink rate." ],
-      "zh": [ "当 \"闪烁\" 选项开启 - 光标会闪烁\r\n"
-            , "闪烁在标准频率下" ],
+      "zh": [ "当 \"闪烁\" 选项开启 - \r\n"
+            , "光标会在标准频率下闪烁" ],
       "id": 1522 }
     ,
     "cbCursorColor": {
@@ -260,8 +263,8 @@
             , "OFF - cursor is white (color#15) on dark backgrounds,\r\n"
             , "and black (color#0) on light backgrounds; also this checkbox affect appearance of ‘Block’ cursors" ],
       "zh": [ "ON - 光标模拟控制台行为（各种颜色转化）\r\n"
-            , "OFF - 光标为白色 （颜色#15） 背景灰暗\r\n"
-            , "以及光标黑色（颜色#0） 背景明亮；这个复选框同时也会影响块状（“Block”）光标的外观" ],
+            , "OFF - 当背景灰暗时光标为白色 （颜色#15） \r\n"
+            , "以及明亮时光标为黑色（颜色#0）；这个复选框同时也会影响块状（“Block”）光标的外观" ],
       "id": 1210 }
     ,
     "cbCursorIgnoreSize": {
@@ -342,12 +345,12 @@
             , "3rd-state - same as \"On\", but w/o confirmation" ],
       "zh": [ "Off - ConEmu不会接受外部拖放\r\n"
             , "On - 允许拖放 （Far 确认对话框）\r\n"
-            , "第三种情况 - 同\"On\"，但无 w/o 确认" ],
+            , "第三种情况 - 同\"On\"，但不经过确认" ],
       "id": 1502 }
     ,
     "cbDropUnlocked": {
       "en": "Unlock source and target window on Drop operation. This may cause unpredictable results, when DragSource creates temp dragged files ONLY for drag lifetime.",
-      "zh": "通过拖放解锁源窗口和目标窗口。当拖放源仅在拖放进行时创建临时文件，可能会导致不预期的结果。",
+      "zh": "通过拖放解锁源窗口和目标窗口。当拖放源仅在拖放进行时创建临时文件时可能会导致不预期的结果。",
       "id": 1579 }
     ,
     "cbDropUseBCopy": {
@@ -378,7 +381,7 @@
       "en": [ "You can use up to 32 foreground colors\r\n"
             , "(instead of console standard 16) at the\r\n"
             , "expense of one of background colors" ],
-      "zh": [ "你可以使用32多种前端颜色\r\n"
+      "zh": [ "你可以使用至多32种前端颜色\r\n"
             , "（取代控制台console标准的16种）\r\n"
             , "背景颜色会占用一种颜色" ],
       "id": 1515 }
@@ -469,7 +472,7 @@
     ,
     "cbInjectConEmuHkFast": {
       "en": "Required for many features (ANSI X3.64, -new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (crash in Windows 8, telnet in Windows 7, dialogs and menus behind of ConEmu window, chcp hungs, and so on...)",
-      "zh": "此功能被更多特征所需要（ANSI X3.64, -new_console argument, ConEmu tabs中的GUI, ...） 并消除若干问题（在Windows 8奔溃，Windows 7中的telnet，对话框和菜单出现在ConEmu窗口后面， chcp挂起，等等……）",
+      "zh": "此功能被更多特征所需要（ANSI X3.64, -new_console argument, ConEmu tabs中的GUI, ...） 并消除若干问题（在Windows 8崩溃，Windows 7中的telnet，对话框和菜单出现在ConEmu窗口后面， chcp挂起，等等……）",
       "id": 2098 }
     ,
     "cbInsideName": {
@@ -497,11 +500,13 @@
     ,
     "cbJumpListAutoUpdate": {
       "en": "If checked, Jump Lists will be updated automatically when user (un)check the ‘Taskbar jump lists’ checkbox in Task properties.",
+      "zh": "选中时，快速跳转菜单会在用户在任务属性中选中或取消选中“快速跳转菜单”选项时自动更新。",
       "ru": "Если включено, Списки переходов будут обновляться автоматически при смене флажка «Список переходов» в свойствах Задачи (Task).",
       "id": 3073 }
     ,
     "cbKillSshAgent": {
       "en": "Terminate all `ssh-agent.exe` processes started from ConEmu's consoles on ConEmu termination.",
+      "zh": "在ConEmu终止时终止所有由ConEmu终端启动的`ssh-agent.exe`进程。",
       "id": 3075 }
     ,
     "cbLongOutput": {
@@ -523,9 +528,9 @@
             , "in ConEmu title for minimize to TSA,\r\n"
             , "when this checkbox is OFF" ],
       "zh": [ "自动最小化到任务栏状态区域（TSA）\r\n"
-            , "在‘关闭窗口按钮’上右击\r\n"
-            , "在ConEmu标题里最小化至TSA,\r\n"
-            , "当此选项关闭时（OFF）" ],
+            , "当此选项关闭时（OFF）"
+            , "在ConEmu标题里的‘关闭窗口按钮’上右击\r\n"
+            , "以最小化至TSA,\r\n" ],
       "id": 1507 }
     ,
     "cbMonitorConsoleLang": {
@@ -543,6 +548,7 @@
     ,
     "cbMouseDragWindow": {
       "en": "Allows to move ConEmu window via dragging it by client area.",
+      "zh": "允许通过在客户端区域内拖动来移动ConEmu窗口。",
       "id": 3060 }
     ,
     "cbMultiCon": {
@@ -966,7 +972,7 @@
     ,
     "lbLDragKey": {
       "en": "Drag with left mouse button, only when pressed...",
-      "zh": "用鼠标左键拖放，仅当按下时……",
+      "zh": "用鼠标左键拖放，仅当按下……时",
       "id": 1501 }
     ,
     "lbNtvdmHeight": {
@@ -978,7 +984,7 @@
     ,
     "lbRDragKey": {
       "en": "Drag with right mouse button, only when pressed...",
-      "zh": "用鼠标右键拖放，仅当按下时……",
+      "zh": "用鼠标右键拖放，仅当按下……时",
       "id": 1503 }
     ,
     "rbActivityComm": {
