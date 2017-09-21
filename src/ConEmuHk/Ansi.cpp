@@ -911,6 +911,57 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	ExtWriteTextParm write = {sizeof(write), ewtf_Current|AddFlags, hConsoleOutput};
 	write.Private = (void*)(FARPROC)_WriteConsoleW;
 
+	LPCWSTR pszSrcBuffer = lpBuffer;
+	wchar_t cvtBuf[80], *pcvtBuf = NULL;
+	if (mCharSet && lpBuffer && nNumberOfCharsToWrite)
+	{
+		static wchar_t G0_DRAWING[31] = {
+			0x2666 /*♦*/, 0x2592 /*▒*/, 0x2192 /*→*/, 0x21A8 /*↨*/, 0x2190 /*←*/, 0x2193 /*↓*/, 0x00B0 /*°*/, 0x00B1 /*±*/,
+			0x00B6 /*¶*/, 0x2195 /*↕*/, 0x2518 /*┘*/, 0x2510 /*┐*/, 0x250C /*┌*/, 0x2514 /*└*/, 0x253C /*┼*/, 0x203E /*‾*/,
+			0x207B /*⁻*/, 0x2500 /*─*/, 0x208B /*₋*/, 0x005F /*_*/, 0x251C /*├*/, 0x2524 /*┤*/, 0x2534 /*┴*/, 0x252C /*┬*/,
+			0x2502 /*│*/, 0x2264 /*≤*/, 0x2265 /*≥*/, 0x03C0 /*π*/, 0x2260 /*≠*/, 0x00A3 /*£*/, 0x00B7 /*·*/
+		};
+		LPCWSTR pszMap = NULL;
+		switch (mCharSet)
+		{
+		case VTCS_DRAWING:
+			pszMap = G0_DRAWING;
+			break;
+		}
+		if (pszMap)
+		{
+			wchar_t* dst = NULL;
+			for (DWORD i = 0; i < nNumberOfCharsToWrite; ++i)
+			{
+				if (pszSrcBuffer[i] >= 0x60 && pszSrcBuffer[i] < 0x7F)
+				{
+					if (!pcvtBuf)
+					{
+						if (nNumberOfCharsToWrite <= countof(cvtBuf))
+						{
+							pcvtBuf = cvtBuf;
+						}
+						else
+						{
+							pcvtBuf = (wchar_t*)malloc(sizeof(*pcvtBuf) * nNumberOfCharsToWrite);
+							if (!pcvtBuf)
+								break;
+						}
+						lpBuffer = pcvtBuf;
+						dst = pcvtBuf;
+						if (i)
+							memmove(dst, pszSrcBuffer, i * sizeof(*dst));
+					}
+					dst[i] = pszMap[pszSrcBuffer[i] - 0x60];
+				}
+				else if (dst)
+				{
+					dst[i] = pszSrcBuffer[i];
+				}
+			}
+		}
+	}
+
 	GetFeatures(NULL, &mb_SuppressBells);
 	if (mb_SuppressBells)
 	{
@@ -985,6 +1036,9 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 
 	if (lpNumberOfCharsWritten)
 		*lpNumberOfCharsWritten = nTotalWritten;
+
+	if (pcvtBuf && pcvtBuf != cvtBuf)
+		free(pcvtBuf);
 
 	return lbRc;
 }
@@ -1356,6 +1410,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					case L'E': // CR-LF
 					case L'D': // LF
 						// xterm?
+						lpStart = lpEscStart;
 						Code.First = 27;
 						Code.Second = *(++lpBuffer);
 						Code.ArgC = 0;
@@ -1373,6 +1428,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					// Set lpSaveStart to current start of Esc sequence, it was set to beginning of buffer
 					_ASSERTEX(lpSaveStart <= lpBuffer);
 					lpSaveStart = lpBuffer;
+					_ASSERTEX(lpSaveStart == lpEscStart);
 
 					Code.First = 27;
 					Code.Second = *(++lpBuffer);
@@ -1382,7 +1438,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 
 					TODO("Bypass unrecognized ESC sequences to screen? Don't try to eliminate 'Possible' sequences?");
 					//if (((Code.Second < 64) || (Code.Second > 95)) && (Code.Second != 124/* '|' - vim-xterm-emulation */))
-					if (!wcschr(L"[](|", Code.Second))
+					if (!wcschr(L"[]|()%", Code.Second))
 					{
 						// Don't assert on rawdump of KeyEvents.exe Esc key presses
 						// 10:00:00 KEY_EVENT_RECORD: Dn, 1, Vk="VK_ESCAPE" [27/0x001B], Scan=0x0001 uChar=[U='\x1b' (0x001B): A='\x1b' (0x1B)]
@@ -1400,9 +1456,26 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 
 					switch (Code.Second)
 					{
+					case L'(':
+					case L')':
+					case L'%':
+					//case L'#':
+					//case L'*':
+					//case L'+':
+					//case L'-':
+					//case L'.':
+					//case L'/':
+						// VT G0/G1/G2/G3 character sets
+						lpStart = lpSaveStart;
+						Code.Action = *(lpBuffer++);
+						Code.Skip = 0;
+						Code.ArgSZ = NULL;
+						Code.cchArgSZ = 0;
+						lpEnd = lpBuffer;
+						iRc = 1;
+						goto wrap;
 					case L'|':
 						// vim-xterm-emulation
-					case L'(':
 					case L'[':
 						// Standard
 						Code.Skip = 0;
@@ -2280,10 +2353,26 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 						break;
 					case L'=':
 					case L'>':
-						// xterm "ESC ="
+						// xterm "ESC =" - Application Keypad (DECKPAM)
+						// xterm "ESC >" - Normal Keypad (DECKPNM)
+						DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
+						break;
 					case L'(':
 						// xterm G0..G3?
-						DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
+						switch (Code.Action)
+						{
+						case L'0':
+							mCharSet = VTCS_DRAWING;
+							//DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Comment);
+							break;
+						case L'B':
+							mCharSet = VTCS_DEFAULT;
+							//DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Comment);
+							break;
+						default:
+							mCharSet = VTCS_DEFAULT;
+							DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
+						}
 						break;
 
 					default:
@@ -2801,6 +2890,13 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			case 7787: /* 'W': Application mousewheel mode */
 				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
 					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored); // ignored for now
+				else
+					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
+				break;
+			case 1034:
+				// Interpret "meta" key, sets eighth bit. (enables/disables the eightBitInput resource).
+				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
+					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
 				else
 					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
 				break;

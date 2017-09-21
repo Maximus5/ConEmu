@@ -217,6 +217,13 @@ protected:
 	OnWriteConsoleW_t pfnWriteConsoleW;
 	HANDLE mh_WriteOutput;
 
+	enum VTCharSet
+	{
+		VTCS_DEFAULT = 0,
+		VTCS_DRAWING,
+	};
+	VTCharSet mCharSet = VTCS_DEFAULT;
+
 	struct DisplayParm
 	{
 		BOOL WasSet;
