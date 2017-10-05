@@ -283,7 +283,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	mp_sei_dbg = NULL;
 	mn_MainSrv_PID = mn_ConHost_PID = 0; mh_MainSrv = NULL; mb_MainSrv_Ready = false;
 	mn_CheckFreqLock = 0;
-	mp_ConHostSearch = NULL;
 	mn_ActiveLayout = 0;
 	mn_AltSrv_PID = 0;  //mh_AltSrv = NULL;
 	mn_Terminal_PID = 0;
@@ -506,10 +505,9 @@ CRealConsole::~CRealConsole()
 	SafeCloseHandle(mh_ActiveServerSwitched);
 	SafeCloseHandle(mh_ConInputPipe);
 	m_ConDataChanged.Close();
-	if (mp_ConHostSearch)
+	if (m_ConHostSearch)
 	{
-		mp_ConHostSearch->Release();
-		SafeFree(mp_ConHostSearch);
+		m_ConHostSearch.Release();
 	}
 
 
@@ -4044,15 +4042,16 @@ void CRealConsole::OnStartProcessAllowed()
 
 void CRealConsole::ConHostSearchPrepare()
 {
-	if (!this || !mp_ConHostSearch)
+	CRefGuard<CConHostSearch> search(m_ConHostSearch.Ptr());
+	if (!this || !search)
 	{
-		_ASSERTE(this && mp_ConHostSearch);
+		_ASSERTE(this && search);
 		return;
 	}
 
 	LogString(L"Prepare searching for conhost");
 
-	mp_ConHostSearch->Reset();
+	search->data.Reset();
 
 	HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (h && (h != INVALID_HANDLE_VALUE))
@@ -4063,7 +4062,7 @@ void CRealConsole::ConHostSearchPrepare()
 			BOOL bFlag = TRUE;
 			do {
 				if (lstrcmpi(PI.szExeFile, L"conhost.exe") == 0)
-					mp_ConHostSearch->Set(PI.th32ProcessID, bFlag);
+					search->data.Set(PI.th32ProcessID, bFlag);
 			} while (Process32Next(h, &PI));
 		}
 		CloseHandle(h);
@@ -4074,9 +4073,10 @@ void CRealConsole::ConHostSearchPrepare()
 
 DWORD CRealConsole::ConHostSearch(bool bFinal)
 {
-	if (!this || !mp_ConHostSearch)
+	CRefGuard<CConHostSearch> search(m_ConHostSearch.Ptr());
+	if (!this || !search)
 	{
-		_ASSERTE(this && mp_ConHostSearch);
+		_ASSERTE(this && search);
 		return 0;
 	}
 
@@ -4101,7 +4101,7 @@ DWORD CRealConsole::ConHostSearch(bool bFinal)
 				do {
 					if (lstrcmpi(PI.szExeFile, L"conhost.exe") == 0)
 					{
-						if (!mp_ConHostSearch->Get(PI.th32ProcessID, NULL))
+						if (!search->data.Get(PI.th32ProcessID, NULL))
 						{
 							CreatedHost.push_back(PI);
 						}
@@ -4136,10 +4136,9 @@ DWORD CRealConsole::ConHostSearch(bool bFinal)
 
 wrap:
 
-	if (bFinal && mp_ConHostSearch)
+	if (bFinal)
 	{
-		mp_ConHostSearch->Release();
-		SafeFree(mp_ConHostSearch);
+		m_ConHostSearch.Release();
 	}
 
 	if (gpSet->isLogging())
@@ -4477,6 +4476,16 @@ void CRealConsole::UpdateRootInfo(const CESERVER_ROOT_INFO& RootInfo)
 	}
 }
 
+CRealConsole::CConHostSearch::CConHostSearch()
+{
+	data.Init();
+}
+
+void CRealConsole::CConHostSearch::FinalRelease()
+{
+	data.Release();
+}
+
 bool CRealConsole::StartProcess()
 {
 	if (!this)
@@ -4620,22 +4629,21 @@ bool CRealConsole::StartProcess()
 	bool bConHostLocked = false;
 	if (bNeedConHostSearch)
 	{
-		if (!mp_ConHostSearch)
+		if (!m_ConHostSearch)
 		{
-			mp_ConHostSearch = (MMap<DWORD,BOOL>*)calloc(1,sizeof(*mp_ConHostSearch));
-			bNeedConHostSearch = mp_ConHostSearch && mp_ConHostSearch->Init();
+			m_ConHostSearch.Attach(new CConHostSearch());
+			bNeedConHostSearch = (bool)m_ConHostSearch;
 		}
 		else
 		{
-			mp_ConHostSearch->Reset();
+			m_ConHostSearch->data.Reset();
 		}
 	}
 	//
 	if (!bNeedConHostSearch)
 	{
-		if (mp_ConHostSearch)
-			mp_ConHostSearch->Release();
-		SafeFree(mp_ConHostSearch);
+		if (m_ConHostSearch)
+			m_ConHostSearch.Release();
 	}
 	else
 	{
@@ -4815,8 +4823,7 @@ bool CRealConsole::StartProcess()
 		// Но т.к. он мог еще "не появиться" - не ругаемся
 		if (ConHostSearch(false))
 		{
-			mp_ConHostSearch->Release();
-			SafeFree(mp_ConHostSearch);
+			m_ConHostSearch.Release();
 		}
 		// Do Unlock immediately
 		if (bConHostLocked)
@@ -8958,7 +8965,7 @@ bool CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 	_ASSERTE(anCount<=countof(PID));
 	if (anCount>countof(PID)) anCount = countof(PID);
 
-	if (mp_ConHostSearch)
+	if (m_ConHostSearch)
 	{
 		if (!mn_ConHost_PID)
 		{

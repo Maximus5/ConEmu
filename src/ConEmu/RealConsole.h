@@ -599,7 +599,15 @@ class CRealConsole
 		static INT_PTR CALLBACK priorityProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 		DWORD mn_CheckFreqLock;
 		DWORD mn_ConHost_PID;
-		MMap<DWORD,BOOL>* mp_ConHostSearch;
+		class CConHostSearch : public CRefRelease
+		{
+		protected:
+			virtual void FinalRelease() override;
+		public:
+			CConHostSearch();
+			MMap<DWORD,BOOL> data;
+		};
+		CRefGuard<CConHostSearch> m_ConHostSearch;
 		void ConHostSearchPrepare();
 		DWORD ConHostSearch(bool bFinal);
 		void ConHostSetPID(DWORD nConHostPID);

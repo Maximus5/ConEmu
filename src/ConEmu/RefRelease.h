@@ -217,8 +217,14 @@ public:
 	};
 
 	// Ptr, No Asserts
-	T* Ptr()
+	T* Ptr() const
 	{
 		return mp_Ref;
+	};
+
+	// Validation, No Assers
+	operator bool() const
+	{
+		return (mp_Ref != NULL);
 	};
 };
