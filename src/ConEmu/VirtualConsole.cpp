@@ -3434,6 +3434,12 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	rect.right += rcClient.left;
 	rect.top += rcClient.top;
 	rect.bottom += rcClient.top;
+
+	if (bActive)
+	{
+		mp_ConEmu->UpdateCaretPos(*this, rect);
+	}
+
 	// Если курсор занимает более 40% площади - принудительно включим
 	// XOR режим, иначе (тем более при немигающем) курсор закрывает
 	// весь символ и его не видно

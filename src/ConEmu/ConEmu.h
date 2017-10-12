@@ -572,6 +572,7 @@ class CConEmuMain
 		void SetTitleTemplate(LPCWSTR asTemplate);
 		int GetActiveVCon(CVConGuard* pVCon = NULL, int* pAllCount = NULL);
 		int isVConValid(CVirtualConsole* apVCon);
+		void UpdateCaretPos(CVirtualConsole& vcon, const RECT& rect);
 		void UpdateCursorInfo(const ConsoleInfoArg* pInfo);
 		void UpdateProcessDisplay(bool abForce);
 		void UpdateSizes();
@@ -639,6 +640,7 @@ class CConEmuMain
 			DWORD ForegroundState;
 			DWORD nDefTermNonResponsive;
 			DWORD nDefTermTick;
+			bool  bCaretCreated;
 		} m_Foreground;
 		bool RecheckForegroundWindow(LPCWSTR asFrom, HWND* phFore = NULL, HWND hForcedForeground = NULL);
 

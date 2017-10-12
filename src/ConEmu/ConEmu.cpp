@@ -5258,6 +5258,21 @@ void CConEmuMain::UpdateProcessDisplay(bool abForce)
 	MCHKHEAP
 }
 
+// gh-1271: update caret position to help accessibilty tools (e.g. Magnifier)
+void CConEmuMain::UpdateCaretPos(CVirtualConsole& vcon, const RECT& rect)
+{
+	if (!m_Foreground.bCaretCreated)
+	{
+		if (!CreateCaret(ghWnd, NULL, RectWidth(rect), RectHeight(rect)))
+			return;
+		m_Foreground.bCaretCreated = true;
+	}
+
+	POINT pt = {rect.left, rect.bottom};
+	//MapWindowPoints(vcon.GetView(), ghWnd, &pt, 1);
+	SetCaretPos(pt.x, pt.y);
+}
+
 void CConEmuMain::UpdateCursorInfo(const ConsoleInfoArg* pInfo)
 {
 	mp_Status->OnConsoleChanged(&pInfo->sbi, &pInfo->cInfo, &pInfo->TopLeft, false);
@@ -7863,6 +7878,12 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		pszMsgName = L"WM_KILLFOCUS";
 		hForeground = GetForegroundWindow();
 		hNewFocus = wParam ? (HWND)wParam : hForeground;
+
+		if (m_Foreground.bCaretCreated)
+		{
+			DestroyCaret();
+			m_Foreground.bCaretCreated = false;
+		}
 
 		if (CVConGroup::isOurWindow(hNewFocus))
 		{
