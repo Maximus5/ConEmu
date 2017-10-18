@@ -2271,23 +2271,23 @@
       "id": 2606 }
     ,
     "vkSplitSwap": {
-      "en": "Split: Exchange with nearest pane",
+      "en": "Split: Exchange (swap) with nearest pane",
       "id": 3084 }
     ,
     "vkSplitSwapDown": {
-      "en": "Split: Exchange with nearest pane downward",
+      "en": "Split: Exchange (swap) with nearest pane downward",
       "id": 3081 }
     ,
     "vkSplitSwapLeft": {
-      "en": "Split: Exchange with nearest pane leftward",
+      "en": "Split: Exchange (swap) with nearest pane leftward",
       "id": 3082 }
     ,
     "vkSplitSwapRight": {
-      "en": "Split: Exchange with nearest pane rightward",
+      "en": "Split: Exchange (swap) with nearest pane rightward",
       "id": 3083 }
     ,
     "vkSplitSwapUp": {
-      "en": "Split: Exchange with nearest pane upward",
+      "en": "Split: Exchange (swap) with nearest pane upward",
       "id": 3080 }
     ,
     "vkSystemMenu": {
@@ -3155,9 +3155,9 @@
       "id": 2584 }
     ,
     "cbAddDefaults": {
-      "en": "Add default tasks...",
-      "ru": "Создать основные задачи...",
-      "zh": "添加默认任务...",
+      "en": "Add/refresh default tasks...",
+      "ru": "Обновить основные задачи...",
+      "_zh": "添加默认任务...",
       "id": 2632 }
     ,
     "cbAdminShield": {
