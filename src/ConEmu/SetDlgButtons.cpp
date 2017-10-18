@@ -1562,7 +1562,7 @@ void CSetDlgButtons::OnBtn_AddDefaults(HWND hDlg, WORD CB, BYTE uCheck)
 		CEWIKIBASE L"Tasks.html#add-default-tasks",
 		MB_YESNOCANCEL|MB_ICONEXCLAMATION, ghOpWnd,
 		L"Add new tasks", L"Append absent tasks for newly installed shells",
-		L"Recreate default tasks", L"Add new and REWRITE EXISTING tasks with defaults",
+		L"Refresh default tasks", L"Add new and REWRITE EXISTING tasks with defaults",
 		L"Cancel");
 	if (iBtn == IDCANCEL)
 		return;

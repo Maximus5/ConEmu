@@ -1377,7 +1377,7 @@ BEGIN
     PUSHBUTTON      "&-",cbCmdTasksDel,27,221,17,14
     PUSHBUTTON      "&Up",cbCmdTasksUp,47,221,37,14
     PUSHBUTTON      "&Down",cbCmdTasksDown,87,221,37,14
-    PUSHBUTTON      "Add default tasks...",cbAddDefaults,9,187,115,14
+    PUSHBUTTON      "Add/refresh default tasks...",cbAddDefaults,9,187,115,14
     PUSHBUTTON      "Reload...",cbCmdTasksReload,9,204,61,14
     PUSHBUTTON      "Clone",cbCmdTasksDup,74,204,50,14
     LTEXT           "Task parameters. Example: /dir ""C:\\"" /icon ""cmd.exe"" /single",stCmdGroupGuiArg,131,56,208,8
