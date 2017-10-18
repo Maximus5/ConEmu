@@ -349,11 +349,13 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 			CharAttr& lca = pcaDst[nX];
 			bool hasTrueColor = false;
 			bool hasFont = false;
+			bool inversed = false;
 
 			// If not "mono" we need only lower byte with color indexes
 			if (!bForceMono)
 			{
-				if (((*pnSrc) & COMMON_LVB_REVERSE_VIDEO) && (((*pnSrc) & CHANGED_CONATTR) == COMMON_LVB_REVERSE_VIDEO))
+				inversed = (((*pnSrc) & COMMON_LVB_REVERSE_VIDEO) && !((*pnSrc) & (CHANGED_CONATTR & ~(COMMON_LVB_REVERSE_VIDEO|COMMON_LVB_UNDERSCORE))));
+				if (inversed)
 					PalIndex = MAKECONCOLOR(CONBACKCOLOR(*pnSrc), CONFORECOLOR(*pnSrc)); // Inverse
 				else
 					PalIndex = ((*pnSrc) & 0xFF);
@@ -391,24 +393,32 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 				}
 				else
 				{
-					TODO("OPTIMIZE: доступ к битовым полям тяжело идет...");
+					if (pcolSrc->style & AI_STYLE_REVERSE)
+						inversed = true;
 
 					if (pcolSrc->fg_valid)
 					{
 						hasTrueColor = true;
 						hasFont = true;
 						lca.nFontIndex = fnt_Normal; //bold/italic/underline will be set below
-						lca.crForeColor = bFade ? gpSet->GetFadeColor(pcolSrc->fg_color) : pcolSrc->fg_color;
 
-						if (pcolSrc->bk_valid)
-							lca.crBackColor = bFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color;
+						unsigned fore = bFade ? gpSet->GetFadeColor(pcolSrc->fg_color) : pcolSrc->fg_color;
+						unsigned back = pcolSrc->bk_valid
+							? (bFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color)
+							: (lca.crBackColor);
+						lca.crForeColor = inversed ? back : fore;
+						lca.crBackColor = inversed ? fore : back;
 					}
 					else if (pcolSrc->bk_valid)
 					{
 						hasTrueColor = true;
 						hasFont = true;
 						lca.nFontIndex = fnt_Normal; //bold/italic/underline will be set below
-						lca.crBackColor = bFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color;
+						unsigned back = bFade ? gpSet->GetFadeColor(pcolSrc->bk_color) : pcolSrc->bk_color;;
+						if (inversed)
+							lca.crForeColor = back;
+						else
+							lca.crBackColor = back;
 					}
 
 					// nFontIndex: 0 - normal, 1 - bold, 2 - italic, 3 - bold&italic,..., 4 - underline, ...

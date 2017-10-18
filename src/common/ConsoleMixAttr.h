@@ -36,6 +36,8 @@ extern WORD AddConAttr[16];
 
 // GCC headers fix
 #ifndef COMMON_LVB_UNDERSCORE
+#define COMMON_LVB_LEADING_BYTE    0x0100
+#define COMMON_LVB_TRAILING_BYTE   0x0200
 #define COMMON_LVB_GRID_HORIZONTAL 0x0400 // DBCS: Grid attribute: top horizontal.
 #define COMMON_LVB_GRID_LVERTICAL  0x0800 // DBCS: Grid attribute: left vertical.
 #define COMMON_LVB_GRID_RVERTICAL  0x1000 // DBCS: Grid attribute: right vertical.

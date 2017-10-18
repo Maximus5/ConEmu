@@ -287,16 +287,16 @@ static void ExtPrepareColor(const ConEmuColor& Attributes, AnnotationInfo& t, WO
 	//-- zeroing must be done by calling function
 	//memset(&t, 0, sizeof(t)); n = 0;
 
-	WORD f = 0;
-	CECOLORFLAGS Flags = Attributes.Flags;
-
+	const CECOLORFLAGS& Flags = Attributes.Flags;
+	t.style = 0;
 	if (Flags & CECF_FG_BOLD)
-		f |= AI_STYLE_BOLD;
+		t.style |= AI_STYLE_BOLD;
 	if (Flags & CECF_FG_ITALIC)
-		f |= AI_STYLE_ITALIC;
+		t.style |= AI_STYLE_ITALIC;
 	if (Flags & CECF_FG_UNDERLINE)
-		f |= AI_STYLE_UNDERLINE;
-	t.style = f;
+		t.style |= AI_STYLE_UNDERLINE;
+	if (Flags & CECF_REVERSE)
+		t.style |= AI_STYLE_REVERSE;
 
 	DWORD nForeColor, nBackColor;
 	if (Flags & CECF_FG_24BIT)
@@ -326,6 +326,11 @@ static void ExtPrepareColor(const ConEmuColor& Attributes, AnnotationInfo& t, WO
 		n |= (WORD)(CONCOLORINDEX(Attributes.BackgroundColor)<<4);
 		t.bk_valid = FALSE;
 	}
+
+	if (Flags & CECF_FG_UNDERLINE)
+		n |= COMMON_LVB_UNDERSCORE;
+	if (Flags & CECF_REVERSE)
+		n |= COMMON_LVB_REVERSE_VIDEO;
 }
 
 // Это это "цвет по умолчанию".
