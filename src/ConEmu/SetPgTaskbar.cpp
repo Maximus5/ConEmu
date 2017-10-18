@@ -61,6 +61,7 @@ LRESULT CSetPgTaskbar::OnInitDialog(HWND hDlg, bool abInitial)
 
 	//
 	checkDlgButton(hDlg, cbCloseConEmuWithLastTab, gpSet->isCloseOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
+	EnableWindow(GetDlgItem(hDlg, cbCloseConEmuWithLastTab), gpSet->isCloseOnLastTabClose(0));
 	checkDlgButton(hDlg, cbCloseConEmuOnCrossClicking, gpSet->isCloseOnCrossClick() ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hDlg, cbMinimizeOnLastTabClose, gpSet->isMinOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hDlg, cbHideOnLastTabClose, gpSet->isHideOnLastTabClose() ? BST_CHECKED : BST_UNCHECKED);

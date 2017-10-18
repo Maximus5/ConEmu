@@ -909,6 +909,7 @@ struct Settings
 		BYTE isMultiHideOnClose; // 0 - не скрываться, 1 - в трей, 2 - просто минимизация
 		// helpers
 		bool isCloseOnLastTabClose();
+		bool isCloseOnLastTabClose(BYTE MultiLeaveOnClose);
 		bool isCloseOnCrossClick();
 		bool isMinOnLastTabClose();
 		bool isHideOnLastTabClose();

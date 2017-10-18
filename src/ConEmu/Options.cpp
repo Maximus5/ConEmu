@@ -5005,10 +5005,18 @@ LPCWSTR Settings::GetLogFileName()
 
 bool Settings::isCloseOnLastTabClose()
 {
-	if (isMultiLeaveOnClose != 0)
+	return isCloseOnLastTabClose(isMultiLeaveOnClose);
+}
+
+bool Settings::isCloseOnLastTabClose(BYTE MultiLeaveOnClose)
+{
+	// The option "Multi.LeaveOnClose"
+	if (MultiLeaveOnClose != 0)
 		return false;
+	// Switch `-MinTSA`
 	if (gpConEmu->WindowStartNoClose)
 		return false;
+	// Switch `-NoAutoClose`
 	if (gpConEmu->opt.NoAutoClose)
 		return false;
 	return true;
