@@ -125,20 +125,20 @@
     ,
     "cbCmdTaskbarCommands": {
       "en": "Show in TaskBar Jump List commands used to run consoles (history)",
-      "zh": "在任务栏快速跳转列表中显示用于运行终端的命令（通过使用历史）",
       "ru": "Показать в списке переходов команды запуска консолей (история)",
+      "zh": "在任务栏快速跳转列表中显示用于运行终端的命令（通过使用历史）",
       "id": 2133 }
     ,
     "cbCmdTaskbarTasks": {
       "en": "Show in TaskBar Jump List eligible Tasks (check Task properties)",
-      "zh": "在任务栏快速跳转列表中显示符合条件的任务（通过检查任务属性）",
       "ru": "Показать в списке переходов разрешенные Задачи (Tasks, Список переходов)",
+      "zh": "在任务栏快速跳转列表中显示符合条件的任务（通过检查任务属性）",
       "id": 2132 }
     ,
     "cbCmdTaskbarUpdate": {
       "en": "Don't forget to update Jump Lists, especially if ‘Autoupdate’ is unchecked",
-      "zh": "别忘了更新快速跳转列表，尤其是当“自动更新”未选中时",
       "ru": "Не забудьте обновить список переходов, особенно если опция ‘Сразу’ отключена",
+      "zh": "别忘了更新快速跳转列表，尤其是当“自动更新”未选中时",
       "id": 2320 }
     ,
     "cbComspecTest": {
@@ -500,8 +500,8 @@
     ,
     "cbJumpListAutoUpdate": {
       "en": "If checked, Jump Lists will be updated automatically when user (un)check the ‘Taskbar jump lists’ checkbox in Task properties.",
-      "zh": "选中时，快速跳转菜单会在用户在任务属性中选中或取消选中“快速跳转菜单”选项时自动更新。",
       "ru": "Если включено, Списки переходов будут обновляться автоматически при смене флажка «Список переходов» в свойствах Задачи (Task).",
+      "zh": "选中时，快速跳转菜单会在用户在任务属性中选中或取消选中“快速跳转菜单”选项时自动更新。",
       "id": 3073 }
     ,
     "cbKillSshAgent": {
@@ -528,7 +528,7 @@
             , "in ConEmu title for minimize to TSA,\r\n"
             , "when this checkbox is OFF" ],
       "zh": [ "自动最小化到任务栏状态区域（TSA）\r\n"
-            , "当此选项关闭时（OFF）"
+            , "当此选项关闭时（OFF）\r\n"
             , "在ConEmu标题里的‘关闭窗口按钮’上右击\r\n"
             , "以最小化至TSA,\r\n" ],
       "id": 1507 }
