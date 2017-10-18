@@ -2653,6 +2653,10 @@
       "zh": "退出代码",
       "id": 17 }
     ,
+    "lng_HkGlblGnrlMsg": {
+      "en": "You can't choose distinctive (R/L) modifier for Global hotkeys due to WinAPI limitation",
+      "id": 86 }
+    ,
     "lng_HotkeyDuplicated": {
       "en": "Hotkey <%s> is not unique",
       "id": 79 }

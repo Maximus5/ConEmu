@@ -774,6 +774,8 @@ INT_PTR CSetPgKeys::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 				{
 					vk = vkChange;
 					CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbHotKeyMod1+i), CSetDlgLists::eModifiers, vkChange, false);
+					// You can't choose distinctive (R/L) modifier for Global hotkeys due to WinAPI limitation
+					gpSetCls->ShowModifierErrorTip(CLngRc::getRsrc(lng_HkGlblGnrlMsg), hDlg, nCtrlId);
 				}
 
 				if (vk)
