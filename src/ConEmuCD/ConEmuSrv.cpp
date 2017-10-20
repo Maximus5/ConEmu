@@ -3964,7 +3964,8 @@ static int ReadConsoleInfo()
 		short nMaxWidth = -1, nMaxHeight = -1;
 		BOOL bSuccess = ::GetConWindowSize(lsbi, gcrVisibleSize.X, gcrVisibleSize.Y, nCurScroll, &TextWidth, &TextHeight, &nNewScroll);
 
-		// Скорректировать "видимый" буфер. Видимым считаем то, что показывается в ConEmu
+		// Use "visible" buffer positions, what user sees at the moment in the ConEmu window
+		// These values are stored in RConBuffer::con.TopLeft
 		if (bSuccess)
 		{
 			//rgn = gpSrv->sbi.srWindow;

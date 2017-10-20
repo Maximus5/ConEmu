@@ -2554,8 +2554,16 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 			#endif
 			#endif
 
-			con.m_sbi = pInfo->ConState.sbi;
+			LONG nLastConsoleRow = mp_RCon->m_AppMap.IsValid() ? mp_RCon->m_AppMap.Ptr()->nLastConsoleRow : -1;
+			CONSOLE_SCREEN_BUFFER_INFO sbi = pInfo->ConState.sbi;
 			con.srRealWindow = pInfo->ConState.srRealWindow;
+			if (nLastConsoleRow > 0)
+			{
+				LONG maxRow = max(nLastConsoleRow, max(sbi.srWindow.Bottom, max(con.srRealWindow.Bottom, sbi.dwCursorPosition.Y)));
+				if (maxRow > 0 && maxRow < sbi.dwSize.Y)
+					sbi.dwSize.Y = maxRow + 1;
+			}
+			con.m_sbi = sbi;
 
 			// Если мышкой тащат ползунок скроллера - не менять TopVisible
 			if (!mp_RCon->InScroll()

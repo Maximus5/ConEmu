@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    164
+#define CESERVER_REQ_VER    165
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1618,6 +1618,10 @@ struct CESERVER_CONSOLE_APP_MAPPING
 
 	// Active application flags (shell or other current interactive process)
 	CEActiveAppFlags nActiveAppFlags;
+
+	// Let know GUI how many rows were processed by console applications
+	// This is actually the maximum row number where any write operation was executed
+	LONG nLastConsoleRow;
 
 	// CECONEMUROOTTHREAD often fails on cygwin/msys fork
 	// This will be more proper way to detect if ConEmuHk

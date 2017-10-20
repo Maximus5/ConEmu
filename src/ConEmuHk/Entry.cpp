@@ -558,6 +558,32 @@ CESERVER_CONSOLE_APP_MAPPING* UpdateAppMapFlags(DWORD nFlags/*enum CEReadConsole
 	return pAppMap;
 }
 
+CESERVER_CONSOLE_APP_MAPPING* UpdateAppMapRows(LONG anLastConsoleRow, bool abForce)
+{
+	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL;
+	if (pAppMap)
+	{
+		if (abForce)
+		{
+			pAppMap->nLastConsoleRow = anLastConsoleRow;
+		}
+		else
+		{
+			// atomic maximum
+			int tries = 100;
+			while (--tries >= 0)
+			{
+				LONG n = pAppMap->nLastConsoleRow;
+				if (n >= anLastConsoleRow)
+					break;
+				if (n == InterlockedCompareExchange(&pAppMap->nLastConsoleRow, anLastConsoleRow, n))
+					break;
+			}
+		}
+	}
+	return pAppMap;
+}
+
 void OnConWndChanged(HWND ahNewConWnd)
 {
 	//BOOL lbForceReopen = FALSE;

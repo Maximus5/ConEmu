@@ -66,6 +66,7 @@ extern MFileMapping<CESERVER_CONSOLE_APP_MAPPING> *gpAppMap;
 CESERVER_CONSOLE_MAPPING_HDR* GetConMap(BOOL abForceRecreate=FALSE);
 CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr();
 CESERVER_CONSOLE_APP_MAPPING* UpdateAppMapFlags(DWORD nFlags/*enum CEReadConsoleInputFlags*/);
+CESERVER_CONSOLE_APP_MAPPING* UpdateAppMapRows(LONG anLastConsoleRow, bool abForce);
 void OnConWndChanged(HWND ahNewConWnd);
 bool AttachServerConsole();
 void CheckAnsiConVar(LPCWSTR asName);
