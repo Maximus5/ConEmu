@@ -4264,10 +4264,15 @@ static BOOL ReadConsoleData()
 				WORD defAttr = gpSrv->sbi.wAttributes;
 				//if (CONFORECOLOR(defAttr) == CONBACKCOLOR(defAttr))
 				//	defAttr = 7; // Really? There would be nothing visible at all...
-				for (int i = (bufSize.X * bufSize.Y) - 1; i >= 0; --i)
+				int max_cells = bufSize.X * bufSize.Y;
+				// After shrinking the width of the console, due to the bug in conhost
+				// all contents receive attribute = 0, so even the prompt on the current
+				// line is displayed as "black on black".
+				// However any new input on the line receives proper color,
+				// so we can't decide attr=0 is or is not expected on that line
+				for (int i = 0; i < max_cells && !gpSrv->pConsoleDataCopy[i].Attributes; ++i)
 				{
-					if (!gpSrv->pConsoleDataCopy[i].Attributes)
-						gpSrv->pConsoleDataCopy[i].Attributes = defAttr;
+					gpSrv->pConsoleDataCopy[i].Attributes = defAttr;
 				}
 			}
 		}
