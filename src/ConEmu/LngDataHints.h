@@ -149,6 +149,7 @@ static LngPredefined gsDataHints[] = {
 	{ cbRestore2ActiveMonitor, L"When restoring or sliding-down move window to the active monitor, where mouse cursor is located" },
 	{ cbRetardInactivePanes,   L"Retard inactive but visible split-panes in the active ConEmu window" },
 	{ cbSafeFarClose,          L"Try to close Far Manager softly, instead of closing console window, when you close ConEmu window" },
+	{ cbScrollbarDynamic,      L"Increase maximum scrollbar position with console output grows" },
 	{ cbSendAltEsc,            L"When checked, You can use \"Alt+Esc\" in Far internally" },
 	{ cbSendAltPrintScrn,      L"When checked, You can use \"Alt+PrintScrn\" in Far internally" },
 	{ cbSendAltTab,            L"When checked, You can use \"Alt+Tab\" in Far internally.\r\nWarning! This blocks ability of switching to another window" },

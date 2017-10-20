@@ -238,6 +238,12 @@ class CRealConsole
 			wchar_t szText[80];
 		} m_ConStatus;
 
+		struct {
+			SHORT nLastHeight = 0;
+			SHORT nLastWndHeight = 0;
+			SHORT nLastTop = 0;
+		} m_ScrollStatus;
+
 	public:
 		HWND    ConWnd();  // HWND RealConsole
 		HWND    GetView(); // HWND отрисовки

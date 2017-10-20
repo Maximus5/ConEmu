@@ -1707,18 +1707,12 @@ void CConEmuChild::SetScroll(bool abEnabled, int anTop, int anVisible, int anHei
 	else
 	{
 		m_si.nPos = anTop;
-		m_si.nPage = anVisible - 1;
-		m_si.nMax = anHeight;
+		// We shall take into account paging size, scroller must be at
+		// the bottom when the console is at the bottom...
+		m_si.nMax = anHeight - 2;
+		// Let paging previously last visible become new first visible
+		m_si.nPage = klMin(anVisible - 1, m_si.nMax);
 	}
-
-	//// Если режим "BufferHeight" включен - получить из консольного окна текущее состояние полосы прокрутки
-	//if (con.bBufferHeight) {
-	//    lbScrollRc = GetScrollInfo(hConWnd, SB_VERT, &si);
-	//} else {
-	//    // Сбросываем параметры так, чтобы полоса не отображалась (все на 0)
-	//}
-	//TODO("Нужно при необходимости 'всплыть' полосу прокрутки");
-	//nCurPos = SetScrollInfo(mh_WndDC/*mh_WndScroll*/, SB_VERT, &m_si, true);
 
 	if (!abEnabled)
 	{
@@ -1786,12 +1780,12 @@ void CConEmuChild::MySetScrollInfo(bool abSetEnabled, bool abEnableValue)
 {
 	SCROLLINFO si = m_si;
 
-	if (/*!mb_ScrollVisible &&*/ !m_si.nMax && (gpSet->isAlwaysShowScrollbar == 1))
+	if ((m_si.nMax < 0) || ((UINT)m_si.nMax < m_si.nPage) && (gpSet->isAlwaysShowScrollbar == 1))
 	{
 		ShowScrollBar(mh_WndBack, SB_VERT, TRUE);
 		// Прокрутка всегда показывается! Скрывать нельзя!
-		si.nPage = 1;
-		si.nMax = 100;
+		if (!si.nPage) si.nPage = 1;
+		si.nMax = si.nPage;
 	}
 
 	si.fMask |= SIF_PAGE|SIF_POS|SIF_RANGE/*|SIF_DISABLENOSCROLL*/;

@@ -62,6 +62,7 @@ LRESULT CSetPgAppear::OnInitDialog(HWND hDlg, bool abInitial)
 
 	//checkDlgButton(hDlg, cbAlwaysShowScrollbar, gpSet->isAlwaysShowScrollbar);
 	checkRadioButton(hDlg, rbScrollbarHide, rbScrollbarAuto, (gpSet->isAlwaysShowScrollbar==0) ? rbScrollbarHide : (gpSet->isAlwaysShowScrollbar==1) ? rbScrollbarShow : rbScrollbarAuto);
+	checkDlgButton(hDlg, cbScrollbarDynamic, gpSet->isDynamicBufferHeight);
 	SetDlgItemInt(hDlg, tScrollAppearDelay, gpSet->nScrollBarAppearDelay, FALSE);
 	SetDlgItemInt(hDlg, tScrollDisappearDelay, gpSet->nScrollBarDisappearDelay, FALSE);
 

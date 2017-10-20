@@ -286,6 +286,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case rbScrollbarAuto:
 			OnBtn_ScrollbarStyle(hDlg, CB, uCheck);
 			break;
+		case cbScrollbarDynamic:
+			OnBtn_ScrollbarDynamic(hDlg, CB, uCheck);
+			break;
 		case cbFarHourglass:
 			OnBtn_FarHourglass(hDlg, CB, uCheck);
 			break;
@@ -2473,6 +2476,17 @@ void CSetDlgButtons::OnBtn_ScrollbarStyle(HWND hDlg, WORD CB, BYTE uCheck)
 	gpConEmu->InvalidateAll();
 
 } // rbScrollbarAuto || rbScrollbarHide || rbScrollbarShow
+
+
+// cbScrollbarDynamic
+void CSetDlgButtons::OnBtn_ScrollbarDynamic(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbScrollbarDynamic);
+
+	gpSet->isDynamicBufferHeight = _bool(uCheck);
+	gpConEmu->OnUpdateScrollInfo();
+
+} // cbScrollbarDynamic
 
 
 // cbFarHourglass

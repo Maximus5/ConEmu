@@ -223,25 +223,27 @@ BEGIN
     CONTROL         "Enhance progressbars and scrollbars",cbEnhanceGraphics,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,73,202,8
     CONTROL         "Show balloon help tooltips",cbShowHelpTooltips,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,213,73,164,8
-    GROUPBOX        "Scrollbar",gbShowScrollBar,4,104,375,29
-    CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON | WS_GROUP,10,117,48,8
-    CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,61,117,60,8
-    CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,124,117,48,8
-    RTEXT           "Appear delay:",stScrollAppear,164,117,60,8
-    EDITTEXT        tScrollAppearDelay,228,115,40,12,ES_AUTOHSCROLL
-    RTEXT           "Disappear:",stScrollDisappear,272,117,58,8
-    EDITTEXT        tScrollDisappearDelay,334,115,40,12,ES_AUTOHSCROLL
-    GROUPBOX        "Title bar (Caption) and border options",gbFeatureCaption,4,138,375,59
-    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,151,144,8
-    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,151,79,8
-    CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,268,151,106,8
-    RTEXT           "Frame width:",stFrameWidth,10,166,84,8
-    EDITTEXT        tHideCaptionAlwaysFrame,98,164,40,12,ES_AUTOHSCROLL
-    RTEXT           "Appear delay:",stFrameAppear,142,166,82,8
-    EDITTEXT        tHideCaptionAlwaysDelay,228,164,40,12,ES_AUTOHSCROLL
-    RTEXT           "Disappear:",stFrameDisappear,272,166,58,8
-    EDITTEXT        tHideCaptionAlwaysDissapear,334,164,40,12,ES_AUTOHSCROLL
-    CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,181,144,8
+    GROUPBOX        "Scrollbar",gbShowScrollBar,4,103,375,43
+    CONTROL         "Hide",rbScrollbarHide,"Button",BS_AUTORADIOBUTTON | WS_GROUP,10,116,48,8
+    CONTROL         "Show",rbScrollbarShow,"Button",BS_AUTORADIOBUTTON,61,116,60,8
+    CONTROL         "Auto",rbScrollbarAuto,"Button",BS_AUTORADIOBUTTON,124,116,48,8
+    RTEXT           "Appear delay:",stScrollAppear,164,116,60,8
+    EDITTEXT        tScrollAppearDelay,228,114,40,12,ES_AUTOHSCROLL
+    RTEXT           "Disappear:",stScrollDisappear,272,116,58,8
+    EDITTEXT        tScrollDisappearDelay,334,114,40,12,ES_AUTOHSCROLL
+    CONTROL         "Dynamic scrollbar range (backscroll buffer)",cbScrollbarDynamic,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,131,363,8
+    GROUPBOX        "Title bar (Caption) and border options",gbFeatureCaption,4,158,375,59
+    CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,171,144,8
+    CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,171,79,8
+    CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,268,171,106,8
+    RTEXT           "Frame width:",stFrameWidth,10,186,84,8
+    EDITTEXT        tHideCaptionAlwaysFrame,98,184,40,12,ES_AUTOHSCROLL
+    RTEXT           "Appear delay:",stFrameAppear,142,186,82,8
+    EDITTEXT        tHideCaptionAlwaysDelay,228,184,40,12,ES_AUTOHSCROLL
+    RTEXT           "Disappear:",stFrameDisappear,272,186,58,8
+    EDITTEXT        tHideCaptionAlwaysDissapear,334,184,40,12,ES_AUTOHSCROLL
+    CONTROL         "Always show numbers [n/m]",cbNumberInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,201,144,8
 END
 
 IDD_SPG_QUAKE DIALOGEX 0, 0, 381, 242

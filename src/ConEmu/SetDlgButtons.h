@@ -129,6 +129,7 @@ protected:
 	static void OnBtn_IntegralSize(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_Restore2ActiveMonitor(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ScrollbarStyle(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_ScrollbarDynamic(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_FarHourglass(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ExtendUCharMap(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_FixAltOnAltTab(HWND hDlg, WORD CB, BYTE uCheck);

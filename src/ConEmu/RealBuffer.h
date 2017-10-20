@@ -87,7 +87,9 @@ public:
 	bool isScroll(RealBufferScroll aiScroll = rbs_Any);
 	bool isConsoleDataChanged();
 
-	void InitSBI(CONSOLE_SCREEN_BUFFER_INFO* ap_sbi, bool abCurBufHeight);
+	// Called during attach
+	void InitSBI(const CONSOLE_SCREEN_BUFFER_INFO& ap_sbi);
+
 	void InitMaxSize(const COORD& crMaxSize);
 	COORD GetMaxSize();
 
@@ -98,16 +100,17 @@ public:
 	void ResetBuffer();
 
 	int BufferHeight(uint nNewBufferHeight = 0);
-	SHORT GetBufferWidth();
-	SHORT GetBufferHeight();
-	SHORT GetBufferPosX();
-	SHORT GetBufferPosY();
-	int GetTextWidth();
-	int TextWidth();
-	int GetTextHeight();
-	int TextHeight();
-	int GetWindowWidth();
-	int GetWindowHeight();
+	SHORT GetBufferWidth() const;
+	SHORT GetBufferHeight() const;
+	int GetDynamicHeight() const;
+	SHORT GetBufferPosX() const;
+	SHORT GetBufferPosY() const;
+	int GetTextWidth() const;
+	int TextWidth() const;
+	int GetTextHeight() const;
+	int TextHeight() const;
+	int GetWindowWidth() const;
+	int GetWindowHeight() const;
 
 	void SetBufferHeightMode(bool abBufferHeight, bool abIgnoreLock = false);
 	void ChangeBufferHeightMode(bool abBufferHeight);
@@ -116,7 +119,6 @@ public:
 	bool isBuferModeChangeLocked();
 	bool BuferModeChangeLock();
 	void BuferModeChangeUnlock();
-	bool BufferHeightTurnedOn(CONSOLE_SCREEN_BUFFER_INFO* psbi);
 	void OnBufferHeight();
 
 	LRESULT DoScrollBuffer(int nDirection, short nTrackPos = -1, UINT nCount = 1, bool abOnlyVirtual = false);
@@ -124,7 +126,7 @@ public:
 
 	bool ApplyConsoleInfo();
 
-	bool GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll);
+	bool GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* pnNewWidth, int* pnNewHeight, DWORD* pnScroll) const;
 
 	COORD ScreenToBuffer(COORD crMouse);
 	COORD BufferToScreen(COORD crMouse, bool bFixup = true, bool bVertOnly = false);
@@ -219,6 +221,7 @@ public:
 
 private:
 	void ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFinished, bool& lbChanged, bool& bBufRecreate);
+	bool IsBufferHeightTurnedOn(const CONSOLE_SCREEN_BUFFER_INFO& psbi);
 	bool SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffer, DWORD anCmdID = CECMD_SETSIZESYNC);
 	bool InitBuffers(DWORD anCellCount = 0, int anWidth = 0, int anHeight = 0, CRConDataGuard* pData = NULL);
 	bool InitBuffers(CRConDataGuard* pData);
@@ -290,6 +293,7 @@ protected:
 		bool mb_ConDataValid;
 		// Sizes
 		int nTextWidth, nTextHeight, nBufferHeight;
+		int nDynamicHeight;
 		// Resize (srv) in progress
 		bool bLockChange2Text;
 		int nChange2TextWidth, nChange2TextHeight;

@@ -184,6 +184,8 @@ struct Settings
 		bool IsConfigNew; // true, если конфигурация новая
 		bool IsConfigPartial; // true, if config has no task or start command
 
+		//reg->Load(L"DynamicBufferHeight", DynamicBufferHeight);
+		bool isDynamicBufferHeight;
 		//reg->Load(L"DefaultBufferHeight", DefaultBufferHeight);
 		int DefaultBufferHeight;
 		//reg->Load(L"AutoBufferHeight", AutoBufferHeight);

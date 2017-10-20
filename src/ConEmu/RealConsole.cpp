@@ -1299,40 +1299,15 @@ bool CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 
 	WARNING("TODO: Support horizontal scroll");
 
-	//2010-03-03 переделано для аттача через пайп
-	CONSOLE_SCREEN_BUFFER_INFO lsbi = rStartStop->sbi;
 	// Remove bRootIsCmdExe&isScroll() from expression. Use REAL scrolls from REAL console
-	bool bCurBufHeight = /*rStartStop->bRootIsCmdExe || mp_RBuf->isScroll() ||*/ mp_RBuf->BufferHeightTurnedOn(&lsbi);
-
-	// Смотрим реальный буфер - изменилось ли наличие прокрутки?
-	if (mp_RBuf->isScroll() != bCurBufHeight)
-	{
-		_ASSERTE(mp_RBuf->isBuferModeChangeLocked()==FALSE);
-		mp_RBuf->SetBufferHeightMode(bCurBufHeight, FALSE);
-	}
+	// BufferHeightTurnedOn and SetBufferHeightMode checks moved to InitSBI
+	// bool bCurBufHeight = /*rStartStop->bRootIsCmdExe || mp_RBuf->isScroll() ||*/ mp_RBuf->BufferHeightTurnedOn(lsbi);
 
 	RECT rcWnd = mp_ConEmu->GetGuiClientRect();
 	TODO("DoubleView: ?");
 	mp_ConEmu->AutoSizeFont(rcWnd, CER_MAINCLIENT);
-	RECT rcCon = mp_ConEmu->CalcRect(CER_CONSOLE_CUR, rcWnd, CER_MAINCLIENT, mp_VCon);
-	// Скорректировать sbi на новый, который БУДЕТ установлен после отработки сервером аттача
-	lsbi.dwSize.X = MakeShort(rcCon.right);
-	lsbi.srWindow.Left = 0; lsbi.srWindow.Right = MakeShort(rcCon.right-1);
 
-	if (bCurBufHeight)
-	{
-		// sbi.dwSize.Y не трогаем
-		lsbi.srWindow.Bottom = MakeShort(lsbi.srWindow.Top + rcCon.bottom - 1);
-	}
-	else
-	{
-		lsbi.dwSize.Y = MakeShort(rcCon.bottom);
-		lsbi.srWindow.Top = 0; lsbi.srWindow.Bottom = MakeShort(rcCon.bottom - 1);
-	}
-
-	mp_RBuf->InitSBI(&lsbi, bCurBufHeight);
-
-	_ASSERTE(isBufferHeight() == bCurBufHeight);
+	mp_RBuf->InitSBI(rStartStop->sbi);
 
 	//// Событие "изменения" консоли //2009-05-14 Теперь события обрабатываются в GUI, но прийти из консоли может изменение размера курсора
 	//swprintf_c(ms_ConEmuC_Pipe, CE_CURSORUPDATE, mn_MainSrv_PID);
@@ -4395,6 +4370,7 @@ void CRealConsole::ResetVarsOnStart()
 	mn_DeactivateTick = 0;
 	mb_WasVisibleOnce = mp_VCon->isVisible();
 	mb_NeedLoadRootProcessIcon = true;
+	ZeroStruct(m_ScrollStatus);
 
 	UpdateStartState(rss_StartupRequested);
 
@@ -11038,18 +11014,15 @@ void CRealConsole::UpdateScrollInfo()
 	UpdateCursorInfo();
 
 
-	WARNING("DoubleView: заменить static на member");
-	static SHORT nLastHeight = 0, nLastWndHeight = 0, nLastTop = 0;
+	if (m_ScrollStatus.nLastHeight == mp_ABuf->GetDynamicHeight()
+	        && m_ScrollStatus.nLastWndHeight == mp_ABuf->GetTextHeight()/*(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1)*/
+	        && m_ScrollStatus.nLastTop == mp_ABuf->GetBufferPosY()/*con.m_sbi.srWindow.Top*/)
+		return; // was not changed
 
-	if (nLastHeight == mp_ABuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/
-	        && nLastWndHeight == mp_ABuf->GetTextHeight()/*(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1)*/
-	        && nLastTop == mp_ABuf->GetBufferPosY()/*con.m_sbi.srWindow.Top*/)
-		return; // не менялось
-
-	nLastHeight = mp_ABuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/;
-	nLastWndHeight = mp_ABuf->GetTextHeight()/*(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1)*/;
-	nLastTop = mp_ABuf->GetBufferPosY()/*con.m_sbi.srWindow.Top*/;
-	mp_VCon->SetScroll(mp_ABuf->isScroll()/*con.bBufferHeight*/, nLastTop, nLastWndHeight, nLastHeight);
+	m_ScrollStatus.nLastHeight = mp_ABuf->GetDynamicHeight();
+	m_ScrollStatus.nLastWndHeight = mp_ABuf->GetTextHeight()/*(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1)*/;
+	m_ScrollStatus.nLastTop = mp_ABuf->GetBufferPosY()/*con.m_sbi.srWindow.Top*/;
+	mp_VCon->SetScroll(mp_ABuf->isScroll()/*con.bBufferHeight*/, m_ScrollStatus.nLastTop, m_ScrollStatus.nLastWndHeight, m_ScrollStatus.nLastHeight);
 }
 
 bool CRealConsole::_TabsInfo::RefreshFarPID(DWORD nNewPID)

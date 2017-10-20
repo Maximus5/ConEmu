@@ -426,7 +426,9 @@ void Settings::InitSettings()
 	//isSendAltEnter = isSendAltSpace = isSendAltF9 = false;
 	isSendAltTab = isSendAltEsc = isSendAltPrintScrn = isSendPrintScrn = isSendCtrlEsc = false;
 	isMonitorConsoleLang = 3; // bitmask. 1 - follow up console HKL (e.g. after XLat in Far Manager), 2 - use one HKL for all tabs
-	DefaultBufferHeight = 1000; AutoBufferHeight = true;
+	isDynamicBufferHeight = true;
+	DefaultBufferHeight = LONGOUTPUTHEIGHT_MAX;
+	AutoBufferHeight = true;
 	UseScrollLock = true;
 	isSaveCmdHistory = true;
 	ComSpec.AddConEmu2Path = CEAP_AddAll;
@@ -2622,6 +2624,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"DownShowHiddenMessage", isDownShowHiddenMessage);
 		reg->Load(L"DownShowExOnTopMessage", isDownShowExOnTopMessage);
 
+		reg->Load(L"DynamicBufferHeight", isDynamicBufferHeight);
+
 		reg->Load(L"DefaultBufferHeight", DefaultBufferHeight);
 
 		if (DefaultBufferHeight < LONGOUTPUTHEIGHT_MIN)
@@ -3628,6 +3632,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ConsoleFontName", ConsoleFont.lfFaceName);
 		reg->Save(L"ConsoleFontWidth", ConsoleFont.lfWidth);
 		reg->Save(L"ConsoleFontHeight", ConsoleFont.lfHeight);
+		reg->Save(L"DynamicBufferHeight", isDynamicBufferHeight);
 		reg->Save(L"DefaultBufferHeight", DefaultBufferHeight);
 		reg->Save(L"AutoBufferHeight", AutoBufferHeight);
 		reg->Save(L"UseScrollLock", UseScrollLock);

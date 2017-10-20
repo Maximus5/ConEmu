@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ExtConsole.h"
 #include "GuiAttach.h"
 #include "hkConsoleOutput.h"
+#include "hlpConsole.h"
 #include "MainThread.h"
 
 /* **************** */
@@ -192,6 +193,8 @@ BOOL WINAPI OnSetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes)
 }
 
 
+TODO("Call UpdateAppMapRows everywhere where direct write operations are executed");
+
 BOOL WINAPI OnWriteConsoleOutputA(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion)
 {
 	//typedef BOOL (WINAPI* OnWriteConsoleOutputA_t)(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
@@ -336,20 +339,43 @@ BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpChar
 }
 
 
+// After "cls" executed in cmd or powershell we have to reset nLastConsoleRow stored in our AppMap
+static void CheckForCls(HANDLE hConsoleOutput, const SMALL_RECT& lpScrollRectangle, COORD dwDestinationOrigin)
+{
+	// Must be {0,0}, 0
+	if (lpScrollRectangle.Left || lpScrollRectangle.Top || dwDestinationOrigin.X)
+		return;
+	if (lpScrollRectangle.Bottom != -dwDestinationOrigin.Y)
+		return;
+	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
+	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &sbi))
+		return;
+	if (lpScrollRectangle.Right != sbi.dwSize.X || lpScrollRectangle.Bottom != sbi.dwSize.Y)
+		return;
+	// That is "cls"
+	UpdateAppMapRows(0, true);
+}
+
+
 BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
 {
 	//typedef BOOL (WINAPI* OnScrollConsoleScreenBufferA_t)(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
 	ORIGINAL_KRNL(ScrollConsoleScreenBufferA);
 	BOOL lbRc = FALSE;
+	bool isOut = false;
 
 	if (HandleKeeper::IsOutputHandle(hConsoleOutput))
 	{
 		ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConsoleOutput, dwDestinationOrigin.Y - lpScrollRectangle->Top};
 		CheckNeedExtScroll(scrl, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin);
 		ExtScrollScreen(&scrl);
+		isOut = true;
 	}
 
 	lbRc = F(ScrollConsoleScreenBufferA)(hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
+
+	if (lbRc && isOut && !lpClipRectangle && lpScrollRectangle && lpFill && lpFill->Char.AsciiChar == ' ')
+		CheckForCls(hConsoleOutput, *lpScrollRectangle, dwDestinationOrigin);
 
 	return lbRc;
 }
@@ -360,12 +386,14 @@ BOOL WINAPI OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT
 	typedef BOOL (WINAPI* OnScrollConsoleScreenBufferW_t)(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill);
 	ORIGINAL_KRNL(ScrollConsoleScreenBufferW);
 	BOOL lbRc = FALSE;
+	bool isOut = false;
 
 	if (HandleKeeper::IsOutputHandle(hConsoleOutput))
 	{
 		ExtScrollScreenParm scrl = {sizeof(scrl), essf_ExtOnly, hConsoleOutput, dwDestinationOrigin.Y - lpScrollRectangle->Top};
 		CheckNeedExtScroll(scrl, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin);
 		ExtScrollScreen(&scrl);
+		isOut = true;
 	}
 
 	//Warning: This function called from "cmd.exe /c cls" whith arguments:
@@ -374,6 +402,9 @@ BOOL WINAPI OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT
 	//dwDestinationOrigin = {0, -9999}
 
 	lbRc = F(ScrollConsoleScreenBufferW)(hConsoleOutput, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
+
+	if (lbRc && isOut && !lpClipRectangle && lpScrollRectangle && lpFill && lpFill->Char.UnicodeChar == ' ')
+		CheckForCls(hConsoleOutput, *lpScrollRectangle, dwDestinationOrigin);
 
 	return lbRc;
 }
