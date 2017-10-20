@@ -2,6 +2,7 @@
 .svnignore
 .wsl
 Descript.ion
+premake5.exe
 
 _*.sln
 
