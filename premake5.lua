@@ -1,8 +1,11 @@
 workspace "premake-CE"
   configurations { "Release", "Debug", "Remote" }
   platforms { "Win32", "x64" }
+  -- Where *.vcxproj files would be placed
   location "build"
   --basedir "%{cfg.location}"
+  -- Subdir for temporary files
+  local build_dir = "_VCBUILD"
   startproject "ConEmu"
   flags { "StaticRuntime" }
 
@@ -103,8 +106,8 @@ project "common-kernel"
     ["Sources"] = {"**.cpp"},
   }
 
-  implibdir "lib1"
-  objdir "obj1"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   -- doesn't work
   --targetdir "%{cfg.objdir}"
   filter "platforms:Win32"
@@ -138,7 +141,8 @@ project "common-user"
     ["Sources"] = {"**.cpp"},
   }
 
-  implibdir "lib1"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   -- doesn't work
   --targetdir "%{cfg.objdir}"
   filter "platforms:Win32"
@@ -207,6 +211,8 @@ project "ConEmu"
 
   targetdir (ConEmuDir)
   targetname "ConEmu"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   filter "platforms:x64"
     targetsuffix "64"
   filter {}
@@ -248,6 +254,8 @@ project "ConEmuC"
 
   targetdir (ConEmuDir.."ConEmu/")
   targetname "ConEmuC"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
   filter "platforms:x64"
@@ -300,9 +308,10 @@ project "ConEmuCD"
     { ["Exports"]   = {"**.def"} },
   }
 
-  implibdir "lib1"
   targetdir (ConEmuDir.."ConEmu/")
   targetname "ConEmuCD"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
   filter "platforms:x64"
@@ -374,9 +383,10 @@ project "ConEmuHk"
     { ["Exports"]   = {"**.def"} },
   }
 
-  implibdir "lib1"
   targetdir (ConEmuDir.."ConEmu/")
   targetname "ConEmuHk"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
   filter "platforms:x64"
@@ -421,9 +431,10 @@ project "Far.ConEmuPlugin"
     { ["Exports"]   = {"**.def"} },
   }
 
-  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/")
   targetname "ConEmu"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
   filter "platforms:x64"
@@ -468,9 +479,10 @@ project "Far.ConEmuBg"
     { ["Exports"]   = {"**.def"} },
   }
 
-  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/Background/")
   targetname "ConEmuBg"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
   filter "platforms:x64"
@@ -515,9 +527,10 @@ project "Far.ConEmuLn"
     { ["Exports"]   = {"**.def"} },
   }
 
-  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/Lines/")
   targetname "ConEmuLn"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
   filter "platforms:x64"
@@ -562,9 +575,10 @@ project "Far.ConEmuTh"
     { ["Exports"]   = {"**.def"} },
   }
 
-  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
   targetname "ConEmuTh"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
   filter "platforms:x64"
@@ -603,9 +617,10 @@ project "Far.ConEmuTh.gdi+"
     { ["Exports"]   = {"**.def"} },
   }
 
-  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
   targetname "gdi+"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetextension ".t32"
   filter "platforms:x64"
@@ -648,9 +663,10 @@ project "Far.ConEmuTh.ico"
     { ["Exports"]   = {"**.def"} },
   }
 
-  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
   targetname "ico"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetextension ".t32"
   filter "platforms:x64"
@@ -688,9 +704,10 @@ project "Far.ConEmuTh.pe"
     { ["Exports"]   = {"**.def"} },
   }
 
-  implibdir "lib1"
   targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
   targetname "pe"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetextension ".t32"
   filter "platforms:x64"
@@ -736,9 +753,10 @@ project "Far.ExtendedConsole"
     { ["Exports"]   = {"**.def"} },
   }
 
-  implibdir "lib1"
   targetdir (ConEmuDir.."ConEmu/")
   targetname "ExtendedConsole"
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
   filter "platforms:x64"
