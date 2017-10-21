@@ -226,11 +226,14 @@ int CheckUnicodeFont()
 
 	// Test of "Reverse video"
 	GetConsoleScreenBufferInfo(hOut, &csbi);
-	const WORD N = 0x07, H = N|COMMON_LVB_REVERSE_VIDEO;
+	const WORD N = 0x07, H = N|COMMON_LVB_REVERSE_VIDEO, E = 0x2007;
 	// "Normal" + ' ' + "Reverse"
 	CHAR_INFO cHighlight[] = {{{'N'},N},{{'o'},N},{{'r'},N},{{'m'},N},{{'a'},N},{{'l'},N},
 		{{' '},N},
-		{{'R'},H},{{'e'},H},{{'v'},H},{{'e'},H},{{'r'},H},{{'s'},H},{{'e'},H}};
+		{{'R'},H},{{'e'},H},{{'v'},H},{{'e'},H},{{'r'},H},{{'s'},H},{{'e'},H},
+		{{' '},N},
+		{{'E'},E},{{'x'},E},{{'t'},E},{{'r'},E},{{'a'},E},
+		{{' '},N}};
 	COORD crHiSize = {countof(cHighlight), 1}, cr0 = {};
 	COORD crBeforePos = csbi.dwCursorPosition, crAfterPos = {countof(cHighlight), csbi.dwCursorPosition.Y};
 	SMALL_RECT srHiPos = {0, csbi.dwCursorPosition.Y, crHiSize.X-1, csbi.dwCursorPosition.Y};
@@ -238,14 +241,25 @@ int CheckUnicodeFont()
 	WriteConsoleOutputW(hOut, cHighlight, crHiSize, cr0, &srHiPos);
 	GetConsoleScreenBufferInfo(hOut, &csbi);
 	ReadConsoleOutputAttribute(hOut, aRead, countof(cHighlight), crBeforePos, &nTmp);
-	msprintf(szInfo, countof(szInfo), L" x%X x%X ", static_cast<UINT>(aRead[0]), static_cast<UINT>(aRead[countof(cHighlight)-1]));
+	msprintf(szInfo, countof(szInfo), L"--> x%X x%X x%X", static_cast<UINT>(aRead[0]), static_cast<UINT>(aRead[7]), static_cast<UINT>(aRead[15]));
 	write(szInfo);
-	msprintf(szInfo, countof(szInfo), L"Normal:x%X ", static_cast<UINT>(csbi.wAttributes));
-	write(szInfo);
-	SetConsoleTextAttribute(hOut, H);
-	GetConsoleScreenBufferInfo(hOut, &csbi);
-	msprintf(szInfo, countof(szInfo), L"Reverse:x%X", static_cast<UINT>(csbi.wAttributes));
-	write(szInfo);
+	write(L"\r\n");
+	struct { const wchar_t* Label; WORD Attr; } AttrTests[] = {
+		{L"LVert", N|COMMON_LVB_GRID_LVERTICAL},
+		{L"RVert", N|COMMON_LVB_GRID_RVERTICAL},
+		{L"Extra", N|0x2000},
+		{L"Under", N|COMMON_LVB_UNDERSCORE},
+		{L"Horz", N|COMMON_LVB_GRID_HORIZONTAL},
+		{}
+	};
+	for (size_t i = 0; AttrTests[i].Label; ++i)
+	{
+		SetConsoleTextAttribute(hOut, AttrTests[i].Attr);
+		msprintf(szInfo, countof(szInfo), L"%s:x%04X", AttrTests[i].Label, static_cast<UINT>(AttrTests[i].Attr));
+		write(szInfo);
+		SetConsoleTextAttribute(hOut, N);
+		write(L" ");
+	}
 	SetConsoleTextAttribute(hOut, N);
 	write(L"\r\n");
 
