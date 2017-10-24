@@ -1,13 +1,14 @@
-workspace "premake-CE"
+workspace "CE"
   configurations { "Release", "Debug", "Remote" }
   platforms { "Win32", "x64" }
   -- Where *.vcxproj files would be placed
-  location "build"
+  location "src"
   --basedir "%{cfg.location}"
   -- Subdir for temporary files
   local build_dir = "_VCBUILD"
+   
   startproject "ConEmu"
-  flags { "StaticRuntime" }
+  flags { "StaticRuntime", "Maps" }
 
   filter "platforms:Win32"
     architecture "x32"
@@ -41,7 +42,16 @@ workspace "premake-CE"
 
   filter{}
 
-  local ConEmuDir = "%{cfg.buildcfg}/"
+function target_dir(folder)
+  filter "configurations:Release"
+    targetdir("Release/"..folder)
+
+  filter "configurations:Debug"
+    targetdir("Debug/"..folder)
+
+  filter "configurations:Remote"
+    targetdir("Z:/"..folder)
+end
 
 
 local common_remove = {
@@ -204,12 +214,12 @@ project "ConEmu"
     { ["Common"]    = {"src/common/*.h"} },
     { ["Resources"] = {"**/*.rc", "**/*.rc2", "**/*.manifest", "**/*.bmp", "**/*.cur", "**/*.ico"} },
     { ["Exports"]   = {"**.def"} },
-    { ["Settings"]  = {"**/SetPg*.*"} },
+    { ["Settings"]  = {"**/SetPg*.*", "**/Options*.*"} },
     { ["Headers"]   = {"**/*.h"} },
     { ["Sources"]   = {"**/*.cpp"} },
   }
 
-  targetdir (ConEmuDir)
+  target_dir("")
   targetname "ConEmu"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
@@ -252,7 +262,7 @@ project "ConEmuC"
     { ["Exports"]   = {"**.def"} },
   }
 
-  targetdir (ConEmuDir.."ConEmu/")
+  target_dir("ConEmu/")
   targetname "ConEmuC"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
@@ -308,7 +318,7 @@ project "ConEmuCD"
     { ["Exports"]   = {"**.def"} },
   }
 
-  targetdir (ConEmuDir.."ConEmu/")
+  target_dir("ConEmu/")
   targetname "ConEmuCD"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
@@ -383,7 +393,7 @@ project "ConEmuHk"
     { ["Exports"]   = {"**.def"} },
   }
 
-  targetdir (ConEmuDir.."ConEmu/")
+  target_dir("ConEmu/")
   targetname "ConEmuHk"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
@@ -431,7 +441,7 @@ project "Far.ConEmuPlugin"
     { ["Exports"]   = {"**.def"} },
   }
 
-  targetdir (ConEmuDir.."plugins/ConEmu/")
+  target_dir("plugins/ConEmu/")
   targetname "ConEmu"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
@@ -479,7 +489,7 @@ project "Far.ConEmuBg"
     { ["Exports"]   = {"**.def"} },
   }
 
-  targetdir (ConEmuDir.."plugins/ConEmu/Background/")
+  target_dir("plugins/ConEmu/Background/")
   targetname "ConEmuBg"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
@@ -527,7 +537,7 @@ project "Far.ConEmuLn"
     { ["Exports"]   = {"**.def"} },
   }
 
-  targetdir (ConEmuDir.."plugins/ConEmu/Lines/")
+  target_dir("plugins/ConEmu/Lines/")
   targetname "ConEmuLn"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
@@ -575,7 +585,7 @@ project "Far.ConEmuTh"
     { ["Exports"]   = {"**.def"} },
   }
 
-  targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
+  target_dir("plugins/ConEmu/Thumbs/")
   targetname "ConEmuTh"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
@@ -617,7 +627,7 @@ project "Far.ConEmuTh.gdi+"
     { ["Exports"]   = {"**.def"} },
   }
 
-  targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
+  target_dir("plugins/ConEmu/Thumbs/")
   targetname "gdi+"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
@@ -663,7 +673,7 @@ project "Far.ConEmuTh.ico"
     { ["Exports"]   = {"**.def"} },
   }
 
-  targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
+  target_dir("plugins/ConEmu/Thumbs/")
   targetname "ico"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
@@ -704,7 +714,7 @@ project "Far.ConEmuTh.pe"
     { ["Exports"]   = {"**.def"} },
   }
 
-  targetdir (ConEmuDir.."plugins/ConEmu/Thumbs/")
+  target_dir("plugins/ConEmu/Thumbs/")
   targetname "pe"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
@@ -753,7 +763,7 @@ project "Far.ExtendedConsole"
     { ["Exports"]   = {"**.def"} },
   }
 
-  targetdir (ConEmuDir.."ConEmu/")
+  target_dir("ConEmu/")
   targetname "ExtendedConsole"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
