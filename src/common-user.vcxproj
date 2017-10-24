@@ -1,0 +1,322 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Remote|Win32">
+      <Configuration>Remote</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Remote|x64">
+      <Configuration>Remote</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{1AC964D4-867E-DDC9-0F73-D7A07B27D4CD}</ProjectGuid>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>common-user</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>bin\Win32\Release\</OutDir>
+    <IntDir>_VCBUILD\Release_common-user_Win32\</IntDir>
+    <TargetName>common-user32</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>bin\x64\Release\</OutDir>
+    <IntDir>_VCBUILD\Release_common-user_x64\</IntDir>
+    <TargetName>common-user64</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>bin\Win32\Debug\</OutDir>
+    <IntDir>_VCBUILD\Debug_common-user_Win32\</IntDir>
+    <TargetName>common-user32</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>bin\x64\Debug\</OutDir>
+    <IntDir>_VCBUILD\Debug_common-user_x64\</IntDir>
+    <TargetName>common-user64</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
+    <OutDir>bin\Win32\Remote\</OutDir>
+    <IntDir>_VCBUILD\Remote_common-user_Win32\</IntDir>
+    <TargetName>common-user32</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
+    <OutDir>bin\x64\Remote\</OutDir>
+    <IntDir>_VCBUILD\Remote_common-user_x64\</IntDir>
+    <TargetName>common-user64</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;HIDE_TODO;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>MinSpace</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN64;_WIN64;NDEBUG;HIDE_TODO;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>MinSpace</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="common\ConEmuCheckEx.h" />
+    <ClInclude Include="common\ConEmuColors.h" />
+    <ClInclude Include="common\ConEmuColors3.h" />
+    <ClInclude Include="common\ConEmuInOut.h" />
+    <ClInclude Include="common\ConEmuPipeMode.h" />
+    <ClInclude Include="common\ConsoleAnnotation.h" />
+    <ClInclude Include="common\ConsoleTrueMod.h" />
+    <ClInclude Include="common\DbgHlpGcc.h" />
+    <ClInclude Include="common\DefTermBase.h" />
+    <ClInclude Include="common\Dump.h" />
+    <ClInclude Include="common\EmergencyShow.h" />
+    <ClInclude Include="common\FarVersion.h" />
+    <ClInclude Include="common\GdiPlusLt.h" />
+    <ClInclude Include="common\MArray.h" />
+    <ClInclude Include="common\MBSTR.h" />
+    <ClInclude Include="common\MCircular.h" />
+    <ClInclude Include="common\MEvent.h" />
+    <ClInclude Include="common\MFileLogEx.h" />
+    <ClInclude Include="common\MFileMapping.h" />
+    <ClInclude Include="common\MGlobal.h" />
+    <ClInclude Include="common\MGuiMacro.h" />
+    <ClInclude Include="common\MJsonReader.h" />
+    <ClInclude Include="common\MMap.h" />
+    <ClInclude Include="common\MPerfCounter.h" />
+    <ClInclude Include="common\MPipe.h" />
+    <ClInclude Include="common\MSetter.h" />
+    <ClInclude Include="common\MStrEsc.h" />
+    <ClInclude Include="common\MStream.h" />
+    <ClInclude Include="common\MTimer.h" />
+    <ClInclude Include="common\MToolHelp.h" />
+    <ClInclude Include="common\MToolTip.h" />
+    <ClInclude Include="common\MWow64Disable.h" />
+    <ClInclude Include="common\Monitors.h" />
+    <ClInclude Include="common\PipeServer.h" />
+    <ClInclude Include="common\ProcessData.h" />
+    <ClInclude Include="common\ProcessSetEnv.h" />
+    <ClInclude Include="common\RConStartArgsEx.h" />
+    <ClInclude Include="common\RgnDetect.h" />
+    <ClInclude Include="common\SetEnvVar.h" />
+    <ClInclude Include="common\SetExport.h" />
+    <ClInclude Include="common\StartupEnv.h" />
+    <ClInclude Include="common\StartupEnvDef.h" />
+    <ClInclude Include="common\StartupEnvEx.h" />
+    <ClInclude Include="common\TerminalMode.h" />
+    <ClInclude Include="common\TokenHelper.h" />
+    <ClInclude Include="common\UnicodeChars.h" />
+    <ClInclude Include="common\WConsoleEx.h" />
+    <ClInclude Include="common\WConsoleInfo.h" />
+    <ClInclude Include="common\WErrGuard.h" />
+    <ClInclude Include="common\WFiles.h" />
+    <ClInclude Include="common\WRegistry.h" />
+    <ClInclude Include="common\WSession.h" />
+    <ClInclude Include="common\WUser.h" />
+    <ClInclude Include="common\clink.h" />
+    <ClInclude Include="common\defines.h" />
+    <ClInclude Include="common\kl_parts.h" />
+    <ClInclude Include="common\md5.h" />
+    <ClInclude Include="common\plugin_helper.h" />
+    <ClInclude Include="common\stdint_.h" />
+    <ClInclude Include="common\wcchars.h" />
+    <ClInclude Include="common\wcwidth.h" />
+    <ClInclude Include="common\xmllite.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="common\ConEmuCheckEx.cpp" />
+    <ClCompile Include="common\EmergencyShow.cpp" />
+    <ClCompile Include="common\MBSTR.cpp" />
+    <ClCompile Include="common\MEvent.cpp" />
+    <ClCompile Include="common\MFileLogEx.cpp" />
+    <ClCompile Include="common\MGlobal.cpp" />
+    <ClCompile Include="common\MGuiMacro.cpp" />
+    <ClCompile Include="common\MJsonReader.cpp" />
+    <ClCompile Include="common\MPerfCounter.cpp" />
+    <ClCompile Include="common\MSetter.cpp" />
+    <ClCompile Include="common\MStrEsc.cpp" />
+    <ClCompile Include="common\MTimer.cpp" />
+    <ClCompile Include="common\MToolTip.cpp" />
+    <ClCompile Include="common\Monitors.cpp" />
+    <ClCompile Include="common\ProcessSetEnv.cpp" />
+    <ClCompile Include="common\RConStartArgsEx.cpp" />
+    <ClCompile Include="common\RgnDetect.cpp" />
+    <ClCompile Include="common\SetEnvVar.cpp" />
+    <ClCompile Include="common\WConsoleEx.cpp" />
+    <ClCompile Include="common\WConsoleInfo.cpp" />
+    <ClCompile Include="common\WFiles.cpp" />
+    <ClCompile Include="common\WRegistry.cpp" />
+    <ClCompile Include="common\WSession.cpp" />
+    <ClCompile Include="common\WUser.cpp" />
+    <ClCompile Include="common\md5.cpp" />
+    <ClCompile Include="common\wcchars.cpp" />
+    <ClCompile Include="common\wcwidth.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

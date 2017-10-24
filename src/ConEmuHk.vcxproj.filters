@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Exports">
+      <UniqueIdentifier>{BA9346E3-2673-C57E-2F8B-50559BE92BE0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{C196CD9C-2D76-4C38-368E-D70EA2ECB299}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Hooks">
+      <UniqueIdentifier>{E9A8540D-55BD-7CBE-1E3F-201E8A1279EF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MinHook">
+      <UniqueIdentifier>{1A77E127-8656-60C3-8F6E-EB99FBCCC624}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MinHook\HDE">
+      <UniqueIdentifier>{3A75B69B-A62A-2F91-2F1F-29689BD32595}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MinHook\Trampoline">
+      <UniqueIdentifier>{04BF1CFA-F0A2-DD4F-5903-D8A24506C8D1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{000BCD17-6C75-818E-B5B3-3234215D5FE3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{89565304-F535-D29F-FE4D-5D766AAC3801}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ConEmuHk\Ansi.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\ConEmuHooks.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\Connector.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\Console2.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\DbgHooks.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\DefTermHk.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\ExtConsole.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\GuiAttach.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\Injects.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\MainThread.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\SetHook.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\ShellProcessor.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkCmdExe.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkConsole.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkConsoleInput.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkConsoleOutput.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkDialog.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkEnvironment.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkFarExe.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkGDI.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkKernel.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkLibrary.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkMessages.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkProcess.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkStdIO.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hkWindow.h">
+      <Filter>Hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hlpConsole.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\hlpProcess.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\resource.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\minhook\include\MinHook.h">
+      <Filter>MinHook</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\minhook\src\HDE\hde32.h">
+      <Filter>MinHook\HDE</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\minhook\src\HDE\hde64.h">
+      <Filter>MinHook\HDE</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\minhook\src\HDE\pstdint.h">
+      <Filter>MinHook\HDE</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\minhook\src\HDE\table32.h">
+      <Filter>MinHook\HDE</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\minhook\src\HDE\table64.h">
+      <Filter>MinHook\HDE</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\minhook\src\buffer.h">
+      <Filter>MinHook\Trampoline</Filter>
+    </ClInclude>
+    <ClInclude Include="modules\minhook\src\trampoline.h">
+      <Filter>MinHook\Trampoline</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ConEmuHk\Ansi.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\ConEmuHooks.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\Connector.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\DefTermHk.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\Entry.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\ExtConsole.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\GuiAttach.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\Injects.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\MainThread.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\SetHook.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\ShellProcessor.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hde.c">
+      <Filter>MinHook</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkCmdExe.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkConsole.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkConsoleInput.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkConsoleOutput.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkDialog.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkEnvironment.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkFarExe.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkGDI.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkKernel.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkLibrary.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkMessages.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkProcess.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkStdIO.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hkWindow.cpp">
+      <Filter>Hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\hlpConsole.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\minhook\src\HDE\hde32.c">
+      <Filter>MinHook\HDE</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\minhook\src\HDE\hde64.c">
+      <Filter>MinHook\HDE</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\minhook\src\buffer.c">
+      <Filter>MinHook\Trampoline</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\minhook\src\hook.c">
+      <Filter>MinHook\Trampoline</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\minhook\src\trampoline.c">
+      <Filter>MinHook\Trampoline</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ConEmuHk\export.def">
+      <Filter>Exports</Filter>
+    </None>
+    <None Include="modules\minhook\LICENSE.txt">
+      <Filter>MinHook</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ConEmuHk\ConEmuHk.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

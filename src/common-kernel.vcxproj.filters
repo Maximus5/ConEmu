@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{C196CD9C-2D76-4C38-368E-D70EA2ECB299}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{89565304-F535-D29F-FE4D-5D766AAC3801}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="common\CEStr.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\CmdLine.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\Common.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ConEmuCheck.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ConsoleMixAttr.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ConsoleRead.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\HandleKeeper.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\HkFunc.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\InQueue.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MAssert.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MConHandle.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MFileLog.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MModule.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MProcess.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MProcessBits.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MRect.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MSection.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MSectionSimple.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MSecurity.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MStrDup.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MStrSafe.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\Memory.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\RConStartArgs.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\WCodePage.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\WConsole.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\WModuleCheck.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\WObjects.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\WThreads.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\execute.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="common\CEStr.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\CmdLine.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\Common.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\ConEmuCheck.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\ConsoleMixAttr.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\ConsoleRead.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\HandleKeeper.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\HkFunc.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\InQueue.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MAssert.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MConHandle.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MFileLog.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MModule.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MProcess.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MProcessBits.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MRect.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MSection.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MSectionSimple.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MSecurity.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MStrDup.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MStrSafe.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\Memory.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\RConStartArgs.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\WCodePage.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\WConsole.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\WModuleCheck.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\WObjects.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\WThreads.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\execute.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

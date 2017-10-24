@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Automation">
+      <UniqueIdentifier>{862AF0EC-72E2-313A-DBE9-0A96C7C0CC2A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Exports">
+      <UniqueIdentifier>{BA9346E3-2673-C57E-2F8B-50559BE92BE0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{C196CD9C-2D76-4C38-368E-D70EA2ECB299}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Interface">
+      <UniqueIdentifier>{764D2783-E2B7-DBF9-2BF6-8C9F979FB94E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{000BCD17-6C75-818E-B5B3-3234215D5FE3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{89565304-F535-D29F-FE4D-5D766AAC3801}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ConEmuCD\Actions.h">
+      <Filter>Automation</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\ConEmuSrv.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\ConProcess.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\ConsoleHelp.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\Debugger.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\DownloaderCall.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\ExitCodes.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\GuiHooks.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\GuiMacro.h">
+      <Filter>Automation</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\Infiltrate.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\MapDump.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\Queue.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\SrvCommands.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\SrvPipes.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\StartEnv.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\UnicodeTest.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\crc32.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\resource.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\Injects.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="common\Common.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ConEmuCD\Actions.cpp">
+      <Filter>Automation</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\ConEmuCmd.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\ConEmuSrv.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\ConProcess.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\ConsoleMain.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\Debugger.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\DownloaderCall.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\GuiHooks.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\GuiMacro.cpp">
+      <Filter>Automation</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\Infiltrate.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\InjectRemote.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\MapDump.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\Queue.cpp">
+      <Filter>Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\SrvCommands.cpp">
+      <Filter>Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\SrvPipes.cpp">
+      <Filter>Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\StartEnv.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\UnicodeTest.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuHk\Injects.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ConEmuCD\export.def">
+      <Filter>Exports</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ConEmuCD\ConEmuCD.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

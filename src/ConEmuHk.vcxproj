@@ -1,0 +1,372 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Remote|Win32">
+      <Configuration>Remote</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Remote|x64">
+      <Configuration>Remote</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{3F2924B7-2BF6-7EC2-540F-6D6A403BB450}</ProjectGuid>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>ConEmuHk</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141_xp</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>..\Release\ConEmu\</OutDir>
+    <IntDir>obj\Win32\Release\ConEmuHk\</IntDir>
+    <TargetName>ConEmuHk</TargetName>
+    <TargetExt>.dll</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>..\Release\ConEmu\</OutDir>
+    <IntDir>obj\x64\Release\ConEmuHk\</IntDir>
+    <TargetName>ConEmuHk64</TargetName>
+    <TargetExt>.dll</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>..\Debug\ConEmu\</OutDir>
+    <IntDir>obj\Win32\Debug\ConEmuHk\</IntDir>
+    <TargetName>ConEmuHk</TargetName>
+    <TargetExt>.dll</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>..\Debug\ConEmu\</OutDir>
+    <IntDir>obj\x64\Debug\ConEmuHk\</IntDir>
+    <TargetName>ConEmuHk64</TargetName>
+    <TargetExt>.dll</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>Z:\ConEmu\</OutDir>
+    <IntDir>_VCBUILD\Remote_ConEmuHk_Win32\</IntDir>
+    <TargetName>ConEmuHk</TargetName>
+    <TargetExt>.dll</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>Z:\ConEmu\</OutDir>
+    <IntDir>_VCBUILD\Remote_ConEmuHk_x64\</IntDir>
+    <TargetName>ConEmuHk64</TargetName>
+    <TargetExt>.dll</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;HIDE_TODO;CONEMU_MINIMAL;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>MinSpace</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;HIDE_TODO;CONEMU_MINIMAL;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <ImportLibrary>..\Release\ConEmu\ConEmuHk.lib</ImportLibrary>
+      <GenerateMapFile>true</GenerateMapFile>
+      <ModuleDefinitionFile>ConEmuHk/export.def</ModuleDefinitionFile>
+      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x7E110000 %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN64;_WIN64;NDEBUG;HIDE_TODO;CONEMU_MINIMAL;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>MinSpace</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN64;_WIN64;NDEBUG;HIDE_TODO;CONEMU_MINIMAL;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <ImportLibrary>..\Release\ConEmu\ConEmuHk64.lib</ImportLibrary>
+      <GenerateMapFile>true</GenerateMapFile>
+      <ModuleDefinitionFile>ConEmuHk/export.def</ModuleDefinitionFile>
+      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x7E110000 %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;CONEMU_MINIMAL;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;CONEMU_MINIMAL;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ImportLibrary>..\Debug\ConEmu\ConEmuHk.lib</ImportLibrary>
+      <GenerateMapFile>true</GenerateMapFile>
+      <ModuleDefinitionFile>ConEmuHk/export.def</ModuleDefinitionFile>
+      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x7E110000 %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;CONEMU_MINIMAL;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;CONEMU_MINIMAL;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ImportLibrary>..\Debug\ConEmu\ConEmuHk64.lib</ImportLibrary>
+      <GenerateMapFile>true</GenerateMapFile>
+      <ModuleDefinitionFile>ConEmuHk/export.def</ModuleDefinitionFile>
+      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x7E110000 %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;CONEMU_MINIMAL;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;CONEMU_MINIMAL;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ImportLibrary>_VCBUILD\Remote_ConEmuHk_Win32\ConEmuHk.lib</ImportLibrary>
+      <GenerateMapFile>true</GenerateMapFile>
+      <ModuleDefinitionFile>ConEmuHk/export.def</ModuleDefinitionFile>
+      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x7E110000 %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;CONEMU_MINIMAL;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <ExceptionHandling>false</ExceptionHandling>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;CONEMU_MINIMAL;_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ImportLibrary>_VCBUILD\Remote_ConEmuHk_x64\ConEmuHk64.lib</ImportLibrary>
+      <GenerateMapFile>true</GenerateMapFile>
+      <ModuleDefinitionFile>ConEmuHk/export.def</ModuleDefinitionFile>
+      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x7E110000 %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="ConEmuHk\Ansi.h" />
+    <ClInclude Include="ConEmuHk\ConEmuHooks.h" />
+    <ClInclude Include="ConEmuHk\Connector.h" />
+    <ClInclude Include="ConEmuHk\Console2.h" />
+    <ClInclude Include="ConEmuHk\DbgHooks.h" />
+    <ClInclude Include="ConEmuHk\DefTermHk.h" />
+    <ClInclude Include="ConEmuHk\ExtConsole.h" />
+    <ClInclude Include="ConEmuHk\GuiAttach.h" />
+    <ClInclude Include="ConEmuHk\Injects.h" />
+    <ClInclude Include="ConEmuHk\MainThread.h" />
+    <ClInclude Include="ConEmuHk\SetHook.h" />
+    <ClInclude Include="ConEmuHk\ShellProcessor.h" />
+    <ClInclude Include="ConEmuHk\hkCmdExe.h" />
+    <ClInclude Include="ConEmuHk\hkConsole.h" />
+    <ClInclude Include="ConEmuHk\hkConsoleInput.h" />
+    <ClInclude Include="ConEmuHk\hkConsoleOutput.h" />
+    <ClInclude Include="ConEmuHk\hkDialog.h" />
+    <ClInclude Include="ConEmuHk\hkEnvironment.h" />
+    <ClInclude Include="ConEmuHk\hkFarExe.h" />
+    <ClInclude Include="ConEmuHk\hkGDI.h" />
+    <ClInclude Include="ConEmuHk\hkKernel.h" />
+    <ClInclude Include="ConEmuHk\hkLibrary.h" />
+    <ClInclude Include="ConEmuHk\hkMessages.h" />
+    <ClInclude Include="ConEmuHk\hkProcess.h" />
+    <ClInclude Include="ConEmuHk\hkStdIO.h" />
+    <ClInclude Include="ConEmuHk\hkWindow.h" />
+    <ClInclude Include="ConEmuHk\hlpConsole.h" />
+    <ClInclude Include="ConEmuHk\hlpProcess.h" />
+    <ClInclude Include="ConEmuHk\resource.h" />
+    <ClInclude Include="modules\minhook\include\MinHook.h" />
+    <ClInclude Include="modules\minhook\src\HDE\hde32.h" />
+    <ClInclude Include="modules\minhook\src\HDE\hde64.h" />
+    <ClInclude Include="modules\minhook\src\HDE\pstdint.h" />
+    <ClInclude Include="modules\minhook\src\HDE\table32.h" />
+    <ClInclude Include="modules\minhook\src\HDE\table64.h" />
+    <ClInclude Include="modules\minhook\src\buffer.h" />
+    <ClInclude Include="modules\minhook\src\trampoline.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ConEmuHk\Ansi.cpp" />
+    <ClCompile Include="ConEmuHk\ConEmuHooks.cpp" />
+    <ClCompile Include="ConEmuHk\Connector.cpp" />
+    <ClCompile Include="ConEmuHk\DefTermHk.cpp" />
+    <ClCompile Include="ConEmuHk\Entry.cpp" />
+    <ClCompile Include="ConEmuHk\ExtConsole.cpp" />
+    <ClCompile Include="ConEmuHk\GuiAttach.cpp" />
+    <ClCompile Include="ConEmuHk\Injects.cpp" />
+    <ClCompile Include="ConEmuHk\MainThread.cpp" />
+    <ClCompile Include="ConEmuHk\SetHook.cpp" />
+    <ClCompile Include="ConEmuHk\ShellProcessor.cpp" />
+    <ClCompile Include="ConEmuHk\hde.c" />
+    <ClCompile Include="ConEmuHk\hkCmdExe.cpp" />
+    <ClCompile Include="ConEmuHk\hkConsole.cpp" />
+    <ClCompile Include="ConEmuHk\hkConsoleInput.cpp" />
+    <ClCompile Include="ConEmuHk\hkConsoleOutput.cpp" />
+    <ClCompile Include="ConEmuHk\hkDialog.cpp" />
+    <ClCompile Include="ConEmuHk\hkEnvironment.cpp" />
+    <ClCompile Include="ConEmuHk\hkFarExe.cpp" />
+    <ClCompile Include="ConEmuHk\hkGDI.cpp" />
+    <ClCompile Include="ConEmuHk\hkKernel.cpp" />
+    <ClCompile Include="ConEmuHk\hkLibrary.cpp" />
+    <ClCompile Include="ConEmuHk\hkMessages.cpp" />
+    <ClCompile Include="ConEmuHk\hkProcess.cpp" />
+    <ClCompile Include="ConEmuHk\hkStdIO.cpp" />
+    <ClCompile Include="ConEmuHk\hkWindow.cpp" />
+    <ClCompile Include="ConEmuHk\hlpConsole.cpp" />
+    <ClCompile Include="modules\minhook\src\HDE\hde32.c">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="modules\minhook\src\HDE\hde64.c">
+      <ExcludedFromBuild>true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="modules\minhook\src\buffer.c" />
+    <ClCompile Include="modules\minhook\src\hook.c" />
+    <ClCompile Include="modules\minhook\src\trampoline.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ConEmuHk\export.def" />
+    <None Include="modules\minhook\LICENSE.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ConEmuHk\ConEmuHk.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="common-kernel.vcxproj">
+      <Project>{9CA77168-0868-ED9E-D1A2-361C3D22327B}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

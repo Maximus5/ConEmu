@@ -1,6 +1,0 @@
-EXPORTS
-	GetMinFarVersionW
-	GetPluginInfoW
-	SetStartupInfoW
-	GetCustomDataW
-	FreeCustomDataW
