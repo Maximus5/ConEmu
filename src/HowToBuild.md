@@ -23,26 +23,11 @@ originally forked from here:
 
 ## How to build
 
-1. Visual Studio solution (*.sln) files. Supported versions:
+1. [Premake 5.0](https://premake.github.io/) is used to generate project files.
 
-   * CE.sln    Visual C++ 2008 and Windows SDK 7.0 (required!)  
-   * CE10.sln  Visual C++ 2010  
-   * CE11.sln  Visual C++ 2012  
-   * CE12.sln  Visual C++ 2013  
-   * CE14.sln  Visual C++ 2015  
+2. Visual Studio solution `src/CE.sln` is generated for ‘Visual C++ 2017’.
 
-2. Visual C++ makefiles (current releases are build with Windows SDK 7.0)
-
-   Example: `nmake /F makefile_all_vc`  
-   ! This method requires libCRT.lib (libCRT64.lib),  
-   ! placed in 'common' subfolder.  
-   ! These files may be compiled from Far Manager sources.  
-   ! http://farmanager.googlecode.com/svn/trunk/plugins  -->  common folder  
-   ! Windows SDK 7.0 required, check version in registry:  
-   ! HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Microsoft SDKs\Windows  
-   ! HKEY_CURRENT_USER\SOFTWARE\Microsoft\Microsoft SDKs\Windows
-        
-3. Use GnuC (MinGW) and makefile_all_gcc.
+3. Also you may use GnuC (MinGW) and makefile_all_gcc.
 
    Example: `mingw32-make -f makefile_all_gcc WIDE=1`  
    ! This method was tested only for x86 builds.  
