@@ -65,7 +65,7 @@ rem if exist ConEmu.map (
 rem   if exist ConEmu1.map del ConEmu1.map
 rem   ren ConEmu.map ConEmu1.map
 rem )
-7z a -r -mx=9 -ms=255f64m ..\%ConEmuPack_7z% * %ex7zlist% %ex7zpack%
+7z a -r -mx=9 -ms=255f64m ..\%ConEmuPack_7z% ConEmu*.exe ConEmu*.map ConEmu\* plugins\* %ex7zlist% %ex7zpack%
 if errorlevel 1 goto err7z
 rem if exist ConEmu1.map ren ConEmu1.map ConEmu.map
 cd ..
@@ -76,7 +76,7 @@ if exist %ConEmu_Maximus5_src_7z% del %ConEmu_Maximus5_src_7z%
 set ex7z_src=License.txt cmd_autorun.cmd About-ConEmu.txt FAQ-ConEmu.txt Settings-ConEmu.reg WhatsNew-ConEmu.txt -x!Release.x64
 set ex7z_src=%ex7z_src% -x!src\dosbox -x!src\*.plog -x!src\ConEmu_Org -x!\MinGW\ -x!src\_Profiler -x!src\_ToDo -x!*.diff -x!*.cab -x!src\Setup\setup_exe
 set ex7z_src=%ex7z_src% -x!src\ConEmuTh\Modules\mp3 -x!src\ConEmuTh\Modules\pe\ver_c0*.dll -x!src\ConEmuLn\x64 -x!src\ConEmuDW\Test\ConEmu
-set ex7z_src=%ex7z_src% -x!src\ConEmuDW\Test.std -x!src\ConEmuDW\95.mht -x!src\ConEmuDW\viewtopic.htm -x!src\ConEmuBg\x64
+set ex7z_src=%ex7z_src% -x!src\ConEmuDW\Test.std -x!src\ConEmuDW\95.mht -x!src\ConEmuDW\viewtopic.htm -x!src\ConEmuBg\x64 -x!_VCBUILD
 7z a -r %ConEmu_Maximus5_src_7z% src\* *.lng %ex7zlist% %ex7z_src%
 7z a -r %ConEmu_Maximus5_src_7z% PortableApps\*
 if errorlevel 1 goto err7z
