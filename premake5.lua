@@ -95,6 +95,7 @@ local common_remove = {
   "**/ProcList.*",
   "**/Processes.*",
   "**/base64.*",
+  "**/ConsoleTrueMod_Concept.h",
   "**/*.bak",
   "**/!*.*",
   "**/_*.*",
@@ -239,6 +240,14 @@ project "ConEmu"
     "**/FontRanges.*",
     "**/*-old.*",
     "**/RegExp.*",
+    "**/ConsoleTrueMod_Concept.h",
+    "**/hourglass.bmp",
+    "**/UserImages.bmp",
+    "**/User16.bmp",
+    "**/Scroll256.bmp",
+    "**/Scroll16.bmp",
+    "**/Scroll0.bmp",
+    "**/base64.h",
     "**/!*.*",
   }
 
