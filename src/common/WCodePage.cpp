@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include "Common.h"
 #include "WCodePage.h"
+#include "WErrGuard.h"
 
 void CpCvt::ResetBuffer()
 {
@@ -38,6 +39,8 @@ void CpCvt::ResetBuffer()
 
 CpCvtResult CpCvt::SetCP(UINT anCP)
 {
+	CLastErrorGuard errGuard;
+
 	if (bInitialized && (nCP == anCP))
 		return ccr_OK;
 
@@ -93,7 +96,7 @@ CpCvtResult CpCvt::Convert(char c, wchar_t& wc)
 			}
 			goto wrap;
 		}
-		
+
 		// Continuation byte (10xxxxxx)?
 		if (blen && ((bt & 0xC0/*11xxxxxx*/) != 0x80/*10xxxxxx*/))
 		{

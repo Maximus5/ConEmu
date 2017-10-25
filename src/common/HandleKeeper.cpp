@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "HandleKeeper.h"
+#include "WErrGuard.h"
 
 #ifdef _DEBUG
 #include "MStrDup.h"
@@ -280,6 +281,8 @@ bool HandleKeeper::AllocHandleInfo(HANDLE h, HandleSource source, DWORD access, 
 
 bool HandleKeeper::QueryHandleInfo(HANDLE h, HandleInformation& Info, bool AnsiOutExpected)
 {
+	CLastErrorGuard errGuard;
+
 	if (!h || (h == INVALID_HANDLE_VALUE))
 		return false;
 	bool bFound = false;

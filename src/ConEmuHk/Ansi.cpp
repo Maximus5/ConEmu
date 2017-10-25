@@ -3831,6 +3831,8 @@ void CEAnsi::StorePromptBegin()
 //static
 CEAnsi* CEAnsi::Object(bool bForceCreate /*= false*/)
 {
+	CLastErrorGuard errGuard;
+
 	if (!AnsiTlsIndex)
 	{
 		AnsiTlsIndex = TlsAlloc();
