@@ -20,6 +20,31 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.10.24
+* connector#15: Support graphics output in some versions of mc.
+* gh-1265: Fix crash in Windows 7 on starting elevated console.
+* gh-1271: Update caret position to help accessibilty tools (e.g. Magnifier).
+* gh-661: Disable ‘Close ConEmu with last tab’ if it's prohibited.
+  Some switches (`-MinTSA`, `-NoAutoClose`, ...) tells ConEmu
+  to stay or minimize (into TaskBar status area) instead of
+  termination ConEmu process when all its consoles goes out.
+* gh-1284: Globally registered (WinAPI) hotkeys may use only general modifiers (e.g. Ctrl instead of RCtrl/LCtrl).
+* Add ‘swap’ to hotkey description (Split: Exchange (swap) with ...)
+* Change button name to ‘Add/refresh default tasks...’
+* gh-1261: Improve gh-1164 workaround (Win10 conhost bug with cleared contents on resize).
+* gh-1288: Use ANSI to underline text.
+  Since now, ambiguous sequences like `ESC[1m`, `ESC[3m`, `ESC[4m`, `ESC[5m`
+  are not used to increase the brightness of background/foreground colors,
+  instead they are used to set ‘bold’, ‘inverse’ and ‘underline’ attributes.
+  To set bright text or background colors one may use sequences `ESC [ 90…97 m`
+  or `ESC [ 100…107 m` accordingly.
+* Let `ConEmuC -CheckUnicode` output samples with extended attributes.
+* New option ‘Dynamic scrollbar range’ on ‘Appearance’ settings page.
+  When enabled, ConEmu tries to determine filled area in RealConsole.
+* Improve `-new_console` description.
+* gh-1293: LastError was erased on `printf`.
+
+
 2017.9.10
 * gh-1227: Let ‘Context help’ button open corresponding page on conemu.github.io.
 * gh-1213, gh-1246: Clicking anywere below the prompt line caused prolonged cursor blinking.
