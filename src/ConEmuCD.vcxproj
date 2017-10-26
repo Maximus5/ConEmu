@@ -94,28 +94,28 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\Release\ConEmu\</OutDir>
-    <IntDir>obj\Win32\Release\ConEmuCD\</IntDir>
+    <IntDir>_VCBUILD\Release_ConEmuCD_Win32\</IntDir>
     <TargetName>ConEmuCD</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\Release\ConEmu\</OutDir>
-    <IntDir>obj\x64\Release\ConEmuCD\</IntDir>
+    <IntDir>_VCBUILD\Release_ConEmuCD_x64\</IntDir>
     <TargetName>ConEmuCD64</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\Debug\ConEmu\</OutDir>
-    <IntDir>obj\Win32\Debug\ConEmuCD\</IntDir>
+    <IntDir>_VCBUILD\Debug_ConEmuCD_Win32\</IntDir>
     <TargetName>ConEmuCD</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\Debug\ConEmu\</OutDir>
-    <IntDir>obj\x64\Debug\ConEmuCD\</IntDir>
+    <IntDir>_VCBUILD\Debug_ConEmuCD_x64\</IntDir>
     <TargetName>ConEmuCD64</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
@@ -154,7 +154,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <ImportLibrary>..\Release\ConEmu\ConEmuCD.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Release_ConEmuCD_Win32\ConEmuCD.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuCD/export.def</ModuleDefinitionFile>
       <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x6F780000 %(AdditionalOptions)</AdditionalOptions>
@@ -181,7 +181,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <ImportLibrary>..\Release\ConEmu\ConEmuCD64.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Release_ConEmuCD_x64\ConEmuCD64.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuCD/export.def</ModuleDefinitionFile>
       <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x6F780000 %(AdditionalOptions)</AdditionalOptions>
@@ -202,7 +202,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ImportLibrary>..\Debug\ConEmu\ConEmuCD.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Debug_ConEmuCD_Win32\ConEmuCD.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuCD/export.def</ModuleDefinitionFile>
       <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x6F780000 %(AdditionalOptions)</AdditionalOptions>
@@ -223,7 +223,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ImportLibrary>..\Debug\ConEmu\ConEmuCD64.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Debug_ConEmuCD_x64\ConEmuCD64.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuCD/export.def</ModuleDefinitionFile>
       <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x6F780000 %(AdditionalOptions)</AdditionalOptions>

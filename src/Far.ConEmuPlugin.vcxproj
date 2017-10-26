@@ -94,29 +94,29 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\Release\plugins\ConEmu\</OutDir>
-    <IntDir>obj\Win32\Release\Far.ConEmuPlugin\</IntDir>
-    <TargetName>Far.ConEmuPlugin</TargetName>
+    <IntDir>_VCBUILD\Release_Far.ConEmuPlugin_Win32\</IntDir>
+    <TargetName>ConEmu</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\Release\plugins\ConEmu\</OutDir>
-    <IntDir>obj\x64\Release\Far.ConEmuPlugin\</IntDir>
-    <TargetName>Far.ConEmuPlugin.x64</TargetName>
+    <IntDir>_VCBUILD\Release_Far.ConEmuPlugin_x64\</IntDir>
+    <TargetName>ConEmu.x64</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\Debug\plugins\ConEmu\</OutDir>
-    <IntDir>obj\Win32\Debug\Far.ConEmuPlugin\</IntDir>
-    <TargetName>Far.ConEmuPlugin</TargetName>
+    <IntDir>_VCBUILD\Debug_Far.ConEmuPlugin_Win32\</IntDir>
+    <TargetName>ConEmu</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\Debug\plugins\ConEmu\</OutDir>
-    <IntDir>obj\x64\Debug\Far.ConEmuPlugin\</IntDir>
-    <TargetName>Far.ConEmuPlugin.x64</TargetName>
+    <IntDir>_VCBUILD\Debug_Far.ConEmuPlugin_x64\</IntDir>
+    <TargetName>ConEmu.x64</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
@@ -155,7 +155,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ImportLibrary>..\Release\plugins\ConEmu\Far.ConEmuPlugin.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Release_Far.ConEmuPlugin_Win32\ConEmu.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuPlugin/export.def</ModuleDefinitionFile>
     </Link>
@@ -182,7 +182,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ImportLibrary>..\Release\plugins\ConEmu\Far.ConEmuPlugin.x64.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Release_Far.ConEmuPlugin_x64\ConEmu.x64.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuPlugin/export.def</ModuleDefinitionFile>
     </Link>
@@ -203,7 +203,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ImportLibrary>..\Debug\plugins\ConEmu\Far.ConEmuPlugin.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Debug_Far.ConEmuPlugin_Win32\ConEmu.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuPlugin/export.def</ModuleDefinitionFile>
     </Link>
@@ -224,7 +224,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ImportLibrary>..\Debug\plugins\ConEmu\Far.ConEmuPlugin.x64.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Debug_Far.ConEmuPlugin_x64\ConEmu.x64.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuPlugin/export.def</ModuleDefinitionFile>
     </Link>

@@ -94,28 +94,28 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\Release\ConEmu\</OutDir>
-    <IntDir>obj\Win32\Release\ConEmuC\</IntDir>
+    <IntDir>_VCBUILD\Release_ConEmuC_Win32\</IntDir>
     <TargetName>ConEmuC</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\Release\ConEmu\</OutDir>
-    <IntDir>obj\x64\Release\ConEmuC\</IntDir>
+    <IntDir>_VCBUILD\Release_ConEmuC_x64\</IntDir>
     <TargetName>ConEmuC64</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\Debug\ConEmu\</OutDir>
-    <IntDir>obj\Win32\Debug\ConEmuC\</IntDir>
+    <IntDir>_VCBUILD\Debug_ConEmuC_Win32\</IntDir>
     <TargetName>ConEmuC</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\Debug\ConEmu\</OutDir>
-    <IntDir>obj\x64\Debug\ConEmuC\</IntDir>
+    <IntDir>_VCBUILD\Debug_ConEmuC_x64\</IntDir>
     <TargetName>ConEmuC64</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>

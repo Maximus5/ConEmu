@@ -93,45 +93,45 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\Release\plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>obj\Win32\Release\Far.ConEmuTh.pe\</IntDir>
-    <TargetName>Far.ConEmuTh.pe</TargetName>
-    <TargetExt>.t32</TargetExt>
+    <OutDir>_VCBUILD\Release_Far.ConEmuTh.pe_Win32\</OutDir>
+    <IntDir>_VCBUILD\Release_Far.ConEmuTh.pe_Win32\</IntDir>
+    <TargetName>pe</TargetName>
+    <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>..\Release\plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>obj\x64\Release\Far.ConEmuTh.pe\</IntDir>
-    <TargetName>Far.ConEmuTh.pe</TargetName>
-    <TargetExt>.t64</TargetExt>
+    <OutDir>_VCBUILD\Release_Far.ConEmuTh.pe_x64\</OutDir>
+    <IntDir>_VCBUILD\Release_Far.ConEmuTh.pe_x64\</IntDir>
+    <TargetName>pe</TargetName>
+    <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\Debug\plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>obj\Win32\Debug\Far.ConEmuTh.pe\</IntDir>
-    <TargetName>Far.ConEmuTh.pe</TargetName>
-    <TargetExt>.t32</TargetExt>
+    <OutDir>_VCBUILD\Debug_Far.ConEmuTh.pe_Win32\</OutDir>
+    <IntDir>_VCBUILD\Debug_Far.ConEmuTh.pe_Win32\</IntDir>
+    <TargetName>pe</TargetName>
+    <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>..\Debug\plugins\ConEmu\Thumbs\</OutDir>
-    <IntDir>obj\x64\Debug\Far.ConEmuTh.pe\</IntDir>
-    <TargetName>Far.ConEmuTh.pe</TargetName>
-    <TargetExt>.t64</TargetExt>
+    <OutDir>_VCBUILD\Debug_Far.ConEmuTh.pe_x64\</OutDir>
+    <IntDir>_VCBUILD\Debug_Far.ConEmuTh.pe_x64\</IntDir>
+    <TargetName>pe</TargetName>
+    <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>Z:\plugins\ConEmu\Thumbs\</OutDir>
+    <OutDir>_VCBUILD\Remote_Far.ConEmuTh.pe_Win32\</OutDir>
     <IntDir>_VCBUILD\Remote_Far.ConEmuTh.pe_Win32\</IntDir>
     <TargetName>pe</TargetName>
-    <TargetExt>.t32</TargetExt>
+    <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>Z:\plugins\ConEmu\Thumbs\</OutDir>
+    <OutDir>_VCBUILD\Remote_Far.ConEmuTh.pe_x64\</OutDir>
     <IntDir>_VCBUILD\Remote_Far.ConEmuTh.pe_x64\</IntDir>
     <TargetName>pe</TargetName>
-    <TargetExt>.t64</TargetExt>
+    <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -155,10 +155,15 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <ImportLibrary>..\Release\plugins\ConEmu\Thumbs\Far.ConEmuTh.pe.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Release_Far.ConEmuTh.pe_Win32\pe.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuTh/Modules/pe/pe.def</ModuleDefinitionFile>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(TargetPath)" "../Release/plugins/ConEmu/Thumbs/pe.t32"
+copy "$(TargetDir)$(TargetName).map" "../Release/plugins/ConEmu/Thumbs/pe.t32.map"
+copy "$(TargetDir)$(TargetName).pdb" "../Release/plugins/ConEmu/Thumbs/pe.t32.pdb"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -182,10 +187,15 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <ImportLibrary>..\Release\plugins\ConEmu\Thumbs\Far.ConEmuTh.pe.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Release_Far.ConEmuTh.pe_x64\pe.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuTh/Modules/pe/pe.def</ModuleDefinitionFile>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(TargetPath)" "../Release/plugins/ConEmu/Thumbs/pe.t64"
+copy "$(TargetDir)$(TargetName).map" "../Release/plugins/ConEmu/Thumbs/pe.t64.map"
+copy "$(TargetDir)$(TargetName).pdb" "../Release/plugins/ConEmu/Thumbs/pe.t64.pdb"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -203,10 +213,15 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ImportLibrary>..\Debug\plugins\ConEmu\Thumbs\Far.ConEmuTh.pe.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Debug_Far.ConEmuTh.pe_Win32\pe.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuTh/Modules/pe/pe.def</ModuleDefinitionFile>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(TargetPath)" "../Debug/plugins/ConEmu/Thumbs/pe.t32"
+copy "$(TargetDir)$(TargetName).map" "../Debug/plugins/ConEmu/Thumbs/pe.t32.map"
+copy "$(TargetDir)$(TargetName).pdb" "../Debug/plugins/ConEmu/Thumbs/pe.t32.pdb"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -224,10 +239,15 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ImportLibrary>..\Debug\plugins\ConEmu\Thumbs\Far.ConEmuTh.pe.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Debug_Far.ConEmuTh.pe_x64\pe.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuTh/Modules/pe/pe.def</ModuleDefinitionFile>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(TargetPath)" "../Debug/plugins/ConEmu/Thumbs/pe.t64"
+copy "$(TargetDir)$(TargetName).map" "../Debug/plugins/ConEmu/Thumbs/pe.t64.map"
+copy "$(TargetDir)$(TargetName).pdb" "../Debug/plugins/ConEmu/Thumbs/pe.t64.pdb"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
     <ClCompile>
@@ -249,6 +269,11 @@
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuTh/Modules/pe/pe.def</ModuleDefinitionFile>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(TargetPath)" "../Z://plugins/ConEmu/Thumbs/pe.t32"
+copy "$(TargetDir)$(TargetName).map" "../Z://plugins/ConEmu/Thumbs/pe.t32.map"
+copy "$(TargetDir)$(TargetName).pdb" "../Z://plugins/ConEmu/Thumbs/pe.t32.pdb"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
     <ClCompile>
@@ -270,6 +295,11 @@
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuTh/Modules/pe/pe.def</ModuleDefinitionFile>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(TargetPath)" "../Z://plugins/ConEmu/Thumbs/pe.t64"
+copy "$(TargetDir)$(TargetName).map" "../Z://plugins/ConEmu/Thumbs/pe.t64.map"
+copy "$(TargetDir)$(TargetName).pdb" "../Z://plugins/ConEmu/Thumbs/pe.t64.pdb"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ConEmuTh\Modules\ThumbSDK.h" />

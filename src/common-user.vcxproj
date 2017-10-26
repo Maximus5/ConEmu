@@ -92,37 +92,37 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>bin\Win32\Release\</OutDir>
+    <OutDir>_VCBUILD\Release_common-user_Win32\</OutDir>
     <IntDir>_VCBUILD\Release_common-user_Win32\</IntDir>
     <TargetName>common-user32</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>bin\x64\Release\</OutDir>
+    <OutDir>_VCBUILD\Release_common-user_x64\</OutDir>
     <IntDir>_VCBUILD\Release_common-user_x64\</IntDir>
     <TargetName>common-user64</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>bin\Win32\Debug\</OutDir>
+    <OutDir>_VCBUILD\Debug_common-user_Win32\</OutDir>
     <IntDir>_VCBUILD\Debug_common-user_Win32\</IntDir>
     <TargetName>common-user32</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>bin\x64\Debug\</OutDir>
+    <OutDir>_VCBUILD\Debug_common-user_x64\</OutDir>
     <IntDir>_VCBUILD\Debug_common-user_x64\</IntDir>
     <TargetName>common-user64</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
-    <OutDir>bin\Win32\Remote\</OutDir>
+    <OutDir>_VCBUILD\Remote_common-user_Win32\</OutDir>
     <IntDir>_VCBUILD\Remote_common-user_Win32\</IntDir>
     <TargetName>common-user32</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
-    <OutDir>bin\x64\Remote\</OutDir>
+    <OutDir>_VCBUILD\Remote_common-user_x64\</OutDir>
     <IntDir>_VCBUILD\Remote_common-user_x64\</IntDir>
     <TargetName>common-user64</TargetName>
     <TargetExt>.lib</TargetExt>
