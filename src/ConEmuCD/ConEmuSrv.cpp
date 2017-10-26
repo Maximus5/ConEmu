@@ -3930,6 +3930,21 @@ static int ReadConsoleInfo()
 	{
 		_ASSERTE(LOWORD(ldwConsoleMode) == ldwConsoleMode);
 		LogModeChange(L"ConInMode", gpSrv->dwConsoleInMode, ldwConsoleMode);
+
+		if ((ldwConsoleMode & ENABLE_VIRTUAL_TERMINAL_INPUT) != (gpSrv->dwConsoleInMode & ENABLE_VIRTUAL_TERMINAL_INPUT))
+		{
+			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+3*sizeof(DWORD));
+			if (pIn)
+			{
+				pIn->dwData[0] = tmc_ConInMode;
+				pIn->dwData[1] = ldwConsoleMode;
+				pIn->dwData[2] = gpSrv->dwRootProcess;
+				CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+				ExecuteFreeResult(pIn);
+				ExecuteFreeResult(pOut);
+			}
+		}
+
 		gpSrv->dwConsoleInMode = LOWORD(ldwConsoleMode); lbChanged = TRUE;
 	}
 

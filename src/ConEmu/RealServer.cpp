@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RgnDetect.h"
 #include "../common/Execute.h"
 #include "../common/PipeServer.h"
+#include "../common/WConsole.h"
 #include "../common/WUser.h"
 #include "RealServer.h"
 #include "RealConsole.h"
@@ -1428,6 +1429,18 @@ CESERVER_REQ* CRealServer::cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	case tmc_CursorShape:
 		mp_RCon->SetCursorShape((TermCursorShapes)value);
 		break;
+	case tmc_ConInMode:
+		// Some console application (not hooked?) changes ConInMode flag ENABLE_VIRTUAL_TERMINAL_INPUT
+		if ((mp_RCon->GetTermType() == te_xterm) != ((value & ENABLE_VIRTUAL_TERMINAL_INPUT) == ENABLE_VIRTUAL_TERMINAL_INPUT))
+		{
+			_ASSERTEX(mp_RCon->m_RootInfo.nPID == nPID); // expected PID at the moment
+			DWORD nRootPID = mp_RCon->m_RootInfo.nPID ? mp_RCon->m_RootInfo.nPID : nPID;
+			bool newXTerm = ((value & ENABLE_VIRTUAL_TERMINAL_INPUT) == ENABLE_VIRTUAL_TERMINAL_INPUT);
+			mp_RCon->StartStopXTerm(nRootPID, newXTerm);
+			if (newXTerm)
+				mp_RCon->StartStopAppCursorKeys(nRootPID, true);
+		}
+		break;
 	default:
 		bProcessed = FALSE;
 	}
@@ -1703,6 +1716,7 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 		pOut = pRSrv->cmdIsAnsiExecAllowed(pInst, pIn, nDataSize);
 		break;
 	case CECMD_GETROOTINFO:
+		// Why 'GET' info?
 		_ASSERTE(!pIn->RootInfo.bRunning && pIn->RootInfo.nPID);
 		pRSrv->mp_RCon->UpdateRootInfo(pIn->RootInfo);
 		pOut = ExecuteNewCmd(CECMD_GETROOTINFO, sizeof(CESERVER_REQ_HDR));

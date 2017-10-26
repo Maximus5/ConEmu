@@ -373,8 +373,9 @@ enum TermModeCommand
 	tmc_AppCursorKeys  = 2, // true/false           - process life-time
 	tmc_CursorShape    = 3, // TermCursorShapes     - ***console*** life-time
 	tmc_MouseMode      = 4, // set of TermMouseMode - process life-time
+	tmc_ConInMode      = 5, // server detected ENABLE_VIRTUAL_TERMINAL_INPUT change -- root process life-time
 	// for array purposes
-	tmc_Last           = 5
+	tmc_Last
 };
 
 // tmc_Keyboard: used for control keys (arrows e.g.) translation

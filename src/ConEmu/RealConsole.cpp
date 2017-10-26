@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ProcessSetEnv.h"
 #include "../common/RgnDetect.h"
 #include "../common/SetEnvVar.h"
+#include "../common/WConsole.h"
 #include "../common/WFiles.h"
 #include "../common/WSession.h"
 #include "../common/WThreads.h"
@@ -15055,7 +15056,7 @@ LPCWSTR CRealConsole::GetMntPrefix()
 	CEActiveAppFlags activeAppFlags = GetActiveAppFlags();
 	TermEmulationType termMode = GetTermType();
 
-	if (conInMode & 0x200/*ENABLE_VIRTUAL_TERMINAL_INPUT*/)
+	if (conInMode & ENABLE_VIRTUAL_TERMINAL_INPUT/*0x200*/)
 		return L"/mnt";
 	if (activeAppFlags & caf_Cygwin1)
 		return L"/cygdrive";

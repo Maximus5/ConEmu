@@ -120,16 +120,16 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 	}
 
 	// gh-629: Arrow keys not working in Bash for Windows
-	if (gbIsBashProcess && IsWin10())
+	// gh-1291: Support wsl.exe and ubuntu.exe
+	if (IsWin10())
 	{
-		// 0x200 is ENABLE_VIRTUAL_TERMINAL_INPUT
-		if ((dwMode & 0x200) || (CEAnsi::gbWasXTermOutput && !(dwMode & 0x200)))
+		if ((dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) || (CEAnsi::gbWasXTermOutput && !(dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)))
 		{
 			if (!HandleKeeper::IsOutputHandle(hConsoleHandle))
 			{
 				_ASSERT(HandleKeeper::IsInputHandle(hConsoleHandle));
-				CEAnsi::StartXTermMode((dwMode & 0x200) == 0x200);
-				if (dwMode & 0x200)
+				CEAnsi::StartXTermMode((dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) != 0);
+				if (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)
 					CEAnsi::ChangeTermMode(tmc_AppCursorKeys, true);
 			}
 		}
