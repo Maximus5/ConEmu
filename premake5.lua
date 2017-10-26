@@ -8,7 +8,10 @@ workspace "CE"
   local build_dir = "_VCBUILD"
    
   startproject "ConEmu"
+
   flags { "StaticRuntime", "Maps" }
+  filter "configurations:Release"
+    flags { "NoIncrementalLink" }
 
   filter "platforms:Win32"
     architecture "x32"
@@ -51,7 +54,40 @@ function target_dir(folder)
 
   filter "configurations:Remote"
     targetdir("Z:/"..folder)
+
+  filter{}
 end
+
+function postbuild_module_(dllname, cfg, ext)
+  postbuildcommands {
+    "copy \"$(TargetPath)\" \"../"..cfg.."/plugins/ConEmu/Thumbs/"..dllname.."."..ext.."\"",
+    "copy \"$(TargetDir)$(TargetName).map\" \"../"..cfg.."/plugins/ConEmu/Thumbs/"..dllname.."."..ext..".map\"",
+    "copy \"$(TargetDir)$(TargetName).pdb\" \"../"..cfg.."/plugins/ConEmu/Thumbs/"..dllname.."."..ext..".pdb\"",
+  }
+end
+
+function postbuild_module(dllname)
+  filter { "configurations:Release", "platforms:Win32" }
+    postbuild_module_(dllname, "Release", "t32")
+
+  filter { "configurations:Release", "platforms:x64" }
+    postbuild_module_(dllname, "Release", "t64")
+
+  filter { "configurations:Debug", "platforms:Win32" }
+    postbuild_module_(dllname, "Debug", "t32")
+
+  filter { "configurations:Debug", "platforms:x64" }
+    postbuild_module_(dllname, "Debug", "t64")
+
+  filter { "configurations:Remote", "platforms:Win32" }
+    postbuild_module_(dllname, "Z:/", "t32")
+
+  filter { "configurations:Remote", "platforms:x64" }
+    postbuild_module_(dllname, "Z:/", "t64")
+
+  filter {}
+end
+
 
 
 local common_remove = {
@@ -117,9 +153,7 @@ project "common-kernel"
   }
 
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
-  implibdir ("%{cfg.objdir}")
-  -- doesn't work
-  --targetdir "%{cfg.objdir}"
+  targetdir "%{cfg.objdir}"
   filter "platforms:Win32"
     targetsuffix "32"
   filter "platforms:x64"
@@ -152,9 +186,7 @@ project "common-user"
   }
 
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
-  implibdir ("%{cfg.objdir}")
-  -- doesn't work
-  --targetdir "%{cfg.objdir}"
+  targetdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix "32"
   filter "platforms:x64"
@@ -172,7 +204,7 @@ project "ConEmu"
   kind "WindowedApp"
   language "C++"
   --exceptionhandling "Off"
-  flags { "WinMain" }
+  entrypoint "WinMainCRTStartup"
 
   links {
     "common-kernel",
@@ -374,7 +406,7 @@ project "ConEmuHk"
 
   filter { "files:**/HDE/*.*" }
     flags {"ExcludeFromBuild"}
-  flags {}
+  filter {}
 
   filter "action:vs*"
     files "src/ConEmuHk/export.def"
@@ -598,7 +630,6 @@ project "Far.ConEmuTh"
 
 
 
-
 -- ############################### --
 -- ############################### --
 -- ############################### --
@@ -627,15 +658,11 @@ project "Far.ConEmuTh.gdi+"
     { ["Exports"]   = {"**.def"} },
   }
 
-  target_dir("plugins/ConEmu/Thumbs/")
   targetname "gdi+"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  targetdir ("%{cfg.objdir}")
   implibdir ("%{cfg.objdir}")
-  filter "platforms:Win32"
-    targetextension ".t32"
-  filter "platforms:x64"
-    targetextension ".t64"
-  filter {}
+  postbuild_module ("gdi+")
 -- end of "Far.ConEmuTh.gdi+"
 
 
@@ -673,15 +700,11 @@ project "Far.ConEmuTh.ico"
     { ["Exports"]   = {"**.def"} },
   }
 
-  target_dir("plugins/ConEmu/Thumbs/")
   targetname "ico"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  targetdir ("%{cfg.objdir}")
   implibdir ("%{cfg.objdir}")
-  filter "platforms:Win32"
-    targetextension ".t32"
-  filter "platforms:x64"
-    targetextension ".t64"
-  filter {}
+  postbuild_module ("ico")
 -- end of "Far.ConEmuTh.ico"
 
 
@@ -714,15 +737,11 @@ project "Far.ConEmuTh.pe"
     { ["Exports"]   = {"**.def"} },
   }
 
-  target_dir("plugins/ConEmu/Thumbs/")
   targetname "pe"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  targetdir ("%{cfg.objdir}")
   implibdir ("%{cfg.objdir}")
-  filter "platforms:Win32"
-    targetextension ".t32"
-  filter "platforms:x64"
-    targetextension ".t64"
-  filter {}
+  postbuild_module ("pe")
 -- end of "Far.ConEmuTh.pe"
 
 
@@ -763,9 +782,10 @@ project "Far.ExtendedConsole"
     { ["Exports"]   = {"**.def"} },
   }
 
-  target_dir("ConEmu/")
-  targetname "ExtendedConsole"
+  target_dir("ConEmu/") -- local function
+  targetname ("ExtendedConsole")
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  -- implibdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
