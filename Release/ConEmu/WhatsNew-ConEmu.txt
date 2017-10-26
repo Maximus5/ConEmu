@@ -20,7 +20,7 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
-2017.10.24
+2017.10.25
 * connector#15: Support graphics output in some versions of mc.
 * gh-1265: Fix crash in Windows 7 on starting elevated console.
 * gh-1271: Update caret position to help accessibilty tools (e.g. Magnifier).
@@ -43,6 +43,8 @@ https://conemu.github.io/en/Whats_New.html
   When enabled, ConEmu tries to determine filled area in RealConsole.
 * Improve `-new_console` description.
 * gh-1293: LastError was erased on `printf`.
+* gh-1298: Force to load `.profile` in WSL.
+* gh-1291: Support wsl.exe and ubuntu.exe - turn on/off XA modes automatically.
 
 
 2017.9.10
