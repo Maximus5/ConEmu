@@ -2819,7 +2819,7 @@ LPWSTR ConEmuMacro::Scroll(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 }
 
 // Select(<Type>,<DX>,<DY>,<HE>)
-//  Type: 0 - Text, 1 - Block
+//  Type: 0 - Text, 1 - Block, 2 - Stop selection
 //    DX: select text horizontally: -1/+1
 //    DY: select text vertically: -1/+1
 //    HE: to-home(-1)/to-end(+1) with text selection
@@ -2828,13 +2828,22 @@ LPWSTR ConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	if (!apRCon)
 		return lstrdup(L"No console");
 
-	if (apRCon->isSelectionPresent())
-		return lstrdup(L"Selection was already started");
-
 	int nType = 0; // 0 - text, 1 - block
 	int nDX = 0, nDY = 0, nHomeEnd = 0;
 
 	p->GetIntArg(0, nType);
+	if (nType == 2)
+	{
+		// ref gh-1299
+		if (!apRCon->isSelectionPresent())
+			return lstrdup(L"Selection was not started");
+		apRCon->DoSelectionStop();
+		return lstrdup(L"OK");
+	}
+
+	if (apRCon->isSelectionPresent())
+		return lstrdup(L"Selection was already started");
+
 	p->GetIntArg(1, nDX);
 	p->GetIntArg(2, nDY);
 	p->GetIntArg(3, nHomeEnd);

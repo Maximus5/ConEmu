@@ -2354,6 +2354,8 @@ bool CRealConsole::PostCtrlBreakEvent(DWORD nEvent, DWORD nGroupId)
 
 	bool lbRc = false;
 
+	// #CTRL_BREAK Don't call CECMD_CTRLBREAK if we know that conhost is inside ReadLine
+
 	_ASSERTE(nEvent == CTRL_C_EVENT/*0*/ || nEvent == CTRL_BREAK_EVENT/*1*/);
 
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_CTRLBREAK, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));

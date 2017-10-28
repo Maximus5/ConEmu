@@ -5548,6 +5548,7 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 
 	// If these was not processed by user HotKeys, lets do it...
 	// Ctrl+C or Ctrl+Ins must copy current selection to clipboard
+	// By default, default vkCTSCopyHtml0 is called with GuiMacro "Copy(0,0)" on Ctrl+C
 	if (VkState.IsEqual('C', cvk_Ctrl) || VkState.IsEqual(VK_INSERT, cvk_Ctrl))
 	{
 		if (bKeyDown)
