@@ -422,6 +422,7 @@ CConEmuMain::CConEmuMain()
 	ZeroStruct(m_TranslatedChars);
 	//GetKeyboardState(m_KeybStates);
 	//memset(m_KeybStates, 0, sizeof(m_KeybStates));
+	ZeroStruct(m_KeyboardState);
 	m_ActiveKeybLayout = GetActiveKeyboardLayout();
 	ZeroStruct(m_LayoutNames);
 	//wchar_t szTranslatedChars[16];
@@ -9533,6 +9534,12 @@ void CConEmuMain::StoreLayoutName(int iIdx, DWORD dwLayout, HKL hkl)
 
 LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	// In Win7 we may not get WM_INPUTLANGCHANGEREQUEST at all (at least with mouse switching)
+	_ASSERTEX(messg == WM_INPUTLANGCHANGEREQUEST || messg == WM_INPUTLANGCHANGE);
+
+	const UINT   nLastMsg = m_KeyboardState.nLastLngMsg;
+	const LPARAM lLastPrm = m_KeyboardState.lLastLngPrm;
+
 	/*
 	**********
 	Вызовы идут в следующем порядке (WinXP SP3)
@@ -9593,6 +9600,9 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 		LogString(szInfo);
 	}
 
+	m_KeyboardState.nLastLngMsg = messg;
+	m_KeyboardState.lLastLngPrm = lParam;
+
 	/*
 	wParam = 204, lParam = 0x04190419 - Russian
 	wParam = 0,   lParam = 0x04090409 - US
@@ -9648,21 +9658,18 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	// в Win7x64 WM_INPUTLANGCHANGEREQUEST вообще не приходит, по крайней мере при переключении мышкой
 	if (messg == WM_INPUTLANGCHANGEREQUEST || messg == WM_INPUTLANGCHANGE)
 	{
-		static UINT   nLastMsg;
-		static LPARAM lLastPrm;
-
 		CVConGuard VCon;
 		CRealConsole* pRCon = (GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 
-		if (pRCon && !(nLastMsg == WM_INPUTLANGCHANGEREQUEST && messg == WM_INPUTLANGCHANGE && lLastPrm == lParam))
+		if (pRCon
+			&& !(nLastMsg == WM_INPUTLANGCHANGEREQUEST && messg == WM_INPUTLANGCHANGE
+				&& ((lLastPrm == lParam) || (lLastPrm == 0))
+				))
 		{
 			pRCon->SwitchKeyboardLayout(
 			    (messg == WM_INPUTLANGCHANGEREQUEST) ? wParam : 0, lParam
 			);
 		}
-
-		nLastMsg = messg;
-		lLastPrm = lParam;
 
 		// -- Эффекта не имеет
 		//if (pRCon)

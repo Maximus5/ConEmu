@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "GuiAttach.h"
 #include "hkMessages.h"
+#include "hlpConsole.h"
 #include "MainThread.h"
 
 /* **************** */
@@ -58,6 +59,17 @@ bool CanSendMessage(HWND& hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT&
 				return false;
 			case WM_INPUTLANGCHANGEREQUEST:
 			case WM_INPUTLANGCHANGE:
+				if (IsWin10() && (Msg == WM_INPUTLANGCHANGEREQUEST))
+				{
+					if (!IsConsoleActive())
+						return false;
+					hWnd = ghConEmuWnd;
+				}
+				else
+				{
+					hWnd = ghConWnd;
+				}
+				return true;
 			case WM_QUERYENDSESSION:
 			case WM_ENDSESSION:
 			case WM_QUIT:

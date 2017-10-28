@@ -446,6 +446,11 @@ class CConEmuMain
 		void StoreLayoutName(int iIdx, DWORD dwLayout, HKL hkl);
 		CAltNumpad* mp_AltNumpad; // Alt+Numpad ==> wchar sequence
 		DWORD_PTR m_ActiveKeybLayout;
+		struct {
+			UINT   nLastLngMsg;
+			LPARAM lLastLngPrm;
+			// #KEYBOARD Add here Ctr/Alt/Shift/Menu/etc. states in Message processing cycle to reuse them in hotkeys processing
+		} m_KeyboardState;
 		struct LayoutNames
 		{
 			BOOL      bUsed;

@@ -76,6 +76,35 @@ BOOL MyGetConsoleFontSize(COORD& crFontSize)
 	return lbRc;
 }
 
+bool IsConsoleActive()
+{
+	bool bActive = true;
+
+	if (ghConEmuWnd)
+	{
+		_ASSERTE(gnGuiPID!=0);
+		ConEmuGuiMapping* inf = (ConEmuGuiMapping*)malloc(sizeof(ConEmuGuiMapping));
+		if (inf)
+		{
+			if (LoadGuiMapping(gnGuiPID, *inf))
+			{
+				for (size_t i = 0; i < countof(inf->Consoles); ++i)
+				{
+					if ((HWND)inf->Consoles[i].Console == ghConWnd)
+					{
+						if (!(inf->Consoles[i].Flags & ccf_Active))
+							bActive = false;
+						break;
+					}
+				}
+			}
+			free(inf);
+		}
+	}
+
+	return bActive;
+}
+
 BOOL IsVisibleRectLocked(COORD& crLocked)
 {
 	CESERVER_CONSOLE_MAPPING_HDR SrvMap;
