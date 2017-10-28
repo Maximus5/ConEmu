@@ -309,7 +309,7 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"  - Check, is RealConsole active or not, \"Yes\"/\"No\"\r\n" \
 	L"IsRealVisible\r\n" \
 	L"  - Check, is RealConsole visible or not, \"Yes\"/\"No\"\r\n" \
-	L"    Keys(\"<Combo1>\"[,\"<Combo2>\"[,...]])\r\n" \
+	L"Keys(\"<Combo1>\"[,\"<Combo2>\"[,...]])\r\n" \
 	L"     - Post special keystrokes to the console (AutoHotKey syntax)\r\n" \
 	L"       \"[Mod1[Mod2[Mod3]]]Key\"\r\n" \
 	L"       Mod: ^ - LCtrl, >^ - RCtrl, ! - LAlt, >! - RAlt, + - Shift\r\n" \
