@@ -380,10 +380,12 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"     Type: 4; No arguments; Go to cursor line\r\n" \
 	L"Select(<Type>,<DX>,<DY>,<HE>)\r\n" \
 	L"  - Used internally for text selection\r\n" \
-	L"     Type: 0 - Text, 1 - Block\r\n" \
+	L"     Type: 0 - Text, 1 - Block, 2 - Stop\r\n" \
 	L"     DX: select text horizontally: -1/+1\r\n" \
 	L"     DY: select text vertically: -1/+1\r\n" \
 	L"     HE: to-home(-1)/to-end(+1) with text selection\r\n" \
+	L"Select(2)\r\n" \
+	L"  - Use to stop selection\r\n" \
 	L"SetDpi(<DPI>)\r\n" \
 	L"  - Change effective dpi for ConEmu window: 96, 120, 144, 192\r\n" \
 	L"SetOption('\"Check\",<ID>,<Value>)\r\n" \
