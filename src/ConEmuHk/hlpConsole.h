@@ -36,6 +36,8 @@ void LockServerReadingThread(bool bLock, COORD dwSize, CESERVER_REQ*& pIn, CESER
 BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo, BOOL bForced = FALSE);
 BOOL GetConsoleModeCached(HANDLE hConsoleHandle, LPDWORD lpMode, BOOL bForced = FALSE);
 
+bool IsConsoleActive();
+
 // Function AttachConsole exists in WinXP and above, need dynamic link
 typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 AttachConsole_t GetAttachConsoleProc();
