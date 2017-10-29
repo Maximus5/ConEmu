@@ -8244,7 +8244,7 @@ void CConEmuMain::OnHideCaption()
 			AdjustWindowRectEx(&rcBefore, nStyle, FALSE, nStyleEx);
 			if (isZoomed())
 			{
-				int nCapY = GetSystemMetrics(SM_CYCAPTION);
+				int nCapY = CDpiAware::GetDpiAwareMetrics(SM_CYCAPTION, ghWnd);
 				if (gpSet->isCaptionHidden())
 					rcAfter.top -= nCapY;
 				else
@@ -13480,6 +13480,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			result = this->OnCreate(hWnd, (LPCREATESTRUCT)lParam);
 			break;
 
+		case WM_NCCREATE:
+			CDpiAware::EnableNonClientDpiScaling(hWnd);
+			return DefWindowProc(hWnd, messg, wParam, lParam);
+
 		case WM_SETHOTKEY:
 			gnWndSetHotkeyOk = wParam;
 			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
@@ -13604,6 +13608,9 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case /*0x02E0*/ WM_DPICHANGED:
 		{
 			// Update window DPI, recreate fonts and toolbars
+			RECT* const prcNewWindow = (RECT*)lParam;
+			SetWindowPos(hWnd, NULL, prcNewWindow->left, prcNewWindow->top, prcNewWindow->right - prcNewWindow->left, prcNewWindow->bottom - prcNewWindow->top, SWP_NOZORDER | SWP_NOACTIVATE);
+			
 			OnDpiChanged(LOWORD(wParam), HIWORD(wParam), (LPRECT)lParam, true, dcs_Api);
 			// Call windows defaults?
 			result = ::DefWindowProc(hWnd, messg, wParam, lParam);

@@ -861,7 +861,7 @@ void CFrameHolder::CalculateCaptionPosition(const RECT &rcWindow, RECT* rcCaptio
 
 void CFrameHolder::CalculateTabPosition(const RECT &rcWindow, const RECT &rcCaption, RECT* rcTabs)
 {
-	int nBtnWidth = GetSystemMetrics(SM_CXSIZE);
+	int nBtnWidth = CDpiAware::GetDpiAwareMetrics(SM_CXSIZE, ghWnd);
 
 	bool bCaptionHidden = gpSet->isCaptionHidden();
 
@@ -869,7 +869,7 @@ void CFrameHolder::CalculateTabPosition(const RECT &rcWindow, const RECT &rcCapt
 
 	rcTabs->left = rcCaption.left;
 	if (bCaptionHidden || gpSet->isTabsInCaption)
-		rcTabs->left += GetSystemMetrics(SM_CXSMICON) + mn_FrameWidth;
+		rcTabs->left += CDpiAware::GetDpiAwareMetrics(SM_CXSMICON, ghWnd) + mn_FrameWidth;
 
 	if (gpSet->nTabsLocation == 0)
 	{
@@ -1409,7 +1409,7 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	{
 		if (point.y < gpConEmu->GetDwmClientRectTopOffset())
 		{
-			int nShift = GetSystemMetrics(SM_CXSMICON);
+			int nShift = CDpiAware::GetDpiAwareMetrics(SM_CXSMICON, ghWnd);
 			int nFrame = 2;
 			//RECT wr; GetWindowRect(hWnd, &wr);
 			int nWidth = wr.right - wr.left;
@@ -1421,7 +1421,7 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				l_result = HTTOPRIGHT;
 			else if (point.x >= (nWidth-nFrame-nShift) && point.y <= nFrame)
 				l_result = HTTOPRIGHT;
-			else if (point.x > nFrame && point.x <= (nFrame+GetSystemMetrics(SM_CXSMICON)))
+			else if (point.x > nFrame && point.x <= (nFrame+ CDpiAware::GetDpiAwareMetrics(SM_CXSMICON, ghWnd)))
 				l_result = HTSYSMENU;
 			else if (point.x <= nFrame)
 				l_result = HTLEFT;
@@ -1487,21 +1487,23 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 //	return l_result;
 //}
 
+
+
 void CFrameHolder::RecalculateFrameSizes()
 {
 	_ASSERTE(mb_Initialized==TRUE); // CConEmuMain должен позвать из своего конструктора InitFrameHolder()
 
 	//mn_WinCaptionHeight, mn_FrameWidth, mn_FrameHeight, mn_OurCaptionHeight, mn_TabsHeight;
-	mn_WinCaptionHeight = GetSystemMetrics(SM_CYCAPTION);
-	mn_FrameWidth = GetSystemMetrics(SM_CXFRAME);
-	mn_FrameHeight = GetSystemMetrics(SM_CYFRAME);
+	mn_WinCaptionHeight = CDpiAware::GetDpiAwareMetrics(SM_CYCAPTION, ghWnd);
+	mn_FrameWidth = CDpiAware::GetDpiAwareMetrics(SM_CXFRAME, ghWnd);
+	mn_FrameHeight = CDpiAware::GetDpiAwareMetrics(SM_CYFRAME, ghWnd);
 
 	//int nHeightIdeal = mn_WinCaptionHeight * 3 / 4;
 	//if (nHeightIdeal < 19) nHeightIdeal = 19;
 	mn_TabsHeight = GetTabsHeight(); // min(nHeightIdeal,mn_OurCaptionHeight);
 
 	//int nCaptionDragHeight = 10;
-	int nCaptionDragHeight = GetSystemMetrics(SM_CYSIZE); // - mn_FrameHeight;
+	int nCaptionDragHeight = CDpiAware::GetDpiAwareMetrics(SM_CYSIZE, ghWnd); // - mn_FrameHeight;
 	if (gpConEmu->DrawType() >= fdt_Themed)
 	{
 	//	//SIZE sz = {}; RECT tmpRc = MakeRect(600,400);

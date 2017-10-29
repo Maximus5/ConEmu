@@ -327,8 +327,8 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 			_ASSERTE(FALSE);
 			if ((mg & ((DWORD)CEM_FRAMECAPTION)) != CEM_CAPTION)
 			{
-				rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
-				rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
+				rc.left = rc.right = CDpiAware::GetDpiAwareMetrics(SM_CXSIZEFRAME, ghWnd);
+				rc.bottom = CDpiAware::GetDpiAwareMetrics(SM_CYSIZEFRAME, ghWnd);
 				rc.top = rc.bottom; // рамка
 			}
 
@@ -344,7 +344,7 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 				else
 				#endif
 				{
-					rc.top += GetSystemMetrics(SM_CYCAPTION);
+					rc.top += CDpiAware::GetDpiAwareMetrics(SM_CYCAPTION, ghWnd);
 				}
 			}
 		}
@@ -447,7 +447,7 @@ RECT CConEmuSize::CalcMargins_Scrolling()
 	// TODO: Horizontal scroll
 	if ((gpSet->isAlwaysShowScrollbar == 1))
 	{
-		rc.right += GetSystemMetrics(SM_CXVSCROLL);
+		rc.right += CDpiAware::GetDpiAwareMetrics(SM_CXVSCROLL, ghWnd);
 	}
 
 	return rc;
@@ -2201,7 +2201,7 @@ void CConEmuSize::CascadedPosFix()
 	if (gpSet->wndCascade && (ghWnd == NULL) && (WindowMode == wmNormal) && IsSizePosFree(WindowMode))
 	{
 		// Сдвиг при каскаде
-		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
+		int nShift = (CDpiAware::GetDpiAwareMetrics(SM_CYSIZEFRAME, ghWnd)+CDpiAware::GetDpiAwareMetrics(SM_CYCAPTION, ghWnd))*1.5;
 		// Monitor information
 		MONITORINFO mi;
 		// Preferred window size
@@ -5845,8 +5845,8 @@ HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/)
 			// с FullScreen не совпадает. Нужно с учетом заголовка
 			// сюда мы попадаем только когда заголовок НЕ скрывается
 			RECT rcScreen = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
-			int nCX = GetSystemMetrics(SM_CXSIZEFRAME);
-			int nCY = GetSystemMetrics(SM_CYSIZEFRAME);
+			int nCX = CDpiAware::GetDpiAwareMetrics(SM_CXSIZEFRAME, ghWnd);
+			int nCY = CDpiAware::GetDpiAwareMetrics(SM_CYSIZEFRAME, ghWnd);
 			hRgn = CreateWindowRgn(abTestOnly, false, nCX, nCY, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
 		}
 	}
@@ -5932,7 +5932,7 @@ HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/)
 						}
 						else if (nFrame < 0)
 						{
-							nFrame = GetSystemMetrics(SM_CXSIZEFRAME);
+							nFrame = CDpiAware::GetDpiAwareMetrics(SM_CXSIZEFRAME, ghWnd);
 						}
 						bCreateRgn = true;
 					}

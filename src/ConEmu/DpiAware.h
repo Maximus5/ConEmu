@@ -31,6 +31,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MArray.h"
 #include "../common/MMap.h"
 
+// Optional support for EnableNonClientDpiScaling (when present)
+typedef BOOL(__stdcall *ENCDS)(HWND);
+BOOL __stdcall Impl_EnableNonClientDpiScaling(HWND hWnd);
+BOOL __stdcall Stub_EnableNonClientDpiScaling(HWND hWnd);
+
+typedef int(__stdcall *GSMFD)(int, UINT);
+int __stdcall Impl_GetSystemMetricsForDpi(int nIndex, UINT dpi);
+int __stdcall Stub_GetSystemMetricsForDpi(int nIndex, UINT dpi);
+
+typedef UINT(__stdcall *GDFW)(HWND);
+UINT __stdcall Impl_GetDpiForWindow(HWND hWnd);
+UINT __stdcall Stub_GetDpiForWindow(HWND hWnd);
+
 enum ProcessDpiAwareness
 {
 	Process_DPI_Unaware            = 0,
@@ -95,6 +108,9 @@ public:
 	// Dialog helper
 	static void GetCenteredRect(HWND hWnd, RECT& rcCentered, HMONITOR hDefault = NULL);
 	static void CenterDialog(HWND hDialog);
+
+	static void EnableNonClientDpiScaling(HWND hWnd);
+	static UINT CDpiAware::GetDpiAwareMetrics(int nIndex, HWND hWnd);
 };
 
 class CDynDialog;
