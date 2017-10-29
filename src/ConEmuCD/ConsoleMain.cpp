@@ -7021,7 +7021,8 @@ bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 		return false;
 	}
 
-	if (pfnGetConsoleKeyboardLayoutName)
+	static bool bGetConsoleKeyboardLayoutNameImplemented = true;
+	if (bGetConsoleKeyboardLayoutNameImplemented && pfnGetConsoleKeyboardLayoutName)
 	{
 		wchar_t szCurKeybLayout[32] = L"";
 
@@ -7053,6 +7054,14 @@ bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 
 		if (!bConApiRc)
 		{
+			// If GetConsoleKeyboardLayoutName is not implemented in Windows, ERROR_MR_MID_NOT_FOUND will be returned
+			// because there is no matching DOS/Win32 error code for NTSTATUS code returned. When this happens, we don't
+			// want to continue to call the function.
+			if (ERROR_MR_MID_NOT_FOUND == nErr)
+			{
+				bGetConsoleKeyboardLayoutNameImplemented = false;
+			}
+
 			if (gpSrv->szKeybLayout[0])
 			{
 				// Log only first error per session
