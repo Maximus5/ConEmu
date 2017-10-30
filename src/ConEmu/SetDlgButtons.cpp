@@ -1119,84 +1119,11 @@ void CSetDlgButtons::OnBtn_InactiveCursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCh
 void CSetDlgButtons::OnBtn_CmdTasksFlags(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	// Only visual mode is supported
-	if (!hDlg)
+	CSetPgTasks* pTasksPg;
+	if (!hDlg || !gpSetCls->GetPageObj(pTasksPg))
 		return;
 
-	int iCur = CSetDlgLists::GetListboxCurSel(hDlg, lbCmdTasks, true);
-	if (iCur < 0)
-		return;
-
-	CommandTasks* p = (CommandTasks*)gpSet->CmdTaskGet(iCur);
-	if (!p)
-		return;
-
-	bool bDistinct = false;
-	bool bUpdate = false;
-	CETASKFLAGS flag = CETF_NONE;
-
-	switch (CB)
-	{
-	case cbCmdGrpDefaultNew:
-		flag = CETF_NEW_DEFAULT;
-		if (isChecked(hDlg, CB))
-		{
-			bDistinct = true;
-			p->Flags |= flag;
-		}
-		else
-		{
-			p->Flags &= ~flag;
-		}
-		break;
-	case cbCmdGrpDefaultCmd:
-		flag = CETF_CMD_DEFAULT;
-		if (isChecked(hDlg, CB))
-		{
-			bDistinct = true;
-			p->Flags |= flag;
-		}
-		else
-		{
-			p->Flags &= ~flag;
-		}
-		break;
-	case cbCmdGrpTaskbar:
-		if (isChecked(hDlg, CB))
-			p->Flags &= ~CETF_NO_TASKBAR;
-		else
-			p->Flags |= CETF_NO_TASKBAR;
-		bUpdate = true;
-		break;
-	case cbCmdGrpToolbar:
-		if (isChecked(hDlg, CB))
-			p->Flags |= CETF_ADD_TOOLBAR;
-		else
-			p->Flags &= ~CETF_ADD_TOOLBAR;
-		break;
-	}
-
-	if (bDistinct)
-	{
-		int nGroup = 0;
-		CommandTasks* pGrp = NULL;
-		while ((pGrp = (CommandTasks*)gpSet->CmdTaskGet(nGroup++)))
-		{
-			if (pGrp != p)
-				pGrp->Flags &= ~flag;
-		}
-	}
-
-	if (bUpdate)
-	{
-		if (gpSet->isJumpListAutoUpdate)
-		{
-			UpdateWin7TaskList(true/*bForce*/, true/*bNoSuccMsg*/);
-		}
-		else
-		{
-			TODO("Show hint to press ‘Update now’ button");
-		}
-	}
+	pTasksPg->OnTaskFlags(CB);
 
 } // cbCmdGrpDefaultNew, cbCmdGrpDefaultCmd, cbCmdGrpTaskbar, cbCmdGrpToolbar
 
@@ -1206,20 +1133,12 @@ void CSetDlgButtons::OnBtn_CmdTasksAdd(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCmdTasksAdd);
 
-	int iCount = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0);
-	if (iCount < 0)
-		return;
-	if (!gpSet->CmdTaskGet(iCount))
-		gpSet->CmdTaskSet(iCount, L"", L"", L"");
-
+	// Only visual mode is supported
 	CSetPgTasks* pTasksPg;
-	if (gpSetCls->GetPageObj(pTasksPg))
-		pTasksPg->OnInitDialog(hDlg, false);
+	if (!hDlg || !gpSetCls->GetPageObj(pTasksPg))
+		return;
 
-	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, iCount);
-
-	if (pTasksPg)
-		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
+	pTasksPg->OnTaskAdd();
 
 } // cbCmdTasksAdd
 
@@ -1229,37 +1148,12 @@ void CSetDlgButtons::OnBtn_CmdTasksDup(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCmdTasksDup);
 
-	// Get the one selected task
-	int *Selected = NULL, iCount = CSetDlgLists::GetListboxSelection(hDlg, lbCmdTasks, Selected);
-	if (iCount != 1 || Selected[0] < 0)
-		return;
-	int iSelected = Selected[0];
-	delete[] Selected;
-	const CommandTasks* pSrc = gpSet->CmdTaskGet(iSelected);
-	if (!pSrc)
-		return;
-
-	iCount = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0);
-	if (iCount < 0)
-		return;
-	// ensure the cell is empty and create new task with the same GuiArgs and Commands
-	if (gpSet->CmdTaskGet(iCount))
-		return;
-	gpSet->CmdTaskSet(iCount, L"", pSrc->pszGuiArgs, pSrc->pszCommands);
-	while (iSelected < (iCount - 1))
-	{
-		gpSet->CmdTaskXch(iCount, iCount - 1);
-		--iCount;
-	}
-
+	// Only visual mode is supported
 	CSetPgTasks* pTasksPg;
-	if (gpSetCls->GetPageObj(pTasksPg))
-		pTasksPg->OnInitDialog(hDlg, false);
+	if (!hDlg || !gpSetCls->GetPageObj(pTasksPg))
+		return;
 
-	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, iCount);
-
-	if (pTasksPg)
-		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
+	pTasksPg->OnTaskDup();
 
 } // cbCmdTasksDup
 
@@ -1269,72 +1163,12 @@ void CSetDlgButtons::OnBtn_CmdTasksDel(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCmdTasksDel);
 
-	int *Selected = NULL, iCount = CSetDlgLists::GetListboxSelection(hDlg, lbCmdTasks, Selected);
-	if (iCount <= 0)
-		return;
-
-	const CommandTasks* p = NULL;
-	bool bIsStartup = false;
-
-	for (INT_PTR i = iCount-1; i >= 0; i--)
-	{
-		p = gpSet->CmdTaskGet(Selected[iCount-1]);
-		if (!p)
-		{
-			_ASSERTE(FALSE && "Failed to get selected task");
-			delete[] Selected;
-			return;
-		}
-
-		if (gpSet->psStartTasksName && p->pszName && (lstrcmpi(gpSet->psStartTasksName, p->pszName) == 0))
-			bIsStartup = true;
-	}
-
-	size_t cchMax = (p->pszName ? _tcslen(p->pszName) : 0) + 200;
-	wchar_t* pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
-	if (!pszMsg)
-	{
-		delete[] Selected;
-		return;
-	}
-
-	wchar_t szOthers[64] = L"";
-	if (iCount > 1)
-		_wsprintf(szOthers, SKIPCOUNT(szOthers) L"\n" L"and %i other task(s)", (iCount-1));
-
-	_wsprintf(pszMsg, SKIPLEN(cchMax) L"%sDelete Task\n%s%s?",
-		bIsStartup ? L"Warning! You about to delete startup task!\n\n" : L"",
-		p->pszName ? p->pszName : L"{???}",
-		szOthers);
-
-	int nBtn = MsgBox(pszMsg, MB_YESNO|(bIsStartup ? MB_ICONEXCLAMATION : MB_ICONQUESTION), NULL, ghOpWnd);
-	SafeFree(pszMsg);
-
-	if (nBtn != IDYES)
-	{
-		delete[] Selected;
-		return;
-	}
-
-	for (INT_PTR i = iCount-1; i >= 0; i--)
-	{
-		gpSet->CmdTaskSet(Selected[i], NULL, NULL, NULL);
-
-		if (bIsStartup && gpSet->psStartTasksName)
-			*gpSet->psStartTasksName = 0;
-	}
-
+	// Only visual mode is supported
 	CSetPgTasks* pTasksPg;
-	if (gpSetCls->GetPageObj(pTasksPg))
-		pTasksPg->OnInitDialog(hDlg, false);
+	if (!hDlg || !gpSetCls->GetPageObj(pTasksPg))
+		return;
 
-	iCount = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0);
-	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, min(Selected[0],(iCount-1)));
-
-	if (pTasksPg)
-		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
-
-	delete[] Selected;
+	pTasksPg->OnTaskDel();
 
 } // cbCmdTasksDel
 
@@ -1344,34 +1178,12 @@ void CSetDlgButtons::OnBtn_CmdTasksUpDown(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCmdTasksUp || CB==cbCmdTasksDown);
 
-	int iCur, iChg;
-	iCur = CSetDlgLists::GetListboxCurSel(hDlg, lbCmdTasks, true);
-	if (iCur < 0)
-		return;
-	if (CB == cbCmdTasksUp)
-	{
-		if (!iCur)
-			return;
-		iChg = iCur - 1;
-	}
-	else
-	{
-		iChg = iCur + 1;
-		if (iChg >= (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0))
-			return;
-	}
-
-	if (!gpSet->CmdTaskXch(iCur, iChg))
-		return;
-
+	// Only visual mode is supported
 	CSetPgTasks* pTasksPg;
-	if (gpSetCls->GetPageObj(pTasksPg))
-		pTasksPg->OnInitDialog(hDlg, false);
+	if (!hDlg || !gpSetCls->GetPageObj(pTasksPg))
+		return;
 
-	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, iChg);
-
-	if (pTasksPg)
-		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
+	pTasksPg->OnTaskUpDown(CB);
 
 } // cbCmdTasksUp || cbCmdTasksDown
 
@@ -1381,20 +1193,13 @@ void CSetDlgButtons::OnBtn_CmdGroupKey(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCmdGroupKey);
 
-	int iCur = CSetDlgLists::GetListboxCurSel(hDlg, lbCmdTasks, true);
-	if (iCur < 0)
-		return;
-	const CommandTasks* pCmd = gpSet->CmdTaskGet(iCur);
-	if (!pCmd)
+	// Only visual mode is supported
+	CSetPgTasks* pTasksPg;
+	if (!hDlg || !gpSetCls->GetPageObj(pTasksPg))
 		return;
 
-	DWORD VkMod = pCmd->HotKey.GetVkMod();
-	if (CHotKeyDialog::EditHotKey(ghOpWnd, VkMod))
-	{
-		gpSet->CmdTaskSetVkMod(iCur, VkMod);
-		wchar_t szKey[128] = L"";
-		SetDlgItemText(hDlg, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.GetVkMod(), szKey));
-	}
+	pTasksPg->OnTaskHotKey();
+
 } // cbCmdGroupKey
 
 
@@ -1403,72 +1208,13 @@ void CSetDlgButtons::OnBtn_CmdGroupApp(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbCmdGroupApp);
 
-	// Добавить команду в группу
-	RConStartArgsEx args;
-	args.aRecreate = cra_EditTab;
-	int nDlgRc = gpConEmu->RecreateDlg(&args);
+	// Only visual mode is supported
+	CSetPgTasks* pTasksPg;
+	if (!hDlg || !gpSetCls->GetPageObj(pTasksPg))
+		return;
 
-	if (nDlgRc == IDC_START)
-	{
-		wchar_t* pszCmd = args.CreateCommandLine();
-		if (!pszCmd || !*pszCmd)
-		{
-			DisplayLastError(L"Can't compile command line for new tab\nAll fields are empty?", -1);
-		}
-		else
-		{
-			//SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszName);
-			wchar_t* pszFull = GetDlgItemTextPtr(hDlg, tCmdGroupCommands);
-			if (!pszFull || !*pszFull)
-			{
-				SafeFree(pszFull);
-				pszFull = pszCmd;
-			}
-			else
-			{
-				size_t cchLen = _tcslen(pszFull);
-				size_t cchMax = cchLen + 7 + _tcslen(pszCmd);
-				pszFull = (wchar_t*)realloc(pszFull, cchMax*sizeof(*pszFull));
+	pTasksPg->OnCmdAddTab();
 
-				int nRN = 0;
-				if (cchLen >= 2)
-				{
-					if (pszFull[cchLen-2] == L'\r' && pszFull[cchLen-1] == L'\n')
-					{
-						nRN++;
-						if (cchLen >= 4)
-						{
-							if (pszFull[cchLen-4] == L'\r' && pszFull[cchLen-3] == L'\n')
-							{
-								nRN++;
-							}
-						}
-					}
-				}
-
-				if (nRN < 2)
-					_wcscat_c(pszFull, cchMax, nRN ? L"\r\n" : L"\r\n\r\n");
-
-				_wcscat_c(pszFull, cchMax, pszCmd);
-			}
-
-			if (pszFull)
-			{
-				SetDlgItemText(hDlg, tCmdGroupCommands, pszFull);
-				CSetPgTasks* pTasksPg;
-				if (gpSetCls->GetPageObj(pTasksPg))
-					pTasksPg->OnEditChanged(hDlg, tCmdGroupCommands);
-			}
-			else
-			{
-				_ASSERTE(pszFull);
-			}
-			if (pszCmd == pszFull)
-				pszCmd = NULL;
-			SafeFree(pszFull);
-		}
-		SafeFree(pszCmd);
-	}
 } // cbCmdGroupApp
 
 
@@ -1603,6 +1349,8 @@ void CSetDlgButtons::OnBtn_CmdTasksReload(HWND hDlg, WORD CB, BYTE uCheck)
 		pTasksPg->OnInitDialog(hDlg, true);
 
 } // cbCmdTasksReload
+
+#endif
 
 // cbCmdTaskbarTasks
 void CSetDlgButtons::OnBtn_CmdTaskbarTasks(HWND hDlg, WORD CB, BYTE uCheck)

@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 
+#include "../common/MArray.h"
 #include "SetPgBase.h"
 #include "SetDlgLists.h"
 
@@ -53,8 +54,39 @@ public:
 	virtual INT_PTR OnComboBox(HWND hWnd2, WORD nCtrlId, WORD code) override;
 	virtual bool SelectNextItem(bool bNext, bool bProcess) override;
 
+	// Events
+	void OnTaskFlags(WORD CB);
+	void OnTaskAdd();
+	void OnTaskDup();
+	void OnTaskDel();
+	void OnTaskUpDown(WORD CB);
+	void OnTaskHotKey();
+	void OnCmdAddTab();
+	void OnCmdAddFile();
+	void OnCmdAddDir();
+	void OnCmdActiveTabs();
+	void OnTasksAddRefresh();
+	void OnTasksReload();
+
 protected:
 	// Members
 	bool mb_IgnoreCmdGroupEdit, mb_IgnoreCmdGroupList;
+
+	// Temp holder for tasks representation
+	struct TaskVis
+	{
+		INT_PTR id;     // -1 for folders
+		INT_PTR index;  // Line index in lbCmdTasks
+		CEStr name;
+		MArray<TaskVis*> children;
+
+		TaskVis(INT_PTR _id, LPCWSTR _label);
+
+		TaskVis* CreateChild(int cid, LPCWSTR label);
+		TaskVis* CreateFolder(LPCWSTR folder);
+
+		void Release();
+	} m_Tasks;
+	MArray<TaskVis*> m_TasksPtr;
 };
 

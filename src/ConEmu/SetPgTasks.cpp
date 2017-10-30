@@ -31,19 +31,75 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
-#include "../common/MArray.h"
 #include "../common/MSetter.h"
 
+#pragma warning(disable: 4091)
+#include <shlobj.h>
+#pragma warning(default: 4091)
+#ifdef __GNUC__
+#include "ShObjIdl_Part.h"
+#endif // __GNUC__
+
+#include "ConEmu.h"
+#include "ConEmuApp.h"
+#include "ConfirmDlg.h"
+#include "HotkeyDlg.h"
+#include "OptionsClass.h"
+#include "OptionsFast.h"
+#include "Recreate.h"
 #include "SetPgTasks.h"
+#include "VConGroup.h"
 
 CSetPgTasks::CSetPgTasks()
 	: mb_IgnoreCmdGroupEdit(false)
 	, mb_IgnoreCmdGroupList(false)
+	, m_Tasks(-1, NULL)
 {
 }
 
 CSetPgTasks::~CSetPgTasks()
 {
+	m_Tasks.Release();
+}
+
+CSetPgTasks::TaskVis::TaskVis(INT_PTR _id, LPCWSTR _label)
+	: id(_id)
+	, index(-1)
+	, name(_label)
+{
+}
+
+CSetPgTasks::TaskVis* CSetPgTasks::TaskVis::CreateChild(int cid, LPCWSTR label)
+{
+	TaskVis* p = new TaskVis{cid, label};
+	children.push_back(p);
+	return p;
+}
+
+CSetPgTasks::TaskVis* CSetPgTasks::TaskVis::CreateFolder(LPCWSTR folder)
+{
+	for (INT_PTR i = 0; i < children.size(); ++i)
+	{
+		TaskVis* p = children[i];
+		if (p->id == -1 && lstrcmpi(folder, p->name) == 0)
+			return p;
+	}
+	return CreateChild(-1, folder);
+}
+
+void CSetPgTasks::TaskVis::Release()
+{
+	for (INT_PTR i = 0; i < children.size(); ++i)
+	{
+		TaskVis* p = NULL;
+		klSwap(p, children[i]);
+		if (p)
+			p->Release();
+		delete p;
+	}
+	children.clear();
+	name.Clear();
+	id = -1;
 }
 
 LRESULT CSetPgTasks::OnInitDialog(HWND hDlg, bool abForceReload)
@@ -81,42 +137,9 @@ LRESULT CSetPgTasks::OnInitDialog(HWND hDlg, bool abForceReload)
 	//	gpSet->LoadCmdTasks(NULL, true);
 	//}
 
-	struct TaskVis
-	{
-		int id; // -1 for folders
-		CEStr name;
-		MArray<TaskVis*> children;
 
-		TaskVis* CreateChild(int cid, LPCWSTR label)
-		{
-			TaskVis* p = new TaskVis{cid, label};
-			children.push_back(p);
-			return p;
-		};
-		TaskVis* CreateFolder(LPCWSTR folder)
-		{
-			for (INT_PTR i = 0; i < children.size(); ++i)
-			{
-				TaskVis* p = children[i];
-				if (p->id == -1 && lstrcmpi(folder, p->name) == 0)
-					return p;
-			}
-			return CreateChild(-1, folder);
-		};
-		void Release()
-		{
-			for (INT_PTR i = 0; i < children.size(); ++i)
-			{
-				TaskVis* p = NULL;
-				klSwap(p, children[i]);
-				if (p)
-					p->Release();
-				delete p;
-			}
-		};
-	};
-
-	TaskVis Tasks{-1};
+	m_TasksPtr.clear();
+	m_Tasks.Release();
 	int nGroup = 0;
 	const CommandTasks* pGrp = NULL;
 	while ((pGrp = gpSet->CmdTaskGet(nGroup)))
@@ -127,24 +150,27 @@ LRESULT CSetPgTasks::OnInitDialog(HWND hDlg, bool abForceReload)
 			CEStr lsFolder((LPCWSTR)pGrp->pszName);
 			wchar_t* pch = wcsstr(lsFolder.ms_Val, L"::");
 			*(pch+2) = 0;
-			TaskVis* parent = Tasks.CreateFolder(lsFolder.ms_Val);
+			TaskVis* parent = m_Tasks.CreateFolder(lsFolder.ms_Val);
 			parent->CreateChild(nGroup, pszColon+2);
 		}
 		else
 		{
-			Tasks.CreateChild(nGroup, pGrp->pszName);
+			m_Tasks.CreateChild(nGroup, pGrp->pszName);
 		}
 		nGroup++;
 	}
-	for (INT_PTR i1 = 0; i1 < Tasks.children.size(); ++i1)
+	for (INT_PTR i1 = 0; i1 < m_Tasks.children.size(); ++i1)
 	{
-		TaskVis* p1 = Tasks.children[i1];
+		TaskVis* p1 = m_Tasks.children[i1];
 		INT_PTR iIndex = SendDlgItemMessage(hDlg, lbCmdTasks, LB_ADDSTRING, 0, (LPARAM)p1->name.ms_Val);
 		if (iIndex < 0)
 		{
 			_ASSERTEX(iIndex >= 0);
 			break;
 		}
+		_ASSERTEX(iIndex == m_TasksPtr.size());
+		p1->index = iIndex;
+		m_TasksPtr.push_back(p1);
 		//SendDlgItemMessage(hDlg, lbCmdTasks, LB_SETITEMDATA, iIndex, (LPARAM)p1->id);
 
 		for (INT_PTR i2 = 0; i2 < p1->children.size(); ++i2)
@@ -157,11 +183,12 @@ LRESULT CSetPgTasks::OnInitDialog(HWND hDlg, bool abForceReload)
 				_ASSERTEX(iIndex >= 0);
 				break;
 			}
+			_ASSERTEX(iIndex == m_TasksPtr.size());
+			p2->index = iIndex;
+			m_TasksPtr.push_back(p2);
 			//SendDlgItemMessage(hDlg, lbCmdTasks, LB_SETITEMDATA, iIndex, (LPARAM)p2->id);
 		}
 	}
-
-	Tasks.Release();
 
 	OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
 
@@ -323,3 +350,474 @@ bool CSetPgTasks::SelectNextItem(bool bNext, bool bProcess)
 wrap:
 	return true;
 }
+
+// cbCmdGrpDefaultNew, cbCmdGrpDefaultCmd, cbCmdGrpTaskbar, cbCmdGrpToolbar
+void CSetPgTasks::OnTaskFlags(WORD CB)
+{
+	int iCur = CSetDlgLists::GetListboxCurSel(hDlg, lbCmdTasks, true);
+	if (iCur < 0)
+		return;
+
+	CommandTasks* p = (CommandTasks*)gpSet->CmdTaskGet(iCur);
+	if (!p)
+		return;
+
+	bool bDistinct = false;
+	bool bUpdate = false;
+	CETASKFLAGS flag = CETF_NONE;
+
+	switch (CB)
+	{
+	case cbCmdGrpDefaultNew:
+		flag = CETF_NEW_DEFAULT;
+		if (isChecked(hDlg, CB))
+		{
+			bDistinct = true;
+			p->Flags |= flag;
+		}
+		else
+		{
+			p->Flags &= ~flag;
+		}
+		break;
+	case cbCmdGrpDefaultCmd:
+		flag = CETF_CMD_DEFAULT;
+		if (isChecked(hDlg, CB))
+		{
+			bDistinct = true;
+			p->Flags |= flag;
+		}
+		else
+		{
+			p->Flags &= ~flag;
+		}
+		break;
+	case cbCmdGrpTaskbar:
+		if (isChecked(hDlg, CB))
+			p->Flags &= ~CETF_NO_TASKBAR;
+		else
+			p->Flags |= CETF_NO_TASKBAR;
+		bUpdate = true;
+		break;
+	case cbCmdGrpToolbar:
+		if (isChecked(hDlg, CB))
+			p->Flags |= CETF_ADD_TOOLBAR;
+		else
+			p->Flags &= ~CETF_ADD_TOOLBAR;
+		break;
+	}
+
+	if (bDistinct)
+	{
+		int nGroup = 0;
+		CommandTasks* pGrp = NULL;
+		while ((pGrp = (CommandTasks*)gpSet->CmdTaskGet(nGroup++)))
+		{
+			if (pGrp != p)
+				pGrp->Flags &= ~flag;
+		}
+	}
+
+	if (bUpdate)
+	{
+		if (gpSet->isJumpListAutoUpdate)
+		{
+			UpdateWin7TaskList(true/*bForce*/, true/*bNoSuccMsg*/);
+		}
+		else
+		{
+			TODO("Show hint to press ‘Update now’ button");
+		}
+	}
+
+} // cbCmdGrpDefaultNew, cbCmdGrpDefaultCmd, cbCmdGrpTaskbar, cbCmdGrpToolbar
+
+
+// cbCmdTasksAdd
+void CSetPgTasks::OnTaskAdd()
+{
+	_ASSERTE(CB==cbCmdTasksAdd);
+
+	int iCount = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0);
+	if (iCount < 0)
+		return;
+	if (!gpSet->CmdTaskGet(iCount))
+		gpSet->CmdTaskSet(iCount, L"", L"", L"");
+
+	OnInitDialog(mh_Dlg, false);
+
+	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, iCount);
+
+	if (pTasksPg)
+		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
+
+} // cbCmdTasksAdd
+
+
+// cbCmdTasksDup
+void CSetPgTasks::OnTaskDup()
+{
+	_ASSERTE(CB==cbCmdTasksDup);
+
+	// Get the one selected task
+	int *Selected = NULL, iCount = CSetDlgLists::GetListboxSelection(hDlg, lbCmdTasks, Selected);
+	if (iCount != 1 || Selected[0] < 0)
+		return;
+	int iSelected = Selected[0];
+	delete[] Selected;
+	const CommandTasks* pSrc = gpSet->CmdTaskGet(iSelected);
+	if (!pSrc)
+		return;
+
+	iCount = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0);
+	if (iCount < 0)
+		return;
+	// ensure the cell is empty and create new task with the same GuiArgs and Commands
+	if (gpSet->CmdTaskGet(iCount))
+		return;
+	gpSet->CmdTaskSet(iCount, L"", pSrc->pszGuiArgs, pSrc->pszCommands);
+	while (iSelected < (iCount - 1))
+	{
+		gpSet->CmdTaskXch(iCount, iCount - 1);
+		--iCount;
+	}
+
+	OnInitDialog(mh_Dlg, false);
+
+	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, iCount);
+
+	if (pTasksPg)
+		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
+
+} // cbCmdTasksDup
+
+
+// cbCmdTasksDel
+void CSetPgTasks::OnTaskDel()
+{
+	_ASSERTE(CB==cbCmdTasksDel);
+
+	int *Selected = NULL, iCount = CSetDlgLists::GetListboxSelection(hDlg, lbCmdTasks, Selected);
+	if (iCount <= 0)
+		return;
+
+	const CommandTasks* p = NULL;
+	bool bIsStartup = false;
+
+	for (INT_PTR i = iCount-1; i >= 0; i--)
+	{
+		p = gpSet->CmdTaskGet(Selected[iCount-1]);
+		if (!p)
+		{
+			_ASSERTE(FALSE && "Failed to get selected task");
+			delete[] Selected;
+			return;
+		}
+
+		if (gpSet->psStartTasksName && p->pszName && (lstrcmpi(gpSet->psStartTasksName, p->pszName) == 0))
+			bIsStartup = true;
+	}
+
+	size_t cchMax = (p->pszName ? _tcslen(p->pszName) : 0) + 200;
+	wchar_t* pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
+	if (!pszMsg)
+	{
+		delete[] Selected;
+		return;
+	}
+
+	wchar_t szOthers[64] = L"";
+	if (iCount > 1)
+		_wsprintf(szOthers, SKIPCOUNT(szOthers) L"\n" L"and %i other task(s)", (iCount-1));
+
+	_wsprintf(pszMsg, SKIPLEN(cchMax) L"%sDelete Task\n%s%s?",
+		bIsStartup ? L"Warning! You about to delete startup task!\n\n" : L"",
+		p->pszName ? p->pszName : L"{???}",
+		szOthers);
+
+	int nBtn = MsgBox(pszMsg, MB_YESNO|(bIsStartup ? MB_ICONEXCLAMATION : MB_ICONQUESTION), NULL, ghOpWnd);
+	SafeFree(pszMsg);
+
+	if (nBtn != IDYES)
+	{
+		delete[] Selected;
+		return;
+	}
+
+	for (INT_PTR i = iCount-1; i >= 0; i--)
+	{
+		gpSet->CmdTaskSet(Selected[i], NULL, NULL, NULL);
+
+		if (bIsStartup && gpSet->psStartTasksName)
+			*gpSet->psStartTasksName = 0;
+	}
+
+	OnInitDialog(mh_Dlg, false);
+
+	iCount = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0);
+	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, min(Selected[0],(iCount-1)));
+
+	if (pTasksPg)
+		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
+
+	delete[] Selected;
+
+} // cbCmdTasksDel
+
+
+// cbCmdTasksUp || cbCmdTasksDown
+void CSetPgTasks::OnTaskUpDown(WORD CB)
+{
+	_ASSERTE(CB==cbCmdTasksUp || CB==cbCmdTasksDown);
+
+	int iCur, iChg;
+	iCur = CSetDlgLists::GetListboxCurSel(hDlg, lbCmdTasks, true);
+	if (iCur < 0)
+		return;
+	if (CB == cbCmdTasksUp)
+	{
+		if (!iCur)
+			return;
+		iChg = iCur - 1;
+	}
+	else
+	{
+		iChg = iCur + 1;
+		if (iChg >= (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0))
+			return;
+	}
+
+	if (!gpSet->CmdTaskXch(iCur, iChg))
+		return;
+
+	OnInitDialog(mh_Dlg, false);
+
+	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, iChg);
+
+	if (pTasksPg)
+		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
+
+} // cbCmdTasksUp || cbCmdTasksDown
+
+
+// cbCmdGroupKey
+void CSetPgTasks::OnTaskHotKey()
+{
+	_ASSERTE(CB==cbCmdGroupKey);
+
+	int iCur = CSetDlgLists::GetListboxCurSel(hDlg, lbCmdTasks, true);
+	if (iCur < 0)
+		return;
+	const CommandTasks* pCmd = gpSet->CmdTaskGet(iCur);
+	if (!pCmd)
+		return;
+
+	DWORD VkMod = pCmd->HotKey.GetVkMod();
+	if (CHotKeyDialog::EditHotKey(ghOpWnd, VkMod))
+	{
+		gpSet->CmdTaskSetVkMod(iCur, VkMod);
+		wchar_t szKey[128] = L"";
+		SetDlgItemText(hDlg, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.GetVkMod(), szKey));
+	}
+} // cbCmdGroupKey
+
+
+// cbCmdGroupApp
+void CSetPgTasks::OnCmdAddTab()
+{
+	_ASSERTE(CB==cbCmdGroupApp);
+
+	// Добавить команду в группу
+	RConStartArgsEx args;
+	args.aRecreate = cra_EditTab;
+	int nDlgRc = gpConEmu->RecreateDlg(&args);
+
+	if (nDlgRc == IDC_START)
+	{
+		wchar_t* pszCmd = args.CreateCommandLine();
+		if (!pszCmd || !*pszCmd)
+		{
+			DisplayLastError(L"Can't compile command line for new tab\nAll fields are empty?", -1);
+		}
+		else
+		{
+			//SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszName);
+			wchar_t* pszFull = GetDlgItemTextPtr(hDlg, tCmdGroupCommands);
+			if (!pszFull || !*pszFull)
+			{
+				SafeFree(pszFull);
+				pszFull = pszCmd;
+			}
+			else
+			{
+				size_t cchLen = _tcslen(pszFull);
+				size_t cchMax = cchLen + 7 + _tcslen(pszCmd);
+				pszFull = (wchar_t*)realloc(pszFull, cchMax*sizeof(*pszFull));
+
+				int nRN = 0;
+				if (cchLen >= 2)
+				{
+					if (pszFull[cchLen-2] == L'\r' && pszFull[cchLen-1] == L'\n')
+					{
+						nRN++;
+						if (cchLen >= 4)
+						{
+							if (pszFull[cchLen-4] == L'\r' && pszFull[cchLen-3] == L'\n')
+							{
+								nRN++;
+							}
+						}
+					}
+				}
+
+				if (nRN < 2)
+					_wcscat_c(pszFull, cchMax, nRN ? L"\r\n" : L"\r\n\r\n");
+
+				_wcscat_c(pszFull, cchMax, pszCmd);
+			}
+
+			if (pszFull)
+			{
+				SetDlgItemText(hDlg, tCmdGroupCommands, pszFull);
+				pTasksPg->OnEditChanged(mh_Dlg, tCmdGroupCommands);
+			}
+			else
+			{
+				_ASSERTE(pszFull);
+			}
+			if (pszCmd == pszFull)
+				pszCmd = NULL;
+			SafeFree(pszFull);
+		}
+		SafeFree(pszCmd);
+	}
+} // cbCmdGroupApp
+
+
+// cbCmdTasksParm - Show "Choose file" dialog and paste into the Task contents the pathname
+void CSetPgTasks::OnCmdAddFile()
+{
+	_ASSERTE(CB==cbCmdTasksParm);
+
+	// Добавить файл
+	wchar_t temp[MAX_PATH+10] = {};
+	OPENFILENAME ofn = {sizeof(ofn)};
+	ofn.hwndOwner = ghOpWnd;
+	ofn.lpstrFilter = L"All files (*.*)\0*.*\0Text files (*.txt,*.ini,*.log)\0*.txt;*.ini;*.log\0Executables (*.exe,*.com,*.bat,*.cmd)\0*.exe;*.com;*.bat;*.cmd\0Scripts (*.vbs,*.vbe,*.js,*.jse)\0*.vbs;*.vbe;*.js;*.jse\0\0";
+	//ofn.lpstrFilter = L"All files (*.*)\0*.*\0\0";
+	ofn.lpstrFile = temp+1;
+	ofn.nMaxFile = countof(temp)-10;
+	ofn.lpstrTitle = L"Choose file";
+	ofn.Flags = OFN_ENABLESIZING|OFN_NOCHANGEDIR
+	            | OFN_PATHMUSTEXIST|OFN_EXPLORER|OFN_HIDEREADONLY|OFN_FILEMUSTEXIST;
+
+	if (GetOpenFileName(&ofn))
+	{
+		LPCWSTR pszName = temp+1;
+		if (wcschr(pszName, L' '))
+		{
+			temp[0] = L'"';
+			wcscat_c(temp, L"\"");
+			pszName = temp;
+		}
+		else
+		{
+			temp[0] = L' ';
+		}
+		//wcscat_c(temp, L"\r\n\r\n");
+
+		SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszName);
+	}
+} // cbCmdTasksParm
+
+
+// cbCmdTasksDir - Choose and paste tab startup directory
+void CSetPgTasks::OnCmdAddDir()
+{
+	_ASSERTE(CB==cbCmdTasksDir);
+
+	TODO("Извлечь текущий каталог запуска");
+
+	BROWSEINFO bi = {ghOpWnd};
+	wchar_t szFolder[MAX_PATH+1] = {0};
+	TODO("Извлечь текущий каталог запуска");
+	bi.pszDisplayName = szFolder;
+	wchar_t szTitle[100];
+	bi.lpszTitle = lstrcpyn(szTitle, L"Choose tab startup directory", countof(szTitle));
+	bi.ulFlags = BIF_EDITBOX | BIF_RETURNONLYFSDIRS | BIF_VALIDATE;
+	bi.lpfn = CRecreateDlg::BrowseCallbackProc;
+	bi.lParam = (LPARAM)szFolder;
+	LPITEMIDLIST pRc = SHBrowseForFolder(&bi);
+
+	if (pRc)
+	{
+		if (SHGetPathFromIDList(pRc, szFolder))
+		{
+			bool bQuot = IsQuotationNeeded(szFolder);
+			CEStr lsFull(L" -new_console:d:", bQuot ? L"\"" : NULL, szFolder, bQuot ? L"\" " : L" ");
+
+			SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)lsFull.ms_Val);
+		}
+
+		CoTaskMemFree(pRc);
+	}
+} // cbCmdTasksDir
+
+// cbCmdTasksActive - Paste all open tabs into the Task
+void CSetPgTasks::OnCmdActiveTabs()
+{
+	_ASSERTE(CB==cbCmdTasksActive);
+
+	wchar_t* pszTasks = CVConGroup::GetTasks(); // return all opened tabs
+	if (pszTasks)
+	{
+		SendDlgItemMessage(hDlg, tCmdGroupCommands, EM_REPLACESEL, TRUE, (LPARAM)pszTasks);
+		SafeFree(pszTasks);
+	}
+} // cbCmdTasksActive
+
+
+// cbAddDefaults
+void CSetPgTasks::OnTasksAddRefresh()
+{
+	_ASSERTE(CB==cbAddDefaults);
+
+	int iBtn = ConfirmDialog(L"Do you want to add new default tasks in your task list?",
+		L"Default tasks", gpConEmu->GetDefaultTitle(),
+		CEWIKIBASE L"Tasks.html#add-default-tasks",
+		MB_YESNOCANCEL|MB_ICONEXCLAMATION, ghOpWnd,
+		L"Add new tasks", L"Append absent tasks for newly installed shells",
+		L"Refresh default tasks", L"Add new and REWRITE EXISTING tasks with defaults",
+		L"Cancel");
+	if (iBtn == IDCANCEL)
+		return;
+
+	// Append or rewrite default tasks
+	CreateDefaultTasks(slf_AppendTasks|((iBtn == IDNO) ? slf_RewriteExisting : slf_None));
+
+	// Refresh onscreen contents
+	OnInitDialog(mh_Dlg, true);
+
+} // cbAddDefaults
+
+// cbCmdTasksReload
+void CSetPgTasks::OnTasksReload()
+{
+	_ASSERTE(CB==cbCmdTasksReload);
+
+	int iBtn = ConfirmDialog(L"All unsaved changes will be lost!\n\nReload Tasks from settings?",
+		L"Warning!", gpConEmu->GetDefaultTitle(),
+		CEWIKIBASE L"Tasks.html",
+		MB_YESNO|MB_ICONEXCLAMATION, ghOpWnd,
+		L"Reload Tasks", NULL,
+		L"Cancel", NULL);
+	if (iBtn != IDYES)
+		return;
+
+	// Reload Tasks
+	gpSet->LoadCmdTasks(NULL, true);
+
+	// Refresh onscreen contents
+	OnInitDialog(mh_Dlg, true);
+
+} // cbCmdTasksReload
