@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include "../common/MArray.h"
 #include "../common/MSetter.h"
 
 #include "SetPgTasks.h"
@@ -63,7 +64,7 @@ LRESULT CSetPgTasks::OnInitDialog(HWND hDlg, bool abForceReload)
 
 	if (abForceReload)
 	{
-		int nTab = 4*4; // represent the number of quarters of the average character width for the font
+		int nTab = 3*4; // represent the number of quarters of the average character width for the font
 		SendDlgItemMessage(hDlg, lbCmdTasks, LB_SETTABSTOPS, 1, (LPARAM)&nTab);
 
 		LONG_PTR nStyles = GetWindowLongPtr(GetDlgItem(hDlg, lbCmdTasks), GWL_STYLE);
@@ -80,21 +81,87 @@ LRESULT CSetPgTasks::OnInitDialog(HWND hDlg, bool abForceReload)
 	//	gpSet->LoadCmdTasks(NULL, true);
 	//}
 
+	struct TaskVis
+	{
+		int id; // -1 for folders
+		CEStr name;
+		MArray<TaskVis*> children;
+
+		TaskVis* CreateChild(int cid, LPCWSTR label)
+		{
+			TaskVis* p = new TaskVis{cid, label};
+			children.push_back(p);
+			return p;
+		};
+		TaskVis* CreateFolder(LPCWSTR folder)
+		{
+			for (INT_PTR i = 0; i < children.size(); ++i)
+			{
+				TaskVis* p = children[i];
+				if (p->id == -1 && lstrcmpi(folder, p->name) == 0)
+					return p;
+			}
+			return CreateChild(-1, folder);
+		};
+		void Release()
+		{
+			for (INT_PTR i = 0; i < children.size(); ++i)
+			{
+				TaskVis* p = NULL;
+				klSwap(p, children[i]);
+				if (p)
+					p->Release();
+				delete p;
+			}
+		};
+	};
+
+	TaskVis Tasks{-1};
 	int nGroup = 0;
-	wchar_t szItem[1024];
 	const CommandTasks* pGrp = NULL;
 	while ((pGrp = gpSet->CmdTaskGet(nGroup)))
 	{
-		_wsprintf(szItem, SKIPLEN(countof(szItem)) L"%i\t", nGroup+1);
-		int nPrefix = lstrlen(szItem);
-		lstrcpyn(szItem+nPrefix, pGrp->pszName, countof(szItem)-nPrefix);
-
-		INT_PTR iIndex = SendDlgItemMessage(hDlg, lbCmdTasks, LB_ADDSTRING, 0, (LPARAM)szItem);
-		UNREFERENCED_PARAMETER(iIndex);
-		//SendDlgItemMessage(hDlg, lbCmdTasks, LB_SETITEMDATA, iIndex, (LPARAM)pGrp);
-
+		LPCWSTR pszColon = wcsstr(pGrp->pszName, L"::");
+		if (pszColon)
+		{
+			CEStr lsFolder((LPCWSTR)pGrp->pszName);
+			wchar_t* pch = wcsstr(lsFolder.ms_Val, L"::");
+			*(pch+2) = 0;
+			TaskVis* parent = Tasks.CreateFolder(lsFolder.ms_Val);
+			parent->CreateChild(nGroup, pszColon+2);
+		}
+		else
+		{
+			Tasks.CreateChild(nGroup, pGrp->pszName);
+		}
 		nGroup++;
 	}
+	for (INT_PTR i1 = 0; i1 < Tasks.children.size(); ++i1)
+	{
+		TaskVis* p1 = Tasks.children[i1];
+		INT_PTR iIndex = SendDlgItemMessage(hDlg, lbCmdTasks, LB_ADDSTRING, 0, (LPARAM)p1->name.ms_Val);
+		if (iIndex < 0)
+		{
+			_ASSERTEX(iIndex >= 0);
+			break;
+		}
+		//SendDlgItemMessage(hDlg, lbCmdTasks, LB_SETITEMDATA, iIndex, (LPARAM)p1->id);
+
+		for (INT_PTR i2 = 0; i2 < p1->children.size(); ++i2)
+		{
+			TaskVis* p2 = p1->children[i2];
+			CEStr lsLabel(L"\t", p2->name);
+			INT_PTR iIndex = SendDlgItemMessage(hDlg, lbCmdTasks, LB_ADDSTRING, 0, (LPARAM)lsLabel.ms_Val);
+			if (iIndex < 0)
+			{
+				_ASSERTEX(iIndex >= 0);
+				break;
+			}
+			//SendDlgItemMessage(hDlg, lbCmdTasks, LB_SETITEMDATA, iIndex, (LPARAM)p2->id);
+		}
+	}
+
+	Tasks.Release();
 
 	OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);
 
