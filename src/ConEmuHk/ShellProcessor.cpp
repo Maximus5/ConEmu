@@ -180,9 +180,10 @@ CShellProc::~CShellProc()
 		ghConEmuWnd = mh_PreConEmuWnd; ghConEmuWndDC = mh_PreConEmuWndDC;
 	}
 
-	if (mb_InShellExecuteEx && gnInShellExecuteEx)
+	if (mb_InShellExecuteEx)
 	{
-		gnInShellExecuteEx--;
+		if (gnInShellExecuteEx > 0)
+			gnInShellExecuteEx--;
 		mb_InShellExecuteEx = FALSE;
 	}
 
@@ -2134,10 +2135,14 @@ int CShellProc::PrepareExecuteParms(
 
 	if (bLongConsoleOutput)
 	{
-		// MultiArc issue. При поиске нефиг включать длинный буфер. Как отсечь?
-		// Пока по запуску не из главного потока.
-		if (GetCurrentThreadId() != gnHookMainThreadId)
+		// MultiArc issue. Don't turn on LongConsoleOutput for "windowless" archive operations
+		// gh-1307: In Win10 ShellExecuteEx executes CreateProcess from background thread
+		if (!((aCmd == eCreateProcess) && (gnInShellExecuteEx > 0))
+			&& (GetCurrentThreadId() != gnHookMainThreadId)
+			)
+		{
 			bLongConsoleOutput = FALSE;
+		}
 	}
 
 	if (aCmd == eShellExecute)
@@ -2262,8 +2267,14 @@ int CShellProc::PrepareExecuteParms(
 		else if ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1)
 				&& (NewConsoleFlags // CEF_NEWCON_SWITCH | CEF_NEWCON_PREPEND
 					|| (bLongConsoleOutput &&
-						(((gFarMode.FarVer.dwVerMajor >= 3) && (aCmd == eShellExecute) && (anShellFlags && (*anShellFlags & SEE_MASK_NO_CONSOLE)) && (anShowCmd && *anShowCmd))
-						|| ((gFarMode.FarVer.dwVerMajor <= 2) && (aCmd == eCreateProcess) && (anCreateFlags && (*anCreateFlags & CREATE_DEFAULT_ERROR_MODE))))
+						(((aCmd == eShellExecute)
+							&& (gFarMode.FarVer.dwVerMajor >= 3)
+							&& (anShellFlags && (*anShellFlags & SEE_MASK_NO_CONSOLE)) && (anShowCmd && *anShowCmd))
+						|| ((aCmd == eCreateProcess)
+							// gh-1307: when user runs "script.py" it's executed by Far3 via ShellExecuteEx->CreateProcess(py.exe),
+							// we don't know it's a console process at the moment of ShellExecuteEx
+							&& ((gFarMode.FarVer.dwVerMajor <= 2) || ((gFarMode.FarVer.dwVerMajor >= 3) && (gnInShellExecuteEx)))
+							&& (anCreateFlags && (*anCreateFlags & CREATE_DEFAULT_ERROR_MODE))))
 						)
 					|| (bCurConsoleArg && (m_Args.LongOutputDisable != crb_On))
 					#ifdef _DEBUG
@@ -2529,8 +2540,11 @@ BOOL CShellProc::OnShellExecuteA(LPCSTR* asAction, LPCSTR* asFile, LPCSTR* asPar
 		return TRUE; // Перехватывать только под ConEmu
 	}
 
-	mb_InShellExecuteEx = TRUE;
-	gnInShellExecuteEx ++;
+	if (GetCurrentThreadId() == gnHookMainThreadId)
+	{
+		mb_InShellExecuteEx = TRUE;
+		gnInShellExecuteEx ++;
+	}
 
 	mpwsz_TempAction = str2wcs(asAction ? *asAction : NULL, mn_CP);
 	mpwsz_TempFile = str2wcs(asFile ? *asFile : NULL, mn_CP);
@@ -2590,8 +2604,11 @@ BOOL CShellProc::OnShellExecuteW(LPCWSTR* asAction, LPCWSTR* asFile, LPCWSTR* as
 		return TRUE;
 	}
 
-	mb_InShellExecuteEx = TRUE;
-	gnInShellExecuteEx ++;
+	if (GetCurrentThreadId() == gnHookMainThreadId)
+	{
+		mb_InShellExecuteEx = TRUE;
+		gnInShellExecuteEx ++;
+	}
 
 	_ASSERTEX(!mpwsz_TempRetFile && !mpwsz_TempRetParam && !mpwsz_TempRetDir);
 
