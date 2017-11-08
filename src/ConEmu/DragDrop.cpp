@@ -1059,6 +1059,7 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 		//}
 		INT_PTR nLen = _tcslen(psz);
 
+		bool AutoQuote = true;
 		if (!bNoFarConsole)
 		{
 
@@ -1085,10 +1086,11 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 			if (pszCygwin)
 			{
 				_wcscpy_c(pszText, MAX_DROP_PATH, pszCygwin);
+				AutoQuote = false;
 			}
 		}
 
-		if ((psz = wcschr(pszText, L' ')) != NULL)
+		if (AutoQuote && (psz = wcschr(pszText, L' ')) != NULL)
 		{
 			// Имя нужно окавычить
 			if (!bNoFarConsole)
