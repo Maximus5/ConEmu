@@ -227,7 +227,7 @@ protected:
 	struct DisplayParm
 	{
 		BOOL WasSet;
-		BOOL Bold;             // 1
+		BOOL BrightOrBold;     // 1
 		BOOL Italic;           // 3
 		BOOL Underline;        // 4
 		BOOL BrightFore;       // 90-97

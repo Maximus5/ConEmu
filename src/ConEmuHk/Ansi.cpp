@@ -447,7 +447,7 @@ void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)
 //struct DisplayParm
 //{
 //	BOOL WasSet;
-//	BOOL Bold;             // 1
+//	BOOL BrightOrBold;     // 1
 //	BOOL Italic;           // 3
 //	BOOL Underline;        // 4
 //	BOOL BrightFore;       // 90-97
@@ -614,10 +614,10 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 		else
 		{
 			attr.Attributes.ForegroundColor |= ClrMap[TextColor&0x7]
-				| (gDisplayParm.BrightFore ? 0x08 : 0);
+				| ((gDisplayParm.BrightFore | (gDisplayParm.BrightOrBold && !gDisplayParm.BrightBack)) ? 0x08 : 0);
 		}
 
-		if (gDisplayParm.Bold)
+		if (gDisplayParm.BrightOrBold && (Text256 | gDisplayParm.BrightFore | gDisplayParm.BrightBack))
 			attr.Attributes.Flags |= CECF_FG_BOLD;
 		if (gDisplayParm.Italic)
 			attr.Attributes.Flags |= CECF_FG_ITALIC;
@@ -3048,14 +3048,14 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					break;
 				case 1:
 					// Bold
-					gDisplayParm.Bold = TRUE;
+					gDisplayParm.BrightOrBold = TRUE;
 					gDisplayParm.WasSet = TRUE;
 					break;
 				case 2:
 					// Faint, decreased intensity (ISO 6429)
 				case 22:
 					// Normal (neither bold nor faint).
-					gDisplayParm.Bold = FALSE;
+					gDisplayParm.BrightOrBold = FALSE;
 					gDisplayParm.WasSet = TRUE;
 					break;
 				case 3:
@@ -3548,7 +3548,7 @@ void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 				switch (Code.ArgV[i])
 				{
 				case 7:
-					gDisplayParm.Bold = FALSE;
+					gDisplayParm.BrightOrBold = FALSE;
 					gDisplayParm.Italic = FALSE;
 					gDisplayParm.Underline = FALSE;
 					gDisplayParm.BrightFore = FALSE;
@@ -3557,7 +3557,7 @@ void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 					gDisplayParm.WasSet = TRUE;
 					break;
 				case 15:
-					gDisplayParm.Bold = TRUE;
+					gDisplayParm.BrightOrBold = TRUE;
 					gDisplayParm.WasSet = TRUE;
 					break;
 				case 112:
