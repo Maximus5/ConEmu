@@ -417,19 +417,48 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength/*=TRUE*/)
 		if (pszSlash)
 			*pszSlash = 0;
 
-		if (!GetShortFileName(pszLong, MAX_PATH+1, szName, abFavorLength))
+		if (wcscmp(pszSrc, L"\\..") == 0)
+		{
+			int nTrim = -1;
+			for (int i = nCurLen-2; i > 0; --i)
+			{
+				if (pszShort[i] == L'\\')
+				{
+					nTrim = i;
+					break;
+				}
+			}
+			if (nTrim > 0)
+			{
+				nCurLen = nTrim+1;
+				pszShort[nCurLen] = 0;
+				szName[0] = 0;
+			}
+			else
+			{
+				wcscpy_s(szName, MAX_PATH+1, L"..");
+			}
+		}
+		else if (!GetShortFileName(pszLong, MAX_PATH+1, szName, abFavorLength))
+		{
 			goto wrap;
+		}
+
 		nLen = lstrlenW(szName);
-		if ((nLen + nCurLen) >= nMaxLen)
-			goto wrap;
-		//pszShort[nCurLen++] = L'\\'; pszShort[nCurLen] = 0;
-		_wcscpyn_c(pszShort+nCurLen, nMaxLen-nCurLen, szName, nLen);
-		nCurLen += nLen;
+		if (nLen > 0)
+		{
+			if ((nLen + nCurLen) >= nMaxLen)
+				goto wrap;
+
+			_wcscpyn_c(pszShort+nCurLen, nMaxLen-nCurLen, szName, nLen);
+			nCurLen += nLen;
+		}
 
 		if (pszSlash)
 		{
 			*pszSlash = L'\\';
-			pszShort[nCurLen++] = L'\\'; // память выделяется calloc!
+			if (nLen > 0)
+				pszShort[nCurLen++] = L'\\'; // память выделяется calloc!
 		}
 	}
 
