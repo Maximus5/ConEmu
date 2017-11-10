@@ -20,6 +20,19 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.11.9
+* XLat from Far didn't change keyboard layout in ConEmu.
+* GuiMacro: Select(2) cancels active selection.
+* gh-1307: Turn on ‘Long console output’ when user runs `script.py` associated with `py.exe`
+  The script is executed by Far3 via ShellExecuteEx(script.py),
+  which in turn runs CreateProcess(py.exe, script.py) in background thread
+* gh-1236, gh-1303: When GetConsoleKeyboardLayoutName not implemented stop calling it
+* gh-275, gh-1102: Support PerMonitorV2 DPI awareness for Windows 10 Creators Update.
+* gh-1304: Use ‘Bold’ ANSI sequence (`\e[1m`) to bright text color (partial revert of gh-1288).
+* `ConEmuBaseDirShort` environment variable had wrong path if `ConEmuBaseDir` contained relative parts.
+* gh-1312: Don't autoquote cygwin/msys paths on paste/drop.
+
+
 2017.10.25
 * connector#15: Support graphics output in some versions of mc.
 * gh-1265: Fix crash in Windows 7 on starting elevated console.
