@@ -282,7 +282,9 @@ function ParseDialogData($rcln, $dlgid, $name)
   }
   if ($ln -ne "") {
     $h = ParseLine $ln
-    $items_arg += $h
+    if (-Not ($script:ignore_ctrls.Contains($h.Id))) {
+      $items_arg += $h
+    }
   }
 
   return $items_arg
@@ -1289,7 +1291,7 @@ function WriteWiki($items_arg, $hints, $hotkeys, $dlgid, $name, $flname)
         $desc = $script:ctrl_desc
 
         if (($script:ctrl_type.Contains("TEXT")) -And ($desc -eq ""))  {
-          $desc = $script:ctrl_type
+          $desc = $script:ctrl_alt
         }
         elseif ($script:ctrl_name -ne "") {
           $label = ReplaceRN $script:ctrl_name
