@@ -74,6 +74,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE2(s) DEBUGSTR(s) // Warning level
+#define DEBUGSTRDYNAMIC(s) DEBUGSTR(s)
 #define DEBUGSTRPKT(s) //DEBUGSTR(s)
 #define DEBUGSTRCURSORPOS(s) //DEBUGSTR(s)
 #define DEBUGSTRMOUSE(s) //DEBUGSTR(s)
@@ -2602,12 +2603,20 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 			int newDynamicHeight = 0;
 			bool lbRealTurnedOn = IsBufferHeightTurnedOn(sbi);
 			con.srRealWindow = pInfo->ConState.srRealWindow;
-			if (nLastConsoleRow > 0)
+			// if (nLastConsoleRow > 0) -- even if nLastConsoleRow is zero (no hooks in console application), try to deal with srWindow
 			{
 				LONG maxRow = max(nLastConsoleRow, max(sbi.srWindow.Bottom, max(con.srRealWindow.Bottom, sbi.dwCursorPosition.Y)));
 				if (maxRow > 0 && maxRow < sbi.dwSize.Y)
 					newDynamicHeight = maxRow + 1;
 			}
+			#ifdef _DEBUG
+			if (con.nDynamicHeight != newDynamicHeight)
+			{
+				msprintf(szCursorDbg, countof(szCursorDbg), L"Dynamic height changed: %i -> %i (Known=%i, Bottom=%i, Real=%i, Cursor=%i)\n",
+					con.nDynamicHeight, newDynamicHeight, nLastConsoleRow, sbi.srWindow.Bottom, con.srRealWindow.Bottom, sbi.dwCursorPosition.Y);
+				DEBUGSTRDYNAMIC(szCursorDbg);
+			}
+			#endif
 			con.m_sbi = sbi;
 			con.nDynamicHeight = newDynamicHeight;
 
