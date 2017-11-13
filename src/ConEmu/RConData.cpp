@@ -340,6 +340,8 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 		// it's shown using monochrome (gray on black)
 		bool bForceMono = (mp_RCon->mn_InRecreate != 0);
 
+		bool has_rowid = (cnSrcLineLen >= ROWID_USED_CELLS) && (GetRowIdFromAttrs(pnSrc) != 0);
+
 		int iTail = cnSrcLineLen;
 		wchar_t* pch = pszDst;
 		for (UINT nX = 0;
@@ -350,11 +352,12 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 			bool hasTrueColor = false;
 			bool hasFont = false;
 			bool inversed = false;
+			bool is_rowid = has_rowid && (nX < ROWID_USED_CELLS);
 
 			// If not "mono" we need only lower byte with color indexes
 			if (!bForceMono)
 			{
-				inversed = (((*pnSrc) & COMMON_LVB_REVERSE_VIDEO) && !((*pnSrc) & (CHANGED_CONATTR & ~(COMMON_LVB_REVERSE_VIDEO|COMMON_LVB_UNDERSCORE))));
+				inversed = !is_rowid && ((*pnSrc) & COMMON_LVB_REVERSE_VIDEO);
 				if (inversed)
 					PalIndex = MAKECONCOLOR(CONBACKCOLOR(*pnSrc), CONFORECOLOR(*pnSrc)); // Inverse
 				else
@@ -430,10 +433,7 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 				}
 			}
 
-			if (!hasFont
-				&& ((*pnSrc) & COMMON_LVB_UNDERSCORE)
-				&& ((nX >= ROWID_USED_CELLS) || !((*pnSrc) & (CHANGED_CONATTR & ~COMMON_LVB_UNDERSCORE)))
-				)
+			if (!hasFont && !is_rowid && ((*pnSrc) & COMMON_LVB_UNDERSCORE))
 			{
 				lca.nFontIndex = fnt_Underline;
 			}
