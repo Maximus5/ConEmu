@@ -195,6 +195,7 @@ class CRealConsole
 		BYTE    mn_TextColorIdx, mn_BackColorIdx, mn_PopTextColorIdx, mn_PopBackColorIdx;
 		HKEY    PrepareConsoleRegistryKey(LPCWSTR asSubKey);
 		void    PrepareDefaultColors(BYTE& nTextColorIdx, BYTE& nBackColorIdx, BYTE& nPopTextColorIdx, BYTE& nPopBackColorIdx, bool bUpdateRegistry = false, HKEY hkConsole = NULL);
+		void    PrepareNewConArgs();
 	public:
 		void    PrepareDefaultColors();
 	private:

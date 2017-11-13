@@ -624,13 +624,7 @@ bool CRealConsole::PreCreate(RConStartArgsEx *args)
 
 	mb_NeedStartProcess = FALSE;
 
-	// Go
-	if (m_Args.BufHeight == crb_On)
-	{
-		mn_DefaultBufferHeight = m_Args.nBufHeight;
-		mp_RBuf->SetBufferHeightMode(mn_DefaultBufferHeight>0);
-	}
-
+	PrepareNewConArgs();
 
 	PrepareDefaultColors();
 
@@ -10073,6 +10067,14 @@ void CRealConsole::CloseLogFiles()
 	SafeDelete(mp_Log);
 }
 
+void CRealConsole::PrepareNewConArgs()
+{
+	if (m_Args.BufHeight == crb_On)
+	{
+		mn_DefaultBufferHeight = m_Args.nBufHeight;
+		mp_RBuf->SetBufferHeightMode(mn_DefaultBufferHeight>0);
+	}
+}
 
 // Послать в консоль запрос на закрытие
 bool CRealConsole::RecreateProcess(RConStartArgsEx *args)
@@ -10157,36 +10159,8 @@ bool CRealConsole::RecreateProcess(RConStartArgsEx *args)
 
 	m_Args.ProcessNewConArg();
 
-	//if (args->pszSpecialCmd && *args->pszSpecialCmd)
-	//{
-	//	if (m_Args.pszSpecialCmd) Free(m_Args.pszSpecialCmd);
+	PrepareNewConArgs();
 
-	//	int nLen = _tcslen(args->pszSpecialCmd);
-	//	m_Args.pszSpecialCmd = (wchar_t*)Alloc(nLen+1,2);
-
-	//	if (!m_Args.pszSpecialCmd)
-	//	{
-	//		Box(_T("Can't allocate memory..."));
-	//		return false;
-	//	}
-
-	//	lstrcpyW(m_Args.pszSpecialCmd, args->pszSpecialCmd);
-	//}
-	//if (args->pszStartupDir)
-	//{
-	//	if (m_Args.pszStartupDir) Free(m_Args.pszStartupDir);
-
-	//	int nLen = _tcslen(args->pszStartupDir);
-	//	m_Args.pszStartupDir = (wchar_t*)Alloc(nLen+1,2);
-
-	//	if (!m_Args.pszStartupDir)
-	//		return false;
-
-	//	lstrcpyW(m_Args.pszStartupDir, args->pszStartupDir);
-	//}
-	//m_Args.bRunAsAdministrator = args->bRunAsAdministrator;
-
-	//DWORD nWait = 0;
 	mb_ProcessRestarted = FALSE;
 	mn_InRecreate = GetTickCount();
 	CloseConfirmReset();
