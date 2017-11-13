@@ -1,4 +1,15 @@
 ﻿
+// gh-1314, gh-1311
+// #CONNECTOR 1. Move definitions to modules/terminals
+// #CONNECTOR 2. Add callback function to implement read ConIn
+//   * ConEmuHk should create server pipe and pass it to GUI
+//   * ConEmu should use MArray<wchar_t> instead of CEStr to make xterm conversions
+//   * If `XTerm` keyboard mode is on - never post data to conhost
+//   * When `XTerm` keyboard mode is off - use conhost API to forward keypressed to native applications
+// gh-1204
+// #CONNECTOR 3. Add mnt-prefix to initialization structure
+
+
 /*
 Copyright (c) 2015-2017 Maximus5
 All rights reserved.
