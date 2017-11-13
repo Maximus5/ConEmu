@@ -1347,7 +1347,22 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			gpConEmu->setFocus();
 	}
 
-	result = DefWindowProc(hWnd, messg, wParam, lParam);
+	// gh-1306, gh-460
+	switch (messg)
+	{
+	case WM_WINDOWPOSCHANGING:
+		// AppWindow must be visible but always out-of-screen
+		if (lParam)
+		{
+			LPWINDOWPOS p = (LPWINDOWPOS)lParam;
+			p->flags &= ~SWP_NOMOVE;
+			p->x = p->y = -32000;
+		}
+		break;
+
+	default:
+		result = DefWindowProc(hWnd, messg, wParam, lParam);
+	}
 	return result;
 }
 
