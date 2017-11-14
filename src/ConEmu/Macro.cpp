@@ -3081,6 +3081,19 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 		}
 		pszResult = lstrdup(L"OK");
 	}
+	else if (!lstrcmpi(pszName, L"bgImage")) 
+	{
+		if (p->GetStrArg(1, pszValue)) {
+			if (gpSetCls->LoadBackgroundFile(pszValue, true)) {
+				wcscmp(pszValue, gpSet->sBgImage);
+				gpSetCls->NeedBackgroundUpdate();
+				gpConEmu->Update(true);
+				pszResult = lstrdup(L"OK");
+			} else {
+				pszResult = lstrdup(L"ERROR");
+			}
+		}
+	} 
 	else if (!lstrcmpi(pszName, L"AlwaysOnTop"))
 	{
 		// SetOption("AlwaysOnTop",0) - Disable top-most
