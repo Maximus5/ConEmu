@@ -5610,16 +5610,22 @@ bool static NeedLegacyCursorCorrection()
 
 	if (!bChecked)
 	{
+		// gh-1051: In NON DBCS systems there are cursor problems too (Win10 stable build 15063 or higher)
 		if (IsWin10() && (GetSystemMetrics(SM_DBCSENABLED) == 0) && !IsWin10LegacyConsole())
 		{
 			OSVERSIONINFOEXW osvi = { sizeof(osvi), 10, 0, 15063 };
-			DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_EQUAL), VER_MINORVERSION, VER_EQUAL), VER_BUILDNUMBER, VER_EQUAL);
+			DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0,
+				VER_MAJORVERSION, VER_GREATER_EQUAL),
+				VER_MINORVERSION, VER_GREATER_EQUAL),
+				VER_BUILDNUMBER, VER_GREATER_EQUAL);
 			BOOL ibIsWin = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_BUILDNUMBER, dwlConditionMask);
 			if (ibIsWin)
 			{
 				bNeedCorrection = true;
 			}
 		}
+
+		bChecked = true;
 	}
 
 	return bNeedCorrection;
