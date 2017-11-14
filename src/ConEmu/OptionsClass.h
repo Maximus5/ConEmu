@@ -171,7 +171,7 @@ class CSettings
 		#else
 		CBackgroundInfo* GetBackgroundObject();
 		#endif
-		bool LoadBackgroundFile(TCHAR *inPath, bool abShowErrors=false);
+		bool LoadBackgroundFile(LPCWSTR inPath, bool abShowErrors=false);
 		bool IsBackgroundEnabled(CVirtualConsole* apVCon);
 		void NeedBackgroundUpdate();
 		//CBackground* CreateBackgroundImage(const BITMAPFILEHEADER* apBkImgData);

@@ -590,6 +590,25 @@ bool CSettings::SetOption(LPCWSTR asName, LPCWSTR asValue)
 			lbRc = true;
 		}
 	}
+	else if (!lstrcmpi(asName, L"BackGround Image") || !lstrcmpi(asName, L"bgImage"))
+	{
+		auto reloadBgImage = [](LPARAM lParam) -> LRESULT
+		{
+			if (gpSetCls->LoadBackgroundFile((LPCWSTR)lParam, true))
+			{
+				wcscpy_c(gpSet->sBgImage, (LPCWSTR)lParam);
+				HWND hBgPg = gpSetCls->GetPage(thi_Hilight);
+				if (hBgPg)
+					SetDlgItemText(hBgPg, tBgImage, gpSet->sBgImage);
+				gpSetCls->NeedBackgroundUpdate();
+				gpConEmu->Update(true);
+				return 1;
+			}
+			return 0;
+		};
+
+		lbRc = (gpConEmu->CallMainThread(true, reloadBgImage, (LPARAM)asValue) != 0);
+	}
 	else if (!lstrcmpi(asName, L"Scheme"))
 	{
 		const ColorPalette* pPal = gpSet->PaletteGetByName(asValue);
@@ -3164,7 +3183,7 @@ CBackgroundInfo* CSettings::GetBackgroundObject()
 	return mp_BgInfo;
 }
 
-bool CSettings::LoadBackgroundFile(TCHAR *inPath, bool abShowErrors)
+bool CSettings::LoadBackgroundFile(LPCWSTR inPath, bool abShowErrors)
 {
 	bool lRes = false;
 

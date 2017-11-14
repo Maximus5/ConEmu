@@ -3123,6 +3123,7 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 			pszResult = gpSetCls->SetOption(pszName, nValue) ? lstrdup(L"OK") : NULL;
 	}
 	else if (!lstrcmpi(pszName, L"FarGotoEditorPath")
+		|| !lstrcmpi(pszName, L"BackGround Image") || !lstrcmpi(pszName, L"bgImage")
 		|| !lstrcmpi(pszName, L"Scheme"))
 	{
 		if (p->GetStrArg(1, pszValue))

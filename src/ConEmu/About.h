@@ -403,6 +403,8 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"      Value: 0(disable) .. 1(enable)\r\n" \
 	L"    \"AlwaysOnTop\": place ConEmu window above all non-topmost windows\r\n" \
 	L"      Value: 2 - toggle, 1 - enable, 0 - disable\r\n" \
+	L"    \"bgImage\": change background image\r\n" \
+	L"      Value: file or color, e.g. \"C:\\image.jpg\" or \"#3182a4\"\r\n" \
 	L"    \"bgImageDarker\": darkening of background image\r\n" \
 	L"      Value: 0 .. 255\r\n" \
 	L"    \"FarGotoEditorPath\": path to the highlight/error editor \r\n" \
