@@ -315,6 +315,7 @@
     <ClInclude Include="modules\minhook\src\HDE\table64.h" />
     <ClInclude Include="modules\minhook\src\buffer.h" />
     <ClInclude Include="modules\minhook\src\trampoline.h" />
+    <ClInclude Include="modules\terminals\ConnectorAPI.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConEmuHk\Ansi.cpp" />

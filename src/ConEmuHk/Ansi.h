@@ -46,6 +46,7 @@ extern DWORD AnsiTlsIndex;
 
 struct MSectionSimple;
 
+/* !!! Duplicated in the ConnectorAPI.h !!! */
 enum WriteProcessedStream
 {
 	wps_None   = 0,
@@ -54,6 +55,7 @@ enum WriteProcessedStream
 	wps_Input  = 4, // Reserved for StdInput
 	wps_Ansi   = 8, // Reserved as a Flag for IsAnsiCapable
 };
+#define WRITE_PROCESSED_STREAM_DEFINED
 
 #if defined(__GNUC__)
 extern "C" {

@@ -1,6 +1,5 @@
 ﻿
 // gh-1314, gh-1311
-// #CONNECTOR 1. Move definitions to modules/terminals
 // #CONNECTOR 2. Add callback function to implement read ConIn
 //   * ConEmuHk should create server pipe and pass it to GUI
 //   * ConEmu should use MArray<wchar_t> instead of CEStr to make xterm conversions
@@ -41,46 +40,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Ansi.h"
 
-enum RequestTermConnectorMode
-{
-	rtc_Start = 1,
-	rtc_Stop  = 2,
-};
 
-/* excerpt from Ansi.h begin *
-enum WriteProcessedStream
-{
-	// ...
-	wps_Output = 1,
-	wps_Error  = 2,
-	// ...
-};
- * excerpt from Ansi.h end */
+// enum RequestTermConnectorMode
+// enum WriteProcessedStream
+// struct RequestTermConnectorParm
+#include "../modules/terminals/ConnectorAPI.h"
 
-struct RequestTermConnectorParm
-{
-	// [IN]  size in bytes of this structure
-	DWORD cbSize;
-	// [IN]  requrested operation
-	RequestTermConnectorMode Mode;
-
-	// [IN]  dump initialization steps to console
-	BOOL bVerbose;
-
-	// [IN]  ttyname(STDOUT_FILENO)
-	LPCSTR pszTtyName;
-	// [IN]  $TERM
-	LPCSTR pszTerm;
-
-	// [OUT] If there were any errors, here may be some details
-	LPCSTR pszError;
-
-	// [OUT] This one is UNICODE
-	BOOL (WINAPI* ReadInput)(PINPUT_RECORD,DWORD,PDWORD);
-	// [OUT] But this is ANSI (UTF-8 is expected)
-	//       cbWrite==-1 : pBuffer contains ASCIIZ string, call strlen on it
-	BOOL (WINAPI* WriteText)(LPCSTR pBuffer, DWORD cbWrite, PDWORD pcbWritten, WriteProcessedStream nStream);
-};
 
 #if defined(__GNUC__)
 extern "C" {

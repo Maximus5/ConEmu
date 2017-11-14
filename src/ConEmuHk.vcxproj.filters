@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="Connector">
+      <UniqueIdentifier>{30ECB2FA-9C56-6771-E594-1817513E45C6}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Exports">
       <UniqueIdentifier>{BA9346E3-2673-C57E-2F8B-50559BE92BE0}</UniqueIdentifier>
     </Filter>
@@ -34,7 +37,7 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmuHk\Connector.h">
-      <Filter>Headers</Filter>
+      <Filter>Connector</Filter>
     </ClInclude>
     <ClInclude Include="ConEmuHk\Console2.h">
       <Filter>Headers</Filter>
@@ -138,6 +141,9 @@
     <ClInclude Include="modules\minhook\src\trampoline.h">
       <Filter>MinHook\Trampoline</Filter>
     </ClInclude>
+    <ClInclude Include="modules\terminals\ConnectorAPI.h">
+      <Filter>Connector</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConEmuHk\Ansi.cpp">
@@ -147,7 +153,7 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuHk\Connector.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Connector</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuHk\DefTermHk.cpp">
       <Filter>Sources</Filter>
