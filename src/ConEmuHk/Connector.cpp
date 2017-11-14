@@ -86,7 +86,10 @@ static BOOL WINAPI termReadInput(PINPUT_RECORD pir, DWORD nCount, PDWORD pRead)
 	UpdateAppMapFlags(rcif_LLInput);
 
 	InterlockedIncrement(&gnInTermInputReading);
-	BOOL bRc = ReadConsoleInputW(ghTermInput, pir, nCount, pRead);
+	DWORD peek = 0;
+	BOOL bRc = (PeekConsoleInputW(ghTermInput, pir, nCount, &peek) && peek)
+		? ReadConsoleInputW(ghTermInput, pir, nCount, pRead)
+		: FALSE;
 	InterlockedDecrement(&gnInTermInputReading);
 
 	if (!bRc)
