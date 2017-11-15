@@ -45,7 +45,7 @@ static wchar_t* gszClinkCmdLine = NULL;
 
 /* **************** */
 
-static bool InitializeClink()
+static bool InitializeCmd()
 {
 	if (gnCmdInitialized)
 		return true;
@@ -93,62 +93,6 @@ static bool InitializeClink()
 	}
 
 	return true;
-
-	//BOOL bRunRc = FALSE;
-	//DWORD nErrCode = 0;
-
-	//if (gnAllowClinkUsage == 2)
-	//{
-	//	// New style. TODO
-	//	wchar_t szClinkDir[MAX_PATH+32], szClinkArgs[MAX_PATH+64];
-
-	//	wcscpy_c(szClinkDir, pConMap->ComSpec.ConEmuBaseDir);
-	//	wcscat_c(szClinkDir, L"\\clink");
-
-	//	wcscpy_c(szClinkArgs, L"\"");
-	//	wcscat_c(szClinkArgs, szClinkDir);
-	//	wcscat_c(szClinkArgs, WIN3264TEST(L"\\clink_x86.exe",L"\\clink_x64.exe"));
-	//	wcscat_c(szClinkArgs, L"\" inject");
-
-	//	STARTUPINFO si = {sizeof(si)};
-	//	PROCESS_INFORMATION pi = {};
-	//	bRunRc = CreateProcess(NULL, szClinkArgs, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, szClinkDir, &si, &pi);
-	//
-	//	if (bRunRc)
-	//	{
-	//		WaitForSingleObject(pi.hProcess, INFINITE);
-	//		CloseHandle(pi.hProcess);
-	//		CloseHandle(pi.hThread);
-	//	}
-	//	else
-	//	{
-	//		nErrCode = GetLastError();
-	//		_ASSERTEX(FALSE && "Clink loader failed");
-	//		UNREFERENCED_PARAMETER(nErrCode);
-	//		UNREFERENCED_PARAMETER(bRunRc);
-	//	}
-	//}
-	//else if (gnAllowClinkUsage == 1)
-	//{
-	//	if (!ghClinkDll)
-	//	{
-	//		wchar_t szClinkModule[MAX_PATH+30];
-	//		_wsprintf(szClinkModule, SKIPLEN(countof(szClinkModule)) L"%s\\clink\\%s",
-	//			pConMap->ComSpec.ConEmuBaseDir, WIN3264TEST(L"clink_dll_x86.dll",L"clink_dll_x64.dll"));
-	//
-	//		ghClinkDll = LoadLibrary(szClinkModule);
-	//		if (!ghClinkDll)
-	//			return false;
-	//	}
-
-	//	if (!gpfnClinkReadLine)
-	//	{
-	//		gpfnClinkReadLine = (call_readline_t)GetProcAddress(ghClinkDll, "call_readline");
-	//		_ASSERTEX(gpfnClinkReadLine!=NULL);
-	//	}
-	//}
-
-	//return (gpfnClinkReadLine != NULL);
 }
 
 static bool IsInteractive()
@@ -197,8 +141,11 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 
 	if (gbIsCmdProcess && hKey && lpValueName)
 	{
+		bool cmdInitialized = InitializeCmd();
+
 		// Allow `CD` to network paths
-		if (lstrcmpi(lpValueName, L"DisableUNCCheck") == 0)
+		// gh-1318: If checkbox ‘Support UNC paths in cmd.exe’ is not checked, rely on real registry value
+		if (gbAllowUncPaths && lstrcmpi(lpValueName, L"DisableUNCCheck") == 0)
 		{
 			if (lpData)
 			{
@@ -215,9 +162,8 @@ LONG WINAPI OnRegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserve
 			goto wrap;
 		}
 
-		if (gbIsCmdProcess && hKey && lpValueName
-			&& (lstrcmpi(lpValueName, L"AutoRun") == 0)
-			&& InitializeClink())
+		if (cmdInitialized && hKey && lpValueName
+			&& (lstrcmpi(lpValueName, L"AutoRun") == 0))
 		{
 			if (gbAllowClinkUsage && gszClinkCmdLine
 				&& IsInteractive())
