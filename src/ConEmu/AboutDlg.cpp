@@ -521,8 +521,7 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 
 	{
 		DontEnable de;
-		if (!mp_DpiAware)
-			mp_DpiAware = new CDpiForDialog();
+		CDpiForDialog::Create(mp_DpiAware);
 		HWND hParent = (ghOpWnd && IsWindowVisible(ghOpWnd)) ? ghOpWnd : ghWnd;
 		// Modal dialog (CreateDialog)
 		INT_PTR iRc = CDynDialog::ExecuteDialog(IDD_ABOUT, hParent, aboutProc, (LPARAM)asPageName);

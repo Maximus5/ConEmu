@@ -122,8 +122,9 @@ protected:
 	};
 	MMap<int, MArray<DlgItem>*> m_Items;
 
-public:
 	CDpiForDialog();
+public:
+	static bool Create(CDpiForDialog*& pHelper);
 
 	~CDpiForDialog();
 

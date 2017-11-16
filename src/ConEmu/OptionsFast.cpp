@@ -850,7 +850,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 				TerminateProcess(GetCurrentProcess(), CERR_FASTCONFIG_QUIT);
 		}
 
-		gp_DpiAware = new CDpiForDialog();
+		CDpiForDialog::Create(gp_DpiAware);
 
 		// Modal dialog (CreateDialog)
 

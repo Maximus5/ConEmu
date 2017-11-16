@@ -406,6 +406,23 @@ class CDpiForDialog - handle per-monitor dpi for our resource-based dialogs
 	MMap<int, MArray<DlgItem>*> m_Items;
 */
 
+bool CDpiForDialog::Create(CDpiForDialog*& pHelper)
+{
+	if (pHelper)
+		return true;
+
+	// In Win10 and newly implemented PerMonitor DPI support we don't need dialog handlers anymore
+	if (IsWin10())
+		return false;
+
+	// Only if required
+	if (!CDpiAware::IsPerMonitorDpi())
+		return false;
+
+	pHelper = new CDpiForDialog();
+	return (pHelper != nullptr);
+}
+
 CDpiForDialog::CDpiForDialog()
 {
 	mh_Dlg = NULL;

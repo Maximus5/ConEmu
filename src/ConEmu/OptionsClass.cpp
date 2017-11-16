@@ -1761,14 +1761,7 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 		// Сначала обновить DC, чтобы некрасивостей не было
 		gpConEmu->UpdateWindowChild(NULL);
 
-		if (!gpSetCls->mp_DpiAware
-			#ifndef _DEBUG
-			&& CDpiAware::IsPerMonitorDpi()
-			#endif
-			)
-		{
-			gpSetCls->mp_DpiAware = new CDpiForDialog();
-		}
+		CDpiForDialog::Create(gpSetCls->mp_DpiAware);
 
 		wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Creating settings dialog, IdPage=%u", IdShowPage);
 		LogString(szLog);

@@ -861,7 +861,7 @@ bool CRealConsole::ChangeAffinityPriority(LPCWSTR asAffinity /*= NULL*/, LPCWSTR
 	else
 	{
 		DontEnable de;
-		mp_PriorityDpiAware = new CDpiForDialog();
+		CDpiForDialog::Create(mp_PriorityDpiAware);
 		iRc = CDynDialog::ExecuteDialog(IDD_AFFINITY, ghWnd, priorityProc, (LPARAM)this);
 		SafeDelete(mp_PriorityDpiAware);
 	}
@@ -11354,7 +11354,7 @@ void CRealConsole::DoRenameTab()
 		return;
 
 	DontEnable de;
-	mp_RenameDpiAware = new CDpiForDialog();
+	CDpiForDialog::Create(mp_RenameDpiAware);
 	// Modal dialog (CreateDialog)
 	INT_PTR iRc = CDynDialog::ExecuteDialog(IDD_RENAMETAB, ghWnd, renameProc, (LPARAM)this);
 	if (iRc == IDOK)

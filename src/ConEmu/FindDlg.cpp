@@ -85,8 +85,7 @@ void CEFindDlg::FindTextDialog()
 
 	gpConEmu->SkipOneAppsRelease(true);
 
-	if (!mp_DpiAware)
-		mp_DpiAware = new CDpiForDialog();
+	CDpiForDialog::Create(mp_DpiAware);
 
 	// (CreateDialog)
 	mp_Dlg = CDynDialog::ShowDialog(IDD_FIND, ghWnd, findTextProc, 0/*Param*/);

@@ -100,8 +100,7 @@ void CSetPgBase::InitObject(HWND ahParent, UINT anActivateTabMsg, const CDpiForD
 
 	if (apParentDpi)
 	{
-		if (!mp_DpiAware)
-			mp_DpiAware = new CDpiForDialog();
+		CDpiForDialog::Create(mp_DpiAware);
 		mb_DpiChanged = false;
 	}
 	else

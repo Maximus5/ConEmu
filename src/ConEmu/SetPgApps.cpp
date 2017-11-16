@@ -680,7 +680,7 @@ bool CSetPgApps::CreateChildDlg()
 
 		if (!mp_DpiDistinct2 && mp_ParentDpi)
 		{
-			mp_DpiDistinct2 = new CDpiForDialog();
+			CDpiForDialog::Create(mp_DpiDistinct2);
 			mp_DpiDistinct2->Attach(mh_Child, mh_Dlg, mp_DlgDistinct2);
 		}
 

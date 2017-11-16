@@ -117,8 +117,7 @@ int CRecreateDlg::RecreateDlg(RConStartArgsEx* apArgs, bool abDontAutoSelCmd /*=
 	InitVars();
 
 	bool bPrev = gpConEmu->SetSkipOnFocus(true);
-	if (!mp_DpiAware)
-		mp_DpiAware = new CDpiForDialog();
+	CDpiForDialog::Create(mp_DpiAware);
 	// Modal dialog (CreateDialog)
 	int nRc = CDynDialog::ExecuteDialog(IDD_RESTART, mh_Parent, RecreateDlgProc, (LPARAM)this);
 	UNREFERENCED_PARAMETER(nRc);

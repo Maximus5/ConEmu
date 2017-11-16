@@ -59,7 +59,7 @@ CHotKeyDialog::CHotKeyDialog(HWND hParent, DWORD aVkMod)
 	m_HK.HkType = chk_User;
 	m_HK.SetVkMod(aVkMod);
 
-	mp_DpiAware = new CDpiForDialog();
+	CDpiForDialog::Create(mp_DpiAware);
 }
 
 CHotKeyDialog::~CHotKeyDialog()
