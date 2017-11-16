@@ -5262,6 +5262,11 @@ void CConEmuMain::UpdateProcessDisplay(bool abForce)
 // gh-1271: update caret position to help accessibilty tools (e.g. Magnifier)
 void CConEmuMain::UpdateCaretPos(CVirtualConsole& vcon, const RECT& rect)
 {
+	if (!gpConEmu->isMeForeground(false, false))
+	{
+		return;
+	}
+
 	if (!m_Foreground.bCaretCreated)
 	{
 		if (!CreateCaret(ghWnd, NULL, RectWidth(rect), RectHeight(rect)))
