@@ -79,6 +79,7 @@ CConEmuSize::CConEmuSize(CConEmuMain* pOwner)
 	mb_LockShowWindow = false;
 	mb_LockWindowRgn = false;
 	mh_MinFromMonitor = NULL;
+	mb_MonitorDpiChanged = false;
 	mn_IgnoreQuakeActivation = 0;
 	mn_LastQuakeShowHide = 0;
 	mn_InResize = 0;
@@ -222,6 +223,11 @@ RECT CConEmuSize::CalcMargins_Win10Frame()
 						);
 					_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
 						LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal), LOGRECTCOORDS(rc));
+					// bugs in DWMWA_EXTENDED_FRAME_BOUNDS?
+					//if (rc.right != rc.left)
+					//	rc.right = rc.left;
+					//if (rc.bottom > rc.right)
+					//	rc.bottom = rc.right;
 				}
 				else
 				{
@@ -245,49 +251,34 @@ RECT CConEmuSize::CalcMargins_Win10Frame()
 	return rc;
 }
 
+// CEM_FRAMECAPTION : Difference between whole window size and its client area (frame + caption)
 RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 {
 	RECT rc = {};
+	if (!(mg & ((DWORD)CEM_FRAMECAPTION)) || mp_ConEmu->mp_Inside)
+		return rc;
 
 	ConEmuWindowMode wm = (wmNewMode == wmCurrent) ? WindowMode : wmNewMode;
+	// We remove all frames and caption in FullScreen mode
+	if (wm == wmFullScreen)
+		return rc;
 
-	// Difference between whole window size and its client area (frame + caption)
-	if ((mg & ((DWORD)CEM_FRAMECAPTION)) && (mp_ConEmu->mp_Inside == NULL))
+	bool bHideCaption = gpSet->isCaptionHidden(wmNewMode);
+	// If there is no caption, nothing to evaluate
+	if (bHideCaption && ((mg & ((DWORD)CEM_FRAMECAPTION)) == CEM_CAPTION))
+		return rc;
+
+	bool processed = false;
+	if (!IsWin10())
 	{
 		DWORD dwStyle = mp_ConEmu->GetWindowStyle();
 		if (wmNewMode != wmCurrent)
 			dwStyle = mp_ConEmu->FixWindowStyle(dwStyle, wmNewMode);
 		DWORD dwStyleEx = mp_ConEmu->GetWindowStyleEx();
-		//static DWORD dwLastStyle, dwLastStyleEx;
-		//static RECT rcLastRect;
-		//if (dwLastStyle == dwStyle && dwLastStyleEx == dwStyleEx)
-		//{
-		//	rc = rcLastRect; // чтобы не дергать лишние расчеты
-		//}
-		//else
-		//{
 		const int nTestWidth = 100, nTestHeight = 100;
 		RECT rcTest = MakeRect(nTestWidth,nTestHeight);
 
-		bool bHideCaption = gpSet->isCaptionHidden(wmNewMode);
-
-		// Если заголовка нет - то и считать нечего
-		if (bHideCaption && ((mg & ((DWORD)CEM_FRAMECAPTION)) == CEM_CAPTION))
-		{
-		}
-		// AdjustWindowRectEx НЕ должно вызываться в FullScreen. Глючит. А рамки с заголовком нет, расширять нечего.
-		else if (wm == wmFullScreen)
-		{
-			// Для FullScreen полностью убираются рамки и заголовок
-			_ASSERTE(rc.left==0 && rc.top==0 && rc.right==0 && rc.bottom==0);
-		}
-		//#if defined(CONEMU_TABBAR_EX)
-		//else if ((fdt >= fdt_Aero) && (wm == wmMaximized) && gpSet->isTabsInCaption)
-		//{
-		//
-		//}
-		//#endif
-		else if (AdjustWindowRectEx(&rcTest, dwStyle, FALSE, dwStyleEx))
+		if (AdjustWindowRectEx(&rcTest, dwStyle, FALSE, dwStyleEx))
 		{
 			if ((mg & ((DWORD)CEM_FRAMECAPTION)) == CEM_CAPTION)
 			{
@@ -299,54 +290,28 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 				rc.right = rcTest.right - nTestWidth;
 				rc.bottom = rcTest.bottom - nTestHeight;
 				if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption)
-				{
-					#if defined(CONEMU_TABBAR_EX)
-					if ((fdt >= fdt_Aero) && gpSet->isTabsInCaption)
-					{
-						//-- NO additional space!
-						//if (wm != wmMaximized)
-						//	rc.top = mp_ConEmu->GetCaptionDragHeight() + rc.bottom;
-						//else
-						rc.top = rc.bottom + mp_ConEmu->GetCaptionDragHeight();
-					}
-					else
-					#endif
-					{
-						rc.top = -rcTest.top;
-					}
-				}
+					rc.top = -rcTest.top;
 				else
-				{
 					rc.top = rc.bottom;
-				}
 			}
 			_ASSERTE(rc.top >= 0 && rc.left >= 0 && rc.right >= 0 && rc.bottom >= 0);
+			processed = true;
 		}
-		else
-		{
-			_ASSERTE(FALSE);
-			if ((mg & ((DWORD)CEM_FRAMECAPTION)) != CEM_CAPTION)
-			{
-				rc.left = rc.right = GetSystemMetrics(SM_CXSIZEFRAME);
-				rc.bottom = GetSystemMetrics(SM_CYSIZEFRAME);
-				rc.top = rc.bottom; // рамка
-			}
+	}
 
-			if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption) // если есть заголовок - добавим и его
-			{
-				#if defined(CONEMU_TABBAR_EX)
-				if ((fdt >= fdt_Aero) && gpSet->isTabsInCaption)
-				{
-					//-- NO additional space!
-					//if (wm != wmMaximized)
-					//	rc.top += mp_ConEmu->GetCaptionDragHeight();
-				}
-				else
-				#endif
-				{
-					rc.top += GetSystemMetrics(SM_CYCAPTION);
-				}
-			}
+	if (!processed)
+	{
+		_ASSERTE(IsWin10());
+		if ((mg & ((DWORD)CEM_FRAMECAPTION)) != CEM_CAPTION)
+		{
+			rc.left = rc.right = mp_ConEmu->GetFrameWidth();
+			rc.bottom = mp_ConEmu->GetFrameHeight();
+			rc.top = rc.bottom; // рамка
+		}
+
+		if ((mg & ((DWORD)CEM_CAPTION)) && !bHideCaption)
+		{
+			rc.top += mp_ConEmu->GetWinCaptionHeight();
 		}
 	}
 
@@ -2571,6 +2536,16 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 				}
 			}
 
+			if (mb_MonitorDpiChanged)
+			{
+				if (mp_ConEmu->mp_TabBar->IsTabsActive())
+				{
+					mp_ConEmu->mp_TabBar->Reposition();
+				}
+
+				OnSize();
+			}
+
 			if (mp_ConEmu->hPictureView)
 			{
 				mp_ConEmu->mrc_WndPosOnPicView = rc;
@@ -2613,6 +2588,8 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	{
 		mp_ConEmu->LogWindowPos(L"WM_WINDOWPOSCHANGED.end");
 	}
+
+	mb_MonitorDpiChanged = false;
 
 	return result;
 }
@@ -2997,6 +2974,7 @@ bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
 			{
 				// Вернуть флаг того, что DPI изменилось
 				bResized = true;
+				mb_MonitorDpiChanged = true;
 			}
 		}
 	}

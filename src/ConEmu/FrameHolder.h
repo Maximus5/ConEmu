@@ -88,6 +88,7 @@ private:
 	void PaintFrame2k(HWND hWnd, HDC hdc, RECT &cr);
 #endif
 	int mn_WinCaptionHeight, mn_FrameWidth, mn_FrameHeight, mn_OurCaptionHeight, mn_TabsHeight, mn_CaptionDragHeight;
+	RECT mrc_NcClientMargins;
 public:
 	void RecalculateFrameSizes();
 	int GetFrameWidth(); // ширина рамки окна

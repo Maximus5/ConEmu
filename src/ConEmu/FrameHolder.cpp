@@ -75,6 +75,7 @@ CFrameHolder::CFrameHolder()
 	mn_OurCaptionHeight = 0;
 	mn_CaptionDragHeight = 0;
 	mn_InNcPaint = 0;
+	ZeroStruct(mrc_NcClientMargins);
 }
 
 CFrameHolder::~CFrameHolder()
@@ -195,7 +196,29 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 	case WM_NCCALCSIZE:
 		DBGFUNCTION(L"WM_NCCALCSIZE \n");
-		lResult = OnNcCalcSize(hWnd, uMsg, wParam, lParam);
+		if (!IsWin10())
+		{
+			lResult = OnNcCalcSize(hWnd, uMsg, wParam, lParam);
+		}
+		else
+		{
+			NCCALCSIZE_PARAMS* pParm = (NCCALCSIZE_PARAMS*)lParam;
+			RECT rcWnd = {};
+			if (wParam && pParm)
+				rcWnd = pParm->rgrc[0];
+			lResult = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+			if (wParam && pParm)
+			{
+				const RECT& rcClient = pParm->rgrc[0];
+				mrc_NcClientMargins = MakeRect(
+					rcClient.left - rcWnd.left,
+					rcClient.top - rcWnd.top,
+					rcWnd.right - rcClient.right,
+					rcWnd.bottom - rcClient.bottom
+				);
+			}
+			RecalculateFrameSizes();
+		}
 		return true;
 
 	case WM_NCHITTEST:
@@ -1491,10 +1514,21 @@ void CFrameHolder::RecalculateFrameSizes()
 {
 	_ASSERTE(mb_Initialized==TRUE); // CConEmuMain должен позвать из своего конструктора InitFrameHolder()
 
+	if (!IsWin10() || (!mrc_NcClientMargins.left))
+	{
 	//mn_WinCaptionHeight, mn_FrameWidth, mn_FrameHeight, mn_OurCaptionHeight, mn_TabsHeight;
-	mn_WinCaptionHeight = GetSystemMetrics(SM_CYCAPTION);
-	mn_FrameWidth = GetSystemMetrics(SM_CXFRAME);
-	mn_FrameHeight = GetSystemMetrics(SM_CYFRAME);
+		mn_WinCaptionHeight = GetSystemMetrics(SM_CYCAPTION);
+		mn_FrameWidth = GetSystemMetrics(SM_CXFRAME);
+		mn_FrameHeight = GetSystemMetrics(SM_CYFRAME);
+	}
+	else
+	{
+		RECT rcWin10 = gpConEmu->CalcMargins(CEM_WIN10FRAME);
+		mn_FrameWidth = mrc_NcClientMargins.left;
+		mn_FrameHeight = mrc_NcClientMargins.bottom;
+		if (mrc_NcClientMargins.top > mrc_NcClientMargins.bottom)
+			mn_WinCaptionHeight = mrc_NcClientMargins.top - mrc_NcClientMargins.bottom;
+	}
 
 	//int nHeightIdeal = mn_WinCaptionHeight * 3 / 4;
 	//if (nHeightIdeal < 19) nHeightIdeal = 19;

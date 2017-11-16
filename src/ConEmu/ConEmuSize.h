@@ -185,6 +185,7 @@ protected:
 		int Xdpi, Ydpi;
 	};
 	MArray<MonitorInfoCache> monitors;
+	bool mb_MonitorDpiChanged;
 public:
 	void ReloadMonitorInfo();
 
