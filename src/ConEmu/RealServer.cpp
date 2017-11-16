@@ -1721,6 +1721,10 @@ BOOL CRealServer::ServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &
 		pRSrv->mp_RCon->UpdateRootInfo(pIn->RootInfo);
 		pOut = ExecuteNewCmd(CECMD_GETROOTINFO, sizeof(CESERVER_REQ_HDR));
 		break;
+	case CECMD_STARTCONNECTOR:
+		pRSrv->mp_RCon->SetMountRoot(pIn);
+		pOut = ExecuteNewCmd(CECMD_STARTCONNECTOR, sizeof(CESERVER_REQ_HDR));
+		break;
 	//else if (pIn->hdr.nCmd == CECMD_ASSERT)
 	//	pOut = cmdAssert(pInst, pIn, nDataSize);
 	default:

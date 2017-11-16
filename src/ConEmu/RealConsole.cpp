@@ -355,6 +355,8 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 
 	mpcs_CurWorkDir = new MSectionSimple(true);
 
+	ms_MountRoot = NULL;
+
 	mn_TextColorIdx = 7; mn_BackColorIdx = 0;
 	mn_PopTextColorIdx = 5; mn_PopBackColorIdx = 15;
 
@@ -4368,6 +4370,7 @@ void CRealConsole::ResetVarsOnStart()
 	mb_WasVisibleOnce = mp_VCon->isVisible();
 	mb_NeedLoadRootProcessIcon = true;
 	ZeroStruct(m_ScrollStatus);
+	SafeFree(ms_MountRoot);
 
 	UpdateStartState(rss_StartupRequested);
 
@@ -15028,6 +15031,10 @@ LPCWSTR CRealConsole::GetMntPrefix()
 	if (m_Args.pszMntRoot && (wcscmp(m_Args.pszMntRoot, L"-") != 0))
 		return m_Args.pszMntRoot;
 
+	// If prefix was acquired from connector
+	if (ms_MountRoot)
+		return ms_MountRoot;
+
 	WORD conInMode = mp_RBuf ? mp_RBuf->GetConInMode() : 0;
 	CEActiveAppFlags activeAppFlags = GetActiveAppFlags();
 	TermEmulationType termMode = GetTermType();
@@ -15502,6 +15509,19 @@ void CRealConsole::StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir)
 		|| wcsstr(pszTabTempl, L"%f") || wcsstr(pszTabTempl, L"%F"))
 	{
 		mp_ConEmu->mp_TabBar->Update();
+	}
+}
+
+// CECMD_STARTCONNECTOR
+void CRealConsole::SetMountRoot(CESERVER_REQ* pConnectorInfo)
+{
+	LPCSTR pszMountRootA = pConnectorInfo->DataSize() ? (LPCSTR)pConnectorInfo->Data : NULL;
+	SafeFree(ms_MountRoot);
+	if (pszMountRootA)
+	{
+		int nLen = lstrlenA(pszMountRootA);
+		ms_MountRoot = (wchar_t*)calloc(nLen+1,sizeof(*ms_MountRoot));
+		MultiByteToWideChar(CP_UTF8, 0, pszMountRootA, -1, ms_MountRoot, nLen+1);
 	}
 }
 

@@ -135,6 +135,13 @@ int WINAPI RequestTermConnector(/*[IN/OUT]*/RequestTermConnectorParm* Parm)
 		Parm->ReadInput = termReadInput;
 		Parm->WriteText = WriteProcessedA;
 
+		if (Parm->pszMntPrefix)
+		{
+			CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, CECMD_STARTCONNECTOR,
+				lstrlenA(Parm->pszMntPrefix)+1, (LPBYTE)Parm->pszMntPrefix, ghConWnd);
+			ExecuteFreeResult(pOut);
+		}
+
 		CEAnsi::StartXTermMode(true);
 		gbWasStarted = true;
 		HandleKeeper::SetConnectorMode(true);

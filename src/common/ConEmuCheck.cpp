@@ -713,6 +713,27 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner, BOOL b
 	return lpRet;
 }
 
+CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, DWORD nCmd, size_t cbDataSize, LPBYTE data, HWND hOwner, BOOL bAsyncNoResult /*= FALSE*/)
+{
+	CESERVER_REQ* pOut = NULL;
+	CESERVER_REQ* pIn = ExecuteNewCmd(nCmd, sizeof(CESERVER_REQ_HDR)+cbDataSize);
+
+	if (pIn)
+	{
+		if (cbDataSize)
+		{
+			_ASSERTEX(data != NULL);
+			memmove(pIn->Data, data, cbDataSize);
+		}
+
+		pOut = ExecuteGuiCmd(hConWnd, pIn, hOwner, bAsyncNoResult);
+
+		ExecuteFreeResult(pIn);
+	}
+
+	return pOut;
+}
+
 // Выполнить в ConEmuC
 CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult, DWORD nTimeout /*= 0*/, BOOL bIgnoreAbsence /*= FALSE*/)
 {

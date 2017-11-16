@@ -704,6 +704,9 @@ class CRealConsole
 		void StoreCurWorkDir(CESERVER_REQ_STORECURDIR* pNewCurDir);
 		bool ReloadFarWorkDir();
 
+		wchar_t* ms_MountRoot;
+		void SetMountRoot(CESERVER_REQ* pConnectorInfo);
+
 		bool mb_WasStartDetached;
 		SYSTEMTIME mst_ServerStartingTime;
 		void SetRootProcessName(LPCWSTR asProcessName);
