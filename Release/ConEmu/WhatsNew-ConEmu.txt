@@ -20,6 +20,24 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.11.17
+* Option ‘Dynamic scrollbar range’ was not working for not-hooked console applications (e.g. wsl.exe).
+* gh-1306, gh-460: Perhaps this fixes unexpected ‘Tool window’.
+* In some cases ‘underline’ and ‘reverse’ had no effect.
+* Switch `-cur_console:hXXX` was ignored on console restart.
+* Connector: Enable log input to file `connector-XXXX-in.log` with `--log`.
+* gh-1317: GuiMacro `SetOption("bgImage", "C:\background.jpg")`.
+* gh-1051, gh-1111, gh-1138: Cursor position fix for Win10 after CJK glyphs.
+* gh-1311: Connector: Input may entirely stop functioning over time.
+* gh-1318: If checkbox ‘Support UNC paths in cmd.exe’ is not checked, rely on real registry value.
+* gh-1271: Fix for caret position when our dialog is active.
+* gh-1204: Get mount root prefix from connector automatically.
+   It is used on paste paths to cygwin/msys consoles, e.g. when you
+   paste `C:\My Sources` you'll get `/cygdrive/c/My\ Sources`.
+* gh-275: Fix dialog glitches moving between monitors.
+* gh-275: Fix GUI glitches while moving ConEmu window to monitor with different DPI.
+
+
 2017.11.9
 * XLat from Far didn't change keyboard layout in ConEmu.
 * GuiMacro: Select(2) cancels active selection.
