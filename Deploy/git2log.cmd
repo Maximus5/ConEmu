@@ -54,6 +54,7 @@ if exist "%daily_md%" (
 )
 rem Create YAML header
 :yaml
+call cecho /yellow "Creating YAML header for %CurVerBuild% %CurVerStage%"
 call :out_build > %daily_md%
 rem Dump git commits into ".daily.md"
 call :do_log %COMMIT_SHA% >> %daily_md%

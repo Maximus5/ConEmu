@@ -59,7 +59,7 @@ if errorlevel 1 goto err
 if /I "%~2" == "-build" goto do_build
 if /I "%~2" == "-deploy" goto do_deploy
 
-echo on
+rem echo on
 
 rem Update versions in all release files (msi, portableapps, nuget, etc.)
 powershell -noprofile -command "%~dp0Deploy\UpdateDeployVersions.ps1" %BUILD_NO%
@@ -89,7 +89,9 @@ rem echo Press Enter to continue if version is OK: "%BUILD_NO%"
 rem pause>nul
 
 rem Give a time to editors to be started
-timeout /t 15
+rem timeout /t 15
+echo Press Enter to start build
+pause > nul
 
 :do_build
 cd /d "%~dp0src"
