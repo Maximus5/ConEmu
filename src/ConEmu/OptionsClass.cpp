@@ -294,6 +294,7 @@ CSettings::CSettings()
 int CSettings::GetOverallDpi()
 {
 	// Must be called during initialization only
+	_ASSERTEX(!gpConEmu || gpConEmu->mn_StartupFinished < CConEmuMain::ss_PostCreate2Called);
 	CDpiAware::QueryDpiForMonitor(NULL, &_dpi_all);
 	_ASSERTE(_dpi_all.Xdpi >= 96 && _dpi_all.Ydpi >= 96);
 	_dpi.SetDpi(_dpi_all);
@@ -304,6 +305,12 @@ int CSettings::GetOverallDpi()
 int CSettings::QueryDpi()
 {
 	return _dpi.Ydpi;
+}
+
+// Called during jump to monitor with different dpi
+void CSettings::SetRequestedDpi(int dpiX, int dpiY)
+{
+	_dpi.SetDpi(dpiX, dpiY);
 }
 
 void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)

@@ -1536,6 +1536,8 @@ BOOL CConEmuMain::Init()
 
 	ConEmuAbout::InitCommCtrls();
 
+	SetRequestedMonitor(gpStartEnv->hStartMon);
+
 	//SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_ABOVE_NORMAL);
 	//SetThreadAffinityMask(GetCurrentThread(), 1);
 	/*DWORD dwErr = 0;
@@ -2010,7 +2012,8 @@ BOOL CConEmuMain::CreateMainWindow()
 		return FALSE;
 	}
 
-	ReloadMonitorInfo();
+	if (monitors.empty())
+		ReloadMonitorInfo();
 
 	// 2009-06-11 Возможно, что CS_SAVEBITS приводит к глюкам отрисовки
 	// банально не прорисовываются некоторые части экрана (драйвер видюхи глючит?)

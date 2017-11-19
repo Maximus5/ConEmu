@@ -110,6 +110,7 @@ public:
 private:
 	friend class CSetPgInfo;
 	friend class CSetPgFonts;
+	DpiValue _dpi_font;
 	LONG mn_FontZoomValue; // 100% == 10000 (FontZoom100)
 	CLogFont LogFont;
 	LONG mn_AutoFontWidth, mn_AutoFontHeight; // размеры шрифтов, которые были запрошены при авторесайзе шрифта

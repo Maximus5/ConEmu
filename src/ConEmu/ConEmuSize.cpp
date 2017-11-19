@@ -78,8 +78,6 @@ CConEmuSize::CConEmuSize(CConEmuMain* pOwner)
 	mb_LastRgnWasNull = true;
 	mb_LockShowWindow = false;
 	mb_LockWindowRgn = false;
-	mh_MinFromMonitor = NULL;
-	mb_MonitorDpiChanged = false;
 	mn_IgnoreQuakeActivation = 0;
 	mn_LastQuakeShowHide = 0;
 	mn_InResize = 0;
@@ -197,54 +195,12 @@ RECT CConEmuSize::CalcMargins_Win10Frame()
 
 	if (IsWin10())
 	{
-		bool dwmSucceeded = false;
 		DWORD dwStyle = mp_ConEmu->FixWindowStyle(0);
-		// TODO: Does DWM return proper values for minimized windows?
-		if (ghWnd && (dwStyle & WS_THICKFRAME) && !isIconic())
+		if (dwStyle & WS_THICKFRAME)
 		{
-			RECT rcVisible = {}, rcReal = {};
-			if (SUCCEEDED(mp_ConEmu->DwmGetWindowAttribute(ghWnd, DWMWA_EXTENDED_FRAME_BOUNDS, &rcVisible, sizeof(rcVisible)))
-				&& GetWindowRect(ghWnd, &rcReal))
-			{
-				// Debug purposes
-				wchar_t szInfo[140];
-
-				// rcVisible is expected to be smaller than rcReal
-				if (rcVisible.left > rcReal.left && rcVisible.right < rcReal.right
-					&& rcVisible.right > rcVisible.left && rcVisible.bottom > rcVisible.top
-					&& rcVisible.top >= rcReal.top && rcVisible.bottom <= rcReal.bottom)
-				{
-					dwmSucceeded = true;
-					rc = MakeRect(
-							(rcVisible.left - rcReal.left),
-							(rcVisible.top - rcReal.top),
-							(rcReal.right - rcVisible.right),
-							(rcReal.bottom - rcVisible.bottom)
-						);
-					_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
-						LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal), LOGRECTCOORDS(rc));
-					// bugs in DWMWA_EXTENDED_FRAME_BOUNDS?
-					//if (rc.right != rc.left)
-					//	rc.right = rc.left;
-					//if (rc.bottom > rc.right)
-					//	rc.bottom = rc.right;
-				}
-				else
-				{
-					_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS {FAIL} Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
-						LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal),
-						(rcVisible.left - rcReal.left), (rcVisible.top - rcReal.top), (rcReal.right - rcVisible.right), (rcReal.bottom - rcVisible.bottom));
-				}
-
-				// Debug purposes
-				LogString(szInfo);
-			}
-		}
-
-		// Default values if API fails
-		if (!dwmSucceeded)
-		{
-			rc = MakeRect(7, 0, 7, 7);
+			const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(NULL);
+			if (mi.HasWin10Frame)
+				rc = mi.Win10Frame;
 		}
 	}
 
@@ -269,7 +225,7 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 		return rc;
 
 	bool processed = false;
-	if (!IsWin10())
+	const MonitorInfoCache mi = NearestMonitorInfo(NULL);
 	{
 		DWORD dwStyle = mp_ConEmu->GetWindowStyle();
 		if (wmNewMode != wmCurrent)
@@ -278,7 +234,7 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 		const int nTestWidth = 100, nTestHeight = 100;
 		RECT rcTest = MakeRect(nTestWidth,nTestHeight);
 
-		if (AdjustWindowRectEx(&rcTest, dwStyle, FALSE, dwStyleEx))
+		if (mp_ConEmu->AdjustWindowRectExForDpi(&rcTest, dwStyle, FALSE, dwStyleEx, mi.Ydpi))
 		{
 			if ((mg & ((DWORD)CEM_FRAMECAPTION)) == CEM_CAPTION)
 			{
@@ -984,6 +940,8 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 
 	_ASSERTE(mp_ConEmu->mp_Inside == NULL); // Must not be called in "Inside"?
 
+	SetRequestedMonitor(hMon ? hMon : mh_RequestedMonitor);
+
 	SIZE sz = {80,25}; // This has no matter unless fatal errors
 
 	CESize sizeW = {WndWidth.Raw};
@@ -1467,6 +1425,8 @@ RECT CConEmuSize::GetDefaultRect()
 		{
 			WindowMode = wmNormal;
 
+			// #DPI What if parent window covers several monitors?
+			SetRequestedMonitor(MonitorFromWindow(mp_ConEmu->mp_Inside->mh_InsideParentWND, MONITOR_DEFAULTTONEAREST));
 			this->WndPos = VisualPosFromReal(rcWnd.left, rcWnd.top);
 			RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN);
 			// In the "Inside" mode we are interested only in "cells"
@@ -1522,6 +1482,8 @@ RECT CConEmuSize::GetGuiClientRect()
 
 void CConEmuSize::ReloadMonitorInfo()
 {
+	_ASSERTEX(isMainThread());
+
 	struct Invoke
 	{
 		static BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
@@ -1534,6 +1496,9 @@ void CConEmuSize::ReloadMonitorInfo()
 			return TRUE;
 		};
 	};
+
+	MSectionLockSimple locks; locks.Lock(&mcs_monitors);
+
 	monitors.clear();
 	EnumDisplayMonitors(NULL, NULL, Invoke::MonitorEnumProc, reinterpret_cast<LPARAM>(this));
 	if (monitors.empty())
@@ -1589,7 +1554,7 @@ void CConEmuSize::ReloadMonitorInfo()
 
 		if (RegisterClassEx(&wc))
 		{
-			DWORD style = WS_OVERLAPPED | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
+			DWORD style = mp_ConEmu->GetWindowStyle();
 			DWORD exStyle = WS_EX_LAYERED;
 			HWND hFrame = CreateWindowEx(exStyle, szFrameClass, L"", style, 100, 100, 400, 200, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
 			if (hFrame)
@@ -1654,6 +1619,41 @@ void CConEmuSize::ReloadMonitorInfo()
 			monitors[i].Ydpi = dpi.Ydpi;
 		}
 	}
+}
+
+void CConEmuSize::SetRequestedMonitor(HMONITOR hNewMon)
+{
+	_ASSERTE(isMainThread());
+	mh_RequestedMonitor = hNewMon ? hNewMon : FindInitialMonitor();
+
+	MonitorInfoCache mi = NearestMonitorInfo(mh_RequestedMonitor);
+	gpSetCls->SetRequestedDpi(mi.Xdpi, mi.Ydpi);
+}
+
+CConEmuSize::MonitorInfoCache CConEmuSize::NearestMonitorInfo(HMONITOR hNewMon)
+{
+	// Must be filled already!
+	if (monitors.empty())
+	{
+		_ASSERTEX(!monitors.empty());
+		ReloadMonitorInfo();
+		// Function always fills 'monitors' with at least one item
+	}
+
+	MSectionLockSimple locks; locks.Lock(&mcs_monitors);
+
+	HMONITOR hTargetMon = hNewMon ? hNewMon : mh_RequestedMonitor;
+
+	int iPrimary = 0;
+	for (int i = 0; i < monitors.size(); ++i)
+	{
+		if (monitors[i].hMon == hTargetMon)
+			return monitors[i];
+		if (monitors[i].mi.dwFlags & MONITORINFOF_PRIMARY)
+			iPrimary = i;
+	}
+
+	return monitors[iPrimary];
 }
 
 RECT CConEmuSize::GetVirtualScreenRect(bool abFullScreen)
@@ -1986,6 +1986,8 @@ bool CConEmuSize::FixPosByStartupMonitor(const HMONITOR hStartMon)
 		return false;
 	}
 
+	SetRequestedMonitor(hStartMon);
+
 	// Perhaps, we shall not care of DPI in per-monitor-dpi systems
 	// That is because we evaluate changed X/Y coordinates proportionally
 
@@ -2235,16 +2237,20 @@ void CConEmuSize::StorePreMinimizeMonitor()
 
 HMONITOR CConEmuSize::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPCRECT prcWnd /*= NULL*/)
 {
+	NestedCallAssert(1);
+
 	HMONITOR hMon = NULL;
 	MONITORINFO mi = {sizeof(mi)};
 
 	HWND hWndFrom = mp_ConEmu->mp_Inside ? mp_ConEmu->mp_Inside->GetParentRoot() : ghWnd;
 
+	// #SIZE_TODO Utilize mh_MinFromMonitor during restore?
+
 	if (prcWnd)
 	{
 		hMon = GetNearestMonitorInfo(&mi, NULL, prcWnd);
 	}
-	else if (!ghWnd || (gpSet->isQuakeStyle && isIconic()))
+	else if (!hWndFrom || (gpSet->isQuakeStyle && isIconic()))
 	{
 		_ASSERTE(WndWidth.Value>0 && WndHeight.Value>0);
 		RECT rcEvalWnd = GetDefaultRect();
@@ -2256,6 +2262,7 @@ HMONITOR CConEmuSize::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPCRECT prc
 	}
 	else
 	{
+		_ASSERTEX(hWndFrom);
 		// !! We can't use CalcRect, it may call GetNearestMonitor in turn !!
 		//RECT rcDefault = CalcRect(CER_MAIN);
 		WINDOWPLACEMENT wpl = {sizeof(wpl)};
@@ -4227,6 +4234,8 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 		LogString(szInfo);
 	}
 
+	SetRequestedMonitor(hNext);
+
 	MONITORINFO miCur;
 	DEBUGTEST(HMONITOR hCurMonitor = )
 		GetNearestMonitor(&miCur, &rcMain);
@@ -5130,6 +5139,9 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 	static UINT oldDpiX, oldDpiY;
 	bool bChanged = (dpiX != oldDpiX) || (dpiY != oldDpiY);
 	oldDpiX = dpiX; oldDpiY = dpiY;
+
+	if (prcSuggested)
+		SetRequestedMonitor(MonitorFromRect(prcSuggested, MONITOR_DEFAULTTONEAREST));
 
 	_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) bChanged ? L"DpiChanged(%s)" : L"DpiNotChanged(%s)",
 		(src == dcs_Api) ? L"Api" : (src == dcs_Macro) ? L"Mcr" : (src == dcs_Jump) ? L"Jmp" : (src == dcs_Snap) ? L"Snp" : L"Int");

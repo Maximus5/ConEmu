@@ -1314,13 +1314,14 @@ bool CFontMgr::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,..
 // However it may be needed for 'Auto sized' fonts
 bool CFontMgr::RecreateFontByDpi(int dpiX, int dpiY, LPRECT prcSuggested)
 {
-	if ((gpSetCls->_dpi.Xdpi == dpiX && gpSetCls->_dpi.Ydpi == dpiY) || (dpiY < 72) || (dpiY > 960))
+	if ((_dpi_font.Xdpi == dpiX && _dpi_font.Ydpi == dpiY) || (dpiY < 72) || (dpiY > 960))
 	{
 		_ASSERTE(dpiY >= 72 && dpiY <= 960);
 		return false;
 	}
 
-	gpSetCls->_dpi.SetDpi(dpiX, dpiY);
+	gpSetCls->SetRequestedDpi(dpiX, dpiY);
+	_dpi_font.SetDpi(dpiX, dpiY);
 	//Raster fonts???
 	EvalLogfontSizes(LogFont, gpSet->FontSizeY, gpSet->FontSizeX);
 	RecreateFont(true);

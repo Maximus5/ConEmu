@@ -1407,6 +1407,7 @@ int CTabPanelWin::QueryTabbarHeight()
 	//	hTabs = CreateTabbar(true);
 	//}
 
+	// #DPI while jumping from high-dpi to low-dpi mon mh_Tabbar is re-created during jump (window was not moved yet?) and we have incorrect rcClient
 	if (mh_Tabbar && IsWindow(mh_Tabbar))
 	{
 		// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
@@ -1417,7 +1418,7 @@ int CTabPanelWin::QueryTabbarHeight()
 	}
 	else
 	{
-		// Не будем создавать TabBar. Все равно вне окно ConEmu оценка получается неточной
+		// Не будем создавать TabBar. Все равно вне окна ConEmu оценка получается неточной
 		//_ASSERTE((hTabs!=NULL) && "Creating of a dummy tab control failed");
 		int lfHeight = gpSetCls->EvalSize(gpSet->nTabFontHeight, esf_Vertical|esf_CanUseDpi|esf_CanUseUnits);
 		mn_TabHeight = gpFontMgr->EvalFontHeight(gpSet->sTabFontFace, lfHeight, gpSet->nTabFontCharSet)

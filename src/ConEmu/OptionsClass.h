@@ -236,11 +236,13 @@ class CSettings
 		static bool CheckConsoleFont(HWND ahDlg);
 		LPCWSTR CreateConFontError(LPCWSTR asReqFont=NULL, LPCWSTR asGotFont=NULL);
 		TOOLINFO tiConFontBalloon;
+		// #DPI Move DPI members to CConEmuMain
 		DpiValue _dpi;
 		DpiValue _dpi_all;
 		int GetOverallDpi();
 	public:
 		int QueryDpi();
+		void SetRequestedDpi(int dpiX, int dpiY);
 	private:
 		CEStr ms_BalloonErrTip;
 		CEStr ms_ConFontError;

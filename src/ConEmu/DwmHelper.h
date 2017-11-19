@@ -99,13 +99,20 @@ public:
 	HRESULT DwmSetIconicThumbnail(HWND hwnd, HBITMAP hbmp);
 	HRESULT DwmSetIconicLivePreviewBitmap(HWND hwnd, HBITMAP hbmp, POINT *pptClient);
 	HRESULT DwmInvalidateIconicBitmaps(HWND hwnd);
+	// Per-monitor DPI support
+	BOOL AdjustWindowRectExForDpi(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi);
 private:
-	// Vista+
 	HMODULE mh_User32;
+	HMODULE mh_DwmApi;
+	HMODULE mh_UxTheme;
+private:
+	// Win10
+	typedef BOOL (WINAPI* AdjustWindowRectExForDpi_t)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi);
+	AdjustWindowRectExForDpi_t _AdjustWindowRectExForDpi;
+	// Vista+
 	typedef BOOL (WINAPI* ChangeWindowMessageFilter_t)(UINT message, DWORD dwFlag);
 	ChangeWindowMessageFilter_t _ChangeWindowMessageFilter;
 	// Vista+ Aero
-	HMODULE mh_DwmApi;
 	typedef HRESULT (WINAPI* DwmIsCompositionEnabled_t)(BOOL *pfEnabled);
 	DwmIsCompositionEnabled_t _DwmIsCompositionEnabled;
 	typedef HRESULT (WINAPI* DwmSetWindowAttribute_t)(HWND hwnd, DWORD dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
@@ -125,7 +132,6 @@ private:
 	typedef HRESULT (WINAPI* DwmEnableBlurBehindWindow_t)(HWND hWnd, const void/*DWM_BLURBEHIND*/ *pBlurBehind);
 	DwmEnableBlurBehindWindow_t _DwmEnableBlurBehindWindow;
 	// XP+ Theming
-	HMODULE mh_UxTheme;
 	typedef BOOL (WINAPI* AppThemed_t)();
 	AppThemed_t _IsAppThemed; // XP
 	AppThemed_t _IsThemeActive; // XP

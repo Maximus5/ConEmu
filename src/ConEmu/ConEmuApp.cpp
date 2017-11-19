@@ -3619,6 +3619,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//	}
 	//}
 
+	gpConEmu->ReloadMonitorInfo();
+	if (gpStartEnv->hStartMon)
+		gpConEmu->SetRequestedMonitor(gpStartEnv->hStartMon);
+
 	DEBUGSTRSTARTUPLOG(L"Registering local fonts");
 
 	gpFontMgr->RegisterFonts();

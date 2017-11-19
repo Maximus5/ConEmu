@@ -118,6 +118,7 @@ void CDwmHelper::InitDwm()
 	BOOL lbDbg;
 
 	mh_User32 = GetModuleHandle(L"User32.dll");
+	_AdjustWindowRectExForDpi = NULL;
 	_ChangeWindowMessageFilter = NULL;
 	mb_DwmAllowed = false;
 	mh_DwmApi = NULL;
@@ -186,6 +187,7 @@ void CDwmHelper::InitDwm()
 				mb_EnableGlass = true;
 		}
 	}
+
 	if (gOSVer.dwMajorVersion >= 6 || (gOSVer.dwMajorVersion == 5 && gOSVer.dwMinorVersion >= 1))
 	{
 		mh_UxTheme = LoadLibrary(_T("UxTheme.dll"));
@@ -223,6 +225,11 @@ void CDwmHelper::InitDwm()
 				}
 			}
 		}
+	}
+
+	if (IsWin10())
+	{
+		_AdjustWindowRectExForDpi = (AdjustWindowRectExForDpi_t)GetProcAddress(mh_User32, "AdjustWindowRectExForDpi");
 	}
 }
 
@@ -643,4 +650,14 @@ HRESULT CDwmHelper::DwmInvalidateIconicBitmaps(HWND hwnd)
 	if (_DwmInvalidateIconicBitmaps)
 		hr = _DwmInvalidateIconicBitmaps(hwnd);
 	return hr;
+}
+
+BOOL CDwmHelper::AdjustWindowRectExForDpi(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi)
+{
+	BOOL rc = FALSE;
+	if (_AdjustWindowRectExForDpi)
+		rc = _AdjustWindowRectExForDpi(lpRect, dwStyle, bMenu, dwExStyle, dpi);
+	else
+		rc = AdjustWindowRectEx(lpRect, dwStyle, bMenu, dwExStyle);
+	return rc;
 }
