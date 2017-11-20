@@ -5692,11 +5692,19 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 				{
 					int nXShift = 0;
 					CHAR_INFO *p = pCharsEx, *pEnd = pCharsEx+cchMax;
-					while ((p + nXShift) < pEnd)
+					// gh-1206: correct position after "こんばんはGood Evening"
+					while (p < pEnd)
 					{
-						if (get_wcwidth(p->Char.UnicodeChar) == 2)
+						if (!(p->Attributes & COMMON_LVB_TRAILING_BYTE)
+							&& get_wcwidth(p->Char.UnicodeChar) == 2)
 						{
 							nXShift++;
+							_ASSERTE(p < pEnd);
+							if (((p + 1) < pEnd)
+								&& (p->Attributes & COMMON_LVB_LEADING_BYTE)
+								&& ((p+1)->Attributes & COMMON_LVB_TRAILING_BYTE)
+								&& (p->Char.UnicodeChar == (p+1)->Char.UnicodeChar))
+								p++;
 							_ASSERTE(p < pEnd);
 						}
 						p++;
