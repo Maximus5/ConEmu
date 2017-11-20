@@ -2855,18 +2855,33 @@ bool CVConGroup::DoCloseAllVCon(bool bMsgConfirmed)
 	return lbAllowed;
 }
 
-void CVConGroup::CloseAllButActive(CVirtualConsole* apVCon/*may be null*/, bool abZombies, bool abNoConfirm)
+void CVConGroup::CloseAllButActive(CVirtualConsole* apVCon/*may be null*/, CloseConsoleMode closeMode, bool abNoConfirm)
 {
 	int i;
 	MArray<CVConGuard*> VCons;
 	CVConGuard* pGuard;
+	bool active_found = false;
 
 	for (i = (int)(countof(gp_VCon)-1); i >= 0; i--)
 	{
-		if ((gp_VCon[i] == NULL) || (gp_VCon[i] == apVCon))
+		if (gp_VCon[i] == NULL)
 			continue;
-		if (abZombies && (gp_VCon[i]->RCon()->GetActivePID() != 0))
+		if (gp_VCon[i] == apVCon)
+		{
+			active_found = true;
 			continue;
+		}
+		if (closeMode == CloseZombie)
+		{
+			if (gp_VCon[i]->RCon()->GetActivePID() != 0)
+				continue;
+		}
+		else if (closeMode == Close2Right)
+		{
+			// we loop from the end to the beginning!
+			if (active_found)
+				break;
+		}
 
 		pGuard = new CVConGuard(gp_VCon[i]);
 		VCons.push_back(pGuard);

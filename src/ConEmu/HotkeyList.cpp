@@ -328,6 +328,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		;
 	Add(vkCloseExceptCon, chk_User,  NULL,    L"CloseExceptConKey",     CConEmuCtrl::key_GuiMacro, false, L"Close(5)")
 		;
+	Add(vkClose2Right,    chk_User,  NULL,   L"CloseToRightKey",        CConEmuCtrl::key_GuiMacro, false, L"Close(11)")
+		;
 	Add(vkTerminateApp,   chk_User,  NULL,    L"KillProcessKey",        CConEmuCtrl::key_GuiMacro, false, L"Close(1)")
 		->SetHotKey(VK_CANCEL,VK_CONTROL,VK_MENU); // Ctrl+Alt+Break
 	Add(vkTermButShell,   chk_User,  NULL,    L"KillAllButShellKey",    CConEmuCtrl::key_GuiMacro, false, L"Close(10,1)")

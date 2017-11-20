@@ -1362,6 +1362,7 @@
 #define cbPasteM1Posix                  3088
 #define cbPasteM2Posix                  3089
 #define cbScrollbarDynamic              3090
+#define vkClose2Right                   3091
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1370,7 +1371,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        241
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3091
+#define _APS_NEXT_CONTROL_VALUE         3092
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

@@ -234,6 +234,7 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"    close all tabs (8), no confirm (8,1)\r\n" \
 	L"    close all zombies (9), no confirm (9,1)\r\n" \
 	L"    terminate all but shell process (10), no confirm (10,1)\r\n" \
+	L"    close consoles to the right (11), no confirm (11,1)\r\n" \
 	L"Context([<Tab>[,<Split>]])\r\n" \
 	L"  - Change macro execution context\r\n" \
 	L"    Tab: 1-based tab index\r\n" \

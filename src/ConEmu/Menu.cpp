@@ -1061,11 +1061,19 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 
 		case IDM_TERMINATEALLCON:
 			// Do normal close of all consoles (tabs and panes)
+			CVConGroup::CloseAllButActive(NULL, CVConGroup::CloseSimple, false);
+			break;
 		case IDM_TERMINATECONEXPT:
 			// Close all tabs and panes except active console/pane
+			CVConGroup::CloseAllButActive(apVCon, CVConGroup::CloseSimple, false);
+			break;
 		case IDM_TERMINATEZOMBIES:
 			// Close ‘zombies’ (where ‘Press Esc to close console’ is displayed)
-			CVConGroup::CloseAllButActive((nCmd == IDM_TERMINATECONEXPT) ? apVCon : NULL, (nCmd == IDM_TERMINATEZOMBIES), false);
+			CVConGroup::CloseAllButActive(NULL, CVConGroup::CloseZombie, false);
+			break;
+		case IDM_TERMINATE2RIGHT:
+			// Terminate -> Close to the right
+			CVConGroup::CloseAllButActive(apVCon, CVConGroup::Close2Right, false);
 			break;
 
 		case IDM_RESTART:
@@ -1964,6 +1972,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, b
 			{ mit_Command,   IDM_TERMINATEALLCON,   vkCloseAllCon,    MF_ENABLED, L"Close &all consoles"    },
 			{ mit_Command,   IDM_TERMINATEZOMBIES,  vkCloseZombies,   MF_ENABLED, L"Close all &zombies"     },
 			{ mit_Command,   IDM_TERMINATECONEXPT,  vkCloseExceptCon, MF_ENABLED, L"Close e&xcept active"   },
+			{ mit_Command,   IDM_TERMINATE2RIGHT,   vkClose2Right,    con_flags,  L"Close to the &right"    },
 			{ mit_Separator },
 			{ mit_Command,   IDM_DETACH,            vkConDetach,      con_flags,  L"Detach"                 },
 			{ mit_Command,   IDM_UNFASTEN,          vkConUnfasten,    con_flags,  L"Unfasten"               }

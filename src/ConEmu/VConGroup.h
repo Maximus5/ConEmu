@@ -119,6 +119,13 @@ protected:
 	static void setActiveVConAndFlags(CVirtualConsole* apNewVConActive);
 
 public:
+	enum CloseConsoleMode
+	{
+		CloseSimple,
+		CloseZombie,
+		Close2Right,
+	};
+public:
 	static void Initialize();
 	static void Deinitialize();
 	static CVirtualConsole* CreateCon(RConStartArgsEx *args, bool abAllowScripts = false, bool abForceCurConsole = false);
@@ -171,7 +178,7 @@ public:
 	static void OnUpdateTextColorSettings(bool ChangeTextAttr = true, bool ChangePopupAttr = true, const AppSettings* apDistinct = NULL);
 	static bool OnCloseQuery(bool* rbMsgConfirmed = NULL);
 	static bool DoCloseAllVCon(bool bMsgConfirmed = false);
-	static void CloseAllButActive(CVirtualConsole* apVCon/*may be null*/, bool abZombies, bool abNoConfirm);
+	static void CloseAllButActive(CVirtualConsole* apVCon/*may be null*/, CloseConsoleMode closeMode, bool abNoConfirm);
 	static void CloseGroup(CVirtualConsole* apVCon/*may be null*/, bool abKillActiveProcess = false);
 	static void OnDestroyConEmu();
 	static void OnVConClosed(CVirtualConsole* apVCon);

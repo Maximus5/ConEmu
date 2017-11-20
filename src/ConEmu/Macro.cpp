@@ -1569,9 +1569,20 @@ LPWSTR ConEmuMacro::Close(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	case 5: // close all tabs but active (5), no confirm (5,1)
 	case 8: // close all tabs (8), no confirm (8,1)
 	case 9: // close all zombies (9), no confirm (9,1)
+	case 11:// close to the right (11), no confirm (11,1)
 		if (apRCon)
 		{
-			CVConGroup::CloseAllButActive((nCmd == 5) ? apRCon->VCon() : NULL, (nCmd == 9), (nFlags & 1)==1);
+			switch (nCmd)
+			{
+			case 5:
+				CVConGroup::CloseAllButActive(apRCon->VCon(), CVConGroup::CloseSimple, (nFlags & 1)==1); break;
+			case 8:
+				CVConGroup::CloseAllButActive(NULL, CVConGroup::CloseSimple, (nFlags & 1)==1); break;
+			case 9:
+				CVConGroup::CloseAllButActive(NULL, CVConGroup::CloseZombie, (nFlags & 1)==1); break;
+			case 11:
+				CVConGroup::CloseAllButActive(apRCon->VCon(), CVConGroup::Close2Right, (nFlags & 1)==1); break;
+			}
 			pszResult = lstrdup(L"OK");
 		}
 		break;
