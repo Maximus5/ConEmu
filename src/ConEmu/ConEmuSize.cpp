@@ -5404,7 +5404,7 @@ void CConEmuSize::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 
 	HRGN hRgn = NULL;
 
-	if (m_ForceShowFrame == fsf_Show)
+	if (m_ForceShowFrame == fsf_Show || IsWin10())
 		hRgn = NULL; // Иначе при ресайзе получаются некрасивые (без XP Theme) кнопки в заголовке
 	else if (anWndWidth != -1 && anWndHeight != -1)
 		hRgn = CreateWindowRgn(false, false, anX, anY, anWndWidth, anWndHeight);

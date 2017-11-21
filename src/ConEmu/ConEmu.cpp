@@ -1832,7 +1832,7 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 	{
 		//Win& & Quake - не работает "Slide up/down" если есть ThickFrame
 		//if ((gpSet->isQuakeStyle == 0) // не для Quake. Для него нужна рамка, чтобы ресайзить
-		if ((wmNewMode == wmFullScreen) || (wmNewMode == wmMaximized))
+		if ((wmNewMode == wmFullScreen) || (wmNewMode == wmMaximized) || IsWin10())
 		{
 			dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
 		}

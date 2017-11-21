@@ -1408,7 +1408,7 @@ int CTabPanelWin::QueryTabbarHeight()
 	//}
 
 	// #DPI while jumping from high-dpi to low-dpi mon mh_Tabbar is re-created during jump (window was not moved yet?) and we have incorrect rcClient
-	if (mh_Tabbar && IsWindow(mh_Tabbar))
+	if (mh_Tabbar && IsWindow(mh_Tabbar) && !IsWin10())
 	{
 		// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
 		RECT rcClient = MakeRect(600, 400);
