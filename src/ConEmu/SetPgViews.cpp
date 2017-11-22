@@ -181,6 +181,7 @@ INT_PTR CSetPgViews::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 					break;
 				case tThumbMaxZoom:
 					gpSet->ThSet.nMaxZoom = max(100,((nSel+1)*100));
+					break;
 				default:
 					_ASSERTE(FALSE && "ListBox was not processed");
 			}
