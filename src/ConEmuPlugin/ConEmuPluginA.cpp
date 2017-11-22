@@ -225,7 +225,7 @@ bool CPluginAnsi::GetPanelItemInfo(const CEPanelInfo& PnlInfo, bool bSelected, I
 	Info.nFileSizeLow = pItem->FindData.nFileSizeLow;
 
 	MultiByteToWideChar(CP_OEMCP, 0, pItem->FindData.cFileName, -1, Info.cFileName, countof(Info.cFileName));
-	MultiByteToWideChar(CP_OEMCP, 0, pItem->FindData.cAlternateFileName, -1, Info.cAlternateFileName, countof(Info.cFileName));
+	MultiByteToWideChar(CP_OEMCP, 0, pItem->FindData.cAlternateFileName, -1, Info.cAlternateFileName, countof(Info.cAlternateFileName));
 
 	if (ppszFullPathName)
 		*ppszFullPathName = lstrdup(Info.cFileName);

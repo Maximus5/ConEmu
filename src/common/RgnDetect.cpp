@@ -831,6 +831,7 @@ bool CRgnDetect::FindDialog_Inner(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 			case ucBoxSinglUpDblHorz:
 			case ucBoxDblUpDblHorz:
 				nY++; // пометить все сверху (включая)
+				break;
 				// иначе - прервать поиск и пометить все сверху (не включая)
 			default:
 				nY--;
