@@ -7048,6 +7048,8 @@ bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 		// The expected result of GetConsoleKeyboardLayoutName is like "00000419"
 		BOOL bConApiRc;
 
+		SetLastError(0);
+
 		bConApiRc = pfnGetConsoleKeyboardLayoutName(szCurKeybLayout);
 
 		DWORD nErr = bConApiRc ? 0 : GetLastError();
@@ -7068,10 +7070,10 @@ bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 
 		if (!bConApiRc)
 		{
-			// If GetConsoleKeyboardLayoutName is not implemented in Windows, ERROR_MR_MID_NOT_FOUND will be returned
-			// because there is no matching DOS/Win32 error code for NTSTATUS code returned. When this happens, we don't
-			// want to continue to call the function.
-			if (ERROR_MR_MID_NOT_FOUND == nErr)
+			// If GetConsoleKeyboardLayoutName is not implemented in Windows, ERROR_MR_MID_NOT_FOUND or E_NOTIMPL will be returned.
+			// (there is no matching DOS/Win32 error code for NTSTATUS code returned)
+			// When this happens, we don't want to continue to call the function.
+			if (nErr == ERROR_MR_MID_NOT_FOUND || LOWORD(nErr) == LOWORD(E_NOTIMPL))
 			{
 				bGetConsoleKeyboardLayoutNameImplemented = false;
 			}
@@ -7085,7 +7087,7 @@ bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 			{
 				wchar_t szErr[80];
 				_wsprintf(szErr, SKIPCOUNT(szErr) L"ConsKeybLayout failed with code=%u forcing to GetKeyboardLayoutName or 0409", nErr);
-				_ASSERTE(FALSE && "ConsKeybLayout failed");
+				_ASSERTE(!bGetConsoleKeyboardLayoutNameImplemented && "ConsKeybLayout failed");
 				LogString(szErr);
 				if (!GetKeyboardLayoutName(szCurKeybLayout) || (szCurKeybLayout[0] == 0))
 				{
