@@ -196,29 +196,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 	case WM_NCCALCSIZE:
 		DBGFUNCTION(L"WM_NCCALCSIZE \n");
-		if (!IsWin10())
-		{
-			lResult = OnNcCalcSize(hWnd, uMsg, wParam, lParam);
-		}
-		else
-		{
-			NCCALCSIZE_PARAMS* pParm = (NCCALCSIZE_PARAMS*)lParam;
-			RECT rcWnd = {};
-			if (wParam && pParm)
-				rcWnd = pParm->rgrc[0];
-			lResult = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
-			if (wParam && pParm)
-			{
-				const RECT& rcClient = pParm->rgrc[0];
-				mrc_NcClientMargins = MakeRect(
-					rcClient.left - rcWnd.left,
-					rcClient.top - rcWnd.top,
-					rcWnd.right - rcClient.right,
-					rcWnd.bottom - rcClient.bottom
-				);
-			}
-			RecalculateFrameSizes();
-		}
+		lResult = OnNcCalcSize(hWnd, uMsg, wParam, lParam);
 		return true;
 
 	case WM_NCHITTEST:
