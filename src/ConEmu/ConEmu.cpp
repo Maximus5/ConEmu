@@ -10351,7 +10351,12 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			rcNew.right = rcNew.left + (mouse.rcWndDragStart.right - mouse.rcWndDragStart.left);
 			rcNew.bottom = rcNew.top + (mouse.rcWndDragStart.bottom - mouse.rcWndDragStart.top);
 
+			int pre_x = rcNew.left, pre_y = rcNew.top;
 			OnMoving(&rcNew, true);
+			if (rcNew.left != pre_x)
+				mouse.ptWndDragStart.x += (pre_x - rcNew.left);
+			if (rcNew.top != pre_y)
+				mouse.ptWndDragStart.y += (pre_y - rcNew.top);
 
 			TODO("Desktop mode?");
 			MoveWindowRect(ghWnd, rcNew, TRUE);
