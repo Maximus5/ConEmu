@@ -13561,8 +13561,12 @@ short CRealConsole::CheckProgressInTitle()
 	wchar_t ch;
 
 	// Wget [41%] http://....
-	while((ch = Title[i])!=0 && (ch == L'{' || ch == L'(' || ch == L'['))
+	while ((ch = Title[i]) != 0)
+	{
 		i++;
+		if (ch == L'{' || ch == L'(' || ch == L'[')
+			break;
+	}
 
 	//if (Title[0] == L'{' || Title[0] == L'(' || Title[0] == L'[') {
 	if (Title[i])
