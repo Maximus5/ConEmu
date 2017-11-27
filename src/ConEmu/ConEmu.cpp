@@ -2157,7 +2157,9 @@ BOOL CConEmuMain::CreateMainWindow()
 BOOL CConEmuMain::CreateWorkWindow()
 {
 	HWND  hParent = ghWnd;
-	RECT  rcClient = CalcRect(CER_WORKSPACE);
+	RECT  rcClient =
+		SizeInfo::WorkspaceRect();
+		// CalcRect(CER_WORKSPACE);
 	DWORD styleEx = GetWorkWindowStyleEx();
 	DWORD style = GetWorkWindowStyle();
 

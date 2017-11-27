@@ -202,7 +202,7 @@ public:
 	static bool ActivateNextPane(CVirtualConsole* apVCon, int nHorz = 0, int nVert = 0);
 	static bool PaneActivateNext(bool abNext);
 	static void PaneMaximizeRestore(CVirtualConsole* apVCon);
-	static void ReSizePanes(RECT mainClient);
+	static void ReSizePanes(RECT workspace);
 	static bool ReSizeSplitter(CVirtualConsole* apVCon, int iHorz = 0, int iVert = 0);
 
 	static void OnUpdateGuiInfoMapping(ConEmuGuiMapping* apGuiInfo);
@@ -237,8 +237,8 @@ public:
 	static void SyncWindowToConsole(); // -- функция пустая, игнорируется
 	static void SyncConsoleToWindow(LPRECT prcNewWnd=NULL, bool bSync=false);
 	static void LockSyncConsoleToWindow(bool abLockSync);
-	static void SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN or CER_MAINCLIENT*/, COORD size, bool bSetRedraw /*= false*/);
-	static void SyncAllConsoles2Window(RECT rcWnd, enum ConEmuRect tFrom = CER_MAIN, bool bSetRedraw = false);
+	static void SetAllConsoleWindowsSize(RECT rcWorkspace, COORD size, bool bSetRedraw /*= false*/);
+	static void SyncAllConsoles2Window(RECT rcWorkspace, bool bSetRedraw = false);
 	static void OnConsoleResize(bool abSizingToDo);
 
 	static LRESULT OnMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

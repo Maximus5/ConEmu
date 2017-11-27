@@ -58,7 +58,7 @@ public:
 
 public:
 	DpiValue();
-
+	DpiValue(int xdpi, int ydpi);
 	DpiValue(WPARAM wParam);
 
 	DpiValue(const DpiValue& dpi);

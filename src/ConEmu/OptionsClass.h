@@ -137,7 +137,7 @@ class CSettings
 		bool AutoScroll;
 		#endif
 
-		LONG EvalSize(LONG nSize, EvalSizeFlags Flags);
+		LONG EvalSize(LONG nSize, EvalSizeFlags Flags, DpiValue* apDpi = nullptr);
 
 	public:
 		char isAllowDetach;

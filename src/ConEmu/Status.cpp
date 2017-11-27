@@ -414,7 +414,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	}
 	else
 	{
-		GetStatusBarClientRect(&rcStatus);
+		GetStatusBarClientRect(rcStatus);
 	}
 
 	#ifdef _DEBUG
@@ -1064,7 +1064,7 @@ void CStatus::InvalidateStatusBar(LPRECT rcInvalidated /*= NULL*/)
 		return;
 
 	RECT rcClient = {};
-	if (!GetStatusBarClientRect(&rcClient))
+	if (!GetStatusBarClientRect(rcClient))
 		return;
 
 	// Invalidate вызывается не только при изменениях, но
@@ -1644,13 +1644,13 @@ void CStatus::OnWindowReposition(const RECT *prcNew)
 	wcscpy_c(m_Values[csi_WindowSize].szFormat, m_Values[csi_WindowSize].sText/*L"9999x9999"*/);
 
 	// csi_WindowClient
-	RECT rcClient = gpConEmu->CalcRect(CER_MAINCLIENT, rcTmp, CER_MAIN);
+	RECT rcClient = gpConEmu->ClientRect();
 	_wsprintf(m_Values[csi_WindowClient].sText, SKIPLEN(countof(m_Values[csi_WindowClient].sText)-1)
 		L"%ix%i", (rcClient.right-rcClient.left), (rcClient.bottom-rcClient.top));
 	wcscpy_c(m_Values[csi_WindowClient].szFormat, m_Values[csi_WindowClient].sText/*L"9999x9999"*/);
 
 	// csi_WindowClient
-	RECT rcWork = gpConEmu->CalcRect(CER_WORKSPACE, rcTmp, CER_MAIN);
+	RECT rcWork = gpConEmu->WorkspaceRect();
 	_wsprintf(m_Values[csi_WindowWork].sText, SKIPLEN(countof(m_Values[csi_WindowWork].sText)-1)
 		L"%ix%i", (rcWork.right-rcWork.left), (rcWork.bottom-rcWork.top));
 	wcscpy_c(m_Values[csi_WindowWork].szFormat, m_Values[csi_WindowWork].sText/*L"9999x9999"*/);
@@ -2342,21 +2342,24 @@ void CStatus::ShowTermModeMenu(POINT pt)
 }
 
 // Прямоугольник в клиентских координатах ghWnd!
-bool CStatus::GetStatusBarClientRect(RECT* rc)
+bool CStatus::GetStatusBarClientRect(RECT& rc)
 {
 	if (!gpSet->isStatusBarShow)
 		return false;
 
-	RECT rcClient = gpConEmu->GetGuiClientRect();
-
-	int nHeight = gpSet->StatusBarHeight();
-	if (nHeight >= (rcClient.bottom - rcClient.top))
-		return false;
-
-	rcClient.top = rcClient.bottom /*- 1*/ - nHeight;
-
-	*rc = rcClient;
+	rc = gpConEmu->StatusRect();
 	return true;
+
+	//RECT rcClient = gpConEmu->GetGuiClientRect();
+
+	//int nHeight = gpSet->StatusBarHeight();
+	//if (nHeight >= (rcClient.bottom - rcClient.top))
+	//	return false;
+
+	//rcClient.top = rcClient.bottom /*- 1*/ - nHeight;
+
+	//*rc = rcClient;
+	//return true;
 }
 
 // Прямоугольник в клиентских координатах ghWnd!
@@ -2376,7 +2379,7 @@ bool CStatus::GetStatusBarItemRect(CEStatusItems nID, RECT* rc)
 	}
 
 	if (rc)
-		GetStatusBarClientRect(rc);
+		GetStatusBarClientRect(*rc);
 
 	return false;
 }

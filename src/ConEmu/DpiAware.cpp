@@ -58,6 +58,11 @@ DpiValue::DpiValue()
 	#endif
 }
 
+DpiValue::DpiValue(int xdpi, int ydpi)
+{
+	SetDpi(xdpi, ydpi);
+}
+
 DpiValue::DpiValue(WPARAM wParam)
 {
 	#if defined(_DEBUG) && defined(DPI_DEBUG_CUSTOM)

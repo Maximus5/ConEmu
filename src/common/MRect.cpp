@@ -76,6 +76,24 @@ SMALL_RECT MakeSmallRect(int X1, int Y1, int X2, int Y2)
 	return rc;
 }
 
+bool RectEqual(const RECT& rc1, const RECT& rc2)
+{
+	return rc1.left == rc2.left
+		&& rc1.top == rc2.top
+		&& rc1.right == rc2.right
+		&& rc1.bottom == rc2.bottom;
+}
+
+bool operator ==(const RECT& rc1, const RECT& rc2)
+{
+	return RectEqual(rc1, rc2);
+}
+
+bool operator !=(const RECT& rc1, const RECT& rc2)
+{
+	return !RectEqual(rc1, rc2);
+}
+
 bool CoordInRect(const COORD& c, const RECT& r)
 {
 	return (c.X >= r.left && c.X <= r.right) && (c.Y >= r.top && c.Y <= r.bottom);

@@ -227,7 +227,7 @@ public:
 
 	LPCWSTR GetSettingName(CEStatusItems nID);
 
-	bool GetStatusBarClientRect(RECT* rc);
+	bool GetStatusBarClientRect(RECT& rc);
 	bool GetStatusBarItemRect(CEStatusItems nID, RECT* rc);
 
 public:

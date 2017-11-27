@@ -305,6 +305,7 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	//	}
 	//	return false;
 
+	#if 0
 	case WM_MOUSEMOVE:
 		DBGFUNCTION(L"WM_MOUSEMOVE \n");
 		// Табов чисто в заголовке - нет
@@ -321,6 +322,36 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		RedrawUnlock();
 		#endif
 		return false;
+	#endif
+	case WM_MOUSEMOVE:
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_LBUTTONDBLCLK:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_RBUTTONDBLCLK:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+	case WM_MBUTTONDBLCLK:
+		if (gpSet->isCaptionHidden() && gpSet->HideCaptionAlwaysFrame() > 0)
+		{
+			RECT wr = {}; GetWindowRect(hWnd, &wr);
+			POINT point; // Coordinates, relative to UpperLeft corner of window
+			point.x = (int)(short)LOWORD(lParam);
+			point.y = (int)(short)HIWORD(lParam);
+
+			LRESULT ht = OnNcHitTest(point, RectWidth(wr), RectHeight(wr), HTCLIENT);
+			if (ht != HTNOWHERE && ht != HTCLIENT)
+			{
+				POINT ptScr = point;
+				MapWindowPoints(hWnd, NULL, &ptScr, 1);
+				LPARAM lParamMain = MAKELONG(ptScr.x, ptScr.y);
+				lResult = gpConEmu->WndProc(hWnd, uMsg-(WM_MOUSEMOVE-WM_NCMOUSEMOVE), ht, lParamMain);
+				return true;
+			}
+		}
+		return false;
+
 
 	case WM_NCLBUTTONDBLCLK:
 		if (wParam == HTCAPTION)
@@ -679,7 +710,9 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg)
 		int nHeight = gpSet->StatusBarHeight();
 		if (nHeight < (wr.bottom - wr.top))
 		{
-			RECT rcStatus = {wr.left, wr.bottom - nHeight, wr.right, wr.bottom};
+			RECT rcStatus =
+				gpConEmu->StatusRect();
+				//{wr.left, wr.bottom - nHeight, wr.right, wr.bottom};
 			gpConEmu->mp_Status->PaintStatus(hdc, &rcStatus);
 			wr.bottom = rcStatus.top;
 		}
@@ -1175,6 +1208,10 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 	}
 	#endif
 
+	RECT rcMargins = {};
+	if (!gpSet->isCaptionHidden())
+		rcMargins = gpConEmu->CalcMargins(CEM_FRAMECAPTION);
+
 	if (wParam)
 	{
 		// lParam points to an NCCALCSIZE_PARAMS structure that contains information
@@ -1200,10 +1237,7 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
 
-		//RECT rcWnd = {0,0, r[0].right-r[0].left, r[0].bottom-r[0].top};
 		RECT rcClient; // = gpConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
-		//_ASSERTE(rcClient.left==0 && rcClient.top==0);
-		RECT rcMargins = gpConEmu->CalcMargins(CEM_FRAMECAPTION);
 
 		#if defined(CONEMU_TABBAR_EX)
 		if (gpSet->isTabsInCaption)
@@ -1216,10 +1250,6 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		{
 			// Need screen coordinates!
 			rcClient = MakeRect(r[0].left+rcMargins.left, r[0].top+rcMargins.top, r[0].right-rcMargins.right, r[0].bottom-rcMargins.bottom);
-			//int nDX = ((rcWnd.right - rcClient.right) >> 1);
-			//int nDY = ((rcWnd.bottom - rcClient.bottom - nCaption) >> 1);
-			//// Need screen coordinates!
-			//OffsetRect(&rcClient, r[0].left + nDX, r[0].top + nDY + nCaption);
 		}
 
 		if (!gpSet->isTabsInCaption)
@@ -1266,10 +1296,8 @@ LRESULT CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			return 0;
 		}
 		RECT rc = *nccr;
-		//RECT rcWnd = {0,0, rc.right-rc.left, rc.bottom-rc.top};
+
 		RECT rcClient; // = gpConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
-		//_ASSERTE(rcClient.left==0 && rcClient.top==0);
-		RECT rcMargins = gpConEmu->CalcMargins(CEM_FRAMECAPTION);
 
 		if (bCallDefProc)
 		{
@@ -1368,11 +1396,17 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
 	l_result = DefWindowProc(hWnd, WM_NCHITTEST, wParam, lParam);
 
+	RECT wr = {}; GetWindowRect(hWnd, &wr);
 	POINT point; // Coordinates, relative to UpperLeft corner of window
-	RECT wr; GetWindowRect(hWnd, &wr);
 	point.x = (int)(short)LOWORD(lParam) - wr.left;
 	point.y = (int)(short)HIWORD(lParam) - wr.top;
-	//MapWindowPoints(NULL, hWnd, &point, 1);
+
+	return OnNcHitTest(point, RectWidth(wr), RectHeight(wr), l_result);
+}
+
+LRESULT CFrameHolder::OnNcHitTest(const POINT& point, int width, int height, LPARAM def_hit_test /*= 0*/)
+{
+	LRESULT l_result = def_hit_test;
 
 	// При скрытии окна заголовка убирается стиль WS_CAPTION,
 	// но чтобы можно было оставить возможность ресайза за рамку -
@@ -1413,7 +1447,7 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 			int nShift = GetSystemMetrics(SM_CXSMICON);
 			int nFrame = 2;
 			//RECT wr; GetWindowRect(hWnd, &wr);
-			int nWidth = wr.right - wr.left;
+			int nWidth = width;
 			if (point.x <= nFrame && point.y <= nShift)
 				l_result = HTTOPLEFT;
 			else if (point.y <= nFrame && point.x <= nShift)
@@ -1446,6 +1480,45 @@ LRESULT CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 
 	if (l_result == HTTOP && gpSet->isHideCaptionAlways() && !gpConEmu->mp_TabBar->IsTabsShown())
 		l_result = HTCAPTION;
+
+	if (l_result == HTCLIENT && gpSet->isCaptionHidden() && gpConEmu->isWindowNormal() && !gpConEmu->isInside())
+	{
+		int nFrame = gpSet->HideCaptionAlwaysFrame();
+		if (nFrame > 0)
+		{
+			int nShift = GetSystemMetrics(SM_CXSMICON);
+			int nWidth = width;
+			int nHeight = height;
+			enum Frames { left = 1, top = 2, right = 4, bottom = 8 };
+			int frames = 0;
+			if (point.x <= nFrame)
+				frames |= Frames::left;
+			if (point.y <= nFrame)
+				frames |= Frames::top;
+			if (point.x >= (nWidth-nFrame))
+				frames |= Frames::right;
+			if (point.y >= (nHeight-nFrame))
+				frames |= Frames::bottom;
+
+			if (((frames & Frames::left) && point.y <= nShift) || ((frames & Frames::top) && point.x <= nShift))
+				l_result = HTTOPLEFT;
+			else if (((frames & Frames::right) && point.y <= nShift) || ((frames & Frames::top) && point.x >= (nWidth-nFrame-nShift)))
+				l_result = HTTOPRIGHT;
+			else if (((frames & Frames::left) && point.y >= (nHeight-nFrame-nShift)) || ((frames & Frames::bottom) && point.x <= nShift))
+				l_result = HTBOTTOMLEFT;
+			else if (((frames & Frames::right) && point.y >= (nHeight-nFrame-nShift)) || ((frames & Frames::bottom) && point.x >= (nWidth-nFrame-nShift)))
+				l_result = HTBOTTOMRIGHT;
+			else if (frames & Frames::left)
+				l_result = HTLEFT;
+			else if (frames & Frames::right)
+				l_result = HTRIGHT;
+			else if (frames & Frames::top)
+				l_result = HTTOP;
+			else if (frames & Frames::bottom)
+				l_result = HTBOTTOM;
+		}
+	}
+
 
 	//if ((l_result == HTCLIENT) && gpSet->isStatusBarShow)
 	//{

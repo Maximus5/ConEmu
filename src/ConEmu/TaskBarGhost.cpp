@@ -787,7 +787,8 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 	//RECT rcMain = gpConEmu->CalcRect(CER_MAIN);
 	//// размер всей рабочей области (но БЕЗ табов, прокруток, статусов)
 	//RECT rcWork = gpConEmu->CalcRect(CER_WORKSPACE, rcMain, CER_MAIN, mp_VCon/*хотя VCon и не важен, нужен полный размер*/);
-	RECT rcWork = gpConEmu->CalcRect(CER_WORKSPACE, mp_VCon/*хотя VCon и не важен, нужен полный размер*/);
+	//RECT rcWork = gpConEmu->CalcRect(CER_WORKSPACE, mp_VCon/*хотя VCon и не важен, нужен полный размер*/);
+	RECT rcWork = gpConEmu->WorkspaceRect();
 	_ASSERTE(rcWork.right>rcWork.left && rcWork.bottom>rcWork.top);
 
 	//RECT rcView = {0};

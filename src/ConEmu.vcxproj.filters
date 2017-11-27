@@ -366,6 +366,9 @@
     <ClInclude Include="ConEmu\ShObjIdl_Part.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\SizeInfo.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmu\Status.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -1039,6 +1042,9 @@
     </ClCompile>
     <ClCompile Include="ConEmu\SetPgViews.cpp">
       <Filter>Settings</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SizeInfo.cpp">
+      <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Status.cpp">
       <Filter>Sources</Filter>

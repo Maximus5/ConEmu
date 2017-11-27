@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define FIXPOSAFTERSTYLE_DELTA 2500
 
 CConEmuSize::CConEmuSize(CConEmuMain* pOwner)
+	: SizeInfo(pOwner)
 {
 	mp_ConEmu = pOwner;
 	_ASSERTE(mp_ConEmu!=NULL);
@@ -249,6 +250,14 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 					rc.top = -rcTest.top;
 				else
 					rc.top = rc.bottom;
+			}
+			if (bHideCaption)
+			{
+				int nFrame = gpSet->HideCaptionAlwaysFrame();
+				if (nFrame > 0)
+				{
+					rc.top += nFrame; rc.left += nFrame; rc.bottom += nFrame; rc.right += nFrame;
+				}
 			}
 			_ASSERTE(rc.top >= 0 && rc.left >= 0 && rc.right >= 0 && rc.bottom >= 0);
 			processed = true;
@@ -543,6 +552,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmuRect tFrom, CVirtualConsole* pVCon, enum ConEmuMargins tTabAction /*= CEM_TAB*/)
 {
 	_ASSERTE(this!=NULL);
+	_ASSERTE(tWhat!=CER_MAINCLIENT && tWhat!=CER_TAB && tWhat!=CER_WORKSPACE);
 	RECT rc = rFrom; // инициализация, если уж не получится...
 	RECT rcShift = MakeRect(0,0);
 	enum ConEmuRect tFromNow = tFrom;
@@ -577,23 +587,14 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		{
 			// Это может быть, если сделали GetWindowRect для ghWnd, когда он isIconic!
 			_ASSERTE((rc.left!=-32000 && rc.right!=-32000) && "Use CalcRect(CER_MAIN) instead of GetWindowRect() while IsIconic!");
-			rcShift = CalcMargins(CEM_FRAMECAPTION);
-			int nWidth = (rc.right-rc.left) - (rcShift.left+rcShift.right);
-			int nHeight = (rc.bottom-rc.top) - (rcShift.top+rcShift.bottom);
-			rc.left = 0;
-			rc.top = 0; // Получили клиентскую область
-			#if defined(CONEMU_TABBAR_EX)
-			if (gpSet->isTabsInCaption)
-			{
-				rc.top = rcShift.top;
-			}
-			#endif
-			rc.right = rc.left + nWidth;
-			rc.bottom = rc.top + nHeight;
+			SizeInfo::RequestSize(RectWidth(rFrom), RectHeight(rFrom));
+			rc = SizeInfo::ClientRect();
 			tFromNow = CER_MAINCLIENT;
 		}
 		break;
-		case CER_MAINCLIENT: // switch (tFrom)
+		// switch (tFrom)
+		case CER_WORKSPACE:
+		case CER_MAINCLIENT:
 		{
 			//
 		}
@@ -1474,9 +1475,9 @@ RECT CConEmuSize::GetDefaultRect()
 
 RECT CConEmuSize::GetGuiClientRect()
 {
-	RECT rcClient = CalcRect(CER_MAINCLIENT);
-	//RECT rcClient = {};
-	//BOOL lbRc = ::GetClientRect(ghWnd, &rcClient); UNREFERENCED_PARAMETER(lbRc);
+	RECT rcClient =
+		SizeInfo::ClientRect();
+		// CalcRect(CER_MAINCLIENT);
 	return rcClient;
 }
 
@@ -1764,11 +1765,16 @@ void CConEmuSize::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
 
 	if (tFrom == CER_MAIN)
 	{
-		rc = CalcRect(CER_WORKSPACE, arFrom, CER_MAIN);
+		rc = SizeInfo::WorkspaceRect();
+			// CalcRect(CER_WORKSPACE, arFrom, CER_MAIN);
 	}
 	else if (tFrom == CER_MAINCLIENT)
 	{
-		rc = CalcRect(CER_WORKSPACE, arFrom, CER_MAINCLIENT);
+		_ASSERTEX(FALSE && "Whole window size is preferred");
+		RECT rcMain = CalcRect(CER_MAIN, arFrom, CER_MAINCLIENT);
+		SizeInfo::RequestSize(RectWidth(rcMain), RectHeight(rcMain));
+		rc = SizeInfo::WorkspaceRect();
+			// CalcRect(CER_WORKSPACE, arFrom, CER_MAINCLIENT);
 	}
 	else
 	{
@@ -2343,9 +2349,16 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 		rcFrame.right += Splits.cx * gpSetCls->EvalSize(gpSet->nSplitWidth, esf_Horizontal|esf_CanUseDpi);
 	if (Splits.cy > 0)
 		rcFrame.bottom += Splits.cy * gpSetCls->EvalSize(gpSet->nSplitHeight, esf_Vertical|esf_CanUseDpi);
-	#ifdef _DEBUG
-	RECT rcWork = CalcRect(CER_WORKSPACE, rcFrame, CER_MAIN);
+
+	#if 0
+	// This is only for testing purposes
+	SizeInfo checker(dynamic_cast<const SizeInfo&>(*this));
+	checker.RequestSize(RectWidth(rcFrame), RectHeight(rcFrame));
+	RECT rcWork =
+		checker.WorkspaceRect();
+		//CalcRect(CER_WORKSPACE, rcFrame, CER_MAIN);
 	#endif
+
 	pInfo->ptMinTrackSize.x = rcFrame.right;
 	pInfo->ptMinTrackSize.y = rcFrame.bottom;
 
@@ -2906,9 +2919,11 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	// therefore OnSize CalcRect will return invalid result on empty src rect
 	if (bResized && !(p->flags & SWP_NOSIZE))
 	{
-		RECT rcWnd = {0,0,p->cx,p->cy};
+		//RECT rcWnd = {0,0,p->cx,p->cy};
 		//CVConGroup::SyncAllConsoles2Window(rcWnd, CER_MAIN, true);
-		RECT rcClient = CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
+		//RECT rcClient = CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
+		SizeInfo::RequestSize(p->cx, p->cy);
+		RECT rcClient = SizeInfo::ClientRect();
 		OnSize(true, isZoomed() ? SIZE_MAXIMIZED : SIZE_RESTORED,
 			rcClient.right - rcClient.left, rcClient.bottom - rcClient.top);
 	}
@@ -3044,8 +3059,9 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 	//nClientTop = rcFrame.top;
 	//#endif
 	//RECT mainClient = MakeRect(0, nClientTop, newClientWidth, newClientHeight+nClientTop);
-	RECT mainClient = CalcRect(CER_MAINCLIENT);
-	RECT work = CalcRect(CER_WORKSPACE, mainClient, CER_MAINCLIENT);
+	RECT main = CalcRect(CER_MAIN);
+	SizeInfo::RequestSize(RectWidth(main), RectHeight(main));
+	RECT work = SizeInfo::WorkspaceRect();
 	_ASSERTE(ghWndWork && GetParent(ghWndWork)==ghWnd); // пока рассчитано на дочерний режим
 	MoveWindowRect(ghWndWork, work, TRUE);
 
@@ -3070,12 +3086,12 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 
 	if (bResizeRCon && (changeFromWindowMode == wmNotChanging) && (mn_InResize <= 1))
 	{
-		CVConGroup::SyncAllConsoles2Window(mainClient, CER_MAINCLIENT, true);
+		CVConGroup::SyncAllConsoles2Window(work, true);
 	}
 
 	if (CVConGroup::isVConExists(0))
 	{
-		CVConGroup::ReSizePanes(mainClient);
+		CVConGroup::ReSizePanes(work);
 	}
 
 	mp_ConEmu->InvalidateGaps();
@@ -5182,6 +5198,10 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 		if ((rc.bottom-rc.top) > 1200)
 			rc.bottom = rc.bottom;
 		#endif
+
+		SizeInfo::RequestDpi(DpiValue(dpiX, dpiY));
+		if (prcSuggested)
+			SizeInfo::RequestRect(*prcSuggested);
 
 		// it returns false if DPI was not changed
 		if (gpFontMgr->RecreateFontByDpi(dpiX, dpiY, prcSuggested))

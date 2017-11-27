@@ -119,12 +119,18 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		case WM_WINDOWPOSCHANGING:
 		{
 			LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
-			if (mn_TabHeight)
-			{
-				pos->cy = mn_TabHeight;
-				return 0;
-			}
-			break;
+			RECT rcRebar = gpConEmu->RebarRect();
+			pos->x = rcRebar.left;
+			pos->y = rcRebar.left;
+			pos->cx = RectWidth(rcRebar);
+			pos->cy = RectHeight(rcRebar);
+			return 0;
+			//if (mn_TabHeight)
+			//{
+			//	pos->cy = mn_TabHeight;
+			//	return 0;
+			//}
+			//break;
 		}
 		case WM_WINDOWPOSCHANGED:
 		{

@@ -172,6 +172,7 @@ SRCS = \
 		SetPgTransparent.cpp\
 		SetPgUpdate.cpp    \
 		SetPgViews.cpp     \
+		SizeInfo.cpp       \
 		Status.cpp         \
 		TabBar.cpp         \
 		TabCtrlBase.cpp    \

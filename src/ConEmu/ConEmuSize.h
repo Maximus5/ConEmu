@@ -30,6 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/MSectionSimple.h"
 
+#include "SizeInfo.h"
+
 class CConEmuMain;
 struct DpiValue;
 
@@ -51,7 +53,7 @@ enum RectOperations
 	rcop_MathSub,
 };
 
-class CConEmuSize
+class CConEmuSize : public SizeInfo
 {
 private:
 	CConEmuMain* mp_ConEmu;
@@ -154,6 +156,7 @@ protected:
 	LONG mn_IgnoreSizeChange;
 	LONG mn_InSetWindowPos;
 
+	// #SIZE_TODO Get rid of m_ForceShowFrame
 	enum {
 		fsf_Hide = 0,     // Рамка и заголовок спрятаны
 		fsf_WaitShow = 1, // Запущен таймер показа рамки
@@ -202,7 +205,7 @@ public:
 	CConEmuSize(CConEmuMain* pOwner);
 	virtual ~CConEmuSize();
 
-protected:
+public:
 	static void AddMargins(RECT& rc, const RECT& rcAddShift, RectOperations rect_op = rcop_Shrink);
 
 private:

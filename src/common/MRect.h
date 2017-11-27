@@ -35,9 +35,15 @@ USHORT MakeUShort(u32 X);
 
 COORD MakeCoord(int X,int Y);
 POINT MakePoint(int X,int Y);
+
 RECT MakeRect(int W,int H);
 RECT MakeRect(int X1, int Y1,int X2,int Y2);
 SMALL_RECT MakeSmallRect(int X1, int Y1, int X2, int Y2);
+
+bool RectEqual(const RECT& rc1, const RECT& rc2);
+bool operator ==(const RECT& rc1, const RECT& rc2);
+bool operator !=(const RECT& rc1, const RECT& rc2);
+
 bool CoordInRect(const COORD& c, const RECT& r);
 bool IntersectSmallRect(const RECT& rc1, const SMALL_RECT& rc2, LPRECT lprcDest = NULL);
 

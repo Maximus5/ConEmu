@@ -995,9 +995,9 @@ bool CVConGroup::ReSizeSplitter(CVirtualConsole* apVCon, int iHorz /*= 0*/, int 
 
 	if (bChanged)
 	{
-		RECT mainClient = gpConEmu->CalcRect(CER_MAINCLIENT, gp_VActive);
-		CVConGroup::SyncAllConsoles2Window(mainClient, CER_MAINCLIENT);
-		CVConGroup::ReSizePanes(mainClient);
+		RECT workspace = apVCon->mp_ConEmu->WorkspaceRect();
+		CVConGroup::SyncAllConsoles2Window(workspace);
+		CVConGroup::ReSizePanes(workspace);
 	}
 
 	return bChanged;
@@ -4165,8 +4165,8 @@ bool CVConGroup::ConActivate(CVConGuard& VCon, int nCon)
 	}
 
 	// Correct sizes of VCon/Back
-	RECT rcWork = {};
-	rcWork = gpConEmu->CalcRect(CER_WORKSPACE, pVCon);
+	RECT rcWork = gpConEmu->WorkspaceRect();
+	//rcWork = gpConEmu->CalcRect(CER_WORKSPACE, pVCon);
 	CVConGroup::MoveAllVCon(pVCon, rcWork);
 
 	setActiveVConAndFlags(pVCon);
@@ -4900,7 +4900,7 @@ void CVConGroup::SetConsoleSizes(const COORD& size, const RECT& rcNewCon, bool a
 // т.е. если по горизонтали есть 2 консоли, и просят размер 80x25
 // то эти две консоли должны стать 40x25 а GUI отресайзиться под 80x25
 // В принципе, эту функцию можно было бы и в CConEmu оставить, но для общности путь здесь будет
-void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN or CER_MAINCLIENT*/, COORD size, bool bSetRedraw /*= false*/)
+void CVConGroup::SetAllConsoleWindowsSize(RECT rcWorkspace, COORD size, bool bSetRedraw /*= false*/)
 {
 	MSectionLockSimple lockGroups; lockGroups.Lock(gpcs_VGroups);
 	CVConGuard VCon(gp_VActive);
@@ -4946,7 +4946,7 @@ void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= 
 	}
 
 	// Для разбиения имеет смысл использовать текущий размер окна в пикселях
-	RECT rcWorkspace = gpConEmu->CalcRect(CER_WORKSPACE, rcWnd, tFrom);
+	//RECT rcWorkspace = gpConEmu->CalcRect(CER_WORKSPACE, rcWnd, tFrom);
 
 	// Избежать мерцания панелей в Far
 	if (!bSetRedraw && Root->mp_Item && Root->m_SplitType == RConStartArgsEx::eSplitNone)
@@ -4966,14 +4966,14 @@ void CVConGroup::SetAllConsoleWindowsSize(RECT rcWnd, enum ConEmuRect tFrom /*= 
 	MCHKHEAP;
 }
 
-void CVConGroup::SyncAllConsoles2Window(RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN*/, bool bSetRedraw /*= false*/)
+void CVConGroup::SyncAllConsoles2Window(RECT rcWorkspace, bool bSetRedraw /*= false*/)
 {
 	if (!isVConExists(0))
 		return;
 	CVConGuard VCon(gp_VActive);
-	RECT rcAllCon = gpConEmu->CalcRect(CER_CONSOLE_ALL, rcWnd, tFrom, VCon.VCon());
+	RECT rcAllCon = gpConEmu->CalcRect(CER_CONSOLE_ALL, rcWorkspace, CER_WORKSPACE, VCon.VCon());
 	COORD crNewAllSize = {(SHORT)rcAllCon.right,(SHORT)rcAllCon.bottom};
-	SetAllConsoleWindowsSize(rcWnd, tFrom, crNewAllSize, bSetRedraw);
+	SetAllConsoleWindowsSize(rcWorkspace, crNewAllSize, bSetRedraw);
 }
 
 void CVConGroup::LockSyncConsoleToWindow(bool abLockSync)
@@ -5001,15 +5001,10 @@ void CVConGroup::SyncConsoleToWindow(LPRECT prcNewWnd/*=NULL*/, bool bSync/*=fal
 	}
 	#endif
 
-	//gp_VActive->RCon()->SyncConsole2Window();
-
-	RECT rcWnd;
 	if (prcNewWnd)
-		rcWnd = gpConEmu->CalcRect(CER_MAINCLIENT, *prcNewWnd, CER_MAIN, VCon.VCon());
-	else
-		rcWnd = gpConEmu->CalcRect(CER_MAINCLIENT, VCon.VCon());
+		VCon->mp_ConEmu->RequestSize(RectWidth(*prcNewWnd), RectHeight(*prcNewWnd));
 
-	SyncAllConsoles2Window(rcWnd, CER_MAINCLIENT, bSync/*abSetRedraw*/);
+	SyncAllConsoles2Window(VCon->mp_ConEmu->WorkspaceRect(), bSync/*abSetRedraw*/);
 }
 
 // -- функция пустая, игнорируется
@@ -5199,10 +5194,13 @@ RECT CVConGroup::AllTextRect(SIZE* rpSplits /*= NULL*/, bool abMinimal /*= false
 // WindowMode: rNormal, rMaximized, rFullScreen
 // rcWnd: размер ghWnd
 // Returns: true - если успешно, можно продолжать
+// #SIZE_TODO Replace rcWnd with SIZE?
 bool CVConGroup::PreReSize(uint WindowMode, RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN*/, bool bSetRedraw /*= false*/)
 {
 	bool lbRc = true;
 	CVConGuard VCon(gp_VActive);
+
+	_ASSERTEX(tFrom == CER_MAIN || tFrom == CER_MAINCLIENT);
 
 	if (gp_VActive)
 	{
@@ -5211,7 +5209,8 @@ bool CVConGroup::PreReSize(uint WindowMode, RECT rcWnd, enum ConEmuRect tFrom /*
 
 	if (tFrom == CER_MAIN)
 	{
-		rcWnd = gpConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
+		gpConEmu->RequestSize(RectWidth(rcWnd), RectHeight(rcWnd));
+		rcWnd = gpConEmu->ClientRect();
 		tFrom = CER_MAINCLIENT;
 	}
 
@@ -5228,7 +5227,7 @@ bool CVConGroup::PreReSize(uint WindowMode, RECT rcWnd, enum ConEmuRect tFrom /*
 	COORD size = MakeCoord(rcCon.right, rcCon.bottom);
 	if (isVConExists(0))
 	{
-		SetAllConsoleWindowsSize(rcWnd, tFrom, size, bSetRedraw);
+		SetAllConsoleWindowsSize(rcWnd, size, bSetRedraw);
 	}
 
 	//if (bSetRedraw /*&& gp_VActive*/)
@@ -5866,7 +5865,7 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 }
 
 // вызывается из CConEmuMain::OnSize
-void CVConGroup::ReSizePanes(RECT mainClient)
+void CVConGroup::ReSizePanes(RECT workspace)
 {
 	//RECT mainClient = MakeRect(newClientWidth,newClientHeight);
 	if (!gp_VActive)
@@ -5879,11 +5878,7 @@ void CVConGroup::ReSizePanes(RECT mainClient)
 	CVConGuard VCon(gp_VActive);
 	CVirtualConsole* pVCon = VCon.VCon();
 
-	RECT rcNewCon = {};
-
-	rcNewCon = gpConEmu->CalcRect(CER_WORKSPACE, mainClient, CER_MAINCLIENT, pVCon);
-
-	CVConGroup::MoveAllVCon(pVCon, rcNewCon);
+	CVConGroup::MoveAllVCon(pVCon, workspace);
 }
 
 void CVConGroup::NotifyChildrenWindows()
