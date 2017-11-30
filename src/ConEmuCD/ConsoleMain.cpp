@@ -7048,8 +7048,6 @@ bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 		// The expected result of GetConsoleKeyboardLayoutName is like "00000419"
 		BOOL bConApiRc;
 
-		SetLastError(0);
-
 		bConApiRc = pfnGetConsoleKeyboardLayoutName(szCurKeybLayout);
 
 		DWORD nErr = bConApiRc ? 0 : GetLastError();
