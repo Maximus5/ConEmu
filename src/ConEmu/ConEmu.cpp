@@ -293,30 +293,17 @@ CConEmuMain::CConEmuMain()
 	, CConEmuStart(this)
 {
 	#pragma warning(default: 4355)
-	gpConEmu = this; // сразу!
-	mb_FindBugMode = false;
-	mn_LastTransparentValue = 255;
-
-	DEBUGTEST(mb_DestroySkippedInAssert=false);
-	mn_InOurDestroy = 0;
+	gpConEmu = this; // immediately! only one CConEmuMain instance per process is allowed now
 
 	CVConGroup::Initialize();
 
 	getForegroundWindow();
 
 	// ConEmu main window was not created yet, so...
-	ZeroStruct(m_Foreground);
 
 	_ASSERTE(gOSVer.dwMajorVersion>=5);
-	//ZeroStruct(gOSVer);
-	//gOSVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	//GetVersionEx(&gOSVer);
 
-	mp_Log = NULL;
 	mpcs_Log = new MSectionSimple(true);
-
-	//HeapInitialize(); - уже
-	//#define D(N) (1##N-100)
 
 	wchar_t szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
 	// Same as ConsoleMain.cpp::SetWorkEnvVar()
@@ -331,21 +318,14 @@ CConEmuMain::CConEmuMain()
 
 	// Classes
 	mp_Menu = new CConEmuMenu;
-	mp_Tip = NULL;
 	mp_Status = new CStatus;
 	mp_TabBar = new CTabBarClass;
 	mp_DefTrm = new CDefaultTerminal;
-	mp_Inside = NULL;
 	mp_Find = new CEFindDlg;
 	mp_RunQueue = new CRunQueue;
 	mp_AltNumpad = new CAltNumpad(this);
 
-	ms_ConEmuAliveEvent[0] = 0;	mb_AliveInitialized = FALSE;
-	mh_ConEmuAliveEvent = NULL; mb_ConEmuAliveOwned = false; mn_ConEmuAliveEventErr = 0;
-	mh_ConEmuAliveEventNoDir = NULL; mb_ConEmuAliveOwnedNoDir = false; mn_ConEmuAliveEventErrNoDir = 0;
-
 	mn_MainThreadId = GetCurrentThreadId();
-	//wcscpy_c(szConEmuVersion, L"?.?.?.?");
 
 	bool bNeedConHostSearch = (gnOsVer == 0x0601);
 	if (bNeedConHostSearch)
@@ -353,96 +333,19 @@ CConEmuMain::CConEmuMain()
 		m_LockConhostStart.pcsLock = new MSectionLockSimple();
 		m_LockConhostStart.pcs = new MSectionSimple(true);
 	}
-	m_LockConhostStart.wait = false;
 
 	m_SshAgentsLock = new MSectionSimple(true);
 
-	mn_StartupFinished = ss_Starting;
-	//isRestoreFromMinimized = false;
-	WindowStartMinimized = false;
-	WindowStartTsa = false;
-	WindowStartNoClose = false;
-	ForceMinimizeToTray = false;
-	mb_LastTransparentFocused = false;
-
-	DisableKeybHooks = false;
-	DisableAllMacro = false;
-	DisableAllHotkeys = false;
-	DisableSetDefTerm = false;
-	DisableRegisterFonts = false;
-	DisableCloseConfirm = false;
-	SilentMacroClose = false;
-	//mn_SysMenuOpenTick = mn_SysMenuCloseTick = 0;
-	//mb_PassSysCommand = false;
-	mb_ExternalHidden = FALSE;
-	ZeroStruct(mst_LastConsole32StartTime); ZeroStruct(mst_LastConsole64StartTime);
-	isPiewUpdate = false; //true; --Maximus5
-	hPictureView = NULL;  mrc_WndPosOnPicView = MakeRect(0,0);
-	bPicViewSlideShow = false;
-	dwLastSlideShowTick = 0;
-	mh_ShellWindow = NULL; mn_ShellWindowPID = 0;
-	mb_FocusOnDesktop = TRUE;
-	cursor.x=0; cursor.y=0; Rcursor=cursor;
-	mp_DragDrop = NULL;
-	Title[0] = 0;
-	TitleTemplate[0] = 0;
-	mb_InTimer = FALSE;
-	m_ProcCount = 0;
-	mb_ProcessCreated = false; /*mn_StartTick = 0;*/ mb_WorkspaceErasedOnClose = false;
-	mb_InCaptionChange = false;
-	m_FixPosAfterStyle = 0;
-	ZeroStruct(mrc_FixPosAfterStyle);
-	mb_InImeComposition = false; mb_ImeMethodChanged = false;
-	ZeroStruct(m_Pressed);
-	mb_MouseCaptured = FALSE;
-	mb_GroupInputFlag = false;
-	mb_HotKeyRegistered = false;
-	mh_LLKeyHookDll = NULL;
-	mph_HookedGhostWnd = NULL;
-	mh_LLKeyHook = NULL;
-	mh_RightClickingBmp = NULL; mh_RightClickingDC = NULL; mb_RightClickingPaint = mb_RightClickingLSent = FALSE;
-	m_RightClickingSize.x = m_RightClickingSize.y = m_RightClickingFrames = 0; m_RightClickingCurrent = -1;
-	mh_RightClickingWnd = NULL; mb_RightClickingRegistered = FALSE;
-	mb_WaitCursor = FALSE;
 	mh_CursorWait = LoadCursor(NULL, IDC_WAIT);
 	mh_CursorArrow = LoadCursor(NULL, IDC_ARROW);
 	mh_CursorMove = LoadCursor(NULL, IDC_SIZEALL);
 	mh_CursorIBeam = LoadCursor(NULL, IDC_IBEAM);
-	mh_DragCursor = NULL;
 	mh_CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
-	// g_hInstance еще не инициализирован
+	// g_hInstance is not initialized yet?
 	mh_SplitV = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITV));
 	mh_SplitH = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITH));
-	//ms_LogCreateProcess[0] = 0; mb_CreateProcessLogged = false;
-	ZeroStruct(mouse);
-	mouse.lastMMW=-1;
-	mouse.lastMML=-1;
 	GetCursorPos(&mouse.ptLastSplitOverCheck);
-	ZeroStruct(session);
-	ZeroStruct(m_TranslatedChars);
-	//GetKeyboardState(m_KeybStates);
-	//memset(m_KeybStates, 0, sizeof(m_KeybStates));
-	ZeroStruct(m_KeyboardState);
 	m_ActiveKeybLayout = GetActiveKeyboardLayout();
-	ZeroStruct(m_LayoutNames);
-	//wchar_t szTranslatedChars[16];
-	//HKL hkl = (HKL)GetActiveKeyboardLayout();
-	//int nTranslatedChars = ToUnicodeEx(0, 0, m_KeybStates, szTranslatedChars, 15, 0, hkl);
-	mn_LastPressedVK = 0;
-	ZeroStruct(m_GuiInfo);
-	m_GuiInfo.cbSize = sizeof(m_GuiInfo);
-	//mh_RecreatePasswFont = NULL;
-	mb_SkipOnFocus = false;
-	mb_LastConEmuFocusState = false;
-	mn_ForceTimerCheckLoseFocus = 0;
-	mb_AllowAutoChildFocus = false;
-	mb_ScClosePending = false;
-	mb_UpdateJumpListOnStartup = false;
-	mn_TBOverlayTimerCounter = 0;
-
-	mps_IconPath = NULL;
-	mh_TaskbarIcon = NULL;
-	mp_PushInfo = NULL;
 
 	#ifdef __GNUC__
 	HMODULE hGdi32 = GetModuleHandle(L"gdi32.dll");
@@ -458,10 +361,6 @@ CConEmuMain::CConEmuMain()
 	#endif
 
 	// IME support (WinXP or later)
-	mh_Imm32 = NULL;
-	_ImmSetCompositionFont = NULL;
-	_ImmSetCompositionWindow = NULL;
-	_ImmGetContext = NULL;
 	if (gnOsVer >= 0x501)
 	{
 		mh_Imm32 = LoadLibrary(L"Imm32.dll");
@@ -483,9 +382,8 @@ CConEmuMain::CConEmuMain()
 	}
 
 
-	// Попробуем "родное" из реестра?
+	// Load current comspec form registry
 	HKEY hk;
-	ms_ComSpecInitial[0] = 0;
 	if (!RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", 0, KEY_READ, &hk))
 	{
 		DWORD nSize = sizeof(ms_ComSpecInitial)-sizeof(wchar_t);
@@ -498,14 +396,6 @@ CConEmuMain::CConEmuMain()
 		GetComspecFromEnvVar(ms_ComSpecInitial, countof(ms_ComSpecInitial));
 	}
 	_ASSERTE(*ms_ComSpecInitial);
-
-	ms_AppID[0] = 0;
-	ms_ConEmuExe[0] = ms_ConEmuExeDir[0] = ms_ConEmuBaseDir[0] = ms_ConEmuWorkDir[0] = 0;
-	ms_ConEmuC32Full[0] = ms_ConEmuC64Full[0] = 0;
-	ms_ConEmuXml[0] = ms_ConEmuIni[0] = ms_ConEmuChm[0] = 0;
-	mps_ConEmuExtraArgs = NULL;
-	mb_SpecialConfigPath = false;
-	mb_ForceUseRegistry = false;
 
 	wchar_t *pszSlash = NULL;
 
@@ -521,8 +411,7 @@ CConEmuMain::CConEmuMain()
 	pszSlash = wcsrchr(ms_ConEmuExeDir, L'\\');
 	if (pszSlash) *pszSlash = 0;
 
-	// Запомнить текущую папку (на момент запуска)
-	mb_ConEmuWorkDirArg = false; // May be overridden with app "/dir" switch
+	// Store current (at the startup moment) working directory
 	StoreWorkDir();
 
 	bool lbBaseFound = false;
@@ -530,7 +419,6 @@ CConEmuMain::CConEmuMain()
 	wchar_t szFindFile[MAX_PATH+64];
 
 	// Mingw/msys installation?
-	m_InstallMode = cm_Normal;
 	CEStr lsBash;
 	if (FindBashLocation(lsBash))
 	{
@@ -721,34 +609,8 @@ CConEmuMain::CConEmuMain()
 	}
 
 
-
-
-
-
-	// DosBox (единственный способ запуска Dos-приложений в 64-битных OS)
+	// DosBox (the only available way to run legacy Dos-applications in 64-bit OS)
 	mb_DosBoxExists = CheckDosBoxExists();
-
-	//mh_Psapi = NULL;
-	//GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(GetModuleHandle(L"Kernel32.dll"), "GetModuleFileNameExW");
-	//if (GetModuleFileNameEx == NULL)
-	//{
-	//	mh_Psapi = LoadLibrary(_T("psapi.dll"));
-	//	if (mh_Psapi)
-	//		GetModuleFileNameEx = (FGetModuleFileNameEx)GetProcAddress(mh_Psapi, "GetModuleFileNameExW");
-	//}
-
-	#ifndef _WIN64
-	mh_WinHook = NULL;
-	#endif
-	mb_ShellHookRegistered = false;
-	//mh_PopupHook = NULL;
-	//mp_TaskBar2 = NULL;
-	//mp_TaskBar3 = NULL;
-	//mp_ VActive = NULL; mp_VCon1 = NULL; mp_VCon2 = NULL;
-	//mb_CreatingActive = false;
-	//memset(mp_VCon, 0, sizeof(mp_VCon));
-	mp_AttachDlg = NULL;
-	mp_RecreateDlg = NULL;
 }
 
 void CConEmuMain::RegisterMessages()
