@@ -1164,7 +1164,7 @@ void CRealConsole::SyncConsole2Window(bool abNtvdmOff/*=FALSE*/, LPRECT prcNewWn
 	if (prcNewWnd == NULL)
 	{
 		WARNING("DoubleView: переделать для...");
-		rcClient = mp_ConEmu->GetGuiClientRect();
+		rcClient = mp_ConEmu->ClientRect();
 	}
 	else
 	{
@@ -1300,7 +1300,7 @@ bool CRealConsole::AttachConemuC(HWND ahConWnd, DWORD anConemuC_PID, const CESER
 	// BufferHeightTurnedOn and SetBufferHeightMode checks moved to InitSBI
 	// bool bCurBufHeight = /*rStartStop->bRootIsCmdExe || mp_RBuf->isScroll() ||*/ mp_RBuf->BufferHeightTurnedOn(lsbi);
 
-	RECT rcWnd = mp_ConEmu->GetGuiClientRect();
+	RECT rcWnd = mp_ConEmu->ClientRect();
 	TODO("DoubleView: ?");
 	mp_ConEmu->AutoSizeFont(rcWnd, CER_MAINCLIENT);
 

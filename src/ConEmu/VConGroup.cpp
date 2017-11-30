@@ -5787,7 +5787,7 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 	_ASSERTE(isMainThread() && !gpConEmu->isIconic());
 
 	//COORD c = ConsoleSizeFromWindow();
-	RECT client = gpConEmu->GetGuiClientRect();
+	RECT client = gpConEmu->ClientRect();
 
 	// Проверим, вдруг не отработал isIconic
 	if (client.bottom > 10)

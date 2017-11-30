@@ -1473,14 +1473,6 @@ RECT CConEmuSize::GetDefaultRect()
 	return rcWnd;
 }
 
-RECT CConEmuSize::GetGuiClientRect()
-{
-	RECT rcClient =
-		SizeInfo::ClientRect();
-		// CalcRect(CER_MAINCLIENT);
-	return rcClient;
-}
-
 void CConEmuSize::ReloadMonitorInfo()
 {
 	_ASSERTEX(isMainThread());
@@ -3048,7 +3040,7 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 
 	if (newClientWidth==(WORD)-1 || newClientHeight==(WORD)-1)
 	{
-		RECT rcClient = GetGuiClientRect();
+		RECT rcClient = ClientRect();
 		newClientWidth = rcClient.right;
 		newClientHeight = rcClient.bottom;
 	}
@@ -4835,7 +4827,7 @@ void CConEmuSize::ReSize(bool abCorrect2Ideal /*= false*/)
 	if (isIconic())
 		return;
 
-	RECT client = GetGuiClientRect();
+	RECT client = ClientRect();
 
 	#ifdef _DEBUG
 	DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
@@ -4889,7 +4881,7 @@ void CConEmuSize::ReSize(bool abCorrect2Ideal /*= false*/)
 		}
 
 		// Поправить! Может изменилось!
-		client = GetGuiClientRect();
+		client = ClientRect();
 	}
 
 	DEBUGTEST(dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE));
@@ -5870,7 +5862,7 @@ HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/)
 				|| (gpSet->isQuakeStyle && (gpSet->HideCaptionAlwaysFrame() != 0)))
 			{
 				// Рамка невидима (мышка не над рамкой или заголовком)
-				RECT rcClient = GetGuiClientRect();
+				RECT rcClient = ClientRect();
 				RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
 				//_ASSERTE(!rcClient.left && !rcClient.top);
 

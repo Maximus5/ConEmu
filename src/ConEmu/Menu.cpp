@@ -1715,7 +1715,7 @@ void CConEmuMenu::ShowSysmenu(int x, int y, DWORD nFlags /*= 0*/)
 	{
 		RECT rect = {}, cRect = {};
 		GetWindowRect(ghWnd, &rect);
-		cRect = gpConEmu->GetGuiClientRect();
+		cRect = gpConEmu->ClientRect();
 		WINDOWINFO wInfo = {sizeof(wInfo)};
 		GetWindowInfo(ghWnd, &wInfo);
 		int nTabShift =

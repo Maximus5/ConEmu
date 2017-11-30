@@ -361,7 +361,7 @@ RECT CTabPanelWin::GetRect()
 	RECT rcWnd = {-32000, -32000, -32000+300, -32000+100};
 	if (ghWnd)
 	{
-		rcWnd = gpConEmu->GetGuiClientRect();
+		rcWnd = gpConEmu->ClientRect();
 	}
 	else
 	{
@@ -457,7 +457,7 @@ HWND CTabPanelWin::CreateTabbar()
 	RECT rcClient = {-32000, -32000, -32000+300, -32000+100};
 	if (ghWnd)
 	{
-		rcClient = gpConEmu->GetGuiClientRect();
+		rcClient = gpConEmu->ClientRect();
 	}
 	else
 	{
@@ -866,9 +866,6 @@ void CTabPanelWin::DeleteItemInt(int I)
 
 void CTabPanelWin::ShowBar(bool bShow)
 {
-	RECT client = {};
-	if (bShow)
-		client = gpConEmu->GetGuiClientRect(); // нас интересует ширина окна
 	int nShow = bShow ? SW_SHOW : SW_HIDE;
 
 	if (mh_Rebar)
@@ -884,7 +881,7 @@ void CTabPanelWin::ShowBar(bool bShow)
 
 void CTabPanelWin::RepositionInt()
 {
-	RECT client = gpConEmu->GetGuiClientRect();
+	RECT client = gpConEmu->ClientRect();
 
 	if (mh_Rebar)
 	{
@@ -1488,7 +1485,7 @@ void CTabPanelWin::RePaintInt()
 		return;
 
 	RECT client, self;
-	client = gpConEmu->GetGuiClientRect();
+	client = gpConEmu->ClientRect();
 	GetWindowRect(mh_Rebar, &self);
 	MapWindowPoints(NULL, ghWnd, (LPPOINT)&self, 2);
 

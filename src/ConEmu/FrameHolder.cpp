@@ -671,9 +671,10 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg)
 		return lRc;
 	}
 
-	#ifdef _DEBUG
 	RECT rcClientReal = {}; GetClientRect(hWnd, &rcClientReal);
-	MapWindowPoints(hWnd, NULL, (LPPOINT)&rcClientReal, 2);
+	#ifdef _DEBUG
+	RECT rcClientMapped = rcClientReal;
+	MapWindowPoints(hWnd, NULL, (LPPOINT)&rcClientMapped, 2);
 	#endif
 
 	// Если "завис" PostUpdate
@@ -686,13 +687,31 @@ LRESULT CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg)
 
 	RecalculateFrameSizes();
 
-	wr = gpConEmu->GetGuiClientRect();
+	wr = gpConEmu->ClientRect();
+
+	if (gpSet->isCaptionHidden())
+	{
+		if (rcClientReal != wr)
+		{
+			RECT rc;
+			int idx = gpConEmu->isMeForeground(false, false) ? COLOR_ACTIVEBORDER : COLOR_INACTIVEBORDER;
+			HBRUSH hbr = GetSysColorBrush(idx);
+			rc = rcClientReal; rc.right = wr.left;
+			FillRect(hdc, &rc, hbr);
+			rc = rcClientReal; rc.left = wr.right;
+			FillRect(hdc, &rc, hbr);
+			rc = rcClientReal; rc.bottom = wr.top;
+			FillRect(hdc, &rc, hbr);
+			rc = rcClientReal; rc.top = wr.bottom;
+			FillRect(hdc, &rc, hbr);
+		}
+	}
 
 	#ifdef _DEBUG
 	wchar_t szPaint[140];
 	_wsprintf(szPaint, SKIPCOUNT(szPaint) L"MainClient %s at {%i,%i}-{%i,%i} screen coords, size (%ix%i) calc (%ix%i)",
 		(uMsg == WM_PAINT) ? L"WM_PAINT" : (uMsg == WM_PRINTCLIENT) ? L"WM_PRINTCLIENT" : L"UnknownMsg",
-		LOGRECTCOORDS(rcClientReal), LOGRECTSIZE(rcClientReal), LOGRECTSIZE(wr));
+		LOGRECTCOORDS(rcClientMapped), LOGRECTSIZE(rcClientMapped), LOGRECTSIZE(wr));
 	DEBUGSTRPAINT(szPaint);
 	#endif
 

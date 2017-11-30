@@ -6255,7 +6255,7 @@ bool CConEmuMain::isMouseOverFrame(bool abReal)
 
 		if (PtInRect(&rcWnd, ptMouse))
 		{
-			RECT rcClient = GetGuiClientRect();
+			RECT rcClient = ClientRect();
 
 			// чтобы область активации рамки была чуть побольше, уменьшим регион
 			rcClient.left += nSub; rcClient.right -= nSub; rcClient.bottom -= nSub;
@@ -13462,14 +13462,13 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				{
 					//_ASSERTE(Icon.isHidingToTray());
 					Icon.HideWindowToTray(gpSet->isDownShowHiddenMessage ? NULL : _T("ConEmu was hidden from some program"));
-					this->mb_ExternalHidden = TRUE;
+					this->mb_ExternalHidden = true;
 				}
 			}
-			else
+			else if (this->mb_ExternalHidden)
 			{
-				if (this->mb_ExternalHidden)
-					Icon.RestoreWindowFromTray(TRUE);
-				this->mb_ExternalHidden = FALSE;
+				Icon.RestoreWindowFromTray(TRUE);
+				this->mb_ExternalHidden = false;
 			}
 
 			//Логирование, что получилось

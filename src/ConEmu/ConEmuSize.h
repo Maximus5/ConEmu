@@ -220,7 +220,6 @@ public:
 	SIZE GetDefaultSize(bool bCells, const CESize* pSizeW = NULL, const CESize* pSizeH = NULL, HMONITOR hMon = NULL);
 	RECT GetDefaultRect();
 	int  GetInitialDpi(DpiValue* pDpi);
-	RECT GetGuiClientRect();
 	RECT GetIdealRect();
 	void StoreIdealRect();
 	void UpdateInsideRect(RECT rcNewPos);
