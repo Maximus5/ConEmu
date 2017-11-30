@@ -235,7 +235,8 @@ LRESULT CSetPgSizePos::OnEditChanged(HWND hDlg, WORD nCtrlId)
 		}
 		else
 		{
-			SetDlgItemText(hDlg, nCtrlId, _ltow(gpSet->DefaultBufferHeight, szTemp, 10));
+			_ltow_s(gpSet->DefaultBufferHeight, szTemp, 10);
+			SetDlgItemText(hDlg, nCtrlId, szTemp);
 		}
 		break;
 	} //case tLongOutputHeight:

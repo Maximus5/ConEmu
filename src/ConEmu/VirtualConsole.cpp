@@ -308,7 +308,8 @@ int CVirtualConsole::Index()
 
 LPCWSTR CVirtualConsole::IndexStr()
 {
-	return _itow(mn_Index, ms_Idx, 10);
+	_itow_s(mn_Index, ms_Idx, 10);
+	return ms_Idx;
 }
 
 int CVirtualConsole::ID()
@@ -318,7 +319,8 @@ int CVirtualConsole::ID()
 
 LPCWSTR CVirtualConsole::IDStr()
 {
-	return _itow(mn_ID, ms_ID, 10);
+	_itow_s(mn_ID, ms_ID, 10);
+	return ms_ID;
 }
 
 bool CVirtualConsole::SetFlags(VConFlags Set, VConFlags Mask, int index)
