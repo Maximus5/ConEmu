@@ -13409,7 +13409,8 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			DefWindowProc(hWnd, messg, wParam, lParam);
 			if (wParam && (hWnd == ghWnd) && gpSet->isStatusBarShow && (lParam & PRF_CLIENT))
 			{
-				OnPaint(hWnd, (HDC)wParam, WM_PRINTCLIENT);
+				LRESULT lPaintRc = 0;
+				OnPaint(hWnd, (HDC)wParam, WM_PRINTCLIENT, lPaintRc);
 
 				//int nHeight = gpSet->StatusBarHeight();
 				//RECT wr = CalcRect(CER_MAINCLIENT);
