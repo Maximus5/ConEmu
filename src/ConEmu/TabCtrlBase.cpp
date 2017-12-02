@@ -292,7 +292,7 @@ LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
 	if (uMsg == WM_LBUTTONDBLCLK)
 	{
 		if ((gpSet->nTabBarDblClickAction == TabBarDblClick::MaxRestoreWindow)
-			|| ((gpSet->nTabBarDblClickAction == TabBarDblClick::Auto) && gpSet->isCaptionHidden()))
+			|| ((gpSet->nTabBarDblClickAction == TabBarDblClick::Auto) && gpConEmu->isCaptionHidden()))
 		{
 			LogString(L"ToolBar: ReBar double click: DoMaximizeRestore");
 			// Чтобы клик случайно не провалился в консоль
@@ -301,7 +301,7 @@ LRESULT CTabPanelBase::OnMouseRebar(UINT uMsg, int x, int y)
 			gpConEmu->DoMaximizeRestore();
 		}
 		else if ((gpSet->nTabBarDblClickAction == TabBarDblClick::OpenNewShell)
-			|| ((gpSet->nTabBarDblClickAction == TabBarDblClick::Auto) && !gpSet->isCaptionHidden()))
+			|| ((gpSet->nTabBarDblClickAction == TabBarDblClick::Auto) && !gpConEmu->isCaptionHidden()))
 		{
 			LogString(L"ToolBar: ReBar double click: RecreateAction");
 			gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
@@ -667,7 +667,7 @@ bool CTabPanelBase::OnSetCursorRebar()
 	if (gpSet->isTabs
 		&& !(gpSet->isQuakeStyle && gpSet->wndCascade) // Quake можно двигать по горизонтали
 		&& (gpConEmu->GetWindowMode() == wmNormal)
-		&& gpSet->isCaptionHidden())
+		&& gpConEmu->isCaptionHidden())
 	{
 		POINT ptCur = {};
 		GetCursorPos(&ptCur);

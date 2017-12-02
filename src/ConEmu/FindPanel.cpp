@@ -529,6 +529,15 @@ bool CFindPanel::IsAvailable(bool bFilled)
 	return false;
 }
 
+void CFindPanel::Invalidate()
+{
+	// #SIZE_TODO When caption is hidden, the search field is not painted properly on startup when `-detached`
+	if (mh_Pane)
+		::InvalidateRect(mh_Pane, NULL, FALSE);
+	if (mh_Edit)
+		::InvalidateRect(mh_Edit, NULL, FALSE);
+}
+
 HWND CFindPanel::Activate(bool bActivate)
 {
 	if (bActivate)

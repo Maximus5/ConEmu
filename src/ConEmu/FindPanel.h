@@ -57,6 +57,7 @@ public:
 	int  GetMinWidth();
 	HWND Activate(bool bActivate);
 	bool IsAvailable(bool bFilled);
+	void Invalidate();
 
 protected:
 	bool RegisterPaneClass();

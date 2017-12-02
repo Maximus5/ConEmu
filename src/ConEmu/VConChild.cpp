@@ -608,12 +608,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			} break;
 
 		case WM_SETCURSOR:
-			{
-				gpConEmu->WndProc(hWnd, messg, wParam, lParam);
-
-				//if (!result)
-				//	result = DefWindowProc(hWnd, messg, wParam, lParam);
-			}
+			result = gpConEmu->OnSetCursor();
 			// If an application processes this message, it should return TRUE to halt further processing or FALSE to continue.
 			break;
 
@@ -966,12 +961,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 			break;
 #endif
 		case WM_SETCURSOR:
-			{
-				gpConEmu->WndProc(hWnd, messg, wParam, lParam);
-
-				//if (!result)
-				//	result = DefWindowProc(hWnd, messg, wParam, lParam);
-			}
+			result = gpConEmu->OnSetCursor();
 			// If an application processes this message, it should return TRUE to halt further processing or FALSE to continue.
 			break;
 

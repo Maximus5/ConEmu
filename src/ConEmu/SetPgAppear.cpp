@@ -68,12 +68,6 @@ LRESULT CSetPgAppear::OnInitDialog(HWND hDlg, bool abInitial)
 
 	checkDlgButton(hDlg, cbAlwaysOnTop, gpSet->isAlwaysOnTop);
 
-	#ifdef _DEBUG
-	checkDlgButton(hDlg, cbTabsInCaption, gpSet->isTabsInCaption);
-	#else
-	ShowWindow(GetDlgItem(hDlg, cbTabsInCaption), SW_HIDE);
-	#endif
-
 	checkDlgButton(hDlg, cbNumberInCaption, gpSet->isNumberInCaption);
 
 	checkDlgButton(hDlg, cbMultiCon, gpSet->mb_isMulti);

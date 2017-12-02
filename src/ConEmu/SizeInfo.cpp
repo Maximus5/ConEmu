@@ -124,12 +124,15 @@ RECT SizeInfo::VisibleRect()
 
 // *** Relative to the upper-left corner of the client area ***
 
-HRGN SizeInfo::CreateFrameRgn()
+HRGN SizeInfo::CreateSelfFrameRgn()
 {
-	if (!gpSet->isCaptionHidden())
+	if (!mp_ConEmu->isCaptionHidden())
 		return NULL;
 
 	DoCalculate();
+
+	if (m_size.client == m_size.real_client)
+		return NULL;
 
 	HRGN hWhole, hClient;
 	hWhole = CreateRectRgn(0, 0, m_size.real_client.right, m_size.real_client.bottom);
@@ -187,7 +190,7 @@ void SizeInfo::DoCalculate()
 		m_size.window = mp_ConEmu->GetDefaultRect();
 
 	DpiValue dpi; dpi.SetDpi(m_opt.dpi, m_opt.dpi);
-	bool caption_hidden = gpSet->isCaptionHidden();
+	bool caption_hidden = mp_ConEmu->isCaptionHidden();
 
 	m_size.visible = m_size.window;
 	if (!caption_hidden && IsWin10())
@@ -199,18 +202,15 @@ void SizeInfo::DoCalculate()
 		m_size.visible.bottom += rcWin10.bottom;
 	}
 
+	RECT rcFrame = mp_ConEmu->CalcMargins(CEM_FRAMECAPTION);
 	if (!caption_hidden)
 	{
-		RECT rcFrame = mp_ConEmu->CalcMargins(CEM_FRAMECAPTION);
 		m_size.real_client = m_size.client = RECT{0, 0, RectWidth(m_size.window) - rcFrame.left - rcFrame.right, RectHeight(m_size.window) - rcFrame.top - rcFrame.bottom};
 	}
 	else
 	{
 		m_size.real_client = RECT{0, 0, RectWidth(m_size.window), RectHeight(m_size.window)};
-		int frame_width = gpSet->HideCaptionAlwaysFrame();
-		if (frame_width < 0)
-			frame_width = 0; // #SIZE_TODO Use default Windows frame width?
-		m_size.client = RECT{frame_width, frame_width, RectWidth(m_size.window) - frame_width, RectHeight(m_size.window) - frame_width};
+		m_size.client = RECT{rcFrame.left, rcFrame.top, RectWidth(m_size.window) - rcFrame.right, RectHeight(m_size.window) - rcFrame.bottom};
 	}
 
 	m_size.workspace = m_size.client;

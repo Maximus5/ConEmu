@@ -289,7 +289,6 @@ const wchar_t gsFocusQuakeCheckTimer[] = L"TIMER_QUAKE_AUTOHIDE_ID";
 #pragma warning(disable: 4355)
 CConEmuMain::CConEmuMain()
 	: CTaskBar(this)
-	, CConEmuSize(this)
 	, CConEmuStart(this)
 {
 	#pragma warning(default: 4355)
@@ -611,6 +610,8 @@ CConEmuMain::CConEmuMain()
 
 	// DosBox (the only available way to run legacy Dos-applications in 64-bit OS)
 	mb_DosBoxExists = CheckDosBoxExists();
+
+	CFrameHolder::InitFrameHolder();
 }
 
 void CConEmuMain::RegisterMessages()
@@ -1442,8 +1443,6 @@ BOOL CConEmuMain::Init()
 	MBoxA(szErr);
 	return FALSE;*/
 
-	InitFrameHolder();
-
 	return TRUE;
 }
 
@@ -1690,29 +1689,18 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 		dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
 		dwStyle |= WS_CHILD|WS_SYSMENU;
 	}
-	else if (gpSet->isCaptionHidden(wmNewMode))
+	else if (gpConEmu->isCaptionHidden(wmNewMode))
 	{
+		// Required to force window sizing
+		dwStyle &= ~WS_SYSMENU;
 		//Win& & Quake - не работает "Slide up/down" если есть ThickFrame
 		//if ((gpSet->isQuakeStyle == 0) // не для Quake. Для него нужна рамка, чтобы ресайзить
-		if ((wmNewMode == wmFullScreen) || (wmNewMode == wmMaximized) || IsWin10())
-		{
-			dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
-		}
-		else if ((m_ForceShowFrame == fsf_Show) || !gpSet->isFrameHidden())
-		{
-			dwStyle &= ~(WS_CAPTION);
-			dwStyle |= WS_THICKFRAME;
-		}
-		else
-		{
-			dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
-			dwStyle |= WS_DLGFRAME;
-		}
+		dwStyle &= ~(WS_CAPTION|WS_THICKFRAME|WS_DLGFRAME);
 	}
 	else
 	{
 		/* WS_CAPTION == WS_BORDER | WS_DLGFRAME  */
-		dwStyle |= WS_CAPTION|WS_THICKFRAME;
+		dwStyle |= WS_CAPTION|WS_THICKFRAME|WS_SYSMENU;
 	}
 
 	return dwStyle;
@@ -1877,6 +1865,9 @@ BOOL CConEmuMain::CreateMainWindow()
 	if (monitors.empty())
 		ReloadMonitorInfo();
 
+	// First ShowWindow forced to use nCmdShow. This may be weird...
+	SkipOneShowWindow();
+
 	// 2009-06-11 Возможно, что CS_SAVEBITS приводит к глюкам отрисовки
 	// банально не прорисовываются некоторые части экрана (драйвер видюхи глючит?)
 	WNDCLASSEX wc = {sizeof(WNDCLASSEX), CS_DBLCLKS|CS_OWNDC/*|CS_SAVEBITS*/, CConEmuMain::MainWndProc, 0, 16,
@@ -2019,9 +2010,7 @@ BOOL CConEmuMain::CreateMainWindow()
 BOOL CConEmuMain::CreateWorkWindow()
 {
 	HWND  hParent = ghWnd;
-	RECT  rcClient =
-		SizeInfo::WorkspaceRect();
-		// CalcRect(CER_WORKSPACE);
+	RECT  rcClient = SizeInfo::WorkspaceRect();
 	DWORD styleEx = GetWorkWindowStyleEx();
 	DWORD style = GetWorkWindowStyle();
 
@@ -5531,6 +5520,18 @@ void CConEmuMain::Invalidate(LPRECT lpRect, BOOL bErase /*= TRUE*/)
 	::InvalidateRect(ghWnd, lpRect, bErase);
 }
 
+void CConEmuMain::InvalidateFrame()
+{
+	if (!gpConEmu->isCaptionHidden())
+		return;
+	HRGN hRgn = gpConEmu->CreateSelfFrameRgn();
+	if (hRgn)
+	{
+		InvalidateRgn(ghWnd, hRgn, FALSE);
+		DeleteObject(hRgn);
+	}
+}
+
 void CConEmuMain::InvalidateAll()
 {
 	Invalidate(NULL, TRUE);
@@ -7197,9 +7198,6 @@ void CConEmuMain::PostCreate(bool abReceived/*=FALSE*/)
 
 	mn_StartupFinished = abReceived ? ss_PostCreate2Called : ss_PostCreate1Called;
 
-	// First ShowWindow forced to use nCmdShow. This may be weird...
-	SkipOneShowWindow();
-
 	if (!abReceived)
 	{
 		#ifdef MSGLOGGER
@@ -8085,14 +8083,14 @@ void CConEmuMain::OnHideCaption()
 	//	SetWindowMode(wmMaximized, TRUE);
 	//}
 
-	DEBUGTEST(bool bHideCaption = gpSet->isCaptionHidden());
+	DEBUGTEST(bool bHideCaption = gpConEmu->isCaptionHidden());
 
 	DWORD nStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD nNewStyle = FixWindowStyle(nStyle, WindowMode);
 	DWORD nStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
 	bool bNeedCorrect = (!isIconic() && (WindowMode != wmFullScreen)) && !m_QuakePrevSize.bWaitReposition;
 
-	if (nNewStyle != nStyle)
+	if (bNeedCorrect || (nNewStyle != nStyle))
 	{
 		// Make debug output too
 		{
@@ -8103,6 +8101,7 @@ void CConEmuMain::OnHideCaption()
 
 		MSetter lSet(&mn_IgnoreSizeChange);
 
+		// coordinates relative to upper-left screen corner
 		RECT rcClient = {}, rcBefore = {}, rcAfter = {};
 		if (bNeedCorrect)
 		{
@@ -8110,20 +8109,12 @@ void CConEmuMain::OnHideCaption()
 			_ASSERTE(!isFullScreen() || (WindowMode==wmNormal || WindowMode==wmMaximized));
 
 			// Тут нужен "натуральный" ClientRect
-			::GetClientRect(ghWnd, &rcClient);
-			rcBefore = rcClient;
-			MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcBefore, 2);
-			rcAfter = rcBefore;
-			AdjustWindowRectEx(&rcBefore, nStyle, FALSE, nStyleEx);
-			if (isZoomed())
-			{
-				int nCapY = GetSystemMetrics(SM_CYCAPTION);
-				if (gpSet->isCaptionHidden())
-					rcAfter.top -= nCapY;
-				else
-					rcAfter.top += nCapY;
-			}
-			AdjustWindowRectEx(&rcAfter, nNewStyle, FALSE, nStyleEx);
+			::GetWindowRect(ghWnd, &rcBefore);
+			rcClient = SizeInfo::ClientRect();
+			MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcClient, 2);
+			rcAfter = rcClient;
+			RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
+			AddMargins(rcAfter, rcFrame, rcop_Enlarge);
 
 			// When switching from "No caption" to "Caption"
 			if (WindowMode == wmNormal)
@@ -8138,7 +8129,7 @@ void CConEmuMain::OnHideCaption()
 		//nStyle = FixWindowStyle(nStyle);
 		//POINT ptBefore = {}; ClientToScreen(ghWnd, &ptBefore);
 
-		if (bNeedCorrect && (rcBefore.left != rcAfter.left || rcBefore.top != rcAfter.top))
+		if (bNeedCorrect && (rcBefore != rcAfter))
 		{
 			m_FixPosAfterStyle = GetTickCount();
 			mrc_FixPosAfterStyle = rcAfter;
@@ -11667,7 +11658,7 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 	return dpb;
 }
 
-LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
+LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 {
 	DEBUGSTRSETCURSOR(lParam==-1 ? L"WM_SETCURSOR (int)" : L"WM_SETCURSOR");
 #ifdef _DEBUG
@@ -11676,6 +11667,14 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam, LPARAM lParam)
 		int nDbg = 0;
 	}
 #endif
+
+	if (lParam != -1)
+	{
+		// Process only for client areas
+		WORD ht = LOWORD(lParam);
+		if (ht != HTCLIENT)
+			return 0;
+	}
 
 	RConStartArgsEx::SplitType split = CVConGroup::isSplitterDragging();
 	if (split)
@@ -12293,7 +12292,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	}
 
 	// режим полного скрытия заголовка
-	if (gpSet->isCaptionHidden())
+	if (gpConEmu->isCaptionHidden())
 	{
 		if (!bForeground)
 		{
@@ -13236,7 +13235,7 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 
 	if (mp_TabBar && mp_TabBar->IsSearchShown(true))
 	{
-		RECT rcWork = CalcRect(CER_WORKSPACE);
+		RECT rcWork = WorkspaceRect();
 		POINT ptCur = {}; GetCursorPos(&ptCur);
 		MapWindowPoints(NULL, ghWnd, &ptCur, 1);
 		if (PtInRect(&rcWork, ptCur))
@@ -13677,25 +13676,6 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			break;
 		case WM_SYSCOMMAND:
 			result = this->mp_Menu->OnSysCommand(hWnd, wParam, lParam, WM_SYSCOMMAND);
-			break;
-		case WM_NCLBUTTONDOWN:
-			// Note: При ресайзе WM_NCLBUTTONUP к сожалению не приходит
-			// поэтому нужно запомнить, что был начат ресайз и при завершении
-			// возможно выполнить дополнительные действия
-
-			BeginSizing(false);
-
-			result = DefWindowProc(hWnd, messg, wParam, lParam);
-			break;
-
-		case WM_NCLBUTTONDBLCLK:
-			this->mouse.state |= MOUSE_SIZING_DBLCKL; // чтобы в консоль не провалился LBtnUp если окошко развернется
-
-			if (this->OnMouse_NCBtnDblClk(hWnd, messg, wParam, lParam))
-				result = 0;
-			else
-				result = DefWindowProc(hWnd, messg, wParam, lParam);
-
 			break;
 
 		case WM_TRAYNOTIFY:

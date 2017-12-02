@@ -503,8 +503,6 @@ struct Settings
 		bool isHideCaptionAlways(); //<<mb_HideCaptionAlways
 		bool isMinimizeOnLoseFocus();
 		bool isForcedHideCaptionAlways(); // true, если mb_HideCaptionAlways отключать нельзя
-		bool isCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);
-		bool isFrameHidden();
 		//reg->Load(L"HideCaptionAlwaysFrame", nHideCaptionAlwaysFrame);
 		BYTE nHideCaptionAlwaysFrame;
 		int HideCaptionAlwaysFrame();
@@ -767,9 +765,6 @@ struct Settings
 		//reg->Load(L"TabDblClick", nTabDblClickAction);
 		UINT nTabBarDblClickAction; // enum of TabBarDblClick : TabBarDblClickActions[]
 		UINT nTabBtnDblClickAction; // enum of TabBtnDblClick : TabBtnDblClickActions[]
-
-		//TODO:
-		bool isTabsInCaption;
 
 		// Tab theme properties
 		//int ilDragHeight; = 10

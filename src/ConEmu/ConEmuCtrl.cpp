@@ -353,7 +353,7 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 		&& (vk == VK_DOWN || vk == VK_LEFT || vk == VK_RIGHT))
 	{
 		//120821 - в режиме HideCaption почему-то не выходит из Maximized по Win+Down
-		if (gpSet->isCaptionHidden())
+		if (gpConEmu->isCaptionHidden())
 		{
 			if (vk == VK_DOWN)
 			{

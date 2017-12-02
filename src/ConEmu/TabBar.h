@@ -201,7 +201,6 @@ class CTabBarClass
 		void SwitchRollback();
 
 		// Из Samples\Tabs
-		bool ProcessNcTabMouseEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; };
 		bool ProcessTabKeyboardEvent(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT &lResult) { return false; };
 		bool Toolbar_GetBtnRect(int nCmd, RECT* rcBtnRect);
 		int  GetHoverTab() { return -1; };

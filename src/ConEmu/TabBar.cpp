@@ -987,11 +987,6 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 	UpdateToolConsoles();
 
-	//if (gpSet->isTabsInCaption)
-	//{
-	//	SendMessage(ghWnd, WM_NCPAINT, 0, 0);
-	//}
-
 	mn_InUpdate --;
 
 	if (mb_PostUpdateRequested)
@@ -1340,7 +1335,7 @@ void CTabBarClass::OnCaptionHidden()
 {
 	if (!this) return;
 
-	mp_Rebar->OnCaptionHiddenChanged(gpSet->isCaptionHidden());
+	mp_Rebar->OnCaptionHiddenChanged(gpConEmu->isCaptionHidden());
 }
 
 void CTabBarClass::OnWindowStateChanged()

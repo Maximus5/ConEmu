@@ -3656,6 +3656,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	if (gpSet->wndCascade)
 	{
+		// #SIZE_TODO the CSettings::GetOverallDpi() must be already called
 		gpConEmu->CascadedPosFix();
 	}
 

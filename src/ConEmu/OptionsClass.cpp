@@ -310,6 +310,11 @@ int CSettings::QueryDpi()
 // Called during jump to monitor with different dpi
 void CSettings::SetRequestedDpi(int dpiX, int dpiY)
 {
+	if (dpiX <= 0 || dpiY <= 0)
+	{
+		_ASSERTE(dpiX>0 && dpiY>0);
+		return;
+	}
 	_dpi.SetDpi(dpiX, dpiY);
 }
 

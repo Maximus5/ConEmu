@@ -664,6 +664,7 @@ class CConEmuMain
 		BOOL Init();
 		void InitInactiveDC(CVirtualConsole* apVCon);
 		void Invalidate(LPRECT lpRect, BOOL bErase = TRUE);
+		void InvalidateFrame();
 		void InvalidateAll();
 		void UpdateWindowChild(CVirtualConsole* apVCon);
 		bool isCloseConfirmed();

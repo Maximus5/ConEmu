@@ -202,7 +202,7 @@ public:
 	MonitorInfoCache NearestMonitorInfo(HMONITOR hNewMon);
 
 public:
-	CConEmuSize(CConEmuMain* pOwner);
+	CConEmuSize();
 	virtual ~CConEmuSize();
 
 public:
@@ -242,6 +242,8 @@ public:
 	bool IsSizePosFree(ConEmuWindowMode CheckMode = wmFullScreen);
 	bool IsCantExceedMonitor();
 	bool IsPosLocked();
+	bool IsInResize();
+	bool IsInWindowModeChange();
 	void LogMinimizeRestoreSkip(LPCWSTR asMsgFormat, DWORD nParm1 = 0, DWORD nParm2 = 0, DWORD nParm3 = 0);
 	bool JumpNextMonitor(bool Next);
 	bool JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd, LPRECT prcNewPos = NULL);
@@ -298,6 +300,10 @@ public:
 
 	HRGN CreateWindowRgn(bool abTestOnly = false);
 	HRGN CreateWindowRgn(bool abTestOnly, bool abRoundTitle, int anX, int anY, int anWndWidth, int anWndHeight);
+
+	bool isFrameCropped();
+	bool isCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);
+	UINT GetSelfFrameWidth();
 
 protected:
 	RECT CalcMargins_Win10Frame();

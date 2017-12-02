@@ -801,11 +801,6 @@ void Settings::InitSettings()
 	isStoreTaskbarkTasks = true;
 	isJumpListAutoUpdate = true;
 
-	isTabsInCaption = false; //cbTabsInCaption
-	#if defined(CONEMU_TABBAR_EX)
-	isTabsInCaption = true;
-	#endif
-
 	sTabCloseMacro = sSaveAllMacro = NULL;
 	nToolbarAddSpace = 0;
 	// Show only shield (szAdminTitleSuffix is ignored if ats_Shield)
@@ -4518,44 +4513,12 @@ void Settings::SetMinToTray(bool bMinToTray)
 	}
 }
 
-bool Settings::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
-{
-	bool bCaptionHidden = isHideCaptionAlways(); // <== Quake & UserScreen here.
-	if (!bCaptionHidden)
-	{
-		if (wmNewMode == wmCurrent || wmNewMode == wmNotChanging)
-			wmNewMode = gpConEmu->WindowMode;
-
-		bCaptionHidden = (wmNewMode == wmFullScreen)
-				|| ((wmNewMode == wmMaximized) && isHideCaption);
-	}
-	return bCaptionHidden;
-}
-
 int Settings::HideCaptionAlwaysFrame()
 {
 	if (gpConEmu->isInside())
 		return 0;
 	int iFrame = gpConEmu->opt.FrameWidth.Exists ? gpConEmu->opt.FrameWidth.Int : gpSet->nHideCaptionAlwaysFrame;
 	return (iFrame > HIDECAPTIONALWAYSFRAME_MAX) ? -1 : iFrame;
-}
-
-// Функция НЕ учитывает isCaptionHidden.
-// Возвращает true, если 'Frame width' меньше системной для ThickFame
-// иначе - false, меняем рамку на "NonResizable"
-bool Settings::isFrameHidden()
-{
-	if (!nHideCaptionAlwaysFrame || isQuakeStyle || isUserScreenTransparent)
-		return true;
-	if (nHideCaptionAlwaysFrame > HIDECAPTIONALWAYSFRAME_MAX)
-		return false; // sure
-
-	// otherwise - need to check system settings
-	UINT nSysFrame = GetSystemMetrics(SM_CXSIZEFRAME);
-	if (nSysFrame > nHideCaptionAlwaysFrame)
-		return true;
-
-	return false;
 }
 
 int Settings::GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated)

@@ -1476,6 +1476,8 @@ void CTabPanelWin::InvalidateBar()
 	if (this && mh_Rebar)
 	{
 		InvalidateRect(mh_Rebar, NULL, TRUE);
+		if (mp_Find)
+			mp_Find->Invalidate();
 	}
 }
 
@@ -1524,7 +1526,7 @@ LRESULT CTabPanelWin::TabHitTest(bool abForce /*= false*/, int* pnOverTabHit /*=
 	if (pnOverTabHit)
 		*pnOverTabHit = -1;
 
-	if (gpSet->isTabs && (abForce || gpSet->isCaptionHidden()))
+	if (gpSet->isTabs && (abForce || gpConEmu->isCaptionHidden()))
 	{
 		if (mp_Owner->IsTabsShown())
 		{

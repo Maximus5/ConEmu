@@ -816,7 +816,7 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 
 	// Due to rather strange DWM's behavior which differs a lot
 	// when window has *non-resizable* border
-	if (gpSet->isFrameHidden())
+	if (gpConEmu->isFrameCropped())
 	{
 		RECT rcMargin = gpConEmu->CalcMargins(CEM_FRAMEONLY);
 		ptOffset.x += rcMargin.left;

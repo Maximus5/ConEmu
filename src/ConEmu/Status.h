@@ -220,7 +220,7 @@ public:
 	void OnTransparency();
 
 	bool IsStatusResizing();
-	bool IsCursorOverResizeMark(POINT ptCurClient);
+	bool IsCursorOverResizeMark(const POINT& ptCurClient);
 	bool IsResizeAllowed();
 	bool ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, POINT ptCurClient, LRESULT& lResult);
 	void ProcessMenuHighlight(HMENU hMenu, WORD nID, WORD nFlags);

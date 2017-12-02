@@ -492,9 +492,6 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbShowWasSetOnTopMsg:
 			OnBtn_ShowWasSetOnTopMsg(hDlg, CB, uCheck);
 			break;
-		case cbTabsInCaption:
-			OnBtn_TabsInCaption(hDlg, CB, uCheck);
-			break;
 		case cbNumberInCaption:
 			OnBtn_NumberInCaption(hDlg, CB, uCheck);
 			break;
@@ -3181,21 +3178,6 @@ void CSetDlgButtons::OnBtn_ShowWasSetOnTopMsg(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->isDownShowExOnTopMessage = uCheck ? false : true;
 
 } // cbShowWasSetOnTopMsg
-
-
-// cbTabsInCaption
-void CSetDlgButtons::OnBtn_TabsInCaption(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==cbTabsInCaption);
-
-	gpSet->isTabsInCaption = _bool(uCheck);
-	////RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW|RDW_FRAME);
-	////gpConEmu->OnNcMessage(ghWnd, WM_NCPAINT, 0,0);
-	//SendMessage(ghWnd, WM_NCACTIVATE, 0, 0);
-	//SendMessage(ghWnd, WM_NCPAINT, 0, 0);
-	gpConEmu->RedrawFrame();
-
-} // cbTabsInCaption
 
 
 // cbNumberInCaption

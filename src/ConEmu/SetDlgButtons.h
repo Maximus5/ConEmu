@@ -188,7 +188,6 @@ protected:
 	static void OnBtn_DisableAllFlashing(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ShowWasHiddenMsg(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ShowWasSetOnTopMsg(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_TabsInCaption(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_NumberInCaption(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_AdminSuffixOrShield(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_HideInactiveConTabs(HWND hDlg, WORD CB, BYTE uCheck);

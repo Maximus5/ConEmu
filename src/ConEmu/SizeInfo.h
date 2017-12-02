@@ -55,7 +55,7 @@ public:
 
 	// *** Relative to the upper-left corner of the client area ***
 
-	HRGN CreateFrameRgn();
+	HRGN CreateSelfFrameRgn();
 
 	// Client rectangle, may be simulated if we utilize some space for self-implemented borders
 	RECT ClientRect();

@@ -236,7 +236,6 @@ BEGIN
     GROUPBOX        "Title bar (Caption) and border options",gbFeatureCaption,4,158,375,59
     CONTROL         "Hide caption when maximized",cbHideCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,171,144,8
     CONTROL         "Hide caption always",cbHideCaptionAlways,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,171,79,8
-    CONTROL         "Show tabs in caption",cbTabsInCaption,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,268,171,106,8
     RTEXT           "Frame width:",stFrameWidth,10,186,84,8
     EDITTEXT        tHideCaptionAlwaysFrame,98,184,40,12,ES_AUTOHSCROLL
     RTEXT           "Appear delay:",stFrameAppear,142,186,82,8

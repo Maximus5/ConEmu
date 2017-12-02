@@ -30,10 +30,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
+class CConEmuMain;
 
 class CFrameHolder
 {
 private:
+	CConEmuMain* mp_ConEmu;
 	bool mb_Initialized = false;
 	#if defined(CONEMU_TABBAR_EX)
 	bool mb_WasGlassDraw = false;
@@ -42,7 +44,7 @@ private:
 	bool mb_DontPreserveClient = false; // запретить сохранение клиентской области при ресайзе
 	LONG mn_InNcPaint = 0;
 	POINT ptLastNcClick = {};
-	int mn_WinCaptionHeight = 0, mn_FrameWidth = 0, mn_FrameHeight = 0, mn_OurCaptionHeight = 0, mn_TabsHeight = 0, mn_CaptionDragHeight = 0;
+	int mn_WinCaptionHeight = 0, mn_FrameWidth = 0, mn_FrameHeight = 0, mn_OurCaptionHeight = 0, mn_CaptionDragHeight = 0;
 	RECT mrc_NcClientMargins = {};
 	int mn_RedrawLockCount = 0;
 	bool mb_RedrawRequested = false;
@@ -72,19 +74,15 @@ public:
 	//virtual void ShowSysmenu(int x=-32000, int y=-32000, bool bAlignUp = false) = 0;
 	//virtual void ShowTabMenu(int anConsole, int anTab, int x, int y) = 0;
 	//virtual void OnPaintClient(HDC hdc/*, int width, int height*/) = 0;
-	virtual void CalculateTabPosition(const RECT &rcWindow, const RECT &rcCaption, RECT* rcTabs);
-	virtual void CalculateCaptionPosition(const RECT &rcWindow, RECT* rcCaption);
 public:
 	void RedrawFrame();
 	void SetFrameActiveState(bool bActive);
 public:
 	void RecalculateFrameSizes();
-	int GetFrameWidth(); // ширина рамки окна
-	int GetFrameHeight(); // высота рамки окна
+	UINT GetWinFrameWidth(); // системная ширина/высота рамки окна
+	UINT GetWinCaptionHeight(); // высота заголовка в окнах Windows по умолчанию (без учета табов)
 	int GetCaptionHeight(); // высота НАШЕГО заголовка (с учетом табов)
-	int GetTabsHeight(); // высота табов
 	int GetCaptionDragHeight(); // высота части заголовка, который оставляем для "таскания" окна
-	int GetWinCaptionHeight(); // высота заголовка в окнах Windows по умолчанию (без учета табов)
 	void GetIconShift(POINT& IconShift);
 
 protected:

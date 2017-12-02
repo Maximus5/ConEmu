@@ -1147,7 +1147,7 @@ bool CStatus::IsResizeAllowed()
 	return true;
 }
 
-bool CStatus::IsCursorOverResizeMark(POINT ptCurClient)
+bool CStatus::IsCursorOverResizeMark(const POINT& ptCurClient)
 {
 	_ASSERTE(this);
 
@@ -1218,6 +1218,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
 	lResult = 0;
 
+#if 0
 	// Cursor over "resize mark"?
 	if (IsResizeAllowed()
 		&& (mb_StatusResizing || PtInRect(&mrc_LastResizeCol, ptCurClient)))
@@ -1269,6 +1270,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 			return true;
 		}
 	}
+#endif
 
 	if (gpConEmu->isSizing() || !PtInRect(&mrc_LastStatus, ptCurClient))
 	{

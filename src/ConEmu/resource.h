@@ -345,7 +345,6 @@
 #define tConsoleFontHklmNote            1731
 #define tConsoleFontConsoleNote         1732
 #define cbBgAllowPlugin                 1734
-#define cbTabsInCaption                 1735
 #define cbAlwaysShowTrayIcon            1736
 #define cbLogShellActivity              1740
 #define cbLogInputActivity              1741
