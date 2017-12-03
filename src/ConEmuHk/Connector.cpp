@@ -73,10 +73,10 @@ static DWORD ProtectCtrlBreakTrap(HANDLE h_input)
 	return conInMode;
 }
 
-static BOOL WINAPI termReadInput(PINPUT_RECORD pir, DWORD nCount, PDWORD pRead)
+static ReadInputResult WINAPI termReadInput(PINPUT_RECORD pir, DWORD nCount, PDWORD pRead)
 {
-	if (gbTerminateReadInput)
-		return FALSE;
+	if (gbTerminateReadInput || !pir || !pRead)
+		return rir_None;
 
 	if (!ghTermInput)
 		ghTermInput = GetStdHandle(STD_INPUT_HANDLE);
@@ -85,19 +85,27 @@ static BOOL WINAPI termReadInput(PINPUT_RECORD pir, DWORD nCount, PDWORD pRead)
 
 	UpdateAppMapFlags(rcif_LLInput);
 
+	ReadInputResult result = rir_None;
 	InterlockedIncrement(&gnInTermInputReading);
 	DWORD peek = 0;
 	BOOL bRc = (PeekConsoleInputW(ghTermInput, pir, nCount, &peek) && peek)
-		? ReadConsoleInputW(ghTermInput, pir, nCount, pRead)
+		? ReadConsoleInputW(ghTermInput, pir, peek, pRead)
 		: FALSE;
+	if (bRc && *pRead)
+	{
+		result = rir_Ready;
+		INPUT_RECORD temp = {};
+		if (PeekConsoleInputW(ghTermInput, &temp, 1, &peek) && peek)
+			result = rir_Ready_More;
+	}
 	InterlockedDecrement(&gnInTermInputReading);
 
 	if (!bRc)
-		return FALSE;
+		return rir_None;
 	if (gbTerminateReadInput)
-		return FALSE;
+		return rir_None;
 
-	return TRUE;
+	return result;
 }
 
 int WINAPI RequestTermConnector(/*[IN/OUT]*/RequestTermConnectorParm* Parm)
