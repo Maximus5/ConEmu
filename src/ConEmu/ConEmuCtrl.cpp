@@ -1284,8 +1284,8 @@ bool CConEmuCtrl::key_ShowCaption(const ConEmuChord& VkState, bool TestOnly, con
 
 	if (ghOpWnd)
 	{
-		if (gpSetCls->GetPage(thi_Features))
-			CheckDlgButton(gpSetCls->GetPage(thi_Features), cbHideCaptionAlways, gpSet->isHideCaptionAlways());
+		if (gpSetCls->GetPage(thi_Appear))
+			CheckDlgButton(gpSetCls->GetPage(thi_Appear), cbHideCaptionAlways, gpSet->isHideCaptionAlways());
 		apiSetForegroundWindow(ghOpWnd);
 	}
 
