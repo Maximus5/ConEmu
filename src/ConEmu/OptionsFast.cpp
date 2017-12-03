@@ -2355,7 +2355,7 @@ static void CreateBashTask()
 	// HKLM\SOFTWARE\Cygwin\setup\rootdir
 	// HKCU\Software\Cygwin\setup\rootdir
 	bash_found |= App.Add(L"Bash::CygWin bash",
-		L" --login -i -new_console:m:/cygdrive -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\Cygwin.ico\"", L"set CHERE_INVOKING=1 & ", L"cygwin",
+		L" --login -i -new_console:C:\"" FOUND_APP_PATH_STR L"\\..\\Cygwin.ico\"", L"set CHERE_INVOKING=1 & ", L"cygwin",
 		L"[SOFTWARE\\Cygwin\\setup:rootdir]\\bin\\bash.exe",
 		L"\\CygWin\\bin\\bash.exe", NULL);
 	//{L"CygWin mintty", L"\\CygWin\\bin\\mintty.exe", L" -"},
