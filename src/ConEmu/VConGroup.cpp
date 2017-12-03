@@ -4042,9 +4042,7 @@ void CVConGroup::ShowActiveGroup(CVirtualConsole* pOldActive)
 	if (pActiveGroup && pActiveGroup->mb_ResizeFlag)
 	{
 		SyncConsoleToWindow();
-		// Отресайзить, могла измениться конфигурация
-		RECT mainClient = gpConEmu->CalcRect(CER_MAINCLIENT, gp_VActive);
-		CVConGroup::ReSizePanes(mainClient);
+		CVConGroup::ReSizePanes(gp_VActive->mp_ConEmu->WorkspaceRect());
 	}
 
 	// Showing...
@@ -4523,6 +4521,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 	}
 #endif
 
+#if 0
 	if ((tWhat == CER_DC) && (tFrom != CER_CONSOLE_CUR))
 	{
 		_ASSERTE(pVCon!=NULL);
@@ -4586,6 +4585,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 				rcAddShift.bottom = nDeltaY;
 		}
 	}
+#endif
 
 	switch (tWhat)
 	{
@@ -4608,7 +4608,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 		case CER_CONSOLE_CUR: // switch (tWhat)
 		case CER_CONSOLE_NTVDMOFF: // switch (tWhat)
 		{
-			_ASSERTE(tWhat!=CER_DC || (tFrom==CER_BACK || tFrom==CER_CONSOLE_CUR)); // CER_DC должен считаться от CER_BACK
+			_ASSERTE(tWhat!=CER_DC || (tFrom==CER_BACK || tFrom==CER_CONSOLE_CUR || tFrom == CER_MAINCLIENT || tFrom == CER_WORKSPACE));
 
 			COORD crConFixSize = {};
 			if ((tWhat == CER_CONSOLE_CUR) && pVCon->RCon()->isFixAndCenter(&crConFixSize))
