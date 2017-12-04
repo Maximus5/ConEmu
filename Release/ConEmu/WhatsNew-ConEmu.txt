@@ -20,6 +20,18 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.12.3
+* Hotkey `Apps+C` didn't update ‘Hide caption always’ checkbox.
+* gh-1329: Fix progress detection in console window title.
+* gh-1206: correct position after `こんばんはGood Evening`.
+* gh-1321: Close tabs to the right (menu, hotkey, macro).
+* gh-1236: Proper fix for 1638b9b5 (kernel debug log to fill on Win10).
+* gh-275, gh-1226: Resize refactoring: dialogs, per-monitor dpi, caption-less mode etc.
+* Fix yanking while dragging the window by its contents with ‘Snap to desktop edges’ enabled.
+* Connector: Fix infinite waiting on shell exit.
+* gh-1331: Delay in response to any keypress on connector shells.
+
+
 2017.11.17
 * Option ‘Dynamic scrollbar range’ was not working for not-hooked console applications (e.g. wsl.exe).
 * gh-1306, gh-460: Perhaps this fixes unexpected ‘Tool window’.
