@@ -51,12 +51,8 @@ bool CHotKeyDialog::EditHotKey(HWND hParent, DWORD& VkMod)
 }
 
 CHotKeyDialog::CHotKeyDialog(HWND hParent, DWORD aVkMod)
+	: mh_Parent(hParent)
 {
-	mh_Dlg = NULL;
-	mh_Parent = hParent;
-
-	ZeroStruct(m_HK);
-	m_HK.HkType = chk_User;
 	m_HK.SetVkMod(aVkMod);
 
 	CDpiForDialog::Create(mp_DpiAware);

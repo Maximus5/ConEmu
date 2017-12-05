@@ -37,10 +37,10 @@ class CDpiForDialog;
 class CHotKeyDialog
 {
 private:
-	HWND mh_Dlg;
-	HWND mh_Parent;
-	ConEmuHotKey m_HK;
-	CDpiForDialog* mp_DpiAware;
+	HWND mh_Dlg = NULL;
+	HWND mh_Parent = NULL;
+	ConEmuHotKey m_HK = {};
+	CDpiForDialog* mp_DpiAware = nullptr;
 public:
 	static bool EditHotKey(HWND hParent, DWORD& VkMod);
 	DWORD GetVkMod();
