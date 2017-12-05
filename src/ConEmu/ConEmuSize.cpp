@@ -493,7 +493,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 				nGetStyle = 5;
 			}
 
-			_ASSERTE((gpConEmu->isIconic() == (rcMain.left <= -32000 && rcMain.top <= -32000)) || (changeFromWindowMode != wmNotChanging));
+			_ASSERTE((mp_ConEmu->isIconic() == (rcMain.left <= -32000 && rcMain.top <= -32000)) || (changeFromWindowMode != wmNotChanging));
 
 			// If rcMain still has invalid pos (got from iconic window placement)
 			if (rcMain.left <= -32000 && rcMain.top <= -32000)
@@ -1210,9 +1210,9 @@ int CConEmuSize::GetInitialDpi(DpiValue* pDpi)
 
 bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWSTR asH)
 {
-	if (gpConEmu->mp_Inside)
+	if (mp_ConEmu->mp_Inside)
 	{
-		_ASSERTE(gpConEmu->mp_Inside == NULL);
+		_ASSERTE(mp_ConEmu->mp_Inside == NULL);
 		return false;
 	}
 
@@ -1243,8 +1243,8 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 	gpSet->_wndX = newX;
 	if (!gpSet->isQuakeStyle)
 		gpSet->_wndY = newY;
-	gpConEmu->WndWidth.Set(true, newW.Style, newW.Value);
-	gpConEmu->WndHeight.Set(false, newH.Style, newH.Value);
+	mp_ConEmu->WndWidth.Set(true, newW.Style, newW.Value);
+	mp_ConEmu->WndHeight.Set(false, newH.Style, newH.Value);
 	gpSet->wndWidth.Set(true, newW.Style, newW.Value);
 	gpSet->wndHeight.Set(true, newH.Style, newH.Value);
 
@@ -1252,7 +1252,7 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 	{
 		if (hDlg)
 			SetFocus(GetDlgItem(hDlg, tWndWidth));
-		RECT rcQuake = gpConEmu->GetDefaultRect();
+		RECT rcQuake = mp_ConEmu->GetDefaultRect();
 		// And size/move!
 		setWindowPos(NULL, rcQuake.left, rcQuake.top, rcQuake.right-rcQuake.left, rcQuake.bottom-rcQuake.top, SWP_NOZORDER);
 	}
@@ -1261,19 +1261,19 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 		if (hDlg)
 			SetFocus(GetDlgItem(hDlg, rNormal));
 
-		if (gpConEmu->isZoomed() || gpConEmu->isIconic() || gpConEmu->isFullScreen())
-			gpConEmu->SetWindowMode(wmNormal);
+		if (mp_ConEmu->isZoomed() || mp_ConEmu->isIconic() || mp_ConEmu->isFullScreen())
+			mp_ConEmu->SetWindowMode(wmNormal);
 
 		setWindowPos(NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 
 		// Установить размер
-		gpConEmu->SizeWindow(newW, newH);
+		mp_ConEmu->SizeWindow(newW, newH);
 
 		setWindowPos(NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 	}
 
 	// Запомнить "идеальный" размер окна, выбранный пользователем
-	gpConEmu->StoreIdealRect();
+	mp_ConEmu->StoreIdealRect();
 
 	return true;
 }
@@ -1971,7 +1971,7 @@ bool CConEmuSize::FixPosByStartupMonitor(const HMONITOR hStartMon)
 		LogString(PSS_SKIP_PREFIX L"hStartMon is NULL");
 		return false;
 	}
-	if (!gpConEmu->opt.Monitor.Exists && !gpSet->isRestore2ActiveMon)
+	if (!mp_ConEmu->opt.Monitor.Exists && !gpSet->isRestore2ActiveMon)
 	{
 		LogString(PSS_SKIP_PREFIX L"Neither `-Monitor` switch nor `Restore to active monitor` option were specified");
 		return false;
@@ -3532,9 +3532,9 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	}
 
 	// Quake is incompatible with "Desktop mode", drop last one
-	if (NewQuakeMode && gpConEmu->opt.DesktopMode)
+	if (NewQuakeMode && mp_ConEmu->opt.DesktopMode)
 	{
-		gpConEmu->opt.DesktopMode.Clear();
+		mp_ConEmu->opt.DesktopMode.Clear();
 		DoDesktopModeSwitch();
 	}
 
@@ -3708,7 +3708,7 @@ bool CConEmuSize::ChandeTileMode(ConEmuWindowCommand Tile)
 		return false;
 	}
 
-	if (!gpConEmu->isMeForeground(false, false))
+	if (!mp_ConEmu->isMeForeground(false, false))
 	{
 		mp_ConEmu->LogString(L"ChangeTileMode SKIPPED because ConEmu is not a foreground window");
 		return false;
@@ -4049,7 +4049,7 @@ bool CConEmuSize::IsSizeFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
 		return false;
 
 	// FullScreen is not supported in "Desktop" mode
-	if (gpConEmu->opt.DesktopMode && (CheckMode == wmFullScreen))
+	if (mp_ConEmu->opt.DesktopMode && (CheckMode == wmFullScreen))
 		return false;
 
 	// В режиме "Quake" менять размер можно только в "Normal"
@@ -4066,7 +4066,7 @@ bool CConEmuSize::IsSizePosFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
 		return false;
 
 	// FullScreen is not supported in "Desktop" mode
-	if (gpConEmu->opt.DesktopMode && (CheckMode == wmFullScreen))
+	if (mp_ConEmu->opt.DesktopMode && (CheckMode == wmFullScreen))
 		return false;
 
 	// Размер И положение можно менять произвольно
@@ -4103,7 +4103,7 @@ bool CConEmuSize::JumpNextMonitor(bool Next)
 	// While debugging - low-level keyboard hooks almost lock DevEnv
 	HooksUnlocker;
 
-	if (mp_ConEmu->mp_Inside || gpConEmu->opt.DesktopMode)
+	if (mp_ConEmu->mp_Inside || mp_ConEmu->opt.DesktopMode)
 	{
 		LogString(L"JumpNextMonitor skipped, not allowed in Inside/Desktop modes");
 		return false;
@@ -4354,7 +4354,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	//	bool bQuake = SetQuakeMode(gpSet->isQuakeStyle
 	//}
 
-	if (gpConEmu->opt.DesktopMode)
+	if (mp_ConEmu->opt.DesktopMode)
 	{
 		if (inMode == wmFullScreen)
 			inMode = (WindowMode != wmNormal) ? wmNormal : wmMaximized; // FullScreen на Desktop-е невозможен
@@ -4472,7 +4472,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				//apiShow Window(ghWnd, SW_SHOWNORMAL); // WM_SYSCOMMAND использовать не хочется...
 				MSetter lSet(&mn_IgnoreSizeChange);
 
-				if (gpConEmu->opt.DesktopMode)
+				if (mp_ConEmu->opt.DesktopMode)
 				{
 					RECT rcNormal = CalcRect(CER_RESTORE, MakeRect(0,0), CER_RESTORE);
 					DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
@@ -4596,7 +4596,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 				mp_ConEmu->InvalidateAll();
 
-				if (!gpConEmu->opt.DesktopMode)
+				if (!mp_ConEmu->opt.DesktopMode)
 				{
 					DEBUGTEST(WINDOWPLACEMENT wpl1 = {sizeof(wpl1)}; GetWindowPlacement(ghWnd, &wpl1););
 					ShowMainWindow(SW_SHOWMAXIMIZED, abFirstShow);
@@ -5368,7 +5368,7 @@ bool CConEmuSize::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int c
 	BOOL lbRc;
 
 	bool bInCreate = mp_ConEmu->InCreateWindow();
-	bool bQuake = gpSet->isQuakeStyle && !(gpConEmu->opt.DesktopMode || mp_ConEmu->mp_Inside);
+	bool bQuake = gpSet->isQuakeStyle && !(mp_ConEmu->opt.DesktopMode || mp_ConEmu->mp_Inside);
 
 	MSetter inSetWindowPos(&mn_InSetWindowPos);
 	_ASSERTE(mn_InSetWindowPos<3);
@@ -6171,11 +6171,11 @@ void CConEmuSize::DoFullScreen()
 	ConEmuWindowMode wm = GetWindowMode();
 
 	if (wm != wmFullScreen)
-		gpConEmu->SetWindowMode(wmFullScreen);
-	else if (gpConEmu->opt.DesktopMode && (wm != wmNormal))
-		gpConEmu->SetWindowMode(wmNormal);
+		mp_ConEmu->SetWindowMode(wmFullScreen);
+	else if (mp_ConEmu->opt.DesktopMode && (wm != wmNormal))
+		mp_ConEmu->SetWindowMode(wmNormal);
 	else
-		gpConEmu->SetWindowMode(gpConEmu->isWndNotFSMaximized ? wmMaximized : wmNormal);
+		mp_ConEmu->SetWindowMode(mp_ConEmu->isWndNotFSMaximized ? wmMaximized : wmNormal);
 }
 
 void CConEmuSize::DoMaximizeRestore()
@@ -6193,7 +6193,7 @@ void CConEmuSize::DoMaximizeRestore()
 
 	ConEmuWindowMode wm = GetWindowMode();
 
-	gpConEmu->SetWindowMode((wm != wmMaximized) ? wmMaximized : wmNormal);
+	mp_ConEmu->SetWindowMode((wm != wmMaximized) ? wmMaximized : wmNormal);
 }
 
 void CConEmuSize::LogMinimizeRestoreSkip(LPCWSTR asMsgFormat, DWORD nParm1, DWORD nParm2, DWORD nParm3)
@@ -6554,7 +6554,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		if (mp_ConEmu->GetActiveVCon(&VCon) >= 0)
 		{
 			VCon->PostRestoreChildFocus();
-			//gpConEmu->OnFocus(ghWnd, WM_ACTIVATEAPP, TRUE, 0, L"From DoMinimizeRestore(sih_Show)");
+			//mp_ConEmu->OnFocus(ghWnd, WM_ACTIVATEAPP, TRUE, 0, L"From DoMinimizeRestore(sih_Show)");
 		}
 
 		CVConGroup::EnumVCon(evf_Visible, CRealConsole::RefreshAfterRestore, 0);
@@ -6691,7 +6691,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			}
 			else
 			{
-				// SC_MINIMIZE сам обработает (gpSet->isMinToTray || gpConEmu->ForceMinimizeToTray)
+				// SC_MINIMIZE сам обработает (gpSet->isMinToTray || mp_ConEmu->ForceMinimizeToTray)
 				SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 			}
 		}
@@ -6743,7 +6743,7 @@ void CConEmuSize::DoForcedFullScreen(bool bSet /*= true*/)
 		}
 	}
 
-	if (gpConEmu->opt.DesktopMode)
+	if (mp_ConEmu->opt.DesktopMode)
 	{
 		DisplayLastError(L"Can't set FullScreen in DesktopMode", -1);
 		return;
@@ -6785,13 +6785,13 @@ void CConEmuSize::DoForcedFullScreen(bool bSet /*= true*/)
 
 void CConEmuSize::DoAlwaysOnTopSwitch()
 {
-	HWND hwndAfter = (gpSet->isAlwaysOnTop || gpConEmu->opt.DesktopMode) ? HWND_TOPMOST : HWND_NOTOPMOST;
+	HWND hwndAfter = (gpSet->isAlwaysOnTop || mp_ConEmu->opt.DesktopMode) ? HWND_TOPMOST : HWND_NOTOPMOST;
 
 	#ifdef CATCH_TOPMOST_SET
 	_ASSERTE((hwndAfter!=HWND_TOPMOST) && "Setting TopMost mode - CConEmuMain::OnAlwaysOnTop()");
 	#endif
 
-	CheckMenuItem(gpConEmu->mp_Menu->GetSysMenu(), ID_ALWAYSONTOP, MF_BYCOMMAND |
+	CheckMenuItem(mp_ConEmu->mp_Menu->GetSysMenu(), ID_ALWAYSONTOP, MF_BYCOMMAND |
 	              (gpSet->isAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED));
 	setWindowPos(hwndAfter, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 
@@ -6817,7 +6817,7 @@ void CConEmuSize::DoDesktopModeSwitch()
 	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD dwNewStyle = dwStyle;
 
-	if (gpConEmu->opt.DesktopMode)
+	if (mp_ConEmu->opt.DesktopMode)
 	{
 		dwNewStyleEx |= WS_EX_TOOLWINDOW;
 		dwNewStyle |= WS_POPUP;
@@ -6841,11 +6841,11 @@ void CConEmuSize::DoDesktopModeSwitch()
 	HWND hDesktop = GetDesktopWindow();
 
 	//HWND hProgman = FindWindowEx(hDesktop, NULL, L"Progman", L"Program Manager");
-	//HWND hParent = NULL; // gpConEmu->opt.DesktopMode ?  : GetDesktopWindow();
+	//HWND hParent = NULL; // mp_ConEmu->opt.DesktopMode ?  : GetDesktopWindow();
 
 	OnTaskbarSettingsChanged();
 
-	if (gpConEmu->opt.DesktopMode)
+	if (mp_ConEmu->opt.DesktopMode)
 	{
 		// Shell windows is FindWindowEx(hDesktop, NULL, L"Progman", L"Program Manager");
 		HWND hShellWnd = GetShellWindow();
@@ -6901,7 +6901,7 @@ void CConEmuSize::DoDesktopModeSwitch()
 
 		if (!hShellWnd)
 		{
-			gpConEmu->opt.DesktopMode.Clear();
+			mp_ConEmu->opt.DesktopMode.Clear();
 
 			HWND hExt = gpSetCls->GetPage(gpSetCls->thi_Features);
 
@@ -6928,7 +6928,7 @@ void CConEmuSize::DoDesktopModeSwitch()
 		}
 	}
 
-	if (!gpConEmu->opt.DesktopMode)
+	if (!mp_ConEmu->opt.DesktopMode)
 	{
 		//dwStyle |= WS_POPUP;
 		RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
