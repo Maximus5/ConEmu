@@ -56,6 +56,11 @@ SizeInfo::~SizeInfo()
 {
 }
 
+bool SizeInfo::isCalculated() const
+{
+	return m_size.valid;
+}
+
 // Following functions deprecate current sizes, recalculation will be executed on next size request
 void SizeInfo::RequestRecalc()
 {
@@ -154,6 +159,13 @@ RECT SizeInfo::ClientRect()
 {
 	DoCalculate();
 	return m_size.client;
+}
+
+// Factual client rectangle, as Windows knows about our window
+RECT SizeInfo::RealClientRect()
+{
+	DoCalculate();
+	return m_size.real_client;
 }
 
 // Contains TabBar, Search panel, ToolBar

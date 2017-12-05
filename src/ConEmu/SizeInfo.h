@@ -59,6 +59,8 @@ public:
 
 	// Client rectangle, may be simulated if we utilize some space for self-implemented borders
 	RECT ClientRect();
+	// Factual client rectangle, as Windows knows about our window
+	RECT RealClientRect();
 	// Contains TabBar, Search panel, ToolBar
 	RECT RebarRect();
 	// StatusBar
@@ -67,6 +69,7 @@ public:
 	RECT WorkspaceRect();
 
 public:
+	bool isCalculated() const;
 	// Following functions deprecate current sizes, recalculation will be executed on next size request
 	void RequestRecalc();
 	// Change used DPI
@@ -106,7 +109,7 @@ protected:
 		bool valid = false; // If false - recalculation is required
 		bool rect_was_set = false;
 		RECT window = {};
-		// All rects below are calculated from mrc_window
+		// All rects below are calculated from m_size.window
 		RECT visible = {};
 		RECT real_client = {};
 		RECT client = {};

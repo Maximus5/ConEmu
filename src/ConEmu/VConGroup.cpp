@@ -5834,7 +5834,7 @@ void CVConGroup::OnConsoleResize(bool abSizingToDo)
 				else
 					SyncConsoleToWindow();
 
-				gpConEmu->OnSize(true, 0, MakeUShort(client.right), MakeUShort(client.bottom));
+				gpConEmu->OnSize(true);
 			}
 
 			//_ASSERTE(gp_VActive!=NULL);

@@ -13506,14 +13506,16 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			//}
 			if (!isIconic())
 			{
-				WORD newClientWidth = LOWORD(lParam), newClientHeight = HIWORD(lParam);
-				#if defined(CONEMU_TABBAR_EX)
-				RECT rcShift = CalcMargins(CEM_CLIENTSHIFT);
-				_ASSERTE(rcShift.left==0 && rcShift.bottom==0 && rcShift.right==0); // Only top shift allowed
-				if ((UINT)rcShift.top > newClientHeight)
-					newClientHeight -= rcShift.top;
-				#endif
-				result = this->OnSize(HIWORD(wParam)!=2, LOWORD(wParam), newClientWidth, newClientHeight);
+				if (lParam)
+				{
+					WORD newClientWidth = LOWORD(lParam), newClientHeight = HIWORD(lParam);
+					RECT real_client = SizeInfo::RealClientRect();
+					if (newClientWidth != RectWidth(real_client) || newClientHeight != RectHeight(real_client))
+					{
+						_ASSERTE(FALSE && "New client size must be already processed in WM_WINDOWPOSCHANGING");
+					}
+				}
+				result = this->OnSize(HIWORD(wParam)!=2, LOWORD(wParam));
 			}
 		} break;
 		case WM_MOVE:

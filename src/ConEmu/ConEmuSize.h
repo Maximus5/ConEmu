@@ -280,7 +280,7 @@ public:
 
 	LRESULT OnGetMinMaxInfo(LPMINMAXINFO pInfo);
 
-	LRESULT OnSize(bool bResizeRCon = true, WPARAM wParam = 0, WORD newClientWidth = (WORD)-1, WORD newClientHeight = (WORD)-1);
+	LRESULT OnSize(bool bResizeRCon = true, WPARAM wParam = 0);
 	LRESULT OnSizing(WPARAM wParam, LPARAM lParam);
 	LRESULT OnMoving(LPRECT prcWnd = NULL, bool bWmMove = false);
 	LRESULT OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

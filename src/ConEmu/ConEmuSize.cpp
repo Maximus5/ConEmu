@@ -2908,9 +2908,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		//CVConGroup::SyncAllConsoles2Window(rcWnd, CER_MAIN, true);
 		//RECT rcClient = CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
 		SizeInfo::RequestSize(p->cx, p->cy);
-		RECT rcClient = SizeInfo::ClientRect();
-		OnSize(true, isZoomed() ? SIZE_MAXIMIZED : SIZE_RESTORED,
-			rcClient.right - rcClient.left, rcClient.bottom - rcClient.top);
+		OnSize(true, isZoomed() ? SIZE_MAXIMIZED : SIZE_RESTORED);
 	}
 
 #if 0
@@ -2989,13 +2987,13 @@ bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
 	return bResized;
 }
 
-LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD newClientWidth/*=(WORD)-1*/, WORD newClientHeight/*=(WORD)-1*/)
+LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/)
 {
 	LRESULT result = 0;
 #ifdef _DEBUG
 	RECT rcDbgSize; GetWindowRect(ghWnd, &rcDbgSize);
-	wchar_t szSize[255]; _wsprintf(szSize, SKIPLEN(countof(szSize)) L"OnSize(%u, %i, %ix%i) Current window size (X=%i, Y=%i, W=%i, H=%i)\n",
-	                               (int)bResizeRCon, (DWORD)wParam, (int)(short)newClientWidth, (int)(short)newClientHeight,
+	wchar_t szSize[255]; _wsprintf(szSize, SKIPLEN(countof(szSize)) L"OnSize(%u, %i) Current window size (X=%i, Y=%i, W=%i, H=%i)\n",
+	                               (int)bResizeRCon, (DWORD)wParam,
 	                               rcDbgSize.left, rcDbgSize.top, (rcDbgSize.right-rcDbgSize.left), (rcDbgSize.bottom-rcDbgSize.top));
 	DEBUGSTRSIZE(szSize);
 #endif
@@ -3014,7 +3012,7 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 	if (!isMainThread())
 	{
 		//MBoxAssert(mn_MainThreadId == GetCurrentThreadId());
-		PostMessage(ghWnd, WM_SIZE, MAKELPARAM(wParam,(bResizeRCon?1:2)), MAKELONG(newClientWidth,newClientHeight));
+		PostMessage(ghWnd, WM_SIZE, MAKELPARAM(wParam,(bResizeRCon?1:2)), 0);
 		return 0;
 	}
 
@@ -3033,12 +3031,12 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 	mn_InResize++;
 
 
-	if (newClientWidth==(WORD)-1 || newClientHeight==(WORD)-1)
-	{
-		RECT rcClient = ClientRect();
-		newClientWidth = rcClient.right;
-		newClientHeight = rcClient.bottom;
-	}
+	//if (newClientWidth==(WORD)-1 || newClientHeight==(WORD)-1)
+	//{
+	//	RECT rcClient = ClientRect();
+	//	newClientWidth = rcClient.right;
+	//	newClientHeight = rcClient.bottom;
+	//}
 
 	//int nClientTop = 0;
 	//#if defined(CONEMU_TABBAR_EX)
@@ -3046,8 +3044,8 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/, WORD
 	//nClientTop = rcFrame.top;
 	//#endif
 	//RECT mainClient = MakeRect(0, nClientTop, newClientWidth, newClientHeight+nClientTop);
-	RECT main = CalcRect(CER_MAIN);
-	SizeInfo::RequestSize(RectWidth(main), RectHeight(main));
+	//RECT main = CalcRect(CER_MAIN);
+	//SizeInfo::RequestSize(RectWidth(main), RectHeight(main));
 	RECT work = SizeInfo::WorkspaceRect();
 	_ASSERTE(ghWndWork && GetParent(ghWndWork)==ghWnd); // пока рассчитано на дочерний режим
 	MoveWindowRect(ghWndWork, work, TRUE);
@@ -4885,8 +4883,7 @@ void CConEmuSize::ReSize(bool abCorrect2Ideal /*= false*/)
 
 	DEBUGTEST(dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE));
 
-	OnSize(true, isZoomed() ? SIZE_MAXIMIZED : SIZE_RESTORED,
-	       client.right, client.bottom);
+	OnSize(true, isZoomed() ? SIZE_MAXIMIZED : SIZE_RESTORED);
 
 	if (abCorrect2Ideal)
 	{
