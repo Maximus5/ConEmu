@@ -121,7 +121,7 @@ LRESULT CTabPanelWin::ReBarProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			LPWINDOWPOS pos = (LPWINDOWPOS)lParam;
 			RECT rcRebar = gpConEmu->RebarRect();
 			pos->x = rcRebar.left;
-			pos->y = rcRebar.left;
+			pos->y = rcRebar.top;
 			pos->cx = RectWidth(rcRebar);
 			pos->cy = RectHeight(rcRebar);
 			return 0;
