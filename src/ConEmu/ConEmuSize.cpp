@@ -3678,6 +3678,10 @@ void CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 {
 	if (m_TileMode != Tile)
 	{
+		wchar_t szInfo[64], szName[32], szOld[32];
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetTileMode(%s) OldMode=%s", FormatTileMode(Tile,szName,countof(szName)), FormatTileMode(m_TileMode,szOld,countof(szOld)));
+		mp_ConEmu->LogString(szInfo);
+
 		m_TileMode = Tile;
 	}
 }
