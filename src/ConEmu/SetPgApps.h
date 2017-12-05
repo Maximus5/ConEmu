@@ -78,8 +78,8 @@ protected:
 	// Members
 	bool mb_SkipEditChange;
 	bool mb_SkipEditSet;
-	CDynDialog*    mp_DlgDistinct2;
-	CDpiForDialog* mp_DpiDistinct2;
+	CDynDialog*    mp_DlgDistinct2 = nullptr;
+	CDpiForDialog* mp_DpiDistinct2 = nullptr;
 	HWND mh_Child;
 	bool mb_Redraw, mb_Refill;
 };

@@ -80,15 +80,6 @@ const wchar_t szTypeCon[] = L"CON";
 const wchar_t szTypeGui[] = L"GUI";
 
 CAttachDlg::CAttachDlg()
-	: mh_Dlg(NULL)
-	, mh_List(NULL)
-	, mp_DpiAware(NULL)
-	, mp_Dlg(NULL)
-	, mn_AttachType(0)
-	, mn_AttachPID(0)
-	, mh_AttachHWND(NULL)
-	, mp_ProcessData(NULL)
-	, mn_ExplorerPID(0)
 {
 	mb_IsWin64 = IsWindows64();
 }

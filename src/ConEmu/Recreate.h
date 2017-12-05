@@ -47,7 +47,7 @@ protected:
 	CEStr ms_RConStartDir;
 	CEStr ms_RConCurDir;
 	// dpi support
-	CDpiForDialog* mp_DpiAware;
+	CDpiForDialog* mp_DpiAware = nullptr;
 	// Buffer
 	wchar_t ms_CurUser[MAX_PATH*2+1];
 protected:

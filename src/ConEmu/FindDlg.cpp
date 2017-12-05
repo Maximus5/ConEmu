@@ -54,9 +54,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 CEFindDlg::CEFindDlg()
 {
-	mh_FindDlg = NULL;
-	mp_Dlg = NULL;
-	mp_DpiAware = NULL;
 }
 
 void CEFindDlg::FindTextDialog()

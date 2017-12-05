@@ -52,15 +52,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 bool CSetPgBase::mb_IgnoreEditChanged = false;
 
 CSetPgBase::CSetPgBase()
-	: mh_Dlg(NULL)
-	, mh_Parent(NULL)
-	, mb_SkipSelChange(false)
-	, mb_DpiChanged(false)
-	, mn_ActivateTabMsg(WM_APP)
-	, mp_DpiAware(NULL)
-	, mp_DynDialog(NULL)
-	, mp_ParentDpi(NULL)
-	, mp_InfoPtr(NULL)
 {
 	mb_IgnoreEditChanged = false;
 }

@@ -480,7 +480,7 @@ class CRealConsole
 	private:
 		bool PreCreate(RConStartArgsEx *args);
 
-		CDpiForDialog* mp_RenameDpiAware;
+		CDpiForDialog* mp_RenameDpiAware = nullptr;
 		static INT_PTR CALLBACK renameProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		bool IsConsoleDataChanged();
@@ -601,7 +601,7 @@ class CRealConsole
 		// Сервер и альтернативный сервер
 		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
 		u64 mn_ProcessAffinity; DWORD mn_ProcessPriority;
-		CDpiForDialog* mp_PriorityDpiAware;
+		CDpiForDialog* mp_PriorityDpiAware = nullptr;
 		void RepositionDialogWithTab(HWND hDlg);
 		static INT_PTR CALLBACK priorityProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 		DWORD mn_CheckFreqLock;

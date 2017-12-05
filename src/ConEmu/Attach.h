@@ -51,17 +51,18 @@ struct AttachParm
 class CAttachDlg
 {
 protected:
-	HWND  mh_Dlg, mh_List;
-	CDpiForDialog* mp_DpiAware;
-	CDynDialog* mp_Dlg;
-	// Параметры аттача
-	int   mn_AttachType; // 1 - console, 2 - GUI
-	DWORD mn_AttachPID;  // PID процесса, к которому цепляемся
-	HWND  mh_AttachHWND; // HWND при GUI аттаче
-	// Данные о запущенных процессах в системе
-	CProcessData *mp_ProcessData;
-	BOOL  mb_IsWin64;
-	DWORD mn_ExplorerPID;
+	HWND mh_Dlg = NULL;
+	HWND mh_List = NULL;
+	CDpiForDialog* mp_DpiAware = nullptr;
+	CDynDialog* mp_Dlg = nullptr;
+	// Attach options
+	int   mn_AttachType = 0;    // 1 - console, 2 - GUI
+	DWORD mn_AttachPID = 0;     // PID of the process we attach to
+	HWND  mh_AttachHWND = NULL; // HWND for GUI attach
+	// The information about running processes in our system
+	CProcessData *mp_ProcessData = nullptr;
+	BOOL  mb_IsWin64 = WIN3264TEST(FALSE,TRUE); // updated in ctor
+	DWORD mn_ExplorerPID = 0;
 protected:
 	bool OnStartAttach();
 	static bool StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, AttachProcessType anType, BOOL abAltMode, BOOL abLeaveOpened);

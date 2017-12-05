@@ -149,18 +149,18 @@ class CSettings
 		// Working variables...
 	private:
 		#ifndef APPDISTINCTBACKGROUND
-		CBackground* mp_Bg;
-		BITMAPFILEHEADER* mp_BgImgData;
+		CBackground* mp_Bg = nullptr;
+		BITMAPFILEHEADER* mp_BgImgData = nullptr;
 		BOOL mb_NeedBgUpdate; //, mb_WasVConBgImage;
 		FILETIME ftBgModified;
 		DWORD nBgModifiedTick;
 		bool isBackgroundImageValid;
 		bool mb_BgLastFade;
 		#else
-		CBackgroundInfo* mp_BgInfo;
+		CBackgroundInfo* mp_BgInfo = nullptr;
 		#endif
-		CDpiForDialog* mp_DpiAware;
-		CImgButtons* mp_ImgBtn;
+		CDpiForDialog* mp_DpiAware = nullptr;
+		CImgButtons* mp_ImgBtn = nullptr;
 	public:
 		enum ColorShowFormat { eRgbDec = 0, eRgbHex, eBgrHex } m_ColorFormat;
 	public:

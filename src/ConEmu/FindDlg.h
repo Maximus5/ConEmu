@@ -36,9 +36,9 @@ class CDynDialog;
 
 struct CEFindDlg
 {
-	HWND mh_FindDlg;
-	CDynDialog* mp_Dlg;
-	CDpiForDialog* mp_DpiAware;
+	HWND mh_FindDlg = NULL;
+	CDynDialog* mp_Dlg = nullptr;
+	CDpiForDialog* mp_DpiAware = nullptr;
 
 	CEFindDlg();
 

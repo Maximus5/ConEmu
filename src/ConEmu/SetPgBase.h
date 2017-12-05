@@ -142,15 +142,15 @@ class CSetPgBase
 	: public CSetDlgButtons
 {
 protected:
-	HWND mh_Dlg;
-	HWND mh_Parent;
-	bool mb_SkipSelChange;
-	bool mb_DpiChanged;
-	UINT mn_ActivateTabMsg;
-	CDpiForDialog* mp_DpiAware;
-	CDynDialog* mp_DynDialog;
-	const CDpiForDialog* mp_ParentDpi;
-	ConEmuSetupPages* mp_InfoPtr;
+	HWND mh_Dlg = NULL;
+	HWND mh_Parent = NULL;
+	bool mb_SkipSelChange = false;
+	bool mb_DpiChanged = false;
+	UINT mn_ActivateTabMsg = WM_APP;
+	CDpiForDialog* mp_DpiAware = nullptr;
+	CDynDialog* mp_DynDialog = nullptr;
+	const CDpiForDialog* mp_ParentDpi = nullptr;
+	ConEmuSetupPages* mp_InfoPtr = nullptr;
 
 public:
 	static bool mb_IgnoreEditChanged;

@@ -59,7 +59,7 @@ namespace ConEmuAbout
 	bool mb_CommCtrlsInitialized = false;
 	HWND mh_AboutDlg = NULL;
 	DWORD nLastCrashReported = 0;
-	CDpiForDialog* mp_DpiAware = NULL;
+	CDpiForDialog* mp_DpiAware = nullptr;
 
 	INT_PTR WINAPI aboutProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);
 	void searchProc(HWND hDlg, HWND hSearch, bool bReentr);
