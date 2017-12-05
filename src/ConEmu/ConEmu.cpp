@@ -317,7 +317,7 @@ CConEmuMain::CConEmuMain()
 
 	// Classes
 	mp_Menu = new CConEmuMenu;
-	mp_Status = new CStatus;
+	mp_Status = new CStatus(this);
 	mp_TabBar = new CTabBarClass;
 	mp_DefTrm = new CDefaultTerminal;
 	mp_Find = new CEFindDlg;
@@ -11348,7 +11348,7 @@ BOOL CConEmuMain::OnMouse_NCBtnDblClk(HWND hWnd, UINT& messg, WPARAM wParam, LPA
 			return FALSE;
 		}
 
-		SetTileMode((wParam == HTLEFT || wParam == HTRIGHT) ? cwc_TileWidth : cwc_TileHeight);
+		ChandeTileMode((wParam == HTLEFT || wParam == HTRIGHT) ? cwc_TileWidth : cwc_TileHeight);
 
 		return TRUE;
 	}

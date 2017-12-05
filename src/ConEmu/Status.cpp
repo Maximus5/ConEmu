@@ -147,6 +147,9 @@ static StatusColInfo gStatusCols[] =
 						L"ConEmu VCon DC size",
 						L"Width x Height: ConEmu VCon drawing size"},
 
+	{csi_WindowMode,	L"StatusBar.Hide.WMode",
+						L"ConEmu window mode",
+						L"ConEmu window mode (Max/FS/Tiled)"},
 	{csi_WindowStyle,	L"StatusBar.Hide.Style",
 						L"ConEmu window style",
 						L"GWL_STYLE: ConEmu window style"},
@@ -276,7 +279,8 @@ static CStatus::StatusMenuOptions gRConTermModes[] = {
 };
 
 
-CStatus::CStatus()
+CStatus::CStatus(CConEmuMain* _owner)
+	: mp_ConEmu(_owner)
 {
 	//mb_WasClick = false;
 	mb_InPopupMenu = false;
@@ -687,6 +691,28 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"U+FF A:FF");
 				break;
 
+			case csi_WindowMode:
+				m_Items[nDrawCount].sText[0] = 0;
+				if (m_WindowMode.mode == wmMaximized)
+					wcscat_c(m_Items[nDrawCount].sText, L"Max");
+				else if (m_WindowMode.mode == wmFullScreen)
+					wcscat_c(m_Items[nDrawCount].sText, L"FS");
+				if (m_WindowMode.tile != cwc_Current)
+				{
+					if (m_Items[nDrawCount].sText[0])
+						wcscat_c(m_Items[nDrawCount].sText, L"|");
+					switch (m_WindowMode.tile)
+					{
+					case cwc_TileHeight:  wcscat_c(m_Items[nDrawCount].sText, L"TH"); break;
+					case cwc_TileWidth:   wcscat_c(m_Items[nDrawCount].sText, L"TW"); break;
+					case cwc_TileLeft:    wcscat_c(m_Items[nDrawCount].sText, L"TL"); break;
+					case cwc_TileRight:   wcscat_c(m_Items[nDrawCount].sText, L"TR"); break;
+					}
+				}
+				if (!m_Items[nDrawCount].sText[0])
+					wcscpy_c(m_Items[nDrawCount].sText, L"--");
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"--");
+				break;
 			case csi_WindowStyle:
 				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", mn_Style);
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
@@ -2020,6 +2046,7 @@ bool CStatus::IsWindowChanged()
 {
 	if (gpSet->isStatusColumnHidden[csi_WindowStyle]
 		&& gpSet->isStatusColumnHidden[csi_WindowStyleEx]
+		&& gpSet->isStatusColumnHidden[csi_WindowMode]
 		&& gpSet->isStatusColumnHidden[csi_Zoom]
 		&& gpSet->isStatusColumnHidden[csi_DPI]
 		&& gpSet->isStatusColumnHidden[csi_HwndFore]
@@ -2033,6 +2060,16 @@ bool CStatus::IsWindowChanged()
 	bool bChanged = false;
 	DWORD n; HWND h;
 	LONG l;
+
+	if (!gpSet->isStatusColumnHidden[csi_WindowMode])
+	{
+		ConEmuWindowCommand tile = mp_ConEmu->GetTileMode(false);
+		ConEmuWindowMode mode = mp_ConEmu->GetWindowMode();
+		if (m_WindowMode.tile != tile || m_WindowMode.mode != mode)
+		{
+			m_WindowMode.tile = tile; m_WindowMode.mode = mode; bChanged = true;
+		}
+	}
 
 	if (!gpSet->isStatusColumnHidden[csi_WindowStyle])
 	{

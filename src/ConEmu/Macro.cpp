@@ -1786,10 +1786,10 @@ LPWSTR ConEmuMacro::WindowMaximize(GuiMacro* p, CRealConsole* apRCon, bool abFro
 	{
 	case 1:
 		// By width
-		gpConEmu->SetTileMode(cwc_TileWidth); break;
+		gpConEmu->ChandeTileMode(cwc_TileWidth); break;
 	case 2:
 		// By height
-		gpConEmu->SetTileMode(cwc_TileHeight); break;
+		gpConEmu->ChandeTileMode(cwc_TileHeight); break;
 	default:
 		gpConEmu->DoMaximizeRestore();
 	}
@@ -1894,7 +1894,7 @@ LPWSTR ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 	case cwc_TileRight:
 	case cwc_TileHeight:
 	case cwc_TileWidth:
-		gpConEmu->SetTileMode(Cmd);
+		gpConEmu->ChandeTileMode(Cmd);
 		break;
 	case cwc_PrevMonitor:
 	case cwc_NextMonitor:

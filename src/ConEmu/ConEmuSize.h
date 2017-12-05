@@ -97,6 +97,7 @@ protected:
 	bool CheckQuakeRect(LPRECT prcWnd);
 
 	ConEmuWindowCommand m_TileMode;
+	void SetTileMode(ConEmuWindowCommand Tile);
 
 	struct {
 		RECT rcNewPos;
@@ -228,7 +229,9 @@ public:
 	bool SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode = wmNotChanging, bool bFromDlg = false);
 
 	static LPCWSTR FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, size_t cchBufMax);
-	bool SetTileMode(ConEmuWindowCommand Tile);
+	bool ChandeTileMode(ConEmuWindowCommand Tile);
+	ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi = NULL);
+	ConEmuWindowCommand EvalTileMode(const RECT& rcWnd, MONITORINFO* pmi = NULL);
 	RECT GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi);
 	ConEmuWindowMode GetWindowMode();
 	ConEmuWindowMode GetChangeFromWindowMode();
@@ -236,8 +239,6 @@ public:
 	bool SetWindowMode(ConEmuWindowMode inMode, bool abForce = false, bool abFirstShow = false);
 	bool SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWSTR asH);
 	void SetWindowPosSizeParam(wchar_t acType, LPCWSTR asValue);
-	ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi = NULL);
-	ConEmuWindowCommand EvalTileMode(const RECT& rcWnd, MONITORINFO* pmi = NULL);
 	bool IsSizeFree(ConEmuWindowMode CheckMode = wmFullScreen);
 	bool IsSizePosFree(ConEmuWindowMode CheckMode = wmFullScreen);
 	bool IsCantExceedMonitor();

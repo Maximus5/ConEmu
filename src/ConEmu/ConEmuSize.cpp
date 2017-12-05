@@ -3651,7 +3651,7 @@ RECT CConEmuSize::SetNormalWindowSize()
 	if (m_TileMode != cwc_Current)
 	{
 		_ASSERTE(m_TileMode == cwc_Current);
-		m_TileMode = cwc_Current;
+		SetTileMode(cwc_Current);
 	}
 
 	HMONITOR hMon = NULL;
@@ -3674,7 +3674,15 @@ RECT CConEmuSize::SetNormalWindowSize()
 	return rcNewWnd;
 }
 
-bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
+void CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
+{
+	if (m_TileMode != Tile)
+	{
+		m_TileMode = Tile;
+	}
+}
+
+bool CConEmuSize::ChandeTileMode(ConEmuWindowCommand Tile)
 {
 	// While debugging - low-level keyboard hooks almost lock DevEnv
 	HooksUnlocker;
@@ -3682,34 +3690,34 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[64], szName[32];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetTileMode(%s)", FormatTileMode(Tile,szName,countof(szName)));
+		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"ChangeTileMode(%s)", FormatTileMode(Tile,szName,countof(szName)));
 		mp_ConEmu->LogString(szInfo);
 	}
 
 
 	if (isIconic())
 	{
-		mp_ConEmu->LogString(L"SetTileMode SKIPPED due to isIconic");
+		mp_ConEmu->LogString(L"ChangeTileMode SKIPPED due to isIconic");
 		return false;
 	}
 
 	if (!IsSizePosFree())
 	{
 		_ASSERTE(FALSE && "Tiling not allowed in Quake and Inside modes");
-		mp_ConEmu->LogString(L"SetTileMode SKIPPED due to Quake/Inside");
+		mp_ConEmu->LogString(L"ChangeTileMode SKIPPED due to Quake/Inside");
 		return false;
 	}
 
 	if (!gpConEmu->isMeForeground(false, false))
 	{
-		mp_ConEmu->LogString(L"SetTileMode SKIPPED because ConEmu is not a foreground window");
+		mp_ConEmu->LogString(L"ChangeTileMode SKIPPED because ConEmu is not a foreground window");
 		return false;
 	}
 
 	if (Tile != cwc_TileLeft && Tile != cwc_TileRight && Tile != cwc_TileHeight && Tile != cwc_TileWidth)
 	{
-		_ASSERTE(FALSE && "SetTileMode SKIPPED due to invalid mode");
-		mp_ConEmu->LogString(L"SetTileMode SKIPPED due to invalid mode");
+		_ASSERTE(FALSE && "ChangeTileMode SKIPPED due to invalid mode");
+		mp_ConEmu->LogString(L"ChangeTileMode SKIPPED due to invalid mode");
 		return false;
 	}
 
@@ -3750,14 +3758,14 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 		// Already snapped to right, Win+Left must "restore" window
 		else if ((Tile == cwc_TileLeft) && (CurTile == cwc_TileRight))
 		{
-			m_TileMode = Tile = cwc_Current;
+			SetTileMode(Tile = cwc_Current);
 			rcNewWnd = SetNormalWindowSize();
 			bChange = false;
 		}
 		// Already snapped to left, Win+Right must "restore" window
 		else if ((Tile == cwc_TileRight) && (CurTile == cwc_TileLeft))
 		{
-			m_TileMode = Tile = cwc_Current;
+			SetTileMode(Tile = cwc_Current);
 			rcNewWnd = SetNormalWindowSize();
 			bChange = false;
 		}
@@ -3765,7 +3773,7 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 		else if (((Tile == cwc_TileWidth) || (Tile == cwc_TileHeight))
 			&& ((CurTile == cwc_TileWidth) || (CurTile == cwc_TileHeight)))
 		{
-			m_TileMode = Tile = cwc_Current;
+			SetTileMode(Tile = cwc_Current);
 			rcNewWnd = SetNormalWindowSize();
 			bChange = false;
 		}
@@ -3794,9 +3802,9 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 				SetWindowMode(wmNormal);
 
 			// Сразу меняем, чтобы DefaultRect не слетел...
-			m_TileMode = Tile;
+			SetTileMode(Tile);
 
-			LogTileModeChange(L"SetTileMode", Tile, bChange, rcNewWnd, NULL, hMon);
+			LogTileModeChange(L"ChangeTileMode", Tile, bChange, rcNewWnd, NULL, hMon);
 
 			if (CDpiAware::IsPerMonitorDpi())
 			{
@@ -3813,7 +3821,7 @@ bool CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 		changeFromWindowMode = wmNotChanging;
 
 		RECT rc = {}; GetWindowRect(ghWnd, &rc);
-		LogTileModeChange(L"result of SetTileMode", Tile, bChange, rcNewWnd, &rc, hMon);
+		LogTileModeChange(L"result of ChangeTileMode", Tile, bChange, rcNewWnd, &rc, hMon);
 
 		CVConGroup::SyncConsoleToWindow();
 
@@ -4022,7 +4030,7 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 			LogString(szTile);
 			DEBUGSTRSIZE(szTile);
 
-			m_TileMode = CurTile;
+			SetTileMode(CurTile);
 
 			mp_ConEmu->UpdateProcessDisplay(false);
 		}
@@ -5162,7 +5170,7 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 	}
 	*/
 
-	// Если прыжок на другой монитор был сделан из SetTileMode (например)
+	// Если прыжок на другой монитор был сделан из ChangeTileMode (например)
 	// то API может предложить некорректное значение в prcSuggested
 	// Корректный размер уже установлен, на менять его
 	if (IsWindowModeChanging())
@@ -5692,7 +5700,7 @@ void CConEmuSize::EndSizing(UINT nMouseMsg/*=0*/)
 				FormatTileMode(m_TileMode,szOldTile,countof(szOldTile)));
 			LogString(szTile);
 
-			m_TileMode = cwc_Current;
+			GetTileMode(true);
 
 			mp_ConEmu->UpdateProcessDisplay(false);
 		}

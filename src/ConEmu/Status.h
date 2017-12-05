@@ -60,6 +60,7 @@ enum CEStatusItems
 	csi_WindowWork,
 	csi_WindowBack,
 	csi_WindowDC,
+	csi_WindowMode,
 	csi_WindowStyle,
 	csi_WindowStyleEx,
 	csi_HwndFore,
@@ -109,6 +110,8 @@ class CRealConsole;
 class CStatus
 {
 private:
+	CConEmuMain* mp_ConEmu;
+
 	// Warning!!! тут индекс не соответствует nID, т.к. некоторые элементы могут быть отключены
 	// Warning!!! а в этом векторе добавлены только видимые элементы!
 	struct strItems {
@@ -179,6 +182,10 @@ private:
 	bool mb_ViewLock;
 	wchar_t ms_ViewLockHint[100];
 
+	struct {
+		ConEmuWindowCommand tile = cwc_Current;
+		ConEmuWindowMode mode = wmNormal;
+	} m_WindowMode = {};
 	DWORD mn_Style, mn_ExStyle;
 	LONG mn_Zoom, mn_Dpi;
 	HWND mh_Fore, mh_Focus;
@@ -196,7 +203,7 @@ private:
 	bool isSettingsOpened(UINT nOpenPageID = 0);
 
 public:
-	CStatus();
+	CStatus(CConEmuMain* _owner);
 	virtual ~CStatus();
 
 	static size_t GetAllStatusCols(StatusColInfo** ppColumns);
