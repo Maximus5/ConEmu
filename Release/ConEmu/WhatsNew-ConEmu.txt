@@ -20,6 +20,16 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.12.5
+* gh-1345: Hide visible frame under TaskBar in maximized mode.
+* gh-1347: Fix crash when setting hotkey for a task (per-mon-dpi regression).
+* gh-1346: Tabs didn't appear when ‘Tabs on bottom’ is set.
+* gh-1346: Refresh Tabs position after ‘Tabs on bottom’ change.
+* gh-935: Workaround for injection failure in Windows 7 on some processes (in progress).
+* StatusBar: show current window and tile modes for debug purposes - column ‘ConEmu window mode’.
+* StatusBar: fix wrong painting position during resize with mouse in some cases.
+
+
 2017.12.3
 * Hotkey `Apps+C` didn't update ‘Hide caption always’ checkbox.
 * gh-1329: Fix progress detection in console window title.
