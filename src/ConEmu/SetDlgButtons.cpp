@@ -2680,6 +2680,7 @@ void CSetDlgButtons::OnBtn_TabsLocationBottom(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbTabsLocationBottom);
 
 	gpSet->nTabsLocation = uCheck;
+	gpConEmu->RequestRecalc();
 	gpConEmu->OnSize();
 
 } // cbTabsLocationBottom
