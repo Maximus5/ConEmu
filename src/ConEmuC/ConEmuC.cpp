@@ -86,9 +86,13 @@ void UnitTests()
 	if (LdrGetDllHandleByName_f)
 	{
 		DWORD_PTR nShift = ((LPBYTE)GetProcAddress(hKernel,"LoadLibraryW")) - (LPBYTE)hKernel;
+		if (!LdrGetDllHandleByName_f(&str, NULL, (PVOID*)&ptrProc))
+			goto err;
 		ntStatus = LdrGetDllHandleByName_f(&str, NULL, (PVOID*)&ptrProc);
 		ptrProc += 0x12345;
 	}
+err:
+	return;
 }
 #endif
 

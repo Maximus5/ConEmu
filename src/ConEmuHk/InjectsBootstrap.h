@@ -73,6 +73,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	if (pnAllocated)
 		*pnAllocated = 0;
 
+	// #HOOK_TODO Replace (code) buffer with MArray<byte> to avoid hardcoded sizes
 #ifdef _WIN64
 	if (ImageBits != 64)
 	{
@@ -103,7 +104,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	}
 
 	// Адрес пути к ConEmuHk64 нужно выровнять на 8 байт!
-	codeSize = 136;
+	codeSize = 168;
 #else
 
 	if (ImageBits != 32)
@@ -243,148 +244,225 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 		PULONGLONG pL; //-V117
 	} ip;
 	ip.pB = code;
+
 #ifdef _WIN64
-	*ip.pL++ = context.Rip;          // адрес возврата
+	*ip.pL++ = context.Rip;          // original process startup point
 	*ip.pL++ = pfn->fnLdrGetDllHandleByName ? pfn->fnLdrGetDllHandleByName : pfn->fnLoadLibrary;        // адрес вызываемой процедуры
 	#ifdef CONEMUHK_BEEP_ON_THREAD_START
 	*ip.pL++ = (ULONGLONG)Beep;
 	#endif
-	*ip.pB++ = 0x9C;					// pushfq
-	*ip.pB++ = 0x50;					// push  rax
-	*ip.pB++ = 0x51;					// push  rcx
-	*ip.pB++ = 0x52;					// push  rdx
-	*ip.pB++ = 0x53;					// push  rbx
-	*ip.pB++ = 0x55;					// push  rbp
-	*ip.pB++ = 0x56;					// push  rsi
-	*ip.pB++ = 0x57;					// push  rdi
-	*ip.pB++ = 0x41; *ip.pB++ = 0x50;	// push  r8
-	*ip.pB++ = 0x41; *ip.pB++ = 0x51;	// push  r9
-	*ip.pB++ = 0x41; *ip.pB++ = 0x52;	// push  r10
-	*ip.pB++ = 0x41; *ip.pB++ = 0x53;	// push  r11
-	*ip.pB++ = 0x41; *ip.pB++ = 0x54;	// push  r12
-	*ip.pB++ = 0x41; *ip.pB++ = 0x55;	// push  r13
-	*ip.pB++ = 0x41; *ip.pB++ = 0x56;	// push  r14
-	*ip.pB++ = 0x41; *ip.pB++ = 0x57;	// push  r15
-	*ip.pB++ = 0x48;					// sub   rsp, 40
+	// pushfq
+	*ip.pB++ = 0x9C;
+	// push  rax
+	*ip.pB++ = 0x50;
+	// push  rcx
+	*ip.pB++ = 0x51;
+	// push  rdx
+	*ip.pB++ = 0x52;
+	// push  rbx
+	*ip.pB++ = 0x53;
+	// push  rbp
+	*ip.pB++ = 0x55;
+	// push  rsi
+	*ip.pB++ = 0x56;
+	// push  rdi
+	*ip.pB++ = 0x57;
+	// push  r8
+	*ip.pB++ = 0x41; *ip.pB++ = 0x50;
+	// push  r9
+	*ip.pB++ = 0x41; *ip.pB++ = 0x51;
+	// push  r10
+	*ip.pB++ = 0x41; *ip.pB++ = 0x52;
+	// push  r11
+	*ip.pB++ = 0x41; *ip.pB++ = 0x53;
+	// push  r12
+	*ip.pB++ = 0x41; *ip.pB++ = 0x54;
+	// push  r13
+	*ip.pB++ = 0x41; *ip.pB++ = 0x55;
+	// push  r14
+	*ip.pB++ = 0x41; *ip.pB++ = 0x56;
+	// push  r15
+	*ip.pB++ = 0x41; *ip.pB++ = 0x57;
+	// sub   rsp, 40
+	*ip.pB++ = 0x48;
 	*ip.pB++ = 0x83;
 	*ip.pB++ = 0xEC;
 	*ip.pB++ = 0x28;
 
 	#ifdef CONEMUHK_BEEP_ON_THREAD_START
-	*ip.pB++ = 0xba;					// mov         edx,3E8h // Dur
+	// mov         edx,3E8h // Dur
+	*ip.pB++ = 0xba;
 	*ip.pI++ = 1000;
-	*ip.pB++ = 0xb9;					// mov         ecx,4B0h // Freq
+	// mov         ecx,4B0h // Freq
+	*ip.pB++ = 0xb9;
 	*ip.pI++ = 1200;
-	*ip.pB++ = 0xFF;					// call  Beep
+	// call  Beep
+	*ip.pB++ = 0xFF;
 	*ip.pB++ = 0x15;
-	*ip.pI   = -(int)(ip.pB + 4 - code - 16);  ip.pI++; // -- указатель на адрес процедуры // GCC do the INC before rvalue eval
+	*ip.pI   = -(int)(ip.pB + 4 - code - 16);  ip.pI++; // -- pointer to procedure address // GCC do the INC before rvalue eval
 	#endif
+
+	PBYTE ptr_jne = nullptr;
 
 	// Due to ASLR of Kernel32.dll in Windows 8 RC x64 we need this workaround
 	// JIC expanded to Windows 7 too.
 	if (pfn->fnLdrGetDllHandleByName)
 	{
-	*ip.pB++ = 0x4C;					// lea	       r8,&ptrProc
+	// lea	       r8,&ptrProc
+	*ip.pB++ = 0x4C;
 	*ip.pB++ = 0x8D;
 	*ip.pB++ = 0x05;
-	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- указатель на адрес процедуры (code+8) [OUT]  // GCC do the INC before rvalue eval
-	*ip.pB++ = 0x33;                    // xor         rdx,rdx
+	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- pointer to procedure address (code+8) [OUT]  // GCC do the INC before rvalue eval
+	// xor         rdx,rdx
+	*ip.pB++ = 0x33;
 	*ip.pB++ = 0xD2;
-	*ip.pB++ = 0x48;                    // lea         rcx,&UNICODE_STRING
+	// lea         rcx,&UNICODE_STRING
+	*ip.pB++ = 0x48;
 	*ip.pB++ = 0x8D;
 	*ip.pB++ = 0x0D;
 	*ip.pI   = (int)(((LPBYTE)pStr) - ip.pB - 4);  ip.pI++;  // &UNICODE_STRING  // GCC do the INC before rvalue eval
-	*ip.pB++ = 0xFF;					// call  LdrGetDllHandleByName
+	// call  LdrGetDllHandleByName
+	*ip.pB++ = 0xFF;
 	*ip.pB++ = 0x15;
-	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- указатель на адрес процедуры (code+8)  // GCC do the INC before rvalue eval
-	//
-	*ip.pB++ = 0x48;                    // mov         rax,&ProcAddress
+	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- pointer to procedure address (code+8)  // GCC do the INC before rvalue eval
+	// test        eax,eax
+	*ip.pB++ = 0x85;
+	*ip.pB++ = 0xC0;
+	// jne         restore
+	*ip.pB++ = 0x75;
+	*(ptr_jne = ip.pB++) = 0;
+	// mov         rax,&ProcAddress
+	*ip.pB++ = 0x48;
 	*ip.pB++ = 0x8B;
 	*ip.pB++ = 0x05;
-	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- указатель на адрес процедуры (code+8)  // GCC do the INC before rvalue eval
-	*ip.pB++ = 0x48;                    // add         rax,nProcShift
+	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- pointer to procedure address (code+8)  // GCC do the INC before rvalue eval
+	// add         rax,nProcShift
+	*ip.pB++ = 0x48;
 	*ip.pB++ = 0x05;
 	*ip.pI++ = (DWORD)nLoadLibraryProcShift;
-	*ip.pB++ = 0x48;                    // mov         &ProcAddress,rax
+	// mov         &ProcAddress,rax
+	*ip.pB++ = 0x48;
 	*ip.pB++ = 0x89;
 	*ip.pB++ = 0x05;
-	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- указатель на адрес процедуры (code+8)  // GCC do the INC before rvalue eval
+	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- pointer to procedure address (code+8)  // GCC do the INC before rvalue eval
 	}
 
 	#ifdef CONEMUHK_BEEP_ON_THREAD_START
-	*ip.pB++ = 0xba;					// mov         edx,3E8h // Dur
+	// mov         edx,3E8h // Dur
+	*ip.pB++ = 0xba;
 	*ip.pI++ = 1000;
-	*ip.pB++ = 0xb9;					// mov         ecx,4B0h // Freq
+	// mov         ecx,4B0h // Freq
+	*ip.pB++ = 0xb9;
 	*ip.pI++ = 1800;
-	*ip.pB++ = 0xFF;					// call  Beep
+	// call  Beep
+	*ip.pB++ = 0xFF;
 	*ip.pB++ = 0x15;
-	*ip.pI   = -(int)(ip.pB + 4 - code - 16);  ip.pI++; // -- указатель на адрес процедуры // GCC do the INC before rvalue eval
+	*ip.pI   = -(int)(ip.pB + 4 - code - 16);  ip.pI++; // -- pointer to procedure address // GCC do the INC before rvalue eval
 	#endif
 
-	*ip.pB++ = 0x48;					// lea	 rcx, "path\to\our.dll"
+	// lea	 rcx, "path\to\our.dll"
+	*ip.pB++ = 0x48;
 	*ip.pB++ = 0x8D;
 	*ip.pB++ = 0x0D;
-	*ip.pI   = (int)(codeSize + code - ip.pB - 4);  ip.pI++;  // 45; -- указатель на "path\to\our.dll"  // GCC do the INC before rvalue eval
+	*ip.pI   = (int)(codeSize + code - ip.pB - 4);  ip.pI++;  // -- pointer to "path\to\our.dll"  // GCC do the INC before rvalue eval
 
-	*ip.pB++ = 0xFF;					// call  LoadLibraryW
+	// call  LoadLibraryW
+	*ip.pB++ = 0xFF;
 	*ip.pB++ = 0x15;
-	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -49; -- указатель на адрес процедуры (code+8)  // GCC do the INC before rvalue eval
+	*ip.pI   = -(int)(ip.pB - code + 4 - 8);  ip.pI++;  // -- pointer to procedure address (code+8)  // GCC do the INC before rvalue eval
 
 	#ifdef CONEMUHK_BEEP_ON_THREAD_START
-	*ip.pB++ = 0xba;					// mov         edx,3E8h // Dur
+	// mov         edx,3E8h // Dur
+	*ip.pB++ = 0xba;
 	*ip.pI++ = 1000;
-	*ip.pB++ = 0xb9;					// mov         ecx,4B0h // Freq
+	// mov         ecx,4B0h // Freq
+	*ip.pB++ = 0xb9;
 	*ip.pI++ = 2400;
-	*ip.pB++ = 0xFF;					// call  Beep
+	// call  Beep
+	*ip.pB++ = 0xFF;
 	*ip.pB++ = 0x15;
-	*ip.pI   = -(int)(ip.pB + 4 - code - 16);  ip.pI++; // -- указатель на адрес процедуры // GCC do the INC before rvalue eval
+	*ip.pI   = -(int)(ip.pB + 4 - code - 16);  ip.pI++; // -- pointer to procedure address // GCC do the INC before rvalue eval
 	#endif
 
-	*ip.pB++ = 0x48;					// add   rsp, 40
+	// restore:
+	if (ptr_jne)
+		*ptr_jne = (ip.pB - ptr_jne - 1);
+
+	// add   rsp, 40
+	*ip.pB++ = 0x48;
 	*ip.pB++ = 0x83;
 	*ip.pB++ = 0xC4;
 	*ip.pB++ = 0x28;
-	*ip.pB++ = 0x41; *ip.pB++ = 0x5F;	// pop   r15
-	*ip.pB++ = 0x41; *ip.pB++ = 0x5E;	// pop   r14
-	*ip.pB++ = 0x41; *ip.pB++ = 0x5D;	// pop   r13
-	*ip.pB++ = 0x41; *ip.pB++ = 0x5C;	// pop   r12
-	*ip.pB++ = 0x41; *ip.pB++ = 0x5B;	// pop   r11
-	*ip.pB++ = 0x41; *ip.pB++ = 0x5A;	// pop   r10
-	*ip.pB++ = 0x41; *ip.pB++ = 0x59;	// pop   r9
-	*ip.pB++ = 0x41; *ip.pB++ = 0x58;	// pop   r8
-	*ip.pB++ = 0x5F;					// pop	 rdi
-	*ip.pB++ = 0x5E;					// pop	 rsi
-	*ip.pB++ = 0x5D;					// pop	 rbp
-	*ip.pB++ = 0x5B;					// pop	 rbx
-	*ip.pB++ = 0x5A;					// pop	 rdx
-	*ip.pB++ = 0x59;					// pop	 rcx
-	*ip.pB++ = 0x58;					// pop	 rax
-	*ip.pB++ = 0x9D;					// popfq
-	*ip.pB++ = 0xff;					// jmp	 Rip
+	// pop   r15
+	*ip.pB++ = 0x41; *ip.pB++ = 0x5F;
+	// pop   r14
+	*ip.pB++ = 0x41; *ip.pB++ = 0x5E;
+	// pop   r13
+	*ip.pB++ = 0x41; *ip.pB++ = 0x5D;
+	// pop   r12
+	*ip.pB++ = 0x41; *ip.pB++ = 0x5C;
+	// pop   r11
+	*ip.pB++ = 0x41; *ip.pB++ = 0x5B;
+	// pop   r10
+	*ip.pB++ = 0x41; *ip.pB++ = 0x5A;
+	// pop   r9
+	*ip.pB++ = 0x41; *ip.pB++ = 0x59;
+	// pop   r8
+	*ip.pB++ = 0x41; *ip.pB++ = 0x58;
+	// pop	 rdi
+	*ip.pB++ = 0x5F;
+	// pop	 rsi
+	*ip.pB++ = 0x5E;
+	// pop	 rbp
+	*ip.pB++ = 0x5D;
+	// pop	 rbx
+	*ip.pB++ = 0x5B;
+	// pop	 rdx
+	*ip.pB++ = 0x5A;
+	// pop	 rcx
+	*ip.pB++ = 0x59;
+	// pop	 rax
+	*ip.pB++ = 0x58;
+	// popfq
+	*ip.pB++ = 0x9D;
+	// jmp	 Rip
+	*ip.pB++ = 0xff;
 	*ip.pB++ = 0x25;
 	*ip.pI   = -(int)(ip.pB - code + 4);  ip.pI++;  // -91;  // GCC do the INC before rvalue eval
-	/* 0x5B */
 
-	context.Rip = (UINT_PTR)mem + 16;	// начало (иструкция pushfq)
+	// End of x64 bootstrapper
+
+	context.Rip = (UINT_PTR)mem + 16;	// the begin (instruction pushfq)
 	#ifdef CONEMUHK_BEEP_ON_THREAD_START
 	context.Rip += 8;
 	#endif
 #else
-	*ip.pB++ = 0x68;			// push  eip
+	// push  eip
+	*ip.pB++ = 0x68;
 	*ip.pI++ = context.Eip;
-	*ip.pB++ = 0x9c;			// pushf
-	*ip.pB++ = 0x60;			// pusha
-	*ip.pB++ = 0x68;			// push  "path\to\our.dll"
+	// pushf
+	*ip.pB++ = 0x9c;
+	// pusha
+	*ip.pB++ = 0x60;
+	// push  "path\to\our.dll"
+	*ip.pB++ = 0x68;
 	*ip.pI++ = (UINT_PTR)mem + codeSize;
-	*ip.pB++ = 0xe8;			// call  LoadLibraryW
+	// call  LoadLibraryW
+	*ip.pB++ = 0xe8;
 	TODO("???");
 	*ip.pI   = (UINT_PTR)pfn->fnLoadLibrary - ((UINT_PTR)mem + (ip.pB+4 - code));  ip.pI++;  // GCC do the INC before rvalue eval
-	*ip.pB++ = 0x61;			// popa
-	*ip.pB++ = 0x9d;			// popf
-	*ip.pB++ = 0xc3;			// ret
+	// popa
+	*ip.pB++ = 0x61;
+	// popf
+	*ip.pB++ = 0x9d;
+	// ret
+	*ip.pB++ = 0xc3;
+
+	// End of x86 bootstrapper
 
 	context.Eip = (UINT_PTR)mem;
 #endif
+
 	if ((INT_PTR)(ip.pB - code) > (INT_PTR)codeSize)
 	{
 		_ASSERTE((INT_PTR)(ip.pB - code) == (INT_PTR)codeSize);

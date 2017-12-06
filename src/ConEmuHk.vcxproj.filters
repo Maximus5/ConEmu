@@ -39,9 +39,6 @@
     <ClInclude Include="ConEmuHk\Connector.h">
       <Filter>Connector</Filter>
     </ClInclude>
-    <ClInclude Include="ConEmuHk\Console2.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="ConEmuHk\DbgHooks.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -55,6 +52,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmuHk\Injects.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuHk\InjectsBootstrap.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmuHk\MainThread.h">

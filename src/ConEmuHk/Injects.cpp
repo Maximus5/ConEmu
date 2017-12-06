@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/execute.h"
 #include "../common/WModuleCheck.h"
 #include "Injects.h"
-#include "Console2.h"
+#include "InjectsBootstrap.h"
 #include "hlpProcess.h"
 
 extern HMODULE ghOurModule;
