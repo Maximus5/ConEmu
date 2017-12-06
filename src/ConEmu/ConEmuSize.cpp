@@ -580,8 +580,10 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		{
 			// Это может быть, если сделали GetWindowRect для ghWnd, когда он isIconic!
 			_ASSERTE((rc.left!=-32000 && rc.right!=-32000) && "Use CalcRect(CER_MAIN) instead of GetWindowRect() while IsIconic!");
-			SizeInfo::RequestSize(RectWidth(rFrom), RectHeight(rFrom));
-			rc = SizeInfo::ClientRect();
+			// Avoid wrong sized when resize is not finished yet
+			SizeInfo temp(*static_cast<SizeInfo*>(this));
+			temp.RequestSize(RectWidth(rFrom), RectHeight(rFrom));
+			rc = temp.ClientRect();
 			tFromNow = CER_MAINCLIENT;
 		}
 		break;
@@ -1470,6 +1472,8 @@ void CConEmuSize::ReloadMonitorInfo()
 {
 	_ASSERTEX(isMainThread());
 
+	// #SIZE_TODO Add visible frame width to MonitorInfoCache, reuse it instead in GetSelfFrameWidth
+
 	struct Invoke
 	{
 		static BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
@@ -1540,6 +1544,7 @@ void CConEmuSize::ReloadMonitorInfo()
 
 		if (RegisterClassEx(&wc))
 		{
+			// #SIZE_TODO Use WS_OVERLAPPED instead of GetWindowStyle(), we need to know frame width for "normal" window, to emulate it in GetSelfFrameWidth()
 			DWORD style = mp_ConEmu->GetWindowStyle();
 			DWORD exStyle = WS_EX_LAYERED;
 			HWND hFrame = CreateWindowEx(exStyle, szFrameClass, L"", style, 100, 100, 400, 200, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
@@ -6094,6 +6099,7 @@ UINT CConEmuSize::GetSelfFrameWidth()
 		return 0;
 	// Take into account user setting but don't allow frame larger than system-defined
 	int iFrame = gpSet->HideCaptionAlwaysFrame();
+	// #SIZE_TODO Reuse frame width from monitors cache
 	int iStdFrame = mp_ConEmu->GetWinFrameWidth();
 	if (iFrame <= 0 || iFrame > iStdFrame)
 		iFrame = iStdFrame;

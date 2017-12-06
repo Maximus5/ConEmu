@@ -423,10 +423,12 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 
 	#ifdef _DEBUG
 	{
-		wchar_t szPos[80]; RECT rcScreen = rcStatus;
+		wchar_t szPos[100]; RECT rcScreen = rcStatus;
 		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcScreen, 2);
-		_wsprintf(szPos, SKIPCOUNT(szPos) L"StatusBar painted at {%i,%i}-{%i,%i} screen coords", LOGRECTCOORDS(rcScreen));
+		_wsprintf(szPos, SKIPCOUNT(szPos) L"StatusBar painted at {%i,%i}-{%i,%i} screen coords (%s)",
+			LOGRECTCOORDS(rcScreen), prcStatus ? L"PTR" : L"calc");
 		DEBUGSTRPAINT(szPos);
+		//OutputDebugStringW(szPos); OutputDebugStringW(L"\n");
 	}
 	#endif
 

@@ -83,6 +83,9 @@ public:
 protected:
 	// Calculates new rectangles, if required, based on current settings and options
 	void DoCalculate();
+	void LogRequest(LPCWSTR asFrom, LPCWSTR asMessage = nullptr);
+	void LogRequest(const RECT& rcNew, LPCWSTR asFrom);
+	void LogRequest(const int dpi, LPCWSTR asFrom);
 
 protected:
 	MSectionSimple mcs_lock;

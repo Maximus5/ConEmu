@@ -67,11 +67,33 @@ void SizeInfo::RequestRecalc()
 	m_size.valid = false;
 }
 
+void SizeInfo::LogRequest(LPCWSTR asFrom, LPCWSTR asMessage /*= nullptr*/)
+{
+	CEStr lsMsg(L"Size recalc requested", asFrom?L" from: ":nullptr, asFrom, asMessage?L" - ":nullptr, asMessage, L"\n");
+	//OutputDebugStringW(lsMsg);
+	mp_ConEmu->LogString(lsMsg);
+}
+
+void SizeInfo::LogRequest(const RECT& rcNew, LPCWSTR asFrom)
+{
+	wchar_t szInfo[120];
+	msprintf(szInfo, countof(szInfo), L"OldRect={%i,%i}-{%i,%i} NewRect={%i,%i}-{%i,%i}", LOGRECTCOORDS(m_size.window), LOGRECTCOORDS(rcNew));
+	LogRequest(asFrom, szInfo);
+}
+
+void SizeInfo::LogRequest(const int dpi, LPCWSTR asFrom)
+{
+	wchar_t szInfo[120];
+	msprintf(szInfo, countof(szInfo), L"OldDpi=%i NewDpi=%i", m_opt.dpi, dpi);
+	LogRequest(asFrom, szInfo);
+}
+
 // Change used DPI
 void SizeInfo::RequestDpi(const DpiValue& _dpi)
 {
 	if (m_opt.dpi == _dpi.Ydpi)
 		return;
+	LogRequest(_dpi.Ydpi, L"RequestDpi");
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
 	m_opt.dpi = _dpi.Ydpi;
 	RequestRecalc();
@@ -82,6 +104,7 @@ void SizeInfo::RequestRect(RECT _window)
 {
 	if (m_size.window == _window)
 		return;
+	LogRequest(_window, L"RequestRect");
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
 	m_size.window = _window;
 	RequestRecalc();
@@ -93,6 +116,7 @@ void SizeInfo::RequestSize(int _width, int _height)
 	RECT rcNew = {rcCur.left, rcCur.top, rcCur.left + _width, rcCur.top + _height};
 	if (rcNew == m_size.window)
 		return;
+	LogRequest(rcNew, L"RequestSize");
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
 	m_size.window = rcNew;
 	RequestRecalc();
@@ -104,6 +128,7 @@ void SizeInfo::RequestPos(int _x, int _y)
 	RECT rcNew = {_x, _y, _x + RectWidth(rcCur), _y + RectHeight(rcCur)};
 	if (rcNew == m_size.window)
 		return;
+	LogRequest(rcNew, L"RequestPos");
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
 	m_size.window = rcNew;
 	RequestRecalc();
