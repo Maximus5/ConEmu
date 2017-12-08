@@ -1280,7 +1280,7 @@ bool CConEmuCtrl::key_ShowCaption(const ConEmuChord& VkState, bool TestOnly, con
 		return true;
 
 	gpSet->SwitchHideCaptionAlways();
-	gpConEmu->OnHideCaption();
+	gpConEmu->RefreshWindowStyles();
 
 	if (ghOpWnd)
 	{

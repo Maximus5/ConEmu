@@ -54,6 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRDPI(s) //DEBUGSTR(s)
+#define DEBUGSTRRGN(s) DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL(s) //DEBUGSTR(s)
 
@@ -186,8 +187,8 @@ RECT CConEmuSize::CalcMargins_Win10Frame()
 		if (dwStyle & WS_THICKFRAME)
 		{
 			const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(NULL);
-			if (mi.HasWin10Frame)
-				rc = mi.Win10Frame;
+			const auto& fi = isCaptionHidden() ? mi.noCaption : mi.withCaption;
+			rc = fi.Win10Stealthy;
 		}
 	}
 
@@ -215,21 +216,36 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 
 	bool processed = false;
 
+	const MonitorInfoCache mi = NearestMonitorInfo(NULL);
+
 	if (!processed && bHideCaption)
 	{
 		_ASSERTE((mg & ((DWORD)CEM_FRAMECAPTION)) != CEM_CAPTION);
 		if (!mp_ConEmu->isInside() && (mg & ((DWORD)CEM_FRAMECAPTION)) & (DWORD)CEM_FRAMEONLY)
 		{
+			rc = mi.noCaption.FrameMargins;
+
+			// #SIZE_TODO Take into account self-drawing frame
+
+			#if 0
 			// We'll hide frame partially with UpdateWindowRgn if our frame is invisible
 			// so, frame may be larger than visible part
-			rc.left = rc.right = rc.top = rc.bottom = GetSelfFrameWidth();
+			if (mi.HasWin10Frame)
+			{
+				// rc.top = mi.Win10Frame.bottom; // no caption?
+			}
+			else
+			{
+				// #SIZE_TODO What?
+				rc.left = rc.right = rc.top = rc.bottom = GetSelfFrameWidth();
+			}
+			#endif
 		}
 		processed = true;
 	}
 
 	if (!processed)
 	{
-		const MonitorInfoCache mi = NearestMonitorInfo(NULL);
 		DWORD dwStyle = mp_ConEmu->GetWindowStyle();
 		if (wmNewMode != wmCurrent)
 			dwStyle = mp_ConEmu->FixWindowStyle(dwStyle, wmNewMode);
@@ -1498,6 +1514,46 @@ void CConEmuSize::ReloadMonitorInfo()
 		monitors.push_back(mi);
 	}
 
+	// Use WS_OVERLAPPEDWINDOW instead of GetWindowStyle(), we need to know frame width for "normal" window,
+	// to emulate it in GetSelfFrameWidth() even if our window has no WS_THICKFRAME
+	const DWORD style = WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW;
+	const DWORD styleNoCaption = WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_OVERLAPPED | WS_THICKFRAME;
+	const DWORD exStyle = WS_EX_LAYERED;
+
+	int std_frame_width = GetSystemMetrics(SM_CXFRAME);
+	for (INT_PTR i = 0; i < monitors.size(); ++i)
+	{
+		// default frame width
+		monitors[i].withCaption.FrameWidth = std_frame_width;
+		monitors[i].noCaption.FrameWidth = std_frame_width;
+
+		// Per-monitor DPI
+		DpiValue dpi;
+		CDpiAware::QueryDpiForMonitor(monitors[i].hMon, &dpi);
+		monitors[i].Xdpi = dpi.Xdpi;
+		monitors[i].Ydpi = dpi.Ydpi;
+
+		const int nTestWidth = 100, nTestHeight = 100;
+		RECT rcTest = MakeRect(nTestWidth,nTestHeight);
+		if (mp_ConEmu->AdjustWindowRectExForDpi(&rcTest, style, FALSE, exStyle, dpi.Ydpi))
+		{
+			RECT& rc = monitors[i].withCaption.FrameMargins;
+			rc.left = -rcTest.left;
+			rc.right = rcTest.right - nTestWidth;
+			rc.bottom = rcTest.bottom - nTestHeight;
+			rc.top = -rcTest.top;
+		}
+		rcTest = MakeRect(nTestWidth,nTestHeight);
+		if (mp_ConEmu->AdjustWindowRectExForDpi(&rcTest, styleNoCaption, FALSE, exStyle, dpi.Ydpi))
+		{
+			RECT& rc = monitors[i].noCaption.FrameMargins;
+			rc.left = -rcTest.left;
+			rc.right = rcTest.right - nTestWidth;
+			rc.bottom = rcTest.bottom - nTestHeight;
+			rc.top = -rcTest.top;
+		}
+	}
+
 	// *** Query information about invisible parts of Win10 frame ***
 	if (IsWin10())
 	{
@@ -1544,51 +1600,67 @@ void CConEmuSize::ReloadMonitorInfo()
 
 		if (RegisterClassEx(&wc))
 		{
-			// #SIZE_TODO Use WS_OVERLAPPED instead of GetWindowStyle(), we need to know frame width for "normal" window, to emulate it in GetSelfFrameWidth()
-			DWORD style = mp_ConEmu->GetWindowStyle();
-			DWORD exStyle = WS_EX_LAYERED;
 			HWND hFrame = CreateWindowEx(exStyle, szFrameClass, L"", style, 100, 100, 400, 200, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
 			if (hFrame)
 			{
 				SetLayeredWindowAttributes(hFrame, 0, 0, LWA_ALPHA);
 				ShowWindow(hFrame, SW_SHOWNA);
 
-				for (INT_PTR i = 0; i < monitors.size(); ++i)
+				for (int c = 0; c <= 1; ++c)
 				{
-					const RECT& rc = monitors[i].mi.rcWork;
-					MoveWindow(hFrame, rc.left+RectWidth(rc)/4, rc.top+RectHeight(rc)/4, RectWidth(rc)/2, RectHeight(rc)/2, FALSE);
+					SetWindowLong(hFrame, GWL_STYLE, !c ? style : styleNoCaption);
 
-					RECT rcReal = {}, rcVisible = {};
-					if (GetWindowRect(hFrame, &rcReal)
-						&& SUCCEEDED(mp_ConEmu->DwmGetWindowAttribute(hFrame, DWMWA_EXTENDED_FRAME_BOUNDS, &rcVisible, sizeof(rcVisible))))
+					for (INT_PTR i = 0; i < monitors.size(); ++i)
 					{
-						wchar_t szInfo[140];
+						MonitorInfoCache& mi = monitors[i];
+						FrameInfoCache& fi = !c ? mi.withCaption : mi.noCaption;
+						const RECT& rc = mi.mi.rcWork;
 
-						// rcVisible is expected to be smaller than rcReal
-						if (rcVisible.left > rcReal.left && rcVisible.right < rcReal.right
-							&& rcVisible.right > rcVisible.left && rcVisible.bottom > rcVisible.top
-							&& rcVisible.top >= rcReal.top && rcVisible.bottom <= rcReal.bottom)
-						{
-							monitors[i].HasWin10Frame = true;
-							RECT rc = MakeRect(
-									(rcVisible.left - rcReal.left),
-									(rcVisible.top - rcReal.top),
-									(rcReal.right - rcVisible.right),
-									(rcReal.bottom - rcVisible.bottom)
-								);
-							monitors[i].Win10Frame = rc;
-							_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
-								LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal), LOGRECTCOORDS(rc));
-						}
-						else
-						{
-							_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS {FAIL} Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
-								LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal),
-								(rcVisible.left - rcReal.left), (rcVisible.top - rcReal.top), (rcReal.right - rcVisible.right), (rcReal.bottom - rcVisible.bottom));
-						}
+						MoveWindow(hFrame, rc.left+RectWidth(rc)/4, rc.top+RectHeight(rc)/4, RectWidth(rc)/2, RectHeight(rc)/2, FALSE);
 
-						// Debug purposes
-						LogString(szInfo);
+						RECT rcReal = {}, rcVisible = {};
+						if (GetWindowRect(hFrame, &rcReal)
+							&& SUCCEEDED(mp_ConEmu->DwmGetWindowAttribute(hFrame, DWMWA_EXTENDED_FRAME_BOUNDS, &rcVisible, sizeof(rcVisible))))
+						{
+							wchar_t szInfo[140];
+
+							// rcVisible is expected to be smaller than rcReal
+							if (rcVisible.left > rcReal.left && rcVisible.right < rcReal.right
+								&& rcVisible.right > rcVisible.left && rcVisible.bottom > rcVisible.top
+								&& rcVisible.top >= rcReal.top && rcVisible.bottom <= rcReal.bottom)
+							{
+								fi.Win10Stealthy = MakeRect(
+										(rcVisible.left - rcReal.left),
+										(rcVisible.top - rcReal.top),
+										(rcReal.right - rcVisible.right),
+										(rcReal.bottom - rcVisible.bottom)
+									);
+								const RECT& rc = fi.Win10Stealthy;
+								_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
+									LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal), LOGRECTCOORDS(rc));
+
+								#if 0
+								// Correct client area shift for caption-less modes!
+								if (c)
+								{
+									// otherwise we get a 7 pixel gap from the visible top-edge-frame to client area start
+									fi.FrameMargins.top = klMax<int>(1, fi.FrameMargins.top - fi.Win10Stealthy.bottom);
+								}
+								#endif
+							}
+							else
+							{
+								_ASSERTE(rcVisible.left > rcReal.left && rcVisible.right < rcReal.right);
+								_ASSERTE(rcVisible.right > rcVisible.left && rcVisible.bottom > rcVisible.top);
+								_ASSERTE(rcVisible.top >= rcReal.top && rcVisible.bottom <= rcReal.bottom);
+								_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS {FAIL} Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
+									LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal),
+									(rcVisible.left - rcReal.left), (rcVisible.top - rcReal.top), (rcReal.right - rcVisible.right), (rcReal.bottom - rcVisible.bottom));
+							}
+
+							// Debug purposes
+							LogString(szInfo);
+						}
 					}
 				}
 				DestroyWindow(hFrame);
@@ -1597,18 +1669,26 @@ void CConEmuSize::ReloadMonitorInfo()
 		}
 	}
 
-	for (INT_PTR i = 0; i < monitors.size(); ++i)
+	if (IsWin10())
 	{
-		// Default values for Win10
-		if (!monitors[i].HasWin10Frame && IsWin10())
+		for (INT_PTR i = 0; i < monitors.size(); ++i)
 		{
-			monitors[i].Win10Frame = MakeRect(7, 0, 7, 7);
+			MonitorInfoCache& mi = monitors[i];
+			for (int c = 0; c <= 1; ++c)
+			{
+				FrameInfoCache& fi = !c ? mi.withCaption : mi.noCaption;
+				// Default values for Win10 if for unknown reason we failed to retrieve them
+				if (!fi.Win10Stealthy.left)
+				{
+					// We shall not get here, WinAPI MUST return proper values
+					_ASSERTE(fi.Win10Stealthy.left && fi.Win10Stealthy.right && fi.Win10Stealthy.bottom);
+					const int def_val = !c ? 7 : 6; // 6 for caption-less
+					fi.Win10Stealthy = MakeRect(def_val, 0, def_val, def_val);
+				}
+				// Correct FrameWidth taking into account hidden frame parts
+				fi.FrameWidth = klMax<int>(1, (fi.FrameMargins.left - fi.Win10Stealthy.left));
+			}
 		}
-		// Per-monitor DPI
-		DpiValue dpi;
-		CDpiAware::QueryDpiForMonitor(monitors[i].hMon, &dpi);
-		monitors[i].Xdpi = dpi.Xdpi;
-		monitors[i].Ydpi = dpi.Ydpi;
 	}
 
 	mp_ConEmu->RecalculateFrameSizes();
@@ -2727,7 +2807,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 			WindowMode = zoomed ? wmMaximized : wmNormal;
 			// Установив WindowMode мы вызываем все необходимые действия
 			// по смене стилей, обновлении регионов, и т.п.
-			mp_ConEmu->OnHideCaption();
+			mp_ConEmu->RefreshWindowStyles();
 		}
 	}
 
@@ -4452,7 +4532,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode exec: NewMode=%s", GetWindowModeName(NewMode));
 	LogString(szInfo);
 
-	mp_ConEmu->OnHideCaption(); // inMode из параметров убрал, т.к. WindowMode уже изменен
+	mp_ConEmu->RefreshWindowStyles(); // inMode из параметров убрал, т.к. WindowMode уже изменен
 
 	DEBUGTEST(BOOL bIsVisible = IsWindowVisible(ghWnd););
 
@@ -4728,12 +4808,10 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			// Already restored, need to clear the flag to avoid incorrect sizing
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(false);
 
-			OnSize(false); // подровнять ТОЛЬКО дочерние окошки
+			OnSize(false); // Align children windows
 
-			RECT rcFrame = CalcMargins(CEM_FRAMEONLY);
-			// ptFullScreenSize содержит "скорректированный" размер (он больше монитора)
-			UpdateWindowRgn(rcFrame.left, rcFrame.top,
-			                mi.rcMonitor.right-mi.rcMonitor.left, mi.rcMonitor.bottom-mi.rcMonitor.top);
+			UpdateWindowRgn();
+
 			setWindowPos(NULL,
 			                -rcShift.left+mi.rcMonitor.left,-rcShift.top+mi.rcMonitor.top,
 			                ptFullScreenSize.x,ptFullScreenSize.y,
@@ -5419,7 +5497,7 @@ bool CConEmuSize::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int c
 	return (lbRc != FALSE);
 }
 
-void CConEmuSize::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth/*=-1*/, int anWndHeight/*=-1*/)
+void CConEmuSize::UpdateWindowRgn()
 {
 	if (mb_LockWindowRgn)
 		return;
@@ -5429,10 +5507,8 @@ void CConEmuSize::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 		return;
 
 	HRGN hRgn = NULL;
-	if (m_ForceShowFrame == fsf_Show)
-		hRgn = NULL; // Иначе при ресайзе получаются некрасивые (без XP Theme) кнопки в заголовке
-	else if (anWndWidth != -1 && anWndHeight != -1)
-		hRgn = CreateWindowRgn(false, false, anX, anY, anWndWidth, anWndHeight);
+	if (m_ForceShowFrame == fsf_Show && !mb_DisableThickFrame)
+		hRgn = NULL; // allow nice themed buttons in the window caption (XP)
 	else
 		hRgn = CreateWindowRgn();
 
@@ -5449,7 +5525,9 @@ void CConEmuSize::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 			return; // менять не нужно
 	}
 
-	if (gpSet->isLogging())
+	bool do_log = RELEASEDEBUGTEST(gpSet->isLogging(), true);
+
+	if (do_log)
 	{
 		wchar_t szInfo[255];
 		RECT rcBox = {};
@@ -5457,7 +5535,10 @@ void CConEmuSize::UpdateWindowRgn(int anX/*=-1*/, int anY/*=-1*/, int anWndWidth
 		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
 			nRgn ? L"SetWindowRgn(0x%08X, <%u> {%i,%i}-{%i,%i})" : L"SetWindowRgn(0x%08X, NULL)",
 			ghWnd, nRgn, LOGRECTCOORDS(rcBox));
-		LogString(szInfo);
+		if (gpSet->isLogging())
+			LogString(szInfo);
+		else
+			DEBUGSTRRGN(szInfo);
 	}
 
 	// Облом получается при двукратном SetWindowRgn(ghWnd, NULL, TRUE);
@@ -5588,7 +5669,26 @@ BOOL CConEmuSize::AnimateWindow(DWORD dwTime, DWORD dwFlags)
 		bWasShown = mp_ConEmu->mp_TabBar->ShowSearchPane(false, true);
 	}
 
+	// during quake-style slide - we turn off ThickFrame,
+	// because it looks really weird during animation
+	if (dwFlags & AW_SLIDE)
+	{
+		mb_DisableThickFrame = true;
+		DEBUGSTRRGN(L"mb_DisableThickFrame = true");
+		mp_ConEmu->UpdateWindowRgn();
+		mp_ConEmu->StopForceShowFrame();
+	}
+
 	BOOL bRc = ::AnimateWindow(ghWnd, dwTime, dwFlags);
+
+	// Restore ThickFrame if we show the window
+	if ((dwFlags & AW_SLIDE) && !(dwFlags & AW_HIDE))
+	{
+		DEBUGSTRRGN(L"mb_DisableThickFrame = false");
+		mb_DisableThickFrame = false;
+		mp_ConEmu->RefreshWindowStyles();
+		mp_ConEmu->UpdateWindowRgn();
+	}
 
 	if (bWasShown)
 	{
@@ -5771,7 +5871,7 @@ void CConEmuSize::StartForceShowFrame()
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);
 	m_ForceShowFrame = fsf_Show;
-	mp_ConEmu->OnHideCaption();
+	mp_ConEmu->RefreshWindowStyles();
 	//UpdateWindowRgn();
 }
 
@@ -5780,7 +5880,7 @@ void CConEmuSize::StopForceShowFrame()
 	m_ForceShowFrame = fsf_Hide;
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);
-	mp_ConEmu->OnHideCaption();
+	mp_ConEmu->RefreshWindowStyles();
 	//UpdateWindowRgn();
 }
 
@@ -5809,30 +5909,21 @@ bool CConEmuSize::InMinimizing(WINDOWPOS *p /*= NULL*/)
 	return false;
 }
 
-HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/)
+HRGN CConEmuSize::CreateWindowRgn()
 {
 	HRGN hRgn = NULL, hExclusion = NULL;
 
 	TODO("DoubleView: Если видимы несколько консолей - нужно совместить регионы, или вообще отрубить, для простоты");
 
-	hExclusion = CVConGroup::GetExclusionRgn(abTestOnly);
+	hExclusion = CVConGroup::GetExclusionRgn();
 
-	if (abTestOnly && hExclusion)
-	{
-		_ASSERTE(hExclusion == (HRGN)1);
-		return (HRGN)1;
-	}
-
-	WARNING("Установка любого НЕ NULL региона сбивает темы при отрисовке кнопок в заголовке");
+	WARNING("Установка любого НЕ NULL региона сбивает XP темы при отрисовке кнопок в заголовке");
 
 	if (!gpSet->isQuakeStyle
 		&& ((WindowMode == wmFullScreen)
 			// Условие именно такое (для isZoomed) - здесь регион ставится на весь монитор
-			|| ((WindowMode == wmMaximized) && (gpSet->isHideCaption || gpSet->isHideCaptionAlways()))))
+			|| ((WindowMode == wmMaximized) && !IsWin10() && (gpSet->isHideCaption || gpSet->isHideCaptionAlways()))))
 	{
-		if (abTestOnly)
-			return (HRGN)1;
-
 		ConEmuRect tFrom = (WindowMode == wmFullScreen) ? CER_FULLSCREEN : CER_MAXIMIZED;
 		RECT rcScreen; // = CalcRect(tFrom, MakeRect(0,0), tFrom);
 		RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
@@ -5846,7 +5937,7 @@ HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/)
 			rcScreen = CalcRect(tFrom, MakeRect(0,0), tFrom);
 
 		// rcFrame, т.к. регион ставится относительно верхнего левого угла ОКНА
-		hRgn = CreateWindowRgn(abTestOnly, false, rcFrame.left, rcFrame.top, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
+		hRgn = CreateWindowRgn(false, rcFrame.left, rcFrame.top, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
 	}
 	else if (!gpSet->isQuakeStyle
 		&& (WindowMode == wmMaximized))
@@ -5862,13 +5953,13 @@ HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/)
 			RECT rcScreen = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
 			int nCX = GetSystemMetrics(SM_CXSIZEFRAME);
 			int nCY = GetSystemMetrics(SM_CYSIZEFRAME);
-			hRgn = CreateWindowRgn(abTestOnly, false, nCX, nCY, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
+			hRgn = CreateWindowRgn(false, nCX, nCY, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
 		}
 	}
 	else
 	{
 		// Normal
-		if (isCaptionHidden())
+		if (isCaptionHidden() && (!IsWin10() || mb_DisableThickFrame))
 		{
 			if ((mn_QuakePercent != 0)
 				|| !mp_ConEmu->isMouseOverFrame()
@@ -5901,16 +5992,23 @@ HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/)
 					}
 				}
 
+
+				// Take the value form gpSet because we need to apply it over calculated size
 				int nFrame = gpSet->HideCaptionAlwaysFrame();
-				bool bFullFrame = (nFrame < 0);
+				bool bFullFrame = (nFrame < 0) && !mb_DisableThickFrame;
 				if (bFullFrame)
 				{
 					nFrame = 0;
 				}
 				else
 				{
-					_ASSERTE(rcFrame.left>=nFrame);
-					_ASSERTE(rcFrame.top>=nFrame);
+					const int min_frame = klMin(rcFrame.left, rcFrame.top);
+					if (nFrame > min_frame)
+					{
+						_ASSERTE(rcFrame.left>=nFrame);
+						_ASSERTE(rcFrame.top>=nFrame);
+						nFrame = min_frame;
+					}
 				}
 
 
@@ -5934,7 +6032,7 @@ HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/)
 				int rgnWidth = RectWidth(rcClient) + rgnX2;
 				int rgnHeight = RectHeight(rcClient) + rgnY2;
 
-				bool bCreateRgn = (nFrame >= 0);
+				bool bCreateRgn = (nFrame >= 0) || mb_DisableThickFrame;
 
 
 				if (gpSet->isQuakeStyle)
@@ -5957,7 +6055,7 @@ HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/)
 
 				if (bCreateRgn)
 				{
-					hRgn = CreateWindowRgn(abTestOnly, bRoundTitle, rgnX, rgnY, rgnWidth, rgnHeight);
+					hRgn = CreateWindowRgn(bRoundTitle, rgnX, rgnY, rgnWidth, rgnHeight);
 				}
 				else
 				{
@@ -5972,7 +6070,7 @@ HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/)
 			// Таки нужно создать...
 			bool bTheming = gpSetCls->CheckTheming();
 			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
-			hRgn = CreateWindowRgn(abTestOnly, bTheming,
+			hRgn = CreateWindowRgn(bTheming,
 			                       0,0, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top);
 		}
 	}
@@ -5980,7 +6078,7 @@ HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/)
 	return hRgn;
 }
 
-HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=false*/,int anX, int anY, int anWndWidth, int anWndHeight)
+HRGN CConEmuSize::CreateWindowRgn(bool abRoundTitle, int anX, int anY, int anWndWidth, int anWndHeight)
 {
 	HRGN hRgn = NULL, hExclusion = NULL, hCombine = NULL;
 
@@ -5992,14 +6090,7 @@ HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 	// или если GUI не закрывается при закрытии последнего таба
 	if (CVConGroup::GetActiveVCon(&VCon) >= 0)
 	{
-		hExclusion = CVConGroup::GetExclusionRgn(abTestOnly);
-	}
-
-
-	if (abTestOnly && hExclusion)
-	{
-		_ASSERTE(hExclusion == (HRGN)1);
-		return (HRGN)1;
+		hExclusion = CVConGroup::GetExclusionRgn();
 	}
 
 	if (abRoundTitle && anX>0 && anY>0)
@@ -6022,9 +6113,6 @@ HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 	{
 		hRgn = CreateRectRgn(anX, anY, anX+anWndWidth, anY+anWndHeight);
 	}
-
-	if (abTestOnly && (hRgn || hExclusion))
-		return (HRGN)1;
 
 	// Смотреть CombineRgn, OffsetRgn (для перемещения региона отрисовки в пространство окна)
 	if (hExclusion)
@@ -6058,6 +6146,10 @@ HRGN CConEmuSize::CreateWindowRgn(bool abTestOnly/*=false*/,bool abRoundTitle/*=
 			hRgn = hCombine; hCombine = NULL;
 		}
 	}
+
+	wchar_t szInfo[200];
+	msprintf(szInfo, countof(szInfo), L"CreateWindowRgn: x,y={%i,%i} size={%i,%i} %s", anX, anY, anWndWidth, anWndHeight, hRgn ? L"Succeeded" : L"Failed");
+	DEBUGSTRRGN(szInfo);
 
 	return hRgn;
 }
@@ -6096,14 +6188,23 @@ bool CConEmuSize::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 
 UINT CConEmuSize::GetSelfFrameWidth()
 {
+	//return 0;
 	if (mp_ConEmu->isInside())
+		return 0;
+	// #SIZE_TODO Favor standard Win10 frame to get nice shadow around the window
+	// #SIZE_TODO Take into account Quake sliding mode
+	if (IsWin10())
 		return 0;
 	// Take into account user setting but don't allow frame larger than system-defined
 	int iFrame = gpSet->HideCaptionAlwaysFrame();
 	// #SIZE_TODO Reuse frame width from monitors cache
+	const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(NULL);
 	int iStdFrame = mp_ConEmu->GetWinFrameWidth();
-	if (iFrame <= 0 || iFrame > iStdFrame)
-		iFrame = iStdFrame;
+	int iDefFrame = isCaptionHidden() ? mi.noCaption.FrameWidth : mi.withCaption.FrameWidth;
+	if (iFrame < 0)
+		iFrame = iDefFrame; // 1 pixel in Win10
+	else if (iFrame == 0 || iFrame > iStdFrame)
+		iFrame = iStdFrame; // allow comfortable resize area on mouse hover
 	return static_cast<UINT>(iFrame);
 }
 

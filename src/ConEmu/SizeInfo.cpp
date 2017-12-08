@@ -49,6 +49,7 @@ SizeInfo::SizeInfo(const SizeInfo& src)
 	, mcs_lock(true)
 	, m_opt(src.m_opt)
 	, m_size(src.m_size)
+	, mb_temp(true)
 {
 }
 
@@ -102,7 +103,8 @@ void SizeInfo::RequestDpi(const DpiValue& _dpi)
 // Change whole window Rect (includes caption/frame and invisible part of Win10 DWM area)
 void SizeInfo::RequestRect(RECT _window)
 {
-	if (m_size.window == _window)
+	RECT rcCur = m_size.window;
+	if (rcCur == _window)
 		return;
 	LogRequest(_window, L"RequestRect");
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
@@ -240,7 +242,7 @@ void SizeInfo::DoCalculate()
 	}
 
 	RECT rcFrame = mp_ConEmu->CalcMargins(CEM_FRAMECAPTION);
-	if (!caption_hidden)
+	if (!caption_hidden || IsWin10()) // #SIZE_TODO unify for all OS
 	{
 		m_size.real_client = m_size.client = RECT{0, 0, RectWidth(m_size.window) - rcFrame.left - rcFrame.right, RectHeight(m_size.window) - rcFrame.top - rcFrame.bottom};
 	}

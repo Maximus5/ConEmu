@@ -1290,7 +1290,8 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 	else if (wParam == TID_MINIMIZE)
 	{
 		LogString(L"ToolBar: TID_MINIMIZE");
-		PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+		//PostMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+		gpConEmu->DoMinimizeRestore(sih_Minimize);
 	}
 	else if (wParam == TID_MAXIMIZE)
 	{

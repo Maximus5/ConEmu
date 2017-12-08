@@ -40,6 +40,7 @@ class SizeInfo
 {
 private:
 	CConEmuMain* mp_ConEmu;
+	bool mb_temp = false;
 public:
 	SizeInfo(CConEmuMain* _ConEmu);
 	SizeInfo(const SizeInfo& src);

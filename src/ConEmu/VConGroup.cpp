@@ -4457,7 +4457,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgsEx *args, bool abAllowScript
 	return pVCon;
 }
 
-HRGN CVConGroup::GetExclusionRgn(bool abTestOnly/*=false*/)
+HRGN CVConGroup::GetExclusionRgn()
 {
 	HRGN hExclusion = NULL;
 	int iComb = 0;
@@ -4469,14 +4469,7 @@ HRGN CVConGroup::GetExclusionRgn(bool abTestOnly/*=false*/)
 		CVConGuard VCon;
 		if (VCon.Attach(gp_VCon[i]) && VCon->isVisible())
 		{
-			HRGN hVCon = VCon->GetExclusionRgn(abTestOnly);
-
-			if (abTestOnly && hVCon)
-			{
-
-				_ASSERTE(hVCon == (HRGN)1);
-				return (HRGN)1;
-			}
+			HRGN hVCon = VCon->GetExclusionRgn();
 
 			if (hVCon)
 			{

@@ -286,7 +286,7 @@ class CVirtualConsole :
 		void OnConsoleSizeChanged();
 		void OnConsoleSizeReset(USHORT sizeX, USHORT sizeY);
 		static void ClearPartBrushes();
-		HRGN GetExclusionRgn(bool abTestOnly=false);
+		HRGN GetExclusionRgn();
 		COORD FindOpaqueCell();
 		bool RegisterPanelView(PanelViewInit* ppvi);
 		void OnPanelViewSettingsChanged();

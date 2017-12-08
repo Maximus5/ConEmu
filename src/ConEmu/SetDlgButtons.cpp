@@ -2331,7 +2331,7 @@ void CSetDlgButtons::OnBtn_HideCaption(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->isHideCaption = _bool(uCheck);
 	if (!gpSet->isQuakeStyle && gpConEmu->isZoomed())
 	{
-		gpConEmu->OnHideCaption();
+		gpConEmu->RefreshWindowStyles();
 		apiSetForegroundWindow(ghOpWnd);
 	}
 } // cbHideCaption
@@ -2351,7 +2351,7 @@ void CSetDlgButtons::OnBtn_HideCaptionAlways(HWND hDlg, WORD CB, BYTE uCheck)
 	}
 	EnableWindow(GetDlgItem(hDlg, cbHideCaptionAlways), !gpSet->isForcedHideCaptionAlways());
 
-	gpConEmu->OnHideCaption();
+	gpConEmu->RefreshWindowStyles();
 	apiSetForegroundWindow(ghOpWnd);
 
 } // cbHideCaptionAlways
@@ -3848,7 +3848,7 @@ void CSetDlgButtons::OnBtn_UserScreenTransparent(HWND hDlg, WORD CB, BYTE uCheck
 
 	gpSet->isUserScreenTransparent = _bool(uCheck);
 
-	gpConEmu->OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
+	gpConEmu->RefreshWindowStyles(); // при прозрачности - обязательно скрытие заголовка + кнопки
 	gpConEmu->UpdateWindowRgn();
 
 } // cbUserScreenTransparent
