@@ -94,7 +94,7 @@ LRESULT CSetPgAppear::OnEditChanged(HWND hDlg, WORD nCtrlId)
 			if (lbOk && (gpSet->nHideCaptionAlwaysFrame != ((nNewVal < 0) ? 255 : (BYTE)nNewVal)))
 			{
 				gpSet->nHideCaptionAlwaysFrame = (nNewVal < 0) ? 255 : (BYTE)nNewVal;
-				gpConEmu->OnHideCaption();
+				gpConEmu->RefreshWindowStyles();
 				gpConEmu->UpdateWindowRgn();
 			}
 		}

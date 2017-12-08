@@ -1692,10 +1692,14 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 	else if (gpConEmu->isCaptionHidden(wmNewMode))
 	{
 		// Required to force window sizing
-		dwStyle &= ~WS_SYSMENU;
+		// dwStyle &= ~WS_SYSMENU;
 		//Win& & Quake - не работает "Slide up/down" если есть ThickFrame
 		//if ((gpSet->isQuakeStyle == 0) // не для Quake. Для него нужна рамка, чтобы ресайзить
-		dwStyle &= ~(WS_CAPTION|WS_THICKFRAME|WS_DLGFRAME);
+		dwStyle &= ~WS_CAPTION;
+		if (mb_DisableThickFrame)
+			dwStyle &= ~(WS_THICKFRAME|WS_SYSMENU);
+		else
+			dwStyle |= (WS_THICKFRAME|WS_SYSMENU);
 	}
 	else
 	{
@@ -5522,14 +5526,19 @@ void CConEmuMain::Invalidate(LPRECT lpRect, BOOL bErase /*= TRUE*/)
 
 void CConEmuMain::InvalidateFrame()
 {
-	if (!gpConEmu->isCaptionHidden())
+	if (!isCaptionHidden())
 		return;
-	HRGN hRgn = gpConEmu->CreateSelfFrameRgn();
+	HRGN hRgn = CreateSelfFrameRgn();
 	if (hRgn)
 	{
 		InvalidateRgn(ghWnd, hRgn, FALSE);
 		DeleteObject(hRgn);
 	}
+	// avoid glitches at the top of the window (Win10)
+	RECT rc = SizeInfo::RealClientRect();
+	int diff = RectHeight(SizeInfo::WindowRect()) - RectHeight(rc);
+	rc.top = 0; rc.bottom = diff;
+	InvalidateRect(ghWnd, &rc, FALSE);
 }
 
 void CConEmuMain::InvalidateAll()
@@ -7214,7 +7223,7 @@ void CConEmuMain::PostCreate(bool abReceived/*=FALSE*/)
 
 		if (gpSet->isHideCaptionAlways())
 		{
-			OnHideCaption();
+			RefreshWindowStyles();
 		}
 
 		if (opt.DesktopMode)
@@ -8068,7 +8077,7 @@ LRESULT CConEmuMain::OnFocus(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	return 0;
 }
 
-void CConEmuMain::OnHideCaption()
+void CConEmuMain::RefreshWindowStyles()
 {
 	if (m_JumpMonitor.bInJump)
 	{
@@ -8076,14 +8085,14 @@ void CConEmuMain::OnHideCaption()
 		return;
 	}
 
+	DEBUGTEST(bool bHideCaption = gpConEmu->isCaptionHidden());
+
 	mp_TabBar->OnCaptionHidden();
 
 	//if (isZoomed())
 	//{
 	//	SetWindowMode(wmMaximized, TRUE);
 	//}
-
-	DEBUGTEST(bool bHideCaption = gpConEmu->isCaptionHidden());
 
 	DWORD nStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD nNewStyle = FixWindowStyle(nStyle, WindowMode);

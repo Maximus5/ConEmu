@@ -56,7 +56,8 @@ static wchar_t _szDbg[512];
 #define DBGFUNCTION(s) //{ wsprintf(_szDbg, L"%i: %s\n", ++_nDbgStep, s); OutputDebugString(_szDbg); /*Sleep(1000);*/ }
 #endif
 
-#define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRNC(s) DEBUGSTR(s)
 #define DEBUGSTRPAINT(s) //DEBUGSTR(s)
 
 #ifdef _DEBUG
@@ -137,11 +138,11 @@ bool CFrameHolder::ProcessNcMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 			lstrcpy(szMsg, L"WM_WINDOWPOSCHANGING"); break;
 		case WM_MOVE:
 			lstrcpy(szMsg, L"WM_MOVE");
-			wsprintf(szInfo, L"{%ix%i}", (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
+			wsprintf(szInfo, L"{%i,%i}", (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
 			break;
 		case WM_SIZE:
 			lstrcpy(szMsg, L"WM_SIZE");
-			wsprintf(szInfo, L"%s {%ix%i}",
+			wsprintf(szInfo, L"%s {%i,%i}",
 				(wParam==SIZE_MAXHIDE) ? L"SIZE_MAXHIDE" :
 				(wParam==SIZE_MAXIMIZED) ? L"SIZE_MAXIMIZED" :
 				(wParam==SIZE_MAXSHOW) ? L"SIZE_MAXSHOW" :
@@ -655,6 +656,7 @@ bool CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg, LRESULT& lResult)
 
 	DBGFUNCTION("WM_PAINT (frame)");
 
+	RECT rcWndReal = {}; GetWindowRect(hWnd, &rcWndReal);
 	RECT rcClientReal = {}; GetClientRect(hWnd, &rcClientReal);
 	#ifdef _DEBUG
 	RECT rcClientMapped = rcClientReal;
@@ -828,8 +830,10 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	bool bCallDefProc = true;
 
 	RECT rcMargins = {};
-	if (!mp_ConEmu->isCaptionHidden())
+	//if (!mp_ConEmu->isCaptionHidden())
 		rcMargins = mp_ConEmu->CalcMargins(CEM_FRAMECAPTION);
+
+	RECT rcWnd = {}, rcClient = {};
 
 	if (wParam)
 	{
@@ -849,6 +853,7 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		// r[2] contains the coordinates of the window's client area before the window was moved or resized
 		RECT r[3] = {pParm->rgrc[0], pParm->rgrc[1], pParm->rgrc[2]};
 		bool bAllowPreserveClient = mb_AllowPreserveClient && (memcmp(r, r+1, sizeof(*r)) == 0);
+		rcWnd = r[0];
 
 		// We need to call this, otherwise some parts of window may be broken
 		// If don't - system will not draw window caption when theming is off
@@ -856,8 +861,6 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		{
 			lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
-
-		RECT rcClient; // = mp_ConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
 
 		// Need screen coordinates!
 		rcClient = MakeRect(r[0].left+rcMargins.left, r[0].top+rcMargins.top, r[0].right-rcMargins.right, r[0].bottom-rcMargins.bottom);
@@ -903,9 +906,7 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			lResult = 0;
 			return true;
 		}
-		RECT rc = *nccr;
-
-		RECT rcClient; // = mp_ConEmu->CalcRect(CER_MAINCLIENT, rcWnd, CER_MAIN);
+		rcWnd = *nccr;
 
 		if (bCallDefProc)
 		{
@@ -914,10 +915,14 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		}
 
 		// Need screen coordinates!
-		rcClient = MakeRect(rc.left+rcMargins.left, rc.top+rcMargins.top, rc.right-rcMargins.right, rc.bottom-rcMargins.bottom);
+		rcClient = MakeRect(rcWnd.left+rcMargins.left, rcWnd.top+rcMargins.top, rcWnd.right-rcMargins.right, rcWnd.bottom-rcMargins.bottom);
 
 		*nccr = rcClient;
 	}
+
+	wchar_t szInfo[200];
+	msprintf(szInfo, countof(szInfo), L"WM_NCCALCSIZE(%u): Wnd={%i,%i}-{%i,%i} -> Client={%i,%i}-{%i,%i}", wParam, LOGRECTCOORDS(rcWnd), LOGRECTCOORDS(rcClient));
+	DEBUGSTRNC(szInfo);
 
 	UNREFERENCED_PARAMETER(lRcDef);
 	UNREFERENCED_PARAMETER(fdt);

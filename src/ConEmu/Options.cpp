@@ -642,7 +642,9 @@ void Settings::InitSettings()
 	_WindowMode = wmNormal;
 	isUseCurrentSizePos = true; // Show in settings dialog and save current window size/pos
 	//isFullScreen = false;
-	isHideCaption = false; mb_HideCaptionAlways = false; isQuakeStyle = false; nQuakeAnimation = QUAKEANIMATION_DEF;
+	isHideCaption = false;
+	mb_HideCaptionAlways = IsWin10();
+	isQuakeStyle = false; nQuakeAnimation = QUAKEANIMATION_DEF;
 	isRestore2ActiveMon = false;
 	isHideChildCaption = true;
 	isFocusInChildWindows = true;

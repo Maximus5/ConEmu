@@ -211,7 +211,7 @@ public:
 	static void OnTaskbarCreated();
 
 	static void MoveAllVCon(CVirtualConsole* pVConCurrent, RECT rcNewCon);
-	static HRGN GetExclusionRgn(bool abTestOnly = false);
+	static HRGN GetExclusionRgn();
 	static void OnConActivated(CVirtualConsole* pVCon);
 	static bool ConActivate(int nCon);
 	private:

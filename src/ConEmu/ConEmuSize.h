@@ -76,6 +76,7 @@ public:
 	void SetIgnoreQuakeActivation(bool bNewValue);
 protected:
 	int mn_QuakePercent; // 0 - отключен, иначе (>0 && <=100) - идет анимация Quake
+	bool mb_DisableThickFrame = false;
 
 	struct QuakePrevSize {
 		bool bWasSaved;
@@ -178,15 +179,26 @@ protected:
 	//bool isPostUpdateWindowSize() { return mb_PostUpdateWindowSize; };
 
 public:
+	struct FrameInfoCache
+	{
+		// if DWMWA_EXTENDED_FRAME_BOUNDS succeeded, we fill Win10Stealthy
+		// with invisible parts of the real frame border (weird...)
+		RECT Win10Stealthy;
+		// Default *visible* frame width for resizeable windows
+		int FrameWidth;
+		// Default offsets for client area
+		RECT FrameMargins;
+	};
 	struct MonitorInfoCache
 	{
 		HMONITOR hMon;
 		MONITORINFO mi;
-		// if DWMWA_EXTENDED_FRAME_BOUNDS succeeded
-		bool HasWin10Frame;
-		RECT Win10Frame;
 		// Per-monitor DPI
 		int Xdpi, Ydpi;
+		// For resizeable windows with caption
+		FrameInfoCache withCaption;
+		// And without caption
+		FrameInfoCache noCaption;
 	};
 protected:
 	MSectionSimple mcs_monitors = MSectionSimple(true);
@@ -265,7 +277,7 @@ public:
 	bool isWindowNormal();
 	bool isZoomed();
 
-	void UpdateWindowRgn(int anX = -1, int anY = -1, int anWndWidth = -1, int anWndHeight = -1);
+	void UpdateWindowRgn();
 	bool ShowMainWindow(int anCmdShow, bool abFirstShow = false);
 	void CheckTopMostState();
 	bool SizeWindow(const CESize sizeW, const CESize sizeH);
@@ -299,8 +311,8 @@ public:
 
 	bool InMinimizing(WINDOWPOS *p = NULL);
 
-	HRGN CreateWindowRgn(bool abTestOnly = false);
-	HRGN CreateWindowRgn(bool abTestOnly, bool abRoundTitle, int anX, int anY, int anWndWidth, int anWndHeight);
+	HRGN CreateWindowRgn();
+	HRGN CreateWindowRgn(bool abRoundTitle, int anX, int anY, int anWndWidth, int anWndHeight);
 
 	bool isFrameCropped();
 	bool isCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);

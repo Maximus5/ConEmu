@@ -2212,7 +2212,7 @@ bool CStatus::ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly)
 			{
 				case 1:
 					gpSet->isUserScreenTransparent = !gpSet->isUserScreenTransparent;
-					gpConEmu->OnHideCaption(); // при прозрачности - обязательно скрытие заголовка + кнопки
+					gpConEmu->RefreshWindowStyles(); // при прозрачности - обязательно скрытие заголовка + кнопки
 					gpConEmu->UpdateWindowRgn();
 					// Отразить изменения в статусе
 					OnTransparency();

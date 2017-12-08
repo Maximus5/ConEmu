@@ -4585,19 +4585,13 @@ bool CVirtualConsole::FindChanges(int row, const wchar_t* ConCharLine, const Cha
 	return TRUE;
 }
 
-HRGN CVirtualConsole::GetExclusionRgn(bool abTestOnly/*=false*/)
+HRGN CVirtualConsole::GetExclusionRgn()
 {
 	if (!gpSet->isUserScreenTransparent)
 		return NULL;
 
 	if (mp_RCon->GetFarPID(TRUE) == 0)
 		return NULL;
-
-	// Возвращает mh_TransparentRgn
-	// Сам mh_TransparentRgn формируется в CheckTransparentRgn,
-	// который должен вызываться в CVirtualConsole::PaintVCon
-	if (abTestOnly && mh_TransparentRgn)
-		return (HRGN)1;
 
 	return mh_TransparentRgn;
 }
