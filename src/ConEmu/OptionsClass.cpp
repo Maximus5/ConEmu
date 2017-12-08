@@ -1767,6 +1767,8 @@ LRESULT CSettings::OnPage(LPNMHDR phdr)
 /// IdShowPage is DialogID (IDD_SPG_FONTS, etc.)
 void CSettings::Dialog(int IdShowPage /*= 0*/)
 {
+	const TabHwndIndex lastPageId = gpSetCls->m_LastActivePageId;
+
 	if (!ghOpWnd || !IsWindow(ghOpWnd))
 	{
 		_ASSERTE(isMainThread());
@@ -1804,8 +1806,8 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 	TabHwndIndex showPage = thi_Last;
 	if (IdShowPage)
 		showPage = gpSetCls->GetPageIdByDialogId(IdShowPage);
-	if ((showPage == thi_Last) && (gpSetCls->m_LastActivePageId != thi_Last))
-		showPage = gpSetCls->m_LastActivePageId;
+	if ((showPage == thi_Last) && (lastPageId != thi_Last))
+		showPage = lastPageId;
 
 	if (showPage != thi_Last)
 	{
