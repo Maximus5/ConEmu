@@ -116,7 +116,7 @@ bool CIconList::Initialize()
 		swprintf_c(szLog, L"Creating IconList for size {%ix%i} SysIcon size is {%ix%i}", mn_CxIcon, mn_CyIcon, iSysX, iSysY);
 		gpConEmu->LogString(szLog);
 
-		if ((mh_TabIcons = ImageList_Create(mn_CxIcon, mn_CyIcon, ILC_COLOR24|ILC_MASK, 0, 16)) != NULL)
+		if ((mh_TabIcons = ImageList_Create(mn_CxIcon, mn_CyIcon, ILC_COLOR32|ILC_MASK, 0, 16)) != NULL)
 		{
 			CToolImg img;
 			int nFirstAdd = -1;
