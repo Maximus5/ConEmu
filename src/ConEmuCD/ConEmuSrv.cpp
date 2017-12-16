@@ -2322,7 +2322,7 @@ void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 	// Changed?
 	if (ghConEmuWnd != hRootWnd)
 	{
-		_wsprintfA(szInfo+lstrlenA(szInfo), SKIPLEN(30) "ConEmuWnd=x%08X ", (DWORD)(DWORD_PTR)hRootWnd);
+		sprintf_c(szInfo+lstrlenA(szInfo), 30/*#SECURELEN*/, "ConEmuWnd=x%08X ", (DWORD)(DWORD_PTR)hRootWnd);
 		ghConEmuWnd = hRootWnd;
 
 		// Than check GuiPID
@@ -2356,7 +2356,7 @@ void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 	// Set new descriptors
 	if ((ghConEmuWndDC != hDcWnd) || (ghConEmuWndBack != hBackWnd))
 	{
-		_wsprintfA(szInfo+lstrlenA(szInfo), SKIPLEN(60) "WndDC=x%08X WndBack=x%08X", (DWORD)(DWORD_PTR)hDcWnd, (DWORD)(DWORD_PTR)hBackWnd);
+		sprintf_c(szInfo+lstrlenA(szInfo), 60/*#SECURELEN*/, "WndDC=x%08X WndBack=x%08X", (DWORD)(DWORD_PTR)hDcWnd, (DWORD)(DWORD_PTR)hBackWnd);
 		ghConEmuWndDC = hDcWnd;
 		ghConEmuWndBack = hBackWnd;
 		// "ConEmuDrawHWND"="0x%08X", "ConEmuBackHWND"="0x%08X"

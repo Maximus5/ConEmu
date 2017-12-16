@@ -9996,7 +9996,7 @@ void CRealConsole::LogInput(INPUT_RECORD* pRec)
 	{
 			/*case FOCUS_EVENT: _wsprintfA(pszAdd, countof(szInfo)-(pszAdd-szInfo), "FOCUS_EVENT(%i)\r\n", pRec->Event.FocusEvent.bSetFocus);
 				break;*/
-		case MOUSE_EVENT: //_wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo)) "MOUSE_EVENT\r\n");
+		case MOUSE_EVENT: //sprintf_c(pszAdd, countof(szInfo)-(pszAdd-szInfo)/*#SECURELEN*/, "MOUSE_EVENT\r\n");
 			{
 				if (!isLogging(2) && (pRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED))
 					return; // Движения мышки логировать только при /log2

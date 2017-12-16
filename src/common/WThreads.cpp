@@ -166,7 +166,7 @@ HANDLE apiCreateThread(LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter
 			char* pszNewName = new char[cchMax];
 			if (pszNewName)
 			{
-				_wsprintfA(pszNewName, SKIPLEN(cchMax) asThreadNameFormat, anFormatArg);
+				sprintf_c(pszNewName, cchMax/*#SECURELEN*/, asThreadNameFormat, anFormatArg);
 				_ASSERTE(strlen(pszNewName) < THREAD_MAX_NAME_LEN);
 				lstrcpynA(args->sName, pszNewName, countof(args->sName));
 				delete[] pszNewName;
