@@ -1342,7 +1342,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	/* ****** Start child process ****** */
 	/* ********************************* */
 #ifdef SHOW_STARTED_PRINT
-	_wsprintfA(szDbgString, SKIPLEN(szDbgString) "ConEmuC: PID=%u", GetCurrentProcessId());
+	sprintf_c(szDbgString, "ConEmuC: PID=%u", GetCurrentProcessId());
 	MessageBoxA(0, "Press Ok to continue", szDbgString, MB_SYSTEMMODAL);
 #endif
 
@@ -5405,7 +5405,7 @@ void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bF
 		int iCvt = WideCharToMultiByte(CP_UTF8, 0, szFontName, -1, szFontInfo+1, 40, NULL, NULL);
 		if (iCvt <= 0) lstrcpynA(szFontInfo+1, "??", 40); else szFontInfo[iCvt+1] = 0;
 		int iLen = lstrlenA(szFontInfo); // result of WideCharToMultiByte is not suitable (contains trailing zero)
-		_wsprintfA(szFontInfo+iLen, SKIPLEN(countof(szFontInfo)-iLen) "` %ix%i%s",
+		sprintf_c(szFontInfo+iLen, countof(szFontInfo)-iLen/*#SECURELEN*/, "` %ix%i%s",
 			fontY, fontX, szState);
 	}
 

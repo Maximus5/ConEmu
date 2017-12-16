@@ -2214,7 +2214,7 @@ bool CRealBuffer::LoadDataFromSrv(CRConDataGuard& data, DWORD CharCount, CHAR_IN
 					int y = con.nTextWidth ? (idx / con.nTextWidth) : 0;
 					int x = con.nTextWidth ? (idx - y * con.nTextWidth) : idx;
 
-					_wsprintfA(sInfo+strlen(sInfo), SKIPLEN(32) ", posY=%i, posX=%i", y, x);
+					sprintf_c(sInfo+strlen(sInfo), 32/*#SECURELEN*/, ", posY=%i, posX=%i", y, x);
 
 					break;
 				}
