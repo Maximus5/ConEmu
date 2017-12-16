@@ -5473,7 +5473,7 @@ void LogModeChange(LPCWSTR asName, DWORD oldVal, DWORD newVal)
 	LPCWSTR pszLabel = asName ? asName : L"???";
 	CEStr lsInfo;
 	INT_PTR cchLen = lstrlen(pszLabel) + 80;
-	_wsprintf(lsInfo.GetBuffer(cchLen), SKIPLEN(cchLen) L"Mode %s changed: old=x%04X new=x%04X", pszLabel, oldVal, newVal);
+	swprintf_c(lsInfo.GetBuffer(cchLen), cchLen/*#SECURELEN*/, L"Mode %s changed: old=x%04X new=x%04X", pszLabel, oldVal, newVal);
 	LogString(lsInfo);
 }
 

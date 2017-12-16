@@ -3745,11 +3745,11 @@ bool CPluginBase::cmd_OpenEditorLine(CESERVER_REQ_FAREDITOR *pCmd)
 		{
 			int nCurLen = lstrlen(pszMacro);
 			if (gFarVersion.dwVerMajor==1)
-				_wsprintf(pszMacro+nCurLen, SKIPLEN(cchMax-nCurLen) L" $if(Editor) AltF8 \"%i:%i\" Enter $end", pCmd->nLine, pCmd->nColon);
+				swprintf_c(pszMacro+nCurLen, cchMax-nCurLen/*#SECURELEN*/, L" $if(Editor) AltF8 \"%i:%i\" Enter $end", pCmd->nLine, pCmd->nColon);
 			else if (!gFarVersion.IsFarLua())
-				_wsprintf(pszMacro+nCurLen, SKIPLEN(cchMax-nCurLen) L" $if(Editor) AltF8 print(\"%i:%i\") Enter $end", pCmd->nLine, pCmd->nColon);
+				swprintf_c(pszMacro+nCurLen, cchMax-nCurLen/*#SECURELEN*/, L" $if(Editor) AltF8 print(\"%i:%i\") Enter $end", pCmd->nLine, pCmd->nColon);
 			else
-				_wsprintf(pszMacro+nCurLen, SKIPLEN(cchMax-nCurLen) L" if Area.Editor then Keys(\"AltF8\") print(\"%i:%i\") Keys(\"Enter\") end", pCmd->nLine, pCmd->nColon);
+				swprintf_c(pszMacro+nCurLen, cchMax-nCurLen/*#SECURELEN*/, L" if Area.Editor then Keys(\"AltF8\") print(\"%i:%i\") Keys(\"Enter\") end", pCmd->nLine, pCmd->nColon);
 		}
 
 		_wcscat_c(pszMacro, cchMax, (!gFarVersion.IsFarLua()) ? L" $end" : L" end");

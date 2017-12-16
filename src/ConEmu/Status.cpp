@@ -655,12 +655,12 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				// чтобы не задавали вопросов, нафига дублируется.
 				if (LOWORD((DWORD)mhk_Locale) == HIWORD((DWORD)mhk_Locale))
 				{
-					_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%04X", LOWORD((DWORD)mhk_Locale));
+					swprintf_c(m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText)-1/*#SECURELEN*/, L"%04X", LOWORD((DWORD)mhk_Locale));
 					wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFF");
 				}
 				else
 				{
-					_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", (DWORD)mhk_Locale);
+					swprintf_c(m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText)-1/*#SECURELEN*/, L"%08X", (DWORD)mhk_Locale);
 					wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
 				}
 				break;
@@ -716,30 +716,30 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"--");
 				break;
 			case csi_WindowStyle:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", mn_Style);
+				swprintf_c(m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText)-1/*#SECURELEN*/, L"%08X", mn_Style);
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
 				break;
 			case csi_WindowStyleEx:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%08X", mn_ExStyle);
+				swprintf_c(m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText)-1/*#SECURELEN*/, L"%08X", mn_ExStyle);
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"FFFFFFFF");
 				break;
 
 			case csi_Zoom:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%i%%", gpFontMgr->GetZoom());
+				swprintf_c(m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText)-1/*#SECURELEN*/, L"%i%%", gpFontMgr->GetZoom());
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"200%");
 				break;
 			case csi_DPI:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"%i", gpSetCls->QueryDpi());
+				swprintf_c(m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText)-1/*#SECURELEN*/, L"%i", gpSetCls->QueryDpi());
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"999");
 				break;
 
 			case csi_HwndFore:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"x%08X[%u]", LODWORD(mh_Fore), mn_ForePID);
+				swprintf_c(m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText)-1/*#SECURELEN*/, L"x%08X[%u]", LODWORD(mh_Fore), mn_ForePID);
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"xFFFFFFFF[99999]");
 				m_Values[nID].sHelp = ms_ForeInfo;
 				break;
 			case csi_HwndFocus:
-				_wsprintf(m_Items[nDrawCount].sText, SKIPLEN(countof(m_Items[nDrawCount].sText)-1) L"x%08X[%u]", LODWORD(mh_Focus), mn_FocusPID);
+				swprintf_c(m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText)-1/*#SECURELEN*/, L"x%08X[%u]", LODWORD(mh_Focus), mn_FocusPID);
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"xFFFFFFFF[99999]");
 				m_Values[nID].sHelp = ms_FocusInfo;
 				break;
@@ -1723,7 +1723,7 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 	// csi_ConsolePos:
 	if (bValid)
 	{
-		_wsprintf(m_Values[csi_ConsolePos].sText, SKIPLEN(countof(m_Values[csi_ConsolePos].sText)-1) L"(%i,%i)-(%i,%i)",
+		swprintf_c(m_Values[csi_ConsolePos].sText, countof(m_Values[csi_ConsolePos].sText)-1/*#SECURELEN*/, L"(%i,%i)-(%i,%i)",
 			(int)psbi->srWindow.Left+1, (int)psbi->srWindow.Top+1, (int)psbi->srWindow.Right+1, (int)psbi->srWindow.Bottom+1);
 		swprintf_c(m_Values[csi_ConsolePos].szFormat, L" (%i,%i)-(%i,%i) ",
 			(int)psbi->srWindow.Left+1, (int)psbi->srWindow.Top+1, (int)psbi->dwSize.X, (int)psbi->dwSize.Y);
@@ -1750,7 +1750,7 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 			wcscpy_c(m_Values[csi_ViewLock].sText, gsViewName);
 		}
 		wcscpy_c(m_Values[csi_ViewLock].szFormat, L"{-,999}");
-		//_wsprintf(ms_ViewLockHint, SKIPLEN(countof(ms_ViewLockHint)-1) L"%s (%i,%i)",
+		//swprintf_c(ms_ViewLockHint, countof(ms_ViewLockHint)-1/*#SECURELEN*/, L"%s (%i,%i)",
 		//	gsViewLock, pTopLeft->x, pTopLeft->y);
 		//m_Values[csi_ViewLock].sHelp = ms_ViewLockHint;
 	}
@@ -1764,7 +1764,7 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 
 	// csi_ConsoleSize:
 	if (bValid)
-		_wsprintf(m_Values[csi_ConsoleSize].sText, SKIPLEN(countof(m_Values[csi_ConsoleSize].sText)-1) L"%ix%i", (int)psbi->srWindow.Right-psbi->srWindow.Left+1, (int)psbi->srWindow.Bottom-psbi->srWindow.Top+1);
+		swprintf_c(m_Values[csi_ConsoleSize].sText, countof(m_Values[csi_ConsoleSize].sText)-1/*#SECURELEN*/, L"%ix%i", (int)psbi->srWindow.Right-psbi->srWindow.Left+1, (int)psbi->srWindow.Bottom-psbi->srWindow.Top+1);
 	else
 		wcscpy_c(m_Values[csi_ConsoleSize].sText, L" ");
 	//m_Values[csi_ConsoleSize].sFormat = L"999x999";
@@ -1775,7 +1775,7 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 	// csi_BufferSize:
 	if (bValid)
 	{
-		_wsprintf(m_Values[csi_BufferSize].sText, SKIPLEN(countof(m_Values[csi_BufferSize].sText)-1) L"%ix%i", (int)psbi->dwSize.X, (int)psbi->dwSize.Y);
+		swprintf_c(m_Values[csi_BufferSize].sText, countof(m_Values[csi_BufferSize].sText)-1/*#SECURELEN*/, L"%ix%i", (int)psbi->dwSize.X, (int)psbi->dwSize.Y);
 		swprintf_c(m_Values[csi_BufferSize].szFormat, L" %ix%i",
 			(int)psbi->dwSize.X, max((int)psbi->dwSize.Y,(int)gpSet->DefaultBufferHeight));
 	}
@@ -1802,7 +1802,7 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	// csi_CursorX:
 	if (bValid)
 	{
-		_wsprintf(m_Values[csi_CursorX].sText, SKIPLEN(countof(m_Values[csi_CursorX].sText)-1) _T("%i"), (int)pcr->X+1);
+		swprintf_c(m_Values[csi_CursorX].sText, countof(m_Values[csi_CursorX].sText)-1/*#SECURELEN*/, _T("%i"), (int)pcr->X+1);
 		if (nMaxX)
 			swprintf_c(m_Values[csi_CursorX].szFormat, L" %i", nMaxX);
 	}
@@ -1815,7 +1815,7 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	// csi_CursorY:
 	if (bValid)
 	{
-		_wsprintf(m_Values[csi_CursorY].sText, SKIPLEN(countof(m_Values[csi_CursorY].sText)-1) _T("%i"), (int)pcr->Y+1);
+		swprintf_c(m_Values[csi_CursorY].sText, countof(m_Values[csi_CursorY].sText)-1/*#SECURELEN*/, _T("%i"), (int)pcr->Y+1);
 		if (nMaxY)
 			swprintf_c(m_Values[csi_CursorY].szFormat, L" %i", nMaxY);
 	}
@@ -1828,7 +1828,7 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	// csi_CursorSize:
 	if (bValid)
 	{
-		_wsprintf(m_Values[csi_CursorSize].sText, SKIPLEN(countof(m_Values[csi_CursorSize].sText)-1) _T("%i%s"), pci->dwSize, pci->bVisible ? L"V" : L"H");
+		swprintf_c(m_Values[csi_CursorSize].sText, countof(m_Values[csi_CursorSize].sText)-1/*#SECURELEN*/, _T("%i%s"), pci->dwSize, pci->bVisible ? L"V" : L"H");
 		wcscpy_c(m_Values[csi_CursorSize].szFormat, L"100V");
 	}
 	else
@@ -1840,7 +1840,7 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	// csi_CursorInfo:
 	if (bValid)
 	{
-		_wsprintf(m_Values[csi_CursorInfo].sText, SKIPLEN(countof(m_Values[csi_CursorInfo].sText)-1) _T("(%i,%i) %i%s"), (int)pcr->X+1, (int)pcr->Y+1, pci->dwSize, pci->bVisible ? L"V" : L"H");
+		swprintf_c(m_Values[csi_CursorInfo].sText, countof(m_Values[csi_CursorInfo].sText)-1/*#SECURELEN*/, _T("(%i,%i) %i%s"), (int)pcr->X+1, (int)pcr->Y+1, pci->dwSize, pci->bVisible ? L"V" : L"H");
 		if (nMaxX && nMaxY)
 			swprintf_c(m_Values[csi_CursorInfo].szFormat, L" (%i,%i) 100V", nMaxX, nMaxY);
 	}

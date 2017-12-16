@@ -1520,7 +1520,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 					LPCWSTR pszExe = GetActiveProcessName();
 					if (pszExe && (lstrcmpi(pszExe, L"powershell.exe") == 0))
 					{
-						//_wsprintf(psz, SKIPLEN(cchMax) L"%ccd \"%s\"%c", 27, asCmd, L'\n');
+						//swprintf_c(psz, cchMax/*#SECURELEN*/, L"%ccd \"%s\"%c", 27, asCmd, L'\n');
 						pszFormat = L"\\ecd \\1\\n";
 					}
 					else if (pszExe && (lstrcmpi(pszExe, L"bash.exe") == 0 || lstrcmpi(pszExe, L"sh.exe") == 0))
@@ -1529,7 +1529,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 					}
 					else
 					{
-						//_wsprintf(psz, SKIPLEN(cchMax) L"%ccd /d \"%s\"%c", 27, asCmd, L'\n');
+						//swprintf_c(psz, cchMax/*#SECURELEN*/, L"%ccd /d \"%s\"%c", 27, asCmd, L'\n');
 						pszFormat = L"\\ecd /d \\1\\n";
 					}
 				}
@@ -1623,7 +1623,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 				}
 				else
 				{
-					_wsprintf(psz, SKIPLEN(cchMax) L"%c%s%c", 27, asCmd, L'\n');
+					swprintf_c(psz, cchMax/*#SECURELEN*/, L"%c%s%c", 27, asCmd, L'\n');
 				}
 
 				PostString(pszData, wcslen(pszData));
@@ -4683,7 +4683,7 @@ bool CRealConsole::StartProcess()
 		                    NULL, dwLastError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
 		                    pszErr, cchFormatMax, NULL))
 		{
-			_wsprintf(pszErr, SKIPLEN(cchFormatMax) L"Unknown system error: 0x%x", dwLastError);
+			swprintf_c(pszErr, cchFormatMax/*#SECURELEN*/, L"Unknown system error: 0x%x", dwLastError);
 		}
 
 		nErrLen += _tcslen(pszErr);
@@ -4692,9 +4692,9 @@ bool CRealConsole::StartProcess()
 		switch (dwLastError)
 		{
 		case ERROR_ACCESS_DENIED:
-			_wsprintf(psz, SKIPLEN(nErrLen) L"Can't create new console, check your antivirus (code %i)!\r\n", (int)dwLastError); break;
+			swprintf_c(psz, nErrLen/*#SECURELEN*/, L"Can't create new console, check your antivirus (code %i)!\r\n", (int)dwLastError); break;
 		default:
-			_wsprintf(psz, SKIPLEN(nErrLen) L"Can't create new console, command execution failed (code %i)\r\n", (int)dwLastError);
+			swprintf_c(psz, nErrLen/*#SECURELEN*/, L"Can't create new console, command execution failed (code %i)\r\n", (int)dwLastError);
 		}
 		_wcscat_c(psz, nErrLen, pszErr);
 		_wcscat_c(psz, nErrLen, L"\r\n");
@@ -4936,7 +4936,7 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		nMode |= (ENABLE_QUICK_EDIT_MODE << 16);
 
 		nCurLen = _tcslen(psCurCmd);
-		_wsprintf(psCurCmd+nCurLen, SKIPLEN(nLen-nCurLen) L" /CINMODE=%X", nMode);
+		swprintf_c(psCurCmd+nCurLen, nLen-nCurLen/*#SECURELEN*/, L" /CINMODE=%X", nMode);
 	}
 
 	_ASSERTE(mp_RBuf==mp_ABuf);
@@ -6039,7 +6039,7 @@ bool CRealConsole::OpenConsoleEventPipe()
 
 			int nLen = _tcslen(ms_ConEmuCInput_Pipe) + 128;
 			wchar_t* pszErrMsg = (wchar_t*)malloc(nLen*sizeof(wchar_t));
-			_wsprintf(pszErrMsg, SKIPLEN(nLen) L"ConEmuCInput not found, ErrCode=0x%08X\n%s", dwErr, ms_ConEmuCInput_Pipe);
+			swprintf_c(pszErrMsg, nLen/*#SECURELEN*/, L"ConEmuCInput not found, ErrCode=0x%08X\n%s", dwErr, ms_ConEmuCInput_Pipe);
 			//DisplayLastError(L"mh_ConInputPipe not found", dwErr);
 			// Выполняем Post-ом, т.к. консоль может уже закрываться (по стеку сообщений)? А сервер еще не прочухал...
 			mp_ConEmu->PostDisplayRConError(this, pszErrMsg);
@@ -7538,9 +7538,9 @@ void CRealConsole::OnServerClosing(DWORD anSrvPID, int* pnShellExitCode)
 		wchar_t szLog[120];
 		swprintf_c(szLog, L"OnServerClosing: SrvPID=%u RootExitCode=", anSrvPID);
 		if (pnShellExitCode && (*pnShellExitCode >= 0 && *pnShellExitCode <= 2048))
-			_wsprintf(szLog+wcslen(szLog), SKIPLEN(countof(szLog)-wcslen(szLog)) L"%u", *pnShellExitCode);
+			swprintf_c(szLog+wcslen(szLog), countof(szLog)-wcslen(szLog)/*#SECURELEN*/, L"%u", *pnShellExitCode);
 		else if (pnShellExitCode)
-			_wsprintf(szLog+wcslen(szLog), SKIPLEN(countof(szLog)-wcslen(szLog)) L"0x%08X", *pnShellExitCode);
+			swprintf_c(szLog+wcslen(szLog), countof(szLog)-wcslen(szLog)/*#SECURELEN*/, L"0x%08X", *pnShellExitCode);
 		else
 			wcscat_c(szLog, L"Unknown");
 		LogString(szLog);
@@ -8294,11 +8294,11 @@ LPCWSTR CRealConsole::GetActiveProcessInfo(CEStr& rsInfo)
 			wchar_t szBits[8] = L"";
 			if (Process.Bits > 0) swprintf_c(szBits, L"%i", Process.Bits);
 
-			_wsprintf(pszText, SKIPLEN(cchTextMax) _T("%s%s[%s%s]:%u"), szNameTrim, pszInteractive, pszAdmin, szBits, nPID);
+			swprintf_c(pszText, cchTextMax/*#SECURELEN*/, _T("%s%s[%s%s]:%u"), szNameTrim, pszInteractive, pszAdmin, szBits, nPID);
 		}
 		else
 		{
-			_wsprintf(pszText, SKIPLEN(cchTextMax) _T("%s%s%s:%u"), szNameTrim, pszInteractive, pszAdmin, nPID);
+			swprintf_c(pszText, cchTextMax/*#SECURELEN*/, _T("%s%s%s:%u"), szNameTrim, pszInteractive, pszAdmin, nPID);
 		}
 	}
 
@@ -13862,7 +13862,7 @@ void CRealConsole::logProgress(LPCWSTR asFormat, int V1, int V2)
 	#endif
 
 	wchar_t szInfo[100];
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)-1) asFormat, V1, V2);
+	swprintf_c(szInfo, countof(szInfo)-1/*#SECURELEN*/, asFormat, V1, V2);
 
 	#ifdef _DEBUG
 	if (!mp_Log)

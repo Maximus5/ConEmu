@@ -325,13 +325,13 @@ void CSetPgDebug::debugLogShell(DebugLogShellActivity *pShl)
 
 	szTime[0] = 0;
 	if (pShl->nShellFlags)
-		_wsprintf(szTime+_tcslen(szTime), SKIPLEN(32) L"Sh:0x%04X ", pShl->nShellFlags); //-V112
+		swprintf_c(szTime+_tcslen(szTime), 32/*#SECURELEN*/, L"Sh:0x%04X ", pShl->nShellFlags); //-V112
 	if (pShl->nCreateFlags)
-		_wsprintf(szTime+_tcslen(szTime), SKIPLEN(32) L"Cr:0x%04X ", pShl->nCreateFlags); //-V112
+		swprintf_c(szTime+_tcslen(szTime), 32/*#SECURELEN*/, L"Cr:0x%04X ", pShl->nCreateFlags); //-V112
 	if (pShl->nStartFlags)
-		_wsprintf(szTime+_tcslen(szTime), SKIPLEN(32) L"St:0x%04X ", pShl->nStartFlags); //-V112
+		swprintf_c(szTime+_tcslen(szTime), 32/*#SECURELEN*/, L"St:0x%04X ", pShl->nStartFlags); //-V112
 	if (pShl->nShowCmd)
-		_wsprintf(szTime+_tcslen(szTime), SKIPLEN(32) L"Sw:%u ", pShl->nShowCmd); //-V112
+		swprintf_c(szTime+_tcslen(szTime), 32/*#SECURELEN*/, L"Sw:%u ", pShl->nShowCmd); //-V112
 	ListView_SetItemText(hList, nItem, lpc_Flags, szTime);
 
 	if (pShl->hStdIn)
@@ -548,7 +548,7 @@ void CSetPgDebug::debugLogInfo(CESERVER_REQ_PEEKREADINFO* pInfo)
 		}
 		else
 		{
-			_wsprintf(szTime+2, SKIPLEN(countof(szTime)-2) L"%u", (DWORD)pr->EventType);
+			swprintf_c(szTime+2, countof(szTime)-2/*#SECURELEN*/, L"%u", (DWORD)pr->EventType);
 			ListView_SetItemText(hList, nItem, lic_Type, szTime);
 		}
 	}

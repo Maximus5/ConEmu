@@ -1532,25 +1532,25 @@ public:
 					switch (u)
 					{
 					case 1: // Naked, only add platform
-						_wsprintf(FJ.szTaskName, SKIPLEN(countof(FJ.szTaskName)-16) L"%s%s",
+						swprintf_c(FJ.szTaskName, countof(FJ.szTaskName)-16/*#SECURELEN*/, L"%s%s",
 							FJ.szTaskBaseName, szPlatform);
 						break;
 
 					case 2: // Add App version and platform
 						if (FJ.Ver.dwFileVersionMS)
-							_wsprintf(FJ.szTaskName, SKIPLEN(countof(FJ.szTaskName)-16) L"%s %u.%u%s",
+							swprintf_c(FJ.szTaskName, countof(FJ.szTaskName)-16/*#SECURELEN*/, L"%s %u.%u%s",
 								FJ.szTaskBaseName, HIWORD(FJ.Ver.dwFileVersionMS), LOWORD(FJ.Ver.dwFileVersionMS), szPlatform);
 						else // If there was not VersionInfo in the exe file (same as u==1)
-							_wsprintf(FJ.szTaskName, SKIPLEN(countof(FJ.szTaskName)-16) L"%s%s",
+							swprintf_c(FJ.szTaskName, countof(FJ.szTaskName)-16/*#SECURELEN*/, L"%s%s",
 								FJ.szTaskBaseName, szPlatform);
 						break;
 
 					case 3: // Add App version, platform and index
 						if (FJ.Ver.dwFileVersionMS)
-							_wsprintf(FJ.szTaskName, SKIPLEN(countof(FJ.szTaskName)-16) L"%s %u.%u%s (%u)",
+							swprintf_c(FJ.szTaskName, countof(FJ.szTaskName)-16/*#SECURELEN*/, L"%s %u.%u%s (%u)",
 								FJ.szTaskBaseName, HIWORD(FJ.Ver.dwFileVersionMS), LOWORD(FJ.Ver.dwFileVersionMS), szPlatform, ++idx);
 						else // If there was not VersionInfo in the exe file
-							_wsprintf(FJ.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%s%s (%u)",
+							swprintf_c(FJ.szTaskName, countof(FI.szTaskName)-16/*#SECURELEN*/, L"%s%s (%u)",
 								FI.szTaskBaseName, szPlatform, ++idx);
 						break;
 					}
@@ -1831,15 +1831,15 @@ public:
 					switch (u)
 					{
 					case 0: // Naked
-						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%sFar %u.%u%s",
+						swprintf_c(FI.szTaskName, countof(FI.szTaskName)-16/*#SECURELEN*/, L"%sFar %u.%u%s",
 							pszPrefix, FI.FarVer.dwVerMajor, FI.FarVer.dwVerMinor, szPlatform);
 						break;
 					case 1: // Add Far Build no?
-						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%sFar %u.%u.%u%s",
+						swprintf_c(FI.szTaskName, countof(FI.szTaskName)-16/*#SECURELEN*/, L"%sFar %u.%u.%u%s",
 							pszPrefix, FI.FarVer.dwVerMajor, FI.FarVer.dwVerMinor, FI.FarVer.dwBuild, szPlatform);
 						break;
 					case 2: // Add Build and index
-						_wsprintf(FI.szTaskName, SKIPLEN(countof(FI.szTaskName)-16) L"%sFar %u.%u.%u%s (%u)",
+						swprintf_c(FI.szTaskName, countof(FI.szTaskName)-16/*#SECURELEN*/, L"%sFar %u.%u.%u%s (%u)",
 							pszPrefix, FI.FarVer.dwVerMajor, FI.FarVer.dwVerMinor, FI.FarVer.dwBuild, szPlatform, ++idx);
 						break;
 					}

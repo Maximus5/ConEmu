@@ -84,7 +84,7 @@ static bool LoadModuleVersion(LPCWSTR asModulePath, VS_FIXEDFILEINFO& Version, w
 			}
 			else
 			{
-				if (ErrText) _wsprintf(ErrText, SKIPLEN(cchErrMax) L"LoadAppVersion failed! Can't allocate %n bytes!\n", dwSize);
+				if (ErrText) swprintf_c(ErrText, cchErrMax/*#SECURELEN*/, L"LoadAppVersion failed! Can't allocate %n bytes!\n", dwSize);
 			}
 		}
 		else
@@ -106,7 +106,7 @@ static bool LoadModuleVersion(LPCWSTR asModulePath, VS_FIXEDFILEINFO& Version, w
 		if (dwErr)
 		{
 			int nCurLen = lstrlen(ErrText);
-			_wsprintf(ErrText+nCurLen, SKIPLEN(cchErrMax-nCurLen) L"\nErrCode=0x%08X", dwErr);
+			swprintf_c(ErrText+nCurLen, cchErrMax-nCurLen/*#SECURELEN*/, L"\nErrCode=0x%08X", dwErr);
 		}
 	}
 

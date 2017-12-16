@@ -195,7 +195,7 @@ LPCWSTR ConEmuHotKey::GetDescription(wchar_t* pszDescr, int cchMaxLen, bool bAdd
 
 	if (bAddMacroIndex && (HkType == chk_Macro))
 	{
-		_wsprintf(pszDescr, SKIPLEN(cchMaxLen) L"Macro %02i: ", DescrLangID-vkGuiMacro01+1);
+		swprintf_c(pszDescr, cchMaxLen/*#SECURELEN*/, L"Macro %02i: ", DescrLangID-vkGuiMacro01+1);
 		int nLen = lstrlen(pszDescr);
 		pszDescr += nLen;
 		cchMaxLen -= nLen;
@@ -213,7 +213,7 @@ LPCWSTR ConEmuHotKey::GetDescription(wchar_t* pszDescr, int cchMaxLen, bool bAdd
 		if ((HkType == chk_User) && GuiMacro && *GuiMacro)
 			lstrcpyn(pszDescr, GuiMacro, cchMaxLen);
 		else
-			_wsprintf(pszDescr, SKIPLEN(cchMaxLen) L"#%i", DescrLangID);
+			swprintf_c(pszDescr, cchMaxLen/*#SECURELEN*/, L"#%i", DescrLangID);
 	}
 	else if ((cchMaxLen >= 16) && GuiMacro && *GuiMacro)
 	{

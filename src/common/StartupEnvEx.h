@@ -369,7 +369,7 @@ public:
 
 			for (UINT i = 0; i < nHkl; i++)
 			{
-				_wsprintf(szSI+iLen, SKIPLEN(18) WIN3264TEST(L" 0x%08X",L" 0x%08X%08X"), WIN3264WSPRINT((DWORD_PTR)hkl[i]));
+				swprintf_c(szSI+iLen, 18/*#SECURELEN*/, WIN3264TEST(L" 0x%08X",L" 0x%08X%08X"), WIN3264WSPRINT((DWORD_PTR)hkl[i]));
 				iLen += lstrlen(szSI+iLen);
 			}
 			dumpEnvStr(szSI, true);

@@ -660,7 +660,7 @@ wchar_t* FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, b
 	//TODO: Добавить в DmpFile имя без пути? <exename>-<ver>-<pid>-<yymmddhhmmss>.[m]dmp
 	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
 	SYSTEMTIME lt = {}; GetLocalTime(&lt);
-	_wsprintf(DmpFile, SKIPLEN(cchDmpMax) L"%s-%02u%02u%02u%s-%u-%02u%02u%02u%02u%02u%02u%03u.%s",
+	swprintf_c(DmpFile, cchDmpMax/*#SECURELEN*/, L"%s-%02u%02u%02u%s-%u-%02u%02u%02u%02u%02u%02u%03u.%s",
 		bTrap ? L"Trap" : L"CEDump",
 		MVV_1, MVV_2, MVV_3, szMinor, dwProcessId,
 		lt.wYear%100, lt.wMonth, lt.wDay, lt.wHour, lt.wMinute, lt.wSecond, lt.wMilliseconds,

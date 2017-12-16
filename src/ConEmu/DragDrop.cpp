@@ -709,7 +709,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject* pDataObject, BOOL abActive)
 						{
 							INT_PTR nLen = _tcslen(pszNewFolder) + 128;
 							wchar_t* pszErr = (wchar_t*)malloc(nLen*sizeof(*pszErr));
-							_wsprintf(pszErr, SKIPLEN(nLen) L"Can't create directory for drag item #%i!\n%s\nError code=0x%08X", mn_CurFile+1, pszNewFolder, nErr);
+							swprintf_c(pszErr, nLen/*#SECURELEN*/, L"Can't create directory for drag item #%i!\n%s\nError code=0x%08X", mn_CurFile+1, pszNewFolder, nErr);
 
 							AssertMsg(pszErr);
 
@@ -1374,7 +1374,7 @@ HRESULT CDragDrop::DropShellOp(IDataObject* pDataObject, DWORD* pdwEffect, STGME
 	{
 		int nCchLen = lstrlenW(pszDropPath)+3;
 		sfop->fop.pTo = new WCHAR[nCchLen];
-		_wsprintf((LPWSTR)sfop->fop.pTo, SKIPLEN(nCchLen) _T("%s\\\0\0"), pszDropPath);
+		swprintf_c((LPWSTR)sfop->fop.pTo, nCchLen/*#SECURELEN*/, _T("%s\\\0\0"), pszDropPath);
 	}
 	else
 	{

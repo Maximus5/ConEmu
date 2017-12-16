@@ -1007,7 +1007,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 			}
 
 			INT_PTR nCurLen = _tcslen(szNames[i].str);
-			_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", tymed=0x%02X", fmt[i].tymed);
+			swprintf_c(szNames[i].str+nCurLen, countof(szNames[i].str)-nCurLen/*#SECURELEN*/, L", tymed=0x%02X", fmt[i].tymed);
 			fmt[i].tymed = TYMED_HGLOBAL;
 			stg[i].tymed = 0; //TYMED_HGLOBAL;
 			size_t nDataSize = 0;
@@ -1026,22 +1026,22 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 						{
 							memsize[i] = GlobalSize(stg[i].hGlobal);
 							nCurLen = _tcslen(szNames[i].str);
-							_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", DataSize=%i", (DWORD)(memsize[i]));
+							swprintf_c(szNames[i].str+nCurLen, countof(szNames[i].str)-nCurLen/*#SECURELEN*/, L", DataSize=%i", (DWORD)(memsize[i]));
 
 							if (memsize[i] == 1)
 							{
 								nCurLen = _tcslen(szNames[i].str);
-								_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
+								swprintf_c(szNames[i].str+nCurLen, countof(szNames[i].str)-nCurLen/*#SECURELEN*/, L", Data=0x%02X", (DWORD)*((LPBYTE)(psz[i])));
 							}
 							else if (memsize[i] == sizeof(DWORD))
 							{
 								nCurLen = _tcslen(szNames[i].str);
-								_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
+								swprintf_c(szNames[i].str+nCurLen, countof(szNames[i].str)-nCurLen/*#SECURELEN*/, L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
 							}
 							else if (memsize[i] == sizeof(u64))
 							{
 								nCurLen = _tcslen(szNames[i].str);
-								_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
+								swprintf_c(szNames[i].str+nCurLen, countof(szNames[i].str)-nCurLen/*#SECURELEN*/, L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
 							}
 							else
 							{
@@ -1123,7 +1123,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 				else
 				{
 					nCurLen = _tcslen(szNames[i].str);
-					_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", Error in source! TYMED_HGLOBAL was requested, but got (%i)", stg[i].tymed);
+					swprintf_c(szNames[i].str+nCurLen, countof(szNames[i].str)-nCurLen/*#SECURELEN*/, L", Error in source! TYMED_HGLOBAL was requested, but got (%i)", stg[i].tymed);
 					ReleaseStgMedium(stg+i);
 					stg[i].hGlobal = NULL;
 				}
@@ -1131,7 +1131,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 			else
 			{
 				nCurLen = _tcslen(szNames[i].str);
-				_wsprintf(szNames[i].str+nCurLen, SKIPLEN(countof(szNames[i].str)-nCurLen) L", Can't get TYMED_HGLOBAL, rc=0x%08X", (DWORD)hr);
+				swprintf_c(szNames[i].str+nCurLen, countof(szNames[i].str)-nCurLen/*#SECURELEN*/, L", Can't get TYMED_HGLOBAL, rc=0x%08X", (DWORD)hr);
 				ReleaseStgMedium(stg+i);
 				stg[i].hGlobal = NULL;
 			}

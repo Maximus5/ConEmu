@@ -5349,7 +5349,7 @@ void CConEmuMain::UpdateProgress()
 		if ((mn_Progress == 0) && bWasIndeterminate)
 			_wcscpy_c(MultiTitle+nCurTtlLen, countof(MultiTitle)-nCurTtlLen, L"{*%%} ");
 		else
-			_wsprintf(MultiTitle+nCurTtlLen, SKIPLEN(countof(MultiTitle)-nCurTtlLen) L"{*%i%%} ", mn_Progress);
+			swprintf_c(MultiTitle+nCurTtlLen, countof(MultiTitle)-nCurTtlLen/*#SECURELEN*/, L"{*%i%%} ", mn_Progress);
 	}
 
 	if (gpSetCls->IsMulti() && (gpSet->isNumberInCaption || !mp_TabBar->IsTabsShown()))
@@ -6837,7 +6837,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 							+ _tcslen(pszArguments)+1
 							+ (*szDir ? (_tcslen(szDir)+32) : 0); // + "-new_console:d<Dir>
 						pszConsoles[iCount] = (wchar_t*)malloc(cchLen*sizeof(wchar_t));
-						_wsprintf(pszConsoles[iCount], SKIPLEN(cchLen) L"\"%s\"%s%s",
+						swprintf_c(pszConsoles[iCount], cchLen/*#SECURELEN*/, L"\"%s\"%s%s",
 							Unquote(szExe), *pszArguments ? L" " : L"", pszArguments);
 						if (*szDir)
 						{
@@ -6855,7 +6855,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 			{
 				cchLen = _tcslen(szPart) + 3;
 				pszConsoles[iCount] = (wchar_t*)malloc(cchLen*sizeof(wchar_t));
-				_wsprintf(pszConsoles[iCount], SKIPLEN(cchLen) L"\"%s\"", (LPCWSTR)szPart);
+				swprintf_c(pszConsoles[iCount], cchLen/*#SECURELEN*/, L"\"%s\"", (LPCWSTR)szPart);
 				iCount++;
 
 				cchAllLen += cchLen+3;
@@ -6946,7 +6946,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgsEx* p
 		{
 			size_t cchMax = _tcslen(szName)+100;
 			wchar_t* pszErrMsg = (wchar_t*)calloc(cchMax,sizeof(*pszErrMsg));
-			_wsprintf(pszErrMsg, SKIPLEN(cchMax) L"Command group %s %s!\n"
+			swprintf_c(pszErrMsg, cchMax/*#SECURELEN*/, L"Command group %s %s!\n"
 				L"Choose your shell?",
 				(LPCWSTR)szName, pszDataW ? L"is empty" : L"not found");
 
@@ -9290,7 +9290,7 @@ void CConEmuMain::AppendHKL(wchar_t* szInfo, size_t cchInfoMax, HKL* hKeyb, int 
 	wchar_t* pszStr = szInfo + nLen;
 	while ((i < nCount) && (cchLen > 40))
 	{
-		_wsprintf(pszStr, SKIPLEN(cchLen) WIN3264TEST(L"0x%08X",L"0x%08X%08X") L" ", WIN3264WSPRINT(hKeyb[i]));
+		swprintf_c(pszStr, cchLen/*#SECURELEN*/, WIN3264TEST(L"0x%08X",L"0x%08X%08X") L" ", WIN3264WSPRINT(hKeyb[i]));
 		nLen = _tcslen(pszStr);
 		cchLen -= nLen;
 		pszStr += nLen;
@@ -9307,7 +9307,7 @@ void CConEmuMain::AppendRegisteredLayouts(wchar_t* szInfo, size_t cchInfoMax)
 	{
 		if (!m_LayoutNames[i].bUsed)
 			continue;
-		_wsprintf(pszStr, SKIPLEN(cchLen) L"{0x%08X," WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"} ",
+		swprintf_c(pszStr, cchLen/*#SECURELEN*/, L"{0x%08X," WIN3264TEST(L"0x%08X",L"0x%08X%08X") L"} ",
 			m_LayoutNames[i].klName, WIN3264WSPRINT(m_LayoutNames[i].hkl));
 		nLen = _tcslen(pszStr);
 		cchLen -= nLen;
@@ -13438,7 +13438,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				result = this->OnSizing(wParam, lParam);
 
 			size_t cchLen = wcslen(szDbg);
-			_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i,%i}-{%i,%i})\n", LOGRECTCOORDS(*pRc));
+			swprintf_c(szDbg+cchLen, countof(szDbg)-cchLen/*#SECURELEN*/, L" -> ({%i,%i}-{%i,%i})\n", LOGRECTCOORDS(*pRc));
 			LogString(szDbg, true, false);
 			DEBUGSTRSIZE(szDbg);
 		} break;
@@ -13453,7 +13453,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				result = this->OnMoving(pRc, true);
 
 				size_t cchLen = wcslen(szDbg);
-				_wsprintf(szDbg+cchLen, SKIPLEN(countof(szDbg)-cchLen) L" -> ({%i,%i}-{%i,%i})\n", LOGRECTCOORDS(*pRc));
+				swprintf_c(szDbg+cchLen, countof(szDbg)-cchLen/*#SECURELEN*/, L" -> ({%i,%i}-{%i,%i})\n", LOGRECTCOORDS(*pRc));
 				LogString(szDbg, true, false);
 				DEBUGSTRSIZE(szDbg);
 			}

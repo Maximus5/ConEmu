@@ -2500,12 +2500,12 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 
 					if (nProgress)
 					{
-						_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Incomplete operations: %i\r\n", nProgress);
+						swprintf_c(pszText, countof(szText)-(pszText-szText)/*#SECURELEN*/, L"Incomplete operations: %i\r\n", nProgress);
 						pszText += _tcslen(pszText);
 					}
 					if (nEditors)
 					{
-						_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Unsaved editor windows: %i\r\n", nEditors);
+						swprintf_c(pszText, countof(szText)-(pszText-szText)/*#SECURELEN*/, L"Unsaved editor windows: %i\r\n", nEditors);
 						pszText += _tcslen(pszText);
 					}
 				}
@@ -3187,7 +3187,7 @@ void CVConGroup::OnUpdateProcessDisplay(HWND hInfo)
 					temp[0] = 0;
 
 				int iUsed = lstrlen(temp);
-				_wsprintf(temp+iUsed, SKIPLEN(MAX_PATH-iUsed) L"[%i.%i] %s - PID:%i",
+				swprintf_c(temp+iUsed, MAX_PATH-iUsed/*#SECURELEN*/, L"[%i.%i] %s - PID:%i",
 						 j+1, i, pPrc[i].Name, pPrc[i].ProcessID);
 				if (hInfo)
 					SendDlgItemMessage(hInfo, lbProcesses, LB_ADDSTRING, 0, (LPARAM)temp);

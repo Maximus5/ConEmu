@@ -1736,7 +1736,7 @@ int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /
 		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
 		INT_PTR nLen = _tcslen(asLabel)+64+(lpMsgBuf ? _tcslen(lpMsgBuf) : 0);
 		out = new wchar_t[nLen];
-		_wsprintf(out, SKIPLEN(nLen) _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
+		swprintf_c(out, nLen/*#SECURELEN*/, _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
 	}
 
 	if (gbMessagingStarted) apiSetForegroundWindow(hParent ? hParent : ghWnd);

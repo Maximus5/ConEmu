@@ -77,7 +77,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 		{
 			nPID = pnProcesses[i];
 			if (!nPID) continue;
-			_wsprintf(psz, SKIPLEN(12) L" %u", nPID);
+			swprintf_c(psz, 12/*#SECURELEN*/, L" %u", nPID);
 			psz += lstrlen(psz);
 			nLastPID = nPID;
 			if (nPID == nLastFoundPID)

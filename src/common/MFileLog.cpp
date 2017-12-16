@@ -78,7 +78,7 @@ HRESULT MFileLog::InitFileName(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/)
 		return E_UNEXPECTED;
 	}
 
-	_wsprintf(ms_FileName, SKIPLEN(cchMax) L"%s-%u.log", asName, anPID);
+	swprintf_c(ms_FileName, cchMax/*#SECURELEN*/, L"%s-%u.log", asName, anPID);
 
 	return S_OK;
 }

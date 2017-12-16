@@ -246,7 +246,7 @@ void MEvent::OnDebugNotify(MEventNotification Action)
 	}
 	wcscat_c(szInfo, L": ");
 	if (mb_NameIsNull)
-		_wsprintf(szInfo + _tcslen(szInfo), SKIPLEN(countof(szInfo) - _tcslen(szInfo)) L"Handle=0x%p", mh_Event);
+		swprintf_c(szInfo + _tcslen(szInfo), countof(szInfo) - _tcslen(szInfo)/*#SECURELEN*/, L"Handle=0x%p", mh_Event);
 	else
 		wcscat_c(szInfo, ms_EventName);
 	DEBUGSTREVT(szInfo);

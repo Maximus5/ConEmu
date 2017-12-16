@@ -227,7 +227,7 @@ protected:
 protected:
 	LPCWSTR FormatColor(COLORREF clr, wchar_t* rsBuf)
 	{
-		_wsprintf(rsBuf, SKIPLEN(8) L"#%02X%02X%02X",
+		swprintf_c(rsBuf, 8/*#SECURELEN*/, L"#%02X%02X%02X",
 			(UINT)(clr & 0xFF), (UINT)((clr & 0xFF00)>>8), (UINT)((clr & 0xFF0000)>>16));
 		return rsBuf;
 	};

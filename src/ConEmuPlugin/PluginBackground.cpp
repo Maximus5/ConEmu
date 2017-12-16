@@ -611,7 +611,7 @@ void CPluginBackground::UpdateBackground()
 			szEmfFile[nLen++] = L'\\';
 			szEmfFile[nLen] = 0;
 		}
-		_wsprintf(szEmfFile+nLen, SKIPLEN(31) L"CeBack%u.emf", GetCurrentProcessId());
+		swprintf_c(szEmfFile+nLen, 31/*#SECURELEN*/, L"CeBack%u.emf", GetCurrentProcessId());
 		pszEmfFile = szEmfFile;
 		#endif
 
