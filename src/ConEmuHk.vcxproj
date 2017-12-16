@@ -186,7 +186,7 @@
       <ImportLibrary>_VCBUILD\Release_ConEmuHk_x64\ConEmuHk64.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuHk/export.def</ModuleDefinitionFile>
-      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x7E110000 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x7E11000000000 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -230,7 +230,7 @@
       <ImportLibrary>_VCBUILD\Debug_ConEmuHk_x64\ConEmuHk64.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuHk/export.def</ModuleDefinitionFile>
-      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x7E110000 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x7E11000000000 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
@@ -274,7 +274,7 @@
       <ImportLibrary>_VCBUILD\Remote_ConEmuHk_x64\ConEmuHk64.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuHk/export.def</ModuleDefinitionFile>
-      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x7E110000 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x7E11000000000 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -184,7 +184,7 @@
       <ImportLibrary>_VCBUILD\Release_ConEmuCD_x64\ConEmuCD64.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuCD/export.def</ModuleDefinitionFile>
-      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x6F780000 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x6F7800000000 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -226,7 +226,7 @@
       <ImportLibrary>_VCBUILD\Debug_ConEmuCD_x64\ConEmuCD64.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuCD/export.def</ModuleDefinitionFile>
-      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x6F780000 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x6F7800000000 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
@@ -268,7 +268,7 @@
       <ImportLibrary>_VCBUILD\Remote_ConEmuCD_x64\ConEmuCD64.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuCD/export.def</ModuleDefinitionFile>
-      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x6F780000 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/DYNAMICBASE:NO /FIXED:NO /BASE:0x6F7800000000 %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

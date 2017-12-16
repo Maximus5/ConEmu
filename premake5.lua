@@ -325,11 +325,15 @@ project "ConEmuCD"
   language "C++"
   --exceptionhandling "Off"
 
-  configuration { "vs*" }
+  filter {"action:vs*", "platforms:Win32"}
     linkoptions { "/DYNAMICBASE:NO", "/FIXED:NO", "/BASE:0x6F780000" }
-  configuration { "gmake" }
+  filter {"action:vs*", "platforms:x64"}
+    linkoptions { "/DYNAMICBASE:NO", "/FIXED:NO", "/BASE:0x6F7800000000" }
+  filter {"action:gmake", "platforms:Win32"}
     linkoptions { "--image-base=0x6F780000" }
-  configuration {}
+  filter {"action:gmake", "platforms:x64"}
+    linkoptions { "--image-base=0x6F7800000000" }
+  filter {}
 
   links {
     "common-kernel",
@@ -381,11 +385,15 @@ project "ConEmuHk"
   language "C++"
   exceptionhandling "Off"
 
-  configuration { "vs*" }
+  filter {"action:vs*", "platforms:Win32"}
     linkoptions { "/DYNAMICBASE:NO", "/FIXED:NO", "/BASE:0x7E110000" }
-  configuration { "gmake" }
+  filter {"action:vs*", "platforms:x64"}
+    linkoptions { "/DYNAMICBASE:NO", "/FIXED:NO", "/BASE:0x7E11000000000" }
+  filter {"action:gmake", "platforms:Win32"}
     linkoptions { "--image-base=0x7E110000" }
-  configuration {}
+  filter {"action:gmake", "platforms:x64"}
+    linkoptions { "--image-base=0x7E11000000000" }
+  filter {}
 
   --filter { "configurations:Release" }
   --  optimize "Full"
