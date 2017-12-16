@@ -116,7 +116,9 @@ bool CIconList::Initialize()
 		swprintf_c(szLog, L"Creating IconList for size {%ix%i} SysIcon size is {%ix%i}", mn_CxIcon, mn_CyIcon, iSysX, iSysY);
 		gpConEmu->LogString(szLog);
 
-		if ((mh_TabIcons = ImageList_Create(mn_CxIcon, mn_CyIcon, ILC_COLOR24|ILC_MASK, 0, 16)) != NULL)
+		// #TABBAR Check for GetDeviceCaps(mh_BmpDc, BITSPIXEL) and 32bit
+		DWORD imglist_flags = (IsWin7() ? ILC_COLOR32 : ILC_COLOR24)|ILC_MASK;
+		if ((mh_TabIcons = ImageList_Create(mn_CxIcon, mn_CyIcon, imglist_flags, 0, 16)) != NULL)
 		{
 			CToolImg img;
 			int nFirstAdd = -1;

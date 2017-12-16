@@ -122,7 +122,7 @@ bool CToolImg::CreateField(int nImgWidth, int nImgHeight, COLORREF clrBackground
 	_ASSERTE(mh_BmpDc == NULL);
 
 	int nBPP = -1;
-	bool bComp = (gnOsVer < 0x600);
+	bool bComp = !IsWin7();
 	if (!bComp)
 	{
 		mh_BmpDc = CreateCompatibleDC(NULL);
