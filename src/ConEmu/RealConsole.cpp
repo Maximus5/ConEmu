@@ -8524,7 +8524,6 @@ int CRealConsole::GetDefaultAppSettingsId()
 	//wchar_t* pszBuffer = NULL;
 	LPCWSTR pszName = NULL;
 	CEStr szExe;
-	wchar_t szName[MAX_PATH+1];
 	LPCWSTR pszTemp = NULL;
 	LPCWSTR pszIconFile = (m_Args.pszIconFile && *m_Args.pszIconFile) ? m_Args.pszIconFile : NULL;
 	bool bAsAdmin = false;
@@ -8588,10 +8587,9 @@ int CRealConsole::GetDefaultAppSettingsId()
 
 	if (wcschr(pszName, L'.') == NULL)
 	{
-		// Если расширение не указано - предположим, что это .exe
-		lstrcpyn(szName, pszName, MAX_PATH-4);
-		wcscat_c(szName, L".exe");
-		pszName = szName;
+		// If extension was not defined, assume it's an .exe
+		szExe.Attach(lstrmerge(szExe.c_str(), L".exe"));
+		pszName = PointToName(szExe);
 	}
 
 	SetRootProcessName(pszName);
@@ -8603,7 +8601,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	iAppId = gpSet->GetAppSettingsId(pszName, bAsAdmin);
 
 	if (!pszIconFile)
-		pszIconFile = lpszCmd;
+		pszIconFile = szExe;
 
 wrap:
 	// Load (or create) icon for new tab
