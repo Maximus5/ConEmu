@@ -4512,12 +4512,12 @@ bool CRealConsole::StartProcess()
 	//=====================================
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
-	wchar_t szInitConTitle[255];
+	CEStr szInitConTitle(CEC_INITTITLE);
 	MCHKHEAP;
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
 	si.dwFlags = STARTF_USESHOWWINDOW|STARTF_USECOUNTCHARS|STARTF_USESIZE/*|STARTF_USEPOSITION*/;
-	si.lpTitle = wcscpy(szInitConTitle, CEC_INITTITLE);
+	si.lpTitle = szInitConTitle.ms_Val;
 	// К сожалению, можно задать только размер БУФЕРА в символах.
 	si.dwXCountChars = mp_RBuf->GetBufferWidth() /*con.m_sbi.dwSize.X*/;
 	si.dwYCountChars = mp_RBuf->GetBufferHeight() /*con.m_sbi.dwSize.Y*/;
@@ -5189,13 +5189,15 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 				SafeFree(pp_sei);
 			}
 
-			INT_PTR iDirLen = (lpszWorkDir ? _tcslen(lpszWorkDir) : 0);
+			const INT_PTR cchDirLen = lpszWorkDir ? _tcslen(lpszWorkDir) : 0;
+			const INT_PTR cchExecLen = _tcslen(szExec);
+			const INT_PTR cchCmdLen = pszCmd ? _tcslen(pszCmd) : 0;
 			int nWholeSize = sizeof(SHELLEXECUTEINFO)
 				                + sizeof(wchar_t) *
 				                (10  /* Verb */
-				                + _tcslen(szExec)+2
-				                + ((pszCmd == NULL) ? 0 : (_tcslen(pszCmd)+2))
-				                + iDirLen + 2
+				                + cchExecLen + 2
+				                + cchCmdLen + 2
+				                + cchDirLen + 2
 				                );
 			pp_sei = (SHELLEXECUTEINFO*)calloc(nWholeSize, 1);
 			pp_sei->cbSize = sizeof(SHELLEXECUTEINFO);
@@ -5208,21 +5210,21 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 			pp_sei->fMask |= SEE_MASK_NOCLOSEPROCESS;
 
 			pp_sei->lpVerb = (wchar_t*)(pp_sei+1);
-			wcscpy((wchar_t*)pp_sei->lpVerb, L"runas");
+			wcscpy_s((wchar_t*)pp_sei->lpVerb, 6, L"runas");
 			pp_sei->lpFile = pp_sei->lpVerb + _tcslen(pp_sei->lpVerb) + 2;
-			wcscpy((wchar_t*)pp_sei->lpFile, szExec);
+			wcscpy_s((wchar_t*)pp_sei->lpFile, cchExecLen+1, szExec);
 			pp_sei->lpParameters = pp_sei->lpFile + _tcslen(pp_sei->lpFile) + 2;
 
 			if (pszCmd)
 			{
 				*(wchar_t*)pp_sei->lpParameters = L' ';
-				wcscpy((wchar_t*)(pp_sei->lpParameters+1), pszCmd);
+				wcscpy_s((wchar_t*)(pp_sei->lpParameters+1), cchCmdLen+1, pszCmd);
 			}
 
 			pp_sei->lpDirectory = pp_sei->lpParameters + _tcslen(pp_sei->lpParameters) + 2;
 
 			if (lpszWorkDir && *lpszWorkDir)
-				_wcscpy_c((wchar_t*)pp_sei->lpDirectory, iDirLen+1, lpszWorkDir);
+				_wcscpy_c((wchar_t*)pp_sei->lpDirectory, cchDirLen+1, lpszWorkDir);
 			else
 				pp_sei->lpDirectory = NULL;
 
@@ -5809,7 +5811,7 @@ void CRealConsole::OnSelectionChanged()
 			sel.srSelection.Right+1, sel.srSelection.Bottom+1,
 			sel.dwSelectionAnchor.X+1, sel.dwSelectionAnchor.Y+1);
 		szSelInfo = lstrmerge(
-			_ltow(nCellsCount, szChars, 10),
+			ltow_s(nCellsCount, szChars, 10),
 			CLngRc::getRsrc(lng_SelChars/*" chars "*/),
 			szCoords,
 			bStreamMode
@@ -10001,48 +10003,49 @@ void CRealConsole::LogInput(INPUT_RECORD* pRec)
 				if (!isLogging(2) && (pRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED))
 					return; // Движения мышки логировать только при /log2
 
-				_wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo))
+				sprintf_s(pszAdd, countof(szInfo)-(pszAdd-szInfo),
 				           "Mouse: {%ix%i} Btns:{", pRec->Event.MouseEvent.dwMousePosition.X, pRec->Event.MouseEvent.dwMousePosition.Y);
 				pszAdd += strlen(pszAdd);
 
-				if (pRec->Event.MouseEvent.dwButtonState & 1) strcat(pszAdd, "L");
+				if (pRec->Event.MouseEvent.dwButtonState & 1) strcat_s(pszAdd, countof(szInfo)-(pszAdd-szInfo), "L");
 
-				if (pRec->Event.MouseEvent.dwButtonState & 2) strcat(pszAdd, "R");
+				if (pRec->Event.MouseEvent.dwButtonState & 2) strcat_s(pszAdd, countof(szInfo)-(pszAdd-szInfo), "R");
 
-				if (pRec->Event.MouseEvent.dwButtonState & 4) strcat(pszAdd, "M1");
+				if (pRec->Event.MouseEvent.dwButtonState & 4) strcat_s(pszAdd, countof(szInfo)-(pszAdd-szInfo), "M1");
 
-				if (pRec->Event.MouseEvent.dwButtonState & 8) strcat(pszAdd, "M2");
+				if (pRec->Event.MouseEvent.dwButtonState & 8) strcat_s(pszAdd, countof(szInfo)-(pszAdd-szInfo), "M2");
 
-				if (pRec->Event.MouseEvent.dwButtonState & 0x10) strcat(pszAdd, "M3");
+				if (pRec->Event.MouseEvent.dwButtonState & 0x10) strcat_s(pszAdd, countof(szInfo)-(pszAdd-szInfo), "M3");
 
 				pszAdd += strlen(pszAdd);
 
 				if (pRec->Event.MouseEvent.dwButtonState & 0xFFFF0000)
 				{
-					_wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo))
+					sprintf_s(pszAdd, countof(szInfo)-(pszAdd-szInfo),
 					           "x%04X", (pRec->Event.MouseEvent.dwButtonState & 0xFFFF0000)>>16);
 				}
 
-				strcat(pszAdd, "} "); pszAdd += strlen(pszAdd);
+				strcat_s(pszAdd, countof(szInfo)-(pszAdd-szInfo), "} "); pszAdd += strlen(pszAdd);
 				_wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo))
 				           "KeyState: 0x%08X ", pRec->Event.MouseEvent.dwControlKeyState);
 
-				if (pRec->Event.MouseEvent.dwEventFlags & 0x01) strcat(pszAdd, "|MOUSE_MOVED");
+				if (pRec->Event.MouseEvent.dwEventFlags & 0x01) strcat_s(pszAdd, countof(szInfo)-(pszAdd-szInfo), "|MOUSE_MOVED");
 
-				if (pRec->Event.MouseEvent.dwEventFlags & 0x02) strcat(pszAdd, "|DOUBLE_CLICK");
+				if (pRec->Event.MouseEvent.dwEventFlags & 0x02) strcat_s(pszAdd, countof(szInfo)-(pszAdd-szInfo), "|DOUBLE_CLICK");
 
-				if (pRec->Event.MouseEvent.dwEventFlags & 0x04) strcat(pszAdd, "|MOUSE_WHEELED"); //-V112
+				if (pRec->Event.MouseEvent.dwEventFlags & 0x04) strcat_s(pszAdd, countof(szInfo)-(pszAdd-szInfo), "|MOUSE_WHEELED"); //-V112
 
-				if (pRec->Event.MouseEvent.dwEventFlags & 0x08) strcat(pszAdd, "|MOUSE_HWHEELED");
+				if (pRec->Event.MouseEvent.dwEventFlags & 0x08) strcat_s(pszAdd, countof(szInfo)-(pszAdd-szInfo), "|MOUSE_HWHEELED");
 
-				strcat(pszAdd, "\r\n");
+				strcat_s(pszAdd, countof(szInfo)-(pszAdd-szInfo), "\r\n");
 			} break;
 		case KEY_EVENT:
 		{
 			char chUtf8[4] = " ";
 			if (pRec->Event.KeyEvent.uChar.UnicodeChar >= 32)
 				WideCharToMultiByte(CP_UTF8, 0, &pRec->Event.KeyEvent.uChar.UnicodeChar, 1, chUtf8, countof(chUtf8), 0,0);
-			/* */ _wsprintfA(pszAdd, SKIPLEN(countof(szInfo)-(pszAdd-szInfo))
+
+			sprintf_s(pszAdd, countof(szInfo)-(pszAdd-szInfo),
 			                 "%s (\\x%04X) %s count=%i, VK=%i, SC=%i, CH=%i, State=0x%08x %s\r\n",
 			                 chUtf8, pRec->Event.KeyEvent.uChar.UnicodeChar,
 			                 pRec->Event.KeyEvent.bKeyDown ? "Down," : "Up,  ",

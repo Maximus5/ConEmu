@@ -302,7 +302,7 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 	nSize += _tcslen(pszNameW)+1;
 
 	MCHKHEAP;
-	pszFullName = (wchar_t*)calloc(nSize, 2);
+	pszFullName = (wchar_t*)calloc(nSize, sizeof(*pszFullName));
 
 	if (!pszFullName)
 	{
@@ -321,26 +321,26 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 
 	if (lbNeedUnc)
 	{
-		wcscpy(pszFullName, L"\\\\?\\");
+		wcscpy_s(pszFullName, nSize, L"\\\\?\\");
 
 		if (pszPanelPath[0] == L'\\' && pszPanelPath[1] == L'\\')
 		{
-			wcscpy(pszFullName+4, L"UNC"); //-V112
-			wcscpy(pszFullName+7, pszPanelPath+1);
+			wcscpy_s(pszFullName+4, nSize-4, L"UNC"); //-V112
+			wcscpy_s(pszFullName+7, nSize-7, pszPanelPath+1);
 		}
 		else
 		{
-			wcscpy(pszFullName+4, pszPanelPath); //-V112
+			wcscpy_s(pszFullName+4, nSize+4, pszPanelPath); //-V112
 		}
 
 		nPathLen = _tcslen(pszFullName) + 1;
 	}
 	else
 	{
-		wcscpy(pszFullName, pszPanelPath);
+		wcscpy_s(pszFullName, nSize, pszPanelPath);
 	}
 
-	wcscat(pszFullName, L"\\");
+	wcscat_s(pszFullName, nSize, L"\\");
 	MCHKHEAP;
 
 	// Должен содержать заключительный "\\"
@@ -352,13 +352,13 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 		}
 		else
 		{
-			wcscpy(pszFullName+nPathLen, asSubFolder);
+			wcscpy_s(pszFullName+nPathLen, nSize-nPathLen, asSubFolder);
 			nPathLen += nSubFolderLen;
 		}
 	}
 
 
-	wcscpy(pszFullName+nPathLen, pszNameW);
+	wcscpy_s(pszFullName+nPathLen, nSize-nPathLen, pszNameW);
 
 	// Отрезать хвостовые пробелы. Гррр....
 	INT_PTR nTotal = _tcslen(pszFullName);
@@ -384,45 +384,42 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 	if (hFind != INVALID_HANDLE_VALUE)
 	{
 		FindClose(hFind);
-		wchar_t* pszMsg = NULL;
 
 		if (abFolder)
 		{
 			if (!(fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
 			{
-				pszMsg = (wchar_t*)calloc(nSize + 100, 2);
-				wcscpy(pszMsg, L"Can't create directory! Same name file exists!\n");
-				wcscat(pszMsg, pszFullName);
-				MsgBox(pszMsg, MB_ICONSTOP, gpConEmu->GetDefaultTitle(), ghWnd, false);
-				free(pszMsg);
+				CEStr szMsg(L"Can't create directory! Same name file exists!\n", pszFullName);
+				MsgBox(szMsg, MB_ICONSTOP, gpConEmu->GetDefaultTitle(), ghWnd, false);
 				free(pszFullName);
 				return NULL;
 			}
 		}
 		else if (fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		{
-			pszMsg = (wchar_t*)calloc(nSize + 100, 2);
-			wcscpy(pszMsg, L"Can't create file! Same name folder exists!\n");
-			wcscat(pszMsg, pszFullName);
-			MsgBox(pszMsg, MB_ICONSTOP, gpConEmu->GetDefaultTitle(), ghWnd, false);
-			free(pszMsg);
+			CEStr szMsg(L"Can't create file! Same name folder exists!\n", pszFullName);
+			MsgBox(szMsg, MB_ICONSTOP, gpConEmu->GetDefaultTitle(), ghWnd, false);
 			free(pszFullName);
 			return NULL;
 		}
 		else
 		{
+			int nRc = IDCANCEL;
 			int nCchSize = nSize + 255;
-			pszMsg = (wchar_t*)calloc(nCchSize, 2);
-			LARGE_INTEGER liSize;
-			liSize.LowPart = fnd.nFileSizeLow; liSize.HighPart = fnd.nFileSizeHigh;
-			FILETIME ftl;
-			FileTimeToLocalFileTime(&fnd.ftLastWriteTime, &ftl);
-			SYSTEMTIME st; FileTimeToSystemTime(&ftl, &st);
-			_wsprintf(pszMsg, SKIPLEN(nCchSize)
-				L"File already exists!\n\n%s\nSize: %I64i\nDate: %02i.%02i.%i %02i:%02i:%02i\n\nOverwrite?",
-				pszFullName, liSize.QuadPart, st.wDay, st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond);
-			int nRc = MsgBox(pszMsg, MB_ICONEXCLAMATION|MB_YESNO, gpConEmu->GetDefaultTitle(), ghWnd, false);
-			free(pszMsg);
+			wchar_t* pszMsg = (wchar_t*)calloc(nCchSize, 2);
+			if (pszMsg)
+			{
+				LARGE_INTEGER liSize;
+				liSize.LowPart = fnd.nFileSizeLow; liSize.HighPart = fnd.nFileSizeHigh;
+				FILETIME ftl;
+				FileTimeToLocalFileTime(&fnd.ftLastWriteTime, &ftl);
+				SYSTEMTIME st; FileTimeToSystemTime(&ftl, &st);
+				swprintf_s(pszMsg, nCchSize,
+					L"File already exists!\n\n%s\nSize: %I64i\nDate: %02i.%02i.%i %02i:%02i:%02i\n\nOverwrite?",
+					pszFullName, liSize.QuadPart, st.wDay, st.wMonth, st.wYear, st.wHour, st.wMinute, st.wSecond);
+				nRc = MsgBox(pszMsg, MB_ICONEXCLAMATION|MB_YESNO, gpConEmu->GetDefaultTitle(), ghWnd, false);
+				free(pszMsg);
+			}
 
 			if (nRc != IDYES)
 			{
@@ -454,28 +451,24 @@ wchar_t* CDragDrop::FileCreateName(BOOL abActive, BOOL abFolder, LPCWSTR asSubFo
 
 HANDLE CDragDrop::FileStart(LPCWSTR pszFullName)
 {
-	_ASSERTE(pszFullName && *pszFullName);
-
 	if (!pszFullName || !*pszFullName)
+	{
+		_ASSERTE(pszFullName && *pszFullName);
 		return INVALID_HANDLE_VALUE;
+	}
 
-	// Создаем файл
+	// Create the file
 	HANDLE hFile = CreateFile(pszFullName, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	if (hFile == INVALID_HANDLE_VALUE)
 	{
 		DWORD dwErr = GetLastError();
 		INT_PTR nSize = _tcslen(pszFullName);
-		wchar_t* pszMsg = (wchar_t*)calloc(nSize + 100, 2);
-		wcscpy(pszMsg, L"Can't create file!\n");
-		wcscat(pszMsg, pszFullName);
-		DisplayLastError(pszMsg, dwErr);
-		free(pszMsg);
-		//free(pszFullName);
+		CEStr szMsg(L"Can't create file!\n", pszFullName);
+		DisplayLastError(szMsg, dwErr);
 		return INVALID_HANDLE_VALUE;
 	}
 
-	//free(pszFullName);
 	mn_CurWritten = 0;
 	return hFile;
 }
@@ -1092,17 +1085,17 @@ HRESULT CDragDrop::DropNames(HDROP hDrop, int iQuantity, BOOL abActive)
 
 		if (AutoQuote && (psz = wcschr(pszText, L' ')) != NULL)
 		{
-			// Имя нужно окавычить
+			// Double quote the name
 			if (!bNoFarConsole)
 			{
 				*(--pszText) = L'\"';
 				*(--pszText) = L'\\';
-				wcscat(pszText, L"\\\"");
+				wcscat_s(pszText, cchData-(pszText-szData), L"\\\"");
 			}
 			else
 			{
 				*(--pszText) = L'\"';
-				wcscat(pszText, L"\"");
+				wcscat_s(pszText, cchData-(pszText-szData), L"\"");
 			}
 		}
 
