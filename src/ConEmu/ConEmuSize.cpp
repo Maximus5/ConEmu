@@ -2739,6 +2739,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		if (gpSet->isQuakeStyle)
 		{
 			if (!mp_ConEmu->mp_Status->IsStatusResizing()
+				&& !m_JumpMonitor.bInJump // gh - Quake is not moved to another monitor
 				&& !mn_IgnoreSizeChange)
 			{
 				RECT rc = GetDefaultRect();
