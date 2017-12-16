@@ -32,9 +32,28 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MJsonReader.h"
 #include "MStrDup.h"
 
+// =====================================================
 // Use json-parser by James McLaughlin
+// Need some defines to use secure variants of functions
 #define json_char wchar_t
+#define sprintf sprintf_s
+template <size_t size> void strcpy__(char (&buffer)[size], const char* value)
+{
+	strcpy_s(buffer, size, value);
+}
+// Defines json_error_max
+#include "../modules/json-parser/json.h"
+// strcpy (error_buf, ...) is used only in json_parse_ex
+// but we don't use it and default for error_buf is nullptr
+void strcpy__(char* buffer, const char* value)
+{
+	strcpy_s(buffer, json_error_max, value);
+}
+#define strcpy strcpy__
 #include "../modules/json-parser/json.c"
+// json-parser included
+// =====================================================
+
 
 MJsonValue::MJsonValue()
 	: mp_data(NULL)
