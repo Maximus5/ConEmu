@@ -1315,7 +1315,7 @@ BOOL CImgCache::LoadThumbnail(struct IMAGE_CACHE_INFO* pItem)
 	// Поставим флаг того, что превьюшку загружать ПЫТАЛИСЬ
 	pItem->PreviewLoaded |= ilt_Thumbnail;
 #ifdef _DEBUG
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"result=%s, preview=%s\n", lbThumbRc ? L"OK" : L"FAILED", (pItem->PreviewLoaded & ilt_ThumbnailLoaded) ? L"Loaded" : L"NOT loaded"); //-V112
+	swprintf_c(szDbg, L"result=%s, preview=%s\n", lbThumbRc ? L"OK" : L"FAILED", (pItem->PreviewLoaded & ilt_ThumbnailLoaded) ? L"Loaded" : L"NOT loaded"); //-V112
 	DEBUGSTRLOAD2(szDbg);
 #endif
 

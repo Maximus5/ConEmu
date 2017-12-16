@@ -927,7 +927,7 @@ struct PipeServer
 			{
 				if (ptrRequest->nCmd == CECMD_CONSOLEDATA)
 					return; // Skip this event
-				_wsprintf(pPipe->szDbgInfo, SKIPLEN(countof(pPipe->szDbgInfo))
+				swprintf_c(pPipe->szDbgInfo,
 					L"<< CmdRecv: PID=%5u  TID=%5u  Cmd=%3u  DataSize=%u  FromPID=%u  FromTID=%u\n", GetCurrentProcessId(), GetCurrentThreadId(), ptrRequest->nCmd,
 					(UINT)(ptrRequest->cbSize - sizeof(*ptrRequest)),
 					ptrRequest->nSrcPID, ptrRequest->nSrcThreadId);

@@ -247,7 +247,7 @@ public:
 			L"<META name=\"GENERATOR\" content=\"ConEmu %s[%u]\">\n"
 			L"</HEAD>\r\n"
 			L"<BODY>\r\n";
-		_wsprintf(szTemp, SKIPLEN(countof(szTemp)) pszHtml, asBuild, WIN3264TEST(32,64));
+		swprintf_c(szTemp, pszHtml, asBuild, WIN3264TEST(32,64));
 		RawAdd(szTemp, _tcslen(szTemp));
 
 		mn_TextStart = mn_AllItemsLen; mn_TextEnd = 0;
@@ -279,12 +279,12 @@ protected:
 	virtual void TextAdd(LPCWSTR asText, INT_PTR cchLen, COLORREF crFore, COLORREF crBack, bool Bold = false, bool Italic = false, bool Underline = false) override
 	{
 		// Open (special colors, fonts, outline?)
-		_wsprintf(szFore, SKIPLEN(countof(szFore)) L"color: %s; ", FormatColor(crFore, szId));
-		_wsprintf(szBack, SKIPLEN(countof(szBack)) L"background-color: %s; ", FormatColor(crBack, szId));
+		swprintf_c(szFore, L"color: %s; ", FormatColor(crFore, szId));
+		swprintf_c(szBack, L"background-color: %s; ", FormatColor(crBack, szId));
 		wcscpy_c(szBold, Bold ? L"font-weight: bold; " : L"");
 		wcscpy_c(szItalic, Italic ? L"font-style: italic; " : L"");
 		wcscpy_c(szUnderline, Underline ? L"text-decoration: underline; " : L"");
-		_wsprintf(szTemp, SKIPLEN(countof(szTemp)) L"<span style=\"%s%s%s%s%s\">", szFore, szBack, szBold, szItalic, szUnderline);
+		swprintf_c(szTemp, L"<span style=\"%s%s%s%s%s\">", szFore, szBack, szBold, szItalic, szUnderline);
 		RawAdd(szTemp, _tcslen(szTemp));
 
 		// Text
@@ -379,10 +379,10 @@ public:
 					"StartSelection:%09u\r\n"
 					"EndSelection:%09u\r\n"
 					"SourceURL:%s\r\n";
-			_wsprintfA(szHdr, SKIPLEN(countof(szHdr)) pszHdrFmt, 0,0,0,0,0,0, pszURL);
+			sprintf_c(szHdr, pszHdrFmt, 0,0,0,0,0,0, pszURL);
 			nHdrLen = strlen(szHdr);
 			// Calculate positions
-			_wsprintfA(szHdr, SKIPLEN(countof(szHdr)) pszHdrFmt,
+			sprintf_c(szHdr, pszHdrFmt,
 				(UINT)(nHdrLen), (UINT)(nHdrLen+mn_AllItemsLen),
 				(UINT)(nHdrLen+mn_TextStart), (UINT)(nHdrLen+mn_TextEnd),
 				(UINT)(nHdrLen+mn_TextStart), (UINT)(nHdrLen+mn_TextEnd),
@@ -434,7 +434,7 @@ protected:
 			{
 				if (clrPalette[i] == crFore)
 				{
-					_wsprintf(rsBuf, SKIPCOUNT(rsBuf) L"\x1B[%um", 30+Ansi[i]);
+					swprintf_c(rsBuf, L"\x1B[%um", 30+Ansi[i]);
 					goto do_bk;
 				}
 			}
@@ -442,7 +442,7 @@ protected:
 			{
 				if (clrPalette[i] == crFore)
 				{
-					_wsprintf(rsBuf, SKIPCOUNT(rsBuf) L"\x1B[%um", 90+Ansi[i-8]);
+					swprintf_c(rsBuf, L"\x1B[%um", 90+Ansi[i-8]);
 					goto do_bk;
 				}
 			}
@@ -451,7 +451,7 @@ protected:
 		//TODO: xterm-256 palette?
 
 		// xterm 24-bit colors
-		_wsprintf(rsBuf, SKIPCOUNT(rsBuf) L"\x1B[38;2;%u;%u;%um",
+		swprintf_c(rsBuf, L"\x1B[38;2;%u;%u;%um",
 			(UINT)(crFore & 0xFF), (UINT)((crFore & 0xFF00)>>8), (UINT)((crFore & 0xFF0000)>>16));
 
 	do_bk:
@@ -462,7 +462,7 @@ protected:
 			{
 				if (clrPalette[i] == crBack)
 				{
-					_wsprintf(szBk, SKIPCOUNT(szBk) L"\x1B[%um", 40+Ansi[i]);
+					swprintf_c(szBk, L"\x1B[%um", 40+Ansi[i]);
 					goto add_bk;
 				}
 			}
@@ -470,7 +470,7 @@ protected:
 			{
 				if (clrPalette[i] == crBack)
 				{
-					_wsprintf(szBk, SKIPCOUNT(szBk) L"\x1B[%um", 100+Ansi[i-8]);
+					swprintf_c(szBk, L"\x1B[%um", 100+Ansi[i-8]);
 					goto add_bk;
 				}
 			}
@@ -479,7 +479,7 @@ protected:
 		//TODO: xterm-256 palette?
 
 		// xterm 24-bit colors
-		_wsprintf(szBk, SKIPCOUNT(szBk) L"\x1B[48;2;%u;%u;%um",
+		swprintf_c(szBk, L"\x1B[48;2;%u;%u;%um",
 			(UINT)(crBack & 0xFF), (UINT)((crBack & 0xFF00)>>8), (UINT)((crBack & 0xFF0000)>>16));
 	add_bk:
 		wcscat_c(rsBuf, szBk);

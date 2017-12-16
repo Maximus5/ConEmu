@@ -201,7 +201,7 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	if (!gsMapHelper.CreateConsoleSection())
 	{
 		dwLastError = GetLastError();
-		_wsprintf(ErrText, SKIPLEN(countof(ErrText)) L"Can't CreateFileMapping(hSection). ErrCode=%i", dwLastError);
+		swprintf_c(ErrText, L"Can't CreateFileMapping(hSection). ErrCode=%i", dwLastError);
 		MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 		return FALSE;
 	}
@@ -214,7 +214,7 @@ BOOL SetConsoleInfo(HWND hwndConsole, CONSOLE_INFO *pci)
 	if (!ptrView)
 	{
 		dwLastError = GetLastError();
-		_wsprintf(ErrText, SKIPLEN(countof(ErrText)) L"Can't MapViewOfFile. ErrCode=%i", dwLastError);
+		swprintf_c(ErrText, L"Can't MapViewOfFile. ErrCode=%i", dwLastError);
 		MessageBox(NULL, ErrText, L"ConEmu", MB_OK|MB_ICONSTOP|MB_SETFOREGROUND);
 	}
 	else

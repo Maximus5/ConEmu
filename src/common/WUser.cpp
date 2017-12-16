@@ -467,9 +467,9 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath /*= false*/)
 				{
 					wchar_t szMsg[MAX_PATH*4], szProc[MAX_PATH] = {}, szPid[MAX_PATH];
 					GetModuleFileName(NULL, szProc, countof(szProc));
-					_wsprintf(szPid, SKIPLEN(countof(szPid))
+					swprintf_c(szPid,
 						L"PID=%u, '%s'", GetCurrentProcessId(), PointToName(szProc));
-					_wsprintf(szMsg, SKIPLEN(countof(szMsg))
+					swprintf_c(szMsg,
 						L"Changing %%ComSpec%% in %s\nCur=%s\nNew=%s",
 						szPid , szCurrent, pszNew);
 					MessageBox(NULL, szMsg, szPid, MB_SYSTEMMODAL);

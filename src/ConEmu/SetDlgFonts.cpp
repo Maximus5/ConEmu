@@ -167,7 +167,7 @@ DWORD CSetDlgFonts::EnumFontsThread(LPVOID apArg)
 	{
 		for (size_t sz=0; sz<countof(CFontMgr::szRasterSizes) && CFontMgr::szRasterSizes[sz].cy; sz++)
 		{
-			_wsprintf(szName, SKIPLEN(countof(szName)) L"[%s %ix%i]", CFontMgr::RASTER_FONTS_NAME, CFontMgr::szRasterSizes[sz].cx, CFontMgr::szRasterSizes[sz].cy);
+			swprintf_c(szName, L"[%s %ix%i]", CFontMgr::RASTER_FONTS_NAME, CFontMgr::szRasterSizes[sz].cx, CFontMgr::szRasterSizes[sz].cy);
 			int nIdx = SendDlgItemMessage(hFontsPg, tFontFace, CB_INSERTSTRING, sz, (LPARAM)szName);
 			SendDlgItemMessage(hFontsPg, tFontFace, CB_SETITEMDATA, nIdx, 1);
 		}

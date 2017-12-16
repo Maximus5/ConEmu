@@ -684,7 +684,7 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	{
 		gpConEmu->GetInitialDpi(&_dpi);
 		wchar_t szInfo[100];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DPI initialized to {%i,%i}\r\n", _dpi.Xdpi, _dpi.Ydpi);
+		swprintf_c(szInfo, L"DPI initialized to {%i,%i}\r\n", _dpi.Xdpi, _dpi.Ydpi);
 		DEBUGSTRDPI(szInfo);
 		LogString(szInfo, true, false);
 	}
@@ -1600,7 +1600,7 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 	if (bTextChanged || bPopupChanged)
 	{
 		wchar_t szLog[128];
-		_wsprintf(szLog, SKIPCOUNT(szLog)
+		swprintf_c(szLog,
 			L"Color Palette: Text {%u|%u}->{%u|%u} Popup {%u|%u}->{%u|%u}",
 			gpSet->AppStd.nTextColorIdx, gpSet->AppStd.nBackColorIdx, pPal->nTextColorIdx, pPal->nBackColorIdx,
 			gpSet->AppStd.nPopTextColorIdx, gpSet->AppStd.nPopBackColorIdx, pPal->nPopTextColorIdx, pPal->nPopBackColorIdx);
@@ -1780,7 +1780,7 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 
 		CDpiForDialog::Create(gpSetCls->mp_DpiAware);
 
-		wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Creating settings dialog, IdPage=%u", IdShowPage);
+		wchar_t szLog[80]; swprintf_c(szLog, L"Creating settings dialog, IdPage=%u", IdShowPage);
 		LogString(szLog);
 
 		gpSetCls->InitPageNames();
@@ -2476,7 +2476,7 @@ void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 	}
 
 	wchar_t szLabel[128];
-	_wsprintf(szLabel, SKIPLEN(countof(szLabel)) L"UpdatePos A={%i,%i} C={%i,%i} S={%i,%i}", ax,ay, x, y, gpSet->_wndX, gpSet->_wndY);
+	swprintf_c(szLabel, L"UpdatePos A={%i,%i} C={%i,%i} S={%i,%i}", ax,ay, x, y, gpSet->_wndX, gpSet->_wndY);
 	gpConEmu->LogWindowPos(szLabel);
 }
 
@@ -2508,7 +2508,7 @@ void CSettings::UpdateSize(const CESize w, const CESize h)
 	wchar_t szLabel[128];
 	CESize ws = {w.Raw};
 	CESize hs = {h.Raw};
-	_wsprintf(szLabel, SKIPLEN(countof(szLabel)) L"UpdateSize A={%s,%s} C={%s,%s} S={%s,%s}", ws.AsString(), hs.AsString(), gpConEmu->WndWidth.AsString(), gpConEmu->WndHeight.AsString(), gpSet->wndWidth.AsString(), gpSet->wndHeight.AsString());
+	swprintf_c(szLabel, L"UpdateSize A={%s,%s} C={%s,%s} S={%s,%s}", ws.AsString(), hs.AsString(), gpConEmu->WndWidth.AsString(), gpConEmu->WndHeight.AsString(), gpSet->wndWidth.AsString(), gpSet->wndHeight.AsString());
 	gpConEmu->LogWindowPos(szLabel);
 }
 
@@ -2608,9 +2608,9 @@ void CSettings::PostUpdateCounters(bool bPosted)
 			// WinApi's wsprintf can't do float/double, so we use integer arithmetics for FPS and others
 
 			if (nID == tPerfKeyboard)
-				_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"%u/%u/%u", (int)v, (int)v3, (int)v2);
+				swprintf_c(sTemp, L"%u/%u/%u", (int)v, (int)v3, (int)v2);
 			else
-				_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L"%u.%u", (int)(v/10), (int)(v%10));
+				swprintf_c(sTemp, L"%u.%u", (int)(v/10), (int)(v%10));
 
 			switch (nID)
 			{
@@ -2653,7 +2653,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 			// Performance
 			wchar_t sTemp[32];
 			// These are not MHz. E.g. on "AMD Athlon 64 X2 1999 MHz" we get "0.004 GHz"
-			_wsprintf(sTemp, SKIPLEN(countof(sTemp)) L" (%I64i)", ((i64)(mn_Freq/1000)));
+			swprintf_c(sTemp, L" (%I64i)", ((i64)(mn_Freq/1000)));
 			CEStr lsTemp, lsInfo(gpLng->getControl(gbPerformance, lsTemp, L"Performance counters"), sTemp);
 			SetDlgItemText(GetPage(thi_Info), nID, lsInfo);
 			// Update immediately
@@ -2925,7 +2925,7 @@ void CSettings::RecreateFont(WORD wFromID)
 		if (hMainPg)
 		{
 			wchar_t szSize[10];
-			_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", gpSet->FontSizeY);
+			swprintf_c(szSize, L"%i", gpSet->FontSizeY);
 			SetDlgItemText(hMainPg, tFontSizeY, szSize);
 		}
 	}
@@ -3169,7 +3169,7 @@ void CSettings::SetBgImageDarker(u8 newValue, bool bUpdate)
 			SendDlgItemMessage(hBgPg, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
 
 			TCHAR tmp[10];
-			_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%u", (UINT)gpSet->bgImageDarker);
+			swprintf_c(tmp, L"%u", (UINT)gpSet->bgImageDarker);
 			SetDlgItemText(hBgPg, tDarker, tmp);
 		}
 
@@ -3236,7 +3236,7 @@ bool CSettings::LoadBackgroundFile(LPCWSTR inPath, bool abShowErrors)
 			{
 				wchar_t szError[MAX_PATH*2];
 				DWORD dwErr = GetLastError();
-				_wsprintf(szError, SKIPLEN(countof(szError)) L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
+				swprintf_c(szError, L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
 				          inPath, dwErr);
 				MBoxA(szError);
 			}
@@ -3526,7 +3526,7 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 
 			#if 0
 			wchar_t szDbg[1024];
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Cmd:\n%s\nExitCode=%i", szCmd, nCheckResult);
+			swprintf_c(szDbg, L"Cmd:\n%s\nExitCode=%i", szCmd, nCheckResult);
 			MBoxA(szDbg);
 			FreeConsole();
 			#endif
@@ -3538,7 +3538,7 @@ wrap:
 	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[128];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CheckConsoleFontFast(`%s`,`%s`) = %u",
+		swprintf_c(szInfo, L"CheckConsoleFontFast(`%s`,`%s`) = %u",
 			asCheckName ? asCheckName : L"NULL", LF.lfFaceName, gpSetCls->nConFontError);
 		LogString(szInfo);
 	}
@@ -3660,18 +3660,18 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			uint nCount = CSetDlgLists::GetListItems(CSetDlgLists::eFSizesSmall, pnSizesSmall);
 			for (uint i = 0; i < nCount; i++)
 			{
-				_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", pnSizesSmall[i]);
+				swprintf_c(temp, L"%i", pnSizesSmall[i]);
 				SendDlgItemMessage(hWnd2, tConsoleFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);
-				_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", (int)(pnSizesSmall[i]*3/2));
+				swprintf_c(temp, L"%i", (int)(pnSizesSmall[i]*3/2));
 				SendDlgItemMessage(hWnd2, tConsoleFontSizeX, CB_ADDSTRING, 0, (LPARAM) temp);
 
 				if ((LONG)pnSizesSmall[i] >= gpFontMgr->LogFont.lfHeight)
 					break; // не допускаются шрифты больше, чем выбрано для основного шрифта!
 			}
 
-			_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->ConsoleFont.lfHeight);
+			swprintf_c(temp, L"%i", gpSet->ConsoleFont.lfHeight);
 			CSetDlgLists::SelectStringExact(hWnd2, tConsoleFontSizeY, temp);
-			_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->ConsoleFont.lfWidth);
+			swprintf_c(temp, L"%i", gpSet->ConsoleFont.lfWidth);
 			CSetDlgLists::SelectStringExact(hWnd2, tConsoleFontSizeX, temp);
 
 			// Показать текущий шрифт и проверить его
@@ -3823,7 +3823,7 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 						sei.fMask = SEE_MASK_NO_CONSOLE|SEE_MASK_NOCLOSEPROCESS|SEE_MASK_NOASYNC;
 						sei.lpVerb = L"runas";
 						sei.lpFile = WIN3264TEST(gpConEmu->ms_ConEmuC32Full,gpConEmu->ms_ConEmuC64Full);
-						_wsprintf(szCommandLine, SKIPLEN(countof(szCommandLine)) L" \"/REGCONFONT=%s\"", szFaceName);
+						swprintf_c(szCommandLine, L" \"/REGCONFONT=%s\"", szFaceName);
 						sei.lpParameters = szCommandLine;
 						wchar_t szWorkDir[MAX_PATH+1];
 						wcscpy_c(szWorkDir, gpConEmu->WorkDir());
@@ -3939,13 +3939,13 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 
 							if (TB != tConsoleFontSizeX)
 							{
-								_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", lpOutl->otmTextMetrics.tmAveCharWidth);
+								swprintf_c(temp, L"%i", lpOutl->otmTextMetrics.tmAveCharWidth);
 								CSetDlgLists::SelectStringExact(hWnd2, tConsoleFontSizeX, temp);
 							}
 
 							if (lpOutl->otmTextMetrics.tmHeight != LF.lfHeight)
 							{
-								_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", lpOutl->otmTextMetrics.tmHeight);
+								swprintf_c(temp, L"%i", lpOutl->otmTextMetrics.tmHeight);
 								if (TB == tConsoleFontSizeY)
 								{
 									CEStr lsMsg(L"The created font height differs: ", temp);

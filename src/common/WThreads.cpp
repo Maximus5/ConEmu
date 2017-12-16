@@ -236,7 +236,7 @@ BOOL apiTerminateThreadEx(HANDLE hThread, DWORD dwExitCode, LPCSTR asFile, int a
 		LPCSTR pszName = strrchr(asFile, L'\\'); if (pszName) pszName++; else pszName = asFile;
 		char szKiller[30]; lstrcpynA(szKiller, pszName, countof(szKiller));
 		_ASSERTE((countof(szKiller)+8) < countof(pThread->sKiller));
-		_wsprintfA(pThread->sKiller, SKIPCOUNT(pThread->sKiller) "%s:%i", szKiller, anLine);
+		sprintf_c(pThread->sKiller, "%s:%i", szKiller, anLine);
 		pThread->bActive = FALSE;
 	}
 	return bRc;

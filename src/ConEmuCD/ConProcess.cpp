@@ -68,7 +68,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 	if (abChanged && RELEASEDEBUGTEST((gpLogSize!=NULL),true))
 	{
 		DWORD nPID, nLastPID = 0, nFoundPID = 0;
-		_wsprintf(szCountInfo, SKIPCOUNT(szCountInfo) L"Process list was changed: %u -> %i", anPrevCount, gpSrv ? nProcessCount : -1);
+		swprintf_c(szCountInfo, L"Process list was changed: %u -> %i", anPrevCount, gpSrv ? nProcessCount : -1);
 
 		wcscat_c(szCountInfo, L"\r\n                        Processes:");
 		INT_PTR iLen = lstrlen(szCountInfo);

@@ -245,7 +245,7 @@ void CSetPgKeys::FillHotKeysList(HWND hDlg, bool abInitial)
 			case chk_User:
 				wcscpy_c(szName, L"User"); break;
 			case chk_Macro:
-				_wsprintf(szName, SKIPLEN(countof(szName)) L"Macro %02i", ppHK->DescrLangID-vkGuiMacro01+1); break;
+				swprintf_c(szName, L"Macro %02i", ppHK->DescrLangID-vkGuiMacro01+1); break;
 			case chk_Modifier:
 			case chk_Modifier2:
 				wcscpy_c(szName, L"Modifier"); break;

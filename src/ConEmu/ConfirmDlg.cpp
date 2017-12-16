@@ -153,7 +153,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		else
 			wcscpy_c(szMessage, L"Confirm closing?");
 
-		wchar_t szWWW[MAX_PATH]; _wsprintf(szWWW, SKIPLEN(countof(szWWW)) L"<a href=\"%s\">%s</a>", gsHomePage, gsHomePage);
+		wchar_t szWWW[MAX_PATH]; swprintf_c(szWWW, L"<a href=\"%s\">%s</a>", gsHomePage, gsHomePage);
 
 		wchar_t szCloseAll[MAX_PATH*2]; wchar_t *pszText;
 		if (Parm.asSingleConsole)
@@ -178,7 +178,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		}
 		else
 		{
-			_wsprintf(szCloseAll, SKIPLEN(countof(szCloseAll))
+			swprintf_c(szCloseAll,
 				(Parm.bGroup && (Parm.nConsoles>1))
 					? ((Parm.bGroup == ConfirmCloseParam::eGroup)
 						? L"Close group (%u consoles)"
@@ -285,7 +285,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 	}
 	else
 	{
-		_wsprintf(szText, SKIPLEN(countof(szText)) L"About to close %u console%s.\r\n", Parm.nConsoles, (Parm.nConsoles>1)?L"s":L"");
+		swprintf_c(szText, L"About to close %u console%s.\r\n", Parm.nConsoles, (Parm.nConsoles>1)?L"s":L"");
 	}
 	pszText = szText+_tcslen(szText);
 

@@ -48,7 +48,7 @@ bool CDlgItemHelper::checkDlgButton(HWND hParent, WORD nCtrlId, UINT uCheck)
 		if (!hCheckBox)
 		{
 			//_ASSERTE(hCheckBox!=NULL && "Checkbox not found in hParent dlg");
-			wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"checkDlgButton failed\nControlID %u not found in hParent dlg", nCtrlId);
+			wchar_t szErr[128]; swprintf_c(szErr, L"checkDlgButton failed\nControlID %u not found in hParent dlg", nCtrlId);
 			MsgBox(szErr, MB_SYSTEMMODAL | MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
 		}
 		else
@@ -75,7 +75,7 @@ bool CDlgItemHelper::checkRadioButton(HWND hParent, int nIDFirstButton, int nIDL
 		//_ASSERTE(GetDlgItem(hParent, nIDFirstButton) && "Checkbox not found in hParent dlg");
 		//_ASSERTE(GetDlgItem(hParent, nIDLastButton) && "Checkbox not found in hParent dlg");
 		//_ASSERTE(GetDlgItem(hParent, nIDCheckButton) && "Checkbox not found in hParent dlg");
-		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"checkRadioButton failed\nControlIDs %u,%u,%u not found in hParent dlg", nIDFirstButton, nIDLastButton, nIDCheckButton);
+		wchar_t szErr[128]; swprintf_c(szErr, L"checkRadioButton failed\nControlIDs %u,%u,%u not found in hParent dlg", nIDFirstButton, nIDLastButton, nIDCheckButton);
 		MsgBox(szErr, MB_SYSTEMMODAL | MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
 	}
 #endif
@@ -108,7 +108,7 @@ void CDlgItemHelper::enableDlgItems(HWND hParent, UINT* pnCtrlID, INT_PTR nCount
 			#if defined(_DEBUG)
 			//_ASSERTE(GetDlgItem(hParent, pnCtrlID[i]) != NULL);
 			#endif
-			wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"enableDlgItems failed\nControlID %u not found in hParent dlg", pnCtrlID[i]);
+			wchar_t szErr[128]; swprintf_c(szErr, L"enableDlgItems failed\nControlID %u not found in hParent dlg", pnCtrlID[i]);
 			MsgBox(szErr, MB_SYSTEMMODAL | MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
 			continue;
 		}
@@ -129,7 +129,7 @@ BYTE CDlgItemHelper::isChecked(HWND hParent, WORD nCtrlId)
 	else if ((nCtrlId != IDCANCEL) && !GetDlgItem(hParent, nCtrlId))
 	{
 		//_ASSERTE(hCheckBox!=NULL && "Checkbox not found in hParent dlg");
-		wchar_t szErr[128]; _wsprintf(szErr, SKIPLEN(countof(szErr)) L"IsChecked failed\nControlID %u not found in hParent dlg", nCtrlId);
+		wchar_t szErr[128]; swprintf_c(szErr, L"IsChecked failed\nControlID %u not found in hParent dlg", nCtrlId);
 		MsgBox(szErr, MB_SYSTEMMODAL | MB_ICONSTOP, L"ConEmu settings", ghOpWnd);
 	}
 #endif

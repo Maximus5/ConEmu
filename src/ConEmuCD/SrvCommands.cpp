@@ -211,7 +211,7 @@ void ForceFarResize()
 	}
 
 	wchar_t szLog[120];
-	_wsprintf(szLog, SKIPCOUNT(szLog) L"ForceFarResize: Size={%i,%i} Buf={%i,%i} Mouse={%i,%i}",
+	swprintf_c(szLog, L"ForceFarResize: Size={%i,%i} Buf={%i,%i} Mouse={%i,%i}",
 		sc.srWindow.Right-sc.srWindow.Left+1, sc.srWindow.Bottom-sc.srWindow.Top+1,
 		sc.dwSize.X, sc.dwSize.Y,
 		r.Event.MouseEvent.dwMousePosition.X, r.Event.MouseEvent.dwMousePosition.Y);
@@ -364,7 +364,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		lstrcpynA(szCmdName, ":CECMD_UNLOCKSTATION", countof(szCmdName)); bForceWriteLog = true; break;
 	default:
 		_ASSERTE(FALSE && "Unnamed command");
-		_wsprintfA(szCmdName, SKIPCOUNT(szCmdName) ":UnnamedCmd(%u)", in.hdr.nCmd);
+		sprintf_c(szCmdName, ":UnnamedCmd(%u)", in.hdr.nCmd);
 	}
 
 	MCHKHEAP;
@@ -493,7 +493,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 
 				// Команду можно выполнить через плагин FARа
 				wchar_t szPipeName[128];
-				_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CEPLUGINPIPENAME, L".", in.SetSize.dwFarPID);
+				swprintf_c(szPipeName, CEPLUGINPIPENAME, L".", in.SetSize.dwFarPID);
 				//DWORD nHILO = ((DWORD)crNewSize.X) | (((DWORD)(WORD)crNewSize.Y) << 16);
 				//pPlgIn = ExecuteNewCmd(CMD_SETSIZE, sizeof(CESERVER_REQ_HDR)+sizeof(nHILO));
 				pPlgIn = ExecuteNewCmd(CMD_REDRAWFAR, sizeof(CESERVER_REQ_HDR));
@@ -640,8 +640,8 @@ BOOL cmd_FarLoaded(CESERVER_REQ& in, CESERVER_REQ** out)
 	#if 0
 	wchar_t szDbg[512], szExe[MAX_PATH], szTitle[512];
 	GetModuleFileName(NULL, szExe, countof(szExe));
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"cmd_FarLoaded: %s", PointToName(szExe));
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg))
+	swprintf_c(szTitle, L"cmd_FarLoaded: %s", PointToName(szExe));
+	swprintf_c(szDbg,
 		L"cmd_FarLoaded was received\nServerPID=%u, name=%s\nFarPID=%u\nRootPID=%u\nDisablingConfirm=%s",
 		GetCurrentProcessId(), PointToName(szExe), in.hdr.nSrcPID, gpSrv->dwRootProcess,
 		((gbAutoDisableConfirmExit || (gnConfirmExitParm == 1)) && gpSrv->dwRootProcess == in.dwData[0]) ? L"YES" :
@@ -691,7 +691,7 @@ BOOL cmd_PostConMsg(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		#ifdef _DEBUG
 		wchar_t szDbg[255];
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"ConEmuC: %s(0x%08X, %s, CP:%i, HKL:0x%08I64X)\n",
+		swprintf_c(szDbg, L"ConEmuC: %s(0x%08X, %s, CP:%i, HKL:0x%08I64X)\n",
 		          in.Msg.bPost ? L"PostMessage" : L"SendMessage", LODWORD(hSendWnd),
 		          (in.Msg.nMsg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" :
 		          (in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST) ? L"WM_INPUTLANGCHANGEREQUEST" :
@@ -704,7 +704,7 @@ BOOL cmd_PostConMsg(CESERVER_REQ& in, CESERVER_REQ** out)
 		if (gpLogSize)
 		{
 			char szInfo[255];
-			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: %s(0x%08X, %s, CP:%i, HKL:0x%08I64X)",
+			sprintf_c(szInfo, "ConEmuC: %s(0x%08X, %s, CP:%i, HKL:0x%08I64X)",
 			           in.Msg.bPost ? "PostMessage" : "SendMessage", LODWORD(hSendWnd), //-V205
 			           (in.Msg.nMsg == WM_INPUTLANGCHANGE) ? "WM_INPUTLANGCHANGE" :
 			           (in.Msg.nMsg == WM_INPUTLANGCHANGEREQUEST) ? "WM_INPUTLANGCHANGEREQUEST" :
@@ -1143,34 +1143,34 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	switch (in.StartStop.nStarted)
 	{
 		case sst_ServerStart:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(ServerStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(ServerStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_AltServerStart:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(AltServerStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(AltServerStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_ServerStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(ServerStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(ServerStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_AltServerStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(AltServerStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(AltServerStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_ComspecStart:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(ComspecStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(ComspecStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_ComspecStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(ComspecStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(ComspecStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_AppStart:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(AppStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(AppStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_AppStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(AppStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(AppStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_App16Start:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(App16Start,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(App16Start,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_App16Stop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"SRV received CECMD_CMDSTARTSTOP(App16Stop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(App16Stop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		default:
 			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
@@ -1569,7 +1569,7 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 		// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
 		if (gbAttachMode || (gpSrv->hRootProcessGui == NULL))
 		{
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GUI application (PID=%u) was attached to ConEmu:\n%s\n",
+			swprintf_c(szInfo, L"GUI application (PID=%u) was attached to ConEmu:\n%s\n",
 				in.AttachGuiApp.nPID, in.AttachGuiApp.sAppFilePathName);
 			_wprintf(szInfo);
 		}
@@ -1580,7 +1580,7 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 			GetWindowText(in.AttachGuiApp.hAppWindow, szTitle, countof(szTitle));
 			wchar_t szClass[MAX_PATH] = {};
 			GetClassName(in.AttachGuiApp.hAppWindow, szClass, countof(szClass));
-			_wsprintf(szInfo,  SKIPLEN(countof(szInfo))
+			swprintf_c(szInfo,
 				L"\nWindow (x%08X,Style=x%08X,Ex=x%X,Flags=x%X) was attached to ConEmu:\nTitle: \"%s\"\nClass: \"%s\"\n",
 				(DWORD)in.AttachGuiApp.hAppWindow, in.AttachGuiApp.Styles.nStyle, in.AttachGuiApp.Styles.nStyleEx, in.AttachGuiApp.nFlags, szTitle, szClass);
 			_wprintf(szInfo);
@@ -1702,9 +1702,9 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 		if (gpLogSize)
 		{
 			if (in.dwData[0] == 1)
-				_wsprintf(szLog, SKIPCOUNT(szLog) L"AltServer: freeze requested, new AltServer=%u", in.dwData[1]);
+				swprintf_c(szLog, L"AltServer: freeze requested, new AltServer=%u", in.dwData[1]);
 			else
-				_wsprintf(szLog, SKIPCOUNT(szLog) L"AltServer: thaw requested, prev AltServer=%u", gpSrv->nPrevAltServer);
+				swprintf_c(szLog, L"AltServer: thaw requested, prev AltServer=%u", gpSrv->nPrevAltServer);
 			LogString(szLog);
 		}
 
@@ -1726,7 +1726,7 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 			}
 			else
 			{
-				_wsprintf(szLog, SKIPCOUNT(szLog) L"AltServer: Wrong gnRunMode=%u", gnRunMode);
+				swprintf_c(szLog, L"AltServer: Wrong gnRunMode=%u", gnRunMode);
 				LogString(szLog);
 				_ASSERTE(gnRunMode == RM_ALTSERVER);
 			}
@@ -2020,7 +2020,7 @@ BOOL cmd_AltBuffer(CESERVER_REQ& in, CESERVER_REQ** out)
 		if (gpLogSize)
 		{
 			char szInfo[100];
-			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "cmd_AltBuffer: (%u) %s%s%s%s",
+			sprintf_c(szInfo, "cmd_AltBuffer: (%u) %s%s%s%s",
 				in.AltBuf.BufferHeight,
 				!in.AltBuf.AbFlags ? "AbFlags==0" :
 				(in.AltBuf.AbFlags & abf_SaveContents) ? " abf_SaveContents" : "",
@@ -2389,7 +2389,7 @@ BOOL cmd_PromptStarted(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		int iLen = lstrlen(in.PromptStarted.szExeName);
 		if (iLen > MAX_PATH) in.PromptStarted.szExeName[MAX_PATH] = 0;
-		_wsprintf(szStarted, SKIPCOUNT(szStarted) L"Prompt (Hook server) was started, PID=%u {%s}", in.hdr.nSrcPID, in.PromptStarted.szExeName);
+		swprintf_c(szStarted, L"Prompt (Hook server) was started, PID=%u {%s}", in.hdr.nSrcPID, in.PromptStarted.szExeName);
 		LogFunction(szStarted);
 	}
 

@@ -142,7 +142,7 @@ void CGestures::StartGestureLog()
 		return;
 
 	wchar_t szInfo[100];
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Gestures: TabletPC=%u, Gestures=%u, Enabled=%u", (int)_isTabletPC, (int)_isGestures, (int)IsGesturesEnabled());
+	swprintf_c(szInfo, L"Gestures: TabletPC=%u, Gestures=%u, Enabled=%u", (int)_isTabletPC, (int)_isGestures, (int)IsGesturesEnabled());
 	gpConEmu->LogString(szInfo);
 }
 
@@ -167,7 +167,7 @@ void CGestures::DumpGesture(LPCWSTR tp, const GESTUREINFO& gi)
 {
 	wchar_t szDump[256];
 
-	_wsprintf(szDump, SKIPLEN(countof(szDump))
+	swprintf_c(szDump,
 		L"Gesture(x%08X {%i,%i} %s",
 		LODWORD(gi.hwndTarget), gi.ptsLocation.x, gi.ptsLocation.y,
 		tp); // tp - имя жеста
@@ -258,7 +258,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		if (gpSet->isLogging())
 		{
 			wchar_t szNotify[60];
-			_wsprintf(szNotify, SKIPLEN(countof(szNotify)) L"SetGestureConfig -> %u,%u", bResult, dwErr);
+			swprintf_c(szNotify, L"SetGestureConfig -> %u,%u", bResult, dwErr);
 			gpConEmu->LogString(szNotify);
 		}
 
@@ -309,7 +309,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 	//#ifdef USE_DUMPGEST
 	//	wchar_t szDump[256];
 	//	#define DUMPGEST(tp)
-	//		_wsprintf(szDump, SKIPLEN(countof(szDump))
+	//		swprintf_c(szDump,
 	//			L"Gesture(x%08X {%i,%i} %s",
 	//			(DWORD)gi.hwndTarget, gi.ptsLocation.x, gi.ptsLocation.y,
 	//			tp);
@@ -537,7 +537,7 @@ bool CGestures::ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy)
 				short Delta = ((ldy < 0) ? -120 : 120) * dy;
 
 				#ifdef _DEBUG
-				wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"  ProcessMove(%i,%i), WheelDelta=%i\n", ldx, ldy, (int)Delta);
+				wchar_t szDbg[128]; swprintf_c(szDbg, L"  ProcessMove(%i,%i), WheelDelta=%i\n", ldx, ldy, (int)Delta);
 				DEBUGSTRPAN(szDbg);
 				#endif
 

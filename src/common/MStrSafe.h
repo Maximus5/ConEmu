@@ -36,12 +36,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // В некоторых случаях использовать StringCch и прочие нельзя
 #undef  STRSAFE_DISABLE
-#ifdef CONEMU_MINIMAL
-	#define STRSAFE_DISABLE
-#endif
-#ifdef __GNUC__
-	#define STRSAFE_DISABLE
-#endif
+//#ifdef CONEMU_MINIMAL
+//	#define STRSAFE_DISABLE
+//#endif
+//#ifdef __GNUC__
+//	#define STRSAFE_DISABLE
+//#endif
 
 
 
@@ -211,7 +211,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif // STRSAFE_NO_DEPRECATE
 
 
-#ifndef _DEBUG
+#if 0
+//#ifndef _DEBUG
 #undef StringCchPrintf
 #define StringCchPrintf    dont_use_StringCchPrintf_in_release;
 
@@ -229,8 +230,32 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Только под дебагом, т.к. StringCchVPrintf вызывает vsprintf, который не линкуется в релизе статиком.
 #define SKIPLEN(l) (l),
 #define SKIPCOUNT(l) (countof(l)),
-int swprintf_c(wchar_t* Buffer, INT_PTR size, const wchar_t *Format, ...);
-int sprintf_c(char* Buffer, INT_PTR size, const char *Format, ...);
+int swprintf_c(wchar_t* Buffer, INT_PTR size, const wchar_t* Format, ...);
+int sprintf_c(char* Buffer, INT_PTR size, const char* Format, ...);
+
+template <size_t size>
+int swprintf_c(wchar_t (&Buffer)[size], const wchar_t* Format, ...)
+{
+	_ASSERTE(Buffer!=Format);
+	va_list argList;
+	va_start(argList, Format);
+	int nRc;
+	nRc = StringCchVPrintfW(Buffer, size, Format, argList);
+	va_end(argList);
+	return nRc;
+}
+
+template <size_t size>
+int sprintf_c(char (&Buffer)[size], const char* Format, ...)
+{
+	_ASSERTE(Buffer!=Format);
+	va_list argList;
+	va_start(argList, Format);
+	int nRc;
+	nRc = StringCchVPrintfA(Buffer, size, Format, argList);
+	va_end(argList);
+	return nRc;
+}
 
 #define _wsprintf  swprintf_c
 #define _wsprintfA sprintf_c
@@ -241,39 +266,39 @@ int sprintf_c(char* Buffer, INT_PTR size, const char *Format, ...);
 //#define _wsprintfA wsprintfA
 //#endif
 
-#ifdef STRSAFE_DISABLE
-inline int wcscpy_add(wchar_t* Buffer, wchar_t* /*BufferStart*/, const wchar_t *Str)
-{
-	lstrcpyW(Buffer, Str);
-	return S_OK;
-};
-inline int wcscpy_add(int Shift, wchar_t* BufferStart, const wchar_t *Str)
-{
-	lstrcpyW(BufferStart+Shift, Str);
-	return S_OK;
-};
-inline int wcscat_add(wchar_t* Buffer, wchar_t* /*BufferStart*/, const wchar_t *Str)
-{
-	lstrcatW(Buffer, Str);
-	return S_OK;
-};
-inline int wcscat_add(int Shift, wchar_t* BufferStart, const wchar_t* Str)
-{
-	lstrcatW(BufferStart+Shift, Str);
-	return S_OK;
-};
-inline int wcscpy_c(wchar_t* Dst, const wchar_t *Src)
-{
-	lstrcpyW(Dst, Src);
-	return S_OK;
-}
-inline int wcscat_c(wchar_t* Dst, const wchar_t *Src)
-{
-	lstrcatW(Dst, Src);
-	return S_OK;
-}
-
-#else
+//#ifdef STRSAFE_DISABLE
+//inline int wcscpy_add(wchar_t* Buffer, wchar_t* /*BufferStart*/, const wchar_t *Str)
+//{
+//	lstrcpyW(Buffer, Str);
+//	return S_OK;
+//};
+//inline int wcscpy_add(int Shift, wchar_t* BufferStart, const wchar_t *Str)
+//{
+//	lstrcpyW(BufferStart+Shift, Str);
+//	return S_OK;
+//};
+//inline int wcscat_add(wchar_t* Buffer, wchar_t* /*BufferStart*/, const wchar_t *Str)
+//{
+//	lstrcatW(Buffer, Str);
+//	return S_OK;
+//};
+//inline int wcscat_add(int Shift, wchar_t* BufferStart, const wchar_t* Str)
+//{
+//	lstrcatW(BufferStart+Shift, Str);
+//	return S_OK;
+//};
+//inline int wcscpy_c(wchar_t* Dst, const wchar_t *Src)
+//{
+//	lstrcpyW(Dst, Src);
+//	return S_OK;
+//}
+//inline int wcscat_c(wchar_t* Dst, const wchar_t *Src)
+//{
+//	lstrcatW(Dst, Src);
+//	return S_OK;
+//}
+//
+//#else
 
 template <size_t size>
 int wcscpy_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t *Str)
@@ -343,7 +368,7 @@ int wcscat_c(wchar_t (&Dst)[size], const wchar_t *Src)
 	int nRc = StringCchCatW(Dst, size, Src);
 	return nRc;
 }
-#endif
+//#endif
 //#undef _wcscpy_c
 //inline errno_t _wcscpy_c(wchar_t *Dst, size_t size, const wchar_t *Src)
 //{

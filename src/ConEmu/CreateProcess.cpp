@@ -158,16 +158,16 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 	                    &hToken))
 	{
 		nErrCode = GetLastError();
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to OpenProcessToken, code=%u", nErrCode);
+		swprintf_c(szLog, L"Failed to OpenProcessToken, code=%u", nErrCode);
 		LogString(szLog);
 		if (pdwLastError) *pdwLastError = nErrCode;
 		goto wrap;
 	}
 
 	if (!GetTokenInformation(hToken, TokenSessionId, &nCurSession, sizeof(nCurSession), &nRetSize))
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to query TokenSessionId, code=%u", GetLastError());
+		swprintf_c(szLog, L"Failed to query TokenSessionId, code=%u", GetLastError());
 	else
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"Current TokenSessionId is %u", nCurSession);
+		swprintf_c(szLog, L"Current TokenSessionId is %u", nCurSession);
 	LogString(szLog);
 	if (anSessionId == (DWORD)-1)
 	{
@@ -181,7 +181,7 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 		if (hParent) CloseHandle(hParent);
 		if (!bObtained)
 		{
-			_wsprintf(szLog, SKIPCOUNT(szLog) L"ProcessIdToSessionId failed, code=%u", nErrCode);
+			swprintf_c(szLog, L"ProcessIdToSessionId failed, code=%u", nErrCode);
 			LogString(szLog);
 			goto wrap;
 		}
@@ -198,7 +198,7 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 	{
 		if (!DuplicateTokenEx(hToken, MAXIMUM_ALLOWED, NULL, SecurityImpersonation, TokenPrimary, &hTokenRest))
 		{
-			_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to duplicate current token, code=%u", GetLastError());
+			swprintf_c(szLog, L"Failed to duplicate current token, code=%u", GetLastError());
 			LogString(szLog);
 			goto wrap;
 		}
@@ -207,14 +207,14 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 			CAdjustProcessToken tcbName;
 			if (tcbName.Enable(1, SE_TCB_NAME) != 1)
 			{
-				_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to adjust SE_TCB_NAME privilege, code=%u", GetLastError());
+				swprintf_c(szLog, L"Failed to adjust SE_TCB_NAME privilege, code=%u", GetLastError());
 				LogString(szLog);
 			}
 
 			if (!SetTokenInformation(hTokenRest, TokenSessionId, &nNewSessionId, sizeof(nNewSessionId)))
 			{
 				nErrCode = GetLastError();
-				_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to adjust TokenSessionId to %u, code=%u", nNewSessionId, nErrCode);
+				swprintf_c(szLog, L"Failed to adjust TokenSessionId to %u, code=%u", nNewSessionId, nErrCode);
 				LogString(szLog);
 				if (pdwLastError) *pdwLastError = nErrCode;
 				goto wrap;
@@ -224,9 +224,9 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 				tcbName.Release();
 
 				if (!GetTokenInformation(hTokenRest, TokenSessionId, &nCurSession, sizeof(nCurSession), &nRetSize))
-					_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to query new TokenSessionId, code=%u", GetLastError());
+					swprintf_c(szLog, L"Failed to query new TokenSessionId, code=%u", GetLastError());
 				else
-					_wsprintf(szLog, SKIPCOUNT(szLog) L"New TokenSessionId is %u", nCurSession);
+					swprintf_c(szLog, L"New TokenSessionId is %u", nCurSession);
 				LogString(szLog);
 			}
 		}
@@ -252,7 +252,7 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 	if (!lbRc)
 	{
 		nErrCode = GetLastError();
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"%s failed, code=%u", hTokenRest ? L"CreateProcessAsUser" : L"CreateProcess", nErrCode);
+		swprintf_c(szLog, L"%s failed, code=%u", hTokenRest ? L"CreateProcessAsUser" : L"CreateProcess", nErrCode);
 		LogString(szLog);
 		if (pdwLastError) *pdwLastError = nErrCode;
 	}

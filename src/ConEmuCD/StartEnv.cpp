@@ -197,7 +197,7 @@ void CStartEnv::UnitTests()
 {
 	CStartEnv setEnv;
 	wchar_t szTempName[80]; SYSTEMTIME st = {}; GetLocalTime(&st);
-	_wsprintf(szTempName, SKIPCOUNT(szTempName) L"ce_temp_%u%u%u%u", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+	swprintf_c(szTempName, L"ce_temp_%u%u%u%u", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 	SetEnvironmentVariable(szTempName, NULL);
 
 	const wchar_t szInit[] = L"initial", szPref[] = L"abc;", szSuff[] = L";def";

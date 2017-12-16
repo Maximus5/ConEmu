@@ -2491,7 +2491,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 
 				wchar_t szText[360], *pszText;
 				//wcscpy_c(szText, L"Close confirmation.\r\n\r\n");
-				_wsprintf(szText, SKIPLEN(countof(szText)) L"About to close %u console%s.\r\n", nConsoles, (nConsoles>1)?L"s":L"");
+				swprintf_c(szText, L"About to close %u console%s.\r\n", nConsoles, (nConsoles>1)?L"s":L"");
 				pszText = szText+_tcslen(szText);
 
 				if (nProgress || nEditors)
@@ -3544,7 +3544,7 @@ BOOL CVConGroup::AttachRequested(HWND ahConWnd, const CESERVER_REQ_STARTSTOP* pS
 			//Штатная ситуация, если аттач (запуск ConEmu.exe) инициируется из сервера
 			wchar_t szDbg[128];
 			//_ASSERTE(pStartStop->dwAID!=0);
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Attach was requested from ServerPID=%u without dwAID\n", pStartStop->dwPID);
+			swprintf_c(szDbg, L"Attach was requested from ServerPID=%u without dwAID\n", pStartStop->dwPID);
 			DEBUGSTRATTACHERR(szDbg);
 		}
 		#endif
@@ -3662,7 +3662,7 @@ CRealConsole* CVConGroup::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFil
 	wchar_t szLogInfo[MAX_PATH];
 	if (gpSet->isLogging())
 	{
-		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. SrvPID=%u. AppPID=%u, FileName=", anServerPID, anAppPID);
+		swprintf_c(szLogInfo, L"AttachRequestedGui. SrvPID=%u. AppPID=%u, FileName=", anServerPID, anAppPID);
 		lstrcpyn(szLogInfo+_tcslen(szLogInfo), asAppFileName ? asAppFileName : L"<NULL>", 128);
 		LogString(szLogInfo);
 	}
@@ -3695,10 +3695,10 @@ CRealConsole* CVConGroup::AttachRequestedGui(DWORD anServerPID, LPCWSTR asAppFil
 	{
 		wchar_t szRc[64];
 		if (pRCon)
-			_wsprintf(szRc, SKIPLEN(countof(szRc)) L"Succeeded. ServerPID=%u", pRCon->GetServerPID());
+			swprintf_c(szRc, L"Succeeded. ServerPID=%u", pRCon->GetServerPID());
 		else
 			wcscpy_c(szRc, L"Rejected");
-		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"AttachRequestedGui. SrvPID=%u. AppPID=%u. %s", anServerPID, anAppPID, szRc);
+		swprintf_c(szLogInfo, L"AttachRequestedGui. SrvPID=%u. AppPID=%u. %s", anServerPID, anAppPID, szRc);
 		LogString(szLogInfo);
 	}
 
@@ -4143,7 +4143,7 @@ bool CVConGroup::ConActivate(CVConGuard& VCon, int nCon)
 	int nNewConHeight = rcNewCon.bottom;
 
 	wchar_t szInfo[128];
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Activating con #%u, OldSize={%u,%u}, NewSize={%u,%u}",
+	swprintf_c(szInfo, L"Activating con #%u, OldSize={%u,%u}, NewSize={%u,%u}",
 		nCon, nOldConWidth, nOldConHeight, nNewConWidth, nNewConHeight);
 	if (gpSet->isLogging())
 	{

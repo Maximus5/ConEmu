@@ -2001,7 +2001,7 @@ void LogFunctionCall(LPCSTR asFunc, LPCSTR asFile, int anLine)
 	if (!gbSuppressShowCall || gbSkipSuppressShowCall)
 	{
 		DWORD nErr = GetLastError();
-		char sFunc[128]; _wsprintfA(sFunc, SKIPLEN(countof(sFunc)) "Hook[%u]: %s\n", GetCurrentThreadId(), asFunc);
+		char sFunc[128]; sprintf_c(sFunc, "Hook[%u]: %s\n", GetCurrentThreadId(), asFunc);
 		DebugStringA(sFunc);
 		SetLastError(nErr);
 	}

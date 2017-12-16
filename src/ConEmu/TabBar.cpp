@@ -259,7 +259,7 @@ HICON CTabBarClass::GetTabIconByIndex(int IconIndex)
 void CTabBarClass::SelectTab(int i)
 {
 	wchar_t szInfo[120];
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"SelectTab tab requested: Tab=%i", i+1);
+	swprintf_c(szInfo, L"SelectTab tab requested: Tab=%i", i+1);
 	if (gpSet->isLogging()) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 
 	if (mp_Rebar->IsTabbarCreated())
@@ -942,7 +942,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		wchar_t szDbg[100];
 		int nNewVisible = m_Tabs.GetCount();
 		int nNewStacked = m_TabStack.size();
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"*** Tab list updated. Visible:%u, Stacked:%u, StackChanged:%s\n",
+		swprintf_c(szDbg, L"*** Tab list updated. Visible:%u, Stacked:%u, StackChanged:%s\n",
 			nNewVisible, nNewStacked, bStackChanged ? L"Yes" : L"No");
 		DEBUGSTRCOUNT(szDbg);
 		nPrevVisible = nNewVisible;
@@ -955,7 +955,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 
 	#ifdef _DEBUG
 	wchar_t szDbg[128];
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CTabBarClass::Update.  ItemCount=%i, PrevItemCount=%i\n", tabIdx, nCurCount);
+	swprintf_c(szDbg, L"CTabBarClass::Update.  ItemCount=%i, PrevItemCount=%i\n", tabIdx, nCurCount);
 	DEBUGSTRTABS(szDbg);
 	#endif
 
@@ -964,7 +964,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 		for (I = tabIdx; I < nCurCount; I++)
 		{
 			#ifdef _DEBUG
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"   Deleting tab=%i\n", I+1);
+			swprintf_c(szDbg, L"   Deleting tab=%i\n", I+1);
 			DEBUGSTRTABS(szDbg);
 			#endif
 
@@ -1544,11 +1544,11 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	////pszNo = wcsstr(szFormat, L"%i");
 	////pszTitle = wcsstr(szFormat, L"%s");
 	////if (pszNo == NULL)
-	////	_wsprintf(fileName, SKIPLEN(countof(fileName)) szFormat, tFileName);
+	////	swprintf_c(fileName, szFormat, tFileName);
 	////else if (pszNo < pszTitle || pszTitle == NULL)
-	////	_wsprintf(fileName, SKIPLEN(countof(fileName)) szFormat, pTab->Pos, tFileName);
+	////	swprintf_c(fileName, szFormat, pTab->Pos, tFileName);
 	////else
-	////	_wsprintf(fileName, SKIPLEN(countof(fileName)) szFormat, tFileName, pTab->Pos);
+	////	swprintf_c(fileName, szFormat, tFileName, pTab->Pos);
 	//wcscpy(pTab->Name, fileName);
 	const TCHAR* pszFmt = szFormat;
 	TCHAR* pszDst = dummy;
@@ -1605,7 +1605,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 					pszText = fileName;
 					break;
 				case _T('i'): case _T('I'): // %i - Far window number (you can see it in standard F12 menu)
-					_wsprintf(szTmp, SKIPLEN(countof(szTmp)) _T("%i"), pTab->Info.nIndex);
+					swprintf_c(szTmp, _T("%i"), pTab->Info.nIndex);
 					pszText = szTmp;
 					break;
 				case _T('p'): case _T('P'): // %p - Active process PID
@@ -1615,7 +1615,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 					}
 					else
 					{
-						_wsprintf(szTmp, SKIPLEN(countof(szTmp)) _T("%u"), apVCon->RCon()->GetActivePID());
+						swprintf_c(szTmp, _T("%u"), apVCon->RCon()->GetActivePID());
 					}
 					pszText = szTmp;
 					break;
@@ -1623,7 +1623,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 					{
 						int iCon = gpConEmu->isVConValid(apVCon);
 						if (iCon > 0)
-							_wsprintf(szTmp, SKIPLEN(countof(szTmp)) _T("%u"), iCon);
+							swprintf_c(szTmp, _T("%u"), iCon);
 						else
 							wcscpy_c(szTmp, _T("?"));
 						pszText = szTmp;
@@ -1741,7 +1741,7 @@ void CTabBarClass::PrintRecentStack()
 			_ASSERTE(p!=NULL);
 			continue;
 		}
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"%2u: %s", i+1,
+		swprintf_c(szDbg, L"%2u: %s", i+1,
 			(p->Info.Status == tisPassive) ? L"<passive> " :
 			(p->Info.Status == tisEmpty) ? L"<not_init> " :
 			(p->Info.Status == tisInvalid) ? L"<invalid> " :
@@ -1763,7 +1763,7 @@ int CTabBarClass::GetNextTab(bool abForward, bool abAltStyle/*=false*/)
 
 	#ifdef PRINT_RECENT_STACK
 	// Debug method
-	wchar_t szTab[80]; _wsprintf(szTab, SKIPCOUNT(szTab) L"GetNextTab: GetCurSel=%i\n", nCurSel);
+	wchar_t szTab[80]; swprintf_c(szTab, L"GetNextTab: GetCurSel=%i\n", nCurSel);
 	DEBUGSTRRECENT(szTab);
 	PrintRecentStack();
 	#endif
@@ -1807,7 +1807,7 @@ int CTabBarClass::GetNextTab(bool abForward, bool abAltStyle/*=false*/)
 		if (nNewSel >= 0)
 		{
 			#ifdef PRINT_RECENT_STACK
-			_wsprintf(szTab, SKIPCOUNT(szTab) L"GetNextTab(true): nNewSel=%i\n", nNewSel);
+			swprintf_c(szTab, L"GetNextTab(true): nNewSel=%i\n", nNewSel);
 			DEBUGSTRRECENT(szTab);
 			#endif
 			return nNewSel;
@@ -1823,7 +1823,7 @@ int CTabBarClass::GetNextTab(bool abForward, bool abAltStyle/*=false*/)
 	if (nNewSel >= 0)
 	{
 		#ifdef PRINT_RECENT_STACK
-		_wsprintf(szTab, SKIPCOUNT(szTab) L"GetNextTab(false): nNewSel=%i\n", nNewSel);
+		swprintf_c(szTab, L"GetNextTab(false): nNewSel=%i\n", nNewSel);
 		DEBUGSTRRECENT(szTab);
 		#endif
 		return nNewSel;

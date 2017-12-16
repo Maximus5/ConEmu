@@ -359,7 +359,7 @@ void ComspecDone(int aiRc)
 			#ifdef _DEBUG
 			if (sbi2.dwSize.Y > 200)
 			{
-				wchar_t szTitle[128]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC (PID=%i)", GetCurrentProcessId());
+				wchar_t szTitle[128]; swprintf_c(szTitle, L"ConEmuC (PID=%i)", GetCurrentProcessId());
 				MessageBox(NULL, L"BufferHeight was not turned OFF", szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL);
 			}
 			#endif

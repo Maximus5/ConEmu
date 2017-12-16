@@ -113,7 +113,7 @@ bool CIconList::Initialize()
 		}
 
 		wchar_t szLog[100];
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"Creating IconList for size {%ix%i} SysIcon size is {%ix%i}", mn_CxIcon, mn_CyIcon, iSysX, iSysY);
+		swprintf_c(szLog, L"Creating IconList for size {%ix%i} SysIcon size is {%ix%i}", mn_CxIcon, mn_CyIcon, iSysX, iSysY);
 		gpConEmu->LogString(szLog);
 
 		if ((mh_TabIcons = ImageList_Create(mn_CxIcon, mn_CyIcon, ILC_COLOR24|ILC_MASK, 0, 16)) != NULL)
@@ -343,7 +343,7 @@ LPCWSTR CIconList::GetIconInfoStr(HICON h, wchar_t (&szInfo)[80])
 	GetIconInfo(h, &ii);
 	BITMAP bi = {};
 	GetObject(ii.hbmColor, sizeof(bi), &bi);
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"{%ix%i} planes=%u bpp=%u", bi.bmWidth, bi.bmHeight, bi.bmPlanes, bi.bmBitsPixel);
+	swprintf_c(szInfo, L"{%ix%i} planes=%u bpp=%u", bi.bmWidth, bi.bmHeight, bi.bmPlanes, bi.bmBitsPixel);
 	SafeDeleteObject(ii.hbmColor);
 	SafeDeleteObject(ii.hbmMask);
 	return szInfo;

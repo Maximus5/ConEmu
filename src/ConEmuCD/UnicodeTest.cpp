@@ -51,7 +51,7 @@ void PrintConsoleInfo()
 
 	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
 	//msprintf не умеет "%02u"
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+	swprintf_c(szInfo,
 		L"ConEmu %02u%02u%02u%s %s\r\n"
 		L"OS Version: %u.%u.%u (%u:%s)\r\n",
 		MVV_1, MVV_2, MVV_3, szMinor, WIN3264TEST(L"x86",L"x64"),

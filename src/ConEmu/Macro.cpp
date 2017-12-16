@@ -361,12 +361,12 @@ wchar_t* GuiMacro::AsString()
 			switch (argv[i].Type)
 			{
 			case gmt_Int:
-				_wsprintf(szNum, SKIPLEN(countof(szNum)) L"%i", argv[i].Int);
+				swprintf_c(szNum, L"%i", argv[i].Int);
 				pszArgs[i] = lstrdup(szNum);
 				cchTotal += _tcslen(szNum)+1;
 				break;
 			case gmt_Hex:
-				_wsprintf(szNum, SKIPLEN(countof(szNum)) L"0x%08X", (DWORD)argv[i].Int);
+				swprintf_c(szNum, L"0x%08X", (DWORD)argv[i].Int);
 				pszArgs[i] = lstrdup(szNum);
 				cchTotal += _tcslen(szNum)+1;
 				break;
@@ -773,7 +773,7 @@ GuiMacro* ConEmuMacro::GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** 
 
 			if (!GetNextString(asString, a.Str, (chTerm == L':'), bEndBracket))
 			{
-				_wsprintf(szArgErr, SKIPLEN(countof(szArgErr)) L"Argument #%u failed (string)", Args.size()+1);
+				swprintf_c(szArgErr, L"Argument #%u failed (string)", Args.size()+1);
 				if (rsErrMsg)
 					*rsErrMsg = lstrdup(szArgErr);
 				return NULL;
@@ -2935,9 +2935,9 @@ LPWSTR ConEmuMacro::Int2Str(UINT nValue, bool bSigned)
 {
 	wchar_t szNumber[20];
 	if (bSigned)
-		_wsprintf(szNumber, SKIPCOUNT(szNumber) L"%i", (int)nValue);
+		swprintf_c(szNumber, L"%i", (int)nValue);
 	else
-		_wsprintf(szNumber, SKIPCOUNT(szNumber) L"%u", nValue);
+		swprintf_c(szNumber, L"%u", nValue);
 	return lstrdup(szNumber);
 }
 
@@ -3399,7 +3399,7 @@ LPWSTR ConEmuMacro::Sleep(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	// Max - 10sec to avoid hungs
 	if (p->GetIntArg(0, ms) && (ms > 0) && (ms < 10000))
 	{
-		_wsprintf(szStatus, SKIPLEN(countof(szStatus)) L"Sleeping %u ms", ms);
+		swprintf_c(szStatus, L"Sleeping %u ms", ms);
 		if (apRCon) apRCon->SetConStatus(szStatus, CRealConsole::cso_Critical);
 		DWORD dwStartTick = GetTickCount(), dwDelta, dwNow;
 		MSG Msg;
@@ -3461,9 +3461,9 @@ LPWSTR ConEmuMacro::Split(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			// Duplicate active «shell» split to bottom: Shell("new_console:sVn")
 			wchar_t szMacro[32] = L"";
 			if (nHorz > 0 && nHorz < 100 && nVert == 0)
-				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"Shell(\"new_console:s%iHn\")", nHorz);
+				swprintf_c(szMacro, L"Shell(\"new_console:s%iHn\")", nHorz);
 			else if (nVert > 0 && nVert < 100 && nHorz == 0)
-				_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"Shell(\"new_console:s%iVn\")", nVert);
+				swprintf_c(szMacro, L"Shell(\"new_console:s%iVn\")", nVert);
 
 			if (szMacro[0])
 				pszResult = ExecuteMacro(szMacro, apRCon);
@@ -3771,7 +3771,7 @@ LPWSTR ConEmuMacro::TaskAdd(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 
 		// Return created task name
 		wchar_t szIndex[16] = L"";
-		_wsprintf(szIndex, SKIPCOUNT(szIndex) L"%i: ", nTaskIdx+1); // 1-based index
+		swprintf_c(szIndex, L"%i: ", nTaskIdx+1); // 1-based index
 		return lstrmerge(szIndex, pGrp->pszName);
 	}
 

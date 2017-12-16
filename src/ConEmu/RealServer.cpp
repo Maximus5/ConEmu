@@ -86,13 +86,13 @@ void CRealServer::Init(CRealConsole* apRCon)
 bool CRealServer::Start()
 {
 	DWORD nConWndID = (DWORD)(((DWORD_PTR)mp_RCon->hConWnd) & 0xFFFFFFFF);
-	_wsprintf(mp_RCon->ms_VConServer_Pipe, SKIPLEN(countof(mp_RCon->ms_VConServer_Pipe)) CEGUIPIPENAME, L".", nConWndID);
+	swprintf_c(mp_RCon->ms_VConServer_Pipe, CEGUIPIPENAME, L".", nConWndID);
 
 	if (!mh_GuiAttached)
 	{
 		wchar_t szEvent[64];
 
-		_wsprintf(szEvent, SKIPLEN(countof(szEvent)) CEGUIRCONSTARTED, nConWndID);
+		swprintf_c(szEvent, CEGUIRCONSTARTED, nConWndID);
 		//// Скорее всего событие в сервере еще не создано
 		//mh_GuiAttached = OpenEvent(EVENT_MODIFY_STATE, FALSE, mp_RCon->ms_VConServer_Pipe);
 		//// Вроде, когда используется run as administrator - event открыть не получается?
@@ -168,27 +168,27 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	{
 		case sst_ServerStart:
 		case sst_ServerStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
 				(nStarted==sst_ServerStart)?L"ServerStart":L"ServerStop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_AltServerStart:
 		case sst_AltServerStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
 				(nStarted==sst_AltServerStart)?L"AltServerStart":L"AltServerStop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_ComspecStart:
 		case sst_ComspecStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
 				(nStarted==sst_ComspecStart)?L"ComspecStart":L"ComspecStop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_AppStart:
 		case sst_AppStop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
 				(nStarted==sst_AppStart)?L"AppStart":L"AppStop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_App16Start:
 		case sst_App16Stop:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
 				(nStarted==sst_App16Start)?L"App16Start":L"App16Stop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		default:
@@ -294,7 +294,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 		if (nStarted == sst_ServerStart)
 		{
 			wchar_t szInfo[80];
-			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Console server started PID=%u...", nPID);
+			swprintf_c(szInfo, L"Console server started PID=%u...", nPID);
 			mp_RCon->SetConStatus(szInfo, CRealConsole::cso_ResetOnConsoleReady|CRealConsole::cso_Critical);
 
 			// Активным должен быть реальный буфер
@@ -649,7 +649,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			}
 
 			#ifdef _DEBUG
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Returns normal window size begin at %i\n", GetTickCount());
+			swprintf_c(szDbg, L"Returns normal window size begin at %i\n", GetTickCount());
 			DEBUGSTRCMD(szDbg);
 			#endif
 
@@ -657,7 +657,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			mp_RCon->mp_RBuf->SetConsoleSize(crNewSize.X, crNewSize.Y, 0, CECMD_CMDFINISHED);
 
 			#ifdef _DEBUG
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Finished returns normal window size begin at %i\n", GetTickCount());
+			swprintf_c(szDbg, L"Finished returns normal window size begin at %i\n", GetTickCount());
 			DEBUGSTRCMD(szDbg);
 			#endif
 

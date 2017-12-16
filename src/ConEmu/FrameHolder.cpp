@@ -696,7 +696,7 @@ bool CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg, LRESULT& lResult)
 
 	#ifdef _DEBUG
 	wchar_t szPaint[140];
-	_wsprintf(szPaint, SKIPCOUNT(szPaint) L"MainClient %s at {%i,%i}-{%i,%i} screen coords, size (%ix%i) calc (%ix%i)",
+	swprintf_c(szPaint, L"MainClient %s at {%i,%i}-{%i,%i} screen coords, size (%ix%i) calc (%ix%i)",
 		(uMsg == WM_PAINT) ? L"WM_PAINT" : (uMsg == WM_PRINTCLIENT) ? L"WM_PRINTCLIENT" : L"UnknownMsg",
 		LOGRECTCOORDS(rcClientMapped), LOGRECTSIZE(rcClientMapped), LOGRECTSIZE(wr));
 	DEBUGSTRPAINT(szPaint);
@@ -770,7 +770,7 @@ bool CFrameHolder::OnNcActivate(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[100];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"CFrameHolder::OnNcActivate(%u,x%X)", (DWORD)wParam, (DWORD)(DWORD_PTR)lParam);
+		swprintf_c(szInfo, L"CFrameHolder::OnNcActivate(%u,x%X)", (DWORD)wParam, (DWORD)(DWORD_PTR)lParam);
 		mp_ConEmu->LogString(szInfo);
 	}
 

@@ -338,7 +338,7 @@ LRESULT CSetPgIntegr::OnInitDialog(HWND hDlg, bool abInitial)
 	_ASSERTE((pszCurHere==NULL) || (*pszCurHere!=0));
 
 	wchar_t szIcon[MAX_PATH+32];
-	_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,0", gpConEmu->ms_ConEmuExe);
+	swprintf_c(szIcon, L"%s,0", gpConEmu->ms_ConEmuExe);
 
 	if ((iInside > 0) && pszCurInside)
 	{
@@ -724,7 +724,7 @@ void CSetPgIntegr::ShellIntegration(HWND hDlg, CSetPgIntegr::ShellIntegrType iMo
 					}
 				}
 
-				//_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,0", gpConEmu->ms_ConEmuExe);
+				//swprintf_c(szIcon, L"%s,0", gpConEmu->ms_ConEmuExe);
 				GetDlgItemText(hDlg, tInsideIcon, szIcon, countof(szIcon));
 				RegisterShell(szName, szOpt[0] ? szOpt : L"-inside", SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
 			}
@@ -744,7 +744,7 @@ void CSetPgIntegr::ShellIntegration(HWND hDlg, CSetPgIntegr::ShellIntegrType iMo
 				wchar_t szConfig[MAX_PATH] = {}, szShell[MAX_PATH] = {}, szIcon[MAX_PATH+16];
 				GetDlgItemText(hDlg, tHereConfig, szConfig, countof(szConfig));
 				GetDlgItemText(hDlg, tHereShell, szShell, countof(szShell));
-				//_wsprintf(szIcon, SKIPLEN(countof(szIcon)) L"%s,0", gpConEmu->ms_ConEmuExe);
+				//swprintf_c(szIcon, L"%s,0", gpConEmu->ms_ConEmuExe);
 				GetDlgItemText(hDlg, tHereIcon, szIcon, countof(szIcon));
 				RegisterShell(szName, L"-here", SkipNonPrintable(szConfig), SkipNonPrintable(szShell), szIcon);
 			}

@@ -230,7 +230,7 @@ CINFILTRATE_EXIT_CODES PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
 		goto wrap;
 	}
 
-	_wsprintf(szAddName, SKIPLEN(countof(szAddName))
+	swprintf_c(szAddName,
 		L"\\" CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
 		WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szMinor);
 
@@ -319,7 +319,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 
 	{
 		wchar_t szLog[128];
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"...OpenProcess(preliminary) PID=%u", nRemotePID);
+		swprintf_c(szLog, L"...OpenProcess(preliminary) PID=%u", nRemotePID);
 		LogString(szLog);
 		HANDLE h = OpenProcess(SYNCHRONIZE
 			|PROCESS_QUERY_INFORMATION|PROCESS_CREATE_THREAD|PROCESS_VM_OPERATION|PROCESS_VM_WRITE|PROCESS_VM_READ,
@@ -345,7 +345,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 			{
 				// Process was terminated already, injection was not in time?
 				GetExitCodeProcess(h, &nProcExitCode);
-				_wsprintf(szLog, SKIPCOUNT(szLog) L"Process PID=%u was already terminated, exitcode=%u, exiting", nRemotePID, nProcExitCode);
+				swprintf_c(szLog, L"Process PID=%u was already terminated, exitcode=%u, exiting", nRemotePID, nProcExitCode);
 				LogString(szLog);
 				iRc = CIR_ProcessWasTerminated/*-205*/;
 				goto wrap;
@@ -354,7 +354,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		else
 		{
 			nErrCode = GetLastError();
-			_wsprintf(szLog, SKIPCOUNT(szLog) L"Failed to open process handle PID=%u, code=%u, exiting", nRemotePID, nErrCode);
+			swprintf_c(szLog, L"Failed to open process handle PID=%u, code=%u, exiting", nRemotePID, nErrCode);
 			LogString(szLog);
 			iRc = CIR_OpenProcess/*-201*/;
 			goto wrap;
@@ -406,7 +406,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		STARTUPINFO si = {sizeof(si)};
 
 		_wcscpy_c(pszNamePtr, 16, is32bit ? L"ConEmuC.exe" : L"ConEmuC64.exe");
-		_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L"%s /INJECT=%u",
+		swprintf_c(szArgs, L"%s /INJECT=%u",
 			gpLogSize ? L" /LOG" : L"", nRemotePID);
 
 		if (gpLogSize)
@@ -424,7 +424,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 
 		if (gpLogSize)
 		{
-			_wsprintf(szHooks, SKIPCOUNT(szHooks) L"Waiting for service process PID=%u termination", pi.dwProcessId);
+			swprintf_c(szHooks, L"Waiting for service process PID=%u termination", pi.dwProcessId);
 			LogString(szHooks);
 		}
 
@@ -433,7 +433,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 
 		if (gpLogSize)
 		{
-			_wsprintf(szHooks, SKIPCOUNT(szHooks) L"Service process PID=%u terminated with code=%u", pi.dwProcessId, nWrapperResult);
+			swprintf_c(szHooks, L"Service process PID=%u terminated with code=%u", pi.dwProcessId, nWrapperResult);
 			LogString(szHooks);
 		}
 
@@ -488,7 +488,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		// Out preferred module name
 		wchar_t szOurName[40] = {};
 		wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _CRT_WIDE(MVV_4a), countof(szMinor));
-		_wsprintf(szOurName, SKIPLEN(countof(szOurName))
+		swprintf_c(szOurName,
 			CEDEFTERMDLLFORMAT /*L"ConEmuHk%s.%02u%02u%02u%s.dll"*/,
 			WIN3264TEST(L"",L"64"), MVV_1, MVV_2, MVV_3, szMinor);
 		CharLowerBuff(szOurName, lstrlen(szOurName));
@@ -568,7 +568,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	// Go to hook
 
 	// Preparing Events
-	_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOK, nRemotePID);
+	swprintf_c(szName, CEDEFAULTTERMHOOK, nRemotePID);
 	if (!abDefTermOnly)
 	{
 		// When running in normal mode (NOT set up as default terminal)
@@ -585,7 +585,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		hEvent = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
 		SetEvent(hEvent);
 
-		_wsprintf(szName, SKIPLEN(countof(szName)) CEDEFAULTTERMHOOKOK, nRemotePID);
+		swprintf_c(szName, CEDEFAULTTERMHOOKOK, nRemotePID);
 		hDefTermReady = CreateEvent(LocalSecurity(), FALSE, FALSE, szName);
 		ResetEvent(hDefTermReady);
 	}
@@ -594,7 +594,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 	// Resetting this event notify ConEmuHk about
 	// 1) need to determine MainThreadId
 	// 2) need to start pipe server
-	_wsprintf(szName, SKIPLEN(countof(szName)) CECONEMUROOTTHREAD, nRemotePID);
+	swprintf_c(szName, CECONEMUROOTTHREAD, nRemotePID);
 	hEvent = OpenEvent(EVENT_MODIFY_STATE|SYNCHRONIZE, FALSE, szName);
 	if (hEvent)
 	{
@@ -627,7 +627,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 
 	if (gpLogSize)
 	{
-		_wsprintf(szHooks, SKIPCOUNT(szHooks) L"InfiltrateDll finished with code=%i", iRc);
+		swprintf_c(szHooks, L"InfiltrateDll finished with code=%i", iRc);
 		LogString(szHooks);
 	}
 

@@ -757,7 +757,7 @@ void ConEmuHotKey::GetVkKeyName(BYTE vk, wchar_t (&szName)[32], bool bSingle /*=
 	default:
 		if (vk >= VK_F1 && vk <= VK_F24)
 		{
-			_wsprintf(szName, SKIPLEN(countof(szName)) L"F%u", (DWORD)vk-VK_F1+1);
+			swprintf_c(szName, L"F%u", (DWORD)vk-VK_F1+1);
 		}
 		else if ((vk >= (BYTE)'A' && vk <= (BYTE)'Z') || (vk >= (BYTE)'0' && vk <= (BYTE)'9'))
 		{
@@ -771,7 +771,7 @@ void ConEmuHotKey::GetVkKeyName(BYTE vk, wchar_t (&szName)[32], bool bSingle /*=
 			//BYTE States[256] = {};
 			//// Скорее всго не сработает
 			//if (!ToUnicode(vk, 0, States, szName, countof(szName), 0))
-			//	_wsprintf(szName, SKIPLEN(countof(szName)) L"<%u>", (DWORD)vk);
+			//	swprintf_c(szName, L"<%u>", (DWORD)vk);
 			// есть еще if (!GetKeyNameText((LONG)(DWORD)*m_HotKeys[i].VkPtr, szName, countof(szName)))
 		}
 	}

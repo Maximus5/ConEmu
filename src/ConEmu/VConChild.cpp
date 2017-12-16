@@ -313,10 +313,10 @@ bool CConEmuChild::ShowView(int nShowCmd)
 	if (gpSet->isLogging())
 	{
 		if (hChildGUI != NULL)
-			_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"ShowView: Back=x%08X, DC=x%08X, ChildGUI=x%08X, ShowCMD=%u, ChildVisible=%u",
+			swprintf_c(sInfo, L"ShowView: Back=x%08X, DC=x%08X, ChildGUI=x%08X, ShowCMD=%u, ChildVisible=%u",
 				LODWORD(mh_WndBack), LODWORD(mh_WndDC), LODWORD(hChildGUI), nShowCmd, bGuiVisible);
 		else
-			_wsprintf(sInfo, SKIPLEN(countof(sInfo)) L"ShowView: Back=x%08X, DC=x%08X, ShowCMD=%u",
+			swprintf_c(sInfo, L"ShowView: Back=x%08X, DC=x%08X, ShowCMD=%u",
 				LODWORD(mh_WndBack), LODWORD(mh_WndDC), nShowCmd);
 		gpConEmu->LogString(sInfo);
 	}
@@ -447,14 +447,14 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			if (gpSet->isLogging(2))
 			{
 				wchar_t szInfo[80];
-				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"VCon[%i] WM_PAINT %u times, %u pending", pVCon->Index(), pVCon->mn_WmPaintCounter, pVCon->mn_InvalidateViewPending);
+				swprintf_c(szInfo, L"VCon[%i] WM_PAINT %u times, %u pending", pVCon->Index(), pVCon->mn_WmPaintCounter, pVCon->mn_InvalidateViewPending);
 				LogString(szInfo);
 			}
 			pVCon->mn_InvalidateViewPending = 0;
 			#ifdef _DEBUG
 			{
 				wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(hWnd, &rcScreen);
-				_wsprintf(szPos, SKIPCOUNT(szPos) L"PaintClient VCon[%i] at {%i,%i}-{%i,%i} screen coords", pVCon->Index(), LOGRECTCOORDS(rcScreen));
+				swprintf_c(szPos, L"PaintClient VCon[%i] at {%i,%i}-{%i,%i} screen coords", pVCon->Index(), LOGRECTCOORDS(rcScreen));
 				DEBUGSTRPAINTVCON(szPos);
 			}
 			#endif
@@ -466,7 +466,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				#ifdef _DEBUG
 				{
 					wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(hWnd, &rcScreen);
-					_wsprintf(szPos, SKIPCOUNT(szPos) L"PrintClient VCon[%i] at {%i,%i}-{%i,%i} screen coords", pVCon->Index(), LOGRECTCOORDS(rcScreen));
+					swprintf_c(szPos, L"PrintClient VCon[%i] at {%i,%i}-{%i,%i} screen coords", pVCon->Index(), LOGRECTCOORDS(rcScreen));
 					DEBUGSTRPAINTVCON(szPos);
 				}
 				#endif
@@ -585,7 +585,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				if (IsDebuggerPresent())
 				{
 					WCHAR szMsg[128];
-					_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"InChild %s(CP:%i, HKL:0x%08X)\n",
+					swprintf_c(szMsg, L"InChild %s(CP:%i, HKL:0x%08X)\n",
 							  (messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
 							  (DWORD)wParam, (DWORD)lParam);
 					DEBUGSTRLANG(szMsg);
@@ -696,7 +696,7 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 				{
 					//изменились табы, их нужно перечитать
 #ifdef MSGLOGGER
-					WCHAR szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Tabs:Notified(%i)\n", (DWORD)wParam);
+					WCHAR szDbg[128]; swprintf_c(szDbg, L"Tabs:Notified(%i)\n", (DWORD)wParam);
 					DEBUGSTRTABS(szDbg);
 #endif
 					TODO("здесь хорошо бы вместо OnTimer реально обновить mn_TopProcessID")
@@ -933,7 +933,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 				if (IsDebuggerPresent())
 				{
 					WCHAR szMsg[128];
-					_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"InChild %s(CP:%i, HKL:0x%08X)\n",
+					swprintf_c(szMsg, L"InChild %s(CP:%i, HKL:0x%08X)\n",
 							  (messg == WM_INPUTLANGCHANGE) ? L"WM_INPUTLANGCHANGE" : L"WM_INPUTLANGCHANGEREQUEST",
 							  (DWORD)wParam, (DWORD)lParam);
 					DEBUGSTRLANG(szMsg);
@@ -946,7 +946,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 		case WM_WINDOWPOSCHANGING:
 			{
 				WINDOWPOS* p = (WINDOWPOS*)lParam;
-				wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGED.BACK ({%i,%i}x{%i,%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
+				wchar_t szDbg[128]; swprintf_c(szDbg, L"WM_WINDOWPOSCHANGED.BACK ({%i,%i}x{%i,%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
 				DEBUGSTRSIZE(szDbg);
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 			}
@@ -954,7 +954,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 		case WM_WINDOWPOSCHANGED:
 			{
 				WINDOWPOS* p = (WINDOWPOS*)lParam;
-				wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGED.BACK ({%i,%i}x{%i,%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
+				wchar_t szDbg[128]; swprintf_c(szDbg, L"WM_WINDOWPOSCHANGED.BACK ({%i,%i}x{%i,%i} Flags=0x%08X)\n", p->x, p->y, p->cx, p->cy, p->flags);
 				DEBUGSTRSIZE(szDbg);
 				result = DefWindowProc(hWnd, messg, wParam, lParam);
 			}
@@ -1075,7 +1075,7 @@ LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 	#ifdef _DEBUG
 	{
 		wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(mh_WndBack, &rcScreen);
-		_wsprintf(szPos, SKIPCOUNT(szPos) L"PaintGaps VCon[%i] at {%i,%i}-{%i,%i} screen coords", mp_VCon->Index(), LOGRECTCOORDS(rcScreen));
+		swprintf_c(szPos, L"PaintGaps VCon[%i] at {%i,%i}-{%i,%i} screen coords", mp_VCon->Index(), LOGRECTCOORDS(rcScreen));
 		DEBUGSTRPAINTGAPS(szPos);
 	}
 	#endif
@@ -1253,7 +1253,7 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 	if (gpSet->isLogging())
 	{
 		char szInfo[128];
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "VCon(0x%08X).OnSize(%ux%u)", LODWORD(mh_WndDC), (UINT)LOWORD(lParam), (UINT)HIWORD(lParam));
+		sprintf_c(szInfo, "VCon(0x%08X).OnSize(%ux%u)", LODWORD(mh_WndDC), (UINT)LOWORD(lParam), (UINT)HIWORD(lParam));
 		gpConEmu->LogString(szInfo);
 	}
 
@@ -1293,7 +1293,7 @@ LRESULT CConEmuChild::OnMove(WPARAM wParam, LPARAM lParam)
 	if (gpSet->isLogging())
 	{
 		char szInfo[128];
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "VCon(0x%08X).OnMove(%ux%u)", LODWORD(mh_WndDC), (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
+		sprintf_c(szInfo, "VCon(0x%08X).OnMove(%ux%u)", LODWORD(mh_WndDC), (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
 		gpConEmu->LogString(szInfo);
 	}
 
@@ -1484,7 +1484,7 @@ void CConEmuChild::InvalidateView()
 		if ((l == 1) && gpSet->isLogging(2))
 		{
 			wchar_t szInfo[80];
-			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"VCon[%i] invalidate called", mp_VCon->Index());
+			swprintf_c(szInfo, L"VCon[%i] invalidate called", mp_VCon->Index());
 			LogString(szInfo);
 		}
 	}

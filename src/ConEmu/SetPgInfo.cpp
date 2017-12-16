@@ -95,8 +95,8 @@ void CSetPgInfo::FillFontInfo(HWND hDlg)
 	wchar_t szMain[32] = L"", szAlt[32] = L"";
 
 	if (gpFontMgr->QueryFont(fnt_Normal, NULL, font))
-		_wsprintf(szMain, SKIPLEN(countof(szMain)) L"%ix%ix%i", font->m_LF.lfHeight, font->m_LF.lfWidth, font->m_tm.tmAveCharWidth);
-	_wsprintf(szAlt, SKIPLEN(countof(szAlt)) L"%ix%i", gpFontMgr->BorderFontHeight(), gpFontMgr->BorderFontWidth());
+		swprintf_c(szMain, L"%ix%ix%i", font->m_LF.lfHeight, font->m_LF.lfWidth, font->m_tm.tmAveCharWidth);
+	swprintf_c(szAlt, L"%ix%i", gpFontMgr->BorderFontHeight(), gpFontMgr->BorderFontWidth());
 
 	SetDlgItemText(hDlg, tRealFontMain, szMain);
 	SetDlgItemText(hDlg, tRealFontBorders, szAlt);
@@ -123,7 +123,7 @@ void CSetPgInfo::FillConsoleMode(HWND hDlg, CRealConsole* pRCon)
 void CSetPgInfo::FillCursorInfo(HWND hDlg, const ConsoleInfoArg* pInfo)
 {
 	wchar_t szCursor[64];
-	_wsprintf(szCursor, SKIPLEN(countof(szCursor)) L"%ix%i, %i %s",
+	swprintf_c(szCursor, L"%ix%i, %i %s",
 		(int)pInfo->crCursor.X, (int)pInfo->crCursor.Y,
 		pInfo->cInfo.dwSize, pInfo->cInfo.bVisible ? L"vis" : L"hid");
 	SetDlgItemText(hDlg, tCursorPos, szCursor);

@@ -55,7 +55,7 @@ bool MyOpenClipboard(LPCWSTR asAction)
 	{
 		DWORD dwErr = GetLastError();
 
-		wchar_t szCode[32]; _wsprintf(szCode, SKIPCOUNT(szCode) L", Code=%u", dwErr);
+		wchar_t szCode[32]; swprintf_c(szCode, L", Code=%u", dwErr);
 		wchar_t* pszMsg = lstrmerge(L"OpenClipboard failed (", asAction, L")", szCode);
 		LogString(pszMsg);
 		int iBtn = DisplayLastError(pszMsg, dwErr, MB_RETRYCANCEL|MB_ICONSTOP);
@@ -92,9 +92,9 @@ HANDLE MySetClipboardData(UINT uFormat, HANDLE hMem)
 
 	wchar_t szLog[100]; DWORD dwErr = (h == NULL) ? GetLastError() : 0;
 	if (h != NULL)
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"SetClipboardData(x%04X, x%08X) succeeded", uFormat, (DWORD)(DWORD_PTR)hMem);
+		swprintf_c(szLog, L"SetClipboardData(x%04X, x%08X) succeeded", uFormat, (DWORD)(DWORD_PTR)hMem);
 	else
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"SetClipboardData(x%04X, x%08X) failed, code=%u", uFormat, (DWORD)(DWORD_PTR)hMem, dwErr);
+		swprintf_c(szLog, L"SetClipboardData(x%04X, x%08X) failed, code=%u", uFormat, (DWORD)(DWORD_PTR)hMem, dwErr);
 	LogString(szLog);
 
 	return h;

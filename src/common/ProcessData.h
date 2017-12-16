@@ -313,7 +313,7 @@ protected:
 
 		LONG rc;
 		LANGID lid = MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
-		_wsprintf(szSubKey, SKIPLEN(countof(szSubKey)) L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Perflib\\%03X", lid);
+		swprintf_c(szSubKey, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Perflib\\%03X", lid);
 		HKEY hKeyNames = NULL;
 		if (0 != (rc = RegOpenKeyEx(HKEY_LOCAL_MACHINE, szSubKey, 0, KEY_READ, &hKeyNames)))
 			return false;
@@ -342,7 +342,7 @@ protected:
 					for (wchar_t* p = buf; p < buf_end && *p; p += lstrlen(p)+1)
 					{
 						if (lstrcmpi(p, L"Process")==0)
-							_wsprintf(szSubKey, SKIPLEN(countof(szSubKey)) L"%i", getcounter(p));
+							swprintf_c(szSubKey, L"%i", getcounter(p));
 						else if (!dwProcessIdTitle && lstrcmpi(p, L"ID Process")==0)
 							dwProcessIdTitle = getcounter(p);
 					}

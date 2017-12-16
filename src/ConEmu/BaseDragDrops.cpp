@@ -463,14 +463,14 @@ HRESULT __stdcall CDataObject::GetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 	if ((idx = LookupFormatEtc(pFormatEtc)) == -1)
 	{
 		#ifdef _DEBUG
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"!!! CDataObject::LookupFormatEtc(%s) failed\n", GetFormatName(pFormatEtc->cfFormat));
+		swprintf_c(szDbg, L"!!! CDataObject::LookupFormatEtc(%s) failed\n", GetFormatName(pFormatEtc->cfFormat));
 		DEBUGSTRDATA(szDbg);
 		#endif
 		return DV_E_FORMATETC;
 	}
 
 	#ifdef _DEBUG
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CDataObject::GetData {cfFormat=%s, lindex=%i, tymed=x%02X(%u)})",
+	swprintf_c(szDbg, L"CDataObject::GetData {cfFormat=%s, lindex=%i, tymed=x%02X(%u)})",
 		GetFormatName(pFormatEtc->cfFormat), pFormatEtc->lindex, pFormatEtc->tymed, pFormatEtc->tymed);
 	LPCWSTR pszName = GetFormatName(pFormatEtc->cfFormat, true);
 	DWORD nData = (DWORD)-1;
@@ -544,7 +544,7 @@ HRESULT __stdcall CDataObject::GetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 	else
 	{
 		#ifdef _DEBUG
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"!!! CDataObject::GetData(tymed=%u) failed", m_Data[idx].FormatEtc.tymed);
+		swprintf_c(szDbg, L"!!! CDataObject::GetData(tymed=%u) failed", m_Data[idx].FormatEtc.tymed);
 		DEBUGSTRDATA(szDbg);
 		//_ASSERTE(FALSE && "Unsupported tymed!");
 		#endif
@@ -560,7 +560,7 @@ HRESULT __stdcall CDataObject::GetDataHere(FORMATETC *pFormatEtc, STGMEDIUM *pMe
 {
 	#ifdef _DEBUG
 	wchar_t szDbg[200];
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CDataObject::GetDataHere({cfFormat=x%04X(%u), lindex=%i, tymed=x%02X(%u)}, {tymed=x%02X})\n",
+	swprintf_c(szDbg, L"CDataObject::GetDataHere({cfFormat=x%04X(%u), lindex=%i, tymed=x%02X(%u)}, {tymed=x%02X})\n",
 		pFormatEtc->cfFormat, pFormatEtc->cfFormat, pFormatEtc->lindex, pFormatEtc->tymed, pFormatEtc->tymed, pMedium->tymed);
 	DEBUGSTRDATA(szDbg);
 	#endif
@@ -584,7 +584,7 @@ HRESULT __stdcall CDataObject::QueryGetData(FORMATETC *pFormatEtc)
 {
 	#ifdef _DEBUG
 	wchar_t szDbg[200];
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CDataObject::LookupFormatEtc({cfFormat=x%04X(%u), lindex=%i, tymed=x%02X(%u)})\n",
+	swprintf_c(szDbg, L"CDataObject::LookupFormatEtc({cfFormat=x%04X(%u), lindex=%i, tymed=x%02X(%u)})\n",
 		pFormatEtc->cfFormat, pFormatEtc->cfFormat, pFormatEtc->lindex, pFormatEtc->tymed, pFormatEtc->tymed);
 	DEBUGSTRDATA(szDbg);
 	#endif
@@ -658,7 +658,7 @@ HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 	}
 
 	wchar_t szDbg[255];
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CDataObject::SetData {cfFormat=%s, lindex=%i, tymed=x%02X(%u)}, {tymed=x%02X}",
+	swprintf_c(szDbg, L"CDataObject::SetData {cfFormat=%s, lindex=%i, tymed=x%02X(%u)}, {tymed=x%02X}",
 		GetFormatName(pFormatEtc->cfFormat), pFormatEtc->lindex, pFormatEtc->tymed, pFormatEtc->tymed, pMedium->tymed);
 	if (nData != (DWORD)-1)
 	{

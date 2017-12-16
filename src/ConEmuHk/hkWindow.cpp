@@ -983,7 +983,7 @@ int WINAPI OnGetWindowTextW(HWND hWnd, LPWSTR lpString, int nMaxCount)
 		iRc = F(GetWindowTextW)(hWnd, lpString, nMaxCount);
 
 	#ifdef DEBUG_CON_TITLE
-	wchar_t szPrefix[32]; _wsprintf(szPrefix, SKIPCOUNT(szPrefix) L"GetWindowTextW(x%08X)='", (DWORD)(DWORD_PTR)hWnd);
+	wchar_t szPrefix[32]; swprintf_c(szPrefix, L"GetWindowTextW(x%08X)='", (DWORD)(DWORD_PTR)hWnd);
 	CEStr lsDbg(lstrmerge(szPrefix, lpString, L"'\n"));
 	OutputDebugString(lsDbg);
 	if (gFarMode.cbSize && lpString && gpLastSetConTitle && gpLastSetConTitle->ms_Arg)

@@ -796,7 +796,7 @@ BOOL CDragDropData::PrepareDrag(BOOL abClickNeed, COORD crMouseDC, DWORD* pdwAll
 
 	if (size <= 0 || nFilesCount == 0)
 	{
-		wchar_t szInfo[128]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DnD: RetrieveDragFromInfo, Code=%i, nFilesCount=%i!", size, nFilesCount);
+		wchar_t szInfo[128]; swprintf_c(szInfo, L"DnD: RetrieveDragFromInfo, Code=%i, nFilesCount=%i!", size, nFilesCount);
 		gpConEmu->DebugStep(szInfo, TRUE);
 		goto wrap;
 	}
@@ -886,7 +886,7 @@ template <class T> void PidlDump(
 
 	while(p && p->mkid.cb)
 	{
-		_wsprintfA(szDump, SKIPLEN(countof(szDump)) "%i: ", nLevel+1);
+		sprintf_c(szDump, "%i: ", nLevel+1);
 		int i = lstrlenA(szDump);
 		//for (int j=0; j < nLevel; j++) { szDump[i++] = ' '; szDump[i++] = ' '; }
 		//szDump[i] = 0;
@@ -962,7 +962,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 
 		if (hDumpFile)
 		{
-			_wsprintf(szNames[0].str, SKIPLEN(countof(szNames[0].str)) L"Drag object contains %i formats\n\n", nCnt);
+			swprintf_c(szNames[0].str, L"Drag object contains %i formats\n\n", nCnt);
 			WriteFile(hDumpFile, szNames[0].str, (DWORD)_tcslen(szNames[0].str)*2, &nWritten, NULL);
 		}
 
@@ -1002,7 +1002,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 					case 0x0082: wcscpy_c(szNames[i].str, L"CF_DSPBITMAP"); break;
 					case 0x0083: wcscpy_c(szNames[i].str, L"CF_DSPMETAFILEPICT"); break;
 					case 0x008E: wcscpy_c(szNames[i].str, L"CF_DSPENHMETAFILE"); break;
-					default: _wsprintf(szNames[i].str, SKIPCOUNT(szNames[i].str) L"ClipFormatID=%i", fmt[i].cfFormat);
+					default: swprintf_c(szNames[i].str, L"ClipFormatID=%i", fmt[i].cfFormat);
 				}
 			}
 
@@ -1265,7 +1265,7 @@ bool CDragDropData::NeedRefreshToInfo(POINTL ptScreen)
 
 	#ifdef _DEBUG
 	static int nLastX, nLastY;
-	wchar_t szDbgInfo[128]; _wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"CDragDropData::NeedRefreshToInfo(%i,%i)\n", ptScreen.x, ptScreen.y);
+	wchar_t szDbgInfo[128]; swprintf_c(szDbgInfo, L"CDragDropData::NeedRefreshToInfo(%i,%i)\n", ptScreen.x, ptScreen.y);
 	bool bShow = (nLastX != ptScreen.x || nLastY != ptScreen.y);
 	if (bShow)
 	{
@@ -2346,7 +2346,7 @@ BOOL CDragDropData::LoadDragImageBits(IDataObject * pDataObject)
 		if (!IsDebuggerPresent())
 		{
 			_ASSERT(nInfoSize == nReqSize); // Неизвестный формат?
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"DragImageBits unknown format? (nInfoSize=%u) != (nReqSize=%u)", (DWORD)nInfoSize, (DWORD)nReqSize);
+			wchar_t szDbg[128]; swprintf_c(szDbg, L"DragImageBits unknown format? (nInfoSize=%u) != (nReqSize=%u)", (DWORD)nInfoSize, (DWORD)nReqSize);
 			gpConEmu->DebugStep(szDbg, TRUE);
 		}
 		#endif
@@ -2775,7 +2775,7 @@ void CDragDropData::DragFeedBack(DWORD dwEffect)
 {
 	HRESULT hrHelper = 0;
 #ifdef _DEBUG
-	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"DragFeedBack(%i)\n", (int)dwEffect);
+	wchar_t szDbg[128]; swprintf_c(szDbg, L"DragFeedBack(%i)\n", (int)dwEffect);
 	DEBUGSTRBACK(szDbg);
 #endif
 
@@ -2985,10 +2985,10 @@ LRESULT CDragDropData::DragProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			MoveWindowRect(hWnd, rcWnd);
 			pds->bInDrag = TRUE;
 			pds->pDrag->mb_DragStarting = TRUE;
-			wchar_t szStep[255]; _wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop.Thread(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, LODWORD(pds->pDrag->mp_DataObject), LODWORD(pDropSource));
+			wchar_t szStep[255]; swprintf_c(szStep, L"DoDragDrop.Thread(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, LODWORD(pds->pDrag->mp_DataObject), LODWORD(pDropSource));
 			gpConEmu->DebugStep(szStep);
 			dwResult = DoDragDrop(pds->pDrag->mp_DataObject, pDropSource, dwAllowedEffects, &dwEffect);
-			_wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop finished, Code=0x%08X", dwResult);
+			swprintf_c(szStep, L"DoDragDrop finished, Code=0x%08X", dwResult);
 
 			switch(dwResult)
 			{

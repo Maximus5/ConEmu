@@ -157,7 +157,7 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 
 				if (gpLogSize)
 				{
-					_wsprintf(szLog, SKIPLEN(countof(szLog)) L"Exact instance requested, HWND=x%08X", (DWORD)(DWORD_PTR)Inst.hConEmuWnd);
+					swprintf_c(szLog, L"Exact instance requested, HWND=x%08X", (DWORD)(DWORD_PTR)Inst.hConEmuWnd);
 					gpLogSize->LogString(szLog);
 				}
 			}
@@ -219,11 +219,11 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 				if (gpLogSize)
 				{
 					if (Inst.hConEmuWnd && Inst.nPID)
-						_wsprintf(szLog, SKIPLEN(countof(szLog)) L"Exact PID=%u requested, instance found HWND=x%08X", Inst.nPID, (DWORD)(DWORD_PTR)Inst.hConEmuWnd);
+						swprintf_c(szLog, L"Exact PID=%u requested, instance found HWND=x%08X", Inst.nPID, (DWORD)(DWORD_PTR)Inst.hConEmuWnd);
 					else if (Inst.hConEmuWnd && !Inst.nPID)
-						_wsprintf(szLog, SKIPLEN(countof(szLog)) L"First found requested, instance found HWND=x%08X", (DWORD)(DWORD_PTR)Inst.hConEmuWnd);
+						swprintf_c(szLog, L"First found requested, instance found HWND=x%08X", (DWORD)(DWORD_PTR)Inst.hConEmuWnd);
 					else
-						_wsprintf(szLog, SKIPLEN(countof(szLog)) L"No instances was found (requested PID=%u) GuiMacro will fail", Inst.nPID);
+						swprintf_c(szLog, L"No instances was found (requested PID=%u) GuiMacro will fail", Inst.nPID);
 					gpLogSize->LogString(szLog);
 				}
 
@@ -237,11 +237,11 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 				{
 				case L'S': case L's':
 					Inst.nSplitIndex = wcstoul(pszID+1, &pszEnd, 10);
-					_wsprintf(szLog, SKIPLEN(countof(szLog)) L"Split was requested: %u", Inst.nSplitIndex);
+					swprintf_c(szLog, L"Split was requested: %u", Inst.nSplitIndex);
 					break;
 				case L'T': case L't':
 					Inst.nTabIndex = wcstoul(pszID+1, &pszEnd, 10);
-					_wsprintf(szLog, SKIPLEN(countof(szLog)) L"Tab was requested: %u", Inst.nTabIndex);
+					swprintf_c(szLog, L"Tab was requested: %u", Inst.nTabIndex);
 					break;
 				}
 				gpLogSize->LogString(szLog);

@@ -89,7 +89,7 @@ void CTabPanelBase::UpdateTabFontInt()
 	gpFontMgr->EvalLogfontSizes(lf, gpSet->nTabFontHeight, 0);
 
 	wchar_t szInfo[100];
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Creating tab font name='%s' height=%i", lf.lfFaceName, lf.lfHeight);
+	swprintf_c(szInfo, L"Creating tab font name='%s' height=%i", lf.lfFaceName, lf.lfHeight);
 	LogString(szInfo);
 
 	// CreateFont
@@ -210,7 +210,7 @@ bool CTabPanelBase::FarSendChangeTab(int tabIndex, CVConGuard* rpVCon /*= NULL*/
 	static DWORD nLastTick = 0; DWORD nCurTick = GetTickCount();
 	wchar_t szInfo[120];
 	int iTickDelta = nLastTick ? (int)(nCurTick - nLastTick) : -1;
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Change tab requested: Tab=%i VCon=%i Wnd=%i Delta=%i",
+	swprintf_c(szInfo, L"Change tab requested: Tab=%i VCon=%i Wnd=%i Delta=%i",
 		tabIndex+1, VCon.VCon() ? VCon->Index() : -1, wndIndex, iTickDelta);
 	if (gpSet->isLogging()) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 	// _ASSERTE((iTickDelta==-1 || iTickDelta>=250) && "Suspicious fast tab switching, may be not intended by user"); -- may occurs while closing all tabs or window
@@ -466,7 +466,7 @@ LRESULT CTabPanelBase::OnMouseTabbar(UINT uMsg, int nTabIdx, int x, int y)
 			int lnCurTab = GetCurSelInt();
 			if (lnCurTab != nTabIdx)
 			{
-				_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Tab was LeftClicked Tab=%i OldTab=%i InSelChange=%i", nTabIdx+1, lnCurTab+1, mn_InSelChange);
+				swprintf_c(szInfo, L"Tab was LeftClicked Tab=%i OldTab=%i InSelChange=%i", nTabIdx+1, lnCurTab+1, mn_InSelChange);
 				if (gpSet->isLogging()) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 
 				if (mn_InSelChange == 0)

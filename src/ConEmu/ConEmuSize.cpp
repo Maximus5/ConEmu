@@ -1158,7 +1158,7 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 		sz.cx = nPixelWidth / nFontWidth;
 		sz.cy = nPixelHeight / nFontHeight;
 		// Debug purposes
-		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"GetDefaultSize: {%i,%i} cells", sz.cx, sz.cy);
+		swprintf_c(szInfo, L"GetDefaultSize: {%i,%i} cells", sz.cx, sz.cy);
 	}
 	else
 	{
@@ -1166,7 +1166,7 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 		sz.cx = nPixelWidth;
 		sz.cy = nPixelHeight;
 		// Debug purposes
-		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"GetDefaultSize: {%i,%i} pixels", sz.cx, sz.cy);
+		swprintf_c(szInfo, L"GetDefaultSize: {%i,%i} pixels", sz.cx, sz.cy);
 	}
 	DEBUGSTRSIZE(szInfo);
 
@@ -1478,7 +1478,7 @@ RECT CConEmuSize::GetDefaultRect()
 
 	// Debug purposes
 	wchar_t szInfo[100];
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"GetDefaultRect: {%i,%i} (%ix%i)", rcWnd.left, rcWnd.top, LOGRECTSIZE(rcWnd));
+	swprintf_c(szInfo, L"GetDefaultRect: {%i,%i} (%ix%i)", rcWnd.left, rcWnd.top, LOGRECTSIZE(rcWnd));
 	DEBUGSTRSIZE(szInfo);
 
 	return rcWnd;
@@ -1636,7 +1636,7 @@ void CConEmuSize::ReloadMonitorInfo()
 										(rcReal.bottom - rcVisible.bottom)
 									);
 								const RECT& rc = fi.Win10Stealthy;
-								_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
+								swprintf_c(szInfo, L"DWMWA_EXTENDED_FRAME_BOUNDS Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
 									LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal), LOGRECTCOORDS(rc));
 
 								#if 0
@@ -1653,7 +1653,7 @@ void CConEmuSize::ReloadMonitorInfo()
 								_ASSERTE(rcVisible.left > rcReal.left && rcVisible.right < rcReal.right);
 								_ASSERTE(rcVisible.right > rcVisible.left && rcVisible.bottom > rcVisible.top);
 								_ASSERTE(rcVisible.top >= rcReal.top && rcVisible.bottom <= rcReal.bottom);
-								_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DWMWA_EXTENDED_FRAME_BOUNDS {FAIL} Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
+								swprintf_c(szInfo, L"DWMWA_EXTENDED_FRAME_BOUNDS {FAIL} Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
 									LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal),
 									(rcVisible.left - rcReal.left), (rcVisible.top - rcReal.top), (rcReal.right - rcVisible.right), (rcReal.bottom - rcVisible.bottom));
 							}
@@ -1872,7 +1872,7 @@ void CConEmuSize::UpdateIdealRect(RECT rcNewIdeal)
 	if (memcmp(&mr_Ideal.rcIdeal, &rcNewIdeal, sizeof(rcNewIdeal)) != 0)
 	{
 		wchar_t szLog[255];
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"UpdateIdealRect Cur={%i,%i}-{%i,%i} New={%i,%i}-{%i,%i}",
+		swprintf_c(szLog, L"UpdateIdealRect Cur={%i,%i}-{%i,%i} New={%i,%i}-{%i,%i}",
 			LOGRECTCOORDS(mr_Ideal.rcIdeal), LOGRECTCOORDS(rcNewIdeal));
 		LogString(szLog);
 	}
@@ -2091,7 +2091,7 @@ bool CConEmuSize::FixPosByStartupMonitor(const HMONITOR hStartMon)
 	// We can't move window "properly"
 	if (!IntersectRect(&rcInter, &rcWnd, &rcPrevMonitor))
 	{
-		_wsprintf(szInfo, SKIPCOUNT(szInfo) PSS_SKIP_PREFIX L"Bad rects were stored: LastMon={%i,%i}-{%i,%i} Pos={%i,%i}", LOGRECTCOORDS(rcPrevMonitor), gpSet->_wndX, gpSet->_wndY);
+		swprintf_c(szInfo, PSS_SKIP_PREFIX L"Bad rects were stored: LastMon={%i,%i}-{%i,%i} Pos={%i,%i}", LOGRECTCOORDS(rcPrevMonitor), gpSet->_wndX, gpSet->_wndY);
 		LogString(szInfo);
 		return false;
 	}
@@ -2177,7 +2177,7 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 			if (memcmp(&mrc_StoredNormalRect, &rcNormal, sizeof(rcNormal)) != 0)
 			{
 				wchar_t szLog[255];
-				_wsprintf(szLog, SKIPCOUNT(szLog) L"UpdateNormalRect Cur={%i,%i}-{%i,%i} (%ix%i) New={%i,%i}-{%i,%i} (%ix%i)",
+				swprintf_c(szLog, L"UpdateNormalRect Cur={%i,%i}-{%i,%i} (%ix%i) New={%i,%i}-{%i,%i} (%ix%i)",
 					LOGRECTCOORDS(mrc_StoredNormalRect), LOGRECTSIZE(mrc_StoredNormalRect),
 					LOGRECTCOORDS(rcNormal), LOGRECTSIZE(rcNormal));
 				LogString(szLog);
@@ -2368,7 +2368,7 @@ HMONITOR CConEmuSize::GetPrimaryMonitor(MONITORINFO* pmi /*= NULL*/)
 	if (gpSet->isLogging(2))
 	{
 		wchar_t szInfo[255];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"  GetPrimaryMonitor=%u -> hMon=x%08X Work=({%i,%i}-{%i,%i}) Area=({%i,%i}-{%i,%i})",
+		swprintf_c(szInfo, L"  GetPrimaryMonitor=%u -> hMon=x%08X Work=({%i,%i}-{%i,%i}) Area=({%i,%i}-{%i,%i})",
 			(hMon!=NULL), LODWORD(hMon), LOGRECTCOORDS(mi.rcWork), LOGRECTCOORDS(mi.rcMonitor));
 		LogString(szInfo);
 	}
@@ -2389,7 +2389,7 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	if (bLog)
 	{
 		GetWindowRect(ghWnd, &rcWnd);
-		_wsprintf(szMinMax, SKIPLEN(countof(szMinMax)) L"OnGetMinMaxInfo[before] MaxSize={%i,%i}, MaxPos={%i,%i}, MinTrack={%i,%i}, MaxTrack={%i,%i}, Cur={%i,%i}-{%i,%i}\n",
+		swprintf_c(szMinMax, L"OnGetMinMaxInfo[before] MaxSize={%i,%i}, MaxPos={%i,%i}, MinTrack={%i,%i}, MaxTrack={%i,%i}, Cur={%i,%i}-{%i,%i}\n",
 	          pInfo->ptMaxSize.x, pInfo->ptMaxSize.y,
 	          pInfo->ptMaxPosition.x, pInfo->ptMaxPosition.y,
 	          pInfo->ptMinTrackSize.x, pInfo->ptMinTrackSize.y,
@@ -2500,7 +2500,7 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	// Что получилось...
 	if (bLog)
 	{
-		_wsprintf(szMinMax, SKIPLEN(countof(szMinMax)) L"OnGetMinMaxInfo[after]  MaxSize={%i,%i}, MaxPos={%i,%i}, MinTrack={%i,%i}, MaxTrack={%i,%i}, Cur={%i,%i}-{%i,%i}\n",
+		swprintf_c(szMinMax, L"OnGetMinMaxInfo[after]  MaxSize={%i,%i}, MaxPos={%i,%i}, MinTrack={%i,%i}, MaxTrack={%i,%i}, Cur={%i,%i}-{%i,%i}\n",
 	          pInfo->ptMaxSize.x, pInfo->ptMaxSize.y,
 	          pInfo->ptMaxPosition.x, pInfo->ptMaxPosition.y,
 	          pInfo->ptMinTrackSize.x, pInfo->ptMinTrackSize.y,
@@ -2564,7 +2564,7 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	//bWasTopMost = ((dwStyleEx & WS_EX_TOPMOST)==WS_EX_TOPMOST);
 	#endif
 
-	wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGED ({%i,%i}x{%i,%i} Flags=0x%08X), style=0x%08X\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle);
+	wchar_t szDbg[128]; swprintf_c(szDbg, L"WM_WINDOWPOSCHANGED ({%i,%i}x{%i,%i} Flags=0x%08X), style=0x%08X\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle);
 	DEBUGSTRSIZE(szDbg);
 	//WindowPosStackCount++;
 
@@ -2749,7 +2749,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 	#ifdef _DEBUG
 	{
-		wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_WINDOWPOSCHANGING ({%i,%i}x{%i,%i} Flags=0x%08X) style=0x%08X%s\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle, zoomed ? L" (zoomed)" : L"");
+		wchar_t szDbg[128]; swprintf_c(szDbg, L"WM_WINDOWPOSCHANGING ({%i,%i}x{%i,%i} Flags=0x%08X) style=0x%08X%s\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle, zoomed ? L" (zoomed)" : L"");
 		DEBUGSTRSIZE(szDbg);
 		DWORD nCurTick = GetTickCount();
 		static int cx, cy;
@@ -2842,7 +2842,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 					{
 						#ifdef _DEBUG
 						wchar_t szQuake[200];
-						_wsprintf(szQuake, SKIPCOUNT(szQuake) L"QuakePosFix Shift=%i Old={%ix%i} Suggested={%ix%i} Fixed={%ix%i}",
+						swprintf_c(szQuake, L"QuakePosFix Shift=%i Old={%ix%i} Suggested={%ix%i} Fixed={%ix%i}",
 							shift, rcQNow.left, width, p->x, p->cx, (p->x - shift), (p->cx + shift));
 						DEBUGSTRSIZE(szQuake);
 						#endif
@@ -3078,7 +3078,7 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/)
 	LRESULT result = 0;
 #ifdef _DEBUG
 	RECT rcDbgSize; GetWindowRect(ghWnd, &rcDbgSize);
-	wchar_t szSize[255]; _wsprintf(szSize, SKIPLEN(countof(szSize)) L"OnSize(%u, %i) Current window size (X=%i, Y=%i, W=%i, H=%i)\n",
+	wchar_t szSize[255]; swprintf_c(szSize, L"OnSize(%u, %i) Current window size (X=%i, Y=%i, W=%i, H=%i)\n",
 	                               (int)bResizeRCon, (DWORD)wParam,
 	                               rcDbgSize.left, rcDbgSize.top, (rcDbgSize.right-rcDbgSize.left), (rcDbgSize.bottom-rcDbgSize.top));
 	DEBUGSTRSIZE(szSize);
@@ -3330,7 +3330,7 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 			TODO("DoubleView");
 			//ActiveCon()->RCon()->SyncConsole2Window(FALSE, pRect);
 			#ifdef _DEBUG
-			wchar_t szSize[255]; _wsprintf(szSize, SKIPLEN(countof(szSize)) L"New window size (X=%i, Y=%i, W=%i, H=%i); Current size (X=%i, Y=%i, W=%i, H=%i)\n",
+			wchar_t szSize[255]; swprintf_c(szSize, L"New window size (X=%i, Y=%i, W=%i, H=%i); Current size (X=%i, Y=%i, W=%i, H=%i)\n",
 			                               pRect->left, pRect->top, (pRect->right-pRect->left), (pRect->bottom-pRect->top),
 			                               rcCurrent.left, rcCurrent.top, (rcCurrent.right-rcCurrent.left), (rcCurrent.bottom-rcCurrent.top));
 			DEBUGSTRSIZE(szSize);
@@ -3765,7 +3765,7 @@ void CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 	if (m_TileMode != Tile)
 	{
 		wchar_t szInfo[64], szName[32], szOld[32];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetTileMode(%s) OldMode=%s", FormatTileMode(Tile,szName,countof(szName)), FormatTileMode(m_TileMode,szOld,countof(szOld)));
+		swprintf_c(szInfo, L"SetTileMode(%s) OldMode=%s", FormatTileMode(Tile,szName,countof(szName)), FormatTileMode(m_TileMode,szOld,countof(szOld)));
 		mp_ConEmu->LogString(szInfo);
 
 		m_TileMode = Tile;
@@ -3780,7 +3780,7 @@ bool CConEmuSize::ChandeTileMode(ConEmuWindowCommand Tile)
 	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[64], szName[32];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"ChangeTileMode(%s)", FormatTileMode(Tile,szName,countof(szName)));
+		swprintf_c(szInfo, L"ChangeTileMode(%s)", FormatTileMode(Tile,szName,countof(szName)));
 		mp_ConEmu->LogString(szInfo);
 	}
 
@@ -3980,14 +3980,14 @@ void CConEmuSize::LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, 
 	wchar_t szInfo[200], szName[32], szNewTile[32], szAfter[64];
 
 	if (prcAfter)
-		_wsprintf(szAfter, SKIPLEN(countof(szAfter)) L" -> %s {%i,%i}-{%i,%i}",
+		swprintf_c(szAfter, L" -> %s {%i,%i}-{%i,%i}",
 			FormatTileMode(NewTile,szNewTile,countof(szNewTile)),
 			LOGRECTCOORDS(*prcAfter)
 			);
 	else
 		szAfter[0] = 0;
 
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"%s(%s) -> %u {%i,%i}-{%i,%i} x%08X%s",
+	swprintf_c(szInfo, L"%s(%s) -> %u {%i,%i}-{%i,%i} x%08X%s",
 		asPrefix,
 		FormatTileMode(Tile,szName,countof(szName)),
 		(UINT)bChanged,
@@ -4115,7 +4115,7 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 		{
 			// Сменился!
 			wchar_t szTile[255], szNewTile[32], szOldTile[32];
-			_wsprintf(szTile, SKIPLEN(countof(szTile)) L"Tile mode was changed externally: Our=%s, New=%s",
+			swprintf_c(szTile, L"Tile mode was changed externally: Our=%s, New=%s",
 				FormatTileMode(m_TileMode,szOldTile,countof(szOldTile)), FormatTileMode(CurTile,szNewTile,countof(szNewTile)));
 			LogString(szTile);
 			DEBUGSTRSIZE(szTile);
@@ -4214,7 +4214,7 @@ bool CConEmuSize::JumpNextMonitor(bool Next)
 	{
 		if (gpSet->isLogging())
 		{
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+			swprintf_c(szInfo,
 				L"JumpNextMonitor skipped, not our window PID=%u, HWND=x%08X",
 				nWndPID, LODWORD(hJump));
 			LogString(szInfo);
@@ -4329,7 +4329,7 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	{
 		if (gpSet->isLogging())
 		{
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+			swprintf_c(szInfo,
 				L"JumpNextMonitor(%i) skipped, GetNextMonitorInfo({%i,%i}-{%i,%i}) returns NULL",
 				(int)Next, LOGRECTCOORDS(rcMain));
 			LogString(szInfo);
@@ -4338,7 +4338,7 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	}
 	else if (gpSet->isLogging())
 	{
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+		swprintf_c(szInfo,
 			L"JumpNextMonitor(%i), GetNextMonitorInfo({%i,%i}-{%i,%i}) returns 0x%08X ({%i,%i}-{%i,%i})",
 			(int)Next, LOGRECTCOORDS(rcMain),
 			(DWORD)(DWORD_PTR)hNext, LOGRECTCOORDS(mi.rcMonitor));
@@ -4452,7 +4452,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 	wchar_t szInfo[255];
 
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode begin: CurMode=%s inMode=%s", GetWindowModeName(GetWindowMode()), GetWindowModeName(inMode));
+	swprintf_c(szInfo, L"SetWindowMode begin: CurMode=%s inMode=%s", GetWindowModeName(GetWindowMode()), GetWindowModeName(inMode));
 	LogString(szInfo);
 
 	if ((inMode != wmFullScreen) && (WindowMode == wmFullScreen))
@@ -4483,7 +4483,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 	// Logging purposes
 	MONITORINFO mi = {sizeof(mi)}; HMONITOR hMon = GetNearestMonitorInfo(&mi, NULL, &rcWnd);
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode info: Wnd={%i,%i}-{%i,%i} Mon=x%08X Work={%i,%i}-{%i,%i} Full={%i,%i}-{%i,%i}",
+	swprintf_c(szInfo, L"SetWindowMode info: Wnd={%i,%i}-{%i,%i} Mon=x%08X Work={%i,%i}-{%i,%i} Full={%i,%i}-{%i,%i}",
 		LOGRECTCOORDS(rcWnd), LODWORD(hMon), LOGRECTCOORDS(mi.rcWork), LOGRECTCOORDS(mi.rcMonitor));
 	LogString(szInfo);
 
@@ -4529,7 +4529,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	mp_ConEmu->GetActiveVCon(&VCon);
 	//CRealConsole* pRCon = gpSet->isLogging() ? (VCon.VCon() ? VCon.VCon()->RCon() : NULL) : NULL;
 
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode exec: NewMode=%s", GetWindowModeName(NewMode));
+	swprintf_c(szInfo, L"SetWindowMode exec: NewMode=%s", GetWindowModeName(NewMode));
 	LogString(szInfo);
 
 	mp_ConEmu->RefreshWindowStyles(); // inMode из параметров убрал, т.к. WindowMode уже изменен
@@ -4864,7 +4864,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[64];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"SetWindowMode(%u) end", inMode);
+		swprintf_c(szInfo, L"SetWindowMode(%u) end", inMode);
 		mp_ConEmu->LogWindowPos(szInfo);
 	}
 
@@ -5036,7 +5036,7 @@ void CConEmuSize::OnConsoleResize(bool abPosted /*= false*/)
 	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[255];
-		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"OnConsoleResize: mouse.state=0x%08X, SizingToDo=%i, IsSizing=%i, LBtnPressed=%i, PostUpdateWindowSize=%i",
+		swprintf_c(szInfo, L"OnConsoleResize: mouse.state=0x%08X, SizingToDo=%i, IsSizing=%i, LBtnPressed=%i, PostUpdateWindowSize=%i",
 		                            mp_ConEmu->mouse.state, (int)lbSizingToDo, (int)lbIsSizing, (int)lbLBtnPressed, (int)0/*mb_PostUpdateWindowSize*/);
 		LogString(szInfo, TRUE);
 	}
@@ -5176,7 +5176,7 @@ void CConEmuSize::OnSizePanels(COORD cr)
 		else
 		{
 			#ifdef _DEBUG
-			wchar_t szDbg[128]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"PanelDrag: Sending '%s'\n", szKey);
+			wchar_t szDbg[128]; swprintf_c(szDbg, L"PanelDrag: Sending '%s'\n", szKey);
 			DEBUGSTRPANEL(szDbg);
 			#endif
 			// Макросом не будем - велика вероятность второго вызова, когда еще не закончилась обработка первого макро
@@ -5243,9 +5243,9 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 	if (prcSuggested)
 		SetRequestedMonitor(MonitorFromRect(prcSuggested, MONITOR_DEFAULTTONEAREST));
 
-	_wsprintf(szPrefix, SKIPLEN(countof(szPrefix)) bChanged ? L"DpiChanged(%s)" : L"DpiNotChanged(%s)",
+	swprintf_c(szPrefix, bChanged ? L"DpiChanged(%s)" : L"DpiNotChanged(%s)",
 		(src == dcs_Api) ? L"Api" : (src == dcs_Macro) ? L"Mcr" : (src == dcs_Jump) ? L"Jmp" : (src == dcs_Snap) ? L"Snp" : L"Int");
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"%s: dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)",
+	swprintf_c(szInfo, L"%s: dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)",
 		szPrefix, dpiX, dpiY, LOGRECTCOORDS(rc), LOGRECTSIZE(rc));
 
 	/*
@@ -5334,7 +5334,7 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 LRESULT CConEmuSize::OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHeight)
 {
 	wchar_t szInfo[255];
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"WM_DISPLAYCHANGED: bpp=%u, size={%u,%u}\r\n",
+	swprintf_c(szInfo, L"WM_DISPLAYCHANGED: bpp=%u, size={%u,%u}\r\n",
 		bpp, screenWidth, screenHeight);
 	DEBUGSTRDPI(szInfo);
 	LogString(szInfo, true, false);
@@ -5476,7 +5476,7 @@ bool CConEmuSize::setWindowPos(HWND hWndInsertAfter, int X, int Y, int cx, int c
 	}
 
 	wchar_t szInfo[255];
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"setWindowPos: {%i,%i} (%ix%i) Flags=x%X After=x%X", X, Y, cx, cy, uFlags, LODWORD(hWndInsertAfter));
+	swprintf_c(szInfo, L"setWindowPos: {%i,%i} (%ix%i) Flags=x%X After=x%X", X, Y, cx, cy, uFlags, LODWORD(hWndInsertAfter));
 	if (gpSet->isLogging())
 	{
 		LogString(szInfo);
@@ -5532,7 +5532,7 @@ void CConEmuSize::UpdateWindowRgn()
 		wchar_t szInfo[255];
 		RECT rcBox = {};
 		int nRgn = hRgn ? GetRgnBox(hRgn, &rcBox) : NULLREGION;
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+		swprintf_c(szInfo,
 			nRgn ? L"SetWindowRgn(0x%08X, <%u> {%i,%i}-{%i,%i})" : L"SetWindowRgn(0x%08X, NULL)",
 			ghWnd, nRgn, LOGRECTCOORDS(rcBox));
 		if (gpSet->isLogging())
@@ -5806,7 +5806,7 @@ void CConEmuSize::EndSizing(UINT nMouseMsg/*=0*/)
 		if (m_TileMode != cwc_Current)
 		{
 			wchar_t szTile[255], szOldTile[32];
-			_wsprintf(szTile, SKIPLEN(countof(szTile)) L"Tile mode was stopped on resizing: Was=%s, New=cwc_Current",
+			swprintf_c(szTile, L"Tile mode was stopped on resizing: Was=%s, New=cwc_Current",
 				FormatTileMode(m_TileMode,szOldTile,countof(szOldTile)));
 			LogString(szTile);
 
@@ -5844,7 +5844,7 @@ void CConEmuSize::CheckTopMostState()
 		{
 			wchar_t szInfo[255];
 			RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+			swprintf_c(szInfo,
 				L"Some external program brought ConEmu OnTop: HWND=x%08X, StyleEx=x%08X, Rect={%i,%i}-{%i,%i}",
 				LODWORD(ghWnd), dwStyleEx, LOGRECTCOORDS(rcWnd));
 			LogString(szInfo);
@@ -6311,7 +6311,7 @@ void CConEmuSize::DoMaximizeRestore()
 void CConEmuSize::LogMinimizeRestoreSkip(LPCWSTR asMsgFormat, DWORD nParm1, DWORD nParm2, DWORD nParm3)
 {
 	wchar_t szInfo[200];
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) asMsgFormat, nParm1, nParm2, nParm3);
+	swprintf_c(szInfo, asMsgFormat, nParm1, nParm2, nParm3);
 	LogFocusInfo(szInfo);
 }
 
@@ -6330,7 +6330,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	BOOL bVis = IsWindowVisible(ghWnd);
 
 	wchar_t szInfo[120];
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"DoMinimizeRestore(%i) Fore=x%08X Our=%u Iconic=%u Vis=%u",
+	swprintf_c(szInfo, L"DoMinimizeRestore(%i) Fore=x%08X Our=%u Iconic=%u Vis=%u",
 		ShowHideType, LODWORD(hCurForeground), bIsForeground, bIsIconic, bVis);
 	LogFocusInfo(szInfo);
 

@@ -153,7 +153,7 @@ void ServerInitFont()
 	{
 		// Скорее всего это аттач из Far плагина. Попробуем установить шрифт в консоли через плагин.
 		wchar_t szPipeName[128];
-		_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CEPLUGINPIPENAME, L".", gpSrv->dwRootProcess);
+		swprintf_c(szPipeName, CEPLUGINPIPENAME, L".", gpSrv->dwRootProcess);
 		CESERVER_REQ In;
 		ExecutePrepareCmd(&In, CMD_SET_CON_FONT, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETFONT));
 		In.Font.cbSize = sizeof(In.Font);
@@ -182,7 +182,7 @@ void ServerInitFont()
 			if (apiGetConsoleFontSize(ghConOut, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
 			{
 				char szLogInfo[128];
-				_wsprintfA(szLogInfo, SKIPLEN(countof(szLogInfo)) "Console font size H=%i W=%i N=", curSizeY, curSizeX);
+				sprintf_c(szLogInfo, "Console font size H=%i W=%i N=", curSizeY, curSizeX);
 				int nLen = lstrlenA(szLogInfo);
 				WideCharToMultiByte(CP_UTF8, 0, sFontName, -1, szLogInfo+nLen, countof(szLogInfo)-nLen, NULL, NULL);
 				LogFunction(szLogInfo);
@@ -224,7 +224,7 @@ LGSResult LoadGuiSettingsPtr(ConEmuGuiMapping& GuiMapping, const ConEmuGuiMappin
 			liRc = lgs_WrongVersion;
 			rnWrongValue = pInfo->nProtocolVersion;
 			wcscpy_c(szLog, L"LoadGuiSettings(Failed, MapPtr is null)");
-			_wsprintf(szLog, SKIPCOUNT(szLog) L"LoadGuiSettings(Failed, Version=%u, Required=%u)", rnWrongValue, (DWORD)CESERVER_REQ_VER);
+			swprintf_c(szLog, L"LoadGuiSettings(Failed, Version=%u, Required=%u)", rnWrongValue, (DWORD)CESERVER_REQ_VER);
 			LogFunction(szLog);
 			goto wrap;
 		}
@@ -234,7 +234,7 @@ LGSResult LoadGuiSettingsPtr(ConEmuGuiMapping& GuiMapping, const ConEmuGuiMappin
 	{
 		liRc = lgs_WrongSize;
 		rnWrongValue = pInfo->cbSize;
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"LoadGuiSettings(Failed, cbSize=%u, Required=%u)", pInfo->cbSize, (DWORD)sizeof(ConEmuGuiMapping));
+		swprintf_c(szLog, L"LoadGuiSettings(Failed, cbSize=%u, Required=%u)", pInfo->cbSize, (DWORD)sizeof(ConEmuGuiMapping));
 		LogFunction(szLog);
 		goto wrap;
 	}
@@ -363,7 +363,7 @@ LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue /*
 		// соответственно, переменная наследуется серверами
 		//SetEnvironmentVariableW(L"ConEmuArgs", pInfo->sConEmuArgs);
 
-		//wchar_t szHWND[16]; _wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
+		//wchar_t szHWND[16]; swprintf_c(szHWND, L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
 		//SetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, szHWND);
 		SetConEmuWindows(gpSrv->guiSettings.hGuiWnd, ghConEmuWndDC, ghConEmuWndBack);
 
@@ -594,11 +594,11 @@ int AttachRootProcess()
 		if (gpSrv->bRequestNewGuiWnd)
 			wcscpy_c(szGuiWnd, L"/GHWND=NEW");
 		else if (gpSrv->hGuiWnd)
-			_wsprintf(szGuiWnd, SKIPLEN(countof(szGuiWnd)) L"/GHWND=%08X", (DWORD)(DWORD_PTR)gpSrv->hGuiWnd);
+			swprintf_c(szGuiWnd, L"/GHWND=%08X", (DWORD)(DWORD_PTR)gpSrv->hGuiWnd);
 		else
 			szGuiWnd[0] = 0;
 
-		_wsprintf(szCommand, SKIPLEN(countof(szCommand)) L"\"%s\" %s /ATTACH /PID=%u", szSelf, szGuiWnd, dwParentPID);
+		swprintf_c(szCommand, L"\"%s\" %s /ATTACH /PID=%u", szSelf, szGuiWnd, dwParentPID);
 
 		PROCESS_INFORMATION pi; memset(&pi, 0, sizeof(pi));
 		STARTUPINFOW si; memset(&si, 0, sizeof(si)); si.cb = sizeof(si);
@@ -777,7 +777,7 @@ int ServerInitAttach2Gui()
 			break; // OK
 
 		wchar_t szTitle[128];
-		_wsprintf(szTitle, SKIPCOUNT(szTitle) WIN3264TEST(L"ConEmuC",L"ConEmuC64") L" PID=%u", GetCurrentProcessId());
+		swprintf_c(szTitle, WIN3264TEST(L"ConEmuC",L"ConEmuC64") L" PID=%u", GetCurrentProcessId());
 		if (MessageBox(NULL, L"Available ConEmu GUI window not found!", szTitle,
 		              MB_RETRYCANCEL|MB_SYSTEMMODAL|MB_ICONQUESTION) != IDRETRY)
 			break; // Отказ
@@ -875,7 +875,7 @@ wrap:
 bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw)
 {
 	wchar_t szFnArg[200];
-	_wsprintf(szFnArg, SKIPCOUNT(szFnArg) L"AltServerWasStarted PID=%u H=x%p ForceThaw=%s ",
+	swprintf_c(szFnArg, L"AltServerWasStarted PID=%u H=x%p ForceThaw=%s ",
 		nPID, hAltServer, ForceThaw ? L"true" : L"false");
 	if (gpLogSize)
 	{
@@ -985,7 +985,7 @@ void ServerInitEnvVars()
 
 	if (gnRunMode == RM_SERVER)
 	{
-		_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%u", GetCurrentProcessId());
+		swprintf_c(szValue, L"%u", GetCurrentProcessId());
 		SetEnvironmentVariable(ENV_CONEMUSERVERPID_VAR_W, szValue);
 	}
 
@@ -997,7 +997,7 @@ void ServerInitEnvVars()
 		// соответственно, переменная наследуется серверами
 		//SetEnvironmentVariableW(L"ConEmuArgs", pInfo->sConEmuArgs);
 
-		//wchar_t szHWND[16]; _wsprintf(szHWND, SKIPLEN(countof(szHWND)) L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
+		//wchar_t szHWND[16]; swprintf_c(szHWND, L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
 		//SetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, szHWND);
 		SetConEmuWindows(gpSrv->guiSettings.hGuiWnd, ghConEmuWndDC, ghConEmuWndBack);
 
@@ -1219,7 +1219,7 @@ int ServerInit()
 	if (!gpSrv->hConEmuGuiAttached && (!gpSrv->DbgInfo.bDebugProcess || gnConEmuPID || gpSrv->hGuiWnd))
 	{
 		wchar_t szTempName[MAX_PATH];
-		_wsprintf(szTempName, SKIPLEN(countof(szTempName)) CEGUIRCONSTARTED, LODWORD(ghConWnd)); //-V205
+		swprintf_c(szTempName, CEGUIRCONSTARTED, LODWORD(ghConWnd)); //-V205
 
 		gpSrv->hConEmuGuiAttached = CreateEvent(gpLocalSecurity, TRUE, FALSE, szTempName);
 
@@ -1266,11 +1266,11 @@ int ServerInit()
 	gpSrv->nMainTimerElapse = 10;
 	gpSrv->TopLeft.Reset(); // блокировка прокрутки не включена
 	// Инициализация имен пайпов
-	_wsprintf(gpSrv->szPipename, SKIPLEN(countof(gpSrv->szPipename)) CESERVERPIPENAME, L".", gnSelfPID);
-	_wsprintf(gpSrv->szInputname, SKIPLEN(countof(gpSrv->szInputname)) CESERVERINPUTNAME, L".", gnSelfPID);
-	_wsprintf(gpSrv->szQueryname, SKIPLEN(countof(gpSrv->szQueryname)) CESERVERQUERYNAME, L".", gnSelfPID);
-	_wsprintf(gpSrv->szGetDataPipe, SKIPLEN(countof(gpSrv->szGetDataPipe)) CESERVERREADNAME, L".", gnSelfPID);
-	_wsprintf(gpSrv->szDataReadyEvent, SKIPLEN(countof(gpSrv->szDataReadyEvent)) CEDATAREADYEVENT, gnSelfPID);
+	swprintf_c(gpSrv->szPipename, CESERVERPIPENAME, L".", gnSelfPID);
+	swprintf_c(gpSrv->szInputname, CESERVERINPUTNAME, L".", gnSelfPID);
+	swprintf_c(gpSrv->szQueryname, CESERVERQUERYNAME, L".", gnSelfPID);
+	swprintf_c(gpSrv->szGetDataPipe, CESERVERREADNAME, L".", gnSelfPID);
+	swprintf_c(gpSrv->szDataReadyEvent, CEDATAREADYEVENT, gnSelfPID);
 	MCHKHEAP;
 
 	if (gpSrv->processes->pnProcesses == NULL || gpSrv->processes->pnProcessesGet == NULL || gpSrv->processes->pnProcessesCopy == NULL)
@@ -1415,7 +1415,7 @@ int ServerInit()
 	}
 
 	_ASSERTE(gnSelfPID == GetCurrentProcessId());
-	_wsprintf(szName, SKIPLEN(countof(szName)) CEFARWRITECMTEVENT, gnSelfPID);
+	swprintf_c(szName, CEFARWRITECMTEVENT, gnSelfPID);
 	gpSrv->hFarCommitEvent = CreateEvent(NULL,FALSE,FALSE,szName);
 	if (!gpSrv->hFarCommitEvent)
 	{
@@ -1425,7 +1425,7 @@ int ServerInit()
 		iRc = CERR_REFRESHEVENT; goto wrap;
 	}
 
-	_wsprintf(szName, SKIPLEN(countof(szName)) CECURSORCHANGEEVENT, gnSelfPID);
+	swprintf_c(szName, CECURSORCHANGEEVENT, gnSelfPID);
 	gpSrv->hCursorChangeEvent = CreateEvent(NULL,FALSE,FALSE,szName);
 	if (!gpSrv->hCursorChangeEvent)
 	{
@@ -1556,7 +1556,7 @@ int ServerInit()
 		pIn->AttachGuiApp.hSrvConWnd = ghConWnd;
 		wchar_t szPipe[MAX_PATH];
 		_ASSERTE(gpSrv->dwRootProcess!=0);
-		_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEHOOKSPIPENAME, L".", gpSrv->dwRootProcess);
+		swprintf_c(szPipe, CEHOOKSPIPENAME, L".", gpSrv->dwRootProcess);
 		DumpInitStatus("\nServerInit: CECMD_ATTACHGUIAPP");
 		CESERVER_REQ* pOut = ExecuteCmd(szPipe, pIn, GUIATTACH_TIMEOUT, ghConWnd);
 		if (!pOut
@@ -1572,7 +1572,7 @@ int ServerInit()
 	}
 
 	_ASSERTE(gnSelfPID == GetCurrentProcessId());
-	_wsprintf(szName, SKIPLEN(countof(szName)) CESRVSTARTEDEVENT, gnSelfPID);
+	swprintf_c(szName, CESRVSTARTEDEVENT, gnSelfPID);
 	// Event мог быть создан и ранее (в Far-плагине, например)
 	gpSrv->hServerStartedEvent = CreateEvent(LocalSecurity(), TRUE, FALSE, szName);
 	if (!gpSrv->hServerStartedEvent)
@@ -1630,7 +1630,7 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		#endif
 
 		wchar_t szServerPipe[MAX_PATH];
-		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", LODWORD(ghConEmuWnd)); //-V205
+		swprintf_c(szServerPipe, CEGUIPIPENAME, L".", LODWORD(ghConEmuWnd)); //-V205
 
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOP));
 		if (pIn)
@@ -2549,11 +2549,11 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 	wchar_t szServerPipe[64];
 	if (hGui)
 	{
-		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CEGUIPIPENAME, L".", LODWORD(hGui)); //-V205
+		swprintf_c(szServerPipe, CEGUIPIPENAME, L".", LODWORD(hGui)); //-V205
 	}
 	else if (anGuiPID)
 	{
-		_wsprintf(szServerPipe, SKIPLEN(countof(szServerPipe)) CESERVERPIPENAME, L".", anGuiPID);
+		swprintf_c(szServerPipe, CESERVERPIPENAME, L".", anGuiPID);
 	}
 	else
 	{
@@ -3589,7 +3589,7 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 	// Задать имя для mapping, если надо - сам сделает CloseMap();
 	gpSrv->pColorerMapping->InitName(AnnotationShareName, (DWORD)sizeof(AnnotationInfo), LODWORD(lhConWnd)); //-V205
 
-	//_wsprintf(szMapName, SKIPLEN(countof(szMapName)) AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
+	//swprintf_c(szMapName, AnnotationShareName, sizeof(AnnotationInfo), (DWORD)lhConWnd);
 	//gpSrv->hColorerMapping = CreateFileMapping(INVALID_HANDLE_VALUE,
 	//                                        gpLocalSecurity, PAGE_READWRITE, 0, nMapSize, szMapName);
 
@@ -4054,8 +4054,8 @@ static int ReadConsoleInfo()
 				{
 					LogSize(NULL, ":ReadConsoleInfo(AssertWidth)");
 					wchar_t /*szTitle[64],*/ szInfo[128];
-					//_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%i", GetCurrentProcessId());
-					_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Size req by server: {%ix%i},  Current size: {%ix%i}",
+					//swprintf_c(szTitle, L"ConEmuC, PID=%i", GetCurrentProcessId());
+					swprintf_c(szInfo, L"Size req by server: {%ix%i},  Current size: {%ix%i}",
 					          crReq.X, crReq.Y, crSize.X, crSize.Y);
 					//MessageBox(NULL, szInfo, szTitle, MB_OK|MB_SETFOREGROUND|MB_SYSTEMMODAL);
 					MY_ASSERT_EXPR(FALSE, szInfo, false);
@@ -4227,7 +4227,7 @@ static BOOL ReadConsoleData()
 	{
 		_ASSERTE(gpSrv->pConsole && gpSrv->pConsole->cbMaxSize >= (nCurSize+nHdrSize));
 
-		_wsprintfA(sFailedInfo, SKIPLEN(countof(sFailedInfo)) "ReadConsoleData FAIL: MaxSize(%u) < CurSize(%u), TextSize(%ux%u)", gpSrv->pConsole->cbMaxSize, (nCurSize+nHdrSize), TextWidth, TextHeight);
+		sprintf_c(sFailedInfo, "ReadConsoleData FAIL: MaxSize(%u) < CurSize(%u), TextSize(%ux%u)", gpSrv->pConsole->cbMaxSize, (nCurSize+nHdrSize), TextWidth, TextHeight);
 		LogString(sFailedInfo);
 
 		TextHeight = (gpSrv->pConsole->ConState.crMaxSize.X * gpSrv->pConsole->ConState.crMaxSize.Y - (TextWidth-1)) / TextWidth;
@@ -4736,7 +4736,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 								}
 							}
 							// Обновить мэппинг
-							wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"RefreshThread, new AltServer=%u", gpSrv->dwAltServerPID);
+							wchar_t szLog[80]; swprintf_c(szLog, L"RefreshThread, new AltServer=%u", gpSrv->dwAltServerPID);
 							UpdateConsoleMapHeader(szLog);
 						}
 
@@ -5062,7 +5062,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			if (gpLogSize)
 			{
 				char szInfo[128];
-				_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "ConEmuC: RefreshThread: Sleep changed, speed(%s)",
+				sprintf_c(szInfo, "ConEmuC: RefreshThread: Sleep changed, speed(%s)",
 					bLowSpeed ? "low" : "high");
 				LogString(szInfo);
 			}

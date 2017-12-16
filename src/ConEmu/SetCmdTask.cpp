@@ -57,7 +57,7 @@ void CommandTasks::SetName(LPCWSTR asName, int anCmdIndex)
 	}
 	else if (!asName || !*asName)
 	{
-		_wsprintf(szCmd, SKIPLEN(countof(szCmd)) L"Group%i", (anCmdIndex+1));
+		swprintf_c(szCmd, L"Group%i", (anCmdIndex+1));
 		asName = szCmd;
 	}
 
@@ -290,7 +290,7 @@ bool CommandTasks::LoadCmdTask(SettingsBase* reg, int iIndex)
 
 		for (int j = 0; j < iCmdMax; j++)
 		{
-			_wsprintf(szVal, SKIPLEN(countof(szVal)) L"Cmd%i", j+1); // 1-based
+			swprintf_c(szVal, L"Cmd%i", j+1); // 1-based
 
 			if (reg->Load(szVal, &(pszCommands[j])) && pszCommands[j] && *pszCommands[j])
 			{
@@ -376,7 +376,7 @@ bool CommandTasks::SaveCmdTask(SettingsBase* reg, bool isStartup)
 				*pszEnd = 0;
 			}
 
-			_wsprintf(szVal, SKIPLEN(countof(szVal)) L"Cmd%i", iCmdCount); // 1-based
+			swprintf_c(szVal, L"Cmd%i", iCmdCount); // 1-based
 
 			if (*pszCmd == L'>')
 			{

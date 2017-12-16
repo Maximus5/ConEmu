@@ -77,7 +77,7 @@ static void DumpMember(const wchar_t* pszData, LPCWSTR szName, LPCWSTR szIndent)
 static void DumpMember(const u64& llData, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szData[64];
-	_wsprintf(szData, SKIPCOUNT(szData) L"0x%p", (LPVOID)llData);
+	swprintf_c(szData, L"0x%p", (LPVOID)llData);
 	CEStr lsLine(szIndent, szName, L": ", szData, L"\r\n");
 	_wprintf(lsLine);
 }
@@ -85,7 +85,7 @@ static void DumpMember(const u64& llData, LPCWSTR szName, LPCWSTR szIndent)
 static void DumpMember(const HWND2& hWnd, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szData[32];
-	_wsprintf(szData, SKIPCOUNT(szData) L"0x%08X", (DWORD)hWnd);
+	swprintf_c(szData, L"0x%08X", (DWORD)hWnd);
 	CEStr lsLine(szIndent, szName, L": ", szData, L"\r\n");
 	_wprintf(lsLine);
 }
@@ -93,7 +93,7 @@ static void DumpMember(const HWND2& hWnd, LPCWSTR szName, LPCWSTR szIndent)
 static void DumpMember(const CONSOLE_SCREEN_BUFFER_INFO& cs, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szText[255];
-	_wsprintf(szText, SKIPCOUNT(szText) L"%s%s: Size={%i,%i} Cursor={%i,%i} Attr=0x%02X Wnd={%i,%i}-{%i,%i} Max={%i,%i}\r\n",
+	swprintf_c(szText, L"%s%s: Size={%i,%i} Cursor={%i,%i} Attr=0x%02X Wnd={%i,%i}-{%i,%i} Max={%i,%i}\r\n",
 		szIndent, szName, cs.dwSize.X, cs.dwSize.Y, cs.dwCursorPosition.X, cs.dwCursorPosition.Y,
 		cs.wAttributes, cs.srWindow.Left, cs.srWindow.Top, cs.srWindow.Right, cs.srWindow.Bottom,
 		cs.dwMaximumWindowSize.X, cs.dwMaximumWindowSize.Y);
@@ -103,7 +103,7 @@ static void DumpMember(const CONSOLE_SCREEN_BUFFER_INFO& cs, LPCWSTR szName, LPC
 static void DumpMember(const COORD& cr, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szText[80];
-	_wsprintf(szText, SKIPCOUNT(szText) L"%s%s: {%i,%i}\r\n",
+	swprintf_c(szText, L"%s%s: {%i,%i}\r\n",
 		szIndent, szName, cr.X, cr.Y);
 	_wprintf(szText);
 }
@@ -123,7 +123,7 @@ static void DumpConsoleInfo(const ConEmuConsoleInfo& con, LPCWSTR szIndent)
 		wcscat_c(szFlags, L"|None");
 
 	wchar_t szLine[128];
-	_wsprintf(szLine, SKIPCOUNT(szLine) L" ConWnd=0x%08X DCWnd=0x%08X ChildGui=0x%08X SrvPID=%u %s\r\n",
+	swprintf_c(szLine, L" ConWnd=0x%08X DCWnd=0x%08X ChildGui=0x%08X SrvPID=%u %s\r\n",
 		(DWORD)con.Console, (DWORD)con.DCWindow, (DWORD)con.ChildGui, con.ServerPID, szFlags+1);
 	_wprintf(szLine);
 }
@@ -215,7 +215,7 @@ static void DumpStructPtr(void* ptrData, MapDumpEnum type, LPCWSTR szIndent)
 			{
 				if (!p->Consoles[i].ServerPID && !p->Consoles[i].Console && !p->Consoles[i].DCWindow && !p->Consoles[i].ChildGui)
 					continue;
-				_wsprintf(szText, SKIPCOUNT(szText) L"%s  [%2u]:", szIndent, i);
+				swprintf_c(szText, L"%s  [%2u]:", szIndent, i);
 				DumpConsoleInfo(p->Consoles[i], szText);
 			}
 			// ConEmuMainFont MainFont;
@@ -260,7 +260,7 @@ static void DumpStructPtr(void* ptrData, MapDumpEnum type, LPCWSTR szIndent)
 			dumpMember(nReadConsolePID);
 			dumpMember(nLastReadInputPID);
 			// WORD nPreReadRowID[2]
-			_wsprintf(szText, SKIPCOUNT(szText) L"%snPreReadRowID[]: [%u, %u]\r\n", szIndent, (DWORD)p->nPreReadRowID[0], (DWORD)p->nPreReadRowID[1]);
+			swprintf_c(szText, L"%snPreReadRowID[]: [%u, %u]\r\n", szIndent, (DWORD)p->nPreReadRowID[0], (DWORD)p->nPreReadRowID[1]);
 			_wprintf(szText);
 			dumpMember(csbiPreRead);
 			DumpAppFlags(p->nActiveAppFlags, L"nActiveAppFlags", szIndent);
@@ -369,9 +369,9 @@ int DumpStructData(LPCWSTR asMappingName)
 			{
 				if (p->Consoles[i].Console)
 				{
-					_wsprintf(szMapName, SKIPCOUNT(szMapName) CECONMAPNAME, (DWORD)p->Consoles[i].Console);
+					swprintf_c(szMapName, CECONMAPNAME, (DWORD)p->Consoles[i].Console);
 					DumpStructData(szMapName);
-					_wsprintf(szMapName, SKIPCOUNT(szMapName) CECONAPPMAPNAME, (DWORD)p->Consoles[i].Console);
+					swprintf_c(szMapName, CECONAPPMAPNAME, (DWORD)p->Consoles[i].Console);
 					DumpStructData(szMapName);
 				}
 			}

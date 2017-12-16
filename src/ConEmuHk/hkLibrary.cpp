@@ -165,7 +165,7 @@ VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFIC
 
 	#ifdef _DEBUG
 	wchar_t szDbgInfo[MAX_PATH*3];
-	_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"ConEmuHk: Ldr(%s) " WIN3264TEST(L"0x%08X",L"0x%08X%08X") L" '%s'\n",
+	swprintf_c(szDbgInfo, L"ConEmuHk: Ldr(%s) " WIN3264TEST(L"0x%08X",L"0x%08X%08X") L" '%s'\n",
 		(NotificationReason==LDR_DLL_NOTIFICATION_REASON_LOADED) ? L"Loaded" : L"Unload",
 		WIN3264WSPRINT(hModule),
 		szModule);
