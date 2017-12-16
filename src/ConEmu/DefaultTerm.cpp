@@ -263,7 +263,7 @@ bool CDefaultTerminal::NotifyHookingStatus(DWORD nPID, LPCWSTR sName)
 void CDefaultTerminal::LogHookingStatus(DWORD nForePID, LPCWSTR sMessage)
 {
 	wchar_t szPID[16];
-	CEStr lsLog(L"DefTerm[", _ultow(nForePID, szPID, 10), L"]: ", sMessage);
+	CEStr lsLog(L"DefTerm[", ultow_s(nForePID, szPID, 10), L"]: ", sMessage);
 	gpConEmu->LogString(lsLog);
 }
 

@@ -2956,7 +2956,7 @@ LPWSTR ConEmuMacro::GetInfo(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 
 		// Globals
 		if (lstrcmpi(pszName, L"PID") == 0)
-			_itow(GetCurrentProcessId(), szTemp, 10);
+			ultow_s(GetCurrentProcessId(), szTemp, 10);
 		else if (lstrcmpi(pszName, L"HWND") == 0)
 			msprintf(szTemp, countof(szTemp), L"0x%08X", LODWORD(ghWnd));
 		else if (lstrcmpi(pszName, L"Build") == 0)
