@@ -508,7 +508,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 
 				// Добавить процесс в список для запуска альтернативного дебаггера соотвествующей битности
 				// Force trailing "," even if only one PID specified ( --> bDebugMultiProcess = TRUE)
-				lstrmerge(&szOtherBitPids.ms_Val, _itow(nDbgProcessID, szPID, 10), L",");
+				lstrmerge(&szOtherBitPids.ms_Val, ltow_s(nDbgProcessID, szPID, 10), L",");
 
 				// Может там еще процессы в списке на дамп?
 				continue;

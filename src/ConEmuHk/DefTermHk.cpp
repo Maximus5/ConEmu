@@ -473,7 +473,7 @@ void CDefTermHk::LogHookingStatus(DWORD nForePID, LPCWSTR sMessage)
 		return;
 	}
 	wchar_t szPID[16];
-	CEStr lsLog(L"DefTerm[", _ultow(nForePID, szPID, 10), L"]: ", sMessage);
+	CEStr lsLog(L"DefTerm[", ultow_s(nForePID, szPID, 10), L"]: ", sMessage);
 	mp_FileLog->LogString(lsLog);
 }
 

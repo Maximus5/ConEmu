@@ -50,44 +50,43 @@ enum MapDumpEnum
 static void DumpMember(const WORD& dwData, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szData[32]; CEStr lsLine;
-	lsLine = lstrmerge(szIndent, szName, L": ", _ultow(dwData, szData, 10), L"\r\n");
+	lsLine = lstrmerge(szIndent, szName, L": ", ultow_s(dwData, szData, 10), L"\r\n");
 	_wprintf(lsLine);
 }
 
 static void DumpMember(const DWORD& dwData, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szData[32]; CEStr lsLine;
-	lsLine = lstrmerge(szIndent, szName, L": ", _ultow(dwData, szData, 10), L"\r\n");
+	lsLine = lstrmerge(szIndent, szName, L": ", ultow_s(dwData, szData, 10), L"\r\n");
 	_wprintf(lsLine);
 }
 
 static void DumpMember(const int& iData, LPCWSTR szName, LPCWSTR szIndent)
 {
-	wchar_t szData[32]; CEStr lsLine;
-	lsLine = lstrmerge(szIndent, szName, L": ", _ltow(iData, szData, 10), L"\r\n");
+	wchar_t szData[32];
+	CEStr lsLine(szIndent, szName, L": ", ltow_s(iData, szData, 10), L"\r\n");
 	_wprintf(lsLine);
 }
 
 static void DumpMember(const wchar_t* pszData, LPCWSTR szName, LPCWSTR szIndent)
 {
-	CEStr lsLine;
-	lsLine = lstrmerge(szIndent, szName, L": `", pszData, L"`\r\n");
+	CEStr lsLine(szIndent, szName, L": `", pszData, L"`\r\n");
 	_wprintf(lsLine);
 }
 
 static void DumpMember(const u64& llData, LPCWSTR szName, LPCWSTR szIndent)
 {
-	wchar_t szData[64]; CEStr lsLine;
+	wchar_t szData[64];
 	_wsprintf(szData, SKIPCOUNT(szData) L"0x%p", (LPVOID)llData);
-	lsLine = lstrmerge(szIndent, szName, L": ", szData, L"\r\n");
+	CEStr lsLine(szIndent, szName, L": ", szData, L"\r\n");
 	_wprintf(lsLine);
 }
 
 static void DumpMember(const HWND2& hWnd, LPCWSTR szName, LPCWSTR szIndent)
 {
-	wchar_t szData[32]; CEStr lsLine;
+	wchar_t szData[32];
 	_wsprintf(szData, SKIPCOUNT(szData) L"0x%08X", (DWORD)hWnd);
-	lsLine = lstrmerge(szIndent, szName, L": ", szData, L"\r\n");
+	CEStr lsLine(szIndent, szName, L": ", szData, L"\r\n");
 	_wprintf(lsLine);
 }
 
@@ -323,8 +322,8 @@ int ProcessMapping(MFileMapping<T>& fileMap, MapDumpEnum type, LPCWSTR pszMapNam
 	{
 		wchar_t szReq[32] = L"", szGet[32] = L"";
 		lsMsg = lstrmerge(L"### WARNING ###",
-			L" ReqSize=", _ultow(strSize, szReq, 10),
-			L" MapSize=", _ultow(fileMap.Ptr()->cbSize, szGet, 10),
+			L" ReqSize=", ultow_s(strSize, szReq, 10),
+			L" MapSize=", ultow_s(fileMap.Ptr()->cbSize, szGet, 10),
 			L"\r\n");
 		_wprintf(lsMsg);
 	}

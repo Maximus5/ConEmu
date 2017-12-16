@@ -375,3 +375,21 @@ int startswith(LPCWSTR asStr, LPCWSTR asPattern, bool abIgnoreCase);
 
 #define lstrempty(s) (!(s) || !*(s))
 #define lstrnempty(s) ((s) && *(s))
+
+template <size_t size>
+const wchar_t* ltow_s(int value, wchar_t (&buffer)[size], int radix)
+{
+	errno_t e = _itow_s(value, buffer, size, radix);
+	if (e != 0)
+		buffer[0] = 0;
+	return buffer;
+}
+
+template <size_t size>
+const wchar_t* ultow_s(unsigned value, wchar_t (&buffer)[size], int radix)
+{
+	errno_t e = _ui64tow_s(value, buffer, size, radix);
+	if (e != 0)
+		buffer[0] = 0;
+	return buffer;
+}

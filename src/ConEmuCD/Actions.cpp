@@ -289,7 +289,7 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		{
 		CProcessData processes;
 		processes.GetProcessName(nRemotePID, lsName.GetBuffer(MAX_PATH), MAX_PATH, lsPath.GetBuffer(MAX_PATH*2), MAX_PATH*2, NULL);
-		CEStr lsLog(L"Remote: PID=", _ultow(nRemotePID, szStr, 10), L" Name=`", lsName, L"` Path=`", lsPath, L"`");
+		CEStr lsLog(L"Remote: PID=", ultow_s(nRemotePID, szStr, 10), L" Name=`", lsName, L"` Path=`", lsPath, L"`");
 		LogString(lsLog);
 		}
 
