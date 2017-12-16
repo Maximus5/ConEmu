@@ -1530,7 +1530,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 		// "{C:\Program Files} - Far 2.1283 Administrator x64"
 		// После добавления суффиков к заголовку фара - оно уже влезать не будет в любом случае... Так что если панели - '...' строго ставить в конце
 		nSplit = nMaxLen;
-		_tcsncpy(szEllip, fileName, nSplit); szEllip[nSplit]=0;
+		lstrcpyn(szEllip, fileName, nSplit); szEllip[nSplit]=0;
 		szEllip[nSplit] = L'\x2026' /*"…"*/;
 		szEllip[nSplit+1] = 0;
 		//_tcscat(szEllip, L"\x2026" /*"…"*/);
