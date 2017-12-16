@@ -117,27 +117,28 @@ bool CIconList::Initialize()
 		gpConEmu->LogString(szLog);
 
 		// #TABBAR Check for GetDeviceCaps(mh_BmpDc, BITSPIXEL) and 32bit
-		DWORD imglist_flags = (IsWin7() ? ILC_COLOR32 : ILC_COLOR24)|ILC_MASK;
+		DWORD imglist_flags = (IsWin7() ? ILC_COLOR32 : (ILC_COLOR24|ILC_MASK));
 		if ((mh_TabIcons = ImageList_Create(mn_CxIcon, mn_CyIcon, imglist_flags, 0, 16)) != NULL)
 		{
-			CToolImg img;
+			HIMAGELIST hShieldUser = ImageList_LoadImage(g_hInstance, MAKEINTRESOURCE(IDB_SHIELD16), 16, 0, CLR_NONE, IMAGE_BITMAP, LR_CREATEDIBSECTION);
 			int nFirstAdd = -1;
-			const int iShieldButtons = 4;
-			if (img.Create(mn_CxIcon, mn_CyIcon, iShieldButtons, GetSysColor(COLOR_BTNFACE)))
+			if (hShieldUser)
 			{
-				if (img.AddButtons(g_hInstance, IDB_SHIELD16, iShieldButtons))
+				int added = 0;
+				for (int i = 0; i < 4; ++i)
 				{
-					HBITMAP hShieldUser = img.GetBitmap();
-					#ifdef _DEBUG
-					BITMAP bmi = {};
-					GetObject(hShieldUser, sizeof(bmi), &bmi);
-					#ifdef _DEBUG
-					//SaveImageEx(L"T:\\ShieldUser.png", hShieldUser);
-					#endif
-					#endif
-
-					nFirstAdd = ImageList_AddMasked(mh_TabIcons, hShieldUser, RGB(128,0,0));
+					HICON hNewIcon = ImageList_GetIcon(hShieldUser, i, ILD_BLEND25|ILD_TRANSPARENT);
+					if (hNewIcon)
+					{
+						int newIcon = ImageList_ReplaceIcon(mh_TabIcons, -1, hNewIcon);
+						if (newIcon >= 0)
+							++added;
+						DestroyIcon(hNewIcon);
+					}
 				}
+				if (added == 4) // expected
+					nFirstAdd = 0;
+				ImageList_Destroy(hShieldUser);
 			}
 
 			#ifdef _DEBUG

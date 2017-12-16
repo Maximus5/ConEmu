@@ -8,7 +8,6 @@
 #define ID_GO                           20
 #define ID_ATTACH                       21
 #define IDB_MAIN_TOOLBAR                101
-#define IDB_SHIELD                      102
 #define IDB_RIGHTCLICKING               103
 #define IDB_SCROLL                      104
 #define IDB_SHIELD16                    107
