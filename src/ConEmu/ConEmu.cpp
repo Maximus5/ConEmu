@@ -3539,7 +3539,7 @@ void CConEmuMain::SetTitle(HWND ahWnd, LPCWSTR asTitle, bool abTrySync /*= false
 
 	if (gpSet->isLogging())
 	{
-		wchar_t szHwnd[20]; _ultow_s(LODWORD(ahWnd), szHwnd, 16);
+		wchar_t szHwnd[20]; ultow_s(LODWORD(ahWnd), szHwnd, 16);
 		CEStr lsMsg(L"SetTitle: hWnd=x", szHwnd, L" Title=`", asTitle, L"`");
 		LogString(lsMsg);
 	}
@@ -3584,7 +3584,7 @@ void CConEmuMain::SetTitle(HWND ahWnd, LPCWSTR asTitle, bool abTrySync /*= false
 			impl* p = (impl*)lParam;
 			if (gpSet->isLogging())
 			{
-				wchar_t szHwnd[20]; _ultow_s(LODWORD(p->hWnd), szHwnd, 16);
+				wchar_t szHwnd[20]; ultow_s(LODWORD(p->hWnd), szHwnd, 16);
 				CEStr lsMsg(L"SetTitle(async): hWnd=x", szHwnd, L" Title=`", p->psTitle, L"`");
 				p->pConEmu->LogString(lsMsg);
 			}

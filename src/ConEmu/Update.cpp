@@ -2195,7 +2195,7 @@ void CConEmuUpdate::WaitAllInstances()
 		{
 			bStillExists = true;
 			DWORD nPID; GetWindowThreadProcessId(hFind, &nPID);
-			wchar_t szPID[16]; _ultow_s(nPID, szPID, 10);
+			wchar_t szPID[16]; ultow_s(nPID, szPID, 10);
 			lstrmerge(&szMessage.ms_Val,
 				L"\n",
 				CLngRc::getRsrc(lng_UpdateCloseMsg2/*"ConEmu still running:"*/), L" ",

@@ -308,7 +308,7 @@ int CVirtualConsole::Index()
 
 LPCWSTR CVirtualConsole::IndexStr()
 {
-	_itow_s(mn_Index, ms_Idx, 10);
+	ltow_s(mn_Index, ms_Idx, 10);
 	return ms_Idx;
 }
 
@@ -319,7 +319,7 @@ int CVirtualConsole::ID()
 
 LPCWSTR CVirtualConsole::IDStr()
 {
-	_itow_s(mn_ID, ms_ID, 10);
+	ltow_s(mn_ID, ms_ID, 10);
 	return ms_ID;
 }
 

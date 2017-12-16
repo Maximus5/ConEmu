@@ -4226,7 +4226,7 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 			else
 			{
 				// В режиме "Дамп дерева процессов" нас интересует и дамп текущего процесса ConEmu.exe
-				CEStr lsPID((LPCWSTR)_itow(GetCurrentProcessId(), szExe, 10));
+				CEStr lsPID(ultow_s(GetCurrentProcessId(), szExe, 10));
 				ConProcess* pPrc = NULL;
 				int nCount = GetProcesses(&pPrc, false/*ClientOnly*/);
 				if (!pPrc || (nCount < 1))
@@ -4236,7 +4236,7 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 				}
 				for (int i = 0; i < nCount; i++)
 				{
-					lstrmerge(&lsPID.ms_Val, lsPID.ms_Val ? L"," : NULL, _itow(pPrc[i].ProcessID, szExe, 10));
+					lstrmerge(&lsPID.ms_Val, lsPID.ms_Val ? L"," : NULL, ultow_s(pPrc[i].ProcessID, szExe, 10));
 					if (lstrlen(lsPID.ms_Val) > MAX_PATH)
 						break;
 				}
@@ -5005,7 +5005,7 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		wchar_t szInfo[32] = L"";
 		if (!lbRc)
 		{
-			CEStr lsLog(L"VCon[", mp_VCon->IndexStr(), L"] failed, code=", _ultow(dwLastError, szInfo, 10));
+			CEStr lsLog(L"VCon[", mp_VCon->IndexStr(), L"] failed, code=", ultow_s(dwLastError, szInfo, 10));
 			LogString(lsLog);
 		}
 		else
@@ -8185,7 +8185,7 @@ LPCWSTR CRealConsole::GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo)
 	LPCWSTR pszVal = szTemp;
 
 	if (lstrcmpi(asWhat, L"ServerPID") == 0)
-		_itow(GetServerPID(true), szTemp, 10);
+		ultow_s(GetServerPID(true), szTemp, 10);
 	else if (lstrcmpi(asWhat, L"DrawHWND") == 0)
 		msprintf(szTemp, countof(szTemp), L"0x%08X", LODWORD(VCon()->GetView()));
 	else if (lstrcmpi(asWhat, L"BackHWND") == 0)

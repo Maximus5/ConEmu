@@ -1650,7 +1650,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 		CEStr lsBuild(L"ConEmu ", (gpConEmu && gpConEmu->ms_ConEmuBuild) ? gpConEmu->ms_ConEmuBuild : L"<UnknownBuild>",
 			L" [", WIN3264TEST(L"32",L"64"), RELEASEDEBUGTEST(NULL,L"D"), L"] ");
 		CEStr lsAssertion(L"Assertion: ", lsBuild, szPID, L"\r\n");
-		CEStr lsWhere(L"\r\n", StripSourceRoot(szFile), L":", _ultow(nLine, szLine, 10), L"\r\n", szDashes);
+		CEStr lsWhere(L"\r\n", StripSourceRoot(szFile), L":", ultow_s(nLine, szLine, 10), L"\r\n", szDashes);
 		CEStr lsHeader(lsAssertion,
 			(gpConEmu && gpConEmu->ms_ConEmuExe) ? gpConEmu->ms_ConEmuExe : L"<NULL>",
 			lsWhere, szText, L"\r\n", szDashes, L"\r\n");

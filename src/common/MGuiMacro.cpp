@@ -70,9 +70,9 @@ const wchar_t* CreateRootInfoXml(LPCWSTR asRootExeName, CESERVER_ROOT_INFO* pInf
 	// Was process started?
 	if (pInfo && pInfo->nPID)
 	{
-		lstrmerge(&rsInfo.ms_Val, L"\tPID=\"", _ultow(pInfo->nPID, szTemp, 10), L"\"\n");
-		lstrmerge(&rsInfo.ms_Val, L"\tExitCode=\"", _ultow(pInfo->nExitCode, szTemp, 10), L"\"\n");
-		lstrmerge(&rsInfo.ms_Val, L"\tUpTime=\"", _ultow(pInfo->nUpTime, szTemp, 10), L"\"\n");
+		lstrmerge(&rsInfo.ms_Val, L"\tPID=\"", ultow_s(pInfo->nPID, szTemp, 10), L"\"\n");
+		lstrmerge(&rsInfo.ms_Val, L"\tExitCode=\"", ultow_s(pInfo->nExitCode, szTemp, 10), L"\"\n");
+		lstrmerge(&rsInfo.ms_Val, L"\tUpTime=\"", ultow_s(pInfo->nUpTime, szTemp, 10), L"\"\n");
 	}
 
 	lstrmerge(&rsInfo.ms_Val, L"/>\n");
