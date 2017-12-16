@@ -203,7 +203,7 @@ void CConEmuStart::SetDefaultCmd(LPCWSTR asCmd)
 		CEStr szSearch;
 		FindBashLocation(szSearch);
 
-		_wsprintf(szDefCmd, SKIPLEN(countof(szDefCmd))
+		swprintf_c(szDefCmd,
 			(wcschr(szSearch, L' ') != NULL)
 				? L"\"%s\" --login -i" /* -new_console:n" */
 				: L"%s --login -i" /* -new_console:n" */,
@@ -874,14 +874,14 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						if (b)
 						{
 							if (pi.dwProcessId)
-								_wsprintf(szExtra, SKIPCOUNT(szExtra) L", PID=%u", pi.dwProcessId);
+								swprintf_c(szExtra, L", PID=%u", pi.dwProcessId);
 							lsLog = lstrmerge(
 								L"Process was created successfully",
 								szExtra);
 						}
 						else
 						{
-							_wsprintf(szExtra, SKIPCOUNT(szExtra) L", ErrorCode=%u", nErr);
+							swprintf_c(szExtra, L", ErrorCode=%u", nErr);
 							lsLog = lstrmerge(
 								L"Failed to start process",
 								szExtra);

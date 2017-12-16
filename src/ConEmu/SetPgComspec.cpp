@@ -218,7 +218,7 @@ void CSetPgComspec::RegisterCmdAutorun(bool bEnabled, bool bForced /*= false*/)
 			pszCur = LoadAutorunValue(hkCmd, true);
 			pszSet = pszCur;
 
-			_wsprintf(szCmd, SKIPLEN(countof(szCmd)) L"\"%s\\Cmd_Autorun.cmd", gpConEmu->ms_ConEmuBaseDir);
+			swprintf_c(szCmd, L"\"%s\\Cmd_Autorun.cmd", gpConEmu->ms_ConEmuBaseDir);
 			if (FileExists(szCmd+1))
 			{
 				wcscat_c(szCmd, bForceNewWnd ? L"\" \"/GHWND=NEW\"" : L"\"");

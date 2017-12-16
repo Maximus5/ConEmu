@@ -486,7 +486,7 @@ RepeatCheck:
 			}
 		}
 
-		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"%sCan't find appropriate shell window!\nUnrecognized layout of the Explorer.\n\nContinue in normal mode?", szAddMsg);
+		swprintf_c(szMsg, L"%sCan't find appropriate shell window!\nUnrecognized layout of the Explorer.\n\nContinue in normal mode?", szAddMsg);
 		int nBtn = MsgBox(szMsg, MB_ICONSTOP|MB_YESNO|MB_DEFBUTTON2);
 
 		if (nBtn != IDYES)
@@ -1005,7 +1005,7 @@ HWND CConEmuInside::CheckInsideFocus()
 
 	if (!GetGUIThreadInfo(nTID, &tif))
 	{
-		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"GetGUIThreadInfo(%u) failed, code=%u", nTID, GetLastError());
+		swprintf_c(szInfo, L"GetGUIThreadInfo(%u) failed, code=%u", nTID, GetLastError());
 		LogString(szInfo);
 		return NULL;
 	}
@@ -1015,7 +1015,7 @@ HWND CConEmuInside::CheckInsideFocus()
 	{
 		last_tif = tif;
 
-		_wsprintf(szInfo, SKIPCOUNT(szInfo)
+		swprintf_c(szInfo,
 			L"ParentInputInfo: flags=x%X Active=x%X Focus=x%X Capture=x%X Menu=x%X MoveSize=x%X Caret=x%X (%i,%i)-(%i,%i)",
 			tif.flags, LODWORD(tif.hwndActive), LODWORD(tif.hwndFocus), LODWORD(tif.hwndCapture), LODWORD(tif.hwndMenuOwner),
 			LODWORD(tif.hwndMoveSize), LODWORD(tif.hwndCaret), LOGRECTCOORDS(tif.rcCaret));

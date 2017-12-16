@@ -100,7 +100,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HEAPVAL
 #endif
 
-//#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; _wsprintf(szAMsg, SKIPLEN(countof(szAMsg)) L"Assertion (%s) at\n%s:%i", _T(#V), _T(__FILE__), __LINE__); CRealConsole::Box(szAMsg); }
+//#define Assert(V) if ((V)==FALSE) { wchar_t szAMsg[MAX_PATH*2]; swprintf_c(szAMsg, L"Assertion (%s) at\n%s:%i", _T(#V), _T(__FILE__), __LINE__); CRealConsole::Box(szAMsg); }
 
 const DWORD gnKeyBarFlags[] = {0,
 	LEFT_CTRL_PRESSED, LEFT_ALT_PRESSED, SHIFT_PRESSED,
@@ -664,7 +664,7 @@ wrap:
 	else if (nDurationTick > 1000)
 	{
 		wchar_t szLog[80];
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"!!! CRealBuffer::LoadAlternativeConsole takes %u ms !!!", nDurationTick);
+		swprintf_c(szLog, L"!!! CRealBuffer::LoadAlternativeConsole takes %u ms !!!", nDurationTick);
 		_ASSERTE(!lbRc || (nDurationTick < 1000));
 		mp_RCon->LogString(szLog);
 	}
@@ -806,9 +806,9 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		case CECMD_SETSIZENOSYNC:
 			lstrcpynA(szSizeCmd, "CECMD_SETSIZENOSYNC", countof(szSizeCmd)); break;
 		default:
-			_wsprintfA(szSizeCmd, SKIPLEN(countof(szSizeCmd)) "SizeCmd=%u", anCmdID);
+			sprintf_c(szSizeCmd, "SizeCmd=%u", anCmdID);
 		}
-		_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "%s(Cols=%i, Rows=%i, Buf=%i, TopLeft={%i,%i})",
+		sprintf_c(szInfo, "%s(Cols=%i, Rows=%i, Buf=%i, TopLeft={%i,%i})",
 		           szSizeCmd, sizeX, sizeY, sizeBuffer, con.TopLeft.y, con.TopLeft.x);
 		mp_RCon->LogString(szInfo);
 	}
@@ -879,13 +879,13 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					_ASSERTE(FALSE && "Maximum real console size was reached");
 					// Inform user -- Add exact numbers to log and hint
 					wchar_t szInfo[240];
-					_wsprintf(szInfo, SKIPCOUNT(szInfo)
+					swprintf_c(szInfo,
 						L"Maximum real console size {%i,%i} was reached, lesser size {%i,%i} was applied than requested {%u,%u}",
 						pOut ? (int)pOut->SetSizeRet.crMaxSize.X : -1, pOut ? (int)pOut->SetSizeRet.crMaxSize.Y : -1,
 						nSetWidth, nSetHeight, (UINT)sizeX, (UINT)sizeY);
 					mp_RCon->LogString(szInfo);
 
-					_wsprintf(szInfo, SKIPCOUNT(szInfo)
+					swprintf_c(szInfo,
 						L"Maximum real console size {%i,%i} was reached\nDecrease font size in the real console properties",
 						nSetWidth, nSetHeight);
 					Icon.ShowTrayIcon(szInfo, tsa_Console_Size);
@@ -901,7 +901,7 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		if (gpSet->isLogging())
 		{
 			DWORD dwErr = GetLastError();
-			_wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv.ExecuteCmd FAILED!!! ErrCode=0x%08X, Bytes read=%i", dwErr, pOut ? pOut->hdr.cbSize : 0);
+			sprintf_c(szInfo, "SetConsoleSizeSrv.ExecuteCmd FAILED!!! ErrCode=0x%08X, Bytes read=%i", dwErr, pOut ? pOut->hdr.cbSize : 0);
 			mp_RCon->LogString(szInfo);
 		}
 
@@ -917,7 +917,7 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 
 			if (gpSet->isLogging())
 			{
-				char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv FAILED!!! OutCmd(%i)!=InCmd(%i)", pOut->hdr.nCmd, pIn->hdr.nCmd);
+				char szInfo[128]; sprintf_c(szInfo, "SetConsoleSizeSrv FAILED!!! OutCmd(%i)!=InCmd(%i)", pOut->hdr.nCmd, pIn->hdr.nCmd);
 				mp_RCon->LogString(szInfo);
 			}
 		}
@@ -964,7 +964,7 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 					{
 						if (gpSet->isLogging())
 						{
-							char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSize FAILED!!! ReqSize={%ix%i}, OutSize={%ix%i}", sizeX, (sizeBuffer ? sizeBuffer : sizeY), crDebugCurSize.X, crDebugCurSize.Y);
+							char szInfo[128]; sprintf_c(szInfo, "SetConsoleSize FAILED!!! ReqSize={%ix%i}, OutSize={%ix%i}", sizeX, (sizeBuffer ? sizeBuffer : sizeY), crDebugCurSize.X, crDebugCurSize.Y);
 							mp_RCon->LogString(szInfo);
 						}
 
@@ -1005,7 +1005,7 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 
 				if (gpSet->isLogging())
 				{
-					char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "Current size: {%i,%i} Buf={%i,%i}", sbi.srWindow.Right-sbi.srWindow.Left+1, sbi.srWindow.Bottom-sbi.srWindow.Top+1, sbi.dwSize.X, sbi.dwSize.Y);
+					char szInfo[128]; sprintf_c(szInfo, "Current size: {%i,%i} Buf={%i,%i}", sbi.srWindow.Right-sbi.srWindow.Left+1, sbi.srWindow.Bottom-sbi.srWindow.Top+1, sbi.dwSize.X, sbi.dwSize.Y);
 					mp_RCon->LogString(szInfo);
 				}
 
@@ -1017,7 +1017,7 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				{
 					if (gpSet->isLogging())
 					{
-						char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
+						char szInfo[128]; sprintf_c(szInfo, "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
 						                             sizeX, sizeY,
 						                             sbi.dwSize.X, sbi.dwSize.Y,
 						                             pOut->SetSizeRet.SetSizeRet.dwSize.X, pOut->SetSizeRet.SetSizeRet.dwSize.Y
@@ -1037,7 +1037,7 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 
 				if (gpSet->isLogging())
 				{
-					char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "Current size: Cols=%i, Rows=%i", sbi.dwSize.X, sbi.dwSize.Y);
+					char szInfo[128]; sprintf_c(szInfo, "Current size: Cols=%i, Rows=%i", sbi.dwSize.X, sbi.dwSize.Y);
 					mp_RCon->LogString(szInfo);
 				}
 
@@ -1049,7 +1049,7 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				{
 					if (gpSet->isLogging())
 					{
-						char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
+						char szInfo[128]; sprintf_c(szInfo, "SetConsoleSizeSrv FAILED! Ask={%ix%i}, Cur={%ix%i}, Ret={%ix%i}",
 						                             sizeX, sizeY,
 						                             sbi.dwSize.X, sbi.dwSize.Y,
 						                             pOut->SetSizeRet.SetSizeRet.dwSize.X, pOut->SetSizeRet.SetSizeRet.dwSize.Y
@@ -1201,7 +1201,7 @@ bool CRealBuffer::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DW
 	int iBufWidth = GetBufferWidth();
 	if (iBufWidth < (int)sizeX) iBufWidth = sizeX;
 	int iBufHeight = (sizeBuffer > 0) ? sizeBuffer : GetBufferHeight();
-	_wsprintf(szStatus, SKIPCOUNT(szStatus) L"{%u,%u} size, {%i,%i} buffer", sizeX, sizeY, iBufWidth, iBufHeight);
+	swprintf_c(szStatus, L"{%u,%u} size, {%i,%i} buffer", sizeX, sizeY, iBufWidth, iBufHeight);
 	mp_RCon->SetConStatus(szStatus, CRealConsole::cso_Critical);
 
 	// Попробовать для консолей (cmd, и т.п.) делать ресайз после отпускания мышки
@@ -1270,7 +1270,7 @@ void CRealBuffer::SyncConsole2Window(SHORT wndSizeX, SHORT wndSizeY)
 	{
 		if (IFLOGCONSOLECHANGE)
 		{
-			char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "CRealBuffer::SyncConsole2Window(Cols=%i, Rows=%i, Current={%i,%i})", wndSizeX, wndSizeY, con.nTextWidth, con.nTextHeight);
+			char szInfo[128]; sprintf_c(szInfo, "CRealBuffer::SyncConsole2Window(Cols=%i, Rows=%i, Current={%i,%i})", wndSizeX, wndSizeY, con.nTextWidth, con.nTextHeight);
 			mp_RCon->LogString(szInfo);
 		}
 
@@ -1589,7 +1589,7 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount /*= 0*/, int anWidth /*= 0*/, in
 		data.Release();
 
 		wchar_t szLog[80];
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"InitBuffers Width=%u Height=%u Cells=%u (begin)", nNewWidth, nNewHeight, nCellCount);
+		swprintf_c(szLog, L"InitBuffers Width=%u Height=%u Cells=%u (begin)", nNewWidth, nNewHeight, nCellCount);
 		mp_RCon->LogString(szLog);
 
 
@@ -1634,7 +1634,7 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount /*= 0*/, int anWidth /*= 0*/, in
 		
 		HEAPVAL
 
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"InitBuffers Width=%u Height=%u Cells=%u (done)", nNewWidth, nNewHeight, nCellCount);
+		swprintf_c(szLog, L"InitBuffers Width=%u Height=%u Cells=%u (done)", nNewWidth, nNewHeight, nCellCount);
 		mp_RCon->LogString(szLog);
 	}
 	else if (con.nTextWidth!=nNewWidth || con.nTextHeight!=nNewHeight)
@@ -2200,7 +2200,7 @@ bool CRealBuffer::LoadDataFromSrv(CRConDataGuard& data, DWORD CharCount, CHAR_IN
 		if (IFLOGCONSOLECHANGE)
 		{
 			char sInfo[128];
-			_wsprintfA(sInfo, SKIPLEN(countof(sInfo)) "DataCmp was changed, width=%u, height=%u, count=%u", con.nTextWidth, con.nTextHeight, CharCount);
+			sprintf_c(sInfo, "DataCmp was changed, width=%u, height=%u, count=%u", con.nTextWidth, con.nTextHeight, CharCount);
 
 			const CHAR_INFO* lp1 = data->pDataCmp;
 			const CHAR_INFO* lp2 = pData;
@@ -2324,7 +2324,7 @@ bool CRealBuffer::IsTrueColorerBufferChanged()
 
 		if (IFLOGCONSOLECHANGE)
 		{
-			char szDbgSize[128]; _wsprintfA(szDbgSize, SKIPLEN(countof(szDbgSize)) "ApplyConsoleInfo: TrueColorer.flushCounter(%u) -> changed(%u)", mp_RCon->m_TrueColorerHeader.flushCounter, aHdr.flushCounter);
+			char szDbgSize[128]; sprintf_c(szDbgSize, "ApplyConsoleInfo: TrueColorer.flushCounter(%u) -> changed(%u)", mp_RCon->m_TrueColorerHeader.flushCounter, aHdr.flushCounter);
 			LOGCONSOLECHANGE(szDbgSize);
 		}
 	}
@@ -2415,7 +2415,7 @@ bool CRealBuffer::ApplyConsoleInfo()
 		else
 		{
 			wchar_t szInfo[128];
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"mp_RCon->m_GetDataPipe.Transact failed, code=%i\r\n", (int)mp_RCon->m_GetDataPipe.GetErrorCode());
+			swprintf_c(szInfo, L"mp_RCon->m_GetDataPipe.Transact failed, code=%i\r\n", (int)mp_RCon->m_GetDataPipe.GetErrorCode());
 			wchar_t* pszFull = lstrmerge(szInfo, mp_RCon->m_GetDataPipe.GetErrorText());
 			//MBoxA(pszFull);
 			LogString(pszFull);
@@ -2560,9 +2560,9 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 			#ifdef _DEBUG
 			wchar_t szCursorDbg[255]; szCursorDbg[0] = 0;
 			if (pInfo->ConState.sbi.dwCursorPosition.X != con.m_sbi.dwCursorPosition.X || pInfo->ConState.sbi.dwCursorPosition.Y != con.m_sbi.dwCursorPosition.Y)
-				_wsprintf(szCursorDbg, SKIPLEN(countof(szCursorDbg)) L"CursorPos changed to %ux%u. ", pInfo->ConState.sbi.dwCursorPosition.X, pInfo->ConState.sbi.dwCursorPosition.Y);
+				swprintf_c(szCursorDbg, L"CursorPos changed to %ux%u. ", pInfo->ConState.sbi.dwCursorPosition.X, pInfo->ConState.sbi.dwCursorPosition.Y);
 			else
-				_wsprintf(szCursorDbg, SKIPLEN(countof(szCursorDbg)) L"CursorPos is %ux%u. ", pInfo->ConState.sbi.dwCursorPosition.X, pInfo->ConState.sbi.dwCursorPosition.Y);
+				swprintf_c(szCursorDbg, L"CursorPos is %ux%u. ", pInfo->ConState.sbi.dwCursorPosition.X, pInfo->ConState.sbi.dwCursorPosition.Y);
 			#endif
 
 			#if 0
@@ -2661,12 +2661,12 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 				{
 					if (IFLOGCONSOLECHANGE)
 					{
-						char szDbgSize[128]; _wsprintfA(szDbgSize, SKIPLEN(countof(szDbgSize)) "ApplyConsoleInfo: SizeWasChanged(cx=%i, cy=%i)", nNewWidth, nNewHeight);
+						char szDbgSize[128]; sprintf_c(szDbgSize, "ApplyConsoleInfo: SizeWasChanged(cx=%i, cy=%i)", nNewWidth, nNewHeight);
 						LOGCONSOLECHANGE(szDbgSize);
 					}
 
 					#ifdef _DEBUG
-					wchar_t szDbgSize[128]; _wsprintf(szDbgSize, SKIPLEN(countof(szDbgSize)) L"ApplyConsoleInfo.SizeWasChanged(cx=%i, cy=%i)", nNewWidth, nNewHeight);
+					wchar_t szDbgSize[128]; swprintf_c(szDbgSize, L"ApplyConsoleInfo.SizeWasChanged(cx=%i, cy=%i)", nNewWidth, nNewHeight);
 					DEBUGSTRSIZE(szDbgSize);
 					#endif
 
@@ -2791,7 +2791,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 		#ifdef _DEBUG
 		{
 			wchar_t szCursorInfo[60];
-			_wsprintf(szCursorInfo, SKIPLEN(countof(szCursorInfo)) L"Cursor (X=%i, Y=%i, Vis:%i, H:%i)\n",
+			swprintf_c(szCursorInfo, L"Cursor (X=%i, Y=%i, Vis:%i, H:%i)\n",
 						con.m_sbi.dwCursorPosition.X, con.m_sbi.dwCursorPosition.Y,
 						con.m_ci.bVisible, con.m_ci.dwSize);
 			DEBUGSTRPKT(szCursorInfo);
@@ -3157,11 +3157,11 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 								CRealConsole* pRCon = VCon->RCon();
 
 								if (pRCon->m_FarInfo.FarVer.dwVerMajor == 1)
-									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 \"%i:%i\" Enter $end", cmd.nLine, cmd.nColon);
+									swprintf_c(szMacro, L"@$if(Editor) AltF8 \"%i:%i\" Enter $end", cmd.nLine, cmd.nColon);
 								else if (pRCon->m_FarInfo.FarVer.IsFarLua())
-									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@if Area.Editor then Keys(\"AltF8\") print(\"%i:%i\") Keys(\"Enter\") end", cmd.nLine, cmd.nColon);
+									swprintf_c(szMacro, L"@if Area.Editor then Keys(\"AltF8\") print(\"%i:%i\") Keys(\"Enter\") end", cmd.nLine, cmd.nColon);
 								else
-									_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"@$if(Editor) AltF8 print(\"%i:%i\") Enter $end", cmd.nLine, cmd.nColon);
+									swprintf_c(szMacro, L"@$if(Editor) AltF8 print(\"%i:%i\") Enter $end", cmd.nLine, cmd.nColon);
 
 								// -- Послать что-нибудь в консоль, чтобы фар ушел из UserScreen открытого через редактор?
 								//PostMouseEvent(WM_LBUTTONUP, 0, crFrom);
@@ -3200,8 +3200,8 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 								if (gpSet->sFarGotoEditor && *gpSet->sFarGotoEditor)
 								{
 									wchar_t szRow[32], szCol[32];
-									_wsprintf(szRow, SKIPLEN(countof(szRow)) L"%u", cmd.nLine);
-									_wsprintf(szCol, SKIPLEN(countof(szCol)) L"%u", cmd.nColon);
+									swprintf_c(szRow, L"%u", cmd.nLine);
+									swprintf_c(szCol, L"%u", cmd.nColon);
 									//LPCWSTR pszVar[] = {L"%1", L"%2", L"%3", ...};
 									//%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File
 
@@ -3461,7 +3461,7 @@ void CRealBuffer::OnTimerCheckSelection()
 bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse)
 {
 	#ifdef _DEBUG
-	wchar_t szDbgInfo[200]; _wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"RBuf::OnMouse %s XY={%i,%i} CR={%i,%i} SelFlags=x%08X\n",
+	wchar_t szDbgInfo[200]; swprintf_c(szDbgInfo, L"RBuf::OnMouse %s XY={%i,%i} CR={%i,%i} SelFlags=x%08X\n",
 		messg==WM_MOUSEMOVE?L"WM_MOUSEMOVE":
 		messg==WM_LBUTTONDOWN?L"WM_LBUTTONDOWN":messg==WM_LBUTTONUP?L"WM_LBUTTONUP":messg==WM_LBUTTONDBLCLK?L"WM_LBUTTONDBLCLK":
 		messg==WM_RBUTTONDOWN?L"WM_RBUTTONDOWN":messg==WM_RBUTTONUP?L"WM_RBUTTONUP":messg==WM_RBUTTONDBLCLK?L"WM_RBUTTONDBLCLK":
@@ -3629,7 +3629,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			{
 				// Anyway, clicks would be ignored
 				#ifdef _DEBUG
-				_wsprintf(szDbgInfo, SKIPCOUNT(szDbgInfo) L"Selection: %s %s ignored", GetMouseMsgName(messg), bInside ? L"Inside" : L"Outside");
+				swprintf_c(szDbgInfo, L"Selection: %s %s ignored", GetMouseMsgName(messg), bInside ? L"Inside" : L"Outside");
 				DEBUGSTRSEL(szDbgInfo);
 				#endif
 				con.mn_SkipNextMouseEvent = (messg == WM_LBUTTONDOWN) ? WM_LBUTTONUP : 0;
@@ -3897,7 +3897,7 @@ wrap:
 	{
 		con.mn_SkipNextMouseEvent = 0;
 		#ifdef _DEBUG
-		_wsprintf(szDbgInfo, SKIPCOUNT(szDbgInfo) L"Selection: %s is skipped", GetMouseMsgName(messg));
+		swprintf_c(szDbgInfo, L"Selection: %s is skipped", GetMouseMsgName(messg));
 		DEBUGSTRSEL(szDbgInfo);
 		#endif
 		lbSkip = true;
@@ -3981,7 +3981,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		}
 
 		#ifdef _DEBUG
-		wchar_t szLog[200]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Selection: %s %s",
+		wchar_t szLog[200]; swprintf_c(szLog, L"Selection: %s %s",
 			(messg == WM_LBUTTONDOWN) ? L"WM_LBUTTONDOWN" : L"WM_LBUTTONDBLCLK",
 			bTripleClick ? L"bTripleClick" : L"");
 		DEBUGSTRSEL(szLog);
@@ -4813,7 +4813,7 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 		if (anchor != con.m_sel.dwSelectionAnchor)
 		{
 			wchar_t szLog[140];
-			_wsprintf(szLog, SKIPCOUNT(szLog)
+			swprintf_c(szLog,
 				L"Selection: %s: Coord={%i,%i} Old={%i,%i}:{%i,%i}-{%i,%i} New={%i,%i}:{%i,%i}-{%i,%i}",
 				(con.m_sel.dwFlags & CONSOLE_LEFT_ANCHOR) ? L"<<LeftAnchor" :
 				(con.m_sel.dwFlags & CONSOLE_RIGHT_ANCHOR) ? L"RightAnchor>>" : L"???",
@@ -5140,7 +5140,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 		}
 		else
 		{
-			//wchar_t szClass[64]; _wsprintf(szClass, SKIPLEN(countof(szClass)) L"ConEmu%s%s", gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x32",L"x64"));
+			//wchar_t szClass[64]; swprintf_c(szClass, L"ConEmu%s%s", gpConEmu->ms_ConEmuBuild, WIN3264TEST(L"x32",L"x64"));
 			html = new CHtmlCopy((nFormat == 2), gpConEmu->ms_ConEmuBuild, gpFontMgr->FontFaceName(), gpFontMgr->FontHeightHtml(), crFore, crBack);
 		}
 	}
@@ -7151,7 +7151,7 @@ bool CRealBuffer::SetTopLeft(int ay /*= -1*/, int ax /*= -1*/, bool abServerCall
 
 		#ifdef _DEBUG
 		wchar_t szDbg[120]; DWORD nSrvPID = mp_RCon->GetServerPID();
-		_wsprintf(szDbg, SKIPCOUNT(szDbg) L"TopLeft changed to {%i,%i} from {%i,%i} SrvPID=%u\n", ay,ax, con.TopLeft.y, con.TopLeft.x, nSrvPID);
+		swprintf_c(szDbg, L"TopLeft changed to {%i,%i} from {%i,%i} SrvPID=%u\n", ay,ax, con.TopLeft.y, con.TopLeft.x, nSrvPID);
 		DEBUGSTRTOPLEFT(szDbg);
 		#endif
 	}

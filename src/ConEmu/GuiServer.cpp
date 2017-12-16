@@ -80,14 +80,14 @@ bool CGuiServer::Start()
 {
 	// Запустить серверную нить
 	// 120122 - теперь через PipeServer
-	_wsprintf(ms_ServerPipe, SKIPLEN(countof(ms_ServerPipe)) CEGUIPIPENAME, L".", LODWORD(ghWnd)); //-V205
+	swprintf_c(ms_ServerPipe, CEGUIPIPENAME, L".", LODWORD(ghWnd)); //-V205
 
 	mp_GuiServer->SetOverlapped(true);
 	mp_GuiServer->SetLoopCommands(false);
 	mp_GuiServer->SetDummyAnswerSize(sizeof(CESERVER_REQ_HDR));
 
 	// Issue 1828: FindWindowEx may fail in some cases, only PID will be working...
-	_wsprintf(ms_ServerPipePID, SKIPLEN(countof(ms_ServerPipePID)) CESERVERPIPENAME, L".", GetCurrentProcessId());
+	swprintf_c(ms_ServerPipePID, CESERVERPIPENAME, L".", GetCurrentProcessId());
 
 	mp_GuiServerPID->SetOverlapped(true);
 	mp_GuiServerPID->SetLoopCommands(false);
@@ -244,7 +244,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			if (pIn->NewCmd.isAdvLogging > gpSet->isLogging())
 			{
 				wchar_t szLogLevel[80];
-				_wsprintf(szLogLevel, SKIPLEN(countof(szLogLevel))
+				swprintf_c(szLogLevel,
 					L"Changing log level! Old=%u, New=%u",
 					(UINT)gpSet->isLogging(), (UINT)pIn->NewCmd.isAdvLogging);
 				gpConEmu->LogString(szLogLevel);
@@ -592,7 +592,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			if (pIn->AttachGuiApp.hWindow == NULL)
 			{
 				wchar_t szDbg[1024];
-				_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"AttachGuiApp requested from:\n%s\nPID=%u", pIn->AttachGuiApp.sAppFilePathName, pIn->AttachGuiApp.nPID);
+				swprintf_c(szDbg, L"AttachGuiApp requested from:\n%s\nPID=%u", pIn->AttachGuiApp.sAppFilePathName, pIn->AttachGuiApp.nPID);
 				//MBoxA(szDbg);
 				MsgBox(szDbg, MB_SYSTEMMODAL, L"ConEmu", NULL, false);
 			}

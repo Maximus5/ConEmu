@@ -681,7 +681,7 @@ CESERVER_REQ* ExecuteGuiCmd(HWND hConWnd, CESERVER_REQ* pIn, HWND hOwner, BOOL b
 		return NULL;
 
 	DWORD nLastErr = GetLastError();
-	//_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CEGUIPIPENAME, L".", (DWORD)hConWnd);
+	//swprintf_c(szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)hConWnd);
 	msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", LODWORD(hConWnd));
 
 	#ifdef _DEBUG
@@ -743,7 +743,7 @@ CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL
 		return NULL;
 
 	DWORD nLastErr = GetLastError();
-	//_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
+	//swprintf_c(szPipeName, CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
 	msprintf(szPipeName, countof(szPipeName), CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
 	CESERVER_REQ* lpRet = ExecuteCmd(szPipeName, pIn, nTimeout, hOwner, bAsyncNoResult, dwSrvPID, bIgnoreAbsence);
 	_ASSERTE(pIn->hdr.bAsync == bAsyncNoResult);
@@ -760,7 +760,7 @@ CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner, BOOL b
 		return NULL;
 
 	DWORD nLastErr = GetLastError();
-	//_wsprintf(szPipeName, SKIPLEN(countof(szPipeName)) CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
+	//swprintf_c(szPipeName, CESERVERPIPENAME, L".", (DWORD)dwSrvPID);
 	msprintf(szPipeName, countof(szPipeName), CEHOOKSPIPENAME, L".", (DWORD)dwHkPID);
 	CESERVER_REQ* lpRet = ExecuteCmd(szPipeName, pIn, 1000, hOwner, bAsyncNoResult, dwHkPID, bIgnoreAbsence);
 	SetLastError(nLastErr); // Чтобы не мешать процессу своими возможными ошибками общения с пайпом
@@ -799,7 +799,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 	}
 
 	#ifdef _DEBUG
-	_wsprintf(szDbgPrefix, SKIPLEN(countof(szDbgPrefix)) L">> ExecCmd: PID=%5u  TID=%5u  Cmd=%3u  ", GetCurrentProcessId(), GetCurrentThreadId(), pIn->hdr.nCmd);
+	swprintf_c(szDbgPrefix, L">> ExecCmd: PID=%5u  TID=%5u  Cmd=%3u  ", GetCurrentProcessId(), GetCurrentThreadId(), pIn->hdr.nCmd);
 	pszDbgMsg = lstrmerge(szDbgPrefix, szPipeName, L"\n");
 	if (pszDbgMsg) { DEBUGSTRCMD(pszDbgMsg); free(pszDbgMsg); }
 	#endif
@@ -975,7 +975,7 @@ CESERVER_REQ* ExecuteCmd(const wchar_t* szPipeName, CESERVER_REQ* pIn, DWORD nWa
 wrap:
 	#ifdef _DEBUG
 	if (pOut)
-		_wsprintf(szDbgResult, SKIPLEN(countof(szDbgResult)) L"- Data=%5u  Err=%u\n", pOut->DataSize(), dwErr);
+		swprintf_c(szDbgResult, L"- Data=%5u  Err=%u\n", pOut->DataSize(), dwErr);
 	else
 		lstrcpyn(szDbgResult, L"[NULL]\n", countof(szDbgResult));
 	pszDbgMsg = lstrmerge(szDbgPrefix, szDbgResult);
@@ -1220,7 +1220,7 @@ HWND GetConEmuHWND(int aiType)
 		pIn = (CESERVER_REQ*)calloc(1,sizeof(CESERVER_REQ));
 
 		ExecutePrepareCmd(pIn, CECMD_GETGUIHWND, sizeof(CESERVER_REQ_HDR));
-		//_wsprintf(szGuiPipeName, SKIPLEN(countof(szGuiPipeName)) CEGUIPIPENAME, L".", (DWORD)FarHwnd);
+		//swprintf_c(szGuiPipeName, CEGUIPIPENAME, L".", (DWORD)FarHwnd);
 		msprintf(szGuiPipeName, cchMax, CEGUIPIPENAME, L".", (DWORD)FarHwnd);
 		// Таймаут уменьшим, т.к. на результат не надеемся
 		pOut = ExecuteCmd(szGuiPipeName, pIn, 250, FarHwnd);

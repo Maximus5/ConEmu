@@ -1527,9 +1527,9 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 			}
 
 			if ((V == nActiveCon) && (T <= 9))
-				_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/&%i]%s", V+1, T, szMark);
+				swprintf_c(pTabs[cchCount].Title, L"[%i/&%i]%s", V+1, T, szMark);
 			else
-				_wsprintf(pTabs[cchCount].Title, SKIPLEN(countof(pTabs[cchCount].Title)) L"[%i/%i]%s", V+1, T, szMark);
+				swprintf_c(pTabs[cchCount].Title, L"[%i/%i]%s", V+1, T, szMark);
 
 			#ifdef _DEBUG
 			if (pRCon->IsFarLua())
@@ -1611,7 +1611,7 @@ bool CConEmuCtrl::key_RunTask(const ConEmuChord& VkState, bool TestOnly, const C
 	if (gpSet->CmdTaskGet(hk->GetTaskIndex()))
 	{
 		wchar_t szMacro[64];
-		_wsprintf(szMacro, SKIPLEN(countof(szMacro)) L"Task(%i)", hk->GetTaskIndex()+1); //1-based
+		swprintf_c(szMacro, L"Task(%i)", hk->GetTaskIndex()+1); //1-based
 		wchar_t* pszResult = ConEmuMacro::ExecuteMacro(szMacro, pRCon);
 		SafeFree(pszResult);
 	}

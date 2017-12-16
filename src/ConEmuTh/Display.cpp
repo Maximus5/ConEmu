@@ -257,7 +257,7 @@ HWND CeFullPanelInfo::CreateView()
 
 	this->cbSize = sizeof(*this);
 	wchar_t szTitle[128];
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu.%sPanelView.%i", (this->bLeftPanel) ? L"Left" : L"Right", gnSelfPID);
+	swprintf_c(szTitle, L"ConEmu.%sPanelView.%i", (this->bLeftPanel) ? L"Left" : L"Right", gnSelfPID);
 	lhView = CreateWindow(gsDisplayClassName, szTitle, WS_CHILD|WS_CLIPSIBLINGS, 0,0,0,0,
 	                      ghConEmuWnd, NULL, (HINSTANCE)ghPluginModule, (LPVOID)this);
 #ifdef _DEBUG
@@ -1443,7 +1443,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 
 #ifdef _DEBUG
 	wchar_t szDbg[512];
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"CeFullPanelInfo::Paint(%s, Items=%i, Top=%i, Current=%i)\n",
+	swprintf_c(szDbg, L"CeFullPanelInfo::Paint(%s, Items=%i, Top=%i, Current=%i)\n",
 	          this->bLeftPanel ? L"Left" : L"Right", (int)ItemsNumber, (int)OurTopPanelItem, (int)CurrentItem);
 	DEBUGSTRCTRL(szDbg);
 #ifdef DEBUG_PAINT

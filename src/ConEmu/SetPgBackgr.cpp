@@ -57,7 +57,7 @@ LRESULT CSetPgBackgr::OnInitDialog(HWND hDlg, bool abInitial)
 
 	checkDlgButton(hDlg, cbBgImage, BST(gpSet->isShowBgImage));
 
-	_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%i", gpSet->bgImageDarker);
+	swprintf_c(tmp, L"%i", gpSet->bgImageDarker);
 	SendDlgItemMessage(hDlg, tDarker, EM_SETLIMITTEXT, 3, 0);
 	SetDlgItemText(hDlg, tDarker, tmp);
 	SendDlgItemMessage(hDlg, slDarker, TBM_SETRANGE, (WPARAM) true, (LPARAM) MAKELONG(0, 255));

@@ -276,13 +276,13 @@ public:
 			SYSTEMTIME st = {};
 			if (FileTimeToLocalFileTime(&CreationTime, &lft)
 				&& FileTimeToSystemTime(&lft, &st))
-					_wsprintf(szStartTime, SKIPLEN(countof(szStartTime))
+					swprintf_c(szStartTime,
 						L"%u-%02u-%02u %02u:%02u:%02u.%03u",
 						st.wYear, st.wMonth, st.wDay,
 						st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 		}
 
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%u.%u.%u.x%u", osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, bWin64 ? 64 : 32);
+		swprintf_c(szTitle, L"%u.%u.%u.x%u", osv.dwMajorVersion, osv.dwMinorVersion, osv.dwBuildNumber, bWin64 ? 64 : 32);
 		if ((osv.dwMajorVersion == 6) && (osv.dwMinorVersion == 3))
 		{
 			if (IsWin10())
@@ -292,10 +292,10 @@ public:
 		wchar_t szBuild[24], szVer4[8] = L"";
 		lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
 		// Same as ConsoleMain.cpp::SetWorkEnvVar()
-		_wsprintf(szBuild, SKIPCOUNT(szBuild) L"%02u%02u%02u%s%s",
+		swprintf_c(szBuild, L"%02u%02u%02u%s%s",
 			(MVV_1%100), MVV_2, MVV_3, szVer4[0]&&szVer4[1]?L"-":L"", szVer4);
 
-		_wsprintf(szSI, SKIPCOUNT(szSI) L"ConEmu %s [%u] Startup Info\r\n"
+		swprintf_c(szSI, L"ConEmu %s [%u] Startup Info\r\n"
 			L"  OsVer: %s, Product: %u, SP: %u.%u, Suite: 0x%X, SM_SERVERR2: %u\r\n"
 			L"  CSDVersion: %s, ReactOS: %u (%s), Rsrv: %u\r\n"
 			L"  DBCS: %u, WINE: %u, PE: %u, Remote: %u, ACP: %u, OEMCP: %u, Admin: %u\r\n"
@@ -312,7 +312,7 @@ public:
 		lstrcpyn(szDesktop, apStartEnv->si.lpDesktop ? apStartEnv->si.lpDesktop : L"<NULL>", countof(szDesktop));
 		lstrcpyn(szTitle, apStartEnv->si.lpTitle ? apStartEnv->si.lpTitle : L"<NULL>", countof(szTitle));
 
-		_wsprintf(szSI, SKIPLEN(countof(szSI))
+		swprintf_c(szSI,
 			L"  Desktop: %s%s%s, SessionId: %s, ConsoleSessionId: %u\r\n  Title: %s%s%s\r\n  Size: {%u,%u},{%u,%u}\r\n"
 			L"  Flags: 0x%08X, ShowWindow: %u, ConHWnd: 0x%08X\r\n"
 			L"  char: %u, short: %u, int: %u, long: %u, u64: %u\r\n"
@@ -338,27 +338,27 @@ public:
 			{
 				ZeroStruct(szTitle);
 				if (pfnGetConsoleKeyboardLayoutName(szTitle))
-					_wsprintf(szSI, SKIPLEN(countof(szSI)) L"  Active console layout name: '%s'", szTitle);
+					swprintf_c(szSI, L"  Active console layout name: '%s'", szTitle);
 			}
 			if (!*szSI)
-				_wsprintf(szSI, SKIPLEN(countof(szSI)) L"  Active console layout: Unknown, code=%u", GetLastError());
+				swprintf_c(szSI, L"  Active console layout: Unknown, code=%u", GetLastError());
 			dumpEnvStr(szSI, true);
 		}
 
 		// PID & TID
-		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"  Current PID: %u, TID: %u", GetCurrentProcessId(), GetCurrentThreadId());
+		swprintf_c(szSI, L"  Current PID: %u, TID: %u", GetCurrentProcessId(), GetCurrentThreadId());
 		dumpEnvStr(szSI, true);
 
 		// Текущий HKL (он может отличаться от GetConsoleKeyboardLayoutNameW
 		HKL hkl[32] = {NULL};
 		hkl[0] = GetKeyboardLayout(0);
-		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"  Active HKL: " WIN3264TEST(L"0x%08X",L"0x%08X%08X"), WIN3264WSPRINT((DWORD_PTR)hkl[0]));
+		swprintf_c(szSI, L"  Active HKL: " WIN3264TEST(L"0x%08X",L"0x%08X%08X"), WIN3264WSPRINT((DWORD_PTR)hkl[0]));
 		dumpEnvStr(szSI, true);
 		// Установленные в системе HKL
 		UINT nHkl = GetKeyboardLayoutList(countof(hkl), hkl);
 		if (!nHkl || (nHkl > countof(hkl)))
 		{
-			_wsprintf(szSI, SKIPLEN(countof(szSI)) L"  GetKeyboardLayoutList failed, code=%u", GetLastError());
+			swprintf_c(szSI, L"  GetKeyboardLayoutList failed, code=%u", GetLastError());
 			dumpEnvStr(szSI, true);
 		}
 		else
@@ -407,7 +407,7 @@ public:
 		RECT rcFore = {0}; if (hFore) GetWindowRect(hFore, &rcFore);
 		if (hFore) GetClassName(hFore, szDesktop, countof(szDesktop)-1); else szDesktop[0] = 0;
 		if (hFore) GetWindowText(hFore, szTitle, countof(szTitle)-1); else szTitle[0] = 0;
-		_wsprintf(szSI, SKIPLEN(countof(szSI)) L"Foreground: x%08X {%i,%i}-{%i,%i} '%s' - %s", (DWORD)(DWORD_PTR)hFore, LOGRECTCOORDS(rcFore), szDesktop, szTitle);
+		swprintf_c(szSI, L"Foreground: x%08X {%i,%i}-{%i,%i} '%s' - %s", (DWORD)(DWORD_PTR)hFore, LOGRECTCOORDS(rcFore), szDesktop, szTitle);
 		dumpEnvStr(szSI, true);
 
 		POINT ptCur = {0}; GetCursorPos(&ptCur);
@@ -416,7 +416,7 @@ public:
 		HMONITOR hMonFromStart = apStartEnv->hStartMon;
 		if (!hMonFromStart || !GetMonitorInfo(hMonFromStart, &mon))
 			hMonFromStart = NULL;
-		_wsprintf(szSI, SKIPLEN(countof(szSI))
+		swprintf_c(szSI,
 			L"MouseCursor: {%i,%i} MouseMonitor: %08X StartMonitor: %08X",
 			ptCur.x, ptCur.y, LODWORD(hMonFromMouse), LODWORD(hMonFromStart));
 		dumpEnvStr(szSI, true);
@@ -430,7 +430,7 @@ public:
 		int nDevCaps = GetDeviceCaps(hdcScreen,RASTERCAPS);
 		int nDpiX = GetDeviceCaps(hdcScreen, LOGPIXELSX);
 		int nDpiY = GetDeviceCaps(hdcScreen, LOGPIXELSY);
-		_wsprintf(szSI, SKIPLEN(countof(szSI))
+		swprintf_c(szSI,
 			L"Display: bpp=%i, planes=%i, align=%i, vrefr=%i, shade=x%08X, rast=x%08X, dpi=%ix%i, per-mon-dpi=%u",
 			apStartEnv->nBPP, nPlanes, nAlignment, nVRefr, nShadeCaps, nDevCaps, nDpiX, nDpiY, apStartEnv->bIsPerMonitorDpi);
 		ReleaseDC(NULL, hdcScreen);
@@ -446,13 +446,13 @@ public:
 				if (p->dpis[j].x || p->dpis[j].y)
 				{
 					wchar_t szDpi[32];
-					_wsprintf(szDpi, SKIPLEN(countof(szDpi))
+					swprintf_c(szDpi,
 						szDesktop[0] ? L";{%i,%i}" : L"{%i,%i}",
 						p->dpis[j].x, p->dpis[j].y);
 					wcscat_c(szDesktop, szDpi);
 				}
 			}
-			_wsprintf(szSI, SKIPLEN(countof(szSI))
+			swprintf_c(szSI,
 				L"  %08X: {%i,%i}-{%i,%i} (%ix%i), Working: {%i,%i}-{%i,%i} (%ix%i), dpi: %s `%s`%s",
 				(DWORD)(DWORD_PTR)p->hMon,
 				LOGRECTCOORDS(p->rcMonitor), LOGRECTSIZE(p->rcMonitor),
@@ -473,7 +473,7 @@ public:
 				{
 					DWORD_PTR ptrStart = (DWORD_PTR)mi.modBaseAddr;
 					DWORD_PTR ptrEnd = (DWORD_PTR)mi.modBaseAddr + (DWORD_PTR)(mi.modBaseSize ? (mi.modBaseSize-1) : 0);
-					_wsprintf(szSI, SKIPLEN(countof(szSI))
+					swprintf_c(szSI,
 						L"  " WIN3264TEST(L"%08X-%08X",L"%08X%08X-%08X%08X") L" %8X %s",
 						WIN3264WSPRINT(ptrStart), WIN3264WSPRINT(ptrEnd), mi.modBaseSize, mi.szExePath);
 					dumpEnvStr(szSI, true);

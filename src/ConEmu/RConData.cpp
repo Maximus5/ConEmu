@@ -260,7 +260,7 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 			{
 				//_ASSERTE(nShiftRows>=0);
 				wchar_t szLog[200];
-				_wsprintf(szLog, SKIPCOUNT(szLog) L"!!! CRealBuffer::GetConsoleData !!! "
+				swprintf_c(szLog, L"!!! CRealBuffer::GetConsoleData !!! "
 					L"nShiftRows=%i nWidth=%i nHeight=%i Rect={%i,%i}-{%i,%i} Buf={%i,%i}",
 					lnShiftRows, anWidth, anHeight,
 					m_sbi.srWindow.Left, m_sbi.srWindow.Top, m_sbi.srWindow.Right, m_sbi.srWindow.Bottom,

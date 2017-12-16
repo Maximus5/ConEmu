@@ -273,7 +273,7 @@ const wchar_t* szDefaultXmlName = L"Background.xml";
 void ReportFail(LPCWSTR asInfo)
 {
 	wchar_t szTitle[128];
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuBg, PID=%u", GetCurrentProcessId());
+	swprintf_c(szTitle, L"ConEmuBg, PID=%u", GetCurrentProcessId());
 
 	wchar_t* pszErr = lstrmerge(asInfo,
 		L"\n" L"Config value: ", gsXmlConfigFile[0] ? gsXmlConfigFile : szDefaultXmlName,
@@ -426,12 +426,12 @@ bool CheckXmlFile(bool abUpdateName /*= false*/)
 				LPBYTE ptrData = (LPBYTE)calloc(inf.nFileSizeLow+1, sizeof(*ptrData));
 				if (!ptrData)
 				{
-					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't allocate %u bytes for xml configuration", inf.nFileSizeLow+1);
+					swprintf_c(szErr, L"Can't allocate %u bytes for xml configuration", inf.nFileSizeLow+1);
 					ReportFail(szErr);
 				}
 				else if (!ReadFile(hFile, ptrData, inf.nFileSizeLow, &dwRead, NULL) || (dwRead != inf.nFileSizeLow))
 				{
-					_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't read %u bytes from xml configuration file", inf.nFileSizeLow);
+					swprintf_c(szErr, L"Can't read %u bytes from xml configuration file", inf.nFileSizeLow);
 					ReportFail(szErr);
 				}
 				else
@@ -2224,7 +2224,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		{
 			DWORD nPanelBackIdx = CONBACKCOLOR(pBk->nFarColors[col_PanelText]);
 			COLORREF crPanel = pBk->crPalette[nPanelBackIdx];
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"ConEmuBk: Disabled %s - {%i,%i,%i,%i) #%06X\n",
+			swprintf_c(szDbg, L"ConEmuBk: Disabled %s - {%i,%i,%i,%i) #%06X\n",
 				bLeft ? L"Left" : L"Right", rcConPanel.left, rcConPanel.top, rcConPanel.right, rcConPanel.bottom,
 				crPanel);
 			DBGSTR(szDbg);
@@ -2383,7 +2383,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		// Поехали рисовать
 		if (pBk->dwLevel == 0)
 		{
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"ConEmuBk: %s - {%i,%i,%i,%i) #%06X\n",
+			swprintf_c(szDbg, L"ConEmuBk: %s - {%i,%i,%i,%i) #%06X\n",
 				bLeft ? L"Left" : L"Right", rcConPanel.left, rcConPanel.top, rcConPanel.right, rcConPanel.bottom,
 				*pDraw->crBack);
 			DBGSTR(szDbg);
@@ -2628,7 +2628,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		/*
 		OffsetRect(&rcText, 0, LINE_SHIFT_Y);
 
-		_wsprintf(szText, SKIPLEN(countof(szText)) L"Volume: «%s» %s, Format: «%s»", szVolume, szVolumeSize, bkInfo->szFormat ? bkInfo->szFormat : L"");
+		swprintf_c(szText, L"Volume: «%s» %s, Format: «%s»", szVolume, szVolumeSize, bkInfo->szFormat ? bkInfo->szFormat : L"");
 		DrawText(pBk->hdc, szText, -1, &rcText, DT_HIDEPREFIX|DT_RIGHT|DT_SINGLELINE|DT_TOP);
 		OffsetRect(&rcText, 0, LINE_SHIFT_Y);
 
@@ -2714,7 +2714,7 @@ int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 	else
 	{
 		RECT rcConPanel = pBk->LeftPanel.rcPanelRect;
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"ConEmuBk: Invisible Left - {%i,%i,%i,%i)\n",
+		swprintf_c(szDbg, L"ConEmuBk: Invisible Left - {%i,%i,%i,%i)\n",
 			rcConPanel.left, rcConPanel.top, rcConPanel.right, rcConPanel.bottom);
 		DBGSTR(szDbg);
 	}
@@ -2726,7 +2726,7 @@ int WINAPI PaintConEmuBackground(struct PaintBackgroundArg* pBk)
 	else
 	{
 		RECT rcConPanel = pBk->RightPanel.rcPanelRect;
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"ConEmuBk: Invisible Right - {%i,%i,%i,%i)\n",
+		swprintf_c(szDbg, L"ConEmuBk: Invisible Right - {%i,%i,%i,%i)\n",
 			rcConPanel.left, rcConPanel.top, rcConPanel.right, rcConPanel.bottom);
 		DBGSTR(szDbg);
 	}

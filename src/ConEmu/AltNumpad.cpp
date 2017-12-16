@@ -99,7 +99,7 @@ bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		bSkip = true;
 		if ((messg == WM_KEYUP) || (messg == WM_SYSKEYUP))
 			mn_SkipVkKeyUp = 0;
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"AltNumber: KeyUp skipped: msg=%u wParam=%u",
+		swprintf_c(szLog, L"AltNumber: KeyUp skipped: msg=%u wParam=%u",
 			(messg == WM_KEYUP) ? L"KeyUp" :
 			(messg == WM_SYSKEYUP) ? L"SysKeyUp" :
 			(messg == WM_CHAR) ? L"Char" :
@@ -128,9 +128,9 @@ bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		wchar_t wszChars[3] = {wc, 0};
 
 		// Log received and to be posted data
-		//_wsprintf(szLog, SKIPCOUNT(szLog) L"Received by AltNumber: system=%c (%u) internal=%s (x%X)",
+		//swprintf_c(szLog, L"Received by AltNumber: system=%c (%u) internal=%s (x%X)",
 		//	wc ? wc : L'?', (UINT)wc, wszChars, wc32);
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"%s: OS=%s (%u/x%X) (internal=x%X)",
+		swprintf_c(szLog, L"%s: OS=%s (%u/x%X) (internal=x%X)",
 			(action == eAltCharAccept) ? L"AltNumber: Received" : L"AltNumber: Skipped",
 			wszChars, (UINT)wc, (UINT)wc, wc32);
 		LogString(szLog);
@@ -262,7 +262,7 @@ bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		else
 		{
 			// Dump collected codepoint before clearing
-			_wsprintf(szLog, SKIPCOUNT(szLog) L"AltNumber: Cleared: codepoint=x%X", LODWORD(mn_AltNumber));
+			swprintf_c(szLog, L"AltNumber: Cleared: codepoint=x%X", LODWORD(mn_AltNumber));
 			LogString(szLog);
 
 			// Clear collected codepoint due to invalid input
@@ -293,7 +293,7 @@ void CAltNumpad::StartCapture(UINT NumberBase, UINT Initial, bool External)
 	}
 
 	wchar_t szLog[80];
-	_wsprintf(szLog, SKIPCOUNT(szLog) L"AltNumber: Starting: Base=%u Initial=%u %s",
+	swprintf_c(szLog, L"AltNumber: Starting: Base=%u Initial=%u %s",
 		NumberBase, Initial, External ? L"External" : L"Internal");
 	LogString(szLog);
 
@@ -316,7 +316,7 @@ void CAltNumpad::ClearAltNumber(bool bFull)
 	// DO NOT RESET m_WaitingForAltChar HERE!
 
 	wchar_t szLog[80];
-	_wsprintf(szLog, SKIPCOUNT(szLog) L"AltNumber: Clearing(Full=%u): Active=%u Gathered=%u",
+	swprintf_c(szLog, L"AltNumber: Clearing(Full=%u): Active=%u Gathered=%u",
 		(UINT)bFull, mb_InAltNumber ? mn_NumberBase : 0, LODWORD(mn_AltNumber));
 	LogString(szLog);
 
@@ -356,11 +356,11 @@ AltCharAction CAltNumpad::DumpAltNumber()
 	wchar_t szLog[120], szCodePoints[32];
 	// Surrogate pair?
 	if (wszChars[0] && wszChars[1])
-		_wsprintf(szCodePoints, SKIPCOUNT(szCodePoints) L"x%X x%X", (UINT)(wszChars[0]), (UINT)(wszChars[1]));
+		swprintf_c(szCodePoints, L"x%X x%X", (UINT)(wszChars[0]), (UINT)(wszChars[1]));
 	else
-		_wsprintf(szCodePoints, SKIPCOUNT(szCodePoints) L"%u", (UINT)(wszChars[0]));
+		swprintf_c(szCodePoints, L"%u", (UINT)(wszChars[0]));
 	// Log our chars collected internally
-	_wsprintf(szLog, SKIPCOUNT(szLog) L"AltNumber: Gathered: char=%s (%s) (codepoint=x%X)",
+	swprintf_c(szLog, L"AltNumber: Gathered: char=%s (%s) (codepoint=x%X)",
 		wszChars, szCodePoints, wc32);
 	LogString(szLog);
 
@@ -500,7 +500,7 @@ void CAltNumpad::DumpStatus()
 		{
 			wchar_t wszChars[3] = L"", szStatus[80];
 			ucs32 wc32 = GetChars(wszChars);
-			_wsprintf(szStatus, SKIPCOUNT(szStatus) L"Alt+Num: `%s` (%Xh/%u)", wszChars, wc32, wc32);
+			swprintf_c(szStatus, L"Alt+Num: `%s` (%Xh/%u)", wszChars, wc32, wc32);
 			lsStatus = lstrmerge(szStatus,
 				CLngRc::getRsrc(
 					mb_External ? lng_AltNumberExt/*" - <Enter> to paste, <Esc> to cancel"*/

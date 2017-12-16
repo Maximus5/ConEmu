@@ -73,7 +73,7 @@ int OsVerInfo()
 	UINT TELNET = isTerminalMode();
 
 	wchar_t szInfo[200];
-	_wsprintf(szInfo, SKIPCOUNT(szInfo)
+	swprintf_c(szInfo,
 		L"OS version information\n"
 		L"%u.%u build %u SP%u.%u suite=x%04X type=%u\n"
 		L"W5fam=%u WXPSP1=%u W6=%u W7=%u W10=%u Wx64=%u\n"
@@ -214,8 +214,8 @@ int DoInjectHooks(LPWSTR asCmdArg)
 	wchar_t szDbgMsg[512], szTitle[128];
 	PROCESSENTRY32 pinf;
 	GetProcessInfo(pi.dwProcessId, &pinf);
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuCD PID=%u", GetCurrentProcessId());
-	_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"InjectsTo PID=%s {%s}\nConEmuCD PID=%u", asCmdArg ? asCmdArg : L"", pinf.szExeFile, GetCurrentProcessId());
+	swprintf_c(szTitle, L"ConEmuCD PID=%u", GetCurrentProcessId());
+	swprintf_c(szDbgMsg, L"InjectsTo PID=%s {%s}\nConEmuCD PID=%u", asCmdArg ? asCmdArg : L"", pinf.szExeFile, GetCurrentProcessId());
 	MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 	#endif
 
@@ -234,16 +234,16 @@ int DoInjectHooks(LPWSTR asCmdArg)
 		DWORD nErrCode = GetLastError();
 		//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
 		wchar_t szDbgMsg[255], szTitle[128];
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC[%u], PID=%u", WIN3264TEST(32,64), GetCurrentProcessId());
-		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
+		swprintf_c(szTitle, L"ConEmuC[%u], PID=%u", WIN3264TEST(32,64), GetCurrentProcessId());
+		swprintf_c(szDbgMsg, L"ConEmuC.X, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
 		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 	}
 	else
 	{
 		//_ASSERTE(pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId);
 		wchar_t szDbgMsg[512], szTitle[128];
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u,%u,%u,%u,%u)!\n%s",
+		swprintf_c(szTitle, L"ConEmuC, PID=%u", GetCurrentProcessId());
+		swprintf_c(szDbgMsg, L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u,%u,%u,%u,%u)!\n%s",
 			GetCurrentProcessId(), LODWORD(pi.hProcess), LODWORD(pi.hThread), pi.dwProcessId, pi.dwThreadId, lbForceGui, //-V205
 			asCmdArg);
 		MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
@@ -279,7 +279,7 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		#if defined(SHOW_ATTACH_MSGBOX)
 		if (!IsDebuggerPresent())
 		{
-			wchar_t szTitle[100]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"%s PID=%u /INJECT", gsModuleName, gnSelfPID);
+			wchar_t szTitle[100]; swprintf_c(szTitle, L"%s PID=%u /INJECT", gsModuleName, gnSelfPID);
 			const wchar_t* pszCmdLine = GetCommandLineW();
 			MessageBox(NULL,pszCmdLine,szTitle,MB_SYSTEMMODAL);
 		}
@@ -298,7 +298,7 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		DWORD nErrCode = 0;
 		CINFILTRATE_EXIT_CODES iHookRc = InjectRemote(nRemotePID, abDefTermOnly, &nErrCode);
 
-		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"InjectRemote result: %i (%s)", iHookRc,
+		swprintf_c(szInfo, L"InjectRemote result: %i (%s)", iHookRc,
 			(iHookRc == CIR_OK) ? L"CIR_OK" :
 			(iHookRc == CIR_AlreadyInjected) ? L"CIR_AlreadyInjected" :
 			L"?");
@@ -323,16 +323,16 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 		// Ошибку (пока во всяком случае) лучше показать, для отлова возможных проблем
 		//_ASSERTE(iHookRc == 0); -- ассерт не нужен, есть MsgBox
 
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle))
+		swprintf_c(szTitle,
 			L"%s %s, PID=%u", gsModuleName, gsVersion, nSelfPID);
 
-		_wsprintf(szInfo, SKIPCOUNT(szInfo)
+		swprintf_c(szInfo,
 			L"Injecting remote FAILED, code=%i:0x%08X\n"
 			L"%s %s, PID=%u\n"
 			L"RemotePID=%u ",
 			iHookRc, nErrCode, gsModuleName, gsVersion, nSelfPID, nRemotePID);
 
-		_wsprintf(szParentPID, SKIPCOUNT(szParentPID)
+		swprintf_c(szParentPID,
 			L"\n"
 			L"ParentPID=%u ",
 			self.th32ParentProcessID);
@@ -350,8 +350,8 @@ int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 	{
 		//_ASSERTE(pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId);
 		wchar_t szDbgMsg[512], szTitle[128];
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmuC, PID=%u", GetCurrentProcessId());
-		_wsprintf(szDbgMsg, SKIPLEN(countof(szDbgMsg)) L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u)!\n%s",
+		swprintf_c(szTitle, L"ConEmuC, PID=%u", GetCurrentProcessId());
+		swprintf_c(szDbgMsg, L"ConEmuC.X, PID=%u\nCmdLine parsing FAILED (%u)!\n%s",
 			GetCurrentProcessId(), nRemotePID,
 			asCmdArg);
 		LogString(szDbgMsg);
@@ -676,7 +676,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 			if (nTestPID == nOurParentPID)
 				continue; // Useless, we just inherited ALL those variables from our parent
 
-			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DoExportEnv: PID=%u `%s`", nTestPID, szName);
+			swprintf_c(szInfo, L"DoExportEnv: PID=%u `%s`", nTestPID, szName);
 			LogString(szInfo);
 
 			// Apply environment
@@ -684,7 +684,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 
 			if (!pOut && !bSilent)
 			{
-				_wsprintf(szInfo, SKIPCOUNT(szInfo)
+				swprintf_c(szInfo,
 					WIN3264TEST(L"ConEmuC",L"ConEmuC64")
 					L": process %s PID=%u was skipped: noninteractive or lack of ConEmuHk\n",
 					szName, nTestPID);
@@ -698,7 +698,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	// We are trying to apply environment to parent tree even if NO server or GUI was found
 	if (nSrvPID)
 	{
-		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"DoExportEnv: PID=%u (server)", nSrvPID);
+		swprintf_c(szInfo, L"DoExportEnv: PID=%u (server)", nSrvPID);
 		LogString(szInfo);
 
 		// Server found? Try to apply environment
@@ -733,7 +733,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 		ExecuteGuiCmd(ghConWnd, pIn, ghConWnd, TRUE);
 	}
 
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) WIN3264TEST(L"ConEmuC",L"ConEmuC64") L": %i %s processed", iVarCount, (iVarCount == 1) ? L"variable was" : L"variables were");
+	swprintf_c(szInfo, WIN3264TEST(L"ConEmuC",L"ConEmuC64") L": %i %s processed", iVarCount, (iVarCount == 1) ? L"variable was" : L"variables were");
 	LogString(szInfo);
 	if (!bSilent)
 	{
@@ -882,7 +882,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 			if (iRead < 0)
 			{
 				wchar_t szInfo[100];
-				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"\r\nCode=%i, Error=%u\r\n", iRead, nErrCode);
+				swprintf_c(szInfo, L"\r\nCode=%i, Error=%u\r\n", iRead, nErrCode);
 				szTemp = lstrmerge(L"Reading source file failed!\r\n", szArg, szInfo);
 				cchLen = szTemp.GetLen();
 				bAsciiPrint = false;

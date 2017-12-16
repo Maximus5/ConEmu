@@ -340,7 +340,7 @@ CStatus::CStatus(CConEmuMain* _owner)
 	}
 	#endif
 
-	_wsprintf(m_Values[csi_ConEmuPID].sText, SKIPLEN(countof(m_Values[csi_ConEmuPID].sText)) L"%u", GetCurrentProcessId());
+	swprintf_c(m_Values[csi_ConEmuPID].sText, L"%u", GetCurrentProcessId());
 
 	// Init some values
 	OnTransparency();
@@ -352,7 +352,7 @@ CStatus::CStatus(CConEmuMain* _owner)
 	wcscpy_c(m_Values[csi_Time].szFormat, L"00:00:00");
 
 	_ASSERTE(gpConEmu && *gpConEmu->ms_ConEmuBuild);
-	_wsprintf(ms_ConEmuBuild, SKIPLEN(countof(ms_ConEmuBuild)) L" %c %s[%u%s]",
+	swprintf_c(ms_ConEmuBuild, L" %c %s[%u%s]",
 		0x00AB/* « */, gpConEmu->ms_ConEmuBuild, WIN3264TEST(32,64), RELEASEDEBUGTEST(L"","D"));
 	ZeroStruct(mpt_StatusResizePt);
 	ZeroStruct(mpt_StatusResizeCmp);
@@ -425,7 +425,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	{
 		wchar_t szPos[100]; RECT rcScreen = rcStatus;
 		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcScreen, 2);
-		_wsprintf(szPos, SKIPCOUNT(szPos) L"StatusBar painted at {%i,%i}-{%i,%i} screen coords (%s)",
+		swprintf_c(szPos, L"StatusBar painted at {%i,%i}-{%i,%i} screen coords (%s)",
 			LOGRECTCOORDS(rcScreen), prcStatus ? L"PTR" : L"calc");
 		DEBUGSTRPAINT(szPos);
 		//OutputDebugStringW(szPos); OutputDebugStringW(L"\n");
@@ -1725,7 +1725,7 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 	{
 		_wsprintf(m_Values[csi_ConsolePos].sText, SKIPLEN(countof(m_Values[csi_ConsolePos].sText)-1) L"(%i,%i)-(%i,%i)",
 			(int)psbi->srWindow.Left+1, (int)psbi->srWindow.Top+1, (int)psbi->srWindow.Right+1, (int)psbi->srWindow.Bottom+1);
-		_wsprintf(m_Values[csi_ConsolePos].szFormat, SKIPLEN(countof(m_Values[csi_ConsolePos].szFormat)) L" (%i,%i)-(%i,%i) ",
+		swprintf_c(m_Values[csi_ConsolePos].szFormat, L" (%i,%i)-(%i,%i) ",
 			(int)psbi->srWindow.Left+1, (int)psbi->srWindow.Top+1, (int)psbi->dwSize.X, (int)psbi->dwSize.Y);
 		if (mb_ViewLock != pTopLeft->isLocked())
 		{
@@ -1736,14 +1736,14 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 		if (mb_ViewLock)
 		{
 			if (pTopLeft->x >= 0)
-				_wsprintf(szX, SKIPCOUNT(szX) L"%i", pTopLeft->x+1);
+				swprintf_c(szX, L"%i", pTopLeft->x+1);
 			else
 				wcscpy_c(szX, L"*");
 			if (pTopLeft->y >= 0)
-				_wsprintf(szY, SKIPCOUNT(szY) L"%i", pTopLeft->y+1);
+				swprintf_c(szY, L"%i", pTopLeft->y+1);
 			else
 				wcscpy_c(szY, L"*");
-			_wsprintf(m_Values[csi_ViewLock].sText, SKIPLEN(countof(m_Values[csi_ViewLock].sText)) L"{%s,%s}", szX, szY);
+			swprintf_c(m_Values[csi_ViewLock].sText, L"{%s,%s}", szX, szY);
 		}
 		else
 		{
@@ -1768,7 +1768,7 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 	else
 		wcscpy_c(m_Values[csi_ConsoleSize].sText, L" ");
 	//m_Values[csi_ConsoleSize].sFormat = L"999x999";
-	//_wsprintf(m_Values[csi_ConsoleSize].szFormat, SKIPLEN(countof(m_Values[csi_ConsoleSize].szFormat)) L" %ix%i",
+	//swprintf_c(m_Values[csi_ConsoleSize].szFormat, L" %ix%i",
 	//	(int)psbi->dwSize.X, max((int)psbi->dwSize.Y,(int)gpSet->DefaultBufferHeight));
 	wcscpy_c(m_Values[csi_ConsoleSize].szFormat, m_Values[csi_ConsoleSize].sText);
 
@@ -1776,7 +1776,7 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 	if (bValid)
 	{
 		_wsprintf(m_Values[csi_BufferSize].sText, SKIPLEN(countof(m_Values[csi_BufferSize].sText)-1) L"%ix%i", (int)psbi->dwSize.X, (int)psbi->dwSize.Y);
-		_wsprintf(m_Values[csi_BufferSize].szFormat, SKIPLEN(countof(m_Values[csi_BufferSize].szFormat)) L" %ix%i",
+		swprintf_c(m_Values[csi_BufferSize].szFormat, L" %ix%i",
 			(int)psbi->dwSize.X, max((int)psbi->dwSize.Y,(int)gpSet->DefaultBufferHeight));
 	}
 	else
@@ -1804,7 +1804,7 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	{
 		_wsprintf(m_Values[csi_CursorX].sText, SKIPLEN(countof(m_Values[csi_CursorX].sText)-1) _T("%i"), (int)pcr->X+1);
 		if (nMaxX)
-			_wsprintf(m_Values[csi_CursorX].szFormat, SKIPLEN(countof(m_Values[csi_CursorX].szFormat)) L" %i", nMaxX);
+			swprintf_c(m_Values[csi_CursorX].szFormat, L" %i", nMaxX);
 	}
 	else
 	{
@@ -1817,7 +1817,7 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	{
 		_wsprintf(m_Values[csi_CursorY].sText, SKIPLEN(countof(m_Values[csi_CursorY].sText)-1) _T("%i"), (int)pcr->Y+1);
 		if (nMaxY)
-			_wsprintf(m_Values[csi_CursorY].szFormat, SKIPLEN(countof(m_Values[csi_CursorY].szFormat)) L" %i", nMaxY);
+			swprintf_c(m_Values[csi_CursorY].szFormat, L" %i", nMaxY);
 	}
 	else
 	{
@@ -1842,7 +1842,7 @@ void CStatus::OnCursorChanged(const COORD* pcr, const CONSOLE_CURSOR_INFO* pci, 
 	{
 		_wsprintf(m_Values[csi_CursorInfo].sText, SKIPLEN(countof(m_Values[csi_CursorInfo].sText)-1) _T("(%i,%i) %i%s"), (int)pcr->X+1, (int)pcr->Y+1, pci->dwSize, pci->bVisible ? L"V" : L"H");
 		if (nMaxX && nMaxY)
-			_wsprintf(m_Values[csi_CursorInfo].szFormat, SKIPLEN(countof(m_Values[csi_CursorInfo].szFormat)) L" (%i,%i) 100V", nMaxX, nMaxY);
+			swprintf_c(m_Values[csi_CursorInfo].szFormat, L" (%i,%i) 100V", nMaxX, nMaxY);
 	}
 	else
 	{
@@ -1893,7 +1893,7 @@ void CStatus::OnActiveVConChanged(int nIndex/*0-based*/, CRealConsole* pRCon)
 
 	if ((nCount > 0) && (nIndex >= 0))
 	{
-		_wsprintf(m_Values[csi_ActiveVCon].sText, SKIPLEN(countof(m_Items[csi_ActiveVCon].sText)) L"%i/%i",
+		swprintf_c(m_Values[csi_ActiveVCon].sText, L"%i/%i",
 			nIndex+1, nCount);
 	}
 	else
@@ -1950,12 +1950,12 @@ void CStatus::OnServerChanged(DWORD nMainServerPID, DWORD nAltServerPID)
 	{
 		if ((nMainServerPID == nAltServerPID) || !nAltServerPID)
 		{
-			_wsprintf(m_Values[csi_Server].sText, SKIPLEN(countof(m_Items[csi_Server].sText)) _T("%u"), nMainServerPID);
+			swprintf_c(m_Values[csi_Server].sText, _T("%u"), nMainServerPID);
 			wcscpy_c(m_Values[csi_Server].szFormat, L"99999");
 		}
 		else
 		{
-			_wsprintf(m_Values[csi_Server].sText, SKIPLEN(countof(m_Values[csi_Server].sText)) _T("%u/%u"), nMainServerPID, nAltServerPID);
+			swprintf_c(m_Values[csi_Server].sText, _T("%u/%u"), nMainServerPID, nAltServerPID);
 			wcscpy_c(m_Values[csi_Server].szFormat, L"99999/99999");
 		}
 	}
@@ -1989,7 +1989,7 @@ bool CStatus::IsTimeChanged()
 	if (st.wHour != mt_LastTime.wHour || st.wMinute != mt_LastTime.wMinute || st.wSecond != mt_LastTime.wSecond)
 	{
 		mt_LastTime = st;
-		_wsprintf(m_Values[csi_Time].sText, SKIPLEN(countof(m_Values[csi_Time].sText)) L"%u:%02u:%02u", (uint)st.wHour, (uint)st.wMinute, (uint)st.wSecond);
+		swprintf_c(m_Values[csi_Time].sText, L"%u:%02u:%02u", (uint)st.wHour, (uint)st.wMinute, (uint)st.wSecond);
 		return true;
 	}
 
@@ -2143,7 +2143,7 @@ void CStatus::OnKeyboardChanged()
 
 void CStatus::OnTransparency()
 {
-	_wsprintf(m_Values[csi_Transparency].sText, SKIPLEN(countof(m_Items[csi_Transparency].sText))
+	swprintf_c(m_Values[csi_Transparency].sText,
 		_T("%u%%%s%s"), (UINT)(gpConEmu->mn_LastTransparentValue >= 255) ? 100 : (gpConEmu->mn_LastTransparentValue * 100 / 255),
 		gpSet->isUserScreenTransparent ? L",USR" : L"",
 		L""); // TODO: ColorKey transparency

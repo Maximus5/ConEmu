@@ -68,7 +68,7 @@ CSetPgBase::~CSetPgBase()
 
 HWND CSetPgBase::CreatePage(ConEmuSetupPages* p, HWND ahParent, UINT anActivateTabMsg, const CDpiForDialog* apParentDpi)
 {
-	wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"Creating child dialog ID=%u", p->DialogID);
+	wchar_t szLog[80]; swprintf_c(szLog, L"Creating child dialog ID=%u", p->DialogID);
 	LogString(szLog);
 
 	SafeDelete(p->pPage);
@@ -394,7 +394,7 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 
 					//gpSet->bgImageDarker = newV;
 					//TCHAR tmp[10];
-					//_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%i", gpSet->bgImageDarker);
+					//swprintf_c(tmp, L"%i", gpSet->bgImageDarker);
 					//SetDlgItemText(hDlg, tDarker, tmp);
 
 					//// Картинку может установить и плагин

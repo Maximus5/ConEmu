@@ -166,7 +166,7 @@ CDragDrop::~CDragDrop()
 DWORD CDragDrop::DragStart(IDropSource *pDropSource, const DWORD dwAllowedEffects, DWORD& dwEffect)
 {
 	DWORD dwResult = E_UNEXPECTED;
-	wchar_t szStep[255]; _wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, LODWORD(mp_DataObject), LODWORD(pDropSource));
+	wchar_t szStep[255]; swprintf_c(szStep, L"DoDragDrop(Eff=0x%X, DataObject=0x%08X, DropSource=0x%08X)", dwAllowedEffects, LODWORD(mp_DataObject), LODWORD(pDropSource));
 	DebugLog(szStep);
 	SAFETRY
 	{
@@ -177,7 +177,7 @@ DWORD CDragDrop::DragStart(IDropSource *pDropSource, const DWORD dwAllowedEffect
 		dwResult = DRAGDROP_S_CANCEL;
 		MBoxA(L"Exception in DoDragDrop\nConEmu restart is recommended");
 	}
-	_wsprintf(szStep, SKIPLEN(countof(szStep)) L"DoDragDrop finished, Code=0x%08X", dwResult);
+	swprintf_c(szStep, L"DoDragDrop finished, Code=0x%08X", dwResult);
 
 	switch(dwResult)
 	{
@@ -508,7 +508,7 @@ HRESULT CDragDrop::FileWrite(HANDLE ahFile, DWORD anSize, LPVOID apData)
 	}
 
 	wchar_t temp[64];
-	_wsprintf(temp, SKIPLEN(countof(temp)) L"Copying %i of %i (%u%c)", (mn_CurFile+1), mn_AllFiles, (DWORD)nPrepared, KM);
+	swprintf_c(temp, L"Copying %i of %i (%u%c)", (mn_CurFile+1), mn_AllFiles, (DWORD)nPrepared, KM);
 	gpConEmu->SetTitle(ghWnd, temp);
 	return S_OK;
 }
@@ -632,7 +632,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject* pDataObject, BOOL abActive)
 
 							if ((nFolderLen + 1) >= cchSubFolder)
 							{
-								_wsprintf(sUnknownError, SKIPLEN(countof(sUnknownError)) L"Drag item #%i contains too long path!", mn_CurFile+1);
+								swprintf_c(sUnknownError, L"Drag item #%i contains too long path!", mn_CurFile+1);
 								DebugLog(sUnknownError, TRUE);
 								SafeFree(pszWideBuf);
 								continue;
@@ -670,7 +670,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject* pDataObject, BOOL abActive)
 						Assert(pszNewFolder!=NULL);
 
 						if (sUnknownError[0] == 0)
-							_wsprintf(sUnknownError, SKIPLEN(countof(sUnknownError)) L"Drag item #%i has invalid file name!", mn_CurFile+1);
+							swprintf_c(sUnknownError, L"Drag item #%i has invalid file name!", mn_CurFile+1);
 
 						SafeFree(pszWideBuf);
 						continue;
@@ -684,7 +684,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject* pDataObject, BOOL abActive)
 
 						if ((nFolderLen + 1) >= cchSubFolder)
 						{
-							_wsprintf(sUnknownError, SKIPLEN(countof(sUnknownError)) L"Drag item #%i contains too long path!", mn_CurFile+1);
+							swprintf_c(sUnknownError, L"Drag item #%i contains too long path!", mn_CurFile+1);
 							DebugLog(sUnknownError, TRUE);
 							SafeFree(pszNewFolder);
 							SafeFree(pszWideBuf);
@@ -740,7 +740,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject* pDataObject, BOOL abActive)
 				if (!pszNewFileName)
 				{
 					if (sUnknownError[0] == 0)
-						_wsprintf(sUnknownError, SKIPLEN(countof(sUnknownError)) L"Drag item #%i has invalid file name!", mn_CurFile+1);
+						swprintf_c(sUnknownError, L"Drag item #%i has invalid file name!", mn_CurFile+1);
 
 					continue;
 				}
@@ -868,7 +868,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject* pDataObject, BOOL abActive)
 				// Ошибку показать один раз на дроп (чтобы не ругаться на КАЖДЫЙ бросаемый файл)
 				//MBoxA(_T("Drag object does not contains known medium!"));
 				if (!lbKnownMedium && (sUnknownError[0] == 0))
-					_wsprintf(sUnknownError, SKIPLEN(countof(sUnknownError)) L"Drag item #%i does not contains known medium!", mn_CurFile+1);
+					swprintf_c(sUnknownError, L"Drag item #%i does not contains known medium!", mn_CurFile+1);
 			}
 
 			// CFSTR_FILEDESCRIPTORx
@@ -1723,7 +1723,7 @@ HRESULT CDragDrop::DragOverInt(DWORD grfKeyState, POINTL pt, DWORD* pdwEffect)
 
 #ifdef _DEBUG
 	wchar_t szDbgInfo[128];
-	_wsprintf(szDbgInfo, SKIPLEN(countof(szDbgInfo)) L"CDragDrop::DragOverInt(%i,%i) -> %s\n",
+	swprintf_c(szDbgInfo, L"CDragDrop::DragOverInt(%i,%i) -> %s\n",
 		pt.x, pt.y,
 		(*pdwEffect == DROPEFFECT_NONE) ? L"DROPEFFECT_NONE" :
 		(*pdwEffect == DROPEFFECT_COPY) ? L"DROPEFFECT_COPY" :

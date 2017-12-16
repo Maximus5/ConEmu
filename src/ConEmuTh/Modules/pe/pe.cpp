@@ -880,11 +880,11 @@ void ParseVersionInfoFixed(PEData *pData,  VS_FIXEDFILEINFO* pVer)
 	{
 		// Чтобы сравнить версию с той, что лежит в строковой части VersionInfo
 		// В таком формате, например, формирует ее VisualC
-		_wsprintf(szTest, SKIPLEN(countof(szTest)) L"%i, %i, %i, %i", nV1, nV2, nV3, nV4);
+		swprintf_c(szTest, L"%i, %i, %i, %i", nV1, nV2, nV3, nV4);
 		if (!lstrcmpiW(szTest, pData->szVersion))
 			pData->szVersion = NULL;
 		// А в таком - можно сэкономить место, отрезав замыкающие нули
-		_wsprintf(szTest, SKIPLEN(countof(szTest)) L"%i.%i.%i.%i", nV1, nV2, nV3, nV4);
+		swprintf_c(szTest, L"%i.%i.%i.%i", nV1, nV2, nV3, nV4);
 		if (!lstrcmpiW(szTest, pData->szVersion))
 			pData->szVersion = NULL;
 		

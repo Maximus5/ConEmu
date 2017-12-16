@@ -78,7 +78,7 @@ void MEvent::InitName(const wchar_t *aszTemplate, DWORD Parm1)
 
 	mb_NameIsNull = (aszTemplate == NULL);
 	if (!mb_NameIsNull)
-		_wsprintf(ms_EventName, SKIPLEN(countof(ms_EventName)) aszTemplate, Parm1);
+		swprintf_c(ms_EventName, aszTemplate, Parm1);
 	mn_LastError = 0;
 }
 

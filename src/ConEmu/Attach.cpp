@@ -232,7 +232,7 @@ bool CAttachDlg::OnStartAttach()
 	pParm = Parms.detach();
 	if (!pParm)
 	{
-		_wsprintf(szItem, SKIPLEN(countof(szItem)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+		swprintf_c(szItem, L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 		DisplayLastError(L"Parms.detach() failed", -1, 0, szItem);
 		goto wrap;
 	}
@@ -242,7 +242,7 @@ bool CAttachDlg::OnStartAttach()
 		if (!hThread)
 		{
 			DWORD dwErr = GetLastError();
-			_wsprintf(szItem, SKIPLEN(countof(szItem)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+			swprintf_c(szItem, L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 			DisplayLastError(L"Can't start attach thread", dwErr, 0, szItem);
 		}
 		else
@@ -308,7 +308,7 @@ CAttachDlg::AttachMacroRet CAttachDlg::AttachFromMacro(DWORD anPID, bool abAlter
 	if (!hThread)
 	{
 		//DWORD dwErr = GetLastError();
-		//_wsprintf(szItem, SKIPLEN(countof(szItem)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+		//swprintf_c(szItem, L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 		//DisplayLastError(L"Can't start attach thread", dwErr, 0, szItem);
 		return amr_Unexpected;
 	}
@@ -343,7 +343,7 @@ BOOL CAttachDlg::AttachDlgEnumWin(HWND hFind, LPARAM lParam)
 			ListView_SetItemText(hList, nItem, alc_Title, Info.szTitle);
 			ListView_SetItemText(hList, nItem, alc_Class, Info.szClass);
 
-			_wsprintf(szHwnd, SKIPLEN(countof(szHwnd)) L"0x%08X", (DWORD)(((DWORD_PTR)hFind) & (DWORD)-1));
+			swprintf_c(szHwnd, L"0x%08X", (DWORD)(((DWORD_PTR)hFind) & (DWORD)-1));
 			ListView_SetItemText(hList, nItem, alc_HWND, szHwnd);
 
 			ListView_SetItemText(hList, nItem, alc_File, Info.szExeName);
@@ -393,14 +393,14 @@ bool CAttachDlg::CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apPro
 	if (gpSet->isLogging())
 	{
 		wchar_t szLogInfo[MAX_PATH*3];
-		_wsprintf(szLogInfo, SKIPLEN(countof(szLogInfo)) L"Attach:%s x%08X/x%08X/x%08X {%s} \"%s\"", Info.szExeName, LODWORD(hFind), nStyle, nStyleEx, Info.szClass, Info.szTitle);
+		swprintf_c(szLogInfo, L"Attach:%s x%08X/x%08X/x%08X {%s} \"%s\"", Info.szExeName, LODWORD(hFind), nStyle, nStyleEx, Info.szClass, Info.szTitle);
 		CVConGroup::LogString(szLogInfo);
 	}
 
 	if (!lbCan)
 		return false;
 
-	_wsprintf(Info.szPid, SKIPLEN(countof(Info.szPid)) L"%u", Info.nPID);
+	swprintf_c(Info.szPid, L"%u", Info.nPID);
 	const wchar_t sz32bit[] = L" [32]";
 	const wchar_t sz64bit[] = L" [64]";
 
@@ -769,7 +769,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	if (gpSet->isLogging())
 	{
 		wchar_t szInfo[128];
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo))
+		swprintf_c(szInfo,
 			L"CAttachDlg::StartAttach HWND=x%08X, PID=%u, Bits%u, Type=%u, AltMode=%u, Leave=%u",
 			(DWORD)(DWORD_PTR)ahAttachWnd, anPID, anBits, (UINT)anType, abAltMode, abLeaveOpened);
 		gpConEmu->LogString(szInfo);
@@ -794,7 +794,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 
 
 	// Is it a Far Manager with our ConEmu.dll plugin loaded?
-	_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEPLUGINPIPENAME, L".", anPID);
+	swprintf_c(szPipe, CEPLUGINPIPENAME, L".", anPID);
 	hPluginTest = CreateFile(szPipe, GENERIC_READ|GENERIC_WRITE, 0, LocalSecurity(), OPEN_EXISTING, 0, NULL);
 	if (hPluginTest && hPluginTest != INVALID_HANDLE_VALUE)
 	{
@@ -803,7 +803,7 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	}
 
 	// May be there is already ConEmuHk[64].dll loaded? Either it is already in the another ConEmu VCon?
-	_wsprintf(szPipe, SKIPLEN(countof(szPipe)) CEHOOKSPIPENAME, L".", anPID);
+	swprintf_c(szPipe, CEHOOKSPIPENAME, L".", anPID);
 	hPipeTest = CreateFile(szPipe, GENERIC_READ|GENERIC_WRITE, 0, LocalSecurity(), OPEN_EXISTING, 0, NULL);
 	if (hPipeTest && hPipeTest != INVALID_HANDLE_VALUE)
 	{
@@ -818,12 +818,12 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 
 	if (abAltMode && (anType == apt_Console))
 	{
-		_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /ATTACH /CONPID=%u /GID=%u /GHWND=%08X",
+		swprintf_c(szArgs, L" /ATTACH /CONPID=%u /GID=%u /GHWND=%08X",
 			anPID, GetCurrentProcessId(), LODWORD(ghWnd));
 	}
 	else
 	{
-		_wsprintf(szArgs, SKIPLEN(countof(szArgs)) L" /INJECT=%u", anPID);
+		swprintf_c(szArgs, L" /INJECT=%u", anPID);
 		abAltMode = FALSE;
 	}
 
@@ -872,8 +872,8 @@ bool CAttachDlg::StartAttach(HWND ahAttachWnd, DWORD anPID, DWORD anBits, Attach
 	{
 		wchar_t szErrMsg[MAX_PATH+255], szTitle[128];
 		DWORD dwErr = GetLastError();
-		_wsprintf(szErrMsg, SKIPLEN(countof(szErrMsg)) L"Can't start %s server\n%s %s", abAltMode ? L"injection" : L"console", szSrv, szArgs);
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+		swprintf_c(szErrMsg, L"Can't start %s server\n%s %s", abAltMode ? L"injection" : L"console", szSrv, szArgs);
+		swprintf_c(szTitle, L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 		DisplayLastError(szErrMsg, dwErr, 0, szTitle);
 		goto wrap;
 	}
@@ -929,7 +929,7 @@ DoPipeCall:
 			wcscat_c(szMsg, L"\nFar ConEmu plugin was loaded");
 		if (hPipeTest && hPipeTest != INVALID_HANDLE_VALUE)
 			wcscat_c(szMsg, L"\nHooks already were set");
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+		swprintf_c(szTitle, L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 		DisplayLastError(szMsg, (pOut && (pOut->hdr.cbSize >= pIn->hdr.cbSize)) ? pOut->dwData[1] : -1, 0, szTitle);
 		goto wrap;
 	}

@@ -587,14 +587,14 @@ union CESize
 		switch (Style)
 		{
 		case ss_Pixels:
-			_wsprintf(TempSZ, SKIPLEN(countof(TempSZ)) L"%ipx", Value);
+			swprintf_c(TempSZ, L"%ipx", Value);
 			break;
 		case ss_Percents:
-			_wsprintf(TempSZ, SKIPLEN(countof(TempSZ)) L"%i%%", Value);
+			swprintf_c(TempSZ, L"%i%%", Value);
 			break;
 		//case ss_Standard:
 		default:
-			_wsprintf(TempSZ, SKIPLEN(countof(TempSZ)) L"%i", Value);
+			swprintf_c(TempSZ, L"%i", Value);
 		}
 		return TempSZ;
 	};

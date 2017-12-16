@@ -237,13 +237,13 @@ void CSetDlgColors::ColorSetEdit(HWND hWnd2, WORD c)
 	switch (gpSetCls->m_ColorFormat)
 	{
 	case CSettings::eRgbHex:
-		_wsprintf(temp, SKIPLEN(countof(temp)) L"#%02x%02x%02x", getR(cr), getG(cr), getB(cr));
+		swprintf_c(temp, L"#%02x%02x%02x", getR(cr), getG(cr), getB(cr));
 		break;
 	case CSettings::eBgrHex:
-		_wsprintf(temp, SKIPLEN(countof(temp)) L"0x%02x%02x%02x", getB(cr), getG(cr), getR(cr));
+		swprintf_c(temp, L"0x%02x%02x%02x", getB(cr), getG(cr), getR(cr));
 		break;
 	default:
-		_wsprintf(temp, SKIPLEN(countof(temp)) L"%i %i %i", getR(cr), getG(cr), getB(cr));
+		swprintf_c(temp, L"%i %i %i", getR(cr), getG(cr), getB(cr));
 	}
 	SetDlgItemText(hWnd2, tc, temp);
 }
@@ -260,7 +260,7 @@ bool CSetDlgColors::ColorEditDialog(HWND hWnd2, WORD c)
 	if (ShowColorDialog(ghOpWnd, &colornew) && colornew != color)
 	{
 		SetColorById(c, colornew);
-		//_wsprintf(temp, SKIPLEN(countof(temp)) L"%i %i %i", getR(colornew), getG(colornew), getB(colornew));
+		//swprintf_c(temp, L"%i %i %i", getR(colornew), getG(colornew), getB(colornew));
 		//SetDlgItemText(hWnd2, c + (tc0-c0), temp);
 		ColorSetEdit(hWnd2, c);
 		CSettings::InvalidateCtrl(GetDlgItem(hWnd2, c), TRUE);

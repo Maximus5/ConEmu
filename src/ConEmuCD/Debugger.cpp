@@ -91,7 +91,7 @@ void UpdateDebuggerTitle()
 			return;
 	}
 
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) pszTemplate,
+	swprintf_c(szTitle, pszTemplate,
 		GetCurrentProcessId(), gpSrv->dwRootProcess, gpSrv->DbgInfo.nProcessCount);
 	SetTitle(szTitle);
 }
@@ -106,7 +106,7 @@ int ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= NULL*/)
 
 	// ANSI is used because of asConfirmText created as ANSI
 	char szTitleA[64];
-	_wsprintfA(szTitleA, SKIPLEN(countof(szTitleA)) CE_CONEMUC_NAME_A " Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
+	sprintf_c(szTitleA, CE_CONEMUC_NAME_A " Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
 
 	int nBtn = MessageBoxA(NULL, asConfirmText ? asConfirmText : "Create minidump (<No> - fulldump)?", szTitleA, MB_YESNOCANCEL|MB_SYSTEMMODAL);
 
@@ -367,7 +367,7 @@ int AttachRootProcessHandle()
 	if (gpSrv->DbgInfo.bDebuggerActive)
 	{
 		wchar_t szTitle[64];
-		_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Debugging PID=%u, Debugger PID=%u", gpSrv->dwRootProcess, GetCurrentProcessId());
+		swprintf_c(szTitle, L"Debugging PID=%u, Debugger PID=%u", gpSrv->dwRootProcess, GetCurrentProcessId());
 		SetTitle(szTitle);
 
 		UpdateDebuggerTitle();
@@ -443,7 +443,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 			if (GetProcessInfo(gpSrv->dwRootProcess, &pi))
 				_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
 
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't start debugging process. ErrCode=0x%08X\n", dwErr);
+			swprintf_c(szInfo, L"Can't start debugging process. ErrCode=0x%08X\n", dwErr);
 			CEStr lsInfo(lstrmerge(szInfo, gpSrv->DbgInfo.pszDebuggingCmdLine, L"\n"));
 			_wprintf(lsInfo);
 			return CERR_CANTSTARTDEBUGGER;
@@ -530,7 +530,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 				if (GetProcessInfo(nDbgProcessID, &pi))
 					_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
 
-				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't attach debugger to '%s' PID=%i. ErrCode=0x%08X\n",
+				swprintf_c(szInfo, L"Can't attach debugger to '%s' PID=%i. ErrCode=0x%08X\n",
 					szProc[0] ? szProc : L"not found", nDbgProcessID, dwErr);
 				_wprintf(szInfo);
 
@@ -556,12 +556,12 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 		wchar_t szExe[MAX_PATH+5], *pszName;
 		if (!GetModuleFileName(NULL, szExe, MAX_PATH))
 		{
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GetModuleFileName(NULL) failed. ErrCode=0x%08X\n", GetLastError());
+			swprintf_c(szInfo, L"GetModuleFileName(NULL) failed. ErrCode=0x%08X\n", GetLastError());
 			_wprintf(szInfo);
 		}
 		else if (!(pszName = (wchar_t*)PointToName(szExe)))
 		{
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"GetModuleFileName(NULL) returns invalid path\n%s\n", szExe);
+			swprintf_c(szInfo, L"GetModuleFileName(NULL) returns invalid path\n%s\n", szExe);
 			_wprintf(szInfo);
 		}
 		else
@@ -585,7 +585,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 			else
 			{
 				DWORD dwErr = GetLastError();
-				_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Can't start external debugger, ErrCode=0x%08X\n", dwErr);
+				swprintf_c(szInfo, L"Can't start external debugger, ErrCode=0x%08X\n", dwErr);
 				CEStr lsInfo(lstrmerge(szInfo, szOtherDebugCmd, L"\n"));
 				_wprintf(lsInfo);
 			}
@@ -774,7 +774,7 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 	wchar_t szErrInfo[MAX_PATH*2];
 
 	wchar_t szTitle[64];
-	_wsprintf(szTitle, SKIPLEN(countof(szTitle)) CE_CONEMUC_NAME_W L" Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
+	swprintf_c(szTitle, CE_CONEMUC_NAME_W L" Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
 
 	wchar_t dmpfile[MAX_PATH] = L""; dmpfile[0] = 0;
 	FormatDumpName(dmpfile, countof(dmpfile), dwProcessId, false, (dumpType == MiniDumpWithFullMemory));
@@ -796,7 +796,7 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 		if (hDmpFile == INVALID_HANDLE_VALUE)
 		{
 			DWORD nErr = GetLastError();
-			_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't create debug dump file\n%s\nErrCode=0x%08X\n\nChoose another name?", dmpfile, nErr);
+			swprintf_c(szErrInfo, L"Can't create debug dump file\n%s\nErrCode=0x%08X\n\nChoose another name?", dmpfile, nErr);
 
 			if (MessageBoxW(NULL, szErrInfo, szTitle, MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
 				break;
@@ -811,7 +811,7 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 			if (gpSrv->DbgInfo.hDbghelp == NULL)
 			{
 				DWORD nErr = GetLastError();
-				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't load debug library 'Dbghelp.dll'\nErrCode=0x%08X\n\nTry again?", nErr);
+				swprintf_c(szErrInfo, L"Can't load debug library 'Dbghelp.dll'\nErrCode=0x%08X\n\nTry again?", nErr);
 
 				if (MessageBoxW(NULL, szErrInfo, szTitle, MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
 					break;
@@ -831,7 +831,7 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 			if (!MiniDumpWriteDump_f)
 			{
 				DWORD nErr = GetLastError();
-				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"Can't locate 'MiniDumpWriteDump' in library 'Dbghelp.dll', ErrCode=%u", nErr);
+				swprintf_c(szErrInfo, L"Can't locate 'MiniDumpWriteDump' in library 'Dbghelp.dll', ErrCode=%u", nErr);
 				MessageBoxW(NULL, szErrInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 				break;
 			}
@@ -863,14 +863,14 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 			if (!lbDumpRc)
 			{
 				DWORD nErr = GetLastError();
-				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"MiniDumpWriteDump failed.\nErrorCode=0x%08X", nErr);
+				swprintf_c(szErrInfo, L"MiniDumpWriteDump failed.\nErrorCode=0x%08X", nErr);
 				_printf("\nFailed, ErrorCode=0x%08X\n", nErr);
 				MessageBoxW(NULL, szErrInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 			}
 			else
 			{
 				int iLeft = (gpSrv->DbgInfo.nWaitTreeBreaks > 0) ? (gpSrv->DbgInfo.nWaitTreeBreaks - 1) : 0;
-				_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo)) L"\nMiniDumpWriteDump succeeded, %i left\n", iLeft);
+				swprintf_c(szErrInfo, L"\nMiniDumpWriteDump succeeded, %i left\n", iLeft);
 				bDumpSucceeded = true;
 			}
 
@@ -939,7 +939,7 @@ void ProcessDebugEvent()
 					case RIP_EVENT: pszName = "RIP_EVENT"; break;
 				}
 
-				_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText)) "{%i.%i} %s\n", evt.dwProcessId,evt.dwThreadId, pszName);
+				sprintf_c(szDbgText, "{%i.%i} %s\n", evt.dwProcessId,evt.dwThreadId, pszName);
 				_printf(szDbgText);
 				if (!bFirstExitThreadEvent && evt.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT)
 				{
@@ -1044,7 +1044,7 @@ void ProcessDebugEvent()
 							}
 							CloseHandle(evt.u.LoadDll.hFile);
 						}
-						_wsprintfA(szBase, SKIPLEN(countof(szBase))
+						sprintf_c(szBase,
 						           " at " WIN3264TEST("0x%08X","0x%08X%08X"),
 						           WIN3264WSPRINT((DWORD_PTR)evt.u.LoadDll.lpBaseOfDll));
 
@@ -1052,13 +1052,13 @@ void ProcessDebugEvent()
 					case UNLOAD_DLL_DEBUG_EVENT:
 						//7 Reports an unload-DLL debugging event. The value of u.UnloadDll specifies an UNLOAD_DLL_DEBUG_INFO structure.
 						pszName = "UNLOAD_DLL_DEBUG_EVENT";
-						_wsprintfA(szBase, SKIPLEN(countof(szBase))
+						sprintf_c(szBase,
 						           " at " WIN3264TEST("0x%08X","0x%08X%08X"),
 						           WIN3264WSPRINT((DWORD_PTR)evt.u.UnloadDll.lpBaseOfDll));
 						break;
 				}
 
-				_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText)) "{%i.%i} %s%s%s\n", evt.dwProcessId,evt.dwThreadId, pszName, szBase, szFile);
+				sprintf_c(szDbgText, "{%i.%i} %s%s%s\n", evt.dwProcessId,evt.dwThreadId, pszName, szBase, szFile);
 				_printf(szDbgText);
 				break;
 			} // LOAD_DLL_DEBUG_EVENT, UNLOAD_DLL_DEBUG_EVENT
@@ -1074,7 +1074,7 @@ void ProcessDebugEvent()
 					{
 						if (evt.u.Exception.ExceptionRecord.NumberParameters>=2)
 						{
-							_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText))
+							sprintf_c(szDbgText,
 							           "{%i.%i} EXCEPTION_ACCESS_VIOLATION at " WIN3264TEST("0x%08X","0x%08X%08X") " flags 0x%08X%s %s of " WIN3264TEST("0x%08X","0x%08X%08X") " FC=%u\n", evt.dwProcessId,evt.dwThreadId,
 							           WIN3264WSPRINT((DWORD_PTR)evt.u.Exception.ExceptionRecord.ExceptionAddress),
 							           evt.u.Exception.ExceptionRecord.ExceptionFlags,
@@ -1088,7 +1088,7 @@ void ProcessDebugEvent()
 						}
 						else
 						{
-							_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText))
+							sprintf_c(szDbgText,
 							           "{%i.%i} EXCEPTION_ACCESS_VIOLATION at " WIN3264TEST("0x%08X","0x%08X%08X") " flags 0x%08X%s FC=%u\n", evt.dwProcessId,evt.dwThreadId,
 							           WIN3264WSPRINT((DWORD_PTR)evt.u.Exception.ExceptionRecord.ExceptionAddress),
 							           evt.u.Exception.ExceptionRecord.ExceptionFlags,
@@ -1101,7 +1101,7 @@ void ProcessDebugEvent()
 					break;
 					case MS_VC_THREADNAME_EXCEPTION:
 					{
-						_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText))
+						sprintf_c(szDbgText,
 							"{%i.%i} %s at " WIN3264TEST("0x%08X", "0x%08X%08X") " flags 0x%08X%s FC=%u\n",
 							evt.dwProcessId, evt.dwThreadId,
 							"MS_VC_THREADNAME_EXCEPTION",
@@ -1140,11 +1140,11 @@ void ProcessDebugEvent()
 								EXCASE(EXCEPTION_SINGLE_STEP); // A trace trap or other single-instruction mechanism signaled that one instruction has been executed.
 								EXCASE(EXCEPTION_STACK_OVERFLOW); // The thread used up its stack.
 							default:
-								_wsprintfA(szName, SKIPLEN(countof(szName))
+								sprintf_c(szName,
 									        "Exception 0x%08X", evt.u.Exception.ExceptionRecord.ExceptionCode);
 						}
 
-						_wsprintfA(szDbgText, SKIPLEN(countof(szDbgText))
+						sprintf_c(szDbgText,
 							        "{%i.%i} %s at " WIN3264TEST("0x%08X","0x%08X%08X") " flags 0x%08X%s FC=%u\n",
 							        evt.dwProcessId,evt.dwThreadId,
 							        pszName,
@@ -1219,7 +1219,7 @@ void ProcessDebugEvent()
 					}
 					else
 					{
-						_wsprintfA(szConfirm, SKIPLEN(countof(szConfirm)) "%s exception (FC=%u)\n",
+						sprintf_c(szConfirm, "%s exception (FC=%u)\n",
 							lbNonContinuable ? "Non continuable" : "Continuable",
 							evt.u.Exception.dwFirstChance);
 						StringCchCatA(szConfirm, countof(szConfirm), szDbgText);

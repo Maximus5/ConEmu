@@ -216,7 +216,7 @@ MConHandle::operator const HANDLE()
 						}
 
 						WideCharToMultiByte(CP_OEMCP, 0, ms_Name, -1, szNameA, sizeof(szNameA), 0,0);
-						_wsprintfA(szErrMsg, SKIPLEN(countof(szErrMsg)) "%s: CreateFile(%s) failed, ErrCode=0x%08X\n", pszSelf, szNameA, mn_LastError);
+						sprintf_c(szErrMsg, "%s: CreateFile(%s) failed, ErrCode=0x%08X\n", pszSelf, szNameA, mn_LastError);
 						HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
 
 						if (h && h!=INVALID_HANDLE_VALUE)

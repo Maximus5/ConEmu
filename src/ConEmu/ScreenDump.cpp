@@ -211,7 +211,7 @@ BOOL DumpImage(HDC hScreen, HBITMAP hBitmap, int anX, int anY, int anWidth, int 
 	{
 		//static wchar_t szLastDumpFile[MAX_PATH];
 		SYSTEMTIME st; GetLocalTime(&st);
-		_wsprintf(szFile, SKIPLEN(countof(szFile)) L"%02u%02u%02u%02u%02u%02u",
+		swprintf_c(szFile, L"%02u%02u%02u%02u%02u%02u",
 			st.wYear%100, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 
 		OPENFILENAME ofn; memset(&ofn,0,sizeof(ofn));

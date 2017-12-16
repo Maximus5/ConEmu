@@ -1297,7 +1297,7 @@ void CSetDlgButtons::OnBtn_CmdTasksDel(HWND hDlg, WORD CB, BYTE uCheck)
 
 	wchar_t szOthers[64] = L"";
 	if (iCount > 1)
-		_wsprintf(szOthers, SKIPCOUNT(szOthers) L"\n" L"and %i other task(s)", (iCount-1));
+		swprintf_c(szOthers, L"\n" L"and %i other task(s)", (iCount-1));
 
 	_wsprintf(pszMsg, SKIPLEN(cchMax) L"%sDelete Task\n%s%s?",
 		bIsStartup ? L"Warning! You about to delete startup task!\n\n" : L"",
@@ -2151,7 +2151,7 @@ void CSetDlgButtons::OnBtn_BgImageEnable(HWND hDlg, WORD CB, BYTE uCheck)
 			//gpSet->bgImageDarker = 0x46;
 			//SendDlgItemMessage(hDlg, slDarker, TBM_SETPOS, (WPARAM) true, (LPARAM) gpSet->bgImageDarker);
 			//TCHAR tmp[10];
-			//_wsprintf(tmp, SKIPLEN(countof(tmp)) L"%i", gpSet->bgImageDarker);
+			//swprintf_c(tmp, L"%i", gpSet->bgImageDarker);
 			//SetDlgItemText(hDlg, tDarker, tmp);
 			lbNeedLoad = TRUE;
 		}
@@ -3045,7 +3045,7 @@ void CSetDlgButtons::OnBtn_UseClink(HWND hDlg, WORD CB, BYTE uCheck)
 	{
 		checkDlgButton(hDlg, cbUseClink, BST_UNCHECKED);
 		wchar_t szErrInfo[MAX_PATH+200];
-		_wsprintf(szErrInfo, SKIPLEN(countof(szErrInfo))
+		swprintf_c(szErrInfo,
 			L"Clink was not found in '%s\\clink'. Download and unpack clink files\nhttps://mridgers.github.io/clink/\n\n"
 			L"Note that you don't need to check 'Use clink'\nif you already have set up clink globally.",
 			gpConEmu->ms_ConEmuBaseDir);

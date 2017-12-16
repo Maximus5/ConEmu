@@ -102,7 +102,7 @@ bool StartupHooks(HMODULE ahOurDll)
 				_ASSERTE(ghHooksModule!=NULL);
 				wchar_t szErrMsg[128];
 				DWORD nErrCode = GetLastError();
-				_wsprintf(szErrMsg, SKIPLEN(countof(szErrMsg))
+				swprintf_c(szErrMsg,
 					L"ConEmuHk was not loaded, but ConEmu found!\nFar PID=%u, ErrCode=0x%08X",
 					GetCurrentProcessId(), nErrCode);
 				MessageBox(NULL, szErrMsg, L"ConEmu plugin", MB_ICONSTOP|MB_SYSTEMMODAL);
@@ -123,8 +123,8 @@ bool StartupHooks(HMODULE ahOurDll)
 		if (!SetHookCallbacks || !SetLoadLibraryCallback || !SetFarHookMode)
 		{
 			wchar_t szTitle[64], szText[255];
-			_wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"ConEmu plugin, PID=%u", GetCurrentProcessId());
-			_wsprintf(szText, SKIPLEN(countof(szText)) L"ConEmuHk is broken, export (%s) not found!",
+			swprintf_c(szTitle, L"ConEmu plugin, PID=%u", GetCurrentProcessId());
+			swprintf_c(szText, L"ConEmuHk is broken, export (%s) not found!",
 			          (!SetHookCallbacks) ? L"SetHookCallbacks"
 			          : (!SetLoadLibraryCallback) ? L"SetLoadLibraryCallback"
 			          : L"SetFarHookMode");

@@ -2093,9 +2093,9 @@ void CEAnsi::DoPrintEnv(LPCWSTR asCmd, INT_PTR cchLen)
 			{
 				SYSTEMTIME st = {}; GetLocalTime(&st);
 				if (lstrcmpi(pszVarName, L"date") == 0)
-					_wsprintf(szValue, SKIPCOUNT(szValue) L"%u-%02u-%02u", st.wYear, st.wMonth, st.wDay);
+					swprintf_c(szValue, L"%u-%02u-%02u", st.wYear, st.wMonth, st.wDay);
 				else
-					_wsprintf(szValue, SKIPCOUNT(szValue) L"%u:%02u:%02u.%03u", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+					swprintf_c(szValue, L"%u:%02u:%02u.%03u", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 				nMax = lstrlen(szValue);
 			}
 			#if 0
@@ -2223,7 +2223,7 @@ void CEAnsi::ReportTerminalPixelSize()
 
 	if (width > 0 && height > 0)
 	{
-		_wsprintf(szReport, SKIPCOUNT(szReport) L"\x1B[4;%u;%ut", (u32)height, (u32)width);
+		swprintf_c(szReport, L"\x1B[4;%u;%ut", (u32)height, (u32)width);
 		ReportString(szReport);
 	}
 }

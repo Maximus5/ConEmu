@@ -52,7 +52,7 @@ LPCWSTR apiQuerySessionID()
 		DWORD nSessionId = 0;
 		BOOL bSucceeded = apiQuerySessionID(GetCurrentProcessId(), nSessionId);
 		if (bSucceeded)
-			_wsprintf(szSessionId, SKIPCOUNT(szSessionId) L"%u", nSessionId);
+			swprintf_c(szSessionId, L"%u", nSessionId);
 		else
 			wcscpy_c(szSessionId, L"?");
 	}

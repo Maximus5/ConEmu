@@ -423,10 +423,10 @@ SetBackgroundResult CBackground::SetPluginBackgroundImageData(CESERVER_REQ_SETBA
 	{
 		static UINT nBackIdx = 0;
 		wchar_t szFileName[32];
-		_wsprintf(szFileName, SKIPLEN(countof(szFileName)) L"PluginBack_%04u.bmp", nBackIdx++);
+		swprintf_c(szFileName, L"PluginBack_%04u.bmp", nBackIdx++);
 		char szAdvInfo[512];
 		BITMAPINFOHEADER* pBmp = (BITMAPINFOHEADER*)((&apImgData->bmp)+1);
-		_wsprintfA(szAdvInfo, SKIPLEN(countof(szAdvInfo)) "\r\nnType=%i, bEnabled=%i,\r\nWidth=%i, Height=%i, Bits=%i, Encoding=%i\r\n",
+		sprintf_c(szAdvInfo, "\r\nnType=%i, bEnabled=%i,\r\nWidth=%i, Height=%i, Bits=%i, Encoding=%i\r\n",
 		           apImgData->nType, apImgData->bEnabled,
 		           pBmp->biWidth, pBmp->biHeight, pBmp->biBitCount, pBmp->biCompression);
 		HANDLE hFile = CreateFile(szFileName, GENERIC_WRITE, FILE_SHARE_READ, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
@@ -1244,7 +1244,7 @@ bool CBackgroundInfo::LoadBackgroundFile(bool abShowErrors)
 			{
 				wchar_t szError[MAX_PATH*2];
 				DWORD dwErr = GetLastError();
-				_wsprintf(szError, SKIPLEN(countof(szError)) L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
+				swprintf_c(szError, L"Can't expand environment strings:\r\n%s\r\nError code=0x%08X\r\nImage loading failed",
 				          ms_BgImage, dwErr);
 				MBoxA(szError);
 			}

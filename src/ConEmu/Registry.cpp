@@ -160,7 +160,7 @@ void SettingsBase::Save(const wchar_t *regName, const UINT&   value)
 void SettingsBase::Save(const wchar_t *regName, const RECT&  value)
 {
 	wchar_t szRect[80];
-	_wsprintf(szRect, SKIPCOUNT(szRect) L"%i,%i,%i,%i", value.left, value.top, value.right, value.bottom);
+	swprintf_c(szRect, L"%i,%i,%i,%i", value.left, value.top, value.right, value.bottom);
 	Save(regName, szRect);
 }
 
@@ -540,7 +540,7 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t*& pszErr)
 
 			for (FindPlaces* fp = findPlaces; fp->sDir; fp++)
 			{
-				_wsprintf(szDll, SKIPLEN(countof(szDll)) L"%s%smsxml3.dll", fp->sDir, fp->sSlash);
+				swprintf_c(szDll, L"%s%smsxml3.dll", fp->sDir, fp->sSlash);
 				hMsXml3 = LoadLibrary(szDll);
 				hFact = hMsXml3 ? 0 : (HRESULT)GetLastError();
 				if (hMsXml3)
@@ -551,7 +551,7 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t*& pszErr)
 			//		|| ((DWORD)hFact) == ERROR_FILE_NOT_FOUND))
 			}
 
-			//_wsprintf(szDll, SKIPLEN(countof(szDll)) L"%s\\msxml3.dll", gpConEmu->ms_ConEmuExeDir);
+			//swprintf_c(szDll, L"%s\\msxml3.dll", gpConEmu->ms_ConEmuExeDir);
 			//hMsXml3 = LoadLibrary(szDll);
 			//hFact = hMsXml3 ? 0 : (HRESULT)GetLastError();
 			//if (!hMsXml3
@@ -559,7 +559,7 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t*& pszErr)
 			//		|| ((DWORD)hFact) == ERROR_BAD_EXE_FORMAT
 			//		|| ((DWORD)hFact) == ERROR_FILE_NOT_FOUND))
 			//{
-			//	_wsprintf(szDll, SKIPLEN(countof(szDll)) L"%s\\msxml3.dll", gpConEmu->ms_ConEmuBaseDir);
+			//	swprintf_c(szDll, L"%s\\msxml3.dll", gpConEmu->ms_ConEmuBaseDir);
 			//	hMsXml3 = LoadLibrary(szDll);
 			//	hFact = hMsXml3 ? 0 : (HRESULT)GetLastError();
 			//}
@@ -567,7 +567,7 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t*& pszErr)
 			if (!hMsXml3)
 			{
 				hMsXml3 = (HMODULE)INVALID_HANDLE_VALUE;
-				_wsprintf(szDllErr, SKIPLEN(countof(szDllErr)) L"\nLoadLibrary(\"msxml3.dll\") failed\nErrCode=0x%08X", (DWORD)hFact);
+				swprintf_c(szDllErr, L"\nLoadLibrary(\"msxml3.dll\") failed\nErrCode=0x%08X", (DWORD)hFact);
 			}
 		}
 
@@ -579,7 +579,7 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t*& pszErr)
 			if (!lpfnGetClassObject)
 			{
 				hFact = (HRESULT)GetLastError();
-				_wsprintf(szDllErr, SKIPLEN(countof(szDllErr)) L"\nGetProcAddress(\"DllGetClassObject\") failed\nErrCode=0x%08X", (DWORD)hFact);
+				swprintf_c(szDllErr, L"\nGetProcAddress(\"DllGetClassObject\") failed\nErrCode=0x%08X", (DWORD)hFact);
 			}
 			else
 			{
@@ -591,12 +591,12 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t*& pszErr)
 					if (SUCCEEDED(hFact) && pFile)
 						hr = hFact;
 					else
-						_wsprintf(szDllErr, SKIPLEN(countof(szDllErr)) L"\nCreateInstance(IID_IXMLDOMDocument) failed\nErrCode=0x%08X", (DWORD)hFact);
+						swprintf_c(szDllErr, L"\nCreateInstance(IID_IXMLDOMDocument) failed\nErrCode=0x%08X", (DWORD)hFact);
 					pFact->Release();
 				}
 				else
 				{
-					_wsprintf(szDllErr, SKIPLEN(countof(szDllErr)) L"\nGetClassObject(CLSID_DOMDocument30) failed\nErrCode=0x%08X", (DWORD)hFact);
+					swprintf_c(szDllErr, L"\nGetClassObject(CLSID_DOMDocument30) failed\nErrCode=0x%08X", (DWORD)hFact);
 				}
 			}
 		}
@@ -605,7 +605,7 @@ IXMLDOMDocument* SettingsXML::CreateDomDocument(wchar_t*& pszErr)
 	if (FAILED(hr) || !pFile)
 	{
 		wchar_t szErr[512];
-		_wsprintf(szErr, SKIPCOUNT(szErr)
+		swprintf_c(szErr,
 				  L"XML setting file can not be used!\r\n"
 				  L"Dynamic libraries 'msxml3.dll'/'msxml3r.dll' were not found!\r\n\r\n"
 				  L"Can't create IID_IXMLDOMDocument!\r\n"
@@ -790,7 +790,7 @@ bool SettingsXML::OpenStorage(uint access, wchar_t*& pszErr)
 				DEBUGTEST(hrd=)
 				pErr->get_linepos(&linepos);
 
-				_wsprintf(szErr, SKIPCOUNT(szErr) L"\r\n\r\n"
+				swprintf_c(szErr, L"\r\n\r\n"
 					L"Line=%i, Pos=%i, XmlCode=0x%08X, HR=0x%08X\r\n", line, linepos, (DWORD)errorCode, (DWORD)hr);
 
 				// For some errors service returns weird error descriptions
@@ -868,7 +868,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 		if (FAILED(hr))
 		{
 			wchar_t szRootError[80];
-			_wsprintf(szRootError, SKIPLEN(countof(szRootError))
+			swprintf_c(szRootError,
 				L"XML: Root node not found! ErrCode=0x%08X\r\n", (DWORD)hr);
 			pszErr = lstrmerge(szRootError, m_Storage.pszFile, L"\r\n", regPath);
 			goto wrap;
@@ -898,7 +898,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 				}
 				else
 				{
-					//_wsprintf(szErr, SKIPLEN(countof(szErr)) L"XML: key <%s> not found!", szName);
+					//swprintf_c(szErr, L"XML: key <%s> not found!", szName);
 					// Don't show error - use default settings
 					SafeFree(pszErr);
 				}
@@ -924,7 +924,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 		{
 			SYSTEMTIME st; wchar_t szTime[32];
 			GetLocalTime(&st);
-			_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%04i-%02i-%02i %02i:%02i:%02i",
+			swprintf_c(szTime, L"%04i-%02i-%02i %02i:%02i:%02i",
 				st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 			SetAttr(mp_Key, L"modified", szTime);
 			SetAttr(mp_Key, L"build", gpConEmu->ms_ConEmuBuild);
@@ -962,7 +962,7 @@ void SettingsXML::TouchKey(IXMLDOMNode* apKey)
 {
 	SYSTEMTIME st; wchar_t szTime[32];
 	GetLocalTime(&st);
-	_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%04i-%02i-%02i %02i:%02i:%02i",
+	swprintf_c(szTime, L"%04i-%02i-%02i %02i:%02i:%02i",
 		st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
 	SetAttr(apKey, L"modified", szTime);
 	SetAttr(apKey, L"build", gpConEmu->ms_ConEmuBuild);
@@ -992,7 +992,7 @@ void SettingsXML::CloseStorage()
 			{
 				DWORD dwErrCode = GetLastError();
 				wchar_t szErr[MAX_PATH*2];
-				_wsprintf(szErr, SKIPLEN(countof(szErr)) L"Can't open file for writing!\n%s\nErrCode=0x%08X",
+				swprintf_c(szErr, L"Can't open file for writing!\n%s\nErrCode=0x%08X",
 				          pszXmlFile, dwErrCode);
 				MBoxA(szErr);
 			}
@@ -1909,28 +1909,28 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 
 			if (bsType && (bsType[0] == L'u' || bsType[0] == L'U'))
 			{
-				_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%u", *(LPDWORD)value);
+				swprintf_c(szValue, L"%u", *(LPDWORD)value);
 			}
 			else if (bsType && (bsType[0] == L'l' || bsType[0] == L'L'))
 			{
-				_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%i", *(int*)value);
+				swprintf_c(szValue, L"%i", *(int*)value);
 			}
 			else
 			{
 				LPCWSTR pszTypeName;
 				if (nType == REG_DWORD)
 				{
-					_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%08x", *(LPDWORD)value);
+					swprintf_c(szValue, L"%08x", *(LPDWORD)value);
 					pszTypeName = L"dword";
 				}
 				else if (nType == REG__ULONG)
 				{
-					_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%u", *(UINT*)value);
+					swprintf_c(szValue, L"%u", *(UINT*)value);
 					pszTypeName = L"ulong";
 				}
 				else
 				{
-					_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%i", *(int*)value);
+					swprintf_c(szValue, L"%i", *(int*)value);
 					pszTypeName = L"long";
 				}
 
@@ -1951,14 +1951,14 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 			{
 				wchar_t szValue[4];
 				BYTE bt = *value;
-				_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%u", (DWORD)bt);
+				swprintf_c(szValue, L"%u", (DWORD)bt);
 				bsValue = ::SysAllocString(szValue);
 			}
 			else if (nSize == 1 && bsType && (bsType[0] == L'l' || bsType[0] == L'L'))
 			{
 				wchar_t szValue[4];
 				char bt = *value;
-				_wsprintf(szValue, SKIPLEN(countof(szValue)) L"%i", (int)bt);
+				swprintf_c(szValue, L"%i", (int)bt);
 				bsValue = ::SysAllocString(szValue);
 			}
 			else

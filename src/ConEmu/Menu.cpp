@@ -422,7 +422,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 					nCurGroupCount++;
 					if (nCurGroupCount >= 1 && nCurGroupCount <= nMenuHotkeyMax)
 					{
-						_wsprintf(itm.szShort, SKIPLEN(countof(itm.szShort)) L"&%c: ", sMenuHotkey[nCurGroupCount-1]);
+						swprintf_c(itm.szShort, L"&%c: ", sMenuHotkey[nCurGroupCount-1]);
 						int iLen = lstrlen(itm.szShort);
 						lstrcpyn(itm.szShort+iLen, szFolderName, countof(itm.szShort)-iLen);
 					}
@@ -472,7 +472,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 
 			if (nGrpCount >= 1 && nGrpCount <= nMenuHotkeyMax)
 			{
-				_wsprintf(itm.szShort, SKIPLEN(countof(itm.szShort)) L"&%c: ", sMenuHotkey[nGrpCount-1]);
+				swprintf_c(itm.szShort, L"&%c: ", sMenuHotkey[nGrpCount-1]);
 			}
 			else
 			{
@@ -889,7 +889,7 @@ bool CConEmuMenu::OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags)
 	bool bRc = true;
 
 	wchar_t szInfo[80];
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"OnMenuSelected selected, ID=%u, Flags=x%04X", nID, nFlags);
+	swprintf_c(szInfo, L"OnMenuSelected selected, ID=%u, Flags=x%04X", nID, nFlags);
 	LogString(szInfo);
 
 	switch (mn_TrackMenuPlace)
@@ -1316,7 +1316,7 @@ int CConEmuMenu::FillTaskPopup(HMENU hMenu, CmdTaskPopupItem* pParent)
 				itm.pGrp = pGrp;
 				itm.pszCmd = pszLine;
 				if (nCount <= nMenuHotkeyMax)
-					_wsprintf(itm.szShort, SKIPLEN(countof(itm.szShort)) L"&%c: ", sMenuHotkey[nCount]);
+					swprintf_c(itm.szShort, L"&%c: ", sMenuHotkey[nCount]);
 				else
 					itm.szShort[0] = 0;
 
@@ -1494,7 +1494,7 @@ LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 				//		itm.pGrp = pGrp;
 				//		itm.pszCmd = pszLine;
 				//		if (nCount <= nMenuHotkeyMax)
-				//			_wsprintf(itm.szShort, SKIPLEN(countof(itm.szShort)) L"&%c: ", sMenuHotkey[nCount]);
+				//			swprintf_c(itm.szShort, L"&%c: ", sMenuHotkey[nCount]);
 				//		else
 				//			itm.szShort[0] = 0;
 
@@ -1565,13 +1565,13 @@ int CConEmuMenu::trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, 
 		uFlags |= TPM_HORIZONTAL;
 
 	wchar_t szInfo[100];
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"TrackPopupMenuEx started, place=%i, flags=x%08X, {%i,%i}", place, uFlags, x, y);
+	swprintf_c(szInfo, L"TrackPopupMenuEx started, place=%i, flags=x%08X, {%i,%i}", place, uFlags, x, y);
 	LogString(szInfo);
 
 	SetLastError(0);
 	int cmd = TrackPopupMenuEx(hMenu, uFlags, x, y, hWnd, &ex);
 
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"TrackPopupMenuEx done, command=%i, code=%u", cmd, GetLastError());
+	swprintf_c(szInfo, L"TrackPopupMenuEx done, command=%i, code=%u", cmd, GetLastError());
 	LogString(szInfo);
 
 	mn_TrackMenuPlace = prevPlace;
@@ -1789,7 +1789,7 @@ void CConEmuMenu::ShowSysmenu(int x, int y, DWORD nFlags /*= 0*/)
 		mn_SysMenuCloseTick = 0;
 	}
 
-	wchar_t szInfo[64]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"ShowSysmenu result: %i", command);
+	wchar_t szInfo[64]; swprintf_c(szInfo, L"ShowSysmenu result: %i", command);
 	LogString(szInfo);
 
 	if (command && Icon.isWindowInTray() && gpConEmu->isIconic())
@@ -2194,7 +2194,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 	MSetter inCall(&InCall);
 	wchar_t szDbg[128], szName[32];
 	wcscpy_c(szName, Msg == WM_SYSCOMMAND ? L" - WM_SYSCOMMAND" : Msg == mn_MsgOurSysCommand ? L" - UM_SYSCOMMAND" : L"");
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand (%i(0x%X), %i, %i)%s", (DWORD)wParam, (DWORD)wParam, (DWORD)lParam, InCall, szName);
+	swprintf_c(szDbg, L"OnSysCommand (%i(0x%X), %i, %i)%s", (DWORD)wParam, (DWORD)wParam, (DWORD)lParam, InCall, szName);
 	LogString(szDbg);
 
 	#ifdef _DEBUG
@@ -2680,7 +2680,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 			else if (wParam != 0xF100)
 			{
 				#ifdef _DEBUG
-				wchar_t szDbg[64]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"OnSysCommand(%i)\n", (DWORD)wParam);
+				wchar_t szDbg[64]; swprintf_c(szDbg, L"OnSysCommand(%i)\n", (DWORD)wParam);
 				DEBUGSTRSYS(szDbg);
 				#endif
 

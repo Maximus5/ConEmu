@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SHOWDEBUGSTR
 
-#define DEBUGSTRTABS(l,i,s) // { wchar_t szLbl[80]; _wsprintf(szLbl,SKIPLEN(countof(szLbl)) L"CTabPanelWin(%s,%i): ",l,i+1); wchar_t* pszDbg = lstrmerge(szLbl,s); DEBUGSTR(pszDbg); SafeFree(pszDbg); }
+#define DEBUGSTRTABS(l,i,s) // { wchar_t szLbl[80]; swprintf_c(szLbl, L"CTabPanelWin(%s,%i): ",l,i+1); wchar_t* pszDbg = lstrmerge(szLbl,s); DEBUGSTR(pszDbg); SafeFree(pszDbg); }
 #define DEBUGSTRSEL(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPANE(s) //DEBUGSTR(s)
@@ -506,7 +506,7 @@ HWND CTabPanelWin::CreateTabbar()
 
 	// And log it
 	wchar_t szInfo[100];
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"Created tab height=%i", iHeight);
+	swprintf_c(szInfo, L"Created tab height=%i", iHeight);
 	LogString(szInfo);
 	DEBUGSTRSIZE(szInfo);
 
@@ -552,7 +552,7 @@ HWND CTabPanelWin::CreateToolbar()
 		nBtnSize = nOriginalSize;
 
 	wchar_t szLog[100];
-	_wsprintf(szLog, SKIPCOUNT(szLog) L"Creating toolbar for size %i px", nBtnSize);
+	swprintf_c(szLog, L"Creating toolbar for size %i px", nBtnSize);
 	gpConEmu->LogString(szLog);
 	DEBUGSTRSIZE(szLog);
 
@@ -828,7 +828,7 @@ int CTabPanelWin::SelectTabInt(int i)
 	mb_ChangeAllowed = true;
 
 	wchar_t szInfo[120];
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"SelectTabInt Tab=%i CurTab=%i", i+1, iCurSel+1);
+	swprintf_c(szInfo, L"SelectTabInt Tab=%i CurTab=%i", i+1, iCurSel+1);
 	if (gpSet->isLogging()) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 
 	if (i != iCurSel)    // Меняем выделение, только если оно реально меняется
@@ -1086,7 +1086,7 @@ bool CTabPanelWin::OnNotifyInt(LPNMHDR nmhdr, LRESULT& lResult)
 		int lnNewTab = GetCurSelInt();
 
 		wchar_t szInfo[120];
-		_wsprintf(szInfo, SKIPCOUNT(szInfo) L"WinApi tab was changed: NewTab=%i", lnNewTab+1);
+		swprintf_c(szInfo, L"WinApi tab was changed: NewTab=%i", lnNewTab+1);
 		if (gpSet->isLogging()) { LogString(szInfo); } else { DEBUGSTRSEL(szInfo); }
 
 		bool bRollbackTabs = false, bRefreshTabs = false;

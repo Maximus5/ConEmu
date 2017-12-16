@@ -639,13 +639,13 @@ bool CEDC::Create(UINT Width, UINT Height)
 		hBitmap = CreateDIBSection(hDC, &bmi, DIB_RGB_COLORS, &pvBits, NULL, 0);
 		pPixels = (COLORREF*)pvBits;
 
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Surface created DIB(%i,%i,%i)=x%08X", (int)bmi.bmiHeader.biWidth, (int)bmi.bmiHeader.biHeight, (int)bmi.bmiHeader.biBitCount, (DWORD)(DWORD_PTR)hBitmap);
+		swprintf_c(szInfo, L"Surface created DIB(%i,%i,%i)=x%08X", (int)bmi.bmiHeader.biWidth, (int)bmi.bmiHeader.biHeight, (int)bmi.bmiHeader.biBitCount, (DWORD)(DWORD_PTR)hBitmap);
 		::LogString(szInfo);
 	}
 	else
 	{
 		DWORD nErr = GetLastError();
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Warning! Color depth of your display is low (%i), 32bit recommended! ErrCode=%u", nPixels, nErr);
+		swprintf_c(szInfo, L"Warning! Color depth of your display is low (%i), 32bit recommended! ErrCode=%u", nPixels, nErr);
 		::LogString(szInfo);
 
 		hBitmap = CreateCompatibleBitmap(hScreenDC, Width, Height);
@@ -655,7 +655,7 @@ bool CEDC::Create(UINT Width, UINT Height)
 		// Remote desktop to Win2k8 gets here and (nPixels==16)
 		_ASSERTE((pPixels || (iRemote==1)) && "Remote desktop? Caps(BitsPerPixel)!=32");
 
-		_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Surface created BMP(%i,%i,Compatible)=x%08X, Remote=%i", (int)Width, (int)Height, (DWORD)(DWORD_PTR)hBitmap, iRemote);
+		swprintf_c(szInfo, L"Surface created BMP(%i,%i,Compatible)=x%08X, Remote=%i", (int)Width, (int)Height, (DWORD)(DWORD_PTR)hBitmap, iRemote);
 		::LogString(szInfo);
 	}
 

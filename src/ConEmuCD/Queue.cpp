@@ -146,7 +146,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 			}
 
 			wchar_t szDbg[60];
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"    ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n", r.Event.MouseEvent.dwMousePosition.X, r.Event.MouseEvent.dwMousePosition.Y, r.Event.MouseEvent.dwButtonState, (r.Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
+			swprintf_c(szDbg, L"    ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n", r.Event.MouseEvent.dwMousePosition.X, r.Event.MouseEvent.dwMousePosition.Y, r.Event.MouseEvent.dwButtonState, (r.Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
 			DEBUGLOGINPUT(szDbg);
 			nLastEventTick = GetTickCount();
 		}
@@ -584,7 +584,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 		switch (pr[i].EventType)
 		{
 		case MOUSE_EVENT:
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg))
+			swprintf_c(szDbg,
 				L"*** ConEmuC.MouseEvent(X=%i,Y=%i,Btns=0x%04x,Moved=%i)\n",
 				pr[i].Event.MouseEvent.dwMousePosition.X, pr[i].Event.MouseEvent.dwMousePosition.Y, pr[i].Event.MouseEvent.dwButtonState, (pr[i].Event.MouseEvent.dwEventFlags & MOUSE_MOVED));
 			DEBUGSTRINPUTWRITE(szDbg);
@@ -620,7 +620,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 				case 13: szCh[0] = L'\\'; szCh[1] = L'n'; break;
 				case 27: szCh[0] = L'\\'; szCh[1] = L'e'; break;
 				}
-				_wsprintf(szDbg, SKIPLEN(countof(szDbg))
+				swprintf_c(szDbg,
 					L"*** ConEmuC.KeybdEvent(%s, VK=%u, CH=%s)\n",
 					pr[i].Event.KeyEvent.bKeyDown ? L"Dn" : L"Up", pr[i].Event.KeyEvent.wVirtualKeyCode, szCh);
 				DEBUGSTRINPUTWRITE(szDbg);
@@ -687,12 +687,12 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	DWORD dwErr = GetLastError();
 	if (!fSuccess || (nCount != cbWritten))
 	{
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"### WriteConsoleInput(Write=%i, Written=%i, Left=%i, Err=x%X)\n", nCount, cbWritten, gpSrv->InputQueue.GetNumberOfBufferEvents(), dwErr);
+		swprintf_c(szDbg, L"### WriteConsoleInput(Write=%i, Written=%i, Left=%i, Err=x%X)\n", nCount, cbWritten, gpSrv->InputQueue.GetNumberOfBufferEvents(), dwErr);
 		DEBUGSTRINPUTWRITEFAIL(szDbg);
 	}
 	else
 	{
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"*** WriteConsoleInput(Write=%i, Written=%i, Left=%i)\n", nCount, cbWritten, gpSrv->InputQueue.GetNumberOfBufferEvents());
+		swprintf_c(szDbg, L"*** WriteConsoleInput(Write=%i, Written=%i, Left=%i)\n", nCount, cbWritten, gpSrv->InputQueue.GetNumberOfBufferEvents());
 		DEBUGSTRINPUTWRITEALL(szDbg);
 	}
 	// Some Ctrl+<key> are eaten by console input buffer. ConsoleMode==0xA7 (cmd.exe)

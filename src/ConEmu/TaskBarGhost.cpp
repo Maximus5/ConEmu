@@ -596,7 +596,7 @@ LRESULT CTaskBarGhost::OnCreate()
 	SetTimer(mh_Ghost, 101, 2500, NULL);
 
 	wchar_t szEvtName[64];
-	_wsprintf(szEvtName, SKIPLEN(countof(szEvtName)) CEGHOSTSKIPACTIVATE, LODWORD(mh_Ghost));
+	swprintf_c(szEvtName, CEGHOSTSKIPACTIVATE, LODWORD(mh_Ghost));
 	SafeCloseHandle(mh_SkipActivateEvent);
 	mh_SkipActivateEvent = CreateEvent(NULL, FALSE, FALSE, szEvtName);
 
@@ -917,7 +917,7 @@ LRESULT CTaskBarGhost::GhostProc(UINT message, WPARAM wParam, LPARAM lParam)
 	else if (message != 0xAE/*WM_NCUAHDRAWCAPTION*/ && message != WM_GETTEXT && message != WM_GETMINMAXINFO
 		&& message != WM_GETICON && message != WM_TIMER)
 	{
-		//wchar_t szDbg[127]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"GhostProc(%i{x%03X},%i,%i)\n", message, message, (DWORD)wParam, (DWORD)lParam);
+		//wchar_t szDbg[127]; swprintf_c(szDbg, L"GhostProc(%i{x%03X},%i,%i)\n", message, message, (DWORD)wParam, (DWORD)lParam);
 		//OutputDebugStringW(szDbg);
 	}
 #endif

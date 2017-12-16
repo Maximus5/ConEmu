@@ -145,12 +145,12 @@ HRESULT MFileLog::CreateLogFile(LPCWSTR asName /*= NULL*/, DWORD anPID /*= 0*/, 
 
 	wchar_t szLevel[16] = L"";
 	if (anLevel > 0)
-		_wsprintf(szLevel, SKIPLEN(countof(szLevel)) L"[%u]", anLevel);
+		swprintf_c(szLevel, L"[%u]", anLevel);
 	wchar_t szVer4[8] = L"";
 	lstrcpyn(szVer4, WSTRING(MVV_4a), countof(szVer4));
 	wchar_t szConEmu[128];
 	GetLocalTime(&mst_LastWrite);
-	_wsprintf(szConEmu, SKIPLEN(countof(szConEmu))
+	swprintf_c(szConEmu,
 		L"%i-%02i-%02i %i:%02i:%02i.%03i ConEmu %u%02u%02u%s%s[%s%s] log%s",
 		mst_LastWrite.wYear, mst_LastWrite.wMonth, mst_LastWrite.wDay,
 		mst_LastWrite.wHour, mst_LastWrite.wMinute, mst_LastWrite.wSecond, mst_LastWrite.wMilliseconds,
@@ -374,9 +374,9 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 		SYSTEMTIME st; GetLocalTime(&st);
 		char szTime[32];
 		if (memcmp(&st, &mst_LastWrite, 4*sizeof(st.wYear)) == 0)
-			_wsprintfA(szTime, SKIPLEN(countof(szTime)) "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+			sprintf_c(szTime, "%i:%02i:%02i.%03i ", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 		else
-			_wsprintfA(szTime, SKIPLEN(countof(szTime)) "%i-%02i-%02i %i:%02i:%02i.%03i ", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+			sprintf_c(szTime, "%i-%02i-%02i %i:%02i:%02i.%03i ", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 		mst_LastWrite = st;
 		INT_PTR dwLen = lstrlenA(szTime);
 		memmove(pszBuffer+cchCur, szTime, dwLen);
@@ -431,7 +431,7 @@ void MFileLog::LogString(LPCWSTR asText, bool abWriteTime /*= true*/, LPCWSTR as
 
 	wchar_t szInfo[512]; szInfo[0] = 0;
 	SYSTEMTIME st; GetLocalTime(&st);
-	_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"%i:%02i:%02i.%03i ",
+	swprintf_c(szInfo, L"%i:%02i:%02i.%03i ",
 	          st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
 	int nCur = lstrlenW(szInfo);
 

@@ -875,7 +875,7 @@ bool CVirtualConsole::Dump(LPCWSTR asFile)
 	LPCTSTR pszTitle = mp_ConEmu->GetLastTitle();
 	WriteFile(hFile, pszTitle, _tcslen(pszTitle)*sizeof(*pszTitle), &dw, NULL);
 	wchar_t temp[100];
-	_wsprintf(temp, SKIPCOUNT(temp) L"\r\nSize: %ix%i   Cursor: %ix%i\r\n", m_Sizes.TextWidth, m_Sizes.TextHeight, Cursor.x, Cursor.y);
+	swprintf_c(temp, L"\r\nSize: %ix%i   Cursor: %ix%i\r\n", m_Sizes.TextWidth, m_Sizes.TextHeight, Cursor.x, Cursor.y);
 	WriteFile(hFile, temp, wcslen(temp)*sizeof(wchar_t), &dw, NULL);
 	WriteFile(hFile, mpsz_ConChar, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpsz_ConChar), &dw, NULL);
 	WriteFile(hFile, mpn_ConAttrEx, m_Sizes.TextWidth * m_Sizes.TextHeight * sizeof(*mpn_ConAttrEx), &dw, NULL);
@@ -1683,7 +1683,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 		{
 			// Скинуть буферы в лог
 			mn_LogScreenIdx++;
-			wchar_t szLogPath[MAX_PATH]; _wsprintf(szLogPath, SKIPLEN(countof(szLogPath)) mpsz_LogScreen, mp_RCon->GetServerPID(), mn_LogScreenIdx);
+			wchar_t szLogPath[MAX_PATH]; swprintf_c(szLogPath, mpsz_LogScreen, mp_RCon->GetServerPID(), mn_LogScreenIdx);
 			Dump(szLogPath);
 		}
 
@@ -2494,7 +2494,7 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 			}
 			else
 			{
-				_wsprintf(szSuffix, SKIPCOUNT(szSuffix) L":%02i", i);
+				swprintf_c(szSuffix, L":%02i", i);
 				szAutoName = lstrmerge(lsPrefix.IsEmpty() ? L"#Attached" : lsPrefix.ms_Val, szSuffix);
 			}
 
@@ -2639,7 +2639,7 @@ void CVirtualConsole::OnAppSettingsChanged(int iAppId /*= -1*/)
 {
 	wchar_t szInfo[80];
 	LONG lNew = InterlockedIncrement(&mn_AppSettingsChangCount);
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L"VCon::OnAppSettingsChanged AppId=%i, Counter=%i", iAppId, lNew);
+	swprintf_c(szInfo, L"VCon::OnAppSettingsChanged AppId=%i, Counter=%i", iAppId, lNew);
 
 	if (lNew == 1)
 	{
@@ -3868,7 +3868,7 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 
 	if (gpSet->isLogging(4))
 	{
-		wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"VCon[%i]: PaintVCon started");
+		wchar_t szLog[80]; swprintf_c(szLog, L"VCon[%i]: PaintVCon started");
 		LogString(szLog);
 	}
 
@@ -3903,7 +3903,7 @@ void CVirtualConsole::PaintVCon(HDC hPaintDc)
 
 	if (gpSet->isLogging(4))
 	{
-		wchar_t szLog[80]; _wsprintf(szLog, SKIPCOUNT(szLog) L"VCon[%i]: PaintVCon finished");
+		wchar_t szLog[80]; swprintf_c(szLog, L"VCon[%i]: PaintVCon finished");
 		LogString(szLog);
 	}
 }
@@ -4277,7 +4277,7 @@ void CVirtualConsole::PaintVConDebug(HDC hPaintDc, RECT rcClient)
 				pt[1] = ConsoleToClient(pDlg->Rects[i].Right+1, pDlg->Rects[i].Bottom+1);
 				//MapWindowPoints(GetView(), ghWnd, pt, 2);
 				Rectangle(hPaintDc, pt[0].x+n, pt[0].y+n, pt[1].x-n, pt[1].y-n);
-				wchar_t szCoord[32]; _wsprintf(szCoord, SKIPLEN(countof(szCoord)) L"%ix%i", pDlg->Rects[i].Left, pDlg->Rects[i].Top);
+				wchar_t szCoord[32]; swprintf_c(szCoord, L"%ix%i", pDlg->Rects[i].Left, pDlg->Rects[i].Top);
 				TextOut(hPaintDc, pt[0].x+1, pt[0].y+1, szCoord, _tcslen(szCoord));
 			}
 
@@ -4341,15 +4341,15 @@ void CVirtualConsole::UpdateInfo()
 	}
 	else
 	{
-		_wsprintf(szSize, SKIPLEN(countof(szSize)) _T("%ix%i"), mp_RCon->TextWidth(), mp_RCon->TextHeight());
+		swprintf_c(szSize, _T("%ix%i"), mp_RCon->TextWidth(), mp_RCon->TextHeight());
 		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConSizeChr, szSize);
-		_wsprintf(szSize, SKIPLEN(countof(szSize)) _T("%ix%i"), m_Sizes.Width, m_Sizes.Height);
+		swprintf_c(szSize, _T("%ix%i"), m_Sizes.Width, m_Sizes.Height);
 		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConSizePix, szSize);
 		RECT rcPanel;
 		RCon()->GetPanelRect(FALSE, &rcPanel);
 
 		if (rcPanel.right>rcPanel.left)
-			_wsprintf(szSize, SKIPLEN(countof(szSize)) L"(%i, %i)-(%i, %i), %ix%i", rcPanel.left+1, rcPanel.top+1, rcPanel.right+1, rcPanel.bottom+1, rcPanel.right-rcPanel.left+1, rcPanel.bottom-rcPanel.top+1);
+			swprintf_c(szSize, L"(%i, %i)-(%i, %i), %ix%i", rcPanel.left+1, rcPanel.top+1, rcPanel.right+1, rcPanel.bottom+1, rcPanel.right-rcPanel.left+1, rcPanel.bottom-rcPanel.top+1);
 		else
 			wcscpy_c(szSize, L"<Absent>");
 
@@ -4357,7 +4357,7 @@ void CVirtualConsole::UpdateInfo()
 		RCon()->GetPanelRect(TRUE, &rcPanel);
 
 		if (rcPanel.right>rcPanel.left)
-			_wsprintf(szSize, SKIPLEN(countof(szSize)) L"(%i, %i)-(%i, %i), %ix%i", rcPanel.left+1, rcPanel.top+1, rcPanel.right+1, rcPanel.bottom+1, rcPanel.right-rcPanel.left+1, rcPanel.bottom-rcPanel.top+1);
+			swprintf_c(szSize, L"(%i, %i)-(%i, %i), %ix%i", rcPanel.left+1, rcPanel.top+1, rcPanel.right+1, rcPanel.bottom+1, rcPanel.right-rcPanel.left+1, rcPanel.bottom-rcPanel.top+1);
 		else
 			wcscpy_c(szSize, L"<Absent>");
 
@@ -4550,7 +4550,7 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y, bool StrictMonospace/*=fa
 						if (cr.X != (int)i)
 						{
 							#ifdef _DEBUG
-							wchar_t szDbg[120]; _wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"Coord corrected from {%i-%i} to {%i-%i}",
+							wchar_t szDbg[120]; swprintf_c(szDbg, L"Coord corrected from {%i-%i} to {%i-%i}",
 														  cr.X, cr.Y, i, cr.Y);
 							DEBUGSTRCOORD(szDbg);
 							#endif

@@ -178,7 +178,7 @@ bool CFontMgr::AutoRecreateFont(int nFontW, int nFontH)
 
 	if (gpSet->isLogging())
 	{
-		char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "AutoRecreateFont(H=%i, W=%i)", nFontH, nFontW);
+		char szInfo[128]; sprintf_c(szInfo, "AutoRecreateFont(H=%i, W=%i)", nFontH, nFontW);
 		CVConGroup::LogString(szInfo);
 	}
 
@@ -707,7 +707,7 @@ BOOL CFontMgr::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 										// Dump found table item
 										if (bDumpTable)
 										{
-											_wsprintf(szDumpInfo, SKIPCOUNT(szDumpInfo) L"  Platf: %u Enc: %u Lang: %u Len: %u \"", ttRecord.uPlatformID, ttRecord.uEncodingID, ttRecord.uLanguageID, ttRecord.uStringLength);
+											swprintf_c(szDumpInfo, L"  Platf: %u Enc: %u Lang: %u Len: %u \"", ttRecord.uPlatformID, ttRecord.uEncodingID, ttRecord.uLanguageID, ttRecord.uStringLength);
 											int iLen = lstrlen(szDumpInfo);
 											for (DWORD i = 0; i < dwRead; i++)
 											{
@@ -1146,7 +1146,7 @@ void CFontMgr::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD
 
 	if (gpSet->isLogging())
 	{
-		char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "MacroFontSetName('%s', H=%i, W=%i)", LF.lfFaceName, LF.lfHeight, LF.lfWidth);
+		char szInfo[128]; sprintf_c(szInfo, "MacroFontSetName('%s', H=%i, W=%i)", LF.lfFaceName, LF.lfHeight, LF.lfWidth);
 		CVConGroup::LogString(szInfo);
 	}
 
@@ -1168,7 +1168,7 @@ void CFontMgr::MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD
 	if (ghOpWnd)
 	{
 		wchar_t szSize[10];
-		_wsprintf(szSize, SKIPLEN(countof(szSize)) L"%i", gpSet->FontSizeY);
+		swprintf_c(szSize, L"%i", gpSet->FontSizeY);
 		SetDlgItemText(gpSetCls->GetPage(thi_Fonts), tFontSizeY, szSize);
 		gpSetCls->UpdateFontInfo();
 	}
@@ -1184,7 +1184,7 @@ bool CFontMgr::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,..
 	wchar_t szLog[128];
 	if (gpSet->isLogging())
 	{
-		_wsprintf(szLog, SKIPLEN(countof(szLog)) L"MacroFontSetSize(%i,%i)", nRelative, nValue);
+		swprintf_c(szLog, L"MacroFontSetSize(%i,%i)", nRelative, nValue);
 		gpConEmu->LogString(szLog);
 	}
 
@@ -1277,9 +1277,9 @@ bool CFontMgr::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,..
 				if (hMainPg)
 				{
 					wchar_t temp[16];
-					_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->FontSizeY);
+					swprintf_c(temp, L"%i", gpSet->FontSizeY);
 					CSetDlgLists::SelectStringExact(hMainPg, tFontSizeY, temp);
-					_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->FontSizeX);
+					swprintf_c(temp, L"%i", gpSet->FontSizeX);
 					CSetDlgLists::SelectStringExact(hMainPg, tFontSizeX, temp);
 				}
 			}
@@ -1287,7 +1287,7 @@ bool CFontMgr::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,..
 			if (gpConEmu->mp_Status)
 				gpConEmu->mp_Status->UpdateStatusBar(true);
 
-			_wsprintf(szLog, SKIPLEN(countof(szLog)) L"-- Succeeded! New font {'%s',%i,%i} was created", font->m_LF.lfFaceName, font->m_LF.lfHeight, font->m_LF.lfWidth, font->m_LF.lfHeight, font->m_LF.lfWidth);
+			swprintf_c(szLog, L"-- Succeeded! New font {'%s',%i,%i} was created", font->m_LF.lfFaceName, font->m_LF.lfHeight, font->m_LF.lfWidth, font->m_LF.lfHeight, font->m_LF.lfWidth);
 			gpConEmu->LogString(szLog);
 
 			return true;
@@ -1304,7 +1304,7 @@ bool CFontMgr::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,..
 		nValue += (nValue > 0) ? 1 : -1;
 	}
 
-	_wsprintf(szLog, SKIPLEN(countof(szLog)) L"-- Failed! New font {'%s',%i,%i} was not created", LF.lfFaceName, LF.lfHeight, LF.lfWidth, LF.lfHeight, LF.lfWidth);
+	swprintf_c(szLog, L"-- Failed! New font {'%s',%i,%i} was not created", LF.lfFaceName, LF.lfHeight, LF.lfWidth, LF.lfHeight, LF.lfWidth);
 	gpConEmu->LogString(szLog);
 
 	return false;
@@ -1536,7 +1536,7 @@ BOOL CFontMgr::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 				if (lstrcmpi((wchar_t*)lpOutl->otmpFamilyName, rf.szFontName) != 0)
 				{
 
-					_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"!!! RegFont failed: '%s'. Req: %s, Created: %s\n",
+					swprintf_c(szDbg, L"!!! RegFont failed: '%s'. Req: %s, Created: %s\n",
 						asFontFile, rf.szFontName, (wchar_t*)lpOutl->otmpFamilyName);
 					lbFail = TRUE;
 				}
@@ -1804,9 +1804,9 @@ bool CFontMgr::CreateFontGroup(CLogFont inFont)
 		if (hMainPg)
 		{
 			wchar_t temp[32];
-			_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->FontSizeY);
+			swprintf_c(temp, L"%i", gpSet->FontSizeY);
 			CSetDlgLists::SelectStringExact(hMainPg, tFontSizeY, temp);
-			_wsprintf(temp, SKIPLEN(countof(temp)) L"%i", gpSet->FontSizeX);
+			swprintf_c(temp, L"%i", gpSet->FontSizeX);
 			CSetDlgLists::SelectStringExact(hMainPg, tFontSizeX, temp);
 			CSetDlgLists::SelectStringExact(hMainPg, tFontSizeX3, temp);
 		}
@@ -2014,7 +2014,7 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 				SelectObject(hDC, hOldF);
 				DeleteDC(hDC);
 
-				_wsprintf(szFontError, SKIPLEN(countof(szFontError)) L"GetTextMetrics failed for non Raster font '%s'", inFont.lfFaceName);
+				swprintf_c(szFontError, L"GetTextMetrics failed for non Raster font '%s'", inFont.lfFaceName);
 				if (dwFontErr)
 				{
 					int nCurLen = _tcslen(szFontError);
@@ -2328,7 +2328,7 @@ void CFontMgr::RecreateAlternativeFont()
 
 			//if (szFontError[0]) wcscat_c(szFontError, L"\n");
 
-			_wsprintf(szFontError, SKIPCOUNT(szFontError)
+			swprintf_c(szFontError,
 			          L"Failed to create border font!\nRequested: %s\nCreated: %s",
 			          LogFont2.lfFaceName, m_Font2->m_LF.lfFaceName);
 
@@ -2413,7 +2413,7 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 
 		if (gpSet->isLogging())
 		{
-			char szInfo[128]; _wsprintfA(szInfo, SKIPLEN(countof(szInfo)) "AutoRecreateFont(H=%i, W=%i)", LF.lfHeight, LF.lfWidth);
+			char szInfo[128]; sprintf_c(szInfo, "AutoRecreateFont(H=%i, W=%i)", LF.lfHeight, LF.lfWidth);
 			CVConGroup::LogString(szInfo);
 		}
 	}
@@ -2483,7 +2483,7 @@ void CFontMgr::SaveFontSizes(bool bAuto, bool bSendChanges)
 	mn_FontHeight = m_Font[0]->m_LF.lfHeight;
 
 	wchar_t szLog[120];
-	_wsprintf(szLog, SKIPLEN(countof(szLog))
+	swprintf_c(szLog,
 		L"Main font was created Face='%s' lfHeight=%i lfWidth=%i use-dpi=%u dpi=%i zoom=%i",
 		LogFont.lfFaceName, LogFont.lfHeight, LogFont.lfWidth,
 		(UINT)gpSet->FontUseDpi, gpSetCls->_dpi.Ydpi, mn_FontZoomValue);
@@ -2678,13 +2678,13 @@ void CFontMgr::DumpFontMetrics(LPCWSTR szType, CFontPtr& Font)
 
 	if (!Font.IsSet())
 	{
-		_wsprintf(szFontDump, SKIPLEN(countof(szFontDump)) L"*** gpSet->%s: WAS NOT CREATED!\n", szType);
+		swprintf_c(szFontDump, L"*** gpSet->%s: WAS NOT CREATED!\n", szType);
 	}
 	else
 	{
 		TEXTMETRIC ltm = Font->m_tm;
 		LPOUTLINETEXTMETRIC lpOutl = Font->mp_otm;
-		_wsprintf(szFontDump, SKIPLEN(countof(szFontDump)) L"*** gpSet->%s: '%s', Height=%i, Ave=%i, Max=%i, Over=%i, Angle*10=%i\n",
+		swprintf_c(szFontDump, L"*** gpSet->%s: '%s', Height=%i, Ave=%i, Max=%i, Over=%i, Angle*10=%i\n",
 		          szType, Font->m_LF.lfFaceName, ltm.tmHeight, ltm.tmAveCharWidth, ltm.tmMaxCharWidth, ltm.tmOverhang,
 		          lpOutl ? lpOutl->otmItalicAngle : 0);
 	}

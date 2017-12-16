@@ -216,7 +216,7 @@ LPCWSTR GetMouseMsgName(UINT msg)
 	default:
 		{
 			static wchar_t szTmp[32] = L"";
-			_wsprintf(szTmp, SKIPCOUNT(szTmp) L"0x%X(%u)", msg, msg);
+			swprintf_c(szTmp, L"0x%X(%u)", msg, msg);
 			pszName = szTmp;
 		}
 	}
@@ -433,7 +433,7 @@ void DebugLogPos(HWND hw, int x, int y, int w, int h, LPCSTR asFunc)
 		wchar_t szPos[255];
 		static SYSTEMTIME st;
 		GetLocalTime(&st);
-		_wsprintf(szPos, SKIPLEN(countof(szPos)) L"%02i:%02i.%03i %s(%s, %i,%i,%i,%i)\n",
+		swprintf_c(szPos, L"%02i:%02i.%03i %s(%s, %i,%i,%i,%i)\n",
 		          st.wMinute, st.wSecond, st.wMilliseconds, asFunc,
 		          (hw==ghConWnd) ? L"Con" : L"Emu", x,y,w,h);
 		DEBUGSTRMOVE(szPos);
@@ -1432,7 +1432,7 @@ BOOL CheckCreateAppWindow()
 	if (gpSet->isLogging())
 	{
 		wchar_t szCreated[128];
-		_wsprintf(szCreated, SKIPLEN(countof(szCreated)) L"App window created, HWND=0x%08X\r\n", LODWORD(ghWndApp));
+		swprintf_c(szCreated, L"App window created, HWND=0x%08X\r\n", LODWORD(ghWndApp));
 		gpConEmu->LogString(szCreated, false, false);
 	}
 
@@ -1516,7 +1516,7 @@ void SkipOneShowWindow()
 		if (gpSet->isLogging())
 		{
 			wchar_t szInfo[128];
-			_wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Skip window 0x%08X was created and destroyed", LODWORD(hSkip));
+			swprintf_c(szInfo, L"Skip window 0x%08X was created and destroyed", LODWORD(hSkip));
 			gpConEmu->LogString(szInfo);
 		}
 	}
@@ -1646,7 +1646,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 	// Prepare assertion message
 	{
 		wchar_t szDashes[] = L"-----------------------\r\n", szPID[80];
-		_wsprintf(szPID, SKIPCOUNT(szPID) L"PID=%u, TID=%u" WIN3264TEST(L"",L"64"), GetCurrentProcessId(), GetCurrentThreadId());
+		swprintf_c(szPID, L"PID=%u, TID=%u" WIN3264TEST(L"",L"64"), GetCurrentProcessId(), GetCurrentThreadId());
 		CEStr lsBuild(L"ConEmu ", (gpConEmu && gpConEmu->ms_ConEmuBuild) ? gpConEmu->ms_ConEmuBuild : L"<UnknownBuild>",
 			L" [", WIN3264TEST(L"32",L"64"), RELEASEDEBUGTEST(NULL,L"D"), L"] ");
 		CEStr lsAssertion(L"Assertion: ", lsBuild, szPID, L"\r\n");
@@ -1677,7 +1677,7 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 			nPostCode = GetLastError();
 		}
 
-		_wsprintf(szCodes, SKIPLEN(countof(szCodes)) L"\r\nPreError=%i, PostError=%i, Result=%i", nPreCode, nPostCode, nRet);
+		swprintf_c(szCodes, L"\r\nPreError=%i, PostError=%i, Result=%i", nPreCode, nPostCode, nRet);
 		lstrmerge(&szFull.ms_Val, szCodes);
 	}
 
@@ -1762,7 +1762,7 @@ void WarnCreateWindowFail(LPCWSTR pszDescription, HWND hParent, DWORD nErrCode)
 
 	if (gpConEmu && gpConEmu->mp_Inside)
 	{
-		_wsprintf(szCreateFail, SKIPCOUNT(szCreateFail)
+		swprintf_c(szCreateFail,
 			L"Inside mode: Parent (%s): PID=%u ParentPID=%u HWND=x%p EXE=",
 			(::IsWindow(gpConEmu->mp_Inside->mh_InsideParentWND) ? L"Valid" : L"Invalid"),
 			gpConEmu->mp_Inside->m_InsideParentInfo.ParentPID,
@@ -1772,7 +1772,7 @@ void WarnCreateWindowFail(LPCWSTR pszDescription, HWND hParent, DWORD nErrCode)
 		LogString(lsLog);
 	}
 
-	_wsprintf(szCreateFail, SKIPCOUNT(szCreateFail)
+	swprintf_c(szCreateFail,
 		L"Create %s FAILED (code=%u)! Parent=x%p%s%s",
 		pszDescription ? pszDescription : L"window", nErrCode, (LPVOID)hParent,
 		(hParent ? (::IsWindow(hParent) ? L" Valid" : L" Invalid") : L""),
@@ -1861,7 +1861,7 @@ void MessageLoop()
 		#ifdef _DEBUG
 		if (Msg.message == WM_TIMER)
 		{
-			_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"WM_TIMER(0x%08X,%u)\n", LODWORD(Msg.hwnd), Msg.wParam);
+			swprintf_c(szDbg, L"WM_TIMER(0x%08X,%u)\n", LODWORD(Msg.hwnd), Msg.wParam);
 			DEBUGSTRTIMER(szDbg);
 		}
 		#endif
@@ -2760,7 +2760,7 @@ HRESULT UpdateAppUserModelID()
 
 	// Log the change
 	wchar_t szLog[200];
-	_wsprintf(szLog, SKIPCOUNT(szLog) L"AppUserModelID was changed to `%s` Result=x%08X", AppID.ms_Val, (DWORD)hr);
+	swprintf_c(szLog, L"AppUserModelID was changed to `%s` Result=x%08X", AppID.ms_Val, (DWORD)hr);
 	LogString(szLog);
 
 	return hr;
@@ -3102,7 +3102,7 @@ int CheckForDebugArgs(LPCWSTR asCmdLine)
 
 	if (debug)
 	{
-		wchar_t szTitle[128]; _wsprintf(szTitle, SKIPLEN(countof(szTitle)) L"Conemu started, PID=%i", GetCurrentProcessId());
+		wchar_t szTitle[128]; swprintf_c(szTitle, L"Conemu started, PID=%i", GetCurrentProcessId());
 		CEStr lsText(L"GetCommandLineW()\n", GetCommandLineW(), L"\n\n\n" L"lpCmdLine\n", asCmdLine);
 		MessageBox(NULL, lsText, szTitle, MB_OK|MB_ICONINFORMATION|MB_SETFOREGROUND|MB_SYSTEMMODAL);
 		nDbg = IsDebuggerPresent();
@@ -3231,7 +3231,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
 		if (nOemCP && !RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont", 0, nRights, &hk))
 		{
-			wchar_t szName[64]; _wsprintf(szName, SKIPLEN(countof(szName)) L"%u", nOemCP);
+			wchar_t szName[64]; swprintf_c(szName, L"%u", nOemCP);
 			wchar_t szVal[64] = {}; DWORD cbSize = sizeof(szVal)-2;
 			if (!RegQueryValueEx(hk, szName, NULL, NULL, (LPBYTE)szVal, &cbSize) && *szVal)
 			{

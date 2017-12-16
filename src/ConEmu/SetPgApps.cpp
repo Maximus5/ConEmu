@@ -154,7 +154,7 @@ INT_PTR CSetPgApps::SetListAppName(const AppSettings* pApp, int nAppIndex/*1-bas
 	INT_PTR iCount, iIndex;
 	wchar_t szItem[1024];
 
-	_wsprintf(szItem, SKIPLEN(countof(szItem)) L"%i\t%s\t", nAppIndex,
+	swprintf_c(szItem, L"%i\t%s\t", nAppIndex,
 		(pApp->Elevated == 1) ? L"E" : (pApp->Elevated == 2) ? L"N" : L"*");
 	int nPrefix = lstrlen(szItem);
 	if (pApp->AppNames)

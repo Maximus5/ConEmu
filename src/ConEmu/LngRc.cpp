@@ -232,7 +232,7 @@ wrap:
 	if (bOk)
 	{
 		wchar_t szLog[120];
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"Loading resources: duration (ms): Parse: %u; Internal: %u; Delete: %u", (nLoadTick - nStartTick), (nFinTick - nLoadTick), (nDelTick - nFinTick));
+		swprintf_c(szLog, L"Loading resources: duration (ms): Parse: %u; Internal: %u; Delete: %u", (nLoadTick - nStartTick), (nFinTick - nLoadTick), (nDelTick - nFinTick));
 		gpConEmu->LogString(szLog);
 	}
 	return bOk;

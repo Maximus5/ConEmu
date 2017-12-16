@@ -1077,7 +1077,7 @@ struct ICOImage
 		pLoadPreview->crSize.X = lWidth;
 		pLoadPreview->crSize.Y = lHeight;
 		pLoadPreview->cbPixelsSize = pLoadPreview->cbStride * lHeight;
-		_wsprintf(szComments, SKIPLEN(countof(szComments)) L"%i x %i x %ibpp [%i] %s%s", lWidth, lHeight, nIconBPP, pIcon->Icon.idCount,
+		swprintf_c(szComments, L"%i x %i x %ibpp [%i] %s%s", lWidth, lHeight, nIconBPP, pIcon->Icon.idCount,
 		          pIcon->Icon.idType!=2 ? L"ICO" : L"CUR", bPNG ? L" [PNG]" : L"");
 		pLoadPreview->pszComments = szComments;
 		return TRUE;

@@ -205,7 +205,7 @@ void EmergencyShow(HWND hConWnd, int newFontY /*= 0*/, int newFontX /*= 0*/)
 		return; // Invalid HWND
 
 	wchar_t szMutex[80];
-	_wsprintf(szMutex, SKIPCOUNT(szMutex) L"ConEmuEmergencyShow:%08X", (DWORD)(DWORD_PTR)hConWnd);
+	swprintf_c(szMutex, L"ConEmuEmergencyShow:%08X", (DWORD)(DWORD_PTR)hConWnd);
 	HANDLE hMutex = CreateMutex(NULL, FALSE, szMutex);
 
 	//_ASSERTE(FALSE && "EmergencyShow was called, Continue?");

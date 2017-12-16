@@ -40,7 +40,7 @@ CConEmuPipe::CConEmuPipe(DWORD anFarPID, DWORD anTimeout/*=-1*/)
 {
 	mn_FarPID = anFarPID;
 	mh_Pipe = NULL;
-	_wsprintf(ms_PipeName, SKIPLEN(countof(ms_PipeName)) CEPLUGINPIPENAME, L".", mn_FarPID);
+	swprintf_c(ms_PipeName, CEPLUGINPIPENAME, L".", mn_FarPID);
 	pIn = NULL;
 	pOut = NULL;
 	lpCursor = NULL;
@@ -85,13 +85,13 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	if (!((nCmd >= (int)CMD_FIRST_FAR_CMD && nCmd <= (int)CMD_LAST_FAR_CMD)))
 	{
 		TCHAR szError[128];
-		_wsprintf(szError, SKIPLEN(countof(szError)) _T("Invalid command id (%i)!\nPID=%u, TID=%u"), nCmd, GetCurrentProcessId(), GetCurrentThreadId());
+		swprintf_c(szError, _T("Invalid command id (%i)!\nPID=%u, TID=%u"), nCmd, GetCurrentProcessId(), GetCurrentThreadId());
 		MBoxA(szError);
 		return FALSE;
 	}
 
 #ifdef _DEBUG
-	WCHAR szMsg[64]; _wsprintf(szMsg, SKIPLEN(countof(szMsg)) _T("Pipe:Execute(%i)\n"), nCmd);
+	WCHAR szMsg[64]; swprintf_c(szMsg, _T("Pipe:Execute(%i)\n"), nCmd);
 	DEBUGSTR(szMsg);
 #endif
 	int nAllSize = sizeof(CESERVER_REQ_HDR)+anDataSize;
@@ -101,7 +101,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	{
 		_ASSERTE(pIn!=NULL);
 		TCHAR szError[128];
-		_wsprintf(szError, SKIPLEN(countof(szError)) _T("Pipe: Can't allocate memory (%i) bytes, Cmd = %i!"), nAllSize, nCmd);
+		swprintf_c(szError, _T("Pipe: Can't allocate memory (%i) bytes, Cmd = %i!"), nAllSize, nCmd);
 		MBoxA(szError);
 		Close();
 		return FALSE;
@@ -141,7 +141,7 @@ BOOL CConEmuPipe::Execute(int nCmd, LPCVOID apData, UINT anDataSize)
 	{
 		DEBUGSTR(L" - FAILED!\n");
 		TCHAR szError[128];
-		_wsprintf(szError, SKIPLEN(countof(szError)) _T("Pipe: TransactNamedPipe failed, Cmd = %i, ErrCode = 0x%08X!"), nCmd, dwErr);
+		swprintf_c(szError, _T("Pipe: TransactNamedPipe failed, Cmd = %i, ErrCode = 0x%08X!"), nCmd, dwErr);
 		MBoxA(szError);
 		Close();
 		SafeFree(pIn);

@@ -150,7 +150,7 @@ CTaskSchedulerBase::~CTaskSchedulerBase()
 void CTaskSchedulerBase::DisplaySchedulerError(LPCWSTR pszStep)
 {
 	wchar_t szInfo[200] = L"";
-	_wsprintf(szInfo, SKIPCOUNT(szInfo) L" Please check scheduler log.\n" L"HR=%u, TaskName=\"", (DWORD)hr);
+	swprintf_c(szInfo, L" Please check scheduler log.\n" L"HR=%u, TaskName=\"", (DWORD)hr);
 	CEStr szErr(L"Scheduler: ", pszStep, szInfo, bsTaskName, L"\"\n", bsApplication, L" ", bsArguments);
 	DisplayLastError(szErr, (DWORD)hr);
 };
@@ -210,7 +210,7 @@ CTaskScheduler2::~CTaskScheduler2()
 		if (FAILED(hr))
 		{
 			wchar_t szLog[80];
-			_wsprintf(szLog, SKIPCOUNT(szLog) L"Scheduler: Failed delete created task, hr=x%08X", (DWORD)hr);
+			swprintf_c(szLog, L"Scheduler: Failed delete created task, hr=x%08X", (DWORD)hr);
 			LogString(szLog);
 		}
 	}
@@ -428,7 +428,7 @@ HRESULT CTaskScheduler2::Run()
 	else
 	{
 		wchar_t szLog[100];
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"Scheduler: Run result: 0x%08X", (DWORD)hr);
+		swprintf_c(szLog, L"Scheduler: Run result: 0x%08X", (DWORD)hr);
 		LogString(szLog);
 
 		GetState();
@@ -447,7 +447,7 @@ TaskSchedulerState CTaskScheduler2::GetState()
 		if (hrRun == SCHED_E_TASK_NOT_RUNNING)
 			wcscpy_c(szLog, L"Scheduler: Current task state: SCHED_E_TASK_NOT_RUNNING");
 		else
-			_wsprintf(szLog, SKIPCOUNT(szLog) L"Scheduler: Failed to get task state: hr=x%08X", (DWORD)hrRun);
+			swprintf_c(szLog, L"Scheduler: Failed to get task state: hr=x%08X", (DWORD)hrRun);
 		LogString(szLog);
 		return tss_Failed;
 	}
@@ -600,16 +600,16 @@ HRESULT CTaskScheduler1::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 		wchar_t szLog[120], szName[20];
 		if (rc != NERR_Success)
 		{
-			_wsprintf(szLog, SKIPCOUNT(szLog) L"NetScheduleJobAdd failed, rc=%u", rc);
+			swprintf_c(szLog, L"NetScheduleJobAdd failed, rc=%u", rc);
 			hr = (HRESULT)-1;
 			DisplaySchedulerError(szLog);
 			goto wrap;
 		}
 
 		// Successfully created, but the name is ‘unknown’, only JobID
-		_wsprintf(szName, SKIPCOUNT(szName) L"At%u", jobId);
+		swprintf_c(szName, L"At%u", jobId);
 		bsTaskName = szName;
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"Scheduler: NetScheduleJobAdd succeeded, jobId=%u", jobId);
+		swprintf_c(szLog, L"Scheduler: NetScheduleJobAdd succeeded, jobId=%u", jobId);
 		LogString(szLog);
 
 		// Check if we can access the task via Task Scheduler 1.0 interface (to Run it)
@@ -618,7 +618,7 @@ HRESULT CTaskScheduler1::Create(bool bAsSystem, LPCWSTR lpTaskName, LPCWSTR lpAp
 		if (FAILED(hr) || !pITask)
 		{
 			// Prepare error message
-			_wsprintf(szLog, SKIPCOUNT(szLog) L"NetScheduleJobAdd succeeded, jobId=%u, but ITask is not found", jobId);
+			swprintf_c(szLog, L"NetScheduleJobAdd succeeded, jobId=%u, but ITask is not found", jobId);
 			// Delete the job immediately
 			netScheduleJobDel(NULL, jobId, jobId);
 			jobId = (DWORD)-1;
@@ -748,7 +748,7 @@ HRESULT CTaskScheduler1::Run()
 	else
 	{
 		wchar_t szLog[80];
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"Scheduler: Run result: 0x%08X", (DWORD)hr);
+		swprintf_c(szLog, L"Scheduler: Run result: 0x%08X", (DWORD)hr);
 		LogString(szLog);
 
 		GetState();
@@ -766,7 +766,7 @@ TaskSchedulerState CTaskScheduler1::GetState()
 
 	if (FAILED(hrRun))
 	{
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"Scheduler: Failed to get task state, hr=x%08X", (DWORD)hrRun);
+		swprintf_c(szLog, L"Scheduler: Failed to get task state, hr=x%08X", (DWORD)hrRun);
 		LogString(szLog);
 		return tss_Failed;
 	}
@@ -855,7 +855,7 @@ BOOL CreateProcessScheduled(bool bAsSystem, DWORD anSessionId, LPWSTR lpCommandL
 
 	wchar_t szUniqTaskName[128];
 	wchar_t szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
-	_wsprintf(szUniqTaskName, SKIPLEN(countof(szUniqTaskName)) L"ConEmu %02u%02u%02u%s starter ParentPID=%u", (MVV_1%100),MVV_2,MVV_3,szVer4, GetCurrentProcessId());
+	swprintf_c(szUniqTaskName, L"ConEmu %02u%02u%02u%s starter ParentPID=%u", (MVV_1%100),MVV_2,MVV_3,szVer4, GetCurrentProcessId());
 
 	HRESULT hr;
 	TaskSchedulerState state;

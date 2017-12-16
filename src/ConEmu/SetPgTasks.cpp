@@ -85,7 +85,7 @@ LRESULT CSetPgTasks::OnInitDialog(HWND hDlg, bool abForceReload)
 	const CommandTasks* pGrp = NULL;
 	while ((pGrp = gpSet->CmdTaskGet(nGroup)))
 	{
-		_wsprintf(szItem, SKIPLEN(countof(szItem)) L"%i\t", nGroup+1);
+		swprintf_c(szItem, L"%i\t", nGroup+1);
 		int nPrefix = lstrlen(szItem);
 		lstrcpyn(szItem+nPrefix, pGrp->pszName, countof(szItem)-nPrefix);
 

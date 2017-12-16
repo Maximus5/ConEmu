@@ -1915,7 +1915,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 		iTopItem = pi->CalcTopPanelItem(iCurItem, iTopItem);
 #ifdef _DEBUG
 		wchar_t szDbg[512];
-		_wsprintf(szDbg, SKIPLEN(countof(szDbg))
+		swprintf_c(szDbg,
 		          L"Requesting panel redraw: {Cur:%i, Top:%i}.\n"
 		          L"  Current state: {Cur:%i, Top:%i, Count:%i, OurTop:%i}\n"
 		          L"  Current request: {%s, Cur:%i, Top=%i}\n",
@@ -1963,7 +1963,7 @@ int ShowLastError()
 
 		if (pszTempl && *pszTempl)
 		{
-			_wsprintf(szErrMsg, SKIPLEN(countof(szErrMsg)) pszTempl, gnWin32Error);
+			swprintf_c(szErrMsg, pszTempl, gnWin32Error);
 
 			if (gFarVersion.dwBuild>=FAR_Y2_VER)
 				return FUNC_Y2(ShowMessageW)(szErrMsg, 0);

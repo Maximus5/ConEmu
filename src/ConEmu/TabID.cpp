@@ -253,7 +253,7 @@ CTabID::~CTabID()
 {
 	#ifdef _DEBUG
 	wchar_t szDbg[120];
-	_wsprintf(szDbg, SKIPLEN(countof(szDbg)) L"~CTabID(PID=%u IDX=%u TYP=%u '",
+	swprintf_c(szDbg, L"~CTabID(PID=%u IDX=%u TYP=%u '",
 		Info.nPID, Info.nFarWindowID, (UINT)Type());
 	int nDbgLen = lstrlen(szDbg);
 	lstrcpyn(szDbg+nDbgLen, GetName(), countof(szDbg)-nDbgLen-5);

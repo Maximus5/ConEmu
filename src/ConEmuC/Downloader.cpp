@@ -817,7 +817,7 @@ BOOL CDownloader::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, D
 	bool bSecureHTTPS = false;
 	bool bFtp = false;
 	HTTP_VERSION_INFO httpver = {1,1};
-	wchar_t szHttpVer[32]; _wsprintf(szHttpVer, SKIPLEN(countof(szHttpVer)) L"HTTP/%u.%u", httpver.dwMajorVersion, httpver.dwMinorVersion);
+	wchar_t szHttpVer[32]; swprintf_c(szHttpVer, L"HTTP/%u.%u", httpver.dwMajorVersion, httpver.dwMinorVersion);
 	const wchar_t szConEmuAgent[] =
 		//L"Mozilla/5.0 (compatible; ConEmu Update)" // This was the cause of not working download redirects
 		L"ConEmu Update" // so we use that to enable redirects
@@ -1653,7 +1653,7 @@ static void PrintDownloadLog(LPCWSTR pszLabel, LPCWSTR pszInfo)
 {
 	SYSTEMTIME st = {}; GetLocalTime(&st);
 	wchar_t szTime[80];
-	_wsprintf(szTime, SKIPLEN(countof(szTime)) L"%i:%02i:%02i.%03i{%u} ",
+	swprintf_c(szTime, L"%i:%02i:%02i.%03i{%u} ",
 	           st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, GetCurrentThreadId());
 
 	CEStr lsAll(lstrmerge(szTime, pszLabel, (pszInfo && *pszInfo) ? pszInfo : L"<NULL>\n"));
@@ -2000,7 +2000,7 @@ int DoDownload(LPCWSTR asCmdLine)
 		{
 			wchar_t szInfo[100];
 			iFiles++;
-			_wsprintf(szInfo, SKIPCOUNT(szInfo) L"File #%u downloaded, size=%u, crc32=x%08X", (DWORD)iFiles, (DWORD)args[0].uintArg, (DWORD)args[1].uintArg);
+			swprintf_c(szInfo, L"File #%u downloaded, size=%u, crc32=x%08X", (DWORD)iFiles, (DWORD)args[0].uintArg, (DWORD)args[1].uintArg);
 			DownloadLog(dc_LogCallback, szInfo);
 		}
 	}
@@ -2008,7 +2008,7 @@ int DoDownload(LPCWSTR asCmdLine)
 	iRc = iFiles ? CERR_DOWNLOAD_SUCCEEDED : CERR_CARGUMENT;
 wrap:
 	// Log exit code
-	_wsprintf(szResult, SKIPCOUNT(szResult)
+	swprintf_c(szResult,
 		L"Exit with code %s (%i)",
 		(iRc==CERR_DOWNLOAD_SUCCEEDED) ? L"CERR_DOWNLOAD_SUCCEEDED" :
 		(iRc==CERR_DOWNLOAD_FAILED) ? L"CERR_DOWNLOAD_FAILED" :

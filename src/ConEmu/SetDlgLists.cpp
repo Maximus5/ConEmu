@@ -191,7 +191,7 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, UINT& n
 	}
 	else
 	{
-		_wsprintf(szNumber, SKIPLEN(countof(szNumber)) L"%i", nValue);
+		swprintf_c(szNumber, L"%i", nValue);
 		SelectStringExact(hList, 0, szNumber);
 	}
 }
@@ -233,7 +233,7 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eWordItems eWhat, UINT& nValue, 
 
 	for (uint i = 0; i < nItems; i++)
 	{
-		_wsprintf(szNumber, SKIPLEN(countof(szNumber)) L"%u", pnValues[i]);
+		swprintf_c(szNumber, L"%u", pnValues[i]);
 		SendMessage(hList, CB_ADDSTRING, 0, (LPARAM)szNumber);
 
 		if (pnValues[i] == nValue)
@@ -242,7 +242,7 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eWordItems eWhat, UINT& nValue, 
 
 	if (abExact)
 	{
-		_wsprintf(szNumber, SKIPLEN(countof(szNumber)) L"%u", nValue);
+		swprintf_c(szNumber, L"%u", nValue);
 		SelectStringExact(hList, 0, szNumber);
 	}
 	else

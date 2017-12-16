@@ -3085,7 +3085,7 @@ void Settings::LoadSizeSettings(SettingsBase* reg)
 
 	if (gpSet->isLogging())
 	{
-		wchar_t szInfo[120]; _wsprintf(szInfo, SKIPLEN(countof(szInfo)) L"Loaded pos: {%i,%i}, size: {%s,%s}", _wndX, _wndY, wndWidth.AsString(), wndHeight.AsString());
+		wchar_t szInfo[120]; swprintf_c(szInfo, L"Loaded pos: {%i,%i}, size: {%s,%s}", _wndX, _wndY, wndWidth.AsString(), wndHeight.AsString());
 		gpConEmu->LogString(szInfo);
 	}
 
@@ -3203,7 +3203,7 @@ void Settings::SaveSettingsOnExit()
 						LPCWSTR pszConfigName = gpSetCls->GetConfigName();
 						if (pszConfigName && *pszConfigName)
 						{
-							_wsprintf(szConfig, SKIPLEN(countof(szConfig)) L"/config \"%s\"", pszConfigName);
+							swprintf_c(szConfig, L"/config \"%s\"", pszConfigName);
 						}
 						StartupTask->SetGuiArg(szConfig);
 
@@ -3235,7 +3235,7 @@ void Settings::SaveSettingsOnExit()
 void Settings::SaveStopBuzzingDate()
 {
 	SYSTEMTIME st = {}; GetLocalTime(&st);
-	_wsprintf(StopBuzzingDate, SKIPCOUNT(StopBuzzingDate) L"%u-%u-%u", st.wYear, st.wMonth, st.wDay);
+	swprintf_c(StopBuzzingDate, L"%u-%u-%u", st.wYear, st.wMonth, st.wDay);
 
 	// -basic switch?
 	if (gpConEmu->IsResetBasicSettings())
@@ -4296,7 +4296,7 @@ void Settings::CheckConsoleSettings()
 		if (gOSVer.dwMajorVersion >= 6)
 		{
 			wchar_t szWarning[512];
-			_wsprintf(szWarning, SKIPLEN(countof(szWarning))
+			swprintf_c(szWarning,
 				L"Warning!\n"
 				L"Dangerous values detected in yours registry\n\n"
 				L"Please check [HKEY_CURRENT_USER\\Console] and [HKEY_CURRENT_USER\\Console\\ConEmu] keys\n\n"
@@ -5310,7 +5310,7 @@ int Settings::CmdTaskSet(int anIndex, LPCWSTR asName, LPCWSTR asGuiArgs, LPCWSTR
 			{
 				bool bDuplicate = false;
 				wchar_t szIndex[16] = L"";
-				if (s) _wsprintf(szIndex, SKIPCOUNT(szIndex) L" (%u)", s);
+				if (s) swprintf_c(szIndex, L" (%u)", s);
 				lsName.Attach(lstrmerge(TaskBracketLeftS, lsNaked.ms_Val, szIndex, TaskBracketRightS));
 
 				for (INT_PTR i = 0; (i < CmdTaskCount) && !bDuplicate; i++)

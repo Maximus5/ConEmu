@@ -261,7 +261,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		case WM_LBUTTONUP:
 		case NIN_BALLOONUSERCLICK:
 			#ifdef _DEBUG
-			_wsprintf(szMsg, SKIPLEN(countof(szMsg)) (lParam==WM_LBUTTONUP) ? L"TSA: WM_LBUTTONUP(%i,0x%08X)\n" : L"TSA: NIN_BALLOONUSERCLICK(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
+			swprintf_c(szMsg, (lParam==WM_LBUTTONUP) ? L"TSA: WM_LBUTTONUP(%i,0x%08X)\n" : L"TSA: NIN_BALLOONUSERCLICK(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
 			DEBUGSTRICON(szMsg);
 			#endif
 			if (gpSet->isQuakeStyle)
@@ -327,7 +327,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			break;
 		case NIN_BALLOONSHOW:
 			#ifdef _DEBUG
-			_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"TSA: NIN_BALLOONSHOW(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
+			swprintf_c(szMsg, L"TSA: NIN_BALLOONSHOW(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
 			DEBUGSTRICON(szMsg);
 			#endif
 			mn_BalloonShowTick = GetTickCount();
@@ -335,7 +335,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		case NIN_BALLOONTIMEOUT:
 			{
 				#ifdef _DEBUG
-				_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"TSA: NIN_BALLOONTIMEOUT(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
+				swprintf_c(szMsg, L"TSA: NIN_BALLOONTIMEOUT(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
 				DEBUGSTRICON(szMsg);
 				#endif
 
@@ -354,7 +354,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		case WM_RBUTTONUP:
 		{
 			#ifdef _DEBUG
-			_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"TSA: WM_RBUTTONUP(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
+			swprintf_c(szMsg, L"TSA: WM_RBUTTONUP(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
 			DEBUGSTRICON(szMsg);
 			#endif
 			POINT mPos;
@@ -370,7 +370,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
 	#ifdef _DEBUG
 	default:
-		_wsprintf(szMsg, SKIPLEN(countof(szMsg)) L"TSA: OnTryIcon(uMsg, wParam=%i, lParam=0x%04X)\n", messg, (int)wParam, (DWORD)lParam);
+		swprintf_c(szMsg, L"TSA: OnTryIcon(uMsg, wParam=%i, lParam=0x%04X)\n", messg, (int)wParam, (DWORD)lParam);
 		DEBUGSTRICON(szMsg);
 	#endif
 	}

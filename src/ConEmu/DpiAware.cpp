@@ -459,7 +459,7 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, CDynDialog* apDlgTempl
 	if ((mh_OldFont != NULL)
 		&& (GetObject(mh_OldFont, sizeof(mlf_InitFont), &mlf_InitFont) > 0))
 	{
-		_wsprintf(szLog, SKIPLEN(countof(szLog)) L"CDpiForDialog(x%08X) Font='%s' lfHeight=%i Points=%u", (DWORD)(DWORD_PTR)hWnd, mlf_InitFont.lfFaceName, mlf_InitFont.lfHeight, mn_TemplateFontSize);
+		swprintf_c(szLog, L"CDpiForDialog(x%08X) Font='%s' lfHeight=%i Points=%u", (DWORD)(DWORD_PTR)hWnd, mlf_InitFont.lfFaceName, mlf_InitFont.lfHeight, mn_TemplateFontSize);
 	}
 	else
 	{
@@ -468,7 +468,7 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, CDynDialog* apDlgTempl
 		lstrcpyn(mlf_InitFont.lfFaceName, L"MS Shell Dlg", countof(mlf_InitFont.lfFaceName));
 		mlf_InitFont.lfWeight = 400;
 		mlf_InitFont.lfCharSet = DEFAULT_CHARSET;
-		_wsprintf(szLog, SKIPLEN(countof(szLog)) L"CDpiForDialog(x%08X) DefaultFont='%s' lfHeight=%i Points=%u", (DWORD)(DWORD_PTR)hWnd, mlf_InitFont.lfFaceName, mlf_InitFont.lfHeight, mn_TemplateFontSize);
+		swprintf_c(szLog, L"CDpiForDialog(x%08X) DefaultFont='%s' lfHeight=%i Points=%u", (DWORD)(DWORD_PTR)hWnd, mlf_InitFont.lfFaceName, mlf_InitFont.lfHeight, mn_TemplateFontSize);
 	}
 
 	LogString(szLog);
@@ -527,7 +527,7 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 	if (gbSkipSetDialogDPI)
 	{
 		GetClientRect(mh_Dlg, &rcClient); GetWindowRect(mh_Dlg, &rcCurWnd);
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"SKIPPED CDpiForDialog::SetDialogDPI x%08X, OldDpi={%i,%i}, NewDpi={%i,%i}, CurSize={%i,%i}, CurClient={%i,%i}",
+		swprintf_c(szLog, L"SKIPPED CDpiForDialog::SetDialogDPI x%08X, OldDpi={%i,%i}, NewDpi={%i,%i}, CurSize={%i,%i}, CurClient={%i,%i}",
 			(DWORD)(DWORD_PTR)mh_Dlg, m_CurDpi.Xdpi, m_CurDpi.Ydpi, newDpi.Xdpi, newDpi.Ydpi,
 			(rcCurWnd.right - rcCurWnd.left), (rcCurWnd.bottom - rcCurWnd.top),
 			(rcClient.right - rcClient.left), (rcClient.bottom - rcClient.top));
@@ -555,7 +555,7 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 		setDpi.Ydpi = MulDiv(setDpi.Ydpi, 120, 96);
 		setDpi.Xdpi = MulDiv(setDpi.Xdpi, 120, 96);
 		// Log it
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"CDpiForDialog::SetDialogDPI x%08X forces larger dpi value from {%i,%i} to {%i,%i}",
+		swprintf_c(szLog, L"CDpiForDialog::SetDialogDPI x%08X forces larger dpi value from {%i,%i} to {%i,%i}",
 			(DWORD)(DWORD_PTR)mh_Dlg, newDpi.Xdpi, newDpi.Ydpi, setDpi.Xdpi, setDpi.Ydpi);
 		LogString(szLog);
 	}
@@ -648,7 +648,7 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 	else
 	{
 		const DlgItem& di = (*p)[0];
-		_wsprintf(szLog, SKIPCOUNT(szLog) L"CDpiForDialog::SetDialogDPI x%08X, OldDpi={%i,%i}, NewDpi={%i,%i}, OldSize={%i,%i}, NewSize={%i,%i}, NewFont=%i",
+		swprintf_c(szLog, L"CDpiForDialog::SetDialogDPI x%08X, OldDpi={%i,%i}, NewDpi={%i,%i}, OldSize={%i,%i}, NewSize={%i,%i}, NewFont=%i",
 			(DWORD)(DWORD_PTR)mh_Dlg, curDpi.Xdpi, curDpi.Ydpi, newDpi.Xdpi, newDpi.Ydpi,
 			(rcCurWnd.right - rcCurWnd.left), (rcCurWnd.bottom - rcCurWnd.top), di.r.right, di.r.bottom,
 			mlf_CurFont.lfHeight);
@@ -701,7 +701,7 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 				GetClientRect(di.h, &rcClient2);
 				GetClientRect(hComboEdit, &rcEdit2);
 				lNewHeight = newH*iComboFieldHeight/iComboWasHeight;
-				_wsprintf(szLog, SKIPCOUNT(szLog) L"CDpiForDialog::Combo height changed - OldHeight=%i, ItemHeight=%i, NewHeight=%i, NewItemHeight=%i",
+				swprintf_c(szLog, L"CDpiForDialog::Combo height changed - OldHeight=%i, ItemHeight=%i, NewHeight=%i, NewItemHeight=%i",
 					(rcCur.bottom - rcCur.top), lFieldHeight, newH, lNewHeight);
 				LogString(szLog);
 				SendMessage(di.h, CB_SETITEMHEIGHT, -1, lNewHeight);
@@ -802,7 +802,7 @@ MArray<CDpiForDialog::DlgItem>* CDpiForDialog::LoadDialogItems(HWND hDlg)
 				if (Button_GetTextMargin(i.h, &rcMargin))
 				{
 					wchar_t szLog[100];
-					_wsprintf(szLog, SKIPCOUNT(szLog) L"CheckBox Rect={%i,%i}-{%i,%i} Margin={%i,%i}-{%i,%i}",
+					swprintf_c(szLog, L"CheckBox Rect={%i,%i}-{%i,%i} Margin={%i,%i}-{%i,%i}",
 						LOGRECTCOORDS(i.r), LOGRECTCOORDS(rcMargin));
 					LogString(szLog);
 				}
