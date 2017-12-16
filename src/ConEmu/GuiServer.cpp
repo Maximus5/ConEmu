@@ -257,7 +257,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				wchar_t* pszInfo = (wchar_t*)malloc(cchAll*sizeof(*pszInfo));
 				if (pszInfo)
 				{
-					_wsprintf(pszInfo, SKIPLEN(cchAll) L"CECMD_NEWCMD: Wnd=x%08X, Act=%u, ConEmu=%s, Dir=%s, Cmd=%s",
+					swprintf_c(pszInfo, cchAll/*#SECURELEN*/, L"CECMD_NEWCMD: Wnd=x%08X, Act=%u, ConEmu=%s, Dir=%s, Cmd=%s",
 						(DWORD)(DWORD_PTR)pIn->NewCmd.hFromConWnd, pIn->NewCmd.ShowHide,
 						pIn->NewCmd.szConEmu, pIn->NewCmd.szCurDir, pszCommand);
 					gpConEmu->LogString(pszInfo);

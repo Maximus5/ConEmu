@@ -193,12 +193,12 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		{
 			//if (nOperations)
 			{
-				_wsprintf(pszText, SKIPLEN(countof(szCloseAll)-(pszText-szCloseAll)) L"\nIncomplete operations: %i", Parm.nOperations);
+				swprintf_c(pszText, countof(szCloseAll)-(pszText-szCloseAll)/*#SECURELEN*/, L"\nIncomplete operations: %i", Parm.nOperations);
 				pszText += _tcslen(pszText);
 			}
 			//if (nUnsavedEditors)
 			{
-				_wsprintf(pszText, SKIPLEN(countof(szCloseAll)-(pszText-szCloseAll)) L"\nUnsaved editor windows: %i", Parm.nUnsavedEditors);
+				swprintf_c(pszText, countof(szCloseAll)-(pszText-szCloseAll)/*#SECURELEN*/, L"\nUnsaved editor windows: %i", Parm.nUnsavedEditors);
 				pszText += _tcslen(pszText);
 			}
 		}
@@ -212,7 +212,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 			if (iCon >= 0)
 			{
 				pszText = szCloseOne + _tcslen(szCloseOne);
-				_wsprintf(pszText, SKIPLEN(countof(szCloseOne)-(pszText-szCloseOne)) L"\n#%u: ", (iCon+1));
+				swprintf_c(pszText, countof(szCloseOne)-(pszText-szCloseOne)/*#SECURELEN*/, L"\n#%u: ", (iCon+1));
 				pszText += _tcslen(pszText);
 				lstrcpyn(pszText, VCon->RCon()->GetTitle(true), countof(szCloseOne)-(pszText-szCloseOne));
 			}
@@ -295,12 +295,12 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 
 		if (Parm.nOperations)
 		{
-			_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Incomplete operations: %i\r\n", Parm.nOperations);
+			swprintf_c(pszText, countof(szText)-(pszText-szText)/*#SECURELEN*/, L"Incomplete operations: %i\r\n", Parm.nOperations);
 			pszText += _tcslen(pszText);
 		}
 		if (Parm.nUnsavedEditors)
 		{
-			_wsprintf(pszText, SKIPLEN(countof(szText)-(pszText-szText)) L"Unsaved editor windows: %i\r\n", Parm.nUnsavedEditors);
+			swprintf_c(pszText, countof(szText)-(pszText-szText)/*#SECURELEN*/, L"Unsaved editor windows: %i\r\n", Parm.nUnsavedEditors);
 			pszText += _tcslen(pszText);
 		}
 	}

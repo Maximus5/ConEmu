@@ -198,15 +198,15 @@ void ConEmuUpdateSettings::ResetToDefaults()
 			{
 				_ASSERTE(bWinRar==true);
 				//Issue 537: old WinRAR beta's fails
-				//_wsprintf(szUpdateArcCmdLineDef, SKIPLEN(cchMax) L"\"%s\" x -y \"%%1\"%s", pszArcPath, bWinRar ? L" \"%%2\\\"" : L"");
-				_wsprintf(szUpdateArcCmdLineDef, SKIPLEN(cchMax) L"\"%s\" x -y \"%%1\"", pszArcPath);
+				//swprintf_c(szUpdateArcCmdLineDef, cchMax/*#SECURELEN*/, L"\"%s\" x -y \"%%1\"%s", pszArcPath, bWinRar ? L" \"%%2\\\"" : L"");
+				swprintf_c(szUpdateArcCmdLineDef, cchMax/*#SECURELEN*/, L"\"%s\" x -y \"%%1\"", pszArcPath);
 			}
 			else
 			{
 				_ASSERTE(bWinRar==false);
 				int nLen = lstrlen(pszArcPath);
 				bool bNeedSlash = (*pszArcPath && (pszArcPath[nLen-1] != L'\\')) ? true : false;
-				_wsprintf(szUpdateArcCmdLineDef, SKIPLEN(cchMax) L"\"%s%s7zg.exe\" x -y \"%%1\"", pszArcPath, bNeedSlash ? L"\\" : L"");
+				swprintf_c(szUpdateArcCmdLineDef, cchMax/*#SECURELEN*/, L"\"%s%s7zg.exe\" x -y \"%%1\"", pszArcPath, bNeedSlash ? L"\\" : L"");
 			}
 		}
 	}

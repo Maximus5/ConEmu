@@ -101,7 +101,7 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 
 	nLen = lstrlen(dmpfile);
 	lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
-	_wsprintf(dmpfile+nLen, SKIPLEN(countof(dmpfile)-nLen) L"\\Trap-%02u%02u%02u%s-%u%s.dmp", MVV_1, MVV_2, MVV_3, szVer4, GetCurrentProcessId(), szDumpIndex);
+	swprintf_c(dmpfile+nLen, countof(dmpfile)-nLen/*#SECURELEN*/, L"\\Trap-%02u%02u%02u%s-%u%s.dmp", MVV_1, MVV_2, MVV_3, szVer4, GetCurrentProcessId(), szDumpIndex);
 	
 	nSharingOption = /*FILE_SHARE_READ;
 	if (IsWindowsXP)
@@ -184,7 +184,7 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 	}
 
 	nLen = _tcslen(szCmdLine);
-	_wsprintf(szCmdLine+nLen, SKIPLEN(countof(szCmdLine)-nLen) L"\" /DEBUGPID=%u /FULL", GetCurrentProcessId());
+	swprintf_c(szCmdLine+nLen, countof(szCmdLine)-nLen/*#SECURELEN*/, L"\" /DEBUGPID=%u /FULL", GetCurrentProcessId());
 
 	if (!CreateProcess(NULL, szCmdLine, NULL, NULL, TRUE, HIGH_PRIORITY_CLASS, NULL, NULL, &si, &pi))
 	{

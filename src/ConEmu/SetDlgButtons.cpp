@@ -1299,7 +1299,7 @@ void CSetDlgButtons::OnBtn_CmdTasksDel(HWND hDlg, WORD CB, BYTE uCheck)
 	if (iCount > 1)
 		swprintf_c(szOthers, L"\n" L"and %i other task(s)", (iCount-1));
 
-	_wsprintf(pszMsg, SKIPLEN(cchMax) L"%sDelete Task\n%s%s?",
+	swprintf_c(pszMsg, cchMax/*#SECURELEN*/, L"%sDelete Task\n%s%s?",
 		bIsStartup ? L"Warning! You about to delete startup task!\n\n" : L"",
 		p->pszName ? p->pszName : L"{???}",
 		szOthers);
@@ -3473,7 +3473,7 @@ void CSetDlgButtons::OnBtn_DosBox(HWND hDlg, WORD CB, BYTE uCheck)
 		checkDlgButton(hDlg, cbDosBox, BST_UNCHECKED);
 		size_t nMaxCCH = MAX_PATH*3;
 		wchar_t* pszErrInfo = (wchar_t*)malloc(nMaxCCH*sizeof(wchar_t));
-		_wsprintf(pszErrInfo, SKIPLEN(nMaxCCH) L"DosBox is not installed!\n"
+		swprintf_c(pszErrInfo, nMaxCCH/*#SECURELEN*/, L"DosBox is not installed!\n"
 				L"\n"
 				L"DosBox files must be located here:"
 				L"%s\\DosBox\\"
@@ -4233,7 +4233,7 @@ void CSetDlgButtons::OnBtn_UpdateArcCmdLine(HWND hDlg, WORD CB, BYTE uCheck)
 	{
 		size_t nMax = _tcslen(szArcExe)+128;
 		wchar_t *pszNew = (wchar_t*)calloc(nMax,sizeof(*pszNew));
-		_wsprintf(pszNew, SKIPLEN(nMax) L"\"%s\"  x -y \"%%1\"", szArcExe);
+		swprintf_c(pszNew, nMax/*#SECURELEN*/, L"\"%s\"  x -y \"%%1\"", szArcExe);
 		SetDlgItemText(hDlg, tUpdateArcCmdLine, pszNew);
 		//if (gpSet->UpdSet.szUpdateArcCmdLine && lstrcmp(gpSet->UpdSet.szUpdateArcCmdLine, gpSet->UpdSet.szUpdateArcCmdLineDef) == 0)
 		//	SafeFree(gpSet->UpdSet.szUpdateArcCmdLine);

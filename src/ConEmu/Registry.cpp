@@ -1971,7 +1971,7 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD
 
 				while (nSize)
 				{
-					_wsprintf(psz, SKIPLEN(nLen-(psz-bsValue)) L"%02x", (DWORD)*ptr);
+					swprintf_c(psz, nLen-(psz-bsValue)/*#SECURELEN*/, L"%02x", (DWORD)*ptr);
 					ptr++; nSize--; psz+=2;
 
 					if (nSize)

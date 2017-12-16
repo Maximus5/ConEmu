@@ -909,7 +909,7 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 			}
 
 			SYSTEMTIME st; FileTimeToSystemTime(&pItem->FindData.ftLastWriteTime, &st);
-			_wsprintf(psz, SKIPLEN(countof(szFullInfo)-(psz-szFullInfo)) L"%02i.%02i.%02i %i:%02i", st.wDay, st.wMonth, st.wYear % 100, st.wHour, st.wMinute);
+			swprintf_c(psz, countof(szFullInfo)-(psz-szFullInfo)/*#SECURELEN*/, L"%02i.%02i.%02i %i:%02i", st.wDay, st.wMonth, st.wYear % 100, st.wHour, st.wMinute);
 			psz += lstrlen(psz);
 
 			if (pItem->FindData.nFileSize
@@ -933,11 +933,11 @@ int CeFullPanelInfo::DrawItemText(HDC hdc, LPRECT prcText, LPRECT prcMaxText, Ce
 					int nAll = (int)nSize;
 					int nL = nAll % 1000;
 					int nH = nAll / 1000;
-					_wsprintf(psz, SKIPLEN(countof(szFullInfo)-(psz-szFullInfo)) L"%i,%03i %c", nH, nL, cType);
+					swprintf_c(psz, countof(szFullInfo)-(psz-szFullInfo)/*#SECURELEN*/, L"%i,%03i %c", nH, nL, cType);
 				}
 				else
 				{
-					_wsprintf(psz, SKIPLEN(countof(szFullInfo)-(psz-szFullInfo)) L"%i %c", (int)nSize, cType);
+					swprintf_c(psz, countof(szFullInfo)-(psz-szFullInfo)/*#SECURELEN*/, L"%i %c", (int)nSize, cType);
 				}
 
 				psz += lstrlen(psz);

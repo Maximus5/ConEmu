@@ -1742,9 +1742,9 @@ LPWSTR ConEmuMacro::FindFarWindowHelper(
 	LPWSTR pszResult = (LPWSTR)malloc(2*cchSize);
 
 	if ((iFoundCon > 0) && (iFoundCon == iActiveCon))
-		_wsprintf(pszResult, SKIPLEN(cchSize) L"Active:%i", (iFoundWnd-1)); // Need return 0-based Far window index
+		swprintf_c(pszResult, cchSize/*#SECURELEN*/, L"Active:%i", (iFoundWnd-1)); // Need return 0-based Far window index
 	else if (iFoundCon > 0)
-		_wsprintf(pszResult, SKIPLEN(cchSize) L"Found:%i", iFoundCon);
+		swprintf_c(pszResult, cchSize/*#SECURELEN*/, L"Found:%i", iFoundCon);
 	else if (iFoundCon == -1)
 		lstrcpyn(pszResult, L"Blocked", cchSize);
 	else
@@ -3371,7 +3371,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 						{
 							size_t cchSize = 16;
 							pszRc = (LPWSTR)malloc(2*cchSize);
-							_wsprintf(pszRc, SKIPLEN(cchSize) L"Failed:%i", nRc);
+							swprintf_c(pszRc, cchSize/*#SECURELEN*/, L"Failed:%i", nRc);
 						}
 					}
 				}

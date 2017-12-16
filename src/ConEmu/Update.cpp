@@ -134,7 +134,7 @@ CConEmuUpdate::~CConEmuUpdate()
 		wchar_t *pszParm = (wchar_t*)calloc(cchParmMax,sizeof(*pszParm));
 		// Обязательно двойное окавычивание. cmd.exe отбрасывает кавычки,
 		// и при наличии разделителей (пробелы, скобки,...) получаем проблемы
-		_wsprintf(pszParm, SKIPLEN(cchParmMax) L"/c \"\"%s\"\"", mpsz_PendingBatchFile);
+		swprintf_c(pszParm, cchParmMax/*#SECURELEN*/, L"/c \"\"%s\"\"", mpsz_PendingBatchFile);
 
 		// Наверное на Elevated процесс это не распространится, но для четкости - взведем флажок
 		SetEnvironmentVariable(ENV_CONEMU_INUPDATE_W, ENV_CONEMU_INUPDATE_YES);
@@ -1411,7 +1411,7 @@ wchar_t* CConEmuUpdate::CreateTempFile(LPCWSTR asDir, LPCWSTR asFileNameTempl, H
 	{
 		_wcscpy_c(pszFilePart, MAX_PATH, szName);
 		if (i)
-			_wsprintf(pszFilePart+_tcslen(pszFilePart), SKIPLEN(16) L"(%u)", i);
+			swprintf_c(pszFilePart+_tcslen(pszFilePart), 16/*#SECURELEN*/, L"(%u)", i);
 		_wcscat_c(pszFilePart, MAX_PATH, pszExt);
 
 		SECURITY_ATTRIBUTES sec = {sizeof(sec), NULL, TRUE};
@@ -1633,7 +1633,7 @@ void CConEmuUpdate::ReportError(LPCWSTR asFormat, DWORD nErrCode)
 	wchar_t* pszErrInfo = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
 	if (pszErrInfo)
 	{
-		_wsprintf(pszErrInfo, SKIPLEN(cchMax) asFormat, nErrCode);
+		swprintf_c(pszErrInfo, cchMax/*#SECURELEN*/, asFormat, nErrCode);
 		ReportErrorInt(pszErrInfo);
 	}
 }
@@ -1647,7 +1647,7 @@ void CConEmuUpdate::ReportError(LPCWSTR asFormat, LPCWSTR asArg, DWORD nErrCode)
 	wchar_t* pszErrInfo = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
 	if (pszErrInfo)
 	{
-		_wsprintf(pszErrInfo, SKIPLEN(cchMax) asFormat, asArg, nErrCode);
+		swprintf_c(pszErrInfo, cchMax/*#SECURELEN*/, asFormat, asArg, nErrCode);
 		ReportErrorInt(pszErrInfo);
 	}
 }
@@ -1661,7 +1661,7 @@ void CConEmuUpdate::ReportError(LPCWSTR asFormat, LPCWSTR asArg1, LPCWSTR asArg2
 	wchar_t* pszErrInfo = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
 	if (pszErrInfo)
 	{
-		_wsprintf(pszErrInfo, SKIPLEN(cchMax) asFormat, asArg1, asArg2, nErrCode);
+		swprintf_c(pszErrInfo, cchMax/*#SECURELEN*/, asFormat, asArg1, asArg2, nErrCode);
 		ReportErrorInt(pszErrInfo);
 	}
 }
@@ -1852,7 +1852,7 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 				cchMax = 200;
 				pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
 
-				_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\nClick here to download",
+				swprintf_c(pszMsg, cchMax/*#SECURELEN*/, L"New %s version available: %s\nClick here to download",
 					(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL,
 					ms_NewVersion);
 				Icon.ShowTrayIcon(pszMsg, tsa_Source_Updater);
@@ -1973,7 +1973,7 @@ MsgOnly:
 	cchMax = 300 + (mpsz_ConfirmSource ? _tcslen(mpsz_ConfirmSource) : 0);
 	pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
 
-	_wsprintf(pszMsg, SKIPLEN(cchMax) L"New %s version available: %s\n\nVersions on server\n%s\n\n%s\n%s\n\nDownload?",
+	swprintf_c(pszMsg, cchMax/*#SECURELEN*/, L"New %s version available: %s\n\nVersions on server\n%s\n\n%s\n%s\n\nDownload?",
 		(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL,
 		ms_NewVersion,
 		ms_VerOnServer,

@@ -290,7 +290,7 @@ void CSetDlgColors::FillBgImageColors(HWND hWnd2)
 				*pszTemp = 0;
 			}
 
-			_wsprintf(pszTemp, SKIPLEN(countof(tmp)-(pszTemp-tmp)) L"#%i", idx);
+			swprintf_c(pszTemp, countof(tmp)-(pszTemp-tmp)/*#SECURELEN*/, L"#%i", idx);
 			pszTemp += _tcslen(pszTemp);
 		}
 

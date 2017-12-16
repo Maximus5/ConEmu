@@ -440,7 +440,7 @@ LPCWSTR CDataObject::GetFormatName(CLIPFORMAT cfFormat, bool bRaw)
 	if (!bRaw || (szName[0] == 0))
 	{
 		int nLen = lstrlen(szName);
-		_wsprintf(szName+nLen, SKIPLEN(countof(szName)-nLen) L"x%04X(%u)",
+		swprintf_c(szName+nLen, countof(szName)-nLen/*#SECURELEN*/, L"x%04X(%u)",
 			cfFormat, cfFormat);
 	}
 	return szName;
@@ -488,7 +488,7 @@ HRESULT __stdcall CDataObject::GetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 		{
 			nData = *pdw;
 			int nLen = lstrlen(szDbg);
-			_wsprintf(szDbg+nLen, SKIPLEN(countof(szDbg)-nLen) L", Data=x%02X(%u)", nData, nData);
+			swprintf_c(szDbg+nLen, countof(szDbg)-nLen/*#SECURELEN*/, L", Data=x%02X(%u)", nData, nData);
 		}
 		GlobalUnlock(m_Data[idx].StgMedium.hGlobal);
 	}
@@ -663,7 +663,7 @@ HRESULT __stdcall CDataObject::SetData(FORMATETC *pFormatEtc, STGMEDIUM *pMedium
 	if (nData != (DWORD)-1)
 	{
 		int nLen = lstrlen(szDbg);
-		_wsprintf(szDbg+nLen, SKIPLEN(countof(szDbg)-nLen) L", Data=x%02X(%u)", nData, nData);
+		swprintf_c(szDbg+nLen, countof(szDbg)-nLen/*#SECURELEN*/, L", Data=x%02X(%u)", nData, nData);
 	}
 	wcscat_c(szDbg, L"\n");
 	DEBUGSTRDATA(szDbg);

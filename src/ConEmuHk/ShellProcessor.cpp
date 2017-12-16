@@ -1894,7 +1894,7 @@ int CShellProc::PrepareExecuteParms(
 							+ _tcslen(szArguments)+1
 							+ (*szDir ? (_tcslen(szDir)+32) : 0); // + "-new_console:d<Dir>
 						pszConsoles[iCount] = (wchar_t*)malloc(cchLen*sizeof(wchar_t));
-						_wsprintf(pszConsoles[iCount], SKIPLEN(cchLen) L"\"%s\"%s%s",
+						swprintf_c(pszConsoles[iCount], cchLen/*#SECURELEN*/, L"\"%s\"%s%s",
 							Unquote(szExe), *szArguments ? L" " : L"", szArguments);
 						if (*szDir)
 						{
@@ -1912,7 +1912,7 @@ int CShellProc::PrepareExecuteParms(
 			{
 				cchLen = _tcslen(szPart) + 3;
 				pszConsoles[iCount] = (wchar_t*)malloc(cchLen*sizeof(wchar_t));
-				_wsprintf(pszConsoles[iCount], SKIPLEN(cchLen) L"\"%s\"", szPart);
+				swprintf_c(pszConsoles[iCount], cchLen/*#SECURELEN*/, L"\"%s\"", szPart);
 				iCount++;
 
 				cchAllLen += cchLen+3;

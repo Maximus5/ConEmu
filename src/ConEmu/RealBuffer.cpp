@@ -2577,7 +2577,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 				lsbi.srWindow.Bottom = lsbi.srWindow.Top + nY;
 				#ifdef _DEBUG
 				int l = lstrlen(szCursorDbg);
-				_wsprintf(szCursorDbg+l, SKIPLEN(countof(szCursorDbg)-l) L"Visible rect locked to {%ux%u-%ux%u), Top=%u. ", lsbi.srWindow.Left, lsbi.srWindow.Top, lsbi.srWindow.Right, lsbi.srWindow.Bottom, con.nTopVisibleLine);
+				swprintf_c(szCursorDbg+l, countof(szCursorDbg)-l/*#SECURELEN*/, L"Visible rect locked to {%ux%u-%ux%u), Top=%u. ", lsbi.srWindow.Left, lsbi.srWindow.Top, lsbi.srWindow.Right, lsbi.srWindow.Bottom, con.nTopVisibleLine);
 				#endif
 			}
 			#ifdef _DEBUG
@@ -2586,7 +2586,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 				if (pInfo->sbi.dwCursorPosition.X != con.m_sbi.dwCursorPosition.X || pInfo->sbi.dwCursorPosition.Y != con.m_sbi.dwCursorPosition.Y)
 				{
 					int l = lstrlen(szCursorDbg);
-					_wsprintf(szCursorDbg+l, SKIPLEN(countof(szCursorDbg)-l) L"Visible rect changed to {%ux%u-%ux%u). ", pInfo->sbi.srWindow.Left, pInfo->sbi.srWindow.Top, pInfo->sbi.srWindow.Right, pInfo->sbi.srWindow.Bottom);
+					swprintf_c(szCursorDbg+l, countof(szCursorDbg)-l/*#SECURELEN*/, L"Visible rect changed to {%ux%u-%ux%u). ", pInfo->sbi.srWindow.Left, pInfo->sbi.srWindow.Top, pInfo->sbi.srWindow.Right, pInfo->sbi.srWindow.Bottom);
 				}
 			}
 
@@ -3850,7 +3850,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 					wcscat_c(szText, L"RAlt-");
 				if (gnKeyBarFlags[i] & SHIFT_PRESSED)
 					wcscat_c(szText, L"Shift-");
-				_wsprintf(szText+lstrlen(szText), SKIPLEN(8) L"F%i", (con.nRClickVK - VK_F1 + 1));
+				swprintf_c(szText+lstrlen(szText), 8/*#SECURELEN*/, L"F%i", (con.nRClickVK - VK_F1 + 1));
 
 				AppendMenu(h, MF_STRING|((!(i % 4)) ? MF_MENUBREAK : 0), i+1, szText);
 			}

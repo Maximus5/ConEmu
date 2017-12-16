@@ -1082,7 +1082,7 @@ void Settings::LoadAppsSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 		int nSucceeded = 0;
 		for (int i = 0; i < NewAppCount; i++)
 		{
-			_wsprintf(pszAppKey, SKIPLEN(32) L"\\App%i", i+1);
+			swprintf_c(pszAppKey, 32/*#SECURELEN*/, L"\\App%i", i+1);
 
 			lbOpened = reg->OpenKey(szAppKey, KEY_READ);
 			if (lbOpened)
@@ -1344,7 +1344,7 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 		int nSucceeded = 0;
 		for (int i = 0; i < NewTasksCount; i++)
 		{
-			_wsprintf(pszCmdKey, SKIPLEN(32) L"\\Task%i", i+1); // 1-based
+			swprintf_c(pszCmdKey, 32/*#SECURELEN*/, L"\\Task%i", i+1); // 1-based
 
 			lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
 			if (lbOpened)
@@ -1402,7 +1402,7 @@ bool Settings::SaveCmdTasks(SettingsBase* reg)
 			if (CmdTasks[i] == NULL)
 				continue;
 
-			_wsprintf(pszCmdKey, SKIPLEN(32) L"\\Task%i", nProcessed+1); // 1-based
+			swprintf_c(pszCmdKey, 32/*#SECURELEN*/, L"\\Task%i", nProcessed+1); // 1-based
 
 			lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
 			if (!lbOpened)
@@ -1567,7 +1567,7 @@ void Settings::LoadPalettes(SettingsBase* reg)
 	// User
 	for (int i = 0; i < UserCount; i++)
 	{
-		_wsprintf(pszColorKey, SKIPLEN(32) L"\\Palette%i", i+1); // 1-based
+		swprintf_c(pszColorKey, 32/*#SECURELEN*/, L"\\Palette%i", i+1); // 1-based
 
 		lbOpened = reg->OpenKey(szColorKey, KEY_READ);
 		if (lbOpened)
@@ -1652,7 +1652,7 @@ void Settings::SavePalettes(SettingsBase* reg)
 		if (!Palettes[i] || Palettes[i]->bPredefined)
 			continue; // Системные - не сохраняем
 
-		_wsprintf(pszColorKey, SKIPLEN(32) L"\\Palette%i", UserCount+1); // 1-based
+		swprintf_c(pszColorKey, 32/*#SECURELEN*/, L"\\Palette%i", UserCount+1); // 1-based
 
 		lbOpened = reg->OpenKey(szColorKey, KEY_WRITE);
 		if (lbOpened)
@@ -2144,7 +2144,7 @@ void Settings::LoadProgresses(SettingsBase* reg)
 		int nSucceeded = 0;
 		for (int i = 0; i < NewProgressesCount; i++)
 		{
-			_wsprintf(pszCmdKey, SKIPLEN(32) L"\\Item%i", i+1); // 1-based
+			swprintf_c(pszCmdKey, 32/*#SECURELEN*/, L"\\Item%i", i+1); // 1-based
 
 			lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
 			if (lbOpened)
@@ -2196,7 +2196,7 @@ bool Settings::SaveProgresses(SettingsBase* reg)
 		//int nSucceeded = 0;
 		for (int i = 0; i < ProgressesCount; i++)
 		{
-			_wsprintf(pszCmdKey, SKIPLEN(32) L"\\Item%i", i+1); // 1-based
+			swprintf_c(pszCmdKey, 32/*#SECURELEN*/, L"\\Item%i", i+1); // 1-based
 
 			lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
 			if (!lbOpened)
@@ -3339,7 +3339,7 @@ void Settings::SaveAppsSettings(SettingsBase* reg)
 
 	for (int i = 0; i < AppCount; i++)
 	{
-		_wsprintf(pszAppKey, SKIPLEN(32) L"\\App%i", i+1);
+		swprintf_c(pszAppKey, 32/*#SECURELEN*/, L"\\App%i", i+1);
 
 		lbOpened = reg->OpenKey(szAppKey, KEY_WRITE);
 		if (lbOpened)

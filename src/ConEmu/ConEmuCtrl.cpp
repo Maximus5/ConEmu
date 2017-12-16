@@ -1533,7 +1533,7 @@ size_t CConEmuCtrl::GetOpenedTabs(CESERVER_REQ_GETALLTABS::TabInfo*& pTabs)
 
 			#ifdef _DEBUG
 			if (pRCon->IsFarLua())
-				_wsprintf(pTabs[cchCount].Title+lstrlen(pTabs[cchCount].Title), SKIPLEN(30) L"{%i} ", tab->Info.nFarWindowID);
+				swprintf_c(pTabs[cchCount].Title+lstrlen(pTabs[cchCount].Title), 30/*#SECURELEN*/, L"{%i} ", tab->Info.nFarWindowID);
 			#endif
 
 			int nCurLen = lstrlen(pTabs[cchCount].Title);

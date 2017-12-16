@@ -80,7 +80,7 @@ LRESULT CSetPgUpdate::OnInitDialog(HWND hDlg, bool abInitial)
 			wchar_t* psz = szTitle.GetBuffer(iLen+4);
 			if (psz)
 			{
-				_wsprintf(psz, SKIPLEN(iLen+4) szFormat.ms_Val, (nPackage == 1) ? szCPU : WIN3264TEST(L"x86",L"x64"));
+				swprintf_c(psz, iLen+4/*#SECURELEN*/, szFormat.ms_Val, (nPackage == 1) ? szCPU : WIN3264TEST(L"x86",L"x64"));
 				SetDlgItemText(hDlg, rbUpdateUseExe, szTitle);
 			}
 		}

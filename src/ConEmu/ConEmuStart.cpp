@@ -500,7 +500,7 @@ bool CConEmuStart::GetCfgParm(LPCWSTR& cmdLineRest, CESwitch& Val, int nMaxLen, 
 		wchar_t* psz = (wchar_t*)calloc(nCchSize,sizeof(wchar_t));
 		if (psz)
 		{
-			_wsprintf(psz, SKIPLEN(nCchSize) L"Too long %s value (%i chars).\r\n", pszName, nLen);
+			swprintf_c(psz, nCchSize/*#SECURELEN*/, L"Too long %s value (%i chars).\r\n", pszName, nLen);
 			_wcscat_c(psz, nCchSize, curCommand);
 			MBoxA(psz);
 			free(psz);
@@ -741,7 +741,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						cchMax += 16; // + quotations, spaces and so on
 
 						wchar_t* pszCmd = (wchar_t*)calloc(cchMax, sizeof(*pszCmd));
-						_wsprintf(pszCmd, SKIPLEN(cchMax) L"\"%s\"%s%s%s", szNext.ms_Val,
+						swprintf_c(pszCmd, cchMax/*#SECURELEN*/, L"\"%s\"%s%s%s", szNext.ms_Val,
 							pszArg1 ? L" \"" : L"", pszArg1 ? pszArg1 : L"", pszArg1 ? L"\"" : L"");
 
 

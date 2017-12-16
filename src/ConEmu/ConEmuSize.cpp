@@ -2545,7 +2545,7 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		if (dwStyle & WS_MAXIMIZE) wcscat_c(szInfo, L" (zoomed)");
 		if (dwStyle & WS_MINIMIZE) wcscat_c(szInfo, L" (iconic)");
 		size_t cchLen = wcslen(szInfo);
-		_wsprintf(szInfo+cchLen, SKIPLEN(countof(szInfo)-cchLen) L" x%08X x%08X (F:x%08X X:%i Y:%i W:%i H:%i)", dwStyle, dwStyleEx, p->flags, p->x, p->y, p->cx, p->cy);
+		swprintf_c(szInfo+cchLen, countof(szInfo)-cchLen/*#SECURELEN*/, L" x%08X x%08X (F:x%08X X:%i Y:%i W:%i H:%i)", dwStyle, dwStyleEx, p->flags, p->x, p->y, p->cx, p->cy);
 		LogString(szInfo);
 	}
 
@@ -2743,7 +2743,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		if (zoomed) wcscat_c(szInfo, L" (zoomed)");
 		if (iconic) wcscat_c(szInfo, L" (iconic)");
 		size_t cchLen = wcslen(szInfo);
-		_wsprintf(szInfo+cchLen, SKIPLEN(countof(szInfo)-cchLen) L" x%08X x%08X (F:x%08X X:%i Y:%i W:%i H:%i)", dwStyle, dwStyleEx, p->flags, p->x, p->y, p->cx, p->cy);
+		swprintf_c(szInfo+cchLen, countof(szInfo)-cchLen/*#SECURELEN*/, L" x%08X x%08X (F:x%08X X:%i Y:%i W:%i H:%i)", dwStyle, dwStyleEx, p->flags, p->x, p->y, p->cx, p->cy);
 	}
 
 
@@ -3018,7 +3018,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	p = (WINDOWPOS*)lParam;
 
 	size_t cchLen = wcslen(szInfo);
-	_wsprintf(szInfo + cchLen, SKIPLEN(countof(szInfo) - cchLen) L" --> (F:x%08X X:%i Y:%i W:%i H:%i)", p->flags, p->x, p->y, p->cx, p->cy);
+	swprintf_c(szInfo + cchLen, countof(szInfo) - cchLen/*#SECURELEN*/, L" --> (F:x%08X X:%i Y:%i W:%i H:%i)", p->flags, p->x, p->y, p->cx, p->cy);
 	if (gpSet->isLogging(2))
 	{
 		LogString(szInfo);
@@ -3718,7 +3718,7 @@ LPCWSTR CConEmuSize::FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, s
 	case cwc_TileWidth:
 		_wcscpy_c(pchBuf, cchBufMax, L"cwc_TileWidth"); break;
 	default:
-		_wsprintf(pchBuf, SKIPLEN(cchBufMax) L"%u", (UINT)Tile);
+		swprintf_c(pchBuf, cchBufMax/*#SECURELEN*/, L"%u", (UINT)Tile);
 	}
 
 	return pchBuf;
@@ -5158,14 +5158,14 @@ void CConEmuSize::OnSizePanels(COORD cr)
 				{
 					// "$Rep (%i)" -> "for RCounter= %i,1,-1 do Keys(\"%s\") end"
 					if (nRepeat > 1)
-						_wsprintf(szMacro+1, SKIPLEN(countof(szMacro)-1) L"for RCounter= %i,1,-1 do Keys(\"%s\") end", nRepeat, szKey);
+						swprintf_c(szMacro+1, countof(szMacro)-1/*#SECURELEN*/, L"for RCounter= %i,1,-1 do Keys(\"%s\") end", nRepeat, szKey);
 					else
-						_wsprintf(szMacro+1, SKIPLEN(countof(szMacro)-1) L"Keys(\"%s\")", szKey);
+						swprintf_c(szMacro+1, countof(szMacro)-1/*#SECURELEN*/, L"Keys(\"%s\")", szKey);
 				}
 				else
 				{
 					if (nRepeat > 1)
-						_wsprintf(szMacro+1, SKIPLEN(countof(szMacro)-1) L"$Rep (%i) %s $End", nRepeat, szKey);
+						swprintf_c(szMacro+1, countof(szMacro)-1/*#SECURELEN*/, L"$Rep (%i) %s $End", nRepeat, szKey);
 					else
 						_wcscpy_c(szMacro+1, countof(szMacro)-1, szKey);
 				}

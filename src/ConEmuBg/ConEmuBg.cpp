@@ -817,7 +817,7 @@ struct GDIPlusDecoder
 		lRc = GdipCreateBitmapFromFile(szFullName, &bmp);
 		if (lRc != Gdiplus::Ok)
 		{
-			_wsprintf(szError, SKIPLEN(cchError) L"Can't load image, Err=%i\n%s", (int)lRc, szFullName);
+			swprintf_c(szError, cchError/*#SECURELEN*/, L"Can't load image, Err=%i\n%s", (int)lRc, szFullName);
 			ReportFail(szError);
 			_ASSERTE(bmp == NULL);
 			bmp = NULL;
@@ -837,7 +837,7 @@ struct GDIPlusDecoder
 		if (((lRc = GdipGetImageWidth(bmp, &nW)) != Gdiplus::Ok) || (GdipGetImageHeight(bmp, &nH) != Gdiplus::Ok)
 			|| (nW < 1) || (nH < 1))
 		{
-			_wsprintf(szError, SKIPLEN(cchError) L"GetImageSize failed, Err=%i\n%s", (int)lRc, szFullName);
+			swprintf_c(szError, cchError/*#SECURELEN*/, L"GetImageSize failed, Err=%i\n%s", (int)lRc, szFullName);
 			ReportFail(szError);
 			goto wrap;
 		}
@@ -854,7 +854,7 @@ struct GDIPlusDecoder
 		lRc = GdipCreateFromHDC(hCompDc, &gr);
 		if (lRc != Gdiplus::Ok)
 		{
-			_wsprintf(szError, SKIPLEN(cchError) L"GdipCreateFromHDC failed, Err=%i\n%s", (int)lRc, szFullName);
+			swprintf_c(szError, cchError/*#SECURELEN*/, L"GdipCreateFromHDC failed, Err=%i\n%s", (int)lRc, szFullName);
 			ReportFail(szError);
 			goto wrap;
 		}
@@ -862,7 +862,7 @@ struct GDIPlusDecoder
 		lRc = GdipDrawImageI(gr, bmp, 0, 0);
 		if (lRc != Gdiplus::Ok)
 		{
-			_wsprintf(szError, SKIPLEN(cchError) L"GdipDrawImageI failed, Err=%i\n%s", (int)lRc, szFullName);
+			swprintf_c(szError, cchError/*#SECURELEN*/, L"GdipDrawImageI failed, Err=%i\n%s", (int)lRc, szFullName);
 			ReportFail(szError);
 			goto wrap;
 		}
@@ -870,7 +870,7 @@ struct GDIPlusDecoder
 		//lRc = GdipGetImageGraphicsContext(bmp, &gr);
 		//if (lRc != Gdiplus::Ok || !gr)
 		//{
-		//	_wsprintf(szError, SKIPLEN(cchError) L"GdipGetImageGraphicsContext failed, Err=%i\n%s", (int)lRc, szFullName);
+		//	swprintf_c(szError, cchError/*#SECURELEN*/, L"GdipGetImageGraphicsContext failed, Err=%i\n%s", (int)lRc, szFullName);
 		//	ReportFail(szError);
 		//	goto wrap;
 		//}
@@ -878,7 +878,7 @@ struct GDIPlusDecoder
 		lRc = GdipGetDC(gr, &hDc);
 		if (lRc != Gdiplus::Ok || !hDc)
 		{
-			_wsprintf(szError, SKIPLEN(cchError) L"GdipGetDC failed, Err=%i\n%s", (int)lRc, szFullName);
+			swprintf_c(szError, cchError/*#SECURELEN*/, L"GdipGetDC failed, Err=%i\n%s", (int)lRc, szFullName);
 			ReportFail(szError);
 			goto wrap;
 		}
@@ -2073,9 +2073,9 @@ void FormatSize(ULARGE_INTEGER size, wchar_t* out)
 			if (lSize < 1000)
 			{
 				if (lDec > 0 && lDec < 10 && lSize < 10)
-					_wsprintf(out, SKIPLEN(MAX_PATH) L"%u.%u %s", (UINT)lSize, (UINT)lDec, SizeSymbol[n]);
+					swprintf_c(out, MAX_PATH/*#SECURELEN*/, L"%u.%u %s", (UINT)lSize, (UINT)lDec, SizeSymbol[n]);
 				else
-					_wsprintf(out, SKIPLEN(MAX_PATH) L"%u %s", (UINT)lSize, SizeSymbol[n]);
+					swprintf_c(out, MAX_PATH/*#SECURELEN*/, L"%u %s", (UINT)lSize, SizeSymbol[n]);
 				break;
 			}
 
@@ -2085,7 +2085,7 @@ void FormatSize(ULARGE_INTEGER size, wchar_t* out)
 		}
 		//if (!*szVolumeSize)
 		//{
-		//	_wsprintf(szVolumeSize, SKIPLEN(MAX_PATH) L"%u %s", (UINT)lSize, SizeSymbol[countof(SizeSymbol)-1]);
+		//	swprintf_c(szVolumeSize, MAX_PATH/*#SECURELEN*/, L"%u %s", (UINT)lSize, SizeSymbol[countof(SizeSymbol)-1]);
 		//}
 	}
 }

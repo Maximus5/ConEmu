@@ -475,7 +475,7 @@ TaskSchedulerState CTaskScheduler2::GetState()
 		wcscat_c(szLog, L"TASK_STATE_UNKNOWN");
 		break;
 	default:
-		_wsprintf(szLog+wcslen(szLog), SKIPLEN(countof(szLog)-wcslen(szLog)) L"%u", (DWORD)taskState);
+		swprintf_c(szLog+wcslen(szLog), countof(szLog)-wcslen(szLog)/*#SECURELEN*/, L"%u", (DWORD)taskState);
 	}
 
 	LogString(szLog);
@@ -800,7 +800,7 @@ TaskSchedulerState CTaskScheduler1::GetState()
 		wcscat_c(szLog, L"SCHED_S_TASK_NO_VALID_TRIGGERS");
 		break;
 	default:
-		_wsprintf(szLog+wcslen(szLog), SKIPLEN(countof(szLog)-wcslen(szLog)) L"0x%08X", (DWORD)hrStatus);
+		swprintf_c(szLog+wcslen(szLog), countof(szLog)-wcslen(szLog)/*#SECURELEN*/, L"0x%08X", (DWORD)hrStatus);
 	}
 
 	LogString(szLog);
