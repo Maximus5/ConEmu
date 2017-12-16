@@ -543,7 +543,7 @@ int startswith(LPCWSTR asStr, LPCWSTR asPattern, bool abIgnoreCase)
 	return (iCmp == 0) ? iLen : 0;
 }
 
-#if defined(_DEBUG) && !defined(STRSAFE_DISABLE)
+//#if defined(_DEBUG) && !defined(STRSAFE_DISABLE)
 int swprintf_c(wchar_t* Buffer, INT_PTR size, const wchar_t *Format, ...)
 {
 	_ASSERTE(Buffer!=Format);
@@ -569,9 +569,9 @@ int sprintf_c(char* Buffer, INT_PTR size, const char *Format, ...)
 	va_end(argList);
 	return nRc;
 }
-#endif // #if defined(_DEBUG) && !defined(STRSAFE_DISABLE)
+//#endif // #if defined(_DEBUG) && !defined(STRSAFE_DISABLE)
 
-#if defined(__CYGWIN__)
+#if 0 //defined(__CYGWIN__)
 
 wchar_t* _itow(int value, wchar_t *str, int radix)
 {
