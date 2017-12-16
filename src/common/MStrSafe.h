@@ -186,7 +186,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #else // STRSAFE_NO_DEPRECATE
 
-#if defined(__CYGWIN__)
+#if 0 //defined(__CYGWIN__)
 	// bug: Cygwin's tchar.h
 	#define __T(x) L ## x
 	#define _T(x) __T(x)
@@ -224,7 +224,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-#if defined(_DEBUG) && !defined(STRSAFE_DISABLE) && !defined(__GNUC__)
+//#if defined(_DEBUG) && !defined(STRSAFE_DISABLE) && !defined(__GNUC__)
 // buggy with L" %c %s[%u%s]" in MinGW build
 // Только под дебагом, т.к. StringCchVPrintf вызывает vsprintf, который не линкуется в релизе статиком.
 #define SKIPLEN(l) (l),
@@ -234,12 +234,12 @@ int sprintf_c(char* Buffer, INT_PTR size, const char *Format, ...);
 
 #define _wsprintf  swprintf_c
 #define _wsprintfA sprintf_c
-#else
-#define SKIPLEN(l)
-#define SKIPCOUNT(l)
-#define _wsprintf  wsprintfW
-#define _wsprintfA wsprintfA
-#endif
+//#else
+//#define SKIPLEN(l)
+//#define SKIPCOUNT(l)
+//#define _wsprintf  wsprintfW
+//#define _wsprintfA wsprintfA
+//#endif
 
 #ifdef STRSAFE_DISABLE
 inline int wcscpy_add(wchar_t* Buffer, wchar_t* /*BufferStart*/, const wchar_t *Str)
