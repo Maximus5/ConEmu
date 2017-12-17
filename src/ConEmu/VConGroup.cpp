@@ -4504,7 +4504,6 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 	CVConGroup* pGroup = pVCon ? ((CVConGroup*)pVCon->mp_Group) : NULL;
 
 	// Теперь rc должен соответствовать CER_MAINCLIENT/CER_BACK
-	RECT rcAddShift = MakeRect(0,0);
 
 #ifdef _DEBUG
 	if ((tWhat == CER_DC || tWhat == CER_BACK) && (tFrom == CER_MAIN || tFrom == CER_MAINCLIENT))
@@ -4515,6 +4514,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 #endif
 
 #if 0
+	RECT rcAddShift = MakeRect(0,0);
 	if ((tWhat == CER_DC) && (tFrom != CER_CONSOLE_CUR))
 	{
 		_ASSERTE(pVCon!=NULL);
@@ -4778,7 +4778,15 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			else
 			{
 				// корректировка, центрирование
-				CConEmuMain::AddMargins(rc, rcAddShift);
+				RECT rcAddShift = {};
+				_ASSERTE(pVCon!=NULL);
+				if (pVCon && (tWhat == CER_DC) && (tFrom != CER_CONSOLE_CUR))
+				{
+					_ASSERTE(tFrom == CER_BACK);
+					RECT rcCalcBack = (tFrom == CER_BACK) ? rFrom : gpConEmu->CalcRect(CER_BACK, pVCon);
+					rcAddShift = pVCon->CalcDCMargins(rcCalcBack);
+				}
+				CConEmuMain::AddMargins(rc, rcAddShift, rcop_Shrink);
 			}
 		}
 		break;

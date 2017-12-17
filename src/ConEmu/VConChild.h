@@ -71,6 +71,7 @@ class CConEmuChild
 
 		void SetRedraw(bool abRedrawEnabled);
 
+		RECT CalcDCMargins(const RECT& arcBack);
 		void SetVConSizePos(const RECT& arcBack, bool abReSize = true);
 		void SetVConSizePos(const RECT& arcBack, const RECT& arcDC, bool abReSize = true);
 		void OnVConSizePosChanged(); // Status bar columns

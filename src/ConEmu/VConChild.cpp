@@ -1073,11 +1073,15 @@ LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 	}
 
 	#ifdef _DEBUG
-	{
-		wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(mh_WndBack, &rcScreen);
-		swprintf_c(szPos, L"PaintGaps VCon[%i] at {%i,%i}-{%i,%i} screen coords", mp_VCon->Index(), LOGRECTCOORDS(rcScreen));
-		DEBUGSTRPAINTGAPS(szPos);
-	}
+	wchar_t szPos[80]; RECT rcScreen = {}; GetWindowRect(mh_WndBack, &rcScreen);
+	swprintf_c(szPos, L"PaintGaps VCon[%i] at {%i,%i}-{%i,%i} screen coords", mp_VCon->Index(), LOGRECTCOORDS(rcScreen));
+	DEBUGSTRPAINTGAPS(szPos);
+
+	RECT rcMain = {}; GetWindowRect(ghWnd, &rcMain);
+	RECT rcMainClient = {}; GetClientRect(ghWnd, &rcMainClient); MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcMainClient, 2);
+	RECT rcWork = {}; GetWindowRect(ghWndWork, &rcWork);
+	RECT rcBack = {}; GetWindowRect(mh_WndBack, &rcBack);
+	RECT rcView = {}; GetWindowRect(mh_WndDC, &rcView);
 	#endif
 
 	PAINTSTRUCT ps = {};
@@ -1369,6 +1373,60 @@ void CConEmuChild::Redraw(bool abRepaintNow /*= false*/)
 			RedrawWindow(mh_WndDC, &rcClient, NULL, RDW_INTERNALPAINT|RDW_NOERASE|RDW_NOFRAME|RDW_UPDATENOW|RDW_VALIDATE);
 		}
 	}
+}
+
+// Only for valid VCon, margins between Back and DC
+RECT CConEmuChild::CalcDCMargins(const RECT& arcBack)
+{
+	// #SplitScreen: тут нужно допиливать?
+
+	RECT rcAddShift = {};
+	RECT rcCalcBack = arcBack;
+	RECT rcCalcCon = CVConGroup::CalcRect(CER_CONSOLE_CUR, rcCalcBack, CER_BACK, mp_VCon);
+
+	// Расчетное DC (размер)
+	_ASSERTE(rcCalcCon.left==0 && rcCalcCon.top==0);
+	RECT rcCalcDC = MakeRect(0, 0, (rcCalcCon.right * gpFontMgr->FontWidth()), (rcCalcCon.bottom * gpFontMgr->FontHeight()));
+
+	RECT rcScrollPad = gpConEmu->CalcMargins(CEM_SCROLL|CEM_PAD);
+	gpConEmu->AddMargins(rcCalcBack, rcScrollPad);
+
+	int nDeltaX = (rcCalcBack.right - rcCalcBack.left) - (rcCalcDC.right - rcCalcDC.left);
+	int nDeltaY = (rcCalcBack.bottom - rcCalcBack.top) - (rcCalcDC.bottom - rcCalcDC.top);
+
+	// Actual gaps
+	if ((gpSet->isTryToCenter && (gpConEmu->isZoomed() || gpConEmu->isFullScreen() || gpSet->isQuakeStyle))
+		|| mp_VCon->RCon()->isNtvdm())
+	{
+		// Precise shifts calculation
+		if (nDeltaX > 0)
+		{
+			rcAddShift.left = nDeltaX >> 1;
+			rcAddShift.right = nDeltaX - rcAddShift.left;
+		}
+	}
+	else
+	{
+		if (nDeltaX > 0)
+			rcAddShift.right = nDeltaX;
+	}
+
+	if ((gpSet->isTryToCenter && (gpConEmu->isZoomed() || gpConEmu->isFullScreen()))
+		|| mp_VCon->RCon()->isNtvdm())
+	{
+		if (nDeltaY > 0)
+		{
+			rcAddShift.top = nDeltaY >> 1;
+			rcAddShift.bottom = nDeltaY - rcAddShift.top;
+		}
+	}
+	else
+	{
+		if (nDeltaY > 0)
+			rcAddShift.bottom = nDeltaY;
+	}
+
+	return rcAddShift;
 }
 
 // Вызывается из VConGroup::RepositionVCon
