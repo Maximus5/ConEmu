@@ -38,6 +38,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "SizeInfo.h"
 
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
+
 SizeInfo::SizeInfo(CConEmuMain* _ConEmu)
 	: mp_ConEmu(_ConEmu)
 	, mcs_lock(true)
@@ -70,8 +72,11 @@ void SizeInfo::RequestRecalc()
 
 void SizeInfo::LogRequest(LPCWSTR asFrom, LPCWSTR asMessage /*= nullptr*/)
 {
-	CEStr lsMsg(L"Size recalc requested", asFrom?L" from: ":nullptr, asFrom, asMessage?L" - ":nullptr, asMessage, L"\n");
-	//OutputDebugStringW(lsMsg);
+	CEStr lsMsg(L"Size recalc requested",
+		mb_temp ? L" (temp)" : L" (main)",
+		asFrom ? L" from: " : nullptr, asFrom,
+		asMessage?L" - ":nullptr, asMessage, L"\n");
+	if (!gpSet->isLogging()) { DEBUGSTRSIZE(lsMsg); }
 	mp_ConEmu->LogString(lsMsg);
 }
 

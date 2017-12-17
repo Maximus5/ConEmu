@@ -674,6 +674,7 @@ bool CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg, LRESULT& lResult)
 	RecalculateFrameSizes();
 
 	wr = mp_ConEmu->ClientRect();
+	rcClientReal = mp_ConEmu->RealClientRect();
 
 	if (mp_ConEmu->isCaptionHidden())
 	{
