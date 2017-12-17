@@ -30,7 +30,7 @@ call cecho /Green "This is first tab, running new tab with two splits"
 echo on
 c:\windows\system32\cmd.exe -new_console /k "%~0" tab1
 c:\windows\syswow64\cmd.exe -new_console:s2TV /k "%~0" tab2
-c:\windows\syswow64\cmd.exe -new_console:b /k "%~0" tab3
+c:\windows\syswow64\cmd.exe -new_console:b:h999 /k "%~0" tab3
 c:\windows\syswow64\cmd.exe -new_console:ba /k "%~0" tab4
 c:\windows\syswow64\cmd.exe -new_console:bt:"Far":C:"%ConEmuDrive%\Far30.Latest\far-bis\Far.exe" /c "%~0" tab5
 c:\windows\syswow64\cmd.exe -new_console:abP:"<Monokai>":t:Tab6 /k "%~0" tab6

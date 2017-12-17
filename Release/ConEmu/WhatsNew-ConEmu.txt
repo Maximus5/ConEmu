@@ -20,6 +20,15 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.12.17
+* gh-1349: When reopening Settings dialog, show last selected section.
+* gh-165: Allow to move Quake console between monitors by hotkeys.
+* gh-275, gh-1345: Resize changes in caption-less mode.
+* gh-1350, gh-1351: Fix wrong VCon position and gaps colors in split-screen mode.
+* A lot of internal changes fixing deprecated string functions warnings.
+* Use BASE addresses above 4GB for better ASLR optimization (ConEmuCD64, ConEmuHk64).
+
+
 2017.12.5
 * gh-1345: Hide visible frame under TaskBar in maximized mode.
 * gh-1347: Fix crash when setting hotkey for a task (per-mon-dpi regression).
