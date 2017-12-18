@@ -558,13 +558,17 @@ public:
 			if (!n)
 				n = GetTempPath(cchMax, gsTempFolder);
 
-			if (n && (n < cchMax))
+			if (n && ((n + 16) < cchMax))
 			{
+				CreateDirectory(gsTempFolder, NULL); // In case, `TEMP` variable points to non-existent folder
 				wchar_t* pszSubDir = gsTempFolder+lstrlen(gsTempFolder);
+				if (*(pszSubDir-1) != L'\\')
+					*(pszSubDir++) = L'\\';
 				lstrcpy(pszSubDir, L"ConEmu");
 				pszSubDir += 6;
 				lstrcpy(pszSubDir, CONEMUVERL);
 				pszSubDir += lstrlen(pszSubDir);
+				// If we succeeded with this folder `%TEMP%\ConEmuYYMMDD`
 				if (CreateDirectory(gsTempFolder, NULL))
 				{
 					SetCurrentDirectory(gsTempFolder);
@@ -572,6 +576,7 @@ public:
 					return true;
 				}
 
+				// Another installer already started? Try this `%TEMP%\ConEmuYYMMDD_HHMMSS`
 				SYSTEMTIME st = {}; GetLocalTime(&st);
 				wsprintf(pszSubDir, L"_%02i%02i%02i", st.wHour, st.wMinute, st.wSecond);
 				if (CreateDirectory(gsTempFolder, NULL))
