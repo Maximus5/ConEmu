@@ -838,7 +838,7 @@ int ServerInitGuiTab()
 		pIn->SrvStartStop.Started = srv_Started; // сервер запущен
 		pIn->SrvStartStop.hConWnd = ghConWnd;
 		// Сразу передать текущий KeyboardLayout
-		IsKeyboardLayoutChanged(&pIn->SrvStartStop.dwKeybLayout);
+		IsKeyboardLayoutChanged(pIn->SrvStartStop.dwKeybLayout);
 
 		if (TryConnect2Gui(hGuiWnd, 0, pIn))
 		{
@@ -2975,7 +2975,7 @@ HWND Attach2Gui(DWORD nTimeout)
 	//pIn->StartStop.dwInputTID = gpSrv->dwInputPipeThreadId;
 	pIn->StartStop.nSubSystem = gnImageSubsystem;
 	// Сразу передать текущий KeyboardLayout
-	IsKeyboardLayoutChanged(&pIn->StartStop.dwKeybLayout);
+	IsKeyboardLayoutChanged(pIn->StartStop.dwKeybLayout);
 	// После детача/аттача
 	DWORD nAltWait;
 	if (gpSrv->dwAltServerPID && gpSrv->hAltServer

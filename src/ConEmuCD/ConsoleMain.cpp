@@ -4742,11 +4742,11 @@ void SendStarted()
 		{
 		case RM_SERVER:
 			pIn->StartStop.nStarted = sst_ServerStart;
-			IsKeyboardLayoutChanged(&pIn->StartStop.dwKeybLayout);
+			IsKeyboardLayoutChanged(pIn->StartStop.dwKeybLayout);
 			break;
 		case RM_ALTSERVER:
 			pIn->StartStop.nStarted = sst_AltServerStart;
-			IsKeyboardLayoutChanged(&pIn->StartStop.dwKeybLayout);
+			IsKeyboardLayoutChanged(pIn->StartStop.dwKeybLayout);
 			break;
 		case RM_COMSPEC:
 			pIn->StartStop.nParentFarPID = gpSrv->dwParentFarPID;
@@ -7025,7 +7025,7 @@ void DisableAutoConfirmExit(BOOL abFromFarPlugin)
 	}
 }
 
-bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
+bool IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode /*= NULL*/)
 {
 	bool bChanged = false;
 
@@ -7046,11 +7046,11 @@ bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 		//#endif
 
 		// The expected result of GetConsoleKeyboardLayoutName is like "00000419"
-		BOOL bConApiRc;
-
-		bConApiRc = pfnGetConsoleKeyboardLayoutName(szCurKeybLayout);
+		BOOL bConApiRc = pfnGetConsoleKeyboardLayoutName(szCurKeybLayout) && szCurKeybLayout[0];
 
 		DWORD nErr = bConApiRc ? 0 : GetLastError();
+		if (pdwErrCode)
+			*pdwErrCode = nErr;
 
 		/*
 		if (!bConApiRc && (nErr == ERROR_GEN_FAILURE))
@@ -7120,15 +7120,19 @@ bool IsKeyboardLayoutChanged(DWORD* pdwLayout)
 			}
 		}
 	}
+	else if (pdwErrCode)
+	{
+		*pdwErrCode = (DWORD)-1;
+	}
 
-	if (pdwLayout)
+	// The result, if possible
 	{
 		wchar_t *pszEnd = NULL; //szCurKeybLayout+8;
 		//WARNING("BUGBUG: 16 цифр не вернет"); -- тут именно 8 цифр. Это LayoutNAME, а не string(HKL)
 		// LayoutName: "00000409", "00010409", ...
 		// А HKL от него отличается, так что передаем DWORD
 		// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
-		*pdwLayout = wcstoul(gpSrv->szKeybLayout, &pszEnd, 16);
+		pdwLayout = wcstoul(gpSrv->szKeybLayout, &pszEnd, 16);
 	}
 
 	return bChanged;
@@ -7144,7 +7148,7 @@ void CheckKeyboardLayout()
 	// А HKL от него отличается, так что передаем DWORD
 	// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
 
-	if (IsKeyboardLayoutChanged(&dwLayout))
+	if (IsKeyboardLayoutChanged(dwLayout))
 	{
 		// Сменился, Отошлем в GUI
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)); //-V119
