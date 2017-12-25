@@ -1696,10 +1696,24 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 		//Win& & Quake - не работает "Slide up/down" если есть ThickFrame
 		//if ((gpSet->isQuakeStyle == 0) // не для Quake. Для него нужна рамка, чтобы ресайзить
 		dwStyle &= ~WS_CAPTION;
-		if (mb_DisableThickFrame)
+		// mb_DisableThickFrame - to eliminate glitches during quake animation
+		// m_ForceShowFrame - to bypass strange MS limitation "not resizing borderless windows with WS_SYSMENU"
+		if (mb_DisableThickFrame || (m_ForceShowFrame == fsf_Show))
+		{
 			dwStyle &= ~(WS_THICKFRAME|WS_SYSMENU);
+		}
+		// User decides to disable standard (DWM) frame with a shadow
+		// in favor of borderless or self-drawn-border window
+		else if (gpSet->HideCaptionAlwaysFrame() >= 0)
+		{
+			dwStyle &= ~(WS_THICKFRAME); // remove standard (DWM) frame and shadows
+			dwStyle |= (WS_SYSMENU); // but allow system menu!
+		}
+		// Normal mode for caption-less window, allow resize using standard (DWM) frame
 		else
+		{
 			dwStyle |= (WS_THICKFRAME|WS_SYSMENU);
+		}
 	}
 	else
 	{
@@ -8110,6 +8124,8 @@ void CConEmuMain::RefreshWindowStyles()
 
 		MSetter lSet(&mn_IgnoreSizeChange);
 
+		_ASSERTE(!isInside());
+
 		// coordinates relative to upper-left screen corner
 		RECT rcClient = {}, rcBefore = {}, rcAfter = {};
 		if (bNeedCorrect)
@@ -8117,33 +8133,32 @@ void CConEmuMain::RefreshWindowStyles()
 			// AdjustWindowRectEx НЕ должно вызываться в FullScreen. Глючит. А рамки с заголовком нет, расширять нечего.
 			_ASSERTE(!isFullScreen() || (WindowMode==wmNormal || WindowMode==wmMaximized));
 
-			// Тут нужен "натуральный" ClientRect
-			::GetWindowRect(ghWnd, &rcBefore);
-			rcClient = SizeInfo::ClientRect();
+			RECT rcBefore = SizeInfo::WindowRect();
+			RECT rcClient = SizeInfo::ClientRect();
 			MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcClient, 2);
-			rcAfter = rcClient;
 			RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
+			RECT rcAfter = rcClient;
 			AddMargins(rcAfter, rcFrame, rcop_Enlarge);
-
 			// When switching from "No caption" to "Caption"
-			if (WindowMode == wmNormal)
+			if (IsSizeFree())
 			{
 				// we need to check window location, caption must not be "Out-of-screen"
 				FixWindowRect(rcAfter, CEB_ALL);
 			}
+
+			if (rcBefore != rcAfter)
+			{
+				SizeInfo::RequestRect(rcAfter);
+				m_FixPosAfterStyle = GetTickCount();
+				mrc_FixPosAfterStyle = rcAfter;
+			}
+			else
+			{
+				bNeedCorrect = false;
+			}
 		}
 
-		//nStyle &= ~(WS_CAPTION|WS_THICKFRAME|WS_DLGFRAME);
-		//SetWindowStyle(nStyle);
-		//nStyle = FixWindowStyle(nStyle);
-		//POINT ptBefore = {}; ClientToScreen(ghWnd, &ptBefore);
-
-		if (bNeedCorrect && (rcBefore != rcAfter))
-		{
-			m_FixPosAfterStyle = GetTickCount();
-			mrc_FixPosAfterStyle = rcAfter;
-		}
-		else
+		if (!bNeedCorrect)
 		{
 			m_FixPosAfterStyle = 0;
 		}

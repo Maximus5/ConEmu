@@ -4777,13 +4777,24 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			}
 			else
 			{
-				// корректировка, центрирование
+				// Precise DC size, center if required
 				RECT rcAddShift = {};
 				_ASSERTE(pVCon!=NULL);
 				if (pVCon && (tWhat == CER_DC) && (tFrom != CER_CONSOLE_CUR))
 				{
-					_ASSERTE(tFrom == CER_BACK);
-					RECT rcCalcBack = (tFrom == CER_BACK) ? rFrom : gpConEmu->CalcRect(CER_BACK, pVCon);
+					RECT rcCalcBack = rFrom;
+					if (tFrom != CER_BACK)
+					{
+						if (tFrom == CER_MAINCLIENT)
+						{
+							rcCalcBack = CVConGroup::CalcRect(CER_BACK, rFrom, tFrom, pVCon, tTabAction);
+						}
+						else
+						{
+							_ASSERTE(tFrom == CER_BACK);
+							rcCalcBack = CVConGroup::CalcRect(CER_BACK, gpConEmu->ClientRect(), CER_MAINCLIENT, pVCon, tTabAction);
+						}
+					}
 					rcAddShift = pVCon->CalcDCMargins(rcCalcBack);
 				}
 				CConEmuMain::AddMargins(rc, rcAddShift, rcop_Shrink);

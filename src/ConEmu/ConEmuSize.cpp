@@ -221,11 +221,17 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 	if (!processed && bHideCaption)
 	{
 		_ASSERTE((mg & ((DWORD)CEM_FRAMECAPTION)) != CEM_CAPTION);
-		if (!mp_ConEmu->isInside() && (mg & ((DWORD)CEM_FRAMECAPTION)) & (DWORD)CEM_FRAMEONLY)
+		if ((mg & ((DWORD)CEM_FRAMECAPTION)) & CEM_FRAMEONLY)
 		{
-			rc = mi.noCaption.FrameMargins;
-
-			// #SIZE_TODO Take into account self-drawing frame
+			if (isSelfFrame())
+			{
+				UINT frame = mp_ConEmu->GetSelfFrameWidth();
+				rc = RECT{(LONG)frame, (LONG)frame, (LONG)frame, (LONG)frame};
+			}
+			else
+			{
+				rc = mi.noCaption.FrameMargins;
+			}
 
 			#if 0
 			// We'll hide frame partially with UpdateWindowRgn if our frame is invisible
@@ -1703,6 +1709,12 @@ void CConEmuSize::SetRequestedMonitor(HMONITOR hNewMon)
 	gpSetCls->SetRequestedDpi(mi.Xdpi, mi.Ydpi);
 }
 
+CConEmuSize::MonitorInfoCache CConEmuSize::NearestMonitorInfo(const RECT& rcWnd)
+{
+	HMONITOR hMon = MonitorFromRect(&rcWnd, MONITOR_DEFAULTTONEAREST);
+	return NearestMonitorInfo(hMon);
+}
+
 CConEmuSize::MonitorInfoCache CConEmuSize::NearestMonitorInfo(HMONITOR hNewMon)
 {
 	// Must be filled already!
@@ -3043,11 +3055,20 @@ bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
 	if (InMinimizing(p))
 		return false;
 
+	RECT rcOld = SizeInfo::m_size.window, rcNew;
+	if ((p->flags & SWP_NOMOVE))
+		rcNew = RECT{rcOld.left, rcOld.top, rcOld.left + p->cx, rcOld.top + p->cy};
+	else if ((p->flags & SWP_NOSIZE))
+		rcNew = RECT{p->x, p->y, p->x + RectWidth(rcOld), p->y + RectHeight(rcOld)};
+	else
+		rcNew = RECT{p->x, p->y, p->x + p->cx, p->y + p->cy};
+
+	bool bResized = (RectWidth(rcNew) != RectWidth(rcOld)) || (RectHeight(rcNew) != RectHeight(rcOld));
+
 	// Lets go
-	bool bResized = ((p->flags & SWP_NOSIZE) == 0);
+
 	HMONITOR hMon = NULL;
 	DpiValue dpi;
-	RECT rcNew = {p->x, p->y, p->x + p->cx, p->y + p->cy};
 
 	#ifdef _DEBUG
 	BOOL bVis = IsWindowVisible(ghWnd);
@@ -6186,25 +6207,33 @@ bool CConEmuSize::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)
 	return bCaptionHidden;
 }
 
+// Return true if WS_THICKFRAME is not used
+bool CConEmuSize::isSelfFrame()
+{
+	if (mp_ConEmu->isInside())
+		return true;
+	if (!mp_ConEmu->isCaptionHidden())
+		return false;
+	// Take into account user setting but don't allow frame larger than system-defined
+	int iFrame = gpSet->HideCaptionAlwaysFrame();
+	return (iFrame >= 0);
+}
+
 UINT CConEmuSize::GetSelfFrameWidth()
 {
-	//return 0;
 	if (mp_ConEmu->isInside())
-		return 0;
-	// #SIZE_TODO Favor standard Win10 frame to get nice shadow around the window
-	// #SIZE_TODO Take into account Quake sliding mode
-	if (IsWin10())
 		return 0;
 	// Take into account user setting but don't allow frame larger than system-defined
 	int iFrame = gpSet->HideCaptionAlwaysFrame();
+	// -1 means we should use standard Windows thick frame if possible
+	if (iFrame < 0)
+		return 0;
 	// #SIZE_TODO Reuse frame width from monitors cache
 	const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(NULL);
 	int iStdFrame = mp_ConEmu->GetWinFrameWidth();
 	int iDefFrame = isCaptionHidden() ? mi.noCaption.FrameWidth : mi.withCaption.FrameWidth;
-	if (iFrame < 0)
-		iFrame = iDefFrame; // 1 pixel in Win10
-	else if (iFrame == 0 || iFrame > iStdFrame)
-		iFrame = iStdFrame; // allow comfortable resize area on mouse hover
+	if (iFrame == 0 || iFrame > iDefFrame)
+		iFrame = iDefFrame; // allow comfortable resize area on mouse hover
 	return static_cast<UINT>(iFrame);
 }
 

@@ -213,6 +213,7 @@ public:
 	void ReloadMonitorInfo();
 	void SetRequestedMonitor(HMONITOR hNewMon);
 	MonitorInfoCache NearestMonitorInfo(HMONITOR hNewMon);
+	MonitorInfoCache NearestMonitorInfo(const RECT& rcWnd);
 
 public:
 	CConEmuSize();
@@ -316,6 +317,7 @@ public:
 
 	bool isFrameCropped();
 	bool isCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);
+	bool isSelfFrame();
 	UINT GetSelfFrameWidth();
 
 protected:

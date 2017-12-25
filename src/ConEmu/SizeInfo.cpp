@@ -246,15 +246,24 @@ void SizeInfo::DoCalculate()
 		m_size.visible.bottom += rcWin10.bottom;
 	}
 
-	RECT rcFrame = mp_ConEmu->CalcMargins(CEM_FRAMECAPTION);
-	if (!caption_hidden || IsWin10()) // #SIZE_TODO unify for all OS
+	if (mp_ConEmu->isInside())
 	{
-		m_size.real_client = m_size.client = RECT{0, 0, RectWidth(m_size.window) - rcFrame.left - rcFrame.right, RectHeight(m_size.window) - rcFrame.top - rcFrame.bottom};
+		m_size.real_client = m_size.client = RECT{0, 0, RectWidth(m_size.window), RectHeight(m_size.window)};
 	}
 	else
 	{
-		m_size.real_client = RECT{0, 0, RectWidth(m_size.window), RectHeight(m_size.window)};
-		m_size.client = RECT{rcFrame.left, rcFrame.top, RectWidth(m_size.window) - rcFrame.right, RectHeight(m_size.window) - rcFrame.bottom};
+		const auto mi = mp_ConEmu->NearestMonitorInfo(m_size.window);
+		RECT rcFrame = caption_hidden ? mi.noCaption.FrameMargins : mi.withCaption.FrameMargins;
+
+		if (!mp_ConEmu->isSelfFrame())
+		{
+			m_size.real_client = m_size.client = RECT{0, 0, RectWidth(m_size.window) - rcFrame.left - rcFrame.right, RectHeight(m_size.window) - rcFrame.top - rcFrame.bottom};
+		}
+		else
+		{
+			m_size.real_client = RECT{0, 0, RectWidth(m_size.window), RectHeight(m_size.window)};
+			m_size.client = RECT{rcFrame.left, rcFrame.top, RectWidth(m_size.window) - rcFrame.right, RectHeight(m_size.window) - rcFrame.bottom};
+		}
 	}
 
 	m_size.workspace = m_size.client;
