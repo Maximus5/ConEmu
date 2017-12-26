@@ -84,9 +84,11 @@ class CVirtualConsole :
 	protected:
 		struct VConRConSizes
 		{
-			uint TextWidth, TextHeight; // размер в символах
-			uint Width, Height; // размер в пикселях
-			uint nMaxTextWidth, nMaxTextHeight; // размер в символах
+			uint TextWidth, TextHeight; // RCon size in cells
+			uint Width, Height; // DC size in pixels
+			uint OffsetX, OffsetY;
+			uint BackWidth, BackHeight;
+			uint nMaxTextWidth, nMaxTextHeight; // max size in cells
 			uint LastPadSize;
 			LONG nFontHeight, nFontWidth;
 		} m_Sizes;
@@ -151,7 +153,7 @@ class CVirtualConsole :
 		bool    mb_InUpdate;
 		RECT    mrc_Client, mrc_Back;
 		CEDC    m_DC;
-		HBRUSH  hBrush0, hOldBrush, hSelectedBrush;
+		HBRUSH  hOldBrush, hSelectedBrush;
 		HBRUSH  CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COLORREF *pColors = NULL);
 		CEFontStyles m_SelectedFont;
 		//CEFONT  mh_FontByIndex[MAX_FONT_STYLES_EX]; // pointers to Normal/Bold/Italic/Bold&Italic/...Underline
@@ -259,7 +261,7 @@ class CVirtualConsole :
 		void UpdateThumbnail(bool abNoSnapshot = FALSE);
 		void SelectFont(CEFontStyles newFont);
 		void SelectBrush(HBRUSH hNew);
-		void PaintBackgroundImage(const RECT& rcText, const COLORREF crBack);
+		void PaintBackgroundImage(HDC hdc, const RECT& rcText, const COLORREF crBack, bool Background = false);
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
 		COLORREF* GetColors();
@@ -275,6 +277,8 @@ class CVirtualConsole :
 		void UpdateInfo();
 		LONG GetVConWidth();
 		LONG GetVConHeight();
+		POINT GetVConOffset();
+		SIZE GetBackSize();
 		LONG GetTextWidth();
 		LONG GetTextHeight();
 		SIZE GetCellSize();

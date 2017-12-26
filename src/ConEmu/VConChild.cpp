@@ -1095,8 +1095,34 @@ LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 		BeginPaint(mh_WndBack, &ps);
 	}
 
-	HBRUSH hBrush = CreateSolidBrush(clrPalette[nColorIdx]);
-	if (hBrush)
+	const auto clrBack = clrPalette[nColorIdx];
+	HBRUSH hBrush = CreateSolidBrush(clrBack);
+	if (VCon->drawImage)
+	{
+		RECT rcPaint = {};
+		if (rcBack != rcView)
+		{
+			const int shiftX = rcView.left - rcBack.left;
+			const int shiftY = rcView.top - rcBack.top;
+			for (int i = 0; i < 4; ++i)
+			{
+				switch (i)
+				{
+				case 0: // top
+					rcPaint = RECT{0, 0, RectWidth(rcBack), shiftY}; break;
+				case 1: // left
+					rcPaint = RECT{0, shiftY, shiftX, RectHeight(rcBack)}; break;
+				case 2: // right
+					rcPaint = RECT{shiftX + RectWidth(rcView), shiftY, RectWidth(rcBack), RectHeight(rcBack)}; break;
+				case 3: // bottom
+					rcPaint = RECT{shiftX, shiftY + RectHeight(rcView), shiftX + RectWidth(rcView), RectHeight(rcBack)}; break;
+				}
+				if (!IsRectEmpty(&rcPaint))
+					VCon->PaintBackgroundImage(ps.hdc, rcPaint, clrBack, true);
+			}
+		}
+	}
+	else if (hBrush)
 	{
 		if (!hdc)
 		{

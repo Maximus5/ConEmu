@@ -253,7 +253,6 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	, bgBmpSize()
 	, mb_IsForceUpdate(false)
 	, mb_InUpdate(false)
-	, hBrush0(NULL)
 	, hSelectedBrush(NULL)
 	, hOldBrush(NULL)
 	, isEditor(false)
@@ -920,240 +919,71 @@ bool CVirtualConsole::LoadDumpConsole()
 }
 
 
-void CVirtualConsole::PaintBackgroundImage(const RECT& rcText, const COLORREF crBack)
+void CVirtualConsole::PaintBackgroundImage(HDC hdc, const RECT& rcText, const COLORREF crBack, bool Background /*= false*/)
 {
-	WARNING("CVirtualConsole::PaintBackgroundImage - crBack игнорируется");
-
-	const int inX = rcText.left;
-	const int inY = rcText.top;
-	const int inX2 = rcText.right;
-	const int inY2 = rcText.bottom;
-	const int inWidth = inX2 - inX;
-	const int inHeight = inY2 - inY;
-
 	#ifdef _DEBUG
-	BOOL lbDump = FALSE;
+	bool lbDump = false;
 	if (lbDump) DumpImage(hBgDc, NULL, bgBmpSize.X, bgBmpSize.Y, L"F:\\bgtemp.png");
 	#endif
 
-	RECT rcFill1 = {0}, rcFill2 = {0};
-	#if 0
-	RECT rcFill3 = {0}, rcFill4 = {0};
-	#endif
-	int bgX = inX, bgY = inY;
-
-	BackgroundOp op = (BackgroundOp)gpSet->bgOperation;
+	// If Back is larger than DC (gap or non-integral size)
+	const POINT dcOffset = {Background ? 0 : m_Sizes.OffsetX, Background ? 0 : m_Sizes.OffsetY};
+	// Where to place bitmap
+	const BackgroundOp& op = (BackgroundOp)gpSet->bgOperation;
+	// We shall get coordinates relative to our DC due to `op`
+	RECT bgRect = {0, 0, bgBmpSize.X, bgBmpSize.Y};
+	POINT bgOffset = {};
 
 	if (op == eUpRight)
 	{
-		int xShift = max(0,((int)m_Sizes.Width - bgBmpSize.X));
-		bgX = inX - xShift; bgY = inY;
-
-		if ((bgBmpSize.X < (int)m_Sizes.Width) || (bgBmpSize.Y < (int)m_Sizes.Height))
-		{
-			if (inY < bgBmpSize.Y)
-			{
-				rcFill1 = MakeRect(inX, inY, min(inX2,xShift), min(bgBmpSize.Y,inY2));
-				rcFill2 = MakeRect(inX, max(inY,bgBmpSize.Y), min(inX2,xShift), inY2);
-			}
-			else
-			{
-				rcFill1 = MakeRect(inX, inY, inX2, inY2);
-			}
-		}
+		bgOffset.x = max(0,((int)m_Sizes.BackWidth - bgBmpSize.X));
 	}
 	else if (op == eDownLeft)
 	{
-		int yShift = max(0,((int)m_Sizes.Height - bgBmpSize.Y));
-		bgX = inX; bgY = inY - yShift;
-
-		if ((bgBmpSize.X < (int)m_Sizes.Width) || (bgBmpSize.Y < (int)m_Sizes.Height))
-		{
-			if (inY2 >= yShift)
-			{
-				rcFill1 = MakeRect(inX, inY, inX2, min(yShift,inY2));
-				rcFill2 = MakeRect(bgBmpSize.X, max(inY,yShift), inX2, inY2);
-			}
-			else
-			{
-				rcFill1 = MakeRect(inX, inY, inX2, inY2);
-			}
-		}
-
+		bgOffset.y = max(0,((int)m_Sizes.BackHeight - bgBmpSize.Y));
 	}
 	else if (op == eDownRight)
 	{
-		int xShift = max(0,((int)m_Sizes.Width - bgBmpSize.X));
-		int yShift = max(0,((int)m_Sizes.Height - bgBmpSize.Y));
-		bgX = inX - xShift; bgY = inY - yShift;
-
-		if ((bgBmpSize.X < (int)m_Sizes.Width) || (bgBmpSize.Y < (int)m_Sizes.Height))
-		{
-			rcFill1 = MakeRect(inX, inY, inX2, min(yShift,inY2));
-			rcFill2 = MakeRect(inX, max(inY,yShift), min(inX2,xShift), inY2);
-		}
-
+		bgOffset.x = max(0,((int)m_Sizes.BackWidth - bgBmpSize.X));
+		bgOffset.y = max(0,((int)m_Sizes.BackHeight - bgBmpSize.Y));
 	}
 	else if ((op == eFit) || (op == eFill) || (op == eCenter))
 	{
-		int xShift = ((int)m_Sizes.Width - bgBmpSize.X)/2;
-		int yShift = ((int)m_Sizes.Height - bgBmpSize.Y)/2;
-		bgX = inX - xShift; bgY = inY - yShift;
-
-		if (op == eFit)
-		{
-			if (xShift > 0)
-			{
-				rcFill1 = MakeRect(inX, inY, min(inX2,xShift), inY2);
-				if (inX2 > (bgBmpSize.X + xShift))
-					rcFill2 = MakeRect(xShift+bgBmpSize.X, inY, inX2, inY2);
-			}
-			else if (yShift > 0)
-			{
-				rcFill1 = MakeRect(inX, inY, inX2, min(inY2,yShift));
-				if (inY2 > (bgBmpSize.Y + yShift))
-					rcFill2 = MakeRect(inX, yShift+bgBmpSize.Y, inX2, inY2);
-			}
-		}
-		else if (op == eCenter)
-		{
-			WARNING("OPTIMIZE!");
-		#if 1
-			if (inX < xShift || inY < yShift || inX2 > (bgBmpSize.X + xShift) || inY2 > (bgBmpSize.Y + yShift))
-				rcFill1 = rcText;
-		#else
-			LPRECT prc[] = {&rcFill1, &rcFill2, &rcFill3, &rcFill4}; int iRct = 0;
-
-			// Full?
-			if (((yShift > 0) && ((yShift >= inY2) || (inY >= (bgBmpSize.Y + yShift)))) // All above or below
-				|| ((xShift > 0) && ((xShift >= inX2) || (inX >= (bgBmpSize.X + xShift))))) // All leftward or rightward
-			{
-				*(prc[iRct++]) = MakeRect(inX, inY, inX2, min(inY2,yShift));
-			}
-			else
-			{
-				// Parts
-				if (xShift > 0)
-				{
-					*(prc[iRct++]) = MakeRect(inX, inY, min(inX2,xShift), inY2);
-
-					if (inX2 > (bgBmpSize.X + xShift))
-					{
-						if (iRct < countof(prc))
-							*(prc[iRct++]) = MakeRect(xShift+bgBmpSize.X, inY, inX2, inY2);
-						else
-							_ASSERTE(iRct<=1);
-					}
-				}
-				if (yShift > 0)
-				{
-					if (iRct < countof(prc))
-						*(prc[iRct++]) = MakeRect(inX, inY, inX2, min(inY2,yShift));
-					else
-						_ASSERTE(iRct<=1);
-
-					if (inY2 > (bgBmpSize.Y + yShift))
-					{
-						if (iRct < countof(prc))
-							*(prc[iRct++]) = MakeRect(inX, yShift+bgBmpSize.Y, inX2, inY2);
-						else
-							_ASSERTE(iRct<=1);
-					}
-				}
-			}
-		#endif
-		}
+		bgOffset.x = ((int)m_Sizes.BackWidth - bgBmpSize.X)/2;
+		bgOffset.y = ((int)m_Sizes.BackHeight - bgBmpSize.Y)/2;
 	}
-	else
+
+	RECT dcMapped = rcText;
+	POINT totalOffset = {dcOffset.x - bgOffset.x, dcOffset.y - bgOffset.y};
+	OffsetRect(&dcMapped, totalOffset.x, totalOffset.y);
+
+	HRGN hRgnDc = CreateRectRgnIndirect(&rcText);
+
+	// Background part
+	RECT blt = {};
+	if (IntersectRect(&blt, &dcMapped, &bgRect))
 	{
-		//if (bgBmpSize.X>inX && bgBmpSize.Y>inY)
-		//{
-		//	BitBlt((HDC)m_DC, inX, inY, inWidth, inHeight, hBgDc, inX, inY, SRCCOPY);
-		//}
+		POINT bltPos = {blt.left - totalOffset.x, blt.top - totalOffset.y};
+		BitBlt(hdc, bltPos.x, bltPos.y, RectWidth(blt), RectHeight(blt), hBgDc, blt.left, blt.top, SRCCOPY);
 
-		// Заливка цветом (там где нет картинки)
-		if ((bgBmpSize.X < (inX+inWidth)) || (bgBmpSize.Y < (inY+inHeight)))
+		HRGN hRgnBg = CreateRectRgn(bltPos.x, bltPos.y, bltPos.x + RectWidth(blt), bltPos.y + RectHeight(blt));
+		if (hRgnDc && hRgnBg)
 		{
-			//if (hBrush0 == NULL)
-			//{
-			//	hBrush0 = CreateSolidBrush(mp_Colors[0]);
-			//	SelectBrush(hBrush0);
-			//}
-
-			rcFill1 = MakeRect(max(inX,bgBmpSize.X), inY, inX+inWidth, inY+inHeight);
-
-			//#ifndef SKIP_ALL_FILLRECT
-			//if (!IsRectEmpty(&rect))
-			//{
-			//	FillRect((HDC)m_DC, &rect, hBrush0);
-			//}
-			//#endif
-
-			if (bgBmpSize.X>inX)
-			{
-				//rect.left = inX; rect.top = max(inY,bgBmpSize.Y); rect.right = bgBmpSize.X;
-				rcFill2 = MakeRect(inX, max(inY,bgBmpSize.Y), bgBmpSize.X, inY+inHeight);
-
-				//#ifndef SKIP_ALL_FILLRECT
-				//if (!IsRectEmpty(&rect))
-				//{
-				//	FillRect((HDC)m_DC, &rect, hBrush0);
-				//}
-				//#endif
-			}
+			CombineRgn(hRgnDc, hRgnDc, hRgnBg, RGN_DIFF);
+			DeleteObject(hRgnBg);
 		}
 	}
 
-	for (int i = 0; i <= 1; i++)
+	// Fill with requested color (if background image is not large enough)
+	#ifndef SKIP_ALL_FILLRECT
+	if (hRgnDc)
 	{
-		if (((i == 0) && (op != eCenter)) || ((i != 0) && (op == eCenter)))
-		{
-			// Background part
-			if (bgBmpSize.X>bgX && bgBmpSize.Y>bgY)
-			{
-				BitBlt((HDC)m_DC, inX, inY, inWidth, inHeight, hBgDc, bgX, bgY, SRCCOPY);
-			}
-		}
-		else
-		{
-			// Fill with color#0 (if background image is not large enough)
-			HBRUSH hBr = NULL;
-			#if 0
-			hBr = PartBrush(L' ', crBack, 0);
-			#else
-			if (hBrush0 == NULL)
-			{
-				hBrush0 = CreateSolidBrush(mp_Colors[0]);
-				//SelectBrush(hBrush0);
-			}
-			hBr = hBrush0;
-			#endif
-
-			#ifndef SKIP_ALL_FILLRECT
-			if (!IsRectEmpty(&rcFill1))
-			{
-				FillRect((HDC)m_DC, &rcFill1, hBrush0);
-			}
-
-			if (!IsRectEmpty(&rcFill2))
-			{
-				FillRect((HDC)m_DC, &rcFill2, hBrush0);
-			}
-
-			#if 0
-			if (!IsRectEmpty(&rcFill3))
-			{
-				FillRect((HDC)m_DC, &rcFill3, hBrush0);
-			}
-
-			if (!IsRectEmpty(&rcFill4))
-			{
-				FillRect((HDC)m_DC, &rcFill4, hBrush0);
-			}
-			#endif
-			#endif
-		}
+		HBRUSH hBr = PartBrush(L' ', crBack, crBack);
+		if (hBr)
+			FillRgn(hdc, hRgnDc, hBr);
+		DeleteObject(hRgnDc);
 	}
+	#endif
 }
 
 bool CVirtualConsole::GetUCharMapFontPtr(CFontPtr& pFont)
@@ -1713,11 +1543,6 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	/*       Finalization, release objects       */
 	/* ***************************************** */
 	SelectBrush(NULL);
-
-	if (hBrush0)    // создается в BlitPictureTo
-	{
-		DeleteObject(hBrush0); hBrush0 = NULL;
-	}
 
 	/*
 	for (UINT br=0; br<m_PartBrushes.size(); br++) {
@@ -2775,6 +2600,14 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 		//	mp_ConEmu->OnConsole Resize();
 	}
 
+	RECT rcBack = {}, rcDC = {};
+	GetWindowRect(GetBack(), &rcBack);
+	GetWindowRect(GetView(), &rcDC);
+	m_Sizes.BackWidth = RectWidth(rcBack);
+	m_Sizes.BackHeight = RectHeight(rcBack);
+	m_Sizes.OffsetX = rcDC.left - rcBack.left;
+	m_Sizes.OffsetY = rcDC.top - rcBack.top;
+
 	// Требуется полная перерисовка!
 	if (mb_IsForceUpdate)
 	{
@@ -3052,7 +2885,7 @@ void CVirtualConsole::UpdateText()
 			// Fill the space with background (erase previously printed text)
 			if (drawImage && ISBGIMGCOLOR(attr.nBackIdx))
 			{
-				PaintBackgroundImage(rect, attr.crBackColor);
+				PaintBackgroundImage(m_DC, rect, attr.crBackColor, false);
 			}
 			else
 			{
@@ -4375,6 +4208,16 @@ LONG CVirtualConsole::GetVConHeight()
 {
 	_ASSERTE(this && m_Sizes.Height);
 	return (LONG)m_Sizes.Height;
+}
+
+POINT CVirtualConsole::GetVConOffset()
+{
+	return POINT{LONG(m_Sizes.OffsetX), LONG(m_Sizes.OffsetY)};
+}
+
+SIZE CVirtualConsole::GetBackSize()
+{
+	return SIZE{LONG(m_Sizes.BackWidth), LONG(m_Sizes.BackHeight)};
 }
 
 LONG CVirtualConsole::GetTextWidth()

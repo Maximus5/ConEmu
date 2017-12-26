@@ -36,6 +36,7 @@ class CBackground
 {
 public:
 	COORD    bgSize;
+	POINT    VConOffset;
 	HDC      hBgDc;
 
 	CBackground();

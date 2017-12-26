@@ -793,7 +793,9 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 
 		pBgFile->PollBackgroundFile();
 
-		RECT rcWork = {0, 0, pVCon->GetVConWidth(), pVCon->GetVConHeight()};
+		VConOffset = pVCon->GetVConOffset();
+		SIZE BackSize = pVCon->GetBackSize();
+		RECT rcWork = {0, 0, BackSize.cx, BackSize.cy};
 
 		// необходимо проверить размер требуемой картинки
 		// -- здесь - всегда только файловая подложка
@@ -957,6 +959,8 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 	}
 	else
 	{
+		VConOffset = POINT{};
+
 		if (!mb_NeedBgUpdate)
 		{
 			if ((mb_BgLastFade == bIsForeground && gpSet->isFadeInactive)
