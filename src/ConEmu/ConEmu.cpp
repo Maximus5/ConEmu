@@ -101,7 +101,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
@@ -2028,6 +2028,11 @@ BOOL CConEmuMain::CreateMainWindow()
 BOOL CConEmuMain::CreateWorkWindow()
 {
 	HWND  hParent = ghWnd;
+	if (!SizeInfo::isCalculated())
+	{
+		RECT rcWnd = GetDefaultRect();
+		SizeInfo::RequestRect(rcWnd);
+	}
 	RECT  rcClient = SizeInfo::WorkspaceRect();
 	DWORD styleEx = GetWorkWindowStyleEx();
 	DWORD style = GetWorkWindowStyle();
@@ -6550,6 +6555,8 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	{
 		DEBUGSTRSIZE(szInfo);
 	}
+
+	SizeInfo::RequestRect(rcWndS);
 
 	// Continue
 	OnTaskbarButtonCreated();

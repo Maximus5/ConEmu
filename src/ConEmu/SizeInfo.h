@@ -110,15 +110,20 @@ protected:
 
 	struct
 	{
-		bool valid = false; // If false - recalculation is required
-		bool rect_was_set = false;
-		RECT window = {};
-		// All rects below are calculated from m_size.window
-		RECT visible = {};
-		RECT real_client = {};
-		RECT client = {};
-		RECT rebar = {};
-		RECT status = {};
-		RECT workspace = {};
+		// If it's false - recalculation is required
+		bool valid = false;
+
+		// Rectangles
+		struct
+		{
+			RECT window = {};
+			// All rects below are calculated from m_size.window
+			RECT visible = {};
+			RECT real_client = {};
+			RECT client = {};
+			RECT rebar = {};
+			RECT status = {};
+			RECT workspace = {};
+		} rr;
 	} m_size;
 };

@@ -1445,11 +1445,14 @@ RECT CConEmuSize::GetDefaultRect()
 
 			// #DPI What if parent window covers several monitors?
 			SetRequestedMonitor(MonitorFromWindow(mp_ConEmu->mp_Inside->mh_InsideParentWND, MONITOR_DEFAULTTONEAREST));
-			this->WndPos = VisualPosFromReal(rcWnd.left, rcWnd.top);
-			RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN);
-			// In the "Inside" mode we are interested only in "cells"
-			this->WndWidth.Set(true, ss_Standard, rcCon.right);
-			this->WndHeight.Set(false, ss_Standard, rcCon.bottom);
+			if (!IsRectEmpty(&rcWnd))
+			{
+				this->WndPos = VisualPosFromReal(rcWnd.left, rcWnd.top);
+				RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN);
+				// In the "Inside" mode we are interested only in "cells"
+				this->WndWidth.Set(true, ss_Standard, rcCon.right);
+				this->WndHeight.Set(false, ss_Standard, rcCon.bottom);
+			}
 
 			OnMoving(&rcWnd);
 
@@ -3000,7 +3003,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 	// Add `SWP_NOSIZE` check because in that case {p->cx,p->cy} are 0
 	// therefore OnSize CalcRect will return invalid result on empty src rect
-	if (bResized && !(p->flags & SWP_NOSIZE))
+	if (bResized && !(p->flags & SWP_NOSIZE) && (p->cx > 0) && (p->cy > 0))
 	{
 		//RECT rcWnd = {0,0,p->cx,p->cy};
 		//CVConGroup::SyncAllConsoles2Window(rcWnd, CER_MAIN, true);
@@ -3055,7 +3058,7 @@ bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
 	if (InMinimizing(p))
 		return false;
 
-	RECT rcOld = SizeInfo::m_size.window, rcNew;
+	RECT rcOld = SizeInfo::m_size.rr.window, rcNew;
 	if ((p->flags & SWP_NOMOVE))
 		rcNew = RECT{rcOld.left, rcOld.top, rcOld.left + p->cx, rcOld.top + p->cy};
 	else if ((p->flags & SWP_NOSIZE))
@@ -3105,7 +3108,7 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/)
 	DEBUGSTRSIZE(szSize);
 #endif
 
-	if (wParam == SIZE_MINIMIZED || isIconic())
+	if (wParam == SIZE_MINIMIZED || isIconic(true))
 	{
 		return 0;
 	}
@@ -3120,6 +3123,13 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/)
 	{
 		//MBoxAssert(mn_MainThreadId == GetCurrentThreadId());
 		PostMessage(ghWnd, WM_SIZE, MAKELPARAM(wParam,(bResizeRCon?1:2)), 0);
+		return 0;
+	}
+
+	RECT rcRealClient = SizeInfo::RealClientRect();
+	if (IsRectEmpty(&rcRealClient))
+	{
+		// If there are no space for anything - just exit
 		return 0;
 	}
 

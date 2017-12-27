@@ -83,7 +83,7 @@ void SizeInfo::LogRequest(LPCWSTR asFrom, LPCWSTR asMessage /*= nullptr*/)
 void SizeInfo::LogRequest(const RECT& rcNew, LPCWSTR asFrom)
 {
 	wchar_t szInfo[120];
-	msprintf(szInfo, countof(szInfo), L"OldRect={%i,%i}-{%i,%i} NewRect={%i,%i}-{%i,%i}", LOGRECTCOORDS(m_size.window), LOGRECTCOORDS(rcNew));
+	msprintf(szInfo, countof(szInfo), L"OldRect={%i,%i}-{%i,%i} NewRect={%i,%i}-{%i,%i}", LOGRECTCOORDS(m_size.rr.window), LOGRECTCOORDS(rcNew));
 	LogRequest(asFrom, szInfo);
 }
 
@@ -108,36 +108,36 @@ void SizeInfo::RequestDpi(const DpiValue& _dpi)
 // Change whole window Rect (includes caption/frame and invisible part of Win10 DWM area)
 void SizeInfo::RequestRect(RECT _window)
 {
-	RECT rcCur = m_size.window;
+	RECT rcCur = m_size.rr.window;
 	if (rcCur == _window)
 		return;
 	LogRequest(_window, L"RequestRect");
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
-	m_size.window = _window;
+	m_size.rr.window = _window;
 	RequestRecalc();
 }
 
 void SizeInfo::RequestSize(int _width, int _height)
 {
-	RECT rcCur = m_size.window;
+	RECT rcCur = m_size.rr.window;
 	RECT rcNew = {rcCur.left, rcCur.top, rcCur.left + _width, rcCur.top + _height};
-	if (rcNew == m_size.window)
+	if (rcNew == m_size.rr.window)
 		return;
 	LogRequest(rcNew, L"RequestSize");
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
-	m_size.window = rcNew;
+	m_size.rr.window = rcNew;
 	RequestRecalc();
 }
 
 void SizeInfo::RequestPos(int _x, int _y)
 {
-	RECT rcCur = m_size.window;
+	RECT rcCur = m_size.rr.window;
 	RECT rcNew = {_x, _y, _x + RectWidth(rcCur), _y + RectHeight(rcCur)};
-	if (rcNew == m_size.window)
+	if (rcNew == m_size.rr.window)
 		return;
 	LogRequest(rcNew, L"RequestPos");
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
-	m_size.window = rcNew;
+	m_size.rr.window = rcNew;
 	RequestRecalc();
 }
 
@@ -148,14 +148,14 @@ void SizeInfo::RequestPos(int _x, int _y)
 RECT SizeInfo::WindowRect()
 {
 	DoCalculate();
-	return m_size.window;
+	return m_size.rr.window;
 }
 
 // In Win10 it may be smaller than stored WindowRect
 RECT SizeInfo::VisibleRect()
 {
 	DoCalculate();
-	return m_size.visible;
+	return m_size.rr.visible;
 }
 
 
@@ -168,12 +168,12 @@ HRGN SizeInfo::CreateSelfFrameRgn()
 
 	DoCalculate();
 
-	if (m_size.client == m_size.real_client)
+	if (m_size.rr.client == m_size.rr.real_client)
 		return NULL;
 
 	HRGN hWhole, hClient;
-	hWhole = CreateRectRgn(0, 0, m_size.real_client.right, m_size.real_client.bottom);
-	hClient = CreateRectRgn(m_size.client.left, m_size.client.top, m_size.client.right, m_size.client.bottom);
+	hWhole = CreateRectRgn(0, 0, m_size.rr.real_client.right, m_size.rr.real_client.bottom);
+	hClient = CreateRectRgn(m_size.rr.client.left, m_size.rr.client.top, m_size.rr.client.right, m_size.rr.client.bottom);
 	int iRc = CombineRgn(hWhole, hWhole, hClient, RGN_DIFF);
 	if (iRc != SIMPLEREGION && iRc != COMPLEXREGION)
 	{
@@ -190,35 +190,35 @@ HRGN SizeInfo::CreateSelfFrameRgn()
 RECT SizeInfo::ClientRect()
 {
 	DoCalculate();
-	return m_size.client;
+	return m_size.rr.client;
 }
 
 // Factual client rectangle, as Windows knows about our window
 RECT SizeInfo::RealClientRect()
 {
 	DoCalculate();
-	return m_size.real_client;
+	return m_size.rr.real_client;
 }
 
 // Contains TabBar, Search panel, ToolBar
 RECT SizeInfo::RebarRect()
 {
 	DoCalculate();
-	return m_size.rebar;
+	return m_size.rr.rebar;
 }
 
 // StatusBar
 RECT SizeInfo::StatusRect()
 {
 	DoCalculate();
-	return m_size.status;
+	return m_size.rr.status;
 }
 
 // Workspace (contains VCons with splitters)
 RECT SizeInfo::WorkspaceRect()
 {
 	DoCalculate();
-	return m_size.workspace;
+	return m_size.rr.workspace;
 }
 
 
@@ -230,56 +230,62 @@ void SizeInfo::DoCalculate()
 
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
 
-	if (IsRectEmpty(&m_size.window))
-		m_size.window = mp_ConEmu->GetDefaultRect();
+	if (IsRectEmpty(&m_size.rr.window))
+	{
+		// Inside mode?
+		_ASSERTEX(RectWidth(m_size.rr.window)>0 || RectHeight(m_size.rr.window)>0);
+		m_size.rr = {};
+		m_size.valid = true;
+		return;
+	}
 
 	DpiValue dpi; dpi.SetDpi(m_opt.dpi, m_opt.dpi);
 	bool caption_hidden = mp_ConEmu->isCaptionHidden();
 
-	m_size.visible = m_size.window;
+	m_size.rr.visible = m_size.rr.window;
 	if (!caption_hidden && IsWin10())
 	{
 		RECT rcWin10 = mp_ConEmu->CalcMargins(CEM_WIN10FRAME);
-		m_size.visible.left += rcWin10.left;
-		m_size.visible.top += rcWin10.top;
-		m_size.visible.right -= rcWin10.right;
-		m_size.visible.bottom += rcWin10.bottom;
+		m_size.rr.visible.left += rcWin10.left;
+		m_size.rr.visible.top += rcWin10.top;
+		m_size.rr.visible.right -= rcWin10.right;
+		m_size.rr.visible.bottom += rcWin10.bottom;
 	}
 
 	if (mp_ConEmu->isInside())
 	{
-		m_size.real_client = m_size.client = RECT{0, 0, RectWidth(m_size.window), RectHeight(m_size.window)};
+		m_size.rr.real_client = m_size.rr.client = RECT{0, 0, RectWidth(m_size.rr.window), RectHeight(m_size.rr.window)};
 	}
 	else
 	{
-		const auto mi = mp_ConEmu->NearestMonitorInfo(m_size.window);
+		const auto mi = mp_ConEmu->NearestMonitorInfo(m_size.rr.window);
 		RECT rcFrame = caption_hidden ? mi.noCaption.FrameMargins : mi.withCaption.FrameMargins;
 
 		if (!mp_ConEmu->isSelfFrame())
 		{
-			m_size.real_client = m_size.client = RECT{0, 0, RectWidth(m_size.window) - rcFrame.left - rcFrame.right, RectHeight(m_size.window) - rcFrame.top - rcFrame.bottom};
+			m_size.rr.real_client = m_size.rr.client = RECT{0, 0, RectWidth(m_size.rr.window) - rcFrame.left - rcFrame.right, RectHeight(m_size.rr.window) - rcFrame.top - rcFrame.bottom};
 		}
 		else
 		{
-			m_size.real_client = RECT{0, 0, RectWidth(m_size.window), RectHeight(m_size.window)};
-			m_size.client = RECT{rcFrame.left, rcFrame.top, RectWidth(m_size.window) - rcFrame.right, RectHeight(m_size.window) - rcFrame.bottom};
+			m_size.rr.real_client = RECT{0, 0, RectWidth(m_size.rr.window), RectHeight(m_size.rr.window)};
+			m_size.rr.client = RECT{rcFrame.left, rcFrame.top, RectWidth(m_size.rr.window) - rcFrame.right, RectHeight(m_size.rr.window) - rcFrame.bottom};
 		}
 	}
 
-	m_size.workspace = m_size.client;
+	m_size.rr.workspace = m_size.rr.client;
 
 	int newStatusHeight = 0;
 	if (gpSet->isStatusBarShow)
 		newStatusHeight = gpSet->StatusBarHeight();
 	if (newStatusHeight > 0)
 	{
-		m_size.status = m_size.workspace;
-		m_size.status.top = m_size.status.bottom - newStatusHeight;
-		m_size.workspace.bottom = m_size.status.top;
+		m_size.rr.status = m_size.rr.workspace;
+		m_size.rr.status.top = m_size.rr.status.bottom - newStatusHeight;
+		m_size.rr.workspace.bottom = m_size.rr.status.top;
 	}
 	else
 	{
-		m_size.status = RECT{};
+		m_size.rr.status = RECT{};
 	}
 
 	int newTabHeight = 0;
@@ -291,24 +297,24 @@ void SizeInfo::DoCalculate()
 	}
 	if (newTabHeight > 0)
 	{
-		m_size.rebar = m_size.workspace;
+		m_size.rr.rebar = m_size.rr.workspace;
 		switch (gpSet->nTabsLocation)
 		{
 		case 0: // top
-			m_size.rebar.bottom = m_size.rebar.top + newTabHeight;
-			m_size.workspace.top += newTabHeight;
+			m_size.rr.rebar.bottom = m_size.rr.rebar.top + newTabHeight;
+			m_size.rr.workspace.top += newTabHeight;
 			break;
 		case 1: // bottom
-			m_size.rebar.top = m_size.rebar.bottom - newTabHeight;
-			m_size.workspace.bottom -= newTabHeight;
+			m_size.rr.rebar.top = m_size.rr.rebar.bottom - newTabHeight;
+			m_size.rr.workspace.bottom -= newTabHeight;
 			break;
 		default:
-			m_size.rebar = RECT{};
+			m_size.rr.rebar = RECT{};
 		}
 	}
 	else
 	{
-		m_size.rebar = RECT{};
+		m_size.rr.rebar = RECT{};
 	}
 
 	m_size.valid = true;
