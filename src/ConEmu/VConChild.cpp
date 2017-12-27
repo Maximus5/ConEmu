@@ -1080,9 +1080,10 @@ LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 	RECT rcMain = {}; GetWindowRect(ghWnd, &rcMain);
 	RECT rcMainClient = {}; GetClientRect(ghWnd, &rcMainClient); MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcMainClient, 2);
 	RECT rcWork = {}; GetWindowRect(ghWndWork, &rcWork);
+	#endif
+
 	RECT rcBack = {}; GetWindowRect(mh_WndBack, &rcBack);
 	RECT rcView = {}; GetWindowRect(mh_WndDC, &rcView);
-	#endif
 
 	PAINTSTRUCT ps = {};
 	if (hdc)
