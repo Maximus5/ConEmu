@@ -1626,7 +1626,7 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 					swprintf_c(psz, cchMax/*#SECURELEN*/, L"%c%s%c", 27, asCmd, L'\n');
 				}
 
-				PostString(pszData, wcslen(pszData));
+				PostString(pszData, wcslen(pszData), false);
 				free(pszData);
 			}
 		}
@@ -1643,7 +1643,7 @@ void CRealConsole::OnKeysSending()
 }
 
 // !!! Функция может менять буфер pszChars! !!! Private !!!
-bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
+bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount, bool allow_group)
 {
 	if (!pszChars || !cchCount)
 	{
@@ -1659,7 +1659,7 @@ bool CRealConsole::PostString(wchar_t* pszChars, size_t cchCount)
 	}
 
 	// If user want to type simultaneously into visible or all consoles
-	EnumVConFlags is_grouped = mp_VCon->isGroupedInput();
+	EnumVConFlags is_grouped = allow_group ? mp_VCon->isGroupedInput() : evf_None;
 
 	// Call OnKeysSending to reset top-left in the buffer if was locked (after scroll)
 	if (is_grouped)
@@ -7172,7 +7172,8 @@ bool CRealConsole::ProcessXtermSubst(const INPUT_RECORD& r)
 		{
 			for (WORD n = 0; n < nRepeatCount; ++n)
 			{
-				if (!PostString(szSubstKeys.ms_Val, szSubstKeys.GetLen()))
+				// Don't use group-input here - it's already processed by ProcessXtermSubst caller
+				if (!PostString(szSubstKeys.ms_Val, szSubstKeys.GetLen(), false))
 					break;
 			}
 		}
@@ -12626,7 +12627,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	// Отправить в консоль все символы из: pszBuf
 	if (nBufLen)
 	{
-		PostString(pszBuf, nBufLen);
+		PostString(pszBuf, nBufLen, true);
 	}
 	else
 	{

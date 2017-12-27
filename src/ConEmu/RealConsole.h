@@ -310,7 +310,7 @@ class CRealConsole
 		void OnKeysSending();
 	protected:
 		friend class CAltNumpad;
-		bool PostString(wchar_t* pszChars, size_t cchCount);
+		bool PostString(wchar_t* pszChars, size_t cchCount, bool allow_group);
 	private:
 		bool ChangePromptPosition(const AppSettings* pApp, COORD crMouse);
 		bool IsPromptActionAllowed(bool bFromMouse, const AppSettings* pApp);

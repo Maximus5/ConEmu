@@ -390,7 +390,7 @@ void CAltNumpad::DumpChars(wchar_t* asChars)
 	if (!mb_External)
 		pRCon->PostKeyUp(VK_MENU, 0, 0);
 
-	pRCon->PostString(asChars, wcslen(asChars));
+	pRCon->PostString(asChars, wcslen(asChars), true);
 
 #if 0
 	WORD vkKey = 0;

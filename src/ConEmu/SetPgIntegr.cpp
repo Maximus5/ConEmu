@@ -577,7 +577,7 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfi
 
 		bool bCmdKeyExist = false;
 
-		if (*asCmd == L'/')
+		if (*asCmd == L'/' || *asCmd == L'-')
 		{
 			CEStr lsArg;
 			LPCWSTR pszTemp = asCmd;
