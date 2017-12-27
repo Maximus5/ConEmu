@@ -4778,7 +4778,7 @@ int CConEmuMain::RunSingleInstance(HWND hConEmuWnd /*= NULL*/, LPCWSTR apszCmd /
 				pIn->NewCmd.SetCommand(lpszCmd ? lpszCmd : L"");
 
 				// Task? That may have "/dir" switch in task parameters
-				if (lpszCmd && (*lpszCmd == TaskBracketLeft) && !mb_ConEmuWorkDirArg)
+				if (lpszCmd && (*lpszCmd == TaskBracketLeft) && !mb_ConEmuWorkDirArg && !mb_ConEmuHere)
 				{
 					RConStartArgsEx args;
 					wchar_t* pszDataW = LoadConsoleBatch(lpszCmd, &args);
