@@ -20,6 +20,16 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2017.12.26
+* Resize fixes.
+* gh-1364: Fix missed slash in the installer temp directory for `%TEMP%\ConEmuYYMMDD`.
+* gh-348, gh-1231, gh-1372: Let background image cover VCon pad areas too.
+* gh-1373: Fix `NestedCallLevel <= 2` assertion in ConEmu-Inside when parent window has zero size.
+* gh-1374: Explorer context menu integration didn't start console in the folder, if starting task has `/dir %CD%` in the task parameters.
+* gh-1269: Special keys were applied multiple times for GroupInput in xterm mode.
+* Add GetConsoleKeyboardLayoutName result to `ConEmuC -checkunicode`.
+
+
 2017.12.17
 * gh-1349: When reopening Settings dialog, show last selected section.
 * gh-165: Allow to move Quake console between monitors by hotkeys.
