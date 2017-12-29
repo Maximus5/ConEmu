@@ -646,6 +646,10 @@
       "zh": "当你关闭ConEmu窗口时，尝试轻柔的关闭Far Manager，取代关闭console窗口",
       "id": 1654 }
     ,
+    "cbScrollbarDynamic": {
+      "en": "Increase maximum scrollbar position with console output grows",
+      "id": 3090 }
+    ,
     "cbSendAltEsc": {
       "en": "When checked, You can use \"Alt+Esc\" in Far internally",
       "zh": "如果选中此项，你可以在Far里使用内部的\"Alt+Esc\"",
@@ -1656,6 +1660,10 @@
       "zh": "子GUI窗口系统菜单（PuTTY, Notepad, etc.）",
       "id": 2577 }
     ,
+    "vkClose2Right": {
+      "en": "Close to the right",
+      "id": 3091 }
+    ,
     "vkCloseAllCon": {
       "en": "Close all consoles",
       "zh": "关闭所有控制台",
@@ -2457,6 +2465,10 @@
       "ru": "Показать диалог ‘Перезапустить активную консоль’",
       "zh": "显示‘重启当前控制台’对话框",
       "id": 43998 }
+    ,
+    "IDM_TERMINATE2RIGHT": {
+      "en": "Close all tabs to the right of the current one",
+      "id": 44008 }
     ,
     "IDM_TERMINATEALLCON": {
       "en": "Do normal close of all consoles (tabs and panes)",
@@ -3679,14 +3691,14 @@
       "id": 1515 }
     ,
     "cbExtendFonts": {
-      "en": "Extend fonts",
-      "ru": "Расширение шрифтов",
-      "zh": "扩展字体",
+      "en": "Extend font styles",
+      "_ru": "Расширение стилей шрифтов",
+      "_zh": "扩展字体",
       "id": 1576 }
     ,
     "cbExtendFontsOverride": {
-      "en": "Extend fonts override",
-      "zh": "覆盖扩展字体",
+      "en": "Extend font styles override",
+      "_zh": "覆盖扩展字体",
       "id": 2144 }
     ,
     "cbExtendUCharMap": {
@@ -4064,6 +4076,10 @@
       "zh": "安全关闭Far",
       "id": 1654 }
     ,
+    "cbScrollbarDynamic": {
+      "en": "Dynamic scrollbar range (backscroll buffer)",
+      "id": 3090 }
+    ,
     "cbSendAltEsc": {
       "en": "Alt+Esc",
       "zh": "Alt+Esc",
@@ -4198,11 +4214,6 @@
       "en": "Internal Ctrl+Tab",
       "zh": "内部Ctrl+Tab",
       "id": 1531 }
-    ,
-    "cbTabsInCaption": {
-      "en": "Show tabs in caption",
-      "zh": "在标题显示标签页",
-      "id": 1735 }
     ,
     "cbTabsLocationBottom": {
       "en": "Tabs on bottom",
@@ -6197,7 +6208,7 @@
     ,
     "stVConPadSize": {
       "en": "Pad size (pixels):",
-      "_ru": "Окантовка (пиксели):",
+      "ru": "Окантовка (пиксели):",
       "zh": "Pad大小（像素）：",
       "id": 2898 }
     ,
