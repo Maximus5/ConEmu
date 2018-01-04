@@ -399,7 +399,7 @@ RECT CConEmuSize::CalcMargins_VisibleFrame(LPRECT prcFrame /*= NULL*/)
 		return rcFrameOnly;
 	}
 
-	int iVisibleFrameWidth = gpSet->HideCaptionAlwaysFrame();
+	int iVisibleFrameWidth = isSelfFrame() ? gpSet->HideCaptionAlwaysFrame() : -1;
 	const RECT rcReal = CalcMargins_FrameCaption(CEM_FRAMEONLY);
 	if (prcFrame)
 		*prcFrame = rcReal;
