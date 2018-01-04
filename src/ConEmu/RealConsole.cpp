@@ -10005,7 +10005,7 @@ bool CRealConsole::LogInput(INPUT_RECORD* pRec)
 		case MOUSE_EVENT: //sprintf_c(pszAdd, countof(szInfo)-(pszAdd-szInfo)/*#SECURELEN*/, "MOUSE_EVENT\r\n");
 			{
 				if (!isLogging(2) && (pRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED))
-					return; // Движения мышки логировать только при /log2
+					return false; // Движения мышки логировать только при /log2
 
 				sprintf_s(pszAdd, countof(szInfo)-(pszAdd-szInfo),
 				           "Mouse: {%ix%i} Btns:{", pRec->Event.MouseEvent.dwMousePosition.X, pRec->Event.MouseEvent.dwMousePosition.Y);
