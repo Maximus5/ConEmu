@@ -1834,7 +1834,7 @@ bool CConEmuMain::CreateLog()
 	return bRc;
 }
 
-void CConEmuMain::LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*= true*/)
+bool CConEmuMain::LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*= true*/)
 {
 	if (!this || !mp_Log)
 	{
@@ -1844,13 +1844,14 @@ void CConEmuMain::LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool ab
 			DEBUGSTRNOLOG(asInfo);
 		}
 		#endif
-		return;
+		return false;
 	}
 
 	mp_Log->LogString(asInfo, abWriteTime, NULL, abWriteLine);
+	return true;
 }
 
-void CConEmuMain::LogString(LPCSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*= true*/)
+bool CConEmuMain::LogString(LPCSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*= true*/)
 {
 	if (!this || !mp_Log)
 	{
@@ -1863,10 +1864,11 @@ void CConEmuMain::LogString(LPCSTR asInfo, bool abWriteTime /*= true*/, bool abW
 			DEBUGSTRNOLOG(lsDump.ms_Val);
 		}
 		#endif
-		return;
+		return false;
 	}
 
 	mp_Log->LogString(asInfo, abWriteTime, NULL, abWriteLine);
+	return true;
 }
 
 BOOL CConEmuMain::CreateMainWindow()
@@ -12905,32 +12907,32 @@ void CConEmuMain::OnRConStartedSuccess(CRealConsole* apRCon)
 	}
 }
 
-void CConEmuMain::LogWindowPos(LPCWSTR asPrefix, LPRECT prcWnd /*= NULL*/)
+bool CConEmuMain::LogWindowPos(LPCWSTR asPrefix, LPRECT prcWnd /*= NULL*/)
 {
-	if (gpSet->isLogging())
-	{
-		wchar_t szInfo[255];
-		RECT rcWnd = {};
-		if (ghWnd && !prcWnd)
-			GetWindowRect(ghWnd, &rcWnd);
-		else if (prcWnd)
-			rcWnd = *prcWnd;
-		MONITORINFO mi = {sizeof(mi)};
-		HMONITOR hMon = GetNearestMonitor(&mi, &rcWnd);
-		swprintf_c(szInfo, L"%s: %s %s WindowMode=%s Rect={%i,%i}-{%i,%i} Mon(x%08X)=({%i,%i}-{%i,%i}),({%i,%i}-{%i,%i})",
-			asPrefix ? asPrefix : L"WindowPos",
-			::IsWindowVisible(ghWnd) ? L"Visible" : L"Hidden",
-			::IsIconic(ghWnd) ? L"Iconic" : ::IsZoomed(ghWnd) ? L"Maximized" : L"Normal",
-			GetWindowModeName((ConEmuWindowMode)(gpSet->isQuakeStyle ? gpSet->_WindowMode : WindowMode)),
-			LOGRECTCOORDS(rcWnd), LODWORD(hMon), LOGRECTCOORDS(mi.rcMonitor), LOGRECTCOORDS(mi.rcWork));
-		LogString(szInfo);
-	}
+	if (!gpSet->isLogging())
+		return false;
+
+	wchar_t szInfo[255];
+	RECT rcWnd = {};
+	if (ghWnd && !prcWnd)
+		GetWindowRect(ghWnd, &rcWnd);
+	else if (prcWnd)
+		rcWnd = *prcWnd;
+	MONITORINFO mi = {sizeof(mi)};
+	HMONITOR hMon = GetNearestMonitor(&mi, &rcWnd);
+	swprintf_c(szInfo, L"%s: %s %s WindowMode=%s Rect={%i,%i}-{%i,%i} Mon(x%08X)=({%i,%i}-{%i,%i}),({%i,%i}-{%i,%i})",
+		asPrefix ? asPrefix : L"WindowPos",
+		::IsWindowVisible(ghWnd) ? L"Visible" : L"Hidden",
+		::IsIconic(ghWnd) ? L"Iconic" : ::IsZoomed(ghWnd) ? L"Maximized" : L"Normal",
+		GetWindowModeName((ConEmuWindowMode)(gpSet->isQuakeStyle ? gpSet->_WindowMode : WindowMode)),
+		LOGRECTCOORDS(rcWnd), LODWORD(hMon), LOGRECTCOORDS(mi.rcMonitor), LOGRECTCOORDS(mi.rcWork));
+	return LogString(szInfo);
 }
 
-void CConEmuMain::LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+bool CConEmuMain::LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (!this || !mp_Log || !gpSet->isLogging(4))
-		return;
+		return false;
 
 	char szLog[128];
 	#define CASE_MSG(x) case x: lstrcpynA(szLog, #x, 64); break
@@ -12990,7 +12992,7 @@ void CConEmuMain::LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		": HWND=x%08X," WIN3264TEST(" W=x%08X, L=x%08X", " W=x%08X%08X, L=x%08X%08X"),
 		LODWORD(hWnd), WIN3264WSPRINT(wParam), WIN3264WSPRINT(lParam));
 
-	LogString(szLog);
+	return LogString(szLog);
 }
 
 /* static */

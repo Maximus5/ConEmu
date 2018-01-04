@@ -525,8 +525,8 @@ class CRealConsole
 		void Paste(CEPasteMode PasteMode = pm_Standard, LPCWSTR asText = NULL, bool abNoConfirm = false, PosixPasteMode posixMode = pxm_Auto);
 		bool Write(LPCWSTR pszText, int nLen = -1, DWORD* pnWritten = NULL);
 		uint isLogging(uint level = 1);
-		void LogString(LPCSTR asText);
-		void LogString(LPCWSTR asText);
+		bool LogString(LPCSTR asText);
+		bool LogString(LPCWSTR asText);
 		bool isActive(bool abAllowGroup);
 		bool isInFocus();
 		bool isFarPanelAllowed();
@@ -581,7 +581,7 @@ class CRealConsole
 		bool InRecreate();
 		bool GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName, DWORD anAppPID);
 		void ShowPropertiesDialog();
-		void LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars = NULL);
+		bool LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars = NULL);
 
 		void OnStartProcessAllowed();
 		void OnTimerCheck();
@@ -816,7 +816,7 @@ class CRealConsole
 		MFileLog *mp_Log;
 		void CreateLogFiles();
 		void CloseLogFiles();
-		void LogInput(INPUT_RECORD* pRec);
+		bool LogInput(INPUT_RECORD* pRec);
 		bool RecreateProcessStart();
 		void RequestStartup(bool bForce = false);
 		//

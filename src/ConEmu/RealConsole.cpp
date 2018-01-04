@@ -9863,52 +9863,54 @@ uint CRealConsole::isLogging(uint level /*= 1*/)
 	return (logLevel && (level <= logLevel)) ? logLevel : 0;
 }
 
-void CRealConsole::LogString(LPCWSTR asText)
+bool CRealConsole::LogString(LPCWSTR asText)
 {
-	if (!this) return;
+	if (!this) return false;
 
-	if (!asText) return;
+	if (!asText) return false;
 
 	if (mp_Log)
 	{
 		wchar_t szTID[32]; swprintf_c(szTID, L"[%u]", GetCurrentThreadId());
 		mp_Log->LogString(asText, true, szTID);
+		return true;
 	}
 	else
 	{
-		mp_ConEmu->LogString(asText);
+		return mp_ConEmu->LogString(asText);
 	}
 }
 
-void CRealConsole::LogString(LPCSTR asText)
+bool CRealConsole::LogString(LPCSTR asText)
 {
-	if (!this) return;
+	if (!this) return false;
 
-	if (!asText) return;
+	if (!asText) return false;
 
 	if (mp_Log)
 	{
 		char szTID[32]; sprintf_c(szTID, "[%u]", GetCurrentThreadId());
 		mp_Log->LogString(asText, true, szTID);
+		return true;
 	}
 	else
 	{
-		mp_ConEmu->LogString(asText);
+		return mp_ConEmu->LogString(asText);
 	}
 }
 
-void CRealConsole::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars /*= NULL*/)
+bool CRealConsole::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR pszTranslatedChars /*= NULL*/)
 {
 	// Есть еще вообще-то и WM_UNICHAR, но ввод UTF-32 у нас пока не поддерживается
 	if (!this || !mp_Log || !isLogging())
-		return;
+		return false;
 	if (!(uMsg == WM_KEYDOWN || uMsg == WM_KEYUP || uMsg == WM_CHAR
 		|| uMsg == WM_SYSCHAR || uMsg == WM_DEADCHAR || uMsg == WM_SYSDEADCHAR
 		|| uMsg == WM_SYSKEYDOWN || uMsg == WM_SYSKEYUP
 		|| (uMsg >= WM_MOUSEFIRST && uMsg <= WM_MOUSELAST)))
-		return;
+		return false;
 	if ((uMsg == WM_MOUSEMOVE) && !isLogging(2))
-		return;
+		return false;
 
 	char szInfo[192] = {0};
 	SYSTEMTIME st; GetLocalTime(&st);
@@ -9972,7 +9974,7 @@ void CRealConsole::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR psz
 	else
 	{
 		_ASSERTE(FALSE && "Unknown message");
-		return;
+		return false;
 	}
 
 	if (*pszAdd)
@@ -9981,12 +9983,15 @@ void CRealConsole::LogInput(UINT uMsg, WPARAM wParam, LPARAM lParam, LPCWSTR psz
 		//DWORD dwLen = 0;
 		//WriteFile(mh_LogInput, szInfo, strlen(szInfo), &dwLen, 0);
 		//FlushFileBuffers(mh_LogInput);
+		return true;
 	}
+
+	return false;
 }
 
-void CRealConsole::LogInput(INPUT_RECORD* pRec)
+bool CRealConsole::LogInput(INPUT_RECORD* pRec)
 {
-	if (!this || !mp_Log || !isLogging()) return;
+	if (!this || !mp_Log || !isLogging()) return false;
 
 	char szInfo[192] = {0};
 	SYSTEMTIME st; GetLocalTime(&st);
@@ -10064,7 +10069,10 @@ void CRealConsole::LogInput(INPUT_RECORD* pRec)
 		//DWORD dwLen = 0;
 		//WriteFile(mh_LogInput, szInfo, strlen(szInfo), &dwLen, 0);
 		//FlushFileBuffers(mh_LogInput);
+		return true;
 	}
+
+	return false;
 }
 
 void CRealConsole::CloseLogFiles()

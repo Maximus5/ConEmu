@@ -242,10 +242,10 @@ class CConEmuMain
 		CRunQueue *mp_RunQueue;
 
 		bool CreateLog();
-		void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
-		void LogString(LPCSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
-		void LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-		void LogWindowPos(LPCWSTR asPrefix, LPRECT prcWnd = NULL);
+		bool LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
+		bool LogString(LPCSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
+		bool LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		bool LogWindowPos(LPCWSTR asPrefix, LPRECT prcWnd = NULL);
 
 	public:
 		bool  WindowStartMinimized = false; // ключик "/min" или "Свернуть" в свойствах ярлыка
