@@ -55,7 +55,11 @@ END
 //
 
 #define CEVER_DESCRIPTION   "ConEmu Background for FAR manager 1.7x, 2.x, 3.x" CONEMUPLTFRM
+#if defined(_WIN64) || defined(WIN64)
+#define CEVER_FILENAME      "ConEmuBg.x64.dll"
+#else
 #define CEVER_FILENAME      "ConEmuBg.dll"
+#endif
 #define CEVER_DLL
 #include "../common/version_template.rc2"
 

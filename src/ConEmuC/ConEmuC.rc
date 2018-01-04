@@ -65,7 +65,11 @@ END
 //
 
 #define CEVER_DESCRIPTION   "ConEmu console extender" CONEMUPLTFRM "\0"
-#define CEVER_FILENAME      "ConEmuC*.exe"
+#if defined(_WIN64) || defined(WIN64)
+#define CEVER_FILENAME      "ConEmuC64.exe"
+#else
+#define CEVER_FILENAME      "ConEmuC.exe"
+#endif
 #undef  CEVER_DLL
 #include "../common/version_template.rc2"
 
