@@ -440,8 +440,8 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	#endif
 	mb_DataChanged = false;
 
-	int nStatusWidth = rcStatus.right - rcStatus.left + 1;
-	int nStatusHeight = rcStatus.bottom - rcStatus.top + ((gpSet->isStatusBarFlags & csf_NoVerticalPad) ? 0 : 1);
+	const int nStatusWidth = RectWidth(rcStatus);
+	const int nStatusHeight = RectHeight(rcStatus);
 
 	// Проверить клавиатуру
 	IsKeyboardChanged();
