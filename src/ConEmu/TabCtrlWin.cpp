@@ -361,7 +361,12 @@ RECT CTabPanelWin::GetRect()
 	RECT rcWnd = {-32000, -32000, -32000+300, -32000+100};
 	if (ghWnd)
 	{
-		rcWnd = gpConEmu->ClientRect();
+		rcWnd = gpConEmu->RebarRect();
+		if (IsRectEmpty(&rcWnd))
+		{
+			_ASSERTE(!IsRectEmpty(&rcWnd));
+			rcWnd = gpConEmu->ClientRect();
+		}
 	}
 	else
 	{
@@ -387,7 +392,7 @@ void CTabPanelWin::CreateRebar()
 								|WS_CLIPSIBLINGS|WS_CLIPCHILDREN
 								|/*CCS_NORESIZE|*/CCS_NOPARENTALIGN
 								|RBS_FIXEDORDER|RBS_AUTOSIZE|/*RBS_VARHEIGHT|*/CCS_NODIVIDER,
-								0,0,rcWnd.right,16, ghWnd, NULL, g_hInstance, NULL);
+								rcWnd.left, rcWnd.top, RectWidth(rcWnd), RectHeight(rcWnd), ghWnd, NULL, g_hInstance, NULL);
 	if (mh_Rebar == NULL)
 	{
 		return;
@@ -454,22 +459,14 @@ HWND CTabPanelWin::CreateTabbar()
 	if (mh_Tabbar)
 		return mh_Tabbar; // Уже создали
 
-	RECT rcClient = {-32000, -32000, -32000+300, -32000+100};
-	if (ghWnd)
-	{
-		rcClient = gpConEmu->ClientRect();
-	}
-	else
-	{
-		_ASSERTE(ghWnd!=NULL && "ConEmu main window must be created already!");
-	}
+	RECT rcClient = GetRect();
 
 	int nHeightExpected = QueryTabbarHeight();
 
 	DWORD nPlacement = TCS_SINGLELINE|WS_VISIBLE|WS_CHILD;
 
-	mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CLIPSIBLINGS | TCS_FOCUSNEVER, 0, 0,
-	                         rcClient.right, 0, mh_Rebar, NULL, g_hInstance, NULL);
+	mh_Tabbar = CreateWindow(WC_TABCONTROL, NULL, nPlacement | WS_CLIPSIBLINGS | TCS_FOCUSNEVER,
+							0, 0, RectWidth(rcClient), RectHeight(rcClient), mh_Rebar, NULL, g_hInstance, NULL);
 
 	if (mh_Tabbar == NULL)
 	{
@@ -881,21 +878,15 @@ void CTabPanelWin::ShowBar(bool bShow)
 
 void CTabPanelWin::RepositionInt()
 {
-	RECT client = gpConEmu->ClientRect();
+	RECT rebarRect = gpConEmu->RebarRect();
 
 	if (mh_Rebar)
 	{
 		wchar_t szLog[120];
 		// Rebar location (top/bottom)
-		int rx = 0, ry = 0, rw = client.right, rh = mn_TabHeight;
-		if (gpSet->nTabsLocation == 1)
-		{
-			int nStatusHeight = gpSet->isStatusBarShow ? gpSet->StatusBarHeight() : 0;
-			ry = client.bottom-nStatusHeight - mn_TabHeight;
-		}
-		msprintf(szLog, countof(szLog), L"New ReBar position x=%i y=%i w=%i h=%i", rx, ry, rw, rh);
+		msprintf(szLog, countof(szLog), L"New ReBar position {%i,%i}-{%i,%i} {%i*%i}", LOGRECTCOORDS(rebarRect), LOGRECTSIZE(rebarRect));
 		LogString(szLog); DEBUGSTRSIZE(szLog);
-		MoveWindow(mh_Rebar, rx, ry, rw, rh, TRUE);
+		MoveWindow(mh_Rebar, rebarRect.left, rebarRect.top, RectWidth(rebarRect), RectHeight(rebarRect), TRUE);
 
 		// Visible panes
 		bool bRebarChanged = false;
@@ -941,7 +932,7 @@ void CTabPanelWin::RepositionInt()
 		}
 
 		// Check what panes are fit
-		if (iAllWidth > client.right)
+		if (iAllWidth > RectWidth(rebarRect))
 		{
 			// Firstly we hide find-pane
 			if (Panes[1].iPaneMinWidth > 0)
@@ -950,7 +941,7 @@ void CTabPanelWin::RepositionInt()
 				Panes[1].iPaneMinWidth = 0;
 			}
 			// If that is not enough - hide toolbar
-			if (iAllWidth > client.right)
+			if (iAllWidth > RectWidth(rebarRect))
 			{
 				Panes[2].iPaneMinWidth = 0;
 			}
@@ -1487,23 +1478,11 @@ void CTabPanelWin::RePaintInt()
 		return;
 
 	RECT client, self;
-	client = gpConEmu->ClientRect();
+	client = gpConEmu->RebarRect();
 	GetWindowRect(mh_Rebar, &self);
 	MapWindowPoints(NULL, ghWnd, (LPPOINT)&self, 2);
 
-	int nNewY;
-	if (gpSet->nTabsLocation == 1)
-	{
-		int nStatusHeight = gpSet->isStatusBarShow ? gpSet->StatusBarHeight() : 0;
-		nNewY = client.bottom-nStatusHeight-(self.bottom-self.top);
-	}
-	else
-	{
-		nNewY = 0;
-	}
-
-	if ((client.right != (self.right - self.left))
-		|| (nNewY != self.top))
+	if (client != self)
 	{
 		RepositionInt();
 

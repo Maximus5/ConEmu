@@ -164,8 +164,6 @@ protected:
 		fsf_WaitShow = 1, // Запущен таймер показа рамки
 		fsf_Show = 2,     // Рамка показана
 	} m_ForceShowFrame;
-	void StartForceShowFrame();
-	void StopForceShowFrame();
 
 	bool mb_InShowMinimized; // true на время выполнения ShowWindow(SW_SHOWMIN...)
 
@@ -319,6 +317,8 @@ public:
 	bool isCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);
 	bool isSelfFrame();
 	UINT GetSelfFrameWidth();
+	void StartForceShowFrame();
+	void StopForceShowFrame();
 
 protected:
 	RECT CalcMargins_Win10Frame();

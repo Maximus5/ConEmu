@@ -33,6 +33,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/MSectionSimple.h"
 
+#define WINDOWS_ICONIC_POS -32000
+
 struct DpiValue;
 class CConEmuMain;
 
@@ -70,16 +72,35 @@ public:
 	RECT WorkspaceRect();
 
 public:
+	// Rectangles
+	struct WindowRectangles
+	{
+		RECT window = {};
+		// All rects below are calculated from m_size.window
+		RECT visible = {};
+		RECT real_client = {};
+		RECT client = {};
+		RECT rebar = {};
+		RECT status = {};
+		RECT workspace = {};
+	};
+
+public:
+	// This function DOES NOT do size recalculation!!!
+	const WindowRectangles& GetRectState() const;
+	// Check if sizes are up to date
 	bool isCalculated() const;
 	// Following functions deprecate current sizes, recalculation will be executed on next size request
 	void RequestRecalc();
 	// Change used DPI
 	void RequestDpi(const DpiValue& _dpi);
 	// Change whole window Rect (includes caption/frame and invisible part of Win10 DWM area)
-	void RequestRect(RECT _window);
-	void RequestSize(int _width, int _height);
-	void RequestPos(int _x, int _y);
+	void RequestRect(const RECT& _window);
+	void RequestSize(const int _width, const int _height);
+	void RequestPos(const int _x, const int _y);
 
+	static bool IsRectMinimized(const RECT& rc);
+	static bool IsRectMinimized(const int x, const int y);
 
 protected:
 	// Calculates new rectangles, if required, based on current settings and options
@@ -87,6 +108,7 @@ protected:
 	void LogRequest(LPCWSTR asFrom, LPCWSTR asMessage = nullptr);
 	void LogRequest(const RECT& rcNew, LPCWSTR asFrom);
 	void LogRequest(const int dpi, LPCWSTR asFrom);
+	void RequestRectInt(const RECT& _window, LPCWSTR asFrom);
 
 protected:
 	MSectionSimple mcs_lock;
@@ -113,17 +135,10 @@ protected:
 		// If it's false - recalculation is required
 		bool valid = false;
 
+		// Source rectangle for calculation
+		RECT source_window = {};
+
 		// Rectangles
-		struct
-		{
-			RECT window = {};
-			// All rects below are calculated from m_size.window
-			RECT visible = {};
-			RECT real_client = {};
-			RECT client = {};
-			RECT rebar = {};
-			RECT status = {};
-			RECT workspace = {};
-		} rr;
+		WindowRectangles rr;
 	} m_size;
 };

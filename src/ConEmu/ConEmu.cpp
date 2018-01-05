@@ -102,6 +102,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRSYS(s) //DEBUGSTR(s)
 #define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRSTYLE(s) DEBUGSTR(s)
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRTABS(s) //DEBUGSTR(s)
 #define DEBUGSTRLANG(s) //DEBUGSTR(s)// ; Sleep(2000)
@@ -5547,7 +5548,7 @@ void CConEmuMain::Invalidate(LPRECT lpRect, BOOL bErase /*= TRUE*/)
 
 void CConEmuMain::InvalidateFrame()
 {
-	if (!isCaptionHidden())
+	if (!isSelfFrame())
 		return;
 	HRGN hRgn = CreateSelfFrameRgn();
 	if (hRgn)
@@ -6247,14 +6248,6 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 
 bool CConEmuMain::isMouseOverFrame(bool abReal)
 {
-	// Если ресайзят за хвостик статус-бара - нефиг с рамкой играться
-	if (mp_Status->IsStatusResizing())
-	{
-		_ASSERTE(m_ForceShowFrame == fsf_Hide); // не должно быть
-		_ASSERTE(isSizing()); // флаг "ресайза" должен был быть выставлен
-		return false;
-	}
-
 	if (m_ForceShowFrame && isSizing())
 	{
 		if (!isPressed(VK_LBUTTON))
@@ -6298,7 +6291,15 @@ bool CConEmuMain::isMouseOverFrame(bool abReal)
 			MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcClient, 2);
 
 			if (!PtInRect(&rcClient, ptMouse))
+			{
 				bCurForceShow = true;
+			}
+			else if (mp_Status)
+			{
+				POINT ptClient = {ptMouse.x - rcClient.left, ptMouse.y - rcClient.top};
+				if (mp_Status->IsCursorOverResizeMark(ptClient))
+					bCurForceShow = true;
+			}
 		}
 	}
 	else
@@ -8128,7 +8129,8 @@ void CConEmuMain::RefreshWindowStyles()
 		{
 			wchar_t szInfo[128];
 			swprintf_c(szInfo, L"Changing main window 0x%08X style Cur=x%08X New=x%08X ExStyle=x%08X", LODWORD(ghWnd), nStyle, nNewStyle, nStyleEx);
-			LogString(szInfo);
+			if (!LogString(szInfo))
+				DEBUGSTRSTYLE(szInfo);
 		}
 
 		MSetter lSet(&mn_IgnoreSizeChange);
@@ -12354,11 +12356,18 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 
 					// Если просили показывать с задержкой - то по таймеру
 					if (nDelay)
+					{
+						DEBUGSTRSTYLE(bCurForceShow ? L"Timer(TIMER_CAPTION_APPEAR_ID)" : L"Timer(TIMER_CAPTION_DISAPPEAR_ID)");
 						SetKillTimer(true, nID, nDelay);
+					}
 					else if (bCurForceShow)
+					{
 						StartForceShowFrame();
+					}
 					else
+					{
 						StopForceShowFrame();
+					}
 				}
 			}
 		}

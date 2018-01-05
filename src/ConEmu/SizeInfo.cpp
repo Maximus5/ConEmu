@@ -64,6 +64,18 @@ bool SizeInfo::isCalculated() const
 	return m_size.valid;
 }
 
+//static
+bool SizeInfo::IsRectMinimized(const RECT& rc)
+{
+	return IsRectMinimized(rc.left, rc.top) || IsRectEmpty(&rc);
+}
+
+//static
+bool SizeInfo::IsRectMinimized(const int x, const int y)
+{
+	return (x <= WINDOWS_ICONIC_POS || y <= WINDOWS_ICONIC_POS);
+}
+
 // Following functions deprecate current sizes, recalculation will be executed on next size request
 void SizeInfo::RequestRecalc()
 {
@@ -83,7 +95,9 @@ void SizeInfo::LogRequest(LPCWSTR asFrom, LPCWSTR asMessage /*= nullptr*/)
 void SizeInfo::LogRequest(const RECT& rcNew, LPCWSTR asFrom)
 {
 	wchar_t szInfo[120];
-	msprintf(szInfo, countof(szInfo), L"OldRect={%i,%i}-{%i,%i} NewRect={%i,%i}-{%i,%i}", LOGRECTCOORDS(m_size.rr.window), LOGRECTCOORDS(rcNew));
+	msprintf(szInfo, countof(szInfo), L"OldRect={%i,%i}-{%i,%i} {%i*%i} NewRect={%i,%i}-{%i,%i} {%i*%i}",
+		LOGRECTCOORDS(m_size.rr.window), LOGRECTSIZE(m_size.rr.window),
+		LOGRECTCOORDS(rcNew), LOGRECTSIZE(rcNew));
 	LogRequest(asFrom, szInfo);
 }
 
@@ -105,40 +119,38 @@ void SizeInfo::RequestDpi(const DpiValue& _dpi)
 	RequestRecalc();
 }
 
-// Change whole window Rect (includes caption/frame and invisible part of Win10 DWM area)
-void SizeInfo::RequestRect(RECT _window)
+void SizeInfo::RequestRectInt(const RECT& _window, LPCWSTR asFrom)
 {
-	RECT rcCur = m_size.rr.window;
-	if (rcCur == _window)
+	if (_window == (m_size.valid ? m_size.rr.window : m_size.source_window))
 		return;
-	LogRequest(_window, L"RequestRect");
+	LogRequest(_window, asFrom);
+	if (IsRectMinimized(_window))
+		return;
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
-	m_size.rr.window = _window;
+	m_size.source_window = _window;
 	RequestRecalc();
 }
 
-void SizeInfo::RequestSize(int _width, int _height)
+// Change whole window Rect (includes caption/frame and invisible part of Win10 DWM area)
+void SizeInfo::RequestRect(const RECT& _window)
+{
+	RequestRectInt(_window, L"RequestRect");
+}
+
+void SizeInfo::RequestSize(const int _width, const int _height)
 {
 	RECT rcCur = m_size.rr.window;
 	RECT rcNew = {rcCur.left, rcCur.top, rcCur.left + _width, rcCur.top + _height};
-	if (rcNew == m_size.rr.window)
-		return;
-	LogRequest(rcNew, L"RequestSize");
-	MSectionLockSimple lock; lock.Lock(&mcs_lock);
-	m_size.rr.window = rcNew;
-	RequestRecalc();
+	RequestRectInt(rcNew, L"RequestSize");
 }
 
-void SizeInfo::RequestPos(int _x, int _y)
+void SizeInfo::RequestPos(const int _x, const int _y)
 {
 	RECT rcCur = m_size.rr.window;
 	RECT rcNew = {_x, _y, _x + RectWidth(rcCur), _y + RectHeight(rcCur)};
-	if (rcNew == m_size.rr.window)
+	if (rcNew == (m_size.valid ? m_size.rr.window : m_size.source_window))
 		return;
-	LogRequest(rcNew, L"RequestPos");
-	MSectionLockSimple lock; lock.Lock(&mcs_lock);
-	m_size.rr.window = rcNew;
-	RequestRecalc();
+	RequestRectInt(rcNew, L"RequestPos");
 }
 
 
@@ -168,12 +180,16 @@ HRGN SizeInfo::CreateSelfFrameRgn()
 
 	DoCalculate();
 
-	if (m_size.rr.client == m_size.rr.real_client)
+	// When Windows standard frame is used - real_client has offset from window left/top
+	// But with owner-draw frame - real_client starts from window left/top
+	if (m_size.rr.real_client.left == 0 && m_size.rr.real_client.top == 0
+		&& RectWidth(m_size.rr.client) == RectWidth(m_size.rr.real_client)
+		&& RectHeight(m_size.rr.client) == RectHeight(m_size.rr.real_client))
 		return NULL;
 
 	HRGN hWhole, hClient;
-	hWhole = CreateRectRgn(0, 0, m_size.rr.real_client.right, m_size.rr.real_client.bottom);
-	hClient = CreateRectRgn(m_size.rr.client.left, m_size.rr.client.top, m_size.rr.client.right, m_size.rr.client.bottom);
+	hWhole = CreateRectRgnIndirect(&m_size.rr.real_client);
+	hClient = CreateRectRgnIndirect(&m_size.rr.client);
 	int iRc = CombineRgn(hWhole, hWhole, hClient, RGN_DIFF);
 	if (iRc != SIMPLEREGION && iRc != COMPLEXREGION)
 	{
@@ -184,6 +200,11 @@ HRGN SizeInfo::CreateSelfFrameRgn()
 	}
 	DeleteObject(hClient);
 	return hWhole;
+}
+
+const SizeInfo::WindowRectangles& SizeInfo::GetRectState() const
+{
+	return m_size.rr;
 }
 
 // Client rectangle, may be simulated if we utilize some space for self-implemented borders
@@ -230,14 +251,18 @@ void SizeInfo::DoCalculate()
 
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
 
-	if (IsRectEmpty(&m_size.rr.window))
+	if (IsRectMinimized(m_size.source_window))
 	{
 		// Inside mode?
-		_ASSERTEX(RectWidth(m_size.rr.window)>0 || RectHeight(m_size.rr.window)>0);
-		m_size.rr = {};
+		_ASSERTEX(RectWidth(m_size.source_window)>0 && RectHeight(m_size.source_window)>0);
+		// m_size.rr = {}; // -- don't touch current values?
 		m_size.valid = true;
 		return;
 	}
+
+	// #SIZE_TODO Declare local "WindowRectangles rr" and fill it, apply the value at the end
+
+	m_size.rr.window = m_size.source_window;
 
 	DpiValue dpi; dpi.SetDpi(m_opt.dpi, m_opt.dpi);
 	bool caption_hidden = mp_ConEmu->isCaptionHidden();
@@ -254,6 +279,7 @@ void SizeInfo::DoCalculate()
 
 	if (mp_ConEmu->isInside())
 	{
+		// No frame at all, client area covers all our window space
 		m_size.rr.real_client = m_size.rr.client = RECT{0, 0, RectWidth(m_size.rr.window), RectHeight(m_size.rr.window)};
 	}
 	else
@@ -263,10 +289,15 @@ void SizeInfo::DoCalculate()
 
 		if (!mp_ConEmu->isSelfFrame())
 		{
-			m_size.rr.real_client = m_size.rr.client = RECT{0, 0, RectWidth(m_size.rr.window) - rcFrame.left - rcFrame.right, RectHeight(m_size.rr.window) - rcFrame.top - rcFrame.bottom};
+			_ASSERTE(!mp_ConEmu->isInside());
+			m_size.rr.real_client = RECT{rcFrame.left, rcFrame.top, RectWidth(m_size.rr.window) - rcFrame.right, RectHeight(m_size.rr.window) - rcFrame.bottom};
+			m_size.rr.client = RECT{0, 0, RectWidth(m_size.rr.window) - rcFrame.left - rcFrame.right, RectHeight(m_size.rr.window) - rcFrame.top - rcFrame.bottom};
 		}
 		else
 		{
+			int iFrame = gpSet->HideCaptionAlwaysFrame();
+			if ((iFrame >= 0) && (iFrame < rcFrame.left))
+				rcFrame = RECT{iFrame, iFrame, iFrame, iFrame};
 			m_size.rr.real_client = RECT{0, 0, RectWidth(m_size.rr.window), RectHeight(m_size.rr.window)};
 			m_size.rr.client = RECT{rcFrame.left, rcFrame.top, RectWidth(m_size.rr.window) - rcFrame.right, RectHeight(m_size.rr.window) - rcFrame.bottom};
 		}

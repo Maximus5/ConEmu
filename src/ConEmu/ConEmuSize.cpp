@@ -53,8 +53,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
+#define DEBUGSTRSTYLE(s) DEBUGSTR(s)
 #define DEBUGSTRDPI(s) //DEBUGSTR(s)
-#define DEBUGSTRRGN(s) DEBUGSTR(s)
+#define DEBUGSTRRGN(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL(s) //DEBUGSTR(s)
 
@@ -515,10 +516,10 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 				nGetStyle = 5;
 			}
 
-			_ASSERTE((mp_ConEmu->isIconic() == (rcMain.left <= -32000 && rcMain.top <= -32000)) || (changeFromWindowMode != wmNotChanging));
+			_ASSERTE((mp_ConEmu->isIconic() == IsRectMinimized(rcMain)) || (changeFromWindowMode != wmNotChanging));
 
 			// If rcMain still has invalid pos (got from iconic window placement)
-			if (rcMain.left <= -32000 && rcMain.top <= -32000)
+			if (IsRectMinimized(rcMain))
 			{
 				// -- when we call "DefWindowProc(hWnd, WM_SYSCOMMAND, wParam, lParam)"
 				// -- uxtheme lose wpl.rcNormalPosition at this point
@@ -601,7 +602,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 			// Нужно отнять отступы рамки и заголовка!
 		{
 			// Это может быть, если сделали GetWindowRect для ghWnd, когда он isIconic!
-			_ASSERTE((rc.left!=-32000 && rc.right!=-32000) && "Use CalcRect(CER_MAIN) instead of GetWindowRect() while IsIconic!");
+			_ASSERTE(!IsRectMinimized(rc) && "Use CalcRect(CER_MAIN) instead of GetWindowRect() while IsIconic!");
 			// Avoid wrong sized when resize is not finished yet
 			SizeInfo temp(*static_cast<SizeInfo*>(this));
 			temp.RequestSize(RectWidth(rFrom), RectHeight(rFrom));
@@ -2833,8 +2834,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 	{
 		if (gpSet->isQuakeStyle)
 		{
-			if (!mp_ConEmu->mp_Status->IsStatusResizing()
-				&& !m_JumpMonitor.bInJump // gh - Quake is not moved to another monitor
+			if (!m_JumpMonitor.bInJump // gh - Quake is not moved to another monitor
 				&& !mn_IgnoreSizeChange)
 			{
 				RECT rc = GetDefaultRect();
@@ -3178,6 +3178,7 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/)
 	if (mp_ConEmu->mp_TabBar->IsTabsActive())
 	{
 		mp_ConEmu->mp_TabBar->Reposition();
+		mp_ConEmu->mp_TabBar->RePaint();
 	}
 
 	// Background - должен занять все клиентское место под тулбаром
@@ -5418,7 +5419,7 @@ bool CConEmuSize::isIconic(bool abRaw /*= false*/)
 		if (!bIconic)
 		{
 			RECT rc = {}; GetWindowRect(ghWnd, &rc);
-			bIconic = (rc.left <= -32000 || rc.top <= -32000);
+			bIconic = IsRectMinimized(rc);
 		}
 	}
 	return bIconic;
@@ -5742,9 +5743,7 @@ bool CConEmuSize::isSizing(UINT nMouseMsg/*=0*/)
 		return false;
 
 	// могло не сброситься, проверим
-	// но только если не ресайзят статусбаром (grip) - он сам все обработает
-	if (!mp_ConEmu->mp_Status->IsStatusResizing() &&
-		((nMouseMsg==WM_NCLBUTTONUP) || !isPressed(VK_LBUTTON)))
+	if ((nMouseMsg==WM_NCLBUTTONUP) || !isPressed(VK_LBUTTON))
 	{
 		EndSizing(nMouseMsg);
 		return false;
@@ -5899,6 +5898,7 @@ void CConEmuSize::CheckTopMostState()
 
 void CConEmuSize::StartForceShowFrame()
 {
+	DEBUGSTRSTYLE(L"StartForceShowFrame called");
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);
 	m_ForceShowFrame = fsf_Show;
@@ -5908,6 +5908,7 @@ void CConEmuSize::StartForceShowFrame()
 
 void CConEmuSize::StopForceShowFrame()
 {
+	DEBUGSTRSTYLE(L"StopForceShowFrame called");
 	m_ForceShowFrame = fsf_Hide;
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);
@@ -5923,7 +5924,7 @@ bool CConEmuSize::InMinimizing(WINDOWPOS *p /*= NULL*/)
 		return true;
 
 	// Last chance to check (come from OnWindowPosChanging)
-	if (p && ((p->x <= -32000) || (p->y <= -32000)))
+	if (p && IsRectMinimized(p->x, p->y))
 		return true;
 
 	if (mp_ConEmu->mp_Inside && mp_ConEmu->mp_Inside->inMinimizing(p))
@@ -5931,7 +5932,7 @@ bool CConEmuSize::InMinimizing(WINDOWPOS *p /*= NULL*/)
 
 	#ifdef _DEBUG
 	RECT rc = {}; GetWindowRect(ghWnd, &rc);
-	if (rc.left <= -32000 || rc.top <= -32000)
+	if (IsRectMinimized(rc))
 	{
 		_ASSERTE((rc.left > -32000 && rc.top > -32000) || (p && (p->x > -32000 && p->y > -32000)));
 	}
@@ -6233,6 +6234,7 @@ UINT CConEmuSize::GetSelfFrameWidth()
 {
 	if (mp_ConEmu->isInside())
 		return 0;
+	_ASSERTE(isSelfFrame()); // Shall GetSelfFrameWidth be used only for self-drawn frame?
 	// Take into account user setting but don't allow frame larger than system-defined
 	int iFrame = gpSet->HideCaptionAlwaysFrame();
 	// -1 means we should use standard Windows thick frame if possible

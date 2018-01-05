@@ -1174,6 +1174,7 @@ bool CStatus::IsResizeAllowed()
 	return true;
 }
 
+// point - coordinates relative to UpperLeft corner of window client rect
 bool CStatus::IsCursorOverResizeMark(const POINT& ptCurClient)
 {
 	_ASSERTE(this);

@@ -53,9 +53,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCONS(s) //DEBUGSTR(s)
 #define DEBUGSTRPAINTGAPS(s) //DEBUGSTR(s)
 #define DEBUGSTRPAINTVCON(s) //DEBUGSTR(s)
-#define DEBUGSTRSIZE(s) //DEBUGSTR(s)
-#define DEBUGSTRDESTROY(s) DEBUGSTR(s)
-#define DEBUGSTRTEXTSEL(s) DEBUGSTR(s)
+#define DEBUGSTRSIZE(s) DEBUGSTR(s)
+#define DEBUGSTRDESTROY(s) //DEBUGSTR(s)
+#define DEBUGSTRTEXTSEL(s) //DEBUGSTR(s)
 
 //#define SCROLLHIDE_TIMER_ID 1726
 #define TIMER_SCROLL_SHOW         3201
@@ -1049,6 +1049,7 @@ INT_PTR CConEmuChild::DbgChildDlgProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LP
 }
 #endif
 
+// Fill the mh_WndBack with background color/image
 LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 {
 	CVConGuard VCon(mp_VCon);
@@ -1283,9 +1284,10 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 
 	if (gpSet->isLogging())
 	{
-		char szInfo[128];
-		sprintf_c(szInfo, "VCon(0x%08X).OnSize(%ux%u)", LODWORD(mh_WndDC), (UINT)LOWORD(lParam), (UINT)HIWORD(lParam));
-		gpConEmu->LogString(szInfo);
+		wchar_t szInfo[128];
+		swprintf_c(szInfo, L"VCon(0x%08X).OnSize(%u,%u)", LODWORD(mh_WndDC), (UINT)LOWORD(lParam), (UINT)HIWORD(lParam));
+		if (!gpConEmu->LogString(szInfo))
+			DEBUGSTRSIZE(szInfo);
 	}
 
 	// Вроде это и не нужно. Ни для Ansi ни для Unicode версии плагина

@@ -292,6 +292,8 @@ bool CFrameHolder::OnNcMouseMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	{
 	case WM_NCLBUTTONDOWN:
 		DBGFUNCTION("WM_NCLBUTTONDOWN");
+		if (mp_ConEmu->isSelfFrame())
+			mp_ConEmu->StartForceShowFrame();
 		mp_ConEmu->BeginSizing(false);
 		break;
 	case WM_NCLBUTTONUP:
@@ -676,22 +678,14 @@ bool CFrameHolder::OnPaint(HWND hWnd, HDC hdc, UINT uMsg, LRESULT& lResult)
 	wr = mp_ConEmu->ClientRect();
 	rcClientReal = mp_ConEmu->RealClientRect();
 
-	if (mp_ConEmu->isCaptionHidden())
+	if (mp_ConEmu->isSelfFrame())
 	{
-		if (rcClientReal != wr)
+		if (HRGN hRgn = mp_ConEmu->CreateSelfFrameRgn())
 		{
 			int idx = mb_NcActive ? COLOR_ACTIVEBORDER : COLOR_INACTIVEBORDER;
 			HBRUSH hbr = GetSysColorBrush(idx);
-			HRGN hRgn = mp_ConEmu->CreateSelfFrameRgn();
-			if (!hRgn)
-			{
-				_ASSERTE(hRgn != NULL || mp_ConEmu->IsInWindowModeChange()); // must be created coz rcClientReal != wr
-			}
-			else
-			{
-				FillRgn(hdc, hRgn, hbr);
-				DeleteObject(hRgn);
-			}
+			FillRgn(hdc, hRgn, hbr);
+			DeleteObject(hRgn);
 		}
 	}
 
@@ -830,11 +824,10 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 	bool bCallDefProc = true;
 
-	RECT rcMargins = {};
-	//if (!mp_ConEmu->isCaptionHidden())
-		rcMargins = mp_ConEmu->CalcMargins(CEM_FRAMECAPTION);
-
 	RECT rcWnd = {}, rcClient = {};
+
+	// We take here the part with TabBar+StatusBar+Workspace
+	SizeInfo::WindowRectangles oldRect = mp_ConEmu->GetRectState();
 
 	if (wParam)
 	{
@@ -853,8 +846,11 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		// r[1] contains the coordinates of the window before it was moved or resized
 		// r[2] contains the coordinates of the window's client area before the window was moved or resized
 		RECT r[3] = {pParm->rgrc[0], pParm->rgrc[1], pParm->rgrc[2]};
-		bool bAllowPreserveClient = mb_AllowPreserveClient && (memcmp(r, r+1, sizeof(*r)) == 0);
+		bool bAllowPreserveClient = mb_AllowPreserveClient
+			&& (RectWidth(r[0]) == RectWidth(r[1]) && RectHeight(r[0]) == RectHeight(r[1]));
+
 		rcWnd = r[0];
+		mp_ConEmu->RequestRect(rcWnd);
 
 		// We need to call this, otherwise some parts of window may be broken
 		// If don't - system will not draw window caption when theming is off
@@ -864,33 +860,28 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		}
 
 		// Need screen coordinates!
-		rcClient = MakeRect(r[0].left+rcMargins.left, r[0].top+rcMargins.top, r[0].right-rcMargins.right, r[0].bottom-rcMargins.bottom);
+		const RECT rcRealClient = mp_ConEmu->RealClientRect();
+		rcClient = rcRealClient;
+		OffsetRect(&rcClient, rcWnd.left, rcWnd.top);
 
 		// pParm->rgrc[0] contains the coordinates of the new client rectangle resulting from the move or resize
 		// pParm->rgrc[1] rectangle contains the valid destination rectangle
 		// pParm->rgrc[2] rectangle contains the valid source rectangle
 		pParm->rgrc[0] = rcClient;
-		//TODO:
-		#if 0
-		if (!bAllowPreserveClient)
-		{
-			pParm->rgrc[1] = MakeRect(rcClient.left, rcClient.top, rcClient.left, rcClient.top);
-			pParm->rgrc[2] = MakeRect(r[2].left, r[2].top, r[2].left, r[2].top);
-		}
-		else
-		#endif
-		{
-			pParm->rgrc[1] = rcClient; // Mark as valid - only client area. Let system to redraw the frame and caption.
-			pParm->rgrc[2] = r[2];
-		}
-	
+		// Mark as valid - only client area. Let system to redraw the frame and caption.
+		pParm->rgrc[1] = mp_ConEmu->ClientRect();
+		OffsetRect(&pParm->rgrc[1], rcWnd.left + rcRealClient.left, rcWnd.top + rcRealClient.top);
+		// Source valid rectangle
+		pParm->rgrc[2] = oldRect.client;
+		OffsetRect(&pParm->rgrc[2], oldRect.window.left + oldRect.real_client.left, oldRect.window.top + oldRect.real_client.top);
+
 		if (bAllowPreserveClient)
 		{
 			lResult = WVR_VALIDRECTS;
 		}
 		// При смене режимов (особенно при смене HideCaption/NotHideCaption)
 		// требовать полную перерисовку клиентской области
-		else if (mb_DontPreserveClient || (mp_ConEmu->GetChangeFromWindowMode() != wmNotChanging))
+		else //if (mb_DontPreserveClient || (mp_ConEmu->GetChangeFromWindowMode() != wmNotChanging))
 		{
 			lResult = WVR_REDRAW;
 		}
@@ -907,7 +898,9 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			lResult = 0;
 			return true;
 		}
+
 		rcWnd = *nccr;
+		mp_ConEmu->RequestRect(rcWnd);
 
 		if (bCallDefProc)
 		{
@@ -916,13 +909,15 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		}
 
 		// Need screen coordinates!
-		rcClient = MakeRect(rcWnd.left+rcMargins.left, rcWnd.top+rcMargins.top, rcWnd.right-rcMargins.right, rcWnd.bottom-rcMargins.bottom);
+		rcClient = mp_ConEmu->RealClientRect();
+		OffsetRect(&rcClient, rcWnd.left, rcWnd.top);
 
 		*nccr = rcClient;
 	}
 
 	wchar_t szInfo[200];
-	msprintf(szInfo, countof(szInfo), L"WM_NCCALCSIZE(%u): Wnd={%i,%i}-{%i,%i} -> Client={%i,%i}-{%i,%i}", wParam, LOGRECTCOORDS(rcWnd), LOGRECTCOORDS(rcClient));
+	swprintf_s(szInfo, countof(szInfo), L"WM_NCCALCSIZE(%u): Wnd={%i,%i}-{%i,%i} {%i*%i} -> Client={%i,%i}-{%i,%i} {%i*%i}", wParam,
+		LOGRECTCOORDS(rcWnd), LOGRECTSIZE(rcWnd), LOGRECTCOORDS(rcClient), LOGRECTSIZE(rcWnd));
 	DEBUGSTRNC(szInfo);
 
 	UNREFERENCED_PARAMETER(lRcDef);
@@ -957,6 +952,7 @@ bool CFrameHolder::OnNcHitTest(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	return true;
 }
 
+// point - coordinates relative to UpperLeft corner of window
 LRESULT CFrameHolder::DoNcHitTest(const POINT& point, int width, int height, LPARAM def_hit_test /*= 0*/)
 {
 	LRESULT l_result = def_hit_test;
@@ -1034,7 +1030,10 @@ LRESULT CFrameHolder::DoNcHitTest(const POINT& point, int width, int height, LPA
 	if (l_result == HTTOP && gpSet->isHideCaptionAlways() && !mp_ConEmu->mp_TabBar->IsTabsShown())
 		l_result = HTCAPTION;
 
-	if (l_result == HTCLIENT && mp_ConEmu->isCaptionHidden() && mp_ConEmu->isWindowNormal() && !mp_ConEmu->isInside())
+	if (l_result == HTCLIENT
+		&& mp_ConEmu->isSelfFrame()
+		&& !mp_ConEmu->isInside()
+		&& mp_ConEmu->isWindowNormal())
 	{
 		int nFrame = mp_ConEmu->GetSelfFrameWidth();
 		if (nFrame > 0)

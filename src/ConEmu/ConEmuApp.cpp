@@ -1356,7 +1356,7 @@ LRESULT CALLBACK AppWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		{
 			LPWINDOWPOS p = (LPWINDOWPOS)lParam;
 			p->flags &= ~SWP_NOMOVE;
-			p->x = p->y = -32000;
+			p->x = p->y = WINDOWS_ICONIC_POS;
 		}
 		break;
 
@@ -1418,7 +1418,7 @@ BOOL CheckCreateAppWindow()
 
 	//ghWnd = CreateWindow(szClassName, 0, WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN, gpSet->wndX, gpSet->wndY, cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
 	DWORD style = WS_OVERLAPPEDWINDOW | WS_POPUP | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_VISIBLE;
-	int nWidth=100, nHeight=100, nX = -32000, nY = -32000;
+	int nWidth = 100, nHeight = 100, nX = WINDOWS_ICONIC_POS, nY = WINDOWS_ICONIC_POS;
 	DWORD exStyle = WS_EX_TOOLWINDOW|WS_EX_ACCEPTFILES;
 	// cRect.right - cRect.left - 4, cRect.bottom - cRect.top - 4; -- все равно это было не правильно
 	ghWndApp = CreateWindowEx(exStyle, gsClassNameApp, gpConEmu->GetDefaultTitle(), style, nX, nY, nWidth, nHeight, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
