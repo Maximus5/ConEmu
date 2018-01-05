@@ -140,7 +140,6 @@ private:
 	wchar_t ms_Status[200];
 
 	RECT mrc_LastResizeCol;
-	bool mb_StatusResizing;
 	POINT mpt_StatusResizePt;
 	POINT mpt_StatusResizeCmp;
 	RECT mrc_StatusResizeRect;
@@ -226,7 +225,6 @@ public:
 	void OnKeyboardChanged();
 	void OnTransparency();
 
-	bool IsStatusResizing();
 	bool IsCursorOverResizeMark(const POINT& ptCurClient);
 	bool IsResizeAllowed();
 	bool ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, POINT ptCurClient, LRESULT& lResult);

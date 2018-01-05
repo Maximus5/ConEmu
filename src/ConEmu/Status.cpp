@@ -310,7 +310,6 @@ CStatus::CStatus(CConEmuMain* _owner)
 	ZeroStruct(mrc_LastStatus);
 	ZeroStruct(mrc_LastResizeCol);
 	ZeroStruct(mt_LastTime);
-	mb_StatusResizing = false;
 
 	//mn_BmpSize; -- не важно
 	mb_OldBmp = mh_Bmp = NULL; mh_MemDC = NULL;
@@ -1189,15 +1188,6 @@ bool CStatus::IsCursorOverResizeMark(const POINT& ptCurClient)
 	return true;
 }
 
-bool CStatus::IsStatusResizing()
-{
-	_ASSERTE(this);
-	if (!gpSet->isStatusBarShow)
-		return false; // Нет статуса - нет ресайза
-
-	return mb_StatusResizing;
-}
-
 void CStatus::DoStatusResize(const POINT& ptScr)
 {
 	DEBUGSTRSIZE(L"Change size from status bar grip");
@@ -1245,60 +1235,6 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 		return false; // Разрешить дальнейшую обработку
 
 	lResult = 0;
-
-#if 0
-	// Cursor over "resize mark"?
-	if (IsResizeAllowed()
-		&& (mb_StatusResizing || PtInRect(&mrc_LastResizeCol, ptCurClient)))
-	{
-		POINT ptScr = {};
-
-		switch (uMsg)
-		{
-		case WM_LBUTTONDOWN:
-			if (!gpConEmu->IsSizeFree())
-			{
-				DEBUGSTRSIZE(L"Resize from status bar grip skipped - size is fixed");
-				break;
-			}
-			DEBUGSTRSIZE(L"Starting resize from status bar grip");
-			GetCursorPos(&mpt_StatusResizePt);
-			GetWindowRect(ghWnd, &mrc_StatusResizeRect);
-			mb_StatusResizing = true;
-			SetCapture(ghWnd);
-			gpConEmu->BeginSizing(true);
-			// Force first resize
-			DoStatusResize(mpt_StatusResizePt);
-			break;
-		case WM_LBUTTONUP:
-		case WM_MOUSEMOVE:
-			if (mb_StatusResizing)
-			{
-				if (GetCursorPos(&ptScr)
-					// Do resize if the cursor position was changed only
-					&& ((ptScr.x != mpt_StatusResizeCmp.x) || (ptScr.y != mpt_StatusResizeCmp.y))
-					)
-				{
-					DoStatusResize(ptScr);
-				}
-
-				if (uMsg == WM_LBUTTONUP)
-				{
-					ReleaseCapture();
-					gpConEmu->EndSizing();
-					mb_StatusResizing = false;
-					DEBUGSTRSIZE(L"Resize from status bar grip finished");
-				}
-			}
-			break;
-		case WM_SETCURSOR: // не приходит
-			// Stop further processing
-			SetCursor(LoadCursor(NULL, IDC_SIZENWSE));
-			lResult = TRUE;
-			return true;
-		}
-	}
-#endif
 
 	if (gpConEmu->isSizing() || !PtInRect(&mrc_LastStatus, ptCurClient))
 	{
