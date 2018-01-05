@@ -927,7 +927,7 @@ void CVirtualConsole::PaintBackgroundImage(HDC hdc, const RECT& rcText, const CO
 	#endif
 
 	// If Back is larger than DC (gap or non-integral size)
-	const POINT dcOffset = {Background ? 0 : m_Sizes.OffsetX, Background ? 0 : m_Sizes.OffsetY};
+	const POINT dcOffset = {Background ? 0 : (int)m_Sizes.OffsetX, Background ? 0 : (int)m_Sizes.OffsetY};
 	// Where to place bitmap
 	const BackgroundOp& op = (BackgroundOp)gpSet->bgOperation;
 	// We shall get coordinates relative to our DC due to `op`
