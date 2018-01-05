@@ -13115,7 +13115,7 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			BeginPaint(hWnd, &ps);
 			_ASSERTE(ghWndWork == hWnd);
 
-			CVConGroup::PaintGaps(ps.hdc);
+			CVConGroup::OnPaintGaps(ps.hdc);
 
 			EndPaint(hWnd, &ps);
 		} // WM_PAINT
@@ -13123,7 +13123,7 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	case WM_PRINTCLIENT:
 		if (wParam && (lParam & PRF_CLIENT))
 		{
-			CVConGroup::PaintGaps((HDC)wParam);
+			CVConGroup::OnPaintGaps((HDC)wParam);
 		}
 		break;
 

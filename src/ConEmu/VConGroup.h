@@ -80,7 +80,7 @@ protected:
 
 	void StoreActiveVCon(CVirtualConsole* pVCon);
 	bool ReSizeSplitter(int iCells);
-	void PaintSplitter(HDC hdc, HBRUSH hbr);
+	void OnPaintSplitter(HDC hdc, HBRUSH hbr);
 
 	CVConGroup* FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/);
 
@@ -185,7 +185,7 @@ public:
 	static void OnUpdateProcessDisplay(HWND hInfo);
 	static void OnDosAppStartStop(HWND hwnd, StartStopType sst, DWORD idChild);
 	static void UpdateWindowChild(CVirtualConsole* apVCon);
-	static void RePaint();
+	//static void RePaint();
 	static void Update(bool isForce = false);
 	static HWND DoSrvCreated(const DWORD nServerPID, const HWND hWndCon, const DWORD dwKeybLayout, DWORD& t1, DWORD& t2, int& iFound, CESERVER_REQ_SRVSTARTSTOPRET& pRet);
 	static void OnVConCreated(CVirtualConsole* apVCon, const RConStartArgsEx *args);
@@ -249,7 +249,7 @@ public:
 	static void SetRedraw(bool abRedrawEnabled);
 	static void Redraw();
 	static void InvalidateGaps();
-	static void PaintGaps(HDC hDC);
+	static void OnPaintGaps(HDC hDC);
 	static void InvalidateAll();
 
 	static bool OnFlashWindow(DWORD nOpt, DWORD nFlags, DWORD nCount, HWND hCon);

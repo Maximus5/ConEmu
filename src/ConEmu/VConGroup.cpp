@@ -2001,6 +2001,7 @@ void CVConGroup::UpdateWindowChild(CVirtualConsole* apVCon)
 	}
 }
 
+#if 0
 void CVConGroup::RePaint()
 {
 	CVConGuard VCon;
@@ -2019,6 +2020,7 @@ void CVConGroup::RePaint()
 		}
 	}
 }
+#endif
 
 void CVConGroup::Update(bool isForce /*= false*/)
 {
@@ -5350,7 +5352,7 @@ wrap:
 #endif
 }
 
-void CVConGroup::PaintSplitter(HDC hdc, HBRUSH hbr)
+void CVConGroup::OnPaintSplitter(HDC hdc, HBRUSH hbr)
 {
 	if (mp_Grp1 && mp_Grp2)
 	{
@@ -5370,14 +5372,14 @@ void CVConGroup::PaintSplitter(HDC hdc, HBRUSH hbr)
 		}
 
 		if (mp_Grp1)
-			mp_Grp1->PaintSplitter(hdc, hbr);
+			mp_Grp1->OnPaintSplitter(hdc, hbr);
 		if (mp_Grp2)
-			mp_Grp2->PaintSplitter(hdc, hbr);
+			mp_Grp2->OnPaintSplitter(hdc, hbr);
 	}
 }
 
 // Должно вызываться ТОЛЬКО для DC в ghWndWork!!!
-void CVConGroup::PaintGaps(HDC hDC)
+void CVConGroup::OnPaintGaps(HDC hDC)
 {
 	bool lbReleaseDC = false;
 
@@ -5424,7 +5426,7 @@ void CVConGroup::PaintGaps(HDC hDC)
 		CVConGroup* pRoot = GetRootOfVCon(VCon.VCon());
 		if (pRoot)
 		{
-			pRoot->PaintSplitter(hDC, hBrush);
+			pRoot->OnPaintSplitter(hDC, hBrush);
 		}
 
 		//int iRc = SIMPLEREGION;
