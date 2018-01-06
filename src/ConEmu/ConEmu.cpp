@@ -12367,7 +12367,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 		{
 			// в Normal режиме при помещении мышки над местом, где должен быть
 			// заголовок или рамка - показать их
-			if (!isIconic() && (WindowMode == wmNormal))
+			if (!isIconic() && !isSizing() && (WindowMode == wmNormal))
 			{
 				TODO("Не наколоться бы с предыдущим статусом при ресайзе?");
 				//static bool bPrevForceShow = false;
