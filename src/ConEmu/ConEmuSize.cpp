@@ -3252,8 +3252,6 @@ LRESULT CConEmuSize::OnSizing(WPARAM wParam, LPARAM lParam)
 		        && isPressed(VK_LBUTTON))
 		{
 			SetSizingFlags(MOUSE_SIZING_TODO);
-			if (isFrameCropped())
-				StartForceShowFrame();
 		}
 
 		wndSizeRect = *pRect;
@@ -5752,22 +5750,10 @@ bool CConEmuSize::isSizing(UINT nMouseMsg/*=0*/)
 	return true;
 }
 
-void CConEmuSize::BeginSizing(bool bFromStatusBar)
+void CConEmuSize::BeginSizing()
 {
 	// Перенес снизу, а то ассерты вылезают
 	SetSizingFlags(MOUSE_SIZING_BEGIN);
-
-	// When resizing by dragging status-bar corner
-	if (bFromStatusBar)
-	{
-		// hide frame, if it was force-showed
-		if (m_ForceShowFrame != fsf_Hide)
-		{
-			_ASSERTE(isFrameCropped()); // m_ForceShowFrame may be set only when isFrameHidden
-
-			StopForceShowFrame();
-		}
-	}
 
 	if (gpSet->isHideCaptionAlways())
 	{
@@ -6184,24 +6170,6 @@ HRGN CConEmuSize::CreateWindowRgn(bool abRoundTitle, int anX, int anY, int anWnd
 	DEBUGSTRRGN(szInfo);
 
 	return hRgn;
-}
-
-// Функция НЕ учитывает isCaptionHidden.
-// Возвращает true, если 'Frame width' меньше системной для ThickFame
-// иначе - false, меняем рамку на "NonResizable"
-bool CConEmuSize::isFrameCropped()
-{
-	if (!gpSet->nHideCaptionAlwaysFrame || gpSet->isQuakeStyle || gpSet->isUserScreenTransparent)
-		return true;
-	if (gpSet->nHideCaptionAlwaysFrame > HIDECAPTIONALWAYSFRAME_MAX)
-		return false; // sure
-
-	// otherwise - need to check system settings
-	UINT nSysFrame = mp_ConEmu->GetWinFrameWidth();
-	if (nSysFrame > gpSet->nHideCaptionAlwaysFrame)
-		return true;
-
-	return false;
 }
 
 bool CConEmuSize::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/)

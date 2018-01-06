@@ -294,7 +294,7 @@ bool CFrameHolder::OnNcMouseMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 		DBGFUNCTION("WM_NCLBUTTONDOWN");
 		if (mp_ConEmu->isSelfFrame())
 			mp_ConEmu->StartForceShowFrame();
-		mp_ConEmu->BeginSizing(false);
+		mp_ConEmu->BeginSizing();
 		break;
 	case WM_NCLBUTTONUP:
 		DBGFUNCTION("WM_NCLBUTTONUP");

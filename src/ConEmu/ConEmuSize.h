@@ -303,7 +303,7 @@ public:
 	void OnConsoleResize(bool abPosted = FALSE);
 
 	bool isSizing(UINT nMouseMsg = 0);
-	void BeginSizing(bool bFromStatusBar);
+	void BeginSizing();
 	void SetSizingFlags(DWORD nSetFlags = MOUSE_SIZING_BEGIN);
 	void ResetSizingFlags(DWORD nDropFlags = MOUSE_SIZING_BEGIN|MOUSE_SIZING_TODO);
 	void EndSizing(UINT nMouseMsg = 0);
@@ -313,7 +313,6 @@ public:
 	HRGN CreateWindowRgn();
 	HRGN CreateWindowRgn(bool abRoundTitle, int anX, int anY, int anWndWidth, int anWndHeight);
 
-	bool isFrameCropped();
 	bool isCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent);
 	bool isSelfFrame();
 	UINT GetSelfFrameWidth();
