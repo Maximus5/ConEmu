@@ -11708,7 +11708,34 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 		// Process only for client areas
 		WORD ht = LOWORD(lParam);
 		if (ht != HTCLIENT)
-			return 0;
+		{
+			BOOL rc = FALSE;
+			if (isSelfFrame())
+			{
+				LPCWSTR pszCursor = NULL;
+				switch (ht)
+				{
+				case HTTOP: case HTBOTTOM:
+					pszCursor = IDC_SIZENS; break;
+				case HTLEFT: case HTRIGHT:
+					pszCursor = IDC_SIZEWE; break;
+				case HTTOPLEFT: case HTBOTTOMRIGHT:
+					pszCursor = IDC_SIZENWSE; break;
+				case HTTOPRIGHT: case HTBOTTOMLEFT:
+					pszCursor = IDC_SIZENESW; break;
+				}
+				if (pszCursor)
+				{
+					HCURSOR sizeCursor = LoadCursor(NULL, pszCursor);
+					if (sizeCursor)
+					{
+						SetCursor(sizeCursor);
+						rc = TRUE;
+					}
+				}
+			}
+			return rc;
+		}
 	}
 
 	RConStartArgsEx::SplitType split = CVConGroup::isSplitterDragging();
