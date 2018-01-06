@@ -2347,12 +2347,14 @@ bool CVConGroup::GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon /*= NULL*/)
 	bool bFound = false;
 	CVConGuard VCon;
 
+#if 0
 	if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon()->isMouseSelectionPresent())
 	{
 		if (pVCon)
 			pVCon->Attach(VCon.VCon());
 		return true;
 	}
+#endif
 
 	for (size_t i = 0; i < countof(gp_VCon); i++)
 	{
