@@ -121,11 +121,35 @@ void SizeInfo::RequestDpi(const DpiValue& _dpi)
 
 void SizeInfo::RequestRectInt(const RECT& _window, LPCWSTR asFrom)
 {
-	if (_window == (m_size.valid ? m_size.rr.window : m_size.source_window))
-		return;
-	LogRequest(_window, asFrom);
 	if (IsRectMinimized(_window))
+	{
+		CEStr temp(asFrom, L" <skipped>");
+		LogRequest(_window, temp);
 		return;
+	}
+
+	const RECT& curRect = m_size.valid ? m_size.rr.window : m_size.source_window;
+	// If nothing was changed
+	if (_window == curRect)
+		return;
+
+	// If the window is just moved but not resized
+	if (m_size.valid && (RectWidth(_window) == RectWidth(curRect) && RectHeight(_window) == RectHeight(curRect)))
+	{
+		const auto cur_mi = mp_ConEmu->NearestMonitorInfo(curRect);
+		const auto new_mi = mp_ConEmu->NearestMonitorInfo(_window);
+		if (cur_mi.hMon == new_mi.hMon && new_mi.Ydpi == m_opt.dpi)
+		{
+			// Ignore recalc request, just correct the window position
+			CEStr temp(asFrom, L" <pos-updated>");
+			LogRequest(_window, temp);
+			m_size.rr.window = RECT{_window.left, _window.top, _window.left + RectWidth(curRect), _window.top + RectHeight(curRect)};
+			return;
+		}
+	}
+
+	// Full processing
+	LogRequest(_window, asFrom);
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
 	m_size.source_window = _window;
 	RequestRecalc();
