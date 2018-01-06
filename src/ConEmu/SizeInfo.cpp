@@ -320,7 +320,7 @@ void SizeInfo::DoCalculate()
 		else
 		{
 			int iFrame = gpSet->HideCaptionAlwaysFrame();
-			if ((iFrame >= 0) && (iFrame < rcFrame.left))
+			if ((iFrame > 0) && (iFrame < rcFrame.left))
 				rcFrame = RECT{iFrame, iFrame, iFrame, iFrame};
 			m_size.rr.real_client = RECT{0, 0, RectWidth(m_size.rr.window), RectHeight(m_size.rr.window)};
 			m_size.rr.client = RECT{rcFrame.left, rcFrame.top, RectWidth(m_size.rr.window) - rcFrame.right, RectHeight(m_size.rr.window) - rcFrame.bottom};

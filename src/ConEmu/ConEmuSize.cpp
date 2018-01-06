@@ -1533,7 +1533,7 @@ void CConEmuSize::ReloadMonitorInfo()
 	int std_frame_width = GetSystemMetrics(SM_CXFRAME);
 	for (INT_PTR i = 0; i < monitors.size(); ++i)
 	{
-		// default frame width
+		// default frame width (it must be corrected after AdjustWindowRectExForDpi)
 		monitors[i].withCaption.FrameWidth = std_frame_width;
 		monitors[i].noCaption.FrameWidth = std_frame_width;
 
@@ -1552,6 +1552,7 @@ void CConEmuSize::ReloadMonitorInfo()
 			rc.right = rcTest.right - nTestWidth;
 			rc.bottom = rcTest.bottom - nTestHeight;
 			rc.top = -rcTest.top;
+			monitors[i].withCaption.FrameWidth = rc.left;
 		}
 		rcTest = MakeRect(nTestWidth,nTestHeight);
 		if (mp_ConEmu->AdjustWindowRectExForDpi(&rcTest, styleNoCaption, FALSE, exStyle, dpi.Ydpi))
@@ -1561,6 +1562,7 @@ void CConEmuSize::ReloadMonitorInfo()
 			rc.right = rcTest.right - nTestWidth;
 			rc.bottom = rcTest.bottom - nTestHeight;
 			rc.top = -rcTest.top;
+			monitors[i].noCaption.FrameWidth = rc.left;
 		}
 	}
 
