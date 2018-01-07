@@ -1533,36 +1533,38 @@ void CConEmuSize::ReloadMonitorInfo()
 	int std_frame_width = GetSystemMetrics(SM_CXFRAME);
 	for (INT_PTR i = 0; i < monitors.size(); ++i)
 	{
+		auto& mi = monitors[i];
+
 		// default frame width (it must be corrected after AdjustWindowRectExForDpi)
-		monitors[i].withCaption.FrameWidth = std_frame_width;
-		monitors[i].noCaption.FrameWidth = std_frame_width;
+		mi.withCaption.VisibleFrameWidth = mi.withCaption.FrameWidth = std_frame_width;
+		mi.noCaption.VisibleFrameWidth = mi.noCaption.FrameWidth = std_frame_width;
 
 		// Per-monitor DPI
 		DpiValue dpi;
-		CDpiAware::QueryDpiForMonitor(monitors[i].hMon, &dpi);
-		monitors[i].Xdpi = dpi.Xdpi;
-		monitors[i].Ydpi = dpi.Ydpi;
+		CDpiAware::QueryDpiForMonitor(mi.hMon, &dpi);
+		mi.Xdpi = dpi.Xdpi;
+		mi.Ydpi = dpi.Ydpi;
 
 		const int nTestWidth = 100, nTestHeight = 100;
 		RECT rcTest = MakeRect(nTestWidth,nTestHeight);
 		if (mp_ConEmu->AdjustWindowRectExForDpi(&rcTest, style, FALSE, exStyle, dpi.Ydpi))
 		{
-			RECT& rc = monitors[i].withCaption.FrameMargins;
+			RECT& rc = mi.withCaption.FrameMargins;
 			rc.left = -rcTest.left;
 			rc.right = rcTest.right - nTestWidth;
 			rc.bottom = rcTest.bottom - nTestHeight;
 			rc.top = -rcTest.top;
-			monitors[i].withCaption.FrameWidth = rc.left;
+			mi.withCaption.VisibleFrameWidth = mi.withCaption.FrameWidth = rc.left;
 		}
 		rcTest = MakeRect(nTestWidth,nTestHeight);
 		if (mp_ConEmu->AdjustWindowRectExForDpi(&rcTest, styleNoCaption, FALSE, exStyle, dpi.Ydpi))
 		{
-			RECT& rc = monitors[i].noCaption.FrameMargins;
+			RECT& rc = mi.noCaption.FrameMargins;
 			rc.left = -rcTest.left;
 			rc.right = rcTest.right - nTestWidth;
 			rc.bottom = rcTest.bottom - nTestHeight;
 			rc.top = -rcTest.top;
-			monitors[i].noCaption.FrameWidth = rc.left;
+			mi.noCaption.VisibleFrameWidth = mi.noCaption.FrameWidth = rc.left;
 		}
 	}
 
@@ -1698,7 +1700,7 @@ void CConEmuSize::ReloadMonitorInfo()
 					fi.Win10Stealthy = MakeRect(def_val, 0, def_val, def_val);
 				}
 				// Correct FrameWidth taking into account hidden frame parts
-				fi.FrameWidth = klMax<int>(1, (fi.FrameMargins.left - fi.Win10Stealthy.left));
+				fi.VisibleFrameWidth = klMax<int>(1, (fi.FrameMargins.left - fi.Win10Stealthy.left));
 			}
 		}
 	}
@@ -5721,8 +5723,8 @@ BOOL CConEmuSize::AnimateWindow(DWORD dwTime, DWORD dwFlags)
 	{
 		mb_DisableThickFrame = true;
 		DEBUGSTRRGN(L"mb_DisableThickFrame = true");
-		mp_ConEmu->UpdateWindowRgn();
 		mp_ConEmu->StopForceShowFrame();
+		//mp_ConEmu->UpdateWindowRgn(); // already called from StopForceShowFrame/RefreshWindowStyles
 	}
 
 	BOOL bRc = ::AnimateWindow(ghWnd, dwTime, dwFlags);
@@ -5733,7 +5735,7 @@ BOOL CConEmuSize::AnimateWindow(DWORD dwTime, DWORD dwFlags)
 		DEBUGSTRRGN(L"mb_DisableThickFrame = false");
 		mb_DisableThickFrame = false;
 		mp_ConEmu->RefreshWindowStyles();
-		mp_ConEmu->UpdateWindowRgn();
+		// mp_ConEmu->UpdateWindowRgn(); // already called from RefreshWindowStyles
 	}
 
 	if (bWasShown)
@@ -5975,7 +5977,7 @@ HRGN CConEmuSize::CreateWindowRgn()
 	else
 	{
 		// Normal
-		if (isSelfFrame() /*&& (!IsWin10() || mb_DisableThickFrame)*/)
+		if (isSelfFrame() || mb_DisableThickFrame)
 		{
 			if ((mn_QuakePercent != 0)
 				|| !mp_ConEmu->isMouseOverFrame()

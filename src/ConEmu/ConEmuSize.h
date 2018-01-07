@@ -182,8 +182,10 @@ public:
 		// if DWMWA_EXTENDED_FRAME_BOUNDS succeeded, we fill Win10Stealthy
 		// with invisible parts of the real frame border (weird...)
 		RECT Win10Stealthy;
-		// Default *visible* frame width for resizeable windows
+		// Default *full* frame width for resizeable windows
 		int FrameWidth;
+		// Default *visible* frame width for resizeable windows (much smaller in Win10)
+		int VisibleFrameWidth;
 		// Default offsets for client area
 		RECT FrameMargins;
 	};
