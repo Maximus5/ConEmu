@@ -2464,7 +2464,7 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	pInfo->ptMinTrackSize.y = rcFrame.bottom;
 
 
-	if ((WindowMode == wmFullScreen) || (gpSet->isQuakeStyle && (gpSet->_WindowMode == wmFullScreen)))
+	if (GetWindowMode() == wmFullScreen)
 	{
 		if (pInfo->ptMaxTrackSize.x < ptFullScreenSize.x)
 			pInfo->ptMaxTrackSize.x = ptFullScreenSize.x;
@@ -2474,8 +2474,8 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 
 		pInfo->ptMaxPosition.x = 0;
 		pInfo->ptMaxPosition.y = 0;
-		pInfo->ptMaxSize.x = GetSystemMetrics(SM_CXFULLSCREEN);
-		pInfo->ptMaxSize.y = GetSystemMetrics(SM_CYFULLSCREEN);
+		pInfo->ptMaxSize.x = klMax<int>(GetSystemMetrics(SM_CXFULLSCREEN), ptFullScreenSize.x);
+		pInfo->ptMaxSize.y = klMax<int>(GetSystemMetrics(SM_CYFULLSCREEN), ptFullScreenSize.y);
 
 		//if (pInfo->ptMaxSize.x < ptFullScreenSize.x)
 		//	pInfo->ptMaxSize.x = ptFullScreenSize.x;
@@ -4171,6 +4171,7 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 		}
 	}
 
+	_ASSERTE(m_TileMode==cwc_Current || m_TileMode==cwc_TileLeft || m_TileMode==cwc_TileRight || m_TileMode==cwc_TileHeight || m_TileMode==cwc_TileWidth);
 	return m_TileMode;
 }
 
@@ -4550,7 +4551,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 	// When changing more to smth else than wmNormal, and current mode is wmNormal
 	// save current window rect for further usage (when restoring from wmMaximized for example)
-	if ((inMode != wmNormal) && isWindowNormal() && !bIconic)
+	if ((inMode != wmNormal) && isWindowNormal() && !bIconic && (GetTileMode(false) == cwc_Current))
 		StoreNormalRect(&rcWnd);
 
 	// Коррекция для Quake/Inside/Desktop
@@ -4796,7 +4797,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			DEBUGLOGFILE("SetWindowMode(wmFullScreen)\n");
 			_ASSERTE(gpSet->isQuakeStyle==0); // Must not get here for Quake mode
 
-			RECT rcMax = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
+			RECT rcMax = CalcRect(CER_FULLSCREEN);
 
 			WARNING("Может обломаться из-за максимального размера консоли");
 			// в этом случае хорошо бы установить максимально возможный и отцентрировать ее в ConEmu
@@ -4976,7 +4977,7 @@ void CConEmuSize::ReSize(bool abCorrect2Ideal /*= false*/)
 		if (isWindowNormal())
 		{
 			// Вобщем-то интересует только X,Y
-			RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
+			RECT rcWnd = {}; GetWindowRect(ghWnd, &rcWnd);
 
 			// Пользователи жалуются на смену размера консоли
 
@@ -5944,6 +5945,12 @@ bool CConEmuSize::InMinimizing(WINDOWPOS *p /*= NULL*/)
 
 HRGN CConEmuSize::CreateWindowRgn()
 {
+	if (mp_ConEmu->isInside())
+	{
+		_ASSERTE(FALSE && "Don't set WndRgn in Inside modes");
+		return NULL;
+	}
+
 	HRGN hRgn = NULL, hExclusion = NULL;
 
 	TODO("DoubleView: Если видимы несколько консолей - нужно совместить регионы, или вообще отрубить, для простоты");
@@ -5952,47 +5959,23 @@ HRGN CConEmuSize::CreateWindowRgn()
 
 	WARNING("Установка любого НЕ NULL региона сбивает XP темы при отрисовке кнопок в заголовке");
 
+	// Ensure that parts of window frames will not be visible *under* the TaskBar or adjacent monitors
 	if (!gpSet->isQuakeStyle
 		&& ((WindowMode == wmFullScreen)
 			// Условие именно такое (для isZoomed) - здесь регион ставится на весь монитор
-			|| ((WindowMode == wmMaximized) && !IsWin10() && (gpSet->isHideCaption || gpSet->isHideCaptionAlways()))))
+			|| ((WindowMode == wmMaximized) && (mp_ConEmu->isCaptionHidden() || hExclusion))))
 	{
-		ConEmuRect tFrom = (WindowMode == wmFullScreen) ? CER_FULLSCREEN : CER_MAXIMIZED;
-		RECT rcScreen; // = CalcRect(tFrom, MakeRect(0,0), tFrom);
-		RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
-
-		MONITORINFO mi = {};
-		HMONITOR hMon = GetNearestMonitor(&mi);
-
-		if (hMon)
-			rcScreen = (WindowMode == wmFullScreen) ? mi.rcMonitor : mi.rcWork;
-		else
-			rcScreen = CalcRect(tFrom, MakeRect(0,0), tFrom);
+		auto mi = NearestMonitorInfo(NULL);
+		RECT rcScreen = (WindowMode == wmFullScreen) ? mi.mi.rcMonitor : mi.mi.rcWork;
+		RECT rcFrame = SizeInfo::FrameMargins();
 
 		// rcFrame, т.к. регион ставится относительно верхнего левого угла ОКНА
 		hRgn = CreateWindowRgn(false, rcFrame.left, rcFrame.top, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
 	}
-	else if (!gpSet->isQuakeStyle
-		&& (WindowMode == wmMaximized))
-	{
-		if (!hExclusion)
-		{
-			// Если прозрачных участков в консоли нет - ничего не делаем
-		}
-		else
-		{
-			// с FullScreen не совпадает. Нужно с учетом заголовка
-			// сюда мы попадаем только когда заголовок НЕ скрывается
-			RECT rcScreen = CalcRect(CER_FULLSCREEN, MakeRect(0,0), CER_FULLSCREEN);
-			int nCX = GetSystemMetrics(SM_CXSIZEFRAME);
-			int nCY = GetSystemMetrics(SM_CYSIZEFRAME);
-			hRgn = CreateWindowRgn(false, nCX, nCY, rcScreen.right-rcScreen.left, rcScreen.bottom-rcScreen.top);
-		}
-	}
 	else
 	{
 		// Normal
-		if (isCaptionHidden() && (!IsWin10() || mb_DisableThickFrame))
+		if (isSelfFrame() /*&& (!IsWin10() || mb_DisableThickFrame)*/)
 		{
 			if ((mn_QuakePercent != 0)
 				|| !mp_ConEmu->isMouseOverFrame()
@@ -6000,7 +5983,7 @@ HRGN CConEmuSize::CreateWindowRgn()
 			{
 				// Рамка невидима (мышка не над рамкой или заголовком)
 				RECT rcClient = ClientRect();
-				RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
+				RECT rcFrame = FrameMargins();
 				//_ASSERTE(!rcClient.left && !rcClient.top);
 
 				bool bRoundTitle = (gOSVer.dwMajorVersion == 5) && gpSetCls->CheckTheming() && mp_ConEmu->mp_TabBar->IsTabsShown();

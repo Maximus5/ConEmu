@@ -1692,14 +1692,19 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 	}
 	else if (gpConEmu->isCaptionHidden(wmNewMode))
 	{
-		// Required to force window sizing
-		// dwStyle &= ~WS_SYSMENU;
-		//Win& & Quake - не работает "Slide up/down" если есть ThickFrame
-		//if ((gpSet->isQuakeStyle == 0) // не для Quake. Для него нужна рамка, чтобы ресайзить
 		dwStyle &= ~WS_CAPTION;
+		// NO frame in FullScreen at all
+		if (wmNewMode == wmFullScreen)
+		{
+			dwStyle &= ~(WS_THICKFRAME);
+		}
 		// mb_DisableThickFrame - to eliminate glitches during quake animation
+		else if (mb_DisableThickFrame)
+		{
+			dwStyle &= ~(WS_THICKFRAME);
+		}
 		// m_ForceShowFrame - to bypass strange MS limitation "not resizing borderless windows with WS_SYSMENU"
-		if (mb_DisableThickFrame || (m_ForceShowFrame == fsf_Show))
+		else if (m_ForceShowFrame == fsf_Show)
 		{
 			dwStyle &= ~(WS_THICKFRAME|WS_SYSMENU);
 		}
