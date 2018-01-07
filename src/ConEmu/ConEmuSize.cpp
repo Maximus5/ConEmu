@@ -2163,7 +2163,7 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 
 	// Обновить координаты в gpSet, если требуется
 	// Если сейчас окно в смене размера - игнорируем, размер запомнит SetWindowMode
-	if ((WindowMode == wmNormal) && !mp_ConEmu->mp_Inside && !isIconic())
+	if ((WindowMode == wmNormal) && !mp_ConEmu->isInside() && !isIconic())
 	{
 		if (prcWnd == NULL)
 		{
@@ -2181,9 +2181,22 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 
 		RECT rcNormal = {};
 		if (prcWnd)
+		{
+			ConEmuWindowCommand rect_tile = EvalTileMode(*prcWnd);
+			if (rect_tile != cwc_Current)
+			{
+				_ASSERTE(rect_tile == cwc_Current); // Don't store tiled placement as "normal rect"
+				return;
+			}
 			rcNormal = *prcWnd;
+		}
 		else
+		{
 			GetWindowRect(ghWnd, &rcNormal);
+		}
+
+		if (SizeInfo::IsRectMinimized(rcNormal))
+			return;
 
 		gpSetCls->UpdatePos(rcNormal.left, rcNormal.top);
 
