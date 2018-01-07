@@ -60,6 +60,8 @@ public:
 
 	HRGN CreateSelfFrameRgn();
 
+	// The Frame with Caption (if visible)
+	RECT FrameMargins();
 	// Client rectangle, may be simulated if we utilize some space for self-implemented borders
 	RECT ClientRect();
 	// Factual client rectangle, as Windows knows about our window
@@ -78,6 +80,7 @@ public:
 		RECT window = {};
 		// All rects below are calculated from m_size.window
 		RECT visible = {};
+		RECT frame = {};
 		RECT real_client = {};
 		RECT client = {};
 		RECT rebar = {};

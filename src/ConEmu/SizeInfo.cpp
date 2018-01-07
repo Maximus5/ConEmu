@@ -231,6 +231,13 @@ const SizeInfo::WindowRectangles& SizeInfo::GetRectState() const
 	return m_size.rr;
 }
 
+// The Frame with Caption (if visible)
+RECT SizeInfo::FrameMargins()
+{
+	DoCalculate();
+	return m_size.rr.frame;
+}
+
 // Client rectangle, may be simulated if we utilize some space for self-implemented borders
 RECT SizeInfo::ClientRect()
 {
@@ -305,13 +312,15 @@ void SizeInfo::DoCalculate()
 	{
 		// No frame at all, client area covers all our window space
 		m_size.rr.real_client = m_size.rr.client = RECT{0, 0, RectWidth(m_size.rr.window), RectHeight(m_size.rr.window)};
+		m_size.rr.frame = RECT{};
 	}
 	else
 	{
 		const auto mi = mp_ConEmu->NearestMonitorInfo(m_size.rr.window);
-		RECT rcFrame = caption_hidden ? mi.noCaption.FrameMargins : mi.withCaption.FrameMargins;
+		const auto wm = mp_ConEmu->GetWindowMode();
+		RECT rcFrame = (wm == wmFullScreen) ? RECT{} : caption_hidden ? mi.noCaption.FrameMargins : mi.withCaption.FrameMargins;
 
-		if (!mp_ConEmu->isSelfFrame())
+		if ((wm == wmFullScreen) || !mp_ConEmu->isSelfFrame())
 		{
 			_ASSERTE(!mp_ConEmu->isInside());
 			m_size.rr.real_client = RECT{rcFrame.left, rcFrame.top, RectWidth(m_size.rr.window) - rcFrame.right, RectHeight(m_size.rr.window) - rcFrame.bottom};
@@ -325,6 +334,8 @@ void SizeInfo::DoCalculate()
 			m_size.rr.real_client = RECT{0, 0, RectWidth(m_size.rr.window), RectHeight(m_size.rr.window)};
 			m_size.rr.client = RECT{rcFrame.left, rcFrame.top, RectWidth(m_size.rr.window) - rcFrame.right, RectHeight(m_size.rr.window) - rcFrame.bottom};
 		}
+
+		m_size.rr.frame = rcFrame;
 	}
 
 	m_size.rr.workspace = m_size.rr.client;
