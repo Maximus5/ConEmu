@@ -75,8 +75,8 @@ protected:
 public:
 	void SetIgnoreQuakeActivation(bool bNewValue);
 protected:
-	int mn_QuakePercent; // 0 - отключен, иначе (>0 && <=100) - идет анимация Quake
-	bool mb_DisableThickFrame = false;
+	int mn_QuakePercent; // 0 - no quake animation ATM; (>0 && <=100) - quake animation in progress
+	bool mb_DisableThickFrame = false; // during quake animation (::AnimateWindow) we must turn off standard Windows frame to avoid glitches
 
 	struct QuakePrevSize {
 		bool bWasSaved;
