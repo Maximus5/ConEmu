@@ -1098,7 +1098,6 @@ LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 	}
 
 	const auto clrBack = clrPalette[nColorIdx];
-	HBRUSH hBrush = CreateSolidBrush(clrBack);
 	if (VCon->drawImage)
 	{
 		RECT rcPaint = {};
@@ -1124,7 +1123,7 @@ LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 			}
 		}
 	}
-	else if (hBrush)
+	else if (HBRUSH hBrush = CreateSolidBrush(clrBack))
 	{
 		if (!hdc)
 		{
