@@ -968,22 +968,21 @@ void CVirtualConsole::PaintBackgroundImage(HDC hdc, const RECT& rcText, const CO
 
 		HRGN hRgnBg = CreateRectRgn(bltPos.x, bltPos.y, bltPos.x + RectWidth(blt), bltPos.y + RectHeight(blt));
 		if (hRgnDc && hRgnBg)
-		{
 			CombineRgn(hRgnDc, hRgnDc, hRgnBg, RGN_DIFF);
+		if (hRgnBg)
 			DeleteObject(hRgnBg);
-		}
 	}
 
 	// Fill with requested color (if background image is not large enough)
-	#ifndef SKIP_ALL_FILLRECT
 	if (hRgnDc)
 	{
+		#ifndef SKIP_ALL_FILLRECT
 		HBRUSH hBr = PartBrush(L' ', crBack, crBack);
 		if (hBr)
 			FillRgn(hdc, hRgnDc, hBr);
+		#endif
 		DeleteObject(hRgnDc);
 	}
-	#endif
 }
 
 bool CVirtualConsole::GetUCharMapFontPtr(CFontPtr& pFont)
