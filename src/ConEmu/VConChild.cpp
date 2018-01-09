@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/SetEnvVar.h"
 #include "ConEmu.h"
 #include "VConChild.h"
+#include "GdiObjects.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "Status.h"
@@ -791,6 +792,8 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 	MSG msgStr = {hWnd, messg, wParam, lParam};
 	ConEmuMsgLogger::Log(msgStr, ConEmuMsgLogger::msgBack);
 
+	gpConEmu->mp_HandleMonitor->DoCheck();
+
 	if (gpSet->isLogging(4))
 	{
 		if (gpConEmu) gpConEmu->LogMessage(hWnd, messg, wParam, lParam);
@@ -1017,6 +1020,7 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 	}
 
 wrap:
+	gpConEmu->mp_HandleMonitor->DoCheck();
 	return result;
 }
 

@@ -74,6 +74,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DpiAware.h"
 #include "DragDrop.h"
 #include "FindDlg.h"
+#include "GdiObjects.h"
 #include "GestureEngine.h"
 #include "HooksUnlocker.h"
 #include "Inside.h"
@@ -324,6 +325,7 @@ CConEmuMain::CConEmuMain()
 	mp_Find = new CEFindDlg;
 	mp_RunQueue = new CRunQueue;
 	mp_AltNumpad = new CAltNumpad(this);
+	mp_HandleMonitor = new HandleMonitor();
 
 	mn_MainThreadId = GetCurrentThreadId();
 
@@ -2516,6 +2518,8 @@ CConEmuMain::~CConEmuMain()
 	SafeDelete(mp_PushInfo);
 
 	SafeDelete(mp_AltNumpad);
+
+	SafeDelete(mp_HandleMonitor);
 
 	//if (m_Child)
 	//{
@@ -13045,6 +13049,8 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 	MSetter nestedLevel(&gnMessageNestingLevel);
 	bool bDestroyed = false;
 
+	gpConEmu->mp_HandleMonitor->DoCheck();
+
 	if (gpConEmu)
 	{
 		gpConEmu->PreWndProc(messg);
@@ -13062,6 +13068,8 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 		gh__Wnd = ghWnd;
 	#endif
 
+	gpConEmu->mp_HandleMonitor->DoCheck();
+
 	if (hWnd == ghWnd)
 		result = gpConEmu->WndProc(hWnd, messg, wParam, lParam);
 	else if (bDestroyed)
@@ -13069,6 +13077,8 @@ LRESULT CConEmuMain::MainWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 		result = ::DefWindowProc(hWnd, messg, wParam, lParam);
 	else
 		result = CConEmuChild::ChildWndProc(hWnd, messg, wParam, lParam);
+
+	gpConEmu->mp_HandleMonitor->DoCheck();
 
 	return result;
 }
@@ -13138,6 +13148,8 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		gpConEmu->LogMessage(hWnd, uMsg, wParam, lParam);
 	}
 
+	gpConEmu->mp_HandleMonitor->DoCheck();
+
 	if (gpConEmu)
 		gpConEmu->PreWndProc(uMsg);
 
@@ -13186,6 +13198,8 @@ LRESULT CConEmuMain::WorkWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 	default:
 		result = DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
+
+	gpConEmu->mp_HandleMonitor->DoCheck();
 	return result;
 }
 

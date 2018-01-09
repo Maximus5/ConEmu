@@ -75,6 +75,7 @@ struct CEFindDlg;
 union CESize;
 class CPushInfo;
 class CAltNumpad;
+struct HandleMonitor;
 
 struct ConsoleInfoArg
 {
@@ -240,6 +241,7 @@ class CConEmuMain
 		CDefaultTerminal *mp_DefTrm;
 		CEFindDlg *mp_Find;
 		CRunQueue *mp_RunQueue;
+		HandleMonitor *mp_HandleMonitor = nullptr;
 
 		bool CreateLog();
 		bool LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);

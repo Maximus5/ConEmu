@@ -97,6 +97,7 @@ SRCS = \
 		FontMgr.cpp        \
 		FontPtr.cpp        \
 		FrameHolder.cpp    \
+		GdiObjects.cpp     \
 		GestureEngine.cpp  \
 		GuiServer.cpp      \
 		HooksUnlocker.cpp  \

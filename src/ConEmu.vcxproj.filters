@@ -4,6 +4,9 @@
     <Filter Include="Common">
       <UniqueIdentifier>{8EEA3EAC-7A8C-6982-6347-7DD64F88F0D2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics">
+      <UniqueIdentifier>{1653CE33-0220-293F-2B39-17E717655ECD}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Headers">
       <UniqueIdentifier>{C196CD9C-2D76-4C38-368E-D70EA2ECB299}</UniqueIdentifier>
     </Filter>
@@ -31,7 +34,7 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\Background.h">
-      <Filter>Headers</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\BaseDragDrops.h">
       <Filter>Headers</Filter>
@@ -40,7 +43,7 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\ColorFix.h">
-      <Filter>Headers</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\ConEmu.h">
       <Filter>Headers</Filter>
@@ -67,7 +70,7 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\CustomFonts.h">
-      <Filter>Headers</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\DefaultTerm.h">
       <Filter>Headers</Filter>
@@ -100,19 +103,22 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\Font.h">
-      <Filter>Headers</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\FontInfo.h">
-      <Filter>Headers</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\FontMgr.h">
-      <Filter>Headers</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\FontPtr.h">
-      <Filter>Headers</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\FrameHolder.h">
       <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\GdiObjects.h">
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\GestureEngine.h">
       <Filter>Headers</Filter>
@@ -142,10 +148,10 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\IconList.h">
-      <Filter>Headers</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\ImgButton.h">
-      <Filter>Headers</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\Inside.h">
       <Filter>Headers</Filter>
@@ -166,7 +172,7 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\LoadImg.h">
-      <Filter>Headers</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\Macro.h">
       <Filter>Headers</Filter>
@@ -229,7 +235,7 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\ScreenDump.h">
-      <Filter>Headers</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\SearchCtrl.h">
       <Filter>Headers</Filter>
@@ -397,7 +403,7 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\ToolImg.h">
-      <Filter>Headers</Filter>
+      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\TrayIcon.h">
       <Filter>Headers</Filter>
@@ -741,7 +747,7 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Background.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\BaseDragDrops.cpp">
       <Filter>Sources</Filter>
@@ -750,7 +756,7 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\ColorFix.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\ConEmu.cpp">
       <Filter>Sources</Filter>
@@ -777,7 +783,7 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\CustomFonts.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\DefaultTerm.cpp">
       <Filter>Sources</Filter>
@@ -807,16 +813,19 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Font.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\FontMgr.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\FontPtr.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\FrameHolder.cpp">
       <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\GdiObjects.cpp">
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\GestureEngine.cpp">
       <Filter>Sources</Filter>
@@ -840,10 +849,10 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\IconList.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\ImgButton.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Inside.cpp">
       <Filter>Sources</Filter>
@@ -855,7 +864,7 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\LoadImg.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Macro.cpp">
       <Filter>Sources</Filter>
@@ -912,7 +921,7 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\ScreenDump.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\SearchCtrl.cpp">
       <Filter>Sources</Filter>
@@ -1074,7 +1083,7 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\ToolImg.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\TrayIcon.cpp">
       <Filter>Sources</Filter>

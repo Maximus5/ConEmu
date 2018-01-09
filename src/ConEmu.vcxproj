@@ -316,6 +316,7 @@
     <ClInclude Include="ConEmu\FontMgr.h" />
     <ClInclude Include="ConEmu\FontPtr.h" />
     <ClInclude Include="ConEmu\FrameHolder.h" />
+    <ClInclude Include="ConEmu\GdiObjects.h" />
     <ClInclude Include="ConEmu\GestureEngine.h" />
     <ClInclude Include="ConEmu\GuiServer.h" />
     <ClInclude Include="ConEmu\Header.h" />
@@ -552,6 +553,7 @@
     <ClCompile Include="ConEmu\FontMgr.cpp" />
     <ClCompile Include="ConEmu\FontPtr.cpp" />
     <ClCompile Include="ConEmu\FrameHolder.cpp" />
+    <ClCompile Include="ConEmu\GdiObjects.cpp" />
     <ClCompile Include="ConEmu\GestureEngine.cpp" />
     <ClCompile Include="ConEmu\GuiServer.cpp" />
     <ClCompile Include="ConEmu\HooksUnlocker.cpp" />
