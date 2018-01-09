@@ -20,6 +20,19 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.1.8
+* A lot of resize fixes.
+* Fix snap to desktop edges on Win8 when caption is not hidden and ‘Frame width’ set to non-negative value.
+* Fix wrong StatusBar size (it was greater) when caption is hidden.
+* Proper ‘OriginalFilename’ in version info.
+* Proper sizing cursor for caption-less window with positive Frame width.
+* During text selection IBeam cursor was set for many superflous areas.
+* Fix wrong Aero peek position for caption-less window with positive ‘Frame width’.
+* Fix window size and TabBar/StatusBar/Workspace position when caption is hidden and ‘frame width’ is zero.
+* Don't force show frame during dragging the ConEmu window.
+* Fix GDI resources leak (564d6449 regression).
+
+
 2017.12.26
 * Resize fixes.
 * gh-1364: Fix missed slash in the installer temp directory for `%TEMP%\ConEmuYYMMDD`.
