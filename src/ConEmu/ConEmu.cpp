@@ -12362,8 +12362,8 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 			mouse.bCheckNormalRect = false;
 	}
 
-	// режим полного скрытия заголовка
-	if (gpConEmu->isCaptionHidden())
+	// If ThickFrame (resizable) is not used
+	if (gpConEmu->isSelfFrame())
 	{
 		if (!bForeground)
 		{
@@ -12407,6 +12407,10 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 				}
 			}
 		}
+	}
+	else if (m_ForceShowFrame)
+	{
+		StopForceShowFrame();
 	}
 
 	if (pVCon)

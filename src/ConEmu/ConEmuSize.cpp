@@ -5903,6 +5903,7 @@ void CConEmuSize::CheckTopMostState()
 void CConEmuSize::StartForceShowFrame()
 {
 	DEBUGSTRSTYLE(L"StartForceShowFrame called");
+	_ASSERTE(gpConEmu->isSelfFrame());
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);
 	m_ForceShowFrame = fsf_Show;
