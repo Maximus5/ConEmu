@@ -210,7 +210,7 @@ struct SwitchParser
 	//			-lngfile C:\Tools\ConEmu\ConEmu.l10n -lng ru  -dir "%1" -run {cmd} -cur_console:n
 	// Strip switches which match current instance startup arguments
 	// No sense to show them (e.g. "-lng ru") in the Integration dialog page
-	void StripDupSwitches(LPCWSTR pszFull)
+	void LoadCommand(LPCWSTR pszFull)
 	{
 		bCmdList = false;
 		szCmd = L"";
@@ -898,7 +898,7 @@ void CSetPgIntegr::FillHereValues(WORD CB)
 					}
 					else
 					{
-						Switches.StripDupSwitches(pszFull);
+						Switches.LoadCommand(pszFull);
 					}
 					RegCloseKey(hkCmd);
 				}
