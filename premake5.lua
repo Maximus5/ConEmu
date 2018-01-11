@@ -331,11 +331,11 @@ project "ConEmuCD"
   filter {"action:vs*", "platforms:Win32"}
     linkoptions { "/DYNAMICBASE:NO", "/FIXED:NO", "/BASE:0x6F780000" }
   filter {"action:vs*", "platforms:x64"}
-    linkoptions { "/DYNAMICBASE:NO", "/FIXED:NO", "/BASE:0x6F7800000000" }
+    linkoptions { "/DYNAMICBASE:NO", "/FIXED:NO", "/BASE:0x6F780000000" }
   filter {"action:gmake", "platforms:Win32"}
     linkoptions { "--image-base=0x6F780000" }
   filter {"action:gmake", "platforms:x64"}
-    linkoptions { "--image-base=0x6F7800000000" }
+    linkoptions { "--image-base=0x6F780000000" }
   filter {}
 
   links {
@@ -391,11 +391,11 @@ project "ConEmuHk"
   filter {"action:vs*", "platforms:Win32"}
     linkoptions { "/DYNAMICBASE:NO", "/FIXED:NO", "/BASE:0x7E110000" }
   filter {"action:vs*", "platforms:x64"}
-    linkoptions { "/DYNAMICBASE:NO", "/FIXED:NO", "/BASE:0x7E11000000000" }
+    linkoptions { "/DYNAMICBASE:NO", "/FIXED:NO", "/BASE:0x7E1100000000" }
   filter {"action:gmake", "platforms:Win32"}
     linkoptions { "--image-base=0x7E110000" }
   filter {"action:gmake", "platforms:x64"}
-    linkoptions { "--image-base=0x7E11000000000" }
+    linkoptions { "--image-base=0x7E1100000000" }
   filter {}
 
   --filter { "configurations:Release" }
