@@ -3071,7 +3071,7 @@ int CheckForDebugArgs(LPCWSTR asCmdLine)
 	UINT iSleep = 0;
 
 	#if defined(SHOW_STARTED_MSGBOX)
-	debugm = true;
+	debug = true;
 	#elif defined(WAIT_STARTED_DEBUGGER)
 	debugw = true;
 	#endif
