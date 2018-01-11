@@ -302,6 +302,7 @@ struct SwitchParser
 
 		if (!rsReady.IsEmpty() || bCmdList)
 		{
+			// Add "-run" without command to depict we run ConEmu "as default"
 			lstrmerge(&rsReady.ms_Val,
 				bCmdList ? L"-runlist " : L"-run ", szCmd);
 		}
@@ -494,6 +495,24 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfi
 	if (!pszCmd)
 		return;
 
+	// Allow to run ConEmu as default, e.g. "ConEmu.exe -here -nosingle"
+	// where the "-nosingle" comes via asCmd
+	// ref: https://twitter.com/soekali/status/951338035374784512
+	bool bAddRunSwitch = false;
+	if (*asCmd == L'/' || *asCmd == L'-')
+	{
+		CEStr lsArg;
+		LPCWSTR pszTemp = asCmd;
+		if (0 == NextArg(&pszTemp, lsArg))
+		{
+			bAddRunSwitch = !lsArg.IsPossibleSwitch();
+		}
+	}
+	else
+	{
+		bAddRunSwitch = true;
+	}
+
 	//[HKEY_CURRENT_USER\Software\Classes\*\shell\ConEmu inside]
 	//"Icon"="C:\\Program Files\\ConEmu\\ConEmu.exe,1"
 
@@ -575,23 +594,7 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfi
 			//break;
 		}
 
-		bool bCmdKeyExist = false;
-
-		if (*asCmd == L'/' || *asCmd == L'-')
-		{
-			CEStr lsArg;
-			LPCWSTR pszTemp = asCmd;
-			while (0 == NextArg(&pszTemp, lsArg))
-			{
-				if (lsArg.OneOfSwitches(L"-run",L"-runlist",L"-cmd",L"-cmdlist"))
-				{
-					bCmdKeyExist = true; break;
-				}
-			}
-
-		}
-
-		if (!bCmdKeyExist)
+		if (bAddRunSwitch)
 			_wcscat_c(pszCmd, cchMax, L"-run ");
 		_wcscat_c(pszCmd, cchMax, asCmd);
 
