@@ -604,13 +604,16 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfi
 			HKEY hkConEmu;
 			if (0 == RegCreateKeyEx(hkRoot, asName, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConEmu, NULL))
 			{
-				// Если задана "иконка"
+				// gh-1395: Force Explorer to use hotkey if specified
+				RegSetValueEx(hkConEmu, NULL, 0, REG_SZ, (LPBYTE)asName, (lstrlen(asName)+1)*sizeof(*asName));
+
+				// The icon, if it was set
 				if (asIcon)
 					RegSetValueEx(hkConEmu, L"Icon", 0, REG_SZ, (LPBYTE)asIcon, (lstrlen(asIcon)+1)*sizeof(*asIcon));
 				else
 					RegDeleteValue(hkConEmu, L"Icon");
 
-				// Команда
+				// The command
 				HKEY hkCmd;
 				if (0 == RegCreateKeyEx(hkConEmu, L"command", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkCmd, NULL))
 				{
