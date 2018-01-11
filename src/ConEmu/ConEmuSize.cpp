@@ -5583,10 +5583,7 @@ void CConEmuSize::UpdateWindowRgn()
 		swprintf_c(szInfo,
 			nRgn ? L"SetWindowRgn(0x%08X, <%u> {%i,%i}-{%i,%i})" : L"SetWindowRgn(0x%08X, NULL)",
 			ghWnd, nRgn, LOGRECTCOORDS(rcBox));
-		if (gpSet->isLogging())
-			LogString(szInfo);
-		else
-			DEBUGSTRRGN(szInfo);
+		if (!LogString(szInfo)) { DEBUGSTRRGN(szInfo); }
 	}
 
 	// Облом получается при двукратном SetWindowRgn(ghWnd, NULL, TRUE);
@@ -5902,7 +5899,8 @@ void CConEmuSize::CheckTopMostState()
 
 void CConEmuSize::StartForceShowFrame()
 {
-	DEBUGSTRSTYLE(L"StartForceShowFrame called");
+	LPCWSTR pszLogMsg = L"StartForceShowFrame called";
+	if (!mp_ConEmu->LogString(pszLogMsg)) { DEBUGSTRSTYLE(pszLogMsg); }
 	_ASSERTE(gpConEmu->isSelfFrame());
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);
@@ -5913,7 +5911,8 @@ void CConEmuSize::StartForceShowFrame()
 
 void CConEmuSize::StopForceShowFrame()
 {
-	DEBUGSTRSTYLE(L"StopForceShowFrame called");
+	LPCWSTR pszLogMsg = L"StopForceShowFrame called";
+	if (!mp_ConEmu->LogString(pszLogMsg)) { DEBUGSTRSTYLE(pszLogMsg); }
 	m_ForceShowFrame = fsf_Hide;
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_APPEAR_ID, 0);
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);

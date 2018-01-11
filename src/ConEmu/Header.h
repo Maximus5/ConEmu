@@ -192,7 +192,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
 #endif
 LPCWSTR GetMouseMsgName(UINT msg);
 
-void LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
+bool LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
 
 //#if !defined(__GNUC__)
 //#pragma warning (disable : 4005)

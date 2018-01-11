@@ -8138,8 +8138,7 @@ void CConEmuMain::RefreshWindowStyles()
 		{
 			wchar_t szInfo[128];
 			swprintf_c(szInfo, L"Changing main window 0x%08X style Cur=x%08X New=x%08X ExStyle=x%08X", LODWORD(ghWnd), nStyle, nNewStyle, nStyleEx);
-			if (!LogString(szInfo))
-				DEBUGSTRSTYLE(szInfo);
+			if (!LogString(szInfo)) { DEBUGSTRSTYLE(szInfo); }
 		}
 
 		MSetter lSet(&mn_IgnoreSizeChange);
@@ -12393,7 +12392,8 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 					// Если просили показывать с задержкой - то по таймеру
 					if (nDelay)
 					{
-						DEBUGSTRSTYLE(bCurForceShow ? L"Timer(TIMER_CAPTION_APPEAR_ID)" : L"Timer(TIMER_CAPTION_DISAPPEAR_ID)");
+						LPCWSTR pszLogMsg = bCurForceShow ? L"Timer(TIMER_CAPTION_APPEAR_ID)" : L"Timer(TIMER_CAPTION_DISAPPEAR_ID)";
+						if (!LogString(pszLogMsg)) { DEBUGSTRSTYLE(pszLogMsg); }
 						SetKillTimer(true, nID, nDelay);
 					}
 					else if (bCurForceShow)

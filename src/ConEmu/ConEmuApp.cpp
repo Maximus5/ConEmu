@@ -537,9 +537,9 @@ int MDEBUG_CHK = TRUE;
 #endif
 
 
-void LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*= true*/)
+bool LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*= true*/)
 {
-	gpConEmu->LogString(asInfo, abWriteTime, abWriteLine);
+	return gpConEmu->LogString(asInfo, abWriteTime, abWriteLine);
 }
 
 LPCWSTR GetWindowModeName(ConEmuWindowMode wm)
