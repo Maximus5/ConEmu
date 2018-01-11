@@ -2493,42 +2493,42 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			case L'H':
 			case L'f':
 				// Set cursor position (1-based)
-				crNewPos.Y = (Code.ArgC > 0 && Code.ArgV[0]) ? (Code.ArgV[0] - 1) : 0;
-				crNewPos.X = (Code.ArgC > 1 && Code.ArgV[1]) ? (Code.ArgV[1] - 1) : 0;
+				crNewPos.Y = csbi.srWindow.Top + ((Code.ArgC > 0 && Code.ArgV[0]) ? (Code.ArgV[0] - 1) : 0);
+				crNewPos.X = ((Code.ArgC > 1 && Code.ArgV[1]) ? (Code.ArgV[1] - 1) : 0);
 				break;
 			case L'A':
 				// Cursor up by N rows
-				crNewPos.Y -= (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
+				crNewPos.Y -= ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
 				break;
 			case L'B':
 				// Cursor down by N rows
-				crNewPos.Y += (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
+				crNewPos.Y += ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
 				break;
 			case L'C':
 				// Cursor right by N cols
-				crNewPos.X += (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
+				crNewPos.X += ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
 				break;
 			case L'D':
 				// Cursor left by N cols
-				crNewPos.X -= (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
+				crNewPos.X -= ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
 				break;
 			case L'E':
 				// Moves cursor to beginning of the line n (default 1) lines down.
-				crNewPos.Y += (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
+				crNewPos.Y += ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
 				crNewPos.X = 0;
 				break;
 			case L'F':
 				// Moves cursor to beginning of the line n (default 1) lines up.
-				crNewPos.Y -= (Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1;
+				crNewPos.Y -= ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
 				crNewPos.X = 0;
 				break;
 			case L'G':
 				// Moves the cursor to column n.
-				crNewPos.X = (Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0;
+				crNewPos.X = ((Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0);
 				break;
 			case L'd':
 				// Moves the cursor to line n.
-				crNewPos.Y = (Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0;
+				crNewPos.Y = csbi.srWindow.Top + ((Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0);
 				break;
 			#ifdef _DEBUG
 			default:
