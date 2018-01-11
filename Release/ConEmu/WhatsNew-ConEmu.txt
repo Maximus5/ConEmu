@@ -20,6 +20,17 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.1.11
+* Resize fixes for quake mode in Windows 10.
+* Don't turn on ‘self-resizable’ frame on mouse-hover if the frame is already resizable.
+* Settings/Integration: If the ‘Command’ field contains only `-nosingle` and no `-run`,
+  don't add `-run` BEFORE `-nosingle`.
+* gh-1395: Settings/Integration: Force Explorer to use hotkey if '&' is specified.
+* gh-1369: Some more logging on changing window style.
+* gh-1355, gh-1393: Fix backscrolling with pager (git bash started from connector).
+* New image-base for ConEmuHk64: 0x7E1100000000.
+
+
 2018.1.8
 * A lot of resize fixes.
 * Fix snap to desktop edges on Win8 when caption is not hidden and ‘Frame width’ set to non-negative value.
