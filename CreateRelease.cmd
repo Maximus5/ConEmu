@@ -114,10 +114,10 @@ rem Sign code
 call "%~dp0src\vc.build.release.cmd" dosign
 if errorlevel 1 goto err
 
-if exist "%~d0..\..\Google\Check-VirusTotal.cmd" (
+if exist "%~dp0..\..\Google\Check-VirusTotal.cmd" (
 	pushd "%~d0Release"
 	echo Starting Check-VirusTotal
-	call cmd /c "%~d0..\..\Google\Check-VirusTotal.cmd" -new_console:bc
+	call cmd /c "%~dp0..\..\Google\Check-VirusTotal.cmd" -new_console:bc
 	popd
 ) else (
 	echo Check-VirusTotal script not found
