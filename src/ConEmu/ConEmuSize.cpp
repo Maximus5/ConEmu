@@ -5965,7 +5965,7 @@ HRGN CConEmuSize::CreateWindowRgn()
 	if (!gpSet->isQuakeStyle
 		&& ((WindowMode == wmFullScreen)
 			// Условие именно такое (для isZoomed) - здесь регион ставится на весь монитор
-			|| ((WindowMode == wmMaximized) && (mp_ConEmu->isCaptionHidden() || hExclusion))))
+			|| ((WindowMode == wmMaximized) && (mp_ConEmu->isSelfFrame() || hExclusion))))
 	{
 		auto mi = NearestMonitorInfo(NULL);
 		RECT rcScreen = (WindowMode == wmFullScreen) ? mi.mi.rcMonitor : mi.mi.rcWork;
