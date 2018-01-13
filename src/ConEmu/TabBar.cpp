@@ -500,6 +500,12 @@ bool CTabBarClass::IsSearchShown(bool bFilled)
 
 void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 {
+	RECT rcRebar = gpConEmu->RebarRect();
+	if (IsRectEmpty(&rcRebar))
+	{
+		gpConEmu->RequestRecalc();
+	}
+
 	CheckRebarCreated();
 
 	bool bAutoShowHide = true;

@@ -365,7 +365,12 @@ RECT CTabPanelWin::GetRect()
 		if (IsRectEmpty(&rcWnd))
 		{
 			_ASSERTE(!IsRectEmpty(&rcWnd));
-			rcWnd = gpConEmu->ClientRect();
+			gpConEmu->RequestRecalc();
+			rcWnd = gpConEmu->RebarRect();
+			if (IsRectEmpty(&rcWnd))
+			{
+				rcWnd = gpConEmu->ClientRect();
+			}
 		}
 	}
 	else
