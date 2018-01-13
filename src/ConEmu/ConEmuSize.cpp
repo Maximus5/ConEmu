@@ -5623,7 +5623,9 @@ bool CConEmuSize::ShowMainWindow(int anCmdShow, bool abFirstShow /*= false*/)
 	// When Caption is visible - Windows animates window itself.
 	// Also, animation brakes transparency
 	DWORD nStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
-	if (nAnimationMS && !gpSet->isQuakeStyle && isCaptionHidden() && !(nStyleEx & WS_EX_LAYERED) )
+	if (nAnimationMS && !gpSet->isQuakeStyle
+		&& isCaptionHidden() && !(IsWin10() && !isSelfFrame())
+		&& !(nStyleEx & WS_EX_LAYERED) )
 	{
 		// Well, Caption is hidden, Windows does not animates our window.
 		if (anCmdShow == SW_HIDE)
@@ -5648,7 +5650,11 @@ bool CConEmuSize::ShowMainWindow(int anCmdShow, bool abFirstShow /*= false*/)
 	if (bUseApi)
 	{
 		bool b, bAllowPreserve = false;
-		if (anCmdShow == SW_SHOWMAXIMIZED)
+		if (mp_ConEmu->InCreateWindow())
+		{
+			bAllowPreserve = false;
+		}
+		else if (anCmdShow == SW_SHOWMAXIMIZED)
 		{
 			if (::IsZoomed(ghWnd)) // тут нужно "RAW" значение zoomed
 				bAllowPreserve = true;
@@ -6600,6 +6606,8 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		isQuakeMinimized = false; // теперь можно сбросить
 
 		apiSetForegroundWindow(ghWnd);
+
+		OnSize();
 
 		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
 		{

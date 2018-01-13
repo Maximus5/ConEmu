@@ -2007,10 +2007,10 @@ BOOL CConEmuMain::CreateMainWindow()
 		LogString(szCreate);
 	}
 
-
+	const int minWidth = 160, minHeight = 16;
 	POINT ptCreate = this->RealPosFromVisual(WndPos.x, WndPos.y);
 	ghWnd = CreateWindowEx(styleEx, gsClassNameParent, GetCmd(), style,
-	                       ptCreate.x, ptCreate.y, nWidth, nHeight, hParent, NULL, (HINSTANCE)g_hInstance, NULL);
+	                       ptCreate.x, ptCreate.y, minWidth, minHeight, hParent, NULL, (HINSTANCE)g_hInstance, NULL);
 
 	if (!ghWnd)
 	{
@@ -2023,6 +2023,22 @@ BOOL CConEmuMain::CreateMainWindow()
 
 		return FALSE;
 	}
+
+
+	// If created style differs from required?
+	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
+	DWORD dwNewStyle = FixWindowStyle(dwStyle, WindowMode);
+	DEBUGTEST(WINDOWPLACEMENT wpl1 = {sizeof(wpl1)}; GetWindowPlacement(ghWnd, &wpl1););
+	if (dwStyle != dwNewStyle)
+	{
+		//RefreshWindowStyles();
+		SetWindowStyle(dwNewStyle);
+	}
+	DEBUGTEST(WINDOWPLACEMENT wpl2 = {sizeof(wpl2)}; GetWindowPlacement(ghWnd, &wpl2););
+
+	setWindowPos(NULL, ptCreate.x, ptCreate.y, nWidth, nHeight, SWP_NOMOVE);
+
+	OnCreateFinished();
 
 	//if (gpSet->isHideCaptionAlways)
 	//	OnHideCaption();
@@ -6552,44 +6568,14 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	_ASSERTE(ghWnd == hWnd);
 	ghWnd = hWnd;
 
-	RECT rcWndS = {}, rcWndT = {}, rcBeforeResize = {}, rcAfterResize = {};
-
-	GetWindowRect(ghWnd, &rcWndS);
 	wchar_t szInfo[200];
 	swprintf_c(szInfo,
-		L"OnCreate: hWnd=x%08X, x=%i, y=%i, cx=%i, cy=%i, style=x%08X, exStyle=x%08X (%ix%i)",
-		(DWORD)(DWORD_PTR)hWnd, lpCreate->x, lpCreate->y, lpCreate->cx, lpCreate->cy, lpCreate->style, lpCreate->dwExStyle, LOGRECTSIZE(rcWndS));
-	if (gpSet->isLogging())
-	{
-		LogString(szInfo);
-	}
-	else
-	{
-		DEBUGSTRSIZE(szInfo);
-	}
+		L"OnCreate: hWnd=x%08X, x=%i, y=%i, cx=%i, cy=%i, style=x%08X, exStyle=x%08X",
+		(DWORD)(DWORD_PTR)hWnd, lpCreate->x, lpCreate->y, lpCreate->cx, lpCreate->cy, lpCreate->style, lpCreate->dwExStyle);
+	if (!LogString(szInfo)) { DEBUGSTRSIZE(szInfo); }
 
-	SizeInfo::RequestRect(rcWndS);
-
-	// Continue
-	OnTaskbarButtonCreated();
-
-	// It's better to store current mrc_Ideal values now, after real window creation
-	StoreIdealRect();
-
-	// Used for restoring from Maximized/Fullscreen/Iconic. Remember current Pos/Size.
-	StoreNormalRect(NULL);
-
-	// Win глючит? Просил создать БЕЗ WS_CAPTION, а создается С WS_CAPTION
-	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
-	DWORD dwNewStyle = FixWindowStyle(dwStyle, WindowMode);
-	DEBUGTEST(WINDOWPLACEMENT wpl1 = {sizeof(wpl1)}; GetWindowPlacement(ghWnd, &wpl1););
-	if (dwStyle != dwNewStyle)
-	{
-		//TODO: Проверить, чтобы в этот момент окошко не пыталось куда-то уехать
-		SetWindowStyle(dwNewStyle);
-	}
-	DEBUGTEST(WINDOWPLACEMENT wpl2 = {sizeof(wpl2)}; GetWindowPlacement(ghWnd, &wpl2););
-
+	RECT rcWndMin = {WINDOWS_ICONIC_POS, WINDOWS_ICONIC_POS, WINDOWS_ICONIC_POS+160, WINDOWS_ICONIC_POS+16};
+	SizeInfo::RequestRect(rcWndMin);
 
 	Icon.LoadIcon(hWnd, gpSet->nIconID/*IDI_ICON1*/);
 
@@ -6610,9 +6596,37 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 		return -1; // The error already must be shown
 	}
 
-#ifdef _DEBUG
-	dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
-#endif
+	_ASSERTE(InCreateWindow() == true);
+
+	// Start pipe server
+	if (!m_GuiServer.Start())
+	{
+		return -1; // The error already must be shown
+	}
+
+	mn_StartupFinished = ss_OnCreateCalled;
+
+	return 0;
+}
+
+void CConEmuMain::OnCreateFinished()
+{
+	// Must be set already from CConEmuMain::MainWndProc, but just to be sure
+	_ASSERTE(ghWnd != nullptr);
+	_ASSERTE(ghWndWork != nullptr);
+
+	RECT rcWndS = {}, rcWndT = {}, rcBeforeResize = {}, rcAfterResize = {};
+	GetWindowRect(ghWnd, &rcWndS);
+	SizeInfo::RequestRect(rcWndS);
+
+	// #START_NOTE Perhaps this shall be in OnCreate?
+	OnTaskbarButtonCreated();
+
+	// It's better to store current mrc_Ideal values now, after real window creation
+	StoreIdealRect();
+
+	// Used for restoring from Maximized/Fullscreen/Iconic. Remember current Pos/Size.
+	StoreNormalRect(NULL);
 
 	_ASSERTE(InCreateWindow() == true);
 
@@ -6640,15 +6654,10 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 
 	GetWindowRect(ghWnd, &rcAfterResize);
 
-	// Start pipe server
-	if (!m_GuiServer.Start())
-	{
-		return -1; // The error already must be shown
-	}
+	mn_StartupFinished = ss_OnCreateFinished;
 
 	UNREFERENCED_PARAMETER(rcWndS.left); UNREFERENCED_PARAMETER(rcWndT.left);
 	UNREFERENCED_PARAMETER(rcBeforeResize.left); UNREFERENCED_PARAMETER(rcAfterResize.left);
-	return 0;
 }
 
 // Returns Zero if unsupported, otherwise - first asSource character (type)
@@ -8191,7 +8200,7 @@ void CConEmuMain::RefreshWindowStyles()
 
 	_ASSERTE(mn_IgnoreSizeChange>=0);
 
-	if (IsWindowVisible(ghWnd))
+	if (IsWindowVisible(ghWnd) && !isIconic())
 	{
 		MSetter lSet2(&mn_IgnoreSizeChange);
 		// Refresh JIC
@@ -13504,9 +13513,17 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 		case WM_MENURBUTTONUP:
 			this->mp_Menu->OnMenuRClick((HMENU)lParam, (UINT)wParam);
 			return 0;
+		case WM_PRINT:
+			if (wParam)
+			{
+				WPARAM lfix = lParam;
+				if (IsWin10() && isCaptionHidden())
+					lfix &= ~PRF_NONCLIENT;
+				DefWindowProc(hWnd, messg, wParam, lParam);
+			}
+			return 0;
 		case WM_PRINTCLIENT:
-			DefWindowProc(hWnd, messg, wParam, lParam);
-			if (wParam && (hWnd == ghWnd) && gpSet->isStatusBarShow && (lParam & PRF_CLIENT))
+			if (wParam && (hWnd == ghWnd) /*&& gpSet->isStatusBarShow*/ && (lParam & PRF_CLIENT))
 			{
 				LRESULT lPaintRc = 0;
 				OnPaint(hWnd, (HDC)wParam, WM_PRINTCLIENT, lPaintRc);

@@ -268,6 +268,8 @@ class CConEmuMain
 
 		enum StartupStage {
 			ss_Starting,
+			ss_OnCreateCalled,
+			ss_OnCreateFinished,
 			ss_PostCreate1Called,
 			ss_PostCreate1Finished,
 			ss_PostCreate2Called,
@@ -738,6 +740,7 @@ class CConEmuMain
 		BOOL isDialogMessage(MSG &Msg);
 		bool isSkipNcMessage(const MSG& Msg);
 		void PreWndProc(UINT messg);
+		void OnCreateFinished();
 		LRESULT WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 	public:
 		void OnSwitchGuiFocus(SwitchGuiFocusOp FocusOp);

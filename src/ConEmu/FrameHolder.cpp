@@ -858,7 +858,8 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		{
 			lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
-
+		else
+		{
 		// Need screen coordinates!
 		const RECT rcRealClient = mp_ConEmu->RealClientRect();
 		rcClient = rcRealClient;
@@ -874,6 +875,7 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		// Source valid rectangle
 		pParm->rgrc[2] = oldRect.client;
 		OffsetRect(&pParm->rgrc[2], oldRect.window.left + oldRect.real_client.left, oldRect.window.top + oldRect.real_client.top);
+		}
 
 		if (bAllowPreserveClient)
 		{
@@ -907,12 +909,14 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			// Call default function JIC
 			lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
-
+		else
+		{
 		// Need screen coordinates!
 		rcClient = mp_ConEmu->RealClientRect();
 		OffsetRect(&rcClient, rcWnd.left, rcWnd.top);
 
 		*nccr = rcClient;
+		}
 	}
 
 	wchar_t szInfo[200];
