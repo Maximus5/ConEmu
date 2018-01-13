@@ -1027,8 +1027,13 @@ LRESULT CFrameHolder::DoNcHitTest(const POINT& point, int width, int height, LPA
 		}
 	}
 
-	if (l_result == HTTOP && gpSet->isHideCaptionAlways() && !mp_ConEmu->mp_TabBar->IsTabsShown())
+	if (l_result == HTTOP && gpSet->isHideCaptionAlways()
+		&& (!mp_ConEmu->mp_TabBar || !mp_ConEmu->mp_TabBar->IsTabsShown()
+			|| (IsWin10() && gpSet->nTabsLocation))
+		)
+	{
 		l_result = HTCAPTION;
+	}
 
 	if (l_result == HTCLIENT
 		&& mp_ConEmu->isSelfFrame()

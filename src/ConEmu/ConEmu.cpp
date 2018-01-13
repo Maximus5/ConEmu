@@ -11718,9 +11718,9 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 		if (ht != HTCLIENT)
 		{
 			BOOL rc = FALSE;
+			LPCWSTR pszCursor = NULL;
 			if (isSelfFrame())
 			{
-				LPCWSTR pszCursor = NULL;
 				switch (ht)
 				{
 				case HTTOP: case HTBOTTOM:
@@ -11732,14 +11732,22 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 				case HTTOPRIGHT: case HTBOTTOMLEFT:
 					pszCursor = IDC_SIZENESW; break;
 				}
-				if (pszCursor)
+			}
+			else if (ht == HTCAPTION && gpSet->isHideCaptionAlways()
+				&& (!mp_TabBar || !mp_TabBar->IsTabsShown()
+					|| (IsWin10() && gpSet->nTabsLocation))
+				)
+			{
+				pszCursor = IDC_SIZEALL;
+			}
+
+			if (pszCursor)
+			{
+				HCURSOR sizeCursor = LoadCursor(NULL, pszCursor);
+				if (sizeCursor)
 				{
-					HCURSOR sizeCursor = LoadCursor(NULL, pszCursor);
-					if (sizeCursor)
-					{
-						SetCursor(sizeCursor);
-						rc = TRUE;
-					}
+					SetCursor(sizeCursor);
+					rc = TRUE;
 				}
 			}
 			return rc;
