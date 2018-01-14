@@ -291,67 +291,67 @@ void SizeInfo::DoCalculate()
 		return;
 	}
 
-	// #SIZE_TODO Declare local "WindowRectangles rr" and fill it, apply the value at the end
+	WindowRectangles new_rr = {};
 
-	m_size.rr.window = m_size.source_window;
+	new_rr.window = m_size.source_window;
 
 	DpiValue dpi; dpi.SetDpi(m_opt.dpi, m_opt.dpi);
 	bool caption_hidden = mp_ConEmu->isCaptionHidden();
 
-	m_size.rr.visible = m_size.rr.window;
+	new_rr.visible = new_rr.window;
 	if (!caption_hidden && IsWin10())
 	{
 		RECT rcWin10 = mp_ConEmu->CalcMargins(CEM_WIN10FRAME);
-		m_size.rr.visible.left += rcWin10.left;
-		m_size.rr.visible.top += rcWin10.top;
-		m_size.rr.visible.right -= rcWin10.right;
-		m_size.rr.visible.bottom += rcWin10.bottom;
+		new_rr.visible.left += rcWin10.left;
+		new_rr.visible.top += rcWin10.top;
+		new_rr.visible.right -= rcWin10.right;
+		new_rr.visible.bottom += rcWin10.bottom;
 	}
 
 	if (mp_ConEmu->isInside())
 	{
 		// No frame at all, client area covers all our window space
-		m_size.rr.real_client = m_size.rr.client = RECT{0, 0, RectWidth(m_size.rr.window), RectHeight(m_size.rr.window)};
-		m_size.rr.frame = RECT{};
+		new_rr.real_client = new_rr.client = RECT{0, 0, RectWidth(new_rr.window), RectHeight(new_rr.window)};
+		new_rr.frame = RECT{};
 	}
 	else
 	{
-		const auto mi = mp_ConEmu->NearestMonitorInfo(m_size.rr.window);
+		const auto mi = mp_ConEmu->NearestMonitorInfo(new_rr.window);
 		const auto wm = mp_ConEmu->GetWindowMode();
 		RECT rcFrame = (wm == wmFullScreen) ? RECT{} : caption_hidden ? mi.noCaption.FrameMargins : mi.withCaption.FrameMargins;
 
 		if ((wm == wmFullScreen) || !mp_ConEmu->isSelfFrame())
 		{
 			_ASSERTE(!mp_ConEmu->isInside());
-			m_size.rr.real_client = RECT{rcFrame.left, rcFrame.top, RectWidth(m_size.rr.window) - rcFrame.right, RectHeight(m_size.rr.window) - rcFrame.bottom};
-			m_size.rr.client = RECT{0, 0, RectWidth(m_size.rr.window) - rcFrame.left - rcFrame.right, RectHeight(m_size.rr.window) - rcFrame.top - rcFrame.bottom};
+			new_rr.real_client = RECT{rcFrame.left, rcFrame.top, RectWidth(new_rr.window) - rcFrame.right, RectHeight(new_rr.window) - rcFrame.bottom};
+			new_rr.client = RECT{0, 0, RectWidth(new_rr.window) - rcFrame.left - rcFrame.right, RectHeight(new_rr.window) - rcFrame.top - rcFrame.bottom};
 		}
 		else
 		{
 			int iFrame = gpSet->HideCaptionAlwaysFrame();
 			if ((iFrame > 0) && (iFrame < rcFrame.left))
 				rcFrame = RECT{iFrame, iFrame, iFrame, iFrame};
-			m_size.rr.real_client = RECT{0, 0, RectWidth(m_size.rr.window), RectHeight(m_size.rr.window)};
-			m_size.rr.client = RECT{rcFrame.left, rcFrame.top, RectWidth(m_size.rr.window) - rcFrame.right, RectHeight(m_size.rr.window) - rcFrame.bottom};
+			new_rr.real_client = RECT{0, 0, RectWidth(new_rr.window), RectHeight(new_rr.window)};
+			new_rr.client = RECT{rcFrame.left, rcFrame.top, RectWidth(new_rr.window) - rcFrame.right, RectHeight(new_rr.window) - rcFrame.bottom};
 		}
 
-		m_size.rr.frame = rcFrame;
+		new_rr.frame = rcFrame;
 	}
 
-	m_size.rr.workspace = m_size.rr.client;
+	new_rr.workspace = new_rr.client;
 
 	int newStatusHeight = 0;
 	if (gpSet->isStatusBarShow)
 		newStatusHeight = gpSet->StatusBarHeight();
 	if (newStatusHeight > 0)
 	{
-		m_size.rr.status = m_size.rr.workspace;
-		m_size.rr.status.top = m_size.rr.status.bottom - newStatusHeight;
-		m_size.rr.workspace.bottom = m_size.rr.status.top;
+		new_rr.status = new_rr.workspace;
+		new_rr.status.top = new_rr.status.bottom - newStatusHeight;
+		new_rr.workspace.bottom = new_rr.status.top;
 	}
 	else
 	{
-		m_size.rr.status = RECT{};
+		new_rr.status = RECT{};
 	}
 
 	int newTabHeight = 0;
@@ -363,25 +363,27 @@ void SizeInfo::DoCalculate()
 	}
 	if (newTabHeight > 0)
 	{
-		m_size.rr.rebar = m_size.rr.workspace;
+		new_rr.rebar = new_rr.workspace;
 		switch (gpSet->nTabsLocation)
 		{
 		case 0: // top
-			m_size.rr.rebar.bottom = m_size.rr.rebar.top + newTabHeight;
-			m_size.rr.workspace.top += newTabHeight;
+			new_rr.rebar.bottom = new_rr.rebar.top + newTabHeight;
+			new_rr.workspace.top += newTabHeight;
 			break;
 		case 1: // bottom
-			m_size.rr.rebar.top = m_size.rr.rebar.bottom - newTabHeight;
-			m_size.rr.workspace.bottom -= newTabHeight;
+			new_rr.rebar.top = new_rr.rebar.bottom - newTabHeight;
+			new_rr.workspace.bottom -= newTabHeight;
 			break;
 		default:
-			m_size.rr.rebar = RECT{};
+			new_rr.rebar = RECT{};
 		}
 	}
 	else
 	{
-		m_size.rr.rebar = RECT{};
+		new_rr.rebar = RECT{};
 	}
 
+	// Apply changes
+	m_size.rr = new_rr;
 	m_size.valid = true;
 }
