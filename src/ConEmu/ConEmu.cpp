@@ -11728,7 +11728,12 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 		{
 			BOOL rc = FALSE;
 			LPCWSTR pszCursor = NULL;
-			if (isSelfFrame())
+			if (isMenuActive())
+			{
+				// Don't change cursor in some cases
+				pszCursor = NULL;
+			}
+			else if (isSelfFrame())
 			{
 				switch (ht)
 				{
