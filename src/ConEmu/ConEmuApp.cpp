@@ -231,7 +231,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
 	if (bBlockDebugLog || (!bSendToFile && !IsDebuggerPresent()))
 		return;
 
-	static char szMess[32], szWP[32], szLP[48], szWhole[255];
+	char szMess[32], szWP[32], szLP[48], szWhole[255];
 	//static SYSTEMTIME st;
 	szMess[0]=0; szWP[0]=0; szLP[0]=0; szWhole[0]=0;
 #define MSG1(s) case s: lstrcpyA(szMess, #s); break;
@@ -263,12 +263,12 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
 
 			MSG2(WM_SIZE);
 			{
-				wsprintfA(szLP, "{%ix%i}", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+				sprintf_c(szLP, "{%ix%i}", GET_X_LPARAM(l), GET_Y_LPARAM(l));
 				break;
 			}
 			MSG2(WM_MOVE);
 			{
-				wsprintfA(szLP, "{%i,%i}", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+				sprintf_c(szLP, "{%i,%i}", GET_X_LPARAM(l), GET_Y_LPARAM(l));
 				break;
 			}
 			MSG1(WM_GETMINMAXINFO);
@@ -277,19 +277,19 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
 				if (l)
 				{
 					RECT r = w ? ((LPNCCALCSIZE_PARAMS)l)->rgrc[0] : *(LPRECT)l;
-					wsprintfA(szLP, "{%i,%i} {%ix%i}", r.left, r.top, LOGRECTSIZE(r));
+					sprintf_c(szLP, "{%i,%i} {%ix%i}", r.left, r.top, LOGRECTSIZE(r));
 				}
 				break;
 			}
 
 			MSG2(WM_WINDOWPOSCHANGING);
 			{
-				wsprintfA(szLP, "{%i,%i} {%ix%i}", ((LPWINDOWPOS)l)->x, ((LPWINDOWPOS)l)->y, ((LPWINDOWPOS)l)->cx, ((LPWINDOWPOS)l)->cy);
+				sprintf_c(szLP, "{%i,%i} {%ix%i}", ((LPWINDOWPOS)l)->x, ((LPWINDOWPOS)l)->y, ((LPWINDOWPOS)l)->cx, ((LPWINDOWPOS)l)->cy);
 				break;
 			}
 			MSG2(WM_WINDOWPOSCHANGED);
 			{
-				wsprintfA(szLP, "{%i,%i} {%ix%i}", ((LPWINDOWPOS)l)->x, ((LPWINDOWPOS)l)->y, ((LPWINDOWPOS)l)->cx, ((LPWINDOWPOS)l)->cy);
+				sprintf_c(szLP, "{%i,%i} {%ix%i}", ((LPWINDOWPOS)l)->x, ((LPWINDOWPOS)l)->y, ((LPWINDOWPOS)l)->cx, ((LPWINDOWPOS)l)->cy);
 				break;
 			}
 
@@ -298,7 +298,7 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
 			MSG1(WM_SYSKEYDOWN);
 			MSG1(WM_SYSKEYUP);
 			MSG2(WM_MOUSEWHEEL);
-			wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+			sprintf_c(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
 			break;
 			MSG2(WM_ACTIVATE);
 
@@ -320,35 +320,35 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
 			break;
 			MSG1(WM_SETFOCUS);
 			MSG2(WM_MOUSEMOVE);
-			//wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+			//sprintf_c(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
 			//break;
 			return;
 			MSG2(WM_RBUTTONDOWN);
-			wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+			sprintf_c(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
 			break;
 			MSG2(WM_RBUTTONUP);
-			wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+			sprintf_c(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
 			break;
 			MSG2(WM_MBUTTONDOWN);
-			wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+			sprintf_c(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
 			break;
 			MSG2(WM_MBUTTONUP);
-			wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+			sprintf_c(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
 			break;
 			MSG2(WM_LBUTTONDOWN);
-			wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+			sprintf_c(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
 			break;
 			MSG2(WM_LBUTTONUP);
-			wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+			sprintf_c(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
 			break;
 			MSG2(WM_LBUTTONDBLCLK);
-			wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+			sprintf_c(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
 			break;
 			MSG2(WM_MBUTTONDBLCLK);
-			wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+			sprintf_c(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
 			break;
 			MSG2(WM_RBUTTONDBLCLK);
-			wsprintfA(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
+			sprintf_c(szLP, "%i:%i", GET_X_LPARAM(l), GET_Y_LPARAM(l));
 			break;
 			MSG1(WM_CLOSE);
 			MSG1(WM_CREATE);
@@ -389,11 +389,11 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
 
 	if (bSendToDebugger || bSendToFile)
 	{
-		if (!szMess[0]) wsprintfA(szMess, "%i(x%02X)", m, m);
+		if (!szMess[0]) sprintf_c(szMess, "%i(x%02X)", m, m);
 
-		if (!szWP[0]) wsprintfA(szWP, "%i", (DWORD)w);
+		if (!szWP[0]) sprintf_c(szWP, "%i", (DWORD)w);
 
-		if (!szLP[0]) wsprintfA(szLP, "%i(0x%08X)", (int)l, (DWORD)l);
+		if (!szLP[0]) sprintf_c(szLP, "%i(0x%08X)", (int)l, (DWORD)l);
 
 		LPCSTR pszSrc = (posted < 0) ? "Recv" : (posted ? "Post" : "Send");
 
@@ -401,13 +401,13 @@ void DebugLogMessage(HWND h, UINT m, WPARAM w, LPARAM l, int posted, BOOL extra)
 		{
 			static SYSTEMTIME st;
 			GetLocalTime(&st);
-			wsprintfA(szWhole, "%02i:%02i.%03i %s%s: <%i> %s, %s, %s\n", st.wMinute, st.wSecond, st.wMilliseconds,
+			sprintf_c(szWhole, "%02i:%02i:%02i.%03i %s%s: <%i> %s, %s, %s\n", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds,
 				pszSrc, (extra ? "+" : ""), gnMessageNestingLevel, szMess, szWP, szLP);
 			OutputDebugStringA(szWhole);
 		}
 		else if (bSendToFile)
 		{
-			wsprintfA(szWhole, "%s%s: <%i> %s, %s, %s\n",
+			sprintf_c(szWhole, "%s%s: <%i> %s, %s, %s\n",
 				pszSrc, (extra ? "+" : ""), gnMessageNestingLevel, szMess, szWP, szLP);
 			DebugLogFile(szWhole);
 		}
