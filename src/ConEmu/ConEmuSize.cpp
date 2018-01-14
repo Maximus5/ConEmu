@@ -1498,8 +1498,6 @@ void CConEmuSize::ReloadMonitorInfo()
 {
 	_ASSERTEX(isMainThread());
 
-	// #SIZE_TODO Add visible frame width to MonitorInfoCache, reuse it instead in GetSelfFrameWidth
-
 	struct Invoke
 	{
 		static BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
@@ -6214,7 +6212,7 @@ UINT CConEmuSize::GetSelfFrameWidth()
 	// -1 means we should use standard Windows thick frame if possible
 	if (iFrame < 0)
 		return 0;
-	// #SIZE_TODO Reuse frame width from monitors cache
+	// Reuse frame width from monitors cache
 	const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(NULL);
 	int iStdFrame = mp_ConEmu->GetWinFrameWidth();
 	int iDefFrame = isCaptionHidden() ? mi.noCaption.FrameWidth : mi.withCaption.FrameWidth;

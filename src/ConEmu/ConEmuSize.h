@@ -158,14 +158,16 @@ protected:
 	LONG mn_IgnoreSizeChange;
 	LONG mn_InSetWindowPos;
 
-	// #SIZE_TODO Get rid of m_ForceShowFrame
+	// If the frame is totally hidden (frame width = 0)
+	// or self-frame is used (frame width > 0) than we need
+	// to change window styles to allow resize with mouse
 	enum {
-		fsf_Hide = 0,     // Рамка и заголовок спрятаны
-		fsf_WaitShow = 1, // Запущен таймер показа рамки
-		fsf_Show = 2,     // Рамка показана
+		fsf_Hide = 0,     // Normal mode (frame is hidden)
+		fsf_WaitShow = 1, // The timer to show frame (on mouse-hover) was started
+		fsf_Show = 2,     // Resizable frame is ON
 	} m_ForceShowFrame;
 
-	bool mb_InShowMinimized; // true на время выполнения ShowWindow(SW_SHOWMIN...)
+	bool mb_InShowMinimized; // true during execution ShowWindow(SW_SHOWMIN...)
 
 	bool mb_LastRgnWasNull;
 
