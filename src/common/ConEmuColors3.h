@@ -166,7 +166,7 @@ public:
 	}
 };
 
-__inline BYTE FarColor_3_2(const FarColor& Color3)
+__inline BYTE FarColor_3_2(const FarColor& Color3, bool auto_brightness = false)
 {
 	WORD Color2 = 0;
 
@@ -187,7 +187,7 @@ __inline BYTE FarColor_3_2(const FarColor& Color3)
 	{
 		WORD bk = (WORD)(Color3.BackgroundColor & 0xF);
 		// Коррекция яркости, если подобранные индексы совпали
-		if (Color2 == bk)
+		if (auto_brightness && (Color2 == bk))
 		{
 			if (Color2 & 8)
 				bk ^= 8;
