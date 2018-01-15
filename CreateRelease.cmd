@@ -115,7 +115,7 @@ call "%~dp0src\vc.build.release.cmd" dosign
 if errorlevel 1 goto err
 
 if exist "%~dp0..\..\Google\Check-VirusTotal.cmd" (
-	pushd "%~d0Release"
+	pushd "%~dp0Release"
 	echo Starting Check-VirusTotal
 	call cmd /c "%~dp0..\..\Google\Check-VirusTotal.cmd" -new_console:bc
 	popd
