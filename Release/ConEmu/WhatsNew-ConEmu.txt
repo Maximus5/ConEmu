@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.1.14
+* Fix frame gaps when maximizing caption-less window on Windows 10.
+* Drag window by frame top if caption is hidden and TabBar is hidden or shown at the bottom.
+* Fix wrong TabBar position when ‘Tabs on bottom’ is checked.
+* gh-1369: Fixes for unexpected unthemed title bar appeared in some cases.
+* gh-1400: Allow resize Far panels with mouse if border fore color match back 4bit color.
+
+
 2018.1.11
 * Resize fixes for quake mode in Windows 10.
 * Don't turn on ‘self-resizable’ frame on mouse-hover if the frame is already resizable.
