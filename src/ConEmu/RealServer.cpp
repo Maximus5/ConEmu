@@ -168,34 +168,36 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 	{
 		case sst_ServerStart:
 		case sst_ServerStop:
-			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)",
 				(nStarted==sst_ServerStart)?L"ServerStart":L"ServerStop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_AltServerStart:
 		case sst_AltServerStop:
-			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)",
 				(nStarted==sst_AltServerStart)?L"AltServerStart":L"AltServerStop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_ComspecStart:
 		case sst_ComspecStop:
-			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)",
 				(nStarted==sst_ComspecStart)?L"ComspecStart":L"ComspecStop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_AppStart:
 		case sst_AppStop:
-			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)",
 				(nStarted==sst_AppStart)?L"AppStart":L"AppStop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		case sst_App16Start:
 		case sst_App16Stop:
-			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)\n",
+			swprintf_c(szDbg, L"GUI received CECMD_CMDSTARTSTOP(%s,%i,PID=%u,From=%u)",
 				(nStarted==sst_App16Start)?L"App16Start":L"App16Stop", pIn->hdr.nCreateTick, pIn->StartStop.dwPID, pIn->hdr.nSrcPID);
 			break;
 		default:
 			_ASSERTE(nStarted==sst_ServerStart && "Unknown start code");
+			szDbg[0] = 0;
 	}
 
-	mp_RCon->LogString(szDbg);
+	if (szDbg[0])
+		mp_RCon->LogString(szDbg);
 
 	_ASSERTE(pIn->StartStop.dwPID!=0);
 	DWORD nPID     = pIn->StartStop.dwPID;
