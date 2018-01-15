@@ -70,32 +70,9 @@ CConEmuSize::CConEmuSize()
 
 	//mb_PostUpdateWindowSize = false;
 
-	changeFromWindowMode = wmNotChanging;
-	isQuakeMinimized = false;
-	isWndNotFSMaximized = false;
-	m_ForceShowFrame = fsf_Hide;
-	m_TileMode = cwc_Current;
-	mn_IgnoreSizeChange = 0;
-	mn_InSetWindowPos = 0;
-	mb_InSetQuakeMode = false;
-	mb_InShowMinimized = false;
-	mb_LastRgnWasNull = true;
-	mb_LockShowWindow = false;
-	mb_LockWindowRgn = false;
-	mn_IgnoreQuakeActivation = 0;
-	mn_LastQuakeShowHide = 0;
-	mn_InResize = 0;
-	mn_QuakePercent = 0; // 0 - отключен
-	WindowMode = wmNormal;
 	WndWidth = gpSet->wndWidth; WndHeight = gpSet->wndHeight;
 	WndPos = MakePoint(gpSet->_wndX, gpSet->_wndY);
 	m_Snapping.reset();
-	ZeroStruct(m_JumpMonitor);
-	ZeroStruct(m_QuakePrevSize);
-	ZeroStruct(mr_Ideal);
-	ZeroStruct(mrc_StoredNormalRect);
-	ZeroStruct(ptFullScreenSize);
-	isRestoreFromMinimized = false;
 }
 
 CConEmuSize::~CConEmuSize()
