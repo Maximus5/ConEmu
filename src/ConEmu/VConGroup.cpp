@@ -4315,7 +4315,14 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgsEx *args, bool abAllowScript
 		_ASSERTE(args->pszSpecialCmd && *args->pszSpecialCmd);
 	}
 
-	if (args->pszSpecialCmd)
+	CEStr lsTaskCommands;
+	if (args->pszSpecialCmd && *args->pszSpecialCmd
+		&& gpConEmu->IsConsoleBatchOrTask(args->pszSpecialCmd))
+	{
+		lsTaskCommands = gpConEmu->LoadConsoleBatch(args->pszSpecialCmd, args);
+	}
+
+	if (lsTaskCommands.IsEmpty() && args->pszSpecialCmd && *args->pszSpecialCmd)
 	{
 		// Issue 1711: May be that is smth like?
 		// ""C:\Windows\...\powershell.exe" -noprofile -new_console:t:"PoSh":d:"C:\Users""
@@ -4377,15 +4384,13 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgsEx *args, bool abAllowScript
 			return NULL;
 		}
 
-		// В качестве "команды" указан "пакетный файл" или "группа команд" одновременного запуска нескольких консолей
-		wchar_t* pszDataW = gpConEmu->LoadConsoleBatch(args->pszSpecialCmd, args);
-		if (!pszDataW)
+		// As command was specified as {Task} or @TaskFile or group|||of|||commands
+		if (lsTaskCommands.IsEmpty())
 			return NULL;
 
 		// GO
-		pVCon = gpConEmu->CreateConGroup(pszDataW, (args->RunAsAdministrator == crb_On), NULL/*ignored when 'args' specified*/, args);
+		pVCon = gpConEmu->CreateConGroup(lsTaskCommands, (args->RunAsAdministrator == crb_On), NULL/*ignored when 'args' specified*/, args);
 
-		SafeFree(pszDataW);
 		MCHKHEAP;
 		return pVCon;
 	}
