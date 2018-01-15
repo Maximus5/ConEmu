@@ -54,6 +54,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRSTYLE(s) DEBUGSTR(s)
+#define DEBUGSTRWMODE(s) DEBUGSTR(s)
 #define DEBUGSTRDPI(s) //DEBUGSTR(s)
 #define DEBUGSTRRGN(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
@@ -4499,7 +4500,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	wchar_t szInfo[255];
 
 	swprintf_c(szInfo, L"SetWindowMode begin: CurMode=%s inMode=%s", GetWindowModeName(GetWindowMode()), GetWindowModeName(inMode));
-	LogString(szInfo);
+	if (!LogString(szInfo)) { DEBUGSTRWMODE(szInfo); }
 
 	if ((inMode != wmFullScreen) && (WindowMode == wmFullScreen))
 	{
@@ -4531,7 +4532,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	MONITORINFO mi = {sizeof(mi)}; HMONITOR hMon = GetNearestMonitorInfo(&mi, NULL, &rcWnd);
 	swprintf_c(szInfo, L"SetWindowMode info: Wnd={%i,%i}-{%i,%i} Mon=x%08X Work={%i,%i}-{%i,%i} Full={%i,%i}-{%i,%i}",
 		LOGRECTCOORDS(rcWnd), LODWORD(hMon), LOGRECTCOORDS(mi.rcWork), LOGRECTCOORDS(mi.rcMonitor));
-	LogString(szInfo);
+	if (!LogString(szInfo)) { DEBUGSTRWMODE(szInfo); }
 
 	//bool canEditWindowSizes = false;
 	bool lbRc = false;
@@ -4576,7 +4577,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	//CRealConsole* pRCon = gpSet->isLogging() ? (VCon.VCon() ? VCon.VCon()->RCon() : NULL) : NULL;
 
 	swprintf_c(szInfo, L"SetWindowMode exec: NewMode=%s", GetWindowModeName(NewMode));
-	LogString(szInfo);
+	if (!LogString(szInfo)) { DEBUGSTRWMODE(szInfo); }
 
 	mp_ConEmu->RefreshWindowStyles(); // inMode из параметров убрал, т.к. WindowMode уже изменен
 
@@ -4618,13 +4619,15 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				}
 				else if (IsWindowVisible(ghWnd))
 				{
-					if (gpSet->isLogging()) LogString(L"WM_SYSCOMMAND(SC_RESTORE)");
+					LPCWSTR pszInfo = L"WM_SYSCOMMAND(SC_RESTORE)";
+					if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 
 					DefWindowProc(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0); //2009-04-22 Было SendMessage
 				}
 				else
 				{
-					if (gpSet->isLogging()) LogString(L"ShowMainWindow(SW_SHOWNORMAL)");
+					LPCWSTR pszInfo = L"ShowMainWindow(SW_SHOWNORMAL)";
+					if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 
 					ShowMainWindow(SW_SHOWNORMAL, abFirstShow);
 				}
@@ -4635,7 +4638,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				//if (mb_MaximizedHideCaption)
 				//	mb_MaximizedHideCaption = FALSE;
 
-				if (gpSet->isLogging()) LogString(L"OnSize(false).1");
+				LPCWSTR pszInfo = L"OnSize(false).1";
+				if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 
 				//OnSize(false); // подровнять ТОЛЬКО дочерние окошки
 			}
@@ -4764,7 +4768,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				//RePaint();
 				mp_ConEmu->InvalidateAll();
 
-				if (gpSet->isLogging()) LogString(L"OnSize(false).2");
+				LPCWSTR pszInfo = L"OnSize(false).2";
+				if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 
 				//OnSize(false); // консоль уже изменила свой размер
 
@@ -4778,7 +4783,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				MSetter lSet(&mn_IgnoreSizeChange);
 				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, abFirstShow);
 
-				if (gpSet->isLogging()) LogString(L"OnSize(false).3");
+				LPCWSTR pszInfo = L"OnSize(false).3";
+				if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 			}
 
 			_ASSERTE(mn_IgnoreSizeChange>=0);
@@ -4872,7 +4878,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				lSet.Unlock();
 				//WindowMode = inMode; // Запомним!
 
-				if (gpSet->isLogging()) LogString(L"OnSize(false).5");
+				LPCWSTR pszInfo = L"OnSize(false).5";
+				if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 
 				OnSize(false); // подровнять ТОЛЬКО дочерние окошки
 			}
@@ -4890,7 +4897,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 		_ASSERTE(FALSE && "Unsupported mode");
 	}
 
-	if (gpSet->isLogging()) LogString(L"SetWindowMode done");
+	LPCWSTR pszInfo = L"SetWindowMode done";
+	if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 
 	//WindowMode = inMode; // Запомним!
 
@@ -4911,7 +4919,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	{
 		wchar_t szInfo[64];
 		swprintf_c(szInfo, L"SetWindowMode(%u) end", inMode);
-		mp_ConEmu->LogWindowPos(szInfo);
+		if (!mp_ConEmu->LogWindowPos(szInfo)) { DEBUGSTRWMODE(szInfo); }
 	}
 
 	//Sync ConsoleToWindow(); 2009-09-10 А это вроде вообще не нужно - ресайз консоли уже сделан
@@ -4920,10 +4928,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 wrap:
 	if (!lbRc)
 	{
-		if (gpSet->isLogging())
-		{
-			LogString(L"Failed to switch WindowMode");
-		}
+		LPCWSTR pszInfo = L"Failed to switch WindowMode";
+		if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 		_ASSERTE(lbRc && "Failed to switch WindowMode");
 		WindowMode = changeFromWindowMode;
 	}
