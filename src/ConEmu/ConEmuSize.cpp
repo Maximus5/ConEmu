@@ -1271,7 +1271,7 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 	}
 
 	// Запомнить "идеальный" размер окна, выбранный пользователем
-	mp_ConEmu->StoreIdealRect();
+	mp_ConEmu->StoreNormalRect(NULL);
 
 	return true;
 }
@@ -1777,27 +1777,19 @@ RECT CConEmuSize::GetVirtualScreenRect(bool abFullScreen)
 
 RECT CConEmuSize::GetIdealRect()
 {
-	RECT rcIdeal = mr_Ideal.rcIdeal;
-	if (!mp_ConEmu->mp_Inside && (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight || m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth))
-	{
-		MONITORINFO mi = {};
-		GetNearestMonitor(&mi);
-		rcIdeal = GetTileRect(m_TileMode, mi);
-	}
-	else if (mp_ConEmu->mp_Inside || (rcIdeal.right <= rcIdeal.left) || (rcIdeal.bottom <= rcIdeal.top))
+	RECT rcIdeal = mrc_StoredNormalRect;
+	if (mp_ConEmu->isInside() || IsRectMinimized(rcIdeal))
 	{
 		rcIdeal = GetDefaultRect();
 	}
+
+	if (!mp_ConEmu->isInside() && (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight || m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth))
+	{
+		auto mi = NearestMonitorInfo(rcIdeal);
+		rcIdeal = GetTileRect(m_TileMode, mi.mi);
+	}
+
 	return rcIdeal;
-}
-
-void CConEmuSize::StoreIdealRect()
-{
-	if ((WindowMode != wmNormal) || mp_ConEmu->mp_Inside)
-		return;
-
-	RECT rcWnd = CalcRect(CER_MAIN);
-	UpdateIdealRect(rcWnd);
 }
 
 void CConEmuSize::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
@@ -1855,36 +1847,9 @@ void CConEmuSize::AutoSizeFont(RECT arFrom, enum ConEmuRect tFrom)
 	gpFontMgr->AutoRecreateFont(nFontW, nFontH);
 }
 
-void CConEmuSize::UpdateIdealRect(RECT rcNewIdeal)
-{
-	DEBUGTEST(RECT rc = rcNewIdeal);
-	_ASSERTE(rc.right>rc.left && rc.bottom>rc.top);
-
-	if (memcmp(&mr_Ideal.rcIdeal, &rcNewIdeal, sizeof(rcNewIdeal)) != 0)
-	{
-		wchar_t szLog[255];
-		swprintf_c(szLog, L"UpdateIdealRect Cur={%i,%i}-{%i,%i} New={%i,%i}-{%i,%i}",
-			LOGRECTCOORDS(mr_Ideal.rcIdeal), LOGRECTCOORDS(rcNewIdeal));
-		LogString(szLog);
-	}
-	#ifdef _DEBUG
-	else
-	{
-		return;
-	}
-	#endif
-
-	mr_Ideal.rcIdeal = rcNewIdeal;
-}
-
 void CConEmuSize::UpdateInsideRect(RECT rcNewPos)
 {
-	RECT rcWnd = rcNewPos;
-
-	UpdateIdealRect(rcWnd);
-
-	// Подвинуть
-	setWindowPos(HWND_TOP, rcWnd.left, rcWnd.top, rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top, 0);
+	setWindowPos(HWND_TOP, rcNewPos.left, rcNewPos.top, RectWidth(rcNewPos), RectHeight(rcNewPos), 0);
 }
 
 // Return true, when rect was changed
@@ -2130,7 +2095,7 @@ bool CConEmuSize::FixPosByStartupMonitor(const HMONITOR hStartMon)
 	return true;
 }
 
-void CConEmuSize::StoreNormalRect(RECT* prcWnd)
+void CConEmuSize::StoreNormalRect(const RECT* prcWnd)
 {
 	mp_ConEmu->mouse.bCheckNormalRect = false;
 
@@ -3160,7 +3125,7 @@ LRESULT CConEmuSize::OnSize(bool bResizeRCon/*=true*/, WPARAM wParam/*=0*/)
 	{
 		//GetWindowRect(ghWnd, &mrc_Ideal);
 		//UpdateIdealRect();
-		StoreIdealRect();
+		StoreNormalRect(NULL);
 	}
 
 	if (mp_ConEmu->mp_TabBar->IsTabsActive())
@@ -3583,7 +3548,7 @@ bool CConEmuSize::SizeWindow(const CESize sizeW, const CESize sizeH)
 	return bSizeOK;
 }
 
-void CConEmuSize::QuakePrevSize::Save(const CESize& awndWidth, const CESize& awndHeight, const LONG& awndX, const LONG& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo, const bool& abAlwaysShowTrayIcon)
+void CConEmuSize::QuakePrevSize::Save(const CESize& awndWidth, const CESize& awndHeight, const LONG& awndX, const LONG& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const RECT& arcStoredNormalRect, const bool& abAlwaysShowTrayIcon)
 {
 	wndWidth = awndWidth;
 	wndHeight = awndHeight;
@@ -3591,20 +3556,20 @@ void CConEmuSize::QuakePrevSize::Save(const CESize& awndWidth, const CESize& awn
 	wndY = awndY;
 	nFrame = anFrame;
 	WindowMode = aWindowMode;
-	rcIdealInfo = arcIdealInfo;
+	rcStoredNormalRect = arcStoredNormalRect;
 	MinToTray = abAlwaysShowTrayIcon;
 	//
 	bWasSaved = true;
 }
 
-ConEmuWindowMode CConEmuSize::QuakePrevSize::Restore(CESize& rwndWidth, CESize& rwndHeight, LONG& rwndX, LONG& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo, bool& rbAlwaysShowTrayIcon)
+ConEmuWindowMode CConEmuSize::QuakePrevSize::Restore(CESize& rwndWidth, CESize& rwndHeight, LONG& rwndX, LONG& rwndY, BYTE& rnFrame, RECT& rrcStoredNormalRect, bool& rbAlwaysShowTrayIcon)
 {
 	rwndWidth = wndWidth;
 	rwndHeight = wndHeight;
 	rwndX = wndX;
 	rwndY = wndY;
 	rnFrame = nFrame;
-	rrcIdealInfo = rcIdealInfo;
+	rrcStoredNormalRect = rcStoredNormalRect;
 	rbAlwaysShowTrayIcon = MinToTray;
 	return WindowMode;
 }
@@ -3653,12 +3618,12 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 
 	if (gpSet->isQuakeStyle && !bPrevStyle)
 	{
-		m_QuakePrevSize.Save(this->WndWidth, this->WndHeight, this->WndPos.x, this->WndPos.y, gpSet->nHideCaptionAlwaysFrame, this->WindowMode, mr_Ideal, gpSet->mb_MinToTray);
+		m_QuakePrevSize.Save(this->WndWidth, this->WndHeight, this->WndPos.x, this->WndPos.y, gpSet->nHideCaptionAlwaysFrame, this->WindowMode, mrc_StoredNormalRect, gpSet->mb_MinToTray);
 	}
 	else if (!gpSet->isQuakeStyle)
 	{
 		if (m_QuakePrevSize.bWasSaved)
-			nNewWindowMode = m_QuakePrevSize.Restore(this->WndWidth, this->WndHeight, this->WndPos.x, this->WndPos.y, gpSet->nHideCaptionAlwaysFrame, mr_Ideal, gpSet->mb_MinToTray);
+			nNewWindowMode = m_QuakePrevSize.Restore(this->WndWidth, this->WndHeight, this->WndPos.x, this->WndPos.y, gpSet->nHideCaptionAlwaysFrame, mrc_StoredNormalRect, gpSet->mb_MinToTray);
 		else
 			m_QuakePrevSize.SetNonQuakeDefaults();
 	}
@@ -3672,8 +3637,7 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 	if (!gpSet->isQuakeStyle && bPrevStyle)
 	{
 		m_QuakePrevSize.bWaitReposition = true;
-		this->UpdateIdealRect(rcWnd);
-		mrc_StoredNormalRect = rcWnd;
+		StoreNormalRect(&rcWnd);
 	}
 
 	if (ghWnd)
@@ -3697,7 +3661,7 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 
 	// Save current rect, JIC
 	if (ghWnd)
-		StoreIdealRect();
+		StoreNormalRect(NULL);
 
 	if (ghWnd)
 		apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
@@ -4050,8 +4014,6 @@ ConEmuWindowCommand CConEmuSize::EvalTileMode(const RECT& arcWnd, MONITORINFO* p
 		}
 	}
 
-	_ASSERTE(IsWindowModeChanging() == false);
-
 	// If the window covers whole working area,
 	// that is not a "tile" mode, but sort of "Maximized"
 	if (((rcWnd.left == mi.rcWork.left) || (rcWnd.left == rcAlt.left))
@@ -4125,6 +4087,8 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 		}
 
 		GetWindowRect(ghWnd, &rcWnd);
+
+		_ASSERTE(IsWindowModeChanging() == false);
 
 		CurTile = EvalTileMode(rcWnd, pmi);
 
@@ -5330,7 +5294,7 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 				: EvalTileMode(rc);
 			if (Tile != cwc_Current)
 			{
-				RECT rcOld = IsRectEmpty(&mrc_StoredNormalRect) ? GetDefaultRect() : mrc_StoredNormalRect;
+				RECT rcOld = IsRectMinimized(mrc_StoredNormalRect) ? GetDefaultRect() : mrc_StoredNormalRect;
 				RECT rcNew = {}, rcNewFix = {};
 				if (!IsRectEmpty(&rc))
 					rcNew = rc;
@@ -6675,7 +6639,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		if (bVis && !bIsIconic)
 		{
 			//UpdateIdealRect();
-			StoreIdealRect();
+			StoreNormalRect(NULL);
 		}
 
 		if ((ghLastForegroundWindow != ghWnd) && (ghLastForegroundWindow != ghOpWnd))

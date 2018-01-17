@@ -59,16 +59,6 @@ private:
 	CConEmuMain* mp_ConEmu;
 
 protected:
-	struct IdealRectInfo
-	{
-		// Current Ideal rect
-		RECT  rcIdeal;
-		// TODO: Reserved fields
-		RECT  rcClientMargins; // (TabBar + StatusBar) at storing moment
-		COORD crConsole;       // Console size in cells at storing moment
-		SIZE  csFont;          // VCon Font size (Width, Height) at storing moment
-	} mr_Ideal = {};
-
 	bool mb_InSetQuakeMode = false;
 	LONG mn_IgnoreQuakeActivation = 0;
 	DWORD mn_LastQuakeShowHide = 0;
@@ -85,13 +75,13 @@ protected:
 		LONG wndX, wndY; // GUI (Visual Position)
 		DWORD nFrame; // it's BYTE, DWORD here for alignment
 		ConEmuWindowMode WindowMode;
-		IdealRectInfo rcIdealInfo;
+		RECT rcStoredNormalRect;
 		bool MinToTray;
 		// Used in GetDefaultRect/GetDefaultSize after Quake was slided up (hidden)
 		RECT PreSlidedSize;
 		// helper methods
-		void Save(const CESize& awndWidth, const CESize& awndHeight, const LONG& awndX, const LONG& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const IdealRectInfo& arcIdealInfo, const bool& abMinToTray);
-		ConEmuWindowMode Restore(CESize& rwndWidth, CESize& rwndHeight, LONG& rwndX, LONG& rwndY, BYTE& rnFrame, IdealRectInfo& rrcIdealInfo, bool& rbMinToTray);
+		void Save(const CESize& awndWidth, const CESize& awndHeight, const LONG& awndX, const LONG& awndY, const BYTE& anFrame, const ConEmuWindowMode& aWindowMode, const RECT& arcStoredNormalRect, const bool& abMinToTray);
+		ConEmuWindowMode Restore(CESize& rwndWidth, CESize& rwndHeight, LONG& rwndX, LONG& rwndY, BYTE& rnFrame, RECT& rrcStoredNormalRect, bool& rbMinToTray);
 		void SetNonQuakeDefaults();
 	} m_QuakePrevSize = {};
 
@@ -237,7 +227,6 @@ public:
 	RECT GetDefaultRect();
 	int  GetInitialDpi(DpiValue* pDpi);
 	RECT GetIdealRect();
-	void StoreIdealRect();
 	void UpdateInsideRect(RECT rcNewPos);
 
 	void RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, bool bResizeWindow, LPRECT prcSuggested = NULL);
@@ -336,8 +325,7 @@ protected:
 	bool FixWindowRect(RECT& rcWnd, ConEmuBorders nBorders, bool bPopupDlg = false);
 	bool FixPosByStartupMonitor(const HMONITOR hStartMon);
 	RECT GetVirtualScreenRect(bool abFullScreen);
-	void StoreNormalRect(RECT* prcWnd);
-	void UpdateIdealRect(RECT rcNewIdeal);
+	void StoreNormalRect(const RECT* prcWnd);
 	RECT SetNormalWindowSize();
 	void LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, bool bChanged, const RECT& rcSet, LPRECT prcAfter, HMONITOR hMon);
 	bool CheckDpiOnMoving(WINDOWPOS *p);

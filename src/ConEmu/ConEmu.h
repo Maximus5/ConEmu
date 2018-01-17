@@ -287,7 +287,7 @@ class CConEmuMain
 			WORD  state;
 			bool  bSkipRDblClk;
 			bool  bIgnoreMouseMove;
-			bool  bCheckNormalRect;
+			bool  bCheckNormalRect; // call StoreNormalRect after resize in main timer
 
 			COORD LClkDC, LClkCon;
 			POINT LDblClkDC; // заполняется в PatchMouseEvent

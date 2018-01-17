@@ -1981,7 +1981,7 @@ BOOL CConEmuMain::CreateMainWindow()
 				}
 			}
 		}
-		UpdateIdealRect(rcWnd);
+		StoreNormalRect(&rcWnd);
 		nWidth = rcWnd.right - rcWnd.left;
 		nHeight = rcWnd.bottom - rcWnd.top;
 	}
@@ -6622,9 +6622,6 @@ void CConEmuMain::OnCreateFinished()
 	// #START_NOTE Perhaps this shall be in OnCreate?
 	OnTaskbarButtonCreated();
 
-	// It's better to store current mrc_Ideal values now, after real window creation
-	StoreIdealRect();
-
 	// Used for restoring from Maximized/Fullscreen/Iconic. Remember current Pos/Size.
 	StoreNormalRect(NULL);
 
@@ -6643,7 +6640,7 @@ void CConEmuMain::OnCreateFinished()
 			//      This may be rather "long" operation (animation)
 			//      and no RCon-s will be created until it finishes
 			setWindowPos(NULL, rcWndT.left, rcWndT.top, rcWndT.right- rcWndT.left, rcWndT.bottom- rcWndT.top, SWP_NOZORDER);
-			UpdateIdealRect(rcWndT);
+			StoreNormalRect(&rcWndT);
 		}
 	}
 

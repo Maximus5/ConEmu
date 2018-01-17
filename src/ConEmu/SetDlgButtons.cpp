@@ -1725,7 +1725,7 @@ void CSetDlgButtons::OnBtn_ApplyPos(HWND hDlg, WORD CB, BYTE uCheck)
 
 		// Запомнить "идеальный" размер окна, выбранный пользователем
 		if (!bStored)
-			gpConEmu->StoreIdealRect();
+			gpConEmu->StoreNormalRect(NULL);
 		//gpConEmu->UpdateIdealRect(TRUE);
 
 		EnableWindow(GetDlgItem(hDlg, cbApplyPos), FALSE);
