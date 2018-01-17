@@ -466,7 +466,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 			if ((WindowMode == wmMaximized) || (WindowMode == wmFullScreen))
 			{
 				// We need RESTORED(NORMAL) rect to be able to find monitor where the window must be maximized/fullscreened
-				if (mrc_StoredNormalRect.right > mrc_StoredNormalRect.left && mrc_StoredNormalRect.bottom > mrc_StoredNormalRect.top)
+				if (!IsRectMinimized(mrc_StoredNormalRect))
 				{
 					// Will be CalcRect(CER_MAXIMIZED/CER_FULLSCREEN,...) below
 					rcMain = mrc_StoredNormalRect;
@@ -495,7 +495,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 				// -- uxtheme lose wpl.rcNormalPosition at this point
 				//_ASSERTE(FALSE && "wpl.rcNormalPosition contains 'iconic' size!");
 
-				if (mrc_StoredNormalRect.right > mrc_StoredNormalRect.left && mrc_StoredNormalRect.bottom > mrc_StoredNormalRect.top)
+				if (!IsRectMinimized(mrc_StoredNormalRect))
 				{
 					rcMain = mrc_StoredNormalRect;
 					nGetStyle = 6;
@@ -794,7 +794,10 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					{
 						RECT rcNormal = {0};
 						if (mp_ConEmu)
+						{
+							_ASSERTE(!IsRectMinimized(mrc_StoredNormalRect));
 							rcNormal = mrc_StoredNormalRect;
+						}
 						int w = rcNormal.right - rcNormal.left;
 						int h = rcNormal.bottom - rcNormal.top;
 						if ((w > 0) && (h > 0))
@@ -2175,7 +2178,7 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 		// восстановлении окна получаем глюк позиционирования - оно прыгает заголовком за пределы.
 		if (!isSizing())
 		{
-			if (memcmp(&mrc_StoredNormalRect, &rcNormal, sizeof(rcNormal)) != 0)
+			if (mrc_StoredNormalRect != rcNormal)
 			{
 				wchar_t szLog[255];
 				swprintf_c(szLog, L"UpdateNormalRect Cur={%i,%i}-{%i,%i} (%ix%i) New={%i,%i}-{%i,%i} (%ix%i)",
