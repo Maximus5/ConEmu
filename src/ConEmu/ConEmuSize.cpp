@@ -4625,24 +4625,22 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			{
 				rcNew = GetDefaultRect();
 
-				if (mp_ConEmu->mp_Inside == NULL)
+				if (!mp_ConEmu->isInside())
 				{
-					//130508 - интересует только ширина-высота
-					//rcNew = CalcRect(CER_MAIN, consoleSize, CER_CONSOLE_ALL);
-					rcNew.right -= rcNew.left; rcNew.bottom -= rcNew.top;
-					rcNew.top = rcNew.left = 0;
-
-					if ((mrc_StoredNormalRect.right > mrc_StoredNormalRect.left) && (mrc_StoredNormalRect.bottom > mrc_StoredNormalRect.top))
+					POINT ptOffset;
+					if (!IsRectMinimized(mrc_StoredNormalRect))
 					{
-						rcNew.left+=mrc_StoredNormalRect.left; rcNew.top+=mrc_StoredNormalRect.top;
-						rcNew.right+=mrc_StoredNormalRect.left; rcNew.bottom+=mrc_StoredNormalRect.top;
+						ptOffset = POINT{mrc_StoredNormalRect.left, mrc_StoredNormalRect.top};
 					}
 					else
 					{
+						// #SIZE_TODO Restore to "active" monitor?
 						MONITORINFO mi; GetNearestMonitor(&mi);
-						rcNew.left+=mi.rcWork.left; rcNew.top+=mi.rcWork.top;
-						rcNew.right+=mi.rcWork.left; rcNew.bottom+=mi.rcWork.top;
+						ptOffset = POINT{mi.rcWork.left, mi.rcWork.top};
 					}
+
+					rcNew = RECT{ptOffset.x, ptOffset.y, ptOffset.x + RectWidth(rcNew), ptOffset.y + RectHeight(rcNew)};
+					FixWindowRect(rcNew, CEB_ALL|CEB_ALLOW_PARTIAL);
 				}
 			}
 
