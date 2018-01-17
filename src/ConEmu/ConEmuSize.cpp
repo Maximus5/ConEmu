@@ -2136,7 +2136,7 @@ void CConEmuSize::StoreNormalRect(RECT* prcWnd)
 
 	// Обновить координаты в gpSet, если требуется
 	// Если сейчас окно в смене размера - игнорируем, размер запомнит SetWindowMode
-	if ((WindowMode == wmNormal) && !mp_ConEmu->isInside() && !isIconic())
+	if ((GetWindowMode() == wmNormal) && !mp_ConEmu->isInside() && !isIconic())
 	{
 		if (prcWnd == NULL)
 		{
