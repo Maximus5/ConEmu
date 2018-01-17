@@ -1893,7 +1893,7 @@ void CConEmuSize::UpdateInsideRect(RECT rcNewPos)
 }
 
 // Return true, when rect was changed
-bool CConEmuSize::FixWindowRect(RECT& rcWnd, DWORD nBorders /* enum of ConEmuBorders */, bool bPopupDlg /*= false*/)
+bool CConEmuSize::FixWindowRect(RECT& rcWnd, ConEmuBorders nBorders, bool bPopupDlg /*= false*/)
 {
 	const RECT rcStore = rcWnd;
 	RECT rcWork;
