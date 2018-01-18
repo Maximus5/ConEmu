@@ -21,6 +21,7 @@
 #define IDD_RESTART                     123
 #define IDC_SPLITV                      124
 #define IDC_SPLITH                      125
+#define IDC_SPLITV2                     126
 #define IDD_SETTINGS                    150
 #define IDD_SPG_FONTS                   151
 #define IDD_SPG_COLORS                  152

@@ -390,7 +390,7 @@ class CConEmuMain
 		bool IsActiveConAdmin();
 		HICON GetCurrentVConIcon();
 		HCURSOR mh_CursorWait, mh_CursorArrow, mh_CursorAppStarting, mh_CursorMove, mh_CursorIBeam;
-		HCURSOR mh_SplitV, mh_SplitH;
+		HCURSOR mh_SplitV = nullptr, mh_SplitV2 = nullptr, mh_SplitH = nullptr;
 		HCURSOR mh_DragCursor = NULL;
 		CDragDrop *mp_DragDrop = nullptr;
 		// TODO: ==>> m_Foreground

@@ -345,6 +345,7 @@ CConEmuMain::CConEmuMain()
 	mh_CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
 	// g_hInstance is not initialized yet?
 	mh_SplitV = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITV));
+	mh_SplitV2 = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITV2));
 	mh_SplitH = LoadCursor(GetModuleHandle(0), MAKEINTRESOURCE(IDC_SPLITH));
 	GetCursorPos(&mouse.ptLastSplitOverCheck);
 	m_ActiveKeybLayout = GetActiveKeyboardLayout();
@@ -10312,7 +10313,7 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	HWND hChild = ::ChildWindowFromPointEx(ghWnd, ptCurClient, CWP_SKIPINVISIBLE|CWP_SKIPDISABLED|CWP_SKIPTRANSPARENT);
 
 
-	//enum DragPanelBorder dpb = DPB_NONE; //CConEmuMain::CheckPanelDrag(COORD crCon)
+	//enum DragPanelBorder dpb = DragPanelBorder::None; //CConEmuMain::CheckPanelDrag(COORD crCon)
 	if (isWheelEvent(messg) && HIWORD(wParam))
 	{
 		BYTE vk = 0;
@@ -10913,7 +10914,7 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 
 LRESULT CConEmuMain::OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, POINT ptCur, COORD cr)
 {
-	enum DragPanelBorder dpb = DPB_NONE;
+	DragPanelBorder dpb = DragPanelBorder::None;
 	//if (isLBDown()) ReleaseCapture(); // Вдруг сглючило? --2009-03-14
 	//isLBDown = false;
 	mouse.state &= ~(DRAG_L_ALLOWED | DRAG_L_STARTED | MOUSE_DRAGPANEL_ALL);
@@ -10927,27 +10928,36 @@ LRESULT CConEmuMain::OnMouse_LBtnDown(CVirtualConsole* pVCon, HWND hWnd, UINT me
 
 	dpb = CConEmuMain::CheckPanelDrag(cr);
 
-	if (dpb != DPB_NONE)
+	if (dpb != DragPanelBorder::None)
 	{
-		if (dpb == DPB_SPLIT)
-			mouse.state |= MOUSE_DRAGPANEL_SPLIT;
-		else if (dpb == DPB_LEFT)
-			mouse.state |= MOUSE_DRAGPANEL_LEFT;
-		else if (dpb == DPB_RIGHT)
-			mouse.state |= MOUSE_DRAGPANEL_RIGHT;
-
-		// Если зажат шифт - в FAR2 меняется высота активной панели
-		if (isPressed(VK_SHIFT))
+		switch (dpb)
 		{
-			mouse.state |= MOUSE_DRAGPANEL_SHIFT;
+		case DragPanelBorder::Split:
+			mouse.state |= MOUSE_DRAGPANEL_SPLIT; break;
+		case DragPanelBorder::Left:
+			mouse.state |= MOUSE_DRAGPANEL_LEFT; break;
+		case DragPanelBorder::Right:
+			mouse.state |= MOUSE_DRAGPANEL_RIGHT; break;
+		case DragPanelBorder::Both:
+			mouse.state |= MOUSE_DRAGPANEL_BOTH; break;
+		}
 
-			if (dpb == DPB_LEFT)
+		// Change panel height separately
+		if (dpb == DragPanelBorder::Left || dpb == DragPanelBorder::Right)
+		{
+			if (dpb == DragPanelBorder::Left)
 			{
-				PostMacro(L"@$If (!APanel.Left) Tab $End");
+				if (pRCon->IsFarLua())
+					pRCon->PostMacro(L"if not APanel.Left then Keys(\"Tab\") end");
+				else
+					pRCon->PostMacro(L"@$If (!APanel.Left) Tab $End");
 			}
-			else if (dpb == DPB_RIGHT)
+			else if (dpb == DragPanelBorder::Right)
 			{
-				PostMacro(L"@$If (APanel.Left) Tab $End");
+				if (pRCon->IsFarLua())
+					pRCon->PostMacro(L"if APanel.Left then Keys(\"Tab\") end");
+				else
+					PostMacro(L"@$If (APanel.Left) Tab $End");
 			}
 		}
 
@@ -11039,13 +11049,13 @@ LRESULT CConEmuMain::OnMouse_LBtnDblClk(CVirtualConsole* pVCon, HWND hWnd, UINT&
 
 	enum DragPanelBorder dpb = CConEmuMain::CheckPanelDrag(cr);
 
-	if (dpb != DPB_NONE)
+	if (dpb != DragPanelBorder::None)
 	{
 		wchar_t szMacro[128]; szMacro[0] = 0;
 
 		bool lbIsLua = pRCon->IsFarLua();
 
-		if (dpb == DPB_SPLIT)
+		if (dpb == DragPanelBorder::Split)
 		{
 			RECT rcRight; pRCon->GetPanelRect(TRUE, &rcRight, TRUE);
 			int  nCenter = pRCon->TextWidth() / 2;
@@ -11067,13 +11077,16 @@ LRESULT CConEmuMain::OnMouse_LBtnDblClk(CVirtualConsole* pVCon, HWND hWnd, UINT&
 		}
 		else
 		{
+			wchar_t szKey[32];
+			wcscpy_c(szKey, (dpb == DragPanelBorder::Both) ? L"CtrlDown" : L"CtrlShiftDown");
+
 			if (lbIsLua)
 			{
-				wsprintf(szMacro+1, L"for RCounter= %i,1,-1 do Keys(\"CtrlDown\") end", pRCon->TextHeight());
+				swprintf_c(szMacro, L"for RCounter= %i,1,-1 do Keys(\"%s\") end", pRCon->TextHeight(), szKey);
 			}
 			else
 			{
-				swprintf_c(szMacro, L"@$Rep (%i) CtrlDown $End", pRCon->TextHeight());
+				swprintf_c(szMacro, L"@$Rep (%i) %s $End", pRCon->TextHeight(), szKey);
 			}
 		}
 
@@ -11655,53 +11668,73 @@ void CConEmuMain::ForceSelectionModifierPressed(DWORD nValue)
 enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 {
 	if (!gpSet->isDragPanel || isPictureView())
-		return DPB_NONE;
+		return DragPanelBorder::None;
 
 	CVConGuard VCon;
 	CRealConsole* pRCon = (GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 
 	if (!pRCon)
-		return DPB_NONE;
+		return DragPanelBorder::None;
 
 	// Должен быть "Фар", "Панели", "Активен" (нет смысла пытаться дергать панели, если фар "висит")
 	if (!pRCon->isFar() || !pRCon->isFilePanel(true) || !pRCon->isAlive())
-		return DPB_NONE;
+		return DragPanelBorder::None;
 
 	// Если активен наш или ФАРовский граббер
 	if (pRCon->isConSelectMode())
-		return DPB_NONE;
+		return DragPanelBorder::None;
 
 	// Если удерживается модификатор запуска выделения текста
 	if (isSelectionModifierPressed(false))
-		return DPB_NONE;
+		return DragPanelBorder::None;
 
 	//CONSOLE_CURSOR_INFO ci;
 	//mp_ VActive->RCon()->GetConsoleCursorInfo(&ci);
 	//   if (!ci.bVisible || ci.dwSize>40) // Курсор должен быть видим, и не в режиме граба
-	//   	return DPB_NONE;
+	//   	return DragPanelBorder::None;
 	// Теперь - можно проверить
-	enum DragPanelBorder dpb = DPB_NONE;
-	RECT rcPanel = {};
+	DragPanelBorder dpb = DragPanelBorder::None;
 
 	//TODO("Сделаем все-таки драг влево-вправо хватанием за «промежуток» между рамками");
 	//int nSplitWidth = gpSetCls->BorderFontWidth()/5;
 	//if (nSplitWidth < 1) nSplitWidth = 1;
 
+	RECT rcRight = {}, rcLeft = {};
+	bool hasRight = VCon->RCon()->GetPanelRect(TRUE, &rcRight, TRUE);
+	bool hasLeft = VCon->RCon()->GetPanelRect(FALSE, &rcLeft, TRUE);
+	const double both_part = 0.15;
 
-	if (VCon->RCon()->GetPanelRect(TRUE, &rcPanel, TRUE))
+	auto over_edge = [](const COORD& crCon, const RECT& rcPanel)
 	{
-		if (crCon.X == rcPanel.left && (rcPanel.top <= crCon.Y && crCon.Y <= rcPanel.bottom))
-			dpb = DPB_SPLIT;
-		else if (crCon.Y == rcPanel.bottom && (rcPanel.left <= crCon.X && crCon.X <= rcPanel.right))
-			dpb = DPB_RIGHT;
+		return (crCon.Y == rcPanel.bottom && (rcPanel.left <= crCon.X && crCon.X <= rcPanel.right));
+	};
+
+	if ((dpb == DragPanelBorder::None)
+		&& hasRight && hasLeft && rcRight != rcLeft)
+	{
+		if ((crCon.X >= (rcLeft.right - both_part * RectWidth(rcLeft)))
+			&& (crCon.X <= (rcRight.left + both_part * RectWidth(rcRight)))
+			&& (over_edge(crCon, rcLeft) || over_edge(crCon, rcRight)))
+			dpb = DragPanelBorder::Both;
 	}
 
-	if (dpb == DPB_NONE && VCon->RCon()->GetPanelRect(FALSE, &rcPanel, TRUE))
+
+	if ((dpb == DragPanelBorder::None)
+		&& hasRight)
 	{
-		if (gpSet->isDragPanelBothEdges && crCon.X == rcPanel.right && (rcPanel.top <= crCon.Y && crCon.Y <= rcPanel.bottom))
-			dpb = DPB_SPLIT;
-		if (crCon.Y == rcPanel.bottom && (rcPanel.left <= crCon.X && crCon.X <= rcPanel.right))
-			dpb = DPB_LEFT;
+		if (crCon.X == rcRight.left && (rcRight.top <= crCon.Y && crCon.Y <= rcRight.bottom))
+			dpb = DragPanelBorder::Split;
+		else if (over_edge(crCon, rcRight))
+			dpb = DragPanelBorder::Right;
+	}
+
+	if ((dpb == DragPanelBorder::None)
+		&& hasLeft)
+	{
+		if (gpSet->isDragPanelBothEdges && crCon.X == rcLeft.right && (rcLeft.top <= crCon.Y && crCon.Y <= rcLeft.bottom))
+			dpb = DragPanelBorder::Split;
+		if (over_edge(crCon, rcLeft))
+			dpb = DragPanelBorder::Left;
 	}
 
 	return dpb;
@@ -11891,6 +11924,11 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 				hCur = mh_SplitH;
 				DEBUGSTRSETCURSOR(L" ---> SplitH (dragging)\n");
 			}
+			else if ((mouse.state & MOUSE_DRAGPANEL_BOTH) == MOUSE_DRAGPANEL_BOTH)
+			{
+				hCur = mh_SplitV2;
+				DEBUGSTRSETCURSOR(L" ---> SplitV (dragging)\n");
+			}
 			else
 			{
 				hCur = mh_SplitV;
@@ -11910,12 +11948,17 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 					COORD crCon = pVCon->ClientToConsole(ptCur.x,ptCur.y);
 					enum DragPanelBorder dpb = CheckPanelDrag(crCon);
 
-					if (dpb == DPB_SPLIT)
+					if (dpb == DragPanelBorder::Split)
 					{
 						hCur = mh_SplitH;
 						DEBUGSTRSETCURSOR(L" ---> SplitH (allow)\n");
 					}
-					else if (dpb != DPB_NONE)
+					else if (dpb == DragPanelBorder::Both)
+					{
+						hCur = mh_SplitV2;
+						DEBUGSTRSETCURSOR(L" ---> SplitV2 (allow)\n");
+					}
+					else if (dpb != DragPanelBorder::None)
 					{
 						hCur = mh_SplitV;
 						DEBUGSTRSETCURSOR(L" ---> SplitV (allow)\n");

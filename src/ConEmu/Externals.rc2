@@ -12,6 +12,7 @@
 //
 
 IDC_SPLITV              CURSOR                  "vsplit.cur"
+IDC_SPLITV2             CURSOR                  "vsplit2.cur"
 IDC_SPLITH              CURSOR                  "hsplit.cur"
 IDC_COPY                CURSOR                  "CursorDragCopy.cur"
 IDC_LINK                CURSOR                  "CursorDragLink.cur"

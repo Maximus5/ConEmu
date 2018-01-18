@@ -81,10 +81,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define MOUSE_DRAGPANEL_SPLIT 0x0400
 #define MOUSE_DRAGPANEL_LEFT  0x0800
 #define MOUSE_DRAGPANEL_RIGHT 0x1000
-#define MOUSE_DRAGPANEL_SHIFT 0x2000
+#define MOUSE_DRAGPANEL_BOTH  (MOUSE_DRAGPANEL_LEFT|MOUSE_DRAGPANEL_RIGHT)
 #define MOUSE_WINDOW_DRAG     0x4000
 
-#define MOUSE_DRAGPANEL_ALL (MOUSE_DRAGPANEL_SPLIT|MOUSE_DRAGPANEL_LEFT|MOUSE_DRAGPANEL_RIGHT|MOUSE_DRAGPANEL_SHIFT)
+#define MOUSE_DRAGPANEL_ALL (MOUSE_DRAGPANEL_SPLIT|MOUSE_DRAGPANEL_LEFT|MOUSE_DRAGPANEL_RIGHT|MOUSE_DRAGPANEL_BOTH)
 
 #define MAX_TITLE_SIZE 0x400
 
@@ -408,12 +408,13 @@ const ConEmuBorders
 	// None of above
 	CEB_NONE = 0;
 
-enum DragPanelBorder
+enum class DragPanelBorder : int
 {
-	DPB_NONE = 0,
-	DPB_SPLIT,    // драг влево/вправо
-	DPB_LEFT,     // высота левой
-	DPB_RIGHT,    // высота правой
+	None,
+	Split,    // Change width of left/right panels
+	Left,     // Left panel height
+	Right,    // Right panel height
+	Both,     // Change height of both panels
 };
 
 enum TrackMenuPlace

@@ -5035,7 +5035,7 @@ void CConEmuSize::OnSizePanels(COORD cr)
 	INPUT_RECORD r;
 	int nRepeat = 0;
 	wchar_t szKey[32];
-	bool bShifted = (mp_ConEmu->mouse.state & MOUSE_DRAGPANEL_SHIFT) && isPressed(VK_SHIFT);
+	bool bShifted = (mp_ConEmu->mouse.state & MOUSE_DRAGPANEL_BOTH) != MOUSE_DRAGPANEL_BOTH;
 	CRealConsole* pRCon = NULL;
 	CVConGuard VCon;
 	if (mp_ConEmu->GetActiveVCon(&VCon) >= 0)
