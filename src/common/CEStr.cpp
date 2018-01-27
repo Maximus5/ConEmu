@@ -508,3 +508,108 @@ void CEStr::GetPosFrom(const CEStr& arg)
 	lstrcpyn(ms_LastTokenSave, arg.ms_LastTokenSave, countof(ms_LastTokenSave));
 	#endif
 }
+
+
+
+// Minimalistic storage for ANSI/UTF8 strings
+CEStrA::CEStrA()
+	: ms_Val(nullptr)
+{
+}
+
+CEStrA::CEStrA(const char* asPtr)
+{
+	ms_Val = asPtr ? lstrdup(asPtr) : nullptr;
+}
+
+CEStrA::CEStrA(char*&& asPtr)
+	: ms_Val(nullptr)
+{
+	klSwap(ms_Val, asPtr);
+}
+
+CEStrA::CEStrA(const CEStrA& src)
+{
+	ms_Val = src.ms_Val ? lstrdup(src.ms_Val) : nullptr;
+}
+
+CEStrA::CEStrA(CEStrA&& src)
+	: ms_Val(nullptr)
+{
+	klSwap(ms_Val, src.ms_Val);
+}
+
+CEStrA& CEStrA::operator=(const char* asPtr)
+{
+	SafeFree(ms_Val);
+	ms_Val = asPtr ? lstrdup(asPtr) : nullptr;
+	return *this;
+}
+
+CEStrA& CEStrA::operator=(char*&& asPtr)
+{
+	SafeFree(ms_Val);
+	klSwap(ms_Val, asPtr);
+	return *this;
+}
+
+CEStrA& CEStrA::operator=(const CEStrA& src)
+{
+	SafeFree(ms_Val);
+	ms_Val = src.ms_Val ? lstrdup(src.ms_Val) : nullptr;
+	return *this;
+}
+
+CEStrA& CEStrA::operator=(CEStrA&& src)
+{
+	SafeFree(ms_Val);
+	klSwap(ms_Val, src.ms_Val);
+	return *this;
+}
+
+CEStrA::operator const char*() const
+{
+	return ms_Val;
+}
+
+CEStrA::operator bool() const
+{
+	return (ms_Val && *ms_Val);
+}
+
+const char* CEStrA::c_str(const char* asNullSubstitute /*= NULL*/) const
+{
+	return ms_Val ? ms_Val : asNullSubstitute;
+}
+
+INT_PTR CEStrA::length() const
+{
+	return ms_Val ? strlen(ms_Val) : 0;
+}
+
+void CEStrA::clear()
+{
+	SafeFree(ms_Val);
+}
+
+// Reset the buffer to new empty data of required size
+char* CEStrA::getbuffer(INT_PTR cchMaxLen)
+{
+	clear();
+	if (cchMaxLen >= 0)
+	{
+		ms_Val = (char*)malloc(cchMaxLen+1);
+		if (ms_Val)
+			ms_Val[0] = 0;
+	}
+	return ms_Val;
+}
+
+// Detach the pointer
+char* CEStrA::release()
+{
+	char* ptr = nullptr;
+	klSwap(ptr, ms_Val);
+	clear(); // JIC
+	return ptr;
+}

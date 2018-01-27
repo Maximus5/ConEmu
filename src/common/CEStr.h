@@ -126,3 +126,33 @@ public:
 	CEStr(const wchar_t* asStr1, const wchar_t* asStr2 = NULL, const wchar_t* asStr3 = NULL, const wchar_t* asStr4 = NULL, const wchar_t* asStr5 = NULL, const wchar_t* asStr6 = NULL, const wchar_t* asStr7 = NULL, const wchar_t* asStr8 = NULL, const wchar_t* asStr9 = NULL);
 	~CEStr();
 };
+
+// Minimalistic storage for ANSI/UTF8 strings
+struct CEStrA
+{
+public:
+	CEStrA();
+	CEStrA(const char* asPtr);
+	CEStrA(char*&& asPtr);
+
+	CEStrA(const CEStrA& src);
+	CEStrA(CEStrA&& src);
+
+	CEStrA& operator=(const char* asPtr);
+	CEStrA& operator=(char*&& asPtr);
+
+	CEStrA& operator=(const CEStrA& src);
+	CEStrA& operator=(CEStrA&& src);
+
+	operator const char*() const;
+	operator bool() const;
+	const char* c_str(const char* asNullSubstitute = NULL) const;
+	INT_PTR length() const;
+	void clear();
+
+	char* getbuffer(INT_PTR cchMaxLen);
+	char* release();
+
+public:
+	char* ms_Val;
+};
