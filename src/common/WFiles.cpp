@@ -318,6 +318,14 @@ bool MakePathProperCase(CEStr& rsPath)
 	return bFound;
 }
 
+int ReadTextFile(LPCWSTR asPath, DWORD cchMax, char*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode)
+{
+	wchar_t* ptrData = nullptr;
+	int iRc = ReadTextFile(asPath, cchMax, ptrData, rnChars, rnErrCode, (DWORD)-1);
+	rsBuffer = (char*)ptrData;
+	return iRc;
+}
+
 int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP /*= 0*/)
 {
 	HANDLE hFile = CreateFile(asPath, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);

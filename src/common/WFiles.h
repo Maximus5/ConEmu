@@ -44,6 +44,7 @@ bool FindFileName(LPCWSTR asPath, CEStr& rsName);
 bool MakePathProperCase(CEStr& rsPath);
 
 int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP = 0);
+int ReadTextFile(LPCWSTR asPath, DWORD cchMax, char*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode);
 int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen = -1, DWORD OutCP = CP_UTF8, bool WriteBOM = true, LPDWORD rnErrCode = NULL);
 
 bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);
