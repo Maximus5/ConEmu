@@ -59,6 +59,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #ifdef _DEBUG
+#include "Registry.h"
+#endif
+
+#ifdef _DEBUG
+
+// Hide from global namespace
+namespace {
+
 void UnitMaskTests()
 {
 	struct {
@@ -486,6 +494,37 @@ void DebugJsonTest()
 	b = v2.getItem(L"en", v4);
 }
 
+void XmlValueConvertTest()
+{
+	struct xml_test { const char* sType; const char* sData; DWORD expected; bool success; };
+	xml_test tests[] = {
+		{"ulong", "0", 0, true },
+		{"ulong", "0123456789", 123456789, true },
+		{"dword", "0", 0, true },
+		{"dword", "12345678", 0x12345678, true },
+		{"dword", "eA7bfE30", 0xeA7bfE30, true },
+		{"long", "0", 0, true },
+		{"long", "1234567891", 1234567891, true },
+		{"long", "-1234567891", (DWORD)-1234567891, true },
+		{"hex", "00", 0x00, true },
+		{"hex", "AB", 0xAB, true },
+		{"hex", "AB,CD", 0xCDAB, true },
+		{"hex", "ABCD", 0xAB, true }, // data is partially incorrect (no commas), we shall take only "AB"
+		{"hex", "A,B,C,D", 0x0D0C0B0A, true },
+	};
+
+	DWORD value;
+	bool rc;
+	for (const auto& test : tests)
+	{
+		value = 0x12345678;
+		rc = SettingsXML::ConvertData(test.sType, test.sData, (LPBYTE)&value, sizeof(value));
+		_ASSERTE(rc == test.success && (!test.success || (value == test.expected)));
+	}
+}
+
+} // end of namespace
+
 void DebugUnitTests()
 {
 	DebugNeedCmdUnitTests();
@@ -510,6 +549,7 @@ void DebugUnitTests()
 	DebugMapsTests();
 	DebugArrayTests();
 	DebugJsonTest();
+	XmlValueConvertTest();
 }
 #endif
 
