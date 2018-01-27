@@ -7,3 +7,6 @@
 [submodule "src/modules/json-parser"]
 	path = src/modules/json-parser
 	url = https://github.com/Maximus5/json-parser.git
+[submodule "src/modules/rapidxml"]
+	path = src/modules/rapidxml
+	url = https://github.com/Maximus5/RapidXml.git

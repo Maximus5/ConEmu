@@ -28,10 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
-#include <msxml.h>
-#endif
-
 #ifndef LPCBYTE
 #define LPCBYTE const BYTE*
 #endif
@@ -47,8 +43,9 @@ struct SettingsBase
 		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) = 0; // required for registry type validation (string)
 
 		virtual void Delete(const wchar_t *regName) = 0;
+		virtual void DeleteKey(const wchar_t *regName) = 0;
 
-		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize) = 0;
+		virtual void Save(const wchar_t *regName, LPCBYTE value, const DWORD nType, const DWORD nSize) = 0;
 
 		// Helpers: Don't change &value if it was not loaded
 		bool Load(const wchar_t *regName, char  &value);
@@ -109,9 +106,10 @@ struct SettingsRegistry : public SettingsBase
 		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) override; // нада, для проверки валидности типа реестра
 
 		virtual void Delete(const wchar_t *regName) override;
+		virtual void DeleteKey(const wchar_t *regName) override;
 
 		//virtual void Save(const wchar_t *regName, const wchar_t *value) override; // value = _T(""); // сюда мог придти и NULL
-		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize) override;
+		virtual void Save(const wchar_t *regName, LPCBYTE value, const DWORD nType, const DWORD nSize) override;
 
 	public:
 		SettingsRegistry();
@@ -133,65 +131,75 @@ struct SettingsINI : public SettingsBase
 		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) override; // нада, для проверки валидности типа реестра
 
 		virtual void Delete(const wchar_t *regName) override;
+		virtual void DeleteKey(const wchar_t *regName) override;
 
 		//virtual void Save(const wchar_t *regName, const wchar_t *value) override; // value = _T(""); // сюда мог придти и NULL
-		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize) override;
+		virtual void Save(const wchar_t *regName, LPCBYTE value, const DWORD nType, const DWORD nSize) override;
 
 	public:
 		SettingsINI(const SettingsStorage& Storage);
 		virtual ~SettingsINI();
 };
 
-#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
+namespace rapidxml
+{
+    // Forward declarations
+    template<class Ch> class xml_node;
+    template<class Ch> class xml_attribute;
+    template<class Ch> class xml_document;
+};
+
 struct SettingsXML : public SettingsBase
 {
 	protected:
-		IXMLDOMDocument* mp_File;
-		IXMLDOMNode* mp_Key;
-		bool mb_Modified; // Save was called at least once (data may be was not changed)
-		bool mb_DataChanged; // Data was changed
-		void SetDataChanged();
-		int mi_Level;
-		bool mb_Empty;
-		bool mb_KeyEmpty;
-		uint mn_access;
-		//wchar_t ms_LevelPrefix[64];
-		//BSTR mbs_LevelPrefix, mbs_LevelSuffix;
-		static IXMLDOMDocument* CreateDomDocument(wchar_t*& pszErr);
-		bool OpenStorage(uint access, wchar_t*& pszErr);
-		void CloseStorage();
-		void TouchKey(IXMLDOMNode* apKey);
+		using document = rapidxml::xml_document<char>;
+		using node = rapidxml::xml_node<char>;
+		using attribute = rapidxml::xml_attribute<char>;
+		char* mp_Utf8Data = nullptr;
+		document* mp_File = nullptr;
+		node* mp_Key = nullptr;
+		bool mb_Modified = false; // Save was called at least once (data may be or may be not changed)
+		bool mb_DataChanged = false; // Data of the mp_Key was changed - set "modified" attribute to current datetime in CloseKey
+		bool mb_Empty = false;
+		uint mn_access = 0;
 	public:
-		static bool IsXmlAllowed();
-		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE) override;
-		virtual void CloseKey() override;
+		static bool IsXmlAllowed() noexcept;
+		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE) noexcept override;
+		virtual void CloseKey() noexcept override;
 
-		virtual bool Load(const wchar_t *regName, wchar_t **value) override;
-		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize) override;
-		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) override; // нада, для проверки валидности типа реестра
+		virtual bool Load(const wchar_t *regName, wchar_t **value) noexcept override;
+		virtual bool Load(const wchar_t *regName, LPBYTE value, DWORD nSize) noexcept override;
+		virtual bool Load(const wchar_t *regName, wchar_t *value, int maxLen) noexcept override; // нада, для проверки валидности типа реестра
 
-		virtual void Delete(const wchar_t *regName) override;
+		virtual void Delete(const wchar_t *regName) noexcept override;
+		virtual void DeleteKey(const wchar_t *regName) noexcept override;
 
-		//virtual void Save(const wchar_t *regName, const wchar_t *value) override; // value = _T(""); // сюда мог придти и NULL
-		virtual void Save(const wchar_t *regName, LPCBYTE value, DWORD nType, DWORD nSize) override;
+		virtual void Save(const wchar_t *regName, LPCBYTE value, const DWORD nType, const DWORD nSize) noexcept override;
+
+		static bool ConvertData(const char* sType, const char* sData, LPBYTE value, DWORD nSize) noexcept;
 
 	protected:
-		IXMLDOMNode* FindItem(IXMLDOMNode* apFrom, const wchar_t* asType, const wchar_t* asName, bool abAllowCreate);
-		bool SetAttr(IXMLDOMNode* apNode, const wchar_t* asName, const wchar_t* asValue);
-		bool SetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, const wchar_t* asName, const wchar_t* asValue);
+		void SetDataChanged();
 
-		bool SetMultiLine(IXMLDOMNode* apNode, const wchar_t* asValue, long nAllLen);
-		void ClearChildrenTail(IXMLDOMNode* apNode, IXMLDOMNode* apFirstClear);
+		bool OpenStorage(uint access, wchar_t*& pszErr);
+		void CloseStorage() noexcept;
+		void TouchKey(node* apKey) noexcept;
 
-		BSTR GetAttr(IXMLDOMNode* apNode, const wchar_t* asName);
-		BSTR GetAttr(IXMLDOMNode* apNode, IXMLDOMNamedNodeMap* apAttrs, const wchar_t* asName);
+		static LPCWSTR utf2wcs(const char* utf8, CEStr& wc);
+		const char* wcs2utf(const wchar_t* wc, CEStrA& str) const;
+		const char* wcs2utf(const wchar_t* wc);
 
-		void AppendIndent(IXMLDOMNode* apFrom, int nLevel);
-		void AppendNewLine(IXMLDOMNode* apFrom);
-		void AppendText(IXMLDOMNode* apFrom, BSTR asText);
+		node* FindItem(node* apFrom, const wchar_t* asType, const wchar_t* asName, bool abAllowCreate);
+		void DeleteImpl(const wchar_t *regName, const wchar_t *asType) noexcept;
+
+		bool SetMultiLine(node* apNode, const wchar_t* asValue, long nAllLen);
+		void ClearChildrenTail(node* apNode, node* apFirstClear, const char* nodeType);
+
+		const char* GetAttr(node* apNode, const char* asName);
+		bool SetAttr(node* apNode, const char* asName, const wchar_t* asValue);
+		bool SetAttr(node* apNode, const char* asName, const char* asValue);
 
 	public:
 		SettingsXML(const SettingsStorage& Storage);
 		virtual ~SettingsXML();
 };
-#endif
