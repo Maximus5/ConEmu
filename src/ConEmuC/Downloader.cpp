@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 LONG gnIsDownloading = 0;
 
+static bool gbNoLog = false;
 static bool gbVerbose = false;
 static bool gbVerboseInitialized = false;
 
@@ -1651,6 +1652,9 @@ bool PrintToConsole(HANDLE hCon, LPCWSTR asData, int anLen)
 
 static void PrintDownloadLog(LPCWSTR pszLabel, LPCWSTR pszInfo)
 {
+	if (gbNoLog)
+		return;
+
 	SYSTEMTIME st = {}; GetLocalTime(&st);
 	wchar_t szTime[80];
 	swprintf_c(szTime, L"%i:%02i:%02i.%03i{%u} ",
@@ -1849,6 +1853,8 @@ int DoDownload(LPCWSTR asCmdLine)
 		{L"agent", &pszAgent},
 		// -debug - may be used to show console and print progress even if output is redirected
 		{L"debug", NULL, &gbVerbose}, {L"verbose", NULL, &gbVerbose},
+		// -nolog - don't write any logging messages to console
+		{L"nolog", NULL, &gbNoLog},
 		{NULL}
 	};
 
