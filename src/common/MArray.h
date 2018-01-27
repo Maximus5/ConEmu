@@ -303,7 +303,7 @@ class MArray
 			{
 				if (_nCount>mn_MaxSize)
 				{
-					INT_PTR n1=min(4096,(_nCount-mn_MaxSize));
+					INT_PTR n1=(_nCount-mn_MaxSize);
 					addsize(max(n1,10));
 				}
 				// 01.03.2005 !!! Only allocate memory, Not initialize values!
