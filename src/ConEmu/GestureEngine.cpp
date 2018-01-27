@@ -496,7 +496,7 @@ void CGestures::ProcessZoom(HWND hWnd, const double dZoomFactor, const LONG lZx,
 	{
 		if (dZoomFactor > 1.01)
 		{
-			int nDelta = (1 * dZoomFactor);
+			int nDelta = (int)(1 * dZoomFactor);
 			if (nDelta < 1)
 				nDelta = 1;
 			else if (nDelta > 8)
@@ -506,7 +506,7 @@ void CGestures::ProcessZoom(HWND hWnd, const double dZoomFactor, const LONG lZx,
 		}
 		else if (dZoomFactor < 0.99)
 		{
-			int nDelta = (1.0 / dZoomFactor);
+			int nDelta = (int)(1.0 / dZoomFactor);
 			if (nDelta < 1)
 				nDelta = 1;
 			else if (nDelta > 8)
