@@ -97,19 +97,19 @@ endlocal
 goto :EOF
 
 :test_cl_luck_14
-call cecho /yellow "  VC14 cl test %~1"
+call cecho /yellow "  VC15 cl test %~1"
 setlocal
-call "%~dp0..\vc.build.set.x32.cmd" 14 > nul
+call "%~dp0..\vc.build.set.x32.cmd" 15 > nul
 if errorlevel 1 goto vars_err
 set VS_VERSION > "build-out.log"
-call :build_std /Fe"vc-test-14.exe" %*
+call :build_std /Fe"vc-test-15.exe" %*
 if errorlevel 1 (
   echo VC%VS_VERSION%: %* 1>> "tests.fail"
   type "build-out.log" >> "tests.fail"
   echo/ >> "tests.fail"
   call cecho /red "  CL FAILED, NOT EXPECTED"
 ) else (
-  call :run_test vc-test-14.exe
+  call :run_test vc-test-15.exe
 )
 endlocal
 goto :EOF
@@ -148,9 +148,9 @@ endlocal
 goto :EOF
 
 :test_cl_fail_14
-call cecho /yellow "  VC14 cl test %~1"
+call cecho /yellow "  VC15 cl test %~1"
 setlocal
-call "%~dp0..\vc.build.set.x32.cmd" 14 > nul
+call "%~dp0..\vc.build.set.x32.cmd" 15 > nul
 if errorlevel 1 goto vars_err
 set VS_VERSION > "build-out.log"
 call :build_err %*

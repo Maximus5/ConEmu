@@ -7,10 +7,11 @@ rem   10: Visual Studio 2010
 rem   11: Visual Studio 2012
 rem   12: Visual Studio 2013
 rem   14: Visual Studio 2015
+rem   15: Visual Studio 2017
 rem Script supports optional arguments:
 rem   [VS_VERSION [full|nofull] [core] [x86|x64] [noclean] [dosign|nosign]]
 rem Example:
-rem   vc.build.release.cmd 14 nofull
+rem   vc.build.release.cmd 15 nofull
 
 setlocal
 cd /d "%~dp0"

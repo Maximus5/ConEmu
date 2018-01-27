@@ -56,9 +56,11 @@ goto done
 
 :ver_15
 set VS_COMNTOOLS=
+pushd "%~dp0"
 for /f "usebackq tokens=1* delims=: " %%i in (`tools\vswhere -version %VS_VERSION% -requires Microsoft.Component.MSBuild`) do (
   if /i "%%i"=="installationPath" set VS_COMNTOOLS=%%j
 )
+popd
 goto done
 
 :done

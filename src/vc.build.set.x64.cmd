@@ -10,6 +10,13 @@ if NOT defined VS_COMNTOOLS (
 
 set LIB=
 
+:aux
+if exist "%VS_COMNTOOLS%\VC\Auxiliary\Build\vcvars64.bat" (
+  echo trying vcvars64.bat
+  call "%VS_COMNTOOLS%\VC\Auxiliary\Build\vcvars64.bat"
+  if defined LIB goto next
+)
+
 :x86_amd64
 if exist "%VS_COMNTOOLS%..\..\VC\BIN\x86_amd64\vcvarsx86_amd64.bat" (
   echo trying x86_amd64\vcvarsx86_amd64.bat
