@@ -3797,9 +3797,9 @@
       "id": 1566 }
     ,
     "cbFontMonitorDpi": {
-      "en": "Admit monitor dpi with font size",
+      "en": "Adjust font size for monitor DPI",
       "ru": "Учитывать DPI монитора в размере шрифта",
-      "zh": "确定字体大小时考虑显示器分辨率",
+      "_zh": "确定字体大小时考虑显示器分辨率",
       "id": 2691 }
     ,
     "cbFullscreenFixedConSize": {

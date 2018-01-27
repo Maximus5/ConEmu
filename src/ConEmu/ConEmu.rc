@@ -123,7 +123,7 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,33,177,8
     CONTROL         "Treat font height as device units",cbFontAsDeviceUnits,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,47,177,8
-    CONTROL         "Admit monitor dpi with font size",cbFontMonitorDpi,
+    CONTROL         "Adjust font size for monitor DPI",cbFontMonitorDpi,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,59,177,8
     CONTROL         "&Monospace",cbMonospace,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,195,72,177,8
     CONTROL         "Compress long strings to fit space",cbCompressLongStrings,
