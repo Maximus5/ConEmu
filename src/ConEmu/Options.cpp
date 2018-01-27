@@ -1380,6 +1380,8 @@ bool Settings::SaveCmdTasks(SettingsBase* reg)
 
 	bool lbRc = false;
 	BOOL lbOpened = FALSE;
+	int OldTaskCount = 0;
+	int NewTaskCount = 0;
 	wchar_t szCmdKey[MAX_PATH+64];
 	wcscpy_c(szCmdKey, gpSetCls->GetConfigPath());
 	wcscat_c(szCmdKey, L"\\Tasks");
@@ -1389,20 +1391,19 @@ bool Settings::SaveCmdTasks(SettingsBase* reg)
 	if (lbOpened)
 	{
 		lbRc = true;
+		reg->Load(L"Count", OldTaskCount);
 		reg->Save(L"Count", CmdTaskCount);
 		reg->CloseKey();
 	}
 
 	if (lbOpened && CmdTasks && CmdTaskCount > 0)
 	{
-		int nProcessed = 0;
-		//int nSucceeded = 0;
 		for (int i = 0; i < CmdTaskCount; i++)
 		{
 			if (CmdTasks[i] == NULL)
 				continue;
 
-			swprintf_c(pszCmdKey, 32/*#SECURELEN*/, L"\\Task%i", nProcessed+1); // 1-based
+			swprintf_c(pszCmdKey, 32/*#SECURELEN*/, L"\\Task%i", NewTaskCount+1); // 1-based
 
 			lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
 			if (!lbOpened)
@@ -1412,24 +1413,38 @@ bool Settings::SaveCmdTasks(SettingsBase* reg)
 			else
 			{
 				if (CmdTasks[i]->SaveCmdTask(reg, false/*CmdTasks[i] == StartupTask*/))
-					nProcessed++;
+					NewTaskCount++;
 
 				reg->CloseKey();
 			}
 		}
-		// invalid tasks were skipped?
-		if (nProcessed != CmdTaskCount)
+	}
+
+	// Maintain list and count
+	if (lbOpened && ((NewTaskCount != CmdTaskCount) || (NewTaskCount < OldTaskCount)))
+	{
+		// Update the "Count" value
+		*pszCmdKey = 0;
+		lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
+		if (lbOpened)
 		{
-			// Update the "Count" value
-			// TODO: remove Count at all, use enumeration of children keys
-			*pszCmdKey = 0;
-			lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
-			if (lbOpened)
+			lbRc = true;
+
+			// invalid tasks were skipped?
+			if (NewTaskCount != CmdTaskCount)
 			{
-				lbRc = true;
-				reg->Save(L"Count", nProcessed);
-				reg->CloseKey();
+				reg->Save(L"Count", NewTaskCount);
 			}
+
+			// Trim obsolete tasks
+			wchar_t szDelTaskKey[32];
+			for (int i = NewTaskCount; i < OldTaskCount; ++i)
+			{
+				swprintf_c(szDelTaskKey, L"Task%i", i+1); // 1-based
+				reg->DeleteKey(szDelTaskKey);
+			}
+
+			reg->CloseKey();
 		}
 	}
 
