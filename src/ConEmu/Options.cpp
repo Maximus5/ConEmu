@@ -3356,6 +3356,7 @@ void Settings::SaveFindOptions(SettingsBase* reg/* = NULL*/)
 void Settings::SaveAppsSettings(SettingsBase* reg)
 {
 	BOOL lbOpened = FALSE;
+	int OldAppCount = 0;
 	wchar_t szAppKey[MAX_PATH+64];
 	wcscpy_c(szAppKey, gpSetCls->GetConfigPath());
 	wcscat_c(szAppKey, L"\\Apps");
@@ -3364,6 +3365,7 @@ void Settings::SaveAppsSettings(SettingsBase* reg)
 	lbOpened = reg->OpenKey(szAppKey, KEY_WRITE);
 	if (lbOpened)
 	{
+		reg->Load(L"Count", OldAppCount);
 		reg->Save(L"Count", AppCount);
 		reg->CloseKey();
 	}
@@ -3379,6 +3381,21 @@ void Settings::SaveAppsSettings(SettingsBase* reg)
 			reg->Save(L"AppNames", Apps[i]->AppNames);
 			reg->Save(L"Elevated", Apps[i]->Elevated);
 			SaveAppSettings(reg, Apps[i]/*, Цвета сохраняются как Имя палитры*/);
+			reg->CloseKey();
+		}
+	}
+
+	if (OldAppCount > AppCount)
+	{
+		*pszAppKey = 0;
+		if (reg->OpenKey(szAppKey, KEY_WRITE))
+		{
+			wchar_t szDelAppKey[20];
+			for (int i = AppCount; i < OldAppCount; i++)
+			{
+				swprintf_c(szDelAppKey, L"App%i", i+1);
+				reg->DeleteKey(szDelAppKey);
+			}
 			reg->CloseKey();
 		}
 	}
