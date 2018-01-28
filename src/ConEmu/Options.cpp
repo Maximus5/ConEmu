@@ -1644,7 +1644,7 @@ void Settings::SavePalettes(SettingsBase* reg)
 	wcscat_c(szColorKey, L"\\Colors");
 
 	// Write "Count" before first "Palette"
-	int UserCount = 0;
+	int UserPaletteCount = 0, OldPaletteCount = 0;
 	lbOpened = reg->OpenKey(szColorKey, KEY_WRITE);
 	if (lbOpened)
 	{
@@ -1652,27 +1652,28 @@ void Settings::SavePalettes(SettingsBase* reg)
 		{
 			if (!Palettes[i] || Palettes[i]->bPredefined)
 				continue; // Системные - не сохраняем
-			UserCount++;
+			UserPaletteCount++;
 		}
-		reg->Save(L"Count", UserCount);
+		reg->Load(L"Count", OldPaletteCount);
+		reg->Save(L"Count", UserPaletteCount);
 		reg->CloseKey();
 	}
 
 	wchar_t* pszColorKey = szColorKey + lstrlen(szColorKey);
 
-	UserCount = 0;
+	UserPaletteCount = 0;
 
 	for (int i = 0; i < PaletteCount; i++)
 	{
 		if (!Palettes[i] || Palettes[i]->bPredefined)
 			continue; // Системные - не сохраняем
 
-		swprintf_c(pszColorKey, 32/*#SECURELEN*/, L"\\Palette%i", UserCount+1); // 1-based
+		swprintf_c(pszColorKey, 32/*#SECURELEN*/, L"\\Palette%i", UserPaletteCount+1); // 1-based
 
 		lbOpened = reg->OpenKey(szColorKey, KEY_WRITE);
 		if (lbOpened)
 		{
-			UserCount++;
+			UserPaletteCount++;
 
 			reg->Save(L"Name", Palettes[i]->pszName);
 			reg->Save(L"ExtendColors", Palettes[i]->isExtendColors);
@@ -1692,6 +1693,21 @@ void Settings::SavePalettes(SettingsBase* reg)
 			}
 
 			reg->CloseKey();
+		}
+	}
+
+	// Clear the tail
+	if (OldPaletteCount > UserPaletteCount)
+	{
+		*pszColorKey = 0;
+		if (reg->OpenKey(szColorKey, KEY_WRITE))
+		{
+			wchar_t szDelPalette[32];
+			for (int i = UserPaletteCount; i < OldPaletteCount; ++i)
+			{
+				swprintf_c(szDelPalette, L"Palette%i", i+1); // 1-based
+				reg->DeleteKey(szDelPalette);
+			}
 		}
 	}
 
