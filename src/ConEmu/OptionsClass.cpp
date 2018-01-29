@@ -294,7 +294,7 @@ CSettings::CSettings()
 int CSettings::GetOverallDpi()
 {
 	// Must be called during initialization only
-	_ASSERTEX(!gpConEmu || gpConEmu->mn_StartupFinished < CConEmuMain::ss_PostCreate2Called);
+	_ASSERTEX(!gpConEmu || gpConEmu->GetStartupStage() < CConEmuMain::ss_PostCreate2Called);
 	CDpiAware::QueryDpiForMonitor(NULL, &_dpi_all);
 	_ASSERTE(_dpi_all.Xdpi >= 96 && _dpi_all.Ydpi >= 96);
 	_dpi.SetDpi(_dpi_all);
@@ -860,7 +860,7 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 void CSettings::SettingsPreSave()
 {
 	// Do not get data from LogFont if it was not created yet
-	if (gpConEmu->mn_StartupFinished >= CConEmuMain::ss_Started)
+	if (gpConEmu->GetStartupStage() >= CConEmuMain::ss_Started)
 	{
 		gpFontMgr->SettingsPreSave();
 	}

@@ -435,7 +435,7 @@ LONG CFontMgr::FontHeight()
 	if (LogFont.lfHeight <= 0)
 	{
 		// Сюда мы должны попадать только для примерных расчетов во время старта!
-		_ASSERTE(LogFont.lfHeight>0 || gpConEmu->mn_StartupFinished<=CConEmuMain::ss_Starting);
+		_ASSERTE(LogFont.lfHeight>0 || gpConEmu->GetStartupStage()<=CConEmuMain::ss_Starting);
 		int iEvalHeight = 0;
 		if (gpSet->FontSizeY)
 		{
@@ -541,7 +541,7 @@ LONG CFontMgr::FontWidth()
 	if (LogFont.lfWidth <= 0)
 	{
 		// Сюда мы должны попадать только для примерных расчетов во время старта!
-		_ASSERTE(LogFont.lfWidth>0 || gpConEmu->mn_StartupFinished<=CConEmuMain::ss_Starting);
+		_ASSERTE(LogFont.lfWidth>0 || gpConEmu->GetStartupStage()<=CConEmuMain::ss_Starting);
 		int iEvalWidth = FontHeight() * 10 / 18;
 		if (iEvalWidth)
 			return _abs(iEvalWidth);
@@ -2448,7 +2448,7 @@ void CFontMgr::RecreateFont(bool abReset, bool abRecreateControls /*= false*/)
 		gpSetCls->UpdateFontInfo();
 	}
 
-	if (gpConEmu->mn_StartupFinished >= CConEmuMain::ss_Started)
+	if (gpConEmu->GetStartupStage() >= CConEmuMain::ss_Started)
 	{
 		gpConEmu->OnPanelViewSettingsChanged(TRUE);
 	}

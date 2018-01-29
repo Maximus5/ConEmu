@@ -245,7 +245,7 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 		*pIsCmdList = false;
 
 	// User've choosed default task?
-	if (mp_ConEmu->mn_StartupFinished >= CConEmuMain::ss_Started)
+	if (mp_ConEmu->GetStartupStage() >= CConEmuMain::ss_Started)
 	{
 		if ((pszCmd = GetDefaultTask()) != NULL)
 			return pszCmd;
@@ -280,7 +280,7 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 	}
 
 	// User've choosed default task?
-	if (mp_ConEmu->mn_StartupFinished < CConEmuMain::ss_Started)
+	if (mp_ConEmu->GetStartupStage() < CConEmuMain::ss_Started)
 	{
 		if ((pszCmd = GetDefaultTask()) != NULL)
 			return pszCmd;

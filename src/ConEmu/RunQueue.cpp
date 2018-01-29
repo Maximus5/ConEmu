@@ -69,7 +69,7 @@ CRunQueue::~CRunQueue()
 
 void CRunQueue::StartQueue()
 {
-	_ASSERTE(gpConEmu->mn_StartupFinished >= CConEmuMain::ss_CreateQueueReady);
+	_ASSERTE(gpConEmu->GetStartupStage() >= CConEmuMain::ss_CreateQueueReady);
 
 	if (mh_Thread)
 	{
@@ -268,7 +268,7 @@ void CRunQueue::ProcessRunQueue()
 void CRunQueue::AdvanceQueue()
 {
 	// If Startup was not completed yet - just do nothing
-	if (gpConEmu->mn_StartupFinished < CConEmuMain::ss_CreateQueueReady)
+	if (gpConEmu->GetStartupStage() < CConEmuMain::ss_CreateQueueReady)
 		return;
 
 	// Nothing to do?

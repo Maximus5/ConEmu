@@ -151,7 +151,7 @@ void CDefaultTerminal::StartGuiDefTerm(bool bManual, bool bNoThreading /*= false
 	if (!bManual)
 	{
 		// Refresh settings in the registry
-		_ASSERTE(gpConEmu->mn_StartupFinished == CConEmuMain::ss_VConAreCreated || gpConEmu->mn_StartupFinished == CConEmuMain::ss_CreateQueueReady);
+		_ASSERTE(gpConEmu->GetStartupStage() == CConEmuMain::ss_VConAreCreated || gpConEmu->GetStartupStage() == CConEmuMain::ss_CreateQueueReady);
 		ApplyAndSave(true, true);
 	}
 

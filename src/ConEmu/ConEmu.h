@@ -280,7 +280,11 @@ class CConEmuMain
 			ss_VConStarted,
 			ss_Destroying,
 			ss_Destroyed,
-		} mn_StartupFinished = ss_Starting;
+		};
+	private:
+		StartupStage mn_StartupFinished = ss_Starting;
+	public:
+		StartupStage GetStartupStage() const;
 
 		struct
 		{

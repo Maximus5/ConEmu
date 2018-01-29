@@ -41,7 +41,7 @@ bool HooksUnlockerProc(bool bUnlock)
 	if (bUnlock)
 	{
 		// Unlock keyboard hooks to avoid problem with debuggers
-		if (gpConEmu && (gpConEmu->mn_StartupFinished > CConEmuMain::ss_Starting))
+		if (gpConEmu && (gpConEmu->GetStartupStage() > CConEmuMain::ss_Starting))
 		{
 			gpConEmu->UnRegisterHooks();
 			lbUnlocked = true;

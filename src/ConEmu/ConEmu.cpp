@@ -8366,6 +8366,11 @@ void CConEmuMain::OnTaskbarSettingsChanged()
 	apiSetForegroundWindow(ghOpWnd ? ghOpWnd : ghWnd);
 }
 
+CConEmuMain::StartupStage CConEmuMain::GetStartupStage() const
+{
+	return mn_StartupFinished;
+}
+
 bool CConEmuMain::InCreateWindow()
 {
 	return (mn_StartupFinished < ss_VConAreCreated);
