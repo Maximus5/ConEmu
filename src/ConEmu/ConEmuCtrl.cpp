@@ -1402,6 +1402,8 @@ void CConEmuCtrl::StatusCommand(ConEmuStatusCommand nStatusCmd, int IntParm, LPC
 			else
 				gpSet->isStatusBarShow = !gpSet->isStatusBarShow;
 
+			gpConEmu->RequestRecalc();
+
 			if (!gpConEmu->isZoomed() && !gpConEmu->isFullScreen())
 			{
 				CVConGroup::SyncConsoleToWindow(&rcIdeal, true);
