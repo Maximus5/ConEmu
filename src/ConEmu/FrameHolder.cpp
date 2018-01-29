@@ -747,8 +747,32 @@ bool CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 
 	RecalculateFrameSizes();
 
-	DBGFUNCTION("WM_NCPAINT(default1)");
-	lResult = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+	// #SIZE_TODO During restore minimized window we get artifacts - 2018-01-28_20-11-29.png
+
+	//if (!IsWin10() || !mp_ConEmu->isCaptionHidden())
+	{
+		DBGFUNCTION("WM_NCPAINT(default1)");
+		lResult = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+	}
+	//else
+	//{
+	//	HDC hdc = GetDCEx(hWnd, (HRGN)wParam, DCX_WINDOW|DCX_INTERSECTRGN);
+	//	if (hdc)
+	//	{
+	//		#ifdef _DEBUG
+	//		RECT rcWnd{}; GetWindowRect(hWnd, &rcWnd);
+	//		OffsetRect(&rcWnd, -rcWnd.left, -rcWnd.top);
+	//		FillRgn(hdc, (HRGN)wParam, (HBRUSH)GetStockObject(WHITE_BRUSH));
+	//		#endif
+	//		ReleaseDC(hWnd, hdc);
+	//	}
+	//	mp_ConEmu->InvalidateAll();
+	//	if (mp_ConEmu->mp_TabBar)
+	//	{
+	//		mp_ConEmu->mp_TabBar->Invalidate();
+	//		mp_ConEmu->mp_TabBar->RePaint();
+	//	}
+	//}
 
 	if (gpSet->isLogging(2)) LogString(L"WM_NCPAINT - end");
 	return true;
@@ -822,7 +846,7 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	// Если nCaption == 0, то при fdt_Aero текст в заголовке окна не отрисовывается
 	DEBUGTEST(int nCaption = GetCaptionHeight());
 
-	bool bCallDefProc = true;
+	bool bCallDefProc = false;
 
 	RECT rcWnd = {}, rcClient = {};
 
@@ -857,24 +881,41 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		if (bCallDefProc)
 		{
 			lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+			rcClient = pParm->rgrc[0];
 		}
 		else
 		{
-		// Need screen coordinates!
-		const RECT rcRealClient = mp_ConEmu->RealClientRect();
-		rcClient = rcRealClient;
-		OffsetRect(&rcClient, rcWnd.left, rcWnd.top);
+			// pParm->rgrc[0] contains the coordinates of the new client rectangle resulting from the move or resize
+			// pParm->rgrc[1] rectangle contains the valid destination rectangle
+			// pParm->rgrc[2] rectangle contains the valid source rectangle
 
-		// pParm->rgrc[0] contains the coordinates of the new client rectangle resulting from the move or resize
-		// pParm->rgrc[1] rectangle contains the valid destination rectangle
-		// pParm->rgrc[2] rectangle contains the valid source rectangle
-		pParm->rgrc[0] = rcClient;
-		// Mark as valid - only client area. Let system to redraw the frame and caption.
-		pParm->rgrc[1] = mp_ConEmu->ClientRect();
-		OffsetRect(&pParm->rgrc[1], rcWnd.left + rcRealClient.left, rcWnd.top + rcRealClient.top);
-		// Source valid rectangle
-		pParm->rgrc[2] = oldRect.client;
-		OffsetRect(&pParm->rgrc[2], oldRect.window.left + oldRect.real_client.left, oldRect.window.top + oldRect.real_client.top);
+			if (SizeInfo::IsRectMinimized(rcWnd))
+			{
+				rcClient = RECT{rcWnd.left, rcWnd.top, rcWnd.left, rcWnd.top};
+				pParm->rgrc[0] = rcClient;
+			}
+			else
+			{
+				// Need screen coordinates!
+				const RECT rcRealClient = mp_ConEmu->RealClientRect();
+				rcClient = rcRealClient;
+				OffsetRect(&rcClient, rcWnd.left, rcWnd.top);
+
+				pParm->rgrc[0] = rcClient;
+
+				// When restoring minimized window?
+				if (!SizeInfo::IsRectMinimized(r[1]))
+				{
+					// Mark as valid - only client area. Let system to redraw the frame and caption.
+					pParm->rgrc[1] = mp_ConEmu->ClientRect();
+					OffsetRect(&pParm->rgrc[1], rcWnd.left + rcRealClient.left, rcWnd.top + rcRealClient.top);
+					#if 0 // leave source valid rectangle unchanged
+					// Source valid rectangle
+					pParm->rgrc[2] = oldRect.client;
+					OffsetRect(&pParm->rgrc[2], oldRect.window.left + oldRect.real_client.left, oldRect.window.top + oldRect.real_client.top);
+					#endif
+				}
+			}
 		}
 
 		if (bAllowPreserveClient)
@@ -887,6 +928,8 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		{
 			lResult = WVR_REDRAW;
 		}
+
+		lResult = 0;
 	}
 	else
 	{
@@ -908,6 +951,7 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 		{
 			// Call default function JIC
 			lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
+			rcClient = *nccr;
 		}
 		else
 		{

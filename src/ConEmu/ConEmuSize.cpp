@@ -1672,6 +1672,15 @@ void CConEmuSize::ReloadMonitorInfo()
 				}
 				// Correct FrameWidth taking into account hidden frame parts
 				fi.VisibleFrameWidth = klMax<int>(1, (fi.FrameMargins.left - fi.Win10Stealthy.left));
+				// Due to the bug of DWM(?) we can't eliminate the top gap in caption-less mode
+				// https://i.imgur.com/jxDPT3q.png
+				// #SIZE_TODO Try DwmExtendFrameIntoClientArea to avoid bug?
+				//// Correct top margin for caption-less window
+				//if (c)
+				//{
+				//	_ASSERTE(fi.Win10Stealthy.top==0 && fi.VisibleFrameWidth>0);
+				//	fi.FrameMargins.top = fi.VisibleFrameWidth + fi.Win10Stealthy.top;
+				//}
 			}
 		}
 	}
@@ -4515,7 +4524,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	swprintf_c(szInfo, L"SetWindowMode exec: NewMode=%s", GetWindowModeName(NewMode));
 	if (!LogString(szInfo)) { DEBUGSTRWMODE(szInfo); }
 
-	mp_ConEmu->RefreshWindowStyles(); // inMode из параметров убрал, т.к. WindowMode уже изменен
+	// 180128 - Removed because this introduces drawing glitches during maximization (toolbar is painted in wrong position, etc.)
+	//mp_ConEmu->RefreshWindowStyles(); // inMode из параметров убрал, т.к. WindowMode уже изменен
 
 	DEBUGTEST(BOOL bIsVisible = IsWindowVisible(ghWnd););
 

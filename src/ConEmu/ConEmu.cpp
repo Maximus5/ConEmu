@@ -8138,6 +8138,7 @@ void CConEmuMain::RefreshWindowStyles()
 	DWORD nNewStyle = FixWindowStyle(nStyle, WindowMode);
 	DWORD nStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
 	bool bNeedCorrect = (!isIconic() && (WindowMode != wmFullScreen)) && !m_QuakePrevSize.bWaitReposition;
+	bool bChanged = false;
 
 	if (bNeedCorrect || (nNewStyle != nStyle))
 	{
@@ -8177,6 +8178,7 @@ void CConEmuMain::RefreshWindowStyles()
 				SizeInfo::RequestRect(rcAfter);
 				m_FixPosAfterStyle = GetTickCount();
 				mrc_FixPosAfterStyle = rcAfter;
+				bChanged = true;
 			}
 			else
 			{
@@ -8189,17 +8191,21 @@ void CConEmuMain::RefreshWindowStyles()
 			m_FixPosAfterStyle = 0;
 		}
 
-		mb_InCaptionChange = true;
-
-		SetWindowStyle(nNewStyle);
-
-		mb_InCaptionChange = false;
+		if (nNewStyle != nStyle)
+		{
+			MSetter inChange(&mb_InCaptionChange);
+			SetWindowStyle(nNewStyle);
+			bChanged = true;
+		}
 	}
 
 	_ASSERTE(mn_IgnoreSizeChange>=0);
 
-	if (IsWindowVisible(ghWnd) && !isIconic())
+	if (bChanged && IsWindowVisible(ghWnd) && !isIconic())
 	{
+		// If we are changing window mode (e.g. Max->Normal)
+		// user may see drawing artifacts during resize
+		_ASSERTE(changeFromWindowMode == wmNotChanging);
 		MSetter lSet2(&mn_IgnoreSizeChange);
 		// Refresh JIC
 		RedrawFrame();
