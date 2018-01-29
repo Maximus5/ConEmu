@@ -1196,9 +1196,11 @@ int CConEmuSize::GetInitialDpi(DpiValue* pDpi)
 {
 	DpiValue dpi;
 
-	HMONITOR hMon = FindInitialMonitor();
+	mh_RequestedMonitor = FindInitialMonitor();
 
-	int dpiY = CDpiAware::QueryDpiForMonitor(hMon, &dpi);
+	int dpiY = CDpiAware::QueryDpiForMonitor(mh_RequestedMonitor, &dpi);
+
+	SizeInfo::RequestDpi(dpi);
 
 	if (pDpi)
 		pDpi->SetDpi(dpi);
@@ -1695,6 +1697,7 @@ void CConEmuSize::SetRequestedMonitor(HMONITOR hNewMon)
 
 	MonitorInfoCache mi = NearestMonitorInfo(mh_RequestedMonitor);
 	gpSetCls->SetRequestedDpi(mi.Xdpi, mi.Ydpi);
+	SizeInfo::RequestDpi({mi.Xdpi, mi.Ydpi});
 }
 
 CConEmuSize::MonitorInfoCache CConEmuSize::NearestMonitorInfo(const RECT& rcWnd)
@@ -2222,9 +2225,7 @@ void CConEmuSize::CascadedPosFix()
 	if (gpSet->wndCascade && (ghWnd == NULL) && (WindowMode == wmNormal) && IsSizePosFree(WindowMode))
 	{
 		// Сдвиг при каскаде
-		int nShift = (GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION))*1.5;
-		// Monitor information
-		MONITORINFO mi;
+		int nShift = (int)(1.5*(GetSystemMetrics(SM_CYSIZEFRAME)+GetSystemMetrics(SM_CYCAPTION)));
 		// Preferred window size
 		int nDefWidth = 0, nDefHeight = 0;
 
@@ -2246,12 +2247,12 @@ void CConEmuSize::CascadedPosFix()
 
 			// Screen coordinates!
 			RECT rcWnd = {}; GetWindowRect(hPrev, &rcWnd);
-			GetNearestMonitorInfo(&mi, NULL, &rcWnd);
+			auto mi = NearestMonitorInfo(rcWnd);
 
 			if (wpl.showCmd == SW_HIDE || !IsWindowVisible(hPrev)
 			        || wpl.showCmd == SW_SHOWMINIMIZED || wpl.showCmd == SW_SHOWMAXIMIZED
 			        /* Max в режиме скрытия заголовка */
-			        || (wpl.rcNormalPosition.left<mi.rcWork.left || wpl.rcNormalPosition.top<mi.rcWork.top))
+			        || (wpl.rcNormalPosition.left<mi.mi.rcWork.left || wpl.rcNormalPosition.top<mi.mi.rcWork.top))
 			{
 				hPrev = FindWindowEx(NULL, hPrev, VirtualConsoleClassMain, NULL);
 				continue;
@@ -2259,6 +2260,12 @@ void CConEmuSize::CascadedPosFix()
 
 			if (!nDefWidth || !nDefHeight)
 			{
+				_ASSERTE(gpConEmu->GetStartupStage() <= CConEmuMain::ss_OnCreateCalled);
+				const int minWidth = 160, minHeight = 16;
+				SizeInfo::RequestDpi({mi.Xdpi, mi.Ydpi});
+				SizeInfo::RequestPos((rcWnd.left + rcWnd.right)/2, (rcWnd.top + rcWnd.bottom)/2);
+				SizeInfo::RequestSize(minWidth, minHeight);
+
 				RECT rcDef = GetDefaultRect();
 				nDefWidth = rcDef.right - rcDef.left;
 				nDefHeight = rcDef.bottom - rcDef.top;
@@ -2267,8 +2274,8 @@ void CConEmuSize::CascadedPosFix()
 			if (nDefWidth > 0 && nDefHeight > 0)
 			{
 				WndPos = VisualPosFromReal(
-					klMin(rcWnd.left + nShift, mi.rcWork.right - nDefWidth),
-					klMin(rcWnd.top + nShift, mi.rcWork.bottom - nDefHeight)
+					klMin(rcWnd.left + nShift, mi.mi.rcWork.right - nDefWidth),
+					klMin(rcWnd.top + nShift, mi.mi.rcWork.bottom - nDefHeight)
 				);
 			}
 			else
@@ -5339,6 +5346,8 @@ LRESULT CConEmuSize::OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHei
 
 void CConEmuSize::RecreateControls(bool bRecreateTabbar, bool bRecreateStatus, bool bResizeWindow, LPRECT prcSuggested /*= NULL*/)
 {
+	SizeInfo::RequestRecalc();
+
 	if (bRecreateTabbar && mp_ConEmu->mp_TabBar)
 		mp_ConEmu->mp_TabBar->Recreate();
 

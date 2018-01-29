@@ -1445,6 +1445,7 @@ int CTabPanelWin::QueryTabbarHeight()
 	{
 		// Размеры таба через TabCtrl_AdjustRect считаются криво при прыжках по мониторам
 		//_ASSERTE((hTabs!=NULL) && "Creating of a dummy tab control failed");
+		RECT rcTab = gpConEmu->RebarRect();
 		int lfHeight = gpSetCls->EvalSize(gpSet->nTabFontHeight, esf_Vertical|esf_CanUseDpi|esf_CanUseUnits);
 		int newHeight = gpFontMgr->EvalFontHeight(gpSet->sTabFontFace, lfHeight, gpSet->nTabFontCharSet)
 			+ gpSetCls->EvalSize((lfHeight < 0) ? 8 : 9, esf_Vertical);

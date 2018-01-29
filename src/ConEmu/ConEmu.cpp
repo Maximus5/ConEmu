@@ -2008,8 +2008,11 @@ BOOL CConEmuMain::CreateMainWindow()
 		LogString(szCreate);
 	}
 
+	// Create window intentionally small in size, we ajust it lately
 	const int minWidth = 160, minHeight = 16;
 	POINT ptCreate = this->RealPosFromVisual(WndPos.x, WndPos.y);
+	SizeInfo::RequestDpi({gpSetCls->QueryDpi(), gpSetCls->QueryDpi()});
+	SizeInfo::RequestRect({ptCreate.x, ptCreate.y, ptCreate.x + minWidth, ptCreate.y + minHeight});
 	ghWnd = CreateWindowEx(styleEx, gsClassNameParent, GetCmd(), style,
 	                       ptCreate.x, ptCreate.y, minWidth, minHeight, hParent, NULL, (HINSTANCE)g_hInstance, NULL);
 
