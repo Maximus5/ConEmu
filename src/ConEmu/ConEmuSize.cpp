@@ -3584,7 +3584,8 @@ ConEmuWindowMode CConEmuSize::QuakePrevSize::Restore(CESize& rwndWidth, CESize& 
 	rwndHeight = wndHeight;
 	rwndX = wndX;
 	rwndY = wndY;
-	rnFrame = nFrame;
+	_ASSERTE(nFrame == LOBYTE(nFrame));
+	rnFrame = LOBYTE(nFrame);
 	rrcStoredNormalRect = rcStoredNormalRect;
 	rbAlwaysShowTrayIcon = MinToTray;
 	return WindowMode;
