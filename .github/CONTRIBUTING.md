@@ -78,9 +78,10 @@ Git CMD shortcut|git-cmd.exe |Git for Windows|`"C:\Program Files\Git\git-cmd.exe
 
 
 ##### Read more:
-https://conemu.github.io/en/ThirdPartyProblems.html
-https://conemu.github.io/en/ConsoleApplication.html
-https://conemu.github.io/en/TerminalVsShell.html
+
+* https://conemu.github.io/en/ThirdPartyProblems.html
+* https://conemu.github.io/en/ConsoleApplication.html
+* https://conemu.github.io/en/TerminalVsShell.html
 
 
 ### Be verbose

@@ -12,6 +12,7 @@
 
 * Please do not post here third-party problems, this is ConEmu project issue tracker.
   * <https://github.com/Maximus5/ConEmu/blob/master/.github/CONTRIBUTING.md>
+  * <https://conemu.github.io/en/ThirdPartyProblems.html>
   * <https://conemu.github.io/en/BadIssue.html>
 
 
