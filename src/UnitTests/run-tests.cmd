@@ -52,11 +52,11 @@ goto :EOF
 
 
 :fail1
-call :test_cl_fail_9 fail1.cpp
+rem call :test_cl_fail_9 fail1.cpp
 call :test_cl_fail_14 fail1.cpp
 goto :EOF
 :fail2
-call :test_cl_fail_9 fail2.cpp
+rem call :test_cl_fail_9 fail2.cpp
 call :test_cl_fail_14 fail2.cpp
 goto :EOF
 :fail3
@@ -69,11 +69,11 @@ goto :EOF
 call :test_cl_fail_14 fail5.cpp
 goto :EOF
 :test1
-call :test_cl_luck_9 test1.cpp %commons% %lnk_def%
+rem call :test_cl_luck_9 test1.cpp %commons% %lnk_def%
 call :test_cl_luck_14 test1.cpp %commons% %lnk_def%
 goto :EOF
 :test2
-call :test_cl_luck_9 test2.cpp %colorcmn% %lnk_def%
+rem call :test_cl_luck_9 test2.cpp %colorcmn% %lnk_def%
 call :test_cl_luck_14 test2.cpp %colorcmn% %lnk_def%
 goto :EOF
 
