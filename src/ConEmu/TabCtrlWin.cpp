@@ -1030,7 +1030,7 @@ void CTabPanelWin::RepositionInt()
 
 void CTabPanelWin::UpdateToolbarPos()
 {
-	if (mh_Toolbar && gpSet->isMultiShowButtons)
+	if (mh_Toolbar && gpSet->isMultiShowButtons && mp_Owner->IsTabsActive())
 	{
 		SIZE sz;
 		SendMessage(mh_Toolbar, TB_GETMAXSIZE, 0, (LPARAM)&sz);
