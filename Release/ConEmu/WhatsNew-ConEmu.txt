@@ -20,6 +20,19 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.1.30
+* Use internal XML parser instead of msxml3.dll.
+* gh-1369, gh-1406: Resize refactoring; refactoring of ideal/stored normal rect.
+* gh-1426: Fix resize glitches if TabBar was set to ‘Auto show’.
+* gh-1410: Correct TabBar height if system DPI was set to custom value.
+* gh-1404: Resize Far Manager panels separately.
+  If mouse cursor is over panels bottom edge at center - resize panels heights simultaneously,
+  otherwise - resize panels separately.
+* Rename option to ‘Adjust font size for monitor DPI’.
+* Don't print download progress: `ConEmuC.exe -download -nolog ...`.
+* Erase deleted Tasks/Palettes/AppDistinct options from xml file on save.
+
+
 2018.1.14
 * Fix frame gaps when maximizing caption-less window on Windows 10.
 * Drag window by frame top if caption is hidden and TabBar is hidden or shown at the bottom.
