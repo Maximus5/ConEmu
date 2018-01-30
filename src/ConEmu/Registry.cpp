@@ -1169,6 +1169,8 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value) noexcept
 			for (pNode = pChild->first_node("line"); pNode; pNode = pNode->next_sibling("line"))
 			{
 				const char* lstr = GetAttr(pNode, "data");
+				if (!lstr || !*lstr)
+					lstr = " "; // Because of ASCIIZZ we must be sure there were no zero-length string
 				size_t cchSize = strlen(lstr) + 1;
 				cchMax += cchSize;
 				lines.push_back({lstr, cchSize});
@@ -1186,7 +1188,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value) noexcept
 						buffer += line.cchSize;
 					}
 					_ASSERTE(cchMax>=1 && data.ms_Val[cchMax-1]==0);
-					lbRc = true;
+					pszData = data.c_str();
 				}
 			}
 		}
