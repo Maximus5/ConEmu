@@ -2718,6 +2718,8 @@ void CConEmuMain::OnTabbarActivated(bool bTabbarVisible, bool bInAutoShowHide)
 		return;
 	}
 
+	RequestRecalc();
+
 	int iNewWidth, iNewHeight;
 
 	if (bInAutoShowHide && isWindowNormal())
@@ -7149,6 +7151,8 @@ void CConEmuMain::OnMainCreateFinished()
 
 	if (isWindowNormal() && (gpSet->isTabs == 2) && mp_TabBar->IsTabsShown())
 	{
+		SizeInfo::RequestRecalc();
+
 		#ifdef _DEBUG
 		RECT rcCur = {}; ::GetWindowRect(ghWnd, &rcCur);
 		#endif

@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsClass.h"
 #include "SizeInfo.h"
+#include "TabBar.h"
 
 #define DEBUGSTRSIZE(s) DEBUGSTR(s)
 
@@ -355,7 +356,7 @@ void SizeInfo::DoCalculate()
 	}
 
 	int newTabHeight = 0;
-	if (gpSet->isTabs != 0)
+	if ((gpSet->isTabs == 1) || (gpSet->isTabs == 2 && gpConEmu->mp_TabBar->IsTabsActive()))
 	{
 		int lfHeight = gpSetCls->EvalSize(gpSet->nTabFontHeight, esf_Vertical|esf_CanUseDpi|esf_CanUseUnits, &dpi);
 		newTabHeight = gpFontMgr->EvalFontHeight(gpSet->sTabFontFace, lfHeight, gpSet->nTabFontCharSet)

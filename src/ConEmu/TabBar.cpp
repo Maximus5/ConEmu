@@ -500,8 +500,13 @@ bool CTabBarClass::IsSearchShown(bool bFilled)
 
 void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 {
+	const bool wasActive = _active;
+	_active = true; // Required to proper size calculation
+	if (!wasActive)
+		gpConEmu->RequestRecalc();
+
 	RECT rcRebar = gpConEmu->RebarRect();
-	if (IsRectEmpty(&rcRebar))
+	if (wasActive && IsRectEmpty(&rcRebar))
 	{
 		gpConEmu->RequestRecalc();
 	}
@@ -514,7 +519,7 @@ void CTabBarClass::Activate(BOOL abPreSyncConsole/*=FALSE*/)
 	if ((gpConEmu->GetStartupStage() < CConEmuMain::ss_PostCreate2Called) && (gpSet->isTabs == 1))
 		bAutoShowHide = false;
 
-	_active = true;
+	_ASSERTE(_active == true);
 	gpConEmu->OnTabbarActivated(true, bAutoShowHide);
 	UpdatePosition();
 }
