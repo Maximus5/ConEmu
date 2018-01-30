@@ -536,7 +536,7 @@ void CFrameHolder::RedrawFrame()
 //
 LRESULT CFrameHolder::NC_Wrapper(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	UINT ret;
+	LRESULT ret;
 	DWORD dwStyle;
 
 	dwStyle = GetWindowLong(hWnd, GWL_STYLE);
@@ -964,8 +964,8 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	}
 
 	wchar_t szInfo[200];
-	swprintf_s(szInfo, countof(szInfo), L"WM_NCCALCSIZE(%u): Wnd={%i,%i}-{%i,%i} {%i*%i} -> Client={%i,%i}-{%i,%i} {%i*%i}", wParam,
-		LOGRECTCOORDS(rcWnd), LOGRECTSIZE(rcWnd), LOGRECTCOORDS(rcClient), LOGRECTSIZE(rcWnd));
+	swprintf_s(szInfo, countof(szInfo), L"WM_NCCALCSIZE(%u): Wnd={%i,%i}-{%i,%i} {%i*%i} -> Client={%i,%i}-{%i,%i} {%i*%i}",
+		LODWORD(wParam), LOGRECTCOORDS(rcWnd), LOGRECTSIZE(rcWnd), LOGRECTCOORDS(rcClient), LOGRECTSIZE(rcWnd));
 	DEBUGSTRNC(szInfo);
 
 	UNREFERENCED_PARAMETER(lRcDef);
