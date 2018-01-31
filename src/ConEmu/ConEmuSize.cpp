@@ -4532,7 +4532,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	swprintf_c(szInfo, L"SetWindowMode exec: NewMode=%s", GetWindowModeName(NewMode));
 	if (!LogString(szInfo)) { DEBUGSTRWMODE(szInfo); }
 
-	// 180128 - Removed because this introduces drawing glitches during maximization (toolbar is painted in wrong position, etc.)
+	// 180130 - Moved after actual mode change, because this introduces drawing glitches during maximization (toolbar is painted in wrong position, etc.)
 	//mp_ConEmu->RefreshWindowStyles(); // inMode из параметров убрал, т.к. WindowMode уже изменен
 
 	DEBUGTEST(BOOL bIsVisible = IsWindowVisible(ghWnd););
@@ -4629,6 +4629,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			#ifdef _DEBUG
 			WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl);
 			#endif
+
+			mp_ConEmu->RefreshWindowStyles();
 
 			setWindowPos(NULL, rcNew.left, rcNew.top, rcNew.right-rcNew.left, rcNew.bottom-rcNew.top, SWP_NOZORDER);
 
@@ -4741,6 +4743,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 			_ASSERTE(mn_IgnoreSizeChange>=0);
 
+			mp_ConEmu->RefreshWindowStyles();
+
 			// Already restored, need to clear the flag to avoid incorrect sizing
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(false);
 
@@ -4806,6 +4810,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			_ASSERTE(mn_IgnoreSizeChange>=0);
 
 			bWasSetFullscreen = SUCCEEDED(mp_ConEmu->Taskbar_MarkFullscreenWindow(ghWnd, TRUE));
+
+			mp_ConEmu->RefreshWindowStyles();
 
 			// for virtual screens mi.rcMonitor. may contain negative values...
 

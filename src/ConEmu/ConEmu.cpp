@@ -8212,7 +8212,8 @@ void CConEmuMain::RefreshWindowStyles()
 	{
 		// If we are changing window mode (e.g. Max->Normal)
 		// user may see drawing artifacts during resize
-		_ASSERTE(changeFromWindowMode == wmNotChanging);
+		// But it's required in some cases, e.g. if "Hide caption when maximized"
+		//_ASSERTE(changeFromWindowMode == wmNotChanging);
 		MSetter lSet2(&mn_IgnoreSizeChange);
 		// Refresh JIC
 		RedrawFrame();
