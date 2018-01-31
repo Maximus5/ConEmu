@@ -20,6 +20,11 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.1.31
+* Environment settings (and other multiline values) were not loaded from xml properly (xmlparser regression).
+* gh-1427, gh-1428: Fix TitleBar glitches whith option ‘Hide caption when maximized’.
+
+
 2018.1.30
 * Use internal XML parser instead of msxml3.dll.
 * gh-1369, gh-1406: Resize refactoring; refactoring of ideal/stored normal rect.
