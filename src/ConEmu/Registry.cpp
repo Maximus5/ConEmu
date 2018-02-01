@@ -1489,12 +1489,13 @@ wrap:
 
 void SettingsXML::ClearChildrenTail(SettingsXML::node* apNode, SettingsXML::node* apFirstClear, const char* nodeType)
 {
-	SettingsXML::node* pNext = apFirstClear->next_sibling(nodeType);
+	SettingsXML::node* pNext = apFirstClear;
 
 	while (pNext)
 	{
-		apNode->remove_node(pNext);
-		pNext = apFirstClear->next_sibling(nodeType);
+		SettingsXML::node* pDel = pNext;
+		pNext = pNext->next_sibling(nodeType);
+		apNode->remove_node(pDel);
 		SetDataChanged();
 	}
 }
