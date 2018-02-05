@@ -238,7 +238,7 @@ bool CDwmHelper::IsDwm()
 	if (!mb_DwmAllowed)
 		return false;
 	BOOL composition_enabled = FALSE;
-	bool isDwm = _DwmIsCompositionEnabled(&composition_enabled) == S_OK &&
+	bool isDwm = (_DwmIsCompositionEnabled(&composition_enabled) == S_OK) &&
 		composition_enabled;
 	return isDwm;
 }
