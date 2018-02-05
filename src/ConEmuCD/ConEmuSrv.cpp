@@ -5237,57 +5237,72 @@ int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
 		return 0; // Invalid argument!
 	}
 
+	BOOL bRedraw = pRgn->bRedraw;
+	HRGN hRgn = NULL, hCombine = NULL;
+
 	if (pRgn->nRectCount == 0)
 	{
-		return SetWindowRgn((HWND)pRgn->hWnd, NULL, pRgn->bRedraw);
+		// return SetWindowRgn((HWND)pRgn->hWnd, NULL, pRgn->bRedraw);
 	}
 	else if (pRgn->nRectCount == -1)
 	{
+		bRedraw = FALSE;
 		apiShowWindow((HWND)pRgn->hWnd, SW_HIDE);
-		return SetWindowRgn((HWND)pRgn->hWnd, NULL, FALSE);
+		// return SetWindowRgn((HWND)pRgn->hWnd, NULL, FALSE);
+	}
+	else
+	{
+		bRedraw = TRUE;
+		// Need calculation
+		HRGN hSubRgn = NULL;
+		BOOL lbPanelVisible = TRUE;
+		hRgn = CreateRectRgn(pRgn->rcRects->left, pRgn->rcRects->top, pRgn->rcRects->right, pRgn->rcRects->bottom);
+
+		for (int i = 1; i < pRgn->nRectCount; i++)
+		{
+			RECT rcTest;
+
+			// IntersectRect не работает, если низ совпадает?
+			_ASSERTE(pRgn->rcRects->bottom != (pRgn->rcRects+i)->bottom);
+			if (!IntersectRect(&rcTest, pRgn->rcRects, pRgn->rcRects+i))
+				continue;
+
+			// Все остальные прямоугольники вычитать из hRgn
+			hSubRgn = CreateRectRgn(rcTest.left, rcTest.top, rcTest.right, rcTest.bottom);
+
+			if (!hCombine)
+				hCombine = CreateRectRgn(0,0,1,1);
+
+			int nCRC = CombineRgn(hCombine, hRgn, hSubRgn, RGN_DIFF);
+
+			if (nCRC)
+			{
+				HRGN hTmp = hRgn; hRgn = hCombine; hCombine = hTmp;
+				DeleteObject(hSubRgn); hSubRgn = NULL;
+			}
+
+			if (nCRC == NULLREGION)
+			{
+				lbPanelVisible = FALSE; break;
+			}
+		}
 	}
 
-	// Нужно считать...
-	HRGN hRgn = NULL, hSubRgn = NULL, hCombine = NULL;
-	BOOL lbPanelVisible = TRUE;
-	hRgn = CreateRectRgn(pRgn->rcRects->left, pRgn->rcRects->top, pRgn->rcRects->right, pRgn->rcRects->bottom);
-
-	for (int i = 1; i < pRgn->nRectCount; i++)
+	if (RELEASEDEBUGTEST(gpSet->isLogging(), true))
 	{
-		RECT rcTest;
-
-		// IntersectRect не работает, если низ совпадает?
-		_ASSERTE(pRgn->rcRects->bottom != (pRgn->rcRects+i)->bottom);
-		if (!IntersectRect(&rcTest, pRgn->rcRects, pRgn->rcRects+i))
-			continue;
-
-		// Все остальные прямоугольники вычитать из hRgn
-		hSubRgn = CreateRectRgn(rcTest.left, rcTest.top, rcTest.right, rcTest.bottom);
-
-		if (!hCombine)
-			hCombine = CreateRectRgn(0,0,1,1);
-
-		int nCRC = CombineRgn(hCombine, hRgn, hSubRgn, RGN_DIFF);
-
-		if (nCRC)
-		{
-			// Замена переменных
-			HRGN hTmp = hRgn; hRgn = hCombine; hCombine = hTmp;
-			// А этот больше не нужен
-			DeleteObject(hSubRgn); hSubRgn = NULL;
-		}
-
-		// Проверка, может регион уже пуст?
-		if (nCRC == NULLREGION)
-		{
-			lbPanelVisible = FALSE; break;
-		}
+		wchar_t szInfo[255];
+		RECT rcBox = {};
+		int nRgn = hRgn ? GetRgnBox(hRgn, &rcBox) : NULLREGION;
+		swprintf_c(szInfo,
+			nRgn ? L"CECMD_SETWINDOWRGN(0x%08X, <%u> {%i,%i}-{%i,%i})" : L"CECMD_SETWINDOWRGN(0x%08X, NULL)",
+			(DWORD)(HWND)pRgn->hWnd, nRgn, LOGRECTCOORDS(rcBox));
+		LogString(szInfo);
 	}
 
 	int iRc = 0;
-	SetWindowRgn((HWND)pRgn->hWnd, hRgn, TRUE); hRgn = NULL;
+	SetWindowRgn((HWND)pRgn->hWnd, hRgn, bRedraw);
+	hRgn = NULL;
 
-	// чистка
 	if (hCombine) { DeleteObject(hCombine); hCombine = NULL; }
 
 	return iRc;

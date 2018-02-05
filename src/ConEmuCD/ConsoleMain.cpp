@@ -5292,7 +5292,7 @@ void CreateLogSizeFile(int nLevel, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleI
 	LogSize(NULL, 0, "Startup");
 }
 
-void LogString(LPCSTR asText)
+bool LogString(LPCSTR asText)
 {
 	if (!gpLogSize)
 	{
@@ -5307,7 +5307,7 @@ void LogString(LPCSTR asText)
 			}
 		}
 		#endif
-		return;
+		return false;
 	}
 
 	char szInfo[255]; szInfo[0] = 0;
@@ -5330,14 +5330,15 @@ void LogString(LPCSTR asText)
 		pszThread = "DataThread";
 
 	gpLogSize->LogString(asText, true, pszThread);
+	return true;
 }
 
-void LogString(LPCWSTR asText)
+bool LogString(LPCWSTR asText)
 {
 	if (!gpLogSize)
 	{
 		DEBUGSTR(asText);
-		return;
+		return false;
 	}
 
 	wchar_t szInfo[255]; szInfo[0] = 0;
@@ -5356,6 +5357,7 @@ void LogString(LPCWSTR asText)
 		pszThread = L"DataThread";
 
 	gpLogSize->LogString(asText, true, pszThread);
+	return false;
 }
 
 void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bForceWriteLog)
