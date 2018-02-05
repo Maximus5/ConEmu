@@ -677,6 +677,21 @@ bool IsWin5family()
 	return (ibIsWin5fam == 1);
 }
 
+// Windows XP or higher
+bool IsWinXP()
+{
+	static int ibIsWinXP = 0;
+	if (!ibIsWinXP)
+	{
+		OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WINXP), LOBYTE(_WIN32_WINNT_WINXP)};
+		DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0,
+			VER_MAJORVERSION, VER_GREATER_EQUAL),
+			VER_MINORVERSION, VER_GREATER_EQUAL);
+		ibIsWinXP = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) ? 1 : -1;;
+	}
+	return (ibIsWinXP == 1);
+}
+
 // WinXP SP1 or higher
 bool IsWinXPSP1()
 {

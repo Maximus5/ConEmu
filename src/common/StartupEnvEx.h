@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "MModule.h"
 #include "MStrDup.h"
 #include "StartupEnv.h"
 #include "WSession.h"
@@ -309,17 +310,39 @@ public:
 			szStartTime);
 		DumpEnvStr(szSI, lParam, true, false);
 
+		bool is_themed = false, is_dwm = false;
+		if (IsWinXP())
+		{
+			MModule uxtheme(L"UxTheme.dll");
+			BOOL (WINAPI* _IsAppThemed)();
+			BOOL (WINAPI* _IsThemeActive)();
+			if (uxtheme.GetProcAddress("IsAppThemed", _IsAppThemed) && uxtheme.GetProcAddress("IsThemeActive", _IsThemeActive))
+				is_themed = _IsAppThemed() && _IsThemeActive();
+			if (IsWin7())
+			{
+				MModule dwm(L"dwmapi.dll");
+				HRESULT (WINAPI* _DwmIsCompositionEnabled)(BOOL *pfEnabled);
+				if (dwm.GetProcAddress("DwmIsCompositionEnabled", _DwmIsCompositionEnabled))
+				{
+					BOOL composition_enabled = FALSE;
+					is_dwm = (_DwmIsCompositionEnabled(&composition_enabled) == S_OK) && composition_enabled;
+				}
+			}
+		}
+
 		lstrcpyn(szDesktop, apStartEnv->si.lpDesktop ? apStartEnv->si.lpDesktop : L"<NULL>", countof(szDesktop));
 		lstrcpyn(szTitle, apStartEnv->si.lpTitle ? apStartEnv->si.lpTitle : L"<NULL>", countof(szTitle));
 
 		swprintf_c(szSI,
-			L"  Desktop: %s%s%s, SessionId: %s, ConsoleSessionId: %u\r\n  Title: %s%s%s\r\n  Size: {%u,%u},{%u,%u}\r\n"
+			L"  Desktop: %s%s%s, SessionId: %s, ConsoleSessionId: %u, Theming: %u, DWM: %u\r\n"
+			L"  Title: %s%s%s\r\n  Size: {%u,%u},{%u,%u}\r\n"
 			L"  Flags: 0x%08X, ShowWindow: %u, ConHWnd: 0x%08X\r\n"
 			L"  char: %u, short: %u, int: %u, long: %u, u64: %u\r\n"
 			L"  Handles: 0x%08X, 0x%08X, 0x%08X\r\n"
 			,
 			apStartEnv->si.lpDesktop ? L"`" : L"", szDesktop, apStartEnv->si.lpDesktop ? L"`" : L"",
 			apiQuerySessionID(), apiGetConsoleSessionID(),
+			is_themed ? 1 : 0, is_dwm ? 1 : 0,
 			apStartEnv->si.lpTitle ? L"`" : L"", szTitle, apStartEnv->si.lpTitle ? L"`" : L"",
 			apStartEnv->si.dwX, apStartEnv->si.dwY, apStartEnv->si.dwXSize, apStartEnv->si.dwYSize,
 			apStartEnv->si.dwFlags, (DWORD)apStartEnv->si.wShowWindow, LODWORD(hConWnd),

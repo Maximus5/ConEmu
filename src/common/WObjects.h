@@ -71,6 +71,7 @@ bool GetOsVersionInformational(OSVERSIONINFO* pOsVer);
 bool IsWinVerOrHigher(WORD OsVer); // Ex: 0x0601, _WIN32_WINNT_WIN10, ...
 bool IsWin2kEql();
 bool IsWin5family();
+bool IsWinXP();
 bool IsWinXPSP1();
 bool IsWin6();
 bool IsWin7();
