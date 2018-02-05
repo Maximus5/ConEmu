@@ -609,10 +609,11 @@ HWND CTabPanelWin::CreateToolbar()
 	btn.iBitmap = nFirst + BID_SYSMENU_IDX; btn.idCommand = TID_SYSMENU; btn.fsState = TBSTATE_ENABLED;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	// Separator before min/max/close
-	sep.fsState |= TBSTATE_HIDDEN; sep.idCommand = TID_MINIMIZE_SEP;
+	BYTE bHideBtn = (!gpConEmu->isCaptionHidden() || gpConEmu->isInside()) ? TBSTATE_HIDDEN : 0;
+	sep.fsState |= bHideBtn; sep.idCommand = TID_MINIMIZE_SEP;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&sep);
 	// Min,Max,Close
-	btn.iBitmap = nFirst + BID_MINIMIZE_IDX; btn.idCommand = TID_MINIMIZE; btn.fsState = TBSTATE_ENABLED|TBSTATE_HIDDEN;
+	btn.iBitmap = nFirst + BID_MINIMIZE_IDX; btn.idCommand = TID_MINIMIZE; btn.fsState = TBSTATE_ENABLED|bHideBtn;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
 	btn.iBitmap = nFirst + ((gpConEmu->GetWindowMode() != wmNormal) ? BID_MAXIMIZE_IDX : BID_RESTORE_IDX); btn.idCommand = TID_MAXIMIZE;
 	SendMessage(mh_Toolbar, TB_ADDBUTTONS, 1, (LPARAM)&btn);
