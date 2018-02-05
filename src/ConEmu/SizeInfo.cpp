@@ -88,9 +88,8 @@ void SizeInfo::LogRequest(LPCWSTR asFrom, LPCWSTR asMessage /*= nullptr*/)
 	CEStr lsMsg(L"Size recalc requested",
 		mb_temp ? L" (temp)" : L" (main)",
 		asFrom ? L" from: " : nullptr, asFrom,
-		asMessage?L" - ":nullptr, asMessage, L"\n");
-	if (!gpSet->isLogging()) { DEBUGSTRSIZE(lsMsg); }
-	mp_ConEmu->LogString(lsMsg);
+		asMessage?L" - ":nullptr, asMessage);
+	if (!mp_ConEmu->LogString(lsMsg)) { DEBUGSTRSIZE(lsMsg); }
 }
 
 void SizeInfo::LogRequest(const RECT& rcNew, LPCWSTR asFrom)
