@@ -290,21 +290,29 @@ public:
 				wcscat_c(szTitle, L" !Win10!");
 		}
 
-		wchar_t szBuild[24], szVer4[8] = L"";
+		wchar_t szBuild[24], szVer4[8] = L"", szProdType[20];
 		lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
 		// Same as ConsoleMain.cpp::SetWorkEnvVar()
 		swprintf_c(szBuild, L"%02u%02u%02u%s%s",
 			(MVV_1%100), MVV_2, MVV_3, szVer4[0]&&szVer4[1]?L"-":L"", szVer4);
+		if (osv.wProductType == VER_NT_WORKSTATION)
+			wcscpy_c(szProdType, L"workstation");
+		else if (osv.wProductType == VER_NT_SERVER)
+			wcscpy_c(szProdType, L"server");
+		else if (osv.wProductType == VER_NT_DOMAIN_CONTROLLER)
+			wcscpy_c(szProdType, L"domain");
+		else
+			swprintf_c(szProdType, L"%u", osv.wProductType);
 
 		swprintf_c(szSI, L"ConEmu %s [%u] Startup Info\r\n"
-			L"  OsVer: %s, Product: %u, SP: %u.%u, Suite: 0x%X, SM_SERVERR2: %u\r\n"
-			L"  CSDVersion: %s, ReactOS: %u (%s), Rsrv: %u\r\n"
+			L"  OsVer: %s, Product: %s, SP: %u.%u, Suite: 0x%X\r\n"
+			L"  CSDVersion: %s, ReactOS: %u (%s), Rsrv: %u, SM_SERVERR2: %u\r\n"
 			L"  DBCS: %u, WINE: %u, PE: %u, Remote: %u, ACP: %u, OEMCP: %u, Admin: %u\r\n"
 			L"  StartTime: %s\r\n"
 			, szBuild, WIN3264TEST(32,64),
 			szTitle,
-			osv.wProductType, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask, GetSystemMetrics(89/*SM_SERVERR2*/),
-			osv.szCSDVersion, apStartEnv->bIsReactOS, pszReactOS, osv.wReserved,
+			szProdType, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask,
+			osv.szCSDVersion, apStartEnv->bIsReactOS, pszReactOS, osv.wReserved, GetSystemMetrics(89/*SM_SERVERR2*/),
 			apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->bIsWinPE, apStartEnv->bIsRemote,
 			apStartEnv->nAnsiCP, apStartEnv->nOEMCP, apStartEnv->bIsAdmin,
 			szStartTime);
