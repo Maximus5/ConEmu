@@ -749,6 +749,9 @@ bool CFrameHolder::OnNcPaint(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 
 	// #SIZE_TODO During restore minimized window we get artifacts - 2018-01-28_20-11-29.png
 
+	// #NC_WARNING If the window is not themed WM_NCCALCSIZE must be passed to DefWindowProc
+	//             otherwise titlebar would not be updated propertly
+
 	//if (!IsWin10() || !mp_ConEmu->isCaptionHidden())
 	{
 		DBGFUNCTION("WM_NCPAINT(default1)");
@@ -846,7 +849,8 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 	// Если nCaption == 0, то при fdt_Aero текст в заголовке окна не отрисовывается
 	DEBUGTEST(int nCaption = GetCaptionHeight());
 
-	bool bCallDefProc = false;
+	bool bCallDefProc = true; // change to (!mp_ConEmu->IsThemed())?
+	bool bCallOurProc = true;
 
 	RECT rcWnd = {}, rcClient = {};
 
@@ -878,12 +882,15 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
 		// We need to call this, otherwise some parts of window may be broken
 		// If don't - system will not draw window caption when theming is off
+		// #NC_WARNING If the window is not themed WM_NCCALCSIZE must be passed to DefWindowProc
+		//             otherwise titlebar would not be updated propertly
 		if (bCallDefProc)
 		{
 			lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 			rcClient = pParm->rgrc[0];
 		}
-		else
+
+		if (bCallOurProc)
 		{
 			// pParm->rgrc[0] contains the coordinates of the new client rectangle resulting from the move or resize
 			// pParm->rgrc[1] rectangle contains the valid destination rectangle
@@ -929,6 +936,7 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			lResult = WVR_REDRAW;
 		}
 
+		// #NC_WARNING DefWindowProc does not return non-zero result, so we are too?
 		lResult = 0;
 	}
 	else
@@ -953,13 +961,14 @@ bool CFrameHolder::OnNcCalcSize(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			lRcDef = ::DefWindowProc(hWnd, uMsg, wParam, lParam);
 			rcClient = *nccr;
 		}
-		else
-		{
-		// Need screen coordinates!
-		rcClient = mp_ConEmu->RealClientRect();
-		OffsetRect(&rcClient, rcWnd.left, rcWnd.top);
 
-		*nccr = rcClient;
+		if (bCallOurProc)
+		{
+			// Need screen coordinates!
+			rcClient = mp_ConEmu->RealClientRect();
+			OffsetRect(&rcClient, rcWnd.left, rcWnd.top);
+
+			*nccr = rcClient;
 		}
 	}
 
