@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <tchar.h>
 #include "defines.h"
 #include "MAssert.h"
+#include "MStrDup.h"
 #include "MStrSafe.h"
 #include "Common.h"
 #include "ConEmuCheck.h"
@@ -375,10 +376,11 @@ void _DEBUGSTR(LPCWSTR s)
 	}
 	else
 	{
-		OutputDebugString(szDEBUGSTRTime);
-		OutputDebugString(psz);
-		if (nSLen && psz[nSLen-1]!=L'\n')
-			OutputDebugString(L"\n");
+		wchar_t* whole = lstrmerge(szDEBUGSTRTime, psz, (nSLen && psz[nSLen-1]!=L'\n') ? L"\n" : nullptr);
+		if (!whole)
+			return;
+		OutputDebugString(whole);
+		free(whole);
 	}
 }
 #endif
