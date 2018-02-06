@@ -249,6 +249,12 @@ void CEStr::Clear()
 	SafeFree(ptr);
 }
 
+LPCWSTR CEStr::Append(const wchar_t* asStr1, const wchar_t* asStr2 /*= NULL*/, const wchar_t* asStr3 /*= NULL*/, const wchar_t* asStr4 /*= NULL*/, const wchar_t* asStr5 /*= NULL*/, const wchar_t* asStr6 /*= NULL*/, const wchar_t* asStr7 /*= NULL*/, const wchar_t* asStr8 /*= NULL*/)
+{
+	lstrmerge(&ms_Val, asStr1, asStr2, asStr3, asStr4, asStr5, asStr6, asStr7, asStr8);
+	return ms_Val;
+}
+
 LPCWSTR CEStr::Attach(wchar_t* RVAL_REF asPtr)
 {
 	CESTRLOG1("CEStr::Attach(wchar_t* RVAL_REF x%p)", ms_Val);

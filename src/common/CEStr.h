@@ -104,6 +104,7 @@ public:
 	wchar_t* GetBuffer(INT_PTR cchMaxLen);
 	wchar_t* Detach();
 	LPCWSTR  Attach(wchar_t* RVAL_REF asPtr);
+	LPCWSTR  Append(const wchar_t* asStr1, const wchar_t* asStr2 = NULL, const wchar_t* asStr3 = NULL, const wchar_t* asStr4 = NULL, const wchar_t* asStr5 = NULL, const wchar_t* asStr6 = NULL, const wchar_t* asStr7 = NULL, const wchar_t* asStr8 = NULL);
 	void Clear();
 	void Empty();
 	bool IsEmpty() const;
