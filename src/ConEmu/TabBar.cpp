@@ -1428,15 +1428,8 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	#endif
 
 	MCHKHEAP
-	// get file name
-	TCHAR dummy[MAX_PATH*2];
-	TCHAR fileName[MAX_PATH+4]; fileName[0] = 0;
-	TCHAR szFormat[32];
-	TCHAR szEllip[MAX_PATH+1];
-	//wchar_t /**tFileName=NULL,*/ *pszNo=NULL, *pszTitle=NULL;
-	int nSplit = 0;
-	int nMaxLen = 0; //gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
-	int origLength = 0; //_tcslen(tFileName);
+	const int min_allowed_tab_width = 15, max_allowed_tab_width = MAX_PATH;
+	CEStr sFileName, sFormat, sBuffer;
 
 	CRealConsole* pRCon = apVCon ? apVCon->RCon() : NULL;
 	bool bIsFar = pRCon ? pRCon->isFar() : false;
@@ -1457,28 +1450,19 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	if (pTab->Name.Empty() || (pTab->Type() == fwt_Panels))
 	{
 		//_tcscpy(szFormat, _T("%s"));
-		lstrcpyn(szFormat,
-			bIsFar ? gpSet->szTabPanels
-			: gpSet->szTabConsole,
-			countof(szFormat));
-		// Modified console contents - tab suffix
-		// Not only Far manager windows but simple consoles also
-		if (gpSet->szTabModifiedSuffix[0] && (pTab->Flags() & fwt_ModifiedFarWnd))
-		{
-			if ((_tcslen(szFormat) + _tcslen(gpSet->szTabModifiedSuffix)) < countof(szFormat))
-			{
-				wcscat_c(szFormat, gpSet->szTabModifiedSuffix);
-			}
-		}
-		nMaxLen = gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
+		sFormat.Clear();
+		sFormat.Append(
+			(bIsFar) ? gpSet->szTabPanels : gpSet->szTabConsole,
+			// Modified console contents - tab suffix
+			// Not only Far manager windows but simple consoles also
+			(gpSet->szTabModifiedSuffix[0] && (pTab->Flags() & fwt_ModifiedFarWnd)) ? gpSet->szTabModifiedSuffix : nullptr);
 
-		lstrcpyn(fileName, pszTabName, countof(fileName));
+		sFileName.Set(pszTabName);
 
 		if (gpSet->pszTabSkipWords && *gpSet->pszTabSkipWords)
 		{
-			StripWords(fileName, gpSet->pszTabSkipWords);
+			StripWords(sFileName.ms_Val, gpSet->pszTabSkipWords);
 		}
-		origLength = _tcslen(fileName);
 		//if (origLength>6) {
 		//    // Чтобы в заголовке было что-то вроде "{C:\Program Fil...- Far"
 		//    //                              вместо "{C:\Program F...} - Far"
@@ -1492,37 +1476,43 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 
 		CEStr tFileName;
 		if (apiGetFullPathName(pszTabName, tFileName))
-			lstrcpyn(fileName, PointToName(tFileName), countof(fileName));
+			sFileName.Set(PointToName(tFileName));
 		else
-			lstrcpyn(fileName, pszTabName, countof(fileName));
+			sFileName.Set(pszTabName);
 
 		if (pTab->Type() == fwt_Editor)
 		{
 			if (pTab->Flags() & fwt_ModifiedFarWnd)
-				lstrcpyn(szFormat, gpSet->szTabEditorModified, countof(szFormat));
+				sFormat.Set(gpSet->szTabEditorModified);
 			else
-				lstrcpyn(szFormat, gpSet->szTabEditor, countof(szFormat));
+				sFormat.Set(gpSet->szTabEditor);
 		}
 		else if (pTab->Type() == fwt_Viewer)
 		{
-			lstrcpyn(szFormat, gpSet->szTabViewer, countof(szFormat));
+			sFormat.Set(gpSet->szTabViewer);
 		}
 		else
 		{
 			_ASSERTE(FALSE && "Must be processed in previous branch");
-			lstrcpyn(szFormat, bIsFar ? gpSet->szTabPanels : gpSet->szTabConsole, countof(szFormat));
+			sFormat.Set(bIsFar ? gpSet->szTabPanels : gpSet->szTabConsole);
 		}
 	}
 
 	// restrict length
-	if (!nMaxLen)
-		nMaxLen = gpSet->nTabLenMax - _tcslen(szFormat) + 2/* %s */;
+	INT_PTR nMaxLen = gpSet->nTabLenMax - sFormat.GetLen();
+	// Take into account %X macro form sFormat
+	for (const wchar_t* prcnt = wcschr(sFormat.c_str(L""), L'%'); prcnt && *prcnt; prcnt = wcschr(prcnt, L'%'))
+	{
+		if (*(++prcnt)) // skip '%'
+			++prcnt;    // skip char after '%'
+		++nMaxLen;
+	}
+	if (nMaxLen < min_allowed_tab_width)
+		nMaxLen = min_allowed_tab_width;
+	else if (nMaxLen > max_allowed_tab_width)
+		nMaxLen = max_allowed_tab_width;
 
-	if (!origLength)
-		origLength = _tcslen(fileName);
-	if (nMaxLen<15) nMaxLen=15; else if (nMaxLen>=MAX_PATH) nMaxLen=MAX_PATH-1;
-
-	if (origLength > nMaxLen)
+	if (sFileName.GetLen() > nMaxLen)
 	{
 		/*_tcsnset(fileName, _T('\0'), MAX_PATH);
 		_tcsncat(fileName, tFileName, 10);
@@ -1540,14 +1530,8 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 		//}
 		// "{C:\Program Files} - Far 2.1283 Administrator x64"
 		// После добавления суффиков к заголовку фара - оно уже влезать не будет в любом случае... Так что если панели - '...' строго ставить в конце
-		nSplit = nMaxLen;
-		lstrcpyn(szEllip, fileName, nSplit); szEllip[nSplit]=0;
-		szEllip[nSplit] = L'\x2026' /*"…"*/;
-		szEllip[nSplit+1] = 0;
-		//_tcscat(szEllip, L"\x2026" /*"…"*/);
-		//_tcscat(szEllip, tFileName + origLength - (nMaxLen - nSplit));
-		//tFileName = szEllip;
-		lstrcpyn(fileName, szEllip, countof(fileName));
+		sFileName.ms_Val[nMaxLen] = ucEllipsis;
+		sFileName.ms_Val[nMaxLen+1] = 0;
 	}
 
 	// szFormat различается для Panel/Viewer(*)/Editor(*)
@@ -1561,10 +1545,12 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 	////else
 	////	swprintf_c(fileName, szFormat, tFileName, pTab->Pos);
 	//wcscpy(pTab->Name, fileName);
-	const TCHAR* pszFmt = szFormat;
-	TCHAR* pszDst = dummy;
+
+	const TCHAR* pszFmt = sFormat.c_str();
+	INT_PTR cchBufferMax = gpSet->nTabLenMax + sFormat.GetLen() + 3;
+	TCHAR* pszDst = sBuffer.GetBuffer(cchBufferMax);
+	TCHAR* pszEnd = pszDst + cchBufferMax;
 	TCHAR* pszStart = pszDst;
-	TCHAR* pszEnd = dummy + countof(dummy) - 1; // в конце еще нужно зарезервировать место для '\0'
 
 	if (!pszFmt || !*pszFmt)
 	{
@@ -1613,7 +1599,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 					}
 					break;
 				case _T('s'): case _T('S'): // %s - Title
-					pszText = fileName;
+					pszText = sFileName.c_str();
 					break;
 				case _T('i'): case _T('I'): // %i - Far window number (you can see it in standard F12 menu)
 					swprintf_c(szTmp, _T("%i"), pTab->Info.nIndex);
@@ -1642,9 +1628,9 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 					break;
 				case _T('n'): case _T('N'): // %n - Active process name
 					{
-						pszText = bRenamedTab ? fileName : pRCon ? pRCon->GetActiveProcessName() : NULL;
-						wcscpy_c(szTmp, (pszText && *pszText) ? pszText : L"?");
-						pszText = szTmp;
+						pszText = bRenamedTab ? sFileName.c_str() : pRCon ? pRCon->GetActiveProcessName() : NULL;
+						if (!pszText || !*pszText)
+							pszText = L"?";
 					}
 					break;
 				case _T('d'): case _T('D'): // %d - current shell directory
@@ -1677,8 +1663,10 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 			pszFmt++;
 			if (pszText)
 			{
-				if ((*(pszDst-1) == L' ') && (*pszText == L' '))
+				if ((pszDst > pszStart) && (*(pszDst-1) == L' ') && (*pszText == L' '))
 					pszText = SkipNonPrintable(pszText);
+				#if 0
+				// sFileName already has ellipsis
 				TCHAR* pszPartEnd = pszEnd; CEStr lsTrimmed;
 				if (bDynamic && (nMaxLen > 1) && (wcslen(pszText) > (size_t)nMaxLen))
 				{
@@ -1689,6 +1677,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 						pszText = lsTrimmed.ms_Val;
 					}
 				}
+				#endif
 				while (*pszText && pszDst < pszEnd)
 				{
 					*(pszDst++) = *(pszText++);
@@ -1699,7 +1688,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 		{
 			pszFmt++; // Avoid adding sequential spaces (e.g. if some macros was empty)
 		}
-		else
+		else if (pszDst < pszEnd)
 		{
 			*(pszDst++) = *(pszFmt++);
 		}
@@ -1720,12 +1709,7 @@ int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 
 	*pszDst = 0;
 
-	#ifdef _DEBUG
-	if (dummy[0] && *(pszDst-1) == L' ')
-		*pszDst = 0;
-	#endif
-
-	pTab->SetLabel(dummy);
+	pTab->SetLabel(sBuffer);
 
 	MCHKHEAP;
 
