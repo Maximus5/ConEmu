@@ -15,6 +15,9 @@
 #define ucTrgLeft     0xE0B2 // L''
 #define ucTrgRight    0xE0B0 // L''
 
+/* Miscellaneous */
+#define ucEllipsis    0x2026 // L'…'
+
 /* Spaces */
 #define ucSpace 0x20
 #define ucNoBreakSpace 0xA0
