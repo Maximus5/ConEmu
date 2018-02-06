@@ -899,6 +899,11 @@ DWORD CConEmuUpdate::CheckProcInt()
 	lbExecuteRc = TRUE;
 
 wrap:
+	if (!lbExecuteRc && gpConEmu && ms_LastErrorInfo)
+	{
+		gpConEmu->CallMainThread(false, ShowLastError, (LPARAM)this);
+	}
+
 	_ASSERTE(mpsz_DeletePackageFile==NULL);
 	mpsz_DeletePackageFile = NULL;
 	if (pszLocalPackage)
