@@ -5288,7 +5288,7 @@ int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
 		}
 	}
 
-	if (RELEASEDEBUGTEST(gpSet->isLogging(), true))
+	if (RELEASEDEBUGTEST((gpLogSize!=nullptr), true))
 	{
 		wchar_t szInfo[255];
 		RECT rcBox = {};

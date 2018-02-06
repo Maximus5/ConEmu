@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.2.6
+* gh-1430: Toolbar buttons Min/Max/Close dissapears after toggling ‘Show buttons in tab bar’.
+* gh-1431: Lines were not erased properly from multiline xml entries (Environment variables, aliases, cp).
+* gh-1436: TitleBar was not painted properly if theming was disabled.
+* gh-1338: Error message was not displayed if 7-zip was not found.
+* Write to log Theming and DWM flags.
+
+
 2018.1.31
 * Environment settings (and other multiline values) were not loaded from xml properly (xmlparser regression).
 * gh-1427, gh-1428: Fix TitleBar glitches whith option ‘Hide caption when maximized’.
