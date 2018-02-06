@@ -1221,10 +1221,7 @@ bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 
 		if (iPage >= 0)
 		{
-			// Если в табе нет "…" - тип не нужен
 			if (!mp_Rebar->GetTabText(iPage, ms_TmpTabText, countof(ms_TmpTabText)))
-				return true;
-			if (!wcschr(ms_TmpTabText, L'\x2026' /*"…"*/))
 				return true;
 
 			CVConGuard VCon;
@@ -1233,6 +1230,9 @@ bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 
 			CTab tab(__FILE__,__LINE__);
 			if (!VCon->RCon()->GetTab(wndIndex, tab))
+				return true;
+
+			if ((tab->Type() == fwt_Panels) && (!wcschr(ms_TmpTabText, ucEllipsis)))
 				return true;
 
 			lstrcpyn(ms_TmpTabText, VCon->RCon()->GetTabTitle(tab), countof(ms_TmpTabText));
