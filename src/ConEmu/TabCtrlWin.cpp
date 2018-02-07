@@ -1290,6 +1290,9 @@ bool CTabPanelWin::ShowSearchPane(bool bShow, bool bCtrlOnly /*= false*/)
 
 	if (bShow && gpSet->isMultiShowSearch)
 	{
+		if (!mh_Rebar)
+			goto wrap; // created only as band in ReBar
+
 		_ASSERTE(isMainThread());
 		if (!IsSearchShownInt(false))
 		{

@@ -2740,6 +2740,7 @@ void CConEmuMain::OnTabbarActivated(bool bTabbarVisible, bool bInAutoShowHide)
 
 			if ((iNewWidth != (rcCur.right - rcCur.left)) || (iNewHeight != (rcCur.bottom - rcCur.top)))
 			{
+				// #SIZE_TODO When toggle "Show toolbar" and show the TabBar - we get assertion coz band width is changing
 				_ASSERTE(iNewWidth == (rcCur.right - rcCur.left)); // Width change is not expected
 
 				// If the window become LARGER than possible (going out of working area)
