@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015-2016 Maximus5
+Copyright (c) 2015-2018 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "../common/defines.h"
-#include "RefRelease.h"
 
-enum DrawObjectType
+namespace drawing
+{
+
+class Factory;
+
+enum class DrawObjectType
 {
 	dt_None = 0,
 	dt_Canvas,
@@ -41,216 +45,179 @@ enum DrawObjectType
 	dt_Pen,
 	dt_Font,
 	dt_Bitmap,
+	dt_Rgn,
 };
 
-class CDrawCanvas;
-class CDrawObjectBrush;
-class CDrawObjectPen;
-class CDrawObjectFont;
-class CDrawObjectBitmap;
-
-
-
-class CDrawFactory
+enum class CanvasType
 {
+	Undefined,
+	Window,    // ReleaseDC is required
+	Client,    // ReleaseDC is required
+	Paint,     // EndPaint is required
+	Memory,    // DeleteDC is required
+};
+
+enum class BkMode
+{
+	Opaque,
+	Transparent,
+};
+
+
+namespace detail
+{
+	class FactoryImpl;
+	class ObjectImplBase;
+	class BitmapImpl;
+	class BrushImpl;
+	class CanvasImpl;
+	class FontImpl;
+	class PenImpl;
+	class RgnImpl;
+
+	class noncopyable
+	{
+	public:
+		noncopyable() {};
+		virtual ~noncopyable() {};
+		noncopyable(const noncopyable& src) = delete;
+		noncopyable& operator=(const noncopyable& src) = delete;
+	};
+
+	class nonmoveable
+	{
+	public:
+		nonmoveable() {};
+		virtual ~nonmoveable() {};
+		nonmoveable(const nonmoveable& src) = delete;
+		nonmoveable& operator=(const nonmoveable& src) = delete;
+	};
+
+
+	// This class is not thread-safe, the drawing is expected
+	// to be executed in the main thread only
+	template<typename T>
+	class ObjectPtr
+	{
+	private:
+		T* object = nullptr;
+
+	public:
+		ObjectPtr();
+		virtual ~ObjectPtr();
+
+		ObjectPtr(T*&& _obj);
+		ObjectPtr<T>& operator=(T*&& _obj) = delete;
+		void reset(T*&& _obj);
+
+		ObjectPtr(const ObjectPtr<T>& _src);
+		ObjectPtr<T>& operator=(const ObjectPtr<T>& _src);
+
+		ObjectPtr(ObjectPtr<T>&& _src);
+		ObjectPtr<T>& operator=(ObjectPtr<T>&& _src);
+
+		template<typename H>
+		H Handle() const;
+
+		operator const T&() const;
+		T* operator->() const;
+		T* get() const;
+		operator bool() const;
+		bool operator!() const;
+		bool operator==(const ObjectPtr<T>& _obj) const;
+		bool operator!=(const ObjectPtr<T>& _obj) const;
+	};
+};
+
+using Bitmap = detail::ObjectPtr<detail::BitmapImpl>;
+using Brush = detail::ObjectPtr<detail::BrushImpl>;
+using Canvas = detail::ObjectPtr<detail::CanvasImpl>;
+using Font = detail::ObjectPtr<detail::FontImpl>;
+using Pen = detail::ObjectPtr<detail::PenImpl>;
+using Rgn = detail::ObjectPtr<detail::RgnImpl>;
+
+struct CanvasState
+{
+	int    state = 0;
+
+	Bitmap bitmap;
+	Brush  brush;
+	Font   font;
+	Pen    pen;
+
+	bool valid() const { return (state > 0); };
+};
+
+
+
+class Factory : public detail::noncopyable
+{
+	detail::FactoryImpl* mp_gdi = nullptr;
+
+public:
+	Factory();
+	~Factory() {}; // Intentionally empty
+
+	bool Initialize();
+	void Finalize();
 public:
 	// Canvas
-	virtual CDrawCanvas* NewCanvas(HWND Wnd) = 0;
-	virtual CDrawCanvas* NewCanvasHDC(HDC Dc) = 0;
-	virtual CDrawCanvas* NewCanvasDI(UINT Width, UINT Height, UINT Bits = 32) = 0;
-	virtual CDrawCanvas* NewCanvasCompatible(UINT Width, UINT Height, HWND Compatible) = 0;
+	Canvas CreateCanvas(HWND wnd, CanvasType canvas_type);
+	Canvas CreateCanvasHDC(HDC dc);
+	Canvas CreateCanvasDI(UINT width, UINT height, UINT bits = 32);
+	Canvas CreateCanvasCompatible(UINT width, UINT height, HWND compatible);
+	CanvasState CanvasSaveState(const Canvas& canvas);
+	void CanvasRestoreState(const Canvas& canvas, const CanvasState& state);
+	bool SelectBrush(const Canvas& canvas, const Brush& brush);
+	bool SelectPen(const Canvas& canvas, const Pen& pen);
+	bool SelectFont(const Canvas& canvas, const Font& font);
+	bool SelectBitmap(const Canvas& canvas, const Bitmap& bitmap);
+
+	// Text
+	bool SetTextColor(const Canvas& canvas, COLORREF clr);
+	bool SetBkColor(const Canvas& canvas, COLORREF clr);
+	bool SetBkMode(const Canvas& canvas, BkMode bk_mode);
+	bool TextDraw(const Canvas& canvas, LPCWSTR pszString, int iLen, int x, int y, const RECT *lprc, UINT Flags, const INT *lpDx);
+	bool TextDrawOem(const Canvas& canvas, LPCSTR pszString, int iLen, int x, int y, const RECT *lprc, UINT Flags, const INT *lpDx);
+	bool TextExtentPoint(const Canvas& canvas, LPCWSTR pszChars, UINT iLen, SIZE& sz);
+
+	// Region
+	Rgn CreateRgn(const RECT& rect);
+
 	// Brush
-	virtual CDrawObjectBrush* NewBrush(COLORREF Color) = 0;
+	Brush CreateBrush(COLORREF color);
+
 	// Pen
-	virtual CDrawObjectPen* NewPen(COLORREF Color, UINT Width = 1) = 0;
+	Pen CreatePen(COLORREF color, UINT width = 1);
+
 	// Font
-	virtual CDrawObjectFont* NewFont(const LOGFONT& Font) = 0;
+	Font CreateFont(const LOGFONT& font);
+
 	// Bitmap
-	virtual CDrawObjectBitmap* NewBitmap(UINT Width, UINT Height, CDrawCanvas* Compatible = NULL) = 0;
+	Bitmap CreateBitmap(UINT width, UINT height, UINT bits = 32);
+	Bitmap CreateBitmap(UINT width, UINT height, const Canvas& compatible);
+
+protected:
+	void ReleaseBitmap(Bitmap& bitmap);
+	void ReleaseBrush(Brush& brush);
+	void ReleaseCanvas(Canvas& canvas);
+	void ReleaseFont(Font& font);
+	void ReleasePen(Pen& pen);
+	void ReleaseRgn(Rgn& rgn);
+public:
+	template <typename T> void ReleaseObject(T& object);
+	template <> void ReleaseObject<Bitmap>(Bitmap& object) { ReleaseBitmap(object); };
+	template <> void ReleaseObject<Brush>(Brush& object) { ReleaseBrush(object); };
+	template <> void ReleaseObject<Canvas>(Canvas& object) { ReleaseCanvas(object); };
+	template <> void ReleaseObject<Font>(Font& object) { ReleaseFont(object); };
+	template <> void ReleaseObject<Pen>(Pen& object) { ReleasePen(object); };
+	template <> void ReleaseObject<Rgn>(Rgn& object) { ReleaseRgn(object); };
+
 public:
 	// Features
-	virtual bool IsCompatibleRequired() = 0;
+	bool IsCompatibleRequired();
 };
 
-
-
-class CDrawObjectBase : public CRefRelease
-{
-protected:
-	DrawObjectType m_Type;
-	bool           mb_External;
-	HANDLE         mh_Object;
-	CDrawFactory*  mp_Factory;
-
-public:
-	CDrawObjectBase(CDrawFactory* pFactory, DrawObjectType Type, HANDLE Obj = NULL, bool External = false);
-protected:
-	virtual ~CDrawObjectBase();
-protected:
-	// May be overrided
-	virtual HANDLE Set(HANDLE Obj);
-	// Must be overrided
-	virtual void InternalFree() = 0;
-protected:
-	// Implements CRefRelease: calls Free() and delete(this)
-	virtual void FinalRelease() override;
-	// Calls InternalFree, nulls mh_Object
-	void Free();
 };
 
-
-
-class CDrawCanvas : public CDrawObjectBase
-{
-protected:
-	HWND   mh_Wnd;
-	DWORD  mn_ThreadID;
-	bool   mb_WindowDC;
-protected:
-	HANDLE mh_OldBrush, mh_OldPen, mh_OldFont;
-
-	CDrawObjectBrush  *mp_Brush;
-	CDrawObjectPen    *mp_Pen;
-	CDrawObjectFont   *mp_Font;
-
-protected:
-	HANDLE mh_OldBitmap;
-	CDrawObjectBitmap *mp_Bitmap;
-	bool mb_SelfBitmap;
-
-public:
-	CDrawCanvas(CDrawFactory* pFactory);
-
-public:
-	// Initialization routines: have to be implemented in descendants
-	virtual bool InitCanvas(HWND Wnd) = 0;
-	virtual bool InitCanvasHDC(HDC Dc) = 0;
-	virtual bool InitCanvasDI(UINT Width, UINT Height, UINT Bits = 32) = 0;
-	virtual bool InitCanvasCompatible(UINT Width, UINT Height, HWND Compatible) = 0;
-
-protected:
-	virtual void InternalFree() override;
-	virtual void InternalFreeCanvas() = 0;
-
-public:
-	// Helpers: if NULL passes as parameter - selects "original" object
-	virtual void SelectBrush(CDrawObjectBrush* Brush) = 0;
-	virtual void SelectPen(CDrawObjectPen* Pen) = 0;
-	virtual void SelectFont(CDrawObjectFont* Font) = 0;
-	virtual void SelectBitmap(CDrawObjectBitmap* Bitmap) = 0;
-
-public:
-	// Helpers for painting objects (like checkboxes, radio buttons), drawing text, blitting bitmaps and so on..
-	#if 0
-	virtual bool DrawButtonCheck(int x, int y, int cx, int cy, DWORD DFCS_Flags) = 0;
-	virtual bool DrawButtonRadio(int x, int y, int cx, int cy, DWORD DFCS_Flags) = 0;
-	#endif
-public:
-	// Text
-	virtual void SetTextColor(COLORREF clr) = 0;
-	virtual void SetBkColor(COLORREF clr) = 0;
-	virtual void SetBkMode(int iBkMode) = 0;
-	virtual bool TextDraw(LPCWSTR pszString, int iLen, int x, int y, const RECT *lprc, UINT Flags, const INT *lpDx) = 0;
-	virtual bool TextDrawOem(LPCSTR pszString, int iLen, int x, int y, const RECT *lprc, UINT Flags, const INT *lpDx) = 0;
-	virtual bool TextExtentPoint(LPCWSTR pszChars, UINT iLen, LPSIZE sz) = 0;
-};
-
-
-
-class CDrawObjectBrush : public CDrawObjectBase
-{
-protected:
-	COLORREF m_Color;
-public:
-	CDrawObjectBrush(CDrawFactory* pFactory);
-};
-
-
-
-class CDrawObjectPen : public CDrawObjectBase
-{
-protected:
-	COLORREF m_Color;
-	UINT mn_Width;
-public:
-	CDrawObjectPen(CDrawFactory* pFactory);
-};
-
-
-
-class CDrawObjectFont : public CDrawObjectBase
-{
-protected:
-	LOGFONT m_LogFont;
-public:
-	CDrawObjectFont(CDrawFactory* pFactory);
-};
-
-
-
-class CDrawObjectBitmap : public CDrawObjectBase
-{
-protected:
-	UINT mn_Width, mn_Height;
-public:
-	CDrawObjectBitmap(CDrawFactory* pFactory);
-};
-
-
-
-template<class _Ty>
-class CDrawObjectPtr
-{
-private:
-	CRefRelease *mp_Ref;
-
-	void Set(_Ty* apRef)
-	{
-		if (mp_Ref != apRef)
-		{
-			if (apRef)
-				apRef->AddRef();
-			SafeRelease(mp_Ref);
-			mp_Ref = apRef;
-		}
-	};
-
-public:
-	CDrawObjectPtr()
-		: mp_Ref(NULL)
-	{
-	};
-
-	CDrawObjectPtr(_Ty* apRef)
-		: mp_Ref(NULL)
-	{
-		Set(apRef);
-	};
-
-	~CDrawObjectPtr()
-	{
-		SafeRelease(mp_Ref);
-	};
-
-	operator _Ty*() const
-	{
-		return dynamic_cast<_Ty*>(mp_Ref);
-	};
-
-	_Ty* operator->()
-	{
-		return dynamic_cast<_Ty*>(mp_Ref);
-	};
-
-	CDrawObjectPtr<_Ty>& operator=(_Ty* apRef)
-	{
-		Set(apRef);
-		return *this;
-	};
-};
-
-typedef CDrawObjectPtr<CDrawCanvas> CCanvasPtr;
-typedef CDrawObjectPtr<CDrawObjectBrush> CBrushPtr;
-typedef CDrawObjectPtr<CDrawObjectPen> CPenPtr;
-typedef CDrawObjectPtr<CDrawObjectFont> CFontPtr;
-typedef CDrawObjectPtr<CDrawObjectBitmap> CBitmapPtr;
+extern drawing::Factory gdi;

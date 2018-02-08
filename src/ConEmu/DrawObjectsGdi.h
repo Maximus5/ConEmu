@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015-2016 Maximus5
+Copyright (c) 2015-2018 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,134 +31,69 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <windows.h>
 #include "DrawObjects.h"
+#include "DrawObjectsImpl.h"
 
-class CDrawFactoryGdi : public CDrawFactory
+namespace drawing
+{
+namespace detail
+{
+
+class FactoryImplGdi : public FactoryImpl
 {
 public:
-	CDrawFactoryGdi();
-	virtual ~CDrawFactoryGdi();
+	FactoryImplGdi();
+	virtual ~FactoryImplGdi();
+
+	virtual bool Initialize() override;
+	virtual void Finalize() override;
 
 public:
 	// Canvas
-	virtual CDrawCanvas* NewCanvas(HWND Wnd) override;
-	virtual CDrawCanvas* NewCanvasHDC(HDC Dc) override;
-	virtual CDrawCanvas* NewCanvasDI(UINT Width, UINT Height, UINT Bits = 32) override;
-	virtual CDrawCanvas* NewCanvasCompatible(UINT Width, UINT Height, HWND Compatible) override;
+	virtual Canvas CreateCanvas(HWND wnd, CanvasType canvas_type) override;
+	virtual Canvas CreateCanvasHDC(HDC dc) override;
+	virtual Canvas CreateCanvasDI(UINT width, UINT height, UINT bits = 32) override;
+	virtual Canvas CreateCanvasCompatible(UINT width, UINT height, HWND compatible) override;
+	virtual int CanvasSaveState(const Canvas& canvas) override;
+	virtual void CanvasRestoreState(const Canvas& canvas, const CanvasState& state) override;
+	virtual void ReleaseCanvas(Canvas& canvas) override;
+	virtual bool SelectBrush(const Canvas& canvas, const Brush& brush) override;
+	virtual bool SelectPen(const Canvas& canvas, const Pen& pen) override;
+	virtual bool SelectFont(const Canvas& canvas, const Font& font) override;
+	virtual bool SelectBitmap(const Canvas& canvas, const Bitmap& bitmap) override;
+
+	// Text
+	virtual bool SetTextColor(const Canvas& canvas, COLORREF clr) override;
+	virtual bool SetBkColor(const Canvas& canvas, COLORREF clr) override;
+	virtual bool SetBkMode(const Canvas& canvas, BkMode bk_mode) override;
+	virtual bool TextDraw(const Canvas& canvas, LPCWSTR pszString, int iLen, int x, int y, const RECT *lprc, UINT Flags, const INT *lpDx) override;
+	virtual bool TextDrawOem(const Canvas& canvas, LPCSTR pszString, int iLen, int x, int y, const RECT *lprc, UINT Flags, const INT *lpDx) override;
+	virtual bool TextExtentPoint(const Canvas& canvas, LPCWSTR pszChars, UINT iLen, SIZE& sz) override;
+
+	// Region
+	virtual Rgn CreateRgn(const RECT& rect) override;
+	virtual void ReleaseRgn(Rgn& rgn) override;
+
 	// Brush
-	virtual CDrawObjectBrush* NewBrush(COLORREF Color) override;
+	virtual Brush CreateBrush(COLORREF color) override;
+	virtual void ReleaseBrush(Brush& brush) override;
+
 	// Pen
-	virtual CDrawObjectPen* NewPen(COLORREF Color, UINT Width = 1) override;
+	virtual Pen CreatePen(COLORREF color, UINT width = 1) override;
+	virtual void ReleasePen(Pen& pen) override;
+
 	// Font
-	virtual CDrawObjectFont* NewFont(const LOGFONT& Font) override;
+	virtual Font CreateFont(const LOGFONT& font) override;
+	virtual void ReleaseFont(Font& font) override;
+
 	// Bitmap
-	virtual CDrawObjectBitmap* NewBitmap(UINT Width, UINT Height, CDrawCanvas* Compatible = NULL) override;
+	virtual Bitmap CreateBitmap(UINT width, UINT height, UINT bits = 32) override;
+	virtual Bitmap CreateBitmap(UINT width, UINT height, const CanvasImpl& compatible) override;
+	virtual void ReleaseBitmap(Bitmap& bitmap) override;
+
 public:
 	// Features
-	virtual bool IsCompatibleRequired() override;
+	bool IsCompatibleRequired() override;
 };
 
-class CDrawCanvasGdi : public CDrawCanvas
-{
-public:
-	CDrawCanvasGdi(CDrawFactory* pFactory);
-
-public:
-	virtual bool InitCanvas(HWND Wnd) override;
-	virtual bool InitCanvasHDC(HDC Dc) override;
-	virtual bool InitCanvasDI(UINT Width, UINT Height, UINT Bits = 32) override;
-	virtual bool InitCanvasCompatible(UINT Width, UINT Height, HWND Compatible) override;
-
-protected:
-	// Methods
-	virtual void InternalFreeCanvas() override;
-
-public:
-	// Operators
-	operator HDC() const;
-
-public:
-	// Helpers
-	virtual void SelectBrush(CDrawObjectBrush* Brush) override;
-	virtual void SelectPen(CDrawObjectPen* Pen) override;
-	virtual void SelectFont(CDrawObjectFont* Font) override;
-	virtual void SelectBitmap(CDrawObjectBitmap* Bitmap) override;
-
-public:
-	// Helpers for painting objects (like checkboxes, radio buttons), drawing text, blitting bitmaps and so on..
-	#if 0
-	virtual bool DrawButtonCheck(int x, int y, int cx, int cy, DWORD DFCS_Flags) override;
-	virtual bool DrawButtonRadio(int x, int y, int cx, int cy, DWORD DFCS_Flags) override;
-	#endif
-protected:
-	// Text
-	virtual void SetTextColor(COLORREF clr) override;
-	virtual void SetBkColor(COLORREF clr) override;
-	virtual void SetBkMode(int iBkMode) override;
-	virtual bool TextDraw(LPCWSTR pszString, int iLen, int x, int y, const RECT *lprc, UINT Flags, const INT *lpDx) override;
-	virtual bool TextDrawOem(LPCSTR pszString, int iLen, int x, int y, const RECT *lprc, UINT Flags, const INT *lpDx) override;
-	virtual bool TextExtentPoint(LPCWSTR pszChars, UINT iLen, LPSIZE sz) override;
 };
-
-class CDrawObjectBrushGdi : public CDrawObjectBrush
-{
-public:
-	CDrawObjectBrushGdi(CDrawFactory* pFactory);
-
-public:
-	bool InitBrush(COLORREF Color);
-
-protected:
-	virtual void InternalFree() override;
-
-public:
-	// Operators
-	operator HBRUSH() const;
-};
-
-class CDrawObjectPenGdi : public CDrawObjectPen
-{
-public:
-	CDrawObjectPenGdi(CDrawFactory* pFactory);
-
-public:
-	bool InitPen(COLORREF Color, UINT Width = 1);
-
-protected:
-	virtual void InternalFree();
-
-public:
-	// Operators
-	operator HPEN() const;
-};
-
-class CDrawObjectFontGdi : public CDrawObjectFont
-{
-public:
-	CDrawObjectFontGdi(CDrawFactory* pFactory);
-
-public:
-	bool InitFont(const LOGFONT& Font);
-
-protected:
-	virtual void InternalFree();
-
-public:
-	// Operators
-	operator HFONT() const;
-};
-
-class CDrawObjectBitmapGdi : public CDrawObjectBitmap
-{
-public:
-	CDrawObjectBitmapGdi(CDrawFactory* pFactory);
-
-public:
-	bool InitBitmap(UINT Width, UINT Height, CDrawCanvas* Compatible = NULL);
-
-protected:
-	virtual void InternalFree();
-
-public:
-	// Operators
-	operator HBITMAP() const;
 };

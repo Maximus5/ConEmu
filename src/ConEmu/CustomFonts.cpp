@@ -152,6 +152,7 @@ private:
 			RGBQUAD space_for_white;
 		};
 
+		// #GDI Implement in DrawObjects
 		MyBitmap b = {};
 		b.bmi.bmiHeader.biSize        = sizeof(b.bmi.bmiHeader);
 		b.bmi.bmiHeader.biWidth       = m_Width * 256;

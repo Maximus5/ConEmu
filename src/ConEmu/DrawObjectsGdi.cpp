@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2015-2016 Maximus5
+Copyright (c) 2015-2018 Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -36,101 +36,338 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "DrawObjectsGdi.h"
 
+namespace drawing
+{
+namespace detail
+{
+
 // **********************************
 //
-// CDrawFactoryGdi
+// FactoryImplGdi
 //
 // **********************************
-CDrawFactoryGdi::CDrawFactoryGdi()
+FactoryImplGdi::FactoryImplGdi()
 {
 }
 
-CDrawFactoryGdi::~CDrawFactoryGdi()
+FactoryImplGdi::~FactoryImplGdi()
 {
 }
 
-CDrawCanvas* CDrawFactoryGdi::NewCanvas(HWND Wnd)
+
+bool FactoryImplGdi::Initialize()
 {
-	CDrawCanvasGdi* pCanvas = new CDrawCanvasGdi(this);
-	if (!pCanvas->InitCanvas(Wnd))
-		SafeRelease(pCanvas);
-	return pCanvas;
+	// Nothing here yet
+	return true;
 }
 
-CDrawCanvas* CDrawFactoryGdi::NewCanvasHDC(HDC Dc)
+void FactoryImplGdi::Finalize()
 {
-	CDrawCanvasGdi* pCanvas = new CDrawCanvasGdi(this);
-	if (!pCanvas->InitCanvasHDC(Dc))
-		SafeRelease(pCanvas);
-	return pCanvas;
+	// Release internal resources?
 }
 
-CDrawCanvas* CDrawFactoryGdi::NewCanvasDI(UINT Width, UINT Height, UINT Bits /*= 32*/)
+drawing::Canvas FactoryImplGdi::CreateCanvas(HWND wnd, CanvasType canvas_type)
 {
-	CDrawCanvasGdi* pCanvas = new CDrawCanvasGdi(this);
-	if (!pCanvas->InitCanvasDI(Width, Height, Bits))
-		SafeRelease(pCanvas);
-	return pCanvas;
+	switch (canvas_type)
+	{
+	case CanvasType::Window:
+		{
+			Canvas window_canvas(new CanvasImpl(::GetWindowDC(wnd), wnd, CanvasType::Window));
+			window_canvas->SaveState(CanvasSaveState(window_canvas));
+			return window_canvas;
+		}
+	case CanvasType::Client:
+		{
+			Canvas client_canvas(new CanvasImpl(::GetDC(wnd), wnd, CanvasType::Client));
+			client_canvas->SaveState(CanvasSaveState(client_canvas));
+			return client_canvas;
+		}
+	case CanvasType::Paint:
+		{
+			PAINTSTRUCT ps = {};
+			HDC hdc = ::BeginPaint(wnd, &ps);
+			Canvas ps_canvas(new CanvasImpl(hdc, wnd, ps));
+			ps_canvas->SaveState(CanvasSaveState(ps_canvas));
+			return ps_canvas;
+		}
+	}
+	_ASSERTE(FALSE && "Unexpected canvas_type");
+	return Canvas();
 }
 
-CDrawCanvas* CDrawFactoryGdi::NewCanvasCompatible(UINT Width, UINT Height, HWND Compatible)
+// This may be used when HDC comes from WindowAPI as wParam/lParam in message
+drawing::Canvas FactoryImplGdi::CreateCanvasHDC(HDC dc)
 {
-	CDrawCanvasGdi* pCanvas = new CDrawCanvasGdi(this);
-	if (!pCanvas->InitCanvasCompatible(Width, Height, Compatible))
-		SafeRelease(pCanvas);
-	return pCanvas;
+	Canvas dc_canvas(new CanvasImpl(dc, true/*external*/, CanvasType::Undefined));
+	dc_canvas->SaveState(CanvasSaveState(dc_canvas));
+	return dc_canvas;
 }
 
-CDrawObjectBrush* CDrawFactoryGdi::NewBrush(COLORREF Color)
+drawing::Canvas FactoryImplGdi::CreateCanvasDI(UINT width, UINT height, UINT bits /*= 32*/)
 {
-	CDrawObjectBrushGdi* pBrush = new CDrawObjectBrushGdi(this);
-	if (!pBrush->InitBrush(Color))
-		SafeRelease(pBrush);
-	return pBrush;
+	Canvas ScreenDC(CreateCanvas(NULL, CanvasType::Client));
+
+	Canvas mem_dc(new CanvasImpl(::CreateCompatibleDC(ScreenDC.Handle<HDC>()), false, CanvasType::Memory));
+	if (mem_dc)
+	{
+		mem_dc->SaveState(CanvasSaveState(mem_dc));
+
+		// #GDI Implement GdiFlush?
+		// You need to guarantee that the GDI subsystem has completed any drawing
+		// to a bitmap created by CreateDIBSection before you draw to the bitmap yourself.
+		// Access to the bitmap must be synchronized. Do this by calling the GdiFlush function.
+		// This applies to any use of the pointer to the bitmap bit values, including passing
+		// the pointer in calls to functions such as SetDIBits.
+
+		Bitmap bitmap(CreateBitmap(width, height, bits));
+		if (bitmap)
+		{
+			if (SelectBitmap(mem_dc, bitmap))
+				return mem_dc;
+			_ASSERTE(FALSE && "SelectBitmap fails");
+		}
+		else
+		{
+			_ASSERTE(FALSE && "CreateBitmap fails");
+		}
+	}
+	else
+	{
+		_ASSERTE(FALSE && "CreateCompatibleDC fails");
+	}
+
+	return Canvas();
 }
 
-CDrawObjectPen* CDrawFactoryGdi::NewPen(COLORREF Color, UINT Width /*= 1*/)
+drawing::Canvas FactoryImplGdi::CreateCanvasCompatible(UINT width, UINT height, HWND compatible)
 {
-	CDrawObjectPenGdi* pPen = new CDrawObjectPenGdi(this);
-	if (!pPen->InitPen(Color, Width))
-		SafeRelease(pPen);
-	return pPen;
+	Canvas ScreenDC(CreateCanvas(NULL, CanvasType::Client));
+
+	Canvas comp_dc(new CanvasImpl(::CreateCompatibleDC(ScreenDC.Handle<HDC>()), false, CanvasType::Memory));
+	if (compatible)
+	{
+		comp_dc->SaveState(CanvasSaveState(comp_dc));
+
+		Bitmap bitmap(CreateBitmap(width, height, ScreenDC));
+		if (bitmap)
+		{
+			if (SelectBitmap(comp_dc, bitmap))
+				return comp_dc;
+			_ASSERTE(FALSE && "SelectBitmap fails");
+		}
+		else
+		{
+			_ASSERTE(FALSE && "CreateBitmap fails");
+		}
+	}
+	else
+	{
+		_ASSERTE(FALSE && "CreateCompatibleDC fails");
+	}
+
+	return Canvas();
 }
 
-CDrawObjectFont* CDrawFactoryGdi::NewFont(const LOGFONT& Font)
+int FactoryImplGdi::CanvasSaveState(const Canvas& canvas)
 {
-	CDrawObjectFontGdi* pFont = new CDrawObjectFontGdi(this);
-	if (!pFont->InitFont(Font))
-		SafeRelease(pFont);
-	return pFont;
+	return ::SaveDC(canvas.Handle<HDC>());
 }
 
-CDrawObjectBitmap* CDrawFactoryGdi::NewBitmap(UINT Width, UINT Height, CDrawCanvas* Compatible /*= NULL*/)
+void FactoryImplGdi::CanvasRestoreState(const Canvas& canvas, const CanvasState& state)
 {
-	CDrawObjectBitmapGdi* pBitmap = new CDrawObjectBitmapGdi(this);
-	if (!pBitmap->InitBitmap(Width, Height))
-		SafeRelease(pBitmap);
-	return pBitmap;
+	if (!state.valid())
+	{
+		_ASSERTE(state.valid());
+		return;
+	}
+	::RestoreDC(canvas.Handle<HDC>(), state.state);
 }
 
-bool CDrawFactoryGdi::IsCompatibleRequired()
+void FactoryImplGdi::ReleaseCanvas(Canvas& canvas)
+{
+	_ASSERTE(canvas);
+	if (canvas->isExternal())
+		return;
+
+	switch (canvas->getCanvasType())
+	{
+	case CanvasType::Window:
+	case CanvasType::Client:
+		::ReleaseDC(canvas->getWindow(), canvas.Handle<HDC>());
+		break;
+
+	case CanvasType::Paint:
+		::EndPaint(canvas->getWindow(), canvas->getPaintStruct());
+		break;
+
+	case CanvasType::Memory:
+		::DeleteDC(canvas.Handle<HDC>());
+		break;
+
+	default:
+		{
+			_ASSERTE(FALSE && "Unsupported CanvasType");
+		}
+	}
+}
+
+bool FactoryImplGdi::SelectBrush(const Canvas& canvas, const Brush& brush)
+{
+	if (!canvas || !brush)
+		return false;
+	::SelectObject(canvas.Handle<HDC>(), brush.Handle<HBRUSH>());
+	return true;
+}
+
+bool FactoryImplGdi::SelectPen(const Canvas& canvas, const Pen& pen)
+{
+	if (!canvas || !pen)
+		return false;
+	::SelectObject(canvas.Handle<HDC>(), pen.Handle<HPEN>());
+	return true;
+}
+
+bool FactoryImplGdi::SelectFont(const Canvas& canvas, const Font& font)
+{
+	if (!canvas || !font)
+		return false;
+	::SelectObject(canvas.Handle<HDC>(), font.Handle<HFONT>());
+	return true;
+}
+
+bool FactoryImplGdi::SelectBitmap(const Canvas& canvas, const Bitmap& bitmap)
+{
+	if (!canvas || !bitmap)
+		return false;
+	::SelectObject(canvas.Handle<HDC>(), bitmap.Handle<HBITMAP>());
+	return true;
+}
+
+bool FactoryImplGdi::SetTextColor(const Canvas& canvas, COLORREF clr)
+{
+	if (!canvas)
+		return false;
+	::SetTextColor(canvas.Handle<HDC>(), clr);
+	return true;
+}
+
+bool FactoryImplGdi::SetBkColor(const Canvas& canvas, COLORREF clr)
+{
+	if (!canvas)
+		return false;
+	::SetBkColor(canvas.Handle<HDC>(), clr);
+	return true;
+}
+
+bool FactoryImplGdi::SetBkMode(const Canvas& canvas, BkMode bk_mode)
+{
+	if (!canvas)
+		return false;
+	::SetBkMode(canvas.Handle<HDC>(), (bk_mode == BkMode::Opaque) ? OPAQUE : TRANSPARENT);
+	return true;
+}
+
+bool FactoryImplGdi::TextDraw(const Canvas& canvas, LPCWSTR pszString, int iLen, int x, int y, const RECT *lprc, UINT Flags, const INT *lpDx)
+{
+	if (!canvas)
+		return false;
+	if (!::ExtTextOut(canvas.Handle<HDC>(), x, y, Flags, lprc, pszString, iLen, lpDx))
+		return false;
+	return true;
+}
+
+bool FactoryImplGdi::TextDrawOem(const Canvas& canvas, LPCSTR pszString, int iLen, int x, int y, const RECT *lprc, UINT Flags, const INT *lpDx)
+{
+	if (!canvas)
+		return false;
+	if (!::ExtTextOutA(canvas.Handle<HDC>(), x, y, Flags, lprc, pszString, iLen, lpDx))
+		return false;
+	return true;
+}
+
+bool FactoryImplGdi::TextExtentPoint(const Canvas& canvas, LPCWSTR pszChars, UINT iLen, SIZE& sz)
+{
+	if (!canvas)
+		return false;
+	if (!::GetTextExtentPoint32(canvas.Handle<HDC>(), pszChars, iLen, &sz))
+		return false;
+	return true;
+}
+
+drawing::Rgn FactoryImplGdi::CreateRgn(const RECT& rect)
+{
+	return Rgn(new RgnImpl(::CreateRectRgnIndirect(&rect), false, rect));
+}
+
+void FactoryImplGdi::ReleaseRgn(Rgn& rgn)
+{
+	::DeleteObject(rgn.Handle<HRGN>());
+}
+
+Brush FactoryImplGdi::CreateBrush(COLORREF color)
+{
+	return Brush(new BrushImpl(::CreateSolidBrush(color), false, color));
+}
+
+void FactoryImplGdi::ReleaseBrush(Brush& brush)
+{
+	::DeleteObject(brush.Handle<HBRUSH>());
+}
+
+Pen FactoryImplGdi::CreatePen(COLORREF color, UINT width /*= 1*/)
+{
+	return Pen(new PenImpl(::CreatePen(PS_SOLID, width, color), false, color, width)); 
+}
+
+void FactoryImplGdi::ReleasePen(Pen& pen)
+{
+	::DeleteObject(pen.Handle<HPEN>());
+}
+
+Font FactoryImplGdi::CreateFont(const LOGFONT& font)
+{
+	return Font(new FontImpl(::CreateFontIndirect(&font), false, font));
+}
+
+void FactoryImplGdi::ReleaseFont(Font& font)
+{
+	::DeleteObject(font.Handle<HFONT>());
+}
+
+Bitmap FactoryImplGdi::CreateBitmap(UINT width, UINT height, UINT bits /*= 32*/)
+{
+	// #GDI Use CreateDIBSection here?
+}
+
+Bitmap FactoryImplGdi::CreateBitmap(UINT width, UINT height, const CanvasImpl& compatible)
+{
+	return Bitmap(new BitmapImpl(::CreateCompatibleBitmap(compatible.Handle<HDC>(), width, height), false, width, height));
+}
+
+void FactoryImplGdi::ReleaseBitmap(Bitmap& bitmap)
+{
+	::DeleteObject(bitmap.Handle<HBITMAP>());
+}
+
+bool FactoryImplGdi::IsCompatibleRequired()
 {
 	static int iVista = 0;
 	if (iVista == 0)
 	{
 		_ASSERTE(_WIN32_WINNT_VISTA==0x600);
 		OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA)};
-		DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-		iVista = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) ? 1 : -1;
+		DWORDLONG const dwlConditionMask = ::VerSetConditionMask(::VerSetConditionMask(0
+			, VER_MAJORVERSION, VER_GREATER_EQUAL)
+			, VER_MINORVERSION, VER_GREATER_EQUAL);
+		iVista = ::VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) ? 1 : -1;
 	}
 
 	int nBPP = -1;
 	bool bComp = (iVista < 0);
 	if (!bComp)
 	{
-		CDrawCanvasGdi ScreenDC(this);
-		ScreenDC.InitCanvas(NULL);
-		nBPP = GetDeviceCaps(ScreenDC.operator HDC(), BITSPIXEL);
+		Canvas ScreenDC(CreateCanvas(NULL, CanvasType::Client));
+		nBPP = ::GetDeviceCaps(ScreenDC.Handle<HDC>(), BITSPIXEL);
 		if (nBPP < 32)
 		{
 			bComp = true;
@@ -140,365 +377,5 @@ bool CDrawFactoryGdi::IsCompatibleRequired()
 	return bComp;
 }
 
-
-
-// **********************************
-//
-// CDrawObjectCanvas
-//
-// **********************************
-CDrawCanvasGdi::CDrawCanvasGdi(CDrawFactory* pFactory)
-	: CDrawCanvas(pFactory)
-{
-}
-
-bool CDrawCanvasGdi::InitCanvas(HWND Wnd)
-{
-	Free();
-	mb_WindowDC = true;
-	mb_External = false;
-	mh_Object = GetDC(Wnd);
-	return (mh_Object!=NULL);
-}
-
-bool CDrawCanvasGdi::InitCanvasHDC(HDC Dc)
-{
-	Free();
-	mb_WindowDC = false; // doesn't matter, actually
-	mb_External = true;
-	mh_Object = Dc;
-	return (mh_Object!=NULL);
-}
-
-bool CDrawCanvasGdi::InitCanvasDI(UINT Width, UINT Height, UINT Bits /*= 32*/)
-{
-	Free();
-	mb_WindowDC = false;
-	mb_External = false;
-
-	_ASSERTE(mp_Bitmap == NULL);
-	SafeRelease(mp_Bitmap);
-
-	CDrawCanvasGdi ScreenDC(mp_Factory);
-
-	if (!mp_Factory->IsCompatibleRequired() || ScreenDC.InitCanvas(NULL))
-	{
-		mh_Object = CreateCompatibleDC(ScreenDC);
-
-		mp_Bitmap = mp_Factory->NewBitmap(Width, Height, &ScreenDC);
-	}
-
-	return (mh_Object!=NULL);
-}
-
-bool CDrawCanvasGdi::InitCanvasCompatible(UINT Width, UINT Height, HWND Compatible)
-{
-	Free();
-	mb_WindowDC = false;
-	mb_External = false;
-
-	_ASSERTE(mp_Bitmap == NULL);
-	SafeRelease(mp_Bitmap);
-
-	CDrawCanvasGdi ScreenDC(mp_Factory);
-
-	if (ScreenDC.InitCanvas(Compatible))
-	{
-		mh_Object = CreateCompatibleDC(ScreenDC.operator HDC());
-
-		if ((mp_Bitmap = mp_Factory->NewBitmap(Width, Height, &ScreenDC)) != NULL)
-			SelectBitmap(mp_Bitmap);
-		else
-			Free();
-	}
-
-	return (mh_Object!=NULL);
-}
-
-CDrawCanvasGdi::operator HDC() const
-{
-	return (HDC)mh_Object;
-}
-
-void CDrawCanvasGdi::InternalFreeCanvas()
-{
-	if (mh_Object && !mb_External)
-	{
-		if (mb_WindowDC)
-			ReleaseDC(mh_Wnd, (HDC)mh_Object);
-		else
-			DeleteDC((HDC)mh_Object);
-	}
-}
-
-void CDrawCanvasGdi::SelectBrush(CDrawObjectBrush* Brush)
-{
-	HDC hdc = operator HDC();
-	if (!hdc)
-		return;
-
-	if (Brush)
-	{
-		HBRUSH hOld = (HBRUSH)SelectObject(hdc, dynamic_cast<CDrawObjectBrushGdi*>(Brush)->operator HBRUSH());
-		if (!mh_OldBrush)
-			mh_OldBrush = hOld;
-		mp_Brush = Brush;
-	}
-	else if (mh_OldBrush)
-	{
-		SelectObject(hdc, (HBRUSH)mh_OldBrush);
-		mh_OldBrush = NULL;
-	}
-}
-
-void CDrawCanvasGdi::SelectPen(CDrawObjectPen* Pen)
-{
-	HDC hdc = operator HDC();
-	if (!hdc)
-		return;
-
-	if (Pen)
-	{
-		HPEN hOld = (HPEN)SelectObject(hdc, dynamic_cast<CDrawObjectPenGdi*>(Pen)->operator HPEN());
-		if (!mh_OldPen)
-			mh_OldPen = hOld;
-		mp_Pen = Pen;
-	}
-	else if (mh_OldPen)
-	{
-		SelectObject(hdc, (HPEN)mh_OldPen);
-		mh_OldPen = NULL;
-	}
-}
-
-void CDrawCanvasGdi::SelectFont(CDrawObjectFont* Font)
-{
-	HDC hdc = operator HDC();
-	if (!hdc)
-		return;
-
-	if (Font)
-	{
-		HFONT hOld = (HFONT)SelectObject(hdc, dynamic_cast<CDrawObjectFontGdi*>(Font)->operator HFONT());
-		if (!mh_OldFont)
-			mh_OldFont = hOld;
-		mp_Font = Font;
-	}
-	else if (mh_OldFont)
-	{
-		SelectObject(hdc, (HFONT)mh_OldFont);
-		mh_OldFont = NULL;
-	}
-}
-
-void CDrawCanvasGdi::SelectBitmap(CDrawObjectBitmap* Bitmap)
-{
-	HDC hdc = operator HDC();
-	if (!hdc)
-		return;
-
-	if (Bitmap)
-	{
-		HFONT hOld = (HFONT)SelectObject(hdc, dynamic_cast<CDrawObjectBitmapGdi*>(Bitmap)->operator HBITMAP());
-		if (!mh_OldBitmap)
-			mh_OldBitmap = hOld;
-		if (mp_Bitmap == Bitmap)
-			mb_SelfBitmap = true;
-		else
-			mp_Bitmap = Bitmap;
-	}
-	else if (mh_OldBitmap)
-	{
-		SelectObject(hdc, (HFONT)mh_OldBitmap);
-		mh_OldBitmap = NULL;
-	}
-}
-
-#if 0
-bool CDrawCanvasGdi::DrawButtonCheck(int x, int y, int cx, int cy, DWORD DFCS_Flags)
-{
-	return false;
-}
-
-bool CDrawCanvasGdi::DrawButtonRadio(int x, int y, int cx, int cy, DWORD DFCS_Flags)
-{
-	return false;
-}
-#endif
-
-void CDrawCanvasGdi::SetTextColor(COLORREF clr)
-{
-	::SetTextColor(operator HDC(), clr);
-}
-
-void CDrawCanvasGdi::SetBkColor(COLORREF clr)
-{
-	::SetBkColor(operator HDC(), clr);
-}
-
-void CDrawCanvasGdi::SetBkMode(int iBkMode)
-{
-	::SetBkMode(operator HDC(), iBkMode);
-}
-
-bool CDrawCanvasGdi::TextDraw(LPCWSTR pszString, int iLen, int x, int y, const RECT *lprc, UINT Flags, const INT *lpDx)
-{
-	bool bRc = false;
-	if (iLen < 0)
-		iLen = lstrlen(pszString);
-	if (::ExtTextOut(operator HDC(), x, y, Flags, lprc, pszString, iLen, lpDx))
-		bRc = true;
-	return bRc;
-}
-
-bool CDrawCanvasGdi::TextDrawOem(LPCSTR pszString, int iLen, int x, int y, const RECT *lprc, UINT Flags, const INT *lpDx)
-{
-	bool bRc = false;
-	if (iLen < 0)
-		iLen = lstrlenA(pszString);
-	if (::ExtTextOutA(operator HDC(), x, y, Flags, lprc, pszString, iLen, lpDx))
-		bRc = true;
-	return bRc;
-}
-
-bool CDrawCanvasGdi::TextExtentPoint(LPCWSTR pszChars, UINT iLen, LPSIZE sz)
-{
-	bool bRc = false;
-	if (::GetTextExtentPoint32(operator HDC(), pszChars, iLen, sz))
-		bRc = true;
-	return bRc;
-}
-
-
-
-// **********************************
-//
-// CDrawObjectBrushGdi
-//
-// **********************************
-CDrawObjectBrushGdi::CDrawObjectBrushGdi(CDrawFactory* pFactory)
-	: CDrawObjectBrush(pFactory)
-{
-}
-
-bool CDrawObjectBrushGdi::InitBrush(COLORREF Color)
-{
-	if (mh_Object)
-		Free();
-	mh_Object = CreateSolidBrush(Color);
-	_ASSERTE(mh_Object && (GetObjectType(mh_Object) == OBJ_BRUSH));
-	return (mh_Object!=NULL);
-}
-
-CDrawObjectBrushGdi::operator HBRUSH() const
-{
-	_ASSERTE(mh_Object && (GetObjectType(mh_Object) == OBJ_BRUSH));
-	return (HBRUSH)mh_Object;
-}
-
-void CDrawObjectBrushGdi::InternalFree()
-{
-	if (mh_Object)
-		DeleteObject((HBRUSH)mh_Object);
-	mh_Object = NULL;
-}
-
-
-// **********************************
-//
-// CDrawObjectPenGdi
-//
-// **********************************
-CDrawObjectPenGdi::CDrawObjectPenGdi(CDrawFactory* pFactory)
-	: CDrawObjectPen(pFactory)
-{
-}
-
-bool CDrawObjectPenGdi::InitPen(COLORREF Color, UINT Width /*= 1*/)
-{
-	if (mh_Object)
-		Free();
-	mh_Object = CreatePen(PS_SOLID, Width, Color);
-	_ASSERTE(mh_Object && (GetObjectType(mh_Object) == OBJ_PEN));
-	return (mh_Object!=NULL);
-}
-
-CDrawObjectPenGdi::operator HPEN() const
-{
-	return (HPEN)mh_Object;
-}
-
-void CDrawObjectPenGdi::InternalFree()
-{
-	if (mh_Object)
-		DeleteObject((HPEN)mh_Object);
-	mh_Object = NULL;
-}
-
-
-// **********************************
-//
-// CDrawObjectFontGdi
-//
-// **********************************
-CDrawObjectFontGdi::CDrawObjectFontGdi(CDrawFactory* pFactory)
-	: CDrawObjectFont(pFactory)
-{
-}
-
-bool CDrawObjectFontGdi::InitFont(const LOGFONT& Font)
-{
-	if (mh_Object)
-		Free();
-	TODO("BDF Fonts");
-	mh_Object = CreateFontIndirect(&Font);
-	_ASSERTE(mh_Object && (GetObjectType(mh_Object) == OBJ_FONT));
-	return (mh_Object!=NULL);
-}
-
-CDrawObjectFontGdi::operator HFONT() const
-{
-	return (HFONT)mh_Object;
-}
-
-void CDrawObjectFontGdi::InternalFree()
-{
-	if (mh_Object)
-		DeleteObject((HFONT)mh_Object);
-	mh_Object = NULL;
-}
-
-
-// **********************************
-//
-// CDrawObjectBitmapGdi
-//
-// **********************************
-CDrawObjectBitmapGdi::CDrawObjectBitmapGdi(CDrawFactory* pFactory)
-	: CDrawObjectBitmap(pFactory)
-{
-}
-
-bool CDrawObjectBitmapGdi::InitBitmap(UINT Width, UINT Height, CDrawCanvas* Compatible /*= NULL*/)
-{
-	if (mh_Object)
-		Free();
-	if (Compatible)
-		mh_Object = CreateCompatibleBitmap(dynamic_cast<CDrawCanvasGdi*>(Compatible)->operator HDC(), Width, Height);
-	else
-		mh_Object = CreateBitmap(Width, Height, 1, 32, NULL);
-	_ASSERTE(mh_Object && (GetObjectType(mh_Object) == OBJ_BITMAP));
-	return (mh_Object!=NULL);
-}
-
-CDrawObjectBitmapGdi::operator HBITMAP() const
-{
-	return (HBITMAP)mh_Object;
-}
-
-void CDrawObjectBitmapGdi::InternalFree()
-{
-	if (mh_Object)
-		DeleteObject((HBITMAP)mh_Object);
-	mh_Object = NULL;
-}
+};
+};
