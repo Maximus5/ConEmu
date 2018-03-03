@@ -1488,6 +1488,8 @@ void CConEmuSize::ReloadMonitorInfo()
 
 	MSectionLockSimple locks; locks.Lock(&mcs_monitors);
 
+	bool is_log = LogString(L"ReloadMonitorInfo");
+
 	monitors.clear();
 	EnumDisplayMonitors(NULL, NULL, Invoke::MonitorEnumProc, reinterpret_cast<LPARAM>(this));
 	if (monitors.empty())
@@ -1590,6 +1592,8 @@ void CConEmuSize::ReloadMonitorInfo()
 			HWND hFrame = CreateWindowEx(exStyle, szFrameClass, L"", style, 100, 100, 400, 200, NULL, NULL, (HINSTANCE)g_hInstance, NULL);
 			if (hFrame)
 			{
+				wchar_t szInfo[140];
+
 				SetLayeredWindowAttributes(hFrame, 0, 0, LWA_ALPHA);
 				ShowWindow(hFrame, SW_SHOWNA);
 
@@ -1609,8 +1613,6 @@ void CConEmuSize::ReloadMonitorInfo()
 						if (GetWindowRect(hFrame, &rcReal)
 							&& SUCCEEDED(mp_ConEmu->DwmGetWindowAttribute(hFrame, DWMWA_EXTENDED_FRAME_BOUNDS, &rcVisible, sizeof(rcVisible))))
 						{
-							wchar_t szInfo[140];
-
 							// rcVisible is expected to be smaller than rcReal
 							if (rcVisible.left > rcReal.left && rcVisible.right < rcReal.right
 								&& rcVisible.right > rcVisible.left && rcVisible.bottom > rcVisible.top
@@ -1623,7 +1625,7 @@ void CConEmuSize::ReloadMonitorInfo()
 										(rcReal.bottom - rcVisible.bottom)
 									);
 								const RECT& rc = fi.Win10Stealthy;
-								swprintf_c(szInfo, L"DWMWA_EXTENDED_FRAME_BOUNDS Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
+								swprintf_c(szInfo, L"  DWMWA_EXTENDED_FRAME_BOUNDS Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
 									LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal), LOGRECTCOORDS(rc));
 
 								#if 0
@@ -1640,7 +1642,7 @@ void CConEmuSize::ReloadMonitorInfo()
 								_ASSERTE(rcVisible.left > rcReal.left && rcVisible.right < rcReal.right);
 								_ASSERTE(rcVisible.right > rcVisible.left && rcVisible.bottom > rcVisible.top);
 								_ASSERTE(rcVisible.top >= rcReal.top && rcVisible.bottom <= rcReal.bottom);
-								swprintf_c(szInfo, L"DWMWA_EXTENDED_FRAME_BOUNDS {FAIL} Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
+								swprintf_c(szInfo, L"  DWMWA_EXTENDED_FRAME_BOUNDS {FAIL} Visible={%i,%i}-{%i,%i} Real={%i,%i}-{%i,%i} Diff={%i,%i}-{%i,%i}",
 									LOGRECTCOORDS(rcVisible), LOGRECTCOORDS(rcReal),
 									(rcVisible.left - rcReal.left), (rcVisible.top - rcReal.top), (rcReal.right - rcVisible.right), (rcReal.bottom - rcVisible.bottom));
 							}
@@ -1687,6 +1689,19 @@ void CConEmuSize::ReloadMonitorInfo()
 		}
 	}
 
+	if (is_log)
+	{
+		wchar_t szInfo[200];
+		for (INT_PTR i = 0; i < monitors.size(); ++i)
+		{
+			auto& mi = monitors[i];
+			swprintf_c(szInfo, L"  %i: #%08X dpi=%i; Full: {%i,%i}-{%i,%i} (%ix%i); Work: {%i,%i}-{%i,%i} (%ix%i)",
+				(int)i, LODWORD(mi.hMon), LOGRECTCOORDS(mi.mi.rcMonitor), LOGRECTSIZE(mi.mi.rcMonitor),
+				LOGRECTCOORDS(mi.mi.rcWork), LOGRECTSIZE(mi.mi.rcWork));
+		}
+	}
+
+	SizeInfo::RequestRecalc();
 	mp_ConEmu->RecalculateFrameSizes();
 }
 
