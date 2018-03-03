@@ -19,6 +19,7 @@
           <Directory Id="DosBox" Name="DosBox"/>
           <Directory Id="clink" Name="clink"/>
           <Directory Id="WSL" Name="wsl"/>
+          <Directory Id="Scripts" Name="Scripts"/>
           <!--
           <Directory Id="Portable" Name="Portable"/>
           -->

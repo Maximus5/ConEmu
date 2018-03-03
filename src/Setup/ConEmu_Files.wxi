@@ -139,9 +139,6 @@
       <Component Id="WhatsNew_ConEmu.txt" Guid="$(var.Guid.WhatsNew_ConEmu.txt)" Win64="$(var.Win64)">
         <File Id="WhatsNew_ConEmu.txt" Source="..\..\Release\ConEmu\WhatsNew-ConEmu.txt"  KeyPath="yes" />
       </Component>
-      <Component Id="Scripts_Readme.txt" Guid="$(var.Guid.Scripts_Readme.txt)" Win64="$(var.Win64)">
-        <File Id="Scripts_Readme.txt" Source="..\..\Release\ConEmu\Scripts\readme.txt"  KeyPath="yes" />
-      </Component>
     </DirectoryRef>
 
     <!-- Addons directory -->
@@ -211,6 +208,13 @@
       </Component>
       <Component Id="Lines18a.bmp" Guid="$(var.Guid.Lines18a.bmp)" Win64="$(var.Win64)">
         <File Id="Lines18a.bmp" Source="..\..\Release\ConEmu\Addons\Lines18a.bmp"  KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <!-- Directory for some predefined scripts -->
+    <DirectoryRef Id="Scripts">
+      <Component Id="Scripts_Readme.txt" Guid="$(var.Guid.Scripts_Readme.txt)" Win64="$(var.Win64)">
+        <File Id="Scripts_Readme.txt" Source="..\..\Release\ConEmu\Scripts\readme.txt"  KeyPath="yes" />
       </Component>
     </DirectoryRef>
 
