@@ -2652,9 +2652,12 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 					}
 				}
 
-				_ASSERTEX(!mb_BuferModeChangeLocked);
-				CheckBufferSize();
-				lbBufferChecked = true;
+				// #SIZE_TODO buffer mode may be changing at the moment by cmdStartStop, use mutex?
+				if (!mb_BuferModeChangeLocked)
+				{
+					CheckBufferSize();
+					lbBufferChecked = true;
+				}
 
 				//  TODO("Включить прокрутку? или оно само?");
 				if (nNewWidth != con.nTextWidth || nNewHeight != con.nTextHeight)
