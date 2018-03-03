@@ -13025,7 +13025,7 @@ void CRealConsole::CloseConsole(bool abForceTerminate, bool abConfirm, bool abAl
 		{
 			bool lbExecuted = false;
 
-			LPCWSTR pszMacro = gpSet->SafeFarCloseMacro(fmv_Default);
+			LPCWSTR pszMacro = gpSet->SafeFarCloseMacro(IsFarLua() ? fmv_Lua : fmv_Default);
 			_ASSERTE(pszMacro && *pszMacro);
 
 			// GuiMacro выполняется безотносительно "фар/не фар"
