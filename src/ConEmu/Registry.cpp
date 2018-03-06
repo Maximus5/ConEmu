@@ -1468,6 +1468,7 @@ bool SettingsXML::SetMultiLine(SettingsXML::node* apNode, const wchar_t* asValue
 			goto wrap;
 
 		apNode->append_node(pNode);
+		pNode = nullptr;
 		SetDataChanged();
 
 		nLen = _tcslen(psz)+1;
