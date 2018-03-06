@@ -3121,6 +3121,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				case 39:
 					// Reset
 					gDisplayParm.TextColor = CONFORECOLOR(GetDefaultTextAttr());
+					gDisplayParm.BrightFore = FALSE;
 					gDisplayParm.Text256 = FALSE;
 					gDisplayParm.WasSet = TRUE;
 					break;
@@ -3153,6 +3154,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				case 49:
 					// Reset
 					gDisplayParm.BackColor = CONBACKCOLOR(GetDefaultTextAttr());
+					gDisplayParm.BrightBack = FALSE;
 					gDisplayParm.Back256 = FALSE;
 					gDisplayParm.WasSet = TRUE;
 					break;
