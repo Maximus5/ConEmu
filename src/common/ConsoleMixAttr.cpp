@@ -101,7 +101,7 @@ WORD GetRowIdFromAttrs(const WORD* pnAttrs4)
 		default:
 			// That may happen after tab completion, if cursor was at position 2-4,
 			// than only part of our mark was erased
-			_ASSERTE((i > 0) && ((pnAttrs4[i] & CHANGED_CONATTR) == 0) && "Unknown mark!");
+			//_ASSERTE((i > 0) && ((pnAttrs4[i] & CHANGED_CONATTR) == 0) && "Unknown mark!");
 			return 0;
 		}
 	}

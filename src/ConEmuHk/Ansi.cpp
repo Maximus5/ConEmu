@@ -484,6 +484,89 @@ void CEAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells)
 
 CEAnsi::DisplayParm CEAnsi::gDisplayParm = {};
 
+// void CEAnsi::DisplayParm::setWasSet(...) -- intentionally is not defined
+
+void CEAnsi::DisplayParm::Reset(const bool full)
+{
+	if (full)
+		*this = DisplayParm{};
+
+	WORD nDefColors = CEAnsi::GetDefaultTextAttr();
+	_TextColor = CONFORECOLOR(nDefColors);
+	_BackColor = CONBACKCOLOR(nDefColors);
+	_WasSet = TRUE;
+}
+void CEAnsi::DisplayParm::setBrightOrBold(const BOOL val)
+{
+	if (!_WasSet)
+		Reset(false);
+	_BrightOrBold = val;
+	_ASSERTE(_WasSet==TRUE);
+}
+void CEAnsi::DisplayParm::setItalic(const BOOL val)
+{
+	if (!_WasSet)
+		Reset(false);
+	_Italic = val;
+	_ASSERTE(_WasSet==TRUE);
+}
+void CEAnsi::DisplayParm::setUnderline(const BOOL val)
+{
+	if (!_WasSet)
+		Reset(false);
+	_Underline = val;
+	_ASSERTE(_WasSet==TRUE);
+}
+void CEAnsi::DisplayParm::setBrightFore(const BOOL val)
+{
+	if (!_WasSet)
+		Reset(false);
+	_BrightFore = val;
+	_ASSERTE(_WasSet==TRUE);
+}
+void CEAnsi::DisplayParm::setBrightBack(const BOOL val)
+{
+	if (!_WasSet)
+		Reset(false);
+	_BrightBack = val;
+	_ASSERTE(_WasSet==TRUE);
+}
+void CEAnsi::DisplayParm::setTextColor(const int val)
+{
+	if (!_WasSet)
+		Reset(false);
+	_TextColor = val;
+	_ASSERTE(_WasSet==TRUE);
+}
+void CEAnsi::DisplayParm::setText256(const BOOL val)
+{
+	if (!_WasSet)
+		Reset(false);
+	_Text256 = val;
+	_ASSERTE(_WasSet==TRUE);
+}
+void CEAnsi::DisplayParm::setBackColor(const int val)
+{
+	if (!_WasSet)
+		Reset(false);
+	_BackColor = val;
+	_ASSERTE(_WasSet==TRUE);
+}
+void CEAnsi::DisplayParm::setBack256(const BOOL val)
+{
+	if (!_WasSet)
+		Reset(false);
+	_Back256 = val;
+	_ASSERTE(_WasSet==TRUE);
+}
+void CEAnsi::DisplayParm::setInverse(const BOOL val)
+{
+	if (!_WasSet)
+		Reset(false);
+	_Inverse = val;
+	_ASSERTE(_WasSet==TRUE);
+}
+
 //struct DisplayCursorPos
 //{
 //    // Internal
@@ -549,15 +632,9 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 {
 	WARNING("Эту функу нужно дергать при смене буферов, закрытии дескрипторов, и т.п.");
 
-	if (bReset || !gDisplayParm.WasSet)
+	if (bReset || !gDisplayParm.getWasSet())
 	{
-		if (bReset)
-			memset(&gDisplayParm, 0, sizeof(gDisplayParm));
-
-		WORD nDefColors = GetDefaultTextAttr();
-		gDisplayParm.TextColor = CONFORECOLOR(nDefColors);
-		gDisplayParm.BackColor = CONBACKCOLOR(nDefColors);
-		gDisplayParm.WasSet = TRUE;
+		gDisplayParm.Reset(bReset);
 	}
 
 	if (bApply)
@@ -599,10 +676,10 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 
 		//if (!gDisplayParm.Inverse)
 		{
-			TextColor = gDisplayParm.TextColor;
-			Text256 = gDisplayParm.Text256;
-			BackColor = gDisplayParm.BackColor;
-			Back256 = gDisplayParm.Back256;
+			TextColor = gDisplayParm.getTextColor();
+			Text256 = gDisplayParm.getText256();
+			BackColor = gDisplayParm.getBackColor();
+			Back256 = gDisplayParm.getBack256();
 		}
 		//else
 		//{
@@ -636,16 +713,16 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 		else
 		{
 			attr.Attributes.ForegroundColor |= ClrMap[TextColor&0x7]
-				| ((gDisplayParm.BrightFore | (gDisplayParm.BrightOrBold && !gDisplayParm.BrightBack)) ? 0x08 : 0);
+				| ((gDisplayParm.getBrightFore() | (gDisplayParm.getBrightOrBold() && !gDisplayParm.getBrightBack())) ? 0x08 : 0);
 		}
 
-		if (gDisplayParm.BrightOrBold && (Text256 | gDisplayParm.BrightFore | gDisplayParm.BrightBack))
+		if (gDisplayParm.getBrightOrBold() && (Text256 | gDisplayParm.getBrightFore() | gDisplayParm.getBrightBack()))
 			attr.Attributes.Flags |= CECF_FG_BOLD;
-		if (gDisplayParm.Italic)
+		if (gDisplayParm.getItalic())
 			attr.Attributes.Flags |= CECF_FG_ITALIC;
-		if (gDisplayParm.Underline)
+		if (gDisplayParm.getUnderline())
 			attr.Attributes.Flags |= CECF_FG_UNDERLINE;
-		if (gDisplayParm.Inverse)
+		if (gDisplayParm.getInverse())
 			attr.Attributes.Flags |= CECF_REVERSE;
 
 		if (Back256)
@@ -671,7 +748,7 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 		else
 		{
 			attr.Attributes.BackgroundColor |= ClrMap[BackColor&0x7]
-				| (gDisplayParm.BrightBack ? 0x8 : 0);
+				| (gDisplayParm.getBrightBack() ? 0x8 : 0);
 		}
 
 
@@ -3070,25 +3147,21 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					break;
 				case 1:
 					// Bold
-					gDisplayParm.BrightOrBold = TRUE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setBrightOrBold(TRUE);
 					break;
 				case 2:
 					// Faint, decreased intensity (ISO 6429)
 				case 22:
 					// Normal (neither bold nor faint).
-					gDisplayParm.BrightOrBold = FALSE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setBrightOrBold(FALSE);
 					break;
 				case 3:
 					// Italic
-					gDisplayParm.Italic = TRUE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setItalic(TRUE);
 					break;
 				case 23:
 					// Not italic
-					gDisplayParm.Italic = FALSE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setItalic(FALSE);
 					break;
 				case 5: // #TODO ANSI Slow Blink (less than 150 per minute)
 				case 6: // #TODO ANSI Rapid Blink (150+ per minute)
@@ -3096,101 +3169,87 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					DumpKnownEscape(Code.pszEscStart,Code.nTotalLen,de_Ignored);
 					break;
 				case 4: // Underlined
-					gDisplayParm.Underline = TRUE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setUnderline(TRUE);
 					break;
 				case 24:
 					// Not underlined
-					gDisplayParm.Underline = FALSE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setUnderline(FALSE);
 					break;
 				case 7:
 					// Reverse video
-					gDisplayParm.Inverse = TRUE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setInverse(TRUE);
 					break;
 				case 27:
 					// Positive (not inverse)
-					gDisplayParm.Inverse = FALSE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setInverse(FALSE);
 					break;
 				case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37:
-					gDisplayParm.TextColor = (Code.ArgV[i] - 30);
-					gDisplayParm.BrightFore = FALSE;
-					gDisplayParm.Text256 = FALSE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setTextColor(Code.ArgV[i] - 30);
+					gDisplayParm.setBrightFore(FALSE);
+					gDisplayParm.setText256(FALSE);
 					break;
 				case 38:
 					// xterm-256 colors
 					// ESC [ 38 ; 5 ; I m -- set foreground to I (0..255) color from xterm palette
 					if (((i+2) < Code.ArgC) && (Code.ArgV[i+1] == 5))
 					{
-						gDisplayParm.TextColor = (Code.ArgV[i+2] & 0xFF);
-						gDisplayParm.Text256 = 1;
-						gDisplayParm.WasSet = TRUE;
+						gDisplayParm.setTextColor(Code.ArgV[i+2] & 0xFF);
+						gDisplayParm.setText256(1);
 						i += 2;
 					}
 					// xterm-256 colors
 					// ESC [ 38 ; 2 ; R ; G ; B m -- set foreground to RGB(R,G,B) 24-bit color
 					else if (((i+4) < Code.ArgC) && (Code.ArgV[i+1] == 2))
 					{
-						gDisplayParm.TextColor = RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF));
-						gDisplayParm.Text256 = 2;
-						gDisplayParm.WasSet = TRUE;
+						gDisplayParm.setTextColor(RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF)));
+						gDisplayParm.setText256(2);
 						i += 4;
 					}
 					break;
 				case 39:
 					// Reset
-					gDisplayParm.TextColor = CONFORECOLOR(GetDefaultTextAttr());
-					gDisplayParm.BrightFore = FALSE;
-					gDisplayParm.Text256 = FALSE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setTextColor(CONFORECOLOR(GetDefaultTextAttr()));
+					gDisplayParm.setBrightFore(FALSE);
+					gDisplayParm.setText256(FALSE);
 					break;
 				case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47:
-					gDisplayParm.BackColor = (Code.ArgV[i] - 40);
-					gDisplayParm.BrightBack = FALSE;
-					gDisplayParm.Back256 = FALSE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setBackColor(Code.ArgV[i] - 40);
+					gDisplayParm.setBrightBack(FALSE);
+					gDisplayParm.setBack256(FALSE);
 					break;
 				case 48:
 					// xterm-256 colors
 					// ESC [ 48 ; 5 ; I m -- set background to I (0..255) color from xterm palette
 					if (((i+2) < Code.ArgC) && (Code.ArgV[i+1] == 5))
 					{
-						gDisplayParm.BackColor = (Code.ArgV[i+2] & 0xFF);
-						gDisplayParm.Back256 = 1;
-						gDisplayParm.WasSet = TRUE;
+						gDisplayParm.setBackColor(Code.ArgV[i+2] & 0xFF);
+						gDisplayParm.setBack256(1);
 						i += 2;
 					}
 					// xterm-256 colors
 					// ESC [ 48 ; 2 ; R ; G ; B m -- set background to RGB(R,G,B) 24-bit color
 					else if (((i+4) < Code.ArgC) && (Code.ArgV[i+1] == 2))
 					{
-						gDisplayParm.BackColor = RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF));
-						gDisplayParm.Back256 = 2;
-						gDisplayParm.WasSet = TRUE;
+						gDisplayParm.setBackColor(RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF)));
+						gDisplayParm.setBack256(2);
 						i += 4;
 					}
 					break;
 				case 49:
 					// Reset
-					gDisplayParm.BackColor = CONBACKCOLOR(GetDefaultTextAttr());
-					gDisplayParm.BrightBack = FALSE;
-					gDisplayParm.Back256 = FALSE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setBackColor(CONBACKCOLOR(GetDefaultTextAttr()));
+					gDisplayParm.setBrightBack(FALSE);
+					gDisplayParm.setBack256(FALSE);
 					break;
 				case 90: case 91: case 92: case 93: case 94: case 95: case 96: case 97:
-					gDisplayParm.TextColor = (Code.ArgV[i] - 90) | 0x8;
-					gDisplayParm.Text256 = FALSE;
-					gDisplayParm.BrightFore = TRUE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setTextColor((Code.ArgV[i] - 90) | 0x8);
+					gDisplayParm.setText256(FALSE);
+					gDisplayParm.setBrightFore(TRUE);
 					break;
 				case 100: case 101: case 102: case 103: case 104: case 105: case 106: case 107:
-					gDisplayParm.BackColor = (Code.ArgV[i] - 100) | 0x8;
-					gDisplayParm.Back256 = FALSE;
-					gDisplayParm.BrightBack = TRUE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setBackColor((Code.ArgV[i] - 100) | 0x8);
+					gDisplayParm.setBack256(FALSE);
+					gDisplayParm.setBrightBack(TRUE);
 					break;
 				case 10:
 					// Something strange and unknown... (received from ssh)
@@ -3572,21 +3631,18 @@ void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 				switch (Code.ArgV[i])
 				{
 				case 7:
-					gDisplayParm.BrightOrBold = FALSE;
-					gDisplayParm.Italic = FALSE;
-					gDisplayParm.Underline = FALSE;
-					gDisplayParm.BrightFore = FALSE;
-					gDisplayParm.BrightBack = FALSE;
-					gDisplayParm.Inverse = FALSE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setBrightOrBold(FALSE);
+					gDisplayParm.setItalic(FALSE);
+					gDisplayParm.setUnderline(FALSE);
+					gDisplayParm.setBrightFore(FALSE);
+					gDisplayParm.setBrightBack(FALSE);
+					gDisplayParm.setInverse(FALSE);
 					break;
 				case 15:
-					gDisplayParm.BrightOrBold = TRUE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setBrightOrBold(TRUE);
 					break;
 				case 112:
-					gDisplayParm.Inverse = TRUE;
-					gDisplayParm.WasSet = TRUE;
+					gDisplayParm.setInverse(TRUE);
 					break;
 				case 143:
 					// What is this?

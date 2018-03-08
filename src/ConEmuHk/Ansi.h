@@ -227,21 +227,28 @@ protected:
 	};
 	VTCharSet mCharSet = VTCS_DEFAULT;
 
+	#undef DP_PROP
+	#define DP_PROP(t,n) \
+		private: t _##n; \
+		public: t get##n() const { return _##n; }; \
+		public: void set##n(const t val);
 	struct DisplayParm
 	{
-		BOOL WasSet;
-		BOOL BrightOrBold;     // 1
-		BOOL Italic;           // 3
-		BOOL Underline;        // 4
-		BOOL BrightFore;       // 90-97
-		BOOL BrightBack;       // 100-107
-		int  TextColor;        // 30-37,38,39
-		BOOL Text256;          // 38
-		int  BackColor;        // 40-47,48,49
-		BOOL Back256;          // 48
+		void Reset(const bool full);
+		DP_PROP(BOOL, WasSet);
+		DP_PROP(BOOL, BrightOrBold);     // 1
+		DP_PROP(BOOL, Italic);           // 3
+		DP_PROP(BOOL, Underline);        // 4
+		DP_PROP(BOOL, BrightFore);       // 90-97
+		DP_PROP(BOOL, BrightBack);       // 100-107
+		DP_PROP(int,  TextColor);        // 30-37,38,39
+		DP_PROP(BOOL, Text256);          // 38
+		DP_PROP(int,  BackColor);        // 40-47,48,49
+		DP_PROP(BOOL, Back256);          // 48
 		// xterm
-		BOOL Inverse;
+		DP_PROP(BOOL, Inverse);
 	}; // gDisplayParm = {};
+	#undef DP_PROP
 	// Bad thing... Thought, it must be synced between thread, but when?
 	static DisplayParm gDisplayParm;
 

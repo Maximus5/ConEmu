@@ -313,7 +313,7 @@ BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpChara
 	FIRST_ANSI_CALL((const BYTE*)lpCharacter, nLength);
 
 	ExtFillOutputParm fll = {sizeof(fll),
-		efof_Attribute|(CEAnsi::gDisplayParm.WasSet ? efof_Current : efof_ResetExt),
+		efof_Attribute|(CEAnsi::gDisplayParm.getWasSet() ? efof_Current : efof_ResetExt),
 		hConsoleOutput, {}, 0, dwWriteCoord, nLength};
 	ExtFillOutput(&fll);
 
@@ -331,7 +331,7 @@ BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpChar
 	FIRST_ANSI_CALL((const BYTE*)lpCharacter, nLength);
 
 	ExtFillOutputParm fll = {sizeof(fll),
-		efof_Attribute|(CEAnsi::gDisplayParm.WasSet ? efof_Current : efof_ResetExt),
+		efof_Attribute|(CEAnsi::gDisplayParm.getWasSet() ? efof_Current : efof_ResetExt),
 		hConsoleOutput, {}, 0, dwWriteCoord, nLength};
 	ExtFillOutput(&fll);
 
