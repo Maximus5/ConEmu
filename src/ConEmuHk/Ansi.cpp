@@ -1937,9 +1937,11 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const int LinesCount)
 	}
 	else
 	{
-		TODO("What we need to scroll? Buffer or visible rect?");
+		// What we need to scroll? Buffer or visible rect?
 		TopLine = csbi.dwCursorPosition.Y;
-		BottomLine = csbi.dwSize.Y - 1;
+		BottomLine = (csbi.dwCursorPosition.Y <= csbi.srWindow.Bottom)
+			? csbi.srWindow.Bottom
+			: csbi.dwSize.Y - 1;
 	}
 
 	// Apply default color before scrolling!
@@ -1972,9 +1974,11 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const int LinesCount)
 	}
 	else
 	{
-		TODO("What we need to scroll? Buffer or visible rect?");
+		// What we need to scroll? Buffer or visible rect?
 		TopLine = csbi.dwCursorPosition.Y;
-		BottomLine = csbi.dwSize.Y - 1;
+		BottomLine = (csbi.dwCursorPosition.Y <= csbi.srWindow.Bottom)
+			? csbi.srWindow.Bottom
+			: csbi.dwSize.Y - 1;
 	}
 
 	if (BottomLine < TopLine)
