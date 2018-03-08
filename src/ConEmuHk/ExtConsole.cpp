@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConEmuColors3.h"
 #include "../common/WObjects.h"
 
+#include "Ansi.h"
 #include "SetHook.h"
 #include "hkConsoleOutput.h"
 #include "hkWindow.h"
@@ -363,6 +364,7 @@ BOOL ExtSetAttributes(const ExtAttributesParm* Info)
 	WORD n = 0;
 	ExtPrepareColor(Info->Attributes, t, n);
 
+	CEAnsi::WriteAnsiLogFormat("ExtSetAttributes(0x%02X)", n);
 	SetConsoleTextAttribute(h, n);
 
 	TODO("По хорошему, gExtCurrentAttr нада ветвить по разным h");

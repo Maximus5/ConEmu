@@ -162,6 +162,8 @@ BOOL WINAPI OnSetConsoleTextAttribute(HANDLE hConsoleOutput, WORD wAttributes)
 	//typedef BOOL (WINAPI* OnSetConsoleTextAttribute_t)(HANDLE hConsoleOutput, WORD wAttributes);
 	ORIGINAL_KRNL(SetConsoleTextAttribute);
 
+	CEAnsi::WriteAnsiLogFormat("SetConsoleTextAttribute(0x%02X)", wAttributes);
+
 	BOOL lbRc = FALSE;
 
 	if (ph && ph->PreCallBack)
@@ -356,6 +358,23 @@ static void CheckForCls(HANDLE hConsoleOutput, const SMALL_RECT& lpScrollRectang
 	UpdateAppMapRows(0, true);
 }
 
+static void LogScrollConsoleScreenBuffer(bool unicode, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
+{
+	if (!CEAnsi::ghAnsiLogFile)
+		return;
+	char src_rect[30] = "null", clip_rect[30] = "null", fill[20] = "null";
+	if (lpScrollRectangle)
+		msprintf(src_rect, countof(src_rect), "{%i,%i}-{%i,%i}",
+			lpScrollRectangle->Left, lpScrollRectangle->Top, lpScrollRectangle->Right, lpScrollRectangle->Bottom);
+	if (lpClipRectangle)
+		msprintf(clip_rect, countof(clip_rect), "{%i,%i}-{%i,%i}",
+			lpClipRectangle->Left, lpClipRectangle->Top, lpClipRectangle->Right, lpClipRectangle->Bottom);
+	if (lpFill)
+		msprintf(fill, countof(fill), "attr=0x%02X char=0x%02X",
+			lpFill->Attributes, unicode ? lpFill->Char.UnicodeChar : lpFill->Char.AsciiChar);
+	CEAnsi::WriteAnsiLogFormat("ScrollConsoleScreenBuffer(%s -> {%i,%i} [%s] <%s>)",
+		src_rect, dwDestinationOrigin.X, dwDestinationOrigin.Y, clip_rect, fill);
+}
 
 BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT *lpScrollRectangle, const SMALL_RECT *lpClipRectangle, COORD dwDestinationOrigin, const CHAR_INFO *lpFill)
 {
@@ -363,6 +382,8 @@ BOOL WINAPI OnScrollConsoleScreenBufferA(HANDLE hConsoleOutput, const SMALL_RECT
 	ORIGINAL_KRNL(ScrollConsoleScreenBufferA);
 	BOOL lbRc = FALSE;
 	bool isOut = false;
+
+	LogScrollConsoleScreenBuffer(false, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
 
 	if (HandleKeeper::IsOutputHandle(hConsoleOutput))
 	{
@@ -387,6 +408,8 @@ BOOL WINAPI OnScrollConsoleScreenBufferW(HANDLE hConsoleOutput, const SMALL_RECT
 	ORIGINAL_KRNL(ScrollConsoleScreenBufferW);
 	BOOL lbRc = FALSE;
 	bool isOut = false;
+
+	LogScrollConsoleScreenBuffer(false, lpScrollRectangle, lpClipRectangle, dwDestinationOrigin, lpFill);
 
 	if (HandleKeeper::IsOutputHandle(hConsoleOutput))
 	{

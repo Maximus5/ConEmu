@@ -46,6 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/UnicodeChars.h"
 #include "../common/WConsole.h"
 
+#include "Ansi.h"
 #include "hlpConsole.h"
 #include "hlpProcess.h"
 
@@ -198,6 +199,7 @@ BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUF
 	static DWORD s_LastCheckTick = 0;
 	static CONSOLE_SCREEN_BUFFER_INFO s_csbi = {};
 	static HANDLE s_hConOut = NULL;
+	static DWORD s_last_attr = -1;
 	//DWORD nTickDelta = 0;
 	//const DWORD TickDeltaMax = 250;
 
@@ -244,6 +246,15 @@ BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUF
 		*lpConsoleScreenBufferInfo = csbi;
 		if (lbRc)
 		{
+			if (s_last_attr != csbi.wAttributes)
+			{
+				s_last_attr = csbi.wAttributes;
+				if (CONFORECOLOR(csbi.wAttributes) == CONBACKCOLOR(csbi.wAttributes))
+				{
+					CEAnsi::WriteAnsiLogFormat("ConsoleTextAttribute >> 0x%02X", csbi.wAttributes);
+				}
+			}
+
 			s_csbi = csbi;
 			s_LastCheckTick = GetTickCount();
 			s_hConOut = hConsoleOutput;

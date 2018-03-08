@@ -264,6 +264,28 @@ UINT CEAnsi::GetCodePage()
 	return cp;
 }
 
+// Intended to log some WinAPI functions
+void CEAnsi::WriteAnsiLogFormat(const char* format, ...)
+{
+	if (!ghAnsiLogFile || !format)
+		return;
+	ScopedObject(CLastErrorGuard);
+	va_list argList;
+	va_start(argList, format);
+	char func_buffer[200] = "";
+	if (S_OK == StringCchVPrintfA(func_buffer, countof(func_buffer), format, argList))
+	{
+		static char s_ExeName[80] = "";
+		if (!*s_ExeName)
+			WideCharToMultiByte(CP_UTF8, 0, gsExeName, -1, s_ExeName, countof(s_ExeName)-1, nullptr, nullptr);
+
+		char log_string[300] = "";
+		msprintf(log_string, countof(log_string), "\x1B]9;11;\"%s: %s\"\x1B\\", s_ExeName, func_buffer);
+		WriteAnsiLogUtf8(log_string, (DWORD)strlen(log_string));
+	}
+	va_end(argList);
+}
+
 BOOL CEAnsi::WriteAnsiLogUtf8(const char* lpBuffer, DWORD nChars)
 {
 	if (!lpBuffer || !nChars)

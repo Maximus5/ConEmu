@@ -183,6 +183,7 @@ public:
 	static void WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars);
 	static void WriteAnsiLogFarPrompt();
 	static void AnsiLogEnterPressed();
+	static void WriteAnsiLogFormat(const char* format, ...);
 protected:
 	static void XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput = NULL);
 	static void XTermAltBuffer(bool bSetAltBuffer);
