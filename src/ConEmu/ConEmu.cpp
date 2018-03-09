@@ -113,6 +113,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRKEY(s) //DEBUGSTR(s)
 #define DEBUGSTRIME(s) //DEBUGSTR(s)
 #define DEBUGSTRCHAR(s) //DEBUGSTR(s)
+#define DEBUGSTRSETCURSOR_(s) //DEBUGSTR(s)
 #define DEBUGSTRSETCURSOR(s) //OutputDebugString(s)
 #define DEBUGSTRCONEVENT(s) //DEBUGSTR(s)
 #define DEBUGSTRMACRO(s) //DEBUGSTR(s)
@@ -11762,7 +11763,7 @@ enum DragPanelBorder CConEmuMain::CheckPanelDrag(COORD crCon)
 
 LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 {
-	DEBUGSTRSETCURSOR(lParam==-1 ? L"WM_SETCURSOR (int)" : L"WM_SETCURSOR");
+	DEBUGSTRSETCURSOR_(lParam==-1 ? L"WM_SETCURSOR (int)" : L"WM_SETCURSOR");
 #ifdef _DEBUG
 	if (isPressed(VK_LBUTTON))
 	{
@@ -11788,12 +11789,16 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 				switch (ht)
 				{
 				case HTTOP: case HTBOTTOM:
+					DEBUGSTRSETCURSOR(L" ---> IDC_SIZENS\n");
 					pszCursor = IDC_SIZENS; break;
 				case HTLEFT: case HTRIGHT:
+					DEBUGSTRSETCURSOR(L" ---> IDC_SIZEWE\n");
 					pszCursor = IDC_SIZEWE; break;
 				case HTTOPLEFT: case HTBOTTOMRIGHT:
+					DEBUGSTRSETCURSOR(L" ---> IDC_SIZENWSE\n");
 					pszCursor = IDC_SIZENWSE; break;
 				case HTTOPRIGHT: case HTBOTTOMLEFT:
+					DEBUGSTRSETCURSOR(L" ---> IDC_SIZENESW\n");
 					pszCursor = IDC_SIZENESW; break;
 				}
 			}
@@ -11802,6 +11807,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 					|| (IsWin10() && gpSet->nTabsLocation))
 				)
 			{
+				DEBUGSTRSETCURSOR(L" ---> IDC_SIZEALL\n");
 				pszCursor = IDC_SIZEALL;
 			}
 
@@ -11821,6 +11827,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 	RConStartArgsEx::SplitType split = CVConGroup::isSplitterDragging();
 	if (split)
 	{
+		DEBUGSTRSETCURSOR(L" ---> Processed by Splitter\n");
 		SetCursor((split == RConStartArgsEx::eSplitVert) ? mh_SplitV : mh_SplitH);
 		return TRUE;
 	}
@@ -11848,6 +11855,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 				LRESULT lResult = 0;
 				if (mp_Status->ProcessStatusMessage(ghWnd, WM_SETCURSOR, 0,0, ptCur, lResult))
 				{
+					DEBUGSTRSETCURSOR(L" ---> Processed by StatusBar\n");
 					return TRUE;
 				}
 			}
@@ -11862,8 +11870,8 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 	HWND hGuiClient = pRCon->GuiWnd();
 	if (pRCon && hGuiClient && pRCon->isGuiVisible())
 	{
-		DEBUGSTRSETCURSOR(L" ---> skipped (TRUE), GUI App Visible\n");
-		return TRUE;
+		DEBUGSTRSETCURSOR(L" ---> skipped (FALSE), GUI App Visible\n");
+		return FALSE;
 	}
 
 	if (lParam == (LPARAM)-1)
