@@ -20,6 +20,22 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.3.9
+* Tab tooltip was not shown for Far editor/viewer tabs.
+* Ellipsis was not shown for long tab titles.
+* gh-1440: Fix error dialog when toggling ‘Show buttons (toolbar) in tab bar’.
+* Workaround for unexpected WINDOW_BUFFER_SIZE_EVENT appeared after console scrolling.
+* Installer: readme.txt in the `ConEmu\Scripts` folder.
+* gh-1466: ANSI FG/BG reset codes did not reset bright intensity.
+* Settings/Environment was not saved properly (last new line was stripped).
+* Write to ANSI Log calls to certain console WinAPI functions.
+  Example: `^[]9;11;"cmd.exe: SetConsoleCursorPosition(0,0)"^[\`.
+* In some cases output of certain tools was printed as ‘black on black’.
+  Ref: https://superuser.com/q/1198421/139371   Related?: gh-1342
+* gh-1393, gh-1469: Fix jumbled output from git log/diff, reverse scrolling speed.
+* gh-1366: Mouse cursor was not updated while hovering over ChildGui.
+
+
 2018.2.6
 * gh-1430: Toolbar buttons Min/Max/Close dissapears after toggling ‘Show buttons in tab bar’.
 * gh-1431: Lines were not erased properly from multiline xml entries (Environment variables, aliases, cp).
