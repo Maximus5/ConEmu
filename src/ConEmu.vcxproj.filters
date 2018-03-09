@@ -66,11 +66,17 @@
     <ClInclude Include="ConEmu\ConfirmDlg.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\ConsoleMessages.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmu\CreateProcess.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\CustomFonts.h">
       <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\DebugMsgLog.h">
+      <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\DefaultTerm.h">
       <Filter>Headers</Filter>

@@ -299,8 +299,10 @@
     <ClInclude Include="ConEmu\ConEmuSize.h" />
     <ClInclude Include="ConEmu\ConEmuStart.h" />
     <ClInclude Include="ConEmu\ConfirmDlg.h" />
+    <ClInclude Include="ConEmu\ConsoleMessages.h" />
     <ClInclude Include="ConEmu\CreateProcess.h" />
     <ClInclude Include="ConEmu\CustomFonts.h" />
+    <ClInclude Include="ConEmu\DebugMsgLog.h" />
     <ClInclude Include="ConEmu\DefaultTerm.h" />
     <ClInclude Include="ConEmu\DlgItemHelper.h" />
     <ClInclude Include="ConEmu\DpiAware.h" />
