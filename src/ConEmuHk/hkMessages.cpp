@@ -43,6 +43,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "hlpConsole.h"
 #include "MainThread.h"
 
+#ifdef _DEBUG
+BOOL bBlockDebugLog=false, bSendToDebugger=false, bSendToFile=false;
+WCHAR *LogFilePath=NULL;
+LONG gnMessageNestingLevel = 0;
+#define GET_X_LPARAM(inPx) ((int)(short)LOWORD(inPx))
+#define GET_Y_LPARAM(inPy) ((int)(short)HIWORD(inPy))
+#define DEBUGSTRMOVE(msg) OutputDebugString(msg)
+#ifndef MSGLOGGER
+	#define MSGLOGGER
+#endif
+#define MSGLOGGER_MOUSE
+#include "../ConEmu/ConsoleMessages.h"
+#include "../ConEmu/DebugMsgLog.h"
+#endif
+
 /* **************** */
 
 bool CanSendMessage(HWND& hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT& lRc)
@@ -95,8 +110,21 @@ void PatchGuiMessage(bool bReceived, HWND& hWnd, UINT& Msg, WPARAM& wParam, LPAR
 	if (!ghAttachGuiClient)
 		return;
 
+	#ifdef _DEBUG
+	int iDbg = -1;
+	#endif
+
 	switch (Msg)
 	{
+	case WM_ACTIVATE:
+	case WM_ACTIVATEAPP:
+	case 0x036E/*WM_ACTIVATETOPLEVEL*/:
+		if (wParam == (WPARAM)ghConEmuWnd)
+		{
+			DEBUGTEST(iDbg = 1);
+		}
+		break;
+
 	case WM_MOUSEACTIVATE:
 		if (wParam == (WPARAM)ghConEmuWnd)
 		{
@@ -140,7 +168,7 @@ void PatchGuiMessage(bool bReceived, HWND& hWnd, UINT& Msg, WPARAM& wParam, LPAR
 	case WM_DESTROY:
 		if (hWnd == ghAttachGuiClient)
 		{
-			int iDbg = -1;
+			DEBUGTEST(iDbg = -100);
 		}
 		break;
 	#endif
@@ -258,7 +286,12 @@ BOOL WINAPI OnGetMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgF
 		lRc = F(GetMessageA)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax);
 
 	if (lRc && ghAttachGuiClient)
+	{
+		#ifdef MSGLOGGER
+		DebugLogMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam, FALSE, FALSE);
+		#endif
 		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+	}
 
 	return lRc;
 }
@@ -274,7 +307,12 @@ BOOL WINAPI OnGetMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsgF
 		lRc = F(GetMessageW)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax);
 
 	if (lRc && ghAttachGuiClient)
+	{
+		#ifdef MSGLOGGER
+		DebugLogMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam, FALSE, FALSE);
+		#endif
 		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+	}
 
 	_ASSERTRESULT(TRUE);
 	return lRc;
@@ -291,7 +329,12 @@ BOOL WINAPI OnPeekMessageA(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsg
 		lRc = F(PeekMessageA)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
 
 	if (lRc && ghAttachGuiClient)
+	{
+		#ifdef MSGLOGGER
+		DebugLogMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam, TRUE, FALSE);
+		#endif
 		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+	}
 
 	return lRc;
 }
@@ -307,7 +350,12 @@ BOOL WINAPI OnPeekMessageW(LPMSG lpMsg, HWND hWnd, UINT wMsgFilterMin, UINT wMsg
 		lRc = F(PeekMessageW)(lpMsg, hWnd, wMsgFilterMin, wMsgFilterMax, wRemoveMsg);
 
 	if (lRc && ghAttachGuiClient)
+	{
+		#ifdef MSGLOGGER
+		DebugLogMessage(lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam, TRUE, FALSE);
+		#endif
 		PatchGuiMessage(true, lpMsg->hwnd, lpMsg->message, lpMsg->wParam, lpMsg->lParam);
+	}
 
 	return lRc;
 }

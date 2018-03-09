@@ -278,6 +278,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ConEmu\ConsoleMessages.h" />
+    <ClInclude Include="ConEmu\DebugMsgLog.h" />
     <ClInclude Include="ConEmuHk\Ansi.h" />
     <ClInclude Include="ConEmuHk\ConEmuHooks.h" />
     <ClInclude Include="ConEmuHk\Connector.h" />

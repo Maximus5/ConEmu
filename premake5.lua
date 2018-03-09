@@ -409,6 +409,8 @@ project "ConEmuHk"
   }
 
   files {
+    "src/ConEmu/ConsoleMessages.h",
+    "src/ConEmu/DebugMsgLog.h",
     "src/ConEmuHk/*.cpp",
     "src/ConEmuHk/*.h",
     "src/ConEmuHk/*.rc",

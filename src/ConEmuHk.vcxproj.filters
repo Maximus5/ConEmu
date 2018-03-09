@@ -30,6 +30,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ConEmu\ConsoleMessages.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\DebugMsgLog.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmuHk\Ansi.h">
       <Filter>Headers</Filter>
     </ClInclude>
