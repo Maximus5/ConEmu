@@ -651,7 +651,7 @@ void Settings::InitSettings()
 	nHideCaptionAlwaysFrame = HIDECAPTIONALWAYSFRAME_DEF; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
 	isSnapToDesktopEdges = true;
 	isAlwaysOnTop = false;
-	isSleepInBackground = false; // по умолчанию - не включать "засыпание в фоне".
+	isSleepInBackground = true; // don't be CPU consuming in background
 	isRetardInactivePanes = false; // не включать "засыпание в видимых-но-неактивных сплитах"
 	mb_MinimizeOnLoseFocus = false; // не "прятаться" при потере фокуса
 	RECT rcWork = {}; SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
