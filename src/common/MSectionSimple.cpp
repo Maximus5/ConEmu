@@ -113,11 +113,11 @@ bool MSectionSimple::RecreateAndLock()
 
 MSectionLockSimple::MSectionLockSimple()
 {
-	mp_S = NULL;
-	mb_Locked = false;
-	#ifdef _DEBUG
-	mn_LockTID = mn_LockTick = 0;
-	#endif
+}
+
+MSectionLockSimple::MSectionLockSimple(MSectionSimple& cs)
+{
+	Lock(&cs);
 }
 
 MSectionLockSimple::~MSectionLockSimple()
