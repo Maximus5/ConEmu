@@ -10174,6 +10174,8 @@ bool CRealConsole::RecreateProcess(RConStartArgsEx *args)
 
 	PrepareNewConArgs();
 
+	// #CLASSES Add OnRecreate event?
+
 	mb_ProcessRestarted = FALSE;
 	mn_InRecreate = GetTickCount();
 	CloseConfirmReset();

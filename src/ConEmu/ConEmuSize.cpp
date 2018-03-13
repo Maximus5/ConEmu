@@ -975,6 +975,7 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 	if (bTabs)
 	{
 		// Check tabs condition - if they are enabled (1==always show) their size must be taken into account
+		// #SIZE_TODO Use static code from SizeInfo::
 		RECT rcTabMargins = mp_ConEmu->mp_TabBar->GetMargins();
 		nTabsX = bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0;
 		nTabsY = bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0;

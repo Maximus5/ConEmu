@@ -2562,6 +2562,7 @@ bool CFontMgr::IsAlmostMonospace(LPCWSTR asFaceName, LPTEXTMETRIC lptm, LPOUTLIN
 
 	if (lpotm)
 	{
+		// #LOG Log info about monospace decision
 		if (lpotm->otmPanoseNumber.bProportion == PAN_PROP_MONOSPACED)
 			bPanMono = true;
 		if (bSelfOtm)

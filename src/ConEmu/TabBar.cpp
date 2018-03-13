@@ -488,6 +488,7 @@ bool CTabBarClass::IsTabsShown()
 	// Otherwise we'll get size calculation errors
 	// And don't add `_visible` to condition list - it will break autotabs
 
+	// #SIZE_TODO May be not precise
 	return _active && mp_Rebar->IsTabbarCreated();
 }
 
@@ -1011,6 +1012,7 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	return; // Just for clearness
 }
 
+// #SIZE_TODO Eliminate the function
 RECT CTabBarClass::GetMargins(bool bIgnoreVisibility /*= false*/)
 {
 	RECT rcNewMargins = {0,0};
@@ -1401,6 +1403,7 @@ void CTabBarClass::OnShowButtonsChanged()
 	Reposition();
 }
 
+// #SIZE_TODO Eliminate the function
 int CTabBarClass::GetTabbarHeight()
 {
 	if (!this) return 0;

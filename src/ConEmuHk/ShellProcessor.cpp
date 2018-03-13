@@ -1455,6 +1455,7 @@ int CShellProc::PrepareExecuteParms(
 	}
 
 
+	// #HOOKS Move to external function
 	bool bAnsiCon = false;
 	for (int i = 0; (i <= 1); i++)
 	{

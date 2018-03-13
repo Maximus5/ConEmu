@@ -1628,6 +1628,7 @@ bool CConEmuMain::isTabsShown()
 {
 	if (gpSet->isTabs == 1)
 		return true;
+	// #SIZE_TODO May be not precise
 	if (mp_TabBar && mp_TabBar->IsTabsShown())
 		return true;
 	return false;
