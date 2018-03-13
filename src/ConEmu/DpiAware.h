@@ -53,15 +53,15 @@ enum MonitorDpiType
 struct DpiValue
 {
 public:
-	int Ydpi;
-	int Xdpi;
+	int Ydpi = 96;
+	int Xdpi = 96;
 
 public:
 	DpiValue();
 	DpiValue(int xdpi, int ydpi);
-	DpiValue(WPARAM wParam);
-
 	DpiValue(const DpiValue& dpi);
+
+	static DpiValue FromWParam(WPARAM wParam);
 
 public:
 	operator int() const;

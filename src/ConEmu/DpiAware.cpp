@@ -63,14 +63,16 @@ DpiValue::DpiValue(int xdpi, int ydpi)
 	SetDpi(xdpi, ydpi);
 }
 
-DpiValue::DpiValue(WPARAM wParam)
+DpiValue DpiValue::FromWParam(WPARAM wParam)
 {
+	DpiValue dpi;
 	#if defined(_DEBUG) && defined(DPI_DEBUG_CUSTOM)
-	SetDpi(DPI_DEBUG_CUSTOM,DPI_DEBUG_CUSTOM);
+	dpi.SetDpi(DPI_DEBUG_CUSTOM,DPI_DEBUG_CUSTOM);
 	#else
-	SetDpi(96,96);
+	dpi.SetDpi(96,96);
 	#endif
-	OnDpiChanged(wParam);
+	dpi.OnDpiChanged(wParam);
+	return dpi;
 }
 
 DpiValue::DpiValue(const DpiValue& dpi)
@@ -767,7 +769,7 @@ bool CDpiForDialog::ProcessDpiMessages(HWND hDlg, UINT nMsg, WPARAM wParam, LPAR
 	{
 	case WM_DPICHANGED:
 		{
-			DpiValue dpi(wParam);
+			DpiValue dpi = DpiValue::FromWParam(wParam);
 			LPRECT lprcSuggested = (LPRECT)lParam;
 			SetDialogDPI(dpi, lprcSuggested);
 			SetWindowLongPtr(hDlg, DWLP_MSGRESULT, 0);
