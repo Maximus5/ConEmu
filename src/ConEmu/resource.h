@@ -687,7 +687,7 @@
 #define vkShowTabBar                    2326
 #define vkAlwaysOnTop                   2327
 #define vkScreenshotFull                2328
-#define vkMultiNewWnd                   2329
+#define vkMultiWndConfirm               2329
 #define cbRunInNewWindow                2330
 #define cbQuakeStyle                    2333
 #define cbGuiMacroHelp                  2334
@@ -1363,6 +1363,7 @@
 #define cbPasteM2Posix                  3089
 #define cbScrollbarDynamic              3090
 #define vkClose2Right                   3091
+#define vkMultiWnd                      3092
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1371,7 +1372,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        241
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3092
+#define _APS_NEXT_CONTROL_VALUE         3093
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

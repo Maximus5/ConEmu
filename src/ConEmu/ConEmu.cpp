@@ -4576,9 +4576,6 @@ bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 		// Создать новую консоль
 		BOOL lbSlotFound = (args.aRecreate == cra_CreateWindow);
 
-		if (args.aRecreate == cra_CreateWindow && gpSetCls->IsMulti())
-			abConfirm = TRUE;
-
 		if (args.aRecreate == cra_CreateTab)
 		{
 			//for (size_t i = 0; i < countof(mp_VCon); i++)

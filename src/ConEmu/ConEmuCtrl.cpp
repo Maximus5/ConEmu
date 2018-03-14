@@ -454,26 +454,6 @@ bool CConEmuCtrl::key_GlobalRestore(const ConEmuChord& VkState, bool TestOnly, c
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_MultiNew(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
-	if (TestOnly)
-		return true;
-	// Создать новую консоль
-	gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), gpSet->isMultiNewConfirm);
-	return true;
-}
-
-// pRCon may be NULL
-bool CConEmuCtrl::key_MultiNewShift(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
-	if (TestOnly)
-		return true;
-	// Создать новую консоль
-	gpConEmu->RecreateAction(cra_CreateTab/*FALSE*/, TRUE/*Confirm*/);
-	return true;
-}
-
-// pRCon may be NULL
 bool CConEmuCtrl::key_MultiNewPopupMenu(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
 	if (TestOnly)
@@ -488,16 +468,6 @@ bool CConEmuCtrl::key_MultiNewPopupMenu2(const ConEmuChord& VkState, bool TestOn
 		return true;
 	// Создать новую консоль
 	gpConEmu->mp_Menu->OnNewConPopupMenu(NULL, 0, true);
-	return true;
-}
-
-// pRCon may be NULL
-bool CConEmuCtrl::key_MultiNewWindow(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
-	if (TestOnly)
-		return true;
-	// Создать новую консоль
-	gpConEmu->RecreateAction(cra_CreateWindow, TRUE/*Confirm*/);
 	return true;
 }
 

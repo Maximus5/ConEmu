@@ -239,13 +239,15 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	/*
 		*** User (Keys)
 	*/
-	Add(vkMultiNew,       chk_User,  NULL,    L"Multi.NewConsole",      CConEmuCtrl::key_MultiNew) // it can be used to create multiple consoles by holding Win+W
+	Add(vkMultiNew,       chk_User,  NULL,    L"Multi.NewConsole",      CConEmuCtrl::key_GuiMacro, false, L"Create()") // it can be used to create multiple consoles by holding Win+W
 		->SetHotKey('W',VK_LWIN);
-	Add(vkMultiNewShift,  chk_User,  NULL,    L"Multi.NewConsoleShift", CConEmuCtrl::key_MultiNewShift)
+	Add(vkMultiNewShift,  chk_User,  NULL,    L"Multi.NewConsoleShift", CConEmuCtrl::key_GuiMacro, false, L"Create(0,1)")
 		->SetHotKey('W',VK_LWIN,VK_SHIFT);
 	Add(vkMultiCmd,       chk_User,  NULL,    L"Multi.CmdKey",          CConEmuCtrl::key_MultiCmd)
 		->SetHotKey('X',VK_LWIN);
-	Add(vkMultiNewWnd,    chk_User,  NULL,    L"Multi.NewWindow",       CConEmuCtrl::key_MultiNewWindow)
+	Add(vkMultiWnd,       chk_User,  NULL,    L"Multi.NewWndConfirm",   CConEmuCtrl::key_GuiMacro, false, L"Create(2)")
+		;
+	Add(vkMultiWndConfirm,chk_User,  NULL,    L"Multi.NewWndConfirm",   CConEmuCtrl::key_GuiMacro, false, L"Create(2,1)")
 		;
 	Add(vkMultiNewPopup,  chk_User,  NULL,    L"Multi.NewConsolePopup", CConEmuCtrl::key_MultiNewPopupMenu)
 		->SetHotKey('N',VK_LWIN);

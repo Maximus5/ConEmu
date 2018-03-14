@@ -2093,14 +2093,9 @@
       "id": 2624 }
     ,
     "vkMultiNewShift": {
-      "en": "Create new console (after ‘Create confirmation’)",
-      "zh": "创建新窗口 （在‘确认创建’之后）",
+      "en": "Create new console (‘Create confirmation’ dialog)",
+      "_zh": "创建新窗口 （在‘确认创建’之后）",
       "id": 2043 }
-    ,
-    "vkMultiNewWnd": {
-      "en": "Create new window (after ‘Create confirmation’)",
-      "zh": "创建新窗口 （在‘确认创建’之后）",
-      "id": 2329 }
     ,
     "vkMultiNext": {
       "en": "Switch next console",
@@ -2121,6 +2116,15 @@
       "en": "Recreate active console",
       "zh": "重新创建活动的控制台",
       "id": 2003 }
+    ,
+    "vkMultiWnd": {
+      "en": "Create new window",
+      "id": 3092 }
+    ,
+    "vkMultiWndConfirm": {
+      "en": "Create new window (‘Create confirmation’ dialog)",
+      "_zh": "创建新窗口 （在‘确认创建’之后）",
+      "id": 2329 }
     ,
     "vkPasteCygwin": {
       "en": "Paste path from clipboard in unix format",
