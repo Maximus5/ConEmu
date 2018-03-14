@@ -8150,7 +8150,7 @@ void CConEmuMain::RefreshWindowStyles()
 	DWORD nStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD nNewStyle = FixWindowStyle(nStyle, WindowMode);
 	DWORD nStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
-	bool bNeedCorrect = (!isIconic() && (WindowMode != wmFullScreen)) && !m_QuakePrevSize.bWaitReposition;
+	bool bNeedCorrect = (!isIconic() && (WindowMode != wmFullScreen) && !isInside()) && !m_QuakePrevSize.bWaitReposition;
 	bool bChanged = false;
 
 	if (bNeedCorrect || (nNewStyle != nStyle))

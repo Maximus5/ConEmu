@@ -1424,6 +1424,8 @@ RECT CConEmuSize::GetDefaultRect()
 			SetRequestedMonitor(MonitorFromWindow(mp_ConEmu->mp_Inside->mh_InsideParentWND, MONITOR_DEFAULTTONEAREST));
 			if (!IsRectEmpty(&rcWnd))
 			{
+				if (!mp_ConEmu->isCalculated())
+					mp_ConEmu->RequestRect(rcWnd);
 				this->WndPos = VisualPosFromReal(rcWnd.left, rcWnd.top);
 				RECT rcCon = CalcRect(CER_CONSOLE_ALL, rcWnd, CER_MAIN);
 				// In the "Inside" mode we are interested only in "cells"
