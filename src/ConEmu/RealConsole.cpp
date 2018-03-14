@@ -5361,6 +5361,14 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 		return false;
 	}
 
+	// No sense to process mouse events (hyperlinks, selection, etc.)
+	// if neither process (console application) was started
+	// nor server initialization finishes (data was aquired from console)
+	if (m_StartState <= rss_DataAquired)
+	{
+		return false;
+	}
+
 	if (messg != WM_MOUSEMOVE)
 	{
 		mcr_LastMouseEventPos.X = mcr_LastMouseEventPos.Y = -1;
@@ -10209,6 +10217,7 @@ bool CRealConsole::RecreateProcess(RConStartArgsEx *args)
 
 void CRealConsole::UpdateStartState(RConStartState state, bool force /*= false*/)
 {
+	MSectionLockSimple lock(m_StartStateCS);
 	if (force || (m_StartState < state))
 		m_StartState = state;
 }

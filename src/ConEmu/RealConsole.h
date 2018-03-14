@@ -154,6 +154,7 @@ enum RConStartState
 	rss_StartingServer,
 	rss_ServerStarted,
 	rss_ServerConnected,
+	rss_DataAquired,
 	rss_ProcessActive,
 };
 
@@ -691,7 +692,8 @@ class CRealConsole
 		MEvent mh_ApplyFinished;
 		HANDLE mh_StartExecuted;
 		bool mb_StartResult;
-		RConStartState m_StartState;
+		RConStartState m_StartState = rss_NotStarted;
+		MSectionSimple m_StartStateCS{true};
 		void UpdateStartState(RConStartState state, bool force = false);
 		bool mb_FullRetrieveNeeded; //, mb_Detached;
 		RConStartArgsEx m_Args;
