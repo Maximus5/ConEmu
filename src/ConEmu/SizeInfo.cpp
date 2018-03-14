@@ -152,6 +152,9 @@ void SizeInfo::RequestRectInt(const RECT& _window, LPCWSTR asFrom)
 	LogRequest(_window, asFrom);
 	MSectionLockSimple lock; lock.Lock(&mcs_lock);
 	m_size.source_window = _window;
+	const auto new_mi = mp_ConEmu->NearestMonitorInfo(_window);
+	if (new_mi.hMon)
+		RequestDpi(DpiValue(new_mi.Xdpi, new_mi.Ydpi));
 	RequestRecalc();
 }
 
