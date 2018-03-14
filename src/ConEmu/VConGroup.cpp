@@ -4316,32 +4316,38 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgsEx *args, bool abAllowScript
 	}
 
 	CEStr lsTaskCommands;
-	if (args->pszSpecialCmd && *args->pszSpecialCmd
-		&& gpConEmu->IsConsoleBatchOrTask(args->pszSpecialCmd))
+	if (args->pszSpecialCmd && *args->pszSpecialCmd)
 	{
-		lsTaskCommands = gpConEmu->LoadConsoleBatch(args->pszSpecialCmd, args);
-	}
-
-	if (lsTaskCommands.IsEmpty() && args->pszSpecialCmd && *args->pszSpecialCmd)
-	{
-		// Issue 1711: May be that is smth like?
-		// ""C:\Windows\...\powershell.exe" -noprofile -new_console:t:"PoSh":d:"C:\Users""
-		// Start/End quotes need to be removed
-		CEStr szExe; BOOL bNeedCutQuot = FALSE;
-		bool bNeedCmd = IsNeedCmd(FALSE, args->pszSpecialCmd, szExe, NULL, &bNeedCutQuot);
-		if (!bNeedCmd && bNeedCutQuot)
-		{
-			int nLen = lstrlen(args->pszSpecialCmd);
-			_ASSERTE(nLen > 4);
-			// Cut first quote
-			_ASSERTE(args->pszSpecialCmd[0] == L'"' && args->pszSpecialCmd[1] == L'"');
-			wmemmove(args->pszSpecialCmd, args->pszSpecialCmd+1, nLen);
-			// And trim one end quote
-			_ASSERTE(args->pszSpecialCmd[nLen-2] == L'"' && args->pszSpecialCmd[nLen-1] == 0);
-			args->pszSpecialCmd[nLen-2] = 0;
-		}
+		// gh-1456: VS Extension runs ConEmu as "ConEmu.exe ... -cmd -cur_console:c {cmd}"
 		// Process "-new_console" switches
 		args->ProcessNewConArg(abForceCurConsole);
+
+		// E.g.: "{cmd}", "{Shell::PowerShell}"
+		if (args->pszSpecialCmd && *args->pszSpecialCmd
+			&& gpConEmu->IsConsoleBatchOrTask(args->pszSpecialCmd))
+		{
+			lsTaskCommands = gpConEmu->LoadConsoleBatch(args->pszSpecialCmd, args);
+		}
+
+		if (lsTaskCommands.IsEmpty() && args->pszSpecialCmd && *args->pszSpecialCmd)
+		{
+			// Issue 1711: May be that is smth like?
+			// ""C:\Windows\...\powershell.exe" -noprofile -new_console:t:"PoSh":d:"C:\Users""
+			// Start/End quotes need to be removed
+			CEStr szExe; BOOL bNeedCutQuot = FALSE;
+			bool bNeedCmd = IsNeedCmd(FALSE, args->pszSpecialCmd, szExe, NULL, &bNeedCutQuot);
+			if (!bNeedCmd && bNeedCutQuot)
+			{
+				int nLen = lstrlen(args->pszSpecialCmd);
+				_ASSERTE(nLen > 4);
+				// Cut first quote
+				_ASSERTE(args->pszSpecialCmd[0] == L'"' && args->pszSpecialCmd[1] == L'"');
+				wmemmove(args->pszSpecialCmd, args->pszSpecialCmd+1, nLen);
+				// And trim one end quote
+				_ASSERTE(args->pszSpecialCmd[nLen-2] == L'"' && args->pszSpecialCmd[nLen-1] == 0);
+				args->pszSpecialCmd[nLen-2] = 0;
+			}
+		}
 	}
 
 	if (gpConEmu->isInside()

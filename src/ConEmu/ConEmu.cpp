@@ -7121,11 +7121,14 @@ bool CConEmuMain::CreateStartupConsoles()
 
 			if (!CreateCon(&args, TRUE))
 			{
-				LPCWSTR pszFailMsg = L"Can't create new virtual console! {CConEmuMain::CreateStartupConsoles}";
-				LogString(pszFailMsg);
+				CEStr szFailMsg(L"Can't create new virtual console!\n"
+					, L"{CConEmuMain::CreateStartupConsoles}\n"
+					, L"Command: ", GetCmd()
+					);
+				LogString(szFailMsg);
 				if (!isInsideInvalid())
 				{
-					DisplayLastError(pszFailMsg, -1);
+					DisplayLastError(szFailMsg, -1);
 				}
 				Destroy();
 				return false;
