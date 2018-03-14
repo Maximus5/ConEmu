@@ -17,4 +17,4 @@ if "%~1" == "" (
 )
 set "ce_add_str=%~2"
 
-powershell -noprofile -command "%~dp0..\..\Deploy\rc2json.ps1" -mode add -id "%ce_add_id%" %3 %new_con%
+powershell -NoProfile -ExecutionPolicy RemoteSigned -command "%~dp0..\..\Deploy\rc2json.ps1" -mode add -id "%ce_add_id%" %3 %new_con%
