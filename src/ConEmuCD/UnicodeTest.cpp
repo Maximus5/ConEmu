@@ -199,6 +199,10 @@ int CheckUnicodeFont()
 	CONSOLE_CURSOR_INFO ci = {};
 	_ASSERTE(nLen<=35); // ниже на 2 буфер множится
 
+	DWORD nCurOutMode = 0;
+	GetConsoleMode(hOut, &nCurOutMode);
+	SetConsoleMode(hOut, ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT);
+
 
 	struct WriteInvoke
 	{
@@ -335,18 +339,28 @@ int CheckUnicodeFont()
 		);
 	write(szInfo);
 
-
+	// #WIN10 Unexpected glyphs width in Win10 - szMid line displayed narrower than console width
 	wchar_t szUpp[] = {ucBoxDblDownRight, ucBoxDblHorz, ucBoxDblDownDblHorz, ucBoxDblDownLeft, 0};
 	wchar_t szMid[] = {ucBoxDblVert, ucSpace, ucBoxDblVert, ucBoxDblVert, 0};
+	wchar_t szExt[] = {ucBoxDblVertRight, ucSpace, ucBoxDblUpDblHorz, ucBoxDblVertLeft, 0};
 	wchar_t szBot[] = {ucBoxDblUpRight, ucBoxDblHorz, ucBoxDblUpDblHorz, ucBoxDblUpLeft, 0};
 	wchar_t szChs[] = L"中文";
 	int nMid = csbi.dwSize.X / 2;
 	int nDbcsShift = IsConsoleDoubleCellCP() ? 2 : 0;
+	msprintf(szInfo, countof(szInfo),
+		L"Width: %i, Mid: %i, DblCell: %i\r\n",
+		csbi.dwSize.X, nMid, IsConsoleDoubleCellCP() ? 1 : 0);
+	write(szInfo);
+	SetConsoleMode(hOut, ENABLE_PROCESSED_OUTPUT);
 	write(szUpp, 1);
 		for (int X = 2; X < nMid; X++) write(szUpp+1, 1);
 		write(szUpp+2, 1);
 		for (int X = nMid+1; X < csbi.dwSize.X; X++) write(szUpp+1, 1);
-		write(szUpp+3, 1);
+		write(szUpp+3, 1); // the cursor is expected to be stuck at the end of console line
+		write(szUpp+3, 1); //
+		write(L"\r\n", 2); // and only now it shall goes to the begginning of the new line
+	SetConsoleMode(hOut, ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT);
+	// Here are we write four CJK glyphs. Most weird and tricky because of inconsitence of CJK support in various Windows versions...
 	write(szMid, 1);
 		write(szChs, 2);
 		for (int X = 4; X < nMid - nDbcsShift; X++) write(szMid+1, 1);
@@ -355,6 +369,18 @@ int CheckUnicodeFont()
 		for (int X = nMid+3; X < csbi.dwSize.X - nDbcsShift; X++) write(szMid+1, 1);
 		write(szChs+1, 1);
 		write(szMid+3, 1);
+	// Check for ENABLE_WRAP_AT_EOL_OUTPUT flag, if it works properly,
+	// AND "\r" does not go to new line, we expect that szExt will be
+	// overwritten by szBot completely.
+	write(szExt, 1);
+		for (int X = 2; X < nMid; X++) write(szBot+1, 1);
+		write(szExt+2, 1);
+		for (int X = nMid+1; X < csbi.dwSize.X; X++) write(szBot+1, 1);
+		SetConsoleMode(hOut, ENABLE_PROCESSED_OUTPUT);
+		write(L"#", 1); // this should be just overwritten by next (szExt+3)
+		write(szExt+3, 1);
+		write(L"\r", 1);
+	SetConsoleMode(hOut, ENABLE_PROCESSED_OUTPUT|ENABLE_WRAP_AT_EOL_OUTPUT);
 	write(szBot, 1);
 		for (int X = 2; X < nMid; X++) write(szBot+1, 1);
 		write(szBot+2, 1);
