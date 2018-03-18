@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/MArray.h"
+#include "OleInitializer.h"
 
 #ifndef __ITaskbarList4_FWD_DEFINED__
 #define __ITaskbarList4_FWD_DEFINED__
@@ -65,13 +66,13 @@ class CConEmuMain;
 class CTaskBar
 {
 protected:
-	CConEmuMain* mp_ConEmu;
-	ITaskbarList4 *mp_TaskBar4; // Win7
-	ITaskbarList3 *mp_TaskBar3; // Win7
-	ITaskbarList2 *mp_TaskBar2; // WinXP
-	ITaskbarList  *mp_TaskBar1; // Win2k
-	HICON mh_Shield;
-	bool  mb_OleInitalized;
+	CConEmuMain* mp_ConEmu = nullptr;
+	ITaskbarList4 *mp_TaskBar4 = nullptr; // Win7
+	ITaskbarList3 *mp_TaskBar3 = nullptr; // Win7
+	ITaskbarList2 *mp_TaskBar2 = nullptr; // WinXP
+	ITaskbarList  *mp_TaskBar1 = nullptr; // Win2k
+	HICON mh_Shield = NULL;
+	OleInitializer m_OleInitalizer;
 protected:
 	// We need ordered array, so MMap is not suitable here
 	MArray<LPVOID> m_Ghosts;

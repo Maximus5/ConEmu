@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmu.h"
 #include "ConEmuPipe.h"
+#include "OleInitializer.h"
 #include "RealConsole.h"
 #include "ScreenDump.h"
 #include "Update.h"
@@ -3021,8 +3022,11 @@ DWORD CDragDropData::DragThread(LPVOID lpParameter)
 {
 	DWORD nResult = 0;
 	CEDragSource* pds = (CEDragSource*)lpParameter;
-	//CoInitialize();
-	OleInitialize(NULL);
+
+	// OleInitialize calls CoInitializeEx internally to initialize the COM library on the current apartment.
+	// Because OLE operations are not thread-safe, OleInitialize specifies the concurrency model as single-thread apartment.
+	OleInitializer ole(true);
+
 	pds->hWnd = CreateWindowEx(WS_EX_TOOLWINDOW, pds->pDrag->ms_SourceClass, L"ConEmu Drag Source",
 	                           WS_POPUP, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 	                           NULL, NULL, (HINSTANCE)g_hInstance, pds);

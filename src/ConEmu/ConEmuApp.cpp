@@ -3189,6 +3189,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (gpConEmu->mb_UpdateJumpListOnStartup && gpConEmu->opt.ExitAfterActionPrm)
 	{
 		DEBUGSTRSTARTUP(L"Updating Win7 task list");
+		OleInitializer ole(true); // gh-1478
 		if (!UpdateWin7TaskList(true/*bForce*/, true/*bNoSuccMsg*/))
 		{
 			if (!iMainRc) iMainRc = 10;
