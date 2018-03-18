@@ -342,6 +342,7 @@
     <ClInclude Include="ConEmu\Menu.h" />
     <ClInclude Include="ConEmu\MenuIds.h" />
     <ClInclude Include="ConEmu\MyClipboard.h" />
+    <ClInclude Include="ConEmu\OleInitializer.h" />
     <ClInclude Include="ConEmu\Options.h" />
     <ClInclude Include="ConEmu\OptionsClass.h" />
     <ClInclude Include="ConEmu\OptionsFast.h" />
@@ -573,6 +574,7 @@
     <ClCompile Include="ConEmu\Match.cpp" />
     <ClCompile Include="ConEmu\Menu.cpp" />
     <ClCompile Include="ConEmu\MyClipboard.cpp" />
+    <ClCompile Include="ConEmu\OleInitializer.cpp" />
     <ClCompile Include="ConEmu\Options.cpp" />
     <ClCompile Include="ConEmu\OptionsClass.cpp" />
     <ClCompile Include="ConEmu\OptionsFast.cpp" />
@@ -667,6 +669,7 @@
     <None Include="ConEmu\conemu.gcc.manifest" />
     <None Include="ConEmu\hsplit.cur" />
     <None Include="ConEmu\vsplit.cur" />
+    <None Include="ConEmu\vsplit2.cur" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ConEmu\ConEmu.rc" />

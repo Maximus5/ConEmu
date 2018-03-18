@@ -195,6 +195,9 @@
     <ClInclude Include="ConEmu\MyClipboard.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\OleInitializer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmu\Options.h">
       <Filter>Settings</Filter>
     </ClInclude>
@@ -884,6 +887,9 @@
     <ClCompile Include="ConEmu\MyClipboard.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmu\OleInitializer.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
     <ClCompile Include="ConEmu\Options.cpp">
       <Filter>Settings</Filter>
     </ClCompile>
@@ -1160,6 +1166,9 @@
       <Filter>Resources</Filter>
     </None>
     <None Include="ConEmu\vsplit.cur">
+      <Filter>Resources</Filter>
+    </None>
+    <None Include="ConEmu\vsplit2.cur">
       <Filter>Resources</Filter>
     </None>
   </ItemGroup>
