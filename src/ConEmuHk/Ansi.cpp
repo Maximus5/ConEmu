@@ -2928,7 +2928,6 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				}
 				break;
 			case 20:
-				// Ignored for now
 				gDisplayOpt.AutoLfNl = (Code.Action == L'h');
 				DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
 				break;
