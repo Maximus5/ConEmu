@@ -909,7 +909,7 @@ LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs, LPCWSTR asOtherConfig /*
 
 	LPCWSTR pszAddArgs = gpConEmu->mps_ConEmuExtraArgs;
 
-	size_t cchMax =
+	const size_t cchMax = 1 // _wcscat_c requires size including terminating zero
 		+ (pszConfig ? (_tcslen(pszConfig) + 16) : 0)
 		+ (pszXmlFile ? (_tcslen(pszXmlFile) + 32) : 0)
 		+ (gpSetCls->isResetBasicSettings ? 7 : 0)

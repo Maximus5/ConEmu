@@ -1862,6 +1862,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 
 	CEStr lsTempBuf;
 	LPCWSTR pszConEmuStartArgs = gpConEmu->MakeConEmuStartArgs(lsTempBuf);
+	_ASSERTE(!pszConEmuStartArgs || pszConEmuStartArgs[_tcslen(pszConEmuStartArgs)-1]==L' ');
 
 	wchar_t* pszBuf = NULL;
 	if (!pszArguments || !*pszArguments)
@@ -1883,7 +1884,6 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 		}
 		if (pszConEmuStartArgs && *pszConEmuStartArgs)
 		{
-			_ASSERTE(pszConEmuStartArgs[_tcslen(pszConEmuStartArgs)-1]==L' ');
 			_wcscat_c(pszBuf, cchMax, pszConEmuStartArgs);
 		}
 		_wcscat_c(pszBuf, cchMax, L"-run ");
