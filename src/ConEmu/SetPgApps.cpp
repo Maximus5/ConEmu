@@ -921,8 +921,6 @@ INT_PTR CSetPgApps::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 								BOOL bPopupAttr = (pApp->nPopTextColorIdx != pPal->nPopTextColorIdx) || (pApp->nPopBackColorIdx != pPal->nPopBackColorIdx);
 								pApp->nPopTextColorIdx = pPal->nPopTextColorIdx;
 								pApp->nPopBackColorIdx = pPal->nPopBackColorIdx;
-								pApp->isExtendColors = pPal->isExtendColors;
-								pApp->nExtendColorIdx = pPal->nExtendColorIdx;
 								if (bTextAttr || bPopupAttr)
 								{
 									gpSetCls->UpdateTextColorSettings(bTextAttr, bPopupAttr, pApp);

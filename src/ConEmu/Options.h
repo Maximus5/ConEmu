@@ -245,7 +245,7 @@ struct Settings
 		const ColorPalette* PaletteFindByColors(bool bMatchAttributes, const ColorPalette* pCur);
 		int PaletteGetIndex(LPCWSTR asName);
 		void PaletteSaveAs(LPCWSTR asName); // Save active colors to named palette
-		void PaletteSaveAs(LPCWSTR asName, bool abExtendColors, BYTE anExtendColorIdx, BYTE anTextColorIdx, BYTE anBackColorIdx, BYTE anPopTextColorIdx, BYTE anPopBackColorIdx, const COLORREF (&aColors)[0x20], bool abSaveSettings);
+		void PaletteSaveAs(LPCWSTR asName, BYTE anTextColorIdx, BYTE anBackColorIdx, BYTE anPopTextColorIdx, BYTE anPopBackColorIdx, const COLORREF (&aColors)[0x10], bool abSaveSettings);
 		void PaletteDelete(LPCWSTR asName); // Delete named palette
 		void PaletteSetStdIndexes();
 		int PaletteSetActive(LPCWSTR asName);
@@ -305,14 +305,14 @@ struct Settings
 
 	private:
 		// reg->Load(L"ColorTableNN", Colors[i]);
-		COLORREF Colors[0x20];
-		COLORREF ColorsFade[0x20];
+		COLORREF Colors[0x10];
+		COLORREF ColorsFade[0x10];
 		bool mb_FadeInitialized;
 
 		//struct CEAppColors
 		//{
-		//	COLORREF Colors[0x20];
-		//	COLORREF ColorsFade[0x20];
+		//	COLORREF Colors[0x10];
+		//	COLORREF ColorsFade[0x10];
 		//	bool FadeInitialized;
 		//} **AppColors; // [AppCount]
 

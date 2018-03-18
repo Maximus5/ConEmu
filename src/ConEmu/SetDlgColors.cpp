@@ -391,10 +391,10 @@ bool CSetDlgColors::GetColorRef(HWND hDlg, WORD TB, COLORREF* pCR)
 	return ::GetColorRef(temp, pCR);
 }
 
-void CSetDlgColors::OnSettingsLoaded(const COLORREF (&Colors)[32])
+void CSetDlgColors::OnSettingsLoaded(const COLORREF (&Colors)[0x10])
 {
 	// Init custom palette for ColorSelection dialog
-	memmove(acrCustClr, gpSet->Colors, sizeof(COLORREF)*16);
+	memmove(acrCustClr, gpSet->Colors, sizeof(Colors));
 }
 
 void CSetDlgColors::ReleaseHandles()

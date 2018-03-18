@@ -1618,9 +1618,6 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 
 	LogString(L"Color Palette: Refreshing");
 
-	gpSet->AppStd.nExtendColorIdx = pPal->nExtendColorIdx;
-	gpSet->AppStd.isExtendColors = pPal->isExtendColors;
-
 	if (hDlg && (hDlg == GetActivePage()))
 	{
 		CSetPgColors* pColorsPg;

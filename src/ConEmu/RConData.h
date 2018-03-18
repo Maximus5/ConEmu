@@ -77,7 +77,7 @@ public:
 	bool isValid(bool bCheckSizes, size_t anCellsRequired);
 	UINT GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, UINT anHeight,
 		wchar_t wSetChar, CharAttr lcaDef, CharAttr *lcaTable, CharAttr *lcaTableExt,
-		bool bFade, bool bExtendColors, BYTE nExtendColorIdx, bool bExtendFonts);
+		bool bFade, bool bExtendFonts);
 	bool GetConsoleLine(int nLine, ConsoleLinePtr& rpLine) const;
 	bool FindPanels(bool& bLeftPanel, RECT& rLeftPanel, RECT& rLeftPanelFull, bool& bRightPanel, RECT& rRightPanel, RECT& rRightPanelFull);
 	short CheckProgressInConsole(UINT nCursorLine);

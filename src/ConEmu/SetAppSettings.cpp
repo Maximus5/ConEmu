@@ -35,18 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "SetAppSettings.h"
 
-bool AppSettings::ExtendColors() const
-{
-	return (OverridePalette || !AppNames) ? isExtendColors : gpSet->AppStd.isExtendColors;
-}
-
-//reg->Load(L"ExtendColorIdx", nExtendColorIdx);
-//BYTE nExtendColorIdx; // 0..15
-BYTE AppSettings::ExtendColorIdx() const
-{
-	return (OverridePalette || !AppNames) ? nExtendColorIdx : gpSet->AppStd.nExtendColorIdx;
-}
-
 //BYTE nTextColorIdx; // 0..15,16
 BYTE AppSettings::TextColorIdx() const
 {

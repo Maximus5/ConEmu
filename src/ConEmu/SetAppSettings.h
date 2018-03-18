@@ -48,7 +48,7 @@ struct AppSettings
 	wchar_t* AppNamesLwr; // For internal use
 	BYTE Elevated; // 00 - unimportant, 01 - elevated, 02 - nonelevated
 
-	//const COLORREF* Palette/*[0x20]*/; // текущая палитра (Fade/не Fade)
+	//const COLORREF* Palette/*[0x10]*/; // текущая палитра (Fade/не Fade)
 
 	bool OverridePalette; // Palette+Extend
 	wchar_t szPaletteName[128];
@@ -56,13 +56,6 @@ struct AppSettings
 	int GetPaletteIndex() const;
 	void SetPaletteName(LPCWSTR asNewPaletteName);
 	void ResetPaletteIndex();
-
-	//reg->Load(L"ExtendColors", isExtendColors);
-	bool isExtendColors;
-	bool ExtendColors() const;
-	//reg->Load(L"ExtendColorIdx", nExtendColorIdx);
-	BYTE nExtendColorIdx; // 0..15
-	BYTE ExtendColorIdx() const;
 
 	BYTE nTextColorIdx; // 0..15,16
 	BYTE TextColorIdx() const;

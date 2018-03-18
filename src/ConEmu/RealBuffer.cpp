@@ -5907,8 +5907,6 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	const AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
 	_ASSERTE(pApp!=NULL);
 	// 120331 - зачем ограничивать настройку доп.цветов?
-	bool bExtendColors = /*lbIsFar &&*/ pApp->ExtendColors();
-	BYTE nExtendColorIdx = pApp->ExtendColorIdx();
 	bool bExtendFonts = pApp->ExtendFonts();
 	bool lbFade = mp_RCon->mp_VCon->isFade;
 	CharAttr *lcaTableExt, *lcaTableOrg, *lcaTable;
@@ -6047,7 +6045,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 
 			// And the data
 			nYMax = data->GetConsoleData(pChar, pAttr, nWidth, nHeight, wSetChar, lcaDef,
-				lcaTable, lcaTableExt, lbFade, bExtendColors, nExtendColorIdx, bExtendFonts);
+				lcaTable, lcaTableExt, lbFade, bExtendFonts);
 			pszDst = pChar + nWidth*nYMax;
 		}
 	} // rbt_Primary

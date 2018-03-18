@@ -565,8 +565,6 @@ void Settings::InitSettings()
 
 	isVividColors = true;
 
-	AppStd.isExtendColors = false;
-	AppStd.nExtendColorIdx = CEDEF_ExtendColorIdx/*14*/;
 	AppStd.nTextColorIdx = AppStd.nBackColorIdx = CEDEF_BackColorAuto/*16*/;
 	AppStd.nPopTextColorIdx = AppStd.nPopBackColorIdx = CEDEF_BackColorAuto/*16*/;
 	AppStd.isExtendFonts = false;
@@ -1191,16 +1189,12 @@ void Settings::LoadAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF*
 	if (bStd)
 	{
 		TCHAR ColorName[] = L"ColorTable00";
-		for (size_t i = countof(Colors)/*0x20*/; i--;)
+		for (size_t i = countof(Colors)/*0x10*/; i--;)
 		{
 			ColorName[10] = i/10 + '0';
 			ColorName[11] = i%10 + '0';
 			reg->Load(ColorName, Colors[i]);
 		}
-
-		reg->Load(L"ExtendColors", pApp->isExtendColors);
-		reg->Load(L"ExtendColorIdx", pApp->nExtendColorIdx);
-		if (pApp->nExtendColorIdx > 15) pApp->nExtendColorIdx=CEDEF_ExtendColorIdx/*14*/;
 
 		reg->Load(L"TextColorIdx", pApp->nTextColorIdx);
 		if (pApp->nTextColorIdx > 16) pApp->nTextColorIdx=CEDEF_BackColorAuto/*16*/;
@@ -1220,8 +1214,6 @@ void Settings::LoadAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF*
 		const ColorPalette* pPal = PaletteGet(pApp->GetPaletteIndex());
 
 		_ASSERTE(pPal!=NULL); // NULL не может быть. Всегда как минимум - стандартная палитра
-		pApp->isExtendColors = pPal->isExtendColors;
-		pApp->nExtendColorIdx = pPal->nExtendColorIdx;
 
 		pApp->nTextColorIdx = pPal->nTextColorIdx;
 		pApp->nBackColorIdx = pPal->nBackColorIdx;
@@ -1512,12 +1504,11 @@ void Settings::CreatePredefinedPalettes(int iAddUserCount)
 		_ASSERTE(DefColors[n].pszTitle && DefColors[n].pszTitle[0]==L'<' && DefColors[n].pszTitle[lstrlen(DefColors[n].pszTitle)-1]==L'>');
 		Palettes[n]->pszName = lstrdup(DefColors[n].pszTitle);
 		Palettes[n]->bPredefined = true;
-		Palettes[n]->isExtendColors = false;
-		Palettes[n]->nExtendColorIdx = CEDEF_ExtendColorIdx/*14*/;
 		Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = CEDEF_BackColorAuto/*16*/;
 		Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = CEDEF_BackColorAuto/*16*/;
-		_ASSERTE(countof(Palettes[n]->Colors)==0x20 && countof(DefColors[n].dwDefColors)==0x10);
-		memmove(Palettes[n]->Colors, DefColors[n].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
+		_ASSERTE(countof(Palettes[n]->Colors)==0x10 && countof(DefColors[n].dwDefColors)==0x10);
+		memmove_s(Palettes[n]->Colors, sizeof(Palettes[n]->Colors),
+			DefColors[n].dwDefColors, sizeof(DefColors[n].dwDefColors));
 		if (DefColors[n].isIndexes())
 		{
 			Palettes[n]->nTextColorIdx = DefColors[n].nIndexes[0];
@@ -1530,8 +1521,6 @@ void Settings::CreatePredefinedPalettes(int iAddUserCount)
 			Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = 16; // Auto
 			Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = 16; // Auto
 		}
-		// Расширения - инициализируем цветами стандартной палитры
-		memmove(Palettes[n]->Colors+0x10, DefColors[0].dwDefColors, 0x10*sizeof(Palettes[n]->Colors[0]));
 	}
 
 	// Инициализировали "Палитрами по умолчанию"
@@ -1590,8 +1579,6 @@ void Settings::LoadPalettes(SettingsBase* reg)
 			Palettes[PaletteCount] = (ColorPalette*)calloc(1, sizeof(ColorPalette));
 
 			reg->Load(L"Name", &Palettes[PaletteCount]->pszName);
-			reg->Load(L"ExtendColors", Palettes[PaletteCount]->isExtendColors);
-			reg->Load(L"ExtendColorIdx", Palettes[PaletteCount]->nExtendColorIdx);
 
 			reg->Load(L"TextColorIdx", Palettes[PaletteCount]->nTextColorIdx); MinMax(Palettes[PaletteCount]->nTextColorIdx,16);
 			reg->Load(L"BackColorIdx", Palettes[PaletteCount]->nBackColorIdx); MinMax(Palettes[PaletteCount]->nBackColorIdx,16);
@@ -1599,7 +1586,7 @@ void Settings::LoadPalettes(SettingsBase* reg)
 			reg->Load(L"PopBackColorIdx", Palettes[PaletteCount]->nPopBackColorIdx); MinMax(Palettes[PaletteCount]->nPopBackColorIdx,16);
 
 			_ASSERTE(countof(Colors) == countof(Palettes[PaletteCount]->Colors));
-			for (size_t k = 0; k < countof(Palettes[PaletteCount]->Colors)/*0x20*/; k++)
+			for (size_t k = 0; k < countof(Palettes[PaletteCount]->Colors)/*0x10*/; k++)
 			{
 				ColorName[10] = k/10 + '0';
 				ColorName[11] = k%10 + '0';
@@ -1676,8 +1663,6 @@ void Settings::SavePalettes(SettingsBase* reg)
 			UserPaletteCount++;
 
 			reg->Save(L"Name", Palettes[i]->pszName);
-			reg->Save(L"ExtendColors", Palettes[i]->isExtendColors);
-			reg->Save(L"ExtendColorIdx", Palettes[i]->nExtendColorIdx);
 
 			reg->Save(L"TextColorIdx", Palettes[i]->nTextColorIdx);
 			reg->Save(L"BackColorIdx", Palettes[i]->nBackColorIdx);
@@ -1685,7 +1670,7 @@ void Settings::SavePalettes(SettingsBase* reg)
 			reg->Save(L"PopBackColorIdx", Palettes[i]->nPopBackColorIdx);
 
 			_ASSERTE(countof(Colors) == countof(Palettes[i]->Colors));
-			for (size_t k = 0; k < countof(Palettes[i]->Colors)/*0x20*/; k++)
+			for (size_t k = 0; k < countof(Palettes[i]->Colors)/*0x10*/; k++)
 			{
 				ColorName[10] = k/10 + '0';
 				ColorName[11] = k%10 + '0';
@@ -1720,8 +1705,6 @@ void Settings::SavePalettes(SettingsBase* reg)
 			{
 				//memmove(AppColors[k]->Colors, Palettes[i]->Colors, sizeof(Palettes[i]->Colors));
 				//AppColors[k]->FadeInitialized = false;
-				Apps[k]->isExtendColors = Palettes[i]->isExtendColors;
-				Apps[k]->nExtendColorIdx = Palettes[i]->nExtendColorIdx;
 
 				Apps[k]->nTextColorIdx = Palettes[i]->nTextColorIdx;
 				Apps[k]->nBackColorIdx = Palettes[i]->nBackColorIdx;
@@ -1781,16 +1764,14 @@ const ColorPalette* Settings::PaletteFindByColors(bool bMatchAttributes, const C
 	const ColorPalette* pPal = NULL;
 	for (int i = 0; (pPal = PaletteGetPtr(i)) != NULL; i++)
 	{
-		if ((pCur->isExtendColors == pPal->isExtendColors)
-			&& (!pPal->isExtendColors || (pCur->nExtendColorIdx == pPal->nExtendColorIdx))
-			&& (!bMatchAttributes
+		if (!bMatchAttributes
 				|| ((pCur->nTextColorIdx == pPal->nTextColorIdx)
 					&& (pCur->nBackColorIdx == pPal->nBackColorIdx)
 					&& (pCur->nPopTextColorIdx == pPal->nPopTextColorIdx)
-					&& (pCur->nPopBackColorIdx == pPal->nPopBackColorIdx)))
+					&& (pCur->nPopBackColorIdx == pPal->nPopBackColorIdx))
 			)
 		{
-			size_t cmpSize = (pPal->isExtendColors ? 32 : 16) * sizeof(pPal->Colors[0]);
+			size_t cmpSize = sizeof(pPal->Colors);
 			int iCmp = memcmp(pCur->Colors, pPal->Colors, cmpSize);
 			if (iCmp == 0)
 			{
@@ -1825,9 +1806,6 @@ ColorPalette* Settings::PaletteGetPtr(int anIndex)
 	static wchar_t szCurrentScheme[64] = L"";
 	lstrcpyn(szCurrentScheme, CLngRc::getRsrc(lng_CurClrScheme/*"<Current color scheme>"*/), countof(szCurrentScheme));
 	StdPal.pszName = szCurrentScheme;
-
-	StdPal.isExtendColors = AppStd.isExtendColors;
-	StdPal.nExtendColorIdx = AppStd.nExtendColorIdx;
 
 	StdPal.nTextColorIdx = AppStd.nTextColorIdx;
 	StdPal.nBackColorIdx = AppStd.nBackColorIdx;
@@ -1927,9 +1905,6 @@ int Settings::PaletteSetActive(LPCWSTR asName)
 		AppStd.nBackColorIdx = pPal->nBackColorIdx;
 		AppStd.nPopTextColorIdx = pPal->nPopTextColorIdx;
 		AppStd.nPopBackColorIdx = pPal->nPopBackColorIdx;
-
-		AppStd.nExtendColorIdx = pPal->nExtendColorIdx;
-		AppStd.isExtendColors = pPal->isExtendColors;
 	}
 
 	return nPalIdx;
@@ -1939,15 +1914,14 @@ int Settings::PaletteSetActive(LPCWSTR asName)
 void Settings::PaletteSaveAs(LPCWSTR asName)
 {
 	PaletteSaveAs(asName,
-		AppStd.isExtendColors, AppStd.nExtendColorIdx,
 		AppStd.nTextColorIdx, AppStd.nBackColorIdx,
 		AppStd.nPopTextColorIdx, AppStd.nPopBackColorIdx,
 		this->Colors, true);
 }
 
-void Settings::PaletteSaveAs(LPCWSTR asName, bool abExtendColors, BYTE anExtendColorIdx,
+void Settings::PaletteSaveAs(LPCWSTR asName,
 		BYTE anTextColorIdx, BYTE anBackColorIdx, BYTE anPopTextColorIdx, BYTE anPopBackColorIdx,
-		const COLORREF (&aColors)[0x20], bool abSaveSettings)
+		const COLORREF (&aColors)[0x10], bool abSaveSettings)
 {
 	// Пользовательские палитры не могут именоваться как "<...>"
 	if (!asName || !*asName || wcspbrk(asName, L"<>"))
@@ -2004,8 +1978,6 @@ void Settings::PaletteSaveAs(LPCWSTR asName, bool abExtendColors, BYTE anExtendC
 	// Сохранять допускается только пользовательские палитры
 	Palettes[nIndex]->bPredefined = false;
 	Palettes[nIndex]->pszName = lstrdup(asName);
-	Palettes[nIndex]->isExtendColors = abExtendColors;
-	Palettes[nIndex]->nExtendColorIdx = anExtendColorIdx;
 
 	BOOL bTextChanged = !bNewPalette && ((Palettes[nIndex]->nTextColorIdx != anTextColorIdx) || (Palettes[nIndex]->nBackColorIdx != anBackColorIdx));
 	BOOL bPopupChanged = !bNewPalette && ((Palettes[nIndex]->nPopTextColorIdx != anPopTextColorIdx) || (Palettes[nIndex]->nPopBackColorIdx != anPopBackColorIdx));
@@ -3405,15 +3377,12 @@ void Settings::SaveStdColors(SettingsBase* reg)
 {
 	TCHAR ColorName[] = L"ColorTable00";
 
-	for(uint i = 0; i<countof(Colors)/*0x20*/; i++)
+	for(uint i = 0; i<countof(Colors)/*0x10*/; i++)
 	{
 		ColorName[10] = i/10 + '0';
 		ColorName[11] = i%10 + '0';
 		reg->Save(ColorName, (DWORD)Colors[i]);
 	}
-
-	reg->Save(L"ExtendColors", AppStd.isExtendColors);
-	reg->Save(L"ExtendColorIdx", AppStd.nExtendColorIdx);
 
 	reg->Save(L"TextColorIdx", AppStd.nTextColorIdx);
 	reg->Save(L"BackColorIdx", AppStd.nBackColorIdx);

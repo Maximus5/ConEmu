@@ -2329,7 +2329,7 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 		}
 
 		// Save new (temporary) palette
-		gpSet->PaletteSaveAs(szAutoName, false, CEDEF_ExtendColorIdx,
+		gpSet->PaletteSaveAs(szAutoName,
 			m_SelfPalette.nTextColorIdx, m_SelfPalette.nBackColorIdx,
 			m_SelfPalette.nPopTextColorIdx, m_SelfPalette.nPopBackColorIdx,
 			m_SelfPalette.Colors, false);

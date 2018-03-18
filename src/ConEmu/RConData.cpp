@@ -202,7 +202,7 @@ void CRConData::FinalRelease()
 // nWidth & nHeight - dimension which VCon want to display
 UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, UINT anHeight,
 	wchar_t wSetChar, CharAttr lcaDef, CharAttr *lcaTable, CharAttr *lcaTableExt,
-	bool bFade, bool bExtendColors, BYTE nExtendColorIdx, bool bExtendFonts)
+	bool bFade, bool bExtendFonts)
 {
 	TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
 	//_ASSERTE(*con.pConChar!=ucBoxDblVert);
@@ -289,37 +289,8 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 	DWORD cbLineSize = min(cbDstLineSize,cbSrcLineSize);
 	int nCharsLeft = (anWidth > nWidth) ? (anWidth - nWidth) : 0;
 	//int nY, nX;
-	//120331 - Нехорошо заменять на "черный" с самого начала
-	BYTE attrBackLast = 0;
 	UINT nExtendStartsY = 0;
 	//int nPrevDlgBorder = -1;
-
-	bool lbStoreBackLast = false;
-	if (bExtendColors)
-	{
-		BYTE FirstBackAttr = lcaTable[(*pnSrc) & 0xFF].nBackIdx;
-		if (FirstBackAttr != nExtendColorIdx)
-			attrBackLast = FirstBackAttr;
-
-		const CEFAR_INFO_MAPPING* pFarInfo = lbIsFar ? mp_RCon->GetFarInfo() : NULL;
-		if (pFarInfo)
-		{
-			// Если в качестве цвета "расширения" выбран цвет панелей - значит
-			// пользователь просто настроил "другую" палитру для панелей фара.
-			// К сожалению, таким образом нельзя заменить только цвета для элемента под курсором.
-			if (CONBACKCOLOR(pFarInfo->nFarColors[col_PanelText]) != nExtendColorIdx)
-				lbStoreBackLast = true;
-			else
-				attrBackLast = FirstBackAttr;
-
-			if (pFarInfo->FarInterfaceSettings.AlwaysShowMenuBar || mp_RCon->isEditor() || mp_RCon->isViewer())
-				nExtendStartsY = 1; // пропустить обработку строки меню
-		}
-		else
-		{
-			lbStoreBackLast = true;
-		}
-	}
 
 	// Собственно данные
 	for (UINT nY = 0; nY < nYMax; nY++)
@@ -436,25 +407,6 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 			if (!hasFont && !is_rowid && ((*pnSrc) & COMMON_LVB_UNDERSCORE))
 			{
 				lca.nFontIndex = fnt_Underline;
-			}
-
-			if (!hasTrueColor && bExtendColors && (nY >= nExtendStartsY))
-			{
-				if (lca.nBackIdx == nExtendColorIdx)
-				{
-					// Have to change the color to adjacent(?) cell
-					lca.nBackIdx = attrBackLast;
-					// For the background nExtendColorIdx we use upper
-					// palette range for text: 16..31 instead of 0..15
-					lca.nForeIdx += 0x10;
-					lca.crForeColor = lca.crOrigForeColor = mp_RCon->mp_Palette->m_Colors[lca.nForeIdx];
-					lca.crBackColor = lca.crOrigBackColor = mp_RCon->mp_Palette->m_Colors[lca.nBackIdx];
-				}
-				else if (lbStoreBackLast)
-				{
-					// Remember last "normal" background
-					attrBackLast = lca.nBackIdx;
-				}
 			}
 
 			switch (get_wcwidth(wwch))

@@ -59,7 +59,7 @@ public:
 	static INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
 	static bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
 public:
-	static void OnSettingsLoaded(const COLORREF (&Colors)[32]);
+	static void OnSettingsLoaded(const COLORREF (&Colors)[0x10]);
 	static void ReleaseHandles();
 
 protected:
