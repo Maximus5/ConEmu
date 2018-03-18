@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
-const int CSetDlgColors::MAX_COLOR_EDT_ID = c31;
+const int CSetDlgColors::MAX_COLOR_EDT_ID = c15;
 
 BOOL CSetDlgColors::gbLastColorsOk = FALSE;
 ColorPalette CSetDlgColors::gLastColors = {};
@@ -75,7 +75,7 @@ bool CSetDlgColors::GetColorById(WORD nID, COLORREF* color)
 		break;
 
 	default:
-		if (nID <= c31)
+		if (nID <= c15)
 			*color = gpSet->Colors[nID - c0];
 		else
 			return false;
@@ -115,7 +115,7 @@ bool CSetDlgColors::SetColorById(WORD nID, COLORREF color)
 		break;
 
 	default:
-		if (nID <= c31)
+		if (nID <= c15)
 		{
 			gpSet->Colors[nID - c0] = color;
 			gpSet->mb_FadeInitialized = false;

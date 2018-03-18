@@ -605,12 +605,6 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case rbColorBgrHex:
 			OnBtn_ColorFormat(hDlg, CB, uCheck);
 			break;
-		case cbExtendColors:
-			OnBtn_ExtendColors(hDlg, CB, uCheck);
-			break;
-		case cbColorResetExt:
-			OnBtn_ColorResetExt(hDlg, CB, uCheck);
-			break;
 		case cbColorSchemeSave:
 		case cbColorSchemeDelete:
 			OnBtn_ColorSchemeSaveDelete(hDlg, CB, uCheck);
@@ -860,8 +854,6 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 
 		case c0:  case c1:  case c2:  case c3:  case c4:  case c5:  case c6:  case c7:
 		case c8:  case c9:  case c10: case c11: case c12: case c13: case c14: case c15:
-		case c16: case c17: case c18: case c19: case c20: case c21: case c22: case c23:
-		case c24: case c25: case c26: case c27: case c28: case c29: case c30: case c31:
 		case c32: case c33: case c34: case c35: case c36: case c37: case c38:
 			//OnBtn_ColorField(hDlg, CB, uCheck);
 			break;
@@ -3677,59 +3669,6 @@ void CSetDlgButtons::OnBtn_ColorFormat(HWND hDlg, WORD CB, BYTE uCheck)
 	}
 
 } // rbColorRgbDec || rbColorRgbHex || rbColorBgrHex
-
-// cbExtendColors
-void CSetDlgButtons::OnBtn_ExtendColors(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==cbExtendColors);
-
-	gpSet->AppStd.isExtendColors = (uCheck == BST_CHECKED);
-
-	if (hDlg)
-	{
-		for (int i=16; i<32; i++) //-V112
-			EnableWindow(GetDlgItem(hDlg, tc0+i), gpSet->AppStd.isExtendColors);
-
-		EnableWindow(GetDlgItem(hDlg, lbExtendIdx), gpSet->AppStd.isExtendColors);
-	}
-
-	if (hDlg)
-	{
-		gpConEmu->Update(true);
-	}
-
-} // cbExtendColors
-
-
-// cbColorResetExt
-void CSetDlgButtons::OnBtn_ColorResetExt(HWND hDlg, WORD CB, BYTE uCheck)
-{
-	_ASSERTE(CB==cbColorResetExt);
-
-	if (MsgBox(L"Reset colors 16..31 to default Windows palette?", MB_ICONQUESTION|MB_YESNO, NULL, ghOpWnd, true) != IDYES)
-		return;
-
-	const COLORREF* pcrColors = gpSet->GetDefColors();
-	if (!pcrColors)
-	{
-		Assert(pcrColors!=NULL);
-		return;
-	}
-
-	for (int i = 0; i < 16; i++)
-	{
-		CSetDlgColors::SetColorById(c16+i, pcrColors[i]);
-		if (hDlg)
-		{
-			CSetDlgColors::ColorSetEdit(hDlg, c16+i);
-			gpSetCls->InvalidateCtrl(GetDlgItem(hDlg, c16+i), TRUE);
-		}
-	}
-
-	gpConEmu->InvalidateAll();
-	gpConEmu->Update(true);
-
-} // cbColorResetExt
 
 
 // cbColorSchemeSave || cbColorSchemeDelete

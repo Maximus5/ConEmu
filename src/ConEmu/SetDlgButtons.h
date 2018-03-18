@@ -216,8 +216,6 @@ protected:
 	static void OnBtn_ActivitySaveAs(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_DebugActivityRadio(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ColorFormat(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_ExtendColors(HWND hDlg, WORD CB, BYTE uCheck);
-	static void OnBtn_ColorResetExt(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ColorSchemeSaveDelete(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_TrueColorer(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_VividColors(HWND hDlg, WORD CB, BYTE uCheck);

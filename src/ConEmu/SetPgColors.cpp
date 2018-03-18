@@ -77,9 +77,6 @@ LRESULT CSetPgColors::OnInitDialog(HWND hDlg, bool abInitial)
 	//	EnableWindow(GetDlgItem(hDlg, lbConClrPopBack), TRUE);
 	//}
 
-	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbExtendIdx), CSetDlgLists::eColorIdxSh, gpSet->AppStd.nExtendColorIdx, true);
-	checkDlgButton(hDlg, cbExtendColors, gpSet->AppStd.isExtendColors ? BST_CHECKED : BST_UNCHECKED);
-	CSetDlgButtons::OnButtonClicked(hDlg, cbExtendColors, 0);
 	checkDlgButton(hDlg, cbTrueColorer, gpSet->isTrueColorer ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hDlg, cbVividColors, gpSet->isVividColors ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hDlg, cbFadeInactive, gpSet->isFadeInactive ? BST_CHECKED : BST_UNCHECKED);
@@ -142,12 +139,6 @@ INT_PTR CSetPgColors::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 
 	switch (nCtrlId)
 	{
-	case lbExtendIdx:
-		{
-			gpSet->AppStd.nExtendColorIdx = SendDlgItemMessage(hDlg, nCtrlId, CB_GETCURSEL, 0, 0);
-			break;
-		} // lbExtendIdx
-
 	case lbConClrText:
 		{
 			gpSet->AppStd.nTextColorIdx = SendDlgItemMessage(hDlg, nCtrlId, CB_GETCURSEL, 0, 0);
@@ -269,7 +260,7 @@ LRESULT CSetPgColors::OnEditChanged(HWND hDlg, WORD nCtrlId)
 			{
 				gpConEmu->InvalidateAll();
 
-				if (nCtrlId >= tc0 && nCtrlId <= tc31)
+				if (nCtrlId >= tc0 && nCtrlId <= tc15)
 					gpConEmu->Update(true);
 
 				InvalidateCtrl(GetDlgItem(hDlg, nCtrlId - (tc0-c0)), TRUE);
