@@ -20,6 +20,16 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.3.18
+* Feature ‘Extend foreground colors’ was removed.
+* Don't be CPU consuming in background.
+* gh-1456: VS Extension fails to start ConEmu with error ‘Can't create new virtual console!’.
+* gh-1467: Let hotkey ‘Create new window’ take into account confirmation setting.
+* gh-1478: Fix for unexpected error during `ConEmu -UpdateJumpList -Exit`.
+* gh-1402: Add some more tricks to find WinAPI problems: `ConEmuC -CheckUnicode`.
+* gh-1480: Update wslbridge to version 0.2.4.
+
+
 2018.3.9
 * Tab tooltip was not shown for Far editor/viewer tabs.
 * Ellipsis was not shown for long tab titles.
