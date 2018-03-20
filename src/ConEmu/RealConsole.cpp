@@ -1420,12 +1420,12 @@ void CRealConsole::SetInitEnvCommands(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 	if (pPal)
 	{
 		_ASSERTE((mn_TextColorIdx || mn_BackColorIdx) && (mn_PopTextColorIdx || mn_PopBackColorIdx));
-		_ASSERTE(sizeof(pRet.Palette.ColorTable)*2 == sizeof(pPal->Colors));
+		_ASSERTE(sizeof(pRet.Palette.ColorTable) == sizeof(pPal->Colors));
 
 		pRet.Palette.bPalletteLoaded = true;
 		pRet.Palette.wAttributes = MAKECONCOLOR(mn_TextColorIdx, mn_BackColorIdx);
 		pRet.Palette.wPopupAttributes = MAKECONCOLOR(mn_PopTextColorIdx, mn_PopBackColorIdx);
-		memmove(pRet.Palette.ColorTable, pPal->Colors, sizeof(pRet.Palette.ColorTable));
+		memmove_s(pRet.Palette.ColorTable, sizeof(pRet.Palette.ColorTable), pPal->Colors, sizeof(pPal->Colors));
 	}
 
 	// Task name
