@@ -5819,12 +5819,12 @@ void Settings::LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const b
 		// Эти модификаторы раньше в настройке не сохранялись, для совместимости - добавляем VK_SHIFT к предыдущей
 		switch (ppHK->DescrLangID)
 		{
-		case vkMultiNewShift:
+		case vkMultiNewConfirm:
 		case vkMultiNextShift:
 			if (i > 0)
 			{
 				ConEmuHotKey *ppHK1 = &((*gpHotKeys)[i-1]);
-				_ASSERTE(ppHK1->DescrLangID == ((ppHK->DescrLangID == vkMultiNewShift) ? vkMultiNew : vkMultiNext));
+				_ASSERTE(ppHK1->DescrLangID == ((ppHK->DescrLangID == vkMultiNewConfirm) ? vkMultiNew : vkMultiNext));
 				ppHK->Key = ppHK1->Key;
 				if (ppHK->Key.Mod & (cvk_Shift|cvk_LShift|cvk_RShift))
 					ppHK->Key.Mod &= ~(cvk_Shift|cvk_LShift|cvk_RShift);

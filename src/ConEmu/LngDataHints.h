@@ -406,7 +406,7 @@ static LngPredefined gsDataHints[] = {
 	{ vkMultiNewAttach,        L"Attach existing Console or GUI application" },
 	{ vkMultiNewPopup,         L"Show create new console popup menu" },
 	{ vkMultiNewPopup2,        L"Show create new console popup menu with task submenus" },
-	{ vkMultiNewShift,         L"Create new console (‘Create confirmation’ dialog)" },
+	{ vkMultiNewConfirm,       L"Create new console (‘Create confirmation’ dialog)" },
 	{ vkMultiWnd,              L"Create new window" },
 	{ vkMultiWndConfirm,       L"Create new window (‘Create confirmation’ dialog)" },
 	{ vkMultiNext,             L"Switch next console" },

@@ -350,7 +350,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 	CmdTaskPopupItem itm = {CmdTaskPopupItem::eNone};
 
 	// "New console dialog..."
-	itm.Reset(CmdTaskPopupItem::eNewDlg, ++mn_CmdLastID, L"New console dialog...");
+	itm.Reset(CmdTaskPopupItem::eNewDlg, ++mn_CmdLastID, MenuAccel(vkMultiNewConfirm,L"New console dialog..."));
 	InsertMenu(hPopup, nInsertPos, MF_BYPOSITION|MF_ENABLED|MF_STRING, itm.nCmd, itm.szShort);
 	m_CmdTaskPopup.push_back(itm);
 
@@ -1091,7 +1091,7 @@ void CConEmuMenu::ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon
 			break;
 
 		case ID_NEWCONSOLE:
-			gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+			gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), true);
 			break;
 		case IDM_ATTACHTO:
 			OnSysCommand(ghWnd, IDM_ATTACHTO, 0);
@@ -1239,7 +1239,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		#endif
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_SETTINGS,   MenuAccel(vkWinAltP,L"Sett&ings..."));
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, IDM_ATTACHTO,  MenuAccel(vkMultiNewAttach,L"Attach t&o..."));
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_NEWCONSOLE, MenuAccel(vkMultiNew,L"New console..."));
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_NEWCONSOLE, MenuAccel(vkMultiNewConfirm,L"New console dialog..."));
 	}
 }
 
@@ -2018,7 +2018,7 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, b
 			// abAddNew - if "false" the result is inserted as PopupMenu into top-level menu 
 			// These three items are visible in the popup menu (Shift+RClick on VCon)
 			{ mit_Separator },
-			{ mit_Command,   ID_NEWCONSOLE,        vkMultiNew,        MF_ENABLED,  L"New console..." },
+			{ mit_Command,   ID_NEWCONSOLE,        vkMultiNewConfirm, MF_ENABLED,  L"New console dialog..." },
 			{ mit_Command,   IDM_ATTACHTO,         vkMultiNewAttach,  MF_ENABLED,  L"Attach to..." }
 		};
 
@@ -2232,7 +2232,7 @@ LRESULT CConEmuMenu::OnSysCommand(HWND hWnd, WPARAM wParam, LPARAM lParam, UINT 
 	{
 		case ID_NEWCONSOLE:
 			// Создать новую консоль
-			gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), gpSet->isMultiNewConfirm || isPressed(VK_SHIFT));
+			gpConEmu->RecreateAction(gpSetCls->GetDefaultCreateAction(), true);
 			return 0;
 
 		case IDM_ATTACHTO:

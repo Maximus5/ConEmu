@@ -392,7 +392,7 @@
 #define vkConsole_10                    2040
 #define vkConsole_11                    2041
 #define vkConsole_12                    2042
-#define vkMultiNewShift                 2043
+#define vkMultiNewConfirm               2043
 #define vkWinLeft                       2044
 #define vkWinRight                      2045
 #define vkWinUp                         2046
