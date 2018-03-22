@@ -377,15 +377,6 @@
             , "如果你正在使用的是便携模式，注意会覆盖你当前的ConEmu.xml文件！" ],
       "id": 2572 }
     ,
-    "cbExtendColors": {
-      "en": [ "You can use up to 32 foreground colors\r\n"
-            , "(instead of console standard 16) at the\r\n"
-            , "expense of one of background colors" ],
-      "zh": [ "你可以使用至多32种前端颜色\r\n"
-            , "（取代控制台console标准的16种）\r\n"
-            , "背景颜色会占用一种颜色" ],
-      "id": 1515 }
-    ,
     "cbExtendFonts": {
       "en": [ "ConEmu is able to use normal, bold and italic fonts side by side.\r\n"
             , "This feature may be useful for prompt decoration or with Colorer plugin for Far Manager (1.7x, 2.x)." ],
@@ -963,11 +954,6 @@
       "en": "When Bold or Italic font property was inverted, ConEmu may change background to default color (default is Blue #1)",
       "zh": "当“粗体”或“斜体”字体属性被倒置，ConEmu会改变背景为默认颜色（默认为蓝色 #1）",
       "id": 2301 }
-    ,
-    "lbExtendIdx": {
-      "en": "Choose background color index, used to increase foreground color index",
-      "zh": "选择背景颜色索引，用来增加前景颜色索引",
-      "id": 2299 }
     ,
     "lbGotoEditorCmd": {
       "en": "Command line for starting editor with file positioned on line and column",
@@ -2082,6 +2068,11 @@
       "zh": "附加存在的控制台（Console）或GUI应用程序",
       "id": 2314 }
     ,
+    "vkMultiNewConfirm": {
+      "en": "Create new console (‘Create confirmation’ dialog)",
+      "_zh": "创建新窗口 （在‘确认创建’之后）",
+      "id": 2043 }
+    ,
     "vkMultiNewPopup": {
       "en": "Show create new console popup menu",
       "zh": "显示新建控制台下拉菜单",
@@ -2091,11 +2082,6 @@
       "en": "Show create new console popup menu with task submenus",
       "zh": "显示新建控制台下拉菜单及任务子菜单",
       "id": 2624 }
-    ,
-    "vkMultiNewShift": {
-      "en": "Create new console (‘Create confirmation’ dialog)",
-      "_zh": "创建新窗口 （在‘确认创建’之后）",
-      "id": 2043 }
     ,
     "vkMultiNext": {
       "en": "Switch next console",
@@ -3394,11 +3380,6 @@
       "zh": "‘颜色键’ 透明度",
       "id": 2312 }
     ,
-    "cbColorResetExt": {
-      "en": "Default...",
-      "zh": "默认...",
-      "id": 2716 }
-    ,
     "cbColorSchemeDelete": {
       "en": "Delete...",
       "zh": "删除...",
@@ -3688,11 +3669,6 @@
       "ru": "Экспорт...",
       "zh": "导出...",
       "id": 2572 }
-    ,
-    "cbExtendColors": {
-      "en": "Extend foreground colors with background",
-      "zh": "扩展相对于背景的前景颜色",
-      "id": 1515 }
     ,
     "cbExtendFonts": {
       "en": "Extend font styles",
@@ -4528,11 +4504,6 @@
       "en": "WARNING!!! Enabling this option may cause false alarms in antiviral programs!!!",
       "zh": "警告！！！ 启用此选项会导致杀毒软件假的警报！！！",
       "id": 2926 }
-    ,
-    "gbExtendColors": {
-      "en": "Extended foreground colors (same format as Standard colors)",
-      "zh": "扩展前端颜色 （与标准颜色的格式相同）",
-      "id": 2927 }
     ,
     "gbFarDragDrop": {
       "en": "Shell style Drag and Drop (Far Manager only)",
