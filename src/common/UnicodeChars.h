@@ -14,6 +14,7 @@
 #define ucArrowDown   0x2193 // L'↓'
 #define ucTrgLeft     0xE0B2 // L''
 #define ucTrgRight    0xE0B0 // L''
+#define ucLineFeed    0x23CE // L'⏎'
 
 /* Miscellaneous */
 #define ucEllipsis    0x2026 // L'…'

@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //#define SHOW_ATTACH_MSGBOX
+//#define SHOW_OUTPUT_MSGBOX
 #endif
 
 #include "../common/Common.h"
@@ -829,6 +830,10 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	CEStr    szArg;
 	HANDLE   hFile = NULL;
 	DWORD    DefaultCP = 0;
+
+	#ifdef SHOW_OUTPUT_MSGBOX
+	_ASSERTE(FALSE && "Continue to DoOutput");
+	#endif
 
 	_ASSERTE(asCmdArg && (*asCmdArg != L' '));
 	asCmdArg = SkipNonPrintable(asCmdArg);

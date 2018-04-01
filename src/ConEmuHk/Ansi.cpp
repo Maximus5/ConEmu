@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/HandleKeeper.h"
 #include "../common/MConHandle.h"
 #include "../common/MSectionSimple.h"
+#include "../common/UnicodeChars.h"
 #include "../common/WCodePage.h"
 #include "../common/WConsole.h"
 #include "../common/WErrGuard.h"
@@ -53,6 +54,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Ansi.h"
 DWORD AnsiTlsIndex = 0;
 ///* ***************** */
+
+#ifdef _DEBUG
+#define GH_1402
+#endif
 
 #undef isPressed
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
@@ -1090,8 +1095,40 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 		write.Flags |= ewtf_NoLfNl;
 
 	DWORD nWriteFrom = 0, nWriteTo = nNumberOfCharsToWrite;
+
+	#ifdef GH_1402
+	static bool fishLineFeed = false;
+	struct ExtWriteTextCalls { const wchar_t* buffer; size_t count; };
+	const size_t ext_calls_max = 16;
+	static ExtWriteTextCalls ext_calls[ext_calls_max] = {};
+	static size_t ext_calls_count = 0;
+
+	auto count_chars = [&](const wchar_t test) -> unsigned {
+		unsigned count = 0;
+		for (DWORD n = nWriteFrom; n < nWriteTo; ++n)
+		{
+			if (lpBuffer[n] == test)
+				++count;
+		}
+		return count;
+	};
+	#endif
+
 	while (nWriteTo > nWriteFrom && nWriteFrom < nNumberOfCharsToWrite)
 	{
+		#ifdef GH_1402
+		bool curFishLineFeed = false;
+		if (count_chars(ucLineFeed) > 0)
+		{
+			if (!gbWasXTermOutput)
+			{
+				_ASSERTE(FALSE && "XTerm mode was not enabled!");
+				gbWasXTermOutput = true;
+			}
+			curFishLineFeed = true;
+		}
+		#endif
+
 		if (gbWasXTermOutput)
 		{
 			write.Flags &= ~ewtf_DontWrap;
@@ -1124,6 +1161,29 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 		//lbRc = _WriteConsoleW(hConsoleOutput, lpBuffer, nNumberOfCharsToWrite, &nTotalWritten, NULL);
 		write.Buffer = lpBuffer + nWriteFrom;
 		write.NumberOfCharsToWrite = nWriteTo - nWriteFrom;
+
+		#ifdef GH_1402
+		// For debugging purposes, we store ext_calls_max latest outputs
+		auto& ext_call = ext_calls[(ext_calls_count++) % ext_calls_max];
+		ext_call.buffer = write.Buffer;
+		ext_call.count = write.NumberOfCharsToWrite;
+		// Ensure we don't write more than a one LF character
+		if (curFishLineFeed)
+		{
+			unsigned ulf_chars = count_chars(ucLineFeed);
+			_ASSERTE(ulf_chars <= 1);
+			unsigned cr_chars = count_chars(L'\r');
+			unsigned lf_chars = count_chars(L'\n');
+			if (ulf_chars)
+				_ASSERTE((ulf_chars > 0) != ((cr_chars+lf_chars) > 0));
+			if (fishLineFeed && (count_chars(L' ') > 0))
+				_ASSERTE((write.Flags & ewtf_DontWrap) != 0);
+			if (ulf_chars > 0)
+				fishLineFeed = true;
+			if (cr_chars > 0)
+				fishLineFeed = false;
+		}
+		#endif
 
 		lbRc = ExtWriteText(&write);
 		if (lbRc)
@@ -1206,7 +1266,7 @@ BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD
 		{
 			_ASSERTE((pDst < (buf+bufMax)) && "wchar_t buffer overflow while converting");
 			buf[(pDst - buf)] = 0; // It's not required, just to easify debugging
-			lbRc = OurWriteConsoleW(hConsoleOutput, buf, (pDst - buf), &nWritten, NULL);
+			lbRc = OurWriteConsoleW(hConsoleOutput, buf, DWORD(pDst - buf), &nWritten, NULL);
 			if (lbRc) nTotalWritten += nWritten;
 			pDst = buf;
 		}
@@ -1230,7 +1290,7 @@ BOOL CEAnsi::OurWriteConsoleA(HANDLE hConsoleOutput, const char *lpBuffer, DWORD
 	{
 		_ASSERTE((pDst < (buf+bufMax)) && "wchar_t buffer overflow while converting");
 		buf[(pDst - buf)] = 0; // It's not required, just to easify debugging
-		lbRc = OurWriteConsoleW(hConsoleOutput, buf, (pDst - buf), &nWritten, NULL);
+		lbRc = OurWriteConsoleW(hConsoleOutput, buf, DWORD(pDst - buf), &nWritten, NULL);
 		if (lbRc) nTotalWritten += nWritten;
 	}
 
@@ -1430,13 +1490,13 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					if (lpReStart > gsPrevAnsiPart)
 					{
 						INT_PTR nSkipLen = (lpReStart - gsPrevAnsiPart); //DWORD nWritten;
-						_ASSERTEX(nSkipLen<=countof(gsPrevAnsiPart) && nSkipLen<=gnPrevAnsiPart);
+						_ASSERTEX(nSkipLen>0 && nSkipLen<=countof(gsPrevAnsiPart) && nSkipLen<=gnPrevAnsiPart);
 						DumpUnknownEscape(gsPrevAnsiPart, nSkipLen);
 
 						//WriteText(_WriteConsoleW, hConsoleOutput, gsPrevAnsiPart, nSkipLen, &nWritten);
 						_ASSERTEX(nSkipLen <= ((int)CEAnsi_MaxPrevPart - (int)cchPrevPart));
 						memmove(szPreDump, gsPrevAnsiPart, nSkipLen);
-						cchPrevPart += nSkipLen;
+						cchPrevPart += int(nSkipLen);
 
 						if (nSkipLen < gnPrevAnsiPart)
 						{
