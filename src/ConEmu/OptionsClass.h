@@ -189,6 +189,7 @@ class CSettings
 		};
 		TabHwndIndex GetPageId(HWND hPage);
 		LPCWSTR GetActivePageWiki(CEStr& lsWiki);
+		bool ActivatePage(TabHwndIndex showPage);
 
 	private:
 		TabHwndIndex m_LastActivePageId;

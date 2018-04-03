@@ -1807,17 +1807,7 @@ void CSettings::Dialog(int IdShowPage /*= 0*/)
 		showPage = lastPageId;
 
 	if (showPage != thi_Last)
-	{
-		for (size_t i = 0; gpSetCls->m_Pages[i].DialogID; i++)
-		{
-			if (gpSetCls->m_Pages[i].PageIndex == showPage)
-			{
-				//PostMessage(GetDlgItem(ghOpWnd, tvSetupCategories), TVM_SELECTITEM, TVGN_CARET, (LPARAM)gpSetCls->m_Pages[i].hTI);
-				SelectTreeItem(GetDlgItem(ghOpWnd, tvSetupCategories), gpSetCls->m_Pages[i].hTI, true);
-				break;
-			}
-		}
-	}
+		gpSetCls->ActivatePage(showPage);
 
 	SetFocus(ghOpWnd);
 wrap:
@@ -4218,6 +4208,24 @@ TabHwndIndex CSettings::GetPageIdByDialogId(UINT DialogID)
 	}
 
 	return pageId;
+}
+
+bool CSettings::ActivatePage(TabHwndIndex showPage)
+{
+	if (showPage != thi_Last)
+	{
+		for (size_t i = 0; m_Pages[i].DialogID; i++)
+		{
+			if (m_Pages[i].PageIndex == showPage)
+			{
+				//PostMessage(GetDlgItem(ghOpWnd, tvSetupCategories), TVM_SELECTITEM, TVGN_CARET, (LPARAM)gpSetCls->m_Pages[i].hTI);
+				SelectTreeItem(GetDlgItem(ghOpWnd, tvSetupCategories), m_Pages[i].hTI, true);
+				return true;;
+			}
+		}
+	}
+
+	return false;
 }
 
 HWND CSettings::GetActivePage()
