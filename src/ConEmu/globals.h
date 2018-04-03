@@ -56,7 +56,6 @@ extern CConEmuMain *gpConEmu;
 extern HWND ghWnd, ghWndWork, ghWndApp, ghWndDrag;
 extern WPARAM gnWndSetHotkey, gnWndSetHotkeyOk;
 extern HWND ghOpWnd;
-extern HWND ghFastCfg;
 #ifdef _DEBUG
 extern HWND ghConWnd;
 #endif

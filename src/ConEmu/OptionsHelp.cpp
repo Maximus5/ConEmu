@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DynDialog.h"
 #include "LngRc.h"
 #include "OptionsClass.h"
+#include "OptionsFast.h"
 #include "OptionsHelp.h"
 
 //#define DEBUGSTRFONT(s) DEBUGSTR(s)
@@ -114,7 +115,7 @@ bool CEHelpPopup::OpenSettingsWiki(HWND hDlg, WORD nCtrlId)
 	{
 		lsUrl.Attach(lstrmerge(CEWIKIBASE, L"Settings.html", szId));
 	}
-	else if (hDlg == ghFastCfg)
+	else if (hDlg == FastConfig::ghFastCfg)
 	{
 		lsUrl.Attach(lstrmerge(CEWIKIBASE, L"SettingsFast.html", szId));
 	}

@@ -29,5 +29,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+struct ColorPalette;
+
+namespace FastConfig
+{
+
+extern HWND ghFastCfg;
+
 void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags);
 void CreateDefaultTasks(SettingsLoadedFlags slfFlags);
+
+// Helper functions used in Settings/Main
+void DoPaintColorBox(HWND hCtrl, const ColorPalette& pal);
+LPCWSTR GetStartupCommand(CEStr& command);
+
+};

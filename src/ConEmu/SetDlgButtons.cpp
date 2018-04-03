@@ -1560,7 +1560,7 @@ void CSetDlgButtons::OnBtn_AddDefaults(HWND hDlg, WORD CB, BYTE uCheck)
 		return;
 
 	// Append or rewrite default tasks
-	CreateDefaultTasks(slf_AppendTasks|((iBtn == IDNO) ? slf_RewriteExisting : slf_None));
+	FastConfig::CreateDefaultTasks(slf_AppendTasks|((iBtn == IDNO) ? slf_RewriteExisting : slf_None));
 
 	// Обновить список на экране
 	CSetPgTasks* pTasksPg;

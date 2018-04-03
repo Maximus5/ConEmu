@@ -735,7 +735,7 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 			szTitle = lstrmerge(pszDef, L" ", pszFastCfgTitle);
 
 		// Run "Fast configuration dialog" and apply some final defaults (if was Reset of new settings)
-		CheckOptionsFast(szTitle, slfFlags);
+		FastConfig::CheckOptionsFast(szTitle, slfFlags);
 
 		// Single instance?
 		if (gpSet->isSingleInstance && (gpSetCls->SingleInstanceArg == sgl_Default))

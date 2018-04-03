@@ -54,6 +54,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WRegistry.h"
 #include "../common/WUser.h"
 
+namespace FastConfig
+{
+
 #define FOUND_APP_PATH_CHR L'\1'
 #define FOUND_APP_PATH_STR L"\1"
 
@@ -79,11 +82,11 @@ static SettingsLoadedFlags sAppendMode = slf_None;
 int FastMsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND ahParent = (HWND)-1, bool abModal = true)
 {
 	MSetter lSet(&gbMessagingStarted);
-	int iBtn = MsgBox(lpText, uType, lpCaption, ahParent, abModal);
+	int iBtn = ::MsgBox(lpText, uType, lpCaption, ahParent, abModal);
 	return iBtn;
 }
 
-void Fast_FindStartupTask(SettingsLoadedFlags slfFlags)
+void FindStartupTask(SettingsLoadedFlags slfFlags)
 {
 	const CommandTasks* pTask = NULL;
 
@@ -139,27 +142,39 @@ void Fast_FindStartupTask(SettingsLoadedFlags slfFlags)
 	}
 }
 
-LPCWSTR Fast_GetStartupCommand(const CommandTasks*& pTask)
+LPCWSTR GetStartupCommand(CEStr& command)
 {
-	pTask = NULL;
+	command.Clear();
+
 	// Show startup task or shell command line
-	LPCWSTR pszStartup = (gpSet->nStartType == 2) ? gpSet->psStartTasksName : (gpSet->nStartType == 0) ? gpSet->psStartSingleApp : NULL;
-	// Check if that task exists
-	if ((gpSet->nStartType == 2) && pszStartup)
+	switch (gpSet->nStartType)
 	{
-		pTask = gpSet->CmdTaskGetByName(gpSet->psStartTasksName);
-		if (pTask && pTask->pszName && (lstrcmp(pTask->pszName, pszStartup) != 0))
+	case 0:
+		command.Set(gpSet->psStartSingleApp);
+		break;
+	case 1:
+		if (gpSet->psStartTasksFile)
 		{
-			// Return pTask name because it may not match exactly with gpSet->psStartTasksName
-			// because CmdTaskGetByName uses some fuzzy logic to find tasks
-			pszStartup = pTask->pszName;
+			wchar_t prefix[2] = {CmdFilePrefix};
+			command = lstrmerge(prefix, gpSet->psStartTasksFile);
 		}
-		else if (!pTask)
+		break;
+	case 2:
+		// Check if that task exists
+		if (gpSet->psStartTasksName)
 		{
-			pszStartup = NULL;
+			const CommandTasks* pTask = gpSet->CmdTaskGetByName(gpSet->psStartTasksName);
+			if (pTask && pTask->pszName /*&& (lstrcmp(pTask->pszName, pszStartup) != 0)*/)
+			{
+				// Return pTask name because it may not match exactly with gpSet->psStartTasksName
+				// because CmdTaskGetByName uses some fuzzy logic to find tasks
+				command.Set(pTask->pszName);
+			}
 		}
+		break;
 	}
-	return pszStartup;
+
+	return command.ms_Val;
 }
 
 
@@ -169,9 +184,31 @@ LPCWSTR Fast_GetStartupCommand(const CommandTasks*& pTask)
 /*        Fast Configuration Dialog         */
 /* **************************************** */
 
+void DoPaintColorBox(HWND hCtrl, const ColorPalette& pal)
+{
+	RECT rcClient = {};
+	PAINTSTRUCT ps = {};
+	if (BeginPaint(hCtrl, &ps))
+	{
+		GetClientRect(hCtrl, &rcClient);
+		for (int i = 0; i < 16; i++)
+		{
+			int x = (i % 8);
+			int y = (i == x) ? 0 : 1;
+			RECT rc = {(x) * rcClient.right / 8, (y) * rcClient.bottom / 2,
+				(x+1) * rcClient.right / 8, (y+1) * rcClient.bottom / 2};
+			HBRUSH hbr = CreateSolidBrush(pal.Colors[i]);
+			FillRect(ps.hdc, &rc, hbr);
+			DeleteObject(hbr);
+		}
+		EndPaint(hCtrl, &ps);
+	}
+}
+
 static const ColorPalette* gp_DefaultPalette = NULL;
 static WNDPROC gpfn_DefaultColorBoxProc = NULL;
-static LRESULT CALLBACK Fast_ColorBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+
+static LRESULT CALLBACK ColorBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lRc = 0;
 
@@ -184,23 +221,7 @@ static LRESULT CALLBACK Fast_ColorBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, L
 				_ASSERTE(gp_DefaultPalette!=NULL);
 				break;
 			}
-			RECT rcClient = {};
-			PAINTSTRUCT ps = {};
-			if (BeginPaint(hwnd, &ps))
-			{
-				GetClientRect(hwnd, &rcClient);
-				for (int i = 0; i < 16; i++)
-				{
-					int x = (i % 8);
-					int y = (i == x) ? 0 : 1;
-					RECT rc = {(x) * rcClient.right / 8, (y) * rcClient.bottom / 2,
-						(x+1) * rcClient.right / 8, (y+1) * rcClient.bottom / 2};
-					HBRUSH hbr = CreateSolidBrush(gp_DefaultPalette->Colors[i]);
-					FillRect(ps.hdc, &rc, hbr);
-					DeleteObject(hbr);
-				}
-				EndPaint(hwnd, &ps);
-			}
+			DoPaintColorBox(hwnd, *gp_DefaultPalette);
 			goto wrap;
 		} // WM_PAINT
 
@@ -230,7 +251,7 @@ wrap:
 
 
 
-static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	ghFastCfg = hDlg;
 
@@ -347,8 +368,8 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	}
 
 	// Show startup task or shell command line
-	const CommandTasks* pTask = NULL;
-	LPCWSTR pszStartup = Fast_GetStartupCommand(pTask);
+	CEStr command;
+	LPCWSTR pszStartup = GetStartupCommand(command);
 	// Show startup command or task
 	if (pszStartup && *pszStartup)
 	{
@@ -375,7 +396,7 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	// Show its colors in box
 	HWND hChild = GetDlgItem(hDlg, stPalettePreviewFast);
 	if (hChild)
-		gpfn_DefaultColorBoxProc = (WNDPROC)SetWindowLongPtr(hChild, GWLP_WNDPROC, (LONG_PTR)Fast_ColorBoxProc);
+		gpfn_DefaultColorBoxProc = (WNDPROC)SetWindowLongPtr(hChild, GWLP_WNDPROC, (LONG_PTR)ColorBoxProc);
 
 
 	// Single instance
@@ -460,7 +481,7 @@ static INT_PTR Fast_OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 	return FALSE; // Set focus to OK
 }
 
-static INT_PTR Fast_OnCtlColorStatic(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+static INT_PTR OnCtlColorStatic(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	if (GetDlgItem(hDlg, stDisableConImeFast1) == (HWND)lParam)
 	{
@@ -487,7 +508,7 @@ static INT_PTR Fast_OnCtlColorStatic(HWND hDlg, UINT messg, WPARAM wParam, LPARA
 	return 0;
 }
 
-static INT_PTR Fast_OnSetCursor(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+static INT_PTR OnSetCursor(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	if (((HWND)wParam) == GetDlgItem(hDlg, stHomePage))
 	{
@@ -499,7 +520,7 @@ static INT_PTR Fast_OnSetCursor(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPa
 	return FALSE;
 }
 
-static INT_PTR Fast_OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+static INT_PTR OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
 	{
@@ -683,13 +704,13 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 		break;
 
 	case WM_INITDIALOG:
-		return Fast_OnInitDialog(hDlg, messg, wParam, lParam);
+		return OnInitDialog(hDlg, messg, wParam, lParam);
 
 	case WM_CTLCOLORSTATIC:
-		return Fast_OnCtlColorStatic(hDlg, messg, wParam, lParam);
+		return OnCtlColorStatic(hDlg, messg, wParam, lParam);
 
 	case WM_SETCURSOR:
-		return Fast_OnSetCursor(hDlg, messg, wParam, lParam);
+		return OnSetCursor(hDlg, messg, wParam, lParam);
 
 	case HELP_WM_HELP:
 		break;
@@ -706,7 +727,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 		switch (HIWORD(wParam))
 		{
 		case BN_CLICKED:
-			return Fast_OnButtonClicked(hDlg, messg, wParam, lParam);
+			return OnButtonClicked(hDlg, messg, wParam, lParam);
 		case CBN_SELCHANGE:
 			switch (LOWORD(wParam))
 			{
@@ -2603,6 +2624,8 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	// Choose default startup command
 	if (slfFlags & (slf_DefaultSettings|slf_DefaultTasks))
 	{
-		Fast_FindStartupTask(slfFlags);
+		FindStartupTask(slfFlags);
 	}
 }
+
+}; // namespace FastConfig
