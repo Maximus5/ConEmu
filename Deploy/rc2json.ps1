@@ -33,7 +33,7 @@ $md_img_path = "/img/"
 $linedelta = 7
 
 $script:ignore_ctrls = @(
-  "tAppDistinctHolder", "tDefTermWikiLink",
+  "tAppDistinctHolder", "tDefTermWikiLink", "stPalettePreviewFast",
   "stConEmuUrl", "tvSetupCategories", "stSetCommands2", "stHomePage", "stDisableConImeFast3", "stDisableConImeFast2",
   "lbActivityLog", "lbConEmuHotKeys", "IDI_ICON1", "IDI_ICON2", "IDI_ICON3", "stConEmuAbout", "IDD_RESTART"
 )
@@ -566,7 +566,8 @@ function InitDialogList()
   $script:dialogs += @{ id = "IDD_HOTKEY";          name = "Choose hotkey"; file = $null; }
   $script:dialogs += @{ id = "IDD_AFFINITY";        name = "Set active console processes affinity and priority"; file = $null; }
 
-  $script:dialogs += @{ id = "IDD_SPG_FONTS";       name = "Main"; file = "Settings-Main"; }
+  $script:dialogs += @{ id = "IDD_SPG_GENERAL";     name = "General"; file = "Settings-Fast"; }
+  $script:dialogs += @{ id = "IDD_SPG_FONTS";       name = " Fonts"; file = "Settings-Main"; }
   $script:dialogs += @{ id = "IDD_SPG_SIZEPOS";     name = " Size & Pos"; file = "Settings-SizePos"; }
   $script:dialogs += @{ id = "IDD_SPG_APPEAR";      name = " Appearance"; file = "Settings-Appearance"; }
   $script:dialogs += @{ id = "IDD_SPG_QUAKE";       name = " Quake style"; file = "Settings-Quake"; } # NEW
