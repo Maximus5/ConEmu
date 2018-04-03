@@ -54,6 +54,8 @@ public:
 	static LPCWSTR getControl(LONG id, CEStr& lsText, LPCWSTR asDefault = NULL);
 	static bool getHint(UINT id, LPWSTR lpBuffer, size_t nBufferMax);
 	static LPCWSTR getRsrc(UINT id, CEStr* lpText = NULL);
+	static LPCWSTR getLanguage();
+	static bool getLanguages(MArray<const wchar_t*>& languages);
 
 protected:
 	// Definitions
@@ -65,9 +67,18 @@ protected:
 		wchar_t* Str;
 	};
 
+	struct LngDefinition
+	{
+		wchar_t* id;
+		wchar_t* name;
+		wchar_t* descr;
+	};
+
 protected:
 	// Routines
 	void Clean(MArray<LngRcItem>& arr);
+	void Clear(MArray<LngDefinition>& arr);
+	bool LoadLanguages(MJsonValue* pJson);
 	bool LoadResources(LPCWSTR asLanguage, LPCWSTR asFile);
 	bool LoadSection(MJsonValue* pJson, MArray<LngRcItem>& arr, int idDiff);
 	bool SetResource(MArray<LngRcItem>& arr, int idx, LPCWSTR asValue, bool bLocalized);
@@ -82,6 +93,8 @@ protected:
 	CEStr ms_l10n; // Full path to localization file (ConEmu.l10n)
 
 	//MSectionSimple* mp_Lock;
+
+	MArray<LngDefinition> m_Languages;
 
 	// Strings
 	MArray<LngRcItem> m_CmnHints; // ID_GO ... _APS_NEXT_CONTROL_VALUE
