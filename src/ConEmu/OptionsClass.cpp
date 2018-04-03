@@ -1874,7 +1874,6 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 {
 	bool lbWasPos = false;
 	RECT rcWnd = {};
-	int nSel = -1;
 
 	wchar_t* pszMsg = NULL;
 	LPCWSTR pszWarning = L"\n\nWarning!!!\nAll your current settings will be lost!";
@@ -1902,7 +1901,6 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 	if (ghOpWnd && IsWindow(ghOpWnd))
 	{
 		lbWasPos = true;
-		nSel = TabCtrl_GetCurSel(GetDlgItem(ghOpWnd, tabMain));
 		GetWindowRect(ghOpWnd, &rcWnd);
 		DestroyWindow(ghOpWnd);
 	}
@@ -1936,7 +1934,8 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 	if (lbWasPos && !ghOpWnd)
 	{
 		Dialog();
-		TabCtrl_SetCurSel(GetDlgItem(ghOpWnd, tabMain), nSel);
+		if (ghOpWnd)
+			SetWindowPos(ghOpWnd, NULL, rcWnd.left, rcWnd.top, 0, 0, SWP_NOSIZE|SWP_NOZORDER);
 	}
 
 	SetCursor(LoadCursor(NULL,IDC_ARROW));
@@ -2241,11 +2240,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 			}
 			else switch (phdr->idFrom)
 			{
-			#if 0
-			case tabMain:
-			#else
 			case tvSetupCategories:
-			#endif
 				gpSetCls->OnPage(phdr);
 				break;
 			}

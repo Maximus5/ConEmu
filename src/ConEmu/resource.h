@@ -623,7 +623,6 @@
 #define tWndX                           2295
 #define tWndY                           2296
 #define cbPosFixed                      2297
-#define tabMain                         2298
 #define lbExtendFontItalicIdx           2300
 #define lbExtendFontNormalIdx           2301
 #define rCascade                        2302
