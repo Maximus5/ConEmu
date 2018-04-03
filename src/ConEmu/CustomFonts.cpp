@@ -1,7 +1,7 @@
 ﻿
 /*
 Copyright (c) 2012 thecybershadow
-Copyright (c) 2012-2017 Maximus5
+Copyright (c) 2012-present Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
