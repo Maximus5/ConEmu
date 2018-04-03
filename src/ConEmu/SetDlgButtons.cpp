@@ -4072,7 +4072,9 @@ void CSetDlgButtons::OnBtn_UpdateTypeRadio(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==rbUpdateStableOnly || CB==rbUpdatePreview || CB==rbUpdateLatestAvailable);
 
-	gpSet->UpdSet.isUpdateUseBuilds = isOptChecked(rbUpdateStableOnly, CB, uCheck) ? 1 : isOptChecked(rbUpdateLatestAvailable, CB, uCheck) ? 2 : 3;
+	gpSet->UpdSet.isUpdateUseBuilds = isOptChecked(rbUpdateStableOnly, CB, uCheck) ? ConEmuUpdateSettings::Builds::Stable
+		: isOptChecked(rbUpdateLatestAvailable, CB, uCheck) ? ConEmuUpdateSettings::Builds::Alpha
+		: ConEmuUpdateSettings::Builds::Preview;
 
 } // rbUpdateStableOnly || rbUpdatePreview || rbUpdateLatestAvailable
 

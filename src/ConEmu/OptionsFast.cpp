@@ -438,11 +438,12 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 	}
 	else
 	{
-		if (gpSet->UpdSet.isUpdateUseBuilds != 0)
+		if (gpSet->UpdSet.isUpdateUseBuilds != ConEmuUpdateSettings::Builds::Undefined)
 			CheckDlgButton(hDlg, cbEnableAutoUpdateFast, gpSet->UpdSet.isUpdateCheckOnStartup|gpSet->UpdSet.isUpdateCheckHourly);
 		CheckRadioButton(hDlg, rbAutoUpdateStableFast, rbAutoUpdateDeveloperFast,
-			(gpSet->UpdSet.isUpdateUseBuilds == 1) ? rbAutoUpdateStableFast :
-			(gpSet->UpdSet.isUpdateUseBuilds == 3) ? rbAutoUpdatePreviewFast : rbAutoUpdateDeveloperFast);
+			(gpSet->UpdSet.isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? rbAutoUpdateStableFast
+			: (gpSet->UpdSet.isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? rbAutoUpdatePreviewFast
+			: rbAutoUpdateDeveloperFast);
 	}
 
 	// Vista - ConIme bugs
@@ -612,7 +613,9 @@ static INT_PTR OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 				gpSet->UpdSet.isUpdateCheckHourly = false;
 				gpSet->UpdSet.isUpdateConfirmDownload = true; // true-Show MessageBox, false-notify via TSA only
 			}
-			gpSet->UpdSet.isUpdateUseBuilds = IsDlgButtonChecked(hDlg, rbAutoUpdateStableFast) ? 1 : IsDlgButtonChecked(hDlg, rbAutoUpdateDeveloperFast) ? 2 : 3;
+			gpSet->UpdSet.isUpdateUseBuilds = IsDlgButtonChecked(hDlg, rbAutoUpdateStableFast) ? ConEmuUpdateSettings::Builds::Stable
+				: IsDlgButtonChecked(hDlg, rbAutoUpdateDeveloperFast) ? ConEmuUpdateSettings::Builds::Alpha
+				: ConEmuUpdateSettings::Builds::Preview;
 
 
 			/* Save settings */
@@ -781,7 +784,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 
 		bCheckHooks = (gpSet->m_isKeyboardHooks == 0);
 
-		bCheckUpdate = (gpSet->UpdSet.isUpdateUseBuilds == 0);
+		bCheckUpdate = (gpSet->UpdSet.isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Undefined);
 
 		bCheckIme = false;
 		if (gOSVer.dwMajorVersion == 6 && gOSVer.dwMinorVersion == 0)

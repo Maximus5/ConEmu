@@ -119,7 +119,9 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	isUpdateCheckOnStartup = false;
 	isUpdateCheckHourly = false;
 	isUpdateConfirmDownload = true; // true-Show MsgBox, false-notify via TSA only
-	isUpdateUseBuilds = 0; // 0-спросить пользователя при первом запуске, 1-stable only, 2-latest, 3-preview
+	isUpdateUseBuilds = (ConEmuVersionStage == CEVS_ALPHA) ? Builds::Alpha
+		: (ConEmuVersionStage == CEVS_PREVIEW) ? Builds::Preview
+		: Builds::Undefined;
 	isUpdateInetTool = false;
 	szUpdateInetTool = NULL;
 	isUpdateUseProxy = false;
@@ -250,7 +252,7 @@ void ConEmuUpdateSettings::LoadFrom(ConEmuUpdateSettings* apFrom)
 	isUpdateCheckOnStartup = apFrom->isUpdateCheckOnStartup;
 	isUpdateCheckHourly = apFrom->isUpdateCheckHourly;
 	isUpdateConfirmDownload = apFrom->isUpdateConfirmDownload;
-	isUpdateUseBuilds = (apFrom->isUpdateUseBuilds >= 1 && apFrom->isUpdateUseBuilds <= 3) ? apFrom->isUpdateUseBuilds : 2; // 1-stable only, 2-latest, 3-preivew
+	isUpdateUseBuilds = (apFrom->isUpdateUseBuilds >= Builds::Stable && apFrom->isUpdateUseBuilds <= Builds::Preview) ? apFrom->isUpdateUseBuilds : Builds::Alpha;
 	isUpdateInetTool = apFrom->isUpdateInetTool;
 	szUpdateInetTool = lstrdup(apFrom->szUpdateInetTool);
 	isUpdateUseProxy = apFrom->isUpdateUseProxy;
@@ -279,7 +281,7 @@ bool ConEmuUpdateSettings::UpdatesAllowed(wchar_t (&szReason)[128])
 		return false; // Не указано расположение обновления
 	}
 
-	if (isUpdateUseBuilds != 1 && isUpdateUseBuilds != 2 && isUpdateUseBuilds != 3)
+	if (isUpdateUseBuilds != Builds::Stable && isUpdateUseBuilds != Builds::Preview && isUpdateUseBuilds != Builds::Alpha)
 	{
 		wcscpy_c(szReason, L"Update.UseBuilds is not specified");
 		return false; // Не указано, какие сборки можно загружать

@@ -996,8 +996,8 @@ bool CConEmuUpdate::LoadVersionInfoFromServer()
 
 	// What version user prefers?
 	_wcscpy_c(szSection, countof(szSection),
-		(mp_Set->isUpdateUseBuilds==1) ? sectionConEmuStable :
-		(mp_Set->isUpdateUseBuilds==3) ? sectionConEmuPreview
+		(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? sectionConEmuStable
+		: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? sectionConEmuPreview
 		: sectionConEmuDevel);
 	_wcscpy_c(szItem, countof(szItem), (mp_Set->UpdateDownloadSetup()==1) ? L"location_exe" : L"location_arc");
 
@@ -1858,7 +1858,9 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 				pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
 
 				swprintf_c(pszMsg, cchMax/*#SECURELEN*/, L"New %s version available: %s\nClick here to download",
-					(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL,
+					(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? CV_STABLE
+					: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? CV_PREVIEW
+					: CV_DEVEL,
 					ms_NewVersion);
 				Icon.ShowTrayIcon(pszMsg, tsa_Source_Updater);
 
@@ -1942,7 +1944,9 @@ int CConEmuUpdate::QueryConfirmationDownload()
 		tsk.pszMainIcon = MAKEINTRESOURCE(IDI_ICON1);
 
 	swprintf_c(szNewVer, L"New %s version available: %s",
-		(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL, ms_NewVersion);
+		(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? CV_STABLE
+		: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? CV_PREVIEW
+		: CV_DEVEL, ms_NewVersion);
 	tsk.pszMainInstruction = szNewVer;
 
 	swprintf_c(szWWW, L"<a href=\"%s\">%s</a>", gsWhatsNew, szWhatsNewLabel);
@@ -1979,7 +1983,9 @@ MsgOnly:
 	pszMsg = (wchar_t*)malloc(cchMax*sizeof(*pszMsg));
 
 	swprintf_c(pszMsg, cchMax/*#SECURELEN*/, L"New %s version available: %s\n\nVersions on server\n%s\n\n%s\n%s\n\nDownload?",
-		(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL,
+		(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? CV_STABLE
+		: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? CV_PREVIEW
+		: CV_DEVEL,
 		ms_NewVersion,
 		ms_VerOnServer,
 		pszServerPath,
@@ -2028,8 +2034,8 @@ int CConEmuUpdate::QueryConfirmationUpdate()
 	tsk.pszFooter = szWWW;
 
 	swprintf_c(szMsg, L"Close and update\nto %s version %s%s",
-		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new " CV_STABLE
-		: (mp_Set->isUpdateUseBuilds==3) ? L"new " CV_PREVIEW : L"new " CV_DEVEL, ms_NewVersion,
+		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? L"new " CV_STABLE
+		: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? L"new " CV_PREVIEW : L"new " CV_DEVEL, ms_NewVersion,
 		(mp_Set->UpdateDownloadSetup() == 1) ? (mp_Set->isSetup64 ? L".x64" : L".x86") : L" (7-Zip)");
 	btns[0].nButtonID  = IDYES;    btns[0].pszButtonText = szMsg;
 	btns[1].nButtonID  = IDNO; btns[1].pszButtonText = L"Postpone\nupdate will be started when you close ConEmu window";
@@ -2052,8 +2058,8 @@ MsgOnly:
 		L"Do you want to close ConEmu and\n"
 		L"update to %s version %s?\n\n"
 		L"Press <No> to postpone.",
-		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds==1) ? L"new " CV_STABLE
-		: (mp_Set->isUpdateUseBuilds==3) ? L"new " CV_PREVIEW : L"new " CV_DEVEL, ms_NewVersion);
+		mb_DroppedMode ? L"dropped" : (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? L"new " CV_STABLE
+		: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? L"new " CV_PREVIEW : L"new " CV_DEVEL, ms_NewVersion);
 
 	iBtn = MsgBox(szMsg, MB_SETFOREGROUND|MB_SYSTEMMODAL|MB_ICONQUESTION|MB_YESNOCANCEL, ms_DefaultTitle, NULL, false);
 
@@ -2081,7 +2087,8 @@ int CConEmuUpdate::QueryConfirmationNoNewVer()
 	wchar_t* pszBtn2 = NULL;
 
 	swprintf_c(szCurVer, L"No newer %s version is available",
-		(mp_Set->isUpdateUseBuilds==1) ? CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? CV_PREVIEW : CV_DEVEL);
+		(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? CV_STABLE
+		: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? CV_PREVIEW : CV_DEVEL);
 
 	if (gOSVer.dwMajorVersion < 6)
 		goto MsgOnly;
@@ -2178,7 +2185,8 @@ wchar_t* CConEmuUpdate::GetCurVerInfo()
 	if (lstrcmpi(ms_NewVersion, ms_OurVersion) > 0)
 	{
 		pszVerInfo = lstrmerge(L"Obsolete, recommended update to ", ms_NewVersion,
-			(mp_Set->isUpdateUseBuilds==1) ? L" " CV_STABLE : (mp_Set->isUpdateUseBuilds==3) ? L" " CV_PREVIEW : L" " CV_DEVEL);
+			(mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Stable) ? L" " CV_STABLE
+			: (mp_Set->isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Preview) ? L" " CV_PREVIEW : L" " CV_DEVEL);
 	}
 	else if (ms_CurVerInfo[0])
 		pszVerInfo = lstrdup(ms_CurVerInfo);

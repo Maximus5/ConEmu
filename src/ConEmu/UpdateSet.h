@@ -41,7 +41,14 @@ public:
 	bool isUpdateCheckOnStartup;
 	bool isUpdateCheckHourly;
 	bool isUpdateConfirmDownload; // true-Show MessageBox, false-notify via TSA only
-	BYTE isUpdateUseBuilds; // 0-спросить пользователя при первом запуске, 1-stable only, 2-latest, 3-preview
+	enum class Builds : BYTE
+	{
+		Undefined = 0,
+		Stable    = 1,
+		Alpha     = 2,
+		Preview   = 3, // Previously there were only two type of releases Stable/Alpha
+	};
+	Builds isUpdateUseBuilds;
 	BYTE isUpdateDownloadSetup; // 0-Auto, 1-Installer (ConEmuSetup.exe), 2-7z archive (ConEmu.7z), WinRar or 7z required
 	BYTE isSetupDetected; // 0-пока не проверялся, 1-установлено через Installer, пути совпали, 2-Installer не запускался
 	bool isSetup64; // нужно запомнить, какой именно setup был установлен

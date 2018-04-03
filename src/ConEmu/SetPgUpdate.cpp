@@ -52,7 +52,9 @@ LRESULT CSetPgUpdate::OnInitDialog(HWND hDlg, bool abInitial)
 	checkDlgButton(hDlg, cbUpdateCheckHourly, p->isUpdateCheckHourly);
 	checkDlgButton(hDlg, cbUpdateConfirmDownload, !p->isUpdateConfirmDownload);
 	checkRadioButton(hDlg, rbUpdateStableOnly, rbUpdateLatestAvailable,
-		(p->isUpdateUseBuilds==1) ? rbUpdateStableOnly : (p->isUpdateUseBuilds==3) ? rbUpdatePreview : rbUpdateLatestAvailable);
+		(p->isUpdateUseBuilds==ConEmuUpdateSettings::Builds::Stable) ? rbUpdateStableOnly
+		: (p->isUpdateUseBuilds==ConEmuUpdateSettings::Builds::Preview) ? rbUpdatePreview
+		: rbUpdateLatestAvailable);
 
 	checkDlgButton(hDlg, cbUpdateInetTool, p->isUpdateInetTool);
 	SetDlgItemText(hDlg, tUpdateInetTool, p->GetUpdateInetToolCmd());

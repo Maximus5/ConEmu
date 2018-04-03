@@ -933,7 +933,7 @@ bool Settings::SaveVanilla(SettingsBase* reg)
 		reg->Save(L"Update.CheckOnStartup", gpSet->UpdSet.isUpdateCheckOnStartup);
 		reg->Save(L"Update.CheckHourly", gpSet->UpdSet.isUpdateCheckHourly);
 		reg->Save(L"Update.ConfirmDownload", gpSet->UpdSet.isUpdateConfirmDownload);
-		reg->Save(L"Update.UseBuilds", gpSet->UpdSet.isUpdateUseBuilds);
+		reg->Save(L"Update.UseBuilds", (BYTE)gpSet->UpdSet.isUpdateUseBuilds);
 
 		/* Font related */
 		reg->Save(L"FontUseDpi", FontUseDpi);
@@ -2986,7 +2986,9 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"Update.CheckOnStartup", UpdSet.isUpdateCheckOnStartup);
 		reg->Load(L"Update.CheckHourly", UpdSet.isUpdateCheckHourly);
 		reg->Load(L"Update.ConfirmDownload", UpdSet.isUpdateConfirmDownload);
-		reg->Load(L"Update.UseBuilds", UpdSet.isUpdateUseBuilds); if (UpdSet.isUpdateUseBuilds>3) UpdSet.isUpdateUseBuilds = 3; // 1-stable only, 2-latest, 3-preview
+		reg->Load(L"Update.UseBuilds", (BYTE&)UpdSet.isUpdateUseBuilds);
+		if (UpdSet.isUpdateUseBuilds < ConEmuUpdateSettings::Builds::Stable || UpdSet.isUpdateUseBuilds > ConEmuUpdateSettings::Builds::Preview)
+			UpdSet.isUpdateUseBuilds = ConEmuUpdateSettings::Builds::Alpha;
 		reg->Load(L"Update.InetTool", UpdSet.isUpdateInetTool);
 		reg->Load(L"Update.InetToolCmd", &UpdSet.szUpdateInetTool);
 		reg->Load(L"Update.UseProxy", UpdSet.isUpdateUseProxy);
@@ -3830,7 +3832,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"Update.CheckOnStartup", UpdSet.isUpdateCheckOnStartup);
 		reg->Save(L"Update.CheckHourly", UpdSet.isUpdateCheckHourly);
 		reg->Save(L"Update.ConfirmDownload", UpdSet.isUpdateConfirmDownload);
-		reg->Save(L"Update.UseBuilds", UpdSet.isUpdateUseBuilds);
+		reg->Save(L"Update.UseBuilds", (BYTE)UpdSet.isUpdateUseBuilds);
 		reg->Save(L"Update.InetTool", UpdSet.isUpdateInetTool);
 		reg->Save(L"Update.InetToolCmd", UpdSet.szUpdateInetTool);
 		reg->Save(L"Update.UseProxy", UpdSet.isUpdateUseProxy);
