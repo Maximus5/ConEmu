@@ -104,6 +104,37 @@ BEGIN
     CONTROL         "&Leave opened",IDC_ATTACH_LEAVE_OPEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,67,177,80,8
 END
 
+IDD_SPG_GENERAL DIALOGEX 0, 0, 381, 242
+STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
+EXSTYLE WS_EX_CONTROLPARENT
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    GROUPBOX        "General settings",gbSettingsGeneral,3,1,376,239
+    LTEXT           "Choose your startup task or even a shell with arguments:",stStartupShellFast,11,16,364,8
+    COMBOBOX        lbStartupShellFast,11,27,324,156,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      ">>>",cbStartupShellFast,340,26,32,14
+    LTEXT           "Interface language:",stInterfaceLanguage,11,50,116,8
+    COMBOBOX        lbInterfaceLanguage,11,61,109,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Choose color scheme:",stColorSchemeFast,133,50,120,8
+    COMBOBOX        lbColorSchemeFast,133,61,121,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Minimize/Restore hotkey:",stQuakeKeyFast,11,89,109,8
+    EDITTEXT        tQuakeKeyFast,133,87,101,12,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "...",cbQuakeKeyFast,240,87,16,13
+    CONTROL         "Single instance mode (use existing window instead of running new instance)",cbSingleInstance,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,112,360,8
+    CONTROL         "Quake-style slide down from the top of the screen",cbQuakeFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,130,360,10
+    CONTROL         "Support special hotkeys (Win+Number, Win+Tab, PrntScrn and so on)",cbUseKeyboardHooksFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,150,360,10
+    CONTROL         "Inject ConEmuHk.dll into all processes started in ConEmu tabs",cbInjectConEmuHkFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,170,360,10
+    CONTROL         "Enable automatic updates",cbEnableAutoUpdateFast,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,190,360,10
+    CONTROL         "‘Stable’",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,23,205,62,10
+    CONTROL         "‘Preview’",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,89,205,69,10
+    CONTROL         "‘Alpha’ builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,164,205,141,10
+    CTEXT           "colors\npreview",stPalettePreviewFast,261,51,112,24,WS_BORDER
+END
+
 IDD_SPG_FONTS DIALOGEX 0, 0, 381, 242
 STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
@@ -1179,8 +1210,8 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Intercept keys",gbCtrlIntercept,4,1,375,53
-    CONTROL         "Install keyboard hooks",cbInstallKeybHooks,"Button",BS_AUTO3STATE | WS_TABSTOP,10,12,180,8
+    GROUPBOX        "Hotkeys processing",gbCtrlIntercept,4,1,375,53
+    CONTROL         "Support special hotkeys",cbInstallKeybHooks,"Button",BS_AUTO3STATE | WS_TABSTOP,10,12,180,8
     CONTROL         "Win+Tab - switch consoles (Tabs)",cbUseWinTab,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,192,12,180,8
     CONTROL         "Win+Numbers - activate console",cbUseWinNumber,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,25,180,8
     CONTROL         "Win+Arrows - resize window",cbUseWinArrows,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,192,25,180,8
@@ -1281,24 +1312,24 @@ BEGIN
     COMBOBOX        lbStartupShellFast,11,49,302,156,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Choose preferred color scheme:",stColorSchemeFast,11,67,190,8
     COMBOBOX        lbColorSchemeFast,11,78,187,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "You can change following on 'Appearance' page of Settings dialog later",stSingleInstance,11,98,302,8
+    LTEXT           "You can change following on 'Appearance' page of Settings dialog",stSingleInstance,11,98,302,8
     CONTROL         "Single instance mode (use existing window instead of running new instance)",cbSingleInstance,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,109,295,8
     CONTROL         "Quake-style slide down from the top of the screen",cbQuakeFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,122,207,10
     EDITTEXT        tQuakeKeyFast,222,121,72,12,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "...",cbQuakeKeyFast,298,121,16,13
-    LTEXT           "You can change following on 'Controls' page of Settings dialog later",stUseKeyboardHooksFast,11,139,302,8
+    LTEXT           "You can change following on 'Keyboard' page of Settings dialog",stUseKeyboardHooksFast,11,139,302,8
     CONTROL         "Install keyboard hooks (required for Win+Number, Win+Tab, PrntScrn and so on)",cbUseKeyboardHooksFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,148,295,10
-    LTEXT           "You can change following on 'Features' page of Settings dialog later",stInjectConEmuHkFast,11,165,302,8
+    LTEXT           "You can change following on 'Features' page of Settings dialog",stInjectConEmuHkFast,11,165,302,8
     CONTROL         "Inject ConEmuHk.dll into all processes started in ConEmu tabs",cbInjectConEmuHkFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,176,295,10
-    LTEXT           "You can change following on 'Update' page of Settings dialog later",stEnableAutoUpdateFast,11,192,302,8
+    LTEXT           "You can change following on 'Update' page of Settings dialog",stEnableAutoUpdateFast,11,192,302,8
     CONTROL         "Enable automatic updates",cbEnableAutoUpdateFast,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,203,109,10
     CONTROL         "‘Stable’",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,128,203,46,10
     CONTROL         "‘Preview’",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,178,203,50,10
-    CONTROL         "‘Developer’ builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,232,203,71,10
+    CONTROL         "‘Alpha’ builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,232,203,71,10
     GROUPBOX        "",gbDisableConImeFast,3,222,317,61
     CONTROL         " Disable ConIme.exe autorun (Vista only)",cbDisableConImeFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,230,295,10

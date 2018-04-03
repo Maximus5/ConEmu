@@ -244,6 +244,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbAlwaysShowTrayIcon:
 			OnBtn_AlwaysShowTrayIcon(hDlg, CB, uCheck);
 			break;
+		case cbQuakeFast:
 		case cbQuakeStyle:
 		case cbQuakeAutoHide:
 			OnBtn_QuakeStyles(hDlg, CB, uCheck);
@@ -422,6 +423,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		//	isLockRealConsolePos = isChecked(hDlg, cbLockRealConsolePos);
 		//	break;
 		case cbUseInjects:
+		case cbInjectConEmuHkFast:
 			OnBtn_UseInjects(hDlg, CB, uCheck);
 			break;
 		case cbProcessAnsi:
@@ -548,6 +550,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			break;
 
 		case cbInstallKeybHooks:
+		case cbUseKeyboardHooksFast:
 			OnBtn_InstallKeybHooks(hDlg, CB, uCheck);
 			break;
 
@@ -736,6 +739,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 
 
 		/* *** Update settings *** */
+		case cbEnableAutoUpdateFast:
+			OnBtn_UpdateCheckFast(hDlg, CB, uCheck);
+			break;
 		case cbUpdateCheckOnStartup:
 			OnBtn_UpdateCheckOnStartup(hDlg, CB, uCheck);
 			break;
@@ -748,6 +754,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case rbUpdateStableOnly:
 		case rbUpdatePreview:
 		case rbUpdateLatestAvailable:
+		case rbAutoUpdateStableFast:
+		case rbAutoUpdatePreviewFast:
+		case rbAutoUpdateDeveloperFast:
 			OnBtn_UpdateTypeRadio(hDlg, CB, uCheck);
 			break;
 		case cbUpdateInetTool:
@@ -889,6 +898,14 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 			}
 			break;
 
+		/* Settings/Main */
+		case cbStartupShellFast:
+			gpSetCls->ActivatePage(thi_Startup);
+			break;
+		case cbQuakeKeyFast:
+			OnBtn_MinMaxKey(hDlg, CB, uCheck);
+			break;
+
 		default:
 			if (CDlgItemHelper::isHyperlinkCtrl(CB))
 			{
@@ -901,6 +918,24 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 
 	return bProcessed;
 }
+
+// cbQuakeKeyFast
+void CSetDlgButtons::OnBtn_MinMaxKey(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbQuakeKeyFast);
+
+	const ConEmuHotKey* pHK = NULL;
+	if (gpSet->GetHotkeyById(vkMinimizeRestore, &pHK) && pHK)
+	{
+		DWORD VkMod = pHK->GetVkMod();
+		if (CHotKeyDialog::EditHotKey(ghOpWnd, VkMod))
+		{
+			gpSet->SetHotkeyById(vkMinimizeRestore, VkMod);
+			wchar_t szKey[128] = L"";
+			SetDlgItemText(hDlg, tQuakeKeyFast, ConEmuHotKey::GetHotkeyName(VkMod, szKey));
+		}
+	}
+} // cbQuakeKeyFast
 
 // rCursorH ... cbInactiveCursorIgnoreSize
 void CSetDlgButtons::OnButtonClicked_Cursor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
@@ -2298,9 +2333,9 @@ void CSetDlgButtons::OnBtn_AlwaysShowTrayIcon(HWND hDlg, WORD CB, BYTE uCheck)
 // cbQuakeAutoHide || cbQuakeStyle
 void CSetDlgButtons::OnBtn_QuakeStyles(HWND hDlg, WORD CB, BYTE uCheck)
 {
-	_ASSERTE(CB==cbQuakeAutoHide || CB==cbQuakeStyle);
+	_ASSERTE(CB==cbQuakeAutoHide || CB==cbQuakeStyle || CB==cbQuakeFast);
 
-	bool bQuake = (CB == cbQuakeStyle) ? (uCheck != 0) : (gpSet->isQuakeStyle != 0);
+	bool bQuake = (CB == cbQuakeStyle || CB == cbQuakeFast) ? (uCheck != 0) : (gpSet->isQuakeStyle != 0);
 	bool bAuto = (CB == cbQuakeAutoHide) ? (uCheck != 0) : (gpSet->isQuakeStyle == 2);
 	BYTE NewQuakeMode = bQuake ? bAuto ? 2 : 1 : 0;
 
@@ -2915,7 +2950,7 @@ void CSetDlgButtons::OnBtn_RConVisible(HWND hDlg, WORD CB, BYTE uCheck)
 // cbUseInjects
 void CSetDlgButtons::OnBtn_UseInjects(HWND hDlg, WORD CB, BYTE uCheck)
 {
-	_ASSERTE(CB==cbUseInjects);
+	_ASSERTE(CB==cbUseInjects || CB == cbInjectConEmuHkFast);
 
 	gpSet->isUseInjects = _bool(uCheck);
 	gpConEmu->OnGlobalSettingsChanged();
@@ -3436,7 +3471,7 @@ void CSetDlgButtons::OnBtn_SendConsoleSpecials(HWND hDlg, WORD CB, BYTE uCheck)
 // cbInstallKeybHooks
 void CSetDlgButtons::OnBtn_InstallKeybHooks(HWND hDlg, WORD CB, BYTE uCheck)
 {
-	_ASSERTE(CB==cbInstallKeybHooks);
+	_ASSERTE(CB==cbInstallKeybHooks || CB == cbUseKeyboardHooksFast);
 
 	switch (uCheck)
 	{
@@ -4037,6 +4072,18 @@ void CSetDlgButtons::OnBtn_HighlightMouseCol(HWND hDlg, WORD CB, BYTE uCheck)
 
 /* *** Update settings *** */
 
+// cbEnableAutoUpdateFast
+void CSetDlgButtons::OnBtn_UpdateCheckFast(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbEnableAutoUpdateFast);
+
+	gpSet->UpdSet.isUpdateCheckOnStartup = gpSet->UpdSet.isUpdateCheckHourly = _bool(uCheck);
+	if (gpSet->UpdSet.isUpdateUseBuilds == ConEmuUpdateSettings::Builds::Undefined)
+		gpSet->UpdSet.isUpdateUseBuilds = ConEmuUpdateSettings::GetDefaultUpdateChannel();
+
+} // cbEnableAutoUpdateFast
+
+
 // cbUpdateCheckOnStartup
 void CSetDlgButtons::OnBtn_UpdateCheckOnStartup(HWND hDlg, WORD CB, BYTE uCheck)
 {
@@ -4070,11 +4117,16 @@ void CSetDlgButtons::OnBtn_UpdateConfirmDownload(HWND hDlg, WORD CB, BYTE uCheck
 // rbUpdateStableOnly || rbUpdatePreview || rbUpdateLatestAvailable
 void CSetDlgButtons::OnBtn_UpdateTypeRadio(HWND hDlg, WORD CB, BYTE uCheck)
 {
-	_ASSERTE(CB==rbUpdateStableOnly || CB==rbUpdatePreview || CB==rbUpdateLatestAvailable);
-
-	gpSet->UpdSet.isUpdateUseBuilds = isOptChecked(rbUpdateStableOnly, CB, uCheck) ? ConEmuUpdateSettings::Builds::Stable
-		: isOptChecked(rbUpdateLatestAvailable, CB, uCheck) ? ConEmuUpdateSettings::Builds::Alpha
-		: ConEmuUpdateSettings::Builds::Preview;
+	if (CB == rbUpdateStableOnly || CB == rbUpdatePreview || CB == rbUpdateLatestAvailable)
+		gpSet->UpdSet.isUpdateUseBuilds = isOptChecked(rbUpdateStableOnly, CB, uCheck) ? ConEmuUpdateSettings::Builds::Stable
+			: isOptChecked(rbUpdateLatestAvailable, CB, uCheck) ? ConEmuUpdateSettings::Builds::Alpha
+			: ConEmuUpdateSettings::Builds::Preview;
+	else if (CB == rbAutoUpdateStableFast || CB == rbAutoUpdatePreviewFast || CB == rbAutoUpdateDeveloperFast)
+		gpSet->UpdSet.isUpdateUseBuilds = isOptChecked(rbAutoUpdateStableFast, CB, uCheck) ? ConEmuUpdateSettings::Builds::Stable
+			: isOptChecked(rbAutoUpdateDeveloperFast, CB, uCheck) ? ConEmuUpdateSettings::Builds::Alpha
+			: ConEmuUpdateSettings::Builds::Preview;
+	else
+		_ASSERTE(FALSE && "Unsupported Radio Options");
 
 } // rbUpdateStableOnly || rbUpdatePreview || rbUpdateLatestAvailable
 

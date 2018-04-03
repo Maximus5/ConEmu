@@ -744,6 +744,9 @@
     <ClInclude Include="common\xmllite.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\SetPgGeneral.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConEmu\AboutDlg.cpp">
@@ -1126,6 +1129,9 @@
     </ClCompile>
     <ClCompile Include="ConEmu\WinObjBase.cpp">
       <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgGeneral.cpp">
+      <Filter>Settings</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

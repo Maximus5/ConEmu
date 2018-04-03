@@ -116,6 +116,7 @@ enum LngResources
 	lng_DlgRestartConsole         = 84,
 	lng_DlgCreateNewConsole       = 85,
 	lng_HkGlblGnrlMsg             = 86,
+	lng_SpgGeneral                   = 87,
 	// last auto-gen identifier
 	lng_NextId
 };

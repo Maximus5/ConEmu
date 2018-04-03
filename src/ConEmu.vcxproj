@@ -389,6 +389,7 @@
     <ClInclude Include="ConEmu\SetPgIntegr.h" />
     <ClInclude Include="ConEmu\SetPgKeyboard.h" />
     <ClInclude Include="ConEmu\SetPgKeys.h" />
+    <ClInclude Include="ConEmu\SetPgGeneral.h" />
     <ClInclude Include="ConEmu\SetPgMarkCopy.h" />
     <ClInclude Include="ConEmu\SetPgMouse.h" />
     <ClInclude Include="ConEmu\SetPgPaste.h" />
@@ -620,6 +621,7 @@
     <ClCompile Include="ConEmu\SetPgIntegr.cpp" />
     <ClCompile Include="ConEmu\SetPgKeyboard.cpp" />
     <ClCompile Include="ConEmu\SetPgKeys.cpp" />
+    <ClCompile Include="ConEmu\SetPgGeneral.cpp" />
     <ClCompile Include="ConEmu\SetPgMarkCopy.cpp" />
     <ClCompile Include="ConEmu\SetPgMouse.cpp" />
     <ClCompile Include="ConEmu\SetPgPaste.cpp" />

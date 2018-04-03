@@ -40,7 +40,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //HWND hMain, hExt, hFar, hKeys, hTabs, hColors, hCmdTasks, hViews, hInfo, hDebug, hUpdate, hSelection;
 enum TabHwndIndex
 {
-	thi_Fonts = 0,    // "Main"
+	thi_General = 0,  // "General"
+	thi_Fonts,        //   "Fonts"
 	thi_SizePos,      //   "Size & Pos"
 	thi_Appear,       //   "Appearance"
 	thi_Quake,        //   "Quake style"

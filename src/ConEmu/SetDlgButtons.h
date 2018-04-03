@@ -243,6 +243,7 @@ protected:
 	static void OnBtn_FarGotoEditor(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_HighlightMouseRow(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_HighlightMouseCol(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_UpdateCheckFast(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_UpdateCheckOnStartup(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_UpdateCheckHourly(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_UpdateConfirmDownload(HWND hDlg, WORD CB, BYTE uCheck);
@@ -263,4 +264,5 @@ protected:
 	static void OnBtn_StatusVertPad(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_StatusSystemColors(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_StatusAddDel(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_MinMaxKey(HWND hDlg, WORD CB, BYTE uCheck);
 };

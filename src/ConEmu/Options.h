@@ -405,7 +405,7 @@ struct Settings
 		//reg->Load(L"CmdLine", &psStartSingleApp);
 		LPTSTR psStartSingleApp;
 		//reg->Load(L"StartTasksFile", &psStartTasksFile);
-		LPTSTR psStartTasksFile;
+		LPTSTR psStartTasksFile; // Stored with prefix, e.g. "@D:\ConEmu\test-start.conemu"
 		//reg->Load(L"StartTasksName", &psStartTasksName);
 		LPTSTR psStartTasksName;
 		//reg->Load(L"StartFarFolders", isStartFarFolders);

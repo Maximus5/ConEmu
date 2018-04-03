@@ -59,6 +59,7 @@
 #define IDD_SPG_QUAKE                   186
 #define IDD_SPG_CHILDGUI                187
 #define IDD_SPG_ANSI                    188
+#define IDD_SPG_GENERAL                 189
 #define IDD_MORE_CONFONT                209
 #define IDD_MORE_DOSBOX                 210
 #define IDD_ATTACHDLG                   212
@@ -1328,15 +1329,20 @@
 #define cbScrollbarDynamic              3090
 #define vkClose2Right                   3091
 #define vkMultiWnd                      3092
+#define stInterfaceLanguage             3093
+#define lbInterfaceLanguage             3094
+#define cbStartupShellFast              3095
+#define stQuakeKeyFast                  3096
+#define gbSettingsGeneral               3097
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        241
+#define _APS_NEXT_RESOURCE_VALUE        244
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3093
+#define _APS_NEXT_CONTROL_VALUE         3098
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

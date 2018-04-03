@@ -100,6 +100,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgIntegr.h"
 #include "SetPgKeyboard.h"
 #include "SetPgKeys.h"
+#include "SetPgGeneral.h"
 #include "SetPgMarkCopy.h"
 #include "SetPgMouse.h"
 #include "SetPgPaste.h"
@@ -419,7 +420,8 @@ void CSettings::InitVars_Pages()
 	ConEmuSetupPages Pages[] =
 	{
 		// При добавлении вкладки нужно добавить OnInitDialog_XXX в pageOpProc
-		{IDD_SPG_FONTS,       0, lng_SpgFonts,        thi_Fonts,        L"SettingsMain.html",         CSetPgFonts::Create},
+		{IDD_SPG_GENERAL,     0, lng_SpgGeneral,      thi_General,      L"SettingsFast.html",         CSetPgGeneral::Create},
+		{IDD_SPG_FONTS,       1, lng_SpgFonts,        thi_Fonts,        L"SettingsMain.html",         CSetPgFonts::Create},
 		{IDD_SPG_SIZEPOS,     1, lng_SpgSizePos,      thi_SizePos,      L"SettingsSizePos.html",      CSetPgSizePos::Create},
 		{IDD_SPG_APPEAR,      1, lng_SpgAppear,       thi_Appear,       L"SettingsAppearance.html",   CSetPgAppear::Create},
 		{IDD_SPG_QUAKE,       1, lng_SpgQuake,        thi_Quake,        L"SettingsQuake.html",        CSetPgQuake::Create},
@@ -1262,7 +1264,7 @@ LRESULT CSettings::OnInitDialog()
 {
 	//_ASSERTE(!hMain && !hColors && !hCmdTasks && !hViews && !hExt && !hFar && !hInfo && !hDebug && !hUpdate && !hSelection);
 	//hMain = hExt = hFar = hTabs = hKeys = hViews = hColors = hCmdTasks = hInfo = hDebug = hUpdate = hSelection = NULL;
-	_ASSERTE(m_Pages && (m_Pages[0].PageIndex==thi_Fonts) && !m_Pages[0].hPage /*...*/);
+	_ASSERTE(m_Pages && (m_Pages[0].PageIndex==thi_General) && !m_Pages[0].hPage /*...*/);
 	ClearPages();
 
 	CSetDlgColors::ReleaseHandles();
@@ -2805,7 +2807,7 @@ void CSettings::RegisterTipsFor(HWND hChildDlg)
 			// In this case, the "tool" is the entire parent window.
 			tiBalloon.cbSize = 44; // был sizeof(TOOLINFO);
 			tiBalloon.uFlags = TTF_IDISHWND | TTF_TRACK | TTF_ABSOLUTE;
-			tiBalloon.hwnd = GetPage(thi_Fonts);
+			tiBalloon.hwnd = GetPage(thi_General);
 			tiBalloon.hinst = g_hInstance;
 			static wchar_t szAsterisk[] = L"*"; // eliminate GCC warning
 			tiBalloon.lpszText = szAsterisk;
@@ -4156,9 +4158,9 @@ const ConEmuSetupPages* CSettings::GetPageData(TabHwndIndex nPage)
 
 	const ConEmuSetupPages* pData = NULL;
 
-	_ASSERTE((thi_Fonts == (TabHwndIndex)0) && (nPage >= thi_Fonts) && (nPage < thi_Last));
+	_ASSERTE((thi_General == (TabHwndIndex)0) && (nPage >= thi_General) && (nPage < thi_Last));
 
-	if ((nPage >= thi_Fonts) && (nPage < thi_Last))
+	if ((nPage >= thi_General) && (nPage < thi_Last))
 	{
 		if (m_Pages[nPage].PageIndex == nPage)
 		{

@@ -230,9 +230,9 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			pObj = (CSetPgBase*)lParam;
 		}
 
-		if (!pObj || (pObj->GetPageType() < thi_Fonts) || (pObj->GetPageType() >= thi_Last))
+		if (!pObj || (pObj->GetPageType() < thi_General) || (pObj->GetPageType() >= thi_Last))
 		{
-			_ASSERTE(pObj && (pObj->GetPageType() >= thi_Fonts && pObj->GetPageType() < thi_Last));
+			_ASSERTE(pObj && (pObj->GetPageType() >= thi_General && pObj->GetPageType() < thi_Last));
 			return 0;
 		}
 		_ASSERTE(pObj->Dlg() == NULL || pObj->Dlg() == hDlg);
