@@ -53,6 +53,7 @@ public:
 	BYTE isSetupDetected; // 0-пока не проверялся, 1-установлено через Installer, пути совпали, 2-Installer не запускался
 	bool isSetup64; // нужно запомнить, какой именно setup был установлен
 	BYTE UpdateDownloadSetup();
+	static Builds GetDefaultUpdateChannel();
 
 	bool isUpdateInetTool; // Use external downloader like `wget` or `curl`
 	wchar_t *szUpdateInetTool; // "<path>\curl.exe" -L %1 -o %2  :: %1 is url address, %2 is dst file name

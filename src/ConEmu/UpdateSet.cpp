@@ -110,6 +110,13 @@ void ConEmuUpdateSettings::SetUpdateVerLocation(LPCWSTR asNewIniLocation)
 	}
 }
 
+ConEmuUpdateSettings::Builds ConEmuUpdateSettings::GetDefaultUpdateChannel()
+{
+	return (ConEmuVersionStage == CEVS_ALPHA) ? Builds::Alpha
+		: (ConEmuVersionStage == CEVS_PREVIEW) ? Builds::Preview
+		: Builds::Undefined;
+}
+
 void ConEmuUpdateSettings::ResetToDefaults()
 {
 	// Указатели должны быть освобождены перед вызовом
@@ -119,9 +126,7 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	isUpdateCheckOnStartup = false;
 	isUpdateCheckHourly = false;
 	isUpdateConfirmDownload = true; // true-Show MsgBox, false-notify via TSA only
-	isUpdateUseBuilds = (ConEmuVersionStage == CEVS_ALPHA) ? Builds::Alpha
-		: (ConEmuVersionStage == CEVS_PREVIEW) ? Builds::Preview
-		: Builds::Undefined;
+	isUpdateUseBuilds = GetDefaultUpdateChannel();
 	isUpdateInetTool = false;
 	szUpdateInetTool = NULL;
 	isUpdateUseProxy = false;
@@ -252,7 +257,8 @@ void ConEmuUpdateSettings::LoadFrom(ConEmuUpdateSettings* apFrom)
 	isUpdateCheckOnStartup = apFrom->isUpdateCheckOnStartup;
 	isUpdateCheckHourly = apFrom->isUpdateCheckHourly;
 	isUpdateConfirmDownload = apFrom->isUpdateConfirmDownload;
-	isUpdateUseBuilds = (apFrom->isUpdateUseBuilds >= Builds::Stable && apFrom->isUpdateUseBuilds <= Builds::Preview) ? apFrom->isUpdateUseBuilds : Builds::Alpha;
+	isUpdateUseBuilds = (apFrom->isUpdateUseBuilds >= Builds::Stable && apFrom->isUpdateUseBuilds <= Builds::Preview)
+		? apFrom->isUpdateUseBuilds : GetDefaultUpdateChannel();
 	isUpdateInetTool = apFrom->isUpdateInetTool;
 	szUpdateInetTool = lstrdup(apFrom->szUpdateInetTool);
 	isUpdateUseProxy = apFrom->isUpdateUseProxy;

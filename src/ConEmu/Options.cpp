@@ -2990,7 +2990,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"Update.ConfirmDownload", UpdSet.isUpdateConfirmDownload);
 		reg->Load(L"Update.UseBuilds", (BYTE&)UpdSet.isUpdateUseBuilds);
 		if (UpdSet.isUpdateUseBuilds < ConEmuUpdateSettings::Builds::Stable || UpdSet.isUpdateUseBuilds > ConEmuUpdateSettings::Builds::Preview)
-			UpdSet.isUpdateUseBuilds = ConEmuUpdateSettings::Builds::Alpha;
+			UpdSet.isUpdateUseBuilds = ConEmuUpdateSettings::GetDefaultUpdateChannel();
 		reg->Load(L"Update.InetTool", UpdSet.isUpdateInetTool);
 		reg->Load(L"Update.InetToolCmd", &UpdSet.szUpdateInetTool);
 		reg->Load(L"Update.UseProxy", UpdSet.isUpdateUseProxy);
