@@ -2071,7 +2071,7 @@ typedef int SetBackgroundResult;
 const SetBackgroundResult
 	esbr_OK = 0,               // All OK
 	esbr_InvalidArg = 1,       // Invalid *RegisterBackgroundArg
-	esbr_PluginForbidden = 2,  // "Allow plugins" unchecked in ConEmu settings ("Main" page)
+	esbr_PluginForbidden = 2,  // "Allow plugins" unchecked in ConEmu settings ("Background" page)
 	esbr_ConEmuInShutdown = 3, // Console is closing. This is not an error, just information
 	esbr_Unexpected = 4,       // Unexpected error in ConEmu //-V112
 	esbr_InvalidArgSize = 5,   // Invalid RegisterBackgroundArg.cbSize
