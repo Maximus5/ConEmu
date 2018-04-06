@@ -6423,6 +6423,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		|| (ShowHideType == sih_HideTSA))
 	{
 		if ((bVis && bIsForeground && !bIsIconic)
+			|| (!bIsIconic && !gpSet->isRestoreInactive)
 			|| (ShowHideType == sih_HideTSA) || (ShowHideType == sih_Minimize))
 		{
 			// если видимо - спрятать
@@ -6722,11 +6723,14 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 				DWORD nFlags = AW_SLIDE|AW_VER_NEGATIVE|AW_HIDE;
 
+				DEBUGTEST(HWND hFore1 = GetForegroundWindow());
+
 				AnimateWindow(nAnimationMS, nFlags);
 
 				DEBUGTEST(BOOL bVs2 = ::IsWindowVisible(ghWnd));
 				DEBUGTEST(RECT rc2; ::GetWindowRect(ghWnd, &rc2));
-				DEBUGTEST(bVs1 = bVs2);
+				DEBUGTEST(bVs1 == bVs2);
+				DEBUGTEST(HWND hFore2 = GetForegroundWindow());
 
 				// 1. Если на таскбаре отображаются "табы", то после AnimateWindow(AW_HIDE) в Win8 иконка с таскбара не убирается
 				// 2. Issue 1042: Return focus to window which was active before showing ConEmu

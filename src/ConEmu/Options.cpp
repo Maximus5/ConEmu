@@ -644,6 +644,7 @@ void Settings::InitSettings()
 	mb_HideCaptionAlways = false; // IsWin10(); -- let default behavior be the same on all OS versions
 	isQuakeStyle = false; nQuakeAnimation = QUAKEANIMATION_DEF;
 	isRestore2ActiveMon = false;
+	isRestoreInactive = false;
 	isHideChildCaption = true;
 	isFocusInChildWindows = true;
 	nHideCaptionAlwaysFrame = HIDECAPTIONALWAYSFRAME_DEF; nHideCaptionAlwaysDelay = 2000; nHideCaptionAlwaysDisappear = 2000;
@@ -2606,6 +2607,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		reg->Load(L"QuakeStyle", isQuakeStyle);
 		reg->Load(L"Restore2ActiveMon", isRestore2ActiveMon);
+		reg->Load(L"RestoreInactive", isRestoreInactive);
 		reg->Load(L"QuakeAnimation", nQuakeAnimation); MinMax(nQuakeAnimation, QUAKEANIMATION_MAX);
 		reg->Load(L"HideCaption", isHideCaption);
 		reg->Load(L"HideChildCaption", isHideChildCaption);
@@ -3636,6 +3638,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		ResetSavedOnExit(); // Раз было инициированное пользователем сохранение настроек - сбросим флажок (mb_ExitSettingsAutoSaved)
 		reg->Save(L"QuakeStyle", isQuakeStyle);
 		reg->Save(L"Restore2ActiveMon", isRestore2ActiveMon);
+		reg->Save(L"RestoreInactive", isRestoreInactive);
 		reg->Save(L"QuakeAnimation", nQuakeAnimation);
 		reg->Save(L"HideCaption", isHideCaption);
 		reg->Save(L"HideChildCaption", isHideChildCaption);

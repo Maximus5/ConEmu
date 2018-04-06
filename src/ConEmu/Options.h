@@ -494,6 +494,8 @@ struct Settings
 		UINT nQuakeAnimation;
 		//reg->Load(L"Restore2ActiveMon", isRestore2ActiveMon);
 		bool isRestore2ActiveMon;
+		//reg->Load(L"RestoreInactive", isRestoreInactive);
+		bool isRestoreInactive;
 		protected:
 		//reg->Load(L"HideCaptionAlways", mb_HideCaptionAlways);
 		bool mb_HideCaptionAlways;
