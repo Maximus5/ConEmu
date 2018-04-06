@@ -36,6 +36,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DynDialog.h"
 #include "LngRc.h"
 
+#if defined(_DEBUG)
+#include "OptionsFast.h"
+#endif
+
 wchar_t CDynDialog::Button[] = L"Button";
 wchar_t CDynDialog::Edit[] = L"Edit";
 wchar_t CDynDialog::Static[] = L"Static";
@@ -644,7 +648,7 @@ void CDynDialog::LocalizeDialog(HWND hDlg, UINT nTitleRsrcId /*= 0*/)
 {
 	#if defined(_DEBUG)
 	static HWND hLastDlg = NULL;
-	if (hLastDlg != hDlg)
+	if (hLastDlg != hDlg || hDlg == FastConfig::ghFastCfg)
 		hLastDlg = hDlg;
 	else
 		_ASSERTE(hLastDlg != hDlg); // avoid re-localization

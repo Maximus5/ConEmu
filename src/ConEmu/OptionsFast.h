@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 struct ColorPalette;
+typedef DWORD SettingsLoadedFlags;
 
 namespace FastConfig
 {
@@ -42,5 +43,6 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags);
 // Helper functions used in Settings/Main
 void DoPaintColorBox(HWND hCtrl, const ColorPalette& pal);
 LPCWSTR GetStartupCommand(CEStr& command);
+void DoStartupCommand(HWND hDlg, WORD nCtrlId);
 
 };

@@ -1299,47 +1299,49 @@ BEGIN
     PUSHBUTTON      "Apply && Check",cbUpdateCheck,219,211,98,15
 END
 
-IDD_FAST_CONFIG DIALOGEX 0, 0, 323, 305
+IDD_FAST_CONFIG DIALOGEX 0, 0, 347, 305
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTEXTHELP
 CAPTION "ConEmu fast configuration"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "",gbFastConfig,3,0,317,220
-    LTEXT           "Choose ConEmu settings storage location (You may turn on/off portable mode here)",stStorageLocation,11,8,294,8
-    COMBOBOX        lbStorageLocation,11,19,302,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Choose your startup task or even a shell with arguments:",stStartupShellFast,11,38,302,8
-    COMBOBOX        lbStartupShellFast,11,49,302,156,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Choose preferred color scheme:",stColorSchemeFast,11,67,190,8
-    COMBOBOX        lbColorSchemeFast,11,78,187,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    LTEXT           "You can change following on 'Appearance' page of Settings dialog",stSingleInstance,11,98,302,8
+    GROUPBOX        "",gbFastConfig,3,0,340,220
+    LTEXT           "Choose ConEmu settings storage location (You may turn on/off portable mode here)",stStorageLocation,11,8,327,8
+    COMBOBOX        lbStorageLocation,11,19,325,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Choose your startup task or even a shell with arguments:",stStartupShellFast,11,38,327,8
+    COMBOBOX        lbStartupShellFast,11,49,325,156,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Interface language:",stInterfaceLanguage,11,67,86,8
+    COMBOBOX        lbInterfaceLanguage,11,78,88,75,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Choose color scheme:",stColorSchemeFast,113,67,108,8
+    COMBOBOX        lbColorSchemeFast,113,78,109,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "You can change following on 'Appearance' page of Settings dialog",stSingleInstance,11,98,327,8
     CONTROL         "Single instance mode (use existing window instead of running new instance)",cbSingleInstance,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,109,295,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,109,325,8
     CONTROL         "Quake-style slide down from the top of the screen",cbQuakeFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,122,207,10
     EDITTEXT        tQuakeKeyFast,222,121,72,12,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "...",cbQuakeKeyFast,298,121,16,13
-    LTEXT           "You can change following on 'Keyboard' page of Settings dialog",stUseKeyboardHooksFast,11,139,302,8
-    CONTROL         "Install keyboard hooks (required for Win+Number, Win+Tab, PrntScrn and so on)",cbUseKeyboardHooksFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,148,295,10
-    LTEXT           "You can change following on 'Features' page of Settings dialog",stInjectConEmuHkFast,11,165,302,8
+    LTEXT           "You can change following on 'Keyboard' page of Settings dialog",stUseKeyboardHooksFast,11,139,327,8
+    CONTROL         "Support special hotkeys (Win+Number, Win+Tab, PrntScrn and so on)",cbUseKeyboardHooksFast,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,148,325,10
+    LTEXT           "You can change following on 'Features' page of Settings dialog",stInjectConEmuHkFast,11,165,327,8
     CONTROL         "Inject ConEmuHk.dll into all processes started in ConEmu tabs",cbInjectConEmuHkFast,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,176,295,10
-    LTEXT           "You can change following on 'Update' page of Settings dialog",stEnableAutoUpdateFast,11,192,302,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,176,325,10
+    LTEXT           "You can change following on 'Update' page of Settings dialog",stEnableAutoUpdateFast,11,192,327,8
     CONTROL         "Enable automatic updates",cbEnableAutoUpdateFast,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,203,109,10
-    CONTROL         "‘Stable’",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,128,203,46,10
-    CONTROL         "‘Preview’",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,178,203,50,10
-    CONTROL         "‘Alpha’ builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,232,203,71,10
-    GROUPBOX        "",gbDisableConImeFast,3,222,317,61
+    CONTROL         "‘Stable’",rbAutoUpdateStableFast,"Button",BS_AUTORADIOBUTTON,128,203,62,10
+    CONTROL         "‘Preview’",rbAutoUpdatePreviewFast,"Button",BS_AUTORADIOBUTTON,192,203,72,10
+    CONTROL         "‘Alpha’ builds",rbAutoUpdateDeveloperFast,"Button",BS_AUTORADIOBUTTON,265,203,73,10
+    GROUPBOX        "",gbDisableConImeFast,3,222,340,61
     CONTROL         " Disable ConIme.exe autorun (Vista only)",cbDisableConImeFast,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,230,295,10
     LTEXT           "Unwanted value of ‘LoadConIme’ registry parameter! This may cause hanging of other console applications! ConEmu may disable ConIme.exe via registry:",stDisableConImeFast1,20,242,292,19
     LTEXT           "[HKEY_CURRENT_USER\\Console]",stDisableConImeFast2,20,261,292,8
     LTEXT           """LoadConIme""=dword:00000000",stDisableConImeFast3,20,270,292,8
-    DEFPUSHBUTTON   "OK",IDOK,215,288,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,270,288,50,14
-    LTEXT           "<homepage>",stHomePage,11,291,194,11,SS_NOTIFY
-    CTEXT           "\ncolors\npreview",stPalettePreviewFast,205,67,108,24
+    DEFPUSHBUTTON   "OK",IDOK,238,288,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,293,288,50,14
+    LTEXT           "<homepage>",stHomePage,11,291,218,11,SS_NOTIFY
+    CTEXT           "colors\npreview",stPalettePreviewFast,228,68,109,24,WS_BORDER
 END
 
 IDD_SPG_TASKS DIALOGEX 0, 0, 381, 242

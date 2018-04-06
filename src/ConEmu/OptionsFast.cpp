@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "DynDialog.h"
 #include "HotkeyDlg.h"
+#include "LngRc.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "OptionsFast.h"
@@ -281,6 +282,23 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 	}
 
 
+	// Languages
+	if (gpLng)
+	{
+		MArray<const wchar_t*> languages;
+		if (gpLng->getLanguages(languages))
+		{
+			SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_RESETCONTENT, 0, 0);
+			for (INT_PTR nLang = 0; nLang < languages.size(); nLang++)
+			{
+				SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_ADDSTRING, 0, (LPARAM)languages[nLang]);
+			}
+			INT_PTR nIdx = SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_FINDSTRING, -1, (LPARAM)CLngRc::getLanguage());
+			if (nIdx >= 0)
+				SendDlgItemMessage(hDlg, lbInterfaceLanguage, CB_SETCURSEL, nIdx, 0);
+		}
+	}
+
 	// lbStorageLocation
 	SettingsStorage Storage = {}; bool ReadOnly = false;
 	gpSet->GetSettingsType(Storage, ReadOnly);
@@ -521,6 +539,44 @@ static INT_PTR OnSetCursor(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
+void DoStartupCommand(HWND hDlg, WORD nCtrlId)
+{
+	CEStr lsValue;
+	if (CSetDlgLists::GetSelectedString(hDlg, nCtrlId, lsValue) > 0)
+	{
+		if (*lsValue.ms_Val == TaskBracketLeft)
+		{
+			if (lsValue.ms_Val[lstrlen(lsValue.ms_Val)-1] != TaskBracketRight)
+			{
+				_ASSERTE(FALSE && "Doesn't match '{...}'");
+			}
+			else
+			{
+				gpSet->nStartType = 2;
+				SafeFree(gpSet->psStartTasksName);
+				gpSet->psStartTasksName = lsValue.Detach();
+			}
+		}
+		else if (lstrcmp(lsValue.ms_Val, AutoStartTaskName) == 0)
+		{
+			// Not shown yet in list
+			gpSet->nStartType = 3;
+		}
+		else if (*lsValue.ms_Val == CmdFilePrefix)
+		{
+			gpSet->nStartType = 1;
+			SafeFree(gpSet->psStartTasksFile);
+			gpSet->psStartTasksFile = lsValue.Detach();
+		}
+		else
+		{
+			gpSet->nStartType = 0;
+			SafeFree(gpSet->psStartSingleApp);
+			gpSet->psStartSingleApp = lsValue.Detach();
+		}
+	}
+}
+
 static INT_PTR OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
 	switch (LOWORD(wParam))
@@ -546,40 +602,7 @@ static INT_PTR OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			}
 
 			/* Startup task */
-			lsValue.Attach(GetDlgItemTextPtr(hDlg, lbStartupShellFast));
-			if (!lsValue.IsEmpty())
-			{
-				if (*lsValue.ms_Val == TaskBracketLeft)
-				{
-					if (lsValue.ms_Val[lstrlen(lsValue.ms_Val)-1] != TaskBracketRight)
-					{
-						_ASSERTE(FALSE && "Doesn't match '{...}'");
-					}
-					else
-					{
-						gpSet->nStartType = 2;
-						SafeFree(gpSet->psStartTasksName);
-						gpSet->psStartTasksName = lstrdup(lsValue.ms_Val);
-					}
-				}
-				else if (lstrcmp(lsValue.ms_Val, AutoStartTaskName) == 0)
-				{
-					// Not shown yet in list
-					gpSet->nStartType = 3;
-				}
-				else if (*lsValue.ms_Val == CmdFilePrefix)
-				{
-					gpSet->nStartType = 1;
-					SafeFree(gpSet->psStartTasksFile);
-					gpSet->psStartTasksFile = lstrdup(lsValue.ms_Val);
-				}
-				else
-				{
-					gpSet->nStartType = 0;
-					SafeFree(gpSet->psStartSingleApp);
-					gpSet->psStartSingleApp = lstrdup(lsValue.ms_Val);
-				}
-			}
+			DoStartupCommand(hDlg, lbStartupShellFast);
 
 			/* Default pallette changed? */
 			if (CSetDlgLists::GetSelectedString(hDlg, lbColorSchemeFast, lsValue) > 0)
@@ -610,7 +633,7 @@ static INT_PTR OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			gpSet->UpdSet.isUpdateCheckOnStartup = (IsDlgButtonChecked(hDlg, cbEnableAutoUpdateFast) == BST_CHECKED);
 			if (bCheckUpdate)
 			{	// При первом запуске - умолчания параметров
-				gpSet->UpdSet.isUpdateCheckHourly = false;
+				gpSet->UpdSet.isUpdateCheckHourly = true;
 				gpSet->UpdSet.isUpdateConfirmDownload = true; // true-Show MessageBox, false-notify via TSA only
 			}
 			gpSet->UpdSet.isUpdateUseBuilds = IsDlgButtonChecked(hDlg, rbAutoUpdateStableFast) ? ConEmuUpdateSettings::Builds::Stable
@@ -696,6 +719,24 @@ static INT_PTR OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 	}
 
 	return FALSE;
+}	
+
+static INT_PTR OnLanguageChanged(HWND hDlg)
+{
+	CEStr lsValue;
+	if (gpLng && CSetDlgLists::GetSelectedString(hDlg, lbInterfaceLanguage, lsValue) > 0)
+	{
+		wchar_t* colon = wcschr(lsValue.ms_Val, L':');
+		if (colon)
+		{
+			*colon = 0;
+			gpConEmu->opt.Language.SetStr(lsValue);
+			gpLng->Reload(true);
+
+			CDynDialog::LocalizeDialog(hDlg);
+		}
+	}
+	return 0;
 }
 
 static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
@@ -735,8 +776,10 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 			switch (LOWORD(wParam))
 			{
 			case lbColorSchemeFast:
-				SendDlgItemMessage(hDlg, stPalettePreviewFast, UM_PALETTE_FAST_CHG, wParam, lParam);
+				SendDlgItemMessage(hDlg, stPalettePreviewFast, UM_PALETTE_FAST_CHG, 0, 0);
 				break;
+			case lbInterfaceLanguage:
+				return OnLanguageChanged(hDlg);
 			}
 			break;
 		}
