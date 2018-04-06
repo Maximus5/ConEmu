@@ -5696,6 +5696,17 @@ bool CConEmuSize::ShowMainWindow(int anCmdShow, bool abFirstShow /*= false*/)
 
 BOOL CConEmuSize::AnimateWindow(DWORD dwTime, DWORD dwFlags)
 {
+	HWND hNextWindow = NULL;
+	if (dwFlags & AW_HIDE)
+	{
+		hNextWindow = ghWnd;
+		while ((hNextWindow = GetNextWindow(hNextWindow, GW_HWNDNEXT)) != NULL)
+		{
+			if (::IsWindowVisible(hNextWindow))
+				break;
+		}
+	}
+
 	bool bWasShown = false;
 	if (gpSet->isQuakeStyle)
 	{
@@ -5726,6 +5737,11 @@ BOOL CConEmuSize::AnimateWindow(DWORD dwTime, DWORD dwFlags)
 	if (bWasShown)
 	{
 		mp_ConEmu->mp_TabBar->ShowSearchPane(true, true);
+	}
+
+	if (hNextWindow && (hNextWindow != ghWnd))
+	{
+		SetForegroundWindow(hNextWindow);
 	}
 
 	return bRc;
