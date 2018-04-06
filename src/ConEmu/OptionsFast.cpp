@@ -228,7 +228,7 @@ static LRESULT CALLBACK ColorBoxProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM
 		case UM_PALETTE_FAST_CHG:
 		{
 			CEStr lsValue;
-			if (CSetDlgLists::GetSelectedString(GetParent(hwnd), lbColorSchemeFast, &lsValue.ms_Val) > 0)
+			if (CSetDlgLists::GetSelectedString(GetParent(hwnd), lbColorSchemeFast, lsValue) > 0)
 			{
 				const ColorPalette* pPal = gpSet->PaletteGetByName(lsValue.ms_Val);
 				if (pPal)
@@ -582,7 +582,7 @@ static INT_PTR OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 			}
 
 			/* Default pallette changed? */
-			if (CSetDlgLists::GetSelectedString(hDlg, lbColorSchemeFast, &lsValue.ms_Val) > 0)
+			if (CSetDlgLists::GetSelectedString(hDlg, lbColorSchemeFast, lsValue) > 0)
 			{
 				const ColorPalette* pPal = gpSet->PaletteGetByName(lsValue.ms_Val);
 				if (pPal)

@@ -113,7 +113,7 @@ public:
 	static bool GetListBoxItem(HWND hWnd, WORD nCtrlId, eWordItems eWhat, UINT& nValue);
 	static bool GetListBoxItem(HWND hWnd, WORD nCtrlId, eWordItems eWhat, BYTE& nValue);
 
-	static INT_PTR GetSelectedString(HWND hParent, WORD nListCtrlId, wchar_t** ppszStr);
+	static INT_PTR GetSelectedString(HWND hParent, WORD nListCtrlId, CEStr& szStr);
 	static int SelectString(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 	static int SelectStringExact(HWND hParent, WORD nCtrlId, LPCWSTR asText);
 

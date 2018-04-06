@@ -327,50 +327,44 @@ bool CSetDlgLists::GetListBoxItem(HWND hWnd, WORD nCtrlId, eWordItems eWhat, BYT
 	return bFound;
 }
 
-INT_PTR CSetDlgLists::GetSelectedString(HWND hParent, WORD nListCtrlId, wchar_t** ppszStr)
+// The return value is the length of the string, in TCHARs, excluding the terminating null character
+// -1 on errors
+INT_PTR CSetDlgLists::GetSelectedString(HWND hParent, WORD nListCtrlId, CEStr& szStr)
 {
 	INT_PTR nCur = SendDlgItemMessage(hParent, nListCtrlId, CB_GETCURSEL, 0, 0);
 	INT_PTR nLen = (nCur >= 0) ? SendDlgItemMessage(hParent, nListCtrlId, CB_GETLBTEXTLEN, nCur, 0) : -1;
-	if (!ppszStr)
-		return nLen;
 
-	if (nLen<=0)
+	if (nLen > 0)
 	{
-		if (*ppszStr) {free(*ppszStr); *ppszStr = NULL;}
-	}
-	else
-	{
-		wchar_t* pszNew = (TCHAR*)calloc(nLen+1, sizeof(TCHAR));
+		CEStr szNew;
+		wchar_t* pszNew = szNew.GetBuffer(nLen);
 		if (!pszNew)
 		{
 			_ASSERTE(pszNew!=NULL);
 		}
 		else
 		{
-			SendDlgItemMessage(hParent, nListCtrlId, CB_GETLBTEXT, nCur, (LPARAM)pszNew);
-
-			if (*ppszStr)
+			nLen = SendDlgItemMessage(hParent, nListCtrlId, CB_GETLBTEXT, nCur, (LPARAM)pszNew);
+			if (nLen > 0)
 			{
-				if (lstrcmp(*ppszStr, pszNew) == 0)
+				if (!szStr.IsEmpty())
 				{
-					free(pszNew);
-					return nLen; // Изменений не было
+					if (lstrcmp(szStr, szNew) == 0)
+					{
+						goto wrap; // There were no changes
+					}
 				}
-			}
 
-			if (nLen > (*ppszStr ? (INT_PTR)_tcslen(*ppszStr) : 0))
-			{
-				if (*ppszStr) free(*ppszStr);
-				*ppszStr = pszNew; pszNew = NULL;
-			}
-			else
-			{
-				_wcscpy_c(*ppszStr, nLen+1, pszNew);
-				SafeFree(pszNew);
+				szStr.Attach(szNew.Detach());
 			}
 		}
 	}
 
+	if (nLen <= 0)
+	{
+		szStr.Clear();
+	}
+wrap:
 	return nLen;
 }
 

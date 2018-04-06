@@ -214,19 +214,18 @@ INT_PTR CSetPgStartup::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 					{
 					case lbStartNamedTask:
 						{
-							wchar_t* pszName = NULL;
-							CSetDlgLists::GetSelectedString(hDlg, lbStartNamedTask, &pszName);
-							if (pszName)
+							CEStr szName;
+							CSetDlgLists::GetSelectedString(hDlg, lbStartNamedTask, szName);
+							if (szName)
 							{
-								if (lstrcmp(pszName, csNoTask) != 0)
+								if (szName.Compare(csNoTask) != 0)
 								{
 									SafeFree(gpSet->psStartTasksName);
-									gpSet->psStartTasksName = pszName;
+									gpSet->psStartTasksName = szName.Detach();
 								}
 							}
 							else
 							{
-								SafeFree(pszName);
 								// If the Task does not exist - force to simple "Command line"
 								gpSet->nStartType = 0;
 								checkRadioButton(hDlg, rbStartSingleApp, rbStartLastTabs, rbStartSingleApp);
