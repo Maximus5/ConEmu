@@ -5656,9 +5656,11 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 		else
 			pChars = Chars; // memory allocation fail? try part of line?
 		COORD crRead = {0, csbi.dwCursorPosition.Y};
+		// gh-1501: Windows 10 CJK version set COMMON_LVB_*_BYTE even for SOME non-ASCII characters (e.g. Greek "Α", Russian "Я", etc.)
+		#if 0
 		//120830 - DBCS uses 2 cells per hieroglyph
-		DWORD nRead = 0;
 		// TODO: Optimize
+		DWORD nRead = 0;
 		BOOL bRead = NeedLegacyCursorCorrection() ? FALSE : ReadConsoleOutputCharacterA(ahConOut, pChars, cchMax, crRead, &nRead);
 		// ReadConsoleOutputCharacterA may return "???" instead of DBCS codes in Non-DBCS systems
 		if (bRead && (nRead == cchMax))
@@ -5680,6 +5682,7 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 			csbi.dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
 		}
 		else if (IsWin10() && (NeedLegacyCursorCorrection() || (GetConsoleOutputCP() == CP_UTF8)))
+		#endif
 		{
 			// Temporary workaround for conhost bug!
 			CHAR_INFO CharsEx[200];
@@ -5689,7 +5692,7 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 			{
 				COORD bufSize = {cchMax, 1}; COORD bufCoord = {0,0};
 				SMALL_RECT rgn = MakeSmallRect(0, csbi.dwCursorPosition.Y, cchMax-1, csbi.dwCursorPosition.Y);
-				bRead = ReadConsoleOutputW(ahConOut, pCharsEx, bufSize, bufCoord, &rgn);
+				BOOL bRead = ReadConsoleOutputW(ahConOut, pCharsEx, bufSize, bufCoord, &rgn);
 				if (bRead)
 				{
 					int nXShift = 0;
@@ -5698,24 +5701,27 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 					while (p < pEnd)
 					{
 						if (!(p->Attributes & COMMON_LVB_TRAILING_BYTE)
-							&& get_wcwidth(p->Char.UnicodeChar) == 2)
+							/*&& get_wcwidth(p->Char.UnicodeChar) == 2*/)
 						{
-							nXShift++;
 							_ASSERTE(p < pEnd);
 							if (((p + 1) < pEnd)
 								&& (p->Attributes & COMMON_LVB_LEADING_BYTE)
 								&& ((p+1)->Attributes & COMMON_LVB_TRAILING_BYTE)
 								&& (p->Char.UnicodeChar == (p+1)->Char.UnicodeChar))
-								p++;
+							{
+								p++; nXShift++;
+							}
 							_ASSERTE(p < pEnd);
 						}
 						p++;
 					}
+
 					_ASSERTE(nXShift <= csbi.dwCursorPosition.X);
 					csbi.dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
+
+					if (pCharsEx != CharsEx)
+						free(pCharsEx);
 				}
-				if (pCharsEx != CharsEx)
-					free(pCharsEx);
 			}
 		}
 		if (pChars != Chars)
