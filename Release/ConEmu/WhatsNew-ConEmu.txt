@@ -20,6 +20,22 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.4.8
+* Add ‘Interface language’ field to ‘Fast configuration’ dialog.
+* New first page ‘General’ in the ‘Settings’ dialog contains several most used options and language selection.
+* Default update channel now is the same as downloaded release (stable/preview/alpha).
+* gh-1404: Update Far Manager panels dragging cursor hotspot.
+* gh-1484, gh-701: Menu item ‘New console dialog...’ in the tab and system menus.
+* gh-1402: Add debug assertions for troubleshooting.
+* gh-1420: Option ‘Restore inactive window by hotkey’ to change Minimize/Restore behavior,
+  new default is ‘if out of focus, minimize instead of focus’.
+* gh-751: Minimizing ConEmu (Quake animation) should return focus to the previous window.
+* gh-1502: Text cursor disappear when use default `{Bash::MinGW bash}` task.
+* gh-1501: Add cursor position test to `ConEmuC -CheckUnicode`.
+* gh-1494: Add `<Babun>` color scheme.
+* Update Connector modules to v1.2.5.
+
+
 2018.3.18
 * Feature ‘Extend foreground colors’ was removed.
 * Don't be CPU consuming in background.
