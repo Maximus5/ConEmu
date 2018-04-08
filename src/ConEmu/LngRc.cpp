@@ -85,8 +85,7 @@ void CLngRc::Reload(bool bForce /*= false*/)
 	bool bExists = false;
 	CEStr lsNewLng, lsNewFile;
 
-	// #L10N There would be gpSet member in future
-	lsNewLng.Set(gpConEmu->opt.Language.GetStr());
+	lsNewLng.Set(gpConEmu->opt.Language.Exists ? gpConEmu->opt.Language.GetStr() : gpSet->Language);
 
 	// Language was requested?
 	if (!lsNewLng.IsEmpty())

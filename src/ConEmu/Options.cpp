@@ -385,6 +385,7 @@ void Settings::InitSettings()
 	// Сброс переменных
 	ResetSettings();
 
+	wcscpy_c(Language, L"en");
 	nStartCreateDelay = RUNQUEUE_CREATE_LAG_DEF;
 	isAutoRegisterFonts = true;
 	nHostkeyNumberModifier = VK_LCONTROL; //TestHostkeyModifiers(nHostkeyNumberModifier);
@@ -2425,6 +2426,8 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 				|| reg->Load(L"TabFontHeight", dw));
 		}
 
+		reg->Load(L"Language", Language, countof(Language));
+
 		bool bCmdLine = reg->Load(L"CmdLine", &psStartSingleApp);
 		reg->Load(L"StartTasksFile", &psStartTasksFile);
 		reg->Load(L"StartTasksName", &psStartTasksName);
@@ -3502,6 +3505,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		{
 			wcscpy_c(Type, reg->m_Storage.szType);
 		}
+
+		reg->Save(L"Language", Language);
 
 		SaveStartCommands(reg);
 
