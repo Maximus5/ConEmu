@@ -195,7 +195,7 @@ int CheckUnicodeFont()
 	DWORD nLen = lstrlen(szText), nWrite = 0, nRead = 0, nErr = 0;
 	WORD nDefColor = 7;
 	DWORD nColorLen = lstrlen(szColor);
-	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {}, csbi2 = {};
 	CONSOLE_CURSOR_INFO ci = {};
 	_ASSERTE(nLen<=35); // ниже на 2 буфер множится
 
@@ -276,6 +276,12 @@ int CheckUnicodeFont()
 
 	if ((bInfo = GetConsoleScreenBufferInfo(hOut, &csbi)) != FALSE)
 	{
+		// First check console cursor offset, szText contains 5 CJK glyphs
+		if (WriteConsoleW(hOut, szText, nLen, &nWrite, NULL))
+		{
+			GetConsoleScreenBufferInfo(hOut, &csbi2);
+		}
+		// And continue to attribute check
 		COORD cr0 = {0,0};
 		WORD intens[17] = {}; for (size_t i = 0; i < countof(intens); ++i) intens[i] = N|FOREGROUND_INTENSITY; intens[countof(intens)-1] = 1;
 		WriteConsoleOutputAttribute(hOut, intens, countof(intens), csbi.dwCursorPosition, &nWrite);
@@ -322,7 +328,7 @@ int CheckUnicodeFont()
 	ptr = szInfo;
 	for (UINT i = 0; i < nLen*2; i++)
 	{
-		if (szCheck[i] <= L' ')
+		if (cRead[i].Char.UnicodeChar <= L' ')
 			break;
 		msprintf(ptr, countof(szInfo)-(ptr-szInfo), L" %c:x%X", cRead[i].Char.UnicodeChar, cRead[i].Attributes);
 		ptr += lstrlen(ptr);
@@ -332,10 +338,14 @@ int CheckUnicodeFont()
 	write(L"\r\n");
 
 
+	int cursor_diff = (csbi2.dwCursorPosition.X - (csbi.dwCursorPosition.X + nLen));
 	msprintf(szInfo, countof(szInfo),
-		L"Info: %u,%u,%u,%u,%u,%u,%u,%u\r\n"
+		L"Info: %u,%u,%u,%u %u,%u,%u,%u  Cursor={%i,%i}->{%i,%i} [%c%i]\r\n"
 		L"\r\n",
-		nErr, bInfo, bWrite, nWrite, bRead, bReadAttr, nRead, bBlkRead
+		nErr, bInfo, bWrite, nWrite,
+		bRead, bReadAttr, nRead, bBlkRead,
+		csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y, csbi2.dwCursorPosition.X, csbi2.dwCursorPosition.Y,
+		(cursor_diff >= 0) ? L'+' : L'?', cursor_diff
 		);
 	write(szInfo);
 
