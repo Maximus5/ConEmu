@@ -114,6 +114,8 @@ LRESULT CSetPgSizePos::OnInitDialog(HWND hDlg, bool abInitial)
 
 	checkDlgButton(hDlg, cbRestore2ActiveMonitor, gpSet->isRestore2ActiveMon);
 
+	checkDlgButton(hDlg, cbRestoreInactive, gpSet->isRestoreInactive);
+
 	checkDlgButton(hDlg, cbSnapToDesktopEdges, gpSet->isSnapToDesktopEdges);
 
 	return 0;

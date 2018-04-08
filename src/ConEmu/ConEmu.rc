@@ -191,7 +191,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Console size and Window position",gbWindowSizePos,4,1,375,194
+    GROUPBOX        "Console size and Window position",gbWindowSizePos,4,1,375,218
     EDITTEXT        tWndWidth,59,63,44,12,ES_AUTOHSCROLL
     EDITTEXT        tWndHeight,155,63,44,12,ES_AUTOHSCROLL
     CONTROL         "Normal",rNormal,"Button",BS_AUTORADIOBUTTON | WS_GROUP,17,50,47,8
@@ -222,18 +222,21 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,131,170,8
     RTEXT           "Pad size (pixels):",stVConPadSize,199,131,113,8
     EDITTEXT        tPadSize,315,130,51,12,ES_AUTOHSCROLL
-    GROUPBOX        "Alignment",gbVConAlignment,9,119,364,70
+    GROUPBOX        "Alignment",gbVConAlignment,10,119,364,53
     CONTROL         "Snap to desktop edges",cbSnapToDesktopEdges,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,159,170,8
-    GROUPBOX        "FullScreen mode",IDC_STATIC,9,195,306,29,NOT WS_VISIBLE | WS_DISABLED
-    CONTROL         "Hide tab && status bars",cbFullscreenNoBars,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,17,208,100,8
-    CONTROL         "Fixed console size",cbFullscreenFixedConSize,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,123,208,83,8
-    EDITTEXT        tFullScreenWidth,210,206,39,12,ES_AUTOHSCROLL | NOT WS_VISIBLE | WS_DISABLED
-    EDITTEXT        tFullScreenHeight,269,206,39,12,ES_AUTOHSCROLL | NOT WS_VISIBLE | WS_DISABLED
-    CTEXT           "x",IDC_STATIC,255,207,8,8,NOT WS_VISIBLE | WS_DISABLED
+    GROUPBOX        "FullScreen mode",IDC_STATIC,9,222,306,19,NOT WS_VISIBLE | WS_DISABLED
+    CONTROL         "Hide tab && status bars",cbFullscreenNoBars,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,17,230,100,8
+    CONTROL         "Fixed console size",cbFullscreenFixedConSize,"Button",BS_AUTOCHECKBOX | NOT WS_VISIBLE | WS_DISABLED | WS_TABSTOP,123,230,83,8
+    EDITTEXT        tFullScreenWidth,210,228,39,12,ES_AUTOHSCROLL | NOT WS_VISIBLE | WS_DISABLED
+    EDITTEXT        tFullScreenHeight,269,228,39,12,ES_AUTOHSCROLL | NOT WS_VISIBLE | WS_DISABLED
+    CTEXT           "x",IDC_STATIC,255,229,8,8,NOT WS_VISIBLE | WS_DISABLED
     CONTROL         "Align ConEmu window size to cells",cbIntegralSize,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,145,170,8
     CONTROL         "Restore to active monitor",cbRestore2ActiveMonitor,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,172,170,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,186,170,8
+    GROUPBOX        "Activation and minimization",gbRestoreMinimize,10,174,364,40
+    CONTROL         "Restore inactive window by hotkey",cbRestoreInactive,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,200,170,8
 END
 
 IDD_SPG_APPEAR DIALOGEX 0, 0, 381, 242

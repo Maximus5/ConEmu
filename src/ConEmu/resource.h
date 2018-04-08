@@ -1334,15 +1334,17 @@
 #define cbStartupShellFast              3095
 #define stQuakeKeyFast                  3096
 #define gbSettingsGeneral               3097
+#define gbRestoreMinimize               3098
+#define cbRestoreInactive               3099
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        244
+#define _APS_NEXT_RESOURCE_VALUE        245
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3098
+#define _APS_NEXT_CONTROL_VALUE         3100
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

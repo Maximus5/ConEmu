@@ -282,6 +282,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbRestore2ActiveMonitor:
 			OnBtn_Restore2ActiveMonitor(hDlg, CB, uCheck);
 			break;
+		case cbRestoreInactive:
+			OnBtn_RestoreInactive(hDlg, CB, uCheck);
+			break;
 		case rbScrollbarHide:
 		case rbScrollbarShow:
 		case rbScrollbarAuto:
@@ -2481,6 +2484,16 @@ void CSetDlgButtons::OnBtn_Restore2ActiveMonitor(HWND hDlg, WORD CB, BYTE uCheck
 	gpSet->isRestore2ActiveMon = (uCheck != BST_UNCHECKED);
 
 } // cbRestore2ActiveMonitor
+
+
+// cbRestoreInactive
+void CSetDlgButtons::OnBtn_RestoreInactive(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbRestoreInactive);
+
+	gpSet->isRestoreInactive = (uCheck != BST_UNCHECKED);
+
+} // cbRestoreInactive
 
 
 // rbScrollbarAuto || rbScrollbarHide || rbScrollbarShow

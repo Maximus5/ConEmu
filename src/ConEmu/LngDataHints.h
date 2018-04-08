@@ -147,6 +147,7 @@ static LngPredefined gsDataHints[] = {
 	{ cbRClick,                L"Off - all RClicks passed to console\r\nOn - EMenu called instead of RClick\r\n3rd-state - Short RClick passed, Long RClick -> EMenu\r\nWarning! This may conflict with RDrag" },
 	{ cbRSelectionFix,         L"Fix dashed selection with fast right mouse drag\r\nFar 3: restore files selection instead of EMenu" },
 	{ cbRestore2ActiveMonitor, L"When restoring or sliding-down move window to the active monitor, where mouse cursor is located" },
+	{ cbRestoreInactive,       L"Restore and focus inactive window by ‘Minimize/Restore’ hotkey" },
 	{ cbRetardInactivePanes,   L"Retard inactive but visible split-panes in the active ConEmu window" },
 	{ cbSafeFarClose,          L"Try to close Far Manager softly, instead of closing console window, when you close ConEmu window" },
 	{ cbScrollbarDynamic,      L"Increase maximum scrollbar position with console output grows" },
