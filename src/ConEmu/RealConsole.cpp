@@ -3065,7 +3065,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 		}
 
 		if (!rbChildProcessCreated
-			&& (mn_ProcessClientCount > 0)
+			&& ((mn_ProcessClientCount > 0) || (mn_Terminal_PID != 0))
 			&& ((GetTickCount() - nConsoleStartTick) > PROCESS_WAIT_START_TIME))
 		{
 			rbChildProcessCreated = true;
