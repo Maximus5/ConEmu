@@ -271,7 +271,7 @@ int CheckUnicodeFont()
 	SetConsoleTextAttribute(hOut, N);
 	write(L"\r\n");
 
-	write(L"\r\nCheck ");
+	write(L"\r\n" L"Check ");
 
 
 	if ((bInfo = GetConsoleScreenBufferInfo(hOut, &csbi)) != FALSE)
