@@ -541,8 +541,8 @@ static INT_PTR OnSetCursor(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 
 void DoStartupCommand(HWND hDlg, WORD nCtrlId)
 {
-	CEStr lsValue;
-	if (CSetDlgLists::GetSelectedString(hDlg, nCtrlId, lsValue) > 0)
+	CEStr lsValue(GetDlgItemTextPtr(hDlg, nCtrlId));
+	if (lsValue)
 	{
 		if (*lsValue.ms_Val == TaskBracketLeft)
 		{
