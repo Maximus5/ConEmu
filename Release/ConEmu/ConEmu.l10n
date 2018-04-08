@@ -622,6 +622,10 @@
       "zh": "当窗口恢复至或者下滑移动到鼠标所在的活动的显示屏时",
       "id": 2867 }
     ,
+    "cbRestoreInactive": {
+      "en": "Restore and focus inactive window by ‘Minimize/Restore’ hotkey",
+      "id": 3099 }
+    ,
     "cbRetardInactivePanes": {
       "en": "Retard inactive but visible split-panes in the active ConEmu window",
       "zh": "延缓在活动的ConEmu窗口里可见但非活动的分割窗格",
@@ -4036,6 +4040,10 @@
       "zh": "恢复至活动的显示屏",
       "id": 2867 }
     ,
+    "cbRestoreInactive": {
+      "en": "Restore inactive window by hotkey",
+      "id": 3099 }
+    ,
     "cbRetardInactivePanes": {
       "en": "Retard inactive panes",
       "zh": "延缓不活动的窗格",
@@ -4707,6 +4715,10 @@
       "en": "New console split",
       "zh": "新建console分屏",
       "id": 2440 }
+    ,
+    "gbRestoreMinimize": {
+      "en": "Activation and minimization",
+      "id": 3098 }
     ,
     "gbSelectColorIdx": {
       "en": "Color indexes",
@@ -5503,7 +5515,7 @@
     ,
     "stColorSchemeFast": {
       "en": "Choose color scheme:",
-      "_ru": "Выберите цветовую схему:",
+      "ru": "Выберите цветовую схему:",
       "_zh": "选择最喜欢的颜色方案：",
       "id": 2845 }
     ,
