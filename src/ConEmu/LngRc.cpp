@@ -107,12 +107,14 @@ void CLngRc::Reload(bool bForce /*= false*/)
 		}
 		else
 		{
-			lsNewFile = JoinPath(gpConEmu->ms_ConEmuExeDir, gsResourceFileName);
-			if (!(bExists = FileExists(lsNewFile)))
-			{
-				lsNewFile = JoinPath(gpConEmu->ms_ConEmuBaseDir, gsResourceFileName);
-				bExists = FileExists(lsNewFile);
-			}
+			if (!bExists)
+				bExists = FileExists(lsNewFile = JoinPath(gpConEmu->ms_ConEmuExeDir, gsResourceFileName));
+			if (!bExists)
+				bExists = FileExists(lsNewFile = JoinPath(gpConEmu->ms_ConEmuBaseDir, gsResourceFileName));
+			#ifdef _DEBUG
+			if (!bExists)
+				bExists = FileExists(lsNewFile = JoinPath(gpConEmu->ms_ConEmuExeDir, L"..\\Release\\ConEmu", gsResourceFileName));
+			#endif
 		}
 
 		// File name was changed?
