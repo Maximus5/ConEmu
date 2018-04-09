@@ -77,6 +77,11 @@
       <ComponentRef Id="Command_Processor_Off.reg" />
     </Feature>
     <!-- Documentation -->
+    <Feature Id="FConEmuL10N" AllowAdvertise="no" Title="Localization" Level="1"
+             Description="ConEmu.l10n file with localization resources">
+      <ComponentRef Id="ConEmu.l10n" />
+    </Feature>
+    <!-- Documentation -->
     <Feature Id="FConEmuDocs" AllowAdvertise="no" Title="Documentation" Level="1"
              Description="WhatsNew-ConEmu.txt, FAQ-ConEmu.txt, ConEmu_Sample.xml, ConEmu_Tilde.xml and other information">
       <ComponentRef Id="About_ConEmu.txt" />

@@ -118,6 +118,11 @@
       </Component>
 
       <!-- Documentation -->
+      <Component Id="ConEmu.l10n" Guid="$(var.Guid.ConEmu.l10n)" Win64="$(var.Win64)">
+        <File Id="ConEmu.l10n" Source="..\..\Release\ConEmu\ConEmu.l10n"  KeyPath="yes" />
+      </Component>
+
+      <!-- Documentation -->
       <Component Id="About_ConEmu.txt" Guid="$(var.Guid.About_ConEmu.txt)" Win64="$(var.Win64)">
         <File Id="About_ConEmu.txt" Source="..\..\Release\ConEmu\About-ConEmu.txt"  KeyPath="yes" />
       </Component>

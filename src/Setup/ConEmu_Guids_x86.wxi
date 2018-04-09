@@ -63,6 +63,8 @@
 	<?define Guid.DosBox_Sample.conf = "686C782C-0AC2-4BE8-AFEE-BFA9BDCF845E" ?>
 	<!-- Portable Reg -->
 	<?define Guid.Portable.Readme.txt = "32DA0E92-B7D0-446A-BDF7-E04611E821C0" ?>
+	<!-- Localization -->
+	<?define Guid.ConEmu.l10n = "CDD787AA-4EE3-4D1A-8DF0-C4DD9D09E6B8" ?>
 	<!-- Documentation -->
 	<?define Guid.About_ConEmu.txt = "A94A790E-7698-45BA-9027-B6F55401BC35" ?>
 	<?define Guid.Portable.txt = "B94B2B1C-E779-428F-A19F-4016D81FF7B5" ?>
