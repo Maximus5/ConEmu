@@ -20,6 +20,12 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.4.9
+* gh-1501: One more fix for cursor position after CJK (and other `COMMON_LVB_*_BYTE`) glyphs on Windows 10.
+* Fix custom startup command in ‘Fast configuration’ dialog (44b40e6 regression).
+* Add ConEmu.l10n (localization file) to portable and installer.
+
+
 2018.4.8
 * Add ‘Interface language’ field to ‘Fast configuration’ dialog.
 * New first page ‘General’ in the ‘Settings’ dialog contains several most used options and language selection.
