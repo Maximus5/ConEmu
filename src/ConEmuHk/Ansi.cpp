@@ -1114,6 +1114,15 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	};
 	#endif
 
+	if ((nNumberOfCharsToWrite == 1) && isConsoleBadDBCS())
+	{
+		if (lpBuffer[0] == ucLineFeed)
+		{
+			static wchar_t dummy_buf[2] = L"%";
+			lpBuffer = dummy_buf;
+		}
+	}
+
 	while (nWriteTo > nWriteFrom && nWriteFrom < nNumberOfCharsToWrite)
 	{
 		#ifdef GH_1402

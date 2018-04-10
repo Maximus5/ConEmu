@@ -81,6 +81,8 @@ extern MY_CONSOLE_FONT_INFOEX g_LastSetConsoleFont;
 extern bool g_IgnoreSetLargeFont;
 #endif
 
+BOOL isConsoleBadDBCS();
+
 BOOL apiGetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
 BOOL apiSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
 

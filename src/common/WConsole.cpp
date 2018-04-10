@@ -35,6 +35,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WObjects.h"
 
 
+// gh-1402: On CJK versions of Win10 the COMMON_LVB_*_BYTE is set unexpectedly for many glyphs
+BOOL isConsoleBadDBCS()
+{
+	static int isBadDBCS = 0;
+	if (!isBadDBCS)
+	{
+		isBadDBCS = (IsWin10() && IsDbcs()) ? 1 : -1;
+	}
+	return (isBadDBCS == 1);
+}
+
+
+
 MY_CONSOLE_FONT_INFOEX g_LastSetConsoleFont = {};
 
 
