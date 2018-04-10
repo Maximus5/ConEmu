@@ -2384,11 +2384,30 @@ static void CreateBashTask()
 					}
 				}
 			}
+			// Find the icon
+			CEStr wslIcon;
+			const wchar_t* iconFiles[] = {
+				// legacy?
+				L"%USERPROFILE%\\AppData\\Local\\lxss\\bash.ico",
+				// Find via registry by "CanonicalGroupLimited"?
+				// [HKEY_CLASSES_ROOT\ActivatableClasses\Package\CanonicalGroupLimited.UbuntuonWindows_1604.2017.922.0_x64__79rhkp1fndgsc]
+				L"%ProgramW6432%\\WindowsApps\\CanonicalGroupLimited.UbuntuonWindows_1604.2017.922.0_x64__79rhkp1fndgsc\\images\\icon.ico",
+				L"%ProgramFiles%\\WindowsApps\\CanonicalGroupLimited.UbuntuonWindows_1604.2017.922.0_x64__79rhkp1fndgsc\\images\\icon.ico"
+			};
+			for (size_t i = 0; i < countof(iconFiles); ++i)
+			{
+				CEStr lsPath(ExpandEnvStr(iconFiles[i]));
+				if (FileExists(lsPath))
+				{
+					wslIcon.Attach(lstrmerge(L"-icon \"", iconFiles[i], L"\""));
+					break;
+				}
+			}
 			// Create the task
 			bash_found |= App.Add(L"Bash::bash",
 				use_bridge ? L" --wsl -cur_console:pm:/mnt" : L" -cur_console:pm:/mnt", // "--login -i" is not required yet
 				use_bridge ? L"set \"PATH=%ConEmuBaseDirShort%\\wsl;%PATH%\" & " : NULL,
-				L"-icon \"%USERPROFILE%\\AppData\\Local\\lxss\\bash.ico\"",
+				wslIcon.c_str(),
 				use_bridge ? lsConnector.ms_Val : BashOnUbuntu,
 				NULL);
 		}
