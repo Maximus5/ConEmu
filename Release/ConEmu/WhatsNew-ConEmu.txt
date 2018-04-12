@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.4.11
+* gh-1402: Workaround for \u23CE ⏎ character preceding every prompt in fish on CJK versions of Win10.
+* gh-1449: DefTerm: Support VS 2017 changes in debugging C# console applications.
+* DefTerm: Do several attempts to attach started console (alternative mode).
+* For new installations automatic updates by default are enabled (same channel as downloaded release).
+* Fix icon path for WSL Bash task.
+
+
 2018.4.9
 * gh-1501: One more fix for cursor position after CJK (and other `COMMON_LVB_*_BYTE`) glyphs on Windows 10.
 * Fix custom startup command in ‘Fast configuration’ dialog (44b40e6 regression).
