@@ -84,7 +84,6 @@ protected:
 	virtual void LogHookingStatus(DWORD nForePID, LPCWSTR sMessage) override;
 protected:
 	friend bool InitDefTerm();
-	friend void DefTermLogInit();
 	friend void DefTermLogString(LPCSTR asMessage, LPCWSTR asLabel /*= NULL*/);
 	friend void DefTermLogString(LPCWSTR asMessage, LPCWSTR asLabel /*= NULL*/);
 };

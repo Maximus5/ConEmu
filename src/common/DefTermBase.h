@@ -1167,8 +1167,8 @@ protected:
 		return bRc;
 	};
 
-protected:
-	// exe-шник в списке обрабатываемых?
+public:
+	// Is exe-name or application window class name in user-defined list?
 	bool IsAppMonitored(LPCWSTR szExeFile)
 	{
 		bool bMonitored = false;
