@@ -152,13 +152,39 @@ protected:
 		wchar_t* pszAutoruns = NULL;
 		HKEY hk = NULL;
 		if (RegOpenKeyEx(HKEY_CURRENT_USER, L"Software\\Microsoft\\Command Processor", 0, KEY_READ, &hk) == 0)
-			LoadAutorunsKey(hk, pszAutoruns, L"  HKCU: ");
+			LoadAutorunsKey(hk, pszAutoruns, L"  HKCU: "); // closes hk
 		bool bWin64 = IsWindows64();
 		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Command Processor", 0, KEY_READ|(bWin64?KEY_WOW64_32KEY:0), &hk) == 0)
-			LoadAutorunsKey(hk, pszAutoruns, L"  HKLM32: ");
+			LoadAutorunsKey(hk, pszAutoruns, L"  HKLM32: "); // closes hk
 		if (bWin64 && RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Command Processor", 0, KEY_READ|KEY_WOW64_64KEY, &hk) == 0)
-			LoadAutorunsKey(hk, pszAutoruns, L"  HKLM64: ");
+			LoadAutorunsKey(hk, pszAutoruns, L"  HKLM64: "); // closes hk
 		return pszAutoruns;
+	}
+
+	static wchar_t* LoadWindowsBuild(const OSVERSIONINFOEXW& osv)
+	{
+		wchar_t* pszBuild = NULL;
+		if (IsWin10())
+		{
+			HKEY hk = NULL;
+			if (0 == RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hk))
+			{
+				DWORD dwSize, UBR = 0, ubrType = 0, relType = 0;
+				wchar_t ReleaseId[128] = L"", szUBR[32];
+				LONG ubr = RegQueryValueEx(hk, L"UBR", NULL, &ubrType, (LPBYTE)&UBR, &(dwSize = sizeof(UBR)));
+				LONG rid = RegQueryValueEx(hk, L"ReleaseId", NULL, &relType, (LPBYTE)ReleaseId, &(dwSize = sizeof(ReleaseId)));
+				wchar_t* pszSP = osv.szCSDVersion[0] ? lstrmerge(L"; SP: ", osv.szCSDVersion) : NULL;
+				if (ubr == 0 && ubrType == REG_DWORD && UBR && rid == 0 && relType == REG_SZ && *ReleaseId)
+					pszBuild = lstrmerge(ReleaseId, L"; UBR: ", ultow_s(UBR, szUBR, 10), pszSP);
+				else if (rid == 0 && relType == REG_SZ && *ReleaseId)
+					pszBuild = lstrmerge(ReleaseId, pszSP);
+				else if (ubr == 0 && ubrType == REG_DWORD && UBR)
+					pszBuild = lstrmerge(ReleaseId, L"UBR(", ultow_s(UBR, szUBR, 10), L")", pszSP);
+				SafeFree(pszSP);
+				RegCloseKey(hk);
+			}
+		}
+		return pszBuild ? pszBuild : lstrdup(osv.szCSDVersion);
 	}
 
 	/*
@@ -263,9 +289,17 @@ public:
 		GetVersionEx((OSVERSIONINFOW*)&osv);
 		#pragma warning(default: 4996)
 
-		LPCWSTR pszReactOS = osv.szCSDVersion + lstrlen(osv.szCSDVersion) + 1;
-		if (!*pszReactOS)
-			pszReactOS++;
+		// if you're running on ReactOS, Version.szCSDVersion will contain two strings.
+		// The first string is the Windows compatible service pack number, "Service Pack 6".
+		// At the end of that string is a null byte. Following that null byte is the ReactOS
+		// version string (something like "ReactOS 0.2.5-RC1 (Build 20041227)".
+		// When running on Windows, there will be only one string in Version.szCSDVersion.
+		LPCWSTR pszReactOS = osv.szCSDVersion + lstrlen(osv.szCSDVersion); // points to '\0'
+		if ((pszReactOS + 10) < (osv.szCSDVersion + countof(osv.szCSDVersion)))
+		{
+			if (*(pszReactOS+1))
+				++pszReactOS;
+		}
 
 		HWND hConWnd = GetConsoleWindow();
 
@@ -304,19 +338,22 @@ public:
 		else
 			swprintf_c(szProdType, L"%u", osv.wProductType);
 
+		wchar_t* pszWinBuild = LoadWindowsBuild(osv);
 		swprintf_c(szSI, L"ConEmu %s [%u] Startup Info\r\n"
 			L"  OsVer: %s, Product: %s, SP: %u.%u, Suite: 0x%X\r\n"
-			L"  CSDVersion: %s, ReactOS: %u (%s), Rsrv: %u, SM_SERVERR2: %u\r\n"
+			L"  Build: %s, ReactOS: %u%s%s%s, Rsrv: %u, SM_SERVERR2: %u\r\n"
 			L"  DBCS: %u, WINE: %u, PE: %u, Remote: %u, ACP: %u, OEMCP: %u, Admin: %u\r\n"
 			L"  StartTime: %s\r\n"
 			, szBuild, WIN3264TEST(32,64),
 			szTitle,
 			szProdType, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask,
-			osv.szCSDVersion, apStartEnv->bIsReactOS, pszReactOS, osv.wReserved, GetSystemMetrics(89/*SM_SERVERR2*/),
+			pszWinBuild ? pszWinBuild : L"", apStartEnv->bIsReactOS, *pszReactOS?L" (":L"", pszReactOS, *pszReactOS?L")":L"",
+				osv.wReserved, GetSystemMetrics(89/*SM_SERVERR2*/),
 			apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->bIsWinPE, apStartEnv->bIsRemote,
 			apStartEnv->nAnsiCP, apStartEnv->nOEMCP, apStartEnv->bIsAdmin,
 			szStartTime);
 		DumpEnvStr(szSI, lParam, true, false);
+		SafeFree(pszWinBuild);
 
 		bool is_themed = false, is_dwm = false;
 		if (IsWinXP())
