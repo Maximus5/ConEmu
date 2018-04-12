@@ -74,7 +74,7 @@ bool isDefTermEnabled()
 {
 	if (!gbPrepareDefaultTerminal || !gpDefTerm)
 		return false;
-	bool bDontCheckName = gbIsNetVsHost
+	bool bDontCheckName = (gbIsNetVsHost || gbIsVSDebug)
 		// Especially for Code, which starts detached "cmd /c start /wait"
 		|| ((ghConWnd == NULL) && (gnImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI))
 		;

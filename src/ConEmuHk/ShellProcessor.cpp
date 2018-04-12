@@ -1760,7 +1760,7 @@ int CShellProc::PrepareExecuteParms(
 				{
 					if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
 					{
-						mb_DebugWasRequested = true;
+						mb_DebugWasRequested = TRUE;
 						LogExit(0);
 						return 0;
 					}
@@ -1969,12 +1969,22 @@ int CShellProc::PrepareExecuteParms(
 					{
 						bDebugWasRequested = true;
 					}
-				}
+				} // end of check "starting *.vshost.exe" (seems like not used in latest VS & .Net)
+				else if (gbIsVSDebug && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI))
+				{
+					// Intended for .Net debugging (without native support)
+					if (anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED)
+						// DEBUG_XXX flags are processed above explicitly
+						&& !((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS)))
+					{
+						bDebugWasRequested = true;
+					}
+				} // end of check "starting C# console app from msvsmon.exe"
 				else if (lbGnuDebugger)
 				{
 					bDebugWasRequested = true;
 					mb_PostInjectWasRequested = true;
-				}
+				} // end of check "starting new gnu debugger"
 				else if (lstrcmpi(gsExeName, ms_ExeTmp))
 				{
 					// Idle from (Pythonw.exe, gh-457), VisualStudio Code (code.exe), and so on
@@ -1982,7 +1992,7 @@ int CShellProc::PrepareExecuteParms(
 					CEStr lsMsg(L"Forcing mb_NeedInjects for `", gsExeName, L"` started from `", gsExeName, L"`");
 					LogShellString(lsMsg);
 					mb_NeedInjects = true;
-				}
+				} // end of check "<starting exe> == <current exe>"
 			}
 		}
 
