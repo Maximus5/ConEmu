@@ -1365,6 +1365,10 @@ void InitExeName()
 	{
 		gbIsVStudio = true;
 	}
+	else if ((lstrcmpi(gsExeName, L"msvsmon.exe") == 0))
+	{
+		gbIsVSDebug = true;
+	}
 	else if (lstrcmpi(gsExeName, L"code.exe") == 0)
 	{
 		gbIsVsCode = true;

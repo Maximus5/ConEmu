@@ -61,6 +61,7 @@ extern HMODULE ghOurModule; // Хэндл нашей dll'ки (здесь хук
 bool gbPrepareDefaultTerminal = false;
 bool gbIsNetVsHost = false;
 bool gbIsVStudio = false;
+bool gbIsVSDebug = false; // msvsmon.exe
 bool gbIsVsCode = false;
 int  gnVsHostStartConsole = 0;
 bool gbIsGdbHost = false;
