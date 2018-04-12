@@ -367,12 +367,14 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 		if (!gpDefTerm)
 		{
 			_ASSERTEX(gpDefTerm!=NULL);
+			LogShellString(L"LoadSrvMapping failed: !gpDefTerm");
 			return FALSE;
 		}
 
 		// Parameters are stored in the registry now
 		if (!isDefTermEnabled())
 		{
+			LogShellString(L"LoadSrvMapping failed: !isDefTermEnabled()");
 			return FALSE;
 		}
 
@@ -431,12 +433,18 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 	if (!m_SrvMapping.cbSize || (m_SrvMapping.hConEmuWndDc && !IsWindow(m_SrvMapping.hConEmuWndDc)))
 	{
 		if (!::LoadSrvMapping(ghConWnd, m_SrvMapping))
+		{
+			LogShellString(L"LoadSrvMapping failed: !::LoadSrvMapping()");
 			return FALSE;
+		}
 		_ASSERTE(m_SrvMapping.ComSpec.ConEmuExeDir[0] && m_SrvMapping.ComSpec.ConEmuBaseDir[0]);
 	}
 
 	if (!m_SrvMapping.hConEmuWndDc || !IsWindow(m_SrvMapping.hConEmuWndDc))
+	{
+		LogShellString(L"LoadSrvMapping failed: !::IsWindow()");
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -1503,11 +1511,11 @@ int CShellProc::PrepareExecuteParms(
 	}
 
 	// DefTerm logging
-	wchar_t szInfo[140];
+	wchar_t szInfo[200];
 	#define LogExit(frc) \
 		msprintf(szInfo, countof(szInfo), \
-			L"PrepareExecuteParms rc=%i %u:%u:%u W:%u I:%u,%u,%u D:%u H:%u S:%u,%u line=%i", \
-			/*rc*/(frc), \
+			L"PrepareExecuteParms rc=%i T:%u %u:%u:%u W:%u I:%u,%u,%u D:%u H:%u S:%u,%u line=%i", \
+			/*rc*/(frc), /*T:*/gbPrepareDefaultTerminal ? 1 : 0, \
 			(UINT)mn_ImageSubsystem, (UINT)mn_ImageBits, (UINT)mb_isCurrentGuiClient, \
 			/*W:*/(UINT)mb_WasSuspended, \
 			/*I:*/(UINT)mb_NeedInjects, (UINT)mb_PostInjectWasRequested, (UINT)mb_Opt_DontInject, \
