@@ -1374,7 +1374,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 		wchar_t* pszDbgMsg = (wchar_t*)calloc(cchLen, sizeof(wchar_t));
 		if (pszDbgMsg)
 		{
-			msprintf(pszDbgMsg, cchLen, L"RunChanged(ParentPID=%u): %s <%s> <%s>\n",
+			msprintf(pszDbgMsg, cchLen, L"RunChanged(ParentPID=%u): %s <%s> <%s>",
 				GetCurrentProcessId(),
 				(aCmd == eShellExecute) ? L"Shell" : (aCmd == eCreateProcess) ? L"Create" : L"???",
 				*psFile ? *psFile : L"", *psParam ? *psParam : L"");
@@ -1528,11 +1528,12 @@ int CShellProc::PrepareExecuteParms(
 	#define LogExit(frc) \
 		msprintf(szInfo, countof(szInfo), \
 			L"PrepareExecuteParms rc=%i %u:%u:%u W:%u I:%u,%u,%u D:%u H:%u S:%u,%u line=%i", \
-			(frc), \
+			/*rc*/(frc), \
 			(UINT)mn_ImageSubsystem, (UINT)mn_ImageBits, (UINT)mb_isCurrentGuiClient, \
-			(UINT)mb_WasSuspended, (UINT)mb_NeedInjects, (UINT)mb_PostInjectWasRequested, \
-			(UINT)mb_Opt_DontInject, (UINT)mb_DebugWasRequested, (UINT)mb_HiddenConsoleDetachNeed, \
-			(UINT)mb_Opt_SkipNewConsole, (UINT)mb_Opt_SkipCmdStart, \
+			/*W:*/(UINT)mb_WasSuspended, \
+			/*I:*/(UINT)mb_NeedInjects, (UINT)mb_PostInjectWasRequested, (UINT)mb_Opt_DontInject, \
+			/*D:*/(UINT)mb_DebugWasRequested, /*H:*/(UINT)mb_HiddenConsoleDetachNeed, \
+			/*S:*/(UINT)mb_Opt_SkipNewConsole, (UINT)mb_Opt_SkipCmdStart, \
 			__LINE__); \
 		LogShellString(szInfo);
 
@@ -2036,7 +2037,7 @@ int CShellProc::PrepareExecuteParms(
 		wchar_t* pszDbgMsg = (wchar_t*)calloc(cchLen, sizeof(wchar_t));
 		if (pszDbgMsg)
 		{
-			msprintf(pszDbgMsg, cchLen, L"Run(ParentPID=%u): %s <%s> <%s>\n",
+			msprintf(pszDbgMsg, cchLen, L"Run(ParentPID=%u): %s <%s> <%s>",
 				GetCurrentProcessId(),
 				(aCmd == eShellExecute) ? L"Shell" : (aCmd == eCreateProcess) ? L"Create" : L"???",
 				asFile ? asFile : L"", asParam ? asParam : L"");
@@ -2961,31 +2962,29 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 {
 	// logging
 	{
-		int cchLen = 255;
-		wchar_t* pszDbgMsg = (wchar_t*)calloc(cchLen, sizeof(wchar_t));
-		if (pszDbgMsg)
+		const size_t cchLen = 255;
+		wchar_t szDbgMsg[cchLen];
+		if (!abSucceeded)
 		{
-			if (!abSucceeded)
-			{
-				msprintf(pszDbgMsg, cchLen, L"Create(ParentPID=%u): Failed, ErrCode=0x%08X",
-					GetCurrentProcessId(), GetLastError());
-			}
-			else
-			{
-				msprintf(pszDbgMsg, cchLen, L"Create(ParentPID=%u): Ok, PID=%u",
-					GetCurrentProcessId(), lpPI->dwProcessId);
-				if (WaitForSingleObject(lpPI->hProcess, 0) == WAIT_OBJECT_0)
-				{
-					DWORD dwExitCode = 0;
-					GetExitCodeProcess(lpPI->hProcess, &dwExitCode);
-					msprintf(pszDbgMsg+lstrlen(pszDbgMsg), cchLen-lstrlen(pszDbgMsg),
-						L", Terminated!!! Code=%u", dwExitCode);
-				}
-			}
-			_wcscat_c(pszDbgMsg, cchLen, L"\n");
-			LogShellString(pszDbgMsg);
-			free(pszDbgMsg);
+			msprintf(szDbgMsg, cchLen,
+				L"Create(ParentPID=%u): Failed, ErrCode=0x%08X",
+				GetCurrentProcessId(), GetLastError());
 		}
+		else
+		{
+			msprintf(szDbgMsg, cchLen,
+				L"Create(ParentPID=%u): Ok, PID=%u",
+				GetCurrentProcessId(), lpPI->dwProcessId);
+			if (WaitForSingleObject(lpPI->hProcess, 0) == WAIT_OBJECT_0)
+			{
+				DWORD dwExitCode = 0;
+				GetExitCodeProcess(lpPI->hProcess, &dwExitCode);
+				int len = lstrlen(szDbgMsg);
+				msprintf(szDbgMsg+len, cchLen-len,
+					L", Terminated!!! Code=%u", dwExitCode);
+			}
+		}
+		LogShellString(szDbgMsg);
 	}
 
 	BOOL bAttachCreated = FALSE;
@@ -3086,7 +3085,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 						wchar_t* pszDbg = (wchar_t*)malloc(MAX_PATH*3*sizeof(*pszDbg));
 						if (pszDbg)
 						{
-							msprintf(pszDbg, MAX_PATH*3, L"ConEmuHk: Failed to start attach server, Err=%u! %s\n", nErr, pszCmdLine);
+							msprintf(pszDbg, MAX_PATH*3, L"ConEmuHk: Failed to start attach server, Err=%u! %s", nErr, pszCmdLine);
 							LogShellString(pszDbg);
 							free(pszDbg);
 						}
@@ -3116,7 +3115,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
 {
 	wchar_t szDbgMsg[255];
-	msprintf(szDbgMsg, countof(szDbgMsg), L"%s: InjectHooks(x%u), ParentPID=%u (%s), ChildPID=%u\n",
+	msprintf(szDbgMsg, countof(szDbgMsg), L"%s: InjectHooks(x%u), ParentPID=%u (%s), ChildPID=%u",
 		asFrom, WIN3264TEST(32,64), GetCurrentProcessId(), gsExeName, lpPI->dwProcessId);
 	LogShellString(szDbgMsg);
 
