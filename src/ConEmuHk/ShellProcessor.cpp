@@ -141,28 +141,7 @@ PROCESS_INFORMATION CShellProc:: m_WaitDebugVsThread = {};
 CShellProc::CShellProc()
 {
 	mn_CP = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
-	mpwsz_TempAction = mpwsz_TempFile = mpwsz_TempParam = NULL;
-	mpsz_TempRetFile = mpsz_TempRetParam = mpsz_TempRetDir = NULL;
-	mpwsz_TempRetFile = mpwsz_TempRetParam = mpwsz_TempRetDir = NULL;
-	mlp_ExecInfoA = NULL; mlp_ExecInfoW = NULL;
-	mlp_SaveExecInfoA = NULL; mlp_SaveExecInfoW = NULL;
-	mb_WasSuspended = FALSE;
-	mb_NeedInjects = FALSE;
-	mb_Opt_DontInject = false;
-	mb_Opt_SkipNewConsole = false;
-	mb_Opt_SkipCmdStart = false;
-	mb_DebugWasRequested = FALSE;
-	mb_HiddenConsoleDetachNeed = FALSE;
-	mb_PostInjectWasRequested = FALSE;
-	// int CShellProc::mn_InShellExecuteEx = 0; <-- static
-	mb_InShellExecuteEx = FALSE;
-	//mb_DosBoxAllowed = FALSE;
-	m_SrvMapping.cbSize = 0;
-
-	mb_TempConEmuWnd = FALSE;
 	mh_PreConEmuWnd = ghConEmuWnd; mh_PreConEmuWndDC = ghConEmuWndDC;
-
-	hOle32 = NULL;
 
 	// Current application is GUI subsystem run in ConEmu tab?
 	CheckIsCurrentGuiClient();

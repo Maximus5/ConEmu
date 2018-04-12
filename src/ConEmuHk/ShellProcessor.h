@@ -51,46 +51,46 @@ private:
 	UINT mn_CP; // = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
 
 	// Для конвертации параметров Ansi функций (работаем через Unicode для унификации)
-	LPWSTR mpwsz_TempAction; // = str2wcs(asAction, nCP);
-	LPWSTR mpwsz_TempFile; // = str2wcs(asFile, nCP);
-	LPWSTR mpwsz_TempParam; // = str2wcs(asParam, nCP);
+	LPWSTR mpwsz_TempAction = NULL; // = str2wcs(asAction, nCP);
+	LPWSTR mpwsz_TempFile = NULL; // = str2wcs(asFile, nCP);
+	LPWSTR mpwsz_TempParam = NULL; // = str2wcs(asParam, nCP);
 
-	LPSTR  mpsz_TempRetFile;
-	LPSTR  mpsz_TempRetParam;
-	LPSTR  mpsz_TempRetDir;
-	LPWSTR mpwsz_TempRetFile;
-	LPWSTR mpwsz_TempRetParam;
-	LPWSTR mpwsz_TempRetDir;
+	LPSTR  mpsz_TempRetFile = NULL;
+	LPSTR  mpsz_TempRetParam = NULL;
+	LPSTR  mpsz_TempRetDir = NULL;
+	LPWSTR mpwsz_TempRetFile = NULL;
+	LPWSTR mpwsz_TempRetParam = NULL;
+	LPWSTR mpwsz_TempRetDir = NULL;
 
 	// Копии для ShellExecuteEx - менять мы можем только свою память
-	LPSHELLEXECUTEINFOA mlp_ExecInfoA, mlp_SaveExecInfoA;
-	LPSHELLEXECUTEINFOW mlp_ExecInfoW, mlp_SaveExecInfoW;
+	LPSHELLEXECUTEINFOA mlp_ExecInfoA = NULL, mlp_SaveExecInfoA = NULL;
+	LPSHELLEXECUTEINFOW mlp_ExecInfoW = NULL, mlp_SaveExecInfoW = NULL;
 
 	// Информация о запускаемом процессе
-	DWORD mn_ImageSubsystem, mn_ImageBits;
+	DWORD mn_ImageSubsystem = 0, mn_ImageBits = 0;
 	CEStr ms_ExeTmp;
-	BOOL mb_WasSuspended; // Если TRUE - значит при вызове CreateProcessXXX уже был флаг CREATE_SUSPENDED
-	BOOL mb_NeedInjects;
-	BOOL mb_DebugWasRequested;
-	BOOL mb_HiddenConsoleDetachNeed;
-	BOOL mb_PostInjectWasRequested;
+	BOOL mb_WasSuspended = FALSE; // Если TRUE - значит при вызове CreateProcessXXX уже был флаг CREATE_SUSPENDED
+	BOOL mb_NeedInjects = FALSE;
+	BOOL mb_DebugWasRequested = FALSE;
+	BOOL mb_HiddenConsoleDetachNeed = FALSE;
+	BOOL mb_PostInjectWasRequested = FALSE;
 	//BOOL mb_DosBoxAllowed;
-	bool mb_Opt_DontInject; // ConEmuHooks=OFF
-	bool mb_Opt_SkipNewConsole; // ConEmuHooks=NOARG
-	bool mb_Opt_SkipCmdStart; // ConEmuHooks=NOSTART
+	bool mb_Opt_DontInject = false; // ConEmuHooks=OFF
+	bool mb_Opt_SkipNewConsole = false; // ConEmuHooks=NOARG
+	bool mb_Opt_SkipCmdStart = false; // ConEmuHooks=NOSTART
 	void CheckHooksDisabled();
 	bool GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsExeTmp);
 
-	BOOL mb_isCurrentGuiClient;
+	BOOL mb_isCurrentGuiClient = FALSE;
 	void CheckIsCurrentGuiClient();
 
 	//static int mn_InShellExecuteEx;
-	BOOL mb_InShellExecuteEx;
+	BOOL mb_InShellExecuteEx = FALSE;
 
-	CESERVER_CONSOLE_MAPPING_HDR m_SrvMapping;
+	CESERVER_CONSOLE_MAPPING_HDR m_SrvMapping = {};
 
-	HWND mh_PreConEmuWnd, mh_PreConEmuWndDC;
-	BOOL mb_TempConEmuWnd;
+	HWND mh_PreConEmuWnd = NULL, mh_PreConEmuWndDC = NULL;
+	BOOL mb_TempConEmuWnd = FALSE;
 
 private:
 	wchar_t* str2wcs(const char* psz, UINT anCP);
@@ -143,11 +143,11 @@ public:
 	bool GetLinkProperties(LPCWSTR asLnkFile, CEStr& rsExe, CEStr& rsArgs, CEStr& rsWorkDir);
 	bool InitOle32();
 protected:
-	HMODULE hOle32;
+	HMODULE hOle32 = NULL;
 	typedef HRESULT (WINAPI* CoInitializeEx_t)(LPVOID pvReserved, DWORD dwCoInit);
 	typedef HRESULT (WINAPI* CoCreateInstance_t)(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID riid, LPVOID *ppv);
-	CoInitializeEx_t CoInitializeEx_f;
-	CoCreateInstance_t CoCreateInstance_f;
+	CoInitializeEx_t CoInitializeEx_f = NULL;
+	CoCreateInstance_t CoCreateInstance_f = NULL;
 };
 
 // Service functions
