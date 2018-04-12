@@ -123,8 +123,8 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	_ASSERTE(szUpdateExeCmdLine==NULL);
 
 	szUpdateVerLocation = NULL;
-	isUpdateCheckOnStartup = false;
-	isUpdateCheckHourly = false;
+	isUpdateCheckOnStartup = true;
+	isUpdateCheckHourly = true;
 	isUpdateConfirmDownload = true; // true-Show MsgBox, false-notify via TSA only
 	isUpdateUseBuilds = GetDefaultUpdateChannel();
 	isUpdateInetTool = false;
