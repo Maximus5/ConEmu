@@ -3381,7 +3381,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 					// Issue 998: Need to wait, while real console will appear
 					// gpSrv->hRootProcess еще не открыт
 					HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, gpSrv->dwRootProcess);
-					while (hProcess)
+					while (hProcess && hProcess != INVALID_HANDLE_VALUE)
 					{
 						DWORD nConPid = 0;
 						HWND hNewCon = FindWindowEx(NULL, NULL, RealConsoleClass, NULL);
@@ -3397,7 +3397,20 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 					}
 					SafeCloseHandle(hProcess);
 
-					bAttach = AttachConsole_f(gpSrv->dwRootProcess);
+					// Sometimes conhost handles are created with lags, wait for a while
+					DWORD nStartTick = GetTickCount();
+					const DWORD reattach_duration = 5000; // 5 sec
+					while (!bAttach)
+					{
+						bAttach = AttachConsole_f(gpSrv->dwRootProcess);
+						if (bAttach)
+							break;
+						Sleep(50);
+						DWORD nDelta = (GetTickCount() - nStartTick);
+						if (nDelta >= reattach_duration)
+							break;
+						LogString(L"Retrying AttachConsole after 50ms delay");
+					}
 				}
 				else
 				{
@@ -3824,7 +3837,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		{
 			// Reuse specified xml file if starting "ConEmu.exe" from console server!
 			#ifdef SHOW_LOADCFGFILE_MSGBOX
-			MessageBox(NULL, szArg, L"/LoadCfgFile", MB_SYSTEMMODAL);
+			MessageBox(NULL, lsCmdLine, L"/LoadCfgFile", MB_SYSTEMMODAL);
 			#endif
 			if ((iRc = NextArg(&lsCmdLine, szArg)) != 0)
 			{
