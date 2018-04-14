@@ -2944,9 +2944,6 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			//	  X10 Mouse Reporting (default off): Set reporting mode to 1 (or reset to
 			//	  0) -- see below.
 
-			//ESC [ ? 25 h
-			//	  DECTECM (default on): Make cursor visible.
-
 			//ESC [ ? 1000 h
 			//	  X11 Mouse Reporting (default off): Set reporting mode to 2 (or reset to
 			//	  0) -- see below.
@@ -3000,14 +2997,34 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				gDisplayOpt.AutoLfNl = (Code.Action == L'h');
 				DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
 				break;
+			//ESC [ ? 12 h
+			//	  Start Blinking Cursor (att610)
+			case 12:
+			//ESC [ ? 25 h
+			//	  DECTECM (default on): Make cursor visible.
 			case 25:
+				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
 				{
-					CONSOLE_CURSOR_INFO ci = {};
-					if (GetConsoleCursorInfo(hConsoleOutput, &ci))
+					for (int i = 0; i < Code.ArgC; ++i)
 					{
-						ci.bVisible = (Code.Action == L'h');
-						SetConsoleCursorInfo(hConsoleOutput, &ci);
+						if (Code.ArgV[i] == 25)
+						{
+							CONSOLE_CURSOR_INFO ci = {};
+							if (GetConsoleCursorInfo(hConsoleOutput, &ci))
+							{
+								ci.bVisible = (Code.Action == L'h');
+								SetConsoleCursorInfo(hConsoleOutput, &ci);
+							}
+						}
+						else
+						{
+							// DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
+						}
 					}
+				}
+				else
+				{
+					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
 				}
 				break;
 			case 4:
@@ -3051,13 +3068,6 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					LastMode = Mode;
 					ChangeTermMode(tmc_MouseMode, Mode);
 				}
-				else
-					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
-				break;
-			case 12:   /* SRM: set echo mode */
-				// tmux/screen?
-				if ((Code.PvtLen == 1) && (Code.Pvt[0] == L'?'))
-					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored); // ignored for now
 				else
 					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
 				break;
