@@ -5697,12 +5697,13 @@ bool CConEmuSize::ShowMainWindow(int anCmdShow, bool abFirstShow /*= false*/)
 BOOL CConEmuSize::AnimateWindow(DWORD dwTime, DWORD dwFlags)
 {
 	HWND hNextWindow = NULL;
-	if (dwFlags & AW_HIDE)
+	if ((dwFlags & AW_HIDE) && mp_ConEmu->isMeForeground(true, true))
 	{
 		hNextWindow = ghWnd;
 		while ((hNextWindow = GetNextWindow(hNextWindow, GW_HWNDNEXT)) != NULL)
 		{
-			if (::IsWindowVisible(hNextWindow))
+			if (!CVConGroup::isOurWindow(hNextWindow)
+				&& ::IsWindowVisible(hNextWindow))
 				break;
 		}
 	}
