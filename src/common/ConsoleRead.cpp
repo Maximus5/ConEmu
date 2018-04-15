@@ -80,7 +80,7 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 	static bool bDBCS = false, bDBCS_Checked = false;
 	if (!bDBCS_Checked)
 	{
-		bDBCS = (GetSystemMetrics(SM_DBCSENABLED) != 0);
+		bDBCS = IsDbcs();
 		bDBCS_Checked = true;
 	}
 
@@ -352,7 +352,7 @@ bool IsConsoleDoubleCellCP()
 	static bool bDBCS = false, bDBCS_Checked = false;
 	if (!bDBCS_Checked)
 	{
-		bDBCS = (GetSystemMetrics(SM_DBCSENABLED) != 0);
+		bDBCS = IsWinDBCS();
 		bDBCS_Checked = true;
 		// gh-945: Perhaps it will be fixed in future Win10 builds?
 		if (!bDBCS && IsWin10())

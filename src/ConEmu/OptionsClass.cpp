@@ -3569,7 +3569,7 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 
 		bool bLoaded = false;
 
-		if (ahDlg && (GetSystemMetrics(SM_DBCSENABLED) != 0))
+		if (ahDlg && IsWinDBCS())
 		{
 			// Chinese
 			HKEY hk = NULL;

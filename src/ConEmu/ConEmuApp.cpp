@@ -2949,7 +2949,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 
-	gbIsDBCS = IsDbcs();
+	gbIsDBCS = IsWinDBCS();
 	if (gbIsDBCS)
 	{
 		HKEY hk = NULL;

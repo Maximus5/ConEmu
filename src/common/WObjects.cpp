@@ -810,10 +810,17 @@ bool IsWin10()
 	return (ibIsWin10 == 1);
 }
 
-bool IsDbcs()
+// Returns true for CJK versions of Windows (Chinese, Japanese, etc.)
+// Their consoles behave in different way than European versions unfortunately
+bool IsWinDBCS()
 {
-	bool bIsDBCS = (GetSystemMetrics(SM_DBCSENABLED) != 0);
-	return bIsDBCS;
+	static int isDBCS = 0;
+	if (!isDBCS)
+	{
+		// GetSystemMetrics may hangs if called during normal process termination
+		isDBCS = (GetSystemMetrics(SM_DBCSENABLED) != 0) ? 1 : -1;
+	}
+	return (isDBCS == 1);
 }
 
 // Проверить битность OS

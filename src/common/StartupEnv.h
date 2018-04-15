@@ -123,7 +123,7 @@ protected:
 			// Информационно. К физической консоли потом могут и через RDP подключиться...
 			pEnv->bIsRemote = GetSystemMetrics(0x1000/*SM_REMOTESESSION*/);
 
-			pEnv->bIsDbcs = IsDbcs();
+			pEnv->bIsDbcs = IsWinDBCS();
 
 			// Don't use them in ConEmuHk
 			pEnv->bIsWine = 2;

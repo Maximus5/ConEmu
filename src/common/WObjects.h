@@ -65,7 +65,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 
 DWORD GetModulePathName(HMODULE hModule, CEStr& lsPathName);
 
-bool IsDbcs();
+bool IsWinDBCS();
 bool IsHwFullScreenAvailable();
 bool GetOsVersionInformational(OSVERSIONINFO* pOsVer);
 bool IsWinVerOrHigher(WORD OsVer); // Ex: 0x0601, _WIN32_WINNT_WIN10, ...

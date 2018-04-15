@@ -88,7 +88,7 @@ protected:
 			DWORD nRights = KEY_READ|WIN3264TEST((IsWindows64() ? KEY_WOW64_64KEY : 0),0);
 			if (0 == RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont", 0, nRights, &hk))
 			{
-				bool bIsDBCS = (GetSystemMetrics(SM_DBCSENABLED) != 0);
+				bool bIsDBCS = IsWinDBCS();
 				DWORD idx = 0, cchName = countof(szName), cchValue = sizeof(szValue)-2, dwType;
 				LONG iRc;
 				wchar_t* psz = pszFonts;

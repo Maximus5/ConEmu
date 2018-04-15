@@ -41,7 +41,7 @@ BOOL isConsoleBadDBCS()
 	static int isBadDBCS = 0;
 	if (!isBadDBCS)
 	{
-		isBadDBCS = (IsWin10() && IsDbcs()) ? 1 : -1;
+		isBadDBCS = (IsWin10() && IsWinDBCS()) ? 1 : -1;
 	}
 	return (isBadDBCS == 1);
 }

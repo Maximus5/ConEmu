@@ -454,7 +454,7 @@ void Settings::InitSettings()
 
 	psEnvironmentSet = lstrdup(L"set PATH=%ConEmuBaseDir%\\Scripts;%PATH%\r\n");
 
-	bool bIsDbcs = (GetSystemMetrics(SM_DBCSENABLED) != 0);
+	bool bIsDbcs = IsWinDBCS();
 
 	/* ********** Font initialization begins ********** */
 	{

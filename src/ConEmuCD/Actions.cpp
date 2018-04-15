@@ -61,7 +61,7 @@ int OsVerInfo()
 	OSVERSIONINFOEX osv = {sizeof(osv)};
 	GetOsVersionInformational((OSVERSIONINFO*)&osv);
 
-	UINT DBCS = IsDbcs();
+	UINT DBCS = IsWinDBCS();
 	UINT HWFS = IsHwFullScreenAvailable();
 	UINT W5fam = IsWin5family();
 	UINT WXPSP1 = IsWinXPSP1();

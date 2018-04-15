@@ -1084,7 +1084,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
 
 	gbIsWine = IsWine(); // В общем случае, на флажок ориентироваться нельзя. Это для информации.
-	gbIsDBCS = IsDbcs();
+	gbIsDBCS = IsWinDBCS();
 
 	gpLocalSecurity = LocalSecurity();
 	HMODULE hKernel = GetModuleHandleW(L"kernel32.dll");
@@ -5626,7 +5626,7 @@ bool static NeedLegacyCursorCorrection()
 	if (!bChecked)
 	{
 		// gh-1051: In NON DBCS systems there are cursor problems too (Win10 stable build 15063 or higher)
-		if (IsWin10() && (GetSystemMetrics(SM_DBCSENABLED) == 0) && !IsWin10LegacyConsole())
+		if (IsWin10() && !IsWinDBCS() && !IsWin10LegacyConsole())
 		{
 			OSVERSIONINFOEXW osvi = { sizeof(osvi), 10, 0, 15063 };
 			DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0,
