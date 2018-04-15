@@ -2994,8 +2994,15 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				}
 				break;
 			case 20:
-				gDisplayOpt.AutoLfNl = (Code.Action == L'h');
-				DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
+				if (Code.PvtLen == 0)
+				{
+					gDisplayOpt.AutoLfNl = (Code.Action == L'h');
+					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
+				}
+				else
+				{
+					DumpUnknownEscape(Code.pszEscStart, Code.nTotalLen);
+				}
 				break;
 			//ESC [ ? 12 h
 			//	  Start Blinking Cursor (att610)

@@ -1313,10 +1313,12 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		if (bNonAutoLfNl)
 		{
 			_ASSERTE(x2>0);
+			_ASSERTE(pCur < pEnd && *pCur == L'\n' && (pFrom == pCur || pFrom == pCur+1));
 			bNonAutoLfNl = false;
 			crScrollCursor.X = x2;
 			crScrollCursor.Y = y2;
 			SetConsoleCursorPosition(Info->ConsoleOutput, crScrollCursor);
+			pFrom = pCur + 1;
 		}
 	}
 
