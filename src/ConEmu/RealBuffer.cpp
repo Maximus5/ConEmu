@@ -7076,55 +7076,56 @@ LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UI
 	else
 	#endif
 	{
-		SHORT nNewTop = con.m_sbi.srWindow.Top;
+		int nNewTop = con.m_sbi.srWindow.Top;
+		int nMaxHeight = GetDynamicHeight();
 
 		switch (nDirection)
 		{
 		case SB_LINEDOWN:
-			if ((nNewTop + nVisible) < con.m_sbi.dwSize.Y)
-				nNewTop = min((nNewTop+(SHORT)nCount),(con.m_sbi.dwSize.Y-nVisible));
+			if ((nNewTop + nVisible) < nMaxHeight)
+				nNewTop = klMin<int>((nNewTop+(SHORT)nCount), (nMaxHeight-nVisible));
 			break;
 		case SB_LINEUP:
 			if (nNewTop > 0)
-				nNewTop = max(0,(nNewTop-(SHORT)nCount));
+				nNewTop = klMax<int>(0,(nNewTop-(SHORT)nCount));
 			break;
 		case SB_PAGEDOWN:
-			nNewTop = min((con.m_sbi.dwSize.Y - nVisible),(con.m_sbi.srWindow.Top + nVisible - 1));
+			nNewTop = klMin<int>((nMaxHeight - nVisible), (con.m_sbi.srWindow.Top + nVisible - 1));
 			break;
 		case SB_PAGEUP:
-			nNewTop = max(0, (con.m_sbi.srWindow.Top - nVisible + 1));
+			nNewTop = klMax<int>(0, (con.m_sbi.srWindow.Top - nVisible + 1));
 			break;
 		case SB_TOP:
 			nNewTop = 0;
 			break;
 		case SB_BOTTOM:
-			nNewTop = (con.m_sbi.dwSize.Y - nVisible);
+			nNewTop = (nMaxHeight - nVisible);
 			break;
 		case SB_THUMBTRACK:
 		case SB_THUMBPOSITION:
+			if (nTrackPos < 0)
 			{
 				_ASSERTE(nTrackPos>=0);
-
-				if (nTrackPos < 0)
-					nTrackPos = 0;
-				else if ((nTrackPos + nVisible) >= con.m_sbi.dwSize.Y)
-					nTrackPos = con.m_sbi.dwSize.Y - nVisible;
-
-				nNewTop = nTrackPos;
+				nTrackPos = 0;
 			}
+			else if ((nTrackPos + nVisible) >= nMaxHeight)
+			{
+				nTrackPos = nMaxHeight - nVisible;
+			}
+			nNewTop = nTrackPos;
 			break;
 		case SB_ENDSCROLL:
 			break;
 		default:
-			// Недопустимый код
-			_ASSERTE(nDirection==SB_LINEUP);
+			_ASSERTE(FALSE && "Unexpected scroll command");
 		}
 
 
 		if (nNewTop != GetBufferPosY())
 		{
-			con.m_sbi.srWindow.Top = nNewTop;
-			con.m_sbi.srWindow.Bottom = nNewTop + nVisible - 1;
+			con.m_sbi.srWindow.Top = SHORT(nNewTop);
+			_ASSERTE(con.m_sbi.srWindow.Top == nNewTop);
+			con.m_sbi.srWindow.Bottom = SHORT(con.m_sbi.srWindow.Top + nVisible - 1);
 
 			SetTopLeft(nNewTop, con.TopLeft.x, true, abOnlyVirtual);
 
