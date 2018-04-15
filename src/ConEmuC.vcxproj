@@ -94,42 +94,42 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\Release\ConEmu\</OutDir>
-    <IntDir>_VCBUILD\Release_ConEmuC_Win32\</IntDir>
+    <IntDir>_VCBUILD\Release\ConEmuC_Win32\</IntDir>
     <TargetName>ConEmuC</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\Release\ConEmu\</OutDir>
-    <IntDir>_VCBUILD\Release_ConEmuC_x64\</IntDir>
+    <IntDir>_VCBUILD\Release\ConEmuC_x64\</IntDir>
     <TargetName>ConEmuC64</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\Debug\ConEmu\</OutDir>
-    <IntDir>_VCBUILD\Debug_ConEmuC_Win32\</IntDir>
+    <IntDir>_VCBUILD\Debug\ConEmuC_Win32\</IntDir>
     <TargetName>ConEmuC</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\Debug\ConEmu\</OutDir>
-    <IntDir>_VCBUILD\Debug_ConEmuC_x64\</IntDir>
+    <IntDir>_VCBUILD\Debug\ConEmuC_x64\</IntDir>
     <TargetName>ConEmuC64</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>Z:\ConEmu\</OutDir>
-    <IntDir>_VCBUILD\Remote_ConEmuC_Win32\</IntDir>
+    <IntDir>_VCBUILD\Remote\ConEmuC_Win32\</IntDir>
     <TargetName>ConEmuC</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>Z:\ConEmu\</OutDir>
-    <IntDir>_VCBUILD\Remote_ConEmuC_x64\</IntDir>
+    <IntDir>_VCBUILD\Remote\ConEmuC_x64\</IntDir>
     <TargetName>ConEmuC64</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>

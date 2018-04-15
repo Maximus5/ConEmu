@@ -93,43 +93,43 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>_VCBUILD\Release_Far.ConEmuTh.ico_Win32\</OutDir>
-    <IntDir>_VCBUILD\Release_Far.ConEmuTh.ico_Win32\</IntDir>
+    <OutDir>_VCBUILD\Release\Far.ConEmuTh.ico_Win32\</OutDir>
+    <IntDir>_VCBUILD\Release\Far.ConEmuTh.ico_Win32\</IntDir>
     <TargetName>ico</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>_VCBUILD\Release_Far.ConEmuTh.ico_x64\</OutDir>
-    <IntDir>_VCBUILD\Release_Far.ConEmuTh.ico_x64\</IntDir>
+    <OutDir>_VCBUILD\Release\Far.ConEmuTh.ico_x64\</OutDir>
+    <IntDir>_VCBUILD\Release\Far.ConEmuTh.ico_x64\</IntDir>
     <TargetName>ico</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>_VCBUILD\Debug_Far.ConEmuTh.ico_Win32\</OutDir>
-    <IntDir>_VCBUILD\Debug_Far.ConEmuTh.ico_Win32\</IntDir>
+    <OutDir>_VCBUILD\Debug\Far.ConEmuTh.ico_Win32\</OutDir>
+    <IntDir>_VCBUILD\Debug\Far.ConEmuTh.ico_Win32\</IntDir>
     <TargetName>ico</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>_VCBUILD\Debug_Far.ConEmuTh.ico_x64\</OutDir>
-    <IntDir>_VCBUILD\Debug_Far.ConEmuTh.ico_x64\</IntDir>
+    <OutDir>_VCBUILD\Debug\Far.ConEmuTh.ico_x64\</OutDir>
+    <IntDir>_VCBUILD\Debug\Far.ConEmuTh.ico_x64\</IntDir>
     <TargetName>ico</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>_VCBUILD\Remote_Far.ConEmuTh.ico_Win32\</OutDir>
-    <IntDir>_VCBUILD\Remote_Far.ConEmuTh.ico_Win32\</IntDir>
+    <OutDir>_VCBUILD\Remote\Far.ConEmuTh.ico_Win32\</OutDir>
+    <IntDir>_VCBUILD\Remote\Far.ConEmuTh.ico_Win32\</IntDir>
     <TargetName>ico</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>_VCBUILD\Remote_Far.ConEmuTh.ico_x64\</OutDir>
-    <IntDir>_VCBUILD\Remote_Far.ConEmuTh.ico_x64\</IntDir>
+    <OutDir>_VCBUILD\Remote\Far.ConEmuTh.ico_x64\</OutDir>
+    <IntDir>_VCBUILD\Remote\Far.ConEmuTh.ico_x64\</IntDir>
     <TargetName>ico</TargetName>
     <TargetExt>.dll</TargetExt>
   </PropertyGroup>
@@ -155,7 +155,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <ImportLibrary>_VCBUILD\Release_Far.ConEmuTh.ico_Win32\ico.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Release\Far.ConEmuTh.ico_Win32\ico.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuTh/Modules/ico/ico.def</ModuleDefinitionFile>
     </Link>
@@ -187,7 +187,7 @@ copy "$(TargetDir)$(TargetName).pdb" "../Release/plugins/ConEmu/Thumbs/ico.t32.p
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <ImportLibrary>_VCBUILD\Release_Far.ConEmuTh.ico_x64\ico.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Release\Far.ConEmuTh.ico_x64\ico.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuTh/Modules/ico/ico.def</ModuleDefinitionFile>
     </Link>
@@ -213,7 +213,7 @@ copy "$(TargetDir)$(TargetName).pdb" "../Release/plugins/ConEmu/Thumbs/ico.t64.p
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ImportLibrary>_VCBUILD\Debug_Far.ConEmuTh.ico_Win32\ico.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Debug\Far.ConEmuTh.ico_Win32\ico.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuTh/Modules/ico/ico.def</ModuleDefinitionFile>
     </Link>
@@ -239,7 +239,7 @@ copy "$(TargetDir)$(TargetName).pdb" "../Debug/plugins/ConEmu/Thumbs/ico.t32.pdb
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ImportLibrary>_VCBUILD\Debug_Far.ConEmuTh.ico_x64\ico.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Debug\Far.ConEmuTh.ico_x64\ico.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuTh/Modules/ico/ico.def</ModuleDefinitionFile>
     </Link>
@@ -265,7 +265,7 @@ copy "$(TargetDir)$(TargetName).pdb" "../Debug/plugins/ConEmu/Thumbs/ico.t64.pdb
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ImportLibrary>_VCBUILD\Remote_Far.ConEmuTh.ico_Win32\ico.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Remote\Far.ConEmuTh.ico_Win32\ico.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuTh/Modules/ico/ico.def</ModuleDefinitionFile>
     </Link>
@@ -291,7 +291,7 @@ copy "$(TargetDir)$(TargetName).pdb" "../Z://plugins/ConEmu/Thumbs/ico.t32.pdb"<
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ImportLibrary>_VCBUILD\Remote_Far.ConEmuTh.ico_x64\ico.lib</ImportLibrary>
+      <ImportLibrary>_VCBUILD\Remote\Far.ConEmuTh.ico_x64\ico.lib</ImportLibrary>
       <GenerateMapFile>true</GenerateMapFile>
       <ModuleDefinitionFile>ConEmuTh/Modules/ico/ico.def</ModuleDefinitionFile>
     </Link>

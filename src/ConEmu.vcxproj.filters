@@ -321,6 +321,9 @@
     <ClInclude Include="ConEmu\SetPgFonts.h">
       <Filter>Settings</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\SetPgGeneral.h">
+      <Filter>Settings</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmu\SetPgHilight.h">
       <Filter>Settings</Filter>
     </ClInclude>
@@ -744,9 +747,6 @@
     <ClInclude Include="common\xmllite.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="ConEmu\SetPgGeneral.h">
-      <Filter>Settings</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConEmu\AboutDlg.cpp">
@@ -1013,6 +1013,9 @@
     <ClCompile Include="ConEmu\SetPgFonts.cpp">
       <Filter>Settings</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmu\SetPgGeneral.cpp">
+      <Filter>Settings</Filter>
+    </ClCompile>
     <ClCompile Include="ConEmu\SetPgHilight.cpp">
       <Filter>Settings</Filter>
     </ClCompile>
@@ -1129,9 +1132,6 @@
     </ClCompile>
     <ClCompile Include="ConEmu\WinObjBase.cpp">
       <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\SetPgGeneral.cpp">
-      <Filter>Settings</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -153,7 +153,7 @@ project "common-kernel"
     ["Sources"] = {"**.cpp"},
   }
 
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   targetdir "%{cfg.objdir}"
   filter "platforms:Win32"
     targetsuffix "32"
@@ -186,7 +186,7 @@ project "common-user"
     ["Sources"] = {"**.cpp"},
   }
 
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   targetdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix "32"
@@ -265,7 +265,7 @@ project "ConEmu"
 
   target_dir("")
   targetname "ConEmu"
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
   filter "platforms:x64"
     targetsuffix "64"
@@ -308,7 +308,7 @@ project "ConEmuC"
 
   target_dir("ConEmu/")
   targetname "ConEmuC"
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
@@ -368,7 +368,7 @@ project "ConEmuCD"
 
   target_dir("ConEmu/")
   targetname "ConEmuCD"
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
@@ -451,7 +451,7 @@ project "ConEmuHk"
 
   target_dir("ConEmu/")
   targetname "ConEmuHk"
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
@@ -499,7 +499,7 @@ project "Far.ConEmuPlugin"
 
   target_dir("plugins/ConEmu/")
   targetname "ConEmu"
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
@@ -547,7 +547,7 @@ project "Far.ConEmuBg"
 
   target_dir("plugins/ConEmu/Background/")
   targetname "ConEmuBg"
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
@@ -595,7 +595,7 @@ project "Far.ConEmuLn"
 
   target_dir("plugins/ConEmu/Lines/")
   targetname "ConEmuLn"
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
@@ -643,7 +643,7 @@ project "Far.ConEmuTh"
 
   target_dir("plugins/ConEmu/Thumbs/")
   targetname "ConEmuTh"
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""
@@ -683,7 +683,7 @@ project "Far.ConEmuTh.gdi+"
   }
 
   targetname "gdi+"
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   targetdir ("%{cfg.objdir}")
   implibdir ("%{cfg.objdir}")
   postbuild_module ("gdi+")
@@ -725,7 +725,7 @@ project "Far.ConEmuTh.ico"
   }
 
   targetname "ico"
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   targetdir ("%{cfg.objdir}")
   implibdir ("%{cfg.objdir}")
   postbuild_module ("ico")
@@ -762,7 +762,7 @@ project "Far.ConEmuTh.pe"
   }
 
   targetname "pe"
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   targetdir ("%{cfg.objdir}")
   implibdir ("%{cfg.objdir}")
   postbuild_module ("pe")
@@ -808,8 +808,8 @@ project "Far.ExtendedConsole"
 
   target_dir("ConEmu/") -- local function
   targetname ("ExtendedConsole")
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
-  -- implibdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}_%{prj.name}_%{cfg.platform}")
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
+  -- implibdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
   filter "platforms:Win32"
     targetsuffix ""

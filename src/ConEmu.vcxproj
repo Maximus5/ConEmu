@@ -94,42 +94,42 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\Release\</OutDir>
-    <IntDir>_VCBUILD\Release_ConEmu_Win32\</IntDir>
+    <IntDir>_VCBUILD\Release\ConEmu_Win32\</IntDir>
     <TargetName>ConEmu</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>..\Release\</OutDir>
-    <IntDir>_VCBUILD\Release_ConEmu_x64\</IntDir>
+    <IntDir>_VCBUILD\Release\ConEmu_x64\</IntDir>
     <TargetName>ConEmu64</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\Debug\</OutDir>
-    <IntDir>_VCBUILD\Debug_ConEmu_Win32\</IntDir>
+    <IntDir>_VCBUILD\Debug\ConEmu_Win32\</IntDir>
     <TargetName>ConEmu</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>..\Debug\</OutDir>
-    <IntDir>_VCBUILD\Debug_ConEmu_x64\</IntDir>
+    <IntDir>_VCBUILD\Debug\ConEmu_x64\</IntDir>
     <TargetName>ConEmu64</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>Z:\</OutDir>
-    <IntDir>_VCBUILD\Remote_ConEmu_Win32\</IntDir>
+    <IntDir>_VCBUILD\Remote\ConEmu_Win32\</IntDir>
     <TargetName>ConEmu</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>Z:\</OutDir>
-    <IntDir>_VCBUILD\Remote_ConEmu_x64\</IntDir>
+    <IntDir>_VCBUILD\Remote\ConEmu_x64\</IntDir>
     <TargetName>ConEmu64</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
@@ -384,12 +384,12 @@
     <ClInclude Include="ConEmu\SetPgFarMacro.h" />
     <ClInclude Include="ConEmu\SetPgFeatures.h" />
     <ClInclude Include="ConEmu\SetPgFonts.h" />
+    <ClInclude Include="ConEmu\SetPgGeneral.h" />
     <ClInclude Include="ConEmu\SetPgHilight.h" />
     <ClInclude Include="ConEmu\SetPgInfo.h" />
     <ClInclude Include="ConEmu\SetPgIntegr.h" />
     <ClInclude Include="ConEmu\SetPgKeyboard.h" />
     <ClInclude Include="ConEmu\SetPgKeys.h" />
-    <ClInclude Include="ConEmu\SetPgGeneral.h" />
     <ClInclude Include="ConEmu\SetPgMarkCopy.h" />
     <ClInclude Include="ConEmu\SetPgMouse.h" />
     <ClInclude Include="ConEmu\SetPgPaste.h" />
@@ -616,12 +616,12 @@
     <ClCompile Include="ConEmu\SetPgFarMacro.cpp" />
     <ClCompile Include="ConEmu\SetPgFeatures.cpp" />
     <ClCompile Include="ConEmu\SetPgFonts.cpp" />
+    <ClCompile Include="ConEmu\SetPgGeneral.cpp" />
     <ClCompile Include="ConEmu\SetPgHilight.cpp" />
     <ClCompile Include="ConEmu\SetPgInfo.cpp" />
     <ClCompile Include="ConEmu\SetPgIntegr.cpp" />
     <ClCompile Include="ConEmu\SetPgKeyboard.cpp" />
     <ClCompile Include="ConEmu\SetPgKeys.cpp" />
-    <ClCompile Include="ConEmu\SetPgGeneral.cpp" />
     <ClCompile Include="ConEmu\SetPgMarkCopy.cpp" />
     <ClCompile Include="ConEmu\SetPgMouse.cpp" />
     <ClCompile Include="ConEmu\SetPgPaste.cpp" />

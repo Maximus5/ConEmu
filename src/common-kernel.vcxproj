@@ -92,38 +92,38 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>_VCBUILD\Release_common-kernel_Win32\</OutDir>
-    <IntDir>_VCBUILD\Release_common-kernel_Win32\</IntDir>
+    <OutDir>_VCBUILD\Release\common-kernel_Win32\</OutDir>
+    <IntDir>_VCBUILD\Release\common-kernel_Win32\</IntDir>
     <TargetName>common-kernel32</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>_VCBUILD\Release_common-kernel_x64\</OutDir>
-    <IntDir>_VCBUILD\Release_common-kernel_x64\</IntDir>
+    <OutDir>_VCBUILD\Release\common-kernel_x64\</OutDir>
+    <IntDir>_VCBUILD\Release\common-kernel_x64\</IntDir>
     <TargetName>common-kernel64</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>_VCBUILD\Debug_common-kernel_Win32\</OutDir>
-    <IntDir>_VCBUILD\Debug_common-kernel_Win32\</IntDir>
+    <OutDir>_VCBUILD\Debug\common-kernel_Win32\</OutDir>
+    <IntDir>_VCBUILD\Debug\common-kernel_Win32\</IntDir>
     <TargetName>common-kernel32</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>_VCBUILD\Debug_common-kernel_x64\</OutDir>
-    <IntDir>_VCBUILD\Debug_common-kernel_x64\</IntDir>
+    <OutDir>_VCBUILD\Debug\common-kernel_x64\</OutDir>
+    <IntDir>_VCBUILD\Debug\common-kernel_x64\</IntDir>
     <TargetName>common-kernel64</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
-    <OutDir>_VCBUILD\Remote_common-kernel_Win32\</OutDir>
-    <IntDir>_VCBUILD\Remote_common-kernel_Win32\</IntDir>
+    <OutDir>_VCBUILD\Remote\common-kernel_Win32\</OutDir>
+    <IntDir>_VCBUILD\Remote\common-kernel_Win32\</IntDir>
     <TargetName>common-kernel32</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
-    <OutDir>_VCBUILD\Remote_common-kernel_x64\</OutDir>
-    <IntDir>_VCBUILD\Remote_common-kernel_x64\</IntDir>
+    <OutDir>_VCBUILD\Remote\common-kernel_x64\</OutDir>
+    <IntDir>_VCBUILD\Remote\common-kernel_x64\</IntDir>
     <TargetName>common-kernel64</TargetName>
     <TargetExt>.lib</TargetExt>
   </PropertyGroup>

@@ -107,6 +107,9 @@ rem call :tch ConEmuLn *.cpp *.h
 rem call :tch ConEmuPlugin *.cpp *.h
 rem call :tch ConEmuTh *.cpp *.h
 
+echo Removing intermediate files...
+rd /S /Q "%~dp0src\_VCBUILD\Release"
+
 rem Compile x86/x64
 call "%~dp0src\ms.build.release.cmd"
 if errorlevel 1 goto err
