@@ -1140,6 +1140,8 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 
 		if (gbWasXTermOutput)
 		{
+			// On Win10 we may utilize DISABLE_NEWLINE_AUTO_RETURN flag, but it would
+			// complicate our code, because ConEmu support older Windows versions
 			write.Flags &= ~ewtf_DontWrap;
 			// top:  writes all lines using full console width
 			//       and thereafter some ANSI-s and "\r\n"
