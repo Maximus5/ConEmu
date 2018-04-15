@@ -54,6 +54,9 @@ LRESULT CSetPgQuake::OnInitDialog(HWND hDlg, bool abInitial)
 
 	EnableWindow(GetDlgItem(hDlg, cbQuakeAutoHide), gpSet->isQuakeStyle);
 
+	checkDlgButton(hDlg, cbRestoreInactive, gpSet->isRestoreInactive);
+	checkDlgButton(hDlg, cbRestore2ActiveMonitor, gpSet->isRestore2ActiveMon);
+
 	// Frame hide options
 	SetDlgItemInt(hDlg, tHideCaptionAlwaysFrame, gpSet->HideCaptionAlwaysFrame(), TRUE);
 	SetDlgItemInt(hDlg, tHideCaptionAlwaysDelay, gpSet->nHideCaptionAlwaysDelay, FALSE);
