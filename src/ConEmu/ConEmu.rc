@@ -232,10 +232,10 @@ BEGIN
     CTEXT           "x",IDC_STATIC,255,229,8,8,NOT WS_VISIBLE | WS_DISABLED
     CONTROL         "Align ConEmu window size to cells",cbIntegralSize,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,145,170,8
-    CONTROL         "Restore to active monitor",cbRestore2ActiveMonitor,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,186,170,8
     GROUPBOX        "Activation and minimization",gbRestoreMinimize,10,174,364,40
     CONTROL         "Restore inactive window by hotkey",cbRestoreInactive,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,186,170,8
+    CONTROL         "Restore to active monitor",cbRestore2ActiveMonitor,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,200,170,8
 END
 

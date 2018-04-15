@@ -6410,7 +6410,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 	SingleInstanceShowHideType cmd = sih_None;
 
 	// gh#255, old#1065: Move window to "active" monitor
-	if ((ShowHideType == sih_None) && gpSet->isRestore2ActiveMon)
+	if ((ShowHideType == sih_None) && gpSet->isRestore2ActiveMon && gpSet->isRestoreInactive)
 	{
 		POINT ptCur = {}; GetCursorPos(&ptCur);
 		RECT rcCur = CalcRect(CER_MAIN, NULL);
