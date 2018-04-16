@@ -20,6 +20,17 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.4.15
+* gh-172: Disable scrolling (mouse wheel and hotkeys) past lowest line.
+* gh-1509: Previous focused window is incorrectly restored to focus after ‘quake’ minimization.
+* gh-1511: ANSI: fix `\n` processing in emacs.
+* gh-1510: Fix for git hangs when Inject ConEmuHk.dll option is enabled (9bce8f14e regression).
+* gh-1512: Option ‘Restore to active monitor’ shall not override unchecked ‘Restore inactive window by hotkey’.
+* Show options ‘Restore inactive window by hotkey’ and ‘Restore to active monitor’ on the ‘Quake style’ page.
+* When ScrollBar is always shown (in settings) don't hide it in alternative (xterm) mode.
+* Improve OS information in About/SysInfo and log.
+
+
 2018.4.11
 * gh-1402: Workaround for \u23CE ⏎ character preceding every prompt in fish on CJK versions of Win10.
 * gh-1449: DefTerm: Support VS 2017 changes in debugging C# console applications.
