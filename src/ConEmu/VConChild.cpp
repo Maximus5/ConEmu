@@ -1777,7 +1777,7 @@ void CConEmuChild::SetScroll(bool abEnabled, int anTop, int anVisible, int anHei
 	m_si.fMask = SIF_PAGE | SIF_POS | SIF_RANGE; // | SIF_TRACKPOS;
 	m_si.nMin = 0;
 
-	if (!abEnabled)
+	if (!abEnabled && (gpSet->isAlwaysShowScrollbar != 1))
 	{
 		m_si.nPos = 0;
 		m_si.nPage = 0;
@@ -1789,7 +1789,7 @@ void CConEmuChild::SetScroll(bool abEnabled, int anTop, int anVisible, int anHei
 		m_si.nPos = anTop;
 		// We shall take into account paging size, scroller must be at
 		// the bottom when the console is at the bottom...
-		m_si.nMax = anHeight - 2;
+		m_si.nMax = anHeight - 1;
 		// Let paging previously last visible become new first visible
 		m_si.nPage = klMin(anVisible - 1, m_si.nMax);
 	}
