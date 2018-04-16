@@ -4436,11 +4436,11 @@ void CRealConsole::UpdateRootInfo(const CESERVER_ROOT_INFO& RootInfo)
 		if (m_Args.nPTY)
 		{
 			// xterm keys notation
-			StartStopXTerm(RootInfo.nPID, ((m_Args.nPTY & 1) == 1));
+			StartStopXTerm(RootInfo.nPID, (m_Args.nPTY & pty_XTerm));
 			// Bracketed paste
-			StartStopBracketedPaste(RootInfo.nPID, ((m_Args.nPTY & 2) == 2));
+			StartStopBracketedPaste(RootInfo.nPID, (m_Args.nPTY & pty_BrPaste));
 			// Application cursor keys
-			StartStopAppCursorKeys(RootInfo.nPID, ((m_Args.nPTY & 4) == 4));
+			StartStopAppCursorKeys(RootInfo.nPID, (m_Args.nPTY & pty_AppKeys));
 		}
 	}
 
@@ -6287,7 +6287,7 @@ bool CRealConsole::StartStopTermMode(TermModeCommand mode, ChangeTermAction acti
 
 	switch (mode)
 	{
-	case tmc_Keyboard:
+	case tmc_TerminalType:
 		if (action == cta_Switch)
 			bValue = (GetTermType() == te_win32);
 		StartStopXTerm(nActivePID, bValue);

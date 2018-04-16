@@ -3983,7 +3983,7 @@ void CEAnsi::StartXTermMode(bool bStart)
 
 	// Remember last mode
 	gbWasXTermOutput = bStart;
-	ChangeTermMode(tmc_Keyboard, bStart ? te_xterm : te_win32);
+	ChangeTermMode(tmc_TerminalType, bStart ? te_xterm : te_win32);
 }
 
 // This is useful when user press Shift+Home,

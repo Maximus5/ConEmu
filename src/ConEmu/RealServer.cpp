@@ -1415,7 +1415,7 @@ CESERVER_REQ* CRealServer::cmdStartXTerm(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 
 	switch (mode)
 	{
-	case tmc_Keyboard:
+	case tmc_TerminalType:
 		_ASSERTE(value == te_win32 || value == te_xterm);
 		mp_RCon->StartStopXTerm(nPID, (value != te_win32));
 		break;

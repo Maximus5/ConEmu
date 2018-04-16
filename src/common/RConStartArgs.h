@@ -44,7 +44,13 @@ enum RConBoolArg
 };
 
 #define DefaultSplitValue 500
-#define DefaultPtyFlags (1|4)
+
+typedef UINT PtyFlags;
+const PtyFlags
+	pty_XTerm    = 1,
+	pty_BrPaste  = 2,
+	pty_AppKeys  = 4,
+	pty_Default  = pty_XTerm;
 
 struct RConStartArgs
 {
@@ -86,7 +92,7 @@ public:
 
 	RConBoolArg     OverwriteMode;      // -new_console:w - enable "Overwrite" mode in console prompt
 
-	UINT     		nPTY;               // -new_console:p[N] - change pty modes, N is bitmask: 1 - xterm keyboard, 2 - bracketed paste, 4 - app cursor keys
+	PtyFlags		nPTY;               // -new_console:p[N] - change pty modes, N is bitmask: 1 - xterm keyboard, 2 - bracketed paste, 4 - app cursor keys
 	
 	RConBoolArg     BufHeight;          // -new_console:h<lines>
 	UINT     		nBufHeight;         //

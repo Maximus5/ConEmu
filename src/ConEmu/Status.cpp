@@ -2196,7 +2196,7 @@ bool CStatus::ProcessTermModeMenuId(WORD nCmd)
 		switch (nCmd)
 		{
 		case 1: case 2:
-			mode = tmc_Keyboard;
+			mode = tmc_TerminalType;
 			action = (nCmd == 2) ? cta_Enable : cta_Disable;
 			break;
 		case 3:

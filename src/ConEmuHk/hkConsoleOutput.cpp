@@ -129,8 +129,8 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 			{
 				_ASSERT(HandleKeeper::IsInputHandle(hConsoleHandle));
 				CEAnsi::StartXTermMode((dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT) != 0);
-				if (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)
-					CEAnsi::ChangeTermMode(tmc_AppCursorKeys, true);
+				//if (dwMode & ENABLE_VIRTUAL_TERMINAL_INPUT)
+				//	CEAnsi::ChangeTermMode(tmc_AppCursorKeys, true);
 			}
 		}
 	}

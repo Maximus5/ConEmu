@@ -3030,7 +3030,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 
 		if (m_Args.nPTY)
 		{
-			CEAnsi::ChangeTermMode(tmc_Keyboard, (m_Args.nPTY == 1), lpPI->dwProcessId);
+			CEAnsi::ChangeTermMode(tmc_TerminalType, (m_Args.nPTY & pty_XTerm) ? 1 : 0, lpPI->dwProcessId);
 		}
 
 		if (isDefTermEnabled())

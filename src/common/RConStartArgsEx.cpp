@@ -562,7 +562,7 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks /*= false*/) const
 	else if (OverwriteMode == crb_Off)
 		wcscat_c(szAdd, L"w0");
 
-	if (nPTY == DefaultPtyFlags)
+	if (nPTY == pty_Default)
 		wcscat_c(szAdd, L"p");
 	else if (nPTY)
 		msprintf(szAdd+lstrlen(szAdd), 15, L"p%u", nPTY);

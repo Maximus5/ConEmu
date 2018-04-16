@@ -433,7 +433,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						}
 						else
 						{
-							nPTY = DefaultPtyFlags; // xterm + app cursor keys
+							nPTY = pty_Default; // xterm mode
 						}
 						break;
 
