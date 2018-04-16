@@ -98,6 +98,7 @@ _DBGHLP(L"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
 		L"When you run application from ConEmu console, you may use one or more\r\n" \
 		L"  Switch: -new_console[:switches]\r\n" \
 		L"     a - RunAs shell verb (as Admin on Vista+, user/pwd in Win2k and WinXP)\r\n" \
+_DBGHLP(L"     A - run under highest available account\r\n") \
 		L"     b - Create background tab\r\n" \
 		L"     c - force enable ‘Press Enter or Esc to close console’ confirmation\r\n" \
 		L"         c0 - wait for Enter/Esc silently\r\n" \
@@ -119,6 +120,7 @@ _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
 		L"     R - force start hooks server in the parent process\r\n" \
 		L"     s[<SplitTab>T][<Percents>](H|V)\r\n" \
 		L"       - https://conemu.github.io/en/SplitScreen.html\r\n" \
+		L"     t:\"<tabname>\" - set title for new created tab\r\n" \
 _DBGHLP(L"     x<width>, y<height> - change size of visible area, use with 'l'\r\n") \
 		L"     u - ConEmu choose user dialog\r\n" \
 		L"     u:\"<user>:<pwd>\" - specify user/pwd in args\r\n" \
