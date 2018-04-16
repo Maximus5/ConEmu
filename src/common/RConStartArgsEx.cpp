@@ -127,6 +127,18 @@ void RConStartArgsEx::RunArgTests()
 
 		switch (i)
 		{
+		case 24:
+			pszCmp = L"/C \"-new_console test.cmd bla\"";
+			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, L"/C \"test.cmd bla\"") && arg.NewConsole==crb_On);
+			break;
+		case 23:
+			pszCmp = L"-new_console test.cmd";
+			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.ProcessNewConArg();
+			_ASSERTE(0==lstrcmp(arg.pszSpecialCmd, L"test.cmd") && arg.NewConsole==crb_On);
+			break;
 		case 22:
 			pszCmp = L"bash -cur_console:m:\"\"";
 			arg.pszSpecialCmd = lstrdup(pszCmp);

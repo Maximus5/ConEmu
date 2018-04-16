@@ -253,12 +253,9 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			if (pszFindNew)
 				NewConsole = crb_On;
 
-			bool lbQuot = (*(pszFind-1) == L'"');
-			bool lbWasQuot = lbQuot;
+			const int iQuotStart = (*(pszFind-1) == L'"') ? 1 : 0;
+			int iQuotCount = iQuotStart;
 			const wchar_t* pszEnd = pszFind+nNewConLen;
-
-			if (lbQuot)
-				pszFind--;
 
 			if (*pszEnd == L'"')
 			{
@@ -296,7 +293,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							pszArgEnd += 2; // Skip qoubled qouble-quotes
 							continue;
 						}
-						if (!lbQuot)
+						if (!iQuotStart)
 						{
 							if (!lbLocalQuot && (*(pszArgEnd-1) == L':'))
 							{
@@ -315,7 +312,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						}
 						goto EndFound;
 					case L' ':
-						if (!lbQuot && !lbLocalQuot)
+						if (!iQuotStart && !lbLocalQuot)
 							goto EndFound;
 						break;
 					case 0:
@@ -337,7 +334,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 					{
 					case L'"':
 						// Assert was happened, for example, with: "/C \"ConEmu:run:Far.exe  -new_console:\""
-						if (!lbWasQuot && (pszEnd < pszArgEnd))
+						if (!iQuotCount && (pszEnd < pszArgEnd))
 						{
 							// For example: ""C:\Windows\system32\cmd.exe" /C "sign "FileZilla server.exe" FzGSS.dll -new_console:a""
 							_ASSERTE(*(pszEnd-1)==L'"' && *(pszEnd)==L'"' && *(pszEnd+1)==0);
@@ -360,7 +357,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						// Just skip ':'. Delimiter between switches: -new_console:c:b:a
 						// Revert stored value to lbQuot. We need to "cut" last double quote in the first two cases
 						// cmd -cur_console:d:"C:\users":t:"My title" "-cur_console:C:C:\cmd.ico" -cur_console:P:"<PowerShell>":a /k ver
-						lbWasQuot = lbQuot;
+						iQuotCount = iQuotStart;
 						break;
 
 					case L'b':
@@ -662,7 +659,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 									wchar_t* pD = *pptr;
 									const wchar_t* pS = pszTab;
 
-									if (lbQuot)
+									if (iQuotStart)
 									{
 										lbLocalQuot = false;
 									}
@@ -670,7 +667,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 											|| (*(pS+1) == L'"' && (!*(pS+2) || isSpace(*(pS+2)) || *(pS+2) == L':'))))
 									{
 										// Remember, that last processed switch was local-quoted
-										lbWasQuot = true;
+										++iQuotCount;
 										// This item is local quoted. Example: -new_console:t:"My title"
 										lbLocalQuot = true;
 										pS++;
@@ -691,6 +688,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 											}
 											else if (lbLocalQuot)
 											{
+												++iQuotCount;
 												pszEnd = (pS+1);
 												_ASSERTE(*pszEnd==L':' || *pszEnd==L' ' || *pszEnd==0);
 												break; // End of local quoted argument: -new_console:d:"C:\User\super user":t:"My title"
@@ -775,17 +773,35 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 
 			if (pszEnd > pszFind)
 			{
+				bool bTrimTrailingSpace = false;
+
 				// pszEnd must point at the end of -new_console[:...] / -cur_console[:...]
 				// and include trailing double-quote (if argument was quoted)
-				if (lbWasQuot)
+				if (iQuotCount > 0)
 				{
 					if (*pszEnd == L'"' && *(pszEnd-1) != L'"')
-						pszEnd++;
+					{
+						++pszEnd;
+						if ((iQuotStart > 0) && (pszFind > pszSpecialCmd))
+						{
+							--pszFind;
+						}
+					}
+					else if ((pszEnd > pszFind) && (*(pszEnd-1) == L'"') && iQuotStart)
+					{
+						--pszFind;
+					}
+					else if (iQuotStart && (*pszEnd == L' ') && *(pszEnd-1) != L' ')
+					{
+						bTrimTrailingSpace = true;
+					}
 				}
 				else
 				{
 					while (*(pszEnd-1) == L'"')
+					{
 						pszEnd--;
+					}
 				}
 
 				// Trim extra LEADING spaces before -new_console[:...] / -cur_console[:...]
@@ -804,7 +820,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 				}
 				// Skip extra TRAILING spaces (after -new_console[:...] / -cur_console[:...])
 				// IF argument was AT THE BEGINNING of the command!
-				if (pszFind == pszSpecialCmd)
+				if (bTrimTrailingSpace || (pszFind == pszSpecialCmd))
 				{
 					while (*pszEnd == L' ')
 						pszEnd++;
