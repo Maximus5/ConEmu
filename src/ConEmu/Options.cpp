@@ -898,6 +898,14 @@ void Settings::InitVanilla()
 		isStatusColumnHidden[csi_ConsoleSize] = true;
 		isStatusColumnHidden[csi_NumLock] = true;
 		isStatusColumnHidden[csi_CellInfo] = false;
+
+		// `-basic` mode was intended for troubleshooting and debugging
+		// So disable Automatic Update if it was not requested by `-update`
+		if (!gpConEmu->opt.AutoUpdateOnStart.GetBool())
+		{
+			UpdSet.isUpdateCheckOnStartup = false;
+			UpdSet.isUpdateCheckHourly = false;
+		}
 	}
 }
 
