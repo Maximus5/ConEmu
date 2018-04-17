@@ -58,6 +58,7 @@ protected:
 	static void OnBtn_InactiveCursorBlink(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
 	static void OnBtn_InactiveCursorColor(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
 	static void OnBtn_InactiveCursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
+	static void OnBtn_InactiveCursorSubstHidden(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
 	static void OnBtn_InactiveCursorX(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp);
 
 protected:

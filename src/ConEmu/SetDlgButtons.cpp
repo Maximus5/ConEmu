@@ -417,6 +417,7 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbInactiveCursorColor:
 		case cbInactiveCursorBlink:
 		case cbInactiveCursorIgnoreSize:
+		case cbInactiveCursorSubstHidden:
 			OnBtn_CursorOptions(hDlg, CB, uCheck);
 			break;
 		case cbVisible:
@@ -978,6 +979,9 @@ void CSetDlgButtons::OnButtonClicked_Cursor(HWND hDlg, WORD CB, BYTE uCheck, App
 	case cbInactiveCursorIgnoreSize:
 		OnBtn_InactiveCursorIgnoreSize(hDlg, CB, uCheck, pApp);
 		break;
+	case cbInactiveCursorSubstHidden:
+		OnBtn_InactiveCursorSubstHidden(hDlg, CB, uCheck, pApp);
+		break;
 
 	default:
 		_ASSERT(FALSE && "Not handled");
@@ -1138,6 +1142,16 @@ void CSetDlgButtons::OnBtn_InactiveCursorIgnoreSize(HWND hDlg, WORD CB, BYTE uCh
 	_ASSERTE(CB==cbInactiveCursorIgnoreSize);
 
 	pApp->CursorInactive.isFixedSize = uCheck;
+
+} // cbInactiveCursorIgnoreSize
+
+
+// cbInactiveCursorIgnoreSize
+void CSetDlgButtons::OnBtn_InactiveCursorSubstHidden(HWND hDlg, WORD CB, BYTE uCheck, AppSettings* pApp)
+{
+	_ASSERTE(CB==cbInactiveCursorSubstHidden);
+
+	pApp->CursorInactive.Invisible = uCheck;
 
 } // cbInactiveCursorIgnoreSize
 

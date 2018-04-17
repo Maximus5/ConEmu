@@ -3192,7 +3192,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 	RECT rect;
 	bool bForeground = mp_ConEmu->isMeForeground();
-	bool bActive = bForeground && isActive(false);
+	bool bActive = bForeground && isActive(false) && cinf.bVisible;
 	bool bGroupActive = bForeground && isGroupedInput() && isActive(true);
 
 	// указатель на настройки разделяемые по приложениям
@@ -3406,8 +3406,10 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	bool bIsAlive = mp_RCon ? (mp_RCon->isAlive() || !mp_RCon->isFar(TRUE)) : false; // не мигать, если фар "думает"
 
 	// Если курсор (в консоли) видим, и находится в видимой области (при прокрутке)
-	if (cinf.bVisible && isCursorValid)
+	if ((cinf.bVisible || GetCursor(false).Invisible) && isCursorValid)
 	{
+		if (!cinf.bVisible)
+			bForeground = false;
 		if (!GetCursor(bGroupActive && bForeground).isBlinking)
 		{
 			Cursor.isVisible = true; // Видим всегда (даже в неактивной консоли), не мигает
@@ -4001,7 +4003,8 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 
 	if (gbNoDblBuffer) GdiSetBatchLimit(0);  // вернуть стандартный режим
 
-	if (Cursor.isVisible && cinf.bVisible && isCursorValid)
+	if (Cursor.isVisible && isCursorValid
+		&& (cinf.bVisible || GetCursor(false).Invisible))
 	{
 		if (mpsz_ConChar && mpn_ConAttrEx)
 		{

@@ -407,7 +407,7 @@ BEGIN
     LTEXT           "(5-100) %",stCursorFixedSize,153,49,38,8
     RTEXT           "Min size (pix):",stCursorMinSize,193,49,72,8
     EDITTEXT        tCursorMinSize,271,47,40,12,ES_AUTOHSCROLL
-    GROUPBOX        "",gbCursorInactive,4,81,375,68
+    GROUPBOX        "",gbCursorInactive,4,81,375,83
     CONTROL         "Inactive console Text Cursor",cbInactiveCursor,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,81,120,8
     CONTROL         "Horizontal (as console)",rInactiveCursorH,"Button",BS_AUTORADIOBUTTON | WS_GROUP,12,95,102,8
     CONTROL         "Vertical (as GUI)",rInactiveCursorV,"Button",BS_AUTORADIOBUTTON,116,95,92,8
@@ -421,6 +421,8 @@ BEGIN
     LTEXT           "(0-100) %",stInactiveCursorFixedSize,153,129,38,8
     RTEXT           "Min size (pix):",stInactiveCursorMinSize,193,129,72,8
     EDITTEXT        tInactiveCursorMinSize,271,127,40,12,ES_AUTOHSCROLL
+    CONTROL         "Treat hidden cursor as inactive",cbInactiveCursorSubstHidden,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,147,192,8
 END
 
 IDD_SPG_INTEGRATION DIALOGEX 0, 0, 381, 242

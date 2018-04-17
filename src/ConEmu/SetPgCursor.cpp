@@ -59,6 +59,7 @@ void CSetPgCursor::InitCursorCtrls(HWND hDlg, const AppSettings* pApp)
 	checkDlgButton(hDlg, cbInactiveCursorIgnoreSize, pApp->CursorInactive.isFixedSize);
 	SetDlgItemInt(hDlg, tInactiveCursorFixedSize, pApp->CursorInactive.FixedSize, FALSE);
 	SetDlgItemInt(hDlg, tInactiveCursorMinSize, pApp->CursorInactive.MinSize, FALSE);
+	checkDlgButton(hDlg, cbInactiveCursorSubstHidden, pApp->CursorInactive.Invisible);
 }
 
 bool CSetPgCursor::OnEditChangedCursor(HWND hDlg, WORD nCtrlId, AppSettings* pApp)

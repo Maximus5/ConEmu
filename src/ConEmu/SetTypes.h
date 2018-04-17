@@ -67,9 +67,11 @@ union CECursorType
 		unsigned int   MinSize      : 7;
 		// set to true for use distinct settings for Inactive cursor
 		unsigned int   Used         : 1;
+		// only for inactive cursor, if true - use inactive style when cursor is invisible
+		unsigned int   Invisible    : 1;
 	};
 
-	DWORD Raw;
+	DWORD Raw; // 32 bits
 };
 
 enum TabStyle

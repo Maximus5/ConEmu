@@ -6707,7 +6707,7 @@ bool CRealBuffer::isCursorVisible()
 		return false;
 
 	// Console cursor is hidden?
-	if (!con.m_ci.bVisible)
+	if (!con.m_ci.bVisible && !mp_RCon->mp_VCon->GetCursor(false).Invisible)
 		return false;
 
 	return true;
