@@ -307,8 +307,8 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 	wchar_t* pszSettingsPlaces[] = {
 		lstrdup(L"HKEY_CURRENT_USER\\Software\\ConEmu"),
 		ExpandEnvStr(L"%APPDATA%\\ConEmu.xml"),
-		ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"),
-		ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"),
+		GetFullPathNameEx(L"%ConEmuBaseDir%\\ConEmu.xml"), // compact "C:\ConEmu\src\..\Debug\ConEmu.xml" to "C:\ConEmu\Debug\ConEmu.xml"
+		GetFullPathNameEx(L"%ConEmuDir%\\ConEmu.xml"),
 		NULL
 	};
 	// Lets find first allowed item

@@ -190,6 +190,7 @@ class CConEmuMain
 	public:
 		bool SetConfigFile(LPCWSTR asFilePath, bool abWriteReq = false, bool abSpecialPath = false);
 		void SetForceUseRegistry();
+		LPCWSTR FindConEmuXml(CEStr& szXmlFile);
 		LPWSTR ConEmuXml(bool* pbSpecialPath = NULL);
 		LPWSTR ConEmuIni();
 		wchar_t ms_ConEmuChm[MAX_PATH+1] = L"";       // полный путь к chm-файлу (help)

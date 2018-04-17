@@ -402,13 +402,18 @@ CConEmuMain::CConEmuMain()
 	_ASSERTE(*ms_ComSpecInitial);
 
 	wchar_t *pszSlash = NULL;
-
-	if (!GetModuleFileName(NULL, ms_ConEmuExe, MAX_PATH) || !(pszSlash = wcsrchr(ms_ConEmuExe, L'\\')))
+	CEStr szExePath, szCompact;
+	if (!GetModuleFileName(NULL, szExePath.GetBuffer(MAX_PATH), MAX_PATH) || !(pszSlash = wcsrchr(szExePath.ms_Val, L'\\')))
 	{
 		DisplayLastError(L"GetModuleFileName failed");
 		TerminateProcess(GetCurrentProcess(), 100);
 		return;
 	}
+	szCompact = GetFullPathNameEx(szExePath);
+	if (FileExists(szCompact))
+		wcscpy_c(ms_ConEmuExe, szCompact);
+	else
+		wcscpy_c(ms_ConEmuExe, szExePath);
 
 	// Папка программы
 	wcscpy_c(ms_ConEmuExeDir, ms_ConEmuExe);
@@ -1181,44 +1186,57 @@ LPWSTR CConEmuMain::ConEmuXml(bool* pbSpecialPath /*= NULL*/)
 
 	TODO("Хорошо бы еще дать возможность пользователю использовать два файла - системный (предустановки) и пользовательский (настройки)");
 
+	CEStr szXmlFile;
+	if (FindConEmuXml(szXmlFile))
+	{
+		wcscpy_c(ms_ConEmuXml, szXmlFile);
+	}
+	else
+	{
+		// If create new, than create it in the %ConEmuBaseDir%
+		// Minimize rubbish in the root folder
+		wcscpy_c(ms_ConEmuXml, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuXml, L"\\ConEmu.xml");
+	}
+
+	return ms_ConEmuXml;
+}
+
+LPCWSTR CConEmuMain::FindConEmuXml(CEStr& szXmlFile)
+{
+	szXmlFile.Empty();
+
 	// Ищем файл портабельных настроек (возвращаем первый найденный, приоритет...)
 	// Search for portable xml file settings. Return first found due to defined priority.
 	// We support both "ConEmu.xml" and its ‘dot version’ ".ConEmu.xml"
-	MArray<wchar_t*> pszSearchXml;
+	MArray<LPCWSTR> pszSearchXml;
 	if (isMingwMode())
 	{
 		// Since Git-For-Windows 2.x
 		// * ConEmu.exe is supposed to be in /opt/bin/
 		// * ConEmu.xml in /share/conemu/
-		pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuDir%\\..\\share\\conemu\\ConEmu.xml"));
-		pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuDir%\\..\\share\\conemu\\.ConEmu.xml"));
+		pszSearchXml.push_back(L"%ConEmuDir%\\..\\share\\conemu\\ConEmu.xml");
+		pszSearchXml.push_back(L"%ConEmuDir%\\..\\share\\conemu\\.ConEmu.xml");
 	}
-	pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuDir%\\ConEmu.xml"));
-	pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuDir%\\.ConEmu.xml"));
-	pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuBaseDir%\\ConEmu.xml"));
-	pszSearchXml.push_back(ExpandEnvStr(L"%ConEmuBaseDir%\\.ConEmu.xml"));
-	pszSearchXml.push_back(ExpandEnvStr(L"%APPDATA%\\ConEmu.xml"));
-	pszSearchXml.push_back(ExpandEnvStr(L"%APPDATA%\\.ConEmu.xml"));
+	pszSearchXml.push_back(L"%ConEmuDir%\\ConEmu.xml");
+	pszSearchXml.push_back(L"%ConEmuDir%\\.ConEmu.xml");
+	pszSearchXml.push_back(L"%ConEmuBaseDir%\\ConEmu.xml");
+	pszSearchXml.push_back(L"%ConEmuBaseDir%\\.ConEmu.xml");
+	pszSearchXml.push_back(L"%APPDATA%\\ConEmu.xml");
+	pszSearchXml.push_back(L"%APPDATA%\\.ConEmu.xml");
 
 	for (INT_PTR i = 0; i < pszSearchXml.size(); i++)
 	{
-		if (FileExists(pszSearchXml[i]))
+		if (CEStr szExpand = GetFullPathNameEx(pszSearchXml[i]))
 		{
-			wcscpy_c(ms_ConEmuXml, pszSearchXml[i]);
-			goto fin;
+			if (FileExists(szExpand))
+			{
+				szXmlFile = szExpand.Detach();
+				break;
+			}
 		}
 	}
 
-	// Но если _создавать_ новый, то в BaseDir! Чтобы в корне не мусорить
-	wcscpy_c(ms_ConEmuXml, ms_ConEmuBaseDir); wcscat_c(ms_ConEmuXml, L"\\ConEmu.xml");
-
-fin:
-	for (INT_PTR i = 0; i < pszSearchXml.size(); i++)
-	{
-		wchar_t* psz = pszSearchXml[i];
-		SafeFree(psz);
-	}
-	return ms_ConEmuXml;
+	return szXmlFile.IsEmpty() ? nullptr : szXmlFile.c_str();
 }
 
 LPWSTR CConEmuMain::ConEmuIni()
