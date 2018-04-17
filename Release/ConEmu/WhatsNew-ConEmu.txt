@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.4.16
+* Add description for `-new_console:t:"title"` switch.
+* Disable automatic update in `-basic` mode unless the `-update` is specified.
+* gh-629: Don't imply ‘AppKeys’ mode (DECCKM) by `-cur_console:p` or `ENABLE_VIRTUAL_TERMINAL_INPUT`.
+* gh-1513: Fix erroneously trimmed leading `"` in commands `cmd /c "-new_console script.bat argument"`.
+* gh-242: Fix hidden scrollbar glitch on mouseover.
+
+
 2018.4.15
 * gh-172: Disable scrolling (mouse wheel and hotkeys) past lowest line.
 * gh-1509: Previous focused window is incorrectly restored to focus after ‘quake’ minimization.
