@@ -3730,7 +3730,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 	{
 		if (con.bBufferHeight && (m_Type == rbt_Primary) && lbFarBufferSupported && lbMouseSendAllowed)
 		{
-			lbMouseOverScroll = mp_RCon->mp_VCon->CheckMouseOverScroll(true);
+			lbMouseOverScroll = mp_RCon->mp_VCon->CheckMouseOverScroll();
 		}
 	}
 

@@ -1683,19 +1683,16 @@ bool CConEmuChild::TrackMouse()
 	return lbCapture;
 }
 
-bool CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
+bool CConEmuChild::CheckMouseOverScroll()
 {
-	if (abCheckVisible)
+	if (gpSet->isAlwaysShowScrollbar == 0)
 	{
-		if (gpSet->isAlwaysShowScrollbar == 0)
-		{
-			return false; // не показывается вообще
-		}
-		else if ((gpSet->isAlwaysShowScrollbar != 1) // 1 -- показывать всегда
-			&& !mb_ScrollVisible)
-		{
-			return false; // не показывается сейчас
-		}
+		return false; // don't show scrollbar at all
+	}
+	else if ((gpSet->isAlwaysShowScrollbar != 1) // 1 -- show always
+		&& !mb_ScrollVisible)
+	{
+		return false; // is not shown now
 	}
 
 	bool lbOverVScroll = false;
@@ -1703,7 +1700,7 @@ bool CConEmuChild::CheckMouseOverScroll(bool abCheckVisible /*= false*/)
 	CVirtualConsole* pVCon = mp_VCon;
 	CVConGuard guard(pVCon);
 
-	// Вроде бы в активной? Или в this?
+	// Process active or this console?
 	CVConGuard VCon;
 	CRealConsole* pRCon = (gpConEmu->GetActiveVCon(&VCon) >= 0) ? VCon->RCon() : NULL;
 

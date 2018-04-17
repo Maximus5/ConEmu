@@ -150,7 +150,7 @@ class CConEmuChild
 		BYTE m_LastAlwaysShowScrollbar;
 		SCROLLINFO m_si;
 	public:
-		bool CheckMouseOverScroll(bool abCheckVisible = false);
+		bool CheckMouseOverScroll();
 	protected:
 		bool CheckScrollAutoPopup();
 		void ShowScroll(bool abImmediate);
