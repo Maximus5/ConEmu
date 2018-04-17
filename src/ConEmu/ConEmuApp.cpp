@@ -2432,11 +2432,17 @@ HRESULT UpdateAppUserModelID()
 	{
 		lstrmerge(&lsTempBuf.ms_Val, L"::Registry", szSuffix);
 	}
+	// xml
 	if (bSpecialXmlFile && pszConfigFile && *pszConfigFile)
 	{
-		lstrmerge(&lsTempBuf.ms_Val, L"::", pszConfigFile, szSuffix);
+		CEStr szXmlFile;
+		if (gpConEmu->FindConEmuXml(szXmlFile)
+			&& (0 == szXmlFile.Compare(pszConfigFile, false)))
+			pszConfigFile = nullptr; // -loadcfgfile is the same as used by default, don't add path file to AppID
+		else
+			lstrmerge(&lsTempBuf.ms_Val, L"::", pszConfigFile, szSuffix);
 	}
-	else
+	if (!bSpecialXmlFile || !pszConfigFile || !*pszConfigFile)
 	{
 		lstrmerge(&lsTempBuf.ms_Val, L"::Xml", szSuffix);
 	}
