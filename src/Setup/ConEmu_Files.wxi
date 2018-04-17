@@ -221,6 +221,9 @@
       <Component Id="Scripts_Readme.txt" Guid="$(var.Guid.Scripts_Readme.txt)" Win64="$(var.Win64)">
         <File Id="Scripts_Readme.txt" Source="..\..\Release\ConEmu\Scripts\readme.txt"  KeyPath="yes" />
       </Component>
+      <Component Id="git_log.cmd" Guid="$(var.Guid.Scripts_git_log.cmd)" Win64="$(var.Win64)">
+        <File Id="git_log.cmd" Source="..\..\Release\ConEmu\Scripts\git-log.cmd"  KeyPath="yes" />
+      </Component>
     </DirectoryRef>
 
     <!-- Windows Subsystem for Linux -->

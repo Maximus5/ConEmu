@@ -73,7 +73,9 @@
 	<?define Guid.FAQ_ConEmu.txt = "921CBC29-757E-4707-BD93-282A8C0F5595" ?>
 	<?define Guid.Settings_ConEmu.reg = "9D4C38CF-2626-4562-9277-CFEB978793D9" ?>
 	<?define Guid.WhatsNew_ConEmu.txt = "D5E97C65-34FF-4983-9288-D28D0993A003" ?>
+    <!-- ConEmu.Scripts directory -->
 	<?define Guid.Scripts_Readme.txt = "550677B8-0E77-4D67-8D0D-93447FA04246" ?>
+	<?define Guid.Scripts_git_log.cmd = "360A42E9-8A7A-494D-A6C0-01A6BCCBB189" ?>
     <!-- ConEmu.Addons directory -->
 	<?define Guid.FarHereInstall.cmd = "836AC116-3E84-42AA-B7EB-1A013710D5D8" ?>
 	<?define Guid.FarHereUninstall.cmd = "8F35ABDB-1A5F-4FD6-B1BB-55E6F1688A2E" ?>

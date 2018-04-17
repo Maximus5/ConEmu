@@ -91,7 +91,12 @@
       <ComponentRef Id="FAQ_ConEmu.txt" />
       <ComponentRef Id="Settings_ConEmu.reg" />
       <ComponentRef Id="WhatsNew_ConEmu.txt" />
+    </Feature>
+    <!-- Documentation -->
+    <Feature Id="FConEmuScripts" AllowAdvertise="no" Title="Scripts" Level="1"
+             Description="Folder ‘Scripts’ is added to %PATH% by default and may contain predefined and user scripts like ‘git-log’ cmd helper">
       <ComponentRef Id="Scripts_Readme.txt" />
+      <ComponentRef Id="git_log.cmd" />
     </Feature>
     <!-- ConEmu.Addons directory -->
     <Feature Id="FConEmuAddons" AllowAdvertise="no" Title="Addons" Level="1" Display="collapse"
