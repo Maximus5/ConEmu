@@ -2388,6 +2388,17 @@ HRESULT UpdateAppUserModelID()
 	LPCWSTR pszConfigFile = gpConEmu->ConEmuXml(&bSpecialXmlFile);
 	LPCWSTR pszConfigName = gpSetCls->GetConfigName();
 
+	if (bSpecialXmlFile && pszConfigFile && *pszConfigFile)
+	{
+		CEStr szXmlFile;
+		if (gpConEmu->FindConEmuXml(szXmlFile)
+			&& (0 == szXmlFile.Compare(pszConfigFile, false)))
+		{
+			pszConfigFile = nullptr; // -loadcfgfile is the same as used by default, don't add path file to AppID
+			bSpecialXmlFile = false;
+		}
+	}
+
 	wchar_t szSuffix[64] = L"";
 
 	// Don't change the ID if application was started without arguments changing:
@@ -2432,17 +2443,11 @@ HRESULT UpdateAppUserModelID()
 	{
 		lstrmerge(&lsTempBuf.ms_Val, L"::Registry", szSuffix);
 	}
-	// xml
-	if (bSpecialXmlFile && pszConfigFile && *pszConfigFile)
+	else if (bSpecialXmlFile && pszConfigFile && *pszConfigFile)
 	{
-		CEStr szXmlFile;
-		if (gpConEmu->FindConEmuXml(szXmlFile)
-			&& (0 == szXmlFile.Compare(pszConfigFile, false)))
-			pszConfigFile = nullptr; // -loadcfgfile is the same as used by default, don't add path file to AppID
-		else
-			lstrmerge(&lsTempBuf.ms_Val, L"::", pszConfigFile, szSuffix);
+		lstrmerge(&lsTempBuf.ms_Val, L"::", pszConfigFile, szSuffix);
 	}
-	if (!bSpecialXmlFile || !pszConfigFile || !*pszConfigFile)
+	else
 	{
 		lstrmerge(&lsTempBuf.ms_Val, L"::Xml", szSuffix);
 	}
