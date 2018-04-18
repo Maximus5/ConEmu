@@ -1649,6 +1649,10 @@
       "zh": "激活ConEmu并‘CD’到最后的（top in Z-order） Explorer窗口路径",
       "id": 2853 }
     ,
+    "vkCheckUpdates": {
+      "en": "Check for updates",
+      "id": 3101 }
+    ,
     "vkChildSystemMenu": {
       "en": "Child GUI window system menu (PuTTY, Notepad, etc.)",
       "zh": "子GUI窗口系统菜单（PuTTY, Notepad, etc.）",
@@ -3867,6 +3871,10 @@
       "en": "Fixed cursor size",
       "zh": "固定光标大小",
       "id": 2539 }
+    ,
+    "cbInactiveCursorSubstHidden": {
+      "en": "Treat hidden cursor as inactive",
+      "id": 3100 }
     ,
     "cbInjectConEmuHkFast": {
       "en": "Inject ConEmuHk.dll into all processes started in ConEmu tabs",
