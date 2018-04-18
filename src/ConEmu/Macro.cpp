@@ -233,6 +233,8 @@ namespace ConEmuMacro
 		LPWSTR TransparencyHelper(int nCmd, int nValue); // helper, это не макро-фукнция
 	// Unfasten
 	LPWSTR Unfasten(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Update
+	LPWSTR Update(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Wiki(["Page"])
 	LPWSTR Wiki(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Fullscreen
@@ -315,6 +317,7 @@ namespace ConEmuMacro
 		{TermMode, {L"TermMode"}},
 		{Transparency, {L"Transparency"}},
 		{Unfasten, {L"Unfasten"}, gmf_MainThread},
+		{Update, {L"Update"}, gmf_MainThread},
 		{Wiki, {L"Wiki"}},
 		{WindowFullscreen, {L"WindowFullscreen"}, gmf_MainThread},
 		{WindowMaximize, {L"WindowMaximize"}, gmf_MainThread},
@@ -1658,6 +1661,13 @@ LPWSTR ConEmuMacro::Unfasten(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugi
 		pszResult = lstrdup(L"OK");
 	}
 	return pszResult ? pszResult : lstrdup(L"Failed");
+}
+
+LPWSTR ConEmuMacro::Update(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	if (!gpConEmu->CheckUpdates(TRUE))
+		return lstrdup(L"NotAllowed");
+	return lstrdup(L"Started");
 }
 
 LPWSTR ConEmuMacro::Context(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)

@@ -239,6 +239,8 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	/*
 		*** User (Keys)
 	*/
+	Add(vkCheckUpdates,    chk_User,  NULL,   L"CheckUpdates",          CConEmuCtrl::key_GuiMacro, false, L"Update()")
+		->SetHotKey('U',VK_LWIN,VK_SHIFT);
 	Add(vkMultiNew,       chk_User,  NULL,    L"Multi.NewConsole",      CConEmuCtrl::key_GuiMacro, false, L"Create()") // it can be used to create multiple consoles by holding Win+W
 		->SetHotKey('W',VK_LWIN);
 	Add(vkMultiNewConfirm,chk_User,  NULL,    L"Multi.NewConsoleShift", CConEmuCtrl::key_GuiMacro, false, L"Create(0,1)")

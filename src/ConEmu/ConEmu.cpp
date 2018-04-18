@@ -11633,18 +11633,19 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 	DEBUGSTRFOREGROUND(szDbg);
 }
 
-void CConEmuMain::CheckUpdates(UINT abShowMessages)
+bool CConEmuMain::CheckUpdates(UINT abShowMessages)
 {
 	if (!isUpdateAllowed())
-		return;
+		return false;
 
 	_ASSERTE(isMainThread());
 
 	if (!gpUpd)
 		gpUpd = new CConEmuUpdate;
 
-	if (gpUpd)
-		gpUpd->StartCheckProcedure(abShowMessages);
+	gpUpd->StartCheckProcedure(abShowMessages);
+
+	return true;
 }
 
 void CConEmuMain::RequestPostUpdateTabs()

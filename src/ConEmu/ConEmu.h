@@ -605,7 +605,7 @@ class CConEmuMain
 		void AttachToDialog();
 		void CheckFocus(LPCWSTR asFrom);
 		bool CheckRequiredFiles();
-		void CheckUpdates(UINT abShowMessages);
+		bool CheckUpdates(UINT abShowMessages);
 		DWORD isSelectionModifierPressed(bool bAllowEmpty);
 		void ForceSelectionModifierPressed(DWORD nValue);
 		enum DragPanelBorder CheckPanelDrag(COORD crCon);

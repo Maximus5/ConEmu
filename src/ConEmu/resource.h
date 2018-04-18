@@ -1337,6 +1337,7 @@
 #define gbRestoreMinimize               3098
 #define cbRestoreInactive               3099
 #define cbInactiveCursorSubstHidden     3100
+#define vkCheckUpdates                  3101
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1345,7 +1346,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        246
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3101
+#define _APS_NEXT_CONTROL_VALUE         3102
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

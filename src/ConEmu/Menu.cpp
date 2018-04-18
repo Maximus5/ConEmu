@@ -2136,7 +2136,7 @@ HMENU CConEmuMenu::CreateHelpMenuPopup()
 		if (gpUpd && gpUpd->InUpdate())
 			AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_STOPUPDATE, _T("&Stop updates checking"));
 		else
-			AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_CHECKUPDATE, _T("&Check for updates"));
+			AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_CHECKUPDATE, MenuAccel(vkCheckUpdates, L"&Check for updates"));
 
 		AppendMenu(hHelp, MF_SEPARATOR, 0, NULL);
 	}
