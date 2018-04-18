@@ -230,6 +230,22 @@ LPCWSTR ConEmuHotKey::GetDescription(wchar_t* pszDescr, int cchMaxLen, bool bAdd
 		lstrcpyn(pszDescr, GuiMacro, cchMaxLen);
 	}
 
+	if ((DescrLangID == vkMultiCmd)
+		&& wcsstr(pszDescr, L"%s"))
+	{
+		RConStartArgsEx args; CEStr lsTitle;
+		if (int shell_rc = gpSet->CmdTaskGetDefaultShell(args, lsTitle))
+		{
+			CEStr lsFormat;
+			INT_PTR cchBufMax = wcslen(pszDescr) + wcslen(lsTitle) + 3;
+			if (lsFormat.GetBuffer(cchBufMax))
+			{
+				msprintf(lsFormat.ms_Val, cchBufMax, pszDescr, lsTitle.c_str());
+				lstrcpyn(pszDescr, lsFormat, cchMaxLen);
+			}
+		}
+	}
+
 	return pszRc;
 }
 

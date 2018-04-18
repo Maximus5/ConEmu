@@ -399,7 +399,7 @@ static LngPredefined gsDataHints[] = {
 	{ vkMultiAltCon,           L"Show alternative console buffer (last command output)" },
 	{ vkMultiBuffer,           L"Switch bufferheight mode" },
 	{ vkMultiClose,            L"Close active console" },
-	{ vkMultiCmd,              L"Create new ‘cmd.exe’ console" },
+	{ vkMultiCmd,              L"Create new %s console" },
 	{ vkMultiGroup,            L"Group keyboard input for visible splits" },
 	{ vkMultiGroupAll,         L"Group keyboard input for all consoles" },
 	{ vkMultiGroupKey,         L"Add active console into group keyboard input" },

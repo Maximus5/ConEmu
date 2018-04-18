@@ -5173,6 +5173,55 @@ LPCWSTR Settings::SaveAllMacroDefault(FarMacroVersion fmv)
 
 #undef IsLuaMacroOk
 
+bool Settings::CmdTaskGetDefaultShell(RConStartArgsEx& args, CEStr& lsTitle)
+{
+	lsTitle.Empty();
+
+	// User defined default shell task? (Win+X)
+	int nGroup = 0;
+	const CommandTasks* pGrp = NULL;
+	while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
+	{
+		if (pGrp->pszName && *pGrp->pszName
+			&& (pGrp->Flags & CETF_CMD_DEFAULT))
+		{
+			// Process "/dir ..." and other switches
+			pGrp->ParseGuiArgs(&args);
+			SafeFree(args.pszSpecialCmd);
+
+			// Run all tabs of the task, if they were specified
+			args.pszSpecialCmd = lstrdup(pGrp->pszName);
+			lsTitle.Set(pGrp->pszName);
+			break;
+		}
+	}
+
+	if (!args.pszSpecialCmd)
+	{
+		args.pszSpecialCmd = GetComspec(&gpSet->ComSpec); //lstrdup(L"cmd");
+		if (!args.pszSpecialCmd)
+		{
+			_ASSERTE(FALSE && "Memory allocation failure");
+			return false;
+		}
+
+		CEStr lsExe; LPCWSTR pszTemp = args.pszSpecialCmd;
+		if (0 == NextArg(&pszTemp, lsExe))
+			lsTitle.Set(PointToName(lsExe));
+		if (lsTitle.IsEmpty())
+			lsTitle.Set(L"cmd.exe");
+
+		lstrmerge(&args.pszSpecialCmd, L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\"");
+	}
+
+	if (!args.pszStartupDir)
+	{
+		args.pszStartupDir = lstrdup(L"%CD%");
+	}
+
+	return true;
+}
+
 const CommandTasks* Settings::CmdTaskGet(int anIndex)
 {
 	if (anIndex == -1)

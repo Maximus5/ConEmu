@@ -559,40 +559,8 @@ bool CConEmuCtrl::key_MultiCmd(const ConEmuChord& VkState, bool TestOnly, const 
 		return true;
 
 	RConStartArgsEx args;
-
-	// User choosed default task?
-	int nGroup = 0;
-	const CommandTasks* pGrp = NULL;
-	while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
-	{
-		if (pGrp->pszName && *pGrp->pszName
-			&& (pGrp->Flags & CETF_CMD_DEFAULT))
-		{
-			// Process "/dir ..." and other switches
-			pGrp->ParseGuiArgs(&args);
-			SafeFree(args.pszSpecialCmd);
-
-			// Run all tabs of the task, if they were specified
-			args.pszSpecialCmd = lstrdup(pGrp->pszName);
-			break;
-		}
-	}
-
-	if (!args.pszSpecialCmd)
-	{
-		args.pszSpecialCmd = GetComspec(&gpSet->ComSpec); //lstrdup(L"cmd");
-		if (!args.pszSpecialCmd)
-		{
-			_ASSERTE(FALSE && "Memory allocation failure");
-			return true;
-		}
-		lstrmerge(&args.pszSpecialCmd, L" /k \"%ConEmuBaseDir%\\CmdInit.cmd\"");
-	}
-
-	if (!args.pszStartupDir)
-	{
-		args.pszStartupDir = lstrdup(L"%CD%");
-	}
+	CEStr lsTitle;
+	gpSet->CmdTaskGetDefaultShell(args, lsTitle);
 
 	gpConEmu->CreateCon(&args, true);
 	return true;
