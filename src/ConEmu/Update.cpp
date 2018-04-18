@@ -177,10 +177,18 @@ void CConEmuUpdate::StartCheckProcedure(UINT abShowMessages)
 		// Already in update procedure
 		if ((m_UpdateStep == us_PostponeUpdate) || (m_UpdateStep == us_ExitAndUpdate))
 		{
-			if (gpConEmu)
+			if (gpConEmu && (m_UpdateStep == us_ExitAndUpdate))
 			{
 				// Повторно?
 				gpConEmu->CallMainThread(true, RequestExitUpdate, 0);
+			}
+			else if (ms_NewVersion[0] && (m_UpdateStep == us_PostponeUpdate))
+			{
+				CEStr lsMsg;
+				LPCWSTR pszFormat = L"Update to version %s will be started when you close ConEmu window";
+				INT_PTR cchMax = wcslen(pszFormat) + wcslen(ms_NewVersion) + 3;
+				msprintf(lsMsg.GetBuffer(cchMax), cchMax, pszFormat, ms_NewVersion);
+				Icon.ShowTrayIcon(lsMsg, tsa_Source_Updater);
 			}
 		}
 		else if (abShowMessages)

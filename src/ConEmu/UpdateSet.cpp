@@ -426,15 +426,17 @@ LPCWSTR ConEmuUpdateSettings::GetUpdateInetToolCmd()
 
 void ConEmuUpdateSettings::CheckHourlyUpdate()
 {
+	const DWORD dwCurTick = GetTickCount();
 	if (!dwLastUpdateCheck)
 	{
-		dwLastUpdateCheck = GetTickCount();
+		dwLastUpdateCheck = dwCurTick;
 	}
 	else
 	{
-		DWORD dwDelta = (GetTickCount() - dwLastUpdateCheck);
+		DWORD dwDelta = (dwCurTick - dwLastUpdateCheck);
 		if (dwDelta >= (60*60*1000))
 		{
+			dwLastUpdateCheck = dwCurTick;
 			gpConEmu->CheckUpdates(FALSE);
 		}
 	}
