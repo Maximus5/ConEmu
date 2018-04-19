@@ -20,6 +20,22 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.4.18
+* gh-880: Show the name of selected shell task for `Win+X` hotkey.
+* gh-1517: After postponing update the ‘Confirm closing’ dialog stucks.
+* Compact paths (%ConEmuDir%, %ConEmuCfgDir%, etc) by removing `\..\` elements.
+  E.g. `C:\ConEmu\src\..\Debug\ConEmu.xml` will be processed now as `C:\ConEmu\Debug\ConEmu.xml`.
+* gh-1046: Don't take into account path to xml settings storage in AppID generation if it's a default xml.
+  If configuration file was set by argument `-LoadCfgFile "%ConEmuDir%\ConEmu.xml"`
+  and it is *already* the default settings location (the same without `-LoadCfgFile` switch),
+  than xml path is not used in AppID generation.
+  Note: AppID is utilized during search for appropriate ConEmu instance
+  when `-single` or `-reuse` switch were specified.
+* By default add commented `LANG` variable and some aliases to ‘Environment’ settings page.
+* Hidden cursor may be displayed as inactive (option for debug purposes).
+* Add hotkey for ‘Check for updates’.
+
+
 2018.4.16
 * Add description for `-new_console:t:"title"` switch.
 * Disable automatic update in `-basic` mode unless the `-update` is specified.
