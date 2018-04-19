@@ -94,7 +94,7 @@
     </Feature>
     <!-- Documentation -->
     <Feature Id="FConEmuScripts" AllowAdvertise="no" Title="Scripts" Level="1"
-             Description="Folder ‘Scripts’ is added to %PATH% by default and may contain predefined and user scripts like ‘git-log’ cmd helper">
+             Description="Folder 'Scripts' is added to %PATH% by default and may contain predefined (e.g. 'git-log' cmd helper) and user scripts">
       <ComponentRef Id="Scripts_Readme.txt" />
       <ComponentRef Id="git_log.cmd" />
     </Feature>
