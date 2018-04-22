@@ -703,7 +703,7 @@ struct GDIPlusImage
 
 			int nCanvasWidth  = pDecodeInfo->crLoadSize.X;
 			int nCanvasHeight = pDecodeInfo->crLoadSize.Y;
-			BOOL lbAllowThumb = (nFormatID == cfTIFF || nFormatID == cfTIFF || nFormatID == cfEXIF || nFormatID == cfJPEG);
+			BOOL lbAllowThumb = (nFormatID == cfPNG || nFormatID == cfTIFF || nFormatID == cfEXIF || nFormatID == cfJPEG);
 			//&& (lWidth > (UINT)nCanvasWidth*5) && (lHeight > (UINT)nCanvasHeight*5);
 			int nShowWidth, nShowHeight;
 			CalculateShowSize(nCanvasWidth, nCanvasHeight, nShowWidth, nShowHeight, lbAllowThumb);
