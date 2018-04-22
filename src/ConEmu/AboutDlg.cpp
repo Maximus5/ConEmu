@@ -554,13 +554,11 @@ void ConEmuAbout::OnInfo_About(LPCWSTR asPageName /*= NULL*/)
 
 void ConEmuAbout::OnInfo_WhatsNew(bool bLocal)
 {
-	wchar_t sFile[MAX_PATH+80];
 	INT_PTR iExec = -1;
 
 	if (bLocal)
 	{
-		wcscpy_c(sFile, gpConEmu->ms_ConEmuBaseDir);
-		wcscat_c(sFile, L"\\WhatsNew-ConEmu.txt");
+		CEStr sFile(gpConEmu->ms_ConEmuBaseDir, L"\\WhatsNew-ConEmu.txt");
 
 		if (FileExists(sFile))
 		{
@@ -572,9 +570,7 @@ void ConEmuAbout::OnInfo_WhatsNew(bool bLocal)
 		}
 	}
 
-	wcscpy_c(sFile, gsWhatsNew);
-
-	iExec = (INT_PTR)ShellExecute(ghWnd, L"open", sFile, NULL, NULL, SW_SHOWNORMAL);
+	iExec = (INT_PTR)ShellExecute(ghWnd, L"open", gsWhatsNew, NULL, NULL, SW_SHOWNORMAL);
 	if (iExec >= 32)
 	{
 		return;
