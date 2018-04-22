@@ -3361,14 +3361,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (gpStartEnv->hStartMon)
 		gpConEmu->SetRequestedMonitor(gpStartEnv->hStartMon);
 
-	DEBUGSTRSTARTUPLOG(L"Registering local fonts");
-
-	gpFontMgr->RegisterFonts();
-	gpFontMgr->InitFont(
-		gpConEmu->opt.FontVal.GetStr(),
-		gpConEmu->opt.SizeVal.Exists ? gpConEmu->opt.SizeVal.GetInt() : -1,
-		gpConEmu->opt.ClearTypeVal.Exists ? gpConEmu->opt.ClearTypeVal.GetInt() : -1
-	);
 
 	// Forced window size or pos
 	// Call this AFTER SettingsLoaded because we (may be)

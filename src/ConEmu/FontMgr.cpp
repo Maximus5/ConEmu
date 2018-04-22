@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 
 #define DEBUGSTRFONT(s) DEBUGSTR(s)
+#define DEBUGSTRSTARTUPLOG(s) DEBUGSTR(s)
 
 //#include <commctrl.h>
 
@@ -1637,6 +1638,8 @@ void CFontMgr::RegisterFonts()
 	if (!gpSet->isAutoRegisterFonts || gpConEmu->DisableRegisterFonts)
 		return; // Если поиск шрифтов не требуется
 
+	DEBUGSTRSTARTUPLOG(L"Registering local fonts");
+
 	// Сначала - регистрация шрифтов в папке программы
 	RegisterFontsDir(gpConEmu->ms_ConEmuExeDir);
 
@@ -2501,16 +2504,30 @@ void CFontMgr::SaveFontSizes(bool bAuto, bool bSendChanges)
 
 void CFontMgr::SettingsLoaded(SettingsLoadedFlags slfFlags)
 {
+	_ASSERTE(gpConEmu != nullptr);
+
 	/*
 	LogFont.lfHeight = mn_FontHeight = gpSet->FontSizeY;
 	LogFont.lfWidth = mn_FontWidth = gpSet->FontSizeX;
 	*/
 	EvalLogfontSizes(LogFont, gpSet->FontSizeY, gpSet->FontSizeX);
-	lstrcpyn(LogFont.lfFaceName, gpSet->inFont, countof(LogFont.lfFaceName));
+	if (gpSet->inFont && *gpSet->inFont)
+		lstrcpyn(LogFont.lfFaceName, gpSet->inFont, countof(LogFont.lfFaceName));
 	LogFont.lfQuality = gpSet->mn_AntiAlias;
 	LogFont.lfWeight = gpSet->isBold ? FW_BOLD : FW_NORMAL;
 	LogFont.lfCharSet = (BYTE)gpSet->mn_LoadFontCharSet;
 	LogFont.lfItalic = gpSet->isItalic;
+
+	if (slfFlags & slf_OnStartupLoad)
+	{
+		RegisterFonts();
+	}
+
+	InitFont(
+		gpConEmu->opt.FontVal.GetStr(),
+		gpConEmu->opt.SizeVal.Exists ? gpConEmu->opt.SizeVal.GetInt() : -1,
+		gpConEmu->opt.ClearTypeVal.Exists ? gpConEmu->opt.ClearTypeVal.GetInt() : -1
+	);
 
 	if (slfFlags & slf_OnResetReload)
 	{

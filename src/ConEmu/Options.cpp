@@ -358,6 +358,7 @@ void Settings::ReleasePointers()
 	SafeFree(psEnvironmentSet);
 
 	FreeCmdTasks();
+	FreeStartupTask();
 	CmdTaskCount = 0;
 
 	FreePalettes();
@@ -1081,65 +1082,63 @@ void Settings::LoadAppsSettings(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 	}
 
 	BOOL lbOpened = FALSE;
-	wchar_t szAppKey[MAX_PATH+64];
-	wcscpy_c(szAppKey, gpSetCls->GetConfigPath());
-	wcscat_c(szAppKey, L"\\Apps");
-	wchar_t* pszAppKey = szAppKey+lstrlen(szAppKey);
+	CEStr szBaseKey(gpSetCls->GetConfigPath(), L"\\Apps");
 
-	int NewAppCount = 0;
-	AppSettings** NewApps = NULL;
-	//CEAppColors** NewAppColors = NULL;
 
-	lbOpened = reg->OpenKey(szAppKey, KEY_READ);
+	lbOpened = reg->OpenKey(szBaseKey, KEY_READ);
 	if (lbOpened)
 	{
+		int NewAppCount = 0;
+		AppSettings** NewApps = NULL;
+
 		reg->Load(L"Count", NewAppCount);
 		reg->CloseKey();
-	}
 
-	if (lbOpened && NewAppCount > 0)
-	{
-		NewApps = (AppSettings**)calloc(NewAppCount, sizeof(*NewApps));
-		//NewAppColors = (CEAppColors**)calloc(NewAppCount, sizeof(*NewAppColors));
-
-		int nSucceeded = 0;
-		for (int i = 0; i < NewAppCount; i++)
+		if (lbOpened && NewAppCount > 0)
 		{
-			swprintf_c(pszAppKey, 32/*#SECURELEN*/, L"\\App%i", i+1);
+			NewApps = (AppSettings**)calloc(NewAppCount, sizeof(*NewApps));
+			//NewAppColors = (CEAppColors**)calloc(NewAppCount, sizeof(*NewAppColors));
 
-			lbOpened = reg->OpenKey(szAppKey, KEY_READ);
-			if (lbOpened)
+			int nSucceeded = 0;
+			for (int i = 0; i < NewAppCount; i++)
 			{
-				_ASSERTE(AppStd.AppNames == NULL && AppStd.AppNamesLwr == NULL);
+				wchar_t szNumber[16];
+				CEStr szAppKey(szBaseKey, L"\\App", ltow_s(i+1, szNumber, 10));
 
-				NewApps[nSucceeded] = (AppSettings*)malloc(sizeof(AppSettings));
-				//NewAppColors[nSucceeded] = (CEAppColors*)calloc(1,sizeof(CEAppColors));
-
-				// Умолчания берем из основной ветки!
-				*NewApps[nSucceeded] = AppStd;
-				//memmove(NewAppColors[nSucceeded]->Colors, Colors, sizeof(Colors));
-				NewApps[nSucceeded]->AppNames = NULL;
-				NewApps[nSucceeded]->AppNamesLwr = NULL;
-				NewApps[nSucceeded]->cchNameMax = 0;
-
-				// Загрузка "AppNames" - снаружи, т.к. LoadAppSettings используется и для загрузки &AppStd
-				reg->Load(L"AppNames", &NewApps[nSucceeded]->AppNames);
-				if (NewApps[nSucceeded]->AppNames /*&& *NewApps[nSucceeded]->AppNames*/)
+				lbOpened = reg->OpenKey(szAppKey, KEY_READ);
+				if (lbOpened)
 				{
-					NewApps[nSucceeded]->cchNameMax = wcslen(NewApps[nSucceeded]->AppNames)+1;
-					NewApps[nSucceeded]->AppNamesLwr = lstrdup(NewApps[nSucceeded]->AppNames);
-					CharLowerBuff(NewApps[nSucceeded]->AppNamesLwr, lstrlen(NewApps[nSucceeded]->AppNamesLwr));
-					reg->Load(L"Elevated", NewApps[nSucceeded]->Elevated);
-					LoadAppSettings(reg, NewApps[nSucceeded]/*, NewAppColors[nSucceeded]->Colors*/);
-					nSucceeded++;
-				}
-				reg->CloseKey();
-			}
-		}
-		NewAppCount = nSucceeded;
-	}
+					_ASSERTE(AppStd.AppNames == NULL && AppStd.AppNamesLwr == NULL);
 
-	FreeApps(NewAppCount, NewApps/*, NewAppColors*/);
+					NewApps[nSucceeded] = (AppSettings*)malloc(sizeof(AppSettings));
+					//NewAppColors[nSucceeded] = (CEAppColors*)calloc(1,sizeof(CEAppColors));
+
+					// Умолчания берем из основной ветки!
+					*NewApps[nSucceeded] = AppStd;
+					//memmove(NewAppColors[nSucceeded]->Colors, Colors, sizeof(Colors));
+					NewApps[nSucceeded]->AppNames = NULL;
+					NewApps[nSucceeded]->AppNamesLwr = NULL;
+					NewApps[nSucceeded]->cchNameMax = 0;
+
+					// Загрузка "AppNames" - снаружи, т.к. LoadAppSettings используется и для загрузки &AppStd
+					reg->Load(L"AppNames", &NewApps[nSucceeded]->AppNames);
+					if (NewApps[nSucceeded]->AppNames /*&& *NewApps[nSucceeded]->AppNames*/)
+					{
+						NewApps[nSucceeded]->cchNameMax = wcslen(NewApps[nSucceeded]->AppNames)+1;
+						NewApps[nSucceeded]->AppNamesLwr = lstrdup(NewApps[nSucceeded]->AppNames);
+						CharLowerBuff(NewApps[nSucceeded]->AppNamesLwr, lstrlen(NewApps[nSucceeded]->AppNamesLwr));
+						reg->Load(L"Elevated", NewApps[nSucceeded]->Elevated);
+						LoadAppSettings(reg, NewApps[nSucceeded]/*, NewAppColors[nSucceeded]->Colors*/);
+						nSucceeded++;
+					}
+					reg->CloseKey();
+				}
+			}
+			NewAppCount = nSucceeded;
+		}
+
+		FreeApps(NewAppCount, NewApps/*, NewAppColors*/);
+	}
 
 	if (lbDelete)
 		delete reg;
@@ -1291,7 +1290,10 @@ void Settings::FreeCmdTasks()
 		}
 		SafeFree(CmdTasks);
 	}
+}
 
+void Settings::FreeStartupTask()
+{
 	if (StartupTask)
 	{
 		StartupTask->FreePtr();
@@ -1319,62 +1321,61 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 		lbDelete = true;
 	}
 
-	FreeCmdTasks();
 
 	BOOL lbOpened = FALSE;
-	wchar_t szCmdKey[MAX_PATH+64];
-	wcscpy_c(szCmdKey, gpSetCls->GetConfigPath());
-	wcscat_c(szCmdKey, L"\\Tasks");
-	wchar_t* pszCmdKey = szCmdKey+lstrlen(szCmdKey);
+	CEStr szBaseKey(gpSetCls->GetConfigPath(), L"\\Tasks");
 
 
 	{
-		// Таск автозагрузки
-		_wcscpy_c(pszCmdKey, 32, L"\\" AutoStartTaskName);
+		// Autoload "<Startup>" task
+		CEStr szCmdKey(szBaseKey, L"\\", AutoStartTaskName);
 		lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
 		if (lbOpened)
 		{
+			FreeStartupTask();
 			_ASSERTE(StartupTask == NULL);
 			if ((StartupTask = (CommandTasks*)calloc(1, sizeof(CommandTasks))) != NULL)
 				StartupTask->LoadCmdTask(reg, -1);
 
 			reg->CloseKey();
 		}
-		// Обязательно вернуть "начальный" путь
-		*pszCmdKey = 0;
 	}
 
-	int NewTasksCount = 0;
 
 
-	lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
+	lbOpened = reg->OpenKey(szBaseKey, KEY_READ);
 	if (lbOpened)
 	{
+		// #SETTINGS Try to append instead of resetting tasks list?
+		FreeCmdTasks();
+
+		int NewTasksCount = 0;
 		reg->Load(L"Count", NewTasksCount);
 		reg->CloseKey();
-	}
 
-	if (lbOpened && NewTasksCount > 0)
-	{
-		CmdTasks = (CommandTasks**)calloc(NewTasksCount, sizeof(CommandTasks*));
-
-		int nSucceeded = 0;
-		for (int i = 0; i < NewTasksCount; i++)
+		if (lbOpened && NewTasksCount > 0)
 		{
-			swprintf_c(pszCmdKey, 32/*#SECURELEN*/, L"\\Task%i", i+1); // 1-based
+			CmdTasks = (CommandTasks**)calloc(NewTasksCount, sizeof(CommandTasks*));
 
-			lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
-			if (lbOpened)
+			int nSucceeded = 0;
+			for (int i = 0; i < NewTasksCount; i++)
 			{
-				_ASSERTE(CmdTasks[i] == NULL);
-				if ((CmdTasks[i] = (CommandTasks*)calloc(1, sizeof(CommandTasks))) != NULL)
-					if (CmdTasks[i]->LoadCmdTask(reg, i))
-						nSucceeded++;
+				wchar_t szNumber[16];
+				CEStr szCmdKey(szBaseKey, L"\\Task", ltow_s(i+1, szNumber, 10)); // 1-based
 
-				reg->CloseKey();
+				lbOpened = reg->OpenKey(szCmdKey, KEY_READ);
+				if (lbOpened)
+				{
+					_ASSERTE(CmdTasks[i] == NULL);
+					if ((CmdTasks[i] = (CommandTasks*)calloc(1, sizeof(CommandTasks))) != NULL)
+						if (CmdTasks[i]->LoadCmdTask(reg, i))
+							nSucceeded++;
+
+					reg->CloseKey();
+				}
 			}
+			CmdTaskCount = nSucceeded;
 		}
-		CmdTaskCount = nSucceeded;
 	}
 
 	if (lbDelete)
@@ -1569,63 +1570,61 @@ void Settings::LoadPalettes(SettingsBase* reg)
 	}
 
 
-	FreePalettes();
-
 
 	BOOL lbOpened = FALSE;
-	wchar_t szColorKey[MAX_PATH+64];
-	wcscpy_c(szColorKey, gpSetCls->GetConfigPath());
-	wcscat_c(szColorKey, L"\\Colors");
-	wchar_t* pszColorKey = szColorKey + lstrlen(szColorKey);
+	CEStr szBaseKey(gpSetCls->GetConfigPath(), L"\\Colors");
 
-	int UserCount = 0;
-	lbOpened = reg->OpenKey(szColorKey, KEY_READ);
+	lbOpened = reg->OpenKey(szBaseKey, KEY_READ);
 	if (lbOpened)
 	{
+		FreePalettes();
+
+		int UserCount = 0;
 		reg->Load(L"Count", UserCount);
 		reg->CloseKey();
-	}
 
 
-	// Predefined
-	CreatePredefinedPalettes(UserCount);
-	_ASSERTE(Palettes!=NULL);
-	// Was initialize with "Default palettes"
-	_ASSERTE(PaletteCount == (int)countof(DefColors));
+		// Predefined
+		CreatePredefinedPalettes(UserCount);
+		_ASSERTE(Palettes!=NULL);
+		// Was initialize with "Default palettes"
+		_ASSERTE(PaletteCount == (int)countof(DefColors));
 
-	// User
-	for (int i = 0; i < UserCount; i++)
-	{
-		swprintf_c(pszColorKey, 32/*#SECURELEN*/, L"\\Palette%i", i+1); // 1-based
-
-		lbOpened = reg->OpenKey(szColorKey, KEY_READ);
-		if (lbOpened)
+		// User
+		for (int i = 0; i < UserCount; i++)
 		{
-			Palettes[PaletteCount] = (ColorPalette*)calloc(1, sizeof(ColorPalette));
+			wchar_t szNumber[16];
+			CEStr szColorKey(szBaseKey, L"\\Palette", ltow_s(i+1, szNumber, 10)); // 1-based
 
-			reg->Load(L"Name", &Palettes[PaletteCount]->pszName);
-
-			reg->Load(L"TextColorIdx", Palettes[PaletteCount]->nTextColorIdx); MinMax(Palettes[PaletteCount]->nTextColorIdx,16);
-			reg->Load(L"BackColorIdx", Palettes[PaletteCount]->nBackColorIdx); MinMax(Palettes[PaletteCount]->nBackColorIdx,16);
-			reg->Load(L"PopTextColorIdx", Palettes[PaletteCount]->nPopTextColorIdx); MinMax(Palettes[PaletteCount]->nPopTextColorIdx,16);
-			reg->Load(L"PopBackColorIdx", Palettes[PaletteCount]->nPopBackColorIdx); MinMax(Palettes[PaletteCount]->nPopBackColorIdx,16);
-
-			_ASSERTE(countof(Colors) == countof(Palettes[PaletteCount]->Colors));
-			for (size_t k = 0; k < countof(Palettes[PaletteCount]->Colors)/*0x10*/; k++)
+			lbOpened = reg->OpenKey(szColorKey, KEY_READ);
+			if (lbOpened)
 			{
-				ColorName[10] = k/10 + '0';
-				ColorName[11] = k%10 + '0';
-				reg->Load(ColorName, Palettes[PaletteCount]->Colors[k]);
+				Palettes[PaletteCount] = (ColorPalette*)calloc(1, sizeof(ColorPalette));
+
+				reg->Load(L"Name", &Palettes[PaletteCount]->pszName);
+
+				reg->Load(L"TextColorIdx", Palettes[PaletteCount]->nTextColorIdx); MinMax(Palettes[PaletteCount]->nTextColorIdx,16);
+				reg->Load(L"BackColorIdx", Palettes[PaletteCount]->nBackColorIdx); MinMax(Palettes[PaletteCount]->nBackColorIdx,16);
+				reg->Load(L"PopTextColorIdx", Palettes[PaletteCount]->nPopTextColorIdx); MinMax(Palettes[PaletteCount]->nPopTextColorIdx,16);
+				reg->Load(L"PopBackColorIdx", Palettes[PaletteCount]->nPopBackColorIdx); MinMax(Palettes[PaletteCount]->nPopBackColorIdx,16);
+
+				_ASSERTE(countof(Colors) == countof(Palettes[PaletteCount]->Colors));
+				for (size_t k = 0; k < countof(Palettes[PaletteCount]->Colors)/*0x10*/; k++)
+				{
+					ColorName[10] = k/10 + '0';
+					ColorName[11] = k%10 + '0';
+					reg->Load(ColorName, Palettes[PaletteCount]->Colors[k]);
+				}
+
+				PaletteCount++;
+
+				reg->CloseKey();
 			}
-
-			PaletteCount++;
-
-			reg->CloseKey();
 		}
-	}
 
-	// sort
-	SortPalettes();
+		// sort
+		SortPalettes();
+	}
 
 	if (lbDelete)
 		delete reg;
@@ -2391,7 +2390,11 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		goto wrap;
 	}
 
-	wcscpy_c(Type, reg->m_Storage.szType);
+	// Update only if settings storage is default
+	if (apStorage)
+	{
+		wcscpy_c(Type, reg->m_Storage.szType);
+	}
 
 	rbNeedCreateVanilla = false;
 
@@ -4417,7 +4420,6 @@ SettingsBase* Settings::CreateSettings(const SettingsStorage* apStorage)
 	}
 
 
-#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
 	DWORD dwAttr = -1;
 
 	if (!apStorage)
@@ -4453,7 +4455,6 @@ SettingsBase* Settings::CreateSettings(const SettingsStorage* apStorage)
 			SafeDelete(pReg);
 		}
 	}
-#endif
 
 	if (lbXml && !pReg && apStorage)
 	{
@@ -4476,7 +4477,6 @@ void Settings::GetSettingsType(SettingsStorage& Storage, bool& ReadOnly)
 
 	ZeroStruct(Storage);
 
-#if !defined(__GNUC__) || defined(__MINGW64_VERSION_MAJOR)
 	HANDLE hFile = NULL;
 	LPWSTR pszXmlFile = gpConEmu->ConEmuXml();
 
@@ -4513,7 +4513,6 @@ void Settings::GetSettingsType(SettingsStorage& Storage, bool& ReadOnly)
 			}
 		}
 	}
-#endif
 
 	wcscpy_c(Storage.szType, pszType);
 	Storage.pszConfig = gpSetCls->GetConfigName();
@@ -5884,7 +5883,6 @@ void Settings::LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const b
 	reg->Load(L"KeyMacroVersion", MacroVersion);
 
 	reg->Load(L"Multi.Modifier", nHostkeyNumberModifier); ConEmuHotKey::TestHostkeyModifiers(nHostkeyNumberModifier);
-	nHostkeyArrowModifier = nHostkeyNumberModifier; // Умолчание - то же что и "Multi.Modifier"
 	reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); ConEmuHotKey::TestHostkeyModifiers(nHostkeyArrowModifier);
 
 	INT_PTR iMax = gpHotKeys->size();
@@ -5946,17 +5944,19 @@ void Settings::LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const b
 		{
 			wcscpy_c(szMacroName, ppHK->Name);
 			wcscat_c(szMacroName, L".Text");
-			_ASSERTE(ppHK->GuiMacro == NULL);
 			wchar_t* pszMacro = NULL;
-			reg->Load(szMacroName, &pszMacro);
-			if (MacroVersion < GUI_MACRO_VERSION)
+			if (reg->Load(szMacroName, &pszMacro))
 			{
-				ppHK->GuiMacro = ConEmuMacro::ConvertMacro(pszMacro, MacroVersion, true);
-				SafeFree(pszMacro);
-			}
-			else
-			{
-				ppHK->GuiMacro = pszMacro;
+				SafeFree(ppHK->GuiMacro);
+				if (MacroVersion < GUI_MACRO_VERSION)
+				{
+					ppHK->GuiMacro = ConEmuMacro::ConvertMacro(pszMacro, MacroVersion, true);
+					SafeFree(pszMacro);
+				}
+				else
+				{
+					ppHK->GuiMacro = pszMacro;
+				}
 			}
 		}
 	}

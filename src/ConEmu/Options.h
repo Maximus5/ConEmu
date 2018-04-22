@@ -288,6 +288,7 @@ struct Settings
 		CommandTasks** CmdTasks;
 		CommandTasks* StartupTask;
 		void FreeCmdTasks();
+		void FreeStartupTask();
 
 		int PaletteCount;
 		ColorPalette** Palettes;

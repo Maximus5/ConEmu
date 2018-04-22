@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "ConEmuCtrl.h"
+#include "ConfirmDlg.h"
 #include "DefaultTerm.h"
 #include "DpiAware.h"
 #include "DynDialog.h"
@@ -1867,23 +1868,33 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 	bool lbWasPos = false;
 	RECT rcWnd = {};
 
-	wchar_t* pszMsg = NULL;
-	LPCWSTR pszWarning = L"\n\nWarning!!!\nAll your current settings will be lost!";
-	if (pXmlStorage)
+	bool bImportOnly = !abResetOnly && pXmlStorage;
+
+	CEStr szLabel, szMessage, szOkDescr;
+	if (bImportOnly)
 	{
-		_ASSERTE(abResetOnly == false);
-		pszMsg = lstrmerge(L"Confirm import settings from file:\n", pXmlStorage->pszFile ? pXmlStorage->pszFile : L"???", pszWarning);
+		szLabel = L"Confirm import settings from file";
+		szMessage = pXmlStorage->pszFile ? pXmlStorage->pszFile : L"???";
+		szOkDescr = L"Import settings via merging";
 	}
 	else if (abResetOnly)
 	{
-		pszMsg = lstrmerge(L"Confirm reset settings to defaults", pszWarning);
+		szLabel = L"Confirm reset settings to defaults";
+		szMessage = L"Warning!!!\nAll your current settings will be lost!";
+		szOkDescr = L"Reset settings to defaults!";
 	}
 	else
 	{
-		pszMsg = lstrmerge(L"Confirm reload settings from ", gpSet->Type, pszWarning);
+		szLabel = CEStr(L"Confirm reload settings from ", gpSet->Type);
+		szMessage = L"Warning!!!\nAll your current settings will be lost!";
+		szOkDescr = CEStr(L"Reset to defaults and import settings from ", gpSet->Type);
 	}
 
-	int nBtn = MsgBox(pszMsg, MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), ghOpWnd);
+	int nBtn = ConfirmDialog(szMessage, szLabel, gpConEmu->GetDefaultTitle(),
+		NULL /* URL */, MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2, ghOpWnd,
+		L"Confirm", szOkDescr,
+		L"Cancel", NULL);
+	// int nBtn = MsgBox(pszMsg, MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2, gpConEmu->GetDefaultTitle(), ghOpWnd);
 	if (nBtn != IDYES)
 		return;
 
@@ -1898,28 +1909,36 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 	}
 	_ASSERTE(ghOpWnd == NULL);
 
-	// Сброс настроек на умолчания
-	gpSet->InitSettings();
-
-	// Почистить макросы и сбросить на умолчания
-	CSetPgKeys::ReInitHotkeys();
-
-	if (!abResetOnly)
+	if (!bImportOnly)
 	{
-		// Если надо - загрузить из реестра/xml
+		// Сброс настроек на умолчания
+		gpSet->InitSettings();
+
+		// Почистить макросы и сбросить на умолчания
+		CSetPgKeys::ReInitHotkeys();
+	}
+
+	if (bImportOnly)
+	{
 		bool bNeedCreateVanilla = false;
 		gpSet->LoadSettings(bNeedCreateVanilla, pXmlStorage);
 	}
+	else if (!abResetOnly)
+	{
+		// Reload from xml/reg
+		bool bNeedCreateVanilla = false;
+		gpSet->LoadSettings(bNeedCreateVanilla);
+	}
 	else
 	{
-		// Иначе - какие-то настройки могут быть модифицированы, как для "Новой конфигурации"
-		gpSet->IsConfigNew = true;
+		// Reset to defaults
+		gpSet->IsConfigNew = true; // otherwise some options may be modified, as for "new config"
 		gpSet->InitVanilla();
 	}
 
 
 	SettingsLoadedFlags slfFlags = slf_OnResetReload
-		| (abResetOnly ? (slf_DefaultSettings|slf_AllowFastConfig) : slf_None);
+		| ((abResetOnly && !bImportOnly) ? (slf_DefaultSettings|slf_AllowFastConfig) : slf_None);
 
 	SettingsLoaded(slfFlags, NULL);
 

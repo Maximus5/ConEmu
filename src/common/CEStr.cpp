@@ -48,14 +48,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 CEStr::CEStr()
-	: ms_Val(NULL), mn_MaxCount(0)
 {
 	CESTRLOG0("CEStr::CEStr()");
 	Empty();
 }
 
 CEStr::CEStr(const wchar_t* asStr1, const wchar_t* asStr2/*= NULL*/, const wchar_t* asStr3/*= NULL*/, const wchar_t* asStr4/*= NULL*/, const wchar_t* asStr5/*= NULL*/, const wchar_t* asStr6/*= NULL*/, const wchar_t* asStr7/*= NULL*/, const wchar_t* asStr8/*= NULL*/, const wchar_t* asStr9/*= NULL*/)
-	: ms_Val(NULL), mn_MaxCount(0)
 {
 	CESTRLOG3("CEStr::CEStr(const wchar_t* x%p, x%p, x%p, ...)", asStr1, asStr2, asStr3);
 	Empty();
@@ -63,8 +61,13 @@ CEStr::CEStr(const wchar_t* asStr1, const wchar_t* asStr2/*= NULL*/, const wchar
 	AttachInt(lpszMerged);
 }
 
-CEStr::CEStr(wchar_t* RVAL_REF asPtr)
-	: ms_Val(NULL), mn_MaxCount(0)
+CEStr::CEStr(CEStr&& asStr)
+{
+	klSwap(ms_Val, asStr.ms_Val);
+	klSwap(mn_MaxCount, asStr.mn_MaxCount);
+}
+
+CEStr::CEStr(wchar_t*&& asPtr)
 {
 	CESTRLOG1("CEStr::CEStr(wchar_t* RVAL_REF x%p)", asPtr);
 	Empty();
@@ -146,7 +149,17 @@ LPCWSTR CEStr::Mid(INT_PTR cchOffset) const
 	return (ms_Val + cchOffset);
 }
 
-CEStr& CEStr::operator=(wchar_t* RVAL_REF asPtr)
+CEStr& CEStr::operator=(CEStr&& asStr)
+{
+	if (ms_Val == asStr.ms_Val)
+		return *this;
+	Clear();
+	klSwap(ms_Val, asStr.ms_Val);
+	klSwap(mn_MaxCount, asStr.mn_MaxCount);
+	return *this;
+}
+
+CEStr& CEStr::operator=(wchar_t*&& asPtr)
 {
 	CESTRLOG1("CEStr::=(wchar_t* RVAL_REF x%p)", asPtr);
 	AttachInt(asPtr);
