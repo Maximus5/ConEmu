@@ -239,10 +239,9 @@ int swprintf_c(wchar_t (&Buffer)[size], const wchar_t* Format, ...)
 	_ASSERTE(Buffer!=Format);
 	va_list argList;
 	va_start(argList, Format);
-	int nRc;
-	nRc = StringCchVPrintfW(Buffer, size, Format, argList);
+	HRESULT nRc = StringCchVPrintfW(Buffer, size, Format, argList);
 	va_end(argList);
-	return nRc;
+	return int(nRc);
 }
 
 template <size_t size>
@@ -251,10 +250,9 @@ int sprintf_c(char (&Buffer)[size], const char* Format, ...)
 	_ASSERTE(Buffer!=Format);
 	va_list argList;
 	va_start(argList, Format);
-	int nRc;
-	nRc = StringCchVPrintfA(Buffer, size, Format, argList);
+	HRESULT nRc = StringCchVPrintfA(Buffer, size, Format, argList);
 	va_end(argList);
-	return nRc;
+	return int(nRc);
 }
 
 #define _wsprintf  swprintf_c
@@ -311,8 +309,8 @@ int wcscpy_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t *Str
 		return E_POINTER;
 	}
 
-	int nRc = StringCchCopyW(Buffer, SizeLeft, Str);
-	return nRc;
+	HRESULT nRc = StringCchCopyW(Buffer, SizeLeft, Str);
+	return int(nRc);
 };
 template <size_t size>
 int wcscpy_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t* Str)
@@ -325,8 +323,8 @@ int wcscpy_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t* Str)
 		return E_POINTER;
 	}
 
-	int nRc = StringCchCopyW(BufferStart+Shift, SizeLeft, Str);
-	return nRc;
+	HRESULT nRc = StringCchCopyW(BufferStart+Shift, SizeLeft, Str);
+	return int(nRc);
 };
 template <size_t size>
 int wcscat_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t* Str)
@@ -339,8 +337,8 @@ int wcscat_add(wchar_t* Buffer, wchar_t (&BufferStart)[size], const wchar_t* Str
 		return E_POINTER;
 	}
 
-	int nRc = StringCchCatW(Buffer, SizeLeft, Str);
-	return nRc;
+	HRESULT nRc = StringCchCatW(Buffer, SizeLeft, Str);
+	return int(nRc);
 };
 template <size_t size>
 int wcscat_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t *Str)
@@ -353,20 +351,20 @@ int wcscat_add(int Shift, wchar_t (&BufferStart)[size], const wchar_t *Str)
 		return E_POINTER;
 	}
 
-	int nRc = StringCchCatW(BufferStart+Shift, SizeLeft, Str);
-	return nRc;
+	HRESULT nRc = StringCchCatW(BufferStart+Shift, SizeLeft, Str);
+	return int(nRc);
 };
 template <size_t size>
 int wcscpy_c(wchar_t (&Dst)[size], const wchar_t *Src)
 {
-	int nRc = StringCchCopyW(Dst, size, Src);
-	return nRc;
+	HRESULT nRc = StringCchCopyW(Dst, size, Src);
+	return int(nRc);
 }
 template <size_t size>
 int wcscat_c(wchar_t (&Dst)[size], const wchar_t *Src)
 {
-	int nRc = StringCchCatW(Dst, size, Src);
-	return nRc;
+	HRESULT nRc = StringCchCatW(Dst, size, Src);
+	return int(nRc);
 }
 //#endif
 //#undef _wcscpy_c
