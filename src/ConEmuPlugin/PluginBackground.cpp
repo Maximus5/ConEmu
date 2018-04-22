@@ -630,7 +630,7 @@ void CPluginBackground::UpdateBackground()
 			_ASSERTE(hdc!=NULL);
 			return;
 		}
-		_ASSERTE(pBits = NULL);
+		_ASSERTE(pBits == NULL);
 		hDib = CreateDIBSection(hScreen, (BITMAPINFO*)&bi, DIB_RGB_COLORS, (void**)&pBits, NULL, 0);
 	}
 	ReleaseDC(NULL, hScreen); hScreen = NULL;
