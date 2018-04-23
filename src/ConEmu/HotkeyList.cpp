@@ -371,9 +371,9 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	Add(vkShowTabsList2,  chk_User,  NULL,    L"Multi.ShowTabsList2",   CConEmuCtrl::key_GuiMacro, false, L"Tabs(8)")
 		->SetHotKey(VK_F12,VK_APPS);
 	Add(vkPasteText,      chk_User,  NULL,    L"ClipboardVkAllLines",   CConEmuCtrl::key_PasteText)
-		->SetHotKey(VK_INSERT,VK_SHIFT);
-	Add(vkPasteFirstLine, chk_User,  NULL,    L"ClipboardVkFirstLine",  CConEmuCtrl::key_PasteFirstLine)
 		->SetHotKey('V',VK_CONTROL);
+	Add(vkPasteFirstLine, chk_User,  NULL,    L"ClipboardVkFirstLine",  CConEmuCtrl::key_PasteFirstLine)
+		->SetHotKey(VK_INSERT,VK_SHIFT);
 	Add(vkAltNumpad,      chk_User,  NULL,    L"Key.AltNumpad",         CConEmuCtrl::key_GuiMacro, false, L"AltNumber(16)")
 		;
 	Add(vkDeleteLeftWord, chk_User,  ConEmuHotKey::UseCtrlBS, L"DeleteWordToLeft", CConEmuCtrl::key_DeleteWordToLeft)
