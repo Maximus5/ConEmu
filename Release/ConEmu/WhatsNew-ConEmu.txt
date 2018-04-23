@@ -48,6 +48,7 @@ https://conemu.github.io/en/Whats_New.html
 * By default add commented `LANG` variable and some aliases to ‘Environment’ settings page.
 * Hidden cursor may be displayed as inactive (option for debug purposes).
 * Add hotkey for ‘Check for updates’.
+* Add helper `git-log.cmd` to distro.
 
 
 2018.4.16
