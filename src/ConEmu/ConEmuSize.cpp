@@ -4564,8 +4564,28 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			//RECT consoleSize;
 
 			bool bTiled = (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight || m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth);
-			RECT rcIdeal = (gpSet->isQuakeStyle) ? GetDefaultRect() : GetIdealRect();
+			RECT rcIdeal = (gpSet->isQuakeStyle || !bTiled) ? GetDefaultRect() : GetIdealRect();
+
+			if (!bTiled && !mp_ConEmu->isInside())
+			{
+				POINT ptOffset;
+				if (!IsRectMinimized(mrc_StoredNormalRect))
+				{
+					ptOffset = POINT{mrc_StoredNormalRect.left, mrc_StoredNormalRect.top};
+				}
+				else
+				{
+					// #SIZE_TODO Restore to "active" monitor?
+					MONITORINFO mi; GetNearestMonitor(&mi);
+					ptOffset = POINT{mi.rcWork.left, mi.rcWork.top};
+				}
+
+				rcIdeal = RECT{ptOffset.x, ptOffset.y, ptOffset.x + RectWidth(rcIdeal), ptOffset.y + RectHeight(rcIdeal)};
+				FixWindowRect(rcIdeal, CEB_ALL|CEB_ALLOW_PARTIAL);
+			}
+
 			AutoSizeFont(rcIdeal, CER_MAIN);
+
 			// Рассчитать размер по оптимальному WindowRect
 			if (!CVConGroup::PreReSize(inMode, rcIdeal))
 			{
@@ -4604,44 +4624,9 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 					ShowMainWindow(SW_SHOWNORMAL, abFirstShow);
 				}
 
-				//RePaint();
-
-				//// Сбросить (заранее), вдруг оно isIconic?
-				//if (mb_MaximizedHideCaption)
-				//	mb_MaximizedHideCaption = FALSE;
-
 				LPCWSTR pszInfo = L"OnSize(false).1";
 				if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 
-				//OnSize(false); // подровнять ТОЛЬКО дочерние окошки
-			}
-
-			//// Сбросить (однозначно)
-			//if (mb_MaximizedHideCaption)
-			//	mb_MaximizedHideCaption = FALSE;
-
-			RECT rcNew = rcIdeal;
-			if (!bTiled)
-			{
-				rcNew = GetDefaultRect();
-
-				if (!mp_ConEmu->isInside())
-				{
-					POINT ptOffset;
-					if (!IsRectMinimized(mrc_StoredNormalRect))
-					{
-						ptOffset = POINT{mrc_StoredNormalRect.left, mrc_StoredNormalRect.top};
-					}
-					else
-					{
-						// #SIZE_TODO Restore to "active" monitor?
-						MONITORINFO mi; GetNearestMonitor(&mi);
-						ptOffset = POINT{mi.rcWork.left, mi.rcWork.top};
-					}
-
-					rcNew = RECT{ptOffset.x, ptOffset.y, ptOffset.x + RectWidth(rcNew), ptOffset.y + RectHeight(rcNew)};
-					FixWindowRect(rcNew, CEB_ALL|CEB_ALLOW_PARTIAL);
-				}
 			}
 
 			#ifdef _DEBUG
@@ -4650,7 +4635,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 			mp_ConEmu->RefreshWindowStyles();
 
-			setWindowPos(NULL, rcNew.left, rcNew.top, rcNew.right-rcNew.left, rcNew.bottom-rcNew.top, SWP_NOZORDER);
+			setWindowPos(NULL, rcIdeal.left, rcIdeal.top, RectWidth(rcIdeal), RectHeight(rcIdeal), SWP_NOZORDER);
 
 			#ifdef _DEBUG
 			GetWindowPlacement(ghWnd, &wpl);
