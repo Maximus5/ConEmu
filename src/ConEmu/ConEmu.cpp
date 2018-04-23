@@ -1979,7 +1979,7 @@ BOOL CConEmuMain::CreateMainWindow()
 	{
 		MBoxAssert(gpFontMgr->FontWidth() && gpFontMgr->FontHeight());
 		RECT rcWnd = GetDefaultRect();
-		if (gpSet->IsConfigNew || MonChanged)
+		if (gpSetCls->IsConfigNew || MonChanged)
 		{
 			// We get here on "clean configuration" or if we forced our window to "Current monitor"
 			// Correct position to appear inside working area

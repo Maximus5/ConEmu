@@ -111,6 +111,12 @@ class CSettings
 		LPCWSTR GetConfigName();
 		void SetConfigName(LPCWSTR asConfigName);
 
+		// Informational only, what Storage was used during settings loading
+		StorageType Type = StorageType::BASIC;
+
+		bool IsConfigNew = false; // true, если конфигурация новая
+		bool IsConfigPartial = false; // true, if config has no task or start command
+
 		// === Аргументы из командной строки ===
 		// Для отладочных целей.
 		bool isResetBasicSettings;

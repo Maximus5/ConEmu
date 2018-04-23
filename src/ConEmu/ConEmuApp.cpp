@@ -3111,7 +3111,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		// force this config as "new"
 		DEBUGSTRSTARTUP(L"Clear config was requested");
-		gpSet->IsConfigNew = true;
+		gpSetCls->IsConfigNew = true;
 		gpSet->InitVanilla();
 	}
 	else
@@ -3158,8 +3158,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Settings are loaded, fixup
 	slfFlags |= slf_OnStartupLoad | slf_AllowFastConfig
 		| (bNeedCreateVanilla ? slf_NeedCreateVanilla : slf_None)
-		| (gpSet->IsConfigPartial ? slf_DefaultTasks : slf_None)
-		| ((gpConEmu->opt.ResetSettings || gpSet->IsConfigNew) ? slf_DefaultSettings : slf_None);
+		| (gpSetCls->IsConfigPartial ? slf_DefaultTasks : slf_None)
+		| ((gpConEmu->opt.ResetSettings || gpSetCls->IsConfigNew) ? slf_DefaultSettings : slf_None);
 	// выполнить дополнительные действия в классе настроек здесь
 	DEBUGSTRSTARTUP(L"Config loaded, post checks");
 	gpSetCls->SettingsLoaded(slfFlags, gpConEmu->opt.runCommand);

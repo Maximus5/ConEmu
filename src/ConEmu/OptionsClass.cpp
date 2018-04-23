@@ -654,25 +654,11 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 		gpLng->Reload();
 
 	// Expose the directory where xml file was loaded from
-	SettingsStorage Storage = {}; bool ReadOnly = false;
-	gpSet->GetSettingsType(Storage, ReadOnly);
-	CEStr CfgFilePath;
-	CfgFilePath.Set((gpConEmu->IsResetBasicSettings() || (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_XML) != 0))
-		? L"" : gpConEmu->ConEmuXml());
-	if (!CfgFilePath.IsEmpty())
-	{
-		wchar_t* p = wcsrchr(CfgFilePath.ms_Val, L'\\');
-		if (!p)
-		{
-			_ASSERTE(p!=NULL);
-			CfgFilePath.Empty();
-		}
-		else
-		{
-			*p = 0;
-		}
-	}
-	SetEnvironmentVariable(ENV_CONEMUCFGDIR_VAR_W, CfgFilePath.IsEmpty() ? L"" : CfgFilePath.ms_Val);
+	SettingsStorage Storage = gpSet->GetSettingsType();
+
+	// gh-1082: "ConEmuCfgDir" << folder where our xml-file is located
+	CEStr CfgFilePath(GetParentPath(Storage.File));
+	SetEnvironmentVariable(ENV_CONEMUCFGDIR_VAR_W, CfgFilePath.c_str(L""));
 
 	if ((ghWnd == NULL) || (slfFlags & slf_OnResetReload))
 	{
@@ -724,10 +710,6 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	if (slfFlags & slf_AllowFastConfig)
 	{
 		LPCWSTR pszDef = gpConEmu->GetDefaultTitle();
-		//wchar_t szType[8];
-		bool ReadOnly = false;
-		SettingsStorage Storage = {};
-		gpSet->GetSettingsType(Storage, ReadOnly);
 		LPCWSTR pszConfig = gpSetCls->GetConfigName();
 
 		CEStr szTitle;
@@ -1324,10 +1306,8 @@ LRESULT CSettings::OnInitDialog()
 	mn_LastChangingFontCtrlId = 0;
 
 	//wchar_t szType[8];
-	SettingsStorage Storage = {};
-	bool ReadOnly = false;
-	gpSet->GetSettingsType(Storage, ReadOnly);
-	if (ReadOnly || isResetBasicSettings)
+	SettingsStorage Storage = gpSet->GetSettingsType();
+	if (Storage.ReadOnly || isResetBasicSettings)
 	{
 		EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
 		if (isResetBasicSettings)
@@ -1341,16 +1321,14 @@ LRESULT CSettings::OnInitDialog()
 		CEStr lsBracketed(L"<", CLngRc::getRsrc(lng_BasicSettings/*"Настройки по умолчанию"*/), L">");
 		SetDlgItemText(ghOpWnd, tStorage, lsBracketed);
 	}
-	else if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_REG) == 0)
+	else if (Storage.Type == StorageType::REG)
 	{
-		wchar_t szStorage[MAX_PATH*2];
-		wcscpy_c(szStorage, L"HKEY_CURRENT_USER\\");
-		wcscat_c(szStorage, ConfigPath);
+		CEStr szStorage(L"HKEY_CURRENT_USER\\", ConfigPath);
 		SetDlgItemText(ghOpWnd, tStorage, szStorage);
 	}
 	else
 	{
-		SetDlgItemText(ghOpWnd, tStorage, gpConEmu->ConEmuXml());
+		SetDlgItemText(ghOpWnd, tStorage, Storage.File);
 	}
 
 	CEStr lsCfgAdd;
@@ -1363,7 +1341,7 @@ LRESULT CSettings::OnInitDialog()
 		CLngRc::getRsrc(lng_DlgSettings/*"Settings"*/),
 		lsCfgAdd,
 		L" ",
-		Storage.szType,
+		Storage.getTypeName(),
 		L" ",
 		gpConEmu->GetDefaultTitle(),
 		L" ",
@@ -1874,7 +1852,7 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 	if (bImportOnly)
 	{
 		szLabel = L"Confirm import settings from file";
-		szMessage = pXmlStorage->pszFile ? pXmlStorage->pszFile : L"???";
+		szMessage = pXmlStorage->File ? pXmlStorage->File : L"???";
 		szOkDescr = L"Import settings via merging";
 	}
 	else if (abResetOnly)
@@ -1885,9 +1863,9 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 	}
 	else
 	{
-		szLabel = CEStr(L"Confirm reload settings from ", gpSet->Type);
+		szLabel = CEStr(L"Confirm reload settings from ", SettingsStorage::getTypeName(gpSetCls->Type));
 		szMessage = L"Warning!!!\nAll your current settings will be lost!";
-		szOkDescr = CEStr(L"Reset to defaults and import settings from ", gpSet->Type);
+		szOkDescr = CEStr(L"Reset to defaults and import settings from ", SettingsStorage::getTypeName(gpSetCls->Type));
 	}
 
 	int nBtn = ConfirmDialog(szMessage, szLabel, gpConEmu->GetDefaultTitle(),
@@ -1923,7 +1901,7 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 		bool bNeedCreateVanilla = false;
 		gpSet->LoadSettings(bNeedCreateVanilla, pXmlStorage);
 	}
-	else if (!abResetOnly)
+	else if (!abResetOnly && !gpConEmu->IsResetBasicSettings())
 	{
 		// Reload from xml/reg
 		bool bNeedCreateVanilla = false;
@@ -1932,13 +1910,13 @@ void CSettings::OnResetOrReload(bool abResetOnly, SettingsStorage* pXmlStorage /
 	else
 	{
 		// Reset to defaults
-		gpSet->IsConfigNew = true; // otherwise some options may be modified, as for "new config"
+		gpSetCls->IsConfigNew = true; // otherwise some options may be modified, as for "new config"
 		gpSet->InitVanilla();
 	}
 
 
 	SettingsLoadedFlags slfFlags = slf_OnResetReload
-		| ((abResetOnly && !bImportOnly) ? (slf_DefaultSettings|slf_AllowFastConfig) : slf_None);
+		| ((abResetOnly && !bImportOnly) ? (slf_DefaultSettings/*|slf_AllowFastConfig*/) : slf_None);
 
 	SettingsLoaded(slfFlags, NULL);
 
@@ -1975,8 +1953,8 @@ void CSettings::ExportSettings()
 			SetConfigName(L"");
 		}
 
-		SettingsStorage XmlStorage = {CONEMU_CONFIGTYPE_XML};
-		XmlStorage.pszFile = pszFile;
+		SettingsStorage XmlStorage = {StorageType::XML};
+		XmlStorage.File = pszFile;
 		bool bOld = isResetBasicSettings; isResetBasicSettings = false;
 		gpSet->SaveSettings(FALSE, &XmlStorage);
 		isResetBasicSettings = bOld;
@@ -1998,6 +1976,7 @@ void CSettings::ExportSettings()
 
 void CSettings::ImportSettings()
 {
+	// #SETTINGS Support INI files?
 	wchar_t *pszFile = SelectFile(L"Import settings", L"*.xml", NULL, ghOpWnd, L"XML files (*.xml)\0*.xml\0", sff_Default);
 	if (pszFile)
 	{
@@ -2009,8 +1988,9 @@ void CSettings::ImportSettings()
 			SetConfigName(L"");
 		}
 
-		SettingsStorage XmlStorage = {CONEMU_CONFIGTYPE_XML};
-		XmlStorage.pszFile = pszFile;
+		SettingsStorage XmlStorage = {StorageType::XML};
+		XmlStorage.File = pszFile;
+		XmlStorage.ReadOnly = true;
 
 		OnResetOrReload(false, &XmlStorage);
 
@@ -2445,7 +2425,7 @@ void CSettings::UpdatePos(int ax, int ay, bool bGetRect)
 	{
 		RECT rc; GetWindowRect(ghWnd, &rc);
 		POINT newPos = gpConEmu->VisualPosFromReal(rc.left, rc.top);
-		_ASSERTE(x==newPos.x && y==newPos.y);
+		//_ASSERTE(x==newPos.x && y==newPos.y); // May occur during Reset/Reload from Settings dialog
 		x = newPos.x; y = newPos.y;
 	}
 	else

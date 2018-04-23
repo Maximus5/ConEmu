@@ -173,6 +173,9 @@ LPCWSTR GetStartupCommand(CEStr& command)
 			}
 		}
 		break;
+	case 3:
+		command.Set(AutoStartTaskName);
+		break;
 	}
 
 	return command.ms_Val;
@@ -300,8 +303,7 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 	}
 
 	// lbStorageLocation
-	SettingsStorage Storage = {}; bool ReadOnly = false;
-	gpSet->GetSettingsType(Storage, ReadOnly);
+	SettingsStorage Storage = gpSet->GetSettingsType();
 
 	// Same priority as in CConEmuMain::ConEmuXml (reverse order)
 	wchar_t* pszSettingsPlaces[] = {
@@ -313,22 +315,22 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 	};
 	// Lets find first allowed item
 	int iAllowed = 0;
-	if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_XML) == 0)
+	if (Storage.Type == StorageType::XML)
 	{
 		iAllowed = 1; // XML is used, registry is not allowed
-		if (Storage.pszFile)
+		if (Storage.File)
 		{
-			if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[1]) == 0) // %APPDATA%
+			if (lstrcmpi(Storage.File, pszSettingsPlaces[1]) == 0) // %APPDATA%
 				iAllowed = 1; // Any other xml has greater priority
-			else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[2]) == 0) // %ConEmuBaseDir%
+			else if (lstrcmpi(Storage.File, pszSettingsPlaces[2]) == 0) // %ConEmuBaseDir%
 				iAllowed = 2; // Only %ConEmuDir% has greater priority
-			else if (lstrcmpi(Storage.pszFile, pszSettingsPlaces[3]) == 0) // %ConEmuDir%
+			else if (lstrcmpi(Storage.File, pszSettingsPlaces[3]) == 0) // %ConEmuDir%
 				iAllowed = 3; // Most prioritized
 			else
 			{
 				// Directly specified with "/LoadCfgFile ..."
 				SafeFree(pszSettingsPlaces[3]);
-				pszSettingsPlaces[3] = lstrdup(Storage.pszFile);
+				pszSettingsPlaces[3] = lstrdup(Storage.File);
 				iAllowed = 3; // Most prioritized
 			}
 		}
@@ -339,7 +341,7 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 	// If registry was detected?
 	if (iAllowed == 0)
 	{
-		if (lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_REG) == 0)
+		if (Storage.Type == StorageType::REG)
 		{
 			SettingsBase* reg = gpSet->CreateSettings(&Storage);
 			if (reg)
@@ -354,7 +356,7 @@ static INT_PTR OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 		}
 		else
 		{
-			_ASSERTE(lstrcmp(Storage.szType, CONEMU_CONFIGTYPE_REG) == 0);
+			_ASSERTE(Storage.Type == StorageType::REG);
 		}
 	}
 	// If still not decided - use xml if possible
@@ -585,8 +587,8 @@ static INT_PTR OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 		{
 			CEStr lsValue;
 
-			SettingsStorage CurStorage = {}; bool ReadOnly = false;
-			gpSet->GetSettingsType(CurStorage, ReadOnly);
+			SettingsStorage CurStorage = gpSet->GetSettingsType();
+
 			LRESULT lSelStorage = SendDlgItemMessage(hDlg, lbStorageLocation, CB_GETCURSEL, 0, 0);
 			if (lSelStorage > 0)
 			{
@@ -898,7 +900,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 		// First ShowWindow forced to use nCmdShow. This may be weird...
 		SkipOneShowWindow();
 
-		if (gpSet->IsConfigNew && gpConEmu->opt.ExitAfterActionPrm.Exists)
+		if (gpSetCls->IsConfigNew && gpConEmu->opt.ExitAfterActionPrm.Exists)
 		{
 			CEStr lsMsg(
 				L"Something is going wrong...\n\n"

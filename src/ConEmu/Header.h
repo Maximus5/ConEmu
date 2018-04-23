@@ -266,17 +266,51 @@ void RaiseTestException();
 ///| Registry |///////////////////////////////////////////////////////////
 //------------------------------------------------------------------------
 
+enum class StorageType : int
+{
+	BASIC,
+	REG,
+	XML,
+	INI,
+};
+
 struct SettingsStorage
 {
-	wchar_t szType[8]; // CONEMU_CONFIGTYPE_REG, CONEMU_CONFIGTYPE_XML
-	LPCWSTR pszFile;   // NULL или полный путь к xml-файлу
-	LPCWSTR pszConfig; // Имя конфигурации
+	StorageType Type = StorageType::BASIC;
+	LPCWSTR     File = nullptr;   // NULL or full path to storage file
+	LPCWSTR     Config = nullptr; // Name of configuration
+	bool        ReadOnly = false; // If xml file is write-prohibited (created in "C:\Program Files"?)
+
+	static LPCWSTR getTypeName(const StorageType t)
+	{
+		return (t == StorageType::REG) ? L"[reg]"
+			: (t == StorageType::XML) ? L"[xml]"
+			: (t == StorageType::INI) ? L"[ini]"
+			: L"[basic]";
+	};
+	LPCWSTR getTypeName() const
+	{
+		return  getTypeName(Type);
+	};
+
+	bool isFileType() const
+	{
+		return (Type == StorageType::XML || Type == StorageType::INI);
+	};
+
+	bool hasFile() const
+	{
+		return isFileType() && (File && *File);
+	};
+
+	bool hasConfig() const
+	{
+		return (Config && *Config);
+	};
 };
 
 #define CONEMU_ROOT_KEY L"Software\\ConEmu"
-#define CONEMU_CONFIGTYPE_REG L"[reg]"
-#define CONEMU_CONFIGTYPE_XML L"[xml]"
-#define CONEMU_CONFIGTYPE_INI L"[ini]"
+
 
 #define APP_MODEL_ID_PREFIX L"Maximus5.ConEmu."
 

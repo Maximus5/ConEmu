@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #include <TlHelp32.h>
 #endif
+#include "../common/CEHandle.h"
 #include "../common/MFileLogEx.h"
 #include "../common/Monitors.h"
 #include "../common/StartupEnvDef.h"
@@ -311,6 +312,7 @@ Settings::Settings()
 {
 	//gpSet = this; // -- нельзя. Settings может использоваться как копия настроек (!= gpSet)
 
+	// #SETTINGS Get rid of ResetSettings in ctor, instead move all defaults to header
 	ResetSettings();
 
 	// Умолчания устанавливаются в CSettings::CSettings
@@ -325,7 +327,7 @@ void Settings::ResetSettings()
 
 	#else
 
-	// Сброс переменных (struct, допустимо)
+	// #SETTINGS While Settings is POD it's valid
 	memset(this, 0, sizeof(*this));
 
 	#endif
@@ -882,9 +884,9 @@ void Settings::InitSettings()
 // Здесь можно включить настройки, которые должны включаться только для новых конфигураций!
 void Settings::InitVanilla()
 {
-	if (!IsConfigNew)
+	if (!gpSetCls->IsConfigNew)
 	{
-		_ASSERTE(IsConfigNew == true);
+		_ASSERTE(gpSetCls->IsConfigNew == true);
 		return;
 	}
 
@@ -2391,9 +2393,9 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 	}
 
 	// Update only if settings storage is default
-	if (apStorage)
+	if (apStorage == nullptr)
 	{
-		wcscpy_c(Type, reg->m_Storage.szType);
+		gpSetCls->Type = reg->m_Storage.Type;
 	}
 
 	rbNeedCreateVanilla = false;
@@ -2427,13 +2429,13 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		// That may be only there was old (not ".Vanilla") settings in the CONEMU_ROOT_KEY
 		_ASSERTE(lbOpened);
 		// The config was saved in the old format, but it is not a 'new config'.
-		IsConfigNew = false;
+		gpSetCls->IsConfigNew = false;
 	}
 	else
 	{
-		IsConfigNew = !lbOpened;
+		gpSetCls->IsConfigNew = !lbOpened;
 		// Здесь можно включить настройки, которые должны включаться только для новых конфигураций!
-		if (IsConfigNew)
+		if (gpSetCls->IsConfigNew)
 		{
 			InitVanilla();
 		}
@@ -2468,10 +2470,10 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 			if (!bCmdLine)
 			{
 				// Config is new or partial (template)?
-				if (!IsConfigNew
+				if (!gpSetCls->IsConfigNew
 					&& !(psStartSingleApp || psStartTasksFile || psStartTasksName))
 				{
-					IsConfigPartial = true;
+					gpSetCls->IsConfigPartial = true;
 				}
 			}
 			else
@@ -3527,9 +3529,9 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 	{
 		// При сохранении меняем "сохраненный" тип (отображается в заголовке диалога)
 		// только если сохранение было "умолчательное", а не "Экспорт в файл"
-		if (apStorage == NULL)
+		if (apStorage == nullptr)
 		{
-			wcscpy_c(Type, reg->m_Storage.szType);
+			gpSetCls->Type = reg->m_Storage.Type;
 		}
 
 		reg->Save(L"Language", Language);
@@ -4363,159 +4365,115 @@ void Settings::CheckConsoleSettings()
 
 wchar_t* Settings::GetStoragePlaceDescr(const SettingsStorage* apStorage, LPCWSTR asPrefix)
 {
-	wchar_t* pszDescr = asPrefix ? lstrdup(asPrefix) : NULL;
-
-	if (apStorage)
+	SettingsStorage temp = {};
+	if (apStorage == nullptr)
 	{
-		lstrmerge(&pszDescr, L" ", apStorage->szType);
-		if (apStorage->pszFile && *apStorage->pszFile)
-			lstrmerge(&pszDescr, L" ", apStorage->pszFile);
-		if (apStorage->pszConfig && *apStorage->pszConfig)
-			lstrmerge(&pszDescr, L" -config ", apStorage->pszConfig);
-		return pszDescr;
+		temp = GetSettingsType();
+		apStorage = &temp;
 	}
 
-	LPCWSTR pszConfig = gpSetCls->GetConfigName();
-	LPCWSTR pszFile = gpConEmu->ConEmuXml();
-	if (pszFile && *pszFile && FileExists(pszFile))
-	{
-		lstrmerge(&pszDescr, L" ", CONEMU_CONFIGTYPE_XML, L" ", pszFile);
-		if (pszConfig && *pszConfig)
-			lstrmerge(&pszDescr, L" -config ", pszConfig);
-		return pszDescr;
-	}
-
-	lstrmerge(&pszDescr, L" ", CONEMU_CONFIGTYPE_REG,
-		(pszConfig && *pszConfig) ? L" -config " : NULL,
-		(pszConfig && *pszConfig) ? pszConfig : NULL);
-	return pszDescr;
+	return lstrmerge(
+		asPrefix,
+		// [reg], [xml], ...
+		L" ", apStorage->getTypeName(),
+		// xml file
+		apStorage->hasFile() ? L" " : nullptr,
+		apStorage->hasFile() ? apStorage->File : nullptr,
+		// -config ...
+		apStorage->hasConfig() ? L" -config " : nullptr,
+		apStorage->hasConfig() ? apStorage->Config : nullptr
+		);
 }
 
 SettingsBase* Settings::CreateSettings(const SettingsStorage* apStorage)
 {
 	SettingsBase* pReg = NULL;
 
-	BOOL lbXml = FALSE;
-	LPCWSTR pszFile = NULL;
+	SettingsStorage Storage = apStorage ? *apStorage : GetSettingsType();
 
+	// When settings location were passed via parameter,
+	// we shall check them for validity and file-availability
 	if (apStorage)
 	{
-		if (lstrcmp(apStorage->szType, CONEMU_CONFIGTYPE_XML) == 0)
+		if (Storage.isFileType())
 		{
-			pszFile = apStorage->pszFile;
-			if (!pszFile || !*pszFile)
+			if (!Storage.hasFile())
 			{
-				DisplayLastError(L"Invalid xml-path was specified!", -1);
+				CEStr lsMessage(L"Invalid ", Storage.getTypeName(), L"-path was specified!");
+				DisplayLastError(lsMessage, -1);
 				return NULL;
 			}
-			HANDLE hFile = CreateFile(pszFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+			HANDLE hFile = CreateFile(Storage.File,
+				GENERIC_READ|(Storage.ReadOnly ? 0 : GENERIC_WRITE),
+				FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 			if (hFile == INVALID_HANDLE_VALUE || !hFile)
 			{
-				DisplayLastError(L"Failed to create xml file!");
+				CEStr lsMessage(L"Failed to create ", Storage.getTypeName(), L"-file!\n", Storage.File);
+				DisplayLastError(lsMessage);
 				return NULL;
 			}
 			CloseHandle(hFile);
-			lbXml = TRUE;
 		}
 	}
 
-
-	DWORD dwAttr = -1;
-
-	if (!apStorage)
+	switch (Storage.Type)
 	{
-		pszFile = gpConEmu->ConEmuXml();
-	}
-
-	// добавил lbXml - он мог быть принудительно включен
-	if (pszFile && *pszFile && !lbXml)
-	{
-		dwAttr = GetFileAttributes(pszFile);
-
-		if (dwAttr != (DWORD)-1 && !(dwAttr & FILE_ATTRIBUTE_DIRECTORY))
-			lbXml = TRUE;
-	}
-
-	if (lbXml)
-	{
-		SettingsStorage XmlStorage = {};
-		XmlStorage.pszFile = pszFile;
-
-		pReg = new SettingsXML(XmlStorage);
-
-		if (!((SettingsXML*)pReg)->IsXmlAllowed())
-		{
-			// Если MSXml.DomDocument не зарегистрирован
-			if (!apStorage)
-			{
-				// Чтобы не пытаться повторно открыть XML - интерфейс не доступен!
-				gpConEmu->ConEmuXml()[0] = 0;
-			}
-			lbXml = FALSE;
-			SafeDelete(pReg);
-		}
-	}
-
-	if (lbXml && !pReg && apStorage)
-	{
-		DisplayLastError(L"XML storage is not available! Check IXMLDOMDocument interface!", -1);
-		return NULL;
-	}
-
-	if (!pReg)
-	{
+	case StorageType::XML:
+		pReg = new SettingsXML(Storage);
+		break;
+	case StorageType::INI:
+		pReg = new SettingsINI(Storage);
+		break;
+	case StorageType::REG:
 		pReg = new SettingsRegistry();
+		break;
+	case StorageType::BASIC:
+		_ASSERTE(FALSE && "-basic is not expected to be loaded from settings");
+		break;
+	default:
+		{
+			CEStr lsMessage(L"Settings type ", Storage.getTypeName(), L" is not supported yet");
+			DisplayLastError(lsMessage, -1);
+		}
 	}
 
 	return pReg;
 }
 
-void Settings::GetSettingsType(SettingsStorage& Storage, bool& ReadOnly)
+SettingsStorage Settings::GetSettingsType()
 {
-	const wchar_t* pszType = CONEMU_CONFIGTYPE_REG /*L"[reg]"*/;
-	ReadOnly = false;
+	SettingsStorage Storage = {StorageType::REG};
+	Storage.Config = gpSetCls->GetConfigName();
 
-	ZeroStruct(Storage);
-
-	HANDLE hFile = NULL;
-	LPWSTR pszXmlFile = gpConEmu->ConEmuXml();
-
+	// #SETTINGS Support other storage types? INI, JSON, ...
+	LPCWSTR pszXmlFile = gpConEmu->ConEmuXml();
 	if (pszXmlFile && *pszXmlFile)
 	{
-		hFile = CreateFile(pszXmlFile, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
-		                   NULL, OPEN_EXISTING, 0, 0);
-
-		// XML-файл есть
-		if (hFile != INVALID_HANDLE_VALUE)
+		// XML-file exists
+		if (CEHandle hFile = CreateFile(pszXmlFile, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+		                   NULL, OPEN_EXISTING, 0, 0))
 		{
-			CloseHandle(hFile); hFile = NULL;
+			// well, at least read-only access is available
+			hFile.Close();
 
-			if (SettingsXML::IsXmlAllowed())
+			Storage.Type = StorageType::XML;
+			Storage.File = pszXmlFile;
+
+			// Check if it's write-enabled
+			hFile = CreateFile(pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
+				                NULL, OPEN_EXISTING, 0, 0);
+
+			if (!hFile)
 			{
-				pszType = CONEMU_CONFIGTYPE_XML /*L"[xml]"*/;
-				Storage.pszFile = pszXmlFile;
-
-				// Проверим, сможем ли мы в него записать
-				hFile = CreateFile(pszXmlFile, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE,
-				                   NULL, OPEN_EXISTING, 0, 0);
-
-				if (hFile != INVALID_HANDLE_VALUE)
-				{
-					CloseHandle(hFile); hFile = NULL; // OK
-				}
-				else
-				{
-					DWORD nErr = GetLastError();
-					//EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
-					ReadOnly = true;
-					UNREFERENCED_PARAMETER(nErr);
-				}
+				DWORD nErr = GetLastError();
+				//EnableWindow(GetDlgItem(ghOpWnd, bSaveSettings), FALSE); // Сохранение запрещено
+				Storage.ReadOnly = true;
+				UNREFERENCED_PARAMETER(nErr);
 			}
 		}
 	}
 
-	wcscpy_c(Storage.szType, pszType);
-	Storage.pszConfig = gpSetCls->GetConfigName();
+	return Storage;
 }
 
 void Settings::SetHideCaptionAlways(bool bHideCaptionAlways)

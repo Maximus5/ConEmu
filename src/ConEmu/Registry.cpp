@@ -184,9 +184,8 @@ void SettingsBase::SaveMSZ(const wchar_t *regName, const wchar_t *value, DWORD n
 SettingsRegistry::SettingsRegistry()
 	: SettingsBase()
 {
-	ZeroStruct(m_Storage);
+	m_Storage = {StorageType::REG};
 	regMy = NULL;
-	lstrcpy(m_Storage.szType, CONEMU_CONFIGTYPE_REG);
 }
 SettingsRegistry::~SettingsRegistry()
 {
@@ -349,7 +348,7 @@ SettingsINI::SettingsINI(const SettingsStorage& Storage)
 {
 	mpsz_Section = NULL;
 	mpsz_IniFile = NULL;
-	lstrcpy(m_Storage.szType, CONEMU_CONFIGTYPE_INI);
+	m_Storage.Type = StorageType::INI;
 }
 SettingsINI::~SettingsINI()
 {
@@ -370,14 +369,14 @@ bool SettingsINI::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 		return false;
 	}
 
-	if (m_Storage.pszFile && *m_Storage.pszFile)
+	if (m_Storage.hasFile())
 	{
-		mpsz_IniFile = m_Storage.pszFile;
+		mpsz_IniFile = m_Storage.File;
 	}
 	else
 	{
-		_ASSERTE(m_Storage.pszFile && *m_Storage.pszFile);
-		m_Storage.pszFile = mpsz_IniFile = gpConEmu->ConEmuIni();
+		_ASSERTE(m_Storage.hasFile());
+		m_Storage.File = mpsz_IniFile = gpConEmu->ConEmuIni();
 	}
 
 	if (!mpsz_IniFile || !*mpsz_IniFile)
@@ -599,16 +598,11 @@ namespace
 SettingsXML::SettingsXML(const SettingsStorage& Storage)
 	: SettingsBase(Storage)
 {
-	lstrcpy(m_Storage.szType, CONEMU_CONFIGTYPE_XML);
+	m_Storage.Type = StorageType::XML;
 }
 SettingsXML::~SettingsXML()
 {
 	CloseStorage();
-}
-
-bool SettingsXML::IsXmlAllowed() noexcept
-{
-	return true;
 }
 
 // The function converts UTF-8 to UCS2 (CEStr) and returns pointer to allocated buffer (CEStr)
@@ -688,22 +682,20 @@ bool SettingsXML::OpenStorage(uint access, wchar_t*& pszErr)
 
 	_ASSERTE(pszErr == NULL);
 
-	if (m_Storage.pszFile && *m_Storage.pszFile)
+	if (m_Storage.hasFile())
 	{
-		pszXmlFile = m_Storage.pszFile;
+		pszXmlFile = m_Storage.File;
 	}
 	else
 	{
 		// Must be already initialized
-		_ASSERTE(m_Storage.pszFile && *m_Storage.pszFile);
-		pszXmlFile = gpConEmu->ConEmuXml();
+		_ASSERTE(m_Storage.hasFile());
+		m_Storage.File = pszXmlFile = gpConEmu->ConEmuXml();
 		if (!pszXmlFile || !*pszXmlFile)
 		{
 			goto wrap;
 		}
 	}
-
-	m_Storage.pszFile = pszXmlFile;
 
 	// Changed access type?
 	if (bNeedReopen || (mn_access != access))
@@ -863,7 +855,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 			wchar_t szRootError[80];
 			swprintf_c(szRootError,
 				L"XML: Root node not found! ErrCode=0x%08X\r\n", (DWORD)hr);
-			pszErr = lstrmerge(szRootError, m_Storage.pszFile, L"\r\n", regPath);
+			pszErr = lstrmerge(szRootError, m_Storage.File, L"\r\n", regPath);
 			goto wrap;
 		}
 
@@ -913,7 +905,7 @@ bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*=
 	catch (rapidxml::parse_error& e)
 	{
 		CEStr lsWhat, lsWhere;
-		pszErr = lstrmerge(L"Exception in SettingsXML::OpenKey\r\n", m_Storage.pszFile,
+		pszErr = lstrmerge(L"Exception in SettingsXML::OpenKey\r\n", m_Storage.File,
 			L"\r\n", regPath, L"\r\n",
 			utf2wcs(e.what(), lsWhat), L"\r\n", utf2wcs(e.where<char>(), lsWhere));
 		lbRc = false;
@@ -978,8 +970,8 @@ void SettingsXML::CloseStorage() noexcept
 	if (mb_Modified && mp_File)
 	{
 		// Путь к файлу проинициализирован в OpenKey
-		_ASSERTE(m_Storage.pszFile && *m_Storage.pszFile);
-		LPCWSTR pszXmlFile = m_Storage.pszFile;
+		_ASSERTE(m_Storage.hasFile());
+		LPCWSTR pszXmlFile = m_Storage.File;
 
 		if (pszXmlFile)
 		{

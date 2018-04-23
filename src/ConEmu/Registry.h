@@ -163,7 +163,6 @@ struct SettingsXML : public SettingsBase
 		bool mb_Empty = false;
 		uint mn_access = 0;
 	public:
-		static bool IsXmlAllowed() noexcept;
 		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE) noexcept override;
 		virtual void CloseKey() noexcept override;
 

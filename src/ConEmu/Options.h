@@ -179,11 +179,6 @@ struct Settings
 		void ReleasePointers();
 	public:
 
-		wchar_t Type[16]; // Информационно: L"[reg]" или L"[xml]"
-
-		bool IsConfigNew; // true, если конфигурация новая
-		bool IsConfigPartial; // true, if config has no task or start command
-
 		//reg->Load(L"Language", Language, countof(Language))
 		wchar_t Language[8]; // "ru", "en", "zh", ...
 
@@ -1147,5 +1142,5 @@ struct Settings
 		SettingsBase* CreateSettings(const SettingsStorage* apStorage);
 		wchar_t* GetStoragePlaceDescr(const SettingsStorage* apStorage, LPCWSTR asPrefix);
 
-		void GetSettingsType(SettingsStorage& Storage, bool& ReadOnly);
+		SettingsStorage GetSettingsType();
 };
