@@ -2548,7 +2548,20 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 			HEAPVAL
 			_ASSERTE(dwSbiSize == sizeof(con.m_sbi));
 
-			if (memcmp(&con.m_sbi, &pInfo->ConState.sbi, sizeof(con.m_sbi))!=0)
+			CONSOLE_SCREEN_BUFFER_INFO sbi = pInfo->ConState.sbi;
+			_ASSERTE(sizeof(sbi.srWindow.Bottom)==sizeof(SHORT) && sizeof(sbi.srWindow)==4*sizeof(SHORT));
+			if (sbi.srWindow.Left < 0 || sbi.srWindow.Top < 0 || sbi.srWindow.Right < 0 || sbi.srWindow.Bottom < 0)
+			{
+				_ASSERTE(sbi.srWindow.Left >= 0 && sbi.srWindow.Top >= 0 && sbi.srWindow.Right >= 0 && sbi.srWindow.Bottom >= 0);
+				for (size_t i = 0; i < 4; ++i)
+				{
+					SHORT& n = ((SHORT*)&sbi.srWindow)[i];
+					if (n < 0)
+						n = std::numeric_limits<SHORT>::max();
+				}
+			}
+
+			if (memcmp(&con.m_sbi, &sbi, sizeof(con.m_sbi))!=0)
 			{
 				LOGCONSOLECHANGE("ApplyConsoleInfo: ScreenBufferInfo changed");
 				lbChanged = true;
@@ -2559,47 +2572,15 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 
 			#ifdef _DEBUG
 			wchar_t szCursorDbg[255]; szCursorDbg[0] = 0;
-			if (pInfo->ConState.sbi.dwCursorPosition.X != con.m_sbi.dwCursorPosition.X || pInfo->ConState.sbi.dwCursorPosition.Y != con.m_sbi.dwCursorPosition.Y)
-				swprintf_c(szCursorDbg, L"CursorPos changed to %ux%u. ", pInfo->ConState.sbi.dwCursorPosition.X, pInfo->ConState.sbi.dwCursorPosition.Y);
+			if (sbi.dwCursorPosition.X != con.m_sbi.dwCursorPosition.X || sbi.dwCursorPosition.Y != con.m_sbi.dwCursorPosition.Y)
+				swprintf_c(szCursorDbg, L"CursorPos changed to %ux%u. ", sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y);
 			else
-				swprintf_c(szCursorDbg, L"CursorPos is %ux%u. ", pInfo->ConState.sbi.dwCursorPosition.X, pInfo->ConState.sbi.dwCursorPosition.Y);
+				swprintf_c(szCursorDbg, L"CursorPos is %ux%u. ", sbi.dwCursorPosition.X, sbi.dwCursorPosition.Y);
 			#endif
 
-			#if 0
-			CONSOLE_SCREEN_BUFFER_INFO lsbi = pInfo->sbi;
-			// Если мышкой тащат ползунок скроллера - не менять TopVisible
-			if (mp_RCon->InScroll())
-			{
-				UINT nY = lsbi.srWindow.Bottom - lsbi.srWindow.Top;
-				SHORT iMaxTop = lsbi.dwSize.Y-nY-1;
-				SHORT iTop = (con.nTopVisibleLine >= 0) ? con.nTopVisibleLine : iMaxTop;
-				lsbi.srWindow.Top = max(0,min(iTop,iMaxTop));
-				lsbi.srWindow.Bottom = lsbi.srWindow.Top + nY;
-				#ifdef _DEBUG
-				int l = lstrlen(szCursorDbg);
-				swprintf_c(szCursorDbg+l, countof(szCursorDbg)-l/*#SECURELEN*/, L"Visible rect locked to {%ux%u-%ux%u), Top=%u. ", lsbi.srWindow.Left, lsbi.srWindow.Top, lsbi.srWindow.Right, lsbi.srWindow.Bottom, con.nTopVisibleLine);
-				#endif
-			}
-			#ifdef _DEBUG
-			else if (memcmp(&pInfo->sbi.srWindow, &con.m_sbi.srWindow, sizeof(con.m_sbi.srWindow)))
-			{
-				if (pInfo->sbi.dwCursorPosition.X != con.m_sbi.dwCursorPosition.X || pInfo->sbi.dwCursorPosition.Y != con.m_sbi.dwCursorPosition.Y)
-				{
-					int l = lstrlen(szCursorDbg);
-					swprintf_c(szCursorDbg+l, countof(szCursorDbg)-l/*#SECURELEN*/, L"Visible rect changed to {%ux%u-%ux%u). ", pInfo->sbi.srWindow.Left, pInfo->sbi.srWindow.Top, pInfo->sbi.srWindow.Right, pInfo->sbi.srWindow.Bottom);
-				}
-			}
-
-			if (szCursorDbg[0])
-			{
-				wcscat_c(szCursorDbg, L"\n");
-				DEBUGSTRCURSORPOS(szCursorDbg);
-			}
-			#endif
-			#endif
 
 			LONG nLastConsoleRow = mp_RCon->m_AppMap.IsValid() ? mp_RCon->m_AppMap.Ptr()->nLastConsoleRow : -1;
-			const CONSOLE_SCREEN_BUFFER_INFO& sbi = pInfo->ConState.sbi;
+
 			int newDynamicHeight = 0;
 			bool lbRealTurnedOn = IsBufferHeightTurnedOn(sbi);
 			con.srRealWindow = pInfo->ConState.srRealWindow;
@@ -2640,7 +2621,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 
 
 			DWORD nScroll;
-			if (GetConWindowSize(pInfo->ConState.sbi, &nNewWidth, &nNewHeight, &nScroll))
+			if (GetConWindowSize(sbi, &nNewWidth, &nNewHeight, &nScroll))
 			{
 				// Far sync resize (avoid panel flickering)
 				// refresh VCon only when server return new size/data
