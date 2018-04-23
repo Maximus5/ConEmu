@@ -258,7 +258,7 @@ BOOL GetConsoleScreenBufferInfoCached(HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUF
 			s_csbi = csbi;
 			s_LastCheckTick = GetTickCount();
 			s_hConOut = hConsoleOutput;
-			UpdateAppMapRows(max(csbi.dwCursorPosition.Y, csbi.srWindow.Bottom), false);
+			UpdateAppMapRows(std::max(csbi.dwCursorPosition.Y, csbi.srWindow.Bottom), false);
 		}
 	}
 

@@ -1370,7 +1370,7 @@ void CSetDlgButtons::OnBtn_CmdTasksDel(HWND hDlg, WORD CB, BYTE uCheck)
 		pTasksPg->OnInitDialog(hDlg, false);
 
 	iCount = (int)SendDlgItemMessage(hDlg, lbCmdTasks, LB_GETCOUNT, 0,0);
-	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, min(Selected[0],(iCount-1)));
+	CSetDlgLists::ListBoxMultiSel(hDlg, lbCmdTasks, std::min(Selected[0],(iCount-1)));
 
 	if (pTasksPg)
 		pTasksPg->OnComboBox(hDlg, lbCmdTasks, LBN_SELCHANGE);

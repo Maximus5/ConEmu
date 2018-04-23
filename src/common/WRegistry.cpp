@@ -118,7 +118,7 @@ int RegEnumValues(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumValuesCallback fn, 
 			while ((iRc = RegEnumValue(hk, idx++, pszName, &cchName, NULL, &dwType, NULL, NULL)) == 0)
 			{
 				iRc++;
-				pszName[min(cchNameMax,cchName)] = 0;
+				pszName[std::min(cchNameMax,cchName)] = 0;
 				if (fn != NULL)
 				{
 					if (!fn(hk, pszName, dwType, lParam))

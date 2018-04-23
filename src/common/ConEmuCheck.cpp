@@ -238,9 +238,9 @@ HANDLE ExecuteOpenPipe(const wchar_t* szPipeName, wchar_t (&szErr)[MAX_PATH*2], 
 	int nTries = nDefaultTries;
 	// nTimeout должен ограничивать ВЕРХНЮЮ границу времени ожидания
 	_ASSERTE(EXECUTE_CMD_OPENPIPE_TIMEOUT >= nTimeout);
-	DWORD nOpenPipeTimeout = nTimeout ? min(nTimeout,EXECUTE_CMD_OPENPIPE_TIMEOUT) : EXECUTE_CMD_OPENPIPE_TIMEOUT;
+	DWORD nOpenPipeTimeout = nTimeout ? std::min<DWORD>(nTimeout, EXECUTE_CMD_OPENPIPE_TIMEOUT) : EXECUTE_CMD_OPENPIPE_TIMEOUT;
 	_ASSERTE(nOpenPipeTimeout > 0);
-	DWORD nWaitPipeTimeout = min(250,nOpenPipeTimeout);
+	DWORD nWaitPipeTimeout = std::min<DWORD>(250, nOpenPipeTimeout);
 
 	BOOL bWaitPipeRc = FALSE, bWaitCalled = FALSE;
 	DWORD nWaitPipeErr = 0;
@@ -525,7 +525,7 @@ BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& SrvMapping)
 		return FALSE;
 	else
 	{
-		memmove(&SrvMapping, pInfo, min(pInfo->cbSize, sizeof(SrvMapping)));
+		memmove(&SrvMapping, pInfo, std::min<size_t>(pInfo->cbSize, sizeof(SrvMapping)));
 	}
 	SrvInfoMapping.CloseMap();
 
@@ -546,7 +546,7 @@ BOOL LoadGuiMapping(DWORD nConEmuPID, ConEmuGuiMapping& GuiMapping)
 		return FALSE;
 	else
 	{
-		memmove(&GuiMapping, pInfo, min(pInfo->cbSize, sizeof(GuiMapping)));
+		memmove(&GuiMapping, pInfo, std::min<size_t>(pInfo->cbSize, sizeof(GuiMapping)));
 	}
 	GuiInfoMapping.CloseMap();
 

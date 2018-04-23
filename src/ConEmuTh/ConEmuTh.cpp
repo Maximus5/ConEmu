@@ -580,19 +580,6 @@ HANDLE WINAPI _export OpenW(const struct OpenInfo *Info)
 
 
 
-#ifndef max
-#define max(a,b)            (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef min
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
-#endif
-
-
-
-
-
-
 void StartPlugin(BOOL abManual)
 {
 	// Это делаем всегда, потому как это общая точка входа в плагин
@@ -1053,7 +1040,7 @@ CeFullPanelInfo* GetActivePanel()
 //	if (ppi) {
 //		ppi->cbSize = sizeof(*ppi);
 //
-//		int n = min(ppi->nMaxFarColors, countof(gFarInfo.nFarColors));
+//		int n = std::min(ppi->nMaxFarColors, countof(gFarInfo.nFarColors));
 //		if (n && ppi->nFarColors) memmove(gFarInfo.nFarColors, ppi->nFarColors, n);
 //		gFarInfo.nFarInterfaceSettings = ppi->nFarInterfaceSettings;
 //		gFarInfo.nFarPanelSettings = ppi->nFarPanelSettings;
@@ -1226,7 +1213,7 @@ void ReloadPanelsInfo()
 //	//	if (gnUngetCount>nMax) gnUngetCount = nMax;
 //	//}
 //
-//	//nMax = min(gnUngetCount,(int)nBufSize);
+//	//nMax = std::min(gnUngetCount,(int)nBufSize);
 //
 //	//int i = 0, j = 0;
 //	//while (i < nMax && j < gnUngetCount) {
@@ -1618,10 +1605,10 @@ BOOL WINAPI OnPreWriteConsoleOutput(HANDLE hOutput,const CHAR_INFO *lpBuffer,COO
 //			int n = 0;
 //			switch (vk) {
 //				case VK_UP: {
-//					n = min(pi->CurrentItem,pi->nXCount);
+//					n = std::min(pi->CurrentItem,pi->nXCount);
 //				} break;
 //				case VK_DOWN: {
-//					n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCount);
+//					n = std::min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCount);
 //				} break;
 //				case VK_LEFT: {
 //					lpBuffer->Event.KeyEvent.wVirtualKeyCode = VK_UP;
@@ -1693,7 +1680,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 	}
 	else
 	{
-		iCurItem = pi->CurrentItem; iTopItem = max(pi->TopPanelItem,pi->ReqTopPanelItem);
+		iCurItem = pi->CurrentItem; iTopItem = std::max(pi->TopPanelItem,pi->ReqTopPanelItem);
 	}
 
 	// Пойдем в два прохода. В первом - обработка замен, и помещение в буфер Unget.
@@ -1724,7 +1711,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 						case VK_UP:
 						{
 							//if (PVM == pvm_Thumbnails)
-							//	n = min(pi->CurrentItem,pi->nXCountFull);
+							//	n = std::min(pi->CurrentItem,pi->nXCountFull);
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_UP)\n");
 
 							if (PVM == pvm_Thumbnails)
@@ -1735,7 +1722,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 						case VK_DOWN:
 						{
 							//if (PVM == pvm_Thumbnails)
-							//	n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull);
+							//	n = std::min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull);
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_DOWN)\n");
 
 							if (PVM == pvm_Thumbnails)
@@ -1748,7 +1735,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							//p->Event.KeyEvent.wVirtualKeyCode = VK_UP;
 							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
 							//if (PVM != pvm_Thumbnails)
-							//	n = min(pi->CurrentItem,pi->nYCountFull);
+							//	n = std::min(pi->CurrentItem,pi->nYCountFull);
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_LEFT)\n");
 
 							if (PVM != pvm_Thumbnails)
@@ -1761,7 +1748,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 							//p->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
 							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeDown;
 							//if (PVM != pvm_Thumbnails)
-							//	n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nYCountFull);
+							//	n = std::min((pi->ItemsNumber-pi->CurrentItem-1),pi->nYCountFull);
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_RIGHT)\n");
 
 							if (PVM != pvm_Thumbnails)
@@ -1773,7 +1760,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 						{
 							//p->Event.KeyEvent.wVirtualKeyCode = VK_UP;
 							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
-							//n = min(pi->CurrentItem,pi->nXCountFull*pi->nYCountFull);
+							//n = std::min(pi->CurrentItem,pi->nXCountFull*pi->nYCountFull);
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_PRIOR)\n");
 							int nRowCol = (PVM == pvm_Thumbnails) ? pi->nXCountFull : pi->nYCountFull;
 
@@ -1794,7 +1781,7 @@ BOOL ProcessConsoleInput(BOOL abReadMode, PINPUT_RECORD lpBuffer, DWORD nBufSize
 						{
 							//p->Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
 							//p->Event.KeyEvent.wVirtualScanCode = wScanCodeUp;
-							//n = min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull*pi->nYCountFull);
+							//n = std::min((pi->ItemsNumber-pi->CurrentItem-1),pi->nXCountFull*pi->nYCountFull);
 							DEBUGSTRCTRL(L"ProcessConsoleInput(VK_NEXT)\n");
 							int nRowCol = (PVM == pvm_Thumbnails) ? pi->nXCountFull : pi->nYCountFull;
 							int nFull = (pi->nXCountFull*pi->nYCountFull);

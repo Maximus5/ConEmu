@@ -107,7 +107,7 @@ class MArray
 			if (mn_MaxSize<=mn_Elements)
 			{
 				_ARRAY_ASSERTE(mn_MaxSize==mn_Elements);
-				addsize(max(256,mn_MaxSize));
+				addsize(std::max<INT_PTR>(256, mn_MaxSize));
 			}
 			INT_PTR nPos = mn_Elements++;
 			memmove(
@@ -133,7 +133,7 @@ class MArray
 			if (mn_MaxSize<=mn_Elements)
 			{
 				_ARRAY_ASSERTE(mn_MaxSize==mn_Elements);
-				addsize(max(256,mn_MaxSize));
+				addsize(std::max<ssize_t>(256, mn_MaxSize));
 			}
 			_ARRAY_ASSERTE(mn_Elements > nPosBefore);
 			memmove(
@@ -304,10 +304,10 @@ class MArray
 				if (_nCount>mn_MaxSize)
 				{
 					INT_PTR n1=(_nCount-mn_MaxSize);
-					addsize(max(n1,10));
+					addsize(std::max<ssize_t>(n1, 10));
 				}
 				// 01.03.2005 !!! Only allocate memory, Not initialize values!
-				//mn_Elements = min(_nCount,mn_MaxSize);
+				//mn_Elements = std::min(_nCount,mn_MaxSize);
 			}
 			return true;
 		};
@@ -329,7 +329,7 @@ class MArray
 			{
 				if (_Index>=mn_MaxSize)
 				{
-					addsize(max(256,(_Index-mn_MaxSize+1)));
+					addsize(std::max<ssize_t>(256, (_Index-mn_MaxSize+1)));
 				}
 				mn_Elements = _Index+1;
 			}

@@ -206,7 +206,7 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 {
 	TODO("Во время ресайза консоль может подглючивать - отдает не то что нужно...");
 	//_ASSERTE(*con.pConChar!=ucBoxDblVert);
-	UINT nYMax = klMin(anHeight,nHeight);
+	UINT nYMax = std::min(anHeight,nHeight);
 
 	MFileMapping<AnnotationHeader>& TrueMap = mp_RCon->m_TrueColorerMap;
 	const AnnotationInfo *pTrueData = mp_RCon->mp_TrueColorerData;
@@ -286,7 +286,7 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 	}
 	#endif
 
-	DWORD cbLineSize = min(cbDstLineSize,cbSrcLineSize);
+	DWORD cbLineSize = std::min(cbDstLineSize,cbSrcLineSize);
 	int nCharsLeft = (anWidth > nWidth) ? (anWidth - nWidth) : 0;
 	//int nY, nX;
 	UINT nExtendStartsY = 0;

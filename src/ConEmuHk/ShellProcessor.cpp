@@ -655,7 +655,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 				//	lbSkipEndQuote = TRUE;
 				//}
 				int nLen = lstrlen(asFile)+1;
-				int cchMax = max(nLen,(MAX_PATH+1));
+				int cchMax = std::max(nLen,(MAX_PATH+1));
 				wchar_t* pszTest = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
 				_ASSERTE(pszTest);
 				if (pszTest)
@@ -2444,7 +2444,7 @@ wrap:
 					if (m_Args.nBufHeight)
 					{
 						WARNING("Хорошо бы на команду сервера это перевести");
-						//SHORT nNewHeight = max((csbi.srWindow.Bottom - csbi.srWindow.Top + 1),(SHORT)m_Args.nBufHeight);
+						//SHORT nNewHeight = std::max((csbi.srWindow.Bottom - csbi.srWindow.Top + 1),(SHORT)m_Args.nBufHeight);
 						//if (nNewHeight != csbi.dwSize.Y)
 						//{
 						//	csbi.dwSize.Y = nNewHeight;

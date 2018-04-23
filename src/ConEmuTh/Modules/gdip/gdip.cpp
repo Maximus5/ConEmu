@@ -26,7 +26,8 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "../common/defines.h"
+#include "../../../common/defines.h"
+using namespace std;
 #include <GdiPlus.h>
 #include <crtdbg.h>
 #include "../../../common/Memory.h"
@@ -635,8 +636,8 @@ struct GDIPlusImage
 
 				if (!nShowHeight || nShowHeight < (nShowWidth/8))
 				{
-					nShowHeight = min(min(8,(UINT)nCanvasHeight),lHeight);
-					UINT lNewWidth = (UINT)((((i64)nCanvasWidth) * lHeight) / nShowHeight);
+					nShowHeight = std::min(std::min<UINT>(8, (UINT)nCanvasHeight), lHeight);
+					UINT lNewWidth = (UINT)((((int64_t)nCanvasWidth) * lHeight) / nShowHeight);
 
 					if (lNewWidth < lWidth)
 					{
@@ -650,13 +651,13 @@ struct GDIPlusImage
 		{
 			if (lHeight >= (UINT)nCanvasHeight)
 			{
-				nShowWidth = (int)((((i64)lWidth) * nCanvasHeight) / lHeight); //-V537
+				nShowWidth = (int)((((int64_t)lWidth) * nCanvasHeight) / lHeight); //-V537
 				nShowHeight = nCanvasHeight;
 
 				if (!nShowWidth || nShowWidth < (nShowHeight/8))
 				{
-					nShowWidth = min(min(8,(UINT)nCanvasWidth),lWidth);
-					UINT lNewHeight = (UINT)((((i64)nCanvasHeight) * lWidth) / nShowWidth);
+					nShowWidth = std::min(std::min<UINT>(8, (UINT)nCanvasWidth), lWidth);
+					UINT lNewHeight = (UINT)((((int64_t)nCanvasHeight) * lWidth) / nShowWidth);
 
 					if (lNewHeight < lHeight)
 					{

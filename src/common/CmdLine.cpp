@@ -496,7 +496,7 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 		// UNC format? "\\?\UNC\Server\Share"
 		LPCWSTR pszSlash = wcschr(pszPath+8, L'\\'); // point to end of server name
 		pszSlash = pszSlash ? wcschr(pszSlash+1, L'\\') : NULL; // point to end of share name
-		lstrcpyn(szDrive, pszPath, pszSlash ? (int)min((INT_PTR)cchDriveMax,pszSlash-pszPath+1) : cchDriveMax);
+		lstrcpyn(szDrive, pszPath, pszSlash ? (int)std::min((INT_PTR)cchDriveMax,pszSlash-pszPath+1) : cchDriveMax);
 	}
 	else if (lstrcmpni(pszPath, L"\\\\?\\", 4) == 0 && pszPath[4] && pszPath[5] == L':')
 	{
@@ -507,7 +507,7 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 		// "\\Server\Share"
 		LPCWSTR pszSlash = wcschr(pszPath+2, L'\\'); // point to end of server name
 		pszSlash = pszSlash ? wcschr(pszSlash+1, L'\\') : NULL; // point to end of share name
-		lstrcpyn(szDrive, pszPath, pszSlash ? (int)min((INT_PTR)cchDriveMax,pszSlash-pszPath+1) : cchDriveMax);
+		lstrcpyn(szDrive, pszPath, pszSlash ? (int)std::min((INT_PTR)cchDriveMax,pszSlash-pszPath+1) : cchDriveMax);
 	}
 	else
 	{

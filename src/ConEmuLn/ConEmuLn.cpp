@@ -98,7 +98,7 @@ COLORREF gcrHilightPlugBack = RGB(0xA8,0,0); // чуть светлее крас
 int WINAPI GetMinFarVersionW(void)
 {
 	// ACTL_SYNCHRO required
-	return MAKEFARVERSION(2,0,max(1007,FAR_X_VER));
+	return MAKEFARVERSION(2,0,std::max<int>(1007,FAR_X_VER));
 }
 
 void WINAPI GetPluginInfoWcmn(void *piv)

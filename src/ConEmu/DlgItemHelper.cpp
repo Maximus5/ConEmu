@@ -171,7 +171,7 @@ int CDlgItemHelper::GetNumber(HWND hParent, WORD nCtrlId, int nMin /*= 0*/, int 
 			nValue = _wtoi((szNumber[0]==L' ') ? (szNumber+1) : szNumber);
 		// Validation?
 		if (nMin < nMax)
-			nValue = min(nMax,max(nMin,nValue));
+			nValue = std::min(nMax,std::max(nMin,nValue));
 	}
 
 	return nValue;

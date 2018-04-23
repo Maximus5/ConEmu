@@ -31,11 +31,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class Far3Color
 {
 public:
-	static int Max(int i1, int i2)
-	{
-		return (i1 > i2) ? i1 : i2;
-	}
-
 	static const COLORREF* GetStdPalette()
 	{
 		static COLORREF StdPalette[16] =
@@ -82,7 +77,7 @@ public:
 			int B = (Color & 0xFF0000) >> 16;
 			int G = (Color & 0xFF00) >> 8;
 			int R = (Color & 0xFF);
-			int nMax = Max(B,Max(R,G));
+			int nMax = std::max(B,std::max(R,G));
 
 			Index =
 				(((B+32) > nMax) ? 1 : 0) | //-V112
@@ -129,7 +124,7 @@ public:
 			int B = (Color & 0xFF0000) >> 16;
 			int G = (Color & 0xFF00) >> 8;
 			int R = (Color & 0xFF);
-			int nMax = Max(B,Max(R,G));
+			int nMax = std::max(B,std::max(R,G));
 
 			Index =
 				(((B+32) > nMax) ? 1 : 0) | //-V112

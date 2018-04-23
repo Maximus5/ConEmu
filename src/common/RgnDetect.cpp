@@ -879,7 +879,7 @@ bool CRgnDetect::FindFrame_TopLeft(wchar_t* pChar, CharAttr* pAttr, int nWidth, 
 	nFrameX = -1; nFrameY = -1;
 	int nShift = nWidth*nFromY;
 	int nFindFrom = nShift+nFromX;
-	int nMaxAdd = min(5,(nWidth - nFromX - 1));
+	int nMaxAdd = std::min(5,(nWidth - nFromX - 1));
 	wchar_t wc;
 
 	// в этой же строке
@@ -1544,10 +1544,10 @@ int CRgnDetect::MarkDialog(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHei
 			MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1, nNewY1, nMostRight, nMostBottom, CharAttr_DialogRect, false);
 			// Еще нужно "пометить" тень под диалогом
 			if (((nMostBottom+1) < nHeight) && ((nNewX1+2) < nWidth))
-				MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1+2, nMostBottom+1, min(nMostRight+2,nWidth-1), nMostBottom+1, CharAttr_DialogRect, false);
+				MarkDialog(pChar, pAttr, nWidth, nHeight, nNewX1+2, nMostBottom+1, std::min(nMostRight+2,nWidth-1), nMostBottom+1, CharAttr_DialogRect, false);
 			// И справа от диалога
 			if (((nMostRight+1) < nWidth) && ((nNewY1+1) < nHeight))
-				MarkDialog(pChar, pAttr, nWidth, nHeight, nMostRight+1, nNewY1+1, min(nMostRight+2,nWidth-1), nMostBottom, CharAttr_DialogRect, false);
+				MarkDialog(pChar, pAttr, nWidth, nHeight, nMostRight+1, nNewY1+1, std::min(nMostRight+2,nWidth-1), nMostBottom, CharAttr_DialogRect, false);
 		}
 	}
 
@@ -1692,10 +1692,10 @@ void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSi
 	}
 
 	// Расфуговка буфера CHAR_INFO на текст и атрибуты
-	int nX1 = max(0,rcRegion.Left);
-	int nX2 = min(rcRegion.Right,(mn_CurWidth-1));
-	int nY1 = max(0,rcRegion.Top);
-	int nY2 = min(rcRegion.Bottom,(mn_CurHeight-1));
+	int nX1 = std::max<int>(0, rcRegion.Left);
+	int nX2 = std::min<int>(rcRegion.Right, (mn_CurWidth-1));
+	int nY1 = std::max<int>(0, rcRegion.Top);
+	int nY2 = std::min<int>(rcRegion.Bottom, (mn_CurHeight-1));
 
 	if ((dwBufferSize.X - dwBufferCoord.X - 1) < (nX2 - nX1))
 		nX2 = nX1 + (dwBufferSize.X - dwBufferCoord.X - 1);
@@ -2513,8 +2513,8 @@ int CRgnRects::Diff(LPRECT prcAddDiff)
 	if (prcAddDiff->left > X2 || prcAddDiff->right < X1)
 		return nRgnState; // prcAddDiff не пересекается с rcRect[0]
 
-	int iX1 = max(prcAddDiff->left,X1);
-	int iX2 = min(prcAddDiff->right,X2);
+	int iX1 = std::max<int>(prcAddDiff->left, X1);
+	int iX2 = std::min<int>(prcAddDiff->right, X2);
 
 	if (iX2 < iX1)
 	{
@@ -2527,8 +2527,8 @@ int CRgnRects::Diff(LPRECT prcAddDiff)
 	if (prcAddDiff->top > Y2 || prcAddDiff->bottom < Y1)
 		return nRgnState; // prcAddDiff не пересекается с rcRect[0]
 
-	int iY1 = max(prcAddDiff->top,Y1);
-	int iY2 = min(prcAddDiff->bottom,Y2);
+	int iY1 = std::max<int>(prcAddDiff->top, Y1);
+	int iY2 = std::min<int>(prcAddDiff->bottom, Y2);
 	// Ладно, добавим этот прямоугольник в список вычитаемых
 	rcRect[nRectCount++] = *prcAddDiff;
 	int Y, iy = iY1 - rcRect[0].top;

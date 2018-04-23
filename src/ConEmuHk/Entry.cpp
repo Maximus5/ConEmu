@@ -273,7 +273,7 @@ namespace HookLogger
 	void RunAnalyzer()
 	{
 		ZeroStruct(g_crit);
-		LONG iFrom = 0, iTo = min(BUFFER_SIZE,(ULONG)g_pos);
+		LONG iFrom = 0, iTo = std::min(BUFFER_SIZE,(ULONG)g_pos);
 		for (LONG i = iFrom; i < iTo; ++i)
 		{
 			Event* e = g_events + i;

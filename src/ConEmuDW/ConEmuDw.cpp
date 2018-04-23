@@ -1364,7 +1364,7 @@ BOOL WINAPI WriteText(HANDLE hConsoleOutput, const AnnotationInfo* Attributes, c
 
 	// Обновить позицию курсора
 	_ASSERTE((csbi.dwCursorPosition.X+(int)nNumberOfCharsToWrite-1) < csbi.dwSize.X);
-	csbi.dwCursorPosition.X = (SHORT)max((csbi.dwSize.X-1),(csbi.dwCursorPosition.X+(int)nNumberOfCharsToWrite-1));
+	csbi.dwCursorPosition.X = (SHORT)std::max((csbi.dwSize.X-1),(csbi.dwCursorPosition.X+(int)nNumberOfCharsToWrite-1));
 	SetConsoleCursorPosition(h, csbi.dwCursorPosition);
 
 	#if 0
@@ -1673,14 +1673,14 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 		else
 		{
 			// Поместить в координаты {X=37,Y=2} (0based)
-			int x = max(0,(38 - P->rcBuffer.Left));
+			int x = std::max(0,(38 - P->rcBuffer.Left));
 			int xShift = (P->rcParent.right - P->rcParent.left + 1) / (P->rcBuffer.Right - P->rcBuffer.Left + 1) * x;
 			if ((xShift + (rcDlg.right-rcDlg.left)) > P->rcParent.right)
-				xShift = max(P->rcParent.left, (P->rcParent.right - (rcDlg.right-rcDlg.left)));
-			int y = max(0,(2 - P->rcBuffer.Top));
+				xShift = std::max(P->rcParent.left, (P->rcParent.right - (rcDlg.right-rcDlg.left)));
+			int y = std::max(0,(2 - P->rcBuffer.Top));
 			int yShift = (P->rcParent.bottom - P->rcParent.top + 1) / (P->rcBuffer.Bottom - P->rcBuffer.Top + 1) * y;
 			if ((yShift + (rcDlg.bottom-rcDlg.top)) > P->rcParent.bottom)
-				yShift = max(P->rcParent.top, (P->rcParent.bottom - (rcDlg.bottom-rcDlg.top)));
+				yShift = std::max(P->rcParent.top, (P->rcParent.bottom - (rcDlg.bottom-rcDlg.top)));
 			//yShift += 32; //TODO: Табы, пока так
 			SetWindowPos(hwndDlg, hTop,
 				P->rcParent.left+xShift, P->rcParent.top+yShift,
@@ -1998,7 +1998,7 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 	{
 		Parm.rcBuffer = srWork;
 
-		int nWidth = Far3Color::Max(lstrlen(pszText),lstrlen(pszTitle))+10;
+		int nWidth = std::max(lstrlen(pszText), lstrlen(pszTitle))+10;
 		int nHeight = 6;
 		int nX = (srWork.Right - srWork.Left - nWidth) >> 1;
 		int nY = (srWork.Bottom - srWork.Top - nHeight) >> 1;

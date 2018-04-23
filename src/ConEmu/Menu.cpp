@@ -197,7 +197,7 @@ void CConEmuMenu::CmdTaskPopupItem::SetMenuName(wchar_t* pszDisplay, INT_PTR cch
 	const wchar_t *pszSrc = asName;
 	wchar_t *pszDst = pszDisplay+nCurLen;
 	wchar_t *pszEnd = pszDisplay+cchDisplayMax-1;
-	_ASSERTE((pszDst+min(8,2*nLen)) <= pszEnd); // Должно быть место
+	_ASSERTE((pszDst+std::min(8,2*nLen)) <= pszEnd); // Должно быть место
 
 	if (!bTrailingPeriod)
 	{
@@ -256,7 +256,7 @@ void CConEmuMenu::CmdTaskPopupItem::SetMenuName(wchar_t* pszDisplay, INT_PTR cch
 		_ASSERTE((nRight+10) < cchDisplayMax);
 
 		if ((pszDst + nRight) >= pszEnd)
-			pszDst = pszDisplay+max(0,(cchDisplayMax-(nRight+1)));
+			pszDst = pszDisplay + std::max<ssize_t>(0, (cchDisplayMax-(nRight+1)));
 
 		_wcscpy_c(pszDst, cchDisplayMax-(pszDst-pszDisplay), szRight);
 		pszDst += _tcslen(pszDst);
@@ -401,7 +401,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			{
 				// "Far::Latest", "Far::Far 1.7", "Build::ConEmu GUI", ...
 				wchar_t szFolderName[64] = L"";
-				lstrcpyn(szFolderName, pszTaskName, min(countof(szFolderName)-2, (pszFolder - pszTaskName + 1)));
+				lstrcpyn(szFolderName, pszTaskName, std::min<int>(countof(szFolderName)-2, (pszFolder - pszTaskName + 1)));
 				wcscat_c(szFolderName, L"}");
 				for (INT_PTR f = 0; f < Folders.size(); f++)
 				{

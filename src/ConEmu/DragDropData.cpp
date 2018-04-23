@@ -891,7 +891,7 @@ template <class T> void PidlDump(
 		int i = lstrlenA(szDump);
 		//for (int j=0; j < nLevel; j++) { szDump[i++] = ' '; szDump[i++] = ' '; }
 		//szDump[i] = 0;
-		nLen = min(255,p->mkid.cb);
+		nLen = std::min<USHORT>(255, p->mkid.cb);
 
 		for(int j = 0; j < nLen; j++)
 		{
@@ -1059,7 +1059,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 									//{
 									MultiByteToWideChar(CP_ACP, 0, pasz, memsize[i], pszData[i], memsize[i]);
 									//} else {
-									//	int nMaxLen = min(200,memsize[i]);
+									//	int nMaxLen = std::min(200,memsize[i]);
 									//	wchar_t* pwszDst = szNames[i].str+_tcslen(szNames[i].str);
 									//	MultiByteToWideChar(CP_ACP, 0, pasz, nMaxLen, pwszDst, nMaxLen);
 									//	pwszDst[nMaxLen] = 0;
@@ -1072,7 +1072,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 									StringCbCopy(pszData[i], nDataSize, pwsz);
 									nDataSize = ((memsize[i]>>1)+1)<<1; // было больше, с учетом возможного MultiByteToWideChar
 									//} else {
-									//	int nMaxLen = min(200,memsize[i]/2);
+									//	int nMaxLen = std::min(200,memsize[i]/2);
 									//	lstrcpyn(szNames[i].str+_tcslen(szNames[i].str), pwsz, nMaxLen);
 									//}
 								}
@@ -1600,7 +1600,7 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 		nFilesCol ++;
 	}
 
-	nMaxX = min((OVERLAY_TEXT_SHIFT + nMaxX),nWidth);
+	nMaxX = std::min((OVERLAY_TEXT_SHIFT + nMaxX),nWidth);
 	// Если тащат много файлов/папок - можно попробовать разместить их в несколько колонок
 	int nColCount = 1;
 	// Win8 bug.
@@ -1937,7 +1937,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 		//	nFilesCol ++;
 		//}
 
-		//nMaxX = min((OVERLAY_TEXT_SHIFT + nMaxX),MAX_OVERLAY_WIDTH);
+		//nMaxX = std::min((OVERLAY_TEXT_SHIFT + nMaxX),MAX_OVERLAY_WIDTH);
 		//// Если тащат много файлов/папок - можно попробовать разместить их в несколько колонок
 		//int nColCount = 1;
 
@@ -2238,13 +2238,13 @@ BOOL CDragDropData::DrawImageBits(HDC hDrawDC, wchar_t* pszFile, int *nMaxX, int
 
 	// А теперь - имя файла/папки
 	RECT rcText = {nX+OVERLAY_TEXT_SHIFT, *nMaxY+1, 0, (*nMaxY + 16)};
-	rcText.right = min(MAX_OVERLAY_WIDTH, (rcText.left + *nMaxX));
+	rcText.right = std::min<int>(MAX_OVERLAY_WIDTH, (rcText.left + *nMaxX));
 	wchar_t szText[MAX_PATH+1]; lstrcpyn(szText, pszText, MAX_PATH); szText[MAX_PATH] = 0;
 	nDrawRC = DrawTextEx(hDrawDC, szText, _tcslen(szText), &rcText,
 	                     DT_LEFT|DT_TOP|DT_NOPREFIX|DT_END_ELLIPSIS|DT_SINGLELINE|DT_MODIFYSTRING, NULL);
 
 	if (*nMaxY < (rcText.bottom+1))
-		*nMaxY = min(rcText.bottom+1,300);
+		*nMaxY = std::min<int>(rcText.bottom+1, 300);
 
 	if (sfi.hIcon)
 	{

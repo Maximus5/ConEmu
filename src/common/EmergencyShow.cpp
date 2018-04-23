@@ -180,12 +180,12 @@ void CorrectConsolePos(HWND hConWnd)
 			if (newX < mi.rcWork.left)
 				newX = mi.rcWork.left;
 			else if (rcNew.right > mi.rcWork.right)
-				newX = max(mi.rcWork.left,(mi.rcWork.right-newW));
+				newX = std::max(mi.rcWork.left,(mi.rcWork.right-newW));
 
 			if (newY < mi.rcWork.top)
 				newY = mi.rcWork.top;
 			else if (rcNew.bottom > mi.rcWork.bottom)
-				newY = max(mi.rcWork.top,(mi.rcWork.bottom-newH));
+				newY = std::max(mi.rcWork.top,(mi.rcWork.bottom-newH));
 
 			if ((newX != rcNew.left) || (newY != rcNew.top))
 				SetWindowPos(hConWnd, HWND_TOP, newX, newY,0,0, SWP_NOSIZE);

@@ -26,7 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "../common/defines.h"
+#include "../../../common/defines.h"
 #include <wintrust.h>
 
 #undef USE_TRACE
@@ -159,11 +159,6 @@ struct PEData
 //PDWORD g_pCVHeader = 0;
 //PIMAGE_COFF_SYMBOLS_HEADER g_pCOFFHeader = 0;
 //COFFSymbolTable * g_pCOFFSymbolTable = 0;
-
-size_t Max(size_t s1, size_t s2)
-{
-	return (s1>s2) ? s1 : s2;
-}
 
 bool DumpExeFilePE(PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_NT_HEADERS32 pNTHeader);
 //bool DumpExeFileVX( PEData *pData, PIMAGE_DOS_HEADER dosHeader, PIMAGE_VXD_HEADER pVXDHeader );
@@ -537,7 +532,7 @@ struct VarFileInfo
 //	// prdsu->Length is the number of unicode characters
 //	WideCharToMultiByte(CP_ACP, 0, prdsu->NameString, prdsu->Length,
 //		buffer, cBytes, 0, 0);
-//	buffer[ min(cBytes-1,prdsu->Length) ] = 0;  // Null terminate it!!!
+//	buffer[ std::min(cBytes-1,prdsu->Length) ] = 0;  // Null terminate it!!!
 //}
 
 
@@ -1169,7 +1164,7 @@ void ParseVersionInfoVariableStringA(PEData *pData, LPVOID ptrRes, DWORD &resSiz
 					while(*pToken == 0 && pToken < pNext) pToken++;
 
 					//ALIGN_TOKEN(pToken); ???
-					int nLenLeft = min(pS->wValueLength,MAX_PATH*2);
+					int nLenLeft = std::min<WORD>(pS->wValueLength, MAX_PATH*2);
 					if (nLenLeft > (pNext-pToken))
 						nLenLeft = (int)(pNext-pToken);
 					szTemp[MultiByteToWideChar(CP_ACP,0,pToken,nLenLeft,szTemp,nLenLeft)] = 0;
@@ -1345,7 +1340,7 @@ void ParseVersionInfo(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 		return;
 	}
 
-	if (!ValidateMemory(pData, ptrRes, Max(resSize,sizeof(VS_FIXEDFILEINFO)+0x28)))
+	if (!ValidateMemory(pData, ptrRes, std::max<size_t>(resSize, sizeof(VS_FIXEDFILEINFO)+0x28)))
 	{
 		_TRACE("Invalid memory pointer (ptrRes) in ParseVersionInfo");
 		return;
@@ -1444,7 +1439,7 @@ void ParseVersionInfoA(PEData *pData, LPVOID &ptrRes, DWORD &resSize)
 		return;
 	}
 
-	if (!ValidateMemory(pData, ptrRes, Max(resSize,sizeof(VS_FIXEDFILEINFO)+0x28)))
+	if (!ValidateMemory(pData, ptrRes, std::max<size_t>(resSize,sizeof(VS_FIXEDFILEINFO)+0x28)))
 	{
 		_TRACE("Invalid memory pointer (ptrRes) in ParseVersionInfo");
 		return;
@@ -1560,7 +1555,7 @@ void /*MPanelItem* */ CreateResource(PEData *pData, DWORD rootType, LPVOID ptrRe
 		{
 			//strcat(fileNameBuffer, ".txt");
 			//pChild = pRoot->AddFile(fileNameBuffer, 0);
-			if (!ValidateMemory(pData, ptrRes, max(resSize,sizeof(GRPICONDIR))))
+			if (!ValidateMemory(pData, ptrRes, std::max<size_t>(resSize, sizeof(GRPICONDIR))))
 			{
 				//pChild->SetErrorPtr(ptrRes, resSize);
 			}

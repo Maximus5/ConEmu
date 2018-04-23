@@ -28,7 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 
-#include <windows.h>
 #include "Common.h"
 #include "ConsoleRead.h"
 #include "WObjects.h"
@@ -269,7 +268,7 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 					// If caller want to know correction status
 					if (lpCursor && (lpCursor->Y == rgn.Top))
 					{
-						lpCursor->X = max(0, (lpCursor->X - iCellsSkipped));
+						lpCursor->X = std::max(0, (lpCursor->X - iCellsSkipped));
 					}
 				}
 

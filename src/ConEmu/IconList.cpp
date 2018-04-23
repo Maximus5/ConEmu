@@ -86,13 +86,13 @@ bool CIconList::Initialize()
 		int iFontY = gpSetCls->EvalSize(gpSet->nTabFontHeight, esf_Vertical|esf_CanUseUnits|esf_CanUseDpi|esf_CanUseZoom);
 		if (iFontY < 0)
 			iFontY = gpFontMgr->EvalFontHeight(gpSet->sTabFontFace, iFontY, gpSet->nTabFontHeight);
-		int iDpyY = gpSetCls->EvalSize(max(16,iSysY), esf_Vertical|esf_CanUseDpi);
+		int iDpyY = gpSetCls->EvalSize(std::max(16,iSysY), esf_Vertical|esf_CanUseDpi);
 		mn_CxIcon = 16; mn_CyIcon = 16;
 		if (iFontY > 16)
 		{
 			if (iDpyY <= iFontY)
 			{
-				mn_CxIcon = gpSetCls->EvalSize(max(16,iSysX), esf_Horizontal|esf_CanUseDpi);
+				mn_CxIcon = gpSetCls->EvalSize(std::max(16,iSysX), esf_Horizontal|esf_CanUseDpi);
 				mn_CyIcon = iDpyY;
 			}
 			else

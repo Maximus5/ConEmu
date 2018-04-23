@@ -271,7 +271,7 @@ bool CToolImg::CreateButtonField(COLORREF clrBackground, ButtonFieldInfo* pBtns,
 	int nFieldHeight = pBtns[0].nHeight;
 	for (int i = 1; i < nBtnCount; i++)
 	{
-		nFieldWidth = max(nFieldWidth, pBtns[i].nWidth);
+		nFieldWidth = std::max(nFieldWidth, pBtns[i].nWidth);
 		nFieldHeight += 1 + pBtns[i].nHeight;
 	}
 
@@ -341,7 +341,7 @@ bool CToolImg::CreateButtonField(LPCWSTR szImgRes, COLORREF clrBackground, Butto
 	int nFieldHeight = pBtns[0].nHeight;
 	for (int i = 1; i < nRowCount; i++)
 	{
-		nFieldWidth = max(nFieldWidth, pBtns[i].nWidth);
+		nFieldWidth = std::max(nFieldWidth, pBtns[i].nWidth);
 		nFieldHeight += 1 + pBtns[i].nHeight;
 	}
 	#endif
@@ -461,7 +461,7 @@ bool CToolImg::PaintButton(int iBtn, HDC hdcDst, int nDstX, int nDstY, int nDstW
 	RECT rc = mprc_Btns[iBtn];
 
 	int y = nDstY;
-	int w = min(nDstWidth, (rc.right - rc.left));
+	int w = std::min<int>(nDstWidth, (rc.right - rc.left));
 	int h = nDstHeight;
 
 	if (nDstHeight > (rc.bottom - rc.top))

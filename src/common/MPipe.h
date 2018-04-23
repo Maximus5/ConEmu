@@ -200,7 +200,7 @@ class MPipe
 			BOOL fSuccess = FALSE;
 			DWORD cbRead, dwErr, cbReadBuf, nOverlappedWait;
 			// Для справки, информация о последнем запросе
-			cbReadBuf = min(anInSize, sizeof(m_In)); //-V105 //-V103
+			cbReadBuf = std::min<DWORD>(anInSize, sizeof(m_In)); //-V105 //-V103
 			memmove(&m_In, apIn, cbReadBuf); //-V106
 			// Send a message to the pipe server and read the response.
 			cbRead = 0; cbReadBuf = sizeof(m_Tmp);

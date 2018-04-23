@@ -127,8 +127,8 @@ bool CBackground::CreateField(int anWidth, int anHeight)
 
 	if (hBgDc)
 	{
-		bgSize.X = klMin(32767,anWidth);
-		bgSize.Y = klMin(32767,anHeight);
+		bgSize.X = std::min(32767,anWidth);
+		bgSize.Y = std::min(32767,anHeight);
 		hBgBitmap = CreateCompatibleBitmap(hScreenDC, bgSize.X, bgSize.Y);
 
 		if (hBgBitmap)
@@ -235,7 +235,7 @@ bool CBackground::FillBackground(
 					//	// еще нужно убедиться, что сама картинка будет немного прозрачной,
 					//	// чтобы это осветление было заметно
 					//	if ((nLow & 0xFF) < 200)
-					//		bf.SourceConstantAlpha = klMin((int)bf.SourceConstantAlpha, (int)(255 - (nLow & 0xFF)));
+					//		bf.SourceConstantAlpha = std::min((int)bf.SourceConstantAlpha, (int)(255 - (nLow & 0xFF)));
 					//	else if (bf.SourceConstantAlpha >= 240)
 					//		bf.SourceConstantAlpha = 240;
 					//}
@@ -245,7 +245,7 @@ bool CBackground::FillBackground(
 					|| (Operation == eDownLeft) || (Operation == eDownRight)
 					|| (Operation == eCenter))
 				{
-					int W = klMin(Width,pHdr->biWidth); int H = klMin(Height,pHdr->biHeight);
+					int W = std::min(Width,pHdr->biWidth); int H = std::min(Height,pHdr->biHeight);
 
 					if (GdiAlphaBlend(hBgDc, X, Y, W, H, hLoadDC, 0, 0, W, H, bf))
 						lbRc = true;
@@ -260,12 +260,12 @@ bool CBackground::FillBackground(
 					int srcX = 0, srcY = 0, srcW = pHdr->biWidth, srcH = pHdr->biHeight;
 					if (Width && Width > Height)
 					{
-						srcH = klMin((srcW * Height / Width), _abs(pHdr->biHeight));
+						srcH = std::min((srcW * Height / Width), _abs(pHdr->biHeight));
 						srcY = (pHdr->biHeight - srcH) / 2;
 					}
 					else if (Height)
 					{
-						srcW = klMin((srcH * Width / Height), pHdr->biWidth);
+						srcW = std::min((srcH * Width / Height), pHdr->biWidth);
 						srcX = (pHdr->biWidth - srcW) / 2;
 					}
 
@@ -278,8 +278,8 @@ bool CBackground::FillBackground(
 					{
 						for (int DX = X; DX < (X+Width); DX += pHdr->biWidth)
 						{
-							int W = klMin((Width-DX),pHdr->biWidth);
-							int H = klMin((Height-DY),pHdr->biHeight);
+							int W = std::min((Width-DX),pHdr->biWidth);
+							int H = std::min((Height-DY),pHdr->biHeight);
 
 							if (GdiAlphaBlend(hBgDc, DX, DY, W, H, hLoadDC, 0, 0, W, H, bf))
 								lbRc = true;
@@ -850,8 +850,8 @@ bool CBackground::PrepareBackground(CVirtualConsole* pVCon, HDC&/*OUT*/ phBgDc, 
 				MONITORINFO mon = {sizeof(MONITORINFO)};
 				GetMonitorInfo(hMon, &mon);
 				//
-				lMaxBgWidth = klMax(rcWork.right - rcWork.left,mon.rcMonitor.right - mon.rcMonitor.left);
-				lMaxBgHeight = klMax(rcWork.bottom - rcWork.top,mon.rcMonitor.bottom - mon.rcMonitor.top);
+				lMaxBgWidth = std::max(rcWork.right - rcWork.left,mon.rcMonitor.right - mon.rcMonitor.left);
+				lMaxBgHeight = std::max(rcWork.bottom - rcWork.top,mon.rcMonitor.bottom - mon.rcMonitor.top);
 			}
 
 			if (bgSize.X != lMaxBgWidth || bgSize.Y != lMaxBgHeight)

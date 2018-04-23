@@ -137,7 +137,7 @@ DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, L
 
 				if (pOut)
 				{
-					size_t nData = min(AliasBufferLength,(pOut->hdr.cbSize-sizeof(pOut->hdr)));
+					size_t nData = std::min<DWORD>(AliasBufferLength, (pOut->hdr.cbSize - sizeof(pOut->hdr)));
 
 					if (nData)
 					{
@@ -405,7 +405,7 @@ BOOL WINAPI OnAllocConsole(void)
 				SMALL_RECT rNewRect = {0, 0, crLocked.X-1, crLocked.Y-1};
 				OnSetConsoleWindowInfo(hStdOut, TRUE, &rNewRect);
 				#ifdef _DEBUG
-				COORD crNewSize = {crLocked.X, max(crLocked.Y, csbi.dwSize.Y)};
+				COORD crNewSize = {crLocked.X, std::max(crLocked.Y, csbi.dwSize.Y)};
 				#endif
 				SetConsoleScreenBufferSize(hStdOut, crLocked);
 			}

@@ -403,10 +403,10 @@ RECT CConEmuSize::CalcMargins_VisibleFrame(LPRECT prcFrame /*= NULL*/)
 		// If user asks to hide frame partially
 		if (iVisibleFrameWidth > 0)
 		{
-			rcFrameOnly.left = klMin<int>(rcFrameOnly.left, iVisibleFrameWidth);
-			rcFrameOnly.right = klMin<int>(rcFrameOnly.right, iVisibleFrameWidth);
-			rcFrameOnly.top = klMin<int>(rcFrameOnly.top, iVisibleFrameWidth);
-			rcFrameOnly.bottom = klMin<int>(rcFrameOnly.bottom, iVisibleFrameWidth);
+			rcFrameOnly.left = std::min<int>(rcFrameOnly.left, iVisibleFrameWidth);
+			rcFrameOnly.right = std::min<int>(rcFrameOnly.right, iVisibleFrameWidth);
+			rcFrameOnly.top = std::min<int>(rcFrameOnly.top, iVisibleFrameWidth);
+			rcFrameOnly.bottom = std::min<int>(rcFrameOnly.bottom, iVisibleFrameWidth);
 		}
 
 		// Quake - hides top edge
@@ -1321,9 +1321,9 @@ bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
 	int iVisibleFrameWidth = gpSet->HideCaptionAlwaysFrame();
 	if (iVisibleFrameWidth > 0)
 	{
-		rcFrameOnly.left = max(0, (rcFrameOnly.left - iVisibleFrameWidth));
-		rcFrameOnly.right = max(0, (rcFrameOnly.right - iVisibleFrameWidth));
-		rcFrameOnly.bottom = max(0, (rcFrameOnly.bottom - iVisibleFrameWidth));
+		rcFrameOnly.left = std::max<int>(0, (rcFrameOnly.left - iVisibleFrameWidth));
+		rcFrameOnly.right = std::max<int>(0, (rcFrameOnly.right - iVisibleFrameWidth));
+		rcFrameOnly.bottom = std::max<int>(0, (rcFrameOnly.bottom - iVisibleFrameWidth));
 	}
 	int iLeftShift = (iVisibleFrameWidth == -1) ? 0 : rcFrameOnly.left;
 	int iRightShift = (iVisibleFrameWidth == -1) ? 0 : rcFrameOnly.right;
@@ -1363,10 +1363,10 @@ bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
 				// If "Fixed" mode was selected, let user set the left corner coordinate
 				POINT pt = RealPosFromVisual(WndPos.x, WndPos.y);
 				if (!gpSet->wndCascade)
-					prcWnd->left = max((mi.rcWork.left - iLeftShift),min(pt.x,(mi.rcWork.right - nWidth + iRightShift)));
+					prcWnd->left = std::max((mi.rcWork.left - iLeftShift),std::min(pt.x,(mi.rcWork.right - nWidth + iRightShift)));
 				else // Иначе - центрируется по монитору
-					prcWnd->left = max((mi.rcWork.left - iLeftShift),((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
-				prcWnd->right = min((mi.rcWork.right + iRightShift),(prcWnd->left + nWidth));
+					prcWnd->left = std::max((mi.rcWork.left - iLeftShift),((mi.rcWork.left + mi.rcWork.right - nWidth) / 2));
+				prcWnd->right = std::min((mi.rcWork.right + iRightShift),(prcWnd->left + nWidth));
 				prcWnd->top = mi.rcWork.top - rcFrameOnly.top;
 				prcWnd->bottom = prcWnd->top + nHeight;
 
@@ -1636,7 +1636,7 @@ void CConEmuSize::ReloadMonitorInfo()
 								if (c)
 								{
 									// otherwise we get a 7 pixel gap from the visible top-edge-frame to client area start
-									fi.FrameMargins.top = klMax<int>(1, fi.FrameMargins.top - fi.Win10Stealthy.bottom);
+									fi.FrameMargins.top = std::max<int>(1, fi.FrameMargins.top - fi.Win10Stealthy.bottom);
 								}
 								#endif
 							}
@@ -1678,7 +1678,7 @@ void CConEmuSize::ReloadMonitorInfo()
 					fi.Win10Stealthy = MakeRect(def_val, 0, def_val, def_val);
 				}
 				// Correct FrameWidth taking into account hidden frame parts
-				fi.VisibleFrameWidth = klMax<int>(1, (fi.FrameMargins.left - fi.Win10Stealthy.left));
+				fi.VisibleFrameWidth = std::max<int>(1, (fi.FrameMargins.left - fi.Win10Stealthy.left));
 				// Due to the bug of DWM(?) we can't eliminate the top gap in caption-less mode
 				// https://i.imgur.com/jxDPT3q.png
 				// #SIZE_TODO Try DwmExtendFrameIntoClientArea to avoid bug?
@@ -1951,7 +1951,7 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, ConEmuBorders nBorders, bool bPopup
 	if (!(nBorders & CEB_TOP))
 		rcMargins.top = 0;
 	else if (IsWin10())
-		rcMargins.top = klMin<LONG>(rcMargins.top, 1);
+		rcMargins.top = std::min<LONG>(rcMargins.top, 1);
 	if (!(nBorders & CEB_RIGHT))
 		rcMargins.right = 0;
 	if (!(nBorders & CEB_BOTTOM))
@@ -1984,8 +1984,8 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, ConEmuBorders nBorders, bool bPopup
 		bool overWidth = (rcStore.left < rcWork.left) || (rcStore.right > rcWork.right);
 		bool overHeight = (rcStore.top < rcWork.top) || (rcStore.bottom > rcWork.bottom);
 
-		rcWnd.left = max(rcWork.left-rcMargins.left,min(rcStore.left,rcWork.right-nWidth+rcMargins.right));
-		rcWnd.top = max(rcWork.top-rcMargins.top,min(rcStore.top,rcWork.bottom-nHeight+rcMargins.bottom));
+		rcWnd.left = std::max(rcWork.left-rcMargins.left,std::min(rcStore.left,rcWork.right-nWidth+rcMargins.right));
+		rcWnd.top = std::max(rcWork.top-rcMargins.top,std::min(rcStore.top,rcWork.bottom-nHeight+rcMargins.bottom));
 
 		// Add Width/Height. They may exceed monitor in wmNormal.
 		if ((wndMode == wmNormal) && !IsCantExceedMonitor())
@@ -2002,15 +2002,15 @@ bool CConEmuSize::FixWindowRect(RECT& rcWnd, ConEmuBorders nBorders, bool bPopup
 				MONITORINFO mi2; GetNearestMonitor(&mi2, &rcTest);
 				RECT rcWork2 = (wndMode == wmFullScreen) ? mi2.rcMonitor : mi2.rcWork;
 
-				rcWnd.right = min(rcWork2.right+rcMargins.right,rcWnd.right);
-				rcWnd.bottom = min(rcWork2.bottom+rcMargins.bottom,rcWnd.bottom);
+				rcWnd.right = std::min(rcWork2.right+rcMargins.right,rcWnd.right);
+				rcWnd.bottom = std::min(rcWork2.bottom+rcMargins.bottom,rcWnd.bottom);
 			}
 		}
 		else
 		{
 			// Maximized/FullScreen. Window CAN'T exceeds active monitor!
-			rcWnd.right = min(rcWork.right+rcMargins.right,rcWnd.left+rcStore.right-rcStore.left);
-			rcWnd.bottom = min(rcWork.bottom+rcMargins.bottom,rcWnd.top+rcStore.bottom-rcStore.top);
+			rcWnd.right = std::min(rcWork.right+rcMargins.right,rcWnd.left+rcStore.right-rcStore.left);
+			rcWnd.bottom = std::min(rcWork.bottom+rcMargins.bottom,rcWnd.top+rcStore.bottom-rcStore.top);
 		}
 
 		// Final corrections
@@ -2292,8 +2292,8 @@ void CConEmuSize::CascadedPosFix()
 			if (nDefWidth > 0 && nDefHeight > 0)
 			{
 				WndPos = VisualPosFromReal(
-					klMin(rcWnd.left + nShift, mi.mi.rcWork.right - nDefWidth),
-					klMin(rcWnd.top + nShift, mi.mi.rcWork.bottom - nDefHeight)
+					std::min(rcWnd.left + nShift, mi.mi.rcWork.right - nDefWidth),
+					std::min(rcWnd.top + nShift, mi.mi.rcWork.bottom - nDefHeight)
 				);
 			}
 			else
@@ -2446,8 +2446,8 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 
 		pInfo->ptMaxPosition.x = 0;
 		pInfo->ptMaxPosition.y = 0;
-		pInfo->ptMaxSize.x = klMax<int>(GetSystemMetrics(SM_CXFULLSCREEN), ptFullScreenSize.x);
-		pInfo->ptMaxSize.y = klMax<int>(GetSystemMetrics(SM_CYFULLSCREEN), ptFullScreenSize.y);
+		pInfo->ptMaxSize.x = std::max<int>(GetSystemMetrics(SM_CXFULLSCREEN), ptFullScreenSize.x);
+		pInfo->ptMaxSize.y = std::max<int>(GetSystemMetrics(SM_CYFULLSCREEN), ptFullScreenSize.y);
 
 		//if (pInfo->ptMaxSize.x < ptFullScreenSize.x)
 		//	pInfo->ptMaxSize.x = ptFullScreenSize.x;
@@ -3480,7 +3480,7 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 	if (magnet_left)
 	{
 		rcWnd.left = rcWorkFix.left;
-		rcWnd.right = klMin<int>(rcWorkFix.right, rcWnd.left + nWidth);
+		rcWnd.right = std::min<int>(rcWorkFix.right, rcWnd.left + nWidth);
 		ptShift.x = rcUnshifted.left - rcWnd.left;
 		SnappingFlags |= smf_Left;
 	}
@@ -3488,7 +3488,7 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 	else if (magnet_right)
 	{
 		rcWnd.right = rcWorkFix.right;
-		rcWnd.left = klMax<int>(rcWorkFix.left, rcWorkFix.right - nWidth);
+		rcWnd.left = std::max<int>(rcWorkFix.left, rcWorkFix.right - nWidth);
 		ptShift.x = rcUnshifted.right - rcWnd.right;
 		SnappingFlags |= smf_Right;
 	}
@@ -3502,7 +3502,7 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 	if (magnet_top)
 	{
 		rcWnd.top = rcWorkFix.top;
-		rcWnd.bottom = min(rcWorkFix.bottom, rcWnd.top + nHeight);
+		rcWnd.bottom = std::min(rcWorkFix.bottom, rcWnd.top + nHeight);
 		ptShift.y = rcUnshifted.top - rcWnd.top;
 		SnappingFlags |= smf_Top;
 	}
@@ -3510,7 +3510,7 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 	else if (magnet_bottom)
 	{
 		rcWnd.bottom = rcWorkFix.bottom;
-		rcWnd.top = klMax<int>(rcWorkFix.top, rcWorkFix.bottom - nHeight);
+		rcWnd.top = std::max<int>(rcWorkFix.top, rcWorkFix.bottom - nHeight);
 		ptShift.y = rcUnshifted.bottom - rcWnd.bottom;
 		SnappingFlags |= smf_Bottom;
 	}
@@ -5109,7 +5109,7 @@ void CConEmuSize::OnSizePanels(COORD cr)
 		//FAR BUGBUG: При наличии часов в заголовке консоли и нечетной ширине окна
 		// слетает заголовок правой панели, если она уже 11 символов. Поставим минимум 12
 		if (cr.X >= (nConWidth-13))
-			cr.X = max((nConWidth-12),mp_ConEmu->mouse.LClkCon.X);
+			cr.X = std::max<int>((nConWidth-12), mp_ConEmu->mouse.LClkCon.X);
 
 		//rcPanel.left = mp_ConEmu->mouse.LClkCon.X; -- делал для макро
 		mp_ConEmu->mouse.LClkCon.Y = cr.Y;
@@ -5118,14 +5118,14 @@ void CConEmuSize::OnSizePanels(COORD cr)
 		{
 			r.Event.KeyEvent.wVirtualKeyCode = VK_LEFT;
 			nRepeat = mp_ConEmu->mouse.LClkCon.X - cr.X;
-			mp_ConEmu->mouse.LClkCon.X = cr.X; // max(cr.X, (mp_ConEmu->mouse.LClkCon.X-1));
+			mp_ConEmu->mouse.LClkCon.X = cr.X; // std::max(cr.X, (mp_ConEmu->mouse.LClkCon.X-1));
 			wcscpy_c(szKey, L"CtrlLeft");
 		}
 		else if (cr.X > mp_ConEmu->mouse.LClkCon.X)
 		{
 			r.Event.KeyEvent.wVirtualKeyCode = VK_RIGHT;
 			nRepeat = cr.X - mp_ConEmu->mouse.LClkCon.X;
-			mp_ConEmu->mouse.LClkCon.X = cr.X; // min(cr.X, (mp_ConEmu->mouse.LClkCon.X+1));
+			mp_ConEmu->mouse.LClkCon.X = cr.X; // std::min(cr.X, (mp_ConEmu->mouse.LClkCon.X+1));
 			wcscpy_c(szKey, L"CtrlRight");
 		}
 	}
@@ -5138,14 +5138,14 @@ void CConEmuSize::OnSizePanels(COORD cr)
 		{
 			r.Event.KeyEvent.wVirtualKeyCode = VK_UP;
 			nRepeat = mp_ConEmu->mouse.LClkCon.Y - cr.Y;
-			mp_ConEmu->mouse.LClkCon.Y = cr.Y; // max(cr.Y, (mp_ConEmu->mouse.LClkCon.Y-1));
+			mp_ConEmu->mouse.LClkCon.Y = cr.Y; // std::max(cr.Y, (mp_ConEmu->mouse.LClkCon.Y-1));
 			wcscpy_c(szKey, bShifted ? L"CtrlShiftUp" : L"CtrlUp");
 		}
 		else if (cr.Y > mp_ConEmu->mouse.LClkCon.Y)
 		{
 			r.Event.KeyEvent.wVirtualKeyCode = VK_DOWN;
 			nRepeat = cr.Y - mp_ConEmu->mouse.LClkCon.Y;
-			mp_ConEmu->mouse.LClkCon.Y = cr.Y; // min(cr.Y, (mp_ConEmu->mouse.LClkCon.Y+1));
+			mp_ConEmu->mouse.LClkCon.Y = cr.Y; // std::min(cr.Y, (mp_ConEmu->mouse.LClkCon.Y+1));
 			wcscpy_c(szKey, bShifted ? L"CtrlShiftDown" : L"CtrlDown");
 		}
 
@@ -5991,7 +5991,7 @@ HRGN CConEmuSize::CreateWindowRgn()
 							nQuakeHeight = 1; // иначе регион не применится
 							rcClient.right = rcClient.left + 1;
 						}
-						rcClient.bottom = min(rcClient.bottom, (rcClient.top+nQuakeHeight));
+						rcClient.bottom = std::min(rcClient.bottom, (rcClient.top+nQuakeHeight));
 						bRoundTitle = false;
 					}
 					else
@@ -6010,7 +6010,7 @@ HRGN CConEmuSize::CreateWindowRgn()
 				}
 				else
 				{
-					const int min_frame = klMin(rcFrame.left, rcFrame.top);
+					const int min_frame = std::min(rcFrame.left, rcFrame.top);
 					if (nFrame > min_frame)
 					{
 						_ASSERTE(rcFrame.left>=nFrame);
@@ -7050,9 +7050,9 @@ void CConEmuSize::DoDesktopModeSwitch()
 		//dwStyle |= WS_POPUP;
 		RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 		RECT rcVirtual = GetVirtualScreenRect(TRUE);
-		setWindowPos(NULL, max(rcWnd.left,rcVirtual.left),max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
+		setWindowPos(NULL, std::max(rcWnd.left,rcVirtual.left),std::max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
 		SetParent(hDesktop);
-		setWindowPos(NULL, max(rcWnd.left,rcVirtual.left),max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
+		setWindowPos(NULL, std::max(rcWnd.left,rcVirtual.left),std::max(rcWnd.top,rcVirtual.top),0,0, SWP_NOSIZE|SWP_NOZORDER);
 		OnAlwaysOnTop();
 
 		if (ghOpWnd && !gpSet->isAlwaysOnTop)

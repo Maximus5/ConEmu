@@ -218,7 +218,7 @@ int RunDebugger()
 	// And wait for debugger thread completion
 	_ASSERTE(gnRunMode == RM_UNDEFINED);
 	DWORD nDebugThread; // = WaitForSingleObject(gpSrv->DbgInfo.hDebugThread, INFINITE);
-	DWORD nDbgTimeout = min(max(25, gpSrv->DbgInfo.nAutoInterval), 100);
+	DWORD nDbgTimeout = std::min<DWORD>(std::max<DWORD>(25, gpSrv->DbgInfo.nAutoInterval), 100);
 
 	LONG nLastCounter = gpSrv->DbgInfo.nDumpsCounter - 1; // First dump create always
 	DWORD nLastTick = GetTickCount();
@@ -1271,7 +1271,7 @@ void ProcessDebugEvent()
 					}
 					else
 					{
-						pwszDbg[min(iReadMax,nRead+1)] = 0;
+						pwszDbg[std::min<size_t>(iReadMax, nRead+1)] = 0;
 					}
 
 					static int nPrefixLen = lstrlen(CONEMU_CONHOST_CREATED_MSG);
@@ -1293,7 +1293,7 @@ void ProcessDebugEvent()
 					}
 					else
 					{
-						szDbgText[min(iReadMax,nRead+1)] = 0;
+						szDbgText[std::min<size_t>(iReadMax, nRead+1)] = 0;
 						if ((memcmp(szDbgText, "\xEF\xBB\xBF", 3) != 0)
 							|| !MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, szDbgText+3, -1, pwszDbg, iReadMax+1))
 						MultiByteToWideChar(CP_ACP, 0, szDbgText, -1, pwszDbg, iReadMax+1);

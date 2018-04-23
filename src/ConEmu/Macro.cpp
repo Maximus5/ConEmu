@@ -3094,7 +3094,7 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 		if (p->GetIntArg(1, nValue))
 		{
 			if (p->GetIntArg(2, nRel) && nRel) // Use relative values?
-				nValue = max(0,min(255,(((int)(UINT)gpSet->bgImageDarker)+nValue)));
+				nValue = std::max(0,std::min(255,(((int)(UINT)gpSet->bgImageDarker)+nValue)));
 			if (nValue >= 0 && nValue < 256 && nValue != (int)(UINT)gpSet->bgImageDarker)
 			{
 				gpSetCls->SetBgImageDarker(nValue, true);
@@ -3421,7 +3421,7 @@ LPWSTR ConEmuMacro::Sleep(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		{
 			while (true)
 			{
-				::Sleep(min(ms,5));
+				::Sleep(std::min(ms,5));
 				dwDelta = (dwNow = GetTickCount()) - dwStartTick;
 				// Too long waiting may be noticed as "hangs"
 				if (dwDelta < (DWORD)ms)
@@ -3844,22 +3844,22 @@ LPWSTR ConEmuMacro::TransparencyHelper(int nCmd, int nValue)
 	case 0:
 		// Absolute value, "AlphaValue" (active)
 		oldValue = gpSet->nTransparent;
-		gpSet->nTransparent = newValue = max(MIN_ALPHA_VALUE, min(MAX_ALPHA_VALUE, nValue));
+		gpSet->nTransparent = newValue = std::max(MIN_ALPHA_VALUE, std::min(MAX_ALPHA_VALUE, nValue));
 		break;
 	case 1:
 		// Relative value, "AlphaValue" (active)
 		oldValue = gpSet->nTransparent;
-		gpSet->nTransparent = newValue = max(MIN_ALPHA_VALUE, min(MAX_ALPHA_VALUE, gpSet->nTransparent+nValue));
+		gpSet->nTransparent = newValue = std::max(MIN_ALPHA_VALUE, std::min(MAX_ALPHA_VALUE, gpSet->nTransparent+nValue));
 		break;
 	case 2:
 		// Absolute value, "AlphaValueInactive" (inactive)
 		oldValue = gpSet->nTransparentInactive;
-		gpSet->nTransparentInactive = newValue = max(MIN_INACTIVE_ALPHA_VALUE, min(MAX_ALPHA_VALUE, nValue));
+		gpSet->nTransparentInactive = newValue = std::max(MIN_INACTIVE_ALPHA_VALUE, std::min(MAX_ALPHA_VALUE, nValue));
 		break;
 	case 3:
 		// Relative value, "AlphaValueInactive" (inactive)
 		oldValue = gpSet->nTransparentInactive;
-		gpSet->nTransparentInactive = newValue = max(MIN_INACTIVE_ALPHA_VALUE, min(MAX_ALPHA_VALUE, gpSet->nTransparentInactive+nValue));
+		gpSet->nTransparentInactive = newValue = std::max(MIN_INACTIVE_ALPHA_VALUE, std::min(MAX_ALPHA_VALUE, gpSet->nTransparentInactive+nValue));
 		break;
 	case 4:
 		// "AlphaValueSeparate"

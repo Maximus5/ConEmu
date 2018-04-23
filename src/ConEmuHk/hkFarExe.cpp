@@ -65,7 +65,7 @@ int WINAPI OnCompareStringW(LCID Locale, DWORD dwCmpFlags, LPCWSTR lpString1, in
 			int n1 = (cchCount1==cchCount2) ? cchCount1
 			         : (cchCount1!=-1 && cchCount2!=-1) ? -1
 			         : (cchCount1!=-1) ? cchCount2
-			         : (cchCount2!=-1) ? cchCount1 : min(cchCount1,cchCount2);
+			         : (cchCount2!=-1) ? cchCount1 : std::min(cchCount1,cchCount2);
 
 			while(!n && /*(ch1=*lpString1++) && (ch2=*lpString2++) &&*/ n1--)
 			{

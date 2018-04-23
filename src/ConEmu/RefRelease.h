@@ -191,7 +191,7 @@ public:
 			if (apRef)
 				apRef->AddRef();
 
-			klSwap(mp_Ref, apRef);
+			std::swap(mp_Ref, apRef);
 
 			if (apRef)
 				apRef->Release();

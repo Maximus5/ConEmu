@@ -238,7 +238,7 @@ protected:
 
 			if (pProcessName)
 			{
-				SIZE_T sz = sizeof(szProcessName);//min(sizeof(szProcessName), Data.BaseDllName.MaximumLength*2);
+				SIZE_T sz = sizeof(szProcessName);//std::min(sizeof(szProcessName), Data.BaseDllName.MaximumLength*2);
 
 				if (Data.BaseDllName.Buffer && ReadProcessMemory(hProcess, Data.BaseDllName.Buffer, szProcessName, sz,0))
 					lstrcpyn(pProcessName, szProcessName, cbProcessName);
@@ -248,7 +248,7 @@ protected:
 
 			if (pFullPath)
 			{
-				SIZE_T sz = sizeof(szProcessName);//min(sizeof(szProcessName), Data.FullDllName.MaximumLength*2);
+				SIZE_T sz = sizeof(szProcessName);//std::min(sizeof(szProcessName), Data.FullDllName.MaximumLength*2);
 
 				if (Data.FullDllName.Buffer && ReadProcessMemory(hProcess, Data.FullDllName.Buffer, szProcessName, sz,0))
 					lstrcpyn(pFullPath, szProcessName, cbFullPath);
@@ -264,7 +264,7 @@ protected:
 
 				if (ReadProcessMemory(hProcess, &pProcessParams->CommandLine, &pCmd, sizeof(pCmd), 0))
 				{
-					SIZE_T sz = min(cbCommandLine, (ULONG)pCmd.Length/sizeof(WCHAR) + 1);
+					SIZE_T sz = std::min<SIZE_T>(cbCommandLine, (ULONG)pCmd.Length/sizeof(WCHAR) + 1);
 					WCHAR* sCommandLine = (WCHAR*)malloc(sz*sizeof(WCHAR));
 					if (sCommandLine)
 					{
@@ -608,7 +608,7 @@ public:
 
 			if (pProcessPath || (pProcessName && !*pProcessName))
 			{
-				DWORD cchMax = max(MAX_PATH*2,cbProcessPath);
+				DWORD cchMax = std::max<DWORD>(MAX_PATH*2, cbProcessPath);
 				wchar_t* pszPath = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
 
 				if (pszPath)

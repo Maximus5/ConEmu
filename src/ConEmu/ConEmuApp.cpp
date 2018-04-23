@@ -944,7 +944,7 @@ void StripWords(wchar_t* pszText, const wchar_t* pszWords)
 		int nLen = (int)(pszNext - pszWord);
 		if (nLen > 0)
 		{
-			lstrcpyn(dummy, pszWord, min((int)countof(dummy),(nLen+1)));
+			lstrcpyn(dummy, pszWord, std::min((int)countof(dummy),(nLen+1)));
 			wchar_t* pszFound;
 			while ((pszFound = StrStrI(pszText, dummy)) != NULL)
 			{
@@ -1524,20 +1524,20 @@ RECT CenterInParent(RECT rcDlg, HWND hParent)
 	GetNearestMonitorInfo(&mi, NULL, &rcParent);
 
 	RECT rcCenter = {
-		max(mi.rcWork.left, rcParent.left + (rcParent.right - rcParent.left - nWidth) / 2),
-		max(mi.rcWork.top, rcParent.top + (rcParent.bottom - rcParent.top - nHeight) / 2)
+		std::max(mi.rcWork.left, rcParent.left + (rcParent.right - rcParent.left - nWidth) / 2),
+		std::max(mi.rcWork.top, rcParent.top + (rcParent.bottom - rcParent.top - nHeight) / 2)
 	};
 
 	if (((rcCenter.left + nWidth) > mi.rcWork.right)
 		&& (rcCenter.left > mi.rcWork.left))
 	{
-		rcCenter.left = max(mi.rcWork.left, (mi.rcWork.right - nWidth));
+		rcCenter.left = std::max(mi.rcWork.left, (mi.rcWork.right - nWidth));
 	}
 
 	if (((rcCenter.top + nHeight) > mi.rcWork.bottom)
 		&& (rcCenter.top > mi.rcWork.top))
 	{
-		rcCenter.top = max(mi.rcWork.top, (mi.rcWork.bottom - nHeight));
+		rcCenter.top = std::max(mi.rcWork.top, (mi.rcWork.bottom - nHeight));
 	}
 
 	rcCenter.right = rcCenter.left + nWidth;
@@ -2168,8 +2168,8 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 		else
 		{
 			// cMinSlots actually must control only ‘last items’ in jump lists
-			if ((nHistoryCount > 0) && (nHistoryCount > klMax(cMinSlots,(UINT)3)))
-				nHistoryCount = klMax(cMinSlots,(UINT)3);
+			if ((nHistoryCount > 0) && (nHistoryCount > std::max(cMinSlots,(UINT)3)))
+				nHistoryCount = std::max(cMinSlots,(UINT)3);
 
 			// And we tries to add all Tasks with flag ‘Taskbar jump lists’
 

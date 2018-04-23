@@ -183,7 +183,7 @@ CVConGroup* CVConGroup::SplitVConGroup(RConStartArgsEx::SplitType aSplitType /*e
 
 	// Параметры разбиения
 	m_SplitType = aSplitType; // eSplitNone/eSplitHorz/eSplitVert
-	mn_SplitPercent10 = max(1,min(anPercent10,999)); // (0.1% - 99.9%)*10
+	mn_SplitPercent10 = std::max<UINT>(1, std::min<UINT>(anPercent10, 999)); // (0.1% - 99.9%)*10
 	SetRectEmpty(&mrc_Splitter);
 	SetRectEmpty(&mrc_DragSplitter);
 
@@ -846,7 +846,7 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 		int iPadSize = (m_SplitType == RConStartArgsEx::eSplitVert) ? (rcScroll.top + rcScroll.bottom) : (rcScroll.left + rcScroll.right);
 		int iSize1 = ((m_SplitType == RConStartArgsEx::eSplitVert) ? mrc_Splitter.top-mrc_Full.top : mrc_Splitter.left-mrc_Full.left) - iPadSize;
 		int iSize2 = ((m_SplitType == RConStartArgsEx::eSplitVert) ? mrc_Full.bottom-mrc_Splitter.bottom : mrc_Full.right-mrc_Splitter.right) - iPadSize;
-		int iCellHalf = max(1,(nCellSize/2)) * (iCells > 0 ? 1 : -1);
+		int iCellHalf = std::max(1,(nCellSize/2)) * (iCells > 0 ? 1 : -1);
 		int iDiff = iCells*nCellSize - iCellHalf;
 
 		bool bCanResize = (iCells < 0)
@@ -866,7 +866,7 @@ bool CVConGroup::ReSizeSplitter(int iCells)
 					&& ((iCells < 0) == ((UINT)nNewSplitPercent10 < mn_SplitPercent10)))
 				{
 					int nOldPercent = mn_SplitPercent10;
-					mn_SplitPercent10 = max(1,min(nNewSplitPercent10,999)); // (0.1% - 99.9%)*10
+					mn_SplitPercent10 = std::max(1,std::min(nNewSplitPercent10,999)); // (0.1% - 99.9%)*10
 
 					CalcSplitRect(mn_SplitPercent10, mrc_Full, rcNewCon1, rcNewCon2, rcNewSplitter);
 
@@ -1035,7 +1035,7 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 
 	WARNING("Не учитывается gpSet->nCenterConsolePad?");
 
-	UINT nSplit = max(1,min(nSplitPercent10,999));
+	UINT nSplit = std::max<UINT>(1, std::min<UINT>(nSplitPercent10, 999));
 
 	if (m_SplitType == RConStartArgsEx::eSplitHorz)
 	{
@@ -1080,7 +1080,7 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 		}
 
 		rcCon1 = MakeRect(rcNewCon.left, rcNewCon.top,
-			max(rcNewCon.left + nScreenWidth,rcNewCon.right - nCon2Width - nPadX), rcNewCon.bottom);
+			std::max(rcNewCon.left + nScreenWidth,rcNewCon.right - nCon2Width - nPadX), rcNewCon.bottom);
 		rcCon2 = MakeRect(rcNewCon.right - nCon2Width, rcNewCon.top, rcNewCon.right, rcNewCon.bottom);
 		rcSplitter = MakeRect(rcCon1.right, rcCon1.top, rcCon2.left, rcCon2.bottom);
 	}
@@ -1126,7 +1126,7 @@ void CVConGroup::CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1
 		}
 
 		rcCon1 = MakeRect(rcNewCon.left, rcNewCon.top,
-			rcNewCon.right, max(rcNewCon.top + nScreenHeight,rcNewCon.bottom - nCon2Height - nPadY));
+			rcNewCon.right, std::max(rcNewCon.top + nScreenHeight,rcNewCon.bottom - nCon2Height - nPadY));
 		rcCon2 = MakeRect(rcCon1.left, rcNewCon.bottom - nCon2Height, rcNewCon.right, rcNewCon.bottom);
 		rcSplitter = MakeRect(rcCon1.left, rcCon1.bottom, rcCon2.right, rcCon2.top);
 	}
@@ -1912,7 +1912,7 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 	{
 		if (nUpdateProgress <= UPD_PROGRESS_DOWNLOAD_START)
 			bWasIndeterminate = TRUE;
-		nProgress = max(nProgress, nUpdateProgress);
+		nProgress = std::max(nProgress, nUpdateProgress);
 	}
 
 	// нас интересует возможное наличие ошибки во всех остальных консолях
@@ -3361,8 +3361,8 @@ bool CVConGroup::ExchangePanes(CVirtualConsole* apVCon, int nHorz /*= 0*/, int n
 			CVConGroup*& g2 = (pNext->mp_Parent->mp_Grp1 == pNext) ? pNext->mp_Parent->mp_Grp1 : pNext->mp_Parent->mp_Grp2;
 			_ASSERTE(g2 == pNext);
 
-			klSwap(g1, g2);
-			klSwap(g1->mp_Parent, g2->mp_Parent);
+			std::swap(g1, g2);
+			std::swap(g1->mp_Parent, g2->mp_Parent);
 
 			lockGroups.Unlock();
 

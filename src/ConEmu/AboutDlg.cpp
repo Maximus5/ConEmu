@@ -351,7 +351,7 @@ void ConEmuAbout::searchProc(HWND hDlg, HWND hSearch, bool bReentr)
 		SendMessage(hEdit, EM_GETSEL, (WPARAM)&nStart, (LPARAM)&nEnd);
 
 		size_t cchMax = wcslen(pszText);
-		size_t cchFrom = max(nStart,nEnd);
+		size_t cchFrom = std::max(nStart,nEnd);
 		if (cchMax > cchFrom)
 			pszFrom += cchFrom;
 
@@ -364,7 +364,7 @@ void ConEmuAbout::searchProc(HWND hDlg, HWND hSearch, bool bReentr)
 			const wchar_t szBrkChars[] = L"()[]<>{}:;,.-=\\/ \t\r\n";
 			LPCWSTR pszEnd = wcspbrk(pszFind, szBrkChars);
 			INT_PTR nPartLen = wcslen(pszPart);
-			if (!pszEnd || ((pszEnd - pszFind) > max(nPartLen,60)))
+			if (!pszEnd || ((pszEnd - pszFind) > std::max<ssize_t>(nPartLen,60)))
 				pszEnd = pszFind + nPartLen;
 			while ((pszFind > pszFrom) && !wcschr(szBrkChars, *(pszFind-1)))
 				pszFind--;

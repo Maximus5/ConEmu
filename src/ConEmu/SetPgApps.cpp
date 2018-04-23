@@ -280,17 +280,17 @@ INT_PTR CSetPgApps::pageOpProc_AppsChild(HWND hDlg, UINT messg, WPARAM wParam, L
 				{
 				case SB_LINEDOWN:
 				case SB_PAGEDOWN:
-					nPos = min(si.nMax,si.nPos+nDelta);
+					nPos = std::min(si.nMax,si.nPos+nDelta);
 					break;
 				//case SB_PAGEDOWN:
-				//	nPos = min(si.nMax,si.nPos+si.nPage);
+				//	nPos = std::min(si.nMax,si.nPos+si.nPage);
 				//	break;
 				case SB_LINEUP:
 				case SB_PAGEUP:
-					nPos = max(si.nMin,si.nPos-nDelta);
+					nPos = std::max(si.nMin,si.nPos-nDelta);
 					break;
 				//case SB_PAGEUP:
-				//	nPos = max(si.nMin,si.nPos-si.nPage);
+				//	nPos = std::max(si.nMin,si.nPos-si.nPage);
 				//	break;
 				}
 			}
@@ -453,7 +453,7 @@ void CSetPgApps::DoAppDel()
 
 	int iCount = (int)SendDlgItemMessage(mh_Dlg, lbAppDistinct, LB_GETCOUNT, 0,0);
 
-	SendDlgItemMessage(mh_Dlg, lbAppDistinct, LB_SETCURSEL, min(iCur,(iCount-1)), 0);
+	SendDlgItemMessage(mh_Dlg, lbAppDistinct, LB_SETCURSEL, std::min(iCur,(iCount-1)), 0);
 
 	lockSelChange.Unlock();
 
@@ -739,7 +739,7 @@ void CSetPgApps::DoFillControls(const AppSettings* pApp)
 	checkDlgButton(mh_Child, cbColorsOverride, pApp->OverridePalette);
 	// Don't add unknown palettes in the list!
 	int nIdx = SendDlgItemMessage(mh_Child, lbColorsOverride, CB_FINDSTRINGEXACT, -1, (LPARAM)pApp->szPaletteName);
-	SendDlgItemMessage(mh_Child, lbColorsOverride, CB_SETCURSEL, klMax(nIdx, 0), 0);
+	SendDlgItemMessage(mh_Child, lbColorsOverride, CB_SETCURSEL, std::max(nIdx, 0), 0);
 
 	checkDlgButton(mh_Child, cbClipboardOverride, pApp->OverrideClipboard);
 	//

@@ -776,7 +776,7 @@ BOOL CeFullPanelInfo::PaintItem(
 		}
 		else
 		{
-			nY = max(y,(rcFrame.top-1));
+			nY = std::max<int>(y, (rcFrame.top-1));
 			nW = rcFrame.right - nX; // + 1;
 			nH = rcFrame.bottom - nY;
 		}
@@ -1242,21 +1242,21 @@ INT_PTR CeFullPanelInfo::CalcTopPanelItem(INT_PTR anCurrentItem, INT_PTR anTopIt
 		{
 			INT_PTR n = (nTopItem + (nXCount-1)) / nXCount;
 			INT_PTR nNewTop = n * nXCount;
-			nTopItem = min(nNewTop, (nItemCount-1));
+			nTopItem = std::min(nNewTop, (nItemCount-1));
 			//int nMod = nTopItem % nXCount;
 			//if (nMod) {
-			//	nTopItem = max(0,nTopItem-nMod);
+			//	nTopItem = std::max(0,nTopItem-nMod);
 			//	//if (nTopItem > nCurrentItem)
-			//	//	nTopItem = max(nCurrentItem,(nTopItem-nXCount));
+			//	//	nTopItem = std::max(nCurrentItem,(nTopItem-nXCount));
 			//}
 		}
 		else
 		{
 			INT_PTR n = (nTopItem + (nYCountFull-1)) / nYCountFull;
 			INT_PTR nNewTop = n * nYCountFull;
-			nTopItem = min(nNewTop, (nItemCount-1));
+			nTopItem = std::min(nNewTop, (nItemCount-1));
 			//if (nTopItem > nCurrentItem)
-			//	nTopItem = max(0,min((nTopItem-nYCountFull),nCurrentItem
+			//	nTopItem = std::max(0,std::min((nTopItem-nYCountFull),nCurrentItem
 		}
 	}
 	else
@@ -1271,7 +1271,7 @@ INT_PTR CeFullPanelInfo::CalcTopPanelItem(INT_PTR anCurrentItem, INT_PTR anTopIt
 
 			if (nMod)
 			{
-				nTopItem = max(0,nTopItem-nMod);
+				nTopItem = std::max<int>(0, (nTopItem - nMod));
 			}
 
 			while((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem)
@@ -1285,7 +1285,7 @@ INT_PTR CeFullPanelInfo::CalcTopPanelItem(INT_PTR anCurrentItem, INT_PTR anTopIt
 
 			if (nMod)
 			{
-				nTopItem = max(0,nTopItem-nMod);
+				nTopItem = std::max<int>(0, (nTopItem-nMod));
 			}
 
 			while((nTopItem + nXCountFull*(nYCountFull)) <= nCurrentItem)
@@ -1846,7 +1846,7 @@ int CeFullPanelInfo::RegisterPanelView()
 		//	nRc = -1000;
 		//} else {
 		//_ASSERTE(pvi.ThSet.cbSize == sizeof(gThSet));
-		//memmove(&gThSet, &pvi.ThSet, min(pvi.ThSet.cbSize,sizeof(gThSet)));
+		//memmove(&gThSet, &pvi.ThSet, std::min(pvi.ThSet.cbSize,sizeof(gThSet)));
 		//// Цвета "консоли"
 		//for (int i=0; i<16; i++) {
 		//	gcrActiveColors[i] = pvi.crPalette[i];

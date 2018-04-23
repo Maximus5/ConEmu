@@ -731,7 +731,7 @@ struct Settings
 		UINT nStatusFontCharSet;
 		//reg->Load(L"StatusFontHeight", nStatusFontHeight);
 		int nStatusFontHeight;
-		int StatusBarFontHeight(); // { return max(4,nStatusFontHeight); };
+		int StatusBarFontHeight(); // { return std::max(4,nStatusFontHeight); };
 		int StatusBarHeight(); // { return StatusBarFontHeight() + ((isStatusBarFlags & csf_NoVerticalPad) ? ((isStatusBarFlags & csf_HorzDelim) ? 1 : 0) : 2); };
 		//reg->Load(L"StatusBar.Color.Back", nStatusBarBack);
 		DWORD nStatusBarBack;

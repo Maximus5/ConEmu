@@ -427,7 +427,7 @@ INT_PTR ConProcess::GetXRequestIndex(DWORD pid, bool create)
 				// Move it to the end of the queue
 				while ((i+1) < xRequests.size())
 				{
-					klSwap(xRequests[i], xRequests[i+1]);
+					std::swap(xRequests[i], xRequests[i+1]);
 					++i;
 				}
 				// Update the last alive tick of the process
@@ -650,7 +650,7 @@ void ConProcess::DumpProcInfo(LPCWSTR sLabel, DWORD nCount, DWORD* pPID)
 	DWORD nErr = GetLastError();
 	wchar_t szDbgMsg[255];
 	msprintf(szDbgMsg, countof(szDbgMsg), L"%s: Err=%u, Count=%u:", sLabel ? sLabel : L"", nErr, nCount);
-	nCount = min(nCount,10);
+	nCount = std::min(nCount,10);
 	for (DWORD i = 0; pPID && (i < nCount); i++)
 	{
 		int nLen = lstrlen(szDbgMsg);
@@ -673,7 +673,7 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 	DWORD nCurProcessesDbg[128] = {}; // для отладки, получение текущего состояния консоли
 	DWORD nPrevProcessedDbg[128] = {}; // для отладки, запомнить предыдущее состояние консоли
 	if (pnProcesses && nProcessCount)
-		memmove(nPrevProcessedDbg, pnProcesses, min(countof(nPrevProcessedDbg),nProcessCount)*sizeof(*pnProcesses));
+		memmove(nPrevProcessedDbg, pnProcesses, std::min<DWORD>(countof(nPrevProcessedDbg), nProcessCount) * sizeof(*pnProcesses));
 #endif
 
 	if (nProcessCount <= 0)
@@ -845,7 +845,7 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 				nProcessCount = nCurCount;
 			}
 
-			UINT nSize = sizeof(DWORD)*min(nMaxProcesses,START_MAX_PROCESSES);
+			UINT nSize = sizeof(DWORD) * std::min<DWORD>(nMaxProcesses, START_MAX_PROCESSES);
 			#ifdef _DEBUG
 			_ASSERTE(!IsBadWritePtr(pnProcessesCopy,nSize));
 			_ASSERTE(!IsBadWritePtr(pnProcesses,nSize));
@@ -975,7 +975,7 @@ bool ConProcess::GetProcesses(DWORD* processes, UINT count)
 	// #CONPROCESS Use current process list!
 	DWORD nCurProcCount = GetProcessCount(processes, count);
 	_ASSERTE(nCurProcCount && processes[0]);
-	size_t cmp_size = klMin<UINT>(sizeof(nLastRetProcesses), (count * sizeof(*processes)));
+	size_t cmp_size = std::min<UINT>(sizeof(nLastRetProcesses), (count * sizeof(*processes)));
 	if (nCurProcCount
 		&& memcmp(nLastRetProcesses, processes, cmp_size))
 	{

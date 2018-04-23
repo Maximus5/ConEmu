@@ -508,8 +508,8 @@ bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, 
 			code |= 32;
 
 		// (1,1) is upper left character position
-		SHORT coord[] = {klMax<SHORT>(0, m.dwMousePosition.X) + 1,
-			klMax<SHORT>(0, m.dwMousePosition.Y) + 1};
+		SHORT coord[] = {std::max<SHORT>(0, m.dwMousePosition.X) + 1,
+			std::max<SHORT>(0, m.dwMousePosition.Y) + 1};
 
 		if (MouseMode & tmm_XTERM)
 		{
@@ -531,7 +531,7 @@ bool TermX::GetSubstitute(const MOUSE_EVENT_RECORD& m, TermMouseMode MouseMode, 
 			{
 				// (1,1) is upper left character position
 				if (!(MouseMode & tmm_UTF8))
-					szSubst[i++] = klMin<unsigned>(255, coord[s] + 32);
+					szSubst[i++] = std::min<unsigned>(255, coord[s] + 32);
 				else if (coord[s] < 0x80)
 					szSubst[i++] = coord[s];
 				else if (coord[s] < 0x800)

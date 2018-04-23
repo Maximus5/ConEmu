@@ -9,6 +9,6 @@
 		_ASSERTE(psi && fsf); \
 		return; \
 	} \
-	memmove(psi, info, min(sizeof(*psi),(size_t)(info)->StructSize)); \
-	memmove(fsf, (info)->FSF, min(sizeof(*fsf),(size_t)(info)->FSF->StructSize)); \
+	memmove(psi, info, std::min(sizeof(*psi),(size_t)(info)->StructSize)); \
+	memmove(fsf, (info)->FSF, std::min(sizeof(*fsf),(size_t)(info)->FSF->StructSize)); \
 	psi->FSF = fsf;

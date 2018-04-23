@@ -570,7 +570,7 @@ BOOL cmd_GetOutput(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		_ASSERTE(sizeof(CESERVER_CONSAVE_HDR) > sizeof(gpStoredOutput->hdr.hdr));
 		DWORD nSize = sizeof(CESERVER_CONSAVE_HDR)
-		              + min((int)gpStoredOutput->hdr.cbMaxOneBufferSize,
+		              + std::min((int)gpStoredOutput->hdr.cbMaxOneBufferSize,
 		                    (gpStoredOutput->hdr.sbi.dwSize.X*gpStoredOutput->hdr.sbi.dwSize.Y*2));
 		*out = ExecuteNewCmd(CECMD_GETOUTPUT, nSize);
 		if (*out)
@@ -1716,7 +1716,7 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 		}
 		else
 		{
-			klSwap(nPrevAltServer, gpSrv->nPrevAltServer);
+			std::swap(nPrevAltServer, gpSrv->nPrevAltServer);
 
 			ThawRefreshThread();
 

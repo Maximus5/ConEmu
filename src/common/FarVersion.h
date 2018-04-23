@@ -65,7 +65,7 @@ static bool LoadModuleVersion(LPCWSTR asModulePath, VS_FIXEDFILEINFO& Version, w
 					if (VerQueryValue((void*)pVerData, szSlash, (void**)&lvs, &nLen))
 					{
 						_ASSERTE(nLen == sizeof(*lvs));
-						memmove(&Version, lvs, min(nLen, sizeof(Version)));
+						memmove(&Version, lvs, std::min<size_t>(nLen, sizeof(Version)));
 						lbRc = true;
 					}
 					else

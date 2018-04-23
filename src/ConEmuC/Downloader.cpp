@@ -632,7 +632,7 @@ VOID CDownloader::InetCallback(HINTERNET hInternet, DWORD_PTR dwContext, DWORD d
 			{
 				wchar_t sAddr[32] = L"";
 				MultiByteToWideChar(CP_ACP, 0,
-					((SOCKADDR*)lpvStatusInformation)->sa_data, min(dwStatusInformationLength-sizeof(u_short),countof(sAddr)-1),
+					((SOCKADDR*)lpvStatusInformation)->sa_data, std::min<int>(dwStatusInformationLength-sizeof(u_short),countof(sAddr)-1),
 					sAddr, countof(sAddr)-1);
 				wcscat_c(sFormat, L" to Server, family=%u, data=%s");
 				pObj->ReportMessage(dc_LogCallback, sFormat,
@@ -769,7 +769,7 @@ bool CDownloader::SetupTimeouts()
 			}
 		}
 
-		nTimeoutSet = max(*TimeOuts[i].pDefault,mn_Timeout);
+		nTimeoutSet = std::max<DWORD>(*TimeOuts[i].pDefault, mn_Timeout);
 		ReportMessage(dc_LogCallback, L"Set internet %s timeout: %u ms",
 			at_Str, TimeOuts[i].pszName, at_Uint, nTimeoutSet, at_None);
 		if (!wi->_InternetSetOptionW(mh_Internet, TimeOuts[i].dwOption, &nTimeoutSet, sizeof(nTimeoutSet)))

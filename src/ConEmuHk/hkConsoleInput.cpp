@@ -153,7 +153,7 @@ COORD FixupReadStartCursorPos(DWORD nNumberOfCharsToRead, CONSOLE_SCREEN_BUFFER_
 			int nNewY = (int)crStartCursorPos.Y;
 			if (nNewX < 0)
 			{
-				int nRows = klMin(nNewY, (int)((-nNewX) / csbi.dwSize.X));
+				int nRows = std::min(nNewY, (int)((-nNewX) / csbi.dwSize.X));
 				if ((nRows < nNewY) && ((nNewX + (nRows * csbi.dwSize.X)) < 0))
 					nRows++;
 				_ASSERTE(((nNewY - nRows) >= 0) && ((nNewX + (nRows * csbi.dwSize.X)) >= 0));
@@ -948,7 +948,7 @@ BOOL WINAPI OnWriteConsoleInputW(HANDLE hConsoleInput, const INPUT_RECORD *lpBuf
 	{
 		#ifdef _DEBUG
 		memset(gir_Written, 0, sizeof(gir_Written));
-		memmove(gir_Written, lpBuffer, min(countof(gir_Written),nLength)*sizeof(*lpBuffer));
+		memmove(gir_Written, lpBuffer, std::min<size_t>(countof(gir_Written), nLength) * sizeof(*lpBuffer));
 		#endif
 		lbRc = gInQueue.WriteInputQueue(lpBuffer, FALSE, nLength);
 	}

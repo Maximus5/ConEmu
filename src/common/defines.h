@@ -29,6 +29,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#define NOMINMAX
+#include <limits>
+#include <algorithm>
+
 #if !defined(__GNUC__) || defined(__MINGW32__)
 #pragma warning(disable: 4091)
 #endif
@@ -59,14 +63,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define TODO(s)
 #define WARNING(s)
 #define PRAGMA_ERROR(s)
-
-#ifndef max
-#define max(a,b)            (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef min
-#define min(a,b)            (((a) < (b)) ? (a) : (b))
-#endif
 
 //#define _ASSERT(f)
 //#define _ASSERTE(f)
@@ -192,7 +188,8 @@ using ssize_t = int32_t;
 #define LOGSRECTCOORDS(rc) (rc).Left, (rc).Top, (rc).Right, (rc).Bottom
 #define LOGRECTSIZE(rc) RectWidth(rc), RectHeight(rc)
 
-#define _abs(n) (((n)>=0) ? (n) : -(n))
+template <typename T>
+const T _abs(const T& n) { return ((n)>=0) ? (n) : -(n); }
 
 #define LDR_IS_DATAFILE(hm)      ((((ULONG_PTR)(hm)) & (ULONG_PTR)1) == (ULONG_PTR)1)
 #define LDR_IS_IMAGEMAPPING(hm)  ((((ULONG_PTR)(hm)) & (ULONG_PTR)2) == (ULONG_PTR)2)

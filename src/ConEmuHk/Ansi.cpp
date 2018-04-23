@@ -1202,7 +1202,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 			if (write.NumberOfCharsWritten)
 				nTotalWritten += write.NumberOfCharsWritten;
 			if (write.ScrolledRowsUp > 0)
-				gDisplayCursor.StoredCursorPos.Y = max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)write.ScrolledRowsUp));
+				gDisplayCursor.StoredCursorPos.Y = std::max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)write.ScrolledRowsUp));
 		}
 
 		nWriteFrom = nWriteTo; nWriteTo = nNumberOfCharsToWrite;
@@ -1331,7 +1331,7 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 	// Store prompt(?) for clink 0.1.1
 	if ((gnAllowClinkUsage == 1) && nNumberOfCharsToWrite && lpBuffer && gpszLastWriteConsole && gcchLastWriteConsoleMax)
 	{
-		size_t cchMax = min(gcchLastWriteConsoleMax-1,nNumberOfCharsToWrite);
+		size_t cchMax = std::min(gcchLastWriteConsoleMax-1,nNumberOfCharsToWrite);
 		gpszLastWriteConsole[cchMax] = 0;
 		wmemmove(gpszLastWriteConsole, (const wchar_t*)lpBuffer, cchMax);
 	}
@@ -1430,7 +1430,7 @@ BOOL CEAnsi::OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD
 		//	if (lpNumberOfCharsWritten)
 		//		*lpNumberOfCharsWritten = wrt.NumberOfCharsWritten;
 		//	if (wrt.ScrolledRowsUp > 0)
-		//		gDisplayCursor.StoredCursorPos.Y = max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)wrt.ScrolledRowsUp));
+		//		gDisplayCursor.StoredCursorPos.Y = std::max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)wrt.ScrolledRowsUp));
 		//}
 	}
 	goto wrap;
@@ -1484,7 +1484,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 		{
 			_ASSERTEX(gnPrevAnsiPart < 79);
 			INT_PTR nCurPrevLen = gnPrevAnsiPart;
-			INT_PTR nAdd = min((lpEnd-lpBuffer),(INT_PTR)countof(gsPrevAnsiPart)-nCurPrevLen-1);
+			INT_PTR nAdd = std::min((lpEnd-lpBuffer),(INT_PTR)countof(gsPrevAnsiPart)-nCurPrevLen-1);
 			// Need to check buffer overflow!!!
 			_ASSERTEX((INT_PTR)countof(gsPrevAnsiPart)>(nCurPrevLen+nAdd));
 			wmemcpy(gsPrevAnsiPart+nCurPrevLen, lpBuffer, nAdd);
@@ -1620,7 +1620,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						//_ASSERTEX(bStandaloneEscChar && "Unsupported control sequence?");
 						if (!bStandaloneEscChar)
 						{
-							DumpKnownEscape(Code.pszEscStart, min(Code.nTotalLen,32), de_UnkControl);
+							DumpKnownEscape(Code.pszEscStart, std::min<size_t>(Code.nTotalLen, 32), de_UnkControl);
 						}
 						continue; // invalid code
 					}
@@ -2003,8 +2003,8 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const int LinesCount)
 	if (gDisplayOpt.ScrollRegion)
 	{
 		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
-		TopLine = max(gDisplayOpt.ScrollStart,0);
-		BottomLine = max(gDisplayOpt.ScrollEnd,0);
+		TopLine = std::max<int>(gDisplayOpt.ScrollStart, 0);
+		BottomLine = std::max<int>(gDisplayOpt.ScrollEnd, 0);
 	}
 	else
 	{
@@ -2113,7 +2113,7 @@ void CEAnsi::EscCopyCtrlString(wchar_t* pszDst, LPCWSTR asMsg, INT_PTR cchMaxLen
 
 	if (cchMaxLen > 0)
 		wmemmove(pszDst, asMsg, cchMaxLen);
-	pszDst[max(cchMaxLen,0)] = 0;
+	pszDst[std::max<ssize_t>(cchMaxLen, 0)] = 0;
 }
 
 // ESC ] 9 ; 2 ; "txt" ST          Show GUI MessageBox ( txt ) for dubug purposes
@@ -2355,7 +2355,7 @@ void CEAnsi::ReportConsoleTitle()
 	_ASSERTEX(lstrlen(sTitle)==3);
 
 	DWORD nTitle = GetConsoleTitle(sTitle+3, MAX_PATH*2);
-	p = sTitle+3+min(nTitle,MAX_PATH*2);
+	p = sTitle + 3 + std::min<DWORD>(nTitle, MAX_PATH*2);
 	*(p++) = L'\x1B';
 	*(p++) = L'\\';
 	*(p++) = 0;
@@ -2471,7 +2471,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 				//	if (lpNumberOfCharsWritten)
 				//		*lpNumberOfCharsWritten = write.NumberOfCharsWritten;
 				//	if (write.ScrolledRowsUp > 0)
-				//		gDisplayCursor.StoredCursorPos.Y = max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)write.ScrolledRowsUp));
+				//		gDisplayCursor.StoredCursorPos.Y = std::max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)write.ScrolledRowsUp));
 				//}
 			}
 
@@ -2585,7 +2585,7 @@ BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOut
 				//	if (lpNumberOfCharsWritten)
 				//		*lpNumberOfCharsWritten = write.NumberOfCharsWritten;
 				//	if (write.ScrolledRowsUp > 0)
-				//		gDisplayCursor.StoredCursorPos.Y = max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)write.ScrolledRowsUp));
+				//		gDisplayCursor.StoredCursorPos.Y = std::max(0,((int)gDisplayCursor.StoredCursorPos.Y - (int)write.ScrolledRowsUp));
 				//}
 			}
 		}
@@ -2771,7 +2771,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				{
 					nScroll = -csbi.srWindow.Top;
 					cr0.X = csbi.dwCursorPosition.X;
-					cr0.Y = max(0,(csbi.dwCursorPosition.Y-csbi.srWindow.Top));
+					cr0.Y = std::max(0,(csbi.dwCursorPosition.Y-csbi.srWindow.Top));
 					resetCursor = true;
 				}
 				break;
@@ -3488,7 +3488,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 
 			int nCount = (Code.ArgC > 0) ? Code.ArgV[0] : 1;
 			int nScreenLeft = csbi.dwSize.X - csbi.dwCursorPosition.X - 1 + (csbi.dwSize.X * (csbi.dwSize.Y - csbi.dwCursorPosition.Y - 1));
-			int nChars = min(nCount,nScreenLeft);
+			int nChars = std::min(nCount,nScreenLeft);
 			COORD cr0 = csbi.dwCursorPosition;
 
 			if (nChars > 0)

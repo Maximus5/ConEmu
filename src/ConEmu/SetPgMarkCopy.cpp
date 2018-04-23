@@ -147,7 +147,7 @@ LRESULT CSetPgMarkCopy::MarkCopyPreviewProc(HWND hCtrl, UINT uMsg, WPARAM wParam
 			SIZE sz = {};
 			GetTextExtentPoint32(hdc, szText, lstrlen(szText), &sz);
 			RECT rcText = {sz.cx, sz.cy};
-			OffsetRect(&rcText, max(0,(rcClient.right-rcClient.left-sz.cx)/2), max(0,(rcClient.bottom-rcClient.top-sz.cy)/2));
+			OffsetRect(&rcText, std::max<int>(0,(rcClient.right-rcClient.left-sz.cx)/2), std::max<int>(0,(rcClient.bottom-rcClient.top-sz.cy)/2));
 			DrawText(hdc, szText, -1, &rcText, DT_VCENTER|DT_CENTER|DT_SINGLELINE);
 			if (hOld)
 				SelectObject(hdc, hOld);

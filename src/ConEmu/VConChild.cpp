@@ -1788,7 +1788,7 @@ void CConEmuChild::SetScroll(bool abEnabled, int anTop, int anVisible, int anHei
 		// the bottom when the console is at the bottom...
 		m_si.nMax = anHeight - 1;
 		// Let paging previously last visible become new first visible
-		m_si.nPage = klMin(anVisible - 1, m_si.nMax);
+		m_si.nPage = std::min(anVisible - 1, m_si.nMax);
 	}
 
 	if (!abEnabled)

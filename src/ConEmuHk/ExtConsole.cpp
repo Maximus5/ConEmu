@@ -951,7 +951,7 @@ static BOOL IntWriteText(HANDLE h, SHORT x, SHORT ForceDumpX,
 			case 7: // bell
 				continue; // non-spacing
 			case 8: // bs
-				pTrueColor = max(pTrueColorLine, pTrueColor-1);
+				pTrueColor = std::max(pTrueColorLine, pTrueColor-1);
 				continue;
 			case 9: // tab
 				TODO("Fill and mark affected console cells?");
@@ -1163,7 +1163,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			// like normal char...
 			if (x2 >= WrapAtCol)
 			{
-				ForceDumpX = min(x2, WrapAtCol)-1;
+				ForceDumpX = std::min(x2, WrapAtCol)-1;
 			}
 			break;
 		case L'\r':
@@ -1221,7 +1221,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			if ((x2 >= WrapAtCol)
 				&& (!bRevertMode || ((pCur+1) < pEnd)))
 			{
-				ForceDumpX = min(x2, WrapAtCol)-1;
+				ForceDumpX = std::min(x2, WrapAtCol)-1;
 				x2 = 0; y2++;
 			}
 		}
@@ -1326,7 +1326,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		_ASSERTE(!bNonAutoLfNl && "bNonAutoLfNl must be processed already");
 
 		// Printing (NOT including pCur) using extended attributes
-		SHORT ForceDumpX = (x2 > x) ? (min(x2, WrapAtCol)-1) : -1;
+		SHORT ForceDumpX = (x2 > x) ? (std::min(x2, WrapAtCol)-1) : -1;
 		DWORD nSplit1 = 0;
 		DWORD toWrite = (DWORD)(pCur - pFrom);
 		if (bRevertMode && (toWrite > 1))
@@ -1442,7 +1442,7 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 				X2 = nWindowWidth;
 			}
 
-			for (SHORT y = max(Y1, srWork.Top); y <= Y2; y++)
+			for (SHORT y = std::max(Y1, srWork.Top); y <= Y2; y++)
 			{
 				SHORT xMax = (y == Y2) ? X2 : nWindowWidth;
 				SHORT xMin = (y == Y1) ? Info->Coord.X : 0;
@@ -1510,7 +1510,7 @@ BOOL ExtScrollLine(ExtScrollScreenParm* Info)
 	SHORT nWindowWidth  = srWork.Right - srWork.Left + 1;
 	SHORT nWindowHeight = srWork.Bottom - srWork.Top + 1;
 
-	int nMaxCell = min(nWindowWidth * nWindowHeight, gpTrueColor->bufferSize);
+	int nMaxCell = std::min(nWindowWidth * nWindowHeight, gpTrueColor->bufferSize);
 	int nMaxRows = nMaxCell / nWindowWidth;
 	int nY1 = (csbi.dwCursorPosition.Y - srWork.Top);
 
@@ -1748,12 +1748,12 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 		// Scroll whole page up by n (default 1) lines. New lines are added at the bottom.
 		if (gpTrueColor)
 		{
-			int nMaxCell = min(nWindowWidth * nWindowHeight,gpTrueColor->bufferSize);
+			int nMaxCell = std::min(nWindowWidth * nWindowHeight,gpTrueColor->bufferSize);
 			int nMaxRows = nMaxCell / nWindowWidth;
 			//_ASSERTEX(SrcLineTop >= srWork.Top); That will be if visible region is ABOVE our TrueColor region
 			int nShiftRows = -nDir; // 1
-			int nY1 = min(max((SrcLineTop - srWork.Top),nShiftRows),nMaxRows);    // 2
-			int nY2 = min(max((SrcLineBottom - srWork.Top),nShiftRows),nMaxRows); // 6
+			int nY1 = std::min(std::max((SrcLineTop - srWork.Top),nShiftRows),nMaxRows);    // 2
+			int nY2 = std::min(std::max((SrcLineBottom - srWork.Top),nShiftRows),nMaxRows); // 6
 			int nRows = nY2 - nY1 + 1; // 5
 
 			if (nRows > 0)
@@ -1782,7 +1782,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 					}
 					#else
 					_ASSERTE(FALSE && "Continue to fill");
-					cr0.Y = max(0,(nWindowHeight+nDir));
+					cr0.Y = std::max(0,(nWindowHeight+nDir));
 					int nLines = (-nDir);
 					ExtFillOutputParm f = {sizeof(f), efof_Attribute|efof_Character, Info->ConsoleOutput,
 						Info->FillAttr, Info->FillChar, cr0, csbi.dwSize.X * nLines};
@@ -1808,7 +1808,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 
 			if (nDir < 0)
 			{
-				cr0.Y = max(0,(SrcLineBottom + nDir + 1));
+				cr0.Y = std::max(0,(SrcLineBottom + nDir + 1));
 				int nLines = SrcLineBottom - cr0.Y + 1;
 				ExtFillOutputParm f = {sizeof(f), efof_Attribute|efof_Character, Info->ConsoleOutput,
 					Info->FillAttr, Info->FillChar, cr0, csbi.dwSize.X * nLines};
@@ -1821,13 +1821,13 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 		// Scroll whole page down by n (default 1) lines. New lines are added at the top.
 		if (gpTrueColor)
 		{
-			int nMaxCell = min(nWindowWidth * nWindowHeight,gpTrueColor->bufferSize);
+			int nMaxCell = std::min(nWindowWidth * nWindowHeight,gpTrueColor->bufferSize);
 			int nMaxRows = nMaxCell / nWindowWidth;
 			//_ASSERTEX(SrcLineTop >= srWork.Top); That will be if visible region is ABOVE our TrueColor region
 			int nShiftRows = nDir;
 			int nMaxRowsShift = nMaxRows - nShiftRows;
-			int nY1 = min(max((SrcLineTop - srWork.Top),0),nMaxRowsShift);
-			int nY2 = min(max((SrcLineBottom - srWork.Top),0),nMaxRowsShift);
+			int nY1 = std::min(std::max((SrcLineTop - srWork.Top),0),nMaxRowsShift);
+			int nY2 = std::min(std::max((SrcLineBottom - srWork.Top),0),nMaxRowsShift);
 			int nRows = nY2 - nY1 + 1;
 
 			if (nRows > 0)

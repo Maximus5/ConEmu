@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 
+#define NOMINMAX
+#include <algorithm>
 #include "WModuleCheck.h"
 
 
@@ -55,7 +57,7 @@ bool IsModuleValid(HMODULE module, BOOL abTestVirtual /*= TRUE*/)
 	}
 
 	LPBYTE lpTest;
-	SIZE_T cbCommitSize = max(max(4096,sizeof(IMAGE_DOS_HEADER)),si.dwPageSize);
+	SIZE_T cbCommitSize = std::max<SIZE_T>(std::max<SIZE_T>(4096,sizeof(IMAGE_DOS_HEADER)),si.dwPageSize);
 
 	// If module is hooked by ConEmuHk, we get excess debug "assertion" from ConEmu.dll (Far plugin)
 	if (abTestVirtual)

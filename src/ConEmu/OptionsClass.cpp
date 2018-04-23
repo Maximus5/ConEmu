@@ -694,8 +694,8 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 			if ((rcCon.right > 0) && (rcCon.bottom > 0)
 				&& ((rcCon.right < gpSet->wndWidth.Value) || (rcCon.bottom < gpSet->wndHeight.Value)))
 			{
-				gpSet->wndWidth.Set(true, ss_Standard, min(gpSet->wndWidth.Value, rcCon.right));
-				gpSet->wndHeight.Set(false, ss_Standard, min(gpSet->wndHeight.Value, rcCon.bottom));
+				gpSet->wndWidth.Set(true, ss_Standard, std::min(gpSet->wndWidth.Value, rcCon.right));
+				gpSet->wndHeight.Set(false, ss_Standard, std::min(gpSet->wndHeight.Value, rcCon.bottom));
 				gpConEmu->WndWidth.Raw = gpSet->wndWidth.Raw;
 				gpConEmu->WndHeight.Raw = gpSet->wndHeight.Raw;
 			}
@@ -2566,7 +2566,7 @@ void CSettings::PostUpdateCounters(bool bPosted)
 			{
 				v = v2 = mn_KbdDelays[0]; v3 = 0;
 
-				size_t nCount = max(0, min(mn_KBD_CUR_FRAME, (int)countof(mn_KbdDelays)));
+				size_t nCount = std::max<int>(0, std::min<int>(mn_KBD_CUR_FRAME, (int)countof(mn_KbdDelays)));
 				for (size_t i = 0; i < nCount; i++)
 				{
 					i64 vi = mn_KbdDelays[i];
@@ -3341,7 +3341,8 @@ bool CSettings::CheckConsoleFontRegistry(LPCWSTR asFaceName)
 			DWORD idx = 0, cchName = countof(szId), dwLen = sizeof(szFont)-2;
 			while ((iRc = RegEnumValue(hk, idx++, szId, &cchName, NULL, &dwType, (LPBYTE)szFont, &dwLen)) == 0)
 			{
-				szId[min(countof(szId)-1,cchName)] = 0; szFont[min(countof(szFont)-1,dwLen/2)] = 0;
+				szId[std::min<size_t>(countof(szId)-1,cchName)] = 0;
+				szFont[std::min<size_t>(countof(szFont)-1,dwLen/2)] = 0;
 				wchar_t* pszEnd;
 				if (wcstoul(szId, &pszEnd, 10) && *szFont)
 				{
@@ -3548,7 +3549,8 @@ bool CSettings::CheckConsoleFont(HWND ahDlg)
 			INT_PTR nIdx = -1;
 			while ((iRc = RegEnumValue(hk, idx++, szId, &cchName, NULL, &dwType, (LPBYTE)szFont, &dwLen)) == 0)
 			{
-				szId[min(countof(szId)-1,cchName)] = 0; szFont[min(countof(szFont)-1,dwLen/2)] = 0;
+				szId[std::min<size_t>(countof(szId)-1,cchName)] = 0;
+				szFont[std::min<size_t>(countof(szFont)-1,dwLen/2)] = 0;
 				if (*szFont)
 				{
 					LPCWSTR pszFaceName = (szFont[0] == L'*') ? (szFont+1) : szFont;

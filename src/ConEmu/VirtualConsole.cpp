@@ -799,7 +799,8 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 		m_Sizes.Width = m_Sizes.TextWidth * m_Sizes.nFontWidth;
 		m_Sizes.Height = m_Sizes.TextHeight * m_Sizes.nFontHeight;
 
-		UINT Pad = min(gpSet->nCenterConsolePad,CENTERCONSOLEPAD_MAX)*2 + max(m_Sizes.nFontHeight,m_Sizes.nFontWidth)*3;
+		UINT Pad = std::min<UINT>(gpSet->nCenterConsolePad, CENTERCONSOLEPAD_MAX) * 2
+			+ std::max<LONG>(m_Sizes.nFontHeight, m_Sizes.nFontWidth) * 3;
 
 		#ifdef _DEBUG
 		if (m_Sizes.Height > 2000)
@@ -936,16 +937,16 @@ void CVirtualConsole::PaintBackgroundImage(HDC hdc, const RECT& rcText, const CO
 
 	if (op == eUpRight)
 	{
-		bgOffset.x = max(0,((int)m_Sizes.BackWidth - bgBmpSize.X));
+		bgOffset.x = std::max(0,((int)m_Sizes.BackWidth - bgBmpSize.X));
 	}
 	else if (op == eDownLeft)
 	{
-		bgOffset.y = max(0,((int)m_Sizes.BackHeight - bgBmpSize.Y));
+		bgOffset.y = std::max(0,((int)m_Sizes.BackHeight - bgBmpSize.Y));
 	}
 	else if (op == eDownRight)
 	{
-		bgOffset.x = max(0,((int)m_Sizes.BackWidth - bgBmpSize.X));
-		bgOffset.y = max(0,((int)m_Sizes.BackHeight - bgBmpSize.Y));
+		bgOffset.x = std::max(0,((int)m_Sizes.BackWidth - bgBmpSize.X));
+		bgOffset.y = std::max(0,((int)m_Sizes.BackHeight - bgBmpSize.Y));
 	}
 	else if ((op == eFit) || (op == eFill) || (op == eCenter))
 	{
@@ -1835,7 +1836,7 @@ void CVirtualConsole::UpdateHighlightsRowCol()
 
 	if ((pos.X >= 0) && ConCharX)
 	{
-		int CurChar = klMax(0, klMin((int)pos.Y, (int)m_Sizes.TextHeight-1)) * m_Sizes.TextWidth + pos.X;
+		int CurChar = std::max(0, std::min((int)pos.Y, (int)m_Sizes.TextHeight-1)) * m_Sizes.TextWidth + pos.X;
 		if ((CurChar >= 0) && (CurChar < (int)(m_Sizes.TextWidth * m_Sizes.TextHeight)))
 		{
 			if (ConCharX[CurChar-1])
@@ -2055,7 +2056,7 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 
 							if (nRectCount>=nMaxRects)
 							{
-								int nNewMaxRects = nMaxRects + max((int)m_Sizes.TextHeight,(int)(nRectCount-nMaxRects+1));
+								int nNewMaxRects = nMaxRects + std::max((int)m_Sizes.TextHeight,(int)(nRectCount-nMaxRects+1));
 								_ASSERTE(nNewMaxRects > nRectCount);
 
 								HEAPVAL;
@@ -2918,14 +2919,14 @@ void CVirtualConsole::UpdateText()
 				charSet = nFontCharSet;
 			}
 
-			const uint nRightEx = klMax((uint)1, (uint)m_Sizes.nFontWidth / 4);
+			const unsigned nRightEx = std::max((unsigned)1, (unsigned)m_Sizes.nFontWidth / 4);
 			rect.left = part->PositionX;
 			rect.top = pos;
 			// For Bold and Italic we slightly extend drawing rect to avoid clipping
 			// Old note: if nextPart is VertBorder, then increase rect.right by ((FontWidth>>1)-1)
 			// Old note: to ensure, that our possible *italic* text will not be clipped
 			if (attr.nFontIndex & 3)
-				rect.right = klMin((uint)part->PositionX + part->TotalWidth + nRightEx, m_Sizes.Width);
+				rect.right = std::min((unsigned)part->PositionX + part->TotalWidth + nRightEx, m_Sizes.Width);
 			else
 				rect.right = part->PositionX + part->TotalWidth;
 			rect.bottom = rect.top + m_Sizes.nFontHeight;
@@ -3188,7 +3189,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	if (((pos.X+1) < (int)m_Sizes.TextWidth) && ((CurChar+1) < (int)(m_Sizes.TextWidth * m_Sizes.TextHeight)) && ConCharX[CurChar])
 		pix2.x = ConCharX[CurChar];
 	else if (pix2.x > rcClient.right)
-		pix2.x = max(rcClient.right,pix2.x);
+		pix2.x = std::max(rcClient.right,pix2.x);
 
 	RECT rect;
 	bool bForeground = mp_ConEmu->isMeForeground();
@@ -3226,7 +3227,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 
 		if (dwSize)
 		{
-			nHeight = klMin((int)m_Sizes.nFontHeight, klMax(MulDiv(m_Sizes.nFontHeight, dwSize, 100), MinSize));
+			nHeight = std::min((int)m_Sizes.nFontHeight, std::max(MulDiv(m_Sizes.nFontHeight, dwSize, 100), MinSize));
 		}
 
 		if (!nHeight)
@@ -3235,7 +3236,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 			return;
 		}
 
-		rect.top = max(rect.top, (rect.bottom-nHeight));
+		rect.top = std::max(rect.top, (rect.bottom-nHeight));
 	}
 	else // Vertical
 	{
@@ -3251,7 +3252,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 		{
 			int nMaxWidth = (nR - rect.left);
 
-			nWidth = klMin(nMaxWidth, klMax(MulDiv(nMaxWidth, dwSize, 100), MinSize));
+			nWidth = std::min(nMaxWidth, std::max(MulDiv(nMaxWidth, dwSize, 100), MinSize));
 		}
 
 		if (!nWidth)
@@ -3260,7 +3261,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 			return;
 		}
 
-		rect.right = min(nR, (rect.left+nWidth));
+		rect.right = std::min<int>(nR, (rect.left + nWidth));
 		rect.bottom = pix2.y;
 	}
 
@@ -3526,12 +3527,12 @@ bool CVirtualConsole::Blit(HDC hPaintDC, int anX, int anY, int anShowWidth, int 
 	}
 	//else
 	//{
-	//	int nPartHeight = min((450000 / anShowWidth),200);
+	//	int nPartHeight = std::min((450000 / anShowWidth),200);
 	//	for (int Y = anY, Ysrc = 0;
 	//			Y < anShowHeight;
 	//			Y += nPartHeight, Ysrc += nPartHeight)
 	//	{
-	//		int nHeight = min(nPartHeight, (anShowHeight - Y));
+	//		int nHeight = std::min(nPartHeight, (anShowHeight - Y));
 	//		lbRc = (::BitBlt(hPaintDC, anX, Y, anShowWidth, nHeight, (HDC)m_DC, 0, Ysrc, SRCCOPY) != FALSE);
 	//	}
 	//}
@@ -5006,7 +5007,7 @@ void CVirtualConsole::PolishPanelViews()
 				        || ((pszLine[x] == ucBoxSinglVert || pszLine[x] == ucBoxDblVert) && pAttrs[x].nForeIdx == nFore && pAttrs[x].nBackIdx == nBack)
 				  ) pszLine[x] = L' ';
 
-			int nX4 = min(rc.right,(nX3+nNameLen));
+			int nX4 = std::min<int>(rc.right, (nX3 + nNameLen));
 
 			for(x = nX3; x < nX4; x++, pszNameTitle++)
 				if ((pAttrs[x].nForeIdx == nNFore && pAttrs[x].nBackIdx == nNBack)

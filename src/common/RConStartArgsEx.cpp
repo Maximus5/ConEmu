@@ -606,7 +606,7 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks /*= false*/) const
 		if (nSplitValue > 0 && nSplitValue < 1000)
 		{
 			UINT iPercent = (1000-nSplitValue)/10;
-			msprintf(szAdd+lstrlen(szAdd), 16, L"%u", max(1,min(iPercent,99)));
+			msprintf(szAdd+lstrlen(szAdd), 16, L"%u", std::max<UINT>(1, std::min<UINT>(iPercent, 99)));
 		}
 		wcscat_c(szAdd, (eSplit == eSplitHorz) ? L"H" : L"V");
 	}

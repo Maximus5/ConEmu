@@ -146,7 +146,7 @@ void ShowConPacket(CESERVER_REQ* pReq)
 				while(*psz && cr.Y<csbi.dwSize.Y)
 				{
 					pszEnd = wcschr(psz, L'\n');
-					dwLen = min(((int)(pszEnd-psz)),csbi.dwSize.X);
+					dwLen = std::min<int>((pszEnd-psz), csbi.dwSize.X);
 					SetConsoleCursorPosition(hO, cr);
 
 					if (dwLen>0)
@@ -161,8 +161,8 @@ void ShowConPacket(CESERVER_REQ* pReq)
 			{
 				FillConsoleOutputAttribute(hO, 0x10, csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
 				FillConsoleOutputCharacter(hO, L' ', csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
-				int nMaxX = min(sbi.dwSize.X, csbi.dwSize.X);
-				int nMaxY = min(sbi.dwSize.Y, csbi.dwSize.Y);
+				int nMaxX = std::min(sbi.dwSize.X, csbi.dwSize.X);
+				int nMaxY = std::min(sbi.dwSize.Y, csbi.dwSize.Y);
 
 				if (pszConData && dwConDataBufSize)
 				{
@@ -317,8 +317,8 @@ void ShowConDump(wchar_t* pszText)
 			{
 				FillConsoleOutputAttribute(hO, gbShowAttrsOnly ? 0xF : 0x10, csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
 				FillConsoleOutputCharacter(hO, L' ', csbi.dwSize.X*csbi.dwSize.Y, cr, &dw);
-				int nMaxX = min(crSize.X, csbi.dwSize.X);
-				int nMaxY = min(crSize.Y, csbi.dwSize.Y);
+				int nMaxX = std::min(crSize.X, csbi.dwSize.X);
+				int nMaxY = std::min(crSize.Y, csbi.dwSize.Y);
 				wchar_t* pszConData = pszBuffers[gnPage-1];
 				void* pnConData = pnBuffers[gnPage-1];
 				LPBYTE pnTemp = (LPBYTE)malloc(nMaxX*2);

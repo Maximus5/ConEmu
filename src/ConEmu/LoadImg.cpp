@@ -179,7 +179,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //
 //			if (mp_Data)
 //			{
-//				dwRead = min(cb, max(0,(mn_DataLen-mn_DataPos)));
+//				dwRead = std::min(cb, std::max(0,(mn_DataLen-mn_DataPos)));
 //
 //				if (dwRead>0)
 //				{
@@ -219,7 +219,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //				{
 //					// Нужно увеличить буфер, но сохранить текущий размер
 //					DWORD lLastLen = mn_DataLen;
-//					ULARGE_INTEGER lNewSize; lNewSize.QuadPart = mn_DataSize + max((cb+1024), 256*1024);
+//					ULARGE_INTEGER lNewSize; lNewSize.QuadPart = mn_DataSize + std::max((cb+1024), 256*1024);
 //
 //					if (lNewSize.HighPart!=0)
 //						return S_FALSE;

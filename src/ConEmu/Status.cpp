@@ -763,7 +763,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 		}
 		if (*m_Items[nDrawCount].szFormat && GetTextExtentPoint32(hDrawDC, m_Items[nDrawCount].szFormat, lstrlen(m_Items[nDrawCount].szFormat), &szTemp))
 		{
-			m_Items[nDrawCount].TextSize.cx = max(m_Items[nDrawCount].TextSize.cx, szTemp.cx);
+			m_Items[nDrawCount].TextSize.cx = std::max(m_Items[nDrawCount].TextSize.cx, szTemp.cx);
 		}
 
 		if (nID == csi_Info)
@@ -799,7 +799,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 
 	if (nDrawCount == 1)
 	{
-		m_Items[0].TextSize.cx = min((nStatusWidth - 2*nGapWidth - 1),m_Items[0].TextSize.cx);
+		m_Items[0].TextSize.cx = std::min<LONG>((nStatusWidth - 2*nGapWidth - 1), m_Items[0].TextSize.cx);
 	}
 	else
 	{
@@ -837,7 +837,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 			// -- don't break, may be further column will be visible and fit!
 		}
 
-		m_Items[0].TextSize.cx = max(nMinInfoWidth,(nStatusWidth - nTotalWidth + iFirstWidth));
+		m_Items[0].TextSize.cx = std::max(nMinInfoWidth,(nStatusWidth - nTotalWidth + iFirstWidth));
 	}
 
 
@@ -1272,7 +1272,7 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 					{
 						// и координата не правее середины колонки
 						// (ну так, на всякий случай, чтобы и статусное меню можно было показать)
-						if (ptCurClient.x <= min(80,(m_Items[0].rcClient.right/2)))
+						if (ptCurClient.x <= std::min<LONG>(80, (m_Items[0].rcClient.right/2)))
 						{
 							_ASSERTE(m_Items[i].nID == csi_Info);
 							SetClickedItemDesc(csi_Info);
@@ -1439,7 +1439,7 @@ void CStatus::ShowStatusSetupMenu()
 	if ((nClickedID == 0)
 		// и координата не правее середины колонки
 		// (ну так, на всякий случай, чтобы и статусное меню можно было показать)
-		&& (ptClient.x <= min(80,(m_Items[0].rcClient.right/2))))
+		&& (ptClient.x <= std::min<LONG>(80, (m_Items[0].rcClient.right/2))))
 	{
 		LogString(L"ShowSysmenu called from (StatusBar)");
 		gpConEmu->mp_Menu->ShowSysmenu(ptCur.x, ptCur.y, TPM_BOTTOMALIGN);
@@ -1706,7 +1706,7 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 		wcscpy_c(m_Values[csi_ConsoleSize].sText, L" ");
 	//m_Values[csi_ConsoleSize].sFormat = L"999x999";
 	//swprintf_c(m_Values[csi_ConsoleSize].szFormat, L" %ix%i",
-	//	(int)psbi->dwSize.X, max((int)psbi->dwSize.Y,(int)gpSet->DefaultBufferHeight));
+	//	(int)psbi->dwSize.X, std::max((int)psbi->dwSize.Y,(int)gpSet->DefaultBufferHeight));
 	wcscpy_c(m_Values[csi_ConsoleSize].szFormat, m_Values[csi_ConsoleSize].sText);
 
 	// csi_BufferSize:
@@ -1714,7 +1714,7 @@ void CStatus::OnConsoleChanged(const CONSOLE_SCREEN_BUFFER_INFO* psbi, const CON
 	{
 		swprintf_c(m_Values[csi_BufferSize].sText, countof(m_Values[csi_BufferSize].sText)-1/*#SECURELEN*/, L"%ix%i", (int)psbi->dwSize.X, (int)psbi->dwSize.Y);
 		swprintf_c(m_Values[csi_BufferSize].szFormat, L" %ix%i",
-			(int)psbi->dwSize.X, max((int)psbi->dwSize.Y,(int)gpSet->DefaultBufferHeight));
+			(int)psbi->dwSize.X, std::max((int)psbi->dwSize.Y,(int)gpSet->DefaultBufferHeight));
 	}
 	else
 	{
@@ -2139,7 +2139,7 @@ bool CStatus::ProcessTransparentMenuId(WORD nCmd, bool abAlphaOnly)
 		{
 			if ((p->nValue < 100) || !abAlphaOnly)
 			{
-				gpSet->nTransparent = min(255,((p->nValue*255/100)+1));
+				gpSet->nTransparent = std::min(255,((p->nValue*255/100)+1));
 				bSelected = true;
 			}
 		}

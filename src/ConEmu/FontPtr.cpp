@@ -60,7 +60,7 @@ CFontPtr::~CFontPtr()
 int CFontPtr::Release()
 {
 	CFont* p = NULL;
-	klSwap(p, mp_Ref);
+	std::swap(p, mp_Ref);
 	int iRef = p ? p->Release() : 0;
 	return iRef;
 }
@@ -69,7 +69,7 @@ bool CFontPtr::Attach(CFont* apRef)
 {
 	if (apRef != mp_Ref)
 	{
-		klSwap(mp_Ref, apRef);
+		std::swap(mp_Ref, apRef);
 		if (mp_Ref)
 			mp_Ref->AddRef();
 		SafeRelease(apRef);

@@ -5692,7 +5692,7 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 				p++;
 			}
 			_ASSERTE(nXShift <= csbi.dwCursorPosition.X);
-			csbi.dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
+			csbi.dwCursorPosition.X = std::max(0,(csbi.dwCursorPosition.X - nXShift));
 		}
 		else if (IsWin10() && (NeedLegacyCursorCorrection() || (GetConsoleOutputCP() == CP_UTF8)))
 		#endif
@@ -5730,7 +5730,7 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 					}
 
 					_ASSERTE(nXShift <= csbi.dwCursorPosition.X);
-					csbi.dwCursorPosition.X = max(0,(csbi.dwCursorPosition.X - nXShift));
+					csbi.dwCursorPosition.X = std::max<int>(0, (csbi.dwCursorPosition.X - nXShift));
 
 					if (pCharsEx != CharsEx)
 						free(pCharsEx);
@@ -5923,13 +5923,13 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 
 			if (gpSrv->TopLeft.x >= 0)
 			{
-				csbi.srWindow.Right = min(csbi.dwSize.X, gpSrv->TopLeft.x+nWidth) - 1;
-				csbi.srWindow.Left = max(0, csbi.srWindow.Right-nWidth+1);
+				csbi.srWindow.Right = std::min<int>(csbi.dwSize.X, gpSrv->TopLeft.x + nWidth) - 1;
+				csbi.srWindow.Left = std::max<int>(0, csbi.srWindow.Right - nWidth + 1);
 			}
 			if (gpSrv->TopLeft.y >= 0)
 			{
-				csbi.srWindow.Bottom = min(csbi.dwSize.Y, gpSrv->TopLeft.y+nHeight) - 1;
-				csbi.srWindow.Top = max(0, csbi.srWindow.Bottom-nHeight+1);
+				csbi.srWindow.Bottom = std::min<int>(csbi.dwSize.Y, gpSrv->TopLeft.y+nHeight) - 1;
+				csbi.srWindow.Top = std::max<int>(0, csbi.srWindow.Bottom-nHeight+1);
 			}
 		}
 
@@ -6102,8 +6102,8 @@ static bool ApplyConsoleSizeSimple(const COORD& crNewSize, const CONSOLE_SCREEN_
 		if (crNewSize.X <= (csbi.srWindow.Right-csbi.srWindow.Left) || crNewSize.Y <= (csbi.srWindow.Bottom-csbi.srWindow.Top))
 		{
 			rNewRect.Left = 0; rNewRect.Top = 0;
-			rNewRect.Right = min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
-			rNewRect.Bottom = min((crNewSize.Y - 1),(csbi.srWindow.Bottom-csbi.srWindow.Top));
+			rNewRect.Right = std::min<int>((crNewSize.X - 1), (csbi.srWindow.Right - csbi.srWindow.Left));
+			rNewRect.Bottom = std::min<int>((crNewSize.Y - 1), (csbi.srWindow.Bottom - csbi.srWindow.Top));
 
 			if (!SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect))
 			{
@@ -6168,7 +6168,7 @@ static SHORT FindFirstDirtyLine(SHORT anFrom, SHORT anTo, SHORT anWidth, WORD wD
 		}
 	}
 
-	iFound = min(anTo, anFrom);
+	iFound = std::min<SHORT>(anTo, anFrom);
 wrap:
 	SafeFree(pch);
 	return iFound;
@@ -6191,8 +6191,8 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 	// не может выходить за пределы ширины буфера
 	if (rNewRect.Right > nMaxX)
 	{
-		rNewRect.Left = max(0, csbi.dwSize.X-crNewSize.X);
-		rNewRect.Right = min(nMaxX, rNewRect.Left+crNewSize.X-1);
+		rNewRect.Left = std::max<int>(0, (csbi.dwSize.X - crNewSize.X));
+		rNewRect.Right = std::min<int>(nMaxX, (rNewRect.Left + crNewSize.X - 1));
 	}
 
 	// Теперь - танцы с вертикалью. Логика такая
@@ -6209,7 +6209,7 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 	{
 		// Все просто, фиксируем нижнюю границу по размеру буфера
 		rNewRect.Bottom = csbi.dwSize.Y-1;
-		rNewRect.Top = max(0, rNewRect.Bottom-crNewSize.Y+1);
+		rNewRect.Top = std::max<int>(0, (rNewRect.Bottom - crNewSize.Y + 1));
 	}
 	else
 	{
@@ -6220,7 +6220,7 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 		{
 			_ASSERTE(nCursorAtBottom<=3);
 			// Оставить строку с курсором "приклеенной" к нижней границе окна (с макс. отступом nCursorAtBottom строк)
-			rNewRect.Bottom = min(nMaxY, csbi.dwCursorPosition.Y+nCursorAtBottom-1);
+			rNewRect.Bottom = std::min<int>(nMaxY, (csbi.dwCursorPosition.Y + nCursorAtBottom - 1));
 		}
 		// Уменьшение видимой области
 		else if (crNewSize.Y < nRectHeight)
@@ -6228,18 +6228,18 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 			if ((nScreenAtBottom > 0) && (nScreenAtBottom <= 3))
 			{
 				// Оставить nScreenAtBottom строк (включая) между anOldBottom и низом консоли
-				rNewRect.Bottom = min(nMaxY, anOldBottom+nScreenAtBottom-1);
+				rNewRect.Bottom = std::min<int>(nMaxY, anOldBottom+nScreenAtBottom-1);
 			}
 			else if (anOldBottom > (rNewRect.Top + crNewSize.Y - 1))
 			{
 				// Если нижняя граница приблизилась или перекрыла
 				// нашу старую строку (которая была anOldBottom)
-				rNewRect.Bottom = min(anOldBottom, csbi.dwSize.Y-1);
+				rNewRect.Bottom = std::min<int>(anOldBottom, csbi.dwSize.Y-1);
 			}
 			else
 			{
 				// Иначе - не трогать верхнюю границу
-				rNewRect.Bottom = min(nMaxY, rNewRect.Top+crNewSize.Y-1);
+				rNewRect.Bottom = std::min<int>(nMaxY, rNewRect.Top+crNewSize.Y-1);
 			}
 			//rNewRect.Top = rNewRect.Bottom-crNewSize.Y+1; // на 0 скорректируем в конце
 		}
@@ -6249,7 +6249,7 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 			if (nScreenAtBottom > 0)
 			{
 				// Оставить nScreenAtBottom строк (включая) между anOldBottom и низом консоли
-				rNewRect.Bottom = min(nMaxY, anOldBottom+nScreenAtBottom-1);
+				rNewRect.Bottom = std::min<int>(nMaxY, anOldBottom+nScreenAtBottom-1);
 			}
 			//rNewRect.Top = rNewRect.Bottom-crNewSize.Y+1; // на 0 скорректируем в конце
 		}
@@ -6257,7 +6257,7 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 		// Но курсор не должен уходить за пределы экрана
 		if (bCursorInScreen && (csbi.dwCursorPosition.Y < (rNewRect.Bottom-crNewSize.Y+1)))
 		{
-			rNewRect.Bottom = max(0, csbi.dwCursorPosition.Y+crNewSize.Y-1);
+			rNewRect.Bottom = std::max<int>(0, csbi.dwCursorPosition.Y+crNewSize.Y-1);
 		}
 
 		// And top, will be corrected to (>0) below
@@ -6267,12 +6267,12 @@ static void EvalVisibleResizeRect(SMALL_RECT& rNewRect,
 		if (rNewRect.Bottom > nMaxY)
 		{
 			rNewRect.Bottom = nMaxY;
-			rNewRect.Top = max(0, rNewRect.Bottom-crNewSize.Y+1);
+			rNewRect.Top = std::max<int>(0, rNewRect.Bottom-crNewSize.Y+1);
 		}
 		else if (rNewRect.Top < 0)
 		{
 			rNewRect.Top = 0;
-			rNewRect.Bottom = min(nMaxY, rNewRect.Top+crNewSize.Y-1);
+			rNewRect.Bottom = std::min<int>(nMaxY, rNewRect.Top+crNewSize.Y-1);
 		}
 	}
 
@@ -6318,7 +6318,7 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 		{
 			if (lbCursorInScreen)
 			{
-				nBottomLine = max(nDirtyLine, min(csbi.dwCursorPosition.Y+1/*-*/,csbi.srWindow.Bottom));
+				nBottomLine = std::max<int>(nDirtyLine, std::min<int>(csbi.dwCursorPosition.Y+1/*-*/,csbi.srWindow.Bottom));
 			}
 			else
 			{
@@ -6335,7 +6335,7 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 				SHORT nAboveLines = (crNewSize.Y - nScreenAtBottom);
 				if (nAboveLines <= (nScreenAtBottom + 1))
 				{
-					nCursorAtBottom = max(1, crNewSize.Y - nScreenAtBottom - 1);
+					nCursorAtBottom = std::max<int>(1, crNewSize.Y - nScreenAtBottom - 1);
 				}
 			}
 		}
@@ -6372,9 +6372,9 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 		#if 0
 		rcTemp.Left = 0;
 		WARNING("А при уменьшении высоты, тащим нижнюю границе окна вверх, Top глючить не будет?");
-		rcTemp.Top = max(0,(csbi.srWindow.Bottom-crNewSize.Y+1));
-		rcTemp.Right = min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
-		rcTemp.Bottom = min((BufferHeight - 1),(rcTemp.Top+crNewSize.Y-1));//(csbi.srWindow.Bottom-csbi.srWindow.Top)); //-V592
+		rcTemp.Top = std::max(0,(csbi.srWindow.Bottom-crNewSize.Y+1));
+		rcTemp.Right = std::min((crNewSize.X - 1),(csbi.srWindow.Right-csbi.srWindow.Left));
+		rcTemp.Bottom = std::min((BufferHeight - 1),(rcTemp.Top+crNewSize.Y-1));//(csbi.srWindow.Bottom-csbi.srWindow.Top)); //-V592
 		_ASSERTE(((rcTemp.Bottom-rcTemp.Top+1)==crNewSize.Y) && ((rcTemp.Bottom-rcTemp.Top)==(rNewRect.Bottom-rNewRect.Top)));
 		#endif
 
@@ -6420,7 +6420,7 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 		TODO("Маркеры для блокировки положения в окне после заворота строк в Win10?");
 	}
 
-	rNewRect.Bottom = min((crHeight.Y-1), (rNewRect.Top+gcrVisibleSize.Y-1)); //-V592
+	rNewRect.Bottom = std::min((crHeight.Y-1), (rNewRect.Top+gcrVisibleSize.Y-1)); //-V592
 	#endif
 
 	_ASSERTE((rNewRect.Bottom-rNewRect.Top)<200);
@@ -6444,7 +6444,7 @@ void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldTe
 
 	// Считать из консоли текущие атрибуты (построчно/поблочно)
 	// И там, где они совпадают с OldText - заменить на in.SetConColor.NewTextAttributes
-	DWORD nMaxLines = max(1,min((8000 / csbi5.dwSize.X),csbi5.dwSize.Y));
+	DWORD nMaxLines = std::max<int>(1, std::min<int>((8000 / csbi5.dwSize.X), csbi5.dwSize.Y));
 	WORD* pnAttrs = (WORD*)malloc(nMaxLines*csbi5.dwSize.X*sizeof(*pnAttrs));
 	if (!pnAttrs)
 	{
@@ -6459,7 +6459,7 @@ void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldTe
 	COORD crRead = {0,0};
 	while (crRead.Y < csbi5.dwSize.Y)
 	{
-		DWORD nReadLn = min((int)nMaxLines,(csbi5.dwSize.Y-crRead.Y));
+		DWORD nReadLn = std::min<int>(nMaxLines, (csbi5.dwSize.Y-crRead.Y));
 		DWORD nReady = 0;
 
 		perf.Start(c_read);
@@ -6669,7 +6669,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		// В режиме BufferHeight - высота ДОЛЖНА быть больше допустимого размера окна консоли
 		// иначе мы запутаемся при проверках "буферный ли это режим"...
 		if (gnBufferHeight <= (csbi.dwMaximumWindowSize.Y * 12 / 10))
-			gnBufferHeight = max(300, (SHORT)(csbi.dwMaximumWindowSize.Y * 12 / 10));
+			gnBufferHeight = std::max<int>(300, (csbi.dwMaximumWindowSize.Y * 12 / 10));
 
 		// В режиме cmd сразу уменьшим максимальный FPS
 		gpSrv->dwLastUserTick = GetTickCount() - USER_IDLE_TIMEOUT - 1;

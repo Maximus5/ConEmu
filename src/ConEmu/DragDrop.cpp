@@ -820,9 +820,9 @@ HRESULT CDragDrop::DropFromStream(IDataObject* pDataObject, BOOL abActive)
 							{
 								LPBYTE ptrCur = ptrFileData;
 
-								while(nFileSize > 0)
+								while (nFileSize > 0)
 								{
-									dwRead = min(nFileSize, 65536); //-V103
+									dwRead = std::min<DWORD>(nFileSize, 65536); //-V103
 									TODO("Сюда прогресс с градусником прицепить можно");
 
 									if (FileWrite(hFile, dwRead, ptrCur) != S_OK)

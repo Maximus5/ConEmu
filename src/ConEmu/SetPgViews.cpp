@@ -180,7 +180,7 @@ INT_PTR CSetPgViews::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 						gpSet->ThSet.Tiles.nFontHeight = val;
 					break;
 				case tThumbMaxZoom:
-					gpSet->ThSet.nMaxZoom = max(100,((nSel+1)*100));
+					gpSet->ThSet.nMaxZoom = std::max<UINT>(100, ((nSel+1)*100));
 					break;
 				default:
 					_ASSERTE(FALSE && "ListBox was not processed");

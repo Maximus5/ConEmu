@@ -103,7 +103,7 @@ BOOL gbMonitorFileChange = FALSE;
 int WINAPI GetMinFarVersionW(void)
 {
 	// ACTL_SYNCHRO required
-	return MAKEFARVERSION(2,0,max(1007,FAR_X_VER));
+	return MAKEFARVERSION(2,0,std::max(1007,FAR_X_VER));
 }
 
 void WINAPI GetPluginInfoWcmn(void *piv)
@@ -1056,7 +1056,7 @@ bool CompareNames(LPCWSTR asMaskList, LPWSTR asPath)
 		LPCWSTR pszSep = wcschr(asMaskList, L'|');
 		if (pszSep)
 		{
-			int nLen = (int)min((INT_PTR)countof(szMask)-1,(INT_PTR)(pszSep-asMaskList));
+			int nLen = (int)std::min((INT_PTR)countof(szMask)-1,(INT_PTR)(pszSep-asMaskList));
 			lstrcpyn(szMask, asMaskList, nLen+1);
 			szMask[nLen] = 0;
 		}
@@ -1685,8 +1685,8 @@ void COLORREF2HSB(COLORREF rgbclr, HSBColor& hsb)
     RGBColor rgb; rgb.clr = rgbclr;
 
 	H = 0.0;
-	minRGB = min(min(rgb.Red, rgb.Green), rgb.Blue);
-	maxRGB = max(max(rgb.Red, rgb.Green), rgb.Blue);
+	minRGB = std::min(std::min(rgb.Red, rgb.Green), rgb.Blue);
+	maxRGB = std::max(std::max(rgb.Red, rgb.Green), rgb.Blue);
 	Delta = (maxRGB - minRGB);
 	b = maxRGB;
 
@@ -1878,10 +1878,10 @@ void RGB2HSV(const RGBColor& rgb, HSVColor& HSV)
 	// returned on [0, 1]. Exception: H is returned UNDEFINED if S==0.
 	int R = rgb.R, G = rgb.G, B = rgb.B, v, x, f;
 	int i;
-	x = min(R, G);
-	x = min(x, B);
-	v = max(R, G);
-	v = max(v, B);
+	x = std::min(R, G);
+	x = std::min(x, B);
+	v = std::max(R, G);
+	v = std::max(v, B);
 
 	if (v == x)
 	{
@@ -1985,7 +1985,7 @@ int GetStatusLineCount(struct PaintBackgroundArg* pBk, BOOL bLeft)
 	if ((rcPanel.bottom-rcPanel.top) <= ((pBk->FarPanelSettings.ShowColumnTitles) ? 5 : 4))
 		return 1; // минимальная высота панели
 
-	COORD bufSize = {(SHORT)(rcPanel.right-rcPanel.left+1),min(10,(SHORT)(rcPanel.bottom-rcPanel.top))};
+	COORD bufSize = {(SHORT)(rcPanel.right-rcPanel.left+1), std::min<SHORT>(10, (SHORT)(rcPanel.bottom-rcPanel.top))};
 	COORD bufCoord = {0,0};
 
 	HANDLE hStd = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -2103,8 +2103,8 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 	RECT rcConPanel = bLeft ? pBk->LeftPanel.rcPanelRect : pBk->RightPanel.rcPanelRect;
 	BkPanelInfo *bkInfo = bLeft ? &pBk->LeftPanel : &pBk->RightPanel;
 	// Не должен содержать рамки
-	int nPanelWidth = max(1,rcConPanel.right - rcConPanel.left + 1);  // ширина в символах
-	int nPanelHeight = max(1,rcConPanel.bottom - rcConPanel.top + 1); // высота в символах
+	int nPanelWidth = std::max<int>(1, rcConPanel.right - rcConPanel.left + 1);  // ширина в символах
+	int nPanelHeight = std::max<int>(1, rcConPanel.bottom - rcConPanel.top + 1); // высота в символах
 	RECT rcWork = {}; //rcPanel;
 	rcWork.left = rcPanel.left + ((rcPanel.right - rcPanel.left + 1) / nPanelWidth);
 	rcWork.right = rcPanel.right - ((rcPanel.right - rcPanel.left + 1) / nPanelWidth);
@@ -2332,8 +2332,8 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			RGBColor rgb; rgb.clr = *pDraw->crBack;
 			RGB2HSV(rgb, hsv);
 			hsv.H += 20;
-			hsv.S = min(100,hsv.S+25);
-			hsv.V = min(100,hsv.V+25);
+			hsv.S = std::min(100,hsv.S+25);
+			hsv.V = std::min(100,hsv.V+25);
 			HSV2RGB(hsv, rgb);
 			pDraw->crLight[0] = rgb.clr;
 			pDraw->nLightCount = 1;
@@ -2391,7 +2391,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		}
 
 		LOGFONT lf = {};
-		lf.lfHeight = max(20, (rcInt.bottom - rcInt.top) * 12 / 100);
+		lf.lfHeight = std::max<LONG>(20, (rcInt.bottom - rcInt.top) * 12 / 100);
 		lf.lfWeight = 700;
 		lstrcpy(lf.lfFaceName, L"Arial");
 
@@ -2405,7 +2405,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 		#define LINE_SHIFT_X (lf.lfHeight/6)
 
 		// Determine appropriate font size:
-		int nY = max(rcInt.top, rcInt.bottom - (LINE_SHIFT_Y));
+		int nY = std::max(rcInt.top, rcInt.bottom - (LINE_SHIFT_Y));
 		RECT rcText = {rcInt.left+IMG_SHIFT_X, nY, rcInt.right-LINE_SHIFT_X, nY+LINE_SHIFT_Y};
 		RECT rcTemp = rcText;
 
@@ -2432,8 +2432,8 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			pI = gpDecoder->GetImage(pDraw->szPic);
 			if (pI)
 			{
-				int nPicDim = max(pI->nWidth,pI->nHeight);
-				int nW = min(nMaxPicSize,nPicDim), nH = min(nMaxPicSize,nPicDim); //TODO: Пропорционально pI->nWidth/pI->nHeight
+				int nPicDim = std::max(pI->nWidth,pI->nHeight);
+				int nW = std::min(nMaxPicSize,nPicDim), nH = std::min(nMaxPicSize,nPicDim); //TODO: Пропорционально pI->nWidth/pI->nHeight
 				if (pI && (rcWork.top <= (rcText.top - nH - IMG_SHIFT_Y)) && (rcWork.left <= (rcWork.right - nW - IMG_SHIFT_X)))
 				{
 					// - картинки чисто черного цвета

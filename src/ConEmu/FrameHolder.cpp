@@ -1211,11 +1211,11 @@ void CFrameHolder::RecalculateFrameSizes()
 	//	//HANDLE hTheme = mp_ConEmu->OpenThemeData(NULL, L"WINDOW");
 	//	//HRESULT hr = mp_ConEmu->GetThemePartSize(hTheme, NULL/*dc*/, 18/*WP_CLOSEBUTTON*/, 1/*CBS_NORMAL*/, &tmpRc, 2/*TS_DRAW*/, &sz);
 	//	//if (SUCCEEDED(hr))
-	//	//	nCaptionDragHeight = max(sz.cy - mn_FrameHeight,10);
+	//	//	nCaptionDragHeight = std::max(sz.cy - mn_FrameHeight,10);
 	//	//mp_ConEmu->CloseThemeData(hTheme);
 		nCaptionDragHeight -= mn_FrameHeight;
 	}
-	mn_CaptionDragHeight = max(10,nCaptionDragHeight);
+	mn_CaptionDragHeight = std::max(10,nCaptionDragHeight);
 
 	if (mp_ConEmu->isCaptionHidden())
 	{
@@ -1254,7 +1254,7 @@ void CFrameHolder::RecalculateFrameSizes()
 UINT CFrameHolder::GetWinFrameWidth()
 {
 	_ASSERTE(mb_Initialized && mn_FrameWidth > 0 && mn_FrameHeight > 0);
-	return static_cast<UINT>(klMax<int>(klMax<int>(mn_FrameWidth, mn_FrameHeight), 4));
+	return static_cast<UINT>(std::max<int>(std::max<int>(mn_FrameWidth, mn_FrameHeight), 4));
 }
 
 // высота НАШЕГО заголовка (с учетом табов)
@@ -1282,7 +1282,7 @@ int CFrameHolder::GetCaptionDragHeight()
 UINT CFrameHolder::GetWinCaptionHeight()
 {
 	_ASSERTE(mb_Initialized && mn_WinCaptionHeight > 0);
-	return static_cast<UINT>(klMax<int>(mn_WinCaptionHeight, 16));
+	return static_cast<UINT>(std::max<int>(mn_WinCaptionHeight, 16));
 }
 
 void CFrameHolder::GetIconShift(POINT& IconShift)

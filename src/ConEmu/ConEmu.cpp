@@ -3724,9 +3724,9 @@ void CConEmuMain::SetTaskbarIcon(HICON ahNewIcon)
 		LogString(szLog);
 
 		// mh_TaskbarIcon will be returned for WM_GETICON(ICON_SMALL|ICON_SMALL2)
-		HICON hOldIcon = klSet(mh_TaskbarIcon, ahNewIcon);
-		if (hOldIcon)
-			DestroyIcon(hOldIcon);
+		std::swap(mh_TaskbarIcon, ahNewIcon);
+		if (ahNewIcon)
+			DestroyIcon(ahNewIcon);
 
 		// Have to "force refresh" the icon on TaskBar, otherwise
 		// icon would not be updated on sequential clicks on cbTaskbarOverlay
@@ -5365,7 +5365,7 @@ void CConEmuMain::UpdateProgress()
 
 	CVConGroup::GetProgressInfo(&nProgress, &bActiveHasProgress, &bWasError, &bWasIndeterminate);
 
-	mn_Progress = min(nProgress,100);
+	mn_Progress = std::min<short>(nProgress, 100);
 
 	if (!bActiveHasProgress)
 	{
@@ -8969,7 +8969,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 		UINT nSC = ((DWORD)lParam & 0xFF0000) >> 16;
 		WARNING("BUGBUG: похоже глючит в x64 на US-Dvorak");
 		nTranslatedChars = ToUnicodeEx(nVK, nSC, m_KeybStates, szTranslatedChars, 10, 0, hkl);
-		if (nTranslatedChars>0) szTranslatedChars[min(10,nTranslatedChars)] = 0; else szTranslatedChars[0] = 0;
+		if (nTranslatedChars>0) szTranslatedChars[std::min(10,nTranslatedChars)] = 0; else szTranslatedChars[0] = 0;
 	}
 
 #endif
@@ -9018,7 +9018,7 @@ LRESULT CConEmuMain::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lPa
 			// stored in the keyboard layout could not be combined with the specified virtual key
 			// to form a single character. However, the buffer may contain more characters than the
 			// return value specifies. When this happens, any extra characters are invalid and should be ignored.
-			szTranslatedChars[min(15,nTranslatedChars)] = 0;
+			szTranslatedChars[std::min(15,nTranslatedChars)] = 0;
 		}
 		else if (nTranslatedChars == -1)
 		{
@@ -10628,8 +10628,8 @@ LRESULT CConEmuMain::OnMouse(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 	//   // buffer mode: cheat the console window: adjust its position exactly to the cursor
 	//   RECT win;
 	//   GetWindowRect(ghWnd, &win);
-	//   short x = win.left + ptCurClient.x - MulDiv(ptCurClient.x, conRect.right, klMax<uint>(1, pVCon->Width));
-	//   short y = win.top + ptCurClient.y - MulDiv(ptCurClient.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
+	//   short x = win.left + ptCurClient.x - MulDiv(ptCurClient.x, conRect.right, std::max<uint>(1, pVCon->Width));
+	//   short y = win.top + ptCurClient.y - MulDiv(ptCurClient.y, conRect.bottom, std::max<uint>(1, pVCon->Height));
 	//   RECT con;
 	//   GetWindowRect(ghConWnd, &con);
 	//   if (con.left != x || con.top != y)
@@ -10888,8 +10888,8 @@ LRESULT CConEmuMain::OnMouse_Move(CVirtualConsole* pVCon, HWND hWnd, UINT messg,
 				//#ifdef NEWMOUSESTYLE
 				//newX = cursor.x; newY = cursor.y;
 				//#else
-				//newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
-				//newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
+				//newX = MulDiv(cursor.x, conRect.right, std::max<uint>(1, pVCon->Width));
+				//newY = MulDiv(cursor.y, conRect.bottom, std::max<uint>(1, pVCon->Height));
 				//#endif
 				//if (lbLeftDrag)
 				//  POSTMESSAGE(ghConWnd, WM_LBUTTONUP, wParam, MAKELPARAM( newX, newY ), TRUE);     //посылаем консоли отпускание
@@ -11060,8 +11060,8 @@ LRESULT CConEmuMain::OnMouse_LBtnUp(CVirtualConsole* pVCon, HWND hWnd, UINT mess
 		//#ifdef NEWMOUSESTYLE
 		//newX = cursor.x; newY = cursor.y;
 		//#else
-		//newX = MulDiv(cursor.x, conRect.right, klMax<uint>(1, pVCon->Width));
-		//newY = MulDiv(cursor.y, conRect.bottom, klMax<uint>(1, pVCon->Height));
+		//newX = MulDiv(cursor.x, conRect.right, std::max<uint>(1, pVCon->Width));
+		//newY = MulDiv(cursor.y, conRect.bottom, std::max<uint>(1, pVCon->Height));
 		//#endif
 		//POSTMESSAGE(ghConWnd, messg, wParam, MAKELPARAM( newX, newY ), FALSE);
 		pVCon->RCon()->OnMouse(messg, wParam, cursor.x, cursor.y);
@@ -12753,7 +12753,7 @@ void CConEmuMain::OnTransparent(bool abFromFocus /*= false*/, bool bSetFocus /*=
 	bool bActive = abFromFocus ? bSetFocus : isMeForeground();
 	bool bColorKey = gpSet->isColorKeyTransparent;
 	UINT nAlpha = (bActive || !gpSet->isTransparentSeparate) ? gpSet->nTransparent : gpSet->nTransparentInactive;
-	nAlpha = max((UINT)(bActive?MIN_ALPHA_VALUE:MIN_INACTIVE_ALPHA_VALUE),(UINT)min(nAlpha,255));
+	nAlpha = std::max<UINT>((bActive?MIN_ALPHA_VALUE:MIN_INACTIVE_ALPHA_VALUE), std::min<UINT>(nAlpha, 255));
 
 	if (((gpSet->nTransparent < 255)
 			|| (gpSet->isTransparentSeparate && (gpSet->nTransparentInactive < 255))
@@ -12802,7 +12802,7 @@ bool CConEmuMain::SetTransparent(HWND ahWnd, UINT anAlpha/*0..255*/, bool abColo
 	BOOL bNeedRedrawOp = FALSE;
 	// Тут бы ветвиться по Active/Inactive, но это будет избыточно.
 	// Проверка уже сделана в OnTransparent
-	UINT nTransparent = max(MIN_INACTIVE_ALPHA_VALUE,min(anAlpha,255));
+	UINT nTransparent = std::max<UINT>(MIN_INACTIVE_ALPHA_VALUE, std::min<UINT>(anAlpha, 255));
 	DWORD dwExStyle = GetWindowLongPtr(ahWnd, GWL_EXSTYLE);
 	bool lbChanged = false;
 

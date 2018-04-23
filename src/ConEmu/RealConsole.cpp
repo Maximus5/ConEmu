@@ -2163,7 +2163,7 @@ int CRealConsole::EvalPromptLeftRightCount(const AppSettings* pApp, COORD crMous
 
 		// Line end/start position
 		int minX = (Y == crMin.Y) ? crMin.X : 0;
-		int maxX = (Y == crMax.Y) ? klMin((int)crMax.X, line.nLen) : line.nLen;
+		int maxX = (Y == crMax.Y) ? std::min((int)crMax.X, line.nLen) : line.nLen;
 		if (minX < 0 || maxX <= 0 || minX >= maxX || maxX > line.nLen)
 		{
 			MBoxAssert(minX >= 0 && maxX >= 0 && maxX >= minX && maxX < line.nLen);
@@ -2244,7 +2244,7 @@ bool CRealConsole::ChangePromptPosition(const AppSettings* pApp, COORD crMouse)
 		for (int repeats = nKeyCount; repeats > 0;)
 		{
 			INPUT_RECORD rs[2] = {r[0], r[1]};
-			rs[0].Event.KeyEvent.wRepeatCount = klMin<int>(255, repeats);
+			rs[0].Event.KeyEvent.wRepeatCount = std::min<int>(255, repeats);
 			repeats -= rs[0].Event.KeyEvent.wRepeatCount;
 			PostConsoleEvent(&rs[0]);
 			PostConsoleEvent(&rs[1]);
@@ -2863,8 +2863,8 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 	DWORD  nWait = 0, nSrvWait = -1, nAcvWait = -1;
 	BOOL   bException = FALSE, bIconic = FALSE, /*bFirst = TRUE,*/ bGuiVisible = FALSE;
 	bool   bActive = false, bVisible = false;
-	DWORD nElapse = max(10,gpSet->nMainTimerElapse);
-	DWORD nInactiveElapse = max(10,gpSet->nMainTimerInactiveElapse);
+	DWORD nElapse = std::max<UINT>(10, gpSet->nMainTimerElapse);
+	DWORD nInactiveElapse = std::max<UINT>(10, gpSet->nMainTimerInactiveElapse);
 	DWORD nLastFarPID = 0;
 	bool bLastAlive = false, bLastAliveActive = false;
 	bool lbForceUpdate = false;
@@ -2884,7 +2884,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 		bIconic = mp_ConEmu->isIconic();
 
 		// в минимизированном/неактивном режиме - сократить расходы
-		nTimeout = bIconic ? max(1000,nInactiveElapse)
+		nTimeout = bIconic ? std::max<UINT>(1000, nInactiveElapse)
 			: !(gpSet->isRetardInactivePanes ? bActive : bVisible) ? nInactiveElapse
 			: nElapse;
 
@@ -3567,7 +3567,7 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 		// Чтобы не было слишком быстрой отрисовки (тогда процессор загружается на 100%)
 		// делаем такой расчет задержки
 		DWORD dwT2 = GetTickCount();
-		DWORD dwD = max(10,(dwT2 - dwT1));
+		DWORD dwD = std::max<DWORD>(10, (dwT2 - dwT1));
 		nElapse = (DWORD)(nElapse*0.7 + dwD*0.3);
 
 		if (nElapse > 1000) nElapse = 1000;  // больше секунды - не ждать! иначе курсор мигать не будет
@@ -6799,7 +6799,7 @@ LRESULT CRealConsole::DoScroll(int nDirection, UINT nCount /*= 1*/)
 				goto wrap;
 			}
 			// Let it set to one from the bottom
-			nTrackPos = max(0,sbi.dwCursorPosition.Y-nVisible+2);
+			nTrackPos = std::max(0,sbi.dwCursorPosition.Y-nVisible+2);
 			nCount = 1;
 			// it would be better to scroll console physically, if the cursor
 			// is visible in the current region, so when user types new command
@@ -11676,7 +11676,7 @@ int CRealConsole::GetTabCount(bool abVisibleOnly /*= FALSE*/)
 	//	return nCount;
 	//}
 
-	return max(tabs.mn_tabsCount,1);
+	return std::max(tabs.mn_tabsCount,1);
 }
 
 int CRealConsole::GetActiveTab()
@@ -12300,7 +12300,7 @@ bool CRealConsole::PrepareOutputFile(bool abUnicodeText, wchar_t* pszFilePathNam
 		return FALSE;
 	}
 
-	DWORD cchMaxBufferSize = min(pHdr->MaxCellCount, (DWORD)(pHdr->info.dwSize.X * pHdr->info.dwSize.Y));
+	DWORD cchMaxBufferSize = std::min(pHdr->MaxCellCount, (DWORD)(pHdr->info.dwSize.X * pHdr->info.dwSize.Y));
 
 	StoredOutputItem.InitName(pHdr->sCurrentMap); //-V205
 	size_t nMaxSize = sizeof(*pData) + cchMaxBufferSize * sizeof(pData->Data[0]);
@@ -12322,7 +12322,7 @@ bool CRealConsole::PrepareOutputFile(bool abUnicodeText, wchar_t* pszFilePathNam
 		//const CESERVER_CONSAVE* pSave = (CESERVER_CONSAVE*)pOut;
 		UINT nWidth = storedSbi.dwSize.X;
 		UINT nHeight = storedSbi.dwSize.Y;
-		size_t cchMaxCount = min((nWidth*nHeight),pData->MaxCellCount);
+		size_t cchMaxCount = std::min<size_t>((nWidth*nHeight), pData->MaxCellCount);
 		//const wchar_t* pwszCur = pSave->Data;
 		//const wchar_t* pwszEnd = (const wchar_t*)(((LPBYTE)pOut)+pOut->hdr.cbSize);
 		CHAR_INFO* ptrCur = pData->Data;
@@ -14065,11 +14065,11 @@ bool CRealConsole::SetProgress(short nState, short nValue, LPCWSTR pszName /*= N
 		lbOk = true;
 		break;
 	case 1:
-		setAppProgress(1, min(max(nValue,0),100));
+		setAppProgress(1, std::min<short>(std::max<short>(nValue,0),100));
 		lbOk = true;
 		break;
 	case 2:
-		setAppProgress(2, (nValue > 0) ? min(max(nValue,0),100) : m_Progress.AppProgress);
+		setAppProgress(2, (nValue > 0) ? std::min<short>(std::max<short>(nValue,0),100) : m_Progress.AppProgress);
 		lbOk = true;
 		break;
 	case 3:
@@ -15583,7 +15583,7 @@ void CRealConsole::CreateColorMapping()
 
 	WARNING("Удалить и переделать!");
 	COORD crMaxSize = mp_RBuf->GetMaxSize();
-	int nMapCells = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * 2;
+	int nMapCells = std::max<int>(crMaxSize.X,200) * std::max<int>(crMaxSize.Y,200) * 2;
 	DWORD nMapSize = nMapCells * sizeof(AnnotationInfo) + sizeof(AnnotationHeader);
 
 	pHdr = m_TrueColorerMap.Create(nMapSize);

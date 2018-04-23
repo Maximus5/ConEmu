@@ -95,7 +95,7 @@ public:
 		DWORD dwRead = 0;
 		if (mp_Data)
 		{
-			dwRead = min(cb, (mn_DataLen>mn_DataPos)?(mn_DataLen-mn_DataPos):0);
+			dwRead = std::min(cb, (mn_DataLen>mn_DataPos)?(mn_DataLen-mn_DataPos):0);
 
 			if (dwRead>0)
 			{
@@ -130,7 +130,7 @@ public:
 			{
 				// Нужно увеличить буфер, но сохранить текущий размер
 				DWORD lLastLen = mn_DataLen;
-				ULARGE_INTEGER lNewSize; lNewSize.QuadPart = mn_DataSize + max((cb+1024), 256*1024);
+				ULARGE_INTEGER lNewSize; lNewSize.QuadPart = mn_DataSize + std::max<ULONG>((cb+1024), 256*1024);
 				if (lNewSize.HighPart!=0)
 					return S_FALSE;
 				if (FAILED(SetSize(lNewSize)))

@@ -51,7 +51,7 @@ struct LineBuffer
 		// Enough storage?
 		if (!ptrData || ((cchMax - cchUsed) <= cbSize))
 		{
-			size_t cchNew = cchMax + max(8192,cbSize+1);
+			size_t cchNew = cchMax + std::max<size_t>(8192, cbSize+1);
 			char* ptrNew = (char*)realloc(ptrData, cchNew);
 			if (!ptrNew)
 				return; // memory allocation failed
@@ -240,7 +240,7 @@ protected:
 
 		while (nReadLeft)
 		{
-			nToRead = min(nBufSize, nReadLeft);
+			nToRead = std::min<DWORD>(nBufSize, nReadLeft);
 			if (!ReadFile(hFile, buf, nToRead, &nRead, NULL) || (nToRead != nRead))
 				goto wrap;
 			if (!CalcCRC(buf, nRead, crc))

@@ -544,7 +544,7 @@ HWND CTabPanelWin::CreateToolbar()
 	// Preferred size of button?
 	int nPrefSize = mn_TabHeight - 10;
 	// Use it but not less than 14 pix
-	int nBtnSize = max(nOriginalSize, nPrefSize);
+	int nBtnSize = std::max(nOriginalSize, nPrefSize);
 
 	// But use fixed size for some ranges...
 	int nSize125 = nOriginalSize * 125 / 100;
@@ -680,8 +680,8 @@ bool CTabPanelWin::GetTabRect(int nTabIdx, RECT* rcTab)
 	TabCtrl_GetItemRect(mh_Tabbar, nTabIdx, rcTab);
 	MapWindowPoints(mh_Tabbar, NULL, (LPPOINT)rcTab, 2);
 	RECT rcBar = {}; GetWindowRect(mh_Rebar, &rcBar);
-	rcTab->bottom = min(rcTab->bottom, rcBar.bottom);
-	rcTab->left = max(rcTab->left-2, rcBar.left);
+	rcTab->bottom = std::min(rcTab->bottom, rcBar.bottom);
+	rcTab->left = std::max(rcTab->left-2, rcBar.left);
 
 	return true;
 }
@@ -914,7 +914,7 @@ void CTabPanelWin::RepositionInt()
 			{
 			case rbi_TabBar:
 				Panes[i].hChild = mh_Tabbar;
-				Panes[i].iPaneMinWidth = max(150,mn_TabHeight*5);
+				Panes[i].iPaneMinWidth = std::max(150,mn_TabHeight*5);
 				break;
 			case rbi_FindBar:
 				if (mp_Find && ((Panes[i].hChild = mp_Find->GetHWND()) != NULL))

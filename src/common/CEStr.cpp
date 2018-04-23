@@ -63,8 +63,8 @@ CEStr::CEStr(const wchar_t* asStr1, const wchar_t* asStr2/*= NULL*/, const wchar
 
 CEStr::CEStr(CEStr&& asStr)
 {
-	klSwap(ms_Val, asStr.ms_Val);
-	klSwap(mn_MaxCount, asStr.mn_MaxCount);
+	std::swap(ms_Val, asStr.ms_Val);
+	std::swap(mn_MaxCount, asStr.mn_MaxCount);
 }
 
 CEStr::CEStr(wchar_t*&& asPtr)
@@ -154,8 +154,8 @@ CEStr& CEStr::operator=(CEStr&& asStr)
 	if (ms_Val == asStr.ms_Val)
 		return *this;
 	Clear();
-	klSwap(ms_Val, asStr.ms_Val);
-	klSwap(mn_MaxCount, asStr.mn_MaxCount);
+	std::swap(ms_Val, asStr.ms_Val);
+	std::swap(mn_MaxCount, asStr.mn_MaxCount);
 	return *this;
 }
 
@@ -221,7 +221,7 @@ wchar_t* CEStr::GetBuffer(INT_PTR cchMaxLen)
 
 	if (!ms_Val || (cchMaxLen >= mn_MaxCount))
 	{
-		INT_PTR nNewMaxLen = max(mn_MaxCount,cchMaxLen+1);
+		INT_PTR nNewMaxLen = std::max(mn_MaxCount,cchMaxLen+1);
 		if (ms_Val)
 		{
 			ms_Val = (wchar_t*)realloc(ms_Val, nNewMaxLen*sizeof(*ms_Val));
@@ -236,7 +236,7 @@ wchar_t* CEStr::GetBuffer(INT_PTR cchMaxLen)
 	if (ms_Val)
 	{
 		_ASSERTE(cchMaxLen>0 && nOldLen>=0);
-		ms_Val[min(cchMaxLen,nOldLen)] = 0;
+		ms_Val[std::min(cchMaxLen,nOldLen)] = 0;
 	}
 
 	CESTRLOG1("  ms_Val=x%p", ms_Val);
@@ -249,7 +249,7 @@ wchar_t* CEStr::Detach()
 	CESTRLOG1("CEStr::Detach()=x%p", ms_Val);
 
 	wchar_t* psz = NULL;
-	klSwap(psz, ms_Val);
+	std::swap(psz, ms_Val);
 	mn_MaxCount = 0;
 	Empty();
 
@@ -444,7 +444,7 @@ LPCWSTR CEStr::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
 
 	if (asNewValue)
 	{
-		ssize_t nNewLen = (anChars < 0) ? (ssize_t)wcslen(asNewValue) : klMin(anChars, (ssize_t)wcslen(asNewValue));
+		ssize_t nNewLen = (anChars < 0) ? (ssize_t)wcslen(asNewValue) : std::min<ssize_t>(anChars, wcslen(asNewValue));
 
 		// Assign empty but NOT NULL string
 		if (nNewLen <= 0)
@@ -544,7 +544,7 @@ CEStrA::CEStrA(const char* asPtr)
 CEStrA::CEStrA(char*&& asPtr)
 	: ms_Val(nullptr)
 {
-	klSwap(ms_Val, asPtr);
+	std::swap(ms_Val, asPtr);
 }
 
 CEStrA::CEStrA(const CEStrA& src)
@@ -555,7 +555,7 @@ CEStrA::CEStrA(const CEStrA& src)
 CEStrA::CEStrA(CEStrA&& src)
 	: ms_Val(nullptr)
 {
-	klSwap(ms_Val, src.ms_Val);
+	std::swap(ms_Val, src.ms_Val);
 }
 
 CEStrA& CEStrA::operator=(const char* asPtr)
@@ -568,7 +568,7 @@ CEStrA& CEStrA::operator=(const char* asPtr)
 CEStrA& CEStrA::operator=(char*&& asPtr)
 {
 	SafeFree(ms_Val);
-	klSwap(ms_Val, asPtr);
+	std::swap(ms_Val, asPtr);
 	return *this;
 }
 
@@ -582,7 +582,7 @@ CEStrA& CEStrA::operator=(const CEStrA& src)
 CEStrA& CEStrA::operator=(CEStrA&& src)
 {
 	SafeFree(ms_Val);
-	klSwap(ms_Val, src.ms_Val);
+	std::swap(ms_Val, src.ms_Val);
 	return *this;
 }
 
@@ -628,7 +628,7 @@ char* CEStrA::getbuffer(INT_PTR cchMaxLen)
 char* CEStrA::release()
 {
 	char* ptr = nullptr;
-	klSwap(ptr, ms_Val);
+	std::swap(ptr, ms_Val);
 	clear(); // JIC
 	return ptr;
 }

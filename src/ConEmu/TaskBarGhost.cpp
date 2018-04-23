@@ -259,7 +259,7 @@ BOOL CTaskBarGhost::CreateTabSnapshot()
 	m_TabSize.VConSize = mpt_ViewSize;
 	m_TabSize.BitmapSize = mpt_Size;
 
-	RECT rcNewUsedRect = MakeRect(mpt_ViewOffset.x, mpt_ViewOffset.y, min(mpt_Size.x, (mpt_ViewOffset.x + mpt_ViewSize.x)), min(mpt_Size.y, (mpt_ViewOffset.y + mpt_ViewSize.y)));
+	RECT rcNewUsedRect = MakeRect(mpt_ViewOffset.x, mpt_ViewOffset.y, std::min(mpt_Size.x, (mpt_ViewOffset.x + mpt_ViewSize.x)), std::min(mpt_Size.y, (mpt_ViewOffset.y + mpt_ViewSize.y)));
 	bool bUsedRectChanged = (memcmp(&rcNewUsedRect, &m_TabSize.UsedRect, sizeof(m_TabSize.UsedRect)) != 0);
 	m_TabSize.UsedRect = rcNewUsedRect;
 
@@ -810,7 +810,7 @@ void CTaskBarGhost::GetPreviewPosSize(POINT* pPtOffset, POINT* pPtViewOffset, PO
 	WARNING("'+1'?")
 	POINT szSize = MakePoint(rcWork.right-rcWork.left, rcWork.bottom-rcWork.top);
 	//POINT ptViewOffset = MakePoint(szSize.x - (rcView.right-rcView.left), szSize.y - (rcView.bottom-rcView.top));
-	POINT ptViewOffset = MakePoint(max(0,(szSize.x - ptViewSize.x)>>1), max(0,(szSize.y - ptViewSize.y)>>1));
+	POINT ptViewOffset = MakePoint(std::max<int>(0,(szSize.x - ptViewSize.x)>>1), std::max<int>(0,(szSize.y - ptViewSize.y)>>1));
 
 	ptOffset = MakePoint(rcWork.left, rcWork.top);
 

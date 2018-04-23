@@ -220,7 +220,7 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 						}
 						else
 						{
-							pszValue = (szValue+klMax(nLen,nCurLen));
+							pszValue = (szValue+std::max(nLen,nCurLen));
 						}
 						// Теперь перекинуть в Dest
 						while (pszValue > szValue)
@@ -427,7 +427,7 @@ LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...)
 					}
 					else
 					{
-						pszValue = (szValue+klMax(nLen,nCurLen));
+						pszValue = (szValue+std::max(nLen,nCurLen));
 					}
 					// Теперь перекинуть в Dest
 					while (pszValue > szValue)

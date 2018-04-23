@@ -402,9 +402,9 @@ void CTabPanelBase::DoTabDrag(UINT uMsg)
 
 		// Если текущий таб короче нового - то нужны доп.проверки
 		// чтобы при драге таб не стал мельтешить вправо/влево
-		iHoverWidth = (max(rcHover.right,rcNew.right) - min(rcHover.left,rcNew.left));
+		iHoverWidth = (std::max(rcHover.right,rcNew.right) - std::min(rcHover.left,rcNew.left));
 		_ASSERTE(iHoverWidth>0);
-		iActiveWidth = (max(rcActive.right,rcOld.right) - min(rcActive.left,rcOld.left));
+		iActiveWidth = (std::max(rcActive.right,rcOld.right) - std::min(rcActive.left,rcOld.left));
 		_ASSERTE(iActiveWidth>0);
 
 		if (iActiveWidth < iHoverWidth)

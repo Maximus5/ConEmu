@@ -575,7 +575,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							{
 								eSplit = newSplit ? newSplit : eSplitHorz;
 								// User set the size of NEW part
-								nSplitValue = 1000-max(1,min(nValue*10,999)); // percents
+								nSplitValue = 1000 - std::max<UINT>(1, std::min<UINT>(nValue*10, 999)); // percents
 								_ASSERTE(nSplitValue>=1 && nSplitValue<1000);
 								nSplitPane = nTab;
 							}

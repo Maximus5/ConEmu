@@ -187,7 +187,7 @@ void CRealBuffer::DumpConsole(HANDLE ahFile)
 	if (GetData(data))
 	{
 		MSectionLock sc; sc.Lock(&csCON, FALSE);
-		DWORD cchMax = klMin((DWORD)(con.nTextWidth * con.nTextHeight), LODWORD(data->nMaxCells));
+		DWORD cchMax = std::min((DWORD)(con.nTextWidth * con.nTextHeight), LODWORD(data->nMaxCells));
 		lbRc = WriteFile(ahFile, data->pConChar, cchMax*sizeof(*data->pConChar), &dw, NULL);
 		lbRc = WriteFile(ahFile, data->pConAttr, cchMax*sizeof(*data->pConAttr), &dw, NULL);
 	}
@@ -354,7 +354,7 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	con.m_sbi.srWindow.Top = 0;
 	con.m_sbi.srWindow.Right = nX - 1;
 	con.m_sbi.srWindow.Bottom = nY - 1;
-	con.crMaxSize = mp_RCon->mp_RBuf->con.crMaxSize; //MakeCoord(max(dump.crSize.X,nX),max(dump.crSize.Y,nY));
+	con.crMaxSize = mp_RCon->mp_RBuf->con.crMaxSize; //MakeCoord(std::max(dump.crSize.X,nX),std::max(dump.crSize.Y,nY));
 	con.m_sbi.dwMaximumWindowSize = con.crMaxSize; //dump.crSize;
 	SetTopLeft();
 	con.nTextWidth = nX/*dump.crSize.X*/;
@@ -478,18 +478,18 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	SetTopLeft(NewTopLeft.y, NewTopLeft.x, false);
 
 	if (NewTopLeft.isLocked() && NewTopLeft.x >= 0)
-		con.m_sbi.srWindow.Right = klMin((NewTopLeft.x + (int)nX - 1),((int)storedSbi.dwSize.X - 1));
+		con.m_sbi.srWindow.Right = std::min((NewTopLeft.x + (int)nX - 1),((int)storedSbi.dwSize.X - 1));
 	else
-		con.m_sbi.srWindow.Right = klMin(((int)nX - 1),((int)storedSbi.dwSize.X - 1));
-	con.m_sbi.srWindow.Left = max(0,con.m_sbi.srWindow.Right - (int)nX + 1);
+		con.m_sbi.srWindow.Right = std::min(((int)nX - 1),((int)storedSbi.dwSize.X - 1));
+	con.m_sbi.srWindow.Left = std::max(0,con.m_sbi.srWindow.Right - (int)nX + 1);
 
 	if (NewTopLeft.isLocked() && NewTopLeft.y >= 0)
-		con.m_sbi.srWindow.Bottom = min((NewTopLeft.y + (int)nY - 1),(storedSbi.dwSize.Y - 1));
+		con.m_sbi.srWindow.Bottom = std::min((NewTopLeft.y + (int)nY - 1),(storedSbi.dwSize.Y - 1));
 	else
-		con.m_sbi.srWindow.Bottom = min((storedSbi.srWindow.Top + (int)nY - 1),(storedSbi.dwSize.Y - 1));
-	con.m_sbi.srWindow.Top = max(0,con.m_sbi.srWindow.Bottom - (int)nY + 1);
+		con.m_sbi.srWindow.Bottom = std::min((storedSbi.srWindow.Top + (int)nY - 1),(storedSbi.dwSize.Y - 1));
+	con.m_sbi.srWindow.Top = std::max(0,con.m_sbi.srWindow.Bottom - (int)nY + 1);
 
-	con.crMaxSize = mp_RCon->mp_RBuf->con.crMaxSize; //MakeCoord(max(dump.crSize.X,nX),max(dump.crSize.Y,nY));
+	con.crMaxSize = mp_RCon->mp_RBuf->con.crMaxSize; //MakeCoord(std::max(dump.crSize.X,nX),std::max(dump.crSize.Y,nY));
 	con.m_sbi.dwMaximumWindowSize = con.crMaxSize; //dump.crSize;
 	con.nTextWidth = nX/*dump.crSize.X*/;
 	con.nTextHeight = nY/*dump.crSize.Y*/;
@@ -511,7 +511,7 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 		CharAttr *lcaTableOrg = NULL;
 		PrepareColorTable(NULL, NULL, &lcaTableOrg);
 
-		DWORD nMax = min(cchCellCount,cchMaxCellCount);
+		DWORD nMax = std::min(cchCellCount,cchMaxCellCount);
 		// Расфуговка буфера на консольные атрибуты
 		for (DWORD n = 0; n < nMax; n++, ptrSrc++, pszDst++, pcaDst++)
 		{
@@ -610,7 +610,7 @@ bool CRealBuffer::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 			goto wrap;
 		}
 
-		cchMaxBufferSize = min(pHdr->MaxCellCount, (DWORD)(pHdr->info.dwSize.X * pHdr->info.dwSize.Y));
+		cchMaxBufferSize = std::min(pHdr->MaxCellCount, (DWORD)(pHdr->info.dwSize.X * pHdr->info.dwSize.Y));
 
 		StoredOutputItem.InitName(pHdr->sCurrentMap); //-V205
 		nMaxSize = sizeof(*pData) + cchMaxBufferSize * sizeof(pData->Data[0]);
@@ -1642,7 +1642,7 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount /*= 0*/, int anWidth /*= 0*/, in
 		HEAPVAL
 		MSectionLock sc; sc.Lock(&csCON);
 
-		size_t nFillCount = nCellCount ? klMin(nCellCount,con.nConBufCells) : con.nConBufCells;
+		size_t nFillCount = nCellCount ? std::min(nCellCount,con.nConBufCells) : con.nConBufCells;
 
 		if (GetData(data) && data.isValid(nFillCount))
 		{
@@ -1885,7 +1885,7 @@ bool CRealBuffer::GetConWindowSize(const CONSOLE_SCREEN_BUFFER_INFO& sbi, int* p
 	{
 		TODO("Добавить в con флажок горизонтальной прокрутки");
 		TODO("и вообще, заменить на вызов ::GetConWindowSize из WObjects.cpp");
-		if (sbi.dwSize.X <= EvalBufferTurnOnSize(max(nCurWidth,con.crMaxSize.X)))
+		if (sbi.dwSize.X <= EvalBufferTurnOnSize(std::max<int>(nCurWidth, con.crMaxSize.X)))
 		{
 			nNewWidth = sbi.dwSize.X;
 		}
@@ -2044,7 +2044,7 @@ void CRealBuffer::ChangeBufferHeightMode(bool abBufferHeight)
 		if (con.nBufferHeight<300)
 		{
 			_ASSERTE(con.nBufferHeight>=300);
-			con.nBufferHeight = max(300,con.nTextHeight*2);
+			con.nBufferHeight = std::max(300,con.nTextHeight*2);
 		}
 	}
 
@@ -2159,7 +2159,7 @@ bool CRealBuffer::LoadDataFromSrv(CRConDataGuard& data, DWORD CharCount, CHAR_IN
 		return FALSE; // Изменений нет
 	}
 
-	DWORD nCharCmp = min(CharCount, con.nConBufCells);
+	size_t nCharCmp = std::min<size_t>(CharCount, con.nConBufCells);
 
 	if (!nCharCmp || !data.isValid(CharCount))
 	{
@@ -2183,8 +2183,8 @@ bool CRealBuffer::LoadDataFromSrv(CRConDataGuard& data, DWORD CharCount, CHAR_IN
 	// because bConsoleDataChanged may be used in tab template
 	if (mp_RCon->isFar())
 	{
-		DWORD nTopCmp = min(nCharCmp, (DWORD)con.nTextWidth);
-		DWORD nRestCmp = nCharCmp - nTopCmp;
+		size_t nTopCmp = std::min(nCharCmp, size_t(con.nTextWidth));
+		size_t nRestCmp = nCharCmp - nTopCmp;
 		bTopChanged = (memcmp(data->pDataCmp, pData, nTopCmp*sizeof(*pData)) != 0);
 		bRestChanged = nRestCmp ? (memcmp(data->pDataCmp+nTopCmp, pData+nTopCmp, nRestCmp*sizeof(*pData)) != 0) : false;
 	}
@@ -2289,7 +2289,7 @@ bool CRealBuffer::IsTrueColorerBufferChanged()
 	if (mp_RCon->m_TrueColorerHeader.flushCounter == aHdr.flushCounter)
 		goto wrap;
 
-	nCurMax = min(con.nTextWidth*con.nTextHeight,mp_RCon->mn_TrueColorMaxCells);
+	nCurMax = std::min(con.nTextWidth*con.nTextHeight,mp_RCon->mn_TrueColorMaxCells);
 	if (nCurMax <= 0)
 		goto wrap;
 
@@ -2586,7 +2586,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 			con.srRealWindow = pInfo->ConState.srRealWindow;
 			// if (nLastConsoleRow > 0) -- even if nLastConsoleRow is zero (no hooks in console application), try to deal with srWindow
 			{
-				LONG maxRow = max(nLastConsoleRow, max(sbi.srWindow.Bottom, max(con.srRealWindow.Bottom, sbi.dwCursorPosition.Y)));
+				LONG maxRow = std::max<LONG>(nLastConsoleRow, std::max<LONG>(sbi.srWindow.Bottom, std::max<LONG>(con.srRealWindow.Bottom, sbi.dwCursorPosition.Y)));
 				if (maxRow > 0 && maxRow < sbi.dwSize.Y)
 					newDynamicHeight = maxRow + 1;
 			}
@@ -2909,8 +2909,8 @@ COORD CRealBuffer::BufferToScreen(COORD crMouse, bool bFixup /*= true*/, bool bV
 
 	if (bFixup)
 	{
-		crMouse.X = max(0,min(crMouse.X,GetTextWidth()-1));
-		crMouse.Y = max(0,min(crMouse.Y,GetTextHeight()-1));
+		crMouse.X = std::max(0, std::min<int>(crMouse.X, GetTextWidth()-1));
+		crMouse.Y = std::max(0, std::min<int>(crMouse.Y, GetTextHeight()-1));
 	}
 
 	return crMouse;
@@ -3393,14 +3393,14 @@ bool CRealBuffer::PatchMouseCoords(int& x, int& y, COORD& crMouse)
 	if ((crMouse.Y < con.m_sbi.srWindow.Top) || (y < SELMOUSEAUTOSCROLLPIX))
 	{
 		DEBUGSTRMOUSE(L"Autoscrolling buffer one line up\n");
-		crMouse.Y = max(0,con.m_sbi.srWindow.Top-1);
+		crMouse.Y = std::max(0,con.m_sbi.srWindow.Top-1);
 		DoScrollBuffer(SB_LINEUP);
 		y = 0;
 	}
 	else if ((crMouse.Y > con.m_sbi.srWindow.Bottom) || (y > (nVConHeight-SELMOUSEAUTOSCROLLPIX)))
 	{
 		DEBUGSTRMOUSE(L"Autoscrolling buffer one line down\n");
-		crMouse.Y = min(con.m_sbi.srWindow.Bottom+1,con.m_sbi.dwSize.Y-1);
+		crMouse.Y = std::min(con.m_sbi.srWindow.Bottom+1,con.m_sbi.dwSize.Y-1);
 		DoScrollBuffer(SB_LINEDOWN);
 		y = (nVConHeight - 1);
 	}
@@ -3524,7 +3524,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			{
 				int nMinX = gpFontMgr->FontWidth();
 				int nMinY = gpFontMgr->FontHeight();
-				int nMinDiff = max(nMinX, nMinY);
+				int nMinDiff = std::max(nMinX, nMinY);
 				int nXdiff = x - con.ISel.LClickPt.x;
 				int nYdiff = y - con.ISel.LClickPt.y;
 
@@ -4194,9 +4194,9 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 		pszFrom = pszFrom1 = dump.pszBlock1 + con.m_sbi.srWindow.Top * nWidth;
 
 		// Search in whole buffer
-		//nHeight = min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1));
+		//nHeight = std::min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1));
 		// But remember visible area
-		pszEnd1 = pszFrom + (nWidth * min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1)));
+		pszEnd1 = pszFrom + (nWidth * std::min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1)));
 	}
 
 	WARNING("TODO: bFindNext");
@@ -4331,15 +4331,15 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 				if (pszFrom < pszFrom1)
 				{
 					// Прокрутить буфер вверх
-					con.m_sbi.srWindow.Top = max(0,((int)(nCharIdx / nWidth))-1);
-					con.m_sbi.srWindow.Bottom = min((con.m_sbi.srWindow.Top + nRows), con.m_sbi.dwSize.Y-1);
+					con.m_sbi.srWindow.Top = std::max(0,((int)(nCharIdx / nWidth))-1);
+					con.m_sbi.srWindow.Bottom = std::min((con.m_sbi.srWindow.Top + nRows), con.m_sbi.dwSize.Y-1);
 					SetTopLeft(con.m_sbi.srWindow.Top, con.TopLeft.x);
 				}
 				else if (pszFrom >= pszEnd1)
 				{
 					// Прокрутить буфер вниз
-					con.m_sbi.srWindow.Bottom = MakeShort(min((nCharIdx / nWidth)+1, (UINT)con.m_sbi.dwSize.Y-1));
-					con.m_sbi.srWindow.Top = MakeShort(max(0, con.m_sbi.srWindow.Bottom-nRows));
+					con.m_sbi.srWindow.Bottom = MakeShort(std::min((nCharIdx / nWidth)+1, size_t(con.m_sbi.dwSize.Y-1)));
+					con.m_sbi.srWindow.Top = MakeShort(std::max(0, con.m_sbi.srWindow.Bottom-nRows));
 					SetTopLeft(con.m_sbi.srWindow.Top, con.TopLeft.x);
 				}
 
@@ -4532,9 +4532,9 @@ void CRealBuffer::ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift)
 		ExpandTextRangeType etr;
 		bool bLeftward = (vkKey == VK_LEFT);
 		if (bLeftward)
-			cr.X = max(0, (cr.X - iDiff));
+			cr.X = std::max(0, (cr.X - iDiff));
 		else
-			cr.X = min((GetBufferWidth() - 1), (cr.X + iDiff));
+			cr.X = std::min((GetBufferWidth() - 1), (cr.X + iDiff));
 		// If `Ctrl` is pressed - jump `by word`
 		if (bJump
 			&& ((bLeftward && (cr.X > 1))
@@ -4556,9 +4556,9 @@ void CRealBuffer::ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift)
 			if (etr == etr_None)
 			{
 				if (bLeftward)
-					cr.X = max(0, (cr.X - 9));
+					cr.X = std::max(0, (cr.X - 9));
 				else
-					cr.X = min((GetBufferWidth() - 1), (cr.X + 9));
+					cr.X = std::min((GetBufferWidth() - 1), (cr.X + 9));
 			}
 		}
 		// Do pos change
@@ -4569,7 +4569,7 @@ void CRealBuffer::ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift)
 		// Half screen if Ctrl is pressed
 		if (bJump)
 			iDiff = (GetWindowHeight() >> 1);
-		cr.Y = max(0, (cr.Y - iDiff));
+		cr.Y = std::max(0, (cr.Y - iDiff));
 		break;
 	}
 	case VK_DOWN:
@@ -4577,7 +4577,7 @@ void CRealBuffer::ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift)
 		// Half screen if Ctrl is pressed
 		if (bJump)
 			iDiff = (GetWindowHeight() >> 1);
-		cr.Y = min((GetBufferHeight() - 1), (cr.Y + iDiff));
+		cr.Y = std::min((GetBufferHeight() - 1), (cr.Y + iDiff));
 		break;
 	}
 	case VK_HOME:
@@ -4759,7 +4759,7 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 					&& (cr.X >= (anchor.X /*+ ((con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN) ? 1 : 0)*/)))
 				{
 					con.m_sel.dwSelectionAnchor.X++;
-					cr.X = klMax(cr.X, con.m_sel.dwSelectionAnchor.X);
+					cr.X = std::max(cr.X, con.m_sel.dwSelectionAnchor.X);
 					con.m_sel.dwFlags = (con.m_sel.dwFlags & ~CONSOLE_RIGHT_ANCHOR) | CONSOLE_LEFT_ANCHOR;
 				}
 			}
@@ -4788,7 +4788,7 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 					&& ((cr.X /*+ ((con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN) ? 1 : 0)*/) < anchor.X))
 				{
 					con.m_sel.dwSelectionAnchor.X--;
-					cr.X = klMin(cr.X, con.m_sel.dwSelectionAnchor.X);
+					cr.X = std::min(cr.X, con.m_sel.dwSelectionAnchor.X);
 					con.m_sel.dwFlags = (con.m_sel.dwFlags & ~CONSOLE_LEFT_ANCHOR) | CONSOLE_RIGHT_ANCHOR;
 				}
 			}
@@ -5017,7 +5017,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 
 		pszDataStart = dump.pszBlock1; // + con.m_sbi.srWindow.Top * nTextWidth; -- работаем с полным буфером
 		pAttrStartEx = dump.pcaBlock1;
-		//nTextHeight = min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1));
+		//nTextHeight = std::min((dump.crSize.Y-con.m_sbi.srWindow.Top),(con.m_sbi.srWindow.Bottom - con.m_sbi.srWindow.Top + 1));
 	}
 
 	if (!pszDataStart || !nTextWidth || !nTextHeight)
@@ -5923,9 +5923,9 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 	if ((m_Type == rbt_DumpScreen) || (m_Type == rbt_Alternative) || (m_Type == rbt_Selection) || (m_Type == rbt_Find))
 	{
 		bDataValid = true;
-		nXMax = min(nWidth, dump.crSize.X);
+		nXMax = std::min<int>(nWidth, dump.crSize.X);
 		int nFirstLine = con.m_sbi.srWindow.Top;
-		nYMax = min(nHeight, (dump.crSize.Y - nFirstLine));
+		nYMax = std::min<int>(nHeight, (dump.crSize.Y - nFirstLine));
 		wchar_t* pszSrc = dump.pszBlock1 + (nFirstLine * dump.crSize.X) + con.m_sbi.srWindow.Left;
 		CharAttr* pcaSrc = dump.pcaBlock1 + (nFirstLine * dump.crSize.X) + con.m_sbi.srWindow.Left;
 		for (int Y = 0; Y < nYMax; Y++)
@@ -7011,7 +7011,7 @@ LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UI
 	// returns "-1" when user choose "one screen per time"
 	else if ((UINT)nCount >= (UINT)nVisible)
 	{
-		nCount = max(1,(nVisible-1));
+		nCount = std::max(1,(nVisible-1));
 	}
 
 	// SB_LINEDOWN / SB_LINEUP / SB_PAGEDOWN / SB_PAGEUP
@@ -7064,17 +7064,17 @@ LRESULT CRealBuffer::DoScrollBuffer(int nDirection, short nTrackPos /*= -1*/, UI
 		{
 		case SB_LINEDOWN:
 			if ((nNewTop + nVisible) < nMaxHeight)
-				nNewTop = klMin<int>((nNewTop+(SHORT)nCount), (nMaxHeight-nVisible));
+				nNewTop = std::min<int>((nNewTop+(SHORT)nCount), (nMaxHeight-nVisible));
 			break;
 		case SB_LINEUP:
 			if (nNewTop > 0)
-				nNewTop = klMax<int>(0,(nNewTop-(SHORT)nCount));
+				nNewTop = std::max<int>(0,(nNewTop-(SHORT)nCount));
 			break;
 		case SB_PAGEDOWN:
-			nNewTop = klMin<int>((nMaxHeight - nVisible), (con.m_sbi.srWindow.Top + nVisible - 1));
+			nNewTop = std::min<int>((nMaxHeight - nVisible), (con.m_sbi.srWindow.Top + nVisible - 1));
 			break;
 		case SB_PAGEUP:
-			nNewTop = klMax<int>(0, (con.m_sbi.srWindow.Top - nVisible + 1));
+			nNewTop = std::max<int>(0, (con.m_sbi.srWindow.Top - nVisible + 1));
 			break;
 		case SB_TOP:
 			nNewTop = 0;

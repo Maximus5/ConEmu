@@ -498,7 +498,7 @@ class CQueueProcessor
 						        && mpp_Queue[i]->Status != eItemPassed
 						        && mpp_Queue[i]->Status != eItemFailed)
 						{
-							int nNew = min(ePriorityLowest, (mpp_Queue[i]->Priority+nSteps));
+							int nNew = std::min(ePriorityLowest, (mpp_Queue[i]->Priority+nSteps));
 							mpp_Queue[i]->Priority = nNew;
 						}
 					}

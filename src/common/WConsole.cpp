@@ -319,19 +319,19 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize, char* pszUtfLog /
 			if (crLargest.X && crLargest.Y && ((dwSize.X > crLargest.X) || (dwSize.Y > crLargest.Y)))
 			{
 				// Теперь прикинуть, какой размер шрифта нам нужен
-				newSizeY = max(1,(nMaxY / (dwSize.Y+1)));
-				newSizeX = max(1,(nMaxX / (dwSize.X+1)));
+				newSizeY = std::max(1,(nMaxY / (dwSize.Y+1)));
+				newSizeX = std::max(1,(nMaxX / (dwSize.X+1)));
 				if ((newSizeY < curSizeY) || (newSizeX < curSizeX))
 				{
 					calcSizeX = newSizeY * curSizeX / curSizeY;
 					calcSizeY = newSizeX * curSizeY / curSizeX;
 					if (calcSizeY < curSizeY)
-						calcSizeX = min(calcSizeX,(calcSizeY * curSizeX / curSizeY));
+						calcSizeX = std::min(calcSizeX,(calcSizeY * curSizeX / curSizeY));
 					if (calcSizeX < curSizeX)
-						calcSizeY = min(calcSizeY,(calcSizeX * curSizeY / curSizeX));
+						calcSizeY = std::min(calcSizeY,(calcSizeX * curSizeY / curSizeX));
 
-					newSizeY = max(1,min(calcSizeY,curSizeY));
-					newSizeX = max(1,min(calcSizeX,curSizeX));
+					newSizeY = std::max(1,std::min(calcSizeY,curSizeY));
+					newSizeX = std::max(1,std::min(calcSizeX,curSizeX));
 					lbRetry = TRUE;
 				}
 			}
@@ -353,12 +353,12 @@ BOOL apiFixFontSizeForBufferSize(HANDLE hOutput, COORD dwSize, char* pszUtfLog /
 						calcSizeX = newSizeY * curSizeX / curSizeY;
 						calcSizeY = newSizeX * curSizeY / curSizeX;
 						if (calcSizeY > curSizeY)
-							calcSizeX = max(calcSizeX,(calcSizeY * curSizeX / curSizeY));
+							calcSizeX = std::max(calcSizeX,(calcSizeY * curSizeX / curSizeY));
 						if (calcSizeX > curSizeX)
-							calcSizeY = max(calcSizeY,(calcSizeX * curSizeY / curSizeX));
+							calcSizeY = std::max(calcSizeY,(calcSizeX * curSizeY / curSizeX));
 
-						newSizeY = max(calcSizeY,curSizeY);
-						newSizeX = max(calcSizeX,curSizeX);
+						newSizeY = std::max(calcSizeY,curSizeY);
+						newSizeX = std::max(calcSizeX,curSizeX);
 						lbRetry = TRUE;
 					}
 				}
@@ -474,8 +474,8 @@ COORD MyGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 
 		// Windows 10 Preview had a new bug in GetLargestConsoleWindowSize
 		_ASSERTE((crMax.X > (csbi.srWindow.Right-csbi.srWindow.Left+1)) && (crMax.Y > (csbi.srWindow.Bottom-csbi.srWindow.Top+1)));
-		//crMax.X = max(crMax.X,555);
-		//crMax.Y = max(crMax.Y,555);
+		//crMax.X = std::max(crMax.X,555);
+		//crMax.Y = std::max(crMax.Y,555);
 	}
 	#endif
 

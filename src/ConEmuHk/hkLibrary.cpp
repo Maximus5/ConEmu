@@ -159,9 +159,9 @@ VOID CALLBACK LdrDllNotification(ULONG NotificationReason, const LDR_DLL_NOTIFIC
 	}
 
 	if (FullDllName && FullDllName->Buffer)
-		memmove(szModule, FullDllName->Buffer, min(sizeof(szModule)-2,FullDllName->Length));
+		memmove(szModule, FullDllName->Buffer, std::min<size_t>(sizeof(szModule)-2, FullDllName->Length));
 	else if (BaseDllName && BaseDllName->Buffer)
-		memmove(szModule, BaseDllName->Buffer, min(sizeof(szModule)-2,BaseDllName->Length));
+		memmove(szModule, BaseDllName->Buffer, std::min<size_t>(sizeof(szModule)-2, BaseDllName->Length));
 
 	#ifdef _DEBUG
 	wchar_t szDbgInfo[MAX_PATH*3];

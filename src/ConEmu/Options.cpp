@@ -675,7 +675,7 @@ void Settings::InitSettings()
 	RECT rcWork = {}; SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
 	if (gbIsWine)
 	{
-		_wndX = max(90,rcWork.left); _wndY = max(90,rcWork.top);
+		_wndX = std::max<int>(90,rcWork.left); _wndY = std::max<int>(90,rcWork.top);
 	}
 	else
 	{
@@ -2873,7 +2873,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"StatusBar.Flags", isStatusBarFlags);
 		reg->Load(L"StatusFontFace", sStatusFontFace, countof(sStatusFontFace));
 		reg->Load(L"StatusFontCharSet", nStatusFontCharSet);
-		reg->Load(L"StatusFontHeight", nStatusFontHeight); nStatusFontHeight = max(4,nStatusFontHeight);
+		reg->Load(L"StatusFontHeight", nStatusFontHeight); nStatusFontHeight = std::max(4,nStatusFontHeight);
 		reg->Load(L"StatusBar.Color.Back", nStatusBarBack);
 		reg->Load(L"StatusBar.Color.Light", nStatusBarLight);
 		reg->Load(L"StatusBar.Color.Dark", nStatusBarDark);
@@ -2909,7 +2909,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		reg->Load(L"TabFontFace", sTabFontFace, countof(sTabFontFace));
 		reg->Load(L"TabFontCharSet", nTabFontCharSet);
-		reg->Load(L"TabFontHeight", nTabFontHeight); nTabFontHeight = max(4,nTabFontHeight);
+		reg->Load(L"TabFontHeight", nTabFontHeight); nTabFontHeight = std::max(4,nTabFontHeight);
 
 		if (!reg->Load(L"SaveAllEditors", &sSaveAllMacro) || (sSaveAllMacro && !*sSaveAllMacro)) { SafeFree(sSaveAllMacro); }
 
@@ -3905,7 +3905,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 
 int Settings::StatusBarFontHeight()
 {
-	return max(4,nStatusFontHeight);
+	return std::max(4,nStatusFontHeight);
 }
 
 int Settings::StatusBarHeight()
@@ -4960,7 +4960,7 @@ uint Settings::isLogging(uint level /*= 1*/)
 {
 	if (!gpConEmu || mb_DisableLogging)
 		return 0;
-	BYTE logLevel = klMax(isDebugLog, (BYTE)(gpConEmu->opt.AdvLogging.GetInt()));
+	BYTE logLevel = std::max(isDebugLog, (BYTE)(gpConEmu->opt.AdvLogging.GetInt()));
 	return (logLevel && (level <= logLevel)) ? logLevel : 0;
 }
 
@@ -5576,7 +5576,7 @@ wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in by
 				int iLineLen = lstrlen(lsLine.ms_Val) + 1;
 				if ((psz - pszDst + 1 + iLineLen) >= nLenMax)
 				{
-					INT_PTR nNewLenMax = max((psz - pszDst + 1 + iLineLen), nLenMax) + 1024;
+					INT_PTR nNewLenMax = std::max((psz - pszDst + 1 + iLineLen), nLenMax) + 1024;
 					wchar_t* pszRealloc = (wchar_t*)realloc(pszDst, nNewLenMax*sizeof(wchar_t));
 					if (!pszRealloc)
 					{

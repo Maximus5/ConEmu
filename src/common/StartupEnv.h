@@ -75,7 +75,7 @@ protected:
 
 			if (pszEnvPathStore)
 			{
-				pszEnvPathStore[min(cbPathSize,cbPathMax-1)] = 0;
+				pszEnvPathStore[std::min<DWORD>(cbPathSize, cbPathMax-1)] = 0;
 			}
 		}
 

@@ -163,13 +163,13 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 			int iLen = lstrlen(Parm.asSingleTitle);
 			const int iCozyLen = 40;
 			int cchMax = (countof(szCloseAll) - (pszText - szCloseAll));
-			if (iLen <= min(iCozyLen, cchMax))
+			if (iLen <= std::min(iCozyLen, cchMax))
 			{
 				lstrcpyn(pszText, Parm.asSingleTitle, cchMax);
 			}
 			else
 			{
-				int iMax = min(iCozyLen, cchMax)-3;
+				int iMax = std::min(iCozyLen, cchMax)-3;
 				lstrcpyn(pszText, Parm.asSingleTitle, iMax);
 				if ((iMax + 4) < cchMax)
 					_wcscat_c(pszText, cchMax, L"...");
@@ -278,7 +278,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 	{
 		lstrcpyn(szText,
 			Parm.asSingleConsole ? Parm.asSingleConsole : Parm.bForceKill ? L"Confirm killing?" : L"Confirm closing?",
-			min(128,countof(szText)));
+			std::min<int>(128, countof(szText)));
 		wcscat_c(szText, L"\r\n\r\n");
 		int nLen = lstrlen(szText);
 		lstrcpyn(szText+nLen, Parm.asSingleTitle, countof(szText)-nLen);

@@ -211,7 +211,7 @@ LGSResult LoadGuiSettingsPtr(ConEmuGuiMapping& GuiMapping, const ConEmuGuiMappin
 
 	if (abForceCopy)
 	{
-		cbSize = min(sizeof(GuiMapping), pInfo->cbSize);
+		cbSize = std::min<DWORD>(sizeof(GuiMapping), pInfo->cbSize);
 		memmove(&GuiMapping, pInfo, cbSize);
 		gpSrv->guiSettings.cbSize = cbSize;
 		lbCopied = true;
@@ -1625,7 +1625,7 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		#ifdef _DEBUG
 		int nCurProcCount = gpSrv->processes->nProcessCount;
 		DWORD nCurProcs[20];
-		memmove(nCurProcs, gpSrv->processes->pnProcesses, min(nCurProcCount,20)*sizeof(DWORD));
+		memmove(nCurProcs, gpSrv->processes->pnProcesses, std::min<DWORD>(nCurProcCount, 20) * sizeof(DWORD));
 		_ASSERTE(nCurProcCount <= 1);
 		#endif
 
@@ -1923,7 +1923,7 @@ bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*
 
 	COORD crMaxSize = MyGetLargestConsoleWindowSize(ghConOut);
 	DWORD cchOneBufferSize = lsbi.dwSize.X * lsbi.dwSize.Y; // Читаем всю консоль целиком!
-	DWORD cchMaxBufferSize = max(pHdr->MaxCellCount,(DWORD)(lsbi.dwSize.Y * lsbi.dwSize.X));
+	DWORD cchMaxBufferSize = std::max<DWORD>(pHdr->MaxCellCount, (lsbi.dwSize.Y * lsbi.dwSize.X));
 
 
 	bool lbNeedRecreate = false; // требуется новый или больший, или сменился индекс (создан в другом сервере)
@@ -2134,7 +2134,7 @@ void CmdOutputRestore(bool abSimpleMode)
 	if (abSimpleMode)
 	{
 
-		crMoveTo.Y = min(pData->info.srWindow.Top,max(0,lsbi.dwSize.Y-h));
+		crMoveTo.Y = std::min<int>(pData->info.srWindow.Top, std::max<int>(0,lsbi.dwSize.Y-h));
 	}
 
 	SMALL_RECT rcBottom = {0, crMoveTo.Y, w - 1, crMoveTo.Y + h - 1};
@@ -2174,7 +2174,7 @@ void CmdOutputRestore(bool abSimpleMode)
 
 	CONSOLE_SCREEN_BUFFER_INFO storedSbi = pData->info;
 	COORD crOldBufSize = pData->info.dwSize; // Может быть шире или уже чем текущая консоль!
-	SMALL_RECT rcWrite = {0,0,min(crOldBufSize.X,lsbi.dwSize.X)-1,min(crOldBufSize.Y,lsbi.dwSize.Y)-1};
+	SMALL_RECT rcWrite = {0, 0, std::min<int>(crOldBufSize.X,lsbi.dwSize.X)-1, std::min<int>(crOldBufSize.Y,lsbi.dwSize.Y)-1};
 	COORD crBufPos = {0,0};
 
 	if (!abSimpleMode)
@@ -2182,7 +2182,7 @@ void CmdOutputRestore(bool abSimpleMode)
 		// Что восстанавливать - при выполнении команд из фара - нужно
 		// восстановить только область выше первой видимой строки,
 		// т.к. видимую область фар восстанавливает сам
-		SHORT nStoredHeight = min(storedSbi.srWindow.Top,rcBottom.Top);
+		SHORT nStoredHeight = std::min<SHORT>(storedSbi.srWindow.Top, rcBottom.Top);
 		if (nStoredHeight < 1)
 		{
 			// Nothing to restore?
@@ -2190,7 +2190,7 @@ void CmdOutputRestore(bool abSimpleMode)
 		}
 
 		rcWrite.Top = rcBottom.Top-nStoredHeight;
-		rcWrite.Right = min(crOldBufSize.X,lsbi.dwSize.X)-1;
+		rcWrite.Right = std::min<int>(crOldBufSize.X,lsbi.dwSize.X)-1;
 		rcWrite.Bottom = rcBottom.Top-1;
 
 		crBufPos.Y = storedSbi.srWindow.Top-nStoredHeight;
@@ -2961,7 +2961,7 @@ HWND Attach2Gui(DWORD nTimeout)
 	DWORD dwStart = GetTickCount(), dwDelta = 0, dwCur = 0;
 	CESERVER_REQ *pIn = NULL;
 	_ASSERTE(sizeof(CESERVER_REQ_STARTSTOP) >= sizeof(CESERVER_REQ_STARTSTOPRET));
-	DWORD cchCmdMax = max((gpszRunCmd ? lstrlen(gpszRunCmd) : 0),(MAX_PATH + 2)) + 1;
+	DWORD cchCmdMax = std::max<int>((gpszRunCmd ? lstrlen(gpszRunCmd) : 0), (MAX_PATH + 2)) + 1;
 	DWORD nInSize =
 		sizeof(CESERVER_REQ_HDR)
 		+sizeof(CESERVER_REQ_STARTSTOP)
@@ -3578,7 +3578,7 @@ int CreateColorerHeader(bool bForceRecreate /*= false*/)
 	}
 
 	//COORD crMaxSize = MyGetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
-	//nMapCells = max(crMaxSize.X,200) * max(crMaxSize.Y,200) * 2;
+	//nMapCells = std::max(crMaxSize.X,200) * std::max(crMaxSize.Y,200) * 2;
 	//nMapSize = nMapCells * sizeof(AnnotationInfo) + sizeof(AnnotationHeader);
 	_ASSERTE(sizeof(AnnotationInfo) == 8*sizeof(int)/*sizeof(AnnotationInfo::raw)*/);
 
@@ -3771,7 +3771,7 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 	{
 		// А для 'буферного' режима позиция может быть заблокирована
 		nTop = gpSrv->nTopVisibleLine;
-		nBottom = min((pSbi->dwSize.Y-1), (gpSrv->nTopVisibleLine+gcrVisibleSize.Y-1)); //-V592
+		nBottom = std::min((pSbi->dwSize.Y-1), (gpSrv->nTopVisibleLine+gcrVisibleSize.Y-1)); //-V592
 	}
 	else
 	{
@@ -3803,7 +3803,7 @@ BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
 			// корректируем низ
 			nBottom = pSbi->dwSize.Y - 1;
 			// и верх по желаемому размеру
-			nTop = max(0, (nBottom - gcrVisibleSize.Y + 1));
+			nTop = std::max(0, (nBottom - gcrVisibleSize.Y + 1));
 		}
 	}
 
@@ -3987,15 +3987,15 @@ static int ReadConsoleInfo()
 			if (!(nNewScroll & rbs_Horz))
 			{
 				lsbi.srWindow.Left = 0;
-				nMaxWidth = max(gpSrv->pConsole->hdr.crMaxConSize.X,(lsbi.srWindow.Right-lsbi.srWindow.Left+1));
-				lsbi.srWindow.Right = min(nMaxWidth,lsbi.dwSize.X-1);
+				nMaxWidth = std::max<int>(gpSrv->pConsole->hdr.crMaxConSize.X, (lsbi.srWindow.Right-lsbi.srWindow.Left+1));
+				lsbi.srWindow.Right = std::min<int>(nMaxWidth, lsbi.dwSize.X-1);
 			}
 
 			if (!(nNewScroll & rbs_Vert))
 			{
 				lsbi.srWindow.Top = 0;
-				nMaxHeight = max(gpSrv->pConsole->hdr.crMaxConSize.Y,(lsbi.srWindow.Bottom-lsbi.srWindow.Top+1));
-				lsbi.srWindow.Bottom = min(nMaxHeight,lsbi.dwSize.Y-1);
+				nMaxHeight = std::max<int>(gpSrv->pConsole->hdr.crMaxConSize.Y, (lsbi.srWindow.Bottom-lsbi.srWindow.Top+1));
+				lsbi.srWindow.Bottom = std::min<int>(nMaxHeight, lsbi.dwSize.Y-1);
 			}
 		}
 
@@ -4074,7 +4074,7 @@ static int ReadConsoleInfo()
 	{
 		int nWndHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
 
-		if (gpSrv->sbi.dwSize.Y > (max(gcrVisibleSize.Y,nWndHeight)+200)
+		if (gpSrv->sbi.dwSize.Y > (std::max<int>(gcrVisibleSize.Y, nWndHeight)+200)
 		        || ((gpSrv->nRequestChangeSize > 0) && gpSrv->nReqSizeBufferHeight))
 		{
 			// Приложение изменило размер буфера!
@@ -4192,25 +4192,25 @@ static BOOL ReadConsoleData()
 	if (nNewScroll & rbs_Horz)
 	{
 		rgn.Left = gpSrv->sbi.srWindow.Left;
-		rgn.Right = min(gpSrv->sbi.srWindow.Left+TextWidth,gpSrv->sbi.dwSize.X)-1;
+		rgn.Right = std::min<int>(gpSrv->sbi.srWindow.Left+TextWidth,gpSrv->sbi.dwSize.X)-1;
 	}
 	else
 	{
 		rgn.Left = 0;
-		nMaxWidth = max(gpSrv->pConsole->hdr.crMaxConSize.X,(gpSrv->sbi.srWindow.Right-gpSrv->sbi.srWindow.Left+1));
-		rgn.Right = min(nMaxWidth,(gpSrv->sbi.dwSize.X-1));
+		nMaxWidth = std::max<int>(gpSrv->pConsole->hdr.crMaxConSize.X,(gpSrv->sbi.srWindow.Right-gpSrv->sbi.srWindow.Left+1));
+		rgn.Right = std::min<int>(nMaxWidth,(gpSrv->sbi.dwSize.X-1));
 	}
 
 	if (nNewScroll & rbs_Vert)
 	{
 		rgn.Top = gpSrv->sbi.srWindow.Top;
-		rgn.Bottom = min(gpSrv->sbi.srWindow.Top+TextHeight,gpSrv->sbi.dwSize.Y)-1;
+		rgn.Bottom = std::min<int>(gpSrv->sbi.srWindow.Top+TextHeight,gpSrv->sbi.dwSize.Y)-1;
 	}
 	else
 	{
 		rgn.Top = 0;
-		nMaxHeight = max(gpSrv->pConsole->hdr.crMaxConSize.Y,(gpSrv->sbi.srWindow.Bottom-gpSrv->sbi.srWindow.Top+1));
-		rgn.Bottom = min(nMaxHeight,(gpSrv->sbi.dwSize.Y-1));
+		nMaxHeight = std::max<int>(gpSrv->pConsole->hdr.crMaxConSize.Y,(gpSrv->sbi.srWindow.Bottom-gpSrv->sbi.srWindow.Top+1));
+		rgn.Bottom = std::min<int>(nMaxHeight,(gpSrv->sbi.dwSize.Y-1));
 	}
 
 
@@ -4238,7 +4238,7 @@ static BOOL ReadConsoleData()
 			goto wrap;
 		}
 
-		rgn.Bottom = min(rgn.Bottom,(rgn.Top+TextHeight-1));
+		rgn.Bottom = std::min<int>(rgn.Bottom,(rgn.Top+TextHeight-1));
 		TextLen = TextWidth * TextHeight;
 		nCurSize = TextLen * sizeof(CHAR_INFO);
 		// Если MapFile еще не создавался, или был увеличен размер консоли

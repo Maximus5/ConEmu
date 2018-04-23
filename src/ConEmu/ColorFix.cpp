@@ -55,11 +55,6 @@ struct dE00
     real_type hPrime1, hPrime2, deltahPrime, deltaHPrime;
     real_type HBarPrime, T, SsubH, RsubT;
 
-	static real_type _abs(real_type v)
-	{
-		return (v < 0) ? (-v) : (v);
-	};
-
 	dE00(ColorFix ax1, ColorFix ax2, real_type weight_lightness = 1, real_type weight_chroma = 1, real_type weight_hue = 1)
 	{
 	    this->x1 = ax1;

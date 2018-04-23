@@ -94,7 +94,8 @@ protected:
 				wchar_t* psz = pszFonts;
 				while ((iRc = RegEnumValue(hk, idx++, szName, &cchName, NULL, &dwType, (LPBYTE)szValue, &cchValue)) == 0)
 				{
-					szName[min(countof(szName)-1,cchName)] = 0; szValue[min(countof(szValue)-1,cchValue/2)] = 0;
+					szName[std::min<size_t>(countof(szName)-1, cchName)] = 0;
+					szValue[std::min<size_t>(countof(szValue)-1,cchValue/2)] = 0;
 					int nNameLen = lstrlen(szName);
 					int nValLen = lstrlen(szValue);
 					int nLen = nNameLen+nValLen+3;

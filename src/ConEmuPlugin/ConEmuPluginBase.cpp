@@ -1964,12 +1964,12 @@ bool CPluginBase::OutDataWrite(LPVOID apData, DWORD anSize)
 {
 	if (!gpData)
 	{
-		if (!OutDataAlloc(max(1024, (anSize+128))))
+		if (!OutDataAlloc(std::max<DWORD>(1024, (anSize+128))))
 			return false;
 	}
-	else if (((gpCursor-gpData)+anSize)>gnDataSize)
+	else if (((gpCursor-gpData)+anSize) > gnDataSize)
 	{
-		if (!OutDataRealloc(gnDataSize+max(1024, (anSize+128))))
+		if (!OutDataRealloc(gnDataSize + std::max<DWORD>(1024, (anSize+128))))
 			return false;
 	}
 
@@ -2090,7 +2090,7 @@ bool CPluginBase::AddTab(int &tabCount, int WindowPos, bool losingFocus, bool ed
 		//{
 		//	lastModifiedStateW = -1; //2009-08-17 при наличии более одного редактора - сносит крышу
 		//}
-		int nLen = min(lstrlen(Name),(CONEMUTABMAX-1));
+		int nLen = std::min(lstrlen(Name),(CONEMUTABMAX-1));
 		lstrcpyn(gpTabs->Tabs.tabs[tabCount].Name, Name, nLen+1);
 		gpTabs->Tabs.tabs[tabCount].Name[nLen]=0;
 		gpTabs->Tabs.tabs[tabCount].Pos = (WindowPos >= 0) ? WindowPos : tabCount;
@@ -3526,7 +3526,7 @@ DWORD CPluginBase::WaitPluginActivation(DWORD nCount, HANDLE *lpHandles, BOOL bW
 		DWORD nTimeout = nStartTick + dwMilliseconds;
 		bool lbLongOperationWasStarted = false;
 		do {
-			nWait = WaitForMultipleObjects(nCount, lpHandles, bWaitAll, min(dwMilliseconds,nStepWait));
+			nWait = WaitForMultipleObjects(nCount, lpHandles, bWaitAll, std::min(dwMilliseconds,nStepWait));
 			if (((nWait >= WAIT_OBJECT_0) && (nWait < (WAIT_OBJECT_0+nCount))) || (nWait != WAIT_TIMEOUT))
 			{
 				_ASSERTE((nWait >= WAIT_OBJECT_0) && (nWait < (WAIT_OBJECT_0+nCount)));
@@ -3591,7 +3591,7 @@ bool CPluginBase::ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout
 	if (nCmd == CMD_REDRAWFAR || nCmd == CMD_FARPOST)
 	{
 		WARNING("Оптимизировать!");
-		nTimeout = min(1000,nTimeout); // чтобы не зависало при попытке ресайза, если фар не отзывается.
+		nTimeout = std::min<DWORD>(1000, nTimeout); // чтобы не зависало при попытке ресайза, если фар не отзывается.
 	}
 
 	if (gbSynchroProhibited)
@@ -3613,7 +3613,7 @@ bool CPluginBase::ActivatePlugin(DWORD nCmd, LPVOID pCommandData, DWORD nTimeout
 		if (!gbUngetDummyMouseEvent && (gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)))
 		{
 			// Страховка от зависаний
-			nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, min(1000,max(250,nTimeout)));
+			nWait = WaitForMultipleObjects(nCount, hEvents, FALSE, std::min(1000UL, std::max(250UL, nTimeout)));
 			if (nWait == WAIT_TIMEOUT)
 			{
 				if (!gbUngetDummyMouseEvent && (gLastMouseReadEvent.dwButtonState & (RIGHTMOST_BUTTON_PRESSED|FROM_LEFT_1ST_BUTTON_PRESSED)))
