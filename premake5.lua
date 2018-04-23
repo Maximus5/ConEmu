@@ -102,6 +102,7 @@ local common_remove = {
 }
 
 local common_kernel = {
+  "src/common/CEHandle.*",
   "src/common/CEStr.*",
   "src/common/CmdLine.*",
   "src/common/Common.cpp",

@@ -230,6 +230,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="common\CEHandle.h" />
     <ClInclude Include="common\CEStr.h" />
     <ClInclude Include="common\CmdLine.h" />
     <ClInclude Include="common\Common.h" />
@@ -261,6 +262,7 @@
     <ClInclude Include="common\execute.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="common\CEHandle.cpp" />
     <ClCompile Include="common\CEStr.cpp" />
     <ClCompile Include="common\CmdLine.cpp" />
     <ClCompile Include="common\Common.cpp" />

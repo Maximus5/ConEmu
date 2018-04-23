@@ -432,6 +432,7 @@
     <ClInclude Include="ConEmu\version.h" />
     <ClInclude Include="ConEmu\version_macro.h" />
     <ClInclude Include="ConEmu\version_stage.h" />
+    <ClInclude Include="common\CEHandle.h" />
     <ClInclude Include="common\CEStr.h" />
     <ClInclude Include="common\CmdLine.h" />
     <ClInclude Include="common\Common.h" />

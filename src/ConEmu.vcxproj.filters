@@ -465,6 +465,9 @@
     <ClInclude Include="ConEmu\version_stage.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="common\CEHandle.h">
+      <Filter>Common</Filter>
+    </ClInclude>
     <ClInclude Include="common\CEStr.h">
       <Filter>Common</Filter>
     </ClInclude>
