@@ -20,6 +20,20 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.4.22
+* Allow import of xml files without reset of current settings.
+  Example with Dracula color theme:
+  https://gist.github.com/Maximus5/3205332bbc45c8300763157f0fdbe884
+* gh-1522: Exchange **default** behavior of `Ctrl+V` and `Shift+Ins`.
+  Both hotkeys actions may be configured in Settings/Paste.
+  * `Ctrl+V` inserts multiple lines from clipboard with `\n` inside;
+  * `Shift+Ins inserts all lines as single line replacing `\n` with spaces.
+* gh-1492: AnsiLog may be enabled on per-console basis via `-new_console:L:"<path>"`,
+  where `<path>` is a folder to store AnsiLog files, e.g. `C:\Logs`.
+  https://conemu.github.io/en/AnsiLogFiles.html
+* Change default folder for AnsiLog files to `%UserProfile%\Desktop\ConEmuLogs`.
+
+
 2018.4.18
 * gh-880: Show the name of selected shell task for `Win+X` hotkey.
 * gh-1517: After postponing update the ‘Confirm closing’ dialog stucks.
