@@ -255,6 +255,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEDEFAULTTERMHOOKWAIT 0 // Don't need timeout, because we wait for remote thread - WaitForSingleObject(hThread, INFINITE);
 //#define CEDEFAULTTERMMUTEX  L"IsConEmuDefaultTerm.%u" // Если Mutex есть - значит какая-то версия длл-ки уже была загружена в обрабатываемый процесс
 
+// Default folder for AnsiLog files
+#define CEANSILOGFOLDER     L"%UserProfile%\\Desktop\\ConEmuLogs\\"
 // File name format for AnsiLog
 #define CEANSILOGNAMEFMT    L"ConEmu-%u-%02u-%02u-p%u.log"
 
