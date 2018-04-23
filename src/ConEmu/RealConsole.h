@@ -412,6 +412,7 @@ class CRealConsole
 		void SetProgramStatus(DWORD nDrop, DWORD nSet);
 		void SetFarStatus(DWORD nNewFarStatus);
 		bool GetProcessInformation(DWORD nPID, ConProcess* rpProcess = NULL);
+		ConEmuAnsiLog GetAnsiLogInfo();
 		LPCWSTR GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo);
 		LPCWSTR GetActiveProcessInfo(CEStr& rsInfo);
 		DWORD GetActivePID(ConProcess* rpProcess = NULL);

@@ -63,7 +63,7 @@ RConStartArgs::RConStartArgs()
 	aRecreate = cra_CreateTab;
 	pszSpecialCmd = pszStartupDir = pszUserName = pszDomain = pszRenameTab = NULL;
 	pszAddGuiArg = NULL;
-	pszIconFile = pszPalette = pszWallpaper = NULL;
+	pszIconFile = pszPalette = pszWallpaper = pszAnsiLog = NULL;
 	pszMntRoot = NULL;
 	BufHeight = crb_Undefined; nBufHeight = 0; LongOutputDisable = crb_Undefined;
 	OverwriteMode = crb_Undefined;
@@ -100,6 +100,7 @@ RConStartArgs::~RConStartArgs()
 	SafeFree(pszPalette);
 	SafeFree(pszWallpaper);
 	SafeFree(pszMntRoot);
+	SafeFree(pszAnsiLog);
 
 	CleanSecure();
 }
@@ -601,6 +602,8 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 						// P:<Palette>. MUST be last option
 					case L'W':
 						// W:<Wallpaper>. MUST be last option
+					case L'L':
+						// L:<AnsiLogDir>. MUST be last option
 					case L'm':
 						// m:<mntroot>. MUST be last option
 						{
@@ -642,6 +645,8 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 							case L'P': pptr = &pszPalette; break;
 							case L'W': pptr = &pszWallpaper; break;
 							case L'm': pptr = &pszMntRoot; break;
+							case L'L': pptr = &pszAnsiLog; break;
+							// don't forget to add the same `case` to the `switch` above!
 							default:
 								_ASSERTE(FALSE && "Unprocessed option");
 								return -1;

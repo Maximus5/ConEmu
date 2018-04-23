@@ -66,7 +66,7 @@ LRESULT CSetPgFeatures::OnInitDialog(HWND hDlg, bool abInitial)
 	checkDlgButton(hDlg, cbProcessAnsi, gpSet->isProcessAnsi);
 
 	checkDlgButton(hDlg, cbAnsiLog, gpSet->isAnsiLog);
-	SetDlgItemText(hDlg, tAnsiLogPath, gpSet->pszAnsiLog ? gpSet->pszAnsiLog : L"");
+	SetDlgItemText(hDlg, tAnsiLogPath, (gpSet->pszAnsiLog && *gpSet->pszAnsiLog) ? gpSet->pszAnsiLog : CEANSILOGFOLDER);
 
 	checkDlgButton(hDlg, cbKillSshAgent, gpSet->isKillSshAgent);
 	checkDlgButton(hDlg, cbProcessNewConArg, gpSet->isProcessNewConArg);

@@ -79,6 +79,7 @@ public:
 	wchar_t* pszPalette;    // "-new_console:P:<palette>"
 	wchar_t* pszWallpaper;  // "-new_console:W:<wallpaper>"
 	wchar_t* pszMntRoot;    // "-new_console:m:<mntroot>" - explicit prefix for mount root: /cygdrive or /mnt
+	wchar_t* pszAnsiLog;    // "-new_console:L:<AnsiLogDir>
 	
 	RConBoolArg     RunAsAdministrator; // -new_console:a
 	RConBoolArg     RunAsSystem;        // -new_console:A

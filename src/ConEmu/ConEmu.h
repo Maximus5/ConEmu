@@ -210,7 +210,6 @@ class CConEmuMain
 		MFileMapping<ConEmuGuiMapping> m_GuiAttachMapping;
 	public:
 		void GetGuiInfo(ConEmuGuiMapping& GuiInfo);
-		void GetAnsiLogInfo(ConEmuAnsiLog &AnsiLog);
 	private:
 		void FillConEmuMainFont(ConEmuMainFont* pFont);
 		void UpdateGuiInfoMapping();

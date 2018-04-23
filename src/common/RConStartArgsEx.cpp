@@ -331,6 +331,7 @@ bool RConStartArgsEx::AssignFrom(const struct RConStartArgsEx* args, bool abConc
 		{&this->pszPalette, args->pszPalette},
 		{&this->pszWallpaper, args->pszWallpaper},
 		{&this->pszMntRoot, args->pszMntRoot},
+		{&this->pszAnsiLog, args->pszAnsiLog},
 		{NULL}
 	};
 
@@ -478,6 +479,7 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks /*= false*/) const
 	cchMaxLen += (pszIconFile   ? (lstrlen(pszIconFile) + 20) : 0); // "-new_console:C:..."
 	cchMaxLen += (pszWallpaper  ? (lstrlen(pszWallpaper) + 20) : 0); // "-new_console:W:..."
 	cchMaxLen += (pszMntRoot    ? (lstrlen(pszMntRoot) + 20) : 0); // "-new_console:W:..."
+	cchMaxLen += (pszAnsiLog    ? (lstrlen(pszAnsiLog) + 20) : 0); // "-new_console:L:..."
 	// Some values may contain 'invalid' symbols (like '<', '>' and so on). They will be escaped. Thats why "len*2".
 	cchMaxLen += (pszRenameTab  ? (lstrlen(pszRenameTab)*2 + 20) : 0); // "-new_console:t:..."
 	cchMaxLen += (pszPalette    ? (lstrlen(pszPalette)*2 + 20) : 0); // "-new_console:P:..."
@@ -630,6 +632,7 @@ wchar_t* RConStartArgsEx::CreateCommandLine(bool abForTasks /*= false*/) const
 		{L'P', true,  this->pszPalette},
 		{L'W', false, this->pszWallpaper},
 		{L'm', false, this->pszMntRoot},
+		{L'L', false, this->pszAnsiLog},
 		{0}
 	};
 

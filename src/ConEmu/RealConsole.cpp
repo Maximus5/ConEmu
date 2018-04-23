@@ -1370,7 +1370,7 @@ void CRealConsole::QueryStartStopRet(CESERVER_REQ_SRVSTARTSTOPRET& pRet)
 	lstrcpy(pRet.Font.sFontName, gpSet->ConsoleFont.lfFaceName);
 
 	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
-	mp_ConEmu->GetAnsiLogInfo(pRet.AnsiLog);
+	pRet.AnsiLog = GetAnsiLogInfo();
 
 	// Return GUI info, let it be in one place
 	mp_ConEmu->GetGuiInfo(pRet.GuiMapping);
@@ -8190,6 +8190,28 @@ void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
 	}
 }
 
+ConEmuAnsiLog CRealConsole::GetAnsiLogInfo()
+{
+	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+	ConEmuAnsiLog AnsiLog = {};
+
+	// Max path = (MAX_PATH - "ConEmu-yyyy-mm-dd-p12345.log")
+	if (m_Args.pszAnsiLog && *m_Args.pszAnsiLog)
+	{
+		AnsiLog.Enabled = true;
+		lstrcpyn(AnsiLog.Path, m_Args.pszAnsiLog, countof(AnsiLog.Path)-32);
+	}
+	else
+	{
+		AnsiLog.Enabled = gpSet->isAnsiLog;
+		lstrcpyn(AnsiLog.Path,
+			(gpSet->isAnsiLog && gpSet->pszAnsiLog) ? gpSet->pszAnsiLog : CEANSILOGFOLDER,
+			countof(AnsiLog.Path)-32);
+	}
+
+	return AnsiLog;
+}
+
 LPCWSTR CRealConsole::GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo)
 {
 	wchar_t szTemp[MAX_PATH*4] = L"";
@@ -8231,7 +8253,7 @@ LPCWSTR CRealConsole::GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo)
 		DWORD nSrvPID = GetServerPID(true);
 		if (nSrvPID)
 		{
-			ConEmuAnsiLog AnsiLog = {}; gpConEmu->GetAnsiLogInfo(AnsiLog);
+			ConEmuAnsiLog AnsiLog = GetAnsiLogInfo();
 			if (AnsiLog.Enabled)
 			{
 				SYSTEMTIME st = {}; GetStartTime(st);
