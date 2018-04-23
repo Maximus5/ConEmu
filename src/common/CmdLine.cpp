@@ -1185,6 +1185,26 @@ wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 /*= NULL*/)
 	return lstrmerge(psz1, psz2, psz3, psz4, psz5);
 }
 
+wchar_t* GetParentPath(LPCWSTR asPath)
+{
+	if (!asPath || !*asPath)
+		return NULL;
+	LPCWSTR pszName = PointToName(asPath);
+	if (!pszName)
+		return NULL;
+	while ((pszName > asPath) && (*(pszName-1) == L'\\' || *(pszName-1) == L'/'))
+		--pszName;
+	if (pszName <= asPath)
+		return NULL;
+
+	wchar_t* parent = lstrdup(asPath);
+	if (!parent)
+		return NULL;
+	_ASSERTE(wcslen(parent) > size_t(pszName - asPath));
+	parent[(pszName - asPath) - 1] = 0;
+	return parent;
+}
+
 // Первичная проверка, может ли asFilePath быть путем
 bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired /*= false*/)
 {
