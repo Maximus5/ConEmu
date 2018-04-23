@@ -318,7 +318,7 @@ bool CLngRc::LoadSection(MJsonValue* pJson, MArray<LngRcItem>& arr, int idDiff)
 	    //  "id": 2046
 		// }
 		LPCWSTR lsLoc = NULL;
-		i64 id = -1;
+		int64_t id = -1;
 		size_t childCount = jRes.getLength();
 
 		for (INT_PTR c = (childCount - 1); c >= 0; --c)
@@ -433,10 +433,10 @@ bool CLngRc::SetResource(MArray<LngRcItem>& arr, int idx, LPCWSTR asValue, bool 
 	}
 
 	size_t iLen = wcslen(asValue);
-	if (iLen >= (u16)-1)
+	if (iLen >= (uint16_t)-1)
 	{
 		// Too long string?
-		_ASSERTE(iLen < (u16)-1);
+		_ASSERTE(iLen < (uint16_t)-1);
 	}
 	else
 	{
@@ -495,7 +495,7 @@ LPCWSTR CLngRc::getControl(LONG id, CEStr& lsText, LPCWSTR asDefault /*= NULL*/)
 		_ASSERTE(gpLng != NULL);
 		return asDefault;
 	}
-	if (!id || (id > (u16)-1))
+	if (!id || (id > (uint16_t)-1))
 	{
 		_ASSERTE(FALSE && "Control ID out of range");
 		return asDefault;

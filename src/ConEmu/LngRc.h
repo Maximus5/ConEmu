@@ -63,7 +63,7 @@ protected:
 	{
 		bool     Processed; // This ID was processed
 		bool     Localized; // true if string was loaded successfully
-		u16      MaxLen;    // To avoid strings realloc
+		uint16_t MaxLen;    // To avoid strings realloc
 		wchar_t* Str;
 	};
 

@@ -194,7 +194,7 @@ SettingsRegistry::~SettingsRegistry()
 
 
 
-bool SettingsRegistry::OpenKey(HKEY inHKEY, const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
+bool SettingsRegistry::OpenKey(HKEY inHKEY, const wchar_t *regPath, unsigned access, BOOL abSilent /*= FALSE*/)
 {
 	bool res = false;
 
@@ -207,7 +207,7 @@ bool SettingsRegistry::OpenKey(HKEY inHKEY, const wchar_t *regPath, uint access,
 
 	return res;
 }
-bool SettingsRegistry::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
+bool SettingsRegistry::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent /*= FALSE*/)
 {
 	return OpenKey(HKEY_CURRENT_USER, regPath, access);
 }
@@ -357,7 +357,7 @@ SettingsINI::~SettingsINI()
 
 
 
-bool SettingsINI::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/)
+bool SettingsINI::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent /*= FALSE*/)
 {
 	_ASSERTE(!gpConEmu->IsResetBasicSettings() || ((access & KEY_WRITE)!=KEY_WRITE));
 
@@ -673,7 +673,7 @@ const char* SettingsXML::wcs2utf(const wchar_t* wc)
 	return allocated;
 }
 
-bool SettingsXML::OpenStorage(uint access, wchar_t*& pszErr)
+bool SettingsXML::OpenStorage(unsigned access, wchar_t*& pszErr)
 {
 	bool bRc = false;
 	bool bNeedReopen = (mp_File == NULL);
@@ -819,7 +819,7 @@ wrap:
 	return bRc;
 }
 
-bool SettingsXML::OpenKey(const wchar_t *regPath, uint access, BOOL abSilent /*= FALSE*/) noexcept
+bool SettingsXML::OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent /*= FALSE*/) noexcept
 {
 	// That may occur if Basic settings and "Export" button was pressed
 	_ASSERTE(!gpConEmu->IsResetBasicSettings() || ((access & KEY_WRITE)!=KEY_WRITE));

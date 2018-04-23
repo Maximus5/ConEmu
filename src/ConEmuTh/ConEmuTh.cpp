@@ -355,7 +355,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		case DLL_PROCESS_ATTACH:
 		{
 			ghPluginModule = (HMODULE)hModule;
-			ghWorkingModule = (u64)hModule;
+			ghWorkingModule = hModule;
 			gnSelfPID = GetCurrentProcessId();
 			gnMainThreadId = gnMainThreadIdInitial = GetMainThreadId();
 			HeapInitialize();

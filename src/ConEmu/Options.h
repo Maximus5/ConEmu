@@ -357,7 +357,7 @@ struct Settings
 		//reg->Load(L"BackGround Image", sBgImage, countof(sBgImage));
 		WCHAR sBgImage[MAX_PATH];
 		//reg->Load(L"bgImageDarker", bgImageDarker);
-		u8 bgImageDarker;
+		uint8_t bgImageDarker;
 		//reg->Load(L"bgImageColors", nBgImageColors);
 		DWORD nBgImageColors;
 		//reg->Load(L"bgOperation", bgOperation);
@@ -373,11 +373,11 @@ struct Settings
 		/* *** Transparency *** */
 		bool isTransparentAllowed();
 		//reg->Load(L"AlphaValue", nTransparent);
-		u8 nTransparent;
+		uint8_t nTransparent;
 		//reg->Load(L"AlphaValueSeparate", nTransparentSeparate);
 		bool isTransparentSeparate;
 		//reg->Load(L"AlphaValueInactive", nTransparentInactive);
-		u8 nTransparentInactive;
+		uint8_t nTransparentInactive;
 		//reg->Load(L"UserScreenTransparent", isUserScreenTransparent);
 		bool isUserScreenTransparent;
 		//reg->Load(L"ColorKeyTransparent", isColorKeyTransparent);
@@ -698,7 +698,7 @@ struct Settings
 		BYTE isDebugLog;
 		// Helpers
 		bool mb_DisableLogging;
-		uint isLogging(uint level = 1);
+		unsigned isLogging(unsigned level = 1);
 		void EnableLogging();
 		void DisableLogging();
 		LPCWSTR GetLogFileName();

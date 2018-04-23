@@ -109,11 +109,11 @@ LRESULT CSetPgMarkCopy::MarkCopyPreviewProc(HWND hCtrl, UINT uMsg, WPARAM wParam
 	HBRUSH hbr;
 	HDC hdc;
 
-	uint idxCon = gpSet->AppStd.nBackColorIdx;
+	unsigned idxCon = gpSet->AppStd.nBackColorIdx;
 	if (idxCon > 15)
 		idxCon = 0;
-	uint idxBack = CONBACKCOLOR(gpSet->isCTSColorIndex);
-	uint idxFore = CONFORECOLOR(gpSet->isCTSColorIndex);
+	unsigned idxBack = CONBACKCOLOR(gpSet->isCTSColorIndex);
+	unsigned idxFore = CONFORECOLOR(gpSet->isCTSColorIndex);
 	RECT rcClient = {};
 	CSetPgMarkCopy* pPage = NULL;
 

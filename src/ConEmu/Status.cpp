@@ -1926,7 +1926,7 @@ bool CStatus::IsTimeChanged()
 	if (st.wHour != mt_LastTime.wHour || st.wMinute != mt_LastTime.wMinute || st.wSecond != mt_LastTime.wSecond)
 	{
 		mt_LastTime = st;
-		swprintf_c(m_Values[csi_Time].sText, L"%u:%02u:%02u", (uint)st.wHour, (uint)st.wMinute, (uint)st.wSecond);
+		swprintf_c(m_Values[csi_Time].sText, L"%u:%02u:%02u", (unsigned)st.wHour, (unsigned)st.wMinute, (unsigned)st.wSecond);
 		return true;
 	}
 
@@ -2239,7 +2239,7 @@ void CStatus::ShowTransparencyMenu(POINT pt)
 	// меню было расчитано на min=40
 	_ASSERTE(MIN_ALPHA_VALUE==40);
 
-	u8 nPrevAlpha = gpSet->nTransparent;
+	uint8_t nPrevAlpha = gpSet->nTransparent;
 	//bool bPrevUserScreen = gpSet->isUserScreenTransparent; -- он идет через WindowRgn, а не Transparency
 	bool bPrevColorKey = gpSet->isColorKeyTransparent;
 

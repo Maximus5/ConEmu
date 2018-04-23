@@ -126,7 +126,7 @@ bool MJsonValue::getBool()
 	return (((json_value*)mp_data)->u.boolean != 0);
 }
 
-i64 MJsonValue::getInt()
+int64_t MJsonValue::getInt()
 {
 	return ((json_value*)mp_data)->u.integer;
 }

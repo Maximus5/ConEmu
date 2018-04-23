@@ -97,8 +97,8 @@ protected:
 	static const ListBoxItem TabBarDblClickActions[];
 
 public:
-	static uint GetListItems(eFillListBoxItems eWhat, const ListBoxItem*& pItems);
-	static uint GetListItems(eWordItems eWhat, const DWORD*& pItems);
+	static unsigned GetListItems(eFillListBoxItems eWhat, const ListBoxItem*& pItems);
+	static unsigned GetListItems(eWordItems eWhat, const DWORD*& pItems);
 
 	static void FillListBox(HWND hList, WORD nCtrlId, eFillListBoxItems eWhat);
 	static void FillListBoxItems(HWND hList, eFillListBoxItems eWhat, UINT& nValue, bool abExact);

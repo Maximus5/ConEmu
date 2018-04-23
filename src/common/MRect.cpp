@@ -32,13 +32,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* RECT/SMALL_RECT/COORD encapsulation */
 
-SHORT MakeShort(i32 X)
+SHORT MakeShort(int32_t X)
 {
 	_ASSERTE(X==LOSHORT(X));
 	return LOSHORT(X);
 }
 
-USHORT MakeUShort(u32 X)
+USHORT MakeUShort(uint32_t X)
 {
 	_ASSERTE(X==LOWORD(X));
 	return LOWORD(X);

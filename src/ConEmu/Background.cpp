@@ -350,7 +350,7 @@ UINT CBackground::IsBackgroundValid(const CESERVER_REQ_SETBACKGROUND* apImgData,
 
 		LPBYTE pBuf = (LPBYTE)&apImgData->bmp;
 
-		if (*(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
+		if (*(uint32_t*)(pBuf + 0x0A) >= 0x36 && *(uint32_t*)(pBuf + 0x0A) <= 0x436 && *(uint32_t*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(uint32_t*)(pBuf + 0x1E))
 		{
 			//UINT nSize = (UINT)sizeof(CESERVER_REQ_SETBACKGROUND) - (UINT)sizeof(apImgData->bmp)
 			//           + apImgData->bmp.bfSize;

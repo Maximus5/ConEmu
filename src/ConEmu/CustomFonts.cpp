@@ -631,7 +631,7 @@ bool CEDC::Create(UINT Width, UINT Height)
 		BITMAPINFO bmi;
 		bmi.bmiHeader.biSize        = sizeof(bmi.bmiHeader);
 		bmi.bmiHeader.biWidth       = Width;
-		bmi.bmiHeader.biHeight      = -(i32)Height;
+		bmi.bmiHeader.biHeight      = -(int32_t)Height;
 		bmi.bmiHeader.biPlanes      = 1;
 		bmi.bmiHeader.biBitCount    = 32;
 		bmi.bmiHeader.biCompression = BI_RGB;

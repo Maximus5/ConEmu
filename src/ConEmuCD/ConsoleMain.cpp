@@ -390,7 +390,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		case DLL_PROCESS_ATTACH:
 		{
 			ghOurModule = (HMODULE)hModule;
-			ghWorkingModule = (u64)hModule;
+			ghWorkingModule = hModule;
 
 			hkFunc.Init(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"), ghOurModule);
 
@@ -4861,7 +4861,7 @@ void SendStarted()
 		if (gnRunMode == RM_SERVER)
 		{
 			_ASSERTE(nGuiPID!=0 && gnRunMode==RM_SERVER);
-			pIn->StartStop.hServerProcessHandle = (u64)(DWORD_PTR)DuplicateProcessHandle(nGuiPID);
+			pIn->StartStop.hServerProcessHandle = DuplicateProcessHandle(nGuiPID);
 
 			// послать CECMD_CMDSTARTSTOP/sst_ServerStart в GUI
 			pOut = ExecuteGuiCmd(ghConEmuWnd, pIn, ghConWnd);
@@ -4869,7 +4869,7 @@ void SendStarted()
 		else if (gnRunMode == RM_ALTSERVER)
 		{
 			// Подготовить хэндл своего процесса для MainServer
-			pIn->StartStop.hServerProcessHandle = (u64)(DWORD_PTR)DuplicateProcessHandle(nMainServerPID);
+			pIn->StartStop.hServerProcessHandle = DuplicateProcessHandle(nMainServerPID);
 
 			_ASSERTE(pIn->hdr.nCmd == CECMD_CMDSTARTSTOP);
 			pSrvOut = ExecuteSrvCmd(nMainServerPID, pIn, ghConWnd);
@@ -4928,7 +4928,7 @@ void SendStarted()
 			_ASSERTE(nServerPID!=0 && (gnRunMode==RM_ALTSERVER || gnRunMode==RM_COMSPEC));
 			if ((gnRunMode == RM_ALTSERVER) || (gnRunMode == RM_SERVER))
 			{
-				pIn->StartStop.hServerProcessHandle = (u64)(DWORD_PTR)DuplicateProcessHandle(nServerPID);
+				pIn->StartStop.hServerProcessHandle = DuplicateProcessHandle(nServerPID);
 			}
 
 			WARNING("Optimize!!!");
@@ -4959,7 +4959,7 @@ void SendStarted()
 			_ASSERTE(nGuiPID!=0 || gnRunMode==RM_SERVER);
 			if ((gnRunMode == RM_ALTSERVER) || (gnRunMode == RM_SERVER))
 			{
-				pIn->StartStop.hServerProcessHandle = (u64)(DWORD_PTR)DuplicateProcessHandle(nGuiPID);
+				pIn->StartStop.hServerProcessHandle = DuplicateProcessHandle(nGuiPID);
 			}
 
 			WARNING("Optimize!!!");

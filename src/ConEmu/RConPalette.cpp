@@ -81,11 +81,11 @@ void CRConPalette::UpdateColorTable(COLORREF *apColors/*[32]*/,
 	{
 		real_type oldDE = 0, newDE = 0;
 		wchar_t szLog[200];
-		u32 nColorIndex = 0;
+		uint32_t nColorIndex = 0;
 
-		for (u32 nBack = 0; nBack <= 0xF; nBack++)
+		for (uint32_t nBack = 0; nBack <= 0xF; nBack++)
 		{
-			for (u32 nFore = 0; nFore <= 0xF; nFore++, nColorIndex++)
+			for (uint32_t nFore = 0; nFore <= 0xF; nFore++, nColorIndex++)
 			{
 				memset(&lca, 0, sizeof(lca));
 				lca.nForeIdx = nFore;
@@ -126,9 +126,9 @@ void CRConPalette::UpdateColorTable(COLORREF *apColors/*[32]*/,
 	if (bExtendFonts)
 	{
 		// We need to update only tuples for nFontBoldColor and nFontItalicColor
-		for (u32 i = 0; i <= 1; i++)
+		for (uint32_t i = 0; i <= 1; i++)
 		{
-			u32 nBack = (i == 0) ? nFontBoldColor : nFontItalicColor;
+			uint32_t nBack = (i == 0) ? nFontBoldColor : nFontItalicColor;
 			if (nBack > 15)
 			{
 				// ‘None’ was selected
@@ -136,9 +136,9 @@ void CRConPalette::UpdateColorTable(COLORREF *apColors/*[32]*/,
 				continue;
 			}
 			CEFontStyles font = (i == 0) ? fnt_Bold : fnt_Italic;
-			u32 nColorIndex = nBack * 0x10;
+			uint32_t nColorIndex = nBack * 0x10;
 
-			for (u32 nFore = 0; nFore <= 0xF; nFore++, nColorIndex++)
+			for (uint32_t nFore = 0; nFore <= 0xF; nFore++, nColorIndex++)
 			{
 				if (nFontNormalColor <= 0x0F)
 				{

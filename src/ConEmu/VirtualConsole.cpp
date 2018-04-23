@@ -644,7 +644,7 @@ bool CVirtualConsole::PointersAlloc()
 	mb_PointersAllocated = false;
 	HEAPVAL;
 
-	uint nWidthHeight = (m_Sizes.nMaxTextWidth * m_Sizes.nMaxTextHeight);
+	unsigned nWidthHeight = (m_Sizes.nMaxTextWidth * m_Sizes.nMaxTextHeight);
 #ifdef AllocArray
 #undef AllocArray
 #endif
@@ -665,7 +665,7 @@ bool CVirtualConsole::PointersAlloc()
 
 void CVirtualConsole::PointersZero()
 {
-	uint nWidthHeight = (m_Sizes.nMaxTextWidth * m_Sizes.nMaxTextHeight);
+	unsigned nWidthHeight = (m_Sizes.nMaxTextWidth * m_Sizes.nMaxTextHeight);
 	//100607: Сбрасывать ВСЕ не будем. Эти массивы могут использоваться и в других нитях!
 	HEAPVAL;
 	//ZeroMemory(mpsz_ConChar, nWidthHeight*sizeof(*mpsz_ConChar));
@@ -704,8 +704,8 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 	if (!(pSCON ? pSCON : &_SCON)->isLocked())
 		(pSCON ? pSCON : &_SCON)->Lock(&csCON);
 	BOOL lbNeedCreateBuffers = FALSE;
-	uint rTextWidth = mp_RCon->TextWidth();
-	uint rTextHeight = mp_RCon->TextHeight();
+	unsigned rTextWidth = mp_RCon->TextWidth();
+	unsigned rTextHeight = mp_RCon->TextHeight();
 
 	if (!rTextWidth || !rTextHeight)
 	{
@@ -2017,9 +2017,9 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 
 				if (!abHasChildWindows)
 				{
-					for(uint nY = 0; nY < m_Sizes.TextHeight; nY++)
+					for(unsigned nY = 0; nY < m_Sizes.TextHeight; nY++)
 					{
-						uint nX = 0;
+						unsigned nX = 0;
 						//int nYPix1 = nY * nFontHeight;
 
 						while (nX < m_Sizes.TextWidth)
@@ -2039,7 +2039,7 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 								break;
 
 							// Найти конец прозрачного блока
-							uint nTranStart = nX;
+							unsigned nTranStart = nX;
 
 							#if 0
 							while (++nX < TextWidth && pnAttr[nX].bTransparent)
@@ -2527,7 +2527,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 	}
 
 	// Первая инициализация, или смена размера
-	BOOL lbSizeChanged = ((HDC)m_DC == NULL) || (m_Sizes.TextWidth != (uint)winSize.X || m_Sizes.TextHeight != (uint)winSize.Y)
+	BOOL lbSizeChanged = ((HDC)m_DC == NULL) || (m_Sizes.TextWidth != (unsigned)winSize.X || m_Sizes.TextHeight != (unsigned)winSize.Y)
 		|| (m_Sizes.LastPadSize != gpSet->nCenterConsolePad)
 		|| isFontSizeChanged; // или смена шрифта ('Auto' на 'Main')
 
@@ -2721,7 +2721,7 @@ void CVirtualConsole::UpdateText()
 	bool bFontProportional = !gpFontMgr->FontMonospaced();
 	//CEFONT hFont = gpFontMgr->mh_Font[0];
 	//CEFONT hFont2 = gpFontMgr->mh_Font2;
-	uint partIndex;
+	unsigned partIndex;
 	VConTextPart *part, *nextPart;
 
 	CVConLine lp(mp_RCon); // Line parser
@@ -2788,7 +2788,7 @@ void CVirtualConsole::UpdateText()
 					pszDrawLine = tmpOemWide;
 					for (int i = 0; i < iWide; i++)
 					{
-						if ((uint)(tmpOemWide[i]) <= 31)
+						if ((unsigned)(tmpOemWide[i]) <= 31)
 						{
 							tmpOemWide[i] = gszAnalogues[tmpOemWide[i]];
 						}
@@ -2810,14 +2810,14 @@ void CVirtualConsole::UpdateText()
 		{
 			partIndex = 0;
 			_ASSERTE(m_Sizes.nFontWidth > 0);
-			uint nChWidth = static_cast<uint>(m_Sizes.nFontWidth);
-			uint nChWidthAndHalf = nChWidth * 8 / 6;
+			unsigned nChWidth = static_cast<unsigned>(m_Sizes.nFontWidth);
+			unsigned nChWidthAndHalf = nChWidth * 8 / 6;
 			while (lp.GetNextPart(partIndex, part, nextPart))
 			{
 				TextCharType *pcf = part->CharFlags;
-				uint cw, *pcw = part->CharWidth;
+				unsigned cw, *pcw = part->CharWidth;
 				bool bDoubled;
-				for (uint i = 0; i < part->Length; i++, pcf++, pcw++)
+				for (unsigned i = 0; i < part->Length; i++, pcf++, pcw++)
 				{
 					if (*pcf >= TCF_WidthFree)
 					{
@@ -2941,11 +2941,11 @@ void CVirtualConsole::UpdateText()
 				// It may be done on first step, but if we do not do that here,
 				// some text may overlap scrollbars and progressbars...
 				wchar_t wc = part->Chars[0];
-				uint nFrom = 0;
+				unsigned nFrom = 0;
 				while (nFrom < part->Length)
 				{
 					wc = part->Chars[nFrom];
-					uint nTo = nFrom + 1;
+					unsigned nTo = nFrom + 1;
 					while (((nTo + 1) < part->Length) && (part->Chars[nTo] == wc))
 						nTo++;
 					HBRUSH hbr = PartBrush(wc, attr.crBackColor, attr.crForeColor);
@@ -4389,7 +4389,7 @@ COORD CVirtualConsole::ClientToConsole(LONG x, LONG y, bool StrictMonospace/*=fa
 			{
 				DWORD* ConCharXLine = ConCharX + cr.Y * m_Sizes.TextWidth;
 
-				for(uint i = 0; i < m_Sizes.TextWidth; i++, ConCharXLine++)
+				for(unsigned i = 0; i < m_Sizes.TextWidth; i++, ConCharXLine++)
 				{
 					if (((int)*ConCharXLine) >= x)
 					{
@@ -4457,9 +4457,9 @@ COORD CVirtualConsole::FindOpaqueCell()
 			CharAttr* pnAttr = mpn_ConAttrEx;
 
 			// Поиск первого непрозрачного
-			for (uint y = 0; y < m_Sizes.TextHeight; y++)
+			for (unsigned y = 0; y < m_Sizes.TextHeight; y++)
 			{
-				for (uint x = 0; x < m_Sizes.TextWidth; x++, pnAttr++)
+				for (unsigned x = 0; x < m_Sizes.TextWidth; x++, pnAttr++)
 				{
 					#if 0
 					if (!pnAttr[x].bTransparent)

@@ -311,7 +311,7 @@ bool isCharPunctuation(ucs32 inChar)
 #define DEF_DOUBLE_MUL 7
 #define DEF_DOUBLE_DIV 10
 
-void VConTextPart::Init(uint anIndex, uint anCell, CVConLine* pLine)
+void VConTextPart::Init(unsigned anIndex, unsigned anCell, CVConLine* pLine)
 {
 	Flags = TRF_None;
 	Length = 1; // initially, we'll enlarge it later
@@ -325,7 +325,7 @@ void VConTextPart::Init(uint anIndex, uint anCell, CVConLine* pLine)
 	CharWidth = pLine->TempCharWidth + anIndex;
 }
 
-void VConTextPart::SetLen(uint anLen, uint FontWidth)
+void VConTextPart::SetLen(unsigned anLen, unsigned FontWidth)
 {
 	_ASSERTE(anLen>0 && anLen<=0xFFFF);
 	Length = anLen;
@@ -338,7 +338,7 @@ void VConTextPart::SetLen(uint anLen, uint FontWidth)
 	else if ((Flags & TRF_TextPseudograph) && isCharPseudoFree(*Chars))
 	{
 		wchar_t wc = *Chars; bool bDiffers = false;
-		for (uint i = 1; i < Length; i++)
+		for (unsigned i = 1; i < Length; i++)
 		{
 			if (Chars[i] != wc)
 			{
@@ -349,18 +349,18 @@ void VConTextPart::SetLen(uint anLen, uint FontWidth)
 			Flags |= TRF_SizeFree;
 	}
 
-	uint FontWidth2 = 2*FontWidth;
+	unsigned FontWidth2 = 2*FontWidth;
 
 	const CharAttr* pca = Attrs;
 	TextCharType* pcf = CharFlags;
-	uint* pcw = CharWidth;
+	unsigned* pcw = CharWidth;
 
 	// Preliminary character widths estimation
 
 	if (Flags & TRF_SizeFree)
 	{
 		// spaces, horizontal lines (frames), etc. They may be shrinked freely
-		for (uint left = anLen; left--; pca++, pcf++)
+		for (unsigned left = anLen; left--; pca++, pcf++)
 		{
 			*pcw = FontWidth; // if non-shrinked
 			*pcf = TCF_WidthFree;
@@ -369,7 +369,7 @@ void VConTextPart::SetLen(uint anLen, uint FontWidth)
 	else
 	{
 		//WARNING: We rely here on pca->Flags2, but not on self evaluated data?
-		for (uint left = anLen; left--; pca++, pcf++, pcw++)
+		for (unsigned left = anLen; left--; pca++, pcf++, pcw++)
 		{
 			if (pca->Flags2 & (CharAttr2_NonSpacing|CharAttr2_Combining))
 			{
@@ -396,8 +396,8 @@ void VConTextPart::Done()
 	_ASSERTE(Length>0 && Length<=0xFFFF);
 	TotalWidth = 0;
 
-	uint* pcw = CharWidth;
-	for (uint left = Length; left--; pcw++)
+	unsigned* pcw = CharWidth;
+	for (unsigned left = Length; left--; pcw++)
 	{
 		TotalWidth += *pcw; // if non-shrinked
 	}
@@ -448,7 +448,7 @@ void CVConLine::SetDialogs(int anDialogsCount, SMALL_RECT* apDialogs, DWORD* apn
 	mrc_UCharMap = arcUCharMap;
 }
 
-bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint anRow, wchar_t* apConCharLine, CharAttr* apConAttrLine, const wchar_t* const ConCharLine2, const CharAttr* const ConAttrLine2)
+bool CVConLine::ParseLine(bool abForce, unsigned anTextWidth, unsigned anFontWidth, unsigned anRow, wchar_t* apConCharLine, CharAttr* apConAttrLine, const wchar_t* const ConCharLine2, const CharAttr* const ConAttrLine2)
 {
 	const bool bNeedAlloc = (MaxBufferSize < anTextWidth);
 	TextWidth = anTextWidth;
@@ -474,11 +474,11 @@ bool CVConLine::ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint
 	const bool bEnhanceGraphics = gpSet->isEnhanceGraphics;
 	const bool bUseAlternativeFont = _bool(gpSet->isFixFarBorders);
 
-	for (uint j = 0; j < TextWidth;)
+	for (unsigned j = 0; j < TextWidth;)
 	{
 		bool bPair = ((j+1) < TextWidth);
 		ucs32 wc = ucs32_from_wchar(ConCharLine+j, bPair);
-		uint j2 = j + (bPair ? 2 : 1);
+		unsigned j2 = j + (bPair ? 2 : 1);
 
 		const CharAttr attr = ConAttrLine[j];
 
@@ -647,7 +647,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 
 	#ifdef _DEBUG
 	// Validate structure
-	for (uint k = 0; k < PartsCount; k++)
+	for (unsigned k = 0; k < PartsCount; k++)
 	{
 		_ASSERTE(TextParts[k].Flags != TRF_None);
 		_ASSERTE(TextParts[k].Length > 0);
@@ -657,20 +657,20 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 
 	// VirtualConsole has set proper character widths, adopt them
 	TotalLineWidth = 0;
-	for (uint k = 0; k < PartsCount; k++)
+	for (unsigned k = 0; k < PartsCount; k++)
 	{
 		VConTextPart& part = TextParts[k];
 		part.Done();
 		TotalLineWidth += part.TotalWidth;
 	}
 
-	uint PosX, CharIdx;
+	unsigned PosX, CharIdx;
 	int prevFixedPart; // !SIGNED!
 
 	// First, we need to check if part do not overlap
 	// with *next* part, which may have *fixed* PosX
 	PosX = 0; prevFixedPart = -1;
-	for (uint k = 0; k < PartsCount; k++)
+	for (unsigned k = 0; k < PartsCount; k++)
 	{
 		VConTextPart& part = TextParts[k];
 
@@ -678,7 +678,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 		{
 			if (part.Flags & TRF_SizeFixed)
 			{
-				for (uint i = 0; i < part.Length; i++)
+				for (unsigned i = 0; i < part.Length; i++)
 				{
 					#define CellWidth FontWidth
 					if (part.CharWidth[i] != CellWidth)
@@ -719,7 +719,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 	/* Fill all X coordinates */
 	PosX = CharIdx = 0;
 	TotalLineWidth = 0;
-	for (uint k = 0; k < PartsCount; k++)
+	for (unsigned k = 0; k < PartsCount; k++)
 	{
 		VConTextPart& part = TextParts[k];
 		_ASSERTE(part.Flags != TRF_None);
@@ -738,9 +738,9 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 		}
 		TotalLineWidth += part.TotalWidth;
 
-		uint charPosX = PosX;
-		uint* ptrWidth = part.CharWidth;
-		for (uint l = part.Length; l--; CharIdx++, ptrWidth++)
+		unsigned charPosX = PosX;
+		unsigned* ptrWidth = part.CharWidth;
+		for (unsigned l = part.Length; l--; CharIdx++, ptrWidth++)
 		{
 			charPosX += *ptrWidth;
 			pnXCoords[CharIdx] = charPosX;
@@ -754,7 +754,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 	//TODO: we'll get memory gain and easy part deletion
 
 	// Now we may combine all parts, which are displayed same style
-	for (uint k = 0; k < PartsCount; k++)
+	for (unsigned k = 0; k < PartsCount; k++)
 	{
 		VConTextPart& part = TextParts[k];
 		if (part.Flags & (TRF_PosFixed|TRF_PosRecommended))
@@ -765,7 +765,7 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 		if (!(part.Flags & TRF_TextSpacing))
 		{
 			_ASSERTE(TRF_CompareMask & TRF_TextAlternative);
-			for (uint k2 = k+1; k2 < PartsCount; k2++)
+			for (unsigned k2 = k+1; k2 < PartsCount; k2++)
 			{
 				VConTextPart& part2 = TextParts[k2];
 				if (part2.Flags & (TRF_PosFixed|TRF_PosRecommended))
@@ -790,12 +790,12 @@ void CVConLine::PolishParts(DWORD* pnXCoords)
 }
 
 // gh-739: Crop overrun parts
-void CVConLine::CropParts(uint part1, uint part2, uint right)
+void CVConLine::CropParts(unsigned part1, unsigned part2, unsigned right)
 {
 	// Leftmost char coord
-	uint PosX = TextParts[part1].PositionX;
+	unsigned PosX = TextParts[part1].PositionX;
 
-	for (uint k = part1; k <= part2; k++)
+	for (unsigned k = part1; k <= part2; k++)
 	{
 		VConTextPart& part = TextParts[k];
 		if (!part.Flags)
@@ -811,14 +811,14 @@ void CVConLine::CropParts(uint part1, uint part2, uint right)
 		#ifdef _DEBUG
 		TextCharType* pcf = part.CharFlags; // character flags (zero/free/normal/double)
 		#endif
-		uint* pcw = part.CharWidth; // pointer to character width
+		unsigned* pcw = part.CharWidth; // pointer to character width
 
 		// Run part shrink
 		part.TotalWidth = 0;
 
 		_ASSERTE(!(part.Flags & TRF_Cropped));
 
-		for (uint c = 0;
+		for (unsigned c = 0;
 			(c < part.Length);
 			c++,
 			#ifdef _DEBUG
@@ -852,16 +852,16 @@ void CVConLine::CropParts(uint part1, uint part2, uint right)
 
 struct Shrinker
 {
-	uint cell_width;
+	unsigned cell_width;
 
 	// constants for selected method
-	uint indent_elast; // = 100;
-	uint space_elast;  // = 100;
-	uint s_tail_elast; // = 10;
-	uint single_elast; // = 300;
-	uint cjk_elast;    // = 101;
-	uint ascii_elast;  // = 150;
-	uint rigid_elast;  // = 10000;
+	unsigned indent_elast; // = 100;
+	unsigned space_elast;  // = 100;
+	unsigned s_tail_elast; // = 10;
+	unsigned single_elast; // = 300;
+	unsigned cjk_elast;    // = 101;
+	unsigned ascii_elast;  // = 150;
+	unsigned rigid_elast;  // = 10000;
 
 	// Restrict compression
 	float indent_min_shrink; // = 0.5;  // %cell
@@ -871,8 +871,8 @@ struct Shrinker
 	// Temporary storage for changed parts widths
 	struct part_data
 	{
-		uint    old_width;
-		uint    new_width;
+		unsigned    old_width;
+		unsigned    new_width;
 		double  part_elast;
 		float   delta;
 	};
@@ -902,7 +902,7 @@ struct Shrinker
 		delete[] data;
 	};
 
-	void init(VConTextPart* parts, uint l, uint r, uint a_font_width)
+	void init(VConTextPart* parts, unsigned l, unsigned r, unsigned a_font_width)
 	{
 		if (data == NULL)
 		{
@@ -925,7 +925,7 @@ struct Shrinker
 		return k;
 	};
 
-	void get_total(VConTextPart* parts, uint l, uint r, float& total_k, int& total_l)
+	void get_total(VConTextPart* parts, unsigned l, unsigned r, float& total_k, int& total_l)
 	{
 		_ASSERTE(data!=NULL);
 
@@ -974,7 +974,7 @@ struct Shrinker
 	};
 
 	// returns `true` if there was critical compression ratio
-	bool eval_compression(VConTextPart* parts, uint l, uint r, int a_req_len)
+	bool eval_compression(VConTextPart* parts, unsigned l, unsigned r, int a_req_len)
 	{
 		_ASSERTE(l<=r && a_req_len>0);
 
@@ -1000,8 +1000,8 @@ struct Shrinker
 
 		float F = total_k * (total_l - req_len);
 		float add_half = (F > 0) ? 0.5 : -0.5;
-		uint half_cell = (cell_width > 3) ? (cell_width/2) : 1;
-		for (uint i = l; (i < r) && (req_len < total_l); i++)
+		unsigned half_cell = (cell_width > 3) ? (cell_width/2) : 1;
+		for (unsigned i = l; (i < r) && (req_len < total_l); i++)
 		{
 			if (!parts[i].TotalWidth)
 			{
@@ -1048,7 +1048,7 @@ struct Shrinker
 
 // Shrink lengths of [part1..part2] (including)
 // They must not exceed `right` X coordinate
-void CVConLine::DistributeParts(uint part1, uint part2, uint right)
+void CVConLine::DistributeParts(unsigned part1, unsigned part2, unsigned right)
 {
 	if ((part1 > part2) || (part2 >= PartsCount))
 	{
@@ -1079,8 +1079,8 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 	}
 
 
-	uint ReqWidth = (right - TextParts[part1].PositionX);
-	uint FullWidth = (TextParts[part2].PositionX + TextParts[part2].TotalWidth - TextParts[part1].PositionX);
+	unsigned ReqWidth = (right - TextParts[part1].PositionX);
+	unsigned FullWidth = (TextParts[part2].PositionX + TextParts[part2].TotalWidth - TextParts[part1].PositionX);
 
 	// 1) ...
 	// 2) ...
@@ -1091,8 +1091,8 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 	shrinker.eval_compression(TextParts, part1, part2, right - TextParts[part1].PositionX);
 
 	// Leftmost char coord
-	uint PosX = TextParts[part1].PositionX;
-	for (uint k = part1; k <= part2; k++)
+	unsigned PosX = TextParts[part1].PositionX;
+	for (unsigned k = part1; k <= part2; k++)
 	{
 		VConTextPart& part = TextParts[k];
 		if (!part.Flags)
@@ -1103,11 +1103,11 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 
 		// Prepare loops
 		TextCharType* pcf = part.CharFlags; // character flags (zero/free/normal/double)
-		uint* pcw = part.CharWidth; // pointer to character width
+		unsigned* pcw = part.CharWidth; // pointer to character width
 		int ShrinkLeft = part.Length;
-		uint NeedWidth = shrinker.data[k-part1].new_width;
-		uint NewPartWidth = 0;
-		for (uint c = 0; c < part.Length; c++, pcf++, pcw++)
+		unsigned NeedWidth = shrinker.data[k-part1].new_width;
+		unsigned NewPartWidth = 0;
+		for (unsigned c = 0; c < part.Length; c++, pcf++, pcw++)
 		{
 			DoShrink(*pcw, ShrinkLeft, NeedWidth, NewPartWidth);
 		}
@@ -1122,7 +1122,7 @@ void CVConLine::DistributeParts(uint part1, uint part2, uint right)
 }
 
 //TODO: Refactor
-void CVConLine::DoShrink(uint& charWidth, int& ShrinkLeft, uint& NeedWidth, uint& TotalWidth)
+void CVConLine::DoShrink(unsigned& charWidth, int& ShrinkLeft, unsigned& NeedWidth, unsigned& TotalWidth)
 {
 	if (!NeedWidth)
 	{
@@ -1133,7 +1133,7 @@ void CVConLine::DoShrink(uint& charWidth, int& ShrinkLeft, uint& NeedWidth, uint
 	else if (ShrinkLeft > 0)
 	{
 		_ASSERTE(ShrinkLeft>0 && NeedWidth>0);
-		uint nw = NeedWidth / ShrinkLeft;
+		unsigned nw = NeedWidth / ShrinkLeft;
 		if (nw > charWidth)
 			nw = charWidth;
 		if (nw > NeedWidth)
@@ -1156,7 +1156,7 @@ void CVConLine::DoShrink(uint& charWidth, int& ShrinkLeft, uint& NeedWidth, uint
 	}
 }
 
-void CVConLine::ExpandPart(VConTextPart& part, uint EndX)
+void CVConLine::ExpandPart(VConTextPart& part, unsigned EndX)
 {
 	if (!part.Length || !part.Flags)
 	{
@@ -1167,13 +1167,13 @@ void CVConLine::ExpandPart(VConTextPart& part, uint EndX)
 	// Spaces and Horizontal frames
 	if ((part.Flags & TRF_SizeFree) && (part.Length > 1))
 	{
-		uint NeedWidth = EndX - part.PositionX;
+		unsigned NeedWidth = EndX - part.PositionX;
 		int WidthLeft = NeedWidth;
-		uint* pcw = part.CharWidth;
+		unsigned* pcw = part.CharWidth;
 		part.TotalWidth = 0;
 		for (int i = part.Length; i > 0; i--, pcw++)
 		{
-			uint nw = (uint)(WidthLeft - i);
+			unsigned nw = (unsigned)(WidthLeft - i);
 			*pcw = nw;
 			part.TotalWidth += nw;
 			WidthLeft -= nw;
@@ -1192,7 +1192,7 @@ void CVConLine::ExpandPart(VConTextPart& part, uint EndX)
 		//TODO: RTL?
 		//if (isCharRTL(part.Chars[chrIdx]))
 		//	chrIdx = 0;
-		uint* pcw = part.CharWidth + chrIdx;
+		unsigned* pcw = part.CharWidth + chrIdx;
 		int iDiff = EndX - part.PositionX - part.TotalWidth;
 		_ASSERTE(iDiff > 0);
 		*pcw += iDiff;
@@ -1200,7 +1200,7 @@ void CVConLine::ExpandPart(VConTextPart& part, uint EndX)
 	}
 }
 
-bool CVConLine::GetNextPart(uint& partIndex, VConTextPart*& part, VConTextPart*& nextPart)
+bool CVConLine::GetNextPart(unsigned& partIndex, VConTextPart*& part, VConTextPart*& nextPart)
 {
 	if (!TextParts || !PartsCount)
 	{
@@ -1237,7 +1237,7 @@ bool CVConLine::AllocateMemory()
 		return false;
 	if (!(TempCharFlags = (TextCharType*)malloc(TextWidth*sizeof(*TempCharFlags))))
 		return false;
-	if (!(TempCharWidth = (uint*)malloc(TextWidth*sizeof(*TempCharWidth))))
+	if (!(TempCharWidth = (unsigned*)malloc(TextWidth*sizeof(*TempCharWidth))))
 		return false;
 
 	return true;
@@ -1251,7 +1251,7 @@ void CVConLine::ReleaseMemory()
 	SafeFree(TempCharWidth);
 }
 
-TextPartFlags CVConLine::isDialogBorderCoord(uint j)
+TextPartFlags CVConLine::isDialogBorderCoord(unsigned j)
 {
 	//bool isDlgBorder = false, bMayBeFrame = false;
 	TextPartFlags dlgBorder = TRF_None;
@@ -1374,9 +1374,9 @@ TextPartFlags CVConLine::isDialogBorderCoord(uint j)
 	return dlgBorder;
 }
 
-uint CVConLine::GetNextPartX(const uint part)
+unsigned CVConLine::GetNextPartX(const unsigned part)
 {
-	uint nextPartX = ((part+1) < PartsCount) ? TextParts[part + 1].CellPosX
+	unsigned nextPartX = ((part+1) < PartsCount) ? TextParts[part + 1].CellPosX
 		: (TextWidth * FontWidth);
 	return nextPartX;
 }

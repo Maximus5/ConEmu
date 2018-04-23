@@ -91,7 +91,7 @@ LRESULT CSetPgViews::OnInitDialog(HWND hDlg, bool abInitial)
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, tThumbMaxZoom), CSetDlgLists::eThumbMaxZoom, gpSet->ThSet.nMaxZoom, false);
 
 	// Colors
-	for(uint c = c32; c <= c34; c++)
+	for(unsigned c = c32; c <= c34; c++)
 		ColorSetEdit(hDlg, c);
 
 	nVal = gpSet->ThSet.crBackground.ColorIdx;

@@ -184,10 +184,10 @@ class CRealConsole
 
 	public:
 
-		uint TextWidth();
-		uint TextHeight();
-		uint BufferHeight(uint nNewBufferHeight=0);
-		uint BufferWidth();
+		unsigned TextWidth();
+		unsigned TextHeight();
+		unsigned BufferHeight(unsigned nNewBufferHeight=0);
+		unsigned BufferWidth();
 		void OnBufferHeight();
 
 	private:
@@ -526,7 +526,7 @@ class CRealConsole
 		void OnServerClosing(DWORD anSrvPID, int* pnShellExitCode);
 		void Paste(CEPasteMode PasteMode = pm_Standard, LPCWSTR asText = NULL, bool abNoConfirm = false, PosixPasteMode posixMode = pxm_Auto);
 		bool Write(LPCWSTR pszText, int nLen = -1, DWORD* pnWritten = NULL);
-		uint isLogging(uint level = 1);
+		unsigned isLogging(unsigned level = 1);
 		bool LogString(LPCSTR asText);
 		bool LogString(LPCWSTR asText);
 		bool isActive(bool abAllowGroup);
@@ -602,7 +602,7 @@ class CRealConsole
 		void SetInCloseConsole(bool InCloseConsole);
 		// Сервер и альтернативный сервер
 		DWORD mn_MainSrv_PID; HANDLE mh_MainSrv;
-		u64 mn_ProcessAffinity; DWORD mn_ProcessPriority;
+		uint64_t mn_ProcessAffinity; DWORD mn_ProcessPriority;
 		CDpiForDialog* mp_PriorityDpiAware = nullptr;
 		void RepositionDialogWithTab(HWND hDlg);
 		static INT_PTR CALLBACK priorityProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam);

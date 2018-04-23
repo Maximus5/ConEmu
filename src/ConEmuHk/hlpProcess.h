@@ -272,7 +272,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate = ds_Undefined);
 		static const int CRITICAL_BUFFER_SIZE = 256;
 		struct CritInfo
 		{
-			u64 total;
+			uint64_t total;
 			DWORD count;
 			
 			#ifdef _WIN64

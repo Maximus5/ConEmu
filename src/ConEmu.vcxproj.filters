@@ -729,9 +729,6 @@
     <ClInclude Include="common\execute.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="common\kl_parts.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="common\md5.h">
       <Filter>Common</Filter>
     </ClInclude>

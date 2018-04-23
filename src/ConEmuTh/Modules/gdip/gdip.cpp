@@ -397,7 +397,7 @@ struct GDIPlusImage
 	};
 
 
-	//Gdiplus::GpBitmap* OpenBitmapFromStream(const u8 *pBuffer, i64 lFileSize)
+	//Gdiplus::GpBitmap* OpenBitmapFromStream(const uint8_t *pBuffer, int64_t lFileSize)
 	//{
 	//	Gdiplus::Status lRc = Gdiplus::Ok;
 	//	Gdiplus::GpBitmap *img = NULL;
@@ -437,7 +437,7 @@ struct GDIPlusImage
 		return bmp;
 	}
 
-	bool Open(bool bVirtual, const wchar_t *pFileName, const u8 *pBuffer, i64 lFileSize, COORD crLoadSize)
+	bool Open(bool bVirtual, const wchar_t *pFileName, const uint8_t *pBuffer, int64_t lFileSize, COORD crLoadSize)
 	{
 		_ASSERTE(img == NULL);
 		_ASSERTE(gdi != NULL);
@@ -624,15 +624,15 @@ struct GDIPlusImage
 	{
 		nShowWidth = lWidth;
 		nShowHeight = lHeight;
-		i64 aSrc = (100 * (i64) lWidth / lHeight);
-		i64 aCvs = (100 * (i64) nCanvasWidth / nCanvasHeight);
+		int64_t aSrc = (100 * (int64_t) lWidth / lHeight);
+		int64_t aCvs = (100 * (int64_t) nCanvasWidth / nCanvasHeight);
 
 		if (aSrc > aCvs)
 		{
 			if (lWidth >= (UINT)nCanvasWidth)
 			{
 				nShowWidth = nCanvasWidth;
-				nShowHeight = (int)((((i64)lHeight) * nCanvasWidth) / lWidth); //-V537
+				nShowHeight = (int)((((int64_t)lHeight) * nCanvasWidth) / lWidth); //-V537
 
 				if (!nShowHeight || nShowHeight < (nShowWidth/8))
 				{

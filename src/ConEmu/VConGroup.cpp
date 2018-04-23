@@ -5222,7 +5222,7 @@ RECT CVConGroup::AllTextRect(SIZE* rpSplits /*= NULL*/, bool abMinimal /*= false
 // rcWnd: размер ghWnd
 // Returns: true - если успешно, можно продолжать
 // #SIZE_TODO Replace rcWnd with SIZE?
-bool CVConGroup::PreReSize(uint WindowMode, RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN*/, bool bSetRedraw /*= false*/)
+bool CVConGroup::PreReSize(unsigned WindowMode, RECT rcWnd, enum ConEmuRect tFrom /*= CER_MAIN*/, bool bSetRedraw /*= false*/)
 {
 	bool lbRc = true;
 	CVConGuard VCon(gp_VActive);

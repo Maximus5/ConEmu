@@ -141,7 +141,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 		case DLL_PROCESS_ATTACH:
 		{
 			ghPluginModule = (HMODULE)hModule;
-			//ghWorkingModule = (u64)hModule;
+			//ghWorkingModule = hModule;
 			HeapInitialize();
 
 #ifdef SHOW_STARTED_MSGBOX
@@ -2064,7 +2064,7 @@ void FormatSize(ULARGE_INTEGER size, wchar_t* out)
 	if (size.QuadPart)
 	{
 		// Сформатировать размер
-		u64 lSize = size.QuadPart, lDec = 0;
+		uint64_t lSize = size.QuadPart, lDec = 0;
 		const wchar_t *SizeSymbol[]={L"B",L"KB",L"MB",L"GB",L"TB",L"PB"};
 		for (size_t n = 0; n < countof(SizeSymbol); n++)
 		{
@@ -2077,7 +2077,7 @@ void FormatSize(ULARGE_INTEGER size, wchar_t* out)
 				break;
 			}
 
-			u64 lNext = lSize >> 10;
+			uint64_t lNext = lSize >> 10;
 			lDec = (lSize % 1024) / 100;
 			lSize = lNext;
 		}
@@ -2646,7 +2646,7 @@ int PaintPanel(struct PaintBackgroundArg* pBk, BOOL bLeft, COLORREF& crOtherColo
 			RECT rcUsed = (pDraw->nSpaceBar == DrawInfo::dib_Small) ? rcWork : rcPanel;
 			int iShift = (pDraw->nSpaceBar == DrawInfo::dib_Small) ? 0 : 2;
 			rcUsed.top = rcUsed.bottom - (nStatusLines+iShift) * ((rcPanel.bottom - rcPanel.top + 1) / nPanelHeight);
-			rcUsed.right = rcUsed.right - (int)((u64)(rcUsed.right - rcUsed.left + 1) * llFreeSize.QuadPart / llTotalSize.QuadPart);
+			rcUsed.right = rcUsed.right - (int)((uint64_t)(rcUsed.right - rcUsed.left + 1) * llFreeSize.QuadPart / llTotalSize.QuadPart);
 			if (rcUsed.right > rcWork.right)
 			{
 				_ASSERTE(rcUsed.right <= rcWork.right);

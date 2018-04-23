@@ -29,8 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <windows.h>
-
+#include "../common/defines.h"
 #include "../common/wcchars.h"
 
 class CConEmuMain;
@@ -48,13 +47,13 @@ class CAltNumpad
 protected:
 	CConEmuMain* mp_ConEmu;
 	AltCharAction m_WaitingForAltChar;
-	bool mb_InAltNumber;
-	bool mb_External; // Mode triggered by hotkey
-	bool mb_AnsiCP; // If started by Alt+0ddd
-	UINT mn_NumberBase; // 10 or 16
-	u64  mn_AltNumber;
-	UINT mn_SkipVkKeyUp;
-	int  mn_AltScanCode;
+	bool     mb_InAltNumber;
+	bool     mb_External; // Mode triggered by hotkey
+	bool     mb_AnsiCP; // If started by Alt+0ddd
+	uint32_t mn_NumberBase; // 10 or 16
+	uint64_t mn_AltNumber;
+	uint32_t mn_SkipVkKeyUp;
+	int32_t  mn_AltScanCode;
 
 public:
 	CAltNumpad(CConEmuMain* apConEmu);

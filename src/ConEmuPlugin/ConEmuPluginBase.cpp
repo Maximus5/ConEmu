@@ -242,7 +242,7 @@ CPluginBase::~CPluginBase()
 void CPluginBase::DllMain_ProcessAttach(HMODULE hModule)
 {
 	ghPluginModule = (HMODULE)hModule;
-	ghWorkingModule = (u64)hModule;
+	ghWorkingModule = hModule;
 	gnSelfPID = GetCurrentProcessId();
 	HeapInitialize();
 	gfnSearchAppPaths = SearchAppPaths;

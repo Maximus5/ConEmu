@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct SettingsBase
 {
 	public:
-		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE) = 0;
+		virtual bool OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent = FALSE) = 0;
 		virtual void CloseKey() = 0;
 
 		virtual bool Load(const wchar_t *regName, wchar_t **value) = 0;
@@ -97,8 +97,8 @@ struct SettingsRegistry : public SettingsBase
 	public:
 		HKEY regMy;
 
-		bool OpenKey(HKEY inHKEY, const wchar_t *regPath, uint access, BOOL abSilent = FALSE);
-		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE) override;
+		bool OpenKey(HKEY inHKEY, const wchar_t *regPath, unsigned access, BOOL abSilent = FALSE);
+		virtual bool OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent = FALSE) override;
 		virtual void CloseKey() override;
 
 		virtual bool Load(const wchar_t *regName, wchar_t **value) override;
@@ -123,7 +123,7 @@ struct SettingsINI : public SettingsBase
 		LPCWSTR  mpsz_IniFile;
 	public:
 
-		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE) override;
+		virtual bool OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent = FALSE) override;
 		virtual void CloseKey() override;
 
 		virtual bool Load(const wchar_t *regName, wchar_t **value) override;
@@ -161,9 +161,9 @@ struct SettingsXML : public SettingsBase
 		bool mb_Modified = false; // Save was called at least once (data may be or may be not changed)
 		bool mb_DataChanged = false; // Data of the mp_Key was changed - set "modified" attribute to current datetime in CloseKey
 		bool mb_Empty = false;
-		uint mn_access = 0;
+		unsigned mn_access = 0;
 	public:
-		virtual bool OpenKey(const wchar_t *regPath, uint access, BOOL abSilent = FALSE) noexcept override;
+		virtual bool OpenKey(const wchar_t *regPath, unsigned access, BOOL abSilent = FALSE) noexcept override;
 		virtual void CloseKey() noexcept override;
 
 		virtual bool Load(const wchar_t *regName, wchar_t **value) noexcept override;
@@ -180,7 +180,7 @@ struct SettingsXML : public SettingsBase
 	protected:
 		void SetDataChanged();
 
-		bool OpenStorage(uint access, wchar_t*& pszErr);
+		bool OpenStorage(unsigned access, wchar_t*& pszErr);
 		void CloseStorage() noexcept;
 		void TouchKey(node* apKey) noexcept;
 

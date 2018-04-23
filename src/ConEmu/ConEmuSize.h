@@ -274,7 +274,7 @@ public:
 	void CheckTopMostState();
 	bool SizeWindow(const CESize sizeW, const CESize sizeH);
 
-	void EvalVConCreateSize(CVirtualConsole* apVCon, uint& rnTextWidth, uint& rnTextHeight);
+	void EvalVConCreateSize(CVirtualConsole* apVCon, unsigned& rnTextWidth, unsigned& rnTextHeight);
 
 	HWND FindNextSiblingApp(bool bActivate);
 

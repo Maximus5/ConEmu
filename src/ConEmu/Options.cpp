@@ -89,7 +89,7 @@ TODO("Load/Save Settings::bHideDisabledTabs?");
 //#define FAILED_FONT_TIMEOUT 3000
 //#define FAILED_CONFONT_TIMEOUT 30000
 
-//const u8 chSetsNums[] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
+//const uint8_t chSetsNums[] = {0, 178, 186, 136, 1, 238, 134, 161, 177, 129, 130, 77, 255, 204, 128, 2, 222, 162, 163};
 //const char *ChSets[] = {"ANSI", "Arabic", "Baltic", "Chinese Big 5", "Default", "East Europe",
 //                        "GB 2312", "Greek", "Hebrew", "Hangul", "Johab", "Mac", "OEM", "Russian", "Shiftjis",
 //                        "Symbol", "Thai", "Turkish", "Vietnamese"
@@ -535,7 +535,7 @@ void Settings::InitSettings()
 	// those which were designed for 8-color consoles (cygwin)
 	if ((pcrColors = GetDefColors(L"<ConEmu>")) != NULL)
 	{
-		for (uint i = 0x10; i--;)
+		for (unsigned i = 0x10; i--;)
 		{
 			Colors[i] = pcrColors[i]; // SolarMe color palette
 			Colors[i+0x10] = pcrStd[i]; // Windows standard colors
@@ -554,7 +554,7 @@ void Settings::InitSettings()
 			TCHAR ColorName[] = L"ColorTable00";
 			bool  lbBlackFound = false;
 
-			for (uint i = 0x10; i--;)
+			for (unsigned i = 0x10; i--;)
 			{
 				// L"ColorTableNN"
 				ColorName[10] = i/10 + '0';
@@ -1920,9 +1920,9 @@ int Settings::PaletteSetActive(LPCWSTR asName)
 
 	if (pPal)
 	{
-		uint nCount = countof(pPal->Colors);
+		unsigned nCount = countof(pPal->Colors);
 
-		for (uint i = 0; i < nCount; i++)
+		for (unsigned i = 0; i < nCount; i++)
 		{
 			Colors[i] = pPal->Colors[i]; //-V108
 		}
@@ -3412,7 +3412,7 @@ void Settings::SaveStdColors(SettingsBase* reg)
 {
 	TCHAR ColorName[] = L"ColorTable00";
 
-	for(uint i = 0; i<countof(Colors)/*0x10*/; i++)
+	for(unsigned i = 0; i<countof(Colors)/*0x10*/; i++)
 	{
 		ColorName[10] = i/10 + '0';
 		ColorName[11] = i%10 + '0';
@@ -4956,7 +4956,7 @@ bool Settings::NeedCreateAppWindow()
 	return false;
 }
 
-uint Settings::isLogging(uint level /*= 1*/)
+unsigned Settings::isLogging(unsigned level /*= 1*/)
 {
 	if (!gpConEmu || mb_DisableLogging)
 		return 0;

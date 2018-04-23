@@ -278,7 +278,6 @@ extern void _DEBUGSTR(LPCWSTR s);
 #endif
 #endif
 
-#include "kl_parts.h"
 #include "MStrSafe.h"
 #include "Memory.h"
 

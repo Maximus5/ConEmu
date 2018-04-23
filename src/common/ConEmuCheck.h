@@ -109,7 +109,7 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND 
 				HANDLE hStdIn, HANDLE hStdOut, HANDLE hStdErr);
 
 extern SECURITY_ATTRIBUTES* gpLocalSecurity;
-extern u64 ghWorkingModule;
+extern HANDLE2 ghWorkingModule;
 
 #ifdef _DEBUG
 extern bool gbPipeDebugBoxes;

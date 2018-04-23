@@ -50,7 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
 
 // Informational. Will be set in pHdr->hModule on calls
-u64 ghWorkingModule = 0;
+HANDLE2 ghWorkingModule = {};
 
 #ifdef _DEBUG
 bool gbPipeDebugBoxes = false;

@@ -170,7 +170,7 @@ BOOL WINAPI DllMain(HANDLE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved
 			{
 				//HeapInitialize();
 				ghOurModule = (HMODULE)hModule;
-				ghWorkingModule = (u64)hModule;
+				ghWorkingModule = hModule;
 				HeapInitialize();
 
 				#ifdef SHOW_STARTED_MSGBOX

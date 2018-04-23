@@ -98,22 +98,22 @@ struct VConTextPartWidth
 struct VConTextPart
 {
 	TextPartFlags Flags;
-	uint Length;
+	unsigned Length;
 
 	// Pointers
 	const wchar_t* Chars;
 	const CharAttr* Attrs;
 
 	// Index in CVConLine.ConCharLine
-	uint Index;
+	unsigned Index;
 	// Cell in the RealConsole. It may differ from Index on DBCS systems
-	uint Cell;
+	unsigned Cell;
 	// Helper, to ensure our text parts fit in the terminal window
-	uint TotalWidth;
+	unsigned TotalWidth;
 	// Final position in VCon
-	uint PositionX;
+	unsigned PositionX;
 	// Preferred position calculated by Cell*FontWidth
-	uint CellPosX;
+	unsigned CellPosX;
 
 	#if 0
 	// Chars distribution
@@ -126,11 +126,11 @@ struct VConTextPart
 	// CharWidth is a pointer to buffer+idx from CVConLine
 	// If gpSet->isMonospace then CharWidth calculated according to TCF_WidthXXX
 	// But for proportional fonts we have to call GDI's TextExtentPoint
-	uint* CharWidth;
+	unsigned* CharWidth;
 
 
-	void Init(uint anIndex, uint anCell, CVConLine* pLine);
-	void SetLen(uint anLen, uint FontWidth);
+	void Init(unsigned anIndex, unsigned anCell, CVConLine* pLine);
+	void SetLen(unsigned anLen, unsigned FontWidth);
 	void Done();
 };
 
@@ -143,21 +143,21 @@ public:
 public:
 	// Methods
 	void SetDialogs(int anDialogsCount, SMALL_RECT* apDialogs, DWORD* apnDialogFlags, DWORD anDialogAllFlags, const SMALL_RECT& arcUCharMap);
-	bool ParseLine(bool abForce, uint anTextWidth, uint anFontWidth, uint anRow, wchar_t* apConCharLine, CharAttr* apConAttrLine, const wchar_t* const ConCharLine2, const CharAttr* const ConAttrLine2);
+	bool ParseLine(bool abForce, unsigned anTextWidth, unsigned anFontWidth, unsigned anRow, wchar_t* apConCharLine, CharAttr* apConAttrLine, const wchar_t* const ConCharLine2, const CharAttr* const ConAttrLine2);
 	void PolishParts(DWORD* pnXCoords);
-	bool GetNextPart(uint& partIndex, VConTextPart*& part, VConTextPart*& nextPart);
+	bool GetNextPart(unsigned& partIndex, VConTextPart*& part, VConTextPart*& nextPart);
 
 protected:
 	// Methods
 	bool AllocateMemory();
 	void ReleaseMemory();
 
-	TextPartFlags isDialogBorderCoord(uint j);
-	void CropParts(uint part1, uint part2, uint right);
-	void DistributeParts(uint part1, uint part2, uint right);
-	void DoShrink(uint& charWidth, int& ShrinkLeft, uint& NeedWidth, uint& TotalWidth);
-	void ExpandPart(VConTextPart& part, uint EndX);
-	uint GetNextPartX(const uint part);
+	TextPartFlags isDialogBorderCoord(unsigned j);
+	void CropParts(unsigned part1, unsigned part2, unsigned right);
+	void DistributeParts(unsigned part1, unsigned part2, unsigned right);
+	void DoShrink(unsigned& charWidth, int& ShrinkLeft, unsigned& NeedWidth, unsigned& TotalWidth);
+	void ExpandPart(VConTextPart& part, unsigned EndX);
+	unsigned GetNextPartX(const unsigned part);
 
 protected:
 	friend struct VConTextPart;
@@ -175,21 +175,21 @@ protected:
 	bool isFilePanel;
 
 	// Drawing parameters below
-	uint TextWidth;
-	uint FontWidth;
+	unsigned TextWidth;
+	unsigned FontWidth;
 	// Full redraw was requested
 	bool isForce;
 
 	// What we are parsing now
-	uint row;
+	unsigned row;
 	const wchar_t* ConCharLine/*[TextWidth]*/;
 	const CharAttr* ConAttrLine/*[TextWidth]*/;
 
 	// Size of buffers
-	uint MaxBufferSize;
+	unsigned MaxBufferSize;
 
 	// Buffer to parse our line
-	uint PartsCount;
+	unsigned PartsCount;
 	VConTextPart* TextParts/*[MaxBufferSize]*/;
 
 	// CharFlags is a pointer to buffer+idx from CVConLine
@@ -198,10 +198,10 @@ protected:
 	// CharWidth is a pointer to buffer+idx from CVConLine
 	// If gpSet->isMonospace then CharWidth calculated according to TCF_WidthXXX
 	// But for proportional fonts we have to call GDI's TextExtentPoint
-	uint* TempCharWidth/*[MaxBufferSize]*/;
+	unsigned* TempCharWidth/*[MaxBufferSize]*/;
 
 	// Just for information
-	uint TotalLineWidth;
+	unsigned TotalLineWidth;
 
 	// Pseudographics alignments
 	bool isFixFrameCoord;

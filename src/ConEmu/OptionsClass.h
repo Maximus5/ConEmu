@@ -170,7 +170,7 @@ class CSettings
 	public:
 		enum ColorShowFormat { eRgbDec = 0, eRgbHex, eBgrHex } m_ColorFormat;
 	public:
-		void SetBgImageDarker(u8 newValue, bool bUpdate);
+		void SetBgImageDarker(uint8_t newValue, bool bUpdate);
 		#ifndef APPDISTINCTBACKGROUND
 		bool PrepareBackground(CVirtualConsole* apVCon, HDC* phBgDc, COORD* pbgBmpSize);
 		bool PollBackgroundFile(); // true, если файл изменен
@@ -280,13 +280,13 @@ class CSettings
 		void RegisterTipsFor(HWND hChildDlg);
 	private:
 		//BOOL mb_CharSetWasSet;
-		i64 mn_Freq;
-		i64 mn_FPS[256]; int mn_FPS_CUR_FRAME;
-		i64 mn_RFPS[128]; int mn_RFPS_CUR_FRAME;
-		i64 mn_Counter[tPerfLast];
-		i64 mn_CounterMax[tPerfLast];
+		int64_t mn_Freq;
+		int64_t mn_FPS[256]; int mn_FPS_CUR_FRAME;
+		int64_t mn_RFPS[128]; int mn_RFPS_CUR_FRAME;
+		int64_t mn_Counter[tPerfLast];
+		int64_t mn_CounterMax[tPerfLast];
 		DWORD mn_CounterTick[tPerfLast];
-		i64 mn_KbdDelayCounter, mn_KbdDelays[32/*must be power of 2*/]; LONG mn_KBD_CUR_FRAME;
+		int64_t mn_KbdDelayCounter, mn_KbdDelays[32/*must be power of 2*/]; LONG mn_KBD_CUR_FRAME;
 		HWND hwndTip, hwndBalloon;
 		TOOLINFO tiBalloon;
 		static BOOL CALLBACK RegisterTipsForChild(HWND hChild, LPARAM lParam);

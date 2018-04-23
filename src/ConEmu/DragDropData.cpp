@@ -1039,7 +1039,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 								nCurLen = _tcslen(szNames[i].str);
 								swprintf_c(szNames[i].str+nCurLen, countof(szNames[i].str)-nCurLen/*#SECURELEN*/, L", Data=0x%08X", (DWORD)*((LPDWORD)(psz[i])));
 							}
-							else if (memsize[i] == sizeof(u64))
+							else if (memsize[i] == sizeof(uint64_t))
 							{
 								nCurLen = _tcslen(szNames[i].str);
 								swprintf_c(szNames[i].str+nCurLen, countof(szNames[i].str)-nCurLen/*#SECURELEN*/, L", Data=0x%08X%08X", (DWORD)((LPDWORD)(psz[i]))[0], (DWORD)((LPDWORD)psz[i])[1]);
@@ -1743,7 +1743,7 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 	//				pDst->nRes1 = GetTickCount(); // что-то непонятное. Random?
 	//				pDst->nRes2 = (DWORD)-1;
 
-	//				const u32 nCurBlend = OVERLAY_ALPHA, nAllBlend = OVERLAY_ALPHA;
+	//				const uint32_t nCurBlend = OVERLAY_ALPHA, nAllBlend = OVERLAY_ALPHA;
 
 	//				INT_PTR PixCount = nMaxY * nLineX;
 	//				Assert(PixCount>0);
@@ -1886,6 +1886,12 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 	#else
 	DestroyDragImageWindow();
 	#endif
+
+	auto klMulDivU32 = [](const uint32_t& a, const uint32_t& b, const uint32_t& c) -> uint32_t
+	{
+		return (a * b / c);
+	};
+
 
 #if 0
 	if (abForceToTop)
@@ -2070,7 +2076,7 @@ DragImageBits* CDragDropData::CreateDragImageBits(wchar_t* pszFiles)
 						pDst->nRes1 = GetTickCount(); // что-то непонятное. Random?
 						pDst->nRes2 = (DWORD)-1;
 
-						const u32 nCurBlend = OVERLAY_ALPHA, nAllBlend = OVERLAY_ALPHA;
+						const uint32_t nCurBlend = OVERLAY_ALPHA, nAllBlend = OVERLAY_ALPHA;
 
 						INT_PTR PixCount = nMaxY * nMaxX;
 						Assert(PixCount>0);

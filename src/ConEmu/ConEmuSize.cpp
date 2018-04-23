@@ -6218,7 +6218,7 @@ void CConEmuSize::SetIgnoreQuakeActivation(bool bNewValue)
 }
 
 // размер в символах, используется в CVirtualConsole::Constructor
-void CConEmuSize::EvalVConCreateSize(CVirtualConsole* apVCon, uint& rnTextWidth, uint& rnTextHeight)
+void CConEmuSize::EvalVConCreateSize(CVirtualConsole* apVCon, unsigned& rnTextWidth, unsigned& rnTextHeight)
 {
 	RECT rcConAll;
 	if (WndWidth.Value && WndHeight.Value)

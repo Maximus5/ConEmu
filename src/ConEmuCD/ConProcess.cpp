@@ -960,7 +960,7 @@ bool ConProcess::GetRootInfo(CESERVER_REQ* pReq)
 	{
 		FILETIME ftCreation = {}, ftExit = {}, ftKernel = {}, ftUser = {};
 		GetProcessTimes(gpSrv->hRootProcess, &ftCreation, &ftExit, &ftKernel, &ftUser);
-		__int64 upTime = ((*(u64*)&ftExit) - (*(u64*)&ftCreation)) / 10000LL;
+		__int64 upTime = ((*(uint64_t*)&ftExit) - (*(uint64_t*)&ftCreation)) / 10000LL;
 		pReq->RootInfo.nUpTime = (LODWORD(upTime) == upTime) ? LODWORD(upTime) : (DWORD)-1;
 	}
 

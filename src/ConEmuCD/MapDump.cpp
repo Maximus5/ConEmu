@@ -74,7 +74,7 @@ static void DumpMember(const wchar_t* pszData, LPCWSTR szName, LPCWSTR szIndent)
 	_wprintf(lsLine);
 }
 
-static void DumpMember(const u64& llData, LPCWSTR szName, LPCWSTR szIndent)
+static void DumpMember(const uint64_t& llData, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szData[64];
 	swprintf_c(szData, L"0x%p", (LPVOID)llData);

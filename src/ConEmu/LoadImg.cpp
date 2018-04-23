@@ -669,7 +669,7 @@ BITMAPFILEHEADER* LoadImageEx(LPCWSTR asImgPath, BY_HANDLE_FILE_INFORMATION& inf
 				{
 					inf.nFileSizeLow += sizeof(bm); // BM
 
-					if (pBuf[0] == 'B' && pBuf[1] == 'M' && *(u32*)(pBuf + 0x0A) >= 0x36 && *(u32*)(pBuf + 0x0A) <= 0x436 && *(u32*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(u32*)(pBuf + 0x1E))
+					if (pBuf[0] == 'B' && pBuf[1] == 'M' && *(uint32_t*)(pBuf + 0x0A) >= 0x36 && *(uint32_t*)(pBuf + 0x0A) <= 0x436 && *(uint32_t*)(pBuf + 0x0E) == 0x28 && !pBuf[0x1D] && !*(uint32_t*)(pBuf + 0x1E))
 					{
 						// OK
 					}

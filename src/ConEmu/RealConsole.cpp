@@ -728,8 +728,8 @@ INT_PTR CRealConsole::priorityProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 
 			// Show affinity/priority
 			DWORD_PTR nSystemAffinity = (DWORD_PTR)-1, nProcessAffinity = (DWORD_PTR)-1;
-			u64 All = GetProcessAffinityMask(GetCurrentProcess(), &nProcessAffinity, &nSystemAffinity) ? nSystemAffinity : 1;
-			u64 Current = pRCon->mn_ProcessAffinity;
+			uint64_t All = GetProcessAffinityMask(GetCurrentProcess(), &nProcessAffinity, &nSystemAffinity) ? nSystemAffinity : 1;
+			uint64_t Current = pRCon->mn_ProcessAffinity;
 			for (int i = 0; i < 64; i++)
 			{
 				HWND hCheck = GetDlgItem(hDlg, cbAffinity0+i);
@@ -774,7 +774,7 @@ INT_PTR CRealConsole::priorityProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 					case IDOK:
 						{
 							// Get changes
-							u64 All = 0, Current = 1;
+							uint64_t All = 0, Current = 1;
 							for (int i = 0; i < 64; i++)
 							{
 								HWND hCheck = GetDlgItem(hDlg, cbAffinity0+i);
@@ -870,7 +870,7 @@ bool CRealConsole::ChangeAffinityPriority(LPCWSTR asAffinity /*= NULL*/, LPCWSTR
 	{
 		// Handles must have PROCESS_SET_INFORMATION access right, so we call MainServer
 
-		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_AFFNTYPRIORITY, sizeof(CESERVER_REQ_HDR)+2*sizeof(u64));
+		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_AFFNTYPRIORITY, sizeof(CESERVER_REQ_HDR)+2*sizeof(uint64_t));
 		if (!pIn)
 		{
 			// Not enough memory? System fails
@@ -4907,7 +4907,7 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 	//lstrcpy(psCurCmd, mp_ConEmu->ms_ConEmuCExeName);
 	_wcscat_c(psCurCmd, nLen, L"\" ");
 
-	uint logLevel = isLogging();
+	unsigned logLevel = isLogging();
 	if (logLevel) _wcscat_c(psCurCmd, nLen, (logLevel == 3) ? L" /LOG3" : (logLevel == 2) ? L" /LOG2" : L" /LOG");
 
 	if ((m_Args.RunAsAdministrator == crb_On) && !mp_ConEmu->mb_IsUacAdmin)
@@ -9885,9 +9885,9 @@ void CRealConsole::CreateLogFiles()
 	LogString((pszCommand && *pszCommand) ? pszCommand : L"<No Command>");
 }
 
-uint CRealConsole::isLogging(uint level /*= 1*/)
+unsigned CRealConsole::isLogging(unsigned level /*= 1*/)
 {
-	uint logLevel = gpSet->isLogging();
+	unsigned logLevel = gpSet->isLogging();
 	if (!logLevel)
 		return 0;
 	return (logLevel && (level <= logLevel)) ? logLevel : 0;
@@ -13267,7 +13267,7 @@ void CRealConsole::CloseTab()
 	}
 }
 
-uint CRealConsole::TextWidth()
+unsigned CRealConsole::TextWidth()
 {
 	_ASSERTE(this!=NULL);
 
@@ -13275,7 +13275,7 @@ uint CRealConsole::TextWidth()
 	return mp_ABuf->TextWidth();
 }
 
-uint CRealConsole::TextHeight()
+unsigned CRealConsole::TextHeight()
 {
 	_ASSERTE(this!=NULL);
 
@@ -13283,13 +13283,13 @@ uint CRealConsole::TextHeight()
 	return mp_ABuf->TextHeight();
 }
 
-uint CRealConsole::BufferWidth()
+unsigned CRealConsole::BufferWidth()
 {
 	TODO("CRealConsole::BufferWidth()");
 	return TextWidth();
 }
 
-uint CRealConsole::BufferHeight(uint nNewBufferHeight/*=0*/)
+unsigned CRealConsole::BufferHeight(unsigned nNewBufferHeight/*=0*/)
 {
 	return mp_ABuf->BufferHeight(nNewBufferHeight);
 }

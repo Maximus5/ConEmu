@@ -87,13 +87,13 @@ BOOL GuiSetForeground(HWND hWnd)
 		CESERVER_REQ *pIn = (CESERVER_REQ*)malloc(sizeof(*pIn)), *pOut;
 		if (pIn)
 		{
-			ExecutePrepareCmd(pIn, CECMD_SETFOREGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(u64)); //-V119
+			ExecutePrepareCmd(pIn, CECMD_SETFOREGROUND, sizeof(CESERVER_REQ_HDR)+sizeof(uint64_t)); //-V119
 
 			DWORD nConEmuPID = ASFW_ANY;
 			GetWindowThreadProcessId(ghConEmuWndDC, &nConEmuPID);
 			AllowSetForegroundWindow(nConEmuPID);
 
-			pIn->qwData[0] = (u64)hWnd;
+			pIn->qwData[0] = (uint64_t)hWnd;
 			HWND hConWnd = GetRealConsoleWindow();
 			pOut = ExecuteGuiCmd(hConWnd, pIn, hConWnd);
 

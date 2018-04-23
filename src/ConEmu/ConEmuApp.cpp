@@ -1618,8 +1618,8 @@ bool PtMouseDblClickTest(const MSG& msg1, const MSG msg2)
 	}
 
 	// Check coord diff
-	POINT pt1 = {(i16)LOWORD(msg1.lParam), (i16)HIWORD(msg1.lParam)};
-	POINT pt2 = {(i16)LOWORD(msg2.lParam), (i16)HIWORD(msg2.lParam)};
+	POINT pt1 = {(int16_t)LOWORD(msg1.lParam), (int16_t)HIWORD(msg1.lParam)};
+	POINT pt2 = {(int16_t)LOWORD(msg2.lParam), (int16_t)HIWORD(msg2.lParam)};
 	// Due to mouse captures hwnd may differ
 	if (msg1.hwnd != msg2.hwnd)
 	{
@@ -2874,7 +2874,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	int iMainRc = 0;
 
 	g_hInstance = hInstance;
-	ghWorkingModule = (u64)hInstance;
+	ghWorkingModule = hInstance;
 
 #ifdef _DEBUG
 	gbAllowChkHeap = true;

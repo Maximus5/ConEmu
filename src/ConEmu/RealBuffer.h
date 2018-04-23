@@ -99,7 +99,7 @@ public:
 	bool PreInit();
 	void ResetBuffer();
 
-	int BufferHeight(uint nNewBufferHeight = 0);
+	int BufferHeight(unsigned nNewBufferHeight = 0);
 	SHORT GetBufferWidth() const;
 	SHORT GetBufferHeight() const;
 	int GetDynamicHeight() const;

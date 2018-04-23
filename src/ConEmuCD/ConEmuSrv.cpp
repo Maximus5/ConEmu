@@ -2522,7 +2522,7 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 					                   FALSE, 0)
 					        && hDupHandle)
 					{
-						pIn->StartStop.hServerProcessHandle = (u64)hDupHandle;
+						pIn->StartStop.hServerProcessHandle = hDupHandle;
 					}
 					else
 					{

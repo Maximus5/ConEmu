@@ -68,7 +68,7 @@ LRESULT CSetPgStatus::OnInitDialog(HWND hDlg, bool abInitial)
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, tStatusFontCharset), CSetDlgLists::eCharSets, gpSet->nStatusFontCharSet, false);
 
 	// Colors
-	for (uint c = c35; c <= c37; c++)
+	for (unsigned c = c35; c <= c37; c++)
 		CSetDlgColors::ColorSetEdit(hDlg, c);
 
 	checkDlgButton(hDlg, cbStatusVertSep, (gpSet->isStatusBarFlags & csf_VertDelim) ? BST_CHECKED : BST_UNCHECKED);

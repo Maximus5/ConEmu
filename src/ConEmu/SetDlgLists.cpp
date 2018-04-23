@@ -87,9 +87,9 @@ const ListBoxItem CSetDlgLists::TabBarDblClickActions[] =
 };
 
 
-uint CSetDlgLists::GetListItems(eFillListBoxItems eWhat, const ListBoxItem*& pItems)
+unsigned CSetDlgLists::GetListItems(eFillListBoxItems eWhat, const ListBoxItem*& pItems)
 {
-	uint nCount = 0;
+	unsigned nCount = 0;
 
 	#undef  LST_ENUM
 	#define LST_ENUM(x) case e##x: pItems = x; nCount = LOWORD(countof(x)); break;
@@ -122,9 +122,9 @@ uint CSetDlgLists::GetListItems(eFillListBoxItems eWhat, const ListBoxItem*& pIt
 	return nCount;
 }
 
-uint CSetDlgLists::GetListItems(eWordItems eWhat, const DWORD*& pItems)
+unsigned CSetDlgLists::GetListItems(eWordItems eWhat, const DWORD*& pItems)
 {
-	uint nCount = 0;
+	unsigned nCount = 0;
 
 	#undef  LST_ENUM
 	#define LST_ENUM(x) case e##x: pItems = x; nCount = LOWORD(countof(x)); break;
@@ -151,11 +151,11 @@ uint CSetDlgLists::GetListItems(eWordItems eWhat, const DWORD*& pItems)
 void CSetDlgLists::FillListBox(HWND hList, WORD nCtrlId, eFillListBoxItems eWhat)
 {
 	const ListBoxItem* Items;
-	uint nItems = GetListItems(eWhat, Items);
+	unsigned nItems = GetListItems(eWhat, Items);
 
 	SendMessage(hList, CB_RESETCONTENT, 0, 0);
 
-	for (uint i = 0; i < nItems; i++)
+	for (unsigned i = 0; i < nItems; i++)
 	{
 		SendMessage(hList, CB_ADDSTRING, 0, (LPARAM)Items[i].sValue); //-V108
 	}
@@ -164,7 +164,7 @@ void CSetDlgLists::FillListBox(HWND hList, WORD nCtrlId, eFillListBoxItems eWhat
 void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, UINT& nValue, bool abExact)
 {
 	const ListBoxItem* Items;
-	uint nItems = GetListItems(eWhat, Items);
+	unsigned nItems = GetListItems(eWhat, Items);
 
 	_ASSERTE(hList!=NULL);
 	int num = -1;
@@ -172,7 +172,7 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, UINT& n
 
 	SendMessage(hList, CB_RESETCONTENT, 0, 0);
 
-	for (uint i = 0; i < nItems; i++)
+	for (unsigned i = 0; i < nItems; i++)
 	{
 		SendMessage(hList, CB_ADDSTRING, 0, (LPARAM) Items[i].sValue); //-V108
 
@@ -223,15 +223,15 @@ void CSetDlgLists::FillListBoxItems(HWND hList, eFillListBoxItems eWhat, const U
 void CSetDlgLists::FillListBoxItems(HWND hList, eWordItems eWhat, UINT& nValue, bool abExact)
 {
 	const DWORD* pnValues;
-	uint nItems = GetListItems(eWhat, pnValues);
+	unsigned nItems = GetListItems(eWhat, pnValues);
 
 	_ASSERTE(hList!=NULL);
-	uint num = 0;
+	unsigned num = 0;
 	wchar_t szNumber[32];
 
 	SendMessage(hList, CB_RESETCONTENT, 0, 0);
 
-	for (uint i = 0; i < nItems; i++)
+	for (unsigned i = 0; i < nItems; i++)
 	{
 		swprintf_c(szNumber, L"%u", pnValues[i]);
 		SendMessage(hList, CB_ADDSTRING, 0, (LPARAM)szNumber);
@@ -257,7 +257,7 @@ bool CSetDlgLists::GetListBoxItem(HWND hWnd, WORD nCtrlId, eFillListBoxItems eWh
 {
 	bool bFound = false;
 	const ListBoxItem* Items;
-	uint nItems = GetListItems(eWhat, Items);
+	unsigned nItems = GetListItems(eWhat, Items);
 
 	HWND hList = nCtrlId ? GetDlgItem(hWnd, nCtrlId) : hWnd;
 	_ASSERTE(hList!=NULL);
@@ -294,7 +294,7 @@ bool CSetDlgLists::GetListBoxItem(HWND hWnd, WORD nCtrlId, eWordItems eWhat, UIN
 {
 	bool bFound = false;
 	const DWORD* pnValues;
-	uint nItems = GetListItems(eWhat, pnValues);
+	unsigned nItems = GetListItems(eWhat, pnValues);
 
 	HWND hList = nCtrlId ? GetDlgItem(hWnd, nCtrlId) : hWnd;
 	_ASSERTE(hList!=NULL);
@@ -450,7 +450,7 @@ void CSetDlgLists::EnableDlgItems(HWND hParent, const DWORD* pnCtrlIds, size_t n
 void CSetDlgLists::EnableDlgItems(HWND hParent, eWordItems eWhat, bool bEnabled)
 {
 	const DWORD* pnValues;
-	uint nItems = GetListItems(eWhat, pnValues);
+	unsigned nItems = GetListItems(eWhat, pnValues);
 	EnableDlgItems(hParent, pnValues, nItems, bEnabled);
 }
 
@@ -489,7 +489,7 @@ void CSetDlgLists::EnableDlgItems(HWND hParent, eWordItems eWhat, bool bEnabled)
 
 //void CSetDlgLists::FillListBoxCharSet(hDlg,nDlgID,Value)
 //{ \
-//	u8 num = 4; /*индекс DEFAULT_CHARSET*/ \
+//	uint8_t num = 4; /*индекс DEFAULT_CHARSET*/ \
 //	for (size_t i = 0; i < countof(SettingsNS::CharSets); i++) \
 //	{ \
 //		SendDlgItemMessageW(hDlg, nDlgID, CB_ADDSTRING, 0, (LPARAM)SettingsNS::CharSets[i].sValue); \
@@ -500,7 +500,7 @@ void CSetDlgLists::EnableDlgItems(HWND hParent, eWordItems eWhat, bool bEnabled)
 
 //void CSetDlgLists::FillListBoxTabDefaultClickAction(tt,hDlg,nDlgID,Value)
 //{ \
-//	u8 num = Value;  \
+//	uint8_t num = Value;  \
 //	for (size_t i = 0; i < countof(SettingsNS::tt##DblClickActions); i++) \
 //	{ \
 //	SendDlgItemMessageW(hDlg, nDlgID, CB_ADDSTRING, 0, (LPARAM)SettingsNS::tt##DblClickActions[i].name); \

@@ -203,8 +203,8 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	LARGE_INTEGER liSize;
 	COORD cr = {};
 	wchar_t* pszDumpTitle, *pszRN, *pszSize;
-	uint nX = 0;
-	uint nY = 0;
+	unsigned nX = 0;
+	unsigned nY = 0;
 	DWORD dwConDataBufSize = 0;
 	DWORD dwConDataBufSizeEx = 0;
 	CRConDataGuard data;
@@ -412,8 +412,8 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	bool lbRc = false;
 	LARGE_INTEGER liSize;
 	//COORD cr = {};
-	uint nX = 0;
-	uint nY = 0;
+	unsigned nX = 0;
+	unsigned nY = 0;
 
 	dump.Close();
 
@@ -1833,7 +1833,7 @@ int CRealBuffer::GetWindowHeight() const
 }
 
 // #SIZE_TODO CRealBuffer::BufferHeight needs refactoring
-int CRealBuffer::BufferHeight(uint nNewBufferHeight /*= 0*/)
+int CRealBuffer::BufferHeight(unsigned nNewBufferHeight /*= 0*/)
 {
 	int nBufferHeight = 0;
 
@@ -2782,13 +2782,13 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 						con.m_ci.bVisible, con.m_ci.dwSize);
 			DEBUGSTRPKT(szCursorInfo);
 
-			uint TextLen = con.nTextWidth * con.nTextHeight;
+			unsigned TextLen = con.nTextWidth * con.nTextHeight;
 
 			// Must be filled!
 			CRConDataGuard data;
 			if (GetData(data) && data.isValid(TextLen))
 			{
-				BOOL lbDataValid = TRUE; uint n = 0;
+				BOOL lbDataValid = TRUE; unsigned n = 0;
 				_ASSERTE(con.nTextWidth == con.m_sbi.dwSize.X);
 
 				wchar_t* pConChar = data->pConChar;

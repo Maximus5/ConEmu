@@ -76,7 +76,7 @@ DWORD CHotKeyDialog::dlgGetHotkey(HWND hDlg, UINT iEditCtrl /*= hkHotKeySelect*/
 
 	bool bList = false;
 	const ListBoxItem* pItems = NULL;
-	uint nKeyCount = CSetDlgLists::GetListItems(CSetDlgLists::eKeysHot, pItems);
+	unsigned nKeyCount = CSetDlgLists::GetListItems(CSetDlgLists::eKeysHot, pItems);
 	for (size_t i = 0; i < nKeyCount; i++)
 	{
 		if (pItems[i].nValue == nHotKey)

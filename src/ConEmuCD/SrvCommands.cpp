@@ -747,7 +747,7 @@ BOOL cmd_PostConMsg(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		LRESULT lRc = SendMessage(hSendWnd, in.Msg.nMsg, (WPARAM)in.Msg.wParam, (LPARAM)in.Msg.lParam);
 		// Возвращаем результат
-		int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(u64);
+		int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(uint64_t);
 		*out = ExecuteNewCmd(CECMD_POSTCONMSG,nOutSize);
 
 		if (*out != NULL)
@@ -1336,7 +1336,7 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 	BOOL lbRc = FALSE;
 	DWORD nErrCode = 0;
 	DWORD nCount = in.dwData[0];
-	LPDWORD pPID = in.dwData+1;
+	LPDWORD pPID = (LPDWORD)&(in.dwData[1]);
 
 	if (nCount == 1)
 		lbRc = TerminateOneProcess(pPID[0], nErrCode);
@@ -1366,7 +1366,7 @@ BOOL cmd_TerminatePid(CESERVER_REQ& in, CESERVER_REQ** out)
 BOOL cmd_AffinityPriority(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	size_t cbInSize = in.DataSize();
-	if (cbInSize < 2*sizeof(u64))
+	if (cbInSize < 2*sizeof(uint64_t))
 		return FALSE;
 
 	BOOL lbRc = FALSE;

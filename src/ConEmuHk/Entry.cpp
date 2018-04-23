@@ -1694,7 +1694,7 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	gDllMainCallInfo[DLL_PROCESS_ATTACH].OnCall();
 
 	ghOurModule = (HMODULE)hModule;
-	ghWorkingModule = (u64)hModule;
+	ghWorkingModule = hModule;
 
 	#ifdef USEHOOKLOG
 	QueryPerformanceFrequency(&HookLogger::g_freq);

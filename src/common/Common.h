@@ -644,8 +644,6 @@ const ConEmuModifiers
 //#pragma pack(push, 1)
 #include <pshpack1.h>
 
-typedef unsigned __int64 u64;
-
 struct HWND2
 {
 	DWORD u;
@@ -687,7 +685,7 @@ struct HKEY2
 
 struct HANDLE2
 {
-	u64 u;
+	uint64_t u;
 	operator HANDLE() const
 	{
 		return (HANDLE)(DWORD_PTR)u;
@@ -717,7 +715,7 @@ struct STRPTR2
 		wchar_t* psz;
 		// Must be 64bit to maintain struct size
 		// During call this is an offset in BYTES from STRPTR
-		u64      offset;
+		uint64_t offset;
 	};
 
 	void   Set(wchar_t* RVAL_REF ptrSrc, int cch = -1);
@@ -730,11 +728,12 @@ struct MSG64
 {
 	DWORD cbSize;
 	DWORD nCount;
-	struct MsgStr {
-		UINT  message;
-		HWND2 hwnd;
-		u64   wParam;
-		u64   lParam;
+	struct MsgStr
+	{
+		UINT     message;
+		HWND2    hwnd;
+		uint64_t wParam;
+		uint64_t lParam;
 	} msg[1];
 };
 
@@ -871,13 +870,13 @@ struct PanelViewSetMapping
 typedef BOOL (WINAPI* PanelViewInputCallback)(HANDLE hInput, PINPUT_RECORD lpBuffer, DWORD nBufSize, LPDWORD lpNumberOfEventsRead, BOOL* pbResult);
 typedef union uPanelViewInputCallback
 {
-	u64 Reserved; // необходимо для выравнивания структур при x64 <--> x86
+	uint64_t Reserved; // необходимо для выравнивания структур при x64 <--> x86
 	PanelViewInputCallback f; //-V117
 } PanelViewInputCallback_t;
 typedef BOOL (WINAPI* PanelViewOutputCallback)(HANDLE hOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion);
 typedef union uPanelViewOutputCallback
 {
-	u64 Reserved; // необходимо для выравнивания структур при x64 <--> x86
+	uint64_t Reserved; // необходимо для выравнивания структур при x64 <--> x86
 	PanelViewOutputCallback f; //-V117
 } PanelViewOutputCallback_t;
 struct PanelViewText
@@ -1361,12 +1360,12 @@ struct ForwardedPanelInfo
 	union //x64 ready
 	{
 		WCHAR* pszActivePath/*[MAX_PATH+1]*/; //-V117
-		u64 Reserved1;
+		uint64_t Reserved1;
 	};
 	union //x64 ready
 	{
 		WCHAR* pszPassivePath/*[MAX_PATH+1]*/; //-V117
-		u64 Reserved2;
+		uint64_t Reserved2;
 	};
 };
 
@@ -1378,17 +1377,17 @@ struct ForwardedFileInfo
 
 struct CESERVER_REQ_HDR
 {
-	DWORD   cbSize;     // Не size_t(!), а именно DWORD, т.к. пакетами обмениваются и 32<->64 бит между собой.
-	DWORD   nVersion;   // CESERVER_REQ_VER
-	BOOL    bAsync;     // не посылать "ответ", сразу закрыть пайп
-	CECMD   nCmd;       // DWORD
-	DWORD   nSrcThreadId;
-	DWORD   nSrcPID;
-	DWORD   nCreateTick;
-	DWORD   nBits;      // битность вызывающего процесса
-	DWORD   nLastError; // последний GetLastError() при отправке пакета
-	DWORD   IsDebugging;
-	u64     hModule;
+	uint32_t cbSize;     // Не size_t(!), а именно DWORD, т.к. пакетами обмениваются и 32<->64 бит между собой.
+	uint32_t nVersion;   // CESERVER_REQ_VER
+	BOOL     bAsync;     // не посылать "ответ", сразу закрыть пайп
+	CECMD    nCmd;       // DWORD
+	uint32_t nSrcThreadId;
+	uint32_t nSrcPID;
+	uint32_t nCreateTick;
+	uint32_t nBits;      // битность вызывающего процесса
+	uint32_t nLastError; // последний GetLastError() при отправке пакета
+	uint32_t IsDebugging;
+	HANDLE2  hModule;
 };
 
 #define CHECK_CMD_SIZE(pCmd,data_size) ((pCmd)->hdr.cbSize >= (sizeof(CESERVER_REQ_HDR) + data_size))
@@ -1878,7 +1877,7 @@ struct CESERVER_REQ_STARTSTOP
 	BOOL  bForceBufferHeight;
 	DWORD nForceBufferHeight;
 	// Только при аттаче. Может быть NULL-ом
-	u64   hServerProcessHandle;
+	HANDLE2 hServerProcessHandle;
 	// При завершении
 	DWORD nOtherPID; // Для RM_COMSPEC - PID завершенного процесса (при sst_ComspecStop)
 	// Для информации и удобства (GetModuleFileName(0))
@@ -1938,17 +1937,17 @@ struct CESERVER_REQ_ONCREATEPROCESSRET
 // _ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
 struct CESERVER_REQ_STARTSTOPRET
 {
-	BOOL  bWasBufferHeight;
-	HWND2 hWnd; // при возврате в консоль - GUI (главное окно)
-	HWND2 hWndDc;
-	HWND2 hWndBack;
-	DWORD dwPID; // при возврате в консоль - PID ConEmu.exe
-	DWORD nBufferHeight, nWidth, nHeight;
-	DWORD dwMainSrvPID;
-	DWORD dwAltSrvPID;
-	DWORD dwPrevAltServerPID;
-	BOOL  bNeedLangChange;
-	u64   NewConsoleLang;
+	BOOL     bWasBufferHeight;
+	HWND2    hWnd; // при возврате в консоль - GUI (главное окно)
+	HWND2    hWndDc;
+	HWND2    hWndBack;
+	uint32_t dwPID; // при возврате в консоль - PID ConEmu.exe
+	uint32_t nBufferHeight, nWidth, nHeight;
+	uint32_t dwMainSrvPID;
+	uint32_t dwAltSrvPID;
+	uint32_t dwPrevAltServerPID;
+	BOOL     bNeedLangChange;
+	uint64_t NewConsoleLang;
 };
 
 // Result of CESERVER_REQ_SRVSTARTSTOP
@@ -1983,11 +1982,10 @@ struct CESERVER_REQ_SRVSTARTSTOPRET
 
 struct CESERVER_REQ_POSTMSG
 {
-	BOOL    bPost;
-	HWND2   hWnd;
-	UINT    nMsg;
-	// Заложимся на унификацию x86 & x64
-	u64     wParam, lParam;
+	BOOL     bPost;
+	HWND2    hWnd;
+	uint32_t nMsg;
+	uint64_t wParam, lParam;
 };
 
 enum CEFlashType
@@ -2000,13 +1998,13 @@ enum CEFlashType
 struct CESERVER_REQ_FLASHWINFO
 {
 	CEFlashType fType;
-	HWND2 hWnd;
+	HWND2       hWnd;
 	// for (fType == eFlashSimple)
-	BOOL  bInvert;
+	BOOL        bInvert;
 	// this and further for (fType != eFlashSimple)
-	DWORD dwFlags;
-	UINT  uCount;
-	DWORD dwTimeout;
+	uint32_t    dwFlags;
+	uint32_t    uCount;
+	uint32_t    dwTimeout;
 };
 
 // CMD_FARCHANGED - FAR plugin
@@ -2029,13 +2027,13 @@ struct CESERVER_REQ_SETCONCP
 // CECMD_SETWINDOWPOS
 struct CESERVER_REQ_SETWINDOWPOS
 {
-	HWND2 hWnd;
-	HWND2 hWndInsertAfter;
-	int X;
-	int Y;
-	int cx;
-	int cy;
-	UINT uFlags;
+	HWND2    hWnd;
+	HWND2    hWndInsertAfter;
+	int32_t  X;
+	int32_t  Y;
+	int32_t  cx;
+	int32_t  cy;
+	uint32_t uFlags;
 };
 
 // CECMD_SETWINDOWRGN
@@ -2104,9 +2102,9 @@ struct CESERVER_REQ_GUIMACRO
 // CECMD_PEEKREADINFO: посылается в GUI на вкладку Debug
 struct CESERVER_REQ_PEEKREADINFO
 {
-	WORD         nCount;
-	BYTE         bMainThread;
-	BYTE         bReserved;
+	uint16_t     nCount;
+	uint8_t      bMainThread;
+	uint8_t      bReserved;
 	wchar_t      cPeekRead/*'P'/'R' или 'W' в GUI*/;
 	wchar_t      cUnicode/*'A'/'W'*/;
 	HANDLE2      h;
@@ -2309,10 +2307,10 @@ struct CESERVER_REQ
 	CESERVER_REQ_HDR hdr;
 	union
 	{
-		BYTE    Data[1]; // variable(!) length
-		WORD    wData[1];
-		DWORD   dwData[1];
-		u64     qwData[1];
+		uint8_t  Data[1]; // variable(!) length
+		uint16_t wData[1];
+		uint32_t dwData[1];
+		uint64_t qwData[1];
 		ConEmuGuiMapping GuiInfo;
 		CESERVER_REQ_CONINFO ReqConInfo;
 		CESERVER_CONSOLE_MAPPING_HDR ConInfo;

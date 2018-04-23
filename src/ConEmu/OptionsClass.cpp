@@ -1567,9 +1567,9 @@ void CSettings::ChangeCurrentPalette(const ColorPalette* pPal, bool bChangeDropD
 		CSetDlgLists::SelectStringExact(hDlg, lbDefaultColors, pPal->pszName);
 	}
 
-	uint nCount = countof(pPal->Colors);
+	unsigned nCount = countof(pPal->Colors);
 
-	for (uint i = 0; i < nCount; i++)
+	for (unsigned i = 0; i < nCount; i++)
 	{
 		gpSet->Colors[i] = pPal->Colors[i]; //-V108
 	}
@@ -2524,11 +2524,11 @@ void CSettings::PostUpdateCounters(bool bPosted)
 		{
 			wchar_t sTemp[64];
 
-			i64 v = 0, v2 = 0, v3 = 0;
+			int64_t v = 0, v2 = 0, v3 = 0;
 
 			if (nID == tPerfFPS || nID == tPerfInterval)
 			{
-				i64 *pFPS = NULL;
+				int64_t *pFPS = NULL;
 				UINT nCount = 0;
 
 				if (nID == tPerfFPS)
@@ -2540,13 +2540,13 @@ void CSettings::PostUpdateCounters(bool bPosted)
 					pFPS = mn_RFPS; nCount = countof(mn_RFPS);
 				}
 
-				i64 tmin, tmax;
-				i64 imin = 0, imax = 0;
+				int64_t tmin, tmax;
+				int64_t imin = 0, imax = 0;
 				tmax = tmin = pFPS[0];
 
 				for (UINT i = 0; i < nCount; i++)
 				{
-					i64 vi = pFPS[i]; //-V108
+					int64_t vi = pFPS[i]; //-V108
 					if (!vi) continue;
 
 					if (vi < tmin) { tmin = vi; imin = i; }
@@ -2556,7 +2556,7 @@ void CSettings::PostUpdateCounters(bool bPosted)
 				if ((tmax > tmin) && mn_Freq > 0)
 				{
 					_ASSERTE(imin!=imax);
-					i64 iSamples = imax - imin;
+					int64_t iSamples = imax - imin;
 					if (iSamples < 0)
 						iSamples += nCount;
 					v = iSamples * 10 * mn_Freq / (tmax - tmin);
@@ -2569,7 +2569,7 @@ void CSettings::PostUpdateCounters(bool bPosted)
 				size_t nCount = std::max<int>(0, std::min<int>(mn_KBD_CUR_FRAME, (int)countof(mn_KbdDelays)));
 				for (size_t i = 0; i < nCount; i++)
 				{
-					i64 vi = mn_KbdDelays[i];
+					int64_t vi = mn_KbdDelays[i];
 					// Skip too large values, they may be false detected
 					if (vi <= 0 || vi >= 5000) continue;
 
@@ -2636,7 +2636,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 			// Performance
 			wchar_t sTemp[32];
 			// These are not MHz. E.g. on "AMD Athlon 64 X2 1999 MHz" we get "0.004 GHz"
-			swprintf_c(sTemp, L" (%I64i)", ((i64)(mn_Freq/1000)));
+			swprintf_c(sTemp, L" (%I64i)", ((int64_t)(mn_Freq/1000)));
 			CEStr lsTemp, lsInfo(gpLng->getControl(gbPerformance, lsTemp, L"Performance counters"), sTemp);
 			SetDlgItemText(GetPage(thi_Info), nID, lsInfo);
 			// Update immediately
@@ -2649,7 +2649,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 	if (nID >= tPerfLast)
 		return;
 
-	i64 tick2 = 0, t;
+	int64_t tick2 = 0, t;
 
 	if (nID == tPerfFPS)
 	{
@@ -2697,7 +2697,7 @@ void CSettings::Performance(UINT nID, BOOL bEnd)
 		}
 		else if (mn_KbdDelayCounter && mn_Freq)
 		{
-			i64 iPrev = mn_KbdDelayCounter; mn_KbdDelayCounter = 0;
+			int64_t iPrev = mn_KbdDelayCounter; mn_KbdDelayCounter = 0;
 			// let eval ms the delay of console output is refreshed
 			t = (tick2 - iPrev) * 1000 / mn_Freq;
 			int idx = (InterlockedIncrement(&mn_KBD_CUR_FRAME) & (countof(mn_KbdDelays)-1));
@@ -3140,7 +3140,7 @@ bool CSettings::IsBackgroundEnabled(CVirtualConsole* apVCon)
 	}
 }
 
-void CSettings::SetBgImageDarker(u8 newValue, bool bUpdate)
+void CSettings::SetBgImageDarker(uint8_t newValue, bool bUpdate)
 {
 	if (/*newV < 256*/ newValue != gpSet->bgImageDarker)
 	{
@@ -3642,8 +3642,8 @@ INT_PTR CSettings::EditConsoleFontProc(HWND hWnd2, UINT messg, WPARAM wParam, LP
 			gpSetCls->hConFontDlg = NULL; // пока не выставим - на смену в контролах не реагировать
 			wchar_t temp[10];
 			const DWORD* pnSizesSmall = NULL;
-			uint nCount = CSetDlgLists::GetListItems(CSetDlgLists::eFSizesSmall, pnSizesSmall);
-			for (uint i = 0; i < nCount; i++)
+			unsigned nCount = CSetDlgLists::GetListItems(CSetDlgLists::eFSizesSmall, pnSizesSmall);
+			for (unsigned i = 0; i < nCount; i++)
 			{
 				swprintf_c(temp, L"%i", pnSizesSmall[i]);
 				SendDlgItemMessage(hWnd2, tConsoleFontSizeY, CB_ADDSTRING, 0, (LPARAM) temp);

@@ -174,9 +174,6 @@
     <ClInclude Include="common\defines.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="common\kl_parts.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="common\md5.h">
       <Filter>Headers</Filter>
     </ClInclude>

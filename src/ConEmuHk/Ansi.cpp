@@ -2397,7 +2397,7 @@ void CEAnsi::ReportTerminalPixelSize()
 
 	if (width > 0 && height > 0)
 	{
-		swprintf_c(szReport, L"\x1B[4;%u;%ut", (u32)height, (u32)width);
+		swprintf_c(szReport, L"\x1B[4;%u;%ut", (uint32_t)height, (uint32_t)width);
 		ReportString(szReport);
 	}
 }

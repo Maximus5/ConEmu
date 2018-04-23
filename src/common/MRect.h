@@ -30,8 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Windows.h>
 
-SHORT MakeShort(i32 X);
-USHORT MakeUShort(u32 X);
+SHORT MakeShort(int32_t X);
+USHORT MakeUShort(uint32_t X);
 
 COORD MakeCoord(int X,int Y);
 POINT MakePoint(int X,int Y);

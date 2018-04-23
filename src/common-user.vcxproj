@@ -279,7 +279,6 @@
     <ClInclude Include="common\WUser.h" />
     <ClInclude Include="common\clink.h" />
     <ClInclude Include="common\defines.h" />
-    <ClInclude Include="common\kl_parts.h" />
     <ClInclude Include="common\md5.h" />
     <ClInclude Include="common\plugin_helper.h" />
     <ClInclude Include="common\stdint_.h" />

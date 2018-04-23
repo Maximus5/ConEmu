@@ -84,12 +84,12 @@ class CVirtualConsole :
 	protected:
 		struct VConRConSizes
 		{
-			uint TextWidth, TextHeight; // RCon size in cells
-			uint Width, Height; // DC size in pixels
-			uint OffsetX, OffsetY;
-			uint BackWidth, BackHeight;
-			uint nMaxTextWidth, nMaxTextHeight; // max size in cells
-			uint LastPadSize;
+			unsigned TextWidth, TextHeight; // RCon size in cells
+			unsigned Width, Height; // DC size in pixels
+			unsigned OffsetX, OffsetY;
+			unsigned BackWidth, BackHeight;
+			unsigned nMaxTextWidth, nMaxTextHeight; // max size in cells
+			unsigned LastPadSize;
 			LONG nFontHeight, nFontWidth;
 		} m_Sizes;
 
@@ -309,7 +309,7 @@ class CVirtualConsole :
 		CONSOLE_SCREEN_BUFFER_INFO csbi; DWORD mdw_LastError;
 		CONSOLE_CURSOR_INFO	cinf;
 		COORD winSize, coord;
-		uint TextLen;
+		unsigned TextLen;
 		bool isCursorValid, drawImage, textChanged, attrChanged;
 		DWORD nBgImageColors;
 		COORD bgBmpSize; HDC hBgDc; // Это только ссылка, для удобства отрисовки

@@ -501,7 +501,7 @@ bool CRConData::FindPanels(bool& bLeftPanel, RECT& rLeftPanel, RECT& rLeftPanelF
 	if (!isValid(true, nWidth*nHeight))
 		return false;
 
-	uint nY = 0;
+	unsigned nY = 0;
 	BOOL lbIsMenu = FALSE;
 
 	if (pConChar[0] == L' ')
@@ -535,7 +535,7 @@ bool CRConData::FindPanels(bool& bLeftPanel, RECT& rLeftPanel, RECT& rLeftPanelF
 			nY ++; // скорее всего, первая строка - меню, при включенной записи макроса
 	}
 
-	uint nIdx = nY*nWidth;
+	unsigned nIdx = nY*nWidth;
 	// Левая панель
 	BOOL bFirstCharOk = (nY == 0)
 		&& (
@@ -593,7 +593,7 @@ bool CRConData::FindPanels(bool& bLeftPanel, RECT& rLeftPanel, RECT& rLeftPanelF
 				// МОЖЕТ быть закрыто AltHistory
 				/*&& pConChar[nIdx+i+nWidth] == ucBoxDblVert*/)
 			{
-				uint nBottom = nHeight - 1;
+				unsigned nBottom = nHeight - 1;
 
 				while(nBottom > 4) //-V112
 				{
@@ -682,7 +682,7 @@ bool CRConData::FindPanels(bool& bLeftPanel, RECT& rLeftPanel, RECT& rLeftPanelF
 						// May be covered by AltHistory
 						/*&& pConChar[nIdx+i+nWidth] == ucBoxDblVert*/)
 					{
-						uint nBottom = nHeight - 1;
+						unsigned nBottom = nHeight - 1;
 
 						while(nBottom > 4) //-V112
 						{
