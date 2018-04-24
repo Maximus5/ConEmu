@@ -617,9 +617,9 @@ CESERVER_REQ* ExecuteNewCmdOnCreate(CESERVER_CONSOLE_MAPPING_HDR* pSrvMap, HWND 
 	//pIn->OnCreateProc.bUnicode = TRUE;
 	pIn->OnCreateProc.nImageSubsystem = mn_ImageSubsystem;
 	pIn->OnCreateProc.nImageBits = mn_ImageBits;
-	pIn->OnCreateProc.hStdIn = (unsigned __int64)hStdIn;
-	pIn->OnCreateProc.hStdOut = (unsigned __int64)hStdOut;
-	pIn->OnCreateProc.hStdErr = (unsigned __int64)hStdErr;
+	pIn->OnCreateProc.hStdIn = (unsigned __int64)(hStdIn ? hStdIn : GetStdHandle(STD_INPUT_HANDLE));
+	pIn->OnCreateProc.hStdOut = (unsigned __int64)(hStdOut ? hStdOut : GetStdHandle(STD_OUTPUT_HANDLE));
+	pIn->OnCreateProc.hStdErr = (unsigned __int64)(hStdErr ? hStdErr : GetStdHandle(STD_ERROR_HANDLE));
 	
 	switch (aCmd)
 	{
