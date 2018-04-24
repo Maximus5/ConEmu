@@ -37,9 +37,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #endif
 
-#include <windows.h>
-
-//#pragma warning( disable : 4995 )
 #include "../common/Common.h"
 #include "../common/CmdLine.h"
 

@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #define HIDE_USE_EXCEPTION_INFO
-#include <windows.h>
+
 #include "defines.h"
 #include "MAssert.h"
 #include "MEvent.h"

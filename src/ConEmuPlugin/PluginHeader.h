@@ -29,10 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#if !defined(_MSC_VER)
-#include <wchar.h>
-#include <tchar.h>
-#endif
+#include "../common/defines.h"
 #include "ConEmu_Lang.h"
 #include "FarDefaultMacros.h"
 #include "../common/WObjects.h"

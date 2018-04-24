@@ -35,7 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	#undef PRINT_SHELL_LOG
 #endif
 
-#include <windows.h>
+#include "../common/Common.h"
+
 #include <TCHAR.h>
 #include <Tlhelp32.h>
 #include <shlwapi.h>
@@ -43,7 +44,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Shlobj.h>
 #pragma warning(default: 4091)
 #include "../common/CmdLine.h"
-#include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"
 #include "../common/HandleKeeper.h"

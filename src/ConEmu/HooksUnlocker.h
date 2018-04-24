@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <windows.h>
+#include "../common/defines.h"
 
 // This is used to temporarily disable low-level keyboard hooks
 // Useful while debugging only

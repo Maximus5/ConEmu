@@ -32,9 +32,8 @@ These codes was produced by cl.exe with special compiler switches
 Look at InfiltrateProc for source
 */
 
-#include <windows.h>
-#include "Infiltrate.h"
 #include "../common/defines.h"
+#include "Infiltrate.h"
 
 #define USE_STATIC_CODES
 

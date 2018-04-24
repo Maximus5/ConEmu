@@ -1,7 +1,7 @@
 ﻿
 #pragma once
-#include <windows.h>
 
+#include "../common/defines.h"
 #include "../common/MArray.h"
 
 #define DROPEFFECT_STOP_INTERNAL ((DWORD)-1)

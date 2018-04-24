@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRICON(s) //DEBUGSTR(s)
 
-#include <windows.h>
+#include "../common/defines.h"
 #include <commctrl.h>
 #include "header.h"
 #include "ConEmu.h"

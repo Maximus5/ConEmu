@@ -31,7 +31,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // declare AddConAttr values
 #define DEFINE_ADDCONATTR
 
-#include <windows.h>
 #include "Common.h"
 #include "ConsoleMixAttr.h"
 

@@ -29,8 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <windows.h>
-
+#include "../common/defines.h"
 #include "GuiMacro.h"
 
 enum ConEmuStateCheck

@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DebugString(x) //OutputDebugString(x)
 #endif
 
-#include <windows.h>
+#include "../common/defines.h"
 #include "GuiAttach.h"
 #include "MainThread.h"
 #include "../common/Common.h"

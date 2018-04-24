@@ -35,7 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCMD(s) DEBUGSTR(s)
 
 
-#include <windows.h>
 #include "../common/Common.h"
 #include "../ConEmuHk/ConEmuHooks.h"
 #ifdef _DEBUG

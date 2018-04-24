@@ -32,10 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define PNGDUMP
 //#endif
 
-#include <windows.h>
-//#ifdef PNGDUMP
-//#include <Gdiplus.h>
-//#endif
+#include "../common/defines.h"
 #include "Header.h"
 #include "LoadImg.h"
 #include "ScreenDump.h"

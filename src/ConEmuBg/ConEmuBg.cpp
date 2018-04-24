@@ -36,8 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
-#include <windows.h>
-
 #include "../common/Common.h"
 #include "../common/CEStr.h"
 #ifdef _DEBUG

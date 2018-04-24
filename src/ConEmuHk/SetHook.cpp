@@ -41,7 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define USECHECKPROCESSMODULES
 #define ASSERT_ON_PROCNOTFOUND
 
-#include <windows.h>
+#include "../common/defines.h"
 #include <intrin.h>
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"

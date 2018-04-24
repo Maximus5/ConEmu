@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 #endif
 
-#include <windows.h>
+#include "../common/defines.h"
 //
 #include "header.h"
 //

@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <windows.h>
+#include "defines.h"
 #include "CmdLine.h"
 
 typedef bool (WINAPI* RegEnumKeysCallback)(HKEY hk, LPCWSTR pszSubkeyName, LPARAM lParam);

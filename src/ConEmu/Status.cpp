@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
 #define DEBUGSTRPAINT(s) //DEBUGSTR(s)
 
-#include <windows.h>
+#include "../common/defines.h"
 #include <commctrl.h>
 
 #include "header.h"

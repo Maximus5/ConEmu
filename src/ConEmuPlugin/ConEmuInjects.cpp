@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
 
-#include <windows.h>
+#include "../common/defines.h"
 #include <TCHAR.h>
 #include <Tlhelp32.h>
 #include <shlwapi.h>

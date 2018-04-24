@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <windows.h>
+#include "../common/defines.h"
 
 #define BST(v) (int)(v & (BST_CHECKED|BST_INDETERMINATE)) // BST_UNCHECKED/BST_CHECKED/BST_INDETERMINATE
 

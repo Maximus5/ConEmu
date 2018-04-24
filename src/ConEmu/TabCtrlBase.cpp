@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRWARN(s) DEBUGSTR(s)
 #define DEBUGSTRSEL(s) DEBUGSTR(s)
 
-#include <windows.h>
+#include "../common/defines.h"
 #include "header.h"
 #include "TabBar.h"
 #include "TabCtrlBase.h"

@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <windows.h>
+#include "defines.h"
 #include <TlHelp32.h>
 
 bool GetProcessInfo(DWORD nPID, PROCESSENTRY32W* Info);

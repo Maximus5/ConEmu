@@ -40,11 +40,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #undef HIDE_TODO
 
-//#include <stdio.h>
-#include <windows.h>
-//#include <windowsx.h>
-//#include <string.h>
-//#include <tchar.h>
 #include "../common/Common.h"
 #include "../common/MSection.h"
 #include "../common/MFileMapping.h"

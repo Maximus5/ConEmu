@@ -6,7 +6,6 @@
 #pragma warning(disable: 4091)
 #include <shlobj.h>
 #pragma warning(default: 4091)
-#include <tchar.h>
 
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 #include "ShObjIdl_Part.h"

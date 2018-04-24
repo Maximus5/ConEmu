@@ -29,8 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <windows.h>
-
+#include "defines.h"
 #include "MSection.h"
 
 /* Console Handles */

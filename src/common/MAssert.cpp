@@ -27,8 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
-#include <windows.h>
-#include <tchar.h>
+
 #include "defines.h"
 #include "MAssert.h"
 #include "MStrDup.h"

@@ -22,7 +22,6 @@ typedef unsigned __int8 u8;
 typedef unsigned __int16 u16;
 typedef unsigned __int32 u32;
 typedef unsigned __int64 u64;
-typedef INT_PTR ssize_t;
 
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 #define __forceinline __inline__

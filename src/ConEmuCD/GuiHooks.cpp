@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRHOOK(s) //OutputDebugString(s)
 
-#include <windows.h>
+#include "../common/defines.h"
 
 #ifndef TESTLINK
 #include "../common/Common.h"

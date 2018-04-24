@@ -43,7 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef PRINT_RECENT_STACK
 #endif
 
-#include <windows.h>
+#include "../common/defines.h"
 #include <commctrl.h>
 #include "header.h"
 #include "../common/MSetter.h"

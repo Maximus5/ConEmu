@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <windows.h>
+#include "defines.h"
 
 // Класс отключения редиректора системных библиотек.
 class MWow64Disable

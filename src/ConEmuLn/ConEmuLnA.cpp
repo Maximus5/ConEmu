@@ -26,7 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <windows.h>
+#include "../common/defines.h"
 #include "../common/pluginA.hpp"
 #include "../common/plugin_helper.h"
 #include "ConEmuLn.h"

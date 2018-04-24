@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <windows.h>
+#include "../common/defines.h"
 
 BOOL MyGetConsoleFontSize(COORD& crFontSize);
 BOOL IsVisibleRectLocked(COORD& crLocked);

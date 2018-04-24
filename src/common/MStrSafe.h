@@ -28,8 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <wchar.h>
-#include <tchar.h>
+#include "defines.h"
 #include "MAssert.h"
 
 #define STRSAFE_NO_DEPRECATE

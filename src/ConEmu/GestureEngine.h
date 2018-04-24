@@ -27,7 +27,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #pragma once
-#include <windows.h>
+
+#include "../common/defines.h"
 
 #if defined(__GNUC__) && (WINVER < 0x0601)
 

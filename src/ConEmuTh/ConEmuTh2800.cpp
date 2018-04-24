@@ -26,7 +26,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <windows.h>
+#include "../common/defines.h"
 #include "../common/MAssert.h"
 #pragma warning( disable : 4995 )
 #include "../common/pluginW2800.hpp" // Far3

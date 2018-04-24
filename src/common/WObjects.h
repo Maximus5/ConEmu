@@ -29,11 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <windows.h>
-//#include <wchar.h>
 #include "Common.h"
-//#include "MSecurity.h"
-//#include "ConEmuCheck.h"
 #include "CEStr.h"
 
 

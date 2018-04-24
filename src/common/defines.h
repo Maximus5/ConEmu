@@ -29,8 +29,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <windows.h>
+#if !defined(__GNUC__) || defined(__MINGW32__)
+#pragma warning(disable: 4091)
+#endif
+#include <Windows.h>
+#if !defined(__GNUC__) || defined(__MINGW32__)
+#pragma warning(default: 4091)
+#endif
+
 #include <wchar.h>
+#include <tchar.h>
+
 //#if !defined(__GNUC__)
 //#include <crtdbg.h>
 //#else
@@ -146,6 +155,14 @@ WARNING("WIN64 was not defined");
 	#define STD_MOVE(v) v
 	#define FN_DELETE
 #endif
+
+
+#ifdef _WIN64
+using ssize_t = int64_t;
+#else
+using ssize_t = int32_t;
+#endif
+
 
 // GCC headers do not describe Task Scheduler 2.0 interfaces
 #if defined(__GNUC__) // && !defined(__MINGW32__)

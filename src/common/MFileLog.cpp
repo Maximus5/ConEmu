@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef USE_FORCE_FLASH_LOG
 
 #define HIDE_USE_EXCEPTION_INFO
-#include <windows.h>
+
 #include "defines.h"
 #include "MAssert.h"
 #include "MModule.h"

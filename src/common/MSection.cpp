@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#endif
 
 #define HIDE_USE_EXCEPTION_INFO
-#include <windows.h>
+
 #include "defines.h"
 #include "MAssert.h"
 #include "MSection.h"
