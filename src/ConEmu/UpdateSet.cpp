@@ -34,8 +34,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ConEmuUpdateSettings::ConEmuUpdateSettings()
 {
-	// struct, memset is valid
-	memset(this, 0, sizeof(*this));
 }
 
 LPCWSTR ConEmuUpdateSettings::UpdateVerLocation()
