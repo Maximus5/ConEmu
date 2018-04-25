@@ -2372,7 +2372,7 @@ bool CRealConsole::PostCtrlBreakEvent(DWORD nEvent, DWORD nGroupId)
 
 bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false*/)
 {
-	if (!this)
+	if (!this || !piRec)
 		return false;
 
 	if (mn_MainSrv_PID == 0 || !m_ConsoleMap.IsValid())
@@ -2381,12 +2381,16 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 	if (!m_ChildGui.hGuiWnd && isPaused())
 	{
 		gpConEmu->LogString(L"PostConsoleEvent skipped, console is paused");
+		// Stop "Paused" mode by "Esc"
+		if (piRec->EventType == KEY_EVENT && !piRec->Event.KeyEvent.bKeyDown
+			&& piRec->Event.KeyEvent.wVirtualKeyCode == VK_ESCAPE)
+			Pause(CEPause_Off);
 		return false;
 	}
 
 	bool lbRc = false;
 
-	// Если GUI-режим - все посылаем в окно, в консоль ничего не нужно
+	// In ChildGui mode - all events are posted into the window
 	if (m_ChildGui.hGuiWnd)
 	{
 		if (piRec->EventType == KEY_EVENT)
@@ -2407,29 +2411,11 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 		return lbRc;
 	}
 
-	// Эмуляция терминала?
+	// XTerm keyboard and mouse emulation
 	if (m_Term.Term && ProcessXtermSubst(*piRec))
 	{
 		return true;
 	}
-
-	//DWORD dwTID = 0;
-	//#ifdef ALLOWUSEFARSYNCHRO
-	//	if (isFar() && mn_FarInputTID) {
-	//		dwTID = mn_FarInputTID;
-	//	} else {
-	//#endif
-	//if (mn_ConEmuC_Input_TID == 0) // значит еще TID ввода не получили
-	//	return;
-	//dwTID = mn_ConEmuC_Input_TID;
-	//#ifdef ALLOWUSEFARSYNCHRO
-	//	}
-	//#endif
-	//if (dwTID == 0) {
-	//	//_ASSERTE(dwTID!=0);
-	//	mp_ConEmu->DebugStep(L"ConEmu: Input thread id is NULL");
-	//	return;
-	//}
 
 	if (piRec->EventType == MOUSE_EVENT)
 	{
@@ -2443,26 +2429,7 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 		//  UCharMap. При его минимизации, если кликнуть по кнопке минимизации
 		//  и фар получит MOUSE_MOVE - то диалог закроется при отпускании кнопки мышки.
 		//2010-07-12 обработка вынесена в CRealConsole::OnMouse с учетом GUI курсора по пикселам
-		//if (piRec->Event.MouseEvent.dwEventFlags == MOUSE_MOVED)
-		//{
-		//    if (m_LastMouse.dwButtonState     == piRec->Event.MouseEvent.dwButtonState
-		//     && m_LastMouse.dwControlKeyState == piRec->Event.MouseEvent.dwControlKeyState
-		//     && m_LastMouse.dwMousePosition.X == piRec->Event.MouseEvent.dwMousePosition.X
-		//     && m_LastMouse.dwMousePosition.Y == piRec->Event.MouseEvent.dwMousePosition.Y)
-		//    {
-		//        //#ifdef _DEBUG
-		//        //wchar_t szDbg[60];
-		//        //swprintf_c(szDbg, L"!!! Skipping ConEmu.Mouse event at: {%ix%i}\n", m_LastMouse.dwMousePosition.X, m_LastMouse.dwMousePosition.Y);
-		//        //DEBUGSTRINPUT(szDbg);
-		//        //#endif
-		//        return; // Это событие лишнее. Движения мышки реально не было, кнопки не менялись
-		//    }
-		//    #ifdef _DEBUG
-		//    if ((nLastBtnState&FROM_LEFT_1ST_BUTTON_PRESSED)) {
-		//    	nLastBtnState = nLastBtnState;
-		//    }
-		//    #endif
-		//}
+
 		#ifdef _DEBUG
 		if (piRec->Event.MouseEvent.dwButtonState == RIGHTMOST_BUTTON_PRESSED
 			&& ((piRec->Event.MouseEvent.dwControlKeyState & 9) != 9))
@@ -2499,63 +2466,6 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 	else if (piRec->EventType == KEY_EVENT)
 	{
 		// github#19: Code moved to ../ConEmuCD/Queue.cpp
-
-		#if 0
-		if (piRec->Event.KeyEvent.uChar.UnicodeChar == 3/*'^C'*/
-			&& (piRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS)
-			&& ((piRec->Event.KeyEvent.dwControlKeyState & ALL_MODIFIERS)
-				== (piRec->Event.KeyEvent.dwControlKeyState & CTRL_MODIFIERS))
-			&& !isFar()
-			)
-		{
-			if (piRec->Event.KeyEvent.bKeyDown)
-			{
-				lbRc = PostConsoleMessage(hConWnd, piRec->Event.KeyEvent.bKeyDown ? WM_KEYDOWN : WM_KEYUP,
-					piRec->Event.KeyEvent.wVirtualKeyCode, 0);
-			}
-			else
-			{
-				lbRc = true;
-			}
-
-			goto wrap;
-			#if 0
-			if (piRec->Event.KeyEvent.bKeyDown)
-			{
-				bool bGenerated = false;
-				DWORD nActivePID = GetActivePID();
-				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_CTRLBREAK, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
-				if (pIn)
-				{
-					pIn->dwData[0] = CTRL_C_EVENT;
-					pIn->dwData[1] = 0;
-
-					CESERVER_REQ* pOut = ExecuteHkCmd(nActivePID, pIn, ghWnd);
-					if (pOut)
-					{
-						if (pOut->DataSize() >= sizeof(DWORD))
-							bGenerated = (pOut->dwData[0] != 0);
-
-						ExecuteFreeResult(pOut);
-					}
-					ExecuteFreeResult(pIn);
-				}
-
-				if (bGenerated)
-				{
-					lbRc = true;
-					goto wrap;
-				}
-			}
-			else
-			{
-				TODO("Только если было обработано?");
-				lbRc = true;
-				goto wrap;
-			}
-			#endif
-		}
-		#endif
 
 		if (!piRec->Event.KeyEvent.wRepeatCount)
 		{
