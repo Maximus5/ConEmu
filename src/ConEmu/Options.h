@@ -1132,6 +1132,8 @@ struct Settings
 		bool SaveProgresses(SettingsBase* reg);
 		void SaveConsoleFont();
 		void SaveFindOptions(SettingsBase* reg = NULL);
+		void OnAutoSaveTimer();
+		void AutoSaveSettings(SettingsBase* reg = NULL);
 		void SaveSettingsOnExit();
 		void SaveStopBuzzingDate();
 		//void UpdateMargins(RECT arcMargins);

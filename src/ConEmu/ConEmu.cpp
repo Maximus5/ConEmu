@@ -1626,7 +1626,11 @@ bool CConEmuMain::IsFastSetupDisabled()
 
 bool CConEmuMain::IsAllowSaveSettingsOnExit()
 {
-	return !(gpSetCls->ibDisableSaveSettingsOnExit || IsResetBasicSettings());
+	if (gpSetCls->ibDisableSaveSettingsOnExit || IsResetBasicSettings())
+		return false;
+	if (mn_StartupFinished < ss_VConStarted || mn_StartupFinished >= ss_Destroying)
+		return false;
+	return true;
 }
 
 void CConEmuMain::OnUseGlass(bool abEnableGlass)
@@ -12580,6 +12584,9 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	{
 		gpSet->UpdSet.CheckHourlyUpdate();
 	}
+
+	// Size/Pos, Autostart task, etc.
+	gpSet->OnAutoSaveTimer();
 
 }
 

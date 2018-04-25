@@ -122,7 +122,7 @@ class CSettings
 		bool isResetBasicSettings;
 		bool isFastSetupDisabled;
 		bool isDontCascade;
-		// === Запрет сохранения опций при выходе ===
+		// === Запрет авто сохранения опций и при выходе ===
 		bool ibDisableSaveSettingsOnExit;
 
 	public:

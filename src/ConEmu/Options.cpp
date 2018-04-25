@@ -3179,6 +3179,27 @@ void Settings::SaveSettingsOnExit()
 		return;
 	mb_ExitSettingsAutoSaved = true;
 
+	AutoSaveSettings();
+}
+
+void Settings::OnAutoSaveTimer()
+{
+	static DWORD dwLastTick = 0;
+	const  DWORD dwAutosaveDelay = 60*1000; // 1 minute
+
+	DWORD dwDelay = (GetTickCount() - dwLastTick);
+	if (dwDelay > dwAutosaveDelay)
+	{
+		dwLastTick = GetTickCount();
+		AutoSaveSettings();
+	}
+}
+
+void Settings::AutoSaveSettings(SettingsBase* reg/*=NULL*/)
+{
+	if (!this)
+		return;
+
 	// В некоторых случаях сохранение опций при выходе не допустимо
 	if (!gpConEmu->IsAllowSaveSettingsOnExit())
 		return;
@@ -3189,14 +3210,21 @@ void Settings::SaveSettingsOnExit()
 	if (!isAutoSaveSizePos && !mb_StatusSettingsWasChanged && !bTaskAutoSave)
 		return;
 
-	gpConEmu->LogWindowPos(L"SaveSettingsOnExit");
+	gpConEmu->LogWindowPos(L"AutoSaveSettings");
 
-	SettingsBase* reg = CreateSettings(NULL);
+	bool lbDelete = false;
 	if (!reg)
 	{
-		gpConEmu->LogWindowPos(L"SaveSettingsOnExit - FAILED(CreateSettings)");
-		_ASSERTE(reg!=NULL);
-		return;
+		reg = CreateSettings(NULL);
+		if (!reg)
+		{
+			gpConEmu->LogWindowPos(L"AutoSaveSettings - FAILED(CreateSettings)");
+			_ASSERTE(reg!=NULL);
+			// Avoid further errors?
+			// gpSetCls->ibDisableSaveSettingsOnExit = true;
+			return;
+		}
+		lbDelete = true;
 	}
 
 	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
@@ -3256,7 +3284,7 @@ void Settings::SaveSettingsOnExit()
 				}
 				else
 				{
-					gpConEmu->LogWindowPos(L"SaveSettingsOnExit - FAILED(OpenKey(AutoStartTaskName, KEY_WRITE))");
+					gpConEmu->LogWindowPos(L"AutoSaveSettings - FAILED(OpenKey(AutoStartTaskName, KEY_WRITE))");
 				}
 			}
 			SafeFree(pszTabs);
@@ -3264,10 +3292,11 @@ void Settings::SaveSettingsOnExit()
 	}
 	else
 	{
-		gpConEmu->LogWindowPos(L"SaveSettingsOnExit - FAILED(OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))");
+		gpConEmu->LogWindowPos(L"AutoSaveSettings - FAILED(OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))");
 	}
 
-	delete reg;
+	if (lbDelete)
+		delete reg;
 }
 
 void Settings::SaveStopBuzzingDate()
@@ -3890,6 +3919,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		SaveCmdTasks(reg);
 		SaveAppsSettings(reg);
 		SavePalettes(reg);
+		/* Some automatic options: size, autostart task, etc. */
+		AutoSaveSettings(reg);
 
 		/* Done */
 		lbRc = TRUE;
