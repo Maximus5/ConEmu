@@ -1689,10 +1689,9 @@ bool CConEmuChild::CheckMouseOverScroll()
 	{
 		return false; // don't show scrollbar at all
 	}
-	else if ((gpSet->isAlwaysShowScrollbar != 1) // 1 -- show always
-		&& !mb_ScrollVisible)
+	else if (gpSet->isAlwaysShowScrollbar == 1) // 1 -- show always
 	{
-		return false; // is not shown now
+		return true;
 	}
 
 	bool lbOverVScroll = false;
