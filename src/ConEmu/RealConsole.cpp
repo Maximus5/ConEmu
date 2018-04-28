@@ -11369,8 +11369,10 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 	}
 	else
 	{
-		wchar_t szConfirm[255];
-		swprintf_c(szConfirm, L"Do you want to duplicate tab with root '%s'?", p->Name);
+		CEStr szWorkDir; GetConsoleCurDir(szWorkDir, true);
+		CEStr szConfirm(L"Do you want to duplicate tab with root?\n",
+			L"Process: ", p->Name, L"\n",
+			L"Directory: ", szWorkDir);
 		if (bSkipMsg || !gpSet->isMultiDupConfirm
 			|| ((MsgBox(szConfirm, MB_OKCANCEL|MB_ICONQUESTION) == IDOK)))
 		{
@@ -11402,7 +11404,11 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 			}
 
 			// Нужно оставить там "new_console", иначе не отключается подтверждение закрытия например
-			wchar_t* pszCmdRedefined = bRootCmdRedefined ? lstrdup(args.pszSpecialCmd) : NULL;
+			CEStr szCmdRedefined(bRootCmdRedefined ? args.pszSpecialCmd : NULL);
+
+			// Explicitly load "detected" working directory
+			SafeFree(args.pszStartupDir);
+			args.pszStartupDir = lstrdup(szWorkDir);
 
 			// Mark as detached, because the new console will be started from active shell process,
 			// but not from ConEmu (yet, behavior planned to be changed)
@@ -11419,8 +11425,10 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 			{
 				CRealConsole* pRCon = pVCon->RCon();
 
-				size_t cchCmdLen = (bRootCmdRedefined && pszCmdRedefined ? _tcslen(pszCmdRedefined) : 0);
-				size_t cbMaxSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_DUPLICATE) + cchCmdLen*sizeof(wchar_t);
+				size_t cbMaxSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_DUPLICATE)
+					+ (szCmdRedefined ? (szCmdRedefined.GetLen() + 1) : 0) * sizeof(wchar_t)
+					+ (szWorkDir ? (szWorkDir.GetLen() + 1) : 0) * sizeof(wchar_t)
+					;
 
 				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_DUPLICATE, cbMaxSize);
 				pIn->Duplicate.hGuiWnd = ghWnd;
@@ -11435,8 +11443,16 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 				pRCon->PrepareDefaultColors(nTextColorIdx, nBackColorIdx, nPopTextColorIdx, nPopBackColorIdx, true);
 				pIn->Duplicate.nColors = (nTextColorIdx) | (nBackColorIdx << 8) | (nPopTextColorIdx << 16) | (nPopBackColorIdx << 24);
 
-				if (pszCmdRedefined)
-					_wcscpy_c(pIn->Duplicate.sCommand, cchCmdLen+1, pszCmdRedefined);
+				if (szWorkDir)
+					pIn->Duplicate.sDirectory.Set(szWorkDir.Detach());
+
+				if (szCmdRedefined)
+					pIn->Duplicate.sCommand.Set(szCmdRedefined.Detach());
+
+				// Variable strings
+				LPBYTE ptrDst = ((LPBYTE)&pIn->Duplicate) + sizeof(pIn->Duplicate);
+				ptrDst = pIn->Duplicate.sDirectory.Mangle(ptrDst);
+				ptrDst = pIn->Duplicate.sCommand.Mangle(ptrDst);
 
 				// Go
 				int nFRc = -1;
@@ -11459,8 +11475,9 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 				{
 					if (!bSkipMsg)
 					{
-						swprintf_c(szConfirm, L"Duplicate tab with root '%s' failed, code=%i", p->Name, nFRc);
-						DisplayLastError(szConfirm, -1);
+						wchar_t szRc[16];
+						CEStr szError(L"Duplicate tab with root '", p->Name, L"' failed, code=", ltow_s(nFRc, szRc, 10));
+						DisplayLastError(szError, -1);
 					}
 					// Do not leave 'hunging' tab if duplicating was failed
 					pRCon->CloseConsole(false, false, false);
@@ -11472,8 +11489,6 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 				ExecuteFreeResult(pOut);
 				ExecuteFreeResult(pIn);
 			}
-
-			SafeFree(pszCmdRedefined);
 		}
 	}
 	SafeFree(pProc);

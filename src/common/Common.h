@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    165
+#define CESERVER_REQ_VER    166
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -2226,14 +2226,15 @@ struct CESERVER_REQ_SETCONSOLORS
 
 struct CESERVER_REQ_DUPLICATE
 {
-	HWND2 hGuiWnd;
-	DWORD nGuiPID;
-	DWORD nAID; // внутренний ID в ConEmu
-	BOOL  bRunAs;
-	DWORD nWidth, nHeight;
-	DWORD nBufferHeight;
-	DWORD nColors;
-	WCHAR sCommand[1]; // variable length, NULL usually
+	HWND2   hGuiWnd;
+	DWORD   nGuiPID;
+	DWORD   nAID; // Internal ConEmu ID
+	BOOL    bRunAs;
+	DWORD   nWidth, nHeight;
+	DWORD   nBufferHeight;
+	DWORD   nColors;
+	STRPTR2 sDirectory;
+	STRPTR2 sCommand;
 };
 
 enum ALTBUFFER_FLAGS

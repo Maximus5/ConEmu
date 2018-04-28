@@ -2447,7 +2447,10 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	if (!gpStartEnv)
 		return -1;
 
-	if ((Duplicate->sCommand[0] == 0) && (ghAttachGuiClient && IsWindow(ghAttachGuiClient)))
+	LPCWSTR pszCmdLine = Duplicate->sCommand.Demangle();
+	LPCWSTR pszCurDir = Duplicate->sDirectory.Demangle();
+
+	if ((!pszCmdLine || !*pszCmdLine) && (ghAttachGuiClient && IsWindow(ghAttachGuiClient)))
 	{
 		// Putty/Kitty?
 		if (lstrcmpi(gsExeName, L"PUTTY.EXE") == 0
@@ -2523,8 +2526,9 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	}
 
 	// Well, allow user to run anything inheriting active process state
-	LPCWSTR pszCmdLine = Duplicate->sCommand[0] ? Duplicate->sCommand : gpStartEnv->pszCmdLine;
 
+	if (!pszCmdLine)
+		pszCmdLine = gpStartEnv->pszCmdLine;
 	if (!pszCmdLine || !*pszCmdLine)
 		return -2;
 
@@ -2626,7 +2630,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	}
 	else
 	{
-		BOOL bRunRc = CreateProcess(NULL, pszCmd, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
+		BOOL bRunRc = CreateProcess(NULL, pszCmd, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, pszCurDir, &si, &pi);
 		iRc = bRunRc ? 0 : GetLastError();
 		goto wrap;
 	}
