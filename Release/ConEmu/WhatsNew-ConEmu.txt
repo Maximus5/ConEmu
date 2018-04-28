@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.4.27
+* gh-934: Fix assertion `nNewWidth>0 && nNewHeight>0` appeared sometimes after console resize in Windows 10.
+* gh-1503: Save size/pos/startup-task every minute.
+* gh-1527: Fix auto-hidden scrollbar, was not revealed on mouse-over (regression 1fd7b5b2).
+* gh-1526: Improve ‘Duplicate root...’ function.
+* Allow to stop ‘Paused’ mode by `Esc` key.
+
+
 2018.4.22
 * Allow import of xml files without reset of current settings.
   Example with Dracula color theme:
