@@ -77,6 +77,7 @@ LPWSTR STRPTR2::Demangle()
 	if (!bMangled)
 		return psz;
 	_ASSERTE(offset >= sizeof(STRPTR2));
+	bMangled = FALSE;
 	psz = (wchar_t*)(((LPBYTE)this) + offset);
 	return psz;
 }
