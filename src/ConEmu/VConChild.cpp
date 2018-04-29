@@ -1685,13 +1685,9 @@ bool CConEmuChild::TrackMouse()
 
 bool CConEmuChild::CheckMouseOverScroll()
 {
-	if (gpSet->isAlwaysShowScrollbar == 0)
+	if (gpSet->isAlwaysShowScrollbar == 0) // 0 -- don't show scrollbar at all
 	{
-		return false; // don't show scrollbar at all
-	}
-	else if (gpSet->isAlwaysShowScrollbar == 1) // 1 -- show always
-	{
-		return true;
+		return false;
 	}
 
 	bool lbOverVScroll = false;
