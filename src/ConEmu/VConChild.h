@@ -28,7 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#define SKIP_HIDE_TIMER
 //#define SKIP_ALL_FILLRECT
 class CVirtualConsole;
 class CRealConsole;
@@ -143,9 +142,6 @@ class CConEmuChild
 		bool mb_ScrollDisabled, mb_ScrollVisible, mb_Scroll2Visible, mb_ScrollAutoPopup, mb_VTracking;
 		CTimer m_TScrollShow; // TIMER_SCROLL_SHOW
 		CTimer m_TScrollHide; // TIMER_SCROLL_HIDE
-		#ifndef SKIP_HIDE_TIMER
-		CTimer m_TScrollCheck; // TIMER_SCROLL_CHECK
-		#endif
 
 		BYTE m_LastAlwaysShowScrollbar;
 		SCROLLINFO m_si;

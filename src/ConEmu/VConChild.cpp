@@ -382,9 +382,6 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 
 			pVCon->m_TScrollShow.Init(hWnd, TIMER_SCROLL_SHOW, TIMER_SCROLL_SHOW_DELAY);
 			pVCon->m_TScrollHide.Init(hWnd, TIMER_SCROLL_HIDE, TIMER_SCROLL_HIDE_DELAY);
-			#ifndef SKIP_HIDE_TIMER
-			pVCon->m_TScrollCheck.Init(hWnd, TIMER_SCROLL_CHECK, TIMER_SCROLL_CHECK_DELAY);
-			#endif
 		}
 	}
 	else if (hWnd != ghDcInDestroing)
@@ -632,20 +629,6 @@ LRESULT CConEmuChild::ChildWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM 
 			{
 				switch(wParam)
 				{
-				#ifndef SKIP_HIDE_TIMER // Не будем прятать по таймеру - только по движению мышки
-				case TIMER_SCROLL_CHECK:
-
-					if (pVCon->mb_Scroll2Visible)
-					{
-						if (!pVCon->CheckMouseOverScroll())
-						{
-							pVCon->HideScroll(FALSE/*abImmediate*/);
-						}
-					}
-
-					break;
-				#endif
-
 				case TIMER_SCROLL_SHOW:
 
 					if (pVCon->CheckMouseOverScroll() || pVCon->CheckScrollAutoPopup())
@@ -1664,12 +1647,6 @@ bool CConEmuChild::TrackMouse()
 			mb_Scroll2Visible = TRUE;
 			ShowScroll(FALSE/*abImmediate*/); // Если gpSet->isAlwaysShowScrollbar==1 - сама разберется
 		}
-		#ifndef SKIP_HIDE_TIMER
-		else if (mb_ScrollVisible && (gpSet->isAlwaysShowScrollbar != 1) && !m_TScrollCheck.IsStarted())
-		{
-			m_TScrollCheck.Start();
-		}
-		#endif
 	}
 	else if (mb_Scroll2Visible || mb_ScrollVisible)
 	{
@@ -1986,17 +1963,6 @@ void CConEmuChild::ShowScroll(bool abImmediate)
 
 	UpdateScrollRgn();
 
-	#ifndef SKIP_HIDE_TIMER
-	if (bTCheck)
-	{
-		m_TScrollCheck.Start(mb_ScrollAutoPopup ? TIMER_SCROLL_CHECK_DELAY2 : TIMER_SCROLL_CHECK_DELAY);
-	}
-	else if (m_TScrollCheck.IsStarted())
-	{
-		m_TScrollCheck.Stop();
-	}
-	#endif
-
 	//
 	if (bTShow)
 		m_TScrollShow.Start(mb_ScrollAutoPopup ? TIMER_SCROLL_SHOW_DELAY2 : TIMER_SCROLL_SHOW_DELAY);
@@ -2059,11 +2025,6 @@ void CConEmuChild::HideScroll(bool abImmediate)
 	}
 
 	UpdateScrollRgn();
-
-	#ifndef SKIP_HIDE_TIMER
-	if (m_TScrollCheck.IsStarted())
-		m_TScrollCheck.Stop();
-	#endif
 
 	//
 	if (m_TScrollShow.IsStarted())
