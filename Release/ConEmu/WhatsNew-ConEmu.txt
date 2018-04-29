@@ -20,6 +20,11 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.4.29
+* gh-1532: Fix ‘splitting windows crashes ConEmu’ (01107bd regression).
+* gh-1534: Unable to select text with always-shown scrollbar (0493ff5 regression).
+
+
 2018.4.27
 * gh-934: Fix assertion `nNewWidth>0 && nNewHeight>0` appeared sometimes after console resize in Windows 10.
 * gh-1503: Save size/pos/startup-task every minute.
