@@ -11404,7 +11404,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 			}
 
 			// Нужно оставить там "new_console", иначе не отключается подтверждение закрытия например
-			CEStr szCmdRedefined(bRootCmdRedefined ? args.pszSpecialCmd : NULL);
+			CEStr szCmdRedefined((const wchar_t*)(bRootCmdRedefined ? args.pszSpecialCmd : NULL));
 
 			// Explicitly load "detected" working directory
 			SafeFree(args.pszStartupDir);
