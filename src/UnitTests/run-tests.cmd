@@ -8,7 +8,7 @@ if exist "%~dp0tests.fail" del /Q "%~dp0tests.fail" > nul
 
 set commons=../common/CEStr.cpp ../common/Memory.cpp ../common/WObjects.cpp ../common/WUser.cpp ../common/CmdLine.cpp ^
             ../common/MStrSafe.cpp ../common/MStrDup.cpp ../common/MAssert.cpp ../common/WThreads.cpp ^
-            ../common/MProcess.cpp ../common/RConStartArgs.cpp ../common/RConStartArgsEx.cpp
+            ../common/MProcess.cpp ../common/RConStartArgs.cpp ../common/RConStartArgsEx.cpp ../common/MModule.cpp
 
 set colorcmn=../ConEmu/ColorFix.cpp
 
