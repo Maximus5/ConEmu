@@ -3708,6 +3708,17 @@ bool CConEmuSize::SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMod
 ConEmuWindowMode CConEmuSize::GetWindowMode()
 {
 	ConEmuWindowMode wndMode = gpSet->isQuakeStyle ? ((ConEmuWindowMode)gpSet->_WindowMode) : WindowMode;
+
+	#ifdef _DEBUG
+	bool bZoomed = _bool(::IsZoomed(ghWnd));
+	bool bIconic = _bool(::IsIconic(ghWnd));
+	bool bCaptionHidden = isCaptionHidden(); // Auto-hidden TaskBar doesn't roll over maximized ConEmu in Win 8.1
+	bool bInTransition = (changeFromWindowMode == wmNormal) || mp_ConEmu->InCreateWindow()
+		|| (m_JumpMonitor.bInJump && (m_JumpMonitor.bFullScreen || m_JumpMonitor.bMaximized))
+		|| !IsWindowVisible(ghWnd);
+	_ASSERTE((WindowMode == wmNormal) || bZoomed || bCaptionHidden || bIconic || bInTransition);
+	#endif
+
 	return wndMode;
 }
 
@@ -5410,19 +5421,9 @@ bool CConEmuSize::isIconic(bool abRaw /*= false*/)
 
 bool CConEmuSize::isWindowNormal()
 {
-	#ifdef _DEBUG
-	bool bZoomed = _bool(::IsZoomed(ghWnd));
-	bool bIconic = _bool(::IsIconic(ghWnd));
-	bool bInTransition = (changeFromWindowMode == wmNormal) || mp_ConEmu->InCreateWindow()
-		|| (m_JumpMonitor.bInJump && (m_JumpMonitor.bFullScreen || m_JumpMonitor.bMaximized))
-		|| !IsWindowVisible(ghWnd);
-	_ASSERTE((WindowMode == wmNormal) || bZoomed || bIconic || bInTransition);
-	#endif
-
 	if ((GetWindowMode() != wmNormal) || !IsSizeFree())
 		return false;
-
-	if (::IsIconic(ghWnd))
+	if (isIconic())
 		return false;
 
 	return true;
@@ -5430,18 +5431,9 @@ bool CConEmuSize::isWindowNormal()
 
 bool CConEmuSize::isZoomed()
 {
-	#ifdef _DEBUG
-	bool bZoomed = _bool(::IsZoomed(ghWnd));
-	bool bIconic = _bool(::IsIconic(ghWnd));
-	bool bInTransition = (changeFromWindowMode == wmNormal) || mp_ConEmu->InCreateWindow()
-		|| (m_JumpMonitor.bInJump && (m_JumpMonitor.bFullScreen || m_JumpMonitor.bMaximized))
-		|| !IsWindowVisible(ghWnd);
-	_ASSERTE((WindowMode == wmNormal) || bZoomed || bIconic || bInTransition);
-	#endif
-
 	if (GetWindowMode() != wmMaximized)
 		return false;
-	if (::IsIconic(ghWnd))
+	if (isIconic())
 		return false;
 
 	return true;
@@ -5449,18 +5441,9 @@ bool CConEmuSize::isZoomed()
 
 bool CConEmuSize::isFullScreen()
 {
-	#ifdef _DEBUG
-	bool bZoomed = _bool(::IsZoomed(ghWnd));
-	bool bIconic = _bool(::IsIconic(ghWnd));
-	bool bInTransition = (changeFromWindowMode == wmNormal) || mp_ConEmu->InCreateWindow()
-		|| (m_JumpMonitor.bInJump && (m_JumpMonitor.bFullScreen || m_JumpMonitor.bMaximized))
-		|| !IsWindowVisible(ghWnd);
-	_ASSERTE((WindowMode == wmNormal) || bZoomed || bIconic || bInTransition);
-	#endif
-
 	if (GetWindowMode() != wmFullScreen)
 		return false;
-	if (::IsIconic(ghWnd))
+	if (isIconic())
 		return false;
 
 	return true;
