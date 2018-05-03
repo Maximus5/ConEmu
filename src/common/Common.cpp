@@ -237,6 +237,7 @@ BOOL UnpackInputRecord(const MSG64::MsgStr* piMsg, INPUT_RECORD* pRec)
 	}
 	else
 	{
+		_ASSERTE(FALSE && "Unknown pack type");
 		return FALSE;
 	}
 

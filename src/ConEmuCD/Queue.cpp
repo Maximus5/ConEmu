@@ -450,29 +450,33 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 	//			nCurInputCount = 0;
 	//	} while ((nCurInputCount > 0) && ((GetTickCount() - dwStartTick) < MAX_INPUT_QUEUE_EMPTY_WAIT));
 	//}
-	INPUT_RECORD* prNew = NULL;
+	INPUT_RECORD *prNew = NULL;
 	int nAllCount = 0;
 	BOOL lbReqEmpty = FALSE;
 
-	for (UINT n = 0; n < nCount; n++)
+	INPUT_RECORD *prCur = pr, *prSrc = pr;
+	for (UINT n = 0; n < nCount; ++n, ++prCur, ++prSrc)
 	{
-		if (pr[n].EventType != KEY_EVENT)
+		if (prCur != prSrc)
+			*prCur = *prSrc;
+
+		if (prCur->EventType != KEY_EVENT)
 		{
 			nAllCount++;
-			if (!lbReqEmpty && (pr[n].EventType == MOUSE_EVENT))
+			if (!lbReqEmpty && (prCur->EventType == MOUSE_EVENT))
 			{
 				// По всей видимости дурит консоль Windows.
 				// Если в буфере сейчас еще есть мышиные события, то запись
 				// в буфер возвращает ОК, но считывающее приложение получает 0-событий.
 				// В итоге, получаем пропуск некоторых событий, что очень неприятно 
 				// при выделении кучи файлов правой кнопкой мыши (проводкой с зажатой кнопкой)
-				if (pr[n].Event.MouseEvent.dwButtonState /*== RIGHTMOST_BUTTON_PRESSED*/)
+				if (prCur->Event.MouseEvent.dwButtonState /*== RIGHTMOST_BUTTON_PRESSED*/)
 					lbReqEmpty = TRUE;
 			}
 		}
 		else
 		{
-			WORD vk = pr[n].Event.KeyEvent.wVirtualKeyCode;
+			WORD vk = prCur->Event.KeyEvent.wVirtualKeyCode;
 			if (((vk == VK_RETURN) || (vk == VK_SPACE)) && gpSrv->pAppMap)
 			{
 				// github#19: don't post Enter/Space KeyUp events to the console input buffer
@@ -482,7 +486,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 				static DWORD nLastPID = 0;
 				static WORD nLastVK = 0;
 				bool bBypass = false;
-				if (pr[n].Event.KeyEvent.bKeyDown)
+				if (prCur->Event.KeyEvent.bKeyDown)
 				{
 					// The application may use Read only for getting the event when it is ready
 					// So the application is not waiting for and simple nReadConsoleInputPID
@@ -497,7 +501,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 						|| (nLastVK != vk))
 					{
 						// Skip this event
-						pr[n].EventType = 0;
+						--prCur;
 						nLastPID = 0; nLastVK = 0;
 						continue;
 					}
@@ -510,15 +514,17 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 				UNREFERENCED_PARAMETER(bBypass);
 			}
 
-			if (!pr[n].Event.KeyEvent.wRepeatCount)
+			if (!prCur->Event.KeyEvent.wRepeatCount)
 			{
-				_ASSERTE(pr[n].Event.KeyEvent.wRepeatCount!=0);
-				pr[n].Event.KeyEvent.wRepeatCount = 1;
+				_ASSERTE(prCur->Event.KeyEvent.wRepeatCount!=0);
+				prCur->Event.KeyEvent.wRepeatCount = 1;
 			}
 
-			nAllCount += pr[n].Event.KeyEvent.wRepeatCount;
+			nAllCount += prCur->Event.KeyEvent.wRepeatCount;
 		}
 	}
+	_ASSERTE(prCur >= pr);
+	nCount = std::min<UINT>(nCount, UINT(prCur - pr));
 
 	if (nAllCount > (int)nCount)
 	{
@@ -625,6 +631,9 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 					pr[i].Event.KeyEvent.bKeyDown ? L"Dn" : L"Up", pr[i].Event.KeyEvent.wVirtualKeyCode, szCh);
 				DEBUGSTRINPUTWRITE(szDbg);
 			}
+			break;
+		case 0:
+			_ASSERTE(pr[i].EventType != 0);
 			break;
 		}
 

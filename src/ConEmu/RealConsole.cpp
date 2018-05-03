@@ -2483,6 +2483,10 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 			gpSetCls->Performance(tPerfKeyboard, FALSE);
 		}
 	}
+	else if (piRec->EventType == 0)
+	{
+		_ASSERTE(piRec->EventType != 0);
+	}
 
 	if (CSetPgDebug::GetActivityLoggingType() == glt_Input)
 	{
