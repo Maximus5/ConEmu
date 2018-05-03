@@ -3400,6 +3400,17 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			{
 				switch (Code.ArgV[i])
 				{
+				case 8:
+					// `ESC [ 8 ; height ; width t` --> Resize the text area to [height;width] in characters.
+					{
+						int height = -1, width = -1;
+						if (i < Code.ArgC)
+							height = Code.ArgV[++i];
+						if (i < Code.ArgC)
+							width = Code.ArgV[++i];
+						DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
+					}
+					break;
 				case 14:
 					// `ESC [ 1 4 t` --> Reports terminal window size in pixels as `CSI 4 ; height ; width t`.
 					ReportTerminalPixelSize();
