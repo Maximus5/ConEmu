@@ -4844,14 +4844,14 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			// Already restored, need to clear the flag to avoid incorrect sizing
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(false);
 
-			OnSize(false); // Align children windows
-
-			UpdateWindowRgn();
-
 			setWindowPos(NULL,
 			                -rcShift.left+mi.rcMonitor.left,-rcShift.top+mi.rcMonitor.top,
 			                ptFullScreenSize.x,ptFullScreenSize.y,
 			                SWP_NOZORDER);
+
+			OnSize(false); // Align children windows
+
+			UpdateWindowRgn();
 
 			gpSetCls->UpdateWindowMode(wmFullScreen);
 
