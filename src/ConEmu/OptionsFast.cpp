@@ -2337,8 +2337,10 @@ static void CreateBashTask()
 		MWow64Disable wow; wow.Disable(); // We need 64-bit version of system32
 		#endif
 		wchar_t BashOnUbuntu[] = L"%windir%\\system32\\bash.exe";
-		CEStr lsExpanded(ExpandEnvStr(BashOnUbuntu));
-		if (FileExists(lsExpanded))
+		wchar_t WslLoader[] = L"%windir%\\system32\\wsl.exe";
+		CEStr lsBashOnUbuntu(ExpandEnvStr(BashOnUbuntu));
+		CEStr lsWslLoader(ExpandEnvStr(BashOnUbuntu));
+		if (FileExists(lsWslLoader) || FileExists(lsBashOnUbuntu))
 		{
 			// Prefer to run WSL via connector+wsl_bridge
 			bool use_bridge = false;
