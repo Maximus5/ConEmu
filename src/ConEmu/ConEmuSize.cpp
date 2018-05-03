@@ -748,8 +748,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 
 			//if (tWhat != CER_CORRECTED)
 			//    tFrom = tWhat;
-			MONITORINFO mi = {sizeof(mi)};
-			DEBUGTEST(HMONITOR hMonitor =) GetNearestMonitor(&mi, (tFrom==CER_MAIN) ? &rFrom : NULL);
+			auto mi = (tFrom == CER_MAIN) ? NearestMonitorInfo(rFrom) : NearestMonitorInfo(NULL);
 
 			{
 				//switch (tFrom) // --было
@@ -757,37 +756,23 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 				{
 					case CER_MONITOR:
 					{
-						rc = mi.rcWork;
+						rc = mi.mi.rcWork;
 
 					} break;
 					case CER_FULLSCREEN:
 					{
-						rc = mi.rcMonitor;
+						rc = mi.mi.rcMonitor;
 
 					} break;
 					case CER_MAXIMIZED:
 					{
-						rc = mi.rcWork;
+						rc = mi.mi.rcWork;
 						RECT rcFrame = CalcMargins(CEM_FRAMEONLY);
 						// Скорректируем размер окна до видимого на мониторе (рамка при максимизации уезжает за пределы экрана)
 						rc.left -= rcFrame.left;
 						rc.right += rcFrame.right;
 						rc.top -= rcFrame.top;
 						rc.bottom += rcFrame.bottom;
-
-						// Issue 828: When taskbar is auto-hidden
-						UINT uEdge = (UINT)-1;
-						// Is task-bar found on current monitor?
-						if (IsTaskbarAutoHidden(&mi.rcMonitor, &uEdge))
-						{
-							switch (uEdge)
-							{
-								case ABE_LEFT:   rc.left   += 1; break;
-								case ABE_RIGHT:  rc.right  -= 1; break;
-								case ABE_TOP:    rc.top    += 1; break;
-								case ABE_BOTTOM: rc.bottom -= 1; break;
-							}
-						}
 
 					} break;
 					case CER_RESTORE:
@@ -806,20 +791,20 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 
 							// Если после последней максимизации была изменена
 							// конфигурация мониторов - нужно поправить видимую область
-							if (((rc.right + 30) <= mi.rcWork.left)
-								|| ((rc.left + 30) >= mi.rcWork.right))
+							if (((rc.right + 30) <= mi.mi.rcWork.left)
+								|| ((rc.left + 30) >= mi.mi.rcWork.right))
 							{
-								rc.left = mi.rcWork.left; rc.right = rc.left + w;
+								rc.left = mi.mi.rcWork.left; rc.right = rc.left + w;
 							}
-							if (((rc.bottom + 30) <= mi.rcWork.top)
-								|| ((rc.top + 30) >= mi.rcWork.bottom))
+							if (((rc.bottom + 30) <= mi.mi.rcWork.top)
+								|| ((rc.top + 30) >= mi.mi.rcWork.bottom))
 							{
-								rc.top = mi.rcWork.top; rc.bottom = rc.top + h;
+								rc.top = mi.mi.rcWork.top; rc.bottom = rc.top + h;
 							}
 						}
 						else
 						{
-							rc = mi.rcWork;
+							rc = mi.mi.rcWork;
 						}
 					} break;
 					default:
@@ -1543,6 +1528,20 @@ void CConEmuSize::ReloadMonitorInfo()
 			rc.bottom = rcTest.bottom - nTestHeight;
 			rc.top = -rcTest.top;
 			mi.noCaption.VisibleFrameWidth = mi.noCaption.FrameWidth = rc.left;
+		}
+
+		// Issue 828: When taskbar is auto-hidden
+		// Is task-bar found on current monitor?
+		if ((mi.isTaskbarHidden = IsTaskbarAutoHidden(&mi.mi.rcMonitor, (PUINT)&mi.taskbarLocation, &mi.hTaskbar)))
+		{
+			const int pixel = 1;
+			switch (mi.taskbarLocation)
+			{
+				case ABE_LEFT:   mi.mi.rcWork.left   += pixel; break;
+				case ABE_RIGHT:  mi.mi.rcWork.right  -= pixel; break;
+				case ABE_TOP:    mi.mi.rcWork.top    += pixel; break;
+				case ABE_BOTTOM: mi.mi.rcWork.bottom -= pixel; break;
+			}
 		}
 	}
 
@@ -4924,7 +4923,8 @@ wrap:
 	// полноэкранности у панели задач. Вернем его...
 	if (mp_ConEmu->mp_TaskBar2)
 	{
-		bNewFullScreen = (WindowMode == wmFullScreen) || (gpSet->isQuakeStyle && (gpSet->_WindowMode == wmFullScreen));
+		bNewFullScreen = (WindowMode == wmFullScreen)
+			|| (gpSet->isQuakeStyle && (gpSet->_WindowMode == wmFullScreen));
 		if (bWasSetFullscreen != bNewFullScreen)
 		{
 			mp_ConEmu->Taskbar_MarkFullscreenWindow(ghWnd, bNewFullScreen);
@@ -6180,7 +6180,19 @@ bool CConEmuSize::isSelfFrame()
 		return false;
 	// Take into account user setting but don't allow frame larger than system-defined
 	int iFrame = gpSet->HideCaptionAlwaysFrame();
-	return (iFrame >= 0);
+	if (iFrame >= 0)
+		return true;
+	// Even for standard frame (without caption) we shall hide it in maximized mode
+	// to avoid artefacts and TaskBar rollout problems
+	_ASSERTE(iFrame == -1);
+	auto wm = GetWindowMode();
+	if (wm == wmFullScreen || wm == wmMaximized)
+	{
+		const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(NULL);
+		if (mi.isTaskbarHidden)
+			return true;
+	}
+	return false;
 }
 
 UINT CConEmuSize::GetSelfFrameWidth()
@@ -6190,11 +6202,13 @@ UINT CConEmuSize::GetSelfFrameWidth()
 	_ASSERTE(isSelfFrame()); // Shall GetSelfFrameWidth be used only for self-drawn frame?
 	// Take into account user setting but don't allow frame larger than system-defined
 	int iFrame = gpSet->HideCaptionAlwaysFrame();
+	const auto wm = GetWindowMode();
+	const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(NULL);
 	// -1 means we should use standard Windows thick frame if possible
-	if (iFrame < 0)
+	// otherwise if window is maximized or fullscreen no sense to create hidden frame for sizing on mouse-over
+	if ((iFrame < 0) || (mi.isTaskbarHidden && isCaptionHidden() && (wm == wmMaximized || wm == wmFullScreen)))
 		return 0;
 	// Reuse frame width from monitors cache
-	const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(NULL);
 	int iStdFrame = mp_ConEmu->GetWinFrameWidth();
 	int iDefFrame = isCaptionHidden() ? mi.noCaption.FrameWidth : mi.withCaption.FrameWidth;
 	if (iFrame == 0 || iFrame > iDefFrame)

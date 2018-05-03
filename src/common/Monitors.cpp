@@ -419,11 +419,15 @@ HWND FindTaskbarWindow(LPRECT rcMon /*= NULL*/)
 	return hTaskbar;
 }
 
-bool IsTaskbarAutoHidden(LPRECT rcMon /*= NULL*/, PUINT pEdge /*= NULL*/)
+bool IsTaskbarAutoHidden(LPRECT rcMon /*= NULL*/, PUINT pEdge /*= NULL*/, HWND* pTaskbar /*= NULL*/)
 {
 	HWND hTaskbar = FindTaskbarWindow(rcMon);
+	if (pTaskbar)
+		*pTaskbar = hTaskbar;
 	if (!hTaskbar)
 	{
+		if (pEdge)
+			*pEdge = (UINT)-1;
 		return false;
 	}
 

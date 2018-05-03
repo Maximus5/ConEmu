@@ -191,6 +191,17 @@ public:
 		FrameInfoCache withCaption;
 		// And without caption
 		FrameInfoCache noCaption;
+		// TaskBar information
+		HWND hTaskbar;
+		BOOL isTaskbarHidden;
+		enum TaskBarLocation : UINT
+		{
+			Left   = ABE_LEFT,
+			Right  = ABE_RIGHT,
+			Top    = ABE_TOP,
+			Bottom = ABE_BOTTOM,
+			Absent = (UINT)-1,
+		} taskbarLocation;
 	};
 protected:
 	MSectionSimple mcs_monitors = MSectionSimple(true);

@@ -39,4 +39,4 @@ HMONITOR GetNearestMonitorInfo(MONITORINFO* pmi = NULL, HMONITOR hDefault = NULL
 HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next);
 
 HWND FindTaskbarWindow(LPRECT rcMon = NULL);
-bool IsTaskbarAutoHidden(LPRECT rcMon = NULL, PUINT pEdge = NULL);
+bool IsTaskbarAutoHidden(LPRECT rcMon = NULL, PUINT pEdge = NULL, HWND* pTaskbar = NULL);

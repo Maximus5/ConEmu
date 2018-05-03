@@ -321,24 +321,30 @@ void SizeInfo::DoCalculate()
 	{
 		const auto mi = mp_ConEmu->NearestMonitorInfo(new_rr.window);
 		const auto wm = mp_ConEmu->GetWindowMode();
-		RECT rcFrame = (wm == wmFullScreen) ? RECT{} : caption_hidden ? mi.noCaption.FrameMargins : mi.withCaption.FrameMargins;
+		const bool selfFrame = mp_ConEmu->isSelfFrame();
+		const unsigned frameWidth = selfFrame ? mp_ConEmu->GetSelfFrameWidth() : 0;
+		const RECT rcFrame =
+			(selfFrame && frameWidth == 0) ? RECT{}
+			: (wm == wmFullScreen) ? RECT{}
+			: caption_hidden ? mi.noCaption.FrameMargins : mi.withCaption.FrameMargins
+			;
 
-		if ((wm == wmFullScreen) || !mp_ConEmu->isSelfFrame())
+		if ((wm == wmFullScreen) || !selfFrame)
 		{
+			new_rr.frame = rcFrame;
 			_ASSERTE(!mp_ConEmu->isInside());
 			new_rr.real_client = RECT{rcFrame.left, rcFrame.top, RectWidth(new_rr.window) - rcFrame.right, RectHeight(new_rr.window) - rcFrame.bottom};
 			new_rr.client = RECT{0, 0, RectWidth(new_rr.window) - rcFrame.left - rcFrame.right, RectHeight(new_rr.window) - rcFrame.top - rcFrame.bottom};
 		}
 		else
 		{
-			int iFrame = gpSet->HideCaptionAlwaysFrame();
-			if ((iFrame > 0) && (iFrame < rcFrame.left))
-				rcFrame = RECT{iFrame, iFrame, iFrame, iFrame};
+			if (frameWidth < rcFrame.left)
+				new_rr.frame = RECT{int(frameWidth), int(frameWidth), int(frameWidth), int(frameWidth)};
+			else
+				new_rr.frame = rcFrame;
 			new_rr.real_client = RECT{0, 0, RectWidth(new_rr.window), RectHeight(new_rr.window)};
-			new_rr.client = RECT{rcFrame.left, rcFrame.top, RectWidth(new_rr.window) - rcFrame.right, RectHeight(new_rr.window) - rcFrame.bottom};
+			new_rr.client = RECT{new_rr.frame.left, new_rr.frame.top, RectWidth(new_rr.window) - new_rr.frame.right, RectHeight(new_rr.window) - new_rr.frame.bottom};
 		}
-
-		new_rr.frame = rcFrame;
 	}
 
 	new_rr.workspace = new_rr.client;

@@ -1720,13 +1720,26 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 	else if (gpConEmu->isCaptionHidden(wmNewMode))
 	{
 		dwStyle &= ~WS_CAPTION;
-		// NO frame in FullScreen at all
-		if (wmNewMode == wmFullScreen)
+
+		bool noThickFrame = false;
+			// NO frame in FullScreen at all
+		if ((wmNewMode == wmFullScreen)
+			// mb_DisableThickFrame - to eliminate glitches during quake animation
+			|| (mb_DisableThickFrame))
 		{
-			dwStyle &= ~(WS_THICKFRAME);
+			noThickFrame = true;
 		}
-		// mb_DisableThickFrame - to eliminate glitches during quake animation
-		else if (mb_DisableThickFrame)
+			// gh-1539: Bypass Windows problem with region and hidden taskbar
+		else if ((wmNewMode == wmMaximized) && isCaptionHidden())
+		{
+			auto mi = NearestMonitorInfo(NULL);
+			if (mi.isTaskbarHidden)
+			{
+				noThickFrame = true;
+			}
+		}
+
+		if (noThickFrame)
 		{
 			dwStyle &= ~(WS_THICKFRAME);
 		}
