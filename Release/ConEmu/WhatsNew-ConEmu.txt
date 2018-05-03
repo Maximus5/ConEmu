@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.5.3
+* gh-1539: Resize fixes for auto-hidden Taskbar and caption-less mode.
+* gh-1545: Fix paste problems in Windows 10 1803 on texts with spaces or CR/LF.
+* Maximized ConEmu was not sized properly after display changes.
+* Default Task: create `{bash}` if either `bash.exe` or `wsl.exe` are found.
+* Improve Windows version detection in dlls.
+
+
 2018.4.29
 * gh-1532: Fix ‘splitting windows crashes ConEmu’ (01107bd regression).
 * gh-1534: Unable to select text with always-shown scrollbar (0493ff5 regression).
