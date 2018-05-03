@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 #include "CmdLine.h"
+#include "MModule.h"
 #include "MStrDup.h"
 #include "WObjects.h"
 
@@ -632,16 +633,38 @@ bool IsWinPE()
 bool GetOsVersionInformational(OSVERSIONINFO* pOsVer)
 {
 	#pragma warning(disable: 4996)
+	// #WINVER Support Rtl function like _VerifyVersionInfo does
 	BOOL result = GetVersionEx(pOsVer);
 	#pragma warning(default: 4996)
 	return (result != FALSE);
+}
+
+bool _VerifyVersionInfo(LPOSVERSIONINFOEXW lpVersionInformation, DWORD dwTypeMask, DWORDLONG dwlConditionMask)
+{
+	bool rc;
+
+	// If our dll was loaded into some executable without proper `supportedOS`
+	// in its manifest, the VerifyVersionInfoW fails to check *real* things
+	static BOOL (WINAPI *rtlVerifyVersionInfo)(LPOSVERSIONINFOEXW, DWORD, DWORDLONG) = NULL;
+	static int hasRtl = 0;
+	if (hasRtl == 0)
+	{
+		MModule ntdll(GetModuleHandle(L"ntdll.dll"));
+		hasRtl = ntdll.GetProcAddress("RtlVerifyVersionInfo", rtlVerifyVersionInfo) ? 1 : -1;
+	}
+
+	if (rtlVerifyVersionInfo)
+		rc = (0/*STATUS_SUCCESS*/ == rtlVerifyVersionInfo(lpVersionInformation, dwTypeMask, dwlConditionMask));
+	else
+		rc = !!VerifyVersionInfoW(lpVersionInformation, dwTypeMask, dwlConditionMask);
+	return rc;
 }
 
 bool IsWinVerOrHigher(WORD OsVer)
 {
 	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(OsVer), LOBYTE(OsVer)};
 	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-	BOOL ibIsWinOrHigher = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+	BOOL ibIsWinOrHigher = _VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
 	return (ibIsWinOrHigher != FALSE);
 }
 
@@ -649,7 +672,7 @@ bool IsWinVerEqual(WORD OsVer)
 {
 	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(OsVer), LOBYTE(OsVer)};
 	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_EQUAL), VER_MINORVERSION, VER_EQUAL);
-	BOOL ibIsWinOrHigher = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+	BOOL ibIsWinOrHigher = _VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
 	return (ibIsWinOrHigher != FALSE);
 }
 
@@ -673,7 +696,7 @@ bool IsWin5family()
 		// Don't use IsWinVerEqual here - we need to compare only major version!
 		OSVERSIONINFOEXW osvi = {sizeof(osvi), 5, 0};
 		DWORDLONG const dwlConditionMask = VerSetConditionMask(0, VER_MAJORVERSION, VER_EQUAL);
-		ibIsWin5fam = VerifyVersionInfoW(&osvi, VER_MAJORVERSION, dwlConditionMask) ? 1 : -1;
+		ibIsWin5fam = _VerifyVersionInfo(&osvi, VER_MAJORVERSION, dwlConditionMask) ? 1 : -1;
 	}
 	return (ibIsWin5fam == 1);
 }
@@ -688,7 +711,7 @@ bool IsWinXP()
 		DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0,
 			VER_MAJORVERSION, VER_GREATER_EQUAL),
 			VER_MINORVERSION, VER_GREATER_EQUAL);
-		ibIsWinXP = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) ? 1 : -1;;
+		ibIsWinXP = _VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask) ? 1 : -1;;
 	}
 	return (ibIsWinXP == 1);
 }
@@ -705,7 +728,7 @@ bool IsWinXPSP1()
 			VER_MAJORVERSION, VER_GREATER_EQUAL),
 			VER_MINORVERSION, VER_GREATER_EQUAL),
 			VER_SERVICEPACKMAJOR, VER_GREATER_EQUAL);
-		ibIsWinXPSP1 = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) ? 1 : -1;;
+		ibIsWinXPSP1 = _VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_SERVICEPACKMAJOR, dwlConditionMask) ? 1 : -1;;
 	}
 	return (ibIsWinXPSP1 == 1);
 }
@@ -870,7 +893,7 @@ bool IsHwFullScreenAvailable()
 	_ASSERTE(_WIN32_WINNT_VISTA==0x600);
 	OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_VISTA), LOBYTE(_WIN32_WINNT_VISTA)};
 	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-	if (VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
+	if (_VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
 		return false; // Vista or higher - not available
 	else
 		return true;

@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "defines.h"
 #include "Memory.h"
 #include "MAssert.h"
+#include "WObjects.h"
 
 class MNullDesc;
 
@@ -78,7 +79,7 @@ protected:
 				_ASSERTE(_WIN32_WINNT_WIN7==0x601);
 				OSVERSIONINFOEXW osvi = {sizeof(osvi), HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7)};
 				DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
-				if (!VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
+				if (!_VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask))
 					continue; // в Vista и ниже "KernelBase.dll" еще не было
 				mh_AdvApi = LoadLibrary(L"KernelBase.dll");
 			}

@@ -5633,7 +5633,7 @@ bool static NeedLegacyCursorCorrection()
 				VER_MAJORVERSION, VER_GREATER_EQUAL),
 				VER_MINORVERSION, VER_GREATER_EQUAL),
 				VER_BUILDNUMBER, VER_GREATER_EQUAL);
-			BOOL ibIsWin = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_BUILDNUMBER, dwlConditionMask);
+			BOOL ibIsWin = _VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_BUILDNUMBER, dwlConditionMask);
 			if (ibIsWin)
 			{
 				bNeedCorrection = true;

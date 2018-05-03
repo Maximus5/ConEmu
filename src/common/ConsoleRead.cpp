@@ -358,7 +358,7 @@ bool IsConsoleDoubleCellCP()
 		{
 			OSVERSIONINFOEXW osvi = {sizeof(osvi), 10, 0, 14959};
 			DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL), VER_BUILDNUMBER, VER_GREATER_EQUAL);
-			BOOL ibIsWinOrHigher = VerifyVersionInfoW(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_BUILDNUMBER, dwlConditionMask);
+			BOOL ibIsWinOrHigher = _VerifyVersionInfo(&osvi, VER_MAJORVERSION | VER_MINORVERSION | VER_BUILDNUMBER, dwlConditionMask);
 			if (ibIsWinOrHigher)
 			{
 				bDBCS = true;

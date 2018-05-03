@@ -61,6 +61,7 @@ wchar_t* GetShortFileNameEx(LPCWSTR asLong, BOOL abFavorLength=TRUE);
 
 DWORD GetModulePathName(HMODULE hModule, CEStr& lsPathName);
 
+bool _VerifyVersionInfo(LPOSVERSIONINFOEXW lpVersionInformation, DWORD dwTypeMask, DWORDLONG dwlConditionMask);
 bool IsWinDBCS();
 bool IsHwFullScreenAvailable();
 bool GetOsVersionInformational(OSVERSIONINFO* pOsVer);

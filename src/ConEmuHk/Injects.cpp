@@ -140,7 +140,7 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 	DWORDLONG const dwlConditionMask = VerSetConditionMask(VerSetConditionMask(0, VER_MAJORVERSION, VER_GREATER_EQUAL), VER_MINORVERSION, VER_GREATER_EQUAL);
 	_ASSERTE(_WIN32_WINNT_WIN7==0x601);
 	OSVERSIONINFOEXW osvi7 = {sizeof(osvi7), HIBYTE(_WIN32_WINNT_WIN7), LOBYTE(_WIN32_WINNT_WIN7)};
-	BOOL bOsWin7 = VerifyVersionInfoW(&osvi7, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
+	BOOL bOsWin7 = _VerifyVersionInfo(&osvi7, VER_MAJORVERSION | VER_MINORVERSION, dwlConditionMask);
 
 	if (!hKernel)
 	{
