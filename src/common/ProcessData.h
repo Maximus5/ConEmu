@@ -564,7 +564,8 @@ public:
 		if (h == NULL)
 		{
 			// Most usually this will be "Access denied", check others?
-			_ASSERTE(nErr == ERROR_ACCESS_DENIED);
+			// ERROR_INVALID_PARAMETER seems like means "there is no such process"
+			_ASSERTE(nErr == ERROR_ACCESS_DENIED || nErr == ERROR_INVALID_PARAMETER);
 		}
 		#endif
 
