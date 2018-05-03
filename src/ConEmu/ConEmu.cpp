@@ -13698,11 +13698,29 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 		} break;
 
+		case WM_SETTINGCHANGE:
+		{
+			if (wParam == SPI_SETWORKAREA)
+			{
+				ReloadMonitorInfo();
+			}
+			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
+			if (wParam == SPI_SETWORKAREA)
+			{
+				auto wm = GetWindowMode();
+				if (wm != wmNormal)
+					SetWindowMode(wm);
+			}
+		} break;
+
 		case WM_DISPLAYCHANGE:
 		{
 			ReloadMonitorInfo();
 			OnDisplayChanged(LOWORD(wParam), LOWORD(lParam), HIWORD(lParam));
 			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
+			auto wm = GetWindowMode();
+			if (wm != wmNormal)
+				SetWindowMode(wm);
 		} break;
 		case /*0x02E0*/ WM_DPICHANGED:
 		{

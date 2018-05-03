@@ -4698,6 +4698,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			DEBUGLOGFILE("SetWindowMode(wmMaximized)\n");
 			_ASSERTE(gpSet->isQuakeStyle==0); // Must not get here for Quake mode
 
+			bool resetSize = false;
 			RECT rcMax = CalcRect(CER_MAXIMIZED);
 
 			WARNING("Может обломаться из-за максимального размера консоли");
@@ -4754,12 +4755,17 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 				gpSetCls->UpdateWindowMode(wmMaximized);
 			} // if (!gpSet->isHideCaption)
+			else
+			{
+				resetSize = true;
+			}
 
 			_ASSERTE(mn_IgnoreSizeChange>=0);
 
 			if (!IsWindowVisible(ghWnd))
 			{
 				MSetter lSet(&mn_IgnoreSizeChange);
+				resetSize = true;
 				ShowMainWindow((abFirstShow && mp_ConEmu->WindowStartMinimized) ? SW_SHOWMINNOACTIVE : SW_SHOWMAXIMIZED, abFirstShow);
 
 				LPCWSTR pszInfo = L"OnSize(false).3";
@@ -4769,6 +4775,11 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			_ASSERTE(mn_IgnoreSizeChange>=0);
 
 			mp_ConEmu->RefreshWindowStyles();
+
+			if (resetSize)
+			{
+				setWindowPos(NULL, rcMax.left, rcMax.top, rcMax.right-rcMax.left, rcMax.bottom-rcMax.top, SWP_NOCOPYBITS|SWP_NOZORDER);
+			}
 
 			// Already restored, need to clear the flag to avoid incorrect sizing
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(false);
