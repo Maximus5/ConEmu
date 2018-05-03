@@ -2532,6 +2532,20 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
+	wchar_t szInfo[255];
+	if (RELEASEDEBUGTEST(gpSet->isLogging(), true))
+	{
+		RECT rcBox = {};
+		HRGN hRgn = CreateRectRgn(0,0,0,0);
+		int wRgn = GetWindowRgn(ghWnd, hRgn);
+		int nRgn = (wRgn == SIMPLEREGION || wRgn == COMPLEXREGION) ? GetRgnBox(hRgn, &rcBox) : wRgn;
+		swprintf_c(szInfo,
+			nRgn ? L"GetWindowRgn(0x%08X) = <%u> {%i,%i}-{%i,%i}" : L"GetWindowRgn(0x%08X) = NULL",
+			ghWnd, nRgn, LOGRECTCOORDS(rcBox));
+		if (!LogString(szInfo)) { DEBUGSTRRGN(szInfo); }
+		DeleteObject(hRgn);
+	}
+
 	// Если нужно поправить параметры DWM
 	mp_ConEmu->ExtendWindowFrame();
 
@@ -2543,12 +2557,11 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 	if (gpSet->isLogging(2))
 	{
-		wchar_t szInfo[255];
 		wcscpy_c(szInfo, L"OnWindowPosChanged:");
 		if (dwStyle & WS_MAXIMIZE) wcscat_c(szInfo, L" (zoomed)");
 		if (dwStyle & WS_MINIMIZE) wcscat_c(szInfo, L" (iconic)");
 		size_t cchLen = wcslen(szInfo);
-		swprintf_c(szInfo+cchLen, countof(szInfo)-cchLen/*#SECURELEN*/, L" x%08X x%08X (F:x%08X X:%i Y:%i W:%i H:%i)", dwStyle, dwStyleEx, p->flags, p->x, p->y, p->cx, p->cy);
+		swprintf_c(szInfo+cchLen, countof(szInfo)-cchLen, L" x%08X x%08X (F:x%08X X:%i Y:%i W:%i H:%i)", dwStyle, dwStyleEx, p->flags, p->x, p->y, p->cx, p->cy);
 		LogString(szInfo);
 	}
 
@@ -2567,7 +2580,8 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	//bWasTopMost = ((dwStyleEx & WS_EX_TOPMOST)==WS_EX_TOPMOST);
 	#endif
 
-	wchar_t szDbg[128]; swprintf_c(szDbg, L"WM_WINDOWPOSCHANGED ({%i,%i}x{%i,%i} Flags=0x%08X), style=0x%08X\n", p->x, p->y, p->cx, p->cy, p->flags, dwStyle);
+	wchar_t szDbg[128]; swprintf_c(szDbg, L"WM_WINDOWPOSCHANGED ({%i,%i}x{%i,%i} Flags=x%08X After=x%08X), style=0x%08X\n",
+		p->x, p->y, p->cx, p->cy, p->flags, LODWORD(p->hwndInsertAfter), dwStyle);
 	DEBUGSTRSIZE(szDbg);
 	//WindowPosStackCount++;
 
@@ -4511,9 +4525,9 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 	RECT rcWnd; GetWindowRect(ghWnd, &rcWnd);
 
 	// Logging purposes
-	MONITORINFO mi = {sizeof(mi)}; HMONITOR hMon = GetNearestMonitorInfo(&mi, NULL, &rcWnd);
+	auto mi = IsRectMinimized(rcWnd) ? NearestMonitorInfo(NULL) : NearestMonitorInfo(rcWnd);
 	swprintf_c(szInfo, L"SetWindowMode info: Wnd={%i,%i}-{%i,%i} Mon=x%08X Work={%i,%i}-{%i,%i} Full={%i,%i}-{%i,%i}",
-		LOGRECTCOORDS(rcWnd), LODWORD(hMon), LOGRECTCOORDS(mi.rcWork), LOGRECTCOORDS(mi.rcMonitor));
+		LOGRECTCOORDS(rcWnd), LODWORD(mi.hMon), LOGRECTCOORDS(mi.mi.rcWork), LOGRECTCOORDS(mi.mi.rcMonitor));
 	if (!LogString(szInfo)) { DEBUGSTRWMODE(szInfo); }
 
 	//bool canEditWindowSizes = false;
@@ -4586,9 +4600,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 				}
 				else
 				{
-					// #SIZE_TODO Restore to "active" monitor?
-					MONITORINFO mi; GetNearestMonitor(&mi);
-					ptOffset = POINT{mi.rcWork.left, mi.rcWork.top};
+					ptOffset = POINT{mi.mi.rcWork.left, mi.mi.rcWork.top};
 				}
 
 				rcIdeal = RECT{ptOffset.x, ptOffset.y, ptOffset.x + RectWidth(rcIdeal), ptOffset.y + RectHeight(rcIdeal)};
