@@ -3312,7 +3312,8 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 			{
 				// Tab templates are case insensitive yet
 				LPCWSTR pszTabTempl = gpSet->szTabPanels;
-				if ((wcsstr(pszTabTempl, L"%d") || wcsstr(pszTabTempl, L"%D"))
+				if ((wcsstr(pszTabTempl, L"%d") || wcsstr(pszTabTempl, L"%D")
+					|| wcsstr(pszTabTempl, L"%f") || wcsstr(pszTabTempl, L"%F"))
 					&& ReloadFarWorkDir())
 				{
 					mp_ConEmu->mp_TabBar->Update();
