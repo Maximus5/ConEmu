@@ -997,10 +997,14 @@ void SettingsXML::CloseStorage() noexcept
 			{
 				try
 				{
+					MCHKHEAP;
 					FileWriter file(pszXmlFile);
 					// Don't write BOM explicitly?
+					MCHKHEAP;
 					rapidxml::print(file.CreateIterator(), *mp_File);
+					MCHKHEAP;
 					file.Write();
+					MCHKHEAP;
 				}
 				catch (FileException& e)
 				{
