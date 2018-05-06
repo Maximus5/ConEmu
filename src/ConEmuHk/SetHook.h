@@ -100,8 +100,8 @@ extern "C" {
 	extern void __stdcall SetFarHookMode(struct HookModeFar *apFarMode);
 
 	bool __stdcall SetHookCallbacks(const char* ProcName, const wchar_t* DllName, HMODULE hCallbackModule,
-	                                HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack,
-	                                HookItemExceptCallback_t ExceptCallBack = NULL);
+	                                HookItemCallback_t PreCallBack, HookItemCallback_t PostCallBack,
+	                                HookItemCallback_t ExceptCallBack = NULL);
 
 #if defined(__GNUC__)
 };
@@ -139,10 +139,10 @@ struct HookItem
 #endif
 
 	// 'll be called before and after 'real' function
-	HMODULE                  hCallbackModule;
-	HookItemPreCallback_t	 PreCallBack;
-	HookItemPostCallback_t	 PostCallBack;
-	HookItemExceptCallback_t ExceptCallBack;
+	HMODULE             hCallbackModule;
+	HookItemCallback_t  PreCallBack;
+	HookItemCallback_t  PostCallBack;
+	HookItemCallback_t  ExceptCallBack;
 };
 
 

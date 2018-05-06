@@ -29,6 +29,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DROP_SETCP_ON_WIN2K3R2
 
+// for ConEmuDw.h
+#define DEFINE_CONSOLE_EXPORTS
+
 // Иначе не опередяется GetConsoleAliases (хотя он должен быть доступен в Win2k)
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0501
@@ -40,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../ConEmuHk/ConEmuHooks.h"
+#include "../ConEmuDW/ConEmuDw.h"
 #include "PluginHeader.h"
 #include "ConEmuPluginBase.h"
 
@@ -69,7 +73,7 @@ SetHookCallbacks_t SetHookCallbacks = NULL;
 SetLoadLibraryCallback_t SetLoadLibraryCallback = NULL;
 SetFarHookMode_t SetFarHookMode = NULL;
 HMODULE ghExtConModule = NULL;
-SetHookCallbacks_t SetHookCallbacksExt = NULL;
+SetConsoleCallbacks_t SetConsoleCallbacks = NULL;
 
 
 // Эту функцию нужно позвать из DllMain плагина
@@ -133,14 +137,7 @@ bool StartupHooks(HMODULE ahOurDll)
 		}
 	}
 
-	if (!ghExtConModule)
-	{
-		ghExtConModule = GetModuleHandle(WIN3264TEST(L"ExtendedConsole.dll",L"ExtendedConsole64.dll"));
-	}
-	if (ghExtConModule && !SetHookCallbacksExt)
-	{
-		SetHookCallbacksExt = (SetHookCallbacks_t)GetProcAddress(ghExtConModule, "SetHookCallbacksExt");
-	}
+	StartupConsoleHooks();
 
 	SetLoadLibraryCallback(ghPluginModule, CPluginBase::OnLibraryLoaded, NULL/*OnLibraryUnLoaded*/);
 	SetHookCallbacks("FreeConsole",  kernel32, ghPluginModule, CPluginBase::OnConsoleDetaching, NULL, NULL);
@@ -151,8 +148,6 @@ bool StartupHooks(HMODULE ahOurDll)
 	SetHookCallbacks("ReadConsoleInputW", kernel32, ghPluginModule, CPluginBase::OnConsoleReadInput, CPluginBase::OnConsoleReadInputPost, NULL);
 	SetHookCallbacks("WriteConsoleOutputA", kernel32, ghPluginModule, CPluginBase::OnWriteConsoleOutput, NULL, NULL);
 	SetHookCallbacks("WriteConsoleOutputW", kernel32, ghPluginModule, CPluginBase::OnWriteConsoleOutput, NULL, NULL);
-	if (SetHookCallbacksExt)
-		SetHookCallbacksExt("WriteConsoleOutputW", kernel32, ghPluginModule, CPluginBase::OnWriteConsoleOutput, NULL, NULL);
 	SetHookCallbacks("GetNumberOfConsoleInputEvents", kernel32, ghPluginModule, NULL, CPluginBase::OnGetNumberOfConsoleInputEventsPost, NULL);
 	SetHookCallbacks("ShellExecuteExW", shell32, ghPluginModule, NULL, NULL, CPluginBase::OnShellExecuteExW_Except);
 	gFarMode.OnCurDirChanged = CPluginBase::OnCurDirChanged;
@@ -161,6 +156,27 @@ bool StartupHooks(HMODULE ahOurDll)
 	SetFarHookMode(&gFarMode);
 
 	return true;
+}
+
+void StartupConsoleHooks()
+{
+	if (!ghExtConModule)
+	{
+		ghExtConModule = GetModuleHandle(WIN3264TEST(L"ExtendedConsole.dll",L"ExtendedConsole64.dll"));
+	}
+	if (ghExtConModule && !SetConsoleCallbacks)
+	{
+		SetConsoleCallbacks = (SetConsoleCallbacks_t)GetProcAddress(ghExtConModule, "SetConsoleCallbacks");
+	}
+
+	if (SetConsoleCallbacks)
+	{
+		HookItemCallback_t callbacks[] = {
+			CPluginBase::OnWriteConsoleOutput
+			,CPluginBase::OnPostWriteConsoleOutput
+		};
+		SetConsoleCallbacks(ghPluginModule, countof(callbacks), callbacks);
+	}
 }
 
 
@@ -182,8 +198,8 @@ void ShutdownHooks()
 		SetHookCallbacks("ReadConsoleInputW", kernel32, ghPluginModule, NULL, NULL, NULL);
 		SetHookCallbacks("WriteConsoleOutputA", kernel32, ghPluginModule, NULL, NULL, NULL);
 		SetHookCallbacks("WriteConsoleOutputW", kernel32, ghPluginModule, NULL, NULL, NULL);
-		if (SetHookCallbacksExt)
-			SetHookCallbacksExt("WriteConsoleOutputW", kernel32, ghPluginModule, NULL, NULL, NULL);
+		if (SetConsoleCallbacks)
+			SetConsoleCallbacks(ghPluginModule, 0, nullptr);
 		SetHookCallbacks("GetNumberOfConsoleInputEvents", kernel32, ghPluginModule, NULL, NULL, NULL);
 		SetHookCallbacks("ShellExecuteExW", shell32, ghPluginModule, NULL, NULL, NULL);
 		SetHookCallbacks = NULL;

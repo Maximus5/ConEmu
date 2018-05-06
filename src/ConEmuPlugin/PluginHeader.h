@@ -196,7 +196,10 @@ void WINAPI ExitFARW3(void*);
 void SetupExportsFar3();
 
 bool StartupHooks(HMODULE ahOurDll);
+void StartupConsoleHooks();
 void ShutdownHooks();
+
+extern HMODULE ghExtConModule;
 
 
 #define IS_SYNCHRO_ALLOWED \

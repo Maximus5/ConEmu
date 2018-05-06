@@ -2,7 +2,10 @@
 #pragma once
 
 #ifdef DEFINE_CONSOLE_EXPORTS
-	// для ConEmuDW\Test\Test.cpp
+	// for ConEmuDW.cpp
+
+	struct FarColor;
+	struct FAR_CHAR_INFO;
 
 	typedef int (WINAPI* GetColorDialog_t)(FarColor* Color, BOOL Centered, BOOL AddTransparent);
 	typedef BOOL (WINAPI* GetTextAttributes_t)(FarColor* Attributes);
@@ -11,6 +14,8 @@
 	typedef BOOL (WINAPI* ReadOutput_t)(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* ReadRegion);
 	typedef BOOL (WINAPI* WriteOutput_t)(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion);
 	typedef void (WINAPI* Commit_t)();
+
+	typedef bool (WINAPI* SetConsoleCallbacks_t)(HMODULE hCallbackModule, DWORD nCallbackCount, HookItemCallback_t *ppfnCallbacks);
 
 #else
 

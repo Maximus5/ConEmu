@@ -181,15 +181,16 @@ public:
 
 	static BOOL OnConsoleReadInputWork(HookCallbackArg* pArgs);
 	static bool OnPanelViewCallbacks(HookCallbackArg* pArgs, PanelViewInputCallback pfnLeft, PanelViewInputCallback pfnRight);
-	static VOID WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs);
-	static VOID WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs);
+	static BOOL WINAPI OnShellExecuteExW_Except(HookCallbackArg* pArgs);
+	static BOOL WINAPI OnGetNumberOfConsoleInputEventsPost(HookCallbackArg* pArgs);
 	static BOOL WINAPI OnConsolePeekInput(HookCallbackArg* pArgs);
-	static VOID WINAPI OnConsolePeekInputPost(HookCallbackArg* pArgs);
+	static BOOL WINAPI OnConsolePeekInputPost(HookCallbackArg* pArgs);
 	static BOOL WINAPI OnConsoleReadInput(HookCallbackArg* pArgs);
-	static VOID WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs);
+	static BOOL WINAPI OnConsoleReadInputPost(HookCallbackArg* pArgs);
 	static BOOL WINAPI OnWriteConsoleOutput(HookCallbackArg* pArgs);
+	static BOOL WINAPI OnPostWriteConsoleOutput(HookCallbackArg* pArgs);
 	static BOOL WINAPI OnConsoleDetaching(HookCallbackArg* pArgs);
-	static VOID WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs);
+	static BOOL WINAPI OnConsoleWasAttached(HookCallbackArg* pArgs);
 	static VOID WINAPI OnCurDirChanged();
 	static void WINAPI OnLibraryLoaded(HMODULE ahModule);
 	static void FillLoadedParm(struct ConEmuLoadedArg* pArg, HMODULE hSubPlugin, BOOL abLoaded);

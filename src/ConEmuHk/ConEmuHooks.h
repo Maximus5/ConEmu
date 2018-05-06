@@ -57,18 +57,17 @@ typedef struct HookCallbackArg
 
 // PreCallBack may returns (FALSE) to skip original function calling,
 //		in that case, caller got pArgs->lResult
-typedef BOOL (WINAPI* HookItemPreCallback_t)(HookCallbackArg* pArgs);
-// PostCallBack can modify pArgs->lResult only
-typedef VOID (WINAPI* HookItemPostCallback_t)(HookCallbackArg* pArgs);
-// ExceptCallBack can modify pArgs->lResult only
-typedef VOID (WINAPI* HookItemExceptCallback_t)(HookCallbackArg* pArgs);
-
-typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
+// PostCallBack can modify pArgs->lResult only (callback function result is ignored)
+// ExceptCallBack can modify pArgs->lResult only (callback function result is ignored)
+typedef BOOL (WINAPI* HookItemCallback_t)(HookCallbackArg* pArgs);
 
 typedef bool (__stdcall* SetHookCallbacks_t)(const char* ProcName, const wchar_t* DllName, HMODULE hCallbackModule,
-        HookItemPreCallback_t PreCallBack, HookItemPostCallback_t PostCallBack,
-        HookItemExceptCallback_t ExceptCallBack);
+        HookItemCallback_t PreCallBack, HookItemCallback_t PostCallBack,
+        HookItemCallback_t ExceptCallBack);
 //extern SetHookCallbacks_t SetHookCallbacks; // = NULL;
+
+// Callback definition
+typedef VOID (WINAPI* OnLibraryLoaded_t)(HMODULE ahModule);
 
 typedef void (__stdcall* SetLoadLibraryCallback_t)(HMODULE ahCallbackModule,
         OnLibraryLoaded_t afOnLibraryLoaded, OnLibraryLoaded_t afOnLibraryUnLoaded);
