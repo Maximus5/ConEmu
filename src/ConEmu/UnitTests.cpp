@@ -121,6 +121,28 @@ void UnitDriveTests()
 	bCheck = true;
 }
 
+void UnitPathTests()
+{
+	struct {
+		LPCWSTR asPath, asResult;
+	} Tests[] = {
+		{L"C:", NULL},
+		{L"C:\\Dir1\\", L"C:\\Dir1"},
+		{L"C:\\Dir1\\File.txt", L"C:\\Dir1"},
+		{L"C:/Dir1/", L"C:/Dir1"},
+		{L"C:/Dir1/File.txt", L"C:/Dir1"},
+		{NULL}
+	};
+	bool bCheck;
+	for (size_t i = 0; Tests[i].asPath; i++)
+	{
+		CEStr path(GetParentPath(Tests[i].asPath));
+		bCheck = (!Tests[i].asResult && !path.ms_Val) || (wcscmp(Tests[i].asResult, path.c_str(L"")) == 0);
+		_ASSERTE(bCheck);
+	}
+	bCheck = true;
+}
+
 void UnitFileNamesTest()
 {
 	_ASSERTE(IsDotsName(L"."));
@@ -531,6 +553,7 @@ void DebugUnitTests()
 	DebugCmdParserTests();
 	UnitMaskTests();
 	UnitDriveTests();
+	UnitPathTests();
 	UnitFileNamesTest();
 	UnitExpandTest();
 	UnitModuleTest();

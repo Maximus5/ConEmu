@@ -1197,11 +1197,12 @@ wchar_t* GetParentPath(LPCWSTR asPath)
 	if (pszName <= asPath)
 		return NULL;
 
-	wchar_t* parent = lstrdup(asPath);
+	size_t cch = pszName - asPath;
+	wchar_t* parent = (wchar_t*)malloc((cch + 1) * sizeof(*parent));
 	if (!parent)
 		return NULL;
-	_ASSERTE(wcslen(parent) > size_t(pszName - asPath));
-	parent[(pszName - asPath) - 1] = 0;
+	wcsncpy_s(parent, cch+1, asPath, cch);
+	parent[cch] = 0;
 	return parent;
 }
 
