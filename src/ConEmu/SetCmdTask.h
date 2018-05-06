@@ -59,9 +59,9 @@ struct CommandTasks
 
 	void SetName(LPCWSTR asName, int anCmdIndex);
 
-	void SetGuiArg(LPCWSTR asGuiArg);
+	bool SetGuiArg(LPCWSTR asGuiArg);
 
-	void SetCommands(LPCWSTR asCommands);
+	bool SetCommands(LPCWSTR asCommands);
 
 	void ParseGuiArgs(RConStartArgsEx* pArgs) const;
 

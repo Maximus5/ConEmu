@@ -3179,23 +3179,51 @@ void Settings::SaveSettingsOnExit()
 		return;
 	mb_ExitSettingsAutoSaved = true;
 
-	AutoSaveSettings();
+	AutoSaveSettings(nullptr, true);
 }
 
 void Settings::OnAutoSaveTimer()
 {
-	static DWORD dwLastTick = 0;
-	const  DWORD dwAutosaveDelay = 60*1000; // 1 minute
+	// Allowed to save?
+	if (!gpConEmu || gpConEmu->GetStartupStage() != CConEmuMain::ss_VConStarted)
+		return;
+	// Are there something to save?
+	if (!IsAutoSaveSettings(false))
+		return;
 
-	DWORD dwDelay = (GetTickCount() - dwLastTick);
-	if (dwDelay > dwAutosaveDelay)
+	// Do the timing
+	static DWORD dwLastTick = 0;
+	const  DWORD dwAutosaveDelay = 5*60*1000; // 5 minutes
+	if (!dwLastTick)
 	{
 		dwLastTick = GetTickCount();
-		AutoSaveSettings();
+		return;
+	}
+	DWORD dwDelay = (GetTickCount() - dwLastTick);
+	// Avoid trying to save at the same time from several instances
+	if (dwDelay > (dwAutosaveDelay + (rand() % 60)))
+	{
+		dwLastTick = GetTickCount();
+		// Save only startup task
+		AutoSaveSettings(nullptr, false);
 	}
 }
 
-void Settings::AutoSaveSettings(SettingsBase* reg/*=NULL*/)
+bool Settings::IsAutoSaveSettings(bool saveAll)
+{
+	bool bTaskAutoSave = (nStartType == (rbStartLastTabs - rbStartSingleApp));
+
+	// What we save on exit?
+	if (saveAll && !(isAutoSaveSizePos || mb_StatusSettingsWasChanged || bTaskAutoSave))
+		return false;
+	// What we save on timer?
+	else if (!saveAll && !(bTaskAutoSave))
+		return false;
+
+	return true;
+}
+
+void Settings::AutoSaveSettings(SettingsBase* reg/* = NULL*/, bool saveAll/* = false*/)
 {
 	if (!this)
 		return;
@@ -3204,11 +3232,12 @@ void Settings::AutoSaveSettings(SettingsBase* reg/*=NULL*/)
 	if (!gpConEmu->IsAllowSaveSettingsOnExit())
 		return;
 
-	bool bTaskAutoSave = (nStartType == (rbStartLastTabs - rbStartSingleApp));
-
-	// Смотрим, нужно ли сохранять что-либо при выходе?
-	if (!isAutoSaveSizePos && !mb_StatusSettingsWasChanged && !bTaskAutoSave)
+	// Do we need to save somethings?
+	if (!((reg && saveAll) // save from settings dialog
+			|| IsAutoSaveSettings(saveAll))) // onTimer and onExit
 		return;
+
+	bool bTaskAutoSave = (nStartType == (rbStartLastTabs - rbStartSingleApp));
 
 	gpConEmu->LogWindowPos(L"AutoSaveSettings");
 
@@ -3227,21 +3256,26 @@ void Settings::AutoSaveSettings(SettingsBase* reg/*=NULL*/)
 		lbDelete = true;
 	}
 
+	// #AutoSave Avoid share violation error on save via named Mutex?
+
 	if (reg->OpenKey(gpSetCls->GetConfigPath(), KEY_WRITE))
 	{
-		if (isAutoSaveSizePos)
+		if (saveAll && isAutoSaveSizePos)
 		{
 			SaveSizeSettings(reg);
 		}
 
-		if (mb_StatusSettingsWasChanged)
+		if (saveAll && mb_StatusSettingsWasChanged)
 		{
 			SaveStatusSettings(reg);
 		}
 
 		if (bTaskAutoSave)
 		{
-			reg->Save(L"StartType", nStartType);
+			BYTE curStartType = -1;
+			if (!reg->Load(L"StartType", curStartType)
+				|| curStartType != nStartType)
+				reg->Save(L"StartType", nStartType);
 		}
 
 		reg->CloseKey();
@@ -3260,8 +3294,13 @@ void Settings::AutoSaveSettings(SettingsBase* reg/*=NULL*/)
 				lbOpened = reg->OpenKey(szCmdKey, KEY_WRITE);
 				if (lbOpened)
 				{
+					bool taskChanged = false;
+
 					if (!StartupTask)
+					{
 						StartupTask = (CommandTasks*)calloc(1, sizeof(CommandTasks));
+						taskChanged = true;
+					}
 
 					if (StartupTask)
 					{
@@ -3271,13 +3310,15 @@ void Settings::AutoSaveSettings(SettingsBase* reg/*=NULL*/)
 						{
 							swprintf_c(szConfig, L"/config \"%s\"", pszConfigName);
 						}
-						StartupTask->SetGuiArg(szConfig);
 
+						taskChanged |= StartupTask->SetGuiArg(szConfig);
 
-						StartupTask->SetCommands(pszTabs);
+						taskChanged |= StartupTask->SetCommands(pszTabs);
 
-
-						StartupTask->SaveCmdTask(reg, true);
+						if (taskChanged)
+						{
+							StartupTask->SaveCmdTask(reg, true);
+						}
 					}
 
 					reg->CloseKey();
@@ -3920,7 +3961,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		SaveAppsSettings(reg);
 		SavePalettes(reg);
 		/* Some automatic options: size, autostart task, etc. */
-		AutoSaveSettings(reg);
+		AutoSaveSettings(reg, true);
 
 		/* Done */
 		lbRc = TRUE;

@@ -93,50 +93,64 @@ void CommandTasks::SetName(LPCWSTR asName, int anCmdIndex)
 	}
 }
 
-void CommandTasks::SetGuiArg(LPCWSTR asGuiArg)
+// Returns `true` if changed
+bool CommandTasks::SetGuiArg(LPCWSTR asGuiArg)
 {
 	if (!asGuiArg)
 		asGuiArg = L"";
+
+	if (0 == wcscmp(asGuiArg, (pszGuiArgs ? pszGuiArgs : L"")))
+		return false;
 
 	size_t iLen = wcslen(asGuiArg);
 
 	if (!pszGuiArgs || (iLen >= cchGuiArgMax))
 	{
-		SafeFree(pszGuiArgs);
-
-		cchGuiArgMax = iLen+256;
-		pszGuiArgs = (wchar_t*)malloc(cchGuiArgMax*sizeof(wchar_t));
-		if (!pszGuiArgs)
+		size_t cchNew = iLen+256;
+		wchar_t* pszNew = (wchar_t*)malloc(cchNew*sizeof(wchar_t));
+		if (!pszNew)
 		{
-			_ASSERTE(pszGuiArgs!=NULL);
-			return;
+			_ASSERTE(pszNew!=NULL);
+			return false;
 		}
+		std::swap(pszNew, pszGuiArgs);
+		cchGuiArgMax = cchNew;
+		SafeFree(pszNew);
 	}
 
 	_wcscpy_c(pszGuiArgs, cchGuiArgMax, asGuiArg);
+
+	return true;
 }
 
-void CommandTasks::SetCommands(LPCWSTR asCommands)
+// Returns `true` if changed
+bool CommandTasks::SetCommands(LPCWSTR asCommands)
 {
 	if (!asCommands)
 		asCommands = L"";
+
+	if (0 == wcscmp(asCommands, (pszCommands ? pszCommands : L"")))
+		return false;
 
 	size_t iLen = wcslen(asCommands);
 
 	if (!pszCommands || (iLen >= cchCmdMax))
 	{
-		SafeFree(pszCommands);
-
-		cchCmdMax = iLen+1024;
-		pszCommands = (wchar_t*)malloc(cchCmdMax*sizeof(wchar_t));
-		if (!pszCommands)
+		size_t cchNew = iLen+1024;
+		wchar_t* pszNew = (wchar_t*)malloc(cchNew*sizeof(wchar_t));
+		if (!pszNew)
 		{
-			_ASSERTE(pszCommands!=NULL);
-			return;
+			_ASSERTE(pszNew!=NULL);
+			return false;
 		}
+		std::swap(pszNew, pszCommands);
+		cchCmdMax = cchNew;
+		SafeFree(pszNew);
 	}
 
 	_wcscpy_c(pszCommands, cchCmdMax, asCommands);
+
+	return true;
 }
 
 void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
