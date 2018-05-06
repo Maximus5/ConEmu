@@ -53,8 +53,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 
 #define DEBUGSTRSIZE(s) //DEBUGSTR(s)
-#define DEBUGSTRSTYLE(s) DEBUGSTR(s)
-#define DEBUGSTRWMODE(s) DEBUGSTR(s)
+#define DEBUGSTRSTYLE(s) //DEBUGSTR(s)
+#define DEBUGSTRWMODE(s) //DEBUGSTR(s)
 #define DEBUGSTRDPI(s) //DEBUGSTR(s)
 #define DEBUGSTRRGN(s) //DEBUGSTR(s)
 #define DEBUGSTRPANEL2(s) //DEBUGSTR(s)
@@ -767,6 +767,8 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 					case CER_MAXIMIZED:
 					{
 						rc = mi.mi.rcWork;
+						if (mi.isTaskbarHidden)
+							AddMargins(rc, mi.rcTaskbarExcess);
 						RECT rcFrame = CalcMargins(CEM_FRAMEONLY);
 						// Скорректируем размер окна до видимого на мониторе (рамка при максимизации уезжает за пределы экрана)
 						rc.left -= rcFrame.left;
@@ -1532,15 +1534,16 @@ void CConEmuSize::ReloadMonitorInfo()
 
 		// Issue 828: When taskbar is auto-hidden
 		// Is task-bar found on current monitor?
+		mi.rcTaskbarExcess = RECT{};
 		if ((mi.isTaskbarHidden = IsTaskbarAutoHidden(&mi.mi.rcMonitor, (PUINT)&mi.taskbarLocation, &mi.hTaskbar)))
 		{
-			const int pixel = 1;
+			const int pixel = 2; // #TaskBar Do the same for standard window frame+caption, coz TaskBar obscures portion of ConEmu
 			switch (mi.taskbarLocation)
 			{
-				case ABE_LEFT:   mi.mi.rcWork.left   += pixel; break;
-				case ABE_RIGHT:  mi.mi.rcWork.right  -= pixel; break;
-				case ABE_TOP:    mi.mi.rcWork.top    += pixel; break;
-				case ABE_BOTTOM: mi.mi.rcWork.bottom -= pixel; break;
+				case ABE_LEFT:   mi.rcTaskbarExcess.left   = pixel; break;
+				case ABE_RIGHT:  mi.rcTaskbarExcess.right  = pixel; break;
+				case ABE_TOP:    mi.rcTaskbarExcess.top    = pixel; break;
+				case ABE_BOTTOM: mi.rcTaskbarExcess.bottom = pixel; break;
 			}
 		}
 	}
@@ -1723,6 +1726,8 @@ CConEmuSize::MonitorInfoCache CConEmuSize::NearestMonitorInfo(const RECT& rcWnd)
 	return NearestMonitorInfo(hMon);
 }
 
+// Pass hNewMon=NULL to get default/recommended monitor for our window
+// Pass hNewMon=HMONITOR(-1) to get primary monitor
 CConEmuSize::MonitorInfoCache CConEmuSize::NearestMonitorInfo(HMONITOR hNewMon)
 {
 	// Must be filled already!
@@ -2403,12 +2408,8 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 	}
 
 
-	MONITORINFO mi = {sizeof(mi)}, prm = {sizeof(prm)};
-	GetNearestMonitor(&mi);
-	if (gnOsVer >= 0x600)
-		prm = mi;
-	else
-		GetPrimaryMonitor(&prm);
+	auto mi = NearestMonitorInfo(NULL);
+	auto prm = IsWin6() ? mi : NearestMonitorInfo(HMONITOR(-1));
 
 
 	// *** Минимально допустимые размеры консоли
@@ -2462,11 +2463,11 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 		RECT rcWork;
 		if (gpSet->_WindowMode == wmFullScreen)
 		{
-			rcWork = mi.rcMonitor;
+			rcWork = mi.mi.rcMonitor;
 		}
 		else
 		{
-			rcWork = mi.rcWork;
+			rcWork = mi.mi.rcWork;
 		}
 
 		if (pInfo->ptMaxTrackSize.x < (rcWork.right - rcWork.left))
@@ -2481,11 +2482,11 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 
 		if (gnOsVer >= 0x600)
 		{
-			pInfo->ptMaxPosition.x = (mi.rcWork.left - mi.rcMonitor.left) - rcShift.left;
-			pInfo->ptMaxPosition.y = (mi.rcWork.top - mi.rcMonitor.top) - rcShift.top;
+			pInfo->ptMaxPosition.x = (mi.mi.rcWork.left - mi.mi.rcMonitor.left) - rcShift.left;
+			pInfo->ptMaxPosition.y = (mi.mi.rcWork.top - mi.mi.rcMonitor.top) - rcShift.top;
 
-			pInfo->ptMaxSize.x = mi.rcWork.right - mi.rcWork.left + (rcShift.left + rcShift.right);
-			pInfo->ptMaxSize.y = mi.rcWork.bottom - mi.rcWork.top + (rcShift.top + rcShift.bottom);
+			pInfo->ptMaxSize.x = mi.mi.rcWork.right - mi.mi.rcWork.left + (rcShift.left + rcShift.right);
+			pInfo->ptMaxSize.y = mi.mi.rcWork.bottom - mi.mi.rcWork.top + (rcShift.top + rcShift.bottom);
 		}
 		else
 		{
@@ -2493,8 +2494,8 @@ LRESULT CConEmuSize::OnGetMinMaxInfo(LPMINMAXINFO pInfo)
 			pInfo->ptMaxPosition.x = /*mi.rcWork.left*/ - rcShift.left;
 			pInfo->ptMaxPosition.y = /*mi.rcWork.top*/ - rcShift.top;
 
-			pInfo->ptMaxSize.x = prm.rcWork.right - prm.rcWork.left + (rcShift.left + rcShift.right);
-			pInfo->ptMaxSize.y = prm.rcWork.bottom - prm.rcWork.top + (rcShift.top + rcShift.bottom);
+			pInfo->ptMaxSize.x = prm.mi.rcWork.right - prm.mi.rcWork.left + (rcShift.left + rcShift.right);
+			pInfo->ptMaxSize.y = prm.mi.rcWork.bottom - prm.mi.rcWork.top + (rcShift.top + rcShift.bottom);
 		}
 	}
 

@@ -194,6 +194,7 @@ public:
 		// TaskBar information
 		HWND hTaskbar;
 		BOOL isTaskbarHidden;
+		RECT rcTaskbarExcess; // for auto-hidden taskbar
 		enum TaskBarLocation : UINT
 		{
 			Left   = ABE_LEFT,

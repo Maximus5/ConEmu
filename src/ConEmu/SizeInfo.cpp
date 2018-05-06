@@ -345,6 +345,11 @@ void SizeInfo::DoCalculate()
 			new_rr.real_client = RECT{0, 0, RectWidth(new_rr.window), RectHeight(new_rr.window)};
 			new_rr.client = RECT{new_rr.frame.left, new_rr.frame.top, RectWidth(new_rr.window) - new_rr.frame.right, RectHeight(new_rr.window) - new_rr.frame.bottom};
 		}
+
+		// Workaround for Windows TaskBar problem when it obscures portion
+		// of maximized window client area when TaskBar is autohidden
+		if (!selfFrame && wm == wmMaximized && mi.isTaskbarHidden)
+			CConEmuSize::AddMargins(new_rr.client, mi.rcTaskbarExcess);
 	}
 
 	new_rr.workspace = new_rr.client;
