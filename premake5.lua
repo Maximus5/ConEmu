@@ -59,21 +59,19 @@ function target_dir(folder)
 end
 
 function postbuild_module_(dllname, cfg, ext)
-  filter "configurations:Release or Debug"
+  if cfg == "Release" or cfg == "Debug" then
     postbuildcommands {
       "copy \"$(TargetPath)\" \"../"..cfg.."/plugins/ConEmu/Thumbs/"..dllname.."."..ext.."\"",
       "copy \"$(TargetDir)$(TargetName).map\" \"../"..cfg.."/plugins/ConEmu/Thumbs/"..dllname.."."..ext..".map\"",
       "copy \"$(TargetDir)$(TargetName).pdb\" \"../"..cfg.."/plugins/ConEmu/Thumbs/"..dllname.."."..ext..".pdb\"",
     }
-
-  filter "configurations:Remote"
+  else
     postbuildcommands {
       "copy \"$(TargetPath)\" \"Z:/plugins/ConEmu/Thumbs/"..dllname.."."..ext.."\"",
       "copy \"$(TargetDir)$(TargetName).map\" \"Z:/plugins/ConEmu/Thumbs/"..dllname.."."..ext..".map\"",
       "copy \"$(TargetDir)$(TargetName).pdb\" \"Z:/plugins/ConEmu/Thumbs/"..dllname.."."..ext..".pdb\"",
     }
-
-  filter{}
+  end
 end
 
 function postbuild_module(dllname)
