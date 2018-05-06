@@ -401,7 +401,7 @@ BOOL CheckBuffers(bool abWrite /*= false*/)
 		{
 			wchar_t szMapName[128];
 			_ASSERTE(sizeof(AnnotationInfo) == 8*sizeof(int)/*sizeof(AnnotationInfo::raw)*/);
-			wsprintf(szMapName, AnnotationShareName, (DWORD)sizeof(AnnotationInfo), (DWORD)hCon); //-V205
+			wsprintf(szMapName, AnnotationShareName, (DWORD)sizeof(AnnotationInfo), LODWORD(hCon)); //-V205
 			// AnnotationShareName is CREATED in ConEmu.exe
 			// May be it would be better, to avoid hooking and cycling (minhook),
 			// call CreateFileMapping instead of OpenFileMapping...
@@ -1742,6 +1742,7 @@ INT_PTR CALLBACK ColorDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM 
 					hwndDlg, NULL,
 					(wParam == IDC_FORE) ? P->crForeColor : P->crBackColor,
 					gcrCustomColors,
+					(DWORD)
 					((P->bTrueColorEnabled || !(wParam==IDC_FORE?P->b4bitfore:P->b4bitback)) ? (CC_FULLOPEN|CC_ANYCOLOR) : CC_SOLIDCOLOR)
 					|CC_RGBINIT,
 				};
@@ -1930,7 +1931,7 @@ int  WINAPI GetColorDialog(FarColor* Color, BOOL Centered, BOOL AddTransparent)
 	
 	// Найти HWND GUI
 	wchar_t szMapName[128];
-	wsprintf(szMapName, CECONMAPNAME, (DWORD)Parm.hConsole); //-V205
+	wsprintf(szMapName, CECONMAPNAME, LODWORD(Parm.hConsole)); //-V205
 	HANDLE hMap = OpenFileMapping(FILE_MAP_READ, FALSE, szMapName);
 	if (hMap != NULL)
 	{
