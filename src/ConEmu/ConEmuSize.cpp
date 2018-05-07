@@ -1696,13 +1696,27 @@ void CConEmuSize::ReloadMonitorInfo()
 
 	if (is_log)
 	{
-		wchar_t szInfo[200];
+		wchar_t szInfo[220];
+		auto location = [](const MonitorInfoCache::TaskBarLocation& l) -> const wchar_t*
+		{
+			return (l == MonitorInfoCache::Left) ? L"Left"
+				: (l == MonitorInfoCache::Right) ? L"Right"
+				: (l == MonitorInfoCache::Top) ? L"Top"
+				: (l == MonitorInfoCache::Bottom) ? L"Bottom"
+				: L"None";
+		};
 		for (INT_PTR i = 0; i < monitors.size(); ++i)
 		{
 			auto& mi = monitors[i];
 			swprintf_c(szInfo, L"  %i: #%08X dpi=%i; Full: {%i,%i}-{%i,%i} (%ix%i); Work: {%i,%i}-{%i,%i} (%ix%i)",
-				(int)i, LODWORD(mi.hMon), LOGRECTCOORDS(mi.mi.rcMonitor), LOGRECTSIZE(mi.mi.rcMonitor),
+				(int)i, LODWORD(mi.hMon), mi.Ydpi, LOGRECTCOORDS(mi.mi.rcMonitor), LOGRECTSIZE(mi.mi.rcMonitor),
 				LOGRECTCOORDS(mi.mi.rcWork), LOGRECTSIZE(mi.mi.rcWork));
+			LogString(szInfo);
+			swprintf_c(szInfo, L"     Caption: %i/%i {%i,%i}-{%i,%i}; NoCaption: %i/%i {%i,%i}-{%i,%i}; TaskBar: %s%s",
+				mi.withCaption.FrameWidth, mi.withCaption.VisibleFrameWidth, LOGRECTCOORDS(mi.withCaption.FrameMargins),
+				mi.noCaption.FrameWidth, mi.noCaption.VisibleFrameWidth, LOGRECTCOORDS(mi.noCaption.FrameMargins),
+				location(mi.taskbarLocation), mi.isTaskbarHidden ? L"-Auto" : L"");
+			LogString(szInfo);
 		}
 	}
 
