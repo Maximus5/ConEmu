@@ -20,6 +20,16 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.5.6
+* gh-884: In some cases Far panels directory were not updated (Tab title, etc.)
+* gh-1082, gh-1546: Env.var ConEmuCfgDir was shorter by one char.
+* gh-1503: Save on timer (every 5 minutes) only startup task if it was changed.
+* gh-1538: Support user-defined drives mount point in WSL.
+* gh-1539: Add workaround for 2 pixels cut off client area by autohidden taskbar.
+* Far working directory was not reloaded for `%f` macro (tab template).
+* Add TaskBar location to LogFile.
+
+
 2018.5.3
 * gh-1539: Resize fixes for auto-hidden Taskbar and caption-less mode.
 * gh-1545: Fix paste problems in Windows 10 1803 on texts with spaces or CR/LF.
