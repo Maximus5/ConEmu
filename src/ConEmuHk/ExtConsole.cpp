@@ -1485,6 +1485,51 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 	return lbRc;
 }
 
+static void ExtMoveColorData(ssize_t dest, ssize_t from, ssize_t ccCells)
+{
+	if (!gpTrueColor || (ccCells <= 0))
+		return;
+
+	const ssize_t bufferSize = gpTrueColor->bufferSize;
+	if (bufferSize <= 0)
+	{
+		_ASSERTE(bufferSize > 0);
+		return;
+	}
+
+	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(((LPBYTE)gpTrueColor) + gpTrueColor->struct_size); //-V104
+	AnnotationInfo* pTrueColorEnd = (pTrueColorStart + bufferSize); //-V104
+
+	if (dest < 0 || from < 0)
+	{
+		ssize_t outOfRange = -std::min(dest,from);
+		ccCells -= outOfRange;
+		if (ccCells <= 0)
+			return;
+		dest += outOfRange;
+		from += outOfRange;
+	}
+
+	if ((std::max(dest,from) + ccCells) > bufferSize)
+	{
+		ssize_t outOfRange = ((std::max(dest,from) + ccCells) - bufferSize);
+		ccCells -= outOfRange;
+		if (ccCells <= 0)
+			return;
+	}
+
+	AnnotationInfo* pTrueColorDest = pTrueColorStart + dest;
+	const AnnotationInfo* pTrueColorFrom = pTrueColorStart + from;
+	_ASSERTEX((uint64_t(pTrueColorDest)+ccCells)<uint64_t(pTrueColorEnd) && uint64_t(pTrueColorDest)>=uint64_t(pTrueColorStart));
+	_ASSERTEX((uint64_t(pTrueColorFrom)+ccCells)<uint64_t(pTrueColorEnd) && uint64_t(pTrueColorFrom)>=uint64_t(pTrueColorStart));
+
+	// #OPTIMIZE: Не нужно двигать заполненную нулями память. Нет атрибутов в строке - и не дергаться?
+	if (ccCells > 0)
+	{
+		memmove(pTrueColorDest, pTrueColorFrom, ccCells * sizeof(*pTrueColorDest));
+	}
+}
+
 // From the cursor position!
 BOOL ExtScrollLine(ExtScrollScreenParm* Info)
 {
@@ -1516,8 +1561,6 @@ BOOL ExtScrollLine(ExtScrollScreenParm* Info)
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
 	AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL; //-V104
-	AnnotationInfo* pTrueColorFrom;
-	AnnotationInfo* pTrueColorDest;
 
 	ORIGINAL_KRNL(ScrollConsoleScreenBufferW);
 
@@ -1554,25 +1597,18 @@ BOOL ExtScrollLine(ExtScrollScreenParm* Info)
 			_ASSERTE((ccCellsTotal > 0) && (ccCellsTotal < 0xFFFF));
 			_ASSERTE((ccCellsMove > 0) && (ccCellsClear > 0));
 
-			pTrueColorFrom = pTrueColorStart + (nY1 * nWindowWidth + csbi.dwCursorPosition.X);
+			ssize_t dest, from = (nY1 * nWindowWidth + csbi.dwCursorPosition.X);
 			if (nDir < 0)
 			{
-				pTrueColorDest = pTrueColorFrom;
-				pTrueColorFrom += -nDir;
+				dest = from;
+				from += -nDir;
 			}
 			else // (nDir > 0)
 			{
-				pTrueColorDest = pTrueColorFrom + nDir;
+				dest = from + nDir;
 			}
 
-			// ccCellsMove
-			{
-				_ASSERTEX((pTrueColorDest+ ccCellsMove)<pTrueColorEnd && pTrueColorDest>=pTrueColorStart);
-				_ASSERTEX((pTrueColorFrom+ ccCellsMove)<pTrueColorEnd && pTrueColorFrom>=pTrueColorStart);
-
-				WARNING("OPTIMIZE: Не нужно двигать заполненную нулями память. Нет атрибутов в строке - и не дергаться?");
-				memmove(pTrueColorDest, pTrueColorFrom, ccCellsMove * sizeof(*pTrueColorDest));
-			}
+			ExtMoveColorData(dest, from, ccCellsMove);
 		}
 
 		// And the real console
@@ -1706,8 +1742,6 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 
 	AnnotationInfo* pTrueColorStart = (AnnotationInfo*)(gpTrueColor ? (((LPBYTE)gpTrueColor) + gpTrueColor->struct_size) : NULL); //-V104
 	DEBUGTEST(AnnotationInfo* pTrueColorEnd = pTrueColorStart ? (pTrueColorStart + gpTrueColor->bufferSize) : NULL); //-V104
-	AnnotationInfo* pTrueColorFrom;
-	AnnotationInfo* pTrueColorDest;
 
 	if (Info->Flags & essf_Current)
 	{
@@ -1760,16 +1794,12 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			{
 				//if (nRows > -nDir)
 				{
-					pTrueColorDest = pTrueColorStart + ((nY1-nShiftRows) * nWindowWidth);
-					pTrueColorFrom = pTrueColorStart + (nY1 * nWindowWidth);
+					ssize_t dest = ((nY1-nShiftRows) * nWindowWidth);
+					ssize_t from = (nY1 * nWindowWidth);
+					_ASSERTEX(dest < from);
+					ssize_t ccCells = nRows * nWindowWidth;
 
-					size_t ccCells = nRows * nWindowWidth;
-					_ASSERTEX((pTrueColorDest+ccCells)<pTrueColorEnd && pTrueColorDest>=pTrueColorStart);
-					_ASSERTEX((pTrueColorFrom+ccCells)<pTrueColorEnd && pTrueColorFrom>=pTrueColorStart);
-					_ASSERTEX(pTrueColorDest < pTrueColorFrom);
-
-					WARNING("OPTIMIZE: Не нужно двигать заполненную нулями память. Нет атрибутов в строке - и не дергаться?");
-					memmove(pTrueColorDest, pTrueColorFrom, ccCells * sizeof(*pTrueColorDest));
+					ExtMoveColorData(dest, from, ccCells);
 				}
 
 				if (Info->Flags & essf_ExtOnly)
@@ -1835,16 +1865,11 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			{
 				//if (nRows >= nDir)
 				{
-					pTrueColorDest = pTrueColorStart+((nY1 + nDir) * nWindowWidth);
-					pTrueColorFrom = pTrueColorStart + (nY1 * nWindowWidth);
+					ssize_t dest = ((nY1 + nDir) * nWindowWidth);
+					ssize_t from = (nY1 * nWindowWidth);
+					ssize_t ccCells = nRows * nWindowWidth;
 
-					size_t ccCells = nRows * nWindowWidth;
-					_ASSERTEX((pTrueColorDest+ccCells)<pTrueColorEnd && pTrueColorDest>=pTrueColorStart);
-					_ASSERTEX((pTrueColorFrom+ccCells)<pTrueColorEnd && pTrueColorFrom>=pTrueColorStart);
-					_ASSERTEX(pTrueColorDest > pTrueColorFrom);
-
-					WARNING("OPTIMIZE: Не нужно двигать заполненную нулями память. Нет атрибутов в строке - и не дергаться.");
-					memmove(pTrueColorDest, pTrueColorFrom, ccCells * sizeof(*pTrueColorStart));
+					ExtMoveColorData(dest, from, ccCells);
 				}
 
 				if (Info->Flags & essf_ExtOnly)
