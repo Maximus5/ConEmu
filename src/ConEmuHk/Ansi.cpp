@@ -1016,6 +1016,9 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 	_ASSERTE(((_WriteConsoleW == pfnDbgWriteConsoleW) || !HooksWereSet) && "It must point to CallPointer for 'unhooked' call");
 	#endif
 
+	if (lpBuffer && nNumberOfCharsToWrite)
+		m_LastWrittenChar = lpBuffer[nNumberOfCharsToWrite-1];
+
 	ExtWriteTextParm write = {sizeof(write), ewtf_Current|AddFlags, hConsoleOutput};
 	write.Private = (void*)(FARPROC)_WriteConsoleW;
 
@@ -2839,6 +2842,25 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 
 		} // case L'J':
 		break;
+
+	case L'b':
+		if (!Code.PvtLen)
+		{
+			int repeat = (Code.ArgC > 0) ? Code.ArgV[0] : 1;
+			if (m_LastWrittenChar && repeat > 0)
+			{
+				CEStr buffer;
+				if (wchar_t* ptr = buffer.GetBuffer(repeat))
+				{
+					for (int i = 0; i < repeat; ++i)
+						ptr[i] = m_LastWrittenChar;
+					WriteText(_WriteConsoleW, hConsoleOutput, ptr, repeat, nullptr);
+				}
+			}
+		}
+		else
+			DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+		break; // case L'b'
 
 	case L'K': // Erases part of the line
 		// Clears all characters from the cursor position to the end of the line
