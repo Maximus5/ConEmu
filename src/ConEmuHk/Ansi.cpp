@@ -1990,7 +1990,7 @@ BOOL CEAnsi::ReverseLF(HANDLE hConsoleOutput, BOOL& bApply)
 	return TRUE;
 }
 
-BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const int LinesCount)
+BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount)
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
@@ -1999,12 +1999,36 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const int LinesCount)
 		return FALSE;
 	}
 
+	// Apply default color before scrolling!
+	ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+
+	BOOL lbRc = FALSE;
+
 	int TopLine, BottomLine;
 	if (gDisplayOpt.ScrollRegion)
 	{
 		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart);
-		TopLine = std::max<int>(gDisplayOpt.ScrollStart, 0);
+		if (csbi.dwCursorPosition.Y < gDisplayOpt.ScrollStart || csbi.dwCursorPosition.Y > gDisplayOpt.ScrollEnd)
+			return TRUE;
+		TopLine = csbi.dwCursorPosition.Y;
 		BottomLine = std::max<int>(gDisplayOpt.ScrollEnd, 0);
+
+		if ((TopLine + LinesCount) <= BottomLine)
+		{
+			ExtScrollScreenParm scrl = {
+				sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
+				LinesCount, {}, L' ',
+				// region to be scrolled (that is not a clipping region)
+				{0, TopLine, csbi.dwSize.X - 1, BottomLine}};
+			lbRc |= ExtScrollScreen(&scrl);
+		}
+		else
+		{
+			ExtFillOutputParm fill = {
+				sizeof(fill), efof_Attribute|efof_Character, hConsoleOutput,
+				{}, L' ', {0, TopLine}, csbi.dwSize.X * LinesCount};
+			lbRc |= ExtFillOutput(&fill);
+		}
 	}
 	else
 	{
@@ -2013,19 +2037,17 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const int LinesCount)
 		BottomLine = (csbi.dwCursorPosition.Y <= csbi.srWindow.Bottom)
 			? csbi.srWindow.Bottom
 			: csbi.dwSize.Y - 1;
+
+		ExtScrollScreenParm scrl = {
+			sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
+			LinesCount, {}, L' ', {0, TopLine, csbi.dwSize.X-1, BottomLine}};
+		lbRc |= ExtScrollScreen(&scrl);
 	}
 
-	// Apply default color before scrolling!
-	ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
-
-	ExtScrollScreenParm scrl = {
-		sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
-		LinesCount, {}, L' ', {0, TopLine, csbi.dwSize.X-1, BottomLine}};
-	BOOL lbRc = ExtScrollScreen(&scrl);
 	return lbRc;
 }
 
-BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const int LinesCount)
+BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const unsigned LinesCount)
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	if (!GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
@@ -2033,6 +2055,11 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const int LinesCount)
 		_ASSERTEX(FALSE && "GetConsoleScreenBufferInfoCached failed");
 		return FALSE;
 	}
+
+	// Apply default color before scrolling!
+	ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
+
+	BOOL lbRc = FALSE;
 
 	int TopLine, BottomLine;
 	if (gDisplayOpt.ScrollRegion)
@@ -2040,8 +2067,24 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const int LinesCount)
 		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>gDisplayOpt.ScrollStart);
 		// ScrollStart & ScrollEnd are 0-based absolute line indexes
 		// relative to VISIBLE area, these are not absolute buffer coords
-		TopLine = gDisplayOpt.ScrollStart;
+		if (((csbi.dwCursorPosition.Y + LinesCount) <= gDisplayOpt.ScrollStart)
+			|| (csbi.dwCursorPosition.Y > gDisplayOpt.ScrollEnd))
+			return TRUE; // Nothing to scroll
+		TopLine = csbi.dwCursorPosition.Y;
 		BottomLine = gDisplayOpt.ScrollEnd;
+
+		ExtScrollScreenParm scrl = {
+			sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
+			-int(LinesCount), {}, L' ', {0, TopLine, csbi.dwSize.X-1, BottomLine}};
+		if (scrl.Region.top < gDisplayOpt.ScrollStart)
+		{
+			scrl.Region.top = gDisplayOpt.ScrollStart;
+			scrl.Dir += (gDisplayOpt.ScrollStart - TopLine);
+		}
+		if ((scrl.Dir < 0) && (scrl.Region.top <= scrl.Region.bottom))
+		{
+			lbRc |= ExtScrollScreen(&scrl);
+		}
 	}
 	else
 	{
@@ -2050,21 +2093,19 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const int LinesCount)
 		BottomLine = (csbi.dwCursorPosition.Y <= csbi.srWindow.Bottom)
 			? csbi.srWindow.Bottom
 			: csbi.dwSize.Y - 1;
+
+		if (BottomLine < TopLine)
+		{
+			_ASSERTEX(FALSE && "Invalid (empty) scroll region");
+			return FALSE;
+		}
+
+		ExtScrollScreenParm scrl = {
+			sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
+			-int(LinesCount), {}, L' ', {0, TopLine, csbi.dwSize.X-1, BottomLine}};
+		lbRc |= ExtScrollScreen(&scrl);
 	}
 
-	if (BottomLine < TopLine)
-	{
-		_ASSERTEX(FALSE && "Invalid (empty) scroll region");
-		return FALSE;
-	}
-
-	// Apply default color before scrolling!
-	ReSetDisplayParm(hConsoleOutput, FALSE, TRUE);
-
-	ExtScrollScreenParm scrl = {
-		sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
-		-LinesCount, {}, L' ', {0, TopLine, csbi.dwSize.X-1, BottomLine}};
-	BOOL lbRc = ExtScrollScreen(&scrl);
 	return lbRc;
 }
 
@@ -3774,8 +3815,8 @@ void CEAnsi::SetScrollRegion(bool bRegion, bool bRelative, int nStart, int nEnd,
 			}
 		}
 		// We need 0-based absolute values
-		gDisplayOpt.ScrollStart = nStart - 1;
-		gDisplayOpt.ScrollEnd = nEnd - 1;
+		gDisplayOpt.ScrollStart = std::max<int>(nStart - 1, 0);
+		gDisplayOpt.ScrollEnd = std::max<int>(nEnd - 1, 0);
 		// Validate
 		if (!(gDisplayOpt.ScrollRegion = (gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart)))
 		{

@@ -200,8 +200,8 @@ public:
 	BOOL FullReset(HANDLE hConsoleOutput);
 	BOOL ForwardLF(HANDLE hConsoleOutput, BOOL& bApply);
 	BOOL ReverseLF(HANDLE hConsoleOutput, BOOL& bApply);
-	BOOL LinesInsert(HANDLE hConsoleOutput, const int LinesCount);
-	BOOL LinesDelete(HANDLE hConsoleOutput, const int LinesCount);
+	BOOL LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount);
+	BOOL LinesDelete(HANDLE hConsoleOutput, const unsigned LinesCount);
 	void DoSleep(LPCWSTR asMS);
 	void EscCopyCtrlString(wchar_t* pszDst, LPCWSTR asMsg, INT_PTR cchMaxLen);
 	void DoMessage(LPCWSTR asMsg, INT_PTR cchLen);

@@ -1029,7 +1029,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 
 	// "Working lines" may be defined (Vim and others)
 	LONG  ScrollTop, ScrollBottom;
-	bool  bScrollRegion = ((Info->Flags & ewtf_Region) != 0);
+	bool  bScrollRegion = !!(Info->Flags & ewtf_Region);
 	RECT  rcScrollRegion = Info->Region;
 	COORD crScrollCursor;
 	if (bScrollRegion)
@@ -1658,8 +1658,6 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			return FALSE;
 		}
 
-		WARNING("ANSI: +srWork.Top ???");
-
 		if (nDir < 0)
 		{
 			DstLineTop = Info->Region.top;
@@ -1689,7 +1687,9 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 		}
 	}
 
-	if (SrcLineBottom < SrcLineTop)
+	if ((Info->Flags & essf_Global)
+		&& (SrcLineBottom < SrcLineTop)
+		&& (SrcLineTop == -Info->Dir))
 	{
 		// We get here if cmd "cls" is called
 		int nLines = csbi.dwSize.Y - cr0.Y;
@@ -1804,7 +1804,8 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			CHAR_INFO cFill = {{Info->FillChar}};
 			ExtPrepareColor(Info->FillAttr, t, cFill.Attributes);
 
-			F(ScrollConsoleScreenBufferW)(Info->ConsoleOutput, &rcSrc, NULL, crDst, &cFill);
+			if (rcSrc.Bottom >= rcSrc.Top)
+				F(ScrollConsoleScreenBufferW)(Info->ConsoleOutput, &rcSrc, NULL, crDst, &cFill);
 
 			if (nDir < 0)
 			{
