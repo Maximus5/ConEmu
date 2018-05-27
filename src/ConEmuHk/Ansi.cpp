@@ -1631,6 +1631,63 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					// Теперь идут параметры.
 					++lpBuffer; // переместим указатель на первый символ ЗА CSI (после '[')
 
+					auto parseNumArgs = [&Code, lpSaveStart](const wchar_t* &lpBuffer, const wchar_t* lpSeqEnd, bool saveAction) -> bool
+					{
+						wchar_t wc;
+						int nValue = 0, nDigits = 0;
+						Code.ArgC = 0;
+
+						while (lpBuffer < lpSeqEnd)
+						{
+							switch (*lpBuffer)
+							{
+							case L'0': case L'1': case L'2': case L'3': case L'4':
+							case L'5': case L'6': case L'7': case L'8': case L'9':
+								nValue = (nValue * 10) + (((int)*lpBuffer) - L'0');
+								++nDigits;
+								break;
+
+							case L';':
+								// Даже если цифр не было - default "0"
+								if (Code.ArgC < (int)countof(Code.ArgV))
+									Code.ArgV[Code.ArgC++] = nValue; // save argument
+								nDigits = nValue = 0;
+								break;
+
+							default:
+								if (Code.Second == L']')
+								{
+									// OSC specific, stop on first non-digit/non-semicolon
+									if (nDigits && (Code.ArgC < (int)countof(Code.ArgV)))
+										Code.ArgV[Code.ArgC++] = nValue;
+									return (Code.ArgC > 0);
+								}
+								else if (((wc = *lpBuffer) >= 64) && (wc <= 126))
+								{
+									// Fin
+									if (saveAction)
+										Code.Action = wc;
+									if (nDigits && (Code.ArgC < (int)countof(Code.ArgV)))
+										Code.ArgV[Code.ArgC++] = nValue;
+									return true;
+								}
+								else if (!nDigits && !Code.ArgC)
+								{
+									if ((Code.PvtLen+1) < (int)countof(Code.Pvt))
+									{
+										Code.Pvt[Code.PvtLen++] = wc; // Skip private symbols
+										Code.Pvt[Code.PvtLen] = 0;
+									}
+								}
+							}
+							++lpBuffer;
+						}
+
+						if (nDigits && (Code.ArgC < (int)countof(Code.ArgV)))
+							Code.ArgV[Code.ArgC++] = nValue;
+						return (Code.Second == L']');
+					};
+
 					switch (Code.Second)
 					{
 					case L'(':
@@ -1659,52 +1716,16 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 						Code.ArgSZ = NULL;
 						Code.cchArgSZ = 0;
 						{
-							int nValue = 0, nDigits = 0;
 							#ifdef _DEBUG
 							LPCWSTR pszSaveStart = lpBuffer;
 							#endif
 
-							while (lpBuffer < lpEnd)
+							if (parseNumArgs(lpBuffer, lpEnd, true))
 							{
-								switch (*lpBuffer)
-								{
-								case L'0': case L'1': case L'2': case L'3': case L'4':
-								case L'5': case L'6': case L'7': case L'8': case L'9':
-									nValue = (nValue * 10) + (((int)*lpBuffer) - L'0');
-									++nDigits;
-									break;
-
-								case L';':
-									// Даже если цифр не было - default "0"
-									if (Code.ArgC < (int)countof(Code.ArgV))
-										Code.ArgV[Code.ArgC++] = nValue; // save argument
-									nDigits = nValue = 0;
-									break;
-
-								default:
-									if (((wc = *lpBuffer) >= 64) && (wc <= 126))
-									{
-										// Fin
-										Code.Action = wc;
-										if (nDigits && (Code.ArgC < (int)countof(Code.ArgV)))
-										{
-											Code.ArgV[Code.ArgC++] = nValue;
-										}
-										lpStart = lpSaveStart;
-										lpEnd = lpBuffer+1;
-										iRc = 1;
-										goto wrap;
-									}
-									else
-									{
-										if ((Code.PvtLen+1) < (int)countof(Code.Pvt))
-										{
-											Code.Pvt[Code.PvtLen++] = wc; // Skip private symbols
-											Code.Pvt[Code.PvtLen] = 0;
-										}
-									}
-								}
-								++lpBuffer;
+								lpStart = lpSaveStart;
+								lpEnd = lpBuffer+1;
+								iRc = 1;
+								goto wrap;
 							}
 						}
 						// В данном запросе (на запись) конца последовательности нет,
@@ -1752,6 +1773,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 								Code.Action = *Code.ArgSZ; // первый символ последовательности
 								Code.cchArgSZ = (lpBuffer - Code.ArgSZ);
 								lpStart = lpSaveStart;
+								const wchar_t* lpBufferPtr = Code.ArgSZ;
 								if (lpBuffer[0] == 27)
 								{
 									if ((lpBuffer + 1) >= lpEnd)
@@ -1776,6 +1798,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 								{
 									lpEnd = lpBuffer + 1;
 								}
+								parseNumArgs(lpBufferPtr, lpBuffer, false);
 								iRc = 1;
 								goto wrap;
 							}
@@ -3644,11 +3667,13 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 					// ESC ] 9 ; 1 ; ms ST
 					DoSleep(Code.ArgSZ+4);
 				}
-				else if (Code.ArgSZ[3] == L'0')
+				else if (Code.ArgC >= 2 && Code.ArgV[1] == 10)
 				{
 					// ESC ] 9 ; 10 ST
-					if (!gbWasXTermOutput)
+					if (!gbWasXTermOutput && (Code.ArgC == 2 || Code.ArgV[2] != 0))
 						CEAnsi::StartXTermMode(true);
+					else if (Code.ArgC >= 3 || Code.ArgV[2] == 0)
+						CEAnsi::StartXTermMode(false);
 				}
 				else if (Code.ArgSZ[3] == L'1' && Code.ArgSZ[4] == L';')
 				{
