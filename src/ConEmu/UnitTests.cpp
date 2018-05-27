@@ -140,6 +140,35 @@ void UnitPathTests()
 		bCheck = (!Tests[i].asResult && !path.ms_Val) || (wcscmp(Tests[i].asResult, path.c_str(L"")) == 0);
 		_ASSERTE(bCheck);
 	}
+
+	struct {
+		LPCWSTR asPath; bool reqFull, result;
+	} Tests2[] = {
+		{L"\"C:\\folder 1\\file\"", false, false},
+		{L"C:\\folder \"1\\file", false, false},
+		{L"C:\\folder 1>file", false, false},
+		{L"C:\\folder 1<file", false, false},
+		{L"C:\\folder 1|file", false, false},
+		{L"C:\\folder 1\\file", true, true},
+		{L"C:\\folder 1\\file", false, true},
+		{L"C:\\folder 1:\\file", true, false},
+		{L"C:\\folder 1:\\file", false, false},
+		{L"C\\folder 1:\\file", true, false},
+		{L"C\\folder 1:\\file", false, false},
+		{L"folder 1\\file", true, false},
+		{L"folder 1\\file", false, true},
+		{L"folder 1/file", true, false},
+		{L"folder 1/file", false, true},
+		{L"\\\\server\\share", true, true},
+		{L"\\\\server\\share", false, true},
+		{NULL}
+	};
+	for (size_t i = 0; Tests2[i].asPath; ++i)
+	{
+		bCheck = (IsFilePath(Tests2[i].asPath, Tests2[i].reqFull) == Tests2[i].result);
+		_ASSERTE(bCheck);
+	}
+
 	bCheck = true;
 }
 

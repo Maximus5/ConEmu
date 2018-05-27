@@ -12548,6 +12548,7 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 	}
 
 	// Convert Windows style path from clipboard to cygwin style?
+	// If clipboard contains double-quoted-path -> IsFilePath returns false -> contents pasted intact
 	if (pszBuf && *pszBuf
 			// if POSIX was explicitly requested
 		&& ((posixMode == pxm_Convert)
