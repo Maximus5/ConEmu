@@ -1679,8 +1679,8 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			RECT rcDest = {};
 			if (!IntersectSmallRect(Info->Region, srWork, &rcDest))
 				return FALSE; // Nothing to scroll
-			// We need relative "working" coordinates here
-			Info->Region = MakeRect(rcDest.left, rcDest.top - srWork.Top, rcDest.right, rcDest.bottom - srWork.Top);
+			// We need absolute coordinates here
+			Info->Region = rcDest;
 		}
 	}
 
@@ -1806,7 +1806,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 				{
 					#if 1
 					AnnotationInfo AIInfo = {};
-					for (int i = (nWindowHeight-nShiftRows)*nWindowWidth; i < nMaxCell; i++)
+					for (int i = std::max<int>(0,(nWindowHeight-nShiftRows)*nWindowWidth); i < nMaxCell; i++)
 					{
 						pTrueColorStart[i] = AIInfo;
 					}
