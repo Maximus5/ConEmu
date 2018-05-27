@@ -1591,8 +1591,9 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 								if ((pszDst+4) < pszEnd)
 								{
 									_ASSERTE(asCmd && (*asCmd != L'"') && (*asCmd != L'/'));
-									wchar_t* pszCygWin = DupCygwinPath(asCmd, false, GetMntPrefix());
-									LPCWSTR pszText = pszCygWin ? pszCygWin : asCmd;
+									CEStr path;
+									DupCygwinPath(asCmd, false, GetMntPrefix(), path);
+									LPCWSTR pszText = !path ? asCmd : path.c_str();
 
 									*(pszDst++) = L'"';
 
@@ -1606,8 +1607,6 @@ bool CRealConsole::PostPromptCmd(bool CD, LPCWSTR asCmd)
 									{
 										*(pszDst++) = L'"';
 									}
-
-									free(pszCygWin);
 								}
 								break;
 							default:
@@ -12559,11 +12558,11 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 			// check the path validity at last
 		&& IsFilePath(pszBuf, true))
 	{
-		wchar_t* pszCygWin = DupCygwinPath(pszBuf, false, GetMntPrefix());
-		if (pszCygWin)
+		CEStr szPosix;
+		if (DupCygwinPath(pszBuf, true, GetMntPrefix(), szPosix))
 		{
 			SafeFree(pszBuf);
-			pszBuf = pszCygWin;
+			pszBuf = szPosix.Detach();
 			nBufLen = wcslen(pszBuf);
 		}
 	}

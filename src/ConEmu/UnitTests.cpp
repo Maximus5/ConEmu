@@ -169,6 +169,32 @@ void UnitPathTests()
 		_ASSERTE(bCheck);
 	}
 
+	struct {
+		LPCWSTR asPath; bool autoQuote; LPCWSTR asResult;
+	} Tests3[] = {
+		{L"C:\\Dir1\\", true, L"/mnt/c/Dir1/"},
+		{L"C:\\Dir1\\File.txt", true, L"/mnt/c/Dir1/File.txt"},
+		{L"C:/Dir1/", true, L"/mnt/c/Dir1/"},
+		// specials, quoted
+		{L"C:/Dir Dir", true, L"'/mnt/c/Dir Dir'"},
+		{L"C:/Dir$Dir", true, L"'/mnt/c/Dir$Dir'"},
+		{L"C:/Dir(Dir)", true, L"'/mnt/c/Dir(Dir)'"},
+		{L"C:/Dir'Dir", true, L"'/mnt/c/Dir'\\''Dir'"},
+		// specials, escaped
+		{L"C:/Dir Dir", false, L"/mnt/c/Dir\\ Dir"},
+		{L"C:/Dir$Dir", false, L"/mnt/c/Dir\\$Dir"},
+		{L"C:/Dir(Dir)", false, L"/mnt/c/Dir\\(Dir\\)"},
+		{L"C:/Dir'Dir", false, L"/mnt/c/Dir\\'Dir"},
+		// #DupCygwinPath Network shares tests
+		{NULL}
+	};
+	for (size_t i = 0; Tests3[i].asPath; i++)
+	{
+		CEStr path; DupCygwinPath(Tests3[i].asPath, Tests3[i].autoQuote, L"/mnt", path);
+		bCheck = (path.Compare(Tests3[i].asResult) == 0);
+		_ASSERTE(bCheck);
+	}
+
 	bCheck = true;
 }
 

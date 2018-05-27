@@ -241,7 +241,7 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst);
 //#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
 
 wchar_t* getFocusedExplorerWindowPath();
-wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix = NULL);
+const wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix, CEStr& path);
 LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath);
 wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath);
 bool FixDirEndSlash(wchar_t* rsPath);
@@ -252,8 +252,8 @@ enum CESelectFileFlags
 	sff_Cygwin       = 2,
 	sff_SaveNewFile  = 4,
 };
-wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder = NULL, HWND hParent = ghWnd, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote /*bool bAutoQuote = true, bool bCygwin = false*/);
-wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = NULL, LPCWSTR asDefPath = NULL, HWND hParent = ghWnd, LPCWSTR asFilter = NULL, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote /*bool abAutoQuote = true, bool bCygwin = false, bool bSaveNewFile = false*/);
+wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder = NULL, HWND hParent = ghWnd, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote, CRealConsole* apRCon = NULL);
+wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = NULL, LPCWSTR asDefPath = NULL, HWND hParent = ghWnd, LPCWSTR asFilter = NULL, DWORD/*CESelectFileFlags*/ nFlags = sff_AutoQuote, CRealConsole* apRCon = NULL);
 
 #include "../common/RConStartArgsEx.h"
 

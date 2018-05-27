@@ -51,25 +51,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MStrEsc.h"
 #include "../common/WFiles.h"
 #include "AboutDlg.h"
-#include "Options.h"
-#include "OptionsClass.h"
 #include "ConEmu.h"
+#include "ConEmuApp.h"
 #include "ConfirmDlg.h"
+#include "DefaultTerm.h"
 #include "DpiAware.h"
+#include "DwmHelper.h"
 #include "FontMgr.h"
 #include "HooksUnlocker.h"
+#include "IconList.h"
 #include "Inside.h"
 #include "LngRc.h"
-#include "TaskBar.h"
-#include "DwmHelper.h"
-#include "ConEmuApp.h"
-#include "Update.h"
-#include "SetCmdTask.h"
-#include "Recreate.h"
-#include "DefaultTerm.h"
-#include "IconList.h"
-#include "UnitTests.h"
 #include "MyClipboard.h"
+#include "Options.h"
+#include "OptionsClass.h"
+#include "Recreate.h"
+#include "RealConsole.h"
+#include "SetCmdTask.h"
+#include "TaskBar.h"
+#include "UnitTests.h"
+#include "Update.h"
 #include "version.h"
 
 #include "../common/StartupEnvEx.h"
@@ -629,52 +630,60 @@ bool GetColorRef(LPCWSTR pszText, COLORREF* pCR)
 	return result;
 }
 
-wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix /*= NULL*/)
+/// Converts Windows path "C:\path 1" to Posix "'/c/path 1'" or "/c/path\ 1"
+/// @param asWinPath   Source Windows path, double-quotes ("\"C:\path\"") are not expected here
+/// @param bAutoQuote  if true - use strong quoting for strings with special characters
+/// @param asMntPrefix Mount prefix from RCon: "/mnt", "/cygdrive", "" or NULL
+/// @param path        Buffer for result
+/// @return NULL on errors or the pointer to converted #path
+const wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix, CEStr& path)
 {
-	if (!asWinPath)
+	if (!asWinPath || !*asWinPath)
 	{
-		_ASSERTE(asWinPath!=NULL);
+		_ASSERTE(asWinPath && *asWinPath);
+		path.Clear();
 		return NULL;
 	}
 
-	if (bAutoQuote)
-	{
-		if ((asWinPath[0] == L'"') || (wcschr(asWinPath, L' ') == NULL))
-		{
-			bAutoQuote = false;
-		}
-	}
+	const wchar_t* unquotedSpecials = L" ()$!'\"";
+	const wchar_t* quotedSpecials = L"'";
+	_ASSERTE(wcslen(quotedSpecials)==1 && wcschr(unquotedSpecials, quotedSpecials[0]));
+
+	// We expect either: cd 'c:\folder with space\spaces and bang !! bang'
+	//               or: cd /c/folder\ with\ space/spaces\ and\ bang\ \!\!\ bang
+	// Here we use single-quote (strong quotation) and if string contains
+
+	bool useQuote = bAutoQuote ? (wcspbrk(asWinPath, unquotedSpecials) != nullptr) : false;
 
 	// Some chars must be escaped
-	const wchar_t* posixSpec = bAutoQuote ? L"$" : L" ()$";
+	const wchar_t* posixSpec = useQuote ? quotedSpecials : unquotedSpecials;
 
 	size_t cchLen = _tcslen(asWinPath)
-		+ (bAutoQuote ? 3 : 1) // two or zero quotes + null-termination
+		+ (useQuote ? 3 : 1) // two or zero quotes + null-termination
 		+ (asMntPrefix ? _tcslen(asMntPrefix) : 0) // '/cygwin' or '/mnt' prefix
 		+ 1/*Possible space-termination on paste*/;
 	if (wcspbrk(asWinPath, posixSpec) != NULL)
 	{
-		for (const wchar_t *pch = asWinPath; *pch; ++pch)
+		const wchar_t *pch = wcspbrk(asWinPath, posixSpec);
+		while (pch)
 		{
-			if (wcschr(posixSpec, *pch))
-				++cchLen;
+			cchLen += useQuote ? 3 : 1;
+			pch = wcspbrk(pch+1, posixSpec);
 		}
 	}
-	wchar_t* pszResult = (wchar_t*)malloc(cchLen*sizeof(*pszResult));
+	wchar_t* pszResult = path.GetBuffer(cchLen+1);
 	if (!pszResult)
 		return NULL;
 	wchar_t* psz = pszResult;
 
-	TODO("Replace quotation with escaping"); // e.g. instead of "/C/Program Files/" type /C/Program\ Files/
+	if (useQuote)
+	{
+		*(psz++) = L'\'';
+	}
 
-	if (bAutoQuote)
-	{
-		*(psz++) = L'"';
-	}
-	else if (asWinPath[0] == L'"')
-	{
-		*(psz++) = *(asWinPath++);
-	}
+	bool stripDoubleQuot = (asWinPath[0] == L'"');
+	if (stripDoubleQuot)
+		++asWinPath;
 
 	// Drive letter!
 	if (asWinPath[0] && (asWinPath[1] == L':'))
@@ -696,6 +705,8 @@ wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix /
 
 	while (*asWinPath)
 	{
+		if (stripDoubleQuot && *asWinPath == L'"' && !*(asWinPath+1))
+			break;
 		if (*asWinPath == L'\\')
 		{
 			*(psz++) = L'/';
@@ -704,13 +715,21 @@ wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix /
 		else
 		{
 			if (wcschr(posixSpec, *asWinPath))
-				*(psz++) = L'\\';
+			{
+				if (!useQuote)
+					*(psz++) = L'\\';
+				else
+				{
+					_ASSERTE(*asWinPath == L'\'');
+					*(psz++) = L'\''; *(psz++) = L'\\'; *(psz++) = L'\'';
+				}
+			}
 			*(psz++) = *(asWinPath++);
 		}
 	}
 
-	if (bAutoQuote)
-		*(psz++) = L'"';
+	if (useQuote)
+		*(psz++) = L'\'';
 	*psz = 0;
 
 	return pszResult;
@@ -827,7 +846,7 @@ bool FixDirEndSlash(wchar_t* rsPath)
 	return false;
 }
 
-wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/)
+wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= NULL*/)
 {
 	wchar_t* pszResult = NULL;
 
@@ -849,8 +868,9 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hPar
 		{
 			if (nFlags & sff_Cygwin)
 			{
-				//TODO: Favor current console GetMntPrefix()
-				pszResult = DupCygwinPath(szFolder, (nFlags & sff_AutoQuote));
+				CEStr path;
+				if (DupCygwinPath(szFolder, (nFlags & sff_AutoQuote), apRCon ? apRCon->GetMntPrefix() : NULL, path))
+					pszResult = path.Detach();
 			}
 			else if ((nFlags & sff_AutoQuote) && (wcschr(szFolder, L' ') != NULL))
 			{
@@ -876,7 +896,7 @@ wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hPar
 	return pszResult;
 }
 
-wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDefPath /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/)
+wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDefPath /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= NULL*/)
 {
 	wchar_t* pszResult = NULL;
 
@@ -908,8 +928,9 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDef
 
 		if (nFlags & sff_Cygwin)
 		{
-			//TODO: Favor current console GetMntPrefix()
-			pszResult = DupCygwinPath(pszName, (nFlags & sff_AutoQuote));
+			CEStr path;
+			if (DupCygwinPath(pszName, (nFlags & sff_AutoQuote), apRCon ? apRCon->GetMntPrefix() : NULL, path))
+				pszResult = path.Detach();
 		}
 		else
 		{
