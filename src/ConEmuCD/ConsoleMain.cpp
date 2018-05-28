@@ -4137,13 +4137,39 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 	if (gnRunMode == RM_COMSPEC)
 	{
-		// Может просили открыть новую консоль?
+		// New console was requested?
 		if (IsNewConsoleArg(lsCmdLine))
 		{
-			if (!ghConWnd)
+			HWND hConWnd = ghConWnd, hConEmu = ghConEmuWnd;
+			if (!hConWnd)
 			{
-				// Недопустимо!
-				_ASSERTE(ghConWnd != NULL);
+				// This may be ConEmuC started from WSL or connector
+				CEStr guiPid(GetEnvVar(ENV_CONEMUPID_VAR_W));
+				CEStr srvPid(GetEnvVar(ENV_CONEMUSERVERPID_VAR_W));
+				if (guiPid && srvPid)
+				{
+					DWORD GuiPID = wcstoul(guiPid, NULL, 10);
+					DWORD SrvPID = wcstoul(srvPid, NULL, 10);
+					ConEmuGuiMapping GuiMapping = {sizeof(GuiMapping)};
+					if (GuiPID && LoadGuiMapping(GuiPID, GuiMapping))
+					{
+						for (size_t i = 0; i < countof(GuiMapping.Consoles); ++i)
+						{
+							if (GuiMapping.Consoles[i].ServerPID == SrvPID)
+							{
+								hConWnd = GuiMapping.Consoles[i].Console;
+								hConEmu = GuiMapping.hGuiWnd;
+								break;
+							}
+						}
+					}
+				}
+			}
+
+			if (!hConWnd)
+			{
+				// Executed outside of ConEmu, impossible to continue
+				_ASSERTE(hConWnd != NULL);
 			}
 			else
 			{
@@ -4152,7 +4178,6 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 				gpSrv->bNewConsole = TRUE;
 
 				// По идее, должен запускаться в табе ConEmu (в существующей консоли), но если нет
-				HWND hConEmu = ghConEmuWnd;
 				if (!hConEmu || !IsWindow(hConEmu))
 				{
 					// попытаться найти открытый ConEmu
@@ -4170,9 +4195,9 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_NEWCMD, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_NEWCMD)+((nCmdLen+strs.mcch_Length)*sizeof(wchar_t)));
 				if (pIn)
 				{
-					pIn->NewCmd.hFromConWnd = ghConWnd;
+					pIn->NewCmd.hFromConWnd = hConWnd;
 
-					// ghConWnd may differ from parent process, but ENV_CONEMUDRAW_VAR_W would be inherited
+					// hConWnd may differ from parent process, but ENV_CONEMUDRAW_VAR_W would be inherited
 					wchar_t* pszDcWnd = GetEnvVar(ENV_CONEMUDRAW_VAR_W);
 					if (pszDcWnd && (pszDcWnd[0] == L'0') && (pszDcWnd[1] == L'x'))
 					{
@@ -4185,7 +4210,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 					pIn->NewCmd.SetCommand(lsCmdLine);
 					pIn->NewCmd.SetEnvStrings(strs.ms_Strings, strs.mcch_Length);
 
-					CESERVER_REQ* pOut = ExecuteGuiCmd(hConEmu, pIn, ghConWnd);
+					CESERVER_REQ* pOut = ExecuteGuiCmd(hConEmu, pIn, hConWnd);
 					if (pOut)
 					{
 						if (pOut->hdr.cbSize <= sizeof(pOut->hdr) || pOut->Data[0] == FALSE)
