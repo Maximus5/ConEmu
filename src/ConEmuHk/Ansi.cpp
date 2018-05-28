@@ -2469,6 +2469,33 @@ void CEAnsi::ReportTerminalPixelSize()
 	}
 }
 
+void CEAnsi::ReportTerminalCharSize(HANDLE hConsoleOutput, int code)
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+	{
+		wchar_t sCurInfo[64];
+		msprintf(sCurInfo, countof(sCurInfo),
+			L"\x1B[%u;%u;%ut",
+			code == 18 ? 8 : 9,
+			csbi.srWindow.Bottom-csbi.srWindow.Top+1, csbi.srWindow.Right-csbi.srWindow.Left+1);
+		ReportString(sCurInfo);
+	}
+}
+
+void CEAnsi::ReportCursorPosition(HANDLE hConsoleOutput)
+{
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
+	{
+		wchar_t sCurInfo[32];
+		msprintf(sCurInfo, countof(sCurInfo),
+			L"\x1B[%u;%uR",
+			csbi.dwCursorPosition.Y-csbi.srWindow.Top+1, csbi.dwCursorPosition.X-csbi.srWindow.Left+1);
+		ReportString(sCurInfo);
+	}
+}
+
 BOOL CEAnsi::WriteAnsiCodes(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)
 {
 	BOOL lbRc = TRUE, lbApply = FALSE;
@@ -2717,7 +2744,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 	case L'H': // Set cursor position (1-based)
 	case L'f': // Same as 'H'
 	case L'A': // Cursor up by N rows
-	case L'B': // Cursor right by N cols
+	case L'B': // Cursor down by N rows
 	case L'C': // Cursor right by N cols
 	case L'D': // Cursor left by N cols
 	case L'E': // Moves cursor to beginning of the line n (default 1) lines down.
@@ -3284,14 +3311,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				//ESC [ 6 n
 				//      Cursor position report (CPR): Answer is ESC [ y ; x R, where x,y is the
 				//      cursor location.
-				if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
-				{
-					wchar_t sCurInfo[32];
-					msprintf(sCurInfo, countof(sCurInfo),
-						L"\x1B[%u;%uR",
-						csbi.dwCursorPosition.Y+1, csbi.dwCursorPosition.X+1);
-					ReportString(sCurInfo);
-				}
+				ReportCursorPosition(hConsoleOutput);
 				break;
 			default:
 				DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
@@ -3505,13 +3525,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				case 19:
 					// `ESC [ 1 8 t` --> Report the size of the text area in characters as `CSI 8 ; height ; width t`
 					// `ESC [ 1 9 t` --> Report the size of the screen in characters as `CSI 9 ; height ; width t`
-					if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
-					{
-						msprintf(sCurInfo, countof(sCurInfo),
-							L"\x1B[8;%u;%ut",
-							csbi.srWindow.Bottom-csbi.srWindow.Top+1, csbi.srWindow.Right-csbi.srWindow.Left+1);
-						ReportString(sCurInfo);
-					}
+					ReportTerminalCharSize(hConsoleOutput, Code.ArgV[i]);
 					break;
 				case 21:
 					// `ESC [ 2 1 t` --> Report terminal window title as `OSC l title ST`

@@ -177,6 +177,8 @@ protected:
 	BOOL ReportString(LPCWSTR asRet);
 	void ReportConsoleTitle();
 	void ReportTerminalPixelSize();
+	void ReportTerminalCharSize(HANDLE hConsoleOutput, int code);
+	void ReportCursorPosition(HANDLE hConsoleOutput);
 	static BOOL WriteAnsiLogUtf8(const char* lpBuffer, DWORD nChars);
 public:
 	static UINT GetCodePage();
