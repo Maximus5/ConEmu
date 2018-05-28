@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 #include "../common/ConsoleRead.h"
+#include "../common/StartupEnvEx.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WCodePage.h"
 #include "../ConEmu/version.h"
@@ -41,31 +42,40 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void PrintConsoleInfo()
 {
+	//_ASSERTE(FALSE && "Continue to PrintConsoleInfo");
 	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
 	HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
 
-	wchar_t szInfo[1024]; DWORD nTmp;
+	extern CEStartupEnv* gpStartEnv;
+	CEStr osInfo;
+	LoadStartupEnvEx::ToString(gpStartEnv, [](LPCWSTR asText, LPARAM lParam, bool bFirst, bool bNewLine)
+		{
+			CEStr* pOsInfo = (CEStr*)lParam;
+			if (!pOsInfo->IsEmpty())
+				return;
+			pOsInfo->Set(asText);
+		}, (LPARAM)&osInfo);
+	_wprintf(osInfo);
+
+	wchar_t szInfo[1024];
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	CONSOLE_CURSOR_INFO ci = {};
 
-	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
-	//msprintf не умеет "%02u"
-	swprintf_c(szInfo,
-		L"ConEmu %02u%02u%02u%s %s\r\n"
-		L"OS Version: %u.%u.%u (%u:%s)\r\n",
-		MVV_1, MVV_2, MVV_3, szMinor, WIN3264TEST(L"x86",L"x64"),
-		gOSVer.dwMajorVersion, gOSVer.dwMinorVersion, gOSVer.dwBuildNumber, gOSVer.dwPlatformId, gOSVer.szCSDVersion);
-	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
-
-	msprintf(szInfo, countof(szInfo), L"SM_IMMENABLED=%u, SM_DBCSENABLED=%u, ACP=%u, OEMCP=%u\r\n",
-		GetSystemMetrics(SM_IMMENABLED), GetSystemMetrics(SM_DBCSENABLED), GetACP(), GetOEMCP());
-	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
-
 	msprintf(szInfo, countof(szInfo), L"ConHWND=0x%08X, Class=\"", LODWORD(ghConWnd));
-	GetClassName(ghConWnd, szInfo+lstrlen(szInfo), 255);
+	if (ghConWnd)
+		GetClassName(ghConWnd, szInfo+lstrlen(szInfo), 255);
 	lstrcpyn(szInfo+lstrlen(szInfo), L"\"\r\n", 4);
-	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+	_wprintf(szInfo);
+
+	{
+	CEStr gui(GetEnvVar(L"ConEmuPID"));
+	if (gui.GetLen() > 64) gui.ms_Val[64] = 0;
+	CEStr srv(GetEnvVar(L"ConEmuServerPID"));
+	if (srv.GetLen() > 64) srv.ms_Val[64] = 0;
+	msprintf(szInfo, countof(szInfo), L"GuiPID=%u, ConEmuPID=%s, ConEmuServerPID=%s\n", gnConEmuPID, gui.c_str(L""), srv.c_str(L""));
+	_wprintf(szInfo);
+	}
 
 	struct FONT_INFOEX
 	{
@@ -98,16 +108,21 @@ void PrintConsoleInfo()
 				info.FaceName);
 		}
 	}
-	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+	_wprintf(szInfo);
 
+	{
 	DWORD nInMode = 0, nOutMode = 0, nErrMode = 0;
-	GetConsoleMode(hIn, &nInMode);
-	GetConsoleMode(hOut, &nOutMode);
-	GetConsoleMode(hErr, &nErrMode);
-	msprintf(szInfo, countof(szInfo), L"Handles: In=x%X (Mode=x%X) Out=x%X (x%X) Err=x%X (x%X)\r\n",
-		LODWORD(hIn), nInMode, LODWORD(hOut), nOutMode, LODWORD(hErr), nErrMode);
-	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
-
+	BOOL bIn = GetConsoleMode(hIn, &nInMode);
+	BOOL bOut = GetConsoleMode(hOut, &nOutMode);
+	BOOL bErr = GetConsoleMode(hErr, &nErrMode);
+	wchar_t szIn[20], szOut[20], szErr[20];
+	msprintf(szIn, countof(szIn), L"x%X", nInMode);
+	msprintf(szOut, countof(szOut), L"x%X", nOutMode);
+	msprintf(szErr, countof(szErr), L"x%X", nErrMode);
+	msprintf(szInfo, countof(szInfo), L"Handles: In=x%X (Mode=%s) Out=x%X (Mode=%s) Err=x%X (Mode=%s)\r\n",
+		LODWORD(hIn), bIn?szIn:L"-1", LODWORD(hOut), bOut?szOut:L"-1", LODWORD(hErr), bErr?szErr:L"-1");
+	_wprintf(szInfo);
+	}
 
 	if (GetConsoleScreenBufferInfo(hOut, &csbi))
 		msprintf(szInfo, countof(szInfo), L"Buffer={%i,%i} Window={%i,%i}-{%i,%i} MaxSize={%i,%i}\r\n",
@@ -117,7 +132,7 @@ void PrintConsoleInfo()
 	else
 		msprintf(szInfo, countof(szInfo), L"GetConsoleScreenBufferInfo failed, code=%u\r\n",
 			GetLastError());
-	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+	_wprintf(szInfo);
 
 	if (GetConsoleCursorInfo(hOut, &ci))
 		msprintf(szInfo, countof(szInfo), L"Cursor: Pos={%i,%i} Size=%i%% %s\r\n",
@@ -125,7 +140,7 @@ void PrintConsoleInfo()
 	else
 		msprintf(szInfo, countof(szInfo), L"GetConsoleCursorInfo failed, code=%u\r\n",
 			GetLastError());
-	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+	_wprintf(szInfo);
 
 	DWORD nCP = GetConsoleCP();
 	DWORD nOutCP = GetConsoleOutputCP();
@@ -136,7 +151,7 @@ void PrintConsoleInfo()
 
 	msprintf(szInfo, countof(szInfo), L"ConsoleCP=%u, ConsoleOutputCP=%u, Layout=%08X (%s errcode=%u)\r\n",
 		nCP, nOutCP, dwLayout, dwLayoutRc ? L"failed" : L"OK", dwLayoutRc);
-	WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+	_wprintf(szInfo);
 
 	for (UINT i = 0; i <= 1; i++)
 	{
@@ -160,7 +175,7 @@ void PrintConsoleInfo()
 				cpinfo.LeadByte[6], cpinfo.LeadByte[7], cpinfo.LeadByte[8], cpinfo.LeadByte[9], cpinfo.LeadByte[10], cpinfo.LeadByte[11],
 				cpinfo.CodePageName);
 		}
-		WriteConsoleW(hOut, szInfo, lstrlen(szInfo), &nTmp, NULL);
+		_wprintf(szInfo);
 	}
 }
 
