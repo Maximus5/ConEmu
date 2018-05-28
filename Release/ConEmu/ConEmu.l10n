@@ -4779,8 +4779,8 @@
       "id": 2754 }
     ,
     "gbStartupOptions": {
-      "en": "Startup options (may be overriden with \"/cmd\" or \"/cmdlist\" argument of ConEmu.exe)",
-      "zh": "启动选项（可能在下面情况下被覆盖： \"/cmd\" 或 \"/cmdlist\" ConEmu.exe的参数）",
+      "en": "Startup options (may be overriden with \"-run\" or \"-runlist\" argument of ConEmu.exe)",
+      "zh": "启动选项（可能在下面情况下被覆盖： \"-run\" 或 \"-runlist\" ConEmu.exe的参数）",
       "id": 2868 }
     ,
     "gbStaticTransparency": {

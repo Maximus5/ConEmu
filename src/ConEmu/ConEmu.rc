@@ -489,7 +489,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Startup options (may be overriden with ""/cmd"" or ""/cmdlist"" argument of ConEmu.exe)",gbStartupOptions,4,1,375,143
+    GROUPBOX        "Startup options (may be overriden with ""-run"" or ""-runlist"" argument of ConEmu.exe)",gbStartupOptions,4,1,375,143
     CONTROL         "Command line",rbStartSingleApp,"Button",BS_AUTORADIOBUTTON,9,15,364,8
     EDITTEXT        tCmdLine,21,27,333,12,ES_AUTOHSCROLL | WS_DISABLED
     CONTROL         "Tasks file",rbStartTasksFile,"Button",BS_AUTORADIOBUTTON,9,45,365,8
