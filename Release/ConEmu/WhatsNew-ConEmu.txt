@@ -20,6 +20,22 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.5.28
+* gh-1583: Let `-new_console` work in WSL.
+  Note: `ConEmuC.exe` or `ConEmuC64.exe` are required to run commands,
+  for example: `ConEmuC64.exe -c powershell -new_console`.
+* Switch `ConEmuC -ConInfo` was not working on redirected handles (mintty, connector, wsl).
+* gh-1444: ANSI. Fix irssi rendering under tmux.
+* ANSI. Sequence `\e[Nb` repeats output of last written character N times.
+* ANSI: `ESC ] 9 ; 10 ; 0 ST` stops xterm mode emulation.
+* ANSI. Reports for `ESC [ 6 n` cursor position relative to viewport (1-based).
+* gh-1569: True color mode with powershell doesn't scroll correctly.
+* gh-1579: Changes in escaping rules on pasting POSIX paths (exclamation `!` mark).
+  * if path contains special characters, strong quoting (single-quote) is used
+  * it's still possible to paste without quotation via GuiMacro
+* In some cases 32-bit ConEmuHk caused access violation on true-color buffer scrolling.
+
+
 2018.5.6
 * gh-884: In some cases Far panels directory were not updated (Tab title, etc.)
 * gh-1082, gh-1546: Env.var ConEmuCfgDir was shorter by one char.
