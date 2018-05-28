@@ -71,4 +71,4 @@ int  DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent = 
 int  DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg);
 bool DoStateCheck(ConEmuStateCheck eStateCheck);
 
-int  WriteOutput(LPCWSTR pszText, DWORD cchLen, DWORD& dwWritten, bool bProcessed, bool bAsciiPrint, bool bStreamBy1, bool bToBottom);
+int  WriteOutput(LPCWSTR pszText, DWORD cchLen = (DWORD)-1, DWORD* pdwWritten = nullptr, bool bProcessed = false, bool bAsciiPrint = false, bool bStreamBy1 = false, bool bToBottom = false);

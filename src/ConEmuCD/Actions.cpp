@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/CEStr.h"
+#include "../common/MModule.h"
 #include "../common/MProcess.h"
 #include "../common/MStrDup.h"
 #include "../common/ProcessData.h"
@@ -792,29 +793,6 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	return i;
 }
 
-HMODULE LoadConEmuHk()
-{
-	HMODULE hHooks = NULL;
-	LPCWSTR pszHooksName = WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll");
-
-	if ((hHooks = GetModuleHandle(pszHooksName)) == NULL)
-	{
-		wchar_t szSelf[MAX_PATH];
-		if (GetModuleFileName(ghOurModule, szSelf, countof(szSelf)))
-		{
-			wchar_t* pszName = (wchar_t*)PointToName(szSelf);
-			int nSelfName = lstrlen(pszName);
-			_ASSERTE(nSelfName == lstrlen(pszHooksName));
-			lstrcpyn(pszName, pszHooksName, nSelfName+1);
-
-			// ConEmuHk.dll / ConEmuHk64.dll
-			hHooks = LoadLibrary(szSelf);
-		}
-	}
-
-	return hHooks;
-}
-
 int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 {
 	int iRc = 0;
@@ -944,17 +922,31 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	}
 	#endif
 
-	iRc = WriteOutput(pszText, cchLen, dwWritten, bProcessed, bAsciiPrint, bStreamBy1, bToBottom);
+	iRc = WriteOutput(pszText, cchLen, &dwWritten, bProcessed, bAsciiPrint, bStreamBy1, bToBottom);
 
 	return iRc;
 }
 
+namespace {
+	/// ConEmuHk is used for preprocessed ANSI output
+	static MModule ConEmuHk;
+};
 
-int WriteOutput(LPCWSTR pszText, DWORD cchLen, DWORD& dwWritten, bool bProcessed, bool bAsciiPrint, bool bStreamBy1, bool bToBottom)
+/// Write text to STD_OUT
+/// @param pszText     text to write, must be '\0'-terminated if #cchLen == -1
+/// @param cchLen      [default -1] length of text in characters or -1 to use len(pszText)
+/// @param pdwWritten  [default null, out] written count
+/// @param bProcessed  [default false] true if pszText contains ANSI sequences (colors, etc.)
+/// @param bAsciiPrint [default false] true if pszText is ASCII (not wchar_t)
+/// @param bStreamBy1  [default false] true to Write 1 character per function call (debug purposes)
+/// @param bToBottom   [default false] true to set text cursor position at the bottom of scroll buffer (force use true-color area)
+/// @result            0 on success, otherwise our internal error code
+int WriteOutput(LPCWSTR pszText, DWORD cchLen /*= -1*/, DWORD* pdwWritten /*= nullptr*/, bool bProcessed /*= false*/, bool bAsciiPrint /*= false*/, bool bStreamBy1 /*= false*/, bool bToBottom /*= false*/)
 {
 	int    iRc = 0;
 	BOOL   bRc = FALSE;
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	DWORD  dwWritten = 0;
 
 	if (bToBottom)
 	{
@@ -969,6 +961,11 @@ int WriteOutput(LPCWSTR pszText, DWORD cchLen, DWORD& dwWritten, bool bProcessed
 		}
 	}
 
+	if (pszText && (cchLen == DWORD(-1)))
+		cchLen = bAsciiPrint
+			? (DWORD)strlen((const char*)pszText)
+			: (DWORD)wcslen(pszText);
+
 	if (!pszText || !cchLen)
 	{
 		iRc = 1;
@@ -979,16 +976,15 @@ int WriteOutput(LPCWSTR pszText, DWORD cchLen, DWORD& dwWritten, bool bProcessed
 	{
 		typedef BOOL (WINAPI* WriteProcessed_t)(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
 		typedef BOOL (WINAPI* WriteProcessedA_t)(LPCSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, UINT Stream);
-		WriteProcessed_t WriteProcessed = NULL;
-		WriteProcessedA_t WriteProcessedA = NULL;
-		HMODULE hHooks = NULL;
-		if (bProcessed)
+		static WriteProcessed_t WriteProcessed = NULL;
+		static WriteProcessedA_t WriteProcessedA = NULL;
+		if (bProcessed && (!WriteProcessed || !WriteProcessedA))
 		{
 			// ConEmuHk.dll / ConEmuHk64.dll
-			if ((hHooks = LoadConEmuHk()) != NULL)
+			if (ConEmuHk.Load(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll")))
 			{
-				WriteProcessed = (WriteProcessed_t)GetProcAddress(hHooks, "WriteProcessed");
-				WriteProcessedA = (WriteProcessedA_t)GetProcAddress(hHooks, "WriteProcessedA");
+				ConEmuHk.GetProcAddress("WriteProcessed", WriteProcessed);
+				ConEmuHk.GetProcAddress("WriteProcessedA", WriteProcessedA);
 			}
 		}
 
@@ -1058,6 +1054,8 @@ int WriteOutput(LPCWSTR pszText, DWORD cchLen, DWORD& dwWritten, bool bProcessed
 		iRc = 3;
 
 wrap:
+	if (pdwWritten)
+		*pdwWritten = dwWritten;
 	return iRc;
 }
 

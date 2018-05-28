@@ -2491,7 +2491,7 @@ BOOL cmd_WriteText(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		if (nLen > 0)
 		{
-			WriteOutput(pszText, nLen, nWritten, true/*bProcessed*/, false/*bAsciiPrint*/, false/*bStreamBy1*/, false/*bToBottom*/);
+			WriteOutput(pszText, nLen, &nWritten, true/*bProcessed*/, false/*bAsciiPrint*/, false/*bStreamBy1*/, false/*bToBottom*/);
 		}
 
 		(*out)->dwData[0] = nWritten;
