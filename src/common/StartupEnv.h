@@ -124,6 +124,7 @@ protected:
 			pEnv->bIsRemote = GetSystemMetrics(0x1000/*SM_REMOTESESSION*/);
 
 			pEnv->bIsDbcs = IsWinDBCS();
+			pEnv->bIsImm = GetSystemMetrics(SM_IMMENABLED);
 
 			// Don't use them in ConEmuHk
 			pEnv->bIsWine = 2;

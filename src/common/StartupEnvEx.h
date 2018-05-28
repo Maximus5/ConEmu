@@ -174,9 +174,9 @@ protected:
 				wchar_t ReleaseId[128] = L"", szUBR[32];
 				LONG ubr = RegQueryValueEx(hk, L"UBR", NULL, &ubrType, (LPBYTE)&UBR, &(dwSize = sizeof(UBR)));
 				LONG rid = RegQueryValueEx(hk, L"ReleaseId", NULL, &relType, (LPBYTE)ReleaseId, &(dwSize = sizeof(ReleaseId)));
-				wchar_t* pszSP = osv.szCSDVersion[0] ? lstrmerge(L"; SP: ", osv.szCSDVersion) : NULL;
+				wchar_t* pszSP = osv.szCSDVersion[0] ? lstrmerge(L", SP: ", osv.szCSDVersion) : NULL;
 				if (ubr == 0 && ubrType == REG_DWORD && UBR && rid == 0 && relType == REG_SZ && *ReleaseId)
-					pszBuild = lstrmerge(ReleaseId, L"; UBR: ", ultow_s(UBR, szUBR, 10), pszSP);
+					pszBuild = lstrmerge(ReleaseId, L", UBR: ", ultow_s(UBR, szUBR, 10), pszSP);
 				else if (rid == 0 && relType == REG_SZ && *ReleaseId)
 					pszBuild = lstrmerge(ReleaseId, pszSP);
 				else if (ubr == 0 && ubrType == REG_DWORD && UBR)
@@ -342,15 +342,15 @@ public:
 		wchar_t* pszWinBuild = LoadWindowsBuild(osv);
 		swprintf_c(szSI, L"ConEmu %s [%u] Startup Info\r\n"
 			L"  OsVer: %s, Product: %s, SP: %u.%u, Suite: 0x%X\r\n"
-			L"  Build: %s, ReactOS: %u%s%s%s, Rsrv: %u, SM_SERVERR2: %u\r\n"
-			L"  DBCS: %u, WINE: %u, PE: %u, Remote: %u, ACP: %u, OEMCP: %u, Admin: %u\r\n"
+			L"  Build: %s, ReactOS: %u%s%s%s, Rsrv: %u, WINE: %u, PE: %u, R2: %u\r\n"
+			L"  DBCS: %u, IMM: %u, Remote: %u, ACP: %u, OEMCP: %u, Admin: %u\r\n"
 			L"  StartTime: %s\r\n"
 			, szBuild, WIN3264TEST(32,64),
 			szTitle,
 			szProdType, osv.wServicePackMajor, osv.wServicePackMinor, osv.wSuiteMask,
 			pszWinBuild ? pszWinBuild : L"", apStartEnv->bIsReactOS, *pszReactOS?L" (":L"", pszReactOS, *pszReactOS?L")":L"",
-				osv.wReserved, GetSystemMetrics(89/*SM_SERVERR2*/),
-			apStartEnv->bIsDbcs, apStartEnv->bIsWine, apStartEnv->bIsWinPE, apStartEnv->bIsRemote,
+				osv.wReserved, apStartEnv->bIsWine, apStartEnv->bIsWinPE, GetSystemMetrics(89/*SM_SERVERR2*/),
+			apStartEnv->bIsDbcs, apStartEnv->bIsImm, apStartEnv->bIsRemote,
 			apStartEnv->nAnsiCP, apStartEnv->nOEMCP, apStartEnv->bIsAdmin,
 			szStartTime);
 		DumpEnvStr(szSI, lParam, true, false);

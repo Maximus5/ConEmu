@@ -68,6 +68,7 @@ struct CEStartupEnv
 	UINT    bIsAdmin;  // Informational (FALSE/TRUE/ or 2 in ConEmuHk)
 	BOOL    bIsReactOS;
 	BOOL    bIsDbcs;
+	BOOL    bIsImm;
 	UINT    nAnsiCP, nOEMCP;
 	BOOL    bIsPerMonitorDpi;
 	UINT    nMonitorsCount;
