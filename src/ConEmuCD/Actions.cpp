@@ -1103,7 +1103,7 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 			iRc = DoInjectRemote((LPWSTR)asCmdArg, (eExecAction == ea_InjectDefTrm));
 			break;
 		}
-	case ea_GuiMacro:
+	case ea_GuiMacro: // ConEmuC -GuiMacro
 		{
 			LogString(L"DoExecAction: DoGuiMacro");
 			GuiMacroFlags Flags = gmf_SetEnvVar
@@ -1114,32 +1114,32 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 			iRc = DoGuiMacro(asCmdArg, Inst, Flags);
 			break;
 		}
-	case ea_CheckUnicodeFont:
+	case ea_CheckUnicodeFont: // ConEmuC -CheckUnicode
 		{
 			LogString(L"DoExecAction: ea_CheckUnicodeFont");
 			iRc = CheckUnicodeFont();
 			break;
 		}
-	case ea_PrintConsoleInfo:
+	case ea_PrintConsoleInfo: // ConEmuC -ConInfo
 		{
 			LogString(L"DoExecAction: ea_PrintConsoleInfo");
 			PrintConsoleInfo();
 			iRc = 0;
 			break;
 		}
-	case ea_TestUnicodeCvt:
+	case ea_TestUnicodeCvt: // ConEmuC -TestUnicode
 		{
 			LogString(L"DoExecAction: ea_TestUnicodeCvt");
 			iRc = TestUnicodeCvt();
 			break;
 		}
-	case ea_OsVerInfo:
+	case ea_OsVerInfo: // ConEmuC -OsVerInfo
 		{
 			LogString(L"DoExecAction: ea_OsVerInfo");
 			iRc = OsVerInfo();
 			break;
 		}
-	case ea_ExportCon:
+	case ea_ExportCon: // ConEmuC -Export ...
 	case ea_ExportTab:
 	case ea_ExportGui:
 	case ea_ExportAll:
@@ -1148,33 +1148,33 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 			iRc = DoExportEnv(asCmdArg, eExecAction, gbPreferSilentMode);
 			break;
 		}
-	case ea_ParseArgs:
+	case ea_ParseArgs: // ConEmuC -Args ... | ConEmuC -ParseArgs
 		{
 			LogString(L"DoExecAction: DoParseArgs");
 			iRc = DoParseArgs(asCmdArg);
 			break;
 		}
-	case ea_ErrorLevel:
+	case ea_ErrorLevel: // ConEmuC -ErrorLevel
 		{
 			LogString(L"DoExecAction: ea_ErrorLevel");
 			wchar_t* pszEnd = NULL;
 			iRc = wcstol(asCmdArg, &pszEnd, 10);
 			break;
 		}
-	case ea_OutEcho:
-	case ea_OutType:
+	case ea_OutEcho: // ConEmuC -e ...
+	case ea_OutType: // ConEmuC -t
 		{
 			LogString(L"DoExecAction: DoOutput");
 			iRc = DoOutput(eExecAction, asCmdArg);
 			break;
 		}
-	case ea_StoreCWD:
+	case ea_StoreCWD: // ConEmuC -StoreCWD
 		{
 			LogString(L"DoExecAction: DoStoreCWD");
 			iRc = DoStoreCWD(asCmdArg);
 			break;
 		}
-	case ea_DumpStruct:
+	case ea_DumpStruct: // ConEmuC -STRUCT
 		{
 			LogString(L"DoExecAction: DoDumpStruct");
 			iRc = DoDumpStruct(asCmdArg);
