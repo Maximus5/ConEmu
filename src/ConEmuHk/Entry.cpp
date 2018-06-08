@@ -73,16 +73,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../ConEmuCD/ExitCodes.h"
 
-
-#include "SetHook.h"
-#include "hlpProcess.h"
-#include "ShellProcessor.h"
-#include "GuiAttach.h"
-#include "Injects.h"
 #include "Ansi.h"
 #include "DefTermHk.h"
+#include "GuiAttach.h"
+#include "Injects.h"
 #include "MainThread.h"
+#include "SetHook.h"
+#include "ShellProcessor.h"
+#include "hlpProcess.h"
+
 #include "../ConEmu/version.h"
+
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/HkFunc.h"
@@ -2662,6 +2663,16 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 
 	BOOL lbRc = FALSE, lbFRc;
 
+	auto returnDWORD = [&](DWORD result)
+	{
+		pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD);
+		if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
+		{
+			ppReply->dwData[0] = result;
+			lbRc = true;
+		}
+	};
+
 	switch (pCmd->hdr.nCmd)
 	{
 	case CECMD_ATTACHGUIAPP:
@@ -2683,10 +2694,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			//ghConEmuWndDC -- еще нету
 			AttachGuiWindow(pCmd->AttachGuiApp.hAppWindow);
 			// Результат
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
-			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize);
-			if (lbRc)
-				ppReply->dwData[0] = LODWORD(ghAttachGuiClient);
+			returnDWORD(LODWORD(ghAttachGuiClient));
 		} // CECMD_ATTACHGUIAPP
 		break;
 	case CECMD_SETFOCUS:
@@ -2697,20 +2705,14 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 		if (CHECK_CMD_SIZE(pCmd,2*sizeof(DWORD)))
 		{
 			lbFRc = GenerateConsoleCtrlEvent(pCmd->dwData[0], pCmd->dwData[1]);
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
-			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize);
-			if (lbRc)
-				ppReply->dwData[0] = lbFRc;
+			returnDWORD(lbFRc);
 		} // CECMD_CTRLBREAK
 		break;
 	case CECMD_SETGUIEXTERN:
 		if (ghAttachGuiClient && (pCmd->DataSize() >= sizeof(CESERVER_REQ_SETGUIEXTERN)))
 		{
 			SetGuiExternMode(pCmd->SetGuiExtern.bExtern, NULL/*pCmd->SetGuiExtern.bDetach ? &pCmd->SetGuiExtern.rcOldPos : NULL*/);
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
-			lbRc = ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize);
-			if (lbRc)
-				ppReply->dwData[0] = gbGuiClientExternMode;
+			returnDWORD(gbGuiClientExternMode);
 
 			if (pCmd->SetGuiExtern.bExtern && pCmd->SetGuiExtern.bDetach)
 			{
@@ -2801,26 +2803,13 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 	case CECMD_EXPORTVARS:
 		{
 			ApplyExportEnvVar((LPCWSTR)pCmd->wData);
-
-			lbRc = true; // Вернуть результат однозначно
-
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
-			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
-			{
-				ppReply->dwData[0] = TRUE;
-			}
+			returnDWORD(TRUE);
 		} // CECMD_EXPORTVARS
 		break;
 	case CECMD_DUPLICATE:
 		{
 			int nFRc = DuplicateRoot(&pCmd->Duplicate);
-
-			lbRc = true; // вернуть результат
-			pcbReplySize = sizeof(CESERVER_REQ_HDR)+sizeof(DWORD);
-			if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pCmd->hdr.nCmd, pcbReplySize))
-			{
-				ppReply->dwData[0] = nFRc;
-			}
+			returnDWORD(nFRc);
 		} // CECMD_DUPLICATE
 		break;
 	}
