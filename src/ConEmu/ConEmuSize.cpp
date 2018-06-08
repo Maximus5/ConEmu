@@ -62,6 +62,40 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define FIXPOSAFTERSTYLE_DELTA 2500
 
+
+/// Helper class to call and automatically revert DisableThickFrame
+CConEmuSize::ThickFrameDisabler::ThickFrameDisabler(CConEmuSize& _conemu, bool _disable /*= false*/)
+	: conemu(_conemu), disabled(false)
+{
+	if (_disable)
+		Disable();
+}
+
+CConEmuSize::ThickFrameDisabler::~ThickFrameDisabler()
+{
+	Enable();
+}
+
+void CConEmuSize::ThickFrameDisabler::Disable()
+{
+	if (disabled)
+		return;
+	disabled = true;
+	conemu.DisableThickFrame(true);
+}
+
+void CConEmuSize::ThickFrameDisabler::Enable()
+{
+	if (!disabled)
+		return;
+	disabled = false;
+	conemu.DisableThickFrame(false);
+}
+
+
+// ****************************************************************** //
+
+/// Part of ConEmu GUI related to sizing functions
 CConEmuSize::CConEmuSize()
 	: mp_ConEmu(static_cast<CConEmuMain*>(this))
 	, SizeInfo(static_cast<CConEmuMain*>(this))
@@ -5720,14 +5754,13 @@ BOOL CConEmuSize::AnimateWindow(DWORD dwTime, DWORD dwFlags)
 		bWasShown = mp_ConEmu->mp_TabBar->ShowSearchPane(false, true);
 	}
 
+	ThickFrameDisabler disabler(*this);
+
 	// during quake-style slide - we turn off ThickFrame,
 	// because it looks really weird during animation
 	if (dwFlags & AW_SLIDE)
 	{
-		mb_DisableThickFrame = true;
-		DEBUGSTRRGN(L"mb_DisableThickFrame = true");
-		mp_ConEmu->StopForceShowFrame();
-		//mp_ConEmu->UpdateWindowRgn(); // already called from StopForceShowFrame/RefreshWindowStyles
+		disabler.Disable();
 	}
 
 	BOOL bRc = ::AnimateWindow(ghWnd, dwTime, dwFlags);
@@ -5735,10 +5768,7 @@ BOOL CConEmuSize::AnimateWindow(DWORD dwTime, DWORD dwFlags)
 	// Restore ThickFrame if we show the window
 	if ((dwFlags & AW_SLIDE) && !(dwFlags & AW_HIDE))
 	{
-		DEBUGSTRRGN(L"mb_DisableThickFrame = false");
-		mb_DisableThickFrame = false;
-		mp_ConEmu->RefreshWindowStyles();
-		// mp_ConEmu->UpdateWindowRgn(); // already called from RefreshWindowStyles
+		disabler.Enable();
 	}
 
 	if (bWasShown)
@@ -5929,6 +5959,24 @@ void CConEmuSize::StopForceShowFrame()
 	mp_ConEmu->SetKillTimer(false, TIMER_CAPTION_DISAPPEAR_ID, 0);
 	mp_ConEmu->RefreshWindowStyles();
 	//UpdateWindowRgn();
+}
+
+void CConEmuSize::DisableThickFrame(bool flag)
+{
+	if (flag)
+	{
+		mb_DisableThickFrame = true;
+		DEBUGSTRRGN(L"mb_DisableThickFrame = true");
+		mp_ConEmu->StopForceShowFrame();
+		//mp_ConEmu->UpdateWindowRgn(); // already called from StopForceShowFrame/RefreshWindowStyles
+	}
+	else
+	{
+		DEBUGSTRRGN(L"mb_DisableThickFrame = false");
+		mb_DisableThickFrame = false;
+		mp_ConEmu->RefreshWindowStyles();
+		// mp_ConEmu->UpdateWindowRgn(); // already called from RefreshWindowStyles
+	}
 }
 
 bool CConEmuSize::InMinimizing(WINDOWPOS *p /*= NULL*/)
@@ -6559,6 +6607,8 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 		DEBUGTEST(bool bWasQuakeIconic = isQuakeMinimized);
 
+		ThickFrameDisabler disabler(*this);
+
 		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
 		{
 			// Для Quake-style необходимо СНАЧАЛА сделать окно "невидимым" перед его разворачиваем или активацией
@@ -6569,7 +6619,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			}
 			else
 			{
-				StopForceShowFrame();
+				disabler.Disable();
 				mn_QuakePercent = nQuakeMin;
 				UpdateWindowRgn();
 			}
@@ -6663,7 +6713,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				{
 					DWORD nStartTick = GetTickCount();
 
-					StopForceShowFrame();
+					disabler.Disable();
 
 					// Begin of animation
 					_ASSERTE(mn_QuakePercent==0 || mn_QuakePercent==nQuakeMin);
@@ -6699,6 +6749,8 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		mn_QuakePercent = 0; // 0 - отключен
 		ZeroStruct(m_QuakePrevSize.PreSlidedSize);
 
+		disabler.Enable();
+
 		CVConGuard VCon;
 		if (mp_ConEmu->GetActiveVCon(&VCon) >= 0)
 		{
@@ -6710,7 +6762,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 		if (bIsIconic)
 			mp_ConEmu->mp_Menu->SetRestoreFromMinimized(bPrevInRestore);
-	}
+	} // if (cmd == sih_Show)
 	else
 	{
 		// Минимизация
@@ -6736,6 +6788,9 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			//TODO: иначе при сворачивании не активируется "следующее" окно, фокус ввода
 			//TODO: остается в дочернем Notepad (ввод текста идет в него)
 		}
+
+		bool wasMinimized = false;
+		ThickFrameDisabler disabler(*this);
 
 		if (gpSet->isQuakeStyle /*&& !isMouseOverFrame()*/)
 		{
@@ -6785,7 +6840,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 					apiShowWindow(ghWnd, SW_SHOWNOACTIVATE);
 					apiShowWindow(ghWnd, SW_HIDE);
 				}
-
+				wasMinimized = true;
 			}
 			else
 			{
@@ -6796,6 +6851,8 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 				if (gpSet->nQuakeAnimation > 0)
 				{
 					int nQuakeStepDelay = gpSet->nQuakeAnimation / nQuakeShift; // 20;
+
+					disabler.Disable();
 
 					while (mn_QuakePercent > 0)
 					{
@@ -6836,17 +6893,14 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		}
 		else if ((cmd == sih_ShowMinimize) || (ShowHideType == sih_Minimize))
 		{
-			if (gpSet->isQuakeStyle)
-			{
-				// No need to trying put focus into next Z-order window.
-				// All magic was done with SW_SHOWNOACTIVATE and SW_HIDE
-			}
-			else
+			if (!wasMinimized)
 			{
 				// SC_MINIMIZE сам обработает (gpSet->isMinToTray || mp_ConEmu->ForceMinimizeToTray)
 				SendMessage(ghWnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
 			}
 		}
+
+		disabler.Enable();
 
 		DEBUGTEST(nLastQuakeHide = GetTickCount());
 	}

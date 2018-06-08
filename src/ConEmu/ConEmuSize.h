@@ -323,6 +323,18 @@ public:
 	UINT GetSelfFrameWidth();
 	void StartForceShowFrame();
 	void StopForceShowFrame();
+	void DisableThickFrame(bool flag);
+
+	class ThickFrameDisabler
+	{
+		CConEmuSize& conemu;
+		bool disabled = false;
+	public:
+		ThickFrameDisabler(CConEmuSize& _conemu, bool _disable = false);
+		~ThickFrameDisabler();
+		void Disable();
+		void Enable();
+	};
 
 protected:
 	RECT CalcMargins_Win10Frame();
