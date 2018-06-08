@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _COMMON_HEADER_HPP_
 
 // Interface version
-#define CESERVER_REQ_VER    166
+#define CESERVER_REQ_VER    167
 
 // Max tabs/panes count
 #define MAX_CONSOLE_COUNT 30
@@ -1553,6 +1553,9 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	//
 	DWORD nAltServerPID;  //
 	DWORD ActiveServerPID() const { return nAltServerPID ? nAltServerPID : nServerPID; };
+
+	/// When started "ConEmuC -std -c far.exe" connector shall pause reading input
+	DWORD stdConBlockingPID;
 
 	// Root(!) ConEmu window
 	HWND2 hConEmuRoot;

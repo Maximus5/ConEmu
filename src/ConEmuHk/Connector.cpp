@@ -45,6 +45,10 @@ static HANDLE ghTermInput = NULL;
 static DWORD gnTermPrevMode = 0;
 static UINT gnPrevConsoleCP = 0;
 static LONG gnInTermInputReading = 0;
+static struct {
+	HANDLE handle;
+	DWORD pid;
+} gBlockInputProcess = {};
 
 static void writeVerbose(const char *buf, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0)
 {
@@ -75,10 +79,56 @@ static DWORD protectCtrlBreakTrap(HANDLE h_input)
 	return conInMode;
 }
 
+/// Called after "ConEmuC -STD -c bla-bla-bla" to allow WinAPI read input exclusively
+void pauseReadInput(DWORD pid)
+{
+	if (!pid)
+		return;
+	HANDLE h = OpenProcess(SYNCHRONIZE, FALSE, pid);
+	// Don't try again to open process
+	gBlockInputProcess.pid = pid;
+	if (!h || h == INVALID_HANDLE_VALUE)
+		return;
+	std::swap(h, gBlockInputProcess.handle);
+	SafeCloseHandle(h);
+}
+
+/// If user started "ConEmuC -STD -c far.exe" we shall not read CONIN$ anymore
+static bool mayReadInput()
+{
+	if (gbTerminateReadInput)
+		return false;
+
+	if (!gBlockInputProcess.handle)
+	{
+		const CESERVER_CONSOLE_MAPPING_HDR* pSrv = GetConMap();
+		if (pSrv && pSrv->stdConBlockingPID && pSrv->stdConBlockingPID != gBlockInputProcess.pid)
+		{
+			pauseReadInput(pSrv->stdConBlockingPID);
+		}
+	}
+
+	if (gBlockInputProcess.handle)
+	{
+		DWORD rc = WaitForSingleObject(gBlockInputProcess.handle, 15);
+		if (rc == WAIT_TIMEOUT)
+			return false;
+		_ASSERTE(rc == WAIT_OBJECT_0);
+		// ConEmuC was terminated, return to normal operation
+		gBlockInputProcess.pid = 0;
+		HANDLE h = NULL; std::swap(h, gBlockInputProcess.handle);
+		SafeCloseHandle(h);
+		// Restore previous modes
+		CEAnsi::RefreshXTermModes();
+	}
+
+	return true;
+}
+
 /// Called from connector binary
 static ReadInputResult WINAPI termReadInput(PINPUT_RECORD pir, DWORD nCount, PDWORD pRead)
 {
-	if (gbTerminateReadInput || !pir || !pRead)
+	if (!mayReadInput() || !pir || !pRead)
 		return rir_None;
 
 	if (!ghTermInput)

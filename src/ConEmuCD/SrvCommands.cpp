@@ -2558,6 +2558,12 @@ BOOL cmd_StartXTerm(CESERVER_REQ& in, CESERVER_REQ** out)
 	if (in.DataSize() >= 3*sizeof(DWORD))
 	{
 		gpSrv->processes->StartStopXTermMode((TermModeCommand)in.dwData[0], in.dwData[1], in.dwData[2]);
+
+		if (in.DataSize() >= 4*sizeof(DWORD))
+		{
+			gpSrv->pConsole->hdr.stdConBlockingPID = in.dwData[3];
+			UpdateConsoleMapHeader(L"CECMD_STARTXTERM");
+		}
 	}
 
 	// Inform the GUI

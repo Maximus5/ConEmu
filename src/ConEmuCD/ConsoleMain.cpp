@@ -277,6 +277,36 @@ namespace InputLogger
 };
 
 
+namespace Shutdown
+{
+	using ShutdownCallback = void (*)(LPARAM);
+	struct ShutdownEvent
+	{
+		ShutdownCallback callback = nullptr;
+		LPARAM lParam = 0;
+		ShutdownEvent* next = nullptr;
+	};
+	ShutdownEvent* events = nullptr;
+	void RegisterEvent(ShutdownCallback callback, LPARAM lParam)
+	{
+		ShutdownEvent* new_event = new ShutdownEvent();
+		new_event->callback = callback;
+		new_event->lParam = lParam;
+		new_event->next = (ShutdownEvent*)InterlockedExchangePointer((PVOID*)&events, new_event);
+	}
+	void ProcessShutdown()
+	{
+		ShutdownEvent* cur_event = (ShutdownEvent*)InterlockedExchangePointer((PVOID*)&events, nullptr);
+		while (cur_event)
+		{
+			if (cur_event->callback)
+				cur_event->callback(cur_event->lParam);
+			_ASSERTE(cur_event != cur_event->next);
+			cur_event = cur_event->next;
+		}
+	}
+};
+
 namespace StdCon {
 
 	bool AttachParentConsole(DWORD parent_pid)
@@ -390,6 +420,158 @@ namespace StdCon {
 		}
 
 		return bAttach;
+	}
+
+	struct ReopenedHandles;
+	ReopenedHandles* gReopenedHandles = nullptr;
+	bool gbReopenConsole = false;
+
+	struct ReopenedHandles
+	{
+		struct {
+			DWORD channel;
+			const wchar_t* name;
+			MConHandle* handle;
+			HANDLE prev_handle;
+		} handles[3] = {
+			{ STD_INPUT_HANDLE, L"CONIN$" },
+			{ STD_OUTPUT_HANDLE, L"CONOUT$" },
+			{ STD_ERROR_HANDLE, L"CONOUT$" }, // "CONERR$" does not exist
+		};
+		bool reopened = false;
+		SECURITY_ATTRIBUTES sec = {sizeof(sec), nullptr, TRUE};
+
+		static void deleter(LPARAM lParam)
+		{
+			SafeDelete(gReopenedHandles);
+		}
+
+		ReopenedHandles()
+		{
+			for (size_t i = 0; i < countof(handles); ++i)
+			{
+				auto& h = handles[i];
+				h.prev_handle = GetStdHandle(h.channel);
+			}
+			Shutdown::RegisterEvent(deleter, 0);
+		}
+
+		~ReopenedHandles()
+		{
+			for (size_t i = 0; i < countof(handles); ++i)
+			{
+				auto& h = handles[i];
+				if (h.handle)
+				{
+					SetStdHandle(h.channel, h.prev_handle);
+					delete h.handle;
+				}
+			}
+		};
+
+		bool Reopen(STARTUPINFO* si)
+		{
+			bool success = true;
+			// "Connect" to the real console
+			if (success && !ghConWnd)
+			{
+				_ASSERTE(GetConsoleWindow() == ghConWnd);
+				CEStr srv_pid(GetEnvVar(ENV_CONEMUSERVERPID_VAR_W));
+				DWORD pid = srv_pid ? wcstoul(srv_pid.c_str(L""), NULL, 10) : 0;
+				success = pid ? AttachParentConsole(pid) : false;
+				DWORD err = success ? 0 : GetLastError();
+				if (success)
+				{
+					if (!gnMainServerPID)
+						gnMainServerPID = pid;
+				}
+				else
+				{
+					wchar_t szError[120];
+					msprintf(szError, countof(szError),
+						L"ConEmuC: AttachConsole failed, code=%u (x%04X), can't initialize ConIn/ConOut\n",
+						err, err);
+					_wprintf(szError);
+				}
+			}
+			if (success)
+			{
+				for (size_t i = 0; i < countof(handles); ++i)
+				{
+					auto& h = handles[i];
+					if (!h.handle)
+						h.handle = new MConHandle(h.name, &sec);
+					if (!(success = (h.handle->GetHandle() != INVALID_HANDLE_VALUE)))
+						break;
+				}
+			}
+			// Change Std handles
+			if (success)
+			{
+				for (size_t i = 0; i < countof(handles); ++i)
+				{
+					auto& h = handles[i];
+					if (!(success = SetStdHandle(h.channel, h.handle->GetHandle())))
+						break;
+				}
+			}
+			// And modify current si
+			if (success && si)
+			{
+				si->hStdInput = handles[0].handle->GetHandle();
+				si->hStdOutput = handles[1].handle->GetHandle();
+				si->hStdError = handles[2].handle->GetHandle();
+			}
+			// On errors - reverts what was done
+			if (!success)
+			{
+				for (size_t i = 0; i < countof(handles); ++i)
+				{
+					auto& h = handles[i];
+					SetStdHandle(h.channel, h.prev_handle);
+					SafeDelete(h.handle);
+				}
+			}
+			return success;
+		};
+	};
+
+	void SetWin32TermMode()
+	{
+		//_ASSERTE(FALSE && "Continue to CECMD_STARTXTERM");
+		if (!gnMainServerPID)
+		{
+			_wprintf(L"ERROR: ConEmuC was unable to detect console server PID\n");
+			return;
+		}
+
+		CESERVER_REQ* pIn2 = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+4*sizeof(DWORD));
+		if (pIn2)
+		{
+			pIn2->dwData[0] = tmc_TerminalType;
+			pIn2->dwData[1] = te_win32;
+			pIn2->dwData[2] = GetCurrentProcessId();
+			pIn2->dwData[3] = GetCurrentProcessId(); /// Block connector reading thread by our PID
+			CESERVER_REQ* pOut = ExecuteSrvCmd(gnMainServerPID, pIn2, ghConWnd);
+			ExecuteFreeResult(pIn2);
+			ExecuteFreeResult(pOut);
+		}
+	}
+
+	// Restore "native" console functionality on cygwin/msys/wsl handles?
+	void ReopenConsoleHandles(STARTUPINFO* si)
+	{
+		// _ASSERTE(FALSE && "ReopenConsoleHandles");
+		if (!gbReopenConsole)
+			return;
+		gbReopenConsole = false; // do it only once
+		if (!gReopenedHandles)
+			gReopenedHandles = new ReopenedHandles();
+		if (!gReopenedHandles->Reopen(si))
+			_wprintf(L"ERROR: ConEmuC was unable to set STD console mode\n");
+		else
+			SetWin32TermMode();
+		// #CONNECTOR On exit we shall return current mode (retrieved from server?)
 	}
 };
 
@@ -712,6 +894,8 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			//	// Но пока - оставим, для отладки ситуации, когда процесс завершается аварийно (Kill).
 			//	_ASSERTE(gnRunMode != RM_ALTSERVER && "AltServer must inform MainServer about self-termination");
 			//}
+
+			Shutdown::ProcessShutdown();
 
 			//#ifndef TESTLINK
 			CommonShutdown();
@@ -1329,9 +1513,15 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		goto wrap;
 
 	// По идее, при вызове дебаггера ParseCommandLine сразу должна послать на выход.
-	_ASSERTE(!(gpSrv->DbgInfo.bDebuggerActive || gpSrv->DbgInfo.bDebugProcess || gpSrv->DbgInfo.bDebugProcessTree))
+	_ASSERTE(!(gpSrv->DbgInfo.bDebuggerActive || gpSrv->DbgInfo.bDebugProcess || gpSrv->DbgInfo.bDebugProcessTree));
 
+	// Force change current handles to STD ConIn/ConOut?
+	if (StdCon::gbReopenConsole)
+	{
+		StdCon::ReopenConsoleHandles(&si);
+	}
 
+	// Continue server initialization
 	if (gnRunMode == RM_SERVER)
 	{
 		// Until the root process is not terminated - set to STILL_ACTIVE
@@ -3877,6 +4067,10 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		{
 			gbUseDosBox = TRUE;
 		}
+		else if (szArg.IsSwitch(L"-STD"))
+		{
+			StdCon::gbReopenConsole = true;
+		}
 		// После этих аргументов - идет то, что передается в CreateProcess!
 		else if (lstrcmpi(szArg, L"/ROOT")==0)
 		{
@@ -3893,6 +4087,8 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		else if (szArg[0] == L'/' && (((szArg[1] & ~0x20) == L'C') || ((szArg[1] & ~0x20) == L'K')))
 		{
 			gbNoCreateProcess = FALSE;
+
+			//_ASSERTE(FALSE && "ConEmuC -c ...");
 
 			if (szArg[2] == 0)  // "/c" или "/k"
 				gnRunMode = RM_COMSPEC;

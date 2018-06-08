@@ -129,6 +129,9 @@ public:
 	static MSectionSimple* gcsAnsiLogFile;
 
 	static bool gbWasXTermOutput;
+	static struct TermModeSet {
+		DWORD value, pid;
+	} gWasXTermModeSet[tmc_Last];
 
 protected:
 	static int NextNumber(LPCWSTR& asMS);
@@ -136,6 +139,7 @@ protected:
 public:
 	static void ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID = 0);
 	static void StartXTermMode(bool bStart);
+	static void RefreshXTermModes();
 	static void StorePromptBegin();
 
 public:

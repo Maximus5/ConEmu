@@ -112,6 +112,8 @@ MSectionSimple* CEAnsi::gcsAnsiLogFile = NULL;
 
 // VIM, etc. Some programs waiting control keys as xterm sequences. Need to inform ConEmu GUI.
 bool CEAnsi::gbWasXTermOutput = false;
+// Let RefreshXTermModes() know what to restore
+CEAnsi::TermModeSet CEAnsi::gWasXTermModeSet[tmc_Last] = {};
 
 /* ************ Export ANSI printings ************ */
 LONG gnWriteProcessed = 0;
@@ -4086,6 +4088,9 @@ void CEAnsi::ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID /*= 0*
 		ExecuteFreeResult(pIn);
 		ExecuteFreeResult(pOut);
 	}
+
+	if (mode < countof(gWasXTermModeSet))
+		gWasXTermModeSet[mode] = {value, nPID ? nPID : GetCurrentProcessId()};
 }
 
 void CEAnsi::StartXTermMode(bool bStart)
@@ -4097,6 +4102,19 @@ void CEAnsi::StartXTermMode(bool bStart)
 	// Remember last mode
 	gbWasXTermOutput = bStart;
 	ChangeTermMode(tmc_TerminalType, bStart ? te_xterm : te_win32);
+}
+
+void CEAnsi::RefreshXTermModes()
+{
+	if (!gbWasXTermOutput)
+		return;
+	for (int i = 0; i < (int)countof(gWasXTermModeSet); ++i)
+	{
+		if (!gWasXTermModeSet[i].pid)
+			continue;
+		_ASSERTE(i != tmc_ConInMode);
+		ChangeTermMode((TermModeCommand)i, gWasXTermModeSet[i].value, gWasXTermModeSet[i].pid);
+	}
 }
 
 // This is useful when user press Shift+Home,
