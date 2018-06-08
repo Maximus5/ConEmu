@@ -44,6 +44,8 @@ class MConHandle
 		DWORD     mn_StdMode;
 		HANDLE*   mpp_OutBuffer; // Устанавливается при SetConsoleActiveScreenBuffer
 
+		SECURITY_ATTRIBUTES *mp_sec;
+
 		static const int HANDLE_BUFFER_SIZE = RELEASEDEBUGTEST(0x100,0x1000);   // Must be a power of 2
 		struct Event {
 			DWORD TID;
@@ -65,12 +67,17 @@ class MConHandle
 
 	public:
 		operator const HANDLE();
+		HANDLE GetHandle();
 
 	public:
 		void Close();
 		void SetBufferPtr(HANDLE* ppOutBuffer);
 
 	public:
-		MConHandle(LPCWSTR asName);
+		MConHandle(LPCWSTR asName, SECURITY_ATTRIBUTES *apSec = NULL);
 		~MConHandle();
+
+		// non-copyable
+		MConHandle(const MConHandle&) = delete;
+		MConHandle& operator=(const MConHandle&) = delete;
 };

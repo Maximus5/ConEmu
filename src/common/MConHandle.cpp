@@ -34,12 +34,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 WARNING("После перехода на альтернативный сервер - должен работать строго в 'стандартном' режиме (mn_StdMode=STD_OUTPUT_HANDLE/STD_INPUT_HANLDE)");
 
-MConHandle::MConHandle(LPCWSTR asName)
+MConHandle::MConHandle(LPCWSTR asName, SECURITY_ATTRIBUTES *apSec)
 {
 	mn_StdMode = 0;
 	mb_OpenFailed = FALSE; mn_LastError = 0;
 	mh_Handle = INVALID_HANDLE_VALUE;
 	mpp_OutBuffer = NULL;
+	mp_sec = apSec;
 	lstrcpynW(ms_Name, asName, 9);
 	m_logidx = -1;
 	memset(m_log, 0, sizeof(m_log));
@@ -162,6 +163,11 @@ void MConHandle::SetBufferPtr(HANDLE* ppOutBuffer)
 
 MConHandle::operator const HANDLE()
 {
+	return GetHandle();
+}
+
+HANDLE MConHandle::GetHandle()
+{
 	if (mpp_OutBuffer && *mpp_OutBuffer && (*mpp_OutBuffer != INVALID_HANDLE_VALUE))
 	{
 		LogHandle(Event::e_GetHandlePtr, *mpp_OutBuffer);
@@ -184,7 +190,9 @@ MConHandle::operator const HANDLE()
 			if (mh_Handle == INVALID_HANDLE_VALUE)
 			{
 				mh_Handle = CreateFileW(ms_Name, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
-										0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+										mp_sec, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+				if (!mh_Handle) // Is not expected, JIC
+					mh_Handle = INVALID_HANDLE_VALUE;
 
 				if (mh_Handle != INVALID_HANDLE_VALUE)
 				{
