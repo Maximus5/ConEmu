@@ -136,8 +136,6 @@ struct ReadConsoleInfo
 	DWORD nConOutMode;
 };
 extern struct ReadConsoleInfo gReadConsoleInfo;
-BOOL OnReadConsoleClick(SHORT xPos, SHORT yPos, bool bForce, bool bBashMargin);
-BOOL OnPromptBsDeleteWord(bool bForce, bool bBashMargin);
 
 void CheckHookServer();
 extern bool gbHookServerForcedTermination;
