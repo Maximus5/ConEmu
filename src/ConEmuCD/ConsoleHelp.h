@@ -35,63 +35,63 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Used via SetWindowText && _wprintf. Need not escape of "%".
 #define pConsoleHelp \
 		L"This is a console part of ConEmu product.\r\n" \
-		L"Usage: ConEmuC [switches] /ROOT <program with arguments, far.exe for example>\r\n" \
-		L"   or: ConEmuC [switches] [/U | /A] [/Async | /Fork] /C <command line>\r\n" \
-		L"   or: ConEmuC /AUTOATTACH [/GHWND=NEW|<HWND>]\r\n" \
-		L"   or: ConEmuC /ATTACH /NOCMD\r\n" \
-		L"   or: ConEmuC /ATTACH [/GHWND=NEW|<HWND>] /[FAR|CON|TRM]PID=<PID>\r\n" \
-		L"   or: ConEmuC [/SILENT] [/USEEXPORT] /GUIMACRO[:PID|HWND][:T<tab>][:S<split>] <GuiMacro command>\r\n" \
-		L"   or: ConEmuC /IsConEmu | /IsAnsi | /IsAdmin | /IsRedirect | /IsTerm\r\n" \
-		L"   or: ConEmuC /DEBUGPID=<PID>[,<PID2>[,...]] [/DUMP | /MINI | /AUTOMINI | /FULL]\r\n" \
-		L"   or: ConEmuC /DEBUGEXE | /DEBUGTREE <CommandLine>\r\n" \
-		L"   or: ConEmuC [/SILENT] /EXPORT[=CON|GUI|ALL] [Var1 [Var2 [...]]]\r\n" \
-		L"   or: ConEmuC /ECHO | /TYPE [...]\r\n" \
-		L"   or: ConEmuC /StoreCWD [\"dir\"]\r\n" \
-		L"   or: ConEmuC /download [-login <name> -password <pwd>]\r\n" \
+		L"Usage: ConEmuC [switches] -ROOT <program with arguments, far.exe for example>\r\n" \
+		L"   or: ConEmuC [switches] [-STD] [-U | -A] [-Async | -Fork] -C <command line>\r\n" \
+		L"   or: ConEmuC -AUTOATTACH [-GHWND=NEW|<HWND>]\r\n" \
+		L"   or: ConEmuC -ATTACH -NOCMD\r\n" \
+		L"   or: ConEmuC -ATTACH [-GHWND=NEW|<HWND>] -[FAR|CON|TRM]PID=<PID>\r\n" \
+		L"   or: ConEmuC [-SILENT] [-USEEXPORT] -GUIMACRO[:PID|HWND][:T<tab>][:S<split>] <GuiMacro command>\r\n" \
+		L"   or: ConEmuC -IsConEmu | -IsAnsi | -IsAdmin | -IsRedirect | -IsTerm\r\n" \
+		L"   or: ConEmuC -DEBUGPID=<PID>[,<PID2>[,...]] [-DUMP | -MINI | -AUTOMINI | -FULL]\r\n" \
+		L"   or: ConEmuC -DEBUGEXE | -DEBUGTREE <CommandLine>\r\n" \
+		L"   or: ConEmuC [-SILENT] -EXPORT[=CON|GUI|ALL] [Var1 [Var2 [...]]]\r\n" \
+		L"   or: ConEmuC -ECHO | -TYPE [...]\r\n" \
+		L"   or: ConEmuC -StoreCWD [\"dir\"]\r\n" \
+		L"   or: ConEmuC -download [-login <name> -password <pwd>]\r\n" \
 		L"               [-proxy <address:port> [-proxylogin <name> -proxypassword <pwd>]]\r\n" \
 		L"               [-async Y|N] [-timeout[1|2] <ms>] [-agent <name>] [-debug] [-nolog]\r\n" \
 		L"               \"full_url_to_file\" [\"local_path_name\" | - ]\r\n" \
-_DBGHLP(L"   or: ConEmuC /REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n") \
-		L"   or: ConEmuC /?\r\n" \
+_DBGHLP(L"   or: ConEmuC -REGCONFONT=<FontName> -> RegisterConsoleFontHKLM\r\n") \
+		L"   or: ConEmuC -?\r\n" \
 		L"Switches and commands:\r\n" \
-		L"     /[NO]CONFIRM    - [don't] confirm closing console on program termination\r\n" \
-		L"     /AUTOATTACH     - asynchronous attach to ConEmu GUI (for batches)\r\n" \
+		L"     -[NO]CONFIRM    - [don't] confirm closing console on program termination\r\n" \
+		L"     -AUTOATTACH     - asynchronous attach to ConEmu GUI (for batches)\r\n" \
 		L"                       always returns 0 as errorlevel on exit (Issue 1003)\r\n" \
-		L"     /ATTACH         - auto attach to ConEmu GUI\r\n" \
-		L"       /GHWND        - you may force new ConEmu window or attach to specific one\r\n" \
-		L"       /NOCMD        - attach current (existing) console to GUI\r\n" \
-		L"       /PID=<PID>    - use <PID> as root process\r\n" \
-		L"       /FARPID=<PID> - for internal use from Far plugin\r\n" \
-		L"       /CONPID=<PID> - 'soft' mode, don't inject ConEmuHk into <PID>\r\n" \
-		L"       /TRMPID=<PID> - called from *.vshost.exe when 'AllocConsole' just created\r\n" \
-		L"     /B{W|H|Z}       - define window width, height and buffer height\r\n" \
-		L"     /F{N|W|H}       - define console font name, width, height\r\n" \
-		L"     /GuiMacro ...   - https://conemu.github.io/en/GuiMacro.html\r\n" \
-		L"     /Export[...]    - https://conemu.github.io/en/ExportEnvVar.html\r\n" \
-		L"     /IsAdmin        - returns 1 as errorlevel if current user has elevated privileges, 2 if not\r\n" \
-		L"     /IsAnsi         - returns 1 as errorlevel if ANSI are processed, 2 if not\r\n" \
-		L"     /IsConEmu       - returns 1 as errorlevel if running in ConEmu tab, 2 if not\r\n" \
-		L"     /IsRedirect     - returns 1 as errorlevel if CONOUT is redirected, 2 if not\r\n" \
-		L"     /IsTerm         - returns 1 as errorlevel if running in telnet, 2 if not\r\n" \
-		L"     /Log[N]         - create (debug) log file, N is number from 0 to 3\r\n" \
-		L"     /Echo | /Type   - https://conemu.github.io/en/ConEmuC.html#EchoAndType\r\n" \
-		L"     /StoreCWD       - inform ConEmu about current working directory\r\n" \
+		L"     -ATTACH         - auto attach to ConEmu GUI\r\n" \
+		L"       -GHWND        - you may force new ConEmu window or attach to specific one\r\n" \
+		L"       -NOCMD        - attach current (existing) console to GUI\r\n" \
+		L"       -PID=<PID>    - use <PID> as root process\r\n" \
+		L"       -FARPID=<PID> - for internal use from Far plugin\r\n" \
+		L"       -CONPID=<PID> - 'soft' mode, don't inject ConEmuHk into <PID>\r\n" \
+		L"       -TRMPID=<PID> - called from *.vshost.exe when 'AllocConsole' just created\r\n" \
+		L"     -B{W|H|Z}       - define window width, height and buffer height\r\n" \
+		L"     -F{N|W|H}       - define console font name, width, height\r\n" \
+		L"     -GuiMacro ...   - https://conemu.github.io/en/GuiMacro.html\r\n" \
+		L"     -Export[...]    - https://conemu.github.io/en/ExportEnvVar.html\r\n" \
+		L"     -IsAdmin        - returns 1 as errorlevel if current user has elevated privileges, 2 if not\r\n" \
+		L"     -IsAnsi         - returns 1 as errorlevel if ANSI are processed, 2 if not\r\n" \
+		L"     -IsConEmu       - returns 1 as errorlevel if running in ConEmu tab, 2 if not\r\n" \
+		L"     -IsRedirect     - returns 1 as errorlevel if CONOUT is redirected, 2 if not\r\n" \
+		L"     -IsTerm         - returns 1 as errorlevel if running in telnet, 2 if not\r\n" \
+		L"     -Log[N]         - create (debug) log file, N is number from 0 to 3\r\n" \
+		L"     -Echo | -Type   - https://conemu.github.io/en/ConEmuC.html#EchoAndType\r\n" \
+		L"     -StoreCWD       - inform ConEmu about current working directory\r\n" \
 _DBGHLP(L"     -- following switches are visible in debug builds only but available in release too--\r\n") \
-_DBGHLP(L"     /CINMODE==<hex:gnConsoleModeFlags>\r\n") \
-_DBGHLP(L"     /CREATECON -> used internally for hidden console creation\r\n") \
-_DBGHLP(L"     /DOSBOX -> use DosBox\r\n") \
-_DBGHLP(L"     /FN=<ConFontName> /FH=<FontHeight> /FW=<FontWidth>\r\n") \
-_DBGHLP(L"     /GHWND=<ConEmu.exe HWND>\r\n") \
-_DBGHLP(L"     /GID=<ConEmu.exe PID>\r\n") \
-_DBGHLP(L"     /HIDE -> gbForceHideConWnd=TRUE\r\n") \
-_DBGHLP(L"     /INJECT=PID{10}\r\n") \
-_DBGHLP(L"     /SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
-        L"     /Args <Command line> -> printf NextArg's\r\n" \
-        L"     /CheckUnicode -> Some unicode printouts\r\n" \
-        L"     /ConInfo -> Current console tech info\r\n" \
-        L"     /OsVerInfo -> Show OS information, returns OsVer as errorlevel\r\n" \
-        L"     /ErrorLevel <number> -> exit with specified errorlevel\r\n" \
-        L"     /Result -> print errorlevel of /C <command>\r\n" \
+_DBGHLP(L"     -CINMODE==<hex:gnConsoleModeFlags>\r\n") \
+_DBGHLP(L"     -CREATECON -> used internally for hidden console creation\r\n") \
+_DBGHLP(L"     -DOSBOX -> use DosBox\r\n") \
+_DBGHLP(L"     -FN=<ConFontName> -FH=<FontHeight> -FW=<FontWidth>\r\n") \
+_DBGHLP(L"     -GHWND=<ConEmu.exe HWND>\r\n") \
+_DBGHLP(L"     -GID=<ConEmu.exe PID>\r\n") \
+_DBGHLP(L"     -HIDE -> gbForceHideConWnd=TRUE\r\n") \
+_DBGHLP(L"     -INJECT=PID{10}\r\n") \
+_DBGHLP(L"     -SETHOOKS=HP{16},PID{10},HT{16},TID{10},ForceGui\r\n") \
+        L"     -Args <Command line> -> printf NextArg's\r\n" \
+        L"     -CheckUnicode -> Some unicode printouts\r\n" \
+        L"     -ConInfo -> Current console tech info\r\n" \
+        L"     -OsVerInfo -> Show OS information, returns OsVer as errorlevel\r\n" \
+        L"     -ErrorLevel <number> -> exit with specified errorlevel\r\n" \
+        L"     -Result -> print errorlevel of -C <command>\r\n" \
 		L"\r\n"
 
 #define pNewConsoleHelp \
