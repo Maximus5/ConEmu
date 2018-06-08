@@ -1174,11 +1174,9 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 			BSRN = true;
 			// "\r\n"? Do not break in two physical writes
 			if (((pCur+1) < pEnd) && (*(pCur+1) == L'\n'))
-			{
-				pCur++; y2++;
-				_ASSERTE(bWrap);
-			}
-			break;
+				pCur++; // continue to L'\n' section
+			else
+				break;
 		case L'\n':
 			if (x2 > 0)
 				ForceDumpX = x2-1;

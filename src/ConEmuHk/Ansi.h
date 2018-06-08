@@ -290,6 +290,8 @@ protected:
 	static DisplayOpt gDisplayOpt;
 	// Store absolute coords by relative ANSI values
 	void SetScrollRegion(bool bRegion, bool bRelative = true, int nStart = 0, int nEnd = 0, HANDLE hConsoleOutput = NULL);
+	// Return absolute coordinates of our working area
+	SMALL_RECT GetWorkingRegion(HANDLE hConsoleOutput, bool viewPort);
 
 	wchar_t gsPrevAnsiPart[CEAnsi_MaxPrevPart]; // = {};
 	INT_PTR gnPrevAnsiPart; // = 0;

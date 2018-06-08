@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <WinError.h>
 #include <WinNT.h>
 #include <TCHAR.h>
+#include <limits>
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/CmdLine.h"
@@ -2806,16 +2807,23 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			#endif
 			}
 
+			SMALL_RECT clipRgn = csbi.srWindow;
+			if (gDisplayOpt.ScrollRegion)
+			{
+				clipRgn.Top = std::max<int>(0, std::min<int>(gDisplayOpt.ScrollStart, csbi.dwSize.Y-1));
+				clipRgn.Bottom = std::max<int>(0, std::min<int>(gDisplayOpt.ScrollEnd, csbi.dwSize.Y-1));
+			}
+
 			// Check Row
-			if (crNewPos.Y < 0)
-				crNewPos.Y = 0;
-			else if (crNewPos.Y >= csbi.dwSize.Y)
-				crNewPos.Y = csbi.dwSize.Y - 1;
+			if (crNewPos.Y < clipRgn.Top)
+				crNewPos.Y = clipRgn.Top;
+			else if (crNewPos.Y > clipRgn.Bottom)
+				crNewPos.Y = clipRgn.Bottom;
 			// Check Col
-			if (crNewPos.X < 0)
-				crNewPos.X = 0;
-			else if (crNewPos.X >= csbi.dwSize.X)
-				crNewPos.X = csbi.dwSize.X - 1;
+			if (crNewPos.X < clipRgn.Left)
+				crNewPos.X = clipRgn.Left;
+			else if (crNewPos.X > clipRgn.Right)
+				crNewPos.X = clipRgn.Right;
 			// Goto
 			ORIGINAL_KRNL(SetConsoleCursorPosition);
 			F(SetConsoleCursorPosition)(hConsoleOutput, crNewPos);
@@ -3862,24 +3870,60 @@ void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 	}
 }
 
+/// Returns coordinates of either working area (viewPort) or full backscroll buffer
+/// @param hConsoleOutput   if NULL we process STD_OUTPUT_HANDLE
+/// @param viewPort         if true - returns srWindow, false - full backscroll buffer
+/// @result valid SMALL_RECT
+SMALL_RECT CEAnsi::GetWorkingRegion(HANDLE hConsoleOutput, bool viewPort)
+{
+	SMALL_RECT region = {0, 0, 9999, 9999};
+	HANDLE hConOut = hConsoleOutput ? hConsoleOutput : GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+	// If function fails, we return {9999}
+	if (GetConsoleScreenBufferInfoCached(hConOut, &csbi, TRUE))
+	{
+		if (viewPort)
+		{
+			// Trick to avoid overflow of SHORT
+			region = {
+				(SHORT)std::min<WORD>(WORD(csbi.srWindow.Left), std::numeric_limits<SHORT>::max()),
+				(SHORT)std::min<WORD>(WORD(csbi.srWindow.Top), std::numeric_limits<SHORT>::max()),
+				(SHORT)std::min<WORD>(WORD(csbi.srWindow.Right), std::numeric_limits<SHORT>::max()),
+				(SHORT)std::min<WORD>(WORD(csbi.srWindow.Bottom), std::numeric_limits<SHORT>::max())
+			};
+		}
+		else
+		{
+			region = {
+				0,
+				0,
+				(SHORT)std::min<WORD>(WORD(csbi.dwSize.X - 1), std::numeric_limits<SHORT>::max()),
+				(SHORT)std::min<WORD>(WORD(csbi.dwSize.Y - 1), std::numeric_limits<SHORT>::max())
+			};
+		}
+		// Last checks
+		if (region.Right < region.Left)
+			region.Right = region.Left;
+		if (region.Bottom < region.Top)
+			region.Bottom = region.Top;
+	}
+	return region;
+}
+
 void CEAnsi::SetScrollRegion(bool bRegion, bool bRelative, int nStart, int nEnd, HANDLE hConsoleOutput)
 {
-	if (bRegion)
+	if (bRegion && (nStart >= 0) && (nStart <= nEnd))
 	{
+		SMALL_RECT working = GetWorkingRegion(hConsoleOutput, bRelative);
+		_ASSERTE(working.Top>=0 && working.Left>=0 && working.Bottom>=working.Top && working.Right>=working.Left);
 		if (bRelative)
 		{
-			HANDLE hConOut = hConsoleOutput ? hConsoleOutput : GetStdHandle(STD_OUTPUT_HANDLE);
-			CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-			TODO("Determine the lowest dirty line of console?");
-			if (GetConsoleScreenBufferInfoCached(hConOut, &csbi, TRUE))
-			{
-				nStart += csbi.srWindow.Top;
-				nEnd += csbi.srWindow.Top;
-			}
+			nStart += working.Top;
+			nEnd += working.Top;
 		}
 		// We need 0-based absolute values
-		gDisplayOpt.ScrollStart = std::max<int>(nStart - 1, 0);
-		gDisplayOpt.ScrollEnd = std::max<int>(nEnd - 1, 0);
+		gDisplayOpt.ScrollStart = std::max<int>(working.Top, std::min<int>(nStart - 1, working.Bottom));
+		gDisplayOpt.ScrollEnd = std::max<int>(working.Top, std::min<int>(nEnd - 1, working.Bottom));
 		// Validate
 		if (!(gDisplayOpt.ScrollRegion = (gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>=gDisplayOpt.ScrollStart)))
 		{
