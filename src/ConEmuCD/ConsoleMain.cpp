@@ -277,6 +277,121 @@ namespace InputLogger
 };
 
 
+namespace StdCon {
+
+	bool AttachParentConsole(DWORD parent_pid)
+	{
+		BOOL bAttach = FALSE;
+
+		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+		AttachConsole_t AttachConsole_f = hKernel ? (AttachConsole_t)GetProcAddress(hKernel,"AttachConsole") : NULL;
+
+		HWND hSaveCon = GetConsoleWindow();
+
+		RetryAttach:
+
+		if (AttachConsole_f)
+		{
+			// FreeConsole нужно дергать даже если ghConWnd уже NULL. Что-то в винде глючит и
+			// AttachConsole вернет ERROR_ACCESS_DENIED, если FreeConsole не звать...
+			FreeConsole();
+			ghConWnd = NULL;
+
+			// Issue 998: Need to wait, while real console will appear
+			// gpSrv->hRootProcess еще не открыт
+			HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, parent_pid);
+			while (hProcess && hProcess != INVALID_HANDLE_VALUE)
+			{
+				DWORD nConPid = 0;
+				HWND hNewCon = FindWindowEx(NULL, NULL, RealConsoleClass, NULL);
+				while (hNewCon)
+				{
+					if (GetWindowThreadProcessId(hNewCon, &nConPid) && (nConPid == parent_pid))
+						break;
+					hNewCon = FindWindowEx(NULL, hNewCon, RealConsoleClass, NULL);
+				}
+
+				if ((hNewCon != NULL) || (WaitForSingleObject(hProcess, 100) == WAIT_OBJECT_0))
+					break;
+			}
+			SafeCloseHandle(hProcess);
+
+			// Sometimes conhost handles are created with lags, wait for a while
+			DWORD nStartTick = GetTickCount();
+			const DWORD reattach_duration = 5000; // 5 sec
+			while (!bAttach)
+			{
+				// The action
+				bAttach = AttachConsole_f(parent_pid);
+				if (bAttach)
+				{
+					ghConWnd = GetConEmuHWND(2);
+					gbVisibleOnStartup = IsWindowVisible(ghConWnd);
+					break;
+				}
+				// failes, try again?
+				Sleep(50);
+				DWORD nDelta = (GetTickCount() - nStartTick);
+				if (nDelta >= reattach_duration)
+					break;
+				LogString(L"Retrying AttachConsole after 50ms delay");
+			}
+		}
+		else
+		{
+			SetLastError(ERROR_PROC_NOT_FOUND);
+		}
+
+		if (!bAttach)
+		{
+			DWORD nErr = GetLastError();
+			size_t cchMsgMax = 10*MAX_PATH;
+			wchar_t* pszMsg = (wchar_t*)calloc(cchMsgMax,sizeof(*pszMsg));
+			wchar_t szTitle[MAX_PATH];
+			HWND hFindConWnd = FindWindowEx(NULL, NULL, RealConsoleClass, NULL);
+			DWORD nFindConPID = 0; if (hFindConWnd) GetWindowThreadProcessId(hFindConWnd, &nFindConPID);
+
+			PROCESSENTRY32 piCon = {}, piRoot = {};
+			GetProcessInfo(parent_pid, &piRoot);
+			if (nFindConPID == parent_pid)
+				piCon = piRoot;
+			else if (nFindConPID)
+				GetProcessInfo(nFindConPID, &piCon);
+
+			if (hFindConWnd)
+				GetWindowText(hFindConWnd, szTitle, countof(szTitle));
+			else
+				szTitle[0] = 0;
+
+			_wsprintf(pszMsg, SKIPLEN(cchMsgMax)
+				L"AttachConsole(PID=%u) failed, code=%u\n"
+				L"[%u]: %s\n"
+				L"Top console HWND=x%08X, PID=%u, %s\n%s\n---\n"
+				L"Prev (self) console HWND=x%08X\n\n"
+				L"Retry?",
+				parent_pid, nErr,
+				parent_pid, piRoot.szExeFile,
+				LODWORD(hFindConWnd), nFindConPID, piCon.szExeFile, szTitle,
+				LODWORD(hSaveCon)
+				);
+
+			swprintf_c(szTitle, L"%s: PID=%u", gsModuleName, GetCurrentProcessId());
+
+			int nBtn = MessageBox(NULL, pszMsg, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL|MB_RETRYCANCEL);
+
+			free(pszMsg);
+
+			if (nBtn == IDRETRY)
+			{
+				goto RetryAttach;
+			}
+
+			return false;
+		}
+
+		return bAttach;
+	}
+};
 
 void ShutdownSrvStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/)
 {
@@ -391,6 +506,8 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		{
 			ghOurModule = (HMODULE)hModule;
 			ghWorkingModule = hModule;
+
+			//_ASSERTE(FALSE && "DLL_PROCESS_ATTACH");
 
 			hkFunc.Init(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"), ghOurModule);
 
@@ -3362,113 +3479,14 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 					#endif
 				}
 
-				BOOL bAttach = FALSE;
-
-				HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
-				AttachConsole_t AttachConsole_f = hKernel ? (AttachConsole_t)GetProcAddress(hKernel,"AttachConsole") : NULL;
-
-				HWND hSaveCon = GetConsoleWindow();
-
-				RetryAttach:
-
-				if (AttachConsole_f)
-				{
-					// FreeConsole нужно дергать даже если ghConWnd уже NULL. Что-то в винде глючит и
-					// AttachConsole вернет ERROR_ACCESS_DENIED, если FreeConsole не звать...
-					FreeConsole();
-					ghConWnd = NULL;
-
-					// Issue 998: Need to wait, while real console will appear
-					// gpSrv->hRootProcess еще не открыт
-					HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, gpSrv->dwRootProcess);
-					while (hProcess && hProcess != INVALID_HANDLE_VALUE)
-					{
-						DWORD nConPid = 0;
-						HWND hNewCon = FindWindowEx(NULL, NULL, RealConsoleClass, NULL);
-						while (hNewCon)
-						{
-							if (GetWindowThreadProcessId(hNewCon, &nConPid) && (nConPid == gpSrv->dwRootProcess))
-								break;
-							hNewCon = FindWindowEx(NULL, hNewCon, RealConsoleClass, NULL);
-						}
-
-						if ((hNewCon != NULL) || (WaitForSingleObject(hProcess, 100) == WAIT_OBJECT_0))
-							break;
-					}
-					SafeCloseHandle(hProcess);
-
-					// Sometimes conhost handles are created with lags, wait for a while
-					DWORD nStartTick = GetTickCount();
-					const DWORD reattach_duration = 5000; // 5 sec
-					while (!bAttach)
-					{
-						bAttach = AttachConsole_f(gpSrv->dwRootProcess);
-						if (bAttach)
-							break;
-						Sleep(50);
-						DWORD nDelta = (GetTickCount() - nStartTick);
-						if (nDelta >= reattach_duration)
-							break;
-						LogString(L"Retrying AttachConsole after 50ms delay");
-					}
-				}
-				else
-				{
-					SetLastError(ERROR_PROC_NOT_FOUND);
-				}
-
+				BOOL bAttach = StdCon::AttachParentConsole(gpSrv->dwRootProcess);
 				if (!bAttach)
 				{
-					DWORD nErr = GetLastError();
-					size_t cchMsgMax = 10*MAX_PATH;
-					wchar_t* pszMsg = (wchar_t*)calloc(cchMsgMax,sizeof(*pszMsg));
-					wchar_t szTitle[MAX_PATH];
-					HWND hFindConWnd = FindWindowEx(NULL, NULL, RealConsoleClass, NULL);
-					DWORD nFindConPID = 0; if (hFindConWnd) GetWindowThreadProcessId(hFindConWnd, &nFindConPID);
-
-					PROCESSENTRY32 piCon = {}, piRoot = {};
-					GetProcessInfo(gpSrv->dwRootProcess, &piRoot);
-					if (nFindConPID == gpSrv->dwRootProcess)
-						piCon = piRoot;
-					else if (nFindConPID)
-						GetProcessInfo(nFindConPID, &piCon);
-
-					if (hFindConWnd)
-						GetWindowText(hFindConWnd, szTitle, countof(szTitle));
-					else
-						szTitle[0] = 0;
-
-					_wsprintf(pszMsg, SKIPLEN(cchMsgMax)
-						L"AttachConsole(PID=%u) failed, code=%u\n"
-						L"[%u]: %s\n"
-						L"Top console HWND=x%08X, PID=%u, %s\n%s\n---\n"
-						L"Prev (self) console HWND=x%08X\n\n"
-						L"Retry?",
-						gpSrv->dwRootProcess, nErr,
-						gpSrv->dwRootProcess, piRoot.szExeFile,
-						LODWORD(hFindConWnd), nFindConPID, piCon.szExeFile, szTitle,
-						LODWORD(hSaveCon)
-						);
-
-					swprintf_c(szTitle, L"%s: PID=%u", gsModuleName, GetCurrentProcessId());
-
-					int nBtn = MessageBox(NULL, pszMsg, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL|MB_RETRYCANCEL);
-
-					free(pszMsg);
-
-					if (nBtn == IDRETRY)
-					{
-						goto RetryAttach;
-					}
-
 					gbInShutdown = TRUE;
 					gbAlwaysConfirmExit = FALSE;
 					LogString(L"CERR_CARGUMENT: (gbAlternativeAttach && gpSrv->dwRootProcess)");
 					return CERR_CARGUMENT;
 				}
-
-				ghConWnd = GetConEmuHWND(2);
-				gbVisibleOnStartup = IsWindowVisible(ghConWnd);
 
 				// Need to be set, because of new console === new handler
 				SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
