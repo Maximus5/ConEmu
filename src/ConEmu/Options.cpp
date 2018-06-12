@@ -458,13 +458,13 @@ void Settings::InitSettings()
 	psEnvironmentSet = lstrdup(
 		L"set PATH=%ConEmuBaseDir%\\Scripts;%PATH%\r\n"
 		L"\r\n"
-		L"rem set LANG=ru_RU.utf8\r\n"
-		L"rem set LANG=ru_RU.CP1251\r\n"
+		L"# set LANG=ru_RU.utf8\r\n"
+		L"# set LANG=ru_RU.CP1251\r\n"
 		L"\r\n"
-		L"rem alias cdc=cd /d \"%ConEmuDir%\"\r\n"
-		L"rem alias cd~=cd /d \"%UserProfile%\"\r\n"
-		L"rem alias gl=git-log\r\n"
-		L"rem alias glb=git-log --branches --date-order\r\n"
+		L"# alias cdc=cd /d \"%ConEmuDir%\"\r\n"
+		L"# alias cd~=cd /d \"%UserProfile%\"\r\n"
+		L"# alias gl=git-log\r\n"
+		L"# alias glb=git-log --branches --date-order\r\n"
 		);
 
 	bool bIsDbcs = IsWinDBCS();
