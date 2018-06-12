@@ -512,7 +512,7 @@ void Settings::InitSettings()
 	isCompressLongStrings = true;
 
 	isTryToCenter = false;
-	nCenterConsolePad = 0;
+	nCenterConsolePad = 4;
 	isAlwaysShowScrollbar = 2;
 	nScrollBarAppearDelay = 100;
 	nScrollBarDisappearDelay = 1000;
