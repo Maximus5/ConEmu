@@ -1771,6 +1771,12 @@ BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
 		//SafeFree(gpStoredOutput);
 		return FALSE; // Не смогли получить информацию о консоли...
 	}
+	// Support dynamic height - do not load all 32K lines
+	if (in.DataSize() >= sizeof(DWORD))
+	{
+		if (static_cast<WORD>(lsbi.dwSize.Y) > in.dwData[0])
+			lsbi.dwSize.Y = LOWORD(in.dwData[0]);
+	}
 
 	CESERVER_CONSAVE_MAP* pData = NULL;
 	size_t cbReplySize = sizeof(CESERVER_CONSAVE_MAP) + (lsbi.dwSize.X * lsbi.dwSize.Y * sizeof(pData->Data[0]));

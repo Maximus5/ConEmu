@@ -632,9 +632,11 @@ bool CRealBuffer::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 	}
 	else if (iMode == lam_FullBuffer)
 	{
-		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_CONSOLEFULL, sizeof(CESERVER_REQ_HDR));
+		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_CONSOLEFULL, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
 		if (pIn)
 		{
+			int dynHeight = mp_RCon->mp_RBuf->GetDynamicHeight();
+			pIn->dwData[0] = (dynHeight > 0) ? dynHeight : 0;
 			CESERVER_REQ *pOut = ExecuteSrvCmd(mp_RCon->GetServerPID(), pIn, ghWnd);
 			if (pOut && (pOut->hdr.cbSize > sizeof(CESERVER_CONSAVE_MAP)))
 			{
