@@ -11965,7 +11965,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 		}
 		else if (pRCon->isSelectionPresent())
 		{
-			if (gpSet->isCTSIBeam)
+			if (gpSet->isCTSIBeam && (pVCon && !pVCon->CheckMouseOverScroll()))
 				hCur = mh_CursorIBeam; // LoadCursor(NULL, IDC_IBEAM);
 		}
 		else if ((etr = pRCon->GetLastTextRangeType()) != etr_None)
@@ -13449,11 +13449,16 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 	{
 		RECT rcWork = WorkspaceRect();
 		POINT ptCur = {}; GetCursorPos(&ptCur);
-		MapWindowPoints(NULL, ghWnd, &ptCur, 1);
+		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcWork, 2);
 		if (PtInRect(&rcWork, ptCur))
 		{
 			bSkipActivation = true;
-			mp_TabBar->ActivateSearchPane(false);
+			CVConGuard VCon;
+			if (CVConGroup::GetVConFromPoint(ptCur, &VCon)
+				&& !VCon->CheckMouseOverScroll())
+			{
+				mp_TabBar->ActivateSearchPane(false);
+			}
 		}
 	}
 
