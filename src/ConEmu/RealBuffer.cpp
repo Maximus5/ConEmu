@@ -6090,16 +6090,15 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			bool lbStreamMode = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
 			// srSelection in Absolute coordinates now!
 			// Поскольку здесь нас интересует только отображение - можно поступить просто
-			COORD crStart = BufferToScreen(MakeCoord(con.m_sel.srSelection.Left, con.m_sel.srSelection.Top));
-			COORD crEnd = BufferToScreen(MakeCoord(con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom));
+			COORD crStart = BufferToScreen(MakeCoord(con.m_sel.srSelection.Left, con.m_sel.srSelection.Top), false);
+			COORD crEnd = BufferToScreen(MakeCoord(con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom), false);
 
 			bool bAboveScreen = (con.m_sel.srSelection.Top < con.m_sbi.srWindow.Top);
 			bool bBelowScreen = (con.m_sel.srSelection.Bottom > con.m_sbi.srWindow.Bottom);
 
 			SMALL_RECT rc = {crStart.X, crStart.Y, crEnd.X, crEnd.Y};
-			// Коррекция по видимой области
+			_ASSERTE(rc.Left >= 0 && rc.Right < nWidth);
 			MinMax(rc.Left, 0, nWidth-1); MinMax(rc.Right, 0, nWidth-1);
-			MinMax(rc.Top, 0, nHeight-1); MinMax(rc.Bottom, 0, nHeight-1);
 
 			// для прямоугольника выделения сбрасываем прозрачность и ставим стандартный цвет выделения (lcaSel)
 			//CharAttr lcaSel = lcaTable[gpSet->isCTSColorIndex]; // Black on LtGray
@@ -6112,7 +6111,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			int nX1, nX2;
 
 
-			for (nY = rc.Top; nY <= rc.Bottom; nY++)
+			for (nY = std::max<int>(rc.Top, 0); nY <= std::min<int>(rc.Bottom, nHeight-1); nY++)
 			{
 				if (!lbStreamMode)
 				{
