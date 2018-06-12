@@ -10,7 +10,11 @@ cmd /d /c ver | "%windir%\system32\find.exe" "Windows"
 rem Now we form the command prompt
 
 rem This will start prompt with `User@PC `
-set ConEmuPrompt0=$E[m$E[32m$E]9;8;"USERNAME"$E\@$E]9;8;"COMPUTERNAME"$E\$S
+if /I "%ConEmuPromptNames%" == "NO" (
+  set ConEmuPrompt0=
+) else (
+  set ConEmuPrompt0=$E[m$E[32m$E]9;8;"USERNAME"$E\@$E]9;8;"COMPUTERNAME"$E\$S
+)
 
 rem Followed by colored `Path`
 set ConEmuPrompt1=%ConEmuPrompt0%$E[92m$P$E[90m
@@ -21,15 +25,16 @@ if NOT "%PROCESSOR_ARCHITECTURE%" == "AMD64" (
   )
 )
 
-rem Carriage return and `$` or `>`
+rem Carriage return and `$` or `#`
+if /I "%ConEmuPromptNL%" == "NO" (set ConEmuPrompt2=) else (set ConEmuPrompt2=$_)
 rem Spare `$E[90m` was specially added because of GitShowBranch.cmd
 if "%ConEmuIsAdmin%" == "ADMIN" (
-  set ConEmuPrompt2=$_$E[90m$$
+  set ConEmuPrompt2=%ConEmuPrompt2%$E[90m#
 ) else (
-  set ConEmuPrompt2=$_$E[90m$G
+  set ConEmuPrompt2=%ConEmuPrompt2%$E[90m$$
 )
 
-rem Finally reset color and add space
+rem Finally reset color and add notify ConEmu about prompt input start coords
 set ConEmuPrompt3=$E[m$S$E]9;12$E\
 
 if /I "%~1" == "/git" goto git
@@ -43,3 +48,9 @@ goto :EOF
 :no_git
 rem Set new prompt
 PROMPT %ConEmuPrompt1%%ConEmuPrompt2%%ConEmuPrompt3%
+
+:clean
+set ConEmuPrompt0=
+set ConEmuPrompt1=
+set ConEmuPrompt2=
+set ConEmuPrompt3=

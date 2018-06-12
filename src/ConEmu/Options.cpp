@@ -458,6 +458,9 @@ void Settings::InitSettings()
 	psEnvironmentSet = lstrdup(
 		L"set PATH=%ConEmuBaseDir%\\Scripts;%PATH%\r\n"
 		L"\r\n"
+		L"# set ConEmuPromptNames=NO\r\n" // created after gh-1570
+		L"# set ConEmuPromptNL=NO\r\n"
+		L"\r\n"
 		L"# set LANG=ru_RU.utf8\r\n"
 		L"# set LANG=ru_RU.CP1251\r\n"
 		L"\r\n"
