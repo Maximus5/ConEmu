@@ -516,7 +516,7 @@ void Settings::InitSettings()
 
 	isCompressLongStrings = true;
 
-	isTryToCenter = false;
+	isTryToCenter = true;
 	nCenterConsolePad = 4;
 	isAlwaysShowScrollbar = 2;
 	nScrollBarAppearDelay = 100;
