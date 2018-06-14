@@ -232,7 +232,7 @@ LRESULT CSetPgSizePos::OnEditChanged(HWND hDlg, WORD nCtrlId)
 			if (nNewVal >= LONGOUTPUTHEIGHT_MIN && nNewVal <= LONGOUTPUTHEIGHT_MAX)
 				gpSet->DefaultBufferHeight = nNewVal;
 			else if (nNewVal > LONGOUTPUTHEIGHT_MAX)
-				SetDlgItemInt(hDlg, nCtrlId, gpSet->DefaultBufferHeight, FALSE);
+				SetDlgItemInt(hDlg, nCtrlId, LONGOUTPUTHEIGHT_MAX, FALSE);
 		}
 		else
 		{
