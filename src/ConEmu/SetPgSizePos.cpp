@@ -89,7 +89,7 @@ LRESULT CSetPgSizePos::OnInitDialog(HWND hDlg, bool abInitial)
 
 	checkDlgButton(hDlg, cbLongOutput, gpSet->AutoBufferHeight);
 	TODO("Надо бы увеличить, но нужно сервер допиливать");
-	SendDlgItemMessage(hDlg, tLongOutputHeight, EM_SETLIMITTEXT, 5, 0);
+	SendDlgItemMessage(hDlg, tLongOutputHeight, EM_SETLIMITTEXT, 6, 0);
 	SetDlgItemInt(hDlg, tLongOutputHeight, gpSet->DefaultBufferHeight, FALSE);
 	//EnableWindow(GetDlgItem(hDlg, tLongOutputHeight), gpSet->AutoBufferHeight);
 
