@@ -5060,7 +5060,7 @@ void SendStarted()
 				if (gpSrv->DbgInfo.bDebuggerActive && !gnBufferHeight)
 				{
 					_ASSERTE(gnRunMode != RM_ALTSERVER);
-					gnBufferHeight = 9999;
+					gnBufferHeight = LONGOUTPUTHEIGHT_MAX;
 				}
 
 				SMALL_RECT rcNil = {0};

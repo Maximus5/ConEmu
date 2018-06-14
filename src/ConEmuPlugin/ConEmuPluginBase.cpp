@@ -1526,16 +1526,16 @@ bool CPluginBase::StartDebugger()
 		// Откроем дебаггер в новой вкладке ConEmu. При желании юзеру проще сделать Detach
 		// "/DEBUGPID=" обязательно должен быть первым аргументом
 
-		swprintf_c(szExe, L"\"%s\" /ATTACH /ROOT \"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=9999",
-		          szConEmuC, szConEmuC, dwSelfPID, w, h);
-		//swprintf_c(szExe, L"\"%s\" /ATTACH /GID=%u /GHWND=%08X /ROOT \"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=9999",
-		//          szConEmuC, nGuiPID, (DWORD)(DWORD_PTR)ghConEmuWndDC, szConEmuC, dwSelfPID, w, h);
+		swprintf_c(szExe, L"\"%s\" /ATTACH /ROOT \"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=%i",
+		          szConEmuC, szConEmuC, dwSelfPID, w, h, LONGOUTPUTHEIGHT_MAX);
+		//swprintf_c(szExe, L"\"%s\" /ATTACH /GID=%u /GHWND=%08X /ROOT \"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=%i",
+		//          szConEmuC, nGuiPID, (DWORD)(DWORD_PTR)ghConEmuWndDC, szConEmuC, dwSelfPID, w, h, LONGOUTPUTHEIGHT_MAX);
 	}
 	else
 	{
 		// Запустить дебаггер в новом видимом консольном окне
-		swprintf_c(szExe, L"\"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=9999",
-		          szConEmuC, dwSelfPID, w, h);
+		swprintf_c(szExe, L"\"%s\" /DEBUGPID=%i /BW=%i /BH=%i /BZ=%i",
+		          szConEmuC, dwSelfPID, w, h, LONGOUTPUTHEIGHT_MAX);
 	}
 
 	if (ghConEmuWndDC)
