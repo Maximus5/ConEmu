@@ -1352,16 +1352,22 @@ bool CStatus::ProcessStatusMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 					}
 					break;
 				case csi_CapsLock:
+					LogString(L"KeyboardState: VK_CAPITAL posting");
 					keybd_event(VK_CAPITAL, 0, 0, 0);
 					keybd_event(VK_CAPITAL, 0, KEYEVENTF_KEYUP, 0);
+					LogString(L"KeyboardState: VK_CAPITAL done");
 					break;
 				case csi_NumLock:
+					LogString(L"KeyboardState: VK_NUMLOCK posting");
 					keybd_event(VK_NUMLOCK, 0, 0, 0);
 					keybd_event(VK_NUMLOCK, 0, KEYEVENTF_KEYUP, 0);
+					LogString(L"KeyboardState: VK_NUMLOCK done");
 					break;
 				case csi_ScrollLock:
+					LogString(L"KeyboardState: VK_SCROLL posting");
 					keybd_event(VK_SCROLL, 0, 0, 0);
 					keybd_event(VK_SCROLL, 0, KEYEVENTF_KEYUP, 0);
+					LogString(L"KeyboardState: VK_SCROLL done");
 					break;
 				case csi_ViewLock:
 					if (gpConEmu->GetActiveVCon(&VCon) >= 0)
@@ -1947,9 +1953,10 @@ bool CStatus::IsKeyboardChanged()
 
 	bool bChanged = false;
 
-	bool bCaps = (GetKeyState(VK_CAPITAL) & 1) == 1;
-	bool bNum = (GetKeyState(VK_NUMLOCK) & 1) == 1;
-	bool bScroll = (GetKeyState(VK_SCROLL) & 1) == 1;
+	SHORT states[3];
+	bool bCaps = ((states[0] = GetKeyState(VK_CAPITAL)) & 1) == 1;
+	bool bNum = ((states[1] = GetKeyState(VK_NUMLOCK)) & 1) == 1;
+	bool bScroll = ((states[2] = GetKeyState(VK_SCROLL)) & 1) == 1;
 	bool bKeyHooks = gpConEmu->IsKeyboardHookRegistered();
 	DWORD_PTR hkl = gpConEmu->GetActiveKeyboardLayout();
 
@@ -1976,6 +1983,14 @@ bool CStatus::IsKeyboardChanged()
 	if (hkl != mhk_Locale)
 	{
 		mhk_Locale = hkl; bChanged = true;
+	}
+
+	if (bChanged)
+	{
+		wchar_t szInfo[120];
+		swprintf_c(szInfo, L"KeyboardState: Caps=x%04X Num=x%04X Scrl=x%04X",
+			(WORD)states[0], (WORD)states[1], (WORD)states[2]);
+		LogString(szInfo);
 	}
 
 	return bChanged;
