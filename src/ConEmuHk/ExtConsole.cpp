@@ -1826,14 +1826,17 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 
 		if (!(Info->Flags & essf_ExtOnly))
 		{
-			SMALL_RECT rcSrc = MakeSmallRect(0, SrcLineTop, csbi.dwSize.X-1, SrcLineBottom);
-			COORD crDst = MakeCoord(0, SrcLineTop + nDir/*<0*/);
-			AnnotationInfo t = {};
 			CHAR_INFO cFill = {{Info->FillChar}};
-			ExtPrepareColor(Info->FillAttr, t, cFill.Attributes);
 
-			if (rcSrc.Bottom >= rcSrc.Top)
+			if (SrcLineBottom >= SrcLineTop)
+			{
+				SMALL_RECT rcSrc = MakeSmallRect(0, SrcLineTop, csbi.dwSize.X-1, SrcLineBottom);
+				COORD crDst = MakeCoord(0, SrcLineTop + nDir/*<0*/);
 				F(ScrollConsoleScreenBufferW)(Info->ConsoleOutput, &rcSrc, NULL, crDst, &cFill);
+			}
+			//else ?
+			//AnnotationInfo t = {};
+			//ExtPrepareColor(Info->FillAttr, t, cFill.Attributes);
 
 			if (nDir < 0)
 			{
