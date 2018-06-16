@@ -6,7 +6,7 @@ $w = [Console]::BufferWidth
 $y = ([Console]::BufferHeight-$h)
 
 # Clean console contents (this will clean TrueColor attributes)
-Write-Host (([char]27)+"[9999S")
+Write-Host (([char]27)+"[32766S")
 # Apply default powershell console attributes
 cls
 
@@ -15,7 +15,7 @@ try{
   [Console]::SetWindowPosition(0,$y)
   [Console]::SetCursorPosition(0,$y)
 }catch{
-  Write-Host (([char]27)+"[9999;1H")
+  Write-Host (([char]27)+"[32766H")
 }
 
 # Header

@@ -2757,7 +2757,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 		// Change cursor position
 		if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 		{
-			COORD crNewPos = csbi.dwCursorPosition;
+			struct {int X,Y;} crNewPos = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y};
 
 			switch (Code.Action)
 			{
@@ -2813,6 +2813,12 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				clipRgn.Top = std::max<int>(0, std::min<int>(gDisplayOpt.ScrollStart, csbi.dwSize.Y-1));
 				clipRgn.Bottom = std::max<int>(0, std::min<int>(gDisplayOpt.ScrollEnd, csbi.dwSize.Y-1));
 			}
+			else if ((Code.Action == 'H')
+				&& (((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 0) >= csbi.dwSize.Y))
+			{
+				// #XTERM_256 Allow to put cursor into the legacy true-color area
+				clipRgn.Top = 0; clipRgn.Bottom = csbi.dwSize.Y - 1;
+			}
 
 			// Check Row
 			if (crNewPos.Y < clipRgn.Top)
@@ -2826,7 +2832,11 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				crNewPos.X = clipRgn.Right;
 			// Goto
 			ORIGINAL_KRNL(SetConsoleCursorPosition);
-			F(SetConsoleCursorPosition)(hConsoleOutput, crNewPos);
+			{
+			COORD crNewPosAPI = { crNewPos.X, crNewPos.Y };
+			_ASSERTE(crNewPosAPI.X == crNewPos.X && crNewPosAPI.Y == crNewPos.Y);
+			F(SetConsoleCursorPosition)(hConsoleOutput, crNewPosAPI);
+			}
 
 			if (gbIsVimProcess)
 				gbIsVimAnsi = true;
