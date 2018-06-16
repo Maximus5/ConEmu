@@ -37,17 +37,24 @@ if "%ConEmuIsAdmin%" == "ADMIN" (
 rem Finally reset color and add notify ConEmu about prompt input start coords
 set ConEmuPrompt3=$E[m$S$E]9;12$E\
 
+rem Show 'git status' extract in prompt?
 if /I "%~1" == "/git" goto git
 if /I "%~1" == "-git" goto git
 goto no_git
-
 :git
+shift /1
 call "%~dp0GitShowBranch.cmd" /i
-goto :EOF
-
+goto :end_git
 :no_git
 rem Set new prompt
 PROMPT %ConEmuPrompt1%%ConEmuPrompt2%%ConEmuPrompt3%
+:end_git
+
+rem Support additional batch execution as `{cmd} "path\to\batch.cmd" <arguments>`
+rem Due to parsing rules of cmd.exe last argument must NOT ends with "
+if "%~1" == "" goto clean
+rem We can't call here %* unfortunately
+call %1 %2 %3 %4 %5 %6 %7 %8 %9
 
 :clean
 set ConEmuPrompt0=
