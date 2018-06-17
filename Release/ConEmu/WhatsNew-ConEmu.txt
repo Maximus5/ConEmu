@@ -20,6 +20,42 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.6.17
+* gh-1590: Quake activation (up/down) did not work properly with ChildGui in tab.
+* Show `-switch` style in ConEmuC help.
+* gh-1240: For those who want to run WinAPI console applications from POSIX layer: `ConEmuC -std -c your-command`.
+  When you run connector (or wslbridge) console handles are set into POSIX mode,
+  and only applications directly compiled for this mode will behave as they are in tty.
+  In other words, if you run ‘ConEmu/cygwin-connector/bash’ and try to start Python
+  outside of cygwin folder (e.g. downloaded from https://www.python.org/downloads/),
+  the Python will not think it was started in terminal, because it was not linked
+  with cygwin1.dll!
+  The command `ConEmuC -std -c python` tries to reinitialize console to work
+  like python was started from cmd.
+* gh-1567: Fixing ANSI scrolling issues.
+* Slightly expand Settings/Environment editor area.
+* Set default console pad size to `4`.
+* gh-728, gh-1570: Easy way to configure cmd prompt in default `{cmd}` task.
+  When you run `{cmd}` task or any other task utilizing `CmdInit.cmd`
+  you may set configuration variables on the Environment settings page:
+  * `set ConEmuPromptNL=NO` - use one-line prompt;
+  * `set ConEmuPromptNames=NO` - don't print `user@pc`.
+* Let configure `csudo` from Environment settings page.
+  * `set ConEmuSudoSplit=NO` - run elevated console in new tab instead of split;
+  * `set ConEmuSudoConfirm=NO` - disable ‘Press Enter or Esc to close console…’ confirmation.
+  * Read more in docs: https://conemu.github.io/en/csudo.html
+* Fix selection artefacts when selected region goes out of the screen.
+* gh-1585: Don't reset search mode by clicking on scrollbar.
+* Support ‘Dynamic scrollbar range’ in search mode.
+* gh-1604, gh-393: Allow users enter buffer height values larger than 9999 to revert to maximum allowed 32766 (by Shawn Presser).
+* gh-1259, gh-1557: ANSI: Some characters disappear by moving cursor with right arrow key.
+* gh-1601: Add logging for keyboard indicators CAPS/NUM/SCRL.
+* Support additional batch init scripts in form of `{cmd} script.cmd <arguments>`.
+  The script.cmd may be surrounded by `"`, but in that case, due to cmd parsing rules,
+  you should append some script arguments without quotes.
+  In other words, the tail of `{cmd}` **should not** end with `"`.
+
+
 2018.5.28
 * gh-1583: Let `-new_console` work in WSL.
   Note: `ConEmuC.exe` or `ConEmuC64.exe` are required to run commands,
