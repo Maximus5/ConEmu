@@ -1159,12 +1159,10 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		switch (*pCur)
 		{
 		case L'\t':
-			x2 = ((x2 + 7) >> 3) << 3;
-			// like normal char...
-			if (x2 >= WrapAtCol)
-			{
-				ForceDumpX = std::min(x2, WrapAtCol)-1;
-			}
+			if (x2>x)
+				ForceDumpX = x2;
+			x2 = ((x2 + 8) >> 3) << 3;
+			BSRN = true; bNonAutoLfNl = true;
 			break;
 		case L'\r':
 			if (x2 > 0)
@@ -1310,7 +1308,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 		if (bNonAutoLfNl)
 		{
 			_ASSERTE(x2>0);
-			_ASSERTE(pCur < pEnd && *pCur == L'\n' && (pFrom == pCur || pFrom == pCur+1));
+			_ASSERTE(pCur < pEnd && (*pCur == L'\n' || *pCur == L'\t') && (pFrom == pCur || pFrom == pCur+1));
 			bNonAutoLfNl = false;
 			crScrollCursor.X = x2;
 			crScrollCursor.Y = y2;
