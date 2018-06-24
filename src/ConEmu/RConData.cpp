@@ -745,7 +745,7 @@ short CRConData::CheckProgressInConsole(UINT nCursorLine)
 	// ...       Vista x86\Vista x86.7z         6%
 	//aria2c
 	//[#1 SIZE:0B/9.1MiB(0%) CN:1 SPD:1.2KiBs ETA:2h1m11s]
-	int nIdx = 0;
+	ssize_t nIdx = 0;
 	bool bAllowDot = false;
 	short nProgress = -1;
 
