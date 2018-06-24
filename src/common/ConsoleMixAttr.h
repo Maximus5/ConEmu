@@ -51,6 +51,10 @@ extern WORD AddConAttr[16];
 #define CON_ATTR_4 COMMON_LVB_GRID_RVERTICAL  // 0x1000 // DBCS: Grid attribute: right vertical.
 #define CON_ATTR_8 COMMON_LVB_UNDERSCORE      // 0x8000 // DBCS: Underscore.
 
+// Mask of attributes, may be set legally for cells (don't write ID in these lines)
+#define LEGACY_CONATTR (COMMON_LVB_REVERSE_VIDEO|COMMON_LVB_UNDERSCORE)
+
+// Mask of attributes used in our ID generation
 #define CHANGED_CONATTR (CON_ATTR_0|CON_ATTR_1|CON_ATTR_2|CON_ATTR_4|CON_ATTR_8)
 
 #define CON_ATTR_PART_0  (CON_ATTR_0|CON_ATTR_8|CON_ATTR_4)

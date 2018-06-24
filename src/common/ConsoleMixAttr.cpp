@@ -31,8 +31,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // declare AddConAttr values
 #define DEFINE_ADDCONATTR
 
+#ifdef _DEBUG
+//#define DEBUG_SHOWIDVALUE
+#undef DEBUG_SHOWIDVALUE
+#else
+#undef DEBUG_SHOWIDVALUE
+#endif
+
 #include "Common.h"
 #include "ConsoleMixAttr.h"
+#include "MStrSafe.h"
 
 WORD AddConAttr[16] =
 {
@@ -136,7 +144,7 @@ bool WriteConsoleRowId(HANDLE hConOut, SHORT nRow, WORD RowId, CEConsoleMark* pM
 {
 	_ASSERTE(ROWID_USED_CELLS==4);
 	WORD  nAttrs[ROWID_USED_CELLS], nNewAttrs[ROWID_USED_CELLS];
-	COORD crLeft = {0, nRow};
+	const COORD crLeft = {0, nRow};
 	DWORD nRead = 0, nWrite = 0;
 
 	if (!ReadConsoleOutputAttribute(hConOut, nAttrs, ROWID_USED_CELLS, crLeft, &nRead) || (nRead != ROWID_USED_CELLS))
@@ -147,6 +155,9 @@ bool WriteConsoleRowId(HANDLE hConOut, SHORT nRow, WORD RowId, CEConsoleMark* pM
 		WORD RowIdPart = RowId;
 		for (size_t i = 0, j = (ROWID_USED_CELLS-1); i < ROWID_USED_CELLS; i++, j--)
 		{
+			// If the beginning of the line already has "underscore" or "rev_video" flags, exit immediately, don't modify these cells
+			if (nAttrs[j] & LEGACY_CONATTR)
+				return false;
 			nNewAttrs[j] = (nAttrs[j] & ~CHANGED_CONATTR) | AddConAttr[RowIdPart&0xF];
 			RowIdPart = (RowIdPart>>4);
 		}
@@ -162,9 +173,23 @@ bool WriteConsoleRowId(HANDLE hConOut, SHORT nRow, WORD RowId, CEConsoleMark* pM
 	if (!WriteConsoleOutputAttribute(hConOut, nNewAttrs, ROWID_USED_CELLS, crLeft, &nWrite) || (nWrite != ROWID_USED_CELLS))
 		return false;
 
+	#ifdef DEBUG_SHOWIDVALUE
+	wchar_t szDbg[80]; msprintf(szDbg, countof(szDbg), L"%04X,%04X,%04X,%04X->%04X,%04X,%04X,%04X",
+		nAttrs[0], nAttrs[1], nAttrs[2], nAttrs[3],
+		nNewAttrs[0], nNewAttrs[1], nNewAttrs[2], nNewAttrs[3]);
+	const COORD crDump = {65, crLeft.Y};
+	WriteConsoleOutputCharacter(hConOut, szDbg, lstrlen(szDbg), crDump, &nWrite);
+	WORD  nWrittenAttrs[ROWID_USED_CELLS];
+	if (!ReadConsoleOutputAttribute(hConOut, nWrittenAttrs, ROWID_USED_CELLS, crLeft, &nRead) || (nRead != ROWID_USED_CELLS)) {
+		_ASSERTE(FALSE && "Failed to read written attrs");
+	} else {
+		_ASSERTE(memcmp(nWrittenAttrs, nNewAttrs, sizeof(nWrittenAttrs)) == 0);
+	}
+	#endif
+
 	if (pMark)
 	{
-		_ASSERTEX(countof(pMark->CellAttr)==countof(nAttrs));
+		_ASSERTEX(countof(pMark->CellAttr)==countof(nNewAttrs));
 		memmove(pMark->CellAttr, nNewAttrs, sizeof(pMark->CellAttr));
 		pMark->RowId = RowId;
 	}

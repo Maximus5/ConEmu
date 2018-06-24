@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 
 #include "Common.h"
+#include "ConsoleMixAttr.h"
 #include "ConsoleRead.h"
 #include "WObjects.h"
 
@@ -101,12 +102,12 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 	}
 	*/
 
-	bool bDBCS_CP = IsConsoleDoubleCellCP();
+	const bool bDBCS_CP = IsConsoleDoubleCellCP();
 
-	size_t nBufWidth = bufSize.X;
-	int nWidth = (rgn.Right - rgn.Left + 1);
-	int nHeight = (rgn.Bottom - rgn.Top + 1);
-	int nCurSize = nWidth * nHeight;
+	const size_t nBufWidth = bufSize.X;
+	const int nWidth = (rgn.Right - rgn.Left + 1);
+	const int nHeight = (rgn.Bottom - rgn.Top + 1);
+	const int nCurSize = nWidth * nHeight;
 
 	_ASSERTE(bufSize.X >= nWidth);
 	_ASSERTE(bufSize.Y >= nHeight);
@@ -195,7 +196,24 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 
 				InterlockedIncrement(&gnInReadConsoleOutput);
 				lbRc = ReadConsoleOutputW(hOut, pLine, bufSize, bufCoord, &rgn);
+				#ifdef _DEBUG
+				WORD  nDbgIdAttrs[ROWID_USED_CELLS] = {};
+				DWORD nIdAttrsRead; bool idAttrsOk = (ReadConsoleOutputAttribute(hOut, nDbgIdAttrs, ROWID_USED_CELLS, COORD{rgn.Left, rgn.Top}, &nIdAttrsRead) && nIdAttrsRead == ROWID_USED_CELLS);
+				#endif
 				InterlockedDecrement(&gnInReadConsoleOutput);
+
+				#ifdef _DEBUG
+				// Attributes retrieved from ReadConsoleOutputAttribute and ReadConsoleOutputW are expected to be equal
+				_ASSERTE(nWidth<4 || (nDbgIdAttrs[0]==pLine[0].Attributes && nDbgIdAttrs[1]==pLine[1].Attributes && nDbgIdAttrs[2]==pLine[2].Attributes && nDbgIdAttrs[3]==pLine[3].Attributes));
+				#endif
+				bool has_rowid = false;
+				WORD nIdAttrs[ROWID_USED_CELLS] = {};
+				if (nWidth >= ROWID_USED_CELLS && rgn.Left == 0)
+				{
+					for (size_t i = 0; i < ROWID_USED_CELLS; ++i)
+						nIdAttrs[i] = pLine[i].Attributes;
+					has_rowid = (GetRowIdFromAttrs(nIdAttrs) != 0);
+				}
 
 				#ifdef DUMP_TEST_READS
 				UNREFERENCED_PARAMETER(sbi_tmp.dwSize.Y);
@@ -217,7 +235,7 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 				{
 					if (pSrc->Attributes & COMMON_LVB_LEADING_BYTE)
 						break;
-					*(pDst++) = *(pSrc++);
+					++pDst; ++pSrc;
 				}
 				// If line was not fully processed (LVB was found)
 				if (pSrc < pEnd)
@@ -269,6 +287,15 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 					if (lpCursor && (lpCursor->Y == rgn.Top))
 					{
 						lpCursor->X = std::max(0, (lpCursor->X - iCellsSkipped));
+					}
+				} // end of "If LVB was found in the line"
+
+				// Fix RowID encapsulated in the attributes
+				if (has_rowid)
+				{
+					for (size_t i = 0; i < ROWID_USED_CELLS; ++i)
+					{
+						pLine[i].Attributes = LOBYTE(pLine[i].Attributes) | (nIdAttrs[i] & CHANGED_CONATTR);
 					}
 				}
 
