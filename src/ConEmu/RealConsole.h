@@ -252,6 +252,9 @@ class CRealConsole
 			POINT ptLastMouseGuiPos = {}; // in pixels
 			bool bBtnClicked = false;
 			COORD crBtnClickPos = {-1, -1};
+			/// Some mouse devices send wheel in much smaller portions than +120/-120
+			int WheelDirAccum = 0;
+			bool WheelAccumulated = false;
 			/// If BtnDown event was sent to console
 			bool bMouseButtonDown = false;
 			COORD crLastMouseEventPos = {-1, -1};

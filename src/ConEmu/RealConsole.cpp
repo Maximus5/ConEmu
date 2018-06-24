@@ -5204,19 +5204,21 @@ void CRealConsole::OnScroll(UINT messg, WPARAM wParam, int x, int y, bool abFrom
 	{
 	case WM_MOUSEWHEEL:
 	{
-		SHORT nDir = (SHORT)HIWORD(wParam);
+		m_Mouse.WheelDirAccum += (SHORT)HIWORD(wParam);
+		m_Mouse.WheelAccumulated = (HIWORD(wParam) && std::abs((SHORT)HIWORD(wParam)) < WHEEL_DELTA);
+		if (std::abs(m_Mouse.WheelDirAccum) < WHEEL_DELTA)
+			break;
+		UINT nCount = (abFromTouch || m_Mouse.WheelAccumulated) ? 1 : gpConEmu->mouse.GetWheelScrollLines();
+		if (m_Mouse.WheelAccumulated)
+			nCount *= (std::abs(m_Mouse.WheelDirAccum) / WHEEL_DELTA);
+
 		BOOL lbCtrl = isPressed(VK_CONTROL);
+		int nDirCmd = (m_Mouse.WheelDirAccum > 0)
+			? (lbCtrl ? SB_PAGEUP : SB_LINEUP)
+			: (lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN);
+		mp_ABuf->DoScrollBuffer(nDirCmd, -1, nCount);
 
-		UINT nCount = abFromTouch ? 1 : gpConEmu->mouse.GetWheelScrollLines();
-
-		if (nDir > 0)
-		{
-			mp_ABuf->DoScrollBuffer(lbCtrl ? SB_PAGEUP : SB_LINEUP, -1, nCount);
-		}
-		else if (nDir < 0)
-		{
-			mp_ABuf->DoScrollBuffer(lbCtrl ? SB_PAGEDOWN : SB_LINEDOWN, -1, nCount);
-		}
+		m_Mouse.WheelDirAccum %= WHEEL_DELTA;
 		break;
 	} // WM_MOUSEWHEEL
 
