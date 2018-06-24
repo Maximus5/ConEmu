@@ -9462,10 +9462,12 @@ void CConEmuMain::CheckActiveLayoutName()
 	{
 		// Startup keyboard layout must be detected
 		wcscat_c(szInfo, L"\niUnused==-1");
-		AssertMsg(szInfo);
+		//AssertMsg(szInfo); -- gh-1606
+		LogString(szInfo);
 	}
 }
 
+/// Called from CheckActiveLayoutName, OnLangChange, OnLangeChangeConsole
 void CConEmuMain::StoreLayoutName(int iIdx, DWORD dwLayout, HKL hkl)
 {
 	_ASSERTE(iIdx>=0 && iIdx<countof(m_LayoutNames) && !m_LayoutNames[iIdx].bUsed);
