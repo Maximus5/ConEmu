@@ -144,9 +144,9 @@ BOOL PackInputRecord(const INPUT_RECORD* piRec, MSG64::MsgStr* pMsg)
 
 		if (nMsg == MOUSE_EVENT_WHEELED || nMsg == MOUSE_EVENT_HWHEELED)
 		{
-			// HIWORD() - short (direction[1/-1])*count*120
+			// HIWORD() - short (direction[1/-1])*count*WHEEL_DELTA/*120*/
 			short nWheel = (short)((((DWORD)piRec->Event.MouseEvent.dwButtonState) & 0xFFFF0000) >> 16);
-			char  nCount = nWheel / 120;
+			char  nCount = nWheel / WHEEL_DELTA;
 			wParam |= ((DWORD_PTR)(BYTE)nCount) << 24;
 		}
 	}
@@ -224,9 +224,9 @@ BOOL UnpackInputRecord(const MSG64::MsgStr* piMsg, INPUT_RECORD* pRec)
 
 		if (piMsg->message == MOUSE_EVENT_WHEELED || piMsg->message == MOUSE_EVENT_HWHEELED)
 		{
-			// HIWORD() - short (direction[1/-1])*count*120
+			// HIWORD() - short (direction[1/-1])*count*WHEEL_DELTA/*120*/
 			signed char nDir = (signed char)((((DWORD)piMsg->wParam) & 0xFF000000) >> 24);
-			WORD wDir = nDir*120;
+			WORD wDir = nDir * WHEEL_DELTA;
 			pRec->Event.MouseEvent.dwButtonState |= wDir << 16;
 		}
 	}

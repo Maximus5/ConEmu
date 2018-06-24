@@ -5501,11 +5501,11 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 		r.Event.MouseEvent.dwEventFlags = MOUSE_WHEELED;
 		SHORT nScroll = (SHORT)(((DWORD)wParam & 0xFFFF0000)>>16);
 
-		if (nScroll<0) { if (nScroll>-120) nScroll=-120; }
-		else { if (nScroll<120) nScroll=120; }
+		if (nScroll<0) { if (nScroll > -WHEEL_DELTA) nScroll = -WHEEL_DELTA; }
+		else { if (nScroll < WHEEL_DELTA) nScroll = WHEEL_DELTA; }
 
-		if (nScroll<-120 || nScroll>120)
-			nScroll = ((SHORT)(nScroll / 120)) * 120;
+		if (nScroll < -WHEEL_DELTA || nScroll > WHEEL_DELTA)
+			nScroll = ((SHORT)(nScroll / WHEEL_DELTA)) * WHEEL_DELTA;
 
 		r.Event.MouseEvent.dwButtonState |= ((DWORD)(WORD)nScroll) << 16;
 		//r.Event.MouseEvent.dwButtonState |= /*(0xFFFF0000 & wParam)*/ (nScroll > 0) ? 0x00780000 : 0xFF880000;
@@ -5521,11 +5521,11 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 		r.Event.MouseEvent.dwEventFlags = 8; //MOUSE_HWHEELED
 		SHORT nScroll = (SHORT)(((DWORD)wParam & 0xFFFF0000)>>16);
 
-		if (nScroll<0) { if (nScroll>-120) nScroll=-120; }
-		else { if (nScroll<120) nScroll=120; }
+		if (nScroll<0) { if (nScroll > -WHEEL_DELTA) nScroll = -WHEEL_DELTA; }
+		else { if (nScroll < WHEEL_DELTA) nScroll = WHEEL_DELTA; }
 
-		if (nScroll<-120 || nScroll>120)
-			nScroll = ((SHORT)(nScroll / 120)) * 120;
+		if (nScroll < -WHEEL_DELTA || nScroll > WHEEL_DELTA)
+			nScroll = ((SHORT)(nScroll / WHEEL_DELTA)) * WHEEL_DELTA;
 
 		r.Event.MouseEvent.dwButtonState |= ((DWORD)(WORD)nScroll) << 16;
 	}

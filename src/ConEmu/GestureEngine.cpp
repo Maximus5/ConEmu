@@ -534,7 +534,7 @@ bool CGestures::ProcessMove(HWND hWnd, const LONG ldx, const LONG ldy)
 			int dy = ((ldy < 0) ? -ldy : ldy) / gpFontMgr->FontHeight();
 			if (dy > 0)
 			{
-				short Delta = ((ldy < 0) ? -120 : 120) * dy;
+				short Delta = ((ldy < 0) ? -WHEEL_DELTA : WHEEL_DELTA) * dy;
 
 				#ifdef _DEBUG
 				wchar_t szDbg[128]; swprintf_c(szDbg, L"  ProcessMove(%i,%i), WheelDelta=%i\n", ldx, ldy, (int)Delta);
