@@ -236,8 +236,8 @@ class CRealConsole
 		void SetConStatus(LPCWSTR asStatus, DWORD/*enum ConStatusOption*/ Options = cso_Default);
 	private:
 		struct {
-			DWORD   Options; /*enum ConStatusOption*/
-			wchar_t szText[80];
+			DWORD   Options = ConStatusOption::cso_Default; /*enum ConStatusOption*/
+			wchar_t szText[80] = L"";
 		} m_ConStatus;
 
 		struct {
@@ -245,6 +245,23 @@ class CRealConsole
 			SHORT nLastWndHeight = 0;
 			SHORT nLastTop = 0;
 		} m_ScrollStatus;
+
+		struct {
+			/// Fix of dblclick in the editor
+			MOUSE_EVENT_RECORD rLastEvent = {};
+			POINT ptLastMouseGuiPos = {}; // in pixels
+			bool bBtnClicked = false;
+			COORD crBtnClickPos = {-1, -1};
+			/// If BtnDown event was sent to console
+			bool bMouseButtonDown = false;
+			COORD crLastMouseEventPos = {-1, -1};
+			/// Far Manager: let touchscreen taps be easy
+			bool bMouseTapChanged = false;
+			COORD crMouseTapReal = {-1, -1};
+			COORD crMouseTapChanged = {-1, -1};
+			/// Useful to know when processing LBtnUp
+			bool bWasMouseSelection = false;
+		} m_Mouse;
 
 	public:
 		HWND    ConWnd();  // HWND RealConsole
@@ -871,10 +888,6 @@ class CRealConsole
 		//
 		bool PrepareOutputFile(bool abUnicodeText, wchar_t* pszFilePathName);
 		HANDLE PrepareOutputFileCreate(wchar_t* pszFilePathName);
-		// фикс для dblclick в редакторе
-		MOUSE_EVENT_RECORD m_LastMouse;
-		POINT m_LastMouseGuiPos; // в пикселах пикселах
-		bool mb_BtnClicked; COORD mrc_BtnClickPos;
 		//
 		wchar_t ms_Editor[32], ms_EditorRus[32], ms_Viewer[32], ms_ViewerRus[32];
 		wchar_t ms_TempPanel[32], ms_TempPanelRus[32];
@@ -886,12 +899,6 @@ class CRealConsole
 		//
 		HWND hPictureView; bool mb_PicViewWasHidden;
 		//
-		bool mb_MouseButtonDown;
-		COORD mcr_LastMouseEventPos;
-		// для Far Manager: облегчить "попадание" тапами
-		bool mb_MouseTapChanged;
-		COORD mcr_MouseTapReal, mcr_MouseTapChanged;
-		//
 		SHELLEXECUTEINFO *mp_sei, *mp_sei_dbg;
 		//
 		HWND FindPicViewFrom(HWND hFrom);
@@ -902,7 +909,6 @@ class CRealConsole
 		bool ConsoleRect2ScreenRect(const RECT &rcCon, RECT *prcScr);
 
 		bool mb_InPostCloseMacro;
-		bool mb_WasMouseSelection; // Useful to know when processing LBtnUp
 
 		// Searching for files on the console surface (hyperlinking)
 		CRConFiles* mp_Files;

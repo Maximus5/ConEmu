@@ -261,11 +261,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	mn_ProcessPriority = GetPriorityClass(GetCurrentProcess());
 	mp_PriorityDpiAware = NULL;
 
-	mb_MouseButtonDown = FALSE;
-	mb_BtnClicked = FALSE; mrc_BtnClickPos = MakeCoord(-1,-1);
-	mcr_LastMouseEventPos = MakeCoord(-1,-1);
-	mb_MouseTapChanged = FALSE;
-	mcr_MouseTapReal = mcr_MouseTapChanged = MakeCoord(-1,-1);
 	//m_DetectedDialogs.Count = 0;
 	//mn_DetectCallCount = 0;
 	wcscpy_c(Title, mp_ConEmu->GetDefaultTitle());
@@ -318,8 +313,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	mb_FullRetrieveNeeded = FALSE;
 	ZeroStruct(m_StartTime);
 	//mb_AdminShieldChecked = FALSE;
-	ZeroStruct(m_LastMouse);
-	ZeroStruct(m_LastMouseGuiPos);
 	mb_DataChanged = FALSE;
 	mb_RConStartedSuccess = FALSE;
 	ZeroStruct(m_Term);
@@ -350,7 +343,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	CloseConfirmReset();
 	mn_LastSetForegroundPID = 0;
 	mb_InPostCloseMacro = false;
-	mb_WasMouseSelection = false;
+	m_Mouse.bWasMouseSelection = false;
 	mp_RenameDpiAware = NULL;
 
 	mpcs_CurWorkDir = new MSectionSimple(true);
@@ -2437,9 +2430,9 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 		}
 		#endif
 
-		if (((m_LastMouse.dwEventFlags & MOUSE_MOVED) && !(piRec->Event.MouseEvent.dwEventFlags & MOUSE_MOVED))
-			|| (!(m_LastMouse.dwEventFlags & MOUSE_MOVED)
-					&& (0 != memcmp(&m_LastMouse, &piRec->Event.MouseEvent, sizeof(m_LastMouse))))
+		if (((m_Mouse.rLastEvent.dwEventFlags & MOUSE_MOVED) && !(piRec->Event.MouseEvent.dwEventFlags & MOUSE_MOVED))
+			|| (!(m_Mouse.rLastEvent.dwEventFlags & MOUSE_MOVED)
+					&& (0 != memcmp(&m_Mouse.rLastEvent, &piRec->Event.MouseEvent, sizeof(m_Mouse.rLastEvent))))
 			)
 		{
 			#ifdef _DEBUG
@@ -2453,11 +2446,11 @@ bool CRealConsole::PostConsoleEvent(INPUT_RECORD* piRec, bool bFromIME /*= false
 		}
 
 		// Store last mouse event
-		m_LastMouse = piRec->Event.MouseEvent;
-		//m_LastMouse.dwMousePosition   = piRec->Event.MouseEvent.dwMousePosition;
-		//m_LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
-		//m_LastMouse.dwButtonState     = piRec->Event.MouseEvent.dwButtonState;
-		//m_LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
+		m_Mouse.rLastEvent = piRec->Event.MouseEvent;
+		//m_Mouse.LastMouse.dwMousePosition   = piRec->Event.MouseEvent.dwMousePosition;
+		//m_Mouse.LastMouse.dwEventFlags      = piRec->Event.MouseEvent.dwEventFlags;
+		//m_Mouse.LastMouse.dwButtonState     = piRec->Event.MouseEvent.dwButtonState;
+		//m_Mouse.LastMouse.dwControlKeyState = piRec->Event.MouseEvent.dwControlKeyState;
 		#ifdef _DEBUG
 		nLastBtnState = piRec->Event.MouseEvent.dwButtonState;
 		#endif
@@ -5285,7 +5278,7 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 
 	if (messg != WM_MOUSEMOVE)
 	{
-		mcr_LastMouseEventPos.X = mcr_LastMouseEventPos.Y = -1;
+		m_Mouse.crLastMouseEventPos.X = m_Mouse.crLastMouseEventPos.Y = -1;
 	}
 
 	// Если включен фаровский граббер - то координаты нужны скорректированные, чтобы точно позиции выделять
@@ -5297,7 +5290,7 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 
 	// Do this BEFORE check in ABuf
 	if (messg == WM_LBUTTONDOWN)
-		mb_WasMouseSelection = false;
+		m_Mouse.bWasMouseSelection = false;
 
 	// Buffer may process mouse events by itself (selections/copy/paste, scroll, ...)
 	if (mp_ABuf->OnMouse(messg, wParam, x, y, crMouse))
@@ -5321,7 +5314,7 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 		if (messg == WM_LBUTTONDOWN)
 		{
 			bool bChanged = false;
-			mcr_MouseTapReal = crMouse;
+			m_Mouse.crMouseTapReal = crMouse;
 
 			// Клик мышкой в {0x0} гасит-показывает панели, но на планшете - фиг попадешь.
 			// Тап в область часов будет делать то же самое
@@ -5330,40 +5323,40 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 			if (!(isEditor() || isViewer()) && (crMouse.Y <= 1) && ((crMouse.X + 5) >= (int)TextWidth()))
 			{
 				bChanged = true;
-				mcr_MouseTapChanged = MakeCoord(0,0);
+				m_Mouse.crMouseTapChanged = MakeCoord(0,0);
 			}
 
 			if (bChanged)
 			{
-				crMouse = mcr_MouseTapChanged;
-				mb_MouseTapChanged = TRUE;
+				crMouse = m_Mouse.crMouseTapChanged;
+				m_Mouse.bMouseTapChanged = TRUE;
 			}
 			else
 			{
-				mb_MouseTapChanged = FALSE;
+				m_Mouse.bMouseTapChanged = FALSE;
 			}
 
 		}
-		else if (mb_MouseTapChanged && (messg == WM_LBUTTONUP || messg == WM_MOUSEMOVE))
+		else if (m_Mouse.bMouseTapChanged && (messg == WM_LBUTTONUP || messg == WM_MOUSEMOVE))
 		{
-			if (mcr_MouseTapReal.X == crMouse.X && mcr_MouseTapReal.Y == crMouse.Y)
+			if (m_Mouse.crMouseTapReal.X == crMouse.X && m_Mouse.crMouseTapReal.Y == crMouse.Y)
 			{
-				crMouse = mcr_MouseTapChanged;
+				crMouse = m_Mouse.crMouseTapChanged;
 			}
 			else
 			{
-				mb_MouseTapChanged = FALSE;
+				m_Mouse.bMouseTapChanged = FALSE;
 			}
 		}
 	}
 	else
 	{
-		mb_MouseTapChanged = FALSE;
+		m_Mouse.bMouseTapChanged = FALSE;
 	}
 
 
 	const AppSettings* pApp = NULL;
-	if ((messg == WM_LBUTTONUP) && !mb_WasMouseSelection
+	if ((messg == WM_LBUTTONUP) && !m_Mouse.bWasMouseSelection
 		&& ((pApp = gpSet->GetAppSettings(GetActiveAppSettingsId())) != NULL)
 		&& pApp->CTSClickPromptPosition()
 		&& gpSet->IsModifierPressed(vkCTSVkPromptClk, true)
@@ -5409,7 +5402,7 @@ bool CRealConsole::OnMouse(UINT messg, WPARAM wParam, int x, int y, bool abForce
 
 	if (messg == WM_MOUSEMOVE)
 	{
-		m_LastMouseGuiPos.x = x; m_LastMouseGuiPos.y = y;
+		m_Mouse.ptLastMouseGuiPos.x = x; m_Mouse.ptLastMouseGuiPos.y = y;
 	}
 
 	return true;
@@ -5474,7 +5467,7 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 			r.Event.MouseEvent.dwButtonState |= 0x0010/*FROM_LEFT_4ND_BUTTON_PRESSED*/;
 	}
 
-	mb_MouseButtonDown = (r.Event.MouseEvent.dwButtonState
+	m_Mouse.bMouseButtonDown = (r.Event.MouseEvent.dwButtonState
 	                      & (FROM_LEFT_1ST_BUTTON_PRESSED|FROM_LEFT_2ND_BUTTON_PRESSED|RIGHTMOST_BUTTON_PRESSED)) != 0;
 
 	// Prepare dwControlKeyState for INPUT_RECORD CAPSLOCK_ON, NUMLOCK_ON, SCROLLLOCK_ON
@@ -5539,7 +5532,7 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 
 	if (messg == WM_LBUTTONDOWN || messg == WM_RBUTTONDOWN || messg == WM_MBUTTONDOWN)
 	{
-		mb_BtnClicked = TRUE; mrc_BtnClickPos = crMouse;
+		m_Mouse.bBtnClicked = TRUE; m_Mouse.crBtnClickPos = crMouse;
 	}
 
 	// В Far3 поменяли действие ПКМ 0_0
@@ -5574,44 +5567,44 @@ void CRealConsole::PostMouseEvent(UINT messg, WPARAM wParam, COORD crMouse, bool
 	}
 	UNREFERENCED_PARAMETER(lbNormalRBtnMode);
 
-	if (messg == WM_MOUSEMOVE /*&& mb_MouseButtonDown*/)
+	if (messg == WM_MOUSEMOVE /*&& m_Mouse.bMouseButtonDown*/)
 	{
 		// Issue 172: проблема с правым кликом на PanelTabs
-		//if (mcr_LastMouseEventPos.X == crMouse.X && mcr_LastMouseEventPos.Y == crMouse.Y)
+		//if (m_Mouse.crLastMouseEventPos.X == crMouse.X && m_Mouse.crLastMouseEventPos.Y == crMouse.Y)
 		//	return; // не посылать в консоль MouseMove на том же месте
-		//mcr_LastMouseEventPos.X = crMouse.X; mcr_LastMouseEventPos.Y = crMouse.Y;
+		//m_Mouse.crLastMouseEventPos.X = crMouse.X; m_Mouse.crLastMouseEventPos.Y = crMouse.Y;
 		//// Проверять будем по пикселам, иначе AltIns начинает выделять со следующей позиции
-		//int nDeltaX = (m_LastMouseGuiPos.x > x) ? (m_LastMouseGuiPos.x - x) : (x - m_LastMouseGuiPos.x);
-		//int nDeltaY = (m_LastMouseGuiPos.y > y) ? (m_LastMouseGuiPos.y - y) : (y - m_LastMouseGuiPos.y);
+		//int nDeltaX = (m_Mouse.ptLastMouseGuiPos.x > x) ? (m_Mouse.ptLastMouseGuiPos.x - x) : (x - m_Mouse.ptLastMouseGuiPos.x);
+		//int nDeltaY = (m_Mouse.ptLastMouseGuiPos.y > y) ? (m_Mouse.ptLastMouseGuiPos.y - y) : (y - m_Mouse.ptLastMouseGuiPos.y);
 		// Теперь - проверяем по координатам консоли, а не экрана.
 		// Этого достаточно, AltIns не глючит, т.к. смена "типа события" (клик/движение) также отслеживается
-		int nDeltaX = m_LastMouse.dwMousePosition.X - crMouse.X;
-		int nDeltaY = m_LastMouse.dwMousePosition.Y - crMouse.Y;
+		int nDeltaX = m_Mouse.rLastEvent.dwMousePosition.X - crMouse.X;
+		int nDeltaY = m_Mouse.rLastEvent.dwMousePosition.Y - crMouse.Y;
 
-		// Последний посланный m_LastMouse запоминается в PostConsoleEvent
-		if (m_LastMouse.dwEventFlags == MOUSE_MOVED // только если последним - был послан НЕ клик
-				&& m_LastMouse.dwButtonState     == r.Event.MouseEvent.dwButtonState
-				&& m_LastMouse.dwControlKeyState == r.Event.MouseEvent.dwControlKeyState
+		// Последний посланный m_Mouse.LastMouse запоминается в PostConsoleEvent
+		if (m_Mouse.rLastEvent.dwEventFlags == MOUSE_MOVED // только если последним - был послан НЕ клик
+				&& m_Mouse.rLastEvent.dwButtonState     == r.Event.MouseEvent.dwButtonState
+				&& m_Mouse.rLastEvent.dwControlKeyState == r.Event.MouseEvent.dwControlKeyState
 				//&& (nDeltaX <= 1 && nDeltaY <= 1) // был 1 пиксел
 				&& !nDeltaX && !nDeltaY // стал 1 символ
 				&& !abForceSend // и если не просили точно послать
 				)
 			return; // не посылать в консоль MouseMove на том же месте
 
-		if (mb_BtnClicked)
+		if (m_Mouse.bBtnClicked)
 		{
-			// Если после LBtnDown в ЭТУ же позицию не был послан MOUSE_MOVE - дослать в mrc_BtnClickPos
-			if (mb_MouseButtonDown && (mrc_BtnClickPos.X != crMouse.X || mrc_BtnClickPos.Y != crMouse.Y))
+			// Если после LBtnDown в ЭТУ же позицию не был послан MOUSE_MOVE - дослать в m_Mouse.crBtnClickPos
+			if (m_Mouse.bMouseButtonDown && (m_Mouse.crBtnClickPos.X != crMouse.X || m_Mouse.crBtnClickPos.Y != crMouse.Y))
 			{
-				r.Event.MouseEvent.dwMousePosition = mrc_BtnClickPos;
+				r.Event.MouseEvent.dwMousePosition = m_Mouse.crBtnClickPos;
 				PostConsoleEvent(&r);
 			}
 
-			mb_BtnClicked = FALSE;
+			m_Mouse.bBtnClicked = FALSE;
 		}
 
-		//m_LastMouseGuiPos.x = x; m_LastMouseGuiPos.y = y;
-		mcr_LastMouseEventPos.X = crMouse.X; mcr_LastMouseEventPos.Y = crMouse.Y;
+		//m_Mouse.ptLastMouseGuiPos.x = x; m_Mouse.ptLastMouseGuiPos.y = y;
+		m_Mouse.crLastMouseEventPos.X = crMouse.X; m_Mouse.crLastMouseEventPos.Y = crMouse.Y;
 	}
 
 	// При БЫСТРОМ драге правой кнопкой мышки выделение в панели получается прерывистым. Исправим это.
@@ -5722,7 +5715,7 @@ void CRealConsole::OnSelectionChanged()
 		#endif
 
 		if (sel.dwFlags & CONSOLE_MOUSE_SELECTION)
-			mb_WasMouseSelection = true;
+			m_Mouse.bWasMouseSelection = true;
 
 		bool bStreamMode = ((sel.dwFlags & CONSOLE_TEXT_SELECTION) != 0);
 		int  nCellsCount = mp_ABuf->GetSelectionCellsCount();
@@ -15396,7 +15389,7 @@ bool CRealConsole::isMouseButtonDown()
 {
 	if (!this) return false;
 
-	return mb_MouseButtonDown;
+	return m_Mouse.bMouseButtonDown;
 }
 
 // Аргумент - DWORD(!) а не DWORD_PTR. Это приходит из консоли.
