@@ -2587,6 +2587,10 @@ bool CVConGroup::OnFlashWindow(DWORD nOpt, DWORD nFlags, DWORD nCount, HWND hCon
 {
 	if (!hCon) return false;
 
+	wchar_t szLog[120];
+	swprintf_c(szLog, L"OnFlashWindow: opt=x%02X flags=x%02X count=%u con=x%08X", nOpt, nFlags, nCount, LODWORD(hCon));
+	LogString(szLog);
+
 	const bool abSimple = (nOpt & 1) != 0;
 	const bool abInvert = (nOpt & 2) != 0;
 	const bool abFromMacro = (nOpt & 4) != 0;
