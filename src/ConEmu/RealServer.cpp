@@ -1060,7 +1060,15 @@ CESERVER_REQ* CRealServer::cmdFlashWindow(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 
 	DEBUGSTRCMD(L"GUI recieved CECMD_FLASHWINDOW\n");
 
-	gpConEmu->DoFlashWindow(&pIn->Flash, false);
+	static DWORD nLastCallTick = 0;
+	const DWORD nMinTickDelta = 1000;
+
+	if (!nLastCallTick || (GetTickCount() - nLastCallTick) > nMinTickDelta)
+		gpConEmu->DoFlashWindow(&pIn->Flash, false);
+	else
+		mp_RCon->LogString(L"CECMD_FLASHWINDOW skipped, too rapid call");
+
+	nLastCallTick = GetTickCount();
 
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
 
