@@ -4183,6 +4183,15 @@ void CEAnsi::StorePromptBegin()
 	}
 }
 
+void CEAnsi::StorePromptReset()
+{
+	CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL;
+	if (pAppMap)
+	{
+		pAppMap->csbiPreRead.dwCursorPosition = COORD{0, 0};
+	}
+}
+
 
 //static
 CEAnsi* CEAnsi::Object(bool bForceCreate /*= false*/)

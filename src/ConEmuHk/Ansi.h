@@ -141,6 +141,7 @@ public:
 	static void StartXTermMode(bool bStart);
 	static void RefreshXTermModes();
 	static void StorePromptBegin();
+	static void StorePromptReset();
 
 public:
 	struct AnsiEscCode

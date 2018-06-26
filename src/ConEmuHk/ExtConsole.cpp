@@ -1187,6 +1187,7 @@ BOOL ExtWriteText(ExtWriteTextParm* Info)
 				bForceDumpScroll = true;
 			_ASSERTE(bWrap);
 			BSRN = true;
+			CEAnsi::StorePromptReset();
 			break;
 		case 7:
 			//Beep (no spacing)
