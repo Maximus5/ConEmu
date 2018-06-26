@@ -196,16 +196,17 @@ BOOL ReadConsoleOutputEx(HANDLE hOut, CHAR_INFO *pData, COORD bufSize, SMALL_REC
 
 				InterlockedIncrement(&gnInReadConsoleOutput);
 				lbRc = ReadConsoleOutputW(hOut, pLine, bufSize, bufCoord, &rgn);
-				#ifdef _DEBUG
-				WORD  nDbgIdAttrs[ROWID_USED_CELLS] = {};
-				DWORD nIdAttrsRead; bool idAttrsOk = (ReadConsoleOutputAttribute(hOut, nDbgIdAttrs, ROWID_USED_CELLS, COORD{rgn.Left, rgn.Top}, &nIdAttrsRead) && nIdAttrsRead == ROWID_USED_CELLS);
-				#endif
+				// #ANSI Has no sense until RowID is written by console applications but our server
+				//#ifdef _DEBUG
+				//WORD  nDbgIdAttrs[ROWID_USED_CELLS] = {};
+				//DWORD nIdAttrsRead; bool idAttrsOk = (ReadConsoleOutputAttribute(hOut, nDbgIdAttrs, ROWID_USED_CELLS, COORD{rgn.Left, rgn.Top}, &nIdAttrsRead) && nIdAttrsRead == ROWID_USED_CELLS);
+				//#endif
 				InterlockedDecrement(&gnInReadConsoleOutput);
 
-				#ifdef _DEBUG
-				// Attributes retrieved from ReadConsoleOutputAttribute and ReadConsoleOutputW are expected to be equal
-				_ASSERTE(nWidth<4 || (nDbgIdAttrs[0]==pLine[0].Attributes && nDbgIdAttrs[1]==pLine[1].Attributes && nDbgIdAttrs[2]==pLine[2].Attributes && nDbgIdAttrs[3]==pLine[3].Attributes));
-				#endif
+				//#ifdef _DEBUG
+				//// Attributes retrieved from ReadConsoleOutputAttribute and ReadConsoleOutputW are expected to be equal
+				//_ASSERTE(nWidth<4 || (nDbgIdAttrs[0]==pLine[0].Attributes && nDbgIdAttrs[1]==pLine[1].Attributes && nDbgIdAttrs[2]==pLine[2].Attributes && nDbgIdAttrs[3]==pLine[3].Attributes));
+				//#endif
 				bool has_rowid = false;
 				WORD nIdAttrs[ROWID_USED_CELLS] = {};
 				if (nWidth >= ROWID_USED_CELLS && rgn.Left == 0)
