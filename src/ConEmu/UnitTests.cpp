@@ -548,7 +548,29 @@ void DebugArrayTests()
 	arr.push_back(3);
 	arr.push_back(4);
 	arr.insert(2, 5);
-	_ASSERTE(arr[0]==1 && arr[1]==2 && arr[2]==5 && arr[3]==3 && arr[4]==4);
+	_ASSERTE(arr.size()==5 && arr[0]==1 && arr[1]==2 && arr[2]==5 && arr[3]==3 && arr[4]==4);
+	arr.sort([](const int* i1, const int* i2){ return (*i1 < *i2) ? -1 : (*i1 > *i2) ? 1 : 0; });
+	_ASSERTE(arr.size()==5 && arr[0]==1 && arr[1]==2 && arr[2]==3 && arr[3]==4 && arr[4]==5);
+	arr.sort([](const int* i1, const int* i2){ return (*i1 < *i2) ? 1 : (*i1 > *i2) ? -1 : 0; });
+	_ASSERTE(arr.size()==5 && arr[0]==5 && arr[1]==4 && arr[2]==3 && arr[3]==2 && arr[4]==1);
+
+	_ASSERTE(&arr[1] == &(arr[1]));
+
+	MArray<int> arr2;
+	arr2.push_back(1);
+	_ASSERTE(arr2.size() == 1 && arr2[0] == 1);
+	arr2.resize(999);
+	_ASSERTE(arr2.size() == 999 && arr2[0] == 1);
+	for (ssize_t i = 1; i < 999; ++i)
+		_ASSERTE(arr2[i] == 0);
+
+	arr2.swap(arr);
+	_ASSERTE(arr2.size()==5 && arr2[0]==5 && arr.size()==999 && arr[0]==1);
+
+	#if 0
+	// note: 'MArray<int> &MArray<int>::operator =(const MArray<int> &)': function was implicitly deleted because 'MArray<int>' has a user-defined move constructor
+	arr2 = arr; // cl error is expected
+	#endif
 }
 
 void DebugJsonTest()
