@@ -42,17 +42,16 @@ DWORD  gnDosBoxPID = 0;
 
 ConProcess::ConProcess()
 {
-	nMaxProcesses = START_MAX_PROCESSES;
-	nProcessCount = 0;
-	pnProcesses = (DWORD*)calloc(START_MAX_PROCESSES, sizeof(DWORD));
-	pnProcessesGet = (DWORD*)calloc(START_MAX_PROCESSES, sizeof(DWORD));
-	pnProcessesCopy = (DWORD*)calloc(START_MAX_PROCESSES, sizeof(DWORD));
-	ZeroStruct(xFixedRequests);
+	csProc = new MSection();
+
+	if (pnProcesses.resize(START_MAX_PROCESSES)
+		&& pnProcessesGet.resize(START_MAX_PROCESSES)
+		&& pnProcessesCopy.resize(START_MAX_PROCESSES))
+		nMaxProcesses = START_MAX_PROCESSES;
 
 	// Let use pid==0 for SetConsoleMode requests
 	XTermRequest x{};
 	xRequests.push_back(x);
-	csProc = new MSection();
 }
 
 ConProcess::~ConProcess()
@@ -672,8 +671,8 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 #ifdef _DEBUG
 	DWORD nCurProcessesDbg[128] = {}; // для отладки, получение текущего состояния консоли
 	DWORD nPrevProcessedDbg[128] = {}; // для отладки, запомнить предыдущее состояние консоли
-	if (pnProcesses && nProcessCount)
-		memmove(nPrevProcessedDbg, pnProcesses, std::min<DWORD>(countof(nPrevProcessedDbg), nProcessCount) * sizeof(*pnProcesses));
+	if (pnProcesses.size() && nProcessCount)
+		memmove(nPrevProcessedDbg, &pnProcesses[0], std::min<DWORD>(countof(nPrevProcessedDbg), nProcessCount) * sizeof(pnProcesses[0]));
 #endif
 
 	if (nProcessCount <= 0)
@@ -723,7 +722,7 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 	{
 		WARNING("Переделать, как-то слишком сложно получается");
 		DWORD nCurCount;
-		nCurCount = pfnGetConsoleProcessList(pnProcessesGet, nMaxProcesses);
+		nCurCount = pfnGetConsoleProcessList(&pnProcessesGet[0], nMaxProcesses);
 
 		#ifdef _DEBUG
 		SetLastError(0);
@@ -776,26 +775,23 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 			if (nCurCount > nMaxProcesses)
 			{
 				DWORD nSize = nCurCount + 100;
-				DWORD* pnPID = (DWORD*)calloc(nSize, sizeof(DWORD));
-
-				if (pnPID)
+				MArray<DWORD> pnPID;
+				if (pnPID.resize(nSize))
 				{
 					CS.RelockExclusive(200);
-					nCurCount = pfnGetConsoleProcessList(pnPID, nSize);
+					nCurCount = pfnGetConsoleProcessList(&pnPID[0], nSize);
 
 					if (nCurCount > 0 && nCurCount <= nSize)
 					{
-						free(pnProcessesGet);
-						pnProcessesGet = pnPID; pnPID = NULL;
-						free(pnProcesses);
-						pnProcesses = (DWORD*)calloc(nSize, sizeof(DWORD));
+						if (!pnProcesses.resize(nSize) || !pnProcessesCopy.resize(nSize))
+						{
+							return false;
+						}
+						pnProcessesGet.swap(pnPID);
 						_ASSERTE(nExitQueryPlace == 0 || nCurCount == 1);
 						nProcessCount = nCurCount;
 						nMaxProcesses = nSize;
 					}
-
-					if (pnPID)
-						free(pnPID);
 				}
 			}
 
@@ -836,8 +832,8 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 
 				if (nCurCount < nProcessCount)
 				{
-					UINT nSize = sizeof(DWORD)*(nProcessCount - nCurCount);
-					memset(pnProcesses + nCurCount, 0, nSize);
+					size_t nSize = sizeof(DWORD) * (nProcessCount - nCurCount);
+					memset(&pnProcesses[nCurCount], 0, nSize);
 				}
 
 				_ASSERTE(nCurCount>0);
@@ -847,25 +843,25 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 
 			UINT nSize = sizeof(DWORD) * std::min<DWORD>(nMaxProcesses, START_MAX_PROCESSES);
 			#ifdef _DEBUG
-			_ASSERTE(!IsBadWritePtr(pnProcessesCopy,nSize));
-			_ASSERTE(!IsBadWritePtr(pnProcesses,nSize));
+			_ASSERTE(!IsBadWritePtr(&pnProcessesCopy[0],nSize));
+			_ASSERTE(!IsBadWritePtr(&pnProcesses[0],nSize));
 			#endif
 
 			if (!lbChanged)
 			{
-				lbChanged = memcmp(pnProcessesCopy, pnProcesses, nSize) != 0;
+				lbChanged = memcmp(&pnProcessesCopy[0], &pnProcesses[0], nSize) != 0;
 				MCHKHEAP;
 			}
 
 			if (lbChanged)
 			{
-				memmove(pnProcessesCopy, pnProcesses, nSize);
+				memmove(&pnProcessesCopy[0], &pnProcesses[0], nSize);
 
 				MCHKHEAP;
 			}
 		}
 
-		if (!bProcFound && bMayBeConsolePaf && (nCurCount > 0) && pnProcesses)
+		if (!bProcFound && bMayBeConsolePaf && (nCurCount > 0) && pnProcesses.size())
 		{
 			for (DWORD i = 0; i < nCurCount; i++)
 			{

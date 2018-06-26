@@ -59,23 +59,24 @@ public:
 	#endif
 
 public:
-	MSection *csProc;
+	MSection *csProc = nullptr;
 
-	UINT nProcessCount, nMaxProcesses;
-	UINT nConhostPID; // Windows 7 and higher: "conhost.exe"
-	DWORD *pnProcesses, *pnProcessesGet, *pnProcessesCopy, nProcessStartTick;
-	DWORD nLastRetProcesses[CONSOLE_PROCESSES_MAX/*20*/];
-	DWORD nLastFoundPID; // Informational! Retrieved by CheckProcessCount/pfnGetConsoleProcessList
-	DWORD dwProcessLastCheckTick;
+	UINT nProcessCount = 0, nMaxProcesses = 0;
+	UINT nConhostPID = 0; // Windows 7 and higher: "conhost.exe"
+	MArray<DWORD> pnProcesses, pnProcessesGet, pnProcessesCopy;
+	DWORD nProcessStartTick = 0;
+	DWORD nLastRetProcesses[CONSOLE_PROCESSES_MAX/*20*/] = {};
+	DWORD nLastFoundPID = 0; // Informational! Retrieved by CheckProcessCount/pfnGetConsoleProcessList
+	DWORD dwProcessLastCheckTick = 0;
 
 	#ifndef WIN64
 	// Only 32-bit Windows versions have ntvdm (old 16-bit DOS subsystem)
-	BOOL bNtvdmActive; DWORD nNtvdmPID;
+	BOOL bNtvdmActive = false; DWORD nNtvdmPID = 0;
 	#endif
 
 	#ifdef USE_COMMIT_EVENT
-	HANDLE hExtConsoleCommit; // Event для синхронизации (выставляется по Commit);
-	DWORD  nExtConsolePID;
+	HANDLE hExtConsoleCommit = NULL; // Event для синхронизации (выставляется по Commit);
+	DWORD  nExtConsolePID = 0;
 	#endif
 
 protected:
@@ -93,7 +94,8 @@ protected:
 	MArray<XTermRequest> xRequests;
 	// Some flags (only tmc_CursorShape yet) are *console* life-time
 	// And we store here current projection of xRequests
-	DWORD xFixedRequests[tmc_Last];
+	DWORD xFixedRequests[tmc_Last] = {};
+
 	// create=false used to erasing on reset
 	INT_PTR GetXRequestIndex(DWORD pid, bool create);
 	// Force update xFixedRequests and inform GUI

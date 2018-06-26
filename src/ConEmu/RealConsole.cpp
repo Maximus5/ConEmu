@@ -9011,6 +9011,8 @@ bool CRealConsole::ProcessUpdate(const DWORD *apPID, UINT anCount)
 	// Теперь нужно добавить новый процесс
 	if (bProcessNew || bProcessDel)
 	{
+		// #PROCESS Mark somehow failed processes to avoid permanent calls to CreateToolhelp32Snapshot
+		// Now we assume that PID's came from Server are valid (retrieved from conhost)
 		ConProcess cp;
 		HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
 		_ASSERTE(h!=INVALID_HANDLE_VALUE);

@@ -7108,6 +7108,7 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount)
 				gpSrv->processes->nConhostPID = (UINT)-1;
 		}
 
+		// #PROCESSES At the moment we assume nConhostPID is alive because console WinAPI still works
 		if (gpSrv->processes->nConhostPID && (gpSrv->processes->nConhostPID != (UINT)-1))
 		{
 			rpdwPID[nRetCount++] = gpSrv->processes->nConhostPID;
