@@ -841,7 +841,7 @@ CESERVER_REQ* CRealServer::cmdGuiMacro(LPVOID pInst, CESERVER_REQ* pIn, UINT nDa
 	DWORD nFarPluginPID = mp_RCon->GetFarPID(true);
 	LPWSTR pszResult = ConEmuMacro::ExecuteMacro(pIn->GuiMacro.sMacro, mp_RCon, (nFarPluginPID==pIn->hdr.nSrcPID), &pIn->GuiMacro);
 
-	int nLen = pszResult ? _tcslen(pszResult) : 0;
+	size_t nLen = pszResult ? _tcslen(pszResult) : 0;
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_GUIMACRO)+nLen*sizeof(wchar_t));
 
 	if (pszResult)
@@ -1063,7 +1063,7 @@ CESERVER_REQ* CRealServer::cmdFlashWindow(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 	static DWORD nLastCallTick = 0;
 	const DWORD nMinTickDelta = 1000;
 
-	if (!nLastCallTick || (GetTickCount() - nLastCallTick) > nMinTickDelta)
+	if (!nLastCallTick || (GetTickCount() - nLastCallTick) >= nMinTickDelta)
 		gpConEmu->DoFlashWindow(&pIn->Flash, false);
 	else
 		mp_RCon->LogString(L"CECMD_FLASHWINDOW skipped, too rapid call");
@@ -1102,7 +1102,7 @@ CESERVER_REQ* CRealServer::cmdSetBackground(LPVOID pInst, CESERVER_REQ* pIn, UIN
 	DEBUGSTRCMD(L"GUI recieved CECMD_SETBACKGROUND\n");
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETBACKGROUNDRET));
 	// Set background Image
-	UINT nCalcSize = pIn->hdr.cbSize - sizeof(pIn->hdr);
+	ssize_t nCalcSize = pIn->hdr.cbSize - sizeof(pIn->hdr);
 
 	if (nCalcSize < sizeof(CESERVER_REQ_SETBACKGROUND))
 	{
@@ -1111,7 +1111,7 @@ CESERVER_REQ* CRealServer::cmdSetBackground(LPVOID pInst, CESERVER_REQ* pIn, UIN
 	}
 	else
 	{
-		UINT nCalcBmSize = nCalcSize - (((LPBYTE)&pIn->Background.bmp) - ((LPBYTE)&pIn->Background));
+		ssize_t nCalcBmSize = nCalcSize - (((LPBYTE)&pIn->Background.bmp) - ((LPBYTE)&pIn->Background));
 
 		if (pIn->Background.bEnabled && nCalcSize < nCalcBmSize)
 		{
@@ -1270,7 +1270,8 @@ CESERVER_REQ* CRealServer::cmdGetAllTabs(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 		pOut = ExecuteNewCmd(pIn->hdr.nCmd, RetSize);
 		if (pOut)
 		{
-			pOut->GetAllTabs.Count = cchCount;
+			_ASSERTE(cchCount == LODWORD(cchCount));
+			pOut->GetAllTabs.Count = LODWORD(cchCount);
 			memmove(pOut->GetAllTabs.Tabs, pTabs, cchCount*sizeof(*pTabs));
 		}
 	}
@@ -1530,7 +1531,7 @@ CESERVER_REQ* CRealServer::cmdGetTaskCmd(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 		}
 	}
 
-	int nLen = lsData.GetLen();
+	ssize_t nLen = lsData.GetLen();
 
 	CESERVER_REQ* pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_TASK) + nLen*sizeof(wchar_t));
 	if (!pOut)
