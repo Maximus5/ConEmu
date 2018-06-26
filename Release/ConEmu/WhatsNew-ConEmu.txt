@@ -20,6 +20,16 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2018.6.26
+* gh-1606: Don't show assertion on start if we can't determine HKL name, just write info to log.
+* gh-1613: In some cases first four CJK cells were displayed using wrong attributes (inverse, underline).
+* gh-1560: Try to support high-precision mouse wheels and trackpads.
+* gh-1614: Fix long running session performance issues (CreateToolhelp32Snapshot).
+* gh-1615: Workaroung for Win10 insider cursor position bug after writing `\b \b` to console.
+* Reset prompt-start position after newline to avoid unexpected behavior of `Shift+Home`.
+* Avoid rapid window flashing initialized from console applications, log FlashWindow requests.
+
+
 2018.6.17
 * gh-1590: Quake activation (up/down) did not work properly with ChildGui in tab.
 * Show `-switch` style in ConEmuC help.
