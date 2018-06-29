@@ -4424,7 +4424,7 @@ CVirtualConsole* CVConGroup::CreateCon(RConStartArgsEx *args, bool abAllowScript
 
 		if (!gp_VCon[i])
 		{
-			bool bTabbar = gpConEmu->mp_TabBar->IsTabsShown();
+			bool bTabbar = gpConEmu->isTabsShown();
 			CVirtualConsole* pOldActive = gp_VActive;
 			gb_CreatingActive = true;
 			pVCon = CVConGroup::CreateVCon(args, gp_VCon[i], (int)i);

@@ -318,43 +318,28 @@ RECT CConEmuSize::CalcMargins_TabBar(DWORD/*enum ConEmuMargins*/ mg)
 	// The place (height) used by TabBar. Only rc.top or rc.bottom may be set
 	if (mg & ((DWORD)CEM_TAB))
 	{
+		#ifdef _DEBUG
 		if (ghWnd)
 		{
-			bool lbTabActive = ((mg & CEM_TAB_MASK) == CEM_TAB) ? mp_ConEmu->isTabsShown()
-			                   : ((mg & ((DWORD)CEM_TABACTIVATE)) == ((DWORD)CEM_TABACTIVATE));
-
-			// Главное окно уже создано, наличие таба определено
-			if (lbTabActive)  //TODO: + IsAllowed()?
-			{
-				RECT rcTab = mp_ConEmu->mp_TabBar->GetMargins(true);
-				MBoxAssert(rcTab.top==0 || rcTab.bottom==0);
-				AddMargins(rc, rcTab, rcop_MathAdd);
-			}
+			const bool isActive = mp_ConEmu->isTabsShown();
+			_ASSERTE(((mg & CEM_TAB_MASK) == CEM_TAB) || (isActive == ((mg & ((DWORD)CEM_TABACTIVATE)) == ((DWORD)CEM_TABACTIVATE))));
 		}
-		else
+		#endif
+
+		// Check tabs condition - if they are enabled (1==always show) their size must be taken into account
+		SizeInfo temp(*static_cast<SizeInfo*>(this));
+		temp.RequestSize(600, 300);
+		// #SIZE_TODO get dpi and coordinates for destination monitor?
+		RECT rcTabs = temp.RebarRect();
+		switch (gpSet->nTabsLocation)
 		{
-			// Иначе нужно смотреть по настройкам
-			if (gpSet->isTabs == 1)
-			{
-				//RECT rcTab = gpSet->rcTabMargins; // умолчательные отступы таба
-				RECT rcTab = mp_ConEmu->mp_TabBar->GetMargins();
-				// Сразу оба - быть не должны. Либо сверху, либо снизу.
-				_ASSERTE(rcTab.top==0 || rcTab.bottom==0);
-
-				//if (!gpSet->isTabFrame)
-				//{
-
-				// От таба остается только заголовок (закладки)
-				//rc.left=0; rc.right=0; rc.bottom=0;
-				if (gpSet->nTabsLocation == 1)
-				{
-					rc.bottom += rcTab.top ? rcTab.top : rcTab.bottom;
-				}
-				else
-				{
-					rc.top += rcTab.top ? rcTab.top : rcTab.bottom;
-				}
-			}
+		case 0: // top
+			rc.top += RectHeight(rcTabs); break;
+		case 1: // bottom
+			rc.bottom = RectHeight(rcTabs); break;
+		default:
+			_ASSERTE(FALSE && "Unsupported location of TabBar!");
+			rc = {};
 		}
 	}
 
@@ -742,15 +727,19 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 		case CER_TAB: // switch (tWhat)
 		{
 			_ASSERTE(tFrom==CER_MAINCLIENT);
-			if (gpSet->nTabsLocation == 1)
-			{
+
+			#ifdef _DEBUG
+			RECT rcNew = SizeInfo::RebarRect();
+			RECT rcTest = rc;
+			if (gpSet->nTabsLocation == 1) {
 				int nStatusHeight = gpSet->isStatusBarShow ? gpSet->StatusBarHeight() : 0;
-				rc.top = rc.bottom - nStatusHeight - mp_ConEmu->mp_TabBar->GetTabbarHeight();
-			}
-			else
-			{
-				rc.bottom = rc.top + mp_ConEmu->mp_TabBar->GetTabbarHeight();
-			}
+				rcTest.top = rcTest.bottom - nStatusHeight - SizeInfo::GetDefaultTabbarHeight();
+			} else
+				rcTest.bottom = rcTest.top + SizeInfo::GetDefaultTabbarHeight();
+			_ASSERTE(rcNew == rcTest);
+			#endif
+
+			rc = SizeInfo::RebarRect();
 		} break;
 		case CER_WORKSPACE: // switch (tWhat)
 		{
@@ -995,11 +984,9 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 	bool bTabs = mp_ConEmu->isTabsShown();
 	if (bTabs)
 	{
-		// Check tabs condition - if they are enabled (1==always show) their size must be taken into account
-		// #SIZE_TODO Use static code from SizeInfo::
-		RECT rcTabMargins = mp_ConEmu->mp_TabBar->GetMargins();
-		nTabsX = bTabs ? (rcTabMargins.left+rcTabMargins.right) : 0;
-		nTabsY = bTabs ? (rcTabMargins.top+rcTabMargins.bottom) : 0;
+		RECT temp = CalcMargins_TabBar(CEM_TAB);
+		nTabsX = temp.left + temp.right;
+		nTabsY = temp.top + temp.bottom;
 	}
 	_ASSERTE((gpSet->isTabs != 1) || (nTabsY > 0));
 
@@ -6049,7 +6036,7 @@ HRGN CConEmuSize::CreateWindowRgn()
 				RECT rcFrame = FrameMargins();
 				//_ASSERTE(!rcClient.left && !rcClient.top);
 
-				bool bRoundTitle = (gOSVer.dwMajorVersion == 5) && gpSetCls->CheckTheming() && mp_ConEmu->mp_TabBar->IsTabsShown();
+				bool bRoundTitle = (gOSVer.dwMajorVersion == 5) && gpSetCls->CheckTheming() && mp_ConEmu->isTabsShown();
 
 				if (gpSet->isQuakeStyle)
 				{
@@ -6205,11 +6192,6 @@ HRGN CConEmuSize::CreateWindowRgn(bool abRoundTitle, int anX, int anY, int anWnd
 			//MapWindowPoints(ghWnd DC, NULL, &ptShift, 1);
 			//RECT rcWnd = GetWindow
 			RECT rcFrame = CalcMargins(CEM_FRAMECAPTION);
-
-			#ifdef _DEBUG
-			// CEM_TAB не учитывает центрирование клиентской части в развернутых режимах
-			RECT rcTab = CalcMargins(CEM_TAB);
-			#endif
 
 			POINT ptClient = {0,0};
 			TODO("Будет глючить на SplitScreen?");

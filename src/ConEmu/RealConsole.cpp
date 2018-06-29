@@ -667,7 +667,7 @@ void CRealConsole::RepositionDialogWithTab(HWND hDlg)
 {
 	// Positioning
 	RECT rcDlg = {}; GetWindowRect(hDlg, &rcDlg);
-	if (mp_ConEmu->mp_TabBar->IsTabsShown())
+	if (mp_ConEmu->isTabsShown())
 	{
 		RECT rcTab = {};
 		if (mp_ConEmu->mp_TabBar->GetActiveTabRect(&rcTab))

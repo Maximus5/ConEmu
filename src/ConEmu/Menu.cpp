@@ -326,7 +326,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 	LPCWSTR pszCurCmd = NULL;
 	if (!ptWhere && !nFlags)
 	{
-		if (gpConEmu->mp_TabBar->IsTabsShown() && (gpSet->nTabsLocation == 1))
+		if (gpConEmu->isTabsShown() && (gpSet->nTabsLocation == 1))
 			nFlags = TPM_BOTTOMALIGN;
 	}
 	bool lbReverse = (nFlags & TPM_BOTTOMALIGN) == TPM_BOTTOMALIGN;
@@ -550,7 +550,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 		if (nFlags)
 			nAlign = nFlags;
 	}
-	else if (gpConEmu->mp_TabBar && gpConEmu->mp_TabBar->IsTabsShown())
+	else if (gpConEmu->mp_TabBar && gpConEmu->isTabsShown())
 	{
 		gpConEmu->mp_TabBar->Toolbar_GetBtnRect(TID_CREATE_CON, &rcBtnRect);
 		lpExcl = &rcBtnRect;
@@ -1249,7 +1249,7 @@ POINT CConEmuMenu::CalcTabMenuPos(CVirtualConsole* apVCon)
 	if (apVCon)
 	{
 		RECT rcWnd;
-		if (gpConEmu->mp_TabBar && gpConEmu->mp_TabBar->IsTabsShown())
+		if (gpConEmu->mp_TabBar && gpConEmu->isTabsShown())
 		{
 			gpConEmu->mp_TabBar->GetActiveTabRect(&rcWnd);
 			ptCur.x = rcWnd.left;
@@ -1719,8 +1719,8 @@ void CConEmuMenu::ShowSysmenu(int x, int y, DWORD nFlags /*= 0*/)
 		WINDOWINFO wInfo = {sizeof(wInfo)};
 		GetWindowInfo(ghWnd, &wInfo);
 		int nTabShift =
-		    ((gpConEmu->isCaptionHidden()) && gpConEmu->mp_TabBar->IsTabsShown() && (gpSet->nTabsLocation != 1))
-		    ? gpConEmu->mp_TabBar->GetTabbarHeight() : 0;
+		    ((gpConEmu->isCaptionHidden()) && gpConEmu->isTabsShown() && (gpSet->nTabsLocation != 1))
+		    ? gpConEmu->GetDefaultTabbarHeight() : 0;
 
 		if (x == -32000)
 			x = rect.right - cRect.right - wInfo.cxWindowBorders;

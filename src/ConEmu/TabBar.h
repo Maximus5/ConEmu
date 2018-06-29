@@ -63,7 +63,7 @@ class CVConGuard;
 class CTabBarClass
 {
 	private:
-		//// Пока - банально. VCon, номер в FAR
+		//// VCon, number in FAR
 		//typedef struct tag_FAR_WND_ID
 		//{
 		//	CVirtualConsole* pVCon;
@@ -78,33 +78,39 @@ class CTabBarClass
 		//	};
 		//} VConTabs;
 
-	private:
-		CTabPanelBase* mp_Rebar;
-
-	private:
-		CIconList      m_TabIcons;
 	public:
 		HIMAGELIST GetTabIcons(int nTabItemHeight);
 		int GetTabIcon(bool bAdmin);
 		HICON GetTabIconByIndex(int IconIndex);
 
 	private:
-		bool _active, _visible;
-		int _tabHeight;
-		int mn_CurSelTab;
-		bool mb_ForceRecalcHeight;
-		//RECT m_Margins;
-		//bool _titleShouldChange;
-		void SelectTab(int i);
-		int PrepareTab(CTab& pTab, CVirtualConsole *apVCon);
-		ConEmuTab m_Tab4Tip;
-		WCHAR  ms_TmpTabText[MAX_PATH];
-		bool CanActivateTab(int nTabIdx);
-		bool mb_InKeySwitching;
-		int GetNextTab(bool abForward, bool abAltStyle=false);
-		int GetNextTabHelper(int idxFrom, bool abForward, bool abRecent);
-		int GetItemCount();
-		void DeleteItem(int I);
+		CTabPanelBase* mp_Rebar = nullptr;
+		CIconList      m_TabIcons;
+
+		bool _active = false, _visible = false;
+		std::atomic_int inActivate{0};
+		int mn_CurSelTab = 0;
+		bool mb_ForceRecalcHeight = false;
+		ConEmuTab m_Tab4Tip = {};
+		WCHAR  ms_TmpTabText[MAX_PATH] = {};
+		bool mb_InKeySwitching = false;
+
+		int  mn_InUpdate = 0;
+		UINT mn_PostUpdateTick = 0;
+		bool mb_PostUpdateCalled = false;
+		bool mb_PostUpdateRequested = false;
+		bool mb_DisableRedraw = false;
+
+	protected:
+		friend class CTabPanelBase;
+
+		// Tab stack
+		CTabStack m_Tabs; // Opened tabs
+		MArray<CTabID*> m_TabStack; // Tabs history (for switching in Recent mode)
+		CTabID* mp_DummyTab = nullptr; // Just to show something if there are no tabs at all
+
+	private:
+
 		enum UpdateAddTabFlags {
 			uat_AnyTab             = 0x000,
 			uat_PanelsOrModalsOnly = 0x001,
@@ -112,7 +118,15 @@ class CTabBarClass
 			uat_NonPanels          = 0x004,
 			uat_PanelsOnly         = 0x008,
 		};
-		int UpdateAddTab(HANDLE hUpdate, int& tabIdx, int& nCurTab, bool& bStackChanged, CVirtualConsole* pVCon, DWORD nFlags/*UpdateAddTabFlags*/);
+
+		void SelectTab(int i);
+		int  PrepareTab(CTab& pTab, CVirtualConsole *apVCon);
+		bool CanActivateTab(int nTabIdx);
+		int  GetNextTab(bool abForward, bool abAltStyle=false);
+		int  GetNextTabHelper(int idxFrom, bool abForward, bool abRecent);
+		int  GetItemCount();
+		void DeleteItem(int I);
+		int  UpdateAddTab(HANDLE hUpdate, int& tabIdx, int& nCurTab, bool& bStackChanged, CVirtualConsole* pVCon, DWORD nFlags/*UpdateAddTabFlags*/);
 
 	public:
 		// Tabs updating (populating)
@@ -122,31 +136,20 @@ class CTabBarClass
 		void ShowTabError(LPCTSTR asInfo, int tabIndex);
 
 	private:
-		int  mn_InUpdate;
-		UINT mn_PostUpdateTick;
-		bool mb_PostUpdateCalled;
-		bool mb_PostUpdateRequested;
 
 		void RequestPostUpdate();
 		int  CountActiveTabs(int nMax = 0);
 
 	protected:
-		friend class CTabPanelBase;
-
-		//int GetIndexByTab(VConTabs tab);
-
-		// Tab stack
-		CTabStack m_Tabs; // Открытые табы
-		MArray<CTabID*> m_TabStack; // История табов (для переключения в Recent mode)
-		CTabID* mp_DummyTab; // Для показа чего-нибудь когда консолей вообще нет
-		//MArray<VConTabs> m_Tab2VCon;
-		//MArray<VConTabs> m_TabStack;
 		bool CheckStack(); // Убьет из стека отсутствующих
 		bool AddStack(CTab& tab); // Убьет из стека отсутствующих и поместит tab на верх стека
 
-		BOOL mb_DisableRedraw;
-
 		int  GetFirstLastVConTab(CVirtualConsole* pVCon, bool bFirst, int nFromTab = -1);
+
+	#ifdef _DEBUG
+	public:
+		bool IsTabsCreated() const;
+	#endif
 
 	public:
 		CTabBarClass();
@@ -161,15 +164,15 @@ class CTabBarClass
 		void Deactivate(BOOL abPreSyncConsole=FALSE);
 		bool GetActiveTabRect(RECT* rcTab);
 		int  GetCurSel();
-		RECT GetMargins(bool bIgnoreVisibility = false);
+		//RECT GetMargins(bool bIgnoreVisibility = false);
 		bool GetRebarClientRect(RECT* rc);
-		int  GetTabbarHeight();
+		//int  GetTabbarHeight();
 		int  GetTabFromPoint(LPPOINT pptCur, bool bScreen = true, bool bOverTabHitTest = true);
 		bool GetVConFromTab(int nTabIdx, CVConGuard* rpVCon, DWORD* rpWndIndex);
 		void HighlightTab(const CTabID* pTab, bool bHighlight);
 		void Invalidate();
-		bool IsTabsActive();
-		bool IsTabsShown();
+		bool IsTabsActive() const;
+		//bool IsTabsShown();
 		bool IsSearchShown(bool bFilled);
 		void OnAlternative(BOOL abAlternative);
 		void OnBufferHeight(BOOL abBufferHeight);
@@ -187,7 +190,7 @@ class CTabBarClass
 		void Reposition();
 		void Reset();
 		void Retrieve();
-		void SetRedraw(BOOL abEnableRedraw);
+		void SetRedraw(bool abEnableRedraw);
 		bool ShowSearchPane(bool bShow, bool bCtrlOnly = false);
 		void UpdatePosition();
 		void UpdateToolConsoles(bool abForcePos=false);

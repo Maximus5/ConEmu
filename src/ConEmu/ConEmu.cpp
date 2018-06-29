@@ -1646,14 +1646,11 @@ void CConEmuMain::OnUseDwm(bool abEnableDwm)
 	//CheckMenuItem(GetSysMenu(false), ID_ISDWM, MF_BYCOMMAND | (abEnableDwm ? MF_CHECKED : MF_UNCHECKED));
 }
 
-bool CConEmuMain::isTabsShown()
+bool CConEmuMain::isTabsShown() const
 {
 	if (gpSet->isTabs == 1)
 		return true;
-	// #SIZE_TODO May be not precise
-	if (mp_TabBar && mp_TabBar->IsTabsShown())
-		return true;
-	return false;
+	return (mp_TabBar && mp_TabBar->IsTabsActive());
 }
 
 void CConEmuMain::SetWindowStyle(DWORD anStyle)
@@ -2816,7 +2813,7 @@ void CConEmuMain::ForceShowTabs(BOOL abShow)
 	//2009-05-20 Раз это Force - значит на возможность получить табы из фара забиваем! Для консоли показывается "Console"
 	BOOL lbTabsAllowed = abShow /*&& this->mp_TabBar->IsAllowed()*/;
 
-	if (abShow && !this->mp_TabBar->IsTabsShown() && gpSet->isTabs && lbTabsAllowed)
+	if (abShow && gpSet->isTabs && lbTabsAllowed)
 	{
 		this->mp_TabBar->Activate(TRUE);
 		this->mp_TabBar->Update();
@@ -5430,7 +5427,7 @@ void CConEmuMain::UpdateProgress()
 			swprintf_c(MultiTitle+nCurTtlLen, countof(MultiTitle)-nCurTtlLen/*#SECURELEN*/, L"{*%i%%} ", mn_Progress);
 	}
 
-	if (gpSetCls->IsMulti() && (gpSet->isNumberInCaption || !mp_TabBar->IsTabsShown()))
+	if (gpSetCls->IsMulti() && (gpSet->isNumberInCaption || !isTabsShown()))
 	{
 		int nCur = 1, nCount = 0;
 
@@ -7177,7 +7174,7 @@ void CConEmuMain::OnMainCreateFinished()
 		m_StartDetached = crb_Off;  // действует только на первую консоль
 	}
 
-	if (isWindowNormal() && (gpSet->isTabs == 2) && mp_TabBar->IsTabsShown())
+	if (isWindowNormal() && (gpSet->isTabs == 2) && isTabsShown())
 	{
 		SizeInfo::RequestRecalc();
 
@@ -11832,7 +11829,7 @@ LRESULT CConEmuMain::OnSetCursor(WPARAM wParam/*=-1*/, LPARAM lParam/*=-1*/)
 				}
 			}
 			else if (ht == HTCAPTION && gpSet->isHideCaptionAlways()
-				&& (!mp_TabBar || !mp_TabBar->IsTabsShown()
+				&& (!isTabsShown()
 					|| (IsWin10() && gpSet->nTabsLocation))
 				)
 			{

@@ -621,7 +621,7 @@ class CConEmuMain
 		void DebugStep(LPCWSTR asMsg, BOOL abErrorSeverity=FALSE);
 		void ForceShowTabs(BOOL abShow);
 		DWORD_PTR GetActiveKeyboardLayout();
-		bool isTabsShown();
+		bool isTabsShown() const;
 
 	public:
 		void Destroy(bool abForce = false);

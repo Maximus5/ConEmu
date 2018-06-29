@@ -1379,7 +1379,7 @@ void CConEmuCtrl::TabCommand(ConEmuTabCommand nTabCmd)
 	{
 		case ctc_ShowHide:
 		{
-			if (gpConEmu->mp_TabBar->IsTabsShown())
+			if (gpConEmu->isTabsShown())
 				gpSet->isTabs = 0;
 			else
 				gpSet->isTabs = 1;

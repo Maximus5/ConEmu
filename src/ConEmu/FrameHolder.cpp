@@ -1085,7 +1085,7 @@ LRESULT CFrameHolder::DoNcHitTest(const POINT& point, int width, int height, LPA
 	}
 
 	if (l_result == HTTOP && gpSet->isHideCaptionAlways()
-		&& (!mp_ConEmu->mp_TabBar || !mp_ConEmu->mp_TabBar->IsTabsShown()
+		&& (!mp_ConEmu->mp_TabBar || !mp_ConEmu->isTabsShown()
 			|| (IsWin10() && gpSet->nTabsLocation))
 		)
 	{
