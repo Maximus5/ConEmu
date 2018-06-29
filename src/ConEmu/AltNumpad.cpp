@@ -64,10 +64,9 @@ bool CAltNumpad::isAltNumpad()
 	SHORT sNumLock = GetKeyState(VK_NUMLOCK);
 	if (!(sNumLock & 1))
 		return false;
-	if (!isPressed(VK_LMENU))
+	if (!isPressed(VK_MENU))
 		return false;
-	if (isPressed(VK_RMENU)
-		|| isPressed(VK_SHIFT) || isPressed(VK_CONTROL)
+	if (isPressed(VK_SHIFT) || isPressed(VK_CONTROL)
 		|| isPressed(VK_LWIN) || isPressed(VK_RWIN))
 		return false;
 	return true;
@@ -169,7 +168,7 @@ bool CAltNumpad::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		{
 			_ASSERTE(bSkip == false); // bypass to console
 		}
-		// If user have chosen to bypass Alt+GrayPlus to consol
+		// If user have chosen to bypass Alt+GrayPlus to console
 		else if ((wParam == VK_ADD) && !isUseAltGrayPlus())
 		{
 			_ASSERTE(bSkip == false); // bypass to console
