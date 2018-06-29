@@ -322,7 +322,7 @@ void SizeInfo::DoCalculate()
 		const auto mi = mp_ConEmu->NearestMonitorInfo(new_rr.window);
 		const auto wm = mp_ConEmu->GetWindowMode();
 		const bool selfFrame = mp_ConEmu->isSelfFrame();
-		const unsigned frameWidth = selfFrame ? mp_ConEmu->GetSelfFrameWidth() : 0;
+		const int frameWidth = selfFrame ? int(mp_ConEmu->GetSelfFrameWidth()) : 0;
 		const RECT rcFrame =
 			(selfFrame && frameWidth == 0) ? RECT{}
 			: (wm == wmFullScreen) ? RECT{}
@@ -339,7 +339,7 @@ void SizeInfo::DoCalculate()
 		else
 		{
 			if (frameWidth < rcFrame.left)
-				new_rr.frame = RECT{int(frameWidth), int(frameWidth), int(frameWidth), int(frameWidth)};
+				new_rr.frame = RECT{frameWidth, frameWidth, frameWidth, frameWidth};
 			else
 				new_rr.frame = rcFrame;
 			new_rr.real_client = RECT{0, 0, RectWidth(new_rr.window), RectHeight(new_rr.window)};
