@@ -1866,7 +1866,8 @@ int CeFullPanelInfo::RegisterPanelView()
 
 		if (gpRgnDetect->InitializeSBI(gcrCurColors))
 		{
-			gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
+			bool bFarUserscreen = (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU));
+			gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors, bFarUserscreen);
 		}
 
 		// Сразу скопировать параметры соответствующего режима к себе

@@ -129,6 +129,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Undocumented messages
 #include "ConsoleMessages.h"
 
+#include "Keyboard.h"
+
 #define MAX_CMD_HISTORY 100
 #define MAX_CMD_HISTORY_SHOW 16
 #define MAX_CMD_GROUP_SHOW 10

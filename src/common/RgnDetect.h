@@ -139,10 +139,10 @@ class CRgnDetect
 		// Public methods
 		int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DWORD anMask=-1, DWORD anTest=-1) const;
 		DWORD GetDialog(DWORD nDlgID, SMALL_RECT* rc) const;
-		void PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const COLORREF *apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight);
+		void PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const COLORREF *apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, bool bFarUserscreen);
 		DWORD GetFlags() const;
 		// Methods for plugins
-		void PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const COLORREF *apColors);
+		void PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const COLORREF *apColors, bool bFarUserscreen);
 		void OnWindowSizeChanged();
 		void OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion, const COLORREF *apColors);
 		BOOL InitializeSBI(const COLORREF *apColors);

@@ -162,6 +162,9 @@
     <ClInclude Include="ConEmu\Inside.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\Keyboard.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmu\LngData.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -867,6 +870,9 @@
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Inside.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Keyboard.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\LngData.cpp">

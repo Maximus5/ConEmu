@@ -1294,7 +1294,8 @@ void OnReadyForPanelsReload()
 	// Сбросим, чтобы RgnDetect попытался сам найти панели и диалоги.
 	// Это нужно чтобы избежать возможных блокировок фара
 	gFarInfo.bFarPanelInfoFilled = gFarInfo.bFarLeftPanel = gFarInfo.bFarRightPanel = FALSE;
-	gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors);
+	bool bFarUserscreen = (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU));
+	gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors, bFarUserscreen);
 	gnRgnDetectFlags = gpRgnDetect->GetFlags();
 	
 	//#ifdef _DEBUG
