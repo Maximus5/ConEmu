@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define NOMINMAX
 #include <limits>
 #include <algorithm>
+#include <atomic>
 
 #if !defined(__GNUC__) || defined(__MINGW32__)
 #pragma warning(disable: 4091)

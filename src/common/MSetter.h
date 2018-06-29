@@ -36,6 +36,7 @@ class MSetter
 	protected:
 		enum tag_MSETTERTYPE
 		{
+			st_aint,
 			st_LONG,
 			st_bool,
 			st_DWORD,
@@ -43,6 +44,10 @@ class MSetter
 
 		union
 		{
+			struct
+			{
+				std::atomic_int* mp_aint;
+			};
 			struct
 			{
 				// st_LONG
@@ -61,6 +66,7 @@ class MSetter
 			DWORD DataPtr[4];
 		};
 	public:
+		MSetter(std::atomic_int& st);
 		MSetter(LONG* st);
 		MSetter(bool* st);
 		MSetter(DWORD* st, DWORD setValue);

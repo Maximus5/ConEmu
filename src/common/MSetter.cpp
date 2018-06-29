@@ -32,6 +32,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MAssert.h"
 #include "MSetter.h"
 
+MSetter::MSetter(std::atomic_int& st)
+{
+	DEBUGTEST(ZeroStruct(DataPtr));
+	type = st_aint;
+	mp_aint = &st;
+	mp_aint->fetch_add(1);
+}
+
 MSetter::MSetter(LONG* st)
 {
 	DEBUGTEST(ZeroStruct(DataPtr));
@@ -70,22 +78,27 @@ MSetter::~MSetter()
 }
 void MSetter::Unlock()
 {
-	if (type==st_LONG)
+	switch (type)
 	{
+	case st_aint:
+		if (mp_aint)
+			mp_aint->fetch_sub(1);
+		mp_aint = nullptr;
+		break;
+	case st_LONG:
 		if (mp_longVal)
 			InterlockedDecrement(mp_longVal);
-		mp_longVal = NULL;
-	}
-	else if (type==st_bool)
-	{
+		mp_longVal = nullptr;
+		break;
+	case st_bool:
 		if (mp_boolVal)
 			*mp_boolVal = mb_OldBoolValue;
-		mp_boolVal = NULL;
-	}
-	else if (type==st_DWORD)
-	{
+		mp_boolVal = nullptr;
+		break;
+	case st_DWORD:
 		if (mpdw_DwordVal)
 			*mpdw_DwordVal = mdw_OldDwordValue;
-		mpdw_DwordVal = NULL;
+		mpdw_DwordVal = nullptr;
+		break;
 	}
 }
