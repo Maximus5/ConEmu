@@ -1286,12 +1286,14 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 		if (mp_ConEmu->isZoomed() || mp_ConEmu->isIconic() || mp_ConEmu->isFullScreen())
 			mp_ConEmu->SetWindowMode(wmNormal);
 
-		setWindowPos(NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+		POINT wndPos = RealPosFromVisual(newX, newY);
+
+		setWindowPos(NULL, wndPos.x, wndPos.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 
 		// Установить размер
 		mp_ConEmu->SizeWindow(newW, newH);
 
-		setWindowPos(NULL, newX, newY, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+		setWindowPos(NULL, wndPos.x, wndPos.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 	}
 
 	// Запомнить "идеальный" размер окна, выбранный пользователем
