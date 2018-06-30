@@ -1576,20 +1576,26 @@ void Settings::LoadPalettes(SettingsBase* reg)
 		lbDelete = true;
 	}
 
-
+	FreePalettes();
 
 	BOOL lbOpened = FALSE;
 	CEStr szBaseKey(gpSetCls->GetConfigPath(), L"\\Colors");
 
 	lbOpened = reg->OpenKey(szBaseKey, KEY_READ);
-	if (lbOpened)
+	if (!lbOpened)
 	{
-		FreePalettes();
+		// Predefined
+		CreatePredefinedPalettes(0);
+		_ASSERTE(Palettes!=NULL);
+		// Was initialize with "Default palettes"
+		_ASSERTE(PaletteCount == (int)countof(DefColors));
+	}
+	else
+	{
 
 		int UserCount = 0;
 		reg->Load(L"Count", UserCount);
 		reg->CloseKey();
-
 
 		// Predefined
 		CreatePredefinedPalettes(UserCount);
@@ -1628,10 +1634,10 @@ void Settings::LoadPalettes(SettingsBase* reg)
 				reg->CloseKey();
 			}
 		}
-
-		// sort
-		SortPalettes();
 	}
+
+	// sort
+	SortPalettes();
 
 	if (lbDelete)
 		delete reg;
