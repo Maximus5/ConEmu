@@ -39,6 +39,9 @@
     <ClInclude Include="common\InQueue.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="common\Keyboard.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="common\MAssert.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -129,6 +132,9 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="common\InQueue.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\Keyboard.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="common\MAssert.cpp">

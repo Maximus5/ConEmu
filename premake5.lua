@@ -122,6 +122,7 @@ local common_kernel = {
   "src/common/HandleKeeper.*",
   "src/common/HkFunc.*",
   "src/common/InQueue.*",
+  "src/common/Keyboard.*",
   "src/common/MAssert.*",
   "src/common/MConHandle.*",
   "src/common/Memory.*",

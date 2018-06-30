@@ -240,6 +240,7 @@
     <ClInclude Include="common\HandleKeeper.h" />
     <ClInclude Include="common\HkFunc.h" />
     <ClInclude Include="common\InQueue.h" />
+    <ClInclude Include="common\Keyboard.h" />
     <ClInclude Include="common\MAssert.h" />
     <ClInclude Include="common\MConHandle.h" />
     <ClInclude Include="common\MFileLog.h" />
@@ -272,6 +273,7 @@
     <ClCompile Include="common\HandleKeeper.cpp" />
     <ClCompile Include="common\HkFunc.cpp" />
     <ClCompile Include="common\InQueue.cpp" />
+    <ClCompile Include="common\Keyboard.cpp" />
     <ClCompile Include="common\MAssert.cpp" />
     <ClCompile Include="common\MConHandle.cpp" />
     <ClCompile Include="common\MFileLog.cpp" />

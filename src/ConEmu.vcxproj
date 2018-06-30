@@ -331,7 +331,6 @@
     <ClInclude Include="ConEmu\IconList.h" />
     <ClInclude Include="ConEmu\ImgButton.h" />
     <ClInclude Include="ConEmu\Inside.h" />
-    <ClInclude Include="ConEmu\Keyboard.h" />
     <ClInclude Include="ConEmu\LngData.h" />
     <ClInclude Include="ConEmu\LngDataEnum.h" />
     <ClInclude Include="ConEmu\LngDataHints.h" />
@@ -457,6 +456,7 @@
     <ClInclude Include="common\HandleKeeper.h" />
     <ClInclude Include="common\HkFunc.h" />
     <ClInclude Include="common\InQueue.h" />
+    <ClInclude Include="common\Keyboard.h" />
     <ClInclude Include="common\MArray.h" />
     <ClInclude Include="common\MAssert.h" />
     <ClInclude Include="common\MBSTR.h" />
@@ -569,7 +569,6 @@
     <ClCompile Include="ConEmu\IconList.cpp" />
     <ClCompile Include="ConEmu\ImgButton.cpp" />
     <ClCompile Include="ConEmu\Inside.cpp" />
-    <ClCompile Include="ConEmu\Keyboard.cpp" />
     <ClCompile Include="ConEmu\LngData.cpp" />
     <ClCompile Include="ConEmu\LngRc.cpp" />
     <ClCompile Include="ConEmu\LoadImg.cpp" />

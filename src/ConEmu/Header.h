@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MAssert.h"
 #include "../common/MStrDup.h"
 #include "../common/CEStr.h"
+#include "../common/Keyboard.h"
 
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 #define wmemmove_s(d,ds,s,ss) wmemmove(d,s,ss)
@@ -128,8 +129,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Undocumented messages
 #include "ConsoleMessages.h"
-
-#include "Keyboard.h"
 
 #define MAX_CMD_HISTORY 100
 #define MAX_CMD_HISTORY_SHOW 16

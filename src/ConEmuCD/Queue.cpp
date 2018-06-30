@@ -31,6 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuSrv.h"
 #include "Queue.h"
 
+#include "../common/Keyboard.h"
+
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s) // ConEmuC: Received key... / ConEmuC: Received input
 #define DEBUGSTRINPUTEVENT(s) //DEBUGSTR(s) // SetEvent(gpSrv->hInputEvent)
 #define DEBUGLOGINPUT(s) //DEBUGSTR(s) // ConEmuC.MouseEvent(X=

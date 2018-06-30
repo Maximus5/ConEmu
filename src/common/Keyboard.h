@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "../common/defines.h"
+#include "defines.h"
 
 // #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 bool isPressed(WORD vk);

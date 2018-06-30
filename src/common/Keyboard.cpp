@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
-#include "Header.h"
+#include "defines.h"
 #include "Keyboard.h"
 
 #define DEBUGSTRKEY(s) // DEBUGSTR(s)

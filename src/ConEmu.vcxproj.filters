@@ -162,9 +162,6 @@
     <ClInclude Include="ConEmu\Inside.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="ConEmu\Keyboard.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="ConEmu\LngData.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -540,6 +537,9 @@
     <ClInclude Include="common\InQueue.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="common\Keyboard.h">
+      <Filter>Common</Filter>
+    </ClInclude>
     <ClInclude Include="common\MArray.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -870,9 +870,6 @@
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Inside.cpp">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\Keyboard.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\LngData.cpp">
