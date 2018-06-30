@@ -1942,6 +1942,9 @@ int Settings::PaletteSetActive(LPCWSTR asName)
 		AppStd.nBackColorIdx = pPal->nBackColorIdx;
 		AppStd.nPopTextColorIdx = pPal->nPopTextColorIdx;
 		AppStd.nPopBackColorIdx = pPal->nPopBackColorIdx;
+
+		mb_FadeInitialized = false;
+		GetColors(-1, true);
 	}
 
 	return nPalIdx;
