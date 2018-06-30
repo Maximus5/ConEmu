@@ -507,6 +507,7 @@ HWND CTabPanelWin::CreateTabbar()
 
 	// Retrieve created tabbar size (height)
 	int iHeight = QueryTabbarHeight();
+	_ASSERTE(nHeightExpected == iHeight);
 
 	// And log it
 	wchar_t szInfo[100];
@@ -1433,50 +1434,17 @@ int CTabPanelWin::QueryTabbarHeight()
 {
 	if (!this) return 0;
 
-	// Нужно пересчитать высоту таба
-
-	//bool bDummyCreate = (hTabs == NULL);
-	//
-	//if (bDummyCreate)
-	//{
-	//	hTabs = CreateTabbar(true);
-	//}
-
-	// #DPI while jumping from high-dpi to low-dpi mon mh_Tabbar is re-created during jump (window was not moved yet?) and we have incorrect rcClient
-	/*
-	if (mh_Tabbar && IsWindow(mh_Tabbar) && !IsWin10())
+	// Размеры таба через TabCtrl_AdjustRect считаются криво при прыжках по мониторам
+	//_ASSERTE((hTabs!=NULL) && "Creating of a dummy tab control failed");
+	int newHeight = gpConEmu->GetDefaultTabbarHeight();
+	if (mn_TabHeight != newHeight)
 	{
-		// нас интересует смещение клиентской области. Т.е. начало - из 0. Остальное не важно
-		RECT rcClient = MakeRect(600, 400);
-		//rcClient = gpConEmu->GetGuiClientRect();
-		TabCtrl_AdjustRect(mh_Tabbar, FALSE, &rcClient);
-		mn_TabHeight = rcClient.top - (gpConEmu->IsThemed() ? 0 : 2) - (gpSet->FontUseUnits ? 1 : 0);
+		wchar_t szInfo[100];
+		msprintf(szInfo, countof(szInfo), L"CTabPanelWin::mn_TabHeight changed from %i to %i", mn_TabHeight, newHeight);
+		LogString(szInfo);
+		DEBUGSTRSIZE(szInfo);
+		mn_TabHeight = newHeight;
 	}
-	else
-	*/
-	{
-		// Размеры таба через TabCtrl_AdjustRect считаются криво при прыжках по мониторам
-		//_ASSERTE((hTabs!=NULL) && "Creating of a dummy tab control failed");
-		RECT rcTab = gpConEmu->RebarRect();
-		// #SIZE_TODO Use RebarRect() instead of calculation
-		int lfHeight = gpSetCls->EvalSize(gpSet->nTabFontHeight, esf_Vertical|esf_CanUseDpi|esf_CanUseUnits);
-		int newHeight = gpFontMgr->EvalFontHeight(gpSet->sTabFontFace, lfHeight, gpSet->nTabFontCharSet)
-			+ gpSetCls->EvalSize((lfHeight < 0) ? 8 : 9, esf_Vertical);
-		if (mn_TabHeight != newHeight)
-		{
-			wchar_t szInfo[100];
-			msprintf(szInfo, countof(szInfo), L"CTabPanelWin::mn_TabHeight changed from %i to %i", mn_TabHeight, newHeight);
-			LogString(szInfo);
-			DEBUGSTRSIZE(szInfo);
-			mn_TabHeight = newHeight;
-		}
-	}
-
-	//if (bDummyCreate && hTabs)
-	//{
-	//	DestroyWindow(hTabs);
-	//	mh_Tabbar = NULL;
-	//}
 
 	return mn_TabHeight;
 }

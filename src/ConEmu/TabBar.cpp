@@ -1009,48 +1009,6 @@ void CTabBarClass::Update(BOOL abPosted/*=FALSE*/)
 	return; // Just for clearness
 }
 
-// #SIZE_TODO Eliminate the function
-#if 0
-RECT CTabBarClass::GetMargins(bool bIgnoreVisibility /*= false*/)
-{
-	RECT rcNewMargins = {0,0};
-
-	if (!this)
-	{
-		_ASSERTE(this);
-		return rcNewMargins;
-	}
-
-	if (bIgnoreVisibility || (_active || (gpSet->isTabs == 1)))
-	{
-		if (!_tabHeight)
-		{
-			// Вычислить высоту
-			GetTabbarHeight();
-		}
-
-		if (_tabHeight /*&& IsTabsShown()*/)
-		{
-			_ASSERTE(_tabHeight!=0 && "Height must be evaluated already!");
-
-			if (gpSet->nTabsLocation == 1)
-				rcNewMargins = MakeRect(0,0,0,_tabHeight);
-			else
-				rcNewMargins = MakeRect(0,_tabHeight,0,0);
-
-			//if (memcmp(&rcNewMargins, &m_Margins, sizeof(m_Margins)) != 0)
-			//{
-			//	m_Margins = rcNewMargins;
-			//	gpSet->UpdateMargins(m_Margins);
-			//}
-		}
-	}
-	//return m_Margins;
-
-	return rcNewMargins;
-}
-#endif
-
 void CTabBarClass::UpdatePosition()
 {
 	if (!mp_Rebar->IsCreated())
@@ -1401,24 +1359,6 @@ void CTabBarClass::OnShowButtonsChanged()
 
 	Reposition();
 }
-
-// #SIZE_TODO Eliminate the function
-#if 0
-int CTabBarClass::GetTabbarHeight()
-{
-	if (!this) return 0;
-
-	_ASSERTE(gpSet->isTabs!=0);
-
-	if (mb_ForceRecalcHeight || (_tabHeight == 0))
-	{
-		// Узнать высоту созданного
-		_tabHeight = mp_Rebar->QueryTabbarHeight();
-	}
-
-	return _tabHeight;
-}
-#endif
 
 int CTabBarClass::PrepareTab(CTab& pTab, CVirtualConsole *apVCon)
 {

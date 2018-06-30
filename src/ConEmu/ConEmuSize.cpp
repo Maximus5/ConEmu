@@ -245,20 +245,6 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 			{
 				rc = mi.noCaption.FrameMargins;
 			}
-
-			#if 0
-			// We'll hide frame partially with UpdateWindowRgn if our frame is invisible
-			// so, frame may be larger than visible part
-			if (mi.HasWin10Frame)
-			{
-				// rc.top = mi.Win10Frame.bottom; // no caption?
-			}
-			else
-			{
-				// #SIZE_TODO What?
-				rc.left = rc.right = rc.top = rc.bottom = GetSelfFrameWidth();
-			}
-			#endif
 		}
 		processed = true;
 	}
