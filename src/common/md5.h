@@ -38,8 +38,12 @@ typedef struct {
 	MD5_u32plus block[16];
 } MD5_CTX;
 
+/// Prepare MD5 calculation context
 extern void MD5_Init(MD5_CTX *ctx);
+/// Push data to MD5 calculation
 extern void MD5_Update(MD5_CTX *ctx, const void *data, unsigned long size);
+/// Complete calculation and return result
+/// @param  result - buffer to `unsigned char[16]`
 extern void MD5_Final(unsigned char *result, MD5_CTX *ctx);
 
 #endif
