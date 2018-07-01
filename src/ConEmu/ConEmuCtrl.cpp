@@ -950,11 +950,11 @@ bool CConEmuCtrl::key_ConsoleNum(const ConEmuChord& VkState, bool TestOnly, cons
 	if (TestOnly)
 		return true;
 
-	int nNewIdx = -1;
+	int nNewIdx = std::numeric_limits<int>::min();
 
+	// If there are more than 9 consoles, use two-digit activation
 	if (CVConGroup::isVConExists(10))
 	{
-		// цифровая двухкнопочная активация, если уже больше 9-и консолей открыто
 		if (gpConEmu->mn_DoubleKeyConsoleNum)
 		{
 			if ((VkState.Vk >= '0') && (VkState.Vk <= '9'))
@@ -966,8 +966,14 @@ bool CConEmuCtrl::key_ConsoleNum(const ConEmuChord& VkState, bool TestOnly, cons
 		}
 		else
 		{
+			// Activate Last console at once
+			if (VkState.Vk == '0')
+			{
+				nNewIdx = -1;
+				_ASSERTE(gpConEmu->mn_DoubleKeyConsoleNum == 0);
+			}
 			// Store first digit for 2-digit 0-based console number
-			if ((VkState.Vk >= '0') && (VkState.Vk <='9' ))
+			else if ((VkState.Vk > '0') && (VkState.Vk <='9' ))
 			{
 				gpConEmu->mn_DoubleKeyConsoleNum = VkState.Vk;
 			}
@@ -980,16 +986,20 @@ bool CConEmuCtrl::key_ConsoleNum(const ConEmuChord& VkState, bool TestOnly, cons
 	else
 	{
 		// Let get 0-based index
-
 		if ((VkState.Vk >= '1') && (VkState.Vk <= '9'))
+		{
 			nNewIdx = VkState.Vk - '1';
+		}
+		// Activate Last console at once
 		else if (VkState.Vk == '0')
-			nNewIdx = 9;
+		{
+			nNewIdx = -1;
+		}
 
 		gpConEmu->ResetDoubleKeyConsoleNum(pRCon);
 	}
 
-	if (nNewIdx >= 0)
+	if (nNewIdx >= -1)
 		gpConEmu->ConActivate(nNewIdx);
 
 	return true;

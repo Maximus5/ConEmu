@@ -4187,11 +4187,14 @@ bool CVConGroup::ConActivate(CVConGuard& VCon, int nCon)
 	return true; // Success
 }
 
-// nCon - zero-based index of console
+// nCon - zero-based index of console; -1 for last console
 bool CVConGroup::ConActivate(int nCon)
 {
 	FLASHWINFO fl = {sizeof(FLASHWINFO)}; fl.dwFlags = FLASHW_STOP; fl.hwnd = ghWnd;
 	FlashWindowEx(&fl); // При многократных созданиях мигать начинает...
+
+	if (nCon == -1)
+		nCon = GetConCount() - 1;
 
 	if (nCon >= 0 && nCon < (int)countof(gp_VCon))
 	{

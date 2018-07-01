@@ -3103,7 +3103,7 @@ bool CConEmuMain::ConActivateNext(bool abNext)
 	return CVConGroup::ConActivateNext(abNext);
 }
 
-// nCon - zero-based index of console
+// nCon - zero-based index of console; -1 for last console
 bool CConEmuMain::ConActivate(int nCon)
 {
 	return CVConGroup::ConActivate(nCon);
