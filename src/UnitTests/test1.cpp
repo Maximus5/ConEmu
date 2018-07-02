@@ -33,6 +33,34 @@ int main(int argc, char** argv)
 	}
 
 	{
+	Verify_Step("CEStr ctor_1");
+	CEStr ls1; ls1.Set(L"Test");
+	CEStr ls2(ls1);
+	Verify0((ls1.ms_Val && ls2.ms_Val && ls1.ms_Val!=ls2.ms_Val),"ls1.ms_Val!=ls2.ms_Val)");
+	}
+
+	{
+	Verify_Step("CEStr ctor_2");
+	CEStr ls1; ls1.Set(L"Test");
+	CEStr ls2 = ls1;
+	Verify0((ls1.ms_Val && ls2.ms_Val && ls1.ms_Val!=ls2.ms_Val),"ls1.ms_Val!=ls2.ms_Val)");
+	}
+
+	{
+	Verify_Step("CEStr assign_1");
+	CEStr ls1; ls1.Set(L"Test");
+	CEStr ls2(ls1.ms_Val);
+	Verify0((ls1.ms_Val && ls2.ms_Val && ls1.ms_Val!=ls2.ms_Val),"ls1.ms_Val!=ls2.ms_Val)");
+	}
+
+	{
+	Verify_Step("CEStr assign_2");
+	CEStr ls1; ls1.Set(L"Test");
+	CEStr ls2 = ls1.ms_Val;
+	Verify0((ls1.ms_Val && ls2.ms_Val && ls1.ms_Val!=ls2.ms_Val),"ls1.ms_Val!=ls2.ms_Val)");
+	}
+
+	{
 	Verify_Step("ls1(`Test`)");
 	CEStr ls1(L"Test");
 	Verify0((ls1.ms_Val && 0==wcscmp(ls1.ms_Val,L"Test")),"ls1==`Test`");

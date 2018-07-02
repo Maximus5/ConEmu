@@ -67,6 +67,11 @@ CEStr::CEStr(CEStr&& asStr)
 	std::swap(mn_MaxCount, asStr.mn_MaxCount);
 }
 
+CEStr::CEStr(const CEStr& asStr)
+{
+	Set(asStr.ms_Val);
+}
+
 CEStr::CEStr(wchar_t*&& asPtr)
 {
 	CESTRLOG1("CEStr::CEStr(wchar_t* RVAL_REF x%p)", asPtr);
@@ -159,6 +164,15 @@ CEStr& CEStr::operator=(CEStr&& asStr)
 	return *this;
 }
 
+CEStr& CEStr::operator=(const CEStr& asStr)
+{
+	if (ms_Val == asStr.ms_Val)
+		return *this;
+	Clear();
+	Set(asStr.ms_Val);
+	return *this;
+}
+
 CEStr& CEStr::operator=(wchar_t*&& asPtr)
 {
 	CESTRLOG1("CEStr::=(wchar_t* RVAL_REF x%p)", asPtr);
@@ -182,6 +196,10 @@ CEStr::~CEStr()
 		SetEnvironmentVariable(ms_RestoreVarName, ms_Val);
 	}
 
+	#ifdef _DEBUG
+	if (ms_Val)
+		*ms_Val = 0;
+	#endif
 	SafeFree(ms_Val);
 }
 
@@ -320,6 +338,11 @@ int CEStr::Compare(LPCWSTR asText, bool abCaseSensitive /*= false*/) const
 	else
 		iCmp = lstrcmpi(ms_Val, asText);
 	return iCmp;
+}
+
+bool CEStr::operator==(const wchar_t* asStr) const
+{
+	return Compare(asStr) == 0;
 }
 
 bool CEStr::IsPossibleSwitch() const

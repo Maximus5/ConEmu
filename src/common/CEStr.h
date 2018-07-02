@@ -59,30 +59,6 @@ public:
 	bool mb_RestoreEnvVar = false; // Если используется для сохранения переменной окружения, восстановить при закрытии объекта
 	wchar_t ms_RestoreVarName[32] = L"";
 
-
-	// *** Not copyable, not implemented, use explicit Set method ***
-	#if defined(__GNUC__)
-	public:
-	CEStr(const CEStr&) = delete;
-	CEStr& operator=(const CEStr &) = delete;
-	#else
-	private:
-	// We may use "=delete" in C++11, but than cl shows only first error
-	CEStr(const CEStr&);
-	CEStr& operator=(const CEStr &);
-	#endif
-	// *** Not copyable, not implemented, use explicit Set method ***
-
-	// *** VC9 can't distinct wchar_t* as lval or rval ***
-	// *** so we prohibit wchar_t assignments in VC14 to find problems ***
-	#if defined(HAS_CPP11)
-	private:
-	CEStr(wchar_t*&);
-	CEStr& operator=(wchar_t*&);
-	#endif
-	// *** VC9 can't distinct wchar_t* as lval or rval ***
-
-
 private:
 	LPCWSTR AttachInt(wchar_t*& asPtr);
 
@@ -92,10 +68,14 @@ public:
 	operator LPCWSTR() const;
 	operator bool() const;
 	LPCWSTR c_str(LPCWSTR asNullSubstitute = NULL) const;
-	int Compare(LPCWSTR asText, bool abCaseSensitive = false) const;
 	LPCWSTR Right(INT_PTR cchMaxCount) const;
 	LPCWSTR Mid(INT_PTR cchOffset) const;
+
+	int Compare(LPCWSTR asText, bool abCaseSensitive = false) const;
+	bool operator==(const wchar_t* asStr) const;
+
 	CEStr& operator=(CEStr&& asStr);
+	CEStr& operator=(const CEStr& asStr);
 	CEStr& operator=(wchar_t*&& asPtr);
 	CEStr& operator=(const wchar_t* asPtr);
 
@@ -125,6 +105,7 @@ public:
 
 	CEStr();
 	CEStr(CEStr&& asStr);
+	CEStr(const CEStr& asStr);
 	CEStr(wchar_t*&& asPtr);
 	CEStr(const wchar_t* asStr1, const wchar_t* asStr2 = NULL, const wchar_t* asStr3 = NULL, const wchar_t* asStr4 = NULL, const wchar_t* asStr5 = NULL, const wchar_t* asStr6 = NULL, const wchar_t* asStr7 = NULL, const wchar_t* asStr8 = NULL, const wchar_t* asStr9 = NULL);
 	~CEStr();

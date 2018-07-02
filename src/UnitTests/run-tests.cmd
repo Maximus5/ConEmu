@@ -21,12 +21,12 @@ if NOT "%~1" == "" (
   goto :end_of_tests
 )
 
-call cecho /blue "Following files must NOT be compiled without errors"
-call :fail1
-call :fail2
-call :fail3
-call :fail4
-call :fail5
+rem call cecho /blue "Following files must NOT be compiled without errors"
+rem call :fail1
+rem call :fail2
+rem call :fail3
+rem call :fail4
+rem call :fail5
 
 call cecho /blue "Following files must BE compiled/executed without errors"
 call :test1
