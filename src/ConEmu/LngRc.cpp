@@ -224,10 +224,10 @@ bool CLngRc::LoadResources(LPCWSTR asLanguage, LPCWSTR asFile)
 	ms_l10n.Set(asFile);
 
 	// Allocate intial array size
-	m_CmnHints.alloc(4096);
-	m_MnuHints.alloc(512);
-	m_Controls.alloc(4096);
-	m_Strings.alloc(lng_NextId);
+	m_CmnHints.reserve(4096);
+	m_MnuHints.reserve(512);
+	m_Controls.reserve(4096);
+	m_Strings.reserve(lng_NextId);
 
 	if (jsonFile->getItem(L"languages", jsonSection) && (jsonSection.getType() == MJsonValue::json_Array))
 		LoadLanguages(&jsonSection);

@@ -597,9 +597,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	}
 
 	// Allocate memory for process tree
-	//pList = (ProcInfo*)malloc(cchMax*sizeof(*pList));
-	//if (!pList)
-	if (!List.alloc(4096))
+	if (!List.reserve(4096))
 	{
 		if (!bSilent)
 			_printf(ExpFailedPref ", List allocation failed\n");

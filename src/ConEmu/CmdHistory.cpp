@@ -80,7 +80,7 @@ UINT CommandHistory::CreateMSZ(wchar_t*& rsMSZ)
 	INT_PTR iCount = Items.size();
 	UINT cchMax = 0;
 	MArray<int> len;
-	len.alloc(iCount);
+	len.reserve(iCount);
 
 	for (INT_PTR i = 0; i < iCount; i++)
 	{

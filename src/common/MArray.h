@@ -327,7 +327,7 @@ class MArray
 		};
 		#endif
 
-		bool alloc(ssize_t _nCount)
+		bool reserve(ssize_t _nCount)
 		{
 			if (mn_TySize==0)
 			{
@@ -338,14 +338,14 @@ class MArray
 			{
 				if (_nCount>mn_MaxSize)
 				{
-					ssize_t n1=(_nCount-mn_MaxSize);
-					addsize(std::max<ssize_t>(n1, 10));
+					addsize(_nCount-mn_MaxSize);
 				}
 				// 01.03.2005 !!! Only allocate memory, Not initialize values!
 				//mn_Elements = std::min(_nCount,mn_MaxSize);
 			}
 			return true;
 		};
+
 		void set_at(ssize_t _Index, _Ty & _Item)
 		{
 			if (mn_TySize==0)

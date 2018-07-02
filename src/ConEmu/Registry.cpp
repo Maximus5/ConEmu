@@ -530,7 +530,7 @@ namespace
 			hFile = CreateFile(pszXmlFile, GENERIC_WRITE, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 			if (!hFile || hFile == INVALID_HANDLE_VALUE)
 				throw FileException(GetLastError());
-			data.alloc(128*1024);
+			data.reserve(128*1024);
 		};
 
 		~FileWriter()

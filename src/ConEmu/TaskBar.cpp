@@ -83,7 +83,7 @@ void CTaskBar::Taskbar_Init()
 {
 	HRESULT hr = S_OK;
 
-	m_Ghosts.alloc(MAX_CONSOLE_COUNT);
+	m_Ghosts.reserve(MAX_CONSOLE_COUNT);
 
 	// OleInitialize calls CoInitializeEx internally to initialize the COM library on the current apartment.
 	// Because OLE operations are not thread-safe, OleInitialize specifies the concurrency model as single-thread apartment.

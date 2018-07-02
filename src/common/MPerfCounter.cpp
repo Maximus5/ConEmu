@@ -37,7 +37,7 @@ MPerfCounter::MPerfCounter(UINT Counters /*= 1*/)
 	if (!QueryPerformanceFrequency(&m_Frequency) || (m_Frequency.QuadPart < 0))
 		m_Frequency.QuadPart = 0;
 	m_Total.QuadPart = 0;
-	m_Counters.alloc((INT_PTR)Counters);
+	m_Counters.reserve((INT_PTR)Counters);
 	PerfCounterData dummy = {};
 	for (UINT i = 0; i < Counters; i++)
 	{
