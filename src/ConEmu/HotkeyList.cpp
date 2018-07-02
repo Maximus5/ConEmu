@@ -40,7 +40,7 @@ ConEmuHotKey* ConEmuHotKeyList::Add(int DescrLangID, ConEmuHotKeyType HkType, Ho
 	ConEmuHotKey* p = &dummy;
 
 	#ifdef _DEBUG
-	for (INT_PTR i = 0; i < size(); i++)
+	for (ssize_t i = 0; i < size(); i++)
 	{
 		if ((*this)[i].DescrLangID == DescrLangID)
 		{
@@ -70,7 +70,7 @@ void ConEmuHotKeyList::UpdateNumberModifier()
 {
 	ConEmuModifiers Mods = cvk_NumHost|CEVkMatch::GetFlagsFromMod(gpSet->HostkeyNumberModifier());
 
-	for (INT_PTR i = this->size(); i >= 0; i--)
+	for (ssize_t i = this->size() - 1; i >= 0; i--)
 	{
 		ConEmuHotKey& hk = (*this)[i];
 		if (hk.HkType == chk_NumHost)
@@ -82,7 +82,7 @@ void ConEmuHotKeyList::UpdateArrowModifier()
 {
 	ConEmuModifiers Mods = cvk_ArrHost|CEVkMatch::GetFlagsFromMod(gpSet->HostkeyArrowModifier());
 
-	for (INT_PTR i = this->size(); i >= 0; i--)
+	for (ssize_t i = this->size() - 1; i >= 0; i--)
 	{
 		ConEmuHotKey& hk = (*this)[i];
 		if (hk.HkType == chk_ArrHost)
@@ -92,7 +92,7 @@ void ConEmuHotKeyList::UpdateArrowModifier()
 
 void ConEmuHotKeyList::ReleaseHotkeys()
 {
-	for (int i = size() - 1; i >= 0; i--)
+	for (ssize_t i = size() - 1; i >= 0; i--)
 	{
 		SafeFree((*this)[i].GuiMacro);
 	}
