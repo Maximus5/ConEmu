@@ -450,7 +450,6 @@
     <ClInclude Include="common\DefTermBase.h" />
     <ClInclude Include="common\Dump.h" />
     <ClInclude Include="common\EmergencyShow.h" />
-    <ClInclude Include="common\ExecPty.h" />
     <ClInclude Include="common\FarVersion.h" />
     <ClInclude Include="common\GdiPlusLt.h" />
     <ClInclude Include="common\HandleKeeper.h" />
@@ -491,10 +490,8 @@
     <ClInclude Include="common\Memory.h" />
     <ClInclude Include="common\Monitors.h" />
     <ClInclude Include="common\PipeServer.h" />
-    <ClInclude Include="common\ProcList.h" />
     <ClInclude Include="common\ProcessData.h" />
     <ClInclude Include="common\ProcessSetEnv.h" />
-    <ClInclude Include="common\Processes.h" />
     <ClInclude Include="common\RConStartArgs.h" />
     <ClInclude Include="common\RConStartArgsEx.h" />
     <ClInclude Include="common\RgnDetect.h" />

@@ -262,6 +262,8 @@ project "ConEmu"
     "**/!*.*",
   }
 
+  removefiles (common_remove)
+
   vpaths {
     { ["Common"]    = {"src/common/*.h"} },
     { ["Resources"] = {"**/*.rc", "**/*.rc2", "**/*.manifest", "**/*.bmp", "**/*.cur", "**/*.ico"} },

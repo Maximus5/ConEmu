@@ -519,9 +519,6 @@
     <ClInclude Include="common\EmergencyShow.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="common\ExecPty.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="common\FarVersion.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -642,16 +639,10 @@
     <ClInclude Include="common\PipeServer.h">
       <Filter>Common</Filter>
     </ClInclude>
-    <ClInclude Include="common\ProcList.h">
-      <Filter>Common</Filter>
-    </ClInclude>
     <ClInclude Include="common\ProcessData.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="common\ProcessSetEnv.h">
-      <Filter>Common</Filter>
-    </ClInclude>
-    <ClInclude Include="common\Processes.h">
       <Filter>Common</Filter>
     </ClInclude>
     <ClInclude Include="common\RConStartArgs.h">
