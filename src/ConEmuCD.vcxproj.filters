@@ -4,6 +4,9 @@
     <Filter Include="Automation">
       <UniqueIdentifier>{862AF0EC-72E2-313A-DBE9-0A96C7C0CC2A}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Console">
+      <UniqueIdentifier>{389F3134-A47E-B0CF-AD96-3BA619F51631}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Exports">
       <UniqueIdentifier>{BA9346E3-2673-C57E-2F8B-50559BE92BE0}</UniqueIdentifier>
     </Filter>
@@ -23,6 +26,9 @@
   <ItemGroup>
     <ClInclude Include="ConEmuCD\Actions.h">
       <Filter>Automation</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\ConData.h">
+      <Filter>Console</Filter>
     </ClInclude>
     <ClInclude Include="ConEmuCD\ConEmuSrv.h">
       <Filter>Headers</Filter>
@@ -85,6 +91,9 @@
   <ItemGroup>
     <ClCompile Include="ConEmuCD\Actions.cpp">
       <Filter>Automation</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\ConData.cpp">
+      <Filter>Console</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuCD\ConEmuCmd.cpp">
       <Filter>Sources</Filter>
