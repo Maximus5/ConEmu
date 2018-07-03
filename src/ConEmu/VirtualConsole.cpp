@@ -1578,7 +1578,7 @@ void CVirtualConsole::PatInvertRect(HDC hPaintDC, const RECT& rect, HDC hFromDC,
 void CVirtualConsole::ResetHighlightCoords()
 {
 	ResetHighlightHyperlinks();
-	m_HighlightInfo.LastRect.eraseall();
+	m_HighlightInfo.LastRect.clear();
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
 	m_HighlightInfo.m_Cur.X = m_HighlightInfo.m_Cur.Y = -1;
 }
@@ -1804,7 +1804,7 @@ bool CVirtualConsole::CalcHighlightRowCol(COORD* pcrPos)
 
 void CVirtualConsole::UpdateHighlights()
 {
-	m_HighlightInfo.LastRect.eraseall();
+	m_HighlightInfo.LastRect.clear();
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
 
 	// During any popup menus (system, tab, etc.) don't highlight row/col
@@ -1928,7 +1928,7 @@ void CVirtualConsole::UndoHighlights()
 			DeleteObject(hBr);
 	}
 
-	m_HighlightInfo.LastRect.eraseall();
+	m_HighlightInfo.LastRect.clear();
 }
 
 bool CVirtualConsole::CheckTransparent()
@@ -3024,7 +3024,7 @@ void CVirtualConsole::UpdateText()
 
 	// Screen updated, reset until next "UpdateHighlights()" call
 	m_HighlightInfo.m_Last.X = m_HighlightInfo.m_Last.Y = -1;
-	m_HighlightInfo.LastRect.eraseall();
+	m_HighlightInfo.LastRect.clear();
 
 	return;
 }

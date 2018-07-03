@@ -159,8 +159,7 @@ bool CAttachDlg::OnStartAttach()
 	int iSel, iCur;
 	DWORD nTID;
 	HANDLE hThread = NULL;
-	AttachParm *pParm = NULL;
-	MArray<AttachParm> Parms;
+	MArray<AttachParm>* Parms = new MArray<AttachParm>();
 	//HWND hAttachWnd = NULL;
 
 	ShowWindow(mh_Dlg, SW_HIDE);
@@ -205,17 +204,12 @@ bool CAttachDlg::OnStartAttach()
 			goto wrap;
 		}
 
-		Parms.push_back(L);
+		Parms->push_back(L);
 	}
 
-	if (Parms.empty())
+	if (Parms->empty())
 	{
 		goto wrap;
-	}
-	else
-	{
-		AttachParm N = {NULL};
-		Parms.push_back(N);
 	}
 
 	//// Чтобы клик от мышки в консоль не провалился
@@ -229,16 +223,8 @@ bool CAttachDlg::OnStartAttach()
 
 	// Работу делаем в фоновом потоке, чтобы не блокировать главный
 	// (к окну ConEmu должна подцепиться новая вкладка)
-	pParm = Parms.detach();
-	if (!pParm)
 	{
-		swprintf_c(szItem, L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-		DisplayLastError(L"Parms.detach() failed", -1, 0, szItem);
-		goto wrap;
-	}
-	else
-	{
-		hThread = apiCreateThread((LPTHREAD_START_ROUTINE)StartAttachThread, pParm, &nTID, "CAttachDlg::StartAttachThread#1");
+		hThread = apiCreateThread((LPTHREAD_START_ROUTINE)StartAttachThread, Parms, &nTID, "CAttachDlg::StartAttachThread#1");
 		if (!hThread)
 		{
 			DWORD dwErr = GetLastError();
@@ -258,7 +244,7 @@ wrap:
 
 CAttachDlg::AttachMacroRet CAttachDlg::AttachFromMacro(DWORD anPID, bool abAlternative)
 {
-	MArray<AttachParm> Parms;
+	MArray<AttachParm>* Parms = new MArray<AttachParm>();
 
 	HWND hFind = NULL;
 	CProcessData ProcessData;
@@ -286,25 +272,18 @@ CAttachDlg::AttachMacroRet CAttachDlg::AttachFromMacro(DWORD anPID, bool abAlter
 		else
 			continue;
 		p.bAlternativeMode = abAlternative;
-		Parms.push_back(p);
+		Parms->push_back(p);
 	}
 
-	if (Parms.empty())
+	if (Parms->empty())
 		return amr_WindowNotFound;
-	if (Parms.size() > 1)
+	if (Parms->size() > 1)
 		return amr_Ambiguous;
-
-	AttachParm Null = {};
-	Parms.push_back(Null);
 
 	// Работу делаем в фоновом потоке, чтобы не блокировать главный
 	// (к окну ConEmu должна подцепиться новая вкладка)
-	AttachParm* pParm = Parms.detach();
-	if (!pParm)
-		return amr_Unexpected;
-
 	DWORD nTID = 0;
-	HANDLE hThread = apiCreateThread((LPTHREAD_START_ROUTINE)StartAttachThread, pParm, &nTID, "CAttachDlg::StartAttachThread#2");
+	HANDLE hThread = apiCreateThread((LPTHREAD_START_ROUTINE)StartAttachThread, Parms, &nTID, "CAttachDlg::StartAttachThread#2");
 	if (!hThread)
 	{
 		//DWORD dwErr = GetLastError();
@@ -947,7 +926,7 @@ wrap:
 
 // Работу делаем в фоновом потоке, чтобы не блокировать главный
 // (к окну ConEmu должна подцепиться новая вкладка)
-DWORD CAttachDlg::StartAttachThread(AttachParm* lpParam)
+DWORD CAttachDlg::StartAttachThread(MArray<AttachParm>* lpParam)
 {
 	if (!lpParam)
 	{
@@ -957,13 +936,13 @@ DWORD CAttachDlg::StartAttachThread(AttachParm* lpParam)
 
 	bool lbRc = true;
 
-	for (AttachParm* p = lpParam; p->hAttachWnd; p++)
+	for (const AttachParm& p : *lpParam)
 	{
-		if (!StartAttach(p->hAttachWnd, p->nPID, p->nBits, p->nType, p->bAlternativeMode, p->bLeaveOpened))
+		if (!StartAttach(p.hAttachWnd, p.nPID, p.nBits, p.nType, p.bAlternativeMode, p.bLeaveOpened))
 			lbRc = false;
 	}
 
-	free(lpParam);
+	delete lpParam;
 
 	if (!lbRc)
 		return 10;

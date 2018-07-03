@@ -79,7 +79,7 @@ protected:
 	};
 	static bool CanAttachWindow(HWND hFind, DWORD nSkipPID, CProcessData* apProcessData, AttachWndInfo& Info);
 public:
-	static DWORD WINAPI StartAttachThread(AttachParm* lpParam);
+	static DWORD WINAPI StartAttachThread(MArray<AttachParm>* lpParam);
 	enum AttachMacroRet
 	{
 		amr_Success = 0,

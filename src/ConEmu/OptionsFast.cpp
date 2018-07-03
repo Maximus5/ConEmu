@@ -983,7 +983,6 @@ public:
 			SafeFree(f.rsFound);
 			SafeFree(f.rsOptionalFull);
 		}
-		this->eraseall();
 	}
 
 	void Add(const wchar_t* asFound, const wchar_t* asOptionalFull)
@@ -1504,36 +1503,36 @@ public:
 		UINT idx = 0;
 
 		struct impl {
-			static int SortRoutine(const AppInfo* e1, const AppInfo* e2)
+			static int SortRoutine(const AppInfo& e1, const AppInfo& e2)
 			{
 				// Compare task base name
-				int iNameCmp = lstrcmpi(e1->szTaskBaseName, e2->szTaskBaseName);
+				int iNameCmp = lstrcmpi(e1.szTaskBaseName, e2.szTaskBaseName);
 				if (iNameCmp)
 					return (iNameCmp < 0) ? -1 : 1;
 
 				// Primary task - to top
-				if (e1->bPrimary && !e2->bPrimary)
+				if (e1.bPrimary && !e2.bPrimary)
 					return -1;
-				else if (e2->bPrimary && !e1->bPrimary)
+				else if (e2.bPrimary && !e1.bPrimary)
 					return 1;
 				#ifdef _DEBUG
-				else if (e1->bPrimary && e2->bPrimary)
-					_ASSERTE(!e1->bPrimary || !e2->bPrimary); // Two primary tasks are not allowed!
+				else if (e1.bPrimary && e2.bPrimary)
+					_ASSERTE(!e1.bPrimary || !e2.bPrimary); // Two primary tasks are not allowed!
 				#endif
 
 				// Compare exe version
-				if (e1->Ver.dwFileVersionMS < e2->Ver.dwFileVersionMS)
+				if (e1.Ver.dwFileVersionMS < e2.Ver.dwFileVersionMS)
 					return 1;
-				if (e1->Ver.dwFileVersionMS > e2->Ver.dwFileVersionMS)
+				if (e1.Ver.dwFileVersionMS > e2.Ver.dwFileVersionMS)
 					return -1;
-				if (e1->Ver.dwFileVersionLS < e2->Ver.dwFileVersionLS)
+				if (e1.Ver.dwFileVersionLS < e2.Ver.dwFileVersionLS)
 					return 1;
-				if (e1->Ver.dwFileVersionLS > e2->Ver.dwFileVersionLS)
+				if (e1.Ver.dwFileVersionLS > e2.Ver.dwFileVersionLS)
 					return -1;
 				// And bitness
-				if (e1->dwBits < e2->dwBits)
+				if (e1.dwBits < e2.dwBits)
 					return 1;
-				if (e1->dwBits > e2->dwBits)
+				if (e1.dwBits > e2.dwBits)
 					return -1;
 
 				// Equal?
@@ -1846,30 +1845,30 @@ public:
 			LPCWSTR pszPrefix = (Installed.size() > 1) ? szFarPrefix : L"";
 
 			struct impl {
-				static int SortRoutine(const AppInfo* e1, const AppInfo* e2)
+				static int SortRoutine(const AppInfo& e1, const AppInfo& e2)
 				{
 					// Primary task - to top
-					if (e1->bPrimary && !e2->bPrimary)
+					if (e1.bPrimary && !e2.bPrimary)
 						return -1;
-					else if (e2->bPrimary && !e1->bPrimary)
+					else if (e2.bPrimary && !e1.bPrimary)
 						return 1;
 					#ifdef _DEBUG
-					else if (e1->bPrimary && e2->bPrimary)
-						_ASSERTE(!e1->bPrimary || !e2->bPrimary); // Two primary tasks are not allowed!
+					else if (e1.bPrimary && e2.bPrimary)
+						_ASSERTE(!e1.bPrimary || !e2.bPrimary); // Two primary tasks are not allowed!
 					#endif
 
 					// Compare exe version
-					if (e1->FarVer.dwVer < e2->FarVer.dwVer)
+					if (e1.FarVer.dwVer < e2.FarVer.dwVer)
 						return 1;
-					if (e1->FarVer.dwVer > e2->FarVer.dwVer)
+					if (e1.FarVer.dwVer > e2.FarVer.dwVer)
 						return -1;
-					if (e1->FarVer.dwBuild < e2->FarVer.dwBuild)
+					if (e1.FarVer.dwBuild < e2.FarVer.dwBuild)
 						return 1;
-					if (e1->FarVer.dwBuild > e2->FarVer.dwBuild)
+					if (e1.FarVer.dwBuild > e2.FarVer.dwBuild)
 						return -1;
-					if (e1->dwBits < e2->dwBits)
+					if (e1.dwBits < e2.dwBits)
 						return 1;
-					if (e1->dwBits > e2->dwBits)
+					if (e1.dwBits > e2.dwBits)
 						return -1;
 
 					// Equal?

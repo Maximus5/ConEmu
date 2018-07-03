@@ -50,15 +50,11 @@ void CommandHistory::FreeItems()
 		return;
 	}
 
-	INT_PTR iCount = Items.size();
-
-	for (INT_PTR i = 0; i < iCount; i++)
+	for (wchar_t* p : Items)
 	{
-		wchar_t* p = Items[i];
 		SafeFree(p);
 	}
-
-	Items.eraseall();
+	Items.swap(MArray<wchar_t*>());
 }
 
 // Return size in bytes

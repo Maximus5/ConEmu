@@ -602,9 +602,9 @@ void DebugArrayTests()
 	arr.push_back(4);
 	arr.insert(2, 5);
 	_ASSERTE(arr.size()==5 && arr[0]==1 && arr[1]==2 && arr[2]==5 && arr[3]==3 && arr[4]==4);
-	arr.sort([](const int* i1, const int* i2){ return (*i1 < *i2) ? -1 : (*i1 > *i2) ? 1 : 0; });
+	arr.sort([](const int& i1, const int& i2){ return (i1 < i2) ? -1 : (i1 > i2) ? 1 : 0; });
 	_ASSERTE(arr.size()==5 && arr[0]==1 && arr[1]==2 && arr[2]==3 && arr[3]==4 && arr[4]==5);
-	arr.sort([](const int* i1, const int* i2){ return (*i1 < *i2) ? 1 : (*i1 > *i2) ? -1 : 0; });
+	arr.sort([](const int& i1, const int& i2){ return (i1 < i2) ? 1 : (i1 > i2) ? -1 : 0; });
 	_ASSERTE(arr.size()==5 && arr[0]==5 && arr[1]==4 && arr[2]==3 && arr[3]==2 && arr[4]==1);
 
 	_ASSERTE(&arr[1] == &(arr[1]));

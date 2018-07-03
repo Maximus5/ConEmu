@@ -306,15 +306,15 @@ BOOL CALLBACK EnumAllMonitors(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMoni
 	return TRUE;
 }
 
-int MonitorSortCallback(const _FindAllMonitorsItem* e1, const _FindAllMonitorsItem* e2)
+static int MonitorSortCallback(const _FindAllMonitorsItem& e1, const _FindAllMonitorsItem& e2)
 {
-	if (e1->ptCenter.x < e2->ptCenter.x)
+	if (e1.ptCenter.x < e2.ptCenter.x)
 		return -1;
-	else if (e1->ptCenter.x > e2->ptCenter.x)
+	else if (e1.ptCenter.x > e2.ptCenter.x)
 		return 1;
-	else if (e1->ptCenter.y < e2->ptCenter.y)
+	else if (e1.ptCenter.y < e2.ptCenter.y)
 		return -1;
-	else if (e1->ptCenter.y > e2->ptCenter.y)
+	else if (e1.ptCenter.y > e2.ptCenter.y)
 		return 1;
 	return 0;
 }

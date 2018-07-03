@@ -31,8 +31,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _MARRAY_HEADER_
 #define _MARRAY_HEADER_
 
-//#pragma warning( disable : 4101 )
-
 #ifndef MCHKHEAP
 	#define MCHKHEAP
 #endif
@@ -43,520 +41,219 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _ARRAY_ASSERTE(x)
 #endif
 
-#include <type_traits>
-#include <iterator>
+#include <vector>
 
-template<typename _Ty>
+#ifndef NOMARRAYSORT
+#include <algorithm>
+#endif
+
+template <typename T>
+class MArrayAllocator
+{
+public:
+	using value_type = T;
+
+	MArrayAllocator() {};
+	~MArrayAllocator() {};
+	template<class U> MArrayAllocator(const MArrayAllocator<U>& other) {};
+	template<class U> bool operator==(const MArrayAllocator<U>& other) const { return true; };
+	template<class U> bool operator!=(const MArrayAllocator<U>& other) const { return false; };
+
+	T* allocate(std::size_t n)
+	{
+		T* ptr = (T*)malloc(n * sizeof(T));
+		if (!ptr)
+			throw std::bad_alloc();
+		return ptr;
+	};
+
+	void deallocate( T* p, std::size_t n )
+	{
+		if (p) free(p);
+	};
+};
+
+template <typename _Ty>
 class MArray
 {
-	protected:
-		const ssize_t mn_TySize = sizeof(_Ty);
-		ssize_t mn_Elements = 0;
-		ssize_t mn_MaxSize = 0;
-		#ifdef _DEBUG
-		ssize_t mn_Reserved;
-		#endif
-		_Ty*    mp_Elements = nullptr;
+	public:
+		using vector_type = std::vector<_Ty, MArrayAllocator<_Ty>>;
+		using iterator = typename vector_type::iterator;
+		using const_iterator = typename vector_type::const_iterator;
 
-		void _DestroyElements(ssize_t from, ssize_t to)
-		{
-			_ARRAY_ASSERTE(from >= 0 && from < mn_Elements && to >= from && to <= mn_Elements);
-			if (!std::is_trivially_destructible<_Ty>::value)
-			{
-				if (mp_Elements)
-				{
-					for (ssize_t i = from; i < to; ++i)
-					{
-						mp_Elements[i].~_Ty();
-					}
-				}
-			}
-		}
+	private:
+		vector_type data;
 
 	public:
-		template <typename T>
-		struct iterator_impl : public std::iterator<std::random_access_iterator_tag, T>
-		{
-		private:
-			T* ptr = nullptr;
-		public:
-			typedef iterator_impl<T> _Unchecked_type;
-
-			iterator_impl(T* _ptr) : ptr(_ptr)
-			{
-			};
-
-			T& operator*() const
-			{
-				_ARRAY_ASSERTE(ptr);
-				return *ptr;
-			};
-			T* operator->() const
-			{
-				_ARRAY_ASSERTE(ptr);
-				return ptr;
-			};
-
-			iterator_impl<T>& operator++()
-			{
-				++ptr;
-				return *this;
-			};
-			iterator_impl<T>& operator--()
-			{
-				--ptr;
-				return *this;
-			};
-			iterator_impl<T>& operator+=(ssize_t index)
-			{
-				ptr += index;
-				return *this;
-			};
-			iterator_impl<T>& operator-=(ssize_t index)
-			{
-				ptr -= index;
-				return *this;
-			};
-			iterator_impl<T> operator+(ssize_t index) const
-			{
-				return iterator_impl<T>(ptr+index);
-			};
-			iterator_impl<T> operator-(ssize_t index) const
-			{
-				return iterator_impl<T>(ptr-index);
-			};
-			ptrdiff_t operator-(const iterator_impl<T>& iter) const
-			{
-				return ptr - iter.ptr;
-			};
-
-			bool operator<(const iterator_impl<T>& iter) const
-			{
-				return (ptr < iter.ptr);
-			};
-			bool operator!=(const iterator_impl<T>& iter) const
-			{
-				return (ptr != iter.ptr);
-			};
-			bool operator==(const iterator_impl<T>& iter) const
-			{
-				return (ptr == iter.ptr);
-			};
-		};
-		using iterator = iterator_impl<_Ty>;
-		using const_iterator = iterator_impl<const _Ty>;
-
-	public:
-		MArray()
-		{
-			#ifdef _DEBUG
-			{
-				// Debug purposes
-				#ifdef _WIN64
-				mn_Reserved = 0xCCCCCCCCCCCCCCCCLL;
-				#else
-				mn_Reserved = 0xCCCCCCCC;
-				#endif
-			}
-			#endif
-			MCHKHEAP;
-			if (mn_TySize==0)
-			{
-				_ARRAY_ASSERTE(!(mn_TySize==0));
-				return;
-			}
-			MCHKHEAP;
-		};
-		~MArray()
-		{
-			clear();
-		};
-
-		MArray(const MArray<_Ty>&) = delete;
-		MArray(MArray<_Ty>&&) = delete;
 
 		void swap(MArray<_Ty>& obj)
 		{
-			_ARRAY_ASSERTE(mn_TySize == obj.mn_TySize);
-
-			std::swap(mn_Elements, obj.mn_Elements);
-			std::swap(mn_MaxSize, obj.mn_MaxSize);
-			std::swap(mp_Elements, obj.mp_Elements);
-
-			#ifdef _DEBUG
-			std::swap(mn_Reserved, obj.mn_Reserved);
-			#endif
+			data.swap(obj.data);
 		}
 
 		iterator begin()
 		{
-			return mp_Elements;
+			return data.begin();
 		};
 		iterator end()
 		{
-			return mp_Elements + mn_Elements;
+			return data.end();
 		};
 		const_iterator cbegin() const
 		{
-			return mp_Elements;
+			return data.cbegin();
 		};
 		const_iterator cend() const
 		{
-			return mp_Elements + mn_Elements;
+			return data.cbegin();
+		};
+
+		ssize_t size() const
+		{
+			ssize_t count = data.size();
+			_ARRAY_ASSERTE(count >= 0);
+			return count;
+		};
+		ssize_t capacity() const
+		{
+			ssize_t count = data.capacity();
+			_ARRAY_ASSERTE(count >= 0);
+			return count;
+		};
+		bool empty() const
+		{
+			return data.empty();
 		};
 
 		// UB if _Index is invalid
 		const _Ty & operator[](ssize_t _Index) const
 		{
-			#ifdef _DEBUG
-			if (_Index<0 || _Index>=mn_Elements)
-			{
-				_ARRAY_ASSERTE(!(_Index<0 || _Index>=mn_Elements));
-			}
-			const _Ty& _Item = mp_Elements[_Index];
-			#endif
-			return mp_Elements[_Index];
+			_ARRAY_ASSERTE(!(_Index<0 || _Index>=size()));
+			return data[_Index];
 		};
 		// UB if _Index is invalid
 		_Ty & operator[](ssize_t _Index)
 		{
-			#ifdef _DEBUG
-			if (_Index<0 || _Index>=mn_Elements)
-			{
-				_ARRAY_ASSERTE(!(_Index<0 || _Index>=mn_Elements));
-			}
-			_Ty& _Item = mp_Elements[_Index];
-			#endif
-			return mp_Elements[_Index];
+			_ARRAY_ASSERTE(!(_Index<0 || _Index>=size()));
+			return data[_Index];
 		};
 
 		ssize_t push_back(const _Ty& _Item)
 		{
-			if (mn_TySize==0)
-			{
-				_ARRAY_ASSERTE(!(mn_TySize==0));
-				return -1;
-			}
-			MCHKHEAP;
-			if (mn_MaxSize <= mn_Elements)
-			{
-				_ARRAY_ASSERTE(mn_MaxSize==mn_Elements);
-				addsize(std::max<ssize_t>(256, mn_MaxSize));
-			}
-			// op begin
-			ssize_t nPos = mn_Elements;
-			{
-				new (mp_Elements + nPos) _Ty(_Item);
-				++mn_Elements;
-			}
-			// op end
-			MCHKHEAP;
+			ssize_t nPos = size();
+			data.push_back(_Item);
 			return nPos;
 		};
 		ssize_t push_back(_Ty&& _Item)
 		{
-			if (mn_TySize==0)
-			{
-				_ARRAY_ASSERTE(!(mn_TySize==0));
-				return -1;
-			}
-			MCHKHEAP;
-			if (mn_MaxSize <= mn_Elements)
-			{
-				_ARRAY_ASSERTE(mn_MaxSize==mn_Elements);
-				addsize(std::max<ssize_t>(256, mn_MaxSize));
-			}
-			// op begin
-			ssize_t nPos = mn_Elements;
-			{
-				new (mp_Elements + nPos) _Ty(std::move(_Item));
-				++mn_Elements;
-			}
-			// op end
-			MCHKHEAP;
+			ssize_t nPos = size();
+			data.push_back(std::move(_Item));
 			return nPos;
 		};
-		void insert(ssize_t nPosBefore, const _Ty& _Item)
+		/// Insert at the end if nPosBefore==-1 or greater than current size
+		ssize_t insert(ssize_t nPosBefore, const _Ty& _Item)
 		{
-			if (mn_TySize==0)
+			ssize_t inserted;
+			if ((nPosBefore < 0) || (nPosBefore >= size()))
 			{
-				_ARRAY_ASSERTE(!(mn_TySize==0));
-				return;
-			}
-			if ((nPosBefore < 0) || (nPosBefore >= mn_Elements))
-			{
-				push_back(_Item);
-				return;
-			}
-			MCHKHEAP;
-			if (mn_MaxSize<=mn_Elements)
-			{
-				_ARRAY_ASSERTE(mn_MaxSize==mn_Elements);
-				addsize(std::max<ssize_t>(256, mn_MaxSize));
-			}
-			_ARRAY_ASSERTE(mn_Elements > nPosBefore && nPosBefore >= 0);
-			_ARRAY_ASSERTE(mn_MaxSize > mn_Elements);
-			// op begin
-			{
-				auto s_begin = this->begin()+nPosBefore, s_end = this->end();
-				new (mp_Elements + mn_Elements) _Ty();
-				++mn_Elements;
-				std::move_backward(s_begin, s_end, this->end());
-				mp_Elements[nPosBefore] = _Item;
-			}
-			// op end
-			MCHKHEAP;
-		};
-		void insert(ssize_t nPosBefore, _Ty&& _Item)
-		{
-			if (mn_TySize==0)
-			{
-				_ARRAY_ASSERTE(!(mn_TySize==0));
-				return;
-			}
-			if ((nPosBefore < 0) || (nPosBefore >= mn_Elements))
-			{
-				push_back(std::move(_Item));
-				return;
-			}
-			MCHKHEAP;
-			if (mn_MaxSize<=mn_Elements)
-			{
-				_ARRAY_ASSERTE(mn_MaxSize==mn_Elements);
-				addsize(std::max<ssize_t>(256, mn_MaxSize));
-			}
-			_ARRAY_ASSERTE(mn_Elements > nPosBefore && nPosBefore >= 0);
-			_ARRAY_ASSERTE(mn_MaxSize > mn_Elements);
-			// op begin
-			{
-				auto s_begin = this->begin()+nPosBefore, s_end = this->end();
-				new (mp_Elements + mn_Elements) _Ty();
-				++mn_Elements;
-				std::move_backward(s_begin, s_end, this->end());
-				mp_Elements[nPosBefore] = std::move(_Item);
-			}
-			// op end
-			MCHKHEAP;
-		};
-		bool pop_back(_Ty& _Item)
-		{
-			if ((mn_TySize==0) || (mn_Elements<=0))
-			{
-				_ARRAY_ASSERTE((!(mn_TySize==0))&&(mn_Elements>=0));
-				return false;
-			}
-			MCHKHEAP;
-			_Item = std::move(mp_Elements[mn_Elements-1]);
-			this->_DestroyElements(mn_Elements-1, mn_Elements);
-			MCHKHEAP;
-			--mn_Elements;
-			return true;
-		};
-		_Ty* detach()
-		{
-			_Ty* p = nullptr;
-			std::swap(p, mp_Elements);
-			clear();
-			return p;
-		};
-		void clear()
-		{
-			if (mp_Elements)
-			{
-				if (mn_Elements > 0)
-					this->_DestroyElements(0, mn_Elements);
-				free(mp_Elements);
-				mp_Elements = NULL;
-			}
-			mn_MaxSize = 0; mn_Elements = 0;
-			MCHKHEAP;
-		};
-		void erase(ssize_t _Index)
-		{
-			if (_Index < 0 || _Index >= mn_Elements)
-			{
-				_ARRAY_ASSERTE(!(_Index<0 || _Index>=mn_Elements));
-				return;
-			}
-
-			// op begin
-			if ((_Index+1) < mn_Elements)
-			{
-				MCHKHEAP;
-				std::move(this->begin()+_Index+1, this->end(), this->begin()+_Index);
-				MCHKHEAP;
-			}
-			this->_DestroyElements(mn_Elements - 1, mn_Elements);
-			mn_Elements--;
-			// op end
-		};
-		void eraseall()
-		{
-			if (mn_Elements > 0)
-				this->_DestroyElements(0, mn_Elements);
-			mn_Elements = 0;
-		};
-
-		ssize_t size() const
-		{
-			return mn_Elements;
-		};
-
-		ssize_t capacity() const
-		{
-			return mn_MaxSize;
-		};
-
-		bool empty() const
-		{
-			return (mn_Elements == 0);
-		};
-
-		bool addsize(ssize_t nElements)
-		{
-			if (mn_TySize==0)
-			{
-				_ARRAY_ASSERTE(!(mn_TySize==0));
-				return false;
-			}
-			if (nElements < 0)
-			{
-				_ARRAY_ASSERTE(nElements > 0);
-				return false;
-			}
-			MCHKHEAP;
-			ssize_t nNewMaxSize = mn_MaxSize + nElements;
-			if (mp_Elements)
-			{
-				_Ty* ptrNew = (_Ty*)calloc(nNewMaxSize, mn_TySize);
-				MCHKHEAP;
-				if (ptrNew == nullptr)
-				{
-					_ARRAY_ASSERTE(ptrNew!=NULL);
-					return false;
-				}
-				std::move(this->begin(), this->end(), iterator(ptrNew));
-				MCHKHEAP;
-				this->_DestroyElements(0, mn_Elements);
-				std::swap(mp_Elements, ptrNew);
-				free(ptrNew);
+				inserted = push_back(_Item);
 			}
 			else
 			{
-				_ARRAY_ASSERTE(mn_Elements == 0);
-				mp_Elements = (_Ty*)calloc(nNewMaxSize, mn_TySize);
-				if (mp_Elements==NULL)
-				{
-					_ARRAY_ASSERTE(mp_Elements!=NULL);
-					return false;
-				}
+				inserted = nPosBefore;
+				data.insert(data.begin()+nPosBefore, _Item);
 			}
-			mn_MaxSize = nNewMaxSize;
-			MCHKHEAP;
+			return inserted;
+		};
+		/// Insert at the end if nPosBefore==-1 or greater than current size
+		ssize_t insert(ssize_t nPosBefore, _Ty&& _Item)
+		{
+			ssize_t inserted;
+			if ((nPosBefore < 0) || (nPosBefore >= size()))
+			{
+				inserted = push_back(std::move(_Item));
+			}
+			else
+			{
+				inserted = nPosBefore;
+				data.insert(data.begin()+nPosBefore, std::move(_Item));
+			}
+			return inserted;
+		};
+		/// Resized if _Index is >= size()
+		ssize_t set_at(ssize_t _Index, const _Ty& _Item)
+		{
+			if (_Index < 0)
+			{
+				_ARRAY_ASSERTE(_Index>=0);
+				return -1;
+			}
+
+			if (_Index >= size())
+			{
+				if (!resize(_Index+1))
+					return -1;
+			}
+
+			data[_Index] = _Item;;
+		};
+
+		bool pop_back(_Ty& _Item)
+		{
+			if (data.empty())
+			{
+				_ARRAY_ASSERTE(!data.empty());
+				return false;
+			}
+			_Item = std::move(data[data.size()-1]);
+			data.pop_back();
 			return true;
 		};
 
-		// Increase or decrease count of elements
+		void clear()
+		{
+			data.clear();
+		};
+		void erase(ssize_t _Index)
+		{
+			if (_Index < 0 || _Index >= size())
+			{
+				_ARRAY_ASSERTE(!(_Index<0 || _Index>=size()));
+				return;
+			}
+			data.erase(data.begin()+_Index);
+		};
+
+		/// Increase or decrease count of elements
 		bool resize(ssize_t nNewCount)
 		{
 			if (nNewCount < 0)
 			{
-				_ARRAY_ASSERTE(nNewCount >= 0);
-				nNewCount = 0;
+				_ARRAY_ASSERTE(nNewCount>0);
+				return false;
 			}
-
-			if (mn_MaxSize < nNewCount)
-			{
-				if (!addsize(nNewCount - mn_MaxSize))
-					return false;
-			}
-
-			_ARRAY_ASSERTE(mn_MaxSize >= nNewCount);
-
-			while (mn_Elements < nNewCount)
-			{
-				new (mp_Elements + mn_Elements) _Ty();
-				++mn_Elements;
-			}
-
-			if (mn_Elements > nNewCount)
-			{
-				this->_DestroyElements(nNewCount, mn_Elements);
-				mn_Elements = nNewCount;
-			}
-
-			_ARRAY_ASSERTE(mn_Elements == nNewCount);
-
+			data.resize(nNewCount > 0 ? nNewCount : 0);
 			return true;
 		}
 
-		#ifndef NOMARRAYSORT
-		void sort(int(*compareFunction)(const _Ty* e1, const _Ty* e2))
+		bool reserve(ssize_t nNewCount)
 		{
-			MCHKHEAP;
-			if (mp_Elements && mn_Elements > 1)
+			if (nNewCount < 0)
 			{
-				using qsortFunction = int (__cdecl *)(const void *,const void *);
-				qsort(mp_Elements, mn_Elements, mn_TySize, (qsortFunction)compareFunction);
-			}
-			MCHKHEAP;
-		};
-		#endif
-
-		bool reserve(ssize_t _nCount)
-		{
-			if (mn_TySize==0)
-			{
-				_ARRAY_ASSERTE(!(mn_TySize==0));
+				_ARRAY_ASSERTE(nNewCount>0);
 				return false;
 			}
-			if (_nCount>mn_Elements)
-			{
-				if (_nCount>mn_MaxSize)
-				{
-					addsize(_nCount-mn_MaxSize);
-				}
-				// 01.03.2005 !!! Only allocate memory, Not initialize values!
-				//mn_Elements = std::min(_nCount,mn_MaxSize);
-			}
+			data.reserve(nNewCount > 0 ? nNewCount : 0);
 			return true;
-		};
+		}
 
-		void set_at(ssize_t _Index, _Ty & _Item)
+
+		#ifndef NOMARRAYSORT
+		void sort(int(*compareFunction)(const _Ty& e1, const _Ty& e2))
 		{
-			if (mn_TySize==0)
-			{
-				_ARRAY_ASSERTE(!(mn_TySize==0));
-				return;
-			}
-			#ifdef _DEBUG
-			if (_Index<0/* || _Index>=mn_Elements*/)
-			{
-				_ARRAY_ASSERTE(!(_Index<0/* || _Index>=mn_Elements*/));
-			}
-			#endif
-
-			if (_Index>=mn_Elements)
-			{
-				if (_Index>=mn_MaxSize)
-				{
-					addsize(std::max<ssize_t>(256, (_Index-mn_MaxSize+1)));
-				}
-				mn_Elements = _Index+1;
-			}
-
-			#ifdef _DEBUG
-			_Ty _ItemDbg = ((_Ty*)mp_Elements)[_Index];
-			#endif
-
-			MCHKHEAP;
-			memmove(
-				((_Ty*)mp_Elements)+(_Index),
-				&_Item, mn_TySize);
-			MCHKHEAP;
+			std::sort(data.begin(), data.end(), compareFunction);
 		};
+		#endif
 };
-
-//#pragma warning( default : 4101 )
 
 #endif // #ifndef _MARRAY_HEADER_
