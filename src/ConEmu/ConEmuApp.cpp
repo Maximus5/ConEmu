@@ -3597,7 +3597,7 @@ done:
 	ShutdownGuiStep(L"Gui terminated");
 
 wrap:
-	// HeapDeinitialize() - Нельзя. Еще живут глобальные объекты
+	HeapDeinitialize();
 	DEBUGSTRSTARTUP(L"WinMain exit");
 	// If TerminateThread was called at least once,
 	// normal process shutdown may hang

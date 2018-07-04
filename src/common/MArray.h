@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "Memory.h"
+
 #ifndef _MARRAY_HEADER_
 #define _MARRAY_HEADER_
 
@@ -53,9 +55,17 @@ class MArrayAllocator
 public:
 	using value_type = T;
 
-	MArrayAllocator() {};
-	~MArrayAllocator() {};
-	template<class U> MArrayAllocator(const MArrayAllocator<U>& other) {};
+	~MArrayAllocator() { };
+	MArrayAllocator()
+	{
+		HeapInitialize();
+	};
+	template<class U> MArrayAllocator(const MArrayAllocator<U>& other)
+	{
+		HeapInitialize();
+	};
+	template<class U> MArrayAllocator(MArrayAllocator<U>&& other) = delete;
+	template<class U> MArrayAllocator<T>& operator=(const MArrayAllocator<U>& other) = delete;
 	template<class U> bool operator==(const MArrayAllocator<U>& other) const { return true; };
 	template<class U> bool operator!=(const MArrayAllocator<U>& other) const { return false; };
 

@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "../common/MArray.h"
+
 class CProcessData;
 class CDpiForDialog;
 class CDynDialog;

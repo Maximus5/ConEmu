@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _ASSERTE(x)
 #endif
 
+static std::atomic_int gHeapCounter;
 HANDLE ghHeap = NULL;
 
 // Debugging purposes
@@ -85,22 +86,37 @@ bool HeapInitialize()
 {
 	if (ghHeap == NULL)
 	{
+		// Our allocator is used in construction of global MArrays
+		++gHeapCounter;
 		//#ifdef MVALIDATE_POINTERS
 		//	ghHeap = HeapCreate(0, 200000, 0);
 		//#else
 		ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 		//#endif
+		_ASSERTE(gHeapCounter == 1);
 	}
 
 	return (ghHeap != NULL);
 }
 
-void HeapDeinitialize()
+static void HeapDeinitializeImpl()
 {
-	if (ghHeap)
+	if (!ghHeap || gHeapCounter)
+	{
+		_ASSERTE(ghHeap && gHeapCounter == 0);
+	}
+	else
 	{
 		HeapDestroy(ghHeap);
 		ghHeap = NULL;
+	}
+}
+
+void HeapDeinitialize()
+{
+	if (ghHeap && --gHeapCounter == 0)
+	{
+		HeapDeinitializeImpl();
 	}
 }
 
@@ -143,6 +159,8 @@ void * __cdecl xf_malloc(size_t _Size XF_PLACE_ARGS_DEF)
 	xf_mem_block* p = (xf_mem_block*)HeapAlloc(ghHeap, 0, nTotalSize);
 	if (p)
 	{
+		++gHeapCounter;
+
 		p->bBlockUsed = TRUE;
 		p->nBlockSize = _Size;
 
@@ -179,6 +197,8 @@ void * __cdecl xf_calloc(size_t _Count, size_t _Size XF_PLACE_ARGS_DEF)
 	xf_mem_block* p = (xf_mem_block*)HeapAlloc(ghHeap, HEAP_ZERO_MEMORY, nTotalSize);
 	if (p)
 	{
+		++gHeapCounter;
+
 		p->bBlockUsed = TRUE;
 		p->nBlockSize = _Count*_Size;
 
@@ -304,6 +324,11 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF)
 	#endif
 
 	HeapFree(ghHeap, 0, _Memory);
+
+	if (--gHeapCounter == 0)
+	{
+		HeapDeinitializeImpl();
+	}
 
 	#ifdef USE_XF_DUMP_CHK
 	xf_dump_chk();
