@@ -563,12 +563,12 @@ void DebugArrayTests()
 	_ASSERTE(sArr.size()==1 && sArr.capacity()==1);
 	const wchar_t* psz = sArr[0].c_str();
 	_ASSERTE(psz && wcscmp(psz, L"sample string")==0);
-	sArr.clear();
+	sArr.swap(MArray<CEStr>());
 	_ASSERTE(sArr.size()==0 && sArr.capacity()==0);
 	sArr.push_back(CEStr(L"1"));
 	_ASSERTE(sArr.size()==1 && sArr.capacity()>=1 && sArr[0]==L"1");
 	sArr.push_back(L"3");
-	_ASSERTE(sArr.size()==2 && sArr.capacity()>2 && sArr[0]==L"1" && sArr[1]==L"3");
+	_ASSERTE(sArr.size()==2 && sArr.capacity()>=2 && sArr[0]==L"1" && sArr[1]==L"3");
 	const CEStr s2(L"2");
 	sArr.insert(1, s2);
 	_ASSERTE(sArr.size()==3 && sArr[0]==L"1" && sArr[1]==L"2" && sArr[2]==L"3");
@@ -603,9 +603,9 @@ void DebugArrayTests()
 	arr.push_back(4);
 	arr.insert(2, 5);
 	_ASSERTE(arr.size()==5 && arr[0]==1 && arr[1]==2 && arr[2]==5 && arr[3]==3 && arr[4]==4);
-	arr.sort([](const int& i1, const int& i2){ return (i1 < i2) ? -1 : (i1 > i2) ? 1 : 0; });
+	arr.sort([](const int& i1, const int& i2){ return (i1 < i2); });
 	_ASSERTE(arr.size()==5 && arr[0]==1 && arr[1]==2 && arr[2]==3 && arr[3]==4 && arr[4]==5);
-	arr.sort([](const int& i1, const int& i2){ return (i1 < i2) ? 1 : (i1 > i2) ? -1 : 0; });
+	arr.sort([](const int& i1, const int& i2){ return (i1 > i2); });
 	_ASSERTE(arr.size()==5 && arr[0]==5 && arr[1]==4 && arr[2]==3 && arr[3]==2 && arr[4]==1);
 
 	_ASSERTE(&arr[1] == &(arr[1]));

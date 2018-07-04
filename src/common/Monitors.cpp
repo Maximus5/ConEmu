@@ -306,17 +306,17 @@ BOOL CALLBACK EnumAllMonitors(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMoni
 	return TRUE;
 }
 
-static int MonitorSortCallback(const _FindAllMonitorsItem& e1, const _FindAllMonitorsItem& e2)
+static bool MonitorSortCallback(const _FindAllMonitorsItem& e1, const _FindAllMonitorsItem& e2)
 {
 	if (e1.ptCenter.x < e2.ptCenter.x)
-		return -1;
+		return true;
 	else if (e1.ptCenter.x > e2.ptCenter.x)
-		return 1;
+		return false;
 	else if (e1.ptCenter.y < e2.ptCenter.y)
-		return -1;
+		return true;
 	else if (e1.ptCenter.y > e2.ptCenter.y)
-		return 1;
-	return 0;
+		return false;
+	return false;
 }
 
 HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next)

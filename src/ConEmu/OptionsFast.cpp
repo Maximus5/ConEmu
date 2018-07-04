@@ -1504,18 +1504,18 @@ public:
 		UINT idx = 0;
 
 		struct impl {
-			static int SortRoutine(const AppInfo& e1, const AppInfo& e2)
+			static bool SortRoutine(const AppInfo& e1, const AppInfo& e2)
 			{
 				// Compare task base name
 				int iNameCmp = lstrcmpi(e1.szTaskBaseName, e2.szTaskBaseName);
 				if (iNameCmp)
-					return (iNameCmp < 0) ? -1 : 1;
+					return (iNameCmp < 0);
 
 				// Primary task - to top
 				if (e1.bPrimary && !e2.bPrimary)
-					return -1;
+					return true;
 				else if (e2.bPrimary && !e1.bPrimary)
-					return 1;
+					return false;
 				#ifdef _DEBUG
 				else if (e1.bPrimary && e2.bPrimary)
 					_ASSERTE(!e1.bPrimary || !e2.bPrimary); // Two primary tasks are not allowed!
@@ -1523,21 +1523,21 @@ public:
 
 				// Compare exe version
 				if (e1.Ver.dwFileVersionMS < e2.Ver.dwFileVersionMS)
-					return 1;
+					return false;
 				if (e1.Ver.dwFileVersionMS > e2.Ver.dwFileVersionMS)
-					return -1;
+					return true;
 				if (e1.Ver.dwFileVersionLS < e2.Ver.dwFileVersionLS)
-					return 1;
+					return false;
 				if (e1.Ver.dwFileVersionLS > e2.Ver.dwFileVersionLS)
-					return -1;
+					return true;
 				// And bitness
 				if (e1.dwBits < e2.dwBits)
-					return 1;
+					return false;
 				if (e1.dwBits > e2.dwBits)
-					return -1;
+					return true;
 
 				// Equal?
-				return 0;
+				return false;
 			};
 		};
 		Installed.sort(impl::SortRoutine);
@@ -1846,13 +1846,13 @@ public:
 			LPCWSTR pszPrefix = (Installed.size() > 1) ? szFarPrefix : L"";
 
 			struct impl {
-				static int SortRoutine(const AppInfo& e1, const AppInfo& e2)
+				static bool SortRoutine(const AppInfo& e1, const AppInfo& e2)
 				{
 					// Primary task - to top
 					if (e1.bPrimary && !e2.bPrimary)
-						return -1;
+						return true;
 					else if (e2.bPrimary && !e1.bPrimary)
-						return 1;
+						return false;
 					#ifdef _DEBUG
 					else if (e1.bPrimary && e2.bPrimary)
 						_ASSERTE(!e1.bPrimary || !e2.bPrimary); // Two primary tasks are not allowed!
@@ -1860,20 +1860,20 @@ public:
 
 					// Compare exe version
 					if (e1.FarVer.dwVer < e2.FarVer.dwVer)
-						return 1;
+						return false;
 					if (e1.FarVer.dwVer > e2.FarVer.dwVer)
-						return -1;
+						return true;
 					if (e1.FarVer.dwBuild < e2.FarVer.dwBuild)
-						return 1;
+						return false;
 					if (e1.FarVer.dwBuild > e2.FarVer.dwBuild)
-						return -1;
+						return true;
 					if (e1.dwBits < e2.dwBits)
-						return 1;
+						return false;
 					if (e1.dwBits > e2.dwBits)
-						return -1;
+						return true;
 
 					// Equal?
-					return 0;
+					return false;
 				};
 			};
 			Installed.sort(impl::SortRoutine);

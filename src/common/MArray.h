@@ -202,7 +202,8 @@ class MArray
 		{
 			if (data.empty())
 			{
-				_ARRAY_ASSERTE(!data.empty());
+				// this implementation of pop_back is used in cycles a lot
+				// _ARRAY_ASSERTE(!data.empty());
 				return false;
 			}
 			_Item = std::move(data[data.size()-1]);
@@ -249,9 +250,9 @@ class MArray
 
 
 		#ifndef NOMARRAYSORT
-		void sort(int(*compareFunction)(const _Ty& e1, const _Ty& e2))
+		void sort(bool(*lessFunction)(const _Ty& e1, const _Ty& e2))
 		{
-			std::sort(data.begin(), data.end(), compareFunction);
+			std::sort(data.begin(), data.end(), lessFunction);
 		};
 		#endif
 };
