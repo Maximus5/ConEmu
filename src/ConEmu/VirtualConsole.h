@@ -176,6 +176,7 @@ class CVirtualConsole :
 	private:
 		// Working pointers
 		bool mb_PointersAllocated;
+		// #MEMORY Replace pointers with MArray
 		wchar_t  *mpsz_ConChar, *mpsz_ConCharSave;   // nMaxTextWidth * nMaxTextHeight
 		// CharAttr определен в "common/RgnDetect.h"
 		CharAttr *mpn_ConAttrEx, *mpn_ConAttrExSave; // nMaxTextWidth * nMaxTextHeight
@@ -305,6 +306,18 @@ class CVirtualConsole :
 		LONG mn_AppSettingsChangCount;
 
 	protected:
+		struct VConHeap
+		{
+			HANDLE mh_Heap{NULL};
+			std::atomic_int64_t mn_HeapSize{0};
+			int64_t mn_HeapMax{0};
+			void Init(size_t initSize);
+			LPVOID Alloc(size_t nCount, size_t nSize);
+			void Free(LPVOID ptr);
+			void Validate();
+			~VConHeap();
+		} m_Heap = {};
+	protected:
 		wchar_t* mpsz_LogScreen; DWORD mn_LogScreenIdx;
 		CONSOLE_SCREEN_BUFFER_INFO csbi; DWORD mdw_LastError;
 		CONSOLE_CURSOR_INFO	cinf;
@@ -327,9 +340,6 @@ class CVirtualConsole :
 		#endif
 		bool CheckChangedTextAttr();
 		bool CheckTransparentRgn(bool abHasChildWindows);
-		HANDLE mh_Heap;
-		LPVOID Alloc(size_t nCount, size_t nSize);
-		void Free(LPVOID ptr);
 		MSection csCON;
 		int mn_BackColorIdx; //==0
 		typedef struct tag_PARTBRUSHES

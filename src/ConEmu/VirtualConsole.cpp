@@ -118,15 +118,6 @@ WARNING("а перед пересылкой символа/клавиши про
 WARNING("Часто после разблокирования компьютера размер консоли изменяется (OK), но обновленное содержимое консоли не приходит в GUI - там остается обрезанная верхняя и нижняя строка");
 
 
-#ifdef _DEBUG
-//#undef HEAPVAL
-#define HEAPVAL HeapValidate(mh_Heap, 0, NULL);
-#define HEAPVALPTR(p) //xf_validate(p)
-#define CURSOR_ALWAYS_VISIBLE
-#else
-#define HEAPVAL
-#define HEAPVALPTR(p)
-#endif
 
 #define ISBGIMGCOLOR(a) (nBgImageColors & (1 << a))
 
@@ -142,6 +133,74 @@ WARNING("Часто после разблокирования компьютер
 #else
 #define DUMPDC(f)
 #endif
+
+
+#ifdef VAlloc
+#undef VAlloc
+#endif
+#ifdef VFree
+#undef VFree
+#endif
+#ifdef HEAPVAL
+#undef HEAPVAL
+#endif
+#ifdef HEAPVALPTR
+#undef HEAPVALPTR
+#endif
+#define VAlloc(c,s) m_Heap.Alloc(c,s)
+#define VFree(f) if (f) { m_Heap.Free(f); f = NULL; }
+#define HEAPVAL m_Heap.Validate()
+#define HEAPVALPTR(x) //
+
+void CVirtualConsole::VConHeap::Init(size_t initSize)
+{
+	if (mh_Heap)
+	{
+		_ASSERTE(mh_Heap==NULL);
+		return;
+	}
+	mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, initSize, 0);
+}
+
+LPVOID CVirtualConsole::VConHeap::Alloc(size_t nCount, size_t nSize)
+{
+	Validate();
+
+	size_t nWhole = nCount * nSize;
+	LPVOID ptr = HeapAlloc(mh_Heap, HEAP_GENERATE_EXCEPTIONS|HEAP_ZERO_MEMORY, nWhole);
+
+	//HEAPVAL;
+	return ptr;
+}
+
+void CVirtualConsole::VConHeap::Free(LPVOID ptr)
+{
+	if (ptr && mh_Heap)
+	{
+		Validate();
+
+		HeapFree(mh_Heap, 0, ptr);
+
+		//HEAPVAL;
+	}
+}
+
+void CVirtualConsole::VConHeap::Validate()
+{
+	#ifdef _DEBUG
+	HeapValidate(mh_Heap, 0, NULL);
+	#endif
+}
+
+CVirtualConsole::VConHeap::~VConHeap()
+{
+	if (mh_Heap)
+	{
+		HeapDestroy(mh_Heap);
+		mh_Heap = NULL;
+	}
+}
+
 
 
 namespace VConCreateLogger
@@ -205,7 +264,6 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	#endif
 	, m_Sizes()
 	, mp_Set(NULL)
-	, mh_Heap(NULL)
 	, cinf()
 	, winSize()
 	, coord()
@@ -354,9 +412,10 @@ bool CVirtualConsole::Constructor(RConStartArgsEx *args)
 
 	mp_ConEmu->OnVConCreated(this, args);
 
-	WARNING("скорректировать размер кучи");
-	SIZE_T nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2;
-	mh_Heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
+	// #MEMORY скорректировать размер кучи
+	size_t nMinHeapSize = (1000 + (200 * 90 * 2) * 6 + MAX_PATH*2)*2;
+	m_Heap.Init(nMinHeapSize);
+
 	cinf.dwSize = 15; cinf.bVisible = TRUE;
 
 	mp_Bg = new CBackground();
@@ -439,14 +498,7 @@ CVirtualConsole::~CVirtualConsole()
 
 	PointersFree();
 
-	// Куча больше не нужна
-	if (mh_Heap)
-	{
-		HeapDestroy(mh_Heap);
-		mh_Heap = NULL;
-	}
-
-	SafeFree(mpsz_LogScreen);
+	VFree(mpsz_LogScreen);
 
 	//DeleteCriticalSection(&csDC);
 	//DeleteCriticalSection(&csCON);
@@ -620,19 +672,15 @@ EnumVConFlags CVirtualConsole::isGroupedInput()
 
 void CVirtualConsole::PointersFree()
 {
-#ifdef SafeFree
-#undef SafeFree
-#endif
-#define SafeFree(f) if (f) { Free(f); f = NULL; }
 	HEAPVAL;
-	SafeFree(mpsz_ConChar);
-	SafeFree(mpsz_ConCharSave);
-	SafeFree(mpn_ConAttrEx);
-	SafeFree(mpn_ConAttrExSave);
-	SafeFree(ConCharX);
-	SafeFree(pbLineChanged);
-	SafeFree(pbBackIsPic);
-	SafeFree(pnBackRGB);
+	VFree(mpsz_ConChar);
+	VFree(mpsz_ConCharSave);
+	VFree(mpn_ConAttrEx);
+	VFree(mpn_ConAttrExSave);
+	VFree(ConCharX);
+	VFree(pbLineChanged);
+	VFree(pbBackIsPic);
+	VFree(pnBackRGB);
 	// Row/Col highlights & Hyperlink underlining
 	ResetHighlightCoords();
 	HEAPVAL;
@@ -648,7 +696,7 @@ bool CVirtualConsole::PointersAlloc()
 #ifdef AllocArray
 #undef AllocArray
 #endif
-#define AllocArray(p,t,c) p = (t*)Alloc(c,sizeof(t)); if (!p) return false;
+#define AllocArray(p,t,c) p = (t*)VAlloc(c,sizeof(t)); if (!p) return false;
 	AllocArray(mpsz_ConChar, wchar_t, nWidthHeight+1); // ASCIIZ
 	AllocArray(mpsz_ConCharSave, wchar_t, nWidthHeight+1); // ASCIIZ
 	AllocArray(mpn_ConAttrEx, CharAttr, nWidthHeight);
@@ -771,7 +819,7 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 
 	if (!pSCON)
 		_SCON.Unlock();
-	HEAPVAL
+	HEAPVAL;
 
 	SelectFont(fnt_NULL);
 
@@ -1394,7 +1442,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	DcDebug dbg(&m_DC.hDC, ahDc); // для отладки - рисуем сразу на канвасе окна
 	#endif
 
-	HEAPVAL
+	HEAPVAL;
 	bool lRes = false;
 	MSectionLock SCON; SCON.Lock(&csCON);
 	//MSectionLock SDC; //&csDC, &ncsTDC);
@@ -1493,7 +1541,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	///| Checking cursor |////////////////////////////////////////////////////
 	//------------------------------------------------------------------------
 	UpdateCursor(lRes);
-	HEAPVAL
+	HEAPVAL;
 	//SDC.Leave();
 	SCON.Unlock();
 
@@ -1551,7 +1599,7 @@ bool CVirtualConsole::Update(bool abForce, HDC *ahDc)
 	m_PartBrushes.clear();
 	*/
 	SelectFont(fnt_NULL);
-	HEAPVAL
+	HEAPVAL;
 	return lRes;
 }
 
@@ -2005,8 +2053,8 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 			//#ifdef _DEBUG
 			//nMaxRects = 5;
 			//#endif
-			POINT *lpAllPoints = (POINT*)Alloc(nMaxRects*4,sizeof(POINT)); // 4 угла
-			//INT   *lpAllCounts = (INT*)Alloc(nMaxRects,sizeof(INT));
+			POINT *lpAllPoints = (POINT*)VAlloc(nMaxRects*4,sizeof(POINT)); // 4 угла
+			//INT   *lpAllCounts = (INT*)VAlloc(nMaxRects,sizeof(INT));
 			HEAPVAL;
 			int    nRectCount = 0;
 
@@ -2060,20 +2108,20 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 								_ASSERTE(nNewMaxRects > nRectCount);
 
 								HEAPVAL;
-								POINT *lpTmpPoints = (POINT*)Alloc(nNewMaxRects*4,sizeof(POINT)); // 4 угла
+								POINT *lpTmpPoints = (POINT*)VAlloc(nNewMaxRects*4,sizeof(POINT)); // 4 угла
 								HEAPVAL;
 
 								if (!lpTmpPoints)
 								{
 									_ASSERTE(lpTmpPoints);
-									Free(lpAllPoints);
+									VFree(lpAllPoints);
 									return false;
 								}
 
 								memmove(lpTmpPoints, lpAllPoints, nMaxRects*4*sizeof(POINT));
 								HEAPVAL;
 								lpPoints = lpTmpPoints + (lpPoints - lpAllPoints);
-								Free(lpAllPoints);
+								VFree(lpAllPoints);
 								lpAllPoints = lpTmpPoints;
 								nMaxRects = nNewMaxRects;
 								HEAPVAL;
@@ -2129,7 +2177,7 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 
 					if (nRectCount > 0)
 					{
-						lpAllCounts = (INT*)Alloc(nRectCount,sizeof(INT));
+						lpAllCounts = (INT*)VAlloc(nRectCount,sizeof(INT));
 						INT   *lpCounts = lpAllCounts;
 
 						for(int n = 0; n < nRectCount; n++)
@@ -2140,14 +2188,12 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 
 					HEAPVAL;
 
-					if (TransparentInfo.pAllCounts)
-						Free(TransparentInfo.pAllCounts);
+					VFree(TransparentInfo.pAllCounts);
 
 					HEAPVAL;
 					TransparentInfo.pAllCounts = lpAllCounts; lpAllCounts = NULL;
 
-					if (TransparentInfo.pAllPoints)
-						Free(TransparentInfo.pAllPoints);
+					VFree(TransparentInfo.pAllPoints);
 
 					HEAPVAL;
 					TransparentInfo.pAllPoints = lpAllPoints; lpAllPoints = NULL;
@@ -2157,8 +2203,7 @@ bool CVirtualConsole::CheckTransparentRgn(bool abHasChildWindows)
 
 				HEAPVAL;
 
-				//if (lpAllCounts) Free(lpAllCounts);
-				if (lpAllPoints) Free(lpAllPoints);
+				VFree(lpAllPoints);
 
 				HEAPVAL;
 			}
@@ -2665,11 +2710,11 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 		LoadConsoleData();
 	}
 
-	HEAPVAL
+	HEAPVAL;
 	// Определить координаты панелей (Переехало в CRealConsole)
 	// get cursor info
 	mp_RCon->GetConsoleCursorInfo(/*hConOut(),*/ &cinf);
-	HEAPVAL
+	HEAPVAL;
 	return true;
 }
 
@@ -2714,7 +2759,8 @@ void CVirtualConsole::UpdateText()
 	else
 		m_DC.SetBkMode(TRANSPARENT);
 
-	int *nDX = (int*)malloc((m_Sizes.TextWidth+1)*sizeof(int));
+	// #MEMORY Try buffer on stack, allocate only if width is too large
+	int *nDX = (int*)VAlloc(m_Sizes.TextWidth + 1, sizeof(int));
 
 	bool bEnhanceGraphics = gpSet->isEnhanceGraphics;
 	bool bFixFarBorders = _bool(gpSet->isFixFarBorders);
@@ -2739,8 +2785,8 @@ void CVirtualConsole::UpdateText()
 	if (nFontCharSet == OEM_CHARSET)
 	{
 		cchOemMax = (m_Sizes.TextWidth*3+1);
-		tmpOemWide = (wchar_t*)Alloc(cchOemMax, sizeof(*tmpOemWide));
-		tmpOem = (char*)Alloc(cchOemMax, sizeof(*tmpOem));
+		tmpOemWide = (wchar_t*)VAlloc(cchOemMax, sizeof(*tmpOemWide));
+		tmpOem = (char*)VAlloc(cchOemMax, sizeof(*tmpOem));
 	}
 
 	_ASSERTE(m_Sizes.nFontHeight > 0 && m_Sizes.nFontWidth > 0);
@@ -3015,10 +3061,10 @@ void CVirtualConsole::UpdateText()
 			DeleteObject(hBr);
 	}
 
-	free(nDX);
+	VFree(nDX);
 
-	SafeFree(tmpOemWide);
-	SafeFree(tmpOem);
+	VFree(tmpOemWide);
+	VFree(tmpOem);
 
 	HEAPVAL;
 
@@ -3488,30 +3534,6 @@ void CVirtualConsole::UpdateCursor(bool& lRes)
 	if (bConActive && isGroupedInput())
 	{
 		CVConGroup::EnumVCon(evf_Visible, UpdateCursorGroup, (LPARAM)(CVirtualConsole*)this);
-	}
-}
-
-
-LPVOID CVirtualConsole::Alloc(size_t nCount, size_t nSize)
-{
-	HEAPVAL;
-
-	size_t nWhole = nCount * nSize;
-	LPVOID ptr = HeapAlloc(mh_Heap, HEAP_GENERATE_EXCEPTIONS|HEAP_ZERO_MEMORY, nWhole);
-
-	//HEAPVAL;
-	return ptr;
-}
-
-void CVirtualConsole::Free(LPVOID ptr)
-{
-	if (ptr && mh_Heap)
-	{
-		HEAPVAL;
-
-		HeapFree(mh_Heap, 0, ptr);
-
-		//HEAPVAL;
 	}
 }
 
