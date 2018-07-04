@@ -2650,7 +2650,7 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 	LPCWSTR pszFrom = szZonedFiles.ms_Val;
 	CEStr lsFile;
 	bool bFirstRunAs = true;
-	while (0 == NextLine(&pszFrom, lsFile))
+	while ((pszFrom = NextLine(pszFrom, lsFile)))
 	{
 		if (!DropZoneIdentifier(lsFile, nErrCode))
 		{

@@ -519,20 +519,12 @@ LPCWSTR NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** rsArgSt
 }
 
 // Returns PTR to next line or NULL on error
-LPCWSTR QueryNextLine(const wchar_t* asLines, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES*/)
-{
-	if (0 != NextLine(&asLines, rsLine, Flags))
-		return NULL;
-	return asLines;
-}
-
-// Returns 0 if succeeded, otherwise the error code
-int NextLine(const wchar_t** asLines, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES*/)
+const wchar_t* NextLine(const wchar_t* asLines, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF_TRIM_SPACES|NLF_SKIP_EMPTY_LINES*/)
 {
 	if (!asLines || !*asLines)
-		return CERR_CMDLINEEMPTY;
+		return NULL;
 
-	const wchar_t* psz = *asLines;
+	const wchar_t* psz = asLines;
 	//const wchar_t szSpaces[] = L" \t";
 	//const wchar_t szLines[] = L"\r\n";
 	//const wchar_t szSpacesLines[] = L" \t\r\n";
@@ -546,8 +538,7 @@ int NextLine(const wchar_t** asLines, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF
 
 	if (!*psz)
 	{
-		*asLines = psz;
-		return CERR_CMDLINEEMPTY;
+		return NULL;
 	}
 
 	const wchar_t* pszEnd = wcspbrk(psz, L"\r\n");
@@ -570,8 +561,7 @@ int NextLine(const wchar_t** asLines, CEStr &rsLine, NEXTLINEFLAGS Flags /*= NLF
 	rsLine.Set(psz, pszTrim-psz);
 	psz = pszEnd;
 
-	*asLines = psz;
-	return 0;
+	return psz;
 }
 
 int AddEndSlash(wchar_t* rsPath, int cchMax)

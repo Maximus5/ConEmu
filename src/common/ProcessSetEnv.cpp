@@ -386,7 +386,7 @@ void CProcessEnvCmd::AddLines(LPCWSTR asLines, bool bPriority)
 	CEStr lsLine;
 	INT_PTR nBefore = bPriority ? 0 : -1;
 
-	while (0 == NextLine(&pszLines, lsLine))
+	while ((pszLines = NextLine(pszLines, lsLine)))
 	{
 		// Skip empty lines
 		LPCWSTR pszLine = SkipNonPrintable(lsLine);

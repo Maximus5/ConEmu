@@ -5653,7 +5653,7 @@ wchar_t* Settings::MultiLine2MSZ(const wchar_t* apszLines, DWORD* pcbSize/*in by
 		{
 			wchar_t* psz = pszDst;
 			LPCWSTR pszSrc = apszLines;
-			while (0 == NextLine(&pszSrc, lsLine, NLF_NONE))
+			while ((pszSrc = NextLine(pszSrc, lsLine, NLF_NONE)))
 			{
 				// We can't store empty lines in the middle of MSZZ value
 				// That is a registry limitation

@@ -1511,7 +1511,7 @@ CESERVER_REQ* CRealServer::cmdGetTaskCmd(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 	if (pTask)
 	{
 		LPCWSTR pszTemp = pTask->pszCommands;
-		if (0 == NextLine(&pszTemp, lsData))
+		if ((pszTemp = NextLine(pszTemp, lsData)))
 		{
 			RConStartArgsEx args;
 			LPCWSTR pszRaw = gpConEmu->ParseScriptLineOptions(lsData.ms_Val, NULL, NULL);
@@ -1565,7 +1565,7 @@ CESERVER_REQ* CRealServer::cmdIsAnsiExecAllowed(LPVOID pInst, CESERVER_REQ* pIn,
 		CEStr lsAllowed((LPCWSTR)gpSet->psAnsiAllowed);
 		LPCWSTR pszFrom = lsAllowed.ms_Val;
 		CEStr lsCmd;
-		while (!bAllowed && (0 == NextLine(&pszFrom, lsCmd)))
+		while (!bAllowed && (pszFrom = NextLine(pszFrom, lsCmd)))
 		{
 			_ASSERTE(!lsCmd.IsEmpty());
 			if (lsCmd.Compare(pszExec, true) == 0)
