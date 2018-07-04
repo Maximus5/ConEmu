@@ -2922,7 +2922,7 @@ HWND Attach2Gui(DWORD nTimeout)
 			// `-cmd`, `-cmdlist`, `-run` or `-runlist` must be in the "ConEmuArgs2" only!
 			#ifdef _DEBUG
 			CmdArg lsFirst; LPCWSTR pszCfgSwitches = cfgSwitches.c_str();
-			_ASSERTE(NextArg(&pszCfgSwitches,lsFirst)==0 && !lsFirst.OneOfSwitches(L"-cmd",L"-cmdlist",L"-run",L"-runlist"));
+			_ASSERTE(NextArg(pszCfgSwitches,lsFirst) && !lsFirst.OneOfSwitches(L"-cmd",L"-cmdlist",L"-run",L"-runlist"));
 			#endif
 
 			lstrmerge(&lsGuiCmd.ms_Val, L" ", cfgSwitches);

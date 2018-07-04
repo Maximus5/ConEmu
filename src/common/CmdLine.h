@@ -82,8 +82,7 @@ public:
 };
 
 
-LPCWSTR QueryNextArg(const wchar_t* asCmdLine, CmdArg& rsArg, const wchar_t** rsArgStart=NULL);
-int NextArg(const wchar_t** asCmdLine, CmdArg& rsArg, const wchar_t** rsArgStart=NULL);
+const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg& rsArg, const wchar_t** rsArgStart=NULL);
 bool DemangleArg(CmdArg& rsDemangle, bool bDeQuote = true, bool bDeEscape = false);
 
 typedef DWORD NEXTLINEFLAGS;

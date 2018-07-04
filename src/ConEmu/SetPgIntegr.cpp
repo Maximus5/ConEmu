@@ -146,7 +146,7 @@ struct SwitchParser
 		LPCWSTR psz = rpsz;
 		CmdArg szNext;
 
-		if ((0 == NextArg(&psz, szNext)) && !szNext.IsPossibleSwitch())
+		if ((psz = NextArg(psz, szNext)) && !szNext.IsPossibleSwitch())
 			rpsz = psz;
 		else
 			szNext.Clear();
@@ -160,7 +160,7 @@ struct SwitchParser
 		LPCWSTR psz = rpsz;
 		CmdArg szArg;
 
-		if (0 != NextArg(&psz, szArg))
+		if (!(psz = NextArg(psz, szArg)))
 		{
 			return NULL;
 		}
@@ -229,7 +229,7 @@ struct SwitchParser
 		// Drop `-dir "..."` (especially from registry) always!
 
 		psz = pszFull;
-		while (0 == NextArg(&psz, szArg))
+		while ((psz = NextArg(psz, szArg)))
 		{
 			if (!szArg.IsPossibleSwitch())
 				continue;
@@ -244,13 +244,13 @@ struct SwitchParser
 			}
 			else if (szArg.IsSwitch(L"-config"))
 			{
-				if (0 != NextArg(&psz, szArg))
+				if (!(psz = NextArg(psz, szArg)))
 					break;
 				szConfig.Set(szArg);
 			}
 			else if (szArg.IsSwitch(L"-dir"))
 			{
-				if (0 != NextArg(&psz, szArg))
+				if (!(psz = NextArg(psz, szArg)))
 					break;
 				_ASSERTE(lstrcmpi(szArg, L"%1")==0);
 			}
@@ -503,7 +503,7 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfi
 	{
 		CmdArg lsArg;
 		LPCWSTR pszTemp = asCmd;
-		if (0 == NextArg(&pszTemp, lsArg))
+		if ((pszTemp = NextArg(pszTemp, lsArg)))
 		{
 			bAddRunSwitch = !lsArg.IsPossibleSwitch();
 		}
@@ -809,11 +809,11 @@ bool CSetPgIntegr::ReloadHereList(int* pnHere /*= NULL*/, int* pnInside /*= NULL
 
 					bool bHasInside = false, bConEmu = false;
 					LPCWSTR pszTemp = pszCmd; CmdArg szArg;
-					if (0 == NextArg(&pszTemp, szArg))
+					if ((pszTemp = NextArg(pszTemp, szArg)))
 					{
 						if ((bConEmu = IsConEmuGui(szArg)))
 						{
-							while (0 == NextArg(&pszTemp, szArg))
+							while ((pszTemp = NextArg(pszTemp, szArg)))
 							{
 								if (szArg.IsSwitch(L"-inside"))
 								{

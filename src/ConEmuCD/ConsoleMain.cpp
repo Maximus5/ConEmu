@@ -1704,7 +1704,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 				// Имеет смысл, только если окно хотят изначально спрятать
 				const wchar_t *psz = gpszRunCmd, *pszStart;
 				CmdArg szExe;
-				if (NextArg(&psz, szExe, &pszStart) == 0)
+				if ((psz = NextArg(psz, szExe, &pszStart)))
 				{
 					MWow64Disable wow;
 					if (!gbSkipWowChange) wow.Disable();
@@ -1757,7 +1757,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		CmdArg szExeName;
 		{
 			LPCWSTR pszStart = gpszRunCmd;
-			if (NextArg(&pszStart, szExeName) == 0)
+			if ((pszStart = NextArg(pszStart, szExeName)))
 			{
 				#ifdef _DEBUG
 				if (FileExists(szExeName))
@@ -1913,7 +1913,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			wchar_t szVerb[10];
 			CmdArg szExec;
 
-			if (NextArg(&pszCmd, szExec) == 0)
+			if ((pszCmd = NextArg(pszCmd, szExec)))
 			{
 				SHELLEXECUTEINFO sei = {sizeof(SHELLEXECUTEINFO)};
 				sei.hwnd = ghConEmuWnd;
@@ -3058,7 +3058,7 @@ void UpdateConsoleTitle()
 		pszReq = pszBuffer;
 	pszCopy = pszReq;
 
-	if (!gpszForcedTitle && (NextArg(&pszCopy, szTemp) == 0))
+	if (!gpszForcedTitle && (pszCopy = NextArg(pszCopy, szTemp)))
 	{
 		wchar_t* pszName = (wchar_t*)PointToName(szTemp.ms_Val);
 		wchar_t* pszExt = (wchar_t*)PointToExt(pszName);
@@ -3117,7 +3117,7 @@ void CheckNeedSkipWowChange(LPCWSTR asCmdLine)
 		LPCWSTR pszTest = asCmdLine;
 		CEStr szApp;
 
-		if (NextArg(&pszTest, szApp) == 0)
+		if ((pszTest = NextArg(pszTest, szApp)))
 		{
 			wchar_t szSysnative[MAX_PATH+32];
 			int nLen = GetWindowsDirectory(szSysnative, MAX_PATH);
@@ -3266,7 +3266,7 @@ wchar_t* ExpandTaskCmd(LPCWSTR asCmdLine)
 // Parse ConEmuC command line switches
 int ParseCommandLine(LPCWSTR asCmdLine)
 {
-	int iRc = 0;
+	int iRc = CERR_CMDLINEEMPTY;
 	CmdArg szArg;
 	CEStr szExeTest;
 	LPCWSTR pszArgStarts = NULL;
@@ -3316,8 +3316,9 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		}
 	} AddArgs;
 
-	while ((iRc = NextArg(&lsCmdLine, szArg, &pszArgStarts)) == 0)
+	while ((lsCmdLine = NextArg(lsCmdLine, szArg, &pszArgStarts)))
 	{
+		iRc = 0;
 		xf_check();
 
 		if ((szArg[0] == L'/' || szArg[0] == L'-')
@@ -3606,7 +3607,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		}
 		else if (wcscmp(szArg, L"/ROOTEXE")==0)
 		{
-			if (0 == NextArg(&lsCmdLine, szArg))
+			if ((lsCmdLine = NextArg(lsCmdLine, szArg)))
 				gpszRootExe = lstrmerge(L"\"", szArg, L"\"");
 		}
 		else if (wcsncmp(szArg, L"/PID=", 5)==0 || wcsncmp(szArg, L"/TRMPID=", 8)==0
@@ -3998,7 +3999,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			gpSrv->DbgInfo.bAutoDump = TRUE;
 			gpSrv->DbgInfo.nAutoInterval = 1000;
 			if (lsCmdLine && *lsCmdLine && isDigit(lsCmdLine[0])
-				&& (NextArg(&lsCmdLine, szArg, &pszArgStarts) == 0))
+				&& (lsCmdLine = NextArg(lsCmdLine, szArg, &pszArgStarts)))
 			{
 				wchar_t* pszEnd;
 				DWORD nVal = wcstol(szArg, &pszEnd, 10);
@@ -4032,8 +4033,9 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		}
 		else if (lstrcmpi(szArg, L"/CONFIG")==0)
 		{
-			if ((iRc = NextArg(&lsCmdLine, szArg)) != 0)
+			if (!(lsCmdLine = NextArg(lsCmdLine, szArg)))
 			{
+				iRc = CERR_CMDLINEEMPTY;
 				_ASSERTE(FALSE && "Config name was not specified!");
 				_wprintf(L"Config name was not specified!\r\n");
 				break;
@@ -4048,8 +4050,9 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			#ifdef SHOW_LOADCFGFILE_MSGBOX
 			MessageBox(NULL, lsCmdLine, L"/LoadCfgFile", MB_SYSTEMMODAL);
 			#endif
-			if ((iRc = NextArg(&lsCmdLine, szArg)) != 0)
+			if (!(lsCmdLine = NextArg(lsCmdLine, szArg)))
 			{
+				iRc = CERR_CMDLINEEMPTY;
 				_ASSERTE(FALSE && "Xml file name was not specified!");
 				_wprintf(L"Xml file name was not specified!\r\n");
 				break;
@@ -5038,7 +5041,7 @@ void SendStarted()
 			// Аттач из фар-плагина
 			gnImageSubsystem = 0x100;
 		}
-		else if (gpszRunCmd && ((0 == NextArg(&pszTemp, lsRoot))))
+		else if (gpszRunCmd && ((pszTemp = NextArg(pszTemp, lsRoot))))
 		{
 			PRINT_COMSPEC(L"Starting: <%s>", lsRoot);
 

@@ -265,7 +265,7 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	int i = 0;
 	CmdArg szArg;
 	{ HL(10); _printf("ConEmu `NextArg` splitter\n"); }
-	while (NextArg(&asCmdLine, szArg) == 0)
+	while ((asCmdLine = NextArg(asCmdLine, szArg)))
 	{
 		if (szArg.mb_Quoted)
 			DemangleArg(szArg, true);
@@ -311,7 +311,7 @@ bool ProcessCommandLine(int& iRc, HMODULE& hConEmu)
 		int iCount = 0;
 		bool bHelpRequested = false;
 		bool bFirst = true;
-		while (NextArg(&pszCmdLine, lsArg) == 0)
+		while ((pszCmdLine = NextArg(pszCmdLine, lsArg)))
 		{
 			if ((lsArg.ms_Val[0] == L'-') && lsArg.ms_Val[1] && !wcspbrk(lsArg.ms_Val+1, L"\\//|.&<>^"))
 			{

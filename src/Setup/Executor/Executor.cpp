@@ -48,7 +48,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	LPCWSTR pszCmdToken = GetCommandLine();
 	//LPCWSTR pszCmdLineW = pszCmdToken;
 	
-	while (0 == NextArg(&pszCmdToken, szArg))
+	while ((pszCmdToken = NextArg(pszCmdToken, szArg)))
 	{
 		if (lstrcmpi(szArg, L"/i") == 0)
 		{

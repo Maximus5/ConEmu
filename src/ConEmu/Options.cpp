@@ -5249,7 +5249,7 @@ bool Settings::CmdTaskGetDefaultShell(RConStartArgsEx& args, CEStr& lsTitle)
 		}
 
 		CmdArg lsExe; LPCWSTR pszTemp = args.pszSpecialCmd;
-		if (0 == NextArg(&pszTemp, lsExe))
+		if ((pszTemp = NextArg(pszTemp, lsExe)))
 			lsTitle.Set(PointToName(lsExe));
 		if (lsTitle.IsEmpty())
 			lsTitle.Set(L"cmd.exe");

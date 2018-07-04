@@ -139,7 +139,7 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 		*ppszEnd = asCommands;
 
 	// Example: "set PATH=C:\Program Files;%PATH%" & set abc=def & cmd
-	while (NextArg(&lsCmdLine, lsSet) == 0)
+	while ((lsCmdLine = NextArg(lsCmdLine, lsSet)))
 	{
 		bool bTokenOk = false;
 		wchar_t* lsNameVal = NULL;
@@ -187,7 +187,7 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 			// OK, lets get token like "name=var value"
 			if (!bProcessed)
 			{
-				bProcessed = (NextArg(&lsCmdLine, lsSet) == 0);
+				bProcessed = (lsCmdLine = NextArg(lsCmdLine, lsSet));
 			}
 			if (bProcessed && (wcschr(lsSet, L'=') > lsSet.ms_Val))
 			{
@@ -218,7 +218,7 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 		else if (lstrcmpi(lsSet, L"chcp") == 0)
 		{
 			lsCmd = L"chcp";
-			if (NextArg(&lsCmdLine, lsSet) == 0)
+			if ((lsCmdLine = NextArg(lsCmdLine, lsSet)))
 			{
 				UINT nCP = GetCpFromString(lsSet);
 				if (nCP > 0 && nCP <= 0xFFFF)
@@ -241,7 +241,7 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 		else if (lstrcmpi(lsSet, L"title") == 0)
 		{
 			lsCmd = L"title";
-			if (NextArg(&lsCmdLine, lsSet) == 0)
+			if ((lsCmdLine = NextArg(lsCmdLine, lsSet)))
 			{
 				bTokenOk = true;
 				_ASSERTE(lsNameVal == NULL);
@@ -266,13 +266,13 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 			CEStr lsSwitches;
 			while (*lsCmdLine == L'-')
 			{
-				if (NextArg(&lsCmdLine, lsSet) != 0)
+				if (!NextArg(lsCmdLine, lsSet))
 					break;
 				lstrmerge(&lsSwitches.ms_Val, lsSwitches.IsEmpty() ? NULL : L" ", lsSet.ms_Val);
 			}
 			// Rest arguments are expected to be processed text or file
 			CmdArg lsAdd;
-			while (NextArg(&lsCmdLine, lsSet) == 0)
+			while ((lsCmdLine = NextArg(lsCmdLine, lsSet)))
 			{
 				bTokenOk = true;
 				lstrmerge(&lsAdd.ms_Val,
@@ -299,7 +299,7 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 		if (lsNameVal || bTokenOk)
 		{
 			lsAmp.GetPosFrom(lsSet);
-			if (NextArg(&lsCmdLine, lsAmp) != 0)
+			if (!NextArg(lsCmdLine, lsAmp))
 			{
 				// End of command? Use may call only "set" without following app? Run simple "cmd" in that case
 				_ASSERTE(lsCmdLine!=NULL && *lsCmdLine==0);
@@ -343,7 +343,7 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 		{
 			*ppszEnd = lsCmdLine;
 		}
-	} // end of "while (NextArg(&lsCmdLine, lsSet) == 0)"
+	} // end of "while ((lsCmdLine = NextArg(lsCmdLine, lsSet)))"
 
 	// Fin
 	if (ppszEnd && (!*ppszEnd || !**ppszEnd))

@@ -685,7 +685,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 						{
 							LPCWSTR pszCopy = pszParam;
 							CmdArg  szFirst;
-							if (NextArg(&pszCopy, szFirst) != 0)
+							if (!NextArg(pszCopy, szFirst))
 							{
 								_ASSERTE(FALSE && "NextArg failed?");
 							}
@@ -906,7 +906,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 			LPCWSTR pszCmdLine = asParam;
 
 			ms_ExeTmp.Empty();
-			if (NextArg(&pszCmdLine, ms_ExeTmp) == 0)
+			if ((pszCmdLine = NextArg(pszCmdLine, ms_ExeTmp)))
 			{
 				LPCWSTR pszExt = PointToExt(ms_ExeTmp);
 				if (pszExt && (lstrcmpi(pszExt, L".exe") == 0 || lstrcmpi(pszExt, L".com") == 0))
@@ -1285,7 +1285,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 			{
 				LPCWSTR pszTest = asParam;
 				CmdArg szTest;
-				if (NextArg(&pszTest, szTest) == 0)
+				if ((pszTest = NextArg(pszTest, szTest)))
 				{
 					pszTest = SkipNonPrintable(pszTest);
 					// Now - checks
@@ -1454,7 +1454,7 @@ int CShellProc::PrepareExecuteParms(
 		bool bAnsiConFound = false;
 		LPCWSTR pszDbg = psz;
 		ms_ExeTmp.Empty();
-		if (NextArg(&pszDbg, ms_ExeTmp) == 0)
+		if ((pszDbg = NextArg(pszDbg, ms_ExeTmp)))
 		{
 			CharUpperBuff(ms_ExeTmp.ms_Val, lstrlen(ms_ExeTmp));
 			if ((pszDbg = wcsstr(ms_ExeTmp, L"ANSI-LLW")) && (pszDbg[lstrlen(L"ANSI-LLW")] != L'\\'))
@@ -1465,7 +1465,7 @@ int CShellProc::PrepareExecuteParms(
 		#endif
 
 		ms_ExeTmp.Empty();
-		if (NextArg(&psz, ms_ExeTmp) != 0)
+		if (!NextArg(psz, ms_ExeTmp))
 		{
 			// AnsiCon exists in command line?
 			_ASSERTEX(bAnsiConFound==false);
@@ -1861,7 +1861,7 @@ int CShellProc::PrepareExecuteParms(
 		// Поехали
 		LPWSTR pszConsoles[MAX_CONSOLE_COUNT] = {};
 		size_t cchLen, cchAllLen = 0, iCount = 0;
-		while ((iCount < MAX_CONSOLE_COUNT) && (0 == NextArg(&asSource, szPart)))
+		while ((iCount < MAX_CONSOLE_COUNT) && (asSource = NextArg(asSource, szPart)))
 		{
 			if (lstrcmpi(PointToExt(szPart), L".lnk") == 0)
 			{

@@ -3165,7 +3165,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 							bool bUseExtEditor = false;
 							LPCWSTR pszTemp = gpSet->sFarGotoEditor;
 							CmdArg szExe;
-							if (NextArg(&pszTemp, szExe) == 0)
+							if ((pszTemp = NextArg(pszTemp, szExe)))
 							{
 								if (!IsFarExe(PointToName(szExe)))
 									bUseExtEditor = true;
@@ -3235,7 +3235,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 											CmdArg szExe;
 											CEnvRestorer szPrevPath;
 											wchar_t* pszPrevPath = NULL;
-											if (NextArg(&pszTemp, szExe) == 0)
+											if ((pszTemp = NextArg(pszTemp, szExe)))
 											{
 												if (SearchAppPaths((LPCWSTR)szExe, szExe, true, &szPrevPath))
 												{

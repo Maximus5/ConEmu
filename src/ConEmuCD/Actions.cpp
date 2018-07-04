@@ -478,7 +478,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 			pszSrc = pszNext;
 		}
 	}
-	else while (0==NextArg(&pszCmdArg, szTmpPart, &pszTmpPartStart))
+	else while ((pszCmdArg = NextArg(pszCmdArg, szTmpPart, &pszTmpPartStart)))
 	{
 		if ((pszTmpPartStart > asCmdArg) && (*(pszTmpPartStart-1) != L'"'))
 		{
@@ -494,7 +494,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 		}
 		LPCWSTR pszPart = szTmpPart;
 		CmdArg szTest;
-		while (0==NextArg(&pszPart, szTest))
+		while ((pszPart = NextArg(pszPart, szTest)))
 		{
 			if (!*szTest || *szTest == L'*')
 			{
@@ -769,7 +769,7 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	int i = 0;
 	CmdArg szArg;
 	_printf("ConEmu `NextArg` splitter\n");
-	while (NextArg(&asCmdLine, szArg) == 0)
+	while ((asCmdLine = NextArg(asCmdLine, szArg)))
 	{
 		if (szArg.mb_Quoted)
 			DemangleArg(szArg, true);
@@ -815,7 +815,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	_ASSERTE(asCmdArg && (*asCmdArg != L' '));
 	asCmdArg = SkipNonPrintable(asCmdArg);
 
-	while ((*asCmdArg == L'-' || *asCmdArg == L'/') && (NextArg(&asCmdArg, szArg) == 0))
+	while ((*asCmdArg == L'-' || *asCmdArg == L'/') && (asCmdArg = NextArg(asCmdArg, szArg)))
 	{
 		// Make uniform
 		if (szArg.ms_Val[0] == L'/')
@@ -856,7 +856,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 
 	if (eExecAction == ea_OutType)
 	{
-		if (NextArg(&asCmdArg, szArg) == 0)
+		if ((asCmdArg = NextArg(asCmdArg, szArg)))
 		{
 			_ASSERTE(!bAsciiPrint || !DefaultCP);
 			DWORD nSize = 0, nErrCode = 0;
@@ -877,7 +877,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	{
 		_ASSERTE(szTemp.ms_Val == NULL);
 
-		while (NextArg(&asCmdArg, szArg) == 0)
+		while ((asCmdArg = NextArg(asCmdArg, szArg)))
 		{
 			LPCWSTR pszAdd = szArg.ms_Val;
 			_ASSERTE(pszAdd!=NULL);
@@ -1064,7 +1064,7 @@ int DoStoreCWD(LPCWSTR asCmdArg)
 	int iRc = 1;
 	CmdArg szDir;
 
-	if ((NextArg(&asCmdArg, szDir) != 0) || szDir.IsEmpty())
+	if (!NextArg(asCmdArg, szDir) || szDir.IsEmpty())
 	{
 		if (GetDirectory(szDir) == NULL)
 			goto wrap;

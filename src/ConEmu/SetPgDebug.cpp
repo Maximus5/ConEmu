@@ -240,7 +240,7 @@ void CSetPgDebug::debugLogShell(DWORD nParentPID, CESERVER_REQ_ONCREATEPROCESS* 
 		{
 			LPCWSTR pszNext = pszParam;
 			CmdArg szArg;
-			while (0 == NextArg(&pszNext, szArg))
+			while ((pszNext = NextArg(pszNext, szArg)))
 			{
 				if (!*szArg || (*szArg == L'-') || (*szArg == L'/'))
 					continue;

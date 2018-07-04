@@ -1817,7 +1817,7 @@ bool CConEmuUpdate::Check7zipInstalled()
 
 	LPCWSTR pszCmd = mp_Set->UpdateArcCmdLine();
 	CmdArg sz7zip;
-	if (NextArg(&pszCmd, sz7zip) != 0)
+	if (!NextArg(pszCmd, sz7zip))
 	{
 		ReportError(L"Invalid update command\nGoto 'Update' page and check 7-zip command", 0);
 		return false;

@@ -4108,7 +4108,7 @@ void CEAnsi::StartVimTerm(bool bFromDllStart)
 	CmdArg lsArg;
 	LPCWSTR pszCmdLine = GetCommandLineW();
 	LPCWSTR pszCompare[] = {L"--help", L"-h", L"--version", NULL};
-	while (0 == NextArg(&pszCmdLine, lsArg))
+	while ((pszCmdLine = NextArg(pszCmdLine, lsArg)))
 	{
 		for (INT_PTR i = 0; pszCompare[i]; i++)
 		{

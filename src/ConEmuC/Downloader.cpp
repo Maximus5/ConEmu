@@ -1859,7 +1859,7 @@ int DoDownload(LPCWSTR asCmdLine)
 		{NULL}
 	};
 
-	while (NextArg(&asCmdLine, szArg) == 0)
+	while ((asCmdLine = NextArg(asCmdLine, szArg)))
 	{
 		LPCWSTR psz = szArg;
 		if ((psz[0] == L'-') || (psz[0] == L'/'))
@@ -1878,7 +1878,7 @@ int DoDownload(LPCWSTR asCmdLine)
 						continue;
 					}
 					SafeFree(*KnownArgs[i].ppszValue);
-					if (NextArg(&asCmdLine, szArg) == 0)
+					if ((asCmdLine = NextArg(asCmdLine, szArg)))
 						*KnownArgs[i].ppszValue = szArg.Detach();
 					break;
 				}
@@ -1900,7 +1900,7 @@ int DoDownload(LPCWSTR asCmdLine)
 
 		SafeFree(pszUrl);
 		pszUrl = szArg.Detach();
-		if (NextArg(&asCmdLine, szArg) != 0)
+		if (!(asCmdLine = NextArg(asCmdLine, szArg)))
 		{
 			// If NOT redirected to file already
 			HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);

@@ -487,7 +487,7 @@ bool CConEmuStart::GetCfgParm(LPCWSTR& cmdLineRest, CESwitch& Val, int nMaxLen, 
 	LPCWSTR pszName = cmdLineRest;
 	CmdArg szGetCfgParmTemp;
 
-	if (NextArg(&cmdLineRest, szGetCfgParmTemp) != 0)
+	if (!(cmdLineRest = NextArg(cmdLineRest, szGetCfgParmTemp)))
 	{
 		return false;
 	}
@@ -608,7 +608,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 
 	// Check the first argument in the command line (most probably it will be our executable path/name)
-	if (NextArg(&pszTemp, szArg) != 0)
+	if (!(pszTemp = NextArg(pszTemp, szArg)))
 	{
 		_ASSERTE(FALSE && "GetCommandLine() is empty");
 		// Treat as empty command line, allow to start
@@ -633,7 +633,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 	if (cmdLineRest && *cmdLineRest)
 	{
 		pszTemp = cmdLineRest;
-		if (NextArg(&pszTemp, szArg) == 0)
+		if ((pszTemp = NextArg(pszTemp, szArg)))
 		{
 			if ((*szArg.ms_Val != L'/')
 				&& (*szArg.ms_Val != L'-')
@@ -669,13 +669,13 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 		pszCopyToEnvStart = cmdLineRest;
 		opt.cfgSwitches.Set(pszCopyToEnvStart);
 
-		while (NextArg(&cmdLineRest, szArg, &pszArgStart) == 0)
+		while ((cmdLineRest = NextArg(cmdLineRest, szArg, &pszArgStart)))
 		{
 			bool lbNotFound = false;
 
 			TODO("Replace NeedNextArg with GetCfgParm?")
 			#define NeedNextArg() \
-				if (NextArg(&cmdLineRest, szNext) != 0) { iResult = CERR_CARGUMENT; goto wrap; }
+				if (!(cmdLineRest = NextArg(cmdLineRest, szNext))) { iResult = CERR_CARGUMENT; goto wrap; }
 
 
 			if (!szArg.IsPossibleSwitch())
@@ -791,7 +791,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 					_ASSERTE(opt.runCommand.IsEmpty());
 					pszTemp = cmdLineRest;
-					if ((NextArg(&pszTemp, szNext) == 0)
+					if ((pszTemp = NextArg(pszTemp, szNext))
 						&& szNext.OneOfSwitches(L"-run",L"-cmd"))
 					{
 						opt.runCommand.Set(pszTemp);

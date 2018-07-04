@@ -135,7 +135,7 @@ BOOL CreateProcessInteractive(DWORD anSessionId, LPCWSTR lpApplicationName, LPWS
 	{
 		LPCWSTR pszLine = lpCommandLine;
 		CEStr szArg;
-		while (NextArg(&pszLine, szArg) == 0)
+		while ((pszLine = NextArg(pszLine, szArg)))
 		{
 			if (!szArg.IsSwitch(L"/GID="))
 				continue;

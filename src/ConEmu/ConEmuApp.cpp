@@ -1954,14 +1954,14 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 			LPCWSTR pszIcon = NULL;
 			RConStartArgsEx args;
 
-			while (NextArg(&pszTemp, szTmp) == 0)
+			while ((pszTemp = NextArg(pszTemp, szTmp)))
 			{
 				if (szTmp.ms_Val[0] == L'/')
 					szTmp.ms_Val[0] = L'-';
 
 				if (szTmp.IsSwitch(L"-icon"))
 				{
-					if (NextArg(&pszTemp, szTmp) == 0)
+					if ((pszTemp = NextArg(pszTemp, szTmp)))
 						pszIcon = szTmp;
 					break;
 				}
@@ -1994,7 +1994,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 					if (!pszIcon)
 					{
 						szTmp.Empty();
-						if (NextArg(&pszTemp, szTmp) == 0)
+						if ((pszTemp = NextArg(pszTemp, szTmp)))
 							pszIcon = szTmp;
 					}
 					break;
@@ -2746,7 +2746,7 @@ int ProcessCmdArg(LPCWSTR cmdNew, bool isScript, bool isBare, CEStr& szReady, bo
 			// we may concatenate this argument with Far command line.
 			pszDefCmd = gpSet->psStartSingleApp;
 			CmdArg szExe;
-			if (0 != NextArg(&pszDefCmd, szExe))
+			if (!NextArg(pszDefCmd, szExe))
 			{
 				_ASSERTE(FALSE && "NextArg failed");
 			}
@@ -2840,7 +2840,7 @@ int CheckForDebugArgs(LPCWSTR asCmdLine)
 	// First argument (actually, first would be our executable in most cases)
 	for (int i = 0; i <= 1; i++)
 	{
-		if (NextArg(&pszCmd, lsArg) != 0)
+		if (!(pszCmd = NextArg(pszCmd, lsArg)))
 			break;
 		// Support both notations
 		if (lsArg.ms_Val[0] == L'/') lsArg.ms_Val[0] = L'-';
@@ -3151,7 +3151,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		CmdArg szPath;
 		LPCWSTR pszCmdLine = gpConEmu->opt.runCommand;
-		if (0 == NextArg(&pszCmdLine, szPath))
+		if ((pszCmdLine = NextArg(pszCmdLine, szPath)))
 		{
 			if (CConEmuUpdate::IsUpdatePackage(szPath))
 			{

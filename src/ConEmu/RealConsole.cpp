@@ -198,7 +198,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	CmdArg lsFirstTemp;
 	if (pszCmdTemp)
 	{
-		if (NextArg(&pszCmdTemp, lsFirstTemp) == 0)
+		if ((pszCmdTemp = NextArg(pszCmdTemp, lsFirstTemp)))
 		{
 			_ASSERTE(!CConEmuMain::IsConsoleBatchOrTask(lsFirstTemp));
 		}
@@ -5033,7 +5033,7 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 				// Force SetCurrentDirectory("%USERPROFILE%") in the server
 				CmdArg exe;
 				LPCWSTR pszTemp = psCurCmd;
-				if (NextArg(&pszTemp, exe) == 0)
+				if ((pszTemp = NextArg(pszTemp, exe)))
 					pszChangedCmd = lstrmerge(exe, L" /PROFILECD ", pszTemp);
 			}
 			DWORD nFlags = (Args.RunAsNetOnly == crb_On) ? LOGON_NETCREDENTIALS_ONLY : LOGON_WITH_PROFILE;
@@ -5083,7 +5083,7 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 		LPCWSTR pszCmd = psCurCmd;
 		CmdArg szExec;
 
-		if (NextArg(&pszCmd, szExec) != 0)
+		if (!(pszCmd = NextArg(pszCmd, szExec)))
 		{
 			lbRc = FALSE;
 			dwLastError = -1;
@@ -8503,7 +8503,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	ProcessSetEnvCmd(lpszCmd, NULL, &setTitle);
 	pszTemp = lpszCmd;
 
-	if (0 == NextArg(&pszTemp, szExe))
+	if ((pszTemp = NextArg(pszTemp, szExe)))
 	{
 		pszName = PointToName(szExe);
 
@@ -13603,7 +13603,7 @@ bool CRealConsole::isFarPanelAllowed()
 			return (mn_FarNoPanelsCheck == 1);
 		CmdArg szArg;
 		LPCWSTR pszCmdLine = GetCmd();
-		while (NextArg(&pszCmdLine, szArg) == 0)
+		while ((pszCmdLine = NextArg(pszCmdLine, szArg)))
 		{
 			LPCWSTR ps = szArg.ms_Val;
 			if ((ps[0] == L'-' || ps[0] == L'/')
@@ -16593,7 +16593,7 @@ bool CRealConsole::GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName,
 		wchar_t* pszDot = wcsrchr(szApp, L'.'); // расширение?
 		CharUpperBuff(szApp, lstrlen(szApp));
 
-		if (NextArg(&pszCmd, szArg, &pszApp) == 0)
+		if ((pszCmd = NextArg(pszCmd, szArg, &pszApp)))
 		{
 			// Что пытаемся запустить в консоли
 			CharUpperBuff(szArg.ms_Val, lstrlen(szArg));

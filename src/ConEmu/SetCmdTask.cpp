@@ -164,14 +164,14 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 
 	LPCWSTR pszArgs = pszGuiArgs, pszOk = pszGuiArgs;
 	CmdArg szArg;
-	while (0 == NextArg(&pszArgs, szArg))
+	while ((pszArgs = NextArg(pszArgs, szArg)))
 	{
 		if (szArg.ms_Val[0] == L'-')
 			szArg.ms_Val[0] = L'/';
 
 		if (lstrcmpi(szArg, L"/dir") == 0)
 		{
-			if (0 != NextArg(&pszArgs, szArg))
+			if (!(pszArgs = NextArg(pszArgs, szArg)))
 				break;
 			if (*szArg)
 			{
@@ -189,7 +189,7 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 		}
 		else if (lstrcmpi(szArg, L"/icon") == 0)
 		{
-			if (0 != NextArg(&pszArgs, szArg))
+			if (!(pszArgs = NextArg(pszArgs, szArg)))
 				break;
 			if (*szArg)
 			{

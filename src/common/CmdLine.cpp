@@ -343,24 +343,18 @@ bool IsNeedDequote(LPCWSTR asCmdLine, bool abFromCmdCK, LPCWSTR* rsEndQuote/*=NU
 	return true;
 }
 
-// Returns PTR to next arg or NULL on error
-LPCWSTR QueryNextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=NULL*/)
-{
-	if (0 != NextArg(&asCmdLine, rsArg, rsArgStart))
-		return NULL;
-	return asCmdLine;
-}
+// #CmdArg Eliminate QueryNext*** and make Next** return LPCWSTR
 
-// Returns 0 if succeeded, otherwise the error code
-int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=NULL*/)
+// Returns PTR to next arg or NULL on error
+LPCWSTR NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=NULL*/)
 {
 	if (!asCmdLine || !*asCmdLine)
-		return CERR_CMDLINEEMPTY;
+		return NULL;
 
 	#ifdef _DEBUG
 	if ((rsArg.mn_TokenNo==0) // first token
-		|| ((rsArg.mn_TokenNo>0) && (rsArg.ms_LastTokenEnd==*asCmdLine)
-			&& (wcsncmp(*asCmdLine,rsArg.ms_LastTokenSave,countof(rsArg.ms_LastTokenSave)-1))==0))
+		|| ((rsArg.mn_TokenNo>0) && (rsArg.ms_LastTokenEnd==asCmdLine)
+			&& (wcsncmp(asCmdLine, rsArg.ms_LastTokenSave, countof(rsArg.ms_LastTokenSave)-1))==0))
 	{
 		// OK, параметры корректны
 	}
@@ -370,9 +364,9 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 	}
 	#endif
 
-	LPCWSTR psCmdLine = SkipNonPrintable(*asCmdLine), pch = NULL;
+	LPCWSTR psCmdLine = SkipNonPrintable(asCmdLine), pch = NULL;
 	if (!*psCmdLine)
-		return CERR_CMDLINEEMPTY;
+		return NULL;
 
 	// Remote surrounding quotes, in certain cases
 	// Example: ""7z.exe" /?"
@@ -432,14 +426,16 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 			}
 		}
 
-		if (!pch) return CERR_CMDLINE;
+		if (!pch)
+			return NULL;
 
 		while (pch[1] == L'"' && (!rsArg.mpsz_Dequoted || ((pch+1) < rsArg.mpsz_Dequoted)))
 		{
 			pch += 2;
 			pch = wcschr(pch, L'"');
 
-			if (!pch) return CERR_CMDLINE;
+			if (!pch)
+				return NULL;
 		}
 
 		// Теперь в pch ссылка на последнюю "
@@ -466,7 +462,7 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 	// Warning: Don't demangle quotes/escapes here, or we'll fail to
 	// concatenate environment or smth, losing quotes and others
 	if (!rsArg.Set(psCmdLine, nArgLen))
-		return CERR_CMDLINE;
+		return NULL;
 	rsArg.mb_Quoted = lbQMode;
 	rsArg.mn_TokenNo++;
 
@@ -519,8 +515,7 @@ int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart
 		break;
 	}
 
-	*asCmdLine = psCmdLine;
-	return 0;
+	return psCmdLine;
 }
 
 // Returns PTR to next line or NULL on error
@@ -720,7 +715,6 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 	if (rsArguments) *rsArguments = NULL;
 
 	bool lbRc = false;
-	int iRc = 0;
 	BOOL lbFirstWasGot = FALSE;
 	LPCWSTR pwszCopy;
 	int nLastChar;
@@ -738,9 +732,8 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 	// Это минимальные проверки, собственно к коду - не относятся
 	bool bIsBatch = false;
 	{
-		LPCWSTR psz = asCmdLine;
-		NextArg(&psz, szDbgFirst);
-		psz = PointToExt(szDbgFirst);
+		NextArg(asCmdLine, szDbgFirst);
+		LPCWSTR psz = PointToExt(szDbgFirst);
 		if (lstrcmpi(psz, L".cmd")==0 || lstrcmpi(psz, L".bat")==0)
 			bIsBatch = true;
 	}
@@ -796,11 +789,9 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 			// cmd /c ""c:\program files\arc\7z.exe" -?"   // да еще и внутри могут быть двойными...
 			// cmd /c "dir c:\"
 
-			LPCWSTR pwszTemp = pwszCopy;
-
 			// Получим первую команду (исполняемый файл?)
 			CmdArg arg;
-			if ((iRc = NextArg(&pwszTemp, arg)) != 0)
+			if (!NextArg(pwszCopy, arg))
 			{
 				//Parsing command line failed
 				#ifdef WARN_NEED_CMD
@@ -911,10 +902,10 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 				pchEnd = pwszCopy + lstrlenW(pwszCopy);
 		}
 
-		if (szExe[0] == 0)
+		if (szExe.IsEmpty())
 		{
 			CmdArg arg;
-			if ((iRc = NextArg(&pwszCopy, arg)) != 0)
+			if (!(pwszCopy = NextArg(pwszCopy, arg)))
 			{
 				//Parsing command line failed
 				#ifdef WARN_NEED_CMD

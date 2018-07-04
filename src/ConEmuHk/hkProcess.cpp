@@ -65,7 +65,7 @@ HRESULT OurShellExecCmdLine(HWND hwnd, LPCWSTR pwszCommand, LPCWSTR pwszStartDir
 	CmdArg szExe;
 	LPCWSTR pszFile = pwszCommand;
 	LPCWSTR pszParm = pwszCommand;
-	if (NextArg(&pszParm, szExe) == 0)
+	if ((pszParm = NextArg(pszParm, szExe)))
 	{
 		pszFile = szExe; pszParm = SkipNonPrintable(pszParm);
 	}

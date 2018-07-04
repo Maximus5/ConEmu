@@ -1308,7 +1308,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 		if (!FileExists(asCmdLine))
 		{
 			const wchar_t *psz = asCmdLine;
-			if (NextArg(&psz, szTemp) == 0)
+			if ((psz = NextArg(psz, szTemp)))
 				asCmdLine = szTemp;
 		}
 		else
@@ -3299,7 +3299,7 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 		LPCWSTR pcszCmd = apszLine;
 		CmdArg szArg;
 		const int iNewConLen = lstrlen(L"-new_console");
-		while (NextArg(&pcszCmd, szArg) == 0)
+		while ((pcszCmd = NextArg(pcszCmd, szArg)))
 		{
 			// On first "-new_console" or "-cur_console" stop processing "specials"
 			if (wcsncmp(szArg, L"-new_console", iNewConLen) == 0 || wcsncmp(szArg, L"-cur_console", iNewConLen) == 0)
@@ -3311,7 +3311,7 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 
 			if (lstrcmpi(szArg, L"/bufferheight") == 0)
 			{
-				if (NextArg(&pcszCmd, szArg) == 0)
+				if ((pcszCmd = NextArg(pcszCmd, szArg)))
 				{
 					wchar_t* pszEnd = NULL;
 					if (pArgs)
@@ -3325,7 +3325,7 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 			}
 			else if (lstrcmpi(szArg, L"/dir") == 0)
 			{
-				if (NextArg(&pcszCmd, szArg) == 0)
+				if ((pcszCmd = NextArg(pcszCmd, szArg)))
 				{
 					if (pArgs)
 					{
@@ -3338,7 +3338,7 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 			}
 			else if (lstrcmpi(szArg, L"/icon") == 0)
 			{
-				if (NextArg(&pcszCmd, szArg) == 0)
+				if ((pcszCmd = NextArg(pcszCmd, szArg)))
 				{
 					if (pArgs)
 					{
@@ -3351,7 +3351,7 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 			}
 			else if (lstrcmpi(szArg, L"/tab") == 0)
 			{
-				if (NextArg(&pcszCmd, szArg) == 0)
+				if ((pcszCmd = NextArg(pcszCmd, szArg)))
 				{
 					if (pArgs)
 					{
@@ -3390,7 +3390,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 
 	CVConGroup::OnCreateGroupBegin();
 
-	while (0 == NextLine(&pszCursor, szLine, NLF_SKIP_EMPTY_LINES| NLF_TRIM_SPACES))
+	while ((pszCursor = NextLine(pszCursor, szLine, NLF_SKIP_EMPTY_LINES| NLF_TRIM_SPACES)))
 	{
 		lbSetActive = false;
 
@@ -3431,8 +3431,8 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 			lsTempTask = LoadConsoleBatch(pszLine, &args);
 			if (lsTempTask.IsEmpty())
 				break;
-			LPCWSTR pszTempPtr = lsTempTask.ms_Val;
-			if (0 != NextLine(&pszTempPtr, lsTempLine))
+			// We need only first line from nested task
+			if (!NextLine(lsTempTask, lsTempLine))
 				break;
 			pszLine = ParseScriptLineOptions(lsTempLine.ms_Val, NULL, &args);
 		}
@@ -6695,10 +6695,9 @@ wchar_t CConEmuMain::IsConsoleBatchOrTask(LPCWSTR asSource)
 	CmdArg lsTemp;
 	if (asSource && (*asSource == L'"'))
 	{
-		LPCWSTR pszTemp = asSource;
-		if (NextArg(&pszTemp, lsTemp) == 0)
+		if (NextArg(asSource, lsTemp))
 		{
-			asSource = lsTemp.ms_Val;
+			asSource = lsTemp.c_str();
 		}
 	}
 
@@ -6737,15 +6736,17 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgsEx* pArgs 
 	CmdArg lsTemp;
 	if (asSource && (*asSource == L'"'))
 	{
-		LPCWSTR pszTemp = asSource;
-		if (NextArg(&pszTemp, lsTemp) == 0)
+		LPCWSTR pszTemp;
+		if ((pszTemp = NextArg(asSource, lsTemp)))
 		{
-			asSource = lsTemp.ms_Val;
+			asSource = lsTemp.c_str();
 
-			#ifdef _DEBUG
 			pszTemp = SkipNonPrintable(pszTemp);
-			_ASSERTE((!pszTemp || !*pszTemp) && "Task arguments are not supported yet");
-			#endif
+			if (pszTemp && *pszTemp)
+			{
+				// #Tasks Is it still true?
+				_ASSERTE((!pszTemp || !*pszTemp) && "Task arguments are not supported yet");
+			}
 		}
 	}
 
@@ -6883,7 +6884,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 		// Поехали
 		LPWSTR pszConsoles[MAX_CONSOLE_COUNT] = {};
 		size_t cchLen, cchAllLen = 0, iCount = 0;
-		while ((iCount < MAX_CONSOLE_COUNT) && (0 == NextArg(&asSource, szPart)))
+		while ((iCount < MAX_CONSOLE_COUNT) && (asSource = NextArg(asSource, szPart)))
 		{
 			if (lstrcmpi(PointToExt(szPart), L".lnk") == 0)
 			{

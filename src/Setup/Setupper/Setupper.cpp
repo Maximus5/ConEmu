@@ -657,7 +657,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 
 	CTempDir temp_dir; // gsTempFolder[0] = 0;
 
-	while (0 == NextArg(&pszCmdToken, szArg))
+	while ((pszCmdToken = NextArg(pszCmdToken, szArg)))
 	{
 		if (lstrcmp(szArg, L"/?") == 0 || lstrcmp(szArg, L"-?") == 0 || lstrcmp(szArg, L"-h") == 0
 			|| lstrcmp(szArg, L"-help") == 0 || lstrcmp(szArg, L"--help") == 0)

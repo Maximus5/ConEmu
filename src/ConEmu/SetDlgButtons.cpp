@@ -4426,7 +4426,7 @@ void CSetDlgButtons::OnBtn_GotoEditorCmd(HWND hDlg, WORD CB, BYTE uCheck)
 
 	LPCWSTR pszTemp = gpSet->sFarGotoEditor;
 	CmdArg szExe;
-	if (NextArg(&pszTemp, szExe) == 0)
+	if ((pszTemp = NextArg(pszTemp, szExe)))
 	{
 		lstrcpyn(szPath, szExe, countof(szPath));
 	}

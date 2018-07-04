@@ -449,7 +449,7 @@ HWND CConEmuInside::InsideFindParent()
 		LPCWSTR pszCmdLine = GetCommandLine();
 		CmdArg lsArg;
 		LPCWSTR pszCmd = pszCmdLine;
-		while (0 == NextArg(&pszCmd, lsArg))
+		while ((pszCmd = NextArg(pszCmd, lsArg)))
 		{
 			if (lsArg.OneOfSwitches(L"-runlist",L"-cmdlist"))
 			{
