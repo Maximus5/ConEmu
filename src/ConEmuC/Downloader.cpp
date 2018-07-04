@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Wininet.h>
 #include "../common/Common.h"
 #include "../common/CmdLine.h"
+#include "../common/EnvVar.h"
 #include "../common/MSectionSimple.h"
 #include "../common/MStrDup.h"
 #include "../common/WObjects.h"

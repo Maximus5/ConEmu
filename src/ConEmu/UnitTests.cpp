@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Hotkeys.h"
 #include "Macro.h"
 #include "Match.h"
+#include "../common/EnvVar.h"
 #include "../common/WFiles.h"
 #include "../common/WUser.h"
 

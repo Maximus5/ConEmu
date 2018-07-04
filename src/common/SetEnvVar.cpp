@@ -31,7 +31,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Common.h"
 #include "CmdLine.h"
-#include "MStrSafe.h"
 #include "SetEnvVar.h"
 #include "WUser.h"
 #include "../ConEmu/version.h"
@@ -91,33 +90,4 @@ void SetConEmuWorkEnvVar(HMODULE hConEmuCD)
 	SetEnvironmentVariable(ENV_CONEMU_BUILD_W, szDrive);
 
 	SetEnvironmentVariable(ENV_CONEMU_ISADMIN_W, IsUserAdmin() ? L"ADMIN" : NULL);
-}
-
-CEnvStrings::CEnvStrings(LPWSTR pszStrings /* = GetEnvironmentStringsW() */)
-	: ms_Strings(pszStrings)
-	, mcch_Length(0)
-	, mn_Count(0)
-{
-	// Must be ZZ-terminated
-	if (pszStrings && *pszStrings)
-	{
-		// Parse variables block, determining MAX length
-		LPCWSTR pszSrc = pszStrings;
-		while (*pszSrc)
-		{
-			pszSrc += lstrlen(pszSrc) + 1;
-			mn_Count++;
-		}
-		mcch_Length = pszSrc - pszStrings + 1;
-		// mn_Count holds count of 'lines' like "name=value\0"
-	}
-}
-
-CEnvStrings::~CEnvStrings()
-{
-	if (ms_Strings)
-	{
-		FreeEnvironmentStringsW((LPWCH)ms_Strings);
-		ms_Strings = NULL;
-	}
 }

@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Common.h"
 #include "CEStr.h"
 #include "CmdLine.h"
+#include "EnvVar.h"
 #include "MStrDup.h"
 #include "WObjects.h"
 

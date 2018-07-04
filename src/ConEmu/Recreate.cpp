@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "Header.h"
+#include "../common/EnvVar.h"
 #include "../common/WFiles.h"
 #include <lm.h>
 #pragma warning(disable: 4091)

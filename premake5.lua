@@ -118,6 +118,7 @@ local common_kernel = {
   "src/common/ConEmuCheck.*",
   "src/common/ConsoleMixAttr.*",
   "src/common/ConsoleRead.*",
+  "src/common/EnvVar.*",
   "src/common/Execute.*",
   "src/common/HandleKeeper.*",
   "src/common/HkFunc.*",

@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Update.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../common/CEStr.h"
+#include "../common/EnvVar.h"
 #include "../common/execute.h"
 #include "../common/FarVersion.h"
 #include "../common/MSetter.h"

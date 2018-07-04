@@ -51,6 +51,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "../common/ConEmuCheck.h"
 
 #include "../common/execute.h"
+#include "../common/EnvVar.h"
 #include "../common/md5.h"
 #include "../common/MArray.h"
 #include "../common/MFileLogEx.h"

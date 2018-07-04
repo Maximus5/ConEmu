@@ -30,6 +30,9 @@
     <ClInclude Include="common\ConsoleRead.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="common\EnvVar.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="common\HandleKeeper.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -123,6 +126,9 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="common\ConsoleRead.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="common\EnvVar.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="common\HandleKeeper.cpp">

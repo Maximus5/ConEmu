@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LngData.h"
 #include "LngRc.h"
 #include "Options.h"
+#include "../common/EnvVar.h"
 #include "../common/MJsonReader.h"
 #include "../common/WFiles.h"
 

@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/ConEmuCheck.h"
 #include "../common/ConsoleMixAttr.h"
+#include "../common/EnvVar.h"
 #include "../common/Execute.h"
 #include "../common/MGlobal.h"
 #include "../common/MSetter.h"
@@ -3231,7 +3232,8 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 										{
 											// Need to check registry for 'App Paths' and set up '%PATH%'
 											LPCWSTR pszTemp = args.pszSpecialCmd;
-											CEStr szExe, szPrevPath;
+											CEStr szExe;
+											CEnvRestorer szPrevPath;
 											wchar_t* pszPrevPath = NULL;
 											if (NextArg(&pszTemp, szExe) == 0)
 											{

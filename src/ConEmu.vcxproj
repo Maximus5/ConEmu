@@ -450,6 +450,7 @@
     <ClInclude Include="common\DefTermBase.h" />
     <ClInclude Include="common\Dump.h" />
     <ClInclude Include="common\EmergencyShow.h" />
+    <ClInclude Include="common\EnvVar.h" />
     <ClInclude Include="common\FarVersion.h" />
     <ClInclude Include="common\GdiPlusLt.h" />
     <ClInclude Include="common\HandleKeeper.h" />

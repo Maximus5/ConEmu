@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 #include "CmdLine.h"
+#include "EnvVar.h"
 #include "MModule.h"
 #include "MStrDup.h"
 #include "WObjects.h"
@@ -920,6 +921,7 @@ bool IsGDB(LPCWSTR asFilePatName)
 	return bIsGdb;
 }
 
+/// Substitute in the pszFormat macros '%1' ... '%9' with pszValues[0] .. pszValues[8]
 wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCount)
 {
 	wchar_t* pszCommand = NULL;
@@ -1001,68 +1003,6 @@ wchar_t* ExpandMacroValues(LPCWSTR pszFormat, LPCWSTR* pszValues, size_t nValCou
 
 wrap:
 	return pszCommand;
-}
-
-wchar_t* ExpandEnvStr(LPCWSTR pszCommand)
-{
-	if (!pszCommand || !*pszCommand)
-		return NULL;
-
-	DWORD cchMax = ExpandEnvironmentStrings(pszCommand, NULL, 0);
-	if (!cchMax)
-		return lstrdup(pszCommand);
-
-	wchar_t* pszExpand = (wchar_t*)malloc((cchMax+2)*sizeof(*pszExpand));
-	if (pszExpand)
-	{
-		pszExpand[0] = 0;
-		pszExpand[cchMax] = 0xFFFF;
-		pszExpand[cchMax+1] = 0xFFFF;
-
-		DWORD nExp = ExpandEnvironmentStrings(pszCommand, pszExpand, cchMax);
-		if (nExp && (nExp <= cchMax) && *pszExpand)
-			return pszExpand;
-
-		SafeFree(pszExpand);
-	}
-	return NULL;
-}
-
-wchar_t* GetEnvVar(LPCWSTR VarName)
-{
-	if (!VarName || !*VarName)
-	{
-		return NULL;
-	}
-
-	DWORD cchMax, nRc, nErr;
-
-	nRc = GetEnvironmentVariable(VarName, NULL, 0);
-	if (nRc == 0)
-	{
-		// Weird. This may be empty variable or not existing variable
-		nErr = GetLastError();
-		if (nErr == ERROR_ENVVAR_NOT_FOUND)
-			return NULL;
-		return (wchar_t*)calloc(3,sizeof(wchar_t));
-	}
-
-	cchMax = nRc+2;
-	wchar_t* pszVal = (wchar_t*)calloc(cchMax,sizeof(*pszVal));
-	if (!pszVal)
-	{
-		_ASSERTE((pszVal!=NULL) && "GetEnvVar memory allocation failed");
-		return NULL;
-	}
-
-	nRc = GetEnvironmentVariable(VarName, pszVal, cchMax);
-	if ((nRc == 0) || (nRc >= cchMax))
-	{
-		_ASSERTE(nRc > 0 && nRc < cchMax);
-		SafeFree(pszVal);
-	}
-
-	return pszVal;
 }
 
 LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits/* = csb_SameOS*/)

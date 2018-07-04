@@ -41,6 +41,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsClass.h"
 #include "ToolImg.h"
+#include "../common/EnvVar.h"
 #include "../common/MSectionSimple.h"
 
 #ifdef _DEBUG

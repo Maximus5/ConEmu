@@ -56,9 +56,6 @@ public:
 	wchar_t ms_LastTokenSave[32] = L"";
 	#endif
 
-	bool mb_RestoreEnvVar = false; // Если используется для сохранения переменной окружения, восстановить при закрытии объекта
-	wchar_t ms_RestoreVarName[32] = L"";
-
 private:
 	LPCWSTR AttachInt(wchar_t*& asPtr);
 
@@ -90,8 +87,6 @@ public:
 	void Empty();
 	bool IsEmpty() const;
 	LPCWSTR Set(LPCWSTR asNewValue, INT_PTR anChars = -1);
-	void SavePathVar(LPCWSTR asCurPath);
-	void SaveEnvVar(LPCWSTR asVarName, LPCWSTR asNewValue);
 	void SetAt(INT_PTR nIdx, wchar_t wc);
 
 	void GetPosFrom(const CEStr& arg);

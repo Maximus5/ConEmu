@@ -94,8 +94,6 @@ void CEStr::Empty()
 	ms_LastTokenEnd = NULL;
 	ms_LastTokenSave[0] = 0;
 	#endif
-	mb_RestoreEnvVar = false;
-	ms_RestoreVarName[0] = 0;
 }
 
 CEStr::operator LPCWSTR() const
@@ -190,11 +188,6 @@ CEStr& CEStr::operator=(const wchar_t* asPtr)
 CEStr::~CEStr()
 {
 	CESTRLOG1("CEStr::~CEStr(x%p)", ms_Val);
-
-	if (mb_RestoreEnvVar && *ms_RestoreVarName && !IsEmpty())
-	{
-		SetEnvironmentVariable(ms_RestoreVarName, ms_Val);
-	}
 
 	#ifdef _DEBUG
 	if (ms_Val)
@@ -504,31 +497,6 @@ LPCWSTR CEStr::Set(LPCWSTR asNewValue, INT_PTR anChars /*= -1*/)
 	CESTRLOG1("  ms_Val=x%p", ms_Val);
 
 	return ms_Val;
-}
-
-void CEStr::SavePathVar(LPCWSTR asCurPath)
-{
-	// Will restore environment variable "PATH" in destructor
-	if (Set(asCurPath))
-	{
-		mb_RestoreEnvVar = true;
-		lstrcpyn(ms_RestoreVarName, L"PATH", countof(ms_RestoreVarName));
-	}
-}
-
-void CEStr::SaveEnvVar(LPCWSTR asVarName, LPCWSTR asNewValue)
-{
-	if (!asVarName || !*asVarName)
-		return;
-
-	_ASSERTE(!mb_RestoreEnvVar);
-	Empty();
-	SafeFree(ms_Val);
-	Attach(GetEnvVar(asVarName));
-
-	mb_RestoreEnvVar = true;
-	lstrcpyn(ms_RestoreVarName, asVarName, countof(ms_RestoreVarName));
-	SetEnvironmentVariable(asVarName, asNewValue);
 }
 
 void CEStr::SetAt(INT_PTR nIdx, wchar_t wc)

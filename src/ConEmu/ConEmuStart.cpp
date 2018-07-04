@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "SetCmdTask.h"
 
+#include "../common/EnvVar.h"
 #include "../common/Monitors.h"
 #include "../common/StartupEnvDef.h"
 #include "../common/WFiles.h"

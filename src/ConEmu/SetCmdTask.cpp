@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include "../common/EnvVar.h"
 #include "ConEmu.h" // Only for ParseScriptLineOptions - need to be moved...
 #include "Hotkeys.h"
 #include "SetCmdTask.h"

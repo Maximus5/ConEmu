@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 #include "../common/ConsoleRead.h"
+#include "../common/EnvVar.h"
 #include "../common/StartupEnvEx.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WCodePage.h"

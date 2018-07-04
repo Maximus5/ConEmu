@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "Common.h"
+#include "EnvVar.h"
 #include "MStrDup.h"
 #include "WFiles.h"
 #include "WObjects.h"
@@ -35,14 +36,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Returns true, if application was found in registry:
 // [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
 // Also, function may change local process %PATH% variable
-bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEStr* rpsPathRestore /*= NULL*/)
+bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRestorer* rpsPathRestore /*= NULL*/)
 {
 	#if defined(CONEMU_MINIMAL)
 	PRAGMA_ERROR("Must not be included in ConEmuHk");
 	#endif
 
 	if (rpsPathRestore)
-		rpsPathRestore->Empty();
+		rpsPathRestore->Clear();
 
 	if (!asFilePath || !*asFilePath)
 		return false;

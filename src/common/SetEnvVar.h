@@ -32,14 +32,3 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 void SetConEmuEnvVar(HWND hConEmuWnd);
 void SetConEmuEnvVarChild(HWND hDcWnd, HWND hBackWnd);
 void SetConEmuWorkEnvVar(HMODULE hConEmuCD);
-
-class CEnvStrings
-{
-public:
-	LPWSTR ms_Strings;
-	size_t mcch_Length;
-	size_t mn_Count; // Holds count of 'lines' like "name=value\0"
-public:
-	CEnvStrings(LPWSTR pszStrings /* = GetEnvironmentStringsW() */);
-	~CEnvStrings();
-};

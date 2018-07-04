@@ -30,14 +30,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "defines.h"
+#include "CmdLine.h"
+#include "Common.h"
+#include "EnvVar.h"
 #include "MAssert.h"
-#include "Memory.h"
 #include "MStrDup.h"
 #include "MStrSafe.h"
+#include "Memory.h"
 #include "RConStartArgs.h"
-#include "Common.h"
 #include "WObjects.h"
-#include "CmdLine.h"
 
 #define DEBUGSTRPARSE(s) DEBUGSTR(s)
 

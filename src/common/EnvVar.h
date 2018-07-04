@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-present Maximus5
+Copyright (c) 2013-present Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,34 +26,36 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+
 #pragma once
 
-#include "CmdLine.h"
+#include "CEStr.h"
 
-bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll = false, int anListCount = -1);
-bool FileExistSubDir(LPCWSTR asDirectory, LPCWSTR asFile, int iDepth, CEStr& rsFound);
-bool DirectoryExists(LPCWSTR asPath);
-bool MyCreateDirectory(wchar_t* asPath);
+wchar_t* ExpandEnvStr(LPCWSTR pszCommand);
+wchar_t* GetEnvVar(LPCWSTR VarName);
 
-bool IsDotsName(LPCWSTR asName);
 
-class CEnvRestorer;
-bool SearchAppPaths(LPCWSTR asFilePath, CEStr& rsFound, bool abSetPath, CEnvRestorer* rpsPathRestore = nullptr);
+class CEnvStrings
+{
+public:
+	LPWSTR ms_Strings;
+	size_t mcch_Length;
+	size_t mn_Count; // Holds count of 'lines' like "name=value\0"
+public:
+	CEnvStrings(LPWSTR pszStrings /* = GetEnvironmentStringsW() */);
+	~CEnvStrings();
+};
 
-wchar_t* GetFullPathNameEx(LPCWSTR asPath);
-bool FindFileName(LPCWSTR asPath, CEStr& rsName);
-bool MakePathProperCase(CEStr& rsPath);
 
-int ReadTextFile(LPCWSTR asPath, DWORD cchMax, wchar_t*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode, DWORD DefaultCP = 0);
-int ReadTextFile(LPCWSTR asPath, DWORD cchMax, char*& rsBuffer, DWORD& rnChars, DWORD& rnErrCode);
-int WriteTextFile(LPCWSTR asPath, const wchar_t* asBuffer, int anSrcLen = -1, DWORD OutCP = CP_UTF8, bool WriteBOM = true, LPDWORD rnErrCode = NULL);
+class CEnvRestorer
+{
+private:
+	bool mb_RestoreEnvVar = false;
+	CEStr ms_VarName, ms_OldValue;
 
-bool FileCompare(LPCWSTR asFilePath1, LPCWSTR asFilePath2);
-
-#if 0
-int apiCancelIoEx(HANDLE hFile, LPOVERLAPPED lpOverlapped);
-#endif
-int apiCancelSynchronousIo(HANDLE hThread);
-
-bool HasZoneIdentifier(LPCWSTR asFile, int& nZoneID);
-bool DropZoneIdentifier(LPCWSTR asFile, DWORD& nErrCode);
+public:
+	~CEnvRestorer();
+	void Clear();
+	void SavePathVar(const wchar_t*  asCurPath);
+	void SaveEnvVar(const wchar_t*  asVarName, const wchar_t*  asNewValue);
+};

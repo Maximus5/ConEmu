@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LoadImg.h"
 #include "VirtualConsole.h"
 #include "../common/CmdLine.h"
+#include "../common/EnvVar.h"
 #include "../common/MSection.h"
 
 CBackground::CBackground()

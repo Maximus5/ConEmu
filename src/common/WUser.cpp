@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Common.h"
 #include <Sddl.h> // ConvertSidToStringSid
 #include "CmdLine.h"
+#include "EnvVar.h"
 #include "MModule.h"
 #include "MProcess.h"
 #include "MStrDup.h"

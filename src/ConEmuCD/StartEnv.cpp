@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "ConEmuSrv.h"
+#include "../common/EnvVar.h"
 #include "../common/MStrDup.h"
 
 #include "Actions.h"

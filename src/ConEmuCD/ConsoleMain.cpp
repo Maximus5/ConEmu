@@ -77,6 +77,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleMixAttr.h"
 #include "../common/ConsoleRead.h"
 #include "../common/EmergencyShow.h"
+#include "../common/EnvVar.h"
 #include "../common/execute.h"
 #include "../common/HkFunc.h"
 #include "../common/MArray.h"

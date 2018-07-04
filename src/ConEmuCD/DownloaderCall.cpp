@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #include <Windows.h>
 #include "../common/defines.h"
+#include "../common/EnvVar.h"
 #include "../common/MAssert.h"
 #include "../common/MSectionSimple.h"
 #include "../common/WFiles.h"

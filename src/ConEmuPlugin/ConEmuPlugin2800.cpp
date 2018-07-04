@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../common/farcolor3.hpp"
 #include "../common/ConEmuColors3.h"
+#include "../common/EnvVar.h"
 #include "../common/MArray.h"
 #include "../common/WThreads.h"
 #include "../ConEmuHk/ConEmuHooks.h"

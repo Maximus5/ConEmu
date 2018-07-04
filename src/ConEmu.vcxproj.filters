@@ -519,6 +519,9 @@
     <ClInclude Include="common\EmergencyShow.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="common\EnvVar.h">
+      <Filter>Common</Filter>
+    </ClInclude>
     <ClInclude Include="common\FarVersion.h">
       <Filter>Common</Filter>
     </ClInclude>
