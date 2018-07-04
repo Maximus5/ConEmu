@@ -3164,7 +3164,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 							// Если явно указан другой внешний редактор - всегда использовать его
 							bool bUseExtEditor = false;
 							LPCWSTR pszTemp = gpSet->sFarGotoEditor;
-							CEStr szExe;
+							CmdArg szExe;
 							if (NextArg(&pszTemp, szExe) == 0)
 							{
 								if (!IsFarExe(PointToName(szExe)))
@@ -3232,7 +3232,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 										{
 											// Need to check registry for 'App Paths' and set up '%PATH%'
 											LPCWSTR pszTemp = args.pszSpecialCmd;
-											CEStr szExe;
+											CmdArg szExe;
 											CEnvRestorer szPrevPath;
 											wchar_t* pszPrevPath = NULL;
 											if (NextArg(&pszTemp, szExe) == 0)

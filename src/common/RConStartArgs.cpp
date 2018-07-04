@@ -150,7 +150,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 		LPCWSTR pszTemp = pszSpecialCmd;
 		LPCWSTR pszSave = pszSpecialCmd;
 		LPCWSTR pszName;
-		CEStr szExe;
+		CmdArg szExe;
 		LPCWSTR pszWords[] = {
 			L"ConEmu", L"ConEmu.exe", L"ConEmu64", L"ConEmu64.exe",
 			L"ConEmuC", L"ConEmuC.exe", L"ConEmuC64", L"ConEmuC64.exe",

@@ -1947,7 +1947,7 @@ static HRESULT _CreateShellLink(PCWSTR pszArguments, PCWSTR pszPrefix, PCWSTR ps
 			hr = psl->SetPath(szAppPath);
 
 			// Иконка
-			CEStr szTmp;
+			CmdArg szTmp;
 			CEStr szIcon; int iIcon = 0;
 			CEStr szBatch;
 			LPCWSTR pszTemp = pszArguments;
@@ -2745,7 +2745,7 @@ int ProcessCmdArg(LPCWSTR cmdNew, bool isScript, bool isBare, CEStr& szReady, bo
 			// Then if user drops, for example, txt file on the ConEmu's icon,
 			// we may concatenate this argument with Far command line.
 			pszDefCmd = gpSet->psStartSingleApp;
-			CEStr szExe;
+			CmdArg szExe;
 			if (0 != NextArg(&pszDefCmd, szExe))
 			{
 				_ASSERTE(FALSE && "NextArg failed");
@@ -2836,7 +2836,7 @@ int CheckForDebugArgs(LPCWSTR asCmdLine)
 	#endif
 
 	LPCWSTR pszCmd = asCmdLine;
-	CEStr lsArg;
+	CmdArg lsArg;
 	// First argument (actually, first would be our executable in most cases)
 	for (int i = 0; i <= 1; i++)
 	{
@@ -3149,7 +3149,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// params == (uint)-1, если первый аргумент не начинается с '/'
 	if (!gpConEmu->opt.runCommand.IsEmpty() && (gpConEmu->opt.params == -1))
 	{
-		CEStr szPath;
+		CmdArg szPath;
 		LPCWSTR pszCmdLine = gpConEmu->opt.runCommand;
 		if (0 == NextArg(&pszCmdLine, szPath))
 		{

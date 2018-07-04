@@ -85,15 +85,6 @@ void CEStr::Empty()
 	{
 		*ms_Val = 0;
 	}
-
-	mn_TokenNo = 0;
-	mn_CmdCall = cc_Undefined;
-	mpsz_Dequoted = NULL;
-	mb_Quoted = false;
-	#ifdef _DEBUG
-	ms_LastTokenEnd = NULL;
-	ms_LastTokenSave[0] = 0;
-	#endif
 }
 
 CEStr::operator LPCWSTR() const
@@ -338,117 +329,6 @@ bool CEStr::operator==(const wchar_t* asStr) const
 	return Compare(asStr) == 0;
 }
 
-bool CEStr::IsPossibleSwitch() const
-{
-	// Nothing to compare?
-	if (IsEmpty())
-		return false;
-	if ((ms_Val[0] != L'-') && (ms_Val[0] != L'/'))
-		return false;
-
-	// We do not care here about "-new_console:..." or "-cur_console:..."
-	// They are processed by RConStartArgsEx
-
-	// But ':' removed from checks, because otherwise ConEmu will not warn
-	// on invalid usage of "-new_console:a" for example
-
-	// Also, support smth like "-inside=\eCD /d %1"
-	LPCWSTR pszDelim = wcspbrk(ms_Val+1, L"=:");
-	LPCWSTR pszInvalids = wcspbrk(ms_Val+1, L"\\/|.&<>^");
-
-	if (pszInvalids && (!pszDelim || (pszInvalids < pszDelim)))
-		return false;
-
-	// Well, looks like a switch (`-run` for example)
-	return true;
-}
-
-bool CEStr::CompareSwitch(LPCWSTR asSwitch) const
-{
-	if ((asSwitch[0] == L'-') || (asSwitch[0] == L'/'))
-	{
-		asSwitch++;
-	}
-	else
-	{
-		_ASSERTE((asSwitch[0] == L'-') || (asSwitch[0] == L'/'));
-	}
-
-	int iCmp = lstrcmpi(ms_Val+1, asSwitch);
-	if (iCmp == 0)
-		return true;
-
-	// Support partial comparison for L"-inside=..." when (asSwitch == L"-inside=")
-	int len = lstrlen(asSwitch);
-	if ((len > 1) && ((asSwitch[len-1] == L'=') || (asSwitch[len-1] == L':')))
-	{
-		iCmp = lstrcmpni(ms_Val+1, asSwitch, (len - 1));
-		if ((iCmp == 0) && ((ms_Val[len] == L'=') || (ms_Val[len] == L':')))
-			return true;
-	}
-
-	return false;
-}
-
-bool CEStr::IsSwitch(LPCWSTR asSwitch) const
-{
-	// Not a switch?
-	if (!IsPossibleSwitch())
-	{
-		return false;
-	}
-
-	if (!asSwitch || !*asSwitch)
-	{
-		_ASSERTE(asSwitch && *asSwitch);
-		return false;
-	}
-
-	return CompareSwitch(asSwitch);
-}
-
-// Stops on first NULL
-bool CEStr::OneOfSwitches(LPCWSTR asSwitch1, LPCWSTR asSwitch2, LPCWSTR asSwitch3, LPCWSTR asSwitch4, LPCWSTR asSwitch5, LPCWSTR asSwitch6, LPCWSTR asSwitch7, LPCWSTR asSwitch8, LPCWSTR asSwitch9, LPCWSTR asSwitch10) const
-{
-	// Not a switch?
-	if (!IsPossibleSwitch())
-	{
-		return false;
-	}
-
-	LPCWSTR switches[] = {asSwitch1, asSwitch2, asSwitch3, asSwitch4, asSwitch5, asSwitch6, asSwitch7, asSwitch8, asSwitch9, asSwitch10};
-
-	for (size_t i = 0; (i < countof(switches)) && switches[i]; i++)
-	{
-		if (CompareSwitch(switches[i]))
-			return true;
-	}
-
-	return false;
-
-#if 0
-	// Variable argument list is not so safe...
-
-	bool bMatch = false;
-	va_list argptr;
-	va_start(argptr, asSwitch1);
-
-	LPCWSTR pszSwitch = va_arg( argptr, LPCWSTR );
-	while (pszSwitch)
-	{
-		if (CompareSwitch(pszSwitch))
-		{
-			bMatch = true; break;
-		}
-		pszSwitch = va_arg( argptr, LPCWSTR );
-	}
-
-	va_end(argptr);
-
-	return bMatch;
-#endif
-}
-
 bool CEStr::IsEmpty() const
 {
 	return (!ms_Val || !*ms_Val);
@@ -507,17 +387,6 @@ void CEStr::SetAt(INT_PTR nIdx, wchar_t wc)
 	}
 }
 
-void CEStr::GetPosFrom(const CEStr& arg)
-{
-	mpsz_Dequoted = arg.mpsz_Dequoted;
-	mb_Quoted = arg.mb_Quoted;
-	mn_TokenNo = arg.mn_TokenNo;
-	mn_CmdCall = arg.mn_CmdCall;
-	#ifdef _DEBUG
-	ms_LastTokenEnd = arg.ms_LastTokenEnd;
-	lstrcpyn(ms_LastTokenSave, arg.ms_LastTokenSave, countof(ms_LastTokenSave));
-	#endif
-}
 
 
 

@@ -387,7 +387,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	HANDLE h;
 	size_t cchMaxEnvLen = 0;
 	wchar_t* pszBuffer;
-	CEStr szTmpPart;
+	CmdArg szTmpPart;
 	LPCWSTR pszTmpPartStart;
 	LPCWSTR pszCmdArg;
 	wchar_t szInfo[200];
@@ -493,7 +493,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 			}
 		}
 		LPCWSTR pszPart = szTmpPart;
-		CEStr szTest;
+		CmdArg szTest;
 		while (0==NextArg(&pszPart, szTest))
 		{
 			if (!*szTest || *szTest == L'*')
@@ -767,7 +767,7 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	LPWSTR* ppszShl = CommandLineToArgvW(asCmdLine, &iShellCount);
 
 	int i = 0;
-	CEStr szArg;
+	CmdArg szArg;
 	_printf("ConEmu `NextArg` splitter\n");
 	while (NextArg(&asCmdLine, szArg) == 0)
 	{
@@ -804,7 +804,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	bool     bAsciiPrint = false;
 	bool     bExpandEnvVar = false;
 	bool     bStreamBy1 = false;
-	CEStr    szArg;
+	CmdArg   szArg;
 	HANDLE   hFile = NULL;
 	DWORD    DefaultCP = 0;
 
@@ -882,7 +882,8 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 			LPCWSTR pszAdd = szArg.ms_Val;
 			_ASSERTE(pszAdd!=NULL);
 
-			CEStr lsExpand, lsDemangle;
+			CEStr lsExpand;
+			CmdArg lsDemangle;
 
 			// Expand environment variables
 			// TODO: Expand !Variables! too
@@ -1061,7 +1062,7 @@ wrap:
 int DoStoreCWD(LPCWSTR asCmdArg)
 {
 	int iRc = 1;
-	CEStr szDir;
+	CmdArg szDir;
 
 	if ((NextArg(&asCmdArg, szDir) != 0) || szDir.IsEmpty())
 	{

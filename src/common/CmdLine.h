@@ -33,9 +33,58 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define CmdEscapeNeededChars  L"<>()&|^\""
 #define QuotationNeededChars  (L" " CmdEscapeNeededChars)
 
-int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart=NULL);
-LPCWSTR QueryNextArg(const wchar_t* asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart=NULL);
-bool DemangleArg(CEStr& rsDemangle, bool bDeQuote = true, bool bDeEscape = false);
+// CmdArg
+struct CmdArg : public CEStr
+{
+public:
+	// Point to the end dblquot, if we need drop first and last quotation marks
+	LPCWSTR mpsz_Dequoted = nullptr;
+	// true if it's a double-quoted argument from NextArg
+	bool mb_Quoted = false;
+	// if 0 - this is must be first call (first token of command line)
+	// so, we need to test for mpsz_Dequoted
+	int mn_TokenNo = 0;
+	// To bee able corretly parse double quotes in commands like
+	// "C:\Windows\system32\cmd.exe" /C ""C:\Python27\python.EXE""
+	// "reg.exe add "HKEY_CLASSES_ROOT\Directory\Background\shell\Command Prompt\command" /ve /t REG_EXPAND_SZ /d "\"D:\Applications\ConEmu\ConEmuPortable.exe\" /Dir \"%V\" /cmd \"cmd.exe\" \"-new_console:nC:cmd.exe\" \"-cur_console:d:%V\"" /f"
+	enum { cc_Undefined, cc_CmdExeFound, cc_CmdCK, cc_CmdCommand } mn_CmdCall = cc_Undefined;
+
+	#ifdef _DEBUG
+	// Debug, для отлова "не сброшенных" вызовов
+	LPCWSTR ms_LastTokenEnd = nullptr;
+	wchar_t ms_LastTokenSave[32] = L"";
+	#endif
+
+private:
+	bool CompareSwitch(LPCWSTR asSwitch) const;
+
+public:
+	void Empty();
+
+	void GetPosFrom(const CmdArg& arg);
+
+	// If this may be supported switch like "-run"
+	bool IsPossibleSwitch() const;
+	// For example, compare if ms_Val is "-run"
+	bool IsSwitch(LPCWSTR asSwitch) const;
+	// Stops checking on first NULL
+	bool OneOfSwitches(LPCWSTR asSwitch1, LPCWSTR asSwitch2 = NULL, LPCWSTR asSwitch3 = NULL, LPCWSTR asSwitch4 = NULL, LPCWSTR asSwitch5 = NULL, LPCWSTR asSwitch6 = NULL, LPCWSTR asSwitch7 = NULL, LPCWSTR asSwitch8 = NULL, LPCWSTR asSwitch9 = NULL, LPCWSTR asSwitch10 = NULL) const;
+
+	CmdArg(CmdArg&&) = delete;
+
+	CmdArg& operator=(const wchar_t* str);
+	CmdArg& operator=(wchar_t*&& str) = delete;
+	CmdArg& operator=(CmdArg&& str) = delete;
+
+	CmdArg();
+	CmdArg(const wchar_t* str);
+	~CmdArg();
+};
+
+
+LPCWSTR QueryNextArg(const wchar_t* asCmdLine, CmdArg& rsArg, const wchar_t** rsArgStart=NULL);
+int NextArg(const wchar_t** asCmdLine, CmdArg& rsArg, const wchar_t** rsArgStart=NULL);
+bool DemangleArg(CmdArg& rsDemangle, bool bDeQuote = true, bool bDeEscape = false);
 
 typedef DWORD NEXTLINEFLAGS;
 const NEXTLINEFLAGS

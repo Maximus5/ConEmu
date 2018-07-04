@@ -5248,7 +5248,7 @@ bool Settings::CmdTaskGetDefaultShell(RConStartArgsEx& args, CEStr& lsTitle)
 			return false;
 		}
 
-		CEStr lsExe; LPCWSTR pszTemp = args.pszSpecialCmd;
+		CmdArg lsExe; LPCWSTR pszTemp = args.pszSpecialCmd;
 		if (0 == NextArg(&pszTemp, lsExe))
 			lsTitle.Set(PointToName(lsExe));
 		if (lsTitle.IsEmpty())

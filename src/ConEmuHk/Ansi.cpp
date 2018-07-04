@@ -4105,7 +4105,7 @@ void CEAnsi::StartVimTerm(bool bFromDllStart)
 
 	// For native vim - don't handle "--help" and "--version" switches
 	// Has no sense for cygwin/msys, but they are skipped above
-	CEStr lsArg;
+	CmdArg lsArg;
 	LPCWSTR pszCmdLine = GetCommandLineW();
 	LPCWSTR pszCompare[] = {L"--help", L"-h", L"--version", NULL};
 	while (0 == NextArg(&pszCmdLine, lsArg))

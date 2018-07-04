@@ -362,7 +362,7 @@ void DebugCmdParserTests()
 	};
 
 	LPCWSTR pszSrc, pszCmp;
-	CEStr ls;
+	CmdArg ls;
 	int iCmp;
 	for (INT_PTR i = 0; i < countof(Tests); i++)
 	{

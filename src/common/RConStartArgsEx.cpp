@@ -53,7 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 void RConStartArgsEx::RunArgTests()
 {
-	CEStr s;
+	CmdArg s;
 	s.Set(L"Abcdef", 3);
 	int nDbg = lstrcmp(s, L"Abc");
 	_ASSERTE(nDbg==0);

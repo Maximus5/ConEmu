@@ -1816,7 +1816,7 @@ bool CConEmuUpdate::Check7zipInstalled()
 		return true; // Инсталлер, архиватор не требуется!
 
 	LPCWSTR pszCmd = mp_Set->UpdateArcCmdLine();
-	CEStr sz7zip; sz7zip.GetBuffer(MAX_PATH);
+	CmdArg sz7zip;
 	if (NextArg(&pszCmd, sz7zip) != 0)
 	{
 		ReportError(L"Invalid update command\nGoto 'Update' page and check 7-zip command", 0);

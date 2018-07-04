@@ -263,7 +263,7 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	LPWSTR* ppszShl = CommandLineToArgvW(asCmdLine, &iShellCount);
 
 	int i = 0;
-	CEStr szArg;
+	CmdArg szArg;
 	{ HL(10); _printf("ConEmu `NextArg` splitter\n"); }
 	while (NextArg(&asCmdLine, szArg) == 0)
 	{
@@ -307,7 +307,7 @@ bool ProcessCommandLine(int& iRc, HMODULE& hConEmu)
 	bool bProcessed = false;
 	// Loop through switches to find supported
 	{
-		CEStr lsArg;
+		CmdArg lsArg;
 		int iCount = 0;
 		bool bHelpRequested = false;
 		bool bFirst = true;

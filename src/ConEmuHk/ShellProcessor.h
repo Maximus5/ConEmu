@@ -68,7 +68,7 @@ private:
 
 	// Информация о запускаемом процессе
 	DWORD mn_ImageSubsystem = 0, mn_ImageBits = 0;
-	CEStr ms_ExeTmp;
+	CmdArg ms_ExeTmp;
 	BOOL mb_WasSuspended = FALSE; // Если TRUE - значит при вызове CreateProcessXXX уже был флаг CREATE_SUSPENDED
 	BOOL mb_NeedInjects = FALSE;
 	BOOL mb_DebugWasRequested = FALSE;

@@ -163,7 +163,7 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 	}
 
 	LPCWSTR pszArgs = pszGuiArgs, pszOk = pszGuiArgs;
-	CEStr szArg;
+	CmdArg szArg;
 	while (0 == NextArg(&pszArgs, szArg))
 	{
 		if (szArg.ms_Val[0] == L'-')

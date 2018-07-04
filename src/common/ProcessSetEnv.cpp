@@ -133,7 +133,7 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 {
 	bool bNew = false;
 	LPCWSTR lsCmdLine = asCommands;
-	CEStr lsSet, lsAmp, lsCmd;
+	CmdArg lsSet, lsAmp, lsCmd;
 
 	if (ppszEnd)
 		*ppszEnd = asCommands;
@@ -271,7 +271,7 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 				lstrmerge(&lsSwitches.ms_Val, lsSwitches.IsEmpty() ? NULL : L" ", lsSet.ms_Val);
 			}
 			// Rest arguments are expected to be processed text or file
-			CEStr lsAdd;
+			CmdArg lsAdd;
 			while (NextArg(&lsCmdLine, lsSet) == 0)
 			{
 				bTokenOk = true;

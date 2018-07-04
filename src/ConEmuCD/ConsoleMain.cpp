@@ -1703,7 +1703,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 				// Имеет смысл, только если окно хотят изначально спрятать
 				const wchar_t *psz = gpszRunCmd, *pszStart;
-				CEStr szExe;
+				CmdArg szExe;
 				if (NextArg(&psz, szExe, &pszStart) == 0)
 				{
 					MWow64Disable wow;
@@ -1754,7 +1754,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 		#ifdef _DEBUG
 		LPCWSTR pszRunCmpApp = NULL;
 		#endif
-		CEStr szExeName;
+		CmdArg szExeName;
 		{
 			LPCWSTR pszStart = gpszRunCmd;
 			if (NextArg(&pszStart, szExeName) == 0)
@@ -1911,7 +1911,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			// Vista: The requested operation requires elevation.
 			LPCWSTR pszCmd = gpszRunCmd;
 			wchar_t szVerb[10];
-			CEStr szExec;
+			CmdArg szExec;
 
 			if (NextArg(&pszCmd, szExec) == 0)
 			{
@@ -3036,7 +3036,7 @@ void UpdateConsoleTitle()
 {
 	LogFunction(L"UpdateConsoleTitle");
 
-	CEStr   szTemp;
+	CmdArg  szTemp;
 	wchar_t *pszBuffer = NULL;
 	LPCWSTR  pszSetTitle = NULL, pszCopy;
 	LPCWSTR  pszReq = gpszForcedTitle ? gpszForcedTitle : gpszRunCmd;
@@ -3267,7 +3267,7 @@ wchar_t* ExpandTaskCmd(LPCWSTR asCmdLine)
 int ParseCommandLine(LPCWSTR asCmdLine)
 {
 	int iRc = 0;
-	CEStr szArg;
+	CmdArg szArg;
 	CEStr szExeTest;
 	LPCWSTR pszArgStarts = NULL;
 	gbRunViaCmdExe = TRUE;
@@ -5025,7 +5025,7 @@ void SendStarted()
 		// Перед запуском 16бит приложений нужно подресайзить консоль...
 		gnImageSubsystem = 0;
 		LPCWSTR pszTemp = gpszRunCmd;
-		CEStr lsRoot;
+		CmdArg lsRoot;
 
 		if (gnRunMode == RM_SERVER && gpSrv->DbgInfo.bDebuggerActive)
 		{

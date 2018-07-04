@@ -74,7 +74,7 @@ BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
 int GuiMacroCommandLine(LPCWSTR asCmdLine)
 {
 	int iRc = CERR_CMDLINEEMPTY;
-	CEStr szArg;
+	CmdArg szArg;
 	LPCWSTR pszArgStarts = NULL;
 	LPCWSTR lsCmdLine = asCmdLine;
 	MacroInstance MacroInst = {}; // Special ConEmu instance for GUIMACRO and other options

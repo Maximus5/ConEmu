@@ -1804,7 +1804,7 @@ int DoDownload(LPCWSTR asCmdLine)
 {
 	int iRc = CERR_CARGUMENT;
 	DWORD_PTR drc;
-	CEStr szArg;
+	CmdArg szArg;
 	wchar_t* pszUrl = NULL;
 	size_t iFiles = 0;
 	CEDownloadErrorArg args[4];

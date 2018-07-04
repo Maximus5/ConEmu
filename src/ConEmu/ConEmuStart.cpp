@@ -485,7 +485,7 @@ bool CConEmuStart::GetCfgParm(LPCWSTR& cmdLineRest, CESwitch& Val, int nMaxLen, 
 
 	// Сохраним, может для сообщения об ошибке понадобится
 	LPCWSTR pszName = cmdLineRest;
-	CEStr szGetCfgParmTemp;
+	CmdArg szGetCfgParmTemp;
 
 	if (NextArg(&cmdLineRest, szGetCfgParmTemp) != 0)
 	{
@@ -591,7 +591,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 	LPCWSTR cmdLineRest = SkipNonPrintable(opt.cmdLine);
 	LPCWSTR pszName, pszArgStart;
 	LPCWSTR psUnknown = NULL;
-	CEStr   szArg, szNext;
+	CmdArg  szArg, szNext;
 	CEStr   szExeName, szExeNameOnly;
 
 	// Set %ConEmuArgs% env var

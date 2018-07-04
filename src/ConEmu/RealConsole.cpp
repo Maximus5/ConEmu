@@ -195,7 +195,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	_ASSERTE(apVCon);
 	_ASSERTE(args && args->pszSpecialCmd && *args->pszSpecialCmd && !CConEmuMain::IsConsoleBatchOrTask(args->pszSpecialCmd));
 	LPCWSTR pszCmdTemp = args ? args->pszSpecialCmd : NULL;
-	CEStr lsFirstTemp;
+	CmdArg lsFirstTemp;
 	if (pszCmdTemp)
 	{
 		if (NextArg(&pszCmdTemp, lsFirstTemp) == 0)
@@ -5031,7 +5031,7 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 					wcscpy_c(szUserDir, L"C:\\");
 				lpszWorkDir = szUserDir;
 				// Force SetCurrentDirectory("%USERPROFILE%") in the server
-				CEStr exe;
+				CmdArg exe;
 				LPCWSTR pszTemp = psCurCmd;
 				if (NextArg(&pszTemp, exe) == 0)
 					pszChangedCmd = lstrmerge(exe, L" /PROFILECD ", pszTemp);
@@ -5081,7 +5081,7 @@ bool CRealConsole::CreateOrRunAs(CRealConsole* pRCon, RConStartArgsEx& Args,
 	else // Args.bRunAsAdministrator
 	{
 		LPCWSTR pszCmd = psCurCmd;
-		CEStr szExec;
+		CmdArg szExec;
 
 		if (NextArg(&pszCmd, szExec) != 0)
 		{
@@ -8463,7 +8463,7 @@ int CRealConsole::GetDefaultAppSettingsId()
 	LPCWSTR lpszCmd = NULL;
 	//wchar_t* pszBuffer = NULL;
 	LPCWSTR pszName = NULL;
-	CEStr szExe;
+	CmdArg szExe;
 	LPCWSTR pszTemp = NULL;
 	LPCWSTR pszIconFile = (m_Args.pszIconFile && *m_Args.pszIconFile) ? m_Args.pszIconFile : NULL;
 	bool bAsAdmin = false;
@@ -13601,7 +13601,7 @@ bool CRealConsole::isFarPanelAllowed()
 	{
 		if (mn_FarNoPanelsCheck)
 			return (mn_FarNoPanelsCheck == 1);
-		CEStr szArg;
+		CmdArg szArg;
 		LPCWSTR pszCmdLine = GetCmd();
 		while (NextArg(&pszCmdLine, szArg) == 0)
 		{
@@ -16579,7 +16579,7 @@ bool CRealConsole::GuiAppAttachAllowed(DWORD anServerPID, LPCWSTR asAppFileName,
 	if (pszCmd && *pszCmd && asAppFileName && *asAppFileName)
 	{
 		wchar_t szApp[MAX_PATH+1];
-		CEStr  szArg;
+		CmdArg  szArg;
 		LPCWSTR pszArg = NULL, pszApp = NULL, pszOnly = NULL;
 
 		while (pszCmd[0] == L'"' && pszCmd[1] == L'"')

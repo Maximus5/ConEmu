@@ -684,7 +684,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 						if (pszFileOnly)
 						{
 							LPCWSTR pszCopy = pszParam;
-							CEStr  szFirst;
+							CmdArg  szFirst;
 							if (NextArg(&pszCopy, szFirst) != 0)
 							{
 								_ASSERTE(FALSE && "NextArg failed?");
@@ -1284,7 +1284,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 			if (!(asFile && *asFile) && asParam && *asParam)
 			{
 				LPCWSTR pszTest = asParam;
-				CEStr szTest;
+				CmdArg szTest;
 				if (NextArg(&pszTest, szTest) == 0)
 				{
 					pszTest = SkipNonPrintable(pszTest);

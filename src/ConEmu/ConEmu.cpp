@@ -1303,7 +1303,7 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 
 		// Проверить битность asCmdLine во избежание лишних запусков серверов для Inject
 		// и корректной битности запускаемого процессора по настройке
-		CEStr szTemp;
+		CmdArg szTemp;
 		wchar_t* pszExpand = NULL;
 		if (!FileExists(asCmdLine))
 		{
@@ -3297,7 +3297,7 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 	if (apszLine && *apszLine)
 	{
 		LPCWSTR pcszCmd = apszLine;
-		CEStr szArg;
+		CmdArg szArg;
 		const int iNewConLen = lstrlen(L"-new_console");
 		while (NextArg(&pcszCmd, szArg) == 0)
 		{
@@ -6692,7 +6692,7 @@ wchar_t CConEmuMain::IsConsoleBatchOrTask(LPCWSTR asSource)
 	wchar_t Supported = 0;
 
 	// If task name is quoted
-	CEStr lsTemp;
+	CmdArg lsTemp;
 	if (asSource && (*asSource == L'"'))
 	{
 		LPCWSTR pszTemp = asSource;
@@ -6734,7 +6734,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch(LPCWSTR asSource, RConStartArgsEx* pArgs 
 	}
 
 	// If task name is quoted
-	CEStr lsTemp;
+	CmdArg lsTemp;
 	if (asSource && (*asSource == L'"'))
 	{
 		LPCWSTR pszTemp = asSource;
@@ -6849,7 +6849,7 @@ wchar_t* CConEmuMain::LoadConsoleBatch_Drops(LPCWSTR asSource)
 
 		// Считаем, что один файл (*.exe, *.cmd, ...) или ярлык (*.lnk)
 		// это одна запускаемая консоль в ConEmu.
-		CEStr szPart;
+		CmdArg szPart;
 		wchar_t szExe[MAX_PATH+1], szDir[MAX_PATH+1];
 		HRESULT hr = S_OK;
 		IShellLinkW* pShellLink = NULL;

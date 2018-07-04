@@ -39,10 +39,171 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MWow64Disable.h"
 #endif
 
+
+CmdArg::CmdArg()
+{
+}
+
+CmdArg::CmdArg(const wchar_t* str)
+	: CEStr(str)
+{
+}
+
+CmdArg::~CmdArg()
+{
+	Empty();
+}
+
+CmdArg& CmdArg::operator=(const wchar_t* str)
+{
+	Set(str);
+	return *this;
+}
+
+void CmdArg::Empty()
+{
+	CEStr::Empty();
+
+	mn_TokenNo = 0;
+	mn_CmdCall = cc_Undefined;
+	mpsz_Dequoted = nullptr;
+	mb_Quoted = false;
+
+	#ifdef _DEBUG
+	ms_LastTokenEnd = nullptr;
+	ms_LastTokenSave[0] = 0;
+	#endif
+}
+
+void CmdArg::GetPosFrom(const CmdArg& arg)
+{
+	mpsz_Dequoted = arg.mpsz_Dequoted;
+	mb_Quoted = arg.mb_Quoted;
+	mn_TokenNo = arg.mn_TokenNo;
+	mn_CmdCall = arg.mn_CmdCall;
+	#ifdef _DEBUG
+	ms_LastTokenEnd = arg.ms_LastTokenEnd;
+	lstrcpyn(ms_LastTokenSave, arg.ms_LastTokenSave, countof(ms_LastTokenSave));
+	#endif
+}
+
+bool CmdArg::IsPossibleSwitch() const
+{
+	// Nothing to compare?
+	if (IsEmpty())
+		return false;
+	if ((ms_Val[0] != L'-') && (ms_Val[0] != L'/'))
+		return false;
+
+	// We do not care here about "-new_console:..." or "-cur_console:..."
+	// They are processed by RConStartArgsEx
+
+	// But ':' removed from checks, because otherwise ConEmu will not warn
+	// on invalid usage of "-new_console:a" for example
+
+	// Also, support smth like "-inside=\eCD /d %1"
+	LPCWSTR pszDelim = wcspbrk(ms_Val+1, L"=:");
+	LPCWSTR pszInvalids = wcspbrk(ms_Val+1, L"\\/|.&<>^");
+
+	if (pszInvalids && (!pszDelim || (pszInvalids < pszDelim)))
+		return false;
+
+	// Well, looks like a switch (`-run` for example)
+	return true;
+}
+
+bool CmdArg::CompareSwitch(LPCWSTR asSwitch) const
+{
+	if ((asSwitch[0] == L'-') || (asSwitch[0] == L'/'))
+	{
+		asSwitch++;
+	}
+	else
+	{
+		_ASSERTE((asSwitch[0] == L'-') || (asSwitch[0] == L'/'));
+	}
+
+	int iCmp = lstrcmpi(ms_Val+1, asSwitch);
+	if (iCmp == 0)
+		return true;
+
+	// Support partial comparison for L"-inside=..." when (asSwitch == L"-inside=")
+	int len = lstrlen(asSwitch);
+	if ((len > 1) && ((asSwitch[len-1] == L'=') || (asSwitch[len-1] == L':')))
+	{
+		iCmp = lstrcmpni(ms_Val+1, asSwitch, (len - 1));
+		if ((iCmp == 0) && ((ms_Val[len] == L'=') || (ms_Val[len] == L':')))
+			return true;
+	}
+
+	return false;
+}
+
+bool CmdArg::IsSwitch(LPCWSTR asSwitch) const
+{
+	// Not a switch?
+	if (!IsPossibleSwitch())
+	{
+		return false;
+	}
+
+	if (!asSwitch || !*asSwitch)
+	{
+		_ASSERTE(asSwitch && *asSwitch);
+		return false;
+	}
+
+	return CompareSwitch(asSwitch);
+}
+
+// Stops on first NULL
+bool CmdArg::OneOfSwitches(LPCWSTR asSwitch1, LPCWSTR asSwitch2, LPCWSTR asSwitch3, LPCWSTR asSwitch4, LPCWSTR asSwitch5, LPCWSTR asSwitch6, LPCWSTR asSwitch7, LPCWSTR asSwitch8, LPCWSTR asSwitch9, LPCWSTR asSwitch10) const
+{
+	// Not a switch?
+	if (!IsPossibleSwitch())
+	{
+		return false;
+	}
+
+	LPCWSTR switches[] = {asSwitch1, asSwitch2, asSwitch3, asSwitch4, asSwitch5, asSwitch6, asSwitch7, asSwitch8, asSwitch9, asSwitch10};
+
+	for (size_t i = 0; (i < countof(switches)) && switches[i]; i++)
+	{
+		if (CompareSwitch(switches[i]))
+			return true;
+	}
+
+	return false;
+
+#if 0
+	// Variable argument list is not so safe...
+
+	bool bMatch = false;
+	va_list argptr;
+	va_start(argptr, asSwitch1);
+
+	LPCWSTR pszSwitch = va_arg( argptr, LPCWSTR );
+	while (pszSwitch)
+	{
+		if (CompareSwitch(pszSwitch))
+		{
+			bMatch = true; break;
+		}
+		pszSwitch = va_arg( argptr, LPCWSTR );
+	}
+
+	va_end(argptr);
+
+	return bMatch;
+#endif
+}
+
+
+
 // Returns true on changes
 // bDeQuote:  replace two "" with one "
 // bDeEscape: process special symbols: ^e^[^r^n^t^b
-bool DemangleArg(CEStr& rsDemangle, bool bDeQuote /*= true*/, bool bDeEscape /*= false*/)
+bool DemangleArg(CmdArg& rsDemangle, bool bDeQuote /*= true*/, bool bDeEscape /*= false*/)
 {
 	if (rsDemangle.IsEmpty() || !(bDeQuote || bDeEscape))
 	{
@@ -183,7 +344,7 @@ bool IsNeedDequote(LPCWSTR asCmdLine, bool abFromCmdCK, LPCWSTR* rsEndQuote/*=NU
 }
 
 // Returns PTR to next arg or NULL on error
-LPCWSTR QueryNextArg(const wchar_t* asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/*=NULL*/)
+LPCWSTR QueryNextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=NULL*/)
 {
 	if (0 != NextArg(&asCmdLine, rsArg, rsArgStart))
 		return NULL;
@@ -191,7 +352,7 @@ LPCWSTR QueryNextArg(const wchar_t* asCmdLine, CEStr &rsArg, const wchar_t** rsA
 }
 
 // Returns 0 if succeeded, otherwise the error code
-int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/*=NULL*/)
+int NextArg(const wchar_t** asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=NULL*/)
 {
 	if (!asCmdLine || !*asCmdLine)
 		return CERR_CMDLINEEMPTY;
@@ -216,12 +377,12 @@ int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/
 	// Remote surrounding quotes, in certain cases
 	// Example: ""7z.exe" /?"
 	// Example: "C:\Windows\system32\cmd.exe" /C ""C:\Python27\python.EXE""
-	if ((rsArg.mn_TokenNo == 0) || (rsArg.mn_CmdCall == CEStr::cc_CmdCK))
+	if ((rsArg.mn_TokenNo == 0) || (rsArg.mn_CmdCall == CmdArg::cc_CmdCK))
 	{
-		if (IsNeedDequote(psCmdLine, (rsArg.mn_CmdCall == CEStr::cc_CmdCK), &rsArg.mpsz_Dequoted))
+		if (IsNeedDequote(psCmdLine, (rsArg.mn_CmdCall == CmdArg::cc_CmdCK), &rsArg.mpsz_Dequoted))
 			psCmdLine++;
-		if (rsArg.mn_CmdCall == CEStr::cc_CmdCK)
-			rsArg.mn_CmdCall = CEStr::cc_CmdCommand;
+		if (rsArg.mn_CmdCall == CmdArg::cc_CmdCK)
+			rsArg.mn_CmdCall = CmdArg::cc_CmdCommand;
 	}
 
 	size_t nArgLen = 0;
@@ -328,13 +489,13 @@ int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/
 
 	switch (rsArg.mn_CmdCall)
 	{
-	case CEStr::cc_Undefined:
+	case CmdArg::cc_Undefined:
 		// Если это однозначно "ключ" - то на имя файла не проверяем
 		if (*rsArg.ms_Val == L'/' || *rsArg.ms_Val == L'-')
 		{
 			// Это для парсинга (чтобы ассертов не было) параметров из ShellExecute (там cmd.exe указывается в другом аргументе)
 			if ((rsArg.mn_TokenNo == 1) && (lstrcmpi(rsArg.ms_Val, L"/C") == 0 || lstrcmpi(rsArg.ms_Val, L"/K") == 0))
-				rsArg.mn_CmdCall = CEStr::cc_CmdCK;
+				rsArg.mn_CmdCall = CmdArg::cc_CmdCK;
 		}
 		else
 		{
@@ -345,16 +506,16 @@ int NextArg(const wchar_t** asCmdLine, CEStr &rsArg, const wchar_t** rsArgStart/
 					|| (lstrcmpi(pch, L"ConEmuC") == 0 || lstrcmpi(pch, L"ConEmuC.exe") == 0)
 					|| (lstrcmpi(pch, L"ConEmuC64") == 0 || lstrcmpi(pch, L"ConEmuC64.exe") == 0))
 				{
-					rsArg.mn_CmdCall = CEStr::cc_CmdExeFound;
+					rsArg.mn_CmdCall = CmdArg::cc_CmdExeFound;
 				}
 			}
 		}
 		break;
-	case CEStr::cc_CmdExeFound:
+	case CmdArg::cc_CmdExeFound:
 		if (lstrcmpi(rsArg.ms_Val, L"/C") == 0 || lstrcmpi(rsArg.ms_Val, L"/K") == 0)
-			rsArg.mn_CmdCall = CEStr::cc_CmdCK;
+			rsArg.mn_CmdCall = CmdArg::cc_CmdCK;
 		else if ((rsArg.ms_Val[0] != L'/') && (rsArg.ms_Val[0] != L'-'))
-			rsArg.mn_CmdCall = CEStr::cc_Undefined;
+			rsArg.mn_CmdCall = CmdArg::cc_Undefined;
 		break;
 	}
 
@@ -564,7 +725,7 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 	LPCWSTR pwszCopy;
 	int nLastChar;
 	#ifdef _DEBUG
-	CEStr szDbgFirst;
+	CmdArg szDbgFirst;
 	#endif
 
 	if (!asCmdLine || !*asCmdLine)
@@ -638,7 +799,8 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 			LPCWSTR pwszTemp = pwszCopy;
 
 			// Получим первую команду (исполняемый файл?)
-			if ((iRc = NextArg(&pwszTemp, szExe)) != 0)
+			CmdArg arg;
+			if ((iRc = NextArg(&pwszTemp, arg)) != 0)
 			{
 				//Parsing command line failed
 				#ifdef WARN_NEED_CMD
@@ -646,6 +808,7 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 				#endif
 				lbRc = true; goto wrap;
 			}
+			szExe.Set(arg);
 
 			if (lstrcmpiW(szExe, L"start") == 0)
 			{
@@ -750,7 +913,8 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 
 		if (szExe[0] == 0)
 		{
-			if ((iRc = NextArg(&pwszCopy, szExe)) != 0)
+			CmdArg arg;
+			if ((iRc = NextArg(&pwszCopy, arg)) != 0)
 			{
 				//Parsing command line failed
 				#ifdef WARN_NEED_CMD
@@ -758,6 +922,7 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 				#endif
 				lbRc = true; goto wrap;
 			}
+			szExe.Set(arg);
 
 			_ASSERTE(lstrcmpiW(szExe, L"start") != 0);
 
