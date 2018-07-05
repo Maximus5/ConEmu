@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _ASSERTE(x)
 #endif
 
-static std::atomic_int gHeapCounter;
+static std::atomic_int gHeapInit, gHeapCounter;
 HANDLE ghHeap = NULL;
 
 // Debugging purposes
@@ -84,16 +84,17 @@ static const char* _PointToName(const char* asFileOrPath)
 
 bool HeapInitialize()
 {
+	// Our allocator is used in construction of global MArrays
+	++gHeapInit;
+
 	if (ghHeap == NULL)
 	{
-		// Our allocator is used in construction of global MArrays
-		++gHeapCounter;
 		//#ifdef MVALIDATE_POINTERS
 		//	ghHeap = HeapCreate(0, 200000, 0);
 		//#else
 		ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 		//#endif
-		_ASSERTE(gHeapCounter == 1);
+		_ASSERTE(gHeapInit == 1);
 	}
 
 	return (ghHeap != NULL);
@@ -101,9 +102,9 @@ bool HeapInitialize()
 
 static void HeapDeinitializeImpl()
 {
-	if (!ghHeap || gHeapCounter)
+	if (!ghHeap || gHeapCounter > 0 || gHeapInit > 0)
 	{
-		_ASSERTE(ghHeap && gHeapCounter == 0);
+		_ASSERTE(ghHeap && gHeapCounter == 0 && gHeapInit == 0);
 	}
 	else
 	{
@@ -114,7 +115,7 @@ static void HeapDeinitializeImpl()
 
 void HeapDeinitialize()
 {
-	if (ghHeap && --gHeapCounter == 0)
+	if (--gHeapInit == 0 && ghHeap && gHeapCounter <= 0)
 	{
 		HeapDeinitializeImpl();
 	}
@@ -150,37 +151,38 @@ void * __cdecl xf_malloc(size_t _Size XF_PLACE_ARGS_DEF)
 {
 	_ASSERTE(ghHeap);
 	_ASSERTE(_Size>0);
+	void* p;
 #ifdef TRACK_MEMORY_ALLOCATIONS
 	#ifdef USE_XF_DUMP_CHK
 	xf_dump_chk();
 	#endif
 
 	size_t nTotalSize = _Size+sizeof(xf_mem_block)+8;
-	xf_mem_block* p = (xf_mem_block*)HeapAlloc(ghHeap, 0, nTotalSize);
-	if (p)
+	xf_mem_block* pTrack = (xf_mem_block*)HeapAlloc(ghHeap, 0, nTotalSize);
+	if (pTrack)
 	{
-		++gHeapCounter;
+		pTrack->bBlockUsed = TRUE;
+		pTrack->nBlockSize = _Size;
 
-		p->bBlockUsed = TRUE;
-		p->nBlockSize = _Size;
-
-		xf_set_tag(p+1, lpszFileName, nLine);
+		xf_set_tag(pTrack+1, lpszFileName, nLine);
 
 		#ifdef _DEBUG
-		if (_Size > 0) memset(p+1, 0xFD, _Size);
+		if (_Size > 0) memset(pTrack+1, 0xFD, _Size);
 		#endif
 
-		memset(((LPBYTE)(p+1))+_Size, 0xCC, 8);
+		memset(((LPBYTE)(pTrack+1))+_Size, 0xCC, 8);
 	}
 	else
 	{
-		_ASSERTE(p!=NULL);
+		_ASSERTE(pTrack!=NULL);
 	}
-	return p?(p+1):p;
+	p = pTrack?(pTrack+1):pTrack;
 #else
-	void* p = HeapAlloc(ghHeap, 0, _Size);
-	return p;
+	p = HeapAlloc(ghHeap, 0, _Size);
 #endif
+	if (p)
+		++gHeapCounter;
+	return p;
 }
 
 
@@ -188,33 +190,34 @@ void * __cdecl xf_calloc(size_t _Count, size_t _Size XF_PLACE_ARGS_DEF)
 {
 	_ASSERTE(ghHeap);
 	_ASSERTE((_Count*_Size)>0);
+	void* p;
 #ifdef TRACK_MEMORY_ALLOCATIONS
 	#ifdef USE_XF_DUMP_CHK
 	xf_dump_chk();
 	#endif
 
 	size_t nTotalSize = _Count*_Size+sizeof(xf_mem_block)+8;
-	xf_mem_block* p = (xf_mem_block*)HeapAlloc(ghHeap, HEAP_ZERO_MEMORY, nTotalSize);
-	if (p)
+	xf_mem_block* pTrack = (xf_mem_block*)HeapAlloc(ghHeap, HEAP_ZERO_MEMORY, nTotalSize);
+	if (pTrack)
 	{
-		++gHeapCounter;
+		pTrack->bBlockUsed = TRUE;
+		pTrack->nBlockSize = _Count*_Size;
 
-		p->bBlockUsed = TRUE;
-		p->nBlockSize = _Count*_Size;
+		xf_set_tag(pTrack+1, lpszFileName, nLine);
 
-		xf_set_tag(p+1, lpszFileName, nLine);
-
-		memset(((LPBYTE)(p+1))+_Count*_Size, 0xCC, 8);
+		memset(((LPBYTE)(pTrack+1))+_Count*_Size, 0xCC, 8);
 	}
 	else
 	{
-		_ASSERTE(p!=NULL);
+		_ASSERTE(pTrack!=NULL);
 	}
-	return p?(p+1):p;
+	p = pTrack?(pTrack+1):pTrack;
 #else
-	void* p = HeapAlloc(ghHeap, HEAP_ZERO_MEMORY, _Count*_Size);
-	return p;
+	p = HeapAlloc(ghHeap, HEAP_ZERO_MEMORY, _Count*_Size);
 #endif
+	if (p)
+		++gHeapCounter;
+	return p;
 }
 
 
@@ -325,7 +328,7 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF)
 
 	HeapFree(ghHeap, 0, _Memory);
 
-	if (--gHeapCounter == 0)
+	if (--gHeapCounter <= 0 && gHeapInit <= 0)
 	{
 		HeapDeinitializeImpl();
 	}
