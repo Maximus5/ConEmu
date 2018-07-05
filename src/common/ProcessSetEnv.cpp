@@ -57,8 +57,11 @@ bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, CProcessEnvCmd* pSetEnv /*= NULL*/, CS
 	if (pDoSet)
 		lpSetEnv->Apply(pDoSet);
 
+	// Run simple "cmd" if there were no actual command?
+	_ASSERTE(lsCmdLine && *lsCmdLine);
+
 	// Return naked command
-	asCmdLine = lsCmdLine;
+	asCmdLine = lsCmdLine ? lsCmdLine : L"";
 
 	// Fin, we must have something to execute
 	_ASSERTE(asCmdLine && *asCmdLine);
@@ -299,17 +302,17 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 		if (lsNameVal || bTokenOk)
 		{
 			lsAmp.GetPosFrom(lsSet);
-			if (!NextArg(lsCmdLine, lsAmp))
+			if (!(lsCmdLine = NextArg(lsCmdLine, lsAmp)))
 			{
-				// End of command? Use may call only "set" without following app? Run simple "cmd" in that case
-				_ASSERTE(lsCmdLine!=NULL && *lsCmdLine==0);
+				// End of command? User called only "set" without following app? Run simple "cmd" in that case
+				_ASSERTE(bAlone || (lsCmdLine!=NULL && *lsCmdLine==0));
 				bTokenOk = true; // And process SetEnvironmentVariable
 			}
 			else
 			{
 				if (lstrcmp(lsAmp, L"&") == 0)
 				{
-					// Only simple conveyer is supported!
+					// Only simple conveyor is supported!
 					bTokenOk = true; // And process SetEnvironmentVariable
 				}
 				// Update last pointer (debug and asserts purposes)

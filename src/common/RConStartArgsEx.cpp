@@ -101,7 +101,7 @@ void RConStartArgsEx::RunArgTests()
 		int j = -1;
 		while (lsArgTest[i].pszCmp[++j])
 		{
-			if (!NextArg(pszTestCmd, s))
+			if (!(pszTestCmd = NextArg(pszTestCmd, s)))
 			{
 				_ASSERTE(FALSE && "Fails on token!");
 			}

@@ -3115,7 +3115,7 @@ void CheckNeedSkipWowChange(LPCWSTR asCmdLine)
 	if (IsWindows64())
 	{
 		LPCWSTR pszTest = asCmdLine;
-		CEStr szApp;
+		CmdArg szApp;
 
 		if ((pszTest = NextArg(pszTest, szApp)))
 		{
