@@ -7,7 +7,7 @@ if exist "%~dp0*.obj" del /Q "%~dp0*.obj" > nul
 if exist "%~dp0tests.fail" del /Q "%~dp0tests.fail" > nul
 
 set commons=../common/CEStr.cpp ../common/Memory.cpp ../common/WObjects.cpp ../common/WUser.cpp ../common/CmdLine.cpp ^
-            ../common/MStrSafe.cpp ../common/MStrDup.cpp ../common/MAssert.cpp ../common/WThreads.cpp ^
+            ../common/MStrSafe.cpp ../common/MStrDup.cpp ../common/MAssert.cpp ../common/WThreads.cpp ../common/EnvVar.cpp ^
             ../common/MProcess.cpp ../common/RConStartArgs.cpp ../common/RConStartArgsEx.cpp ../common/MModule.cpp
 
 set colorcmn=../ConEmu/ColorFix.cpp
@@ -101,6 +101,7 @@ call cecho /yellow "  VC15 cl test %~1"
 setlocal
 call "%~dp0..\vc.build.set.x32.cmd" 15 > nul
 if errorlevel 1 goto vars_err
+cd /d "%~dp0"
 set VS_VERSION > "build-out.log"
 call :build_std /Fe"vc-test-15.exe" %*
 if errorlevel 1 (

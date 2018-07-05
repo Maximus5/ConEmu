@@ -92,7 +92,7 @@ int main(int argc, char** argv)
 	{
 	Verify_Step("NextArg and Switch comparison");
 	LPCWSTR pszCmd = L"conemu.exe /c/dir -run -inside=0x800 /cmdlist \"-inside=\\eCD /d %1\" -bad|switch ";
-	CEStr ls;
+	CmdArg ls;
 	Verify0(((pszCmd=NextArg(pszCmd,ls))),"NextArg conemu.exe");
 	Verify0((!ls.IsPossibleSwitch()),"!IsPossibleSwitch()");
 	Verify0(((pszCmd=NextArg(pszCmd,ls))),"NextArg /c/dir");
