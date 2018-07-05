@@ -949,7 +949,7 @@ void CDragDropData::EnumDragFormats(IDataObject * pDataObject, HANDLE hDumpFile 
 	memset(stg, 0, sizeof(stg));
 	memset(psz, 0, sizeof(psz));
 	memset(pszData, 0, sizeof(pszData));
-	if (!szNames.reserve(nCnt))
+	if (!szNames.resize(nCnt))
 		return;
 
 	if (hDumpFile) WriteFile(hDumpFile, "\xFF\xFE", 2, &nWritten, NULL);
