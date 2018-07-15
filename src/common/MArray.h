@@ -161,17 +161,20 @@ class MArray
 			return nPos;
 		};
 		/// Insert at the end if nPosBefore==-1 or greater than current size
-		ssize_t insert(ssize_t nPosBefore, const _Ty& _Item)
+		ssize_t insert(ssize_t nPosBefore, const _Ty& _Item, ssize_t _Count = 1)
 		{
+			if (_Count <= 0)
+				return -1;
 			ssize_t inserted;
 			if ((nPosBefore < 0) || (nPosBefore >= size()))
 			{
-				inserted = push_back(_Item);
+				inserted = data.size();
+				data.insert(data.end(), _Count, _Item);
 			}
 			else
 			{
 				inserted = nPosBefore;
-				data.insert(data.begin()+nPosBefore, _Item);
+				data.insert(data.begin()+nPosBefore, _Count, _Item);
 			}
 			return inserted;
 		};
@@ -181,6 +184,7 @@ class MArray
 			ssize_t inserted;
 			if ((nPosBefore < 0) || (nPosBefore >= size()))
 			{
+				inserted = data.size();
 				inserted = push_back(std::move(_Item));
 			}
 			else
@@ -225,14 +229,14 @@ class MArray
 		{
 			data.clear();
 		};
-		void erase(ssize_t _Index)
+		void erase(ssize_t _Index, ssize_t _Count = 1)
 		{
-			if (_Index < 0 || _Index >= size())
+			if (_Index < 0 || _Index + _Count > size() || _Count <= 0)
 			{
-				_ARRAY_ASSERTE(!(_Index<0 || _Index>=size()));
+				_ARRAY_ASSERTE((_Index>=0 && _Index+_Count<=size()) || _Count==0);
 				return;
 			}
-			data.erase(data.begin()+_Index);
+			data.erase(data.begin() + _Index, data.begin() + _Index + _Count);
 		};
 
 		/// Increase or decrease count of elements

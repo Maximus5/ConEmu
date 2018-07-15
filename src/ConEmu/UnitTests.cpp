@@ -582,6 +582,7 @@ void DebugArrayTests()
 	_ASSERTE(sArr.size()==3 && sArr[0]==L"1" && sArr[1]==L"3" && sArr[2]==L"4");
 
 	bool delete_called = false;
+	MArrayDeleteTester::dtor_called = 0;
 	MArray<MArrayDeleteTester> dArr;
 	dArr.push_back(MArrayDeleteTester{2});
 	_ASSERTE(MArrayDeleteTester::dtor_called==1 && dArr.size()==1 && dArr[0].value==2); // dtor of temp object
@@ -625,6 +626,12 @@ void DebugArrayTests()
 	// note: 'MArray<int> &MArray<int>::operator =(const MArray<int> &)': function was implicitly deleted because 'MArray<int>' has a user-defined move constructor
 	arr2 = arr; // cl error is expected
 	#endif
+
+	MArray<int> arr3;
+	for (int i = 1; i <= 5; ++i) arr3.push_back(i);
+	for (ssize_t i = arr3.size() - 1; i >= 0; --i) arr3.erase(i);
+	for (int i = 1; i <= 5; ++i) arr3.push_back(i);
+	for (ssize_t i = 0; i < arr3.size(); ++i) arr3.erase(i);
 }
 
 void DebugJsonTest()
