@@ -30,3 +30,315 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/defines.h"
+#include <deque>
+#include <mutex>
+#include "../common/ConsoleMixAttr.h"
+#include "../common/MArray.h"
+/// CharAttr definition
+#include "../common/RgnDetect.h"
+
+
+namespace condata
+{
+
+#include <pshpack2.h>
+
+/// Used for both coordinates and sizes
+struct Coord
+{
+	/// 0-based X coordinate
+	unsigned x = 0;
+	/// < 0 - backscroll buffer row indexes
+	/// >=0 - 0-based index of workspace row
+	int y = 0;
+};
+
+/// Colors, font type, outlines, etc.
+struct Attribute
+{
+	/// Legacy attribute type definition for WinAPI calls
+	union LegacyAttributes
+	{
+		unsigned short attr; /// RAW value for WinAPI
+		struct
+		{
+			unsigned foreIdx : 4; /// 16-bit color palette
+			unsigned backIdx : 4; /// 16-bit color palette
+			unsigned _flags  : 8; /// DON'T ACCESS IT DIRECTLY!!! comes from COMMON_LVB_REVERSE_VIDEO, COMMON_LVB_UNDERSCORE etc.
+		};
+	};
+	/// Attributes ready for WinAPI calls
+	LegacyAttributes attr;
+
+	/// Special flags not covered by attr.flags
+	enum Flags : unsigned
+	{
+		/// No special flags
+		fDefault  = 0,
+
+		/// Use Bold font
+		fBold     = 0x00000001,
+		/// Use Italic font
+		fItalic   = 0x00000002,
+		/// Not supported yet, reserved
+		fStrike   = 0x00000004,
+
+		/// crForeColor contains xterm-256 palette index
+		fFore8b   = 0x00000100,
+		/// crForeColor contains RGB value
+		fFore24b  = 0x00000200,
+		/// crBackColor contains xterm-256 palette index
+		fBack8b   = 0x00000400,
+		/// crBackColor contains RGB value
+		fBack24b  = 0x00000800,
+
+		/// row was '\n'-terminated
+		fCRLF     = 0x00010000,
+	};
+	Flags flags;
+
+	/// Foreground color from xTerm256-color palette if (flags&fFore8b), or RGB if (flags&fFore24b)
+	unsigned crForeColor; // only 24 bits are used
+	/// Background color from xTerm256-color palette if (flags&fBack8b), or RGB if (flags&fBack24b)
+	unsigned crBackColor; // only 24 bits are used
+
+	/// Helper functions to access flags
+	bool isBold() const;
+	bool isItalic() const;
+	bool isUnderscore() const;
+	bool isReverse() const;
+	bool isFore4b() const;
+	bool isFore8b() const;
+	bool isFore24b() const;
+	bool isBack4b() const;
+	bool isBack8b() const;
+	bool isBack24b() const;
+
+	/// Comparison operators
+	bool operator==(const Attribute& a) const;
+	bool operator!=(const Attribute& a) const;
+
+}; // gDisplayParm = {};
+
+/// Replace for CHAR_INFO
+struct CharInfo
+{
+	/// Only Unicode symbols
+	wchar_t chr;
+	/// Colors, fonts, etc.
+	Attribute attr;
+};
+
+#include <poppack.h>
+
+/// Representation of the row data
+class Row
+{
+private:
+	struct RowColor
+	{
+		//// Number of the first cell where attr is applied
+		unsigned  cell = 0;
+		//// true-color properties of the cell
+		Attribute attr = {};
+	};
+	using RowColors = MArray<RowColor>;
+	using RowChars = MArray<wchar_t>;
+
+public:
+	Row();
+	~Row();
+
+	Row(const Row& src);
+
+	void swap(Row& row);
+
+	/// all cell coordinates are 0-based
+
+	void Write(unsigned cell, const Attribute& attr, const wchar_t* text, unsigned count);
+	void Insert(unsigned cell, const Attribute& attr, const wchar_t chr, unsigned count);
+	void Delete(unsigned cell, unsigned count);
+	void SetCellAttr(unsigned cell, const Attribute& attr, unsigned count);
+
+	/// Function will never return '\0'
+	wchar_t GetCellChar(unsigned cell) const;
+	/// Returns cell attributes
+	/// @param  cell - 0-based index
+	/// @param  attr - [OUT] cell attributes
+	/// @param  hint - previous result of *GetCellAttr*, used to iterate cell search
+	/// @result index in the ConsoleRow internal array, may be used with *hint* to iterate search
+	unsigned GetCellAttr(unsigned cell, Attribute& attr, unsigned hint = 0) const;
+	unsigned GetLength() const;
+
+	/// Internal validation
+	void Validate() const;
+
+	/// Ensures that Row contains enough space to write the *cell*
+	/// @result current or new (if modified) GetLength()
+	unsigned SetReqSize(unsigned cell);
+
+	/// Reserves enough space in m_Text to write *len* cells
+	/// It doesn't do actual resize/append of text
+	void Reserve(unsigned len);
+
+protected:
+	WORD m_RowID = 0;
+	RowChars m_Text;
+	RowColors m_Colors;
+};
+
+
+/// Main class to manipulate console surface
+class Table
+{
+public:
+	using BellCallback = void(*)();
+
+	struct Region
+	{
+		unsigned Top, Bottom;
+	};
+
+public:
+	Table(const Attribute& _attr = {7}, const Coord& _size = {80, 25}, const int _backscrollMax = 1<<20, BellCallback _bellCallback = nullptr);
+	~Table();
+
+	Table(const Table&) = delete;
+	Table(Table&&) = delete;
+
+	// To simplify our interface, there are no functions which do write without cursor movement
+	// So the cursor position always explicitly defines next write operation
+	// The cursor can't be moved to *backscroll* area, only workspace is accessible for modifications
+
+	/// Visual dimensions of working area
+	Coord GetSize() const;
+	/// Change visual dimensions of working area
+	void Resize(const Coord newSize);
+	/// Return count of rows went to backscroll buffer (console history)
+	unsigned GetBackscroll() const;
+
+	/// Set attributes for *next* write operation
+	void SetAttr(const Attribute& attr);
+	/// Just returns *current* attributes for next write operations
+	Attribute GetAttr() const;
+
+	/// Moves cursor to certain location on workspace
+	/// @param  cursor - passed by value intentionally (m_Cursor is passed as argument often)
+	void SetCursor(const Coord cursor);
+	/// Returns current cursor position in workspace coordinates
+	Coord GetCursor() const;
+
+	/// Set scrolling region of viewport if *setRegion* is *true*
+	/// *top* and *bottom* are 0-based row indexes
+	/// If *top* is greater than 0, scrolled lines are completely erased,
+	/// so they don't go into m_Backscroll
+	void SetScrollRegion(bool setRegion = false, unsigned top = 0, unsigned bottom = 0);
+	/// Emit CR automatically after single LF
+	void SetAutoCRLF(bool autoCRLF);
+	/// Defines behavior when character is written at the last cell of the row
+	/// If *true* (enabled by "ESC [ ? 7 h") we may advance cursor and create new line (perhaps on next write if *BeyondEOL*)
+	/// If *false* (enabled by "ESC [ ? 7 l") cursor stays at *m_Size.x-1* indefinitely
+	void SetAutoWrap(bool autoWrap, int wrapAt = -1);
+	/// Option is ignored if *AutoWrap* is *false*, cursor stays at *m_Size.x-1* indefinitely
+	/// If *true* cursor may stay "after" EOL until next write or cursor move (default for XTerm)
+	/// If *false* new line is created implicitly (default for WinAPI)
+	void SetBeyondEOL(bool beyondEOL);
+
+	/// Direct modification
+	void Write(const wchar_t* text, unsigned count);
+	void InsertCell(unsigned count = 1, const wchar_t chr = L' ');
+	void DeleteCell(unsigned count = 1);
+	void InsertRow(unsigned count = 1);
+	void DeleteRow(unsigned count = 1);
+
+	/// Returns console data
+	void GetData(CharInfo *pData, const Coord& bufSize, RECT& rgn) const;
+
+	/// Bell or Flash on Write("\7")
+	void SetBellCallback(BellCallback bellCallback);
+
+	/// Let remember when *prompt* input was started
+	/// Used for typed command selection by `Shift+Home`
+	void PromptPosStore();
+	/// Drop prompt position stored by PromptPosStore()
+	void PromptPosReset();
+
+	/// Mutex lock call for TablePtr
+	std::unique_lock<std::mutex> Lock();
+
+protected:
+	/// Return object for row with cursor
+	Row& CurrentRow();
+	/// Scroll rows upward, move top row to backscroll buffer if required
+	void DoAutoScroll();
+	/// Emulate 'Enter' keypress - move cursor one row down or scroll contents upward
+	/// @param cr - move cursor to first cell in row too
+	void DoLineFeed(bool cr);
+	/// Return top/bottom rows where cursor may be located and text printed
+	Region GetScrollRegion() const;
+	/// If size was set to {0,0} - absolutely unexpected
+	bool IsEmpty() const;
+
+private:
+	using deque_type = std::deque<Row, MArrayAllocator<Row>>;
+	using vector_type = std::vector<Row, MArrayAllocator<Row>>;
+
+	// Make all calls thread-safe, access via TablePtr class
+	std::mutex m_Mutex;
+
+	/// Bell or Flash on Write("\7")
+	BellCallback m_BellCallback;
+
+	/// Working part of the console, where POSIX applications may write
+	vector_type m_Workspace;
+	/// History part of the console, here go rows went out of scope on auto-scrolling
+	deque_type m_Backscroll;
+	/// Maximum count of history rows, -1 means "don't limit"
+	int m_BackscrollMax = -1;
+	/// Dimensions of viewport (m_Workspace)
+	Coord m_Size = {};
+	/// Current cursor position
+	Coord m_Cursor = {};
+	/// Current output attributes
+	Attribute m_Attr = {7};
+	/// Just for drawing oldschool ANSI arts designed for 80-cell terminals
+	/// To enable - "ESC [ 7 ; _col_ h", to disable - "ESC [ 7 ; l"
+	int m_WrapAt = -1;
+	/// Scrolling region if *m_Flags.Region* is true
+	Region m_Region = {};
+
+	struct Flags
+	{
+		/// Emit CR automatically after single LF
+		bool AutoCRLF = true;
+		/// Defines behavior when character is written at the last cell of the row
+		/// If *true* (enabled by "ESC [ ? 7 h") we may advance cursor and create new line (perhaps on next write if *BeyondEOL*)
+		/// If *false* (enabled by "ESC [ ? 7 l") cursor stays at *m_Size.x-1* indefinitely
+		bool AutoWrap = true;
+		/// Option is ignored if *AutoWrap* is *false*, cursor stays at *m_Size.x-1* indefinitely
+		/// If *true* cursor may stay "after" EOL until next write or cursor move (default for XTerm)
+		/// If *false* new line is created implicitly (default for WinAPI)
+		bool BeyondEOL = true;
+		/// If *true* the cursor is locked inside specified rows in viewport
+		bool Region = false;
+
+	} m_Flags;
+
+};
+
+
+/// Makes Table calls thread-safe
+class TablePtr
+{
+public:
+	TablePtr(Table& _table);
+	~TablePtr();
+
+	Table* operator->();
+
+private:
+	Table* m_table = nullptr;
+	std::unique_lock<std::mutex> m_lock;
+};
+
+}; /// namespace console
