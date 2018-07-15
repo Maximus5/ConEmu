@@ -81,11 +81,10 @@ LRESULT CSetPgFeatures::OnInitDialog(HWND hDlg, bool abInitial)
 
 	checkDlgButton(hDlg, cbUseClink, gpSet->isUseClink() ? BST_CHECKED : BST_UNCHECKED);
 
-	checkDlgButton(hDlg, cbDosBox, gpConEmu->mb_DosBoxExists);
-	// изменение пока запрещено
-	// или чтобы ругнуться, если DosBox не установлен
+	// Show if DosBox is found, and allow user to click checkbox for recheck and message
+	checkDlgButton(hDlg, cbDosBox, gpConEmu->CheckDosBoxExists());
 	EnableWindow(GetDlgItem(hDlg, cbDosBox), !gpConEmu->mb_DosBoxExists);
-	//EnableWindow(GetDlgItem(hDlg, bDosBoxSettings), FALSE); // изменение пока запрещено
+	//EnableWindow(GetDlgItem(hDlg, bDosBoxSettings), FALSE);
 	ShowWindow(GetDlgItem(hDlg, bDosBoxSettings), SW_HIDE);
 
 	checkDlgButton(hDlg, cbDisableAllFlashing, gpSet->isDisableAllFlashing);

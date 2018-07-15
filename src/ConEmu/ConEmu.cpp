@@ -620,7 +620,7 @@ CConEmuMain::CConEmuMain()
 
 
 	// DosBox (the only available way to run legacy Dos-applications in 64-bit OS)
-	mb_DosBoxExists = CheckDosBoxExists();
+	CheckDosBoxExists();
 
 	CFrameHolder::InitFrameHolder();
 }
@@ -2145,21 +2145,21 @@ void CConEmuMain::FillConEmuMainFont(ConEmuMainFont* pFont)
 }
 
 
-BOOL CConEmuMain::CheckDosBoxExists()
+bool CConEmuMain::CheckDosBoxExists()
 {
-	BOOL lbExists = FALSE;
-	wchar_t szDosBoxPath[MAX_PATH+32];
-	wcscpy_c(szDosBoxPath, ms_ConEmuBaseDir);
-	wchar_t* pszName = szDosBoxPath+_tcslen(szDosBoxPath);
+	bool absent = false;
 
-	wcscpy_add(pszName, szDosBoxPath, L"\\DosBox\\DosBox.exe");
-	if (FileExists(szDosBoxPath))
+	const wchar_t* reqFiles[] = { L"DosBox.exe", L"DosBox.conf" };
+	for (size_t i = 0; i < countof(reqFiles); ++i)
 	{
-		wcscpy_add(pszName, szDosBoxPath, L"\\DosBox\\DosBox.conf");
-		lbExists = FileExists(szDosBoxPath);
+		CEStr file(ms_ConEmuBaseDir, L"\\DosBox\\", reqFiles[i]);
+		if (!FileExists(file))
+		{
+			absent = true; break;
+		}
 	}
 
-	return lbExists;
+	return (mb_DosBoxExists = !absent);
 }
 
 void CConEmuMain::GetComSpecCopy(ConEmuComspec& ComSpec)
@@ -2234,8 +2234,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	// m_GuiInfo.Flags[CECF_SleepInBackg], m_GuiInfo.hActiveCons, m_GuiInfo.dwActiveTick, m_GuiInfo.bGuiActive
 	UpdateGuiInfoMappingActive(isMeForeground(true, true), false);
 
-	mb_DosBoxExists = CheckDosBoxExists();
-	SetConEmuFlags(m_GuiInfo.Flags,CECF_DosBox,(mb_DosBoxExists ? CECF_DosBox : 0));
+	SetConEmuFlags(m_GuiInfo.Flags,CECF_DosBox,(CheckDosBoxExists() ? CECF_DosBox : 0));
 
 	wcscpy_c(m_GuiInfo.sConEmuExe, ms_ConEmuExe);
 	//-- переехали в m_GuiInfo.ComSpec

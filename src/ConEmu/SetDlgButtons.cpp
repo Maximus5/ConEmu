@@ -3517,7 +3517,7 @@ void CSetDlgButtons::OnBtn_DosBox(HWND hDlg, WORD CB, BYTE uCheck)
 {
 	_ASSERTE(CB==cbDosBox);
 
-	if (gpConEmu->mb_DosBoxExists)
+	if (gpConEmu->CheckDosBoxExists())
 	{
 		checkDlgButton(hDlg, cbDosBox, BST_CHECKED);
 		EnableWindow(GetDlgItem(hDlg, cbDosBox), FALSE); // изменение пока запрещено
@@ -3525,16 +3525,15 @@ void CSetDlgButtons::OnBtn_DosBox(HWND hDlg, WORD CB, BYTE uCheck)
 	else
 	{
 		checkDlgButton(hDlg, cbDosBox, BST_UNCHECKED);
-		size_t nMaxCCH = MAX_PATH*3;
-		wchar_t* pszErrInfo = (wchar_t*)malloc(nMaxCCH*sizeof(wchar_t));
-		swprintf_c(pszErrInfo, nMaxCCH/*#SECURELEN*/, L"DosBox is not installed!\n"
-				L"\n"
-				L"DosBox files must be located here:"
-				L"%s\\DosBox\\"
+		CEStr lsErrInfo(
+				L"DosBox files must be located here:\n",
+				gpConEmu->ms_ConEmuBaseDir, L"\\DosBox\\"
 				L"\n"
 				L"1. Copy files DOSBox.exe, SDL.dll, SDL_net.dll\n"
-				L"2. Create of modify configuration file DOSBox.conf",
-				gpConEmu->ms_ConEmuBaseDir);
+				L"2. Create of modify configuration file DOSBox.conf"
+				);
+		// gh-1637 Show information to user!
+		MsgBox(lsErrInfo, MB_OK|MB_ICONINFORMATION, NULL, ghOpWnd);
 	}
 } // cbDosBox
 
