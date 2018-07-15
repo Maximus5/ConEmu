@@ -12643,21 +12643,33 @@ void CConEmuMain::OnTimer_ActivateSplit()
 	if (!PTDIFFTEST(mouse.ptLastSplitOverCheck, SPLITOVERCHECK_DELTA))
 	{
 		mouse.ptLastSplitOverCheck = ptCur;
+		bool isChildGui = false;
 		if (!isIconic()
 			&& (hForeWnd == ghWnd
 				|| (mp_Inside && mp_Inside->isParentProcess(hForeWnd))
-				|| CVConGroup::isOurGuiChildWindow(hForeWnd)
+				|| (isChildGui = CVConGroup::isOurGuiChildWindow(hForeWnd))
 			))
 		{
 			// Курсор над ConEmu?
-			RECT rcClient = CalcRect(CER_MAIN);
+			RECT rcClient = SizeInfo::WindowRect();
 			// Проверяем, в какой из VCon попадает курсор?
 			if (PtInRect(&rcClient, ptCur))
 			{
 				if (CVConGroup::GetVConFromPoint(ptCur, &VConFromPoint))
 				{
-					bool bActive = VConFromPoint->isActive(false);
-					if (!bActive)
+					bool needActivate = !VConFromPoint->isActive(false);
+					if (isChildGui)
+					{
+						HWND hCursorWnd = WindowFromPoint(ptCur);
+						if (hCursorWnd && CVConGroup::isOurGuiChildWindow(hCursorWnd))
+						{
+							RECT rcFore{};
+							GetWindowRect(hCursorWnd, &rcFore);
+							if (PtInRect(&rcFore, ptCur))
+								needActivate = false;
+						}
+					}
+					if (needActivate)
 					{
 						CVConGuard VCon;
 						// Если был активирован GUI CHILD - то фокус нужно сначала поставить в ConEmu
