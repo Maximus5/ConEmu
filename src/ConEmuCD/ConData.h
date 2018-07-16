@@ -41,6 +41,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 namespace condata
 {
 
+class console_error : public std::logic_error
+{
+public:
+	console_error(const char* message);
+};
+
 #include <pshpack2.h>
 
 /// Used for both coordinates and sizes
@@ -146,7 +152,7 @@ private:
 	using RowChars = MArray<wchar_t>;
 
 public:
-	Row();
+	Row(const Attribute& attr = {});
 	~Row();
 
 	Row(const Row& src);
@@ -170,6 +176,9 @@ public:
 	unsigned GetCellAttr(unsigned cell, Attribute& attr, unsigned hint = 0) const;
 	unsigned GetLength() const;
 
+	/// Check if the '\n' was written explicitly
+	bool HasLineFeed() const;
+
 	/// Internal validation
 	void Validate() const;
 
@@ -180,6 +189,9 @@ public:
 	/// Reserves enough space in m_Text to write *len* cells
 	/// It doesn't do actual resize/append of text
 	void Reserve(unsigned len);
+
+	/// Returns ASCII-Z string, throw if m_Text is invalid
+	const wchar_t* GetText() const;
 
 protected:
 	WORD m_RowID = 0;
@@ -252,7 +264,10 @@ public:
 	void DeleteRow(unsigned count = 1);
 
 	/// Returns console data
-	void GetData(CharInfo *pData, const Coord& bufSize, RECT& rgn) const;
+	/// @param pData - destination buffer of { wchar_t; Attribute; }
+	/// @param bufSize - dimensions of *pData*
+	/// @param rgn - negative vertical coordinates represent backscroll buffer
+	void GetData(CharInfo *pData, const Coord& bufSize, const RECT& rgn) const;
 
 	/// Bell or Flash on Write("\7")
 	void SetBellCallback(BellCallback bellCallback);
@@ -266,9 +281,15 @@ public:
 	/// Mutex lock call for TablePtr
 	std::unique_lock<std::mutex> Lock();
 
+	/// Dump of Backscroll & Workspace contents to debug output
+	void DebugDump() const;
+
 protected:
-	/// Return object for row with cursor
-	Row& CurrentRow();
+	using deque_type = std::deque<Row, MArrayAllocator<Row>>;
+	using vector_type = std::vector<Row, MArrayAllocator<Row>>;
+
+	/// Return iterator (m_Workspace) for row with cursor
+	vector_type::iterator CurrentRow();
 	/// Scroll rows upward, move top row to backscroll buffer if required
 	void DoAutoScroll();
 	/// Emulate 'Enter' keypress - move cursor one row down or scroll contents upward
@@ -278,11 +299,10 @@ protected:
 	Region GetScrollRegion() const;
 	/// If size was set to {0,0} - absolutely unexpected
 	bool IsEmpty() const;
+	/// Called during resize
+	void ShiftRowIndexes(int direction);
 
 private:
-	using deque_type = std::deque<Row, MArrayAllocator<Row>>;
-	using vector_type = std::vector<Row, MArrayAllocator<Row>>;
-
 	// Make all calls thread-safe, access via TablePtr class
 	std::mutex m_Mutex;
 
