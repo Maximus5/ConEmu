@@ -115,7 +115,7 @@ class MArray
 		};
 		const_iterator cend() const
 		{
-			return data.cbegin();
+			return data.cend();
 		};
 
 		ssize_t size() const
