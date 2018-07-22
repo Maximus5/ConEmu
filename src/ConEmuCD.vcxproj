@@ -285,6 +285,7 @@
     <ClInclude Include="ConEmuCD\Infiltrate.h" />
     <ClInclude Include="ConEmuCD\MapDump.h" />
     <ClInclude Include="ConEmuCD\Queue.h" />
+    <ClInclude Include="ConEmuCD\Shutdown.h" />
     <ClInclude Include="ConEmuCD\SrvCommands.h" />
     <ClInclude Include="ConEmuCD\SrvPipes.h" />
     <ClInclude Include="ConEmuCD\StartEnv.h" />
@@ -309,6 +310,7 @@
     <ClCompile Include="ConEmuCD\InjectRemote.cpp" />
     <ClCompile Include="ConEmuCD\MapDump.cpp" />
     <ClCompile Include="ConEmuCD\Queue.cpp" />
+    <ClCompile Include="ConEmuCD\Shutdown.cpp" />
     <ClCompile Include="ConEmuCD\SrvCommands.cpp" />
     <ClCompile Include="ConEmuCD\SrvPipes.cpp" />
     <ClCompile Include="ConEmuCD\StartEnv.cpp" />

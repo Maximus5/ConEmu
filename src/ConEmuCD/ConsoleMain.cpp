@@ -106,6 +106,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConsoleHelp.h"
 #include "GuiMacro.h"
 #include "Debugger.h"
+#include "Shutdown.h"
 #include "StartEnv.h"
 #include "UnicodeTest.h"
 
@@ -277,36 +278,6 @@ namespace InputLogger
 	LONG g_overflow = 0;
 };
 
-
-namespace Shutdown
-{
-	using ShutdownCallback = void (*)(LPARAM);
-	struct ShutdownEvent
-	{
-		ShutdownCallback callback = nullptr;
-		LPARAM lParam = 0;
-		ShutdownEvent* next = nullptr;
-	};
-	ShutdownEvent* events = nullptr;
-	void RegisterEvent(ShutdownCallback callback, LPARAM lParam)
-	{
-		ShutdownEvent* new_event = new ShutdownEvent();
-		new_event->callback = callback;
-		new_event->lParam = lParam;
-		new_event->next = (ShutdownEvent*)InterlockedExchangePointer((PVOID*)&events, new_event);
-	}
-	void ProcessShutdown()
-	{
-		ShutdownEvent* cur_event = (ShutdownEvent*)InterlockedExchangePointer((PVOID*)&events, nullptr);
-		while (cur_event)
-		{
-			if (cur_event->callback)
-				cur_event->callback(cur_event->lParam);
-			_ASSERTE(cur_event != cur_event->next);
-			cur_event = cur_event->next;
-		}
-	}
-};
 
 namespace StdCon {
 

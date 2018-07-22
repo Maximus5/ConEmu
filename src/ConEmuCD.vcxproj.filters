@@ -63,6 +63,9 @@
     <ClInclude Include="ConEmuCD\Queue.h">
       <Filter>Interface</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmuCD\Shutdown.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmuCD\SrvCommands.h">
       <Filter>Interface</Filter>
     </ClInclude>
@@ -130,6 +133,9 @@
     </ClCompile>
     <ClCompile Include="ConEmuCD\Queue.cpp">
       <Filter>Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\Shutdown.cpp">
+      <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuCD\SrvCommands.cpp">
       <Filter>Interface</Filter>
