@@ -37,19 +37,19 @@ struct CEStr
 public:
 	wchar_t *ms_Val = nullptr;
 private:
-	INT_PTR mn_MaxCount = 0; // Including termination \0
+	ssize_t mn_MaxCount = 0; // Including termination \0
 
 private:
-	LPCWSTR AttachInt(wchar_t*& asPtr);
+	const wchar_t* AttachInt(wchar_t*& asPtr);
 
 public:
-	operator LPCWSTR() const;
+	operator const wchar_t*() const;
 	operator bool() const;
-	LPCWSTR c_str(LPCWSTR asNullSubstitute = NULL) const;
-	LPCWSTR Right(INT_PTR cchMaxCount) const;
-	LPCWSTR Mid(INT_PTR cchOffset) const;
+	const wchar_t* c_str(const wchar_t* asNullSubstitute = NULL) const;
+	const wchar_t* Right(ssize_t cchMaxCount) const;
+	const wchar_t* Mid(ssize_t cchOffset) const;
 
-	int Compare(LPCWSTR asText, bool abCaseSensitive = false) const;
+	int Compare(const wchar_t* asText, bool abCaseSensitive = false) const;
 	bool operator==(const wchar_t* asStr) const;
 
 	CEStr& operator=(CEStr&& asStr);
@@ -57,18 +57,20 @@ public:
 	CEStr& operator=(wchar_t*&& asPtr);
 	CEStr& operator=(const wchar_t* asPtr);
 
-	INT_PTR GetLen() const;
-	INT_PTR GetMaxCount();
+	void swap(CEStr& asStr);
 
-	wchar_t* GetBuffer(INT_PTR cchMaxLen);
+	ssize_t GetLen() const;
+	ssize_t GetMaxCount();
+
+	wchar_t* GetBuffer(ssize_t cchMaxLen);
 	wchar_t* Detach();
-	LPCWSTR  Attach(wchar_t* RVAL_REF asPtr);
-	LPCWSTR  Append(const wchar_t* asStr1, const wchar_t* asStr2 = NULL, const wchar_t* asStr3 = NULL, const wchar_t* asStr4 = NULL, const wchar_t* asStr5 = NULL, const wchar_t* asStr6 = NULL, const wchar_t* asStr7 = NULL, const wchar_t* asStr8 = NULL);
+	const wchar_t*  Attach(wchar_t* RVAL_REF asPtr);
+	const wchar_t*  Append(const wchar_t* asStr1, const wchar_t* asStr2 = NULL, const wchar_t* asStr3 = NULL, const wchar_t* asStr4 = NULL, const wchar_t* asStr5 = NULL, const wchar_t* asStr6 = NULL, const wchar_t* asStr7 = NULL, const wchar_t* asStr8 = NULL);
 	void Clear();
 	void Empty();
 	bool IsEmpty() const;
-	LPCWSTR Set(LPCWSTR asNewValue, INT_PTR anChars = -1);
-	void SetAt(INT_PTR nIdx, wchar_t wc);
+	const wchar_t* Set(const wchar_t* asNewValue, ssize_t anChars = -1);
+	void SetAt(ssize_t nIdx, wchar_t wc);
 
 	CEStr();
 	CEStr(CEStr&& asStr);
@@ -98,10 +100,10 @@ public:
 	operator const char*() const;
 	operator bool() const;
 	const char* c_str(const char* asNullSubstitute = NULL) const;
-	INT_PTR length() const;
+	ssize_t length() const;
 	void clear();
 
-	char* getbuffer(INT_PTR cchMaxLen);
+	char* getbuffer(ssize_t cchMaxLen);
 	char* release();
 
 public:
