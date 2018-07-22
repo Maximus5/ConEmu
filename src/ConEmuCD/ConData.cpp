@@ -292,8 +292,15 @@ Row::~Row()
 
 Row::Row(const Row& src)
 {
+	(*this) = src;
+}
+
+Row& Row::operator=(const Row& src)
+{
 	src.Validate();
 	m_RowID = src.m_RowID;
+	m_WasLF = src.m_WasLF;
+	m_CWD = src.m_CWD;
 
 	if (unsigned length = src.GetLength())
 	{
@@ -325,14 +332,18 @@ Row::Row(const Row& src)
 	}
 
 	Validate();
+
+	return *this;
 }
 
 void Row::swap(Row& row)
 {
 	row.Validate();
 	std::swap(m_RowID, row.m_RowID);
+	std::swap(m_WasLF, row.m_WasLF);
 	m_Colors.swap(row.m_Colors);
 	m_Text.swap(row.m_Text);
+	m_CWD.swap(row.m_CWD);
 }
 
 unsigned Row::SetReqSize(unsigned cell)
@@ -370,6 +381,9 @@ void Row::Write(unsigned cell, const Attribute& attr, const wchar_t* text, unsig
 	if (!text || !count)
 		return;
 
+	if (m_WasLF != -1 && (cell + count) >= (unsigned)m_WasLF)
+		m_WasLF = -1;
+
 	Reserve(((cell + count + 80) / 80) * 80);
 
 	SetReqSize(cell + count);
@@ -383,6 +397,9 @@ void Row::Write(unsigned cell, const Attribute& attr, const wchar_t* text, unsig
 
 void Row::Insert(unsigned cell, const Attribute& attr, const wchar_t chr, unsigned count)
 {
+	if (m_WasLF != -1)
+		m_WasLF = -1;
+
 	if (!count)
 		return;
 
@@ -402,6 +419,9 @@ void Row::Insert(unsigned cell, const Attribute& attr, const wchar_t chr, unsign
 
 void Row::Delete(unsigned cell, unsigned count)
 {
+	if (m_WasLF != -1)
+		m_WasLF = -1;
+
 	const unsigned cur_len = GetLength();
 	if (!count || cell >= cur_len)
 		return;
@@ -463,10 +483,27 @@ unsigned Row::GetLength() const
 	return 0;
 }
 
-bool Row::HasLineFeed() const
+void Row::SetLineFeed(int pos)
 {
-	// #condata Implement fCRLF flags
-	return false;
+	if (pos < 0)
+	{
+		m_WasLF = -1;
+	}
+	else
+	{
+		unsigned len = GetLength();
+		_ASSERTE((unsigned)pos == len);
+		if ((unsigned)pos >= len)
+			m_WasLF = pos;
+		else
+			m_WasLF = -1;
+	}
+}
+
+int Row::HasLineFeed() const
+{
+	_ASSERTE(m_WasLF == -1 || (m_WasLF >= 0 && (unsigned)m_WasLF >= GetLength()));
+	return m_WasLF;
 }
 
 const wchar_t* Row::GetText() const
@@ -488,6 +525,8 @@ unsigned Row::GetCellAttr(unsigned cell, Attribute& attr, unsigned hint /*= 0*/)
 		return 0;
 	}
 
+	unsigned result;
+
 	// We may use binary search for optimization, but
 	// expected size of the m_Colors is just a few elements
 	for (ssize_t i = hint; i < m_Colors.size(); ++i)
@@ -499,18 +538,22 @@ unsigned Row::GetCellAttr(unsigned cell, Attribute& attr, unsigned hint /*= 0*/)
 		{
 			_ASSERTE(m_Colors[i - 1].cell < cell);
 			attr = m_Colors[i - 1].attr;
-			return unsigned(i - 1);
+			result = unsigned(i - 1);
+			goto wrap;
 		}
 		else
 		{
 			_ASSERTE(ic == cell);
 			attr = m_Colors[i].attr;
-			return unsigned(i);
+			result = unsigned(i);
+			goto wrap;
 		}
 	}
 
 	attr = m_Colors[m_Colors.size()-1].attr;
-	return unsigned(m_Colors.size()-1);
+	result = unsigned(m_Colors.size()-1);
+wrap:
+	return result;
 }
 
 void Row::SetCellAttr(unsigned cell, const Attribute& attr, unsigned count)
@@ -598,6 +641,19 @@ void Row::SetCellAttr(unsigned cell, const Attribute& attr, unsigned count)
 	Validate();
 }
 
+void Row::SetWorkingDirectory(const wchar_t* cwd)
+{
+	if (!cwd || !*cwd)
+		m_CWD.Clear();
+	else
+		m_CWD.Set(cwd);
+}
+
+const wchar_t* Row::GetWorkingDirectory() const
+{
+	return m_CWD.IsEmpty() ? nullptr : m_CWD.c_str();
+}
+
 wchar_t Row::GetCellChar(unsigned cell) const
 {
 	wchar_t ch = (cell < m_Text.size()) ? m_Text[cell] : L' ';
@@ -670,9 +726,25 @@ unsigned Table::GetBackscroll() const
 	return (unsigned) m_Backscroll.size();
 }
 
+void Table::SetBackscrollMax(const int backscrollMax)
+{
+	m_BackscrollMax = (backscrollMax < 0) ? -1 : backscrollMax;
+
+	if (m_BackscrollMax >= 0 && m_Backscroll.size() > size_t(m_BackscrollMax))
+		m_Backscroll.erase(m_Backscroll.begin() + m_BackscrollMax, m_Backscroll.end());
+}
+
 condata::Attribute Table::GetAttr() const
 {
 	return m_Attr;
+}
+
+void Table::Reset(const Attribute& attr)
+{
+	SetScrollRegion(false);
+	SetCursor({});
+	DeleteRow((unsigned)m_Workspace.size());
+	SetAttr(attr);
 }
 
 void Table::Resize(const Coord newSize)
@@ -714,26 +786,40 @@ void Table::Resize(const Coord newSize)
 	SetCursor(m_Cursor);
 }
 
-void Table::ShiftRowIndexes(int direction)
+void Table::ShiftRowIndexes(int direction, unsigned flags /*= ShiftAll*/)
 {
 	if (direction > 0)
 	{
 		_ASSERTE(direction == 1);
-		SetCursor({m_Cursor.x, m_Cursor.y + direction});
-		if (m_Flags.Region && m_Region.Bottom + 1 < m_Size.y)
+		if (flags & ShiftCursor)
+		{
+			SetCursor({m_Cursor.x, m_Cursor.y + direction});
+		}
+		if ((flags & ShiftRegion) && m_Flags.Region && ((int)m_Region.Bottom + 1 < m_Size.y))
 		{
 			m_Region.Top += direction;
 			m_Region.Bottom += direction;
+		}
+		if ((flags & ShiftPrompt) && m_Flags.Prompt && (m_Prompt.y + 1 < m_Size.y))
+		{
+			m_Prompt.y += direction;
 		}
 	}
 	else if (direction < 0)
 	{
 		_ASSERTE(direction == -1);
-		SetCursor({m_Cursor.x, m_Cursor.y - direction});
-		if (m_Flags.Region && m_Region.Top > 0)
+		if (flags & ShiftCursor)
+		{
+			SetCursor({m_Cursor.x, m_Cursor.y - direction});
+		}
+		if ((flags & ShiftRegion) && m_Flags.Region && ((int)m_Region.Top > 0))
 		{
 			m_Region.Top += direction;
 			m_Region.Bottom += direction;
+		}
+		if ((flags & ShiftPrompt) && m_Flags.Prompt && (m_Prompt.y > 0))
+		{
+			m_Prompt.y += direction;
 		}
 	}
 }
@@ -862,6 +948,8 @@ void Table::DoLineFeed(bool cr)
 		++cur.y;
 	}
 
+	ShiftRowIndexes(-1, ShiftPrompt);
+
 	SetCursor(cur);
 }
 
@@ -889,12 +977,7 @@ void Table::Write(const wchar_t* text, unsigned count)
 		_ASSERTE(FALSE && "Workspace is empty");
 		return;
 	}
-
-	if (m_Size.x < 1 || m_Size.y < 1)
-	{
-		_ASSERTE(m_Size.x >= 1 && m_Size.y >= 1);
-		return;
-	}
+	_ASSERTE(m_Size.x >= 1 && m_Size.y >= 1);
 
 
 	#ifdef _DEBUG
@@ -910,15 +993,18 @@ void Table::Write(const wchar_t* text, unsigned count)
 		switch (text[pos])
 		{
 		case L'\t':
+			_ASSERTE(!m_Flags.AutoWrap || m_Flags.BeyondEOL || m_Cursor.x < m_Size.x);
 			// #ConData Store in the row attribute that '\t' was "written" at this place?
 			SetCursor({std::max<unsigned>(m_Size.x - 1, ((m_Cursor.x + 8) >> 3) << 3), m_Cursor.y});
 			break;
 		case L'\r':
+			_ASSERTE(!m_Flags.AutoWrap || m_Flags.BeyondEOL || m_Cursor.x < m_Size.x);
 			// just put cursor at the line start
 			SetCursor({0, m_Cursor.y});
 			break;
 		case L'\n':
-			// #ConData Store in the row attribute that line was '\n'-terminated
+			_ASSERTE(!m_Flags.AutoWrap || m_Flags.BeyondEOL || m_Cursor.x < m_Size.x);
+			CurrentRow()->SetLineFeed((int)m_Cursor.x);
 			DoLineFeed(m_Flags.AutoCRLF);
 			// New line == prompt reset
 			PromptPosReset();
@@ -926,13 +1012,16 @@ void Table::Write(const wchar_t* text, unsigned count)
 		case 7:
 			//Beep (no spacing)
 			if (m_BellCallback)
-				m_BellCallback();
+				m_BellCallback(m_BellCallbackParam);
 			// cursor position is not changed, we just skip the bell position in text
 			break;
 		case 8: // L'\b'
 			//BS
 			SetCursor({m_Cursor.x > 0 ? (m_Cursor.x - 1) : m_Cursor.x, m_Cursor.y});
 			break;
+
+		// #condata support '\v' (11) and other codes from https://en.wikipedia.org/wiki/Control_character
+
 		default:
 			// Just a letter
 			// RealConsole can't have non-spacing glyphs, exceptions are processed above
@@ -1114,24 +1203,36 @@ void Table::GetData(CharInfo *pData, const Coord& bufSize, const RECT& rgn) cons
 	}
 }
 
-void Table::SetBellCallback(BellCallback bellCallback)
+void Table::SetBellCallback(BellCallback bellCallback, void* param)
 {
 	m_BellCallback = bellCallback;
+	m_BellCallbackParam = param;
 }
 
 void Table::PromptPosStore()
 {
-	// #condata PromptPosStore
+	m_Flags.Prompt = true;
+	m_Prompt = GetCursor();
 }
 
 void Table::PromptPosReset()
 {
-	// #condata PromptPosReset
+	m_Flags.Prompt = false;
 }
 
-std::unique_lock<std::mutex> Table::Lock()
+void Table::SetWorkingDirectory(const wchar_t* cwd)
 {
-	return std::unique_lock<std::mutex>(m_Mutex);
+	if (!cwd || !*cwd)
+		return;
+
+	if (IsEmpty())
+	{
+		_ASSERTE(FALSE && "Workspace is empty");
+		return;
+	}
+	_ASSERTE(m_Size.x >= 1 && m_Size.y >= 1);
+
+	CurrentRow()->SetWorkingDirectory(cwd);
 }
 
 void Table::DebugDump() const
@@ -1175,31 +1276,5 @@ void Table::DebugDump() const
 #endif
 }
 
-
-
-
-/**
-	Main class to manipulate console surface
-**/
-
-TablePtr::TablePtr(Table& _table)
-	: m_table(&_table)
-	, m_lock(_table.Lock())
-{
-}
-
-TablePtr::~TablePtr()
-{
-}
-
-condata::Table* TablePtr::operator->()
-{
-	if (!m_table)
-	{
-		_ASSERTE(m_table!=nullptr);
-		throw console_error("m_table is nullptr");
-	}
-	return m_table;
-}
 
 };
