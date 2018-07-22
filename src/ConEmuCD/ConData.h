@@ -31,7 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/defines.h"
 #include <deque>
-#include <mutex>
+#include <vector>
+#include "../common/CEStr.h"
 #include "../common/ConsoleMixAttr.h"
 #include "../common/MArray.h"
 /// CharAttr definition
@@ -86,22 +87,23 @@ struct Attribute
 		fBold     = 0x00000001,
 		/// Use Italic font
 		fItalic   = 0x00000002,
-		/// Not supported yet, reserved
+		// #condata Not supported yet, reserved
 		fStrike   = 0x00000004,
 
-		/// crForeColor contains xterm-256 palette index
+		// #condata crForeColor contains xterm-256 palette index (unused yet)
 		fFore8b   = 0x00000100,
 		/// crForeColor contains RGB value
 		fFore24b  = 0x00000200,
-		/// crBackColor contains xterm-256 palette index
+		// #condata crBackColor contains xterm-256 palette index (unused yet)
 		fBack8b   = 0x00000400,
 		/// crBackColor contains RGB value
 		fBack24b  = 0x00000800,
 
-		/// row was '\n'-terminated
-		fCRLF     = 0x00010000,
+		/// row was '`n'-terminated
+		fWasLF     = 0x00010000,
 	};
-	Flags flags;
+	/// Enum of Flags
+	unsigned flags;
 
 	/// Foreground color from xTerm256-color palette if (flags&fFore8b), or RGB if (flags&fFore24b)
 	unsigned crForeColor; // only 24 bits are used
@@ -156,6 +158,7 @@ public:
 	~Row();
 
 	Row(const Row& src);
+	Row& operator=(const Row& src);
 
 	void swap(Row& row);
 
@@ -166,6 +169,19 @@ public:
 	void Delete(unsigned cell, unsigned count);
 	void SetCellAttr(unsigned cell, const Attribute& attr, unsigned count);
 
+	/// If shell emits its current directory - remember it in the current row
+	/// @param cwd - current working directory; it may be either in Unix or Windows format, store unchanged
+	void SetWorkingDirectory(const wchar_t* cwd);
+	/// Returns previously stored working directory
+	/// @result returns *nullptr* if directory was not set
+	const wchar_t* GetWorkingDirectory() const;
+
+	/// Remember that line was '`n' terminated explicitly
+	void SetLineFeed(int pos);
+	/// Check if the '`n' was written explicitly
+	/// @result Returns `-1` if there were no '`n' emitted to the line, otherwise - length of the '`n'-terminated string
+	int HasLineFeed() const;
+
 	/// Function will never return '\0'
 	wchar_t GetCellChar(unsigned cell) const;
 	/// Returns cell attributes
@@ -175,9 +191,6 @@ public:
 	/// @result index in the ConsoleRow internal array, may be used with *hint* to iterate search
 	unsigned GetCellAttr(unsigned cell, Attribute& attr, unsigned hint = 0) const;
 	unsigned GetLength() const;
-
-	/// Check if the '\n' was written explicitly
-	bool HasLineFeed() const;
 
 	/// Internal validation
 	void Validate() const;
@@ -195,8 +208,10 @@ public:
 
 protected:
 	WORD m_RowID = 0;
+	int m_WasLF = -1;
 	RowChars m_Text;
 	RowColors m_Colors;
+	CEStr m_CWD;
 };
 
 
@@ -204,7 +219,7 @@ protected:
 class Table
 {
 public:
-	using BellCallback = void(*)();
+	using BellCallback = void(*)(void*);
 
 	struct Region
 	{
@@ -228,11 +243,17 @@ public:
 	void Resize(const Coord newSize);
 	/// Return count of rows went to backscroll buffer (console history)
 	unsigned GetBackscroll() const;
+	/// Limit maximum count of backscroll rows
+	/// @param backscrollMax = -1 means unlimited
+	void SetBackscrollMax(const int backscrollMax);
 
 	/// Set attributes for *next* write operation
 	void SetAttr(const Attribute& attr);
 	/// Just returns *current* attributes for next write operations
 	Attribute GetAttr() const;
+
+	/// Clear working area, reset all options to default, set attributes for *next* write operation
+	void Reset(const Attribute& attr);
 
 	/// Moves cursor to certain location on workspace
 	/// @param  cursor - passed by value intentionally (m_Cursor is passed as argument often)
@@ -270,7 +291,7 @@ public:
 	void GetData(CharInfo *pData, const Coord& bufSize, const RECT& rgn) const;
 
 	/// Bell or Flash on Write("\7")
-	void SetBellCallback(BellCallback bellCallback);
+	void SetBellCallback(BellCallback bellCallback, void* param);
 
 	/// Let remember when *prompt* input was started
 	/// Used for typed command selection by `Shift+Home`
@@ -278,8 +299,9 @@ public:
 	/// Drop prompt position stored by PromptPosStore()
 	void PromptPosReset();
 
-	/// Mutex lock call for TablePtr
-	std::unique_lock<std::mutex> Lock();
+	/// If shell emits its current directory - remember it in the current row
+	/// @param cwd - current working directory; it may be either in Unix or Windows format, store unchanged
+	void SetWorkingDirectory(const wchar_t* cwd);
 
 	/// Dump of Backscroll & Workspace contents to debug output
 	void DebugDump() const;
@@ -299,15 +321,24 @@ protected:
 	Region GetScrollRegion() const;
 	/// If size was set to {0,0} - absolutely unexpected
 	bool IsEmpty() const;
+
+	/// Options for *ShiftRowIndexes*
+	enum ShiftRowIndexesEnum : unsigned
+	{
+		ShiftCursor = 1,
+		ShiftRegion = 2,
+		ShiftPrompt = 4,
+		ShiftAll    = (unsigned)-1
+	};
 	/// Called during resize
-	void ShiftRowIndexes(int direction);
+	/// @param direction - only `-1` or `+1` are allowed now
+	/// @param flags - enum *ShiftRowIndexesEnum*
+	void ShiftRowIndexes(int direction, unsigned flags = ShiftAll);
 
 private:
-	// Make all calls thread-safe, access via TablePtr class
-	std::mutex m_Mutex;
-
 	/// Bell or Flash on Write("\7")
-	BellCallback m_BellCallback;
+	BellCallback m_BellCallback = nullptr;
+	void* m_BellCallbackParam = nullptr;
 
 	/// Working part of the console, where POSIX applications may write
 	vector_type m_Workspace;
@@ -326,6 +357,8 @@ private:
 	int m_WrapAt = -1;
 	/// Scrolling region if *m_Flags.Region* is true
 	Region m_Region = {};
+	/// Coordinates stored by *PromptPosStore*
+	Coord m_Prompt = {};
 
 	struct Flags
 	{
@@ -341,24 +374,11 @@ private:
 		bool BeyondEOL = true;
 		/// If *true* the cursor is locked inside specified rows in viewport
 		bool Region = false;
+		/// If *true* we are in the prompt/readline routine
+		bool Prompt = false;
 
 	} m_Flags;
 
-};
-
-
-/// Makes Table calls thread-safe
-class TablePtr
-{
-public:
-	TablePtr(Table& _table);
-	~TablePtr();
-
-	Table* operator->();
-
-private:
-	Table* m_table = nullptr;
-	std::unique_lock<std::mutex> m_lock;
 };
 
 }; /// namespace console
