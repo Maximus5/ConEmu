@@ -126,6 +126,21 @@ void RConStartArgsEx::RunArgTests()
 
 		switch (i)
 		{
+		case 26:
+			// conemu-old-issues#1710: The un-eaten double quote
+			pszCmp = LR"(powershell -new_console:t:"PoSh":d:"%USERPROFILE%")";
+			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.ProcessNewConArg();
+			_ASSERTE(arg.pszRenameTab && lstrcmp(arg.pszRenameTab, L"PoSh")==0);
+			_ASSERTE(arg.pszStartupDir && CEStr(ExpandEnvStr(L"%USERPROFILE%")).Compare(arg.pszStartupDir)==0);
+			break;
+		case 25:
+			pszCmp = LR"(cmd -new_console:u:"john:pass^"word^"")";
+			arg.pszSpecialCmd = lstrdup(pszCmp);
+			arg.ProcessNewConArg();
+			_ASSERTE(arg.pszUserName && lstrcmp(arg.pszUserName, L"john")==0);
+			_ASSERTE(arg.szUserPassword && lstrcmp(arg.szUserPassword, L"pass\"word\"")==0);
+			break;
 		case 24:
 			pszCmp = L"/C \"-new_console test.cmd bla\"";
 			arg.pszSpecialCmd = lstrdup(pszCmp);

@@ -705,10 +705,6 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 									// Terminate with '\0'
 									_ASSERTE(pD <= ((*pptr)+cchLen));
 									*pD = 0;
-									// Issue 1711: Supposing there can't be ending quotes
-									INT_PTR iLen = (pD - *pptr);
-									while (((iLen--) > 0) && (*(--pD) == L'"'))
-										*pD = 0;
 								}
 								// Additional processing
 								switch (cOpt)
