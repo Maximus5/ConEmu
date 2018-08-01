@@ -733,7 +733,10 @@ static INT_PTR OnLanguageChanged(HWND hDlg)
 		if (colon)
 		{
 			*colon = 0;
-			gpConEmu->opt.Language.SetStr(lsValue);
+			if (gpConEmu->opt.Language.Exists)
+				gpConEmu->opt.Language.SetStr(lsValue);
+			else
+				lstrcpyn(gpSet->Language, lsValue, countof(gpSet->Language));
 			gpLng->Reload(true);
 
 			CDynDialog::LocalizeDialog(hDlg);

@@ -199,7 +199,10 @@ INT_PTR CSetPgGeneral::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 			if (colon)
 			{
 				*colon = 0;
-				gpConEmu->opt.Language.SetStr(lsValue);
+				if (gpConEmu->opt.Language.Exists)
+					gpConEmu->opt.Language.SetStr(lsValue);
+				else
+					lstrcpyn(gpSet->Language, lsValue, countof(gpSet->Language));
 				gpLng->Reload(true);
 
 				bool lbWasPos = false;
