@@ -158,6 +158,8 @@ using ssize_t = int64_t;
 using ssize_t = int32_t;
 #endif
 
+using uint = uint32_t;
+
 
 // GCC headers do not describe Task Scheduler 2.0 interfaces
 #if defined(__GNUC__) // && !defined(__MINGW32__)
