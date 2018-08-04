@@ -723,10 +723,10 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 		else
 		{
 			attr.Attributes.ForegroundColor |= ClrMap[TextColor&0x7]
-				| ((gDisplayParm.getBrightFore() | (gDisplayParm.getBrightOrBold() && !gDisplayParm.getBrightBack())) ? 0x08 : 0);
+				| ((gDisplayParm.getBrightFore() || (gDisplayParm.getBrightOrBold() && !gDisplayParm.getBrightBack())) ? 0x08 : 0);
 		}
 
-		if (gDisplayParm.getBrightOrBold() && (Text256 | gDisplayParm.getBrightFore() | gDisplayParm.getBrightBack()))
+		if (gDisplayParm.getBrightOrBold() && (Text256 || gDisplayParm.getBrightFore() || gDisplayParm.getBrightBack()))
 			attr.Attributes.Flags |= CECF_FG_BOLD;
 		if (gDisplayParm.getItalic())
 			attr.Attributes.Flags |= CECF_FG_ITALIC;
@@ -1901,34 +1901,6 @@ BOOL CEAnsi::ScrollScreen(HANDLE hConsoleOutput, int nDir)
 	}
 
 	BOOL lbRc = ExtScrollScreen(&scrl);
-
-	return lbRc;
-}
-
-BOOL CEAnsi::PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csbi)
-{
-	BOOL lbRc = FALSE;
-	COORD crFrom = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y};
-	DEBUGTEST(DWORD nCount = csbi.dwSize.X - csbi.dwCursorPosition.X);
-
-	/*
-	lbRc = FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nCount, crFrom, &nWritten)
-		&& FillConsoleOutputCharacter(hConsoleOutput, L' ', nCount, crFrom, &nWritten);
-	*/
-
-	if ((csbi.dwCursorPosition.Y + 1) >= csbi.dwSize.Y)
-	{
-		lbRc = ScrollScreen(hConsoleOutput, -1);
-		crFrom.X = 0;
-	}
-	else
-	{
-		crFrom.X = 0; crFrom.Y++;
-		lbRc = TRUE;
-	}
-
-	csbi.dwCursorPosition = crFrom;
-	SetConsoleCursorPosition(hConsoleOutput, crFrom);
 
 	return lbRc;
 }
