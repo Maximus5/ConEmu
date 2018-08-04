@@ -191,7 +191,7 @@ struct RowUnitTest
 
 		// working table - test 1
 		{
-			Table table({7}, {10, 4}, 10);
+			Table table({7}, {10/*cols*/, 4/*rows*/}, 10);
 			const wchar_t txt1[] = L"1234567890abcdefg";
 			table.SetAttr(Attribute{1});
 			table.Write(txt1, (unsigned)wcslen(txt1));
@@ -213,6 +213,30 @@ struct RowUnitTest
 				table.Write(txt3, 10);
 				table.DebugDump();
 			}
+		}
+
+		// working table - test 2 (scrolling)
+		{
+			Table table({7}, {4/*cols*/, 8/*rows*/}, 10);
+			wchar_t line[4] = L"**\n";
+			for (char c = '1'; c <= '8'; ++c)
+			{
+				line[0] = line[1] = c;
+				table.Write(line, 3);
+			}
+			table.DebugDump();
+			//
+			table.Scroll(-4);
+			table.DebugDump();
+			//
+			table.Scroll(-2);
+			table.DebugDump();
+			//
+			table.Scroll(1);
+			table.DebugDump();
+			//
+			table.Scroll(5);
+			table.DebugDump();
 		}
 	};
 };
@@ -302,27 +326,28 @@ Row& Row::operator=(const Row& src)
 	m_WasLF = src.m_WasLF;
 	m_CWD = src.m_CWD;
 
+	// If src is not empty
 	if (unsigned length = src.GetLength())
 	{
+		m_Text = src.m_Text;
 		if (src.m_Text.size() > 0)
 		{
 			_ASSERTE(src.m_Text.size()>1 && src.m_Text[src.m_Text.size()-1]==0); // should be '\0'-terminated string
 			m_Text.resize(length + 1); // prefer our strings to be '\0'-terminated
-			memmove_s(&m_Text[0], sizeof(m_Text[0]) * m_Text.size(), &src.m_Text[0], sizeof(m_Text[0]) * length);
+			m_Text[length] = 0;
 		}
 
-		if (src.m_Colors.size() > 0)
-		{
-			m_Colors.resize(src.m_Colors.size());
-			memmove_s(&m_Colors[0], sizeof(m_Colors[0]) * m_Colors.size(), &src.m_Colors[0], sizeof(m_Colors[0]) * src.m_Colors.size());
-		}
+		m_Colors = src.m_Colors;
 	}
 	else
 	{
+		m_Text.swap(decltype(m_Text){});
+		m_Colors.swap(decltype(m_Colors){});
 		if (!src.m_Colors.empty())
 		{
-			_ASSERTE(m_Colors.empty() && src.m_Colors[0].cell == 0);
+			_ASSERTE(src.m_Colors[0].cell == 0);
 			m_Colors.push_back(src.m_Colors[0]);
+			m_Colors[0].cell = 0;
 		}
 		else
 		{
@@ -380,6 +405,22 @@ void Row::Write(unsigned cell, const Attribute& attr, const wchar_t* text, unsig
 {
 	if (!text || !count)
 		return;
+	Write(cell, attr, {text, 0}, count);
+}
+
+void Row::Write(unsigned cell, const Attribute& attr, const wchar_t chr, unsigned count)
+{
+	if (!count)
+		return;
+	_ASSERTE(chr != 0);
+	Write(cell, attr, {nullptr, chr?chr:L' '}, count);
+}
+
+// protected
+void Row::Write(unsigned cell, const Attribute& attr, std::pair<const wchar_t*,wchar_t> txt, unsigned count)
+{
+	if (!count)
+		return;
 
 	if (m_WasLF != -1 && (cell + count) >= (unsigned)m_WasLF)
 		m_WasLF = -1;
@@ -389,7 +430,10 @@ void Row::Write(unsigned cell, const Attribute& attr, const wchar_t* text, unsig
 	SetReqSize(cell + count);
 	for (unsigned i = 0; i < count; ++i)
 	{
-		m_Text[cell + i] = text[i];
+		if (txt.first)
+			m_Text[cell + i] = txt.first[i];
+		else
+			m_Text[cell + i] = txt.second;
 	}
 
 	SetCellAttr(cell, attr, count);
@@ -500,10 +544,11 @@ void Row::SetLineFeed(int pos)
 	}
 }
 
-int Row::HasLineFeed() const
+bool Row::HasLineFeed() const
 {
-	_ASSERTE(m_WasLF == -1 || (m_WasLF >= 0 && (unsigned)m_WasLF >= GetLength()));
-	return m_WasLF;
+	if (m_WasLF >= 0 && (unsigned)m_WasLF >= GetLength())
+		return true;
+	return false;
 }
 
 const wchar_t* Row::GetText() const
@@ -641,6 +686,17 @@ void Row::SetCellAttr(unsigned cell, const Attribute& attr, unsigned count)
 	Validate();
 }
 
+void Row::Reset(const Attribute& attr)
+{
+	m_RowID = 0;
+	m_WasLF = -1;
+	m_Text.clear();
+	m_Colors.clear();
+	m_CWD.Clear();
+
+	m_Colors.push_back(RowColor{0, attr});
+}
+
 void Row::SetWorkingDirectory(const wchar_t* cwd)
 {
 	if (!cwd || !*cwd)
@@ -743,8 +799,24 @@ void Table::Reset(const Attribute& attr)
 {
 	SetScrollRegion(false);
 	SetCursor({});
-	DeleteRow((unsigned)m_Workspace.size());
+	PromptPosReset();
+	m_WrapAt = -1;
+	//DeleteRow((unsigned)m_Workspace.size());
+	m_Workspace.clear();
+	m_Backscroll.clear();
 	SetAttr(attr);
+}
+
+void Table::ClearBackscroll()
+{
+	m_Backscroll.clear();
+}
+
+void Table::ClearWorkspace()
+{
+	SetScrollRegion(false); // ?
+	PromptPosReset();
+	m_Workspace.clear();
 }
 
 void Table::Resize(const Coord newSize)
@@ -800,9 +872,12 @@ void Table::ShiftRowIndexes(int direction, unsigned flags /*= ShiftAll*/)
 			m_Region.Top += direction;
 			m_Region.Bottom += direction;
 		}
-		if ((flags & ShiftPrompt) && m_Flags.Prompt && (m_Prompt.y + 1 < m_Size.y))
+		if (flags & ShiftPrompt)
 		{
-			m_Prompt.y += direction;
+			if (m_Flags.Prompt && (m_Prompt.y + 1 < m_Size.y))
+				m_Prompt.y += direction;
+			else
+				m_Flags.Prompt = false;
 		}
 	}
 	else if (direction < 0)
@@ -817,9 +892,12 @@ void Table::ShiftRowIndexes(int direction, unsigned flags /*= ShiftAll*/)
 			m_Region.Top += direction;
 			m_Region.Bottom += direction;
 		}
-		if ((flags & ShiftPrompt) && m_Flags.Prompt && (m_Prompt.y > 0))
+		if (flags & ShiftPrompt)
 		{
-			m_Prompt.y += direction;
+			if (m_Flags.Prompt && (m_Prompt.y > 0))
+				m_Prompt.y += direction;
+			else
+				m_Flags.Prompt = false;
 		}
 	}
 }
@@ -876,50 +954,137 @@ void Table::SetBeyondEOL(bool beyondEOL)
 
 Table::vector_type::iterator Table::CurrentRow()
 {
+	_ASSERTE(m_Cursor.y >= 0 && m_Cursor.y < m_Size.y);
+	// Extend workspace to requested row
+	const unsigned idx = (unsigned)std::max<int>(0, (int) std::min<ssize_t>(m_Size.y - 1, m_Cursor.y));
+	_ASSERTE(idx < 1000); // sane console dimensions?
+
+	return GetRow(idx);
+}
+
+condata::Table::vector_type::iterator Table::GetRow(unsigned row)
+{
+	// It checks only m_Size, m_Workspace would be resized to required amount
 	if (IsEmpty())
 	{
 		_ASSERTE(FALSE && "Workspace is empty");
 		throw console_error("Workspace is empty");
 	}
+	_ASSERTE((int)row >= 0 && (int)row < m_Size.y);
 	// Extend workspace to requested row
-	const size_t idx = (size_t)std::max<int>(0, (int) std::min<ssize_t>(m_Size.y - 1, m_Cursor.y));
+	const unsigned idx = (unsigned)std::max<int>(0, (int) std::min<ssize_t>(m_Size.y - 1, row));
 	_ASSERTE(idx < 1000); // sane console dimensions?
-	if (m_Workspace.size() <= idx)
-		m_Workspace.resize(idx+1);
+	m_Workspace.reserve(idx+1);
+	while (m_Workspace.size() <= idx)
+	{
+		m_Workspace.push_back(Row{m_Attr});
+	}
 	return (m_Workspace.begin() + idx);
 }
 
-void Table::DoAutoScroll()
+void Table::Scroll(int dir)
 {
+	if (dir == 0)
+	{
+		// nothing to do?
+		_ASSERTE(dir != 0);
+		return;
+	}
+
+	DoAutoScroll(dir);
+	PromptPosReset();
+}
+
+void Table::DoAutoScroll(int dir)
+{
+	if (dir == 0)
+	{
+		// nothing to do?
+		_ASSERTE(dir != 0);
+		return;
+	}
+
 	if (IsEmpty())
 	{
 		_ASSERTE(FALSE && "Workspace is empty");
 		throw console_error("Workspace is empty");
 	}
 
-	const auto cur = GetCursor();
 	const Region rgn = GetScrollRegion();
-	if (cur.y < (int)rgn.Top)
+	if (rgn.Top > rgn.Bottom)
 	{
-		_ASSERTE(FALSE && "Cursor or Region is broken");
-		throw console_error("Cursor or Region is broken");
+		_ASSERTE(FALSE && "Region is broken");
+		throw console_error("Region is broken");
 	}
 
-	if (m_Workspace.size() <= (size_t)cur.y)
+	// Ensure the workspace has proper depth
+	GetRow(rgn.Bottom);
+	_ASSERTE(m_Workspace.size() > rgn.Bottom);
+
+	ssize_t src, dst, back_erase = 0;
+	const ssize_t step = (dir < 0) ? +1 : -1;
+	if (dir < 0)
 	{
-		m_Workspace.resize((size_t)cur.y + 1);
+		src = rgn.Top;
+		dst = ssize_t(rgn.Top) + dir;
+		_ASSERTE(dst < src);
+	}
+	else
+	{
+		src = ssize_t(rgn.Bottom) - dir;
+		dst = rgn.Bottom;
+		_ASSERTE(dst > src);
 	}
 
-	if ((rgn.Top == 0) && (m_BackscrollMax < 0 || (ssize_t)m_Backscroll.size() < m_BackscrollMax))
+	// copy/move rows one by one
+	for (unsigned counter = (rgn.Bottom - rgn.Top + 1); counter; --counter, src += step, dst += step)
 	{
-		m_Backscroll.push_front(Row(m_Workspace.front()));
+		const Row& row =
+			(src >= ssize_t(rgn.Top) && src <= ssize_t(rgn.Bottom) && size_t(src) < m_Workspace.size()) ? m_Workspace[src]
+			: (src < 0 && size_t(-src) < m_Backscroll.size()) ? m_Backscroll[-src - 1]
+			: Row();
+		// workspace operation
+		if (dst >= ssize_t(rgn.Top) && dst <= ssize_t(rgn.Bottom))
+		{
+			*GetRow(unsigned(dst)) = row;
+		}
+		// if backscroll operation is allowed
+		if (rgn.Top == 0 && m_BackscrollMax != 0)
+		{
+			if (dir < 0 && dst < 0)
+				m_Backscroll.push_front(row);
+			else if (dir > 0 && src < 0)
+				++back_erase;
+		}
 	}
 
-	m_Workspace.erase(m_Workspace.begin() + rgn.Top);
-	m_Workspace.insert(m_Workspace.begin() + std::min<unsigned>(cur.y, rgn.Bottom), Row{m_Attr});
+	if (dst >= ssize_t(rgn.Top) && dst <= ssize_t(rgn.Bottom))
+	{
+		const unsigned from_row = (step > 0) ? unsigned(dst) : rgn.Top;
+		const unsigned to_row = (step > 0) ? rgn.Bottom : unsigned(dst);
+		for (unsigned row = from_row; row <= to_row; ++row)
+		{
+			*GetRow(unsigned(row)) = Row{};
+		}
+	}
+
+	if (m_BackscrollMax != 0)
+	{
+		// if rows were pushed from backscroll to workspace
+		if (back_erase > 0)
+		{
+			_ASSERTE(dir > 0);
+			m_Backscroll.erase(m_Backscroll.begin(), m_Backscroll.begin() + std::min<size_t>(back_erase, m_Backscroll.size()));
+		}
+		// validate maximum backscroll lines count
+		if (m_BackscrollMax > 0 && m_Backscroll.size() > unsigned(m_BackscrollMax))
+		{
+			m_Backscroll.erase(m_Backscroll.begin() + m_BackscrollMax, m_Backscroll.end());
+		}
+	}
 }
 
-void Table::DoLineFeed(bool cr)
+void Table::LineFeed(bool cr)
 {
 	if (IsEmpty())
 	{
@@ -940,7 +1105,7 @@ void Table::DoLineFeed(bool cr)
 		_ASSERTE(cur.y == (int)rgn.Bottom);
 		// scroll scrollable contents upward, insert empty line at the bottom
 		// cursor y-position is not changed
-		DoAutoScroll();
+		DoAutoScroll(-1);
 	}
 	else
 	{
@@ -1005,7 +1170,7 @@ void Table::Write(const wchar_t* text, unsigned count)
 		case L'\n':
 			_ASSERTE(!m_Flags.AutoWrap || m_Flags.BeyondEOL || m_Cursor.x < m_Size.x);
 			CurrentRow()->SetLineFeed((int)m_Cursor.x);
-			DoLineFeed(m_Flags.AutoCRLF);
+			LineFeed(m_Flags.AutoCRLF);
 			// New line == prompt reset
 			PromptPosReset();
 			break;
@@ -1030,7 +1195,7 @@ void Table::Write(const wchar_t* text, unsigned count)
 			SetCursor(m_Cursor);
 			// If AutoWrap allowed and we are at EOL (xterm mode)
 			if (m_Flags.AutoWrap && m_Cursor.x >= m_Size.x)
-				DoLineFeed(true);
+				LineFeed(true);
 
 			// They should not go to the console data (processed above)
 			_ASSERTE(text[pos]!=L'\n' && text[pos]!=L'\r' && text[pos]!=L'\t' && text[pos]!=L'\b' && text[pos]!=7/*bell*/);
@@ -1043,7 +1208,7 @@ void Table::Write(const wchar_t* text, unsigned count)
 
 			// And in WinApi mode do line feed
 			if (m_Flags.AutoWrap && !m_Flags.BeyondEOL && m_Cursor.x >= m_Size.x)
-				DoLineFeed(true);
+				LineFeed(true);
 		}
 	}
 }
