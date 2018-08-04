@@ -165,9 +165,13 @@ public:
 	/// all cell coordinates are 0-based
 
 	void Write(unsigned cell, const Attribute& attr, const wchar_t* text, unsigned count);
+	void Write(unsigned cell, const Attribute& attr, const wchar_t chr, unsigned count);
 	void Insert(unsigned cell, const Attribute& attr, const wchar_t chr, unsigned count);
 	void Delete(unsigned cell, unsigned count);
 	void SetCellAttr(unsigned cell, const Attribute& attr, unsigned count);
+
+	/// Clear row, set attributes for *next* write operation
+	void Reset(const Attribute& attr);
 
 	/// If shell emits its current directory - remember it in the current row
 	/// @param cwd - current working directory; it may be either in Unix or Windows format, store unchanged
@@ -179,8 +183,9 @@ public:
 	/// Remember that line was '`n' terminated explicitly
 	void SetLineFeed(int pos);
 	/// Check if the '`n' was written explicitly
-	/// @result Returns `-1` if there were no '`n' emitted to the line, otherwise - length of the '`n'-terminated string
-	int HasLineFeed() const;
+	/// @result *true* if '`n'-terminated string was emitted here
+	///         *false* if there were no '`n' emitted to the line
+	bool HasLineFeed() const;
 
 	/// Function will never return '\0'
 	wchar_t GetCellChar(unsigned cell) const;
@@ -207,6 +212,10 @@ public:
 	const wchar_t* GetText() const;
 
 protected:
+	/// *protected* helper to maintain both wchar_t and wchar_t[]
+	void Write(unsigned cell, const Attribute& attr, std::pair<const wchar_t*,wchar_t> txt, unsigned count);
+
+protected:
 	WORD m_RowID = 0;
 	int m_WasLF = -1;
 	RowChars m_Text;
@@ -225,6 +234,9 @@ public:
 	{
 		unsigned Top, Bottom;
 	};
+
+	using deque_type = std::deque<Row, MArrayAllocator<Row>>;
+	using vector_type = std::vector<Row, MArrayAllocator<Row>>;
 
 public:
 	Table(const Attribute& _attr = {7}, const Coord& _size = {80, 25}, const int _backscrollMax = 1<<20, BellCallback _bellCallback = nullptr);
@@ -252,8 +264,20 @@ public:
 	/// Just returns *current* attributes for next write operations
 	Attribute GetAttr() const;
 
-	/// Clear working area, reset all options to default, set attributes for *next* write operation
+	/// Clear working area and backscroll, reset all options to default, set attributes for *next* write operation
+	/// This action executed on `ESC c` sequence
 	void Reset(const Attribute& attr);
+
+	/// Clear scrollback buffer entirely
+	/// This action executed on `ESC [ 3 J`
+	void ClearBackscroll();
+
+	/// Clear scrollback buffer entirely
+	/// This action executed on `ESC [ 2 J`
+	void ClearWorkspace();
+
+	/// If size was set to {0,0} - absolutely unexpected
+	bool IsEmpty() const;
 
 	/// Moves cursor to certain location on workspace
 	/// @param  cursor - passed by value intentionally (m_Cursor is passed as argument often)
@@ -266,6 +290,10 @@ public:
 	/// If *top* is greater than 0, scrolled lines are completely erased,
 	/// so they don't go into m_Backscroll
 	void SetScrollRegion(bool setRegion = false, unsigned top = 0, unsigned bottom = 0);
+
+	/// Return top/bottom rows where cursor may be located and text printed
+	Region GetScrollRegion() const;
+
 	/// Emit CR automatically after single LF
 	void SetAutoCRLF(bool autoCRLF);
 	/// Defines behavior when character is written at the last cell of the row
@@ -277,12 +305,25 @@ public:
 	/// If *false* new line is created implicitly (default for WinAPI)
 	void SetBeyondEOL(bool beyondEOL);
 
+	/// Return iterator (m_Workspace) for row with cursor
+	vector_type::iterator CurrentRow();
+	/// Return iterator (m_Workspace) for row by index
+	vector_type::iterator GetRow(unsigned row);
+
 	/// Direct modification
 	void Write(const wchar_t* text, unsigned count);
 	void InsertCell(unsigned count = 1, const wchar_t chr = L' ');
 	void DeleteCell(unsigned count = 1);
 	void InsertRow(unsigned count = 1);
 	void DeleteRow(unsigned count = 1);
+
+	/// Scroll workspace
+	/// @param dir - positive values = scroll downward, negative values = upward
+	void Scroll(int dir);
+
+	/// Emulate 'Enter' keypress - move cursor one row down or scroll contents upward
+	/// @param cr - move cursor to first cell in row too
+	void LineFeed(bool cr);
 
 	/// Returns console data
 	/// @param pData - destination buffer of { wchar_t; Attribute; }
@@ -307,20 +348,9 @@ public:
 	void DebugDump() const;
 
 protected:
-	using deque_type = std::deque<Row, MArrayAllocator<Row>>;
-	using vector_type = std::vector<Row, MArrayAllocator<Row>>;
-
-	/// Return iterator (m_Workspace) for row with cursor
-	vector_type::iterator CurrentRow();
 	/// Scroll rows upward, move top row to backscroll buffer if required
-	void DoAutoScroll();
-	/// Emulate 'Enter' keypress - move cursor one row down or scroll contents upward
-	/// @param cr - move cursor to first cell in row too
-	void DoLineFeed(bool cr);
-	/// Return top/bottom rows where cursor may be located and text printed
-	Region GetScrollRegion() const;
-	/// If size was set to {0,0} - absolutely unexpected
-	bool IsEmpty() const;
+	/// @param dir - positive values = scroll downward, negative values = upward
+	void DoAutoScroll(int dir);
 
 	/// Options for *ShiftRowIndexes*
 	enum ShiftRowIndexesEnum : unsigned

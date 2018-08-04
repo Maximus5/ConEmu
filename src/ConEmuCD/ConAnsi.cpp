@@ -69,80 +69,65 @@ void SrvAnsi::DisplayParm::Reset(const bool full)
 	if (full)
 		*this = DisplayParm{};
 
-	WORD nDefColors = SrvAnsi::GetDefaultTextAttr();
+	WORD nDefColors = SrvAnsi::GetDefaultAnsiAttr();
 	_TextColor = CONFORECOLOR(nDefColors);
 	_BackColor = CONBACKCOLOR(nDefColors);
-	_WasSet = TRUE;
+
+	_ASSERTE(!full || _Dirty==false);
 }
-void SrvAnsi::DisplayParm::setBrightOrBold(const BOOL val)
+void SrvAnsi::DisplayParm::setDirty(const bool val)
 {
-	if (!_WasSet)
-		Reset(false);
+	_Dirty = val;
+}
+void SrvAnsi::DisplayParm::setBrightOrBold(const bool val)
+{
 	_BrightOrBold = val;
-	_ASSERTE(_WasSet==TRUE);
+	setDirty(true);
 }
-void SrvAnsi::DisplayParm::setItalic(const BOOL val)
+void SrvAnsi::DisplayParm::setItalic(const bool val)
 {
-	if (!_WasSet)
-		Reset(false);
 	_Italic = val;
-	_ASSERTE(_WasSet==TRUE);
+	setDirty(true);
 }
-void SrvAnsi::DisplayParm::setUnderline(const BOOL val)
+void SrvAnsi::DisplayParm::setUnderline(const bool val)
 {
-	if (!_WasSet)
-		Reset(false);
 	_Underline = val;
-	_ASSERTE(_WasSet==TRUE);
+	setDirty(true);
 }
-void SrvAnsi::DisplayParm::setBrightFore(const BOOL val)
+void SrvAnsi::DisplayParm::setBrightFore(const bool val)
 {
-	if (!_WasSet)
-		Reset(false);
 	_BrightFore = val;
-	_ASSERTE(_WasSet==TRUE);
+	setDirty(true);
 }
-void SrvAnsi::DisplayParm::setBrightBack(const BOOL val)
+void SrvAnsi::DisplayParm::setBrightBack(const bool val)
 {
-	if (!_WasSet)
-		Reset(false);
 	_BrightBack = val;
-	_ASSERTE(_WasSet==TRUE);
+	setDirty(true);
 }
 void SrvAnsi::DisplayParm::setTextColor(const int val)
 {
-	if (!_WasSet)
-		Reset(false);
 	_TextColor = val;
-	_ASSERTE(_WasSet==TRUE);
+	setDirty(true);
 }
-void SrvAnsi::DisplayParm::setText256(const BOOL val)
+void SrvAnsi::DisplayParm::setText256(const SrvAnsi::cbit val)
 {
-	if (!_WasSet)
-		Reset(false);
 	_Text256 = val;
-	_ASSERTE(_WasSet==TRUE);
+	setDirty(true);
 }
 void SrvAnsi::DisplayParm::setBackColor(const int val)
 {
-	if (!_WasSet)
-		Reset(false);
 	_BackColor = val;
-	_ASSERTE(_WasSet==TRUE);
+	setDirty(true);
 }
-void SrvAnsi::DisplayParm::setBack256(const BOOL val)
+void SrvAnsi::DisplayParm::setBack256(const SrvAnsi::cbit val)
 {
-	if (!_WasSet)
-		Reset(false);
 	_Back256 = val;
-	_ASSERTE(_WasSet==TRUE);
+	setDirty(true);
 }
-void SrvAnsi::DisplayParm::setInverse(const BOOL val)
+void SrvAnsi::DisplayParm::setInverse(const bool val)
 {
-	if (!_WasSet)
-		Reset(false);
 	_Inverse = val;
-	_ASSERTE(_WasSet==TRUE);
+	setDirty(true);
 }
 
 
@@ -181,17 +166,26 @@ void SrvAnsi::Release(LPARAM lParam)
 SrvAnsi::SrvAnsi()
 {
 	const CONSOLE_SCREEN_BUFFER_INFO csbi = GetDefaultCSBI();
-	m_Primary.SetAttr(condata::Attribute{csbi.wAttributes});
-
 	int newWidth = 0, newHeight = 0; DWORD nScroll = 0;
 	if (!GetConWindowSize(csbi, 0, 0, 0, &newWidth, &newHeight, &nScroll) || newWidth <= 0 || newHeight <= 0)
 		throw condata::console_error("GetConWindowSize failed");
+
+	gDisplayParm.Reset(true);
+
+	const condata::Attribute attr = GetDefaultAttr();
+	m_Primary.SetAttr(attr);
 	m_Primary.Resize({(unsigned)newWidth, newHeight});
 	m_Primary.SetBellCallback(BellBallback, this);
 
+	m_Alternative.SetAttr(attr);
 	m_Alternative.Resize({(unsigned)newWidth, newHeight});
+	// Alternative buffer is not expected to have backscroll (intended for Vim and other "fullscreen" applications)
 	m_Alternative.SetBackscrollMax(0);
 	m_Alternative.SetBellCallback(BellBallback, this);
+
+	// #condata Try to increase the buffer if the original title is too long?
+	wchar_t szOrigTitle[2000];
+	gsInitConTitle.Set(::GetConsoleTitle(szOrigTitle, (DWORD)std::size(szOrigTitle)) ? szOrigTitle : L"ConEmu");
 
 	StartXTermMode(true);
 }
@@ -460,14 +454,14 @@ void SrvAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells) const
 	if (csbi.dwSize.X > 0 && csbi.dwSize.Y > 0)
 		return csbi;
 
-	HANDLE hIn = GetStdHandle(STD_OUTPUT_HANDLE);
-	if (!GetConsoleScreenBufferInfo(hIn, &csbi))
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (!GetConsoleScreenBufferInfo(hOut, &csbi))
 		throw condata::console_error("GetConsoleScreenBufferInfo failed");
 
 	return csbi;
 }
 
-/*static*/ SHORT SrvAnsi::GetDefaultTextAttr()
+/*static*/ SHORT SrvAnsi::GetDefaultAnsiAttr()
 {
 	// Default console colors
 	static SHORT clrDefault = 0;
@@ -483,17 +477,33 @@ void SrvAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells) const
 	return clrDefault;
 }
 
-void SrvAnsi::ReSetDisplayParm(BOOL bReset, BOOL bApply)
+condata::Attribute SrvAnsi::GetDefaultAttr() const
+{
+	const CONSOLE_SCREEN_BUFFER_INFO csbi = GetDefaultCSBI();
+	return condata::Attribute{csbi.wAttributes};
+}
+
+void SrvAnsi::ApplyDisplayParm()
+{
+	if (gDisplayParm.getDirty())
+	{
+		ReSetDisplayParm(false, true);
+	}
+}
+
+void SrvAnsi::ReSetDisplayParm(bool bReset, bool bApply)
 {
 	WARNING("Эту функу нужно дергать при смене буферов, закрытии дескрипторов, и т.п.");
 
-	if (bReset || !gDisplayParm.getWasSet())
+	if (bReset)
 	{
-		gDisplayParm.Reset(bReset);
+		gDisplayParm.Reset(true);
 	}
 
 	if (bApply)
 	{
+		gDisplayParm.setDirty(false);
+
 		condata::Attribute attr = {};
 
 		// Ansi colors
@@ -522,25 +532,15 @@ void SrvAnsi::ReSetDisplayParm(BOOL bReset, BOOL bApply)
 			/*244*/0x808080, /*245*/0x8a8a8a, /*246*/0x949494, /*247*/0x9e9e9e, /*248*/0xa8a8a8, /*249*/0xb2b2b2, /*250*/0xbcbcbc, /*251*/0xc6c6c6, /*252*/0xd0d0d0, /*253*/0xdadada, /*254*/0xe4e4e4, /*255*/0xeeeeee
 		};
 
-		int  TextColor;        // 30-37,38,39
-		BOOL Text256;          // 38
-		int  BackColor;        // 40-47,48,49
-		BOOL Back256;          // 48
 
-		//if (!gDisplayParm.Inverse)
-		{
-			TextColor = gDisplayParm.getTextColor();
-			Text256 = gDisplayParm.getText256();
-			BackColor = gDisplayParm.getBackColor();
-			Back256 = gDisplayParm.getBack256();
-		}
-		//else
-		//{
-		//	TextColor = gDisplayParm.BackColor;
-		//	Text256 = gDisplayParm.Back256;
-		//	BackColor = gDisplayParm.TextColor;
-		//	Back256 = gDisplayParm.Text256;
-		//}
+		// 30-37,38,39
+		const auto TextColor = gDisplayParm.getTextColor();
+		// 38
+		const auto Text256 = gDisplayParm.getText256();
+		// 40-47,48,49
+		const auto BackColor = gDisplayParm.getBackColor();
+		// 48
+		const auto Back256 = gDisplayParm.getBack256();
 
 
 		if (Text256)
@@ -574,10 +574,10 @@ void SrvAnsi::ReSetDisplayParm(BOOL bReset, BOOL bApply)
 		else
 		{
 			attr.attr.foreIdx = ClrMap[TextColor&0x7]
-				| ((gDisplayParm.getBrightFore() | (gDisplayParm.getBrightOrBold() && !gDisplayParm.getBrightBack())) ? 0x08 : 0);
+				| ((gDisplayParm.getBrightFore() || (gDisplayParm.getBrightOrBold() && !gDisplayParm.getBrightBack())) ? 0x08 : 0);
 		}
 
-		if (gDisplayParm.getBrightOrBold() && (Text256 | gDisplayParm.getBrightFore() | gDisplayParm.getBrightBack()))
+		if (gDisplayParm.getBrightOrBold() && (Text256 || gDisplayParm.getBrightFore() || gDisplayParm.getBrightBack()))
 			attr.flags |= condata::Attribute::fBold;
 		if (gDisplayParm.getItalic())
 			attr.flags |= condata::Attribute::fItalic;
@@ -623,7 +623,6 @@ void SrvAnsi::ReSetDisplayParm(BOOL bReset, BOOL bApply)
 		GetTable(GetTableEnum::current)->SetAttr(attr);
 	}
 }
-
 
 void SrvAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 {
@@ -757,6 +756,41 @@ void SrvAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 #endif
 }
 
+void SrvAnsi::SetCursorVisibility(bool visible)
+{
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO ci = {};
+	if (::GetConsoleCursorInfo(hOut, &ci))
+	{
+		ci.bVisible = visible;
+		SetConsoleCursorInfo(hOut, &ci);
+	}
+}
+
+void SrvAnsi::SetCursorShape(unsigned style)
+{
+	/*
+	CSI Ps SP q
+		Set cursor style (DECSCUSR, VT520).
+			Ps = 0  -> ConEmu's default.
+			Ps = 1  -> blinking block.
+			Ps = 2  -> steady block.
+			Ps = 3  -> blinking underline.
+			Ps = 4  -> steady underline.
+			Ps = 5  -> blinking bar (xterm).
+			Ps = 6  -> steady bar (xterm).
+	*/
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_CURSOR_INFO ci = {};
+	if (GetConsoleCursorInfo(hOut, &ci))
+	{
+		// We can't implement all possible styles in RealConsole,
+		// but we can use "Block/Underline" shapes...
+		ci.dwSize = (style == 1 || style == 2) ? 100 : 15;
+		SetConsoleCursorInfo(hOut, &ci);
+	}
+	ChangeTermMode(tmc_CursorShape, style);
+}
 
 // we need to ‘cache’ parts of non-translated MBCS chars (one UTF-8 symbol may be transmitted by up to *three* parts)
 bool SrvAnsi::OurWriteConsoleA(const char* lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten)

@@ -88,9 +88,9 @@ protected:
 
 	bool WriteAnsiCodes(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
 
-	void WriteAnsiCode_CSI(AnsiEscCode& Code, bool& lbApply);
-	void WriteAnsiCode_OSC(AnsiEscCode& Code, bool& lbApply);
-	void WriteAnsiCode_VIM(AnsiEscCode& Code, bool& lbApply);
+	void WriteAnsiCode_CSI(AnsiEscCode& Code);
+	void WriteAnsiCode_OSC(AnsiEscCode& Code);
+	void WriteAnsiCode_VIM(AnsiEscCode& Code);
 	bool ReportString(LPCWSTR asRet);
 	void ReportConsoleTitle();
 	void ReportTerminalPixelSize();
@@ -101,13 +101,10 @@ protected:
 	void XTermAltBuffer(bool bSetAltBuffer);
 
 	bool WriteText(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
-	bool ScrollScreen(int nDir);
-	bool PadAndScroll(CONSOLE_SCREEN_BUFFER_INFO& csbi);
 	bool FullReset();
-	bool ForwardLF(bool& bApply);
-	bool ReverseLF(bool& bApply);
-	bool LinesInsert(const unsigned LinesCount);
-	bool LinesDelete(const unsigned LinesCount);
+	void ForwardLF();
+	void ForwardCRLF();
+	void ReverseLF();
 	void DoSleep(LPCWSTR asMS);
 	void EscCopyCtrlString(wchar_t* pszDst, LPCWSTR asMsg, ssize_t cchMaxLen);
 	void DoMessage(LPCWSTR asMsg, ssize_t cchLen);
@@ -115,6 +112,7 @@ protected:
 	void DoGuiMacro(LPCWSTR asCmd, ssize_t cchLen);
 	void DoPrintEnv(LPCWSTR asCmd, ssize_t cchLen);
 	void DoSendCWD(LPCWSTR asCmd, ssize_t cchLen);
+	void DoSetProgress(WORD st, WORD pr, LPCWSTR pszName = NULL);
 	bool IsAnsiExecAllowed(LPCWSTR asCmd);
 
 	int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[SrvAnsi::CEAnsi_MaxPrevPart], DWORD& cchPrevPart, LPCWSTR& lpStart, LPCWSTR& lpNext, AnsiEscCode& Code, bool ReEntrance = FALSE);

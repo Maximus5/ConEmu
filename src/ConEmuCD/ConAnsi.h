@@ -53,7 +53,7 @@ private:
 	/// Returns console buffer attributes set on ConEmuC startup
 	static CONSOLE_SCREEN_BUFFER_INFO GetDefaultCSBI();
 	/// Returns *ANSI* color indexes!!!
-	static SHORT GetDefaultTextAttr();
+	static SHORT GetDefaultAnsiAttr();
 
 public:
 	static SrvAnsi* Object();
@@ -92,6 +92,8 @@ protected:
 	bool   gbAnsiLogNewLine = false;
 	bool   gbAnsiWasNewLine = false;
 
+	CEStr  gsInitConTitle;
+
 	struct CpConv
 	{
 		// for example, "git add -p" uses codepage 1252 while printing chunks to be staged
@@ -119,21 +121,25 @@ protected:
 		private: t _##n; \
 		public: t get##n() const { return _##n; }; \
 		public: void set##n(const t val);
+	enum cbit { clr4b = 0, clr8b, clr24b };
 	struct DisplayParm
 	{
 		void Reset(const bool full);
-		DP_PROP(BOOL, WasSet)
-		DP_PROP(BOOL, BrightOrBold)     // 1
-		DP_PROP(BOOL, Italic)           // 3
-		DP_PROP(BOOL, Underline)        // 4
-		DP_PROP(BOOL, BrightFore)       // 90-97
-		DP_PROP(BOOL, BrightBack)       // 100-107
+
+		DP_PROP(bool, BrightOrBold)     // 1
+		DP_PROP(bool, Italic)           // 3
+		DP_PROP(bool, Underline)        // 4
+		DP_PROP(bool, BrightFore)       // 90-97
+		DP_PROP(bool, BrightBack)       // 100-107
 		DP_PROP(int,  TextColor)        // 30-37,38,39
-		DP_PROP(BOOL, Text256)          // 38
+		DP_PROP(cbit, Text256)          // 38
 		DP_PROP(int,  BackColor)        // 40-47,48,49
-		DP_PROP(BOOL, Back256)          // 48
+		DP_PROP(cbit, Back256)          // 48
 		// xterm
-		DP_PROP(BOOL, Inverse)
+		DP_PROP(bool, Inverse)
+
+		// set if there was a call of any PROP defined above
+		DP_PROP(bool, Dirty)
 	}; // gDisplayParm = {};
 	#undef DP_PROP
 
@@ -232,9 +238,14 @@ protected:
 	void DebugStringUtf8(LPCWSTR asMessage);
 	void DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown);
 
+	void SetCursorVisibility(bool visible);
+	void SetCursorShape(unsigned style);
+
 	void GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells) const;
 
-	void ReSetDisplayParm(BOOL bReset, BOOL bApply);
+	void ApplyDisplayParm();
+	void ReSetDisplayParm(bool bReset, bool bApply);
+	condata::Attribute GetDefaultAttr() const;
 
 	void ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID = 0);
 	void StartXTermMode(bool bStart);

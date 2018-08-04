@@ -161,6 +161,7 @@ public:
 	}
 };
 
+#ifdef __PLUGIN_HPP__
 __inline BYTE FarColor_3_2(const FarColor& Color3, bool auto_brightness = false)
 {
 	WORD Color2 = 0;
@@ -199,3 +200,4 @@ __inline BYTE FarColor_3_2(const FarColor& Color3, bool auto_brightness = false)
 
 	return (BYTE)(Color2 & 0xFF);
 }
+#endif
