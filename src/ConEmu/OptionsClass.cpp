@@ -36,9 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "version.h"
 
 #include <commctrl.h>
-#pragma warning(disable: 4091)
-#include <shlobj.h>
-#pragma warning(default: 4091)
+#include "../common/shlobj.h"
+
 
 #ifdef __GNUC__
 #include "ShObjIdl_Part.h"

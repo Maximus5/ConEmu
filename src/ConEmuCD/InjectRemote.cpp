@@ -34,9 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Infiltrate.h"
 #include "../ConEmuHk/Injects.h"
 #include "../ConEmu/version.h"
-#pragma warning(disable: 4091)
-#include <shlobj.h>
-#pragma warning(default: 4091)
+#include "../common/shlobj.h"
 
 // 0 - OK, иначе - ошибка
 // Здесь вызывается CreateRemoteThread
