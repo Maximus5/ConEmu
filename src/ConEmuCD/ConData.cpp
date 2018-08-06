@@ -358,13 +358,6 @@ Row& Row::operator=(const Row& src)
 	if (unsigned length = src.GetLength())
 	{
 		m_Text = src.m_Text;
-		if (src.m_Text.size() > 0)
-		{
-			_ASSERTE(src.m_Text.size()>1 && src.m_Text[src.m_Text.size()-1]==0); // should be '\0'-terminated string
-			m_Text.resize(length + 1); // prefer our strings to be '\0'-terminated
-			m_Text[length] = 0;
-		}
-
 		m_Colors = src.m_Colors;
 	}
 	else
@@ -415,13 +408,9 @@ unsigned Row::SetReqSize(unsigned cell)
 		return cur_len;
 
 	// if cell is greater than previous output (e.g. cursor was moved after "eol")
-	_ASSERTE(cell + 1 > m_Text.size());
+	_ASSERTE(cell > m_Text.length());
 	// additional '\0'-termination
-	m_Text.resize(cell + 1);
-	for (unsigned i = cur_len; i < cell; ++i)
-	{
-		m_Text[i] = L' ';
-	}
+	m_Text.resize(cell, L' ');
 
 	return cell;
 }
@@ -454,7 +443,7 @@ void Row::Write(unsigned cell, const Attribute& attr, std::pair<const wchar_t*,w
 
 	ResetCRLF();
 
-	Reserve(((cell + count + 80) / 80) * 80);
+	// Reserve(((cell + count + 80) / 80) * 80);
 
 	SetReqSize(cell + count);
 	for (unsigned i = 0; i < count; ++i)
@@ -483,12 +472,12 @@ void Row::Insert(unsigned cell, const Attribute& attr, const wchar_t chr, unsign
 	if (!count)
 		return;
 
-	Reserve(cell + count + 1);
+	Reserve(m_Text.length() + count);
 	SetReqSize(cell);
-	m_Text.insert(cell, chr, count);
+	m_Text.insert(cell, count, chr);
 
 	Validate();
-	for (ssize_t i = 0; i < m_Colors.size(); ++i)
+	for (size_t i = 0; i < m_Colors.size(); ++i)
 	{
 		if (m_Colors[i].cell >= cell)
 			m_Colors[i].cell += count;
@@ -517,11 +506,11 @@ void Row::Delete(unsigned cell, unsigned count)
 		unsigned del_first = (m_Colors[first].cell == cell) ? first : first + 1;
 		if (del_first < last)
 		{
-			m_Colors.erase(del_first, last - del_first);
+			m_Colors.erase(m_Colors.begin() + del_first, (last < m_Colors.size()) ? (m_Colors.begin() + last) : m_Colors.end());
 			// Validate(); -- invalid till next decrement cycle
 		}
 	}
-	for (ssize_t i = first; i < m_Colors.size(); ++i)
+	for (size_t i = first; i < m_Colors.size(); ++i)
 	{
 		auto& ic = m_Colors[i];
 		if (ic.cell >= cell + count)
@@ -535,7 +524,7 @@ void Row::Delete(unsigned cell, unsigned count)
 	{
 		GetCellAttr(cell, newAttr, first);
 		if (!(newAttr == lastAttr))
-			m_Colors.insert(first, RowColor{cell, lastAttr});
+			m_Colors.insert(m_Colors.begin() + first, RowColor{cell, lastAttr});
 		Validate();
 	}
 
@@ -546,18 +535,11 @@ void Row::Delete(unsigned cell, unsigned count)
 
 unsigned Row::GetLength() const
 {
-	const auto tsize = m_Text.size();
+	const auto tsize = m_Text.length();
 	if (tsize > 0)
 	{
-		if (m_Text[tsize - 1] != 0)
-		{
-			_ASSERTE(tsize>0 && m_Text[tsize-1]==0); // Missed '\0'-terminator
-			return unsigned(tsize);
-		}
-		else
-		{
-			return unsigned(tsize - 1); // // valid '\0'-terminated string
-		}
+		_ASSERTE(tsize == unsigned(tsize));
+		return unsigned(tsize);
 	}
 	// Empty line
 	return 0;
@@ -608,9 +590,7 @@ const wchar_t* Row::GetText() const
 	unsigned len = GetLength();
 	if (!len)
 		return L"";
-	if (len == m_Text.size())
-		throw console_error("Row has no 0-terminator");
-	return (const wchar_t*)&m_Text[0];
+	return m_Text.c_str();
 }
 
 unsigned Row::GetCellAttr(unsigned cell, Attribute& attr, unsigned hint /*= 0*/) const
@@ -626,7 +606,7 @@ unsigned Row::GetCellAttr(unsigned cell, Attribute& attr, unsigned hint /*= 0*/)
 
 	// We may use binary search for optimization, but
 	// expected size of the m_Colors is just a few elements
-	for (ssize_t i = hint; i < m_Colors.size(); ++i)
+	for (size_t i = hint; i < m_Colors.size(); ++i)
 	{
 		const auto& ic = m_Colors[i].cell;
 		if (ic < cell)
@@ -665,7 +645,7 @@ void Row::SetCellAttr(unsigned cell, const Attribute& attr, unsigned count)
 	unsigned first = GetCellAttr(cell, firstAttr);
 	unsigned next = GetCellAttr(cell + count, nextAttr, first);
 	#ifdef _DEBUG
-	const decltype(m_Colors)::vector_type color_copy(m_Colors.cbegin(), m_Colors.cend());
+	const decltype(m_Colors) color_copy(m_Colors.cbegin(), m_Colors.cend());
 	#endif
 
 	// [...] ... [first:A] ... [next:B] ... [...]
@@ -680,7 +660,7 @@ void Row::SetCellAttr(unsigned cell, const Attribute& attr, unsigned count)
 			if (first + 1 < next)
 			{
 				const unsigned del_first = first + 1;
-				m_Colors.erase(del_first, next - del_first);
+				m_Colors.erase(m_Colors.begin() + del_first, m_Colors.begin() + next);
 			}
 		}
 	}
@@ -694,7 +674,7 @@ void Row::SetCellAttr(unsigned cell, const Attribute& attr, unsigned count)
 		else
 		{
 			_ASSERTE(m_Colors[first].cell<cell && (first+1 >= m_Colors.size() || m_Colors[first+1].cell > cell));
-			m_Colors.insert(++first, RowColor{cell, attr});
+			m_Colors.insert(m_Colors.begin() + (++first), RowColor{cell, attr});
 			// [...] ... [first-1:A] [first:attr] ... [next:B] ... [...]
 		}
 		next = first + 1;
@@ -720,7 +700,7 @@ void Row::SetCellAttr(unsigned cell, const Attribute& attr, unsigned count)
 		if (first + 1 < next)
 		{
 			const unsigned del_first = first + 1;
-			m_Colors.erase(del_first, next - del_first);
+			m_Colors.erase(m_Colors.begin() + del_first, m_Colors.begin() + next);
 		}
 
 		// Validate next, may be changed after insert/erase
@@ -729,7 +709,7 @@ void Row::SetCellAttr(unsigned cell, const Attribute& attr, unsigned count)
 			unsigned new_next = GetCellAttr(cell + count, newAttr, first);
 			if (!(newAttr == nextAttr))
 			{
-				m_Colors.insert(new_next + 1, RowColor{cell + count, nextAttr});
+				m_Colors.insert(m_Colors.begin() + (new_next + 1), RowColor{cell + count, nextAttr});
 				Validate();
 			}
 		}
@@ -764,7 +744,7 @@ const wchar_t* Row::GetWorkingDirectory() const
 
 wchar_t Row::GetCellChar(unsigned cell) const
 {
-	wchar_t ch = (cell < m_Text.size()) ? m_Text[cell] : L' ';
+	wchar_t ch = (cell < m_Text.length()) ? m_Text[cell] : L' ';
 	return ch ? ch : L' ';
 }
 
@@ -774,7 +754,7 @@ void Row::Validate() const
 	const unsigned len = GetLength();
 	_ASSERTE(len==0 || (m_Colors.size()>=1 && m_Colors[0].cell==0));
 	ssize_t prev = 0;
-	for (ssize_t i = 1; i < m_Colors.size(); ++i)
+	for (size_t i = 1; i < m_Colors.size(); ++i)
 	{
 		_ASSERTE(prev < ssize_t(m_Colors[i].cell));
 		_ASSERTE(m_Colors[i].cell < len);

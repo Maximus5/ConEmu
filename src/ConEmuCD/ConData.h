@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 #include <deque>
 #include <vector>
+#include <string>
 #include "../common/CEStr.h"
 #include "../common/ConsoleMixAttr.h"
 #include "../common/MArray.h"
@@ -150,8 +151,8 @@ private:
 		//// true-color properties of the cell
 		Attribute attr = {};
 	};
-	using RowColors = MArray<RowColor>;
-	using RowChars = MArray<wchar_t>;
+	using RowColors = std::vector<RowColor, MArrayAllocator<RowColor>>; // MArray<RowColor>;
+	using RowChars = std::basic_string<wchar_t, std::char_traits<wchar_t>, MArrayAllocator<wchar_t>>; // MArray<wchar_t>;
 
 public:
 	Row(const Attribute& attr = {});
