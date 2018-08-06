@@ -27,6 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
+#define SHOWDEBUGSTR
 #include "Header.h"
 #include "AboutDlg.h"
 #include "ConEmu.h"
@@ -55,6 +56,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WFiles.h"
 #include "../common/WRegistry.h"
 #include "../common/WUser.h"
+
+#define DEBUGSTRTASKS(s) DEBUGSTR(s)
 
 namespace FastConfig
 {
@@ -2601,6 +2604,9 @@ static void CreateDockerTask()
 // *Create new* or *add absent* default tasks
 void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 {
+	LogString(L"CreateDefaultTasks:: started");
+	DEBUGSTRTASKS(L"CreateDefaultTasks:: started");
+
 	iCreatIdx = 0;
 
 	sAppendMode = slfFlags;
@@ -2612,6 +2618,8 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 		if (pExist != NULL)
 		{
 			// At least one task was already created
+			LogString(L"CreateDefaultTasks:: tasks exist");
+			DEBUGSTRTASKS(L"CreateDefaultTasks:: tasks exist");
 			return;
 		}
 	}
@@ -2698,6 +2706,9 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	{
 		FindStartupTask(slfFlags);
 	}
+
+	LogString(L"CreateDefaultTasks:: finished");
+	DEBUGSTRTASKS(L"CreateDefaultTasks:: finished");
 }
 
 }; // namespace FastConfig
