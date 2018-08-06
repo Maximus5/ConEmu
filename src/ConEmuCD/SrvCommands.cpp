@@ -62,6 +62,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../ConEmuHk/Injects.h"
 #include "Actions.h"
+#include "ConAnsi.h"
 #include "ConProcess.h"
 #include "ConsoleHelp.h"
 #include "GuiMacro.h"
@@ -2582,6 +2583,30 @@ BOOL cmd_StartXTerm(CESERVER_REQ& in, CESERVER_REQ** out)
 	return lbRc;
 }
 
+BOOL cmd_StartPtySrv(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = TRUE;
+
+	LogString("CECMD_STARTPTYSRV");
+
+	if (in.DataSize() >= sizeof(CESERVER_REQ::Data[0]) && in.Data[0] == TRUE)
+	{
+		auto handles = SrvAnsi::Object()->GetClientHandles(in.hdr.nSrcPID);
+		if ((*out = ExecuteNewCmd(CECMD_STARTPTYSRV, sizeof(CESERVER_REQ_HDR) + 2*sizeof(CESERVER_REQ::qwData[0]))))
+		{
+			(*out)->qwData[0] = uint64_t(handles.first);
+			(*out)->qwData[1] = uint64_t(handles.second);
+		}
+	}
+	else
+	{
+		*out = ExecuteNewCmd(CECMD_STARTPTYSRV, sizeof(CESERVER_REQ_HDR));
+	}
+
+	lbRc = ((*out) != NULL);
+	return lbRc;
+}
+
 
 /// Main routine to process CECMD
 BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
@@ -2790,6 +2815,10 @@ BOOL ProcessSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out)
 		case CECMD_FINDNEXTROWID:
 		{
 			lbRc = cmd_FindNextRowId(in, out);
+		} break;
+		case CECMD_STARTPTYSRV:
+		{
+			lbRc = cmd_StartPtySrv(in, out);
 		} break;
 		default:
 		{

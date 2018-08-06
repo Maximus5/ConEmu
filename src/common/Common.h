@@ -532,6 +532,7 @@ const CECMD
 	CECMD_SSHAGENTSTART  = 94, // dwData[0] - PID of ssh-agent.exe started from one of the ConEmu console processes
 	CECMD_FINDNEXTROWID  = 95, // IN: dwData[0] - from row, dwData[1] - search upward (TRUE/FALSE); OUT: dwData[0] - found row or DWORD(-1), dwData[1] - rowid
 	CECMD_STARTCONNECTOR = 96, // IN: Data[0] - ASCIIZ string for mount prefix, e.g. "/cygdrive" or just empty "".
+	CECMD_STARTPTYSRV    = 97, // IN: Data[0] - start=TRUE, stop=FALSE; OUT: handles for connector qwData[0] - read_input, qwData[1] - write_output
 /** Команды FAR плагина **/
 	CMD_FIRST_FAR_CMD    = 200,
 	CMD_DRAGFROM         = 200,
