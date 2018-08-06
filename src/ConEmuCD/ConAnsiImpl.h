@@ -28,12 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#ifdef _DEBUG
-	#define DUMP_WRITECONSOLE_LINES
-	#define DUMP_UNKNOWN_ESCAPES
-#endif
-
-
 #include <mutex>
 #include "../common/ConsoleMixAttr.h"
 #include "../common/WCodePage.h"

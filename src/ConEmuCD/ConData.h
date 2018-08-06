@@ -160,7 +160,8 @@ public:
 	Row(const Row& src);
 	Row& operator=(const Row& src);
 
-	void swap(Row& row);
+	Row(Row&& src);
+	Row& operator=(Row&& src);
 
 	/// all cell coordinates are 0-based
 
@@ -180,8 +181,10 @@ public:
 	/// @result returns *nullptr* if directory was not set
 	const wchar_t* GetWorkingDirectory() const;
 
-	/// Remember that line was '`n' terminated explicitly
-	void SetLineFeed(int pos);
+	/// Remember where '`r' was emitted
+	void SetCR(int pos);
+	/// Remember where '`n' was emitted
+	void SetLF(int pos);
 	/// Check if the '`n' was written explicitly
 	/// @result *true* if '`n'-terminated string was emitted here
 	///         *false* if there were no '`n' emitted to the line
@@ -214,9 +217,12 @@ public:
 protected:
 	/// *protected* helper to maintain both wchar_t and wchar_t[]
 	void Write(unsigned cell, const Attribute& attr, std::pair<const wchar_t*,wchar_t> txt, unsigned count);
+	/// *protected* helper to reset CR/LF saved positions
+	void ResetCRLF();
 
 protected:
 	WORD m_RowID = 0;
+	int m_WasCR = -1;
 	int m_WasLF = -1;
 	RowChars m_Text;
 	RowColors m_Colors;
@@ -345,7 +351,7 @@ public:
 	void SetWorkingDirectory(const wchar_t* cwd);
 
 	/// Dump of Backscroll & Workspace contents to debug output
-	void DebugDump() const;
+	void DebugDump(bool workspace_only = false) const;
 
 protected:
 	/// Scroll rows upward, move top row to backscroll buffer if required

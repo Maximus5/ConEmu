@@ -38,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef TABLE_DEBUGDUMP
 #ifdef _DEBUG
 #define TABLE_DEBUGDUMP
+#define TABLE_UNITTESTS
 #endif
 
 namespace condata
@@ -51,7 +52,7 @@ console_error::console_error(const char* message)
 
 
 
-#ifdef _DEBUG
+#ifdef TABLE_UNITTESTS
 struct RowUnitTest
 {
 	struct Cell { wchar_t ch; Attribute attr; };
@@ -215,7 +216,25 @@ struct RowUnitTest
 			}
 		}
 
-		// working table - test 2 (scrolling)
+		// working table - test 2 (excessive output)
+		//_ASSERTE(FALSE && "Continue to 100000 lines test");
+		DWORD start_tick = GetTickCount();
+		{
+			Table table({7}, {110/*cols*/, 34/*rows*/}, -1);
+			wchar_t line[32];
+			for (unsigned i = 1; i <= 100000; ++i)
+			{
+				msprintf(line, std::size(line), L"%u\n", i);
+				table.Write(line, wcslen(line));
+			}
+		}
+		DWORD end_tick = GetTickCount();
+		DWORD duration = end_tick - start_tick;
+		wchar_t dbg[80]; swprintf_s(dbg, L"100000 test duration: %.3fs\n", duration / 1000.0f);
+		OutputDebugStringW(dbg);
+		//_ASSERTE(FALSE && "100000 lines test finished");
+
+		// working table - test 3 (scrolling)
 		{
 			Table table({7}, {4/*cols*/, 8/*rows*/}, 10);
 			wchar_t line[4] = L"**\n";
@@ -319,10 +338,16 @@ Row::Row(const Row& src)
 	(*this) = src;
 }
 
+Row::Row(Row&& src)
+{
+	*this = std::move(src);
+}
+
 Row& Row::operator=(const Row& src)
 {
 	src.Validate();
 	m_RowID = src.m_RowID;
+	m_WasCR = src.m_WasCR;
 	m_WasLF = src.m_WasLF;
 	m_CWD = src.m_CWD;
 
@@ -341,8 +366,8 @@ Row& Row::operator=(const Row& src)
 	}
 	else
 	{
-		m_Text.swap(decltype(m_Text){});
-		m_Colors.swap(decltype(m_Colors){});
+		m_Text = decltype(m_Text){};
+		m_Colors = decltype(m_Colors){};
 		if (!src.m_Colors.empty())
 		{
 			_ASSERTE(src.m_Colors[0].cell == 0);
@@ -361,14 +386,16 @@ Row& Row::operator=(const Row& src)
 	return *this;
 }
 
-void Row::swap(Row& row)
+Row& Row::operator=(Row&& src)
 {
-	row.Validate();
-	std::swap(m_RowID, row.m_RowID);
-	std::swap(m_WasLF, row.m_WasLF);
-	m_Colors.swap(row.m_Colors);
-	m_Text.swap(row.m_Text);
-	m_CWD.swap(row.m_CWD);
+	src.Validate();
+	m_RowID = src.m_RowID; src.m_RowID = 0;
+	m_WasCR = src.m_WasCR; src.m_WasCR = -1;
+	m_WasLF = src.m_WasLF; src.m_WasLF = -1;
+	m_Colors = std::move(src.m_Colors);
+	m_Text = std::move(src.m_Text);
+	m_CWD = std::move(src.m_CWD);
+	return *this;
 }
 
 unsigned Row::SetReqSize(unsigned cell)
@@ -422,8 +449,7 @@ void Row::Write(unsigned cell, const Attribute& attr, std::pair<const wchar_t*,w
 	if (!count)
 		return;
 
-	if (m_WasLF != -1 && (cell + count) >= (unsigned)m_WasLF)
-		m_WasLF = -1;
+	ResetCRLF();
 
 	Reserve(((cell + count + 80) / 80) * 80);
 
@@ -439,10 +465,17 @@ void Row::Write(unsigned cell, const Attribute& attr, std::pair<const wchar_t*,w
 	SetCellAttr(cell, attr, count);
 }
 
-void Row::Insert(unsigned cell, const Attribute& attr, const wchar_t chr, unsigned count)
+void Row::ResetCRLF()
 {
+	if (m_WasCR != -1)
+		m_WasCR = -1;
 	if (m_WasLF != -1)
 		m_WasLF = -1;
+}
+
+void Row::Insert(unsigned cell, const Attribute& attr, const wchar_t chr, unsigned count)
+{
+	ResetCRLF();
 
 	if (!count)
 		return;
@@ -463,8 +496,7 @@ void Row::Insert(unsigned cell, const Attribute& attr, const wchar_t chr, unsign
 
 void Row::Delete(unsigned cell, unsigned count)
 {
-	if (m_WasLF != -1)
-		m_WasLF = -1;
+	ResetCRLF();
 
 	const unsigned cur_len = GetLength();
 	if (!count || cell >= cur_len)
@@ -511,23 +543,38 @@ void Row::Delete(unsigned cell, unsigned count)
 
 unsigned Row::GetLength() const
 {
-	if (m_Text.size() > 0)
+	const auto tsize = m_Text.size();
+	if (tsize > 0)
 	{
-		if (m_Text[m_Text.size() - 1] != 0)
+		if (m_Text[tsize - 1] != 0)
 		{
-			_ASSERTE(m_Text.size()>0 && m_Text[m_Text.size()-1]==0); // Missed '\0'-terminator
-			return unsigned(m_Text.size());
+			_ASSERTE(tsize>0 && m_Text[tsize-1]==0); // Missed '\0'-terminator
+			return unsigned(tsize);
 		}
 		else
 		{
-			return unsigned(m_Text.size() - 1); // // valid '\0'-terminated string
+			return unsigned(tsize - 1); // // valid '\0'-terminated string
 		}
 	}
 	// Empty line
 	return 0;
 }
 
-void Row::SetLineFeed(int pos)
+void Row::SetCR(int pos)
+{
+	if (pos >= 0)
+	{
+		if (m_WasLF != -1)
+			m_WasLF = -1;
+
+		unsigned len = GetLength();
+
+		if (pos > 0)
+			m_WasCR = pos;
+	}
+}
+
+void Row::SetLF(int pos)
 {
 	if (pos < 0)
 	{
@@ -536,9 +583,11 @@ void Row::SetLineFeed(int pos)
 	else
 	{
 		unsigned len = GetLength();
-		_ASSERTE((unsigned)pos == len);
-		if ((unsigned)pos >= len)
-			m_WasLF = pos;
+		unsigned new_pos = pos ? pos : (m_WasCR >= 0) ? unsigned(m_WasCR) : 0;
+		//_ASSERTE((unsigned)new_pos == len);
+
+		if ((unsigned)new_pos >= len)
+			m_WasLF = new_pos;
 		else
 			m_WasLF = -1;
 	}
@@ -689,7 +738,7 @@ void Row::SetCellAttr(unsigned cell, const Attribute& attr, unsigned count)
 void Row::Reset(const Attribute& attr)
 {
 	m_RowID = 0;
-	m_WasLF = -1;
+	ResetCRLF();
 	m_Text.clear();
 	m_Colors.clear();
 	m_CWD.Clear();
@@ -832,26 +881,33 @@ void Table::Resize(const Coord newSize)
 	{
 		if (m_Backscroll.empty())
 			break;
-		m_Workspace.insert(m_Workspace.begin(), Row(m_Backscroll.front()));
+		m_Workspace.insert(m_Workspace.begin(), m_Backscroll.front());
 		m_Backscroll.erase(m_Backscroll.begin());
 		++m_Size.y;
 		ShiftRowIndexes(+1);
 	}
 
 	// If newSize.y becomes lesser than m_Size.y, push upper lines to backscroll and adjust cursor position
+	size_t drop_row = 0;
 	while (newSize.y < m_Size.y)
 	{
 		if (m_Workspace.empty())
 			break;
-		if (m_BackscrollMax < 0 || (ssize_t)m_Backscroll.size() < m_BackscrollMax)
-			m_Backscroll.push_front(Row(m_Workspace.front()));
-		m_Workspace.erase(m_Workspace.begin());
+		if (m_BackscrollMax != 0)
+			m_Backscroll.push_front(m_Workspace[drop_row]);
+		if (m_BackscrollMax >= 0 || (ssize_t)m_Backscroll.size() > m_BackscrollMax)
+			m_Backscroll.erase(m_Backscroll.begin() + m_BackscrollMax, m_Backscroll.end());
+		++drop_row;
 		--m_Size.y;
 		ShiftRowIndexes(-1);
 	}
+	if (drop_row > 0)
+	{
+		m_Workspace.erase(m_Workspace.begin(), m_Workspace.begin() + drop_row);
+	}
 
-	// The height must be already adjusted
-	_ASSERTE(m_Size.y == newSize.y);
+	// The height may be not increased, if backscroll if yet empty for example
+	_ASSERTE(m_Size.y == newSize.y || (m_Backscroll.empty() && m_Size.y < newSize.y));
 	m_Size = newSize;
 
 	// Ensure the cursor is in allowed place
@@ -1037,25 +1093,23 @@ void Table::DoAutoScroll(int dir)
 	}
 
 	// copy/move rows one by one
+	Row dummy;
 	for (unsigned counter = (rgn.Bottom - rgn.Top + 1); counter; --counter, src += step, dst += step)
 	{
-		const Row& row =
+		Row& row =
 			(src >= ssize_t(rgn.Top) && src <= ssize_t(rgn.Bottom) && size_t(src) < m_Workspace.size()) ? m_Workspace[src]
 			: (src < 0 && size_t(-src) < m_Backscroll.size()) ? m_Backscroll[-src - 1]
-			: Row();
-		// workspace operation
+			: dummy;
+
+		// workspace or backscroll operation
 		if (dst >= ssize_t(rgn.Top) && dst <= ssize_t(rgn.Bottom))
-		{
-			*GetRow(unsigned(dst)) = row;
-		}
+			*GetRow(unsigned(dst)) = std::move(row);
+		else if (rgn.Top == 0 && m_BackscrollMax != 0 && dir < 0 && dst < 0)
+			m_Backscroll.push_front(std::move(row));
+
 		// if backscroll operation is allowed
-		if (rgn.Top == 0 && m_BackscrollMax != 0)
-		{
-			if (dir < 0 && dst < 0)
-				m_Backscroll.push_front(row);
-			else if (dir > 0 && src < 0)
-				++back_erase;
-		}
+		if (rgn.Top == 0 && m_BackscrollMax != 0 && dir > 0 && src < 0)
+			++back_erase;
 	}
 
 	if (dst >= ssize_t(rgn.Top) && dst <= ssize_t(rgn.Bottom))
@@ -1160,16 +1214,17 @@ void Table::Write(const wchar_t* text, unsigned count)
 		case L'\t':
 			_ASSERTE(!m_Flags.AutoWrap || m_Flags.BeyondEOL || m_Cursor.x < m_Size.x);
 			// #ConData Store in the row attribute that '\t' was "written" at this place?
-			SetCursor({std::max<unsigned>(m_Size.x - 1, ((m_Cursor.x + 8) >> 3) << 3), m_Cursor.y});
+			SetCursor({std::min<unsigned>(m_Size.x - 1, ((m_Cursor.x + 8) >> 3) << 3), m_Cursor.y});
 			break;
 		case L'\r':
 			_ASSERTE(!m_Flags.AutoWrap || m_Flags.BeyondEOL || m_Cursor.x < m_Size.x);
+			CurrentRow()->SetCR((int)m_Cursor.x);
 			// just put cursor at the line start
 			SetCursor({0, m_Cursor.y});
 			break;
 		case L'\n':
 			_ASSERTE(!m_Flags.AutoWrap || m_Flags.BeyondEOL || m_Cursor.x < m_Size.x);
-			CurrentRow()->SetLineFeed((int)m_Cursor.x);
+			CurrentRow()->SetLF((int)m_Cursor.x);
 			LineFeed(m_Flags.AutoCRLF);
 			// New line == prompt reset
 			PromptPosReset();
@@ -1400,13 +1455,13 @@ void Table::SetWorkingDirectory(const wchar_t* cwd)
 	CurrentRow()->SetWorkingDirectory(cwd);
 }
 
-void Table::DebugDump() const
+void Table::DebugDump(bool workspace_only /*= false*/) const
 {
 #ifdef TABLE_DEBUGDUMP
 	wchar_t prefix[20];
 	MArray<CEStr> dbgout;
 	dbgout.push_back(L"\n<<< Table::DebugDump <<< backscroll begin\n");
-	for (size_t i = m_Backscroll.size(); i > 0; --i)
+	for (size_t i = m_Backscroll.size(); !workspace_only && i > 0; --i)
 	{
 		swprintf_s(prefix, L"%04i: ", -int(i));
 		const auto& row = m_Backscroll[i-1];
@@ -1437,6 +1492,7 @@ void Table::DebugDump() const
 		ptr += l;
 	}
 
+	// #condata Fails on very long texts (backscroll > 1000 lines)
 	OutputDebugStringW(buffer);
 #endif
 }

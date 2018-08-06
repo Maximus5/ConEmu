@@ -28,15 +28,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#ifdef _DEBUG
-	#define DUMP_WRITECONSOLE_LINES
-	#define DUMP_UNKNOWN_ESCAPES
-#endif
-
-
 #include <mutex>
 #include "../common/ConsoleMixAttr.h"
+#include "../common/MPipe.h"
 #include "../common/WCodePage.h"
+#include "../common/WThreads.h"
 #include "ConData.h"
 
 
@@ -58,13 +54,13 @@ private:
 public:
 	static SrvAnsi* Object();
 
-	/// Codepage set for OurWriteConsoleA
-	UINT GetCodePage();
-
 	/// we need to ‘cache’ parts of non-translated MBCS chars (one UTF-8 symbol may be transmitted by up to *three* parts)
 	bool OurWriteConsoleA(const char* lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
 	/// for converted parts of UTF-8 data ready to written in UTF-16
 	bool OurWriteConsoleW(const wchar_t* lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
+
+	/// Prepare server pipes, return client handles
+	std::pair<HANDLE,HANDLE> GetClientHandles(DWORD clientPID);
 
 protected:
 	friend class SrvAnsiImpl;
@@ -84,6 +80,13 @@ private:
 	condata::Table m_Primary;
 	condata::Table m_Alternative;
 	bool m_UsePrimary = true;
+
+	/// Pipes for processing input and output
+	MPipeDual m_pipes;
+	bool m_pipe_stop = false;
+	MThread m_pipe_thread[2] = {};
+	struct PipeArg { SrvAnsi* self; bool input; };
+	static DWORD WINAPI PipeThread(LPVOID pipe_arg);
 
 protected:
 	// #condata Replace with MLogFile?
@@ -227,8 +230,10 @@ protected:
 
 protected:
 
-	/// OK
+	/// Codepage set for OurWriteConsoleA
+	UINT GetCodePage();
 
+	/// ANSI functions
 	void FirstAnsiCall(const BYTE* lpBuf, DWORD nNumberOfBytes);
 	void InitAnsiLog(LPCWSTR asFilePath);
 	void DoneAnsiLog(bool bFinal);
