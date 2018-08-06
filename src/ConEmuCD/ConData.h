@@ -230,6 +230,17 @@ protected:
 };
 
 
+class iRow
+{
+public:
+	const unsigned index;
+	iRow(unsigned _index, Row* _row);
+	Row* operator->() const;
+protected:
+	Row* row;
+};
+
+
 /// Main class to manipulate console surface
 class Table
 {
@@ -312,9 +323,9 @@ public:
 	void SetBeyondEOL(bool beyondEOL);
 
 	/// Return iterator (m_Workspace) for row with cursor
-	vector_type::iterator CurrentRow();
+	iRow CurrentRow();
 	/// Return iterator (m_Workspace) for row by index
-	vector_type::iterator GetRow(unsigned row);
+	iRow GetRow(unsigned row);
 
 	/// Direct modification
 	void Write(const wchar_t* text, unsigned count);

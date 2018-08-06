@@ -38,7 +38,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef TABLE_DEBUGDUMP
 #ifdef _DEBUG
 #define TABLE_DEBUGDUMP
+#ifndef TABLE_UNITTESTS
 #define TABLE_UNITTESTS
+#endif
 #endif
 
 namespace condata
@@ -225,7 +227,8 @@ struct RowUnitTest
 			for (unsigned i = 1; i <= 100000; ++i)
 			{
 				msprintf(line, std::size(line), L"%u\n", i);
-				table.Write(line, wcslen(line));
+				unsigned len = unsigned(wcslen(line));
+				table.Write(line, len);
 			}
 		}
 		DWORD end_tick = GetTickCount();
@@ -782,6 +785,18 @@ void Row::Validate() const
 
 
 
+iRow::iRow(unsigned _index, Row* _row)
+	: row(_row), index(_index)
+{
+}
+
+Row* iRow::operator->() const
+{
+	return row;
+}
+
+
+
 /**
 	Main class to manipulate console surface
 **/
@@ -1008,7 +1023,7 @@ void Table::SetBeyondEOL(bool beyondEOL)
 	m_Flags.BeyondEOL = beyondEOL;
 }
 
-Table::vector_type::iterator Table::CurrentRow()
+iRow Table::CurrentRow()
 {
 	_ASSERTE(m_Cursor.y >= 0 && m_Cursor.y < m_Size.y);
 	// Extend workspace to requested row
@@ -1018,7 +1033,7 @@ Table::vector_type::iterator Table::CurrentRow()
 	return GetRow(idx);
 }
 
-condata::Table::vector_type::iterator Table::GetRow(unsigned row)
+iRow Table::GetRow(unsigned row)
 {
 	// It checks only m_Size, m_Workspace would be resized to required amount
 	if (IsEmpty())
@@ -1033,9 +1048,9 @@ condata::Table::vector_type::iterator Table::GetRow(unsigned row)
 	m_Workspace.reserve(idx+1);
 	while (m_Workspace.size() <= idx)
 	{
-		m_Workspace.push_back(Row{m_Attr});
+		m_Workspace.emplace_back(m_Attr);
 	}
-	return (m_Workspace.begin() + idx);
+	return iRow(idx, &m_Workspace[idx]);
 }
 
 void Table::Scroll(int dir)
@@ -1096,16 +1111,22 @@ void Table::DoAutoScroll(int dir)
 	Row dummy;
 	for (unsigned counter = (rgn.Bottom - rgn.Top + 1); counter; --counter, src += step, dst += step)
 	{
-		Row& row =
-			(src >= ssize_t(rgn.Top) && src <= ssize_t(rgn.Bottom) && size_t(src) < m_Workspace.size()) ? m_Workspace[src]
-			: (src < 0 && size_t(-src) < m_Backscroll.size()) ? m_Backscroll[-src - 1]
-			: dummy;
-
 		// workspace or backscroll operation
 		if (dst >= ssize_t(rgn.Top) && dst <= ssize_t(rgn.Bottom))
-			*GetRow(unsigned(dst)) = std::move(row);
+		{
+			_ASSERTE((ssize_t)m_Workspace.size() > dst);
+			if (src >= ssize_t(rgn.Top) && src <= ssize_t(rgn.Bottom) && size_t(src) < m_Workspace.size())
+				m_Workspace[dst] = std::move(m_Workspace[src]);
+			else if (src < 0 && size_t(-src) < m_Backscroll.size())
+				m_Workspace[dst] = std::move(m_Backscroll[-src - 1]);
+		}
 		else if (rgn.Top == 0 && m_BackscrollMax != 0 && dir < 0 && dst < 0)
-			m_Backscroll.push_front(std::move(row));
+		{
+			if (src >= ssize_t(rgn.Top) && src <= ssize_t(rgn.Bottom) && size_t(src) < m_Workspace.size())
+				m_Backscroll.emplace_front(std::move(m_Workspace[src]));
+			else
+				m_Backscroll.emplace_front(m_Attr);
+		}
 
 		// if backscroll operation is allowed
 		if (rgn.Top == 0 && m_BackscrollMax != 0 && dir > 0 && src < 0)
@@ -1118,7 +1139,7 @@ void Table::DoAutoScroll(int dir)
 		const unsigned to_row = (step > 0) ? rgn.Bottom : unsigned(dst);
 		for (unsigned row = from_row; row <= to_row; ++row)
 		{
-			*GetRow(unsigned(row)) = Row{};
+			m_Workspace[row] = Row{m_Attr};
 		}
 	}
 
@@ -1309,10 +1330,9 @@ void Table::InsertRow(unsigned count /*= 1*/)
 
 	const auto sz = GetSize();
 	auto row = CurrentRow();
-	for (unsigned i = 0; i < count; ++i)
-	{
-		row = m_Workspace.insert(row, Row{m_Attr});
-	}
+	decltype(m_Workspace) elements(count, Row{m_Attr});
+	m_Workspace.insert(m_Workspace.begin() + row.index, elements.begin(), elements.end());
+
 	if (m_Workspace.size() >= (unsigned)sz.y)
 	{
 		// These lines go to trash
@@ -1333,13 +1353,9 @@ void Table::DeleteRow(unsigned count /*= 1*/)
 	}
 
 	auto row = CurrentRow();
-	ptrdiff_t tail = m_Workspace.end() - row;
-	if (tail <= 0)
-	{
-		_ASSERTE(tail > 0);
-		return;
-	}
-	m_Workspace.erase(row, row + std::min<size_t>(tail, count));
+
+	m_Workspace.erase(m_Workspace.begin() + row.index,
+		(row.index + count > m_Workspace.size()) ? m_Workspace.end() : (m_Workspace.begin() + (row.index + count)));
 }
 
 void Table::GetData(CharInfo *pData, const Coord& bufSize, const RECT& rgn) const
@@ -1496,6 +1512,5 @@ void Table::DebugDump(bool workspace_only /*= false*/) const
 	OutputDebugStringW(buffer);
 #endif
 }
-
 
 };
