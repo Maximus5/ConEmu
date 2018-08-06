@@ -751,6 +751,24 @@ CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, CESERVER_REQ* pIn, HWND hOwner, BOOL
 	return lpRet;
 }
 
+// Выполнить в ConEmuC
+CESERVER_REQ* ExecuteSrvCmd(DWORD dwSrvPID, DWORD nCmd, size_t cbDataSize, LPBYTE data, HWND hOwner, BOOL bAsyncNoResult /*= FALSE*/)
+{
+	CESERVER_REQ* pOut = NULL;
+
+	if (CESERVER_REQ* pIn = ExecuteNewCmd(nCmd, sizeof(CESERVER_REQ_HDR)+cbDataSize))
+	{
+		if (cbDataSize && data)
+			memmove_s(pIn->Data, pIn->DataSize(), data, cbDataSize);
+
+		pOut = ExecuteSrvCmd(dwSrvPID, pIn, hOwner, bAsyncNoResult);
+
+		ExecuteFreeResult(pIn);
+	}
+
+	return pOut;
+}
+
 // Выполнить в ConEmuHk
 CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner, BOOL bAsyncNoResult /*= FALSE*/, BOOL bIgnoreAbsence /*= FALSE*/)
 {
