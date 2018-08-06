@@ -274,3 +274,87 @@ void SetThreadName(DWORD dwThreadID, char* threadName)
    }
 }
 #endif
+
+MThread::MThread()
+{
+}
+
+MThread::MThread(LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, LPCSTR asThreadNameFormat /*= NULL*/, int anFormatArg /*= 0*/)
+	: pfnThread(lpStartAddress), threadArg(lpParameter)
+{
+	hThread = apiCreateThread(lpStartAddress, lpParameter, &threadId, asThreadNameFormat, anFormatArg);
+	_ASSERTE(!wasTerminated);
+}
+
+MThread::MThread(MThread&& src)
+{
+	*this = std::move(src);
+}
+
+bool MThread::Running() const
+{
+	if (!hThread || wasTerminated)
+		return false;
+	DWORD wait = WaitForSingleObject(hThread, 0);
+	if (wait == WAIT_TIMEOUT)
+		return true;
+	_ASSERTE(FALSE && wait==WAIT_OBJECT_0);
+	GetExitCodeThread(hThread, &exitCode);
+	return (wasTerminated = true);
+}
+
+MThread::operator bool() const
+{
+	return Running();
+}
+
+MThread::operator HANDLE() const
+{
+	return hThread;
+}
+
+DWORD MThread::GetExitCode() const
+{
+	if (Running())
+		return STILL_ACTIVE;
+	return exitCode;
+}
+
+void MThread::Close()
+{
+	HANDLE h = NULL;
+	std::swap(h, hThread);
+	if (h)
+		CloseHandle(h);
+}
+
+MThread& MThread::operator=(MThread&& src)
+{
+	if (Running())
+	{
+		_ASSERTE(FALSE && "Overwriting running thread?");
+		apiTerminateThread(hThread, 255);
+	}
+	Close();
+
+	std::swap(pfnThread, src.pfnThread);
+	std::swap(threadArg, src.threadArg);
+	std::swap(hThread, src.hThread);
+	std::swap(threadId, src.threadId);
+	std::swap(wasTerminated, src.wasTerminated);
+	std::swap(exitCode, src.exitCode);
+
+	src.hThread = NULL;
+	src.threadId = 0;
+
+	return *this;
+}
+
+MThread::~MThread()
+{
+	if (Running())
+	{
+		apiTerminateThread(hThread, 255);
+	}
+	Close();
+}
