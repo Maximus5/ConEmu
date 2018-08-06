@@ -40,3 +40,31 @@ void SetThreadName(DWORD dwThreadID, char* threadName);
 #else
 #define SetThreadName(dwThreadID, threadName)
 #endif
+
+class MThread
+{
+public:
+	MThread();
+	MThread(LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, LPCSTR asThreadNameFormat = NULL, int anFormatArg = 0);
+	virtual ~MThread();
+
+	MThread(const MThread&) = delete;
+	MThread& operator=(const MThread&) = delete;
+	MThread(MThread&& src);
+	MThread& operator=(MThread&& src);
+
+	bool Running() const;
+	operator bool() const;
+	operator HANDLE() const;
+	DWORD GetExitCode() const;
+
+protected:
+	void Close();
+
+	LPTHREAD_START_ROUTINE pfnThread = nullptr;
+	LPVOID threadArg = nullptr;
+	HANDLE hThread = nullptr;
+	DWORD threadId = 0;
+	mutable bool wasTerminated = false;
+	mutable DWORD exitCode = STILL_ACTIVE;
+};
