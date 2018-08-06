@@ -213,7 +213,16 @@ Cleanup:
 
 HANDLE DuplicateProcessHandle(DWORD anTargetPID)
 {
-	HANDLE hDup = NULL;
+	HANDLE src = GetCurrentProcess(), dst = NULL;
+	if (!DuplicateHandleForPID(anTargetPID, 1, &src, &dst))
+		return NULL;
+	return dst;
+}
+
+bool DuplicateHandleForPID(const DWORD anTargetPID, const size_t count, const HANDLE ahSourceHandle[], HANDLE ahDestHandle[])
+{
+	bool rc = false;
+	DWORD errCode = 0;
 
 	if (anTargetPID == 0)
 	{
@@ -221,16 +230,27 @@ HANDLE DuplicateProcessHandle(DWORD anTargetPID)
 	}
 	else
 	{
-		HANDLE hTarget = OpenProcess(PROCESS_DUP_HANDLE, FALSE, anTargetPID);
+		HANDLE hTarget = OpenProcess(PROCESS_DUP_HANDLE|SYNCHRONIZE|READ_CONTROL|PROCESS_QUERY_INFORMATION, FALSE, anTargetPID);
 		if (hTarget)
 		{
-			DuplicateHandle(GetCurrentProcess(), GetCurrentProcess(), hTarget, &hDup, MY_PROCESS_ALL_ACCESS, FALSE, 0);
+			rc = true;
+			for (size_t i = 0; i < count; ++i)
+			{
+				if (!DuplicateHandle(GetCurrentProcess(), ahSourceHandle[i], hTarget, &ahDestHandle[i], 0, FALSE, DUPLICATE_SAME_ACCESS))
+				{
+					errCode = GetLastError();
+					_ASSERTE(FALSE && "DuplicateHandle failed");
+					rc = false;
+					break;
+				}
+			}
 
 			CloseHandle(hTarget);
 		}
 	}
 
-	return hDup;
+	UNREFERENCED_PARAMETER(errCode);
+	return rc;
 }
 
 // используется в GUI при загрузке настроек
