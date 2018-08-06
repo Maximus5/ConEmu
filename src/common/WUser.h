@@ -41,9 +41,15 @@ void getWindowInfo(HWND ahWnd, wchar_t (&rsInfo)[1024], bool bProcessName = fals
 bool IsUserAdmin();
 bool GetLogonSID (HANDLE hToken, wchar_t **ppszSID);
 
+/// Duplicate our current process handle for use in anTargetPID
 HANDLE DuplicateProcessHandle(DWORD anTargetPID);
+/// Duplicate array of handles for use in anTargetPID
+bool DuplicateHandleForPID(const DWORD anTargetPID, const size_t count, const HANDLE ahSourceHandle[], HANDLE ahDestHandle[]);
 
-void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso = true); // используется в GUI при загрузке настроек
+/// Used in GUI during settings loading
+void FindComspec(ConEmuComspec* pOpt, bool bCmdAlso = true);
+/// Update env.var `ComSpec` and (if requested) the `PATH` for compec from *pOpt*
 void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath = false);
 
+/// Set env.var from `asName` to *expanded* value from `asValue`
 void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue);
