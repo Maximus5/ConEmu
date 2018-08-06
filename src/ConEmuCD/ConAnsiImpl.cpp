@@ -44,6 +44,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConAnsiImpl.h"
 #include "ConEmuSrv.h"
 
+#ifdef _DEBUG
+	#define DUMP_CONSOLE_OUTPUT
+#endif
+
 
 
 #define ANSI_MAP_CHECK_TIMEOUT 1000

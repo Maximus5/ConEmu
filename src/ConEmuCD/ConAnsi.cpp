@@ -48,6 +48,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuSrv.h"
 #include "Shutdown.h"
 
+#ifdef _DEBUG
+//	#define DUMP_CONSOLE_OUTPUT
+#endif
 
 
 #define ANSI_MAP_CHECK_TIMEOUT 1000
@@ -141,13 +144,17 @@ std::mutex SrvAnsi::object_mutex;
 //static
 SrvAnsi* SrvAnsi::Object()
 {
+	// #condata Let Object accept requestor (connector) PID as argument
 	if (!object)
 	{
 		std::unique_lock<std::mutex> lock(object_mutex);
-		object = new SrvAnsi();
-		lock.release();
+		if (!object)
+		{
+			object = new SrvAnsi();
+			lock.release();
 
-		Shutdown::RegisterEvent(SrvAnsi::Release, 0);
+			Shutdown::RegisterEvent(SrvAnsi::Release, 0);
+		}
 	}
 	return object;
 }
@@ -626,7 +633,7 @@ void SrvAnsi::ReSetDisplayParm(bool bReset, bool bApply)
 
 void SrvAnsi::DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown)
 {
-#if defined(DUMP_UNKNOWN_ESCAPES) || defined(DUMP_WRITECONSOLE_LINES)
+#if defined(DUMP_CONSOLE_OUTPUT)
 
 	static const wchar_t szAnalogues[32] =
 	{
@@ -876,10 +883,25 @@ bool SrvAnsi::OurWriteConsoleA(const char* lpBuffer, DWORD nNumberOfCharsToWrite
 		if (lbRc) nTotalWritten += nWritten;
 	}
 
-	// Issue 1291:	Python fails to print string sequence with ASCII character followed by Chinese character.
-	if (lpNumberOfCharsWritten && lbRc)
+	// If succeeded
+	if (lbRc)
 	{
-		*lpNumberOfCharsWritten = nNumberOfCharsToWrite;
+		// Issue 1291: Python fails to print string sequence with ASCII character followed by Chinese character.
+		if (lpNumberOfCharsWritten)
+			*lpNumberOfCharsWritten = nNumberOfCharsToWrite;
+
+		// for pty debug purposes
+		#ifdef _DEBUG
+		static unsigned buffered = 0, last_tick = 0;
+		buffered += nNumberOfCharsToWrite;
+		if (/*buffered >= 2048 ||*/ !last_tick || (GetTickCount() - last_tick) >= 5000)
+		{
+			// std::unique_lock<std::mutex> lock(m_UseMutex); -- writer already locked the mutex
+			GetTable(GetTableEnum::current)->DebugDump(true);
+			buffered = 0;
+			last_tick = GetTickCount();
+		}
+		#endif
 	}
 
 fin:
@@ -895,6 +917,75 @@ bool SrvAnsi::OurWriteConsoleW(const wchar_t* lpBuffer, DWORD nNumberOfCharsToWr
 	// The output
 	lbRc = writer.OurWriteConsole(lpBuffer, nNumberOfCharsToWrite, lpNumberOfCharsWritten);
 	return lbRc;
+}
+
+std::pair<HANDLE, HANDLE> SrvAnsi::GetClientHandles(DWORD clientPID)
+{
+	//_ASSERTE(FALSE && "Continue to SrvAnsi::GetClientHandles");
+	auto clientHandles = m_pipes.GetClientHandles(clientPID);
+	if (!clientHandles.first || !clientHandles.second)
+	{
+		_ASSERTE(clientHandles.first && clientHandles.second);
+		return std::pair<HANDLE, HANDLE>{};
+	}
+
+	if (!m_pipe_thread[0])
+	{
+		m_pipe_thread[0] = MThread(PipeThread, new PipeArg{this, true/*input*/}, "SrvAnsi::In::%u", clientPID);
+	}
+	if (!m_pipe_thread[1])
+	{
+		m_pipe_thread[1] = MThread(PipeThread, new PipeArg{this, false/*output*/}, "SrvAnsi::Out::%u", clientPID);
+	}
+
+	return clientHandles;
+}
+
+DWORD WINAPI SrvAnsi::PipeThread(LPVOID pipe_arg)
+{
+	PipeArg* p = static_cast<PipeArg*>(pipe_arg);
+
+	if (p->input)
+	{
+		INPUT_RECORD pir[128];
+		HANDLE hTermInput = GetStdHandle(STD_INPUT_HANDLE);
+		while (!p->self->m_pipe_stop)
+		{
+			// #condata Replace with internal input buffer
+			DWORD peek = 0, read = 0;
+			BOOL bRc = (PeekConsoleInputW(hTermInput, pir, (DWORD)std::size(pir), &peek) && peek)
+				? (ReadConsoleInputW(hTermInput, pir, peek, &read) && read)
+				: FALSE;
+			if (bRc && read)
+			{
+				if (!p->self->m_pipes.Write(pir, read * sizeof(pir[0])))
+				{
+					_ASSERTE(FALSE && "input pipe was closed?");
+					break;
+				}
+			}
+			Sleep(10);
+		}
+	}
+	else
+	{
+		while (!p->self->m_pipe_stop)
+		{
+			auto data = p->self->m_pipes.Read(true);
+			if (!data.first)
+			{
+				_ASSERTE(FALSE && "output pipe was closed?");
+				break;
+			}
+			if (data.second)
+			{
+				p->self->OurWriteConsoleA(static_cast<const char*>(data.first), data.second, NULL);
+			}
+		}
+	}
+
+	delete p;
+	return 0;
 }
 
 void SrvAnsi::ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID /*= 0*/)
