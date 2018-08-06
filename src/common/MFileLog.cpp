@@ -39,8 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MStrDup.h"
 #include "WObjects.h"
 #include "../ConEmu/version.h"
-#pragma warning(disable: 4091)
-#include <shlobj.h>
+#include "../common/shlobj.h"
 
 #ifdef _DEBUG
 #define DebugString(x) //OutputDebugString(x)

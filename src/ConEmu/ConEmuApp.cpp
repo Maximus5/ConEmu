@@ -31,10 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include <commctrl.h>
-#pragma warning(disable: 4091)
-#include <shlobj.h>
+#include "../common/shlobj.h"
 #include <exdisp.h>
-#pragma warning(default: 4091)
 #include <tlhelp32.h>
 #if !defined(__GNUC__) || defined(__MINGW32__)
 #pragma warning(disable: 4091)

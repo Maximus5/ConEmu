@@ -281,6 +281,7 @@
     <ClInclude Include="common\defines.h" />
     <ClInclude Include="common\md5.h" />
     <ClInclude Include="common\plugin_helper.h" />
+    <ClInclude Include="common\shlobj.h" />
     <ClInclude Include="common\stdint_.h" />
     <ClInclude Include="common\wcchars.h" />
     <ClInclude Include="common\wcwidth.h" />

@@ -732,6 +732,9 @@
     <ClInclude Include="common\plugin_helper.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="common\shlobj.h">
+      <Filter>Common</Filter>
+    </ClInclude>
     <ClInclude Include="common\stdint_.h">
       <Filter>Common</Filter>
     </ClInclude>

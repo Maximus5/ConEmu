@@ -30,10 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
-#pragma warning(disable: 4091)
-#include <shlobj.h>
-#pragma warning(default: 4091)
 #include "Header.h"
+#include "../common/shlobj.h"
 #include "../common/WFiles.h"
 #include "../common/WThreads.h"
 

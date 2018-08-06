@@ -180,6 +180,9 @@
     <ClInclude Include="common\plugin_helper.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="common\shlobj.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="common\stdint_.h">
       <Filter>Headers</Filter>
     </ClInclude>
