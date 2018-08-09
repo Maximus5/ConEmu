@@ -726,6 +726,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbClipConfirmEnter:
 			CSetPgPaste::OnBtn_ClipConfirmEnter(hDlg, CB, uCheck);
 			break;
+		case cbAutoTrimSingleLine:
+			CSetPgPaste::OnBtn_AutoTrimSingleLine(hDlg, CB, uCheck);
+			break;
 		case cbClipConfirmLimit:
 			CSetPgPaste::OnBtn_ClipConfirmLimit(hDlg, CB, uCheck);
 			break;

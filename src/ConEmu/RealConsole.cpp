@@ -12477,6 +12477,19 @@ void CRealConsole::Paste(CEPasteMode PasteMode /*= pm_Standard*/, LPCWSTR asText
 
 	// Смотрим первую строку / наличие второй
 	wchar_t* pszRN = wcspbrk(pszBuf, L"\r\n");
+
+	// If user has enabled AutoTrimSingleLine, check if we are pasting a single line string.
+	// If so, set PasteMode to pm_OneLine to remove trailing newlines.
+	if (pszRN && gpSet->isAutoTrimSingleLine) {
+		wchar_t* pszNext = pszRN;
+		while ((*pszNext == L'\r') || (*pszNext == L'\n')) {
+			pszNext++;
+		}
+		if (!wcspbrk(pszNext, L"\r\n")) {
+			PasteMode = pm_OneLine;
+		}
+	}
+
 	if (PasteMode == pm_OneLine)
 	{
 		LPCWSTR pszEnd = pszBuf + nBufLen;

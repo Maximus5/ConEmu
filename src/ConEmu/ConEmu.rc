@@ -911,7 +911,7 @@ BEGIN
     CONTROL         "First line",rPasteM2FirstLine,"Button",BS_AUTORADIOBUTTON,206,41,78,8
     CONTROL         "Single line",rPasteM2SingleLine,"Button",BS_AUTORADIOBUTTON,288,26,78,8
     CONTROL         "Do nothing",rPasteM2Nothing,"Button",BS_AUTORADIOBUTTON,288,41,78,8
-    GROUPBOX        "Confirm critical actions",gbPasteConfirm,10,80,364,64,WS_GROUP
+    GROUPBOX        "Confirm critical actions",gbPasteConfirm,10,80,364,79,WS_GROUP
     CONTROL         "Multi-line paste: avoid unexpected command execution by <Enter> keypress",cbClipConfirmEnter,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,93,355,8
     CONTROL         "Long text paste: avoid non-responsive console until the paste finishes",cbClipConfirmLimit,
@@ -922,6 +922,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,56,163,10
     CONTROL         "Allow Windows to POSIX path conversion",cbPasteM2Posix,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,206,56,163,10
+    CONTROL         "Automatically remove newline when pasting single line",cbAutoTrimSingleLine,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,16,141,253,10
 END
 
 IDD_SPG_ENVIRONMENT DIALOGEX 0, 0, 381, 242
@@ -1665,6 +1667,10 @@ END
 #ifdef APSTUDIO_INVOKED
 GUIDELINES DESIGNINFO
 BEGIN
+    IDD_CMDPROMPT, DIALOG
+    BEGIN
+    END
+
     IDD_SPG_PASTE, DIALOG
     BEGIN
     END

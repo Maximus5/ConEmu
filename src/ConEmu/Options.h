@@ -580,6 +580,8 @@ struct Settings
 		BYTE isCTSColorIndex;
 		//reg->Load(L"ClipboardConfirmEnter", isPasteConfirmEnter);
 		bool isPasteConfirmEnter;
+		//reg->Load(L"AutoTrimSingleLine", isAutoTrimSingleLine);
+		bool isAutoTrimSingleLine;
 		//reg->Load(L"ClipboardConfirmLonger", nPasteConfirmLonger);
 		UINT nPasteConfirmLonger;
 		//reg->Load(L"FarGotoEditorOpt", isFarGotoEditor);

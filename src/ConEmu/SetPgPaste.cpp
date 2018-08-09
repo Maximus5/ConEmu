@@ -63,6 +63,7 @@ LRESULT CSetPgPaste::OnInitDialog(HWND hDlg, bool abInitial)
 	checkDlgButton(hDlg, cbPasteM2Posix, (gpSet->AppStd.isPosixFirstLine != pxm_Intact) ? BST_CHECKED : BST_UNCHECKED);
 
 	checkDlgButton(hDlg, cbClipConfirmEnter, gpSet->isPasteConfirmEnter);
+	checkDlgButton(hDlg, cbAutoTrimSingleLine, gpSet->isAutoTrimSingleLine);
 
 	checkDlgButton(hDlg, cbClipConfirmLimit, (gpSet->nPasteConfirmLonger!=0));
 	SetDlgItemInt(hDlg, tClipConfirmLimit, gpSet->nPasteConfirmLonger, FALSE);
@@ -152,6 +153,17 @@ void CSetPgPaste::OnBtn_ClipConfirmEnter(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->isPasteConfirmEnter = (uCheck != BST_UNCHECKED);
 
 } // cbClipConfirmEnter
+
+
+// cbAutoTrimSingleLine
+void CSetPgPaste::OnBtn_AutoTrimSingleLine(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB == cbAutoTrimSingleLine);
+
+	gpSet->isAutoTrimSingleLine = (uCheck != BST_UNCHECKED);
+
+} // cbAutoTrimSingleLine
+
 
 // cbClipConfirmLimit
 void CSetPgPaste::OnBtn_ClipConfirmLimit(HWND hDlg, WORD CB, BYTE uCheck)
