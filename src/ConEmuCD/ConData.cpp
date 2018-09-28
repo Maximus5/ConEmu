@@ -637,6 +637,8 @@ void Row::SetCellAttr(unsigned cell, const Attribute& attr, unsigned count)
 {
 	_ASSERTE(cell < GetLength() && count);
 
+	// #condata Optimize SetCellAttr to use explicit m_Attr0 instead of vector
+
 	Validate();
 
 	SetReqSize(cell + count);
@@ -1028,9 +1030,9 @@ iRow Table::GetRow(unsigned row)
 	m_Workspace.reserve(idx+1);
 	while (m_Workspace.size() <= idx)
 	{
-		m_Workspace.emplace_back(m_Attr);
+		m_Workspace.emplace_back(new Row{m_Attr});
 	}
-	return iRow(idx, &m_Workspace[idx]);
+	return iRow(idx, m_Workspace[idx]);
 }
 
 void Table::Scroll(int dir)
@@ -1105,7 +1107,7 @@ void Table::DoAutoScroll(int dir)
 			if (src >= ssize_t(rgn.Top) && src <= ssize_t(rgn.Bottom) && size_t(src) < m_Workspace.size())
 				m_Backscroll.emplace_front(std::move(m_Workspace[src]));
 			else
-				m_Backscroll.emplace_front(m_Attr);
+				m_Backscroll.emplace_front(new Row{m_Attr});
 		}
 
 		// if backscroll operation is allowed
@@ -1119,7 +1121,7 @@ void Table::DoAutoScroll(int dir)
 		const unsigned to_row = (step > 0) ? rgn.Bottom : unsigned(dst);
 		for (unsigned row = from_row; row <= to_row; ++row)
 		{
-			m_Workspace[row] = Row{m_Attr};
+			m_Workspace[row] = new Row{m_Attr};
 		}
 	}
 
@@ -1310,7 +1312,8 @@ void Table::InsertRow(unsigned count /*= 1*/)
 
 	const auto sz = GetSize();
 	auto row = CurrentRow();
-	decltype(m_Workspace) elements(count, Row{m_Attr});
+	decltype(m_Workspace) elements(count);
+	for (unsigned i = 0; i < count; ++i) elements[i] = new Row{m_Attr};
 	m_Workspace.insert(m_Workspace.begin() + row.index, elements.begin(), elements.end());
 
 	if (m_Workspace.size() >= (unsigned)sz.y)
@@ -1360,7 +1363,7 @@ void Table::GetData(CharInfo *pData, const Coord& bufSize, const RECT& rgn) cons
 		{
 			size_t back_idx = size_t(-(y+1));
 			if (back_idx < m_Backscroll.size())
-				row = &(m_Backscroll[back_idx]);
+				row = (m_Backscroll[back_idx]);
 			else
 				row = nullptr;
 		}
@@ -1368,7 +1371,7 @@ void Table::GetData(CharInfo *pData, const Coord& bufSize, const RECT& rgn) cons
 		{
 			size_t work_idx = size_t(y);
 			if (work_idx < m_Workspace.size())
-				row = &(m_Workspace[work_idx]);
+				row = (m_Workspace[work_idx]);
 			else
 				row = nullptr;
 		}
@@ -1378,11 +1381,11 @@ void Table::GetData(CharInfo *pData, const Coord& bufSize, const RECT& rgn) cons
 		{
 			if (y < 0 && !m_Backscroll.empty())
 			{
-				m_Backscroll.back().GetCellAttr(0, attr);
+				m_Backscroll.back()->GetCellAttr(0, attr);
 			}
 			else if (!m_Workspace.empty())
 			{
-				m_Workspace[0].GetCellAttr(0, attr);
+				m_Workspace[0]->GetCellAttr(0, attr);
 			}
 		}
 
@@ -1461,14 +1464,14 @@ void Table::DebugDump(bool workspace_only /*= false*/) const
 	{
 		swprintf_s(prefix, L"%04i: ", -int(i));
 		const auto& row = m_Backscroll[i-1];
-		dbgout.push_back(CEStr(prefix, row.GetText(), row.HasLineFeed() ? L"\\n" : L"\\0", L"\n"));
+		dbgout.push_back(CEStr(prefix, row->GetText(), row->HasLineFeed() ? L"\\n" : L"\\0", L"\n"));
 	}
 	dbgout.push_back(L"<<< Table::DebugDump <<< workspace begin\n");
 	for (size_t i = 0; i < m_Workspace.size(); ++i)
 	{
 		swprintf_s(prefix, L"%04i: ", int(i));
 		const auto& row = m_Workspace[i];
-		dbgout.push_back(CEStr(prefix, row.GetText(), row.HasLineFeed() ? L"\\n" : L"\\0", L"\n"));
+		dbgout.push_back(CEStr(prefix, row->GetText(), row->HasLineFeed() ? L"\\n" : L"\\0", L"\n"));
 	}
 	dbgout.push_back(L"<<< Table::DebugDump <<< end\n\n");
 	ssize_t total = 0;
