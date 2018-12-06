@@ -2145,6 +2145,7 @@ static void CreateVCTask(AppFoundList& App, LPCWSTR pszPlatform, LPCWSTR pszVer,
 		LPCWSTR pszIconSfx;
 		switch (iVer)
 		{
+		case 16: pszIconSfx = L",43\""; break;
 		case 15: pszIconSfx = L",38\""; break;
 		case 14: pszIconSfx = L",33\""; break;
 		case 12: pszIconSfx = L",28\""; break;
