@@ -335,12 +335,14 @@ bool CTabID::IsEqual(CVirtualConsole* apVCon, LPCWSTR asName, CEFarWindowType an
 #ifdef TAB_REF_PLACE
 void CTabID::AddPlace(LPCSTR asName, int anLine)
 {
+	MSectionLockSimple lock(m_PlacesSC);
 	TabRefPlace rp; rp.SetPlace(asName, anLine);
 	m_Places.push_back(rp);
 }
 
 void CTabID::DelPlace(LPCSTR asName, int anLine)
 {
+	MSectionLockSimple lock(m_PlacesSC);
 	for (INT_PTR i = 0; i < m_Places.size(); i++)
 	{
 		const TabRefPlace& rp = m_Places[i];

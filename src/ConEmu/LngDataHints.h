@@ -326,6 +326,8 @@ static LngPredefined gsDataHints[] = {
 	{ vkCTSShiftHome,          L"Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages" },
 	{ vkCTSShiftLeft,          L"Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages" },
 	{ vkCTSShiftRight,         L"Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages" },
+	{ vkCTSCtrlShiftLeft,      L"Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages" },
+	{ vkCTSCtrlShiftRight,     L"Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages" },
 	{ vkCTSShiftUp,            L"Start block selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages" },
 	{ vkCTSVkAct,              L"Right and middle mouse buttons modifier (Text selection)" },
 	{ vkCTSVkBlock,            L"Block selection modifier" },

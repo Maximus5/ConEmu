@@ -385,6 +385,7 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"     DX: select text horizontally: -1/+1\r\n" \
 	L"     DY: select text vertically: -1/+1\r\n" \
 	L"     HE: to-home(-1)/to-end(+1) with text selection\r\n" \
+	L"     HE: word-left(-2)/word-right(+2) with text selection\r\n" \
 	L"Select(2)\r\n" \
 	L"  - Use to stop selection\r\n" \
 	L"SetDpi(<DPI>)\r\n" \

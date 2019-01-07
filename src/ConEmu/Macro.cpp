@@ -2920,8 +2920,17 @@ LPWSTR ConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	}
 	else if (nType == 0)
 	{
-		if (nHomeEnd)
-			apRCon->ChangeSelectionByKey(((nHomeEnd < 0) ? VK_HOME : VK_END), false, true);
+		switch (nHomeEnd)
+		{
+		case -1:
+			apRCon->ChangeSelectionByKey(VK_HOME, false, true); break;
+		case +1:
+			apRCon->ChangeSelectionByKey(VK_END, false, true); break;
+		case -2:
+			apRCon->ChangeSelectionByKey(VK_LEFT, true, true); break;
+		case +2:
+			apRCon->ChangeSelectionByKey(VK_RIGHT, true, true); break;
+		}
 	}
 
 	return lstrdup(L"OK");

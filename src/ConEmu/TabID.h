@@ -202,6 +202,7 @@ public:
 
 	#ifdef TAB_REF_PLACE
 	protected:
+	MSectionSimple m_PlacesSC{true};
 	MArray<TabRefPlace> m_Places;
 	public:
 	void AddPlace(LPCSTR asName, int anLine);

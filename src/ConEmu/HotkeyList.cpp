@@ -572,6 +572,10 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_LEFT,VK_SHIFT);
 	Add(vkCTSShiftRight,  chk_System, ConEmuHotKey::UseCTSShiftArrow, L"", CConEmuCtrl::key_GuiMacro, false, L"Select(0,1)")
 		->SetHotKey(VK_RIGHT,VK_SHIFT);
+	Add(vkCTSCtrlShiftLeft,   chk_System, ConEmuHotKey::UseCTSShiftArrow, L"", CConEmuCtrl::key_GuiMacro, false, L"Select(0,-1,0,-2)")
+		->SetHotKey(VK_LEFT,VK_CONTROL,VK_SHIFT);
+	Add(vkCTSCtrlShiftRight,  chk_System, ConEmuHotKey::UseCTSShiftArrow, L"", CConEmuCtrl::key_GuiMacro, false, L"Select(0,1,0,2)")
+		->SetHotKey(VK_RIGHT,VK_CONTROL,VK_SHIFT);
 	Add(vkCTSShiftHome,   chk_System, ConEmuHotKey::UseCTSShiftArrow, L"", CConEmuCtrl::key_GuiMacro, false, L"Select(0,-1,0,-1)")
 		->SetHotKey(VK_HOME,VK_SHIFT);
 	Add(vkCTSShiftEnd,    chk_System, ConEmuHotKey::UseCTSShiftArrow, L"", CConEmuCtrl::key_GuiMacro, false, L"Select(0,1,0,1)")
