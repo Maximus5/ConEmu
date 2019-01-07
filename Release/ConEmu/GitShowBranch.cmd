@@ -163,7 +163,7 @@ set /P gitbranch=<"%git_err%"
 rem But we need only first line of it
 set "gitbranch=%gitbranch%"
 if NOT DEFINED gitbranch goto skip_not_a_git
-if "%gitbranch:~0,16%" == "fatal: Not a git" (
+if /I "%gitbranch:~0,16%" == "fatal: not a git" (
 rem echo Not a .git repository
 del "%git_out%">nul
 del "%git_err%">nul
