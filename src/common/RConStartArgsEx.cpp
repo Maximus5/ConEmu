@@ -39,6 +39,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WObjects.h"
 #include "CmdLine.h"
 
+#ifdef _DEBUG
+// for tests only
+#include "EnvVar.h"
+#endif
+
 #define DEBUGSTRPARSE(s) DEBUGSTR(s)
 
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
