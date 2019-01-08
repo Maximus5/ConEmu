@@ -210,7 +210,9 @@ namespace ConEmuMacro
 	LPWSTR SetDpi(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// SetOption("<Name>",<Value>)
 	LPWSTR SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-	// Диалог Settings
+	// SetParentHWND(<NewParentHWND>)
+	LPWSTR SetParentHWND(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Open Settings dialog
 	LPWSTR Settings(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Shell (ShellExecute)
 	LPWSTR Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
@@ -306,6 +308,7 @@ namespace ConEmuMacro
 		{Select, {L"Select"}},
 		{SetDpi, {L"SetDpi"}, gmf_MainThread},
 		{SetOption, {L"SetOption"}, gmf_MainThread},
+		{SetParentHWND, {L"SetParentHWND"}, gmf_MainThread},
 		{Settings, {L"Settings"}, gmf_MainThread},
 		{Shell, {L"Shell", L"ShellExecute"}, gmf_MainThread},
 		{Sleep, {L"Sleep"}},
@@ -3181,6 +3184,25 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 	}
 
 	return pszResult ? pszResult : lstrdup(L"UnknownOption");
+}
+
+// SetParentHWND(<NewParentHWND>)
+LPWSTR ConEmuMacro::SetParentHWND(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	if (!gpConEmu->isInside())
+		return lstrdup(L"InsideModeRequired");
+
+	HWND2 hNewParent{0};
+	if (p->IsIntArg(0))
+	{
+		int hwnd_int = 0;
+		p->GetIntArg(0, hwnd_int);
+		hNewParent.u = static_cast<DWORD>(hwnd_int);
+	}
+
+	// TODO: Call here smth. like gpConEmu->SetInsideParent((HWND)hNewParent);
+
+	return lstrdup(L"OK");
 }
 
 // Диалог Settings
