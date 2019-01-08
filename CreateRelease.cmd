@@ -1,7 +1,20 @@
 @echo off
 
+setlocal
+
 set ver_info="%~dp0PortableApps\App\AppInfo\appinfo.ini"
 set ver_hdr="%~dp0src\ConEmu\version.h"
+
+echo on
+set "curdt=%DATE%"
+set "curdt_day=%curdt:~0,2%"
+if /I "%curdt:~2,5%" == "-Jan-" (
+  set "curdt_mon=01" & set "curdt_year=%date:~7,2%"
+) else (
+  set "curdt_mon=%curdt:~3,2%" & set "curdt_year=%curdt:~8,2%"
+)
+set "curdt=%curdt_year%%curdt_mon%%curdt_day%"
+echo off
 
 
 set ConEmuHooks=Enabled
@@ -31,8 +44,6 @@ if /I "%~2" == "ALPHA" (
 :oneparm
 
 rem check date, must not bee too late or future ;)
-set curdt=%DATE%
-set curdt=%curdt:~8,2%%curdt:~3,2%%curdt:~0,2%
 set /A maxdt=%curdt%+1
 set /A mindt=%curdt%-1
 if "%BUILD_NO:~0,6%" == "%curdt%" goto buildok
@@ -148,15 +159,13 @@ goto :EOF
 :noparm
 call "%~dp0Deploy\GetCurVer.cmd"
 if "%CurVerBuild%" NEQ "" goto build_found
-set curdt=%DATE%
-set CurVerBuild=%curdt:~8,2%%curdt:~3,2%%curdt:~0,2%
+set CurVerBuild=%curdt%
 
 :build_found
 echo Usage:    CreateRelease.cmd ^<Version^> [^<Stage^>]
 echo Example:  CreateRelease.cmd %CurVerBuild% %CurVerStage%
 echo .
-set curdt=%DATE%
-set CurVerBuild=%curdt:~8,2%%curdt:~3,2%%curdt:~0,2%
+set CurVerBuild=%curdt%
 set BUILD_NO=
 set BUILD_STAGE=
 rem Version
