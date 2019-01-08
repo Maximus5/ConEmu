@@ -1210,10 +1210,17 @@ LPWSTR ConEmuMacro::GetNextInt(LPWSTR& rsArguments, GuiMacroArg& rnValue)
 	if (*pszTestEnd == L'-' || *pszTestEnd == L'+')
 		pszTestEnd++;
 	if (pszTestEnd[0] == L'0' && (pszTestEnd[1] == L'x' || pszTestEnd[1] == L'X'))
-		pszTestEnd+=2;
-	while (isDigit(*pszTestEnd))
-		pszTestEnd++;
+	{
+		pszTestEnd += 2;
+		while (isHexDigit(*pszTestEnd))
+			pszTestEnd++;
+	} else {
+		while (isDigit(*pszTestEnd))
+			pszTestEnd++;
+	}
 	#endif
+
+	// TODO: Support 64-bit integers?
 
 	// Hex value?
 	if (pszArg[0] == L'0' && (pszArg[1] == L'x' || pszArg[1] == L'X'))

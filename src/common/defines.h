@@ -172,6 +172,7 @@ using ssize_t = int32_t;
 
 #define isDriveLetter(c) ((c>=L'A' && c<=L'Z') || (c>=L'a' && c<=L'z'))
 #define isDigit(c) (c>=L'0' && c<=L'9')
+#define isHexDigit(c) ((c>=L'0' && c<=L'9') || (c>=L'a' && c<=L'f') || (c>=L'A' && c<=L'F'))
 #define isDot(c) (c==L'.' || c==',')
 #define isAlpha(c) (IsCharAlpha(c))
 #define isSpace(c) (c==L' ' || c==L'\xA0' || c==L'\t' || c==L'\r' || c==L'\n')
