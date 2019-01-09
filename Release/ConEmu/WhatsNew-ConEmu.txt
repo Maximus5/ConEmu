@@ -20,6 +20,28 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2019.1.8
+* Start word selection with Ctrl+Shift+Left/Right.
+* Settings/Size & Pos: Apply button ignored invisible part of Win10 frame while setting coordinates.
+* gh-861: Support RAlt the same way as Alt+Numbers (keypad).
+* Predefined palettes were not initialized in some cases.
+* gh-1620: Fade colors were wrong if ConEmu was started with `-Palette` switch.
+* gh-1623: Let `Ctrl+0` and GuiMacro `Tab(7,-1)` activate *last* tab.
+* gh-1637: Show message about absent DosBox required files.
+* Fix unexpected pane-1 activation on mouse hover when pane-2 ChildGui popup dialog is over pane-1.
+* gh-1662: Escape Char not working for passwords with trailing quote.
+* gh-1573: Interface language setting was not saved.
+* Add a new option to auto-trim single lines.
+  When pasting a single line ending in newline, the user is presented with a
+  warning about pasting multi-line strings. This enables a new option to
+  automatically strip trailing newlines whenever we detect that a single line
+  string has been pasted. This prevents the warning and allows the user to more
+  conveniently edit single lines pasted into the console.
+* Add German translation to ConEmu.l10n.
+* Add icon ID number for VS2019 in CreateVCTask.
+* GitShowBranch: Case insensitive check for no branch.
+
+
 2018.6.26
 * gh-1606: Don't show assertion on start if we can't determine HKL name, just write info to log.
 * gh-1613: In some cases first four CJK cells were displayed using wrong attributes (inverse, underline).
