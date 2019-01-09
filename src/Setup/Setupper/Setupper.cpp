@@ -652,12 +652,12 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	lstrcpyn(gsRunAsAdm, msgRunSetupAsAdmin, countof(gsRunAsAdm));
 
 	wchar_t szArg[MAX_PATH+1];
-	LPCWSTR pszCmdToken = GetCommandLine();
+	const wchar_t* pszCmdToken = GetCommandLine();
 	LPCWSTR pszCmdLineW = pszCmdToken;
 
 	CTempDir temp_dir; // gsTempFolder[0] = 0;
 
-	while ((pszCmdToken = NextArg(pszCmdToken, szArg)))
+	while ((0 == NextArg(&pszCmdToken, szArg)))
 	{
 		if (lstrcmp(szArg, L"/?") == 0 || lstrcmp(szArg, L"-?") == 0 || lstrcmp(szArg, L"-h") == 0
 			|| lstrcmp(szArg, L"-help") == 0 || lstrcmp(szArg, L"--help") == 0)

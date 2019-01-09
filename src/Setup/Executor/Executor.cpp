@@ -45,10 +45,10 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 	
 	LPCWSTR pszMsi = NULL, pszArguments = NULL;
 	wchar_t szArg[MAX_PATH+1], szMsi[MAX_PATH+1];
-	LPCWSTR pszCmdToken = GetCommandLine();
+	const wchar_t* pszCmdToken = GetCommandLine();
 	//LPCWSTR pszCmdLineW = pszCmdToken;
 	
-	while ((pszCmdToken = NextArg(pszCmdToken, szArg)))
+	while ((0 == NextArg(&pszCmdToken, szArg)))
 	{
 		if (lstrcmpi(szArg, L"/i") == 0)
 		{
