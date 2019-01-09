@@ -7,7 +7,7 @@ cd /d "%~dp0"
 set "x32_build_flag=%~dp0.x32_build_flag"
 set "x64_build_flag=%~dp0.x64_build_flag"
 set build_flag=
-set build_multi=
+set build_multi=/m
 rem set build_multi=/m
 
 set target=clean,build
