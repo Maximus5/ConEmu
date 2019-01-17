@@ -13736,7 +13736,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			OnDisplayChanged(LOWORD(wParam), LOWORD(lParam), HIWORD(lParam));
 			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
 			auto wm = GetWindowMode();
-			if (wm != wmNormal)
+			if (wm != wmNormal && !isIconic() && isMeForeground())
 				SetWindowMode(wm);
 		} break;
 		case /*0x02E0*/ WM_DPICHANGED:
