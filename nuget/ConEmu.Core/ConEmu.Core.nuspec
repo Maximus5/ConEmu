@@ -14,7 +14,7 @@
 <releaseNotes>http://conemu.github.io/en/Whats_New.html</releaseNotes>
 
 <requireLicenseAcceptance>false</requireLicenseAcceptance>
-<licenseUrl>https://github.com/Maximus5/ConEmu/blob/master/Release/ConEmu/License.txt</licenseUrl>
+<license type="file">license\license.txt</license>
 <copyright>© 2015, Maximus5</copyright>
 
 <summary>
@@ -51,6 +51,8 @@ Short list of features:
     <!-- Nuget will include this build file in the MSBuild project when referencing the Nuget. -->
     <!-- It allows the conemu stuff to be copied to the outdir of that project (or projects which reference it). -->
     <file src="Build\ConEmu.Core.Targets" target="Build" />
+    <!-- License -->
+    <file src="..\..\Release\ConEmu\License.txt" target="license\license.txt" />
     <!-- Set of ConEmu files. -->
     <file src="..\..\Release\ConEmu.exe" target="Tools\ConEmu" />
     <file src="..\..\Release\ConEmu64.exe" target="Tools\ConEmu" />
