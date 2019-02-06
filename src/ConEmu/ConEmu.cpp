@@ -13725,7 +13725,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			if (wParam == SPI_SETWORKAREA)
 			{
 				auto wm = GetWindowMode();
-				if (wm != wmNormal)
+				if (wm != wmNormal && !isIconic() && isMeForeground())
 					SetWindowMode(wm);
 			}
 		} break;
