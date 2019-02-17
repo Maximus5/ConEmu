@@ -1144,6 +1144,7 @@ BOOL CEAnsi::WriteText(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, 
 		}
 		#endif
 
+		// for debug purposes insert "\x1B]9;10\x1B\" at the beginning of connector-*-out.log
 		if (gbWasXTermOutput)
 		{
 			// On Win10 we may utilize DISABLE_NEWLINE_AUTO_RETURN flag, but it would
@@ -2808,10 +2809,12 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			}
 
 			SMALL_RECT clipRgn = csbi.srWindow;
+			// TODO: it's expected to work with relative coordinates, only working area
 			if (gDisplayOpt.ScrollRegion)
 			{
-				clipRgn.Top = std::max<int>(0, std::min<int>(gDisplayOpt.ScrollStart, csbi.dwSize.Y-1));
-				clipRgn.Bottom = std::max<int>(0, std::min<int>(gDisplayOpt.ScrollEnd, csbi.dwSize.Y-1));
+				// tmux sets cursor position outside of the scrolling region
+				//clipRgn.Top = std::max<int>(0, std::min<int>(gDisplayOpt.ScrollStart, csbi.dwSize.Y-1));
+				//clipRgn.Bottom = std::max<int>(0, std::min<int>(gDisplayOpt.ScrollEnd, csbi.dwSize.Y-1));
 			}
 			else if ((Code.Action == 'H')
 				&& (((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 0) >= csbi.dwSize.Y))
@@ -3550,6 +3553,20 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				case 21:
 					// `ESC [ 2 1 t` --> Report terminal window title as `OSC l title ST`
 					ReportConsoleTitle();
+					break;
+				case 22:
+				case 23:
+					// `ESC [ 2 2 ; 0 t` --> Save xterm icon and window title on stack.
+					// `ESC [ 2 2 ; 1 t` --> Save xterm icon title on stack.
+					// `ESC [ 2 2 ; 2 t` --> Save xterm window title on stack.
+					// `ESC [ 2 3 ; 0 t` --> Restore xterm icon and window title from stack.
+					// `ESC [ 2 3 ; 1 t` --> Restore xterm icon title from stack.
+					// `ESC [ 2 3 ; 2 t` --> Restore xterm window title from stack.
+					if (i < Code.ArgC)
+						++i; // subcommand
+					if (i < Code.ArgC && !Code.ArgV[i])
+						++i; // strange sequence 22;0;0t
+					DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
 					break;
 				default:
 					TODO("ANSI: xterm window manipulation");

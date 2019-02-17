@@ -1836,7 +1836,7 @@ BOOL ExtScrollScreen(ExtScrollScreenParm* Info)
 			}
 			else
 			{
-				_ASSERTEX(nRows > 0);
+				//_ASSERTEX(nRows > 0); // may occur when scroll region does not start from screen top and we erase all lines
 			}
 		}
 
