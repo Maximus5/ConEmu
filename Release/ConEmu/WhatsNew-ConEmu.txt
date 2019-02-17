@@ -20,6 +20,11 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2019.2.17
+* gh-1795: Unexpected ConEmu activation on monitor change.
+* gh-1159, gh-1775: ANSI, tmux, compatibility issues.
+
+
 2019.1.8
 * Start word selection with Ctrl+Shift+Left/Right.
 * Settings/Size & Pos: Apply button ignored invisible part of Win10 frame while setting coordinates.
