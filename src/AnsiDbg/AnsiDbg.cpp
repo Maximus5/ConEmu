@@ -587,21 +587,37 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	InitializeCriticalSection(&cs);
 
-	if (argc == 3 && _tcscmp(argv[1], _T("-srv")) == 0)
+	bool valid_args = false;
+	for (int i = 0; i < argc; ++i)
 	{
-		iRc = ProcessSrv(argv[2]);
+		if (((i + 1) < argc) && _tcscmp(argv[i], _T("-srv")) == 0)
+		{
+			valid_args = true;
+			iRc = ProcessSrv(argv[i+1]);
+			break;
+		}
+		if (((i + 1) < argc) && _tcscmp(argv[i], _T("-in")) == 0)
+		{
+			valid_args = true;
+			iRc = ProcessInput(argv[i+1]);
+			break;
+		}
+		if (_tcscmp(argv[1], _T("-read")) == 0)
+		{
+			valid_args = true;
+			iRc = InputThread(NULL);
+			break;
+		}
 	}
-	else if (argc == 3 && _tcscmp(argv[1], _T("-in")) == 0)
+
+	if (!valid_args)
 	{
-		iRc = ProcessInput(argv[2]);
-	}
-	else if (argc == 2 && _tcscmp(argv[1], _T("-read")) == 0)
-	{
-		iRc = InputThread(NULL);
-	}
-	else
-	{
-		printf("Invalid usage\n\tAnsiDbg -in <name>\n\tAnsiDbg -out <name>\n");
+		printf("Invalid usage\n\tAnsiDbg -in <name>\n\tAnsiDbg -out <name>\nCalled as:\n");
+		for (int i = 0; i < argc; ++i)
+			wprintf(L"\t#%i: %s\n", i, argv[i]);
+		char buffer[80];
+		printf("Press Enter to exit...");
+		fgets(buffer, 80, stdin);
 		iRc = 100;
 	}
 
