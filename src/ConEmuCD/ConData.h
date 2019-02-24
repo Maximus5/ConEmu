@@ -253,8 +253,8 @@ public:
 		unsigned Top, Bottom;
 	};
 
-	using deque_type = std::deque<Row, MArrayAllocator<Row>>;
-	using vector_type = std::vector<Row, MArrayAllocator<Row>>;
+	using deque_type = std::deque<Row*, MArrayAllocator<Row*>>;
+	using vector_type = std::vector<Row*, MArrayAllocator<Row*>>;
 
 public:
 	Table(const Attribute& _attr = {7}, const Coord& _size = {80, 25}, const int _backscrollMax = 1<<20, BellCallback _bellCallback = nullptr);
