@@ -1592,6 +1592,7 @@ int CEAnsi::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[CE
 					case L'M': // Reverse LF
 					case L'E': // CR-LF
 					case L'D': // LF
+					// #ANSI gh-1827: support 'H' to set tab stops
 						// xterm?
 						lpStart = lpEscStart;
 						Code.First = 27;
@@ -2760,11 +2761,32 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 		// Change cursor position
 		if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 		{
+			struct PointXY {int X,Y;};
+			auto get_scroll_region = [&csbi]()
+			{
+				const auto& srw = csbi.srWindow;
+				SMALL_RECT clipRgn = {0, 0, srw.Right - srw.Left, srw.Bottom - srw.Top};
+				if (gDisplayOpt.ScrollRegion)
+				{
+					clipRgn.Top = std::max<SHORT>(0, std::min<SHORT>(gDisplayOpt.ScrollStart, csbi.dwSize.Y-1));
+					clipRgn.Bottom = std::max<SHORT>(0, std::min<SHORT>(gDisplayOpt.ScrollEnd, csbi.dwSize.Y-1));
+				}
+				return clipRgn;
+			};
+			auto get_cursor = [&csbi]()
+			{
+				const auto& srw = csbi.srWindow;
+				int visible_rows = srw.Bottom - srw.Top;
+				return PointXY{
+					csbi.dwCursorPosition.X,
+					std::max(0, std::min(visible_rows, csbi.dwCursorPosition.Y - srw.Top))
+				};
+			};
 			const struct {int left, top, right, bottom;} workRgn = {0, 0, csbi.dwSize.X - 1, csbi.dwSize.Y - 1};
 			_ASSERTEX(workRgn.left <= workRgn.right && workRgn.top <= workRgn.bottom);
-			const auto& clipRgn = csbi.srWindow;
-			const struct {int X,Y;} cur = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y};
-			struct {int X,Y;} crNewPos = {cur.X, cur.Y};
+			const auto& clipRgn = get_scroll_region();
+			const auto cur = get_cursor();
+			PointXY crNewPos = cur;
 
 			enum class Direction { kAbsolute, kCompatible, kRelative };
 
@@ -2846,8 +2868,12 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			// Goto
 			ORIGINAL_KRNL(SetConsoleCursorPosition);
 			{
-			COORD crNewPosAPI = { crNewPos.X, crNewPos.Y };
-			_ASSERTE(crNewPosAPI.X == crNewPos.X && crNewPosAPI.Y == crNewPos.Y);
+			const auto& srw = csbi.srWindow;
+			COORD crNewPosAPI = {
+				(SHORT)crNewPos.X,
+				(SHORT)std::min<int>(csbi.dwSize.Y - 1, srw.Top + crNewPos.Y)
+			};
+			_ASSERTE(crNewPosAPI.X == crNewPos.X);
 			F(SetConsoleCursorPosition)(hConsoleOutput, crNewPosAPI);
 			}
 
@@ -3001,7 +3027,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 		//(The default for Pt is line 1, the default for Pb is the end
 		// of the screen)
 		//
-		if ((Code.ArgC >= 2) && (Code.ArgV[0] >= 1) && (Code.ArgV[1] >= Code.ArgV[0]))
+		if ((Code.ArgC >= 2) && (Code.ArgV[0] >= 0) && (Code.ArgV[1] >= Code.ArgV[0]))
 		{
 			// Values are 1-based
 			SetScrollRegion(true, true, Code.ArgV[0], Code.ArgV[1], hConsoleOutput);
@@ -3534,7 +3560,6 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 	case L't':
 		if (Code.ArgC > 0 && Code.ArgC <= 3)
 		{
-			wchar_t sCurInfo[32];
 			for (int i = 0; i < Code.ArgC; i++)
 			{
 				switch (Code.ArgV[i])
@@ -3952,6 +3977,8 @@ void CEAnsi::SetScrollRegion(bool bRegion, bool bRelative, int nStart, int nEnd,
 {
 	if (bRegion && (nStart >= 0) && (nStart <= nEnd))
 	{
+		// note: the '\e[0;35r' shall be treated as '\e[1;35r'
+		_ASSERTE(nStart >= 0 && nEnd >= nStart);
 		SMALL_RECT working = GetWorkingRegion(hConsoleOutput, bRelative);
 		_ASSERTE(working.Top>=0 && working.Left>=0 && working.Bottom>=working.Top && working.Right>=working.Left);
 		if (bRelative)

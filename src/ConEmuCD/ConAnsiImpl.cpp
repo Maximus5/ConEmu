@@ -1313,12 +1313,13 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			//if (gbIsVimProcess)
 			//	gbIsVimAnsi = true;
 
+			struct PointXY {int X,Y;};
 			const auto& workSize = m_Table->GetSize();
-			const struct {int left, top, right, bottom;} workRgn = {0, 0, workSize.x - 1, workSize.y - 1};
+			const struct {int left, top, right, bottom;} workRgn = {0, 0, (int)workSize.x - 1, workSize.y - 1};
 			_ASSERTEX(workRgn.left <= workRgn.right && workRgn.top <= workRgn.bottom);
 			const auto& clipRgn = m_Table->GetScrollRegion();
-			const struct {int X, Y;} cur = {(int)m_Table->GetCursor().x, m_Table->GetCursor().y};
-			struct {int X,Y;} crNewPos = {cur.X, cur.Y};
+			const auto cur = PointXY{(int)m_Table->GetCursor().x, m_Table->GetCursor().y};
+			PointXY crNewPos = cur;
 			enum class Direction { kAbsolute, kCompatible, kRelative };
 
 			auto set_y = [&crNewPos, &workRgn, &clipRgn, &cur](Direction direction, int value)
@@ -1329,9 +1330,9 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					crNewPos.Y = workRgn.bottom;
 				else if (direction == Direction::kAbsolute || direction == Direction::kCompatible)
 					crNewPos.Y = std::max(workRgn.top, std::min(workRgn.bottom, value));
-				else if (value < 0 && cur.Y >= clipRgn.Top)
+				else if (value < 0 && cur.Y >= (int)clipRgn.Top)
 					crNewPos.Y = std::max<int>(clipRgn.Top, std::min(workRgn.bottom, cur.Y + value));
-				else if (value > 0 && cur.Y <= clipRgn.Bottom)
+				else if (value > 0 && cur.Y <= (int)clipRgn.Bottom)
 					crNewPos.Y = std::max(workRgn.top, std::min<int>(clipRgn.Bottom, cur.Y + value));
 				else
 					crNewPos.Y = std::max(workRgn.top, std::min(workRgn.bottom, cur.Y + value));
@@ -1519,7 +1520,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 		// of the screen)
 		//
 		// Values are 1-based
-		if ((Code.ArgC >= 2) && (Code.ArgV[0] >= 1) && (Code.ArgV[1] >= Code.ArgV[0]))
+		if ((Code.ArgC >= 2) && (Code.ArgV[0] >= 0) && (Code.ArgV[1] >= Code.ArgV[0]))
 			SetScrollRegion(true, Code.ArgV[0], Code.ArgV[1]);
 		else
 			SetScrollRegion(false);
@@ -2377,7 +2378,8 @@ void SrvAnsiImpl::SetScrollRegion(bool bRegion, int nStart, int nEnd)
 {
 	if (bRegion)
 	{
-		_ASSERTE(nStart > 0 && nEnd >= nStart);
+		// note: the '\e[0;35r' shall be treated as '\e[1;35r'
+		_ASSERTE(nStart >= 0 && nEnd >= nStart);
 		m_Table->SetScrollRegion(true, std::max(0, nStart - 1), std::max(0, nEnd - 1));
 	}
 	else
