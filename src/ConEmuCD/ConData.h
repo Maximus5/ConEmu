@@ -222,11 +222,17 @@ protected:
 	void ResetCRLF();
 
 protected:
+	// Reserved for synchronization with RealConsole
 	WORD m_RowID = 0;
+	// Where '\r' was emitted
 	int m_WasCR = -1;
+	// Where '\n' was emitted
 	int m_WasLF = -1;
+	// Simple string of the row
 	RowChars m_Text;
+	// #condata Optimize SetCellAttr to use explicit m_Attr0 instead of vector
 	RowColors m_Colors;
+	// If console app informed us about its current working directory
 	CEStr m_CWD;
 };
 
