@@ -243,6 +243,7 @@ public:
 	const unsigned index;
 	iRow(unsigned _index, Row* _row);
 	Row* operator->() const;
+	Row& operator*() const;
 protected:
 	Row* row;
 };

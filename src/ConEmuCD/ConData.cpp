@@ -36,12 +36,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConData.h"
 
 #undef TABLE_DEBUGDUMP
-#ifdef _DEBUG
-#define TABLE_DEBUGDUMP
-#ifndef TABLE_UNITTESTS
-#define TABLE_UNITTESTS
-#endif
-#endif
+#undef TABLE_UNITTESTS
+//#ifdef _DEBUG
+//#define TABLE_DEBUGDUMP
+//#ifndef TABLE_UNITTESTS
+//#define TABLE_UNITTESTS
+//#endif
+//#endif
 
 namespace condata
 {
@@ -775,6 +776,12 @@ iRow::iRow(unsigned _index, Row* _row)
 Row* iRow::operator->() const
 {
 	return row;
+}
+
+Row& iRow::operator*() const
+{
+	_ASSERTE(row);
+	return *row;
 }
 
 
