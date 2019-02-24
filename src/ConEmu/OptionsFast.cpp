@@ -2300,6 +2300,8 @@ static void CreatePowerShellTask()
 		L"powershell.exe");
 	CreateDefaultTask(L"Shells::PowerShell (Admin)", L"",
 		L"powershell.exe -new_console:a");
+
+	// #DefaultTasks pwsh.exe
 }
 
 static void CreatePuttyTask()
