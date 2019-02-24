@@ -819,8 +819,12 @@ Coord Table::GetCursor() const
 		return Coord{};
 	}
 	_ASSERTE(m_Cursor.y >= 0);
-	const Region rgn = GetScrollRegion();
-	return Coord{std::min(m_Cursor.x, m_Size.x), std::max<int>(rgn.Top, std::min<int>(m_Cursor.y, rgn.Bottom))};
+	//Unix terminals do not restrict the cursor to be in the scrolling area
+	//only incremental movement (up/down/left/right) are restricted,
+	//and only if the cursor IS inside scrolling area
+	//const Region rgn = GetScrollRegion();
+	return Coord{std::max<unsigned>(0, std::min(m_Cursor.x, m_Size.x)),
+		         std::max<int>(0, std::min<int>(m_Cursor.y, m_Size.y))};
 }
 
 unsigned Table::GetBackscroll() const

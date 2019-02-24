@@ -2760,49 +2760,82 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 		// Change cursor position
 		if (GetConsoleScreenBufferInfoCached(hConsoleOutput, &csbi))
 		{
-			struct {int X,Y;} crNewPos = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y};
+			const struct {int left, top, right, bottom;} workRgn = {0, 0, csbi.dwSize.X - 1, csbi.dwSize.Y - 1};
+			_ASSERTEX(workRgn.left <= workRgn.right && workRgn.top <= workRgn.bottom);
+			const auto& clipRgn = csbi.srWindow;
+			const struct {int X,Y;} cur = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y};
+			struct {int X,Y;} crNewPos = {cur.X, cur.Y};
+
+			enum class Direction { kAbsolute, kCompatible, kRelative };
+
+			auto set_y = [&crNewPos, &workRgn, &clipRgn, &cur](Direction direction, int value)
+			{
+				const int kLegacyY = 9999;
+				if (direction == Direction::kCompatible && value >= std::min(kLegacyY, workRgn.bottom))
+					// #XTERM_256 Allow to put cursor into the legacy true-color area
+					crNewPos.Y = workRgn.bottom;
+				else if (direction == Direction::kAbsolute || direction == Direction::kCompatible)
+					crNewPos.Y = std::max(workRgn.top, std::min(workRgn.bottom, value));
+				else if (value < 0 && cur.Y >= clipRgn.Top)
+					crNewPos.Y = std::max<int>(clipRgn.Top, std::min(workRgn.bottom, cur.Y + value));
+				else if (value > 0 && cur.Y <= clipRgn.Bottom)
+					crNewPos.Y = std::max(workRgn.top, std::min<int>(clipRgn.Bottom, cur.Y + value));
+				else
+					crNewPos.Y = std::max(workRgn.top, std::min(workRgn.bottom, cur.Y + value));
+			};
+			auto set_x = [&crNewPos, &workRgn, &clipRgn, &cur](Direction direction, int value)
+			{
+				if (direction == Direction::kAbsolute || direction == Direction::kCompatible)
+					crNewPos.X = std::max(workRgn.left, std::min(workRgn.right, value));
+				else
+					crNewPos.X = std::max(workRgn.left, std::min(workRgn.right, cur.X + value));
+			};
 
 			switch (Code.Action)
 			{
 			case L'H':
+				// Set cursor position (ANSI values are 1-based)
+				set_y(Direction::kCompatible, (Code.ArgC > 0 && Code.ArgV[0]) ? (Code.ArgV[0] - 1) : 0);
+				set_x(Direction::kAbsolute, (Code.ArgC > 1 && Code.ArgV[1]) ? (Code.ArgV[1] - 1) : 0);
+				break;
 			case L'f':
-				// Set cursor position (1-based)
-				crNewPos.Y = csbi.srWindow.Top + ((Code.ArgC > 0 && Code.ArgV[0]) ? (Code.ArgV[0] - 1) : 0);
-				crNewPos.X = ((Code.ArgC > 1 && Code.ArgV[1]) ? (Code.ArgV[1] - 1) : 0);
+				// Set cursor position (ANSI values are 1-based)
+				set_y(Direction::kAbsolute, (Code.ArgC > 0 && Code.ArgV[0]) ? (Code.ArgV[0] - 1) : 0);
+				set_x(Direction::kAbsolute, (Code.ArgC > 1 && Code.ArgV[1]) ? (Code.ArgV[1] - 1) : 0);
 				break;
 			case L'A':
 				// Cursor up by N rows
-				crNewPos.Y -= ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
+				set_y(Direction::kRelative, -((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1));
 				break;
 			case L'B':
 				// Cursor down by N rows
-				crNewPos.Y += ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
+				set_y(Direction::kRelative, +((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1));
 				break;
 			case L'C':
 				// Cursor right by N cols
-				crNewPos.X += ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
+				set_x(Direction::kRelative, +((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1));
 				break;
 			case L'D':
 				// Cursor left by N cols
-				crNewPos.X -= ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
+				set_x(Direction::kRelative, -((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1));
 				break;
 			case L'E':
 				// Moves cursor to beginning of the line n (default 1) lines down.
-				crNewPos.Y += ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
-				crNewPos.X = 0;
+				set_y(Direction::kRelative, +((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1));
+				set_x(Direction::kAbsolute, 0);
 				break;
 			case L'F':
 				// Moves cursor to beginning of the line n (default 1) lines up.
-				crNewPos.Y -= ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
-				crNewPos.X = 0;
+				set_y(Direction::kRelative, -((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1));
+				set_x(Direction::kAbsolute, 0);
 				break;
 			case L'G':
 				// Moves the cursor to column n.
-				crNewPos.X = ((Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0);
+				set_x(Direction::kAbsolute, (Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0);
 				break;
 			case L'd':
-				// Moves the cursor to line n.
-				crNewPos.Y = csbi.srWindow.Top + ((Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0);
+				// Moves the cursor to line n (almost the same as 'H', but leave X unchanged).
+				set_y(Direction::kAbsolute, (Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0);
 				break;
 			#ifdef _DEBUG
 			default:
@@ -2810,31 +2843,6 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			#endif
 			}
 
-			SMALL_RECT clipRgn = csbi.srWindow;
-			// TODO: it's expected to work with relative coordinates, only working area
-			if (gDisplayOpt.ScrollRegion)
-			{
-				// tmux sets cursor position outside of the scrolling region
-				//clipRgn.Top = std::max<int>(0, std::min<int>(gDisplayOpt.ScrollStart, csbi.dwSize.Y-1));
-				//clipRgn.Bottom = std::max<int>(0, std::min<int>(gDisplayOpt.ScrollEnd, csbi.dwSize.Y-1));
-			}
-			else if ((Code.Action == 'H')
-				&& (((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 0) >= csbi.dwSize.Y))
-			{
-				// #XTERM_256 Allow to put cursor into the legacy true-color area
-				clipRgn.Top = 0; clipRgn.Bottom = csbi.dwSize.Y - 1;
-			}
-
-			// Check Row
-			if (crNewPos.Y < clipRgn.Top)
-				crNewPos.Y = clipRgn.Top;
-			else if (crNewPos.Y > clipRgn.Bottom)
-				crNewPos.Y = clipRgn.Bottom;
-			// Check Col
-			if (crNewPos.X < clipRgn.Left)
-				crNewPos.X = clipRgn.Left;
-			else if (crNewPos.X > clipRgn.Right)
-				crNewPos.X = clipRgn.Right;
 			// Goto
 			ORIGINAL_KRNL(SetConsoleCursorPosition);
 			{
@@ -2845,7 +2853,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 
 			if (gbIsVimProcess)
 				gbIsVimAnsi = true;
-		} // case L'H': case L'f': case 'A': case L'B': case L'C': case L'D':
+		} // case 'H', 'f', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'd'
 		break;
 
 	case L'J': // Clears part of the screen

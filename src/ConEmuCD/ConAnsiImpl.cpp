@@ -1313,51 +1313,82 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			//if (gbIsVimProcess)
 			//	gbIsVimAnsi = true;
 
-			const auto clipRgn = m_Table->GetScrollRegion();
-			const auto cur = m_Table->GetCursor();
-			struct {int X,Y;} crNewPos = {(int)cur.x, cur.y};
+			const auto& workSize = m_Table->GetSize();
+			const struct {int left, top, right, bottom;} workRgn = {0, 0, workSize.x - 1, workSize.y - 1};
+			_ASSERTEX(workRgn.left <= workRgn.right && workRgn.top <= workRgn.bottom);
+			const auto& clipRgn = m_Table->GetScrollRegion();
+			const struct {int X, Y;} cur = {(int)m_Table->GetCursor().x, m_Table->GetCursor().y};
+			struct {int X,Y;} crNewPos = {cur.X, cur.Y};
+			enum class Direction { kAbsolute, kCompatible, kRelative };
+
+			auto set_y = [&crNewPos, &workRgn, &clipRgn, &cur](Direction direction, int value)
+			{
+				const int kLegacyY = 9999;
+				if (direction == Direction::kCompatible && value >= std::min(kLegacyY, workRgn.bottom))
+					// #XTERM_256 Allow to put cursor into the legacy true-color area
+					crNewPos.Y = workRgn.bottom;
+				else if (direction == Direction::kAbsolute || direction == Direction::kCompatible)
+					crNewPos.Y = std::max(workRgn.top, std::min(workRgn.bottom, value));
+				else if (value < 0 && cur.Y >= clipRgn.Top)
+					crNewPos.Y = std::max<int>(clipRgn.Top, std::min(workRgn.bottom, cur.Y + value));
+				else if (value > 0 && cur.Y <= clipRgn.Bottom)
+					crNewPos.Y = std::max(workRgn.top, std::min<int>(clipRgn.Bottom, cur.Y + value));
+				else
+					crNewPos.Y = std::max(workRgn.top, std::min(workRgn.bottom, cur.Y + value));
+			};
+			auto set_x = [&crNewPos, &workRgn, &clipRgn, &cur](Direction direction, int value)
+			{
+				if (direction == Direction::kAbsolute || direction == Direction::kCompatible)
+					crNewPos.X = std::max(workRgn.left, std::min(workRgn.right, value));
+				else
+					crNewPos.X = std::max(workRgn.left, std::min(workRgn.right, cur.X + value));
+			};
 
 			switch (Code.Action)
 			{
 			case L'H':
+				// Set cursor position (ANSI values are 1-based)
+				set_y(Direction::kCompatible, (Code.ArgC > 0 && Code.ArgV[0]) ? (Code.ArgV[0] - 1) : 0);
+				set_x(Direction::kAbsolute, (Code.ArgC > 1 && Code.ArgV[1]) ? (Code.ArgV[1] - 1) : 0);
+				break;
 			case L'f':
 				// Set cursor position (ANSI values are 1-based)
-				crNewPos.Y = ((Code.ArgC > 0 && Code.ArgV[0]) ? (Code.ArgV[0] - 1) : 0);
-				crNewPos.X = ((Code.ArgC > 1 && Code.ArgV[1]) ? (Code.ArgV[1] - 1) : 0);
+				set_y(Direction::kAbsolute, (Code.ArgC > 0 && Code.ArgV[0]) ? (Code.ArgV[0] - 1) : 0);
+				set_x(Direction::kAbsolute, (Code.ArgC > 1 && Code.ArgV[1]) ? (Code.ArgV[1] - 1) : 0);
 				break;
 			case L'A':
 				// Cursor up by N rows
-				crNewPos.Y -= ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
+				set_y(Direction::kRelative, -((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1));
 				break;
 			case L'B':
 				// Cursor down by N rows
-				crNewPos.Y += ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
+				set_y(Direction::kRelative, +((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1));
 				break;
 			case L'C':
 				// Cursor right by N cols
-				crNewPos.X += ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
+				set_x(Direction::kRelative, +((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1));
 				break;
 			case L'D':
 				// Cursor left by N cols
-				crNewPos.X -= ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
+				set_x(Direction::kRelative, -((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1));
 				break;
 			case L'E':
 				// Moves cursor to beginning of the line n (default 1) lines down.
-				crNewPos.Y += ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
-				crNewPos.X = 0;
+				set_y(Direction::kRelative, +((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1));
+				set_x(Direction::kAbsolute, 0);
 				break;
 			case L'F':
 				// Moves cursor to beginning of the line n (default 1) lines up.
-				crNewPos.Y -= ((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1);
-				crNewPos.X = 0;
+				set_y(Direction::kRelative, -((Code.ArgC > 0 && Code.ArgV[0]) ? Code.ArgV[0] : 1));
+				set_x(Direction::kAbsolute, 0);
 				break;
 			case L'G':
 				// Moves the cursor to column n.
-				crNewPos.X = ((Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0);
+				set_x(Direction::kAbsolute, (Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0);
 				break;
 			case L'd':
-				// Moves the cursor to line n.
-				crNewPos.Y = ((Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0);
+				// Moves the cursor to line n (almost the same as 'H', but leave X unchanged).
+				set_y(Direction::kAbsolute, (Code.ArgC > 0) ? (Code.ArgV[0] - 1) : 0);
 				break;
 			#ifdef _DEBUG
 			default:
@@ -1365,15 +1396,10 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 			#endif
 			}
 
-			// Check Row
-			crNewPos.Y = std::max<int>(clipRgn.Top, std::min<int>(clipRgn.Bottom, crNewPos.Y));
-			// Check Col
-			crNewPos.X = std::max<int>(0, crNewPos.X);
-
 			// Goto
 			m_Table->SetCursor({unsigned(crNewPos.X), crNewPos.Y});
 
-		} // case L'H': case L'f': case 'A': case L'B': case L'C': case L'D':
+		} // case 'H', 'f', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'd'
 		break;
 
 	case L'J': // Clears part of the screen
