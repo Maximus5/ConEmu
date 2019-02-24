@@ -670,13 +670,12 @@ bool SrvAnsiImpl::FullReset()
 	return TRUE;
 }
 
-#ifdef _DEBUG
 static bool GetConsoleScreenBufferInfoCached(CONSOLE_SCREEN_BUFFER_INFO* csbi)
 {
+	// #condata need to implement
 	throw;
 	return false;
 }
-#endif
 
 void SrvAnsiImpl::ForwardLF()
 {
