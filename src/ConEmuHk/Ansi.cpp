@@ -1904,33 +1904,33 @@ BOOL CEAnsi::ScrollScreen(HANDLE hConsoleOutput, int nDir)
 	return lbRc;
 }
 
-BOOL CEAnsi::PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csbi)
-{
-	BOOL lbRc = FALSE;
-	COORD crFrom = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y};
-	DEBUGTEST(DWORD nCount = csbi.dwSize.X - csbi.dwCursorPosition.X);
-
-	/*
-	lbRc = FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nCount, crFrom, &nWritten)
-		&& FillConsoleOutputCharacter(hConsoleOutput, L' ', nCount, crFrom, &nWritten);
-	*/
-
-	if ((csbi.dwCursorPosition.Y + 1) >= csbi.dwSize.Y)
-	{
-		lbRc = ScrollScreen(hConsoleOutput, -1);
-		crFrom.X = 0;
-	}
-	else
-	{
-		crFrom.X = 0; crFrom.Y++;
-		lbRc = TRUE;
-	}
-
-	csbi.dwCursorPosition = crFrom;
-	SetConsoleCursorPosition(hConsoleOutput, crFrom);
-
-	return lbRc;
-}
+//BOOL CEAnsi::PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csbi)
+//{
+//	BOOL lbRc = FALSE;
+//	COORD crFrom = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y};
+//	DEBUGTEST(DWORD nCount = csbi.dwSize.X - csbi.dwCursorPosition.X);
+//
+//	/*
+//	lbRc = FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nCount, crFrom, &nWritten)
+//		&& FillConsoleOutputCharacter(hConsoleOutput, L' ', nCount, crFrom, &nWritten);
+//	*/
+//
+//	if ((csbi.dwCursorPosition.Y + 1) >= csbi.dwSize.Y)
+//	{
+//		lbRc = ScrollScreen(hConsoleOutput, -1);
+//		crFrom.X = 0;
+//	}
+//	else
+//	{
+//		crFrom.X = 0; crFrom.Y++;
+//		lbRc = TRUE;
+//	}
+//
+//	csbi.dwCursorPosition = crFrom;
+//	SetConsoleCursorPosition(hConsoleOutput, crFrom);
+//
+//	return lbRc;
+//}
 
 BOOL CEAnsi::FullReset(HANDLE hConsoleOutput)
 {
