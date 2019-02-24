@@ -406,7 +406,7 @@ int ProcessInput(LPCTSTR asName)
 		printf("\n!!! OpenPipe failed, code=%u !!!\n", nRead);
 		return nRead;
 	}
-	printf("\nConnected! Alt+X - exit, Alt+L - clear, Alt+F - fill\n");
+	printf("\nConnected! Alt+X - exit, Alt+L - clear, Alt+F - fill, Ctrl+F - paste file\n");
 
 	SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
 
