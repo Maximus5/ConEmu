@@ -978,7 +978,7 @@ void Table::SetScrollRegion(bool setRegion /*= false*/, unsigned top /*= 0*/, un
 		m_Region.Top = top;
 		m_Region.Bottom = bottom;
 		m_Flags.Region = true;
-		// e.g. mintty resets cursor explicitly in position {0,0}, but that looks like a bug
+		// #condata e.g. mintty resets cursor explicitly in position {0,0}, but that looks like a bug (check this)
 		SetCursor({0, int(top)});
 	}
 	else
@@ -1216,7 +1216,7 @@ void Table::Write(const wchar_t* text, unsigned count)
 		{
 		case L'\t':
 			_ASSERTE(!m_Flags.AutoWrap || m_Flags.BeyondEOL || m_Cursor.x < m_Size.x);
-			// #ConData Store in the row attribute that '\t' was "written" at this place?
+			// #condata Store in the row attribute that '\t' was "written" at this place?
 			SetCursor({std::min<unsigned>(m_Size.x - 1, ((m_Cursor.x + 8) >> 3) << 3), m_Cursor.y});
 			break;
 		case L'\r':

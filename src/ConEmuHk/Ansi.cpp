@@ -3905,10 +3905,11 @@ void CEAnsi::WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 /// @result valid SMALL_RECT
 SMALL_RECT CEAnsi::GetWorkingRegion(HANDLE hConsoleOutput, bool viewPort)
 {
-	SMALL_RECT region = {0, 0, 9999, 9999};
+	const short kFallback = 9999;
+	SMALL_RECT region = {0, 0, kFallback, kFallback};
 	HANDLE hConOut = hConsoleOutput ? hConsoleOutput : GetStdHandle(STD_OUTPUT_HANDLE);
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
-	// If function fails, we return {9999}
+	// If function fails, we return {kFallback, kFallback}
 	if (GetConsoleScreenBufferInfoCached(hConOut, &csbi, TRUE))
 	{
 		if (viewPort)
