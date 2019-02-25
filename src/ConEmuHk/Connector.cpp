@@ -28,6 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 
+#undef USE_PTY_IMPL
+//#define USE_PTY_IMPL
+
 #include "../common/defines.h"
 #include "../common/Common.h"
 #include "../common/HandleKeeper.h"
@@ -242,6 +245,7 @@ static int startConnector(/*[IN/OUT]*/RequestTermConnectorParm& Parm)
 	if (gbTermVerbose)
 		writeVerbose("\r\n\033[31;40m{PID:%u} Starting ConEmu xterm mode\033[m\r\n", GetCurrentProcessId());
 
+	#ifdef USE_PTY_IMPL
 	BYTE start = TRUE;
 	if (CESERVER_REQ* pOut = ExecuteSrvCmd(gnServerPID, CECMD_STARTPTYSRV, sizeof(start), &start, ghConWnd))
 	{
@@ -258,6 +262,7 @@ static int startConnector(/*[IN/OUT]*/RequestTermConnectorParm& Parm)
 		Parm.pszError = "CECMD_STARTPTYSRV failed";
 		return -1;
 	}
+	#endif
 
 	ghTermInput = GetStdHandle(STD_INPUT_HANDLE);
 	gnTermPrevMode = protectCtrlBreakTrap(ghTermInput);
@@ -323,11 +328,13 @@ int stopConnector(/*[IN/OUT]*/RequestTermConnectorParm& Parm)
 		OnSetConsoleOutputCP(gnPrevConsoleCP);
 	}
 
+	#ifdef USE_PTY_IMPL
 	BYTE start = FALSE;
 	if (CESERVER_REQ* pOut = ExecuteSrvCmd(gnServerPID, CECMD_STARTPTYSRV, sizeof(start), &start, ghConWnd))
 	{
 		ExecuteFreeResult(pOut);
 	}
+	#endif
 
 	SafeCloseHandle(gBlockInputProcess.handle);
 
