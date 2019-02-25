@@ -20,6 +20,10 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2019.2.25
+* gh-1835: Connector failed to start (regression).
+
+
 2019.2.24
 * gh-1159, gh-1775: ANSI, tmux, compatibility issues.
 * Connector v1.2.6: Pass ConEmuServerPID environment variable to wslbridge.
