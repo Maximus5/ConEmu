@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2019.2.24
+* gh-1159, gh-1775: ANSI, tmux, compatibility issues.
+* Connector v1.2.6: Pass ConEmuServerPID environment variable to wslbridge.
+* Add to log start/end time of default tasks populating.
+* Preliminary implementation of PTY in Connector.
+* AnsiDbg: better switch checking.
+
+
 2019.2.17
 * gh-1795: Unexpected ConEmu activation on monitor change.
 * gh-1159, gh-1775: ANSI, tmux, compatibility issues.
