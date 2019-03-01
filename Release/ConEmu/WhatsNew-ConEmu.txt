@@ -20,6 +20,12 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2019.3.1
+* gh-1795: Unexpected ConEmu activation on monitor change.
+* Paste hotkeys `Ctrl+V`/`Shift+Ins` didn't work in Far Manager if selection was present.
+* Eliminate copying delay on Paste if mouse selection is present.
+
+
 2019.2.25
 * gh-1835: Connector failed to start (regression).
 
