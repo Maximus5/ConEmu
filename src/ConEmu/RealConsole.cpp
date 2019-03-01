@@ -5693,7 +5693,8 @@ void CRealConsole::ExpandSelection(SHORT anX, SHORT anY)
 
 void CRealConsole::DoSelectionFinalize()
 {
-	mp_ABuf->DoSelectionFinalize(false);
+	const bool do_copy = (isMouseSelectionPresent() && gpSet->isCTSAutoCopy);
+	mp_ABuf->DoSelectionFinalize(do_copy);
 }
 
 void CRealConsole::OnSelectionChanged()
