@@ -479,7 +479,7 @@ class CRealConsole
 		void ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift);
 		void ExpandSelection(SHORT anX, SHORT anY);
 		bool DoSelectionCopy(CECopyMode CopyMode = cm_CopySel, BYTE nFormat = CTSFormatDefault, LPCWSTR pszDstFile = NULL);
-		void DoSelectionStop();
+		void DoSelectionFinalize();
 		void OnSelectionChanged();
 		void DoFindText(int nDirection);
 		void DoEndFindText();

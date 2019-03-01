@@ -5691,9 +5691,9 @@ void CRealConsole::ExpandSelection(SHORT anX, SHORT anY)
 	mp_ABuf->ExpandSelection(anX, anY, mp_ABuf->isSelectionPresent());
 }
 
-void CRealConsole::DoSelectionStop()
+void CRealConsole::DoSelectionFinalize()
 {
-	mp_ABuf->DoSelectionStop();
+	mp_ABuf->DoSelectionFinalize(false);
 }
 
 void CRealConsole::OnSelectionChanged()

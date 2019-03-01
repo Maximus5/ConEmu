@@ -2868,7 +2868,7 @@ LPWSTR ConEmuMacro::Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		// ref gh-1299
 		if (!apRCon->isSelectionPresent())
 			return lstrdup(L"Selection was not started");
-		apRCon->DoSelectionStop();
+		apRCon->DoSelectionFinalize();
 		return lstrdup(L"OK");
 	}
 

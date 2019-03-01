@@ -5557,6 +5557,17 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 		return ConEmuSkipHotKey;
 	}
 
+	// Let Far process Paste by Ctrl+V / Shift+Ins
+	if (mp_RCon->isFar()
+		&& (VkState.IsEqual('V', cvk_Ctrl) || VkState.IsEqual(VK_INSERT, cvk_Shift)))
+	{
+		if (bKeyDown)
+		{
+			mp_RCon->DoSelectionFinalize();
+		}
+		return NULL;
+	}
+
 	// Del/Shift-Del/BS/Ctrl-X - try to "edit" prompt
 	bool bDel = false, bShiftDel = false, bBS = false, bCtrlX = false;
 	if (gpSet->isCTSEraseBeforeReset &&

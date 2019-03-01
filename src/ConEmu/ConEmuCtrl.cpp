@@ -1253,16 +1253,11 @@ bool CConEmuCtrl::key_AlwaysOnTop(const ConEmuChord& VkState, bool TestOnly, con
 
 bool CConEmuCtrl::key_PasteText(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
-	if (!pRCon || pRCon->isFar())
-		return false;
-
-	return key_PasteTextAllApp(VkState, TestOnly, hk, pRCon);
-}
-
-bool CConEmuCtrl::key_PasteTextAllApp(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
 	// Если это GUI App in Tab - пусть само
 	if (!pRCon || pRCon->GuiWnd())
+		return false;
+	// Let Far Manager process Ctrl+V himself too
+	if (pRCon->isFar())
 		return false;
 
 	const AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId());
@@ -1293,16 +1288,11 @@ bool CConEmuCtrl::key_PasteTextAllApp(const ConEmuChord& VkState, bool TestOnly,
 
 bool CConEmuCtrl::key_PasteFirstLine(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
 {
-	if (!pRCon || pRCon->isFar())
-		return false;
-
-	return key_PasteFirstLineAllApp(VkState, TestOnly, hk, pRCon);
-}
-
-bool CConEmuCtrl::key_PasteFirstLineAllApp(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
-{
 	// Если это GUI App in Tab - пусть само
 	if (!pRCon || pRCon->GuiWnd())
+		return false;
+	// Let Far Manager process Ctrl+V himself too
+	if (pRCon->isFar())
 		return false;
 
 	const AppSettings* pApp = gpSet->GetAppSettings(pRCon->GetActiveAppSettingsId());
