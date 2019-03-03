@@ -1988,11 +1988,8 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 		hFont = CreateFontIndirect(&tmpFont);
 
 		wchar_t szFontFace[32];
-		// ghWnd is preferred, different monitors may have different properties
-		HDC hScreenDC = GetDC(ghWnd); // GetDC(0);
-		HDC hDC = CreateCompatibleDC(hScreenDC);
-		ReleaseDC(ghWnd, hScreenDC);
-		hScreenDC = NULL;
+		CEDC hDC(NULL);
+		hDC.Create(800, 600);
 		MBoxAssert(hDC);
 
 		if (hFont)
@@ -2037,7 +2034,6 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 			{
 				rpFont->m_tm.tmHeight = nRastHeight;
 				rpFont->m_tm.tmAveCharWidth = rpFont->m_tm.tmMaxCharWidth = nRastWidth;
-				rpFont->mb_Monospace = true;
 			}
 
 			rpFont->mp_otm = LoadOutline(hDC, NULL/*hFont*/); // шрифт УЖЕ выбран в DC
@@ -2073,9 +2069,23 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 
 			// Лучше поставим AveCharWidth. MaxCharWidth для "условно моноширинного" Consolas почти равен высоте.
 			if (gpSet->FontSizeX3 && ((int)gpSet->FontSizeX3 > FontDefWidthMin) && ((int)gpSet->FontSizeX3 <= FontDefWidthMax))
+			{
 				inFont.lfWidth = EvalCellWidth();
+			}
+			else if (rpFont->mb_Monospace)
+			{
+				// Same logic as in CEDC::TextExtentPoint!
+				wchar_t text[] = L"N";
+				RECT rc = {};
+				if (::DrawText(hDC, text, 1, &rc, DT_CALCRECT|DT_NOPREFIX) != 0)
+					inFont.lfWidth = rc.right;
+				else
+					inFont.lfWidth = rpFont->m_tm.tmAveCharWidth;
+			}
 			else
+			{
 				inFont.lfWidth = rpFont->m_tm.tmAveCharWidth;
+			}
 
 			// Обновлять реальный размер шрифта в диалоге настройки не будем, были случаи, когда
 			// tmHeight был меньше, чем запрашивалось, однако, если пытаться создать шрифт с этим "обновленным"
@@ -2094,7 +2104,7 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 			bSucceeded = (hFont != NULL);
 		}
 
-		DeleteDC(hDC);
+		hDC.Delete();
 	}
 
 	if (bSucceeded)

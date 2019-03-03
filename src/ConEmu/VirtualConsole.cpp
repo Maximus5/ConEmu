@@ -1238,6 +1238,11 @@ WORD CVirtualConsole::CharWidth(wchar_t ch, const CharAttr& attr)
 		// Font mapper is not used in this case
 		return MakeUShort(m_Sizes.nFontWidth);
 	}
+	else if (isCharSpaceSingle(ch))
+	{
+		// mitigate font bugs
+		return MakeUShort(m_Sizes.nFontWidth);
+	}
 
 	TODO("fnt_UCharMap, m_UCharMapFont");
 
@@ -2731,20 +2736,12 @@ void CVirtualConsole::UpdateText()
 	SelectFont(fnt_Normal);
 
 	// pointers
-	wchar_t* ConCharLine = NULL;
-	CharAttr* ConAttrLine = NULL;
-	DWORD* ConCharXLine = NULL;
+	wchar_t* ConCharLine = mpsz_ConChar;
+	CharAttr* ConAttrLine = mpn_ConAttrEx;
+	DWORD* ConCharXLine = ConCharX;
 	// counters
-	int pos, row;
-	{
-		int i;
-		i = 0; //TextLen - TextWidth; // TextLen = TextWidth/*80*/ * TextHeight/*25*/;
-		pos = 0; //Height - nFontHeight; // Height = TextHeight * nFontHeight;
-		row = 0; //TextHeight - 1;
-		ConCharLine = mpsz_ConChar + i;
-		ConAttrLine = mpn_ConAttrEx + i;
-		ConCharXLine = ConCharX + i;
-	}
+	int pos = 0, row = 0;
+	// max vertical coordinate of line allowed
 	int nMaxPos = m_Sizes.Height - m_Sizes.nFontHeight;
 
 	if (!ConCharLine || !ConAttrLine || !ConCharXLine)
