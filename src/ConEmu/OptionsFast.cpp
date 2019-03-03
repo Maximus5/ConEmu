@@ -2302,14 +2302,17 @@ static void CreateCmdTask()
 // powershell.exe
 static void CreatePowerShellTask()
 {
+	AppFoundList App;
 	// Windows internal: PowerShell
 	// Don't use 'App.Add' here, we are creating "powershell.exe" tasks directly
-	CreateDefaultTask(L"Shells::PowerShell", L"",
-		L"powershell.exe");
-	CreateDefaultTask(L"Shells::PowerShell (Admin)", L"",
-		L"powershell.exe -new_console:a");
+	App.Add(L"Shells::PowerShell", NULL, NULL, NULL, L"powershell.exe", NULL);
+	App.Add(L"Shells::PowerShell (Admin)", L" -new_console:a", NULL, NULL, L"powershell.exe", NULL);
+
+	App.Add(L"Shells::PowerShell Core", NULL, NULL, NULL, L"pwsh.exe", NULL);
+	App.Add(L"Shells::PowerShell Core (Admin)", L" -new_console:a", NULL, NULL, L"pwsh.exe", NULL);
 
 	// #DefaultTasks pwsh.exe
+	App.Commit();
 }
 
 static void CreatePuttyTask()
