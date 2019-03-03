@@ -43,6 +43,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ToolImg.h"
 #include "../common/EnvVar.h"
 #include "../common/MSectionSimple.h"
+#include "../common/WFiles.h"
 
 #ifdef _DEBUG
 #include "LoadImg.h"
@@ -259,7 +260,14 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 	else if ((lstrcmpi(lpszExt, L".exe") == 0) || (lstrcmpi(lpszExt, L".dll") == 0))
 	{
 		HICON hIconLarge = NULL, hIconSmall = NULL;
-		ExtractIconEx(szLoadFile, nIndex, &hIconLarge, &hIconSmall, 1);
+		const UINT extracted = ExtractIconEx(szLoadFile, nIndex, &hIconLarge, &hIconSmall, 1);
+		if (!(hIconLarge || hIconSmall))
+		{
+			_ASSERTE(!extracted || (extracted == (UINT)-1));
+			CEStr rsFound;
+			if (SearchAppPaths(szLoadFile, rsFound, false/*abSetPath*/))
+				ExtractIconEx(rsFound, nIndex, &hIconLarge, &hIconSmall, 1);
+		}
 		bool bUseLargeIcon = ((mn_CxIcon > 16) && (hIconLarge != NULL)) || (hIconSmall == NULL);
 		HICON hDestroyIcon = bUseLargeIcon ? hIconSmall : hIconLarge;
 		if (hDestroyIcon) DestroyIcon(hDestroyIcon);
