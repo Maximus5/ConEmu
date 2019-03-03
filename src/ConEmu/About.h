@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"Command line examples\r\n" \
 	VCGCCTEST(L"––––––––––––––––––––––\r\n",L"----------------------\r\n") \
 	L"ConEmu.exe -run Far.exe -w\r\n" \
-	L"ConEmu.exe -font \"Consolas\" -size 16 -bufferheight 32766 -run powershell\r\n" \
+	L"ConEmu.exe -font \"Consolas\" -FontSize 16 -bufferheight 32766 -run powershell\r\n" \
 	L"ConEmu.exe -config \"Hiew\" -run \"C:\\Tools\\HIEW32.EXE\"\r\n" \
 	L"ConEmu.exe -run {Shells}\r\n" \
 	L"ConEmu.exe -nosingle -runlist cmd ||| cmd -new_console:sV ||| cmd -new_console:sH\r\n" \
@@ -69,7 +69,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"-NoCloseConfirm - Disable confirmation of ConEmu's window closing\r\n" \
 	L"-CT[0|1] - Anti-aliasing: -ct0 - off, -ct1 - standard, -ct - cleartype.\r\n" \
 	L"-Font <fontname> - Specify the font name.\r\n" \
-	L"-Size <fontsize> - Specify the font size.\r\n" \
+	L"-FontSize <fontsize> - Specify the font size.\r\n" \
 	L"-FontFile <fontfilename> - Loads font from file (multiple pairs allowed).\r\n" \
 	L"-FontDir <fontfolder> - Loads all fonts from folder (multiple pairs allowed).\r\n" \
 	L"-BufferHeight <lines> - Set console buffer height.\r\n" \

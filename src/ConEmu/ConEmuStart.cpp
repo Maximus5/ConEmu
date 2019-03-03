@@ -961,8 +961,8 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						gpConEmu->AppendExtraArgs(L"-lngfile", szNext);
 					}
 				}
-				// имя шрифта
-				else if (szArg.IsSwitch(L"-font"))
+				// Change font name
+				else if (szArg.IsSwitch(L"-Font"))
 				{
 					NeedNextArg();
 
@@ -972,8 +972,8 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						gpConEmu->AppendExtraArgs(L"-font", szNext);
 					}
 				}
-				// Высота шрифта
-				else if (szArg.IsSwitch(L"-size"))
+				// Change font height
+				else if (szArg.IsSwitch(L"-FontSize") || szArg.IsSwitch(L"-Size"))
 				{
 					NeedNextArg();
 
