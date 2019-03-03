@@ -346,7 +346,7 @@ bool IsNeedDequote(LPCWSTR asCmdLine, bool abFromCmdCK, LPCWSTR* rsEndQuote/*=NU
 // #CmdArg Eliminate QueryNext*** and make Next** return LPCWSTR
 
 // Returns PTR to next arg or NULL on error
-LPCWSTR NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=NULL*/)
+const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** rsArgStart/*=NULL*/)
 {
 	if (!asCmdLine || !*asCmdLine)
 		return NULL;
