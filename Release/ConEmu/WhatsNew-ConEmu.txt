@@ -20,6 +20,16 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2019.3.3
+* gh-1840: Fix hung during startup if Environment contains `echo -x ...`.
+* The `-FontSize` is better name to change font size switch.
+* Allow to do `Copy all` from load dump screen.
+* gh-1833: Fix border rendering issues (bar placement).
+* Icon was not autoloaded for some tabs (e.g. `pwsh.exe`).
+* Add default tasks for ‘PowerShell Core’.
+* Some internal changes in default tasks generation.
+
+
 2019.3.1
 * gh-1795: Unexpected ConEmu activation on monitor change.
 * Paste hotkeys `Ctrl+V`/`Shift+Ins` didn't work in Far Manager if selection was present.
