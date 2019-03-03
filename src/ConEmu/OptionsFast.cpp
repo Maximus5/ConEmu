@@ -972,7 +972,6 @@ struct FoundFile
 {
 	wchar_t* rsFound;
 	wchar_t* rsOptionalFull;
-	bool bNeedQuot;
 };
 
 class FoundFiles : public MArray<FoundFile>
@@ -1007,7 +1006,6 @@ public:
 				return;
 		}
 		FoundFile ff = {lstrdup(asFound), (asOptionalFull && *asOptionalFull) ? lstrdup(asOptionalFull) : NULL};
-		ff.bNeedQuot = IsQuotationNeeded(ff.rsOptionalFull ? ff.rsOptionalFull : ff.rsFound);
 		this->push_back(ff);
 	}
 };
@@ -1147,7 +1145,8 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 		// Search in [HKCU|HKLM]\Software\Microsoft\Windows\CurrentVersion\App Paths
 		else if (SearchAppPaths(asSearchPath, rsFound, false/*abSetPath*/))
 		{
-			foundFiles.Add(rsFound, NULL);
+			// If app exists in "App Paths" we don't need to store its full path
+			foundFiles.Add(asSearchPath, rsFound);
 			bFound = true;
 		}
 		goto wrap;
@@ -1327,7 +1326,8 @@ public:
 		DWORD dwSubsystem, dwBits;
 		FarVersion FarVer; // ConvertVersionToFarVersion
 		int  iStep;
-		bool bNeedQuot;
+		bool bForceQuot;
+		bool isNeedQuot() const { return bForceQuot || IsQuotationNeeded(szFullPath); };
 		bool bPrimary; // Do not rename this task while unifying
 		void Free()
 		{
@@ -1344,7 +1344,7 @@ public:
 
 protected:
 	// This will load App version and check if it was already added
-	virtual INT_PTR AddAppPath(LPCWSTR asName, LPCWSTR szPath, LPCWSTR pszOptFull, bool bNeedQuot,
+	virtual INT_PTR AddAppPath(LPCWSTR asName, LPCWSTR szPath, LPCWSTR pszOptFull, bool bForceQuot,
 		LPCWSTR asArgs = NULL, LPCWSTR asPrefix = NULL, LPCWSTR asGuiArg = NULL)
 	{
 		INT_PTR iAdded = -1;
@@ -1367,20 +1367,27 @@ protected:
 			for (INT_PTR a = 0; a < Installed.size(); a++)
 			{
 				AppInfo& ai = Installed[a];
+				bool path_match = false;
 				if (lstrcmpi(ai.szFullPath, szPath) == 0)
 				{
-					bAlready = true; break; // Do not add twice same path
+					path_match = true;
 				}
 				else if (pszOptFull && (lstrcmpi(ai.szFullPath, pszOptFull) == 0))
 				{
 					// Store path with environment variables (unexpanded) or without path at all (just "Far.exe" for example)
 					SafeFree(ai.szFullPath);
 					ai.szFullPath = lstrdup(szPath);
-					bAlready = true; break; // Do not add twice same path
+					path_match = true;
 				}
 				else if (pszOptFull && ai.szExpanded && (lstrcmpi(ai.szExpanded, pszOptFull) == 0))
 				{
-					bAlready = true; break; // Do not add twice same path
+					path_match = true;
+				}
+				// Do not add twice same path + args
+				if (path_match
+						&& (lstrcmp(ai.szArgs ? ai.szArgs : L"", asArgs ? asArgs : L"") == 0))
+				{
+					bAlready = true; break;
 				}
 			}
 			// New instance, add it
@@ -1390,7 +1397,7 @@ protected:
 				lstrcpyn(FI.szTaskBaseName, asName, countof(FI.szTaskBaseName));
 				FI.szFullPath = lstrdup(szPath);
 				FI.szExpanded = pszOptFull ? lstrdup(pszOptFull) : ExpandEnvStr(szPath);
-				FI.bNeedQuot = bNeedQuot;
+				FI.bForceQuot = bForceQuot;
 				FI.szArgs = asArgs ? lstrdup(asArgs) : NULL;
 				FI.szPrefix = asPrefix ? lstrdup(asPrefix) : NULL;
 				FI.szGuiArg = asGuiArg ? lstrdup(asGuiArg) : NULL;
@@ -1429,6 +1436,7 @@ protected:
 	}
 
 public:
+	// asPrefix - some prefix before the command line, e.g. "set \"PATH=%ConEmuBaseDirShort%\\wsl;%PATH%\" & "
 	bool Add(LPCWSTR asName, LPCWSTR asArgs, LPCWSTR asPrefix, LPCWSTR asGuiArg, LPCWSTR asExePath, ...)
 	{
 		bool bCreated = false;
@@ -1460,7 +1468,7 @@ public:
 					pszFound = szUnexpand;
 				}
 
-				if (AddAppPath(asName, pszFound, (szOptFull && *szOptFull) ? szOptFull : szFound, f.bNeedQuot, asArgs, asPrefix, asGuiArg) >= 0)
+				if (AddAppPath(asName, pszFound, (szOptFull && *szOptFull) ? szOptFull : szFound, false, asArgs, asPrefix, asGuiArg) >= 0)
 				{
 					bCreated = true;
 
@@ -1700,7 +1708,7 @@ public:
 			}
 
 			// Spaces in path? (use expanded path)
-			if (ai.bNeedQuot)
+			if (ai.isNeedQuot())
 				szFull = lstrmerge(ai.szPrefix, L"\"", ai.szFullPath, L"\"", pszArgs);
 			else
 				szFull = lstrmerge(ai.szPrefix, ai.szFullPath, pszArgs);
