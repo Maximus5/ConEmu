@@ -590,6 +590,12 @@ int _tmain(int argc, _TCHAR* argv[])
 	bool valid_args = false;
 	for (int i = 0; i < argc; ++i)
 	{
+		if (_tcscmp(argv[i], _T("-utf8")) == 0)
+		{
+			SetConsoleCP(CP_UTF8);
+			SetConsoleOutputCP(CP_UTF8);
+			continue;
+		}
 		if (((i + 1) < argc) && _tcscmp(argv[i], _T("-srv")) == 0)
 		{
 			valid_args = true;
@@ -602,7 +608,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			iRc = ProcessInput(argv[i+1]);
 			break;
 		}
-		if (_tcscmp(argv[1], _T("-read")) == 0)
+		if (_tcscmp(argv[i], _T("-read")) == 0)
 		{
 			valid_args = true;
 			iRc = InputThread(NULL);
@@ -612,7 +618,12 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	if (!valid_args)
 	{
-		printf("Invalid usage\n\tAnsiDbg -in <name>\n\tAnsiDbg -out <name>\nCalled as:\n");
+		printf(
+			"Invalid usage\n"
+			"\tAnsiDbg [-utf8] -in <name>\n"
+			"\tAnsiDbg [-utf8] -out <name>\n"
+			"Called as:\n"
+		);
 		for (int i = 0; i < argc; ++i)
 			wprintf(L"\t#%i: %s\n", i, argv[i]);
 		char buffer[80];
