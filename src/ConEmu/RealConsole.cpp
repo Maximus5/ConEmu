@@ -5767,6 +5767,12 @@ bool CRealConsole::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nF
 				pBuf->ExpandSelection(crEnd.X, crEnd.Y, false);
 			}
 		}
+		else if (pBuf->m_Type == rbt_DumpScreen)
+		{
+			COORD crEnd = {pBuf->GetBufferWidth() - 1, pBuf->GetBufferHeight() - 1};
+			pBuf->StartSelection(TRUE, 0, 0);
+			pBuf->ExpandSelection(crEnd.X, crEnd.Y, false);
+		}
 		else
 		{
 			MsgBox(L"Return to Primary buffer first!", MB_ICONEXCLAMATION);
