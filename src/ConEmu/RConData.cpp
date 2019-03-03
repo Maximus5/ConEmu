@@ -312,12 +312,14 @@ UINT CRConData::GetConsoleData(wchar_t* rpChar, CharAttr* rpAttr, UINT anWidth, 
 		bool bForceMono = (mp_RCon->mn_InRecreate != 0);
 
 		bool has_rowid = (cnSrcLineLen >= ROWID_USED_CELLS) && (GetRowIdFromAttrs(pnSrc) != 0);
+		#ifdef _DEBUG
 		if (!has_rowid && cnSrcLineLen >= ROWID_USED_CELLS) {
-			_ASSERTE(!(pnSrc[0]&COMMON_LVB_REVERSE_VIDEO));
-			_ASSERTE(!(pnSrc[1]&COMMON_LVB_REVERSE_VIDEO));
-			_ASSERTE(!(pnSrc[2]&COMMON_LVB_REVERSE_VIDEO));
-			_ASSERTE(!(pnSrc[3]&COMMON_LVB_REVERSE_VIDEO));
+			_ASSERTE(!(pnSrc[0] & (CHANGED_CONATTR & ~LEGACY_CONATTR)));
+			_ASSERTE(!(pnSrc[1] & (CHANGED_CONATTR & ~LEGACY_CONATTR)));
+			_ASSERTE(!(pnSrc[2] & (CHANGED_CONATTR & ~LEGACY_CONATTR)));
+			_ASSERTE(!(pnSrc[3] & (CHANGED_CONATTR & ~LEGACY_CONATTR)));
 		}
+		#endif
 
 		int iTail = cnSrcLineLen;
 		wchar_t* pch = pszDst;
