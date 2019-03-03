@@ -409,7 +409,8 @@ bool IsConsoleDoubleCellCP()
 		#ifdef _DEBUG
 		nCP1 = GetConsoleCP();
 		// May occur in some case due race
-		_ASSERTE(nCP1==nCP);
+		// Under pwsh.exe we have GetConsoleOutputCP=65001 and GetConsoleCP=437
+		//_ASSERTE(nCP1==nCP);
 		//GetConsoleMode(hOut, &nMode);
 		#endif
 
