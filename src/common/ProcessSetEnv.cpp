@@ -267,9 +267,9 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 			// echo [-r] [-n] [-x] [-b] "String to echo"
 			// type [-b] [-CP] "Path to text file to echo"
 			CEStr lsSwitches;
-			while (*lsCmdLine == L'-')
+			while (lsCmdLine && *lsCmdLine == L'-')
 			{
-				if (!NextArg(lsCmdLine, lsSet))
+				if (!(lsCmdLine = NextArg(lsCmdLine, lsSet)))
 					break;
 				lstrmerge(&lsSwitches.ms_Val, lsSwitches.IsEmpty() ? NULL : L" ", lsSet.ms_Val);
 			}
