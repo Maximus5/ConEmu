@@ -1478,7 +1478,7 @@ bool CRealBuffer::PreInit()
 bool CRealBuffer::GetData(CRConDataGuard& data)
 {
 	// m_ConData is not expected to be used in other buffer types
-	_ASSERTE(m_Type == rbt_Primary);
+	_ASSERTE(m_Type == rbt_Primary || m_Type == rbt_DumpScreen);
 
 	MSectionLockSimple cs; cs.Lock(&mcs_Data);
 	if (m_ConData.isValid())
