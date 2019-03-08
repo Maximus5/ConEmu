@@ -506,35 +506,35 @@ void CEAnsi::DisplayParm::Reset(const bool full)
 	_BackColor = CONBACKCOLOR(nDefColors);
 	_WasSet = TRUE;
 }
-void CEAnsi::DisplayParm::setBrightOrBold(const BOOL val)
+void CEAnsi::DisplayParm::setBrightOrBold(const bool val)
 {
 	if (!_WasSet)
 		Reset(false);
 	_BrightOrBold = val;
 	_ASSERTE(_WasSet==TRUE);
 }
-void CEAnsi::DisplayParm::setItalic(const BOOL val)
+void CEAnsi::DisplayParm::setItalic(const bool val)
 {
 	if (!_WasSet)
 		Reset(false);
 	_Italic = val;
 	_ASSERTE(_WasSet==TRUE);
 }
-void CEAnsi::DisplayParm::setUnderline(const BOOL val)
+void CEAnsi::DisplayParm::setUnderline(const bool val)
 {
 	if (!_WasSet)
 		Reset(false);
 	_Underline = val;
 	_ASSERTE(_WasSet==TRUE);
 }
-void CEAnsi::DisplayParm::setBrightFore(const BOOL val)
+void CEAnsi::DisplayParm::setBrightFore(const bool val)
 {
 	if (!_WasSet)
 		Reset(false);
 	_BrightFore = val;
 	_ASSERTE(_WasSet==TRUE);
 }
-void CEAnsi::DisplayParm::setBrightBack(const BOOL val)
+void CEAnsi::DisplayParm::setBrightBack(const bool val)
 {
 	if (!_WasSet)
 		Reset(false);
@@ -548,7 +548,7 @@ void CEAnsi::DisplayParm::setTextColor(const int val)
 	_TextColor = val;
 	_ASSERTE(_WasSet==TRUE);
 }
-void CEAnsi::DisplayParm::setText256(const BOOL val)
+void CEAnsi::DisplayParm::setText256(const cbit val)
 {
 	if (!_WasSet)
 		Reset(false);
@@ -562,18 +562,25 @@ void CEAnsi::DisplayParm::setBackColor(const int val)
 	_BackColor = val;
 	_ASSERTE(_WasSet==TRUE);
 }
-void CEAnsi::DisplayParm::setBack256(const BOOL val)
+void CEAnsi::DisplayParm::setBack256(const cbit val)
 {
 	if (!_WasSet)
 		Reset(false);
 	_Back256 = val;
 	_ASSERTE(_WasSet==TRUE);
 }
-void CEAnsi::DisplayParm::setInverse(const BOOL val)
+void CEAnsi::DisplayParm::setInverse(const bool val)
 {
 	if (!_WasSet)
 		Reset(false);
 	_Inverse = val;
+	_ASSERTE(_WasSet==TRUE);
+}
+void CEAnsi::DisplayParm::setCrossed(const bool val)
+{
+	if (!_WasSet)
+		Reset(false);
+	_Crossed = val;
 	_ASSERTE(_WasSet==TRUE);
 }
 
@@ -679,30 +686,14 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 			/*244*/0x808080, /*245*/0x8a8a8a, /*246*/0x949494, /*247*/0x9e9e9e, /*248*/0xa8a8a8, /*249*/0xb2b2b2, /*250*/0xbcbcbc, /*251*/0xc6c6c6, /*252*/0xd0d0d0, /*253*/0xdadada, /*254*/0xe4e4e4, /*255*/0xeeeeee
 		};
 
-		int  TextColor;        // 30-37,38,39
-		BOOL Text256;          // 38
-		int  BackColor;        // 40-47,48,49
-		BOOL Back256;          // 48
-
-		//if (!gDisplayParm.Inverse)
-		{
-			TextColor = gDisplayParm.getTextColor();
-			Text256 = gDisplayParm.getText256();
-			BackColor = gDisplayParm.getBackColor();
-			Back256 = gDisplayParm.getBack256();
-		}
-		//else
-		//{
-		//	TextColor = gDisplayParm.BackColor;
-		//	Text256 = gDisplayParm.Back256;
-		//	BackColor = gDisplayParm.TextColor;
-		//	Back256 = gDisplayParm.Text256;
-		//}
-
+		const auto& TextColor = gDisplayParm.getTextColor();   // 30-37,38,39
+		const auto& Text256 = gDisplayParm.getText256();       // 38
+		const auto& BackColor = gDisplayParm.getBackColor();   // 40-47,48,49
+		const auto& Back256 = gDisplayParm.getBack256();       // 48
 
 		if (Text256)
 		{
-			if (Text256 == 2)
+			if (Text256 == clr24b)
 			{
 				attr.Attributes.Flags |= CECF_FG_24BIT;
 				attr.Attributes.ForegroundColor = TextColor&0xFFFFFF;
@@ -732,12 +723,14 @@ void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 			attr.Attributes.Flags |= CECF_FG_ITALIC;
 		if (gDisplayParm.getUnderline())
 			attr.Attributes.Flags |= CECF_FG_UNDERLINE;
+		if (gDisplayParm.getCrossed())
+			attr.Attributes.Flags |= CECF_FG_CROSSED;
 		if (gDisplayParm.getInverse())
 			attr.Attributes.Flags |= CECF_REVERSE;
 
 		if (Back256)
 		{
-			if (Back256 == 2)
+			if (Back256 == clr24b)
 			{
 				attr.Attributes.Flags |= CECF_BG_24BIT;
 				attr.Attributes.BackgroundColor = BackColor&0xFFFFFF;
@@ -3425,11 +3418,11 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					DumpKnownEscape(Code.pszEscStart,Code.nTotalLen,de_Ignored);
 					break;
 				case 4: // Underlined
-					gDisplayParm.setUnderline(TRUE);
+					gDisplayParm.setUnderline(true);
 					break;
 				case 24:
 					// Not underlined
-					gDisplayParm.setUnderline(FALSE);
+					gDisplayParm.setUnderline(false);
 					break;
 				case 7:
 					// Reverse video
@@ -3439,10 +3432,18 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					// Positive (not inverse)
 					gDisplayParm.setInverse(FALSE);
 					break;
+				case 9:
+					// Crossed-out / strikethrough
+					gDisplayParm.setCrossed(true);
+					break;
+				case 29:
+					// Not Crossed-out / Not strikethrough
+					gDisplayParm.setCrossed(false);
+					break;
 				case 30: case 31: case 32: case 33: case 34: case 35: case 36: case 37:
 					gDisplayParm.setTextColor(Code.ArgV[i] - 30);
 					gDisplayParm.setBrightFore(FALSE);
-					gDisplayParm.setText256(FALSE);
+					gDisplayParm.setText256(clr4b);
 					break;
 				case 38:
 					// xterm-256 colors
@@ -3450,7 +3451,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					if (((i+2) < Code.ArgC) && (Code.ArgV[i+1] == 5))
 					{
 						gDisplayParm.setTextColor(Code.ArgV[i+2] & 0xFF);
-						gDisplayParm.setText256(1);
+						gDisplayParm.setText256(clr8b);
 						i += 2;
 					}
 					// xterm-256 colors
@@ -3458,7 +3459,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					else if (((i+4) < Code.ArgC) && (Code.ArgV[i+1] == 2))
 					{
 						gDisplayParm.setTextColor(RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF)));
-						gDisplayParm.setText256(2);
+						gDisplayParm.setText256(clr24b);
 						i += 4;
 					}
 					break;
@@ -3466,12 +3467,12 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					// Reset
 					gDisplayParm.setTextColor(CONFORECOLOR(GetDefaultTextAttr()));
 					gDisplayParm.setBrightFore(FALSE);
-					gDisplayParm.setText256(FALSE);
+					gDisplayParm.setText256(clr4b);
 					break;
 				case 40: case 41: case 42: case 43: case 44: case 45: case 46: case 47:
 					gDisplayParm.setBackColor(Code.ArgV[i] - 40);
 					gDisplayParm.setBrightBack(FALSE);
-					gDisplayParm.setBack256(FALSE);
+					gDisplayParm.setBack256(clr4b);
 					break;
 				case 48:
 					// xterm-256 colors
@@ -3479,7 +3480,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					if (((i+2) < Code.ArgC) && (Code.ArgV[i+1] == 5))
 					{
 						gDisplayParm.setBackColor(Code.ArgV[i+2] & 0xFF);
-						gDisplayParm.setBack256(1);
+						gDisplayParm.setBack256(clr8b);
 						i += 2;
 					}
 					// xterm-256 colors
@@ -3487,7 +3488,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					else if (((i+4) < Code.ArgC) && (Code.ArgV[i+1] == 2))
 					{
 						gDisplayParm.setBackColor(RGB((Code.ArgV[i+2] & 0xFF),(Code.ArgV[i+3] & 0xFF),(Code.ArgV[i+4] & 0xFF)));
-						gDisplayParm.setBack256(2);
+						gDisplayParm.setBack256(clr24b);
 						i += 4;
 					}
 					break;
@@ -3495,16 +3496,16 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 					// Reset
 					gDisplayParm.setBackColor(CONBACKCOLOR(GetDefaultTextAttr()));
 					gDisplayParm.setBrightBack(FALSE);
-					gDisplayParm.setBack256(FALSE);
+					gDisplayParm.setBack256(clr4b);
 					break;
 				case 90: case 91: case 92: case 93: case 94: case 95: case 96: case 97:
 					gDisplayParm.setTextColor((Code.ArgV[i] - 90) | 0x8);
-					gDisplayParm.setText256(FALSE);
+					gDisplayParm.setText256(clr4b);
 					gDisplayParm.setBrightFore(TRUE);
 					break;
 				case 100: case 101: case 102: case 103: case 104: case 105: case 106: case 107:
 					gDisplayParm.setBackColor((Code.ArgV[i] - 100) | 0x8);
-					gDisplayParm.setBack256(FALSE);
+					gDisplayParm.setBack256(clr4b);
 					gDisplayParm.setBrightBack(TRUE);
 					break;
 				case 10:

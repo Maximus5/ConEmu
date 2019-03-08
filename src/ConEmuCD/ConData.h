@@ -89,7 +89,7 @@ struct Attribute
 		/// Use Italic font
 		fItalic   = 0x00000002,
 		// #condata Not supported yet, reserved
-		fStrike   = 0x00000004,
+		fCrossed  = 0x00000004,
 
 		// #condata crForeColor contains xterm-256 palette index (unused yet)
 		fFore8b   = 0x00000100,

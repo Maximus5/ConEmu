@@ -132,6 +132,11 @@ void SrvAnsi::DisplayParm::setInverse(const bool val)
 	_Inverse = val;
 	setDirty(true);
 }
+void SrvAnsi::DisplayParm::setCrossed(const bool val)
+{
+	_Crossed = val;
+	setDirty(true);
+}
 
 
 
@@ -552,7 +557,7 @@ void SrvAnsi::ReSetDisplayParm(bool bReset, bool bApply)
 
 		if (Text256)
 		{
-			if (Text256 == 2)
+			if (Text256 == clr24b)
 			{
 				attr.flags |= condata::Attribute::fFore24b;
 				attr.crForeColor = TextColor&0xFFFFFF;
@@ -590,12 +595,14 @@ void SrvAnsi::ReSetDisplayParm(bool bReset, bool bApply)
 			attr.flags |= condata::Attribute::fItalic;
 		if (gDisplayParm.getUnderline())
 			attr.attr.attr |= COMMON_LVB_UNDERSCORE;
+		if (gDisplayParm.getCrossed())
+			attr.flags |= condata::Attribute::fCrossed;
 		if (gDisplayParm.getInverse())
 			attr.attr.attr |= COMMON_LVB_REVERSE_VIDEO;
 
 		if (Back256)
 		{
-			if (Back256 == 2)
+			if (Back256 == clr24b)
 			{
 				attr.flags |= condata::Attribute::fBack24b;
 				attr.crBackColor = BackColor&0xFFFFFF;

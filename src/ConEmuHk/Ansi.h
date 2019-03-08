@@ -240,21 +240,22 @@ protected:
 		private: t _##n; \
 		public: t get##n() const { return _##n; }; \
 		public: void set##n(const t val);
+	enum cbit { clr4b = 0, clr8b, clr24b };
 	struct DisplayParm
 	{
 		void Reset(const bool full);
-		DP_PROP(BOOL, WasSet);
-		DP_PROP(BOOL, BrightOrBold);     // 1
-		DP_PROP(BOOL, Italic);           // 3
-		DP_PROP(BOOL, Underline);        // 4
-		DP_PROP(BOOL, BrightFore);       // 90-97
-		DP_PROP(BOOL, BrightBack);       // 100-107
+		DP_PROP(bool, WasSet);
+		DP_PROP(bool, BrightOrBold);     // 1
+		DP_PROP(bool, Italic);           // 3
+		DP_PROP(bool, Underline);        // 4
+		DP_PROP(bool, Inverse);          // 7
+		DP_PROP(bool, Crossed)           // 9
+		DP_PROP(bool, BrightFore);       // 90-97
+		DP_PROP(bool, BrightBack);       // 100-107
 		DP_PROP(int,  TextColor);        // 30-37,38,39
-		DP_PROP(BOOL, Text256);          // 38
+		DP_PROP(cbit, Text256);          // 38
 		DP_PROP(int,  BackColor);        // 40-47,48,49
-		DP_PROP(BOOL, Back256);          // 48
-		// xterm
-		DP_PROP(BOOL, Inverse);
+		DP_PROP(cbit, Back256);          // 48
 	}; // gDisplayParm = {};
 	#undef DP_PROP
 	// Bad thing... Thought, it must be synced between thread, but when?
