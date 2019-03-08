@@ -2631,7 +2631,7 @@ bool CVirtualConsole::UpdatePrepare(HDC *ahDc, MSectionLock *pSDC, MSectionLock 
 			if (!bSizeProcessed)
 			{
 				MSetter lInConsoleResize(&mb_InConsoleResize);
-				mp_ConEmu->OnConsoleResize(TRUE);
+				mp_ConEmu->OnConsoleResize();
 			}
 		}
 

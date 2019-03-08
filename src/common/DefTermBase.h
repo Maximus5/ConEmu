@@ -571,7 +571,7 @@ public:
 			ThreadArg* pArg = (ThreadArg*)malloc(sizeof(ThreadArg));
 			if (!pArg)
 			{
-				_ASSERTE(pArg);
+				_ASSERTE(pArg);  // -V571
 				goto wrap;
 			}
 			pArg->pTerm = GetInterface();
@@ -1071,13 +1071,10 @@ protected:
 			}
 			else if (hProcess)
 			{
-				if (!bTerm)
+				DWORD nWait = WaitForSingleObject(hProcess, 0);
+				if (nWait == WAIT_OBJECT_0)
 				{
-					DWORD nWait = WaitForSingleObject(hProcess, 0);
-					if (nWait == WAIT_OBJECT_0)
-					{
-						bTerm = true;
-					}
+					bTerm = true;
 				}
 			}
 
@@ -1116,7 +1113,7 @@ protected:
 				if (bForceTerminate)
 				{
 					#ifdef _DEBUG
-					SuspendThread(hThread);
+					SuspendThread(hThread);  // -V720
 					_ASSERTE(FALSE && "Terminating DefTermBase hooker thread");
 					ResumeThread(hThread); // superfluous?
 					#endif

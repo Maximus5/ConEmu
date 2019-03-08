@@ -285,10 +285,11 @@ public:
 
 		BOOL bWin64 = IsWindows64();
 
+		#pragma warning(push)
 		#pragma warning(disable: 4996)
 		OSVERSIONINFOEXW osv = {sizeof(osv)};
 		GetVersionEx((OSVERSIONINFOW*)&osv);
-		#pragma warning(default: 4996)
+		#pragma warning(pop)
 
 		// if you're running on ReactOS, Version.szCSDVersion will contain two strings.
 		// The first string is the Windows compatible service pack number, "Service Pack 6".

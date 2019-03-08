@@ -115,7 +115,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // Default constructor of the class.
 CGestures::CGestures()
-:   _dwArguments(0), _inRotate(false)
 {
 	DEBUGTEST(GESTUREINFO c = {sizeof(c)});
 	_isTabletPC = (GetSystemMetrics(SM_TABLETPC) != FALSE);
@@ -229,7 +228,7 @@ bool CGestures::ProcessGestureMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 	if (!_isGestures)
 	{
-		_ASSERTE(_isGestures);
+		_ASSERTE(_isGestures);  // -V571
 		gpConEmu->LogString(L"Gesture message received but not allowed, skipping");
 		return false;
 	}

@@ -46,10 +46,18 @@ bool operator!= (const CFontPtr &a, const CFontPtr &b)
 }
 
 
-CFontPtr::CFontPtr(CFont* apRef /*= NULL*/)
-	: mp_Ref(NULL)
+CFontPtr::CFontPtr()
+{
+}
+
+CFontPtr::CFontPtr(CFont* apRef)
 {
 	Attach(apRef);
+}
+
+CFontPtr::CFontPtr(const CFontPtr& aPtr)
+{
+	Attach(aPtr.Ptr());
 }
 
 CFontPtr::~CFontPtr()

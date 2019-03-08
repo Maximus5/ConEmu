@@ -184,8 +184,10 @@ class MArray
 			ssize_t inserted;
 			if ((nPosBefore < 0) || (nPosBefore >= size()))
 			{
+				#ifdef _DEBUG
 				inserted = data.size();
-				inserted = push_back(std::move(_Item));
+				#endif
+				inserted = push_back(std::move(_Item));  // -V519
 			}
 			else
 			{
@@ -209,7 +211,8 @@ class MArray
 					return -1;
 			}
 
-			data[_Index] = _Item;;
+			data[_Index] = _Item;
+			return _Index;
 		};
 
 		bool pop_back(_Ty& _Item)

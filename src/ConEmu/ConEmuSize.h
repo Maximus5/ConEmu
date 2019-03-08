@@ -305,7 +305,7 @@ public:
 	LRESULT OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, bool bResizeWindow, DpiChangeSource src);
 	LRESULT OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHeight);
 	void OnSizePanels(COORD cr);
-	void OnConsoleResize(bool abPosted = FALSE);
+	void OnConsoleResize();
 
 	bool isSizing(UINT nMouseMsg = 0);
 	void BeginSizing();

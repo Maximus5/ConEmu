@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#pragma warning(push)
 #pragma warning(disable: 4091)
 #include <shlobj.h>
-#pragma warning(default: 4091)
+#pragma warning(pop)

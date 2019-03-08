@@ -4375,7 +4375,7 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	RECT rcMain = {};
 	bool bFullScreen = false;
 	bool bMaximized = false;
-	DWORD nStyles = GetWindowLong(hJumpWnd, GWL_STYLE);
+	const DWORD nStyles = GetWindowLong(hJumpWnd, GWL_STYLE);
 
 	rcMain = rcJumpWnd;
 	if (hJumpWnd == ghWnd)
@@ -4453,7 +4453,10 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 		m_JumpMonitor.bFullScreen = bFullScreen;
 		m_JumpMonitor.bMaximized = bMaximized;
 
-		GetWindowLong(ghWnd, GWL_STYLE);
+		#ifdef _DEBUG
+		const DWORD nStylesDbg = GetWindowLong(ghWnd, GWL_STYLE);
+		_ASSERTE(nStylesDbg == nStyles);
+		#endif
 		if (bFullScreen)
 		{
 			// Win8. Не хочет прыгать обратно
@@ -5057,15 +5060,14 @@ void CConEmuSize::ReSize(bool abCorrect2Ideal /*= false*/)
 	}
 }
 
-void CConEmuSize::OnConsoleResize(bool abPosted /*= false*/)
+void CConEmuSize::OnConsoleResize()
 {
 	TODO("На удаление. ConEmu не должен дергаться при смене размера ИЗ КОНСОЛИ");
 	//MSetter lInConsoleResize(&mb_InConsoleResize);
 	// Выполняться должно в нити окна, иначе можем повиснуть
 	static bool lbPosted = false;
-	abPosted = isMainThread();
 
-	if (!abPosted)
+	if (!isMainThread())
 	{
 		if (gpSet->isLogging())
 			LogString(L"OnConsoleResize(abPosted==false)", TRUE);
@@ -5350,8 +5352,8 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 		LogString(szInfo, true);
 
 		#ifdef _DEBUG
-		if ((rc.bottom-rc.top) > 1200)
-			rc.bottom = rc.bottom;
+		if ((rc.bottom - rc.top) > 1200)
+			rc.bottom == rc.bottom;
 		#endif
 
 		SizeInfo::RequestDpi(DpiValue(dpiX, dpiY));
@@ -5572,7 +5574,7 @@ void CConEmuSize::UpdateWindowRgn()
 
 	bool do_log = RELEASEDEBUGTEST(gpSet->isLogging(), true);
 
-	if (do_log)
+	if (do_log)  // -V547
 	{
 		wchar_t szInfo[255];
 		RECT rcBox = {};
@@ -6791,7 +6793,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 
 				DEBUGTEST(BOOL bVs2 = ::IsWindowVisible(ghWnd));
 				DEBUGTEST(RECT rc2; ::GetWindowRect(ghWnd, &rc2));
-				DEBUGTEST((bVs1 == bVs2));
+				DEBUGTEST((bVs1 == bVs2));  // -V607
 				DEBUGTEST(HWND hFore2 = GetForegroundWindow());
 
 				// 1. Если на таскбаре отображаются "табы", то после AnimateWindow(AW_HIDE) в Win8 иконка с таскбара не убирается

@@ -49,12 +49,4 @@ public:
 #ifdef _DEBUG
 	static void RunArgTests();
 #endif
-
-
-public:
-	// Environment: Internal for GUI tab creation
-	DWORD cchEnvStrings;
-	wchar_t* pszEnvStrings;
-	// Task name if defined
-	wchar_t* pszTaskName;
 };

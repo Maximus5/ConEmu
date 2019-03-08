@@ -35,9 +35,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <exdisp.h>
 #include <tlhelp32.h>
 #if !defined(__GNUC__) || defined(__MINGW32__)
+#pragma warning(push)
 #pragma warning(disable: 4091)
 #include <dbghelp.h>
-#pragma warning(default: 4091)
+#pragma warning(pop)
 #include <shobjidl.h>
 #include <propkey.h>
 #else

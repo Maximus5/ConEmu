@@ -386,7 +386,7 @@ class MPipe : public MPipeBase
 			}
 
 			#ifdef _DEBUG
-			DWORD nMoreDataTick[6] = {GetTickCount()};
+			DWORD nMoreDataTick[6] = {GetTickCount()};  // -V1009
 			#endif
 
 			if (dwErr == ERROR_MORE_DATA)
@@ -625,7 +625,7 @@ public:
 		std::pair<void*,uint32_t> rc = {};
 		DWORD avail = 0, read = 0; uint32_t data_size = 0;
 
-		if (blocking || PeekNamedPipe(read_pipe.mh_Pipe, NULL, 0, NULL, &avail, NULL) && avail >= sizeof(data_size))
+		if (blocking || (PeekNamedPipe(read_pipe.mh_Pipe, NULL, 0, NULL, &avail, NULL) && avail >= sizeof(data_size)))
 		{
 			if (!ReadFile(read_pipe.mh_Pipe, &data_size, sizeof(data_size), &read, NULL) || read != sizeof(data_size))
 			{

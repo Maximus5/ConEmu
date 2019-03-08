@@ -2416,7 +2416,7 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 	if (!apRCon)
 		return lstrdup(L"RConRequired");
 
-	LPWSTR pszKey;
+	LPWSTR pszKey = NULL;
 	int iKeyNo = 0;
 
 	while (p->GetStrArg(iKeyNo++, pszKey))
@@ -2433,7 +2433,7 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		// Parse modifiers
 		while (pszKey[0] && pszKey[1])
 		{
-			switch (*pszKey)
+			switch (pszKey[0])
 			{
 			case L'<':
 				bRight = false;
@@ -2457,8 +2457,6 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				// Post {pszKey + dwControlState} to console
 				goto DoPost;
 			}
-			if (!pszKey)
-				break;
 			pszKey++;
 		}
 

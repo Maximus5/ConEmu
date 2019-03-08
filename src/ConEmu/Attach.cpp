@@ -94,7 +94,7 @@ HWND CAttachDlg::GetHWND()
 {
 	if (!this)
 	{
-		_ASSERTE(this);
+		_ASSERTE(this);  // -V571
 		return NULL;
 	}
 	return mh_Dlg;
@@ -105,7 +105,7 @@ void CAttachDlg::AttachDlg()
 {
 	if (!this)
 	{
-		_ASSERTE(this);
+		_ASSERTE(this);  // -V571
 		return;
 	}
 
@@ -276,9 +276,15 @@ CAttachDlg::AttachMacroRet CAttachDlg::AttachFromMacro(DWORD anPID, bool abAlter
 	}
 
 	if (Parms->empty())
+	{
+		delete Parms;
 		return amr_WindowNotFound;
+	}
 	if (Parms->size() > 1)
+	{
+		delete Parms;
 		return amr_Ambiguous;
+	}
 
 	// Работу делаем в фоновом потоке, чтобы не блокировать главный
 	// (к окну ConEmu должна подцепиться новая вкладка)
@@ -289,6 +295,7 @@ CAttachDlg::AttachMacroRet CAttachDlg::AttachFromMacro(DWORD anPID, bool abAlter
 		//DWORD dwErr = GetLastError();
 		//swprintf_c(szItem, L"ConEmu Attach, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 		//DisplayLastError(L"Can't start attach thread", dwErr, 0, szItem);
+		delete Parms;
 		return amr_Unexpected;
 	}
 	// We don't need this handle

@@ -102,20 +102,19 @@ CustomFontFamily::~CustomFontFamily()
 class BDFFont : public CustomFont
 {
 private:
-	int m_Width, m_Height;
-	BOOL m_Bold;
+	HDC hDC = NULL;
+	HBITMAP hBitmap = NULL;  // for GDI rendering
 
-	HDC hDC;
-	HBITMAP hBitmap;  // for GDI rendering
-	BYTE *bpBPixels; DWORD dwStride;
-	bool *bpMPixels;  // for manual rendering
-	BOOL m_HasUnicode, m_HasBorders;
+	int m_Width = 0, m_Height = 0;
+	bool m_Bold = FALSE;
+
+	DWORD dwStride = 0;
+	BYTE *bpBPixels = nullptr;
+	bool *bpMPixels = nullptr;  // for manual rendering
+	bool m_HasUnicode = false, m_HasBorders = false;
 
 	BDFFont()
 	{
-		m_Bold = m_HasUnicode = m_HasBorders = FALSE;
-		m_Width = 0;
-		m_Height = 0;
 	}
 
 	void CreateBitmap()

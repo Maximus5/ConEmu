@@ -114,7 +114,7 @@ bool CFont::IsSet() const
 {
 	if (!this)
 	{
-		_ASSERTE(this);
+		_ASSERTE(this);  // -V571
 		return false;
 	}
 

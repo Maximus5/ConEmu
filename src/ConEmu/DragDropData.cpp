@@ -618,7 +618,7 @@ BOOL CDragDropData::AddFmt_HDROP(wchar_t* pszDraggedPath, UINT nFilesCount, int 
 
 	if (!drop_data)
 	{
-		_ASSERTE(drop_data);
+		_ASSERTE(drop_data);  // -V571
 		gpConEmu->DebugStep(_T("DnD: Memory allocation failed!"), TRUE);
 		goto wrap;
 	}
@@ -1547,7 +1547,7 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 		hDrawDC = CreateCompatibleDC(hScreenDC);
 		if (!hDrawDC)
 		{
-			_ASSERTE(hDrawDC);
+			_ASSERTE(hDrawDC);  // -V571
 			if (hScreenDC) ::ReleaseDC(0, hScreenDC);
 			return FALSE;
 		}
@@ -1559,7 +1559,7 @@ BOOL CDragDropData::PaintDragImageBits(wchar_t* pszFiles, HDC& hDrawDC, HBITMAP&
 		hBitmap = CreateCompatibleBitmap(hScreenDC, nWidth, nHeight);
 		if (!hBitmap)
 		{
-			_ASSERTE(hBitmap);
+			_ASSERTE(hBitmap);  // -V571
 			if (bCreateDC) DeleteDC(hDrawDC);
 			if (hScreenDC) ::ReleaseDC(0, hScreenDC);
 			return FALSE;

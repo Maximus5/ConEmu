@@ -54,7 +54,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Helper function
 bool LocalToSystemTime(LPFILETIME lpLocal, LPSYSTEMTIME lpSystem)
 {
-	false;
 	FILETIME ftSystem;
 	bool bOk = LocalFileTimeToFileTime(lpLocal, &ftSystem)
 		&& FileTimeToSystemTime(&ftSystem, lpSystem);

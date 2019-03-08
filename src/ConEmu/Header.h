@@ -669,7 +669,7 @@ union CESize
 		if (!NewValue)
 		{
 			// Size can't be empty
-			_ASSERTE(NewValue);
+			_ASSERTE(NewValue);  // -V571
 			// Fail
 			return false;
 		}

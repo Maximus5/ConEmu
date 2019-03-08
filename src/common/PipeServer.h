@@ -1525,7 +1525,7 @@ struct PipeServer
 					for (int i = 0; i < mn_MaxCount; i++)
 					{
 						if (m_Pipes[i].hThread)
-							SuspendThread(m_Pipes[i].hThread);
+							SuspendThread(m_Pipes[i].hThread);  // -V720
 					}
 					_ASSERTE(FALSE && "StopPipeServer takes more than 500ms (debug mode), normal termination fails");
 					for (int i = 0; i < mn_MaxCount; i++)
@@ -1561,7 +1561,7 @@ struct PipeServer
 							// So, StopPipeServer will fail on wait for pipe threads
 							if (!mb_StopFromDllMain)
 							{
-								SuspendThread(m_Pipes[i].hThread);
+								SuspendThread(m_Pipes[i].hThread);  // -V720
 								_ASSERTEX(nWait == WAIT_OBJECT_0 && ("Waiting for pipe thread termination failed"));
 								ResumeThread(m_Pipes[i].hThread);
 							}

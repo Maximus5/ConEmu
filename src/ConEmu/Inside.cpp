@@ -530,7 +530,7 @@ bool CConEmuInside::TurnExplorerTipPane(wchar_t (&szAddMsg)[128])
 	{
 		// WinXP, Win2k3
 		nBtn = IDYES; // MsgBox(L"Tip pane is not found in Explorer window!\nThis pane is required for 'ConEmu Inside' mode.\nDo you want to show this pane?", MB_ICONQUESTION|MB_YESNO);
-		if (nBtn == IDYES)
+		// if (nBtn == IDYES)
 		{
 
 		#if 0

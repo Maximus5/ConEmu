@@ -48,6 +48,10 @@ public:
 	SizeInfo(const SizeInfo& src);
 	virtual ~SizeInfo();
 
+	SizeInfo& operator=(const SizeInfo&) = delete;
+	SizeInfo& operator=(SizeInfo&&) = delete;
+	SizeInfo(SizeInfo&&) = delete;
+
 public:
 	// *** Relative to the upper-left corner of the screen or the parent (if Inside mode) ***
 

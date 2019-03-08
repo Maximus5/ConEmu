@@ -126,9 +126,8 @@ public:
 	
 	RecreateActionParm aRecreate; // Информационно и для CRecreateDlg
 
-	// Internal for GUI tab creation
 	#ifndef CONEMU_MINIMAL
-	// Environment
+	// Environment: Internal for GUI tab creation
 	DWORD cchEnvStrings;
 	wchar_t* pszEnvStrings;
 	// Task name if defined

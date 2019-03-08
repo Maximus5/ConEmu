@@ -94,21 +94,21 @@ private:
 private:
 	// При Pan и прочем это первая точка, в отличие от _ptFirst не меняется
 	// в процессе перетаскивания и содержит ЭКРАННЫЕ координаты
-	POINT _ptBegin;
+	POINT _ptBegin = {};
 	// first significant point of the gesture
-	POINT _ptFirst;
+	POINT _ptFirst = {};
 	// second significant point of the gesture
-	POINT _ptSecond;
+	POINT _ptSecond = {};
 	// 4 bytes long argument
-	DWORD _dwArguments;
+	DWORD _dwArguments = 0;
 	// Rotation was started?
-	bool  _inRotate;
+	bool  _inRotate = false;
 private:
-	bool _isTabletPC, _isGestures;
+	bool _isTabletPC = false, _isGestures = false;
 	typedef BOOL (WINAPI* GetGestureInfo_t)(HGESTUREINFO hGestureInfo, PGESTUREINFO pGestureInfo);
-	GetGestureInfo_t _GetGestureInfo;
+	GetGestureInfo_t _GetGestureInfo = nullptr;
 	typedef BOOL (WINAPI* SetGestureConfig_t)(HWND hwnd, DWORD dwReserved, UINT cIDs, PGESTURECONFIG pGestureConfig, UINT cbSize);
-	SetGestureConfig_t _SetGestureConfig;
+	SetGestureConfig_t _SetGestureConfig = nullptr;
 	typedef BOOL (WINAPI* CloseGestureInfoHandle_t)(HGESTUREINFO hGestureInfo);
-	CloseGestureInfoHandle_t _CloseGestureInfoHandle;
+	CloseGestureInfoHandle_t _CloseGestureInfoHandle = nullptr;
 };

@@ -36,15 +36,19 @@ class CFont;
 class CFontPtr
 {
 private:
-	CFont *mp_Ref;
+	CFont *mp_Ref = nullptr;
 
 public:
-	CFontPtr(CFont* apRef = NULL);
+	CFontPtr();
+	CFontPtr(CFont* apRef);
+	CFontPtr(const CFontPtr& aPtr);
 	~CFontPtr();
 
 	int  Release();
 	bool Attach(CFont* apRef);
 
+	CFontPtr(CFontPtr&&) = delete;
+	CFontPtr& operator=(CFontPtr&&) = delete;
 
 public:
 	// Dereference

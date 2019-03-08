@@ -140,7 +140,7 @@ void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);
 #define Assert(V)
 #define AssertMsg(V)
 #else
-#define Assert(V) if ((V)==FALSE) { AssertBox(_T(#V), _T(__FILE__), __LINE__); }
+#define Assert(V) if (!(V)) { AssertBox(_T(#V), _T(__FILE__), __LINE__); }
 #define AssertMsg(V) AssertBox(V, _T(__FILE__), __LINE__);
 #endif
 

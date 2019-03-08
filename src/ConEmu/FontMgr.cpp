@@ -461,7 +461,7 @@ LONG CFontMgr::FontHeightHtml()
 {
 	if (!m_Font[0].IsSet())
 	{
-		_ASSERTE(m_Font[0].IsSet());
+		_ASSERTE(m_Font[0].IsSet());  // -V571
 		return FontHeight();
 	}
 
@@ -2027,7 +2027,7 @@ bool CFontMgr::Create(CLogFont inFont, CFontPtr& rpFont, CustomFontFamily** ppCu
 
 			if (!lbTM)
 			{
-				_ASSERTE(lbTM);
+				_ASSERTE(lbTM);  // -V571
 			}
 
 			if (bRasterFont)

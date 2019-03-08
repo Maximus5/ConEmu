@@ -136,7 +136,7 @@ protected:
 			wchar_t* pszReactOS = os.szCSDVersion + lstrlen(os.szCSDVersion) + 1;
 			if (*pszReactOS && ((pszReactOS+nCmdLen+1) < (os.szCSDVersion + countof(os.szCSDVersion))))
 			{
-				pszReactOS[nCmdLen] = 0;
+				pszReactOS[nCmdLen] = 0;  // -V557
 				pEnv->bIsReactOS = (lstrcmpi(pszReactOS, pszReactCompare) == 0);
 			}
 

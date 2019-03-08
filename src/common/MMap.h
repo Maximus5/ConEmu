@@ -44,10 +44,10 @@ protected:
 		size_t    nCount;
 		MapItems *pNextBlock;
 	};
-	MapItems *mp_FirstBlock;
-	MapItems *mp_LastBlock;
-	size_t mn_ItemsInBlock; // max number of items in one block
-	size_t mn_MaxCount;     // informational
+	MapItems *mp_FirstBlock = nullptr;
+	MapItems *mp_LastBlock = nullptr;
+	size_t mn_ItemsInBlock = 0; // max number of items in one block
+	size_t mn_MaxCount = 0;     // informational
 
 	MapItems* AllocateBlock()
 	{
@@ -110,8 +110,6 @@ protected:
 public:
 	MMap()
 	{
-		mp_FirstBlock = NULL;
-		mn_MaxCount = 0;
 	};
 	~MMap()
 	{

@@ -1089,7 +1089,7 @@ bool CConEmuCtrl::key_GuiMacro(const ConEmuChord& VkState, bool TestOnly, const 
 		wchar_t* pszCopy = lstrdup(hk->GuiMacro);
 		if (!pszCopy)
 		{
-			_ASSERTE(pszCopy);
+			_ASSERTE(pszCopy);  // -V571
 		}
 		else
 		{
