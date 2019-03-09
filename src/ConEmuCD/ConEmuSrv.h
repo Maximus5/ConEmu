@@ -647,30 +647,6 @@ extern HMODULE ghOurModule;
 
 void PrintVersion();
 
-//#pragma pack(push, 1)
-//extern CESERVER_CONSAVE* gpStoredOutput;
-//#pragma pack(pop)
-//extern MSection* gpcsStoredOutput;
-
-//typedef struct tag_CmdInfo
-//{
-//	DWORD dwFarPID;
-//	//DWORD dwSrvPID;
-//	BOOL  bK;
-//	//BOOL  bNonGuiMode; // Если запущен НЕ в консоли, привязанной к GUI. Может быть из-за того, что работает как COMSPEC
-//	CONSOLE_SCREEN_BUFFER_INFO sbi;
-//	BOOL  bNewConsole;
-//	//DWORD nExitCode;
-//	wchar_t szComSpecName[32];
-//	wchar_t szSelfName[32];
-//	wchar_t *pszPreAliases;
-//	DWORD nPreAliasSize;
-//	// По завершении ComSpec не отключать буфер
-//	//BOOL  bWasBufferHeight;
-//} CmdInfo;
-//
-//extern CmdInfo* gpSrv;
-
 extern COORD gcrVisibleSize;
 extern BOOL  gbParmVisibleSize, gbParmBufSize;
 extern SHORT gnBufferHeight, gnBufferWidth;

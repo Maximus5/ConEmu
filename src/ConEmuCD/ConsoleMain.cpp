@@ -248,13 +248,6 @@ bool gbIsDBCS = false;
 SrvInfo* gpSrv = NULL;
 
 
-//#pragma pack(push, 1)
-//CESERVER_CONSAVE* gpStoredOutput = NULL;
-//#pragma pack(pop)
-//MSection* gpcsStoredOutput = NULL;
-
-//CmdInfo* gpSrv = NULL;
-
 COORD gcrVisibleSize = {80,25}; // gcrBufferSize переименован в gcrVisibleSize
 BOOL  gbParmVisibleSize = FALSE;
 BOOL  gbParmBufSize = FALSE;

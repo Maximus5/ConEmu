@@ -1769,8 +1769,6 @@ BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
 	//     а не скорректированное функцией MyGetConsoleScreenBufferInfo
 	if (!GetConsoleScreenBufferInfo(ghConOut, &lsbi))
 	{
-		//CS.RelockExclusive();
-		//SafeFree(gpStoredOutput);
 		return FALSE; // Не смогли получить информацию о консоли...
 	}
 	// Support dynamic height - do not load all 32K lines

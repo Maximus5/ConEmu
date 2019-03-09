@@ -1200,13 +1200,6 @@ int ServerInit()
 	{
 		_ASSERTE(gnRunMode==RM_AUTOATTACH);
 	}
-	#if 0
-	_ASSERTE(gpcsStoredOutput==NULL && gpStoredOutput==NULL);
-	if (!gpcsStoredOutput)
-	{
-		gpcsStoredOutput = new MSection;
-	}
-	#endif
 
 
 	// Включить по умолчанию выделение мышью
@@ -1751,14 +1744,6 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 
 	SafeDelete(gpSrv->pStoredOutputItem);
 	SafeDelete(gpSrv->pStoredOutputHdr);
-	#if 0
-	{
-		MSectionLock CS; CS.Lock(gpcsStoredOutput, TRUE);
-		SafeFree(gpStoredOutput);
-		CS.Unlock();
-		SafeDelete(gpcsStoredOutput);
-	}
-	#endif
 
 	SafeFree(gpSrv->pszAliases);
 
@@ -1886,8 +1871,6 @@ bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*
 	//     а не скорректированное функцией MyGetConsoleScreenBufferInfo
 	if (!GetConsoleScreenBufferInfo(ghConOut, &lsbi))
 	{
-		//CS.RelockExclusive();
-		//SafeFree(gpStoredOutput);
 		return false; // Не смогли получить информацию о консоли...
 	}
 
@@ -2035,33 +2018,6 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 	if (abCreateOnly)
 		return;
 
-	//// Если требуется увеличение размера выделенной памяти
-	//if (gpStoredOutput)
-	//{
-	//	if (gpStoredOutput->hdr.cbMaxOneBufferSize < (DWORD)nOneBufferSize)
-	//	{
-	//		CS.RelockExclusive();
-	//		SafeFree(gpStoredOutput);
-	//	}
-	//}
-
-	//if (gpStoredOutput == NULL)
-	//{
-	//	CS.RelockExclusive();
-	//	// Выделяем память: заголовок + буфер текста (на атрибуты забьем)
-	//	gpStoredOutput = (CESERVER_CONSAVE*)calloc(sizeof(CESERVER_CONSAVE_HDR)+nOneBufferSize,1);
-	//	_ASSERTE(gpStoredOutput!=NULL);
-
-	//	if (gpStoredOutput == NULL)
-	//		return; // Не смогли выделить память
-
-	//	gpStoredOutput->hdr.cbMaxOneBufferSize = nOneBufferSize;
-	//}
-
-	//// Запомнить sbi
-	////memmove(&gpStoredOutput->hdr.sbi, &lsbi, sizeof(lsbi));
-	//gpStoredOutput->hdr.sbi = lsbi;
-
 	// Теперь читаем данные
 	COORD BufSize = {lsbi.dwSize.X, lsbi.dwSize.Y};
 	SMALL_RECT ReadRect = {0, 0, lsbi.dwSize.X-1, lsbi.dwSize.Y-1};
@@ -2108,16 +2064,6 @@ void CmdOutputRestore(bool abSimpleMode)
 		return;
 	}
 
-#if 0
-	// Event if there were no backscroll - we may restore saved content!
-	if (lsbi.dwSize.Y <= (lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1))
-	{
-		// There is no scroller in window
-		// Nothing to do
-		return;
-	}
-#endif
-
 	CHAR_INFO chrFill = {};
 	chrFill.Attributes = lsbi.wAttributes;
 	chrFill.Char.UnicodeChar = L' ';
@@ -2144,20 +2090,6 @@ void CmdOutputRestore(bool abSimpleMode)
 	COORD crNewPos = {lsbi.dwCursorPosition.X, lsbi.dwCursorPosition.Y + crMoveTo.Y};
 	SetConsoleCursorPosition(ghConOut, crNewPos);
 
-#if 0
-	MSectionLock CS; CS.Lock(gpcsStoredOutput, TRUE);
-	if (gpStoredOutput)
-	{
-
-		// Учесть, что ширина консоли могла измениться со времени выполнения предыдущей команды.
-		// Сейчас у нас в верхней части консоли может оставаться кусочек предыдущего вывода (восстановил FAR).
-		// 1) Этот кусочек нужно считать
-		// 2) Скопировать в нижнюю часть консоли (до которой докрутилась предыдущая команда)
-		// 3) прокрутить консоль до предыдущей команды (куда мы только что скопировали данные сверху)
-		// 4) восстановить оставшуюся часть консоли. Учесть, что фар может
-		//    выполнять некоторые команды сам и курсор вообще-то мог несколько уехать...
-	}
-#endif
 
 	// Восстановить текст скрытой (прокрученной вверх) части консоли
 	// Учесть, что ширина консоли могла измениться со времени выполнения предыдущей команды.
