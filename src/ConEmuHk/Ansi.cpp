@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "../common/HandleKeeper.h"
 #include "../common/MConHandle.h"
+#include "../common/MRect.h"
 #include "../common/MSectionSimple.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WCodePage.h"
@@ -2039,7 +2040,7 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount)
 		TopLine = csbi.dwCursorPosition.Y;
 		BottomLine = std::max<int>(gDisplayOpt.ScrollEnd, 0);
 
-		if ((TopLine + LinesCount) <= BottomLine)
+		if ((TopLine + (int)LinesCount) <= BottomLine)
 		{
 			ExtScrollScreenParm scrl = {
 				sizeof(scrl), essf_Current|essf_Commit|essf_Region, hConsoleOutput,
@@ -2052,7 +2053,7 @@ BOOL CEAnsi::LinesInsert(HANDLE hConsoleOutput, const unsigned LinesCount)
 		{
 			ExtFillOutputParm fill = {
 				sizeof(fill), efof_Attribute|efof_Character, hConsoleOutput,
-				{}, L' ', {0, TopLine}, csbi.dwSize.X * LinesCount};
+				{}, L' ', {0, MakeShort(TopLine)}, csbi.dwSize.X * LinesCount};
 			lbRc |= ExtFillOutput(&fill);
 		}
 	}
@@ -2093,7 +2094,7 @@ BOOL CEAnsi::LinesDelete(HANDLE hConsoleOutput, const unsigned LinesCount)
 		_ASSERTEX(gDisplayOpt.ScrollStart>=0 && gDisplayOpt.ScrollEnd>gDisplayOpt.ScrollStart);
 		// ScrollStart & ScrollEnd are 0-based absolute line indexes
 		// relative to VISIBLE area, these are not absolute buffer coords
-		if (((csbi.dwCursorPosition.Y + LinesCount) <= gDisplayOpt.ScrollStart)
+		if (((csbi.dwCursorPosition.Y + (int)LinesCount) <= gDisplayOpt.ScrollStart)
 			|| (csbi.dwCursorPosition.Y > gDisplayOpt.ScrollEnd))
 			return TRUE; // Nothing to scroll
 		TopLine = csbi.dwCursorPosition.Y;
