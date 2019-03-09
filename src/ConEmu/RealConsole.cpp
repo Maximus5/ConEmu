@@ -12226,6 +12226,7 @@ bool CRealConsole::PrepareOutputFile(bool abUnicodeText, wchar_t* pszFilePathNam
 	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
 	CESERVER_CONSAVE_MAP* pData = NULL;
 
+	// #AltBuffer Load alt buffer from Console Server (CECMD_GETOUTPUT / cmd_GetOutput)
 	StoredOutputHdr.InitName(CECONOUTPUTNAME, LODWORD(hConWnd)); //-V205
 	if (!(pHdr = StoredOutputHdr.Open()) || !pHdr->sCurrentMap[0])
 	{

@@ -32,16 +32,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MAssert.h"
 #include "MConHandle.h"
 
-WARNING("После перехода на альтернативный сервер - должен работать строго в 'стандартном' режиме (mn_StdMode=STD_OUTPUT_HANDLE/STD_INPUT_HANLDE)");
+#include <intrin.h>
+
+WARNING("После перехода на альтернативный сервер - должен работать строго в 'стандартном' режиме (mn_StdMode=STD_OUTPUT_HANDLE/STD_INPUT_HANDLE)");
 
 MConHandle::MConHandle(LPCWSTR asName, SECURITY_ATTRIBUTES *apSec)
+	: mcs_Handle(true)
 {
-	mn_StdMode = 0;
+	mn_StdMode = StdMode::None;
 	mb_OpenFailed = FALSE; mn_LastError = 0;
 	mh_Handle = INVALID_HANDLE_VALUE;
 	mpp_OutBuffer = NULL;
 	mp_sec = apSec;
-	lstrcpynW(ms_Name, asName, 9);
+	lstrcpynW(ms_Name, asName ? asName : L"", 9);
 	m_logidx = -1;
 	memset(m_log, 0, sizeof(m_log));
 	/*
@@ -138,9 +141,12 @@ MConHandle::MConHandle(LPCWSTR asName, SECURITY_ATTRIBUTES *apSec)
 	//	else if (!lstrcmpW(ms_Name, L"CONIN$"))
 	//		mn_StdMode = STD_INPUT_HANDLE;
 	//}
-};
+}
 
-#include <intrin.h>
+MConHandle::~MConHandle()
+{
+	Close();
+}
 
 void MConHandle::LogHandle(UINT evt, HANDLE h)
 {
@@ -151,19 +157,45 @@ void MConHandle::LogHandle(UINT evt, HANDLE h)
 	m_log[i].h = h;
 }
 
-MConHandle::~MConHandle()
-{
-	Close();
-};
-
-void MConHandle::SetBufferPtr(HANDLE* ppOutBuffer)
+// may point to some GLOBAL SCOPE variable with console handle
+void MConHandle::SetHandlePtr(HANDLE* ppOutBuffer)
 {
 	mpp_OutBuffer = ppOutBuffer;
+}
+
+// may point to some GLOBAL SCOPE variable with console handle
+void MConHandle::SetHandlePtr(const MConHandle& out_buffer)
+{
+	mpp_OutBuffer = &out_buffer.mh_Handle;
+}
+
+bool MConHandle::SetHandle(const HANDLE new_handle, const MConHandle::StdMode std_mode)
+{
+	MSectionLockSimple CS; CS.Lock(&mcs_Handle);
+	HANDLE h = (new_handle == NULL) ? INVALID_HANDLE_VALUE : new_handle;
+	Close();
+	mh_Handle = h;
+	mn_StdMode = std_mode;
+	return HasHandle();
+}
+
+bool MConHandle::HasHandle() const
+{
+	return mh_Handle && (mh_Handle != INVALID_HANDLE_VALUE);
 }
 
 MConHandle::operator const HANDLE()
 {
 	return GetHandle();
+}
+
+HANDLE MConHandle::Release()
+{
+	MSectionLockSimple CS; CS.Lock(&mcs_Handle);
+	HANDLE h = INVALID_HANDLE_VALUE;
+	std::swap(h, mh_Handle);
+	mn_StdMode = StdMode::None;
+	return h;
 }
 
 HANDLE MConHandle::GetHandle()
@@ -176,15 +208,15 @@ HANDLE MConHandle::GetHandle()
 
 	if (mh_Handle == INVALID_HANDLE_VALUE)
 	{
-		if (mn_StdMode)
+		if (mn_StdMode != StdMode::None)
 		{
-			mh_Handle = GetStdHandle(mn_StdMode);
+			mh_Handle = GetStdHandle(mn_StdMode == StdMode::Input ? STD_INPUT_HANDLE : STD_OUTPUT_HANDLE);
 			LogHandle(Event::e_CreateHandleStd, mh_Handle);
 		}
 		else
 		{
 			// Чтобы случайно не открыть хэндл несколько раз в разных потоках
-			MSectionLock CS; CS.Lock(&mcs_Handle, TRUE);
+			MSectionLockSimple CS; CS.Lock(&mcs_Handle);
 
 			// Во время ожидания хэндл мог быт открыт в другом потоке
 			if (mh_Handle == INVALID_HANDLE_VALUE)
@@ -242,7 +274,7 @@ HANDLE MConHandle::GetHandle()
 
 	LogHandle(Event::e_GetHandle, mh_Handle);
 	return mh_Handle;
-};
+}
 
 void MConHandle::Close()
 {
@@ -254,7 +286,7 @@ void MConHandle::Close()
 
 	if (mh_Handle != INVALID_HANDLE_VALUE)
 	{
-		if (mn_StdMode)
+		if (mn_StdMode != StdMode::None)
 		{
 			LogHandle(Event::e_CloseHandleStd, mh_Handle);
 			mh_Handle = INVALID_HANDLE_VALUE;
@@ -268,4 +300,4 @@ void MConHandle::Close()
 			CloseHandle(h);
 		}
 	}
-};
+}

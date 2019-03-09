@@ -135,6 +135,7 @@ BOOL WINAPI WriteProcessed3(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWO
 	InterlockedDecrement(&gnWriteProcessed);
 	return bRc;
 }
+MConHandle ghConOut(L"CONOUT$"), ghStdOut(L""), ghStdErr(L"");
 HANDLE GetStreamHandle(WriteProcessedStream Stream)
 {
 	HANDLE hConsoleOutput;
@@ -2708,7 +2709,7 @@ wrap:
 	return lbRc;
 }
 
-void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
+void CEAnsi::WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE& hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply)
 {
 	/*
 
@@ -3131,11 +3132,11 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 						TODO("Need to find proper way for activation alternative buffer from ViM?");
 						if (Code.Action == L'h')
 						{
-							StartVimTerm(false);
+							hConsoleOutput = StartVimTerm(false);
 						}
 						else
 						{
-							StopVimTerm();
+							hConsoleOutput = StopVimTerm();
 						}
 					}
 
@@ -3277,7 +3278,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 						XTermSaveRestoreCursor(true, hConsoleOutput);
 					// h: switch to alternative buffer without backscroll
 					// l: restore saved scrollback buffer
-					XTermAltBuffer((Code.Action == L'h'));
+					hConsoleOutput = XTermAltBuffer((Code.Action == L'h'));
 					// \e[?1049l - restore cursor pos
 					if ((Code.ArgV[0] == 1049) && (Code.Action == L'l'))
 						XTermSaveRestoreCursor(false, hConsoleOutput);
@@ -4031,16 +4032,19 @@ void CEAnsi::XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput /*= 
 /// applications like Vim. There is no scrolling and this
 /// mode is used to save current backscroll contents and
 /// restore it when application exits
-void CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
+HANDLE CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
 {
 	if (bSetAltBuffer)
 	{
 		// Once!
 		if ((gXTermAltBuffer.Flags & xtb_AltBuffer))
-			return;
+			return GetStdHandle(STD_OUTPUT_HANDLE);
 
 		CONSOLE_SCREEN_BUFFER_INFO csbi1 = {}, csbi2 = {};
 		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
+		ghStdOut.SetHandle(hOut, MConHandle::StdMode::Output);
+		ghStdErr.SetHandle(hErr, MConHandle::StdMode::Output);
 		if (GetConsoleScreenBufferInfoCached(hOut, &csbi1, TRUE))
 		{
 			// -- Turn on "alternative" buffer even if not scrolling exist now
@@ -4054,6 +4058,18 @@ void CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
 					pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
 					if (pOut)
 					{
+						if (!IsWin7Eql())
+						{
+							ghConOut.Close();
+							HANDLE hNewOut = ghConOut.GetHandle();
+							if (hNewOut && hNewOut != INVALID_HANDLE_VALUE)
+							{
+								hOut = hNewOut;
+								SetStdHandle(STD_OUTPUT_HANDLE, hNewOut);
+								SetStdHandle(STD_ERROR_HANDLE, hNewOut);
+							}
+						}
+
 						// Ensure we have fresh information (size was changed)
 						GetConsoleScreenBufferInfoCached(hOut, &csbi2, TRUE);
 
@@ -4091,11 +4107,12 @@ void CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
 				}
 			}
 		}
+		return hOut;
 	}
 	else
 	{
 		if (!(gXTermAltBuffer.Flags & xtb_AltBuffer))
-			return;
+			return GetStdHandle(STD_OUTPUT_HANDLE);
 
 		// Однократно
 		gXTermAltBuffer.Flags &= ~xtb_AltBuffer;
@@ -4116,6 +4133,14 @@ void CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
 				pObj->ReSetDisplayParm(hOut, TRUE, TRUE);
 			else
 				SetConsoleTextAttribute(hOut, nDefAttr);
+		}
+
+		if (!IsWin7Eql() && ghStdOut.HasHandle())
+		{
+			SetStdHandle(STD_OUTPUT_HANDLE, ghStdOut);
+			SetStdHandle(STD_ERROR_HANDLE, ghStdErr);
+			hOut = ghStdOut.Release();
+			ghConOut.Close();
 		}
 
 		// Восстановление прокрутки и данных
@@ -4144,6 +4169,7 @@ void CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
 				gDisplayOpt.ScrollEnd = gXTermAltBuffer.ScrollEnd;
 			}
 		}
+		return hOut;
 	}
 }
 
@@ -4154,11 +4180,11 @@ This is because
 2) can't find ATM legal way to switch Alternative/Primary buffer by request from ViM
 */
 
-void CEAnsi::StartVimTerm(bool bFromDllStart)
+HANDLE CEAnsi::StartVimTerm(bool bFromDllStart)
 {
 	// Only certain versions of Vim able to use xterm-256 in ConEmu
 	if (gnExeFlags & (caf_Cygwin1|caf_Msys1|caf_Msys2))
-		return;
+		return GetStdHandle(STD_OUTPUT_HANDLE);
 
 	// For native vim - don't handle "--help" and "--version" switches
 	// Has no sense for cygwin/msys, but they are skipped above
@@ -4170,21 +4196,21 @@ void CEAnsi::StartVimTerm(bool bFromDllStart)
 		for (INT_PTR i = 0; pszCompare[i]; i++)
 		{
 			if (wcscmp(lsArg, pszCompare[i]) == 0)
-				return;
+				return GetStdHandle(STD_OUTPUT_HANDLE);
 		}
 	}
 
-	XTermAltBuffer(true);
+	return XTermAltBuffer(true);
 }
 
-void CEAnsi::StopVimTerm()
+HANDLE CEAnsi::StopVimTerm()
 {
 	if (gbWasXTermOutput)
 	{
 		CEAnsi::StartXTermMode(false);
 	}
 
-	XTermAltBuffer(false);
+	return XTermAltBuffer(false);
 }
 
 void CEAnsi::ChangeTermMode(TermModeCommand mode, DWORD value, DWORD nPID /*= 0*/)

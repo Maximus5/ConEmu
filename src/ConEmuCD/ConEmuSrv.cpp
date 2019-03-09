@@ -1097,6 +1097,8 @@ int ServerInit()
 	// Межпроцессный семафор не помогает, оставил пока только в качестве заглушки
 	//InitializeConsoleInputSemaphore();
 
+	// Windows 7 has a bug which makes impossible to utilize ScreenBuffers
+	// https://conemu.github.io/en/MicrosoftBugs.html#CorruptedScreenBuffer
 	if (gpSrv->osv.dwMajorVersion == 6 && gpSrv->osv.dwMinorVersion == 1)
 		gpSrv->bReopenHandleAllowed = FALSE;
 	else
@@ -1989,7 +1991,7 @@ wrap:
 	return (pData != NULL);
 }
 
-// Сохранить данные ВСЕЙ консоли в gpStoredOutput
+// Сохранить данные ВСЕЙ консоли в mapping
 void CmdOutputStore(bool abCreateOnly /*= false*/)
 {
 	LogFunction(L"CmdOutputStore");

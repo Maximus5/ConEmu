@@ -406,6 +406,7 @@ bool IsAutoAttachAllowed();
 /* Console Handles */
 //extern MConHandle ghConIn;
 extern MConHandle ghConOut;
+extern MConHandle gPrimaryBuffer, gAltBuffer;
 void ConOutCloseHandle();
 
 

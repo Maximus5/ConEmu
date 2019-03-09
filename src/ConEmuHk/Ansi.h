@@ -107,8 +107,8 @@ public:
 	/* ************************************* */
 	/*      STATIC Helper routines           */
 	/* ************************************* */
-	static void StartVimTerm(bool bFromDllStart);
-	static void StopVimTerm();
+	static HANDLE StartVimTerm(bool bFromDllStart);
+	static HANDLE StopVimTerm();
 
 	static BOOL OurWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved, bool bInternal = true);
 
@@ -176,7 +176,7 @@ protected:
 	CpCvt* mp_Cvt;
 	wchar_t m_LastWrittenChar = L' ';
 protected:
-	void WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
+	void WriteAnsiCode_CSI(OnWriteConsoleW_t _WriteConsoleW, HANDLE& hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
 	void WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
 	void WriteAnsiCode_VIM(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsoleOutput, AnsiEscCode& Code, BOOL& lbApply);
 	BOOL ReportString(LPCWSTR asRet);
@@ -194,7 +194,7 @@ public:
 	static void WriteAnsiLogFormat(const char* format, ...);
 protected:
 	static void XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput = NULL);
-	static void XTermAltBuffer(bool bSetAltBuffer);
+	static HANDLE XTermAltBuffer(bool bSetAltBuffer);
 public:
 
 	void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply);

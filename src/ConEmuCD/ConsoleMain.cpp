@@ -154,6 +154,8 @@ FGetConsoleDisplayMode pfnGetConsoleDisplayMode = NULL;
 /* Console Handles */
 //MConHandle ghConIn ( L"CONIN$" );
 MConHandle ghConOut(L"CONOUT$");
+//Used to store and restore console screen buffers in cmd_AltBuffer
+MConHandle gPrimaryBuffer(NULL), gAltBuffer(NULL);
 
 // Время ожидания завершения консольных процессов, когда юзер нажал крестик в КОНСОЛЬНОМ окне
 // The system also displays this dialog box if the process does not respond within a certain time-out period
@@ -2502,6 +2504,7 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	return ConsoleMain3(anWorkMode, GetCommandLineW());
 }
 
+// if Parm->ppConOutBuffer is set, it HAVE TO BE GLOBAL SCOPE variable!
 int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 {
 	//_ASSERTE(FALSE && "ConEmuCD. Continue to RequestLocalServer");
@@ -2527,7 +2530,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	// Хэндл обновим сразу
 	if (Parm->Flags & slsf_SetOutHandle)
 	{
-		ghConOut.SetBufferPtr(Parm->ppConOutBuffer);
+		ghConOut.SetHandlePtr(Parm->ppConOutBuffer);
 	}
 
 	if (gnRunMode != RM_ALTSERVER)

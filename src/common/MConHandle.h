@@ -30,19 +30,43 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "defines.h"
-#include "MSection.h"
+#include "MSectionSimple.h"
 
 /* Console Handles */
 class MConHandle
 {
+	public:
+		MConHandle(LPCWSTR asName, SECURITY_ATTRIBUTES *apSec = NULL);
+		~MConHandle();
+
+		// non-copyable
+		MConHandle(const MConHandle&) = delete;
+		MConHandle& operator=(const MConHandle&) = delete;
+
+	public:
+		bool HasHandle() const;
+		operator const HANDLE();
+		HANDLE GetHandle();
+		HANDLE Release();
+
+	public:
+		void Close();
+
+		void SetHandlePtr(HANDLE* ppOutBuffer);
+		void SetHandlePtr(const MConHandle& out_buffer);
+
+		enum class StdMode { None, Input, Output };
+		bool SetHandle(const HANDLE new_handle, const StdMode std_mode);
+
 	private:
 		wchar_t   ms_Name[10];
 		HANDLE    mh_Handle;
-		MSection  mcs_Handle;
 		BOOL      mb_OpenFailed;
 		DWORD     mn_LastError;
-		DWORD     mn_StdMode;
-		HANDLE*   mpp_OutBuffer; // Устанавливается при SetConsoleActiveScreenBuffer
+		StdMode   mn_StdMode;
+
+		const HANDLE*  mpp_OutBuffer; // Устанавливается при SetConsoleActiveScreenBuffer
+		MSectionSimple mcs_Handle;
 
 		SECURITY_ATTRIBUTES *mp_sec;
 
@@ -58,26 +82,11 @@ class MConHandle
 				e_CreateHandle,
 				e_CreateHandleStd,
 				e_GetHandlePtr,
+				e_ReleaseHandle,
 			} evt;
 			DEBUGTEST(DWORD time;)
 		};
 		Event m_log[HANDLE_BUFFER_SIZE];
 		LONG m_logidx;
 		void LogHandle(UINT evt, HANDLE h);
-
-	public:
-		operator const HANDLE();
-		HANDLE GetHandle();
-
-	public:
-		void Close();
-		void SetBufferPtr(HANDLE* ppOutBuffer);
-
-	public:
-		MConHandle(LPCWSTR asName, SECURITY_ATTRIBUTES *apSec = NULL);
-		~MConHandle();
-
-		// non-copyable
-		MConHandle(const MConHandle&) = delete;
-		MConHandle& operator=(const MConHandle&) = delete;
 };

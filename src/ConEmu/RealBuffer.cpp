@@ -607,6 +607,7 @@ bool CRealBuffer::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 		StoredOutputHdr.InitName(CECONOUTPUTNAME, LODWORD(mp_RCon->hConWnd));
 		if (!(pHdr = StoredOutputHdr.Open()) || !pHdr->sCurrentMap[0])
 		{
+			// #AltBuffer Load alt buffer from Console Server (CECMD_GETOUTPUT / cmd_GetOutput)
 			DisplayLastError(L"Stored output mapping was not created!");
 			goto wrap;
 		}
