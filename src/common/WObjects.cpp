@@ -758,6 +758,18 @@ bool IsWin7()
 	return (ibIsWin7 == 1);
 }
 
+// Windows 7 exactly
+bool IsWin7Eql()
+{
+	static int ibIsWin7Eql = 0;
+	if (!ibIsWin7Eql)
+	{
+		_ASSERTE(_WIN32_WINNT_WIN7 == 0x601);
+		ibIsWin7Eql = IsWinVerEqual(_WIN32_WINNT_WIN7) ? 1 : -1;
+	}
+	return (ibIsWin7Eql == 1);
+}
+
 // Windows 8 and higher
 bool IsWin8()
 {
