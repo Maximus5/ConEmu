@@ -6726,9 +6726,10 @@ void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldTe
 
 	free(pnAttrs);
 
-	ULONG l_read_p, l_read = perf.GetCounter(c_read.ID, &l_read_p, NULL, NULL);
-	ULONG l_fill_p, l_fill = perf.GetCounter(c_fill.ID, &l_fill_p, NULL, NULL);
-	swprintf_c(szLog, L"RefillConsoleAttributes finished, Reads(%u, %u%%), Fills(%u, %u%%)", l_read, l_read_p, l_fill, l_fill_p);
+	ULONG l_read_ms, l_read_p, l_read = perf.GetCounter(c_read.ID, &l_read_p, &l_read_ms, NULL);
+	ULONG l_fill_ms, l_fill_p, l_fill = perf.GetCounter(c_fill.ID, &l_fill_p, &l_fill_ms, NULL);
+	swprintf_c(szLog, L"RefillConsoleAttributes finished, Reads(%u, %u%%, %ums), Fills(%u, %u%%, %ums)",
+		l_read, l_read_p, l_read_ms, l_fill, l_fill_p, l_fill_ms);
 	LogString(szLog);
 }
 
