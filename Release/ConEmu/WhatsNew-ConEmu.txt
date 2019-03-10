@@ -20,6 +20,17 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2019.3.10
+* Update ChocolateyAbout.cmd to latest installation cmd.
+* gh-1323, gh-1385, gh-1841: Speed up alternative buffer operations (connector).
+* gh-1323, gh-1385, gh-1841: Let ‘Alternative mode’ toolbar button works with console buffers.
+* Connector: When `--log` is used, log current system time each 500ms.
+* gh-463: ConEmu.exe switch `-NoHooksWarn` disabled external hooks checks.
+* Log duration of external hooks checks.
+* gh-1733: Enable dark theme scrollbars with `ConEmu.exe -Theme DarkMode_Explorer`.
+* ANSI: Visual Bell for `ESC g`.
+
+
 2019.3.3
 * gh-1840: Fix hung during startup if Environment contains `echo -x ...`.
 * The `-FontSize` is better name to change font size switch.
