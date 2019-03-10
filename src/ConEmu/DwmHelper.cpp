@@ -35,7 +35,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 
-
 /* *************************** */
 
 CDwmHelper::CDwmHelper(void)
@@ -88,6 +87,7 @@ CDwmHelper::~CDwmHelper(void)
 		_GetThemeSysSize = NULL;
 		_GetThemeBackgroundContentRect = NULL;
 		_SetThemeAppProperties = NULL;
+		_SetWindowTheme = NULL;
 	}
 }
 
@@ -213,6 +213,7 @@ void CDwmHelper::InitDwm()
 			_BufferedPaintSetAlpha = (BufferedPaintSetAlpha_t)GetProcAddress(mh_UxTheme, "BufferedPaintSetAlpha");
 			_EndBufferedPaint = (EndBufferedPaint_t)GetProcAddress(mh_UxTheme, "EndBufferedPaint");
 			_DrawThemeTextEx = (DrawThemeTextEx_t)GetProcAddress(mh_UxTheme, "DrawThemeTextEx");
+			_SetWindowTheme = (SetWindowTheme_t)GetProcAddress(mh_UxTheme, "SetWindowTheme");
 
 			mb_ThemeAllowed = (_IsAppThemed != NULL) && (_IsThemeActive != NULL);
 			if (mb_ThemeAllowed)
@@ -280,6 +281,14 @@ void CDwmHelper::EnableTheming(bool abTheme)
 	mb_EnableTheming = abTheme && mb_ThemeAllowed;
 	OnUseTheming(mb_EnableTheming);
 	CheckGlassAttribute();
+}
+
+void CDwmHelper::SetWindowTheme(HWND hWnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList)
+{
+	if (!_SetWindowTheme)
+		return;
+	HRESULT hr = _SetWindowTheme(hWnd, pszSubAppName, pszSubIdList);
+	UNREFERENCED_PARAMETER(hr);
 }
 
 void CDwmHelper::EnableBlurBehind(bool abBlurBehindClient)

@@ -2063,7 +2063,6 @@ BOOL CConEmuMain::CreateMainWindow()
 		return FALSE;
 	}
 
-
 	// If created style differs from required?
 	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD dwNewStyle = FixWindowStyle(dwStyle, WindowMode);
@@ -6601,6 +6600,9 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 		L"OnCreate: hWnd=x%08X, x=%i, y=%i, cx=%i, cy=%i, style=x%08X, exStyle=x%08X",
 		(DWORD)(DWORD_PTR)hWnd, lpCreate->x, lpCreate->y, lpCreate->cx, lpCreate->cy, lpCreate->style, lpCreate->dwExStyle);
 	if (!LogString(szInfo)) { DEBUGSTRSIZE(szInfo); }
+
+	if (const auto theme = gpConEmu->opt.WindowTheme.GetStr())
+		gpConEmu->SetWindowTheme(hWnd, theme, nullptr);
 
 	RECT rcWndMin = {WINDOWS_ICONIC_POS, WINDOWS_ICONIC_POS, WINDOWS_ICONIC_POS+160, WINDOWS_ICONIC_POS+16};
 	SizeInfo::RequestRect(rcWndMin);

@@ -794,6 +794,8 @@ LRESULT CConEmuChild::BackWndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM l
 		pVCon = guard.VCon();
 		if (pVCon)
 			gVConBkMap.Set(hWnd, pVCon);
+		if (const auto theme = gpConEmu->opt.WindowTheme.GetStr())
+			gpConEmu->SetWindowTheme(hWnd, theme, nullptr);
 	}
 	else if (hWnd != ghBkInDestroing)
 	{

@@ -195,6 +195,7 @@ public:
 		CESwitch DesktopMode; // sw_Simple
 		bool SizePosPrm; // -WndX -WndY -WndW[idth] -WndH[eight]
 		CESwitch sWndX, sWndY, sWndW, sWndH; // sw_Str
+		CESwitch WindowTheme; // swStr: -theme "DarkMode_Explorer"
 		CESwitch Monitor; // -Monitor <1 | x10001 | "\\.\DISPLAY1">
 		CESwitch SetUpDefaultTerminal; // sw_Simple
 		CESwitch FixZoneId; // sw_Simple

@@ -72,6 +72,7 @@ public:
 	bool IsThemed();
 	void EnableGlass(bool abGlass);
 	void EnableTheming(bool abTheme);
+	void SetWindowTheme(HWND hWnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList);
 	void EnableBlurBehind(bool abBlurBehindClient);
 	bool ExtendWindowFrame();
 	bool ExtendWindowFrame(HWND hWnd, const RECT& rcMargins);
@@ -168,6 +169,8 @@ private:
 	SetThemeAppProperties_t _SetThemeAppProperties; // XP
 	typedef void (WINAPI* SetWindowThemeNonClientAttributes_t)(DWORD dwFlags);
 	SetWindowThemeNonClientAttributes_t _SetWindowThemeNonClientAttributes; // Vista
+	typedef HRESULT (WINAPI* SetWindowTheme_t)(HWND hwnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList);
+	SetWindowTheme_t _SetWindowTheme = nullptr; // Vista
 
 	// some other private functions
 	void InitDwm();

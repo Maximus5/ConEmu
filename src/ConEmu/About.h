@@ -79,6 +79,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"-Frame <value> - Set custom ‘Frame width’.\r\n" \
 	L"-Monitor <1 | x10001 | \"\\\\.\\DISPLAY1\"> - Place window on the specified monitor.\r\n" \
 	L"-Palette <name> - Choose named color palette.\r\n" \
+	L"-Theme [<name>] - Use specified Windows theme or ‘DarkMode_Explorer’.\r\n" \
 	L"-Log[1|2] - Used to create debug log files.\r\n" \
 	L"-Demote -run <command> - Run command de-elevated.\r\n" \
 	L"-Bypass -run <command> - Just execute the command detached.\r\n" \

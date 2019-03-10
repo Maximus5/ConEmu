@@ -1274,6 +1274,16 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						gpStartEnv->hStartMon = gpConEmu->opt.Monitor.Mon;
 					}
 				}
+				else if (szArg.IsSwitch(L"-Theme"))
+				{
+					const wchar_t* kDefaultTheme = L"DarkMode_Explorer";
+					bool bParm = false;
+					if (!cmdLineRest || (*cmdLineRest == L'-' || *cmdLineRest == L'/')
+						|| !GetCfgParm(cmdLineRest, bParm, gpConEmu->opt.WindowTheme, 128))
+					{
+						gpConEmu->opt.WindowTheme.SetStr(kDefaultTheme);
+					}
+				}
 				else if (szArg.OneOfSwitches(L"-Buffer", L"-BufferHeight"))
 				{
 					NeedNextArg();
