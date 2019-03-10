@@ -368,8 +368,10 @@ int SrvAnsiImpl::NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDum
 					case L'7': // Save xterm cursor
 					case L'8': // Restore xterm cursor
 					case L'c': // Full reset
+					case L'g': // Visual Bell
 					case L'=':
 					case L'>':
+					case L'H': // Horizontal Tab Set
 					case L'M': // Reverse LF
 					case L'E': // CR-LF
 					case L'D': // LF
@@ -1179,6 +1181,16 @@ bool SrvAnsiImpl::WriteAnsiCodes(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, 
 					case L'c': // ESC c
 						// Full reset
 						FullReset();
+						break;
+					case L'g':
+						// User may disable flashing in ConEmu settings
+						// #ANSI Implement GuiFlashWindow in common
+						DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
+						// GuiFlashWindow(eFlashBeep, ghConWnd, FALSE, FLASHW_ALL, 1, 0);
+						break;
+					case L'H':
+						// #ANSI gh-1827: support 'H' to set tab stops
+						DumpKnownEscape(Code.pszEscStart, Code.nTotalLen, de_Ignored);
 						break;
 					case L'M': // ESC M
 						ReverseLF();
