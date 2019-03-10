@@ -1048,6 +1048,11 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 					// This one has more weight than AutoUpdateOnStart
 					gpConEmu->opt.DisableAutoUpdate = true;
 				}
+				else if (szArg.IsSwitch(L"-NoHooksWarn"))
+				{
+					// Don't try to warn users about known problems with third-party detours
+					gpConEmu->opt.NoHooksWarn = true;
+				}
 				else if (szArg.OneOfSwitches(L"-NoKeyHook", L"-NoKeyHooks", L"-NoKeybHook", L"-NoKeybHooks"))
 				{
 					gpConEmu->DisableKeybHooks = true;

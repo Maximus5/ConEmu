@@ -61,6 +61,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"-ShowHide | -ShowHideTSA - Works like \"Minimize/Restore\" global hotkey.\r\n" \
 	L"-NoCascade - Disable ‘Cascade’ option may be set in the Settings.\r\n" \
 	L"-NoDefTerm - Don't start initialization procedure for setting up ConEmu as default terminal.\r\n" \
+	L"-NoHooksWarn - Don't show ‘hooks are detected’ warning in console.\r\n" \
 	L"-NoKeyHooks - Disable SetWindowsHookEx and global hotkeys.\r\n" \
 	L"-NoMacro - Disable GuiMacro hotkeys.\r\n" \
 	L"-NoHotkey - Disable all hotkeys.\r\n" \

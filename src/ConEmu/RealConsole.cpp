@@ -4823,7 +4823,9 @@ bool CRealConsole::StartProcessInt(LPCWSTR& lpszCmd, wchar_t*& psCurCmd, LPCWSTR
 		_wcscat_c(psCurCmd, nLen, L" /ADMIN");
 	}
 
-	if (!bIsFirstConsole)
+	// Run CheckAndWarnHookers() only for the first console
+	// and if the switch `-NoHooksWars` was not specified
+	if (!bIsFirstConsole || gpConEmu->opt.NoHooksWarn)
 	{
 		_wcscat_c(psCurCmd, nLen, L" /OMITHOOKSWARN");
 	}
