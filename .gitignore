@@ -55,3 +55,6 @@ Release/**/*.lib
 /src/ConEmu/graphics.src
 /src/WebInstall
 /src/WebInstall
+
+pvs-studio*.*
+/src/*.PVS-Studio.*
