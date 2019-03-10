@@ -524,6 +524,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		if (in.hdr.nCmd == CECMD_CMDSTARTED)
 		{
 			// Восстановить текст скрытой (прокрученной вверх) части консоли
+			// #LongConsoleOutput This does not work
 			CmdOutputRestore(false);
 		}
 	}
@@ -1749,33 +1750,24 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 	return TRUE;
 }
 
-BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
+namespace {
+// hOutput - our console output handle
+// max_height - 0 for unlimited, >0 for detected dynamic height
+BOOL LoadFullConsoleData(HANDLE hOutput, WORD max_height, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
-	//DWORD nPrevAltServer = 0;
-
-	// В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!
-	// В итоге, буфер вывода telnet'а схлопывается!
-	if (gpSrv->bReopenHandleAllowed)
-	{
-		ConOutCloseHandle();
-	}
-
-	// Need to block all requests to output buffer in other threads
-	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
 	// !!! Нас интересует реальное положение дел в консоли,
 	//     а не скорректированное функцией MyGetConsoleScreenBufferInfo
-	if (!GetConsoleScreenBufferInfo(ghConOut, &lsbi))
+	if (!GetConsoleScreenBufferInfo(hOutput, &lsbi))
 	{
 		return FALSE; // Не смогли получить информацию о консоли...
 	}
 	// Support dynamic height - do not load all 32K lines
-	if (in.DataSize() >= sizeof(DWORD))
+	if (max_height && (static_cast<WORD>(lsbi.dwSize.Y) > max_height))
 	{
-		if (static_cast<WORD>(lsbi.dwSize.Y) > in.dwData[0])
-			lsbi.dwSize.Y = LOWORD(in.dwData[0]);
+		lsbi.dwSize.Y = max_height;
 	}
 
 	CESERVER_CONSAVE_MAP* pData = NULL;
@@ -1788,7 +1780,7 @@ BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
 		COORD BufSize = {lsbi.dwSize.X, lsbi.dwSize.Y};
 		SMALL_RECT ReadRect = {0, 0, lsbi.dwSize.X-1, lsbi.dwSize.Y-1};
 
-		lbRc = MyReadConsoleOutput(ghConOut, pData->Data, BufSize, ReadRect);
+		lbRc = MyReadConsoleOutput(hOutput, pData->Data, BufSize, ReadRect);
 
 		if (lbRc)
 		{
@@ -1800,7 +1792,7 @@ BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
 			// Еще раз считать информацию по консоли (курсор положение и прочее...)
 			// За время чтения данных - они могли прокрутиться вверх
 			CONSOLE_SCREEN_BUFFER_INFO lsbi2 = {{0,0}};
-			if (GetConsoleScreenBufferInfo(ghConOut, &lsbi2))
+			if (GetConsoleScreenBufferInfo(hOutput, &lsbi2))
 			{
 				// Обновим только курсор, а то юзер может получить черный экран, вместо ожидаемого текста
 				// Если во время "dir c:\ /s" запросить AltConsole - получаем черный экран.
@@ -1813,6 +1805,65 @@ BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
 	}
 
 	return lbRc;
+}
+
+BOOL LoadConsoleMapData(CESERVER_REQ** out)
+{
+	BOOL lbRc = FALSE;
+	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+	CESERVER_CONSAVE_MAPHDR* pMapHdr = NULL;
+	CESERVER_CONSAVE_MAP* pMapData = NULL;
+	if (!CmdOutputOpenMap(lsbi, pMapHdr, pMapData))
+		return FALSE;
+	// #AltBuffer try to detect max used row
+	const size_t max_cells = std::min<DWORD>(lsbi.dwSize.X * lsbi.dwSize.Y, pMapData->MaxCellCount);
+	const size_t max_cells_cb = (max_cells * sizeof(pMapData->Data[0]));
+	const size_t cbReplySize = sizeof(CESERVER_CONSAVE_MAP) + max_cells_cb;
+	*out = ExecuteNewCmd(CECMD_CONSOLEFULL, cbReplySize);
+
+	if ((*out) != NULL)
+	{
+		auto pData = (CESERVER_CONSAVE_MAP*)*out;
+		pData->info = lsbi;
+		pData->Succeeded = lbRc;
+		pData->MaxCellCount = lsbi.dwSize.X * lsbi.dwSize.Y;
+		pData->CurrentIndex = pMapData->CurrentIndex;
+		memmove_s(pData->Data, max_cells_cb, pMapData->Data, max_cells_cb);
+		lbRc = TRUE;
+	}
+	return lbRc;
+}
+
+BOOL LoadFullConsoleDataReal(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	BOOL lbRc = FALSE;
+
+	// В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!
+	// В итоге, буфер вывода telnet'а схлопывается!
+	if (isReopenHandleAllowed())
+	{
+		ConOutCloseHandle();
+	}
+
+	return LoadFullConsoleData(ghConOut, (in.DataSize() >= sizeof(DWORD)) ? LOWORD(in.dwData[0]) : 0, out);
+}
+}  // namespace
+
+BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
+{
+	// Need to block all requests to output buffer in other threads
+	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+
+	BOOL alt_screen = (in.DataSize() >= 2 * sizeof(DWORD)) ? in.dwData[1] : FALSE;
+	if (!alt_screen)
+		return LoadFullConsoleDataReal(in, out);
+	else if (gPrimaryBuffer.HasHandle())
+		return LoadFullConsoleData(gPrimaryBuffer, gnPrimaryBufferLastRow, out);
+	else if (!isReopenHandleAllowed())
+		return LoadConsoleMapData(out);
+
+	_ASSERTE(FALSE && "Unsupported retrieve mode!");
+	return FALSE;
 }
 
 BOOL cmd_SetFullScreen(CESERVER_REQ& in, CESERVER_REQ** out)
@@ -2095,7 +2146,7 @@ BOOL cmd_AltBuffer(CESERVER_REQ& in, CESERVER_REQ** out)
 		};
 
 		// In Windows 7 we have to use legacy mode
-		if (!gpSrv->bReopenHandleAllowed)
+		if (!isReopenHandleAllowed())
 		{
 			if (in.AltBuf.AbFlags & abf_SaveContents)
 				CmdOutputStore();
@@ -2125,6 +2176,7 @@ BOOL cmd_AltBuffer(CESERVER_REQ& in, CESERVER_REQ** out)
 					ghConOut.SetHandlePtr(gAltBuffer);
 					if ((lbRc = do_resize_buffer()))
 					{
+						gnPrimaryBufferLastRow = in.AltBuf.BufferHeight;
 						alt_buffer_set = true;
 					}
 					else
@@ -2148,6 +2200,7 @@ BOOL cmd_AltBuffer(CESERVER_REQ& in, CESERVER_REQ** out)
 				gPrimaryBuffer.Close();
 				gAltBuffer.Close();
 				alt_buffer_set = false;
+				gnPrimaryBufferLastRow = 0;
 				lbRc = do_resize_buffer();
 			}
 		}

@@ -156,6 +156,7 @@ FGetConsoleDisplayMode pfnGetConsoleDisplayMode = NULL;
 MConHandle ghConOut(L"CONOUT$");
 //Used to store and restore console screen buffers in cmd_AltBuffer
 MConHandle gPrimaryBuffer(NULL), gAltBuffer(NULL);
+USHORT gnPrimaryBufferLastRow = 0; // last detected written row in gPrimaryBuffer
 
 // Время ожидания завершения консольных процессов, когда юзер нажал крестик в КОНСОЛЬНОМ окне
 // The system also displays this dialog box if the process does not respond within a certain time-out period

@@ -1097,13 +1097,6 @@ int ServerInit()
 	// Межпроцессный семафор не помогает, оставил пока только в качестве заглушки
 	//InitializeConsoleInputSemaphore();
 
-	// Windows 7 has a bug which makes impossible to utilize ScreenBuffers
-	// https://conemu.github.io/en/MicrosoftBugs.html#CorruptedScreenBuffer
-	if (gpSrv->osv.dwMajorVersion == 6 && gpSrv->osv.dwMinorVersion == 1)
-		gpSrv->bReopenHandleAllowed = FALSE;
-	else
-		gpSrv->bReopenHandleAllowed = TRUE;
-
 	if (gnRunMode == RM_SERVER)
 	{
 		if (!gnConfirmExitParm)
@@ -1841,7 +1834,7 @@ BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& 
 
 void ConOutCloseHandle()
 {
-	if (gpSrv->bReopenHandleAllowed)
+	if (isReopenHandleAllowed())
 	{
 		// Need to block all requests to output buffer in other threads
 		MSectionLockSimple csRead;
@@ -1852,30 +1845,26 @@ void ConOutCloseHandle()
 	}
 }
 
+// В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!
+// В итоге, буфер вывода telnet'а схлопывается!
+bool isReopenHandleAllowed()
+{
+	// Windows 7 has a bug which makes impossible to utilize ScreenBuffers
+	// https://conemu.github.io/en/MicrosoftBugs.html#CorruptedScreenBuffer
+	if (IsWin7Eql())
+		return false;
+	return true;
+}
+
 bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*& pHdr, CESERVER_CONSAVE_MAP*& pData)
 {
 	LogFunction(L"CmdOutputOpenMap");
 
-	pHdr = NULL;
-	pData = NULL;
-
-	// В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!
-	// В итоге, буфер вывода telnet'а схлопывается!
-	if (gpSrv->bReopenHandleAllowed)
-	{
-		ConOutCloseHandle();
-	}
+	pHdr = nullptr;
+	pData = nullptr;
 
 	// Need to block all requests to output buffer in other threads
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
-
-	// !!! Нас интересует реальное положение дел в консоли,
-	//     а не скорректированное функцией MyGetConsoleScreenBufferInfo
-	if (!GetConsoleScreenBufferInfo(ghConOut, &lsbi))
-	{
-		return false; // Не смогли получить информацию о консоли...
-	}
-
 
 	if (!gpSrv->pStoredOutputHdr)
 	{
@@ -1900,14 +1889,12 @@ bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*
 		}
 	}
 
+	if (!lsbi.dwSize.Y)
+		lsbi = pHdr->info;
+
 	WARNING("А вот это нужно бы делать в RefreshThread!!!");
 	DEBUGSTR(L"--- CmdOutputStore begin\n");
 
-	//MSectionLock CS; CS.Lock(gpcsStoredOutput, FALSE);
-
-
-
-	COORD crMaxSize = MyGetLargestConsoleWindowSize(ghConOut);
 	DWORD cchOneBufferSize = lsbi.dwSize.X * lsbi.dwSize.Y; // Читаем всю консоль целиком!
 	DWORD cchMaxBufferSize = std::max<DWORD>(pHdr->MaxCellCount, (lsbi.dwSize.Y * lsbi.dwSize.X));
 
@@ -1994,14 +1981,35 @@ wrap:
 // Сохранить данные ВСЕЙ консоли в mapping
 void CmdOutputStore(bool abCreateOnly /*= false*/)
 {
+	const bool reopen_allowed = isReopenHandleAllowed();
+	if (reopen_allowed)
+	{
+		// Nothing to do, in this mode we utilize conhost screen buffers
+		return;
+	}
+
 	LogFunction(L"CmdOutputStore");
 
-	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+	CONSOLE_SCREEN_BUFFER_INFO lsbi = {};
 	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
 	CESERVER_CONSAVE_MAP* pData = NULL;
 
 	// Need to block all requests to output buffer in other threads
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+
+	// Just in case we change the logic somehow
+	if (reopen_allowed)
+		ConOutCloseHandle();
+
+	// !!! Нас интересует реальное положение дел в консоли,
+	//     а не скорректированное функцией MyGetConsoleScreenBufferInfo
+	if (!GetConsoleScreenBufferInfo(ghConOut, &lsbi) || !lsbi.dwSize.Y)
+	{
+		LogString("GetConsoleScreenBufferInfo failed");
+		return; // Не смогли получить информацию о консоли...
+	}
+	// just for information
+	COORD crMaxSize = MyGetLargestConsoleWindowSize(ghConOut);
 
 	if (!CmdOutputOpenMap(lsbi, pHdr, pData))
 		return;
@@ -2033,6 +2041,7 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 
 	LogString("CmdOutputStore finished");
 	DEBUGSTR(L"--- CmdOutputStore end\n");
+	UNREFERENCED_PARAMETER(crMaxSize);
 }
 
 // abSimpleMode==true  - просто восстановить экран на момент вызова CmdOutputStore
@@ -2040,6 +2049,13 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 //                       задел на будущее для выполнения команд из Far (без /w), mc, или еще кого.
 void CmdOutputRestore(bool abSimpleMode)
 {
+	const bool reopen_allowed = isReopenHandleAllowed();
+	if (reopen_allowed)
+	{
+		// Nothing to do, in this mode we utilize conhost screen buffers
+		return;
+	}
+
 	LogFunction(L"CmdOutputRestore");
 
 	if (!abSimpleMode)
@@ -2050,11 +2066,14 @@ void CmdOutputRestore(bool abSimpleMode)
 		return;
 	}
 
-
 	// Need to block all requests to output buffer in other threads
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 
-	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
+	// Just in case we change the logic somehow
+	if (reopen_allowed)
+		ConOutCloseHandle();
+
+	CONSOLE_SCREEN_BUFFER_INFO lsbi = {};
 	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
 	CESERVER_CONSAVE_MAP* pData = NULL;
 	if (!CmdOutputOpenMap(lsbi, pHdr, pData))
@@ -4501,7 +4520,7 @@ bool FreezeRefreshThread()
 		_ASSERTE(GetCurrentThreadId() != gpSrv->dwRefreshThread);
 		return false;
 	}
-	
+
 	gpSrv->nRefreshFreezeRequests++;
 	ResetEvent(gpSrv->hFreezeRefreshThread);
 
@@ -4738,7 +4757,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		// Always update con handle, мягкий вариант
 		// !!! В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ. В итоге, буфер вывода telnet'а схлопывается! !!!
 		// 120507 - Если крутится альт.сервер - то игнорировать
-		if (gpSrv->bReopenHandleAllowed
+		if (isReopenHandleAllowed()
 			&& !nAltWait
 			&& ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT))
 		{

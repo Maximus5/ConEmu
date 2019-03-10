@@ -407,7 +407,10 @@ bool IsAutoAttachAllowed();
 //extern MConHandle ghConIn;
 extern MConHandle ghConOut;
 extern MConHandle gPrimaryBuffer, gAltBuffer;
+extern USHORT gnPrimaryBufferLastRow;
 void ConOutCloseHandle();
+bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*& pHdr, CESERVER_CONSAVE_MAP*& pData);
+bool isReopenHandleAllowed();
 
 
 typedef enum tag_RunMode
@@ -526,7 +529,6 @@ struct SrvInfo
 	bool   bServerForcedTermination;
 	//
 	OSVERSIONINFO osv;
-	BOOL bReopenHandleAllowed;
 	UINT nMaxFPS;
 	//
 	MSection *csAltSrv;

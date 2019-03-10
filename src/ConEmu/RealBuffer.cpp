@@ -588,52 +588,22 @@ bool CRealBuffer::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 		}
 	}
 
-	if (iMode == lam_LastOutput)
+	if ((iMode == lam_LastOutput) || (iMode == lam_FullBuffer))
 	{
-		MFileMapping<CESERVER_CONSAVE_MAPHDR> StoredOutputHdr;
-		MFileMapping<CESERVER_CONSAVE_MAP> StoredOutputItem;
-
-		CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
-		CESERVER_CONSAVE_MAP* pData = NULL;
-		CONSOLE_SCREEN_BUFFER_INFO storedSbi = {};
-		DWORD cchMaxBufferSize = 0;
-		size_t nMaxSize = 0;
-
-		StoredOutputHdr.InitName(CECONOUTPUTNAME, LODWORD(mp_RCon->hConWnd));
-		if (!(pHdr = StoredOutputHdr.Open()) || !pHdr->sCurrentMap[0])
-		{
-			// #AltBuffer Load alt buffer from Console Server (CECMD_GETOUTPUT / cmd_GetOutput)
-			DisplayLastError(L"Stored output mapping was not created!");
-			goto wrap;
-		}
-
-		cchMaxBufferSize = std::min(pHdr->MaxCellCount, (DWORD)(pHdr->info.dwSize.X * pHdr->info.dwSize.Y));
-
-		StoredOutputItem.InitName(pHdr->sCurrentMap); //-V205
-		nMaxSize = sizeof(*pData) + cchMaxBufferSize * sizeof(pData->Data[0]);
-		if (!(pData = StoredOutputItem.Open(FALSE,nMaxSize)))
-		{
-			DisplayLastError(L"Stored output data mapping was not created!");
-			goto wrap;
-		}
-
-		if ((pData->hdr.nVersion != CESERVER_REQ_VER) || (pData->hdr.cbSize <= sizeof(CESERVER_CONSAVE_MAP)))
-		{
-			DisplayLastError(L"Invalid data in mapping header", -1);
-			goto wrap;
-		}
-
-		storedSbi = pData->info;
-
-		lbRc = LoadDataFromDump(storedSbi, pData->Data, cchMaxBufferSize);
-	}
-	else if (iMode == lam_FullBuffer)
-	{
-		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_CONSOLEFULL, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));
+		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_CONSOLEFULL, sizeof(CESERVER_REQ_HDR) + 2 * sizeof(DWORD));
 		if (pIn)
 		{
 			int dynHeight = mp_RCon->mp_RBuf->GetDynamicHeight();
-			pIn->dwData[0] = (dynHeight > 0) ? dynHeight : 0;
+			if (iMode == lam_FullBuffer)
+			{
+				pIn->dwData[0] = (dynHeight > 0) ? dynHeight : 0;
+				pIn->dwData[1] = FALSE;
+			}
+			else
+			{
+				pIn->dwData[0] = 0;
+				pIn->dwData[1] = TRUE;
+			}
 			CESERVER_REQ *pOut = ExecuteSrvCmd(mp_RCon->GetServerPID(), pIn, ghWnd);
 			if (pOut && (pOut->hdr.cbSize > sizeof(CESERVER_CONSAVE_MAP)))
 			{

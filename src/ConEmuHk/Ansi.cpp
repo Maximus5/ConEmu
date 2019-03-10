@@ -4055,6 +4055,11 @@ HANDLE CEAnsi::XTermAltBuffer(bool bSetAltBuffer)
 				if (pIn)
 				{
 					pIn->AltBuf.AbFlags = abf_BufferOff|abf_SaveContents;
+					// support "virtual" dynamic console buffer height
+					if (CESERVER_CONSOLE_APP_MAPPING* pAppMap = gpAppMap ? gpAppMap->Ptr() : NULL)
+						pIn->AltBuf.BufferHeight = std::max<SHORT>(pAppMap->nLastConsoleRow, csbi1.srWindow.Bottom);
+					else
+						pIn->AltBuf.BufferHeight = csbi1.srWindow.Bottom;
 					pOut = ExecuteSrvCmd(gnServerPID, pIn, ghConWnd);
 					if (pOut)
 					{
