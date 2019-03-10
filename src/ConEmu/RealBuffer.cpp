@@ -83,6 +83,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRTRUEMOD(s) //DEBUGSTR(s)
 #define DEBUGSTRLINK(s) //DEBUGSTR(s)
 #define DEBUGSTRSEL(s) //DEBUGSTR(s)
+#define DEBUGSTRTIMEOUTS(s) DEBUGSTR(s)
 
 // ANSI, without "\r\n"
 #define IFLOGCONSOLECHANGE gpSet->isLogging(2)
@@ -663,8 +664,9 @@ wrap:
 	{
 		wchar_t szLog[80];
 		swprintf_c(szLog, L"!!! CRealBuffer::LoadAlternativeConsole takes %u ms !!!", nDurationTick);
+		if (!mp_RCon->LogString(szLog))
+			DEBUGSTRTIMEOUTS(szLog);
 		_ASSERTE(!lbRc || (nDurationTick < 1000));
-		mp_RCon->LogString(szLog);
 	}
 	return lbRc;
 }
