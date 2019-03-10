@@ -70,6 +70,7 @@ public:
 	{
 		mn_AllItemsLen = 0;
 		bCopyRawCodes = false;
+		szUTF8[0] = 0;  // mitigate V730
 	};
 	virtual ~CFormatCopy()
 	{
@@ -237,6 +238,7 @@ public:
 	{
 		mb_Finalized = mb_ParOpened = false;
 		mn_TextStart = 0; mn_TextEnd = 0;
+		szBack[0] = szFore[0] = szId[0] = szBold[0] = szItalic[0] = szUnderline[0] = 0;  // mitigate V730
 
 		bCopyRawCodes = abPlainHtml;
 

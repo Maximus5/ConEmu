@@ -1226,7 +1226,7 @@ const ConEmuConsoleFlags
 	;
 #define SetConEmuFlags(v,m,f) (v) = ((v) & ~(m)) | (f)
 
-typedef ConEmuConsoleFlags DWORD;
+typedef DWORD ConEmuConsoleFlags;
 const ConEmuConsoleFlags
 	ccf_Active   = 1,
 	ccf_Visible  = 2,
