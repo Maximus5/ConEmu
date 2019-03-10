@@ -2,7 +2,7 @@
 cd /d "%~dp0"
 
 setlocal
-set PATH=%~d0\Chocolatey\bin;%PATH%
+set "PATH=%~dp0..\..\Tools\Chocolatey\bin;%PATH%"
 
 call "%~dp0..\Deploy\GetCurVer.cmd"
 powershell -noprofile -command "%~dp0..\Deploy\UpdatePackageVersions.ps1" %CurVerBuild%

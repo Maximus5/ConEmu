@@ -6,7 +6,7 @@ rem The version in the package is updated by
 rem build.cmd -> UpdatePackageVersions.ps1
 
 setlocal
-set PATH=%~d0\Nuget\bin;%PATH%                           
+set "PATH=%~dp0..\..\Tools\Nuget\bin;%PATH%"
 rem ??? what would be the path to Nuget.exe cmdline tool?..
 
 if exist "ConEmu.Core.*.nupkg" del "ConEmu.Core.*.nupkg"
