@@ -1161,6 +1161,9 @@ bool CheckAndWarnHookers()
 		return false;
 	}
 
+	MPerfCounter perf(2);
+	PerfCounter c_scan{0}, c_write{1};
+
 	bool bHooked = false;
 	struct CheckModules {
 		LPCWSTR Title, File;
@@ -1180,18 +1183,25 @@ bool CheckAndWarnHookers()
 
 	for (INT_PTR i = 0; modules[i].Title; i++)
 	{
+		perf.Start(c_scan);
 		pszTitle = modules[i].Title;
 		pszName = modules[i].File;
 
 		hModule = GetModuleHandle(pszName);
-		if (hModule)
+		if (!hModule)
+		{
+			perf.Stop(c_scan);
+		}
+		else
 		{
 			bHooked = true;
 			if (!GetModuleFileName(hModule, szPath, countof(szPath)))
 			{
 				wcscpy_c(szPath, pszName); // Must not get here, but show a name at least on errors
 			}
+			perf.Stop(c_scan);
 
+			perf.Start(c_write);
 			if (!bConOutChecked)
 			{
 				bConOutChecked = true;
@@ -1218,6 +1228,8 @@ bool CheckAndWarnHookers()
 			_wprintf(szMessage);
 			_wprintf(szPath);
 			_wprintf(pszTail);
+
+			perf.Stop(c_write);
 		}
 	}
 
@@ -1226,6 +1238,13 @@ bool CheckAndWarnHookers()
 	if (bColorChanged)
 		SetConsoleTextAttribute(hOut, sbi.wAttributes);
 	#endif
+
+	wchar_t szLog[120];
+	const auto scan_stat = perf.GetStats(c_scan.ID);
+	const auto write_stat = perf.GetStats(c_write.ID);
+	swprintf_c(szLog, L"CheckAndWarnHookers finished, Scan(%u%%, %ums), Write(%u%%, %ums)",
+		scan_stat.Percentage, scan_stat.MilliSeconds, write_stat.Percentage, write_stat.MilliSeconds);
+	LogString(szLog);
 
 	return bHooked;
 }
