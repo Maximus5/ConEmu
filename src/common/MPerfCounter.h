@@ -42,13 +42,28 @@ struct PerfCounter
 	LARGE_INTEGER Start;
 };
 
+struct PerfCounterStats
+{
+	// number of times Start was called
+	ULONG Counter;
+	// 0..100% of all counters time
+	ULONG Percentage;
+	// human-readable duration in ms
+	ULONG MilliSeconds;
+	// duration from QueryPerformanceCounter
+	LARGE_INTEGER Duration;
+};
+
 class MPerfCounter
 {
 protected:
 	// QueryPerformanceFrequency()
-	LARGE_INTEGER m_Frequency;
+	LARGE_INTEGER m_Frequency = {};
 	// Total captured time for all counters
-	LARGE_INTEGER m_Total;
+	LARGE_INTEGER m_Total = {};
+
+	// Used for arg-less Start() and Stop()
+	PerfCounter self_counter_ = {};
 
 protected:
 	// Data storage
@@ -65,13 +80,19 @@ protected:
 	MArray<PerfCounterData> m_Counters;
 
 public:
-	MPerfCounter(UINT Counters = 1);
+	MPerfCounter(const UINT Counters = 1);
 	~MPerfCounter();
 
 	// ID = 0..(Counters-1)
 	void Start(PerfCounter& counter);
 	void Stop(PerfCounter& counter);
 
-	ULONG GetCounter(UINT ID, ULONG* pPercentage, ULONG* pMilliSeconds, LARGE_INTEGER* pDuration);
+	// ID = 0
+	void Start();
+	ULONG Stop();
 
+	// returns count of calls
+	ULONG GetCounter(const UINT ID, ULONG* pPercentage, ULONG* pMilliSeconds, LARGE_INTEGER* pDuration) const;
+	// return full statistics about ID
+	PerfCounterStats GetStats(const UINT ID) const;
 };

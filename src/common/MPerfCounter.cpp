@@ -32,11 +32,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <intrin.h>
 #include "MPerfCounter.h"
 
-MPerfCounter::MPerfCounter(UINT Counters /*= 1*/)
+MPerfCounter::MPerfCounter(const UINT Counters /*= 1*/)
 {
 	if (!QueryPerformanceFrequency(&m_Frequency) || (m_Frequency.QuadPart < 0))
 		m_Frequency.QuadPart = 0;
-	m_Total.QuadPart = 0;
 	m_Counters.reserve((INT_PTR)Counters);
 	PerfCounterData dummy = {};
 	for (UINT i = 0; i < Counters; i++)
@@ -47,6 +46,19 @@ MPerfCounter::MPerfCounter(UINT Counters /*= 1*/)
 
 MPerfCounter::~MPerfCounter()
 {
+}
+
+void MPerfCounter::Start()
+{
+	Start(self_counter_);
+}
+
+ULONG MPerfCounter::Stop()
+{
+	ULONG ms = 0;
+	Stop(self_counter_);
+	GetCounter(self_counter_.ID, nullptr, &ms, nullptr);
+	return ms;
 }
 
 void MPerfCounter::Start(PerfCounter& counter)
@@ -103,13 +115,13 @@ void MPerfCounter::Stop(PerfCounter& counter)
 	counter.Initialized = FALSE;
 }
 
-ULONG MPerfCounter::GetCounter(UINT ID, ULONG* pPercentage, ULONG* pMilliSeconds, LARGE_INTEGER* pDuration)
+ULONG MPerfCounter::GetCounter(const UINT ID, ULONG* pPercentage, ULONG* pMilliSeconds, LARGE_INTEGER* pDuration) const
 {
 	ULONG nCount = 0;
 	LONGLONG duration = 0;
 	if (ID < (UINT)m_Counters.size())
 	{
-		PerfCounterData* p = &(m_Counters[ID]);
+		const PerfCounterData* p = &(m_Counters[ID]);
 		duration = p->Duration.QuadPart;
 		nCount = (ULONG)p->Count;
 	}
@@ -137,4 +149,11 @@ ULONG MPerfCounter::GetCounter(UINT ID, ULONG* pPercentage, ULONG* pMilliSeconds
 	}
 
 	return nCount;
+}
+
+PerfCounterStats MPerfCounter::GetStats(const UINT ID) const
+{
+	PerfCounterStats stats = {};
+	stats.Counter = GetCounter(ID, &stats.Percentage, &stats.MilliSeconds, &stats.Duration);
+	return stats;
 }
