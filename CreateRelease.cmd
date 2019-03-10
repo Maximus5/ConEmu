@@ -14,6 +14,7 @@ rem set PATH=%PATH%
 set MINGWRT=
 if exist %~d0\MinGW\msys\1.0\bin\head.exe set MINGWRT=%~d0\MinGW\msys\1.0\bin
 if exist %~d0\MinGW\msys32\bin\head.exe set MINGWRT=%~d0\MinGW\msys32\bin
+if exist %~d0..\Tools\MSYS\msys2-x64\usr\bin\head.exe set MINGWRT=%~d0..\Tools\MSYS\msys2-x64\usr\bin
 
 set BUILD_NO=
 set BUILD_STAGE=

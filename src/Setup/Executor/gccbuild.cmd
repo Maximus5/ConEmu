@@ -1,6 +1,6 @@
 @echo off
 
-call %~d0\gcc\gccsetvars.cmd
+call %~dp0..\..\..\..\Tools\MSYS\GCC\gccsetvars.cmd
 
 cd /d "%~dp0"
 
@@ -11,5 +11,5 @@ mingw32-make -f makefile_gcc WIDE=1
 
 if errorlevel 1 goto :EOF
 
-if not "%~1"=="/nosign" call \VCProject\FarPlugin\ConEmu\ConEmu-key\sign_any.bat ..\Setupper\Executor.exe
+if not "%~1"=="/nosign" call "%~dp0..\..\..\..\ConEmu-key\sign_any.bat" ..\Setupper\Executor.exe
 rd /S /Q %~dp0Release.gcc

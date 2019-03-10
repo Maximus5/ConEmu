@@ -1,6 +1,6 @@
 @echo off
 
-call %~d0\gcc\gccsetvars.cmd
+call %~dp0..\..\..\..\Tools\MSYS\GCC\gccsetvars.cmd
 
 if "%ConEmuHttp%" == "" set ConEmuHttp=https://conemu.github.io/
 

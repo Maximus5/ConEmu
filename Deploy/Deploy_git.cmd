@@ -8,7 +8,7 @@ set ex7zpack=-x!ConEmu.Gui.map -x!ConEmu64.Gui.map -x!ConEmu\*.map -x!ConEmu\Con
 setlocal
 set ConEmuHooks=OFF
 
-set PATH=%PATH%;%~d0\Utils\Arch\7-Zip
+set "PATH=%~d0..\..\Tools\Arch;%PATH%"
 
 cd /d "%~dp0..\"
 

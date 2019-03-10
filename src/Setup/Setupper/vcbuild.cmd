@@ -8,6 +8,6 @@ set RELEASE=1
 nmake /f makefile_vc
 if errorlevel 1 goto :EOF
 
-call \VCProject\FarPlugin\ConEmu\ConEmu-key\sign_any.bat Release.x86\Setupper.exe
+call "%~dp0..\..\..\..\ConEmu-key\sign_any.bat" Release.x86\Setupper.exe
 move Release.x86\Setupper.exe .
 rd /S /Q %~dp0Release.x86

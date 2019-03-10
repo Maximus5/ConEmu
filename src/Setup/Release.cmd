@@ -5,7 +5,7 @@ set ConEmuHttp=https://conemu.github.io/
 if "%~1"=="" goto noparm
 cd /d "%~dp0"
 
-set path=%~d0\Utils\Lans\WiX\bin;%PATH%
+set path=%~d0..\..\..\Tools\WiX\bin;%PATH%
 
 set "BUILD_NO=%~1"
 echo Preparing version %BUILD_NO%...

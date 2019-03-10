@@ -34,7 +34,7 @@ call cecho "Failed to erase: %AppSetup%"
 goto err
 )
 
-set path
+set "PATH=%~dp0..\..\Tools\Arch;%PATH%"
 xcopy.exe /E "%AppTempl%\*.*" "%AppSetup%\"
 if errorlevel 1 goto err
 
@@ -63,7 +63,7 @@ echo Updating ini files with version info
 "%~dp0..\src\tools\SetIni.exe" %SetIniCmd%
 
 echo Creating PortableApps.com installer
-start "Portable" /MIN /WAIT "%~d0\Portable\PortableApps\PortableApps.comInstaller\PortableApps.comInstaller.exe" "%AppSetup%"
+start "Portable" /MIN /WAIT "%~dp0..\..\Tools\Portable\PortableApps\PortableApps.comInstaller\PortableApps.comInstaller.exe" "%AppSetup%"
 if errorlevel 1 goto err
 timeout /t 3
 echo PortableApps.com installer created successfully
