@@ -75,9 +75,17 @@ DpiValue DpiValue::FromWParam(WPARAM wParam)
 	return dpi;
 }
 
+// just for debugging simplification
 DpiValue::DpiValue(const DpiValue& dpi)
 {
 	Xdpi = dpi.Xdpi; Ydpi = dpi.Ydpi;
+}
+
+// just for debugging simplification
+DpiValue& DpiValue::operator=(const DpiValue& dpi)
+{
+	Xdpi = dpi.Xdpi; Ydpi = dpi.Ydpi;
+	return *this;
 }
 
 DpiValue::operator int() const

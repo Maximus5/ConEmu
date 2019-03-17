@@ -60,6 +60,7 @@ public:
 	DpiValue();
 	DpiValue(int xdpi, int ydpi);
 	DpiValue(const DpiValue& dpi);
+	DpiValue& operator=(const DpiValue& dpi);
 
 	static DpiValue FromWParam(WPARAM wParam);
 

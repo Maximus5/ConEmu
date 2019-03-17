@@ -64,13 +64,13 @@ public:
 	// Was specified in command line?
 	bool Exists;
 
-private:
-	// Not copyable!
-	CESwitch& operator=(const CESwitch &);
-
 public:
 	CESwitch(CESwitchType aType = sw_None);
 	~CESwitch();
+
+	// Not copyable!
+	CESwitch& operator=(const CESwitch&) = delete;
+	CESwitch(const CESwitch&) = delete;
 
 	void Clear();
 
