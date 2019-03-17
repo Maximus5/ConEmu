@@ -2418,6 +2418,7 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 	LPWSTR pszKey = NULL;
 	int iKeyNo = 0;
+	wchar_t szSeq[4];
 
 	while (p->GetStrArg(iKeyNo++, pszKey))
 	{
@@ -2474,7 +2475,6 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 		}
 		if (VK || (iScanCode != -1))
 		{
-			wchar_t szSeq[4];
 			if (pszKey[1] != 0)
 				pszKey = NULL;
 

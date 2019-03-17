@@ -46,9 +46,6 @@ public:
 	CSetPgColors();
 	virtual ~CSetPgColors();
 
-protected:
-	enum ColorShowFormat { eRgbDec = 0, eRgbHex, eBgrHex } m_ColorFormat;
-
 public:
 	// Methods
 	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;

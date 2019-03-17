@@ -3169,7 +3169,7 @@ bool CShellProc::OnResumeDebugeeThreadCalled(HANDLE hThread, PROCESS_INFORMATION
 	{
 		nResumeRC = ResumeThread(hThread);
 		Sleep(50);
-		SuspendThread(hThread);
+		SuspendThread(hThread);  // -V720
 
 		// We need to ensure that process has been 'started'
 		// If not - CreateToolhelp32Snapshot will return ERROR_PARTIAL_COPY

@@ -1505,7 +1505,8 @@ bool CConEmuUpdate::IsLocalFile(LPWSTR& asPathOrUrl)
 
 BOOL CConEmuUpdate::DownloadFile(LPCWSTR asSource, LPCWSTR asTarget, DWORD& crc, BOOL abPackage /*= FALSE*/, LARGE_INTEGER* rpSize /*= NULL*/)
 {
-	BOOL lbRc = FALSE, lbRead = FALSE, lbWrite = FALSE;
+	bool lbRc = false;
+	BOOL lbRead = FALSE, lbWrite = FALSE;
 	CEDownloadErrorArg args[3] = {};
 
 	MCHKHEAP;

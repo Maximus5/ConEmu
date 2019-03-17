@@ -501,7 +501,7 @@ void SettingsINI::Save(const wchar_t *regName, LPCBYTE value, const DWORD nType,
 /* *************************** */
 namespace
 {
-	class FileException : std::exception
+	class FileException : public std::exception
 	{
 		int mn_ErrCode;
 	public:

@@ -222,7 +222,7 @@ void FixSshThreads(int iStep)
 						}
 						else
 						{
-							DWORD nSC = SuspendThread(hThread);
+							DWORD nSC = SuspendThread(hThread);  // -V720
 							if (nSC == (DWORD)-1)
 							{
 								// Error!

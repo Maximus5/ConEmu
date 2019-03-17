@@ -1151,7 +1151,8 @@ SIZE CConEmuSize::GetDefaultSize(bool bCells, const CESize* pSizeW /*= NULL*/, c
 HMONITOR CConEmuSize::FindInitialMonitor(MONITORINFO* pmi /*= NULL*/)
 {
 	// Too large or too small values may cause wrong monitor detection if on the edge of screen
-	int iWidth = 100, iHeight = 100;
+	const int kSizeDefault = 100;
+	int iWidth, iHeight;
 
 	TODO("CConEmuSize::GetInitialDpi -> ss_Percents");
 
@@ -1163,6 +1164,8 @@ HMONITOR CConEmuSize::FindInitialMonitor(MONITORINFO* pmi /*= NULL*/)
 	case ss_Percents:
 		iWidth = WndWidth.Value;
 		break;
+	default:
+		iWidth = kSizeDefault;
 	}
 
 	switch (WndHeight.Style)
@@ -1173,6 +1176,8 @@ HMONITOR CConEmuSize::FindInitialMonitor(MONITORINFO* pmi /*= NULL*/)
 	case ss_Percents:
 		iWidth = WndHeight.Value;
 		break;
+	default:
+		iHeight = kSizeDefault;
 	}
 
 	// No need to get strict coordinates, just find the default monitor
@@ -3416,7 +3421,7 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 	POINT ptCur = {};
 	bool drag_by_mouse = false;
 
-	if (!gpSet->isSnapToDesktopEdges && !m_TileMode)
+	if (!gpSet->isSnapToDesktopEdges && (m_TileMode != cwc_Current))
 		goto wrap;
 
 	if (isIconic() || isZoomed() || isFullScreen())

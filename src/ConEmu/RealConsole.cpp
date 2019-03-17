@@ -1922,13 +1922,13 @@ bool CRealConsole::PostKeyUp(WORD vkKey, DWORD dwControlState, wchar_t wch, int 
 		switch (vkKey)
 		{
 		case VK_RMENU:
-			dwControlState = ENHANCED_KEY;
+			dwControlState = ENHANCED_KEY;  // -V796
 		case VK_LMENU:
 			vkKey = VK_MENU;
 			break;
 
 		case VK_RCONTROL:
-			dwControlState = ENHANCED_KEY;
+			dwControlState = ENHANCED_KEY;  // -V796
 		case VK_LCONTROL:
 			vkKey = VK_CONTROL;
 			break;

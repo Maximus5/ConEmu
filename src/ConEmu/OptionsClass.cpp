@@ -2181,7 +2181,7 @@ INT_PTR CSettings::wndOpProc(HWND hWnd2, UINT messg, WPARAM wParam, LPARAM lPara
 							CSetPgBase* pg = gpSetCls->GetActivePageObj();
 							if (pg && !pg->QueryDialogCancel())
 								break;
-						}
+						}  // -V796
 					case IDOK:
 					case IDCLOSE:
 						// -- перенесено в WM_CLOSE
@@ -2858,7 +2858,7 @@ BOOL CSettings::RegisterTipsForChild(HWND hChild, LPARAM lParam)
 	// Register tooltip by child HWND
 	if (gpSetCls->hwndTip)
 	{
-		BOOL lbRc = FALSE;
+		bool lbRc = false;
 		HWND hEdit = NULL;
 
 		// Associate the ToolTip with the tool.

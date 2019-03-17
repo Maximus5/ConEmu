@@ -621,7 +621,7 @@ bool CRealBuffer::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 		_ASSERTE(iMode==lam_LastOutput || iMode==lam_FullBuffer);
 	}
 
-wrap:
+	// final checks
 	if (!lbRc)
 		dump.Close();
 	// Logging

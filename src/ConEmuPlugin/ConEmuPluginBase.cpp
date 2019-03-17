@@ -4615,7 +4615,7 @@ void CPluginBase::OnConsolePeekReadInput(bool abPeek)
 	if (nCurTID != nCurMainTID)
 	{
 		HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, nCurMainTID);
-		if (hThread) SuspendThread(hThread);
+		if (hThread) SuspendThread(hThread);  // -V720
 		_ASSERTE(nCurTID == nCurMainTID);
 		if (hThread) { ResumeThread(hThread); CloseHandle(hThread); }
 	}
@@ -5310,7 +5310,7 @@ BOOL /*WINAPI*/ CPluginBase::OnConsoleDetaching(HookCallbackArg* pArgs)
 {
 	if (ghMonitorThread)
 	{
-		SuspendThread(ghMonitorThread);
+		SuspendThread(ghMonitorThread);  // -V720
 		// ResumeThread выполняется в конце OnConsoleWasAttached
 	}
 

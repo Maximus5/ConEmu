@@ -633,7 +633,7 @@ bool CRgnDetect::FindFrameTop_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidt
 	return (nMostTop < nFromY);
 }
 
-bool CRgnDetect::FindFrameBottom_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, int &nFromX, int &nFromY, int &nMostBottom)
+bool CRgnDetect::FindFrameBottom_ByRight(wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, const int &nFromX, const int &nFromY, int &nMostBottom)
 {
 	// Попытаемся спуститься вдоль правой рамки до угла
 	int nY = nFromY;
@@ -712,7 +712,7 @@ bool CRgnDetect::FindDialog_Right(wchar_t* pChar, CharAttr* pAttr, int nWidth, i
 		nFromY = nY;
 
 	// Попытаемся спуститься вдоль правой рамки до угла
-	if (FindFrameBottom_ByRight(pChar, pAttr, nWidth, nHeight, nFromX, nMostBottom, nY))
+	if (FindFrameBottom_ByRight(pChar, pAttr, nWidth, nHeight, nFromX, nMostBottom, nY))  // -V764
 		nMostBottom = nY;
 
 	// Теперь можно искать диалог

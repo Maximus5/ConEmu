@@ -623,7 +623,7 @@ INT_PTR CRecreateDlg::OnButtonClicked(HWND hDlg, UINT messg, WPARAM wParam, LPAR
 	case cbRunAsAdmin:
 	{
 		// BCM_SETSHIELD = 5644
-		BOOL bRunAs = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
+		bool bRunAs = SendDlgItemMessage(hDlg, cbRunAsAdmin, BM_GETCHECK, 0, 0);
 
 		if (gOSVer.dwMajorVersion >= 6)
 		{

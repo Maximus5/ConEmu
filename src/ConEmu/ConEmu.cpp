@@ -6300,7 +6300,7 @@ bool CConEmuMain::isMeForeground(bool abRealAlso/*=false*/, bool abDialogsAlso/*
 
 bool CConEmuMain::isMouseOverFrame(bool abReal)
 {
-	if (m_ForceShowFrame && isSizing())
+	if ((m_ForceShowFrame != fsf_Hide) && isSizing())
 	{
 		if (!isPressed(VK_LBUTTON))
 		{
@@ -12482,7 +12482,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 	{
 		if (!bForeground)
 		{
-			if (m_ForceShowFrame)
+			if (m_ForceShowFrame != fsf_Hide)
 			{
 				StopForceShowFrame();
 			}
@@ -12524,7 +12524,7 @@ void CConEmuMain::OnTimer_Main(CVirtualConsole* pVCon)
 			}
 		}
 	}
-	else if (m_ForceShowFrame)
+	else if (m_ForceShowFrame != fsf_Hide)
 	{
 		StopForceShowFrame();
 	}

@@ -300,6 +300,7 @@ CStatus::CStatus(CConEmuMain* _owner)
 
 	mb_Caps = mb_Num = mb_Scroll = false;
 	mb_ViewLock = false;
+	ms_ViewLockHint[0] = 0;
 	mb_KeyHooks = false;
 	mhk_Locale = 0;
 
