@@ -633,7 +633,7 @@ BOOL CFontMgr::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 		goto wrap;
 
 	//f.Read(&ttOffsetTable, sizeof(TT_OFFSET_TABLE));
-	if (!ReadFile(f, &ttOffsetTable, sizeof(TT_OFFSET_TABLE), &(dwRead=0), NULL) || (dwRead != sizeof(TT_OFFSET_TABLE)))
+	if (!ReadFile(f, &ttOffsetTable, sizeof(ttOffsetTable), &(dwRead=0), NULL) || (dwRead != sizeof(ttOffsetTable)))
 		goto wrap;
 
 	ttOffsetTable.uNumOfTables = SWAPWORD(ttOffsetTable.uNumOfTables);
@@ -648,7 +648,7 @@ BOOL CFontMgr::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 	for (int i = 0; i < ttOffsetTable.uNumOfTables; i++)
 	{
 		//f.Read(&tblDir, sizeof(TT_TABLE_DIRECTORY));
-		if (ReadFile(f, &tblDir, sizeof(TT_TABLE_DIRECTORY), &(dwRead=0), NULL) && dwRead)
+		if (ReadFile(f, &tblDir, sizeof(tblDir), &(dwRead=0), NULL) && dwRead)
 		{
 			if (lstrcmpni(tblDir.szTag, "name", 4) == 0) //-V112
 			{
@@ -667,7 +667,7 @@ BOOL CFontMgr::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 			TT_NAME_TABLE_HEADER ttNTHeader;
 
 			//f.Read(&ttNTHeader, sizeof(TT_NAME_TABLE_HEADER));
-			if (ReadFile(f, &ttNTHeader, sizeof(TT_NAME_TABLE_HEADER), &(dwRead=0), NULL) && dwRead)
+			if (ReadFile(f, &ttNTHeader, sizeof(ttNTHeader), &(dwRead=0), NULL) && dwRead)
 			{
 				ttNTHeader.uNRCount = SWAPWORD(ttNTHeader.uNRCount);
 				ttNTHeader.uStorageOffset = SWAPWORD(ttNTHeader.uStorageOffset);
@@ -677,7 +677,7 @@ BOOL CFontMgr::GetFontNameFromFile_TTF(LPCTSTR lpszFilePath, wchar_t (&rsFontNam
 				for (int i = 0; i < ttNTHeader.uNRCount; i++)
 				{
 					//f.Read(&ttRecord, sizeof(TT_NAME_RECORD));
-					if (ReadFile(f, &ttRecord, sizeof(TT_NAME_RECORD), &(dwRead=0), NULL) && dwRead)
+					if (ReadFile(f, &ttRecord, sizeof(ttRecord), &(dwRead=0), NULL) && dwRead)
 					{
 						ttRecord.uNameID = SWAPWORD(ttRecord.uNameID);
 
