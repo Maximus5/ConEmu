@@ -685,7 +685,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 						{
 							LPCWSTR pszCopy = pszParam;
 							CmdArg  szFirst;
-							if (!NextArg(pszCopy, szFirst))
+							if (!(pszCopy = NextArg(pszCopy, szFirst)))
 							{
 								_ASSERTE(FALSE && "NextArg failed?");
 							}
