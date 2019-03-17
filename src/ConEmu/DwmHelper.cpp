@@ -37,16 +37,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* *************************** */
 
-CDwmHelper::CDwmHelper(void)
+CDwmHelper::CDwmHelper()
 {
-	mb_EnableGlass = false;
-	mb_EnableTheming = false;
-	mn_DwmClientRectTopOffset = 0;
 	InitDwm();
 	DrawType();
 }
 
-CDwmHelper::~CDwmHelper(void)
+CDwmHelper::~CDwmHelper()
 {
 	if (mh_DwmApi)
 	{
@@ -54,46 +51,26 @@ CDwmHelper::~CDwmHelper(void)
 		mh_DwmApi = NULL;
 
 		mb_DwmAllowed = false;
-		_DwmIsCompositionEnabled = NULL;
-		_DwmSetWindowAttribute = NULL;
-		_DwmGetWindowAttribute = NULL;
-		_DwmExtendFrameIntoClientArea = NULL;
+		dwm = {};
 	}
+
 	if (mh_UxTheme)
 	{
-		if (mb_BufferedAllowed && _BufferedPaintUnInit)
+		if (mb_BufferedAllowed && ux._BufferedPaintUnInit)
 		{
-			_BufferedPaintUnInit();
+			ux._BufferedPaintUnInit();
 		}
 
 		FreeLibrary(mh_UxTheme);
 		mh_UxTheme = NULL;
 
-		_IsAppThemed = NULL;
-		_IsThemeActive = NULL;
-		_OpenThemeData = NULL;
-		_CloseThemeData = NULL;
-		_BufferedPaintInit = NULL;
-		_BufferedPaintUnInit = NULL;
-		_BeginBufferedPaint = NULL;
-		_BufferedPaintSetAlpha = NULL;
-		_EndBufferedPaint = NULL;
-		_DrawThemeTextEx = NULL;
-		_DrawThemeBackground = NULL;
-		_DrawThemeEdge = NULL;
-		_GetThemeMargins = NULL;
-		_GetThemePartSize = NULL;
-		_GetThemePosition = NULL;
-		_GetThemeSysSize = NULL;
-		_GetThemeBackgroundContentRect = NULL;
-		_SetThemeAppProperties = NULL;
-		_SetWindowTheme = NULL;
+		ux = {};
 	}
 }
 
 FrameDrawStyle CDwmHelper::DrawType()
 {
-	if (IsWindows8)
+	if (IsWin8())
 	{
 		m_DrawType = fdt_Win8;
 	}
@@ -118,50 +95,16 @@ void CDwmHelper::InitDwm()
 	BOOL lbDbg;
 
 	mh_User32 = GetModuleHandle(L"User32.dll");
-	_AdjustWindowRectExForDpi = NULL;
-	_ChangeWindowMessageFilter = NULL;
-	mb_DwmAllowed = false;
-	mh_DwmApi = NULL;
-	_DwmIsCompositionEnabled = NULL;
-	_DwmSetWindowAttribute = NULL;
-	_DwmGetWindowAttribute = NULL;
-	_DwmExtendFrameIntoClientArea = NULL;
-	_DwmDefWindowProc = NULL;
-	_DwmSetIconicThumbnail = NULL;
-	_DwmSetIconicLivePreviewBitmap = NULL;
-	_DwmInvalidateIconicBitmaps = NULL;
-	_DwmEnableBlurBehindWindow = NULL;
-	mb_ThemeAllowed = false;
-	mb_BufferedAllowed = false;
-	mh_UxTheme = NULL;
-	_IsAppThemed = NULL;
-	_IsThemeActive = NULL;
-	_OpenThemeData = NULL;
-	_CloseThemeData = NULL;
-	_BufferedPaintInit = NULL;
-	_BufferedPaintUnInit = NULL;
-	_BeginBufferedPaint = NULL;
-	_BufferedPaintSetAlpha = NULL;
-	_EndBufferedPaint = NULL;
-	_DrawThemeTextEx = NULL;
-	_DrawThemeBackground = NULL;
-	_DrawThemeEdge = NULL;
-	_GetThemeMargins = NULL;
-	_GetThemePartSize = NULL;
-	_GetThemePosition = NULL;
-	_GetThemeSysSize = NULL;
-	_GetThemeBackgroundContentRect = NULL;
-	_SetThemeAppProperties = NULL;
 
 	//gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
 	//GetVersionEx(&gOSVer);
-	if (gOSVer.dwMajorVersion >= 6)
+	if (IsWin6())
 	{
-		_ChangeWindowMessageFilter = (ChangeWindowMessageFilter_t)GetProcAddress(mh_User32, "ChangeWindowMessageFilter");
-		if (_ChangeWindowMessageFilter)
+		user._ChangeWindowMessageFilter = (USER::ChangeWindowMessageFilter_t)GetProcAddress(mh_User32, "ChangeWindowMessageFilter");
+		if (user._ChangeWindowMessageFilter)
 		{
-			lbDbg = _ChangeWindowMessageFilter(WM_DWMSENDICONICTHUMBNAIL, MSGFLT_ADD);
-			lbDbg = _ChangeWindowMessageFilter(WM_DWMSENDICONICLIVEPREVIEWBITMAP, MSGFLT_ADD);
+			lbDbg = user._ChangeWindowMessageFilter(WM_DWMSENDICONICTHUMBNAIL, MSGFLT_ADD);
+			lbDbg = user._ChangeWindowMessageFilter(WM_DWMSENDICONICLIVEPREVIEWBITMAP, MSGFLT_ADD);
 			UNREFERENCED_PARAMETER(lbDbg);
 		}
 
@@ -169,20 +112,20 @@ void CDwmHelper::InitDwm()
 		if (mh_DwmApi)
 		{
 			// Vista+
-			_DwmIsCompositionEnabled = (DwmIsCompositionEnabled_t)GetProcAddress(mh_DwmApi, "DwmIsCompositionEnabled");
-			_DwmSetWindowAttribute = (DwmSetWindowAttribute_t)GetProcAddress(mh_DwmApi, "DwmSetWindowAttribute");
-			_DwmGetWindowAttribute = (DwmGetWindowAttribute_t)GetProcAddress(mh_DwmApi, "DwmGetWindowAttribute");
-			_DwmExtendFrameIntoClientArea = (DwmExtendFrameIntoClientArea_t)GetProcAddress(mh_DwmApi, "DwmExtendFrameIntoClientArea");
-			_DwmDefWindowProc = (DwmDefWindowProc_t)GetProcAddress(mh_DwmApi, "DwmDefWindowProc");
-			_DwmSetIconicThumbnail = (DwmSetIconicThumbnail_t)GetProcAddress(mh_DwmApi, "DwmSetIconicThumbnail");
-			_DwmSetIconicLivePreviewBitmap = (DwmSetIconicLivePreviewBitmap_t)GetProcAddress(mh_DwmApi, "DwmSetIconicLivePreviewBitmap");
-			_DwmInvalidateIconicBitmaps = (DwmInvalidateIconicBitmaps_t)GetProcAddress(mh_DwmApi, "DwmInvalidateIconicBitmaps");
-			_DwmEnableBlurBehindWindow = (DwmEnableBlurBehindWindow_t)GetProcAddress(mh_DwmApi, "DwmEnableBlurBehindWindow");
+			dwm._DwmIsCompositionEnabled = (DWM::DwmIsCompositionEnabled_t)GetProcAddress(mh_DwmApi, "DwmIsCompositionEnabled");
+			dwm._DwmSetWindowAttribute = (DWM::DwmSetWindowAttribute_t)GetProcAddress(mh_DwmApi, "DwmSetWindowAttribute");
+			dwm._DwmGetWindowAttribute = (DWM::DwmGetWindowAttribute_t)GetProcAddress(mh_DwmApi, "DwmGetWindowAttribute");
+			dwm._DwmExtendFrameIntoClientArea = (DWM::DwmExtendFrameIntoClientArea_t)GetProcAddress(mh_DwmApi, "DwmExtendFrameIntoClientArea");
+			dwm._DwmDefWindowProc = (DWM::DwmDefWindowProc_t)GetProcAddress(mh_DwmApi, "DwmDefWindowProc");
+			dwm._DwmSetIconicThumbnail = (DWM::DwmSetIconicThumbnail_t)GetProcAddress(mh_DwmApi, "DwmSetIconicThumbnail");
+			dwm._DwmSetIconicLivePreviewBitmap = (DWM::DwmSetIconicLivePreviewBitmap_t)GetProcAddress(mh_DwmApi, "DwmSetIconicLivePreviewBitmap");
+			dwm._DwmInvalidateIconicBitmaps = (DWM::DwmInvalidateIconicBitmaps_t)GetProcAddress(mh_DwmApi, "DwmInvalidateIconicBitmaps");
+			dwm._DwmEnableBlurBehindWindow = (DWM::DwmEnableBlurBehindWindow_t)GetProcAddress(mh_DwmApi, "DwmEnableBlurBehindWindow");
 
-			mb_DwmAllowed = (_DwmIsCompositionEnabled != NULL)
-				&& (_DwmGetWindowAttribute != NULL) && (_DwmSetWindowAttribute != NULL)
-				&& (_DwmExtendFrameIntoClientArea != NULL)
-				&& (_DwmDefWindowProc != NULL);
+			mb_DwmAllowed = (dwm._DwmIsCompositionEnabled != NULL)
+				&& (dwm._DwmGetWindowAttribute != NULL) && (dwm._DwmSetWindowAttribute != NULL)
+				&& (dwm._DwmExtendFrameIntoClientArea != NULL)
+				&& (dwm._DwmDefWindowProc != NULL);
 			if (mb_DwmAllowed)
 				mb_EnableGlass = true;
 		}
@@ -194,34 +137,34 @@ void CDwmHelper::InitDwm()
 		if (mh_UxTheme)
 		{
 			// XP+
-			_IsAppThemed = (AppThemed_t)GetProcAddress(mh_UxTheme, "IsAppThemed");
-			_IsThemeActive = (AppThemed_t)GetProcAddress(mh_UxTheme, "IsThemeActive");
-			_OpenThemeData = (OpenThemeData_t)GetProcAddress(mh_UxTheme, "OpenThemeData");
-			_CloseThemeData = (CloseThemeData_t)GetProcAddress(mh_UxTheme, "CloseThemeData");
-			_DrawThemeBackground = (DrawThemeBackground_t)GetProcAddress(mh_UxTheme, "DrawThemeBackground");
-			_DrawThemeEdge = (DrawThemeEdge_t)GetProcAddress(mh_UxTheme, "DrawThemeEdge");
-			_GetThemeMargins = (GetThemeMargins_t)GetProcAddress(mh_UxTheme, "GetThemeMargins");
-			_GetThemePartSize = (GetThemePartSize_t)GetProcAddress(mh_UxTheme, "GetThemePartSize");
-			_GetThemePosition = (GetThemePosition_t)GetProcAddress(mh_UxTheme, "GetThemePosition");
-			_GetThemeSysSize = (GetThemeSysSize_t)GetProcAddress(mh_UxTheme, "GetThemeSysSize");
-			_GetThemeBackgroundContentRect = (GetThemeBackgroundContentRect_t)GetProcAddress(mh_UxTheme, "GetThemeBackgroundContentRect");
-			_SetThemeAppProperties = (SetThemeAppProperties_t)GetProcAddress(mh_UxTheme, "SetThemeAppProperties");
+			ux._IsAppThemed = (UX::AppThemed_t)GetProcAddress(mh_UxTheme, "IsAppThemed");
+			ux._IsThemeActive = (UX::AppThemed_t)GetProcAddress(mh_UxTheme, "IsThemeActive");
+			ux._OpenThemeData = (UX::OpenThemeData_t)GetProcAddress(mh_UxTheme, "OpenThemeData");
+			ux._CloseThemeData = (UX::CloseThemeData_t)GetProcAddress(mh_UxTheme, "CloseThemeData");
+			ux._DrawThemeBackground = (UX::DrawThemeBackground_t)GetProcAddress(mh_UxTheme, "DrawThemeBackground");
+			ux._DrawThemeEdge = (UX::DrawThemeEdge_t)GetProcAddress(mh_UxTheme, "DrawThemeEdge");
+			ux._GetThemeMargins = (UX::GetThemeMargins_t)GetProcAddress(mh_UxTheme, "GetThemeMargins");
+			ux._GetThemePartSize = (UX::GetThemePartSize_t)GetProcAddress(mh_UxTheme, "GetThemePartSize");
+			ux._GetThemePosition = (UX::GetThemePosition_t)GetProcAddress(mh_UxTheme, "GetThemePosition");
+			ux._GetThemeSysSize = (UX::GetThemeSysSize_t)GetProcAddress(mh_UxTheme, "GetThemeSysSize");
+			ux._GetThemeBackgroundContentRect = (UX::GetThemeBackgroundContentRect_t)GetProcAddress(mh_UxTheme, "GetThemeBackgroundContentRect");
+			ux._SetThemeAppProperties = (UX::SetThemeAppProperties_t)GetProcAddress(mh_UxTheme, "SetThemeAppProperties");
 			// Vista+
-			_BufferedPaintInit = (BufferedPaintInit_t)GetProcAddress(mh_UxTheme, "BufferedPaintInit");
-			_BufferedPaintUnInit = (BufferedPaintInit_t)GetProcAddress(mh_UxTheme, "BufferedPaintUnInit");
-			_BeginBufferedPaint = (BeginBufferedPaint_t)GetProcAddress(mh_UxTheme, "BeginBufferedPaint");
-			_BufferedPaintSetAlpha = (BufferedPaintSetAlpha_t)GetProcAddress(mh_UxTheme, "BufferedPaintSetAlpha");
-			_EndBufferedPaint = (EndBufferedPaint_t)GetProcAddress(mh_UxTheme, "EndBufferedPaint");
-			_DrawThemeTextEx = (DrawThemeTextEx_t)GetProcAddress(mh_UxTheme, "DrawThemeTextEx");
-			_SetWindowTheme = (SetWindowTheme_t)GetProcAddress(mh_UxTheme, "SetWindowTheme");
+			ux._BufferedPaintInit = (UX::BufferedPaintInit_t)GetProcAddress(mh_UxTheme, "BufferedPaintInit");
+			ux._BufferedPaintUnInit = (UX::BufferedPaintInit_t)GetProcAddress(mh_UxTheme, "BufferedPaintUnInit");
+			ux._BeginBufferedPaint = (UX::BeginBufferedPaint_t)GetProcAddress(mh_UxTheme, "BeginBufferedPaint");
+			ux._BufferedPaintSetAlpha = (UX::BufferedPaintSetAlpha_t)GetProcAddress(mh_UxTheme, "BufferedPaintSetAlpha");
+			ux._EndBufferedPaint = (UX::EndBufferedPaint_t)GetProcAddress(mh_UxTheme, "EndBufferedPaint");
+			ux._DrawThemeTextEx = (UX::DrawThemeTextEx_t)GetProcAddress(mh_UxTheme, "DrawThemeTextEx");
+			ux._SetWindowTheme = (UX::SetWindowTheme_t)GetProcAddress(mh_UxTheme, "SetWindowTheme");
 
-			mb_ThemeAllowed = (_IsAppThemed != NULL) && (_IsThemeActive != NULL);
+			mb_ThemeAllowed = (ux._IsAppThemed != NULL) && (ux._IsThemeActive != NULL);
 			if (mb_ThemeAllowed)
 			{
 				mb_EnableTheming = true;
-				if (_BufferedPaintInit && _BufferedPaintUnInit)
+				if (ux._BufferedPaintInit && ux._BufferedPaintUnInit)
 				{
-					HRESULT hr = _BufferedPaintInit();
+					HRESULT hr = ux._BufferedPaintInit();
 					mb_BufferedAllowed = SUCCEEDED(hr);
 				}
 			}
@@ -230,7 +173,7 @@ void CDwmHelper::InitDwm()
 
 	if (IsWin10())
 	{
-		_AdjustWindowRectExForDpi = (AdjustWindowRectExForDpi_t)GetProcAddress(mh_User32, "AdjustWindowRectExForDpi");
+		user._AdjustWindowRectExForDpi = (USER::AdjustWindowRectExForDpi_t)GetProcAddress(mh_User32, "AdjustWindowRectExForDpi");
 	}
 }
 
@@ -239,7 +182,7 @@ bool CDwmHelper::IsDwm()
 	if (!mb_DwmAllowed)
 		return false;
 	BOOL composition_enabled = FALSE;
-	bool isDwm = (_DwmIsCompositionEnabled(&composition_enabled) == S_OK) &&
+	bool isDwm = (dwm._DwmIsCompositionEnabled(&composition_enabled) == S_OK) &&
 		composition_enabled;
 	return isDwm;
 }
@@ -262,7 +205,7 @@ bool CDwmHelper::IsThemed()
 {
 	if (!mb_ThemeAllowed) // || !mb_EnableTheming)
 		return false;
-	return _IsAppThemed() && _IsThemeActive();
+	return ux._IsAppThemed() && ux._IsThemeActive();
 }
 
 void CDwmHelper::EnableGlass(bool abGlass)
@@ -285,16 +228,16 @@ void CDwmHelper::EnableTheming(bool abTheme)
 
 void CDwmHelper::SetWindowTheme(HWND hWnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList)
 {
-	if (!_SetWindowTheme)
+	if (!ux._SetWindowTheme)
 		return;
-	HRESULT hr = _SetWindowTheme(hWnd, pszSubAppName, pszSubIdList);
+	HRESULT hr = ux._SetWindowTheme(hWnd, pszSubAppName, pszSubIdList);
 	UNREFERENCED_PARAMETER(hr);
 }
 
 void CDwmHelper::EnableBlurBehind(bool abBlurBehindClient)
 {
 	HRESULT hr = E_NOINTERFACE;
-	if (_DwmEnableBlurBehindWindow)
+	if (dwm._DwmEnableBlurBehindWindow)
 	{
 		// Возможно, ghWndWork впоследствии будет отдельным окном (WS_POPUP?)
 		// чтобы реализовать прозрачность только клиентской части
@@ -327,7 +270,7 @@ void CDwmHelper::EnableBlurBehind(bool abBlurBehindClient)
 
 
 		// Enable blur-behind.
-		hr = _DwmEnableBlurBehindWindow(hWnd, &bb);
+		hr = dwm._DwmEnableBlurBehindWindow(hWnd, &bb);
 
 		if (bb.hRgnBlur)
 			DeleteObject(bb.hRgnBlur);
@@ -340,7 +283,7 @@ void CDwmHelper::CheckGlassAttribute()
 	if (mb_DwmAllowed)
 	{
 		DWMNCRENDERINGPOLICY policy = mb_EnableGlass ? DWMNCRP_ENABLED : DWMNCRP_DISABLED;
-		_DwmSetWindowAttribute(ghWnd, DWMWA_NCRENDERING_POLICY,
+		dwm._DwmSetWindowAttribute(ghWnd, DWMWA_NCRENDERING_POLICY,
 			&policy, sizeof(DWMNCRENDERINGPOLICY));
 
 		TODO("Replace IsDwm with IsGlass?");
@@ -406,7 +349,7 @@ bool CDwmHelper::ExtendWindowFrame(HWND hWnd, const RECT& rcMargins)
 	dwmm.cyTopHeight = rcMargins.top;
 	dwmm.cyBottomHeight = rcMargins.bottom;
 
-	HRESULT hr = _DwmExtendFrameIntoClientArea(hWnd, &dwmm);
+	HRESULT hr = dwm._DwmExtendFrameIntoClientArea(hWnd, &dwmm);
 
 	//SetWindowThemeNonClientAttributes(hWnd, WTNCA_VALIDBITS, WTNCA_NODRAWCAPTION);
 
@@ -417,14 +360,14 @@ BOOL CDwmHelper::DwmDefWindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 {
 	if (!mb_DwmAllowed)
 		return FALSE;
-	return _DwmDefWindowProc(hwnd, msg, wParam, lParam, plResult);
+	return dwm._DwmDefWindowProc(hwnd, msg, wParam, lParam, plResult);
 }
 
 HRESULT CDwmHelper::DwmGetWindowAttribute(HWND hwnd, DWORD dwAttribute, PVOID pvAttribute, DWORD cbAttribute)
 {
-	if (!_DwmGetWindowAttribute)
+	if (!dwm._DwmGetWindowAttribute)
 		return E_NOINTERFACE;
-	return _DwmGetWindowAttribute(hwnd, dwAttribute, pvAttribute, cbAttribute);
+	return dwm._DwmGetWindowAttribute(hwnd, dwAttribute, pvAttribute, cbAttribute);
 }
 
 int CDwmHelper::GetDwmClientRectTopOffset()
@@ -442,16 +385,16 @@ wrap:
 
 HANDLE/*HTHEME*/ CDwmHelper::OpenThemeData(HWND hwnd, LPCWSTR pszClassList)
 {
-	if (!_OpenThemeData)
+	if (!ux._OpenThemeData)
 		return NULL;
-	return _OpenThemeData(hwnd, pszClassList);
+	return ux._OpenThemeData(hwnd, pszClassList);
 }
 
 HRESULT CDwmHelper::CloseThemeData(HANDLE/*HTHEME*/ hTheme)
 {
-	if (!_CloseThemeData)
+	if (!ux._CloseThemeData)
 		return E_NOINTERFACE;
-	return _CloseThemeData(hTheme);
+	return ux._CloseThemeData(hTheme);
 }
 
 HANDLE/*HPAINTBUFFER*/ CDwmHelper::BeginBufferedPaint(HDC hdcTarget, const RECT& rcTarget, PaintDC& dc)
@@ -459,14 +402,14 @@ HANDLE/*HPAINTBUFFER*/ CDwmHelper::BeginBufferedPaint(HDC hdcTarget, const RECT&
 {
 	HANDLE hResult = NULL;
 
-	if (_BeginBufferedPaint && !dc.bInternal)
+	if (ux._BeginBufferedPaint && !dc.bInternal)
 	{
 		dc.bInternal = false;
 
 		BP_PAINTPARAMS args = {sizeof(args)};
 		args.dwFlags = 1/*BPPF_ERASE*/;
 
-		hResult = _BeginBufferedPaint(hdcTarget, &rcTarget, 1/*BPBF_DIB*//*dwFormat*/, &args, &dc.hDC);
+		hResult = ux._BeginBufferedPaint(hdcTarget, &rcTarget, 1/*BPBF_DIB*//*dwFormat*/, &args, &dc.hDC);
 	}
 
 	if (!hResult)
@@ -501,9 +444,9 @@ HANDLE/*HPAINTBUFFER*/ CDwmHelper::BeginBufferedPaint(HDC hdcTarget, const RECT&
 
 HRESULT CDwmHelper::BufferedPaintSetAlpha(const PaintDC& dc, const RECT *prc, BYTE alpha)
 {
-	if (!_BufferedPaintSetAlpha || dc.bInternal)
+	if (!ux._BufferedPaintSetAlpha || dc.bInternal)
 		return E_NOINTERFACE;
-	return _BufferedPaintSetAlpha(dc.hBuffered, prc, alpha);
+	return ux._BufferedPaintSetAlpha(dc.hBuffered, prc, alpha);
 }
 
 HRESULT CDwmHelper::EndBufferedPaint(PaintDC& dc, BOOL fUpdateTarget)
@@ -528,9 +471,9 @@ HRESULT CDwmHelper::EndBufferedPaint(PaintDC& dc, BOOL fUpdateTarget)
 	}
 	else
 	{
-		if (_EndBufferedPaint)
+		if (ux._EndBufferedPaint)
 		{
-			hr = _EndBufferedPaint(dc.hBuffered, fUpdateTarget);
+			hr = ux._EndBufferedPaint(dc.hBuffered, fUpdateTarget);
 		}
 	}
 
@@ -539,106 +482,106 @@ HRESULT CDwmHelper::EndBufferedPaint(PaintDC& dc, BOOL fUpdateTarget)
 
 HRESULT CDwmHelper::DrawThemeTextEx(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, LPCWSTR pszText, int iCharCount, DWORD dwFlags, LPRECT pRect, const void/*DTTOPTS*/ *pOptions)
 {
-	if (!_DrawThemeTextEx)
+	if (!ux._DrawThemeTextEx)
 		return E_NOINTERFACE;
-	return _DrawThemeTextEx(hTheme, hdc, iPartId, iStateId, pszText, iCharCount, dwFlags, pRect, (const DTTOPTS*)pOptions);
+	return ux._DrawThemeTextEx(hTheme, hdc, iPartId, iStateId, pszText, iCharCount, dwFlags, pRect, (const DTTOPTS*)pOptions);
 }
 
 HRESULT CDwmHelper::DrawThemeBackground(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, const RECT *pRect, const RECT *pClipRect)
 {
-	if (!_DrawThemeBackground)
+	if (!ux._DrawThemeBackground)
 		return E_NOINTERFACE;
-	return _DrawThemeBackground(hTheme, hdc, iPartId, iStateId, pRect, pClipRect);
+	return ux._DrawThemeBackground(hTheme, hdc, iPartId, iStateId, pRect, pClipRect);
 }
 
 HRESULT CDwmHelper::DrawThemeEdge(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, LPCRECT pDestRect, UINT uEdge, UINT uFlags, LPRECT pContentRect)
 {
-	if (!_DrawThemeEdge)
+	if (!ux._DrawThemeEdge)
 		return E_NOINTERFACE;
-	return _DrawThemeEdge(hTheme, hdc, iPartId, iStateId, pDestRect, uEdge, uFlags, pContentRect);
+	return ux._DrawThemeEdge(hTheme, hdc, iPartId, iStateId, pDestRect, uEdge, uFlags, pContentRect);
 }
 
 HRESULT CDwmHelper::GetThemeMargins(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, int iPropId, LPRECT prc, RECT *pMargins)
 {
-	if (!_GetThemeMargins)
+	if (!ux._GetThemeMargins)
 		return E_NOINTERFACE;
-	return _GetThemeMargins(hTheme, hdc, iPartId, iStateId, iPropId, prc, pMargins);
+	return ux._GetThemeMargins(hTheme, hdc, iPartId, iStateId, iPropId, prc, pMargins);
 }
 
 HRESULT CDwmHelper::GetThemePartSize(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, LPCRECT prc, int/*THEMESIZE*/ eSize, SIZE *psz)
 {
-	if (!_GetThemePartSize)
+	if (!ux._GetThemePartSize)
 		return E_NOINTERFACE;
-	return _GetThemePartSize(hTheme, hdc, iPartId, iStateId, prc, eSize, psz);
+	return ux._GetThemePartSize(hTheme, hdc, iPartId, iStateId, prc, eSize, psz);
 }
 
 HRESULT CDwmHelper::GetThemePosition(HANDLE/*HTHEME*/ hTheme, int iPartId, int iStateId, int iPropId, POINT *pPoint)
 {
-	if (!_GetThemePosition)
+	if (!ux._GetThemePosition)
 		return E_NOINTERFACE;
-	return _GetThemePosition(hTheme, iPartId, iStateId, iPropId, pPoint);
+	return ux._GetThemePosition(hTheme, iPartId, iStateId, iPropId, pPoint);
 }
 
 int CDwmHelper::GetThemeSysSize(HANDLE/*HTHEME*/ hTheme, int iSizeID)
 {
-	if (!_GetThemeSysSize)
+	if (!ux._GetThemeSysSize)
 		return -1;
-	return _GetThemeSysSize(hTheme, iSizeID);
+	return ux._GetThemeSysSize(hTheme, iSizeID);
 }
 
 HRESULT CDwmHelper::GetThemeBackgroundContentRect(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, LPCRECT pBoundingRect, LPRECT pContentRect)
 {
-	if (!_GetThemeBackgroundContentRect)
+	if (!ux._GetThemeBackgroundContentRect)
 		return E_NOINTERFACE;
-	return _GetThemeBackgroundContentRect(hTheme, hdc, iPartId, iStateId, pBoundingRect, pContentRect);
+	return ux._GetThemeBackgroundContentRect(hTheme, hdc, iPartId, iStateId, pBoundingRect, pContentRect);
 }
 
 void CDwmHelper::ForceSetIconic(HWND hWnd)
 {
 	BOOL bValue;
 
-	if (_DwmSetWindowAttribute)
+	if (dwm._DwmSetWindowAttribute)
 	{
 		bValue = TRUE;
-		_DwmSetWindowAttribute(hWnd, DWMWA_FORCE_ICONIC_REPRESENTATION, &bValue, sizeof(bValue));
+		dwm._DwmSetWindowAttribute(hWnd, DWMWA_FORCE_ICONIC_REPRESENTATION, &bValue, sizeof(bValue));
 	}
 
-	if (_DwmSetWindowAttribute)
+	if (dwm._DwmSetWindowAttribute)
 	{
 		bValue = TRUE;
-		_DwmSetWindowAttribute(hWnd, DWMWA_HAS_ICONIC_BITMAP, &bValue, sizeof(bValue));
+		dwm._DwmSetWindowAttribute(hWnd, DWMWA_HAS_ICONIC_BITMAP, &bValue, sizeof(bValue));
 	}
 }
 
 HRESULT CDwmHelper::DwmSetIconicThumbnail(HWND hwnd, HBITMAP hbmp)
 {
 	HRESULT hr = E_NOINTERFACE;
-	if (_DwmSetIconicThumbnail)
-		hr = _DwmSetIconicThumbnail(hwnd, hbmp, 0);
+	if (dwm._DwmSetIconicThumbnail)
+		hr = dwm._DwmSetIconicThumbnail(hwnd, hbmp, 0);
 	return hr;
 }
 
 HRESULT CDwmHelper::DwmSetIconicLivePreviewBitmap(HWND hwnd, HBITMAP hbmp, POINT *pptClient)
 {
 	HRESULT hr = E_NOINTERFACE;
-	if (_DwmSetIconicLivePreviewBitmap)
-		hr = _DwmSetIconicLivePreviewBitmap(hwnd, hbmp, pptClient, 0);
+	if (dwm._DwmSetIconicLivePreviewBitmap)
+		hr = dwm._DwmSetIconicLivePreviewBitmap(hwnd, hbmp, pptClient, 0);
 	return hr;
 }
 
 HRESULT CDwmHelper::DwmInvalidateIconicBitmaps(HWND hwnd)
 {
 	HRESULT hr = E_NOINTERFACE;
-	if (_DwmInvalidateIconicBitmaps)
-		hr = _DwmInvalidateIconicBitmaps(hwnd);
+	if (dwm._DwmInvalidateIconicBitmaps)
+		hr = dwm._DwmInvalidateIconicBitmaps(hwnd);
 	return hr;
 }
 
 BOOL CDwmHelper::AdjustWindowRectExForDpi(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi)
 {
 	BOOL rc = FALSE;
-	if (_AdjustWindowRectExForDpi)
-		rc = _AdjustWindowRectExForDpi(lpRect, dwStyle, bMenu, dwExStyle, dpi);
+	if (user._AdjustWindowRectExForDpi)
+		rc = user._AdjustWindowRectExForDpi(lpRect, dwStyle, bMenu, dwExStyle, dpi);
 	else
 		rc = AdjustWindowRectEx(lpRect, dwStyle, bMenu, dwExStyle);
 	return rc;

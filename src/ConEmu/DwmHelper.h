@@ -55,16 +55,16 @@ struct PaintDC
 class CDwmHelper
 {
 protected:
-	bool    mb_DwmAllowed, mb_ThemeAllowed, mb_BufferedAllowed;
-	bool    mb_EnableGlass, mb_EnableTheming;
-	int     mn_DwmClientRectTopOffset;
-	FrameDrawStyle m_DrawType;
+	bool    mb_DwmAllowed = false, mb_ThemeAllowed = false, mb_BufferedAllowed = false;
+	bool    mb_EnableGlass = false, mb_EnableTheming = false;
+	int     mn_DwmClientRectTopOffset = 0;
+	FrameDrawStyle m_DrawType = fdt_Win2k;
 	virtual void OnUseGlass(bool abEnableGlass) = 0;
 	virtual void OnUseTheming(bool abEnableTheming) = 0;
 	virtual void OnUseDwm(bool abEnableDwm) = 0;
 public:
-	CDwmHelper(void);
-	virtual ~CDwmHelper(void);
+	CDwmHelper();
+	virtual ~CDwmHelper();
 public:
 	bool IsDwm();
 	bool IsDwmAllowed();
@@ -103,75 +103,83 @@ public:
 	// Per-monitor DPI support
 	BOOL AdjustWindowRectExForDpi(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi);
 private:
-	HMODULE mh_User32;
-	HMODULE mh_DwmApi;
-	HMODULE mh_UxTheme;
+	HMODULE mh_User32 = NULL;
+	HMODULE mh_DwmApi = NULL;
+	HMODULE mh_UxTheme = NULL;
 private:
+	// Initialize dlls and functions
+	void InitDwm();
+
+	struct USER {
 	// Win10
 	typedef BOOL (WINAPI* AdjustWindowRectExForDpi_t)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle, UINT dpi);
-	AdjustWindowRectExForDpi_t _AdjustWindowRectExForDpi;
+	AdjustWindowRectExForDpi_t _AdjustWindowRectExForDpi = nullptr;
 	// Vista+
 	typedef BOOL (WINAPI* ChangeWindowMessageFilter_t)(UINT message, DWORD dwFlag);
-	ChangeWindowMessageFilter_t _ChangeWindowMessageFilter;
+	ChangeWindowMessageFilter_t _ChangeWindowMessageFilter = nullptr;
+	} user;
+
+	struct DWM {
 	// Vista+ Aero
 	typedef HRESULT (WINAPI* DwmIsCompositionEnabled_t)(BOOL *pfEnabled);
-	DwmIsCompositionEnabled_t _DwmIsCompositionEnabled;
+	DwmIsCompositionEnabled_t _DwmIsCompositionEnabled = nullptr;
 	typedef HRESULT (WINAPI* DwmSetWindowAttribute_t)(HWND hwnd, DWORD dwAttribute, LPCVOID pvAttribute, DWORD cbAttribute);
-	DwmSetWindowAttribute_t _DwmSetWindowAttribute;
+	DwmSetWindowAttribute_t _DwmSetWindowAttribute = nullptr;
 	typedef HRESULT (WINAPI* DwmExtendFrameIntoClientArea_t)(HWND hWnd, void* pMarInset);
-	DwmExtendFrameIntoClientArea_t _DwmExtendFrameIntoClientArea;
+	DwmExtendFrameIntoClientArea_t _DwmExtendFrameIntoClientArea = nullptr;
 	typedef BOOL (WINAPI* DwmDefWindowProc_t)(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *plResult);
-	DwmDefWindowProc_t _DwmDefWindowProc;
+	DwmDefWindowProc_t _DwmDefWindowProc = nullptr;
 	typedef HRESULT (WINAPI* DwmGetWindowAttribute_t)(HWND hwnd, DWORD dwAttribute, PVOID pvAttribute, DWORD cbAttribute);
-	DwmGetWindowAttribute_t _DwmGetWindowAttribute;
+	DwmGetWindowAttribute_t _DwmGetWindowAttribute = nullptr;
 	typedef HRESULT (WINAPI* DwmSetIconicThumbnail_t)(HWND hwnd, HBITMAP hbmp, DWORD dwSITFlags);
-	DwmSetIconicThumbnail_t _DwmSetIconicThumbnail;
+	DwmSetIconicThumbnail_t _DwmSetIconicThumbnail = nullptr;
 	typedef HRESULT (WINAPI* DwmSetIconicLivePreviewBitmap_t)(HWND hwnd, HBITMAP hbmp, POINT *pptClient, DWORD dwSITFlags);
-	DwmSetIconicLivePreviewBitmap_t _DwmSetIconicLivePreviewBitmap;
+	DwmSetIconicLivePreviewBitmap_t _DwmSetIconicLivePreviewBitmap = nullptr;
 	typedef HRESULT (WINAPI* DwmInvalidateIconicBitmaps_t)(HWND hwnd);
-	DwmInvalidateIconicBitmaps_t _DwmInvalidateIconicBitmaps;
+	DwmInvalidateIconicBitmaps_t _DwmInvalidateIconicBitmaps = nullptr;
 	typedef HRESULT (WINAPI* DwmEnableBlurBehindWindow_t)(HWND hWnd, const void/*DWM_BLURBEHIND*/ *pBlurBehind);
-	DwmEnableBlurBehindWindow_t _DwmEnableBlurBehindWindow;
+	DwmEnableBlurBehindWindow_t _DwmEnableBlurBehindWindow = nullptr;
+	} dwm;
+
+	struct UX {
 	// XP+ Theming
 	typedef BOOL (WINAPI* AppThemed_t)();
-	AppThemed_t _IsAppThemed; // XP
-	AppThemed_t _IsThemeActive; // XP
+	AppThemed_t _IsAppThemed = nullptr; // XP
+	AppThemed_t _IsThemeActive = nullptr; // XP
 	typedef HANDLE/*HTHEME*/ (WINAPI* OpenThemeData_t)(HWND hwnd, LPCWSTR pszClassList);
-	OpenThemeData_t _OpenThemeData; // XP
+	OpenThemeData_t _OpenThemeData = nullptr; // XP
 	typedef HRESULT (WINAPI* CloseThemeData_t)(HANDLE/*HTHEME*/ hTheme);
-	CloseThemeData_t _CloseThemeData; // XP
+	CloseThemeData_t _CloseThemeData = nullptr; // XP
 	typedef HRESULT (WINAPI* BufferedPaintInit_t)();
-	BufferedPaintInit_t _BufferedPaintInit; // Vista
-	BufferedPaintInit_t _BufferedPaintUnInit; // Vista
+	BufferedPaintInit_t _BufferedPaintInit = nullptr; // Vista
+	BufferedPaintInit_t _BufferedPaintUnInit = nullptr; // Vista
 	typedef HANDLE/*HPAINTBUFFER*/ (WINAPI* BeginBufferedPaint_t)(HDC hdcTarget, const RECT *prcTarget, int/*BP_BUFFERFORMAT*/ dwFormat, void/*BP_PAINTPARAMS*/ *pPaintParams, HDC *phdc);
-	BeginBufferedPaint_t _BeginBufferedPaint; // Vista
+	BeginBufferedPaint_t _BeginBufferedPaint = nullptr; // Vista
 	typedef HRESULT (WINAPI* BufferedPaintSetAlpha_t)(HANDLE/*HPAINTBUFFER*/ hBufferedPaint, const RECT *prc, BYTE alpha);
-	BufferedPaintSetAlpha_t _BufferedPaintSetAlpha; // Vista
+	BufferedPaintSetAlpha_t _BufferedPaintSetAlpha = nullptr; // Vista
 	typedef HRESULT (WINAPI* EndBufferedPaint_t)(HANDLE/*HPAINTBUFFER*/ hBufferedPaint, BOOL fUpdateTarget);
-	EndBufferedPaint_t _EndBufferedPaint; // Vista
+	EndBufferedPaint_t _EndBufferedPaint = nullptr; // Vista
 	typedef HRESULT (WINAPI* DrawThemeTextEx_t)(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, LPCWSTR pszText, int iCharCount, DWORD dwFlags, LPRECT pRect, const void/*DTTOPTS*/ *pOptions);
-	DrawThemeTextEx_t _DrawThemeTextEx; // Vista
+	DrawThemeTextEx_t _DrawThemeTextEx = nullptr; // Vista
 	typedef HRESULT (WINAPI* DrawThemeBackground_t)(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, const RECT *pRect, const RECT *pClipRect);
-	DrawThemeBackground_t _DrawThemeBackground; // XP
+	DrawThemeBackground_t _DrawThemeBackground = nullptr; // XP
 	typedef HRESULT (WINAPI* DrawThemeEdge_t)(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, LPCRECT pDestRect, UINT uEdge, UINT uFlags, LPRECT pContentRect);
-	DrawThemeEdge_t _DrawThemeEdge; // XP
+	DrawThemeEdge_t _DrawThemeEdge = nullptr; // XP
 	typedef HRESULT (WINAPI* GetThemeMargins_t)(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, int iPropId, LPRECT prc, RECT *pMargins);
-	GetThemeMargins_t _GetThemeMargins; // XP
+	GetThemeMargins_t _GetThemeMargins = nullptr; // XP
 	typedef HRESULT (WINAPI* GetThemePartSize_t)(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, LPCRECT prc, int/*THEMESIZE*/ eSize, SIZE *psz);
-	GetThemePartSize_t _GetThemePartSize; // XP
+	GetThemePartSize_t _GetThemePartSize = nullptr; // XP
 	typedef HRESULT (WINAPI* GetThemePosition_t)(HANDLE/*HTHEME*/ hTheme, int iPartId, int iStateId, int iPropId, POINT *pPoint);
-	GetThemePosition_t _GetThemePosition; // XP
+	GetThemePosition_t _GetThemePosition = nullptr; // XP
 	typedef int (WINAPI* GetThemeSysSize_t)(HANDLE/*HTHEME*/ hTheme, int iSizeID);
-	GetThemeSysSize_t _GetThemeSysSize; // XP
+	GetThemeSysSize_t _GetThemeSysSize = nullptr; // XP
 	typedef HRESULT (WINAPI* GetThemeBackgroundContentRect_t)(HANDLE/*HTHEME*/ hTheme, HDC hdc, int iPartId, int iStateId, LPCRECT pBoundingRect, LPRECT pContentRect);
-	GetThemeBackgroundContentRect_t _GetThemeBackgroundContentRect; // XP
+	GetThemeBackgroundContentRect_t _GetThemeBackgroundContentRect = nullptr; // XP
 	typedef void (WINAPI* SetThemeAppProperties_t)(DWORD dwFlags);
-	SetThemeAppProperties_t _SetThemeAppProperties; // XP
+	SetThemeAppProperties_t _SetThemeAppProperties = nullptr; // XP
 	typedef void (WINAPI* SetWindowThemeNonClientAttributes_t)(DWORD dwFlags);
-	SetWindowThemeNonClientAttributes_t _SetWindowThemeNonClientAttributes; // Vista
+	SetWindowThemeNonClientAttributes_t _SetWindowThemeNonClientAttributes = nullptr; // Vista
 	typedef HRESULT (WINAPI* SetWindowTheme_t)(HWND hwnd, LPCWSTR pszSubAppName, LPCWSTR pszSubIdList);
 	SetWindowTheme_t _SetWindowTheme = nullptr; // Vista
-
-	// some other private functions
-	void InitDwm();
+	} ux;
 };
