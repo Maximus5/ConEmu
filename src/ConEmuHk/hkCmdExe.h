@@ -29,11 +29,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/defines.h"
+#include "../common/clink.h"
 #include "SetHook.h"
 
 /* *************************** */
 
-#define CLINK_DLL_NAME WIN3264TEST(L"clink_dll_x86.dll", L"clink_dll_x64.dll")
 bool IsClinkLoaded();
 
 /* *************************** */

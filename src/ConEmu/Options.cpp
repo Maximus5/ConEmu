@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #include <TlHelp32.h>
 #endif
+#include "../common/clink.h"
 #include "../common/CEHandle.h"
 #include "../common/MFileLogEx.h"
 #include "../common/Monitors.h"
@@ -4011,7 +4012,7 @@ int Settings::StatusBarHeight()
 }
 
 
-DWORD Settings::isUseClink(bool abCheckVersion /*= false*/)
+DWORD Settings::isUseClink()
 {
 	if (!mb_UseClink)
 		return 0;
@@ -4019,47 +4020,45 @@ DWORD Settings::isUseClink(bool abCheckVersion /*= false*/)
 	if (gpConEmu->IsResetBasicSettings())
 		return 0;
 
-	wchar_t szClink32[MAX_PATH+30], szClink64[MAX_PATH+30];
-
-	wcscpy_c(szClink32, gpConEmu->ms_ConEmuBaseDir);
-	wcscat_c(szClink32, L"\\clink\\clink_dll_x86.dll");
-	if (!FileExists(szClink32))
-		szClink32[0] = 0;
-
-	#ifdef _WIN64
-	wcscpy_c(szClink64, gpConEmu->ms_ConEmuBaseDir);
-	wcscat_c(szClink64, L"\\clink\\clink_dll_x64.dll");
-	if (!FileExists(szClink64))
-		szClink64[0] = 0;
-	#else
-		szClink64[0] = 0;
-	#endif
-
-	if (!szClink32[0] && !szClink64[0])
+	LPCWSTR clink_found_path = NULL;
+	wchar_t szClink32[MAX_PATH+30] = L"", szClink64[MAX_PATH+30] = L"";
+	const wchar_t* clink_dll_32[] = {CLINK_DLL_NAME_x32_v1, CLINK_DLL_NAME_x32_v0};
+	const wchar_t* clink_dll_64[] = {CLINK_DLL_NAME_x64_v1, CLINK_DLL_NAME_x64_v0};
+	const wchar_t clink_dir[] = L"\\clink\\";
+	for (size_t i = 0; i < std::size(clink_dll_32) && !clink_found_path; ++i)
 	{
-		return 0;
+		wcscpy_c(szClink32, gpConEmu->ms_ConEmuBaseDir);
+		wcscat_c(szClink32, clink_dir);
+		wcscat_c(szClink32, clink_dll_32[i]);
+		if (!FileExists(szClink32))
+			continue;
+
+		if (IsWindows64())
+		{
+			wcscpy_c(szClink64, gpConEmu->ms_ConEmuBaseDir);
+			wcscat_c(szClink64, clink_dir);
+			wcscat_c(szClink64, clink_dll_64[i]);
+			if (!FileExists(szClink64))
+				continue;
+		}
+
+		clink_found_path = WIN3264TEST(szClink32, szClink64);
 	}
 
 	static int nVersionChecked = 0;
+
+	if (!clink_found_path)
+	{
+		nVersionChecked = 0;
+		return 0;
+	}
+
 	static VS_FIXEDFILEINFO vi = {};
 
 	if (nVersionChecked == 0)
 	{
-		//DWORD nErrCode;
-		//HMODULE hLib = LoadLibraryEx(WIN3264TEST(szClink32,szClink64), NULL, LOAD_LIBRARY_AS_DATAFILE|LOAD_LIBRARY_AS_IMAGE_RESOURCE);
-		//if (!hLib)
-		//{
-		//	nVersionChecked = -1;
-		//	nErrCode = GetLastError();
-		//	DisplayLastError(L"Failed to load clink library as DataFile", nErrCode);
-		//	return false;
-		//}
-		//FreeLibrary(hLib);
-
-		LPCTSTR pszPath = WIN3264TEST(szClink32,szClink64[0] ? szClink64 : szClink32);
-
 		DWORD dwRsrvd = 0;
-		DWORD dwSize = GetFileVersionInfoSize(pszPath, &dwRsrvd);
+		DWORD dwSize = GetFileVersionInfoSize(clink_found_path, &dwRsrvd);
 
 		if (dwSize == 0)
 		{
@@ -4074,7 +4073,7 @@ DWORD Settings::isUseClink(bool abCheckVersion /*= false*/)
 				VS_FIXEDFILEINFO *lvs = NULL;
 				UINT nLen = sizeof(lvs);
 
-				if (GetFileVersionInfo(pszPath, 0, dwSize, pVerData))
+				if (GetFileVersionInfo(clink_found_path, 0, dwSize, pVerData))
 				{
 					wchar_t szSlash[3]; lstrcpyW(szSlash, L"\\");
 
@@ -4091,7 +4090,7 @@ DWORD Settings::isUseClink(bool abCheckVersion /*= false*/)
 	}
 
 	if (nVersionChecked != 1 && nVersionChecked != 2)
-		return false;
+		return 0;
 	return (DWORD)nVersionChecked;
 }
 

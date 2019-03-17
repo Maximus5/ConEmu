@@ -1080,7 +1080,7 @@ struct Settings
 		bool isProcessCtrlZ; // Treat Ctrl-Z as ‘EndOfStream’. On new line press Ctrl-Z and Enter. Refer to the gh#465 for details (Go input streams).
 		//reg->Load(L"UseClink", mb_UseClink);
 		bool mb_UseClink; // использовать расширение командной строки (ReadConsole)
-		DWORD isUseClink(bool abCheckVersion = false);
+		DWORD isUseClink();
 		//reg->Load(L"PortableReg", isPortableReg);
 		bool isPortableReg;
 		//reg->Load(L"SuppressBells", isSuppressBells);

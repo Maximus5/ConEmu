@@ -125,7 +125,11 @@ bool IsClinkLoaded()
 	if (!gbIsCmdProcess && !gbIsPowerShellProcess)
 		return false;
 	// Check, if clink library is loaded
-	HMODULE hClink = GetModuleHandle(WIN3264TEST(L"clink_dll_x86.dll", L"clink_dll_x64.dll"));
+	HMODULE hClink;
+	if ((hClink = GetModuleHandle(CLINK_DLL_NAME_v1)) != NULL)
+		return true;
+	if ((hClink = GetModuleHandle(CLINK_DLL_NAME_v0)) != NULL)
+		return true;
 	return (hClink != NULL);
 }
 

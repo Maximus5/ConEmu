@@ -1152,7 +1152,7 @@ void InitExeFlags()
 		gnExeFlags |= caf_Msys2;
 
 	// Most probably, clink is not loaded yet, but we'll check
-	if (GetModuleHandle(WIN3264TEST(L"clink_dll_x86.dll", L"clink_dll_x64.dll")) != NULL)
+	if (IsClinkLoaded())
 		gnExeFlags |= caf_Clink;
 }
 
