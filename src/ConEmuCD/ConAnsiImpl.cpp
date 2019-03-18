@@ -2015,6 +2015,17 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 		}
 		break; // "[...m"
 
+	case L'p':
+		if (Code.ArgC == 0 && Code.PvtLen == 1 && Code.Pvt[0] == L'!')
+		{
+			FullReset();
+		}
+		else
+		{
+			DumpUnknownEscape(Code.pszEscStart,Code.nTotalLen);
+		}
+		break; // "[!p"
+
 	case L'q':
 		if ((Code.PvtLen == 1) && (Code.Pvt[0] == L' '))
 		{
