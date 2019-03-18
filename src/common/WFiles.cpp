@@ -583,6 +583,7 @@ bool IsDotsName(LPCWSTR asName)
 }
 
 // Useful for searching sources from compilation error log
+// #Search Implement return of more than one file
 bool FileExistSubDir(LPCWSTR asDirectory, LPCWSTR asFile, int iDepth, CEStr& rsFound)
 {
 	if (FilesExists(asDirectory, asFile, true, 1))

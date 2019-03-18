@@ -487,7 +487,7 @@ BOOL WINAPI OnReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberO
 			if (pszPath[0] == L'\\' && pszPath[1] == L'\\')
 			{
 				wchar_t* pszEnd;
-				if (*pszPath == L'"')
+				if (*pszPath == L'"')  // #PVS Expression '* pszPath == L'"'' is always false.
 					pszEnd = wcschr(++pszPath, L'"');
 				else
 					pszEnd = wcspbrk(pszPath, L"\r\n\t&| ");
