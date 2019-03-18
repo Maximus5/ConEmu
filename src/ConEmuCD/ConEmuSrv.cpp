@@ -1982,11 +1982,6 @@ wrap:
 void CmdOutputStore(bool abCreateOnly /*= false*/)
 {
 	const bool reopen_allowed = isReopenHandleAllowed();
-	if (reopen_allowed)
-	{
-		// Nothing to do, in this mode we utilize conhost screen buffers
-		return;
-	}
 
 	LogFunction(L"CmdOutputStore");
 
@@ -1997,7 +1992,6 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 	// Need to block all requests to output buffer in other threads
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 
-	// Just in case we change the logic somehow
 	if (reopen_allowed)
 		ConOutCloseHandle();
 
