@@ -2146,7 +2146,8 @@ BOOL cmd_AltBuffer(CESERVER_REQ& in, CESERVER_REQ** out)
 		};
 
 		// In Windows 7 we have to use legacy mode
-		if (!isReopenHandleAllowed())
+		if (!isReopenHandleAllowed()
+			|| !(in.AltBuf.AbFlags & abf_Connector))
 		{
 			if (in.AltBuf.AbFlags & abf_SaveContents)
 				CmdOutputStore();

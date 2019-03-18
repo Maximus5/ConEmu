@@ -49,3 +49,5 @@ extern "C" {
 #if defined(__GNUC__)
 };
 #endif
+
+bool isConnectorStarted();

@@ -2247,6 +2247,7 @@ enum ALTBUFFER_FLAGS
 	abf_RestoreContents = 0x0002,
 	abf_BufferOn        = 0x0004,
 	abf_BufferOff       = 0x0008,
+	abf_Connector       = 0x0010,
 };
 
 struct CESERVER_REQ_ALTBUFFER

@@ -346,6 +346,11 @@ int stopConnector(/*[IN/OUT]*/RequestTermConnectorParm& Parm)
 
 }
 
+bool isConnectorStarted()
+{
+	return Connector::gbWasStarted;
+}
+
 /// exported function, connector entry point
 /// The function is called from `conemu-cyg-32.exe` and other builds of connector
 int WINAPI RequestTermConnector(/*[IN/OUT]*/RequestTermConnectorParm* Parm)

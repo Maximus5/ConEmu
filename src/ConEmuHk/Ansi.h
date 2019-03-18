@@ -194,7 +194,10 @@ public:
 	static void WriteAnsiLogFormat(const char* format, ...);
 protected:
 	static void XTermSaveRestoreCursor(bool bSaveCursor, HANDLE hConsoleOutput = NULL);
-	static HANDLE XTermAltBuffer(bool bSetAltBuffer);
+	static HANDLE XTermAltBuffer(const bool bSetAltBuffer, const int mode = 1049);
+	static HANDLE XTermBufferConEmuAlternative();
+	static HANDLE XTermBufferConEmuPrimary();
+	//static HANDLE XTermBufferWin10(const int mode, const bool bSetAltBuffer);
 public:
 
 	void ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply);
