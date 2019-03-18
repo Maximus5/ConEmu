@@ -1733,7 +1733,7 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 						: (Code.ArgV[0] == 1004) ? tmm_FOCUS
 						: (Code.ArgV[0] == 1005) ? tmm_UTF8
 						: (Code.ArgV[0] == 1006) ? tmm_XTERM
-						: (Code.ArgV[0] == 1000) ? tmm_URXVT
+						: (Code.ArgV[0] == 1015) ? tmm_URXVT
 						: tmm_None;
 					DWORD Mode = (Code.Action == L'h')
 						? (LastMode | ModeMask)
