@@ -2269,6 +2269,14 @@
       "de": "Kopieren: Aktuelle Auswahl als HTML",
       "id": 2635 }
     ,
+    "vkCTSCtrlShiftLeft": {
+      "en": "Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
+      "id": 3103 }
+    ,
+    "vkCTSCtrlShiftRight": {
+      "en": "Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
+      "id": 3104 }
+    ,
     "vkCTSShiftDown": {
       "en": "Start block selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
       "zh": "开始块状模式选择，在Far里会忽略，可以在 ‘标记 & 粘贴’ 和 ‘应用程序区别’ 页面禁用",
@@ -3955,6 +3963,10 @@
       "zh": "自动保存窗口大小和位置",
       "de": "Fenstergröße und Position beim Verlassen automatisch speichern",
       "id": 1723 }
+    ,
+    "cbAutoTrimSingleLine": {
+      "en": "Automatically remove newline when pasting single line",
+      "id": 3102 }
     ,
     "cbBgAllowPlugin": {
       "en": "Allow background plugins (Far Manager)",
