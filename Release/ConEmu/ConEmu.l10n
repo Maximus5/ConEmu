@@ -1,4 +1,4 @@
-﻿{
+{
   "languages": [
     {"id": "en", "name": "English" }
     ,
@@ -1221,8 +1221,7 @@
       "_zh": "着色truemod支持",
       "de": [ "TrueColor-(auch: XTerm-256)-Unterstützung aktivieren\r\n"
             , "https://conemu.github.io/en/Xterm256Colors.html" ],
-      "ja": [ "TrueColor(XTerm-256とも呼ばれる)サポートを有効にする\r\n"
-            , "" ],
+      "ja": "TrueColor(XTerm-256とも呼ばれる)サポートを有効にする\r\n",
       "id": 1578 }
     ,
     "cbTryToCenter": {
@@ -1257,8 +1256,7 @@
             , "https://mridgers.github.io/clink/" ],
       "de": [ "Verwende clink um Befehls-Prompt (cmd.exe) zu erweitern\r\n"
             , "https://mridgers.github.io/clink/" ],
-      "ja": [ "clinkを使用してコマンドプロンプトを拡張する(cmd.exe)\r\n"
-            , "" ],
+      "ja": "clinkを使用してコマンドプロンプトを拡張する(cmd.exe)\r\n",
       "id": 2418 }
     ,
     "cbUseInjects": {
@@ -2713,6 +2711,14 @@
       "ja": "コピー:HTMLとしての現在の選択",
       "id": 2635 }
     ,
+    "vkCTSCtrlShiftLeft": {
+      "en": "Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
+      "id": 3103 }
+    ,
+    "vkCTSCtrlShiftRight": {
+      "en": "Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
+      "id": 3104 }
+    ,
     "vkCTSShiftDown": {
       "en": "Start block selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
       "zh": "开始块状模式选择，在Far里会忽略，可以在 ‘标记 & 粘贴’ 和 ‘应用程序区别’ 页面禁用",
@@ -3567,8 +3573,7 @@
             , "https://conemu.github.io/en/Issues.html" ],
       "de": [ "Erstelle Fehlerbericht oder Anfrage nach neuen Funktionen\r\n"
             , "https://conemu.github.io/en/Issues.html" ],
-      "ja": [ "バグレポートを作成するか,新しい機能をリクエストする\r\n"
-            , "" ],
+      "ja": "バグレポートを作成するか,新しい機能をリクエストする\r\n",
       "id": 43961 }
     ,
     "IDM_RESTART": {
@@ -4203,11 +4208,7 @@
       "ru": "Параметры",
       "zh": "特征",
       "de": "Funktionen",
-<<<<<<< HEAD
       "ja": "フィーチャー",
-=======
-      "ja": "特徴",
->>>>>>> e1fe64b354776466b4227a711d8cdfa954ac1232
       "id": 37 }
     ,
     "lng_SpgFonts": {
@@ -4269,11 +4270,7 @@
       "ru": "Выделение",
       "zh": "标记/复制",
       "de": "Markieren/Kopieren",
-<<<<<<< HEAD
       "ja": "マーク / コピー",
-=======
-      "ja": "マーク/コピー",
->>>>>>> e1fe64b354776466b4227a711d8cdfa954ac1232
       "id": 47 }
     ,
     "lng_SpgMouse": {
@@ -4445,11 +4442,11 @@
       "id": 2396 }
     ,
     "bConFontAdd2HKLM": {
-      "en": "Add font to ‘...\\Console\\TrueTypeFont’",
-      "ru": "Добавить шрифт в ‘...\\Console\\TrueTypeFont’",
-      "zh": "添加字体到‘...\\Console\\TrueTypeFont’",
-      "de": "Füge Schriftart zu '...\\Console\\TrueTypeFont' hinzu",
-      "ja": "'... \\Console\\TrueTypeFont'にフォントを追加",
+      "en": "Add font to �...\\Console\\TrueTypeFont�",
+      "_ru": "Добавить шрифт в ‘...\\Console\\TrueTypeFont’",
+      "_zh": "添加字体到‘...\\Console\\TrueTypeFont’",
+      "_de": "Füge Schriftart zu '...\\Console\\TrueTypeFont' hinzu",
+      "_ja": "'... \\Console\\TrueTypeFont'にフォントを追加",
       "id": 1730 }
     ,
     "bConFontCancel": {
@@ -4676,6 +4673,10 @@
       "ja": "終了時にウィンドウのサイズと位置を自動的に保存",
       "id": 1723 }
     ,
+    "cbAutoTrimSingleLine": {
+      "en": "Automatically remove newline when pasting single line",
+      "id": 3102 }
+    ,
     "cbBgAllowPlugin": {
       "en": "Allow background plugins (Far Manager)",
       "zh": "允许背景插件（Far Manager）",
@@ -4872,10 +4873,10 @@
       "id": 2126 }
     ,
     "cbColorKeyTransparent": {
-      "en": "‘Color key’ transparency",
-      "zh": "‘颜色键’ 透明度",
-      "de": "'Schlüsselfarben'-Transparenz",
-      "ja": "'カラーキー' 透明度",
+      "en": "�Color key� transparency",
+      "_zh": "‘颜色键’ 透明度",
+      "_de": "'Schlüsselfarben'-Transparenz",
+      "_ja": "'カラーキー' 透明度",
       "id": 2312 }
     ,
     "cbColorSchemeDelete": {
@@ -5668,10 +5669,10 @@
       "id": 1506 }
     ,
     "cbMultiIterate": {
-      "en": "‘Host-key’+Number iterates Far windows",
-      "zh": "‘Host-key’+数字迭代Far窗口",
-      "de": "'Host-Taste'+Zahl wechselt durch die Far-Fenster",
-      "ja": "‘Host-key’+Numキー で Farウィンドウを循環",
+      "en": "�Host-key�+Number iterates Far windows",
+      "_zh": "‘Host-key’+数字迭代Far窗口",
+      "_de": "'Host-Taste'+Zahl wechselt durch die Far-Fenster",
+      "_ja": "‘Host-key’+Numキー で Farウィンドウを循環",
       "id": 2104 }
     ,
     "cbMultiShowButtons": {
@@ -5909,17 +5910,17 @@
       "id": 2262 }
     ,
     "cbShowWasHiddenMsg": {
-      "en": "Show ‘... was hidden’ warning in TSA",
-      "zh": "在任务栏状态区域显示“... 被隐藏”警告",
-      "de": "Zeige '... wurde versteckt'-Warnung im Infobereich",
-      "ja": "'...隠された' TSAの警告を表示",
+      "en": "Show �... was hidden� warning in TSA",
+      "_zh": "在任务栏状态区域显示“... 被隐藏”警告",
+      "_de": "Zeige '... wurde versteckt'-Warnung im Infobereich",
+      "_ja": "'...隠された' TSAの警告を表示",
       "id": 2435 }
     ,
     "cbShowWasSetOnTopMsg": {
-      "en": "Show ‘... brought ConEmu OnTop. Revert?’ confirmation box",
-      "zh": "显示“...置顶ConEmu。 恢复？” 确认框",
-      "de": "Zeige '... holte ConEmu in den Vordergrund. Rückgängig?'-Bestätigungsdialog",
-      "ja": "'... ConEmu OnTopをもたらした.復帰？ '確認ボックスを表示",
+      "en": "Show �... brought ConEmu OnTop. Revert?� confirmation box",
+      "_zh": "显示“...置顶ConEmu。 恢复？” 确认框",
+      "_de": "Zeige '... holte ConEmu in den Vordergrund. Rückgängig?'-Bestätigungsdialog",
+      "_ja": "'... ConEmu OnTopをもたらした.復帰？ '確認ボックスを表示",
       "id": 2854 }
     ,
     "cbSingleInstance": {
@@ -6226,10 +6227,10 @@
       "id": 2086 }
     ,
     "cbUserScreenTransparent": {
-      "en": "‘User screen’ transparency (Far Manager feature)",
-      "zh": "‘用户屏幕’ 透明度 （Far Manager的特征）",
-      "de": "'Benutzerbildschirm'-Transparenz (Far-Manager-Funktion)",
-      "ja": "'ユーザー画面'の透過性(Far Manager 機能)",
+      "en": "�User screen� transparency (Far Manager feature)",
+      "_zh": "‘用户屏幕’ 透明度 （Far Manager的特征）",
+      "_de": "'Benutzerbildschirm'-Transparenz (Far-Manager-Funktion)",
+      "_ja": "'ユーザー画面'の透過性(Far Manager 機能)",
       "id": 1573 }
     ,
     "cbUseWinArrows": {
@@ -7064,27 +7065,27 @@
       "id": 2141 }
     ,
     "rbAutoUpdateDeveloperFast": {
-      "en": "‘Alpha’ builds",
-      "ru": "‘Альфа’ сборка",
+      "en": "�Alpha� builds",
+      "_ru": "‘Альфа’ сборка",
       "_zh": "‘开发者’ builds",
-      "de": "'Alpha'-Versionen",
-      "ja": " ' Alpha ' ビルド",
+      "_de": "'Alpha'-Versionen",
+      "_ja": " ' Alpha ' ビルド",
       "id": 2591 }
     ,
     "rbAutoUpdatePreviewFast": {
-      "en": "‘Preview’",
-      "ru": "‘Рекомендуемая’",
-      "zh": "‘预览’",
-      "de": "'Vorschau'",
-      "ja": "' Preview '",
+      "en": "�Preview�",
+      "_ru": "‘Рекомендуемая’",
+      "_zh": "‘预览’",
+      "_de": "'Vorschau'",
+      "_ja": "' Preview '",
       "id": 2590 }
     ,
     "rbAutoUpdateStableFast": {
-      "en": "‘Stable’",
-      "ru": "‘Стабильная’",
-      "zh": "‘稳定’",
-      "de": "'Stabil'",
-      "ja": "' Stable '",
+      "en": "�Stable�",
+      "_ru": "‘Стабильная’",
+      "_zh": "‘稳定’",
+      "_de": "'Stabil'",
+      "_ja": "' Stable '",
       "id": 2589 }
     ,
     "rbColorBgrHex": {
@@ -7133,11 +7134,7 @@
       "en": "Auto (tcc - if installed, %ComSpec% - otherwise)",
       "zh": "自动 （tcc - 如果已安装, %ComSpec% - 否则）",
       "de": "Auto (TCC - falls installiert, sonst %ComSpec%)",
-<<<<<<< HEAD
       "ja": "自動(tcc-インストールされている場合は%ComSpec%-それ以外)",
-=======
-      "ja": "自動 ( tcc - インストールされている場合は %ComSpec% - それ以外)",
->>>>>>> e1fe64b354776466b4227a711d8cdfa954ac1232
       "id": 2148 }
     ,
     "rbComspecCmd": {
@@ -7754,12 +7751,12 @@
     ,
     "stCmdAutoAttach": {
       "en": [ "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\n"
-            , "Current command stored in registry ‘AutoRun’ (HKLM value is not processed here):" ],
-      "zh": [ "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\n"
+            , "Current command stored in registry �AutoRun� (HKLM value is not processed here):" ],
+      "_zh": [ "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\n"
             , "当前命令储存在注册表‘自动运行’ （此处HKLM的值未被处理）:" ],
-      "de": [ "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\n"
+      "_de": [ "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\n"
             , "Aktueller, in der Registry 'AutoRun' gespeicherter, Befehl (HKLM-Wert wird hier nicht verarbeitet):" ],
-      "ja": [ "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\n"
+      "_ja": [ "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\n"
             , "レジストリ 'AutoRun'に格納されている現在のコマンド(HKLM値はここでは処理されません):" ],
       "id": 2956 }
     ,
@@ -7974,13 +7971,13 @@
       "id": 2947 }
     ,
     "stDefaultTerminal": {
-      "en": [ "List of hooked executables or window class names delimited with ‘|’\r\n"
+      "en": [ "List of hooked executables or window class names delimited with �|�\r\n"
             , "Example: explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow" ],
-      "zh": [ "以分割符‘|’列出hooked的可执行文件或窗口类的名字\r\n"
+      "_zh": [ "以分割符‘|’列出hooked的可执行文件或窗口类的名字\r\n"
             , "例子： explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow" ],
-      "de": [ "Liste von angezapften ausführbaren Dateien oder Fensterklassennamen getrennt durch ‘|’\r\n"
+      "_de": [ "Liste von angezapften ausführbaren Dateien oder Fensterklassennamen getrennt durch ‘|’\r\n"
             , "Beispiel: explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow" ],
-      "ja": [ "'|'で区切られたフックされた実行ファイルまたはウィンドウクラス名のリスト\r\n"
+      "_ja": [ "'|'で区切られたフックされた実行ファイルまたはウィンドウクラス名のリスト\r\n"
             , "例:explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow" ],
       "id": 2663 }
     ,
@@ -7996,10 +7993,10 @@
       "id": 2662 }
     ,
     "stDisableConImeFast1": {
-      "en": "Unwanted value of ‘LoadConIme’ registry parameter! This may cause hanging of other console applications! ConEmu may disable ConIme.exe via registry:",
-      "zh": "注册表参数‘LoadConIme’多余的值！这可能会导致其他控制台应用程序挂起！ConEmu可以通过注册表禁用ConIme.exe：",
-      "de": "Unerwünschter Wert vom 'LoadConIme'-Registry-Parameter! Das kann zum Aufhängen anderer Konsolenanwendungen führen! ConEmu kann ConIme.exe mittel Registry deaktivieren:",
-      "ja": "'LoadConIme'レジストリパラメータの不要な値！これにより,他のコンソールアプリケーションが停止することがあります. ConEmuはレジストリを介してConIme.exeを無効にすることがあります:",
+      "en": "Unwanted value of �LoadConIme� registry parameter! This may cause hanging of other console applications! ConEmu may disable ConIme.exe via registry:",
+      "_zh": "注册表参数‘LoadConIme’多余的值！这可能会导致其他控制台应用程序挂起！ConEmu可以通过注册表禁用ConIme.exe：",
+      "_de": "Unerwünschter Wert vom 'LoadConIme'-Registry-Parameter! Das kann zum Aufhängen anderer Konsolenanwendungen führen! ConEmu kann ConIme.exe mittel Registry deaktivieren:",
+      "_ja": "'LoadConIme'レジストリパラメータの不要な値！これにより,他のコンソールアプリケーションが停止することがあります. ConEmuはレジストリを介してConIme.exeを無効にすることがあります:",
       "id": 2094 }
     ,
     "stElevatedConsolesGroup": {
@@ -8071,15 +8068,15 @@
       "id": 2940 }
     ,
     "stFarTabTemplates": {
-      "en": [ "%s - Title, %c - Console #, %n - Active process name, %p - PID, %a - ‘Admin’, %% - %,\n"
-            , "%m...m, %M...M - mark ‘...’ for active (m) and inactive (M) tab\n"
+      "en": [ "%s - Title, %c - Console #, %n - Active process name, %p - PID, %a - �Admin�, %% - %,\n"
+            , "%m...m, %M...M - mark �...� for active (m) and inactive (M) tab\n"
             , "%i - Far window number (you can see it in standard F12 menu)" ],
       "_zh": [ "%s - 标题, %c - 控制台 #, %n - 活动的进程名, %p - PID, %a - ‘Admin’, %% - %,\n"
             , "%i - Far窗口编号（你能在标准的F12菜单里看见）" ],
-      "de": [ "%s - Titel, %c - Konsole #, %n - Name d. Aktiven Prozesses, %p - PID, %a - 'Admin', %% - %,\n"
+      "_de": [ "%s - Titel, %c - Konsole #, %n - Name d. Aktiven Prozesses, %p - PID, %a - 'Admin', %% - %,\n"
             , "%m...m, %M...M - markiere '...' für aktive (m) und inaktive (M) Reiter\n"
             , "%i - Far-Fensterzahl (Kann im Standard-F12-Menü gefunden werden)" ],
-      "ja": [ "%s - タイトル, %c - コンソール番号, %n - アクティブなプロセス名, %p - PID, %a - 'Admin', %% - %,\n"
+      "_ja": [ "%s - タイトル, %c - コンソール番号, %n - アクティブなプロセス名, %p - PID, %a - 'Admin', %% - %,\n"
             , "%m...m, %M...M - アクティブ(m)および非アクティブ(M)タブのM'...'\n"
             , "%i  - Farウィンドウ番号(標準のF12メニューで見ることができます)" ],
       "id": 2960 }
@@ -8154,16 +8151,16 @@
       "id": 2256 }
     ,
     "stGotoEditorCmdHelp": {
-      "en": [ "Available macros: ‘%1’ - line number, ‘%2’ - column number\n"
-            , "‘%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File\n"
-            , "Use ‘#’ prefix to run editor outside of ConEmu" ],
-      "zh": [ "可用的宏： ‘%1’ - 行数, ‘%2’ - 列数\n"
+      "en": [ "Available macros: �%1� - line number, �%2� - column number\n"
+            , "�%3� - C:\\Path\\File, �%4� - C:/Path/File, �%5� - /C/Path/File\n"
+            , "Use �#� prefix to run editor outside of ConEmu" ],
+      "_zh": [ "可用的宏： ‘%1’ - 行数, ‘%2’ - 列数\n"
             , "‘%3’ - C:\\Path\\File, ‘%4’ - C:/Path/File, ‘%5’ - /C/Path/File\n"
             , "使用‘#’前缀来运行ConEmu外部的编辑器" ],
-      "de": [ "Verfügbare Platzhalter: '%1' - Zeilennummer, '%2' - Spaltennummer\n"
+      "_de": [ "Verfügbare Platzhalter: '%1' - Zeilennummer, '%2' - Spaltennummer\n"
             , "'%3' - C:\\Pfad\\Datei, '%4' - C:/Pfad/Datei, '%5' - /C/Pfad/Datei\n"
             , "'#' als Vorzeichen verwenden um den Editor außerhalb ConEmus zu starten" ],
-      "ja": [ "利用可能なマクロ: '%1' - 行番号, '%2' - 列番号\n"
+      "_ja": [ "利用可能なマクロ: '%1' - 行番号, '%2' - 列番号\n"
             , "'%3' - C:\\Path\\File, '%4' - C:/Path/File, '%5' - /C/Path/File\n"
             , "ConEmuの外部でエディタを実行するには '#'接頭辞を使用してください" ],
       "id": 2681 }
@@ -8303,10 +8300,10 @@
       "id": 3008 }
     ,
     "stMoreConfont4": {
-      "en": "For example: True Type font ‘Lucida Console’ 5x3",
-      "zh": "例如： True Type 字体 ‘Lucida Console’ 5x3",
-      "de": "Zum Beispiel: True-Type-Schrift 'Lucida Console' 5x3",
-      "ja": "例:True Typeフォント 'Lucida Console' 5x3",
+      "en": "For example: True Type font �Lucida Console� 5x3",
+      "_zh": "例如： True Type 字体 ‘Lucida Console’ 5x3",
+      "_de": "Zum Beispiel: True-Type-Schrift 'Lucida Console' 5x3",
+      "_ja": "例:True Typeフォント 'Lucida Console' 5x3",
       "id": 3009 }
     ,
     "stMoreConfont5": {
@@ -8628,14 +8625,14 @@
     ,
     "stTabTemplateDescr": {
       "en": [ "%s - Title, %c - Console #, %n - Active process name, %p - PID,\n"
-            , "%m...m, %M...M - mark ‘...’ for active (m) and inactive (M) tab\n"
-            , "%a - ‘Admin’, %d - current shell directory, %f - folder, %% - %" ],
+            , "%m...m, %M...M - mark �...� for active (m) and inactive (M) tab\n"
+            , "%a - �Admin�, %d - current shell directory, %f - folder, %% - %" ],
       "_zh": [ "%s - 标题, %c - Console #, %n - 激活的进程名, %p - PID,\n"
             , "%a - ‘管理员’, %d - 当前shell目录, %f - 文件夹, %% - %" ],
-      "de": [ "%s - Titel, %c - Konsole #, %n - Name des aktiven Prozesses, %p - PID,\n"
+      "_de": [ "%s - Titel, %c - Konsole #, %n - Name des aktiven Prozesses, %p - PID,\n"
             , "%m...m, %M...M - markiere '...' für aktive (m) und inaktive (M) Reiter\n"
             , "%a - 'Admin', %d - aktuelles Shell-Verzeichnis, %f - Ordner, %% - %" ],
-      "ja": [ "%s - タイトル, %c - コンソール番号, %n - アクティブなプロセス名, %p - PID,\n"
+      "_ja": [ "%s - タイトル, %c - コンソール番号, %n - アクティブなプロセス名, %p - PID,\n"
             , "%m...m, %M...M - アクティブ(m)および非アクティブ(M)タブのM'...'\n"
             , "%a - 'Admin', %d - 現在のシェルディレクトリ, %f - フォルダ, %% - %" ],
       "id": 2737 }
@@ -8763,11 +8760,11 @@
       "id": 2859 }
     ,
     "stUpdatePostCommand": {
-      "en": "Post-update command, don't forget ‘call’ for batches",
-      "ru": "Выполнить после обновления, не забудьте «call» для вызова bat/cmd файлов",
-      "zh": "更新后命令，不要忘记从批处理“调用”",
-      "de": "Befehl nach Aktualisierung, für Batch 'call' nicht vergessen",
-      "ja": "更新後のコマンド,バッチの 'call' を忘れないでください",
+      "en": "Post-update command, don't forget �call� for batches",
+      "_ru": "Выполнить после обновления, не забудьте «call» для вызова bat/cmd файлов",
+      "_zh": "更新后命令，不要忘记从批处理“调用”",
+      "_de": "Befehl nach Aktualisierung, für Batch 'call' nicht vergessen",
+      "_ja": "更新後のコマンド,バッチの 'call' を忘れないでください",
       "id": 2860 }
     ,
     "stUpdateProxy": {
