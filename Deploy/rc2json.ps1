@@ -1,4 +1,4 @@
-param([string]$mode="auto",[string]$id="",[string]$str="",[switch]$force)
+ï»¿param([string]$mode="auto",[string]$id="",[string]$str="",[switch]$force)
 
 $path = split-path -parent $MyInvocation.MyCommand.Definition
 
@@ -425,7 +425,7 @@ function ParseLngData($LngData)
   return $hints
 }
 
-# If string comes from ConvertFrom-JSON - it is â€˜de-escapedâ€™
+# If string comes from ConvertFrom-JSON - it is Ã¢â‚¬Ëœde-escapedÃ¢â‚¬â„¢
 function EscapeJson($str)
 {
   if ($str -eq $null) {
@@ -985,7 +985,7 @@ function InitKeyNames()
   $script:KeysFriendly += @{ Key = "VK_LSHIFT" ; Name = "RShift" }
   $script:KeysFriendly += @{ Key = "VK_RSHIFT" ; Name = "LShift" }
   $script:KeysFriendly += @{ Key = "VK_OEM_3/*~*/" ; Name = "'~'" }
-  $script:KeysFriendly += @{ Key = "192/*VK_ªøû¹ôð*/" ; Name = "'~'" }
+  $script:KeysFriendly += @{ Key = "192/*VK_tilde*/" ; Name = "'~'" }
   $script:KeysFriendly += @{ Key = "VK_UP" ; Name = "UpArrow" }
   $script:KeysFriendly += @{ Key = "VK_DOWN" ; Name = "DownArrow" }
   $script:KeysFriendly += @{ Key = "VK_LEFT" ; Name = "LeftArrow" }
@@ -1047,7 +1047,7 @@ function FriendlyKeys($token)
     if ($key.Length -eq 3) {
       $key = $key.SubString(1,1)
     } else {
-      $key = "‘"+$key.Trim("'")+"’"
+      $key = "â€˜"+$key.Trim("'")+"â€™"
     }
   }
   # ready

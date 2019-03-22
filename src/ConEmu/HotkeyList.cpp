@@ -301,7 +301,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 	Add(vkMultiNextShift, chk_User,  NULL,    L"Multi.NextShift",       CConEmuCtrl::key_MultiPrev)
 		;
 	Add(vkMultiRecreate,  chk_User,  NULL,    L"Multi.Recreate",        CConEmuCtrl::key_MultiRecreate)
-		->SetHotKey(192/*VK_тильда*/,VK_LWIN);
+		->SetHotKey(192/*VK_tilde*/,VK_LWIN);
 	Add(vkMultiAltCon,    chk_User,  NULL,    L"Multi.AltCon",          CConEmuCtrl::key_AlternativeBuffer)
 		->SetHotKey('A',VK_LWIN);
 	Add(vkMultiPause,     chk_User,  NULL,    L"Multi.Pause",           CConEmuCtrl::key_GuiMacro, false, L"Pause")
