@@ -1174,7 +1174,7 @@ HMONITOR CConEmuSize::FindInitialMonitor(MONITORINFO* pmi /*= NULL*/)
 		iHeight = WndHeight.Value * gpSet->FontSizeY;
 		break;
 	case ss_Percents:
-		iWidth = WndHeight.Value;
+		iHeight = WndHeight.Value;
 		break;
 	default:
 		iHeight = kSizeDefault;
@@ -1318,16 +1318,10 @@ bool CConEmuSize::CheckQuakeRect(LPRECT prcWnd)
 
 	bool bChange = false;
 
-	RECT rcFrameOnly = CalcMargins(CEM_FRAMECAPTION);
-	int iVisibleFrameWidth = gpSet->HideCaptionAlwaysFrame();
-	if (iVisibleFrameWidth > 0)
-	{
-		rcFrameOnly.left = std::max<int>(0, (rcFrameOnly.left - iVisibleFrameWidth));
-		rcFrameOnly.right = std::max<int>(0, (rcFrameOnly.right - iVisibleFrameWidth));
-		rcFrameOnly.bottom = std::max<int>(0, (rcFrameOnly.bottom - iVisibleFrameWidth));
-	}
-	int iLeftShift = (iVisibleFrameWidth == -1) ? 0 : rcFrameOnly.left;
-	int iRightShift = (iVisibleFrameWidth == -1) ? 0 : rcFrameOnly.right;
+	const RECT rcInvidisbleFrame = CalcMargins(CEM_INVISIBLE_FRAME);
+	const RECT rcFrameOnly = CalcMargins(CEM_FRAMECAPTION);
+	const auto& iLeftShift = rcInvidisbleFrame.left;
+	const auto& iRightShift = rcInvidisbleFrame.right;
 
 	// Если успешно - подгоняем по экрану
 	if (mi.rcWork.right > mi.rcWork.left)
