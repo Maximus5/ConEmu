@@ -1222,7 +1222,7 @@
       "de": [ "TrueColor-(auch: XTerm-256)-Unterstützung aktivieren\r\n"
             , "https://conemu.github.io/en/Xterm256Colors.html" ],
       "ja": [ "TrueColor(XTerm-256とも呼ばれる)サポートを有効にする\r\n"
-            , "" ],
+            , "https://conemu.github.io/en/Xterm256Colors.html" ],
       "id": 1578 }
     ,
     "cbTryToCenter": {
@@ -1258,7 +1258,7 @@
       "de": [ "Verwende clink um Befehls-Prompt (cmd.exe) zu erweitern\r\n"
             , "https://mridgers.github.io/clink/" ],
       "ja": [ "clinkを使用してコマンドプロンプトを拡張する(cmd.exe)\r\n"
-            , "" ],
+            , "https://mridgers.github.io/clink/" ],
       "id": 2418 }
     ,
     "cbUseInjects": {
@@ -3576,7 +3576,7 @@
       "de": [ "Erstelle Fehlerbericht oder Anfrage nach neuen Funktionen\r\n"
             , "https://conemu.github.io/en/Issues.html" ],
       "ja": [ "バグレポートを作成するか,新しい機能をリクエストする\r\n"
-            , "" ],
+            , "https://conemu.github.io/en/Issues.html" ],
       "id": 43961 }
     ,
     "IDM_RESTART": {
@@ -4211,11 +4211,7 @@
       "ru": "Параметры",
       "zh": "特征",
       "de": "Funktionen",
-<<<<<<< HEAD
       "ja": "フィーチャー",
-=======
-      "ja": "特徴",
->>>>>>> e1fe64b354776466b4227a711d8cdfa954ac1232
       "id": 37 }
     ,
     "lng_SpgFonts": {
@@ -4277,11 +4273,7 @@
       "ru": "Выделение",
       "zh": "标记/复制",
       "de": "Markieren/Kopieren",
-<<<<<<< HEAD
       "ja": "マーク / コピー",
-=======
-      "ja": "マーク/コピー",
->>>>>>> e1fe64b354776466b4227a711d8cdfa954ac1232
       "id": 47 }
     ,
     "lng_SpgMouse": {
@@ -7145,11 +7137,7 @@
       "en": "Auto (tcc - if installed, %ComSpec% - otherwise)",
       "zh": "自动 （tcc - 如果已安装, %ComSpec% - 否则）",
       "de": "Auto (TCC - falls installiert, sonst %ComSpec%)",
-<<<<<<< HEAD
       "ja": "自動(tcc-インストールされている場合は%ComSpec%-それ以外)",
-=======
-      "ja": "自動 ( tcc - インストールされている場合は %ComSpec% - それ以外)",
->>>>>>> e1fe64b354776466b4227a711d8cdfa954ac1232
       "id": 2148 }
     ,
     "rbComspecCmd": {
