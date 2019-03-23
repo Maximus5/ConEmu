@@ -4165,16 +4165,12 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 		{
 			if (pmi)
 				GetNearestMonitorInfo(pmi, NULL, NULL, ghWnd);
-			goto done;
+		} else {
+			GetWindowRect(ghWnd, &rcWnd);
+			_ASSERTE(IsWindowModeChanging() == false);
+			CurTile = EvalTileMode(rcWnd, pmi);
 		}
 
-		GetWindowRect(ghWnd, &rcWnd);
-
-		_ASSERTE(IsWindowModeChanging() == false);
-
-		CurTile = EvalTileMode(rcWnd, pmi);
-
-	done:
 		if (m_TileMode != CurTile)
 		{
 			// Сменился!
