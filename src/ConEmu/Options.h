@@ -72,7 +72,7 @@ enum CEFontStyles
 
 #define RUNQUEUE_CREATE_LAG_DEF 100
 #define RUNQUEUE_CREATE_LAG_MIN 10 // 10 ms
-#define RUNQUEUE_CREATE_LAG_MAX 10*1000 // 10 sec
+#define RUNQUEUE_CREATE_LAG_MAX (10*1000) // 10 sec
 
 enum FarMacroVersion
 {

@@ -354,7 +354,7 @@ enum CONSOLE_KEY_ID
 	ID_CTRLESC,
 };
 
-#define EvalBufferTurnOnSize(Now) (2*Now+32)
+#define EvalBufferTurnOnSize(Now) (2 * (Now) + 32)
 
 enum RealBufferScroll
 {
@@ -1391,7 +1391,7 @@ struct CESERVER_REQ_HDR
 	HANDLE2  hModule;
 };
 
-#define CHECK_CMD_SIZE(pCmd,data_size) ((pCmd)->hdr.cbSize >= (sizeof(CESERVER_REQ_HDR) + data_size))
+#define CHECK_CMD_SIZE(pCmd,data_size) ((pCmd)->hdr.cbSize >= (sizeof(CESERVER_REQ_HDR) + (data_size)))
 
 
 struct CESERVER_CHAR_HDR

@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "CustomFonts.h"
 #include "SetColorPalette.h"
 
-#define MAX_COUNT_PART_BRUSHES 16*16*4
+#define MAX_COUNT_PART_BRUSHES (16*16*4)
 #define MAX_SPACES 0x400
 
 class CBackground;
