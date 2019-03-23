@@ -118,10 +118,12 @@ protected:
 
 					if ((cp != -1) && (nLen < nLenMax))
 					{
+						const wchar_t* from = psz;
 						if (*pszFonts) *(psz++) = L'\t';
-						lstrcpy(psz, szName); psz+= nNameLen;
+						lstrcpy(psz, szName); psz += nNameLen;
 						*(psz++) = L'\t';
-						lstrcpy(psz, szValue); psz+= nValLen;
+						lstrcpy(psz, szValue); psz += nValLen;
+						nLenMax -= static_cast<int>(psz - from);
 					}
 
 					cchName = countof(szName); cchValue = sizeof(szValue)-2;
