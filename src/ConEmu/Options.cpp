@@ -2388,8 +2388,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 
 		if (gpConEmu->mp_Inside
 			&& ((gpConEmu->mp_Inside->mh_InsideParentWND == NULL)
-				|| (gpConEmu->mp_Inside->mh_InsideParentWND
-					&& (gpConEmu->mp_Inside->mh_InsideParentWND != INSIDE_PARENT_NOT_FOUND)
+				|| ((gpConEmu->mp_Inside->mh_InsideParentWND != INSIDE_PARENT_NOT_FOUND)
 					&& !IsWindow(gpConEmu->mp_Inside->mh_InsideParentWND))))
 		{
 			SafeDelete(gpConEmu->mp_Inside);
@@ -4071,12 +4070,12 @@ DWORD Settings::isUseClink()
 			if (pVerData)
 			{
 				VS_FIXEDFILEINFO *lvs = NULL;
-				UINT nLen = sizeof(lvs);
 
 				if (GetFileVersionInfo(clink_found_path, 0, dwSize, pVerData))
 				{
 					wchar_t szSlash[3]; lstrcpyW(szSlash, L"\\");
 
+					UINT nLen = sizeof(void**);
 					if (VerQueryValue((void*)pVerData, szSlash, (void**)&lvs, &nLen))
 					{
 						vi = *lvs;

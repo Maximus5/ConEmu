@@ -373,7 +373,7 @@ public:
 		{
 			MapItem* pEnd = pBlock->pItems + pBlock->nCount;
 
-			for (; pItem < pEnd; pItem++)
+			for (; pItem && pItem < pEnd; pItem++)
 			{
 				if (pItem->used)
 				{
