@@ -132,7 +132,7 @@ protected:
 
 		if (ms_MapName[0] == 0)
 		{
-			_ASSERTE(ms_MapName[0]!=0);
+			_ASSERTE(ms_MapName[0]!=0);  // -V547
 			wcscpy_c(ms_Error, L"Internal error. Mapping file name was not specified.");
 			return NULL;
 		}

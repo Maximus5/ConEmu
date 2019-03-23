@@ -86,7 +86,7 @@ class MPipeBase
 
 				if (!ptrNew)
 				{
-					_ASSERTE(ptrNew!=NULL);
+					_ASSERTE(ptrNew!=NULL);  // -V547
 					msprintf(ms_Error, countof(ms_Error), L"%s: Can't allocate %u bytes!", ms_Module, nAllSize);
 					return FALSE;
 				}
@@ -194,7 +194,7 @@ class MPipe : public MPipeBase
 				if (mh_Heap)
 					HeapFree(mh_Heap, 0, mp_Out);
 				else
-					_ASSERTE(mh_Heap!=NULL);
+					_ASSERTE(mh_Heap!=NULL);  // -V547
 			}
 			mp_Out = NULL;
 		}
@@ -351,7 +351,7 @@ class MPipe : public MPipeBase
 			// Пошли проверки заголовка
 			if (cbRead < sizeof(CESERVER_REQ_HDR))
 			{
-				_ASSERTE(cbRead >= sizeof(CESERVER_REQ_HDR));
+				_ASSERTE(cbRead >= sizeof(CESERVER_REQ_HDR));  // -V547
 				msprintf(ms_Error, countof(ms_Error),
 				          L"%s: Only %i bytes received, required %i bytes at least!",
 				          ms_Module, cbRead, (DWORD)sizeof(CESERVER_REQ_HDR));
@@ -463,14 +463,14 @@ class MPipe : public MPipeBase
 
 				if (nAllSize > 0)
 				{
-					_ASSERTE(nAllSize==0);
+					_ASSERTE(nAllSize==0);  // -V547
 					msprintf(ms_Error, countof(ms_Error), L"%s: Can't read %u bytes!", ms_Module, nAllSize);
 					return false;
 				}
 
 				if (dwErr == ERROR_MORE_DATA)
 				{
-					_ASSERTE(dwErr != ERROR_MORE_DATA);
+					_ASSERTE(dwErr != ERROR_MORE_DATA);  // -V547
 					//	BYTE cbTemp[512];
 					//	while (1) {
 					//		fSuccess = ReadFile( mh_Pipe, cbTemp, 512, &cbRead, NULL);

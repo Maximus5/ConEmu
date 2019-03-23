@@ -201,8 +201,8 @@ public:
 
 			if (Remove)
 			{
-				memset(&(pItem->key), 0, sizeof(pItem->key));
-				memset(&(pItem->val), 0, sizeof(pItem->val));
+				memset(&(pItem->key), 0, sizeof(pItem->key));  // -V568
+				memset(&(pItem->val), 0, sizeof(pItem->val));  // -V568
 				InterlockedCompareExchange(&pItem->used, 0, hash);
 			}
 
@@ -453,7 +453,7 @@ public:
 		pBlock = AllocateBlock();
 		if (!pBlock)
 		{
-			_ASSERTE(pBlock!=NULL);
+			_ASSERTE(pBlock!=NULL);  // -V547
 			return false;
 		}
 

@@ -572,7 +572,7 @@ public:
 		if (h == INVALID_HANDLE_VALUE)
 		{
 			_ASSERTE(h!=INVALID_HANDLE_VALUE); // Unexpected here!
-			h = NULL;
+			h = NULL;  // -V773
 		}
 
 		if (pProcessName)

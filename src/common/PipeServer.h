@@ -540,7 +540,7 @@ struct PipeServer
 				pIn = pPipe->AllocRequestBuf(cbRead);
 				if (!pIn)
 				{
-					_ASSERTEX(pIn!=NULL);
+					_ASSERTEX(pIn!=NULL);  // -V547
 					return FALSE;
 				}
 				memmove(pIn, In, cbRead);
@@ -549,7 +549,7 @@ struct PipeServer
 			}
 			else if (cbWholeSize >= 0x7FFFFFFF)
 			{
-				_ASSERTEX(cbWholeSize < 0x7FFFFFFF);
+				_ASSERTEX(cbWholeSize < 0x7FFFFFFF);  // -V547
 				return FALSE;
 			}
 			else
@@ -558,7 +558,7 @@ struct PipeServer
 				pIn = pPipe->AllocRequestBuf(cbWholeSize);
 				if (!pIn)
 				{
-					_ASSERTEX(pIn!=NULL);
+					_ASSERTEX(pIn!=NULL);  // -V547
 					return FALSE;
 				}
 				memmove(pIn, In, cbRead);
@@ -620,7 +620,7 @@ struct PipeServer
 
 				if (nAllSize>0)
 				{
-					_ASSERTEX(nAllSize==0);
+					_ASSERTEX(nAllSize==0);  // -V547
 					PLOG("PipeServerRead.FALSE2");
 					return FALSE; // удалось считать не все данные
 				}
@@ -656,7 +656,7 @@ struct PipeServer
 
 				PLOG("PipeServerWrite.Write done");
 			}
-			else if (bDelayed)
+			else // if (bDelayed)
 			{
 				fWriteSuccess = pPipe->fWriteSuccess;
 				dwErr = pPipe->dwWriteErr;
@@ -1381,7 +1381,7 @@ struct PipeServer
 		{
 			if (mb_Initialized)
 			{
-				_ASSERTEX(mb_Initialized==FALSE);
+				_ASSERTEX(mb_Initialized==FALSE);  // -V547
 				return false;
 			}
 			
@@ -1398,7 +1398,7 @@ struct PipeServer
 			m_Pipes = (PipeInst*)calloc(mn_MaxCount,sizeof(*m_Pipes));
 			if (m_Pipes == NULL)
 			{
-				_ASSERTEX(m_Pipes!=NULL);
+				_ASSERTEX(m_Pipes!=NULL);  // -V547
 				return false;
 			}
 			//memset(m_Pipes, 0, sizeof(m_Pipes));

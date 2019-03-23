@@ -201,7 +201,7 @@ class MArray
 		{
 			if (_Index < 0)
 			{
-				_ARRAY_ASSERTE(_Index>=0);
+				_ARRAY_ASSERTE(_Index>=0);  // -V547
 				return -1;
 			}
 
@@ -247,10 +247,10 @@ class MArray
 		{
 			if (nNewCount < 0)
 			{
-				_ARRAY_ASSERTE(nNewCount>0);
+				_ARRAY_ASSERTE(nNewCount>0);  // -V547
 				return false;
 			}
-			data.resize(nNewCount > 0 ? nNewCount : 0);
+			data.resize(nNewCount);
 			return true;
 		}
 
@@ -258,10 +258,10 @@ class MArray
 		{
 			if (nNewCount < 0)
 			{
-				_ARRAY_ASSERTE(nNewCount>0);
+				_ARRAY_ASSERTE(nNewCount>0);  // -V547
 				return false;
 			}
-			data.reserve(nNewCount > 0 ? nNewCount : 0);
+			data.reserve(nNewCount);
 			return true;
 		}
 

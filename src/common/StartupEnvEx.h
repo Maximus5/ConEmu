@@ -57,7 +57,9 @@ protected:
 			p->Monitors[i].dwFlags = mi.dwFlags;
 			wcscpy_c(p->Monitors[i].szDevice, mi.szDevice);
 
-			HDC hdc = CreateDC(mi.szDevice, mi.szDevice, NULL, NULL);
+			// If lpszDriver is ... the device name of a specific display device,
+			// then lpszDevice must be ... that same device name.
+			HDC hdc = CreateDC(mi.szDevice, mi.szDevice, NULL, NULL);  // -V549
 			if (hdc)
 			{
 				p->Monitors[i].dpis[0].x = GetDeviceCaps(hdc, LOGPIXELSX);
