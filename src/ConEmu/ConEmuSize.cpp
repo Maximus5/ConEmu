@@ -3836,7 +3836,7 @@ void CConEmuSize::SetTileMode(ConEmuWindowCommand Tile)
 	}
 }
 
-bool CConEmuSize::ChandeTileMode(ConEmuWindowCommand Tile)
+bool CConEmuSize::ChangeTileMode(ConEmuWindowCommand Tile)
 {
 	// While debugging - low-level keyboard hooks almost lock DevEnv
 	HooksUnlocker;

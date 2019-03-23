@@ -245,7 +245,7 @@ public:
 	bool SetQuakeMode(BYTE NewQuakeMode, ConEmuWindowMode nNewWindowMode = wmNotChanging, bool bFromDlg = false);
 
 	static LPCWSTR FormatTileMode(ConEmuWindowCommand Tile, wchar_t* pchBuf, size_t cchBufMax);
-	bool ChandeTileMode(ConEmuWindowCommand Tile);
+	bool ChangeTileMode(ConEmuWindowCommand Tile);
 	ConEmuWindowCommand GetTileMode(bool Estimate, MONITORINFO* pmi = NULL);
 	ConEmuWindowCommand EvalTileMode(const RECT& rcWnd, MONITORINFO* pmi = NULL);
 	RECT GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi);
