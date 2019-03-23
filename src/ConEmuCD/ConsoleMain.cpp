@@ -6665,15 +6665,15 @@ static bool ApplyConsoleSizeBuffer(const USHORT BufferHeight, const COORD& crNew
 	return lbRc;
 }
 
-
+// Read from the console current attributes (by line/block)
+// Cells with attr.color matching OldText rewrite with NewText
 void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldText, WORD NewText)
 {
+	// #AltBuffer No need to process rows below detected dynamic height, use ScrollBuffer instead
 	wchar_t szLog[140];
 	swprintf_c(szLog, L"RefillConsoleAttributes started Lines=%u Cols=%u Old=x%02X New=x%02X", csbi5.dwSize.Y, csbi5.dwSize.X, OldText, NewText);
 	LogString(szLog);
 
-	// Считать из консоли текущие атрибуты (построчно/поблочно)
-	// И там, где они совпадают с OldText - заменить на in.SetConColor.NewTextAttributes
 	DWORD nMaxLines = std::max<int>(1, std::min<int>((8000 / csbi5.dwSize.X), csbi5.dwSize.Y));
 	WORD* pnAttrs = (WORD*)malloc(nMaxLines*csbi5.dwSize.X*sizeof(*pnAttrs));
 	if (!pnAttrs)
@@ -6700,7 +6700,6 @@ void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD OldTe
 
 		bool bStarted = false;
 		COORD crFrom = crRead;
-		//SHORT nLines = (SHORT)(nReady / csbi5.dwSize.X);
 		DWORD i = 0, iStarted = 0, iWritten;
 		while (i < nReady)
 		{
