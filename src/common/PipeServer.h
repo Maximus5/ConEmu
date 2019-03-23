@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <limits>
 #include "ConEmuPipeMode.h"
 #include "CmdLine.h" // required for PointToName
 
@@ -547,7 +548,7 @@ struct PipeServer
 				pPipe->cbReadSize = cbRead;
 				PLOG("PipeServerRead.memmoved");
 			}
-			else if (cbWholeSize >= 0x7FFFFFFF)
+			else if (cbWholeSize >= static_cast<DWORD>(std::numeric_limits<int32_t>::max()))
 			{
 				_ASSERTEX(cbWholeSize < 0x7FFFFFFF);  // -V547
 				return FALSE;
