@@ -29,7 +29,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
+#if defined(max) || defined(min)
+#pragma message("error: min/max macros should not be defined")
+#endif
+
 #include <limits>
 #include <algorithm>
 #include <atomic>

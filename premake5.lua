@@ -31,16 +31,16 @@ workspace "CE"
     toolset "v110_xp"
 
   filter "configurations:Release"
-    defines { "NDEBUG", "HIDE_TODO" }
+    defines { "NDEBUG", "HIDE_TODO", "NOMINMAX" }
     optimize "Size"
     symbols "On"
 
   filter "configurations:Debug"
-    defines { "_DEBUG", "HIDE_TODO", "MSGLOGGER" }
+    defines { "_DEBUG", "HIDE_TODO", "MSGLOGGER", "NOMINMAX" }
     symbols "On"
 
   filter "configurations:Remote"
-    defines { "_DEBUG", "HIDE_TODO", "MSGLOGGER" }
+    defines { "_DEBUG", "HIDE_TODO", "MSGLOGGER", "NOMINMAX" }
     symbols "On"
 
   filter{}
