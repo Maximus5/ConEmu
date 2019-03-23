@@ -11606,20 +11606,15 @@ void CConEmuMain::CheckFocus(LPCWSTR asFrom)
 							else
 							{
 								DEBUGSTRFOREGROUND(L"Activating ConEmu on desktop by mouse click\n");
-								mouse.bForceSkipActivation = TRUE; // не пропускать этот клик в консоль!
-								// Запомнить, где курсор сейчас. Вернуть надо будет
+								mouse.bForceSkipActivation = true;  // don't pass this click into the console!
+								// Remember, where was the cursor. Revert the position later
 								POINT ptCur; GetCursorPos(&ptCur);
-								SetCursorPos(pt.x,pt.y); // мышку обязательно "подвинуть", иначе mouse_event не сработает
-								// "кликаем"
+								SetCursorPos(pt.x,pt.y);  // Need to "move" the mouse, otherwise mouse_event will not work
+								// "clicking"
 								mouse_event(MOUSEEVENTF_ABSOLUTE+MOUSEEVENTF_LEFTDOWN, pt.x,pt.y, 0,0);
 								mouse_event(MOUSEEVENTF_ABSOLUTE+MOUSEEVENTF_LEFTUP, pt.x,pt.y, 0,0);
-								// Вернуть курсор
+								// Revert the cursor position
 								SetCursorPos(ptCur.x,ptCur.y);
-								//
-								//#ifdef _DEBUG -- очередь еще не обработана системой...
-								//HWND hPost = GetForegroundWindow();
-								//DEBUGSTRFOREGROUND((hPost==ghWnd) ? L"ConEmu on desktop activation Succeeded\n" : L"ConEmu on desktop activation FAILED\n");
-								//#endif
 							}
 						}
 					}
@@ -13452,7 +13447,7 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 	//return MA_ACTIVATEANDEAT; -- ест все подряд, а LBUTTONUP пропускает :(
 	this->mouse.nSkipEvents[0] = 0;
 	this->mouse.nSkipEvents[1] = 0;
-	this->mouse.bTouchActivation = FALSE;
+	this->mouse.bTouchActivation = false;
 
 	bool bSkipActivation = false;
 
@@ -13473,17 +13468,15 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 		}
 	}
 
-	if (this->mouse.bForceSkipActivation  // принудительная активация окна, лежащего на Desktop
+	if (this->mouse.bForceSkipActivation  // force activation of the Windows which is a child of Desktop
 		|| bSkipActivation
 		|| (gpSet->isMouseSkipActivation
 			&& (LOWORD(lParam) == HTCLIENT)
 			&& (bTouchActivation || !(m_Foreground.ForegroundState & (fgf_ConEmuMain|fgf_InsideParent))))
 		)
 	{
-		this->mouse.bForceSkipActivation = FALSE; // Однократно
+		this->mouse.bForceSkipActivation = false; // Once
 		POINT ptMouse = {0}; GetCursorPos(&ptMouse);
-		//RECT  rcDC = {0}; GetWindowRect('ghWnd DC', &rcDC);
-		//if (PtInRect(&rcDC, ptMouse))
 		if (IsGesturesEnabled() || CVConGroup::GetVConFromPoint(ptMouse))
 		{
 			DEBUGSTRFOCUS(L"!Skipping mouse activation message!");
@@ -13502,7 +13495,7 @@ LRESULT CConEmuMain::OnActivateByMouse(HWND hWnd, UINT messg, WPARAM wParam, LPA
 			else if (HIWORD(lParam) == 0x0246/*WM_POINTERDOWN*/)
 			{
 				// Following real WM_LBUTTONDOWN activation is expected
-				this->mouse.bTouchActivation = TRUE;
+				this->mouse.bTouchActivation = true;
 			}
 			else
 			{

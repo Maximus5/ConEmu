@@ -285,40 +285,40 @@ class CConEmuMain
 	public:
 		StartupStage GetStartupStage() const;
 
-		struct
+		struct MouseState
 		{
-			WORD  state;
-			bool  bSkipRDblClk;
-			bool  bIgnoreMouseMove;
-			bool  bCheckNormalRect; // call StoreNormalRect after resize in main timer
+			WORD  state = 0;
+			bool  bSkipRDblClk = false;
+			bool  bIgnoreMouseMove = false;
+			bool  bCheckNormalRect = false; // call StoreNormalRect after resize in main timer
 
-			COORD LClkDC, LClkCon;
-			POINT LDblClkDC; // заполняется в PatchMouseEvent
-			DWORD LDblClkTick;
-			COORD RClkDC, RClkCon;
-			DWORD RClkTick;
+			COORD LClkDC = {}, LClkCon = {};
+			POINT LDblClkDC = {}; // filled in PatchMouseEvent
+			DWORD LDblClkTick = 0;
+			COORD RClkDC = {}, RClkCon = {};
+			DWORD RClkTick = 0;
 
-			// Для обработки gpSet->isActivateSplitMouseOver
-			POINT  ptLastSplitOverCheck;
+			// For processing in gpSet->isActivateSplitMouseOver
+			POINT  ptLastSplitOverCheck = {};
 
-			// Чтобы не слать в консоль бесконечные WM_MOUSEMOVE
-			UINT   lastMsg;
+			// To avoid infinite WM_MOUSEMOVE posting to the console
+			UINT   lastMsg = 0;
 			WPARAM lastMMW = (WPARAM)-1;
 			LPARAM lastMML = (LPARAM)-1;
 
-			// Пропустить клик мышкой (окно было неактивно)
-			UINT nSkipEvents[2]; UINT nReplaceDblClk;
+			// Skip the mouse click (window was inactive)
+			UINT nSkipEvents[2] = {}; UINT nReplaceDblClk = 0;
 			// Activated by touch, skip next "activation" emulated by real mouse click
-			BOOL bTouchActivation;
-			// не пропускать следующий клик в консоль!
-			BOOL bForceSkipActivation;
+			bool bTouchActivation = false;
+			// Don't pass next click into the console!
+			bool bForceSkipActivation = false;
 
-			// таскание окошка за клиентскую область
-			POINT ptWndDragStart;
-			RECT  rcWndDragStart;
+			// Drag the window by client area
+			POINT ptWndDragStart = {};
+			RECT  rcWndDragStart = {};
 
-			// настройки скролла мышкой (сколько линий/символов "за клик")
-			UINT nWheelScrollChars, nWheelScrollLines;
+			// Settings from Windows - how many rows/chars we shall scroll by one step
+			UINT nWheelScrollChars = 0, nWheelScrollLines = 0;
 			void  ReloadWheelScroll()
 			{
 				#ifndef SPI_GETWHEELSCROLLCHARS
