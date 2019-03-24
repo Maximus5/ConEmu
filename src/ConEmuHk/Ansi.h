@@ -185,6 +185,7 @@ protected:
 	void ReportTerminalCharSize(HANDLE hConsoleOutput, int code);
 	void ReportCursorPosition(HANDLE hConsoleOutput);
 	static BOOL WriteAnsiLogUtf8(const char* lpBuffer, DWORD nChars);
+	static void WriteAnsiLogTime();
 public:
 	static UINT GetCodePage();
 	static void WriteAnsiLogA(LPCSTR lpBuffer, DWORD nChars);

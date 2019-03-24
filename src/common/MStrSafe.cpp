@@ -222,7 +222,7 @@ LPCWSTR msprintf(LPWSTR lpOut, size_t cchOutMax, LPCWSTR lpFmt, ...)
 						{
 							pszValue = (szValue+std::max(nLen,nCurLen));
 						}
-						// Теперь перекинуть в Dest
+						// move result to Dest
 						while (pszValue > szValue)
 						{
 							*(pszDst++) = *(--pszValue);
@@ -391,6 +391,13 @@ LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...)
 						}
 						pszSrc += 3;
 					}
+					else if (pszSrc[0] == '0' && (pszSrc[1] == '2' || pszSrc[1] == '3') && pszSrc[2] == 'u')
+					{
+						cBase = 0;
+						szValue[0] = 0;
+						nLen = ((int)pszSrc[1]) - ((int)'0');
+						pszSrc += 3;
+					}
 					else if (pszSrc[0] == 'X' || pszSrc[0] == 'x')
 					{
 						if (pszSrc[0] == 'x')
@@ -406,33 +413,53 @@ LPCSTR msprintf(LPSTR lpOut, size_t cchOutMax, LPCSTR lpFmt, ...)
 					
 					nValue = va_arg( argptr, UINT );
 					pszValue = szValue;
-					while (nValue)
+					if (cBase)
 					{
-						WORD n = (WORD)(nValue & 0xF);
-						if (n <= 9)
-							*(pszValue++) = (char)('0' + n);
-						else
-							*(pszValue++) = (char)(cBase + n - 10);
-						nValue = nValue >> 4;
-					}
-					int nCurLen = (int)(pszValue - szValue);
-					if (!nLen)
-					{
-						nLen = nCurLen;
+						// Hexadecimal branch
+						while (nValue)
+						{
+							WORD n = (WORD)(nValue & 0xF);
+							if (n <= 9)
+								*(pszValue++) = (char)('0' + n);
+							else
+								*(pszValue++) = (char)(cBase + n - 10);
+							nValue = nValue >> 4;
+						}
+						int nCurLen = (int)(pszValue - szValue);
 						if (!nLen)
 						{
-							*(pszValue++) = '0';
-							nLen = 1;
+							nLen = nCurLen;
+							if (!nLen)
+							{
+								*(pszValue++) = '0';
+								nLen = 1;
+							}
+						}
+						else
+						{
+							pszValue = (szValue+std::max(nLen,nCurLen));
+						}
+						// move result to Dest
+						while (pszValue > szValue)
+						{
+							*(pszDst++) = *(--pszValue);
 						}
 					}
 					else
 					{
-						pszValue = (szValue+std::max(nLen,nCurLen));
-					}
-					// Теперь перекинуть в Dest
-					while (pszValue > szValue)
-					{
-						*(pszDst++) = *(--pszValue);
+						// Decimal branch
+						int nGetLen = 0;
+						while (nValue)
+						{
+							WORD n = (WORD)(nValue % 10);
+							*(pszValue++) = (char)('0' + n);
+							nValue = (nValue - n) / 10;
+							nGetLen++;
+						}
+						while ((nGetLen++) < nLen)
+							*(pszDst++) = '0';
+						while ((--pszValue) >= szValue)
+							*(pszDst++) = *pszValue;
 					}
 					continue;
 				}

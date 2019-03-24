@@ -228,6 +228,8 @@ protected:
 	} gXTermAltBuffer = {};
 	/* ************ Globals for xTerm/ViM ************ */
 
+	DWORD last_write_tick_ = 0;
+
 protected:
 
 	/// Codepage set for OurWriteConsoleA
@@ -239,6 +241,7 @@ protected:
 	void DoneAnsiLog(bool bFinal);
 	void WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars);
 	void WriteAnsiLogFormat(const char* format, ...);
+	void WriteAnsiLogTime();
 	bool WriteAnsiLogUtf8(const char* lpBuffer, DWORD nChars);
 	void DebugStringUtf8(LPCWSTR asMessage);
 	void DumpEscape(LPCWSTR buf, size_t cchLen, DumpEscapeCodes iUnknown);
