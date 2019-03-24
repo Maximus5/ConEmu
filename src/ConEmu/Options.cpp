@@ -707,6 +707,7 @@ void Settings::InitSettings()
 	isAnsiExec = ansi_CmdOnly;
 	psAnsiAllowed = lstrdup(L"cmd -cur_console:R /cGitShowBranch.cmd\r\n");
 	isAnsiLog = false;
+	isAnsiLogCodes = false;
 	pszAnsiLog = lstrdup(CEANSILOGFOLDER);
 	isKillSshAgent = true;
 	isProcessNewConArg = true;
@@ -2542,6 +2543,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		this->LoadMSZ(reg, L"AnsiAllowedCommands", psAnsiAllowed, L"\r\n", true);
 
 		reg->Load(L"AnsiLog", isAnsiLog);
+		reg->Load(L"AnsiLogCodes", isAnsiLogCodes);
 		reg->Load(L"AnsiLogPath", &pszAnsiLog);
 		reg->Load(L"KillSshAgent", isKillSshAgent);
 		reg->Load(L"ProcessNewConArg", isProcessNewConArg);
@@ -3657,6 +3659,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		this->SaveMSZ(reg, L"AnsiAllowedCommands", psAnsiAllowed, L"\r\n", false);
 
 		reg->Save(L"AnsiLog", isAnsiLog);
+		reg->Save(L"AnsiLogCodes", isAnsiLogCodes);
 		reg->Save(L"AnsiLogPath", pszAnsiLog);
 		reg->Save(L"KillSshAgent", isKillSshAgent);
 		reg->Save(L"ProcessNewConArg", isProcessNewConArg);

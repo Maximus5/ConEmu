@@ -3205,6 +3205,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (gpConEmu->opt.AnsiLogPath.GetStr())
 	{
 		gpSet->isAnsiLog = true;
+		gpSet->isAnsiLogCodes = true;
 		SafeFree(gpSet->pszAnsiLog);
 		gpSet->pszAnsiLog = lstrdup(gpConEmu->opt.AnsiLogPath.GetStr());
 	}

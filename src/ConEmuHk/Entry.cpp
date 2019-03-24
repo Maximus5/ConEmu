@@ -529,7 +529,7 @@ wrap:
 	bAnsiLog = ((gpConInfo != NULL) && (gpConInfo->AnsiLog.Enabled && *gpConInfo->AnsiLog.Path));
 	if (bAnsiLog)
 	{
-		CEAnsi::InitAnsiLog(gpConInfo->AnsiLog.Path);
+		CEAnsi::InitAnsiLog(gpConInfo->AnsiLog.Path, gpConInfo->AnsiLog.LogAnsiCodes);
 	}
 	return gpConInfo;
 }

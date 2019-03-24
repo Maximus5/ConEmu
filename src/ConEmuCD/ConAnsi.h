@@ -91,6 +91,7 @@ private:
 protected:
 	// #condata Replace with MLogFile?
 	HANDLE ghAnsiLogFile = NULL;
+	bool   gbAnsiLogCodes = false;
 	LONG   gnEnterPressed = 0;
 	bool   gbAnsiLogNewLine = false;
 	bool   gbAnsiWasNewLine = false;
@@ -237,7 +238,7 @@ protected:
 
 	/// ANSI functions
 	void FirstAnsiCall(const BYTE* lpBuf, DWORD nNumberOfBytes);
-	void InitAnsiLog(LPCWSTR asFilePath);
+	void InitAnsiLog(LPCWSTR asFilePath, const bool LogAnsiCodes);
 	void DoneAnsiLog(bool bFinal);
 	void WriteAnsiLogW(LPCWSTR lpBuffer, DWORD nChars);
 	void WriteAnsiLogFormat(const char* format, ...);

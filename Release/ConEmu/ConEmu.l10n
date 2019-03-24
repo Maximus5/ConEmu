@@ -91,7 +91,7 @@
     "cbAnsiLog": {
       "en": [ "Log console output to text files\r\n"
             , "ConEmu-YYYY-MM-DD-pNNNN.log\r\n"
-            , "(affect new consoles only)" ],
+            , "(affects new consoles only)" ],
       "ru": [ "Логировать консольный вывод в текстовые файлы\r\n"
             , "ConEmu-YYYY-MM-DD-pNNNN.log\r\n"
             , "(влияет только на новые консоли)" ],
@@ -105,6 +105,11 @@
             , "ConEmu-YYYY-MM-DD-pNNNN.log\r\n"
             , "（新しいコンソールでのみ有効）" ],
       "id": 2679 }
+    ,
+    "cbAnsiLogCodes": {
+      "en": [ "Write to console log ANSI sequences\r\n"
+            , "(affects new consoles only)" ],
+      "id": 3105 }
     ,
     "cbAutoRegFonts": {
       "en": [ "Use in ConEmu fonts, located in ConEmu folder.\r\n"
@@ -4619,6 +4624,10 @@
       "de": "Protokolliere Konsolenausgabe (*)",
       "ja": "ログコンソール出力(*)",
       "id": 2679 }
+    ,
+    "cbAnsiLogCodes": {
+      "en": "Log ANSI sequences (*)",
+      "id": 3105 }
     ,
     "cbAppDistinctDown": {
       "en": "Down",

@@ -695,7 +695,8 @@ BEGIN
     CONTROL         "Kill ssh-agent with ConEmu",cbKillSshAgent,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,132,118,8
     CONTROL         "Skip focus events (don't send to console FOCUS_EVENT, useful with Far Manager)",cbSkipFocusEvents,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,146,364,8
-    CONTROL         "Log console output (*)",cbAnsiLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,160,360,8
+    CONTROL         "Log console output (*)",cbAnsiLog,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,160,133,8
+    CONTROL         "Log ANSI sequences (*)",cbAnsiLogCodes,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,160,222,8
     EDITTEXT        tAnsiLogPath,21,172,352,12,ES_AUTOHSCROLL
     GROUPBOX        "Debugging options",gbFeatureDebug,4,194,375,43
     CONTROL         "Exception handler (debug)",cbConsoleExceptionHandler,

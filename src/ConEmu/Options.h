@@ -1068,6 +1068,8 @@ struct Settings
 
 		//reg->Load(L"AnsiLog", isAnsiLog);
 		bool isAnsiLog; // Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
+		//reg->Load(L"AnsiLogCodes", isAnsiLogCodes);
+		bool isAnsiLogCodes; // Write to logfile ANSI sequences (from app and our internals)
 		//reg->Load(L"AnsiLogPath", &pszAnsiLog);
 		wchar_t* pszAnsiLog;
 		//reg->Load(L"KillSshAgent", isKillSshAgent)

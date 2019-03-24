@@ -8128,8 +8128,9 @@ ConEmuAnsiLog CRealConsole::GetAnsiLogInfo()
 	// Max path = (MAX_PATH + "\ConEmu-yyyy-mm-dd-p12345.log")
 	if (m_Args.pszAnsiLog && *m_Args.pszAnsiLog)
 	{
+		// #ANSI Add ability to enable/disable codes via `L0` or `L1`; allow pszAnsiLog to be "" to indicate switch
 		AnsiLog.Enabled = true;
-		//AnsiLog.LogAnsiCodes = true;
+		AnsiLog.LogAnsiCodes = gpSet->isAnsiLogCodes;
 		lstrcpyn(dir, m_Args.pszAnsiLog, static_cast<int>(std::size(dir)));
 		// Is it only a directory, without file name?
 		const auto dir_tail = dir[wcslen(dir) - 1];
@@ -8146,7 +8147,7 @@ ConEmuAnsiLog CRealConsole::GetAnsiLogInfo()
 	else
 	{
 		AnsiLog.Enabled = gpSet->isAnsiLog;
-		//AnsiLog.LogAnsiCodes = true;
+		AnsiLog.LogAnsiCodes = gpSet->isAnsiLogCodes;
 		lstrcpyn(dir,
 			(gpSet->isAnsiLog && gpSet->pszAnsiLog && *gpSet->pszAnsiLog)
 				? gpSet->pszAnsiLog : CEANSILOGFOLDER,

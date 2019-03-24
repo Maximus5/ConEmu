@@ -1531,6 +1531,7 @@ struct CEFAR_INFO_MAPPING
 struct ConEmuAnsiLog
 {
 	BOOL    Enabled;
+	BOOL    LogAnsiCodes;
 	// Full path with name of log-file
 	wchar_t Path[MAX_PATH];
 };

@@ -111,6 +111,7 @@ BOOL WINAPI OnCreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LP
 
 // These handles must be registered and released in OnCloseHandle.
 HANDLE CEAnsi::ghAnsiLogFile = NULL;
+bool CEAnsi::gbAnsiLogCodes = false;
 LONG CEAnsi::gnEnterPressed = 0;
 bool CEAnsi::gbAnsiLogNewLine = false;
 bool CEAnsi::gbAnsiWasNewLine = false;
@@ -228,8 +229,10 @@ void DebugStringUtf8(LPCWSTR asMessage)
 	#endif
 }
 
-void CEAnsi::InitAnsiLog(LPCWSTR asFilePath)
+void CEAnsi::InitAnsiLog(LPCWSTR asFilePath, const bool LogAnsiCodes)
 {
+	gbAnsiLogCodes = LogAnsiCodes;
+
 	// Already initialized?
 	if (ghAnsiLogFile)
 		return;
@@ -281,7 +284,7 @@ UINT CEAnsi::GetCodePage()
 // Intended to log some WinAPI functions
 void CEAnsi::WriteAnsiLogFormat(const char* format, ...)
 {
-	if (!ghAnsiLogFile || !format)
+	if (!ghAnsiLogFile || !gbAnsiLogCodes || !format)
 		return;
 	ScopedObject(CLastErrorGuard);
 
@@ -305,6 +308,8 @@ void CEAnsi::WriteAnsiLogFormat(const char* format, ...)
 
 void CEAnsi::WriteAnsiLogTime()
 {
+	if (!ghAnsiLogFile || !gbAnsiLogCodes)
+		return;
 	static DWORD last_write_tick_ = 0;
 
 	const DWORD min_diff = 500;

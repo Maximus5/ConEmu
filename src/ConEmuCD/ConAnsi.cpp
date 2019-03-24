@@ -303,8 +303,10 @@ void SrvAnsi::FirstAnsiCall(const BYTE* lpBuf, DWORD nNumberOfBytes)
 #endif
 }
 
-void SrvAnsi::InitAnsiLog(LPCWSTR asFilePath)
+void SrvAnsi::InitAnsiLog(LPCWSTR asFilePath, const bool LogAnsiCodes)
 {
+	gbAnsiLogCodes = LogAnsiCodes;
+
 	// Already initialized?
 	if (ghAnsiLogFile)
 		return;
