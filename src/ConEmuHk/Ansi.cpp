@@ -649,6 +649,12 @@ static const wchar_t szAnalogues[32] =
 }
 
 
+const CEAnsi::DisplayParm& CEAnsi::getDisplayParm()
+{
+	return gDisplayParm;
+}
+
+
 void CEAnsi::ReSetDisplayParm(HANDLE hConsoleOutput, BOOL bReset, BOOL bApply)
 {
 	WARNING("Эту функу нужно дергать при смене буферов, закрытии дескрипторов, и т.п.");
@@ -1905,34 +1911,6 @@ BOOL CEAnsi::ScrollScreen(HANDLE hConsoleOutput, int nDir)
 	return lbRc;
 }
 
-//BOOL CEAnsi::PadAndScroll(HANDLE hConsoleOutput, CONSOLE_SCREEN_BUFFER_INFO& csbi)
-//{
-//	BOOL lbRc = FALSE;
-//	COORD crFrom = {csbi.dwCursorPosition.X, csbi.dwCursorPosition.Y};
-//	DEBUGTEST(DWORD nCount = csbi.dwSize.X - csbi.dwCursorPosition.X);
-//
-//	/*
-//	lbRc = FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nCount, crFrom, &nWritten)
-//		&& FillConsoleOutputCharacter(hConsoleOutput, L' ', nCount, crFrom, &nWritten);
-//	*/
-//
-//	if ((csbi.dwCursorPosition.Y + 1) >= csbi.dwSize.Y)
-//	{
-//		lbRc = ScrollScreen(hConsoleOutput, -1);
-//		crFrom.X = 0;
-//	}
-//	else
-//	{
-//		crFrom.X = 0; crFrom.Y++;
-//		lbRc = TRUE;
-//	}
-//
-//	csbi.dwCursorPosition = crFrom;
-//	SetConsoleCursorPosition(hConsoleOutput, crFrom);
-//
-//	return lbRc;
-//}
-
 BOOL CEAnsi::FullReset(HANDLE hConsoleOutput)
 {
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
@@ -3017,9 +2995,6 @@ CSI P s @			Insert P s (Blank) Character(s) (default = 1) (ICH)
 				ExtFillOutputParm fill = {sizeof(fill), efof_Current|efof_Attribute|efof_Character,
 					hConsoleOutput, {}, L' ', cr0, (DWORD)nChars };
 				ExtFillOutput(&fill);
-				//DWORD nWritten = 0;
-				//FillConsoleOutputAttribute(hConsoleOutput, GetDefaultTextAttr(), nChars, cr0, &nWritten);
-				//FillConsoleOutputCharacter(hConsoleOutput, L' ', nChars, cr0, &nWritten);
 			}
 		} // case L'K':
 		break;

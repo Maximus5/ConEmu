@@ -243,6 +243,7 @@ protected:
 		private: t _##n; \
 		public: t get##n() const { return _##n; }; \
 		public: void set##n(const t val);
+public:
 	enum cbit { clr4b = 0, clr8b, clr24b };
 	struct DisplayParm
 	{
@@ -261,11 +262,11 @@ protected:
 		DP_PROP(cbit, Back256);          // 48
 	}; // gDisplayParm = {};
 	#undef DP_PROP
+	static const DisplayParm& getDisplayParm();
+
+protected:
 	// Bad thing... Thought, it must be synced between thread, but when?
 	static DisplayParm gDisplayParm;
-
-	friend BOOL WINAPI OnWriteConsoleOutputCharacterA(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
-	friend BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten);
 
 	struct DisplayCursorPos
 	{
