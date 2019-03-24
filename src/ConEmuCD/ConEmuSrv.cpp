@@ -2373,17 +2373,17 @@ void CheckConEmuHwnd()
 			// ghConEmuWndDC по идее уже должен быть получен из GUI через пайпы
 			LogFunction(L"Warning, ghConEmuWndDC still not initialized");
 			_ASSERTE(ghConEmuWndDC!=NULL);
-			HWND hBack = NULL, hDc = NULL;
 			wchar_t szClass[128];
 			while (!ghConEmuWndDC)
 			{
-				hBack = FindWindowEx(ghConEmuWnd, hBack, VirtualConsoleClassBack, NULL);
+				const HWND hBack = FindWindowEx(ghConEmuWnd, hBack, VirtualConsoleClassBack, NULL);
 				if (!hBack)
 					break;
-				if (GetWindowLong(hBack, 0) == LOLONG(ghConWnd))
+				if (GetWindowLong(hBack, WindowLongBack_ConWnd) == LOLONG(ghConWnd))
 				{
-					hDc = (HWND)(DWORD)GetWindowLong(hBack, 4);
-					if (IsWindow(hDc) && GetClassName(hDc, szClass, countof(szClass) && !lstrcmp(szClass, VirtualConsoleClass)))
+					const HWND2 hDc{(DWORD)GetWindowLong(hBack, WindowLongBack_DCWnd)};
+					if (IsWindow(hDc) && GetClassName(hDc, szClass, countof(szClass)
+						&& (0 == lstrcmp(szClass, VirtualConsoleClass))))
 					{
 						SetConEmuWindows(ghConEmuWnd, hDc, hBack);
 						break;

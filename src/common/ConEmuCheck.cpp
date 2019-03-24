@@ -1078,7 +1078,7 @@ bool isConsoleWindow(HWND hWnd)
 
 	// RealConsole handle is stored in the Window DATA
 	wchar_t szClassPtr[64] = L"";
-	HWND h = (HWND)GetWindowLongPtr(hWnd, 0);
+	HWND h = (HWND)GetWindowLongPtr(hWnd, WindowLongDCWnd_ConWnd);
 	if (h && (h != hWnd) && IsWindow(h))
 	{
 		if (GetClassName(h, szClassPtr, countof(szClassPtr)))
@@ -1134,7 +1134,7 @@ HWND myGetConsoleWindow()
 			#endif
 
 			// Regardless of GetClassName result, it may be VirtualConsoleClass
-			HWND h = (HWND)GetWindowLongPtr(hConWnd, 0);
+			HWND h = (HWND)GetWindowLongPtr(hConWnd, WindowLongDCWnd_ConWnd);
 			if (h && IsWindow(h) && isConsoleWindow(h))
 			{
 				hConWnd = h;

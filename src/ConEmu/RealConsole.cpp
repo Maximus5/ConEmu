@@ -9725,7 +9725,7 @@ void CRealConsole::CheckVConRConPointer(bool bForceSet)
 	HWND hCurrent = (HWND)INVALID_HANDLE_VALUE;
 	if (!bForceSet)
 	{
-		hCurrent = (HWND)GetWindowLongPtr(hVCon, 0);
+		hCurrent = (HWND)GetWindowLongPtr(hVCon, WindowLongDCWnd_ConWnd);
 		if (hCurrent == hConWnd)
 			return; // OK, was not changed externally
 		if (isServerClosing())
@@ -9734,10 +9734,10 @@ void CRealConsole::CheckVConRConPointer(bool bForceSet)
 		_ASSERTE(mp_ConEmu->mp_Inside && "WindowLongPtr was changed externally?");
 	}
 
-	SetWindowLongPtr(hVCon, 0, (LONG_PTR)hConWnd);
+	SetWindowLongPtr(hVCon, WindowLongDCWnd_ConWnd, (LONG_PTR)hConWnd);
 
-	SetWindowLong(hVConBack, 0, LODWORD(hConWnd));
-	SetWindowLong(hVConBack, 4, LODWORD(hVCon));
+	SetWindowLong(hVConBack, WindowLongBack_ConWnd, LODWORD(hConWnd));
+	SetWindowLong(hVConBack, WindowLongBack_DCWnd, LODWORD(hVCon));
 }
 
 void CRealConsole::OnFocus(bool abFocused)
