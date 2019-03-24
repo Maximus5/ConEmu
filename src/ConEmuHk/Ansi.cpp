@@ -302,7 +302,7 @@ void CEAnsi::WriteAnsiLogFormat(const char* format, ...)
 
 BOOL CEAnsi::WriteAnsiLogUtf8(const char* lpBuffer, DWORD nChars)
 {
-	if (!lpBuffer || !nChars)
+	if (!ghAnsiLogFile || !lpBuffer || !nChars)
 		return FALSE;
 	BOOL bWrite; DWORD nWritten;
 	// Handle multi-thread writers

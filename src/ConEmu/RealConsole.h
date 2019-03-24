@@ -582,7 +582,7 @@ class CRealConsole
 		int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf);
 		const CRgnDetect* GetDetector();
 		int GetStatusLineCount(int nLeftPanelEdge);
-		void GetStartTime(SYSTEMTIME& st);
+		const SYSTEMTIME& GetStartTime() const;
 		LPCWSTR GetConsoleStartDir(CEStr& szDir);
 		LPCWSTR GetFileFromConsole(LPCWSTR asSrc, CEStr& szFull);
 		LPCWSTR GetConsoleCurDir(CEStr& szDir, bool NeedRealPath);

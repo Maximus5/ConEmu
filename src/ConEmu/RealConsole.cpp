@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/ConEmuCheck.h"
 #include "../common/ConEmuPipeMode.h"
+#include "../common/EnvVar.h"
 #include "../common/Execute.h"
 #include "../common/MGuiMacro.h"
 #include "../common/MFileLog.h"
@@ -8109,21 +8110,59 @@ void CRealConsole::SetFarPluginPID(DWORD nFarPluginPID)
 
 ConEmuAnsiLog CRealConsole::GetAnsiLogInfo()
 {
+	// #Refactoring Implement contents of GetAnsiLogInfo as ConEmuAnsiLog method
+
+	// Valid only for started server
+	const DWORD nSrvPID = GetServerPID(true);
+	if (!nSrvPID)
+	{
+		_ASSERTE(nSrvPID != 0); // ServerPID should be actualized already!
+	}
+
 	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
 	ConEmuAnsiLog AnsiLog = {};
 
-	// Max path = (MAX_PATH - "ConEmu-yyyy-mm-dd-p12345.log")
+	wchar_t dir[MAX_PATH] = L"", name[40] = L"";
+	const SYSTEMTIME& st = GetStartTime();
+	msprintf(name, countof(name), CEANSILOGNAMEFMT, st.wYear, st.wMonth, st.wDay, nSrvPID);
+
+	// Max path = (MAX_PATH + "\ConEmu-yyyy-mm-dd-p12345.log")
 	if (m_Args.pszAnsiLog && *m_Args.pszAnsiLog)
 	{
 		AnsiLog.Enabled = true;
-		lstrcpyn(AnsiLog.Path, m_Args.pszAnsiLog, countof(AnsiLog.Path)-32);
+		//AnsiLog.LogAnsiCodes = true;
+		lstrcpyn(dir, m_Args.pszAnsiLog, static_cast<int>(std::size(dir)));
+		// Is it only a directory, without file name?
+		const auto dir_tail = dir[wcslen(dir) - 1];
+		if (dir_tail != L'\\' && dir_tail != L'/'
+			&& !DirectoryExists(CEStr(ExpandEnvStr(dir))))
+		{
+			// File name may be specified in -new_console:L:"C:\temp\my-file.log"
+			const auto ptr_ext = PointToExt(dir);
+			// We don't restrict to use only certain extension
+			if (ptr_ext && ptr_ext[0] == L'.' && ptr_ext[1])
+				name[0] = 0;
+		}
 	}
 	else
 	{
 		AnsiLog.Enabled = gpSet->isAnsiLog;
-		lstrcpyn(AnsiLog.Path,
-			(gpSet->isAnsiLog && gpSet->pszAnsiLog) ? gpSet->pszAnsiLog : CEANSILOGFOLDER,
-			countof(AnsiLog.Path)-32);
+		//AnsiLog.LogAnsiCodes = true;
+		lstrcpyn(dir,
+			(gpSet->isAnsiLog && gpSet->pszAnsiLog && *gpSet->pszAnsiLog)
+				? gpSet->pszAnsiLog : CEANSILOGFOLDER,
+			static_cast<int>(std::size(dir)));
+	}
+
+	if (name[0])
+	{
+		const int dir_len_max = static_cast<int>(std::size(dir) - wcslen(name) - 2); // possible slash and '\0'-terminator
+		CEStr concat(JoinPath(dir, name));
+		lstrcpyn(AnsiLog.Path, concat, static_cast<int>(std::size(AnsiLog.Path)));
+	}
+	else
+	{
+		lstrcpyn(AnsiLog.Path, dir, static_cast<int>(std::size(AnsiLog.Path)));
 	}
 
 	return AnsiLog;
@@ -8167,16 +8206,13 @@ LPCWSTR CRealConsole::GetConsoleInfo(LPCWSTR asWhat, CEStr& rsInfo)
 	}
 	else if (lstrcmpi(asWhat, L"AnsiLog") == 0)
 	{
-		DWORD nSrvPID = GetServerPID(true);
+		const DWORD nSrvPID = GetServerPID(true);
 		if (nSrvPID)
 		{
-			ConEmuAnsiLog AnsiLog = GetAnsiLogInfo();
+			const ConEmuAnsiLog& AnsiLog = GetAnsiLogInfo();
 			if (AnsiLog.Enabled)
 			{
-				SYSTEMTIME st = {}; GetStartTime(st);
-				msprintf(szTemp, countof(szTemp), CEANSILOGNAMEFMT, st.wYear, st.wMonth, st.wDay, nSrvPID);
-				rsInfo = JoinPath(AnsiLog.Path, szTemp);
-				pszVal = rsInfo;
+				pszVal = rsInfo.Set(AnsiLog.Path);
 			}
 		}
 	}
@@ -15262,12 +15298,12 @@ bool CRealConsole::ReloadFarWorkDir()
 	return bChanged;
 }
 
-void CRealConsole::GetStartTime(SYSTEMTIME& st)
+const SYSTEMTIME& CRealConsole::GetStartTime() const
 {
 	if (!this)
-		st = {};
+		return {};
 	else
-		st = m_StartTime;
+		return m_StartTime;
 }
 
 LPCWSTR CRealConsole::GetConsoleStartDir(CEStr& szDir)

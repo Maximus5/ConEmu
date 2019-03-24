@@ -3635,8 +3635,7 @@ void InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 	LogFunction(L"InitAnsiLog");
 	// Reset first
 	SetEnvironmentVariable(ENV_CONEMUANSILOG_VAR_W, L"");
-	gpSrv->AnsiLog.Enabled = FALSE;
-	gpSrv->AnsiLog.Path[0] = 0;
+	gpSrv->AnsiLog = {};
 	// Enabled?
 	if (!AnsiLog.Enabled || !*AnsiLog.Path)
 	{
@@ -3644,44 +3643,44 @@ void InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 		return;
 	}
 	// May contains variables
-	wchar_t* pszExp = ExpandEnvStr(AnsiLog.Path);
-	// Max path = (MAX_PATH - "ConEmu-yyyy-mm-dd-p12345.log")
-	wchar_t szPath[MAX_PATH] = L"", szName[40] = L"";
-	SYSTEMTIME st = {}; GetLocalTime(&st);
-	msprintf(szName, countof(szName), CEANSILOGNAMEFMT, st.wYear, st.wMonth, st.wDay, GetCurrentProcessId());
-	int nNameLen = lstrlen(szName);
-	lstrcpyn(szPath, pszExp ? pszExp : AnsiLog.Path, countof(szPath)-nNameLen);
-	int nLen = lstrlen(szPath);
-	if ((nLen >= 1) && (szPath[nLen-1] != L'\\'))
-		szPath[nLen++] = L'\\';
-	if (!DirectoryExists(szPath))
+	CEStr log_file(ExpandEnvStr(AnsiLog.Path));
+	if (log_file.IsEmpty())
+		log_file.Set(AnsiLog.Path);
+	const wchar_t* ptr_name = PointToName(log_file.c_str());
+	if (!ptr_name)
 	{
-		if (!MyCreateDirectory(szPath))
+		_ASSERTE(ptr_name != nullptr);
+		return;
+	}
+	const ssize_t idx_name = ptr_name - log_file.c_str();
+	const wchar_t name_chr = log_file.SetAt(idx_name, 0);
+	if (!DirectoryExists(log_file))
+	{
+		if (!MyCreateDirectory(log_file.ms_Val))
 		{
 			DWORD dwErr = GetLastError();
 			_printf("Failed to create AnsiLog-files directory:\n");
-			_wprintf(szPath);
+			_wprintf(log_file);
 			print_error(dwErr);
 			return;
 		}
 	}
-	// Prepare path
-	wcscat_c(szPath, szName);
+	log_file.SetAt(idx_name, name_chr);
 	// Try to create
-	HANDLE hLog = CreateFile(szPath, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (hLog == INVALID_HANDLE_VALUE)
+	HANDLE hLog = CreateFile(log_file, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (!hLog || hLog == INVALID_HANDLE_VALUE)
 	{
 		DWORD dwErr = GetLastError();
 		_printf("Failed to create new AnsiLog-file:\n");
-		_wprintf(szPath);
+		_wprintf(log_file);
 		print_error(dwErr);
 		return;
 	}
 	CloseHandle(hLog);
 	// OK!
-	gpSrv->AnsiLog.Enabled = TRUE;
-	wcscpy_c(gpSrv->AnsiLog.Path, szPath);
-	SetEnvironmentVariable(ENV_CONEMUANSILOG_VAR_W, szPath);
+	gpSrv->AnsiLog = AnsiLog;
+	wcscpy_c(gpSrv->AnsiLog.Path, log_file);
+	SetEnvironmentVariable(ENV_CONEMUANSILOG_VAR_W, log_file);
 }
 
 #if 0

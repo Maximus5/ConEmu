@@ -111,6 +111,8 @@ _DBGHLP(L"     A - run under highest available account\r\n") \
 		L"     i - don't inject ConEmuHk into starting process\r\n" \
 		L"     I - (GuiMacro only) forces inheriting of root process contents, like \"Duplicate root\"\r\n" \
 _DBGHLP(L"     l - lock console size, do not sync it to ConEmu window\r\n") \
+        L"     L:\"<dir>\\\" - the directory for ANSI log files\r\n" \
+        L"     L:\"<logfile>\" - the full path for ANSI log file\r\n" \
 		L"     m:/mnt - defines ‘/mnt’ prefix for Unix-path conversion, m:\"\" - no prefix\r\n" \
 		L"     n - disable ‘Press Enter or Esc to close console’ confirmation\r\n" \
 		L"     o - don't enable ‘Long console output’ when starting command from Far Manager\r\n" \
