@@ -1715,34 +1715,21 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 		dwStyle &= ~(WS_CAPTION|WS_THICKFRAME);
 		dwStyle |= WS_CHILD|WS_SYSMENU;
 	}
-	else if (gpConEmu->isCaptionHidden(wmNewMode))
+	else if (isCaptionHidden(wmNewMode))
 	{
 		dwStyle &= ~WS_CAPTION;
 
-		bool noThickFrame = false;
-			// NO frame in FullScreen at all
-		if ((wmNewMode == wmFullScreen)
-			// mb_DisableThickFrame - to eliminate glitches during quake animation
-			|| (mb_DisableThickFrame))
-		{
-			noThickFrame = true;
-		}
-			// gh-1539: Bypass Windows problem with region and hidden taskbar
-		else if ((wmNewMode == wmMaximized) && isCaptionHidden())
-		{
-			auto mi = NearestMonitorInfo(NULL);
-			if (mi.isTaskbarHidden)
-			{
-				noThickFrame = true;
-			}
-		}
+		const bool noThickFrame = isSelfFrame(wmNewMode)
+			|| mb_DisableThickFrame  // eliminate glitches during quake animation
+			;
 
 		if (noThickFrame)
 		{
 			dwStyle &= ~(WS_THICKFRAME);
 		}
+
 		// m_ForceShowFrame - to bypass strange MS limitation "not resizing borderless windows with WS_SYSMENU"
-		else if (m_ForceShowFrame == fsf_Show)
+		if (m_ForceShowFrame == fsf_Show)
 		{
 			dwStyle &= ~(WS_THICKFRAME|WS_SYSMENU);
 		}
@@ -1750,11 +1737,12 @@ DWORD CConEmuMain::FixWindowStyle(DWORD dwStyle, ConEmuWindowMode wmNewMode /*= 
 		// in favor of borderless or self-drawn-border window
 		else if (gpSet->HideCaptionAlwaysFrame() >= 0)
 		{
+			_ASSERTE(!(dwStyle & WS_THICKFRAME)); // should already be cleared, just ensure...
 			dwStyle &= ~(WS_THICKFRAME); // remove standard (DWM) frame and shadows
 			dwStyle |= (WS_SYSMENU); // but allow system menu!
 		}
 		// Normal mode for caption-less window, allow resize using standard (DWM) frame
-		else
+		else if (!noThickFrame)
 		{
 			dwStyle |= (WS_THICKFRAME|WS_SYSMENU);
 		}

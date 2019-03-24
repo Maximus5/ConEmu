@@ -134,7 +134,7 @@ RECT CConEmuSize::CalcMargins(DWORD/*enum ConEmuMargins*/ mg, ConEmuWindowMode w
 	DEBUGTEST(ConEmuWindowMode wm = (wmNewMode == wmCurrent) ? WindowMode : wmNewMode);
 
 	// Windows 10 breaks desktop coordinate system
-	if ((mg & ((DWORD)CEM_WIN10FRAME)) && IsWin10())
+	if ((mg & ((DWORD)CEM_WIN10FRAME)) && isWin10InvisibleFrame())
 	{
 		RECT rcHiddenFrame = CalcMargins_Win10Frame();
 		AddMargins(rc, rcHiddenFrame, rcop_MathAdd);
@@ -194,15 +194,11 @@ RECT CConEmuSize::CalcMargins_Win10Frame() const
 {
 	RECT rc = {};
 
-	if (IsWin10())
+	if (isWin10InvisibleFrame())
 	{
-		DWORD dwStyle = mp_ConEmu->FixWindowStyle(0);
-		if (dwStyle & WS_THICKFRAME)
-		{
-			const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(NULL);
-			const auto& fi = isCaptionHidden() ? mi.noCaption : mi.withCaption;
-			rc = fi.Win10Stealthy;
-		}
+		const MonitorInfoCache mi = NearestMonitorInfo(NULL);
+		const auto& fi = isCaptionHidden() ? mi.noCaption : mi.withCaption;
+		rc = fi.Win10Stealthy;
 	}
 
 	return rc;
@@ -393,10 +389,8 @@ RECT CConEmuSize::CalcMargins_VisibleFrame(LPRECT prcFrame /*= NULL*/) const
 	{
 		rcFrameOnly = rcReal;
 
-		DWORD dwStyle = mp_ConEmu->FixWindowStyle(0);
-
 		// Windows 10 DWM hides portions of the actual frame
-		if ((dwStyle & WS_THICKFRAME) && IsWin10())
+		if (isWin10InvisibleFrame())
 		{
 			// BUGBUG: During m_ForceShowFrame DwmGetWindowAttribute returns yet old values (fixed frame), but we need estimated values for changes styles
 			const RECT rcWin10 = CalcMargins_Win10Frame();
@@ -4153,21 +4147,24 @@ wrap:
 
 ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=NULL*/)
 {
-	if (Estimate && IsSizePosFree()
-		// && !isFullScreen() && !isZoomed() -- gh#142
-		&& !isIconic()
-		&& IsWindowVisible(ghWnd)
-		)
+	if (Estimate)
 	{
-		RECT rcWnd = {};
-		ConEmuWindowCommand CurTile = cwc_Current;
+		ConEmuWindowCommand CurTile = m_TileMode;
 
-		// Если окно развернуто - сбрасываем признак "Snap" (Tile)
 		if (isFullScreen() || isZoomed())
 		{
 			if (pmi)
 				GetNearestMonitorInfo(pmi, NULL, NULL, ghWnd);
-		} else {
+			CurTile = cwc_Current;
+		}
+		else if (IsSizeFree()  // gh-622: Quake wmNormal, but 100% width
+			// && !isFullScreen() && !isZoomed() -- gh#142
+			&& !isIconic()
+			&& ((mp_ConEmu->GetStartupStage() < CConEmuMain::ss_Started)
+				|| IsWindowVisible(ghWnd))
+			)
+		{
+			RECT rcWnd = {};
 			GetWindowRect(ghWnd, &rcWnd);
 			_ASSERTE(IsWindowModeChanging() == false);
 			CurTile = EvalTileMode(rcWnd, pmi);
@@ -6214,13 +6211,29 @@ bool CConEmuSize::isCaptionHidden(ConEmuWindowMode wmNewMode /*= wmCurrent*/) co
 	return bCaptionHidden;
 }
 
+// Determines if our window has "invisible" portion of WS_THICKFRAME
+// This was introduced in Windows 10 :(
+bool CConEmuSize::isWin10InvisibleFrame(const ConEmuWindowMode wmNewMode /*= wmCurrent*/) const
+{
+	if (!IsWin10())
+		return false;
+	if (isSelfFrame(wmNewMode))
+		return false;
+	return true;
+}
+
 // Return true if WS_THICKFRAME is not used
-bool CConEmuSize::isSelfFrame() const
+bool CConEmuSize::isSelfFrame(const ConEmuWindowMode wmNewMode /*= wmCurrent*/) const
 {
 	if (mp_ConEmu->isInside())
 		return true;
-	if (!mp_ConEmu->isCaptionHidden())
+	const auto wm = (wmNewMode != wmCurrent) ? wmNewMode : GetWindowMode();
+	// Use standard Windows frame when caption is ON
+	if (!isCaptionHidden(wm))
 		return false;
+	// NO resizeable frame in FullScreen at all
+	if (wm == wmFullScreen)
+		return true;
 	// Take into account user setting but don't allow frame larger than system-defined
 	const int iFrame = gpSet->HideCaptionAlwaysFrame();
 	if (iFrame >= 0)
@@ -6228,8 +6241,8 @@ bool CConEmuSize::isSelfFrame() const
 	// Even for standard frame (without caption) we shall hide it in maximized mode
 	// to avoid artifacts and TaskBar rollout problems
 	_ASSERTE(iFrame == -1);
-	auto wm = GetWindowMode();
-	if (wm == wmFullScreen || wm == wmMaximized)
+	// gh-1539: Bypass Windows problem with region and hidden taskbar
+	if (wm == wmMaximized)
 	{
 		const MonitorInfoCache mi = CConEmuSize::NearestMonitorInfo(NULL);
 		if (mi.isTaskbarHidden)

@@ -319,7 +319,8 @@ public:
 	HRGN CreateWindowRgn(bool abRoundTitle, int anX, int anY, int anWndWidth, int anWndHeight);
 
 	bool isCaptionHidden(ConEmuWindowMode wmNewMode = wmCurrent) const;
-	bool isSelfFrame() const;
+	bool isWin10InvisibleFrame(const ConEmuWindowMode wmNewMode = wmCurrent) const;
+	bool isSelfFrame(const ConEmuWindowMode wmNewMode = wmCurrent) const;
 	UINT GetSelfFrameWidth() const;
 	void StartForceShowFrame();
 	void StopForceShowFrame();
