@@ -1839,7 +1839,9 @@ RECT CConEmuSize::GetIdealRect()
 		rcIdeal = GetDefaultRect();
 	}
 
-	if (!mp_ConEmu->isInside() && (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight || m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth))
+	if (!mp_ConEmu->isInside()
+		&& (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight
+			|| m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth))
 	{
 		auto mi = NearestMonitorInfo(rcIdeal);
 		rcIdeal = GetTileRect(m_TileMode, mi.mi);
