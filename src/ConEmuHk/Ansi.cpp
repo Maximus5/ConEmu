@@ -294,7 +294,7 @@ void CEAnsi::WriteAnsiLogFormat(const char* format, ...)
 			WideCharToMultiByte(CP_UTF8, 0, gsExeName, -1, s_ExeName, countof(s_ExeName)-1, nullptr, nullptr);
 
 		char log_string[300] = "";
-		msprintf(log_string, countof(log_string), "\x1B]9;11;\"%s: %s\"\x1B\\", s_ExeName, func_buffer);
+		msprintf(log_string, countof(log_string), "\x1B]9;11;\"%s: %s\"\x7", s_ExeName, func_buffer);
 		WriteAnsiLogUtf8(log_string, (DWORD)strlen(log_string));
 	}
 	va_end(argList);
