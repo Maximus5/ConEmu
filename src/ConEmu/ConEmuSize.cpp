@@ -4172,7 +4172,6 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 
 		if (m_TileMode != CurTile)
 		{
-			// Сменился!
 			wchar_t szTile[255], szNewTile[32], szOldTile[32];
 			swprintf_c(szTile, L"Tile mode was changed externally: Our=%s, New=%s",
 				FormatTileMode(m_TileMode,szOldTile,countof(szOldTile)), FormatTileMode(CurTile,szNewTile,countof(szNewTile)));
