@@ -39,6 +39,9 @@ https://conemu.github.io/en/Whats_New.html
 * AnsiLogs: log current system time each 500ms.
 * Hooks: Support FillConsoleOutputCharacter and FillConsoleOutputAttribute.
 * gh-1825: Add option to enable/disable ANSI calls to WinApi functions.
+
+
+2019.3.10
 * Update ChocolateyAbout.cmd to latest installation cmd.
 * gh-1323, gh-1385, gh-1841: Speed up alternative buffer operations (connector).
 * gh-1323, gh-1385, gh-1841: Let ‘Alternative mode’ toolbar button works with console buffers.
