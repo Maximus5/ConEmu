@@ -13398,7 +13398,7 @@ void CRealConsole::CheckFarStates()
 	{
 		#ifdef _DEBUG
 		if ((nNewState & CES_FILEPANEL) == 0)
-			nNewState = nNewState;
+			nNewState = nNewState;  // -V570 for breakpoint
 		#endif
 
 		SetFarStatus(nNewState);
