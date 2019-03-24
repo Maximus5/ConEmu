@@ -1478,14 +1478,16 @@ BOOL ExtFillOutput(ExtFillOutputParm* Info)
 
 		if (!(Info->Flags & efof_ResetExt))
 		{
-			b = FillConsoleOutputAttribute(h, n, Info->Count, Info->Coord, &nWritten);
+			ORIGINAL_KRNL(FillConsoleOutputAttribute);
+			b = F(FillConsoleOutputAttribute)(h, n, Info->Count, Info->Coord, &nWritten);
 			lbRc &= b;
 		}
 	}
 
 	if (Info->Flags & efof_Character)
 	{
-		b = FillConsoleOutputCharacter(h, Info->FillChar ? Info->FillChar : L' ', Info->Count, Info->Coord, &nWritten);
+		ORIGINAL_KRNL(FillConsoleOutputCharacterW);
+		b = F(FillConsoleOutputCharacterW)(h, Info->FillChar ? Info->FillChar : L' ', Info->Count, Info->Coord, &nWritten);
 		lbRc &= b;
 	}
 

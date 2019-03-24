@@ -341,6 +341,45 @@ BOOL WINAPI OnWriteConsoleOutputCharacterW(HANDLE hConsoleOutput, LPCWSTR lpChar
 }
 
 
+BOOL WINAPI OnFillConsoleOutputCharacterA(HANDLE hConsoleOutput, char cCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
+{
+	ORIGINAL_KRNL(FillConsoleOutputCharacterA);
+
+	CEAnsi::WriteAnsiLogFormat("FillConsoleOutputCharacterW(x%02X,%u,{%i,%i})",
+		(uint32_t)cCharacter, nLength, dwWriteCoord.X, dwWriteCoord.Y);
+
+	const BOOL lbRc = F(FillConsoleOutputCharacterA)(hConsoleOutput, cCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
+	return lbRc;
+}
+
+BOOL WINAPI OnFillConsoleOutputCharacterW(HANDLE hConsoleOutput, wchar_t cCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten)
+{
+	ORIGINAL_KRNL(FillConsoleOutputCharacterW);
+
+	CEAnsi::WriteAnsiLogFormat("FillConsoleOutputCharacterW(x%02X,%u,{%i,%i})",
+		(uint32_t)cCharacter, nLength, dwWriteCoord.X, dwWriteCoord.Y);
+
+	const BOOL lbRc = F(FillConsoleOutputCharacterW)(hConsoleOutput, cCharacter, nLength, dwWriteCoord, lpNumberOfCharsWritten);
+	return lbRc;
+}
+
+BOOL WINAPI OnFillConsoleOutputAttribute(HANDLE hConsoleOutput, WORD wAttribute, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfAttrsWritten)
+{
+	ORIGINAL_KRNL(FillConsoleOutputAttribute);
+
+	CEAnsi::WriteAnsiLogFormat("FillConsoleOutputAttribute(x%02X,%u,{%i,%i})",
+		wAttribute, nLength, dwWriteCoord.X, dwWriteCoord.Y);
+
+	ConEmuColor FillAttr = {CECF_NONE, CONFORECOLOR(wAttribute), CONBACKCOLOR(wAttribute)};
+	ExtFillOutputParm fll = {sizeof(fll),
+		efof_Attribute|efof_ResetExt,
+		hConsoleOutput, FillAttr, 0, dwWriteCoord, nLength};
+	ExtFillOutput(&fll);
+
+	const BOOL lbRc = F(FillConsoleOutputAttribute)(hConsoleOutput, wAttribute, nLength, dwWriteCoord, lpNumberOfAttrsWritten);
+	return lbRc;
+}
+
 // After "cls" executed in cmd or powershell we have to reset nLastConsoleRow stored in our AppMap
 static void CheckForCls(HANDLE hConsoleOutput, const SMALL_RECT& lpScrollRectangle, COORD dwDestinationOrigin)
 {

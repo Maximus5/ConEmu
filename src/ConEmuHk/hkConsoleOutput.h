@@ -43,5 +43,8 @@ HOOK_PROTOTYPE(WriteConsoleA,BOOL,WINAPI,(HANDLE hConsoleOutput, const VOID *lpB
 HOOK_PROTOTYPE(WriteConsoleOutputA,BOOL,WINAPI,(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion));
 HOOK_PROTOTYPE(WriteConsoleOutputCharacterA,BOOL,WINAPI,(HANDLE hConsoleOutput, LPCSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten));
 HOOK_PROTOTYPE(WriteConsoleOutputCharacterW,BOOL,WINAPI,(HANDLE hConsoleOutput, LPCWSTR lpCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten));
+HOOK_PROTOTYPE(FillConsoleOutputCharacterA,BOOL,WINAPI,(HANDLE hConsoleOutput, char cCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten));
+HOOK_PROTOTYPE(FillConsoleOutputCharacterW,BOOL,WINAPI,(HANDLE hConsoleOutput, wchar_t cCharacter, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfCharsWritten));
+HOOK_PROTOTYPE(FillConsoleOutputAttribute,BOOL,WINAPI,(HANDLE hConsoleOutput, WORD wAttribute, DWORD nLength, COORD dwWriteCoord, LPDWORD lpNumberOfAttrsWritten));
 HOOK_PROTOTYPE(WriteConsoleOutputW,BOOL,WINAPI,(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion));
 HOOK_PROTOTYPE(WriteConsoleW,BOOL,WINAPI,(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten, LPVOID lpReserved));
