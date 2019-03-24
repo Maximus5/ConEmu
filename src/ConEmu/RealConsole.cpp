@@ -10186,8 +10186,7 @@ bool CRealConsole::RecreateProcessStart()
 
 	if ((mn_InRecreate == 0) || (mn_ProcessCount != 0) || mb_ProcessRestarted)
 	{
-		// Must not be called twice, while Restart is still pending, or was not prepared
-		_ASSERTE((mn_InRecreate == 0) || (mn_ProcessCount != 0) || mb_ProcessRestarted);
+		_ASSERTE(FALSE && "Must not be called twice, while Restart is still pending, or was not prepared");
 	}
 	else
 	{
