@@ -328,7 +328,6 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	m_AppDistinctProcess = {};
 	mb_ForceRefreshAppId = false;
 	mn_FarNoPanelsCheck = 0;
-	mb_ForceRefreshAppId = false;
 	ms_LastActiveProcess[0] = 0;
 	mn_LastAppSettingsId = -2;
 	memset(m_FarPlugPIDs, 0, sizeof(m_FarPlugPIDs)); mn_FarPlugPIDsCount = 0;
