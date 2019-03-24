@@ -268,7 +268,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	TitleAdmin[0] = 0;
 	ms_PanelTitle[0] = 0;
 	mb_ForceTitleChanged = FALSE;
-	ZeroStruct(m_Progress);
+	m_Progress = {};
 	m_Progress.Progress = m_Progress.PreWarningProgress = m_Progress.LastShownProgress = -1; // Процентов нет
 	m_Progress.ConsoleProgress = m_Progress.LastConsoleProgress = -1;
 	hPictureView = NULL; mb_PicViewWasHidden = FALSE;
@@ -311,20 +311,20 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	//m_Args.pszSpecialCmd = NULL; -- не требуется
 	//mpsz_CmdBuffer = NULL;
 	mb_FullRetrieveNeeded = FALSE;
-	ZeroStruct(m_StartTime);
+	m_StartTime = {};
 	//mb_AdminShieldChecked = FALSE;
 	mb_DataChanged = FALSE;
 	mb_RConStartedSuccess = FALSE;
-	ZeroStruct(m_Term);
-	ZeroStruct(m_TermCursor);
+	m_Term = {};
+	m_TermCursor = {};
 	mn_ProgramStatus = 0; mn_FarStatus = 0; mn_Comspec4Ntvdm = 0;
 	isShowConsole = gpSet->isConVisible;
 	//mb_ConsoleSelectMode = false;
 	mn_SelectModeSkipVk = 0;
 	mn_ProcessCount = mn_ProcessClientCount = 0;
 	mn_FarPID = 0;
-	ZeroStruct(m_ActiveProcess);
-	ZeroStruct(m_AppDistinctProcess);
+	m_ActiveProcess = {};
+	m_AppDistinctProcess = {};
 	mb_ForceRefreshAppId = false;
 	mn_FarNoPanelsCheck = 0;
 	mb_ForceRefreshAppId = false;
@@ -375,10 +375,10 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	mb_DebugLocked = FALSE;
 	#endif
 
-	ZeroStruct(m_RootInfo);
+	m_RootInfo = {};
 	//m_RootInfo.nExitCode = STILL_ACTIVE;
-	ZeroStruct(m_ServerClosing);
-	ZeroStruct(m_Args);
+	m_ServerClosing = {};
+	m_Args = {};
 	ms_RootProcessName[0] = 0;
 	mn_RootProcessIcon = -1;
 	mb_NeedLoadRootProcessIcon = true;
@@ -386,7 +386,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 
 	hConWnd = NULL;
 
-	ZeroStruct(m_ChildGui);
+	m_ChildGui = {};
 	setGuiWndPID(NULL, 0, 0, NULL); // force set mn_GuiWndPID to 0
 
 	mn_InPostDeadChar = 0;
@@ -440,7 +440,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	mb_WasStartDetached = (m_Args.Detached == crb_On);
 	_ASSERTE(mb_WasStartDetached == (args->Detached == crb_On));
 
-	ZeroStruct(mst_ServerStartingTime);
+	mst_ServerStartingTime = {};
 
 	/* *** TABS *** */
 	// -- т.к. автопоказ табов может вызвать ресайз - то табы в самом конце инициализации!
@@ -4269,14 +4269,14 @@ void CRealConsole::ResetVarsOnStart()
 	//Drop flag after Restart console
 	mb_InPostCloseMacro = false;
 	//mb_WasStartDetached = FALSE; -- не сбрасывать, на него смотрит и isDetached()
-	ZeroStruct(m_RootInfo);
+	m_RootInfo = {};
 	//m_RootInfo.nExitCode = STILL_ACTIVE;
-	ZeroStruct(m_ServerClosing);
+	m_ServerClosing = {};
 	mn_StartTick = mn_RunTime = 0;
 	mn_DeactivateTick = 0;
 	mb_WasVisibleOnce = mp_VCon->isVisible();
 	mb_NeedLoadRootProcessIcon = true;
-	ZeroStruct(m_ScrollStatus);
+	m_ScrollStatus = {};
 	SafeFree(ms_MountRoot);
 
 	UpdateStartState(rss_StartupRequested);
@@ -4294,10 +4294,9 @@ void CRealConsole::ResetVarsOnStart()
 	if (mp_XTerm)
 		mp_XTerm->Reset();
 
-	// setXXX для удобства
+	// setXXX for the sake of convenience
 	setGuiWndPID(NULL, 0, 0, NULL); // set m_ChildGui.Process.ProcessID to 0
-	// ZeroStruct для четкости
-	ZeroStruct(m_ChildGui);
+	m_ChildGui = {};
 
 	StartStopXTerm(0, false/*te_win32*/);
 
@@ -6238,7 +6237,7 @@ void CRealConsole::StartStopXTerm(DWORD nPID, bool xTerm)
 
 	if (!nPID || !xTerm)
 	{
-		ZeroStruct(m_Term);
+		m_Term = {};
 		if (mp_XTerm)
 			mp_XTerm->AppCursorKeys = false;
 	}
@@ -8612,7 +8611,7 @@ void CRealConsole::SetActivePID(const ConProcess* apProcess)
 	{
 		if (m_ActiveProcess.ProcessID)
 		{
-			ZeroStruct(m_ActiveProcess);
+			m_ActiveProcess = {};
 			bChanged = true;
 		}
 	}
@@ -8637,7 +8636,7 @@ void CRealConsole::SetAppDistinctPID(const ConProcess* apProcess)
 	{
 		// Supposed to be during startup only
 		bChanged = (m_AppDistinctProcess.ProcessID != 0);
-		ZeroStruct(m_AppDistinctProcess);
+		m_AppDistinctProcess = {};
 	}
 	else if (m_AppDistinctProcess.ProcessID != apProcess->ProcessID)
 	{
@@ -9679,7 +9678,7 @@ void CRealConsole::SetHwnd(HWND ahConWnd, bool abForceApprove /*= FALSE*/)
 	mb_ProcessRestarted = FALSE; // Консоль запущена
 	SetInCloseConsole(false);
 	m_Args.Detached = crb_Off;
-	ZeroStruct(m_ServerClosing);
+	m_ServerClosing = {};
 	if (mn_InRecreate>=1)
 		mn_InRecreate = 0; // корневой процесс успешно пересоздался
 
@@ -14699,7 +14698,7 @@ void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD
 	In.AttachGuiApp.hAppWindow = ahGuiWnd;
 	In.AttachGuiApp.Styles.nStyle = anStyle;
 	In.AttachGuiApp.Styles.nStyleEx = anStyleEx;
-	ZeroStruct(In.AttachGuiApp.Styles.Shifts);
+	In.AttachGuiApp.Styles.Shifts = {};
 	CorrectGuiChildRect(In.AttachGuiApp.Styles.nStyle, In.AttachGuiApp.Styles.nStyleEx, In.AttachGuiApp.Styles.Shifts, m_ChildGui.Process.Name);
 	In.AttachGuiApp.nPID = anAppPID;
 	if (asAppFileName)
@@ -15267,7 +15266,7 @@ bool CRealConsole::ReloadFarWorkDir()
 void CRealConsole::GetStartTime(SYSTEMTIME& st)
 {
 	if (!this)
-		ZeroStruct(st);
+		st = {};
 	else
 		st = m_StartTime;
 }

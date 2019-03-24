@@ -450,7 +450,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 		if (!mp_ConEmu->mp_Inside->GetInsideRect(&rcMain))
 		{
 			_ASSERTE(FALSE && "GetInsideRect failed");
-			ZeroStruct(rcMain);
+			rcMain = {};
 			return rcMain;
 		}
 	}
@@ -690,7 +690,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, const RECT &rFrom, enum ConEmu
 				break;
 			default:
 				_ASSERTE((tFrom==tWhat) && "Unhandled tFrom/tWhat");
-				ZeroStruct(rcShift);
+				rcShift = {};
 			}
 			AddMargins(rc, rcShift);
 			tFromNow = CER_MAINCLIENT;
@@ -5285,7 +5285,7 @@ struct OnDpiChangedArg
 		if (prc)
 			rcSuggested = *prc;
 		else
-			ZeroStruct(rcSuggested);
+			rcSuggested = {};
 		bResizeWindow = abResize;
 		src = asrc;
 	};
@@ -6714,7 +6714,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			}
 		}
 		mn_QuakePercent = 0; // 0 - отключен
-		ZeroStruct(m_QuakePrevSize.PreSlidedSize);
+		m_QuakePrevSize.PreSlidedSize = {};
 
 		disabler.Enable();
 
@@ -6770,7 +6770,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 			else
 			{
 				_ASSERTE(FALSE && "Quake must not be slided up from hidden state");
-				ZeroStruct(m_QuakePrevSize.PreSlidedSize);
+				m_QuakePrevSize.PreSlidedSize = {};
 			}
 
 			if (bUseQuakeAnimation)
@@ -6846,7 +6846,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		}
 		else
 		{
-			ZeroStruct(m_QuakePrevSize.PreSlidedSize);
+			m_QuakePrevSize.PreSlidedSize = {};
 		}
 		mn_QuakePercent = 0; // 0 - отключен
 

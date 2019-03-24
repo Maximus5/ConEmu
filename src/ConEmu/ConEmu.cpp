@@ -541,7 +541,7 @@ CConEmuMain::CConEmuMain()
 	}
 	NonPortable:
 
-	ZeroStruct(m_DbgInfo);
+	m_DbgInfo = {};
 	if (IsDebuggerPresent())
 	{
 		wchar_t szDebuggers[32];
