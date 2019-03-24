@@ -20,7 +20,25 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
-2019.3.10
+2019.3.24
+* gh-1857: Fix regression in `-cur_console` processing.
+* gh-1860: Support new clink dll names.
+* ANSI: Mouse mode for URXVT was not working.
+* ANSI: Implement `ESC [ ! p` sequence to reset terminal.
+* gh-1852, gh-1855: Fix 'Show last command output' in Far Manager (regression).
+* gh-1851: Fix alternative buffer for OpenSSH.
+* gh-1866: l10n: Add Japanese translation.
+* gh-622: Unexpected left/right margins in quake mode with `100%` width.
+* gh-622: Fix window size on minimize/restore.
+* ANSI: Use \x7 as our specials terminator in logs.
+* gh-1492: AnsiLog-s location may be specified as a folder or file with `-new_console:L:"Path"`.
+  Write all ANSI logs to specified file:
+  `cmd.exe -new_console:L:"C:\Logs\cmd.log"`.
+  Create log files by format `ConEmu-<YYYY-MM-DD>-p<SrvPid>.log`:
+  `cmd.exe -new_console:L:"C:\Logs\"`.
+* AnsiLogs: log current system time each 500ms.
+* Hooks: Support FillConsoleOutputCharacter and FillConsoleOutputAttribute.
+* gh-1825: Add option to enable/disable ANSI calls to WinApi functions.
 * Update ChocolateyAbout.cmd to latest installation cmd.
 * gh-1323, gh-1385, gh-1841: Speed up alternative buffer operations (connector).
 * gh-1323, gh-1385, gh-1841: Let ‘Alternative mode’ toolbar button works with console buffers.
