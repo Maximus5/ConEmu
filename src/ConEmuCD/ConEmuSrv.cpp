@@ -1070,7 +1070,7 @@ int ServerInit()
 			{
 				DumpInitStatus("\nServerInit: CreateThread(SetOemCpProc)");
 				DWORD nTID;
-				HANDLE h = apiCreateThread(SetOemCpProc, (LPVOID)nOemCP, &nTID, "SetOemCpProc");
+				HANDLE h = apiCreateThread(SetOemCpProc, (LPVOID)(DWORD_PTR)nOemCP, &nTID, "SetOemCpProc");
 				if (h && (h != INVALID_HANDLE_VALUE))
 				{
 					DWORD nWait = WaitForSingleObject(h, 5000);
@@ -1531,7 +1531,7 @@ int ServerInit()
 	{
 		// Его нужно дернуть, чтобы инициализировать цикл аттача во вкладку ConEmu
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ATTACHGUIAPP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP));
-		_ASSERTE(((DWORD)gpSrv->hRootProcessGui)!=0xCCCCCCCC);
+		_ASSERTE(LODWORD(gpSrv->hRootProcessGui)!=0xCCCCCCCC);
 		_ASSERTE(IsWindow(ghConEmuWnd));
 		_ASSERTE(IsWindow(ghConEmuWndDC));
 		_ASSERTE(IsWindow(ghConEmuWndBack));
@@ -2122,7 +2122,7 @@ void CmdOutputRestore(bool abSimpleMode)
 
 	CONSOLE_SCREEN_BUFFER_INFO storedSbi = pData->info;
 	COORD crOldBufSize = pData->info.dwSize; // Может быть шире или уже чем текущая консоль!
-	SMALL_RECT rcWrite = {0, 0, std::min<int>(crOldBufSize.X,lsbi.dwSize.X)-1, std::min<int>(crOldBufSize.Y,lsbi.dwSize.Y)-1};
+	SMALL_RECT rcWrite = MakeSmallRect(0, 0, std::min<int>(crOldBufSize.X,lsbi.dwSize.X)-1, std::min<int>(crOldBufSize.Y,lsbi.dwSize.Y)-1);
 	COORD crBufPos = {0,0};
 
 	if (!abSimpleMode)
