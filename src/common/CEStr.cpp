@@ -385,12 +385,15 @@ const wchar_t* CEStr::Set(const wchar_t* asNewValue, ssize_t anChars /*= -1*/)
 	return ms_Val;
 }
 
-void CEStr::SetAt(ssize_t nIdx, wchar_t wc)
+wchar_t CEStr::SetAt(const ssize_t nIdx, const wchar_t wc)
 {
+	wchar_t prev = 0;
 	if (ms_Val && (nIdx < mn_MaxCount))
 	{
+		prev = ms_Val[nIdx];
 		ms_Val[nIdx] = wc;
 	}
+	return prev;
 }
 
 

@@ -70,7 +70,7 @@ public:
 	void Empty();
 	bool IsEmpty() const;
 	const wchar_t* Set(const wchar_t* asNewValue, ssize_t anChars = -1);
-	void SetAt(ssize_t nIdx, wchar_t wc);
+	wchar_t SetAt(const ssize_t nIdx, const wchar_t wc);
 
 	CEStr();
 	CEStr(CEStr&& asStr);
