@@ -2374,9 +2374,10 @@ void CheckConEmuHwnd()
 			LogFunction(L"Warning, ghConEmuWndDC still not initialized");
 			_ASSERTE(ghConEmuWndDC!=NULL);
 			wchar_t szClass[128];
+			HWND hBack = NULL;
 			while (!ghConEmuWndDC)
 			{
-				const HWND hBack = FindWindowEx(ghConEmuWnd, hBack, VirtualConsoleClassBack, NULL);
+				hBack = FindWindowEx(ghConEmuWnd, hBack, VirtualConsoleClassBack, NULL);
 				if (!hBack)
 					break;
 				if (GetWindowLong(hBack, WindowLongBack_ConWnd) == LOLONG(ghConWnd))
