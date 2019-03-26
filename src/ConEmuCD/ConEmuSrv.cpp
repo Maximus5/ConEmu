@@ -1786,6 +1786,8 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 // MAX_CONREAD_SIZE подобрано экспериментально
 BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn)
 {
+	LogFunction(L"MyWriteConsoleOutput");
+
 	BOOL lbRc = FALSE;
 
 	size_t nBufWidth = bufSize.X;
@@ -1981,9 +1983,9 @@ wrap:
 // Сохранить данные ВСЕЙ консоли в mapping
 void CmdOutputStore(bool abCreateOnly /*= false*/)
 {
-	const bool reopen_allowed = isReopenHandleAllowed();
-
 	LogFunction(L"CmdOutputStore");
+
+	const bool reopen_allowed = isReopenHandleAllowed();
 
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {};
 	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
@@ -1991,6 +1993,7 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 
 	// Need to block all requests to output buffer in other threads
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+	LogString(L"csReadConsoleInfo locked");
 
 	if (reopen_allowed)
 		ConOutCloseHandle();
@@ -1999,18 +2002,22 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 	//     а не скорректированное функцией MyGetConsoleScreenBufferInfo
 	if (!GetConsoleScreenBufferInfo(ghConOut, &lsbi) || !lsbi.dwSize.Y)
 	{
-		LogString("GetConsoleScreenBufferInfo failed");
+		LogString("--- Skipped, GetConsoleScreenBufferInfo failed");
 		return; // Не смогли получить информацию о консоли...
 	}
 	// just for information
 	COORD crMaxSize = MyGetLargestConsoleWindowSize(ghConOut);
 
 	if (!CmdOutputOpenMap(lsbi, pHdr, pData))
+	{
+		LogString("--- Skipped, CmdOutputOpenMap failed");
 		return;
+	}
 
 	if (!pHdr || !pData)
 	{
 		_ASSERTE(pHdr && pData);
+		LogString("--- Skipped, invalid map data");
 		return;
 	}
 
@@ -2019,19 +2026,18 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 	if (!pData->info.dwSize.Y || !abCreateOnly)
 		pData->info = lsbi;
 
-	if (abCreateOnly)
-		return;
+	if (!abCreateOnly)
+	{
+		// now we may read the console data
+		COORD BufSize = {lsbi.dwSize.X, lsbi.dwSize.Y};
+		SMALL_RECT ReadRect = {0, 0, lsbi.dwSize.X-1, lsbi.dwSize.Y-1};
 
-	// Теперь читаем данные
-	COORD BufSize = {lsbi.dwSize.X, lsbi.dwSize.Y};
-	SMALL_RECT ReadRect = {0, 0, lsbi.dwSize.X-1, lsbi.dwSize.Y-1};
+		// store/update sbi
+		pData->info = lsbi;
 
-	// Запомнить/обновить sbi
-	pData->info = lsbi;
-
-	pData->Succeeded = MyReadConsoleOutput(ghConOut, pData->Data, BufSize, ReadRect);
-
-	csRead.Unlock();
+		LogString("MyReadConsoleOutput");
+		pData->Succeeded = MyReadConsoleOutput(ghConOut, pData->Data, BufSize, ReadRect);
+	}
 
 	LogString("CmdOutputStore finished");
 	DEBUGSTR(L"--- CmdOutputStore end\n");
@@ -2043,14 +2049,15 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 //                       задел на будущее для выполнения команд из Far (без /w), mc, или еще кого.
 void CmdOutputRestore(bool abSimpleMode)
 {
+	LogFunction(L"CmdOutputRestore");
+
 	const bool reopen_allowed = isReopenHandleAllowed();
 	if (reopen_allowed)
 	{
 		// Nothing to do, in this mode we utilize conhost screen buffers
+		LogString("--- Skipped, reopen_allowed");
 		return;
 	}
-
-	LogFunction(L"CmdOutputRestore");
 
 	if (!abSimpleMode)
 	{
@@ -2062,6 +2069,7 @@ void CmdOutputRestore(bool abSimpleMode)
 
 	// Need to block all requests to output buffer in other threads
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+	LogString(L"csReadConsoleInfo locked");
 
 	// Just in case we change the logic somehow
 	if (reopen_allowed)
@@ -2071,11 +2079,19 @@ void CmdOutputRestore(bool abSimpleMode)
 	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
 	CESERVER_CONSAVE_MAP* pData = NULL;
 	if (!CmdOutputOpenMap(lsbi, pHdr, pData))
+	{
+		LogString(L"--- Skipped, CmdOutputOpenMap failed");
 		return;
+	}
 
 	if (lsbi.srWindow.Top > 0)
 	{
 		_ASSERTE(lsbi.srWindow.Top == 0 && "Upper left corner of window expected");
+		wchar_t err_msg[80];
+		msprintf(err_msg, std::size(err_msg),
+			L"Invalid upper-left corner; sr={%i,%i}-{%i,%i}",
+			LogSRectCoords(lsbi.srWindow));
+		LogString(err_msg);
 		return;
 	}
 
@@ -2087,6 +2103,7 @@ void CmdOutputRestore(bool abSimpleMode)
 	COORD crMoveTo = {0, lsbi.dwSize.Y - 1 - lsbi.srWindow.Bottom};
 	if (!ScrollConsoleScreenBuffer(ghConOut, &rcTop, NULL, crMoveTo, &chrFill))
 	{
+		LogString(L"--- Skipped, ScrollConsoleScreenBuffer failed");
 		return;
 	}
 
@@ -2095,7 +2112,6 @@ void CmdOutputRestore(bool abSimpleMode)
 
 	if (abSimpleMode)
 	{
-
 		crMoveTo.Y = std::min<int>(pData->info.srWindow.Top, std::max<int>(0,lsbi.dwSize.Y-h));
 	}
 
@@ -2152,6 +2168,7 @@ void CmdOutputRestore(bool abSimpleMode)
 
 	if (abSimpleMode)
 	{
+		LogString("SetConsoleTextAttribute");
 		SetConsoleTextAttribute(ghConOut, pData->info.wAttributes);
 	}
 
