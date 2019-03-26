@@ -1285,9 +1285,15 @@ void CTabBarClass::OnCommand(WPARAM wParam, LPARAM lParam)
 		LogString(L"ToolBar: TID_SYSMENU");
 		RECT rcBtnRect = {0};
 		mp_Rebar->GetToolBtnRect(TID_SYSMENU, &rcBtnRect);
-		DWORD nAddFlags = ((gpSet->nTabsLocation == 1) ? TPM_BOTTOMALIGN : 0) | TPM_RIGHTALIGN;
+		const DWORD nAddFlags = ((gpSet->nTabsLocation == 1) ? TPM_BOTTOMALIGN : 0) | TPM_RIGHTALIGN;
+		MONITORINFO mi = {}; gpConEmu->GetNearestMonitor(&mi);
+		--mi.rcWork.right; --mi.rcWork.bottom;
+		RECT rcVisible = {}; const BOOL visible = IntersectRect(&rcVisible, &rcBtnRect, &mi.rcWork);
 		LogString(L"ShowSysmenu called from (ToolBar)");
-		gpConEmu->mp_Menu->ShowSysmenu(rcBtnRect.right,rcBtnRect.bottom, nAddFlags);
+		gpConEmu->mp_Menu->ShowSysmenu(
+			visible ? rcVisible.right : rcBtnRect.right,
+			visible ? rcVisible.bottom : rcBtnRect.bottom,
+			nAddFlags);
 	}
 	else
 	{
