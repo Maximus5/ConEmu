@@ -3230,7 +3230,7 @@ wchar_t* ExpandTaskCmd(LPCWSTR asCmdLine)
 	pszNameEnd++;
 
 	size_t cchCount = (pszNameEnd - asCmdLine);
-	DWORD cbSize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_TASK) + cchCount*sizeof(asCmdLine[0]);
+	DWORD cbSize = DWORD(sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_TASK) + cchCount*sizeof(asCmdLine[0]));
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETTASKCMD, cbSize);
 	if (!pIn)
 		return NULL;
@@ -4413,7 +4413,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 					GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
 					pIn->NewCmd.SetCommand(lsCmdLine);
-					pIn->NewCmd.SetEnvStrings(strs.ms_Strings, strs.mcch_Length);
+					pIn->NewCmd.SetEnvStrings(strs.ms_Strings, static_cast<DWORD>(strs.mcch_Length));
 
 					CESERVER_REQ* pOut = ExecuteGuiCmd(hConEmu, pIn, hConWnd);
 					if (pOut)
@@ -5933,7 +5933,7 @@ void static CorrectDBCSCursorPosition(HANDLE ahConOut, CONSOLE_SCREEN_BUFFER_INF
 				: (CHAR_INFO*)calloc(cchMax, sizeof(*pCharsEx));
 			if (pCharsEx)
 			{
-				COORD bufSize = {cchMax, 1}; COORD bufCoord = {0,0};
+				COORD bufSize = {MakeShort(cchMax), 1}; COORD bufCoord = {0,0};
 				SMALL_RECT rgn = MakeSmallRect(0, csbi.dwCursorPosition.Y, cchMax-1, csbi.dwCursorPosition.Y);
 				BOOL bRead = ReadConsoleOutputW(ahConOut, pCharsEx, bufSize, bufCoord, &rgn);
 				if (bRead)

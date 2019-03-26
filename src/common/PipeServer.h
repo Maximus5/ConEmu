@@ -1654,7 +1654,7 @@ struct PipeServer
 		{
 			PipeInst* pPipe = (PipeInst*)pInstance;
 			PLOG("BreakConnection");
-			pPipe->bBreakConnection = true;
+			pPipe->bBreakConnection = TRUE;
 		};
 
 		HANDLE GetPipeHandle(LPVOID pInstance)

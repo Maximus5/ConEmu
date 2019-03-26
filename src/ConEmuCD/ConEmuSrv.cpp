@@ -1612,7 +1612,7 @@ void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
 		}
 
 		#ifdef _DEBUG
-		UINT nCurProcCount = std::min<UINT>(gpSrv->processes->nProcessCount, gpSrv->processes->pnProcesses.size());
+		UINT nCurProcCount = std::min(gpSrv->processes->nProcessCount, (UINT)gpSrv->processes->pnProcesses.size());
 		DWORD nCurProcs[20];
 		memmove(nCurProcs, &gpSrv->processes->pnProcesses[0], std::min<DWORD>(nCurProcCount, 20) * sizeof(DWORD));
 		_ASSERTE(nCurProcCount <= 1);
@@ -5242,7 +5242,7 @@ int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
 		int nRgn = hRgn ? GetRgnBox(hRgn, &rcBox) : NULLREGION;
 		swprintf_c(szInfo,
 			nRgn ? L"CECMD_SETWINDOWRGN(0x%08X, <%u> {%i,%i}-{%i,%i})" : L"CECMD_SETWINDOWRGN(0x%08X, NULL)",
-			(DWORD)(HWND)pRgn->hWnd, nRgn, LOGRECTCOORDS(rcBox));
+			(DWORD)(DWORD_PTR)(HWND)pRgn->hWnd, nRgn, LOGRECTCOORDS(rcBox));
 		LogString(szInfo);
 	}
 
