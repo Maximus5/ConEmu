@@ -194,8 +194,12 @@ using uint = uint32_t;
 #define RectWidth(rc) ((rc).right-(rc).left)
 #define RectHeight(rc) ((rc).bottom-(rc).top)
 #define LOGRECTCOORDS(rc) (rc).left, (rc).top, (rc).right, (rc).bottom
-#define LOGSRECTCOORDS(rc) (rc).Left, (rc).Top, (rc).Right, (rc).Bottom
 #define LOGRECTSIZE(rc) RectWidth(rc), RectHeight(rc)
+
+#define SRectWidth(rc) ((rc).Right-(rc).Left)
+#define SRectHeight(rc) ((rc).Bottom-(rc).Top)
+#define LogSRectCoords(rc) (rc).Left, (rc).Top, (rc).Right, (rc).Bottom
+#define LogSRectSize(rc) SRectWidth(rc), SRectHeight(rc)
 
 template <typename T>
 const T _abs(const T& n) { return ((n)>=0) ? (n) : -(n); }

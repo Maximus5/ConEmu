@@ -4774,8 +4774,8 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 				L"Selection: %s: Coord={%i,%i} Old={%i,%i}:{%i,%i}-{%i,%i} New={%i,%i}:{%i,%i}-{%i,%i}",
 				(con.m_sel.dwFlags & CONSOLE_LEFT_ANCHOR) ? L"<<LeftAnchor" :
 				(con.m_sel.dwFlags & CONSOLE_RIGHT_ANCHOR) ? L"RightAnchor>>" : L"???",
-				anX, anY, anchor.X, anchor.Y, LOGSRECTCOORDS(srSel),
-				con.m_sel.dwSelectionAnchor.X, con.m_sel.dwSelectionAnchor.Y, LOGSRECTCOORDS(con.m_sel.srSelection)
+				anX, anY, anchor.X, anchor.Y, LogSRectCoords(srSel),
+				con.m_sel.dwSelectionAnchor.X, con.m_sel.dwSelectionAnchor.Y, LogSRectCoords(con.m_sel.srSelection)
 				);
 			mp_RCon->LogString(szLog);
 		}
