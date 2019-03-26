@@ -60,21 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGLOGSIZE(s) DEBUGSTR(s)
 #define DEBUGLOGLANG(s) //DEBUGSTR(s) //; Sleep(2000)
 
-class CLogFunction
-{
-protected:
-	static int m_FnLevel; // without per-thread division
-	bool mb_Logged;
-public:
-	CLogFunction();
-	CLogFunction(const char* asFnName);
-	CLogFunction(const wchar_t* asFnName);
-	void DoLogFunction(const wchar_t* asFnName);
-	~CLogFunction();
-};
-#define LogFunction_Cat2(n,i) n##i
-#define LogFunction_Cat1(n,i) LogFunction_Cat2(n,i)
-#define LogFunction(fn) CLogFunction LogFunction_Cat1(logFunction,__COUNTER__)(fn)
+#include "LogFunction.h"
 
 #ifdef _DEBUG
 //CRITICAL_ SECTION gcsHeap;

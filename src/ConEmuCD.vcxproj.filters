@@ -63,6 +63,9 @@
     <ClInclude Include="ConEmuCD\Infiltrate.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmuCD\LogFunction.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmuCD\MapDump.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -138,6 +141,9 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuCD\InjectRemote.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\LogFunction.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuCD\MapDump.cpp">

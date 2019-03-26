@@ -285,6 +285,7 @@
     <ClInclude Include="ConEmuCD\GuiHooks.h" />
     <ClInclude Include="ConEmuCD\GuiMacro.h" />
     <ClInclude Include="ConEmuCD\Infiltrate.h" />
+    <ClInclude Include="ConEmuCD\LogFunction.h" />
     <ClInclude Include="ConEmuCD\MapDump.h" />
     <ClInclude Include="ConEmuCD\Queue.h" />
     <ClInclude Include="ConEmuCD\Shutdown.h" />
@@ -312,6 +313,7 @@
     <ClCompile Include="ConEmuCD\GuiMacro.cpp" />
     <ClCompile Include="ConEmuCD\Infiltrate.cpp" />
     <ClCompile Include="ConEmuCD\InjectRemote.cpp" />
+    <ClCompile Include="ConEmuCD\LogFunction.cpp" />
     <ClCompile Include="ConEmuCD\MapDump.cpp" />
     <ClCompile Include="ConEmuCD\Queue.cpp" />
     <ClCompile Include="ConEmuCD\Shutdown.cpp" />
