@@ -1672,6 +1672,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			ResetEvent(ghFarInExecuteEvent);
 		#endif
 
+		wchar_t szSelf[MAX_PATH*2] = L"";
 		LPCWSTR pszCurDir = NULL;
 		WARNING("The process handle must have the PROCESS_VM_OPERATION access right!");
 
@@ -1771,7 +1772,6 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			// Фикс для перемещения ConEmu.exe в подпапку фара. т.е. far.exe находится на одну папку выше
 			if (gsSelfExe[0] != 0)
 			{
-				wchar_t szSelf[MAX_PATH*2];
 				wcscpy_c(szSelf, gsSelfExe);
 
 				wchar_t* pszSlash = wcsrchr(szSelf, L'\\');
