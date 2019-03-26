@@ -2967,9 +2967,8 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd)
 
 	if (bExclSubst)
 	{
-		wchar_t* pszCmdCopy = lstrdup(asCmd);
-		if (!pszCmdCopy)
-			return NULL; // Ошибка выделения памяти вообще-то
+		if (!(pszCmdCopy = lstrdup(asCmd)))
+			return NULL;
 
 		for (size_t i = 0; i < countof(szNames); ++i)
 		{
