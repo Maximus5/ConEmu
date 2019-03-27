@@ -20,6 +20,11 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2019.3.26
+* gh-1849: SystemMenu does not appear if ConEmu is maximized.
+* gh-1838: Log times in CmdOutputStore/CmdOutputRestore.
+
+
 2019.3.24
 * gh-1857: Fix regression in `-cur_console` processing.
 * gh-1860: Support new clink dll names.
