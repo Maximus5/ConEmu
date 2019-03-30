@@ -1164,10 +1164,11 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 	SMALL_RECT rcWrite = *WriteRegion;
 	COORD MyBufferSize = {BufferSize.X, 1};
 	COORD MyBufferCoord = {BufferCoord.X, 0};
-	SHORT YShift = gbFarBufferMode ? (csbi.dwSize.Y - (srWork.Bottom - srWork.Top + 1)) : 0;
-	SHORT Y1 = WriteRegion->Top + YShift;
-	SHORT Y2 = WriteRegion->Bottom + YShift;
-	SHORT BufferShift = WriteRegion->Top + YShift;
+	const int YShift = gbFarBufferMode
+		? (static_cast<int>(csbi.dwSize.Y) - (srWork.Bottom - srWork.Top + 1)) : 0;
+	SHORT Y1 = static_cast<SHORT>(WriteRegion->Top + YShift);
+	SHORT Y2 = static_cast<SHORT>(WriteRegion->Bottom + YShift);
+	const SHORT BufferShift = static_cast<SHORT>(WriteRegion->Top + YShift);
 
 	if (Y2 >= csbi.dwSize.Y)
 	{
