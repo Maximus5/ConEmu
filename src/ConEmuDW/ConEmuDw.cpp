@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/HkFunc.h"
+#include "../common/MModule.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WThreads.h"
 #include "../ConEmu/version.h"
@@ -1124,6 +1125,22 @@ BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD Buf
 	HANDLE h;
 	if (!GetBufferInfo(h, csbi, srWork))
 		return FALSE;
+
+	// A sign that Far starts command execution?
+	if (WriteRegion->Left == 0 && WriteRegion->Right > 0
+		&& WriteRegion->Top == -1 && WriteRegion->Bottom == -1)
+	{
+		SrvLogString_t fnSrvLogString;
+		MModule srv_dll(GetModuleHandle(ConEmuCD_DLL_3264));
+		if (srv_dll.GetProcAddress("PrivateEntry2", fnSrvLogString))
+		{
+			wchar_t log_info[120];
+			msprintf(log_info, std::size(log_info),
+				L"Far.exe: Start command execution? buffer={%ix%i} rect={%i,%i}-{%i,%i}",
+				csbi.dwSize.X, csbi.dwSize.Y, LogSRectCoords(srWork));
+			fnSrvLogString(log_info);
+		}
+	}
 
 	CHAR_INFO cDefWriteBuf[256];
 	CHAR_INFO *pcWriteBuf = NULL;

@@ -155,6 +155,7 @@ HookModeFar gFarMode = {sizeof(HookModeFar)};
 bool    gbIsFarProcess = false;
 InQueue gInQueue = {};
 HANDLE  ghConsoleCursorChanged = NULL;
+SrvLogString_t gfnSrvLogString = nullptr;
 /* ************ Globals for Far Hooks ************ */
 
 /* ************ Globals for cmd.exe/clink ************ */

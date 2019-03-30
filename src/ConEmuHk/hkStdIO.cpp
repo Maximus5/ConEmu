@@ -298,6 +298,7 @@ HANDLE WINAPI OnOpenFileMappingW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPC
 				if (ghConsoleCursorChanged && (ghConsoleCursorChanged != Parm.hCursorChangeEvent))
 					CloseHandle(ghConsoleCursorChanged);
 				ghConsoleCursorChanged = Parm.hCursorChangeEvent;
+				gfnSrvLogString = Parm.fSrvLogString;
 			}
 		}
 	}

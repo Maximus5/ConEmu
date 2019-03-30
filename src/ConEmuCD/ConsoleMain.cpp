@@ -2524,6 +2524,14 @@ int __stdcall ConsoleMain2(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	return ConsoleMain3(anWorkMode, GetCommandLineW());
 }
 
+
+int WINAPI LogHooksFunction(const wchar_t* str)
+{
+	if (!gpLogSize) return -1;
+	if (!str || !*str) return 0;
+	return LogString(str) ? 1 : 0;
+}
+
 // if Parm->ppConOutBuffer is set, it HAVE TO BE GLOBAL SCOPE variable!
 int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 {
@@ -2656,6 +2664,8 @@ DoEvents:
 
 		ThawRefreshThread();
 	}
+
+	Parm->fSrvLogString = LogHooksFunction;
 
 wrap:
 	return iRc;

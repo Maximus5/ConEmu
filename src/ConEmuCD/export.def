@@ -7,6 +7,7 @@ EXPORTS
 	ConsoleMain3
 	HandlerRoutine
 	PrivateEntry=RequestLocalServer
+	PrivateEntry2=LogHooksFunction
 	DownloadCommand
 	GuiMacro
 

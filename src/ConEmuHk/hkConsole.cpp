@@ -686,7 +686,19 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 
 		ghCurrentOutBuffer = hConsoleOutput;
 		RequestLocalServerParm Parm = {(DWORD)sizeof(Parm), slsf_SetOutHandle, &ghCurrentOutBuffer};
-		RequestLocalServer(&Parm);
+		if (RequestLocalServer(&Parm) == 0)
+		{
+			gfnSrvLogString = Parm.fSrvLogString;
+		}
+	}
+
+	if (gfnSrvLogString && gbIsFarProcess)
+	{
+		wchar_t szLog[120];
+		msprintf(szLog, std::size(szLog),
+			L"Far.exe: SetConsoleActiveScreenBuffer(x%08X)",
+			LODWORD(hConsoleOutput));
+		gfnSrvLogString(szLog);
 	}
 
 	return lbRc;

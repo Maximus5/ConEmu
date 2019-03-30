@@ -2464,6 +2464,7 @@ struct AnnotationInfo;
 typedef int (WINAPI* RequestLocalServer_t)(/*[IN/OUT]*/RequestLocalServerParm* Parm);
 typedef BOOL (WINAPI* ExtendedConsoleWriteText_t)(HANDLE hConsoleOutput, const AnnotationInfo* Attributes, const wchar_t* Buffer, DWORD nNumberOfCharsToWrite, LPDWORD lpNumberOfCharsWritten);
 typedef void (WINAPI* ExtendedConsoleCommit_t)();
+typedef int (WINAPI* SrvLogString_t)(const wchar_t* str);
 typedef DWORD RequestLocalServerFlags;
 const RequestLocalServerFlags
 	slsf_SetOutHandle      = 1,
@@ -2492,6 +2493,7 @@ struct RequestLocalServerParm
 	/*[OUT]*/ DWORD_PTR nPrevAltServerPID; // alignment
 	/*[OUT]*/ HANDLE hFarCommitEvent;
 	/*[OUT]*/ HANDLE hCursorChangeEvent;
+	/*[OUT]*/ SrvLogString_t fSrvLogString;
 };
 
 

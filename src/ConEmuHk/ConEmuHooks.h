@@ -46,6 +46,9 @@ struct HookModeFar
 	void  (WINAPI* OnCurDirChanged)();
 };
 
+extern struct HookModeFar gFarMode;
+extern SrvLogString_t gfnSrvLogString;
+
 typedef struct HookCallbackArg
 {
 	BOOL         bMainThread;

@@ -148,6 +148,14 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 	}
 	#endif
 
+	if (gfnSrvLogString && gbIsFarProcess)
+	{
+		wchar_t szLog[120];
+		msprintf(szLog, std::size(szLog), L"Far.exe: SetConsoleMode(x%08X, x%08X)",
+			LODWORD(hConsoleHandle), dwMode);
+		gfnSrvLogString(szLog);
+	}
+
 	lbRc = F(SetConsoleMode)(hConsoleHandle, dwMode);
 
 	return lbRc;
