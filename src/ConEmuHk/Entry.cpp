@@ -2944,7 +2944,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 
 	if (!ghSrvDll || !gfRequestLocalServer)
 	{
-		LPCWSTR pszSrvName = WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll");
+		LPCWSTR pszSrvName = ConEmuCD_DLL_3264;
 
 		if (!ghSrvDll)
 		{

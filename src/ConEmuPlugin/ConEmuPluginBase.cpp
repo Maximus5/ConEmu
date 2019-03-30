@@ -2741,7 +2741,7 @@ void CPluginBase::EmergencyShow()
 		return;
 
 	// If there is a ConEmuCD - just skip 'Plugin version'
-	HMODULE hSrv = GetModuleHandle(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
+	HMODULE hSrv = GetModuleHandle(ConEmuCD_DLL_3264);
 	if (hSrv)
 		return;
 

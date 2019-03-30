@@ -76,13 +76,19 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CES_NTVDM 0x10
 #define CEC_INITTITLE       L"ConEmu"
 
-#define VirtualConsoleClass L"VirtualConsoleClass" // окна отрисовки
-#define VirtualConsoleClassMain L"VirtualConsoleClass" // главное окно
-#define VirtualConsoleClassApp L"VirtualConsoleClassApp" // специальный Popup (не используется)
-#define VirtualConsoleClassWork L"VirtualConsoleClassWork" // Holder для всех VCon
-#define VirtualConsoleClassBack L"VirtualConsoleClassBack" // Подложка (со скроллерами) для каждого VCon
-#define VirtualConsoleClassGhost L"VirtualConsoleClassGhost"
-#define ConEmuPanelViewClass L"ConEmuPanelView"
+// Our binaries
+#define ConEmuCD_32_DLL L"ConEmuCD.dll"
+#define ConEmuCD_64_DLL L"ConEmuCD64.dll"
+#define ConEmuCD_DLL_3264 WIN3264TEST(ConEmuCD_32_DLL,ConEmuCD_64_DLL)
+
+// Windows and Classes
+#define VirtualConsoleClass L"VirtualConsoleClass" // DC Window
+#define VirtualConsoleClassMain L"VirtualConsoleClass" // Main window (with title/tabs/etc.)
+#define VirtualConsoleClassApp L"VirtualConsoleClassApp" // special Popup (used in some special cases to hide TaskBar icon)
+#define VirtualConsoleClassWork L"VirtualConsoleClassWork" // Holder for all VCon-s
+#define VirtualConsoleClassBack L"VirtualConsoleClassBack" // Underlay (with scrollers) for each VCon
+#define VirtualConsoleClassGhost L"VirtualConsoleClassGhost" // support for Win7 Aero
+#define ConEmuPanelViewClass L"ConEmuPanelView" // Used in Far Manager plugin
 
 #define RealConsoleClass L"ConsoleWindowClass"
 #define WineConsoleClass L"WineConsoleClass"

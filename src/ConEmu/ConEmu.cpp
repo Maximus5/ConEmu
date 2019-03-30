@@ -4245,12 +4245,8 @@ HMODULE CConEmuMain::LoadConEmuCD()
 	if (!mh_LLKeyHookDll)
 	{
 		wchar_t szConEmuDll[MAX_PATH+32];
-		lstrcpy(szConEmuDll, ms_ConEmuBaseDir);
-#ifdef WIN64
-		lstrcat(szConEmuDll, L"\\ConEmuCD64.dll");
-#else
-		lstrcat(szConEmuDll, L"\\ConEmuCD.dll");
-#endif
+		wcscpy_c(szConEmuDll, ms_ConEmuBaseDir);
+		wcscat_c(szConEmuDll, L"\\" ConEmuCD_DLL_3264);
 		//wchar_t szSkipEventName[128];
 		//swprintf_c(szSkipEventName, CEHOOKDISABLEEVENT, GetCurrentProcessId());
 		//HANDLE hSkipEvent = CreateEvent(NULL, TRUE, TRUE, szSkipEventName);

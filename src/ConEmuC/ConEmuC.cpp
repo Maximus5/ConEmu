@@ -373,7 +373,7 @@ bool ProcessCommandLine(int& iRc, HMODULE& hConEmu)
 			if (!hConEmu)
 			{
 				// Prefere Help from ConEmuCD.dll because ConEmuC.exe may be outdated (due to stability preference)
-				hConEmu = LoadLibrary(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
+				hConEmu = LoadLibrary(ConEmuCD_DLL_3264);
 
 				// Show internal Help variant if only ConEmuCD.dll was failed to load
 				if (hConEmu == NULL)
@@ -432,14 +432,14 @@ int main(int argc, char** argv)
 
 	// Otherwise - do the full cycle
 	if (!hConEmu)
-		hConEmu = LoadLibrary(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
+		hConEmu = LoadLibrary(ConEmuCD_DLL_3264);
 	dwErr = GetLastError();
 
 	if (!hConEmu)
 	{
 		swprintf_c(szErrInfo,
 		           L"Can't load library \"%s\", ErrorCode=0x%08X\n",
-		           WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"),
+		           ConEmuCD_DLL_3264,
 		           dwErr);
 		_wprintf(szErrInfo);
 		_ASSERTE(FALSE && "LoadLibrary failed");
@@ -457,7 +457,7 @@ int main(int argc, char** argv)
 		swprintf_c(szErrInfo,
 		           L"Procedure \"%s\"  not found in library \"%s\"",
 		           lfConsoleMain2 ? L"HandlerRoutine" : L"ConsoleMain2",
-		           WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
+		           ConEmuCD_DLL_3264);
 		_wprintf(szErrInfo);
 		_ASSERTE(FALSE && "GetProcAddress failed");
 		FreeLibrary(hConEmu);

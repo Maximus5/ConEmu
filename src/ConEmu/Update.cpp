@@ -2262,17 +2262,17 @@ bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 
 	pUpd = apUpd;
 
-	pszLib = lstrmerge(gpConEmu->ms_ConEmuBaseDir, WIN3264TEST(L"\\ConEmuCD.dll",L"\\ConEmuCD64.dll"));
+	pszLib = lstrmerge(gpConEmu->ms_ConEmuBaseDir, L"\\", ConEmuCD_DLL_3264);
 	lhDll = pszLib ? LoadLibrary(pszLib) : NULL;
 	if (!lhDll)
 	{
 		_ASSERTE(lhDll!=NULL);
-		lhDll = LoadLibrary(WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"));
+		lhDll = LoadLibrary(ConEmuCD_DLL_3264);
 	}
 	if (!lhDll)
 	{
 		DWORD nErr = GetLastError();
-		pUpd->ReportError(L"Required library '%s' was not loaded, code=%u", WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"), nErr);
+		pUpd->ReportError(L"Required library '%s' was not loaded, code=%u", ConEmuCD_DLL_3264, nErr);
 		goto wrap;
 	}
 
@@ -2280,7 +2280,7 @@ bool CConEmuUpdate::wininet::Init(CConEmuUpdate* apUpd)
 	if (!lDownloadCommand)
 	{
 		pUpd->ReportError(L"Exported function DownloadCommand in '%s' not found! Check your installation!",
-			WIN3264TEST(L"ConEmuCD.dll",L"ConEmuCD64.dll"), GetLastError());
+			ConEmuCD_DLL_3264, GetLastError());
 		goto wrap;
 	}
 
