@@ -996,9 +996,15 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 	nCchSize = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 64;
 	if (lbUseDosBox)
 	{
-		// Может быть нужно экранирование кавычек или еще чего, зарезервируем буфер
-		// ну и сами параметры для DosBox
-		nCchSize = (nCchSize*2) + lstrlen(szDosBoxExe) + lstrlen(szDosBoxCfg) + 128 + MAX_PATH*2/*на cd и прочую фигню*/;
+		// Escaping of special symbols, dosbox arguments, etc.
+		nCchSize += (nCchSize)
+			+ lstrlen(szDosBoxExe) + lstrlen(szDosBoxCfg) + 128
+			+ (MAX_PATH * 2/*cd and others*/);
+	}
+
+	if (m_SrvMapping.nLogLevel)
+	{
+		nCchSize += 5; // + " /LOG"
 	}
 
 	if (!FileExists(pszOurExe))
@@ -1095,6 +1101,9 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 
 	if (lbUseDosBox)
 		_wcscat_c((*psParam), nCchSize, L" /DOSBOX");
+
+	if (m_SrvMapping.nLogLevel)
+		_wcscat_c((*psParam), nCchSize, L" /LOG");
 
 	if (gFarMode.cbSize && gFarMode.bFarHookMode)
 	{
