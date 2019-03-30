@@ -1087,6 +1087,9 @@ BOOL WINAPI ReadOutput(FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoor
 
 BOOL WINAPI WriteOutput(const FAR_CHAR_INFO* Buffer, COORD BufferSize, COORD BufferCoord, SMALL_RECT* WriteRegion)
 {
+	if (!Buffer || !WriteRegion)
+		return FALSE;
+
 	#ifdef _DEBUG
 	wchar_t szCall[100]; swprintf_c(szCall, L"ExtCon::WriteOutput({%i,%i}-{%i,%i})\n", WriteRegion->Left, WriteRegion->Top, WriteRegion->Right, WriteRegion->Bottom);
 	DEBUGSTRCALL(szCall);
