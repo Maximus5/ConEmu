@@ -43,6 +43,8 @@ private:
 
 	static std::atomic_int32_t m_FnLevel; // log string indentation, without per-thread division
 	bool mb_Logged = false;
+	wchar_t mc_FnInfo[120] = L"";
+	size_t mn_FnSuffix = 0;
 };
 
 #define LogFunction_Cat2(n,i) n##i

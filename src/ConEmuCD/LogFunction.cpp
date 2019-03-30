@@ -31,24 +31,27 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 #include <Windows.h>
 
+namespace {
+const wchar_t kFnBegin[] = L" [begin]";
+const wchar_t kFnEnd[] = L" [end]";
+}
+
 std::atomic_int32_t CLogFunction::m_FnLevel{0}; // Simple, without per-thread devision
 
 CLogFunction::CLogFunction(const char* asFnName)
 {
-	int nLen = MultiByteToWideChar(CP_ACP, 0, asFnName, -1, NULL, 0);
-	wchar_t sBuf[80] = L"";
-	wchar_t *pszBuf = NULL;
-	if (nLen >= 80)
-		pszBuf = (wchar_t*)calloc(nLen+1,sizeof(*pszBuf));
-	else
-		pszBuf = sBuf;
+	const int nLen = MultiByteToWideChar(CP_ACP, 0, asFnName, -1, NULL, 0);
+
+	const int cchBuf = 80;
+	wchar_t sBuf[cchBuf] = L"";
+	CEStr szTemp;
+	wchar_t *pszBuf = (nLen >= cchBuf)
+		? szTemp.GetBuffer(nLen + 1)
+		: sBuf;
 
 	MultiByteToWideChar(CP_ACP, 0, asFnName, -1, pszBuf, nLen+1);
 
 	DoLogFunction(pszBuf);
-
-	if (pszBuf != sBuf)
-		SafeFree(pszBuf);
 }
 
 CLogFunction::CLogFunction(const wchar_t* asFnName)
@@ -66,27 +69,31 @@ void CLogFunction::DoLogFunction(const wchar_t* asFnName)
 
 	if (!gpLogSize) return;
 
-	const int cchFnInfo = 120;
-	wchar_t cFnInfo[cchFnInfo];
-	wchar_t* pc = cFnInfo;
-	for (LONG l = 1; l < lLevel; l++)
-	{
-		*(pc++) = L' '; *(pc++) = L' '; *(pc++) = L' ';
-	}
+	const int cchFnInfo = std::size(mc_FnInfo);
+	wchar_t* pc = mc_FnInfo;
+	for (int32_t l = 3 * (lLevel - 1); l > 0; --l)
+		*(pc++) = L' ';
 	*pc = 0;
 
-	const int nPrefix = static_cast<int>(pc - cFnInfo);
+	const int nPrefix = static_cast<int>(pc - mc_FnInfo);
 	const int cchSpaceLeft = cchFnInfo - nPrefix;
 	const int nFnLen = lstrlen(asFnName);
+	const int nSufLen = lstrlen(kFnBegin);
+	_ASSERTE(lstrlen(kFnBegin) > lstrlen(kFnEnd));
+	_ASSERTE(cchSpaceLeft > 48);
 
-	if (nFnLen < cchSpaceLeft)
+	if ((nFnLen + nSufLen) < cchSpaceLeft)
 	{
 		lstrcpyn(pc, asFnName, cchSpaceLeft);
-		LogString(cFnInfo);
+		mn_FnSuffix = nPrefix + nFnLen;
+		pc += nFnLen;
+		lstrcpyn(pc, kFnBegin, cchSpaceLeft - nFnLen);
+		LogString(mc_FnInfo);
 	}
 	else
 	{
-		LogString(CEStr(cFnInfo, asFnName));
+		LogString(CEStr(mc_FnInfo, asFnName, kFnBegin));
+		lstrcpyn(pc, asFnName, cchSpaceLeft);
 	}
 }
 
@@ -95,4 +102,17 @@ CLogFunction::~CLogFunction()
 	if (!mb_Logged)
 		return;
 	--m_FnLevel;
+
+	if (!gpLogSize || !(mc_FnInfo[0])) return;
+
+	if (mn_FnSuffix)
+	{
+		const int cchSpaceLeft = static_cast<int>(std::size(mc_FnInfo) - mn_FnSuffix);
+		lstrcpyn(mc_FnInfo + mn_FnSuffix, kFnEnd, cchSpaceLeft);
+		LogString(mc_FnInfo);
+	}
+	else
+	{
+		LogString(CEStr(mc_FnInfo, kFnEnd));
+	}
 }
