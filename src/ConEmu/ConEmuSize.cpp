@@ -3411,7 +3411,7 @@ LRESULT CConEmuSize::OnMoving(LPRECT prcWnd /*= NULL*/, bool bWmMove /*= false*/
 	POINT ptCur = {};
 	bool drag_by_mouse = false;
 
-	if (!gpSet->isSnapToDesktopEdges && (m_TileMode != cwc_Current))
+	if (!gpSet->isSnapToDesktopEdges && (m_TileMode == cwc_Current))
 		goto wrap;
 
 	if (isIconic() || isZoomed() || isFullScreen())
