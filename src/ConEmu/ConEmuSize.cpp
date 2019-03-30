@@ -2558,9 +2558,11 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 		int wRgn = GetWindowRgn(ghWnd, hRgn);
 		int nRgn = (wRgn == SIMPLEREGION || wRgn == COMPLEXREGION) ? GetRgnBox(hRgn, &rcBox) : wRgn;
 		swprintf_c(szInfo,
-			nRgn ? L"GetWindowRgn(0x%08X) = <%u> {%i,%i}-{%i,%i}" : L"GetWindowRgn(0x%08X) = NULL",
+			nRgn
+				? L"WM_WINDOWPOSCHANGED.begin: GetWindowRgn(0x%08X) = <%u> {%i,%i}-{%i,%i}"
+				: L"WM_WINDOWPOSCHANGED.begin: GetWindowRgn(0x%08X) = NULL",
 			ghWnd, nRgn, LOGRECTCOORDS(rcBox));
-		if (!LogString(szInfo)) { DEBUGSTRRGN(szInfo); }
+		if (!mp_ConEmu->LogWindowPos(szInfo)) { DEBUGSTRRGN(szInfo); }
 		DeleteObject(hRgn);
 	}
 
@@ -2733,6 +2735,8 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 	}
 
+	mp_ConEmu->LogWindowPos(L"OnWindowPosChanging.begin");
+
 	bool zoomed = _bool(::IsZoomed(ghWnd));
 	bool iconic = _bool(::IsIconic(ghWnd));
 
@@ -2772,9 +2776,9 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		}
 	}
 
-	wchar_t szInfo[255] = L"";
+	wchar_t szInfo[280] = L"";
 	{
-		wcscpy_c(szInfo, L"OnWindowPosChanging:");
+		wcscpy_c(szInfo, L"OnWindowPosChanging.end:");
 		if (zoomed) wcscat_c(szInfo, L" (zoomed)");
 		if (iconic) wcscat_c(szInfo, L" (iconic)");
 		size_t cchLen = wcslen(szInfo);
@@ -3053,14 +3057,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 	size_t cchLen = wcslen(szInfo);
 	swprintf_c(szInfo + cchLen, countof(szInfo) - cchLen/*#SECURELEN*/, L" --> (F:x%08X X:%i Y:%i W:%i H:%i)", p->flags, p->x, p->y, p->cx, p->cy);
-	if (gpSet->isLogging(2))
-	{
-		LogString(szInfo);
-	}
-	else
-	{
-		DEBUGSTRSIZE(szInfo);
-	}
+	if (!LogString(szInfo)) { DEBUGSTRSIZE(szInfo); }
 
 	return result;
 }
