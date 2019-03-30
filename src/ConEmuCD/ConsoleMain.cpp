@@ -7270,7 +7270,7 @@ bool IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode /*= NULL*/)
 				if (gpLogSize)
 				{
 					char szInfo[128]; wchar_t szWide[128];
-					swprintf_c(szWide, L"ConsKeybLayout changed from %s to %s", gpSrv->szKeybLayout, szCurKeybLayout);
+					swprintf_c(szWide, L"ConsKeybLayout changed from '%s' to '%s'", gpSrv->szKeybLayout, szCurKeybLayout);
 					WideCharToMultiByte(CP_ACP,0,szWide,-1,szInfo,128,0,0);
 					LogFunction(szInfo);
 				}

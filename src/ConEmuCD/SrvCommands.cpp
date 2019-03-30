@@ -1146,34 +1146,34 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	switch (in.StartStop.nStarted)
 	{
 		case sst_ServerStart:
-			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(ServerStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(ServerStart,%i,PID=%u)", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_AltServerStart:
-			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(AltServerStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(AltServerStart,%i,PID=%u)", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_ServerStop:
-			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(ServerStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(ServerStop,%i,PID=%u)", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_AltServerStop:
-			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(AltServerStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(AltServerStop,%i,PID=%u)", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_ComspecStart:
-			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(ComspecStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(ComspecStart,%i,PID=%u)", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_ComspecStop:
-			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(ComspecStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(ComspecStop,%i,PID=%u)", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_AppStart:
-			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(AppStart,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(AppStart,%i,PID=%u)", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_AppStop:
-			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(AppStop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(AppStop,%i,PID=%u)", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_App16Start:
-			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(App16Start,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(App16Start,%i,PID=%u)", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		case sst_App16Stop:
-			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(App16Stop,%i,PID=%u)\n", in.hdr.nCreateTick, in.StartStop.dwPID);
+			swprintf_c(szDbg, L"SRV received CECMD_CMDSTARTSTOP(App16Stop,%i,PID=%u)", in.hdr.nCreateTick, in.StartStop.dwPID);
 			break;
 		default:
 			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )

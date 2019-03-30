@@ -7955,14 +7955,14 @@ bool CRealConsole::ReopenServerPipes()
 			ConProcess* i = &(m_Processes[ii]);
 			if (i->ProcessID == nSrvPID)
 			{
-				swprintf_c(szDbgInfo, L"==> Active server changed to '%s' PID=%u\n", i->Name, nSrvPID);
+				swprintf_c(szDbgInfo, L"==> Active server changed to '%s' PID=%u", i->Name, nSrvPID);
 				break;
 			}
 		}
 		SC.Unlock();
 
 		if (!*szDbgInfo)
-			swprintf_c(szDbgInfo, L"==> Active server changed to PID=%u\n", nSrvPID);
+			swprintf_c(szDbgInfo, L"==> Active server changed to PID=%u", nSrvPID);
 
 		if (isLogging()) { LogString(szDbgInfo); } else { DEBUGSTRALTSRV(szDbgInfo); }
 	}
