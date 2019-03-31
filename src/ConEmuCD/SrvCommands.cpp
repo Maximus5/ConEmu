@@ -2023,6 +2023,7 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			// Считать из консоли текущие атрибуты (построчно/поблочно)
 			// И там, где они совпадают с OldText - заменить на in.SetConColor.NewTextAttributes
+			// #Refill Pass current DynamicHeight into
 			RefillConsoleAttributes(csbi5, OldText, in.SetConColor.NewTextAttributes);
 		}
 

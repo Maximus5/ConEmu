@@ -14172,6 +14172,7 @@ void CRealConsole::UpdateTextColorSettings(bool ChangeTextAttr /*= TRUE*/, bool 
 	pIn->SetConColor.ChangePopupAttr = ChangePopupAttr;
 	pIn->SetConColor.NewPopupAttributes = MAKECONCOLOR(mn_PopTextColorIdx, mn_PopBackColorIdx);
 	pIn->SetConColor.ReFillConsole = !isFar();
+	// #Refill Pass current DynamicHeight into
 
 	if (isLogging())
 	{
