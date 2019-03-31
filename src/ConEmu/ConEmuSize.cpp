@@ -5343,7 +5343,7 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 
 		#ifdef _DEBUG
 		if ((rc.bottom - rc.top) > 1200)
-			rc.bottom == rc.bottom;
+			_ASSERTE((rc.bottom - rc.bottom) == 0);
 		#endif
 
 		SizeInfo::RequestDpi(DpiValue(dpiX, dpiY));
