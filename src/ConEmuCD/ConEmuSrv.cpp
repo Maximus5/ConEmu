@@ -2052,12 +2052,6 @@ void CmdOutputRestore(bool abSimpleMode)
 	LogFunction(L"CmdOutputRestore");
 
 	const bool reopen_allowed = isReopenHandleAllowed();
-	if (reopen_allowed)
-	{
-		// Nothing to do, in this mode we utilize conhost screen buffers
-		LogString("--- Skipped, reopen_allowed");
-		return;
-	}
 
 	if (!abSimpleMode)
 	{
