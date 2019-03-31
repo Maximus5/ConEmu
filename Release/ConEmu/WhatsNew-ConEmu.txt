@@ -20,6 +20,21 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2019.3.31
+* gh-1877: Option 'Snap to desktop edges' was broken (regression 663a216).
+* gh-1878: Enable log in `ConEmuC /c` when started from Far.exe.
+* gh-1838: Log start/stop command from Far.exe.
+* gh-1871: Add some logs to WindowPosChaning.
+* gh-1870: Add switch `/t:<temp dir>` to Setupper.
+  Ability to specify temparary directory for msi files.
+  So, you may specify on the ‘Update’ settings page special
+  installer command, e.g.: `"%1" /t:"C:\Temp\ConEmuFiles"` /p:%3,adm /qn`.
+  If the switch `/t:...` is not specified, Setupper uses:
+  * `TEMP` environment variable;
+  * `GetTempPath` API function if variable is not defined.
+* gh-1851: Restore contents after return from Alternative screen was broken.
+
+
 2019.3.26
 * gh-1849: SystemMenu does not appear if ConEmu is maximized.
 * gh-1838: Log times in CmdOutputStore/CmdOutputRestore.
