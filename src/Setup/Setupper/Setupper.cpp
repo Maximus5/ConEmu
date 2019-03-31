@@ -635,6 +635,27 @@ public:
 	};
 };
 
+void FillTempPath(const wchar_t* temp_path)
+{
+	if (!temp_path || !*temp_path)
+	{
+		gsTempFolder[0] = 0;
+	}
+	else if (*temp_path == L'"')
+	{
+		// quoted path, e.g.: /e:"C:\Temp Files"
+		lstrcpyn(gsTempFolder, temp_path + 1, countof(gsTempFolder));
+		const int len = lstrlen(gsTempFolder);
+		if (len > 0 && gsTempFolder[len - 1] == L'"')
+			gsTempFolder[len - 1] = L'\0';
+	}
+	else
+	{
+		// non-quoted path, e.g.: "/e:C:\Temp Files"
+		lstrcpyn(gsTempFolder, temp_path, countof(gsTempFolder));
+	}
+}
+
 #ifdef __GNUC__
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 #else
@@ -666,19 +687,35 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 			return exit_Cancelled;
 		}
 
-		if (*szArg == L'/')
+		// Special to stop processing of setupper switches
+		if (lstrcmp(szArg, L"--") == 0)
 		{
+			break;
+		}
+
+		if ((*szArg == L'/') || (*szArg == L'-'))
+		{
+			// [/e[:<extract path>]]
 			if (szArg[1] == L'e' || szArg[1] == L'E')
 			{
 				gbExtractOnly = true;
 				if (szArg[2] == L':' && szArg[3])
-				{
-					lstrcpyn(gsTempFolder, (szArg[3]==L'"') ? (szArg+4) : (szArg+3), countof(gsTempFolder));
-				}
+					FillTempPath(szArg + 3);
 				continue;
 			}
 
-		    if (memcmp(szArg, L"/p:x", 4*sizeof(*szArg)) == 0)
+			// [/t:<temp path>]
+			// temp path to extract msi files
+			if (szArg[1] == L't' || szArg[1] == L'T')
+			{
+				if (szArg[2] == L':' && szArg[3])
+					FillTempPath(szArg + 3);
+				continue;
+			}
+
+			// [/p:x86[,adm] | /p:x64[,adm]]
+			// this should be last setupper switch, the tail goes to msi!
+		    if (memcmp(szArg + 1, L"p:x", 3*sizeof(*szArg)) == 0)
 		    {
 		    	gbAlreadyAdmin = IsUserAdmin();
 				if (lstrcmpi(szArg+4, L"86") == 0)
@@ -699,17 +736,15 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 					nInstallVer = Ver64;
 					gbUseElevation = !gbAlreadyAdmin;
 				}
+				break;
 			}
-			else
-				pszCmdToken = pszCmdLineW;
-			break;
-		}
-		else if (*szArg == L'-')
-		{
+
+			// unknown switches goes to msi
 			pszCmdToken = pszCmdLineW;
 			break;
 		}
 
+		// Skip non-switches (e.g. executable name)
 		pszCmdLineW = pszCmdToken;
 	}
 
@@ -720,7 +755,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 
 	if (!gbExtractOnly)
 	{
-		// If pszCmdToken is not empty - set global var
+		// If there are msi args (pszCmdToken is not empty)
 		gbAutoMode = (pszCmdToken && *pszCmdToken);
 
 		wchar_t szInstallPath[MAX_PATH+32];

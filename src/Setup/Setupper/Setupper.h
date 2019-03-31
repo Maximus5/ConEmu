@@ -11,7 +11,7 @@ const wchar_t msgRunSetupAsAdmin[] = L"Run installer as administrator";
 
 const wchar_t msgUsageExample[] =
 	L"Usage:\n"
-	L"   ConEmuSetup [/p:x86[,adm] | /p:x64[,adm]] [<msi args>]\n"
+	L"   ConEmuSetup [/t:<temp path>] [/p:x86[,adm] | /p:x64[,adm]] [<msi args>]\n"
 	L"   ConEmuSetup [/e[:<extract path>]] [/p:x86 | /p:x64]\n"
 	L"Example (run x64 auto update as administrator):\n"
 	L"   ConEmuSetup /p:x64,adm /qr";
