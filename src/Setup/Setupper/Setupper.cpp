@@ -52,16 +52,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // Global Variables:
 HINSTANCE hInst;
 OSVERSIONINFO gOSVer = {sizeof(OSVERSIONINFO)};
-wchar_t gsTitle[128]; // L"ConEmu %s installer"
-wchar_t gsMessage[128];
-wchar_t gsFull[1024];
-wchar_t gsVer86[1024];
-wchar_t gsVer64[1024];
-wchar_t gsRunAsAdm[128];
-wchar_t gsTempFolder[MAX_PATH-24];
-wchar_t gsMsiFile[MAX_PATH];
-wchar_t gsCabFile[MAX_PATH];
-wchar_t gsExeFile[MAX_PATH];
+wchar_t gsTitle[128] = L""; // L"ConEmu %s installer"
+wchar_t gsMessage[128] = L"";
+wchar_t gsFull[1024] = L"";
+wchar_t gsVer86[1024] = L"";
+wchar_t gsVer64[1024] = L"";
+wchar_t gsRunAsAdm[128] = L"";
+wchar_t gsTempFolder[MAX_PATH-24] = L"";
+wchar_t gsMsiFile[MAX_PATH] = L"";
+wchar_t gsCabFile[MAX_PATH] = L"";
+wchar_t gsExeFile[MAX_PATH] = L"";
 bool gbExtractOnly = false;
 bool gbUseElevation = false;
 bool gbAlreadyAdmin = false;
