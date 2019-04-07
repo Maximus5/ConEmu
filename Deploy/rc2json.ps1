@@ -20,6 +20,7 @@ $conemu_hotkeys_file = Join-Path $path "..\src\ConEmu\HotkeyList.cpp"
 $conemu_status_file = Join-Path $path "..\src\ConEmu\Status.cpp"
 
 $target_l10n = ($path + "\..\Release\ConEmu\ConEmu.l10n")
+$target_yaml_path = ($path + "\..\src\l10n\")
 
 $conemu_page_automsg = "*This page was generated automatically from ConEmu sources*"
 $conemu_page_hotkeymark = "{% comment %} LIST OF HOTKEYS {% endcomment %}"
@@ -47,9 +48,10 @@ $script:dlg_not_found = $FALSE
 
 function AppendExistingLanguages()
 {
-  $json.languages | ? { $_.id -ne "en" } | % {
+  $script:json.languages | ? { $_.id -ne "en" } | % {
     $script:l10n += "    ,"
     $script:l10n += "    {`"id`": `"$($_.id)`", `"name`": `"$($_.name)`" }"
+    $script:yaml.Add($_.id, @{})
   }
 }
 
@@ -62,6 +64,9 @@ function InitializeJsonData()
   } else {
     $script:json = $NULL
   }
+
+  $script:yaml = @{}
+  $script:yaml.Add("en", @{})
 
   $script:l10n = @("{")
   $script:l10n += "  `"languages`": ["
@@ -475,7 +480,7 @@ function AppendExistingTranslations([string]$section,[string]$name,[string]$en_v
       }
 
       # Append existing translations"
-      $json.languages | ? { $_.id -ne "en" } | % {
+      $script:json.languages | ? { $_.id -ne "en" } | % {
         $depr = $depr_en
         $jlng = EscapeJson $jres."$($_.id)"
         # Perhaps resource was already deprecated?
@@ -492,6 +497,15 @@ function AppendExistingTranslations([string]$section,[string]$name,[string]$en_v
           $str = [System.String]::Join("",$jlng).Replace("`r","\r").Replace("`n","\n").Replace("`t","\t").Replace("`"","\`"")
           if ($str -ne "") {
             $script:l10n += (AddValue "$depr$($_.id)" $str)
+            if (-not $script:yaml.ContainsKey($_.id)) {
+              Write-Host -ForegroundColor Red "Language not found: $($_.id)"
+              $script:yaml.Add($_.id, @{})
+            }
+            if (-not $script:yaml[$_.id].ContainsKey($section)) {
+              Write-Host -ForegroundColor Red "Section not found: $($_.id):$section"
+              $script:yaml[$_.id].Add($section, @{})
+            }
+            $script:yaml[$_.id][$section].Add($name, $str)
           }
         }
       }
@@ -505,6 +519,9 @@ function WriteResources([string]$section,$ids,$hints)
   $script:l10n += "  ,"
   $script:l10n += "  `"$section`": {"
   $script:first = $TRUE
+  $script:json.languages | % {
+    $script:yaml[$_.id].Add($section, @{})
+  }
 
   $ids.Keys | sort | % {
     $id = $ids[$_]
@@ -514,6 +531,7 @@ function WriteResources([string]$section,$ids,$hints)
       if ($script:first) { $script:first = $FALSE } else { $script:l10n += "    ," }
       $script:l10n += "    `"$name`": {"
       $script:l10n += (AddValue "en" $value)
+      $script:yaml["en"][$section].Add($name, $value)
       if ($script:json -ne $NULL) {
         AppendExistingTranslations $section $name $value
       }
@@ -605,6 +623,25 @@ function InitDialogList()
 }
 
 
+function WriteL10nYaml()
+{
+  $script:yaml.Keys | % {
+    $yaml_file = Join-Path $target_yaml_path "ConEmu_$($_).yaml"
+    Write-Host "Updating: $yaml_file"
+    $lang = $script:yaml[$_]
+    $data = @()
+    $lang.Keys | % {
+      $section = $lang[$_]
+      $data += $_+":"  # cmnhints:
+      $section.Keys | % {
+        $data += "  "+$_+": `"" + $section[$_] + "`""
+      }
+    }
+    Set-Content $yaml_file $data -Encoding UTF8
+  }
+}
+
+
 function UpdateConEmuL10N()
 {
   # $script:json & $script:l10n
@@ -683,6 +720,8 @@ function UpdateConEmuL10N()
 
   Write-Host "Updating: $target_l10n"
   Set-Content $target_l10n $script:l10n -Encoding UTF8
+
+  WriteL10nYaml
 }
 
 # $loop is $TRUE when called from NewLngResourceLoop
