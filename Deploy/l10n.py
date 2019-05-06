@@ -12,6 +12,8 @@ class WorkMode(Enum):
     l10n_to_l10n = 'l10n-to-l10n'
     l10n_to_yaml = 'l10n-to-yaml'
     yaml_to_l10n = 'yaml-to-l10n'
+    tx_pull = 'tx-pull'
+    tx_push = 'tx-push'
 
     def __str__(self):
         return self.value
