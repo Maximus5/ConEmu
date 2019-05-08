@@ -1,10 +1,13 @@
 #!/usr/bin/python3
 import argparse
 import json
+import os
+import requests
 import sys
 
 from collections import OrderedDict
 from enum import Enum
+from requests.auth import HTTPBasicAuth
 
 
 class WorkMode(Enum):
@@ -191,25 +194,47 @@ class LangData:
         pass
 
 
+class Transifex:
+    def __init__(self):
+        self.tx_token = os.environ['TX_TOKEN']
+        # curl -k -L --user api:%TX_TOKEN% -X GET https://www.transifex.com/api/2/project/conemu-sources/resource/conemu-en-yaml--daily/translation/%1/?file=YAML_GENERIC -o %2
+        self.base_url = 'https://www.transifex.com/api/2/project/conemu-sources/resource/conemu-en-yaml--daily'
+        self.file_format = 'file=YAML_GENERIC'
+        return
+
+    def pull(self, lang_id):
+        result = requests.get(
+            '{}/translation/{}/?{}'.format(
+                self.base_url, lang_id, self.file_format),
+            auth=HTTPBasicAuth('api', self.tx_token))
+        print(result)
+        if result.status_code == 200:
+            print(result.text)
+        return
+
+
 def main(args):
     print("args", args)
     l10n = LangData()
-    if 'l10n' in args:
+    if not args.l10n is None:
         l10n.load_l10n_file(file_name=args.l10n)
-    if 'lng_l10n' in args and not args.lng_l10n is None:
+    if not args.lng_l10n is None:
         l10n.load_l10n_file(file_name=args.lng_l10n[1],
                             selected_lang=args.lng_l10n[0])
-    if 'mode' in args:
-        if args.mode == WorkMode.l10n_to_l10n:
-            # l10n.write_l10n(sys.stdout)
-            with open(args.l10n, 'w', encoding='utf-8-sig') as l10n_file:
-                l10n.write_l10n(l10n_file)
-            # for blk in l10n.blocks:
-            #     print(blk, ":")
-            #     for res in l10n.blocks[blk]:
-            #         print("  ", res, " = ", l10n.blocks[blk][res])
-        else:
-            raise Exception("Unsupported mode", args.mode)
+    if args.mode == WorkMode.l10n_to_l10n:
+        # l10n.write_l10n(sys.stdout)
+        with open(args.l10n, 'w', encoding='utf-8-sig') as l10n_file:
+            l10n.write_l10n(l10n_file)
+        # for blk in l10n.blocks:
+        #     print(blk, ":")
+        #     for res in l10n.blocks[blk]:
+        #         print("  ", res, " = ", l10n.blocks[blk][res])
+    elif args.mode == WorkMode.tx_pull:
+        tx = Transifex()
+        tx.pull('es')
+    else:
+        raise Exception("Unsupported mode", args.mode)
+
     return
 
 
