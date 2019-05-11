@@ -2,35 +2,31 @@
 import argparse
 import json
 import os
+import pprint
 import requests
 import sys
+
+import yaml  # PyYAML | PyYAML.Yandex
 
 from collections import OrderedDict
 from enum import Enum
 from requests.auth import HTTPBasicAuth
 
 
-class WorkMode(Enum):
-    rc_to_l10n = 'rc-to-l10n'
-    l10n_to_l10n = 'l10n-to-l10n'
-    l10n_to_yaml = 'l10n-to-yaml'
-    yaml_to_l10n = 'yaml-to-l10n'
-    tx_pull = 'tx-pull'
-    tx_push = 'tx-push'
-
-    def __str__(self):
-        return self.value
-
-
 def parse_args():
     parser = argparse.ArgumentParser()
-
-    parser.add_argument('--mode', default='rc-to-l10n',
-                        type=WorkMode, choices=list(WorkMode))
-    parser.add_argument('--l10n',
+    parser.add_argument('--l10n', required=True,
                         help='Filepath to ConEmu.l10n')
-    parser.add_argument('--lng-l10n', nargs=2,
+    parser.add_argument('--lng-l10n', nargs=2, action='append',
+                        metavar=('LNG', 'L10N'),
                         help='Append <LNG> data from <L10N> file')
+    parser.add_argument('--tx-pull', action='append', metavar='LNG',
+                        help='Pull <LNG> translation from Transifex; '
+                             'use <all> for all translations')
+    parser.add_argument('--write-l10n', action='store_true',
+                        help='Update contents in <L10N> file')
+    parser.add_argument('--write-yaml', metavar='DIR',
+                        help='Write yaml resources to <DIR> folder')
     return parser.parse_args()
 
 
@@ -50,16 +46,23 @@ class LangData:
         raise Exception("Unknown type={}".format(type(item)))
 
     @staticmethod
-    def _set_str(block, lng_id, item):
+    def _set_str(resource, lng_id, item):
         deprecated = lng_id.startswith('_')
-        id = lng_id[1:] if deprecated else lng_id
-        block[id] = {'item': LangData._get_str(item), 'deprecated': deprecated}
+        set_lng_id = lng_id[1:] if deprecated else lng_id
+        resource[set_lng_id] = {
+                'item': LangData._get_str(item), 'deprecated': deprecated}
 
     def _add_languages(self, new_langs, selected_lang=''):
         for lang in new_langs:
             if selected_lang == '' or selected_lang == lang['id']:
                 self.languages[lang['id']] = lang['name']
         return
+
+    def get_translation_lang_ids(self, tx_langs=[]):
+        if len(tx_langs) != 0 and not 'all' in tx_langs:
+            return list(filter(lambda x: x != 'en', tx_langs))
+        return list(filter(lambda x: x != 'en',
+                    map(lambda x: x, languages.keys())))
 
     def _add_block(self, name, data, selected_lang=''):
         our_block = self.blocks.setdefault(name, OrderedDict())
@@ -104,12 +107,36 @@ class LangData:
             print("Total resources count={}".format(total_count))
         return
 
+    def update_lang(self, lng_id, data):
+        if not lng_id in self.languages:
+            raise Exception("Unknown lang_id={}".format(lng_id))
+        for block_id in data:
+            if not block_id in self.blocks:
+                raise Exception("Block is not defined in the base", block_id)
+            our_block = self.blocks[block_id]
+            new_block = data[block_id]
+            for str_id in new_block:
+                if not str_id in our_block:
+                    print("warning: str_id={} is not defined "
+                          "in the base".format(str_id))
+                    continue
+                resource = our_block[str_id]
+                if not lng_id in resource:
+                    resource.setdefault(
+                        lng_id,
+                        {'item': new_block[str_id], 'deprecated': False})
+                elif resource[lng_id] != new_block[str_id]:
+                    resource[lng_id]['item'] = new_block[str_id]
+                    resource[lng_id]['deprecated'] = False
+        return
+
+    @staticmethod
+    def escape(line):
+        return line.replace('\\', '\\\\').replace('"', '\\"').replace(
+            '\n', '\\n').replace('\r', '\\r')
+
     def write_l10n(self, file):
         endl = '\n'
-
-        def escape(line):
-            return line.replace('\\', '\\\\').replace('"', '\\"').replace(
-                '\n', '\\n').replace('\r', '\\r')
 
         def write_languages(file, indent):
             def write_language(file, lng_id, name, indent):
@@ -121,6 +148,7 @@ class LangData:
 
             file.write(indent + '"languages": [' + endl)
             is_first = True
+
             for lng_id in self.languages:
                 if is_first:
                     is_first = False
@@ -191,7 +219,25 @@ class LangData:
         write_languages(file, '  ')
         write_blocks(file, '  ')
         file.write('}' + endl)
-        pass
+        return
+
+    def write_yaml(self, folder):
+        print('Writing yamls to {}'.format(folder))
+        endl = '\n'
+        for lng_id in self.languages:
+            file_path = os.path.join(folder, 'ConEmu_{}.yaml'.format(lng_id))
+            print('  {}'.format(file_path))
+            with open(file_path, 'w', encoding='utf-8-sig') as file:
+                for block_id in self.blocks:
+                    file.write(block_id + ':' + endl)
+                    block = self.blocks[block_id]
+                    for str_id in sorted(block, key=lambda s: s.lower()):
+                        resource = block[str_id]
+                        if lng_id in resource:
+                            file.write('  ' + str_id + ': "' +
+                                       self.escape(resource[lng_id]['item']) +
+                                       '"' + endl)
+        return
 
 
 class Transifex:
@@ -209,35 +255,38 @@ class Transifex:
             auth=HTTPBasicAuth('api', self.tx_token))
         print(result)
         if result.status_code == 200:
-            print(result.text)
-        return
+            print(result.encoding)
+            result.encoding = 'utf-8'
+            data = yaml.load(result.text)
+            # pp = pprint.PrettyPrinter(indent=2)
+            # pp.pprint(data)
+            return data
+        raise Exception("No Transifex data", result)
 
 
 def main(args):
     print("args", args)
     l10n = LangData()
-    if not args.l10n is None:
-        l10n.load_l10n_file(file_name=args.l10n)
+    l10n.load_l10n_file(file_name=args.l10n)
+
     if not args.lng_l10n is None:
-        l10n.load_l10n_file(file_name=args.lng_l10n[1],
-                            selected_lang=args.lng_l10n[0])
-    if args.mode == WorkMode.l10n_to_l10n:
-        # l10n.write_l10n(sys.stdout)
+        for lng_pair in args.lng_l10n:
+            l10n.load_l10n_file(selected_lang=lng_pair[0],
+                                file_name=lng_pair[1])
+    if not args.tx_pull is None:
+        tx = Transifex()
+        for lng_id in l10n.get_translation_lang_ids(args.tx_pull):
+            l10n.update_lang(lng_id, tx.pull(lng_id))
+    if args.write_l10n:
         with open(args.l10n, 'w', encoding='utf-8-sig') as l10n_file:
             l10n.write_l10n(l10n_file)
-        # for blk in l10n.blocks:
-        #     print(blk, ":")
-        #     for res in l10n.blocks[blk]:
-        #         print("  ", res, " = ", l10n.blocks[blk][res])
-    elif args.mode == WorkMode.tx_pull:
-        tx = Transifex()
-        tx.pull('es')
-    else:
-        raise Exception("Unsupported mode", args.mode)
-
+    if args.write_yaml:
+        l10n.write_yaml(args.write_yaml)
     return
 
 
 if __name__ == "__main__":
     args = parse_args()
+    print(args)
     main(args)
+
