@@ -89,7 +89,7 @@ class LangData:
         if len(tx_langs) != 0 and not 'all' in tx_langs:
             return list(filter(lambda x: x != 'en', tx_langs))
         return list(filter(lambda x: x != 'en',
-                    map(lambda x: x, languages.keys())))
+                    map(lambda x: x, self.languages.keys())))
 
     def _add_block(self, name, data, selected_lang=''):
         our_block = self.blocks.setdefault(name, OrderedDict())
