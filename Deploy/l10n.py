@@ -35,6 +35,7 @@ def parse_args():
                         help='Update contents in <L10N> file')
     parser.add_argument('--write-yaml', metavar='DIR',
                         help='Write yaml resources to <DIR> folder')
+    parser.add_argument('-v', '--verbose', action='store_true')
     return parser.parse_args()
 
 
@@ -133,7 +134,7 @@ class LangData:
             print("Total resources count={}".format(total_count))
         return
 
-    def update_lang(self, lng_id, data):
+    def update_lang(self, lng_id, data, verbose):
         if not lng_id in self.languages:
             raise Exception("Unknown lang_id={}".format(lng_id))
         for block_id in data:
@@ -146,13 +147,21 @@ class LangData:
                     print("warning: str_id={} is not defined "
                           "in the base".format(str_id))
                     continue
+                if new_block[str_id].strip() == '':
+                    continue
                 resource = our_block[str_id]
+                new_str = new_block[str_id]
                 if not lng_id in resource:
+                    if verbose:
+                        print('  new string[{}]: {}'.format(lng_id, new_str))
                     resource.setdefault(
                         lng_id,
-                        {'item': new_block[str_id], 'deprecated': False})
-                elif resource[lng_id] != new_block[str_id]:
-                    resource[lng_id]['item'] = new_block[str_id]
+                        {'item': new_str, 'deprecated': False})
+                elif resource[lng_id]['item'] != new_str:
+                    if verbose:
+                        print('  changed string[{}]: "{}" -> "{}"'.format(
+                            lng_id, resource[lng_id]['item'], new_str))
+                    resource[lng_id]['item'] = new_str
                     resource[lng_id]['deprecated'] = False
         return
 
@@ -289,6 +298,17 @@ class Transifex:
             return data
         raise Exception("No Transifex data", result)
 
+    def push_source_language(self, json_data):
+        result = requests.put(
+            '{}/content/{}/'.format(self.base_url, lang_id),
+            auth=HTTPBasicAuth('api', self.tx_token),
+            json=json_data)
+        print(result)
+        if result.status_code == 200:
+            return data
+        raise Exception("No Transifex data", result)
+
+
 
 def main(args):
     print("args", args)
@@ -305,7 +325,7 @@ def main(args):
     if not args.tx_pull is None:
         tx = Transifex()
         for lng_id in l10n.get_translation_lang_ids(args.tx_pull):
-            l10n.update_lang(lng_id, tx.pull(lng_id))
+            l10n.update_lang(lng_id, tx.pull(lng_id), args.verbose)
     if args.write_l10n:
         with open(args.l10n, 'w', encoding='utf-8-sig') as l10n_file:
             l10n.write_l10n(l10n_file)
