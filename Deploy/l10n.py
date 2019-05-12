@@ -284,6 +284,7 @@ class Transifex:
         return
 
     def pull(self, lang_id):
+        print('Pulling language {} from Transifex'.format(lang_id))
         result = requests.get(
             '{}/translation/{}/?{}'.format(
                 self.base_url, lang_id, self.file_format),
