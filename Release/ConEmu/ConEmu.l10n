@@ -9,6 +9,8 @@
     {"id": "de", "name": "Deutsch" }
     ,
     {"id": "ja", "name": "日本語" }
+    ,
+    {"id": "es", "name": "Español" }
   ]
   ,
   "cmnhints": {
@@ -18,6 +20,7 @@
       "zh": "你可以改变控制台本体的字体外观和大小。需要重启控制台。",
       "de": "Schriftart und -größe können für die tatsächliche Konsole geändert. Benötigt einen Neustart der Konsole.",
       "ja": "リアルコンソールでフォントのフェイスとサイズを変更することができます。コンソールの再起動が必要です。",
+      "es": "Puedes cambiar el tipo y tamaño de letra en el terminal Real. Se necesita reiniciar el terminal.",
       "id": 1608 }
     ,
     "bReloadSettings": {
@@ -26,6 +29,7 @@
       "de": "Lädt alle Einstellungen erneut aus der Registry/XML",
       "ja": "レジストリ/ xmlからすべての設定を再読込みする",
       "ru": "Перезагрузить все настройки из реестра/xml",
+      "es": "Recargar las opciones desde el registro/XML",
       "id": 1596 }
     ,
     "bResetSettings": {
@@ -34,6 +38,7 @@
       "de": "Setzt alle Einstellungen auf Vorgabewerte zurück",
       "ja": "すべての設定をデフォルトにリセットする",
       "ru": "Сбросить к настройкам по умолчанию",
+      "es": "Reiniciar las opciones a sus valores por defecto",
       "id": 1595 }
     ,
     "bSaveSettings": {
@@ -47,6 +52,8 @@
             , "Shiftを押したときにダイアログを閉じない" ],
       "ru": [ "Сохранить настройки в реестре/xml\r\n"
             , "Не закрывать диалог, если нажата Shift" ],
+      "es": [ "Guardar la configuración en el registro/xml\r\n"
+            , "No cerrar el diálogo si está pulsado Shift" ],
       "id": 1610 }
     ,
     "cbActivateSplitMouseOver": {
@@ -60,6 +67,8 @@
             , "3番目 -  'Active window tracking' システム設定" ],
       "ru": [ "Когда несколько панелей (разделений) видны одновременно, активируйте (поместите фокус в) консоль с наведением мыши,\r\n"
             , "3rd-state - соответствует системным настройкам ‘Активное отслеживание окон’" ],
+      "es": [ "Cuando hay varios paneles (divisiones) visibles activar (poner foco) pasando el ratón encima,\r\n"
+            , "3er-estado - igual que las opciones de 'Seguimiento de ventana activa'" ],
       "id": 2601 }
     ,
     "cbAdminShield": {
@@ -68,6 +77,7 @@
       "de": "Wenn ausgewählt, wird ein 'Schild'-Symbol in Reitern gezeigt, die 'Als Administrator' gestartet wurden",
       "ja": "チェックすると、'Shield'アイコンがタブに表示され、 '管理者' として開始されます",
       "ru": "Когда это отмечено - на вкладках будет отображаться значок ‘Щит’, запускаемый ‘как администратор’.",
+      "es": "Cuando se activa - se mostrará el icono del 'Escudo' en las pestañas que se inician 'Como administrador'",
       "id": 2109 }
     ,
     "cbAdminSuffix": {
@@ -81,6 +91,8 @@
             , "'%a' varで挿入場所を指定できます。指定がない場合タブの最後に接尾辞が付きます。" ],
       "ru": [ "Когда отмечено - указанный суффикс будет добавляться в заголовки вкладок и запускается ‘Как администратор’.\r\n"
             , "Вы можете выбрать место вставки с помощью переменной ‘%a’, в противном случае суффикс будет в конце вкладки." ],
+      "es": [ "Cuando se activa - el sufijo especificado se añadirá a los títulos de las pestañas, que comiencen por ‘Como administrador’.\r\n"
+            , "Puedes elegir el punto de inserción con '%a', en otro caso se añadirá al final de la pestaña." ],
       "id": 2110 }
     ,
     "cbAlwaysOnTop": {
@@ -89,6 +101,7 @@
       "de": "Zeigt das ConEmu-Fenster über allen Fenstern, die nicht als 'zuoberst' festgelegt wurden. Das Fenster behält seine oberste Position auch wenn es inaktiv ist",
       "ja": "ConEmuウィンドウを 常に手前 に表示します。ウィンドウは、非アクティブ化されても最前面に居座ります",
       "ru": "Размещает окно ConEmu над всеми окнами, не являющимися topmost. Окно сохраняет свое положение topmost, даже если оно деактивировано",
+      "es": "Coloca la ventana de ConEmu sobre todas las demás. La ventana mantiene su posición incluso cuando se desactiva",
       "id": 1572 }
     ,
     "cbAlwaysShowTrayIcon": {
@@ -97,6 +110,7 @@
       "de": "Zeigt das ConEmu-Symbol immer im Taskleisten-Infobereich",
       "ja": "ConEmuアイコンをタスクバーステータスエリア（TSA）に常に表示する",
       "ru": "Всегда показывать значок ConEmu на панели задач (TSA))",
+      "es": "Mostrar siempre el icono de ConEmu en el área de notificación",
       "id": 1736 }
     ,
     "cbAnsiLog": {
@@ -115,6 +129,9 @@
       "ja": [ "コンソール出力をテキストファイルに出力する\r\n"
             , "ConEmu-YYYY-MM-DD-pNNNN.log\r\n"
             , "（新しいコンソールでのみ有効）" ],
+      "es": [ "Registrar salida del terminar en ficheros de texto\r\n"
+            , "ConEmu-YYYY-MM-DD-pNNNN.log\r\n"
+            , "(sólo afecta a terminales nuevos)" ],
       "id": 2679 }
     ,
     "cbAnsiLogCodes": {
@@ -124,6 +141,8 @@
             , "(влияет только на новые консоли)" ],
       "zh": [ "记录ANSI序列并将其写入控制台中\r\n"
             , "（仅对新控制台有效）" ],
+      "es": [ "Escribir secuencias ANSI al log del terminal\r\n"
+            , "(afecta sólo a terminales nuevos)" ],
       "id": 3105 }
     ,
     "cbAutoRegFonts": {
@@ -137,6 +156,8 @@
             , "Es werden *.ttf-, *.otf- und *.bdf-Dateien unterstützt." ],
       "ja": [ "ConEmuフォルダにあるConEmuフォントで使用する。\r\n"
             , "*.ttf, *.otf and *.bdf ファイルがサポートされています。" ],
+      "es": [ "Usar en tipos de letra de ConEmu, en la carpeta de ConEmu.\r\n"
+            , "*.ttf, *.otf y *.bdf files están soportados." ],
       "id": 1550 }
     ,
     "cbBgAllowPlugin": {
@@ -150,6 +171,8 @@
             , "3番目 - ビューア/エディタで描画しない" ],
       "ru": [ "Включить фоновые плагины Far (например, Panel Colorer),\r\n"
             , "3rd-state - не рисовать в средстве просмотра/редакторе" ],
+      "es": [ "Activar plugins de fondo de Far (ej.: Panel Colorer),\r\n"
+            , "3er-estado - no dibujar en visor/editor" ],
       "id": 1734 }
     ,
     "cbBgImage": {
@@ -168,6 +191,9 @@
       "ru": [ "Показывать фоновое изображение вместо стандартного\r\n"
             , "цвета #0 и #1 (черный и синий)\r\n"
             , "3rd-state - не рисовать в средстве просмотра/редакторе" ],
+      "es": [ "Mostrar imagen de fondo en vez de los\r\n"
+            , "colores estándar #0 y #1 (Negro y Azul)\r\n"
+            , "3er-estado - no dibujar en visor/editor" ],
       "id": 1699 }
     ,
     "cbBold": {
@@ -176,6 +202,7 @@
       "zh": "主字体加粗",
       "de": "Hauptschrift fett",
       "ja": "メインフォントの太さ",
+      "es": "Peso del tipo de letra principal",
       "id": 2278 }
     ,
     "cbClinkWebPage": {
@@ -184,6 +211,7 @@
       "de": "Öffnet clinks Website https://mridgers.github.io/clink/ im Browser",
       "ja": "あなたのブラウザで clinkのウェブページ https://mridgers.github.io/clink/ を開きます",
       "ru": "Открыть веб-страницу ‘Clink’ https://mridgers.github.io/clink/ в браузере",
+      "es": "Abrir página web de clink https://mridgers.github.io/clink/ en el navegador",
       "id": 2614 }
     ,
     "cbCloseConsoleConfirm": {
@@ -192,6 +220,7 @@
       "de": "Zeigt Rückfragedialog vor dem Schließen eines Reiters oder einer Seite (Reiter 'Schließen' Menüeintrag)",
       "ja": "タブまたはページを閉じる前に確認を表示する（[閉じる]メニュー項目のタブ）",
       "ru": "Показать подтверждение перед закрытием вкладки или страницы (пункт меню ‘Закрыть’)",
+      "es": "Mostrar confirmación antes de cerrar una pestaña o página (opción 'Cerrar' del menú de pestaña)",
       "id": 2179 }
     ,
     "cbCloseEditViewConfirm": {
@@ -200,6 +229,7 @@
       "de": "Zeigt Rückfragedialog vor dem Schließen eines Far-Manager-Editor- oder Betrachter-Reiters",
       "ja": "Far Manager エディタまたはビューアタブを閉じる前に確認を表示する",
       "ru": "Показать подтверждение перед закрытием Far Manager или вкладки просмотра",
+      "es": "Pedir confirmación antes de cerrar la pestaña de editor o visor de Far Manager",
       "id": 2517 }
     ,
     "cbCloseWindowConfirm": {
@@ -208,6 +238,7 @@
       "de": "Zeigt Rückfragedialog vor Schließen des ConEmu-Fensters (X anklicken)",
       "ja": "ConEmuウィンドウを閉じる前に確認を表示する (cross clicking)",
       "ru": "Показать подтверждение перед закрытием окна ConEmu (щелчок по крестику)",
+      "es": "Mostrar confirmación antes de cerrar ConEmu (pulsando en la X)",
       "id": 2757 }
     ,
     "cbCmdTaskbarCommands": {
@@ -216,6 +247,7 @@
       "zh": "在任务栏快速跳转列表中显示用于运行终端的命令（通过使用历史）",
       "de": "Zeigt verwendete Taskleisten-Sprungbefehle um Konsolen zu starten (Verlauf)",
       "ja": "タスクバーで表示するコンソールを実行するために使用するジャンプコマンド(履歴)",
+      "es": "Mostrar en la Lista de Tareas los comandos para iniciar terminales (histórico)",
       "id": 2133 }
     ,
     "cbCmdTaskbarTasks": {
@@ -224,6 +256,7 @@
       "zh": "在任务栏快速跳转列表中显示符合条件的任务（通过检查任务属性）",
       "de": "Zeigt passende Aufgaben in den Taskleisten-Sprungbefehlen (Prüfe Aufgabeneigenschaften)",
       "ja": "タスクバーのジャンプリストにタスクを表示する(タスクのプロパティをチェック)",
+      "es": "Mostrar en la lista de la Barra de Tareas las tareas correspondientes (comprobar las propiedades de las tareas)",
       "id": 2132 }
     ,
     "cbCmdTaskbarUpdate": {
@@ -232,6 +265,7 @@
       "zh": "别忘了更新快速跳转列表，尤其是当“自动更新”未选中时",
       "de": "Vergiss nicht Sprungbefehle zu aktualisieren, besonders wenn 'Autoupdate' abgewählt ist",
       "ja": "ジャンプリストを更新することを忘れないでください.特に, '自動更新' がチェックされていない場合",
+      "es": "No olvides actualizar la Lista de Tareas, especialmente si no está activado 'Autoactualizar'",
       "id": 2320 }
     ,
     "cbComspecTest": {
@@ -240,6 +274,7 @@
       "de": "Zeigt 'berechneten' ComSpec-Pfad",
       "ja": "'計算された' ComSpecパスを表示する",
       "ru": "Показать ‘рассчитанный’ путь ComSpec",
+      "es": "Mostrar la ruta ComSpec 'calculada'",
       "id": 2162 }
     ,
     "cbComspecUpdateEnv": {
@@ -248,6 +283,7 @@
       "de": "ConEmu darf die Variable %ComSpec% auf den ausgewählten Befehlsprozesser ändern",
       "ja": "ConEmuは %ComSpec% 変数を選択されたコマンドプロセッサに更新することがあります",
       "ru": "ConEmu может обновить переменную %ComSpec% для выбранного командного процессора",
+      "es": "ConEmu puede actualizar la variable %ComSpec% para el intérprete de comandos seleccionado",
       "id": 2160 }
     ,
     "cbConfirmCloseRunning": {
@@ -256,6 +292,7 @@
       "de": "Wenn es in der Konsole zwei oder mehr Benutzerprozesse gibt",
       "ja": "コンソールに2つ以上のユーザープロセスがある場合",
       "ru": "Если в консоли два или более пользовательских процесса",
+      "es": "Si hay dos o más procesos de usuario en el terminal",
       "id": 2758 }
     ,
     "cbConsoleExceptionHandler": {
@@ -269,6 +306,8 @@
             , "しかし,デバッグの目的で有効にすることができます" ],
       "ru": [ "По умолчанию ConEmu не выполняет SetUnhandledExceptionFilter на альтернативных серверах (Far, Telnet и т.д.),\r\n"
             , "но может быть включено для целей отладки" ],
+      "es": [ "Por defecto ConEmu no hace SetUnhandledExceptionFilter en servidores alternativos (Far, Telnet, etc.)\r\n"
+            , "Pero se puede activar por motivos de depuración" ],
       "id": 2622 }
     ,
     "cbCTSAutoCopy": {
@@ -277,6 +316,7 @@
       "de": "Kopiert sofort beim Loslassen der linken Maustaste (bei Auswahl mit Maus)",
       "ja": "マウスの左ボタンですぐにコピーする(マウスで選択する場合)",
       "ru": "Копировать сразу при отпускании левой кнопки мыши (при выборе мышью)",
+      "es": "Copiar inmediatamente al soltar el botón izquierdo del ratón (cuando se selecciona con ratón)",
       "id": 2340 }
     ,
     "cbCTSBashMargin": {
@@ -285,6 +325,7 @@
       "de": "Bash hinterlässt beim automatischen Zeilenumbruch ein Leerzeichen an der rechten Kante der Konsole. Diese Option überspringt dieses, wenn in die Zwischenablage kopiert wird",
       "ja": "行を折り返すときにBashはコンソールの右端に1つのスペース文字を残し,クリップボードにコピーするときはこれらのスペースをスキップします",
       "ru": "Bash оставляет один пробел на правом краю консоли при переносе строк, пропустить эти пробелы при копировании в буфер обмена",
+      "es": "Bash deja un espacio en el lateral derecho del terminal cuando corta las lineas, eliminar estos espacios cuando se copie al portapapeles",
       "id": 2359 }
     ,
     "cbCTSBlockSelection": {
@@ -293,6 +334,7 @@
       "de": "Aktiviert rechteckige Auswahl (wie die Standard-Windows-Konsole)",
       "ja": "ブロック選択を有効にする(標準のWindowsコンソールなど)",
       "ru": "Включить прямоугольное выделение (как стандартная консоль Windows)",
+      "es": "Activar selección rectangular (como en el terminal estándar de Windows)",
       "id": 1635 }
     ,
     "cbCTSClickPromptPosition": {
@@ -301,6 +343,7 @@
       "de": "3.-Zustand bedeutet: 'Versuche herauszufinden, ob die Konsole sich in ReadConsole befindet', falls dies mit der Bash verwendet werden soll: 'Ein' auswählen (Verwendet dritten Zustand nicht)",
       "ja": "3rd-state 手段とは,コンソールがReadConsoleにあるかどうかを検出しようとすることです.これをbashで使用する場合は,チェックボックスを 'On' にします(third stateは使用しないでください).",
       "ru": "3rd-state означает ‘попытаться определить, находится ли консоль в ReadConsole’, если вы хотите использовать это с bash - установите флажок ‘Вкл’ (не используйте 3rd-state)",
+      "es": "3er-estado indica que 'intenta detectar si el terminal está en modo ReadConsole', si lo quieres usar con bash - activa la casilla (no uses el 3er-estado)",
       "id": 2344 }
     ,
     "cbCTSDeleteLeftWord": {
@@ -314,6 +357,8 @@
             , "3rd-state means ‘try to detect if console is in ReadConsole’, if you want to use this with bash - turn checkbox to ‘On’ (don't use third state)" ],
       "ru": [ "Удалить слово слева от курсора (игнорируется в Far),\r\n"
             , "3rd-state означает ‘попытаться определить, находится ли консоль в ReadConsole’, если вы хотите использовать это с bash - установите флажок ‘On’ (не используйте 3rd-state)" ],
+      "es": [ "Borrar la palabra a la izquierda del cursor (sé ignora en Far),\r\n"
+            , "3er-estado indica 'intentar detectar si el terminal está en modo ReadConsole', si quieres usar esto con bash - activa la casilla (no uses el 3er-estado)" ],
       "id": 2526 }
     ,
     "cbCTSDetectLineEnd": {
@@ -322,6 +367,7 @@
       "de": "Versucht umgebrochene Texte als eine Zeile zu kopieren (Textauswahl)",
       "ja": "可能であれば自動改行されたテキストを1行にコピーする(テキスト選択)",
       "ru": "Попробовать скопировать завернутый текст одной строкой, если это возможно (выделение текста)",
+      "es": "Intentar copiar textos multilínea como una sola línea cuando sea posible (selección de texto)",
       "id": 2358 }
     ,
     "cbCTSEndCopyBefore": {
@@ -330,6 +376,7 @@
       "de": "Kopiert Auswahl in die Zwischenablage vor dem Zurücksetzen des Auswahlbereichs",
       "ja": "選択領域をリセットする前に選択をクリップボードにコピーする",
       "ru": "Скопировать выделенную область в буфер обмена до сброса выделенной области",
+      "es": "Copiar la selección al portapapeles antes de reiniciar la zona seleccionada",
       "id": 2579 }
     ,
     "cbCTSEndOnKeyPress": {
@@ -343,6 +390,8 @@
             , "‘On’の場合 - 任意のキーで選択を終了する (矢印キー, PgUp, End など)" ],
       "ru": [ "Когда ‘Off’ - только символы заканчивают выделение\r\n"
             , "Когда ‘On’ - любая клавиша заканчивает выбор (стрелки, PgUp, End и т.д.)" ],
+      "es": [ "Cuando está ‘inactiva’ - sólo los caracteres finalizan la selección\r\n"
+            , "Cuando está ‘activa’ - cualquier tecla finaliza la selección (Flechas, RePag, Fin, etc.)" ],
       "id": 2436 }
     ,
     "cbCTSEndOnTyping": {
@@ -351,6 +400,7 @@
       "de": "Setzt Auswahlbereich bei Tastendruck zurück",
       "ja": "キーを押したときに選択範囲をリセットする",
       "ru": "Сбросить область выделения при нажатии клавиш",
+      "es": "Reiniciar la zona seleccionada al pulsar una tecla",
       "id": 2412 }
     ,
     "cbCTSEraseBeforeReset": {
@@ -366,6 +416,9 @@
       "ru": [ "Попробуйте стереть выбранный регион, если это возможно,\r\n"
             , "отправив последовательность Del/BS на консоль.\r\n"
             , "Реализуйте ‘обычные’ горячие клавиши Ctrl+X, Shift+Del, BS и Del." ],
+      "es": [ "Intentar el borrado de la zona seleccionada si es posible\r\n"
+            , "enviando la secuencia Supr/Retroceso al terminal.\r\n"
+            , "Implementar las combinaciones Ctrl+X, Shift+Supr, Retroceso and Supr." ],
       "id": 3030 }
     ,
     "cbCTSFreezeBeforeSelect": {
@@ -374,6 +427,7 @@
       "de": "Friert Konsoleninhalte vor der Auswahl ein (kann kurze Verzögerung verursachen)",
       "ja": "選択前にコンソールの内容をフリーズする(小さなラグを引き起こす可能性がある)",
       "ru": "Заморозить содержимое консоли перед выделением (может вызвать небольшие задержки)",
+      "es": "Inmovilizar los contenidos de la terminal antes de seleccionar (puede causar un pequeño retardo)",
       "id": 2257 }
     ,
     "cbCTSIBeam": {
@@ -382,6 +436,7 @@
       "de": "Zeigt IBeam-(Textauswahl)-Zeiger wenn verfügbar und durch Einstellungen und Tastenmodifizierer erlaubt",
       "ja": "設定およびモデファイヤキーで使用可能な時 Iビーム(テキスト選択)カーソルを表示する",
       "ru": "Показать курсор IBeam (выделение текста), когда он доступен и разрешен настройками и модификаторами клавиш",
+      "es": "Mostrar el cursor IBeam (selección de texto) cuando esté disponible y permitido por la configuración y modificadores",
       "id": 2603 }
     ,
     "cbCTSResetOnRelease": {
@@ -390,6 +445,7 @@
       "de": "Setzt Auswahlbereich beim Loslassen der linken Maustaste zurück (bei Auswahl mit Maus)",
       "ja": "マウスの左ボタンで選択領域をリセット(マウスで選択した場合)",
       "ru": "Сбросить область выбора отпусканием левой кнопки мыши (при выборе с помощью мыши)",
+      "es": "Reiniciar la zona seleccionada cuando se levante el botón izquierdo del ratón (cuando se selecciona con ratón)",
       "id": 3029 }
     ,
     "cbCTSShiftArrowStartSel": {
@@ -398,6 +454,7 @@
       "de": "Beginnt Textauswahl mit Umslt+Links/Rechts/Pos1/Ende oder Blockauswahl mit Umslt+Hoch/Runter",
       "ja": "Shift+Left/Right/Home/End でテキスト選択を開始するか,Shift+Up/Downでブロック選択を開始する",
       "ru": "Начать выделение текста с Shift+Left/Right/Home/End или выделение блока с Shift+Up/Down",
+      "es": "Iniciar la selección de texto con Shift+Izquierda/Derecha/Inicio/Fin o selección de bloque con Shift+Arriba/Abajo",
       "id": 2553 }
     ,
     "cbCTSTextSelection": {
@@ -406,6 +463,7 @@
       "de": "Aktiviert Streaming-Auswahl (wie GUI-Texteditoren)",
       "ja": "ストリーミング選択を有効にする(GUIテキストエディタのように)",
       "ru": "Включить выбор потоков (как GUI текстовые редакторы)",
+      "es": "Activar selección en línea (como editores GUI)",
       "id": 1630 }
     ,
     "cbCTSTrimTrailing": {
@@ -414,6 +472,7 @@
       "de": "3.-Zustand bedeutet 'Nur für Textauswahl'",
       "ja": "3番目は 'テキスト選択のみ' を意味します",
       "ru": "3-е состояние означает ‘Только для выделения текста’",
+      "es": "3er-estado indica 'Sólo para selección de texto'",
       "id": 2365 }
     ,
     "cbCursorBlink": {
@@ -427,6 +486,8 @@
             , "標準的なカーソルの点滅速度で." ],
       "ru": [ "Когда \"Мигание\" включено - курсор мигает\r\n"
             , "со стандартной частотой мигания курсора." ],
+      "es": [ "Cuando está activo \"Parpadear\" - el cursor parpadea\r\n"
+            , "con la velocidad de parpadeo estándar." ],
       "id": 1522 }
     ,
     "cbCursorColor": {
@@ -445,6 +506,9 @@
       "ru": [ "ON - курсор имитирует поведение консоли (сортировка цветов)\r\n"
             , "OFF - белый курсор (цвет#15) на темном фоне\r\n"
             , "и черный (цвет#0) на светлом фоне; этот флажок также влияет на внешний вид курсоров ‘Блок’" ],
+      "es": [ "ON - cursor emula comportamiento del terminal (inversión de colores)\r\n"
+            , "OFF - cursor es blanco (color#15) en fondos oscuros,\r\n"
+            , "y negro (color#0) en fondos claros; esta opción también afecta la apariencia de los cursores 'Bloque'" ],
       "id": 1210 }
     ,
     "cbCursorIgnoreSize": {
@@ -453,6 +517,7 @@
       "de": "Ignoriert Schreibmarkengröße in tatsächlicher Konsole, Schreibmarke wird immer in angegebener Größe gezeigt",
       "ja": "実際のコンソールでカーソルサイズを無視し,常に指定されたサイズのカーソルを表示する",
       "ru": "Игнорировать размер курсора в реальной консоли, всегда показывать курсор с заданным размером",
+      "es": "Ignorar tamaño del cursor en el terminal real, mostrar siempre el cursor con el tamaño especificado",
       "id": 1655 }
     ,
     "cbDebugSteps": {
@@ -466,6 +531,8 @@
             , "例えば.プラグインの通信手順." ],
       "ru": [ "Показать некоторую отладочную информацию в заголовке ConEmu\r\n"
             , "Например. Шаги плагина связи." ],
+      "es": [ "Mostrar información de depuración en la barra de título de ConEmu\r\n"
+            , "Ej.: pasos de comunicación con plugin." ],
       "id": 1551 }
     ,
     "cbDefTermAgressive": {
@@ -474,6 +541,7 @@
       "de": "Wenn aktiviert, wird keine ConEmu-Instanz benötigt um neue Prozesse anzuzapfen. Ein bereits angezapfter Prozess, z.B. 'Explorer.exe', wird genügen.",
       "ja": "有効にすると,新しいプロセスをフックするためにConEmuインスタンスを実行しません.既にフックされた単一の 'Explorer.exe'プロセスを使います.",
       "ru": "Если включено, запуск экземпляра ConEmu не потребуется для перехвата новых процессов. Одиного перехваченного процесса, например ‘Explorer.exe’ будет достаточно.",
+      "es": "Si está activo, no se requiere ejecutar la instancia de ConEmu para anclar nuevos procesos. Será suficiente un proceso ya anclado, ej.: 'Explorer.exe'",
       "id": 2684 }
     ,
     "cbDisableAllFlashing": {
@@ -487,6 +555,8 @@
             , "3番目 - 短期間の点滅は許可" ],
       "ru": [ "Отключить все мигания (из консолей) на панели задач Windows.\r\n"
             , "3rd-state - разрешить короткое мигание." ],
+      "es": [ "Desactivar los parpadeos (de los terminales) en la barra de tareas de Windows.\r\n"
+            , "3er-estado - permitir pequeño parpadeo." ],
       "id": 1719 }
     ,
     "cbDisableFarFlashing": {
@@ -500,6 +570,8 @@
             , "3番目 - 短期間の点滅は許可" ],
       "ru": [ "Отключить мигание (из Far Manager) на панели задач Windows.\r\n"
             , "3rd-state - разрешить короткое мигание." ],
+      "es": [ "Desactivar parpadeo (de Far Manager) en la barra de tareas de Windows.\r\n"
+            , "3er-estado - permitir parpadeo corto." ],
       "id": 1718 }
     ,
     "cbDnDCopy": {
@@ -518,6 +590,9 @@
       "ru": [ "Принудительное действие \"Копировать по умолчанию\",\r\n"
             , "Вы можете использовать Ctrl, Shift или Alt\r\n"
             , "во время перетаскивания, чтобы изменить действие" ],
+      "es": [ "Forzar la acción \"Copiar\" por defecto,\r\n"
+            , "Puedes usar Ctrl, Shift o Alt\r\n"
+            , "durante el arrastre para cambiar la acción" ],
       "id": 2287 }
     ,
     "cbDosBox": {
@@ -526,6 +601,7 @@
       "de": "Aktiviert DosBox-Integration",
       "ja": "DosBoxの統合を可能にする",
       "ru": "Включает интеграцию DosBox",
+      "es": "Activar la integración con DosBox",
       "id": 1753 }
     ,
     "cbDragIcons": {
@@ -534,6 +610,7 @@
       "de": "Zeigt Symbole von gezogenen Einträgen",
       "ja": "ドラッグされたアイテムのアイコンを表示する",
       "ru": "Показать иконки перетаскиваемых элементов",
+      "es": "Mostrar iconos de elementos arrastrados",
       "id": 1553 }
     ,
     "cbDragImage": {
@@ -542,6 +619,7 @@
       "de": "Erzeugt und zeigt überlagernde, durchsichtige Schnappschüsse von gezogenen Dateien",
       "ja": "ファイルのオーバーレイ透明スナップショットを作成して表示する",
       "ru": "Создание и отображение наложения прозрачного снимка перетаскиваемых файлов",
+      "es": "Crear y visualizar una imagen transparente de los archivos arrastrados",
       "id": 1548 }
     ,
     "cbDragL": {
@@ -550,6 +628,7 @@
       "de": "Erlaubt das Ziehen mit der linken Maustaste",
       "ja": "左マウスボタンでドラッグを許可する",
       "ru": "Разрешить перетаскивание левой кнопкой мыши",
+      "es": "Permitir arrastrar con el botón izquierdo del ratón",
       "id": 1504 }
     ,
     "cbDragPanel": {
@@ -563,6 +642,8 @@
             , "3番目 - マクロによるボタンリリース時のサイズ変更." ],
       "ru": [ "Включить размер левой и правой панели, перетаскивая мышью.\r\n"
             , "3rd-state - изменение размера при отпускании кнопки с макросами." ],
+      "es": [ "Activar redimensionamiento de paneles izquierdo y derecho arrastrando con el ratón.\r\n"
+            , "3er-estado - redimensionar al soltar botón con macros." ],
       "id": 1568 }
     ,
     "cbDragR": {
@@ -571,6 +652,7 @@
       "de": "Erlaubt das Ziehen mit der rechten Maustaste",
       "ja": "マウスの右ボタンでドラッグを許可する",
       "ru": "Разрешить перетаскивание правой кнопкой мыши",
+      "es": "Permitir arrastrar con el botón derecho del ratón",
       "id": 1505 }
     ,
     "cbDropEnabled": {
@@ -589,6 +671,9 @@
       "ru": [ "Выкл. - ConEmu НЕ будет получать внешние пропуски.\r\n"
             , "On - Drops разрешены (диалоговое окно подтверждения Far)\r\n"
             , "3rd-state - то же, что \"Вкл.\", но без подтверждения" ],
+      "es": [ "Off - ConEmu NO recibirá elementos arrastrados externos \r\n"
+            , "On - Se permiten elementos arrastrados (diálogo de confirmación de Far)\r\n"
+            , "3er-estado - igual que 'On', pero sin confirmación" ],
       "id": 1502 }
     ,
     "cbDropUnlocked": {
@@ -597,6 +682,7 @@
       "de": "Entsperrt Quell- und Zielfenster bei Ablegeoperationen. Dies kann zu unvorhergesehenen Ergebnissen führen, wenn die ZiehQuelle temporär gezogene Dateien NUR für die Zieh-Lebenszeit erzeugt.",
       "ja": "ドロップ操作でソースウィンドウとターゲットウィンドウのロックを解除します. ドラッグソースが一時的にドラッグされたファイルをドラッグライフタイムのために作成すると,予期しない結果が生じることがあります.",
       "ru": "Разблокируйте источник и целевое окно при Drop. Это может привести к непредсказуемым результатам, когда DragSource создает временные перетаскиваемые файлы ТОЛЬКО на время жизни перетаскивания.",
+      "es": "Desbloquear las ventanas origen y destino en operaciones de arrastrar y soltar. Esto puede causar resultados imprevistos, cuando el origen crea archivos temporales sólo mientras dura el arrastre.",
       "id": 1579 }
     ,
     "cbDropUseBCopy": {
@@ -605,6 +691,7 @@
       "de": "Verwendet den BCopy-Dienst für Ablegeoperationen ('Entsperrtes Ablegen' muss angewählt sein)",
       "ja": "ドロップ操作にBCopyサービスを使用する( 'Unlocked drop'をチェックする必要があります)",
       "ru": "Использовать сервис BCopy для операций удаления (необходимо разблокировать ‘Unlocked drop’)",
+      "es": "Usar el servicio BCopy para las operaciones de 'soltar' (debe estar activado 'Desbloquear soltar')",
       "id": 1580 }
     ,
     "cbEnableMouse": {
@@ -613,6 +700,7 @@
       "de": "Abwählen um das Senden von Mausereignissen an die Konsole zu unterdrücken, die Maus wird intern von ConEmu verarbeitet (z.B. Textauswahl)",
       "ja": "マウスイベントをコンソールに送信しないようにするにはこれをオフにします.マウスはConEmuによって内部的に処理されます(テキスト選択など)",
       "ru": "Снимите этот флажок, чтобы прекратить отправку событий мыши на консоль, ConEmu будет обрабатывать мышь внутри себя (например, выделение текста)",
+      "es": "Desactiva esto para evitar enviar eventos del ratón al terminal, el ratón se manejará internamente por ConEmu (por ejemplo, selección de texto)",
       "id": 2313 }
     ,
     "cbEnhanceGraphics": {
@@ -621,6 +709,7 @@
       "de": "Verbessert das Erscheinungsbild von Fortschrittsbalken und Scrollleisten",
       "ja": "進捗バーとスクロールバーの外観を強化する",
       "ru": "Улучшение внешнего вида индикаторов и полос прокрутки",
+      "es": "Mejorar el aspecto de las barras de progreso y desplazamiento",
       "id": 2289 }
     ,
     "cbExportConfig": {
@@ -639,6 +728,9 @@
       "ru": [ "Экспорт текущих настроек в файл XML\r\n"
             , "\r\n"
             , "Остерегайтесь перезаписи вашего текущего файла ConEmu.xml, если вы используете портативный режим ConEmu!" ],
+      "es": [ "Exportar la configuración a archivo xml\r\n"
+            , "\r\n"
+            , "¡Cuidado con no sobreescribir la configuración actual si estás usando ConEmu en modo portable!" ],
       "id": 2572 }
     ,
     "cbExtendFonts": {
@@ -652,6 +744,8 @@
             , "この機能は,プロンプトの装飾やFar Manager(1.7x,2.x)のColorerプラグインで便利です." ],
       "ru": [ "ConEmu может использовать обычные, жирные и курсивные шрифты рядом.\r\n"
             , "Эта функция может быть полезна для быстрого оформления или с плагином Colorer для Far Manager (1.7x, 2.x)." ],
+      "es": [ "Permite a ConEmu usar tipos de letra normal, negrita e itálica a la vez.\r\n"
+            , "Esta característica puede ser útil para adornar el símbolo del sistema o con el plugin Colorer de Far Manager (1.7x, 2.x)." ],
       "id": 1576 }
     ,
     "cbExtendUCharMap": {
@@ -660,6 +754,7 @@
       "de": "Zeigt Glyphen der ausgewählten Schriftart im 'Unicode CharMap'-PlugIn (nur FAR2)",
       "ja": "選択したフォントのグリフを 'Unicode CharMap' プラグインで表示する(FAR2のみ)",
       "ru": "Показать глифы из выбранного шрифта в плагине ‘Unicode CharMap’ (только FAR2)",
+      "es": "Mostrar glifos del tipo de letra seleccionado en el plugin 'Unicode CharMap' (sólo FAR2)",
       "id": 1722 }
     ,
     "cbFadeInactive": {
@@ -668,6 +763,7 @@
       "de": "Wenn ConEmu den Fokus verliert, werden seine Inhalte verblassen. Es kann die hellste Farbe angegeben werden.",
       "ja": "ConEmu 非アクティブ時の透明度を上げる.最も明るい色を指定できます.",
       "ru": "Когда ConEmu теряет фокус, его содержимое может исчезнуть. Вы можете указать наиболее яркий цвет.",
+      "es": "Cuando ConEmu pierde el foco, sus contenidos pueden quedar descoloridos. Puedes especificar colores con más brillo.",
       "id": 1581 }
     ,
     "cbFarHourglass": {
@@ -676,6 +772,7 @@
       "de": "Zeigt 'Beschäftigt'-Mauszeiger (Pfeil mit einer kleinen Sanduhr oder einem Kreis) wenn Far beschäftigt ist (nicht während langer Operationen reagiert)",
       "ja": "Farがビジー状態のときに,マウスカーソル(小さい砂時計または円のある矢印)を表示する(長い操作中に応答しない)",
       "ru": "Показать AppStarting курсор мыши (стрелка с маленькими песочными часами или кружком), когда Far занят (не отвечает во время длительных операций)",
+      "es": "Mostar el cursor del ratón InicioApp (flecha con un pequeño reloj o círculo) cuando Far está ocupado (no responde durante operaciones largas)",
       "id": 1563 }
     ,
     "cbFARuseASCIIsort": {
@@ -689,6 +786,8 @@
             , "!!!ハイライト実験!!!" ],
       "ru": [ "Перехват функций сортировки строк Far.\r\n"
             , "!!!ОЧЕНЬ ЭКСПЕРИМЕНТАЛЬНО!!!" ],
+      "es": [ "Anclar funciones de ordenación de cadenas de Far.\r\n"
+            , "¡¡¡MUY EXPERIMENTAL!!!" ],
       "id": 1561 }
     ,
     "cbFixAltOnAltTab": {
@@ -697,6 +796,7 @@
       "de": "Wenn ein Makro auf Alt (RAlt) gesetzt wird kann das zu unerwarteten Aktionen bei AltTab oder AltF9 führen. Dieses Problem kann behoben werden, in dem Steuerung-Loslassen vor dem Alt-Loslassen an die Konsole gesendet wird.",
       "ja": "Alt(右Alt)でマクロを設定すると,AltTabまたはAltF9で予期せず起動することがあります.この問題は,Altキーを押す前にコンソールControlを送信することで修正できます.",
       "ru": "Когда вы устанавливаете макрос на Alt (RAlt), он может неожиданно активироваться на AltTab или AltF9. Эту проблему можно исправить, отправив в консоль нажатие Ctrl перед отпусканием Alt.",
+      "es": "Cuando asignas una macro a Alt (RAlt) podría activarse con Alt-Tab o Alt-F9. Este problema se puede solucionar enviando al terminal la pulsación de Ctrl antes de soltar Alt.",
       "id": 1562 }
     ,
     "cbFixFarBorders": {
@@ -711,6 +811,8 @@
             , "例) メイン -  \"Consolas\", 追加 -  \"Segoe UI\"" ],
       "ru": [ "Вы можете указать дополнительный шрифт для псевдографики или заданный диапазон символов.\r\n"
             , "Например. основной - \"Consolas\", дополнительный - \"Segoe UI\"." ],
+      "es": [ "Puedes especificar tipos de letra adicionales para dibujar pseudo-gráficos o un conjunto de símbolos.\r\n"
+            , "Ej.: principal - \"Consolas\",  adicional - \"Segoe UI\"." ],
       "id": 1207 }
     ,
     "cbFocusInChildWindows": {
@@ -719,6 +821,7 @@
       "de": "Setzt den Fokus auf xshell/PuTTY/Notepad/usw., wenn ConEmu aktiviert oder ein Reiter gewechselt wird.",
       "ja": "ConEmuが起動されたとき,またはタブが切り替わったときに xshell/putty/notepad/etc にフォーカスを設定します",
       "ru": "Задайте фокус в xshell/putty/notepad/etc. когда ConEmu активирован или вкладка переключена.",
+      "es": "Hacer foco en xshell/putty/notepad/etc... cuando se activa ConEmu, o se cambia de pestaña.",
       "id": 2568 }
     ,
     "cbFont2AA": {
@@ -732,6 +835,8 @@
             , "Точная псевдография выглядит лучше." ],
       "zh": [ "对备用字体启用或禁用“Clear Type”，\n"
             , "这能够使经过精确设计的伪字符（psuedographics）看起来效果更好。" ],
+      "es": [ "Activar o desactivar 'Clear Type' para tipo de letra alternativo.\n"
+            , "Se verán mejor los pseudo-gráficos." ],
       "id": 2883 }
     ,
     "cbFontAuto": {
@@ -740,6 +845,7 @@
       "de": "Automatische Schriftgrößenanpassung bei fester Breite der tatsächlichen Konsole",
       "ja": "実際のコンソール幅で自動的にフォントをリサイズする",
       "ru": "Автоматический размер шрифта для фиксированной реальной ширины консоли",
+      "es": "Redimensionar automáticamente el tipo de letra para la anchura fija del terminal real",
       "id": 1566 }
     ,
     "cbHandleFarDetach": {
@@ -748,6 +854,7 @@
       "de": "Automatisches Ankoppeln einer neuen, beim Abkoppeln erzeugten, Far-Manager-Konsole an ConEmu (StrgAltTab)",
       "ja": "DetEach(CtrlAltTab)で作成されたConEmuの新しいFar Manager コンソールへの自動接続",
       "ru": "Автоматическое подключение к новой консоли Far Manager ConEmu, созданной при отсоединении (CtrlAltTab)",
+      "es": "Enganchar automáticamente a ConEmu el nuevo terminal de Far manager, creado al desenganchar (CtrlAltTab) ",
       "id": 1619 }
     ,
     "cbHereName": {
@@ -761,6 +868,8 @@
             , "`&`記号を使ってメニュー項目のホットキーを設定することができます" ],
       "ru": [ "Что вы увидите во всплывающем меню Проводника\r\n"
             , "Вы можете использовать знак `&`, чтобы установить горячую клавишу для пункта меню" ],
+      "es": [ "Lo que se verá en el menú contextual del Explorador\r\n"
+            , " Puedes usar el símbolo '&' para elegir la tecla activa del elemento" ],
       "id": 2407 }
     ,
     "cbHideCaption": {
@@ -769,6 +878,7 @@
       "de": "Blendet Hauptfenstertitel aus, wenn maximiert (Alt-F9)",
       "ja": "最大化するとメインウィンドウのキャプションを隠す(Alt-F9)",
       "ru": "Скрыть заголовок главного окна, когда развернуто (Alt-F9)",
+      "es": "Ocultar la barra de título de la ventana principal, cuando está maximizada (Alt-F9)",
       "id": 1565 }
     ,
     "cbHideCaptionAlways": {
@@ -777,6 +887,7 @@
       "de": "Fensterrahmen und -titel entfernen. Es werden nur Konsole, Reiter und Statusleiste angezeigt.",
       "ja": "ウィンドウ枠とキャプションを削除します.コンソール,タブ,ステータスバーのみが表示されます.",
       "ru": "Удалить границы окна и подпись. Будут показаны только консоль, вкладки и строка состояния.",
+      "es": "Eliminar el borde y barra de título de la ventana. Sólo se mostrarán el terminal, las pestañas y la barra de estado.",
       "id": 1569 }
     ,
     "cbHideInactiveConTabs": {
@@ -785,6 +896,7 @@
       "de": "Zeigt nur Reiter der aktiven Konsole",
       "ja": "アクティブなコンソールからのみタブを表示する",
       "ru": "Показывать вкладки только из активной консоли",
+      "es": "Mostrar sólo pestañas del terminal activo",
       "id": 1642 }
     ,
     "cbInjectConEmuHkFast": {
@@ -793,6 +905,7 @@
       "de": "Erforderlich für viele Funktionen (ANSI X3.64, -new_console-Parameter, GUI-Anwendungen in ConEmu-Reitern, ...) und Behebung verschiedener Probleme (Absturz in Windows 8, Telnet in Windows 7, Dialoge und Menüs hinter dem ConEmu-Fenster, Aufhängen von chcp, usw.)",
       "ja": "多くの機能(ConEmuタブのANSI X3.64, -new_console 引数, GUIアプリケーション,...)といくつかの問題(Windows8でのクラッシュ, Windows7での telnet, ConEmuウィンドウの後ろのダイアログとメニュー, chcp hungs , 等々...)",
       "ru": "Требуется для многих функций (ANSI X3.64, -new_console, GUI приложения во вкладках ConEmu, ...) и устранения ряда проблем (сбой в Windows 8, telnet в Windows 7, диалоги и меню за окном ConEmu, chcp hungs и так далее...)",
+      "es": "Se necesita para varias características (ANSI X3.64, parámentro -new_console, aplicaciones GUI en pestañas de ConEmu, ...) y para evitar varios problemas (casques en Windows 8, telnet en Windows 7, diálogos y menús que se quedan detrás de la ventana de ConEmu, cuelgues de chcp, ...)",
       "id": 2098 }
     ,
     "cbInsideName": {
@@ -806,6 +919,8 @@
             , "`&`記号を使ってメニュー項目のホットキーを設定することができます" ],
       "ru": [ "Что вы увидите во всплывающем меню Проводника\r\n"
             , "Вы можете использовать знак `&`, чтобы установить горячую клавишу для пункта меню" ],
+      "es": [ "Lo que se verá en el menú contextual del Explorador\r\n"
+            , "Puedes usar '&' para definir la tecla de activación del elemento de menú" ],
       "id": 2406 }
     ,
     "cbInsideSyncDir": {
@@ -814,6 +929,7 @@
       "de": "Synchronisiert aktuelles Verzeichnis (Explorer -> ConEmu)",
       "ja": "現在のディレクトリを同期する(Explorer  - > ConEmu)",
       "ru": "Синхр. текущей директории (Проводник -> ConEmu)",
+      "es": "Sincronizar carpeta actual (Explorador -> ConEmu)",
       "id": 2397 }
     ,
     "cbInstallKeybHooks": {
@@ -821,6 +937,7 @@
       "zh": "允许拦截Win+Number, Win+Arrows, Alt+Esc, Alt+Tab,等等。",
       "ja": "Win Number,Win Arrows,Alt Esc,Alt Tabなどの傍受を許可します.",
       "ru": "Позволяет перехватывать Win+Number, Win+Arrows, Alt+Esc, Alt+Tab и т.д.",
+      "es": "Permite interceptar combinaciones Win+Número, Win+Cursores, Alt+Esc, Alt+Tab, etc...",
       "id": 1649 }
     ,
     "cbItalic": {
@@ -829,6 +946,7 @@
       "zh": "主字体斜体",
       "de": "Hauptschrift kursiv",
       "ja": "メイン フォント 斜体",
+      "es": "Tipo de letra itálica principal",
       "id": 2280 }
     ,
     "cbJumpListAutoUpdate": {
@@ -837,6 +955,7 @@
       "zh": "选中时，快速跳转菜单会在用户在任务属性中选中或取消选中“快速跳转菜单”选项时自动更新。",
       "de": "Wenn angewählt, werden die Sprungbefehle automatisch aktualisiert, wenn ein Benutzer in den Aufgabeneigenschaften das 'Taskleisten-Sprungbefehle'-Kästchen an-/abwählt.",
       "ja": "ユーザーがタスクプロパティの[タスクバージャンプリスト]チェックボックスをOn/OFFしたときに、ジャンプリストを自動的に更新する",
+      "es": "Si se selecciona, las Listas de Tareas se actualizarán automáticamente cuando el usuario (des)marque la casilla de 'Lista de tareas' de las propiedades de la tarea",
       "id": 3073 }
     ,
     "cbKillSshAgent": {
@@ -845,6 +964,7 @@
       "de": "Beendet beim ConEmu-Beenden alle 'ssh-agent.exe'-Prozesse die aus ConEmu-Konsolen heraus gestartet wurden.",
       "ja": "ConEmuの終了時にConEmuのコンソールから起動したすべての `ssh-agent.exe`プロセスを終了します.",
       "ru": "Завершить все процессы `ssh-agent.exe`, запущенные с консолей ConEmu при завершении ConEmu.",
+      "es": "Finalizar todos los procesos 'ssh-agent.exe' iniciados por terminales de ConEmu al salir de ConEmu.",
       "id": 3075 }
     ,
     "cbLongOutput": {
@@ -873,6 +993,11 @@
             , "консольные команды. Полный вывод на консоль\r\n"
             , "(до указанного количества строк) будет доступен\r\n"
             , "через макрос Far (CtrlO.reg)" ],
+      "es": [ "Autoexpandir la altura del buffer al número de\r\n"
+            , "líneas especificado, mientras Far ejecuta\r\n"
+            , "comandos de terminal. La salida del terminal\r\n"
+            , "(hasta el número de líneas especificado) estará\r\n"
+            , "disponible con la macro de Far (CtrlO.reg)" ],
       "id": 1534 }
     ,
     "cbMinToTray": {
@@ -896,6 +1021,10 @@
             , "Щелкните правой кнопкой мыши по кнопке ‘Закрыть окно’\r\n"
             , "в заголовке ConEmu, для сворачивания в TSA,\r\n"
             , "когда этот флажок выключен" ],
+      "es": [ "Auto minimizar a la zona de estado\r\n"
+            , "Pulsa con el botón derecho en el botón de cierre\r\n"
+            , "de ConEmu para minimizar a la zona de estado,\r\n"
+            , "cuando esta opción está desactivada" ],
       "id": 1507 }
     ,
     "cbMonitorConsoleLang": {
@@ -909,6 +1038,8 @@
             , "コンソール(Far Manager XLatスイッチングサポートなど)" ],
       "ru": [ "Мониторинг изменения языка ввода в реальной консоли\r\n"
             , "(например, поддержка переключения Far Manager XLat)" ],
+      "es": [ "Monitorizar el cambio del idioma de entrada del terminal\r\n"
+            , "en tiempo real (ej.: soporte para cambio XLat de Far Manager XLat)" ],
       "id": 1537 }
     ,
     "cbMonospace": {
@@ -917,6 +1048,7 @@
       "zh": "为无比例（等宽）字体选中此处",
       "de": "Auswählen für nicht-proportionale Schriftarten",
       "ja": "等幅(monospace)フォントを使用",
+      "es": "Activarlo para tipos de letra no proporcionales (monoespaciados)",
       "id": 2283 }
     ,
     "cbMouseDragWindow": {
@@ -925,6 +1057,7 @@
       "de": "Ermöglicht das Verschieben des ConEmu-Fensters durch Ziehen im Client-Bereich.",
       "ja": "ConEmuウィンドウをクライアント領域でドラッグして移動することができます.",
       "ru": "Позволяет перемещать окно ConEmu, перетаскивая его по клиентской области.",
+      "es": "Permitir desplazar la ventana de ConEmu arrastrando desde su zona cliente.",
       "id": 3060 }
     ,
     "cbMultiCon": {
@@ -943,6 +1076,9 @@
       "ru": [ "Включить MultiConsole\r\n"
             , "(несколько консолей в одном ConEmu)\r\n"
             , "Требуется перезапуск ConEmu" ],
+      "es": [ "Activar MultiTerminal\r\n"
+            , "(varios terminales en un ConEmu)\r\n"
+            , "Se requiere reiniciar ConEmu" ],
       "id": 1506 }
     ,
     "cbMultiIterate": {
@@ -951,6 +1087,7 @@
       "de": "Offene Far-Fenster mit 'Host-Taste'+Zahl durchblättern",
       "ja": "オープン中の Far ウィンドウを ' Host-key '+Numキー で移動する",
       "ru": "Повторять открытые окона Far с помощью ‘Host-key’+Number",
+      "es": "Iterar sobre las ventanas Far abiertas con 'Tecla-Host'+Número",
       "id": 2104 }
     ,
     "cbNewConfirm": {
@@ -969,6 +1106,9 @@
       "ru": [ "Подтвердите создание новой консоли.\r\n"
             , "Вы можете изменить для этого строку cmd или включить функцию \"Запуск от имени...\".\r\n"
             , "Даже если не отмечено, вы можете удерживать \"Shift\" для отображения диалога." ],
+      "es": [ "Confirmar creación de un nuevo terminal.\r\n"
+            , "Puedes cambiar la línea de comando, o activar \"Ejecutar como...\"\r\n"
+            , "Incluso si no está activado, puedes mantener \"Shift\" para mostrar el diálogo." ],
       "id": 1546 }
     ,
     "cbNumberInCaption": {
@@ -977,6 +1117,7 @@
       "de": "Zeigt [Aktive Konsolen/Alle Konsolen] im Fenstertitel",
       "ja": "ウィンドウキャプションに[ActiveCon/TotalCon]を表示",
       "ru": "Показать [ActiveCon/TotalCon] в заголовке окна",
+      "es": "Mostrar [ActiveCon/TotalCon] en la barra de título de la ventana",
       "id": 2480 }
     ,
     "cbOneTabPerGroup": {
@@ -985,6 +1126,7 @@
       "de": "Zeigt nur einen Reiter für alle Unterteilungen in der Gruppe",
       "ja": "グループ内のすべての分割に1つのタブのみを表示する",
       "ru": "Показывать только одну вкладку для всех разделений в группе",
+      "es": "Mostrar una sola pestaña para todas las divisiones del grupo",
       "id": 2599 }
     ,
     "cbProcessAnsi": {
@@ -993,6 +1135,7 @@
       "de": "Verarbeitung von ANSI-Escape-Sequenzen aktivieren, 'ConEmuHk einschleusen' muss ausgewählt sein wenn mit Prozessen zweiter Ebenen gearbeitet werden soll (z.B. cmd.exe -> app.exe)",
       "ja": "ANSIエスケープシーケンスの処理を有効にする,2番目のレベルのプロセス(cmd.exe  -> app.exeなど)を使用する場合は, 'Inject ConEmuHk'をオンにする必要があります.",
       "ru": "Включить обработку последовательностей ANSI, ‘Inject ConEmuHk’ должна быть включена, если вы хотите работать с процессами второго уровня (например. cmd.exe -> app.exe)",
+      "es": "Permitir procesar las secuencias de escape ANSI, debe estar seleccionado 'Inyectar ConEmuHk' para que funcione con procesos de segundo nivel (ej.: cmd.exe -> app.exe)",
       "id": 2253 }
     ,
     "cbProcessCmdStart": {
@@ -1001,6 +1144,7 @@
       "de": "Den 'start'-Befehl in, in ConEmu-Reitern gestarteten, CMD-Prompts und Batch-Skripten abfangen, um Konsolenanwendungen in neuen ConEmu-Reitern zu starten",
       "ja": "cmdプロンプトで'start'コマンドをフックし,新しいConEmuタブでコンソールアプリケーションを実行するためにConEmuタブでバッチを開始しました",
       "ru": "Перхватывать команду 'start' в командной строке и запустите пакетно на вкладках ConEmu для запуска консольных приложений на новых вкладках ConEmu",
+      "es": "Anclar comando 'start' en los símbolos del sistema y procesos batch iniciados en pestañas de ConEmu para ejecutar aplicaciones de terminal usando una nueva pestaña",
       "id": 2740 }
     ,
     "cbProcessCtrlZ": {
@@ -1014,6 +1158,8 @@
             , "詳細については,gh#465を参照してください(入力ストリームに行く)." ],
       "ru": [ "Считайте Ctrl-Z как ‘EndOfStream’. В новой строке нажмите Ctrl-Z и Enter.\r\n"
             , "Обратитесь к gh#465 для деталей (Go входные потоки)." ],
+      "es": [ "Tratar Ctrl-Z como 'EndOfStream'. Para salto de línea pulsa Ctrl-Z y Enter.\r\n"
+            , "Consulta los detalles en gh#465 (ir a 'input streams')." ],
       "id": 2878 }
     ,
     "cbProcessNewConArg": {
@@ -1022,6 +1168,7 @@
       "de": "Aktiviert das Verarbeiten von '-new_console' und '-cur_console' Parametern in der Befehlszeile, Skripten, usw., die in ConEmu-Reitern gestartet wurden.",
       "ja": "ConEmuタブを開始する時 シェルプロンプト,スクリプトなどで '-new_console'と '-cur_console'スイッチの処理を有効にする",
       "ru": "Включить обработку ключей -new_console и -cur_console в командной строке, сценариях и т.д., запущенных на вкладках ConEmu",
+      "es": "Activar procesamiento de las opciones  '-new_console' y '-cur_console'  en el indicador del terminal, scripts, etc... iniciados en pestañas de ConEmu",
       "id": 2640 }
     ,
     "cbQuakeStyle": {
@@ -1035,6 +1182,8 @@
             , "Tastenkürzel für 'Minimieren/Wiederherstellen'-Aktion auf der 'Tasten & Makro'-Seite auswählen" ],
       "ja": [ "コンソールコンソールをゲームコンソールのように画面上部からスライドさせる\r\n"
             , " 'キーとマクロ' ページで '最小化/復元' アクションのホットキーを選択してください" ],
+      "es": [ "Deslizar la ventana de terminal desde el borde superior de la pantalla, como en los juegos\r\n"
+            , "Selecciona la tecla para 'Minimizar/Restaurar' en la página de 'Teclas y Macros'" ],
       "id": 2333 }
     ,
     "cbRClick": {
@@ -1058,6 +1207,10 @@
             , "On - вызывается EMenu вместо RClick\r\n"
             , "3rd-state - Short RClick передается, Long RClick -> EMenu\r\n"
             , "Предупреждение! Это может конфликтовать с RDrag" ],
+      "es": [ "Off - todos los RClicks se pasan al terminal\r\n"
+            , "On - se llama a EMenu en vez de RClick\r\n"
+            , "3er-estado - se pasa un RClick Corto, RClick Largo -> EMenu\r\n"
+            , "¡Aviso! Esto puede entrar en conflicto con RDrag" ],
       "id": 1696 }
     ,
     "cbRestore2ActiveMonitor": {
@@ -1066,6 +1219,7 @@
       "de": "Zeigt beim Wiederherstellen oder Hereingleiten das Fenster auf den aktiven Bildschirm, also wo sich der Mauszeiger befindet",
       "ja": "マウスカーソルがあるアクティブモニタにウィンドウを復元またはスライドダウン",
       "ru": "При восстановлении или скольжении перемещайте окно к активному монитору, где расположен курсор мыши",
+      "es": "Cuando se restaura o se desplaza la ventana al monitor activo, donde está el cursor del ratón",
       "id": 2867 }
     ,
     "cbRestoreInactive": {
@@ -1074,6 +1228,7 @@
       "ja": " '最小化 / 復元' ホットキーで非アクティブウィンドウを復元してフォーカス",
       "ru": "Восстановить и выделить неактивное окно с помощью клавиши ‘Свернуть/Восстановить’",
       "zh": "按“最小化/恢复”热键以恢复并聚焦非活动窗口",
+      "es": "Restaura y pone foco en ventana inactiva con la tecla de 'Minimizar/Restaurar'",
       "id": 3099 }
     ,
     "cbRetardInactivePanes": {
@@ -1082,6 +1237,7 @@
       "de": "Verzögert inaktive aber sichtbare Unterteilungen im aktiven ConEmu-Fenster",
       "ja": "アクティブなConEmuウィンドウで,非アクティブで表示されている分割ペインを遅らせる",
       "ru": "Задержка неактивных, но видимых разделенных панелей в активном окне ConEmu",
+      "es": "Retrasar paneles-división inactivos pero visibles en la ventana activa de ConEmu",
       "id": 2665 }
     ,
     "cbRSelectionFix": {
@@ -1095,6 +1251,8 @@
             , "Far 3: EMenuの代わりにファイルの選択を復元" ],
       "ru": [ "Исправить пунктирный выбор с помощью быстрого перетаскивания правой кнопкой мыши\r\n"
             , "Far 3: восстановить выбор файлов вместо EMenu" ],
+      "es": [ "Arreglar selección corrompida al arrastrar rápidamente con el botón derecho del ratón\r\n"
+            , "Far 3: reiniciar selección de ficheros en vez de EMenu" ],
       "id": 1536 }
     ,
     "cbSafeFarClose": {
@@ -1103,6 +1261,7 @@
       "de": "Versucht Far-Manager vorsichtig zu schließen, anstatt einfach das Konsolenfenster zu schließen, wenn das ConEmu-Fenster geschlossen wird",
       "ja": "ConEmuウィンドウを閉じたときにコンソールウィンドウではなく Far Manager を閉じるように試みる",
       "ru": "Попробуйте закрыть Far Manager мягко, вместо закрытия окна консоли, когда вы закрываете окно ConEmu",
+      "es": "Intentar el cierre de Far Manager, en vez de cerrar la terminal, cuando se cierra la ventana de ConEmu",
       "id": 1654 }
     ,
     "cbScrollbarDynamic": {
@@ -1111,6 +1270,7 @@
       "ja": "コンソール出力での最大スクロールバー位置の増加",
       "ru": "Увеличение максимальной позиции прокрутки при увеличении вывода консоли",
       "zh": "随控制台输出内容的增加而同时增加滚动条的最远位置",
+      "es": "Aumentar la posición máxima de la barra de desplazamiento cuando crece la salida del terminal",
       "id": 3090 }
     ,
     "cbSendAltEsc": {
@@ -1119,6 +1279,7 @@
       "de": "Wenn angewählt, kann \"Alt+Esc\" in Far intern verwendet werden",
       "ja": "オンにすると,内部で \"Alt+Esc\" を使用できます",
       "ru": "Если отмечено, можно использовать \"Alt+Esc\" внутри Far",
+      "es": "Cuando se activa, puedes usar 'Alt+Esc' en Far internamente",
       "id": 1778 }
     ,
     "cbSendAltPrintScrn": {
@@ -1127,6 +1288,7 @@
       "de": "Wenn angewählt, kann \"Alt+Druck\" in Far intern verwendet werden",
       "ja": "オンにすると,内部で \"Alt+PrintScrn\" を使用できます",
       "ru": "Если отмечено, можно использовать \"Alt+PrintScrn\" внутри Far",
+      "es": "Cuando está activa, se puede usar \"Alt+ImprPant\" internamente en Far",
       "id": 1779 }
     ,
     "cbSendAltTab": {
@@ -1140,6 +1302,8 @@
             , "警告！これにより,別のウィンドウに切り替える機能がブロックされます" ],
       "ru": [ "Когда установлен этот флажок, вы можете использовать \"Alt+Tab\" в Far.\r\n"
             , "Предупреждение! Это блокирует возможность переключения в другое окно" ],
+      "es": [ "Cuando se activa, se puede usar \"Alt+Tab\" internamente en Far.\r\n"
+            , "¡Aviso! Esto bloquea la capacidad de cambiar a otra ventana" ],
       "id": 1777 }
     ,
     "cbSendCtrlEsc": {
@@ -1148,6 +1312,7 @@
       "de": "Wenn angewählt, kann \"Strg+Esc\" in Far intern verwendet werden",
       "ja": "オンにすると,Farで \"Ctrl+Esc\" を内部的に使用できます",
       "ru": "Если отмечено, можно использовать \"Ctrl+Esc\" внутри Far",
+      "es": "Cuando está activa, puedes usar \"Ctrl+Esc\" internamente en Far",
       "id": 1781 }
     ,
     "cbSendPrintScrn": {
@@ -1156,6 +1321,7 @@
       "de": "Wenn angewählt, kann \"Druck\" in Far intern verwendet werden",
       "ja": "オンにすると,内部で \"PrintScrn\" を使用できます",
       "ru": "Если отмечено, можно использовать \"PrintScrn\" внутри Far",
+      "es": "Cuando está marcado, puedes usar 'ImprPant' en Far internamente",
       "id": 1780 }
     ,
     "cbShellNoZoneCheck": {
@@ -1164,6 +1330,7 @@
       "de": "SEE_MASK_NOZONECHECKS. Das Gleiche was in Far 2 Build 771 auftrat und sich nach 1464 wieder gab.",
       "ja": "SEE_MASK_NOZONECHECKS. Farv2ビルド771に登場したのと同じで,1464年後には姿を消した.",
       "ru": "SEE_MASK_NOZONECHECKS. То же, что появилось в Far 2 билд 771 и исчезло после 1464.",
+      "es": "SEE_MASK_NOZONECHECKS. Igual que en Far 2 build 771 y se eliminó después de la 1464.",
       "id": 1725 }
     ,
     "cbShowFarWindows": {
@@ -1172,6 +1339,7 @@
       "de": "Zeigt alle Far-Manager-Fenster (Panels, Editoren, Betrachter) anstatt eines Reiters für eine Konsole",
       "ja": "コンソール1つではなく,すべてのFar Managerウィンドウ(パネル,エディタ,ビューア)を表示する",
       "ru": "Показать все окна Far Manager (панели, редакторы, средства просмотра) вместо одной вкладки для одной консоли",
+      "es": "Mostrar todas las ventanas de Far Manager (paneles, editores, visores) en vez de una pestaña por cada terminal",
       "id": 2053 }
     ,
     "cbShowHelpTooltips": {
@@ -1180,6 +1348,7 @@
       "de": "Sprechblasen mit Kurzinformationen im Einstellungen-Dialog können hier deaktiviert werden.",
       "ja": "設定ダイアログでツールチップが気に入らないのですか？この機能を無効にします.",
       "ru": "Не нравятся всплывающие подсказки в диалоге настроек? Отключите эту функцию.",
+      "es": "Si no te gustan las etiquetas informativas en el diálogo de opciones, desactiva esta característica.",
       "id": 2592 }
     ,
     "cbShowWasHiddenMsg": {
@@ -1188,6 +1357,7 @@
       "de": "Zeigt eine 'ConEmu wurde von einem Programm minimiert'-Nachricht im Infobereich",
       "ja": "TSAの 'ConEmuがいくつかのプログラムから隠されていた' というメッセージを表示する",
       "ru": "Показать ‘ConEmu был скрыт от сообщений какой-либо программы’ в TSA",
+      "es": "Mostrar mensaje 'ConEmu estaba oculto para algún programa' en la zona de notificaciones",
       "id": 2435 }
     ,
     "cbShowWasSetOnTopMsg": {
@@ -1196,6 +1366,7 @@
       "de": "Zeigt einen 'Ein externes Programm hat ConEmu in den Vordergrund geholt. Rückgängig?'-Bestätigungsdialog",
       "ja": "Show 'いくつかの外部プログラムがConEmu OnTopをもたらしました.復帰？ '確認ボックス",
       "ru": "Показать ‘Some external program brought ConEmu OnTop. Revert?’ окно подтверждения",
+      "es": "Mostrar el mensaje de confirmación 'Algún programa externo trajo a ConEmu a primer plano. ¿Deshacer?'",
       "id": 2854 }
     ,
     "cbSingleInstance": {
@@ -1209,6 +1380,8 @@
             , "Kann durch '/nosingle' überschrieben oder mit '/single' erzwungen werden" ],
       "ja": [ "新しいコンソールをショートカットなどから起動するときは\r\n"
             , "'/nosingle' または '/single' スイッチで強制的にConEmu を一つに限定可能" ],
+      "es": [ "Usar una ventana de ConEmu cuando se inicie un nuevo terminal desde un acceso directo\r\n"
+            , "Se puede desactivar con la opción '/nosingle' o forzarse con '/single'" ],
       "id": 2578 }
     ,
     "cbSkipActivation": {
@@ -1222,6 +1395,8 @@
             , "クリックすると,ウィンドウがアクティブになります" ],
       "ru": [ "Пропустить нажатие кнопки мыши (влево/вправо/в центр)\r\n"
             , "при активизации окна" ],
+      "es": [ "Ignorar pulsaciones de botón del ratón (izq./der./central)\r\n"
+            , "al activar la ventana" ],
       "id": 1542 }
     ,
     "cbSkipFocusEvents": {
@@ -1235,6 +1410,8 @@
             , "パネル内の高速検索ダイアログの自動クローニング" ],
       "ru": [ "Не отправлять события фокуса на консоль, чтобы отключить\r\n"
             , "автоматическое закрытие диалога быстрого поиска на панелях" ],
+      "es": [ "No enviar eventos de foco a la terminal para desactivar\r\n"
+            , "autocierre de los diálogos de búsqueda rápida en paneles" ],
       "id": 1538 }
     ,
     "cbSkipMove": {
@@ -1248,6 +1425,8 @@
             , "ConEmuはフォアグラウンドウィンドウではありません" ],
       "ru": [ "Пропустить события перемещения мыши, пока\r\n"
             , "ConEmu не находится на переднем плане" ],
+      "es": [ "Saltar eventos del ratón mientras\r\n"
+            , "ConEmu no sea la ventana activa" ],
       "id": 1543 }
     ,
     "cbSleepInBackground": {
@@ -1256,6 +1435,7 @@
       "de": "FPS reduzieren wenn ConEmu den Fokus verliert",
       "ja": "ConEmuがフォーカスを失ったときにFPSを減らす",
       "ru": "Уменьшает FPS при потере фокуса ConEmu",
+      "es": "Reducir FPS cuando ConEmu pierde el foco",
       "id": 1721 }
     ,
     "cbSnapToDesktopEdges": {
@@ -1264,6 +1444,7 @@
       "de": "Sperrt das ConEmu-Fenster innerhalb des Desktop-Arbeitsbereichs",
       "ja": "デスクトップワークエリア内にConEmuウィンドウをロックする",
       "ru": "Блокировка окна ConEmu внутри рабочей области рабочего стола",
+      "es": "Bloquear la ventana de ConEmu dentro de la zona de escritorio",
       "id": 2403 }
     ,
     "cbStartFarRestoreEditors": {
@@ -1272,6 +1453,7 @@
       "de": "Wendet 'Autospeichern/-wiederherstellen geöffneter Reiter' auch auf Far-Manager-Editoren/-Betrachter an",
       "ja": "'開いたタブを自動的に保存/復元する'ときは,Far Manager エディタやビューアも保存/復元する",
       "ru": "Когда ‘Автосохранение/восстановление открытых вкладок’ также сохраняет/восстанавливает редакторы/средства просмотра Far Manager",
+      "es": "Cuando se activa 'Auto guardar/recuperar pestañas abiertas' guardar/recuperar también los editores/visores de Far Manager",
       "id": 2238 }
     ,
     "cbStartFarRestoreFolders": {
@@ -1280,6 +1462,7 @@
       "de": "Wendet 'Autospeichern/-wiederherstellen geöffneter Reiter' auch auf Far-Manager-Panelordner an",
       "ja": "'開いたタブの自動保存/復元'がFar Managerパネルのフォルダを保存/復元するとき",
       "ru": "Когда ‘Автосохранение/восстановление открытых вкладок’ также сохраняет/восстанавливает папки панелей Far Manager",
+      "es": "Cuando esté activo 'Auto guardado/recuperación de pestañas abiertas' guardar/recuperar también los paneles de carpetas de Far Manager",
       "id": 2237 }
     ,
     "cbSuppressBells": {
@@ -1291,6 +1474,8 @@
             , "注入ConEmuHkが必要です." ],
       "ru": [ "Подавить надоедливые звуки, вызванные повторением функций char(7), Beep и MessageBeep.\r\n"
             , "Требуется Inject ConEmuHk." ],
+      "es": [ "Eliminar los sonidos emitidos al emitir el char(7), por las funciones Beep y MessageBeep.\r\n"
+            , "Se necesita 'Inyectar ConEmuHk'" ],
       "id": 2598 }
     ,
     "cbTabLazy": {
@@ -1304,6 +1489,8 @@
             , "Ctrlキーを押しながら実行されます" ],
       "ru": [ "Если установлен этот флажок, переключение реального\r\n"
             , "окна будет выполняться при нажатии Ctrl." ],
+      "es": [ "Cuando está marcado - se realizará el cambio\r\n"
+            , "a la ventana al soltar Ctrl" ],
       "id": 1532 }
     ,
     "cbTabRecent": {
@@ -1327,6 +1514,10 @@
             , "Вы по-прежнему можете переключаться между вкладками \r\n"
             , "стандартным способом, используя Left/Right\r\n"
             , "(потом CtrlTab), пока Ctrl все еще нажат." ],
+      "es": [ "Conmutar primero entre las pestañas recientes.\r\n"
+            , "Puedes cambiar entre pestañas\r\n"
+            , "de la forma estándar usando Izquierda/Derecha\r\n"
+            , "(tras CtrlTab), mientras Ctrl está pulsado." ],
       "id": 1533 }
     ,
     "cbTabs": {
@@ -1340,6 +1531,8 @@
             , "ConEmuウィンドウの上部に" ],
       "ru": [ "Показать вкладки (все открытые панели, редакторы и средства просмотра)\r\n"
             , "в верхней части окна ConEmu" ],
+      "es": [ "Mostrar pestañas (todos los paneles abiertos, editores y visores)\r\n"
+            , "en la zona superior de la ventana de ConEmu" ],
       "id": 2288 }
     ,
     "cbTabSelf": {
@@ -1363,6 +1556,10 @@
             , "(by ConEmu). Эти нажатия клавиш не будут отправлены\r\n"
             , "в консольное окно, но вы можете легко\r\n"
             , "переключаться между консолями (панелями)." ],
+      "es": [ "Manejar CtrlTab y CtrlShiftTab internamente\r\n"
+            , "(por ConEmu). Estas combinaciones no se enviarán\r\n"
+            , "a la ventana de terminal, pero puedes conmutar fácilmente\r\n"
+            , "entre terminale (paneles)." ],
       "id": 1531 }
     ,
     "cbTabsOnTaskBar": {
@@ -1376,6 +1573,8 @@
             , "3番目 -  Windows 7以上" ],
       "ru": [ "Представлять каждую консоль на панели задач\r\n"
             , "3rd-state - Windows 7 и выше" ],
+      "es": [ "Presentar cada terminal en la barra de tareas\r\n"
+            , "3er-estado - Windows 7 o superior" ],
       "id": 2048 }
     ,
     "cbThumbLoadFiles": {
@@ -1384,6 +1583,7 @@
       "de": "Erzeugt Vorschauansichten für Dateien",
       "ja": "ファイルのプレビューを生成する",
       "ru": "Генерация превью для файлов",
+      "es": "Generar previsualización de archivos",
       "id": 1664 }
     ,
     "cbThumbLoadFolders": {
@@ -1392,6 +1592,7 @@
       "de": "Erzeugt Vorschauansichten für Ordner (durch die ersten 4 Dateien)",
       "ja": "フォルダのプレビューを生成する(最初の4つのファイル)",
       "ru": "Генерация превью для папок (по первым 4 файлам)",
+      "es": "Generar previsualización para carpetas (por los primeros 4 archivos)",
       "id": 1663 }
     ,
     "cbThumbRestoreOnStartup": {
@@ -1400,6 +1601,7 @@
       "de": "Stellt Panelansichten beim Start von Far wieder her",
       "ja": "Far起動時のパネルビューの復元",
       "ru": "Восстановление вида панели при запуске Far",
+      "es": "Recuperar vistas de panel al iniciar Far",
       "id": 1720 }
     ,
     "cbThumbUsePicView2": {
@@ -1408,6 +1610,7 @@
       "de": "Versuche das PicView2-PlugIn zu verwenden um Vorschauansichten zu erzeugen (nur FAR2)",
       "ja": "PicView2プラグインを使用してプレビューを生成しようとする(FAR2のみ)",
       "ru": "Попробуйте использовать плагин PicView2 для создания превью (только FAR2)",
+      "es": "Intentar usar el plugin PicView2 para generar las previsualizaciones (sól FAR2)",
       "id": 1680 }
     ,
     "cbTrueColorer": {
@@ -1420,6 +1623,8 @@
             , "https://conemu.github.io/en/Xterm256Colors.html" ],
       "ru": [ "Включить поддержку TrueColor (он же XTerm-256)\r\n"
             , "https://conemu.github.io/en/Xterm256Colors.html" ],
+      "es": [ "Activar soporte TrueColor (XTerm-256)\r\n"
+            , "https://conemu.github.io/en/Xterm256Colors.html" ],
       "id": 1578 }
     ,
     "cbTryToCenter": {
@@ -1428,6 +1633,7 @@
       "de": "Zeichne Konsoleninhalt in der Mitte des ConEmu-Fensters. Zusammen mit 'Abstand-Größe' verwenden",
       "ja": "ConEmuウィンドウの中央にコンソールのコンテンツを描画します.  'パッドサイズ' と一緒に使用する",
       "ru": "Нарисуйте содержимое консоли в центре окна ConEmu. Используйте вместе с ‘Pad size’",
+      "es": "Dibujar el contenido del terminal centrado en la ventana de ConEmu. Usar junto con 'Tamaño de separación'",
       "id": 1570 }
     ,
     "cbUnicodeRangesApply": {
@@ -1436,6 +1642,7 @@
       "ja": "手動で入力したUCS範囲を適用するなら結果をきちんと確認して下さい。",
       "ru": "Не забудьте применить введенный вручную диапазон UCS, чтобы увидеть результат.",
       "zh": "不要忘记应用手动输入的 UCS 范围以查看结果。",
+      "es": "No olvides aplicar manualmente el rango UCS introducido para observar los resultados.",
       "id": 2838 }
     ,
     "cbUseAltGrayPlus": {
@@ -1451,6 +1658,9 @@
       "ru": [ "Используйте Alt+NumpadAdd+HexNumbers для ввода символа юникода по его шестнадцатеричной кодовой базе\r\n"
             , "Игнорируется в Far Manager.\r\n"
             , "Не влияет на явные ярлыки." ],
+      "es": [ "Usar Alt+TecladoNumSuma+NúmeroHex para introducir el símbolo unicode por su código hexadecimal\r\n"
+            , "Se ignora en Far Manager\r\n"
+            , "No tiene efecto en atajos explícitos" ],
       "id": 3061 }
     ,
     "cbUseClink": {
@@ -1463,6 +1673,8 @@
       "ja": [ "clinkを使用してコマンドプロンプトを拡張する(cmd.exe)\r\n"
             , "https://mridgers.github.io/clink/" ],
       "ru": [ "Используйте clink для расширения командной строки (cmd.exe)\r\n"
+            , "https://mridgers.github.io/clink/" ],
+      "es": [ "Usar clink para extender el intérprete de comandos (cmd.exe)\r\n"
             , "https://mridgers.github.io/clink/" ],
       "id": 2418 }
     ,
@@ -1477,6 +1689,8 @@
             , "多くの機能(ANSI X3.64, -new_console 引数, ConEmuタブのGUIアプリケーションなど) いくつかの問題 (Windows7では Telnet, ConEmuウィンドウの後ろにはダイアログやメニュー, chcp hungsなど)が必要です...)" ],
       "ru": [ "Разрешить внедрение ConEmuHk.dll в каждый процесс окна консоли ConEmu.\r\n"
             , "Требуется для многих функций (ANSI X3.64, -new_console, приложений с графическим интерфейсом на вкладках ConEmu, ...) и устранения некоторых проблем (telnet в Windows 7, диалоги и меню за окном ConEmu, chcp и т.д...)" ],
+      "es": [ "Permitir la inyección de ConEmuHk.dll en cada proceso de la ventana de terminal de ConEmu.\r\n"
+            , "Necesario para muchas características (ANSI X3.64, -new_console argument, aplicaciones GUI en pesatañas de ConEmu, ...) y para solucionar varios problemas (telnet en Windows 7, diálogis y menús detrás de la ventana de ConEmu window, cuelgues de chcp hungs, ...)" ],
       "id": 1752 }
     ,
     "cbUseKeyboardHooksFast": {
@@ -1485,6 +1699,7 @@
       "de": "Für einige Tastaturkombinationen erforderlich. Wenn ausgewählt und ConEmu das Fenster im Vordergrund ist, wird es die Tastatur anzapfen. Dies muss in vorhandenen Antivirenprogrammen erlaubt werden",
       "ja": "いくつかのキーボードの組み合わせに必要、チェックするとConEmuがフォアグラウンドのときにキーボードをフックします。アンチウイルスソフト(例えばAVP)などで許可しておく必要があります",
       "ru": "Требуется для некоторых сочетаний клавиш. Когда отмеченно, ConEmu установит хук клавиатуры, когда ConEmu находится на переднем окне. Так что, вы должны разрешить это в антивирусном ПО (например, AVP)",
+      "es": "Se precisa para algunas combinaciones de teclado. Cuando está activa, ConEmu instalará un gancho de teclado cuando esté como ventana de fondo. Debes permitir esto en tu antivirus (p.ej.: AVP)",
       "id": 2086 }
     ,
     "cbUserScreenTransparent": {
@@ -1493,6 +1708,7 @@
       "de": "'Benutzerbildschirm'-Transparenz einschalten, wenn Panel(s) angehoben oder verborgen wird. Der 'Benutzerbildschirm' kann kurzfristig durch drücken von Strg-Alt-Umslt aufgedeckt werden.",
       "ja": "パネルが持ち上げられたり,隠れたりした場合, 'ユーザースクリーン' の透明度をオンにします. Ctrl-Alt-Shiftを押して, 'ユーザーの画面' を一時的に表示することができます.",
       "ru": "Включите прозрачность ‘Экран пользователя’, когда панель(и) поднята или скрыта. Вы можете временно открыть ‘Экран пользователя’, нажав Ctrl-Alt-Shift.",
+      "es": "Activar transparencia de 'Pantalla de usuario', cuando el/los panel/es se desplazan o se ocultan. Puedes mostrar temporalmente la 'Pantalla de usuario' pulsando Ctrl-Alt-Shift.",
       "id": 1573 }
     ,
     "cbUseWinArrows": {
@@ -1501,6 +1717,7 @@
       "de": "Größe des ConEmu-Fensters mit Pfeiltasten anpassen",
       "ja": "矢印キーでConEmuウィンドウのサイズを変更する",
       "ru": "Изменить размер окна ConEmu с помощью клавиш со стрелками",
+      "es": "Redimensionar ventana de ConEmu con las teclas del cursor",
       "id": 1768 }
     ,
     "cbUseWinNumber": {
@@ -1509,6 +1726,7 @@
       "de": "Umschalten von Reitern (30 Konsolen) anhand ihrer Nummern (1,2,...,9,10,11,...) aktivieren. 'Host-Taste' ist standardmäßig 'Win'.",
       "ja": "数字(1,2,...,9,10,11,...)でタブ(30個のコンソール)を切り替えることができます.  'Host-key' はデフォルトで 'Win' キーです.",
       "ru": "Включает переключение вкладок (30 консоли) по их номерам (1,2,...,9,10,11,...). По умолчанию ‘Host-key’ ключ ‘Win’.",
+      "es": "Activa el cambio de pestañas (30 teminales) por su número (1,2,...,9,10,11,...). La tecla de 'activación' es, por defecto, 'Win'",
       "id": 1648 }
     ,
     "cbUseWinTab": {
@@ -1517,6 +1735,7 @@
       "de": "Deaktiviere die Windows-7-Aero-Umschaltung (Win+Tab) wenn ConEmu im Vordergrund ist",
       "ja": "ConEmuがフォアグラウンドのときにWindows 7 Aeroスイッチ(Winタブ)を無効にする",
       "ru": "Отключить переключатель Windows 7 Aero (Win+Tab), когда ConEmu на переднем плане",
+      "es": "Desactivar el cambio de tareas de Windows 7 Aero (Win+Tab) cuando ConEmu está en primer plano",
       "id": 1764 }
     ,
     "cbVisible": {
@@ -1525,6 +1744,7 @@
       "de": "Zeigt eine tatsächliche Konsole beim Start",
       "ja": "起動時に実際のコンソールを表示する",
       "ru": "Показать реальную консоль при запуске",
+      "es": "Mostrar la terminal real al iniciar",
       "id": 1545 }
     ,
     "cbVividColors": {
@@ -1537,6 +1757,8 @@
       "ru": [ "Измените яркость текста, если разница в цвете\r\n"
             , "между текстом и фоном не различима" ],
       "zh": "当文字与背景的颜色差异难以辨别时，更改文字的亮度",
+      "es": [ "Cambiar brillo del texto si la diferencia de colores\r\n"
+            , "entre el texto y el fondo no se aprecia" ],
       "id": 3056 }
     ,
     "lbColorsOverride": {
@@ -1555,6 +1777,9 @@
       "ru": [ "Вы можете выбрать одну из предопределенных цветовых схем.\r\n"
             , "Каждая схема настраивает 32 цвета (16+16)\r\n"
             , "и расширяет возможности переднего плана." ],
+      "es": [ "Puedes seleccionar uno de los esquemas de color predefinidos.\r\n"
+            , "Cada esquema personaliza 32 colores (16+16)\r\n"
+            , "y extiende las opciones de fondo." ],
       "id": 2147 }
     ,
     "lbConClrBack": {
@@ -1563,6 +1788,7 @@
       "de": "Legt Standard-Hintergrund-Textfarbe für neue Konsolen fest",
       "ja": "新しいコンソールのデフォルトの背景色を指定する",
       "ru": "Укажите цвет фона по умолчанию для новых консолей",
+      "es": "Indicar el color de fondo por defecto para nuevos terminales",
       "id": 2399 }
     ,
     "lbConClrPopBack": {
@@ -1571,6 +1797,7 @@
       "de": "Legt Standard-Hintergrund-PopUp-Farbe für neue Konsolen fest",
       "ja": "新しいコンソールのデフォルトの背景ポップアップカラーを指定する",
       "ru": "Укажите цвет фона всплывающего окна по умолчанию для новых консолей.",
+      "es": "Especificar el color de fondo de popup para nuevos terminales",
       "id": 2402 }
     ,
     "lbConClrPopText": {
@@ -1579,6 +1806,7 @@
       "de": "Legt Standard-Vordergrund-(Schriftart)-PopUp-Farbe für neue Konsolen fest",
       "ja": "新しいコンソールのデフォルトのフォアグラウンド(フォント)ポップアップカラーを指定する",
       "ru": "Укажите цвет всплывающего окна по умолчанию (шрифт) для новых консолей",
+      "es": "Especificar color de fondo por defecto de popups para nuevos terminales",
       "id": 2401 }
     ,
     "lbConClrText": {
@@ -1587,6 +1815,7 @@
       "de": "Legt Standard-Vordergrund-(Schriftart)-Text-Farbe für neue Konsolen fest",
       "ja": "新しいコンソールのデフォルトのフォアグラウンド(フォント)テキストカラーを指定する",
       "ru": "Укажите цвет текста по умолчанию (шрифт) для новых консолей",
+      "es": "Definir el color de texto por defecto para nuevos terminales",
       "id": 2398 }
     ,
     "lbCTSActAlways": {
@@ -1602,6 +1831,9 @@
       "ru": [ "Выберите требуемый модификатор нажатия для действий\r\n"
             , "<No-Mod> игнорируется в Far Manager для обхода\r\n"
             , " нажатий кнопок мыши на консоли" ],
+      "es": [ "Seleccionar el modificado a pulsar para las acciones\r\n"
+            , "<No-Mod> se ignora en Far Manager para pasar las\r\n"
+            , "pulsaciones del ratón al terminal" ],
       "id": 1645 }
     ,
     "lbCTSBlockSelection": {
@@ -1609,6 +1841,7 @@
       "zh": "使用鼠标左键单击+拖动，选择修改器来启动“块状选择”（‘Block selection’）",
       "ja": "モディファイアを選択して,マウスで 'ブロック選択' を開始する LeftClick+Drag",
       "ru": "Выберите модификатор для начала ‘Блокировки’ с помощью мыши LeftClick+Drag",
+      "es": "Selecciona el modificador para iniciar la 'Selección de bloque' con el ratón ClickIzq+Arrastrar",
       "id": 1633 }
     ,
     "lbCTSEOL": {
@@ -1617,6 +1850,7 @@
       "de": "Bevorzugten Zeilentrenner (\\r\\n, \\n oder \\r) auswählen",
       "ja": "優先行区切り記号を選択する(\\r \\n,\\nまたは\\r)",
       "ru": "Выбрать разделитель строк (\\r\\n, \\n or \\r)",
+      "es": "Seleccionar el separador de línea (\\r\\n, \\n o \\r)",
       "id": 2367 }
     ,
     "lbCTSTextSelection": {
@@ -1625,6 +1859,7 @@
       "de": "Modifizierer auswählen für Start von 'Textauswahl' mit linker_Mausklick+Ziehen",
       "ja": "マウスで 'テキスト選択' を開始するための修飾子を選択するLeftClick Drag",
       "ru": "Выберите модификатор для начала ‘выделения текста’ с помощью мыши LeftClick+Drag",
+      "es": "Elegir modificador para iniciar 'Selección de texto' con el ratón ClickIzq+Arrastrar",
       "id": 1634 }
     ,
     "lbDefaultColors": {
@@ -1643,6 +1878,9 @@
       "ru": [ "Вы можете выбрать одну из предопределенных цветовых схем.\r\n"
             , "Каждая схема настраивает 32 цвета (16+16)\r\n"
             , "и расширяет возможности переднего плана." ],
+      "es": [ "Puedes seleccionar un esquema de colores predefinido.\r\n"
+            , "Cada esquema personaliza 32 colores (16+16)\r\n"
+            , "y extiende las opciones de color de texto." ],
       "id": 1554 }
     ,
     "lbExtendFontBoldIdx": {
@@ -1651,6 +1889,7 @@
       "de": "Hintergrundfarbindex wählen für den 'Fette' Schrifteigenschaften umgekehrt werden (Vorgabe ist Rot #12)",
       "ja": " '太字' のフォントプロパティを反転する背景色のインデックスを選択します(デフォルトは赤#12)",
       "ru": "Выбрать фон, для которого будут инвертированы свойства шрифта ‘Жирный’ (по умолчанию Красный #12)",
+      "es": "Seleccionar índice de color de fondo para el cual se invertirán las propiedades del tipo 'Negrita' (por defecto Rojo #12)",
       "id": 1577 }
     ,
     "lbExtendFontItalicIdx": {
@@ -1659,6 +1898,7 @@
       "de": "Hintergrundfarbindex wählen für den 'Kursive' Schrifteigenschaften umgekehrt werden (Vorgabe ist Magenta #13)",
       "ja": "'Italic'フォントのプロパティを反転する背景色のインデックスを選択します(デフォルトはMagenta#13)",
       "ru": "Выбрать фон, для которого будут инвертированы свойства шрифта ‘Курсив’ (по умолчанию - Магнента #13)",
+      "es": "Elegir el índice del color de fondo para el cual la propiedad 'itálica' se invertirá (por defecto es Magenta #13)",
       "id": 2300 }
     ,
     "lbExtendFontNormalIdx": {
@@ -1667,6 +1907,7 @@
       "de": "Wenn die Schrifteigenschaft Fett oder Kursiv umgekehrt wurde, darf ConEmu den Hintergrund auf die Vorgabefabe ändern (Vorgabe ist Blau #1)",
       "ja": "太字または斜体のフォントプロパティが反転されている場合,ConEmuは背景をデフォルトの色に変更することがあります(デフォルトは青#1)",
       "ru": "Когда свойство жирного или курсивого шрифта было инвертировано, ConEmu может изменить фон на цвет по умолчанию (по умолчанию Синий #1)",
+      "es": "Cuando se invierten los tipos de letra Negrita e Itálica, ConEmu puede cambiar el fondo al color por defecto (Azul #1)",
       "id": 2301 }
     ,
     "lbGotoEditorCmd": {
@@ -1675,6 +1916,7 @@
       "de": "Befehlszeile für das Starten des Editors mit einer Datei positioniert auf Zeile und in Spalte",
       "ja": "行と列にファイルを配置してエディタを起動するコマンドライン",
       "ru": "Командная строка для запуска редактора с файлом, расположенным в строке и столбце",
+      "es": "Línea de comandos para iniciar el editor con el archivo posicionado en una fila y columna",
       "id": 2255 }
     ,
     "lbLDragKey": {
@@ -1683,6 +1925,7 @@
       "de": "Ziehen mit der linken Maustaste, nur wenn ... gedrückt",
       "ja": "マウスの左ボタンでドラッグします.",
       "ru": "Перетаскивание левой кнопкой мыши, только при нажатии ...",
+      "es": "Arrastrar con el botón izquierdo del ratón, sólo cuando esté pulsado...",
       "id": 1501 }
     ,
     "lbNtvdmHeight": {
@@ -1696,6 +1939,8 @@
             , "この機能は,x64 OSでは使用できません." ],
       "ru": [ "Старые DOS-программы можно запускать с размерами консоли: 80x25, 80x28, 80x43 или 80x50. Вы можете принудительно выбрать размер окна или оставить автоматический выбор.\r\n"
             , "Эта функция недоступна в ОС x64." ],
+      "es": [ "Los programas antiguos de DOS deben ejecutarse en tamaños de terminal: 80x25, 80x28, 80x43 o 80x50. Puedes forzar a seleccionar el tamaño de la ventana, o dejar la selección automática.\r\n"
+            , "Esta opción no está disponible en SO x64." ],
       "id": 1559 }
     ,
     "lbRDragKey": {
@@ -1704,6 +1949,7 @@
       "de": "Ziehen mit der rechten Maustaste, nur wenn ... gedrückt",
       "ja": "マウスの右ボタンでドラッグします.",
       "ru": "Перетаскивание правой кнопкой мыши, только при нажатии ...",
+      "es": "Arrastrar con el botón derecho del ratón, sólo cuando esté pulsado...",
       "id": 1503 }
     ,
     "rbActivityComm": {
@@ -1712,6 +1958,7 @@
       "de": "Protokolliert interne ConEmu-(GUI<-->Server)-Aurufe",
       "ja": "内部ConEmu(GUI < - >サーバ)コールのログ",
       "ru": "Журнал внутренних вызовов ConEmu (GUI <-> Server)",
+      "es": "Registrar llamadas internas de ConEmu (Servidor<-->GUI)",
       "id": 2069 }
     ,
     "rbActivityDisabled": {
@@ -1724,6 +1971,8 @@
             , "これは,[設定]ダイアログを閉じることを意味します." ],
       "ru": [ "Отключить ведение журнала отладки.\r\n"
             , "Это подразумевает закрытие диалога ‘Настройки’." ],
+      "es": [ "Desactivar registro de depuración.\r\n"
+            , "Se aplica al cerrar el diálogo de 'Opciones'." ],
       "id": 1747 }
     ,
     "rbActivityInput": {
@@ -1732,6 +1981,7 @@
       "de": "Protokolliert Tastatur- und Mausaktivitäten",
       "ja": "ログキーボードとマウスのアクティビティ",
       "ru": "Журнал действий клавиатуры и мыши",
+      "es": "Registrar actividad de teclado y ratón",
       "id": 1762 }
     ,
     "rbActivityProcess": {
@@ -1745,6 +1995,8 @@
             , "Требуется ‘Inject ConEmuHk’" ],
       "zh": [ "将进程创建的状态记录到控制台中。\n"
             , "要求“注入 ConEmuHk”已启用" ],
+      "es": [ "Registrar en log el progresos de la creación de terminales.\r\n"
+            , "Se necesitar ‘Inyectar ConEmuHk’ is required" ],
       "id": 3057 }
     ,
     "rbActivityShell": {
@@ -1757,6 +2009,8 @@
             , " 'Inject ConEmuHk' が必要です" ],
       "ru": [ "Записывать вызовы оболочки (создание прогресса, загрузка библиотеки и т.д.) \r\n"
             , "Требуется ‘Inject ConEmuHk’" ],
+      "es": [ "Registrar en log las llamadas del intérprete de comandos\r\n"
+            , "Se requiere 'Inyectar ConEmuHk'" ],
       "id": 1748 }
     ,
     "rbComspec_AppBit": {
@@ -1765,6 +2019,7 @@
       "de": "Nur 64Bit-BS, (System32 oder SysWOW64) - gleiche Bitzahl wie die Anwendung (ConEmu, Far-Manager, ...)",
       "ja": "64ビットOSのみ,(System32またはSysWOW64) - アプリケーションと同じビット(ConEmu,Far Manager,...)",
       "ru": "Только на 64бит ОС, (System32 или SysWOW64) - те же биты, что и в приложении (ConEmu, Far Manager, ...)",
+      "es": "Sólo SO de 64bit (System32 o SysWOW64) - igual nº de bits que la aplicación (ConEmu, Far Manager, ...)",
       "id": 2158 }
     ,
     "rbComspec_OSbit": {
@@ -1773,6 +2028,7 @@
       "de": "Nur 64Bit-BS, (System32 oder SysWOW64) - Verwendet System32",
       "ja": "64ビットOSのみ,(System32またはSysWOW64) -  System32を使用する",
       "ru": "Только на 64бит ОС, (System32 или SysWOW64) - используйте System32",
+      "es": "Sólo SO de 64bit, (System32 o SysWOW64) - usar System32",
       "id": 2157 }
     ,
     "rbComspec_x32": {
@@ -1781,6 +2037,7 @@
       "de": "Nur 64Bit-BS, (System32 oder SysWOW64) - Verwendet SysWOW64",
       "ja": "64ビットOSのみ,(System32またはSysWOW64) -  SysWOW64を使用する",
       "ru": "Только на 64бит ОС, (System32 или SysWOW64) - используйте SysWOW64",
+      "es": "Sólo sistema de 64bit, (System32 o SysWOW64) - usar SysWOW64",
       "id": 2159 }
     ,
     "rbComspecAuto": {
@@ -1789,6 +2046,7 @@
       "de": "Starte TCC - falls installiert, %ComSpec% - andererseits (verwendet für 'Erzeuge neue 'cmd.exe'-Konsole')",
       "ja": "tccを起動する - インストールされている場合は%ComSpec% - それ以外の場合( '新しい' cmd.exe 'コンソール'を作成するために使用)",
       "ru": "Запустить tcc - если установлен, %ComSpec% - иначе (используется для ‘Создать новую консоль ‘cmd.exe’’)",
+      "es": "Iniciar tcc - si está instalado, %ComSpec% - de otra forma (se usa para 'Crear nuevo terminal cmd.exe')",
       "id": 2148 }
     ,
     "rbComspecCmd": {
@@ -1797,6 +2055,7 @@
       "de": "Verwendet nur cmd.exe (verwendet für 'Erzeuge neue 'cmd.exe'-Konsole')",
       "ja": "cmd.exeのみを使用する( '新しい' cmd.exe 'コンソールの作成'に使用)",
       "ru": "Использовать только cmd.exe (используется для ‘Создать новую консоль ‘cmd.exe’’)",
+      "es": "Usar sólo cmd.exe (usado para 'Crear terminal nuevo cmd.exe')",
       "id": 2150 }
     ,
     "rbComspecEnvVar": {
@@ -1805,6 +2064,7 @@
       "de": "Verwendet die %ComSpec%-Umgebungsvariable (wird für 'Erzeuge neue 'cmd.exe'-Konsole' verwendet)",
       "ja": "%ComSpec%環境変数を使用する( '新しい' cmd.exe 'コンソールの作成'に使用)",
       "ru": "Использовать переменную среды %ComSpec% (используется для  ‘Создать новую консоль ‘cmd.exe’’)",
+      "es": "Usar variable de entorno %ComSpec% (usado para 'Crear nuevos terminales cmd.exe')",
       "id": 2149 }
     ,
     "rbComspecExplicit": {
@@ -1813,6 +2073,7 @@
       "de": "Angegebener Befehlsprozessor (verwendet für 'Erzeuge neue 'cmd.exe'-Konsole')",
       "ja": "指定されたコマンドプロセッサ( 'Create' cmd.exe 'console'に使用)",
       "ru": "Указанный командный процессор (используется для для ‘Создать новую консоль ‘cmd.exe’’)",
+      "es": "Intérprete de comandos (usado por 'Crear nuevo terminal cmd.exe')",
       "id": 2151 }
     ,
     "rbScrollbarAuto": {
@@ -1821,6 +2082,7 @@
       "de": "Zeige Scrollleiste beim Darauf-Zeigen mit der Maus oder beim Scrollpositionswechsel",
       "ja": "マウスオーバーまたはスクロール位置の変更時にスクロールバーを表示する",
       "ru": "Показывать полосу прокрутки при наведении мыши или изменении положения прокрутки",
+      "es": "Mostrar barra de scroll al pasar el ratón por encima o cuando cambia la posición de scroll",
       "id": 2489 }
     ,
     "rbScrollbarHide": {
@@ -1829,6 +2091,7 @@
       "de": "Verberge Scrollleiste",
       "ja": "スクロールバーを表示しない",
       "ru": "Не показывать прокрутку",
+      "es": "No mostrar barra de scroll",
       "id": 2487 }
     ,
     "rbScrollbarShow": {
@@ -1837,6 +2100,7 @@
       "de": "Zeige Scrollbar immer an der rechten Kante des Fensters",
       "ja": "ウインドウの右端に常にスクロールバーを表示する",
       "ru": "Всегда показывать полосу прокрутки на правом краю окна",
+      "es": "Mostrar siempre la barra de scroll en el borde derecho de la ventana",
       "id": 2488 }
     ,
     "rbStartLastTabs": {
@@ -1845,6 +2109,7 @@
       "de": "AutoSpeichern/Wiederherstellen (Neu Öffnen) von ConEmu-Reitern",
       "ja": "ConEmuタブの自動保存/復元(再オープン)",
       "ru": "Автосохранение/восстановление (повторное открытие) вкладок ConEmu",
+      "es": "Auto guardar/recuperar (reabrir) pestañas de ConEmu",
       "id": 2236 }
     ,
     "rbStartNamedTask": {
@@ -1853,6 +2118,7 @@
       "de": "Startet ConEmu mit einem oder mehreren Reitern, nach Befehlen aus den ConEmu-Einstellungen, Seite Aufgaben",
       "ja": "ConEmuを複数の(1つ以上の)タブで開始します.コマンドは,ConEmuの設定,タスクページにあります.",
       "ru": "Запускает ConEmu с несколькими (одной или несколькими) вкладками, команды, расположенные в настройках ConEmu, страница Задачи",
+      "es": "Inicia ConEmu con varias (una o más) pestañas, comandos en las opciones de ConEmu, páginas de tareas",
       "id": 2235 }
     ,
     "rbStartSingleApp": {
@@ -1861,6 +2127,7 @@
       "de": "Startet ConEmu mit einem einzelnen geöffneten Reiter",
       "ja": "単一のタブを開いた状態でConEmuを開始",
       "ru": "Запускать ConEmu с одной открытой вкладкой",
+      "es": "Iniciar ConEmu con un sola pestaña abierta",
       "id": 2233 }
     ,
     "rbStartTasksFile": {
@@ -1869,6 +2136,7 @@
       "de": "Startet ConEmu mit einem oder mehreren Reitern nach Befehlen die in der angegebenen Textdatei liegen",
       "ja": "いくつかの(1つまたは複数の)タブ,特定のテキストファイルにあるコマンドでConEmuを開始します.",
       "ru": "Запускает ConEmu с несколькими (одной или несколькими) вкладками, командами, расположенными в указанном текстовом файле",
+      "es": "Iniciar ConEmu con varias pestañas, para los comandos del fichero de texto especificado",
       "id": 2234 }
     ,
     "rCursorB": {
@@ -1877,6 +2145,7 @@
       "de": "Ganze-Zelle-Blockschreibmarke. 'Farbe'-Auswahlfeld ändern, um die Schreibmarkendarstellung anzupassen",
       "ja": "フルセル(ブロック)カーソル,カーソル外観を変更するための 'カラー' チェックボックスを変更する",
       "ru": "Курсор на всю ячейку (блок), установите флажок ‘Цвет’ для изменения внешнего вида курсора.",
+      "es": "Cursor de bloque, cambiar la opción 'Color' para cambiar la apariencia del cursor",
       "id": 2532 }
     ,
     "rCursorH": {
@@ -1885,6 +2154,7 @@
       "de": "Horizontale Textmarke, wie in ursprünglicher Konsole",
       "ja": "ネイティブコンソールのような水平方向のテキストカーソル",
       "ru": "Горизонтальный текстовый курсор, как у native console",
+      "es": "Cursor de texto horizontal, como en el terminal nativo",
       "id": 2530 }
     ,
     "rCursorV": {
@@ -1893,6 +2163,7 @@
       "de": "Vertikale Textmarke, wie in grafischen Texteditoren",
       "ja": "標準的なグラフィック・テキスト・エディタのような垂直方向のテキスト・カーソル",
       "ru": "Вертикальный текстовый курсор, как в стандартных графических текстовых редакторах",
+      "es": "Cursor de texto vertical, con en los editores de texto estándar",
       "id": 2531 }
     ,
     "slTransparent": {
@@ -1901,6 +2172,7 @@
       "de": "Transparenz der ConEmu-Hauptfensters",
       "ja": "メインConEmuウィンドウの透過度",
       "ru": "Прозрачность главного окна ConEmu",
+      "es": "Transparencia de la ventana principal de ConEmu",
       "id": 1564 }
     ,
     "tAnsiLogPath": {
@@ -1912,6 +2184,8 @@
             , "(新しいコンソールにのみ影響する)" ],
       "ru": [ "Вы можете выбрать папку для файлов журнала в консоли\r\n"
             , "(влияет только на новые консоли)" ],
+      "es": [ "Puedes elegir la carpeta para los ficheros de log del terminal\r\n"
+            , "(sólo afecta a nuevos terminales)" ],
       "id": 2680 }
     ,
     "tBgImage": {
@@ -1920,6 +2194,7 @@
       "de": "Hintergrundbilddatei (bmp, jpg, png, tif) auswählen oder eine reine Farbe auf eine Art angeben, die von der Seite 'Farben' unterstützt wird",
       "ja": "背景画像ファイル(bmp,jpg,png,tif)を選択するか, '色' ページでサポートされているフォームで単色を指定します",
       "ru": "Выберите файл фонового изображения (bmp, jpg, png, tif) или укажите сплошной цвет в любой форме, поддерживаемой страницей ‘Цвета’",
+      "es": "Selecciona la imagen de fondo (bmp, jpg, png, tif) o especifica un color sólido tal y como está en la página de 'Colores'",
       "id": 1697 }
     ,
     "tBgImageColors": {
@@ -1943,6 +2218,10 @@
             , "которые будут заменены фоновым изображением,\r\n"
             , "по умолчанию ‘#0 #1’ Черный и синий.\r\n"
             , "Используйте \"*\" (звездочку) для цвета фона панелей Far Manager." ],
+      "es": [ "Seleccionar los índices de color de fondo,\r\n"
+            , "que se reemplazarán por la imagen de fondo,\r\n"
+            , "por defecto son '#0 #1' Negro y Azul.\r\n"
+            , "Usar \"*\" (asterisco) para el color de fondo de los paneles de Far Manager." ],
       "id": 1575 }
     ,
     "tCloseTabMacro": {
@@ -1956,6 +2235,8 @@
             , "フィールドをクリアしてデフォルトにリセットする" ],
       "ru": [ "Макрос для закрытия редактора/средства просмотра/панелей в Far Manager, когда вы выбираете ‘Закрыть’ в контекстном меню вкладки\r\n"
             , "Очистить поле для сброса на значения по умолчанию" ],
+      "es": [ "Macro para cerrar el Editor/Visor/Paneles en Far Manager, cuando seleccionar 'Cerrar' desde el menú contextual de la pestaña\r\n"
+            , "Limpia el campo para comportamiento por defecto" ],
       "id": 2078 }
     ,
     "tCmdGroupCommands": {
@@ -1984,6 +2265,11 @@
             , "Каждая команда создает вкладку или панель при запуске группы\r\n"
             , "Пометить активную вкладку консоли знаком '>'\r\n"
             , "Запустить консоль от имени администратора со знаком '*'" ],
+      "es": [ "Comandos (aplicación, parámetros, '-new_console')\r\n"
+            , "Delimita los comandos con lineas en blanco\r\n"
+            , "Cada comando crea una pestaña o panel al inicio del grupo\r\n"
+            , "Marcar la pestaña de terminal activa con '>'\r\n"
+            , "Iniciar el terminal 'Como Administrador' con '*'" ],
       "id": 2118 }
     ,
     "tCmdGroupGuiArg": {
@@ -1997,6 +2283,8 @@
             , "例:/ dir \"C:\\\" / icon \"cmd.exe\" / single" ],
       "ru": [ "Параметры задачи (‘/dir’, ‘/icon’)\r\n"
             , "Пример: /dir \"C:\\\" /icon \"cmd.exe\" /single" ],
+      "es": [ "Parámetros de la tarea (‘/dir’, ‘/icon’)\r\n"
+            , "Ejemplo: /dir \"C:\\\" /icon \"cmd.exe\" /single" ],
       "id": 2322 }
     ,
     "tCmdGroupKey": {
@@ -2005,6 +2293,7 @@
       "de": "Schnelltaste zum Erstellen diese Aufgabe auswählen (nicht global, funktioniert nur in ConEmu)",
       "ja": "このタスクを作成するためのホットキーを選択します(グローバルではなく,ConEmuでのみ動作します)",
       "ru": "Выберать горячую клавишу для создания этой задачи (не глобальная, работает только в ConEmu)",
+      "es": "Elegir combinación para crear esta tarea (no es global, sólo funciona en ConEmu)",
       "id": 2628 }
     ,
     "tCmdGroupName": {
@@ -2012,6 +2301,7 @@
       "zh": "任务名 （别名）, 包括在{...}里, 在‘[+] 菜单’里使用,‘重新创建对话框’或ConEmu.exe的‘-run’参数",
       "de": "Aufgabenname (Alias), umgeben von {...}, verwendet im '[+]-Menü', in 'Dialog neu erstellen' oder mit '-run'-Parameter der ConEmu.exe",
       "ru": "Имя задачи (псевдоним), окруженное {...}, используемое в ‘[+] меню’, ‘Восстановить диалог’ или ‘-run’ аргумент ConEmu.exe",
+      "es": "Nombre de la tarea (alias), entre corchetes {...}, usado en 'menú [+]', 'Recrear diálogo' o argumento '-run' de ConEmu.exe",
       "id": 2117 }
     ,
     "tCursorFixedSize": {
@@ -2020,6 +2310,7 @@
       "de": "Angegebene Größe der Schreibmarke in Prozent. Zusammen mit 'Feste Schreibmarkengröße' verwenden",
       "ja": "カーソルのサイズをパーセントで指定します.  '固定カーソルサイズ' と一緒に使用する",
       "ru": "Указанный размер курсора в процентах. Используйте вместе с ‘Фиксированный размер курсор’",
+      "es": "Tamaño del cursor en porcentaje. Usar junto con 'Tamaño fijo del cursor'",
       "id": 2368 }
     ,
     "tCursorMinSize": {
@@ -2028,6 +2319,7 @@
       "de": "Angegebene minimale Größe der Schreibmarke in Pixeln (unabhängig von der 'Festen Schreibmarkengröße')",
       "ja": "カーソルの最小サイズをピクセルで指定しました( '固定カーソルサイズ' に関係なく)",
       "ru": "Указан минимальный размер курсора в пикселях (независимо от ‘Фиксированный размер курсор’)",
+      "es": "Tamaño mínimo del cursor en pixels (ignorando el 'Tamaño fijo del cursor')",
       "id": 2370 }
     ,
     "tFadeHigh": {
@@ -2036,6 +2328,7 @@
       "de": "Wenn ConEmu den Fokus verliert sollen die Inhalte verblassen. Hier \"hohe Verschiebung\" angegeben werden (macht helle Faben dunkler).",
       "ja": "ConEmuがフォーカスを失ったとき,その内容は薄れているかもしれません.ここでは \"ハイシフト\"(明るい色を暗くする)を指定することができます.",
       "ru": "Когда ConEmu теряет фокус, его содержимое может исчезнуть. Вы можете указать здесь \"высокий сдвиг\" (делает светлые цвета темнее).",
+      "es": "Cuando ConEmu pierde el foco, su contenido se puede difuminar. Puedes especificar \"paso alto\" (lo cual hace que los colores claros se oscurezcan)",
       "id": 1625 }
     ,
     "tFadeLow": {
@@ -2044,6 +2337,7 @@
       "de": "Wenn ConEmu den Fokus verliert sollen die Inhalte verblassen. Hier \"geringe Verschiebung\" angegeben werden (macht dunkle Faben heller).",
       "ja": "ConEmuがフォーカスを失ったとき,その内容は薄れているかもしれません.ここでは \"低シフト\"(暗い色を明るくする)を指定することができます.",
       "ru": "Когда ConEmu теряет фокус, его содержимое может исчезнуть. Вы можете указать здесь \"низкий сдвиг\" (делает светлые цвета темнее).",
+      "es": "Cuando ConEmu pierde el foco, sus contenidos se difuminarán. Puedes especificar el 'paso bajo' (que hará que los colores se aclaren)",
       "id": 1624 }
     ,
     "tFontCharset": {
@@ -2052,6 +2346,7 @@
       "de": "Zeichensatz der Hauptschrift",
       "ja": "メインフォントの文字セット",
       "ru": "Кодировка основного шрифта",
+      "es": "Juego de caracteres principal",
       "id": 1513 }
     ,
     "tFontFace": {
@@ -2060,6 +2355,7 @@
       "zh": "主字体的名称",
       "de": "Anzeigename der Hauptschriftart",
       "ja": "メインフォントのフェイス名",
+      "es": "Nombre del tipo de letra principal",
       "id": 1511 }
     ,
     "tFontFace2": {
@@ -2074,6 +2370,8 @@
             , "例えば.メイン -  \"Consolas\",追加 -  \"Segoe UI\"" ],
       "ru": [ "Шрифт, используемый для псевдографики или указанного диапазона символов.\r\n"
             , "Например: основной - \"Consolas\", дополнительный - \"Segoe UI\"." ],
+      "es": [ "Tipo de letra para dibujar pseudo-gráficos o los símbolos especificados\r\n"
+            , "Ej.: principal - \"Consolas\", adicional - \"Segoe UI\"" ],
       "id": 1514 }
     ,
     "tFontSizeX": {
@@ -2092,6 +2390,9 @@
       "ru": [ "Ширина основного шрифта\r\n"
             , "0 - средняя ширина по умолчанию\r\n"
             , "для указанной высоты" ],
+      "es": [ "Anchura de tipo de letra principal\r\n"
+            , "0 - anchura por defecto\r\n"
+            , "para la altura especificada" ],
       "id": 2279 }
     ,
     "tFontSizeX2": {
@@ -2110,6 +2411,9 @@
       "ru": [ "ШИРИНА для псевдографического шрифта.\r\n"
             , "Он должен быть шире основного шрифта,\r\n"
             , "чтобы избежать \"пунктирной\" псевдографии (фреймов)." ],
+      "es": [ "ANCHURA para tipo de letra de pseudo-gráficos.\r\n"
+            , "Debe ser más ancha que el tipo de letra principal\r\n"
+            , "para evitar pseudo-gráficos corrompidos (marcos)." ],
       "id": 2284 }
     ,
     "tFontSizeX3": {
@@ -2118,6 +2422,7 @@
       "de": "Zeichenbreite für den \"Festbreite\"-Modus",
       "ja": "\"モノスペース\"モードのセル幅",
       "ru": "Ширина ячейки для режима \"Monospace\"",
+      "es": "Anchura de celda para modo \"Monoespaciado\"",
       "id": 2290 }
     ,
     "tFontSizeY": {
@@ -2126,6 +2431,7 @@
       "de": "Hauptschrifthöhe",
       "ja": "メインフォントの高さ",
       "ru": "Высота основного шрифта",
+      "es": "Altura del tipo de letra principal",
       "id": 1512 }
     ,
     "tHereConfig": {
@@ -2134,6 +2440,7 @@
       "de": "Erlaubt das Setzten einer abweichenden Schriftart, Palette und anderer Einstellungen für deine ConEmu-Instanz",
       "ja": "ConEmuインスタンスに異なるフォント,パレット,その他の設定をすることを許可する",
       "ru": "Позволяет установить другой шрифт, палитру и другие настройки для вашего экземпляра ConEmu",
+      "es": "Permite seleccionar otro tipo de letra, paleta y otras opciones para la instancia de ConEmu",
       "id": 2390 }
     ,
     "tHereIcon": {
@@ -2142,6 +2449,7 @@
       "de": "‘C:\\Far\\far.exe,0’, ‘powershell.exe’, ‘C:\\Images\\Icon.ico’",
       "ja": "'C:\\Far \\far.exe,0', 'powershell.exe', 'C​​:\\Images \\Icon.ico'",
       "ru": "‘C:\\Far\\far.exe,0’, ‘powershell.exe’, ‘C:\\Images\\Icon.ico’",
+      "es": "‘C:\\Far\\far.exe,0’, ‘powershell.exe’, ‘C:\\Images\\Icon.ico’",
       "id": 2389 }
     ,
     "tHereShell": {
@@ -2165,6 +2473,11 @@
             , "Используйте ‘!ConEmuWorkDir!’ для каталога,\r\n"
             , "но не файл, по которому щелкнули\r\n"
             , "Используйте ‘-reuse’ для повторного использования существующего окна ConEmu вместо создания нового. Например  ‘-reuse -run {cmd}’" ],
+      "es": [ "Indica tu intérprete de comandos (cmd, far, etc...)\r\n"
+            , "Usar '%1' para elemento 'seleccionado'\r\n"
+            , "Usar '!ConEmuWorkDir!' para la carpeta,\r\n"
+            , "pero no el archivo seleccionado\r\n"
+            , "Usar '-reuse' para reutilizar la ventana existente de ConEmu en vez de crear una nueva. Ej.: '-reuse -run {cmd}'" ],
       "id": 2391 }
     ,
     "tHideCaptionAlwaysDelay": {
@@ -2173,6 +2486,7 @@
       "de": "Verzögerung in Millisekunden bis zum Anzeigen des Fensters",
       "ja": "フレームが出現するまでの時間をミリ秒単位で指定",
       "ru": "Задержка в миллисекундах, для внешнего вида фрейма",
+      "es": "Retardo en milisegundos, para que aparezca un Frame",
       "id": 1590 }
     ,
     "tHideCaptionAlwaysDissapear": {
@@ -2181,6 +2495,7 @@
       "de": "Verzögerung in Millisekunden bis zum Anzeigen des Fensters",
       "ja": "フレームが消失するまでの時間をミリ秒単位で指定",
       "ru": "Задержка в миллисекундах, для исчезновения фрейма",
+      "es": "Retardo en milisegundos, para la desaparición de un frame",
       "id": 1591 }
     ,
     "tHideCaptionAlwaysFrame": {
@@ -2189,6 +2504,7 @@
       "de": "Solange Titel und Rahmen verborgen sind, soll ConEmu einen kleinen Teil des Rahmens (in Pixeln) um den Konsolenteil anzeigen. Vorgabe ist 1 Pixel.",
       "ja": "キャプションとフレームが隠されている間,ConEmuはコンソール部分の周りにフレームの小さな部分(ピクセル単位)を保持します.デフォルトは1ピクセルです.",
       "ru": "Пока заголовок и рамка скрыты, ConEmu может держать небольшую часть кадра (в пикселях) вокруг части консоли. По умолчанию 1 пиксель.",
+      "es": "Mientras la barra de título y el borde están ocultos, ConEmu puede mantener un pequeño margen alrededor de la zona del terminal. Por defecto es 1 pixel.",
       "id": 1589 }
     ,
     "tInsideConfig": {
@@ -2197,6 +2513,7 @@
       "de": "Erlaubt das Setzen abweichender Schriftart, Palette und anderer Einstellungen für deine ConEmu-Instanz",
       "ja": "ConEmuインスタンスに異なるフォント,パレット,その他の設定をすることを許可する",
       "ru": "Позволяет установить другой шрифт, палитру и другие настройки для вашего экземпляра ConEmu",
+      "es": "Permite configurar diferente tipo de letra, paleta y otras opciones para tu instancia de ConEmu",
       "id": 2385 }
     ,
     "tInsideIcon": {
@@ -2205,6 +2522,7 @@
       "de": "‘C:\\Far\\far.exe,0’, ‘powershell.exe’, ‘C:\\Images\\Icon.ico’",
       "ja": "'C:\\Far \\far.exe,0', 'powershell.exe', 'C​​:\\Images \\Icon.ico'",
       "ru": "‘C:\\Far\\far.exe,0’, ‘powershell.exe’, ‘C:\\Images\\Icon.ico’",
+      "es": "‘C:\\Far\\far.exe,0’, ‘powershell.exe’, ‘C:\\Images\\Icon.ico’",
       "id": 2384 }
     ,
     "tInsideShell": {
@@ -2228,6 +2546,10 @@
             , "Использовать макрос ‘%1’ для элемента ‘клик’\r\n"
             , "Используйте ‘!ConEmuWorkDir!’ для каталога,\r\n"
             , "но не файл, по которому щелкнули" ],
+      "es": [ "Especifica tu intérprete de comandos (cmd, far, etc.)\r\n"
+            , "Usar la macro '%1' para el elemento seleccionado\r\n"
+            , "Usar '!ConEmuWorkDir!' para la carpeta,\r\n"
+            , "no para el archivo seleccionado" ],
       "id": 2386 }
     ,
     "tInsideSyncDir": {
@@ -2240,6 +2562,8 @@
       "ja": [ "'cd'の形式で,デフォルトは '\\eCD / d \\1 \\n'です.\r\n"
             , "\\e  -  ESC,\\b  -  BS,\\n  -  ENTER,\\1  -  \"dir\",\\2  -  \"bash dir\"" ],
       "ru": [ "Формат ‘cd’, по умолчанию ‘\\eCD /d \\1\\n’.\r\n"
+            , "\\e - ESC, \\b - BS, \\n - ENTER, \\1 - \"dir\", \\2 - \"bash dir\"." ],
+      "es": [ "Formato de 'cd', por defecto es '\\eCD /d \\1\\n'.\r\n"
             , "\\e - ESC, \\b - BS, \\n - ENTER, \\1 - \"dir\", \\2 - \"bash dir\"." ],
       "id": 2479 }
     ,
@@ -2254,6 +2578,8 @@
             , "サポートされる最大値は32766です." ],
       "ru": [ "Длина буфера обратной прокрутки в строках.\r\n"
             , "Максимальное поддерживаемое значение - 32766." ],
+      "es": [ "Longitud del buffer de scroll en lineas.\r\n"
+            , "El máximo valor es 32766." ],
       "id": 1535 }
     ,
     "tOptionSearch": {
@@ -2267,6 +2593,8 @@
             , "[ズーム]アイコンをクリックするか,[Enter]を押して検索を続行します." ],
       "ru": [ "Это позволяет осуществлять поиск по всем элементам управления страницами настройки по указанному тексту\r\n"
             , "Нажмите ‘увеличить’ или ‘Enter’, чтобы продолжить поиск" ],
+      "es": [ "Permite buscar un texto en los controles de las páginas de configuración\r\n"
+            , "Pulsar el icono de 'zoom' o pulsar 'Enter' para continuar la búsqueda" ],
       "id": 2569 }
     ,
     "tPadSize": {
@@ -2275,6 +2603,7 @@
       "de": "Erzeuge Abstand zwischen ConEmu-Rahmen und Konsolenfeld",
       "ja": "ConEmuフレームとコンソールフィールドの間にパッドを作成する",
       "ru": "Создать отступ между рамкой ConEmu и полями консоли",
+      "es": "Crear separación entre el borde de ConEmu y el campo de la terminal",
       "id": 2356 }
     ,
     "tPerfCounters": {
@@ -2303,6 +2632,11 @@
             , "Render: средняя продолжительность рендеринга текста в память DC\r\n"
             , "Blt: средняя продолжительность операции блитования от памяти DC до экрана DC\r\n"
             , "RPS: среднее число операций чтения реальных данных консоли в секунду" ],
+      "es": [ "FPS: Frames por segundo\r\n"
+            , "Data: Tiempo medio para transferir datos del teminal Real al Virtual\r\n"
+            , "Render: Tiempo medio para renderizar el texto en memoria\r\n"
+            , "Blt: Tiempo medio de las operaciones entre memoria y pantalla\r\n"
+            , "RPS: Media de lecturas de datos por segundo del terminal real" ],
       "id": 2602 }
     ,
     "tQuakeAnimation": {
@@ -2316,6 +2650,8 @@
             , "アニメーションは,ウィンドウのキャプションが隠されている場合にのみ機能します." ],
       "ru": [ "Продолжительность анимации окна (0..2000мс): Quake скользит вниз/вверх и восстанавливает/скрывает окно в TSA.\r\n"
             , "Анимация работает только тогда, когда заголовок окна скрыт." ],
+      "es": [ "Duración de la animación de la ventana (0..2000ms): deslizamiento en modo Quake y restauración/ocultación de ventana a la zona de notificaciones.\r\n"
+            , "La animación sólo funciona cuando la barra de título de la ventana está oculta." ],
       "id": 2564 }
     ,
     "tRClickMacro": {
@@ -2329,6 +2665,8 @@
             , "フィールドをクリアしてデフォルトにリセットする" ],
       "ru": [ "Макрос Far Manager для EMenu выбранных элементов панели файлов\r\n"
             , "Очистить поле, чтобы восстановить настройки по умолчанию" ],
+      "es": [ "Far Manager macro para EMenu de los elementos seleccionados del panel de ficheros\r\n"
+            , "Limpiar campor y reiniciar a valores por defecto" ],
       "id": 2075 }
     ,
     "tRealFontBorders": {
@@ -2342,6 +2680,8 @@
             , "高さx幅" ],
       "ru": [ "Реальные размеры \"Изменить шрифт псевдографики\":\r\n"
             , "Высота x Ширина" ],
+      "es": [ "Tamaños reales de \"Cambiar tipo de letra de pseudo-gráficos\":\r\n"
+            , "Altura x Anchura" ],
       "id": 1518 }
     ,
     "tRealFontMain": {
@@ -2355,6 +2695,8 @@
             , "高さ×幅×AveWidth" ],
       "ru": [ "Реальные размеры основного шрифта:\r\n"
             , "Высота x Ширина x Средняя ширина" ],
+      "es": [ "Tamaños reales de tipo de letra principal:\r\n"
+            , "Alto x Ancho x AnchoMed" ],
       "id": 1517 }
     ,
     "tSafeFarCloseMacro": {
@@ -2366,6 +2708,8 @@
             , "フィールドをクリアしてデフォルトにリセットする" ],
       "ru": [ "Макрос для закрытия Far Manager мягко, вместо закрытия окна консоли, когда вы закрываете окно ConEmu\r\n"
             , "Очистить поле, чтобы восстановить настройки по умолчанию" ],
+      "es": [ "Macro para cerrar Far Manager, sin cerrar la ventana de terminal, cuando se cierra ConEmu\r\n"
+            , "Vaciar el campo para usar configuración por defecto" ],
       "id": 2080 }
     ,
     "tSaveAllMacro": {
@@ -2377,6 +2721,8 @@
             , "フィールドをクリアしてデフォルトにリセットする" ],
       "ru": [ "Макрос для сохранения всех открытых модифицированных редакторов Far Manager, когда вы выбираете ‘Сохранить все’ в контекстном меню вкладки\r\n"
             , "Очистить поле для сброса на значения по умолчанию" ],
+      "es": [ "Macro para guardar todos los editores abiertos y modificados de Far Manager, cuando elijes 'Guardar todo' del menú contextual\r\n"
+            , "Vaciar el campo para usar configuración por defecto" ],
       "id": 2079 }
     ,
     "tScrollAppearDelay": {
@@ -2385,6 +2731,7 @@
       "de": "Scrollbaranzeigeverzögerung wenn 'Scrollbar immer zeigen’ ausgeschaltet oder im 3.-Zustand ist",
       "ja": "'常にスクロールバーを表示する'が OFFまたは自動のときスクロールバーを遅らせて表示する",
       "ru": "Полоса прокрутки отображается с задержкой, когда ‘Всегда показывать прокрутку’ выключена или находится в 3rd-state",
+      "es": "Retraso de aparición de la barra de scroll cuando 'Motrar siempre barra de scroll' está desactivada o en el 3er-estado",
       "id": 2354 }
     ,
     "tScrollDisappearDelay": {
@@ -2393,6 +2740,7 @@
       "de": "Verzögerung des Ausblendens der Scrollleiste wenn 'Immer zeigen' ausgeschaltet oder der 3.-Zustand aktiviert ist",
       "ja": "'常にスクロールバーを表示する'が OFFまたは自動のときスクロールバーを遅らせて非表示にする",
       "ru": "Задержка исчезновения полосы прокрутки, когда ‘Всегда показывать прокрутку’ выключена или находится в 3rd-state",
+      "es": "El retardo de desaparición de la barra de scroll cuando 'Mostrar siempre barra de scroll' está desactivado o en 3er-estado",
       "id": 2355 }
     ,
     "tsTopPID": {
@@ -2401,6 +2749,7 @@
       "de": "Far-PID und Far mit PlugIn-PID",
       "ja": "Far PIDと Far プラグイン PID",
       "ru": "Far PID и Far с плагином PID",
+      "es": "PID de Far y PID de Far con plugin",
       "id": 1510 }
     ,
     "tStorage": {
@@ -2419,6 +2768,9 @@
       "ru": [ "Текущее хранилище настроек ConEmu\r\n"
             , "Вы можете изменить местоположение, создав/удалив файл ConEmu.xml\r\n"
             , "Также вы можете использовать /config \"Имя параметра\" командной строки (ConEmu.exe) для нескольких конфигураций" ],
+      "es": [ "Lugar de almacenamiento de las opciones de ConEmu\r\n"
+            , "Puedas cambiar el lugar creando/borrando el archivo \"ConEmu.xml\"\r\n"
+            , "También puedes usar el parámetro de linea de comandos /config \"Name\" (ConEmu.exe) para mantener múltiples configuraciones" ],
       "id": 2571 }
     ,
     "tTabBarDblClickAction": {
@@ -2432,6 +2784,8 @@
             , "キャプションが表示されているときに '自動' が '最大化/復元' を意味し,キャプションが表示されているときに '新しいシェルを開く' を意味します" ],
       "ru": [ "Если дважды щелкнуть на свободное место на панели вкладок ... \r\n"
             , "‘Авто’ означает ‘Развернуть/Восстановить’, когда заголовок скрыт, и ‘Открыть новую оболочку’, когда заголовок виден." ],
+      "es": [ "Cuando haces doble-click en un espacio libre de la barra de pestañas...\r\n"
+            , "'Auto' significa 'Maximizar/Restaurar' cuando la barra de título está oculta y 'Abrir nuevo terminal' cuando está visible" ],
       "id": 2600 }
     ,
     "tTabBtnDblClickAction": {
@@ -2440,6 +2794,7 @@
       "de": "Beim Doppelklick auf einen Reiter...",
       "ja": "あなたがタブをダブルクリックすると...",
       "ru": "Когда вы дважды щелкните на вкладке...",
+      "es": "Cuando haces doble-click en una pestaña...",
       "id": 2593 }
     ,
     "tTabConsole": {
@@ -2448,6 +2803,7 @@
       "de": "Allgemeine Reitervorlage (jedes Konsolenprogramm außer Far-Manager)",
       "ja": "共通タブテンプレート(Far Manager以外のコンソールプログラム)",
       "ru": "Шаблон общей вкладки (любая консольная программа, кроме Far Manager)",
+      "es": "Plantilla común para pestaña (cualquier programa de terminal excepto Far Manager)",
       "id": 1638 }
     ,
     "tTabEditor": {
@@ -2456,6 +2812,7 @@
       "de": "Reitervorlage für Far-Manager-interne Editoren",
       "ja": "Far Managerの内部エディタ用のタブテンプレート",
       "ru": "Шаблон вкладки для Far Manager internal editors",
+      "es": "Plantilla de pestaña para editores internos de Far Manager",
       "id": 1639 }
     ,
     "tTabEditorMod": {
@@ -2464,6 +2821,7 @@
       "de": "Reitervorlage für Far-Manager-interne modifizierte Editoren",
       "ja": "Far Manager内部修正エディタ用のタブテンプレート",
       "ru": "Шаблон вкладки для Far Manager internal modified editors",
+      "es": "Plantilla de pestaña para editores modificados internos de Far Manager",
       "id": 1641 }
     ,
     "tTabFlashCounter": {
@@ -2487,6 +2845,10 @@
             , "В этом случае ConEmu может мигать значком вкладки.\r\n"
             , "Установите ‘-1’, чтобы мигать бесконечно\r\n"
             , "Используйте нечетные значения, чтобы оставить вкладку в выделенном состоянии" ],
+      "es": [ "Cuando algo cambia en el terminal inactivo\r\n"
+            , "ConEmu puede hacer parpadear el icono de pestaña\r\n"
+            , "Poner '-1' para que el parpadeo no pare\r\n"
+            , "Usar valores impares para dejar la pestaña resaltada" ],
       "id": 2739 }
     ,
     "tTabModifiedSuffix": {
@@ -2505,6 +2867,9 @@
       "ru": [ "Когда что-то изменилось в неактивной консоли,\r\n"
             , "ConEmu может показать, что в ярлыке вкладки\r\n"
             , "Установите или очистите этот суффикс, добавленный к шаблону вкладки" ],
+      "es": [ "Cuando algo cambi en el terminal inactivo\r\n"
+            , "ConEmu puede mostrarlo en el texto de la pestaña\r\n"
+            , "Define o elimina el sufijo que se añade a la plantilla de la pestaña" ],
       "id": 2738 }
     ,
     "tTabPanels": {
@@ -2513,6 +2878,7 @@
       "de": "Reitervorlage für Far-Manager-Panels",
       "ja": "Far Managerパネルのタブテンプレート",
       "ru": "Шаблон вкладки для панели Far Manager",
+      "es": "Plantilla de pestaña para paneles de Far Manager",
       "id": 1644 }
     ,
     "tTabViewer": {
@@ -2521,6 +2887,7 @@
       "de": "Reitervorlage für Far-Manager-interne Betrachter",
       "ja": "Far Managerの内部ビューア用のタブテンプレート",
       "ru": "Шаблон вкладки для Far Manager internal viewers",
+      "es": "Plantilla de pestañas para los visores internos de Far Manager",
       "id": 1640 }
     ,
     "tThumbLoadingTimeout": {
@@ -2529,6 +2896,7 @@
       "de": "Maximale Dauer der Vorschauerzeugung (pro Datei)",
       "ja": "プレビュー生成の最大継続時間(ファイルごと)",
       "ru": "Максимальная продолжительность генерации предварительного просмотра (для файла)",
+      "es": "Duración máximo para generar previsualizaciones (por archivo)",
       "id": 1679 }
     ,
     "tThumbMaxZoom": {
@@ -2537,6 +2905,7 @@
       "de": "Maximale Vergrößerung für Bilder kleiner als die Vorschau",
       "ja": "プレビューよりも小さい画像の最大ズーム",
       "ru": "Максимальный масштаб изображений меньше, чем предварительный просмотр",
+      "es": "Ampliación máxima para imágenes más pequeñas que la previsualización",
       "id": 1662 }
     ,
     "tThumbsFontName": {
@@ -2545,6 +2914,7 @@
       "de": "Beschriftungs-Schriftartname im Vorschaumodus",
       "ja": "サムネイルモードのテキストラベルのフォント名",
       "ru": "Имя шрифта текстовых меток в режиме миниатюр",
+      "es": "Tipo de letra de las etiquetas de texto en modo Miniaturas",
       "id": 1659 }
     ,
     "tThumbsFontSize": {
@@ -2553,6 +2923,7 @@
       "de": "Schriftartname im Vorschaumodus",
       "ja": "サムネイルモードでのテキストラベルフォントの高さ",
       "ru": "Высота шрифта текстовых меток в режиме миниатюр",
+      "es": "Altura de las etiquetas de texto en modo de Miniaturas",
       "id": 1660 }
     ,
     "tThumbsImgSize": {
@@ -2566,6 +2937,8 @@
             , "デフォルトは96です" ],
       "ru": [ "Размер в пикселях квадрата предварительного просмотра в режиме эскизов\r\n"
             , "По умолчанию установлено значение 96" ],
+      "es": [ "Tamaño en pixels del cuadro de previsualización en el modo Miniaturase\r\n"
+            , "Por defecto es 96" ],
       "id": 1682 }
     ,
     "tThumbsPadding": {
@@ -2574,6 +2947,7 @@
       "de": "Horizontaler Abstand in Pixeln (links und rechts) von der Beschriftung",
       "ja": "テキストラベルの水平方向のピクセル間隔(左右)",
       "ru": "Горизонтальное расстояние в пикселях (слева и справа) текстовой метки",
+      "es": "Espaciado horizontal en pixels (izquierdo y derecho) de la etiqueta de texto",
       "id": 1708 }
     ,
     "tThumbsSpacing": {
@@ -2582,6 +2956,7 @@
       "de": "Vertikaler Abstand in Pixeln (oben und unten) von der Beschriftung",
       "ja": "テキストラベルの上下の間隔(ピクセル単位)",
       "ru": "Вертикальное расстояние в пикселях (сверху и снизу) текстовой метки",
+      "es": "Espaciado vertical en pixels (arriba y abajo) de la etiqueta de texto",
       "id": 1707 }
     ,
     "tThumbsX1": {
@@ -2590,6 +2965,7 @@
       "de": "Abstand in Pixeln von der linken Seite der Zelle zur linken Seite der Vorschau",
       "ja": "セルの左側からプレビューの左側へのピクセル間隔",
       "ru": "Расстояние в пикселях от левой стороны ячейки до левой стороны предварительного просмотра",
+      "es": "Espaciado en pixels desde el borde izquierdo de la celda al borde izquierdo de la previsualización",
       "id": 1703 }
     ,
     "tThumbsX2": {
@@ -2598,6 +2974,7 @@
       "de": "Abstand in Pixeln von der rechten Seite der Vorschau zur rechten Seite der Zelle",
       "ja": "プレビューの右側からセルの右側へのピクセル間隔",
       "ru": "Расстояние в пикселях от правой стороны предварительного просмотра до правой стороны ячейки",
+      "es": "Espaciado en pixels desde el lateral derecho de la previsualización al lateral derecho de la celda",
       "id": 1705 }
     ,
     "tThumbsY1": {
@@ -2606,6 +2983,7 @@
       "de": "Abstand in Pixeln von der oberen Seite der Zelle zur oberen Seite der Vorschau",
       "ja": "セルの上端からプレビューの上端までのピクセル間隔",
       "ru": "Расстояние в пикселях от верхней стороны ячейки до верхней стороны предварительного просмотра",
+      "es": "Espaciado en pixels desde el borde superior de la celda al borde superior de la previsualización",
       "id": 1704 }
     ,
     "tThumbsY2": {
@@ -2614,6 +2992,7 @@
       "de": "Abstand in Pixeln von der unteren Seite der Vorschau zur unteren Seite der Zelle (Beschriftung wird hier platziert)",
       "ja": "プレビューの下端からセルの下端までのピクセル間隔(テキストラベルはここに配置されます)",
       "ru": "Расстояние в пикселях от нижней стороны предварительного просмотра до нижней стороны ячейки (здесь размещена текстовая метка)",
+      "es": "Espacio en pixels desde la parte inferior de la previsualización a la parte inferior de la celda (la etiqueta de texto se coloca ahí)",
       "id": 1706 }
     ,
     "tTilesFontName": {
@@ -2622,6 +3001,7 @@
       "de": "Beschriftungs-Schriftartname im Kachelmodus",
       "ja": "タイルモードでのテキストラベルのフォント名",
       "ru": "Имя шрифта текстовых меток в режиме тайлов",
+      "es": "Tipo de letra para etiquetas en modo Tiles",
       "id": 1661 }
     ,
     "tTilesFontSize": {
@@ -2630,6 +3010,7 @@
       "de": "Beschriftungs-Schriftgröße im Kachelmodus",
       "ja": "タイルモードでのテキストラベルフォントの高さ",
       "ru": "Высота шрифта текстовых меток в режиме тайлов",
+      "es": "Altura de las etiquetas de texto en modo Tiles",
       "id": 1666 }
     ,
     "tTilesImgSize": {
@@ -2643,6 +3024,8 @@
             , "デフォルトは48です" ],
       "ru": [ "Размер в пикселях квадрата предварительного просмотра в Tiles mode\r\n"
             , "По умолчанию 48" ],
+      "es": [ "Tamaño en pixels de la caja de previsualización en el modo de Tiles\r\n"
+            , "Por defecto es 48" ],
       "id": 1681 }
     ,
     "tTilesPadding": {
@@ -2651,6 +3034,7 @@
       "de": "Abstand in Pixeln zur Rechten der Beschriftung",
       "ja": "テキストラベルの右側のピクセル単位の間隔",
       "ru": "Расстояние в пикселях справа от текстовой метки",
+      "es": "Espaciado en pixels a la derecha de la etiqueta de texto",
       "id": 1714 }
     ,
     "tTilesSpacing": {
@@ -2659,6 +3043,7 @@
       "de": "Abstand in Pixeln zur Linken der Beschriftung",
       "ja": "テキストラベルの左にあるピクセル単位のスペース",
       "ru": "Расстояние в пикселях слева от текстовой метки",
+      "es": "Espaciado en pixels a la izquierda de la etiqueta de texto",
       "id": 1713 }
     ,
     "tTilesX1": {
@@ -2667,6 +3052,7 @@
       "de": "Abstand in Pixeln von der linken Seite der Zelle zur linken Seite der Vorschau",
       "ja": "セルの左側からプレビューの左側へのピクセル間隔",
       "ru": "Расстояние в пикселях от левой стороны ячейки до левой стороны предварительного просмотра",
+      "es": "Espacio en pixels desde el borde izquierdo de la celda al borde izquierdo de la previsualización",
       "id": 1709 }
     ,
     "tTilesX2": {
@@ -2675,6 +3061,7 @@
       "de": "Abstand in Pixeln von der rechten Seite der Vorschau zur rechten Seite der Zelle (Beschriftung wird hier platziert)",
       "ja": "プレビューの右側からセルの右側へのピクセル間隔(ここにテキストラベルが配置されます)",
       "ru": "Расстояние в пикселях от правой стороны предварительного просмотра до правой стороны ячейки (текстовая метка размещена здесь)",
+      "es": "Espaciado en pixels desde el latetal derecho de la previsualización al lateral derecho de la celda (ahí se coloca la etiqueta de texto)",
       "id": 1711 }
     ,
     "tTilesY1": {
@@ -2683,6 +3070,7 @@
       "de": "Abstand in Pixeln von der oberen Seite der Zelle zur oberen Seite der Vorschau",
       "ja": "セルの上端からプレビューの上端までのピクセル間隔",
       "ru": "Расстояние в пикселях от верхней стороны ячейки до верхней стороны предварительного просмотра",
+      "es": "Espaciado en pixels desde el borde superior de la celda al borde superior de la previsualización",
       "id": 1710 }
     ,
     "tTilesY2": {
@@ -2691,6 +3079,7 @@
       "de": "Abstand in Pixeln von der unteren Seite der Vorschau zur unteren Seite der Zelle",
       "ja": "プレビューの下側からセルの下側へのピクセル間隔",
       "ru": "Расстояние в пикселях от нижней стороны предварительного просмотра до нижней стороны ячейки",
+      "es": "Espaciado en pixels desde el borde inferior de la previsualización al borde inferior de la celda",
       "id": 1712 }
     ,
     "tUnicodeRanges": {
@@ -2704,6 +3093,8 @@
             , "выберите предварительно определенный из списка." ],
       "zh": [ "指定你自己的UCS范围，\n"
             , "或者是使用列表中预先定义好的选项。" ],
+      "es": [ "Define tu propio rango UCS o\n"
+            , "elige uno de la lista." ],
       "id": 2835 }
     ,
     "tUpdateVerLocation": {
@@ -2722,6 +3113,9 @@
       "ru": [ "URL-адрес для получения информации о последней версии,\r\n"
             , "по умолчанию: https://conemu.github.io/version.ini\r\n"
             , "Стереть текст, для возврата к URL-адресу по умолчанию." ],
+      "es": [ "URL para recuperar información de la última versión,\r\n"
+            , "por defecto es: https://conemu.github.io/version.ini\r\n"
+            , "Borra la caja de  texto para volver a la URL por defecto" ],
       "id": 2052 }
     ,
     "tWndHeight": {
@@ -2745,6 +3139,10 @@
             , "Использовать числа для размера в ячейках\r\n"
             , "Использовать знак процента (например ‘40%’) для относительного размера монитора\r\n"
             , "Использовать суффикс ‘px’ (например, 800px) для строгого размера пикселя" ],
+      "es": [ "Altura de la ventana de terminal\r\n"
+            , "Usar números para tamaño en celdas\r\n"
+            , "Usar símbolo porcentual (ej. ‘40%’) para altura relativa al tamaño del monitor\r\n"
+            , "Usar sufijo 'px' (ej. '800px') para tamaño en pixels" ],
       "id": 2282 }
     ,
     "tWndWidth": {
@@ -2768,6 +3166,10 @@
             , "Использовать числа для размера в ячейках\r\n"
             , "Использовать знак процента (например ‘40%’) для относительного размера монитора\r\n"
             , "Использовать суффикс ‘px’ (например, 800px) для строгого размера пикселя" ],
+      "es": [ "Anchura de la ventana del terminal\r\n"
+            , "Usar números para tamaño en celdas\r\n"
+            , "Usar signo de porcentaje (ej.: '40%') para tamaño relativo al monitor\r\n"
+            , "Usar el sufijo 'px' (ej.: '800px') para tamaño en pixels" ],
       "id": 2281 }
     ,
     "tWndX": {
@@ -2781,6 +3183,8 @@
             , "これはピクセル単位です" ],
       "ru": [ "Верхний левый угол ConEmu в обычном режиме\r\n"
             , "Это в пикселях" ],
+      "es": [ "Esquina superior izquierda de ConEmu en modo Normal\r\n"
+            , "En pixels" ],
       "id": 2295 }
     ,
     "tWndY": {
@@ -2794,6 +3198,8 @@
             , "これはピクセル単位です" ],
       "ru": [ "Верхний левый угол ConEmu в обычном режиме\r\n"
             , "Это в пикселях" ],
+      "es": [ "Esquina superior izquierda de ConEmu en modo Normal\r\n"
+            , "En pixels" ],
       "id": 2296 }
     ,
     "vkAltEnter": {
@@ -2802,6 +3208,7 @@
       "de": "Vollbildschirm",
       "ja": "全画面表示",
       "ru": "Полный экран",
+      "es": "Pantalla completa",
       "id": 2017 }
     ,
     "vkAltNumpad": {
@@ -2810,6 +3217,7 @@
       "de": "Startet Alt+Zahl-Modus um ein Unicode-Symbol anhand seines Hex-Wertes einzugeben",
       "ja": "Alt 16進コードベースでUnicodeシンボルを入力するにはAltキーを押します.",
       "ru": "Запустите Alt+Number mode для ввода символа юникода по его шестнадцатеричному коду",
+      "es": "Iniciar modo Alt+Número para introducir símbolo unicode por su código hexadecimal",
       "id": 3028 }
     ,
     "vkAlwaysOnTop": {
@@ -2818,6 +3226,7 @@
       "de": "Wechselt den 'Immer oben'-Fenstermodus",
       "ja": "スイッチを '常に上に' ウィンドウモードにする",
       "ru": "Переключить режим ‘Всегда сверху’",
+      "es": "Alternar modo de ventana 'Siempre en primer plano'",
       "id": 2327 }
     ,
     "vkAppsBS": {
@@ -2826,6 +3235,7 @@
       "de": "Puffer bis zu Cursorposition scrollen",
       "ja": "バッファをカーソル位置にスクロールする",
       "ru": "Прокручивать буфер до позиции курсора",
+      "es": "Desplazar el buffer a la posición del cursor",
       "id": 2697 }
     ,
     "vkAppsEnd": {
@@ -2834,6 +3244,7 @@
       "de": "Puffer bis zum unteren Ende scrollen",
       "ja": "バッファを下にスクロールする",
       "ru": "Прокручивать буфер вниз",
+      "es": "Desplazar buffer al final",
       "id": 2696 }
     ,
     "vkAppsHome": {
@@ -2842,6 +3253,7 @@
       "de": "Puffer bis zum oberen Ende scrollen",
       "ja": "上にスクロールバッファ",
       "ru": "Прокручивать буфер вверх",
+      "es": "Desplazarse al inicio del buffer",
       "id": 2695 }
     ,
     "vkAppsPgDn": {
@@ -2850,6 +3262,7 @@
       "de": "Puffer eine halbe Seite nach unten scrollen",
       "ja": "バッファを半ページ下にスクロール",
       "ru": "Прокручивать буфер на половину страницы вниз",
+      "es": "Desplazar el buffer media página hacia abajo",
       "id": 2694 }
     ,
     "vkAppsPgUp": {
@@ -2858,6 +3271,7 @@
       "de": "Puffer eine halbe Seite nach oben scrollen",
       "ja": "半ページ上にスクロールバッファー",
       "ru": "Прокручивать буфер на половину страницы вверх",
+      "es": "Desplazar el buffer media página arriba",
       "id": 2693 }
     ,
     "vkCdExplorerPath": {
@@ -2866,6 +3280,7 @@
       "de": "Aktiviere ConEmu und 'CD' im letzten (oberster in der Z-Reihenfolge) Explorer-Fenster-Pfad",
       "ja": "ConEmuと 'CD'を有効にして,最後に(Zオーダーの先頭)エクスプローラウィンドウのパス",
       "ru": "Активировать ConEmu и ‘CD’ (вверху Z-порядка) до последнего пути окна проводника",
+      "es": "Activar ConEmu y 'CD' a la última ruta de la ventana del Explorador (en orden-Z)",
       "id": 2853 }
     ,
     "vkCheckUpdates": {
@@ -2874,6 +3289,7 @@
       "ja": "アップデートを確認",
       "ru": "Проверка обновлений",
       "zh": "检查更新",
+      "es": "Comprobar actualizaciones",
       "id": 3101 }
     ,
     "vkChildSystemMenu": {
@@ -2882,6 +3298,7 @@
       "de": "Tocher-GUI-Fenster-Systemmenü (PuTTY, Notepad, usw.)",
       "ja": "チャイルドGUIウィンドウシステムメニュー(PuTTY,メモ帳など)",
       "ru": "Системное меню дочернего окна GUI (PuTTY, Блокнот и т.д.)",
+      "es": "Menú de sistema de la ventana GUI hija (PuTTY, Block de notas, etc...)",
       "id": 2577 }
     ,
     "vkClose2Right": {
@@ -2890,6 +3307,7 @@
       "ja": "右に近い",
       "ru": "Закрыть вправо",
       "zh": "关闭右侧",
+      "es": "Cerca de la derecha",
       "id": 3091 }
     ,
     "vkCloseAllCon": {
@@ -2898,6 +3316,7 @@
       "de": "Alle Konsolen schließen",
       "ja": "すべてのコンソールを閉じる",
       "ru": "Закрыть все консоли",
+      "es": "Cerrar todos los terminales",
       "id": 2625 }
     ,
     "vkCloseConEmu": {
@@ -2906,6 +3325,7 @@
       "de": "Alle Reiter schließen (ist das Gleiche wie 'X' anklicken)",
       "ja": "すべてのタブを閉じる(「×」クリックと同じ)",
       "ru": "Закрыть все вкладки (так же как клик по ‘Крест’",
+      "es": "Cerrar todas las pestañas (igual que hacer click en la 'X')",
       "id": 2502 }
     ,
     "vkCloseExceptCon": {
@@ -2914,6 +3334,7 @@
       "de": "Alle außer dem aktiven schließen",
       "ja": "すべてをアクティブにして閉じる",
       "ru": "Закрыть все кроме активной",
+      "es": "Cerrar todas menos la aciva",
       "id": 2626 }
     ,
     "vkCloseGroup": {
@@ -2922,6 +3343,7 @@
       "de": "Alle Bereiche außer der aktiven Gruppe schließen",
       "ja": "アクティブなグループのすべてのペインを閉じる",
       "ru": "Закрыть все панели активной группы",
+      "es": "Cerrar todos los paneles del grupo activo",
       "id": 2513 }
     ,
     "vkCloseGroupPrc": {
@@ -2930,6 +3352,7 @@
       "de": "Alle aktiven Prozesse der aktiven Gruppe schließen",
       "ja": "アクティブなグループのすべてのアクティブなプロセスを閉じる",
       "ru": "Закрыть все активные процессы активной группы",
+      "es": "Cerrar los procesos activos del grupo activo",
       "id": 2621 }
     ,
     "vkCloseTab": {
@@ -2938,6 +3361,7 @@
       "de": "Aktuellen Reiter schließen",
       "ja": "現在のタブを閉じる",
       "ru": "Закрыть текущую вкладку",
+      "es": "Cerrar pestaña actual",
       "id": 2501 }
     ,
     "vkCloseZombies": {
@@ -2946,6 +3370,7 @@
       "de": "Alle 'Zombies' schließen",
       "ja": "すべてのゾンビを閉じる",
       "ru": "Закрыть всех зомби",
+      "es": "Cerrar los zombies",
       "id": 2713 }
     ,
     "vkConDetach": {
@@ -2954,6 +3379,7 @@
       "de": "Aktive RealConsole von ConEmu abkoppeln",
       "ja": "ConEmuからアクティブなRealConsoleを切り離す",
       "ru": "Отключить активную RealConsole от ConEmu",
+      "es": "Desanclar el terminal real activo de ConEmu",
       "id": 2839 }
     ,
     "vkConsole_1": {
@@ -2962,6 +3388,7 @@
       "de": "Aktiviere Konsole mittels Zahl (könnte deaktiviert sein)",
       "ja": "番号でコンソールをアクティブにする(無効にすることができます)",
       "ru": "Активировать консоль по номеру (может быть отключено)",
+      "es": "Activar terminal por número (se puede desactivar)",
       "id": 2031 }
     ,
     "vkConsole_10": {
@@ -2970,6 +3397,7 @@
       "de": "Aktiviere Konsole mittels Zahl (könnte deaktiviert sein)",
       "ja": "番号でコンソールをアクティブにする(無効にすることができます)",
       "ru": "Активировать консоль по номеру (может быть отключено)",
+      "es": "Activar terminal por número (puede desactivarse)",
       "id": 2040 }
     ,
     "vkConsole_2": {
@@ -2978,6 +3406,7 @@
       "de": "Aktiviere Konsole mittels Zahl (könnte deaktiviert sein)",
       "ja": "番号でコンソールをアクティブにする(無効にすることができます)",
       "ru": "Активировать консоль по номеру (может быть отключено)",
+      "es": "Activar terminal por número (se puede desactivar)",
       "id": 2032 }
     ,
     "vkConsole_3": {
@@ -2986,6 +3415,7 @@
       "de": "Aktiviere Konsole mittels Zahl (könnte deaktiviert sein)",
       "ja": "番号でコンソールをアクティブにする(無効にすることができます)",
       "ru": "Активировать консоль по номеру (может быть отключено)",
+      "es": "Activar terminal con número (se puede desactivar)",
       "id": 2033 }
     ,
     "vkConsole_4": {
@@ -2994,6 +3424,7 @@
       "de": "Aktiviere Konsole mittels Zahl (könnte deaktiviert sein)",
       "ja": "番号でコンソールをアクティブにする(無効にすることができます)",
       "ru": "Активировать консоль по номеру (может быть отключено)",
+      "es": "Activar terminal por número (puede se desactivado)",
       "id": 2034 }
     ,
     "vkConsole_5": {
@@ -3002,6 +3433,7 @@
       "de": "Aktiviere Konsole mittels Zahl (könnte deaktiviert sein)",
       "ja": "番号でコンソールをアクティブにする(無効にすることができます)",
       "ru": "Активировать консоль по номеру (может быть отключено)",
+      "es": "Activar terminal por número (puede desactivarse)",
       "id": 2035 }
     ,
     "vkConsole_6": {
@@ -3010,6 +3442,7 @@
       "de": "Aktiviere Konsole mittels Zahl (könnte deaktiviert sein)",
       "ja": "番号でコンソールをアクティブにする(無効にすることができます)",
       "ru": "Активировать консоль по номеру (может быть отключено)",
+      "es": "Activar terminal por número (puede desactivarse)",
       "id": 2036 }
     ,
     "vkConsole_7": {
@@ -3018,6 +3451,7 @@
       "de": "Aktiviere Konsole mittels Zahl (könnte deaktiviert sein)",
       "ja": "番号でコンソールをアクティブにする(無効にすることができます)",
       "ru": "Активировать консоль по номеру (может быть отключено)",
+      "es": "Activar el terminal por número (se puede desactivar)",
       "id": 2037 }
     ,
     "vkConsole_8": {
@@ -3026,6 +3460,7 @@
       "de": "Aktiviere Konsole mittels Zahl (könnte deaktiviert sein)",
       "ja": "番号でコンソールをアクティブにする(無効にすることができます)",
       "ru": "Активировать консоль по номеру (может быть отключено)",
+      "es": "Activar terminal por número (se puede desactivar)",
       "id": 2038 }
     ,
     "vkConsole_9": {
@@ -3034,6 +3469,7 @@
       "de": "Aktiviere Konsole mittels Zahl (könnte deaktiviert sein)",
       "ja": "番号でコンソールをアクティブにする(無効にすることができます)",
       "ru": "Активировать консоль по номеру (может быть отключено)",
+      "es": "Activar terminal por número (se puede desactivar)",
       "id": 2039 }
     ,
     "vkConUnfasten": {
@@ -3042,6 +3478,7 @@
       "de": "Aktive RealConsole von aktivem ConEmu-Fenster ablösen",
       "ja": "アクティブなConEmuウィンドウからアクティブなRealConsoleを解除する",
       "ru": "Отключить активную RealConsole из активного окна ConEmu",
+      "es": "Desanclar la Terminal-Real de la ventana activa de ConEmu",
       "id": 2840 }
     ,
     "vkCtrlDown": {
@@ -3050,6 +3487,7 @@
       "de": "Puffer um eine Zeile nach unten scrollen (in Far /w deaktiviert)",
       "ja": "バッファを1行下にスクロール(Far / wで無効)",
       "ru": "Прокрутка буфера на одну строку вниз (отключен в Far / w)",
+      "es": "Desplazamiento del buffer una linea hacia abajo (desactivado en Far /w)",
       "id": 2020 }
     ,
     "vkCtrlPgDn": {
@@ -3058,6 +3496,7 @@
       "de": "Puffer um eine Seite nach unten scrollen (in Far /w deaktiviert)",
       "ja": "バッファを1ページ下にスクロール(Far / wでは無効)",
       "ru": "Прокрутка буфера на одну страницу вниз (отключен в Far /w)",
+      "es": "Desplazar el buffer una página hacia abajo (desactivado en Far /w)",
       "id": 2022 }
     ,
     "vkCtrlPgUp": {
@@ -3066,6 +3505,7 @@
       "de": "Puffer um eine Seite nach oben scrollen (in Far /w deaktiviert)",
       "ja": "バッファを1ページ上にスクロール(Far / wで無効)",
       "ru": "Прокрутка буфера на одну страницу вверх (отключен в Far /w)",
+      "es": "Desplazamiento del buffer una página hacia arriba (desactivado en Far /w)",
       "id": 2021 }
     ,
     "vkCtrlShiftTab": {
@@ -3074,6 +3514,7 @@
       "de": "Voriger Reiter (könnte deaktiviert sein)",
       "ja": "前のタブ(無効にすることができます)",
       "ru": "Предыдущая вкладка (может быть отключена)",
+      "es": "Pestaña anterior (se puede desactivar)",
       "id": 2024 }
     ,
     "vkCtrlTab": {
@@ -3082,6 +3523,7 @@
       "de": "Nächster Reiter (könnte deaktiviert sein)",
       "ja": "次のタブ(無効にすることができます)",
       "ru": "Следующая вкладка (может быть отключена)",
+      "es": "Siguiente pestaña (se puede desactivar)",
       "id": 2023 }
     ,
     "vkCtrlTab_Down": {
@@ -3090,6 +3532,7 @@
       "de": "Wechsle einen Reiter nach rechts (während Strg-Tab gedrückt und Strg gehalten wurde)",
       "ja": "タブを右に切り替えます(Ctrl + Tabを押しながらCtrlキーを押しながら)",
       "ru": "Переключить вкладку вправо (при нажатой клавише Ctrl-Tab и удержании Ctrl)",
+      "es": "Mover pestaña a la derecha (mientras se pulsa Ctrl-Tab y manteniendo pulsado Ctrl)",
       "id": 2028 }
     ,
     "vkCtrlTab_Left": {
@@ -3098,6 +3541,7 @@
       "de": "Wechsle einen Reiter nach links (während Strg-Tab gedrückt und Strg gehalten wurde)",
       "ja": "タブを左に切り替えます(Ctrl + Tabを押しながらCtrlキーを押しながら)",
       "ru": "Переключить вкладку влево (при нажатой клавише Ctrl-Tab и удержании Ctrl)",
+      "es": "Mover pestaña a la izquierda (al pulsar Ctrl-Tab y mantener Ctrl)",
       "id": 2025 }
     ,
     "vkCtrlTab_Right": {
@@ -3106,6 +3550,7 @@
       "de": "Wechsle einen Reiter nach rechts (während Strg-Tab gedrückt und Strg gehalten wurde)",
       "ja": "タブを右に切り替えます(Ctrl + Tabを押しながらCtrlキーを押しながら)",
       "ru": "Переключить вкладку вправо (при нажатой клавише Ctrl-Tab и удержании Ctrl)",
+      "es": "Cambiar pestaña a la derecha (mientras se pulsa Ctrl-Tab y se mantiene Ctrl)",
       "id": 2026 }
     ,
     "vkCtrlTab_Up": {
@@ -3114,6 +3559,7 @@
       "de": "Wechsle einen Reiter nach links (während Strg-Tab gedrückt und Strg gehalten wurde)",
       "ja": "タブを左に切り替えます(Ctrl + Tabを押しながらCtrlキーを押しながら)",
       "ru": "Переключить вкладку влево (при нажатой клавише Ctrl-Tab и удержании Ctrl)",
+      "es": "Cambiar pestaña a la izquierda (mientras se pulsa Ctrl-Tab y se mantiene Ctrl)",
       "id": 2027 }
     ,
     "vkCtrlUp": {
@@ -3122,6 +3568,7 @@
       "de": "Puffer um eine Zeile nach oben scrollen (in Far /w deaktiviert)",
       "ja": "バッファを1行上にスクロール(Far / wで無効)",
       "ru": "Прокрутка буфера на одну строку вверх (отключен в Far / w)",
+      "es": "Desplazar el buffer una linea hacia arriba (desactivado en Far /w)",
       "id": 2019 }
     ,
     "vkCtrlWinAltSpace": {
@@ -3130,6 +3577,7 @@
       "de": "Zeige echte Konsole",
       "ja": "実際のコンソールを表示する",
       "ru": "Показать реальную консоль",
+      "es": "Mostrar el terminal real",
       "id": 2016 }
     ,
     "vkCtrlWinEnter": {
@@ -3138,6 +3586,7 @@
       "de": "Vollbild",
       "ja": "全画面表示",
       "ru": "Полный экран",
+      "es": "Pantalla completa",
       "id": 2029 }
     ,
     "vkCTSCopyHtml0": {
@@ -3146,6 +3595,7 @@
       "de": "Kopieren: Aktuelle Auswahl als reinen Text",
       "ja": "コピー:プレーンテキストとしての現在の選択",
       "ru": "Копировать: текущее выделение как простой текст",
+      "es": "Copiar: selección actual como texto plano",
       "id": 2633 }
     ,
     "vkCTSCopyHtml1": {
@@ -3154,6 +3604,7 @@
       "de": "Kopieren: Aktuelle Auswahl als HTML-formatiert",
       "ja": "コピー:現在選択されているHTML形式",
       "ru": "Копировать: текущее выделение как форматированный HTML",
+      "es": "Copiar: la selección actual formateada a HTML",
       "id": 2634 }
     ,
     "vkCTSCopyHtml2": {
@@ -3162,16 +3613,19 @@
       "de": "Kopieren: Aktuelle Auswahl als HTML",
       "ja": "コピー:HTMLとしての現在の選択",
       "ru": "Копировать: текущее выделение как HTML",
+      "es": "Copiar: selección actual como HTML",
       "id": 2635 }
     ,
     "vkCTSCtrlShiftLeft": {
       "en": "Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
       "ru": "Начать выделение текста, игнорируется в Far, может быть отключено на страницах ‘Отметить & вставить’ и ‘App distinct’",
+      "es": "Iniciar la selección de texto, se ignora en Far, puede desactivarse en las páginas 'Marcar y Pegar' y 'Otras App'",
       "id": 3103 }
     ,
     "vkCTSCtrlShiftRight": {
       "en": "Start text selection, ignored in Far, may be disabled on ‘Mark & Paste’ and ‘App distinct’ pages",
       "ru": "Начать выделение текста, игнорируется в Far, может быть отключено на страницах ‘Отметить & вставить’ и ‘App distinct’",
+      "es": "Iniciar selección de texto, se ignora en Far, se puede desactivar en las páginas 'Marcar y Pegar' y 'Otras App'",
       "id": 3104 }
     ,
     "vkCTSShiftDown": {
@@ -3180,6 +3634,7 @@
       "de": "Beginne Blockauswahl, wird in Far ignoriert, kann auf den Seiten 'Markieren && Einfügen' und 'Anwendungsspezifisch' deaktiviert werden",
       "ja": "Farで無視される開始ブロックの選択は, 'マーク&ペースト' と 'アプリ別' ページで無効になることがあります",
       "ru": "Начать выделение блока, игнорируется в Far, может быть отключено на страницах ‘Отметить & вставить’ и ‘App distinct’",
+      "es": "Iniciar selección de bloque, se ignora en Far, se puede desactivar en las páginas de 'Marcar y Pegar' y 'Otras App'",
       "id": 2557 }
     ,
     "vkCTSShiftEnd": {
@@ -3188,6 +3643,7 @@
       "de": "Beginne Textauswahl, wird in Far ignoriert, kann auf den Seiten 'Markieren && Einfügen' und 'Anwendungsspezifisch' deaktiviert werden",
       "ja": "Farで無視される開始テキストの選択は, 'マーク&ペースト' と 'App distinct' ページで無効になることがあります",
       "ru": "Начать выделение текста, игнорируется в Far, может быть отключено на страницах ‘Отметить & вставить’ и ‘App distinct’",
+      "es": "Iniciar selección de texto, se ignora en Far, puede desactivarse en las páginas 'Marcar y Pegar' y 'Otras App'",
       "id": 2631 }
     ,
     "vkCTSShiftHome": {
@@ -3196,6 +3652,7 @@
       "de": "Beginne Textauswahl, wird in Far ignoriert, kann auf den Seiten 'Markieren && Einfügen' und 'Anwendungsspezifisch' deaktiviert werden",
       "ja": "Farで無視される開始テキストの選択は, 'マーク&ペースト' と 'App distinct' ページで無効になることがあります",
       "ru": "Начать выделение текста, игнорируется в Far, может быть отключено на страницах ‘Отметить & вставить’ и ‘App distinct’",
+      "es": "Iniciar selección de texto, se ignora en Far, se puede desactivar en las páginas de 'Marcar y Pegar' y 'Otras App'",
       "id": 2630 }
     ,
     "vkCTSShiftLeft": {
@@ -3204,6 +3661,7 @@
       "de": "Beginne Textauswahl, wird in Far ignoriert, kann auf den Seiten 'Markieren && Einfügen' und 'Anwendungsspezifisch' deaktiviert werden",
       "ja": "Farで無視される開始テキストの選択は, 'マーク&ペースト' と 'App distinct' ページで無効になることがあります",
       "ru": "Начать выделение текста, игнорируется в Far, может быть отключено на страницах ‘Отметить & вставить’ и ‘App distinct’",
+      "es": "El inicio de selección de texto, se ignora en Far, se puede desactivar en las páginas 'Marcar y Copiar' y 'Otras App'",
       "id": 2554 }
     ,
     "vkCTSShiftRight": {
@@ -3212,6 +3670,7 @@
       "de": "Beginne Textauswahl, wird in Far ignoriert, kann auf den Seiten 'Markieren && Einfügen' und 'Anwendungsspezifisch' deaktiviert werden",
       "ja": "Farで無視される開始テキストの選択は, 'マーク&ペースト' と 'App distinct' ページで無効になることがあります",
       "ru": "Начать выделение текста, игнорируется в Far, может быть отключено на страницах ‘Отметить & вставить’ и ‘App distinct’",
+      "es": "Iniciar la selección de texto, se ignora en Far, se puede desactivar en las páginas 'Marcar y Pegar' y 'Otras App'",
       "id": 2555 }
     ,
     "vkCTSShiftUp": {
@@ -3220,6 +3679,7 @@
       "de": "Beginne Blockauswahl, wird in Far ignoriert, kann auf den Seiten 'Markieren && Einfügen' und 'Anwendungsspezifisch' deaktiviert werden",
       "ja": "Farで無視される開始ブロックの選択は, 'マーク&ペースト' と 'アプリ別' ページで無効になることがあります",
       "ru": "Начать выделение блока, игнорируется в Far, может быть отключено на страницах ‘Отметить & вставить’ и ‘App distinct’",
+      "es": "Inicial selección de bloque, ignorado en Far, puede desactivarse en las páginas de 'Marcar y Pegar' y en 'Otras App'",
       "id": 2556 }
     ,
     "vkCTSVkAct": {
@@ -3228,6 +3688,7 @@
       "de": "Modifizierer für rechte und mittlere Maustaste (Textauswahl)",
       "ja": "右および中央のマウスボタン修飾子(テキスト選択)",
       "ru": "Модификатор правой и средней кнопок мыши (выделение текста)",
+      "es": "Modificador de los botones derecho y central del ratón (selección de texto)",
       "id": 2009 }
     ,
     "vkCTSVkBlock": {
@@ -3236,6 +3697,7 @@
       "de": "Modifizierer für Blockauswahl",
       "ja": "ブロック選択修飾子",
       "ru": "Модификатор выделения блока",
+      "es": "Modificador de selección de bloque",
       "id": 2007 }
     ,
     "vkCTSVkBlockStart": {
@@ -3244,6 +3706,7 @@
       "de": "Beginne vertikale Blockauswahl (wie Standardkonsole)",
       "ja": "垂直ブロック選択を開始する(標準コンソールのように)",
       "ru": "Начать выбор вертикального блока (как в стандартной консоли)",
+      "es": "Iniciar selección vertical de bloque (como en el terminal estándar)",
       "id": 2112 }
     ,
     "vkCTSVkCopyAll": {
@@ -3252,6 +3715,7 @@
       "de": "Kopieren: Gesamte Textausgabe (einschließlich Puffer) der aktiven Konsole",
       "ja": "コピー:アクティブなすべてのコンソールテキスト出力(バッファーを含む)",
       "ru": "Копировать: весь активный консольный текстовый вывод (включая буфер)",
+      "es": "Copiar: Texto de yodos los terminales activos (incluido el buffer)",
       "id": 2595 }
     ,
     "vkCTSVkPromptClk": {
@@ -3260,6 +3724,7 @@
       "de": "Ändert Prompt-Text Cursorposition mit linkem Mausklick (CMD, PowerShell, TCC/LE, ...)",
       "ja": "マウスの左クリックでプロンプトテキストのカーソル位置を変更する(cmd,powershell,tcc / le,...)",
       "ru": "Изменение положения курсора текста подсказки с помощью левой кнопки мыши (cmd, powershell, tcc/le, ...)",
+      "es": "Cambiar la posición del cursor de texto con el botón izquierdo del ratón (cmd, powershell, tcc/le, ...)",
       "id": 2346 }
     ,
     "vkCTSVkText": {
@@ -3268,6 +3733,7 @@
       "de": "Modifizierer für Textauswahl",
       "ja": "テキスト選択修飾子",
       "ru": "Модификатор выделения текста",
+      "es": "Modificador para selección de texto",
       "id": 2008 }
     ,
     "vkCTSVkTextStart": {
@@ -3276,6 +3742,7 @@
       "de": "Beginne Textauswahl (wie bei Texteditoren)",
       "ja": "テキスト選択を開始する(テキストエディタのように)",
       "ru": "Начать выделение текста (как текстовые редакторы)",
+      "es": "Iniciar selección de texto (como en editores de texto)",
       "id": 2113 }
     ,
     "vkDebugProcess": {
@@ -3284,6 +3751,7 @@
       "de": "Fehlersuche in aktivem Prozess",
       "ja": "アクティブなプロセスをデバッグする",
       "ru": "Отладка активного процесса",
+      "es": "Depurar proceso activo",
       "id": 2874 }
     ,
     "vkDeleteLeftWord": {
@@ -3292,6 +3760,7 @@
       "de": "Lösche Wort links der Schreibmarke (wird in Far ignoriert)",
       "ja": "単語をカーソルの左に削除する(Farでは無視される)",
       "ru": "Удалить слово слева от курсора (игнорируется в Far)",
+      "es": "Borrar palabra a la izquierda del cursor (ignorado por Far)",
       "id": 2522 }
     ,
     "vkDumpProcess": {
@@ -3300,6 +3769,7 @@
       "de": "Speicherauszug des aktiven Prozesses",
       "ja": "アクティブなプロセスメモリダンプ",
       "ru": "Дамп памяти активного процесса",
+      "es": "Volcado de memoria del proceso activo",
       "id": 2875 }
     ,
     "vkDumpTree": {
@@ -3308,6 +3778,7 @@
       "de": "Baumstruktur-Speicherauszug des aktiven Prozesses",
       "ja": "アクティブプロセスツリーメモリダンプ",
       "ru": "Дамп памяти дерева активного процесса",
+      "es": "Volcado de memoria del árbol de procesos activos",
       "id": 2876 }
     ,
     "vkDuplicateRoot": {
@@ -3316,6 +3787,7 @@
       "de": "Reiter mit aktuellem Zustand des Wurzelprozesses verdoppeln",
       "ja": "現在のルートプロセスの状態と重複するタブ",
       "ru": "Дублировать вкладку с текущим состоянием корневого процесса",
+      "es": "Duplicar pestaña con el estado actual del proceso raíz",
       "id": 2503 }
     ,
     "vkDuplicateRootAs": {
@@ -3324,6 +3796,7 @@
       "de": "Reiter mit aktuellem Zustand des Wurzelprozesses verdoppeln, 'Als Administrator' ausführen",
       "ja": "現在のルートプロセスの状態でタブを複製し, '管理者として実行'",
       "ru": "Дублировать вкладку с текущим состоянием процесса, запустить ‘как Администратор’",
+      "es": "Duplicar pestaña con el estado actual del proceso padre, ejecutar 'como Administrador'",
       "id": 2504 }
     ,
     "vkEscNoConsoles": {
@@ -3332,6 +3805,7 @@
       "de": "Minimiere ConEmu mittels Esc wenn keine offenen Konsolen übrig sind (siehe Option 'ConEmu nicht zusammen mit der letzten Konsole schließen')",
       "ja": "開いているコンソールが残っていないときにEscキーでConEmuを最小化する(オプション '最後のコンソールを閉じるときにConEmuを閉じない' オプションを参照)",
       "ru": "Сворачивать ConEmu с помощью Esc, когда нет открытых консолей (см. Параметр ‘Не закрывать ConEmu при закрытии последней консоли’)",
+      "es": "Minimizar ConEmu con Esc cuando no hay terminales abiertos (ver opción 'No cerrar ConEmu al cerrar el último terminal)",
       "id": 2546 }
     ,
     "vkFarGotoEditorVk": {
@@ -3340,6 +3814,7 @@
       "de": "Hervorhebung: Hyperlinks und Compiler-Fehler (FarGotoEditor-Modifizierer)",
       "ja": "強調表示:ハイパーリンクとコンパイラエラー(FarGotoEditor修飾子)",
       "ru": "Подсветка: гиперссылки и ошибки компилятора (модификатор FarGotoEditor)",
+      "es": "Resaltado: hiperenlaces y errores de compilación (modificador FarGotoEditor)",
       "id": 2010 }
     ,
     "vkFindTextDlg": {
@@ -3348,6 +3823,7 @@
       "de": "Finde Text in der aktiven Konsole",
       "ja": "アクティブなコンソールでテキストを検索する",
       "ru": "Найти текст в активной консоли",
+      "es": "Buscar texto en el terminal activo",
       "id": 2230 }
     ,
     "vkFontLarger": {
@@ -3356,6 +3832,7 @@
       "de": "Mache Hauptschrift größer",
       "ja": "メインフォントを大きくする",
       "ru": "Сделать основной шрифт больше",
+      "es": "Aumentar el tipo de letra principal",
       "id": 2453 }
     ,
     "vkFontOriginal": {
@@ -3364,6 +3841,7 @@
       "de": "Bringe Hauptschrift in ursprüngliche Größe",
       "ja": "メインフォントの元のサイズにする",
       "ru": "Сделать основной шрифта оригинальным размером",
+      "es": "Pone el tamaño original para el tipo de letra principal",
       "id": 2698 }
     ,
     "vkFontSmaller": {
@@ -3372,6 +3850,7 @@
       "de": "Mache Hauptschrift kleiner",
       "ja": "メインフォントを小さくする",
       "ru": "Сделать основной шрифт меньше",
+      "es": "Reducir el tamaño del tipo de letra principal",
       "id": 2454 }
     ,
     "vkForceFullScreen": {
@@ -3380,6 +3859,7 @@
       "de": "Falls verfügbar, in TEXT-Vollbildmodus wechseln. Falls nicht - Standard-Vollbild und immer zuoberst",
       "ja": "可能であれば,TEXTフルスクリーンモードにします.そうでない場合 - 標準フルスクリーンと常に上に",
       "ru": "Войдите в полноэкранный режим ТЕКСТ, если он доступен. Если нет - стандартный полноэкранный режим и всегда поверх",
+      "es": "Pasar a modo de TEXTO de pantalla completa, cuando esté disponible. Si no - modo de pantalla completa estándar y siempre en primer plano",
       "id": 2260 }
     ,
     "vkGlobalRestore": {
@@ -3388,6 +3868,7 @@
       "de": "Wiederherstellen (nach vorne holen)",
       "ja": "元に戻す(元に戻す)",
       "ru": "Восстановить (перенести на передний план)",
+      "es": "Restaurar (traer al frente)",
       "id": 2484 }
     ,
     "vkHighlightMouse": {
@@ -3396,6 +3877,7 @@
       "de": "Hervorhebung: Umschalten zwischen 'Zeile unter Mauszeiger hervorheben'",
       "ja": "ハイライト表示: 'マウスカーソルの下のハイライト行'",
       "ru": "Выделение: переключатель ‘Выделить строку под курсором мыши’",
+      "es": "Resaltado: cambiar 'resaltar la fila bajo el cursor del ratón'",
       "id": 2646 }
     ,
     "vkHighlightMouseX": {
@@ -3404,6 +3886,7 @@
       "de": "Hervorhebung: Umschalten zwischen 'Zeile && Spalte unter Mauszeiger hervorheben'",
       "ja": "強調表示:スイッチ 'マウスカーソルの下の行と列を強調表示する'",
       "ru": "Подсветка: Переключатель ‘Подсвечивать строки и столбцы под курсором мыши’",
+      "es": "Resaltado: cambiar 'Resaltar fila y columna bajo el cursor del ratón'",
       "id": 2725 }
     ,
     "vkJumpActiveMonitor": {
@@ -3412,6 +3895,7 @@
       "de": "ConEmu-Fenster auf den Bildschirm mit dem Mauszeiger verschieben (Bring her)",
       "ja": "マウスカーソルでConEmuウィンドウをモニターに移動する(ここに持ってくる)",
       "ru": "Переместить окно ConEmu на монитор с помощью курсора мыши (здесь)",
+      "es": "Mover la ventana de ConEmu al monitor con el cursor del ratón (Traer aquí)",
       "id": 3026 }
     ,
     "vkJumpNextMonitor": {
@@ -3420,6 +3904,7 @@
       "de": "ConEmu-Fenster auf den nächsten Bildschirm verschieben",
       "ja": "ConEmuウィンドウを次のモニタに移動",
       "ru": "Переместить окно ConEmu на следующий монитор",
+      "es": "Mover la ventana de ConEmu al siguiente monitor",
       "id": 2581 }
     ,
     "vkJumpPrevMonitor": {
@@ -3428,6 +3913,7 @@
       "de": "ConEmu-Fenster auf den vorigen Bildschirm verschieben",
       "ja": "ConEmuウィンドウを前のモニターに移動",
       "ru": "Переместить окно ConEmu на предыдущий монитор",
+      "es": "Mover la ventana de ConEmu al monitor anterior",
       "id": 2582 }
     ,
     "vkLDragKey": {
@@ -3436,6 +3922,7 @@
       "de": "Far-Panels mit der linken Maustaste ziehen (LDrag-Modifizierer)",
       "ja": "左側のマウスキーで遠いパネルからドラッグする(LDrag修飾子)",
       "ru": "Перетаскивание из панелей Far левой кнопкой мыши (модификатор LDrag)",
+      "es": "Arrastrar desde los paneles de Far con el botón izquierdo del ratón (modificador LDrag)",
       "id": 2011 }
     ,
     "vkMaximize": {
@@ -3444,6 +3931,7 @@
       "de": "Maximieren/Wiederherstellen",
       "ja": "最大化/復元",
       "ru": "Максимизация/восстановление",
+      "es": "Maximizar/restaurar",
       "id": 2015 }
     ,
     "vkMaximizeHeight": {
@@ -3452,6 +3940,7 @@
       "de": "ConEmu-Fenster an Ober-/Unterkante des Bildschirms fangen (Höhe maximieren)",
       "ja": "ConEmuウィンドウをモニタの上端/下端にスナップ(高さを最大にする)",
       "ru": "Привязать окно ConEmu к верхнему/нижнему краям монитора (увеличить высоту)",
+      "es": "Anclar la ventana de ConEmu a los bordes superior/inferior del monitor (maximizar altura)",
       "id": 2637 }
     ,
     "vkMaximizePane": {
@@ -3460,6 +3949,7 @@
       "de": "Unterteilen: Maximieren/Wiederherstellen des aktiven Bereichs",
       "ja": "分割:アクティブペインの最大化/復元",
       "ru": "Разделить: развернуть/восстановить активную панель",
+      "es": "Dividir: Maximizar/restaurar el panel activo",
       "id": 2729 }
     ,
     "vkMaximizeWidth": {
@@ -3468,6 +3958,7 @@
       "de": "ConEmu-Fenster an linken/rechten Kante des Bildschirms fangen (Breite maximieren)",
       "ja": "モニターの左右端にConEmuウィンドウをスナップ(幅を最大にする)",
       "ru": "Привязать окно ConEmu к левому/правому краям монитора (увеличить ширину)",
+      "es": "Anclar la ventana de ConEmu a los borders izquierdo/derecho (anchura maximizada)",
       "id": 2636 }
     ,
     "vkMinimizeRestor2": {
@@ -3476,6 +3967,7 @@
       "de": "Maximieren/Wiederherstellen (alternativ)",
       "ja": "最小化/復元(代替)",
       "ru": "Свернуть/Восстановить (альтернатива)",
+      "es": "Minimizar/Restaurar (alternativo)",
       "id": 2413 }
     ,
     "vkMinimizeRestore": {
@@ -3484,6 +3976,7 @@
       "de": "Minimieren/Wiederherstellen (auch Quake-Tastenkürzel)",
       "ja": "最小化/復元(Quakeスタイルのホットキーも可能)",
       "ru": "Свернуть/Восстановить (также горячая клавиша в Quake-style)",
+      "es": "Minimizar/Restaurar (también para Modo-Quake)",
       "id": 2000 }
     ,
     "vkMoveTabLeft": {
@@ -3492,6 +3985,7 @@
       "de": "Aktiven Reiter nach links verschieben",
       "ja": "アクティブなタブを左に移動",
       "ru": "Переместить активную вкладку влево",
+      "es": "Mover pestaña activa hacia la izquierda",
       "id": 2414 }
     ,
     "vkMoveTabRight": {
@@ -3500,6 +3994,7 @@
       "de": "Aktiven Reiter nach rechts verschieben",
       "ja": "アクティブなタブを右に移動",
       "ru": "Переместить активную вкладку вправо",
+      "es": "Mover pestaña activa a la derecha",
       "id": 2415 }
     ,
     "vkMultiAltCon": {
@@ -3508,6 +4003,7 @@
       "de": "Zeige alternativen Konsolenpuffer (letze Befehlsausgabe)",
       "ja": "別のコンソールバッファを表示する(最後のコマンド出力)",
       "ru": "Показать альтернативный консольный буфер (вывод последний команды)",
+      "es": "Mostrar buffer alternativo del terminal (salida del último comando)",
       "id": 2254 }
     ,
     "vkMultiBuffer": {
@@ -3516,6 +4012,7 @@
       "de": "Pufferhöhenmodus umschalten",
       "ja": "バッファーハイトモードを切り替える",
       "ru": "Режим переключения высоты буфера",
+      "es": "Cambiar modo 'altura-buffer'",
       "id": 2004 }
     ,
     "vkMultiClose": {
@@ -3524,6 +4021,7 @@
       "de": "Schließe aktive Konsole",
       "ja": "アクティブなコンソールを閉じる",
       "ru": "Закрыть активную консоль",
+      "es": "Cerrar terminal activa",
       "id": 2005 }
     ,
     "vkMultiCmd": {
@@ -3532,6 +4030,7 @@
       "de": "Erzeuge neue %s Konsole",
       "ja": "新しい%sコンソールを作成する",
       "ru": "Создать новую консоль %s",
+      "es": "Crear nuevo terminal %s",
       "id": 2006 }
     ,
     "vkMultiGroup": {
@@ -3540,6 +4039,7 @@
       "de": "Gruppiere Tastatureingabe für sichtbare Unterteilungen",
       "ja": "目に見える分割のためのグループキーボード入力",
       "ru": "Групповой ввод с клавиатуры для видимых разделений",
+      "es": "Agrupar entrada de teclado para las divisiones visibles",
       "id": 2728 }
     ,
     "vkMultiGroupAll": {
@@ -3548,6 +4048,7 @@
       "ja": "すべてのコンソール用のグループキーボード入力",
       "ru": "Групповой ввод с клавиатуры для всех консолей",
       "zh": "对所有控制台进行键盘输入分组",
+      "es": "Grupo de entrada de teclado para todos los terminales",
       "id": 3079 }
     ,
     "vkMultiGroupKey": {
@@ -3556,6 +4057,7 @@
       "ja": "グループキーボード入力にアクティブなコンソールを追加する",
       "ru": "Добавить активную консоль в групповой ввод с клавиатуры",
       "zh": "将活动控制台加入键盘输入分组中",
+      "es": "Añadir el terminal activo al grupo de entrada de teclado",
       "id": 3085 }
     ,
     "vkMultiNew": {
@@ -3564,6 +4066,7 @@
       "de": "Neue Konsole oder neues Fenster erzeugen ('Mehrere Konsolen in einem ConEmu-Fenster' prüfen)",
       "ja": "新しいコンソールまたは新しいウィンドウを作成する( '1つのConEmuウィンドウで複数のコンソールをチェックする' )",
       "ru": "Создать новую консоль или новое окно (отметьте ‘Несколько консолей в одном окне ConEmu’)",
+      "es": "Crear un nuevo terminal o nueva ventana (comprobar 'Varios terminales en una ventana de ConEmu')",
       "id": 2001 }
     ,
     "vkMultiNewAttach": {
@@ -3572,6 +4075,7 @@
       "de": "Vorhandene Konsole oder GUI-Anwendung ankoppeln",
       "ja": "既存のコンソールまたはGUIアプリケーションを接続する",
       "ru": "Присоединить существующую консоль или GUI приложение",
+      "es": "Anclar terminal existente o aplicación GUI",
       "id": 2314 }
     ,
     "vkMultiNewConfirm": {
@@ -3580,6 +4084,7 @@
       "de": "Erzeuge neue Konsole ('Erzeugen-Rückfrage'-Dialog)",
       "ja": "新しいコンソールを作成する( '確認の作成'ダイアログ)",
       "ru": "Создать новую консоль (диалоговое окно ‘Создать подтверждение’)",
+      "es": "Crear nuevo terminal (diálogo de confirmación)",
       "id": 2043 }
     ,
     "vkMultiNewPopup": {
@@ -3588,6 +4093,7 @@
       "de": "Zeige PopUp-Menü 'Neue Konsole erzeugen'",
       "ja": "新しいコンソールポップアップメニューを作成する",
       "ru": "Показать всплывающее меню ‘Создать новую консоль’",
+      "es": "Mostrar menú popup de creación de nuevos terminales",
       "id": 2252 }
     ,
     "vkMultiNewPopup2": {
@@ -3596,6 +4102,7 @@
       "de": "Zeige PopUp-Menü 'Neue Konsole erzeugen' mit Aufgaben-Untermenüs",
       "ja": "タスクサブメニュー付きの新しいコンソールポップアップメニューを作成する",
       "ru": "Показать создание нового всплывающего меню консоли с подменю задач",
+      "es": "Mostrar el menú contextual de creación de nuevo terminal con submenus de tareas",
       "id": 2624 }
     ,
     "vkMultiNext": {
@@ -3604,6 +4111,7 @@
       "de": "Zur nächsten Konsole wechseln",
       "ja": "次のコンソールに切り替える",
       "ru": "Переключить следующую консоль",
+      "es": "Cambiar al siguiente terminal",
       "id": 2002 }
     ,
     "vkMultiNextShift": {
@@ -3612,6 +4120,7 @@
       "de": "Zur vorigen Konsole wechseln",
       "ja": "前のコンソールを切り替える",
       "ru": "Переключиться на предыдущую консоль",
+      "es": "Cambiar al anterior terminal",
       "id": 2030 }
     ,
     "vkMultiPause": {
@@ -3620,6 +4129,7 @@
       "de": "Aktuelle Konsole pausieren",
       "ja": "現在のコンソールを一時停止する",
       "ru": "Пауза текущей консоли",
+      "es": "Pausar el terminal actual",
       "id": 2727 }
     ,
     "vkMultiRecreate": {
@@ -3628,6 +4138,7 @@
       "de": "Aktive Konsole neu erzeugen",
       "ja": "アクティブなコンソールを再作成する",
       "ru": "Пересоздать активную консоль",
+      "es": "Recrear el terminal activo",
       "id": 2003 }
     ,
     "vkMultiWnd": {
@@ -3636,6 +4147,7 @@
       "ja": "新しいウィンドウを作成する",
       "ru": "Открыть в новом окне",
       "zh": "创建新窗口",
+      "es": "Crear nueva ventana",
       "id": 3092 }
     ,
     "vkMultiWndConfirm": {
@@ -3644,6 +4156,7 @@
       "de": "Neues Fenster erzeugen ('Erstellen-Rückfrage'-Dialog)",
       "ja": "新しいウィンドウを作成する( 'Create confirmation'ダイアログ)",
       "ru": "Создать новое окно (диалоговое окно ‘Создать подтверждение’)",
+      "es": "Crear nueva ventana (diálogo de confirmación)",
       "id": 2329 }
     ,
     "vkPasteCygwin": {
@@ -3652,6 +4165,7 @@
       "de": "Pfad aus der Zwischenablage im UNIX-Format einfügen",
       "ja": "クリップボードからunix形式でパスを貼り付け",
       "ru": "Вставить путь из буфера обмена в формате Unix",
+      "es": "Pegar ruta desde el portapapeles en formato unix",
       "id": 2492 }
     ,
     "vkPasteDirectory": {
@@ -3660,6 +4174,7 @@
       "de": "Ordnerpfad auswählen und einfügen",
       "ja": "フォルダパスの選択と貼り付け",
       "ru": "Выберите и вставьте путь к папке",
+      "es": "Elegir y pegar ruta de la carpeta",
       "id": 2486 }
     ,
     "vkPasteFilePath": {
@@ -3668,6 +4183,7 @@
       "de": "Dateiname auswählen und einfügen",
       "ja": "ファイルパス名の選択と貼り付け",
       "ru": "Выберите и вставьте путь к файлу",
+      "es": "Seleccionar y pegar ruta del archivo",
       "id": 2485 }
     ,
     "vkPasteFirstLine": {
@@ -3676,6 +4192,7 @@
       "de": "Erste Zeile des Zwischenablageninhalts einfügen, Pfade für Cygwin-Anwendungen automatisch konvertieren (wird in Far ignoriert)",
       "ja": "クリップボードの内容の最初の行を貼り付け,cygwinのアプリケーションのパスを自動変換する(Farでは無視される)",
       "ru": "Вставить первую строку содержимого буфера обмена, автоматическое преобразование путей для приложений Cygwin (игнорируется в Far)",
+      "es": "Pegar la primera línea del portapapeles, convierte rutas para las aplicaciones de Cygwin (se ignora en Far)",
       "id": 2224 }
     ,
     "vkPasteText": {
@@ -3684,6 +4201,7 @@
       "de": "Zwischenablageninhalt einfügen (wird in Far ignoriert)",
       "ja": "クリップボードの内容を貼り付け(Farでは無視されます)",
       "ru": "Вставить содержимое буфера обмена (игнорируется в Far)",
+      "es": "Pegar el contenido del portapapeles (se ignora en Far)",
       "id": 2223 }
     ,
     "vkPicViewFaster": {
@@ -3692,6 +4210,7 @@
       "de": "PicView-Far-PlugIn: Bilderschau schneller",
       "ja": "PicView Farプラグイン:スライドショーの高速化",
       "ru": "PicView Far плагин: Слайд-шоу быстрее",
+      "es": "Plugin PicView de Far: pase de diapositivas más rápido",
       "id": 2183 }
     ,
     "vkPicViewSlide": {
@@ -3700,6 +4219,7 @@
       "de": "PicView-Far-PlugIn: Bilderschau starten",
       "ja": "PicView Far プラグイン: スライドショー開始",
       "ru": "PicView Far плагин: Слайд-шоу запуск",
+      "es": "Plugin PicView de Far: iniciar pase de diapositivas",
       "id": 2181 }
     ,
     "vkPicViewSlower": {
@@ -3708,6 +4228,7 @@
       "de": "PicView-Far-PlugIn: Bilderschau langsamer",
       "ja": "PicView Far プラグイン:ゆっくりスライドショー",
       "ru": "PicView Far плагин: Слайд-шоу медленнее",
+      "es": "Plugin PicView de Far: enlentecer pase de diapositivas",
       "id": 2182 }
     ,
     "vkRDragKey": {
@@ -3716,6 +4237,7 @@
       "de": "Von Far-Panels mit rechter Maustaste ziehen (RDrag-Modifizierer)",
       "ja": "右側のマウスキー(RDrag修飾子)を使用して Far パネルからドラッグする",
       "ru": "Перетаскивание из панелей Far правой кнопкой мыши (модификатор RDrag)",
+      "es": "Arrastrar desde los paneles de Far usando el botón derecho del ratón (modificador RDrag)",
       "id": 2012 }
     ,
     "vkRenameTab": {
@@ -3724,6 +4246,7 @@
       "zh": "重命名活动标签页",
       "de": "Aktiven Reiter umbenennen",
       "ja": "アクティブなタブの名前を変更する",
+      "es": "Renombrar la pestaña activa       ",
       "id": 2335 }
     ,
     "vkResetTerminal": {
@@ -3732,6 +4255,7 @@
       "de": "Terminal zurücksetzen: Bildschirm leeren, zurückscrollen, Schreibmarke in die obere, linke Ecke setzen",
       "ja": "リセット端子:画面のクリア,バックスクロール,カーソルを左上隅に移動",
       "ru": "Сбросить терминал: очистить экран, прокрутить назад, переместить курсор в верхний левый угол",
+      "es": "Reinicia terminal: limpiar la pantalla, el buffer de scroll, mover el cursor a la esquina superior izquierda",
       "id": 3027 }
     ,
     "vkScreenshot": {
@@ -3740,6 +4264,7 @@
       "de": "Bildschirmfoto des aktiven Fensters erstellen",
       "ja": "アクティブなウィンドウのスクリーンショットを作る",
       "ru": "Сделать скриншот активного окна",
+      "es": "Captura de pantalla de la ventana activa",
       "id": 2315 }
     ,
     "vkScreenshotFull": {
@@ -3748,6 +4273,7 @@
       "de": "Bildschirmfoto der gesamten Arbeitsfläche erstellen",
       "ja": "デスクトップ全体のスクリーンショットを作成する",
       "ru": "Сделать скриншот всего рабочего стола",
+      "es": "Captura de pantalla de todo el escritorio",
       "id": 2328 }
     ,
     "vkSetFocusChild": {
@@ -3756,6 +4282,7 @@
       "de": "Setze Fokus auf Tochter-GUI-Anwendung",
       "ja": "子GUIアプリケーションにフォーカスを設定する",
       "ru": "Установить фокус на дочернее приложение GUI",
+      "es": "Activar foco en la aplicación GUI hija",
       "id": 2576 }
     ,
     "vkSetFocusGui": {
@@ -3764,6 +4291,7 @@
       "de": "Setze Fokus auf ConEmu",
       "ja": "ConEmuに焦点を合わせる",
       "ru": "Установить фокус на ConEmu",
+      "es": "Poner foco en ConEmu",
       "id": 2575 }
     ,
     "vkSetFocusSwitch": {
@@ -3772,6 +4300,7 @@
       "de": "Wechsle Fokus zwischen ConEmu und Tochter-GUI-Anwendung (z.B. PuTTY oder Notepad)",
       "ja": "ConEmuと子GUIアプリケーション(PuTTYやメモ帳など)間のフォーカスを切り替えます.",
       "ru": "Переключение фокуса между ConEmu и дочерним GUI приложением (например, PuTTY или Notepad)",
+      "es": "Cambiar el foco entre ConEmu y la aplicación GUI hija (ej.: PuTTY o Bloc de notas)",
       "id": 2566 }
     ,
     "vkShowCaption": {
@@ -3780,6 +4309,7 @@
       "de": "Zeige Fenstertitel",
       "ja": "ウィンドウキャプションを表示する",
       "ru": "Показать заголовок окна",
+      "es": "Mostrar barra de título de la ventana",
       "id": 2437 }
     ,
     "vkShowStatusBar": {
@@ -3788,6 +4318,7 @@
       "de": "Zeige Statusleiste",
       "ja": "ステータスバーを表示",
       "ru": "Показывать строку состояния",
+      "es": "Mostrar barra de estado",
       "id": 2325 }
     ,
     "vkShowTabBar": {
@@ -3796,6 +4327,7 @@
       "de": "Zeige Reiterleiste",
       "ja": "タブバーを表示",
       "ru": "Показать панель вкладок",
+      "es": "Mostrar barra de pestañas",
       "id": 2326 }
     ,
     "vkShowTabsList": {
@@ -3804,6 +4336,7 @@
       "de": "Zeige Liste offener Reiter (wird in Far ignoriert - Makro stattdessen verwenden)",
       "ja": "開いているタブのリストを表示する(代わりにFar  -  use macroでは無視される)",
       "ru": "Показать список открытых вкладок (игнорируется в Far - используйте вместо этого макрос)",
+      "es": "Mostrar lista de pestañas abiertas (se ignora en Far - usar una macro)",
       "id": 2222 }
     ,
     "vkShowTabsList2": {
@@ -3812,6 +4345,7 @@
       "de": "Zeige Liste offener Reiter (funktioniert auch in Far)",
       "ja": "開いているタブのリストを表示する(遠すぎても動作する)",
       "ru": "Показать список открытых вкладок (работает и в Far)",
+      "es": "Mostrar lista de pestañas abiertas (funciona también en Far)",
       "id": 2455 }
     ,
     "vkSplitFocusDown": {
@@ -3820,6 +4354,7 @@
       "de": "Unterteilung: Setzte Fokus auf nächsten Bereich unterhalb",
       "ja": "分割:最も近いペインを下に移動",
       "ru": "Разделить: переместить фокус на ближайшую панель вниз",
+      "es": "Dividir: poner el foco en el panel más cercano hacia abajo",
       "id": 2611 }
     ,
     "vkSplitFocusLeft": {
@@ -3828,6 +4363,7 @@
       "de": "Unterteilung: Setzte Fokus auf nächsten Bereich links",
       "ja": "分割:最も近いウィンドウにフォーカスを左に移動",
       "ru": "Разделить: переместить фокус на ближайшую панель слева",
+      "es": "Dividir: Poner el foco en el panel izquierdo más cercano",
       "id": 2612 }
     ,
     "vkSplitFocusRight": {
@@ -3836,6 +4372,7 @@
       "de": "Unterteilung: Setzte Fokus auf nächsten Bereich rechts",
       "ja": "分割:最も近いウィンドウにフォーカスを右に移動",
       "ru": "Разделить: переместить фокус на ближайшую панель справа",
+      "es": "Dividir: Poner el foco en el panel más cercano por la derecha",
       "id": 2613 }
     ,
     "vkSplitFocusUp": {
@@ -3844,6 +4381,7 @@
       "de": "Unterteilung: Setzte Fokus auf nächsten Bereich oberhalb",
       "ja": "分割:フォーカスを最も近いペインに上に移動",
       "ru": "Разделить: переместить фокус на ближайшую панель вверх",
+      "es": "Dividir: poner el foco en el panel superior más cercano",
       "id": 2610 }
     ,
     "vkSplitNewConH": {
@@ -3852,6 +4390,7 @@
       "de": "Unterteilung: Dupliziere aktive 'Shell' in Unterteilung nach rechts",
       "ja": "分割:アクティブな 'シェル'分割を右に複製",
       "ru": "Разделить: Дублировать активную ‘оболочку’, разделенную справа",
+      "es": "Dividir: Duplicar intérprete de comandos activo a la derecha",
       "id": 2605 }
     ,
     "vkSplitNewConV": {
@@ -3860,6 +4399,7 @@
       "de": "Unterteilung: Dupliziere aktive 'Shell' in Unterteilung nach unten",
       "ja": "分割:アクティブな 'シェル'分割を下に重複させる",
       "ru": "Разделить: Дублировать активную ‘оболочку’, разделенную снизу",
+      "es": "Dividir: duplicar el terminal activo hacia abajo",
       "id": 2604 }
     ,
     "vkSplitSizeHleft": {
@@ -3868,6 +4408,7 @@
       "de": "Unterteilung: Bewege Teiler nach links",
       "ja": "スプリット:スプリッタを左に移動",
       "ru": "Разделить: переместить разделитель влево",
+      "es": "Dividir: Mover el separador hacia la izquierda",
       "id": 2608 }
     ,
     "vkSplitSizeHright": {
@@ -3876,6 +4417,7 @@
       "de": "Unterteilung: Bewege Teiler nach rechts",
       "ja": "スプリット:スプリッタを右に移動",
       "ru": "Разделить: переместить разделитель вправо",
+      "es": "Dividir: Mover el divisor hacia la derecha",
       "id": 2609 }
     ,
     "vkSplitSizeVdown": {
@@ -3884,6 +4426,7 @@
       "de": "Unterteilung: Bewege Teiler nach unten",
       "ja": "スプリット:スプリッタを下に移動",
       "ru": "Разделить: переместить разделитель вниз",
+      "es": "Dividir: Mover el divisor hacia abajo",
       "id": 2607 }
     ,
     "vkSplitSizeVup": {
@@ -3892,6 +4435,7 @@
       "de": "Unterteilung: Bewege Teiler nach oben",
       "ja": "スプリット:スプリッタを上に移動",
       "ru": "Разделить: переместить разделитель вверх",
+      "es": "Dividir: mover divisor hacia arriba",
       "id": 2606 }
     ,
     "vkSplitSwap": {
@@ -3900,6 +4444,7 @@
       "ja": "分割:最も近いウィンドウで交換(交換)",
       "ru": "Разделить: Обмен (своп) с ближайшей панелью",
       "zh": "分屏：与最近的窗格交换（互换）",
+      "es": "Dividir: Cambiar con el panel más cercano",
       "id": 3084 }
     ,
     "vkSplitSwapDown": {
@@ -3908,6 +4453,7 @@
       "ja": "分割:最も近いペインを下にしてExchange(スワップ)する",
       "ru": "Разделить: Обмен (своп) с ближайшей панкой вниз",
       "zh": "拆分：与后面距离最近的分栏进行交换（互换）",
+      "es": "Dividir: Intercambiar con el panel inferior más cercano",
       "id": 3081 }
     ,
     "vkSplitSwapLeft": {
@@ -3915,6 +4461,7 @@
       "de": "Unterteilung: Mit nächstem Bereich links vertauschen",
       "ja": "分割:最も近いウィンドウを左向きにしてExchange(スワップ)する",
       "ru": "Разделить: Обмен (своп) с ближайшей панели слева",
+      "es": "Dividir: Intercambiar con el panel más cercano hacia la izquierda",
       "id": 3082 }
     ,
     "vkSplitSwapRight": {
@@ -3922,6 +4469,7 @@
       "de": "Unterteilung: Mit nächstem Bereich rechts vertauschen",
       "ja": "分割:右のペインで右にスワップする",
       "ru": "Разделить: Обмен (своп) с ближайшей стойкой справа",
+      "es": "Dividir: intercambiar con el panel más cercano por la derecha",
       "id": 3083 }
     ,
     "vkSplitSwapUp": {
@@ -3930,6 +4478,7 @@
       "ja": "分割:最も近いペインを上にして交換(交換)",
       "ru": "Разделить: Обмен (своп) с ближайшей панелью вверх",
       "zh": "分屏：与前方最近的分栏彼此交换（互换）",
+      "es": "Dividir: Intercambiar con el panel superior más cercano",
       "id": 3080 }
     ,
     "vkSystemMenu": {
@@ -3938,6 +4487,7 @@
       "de": "Zeige ConEmu-Systemmenü",
       "ja": "ConEmuシステムメニューを表示する",
       "ru": "Показать системное меню ConEmu",
+      "es": "Mostrar menú del sistema de ConEmu",
       "id": 2018 }
     ,
     "vkSystemMenu2": {
@@ -3946,6 +4496,7 @@
       "de": "Zeige ConEmu-Systemmenü",
       "ja": "ConEmuシステムメニューを表示する",
       "ru": "Показать системное меню ConEmu",
+      "es": "Mostrar menú del sistema de ConEmu",
       "id": 2495 }
     ,
     "vkTabMenu": {
@@ -3954,6 +4505,7 @@
       "de": "Zeige Reiterkontextmenü",
       "ja": "タブのコンテキストメニューを表示",
       "ru": "Показать контекстное меню вкладки",
+      "es": "Mostrar menú contextual de pestaña",
       "id": 2111 }
     ,
     "vkTabMenu2": {
@@ -3962,6 +4514,7 @@
       "de": "Zeige Reiterkontextmenü",
       "ja": "タブのコンテキストメニューを表示",
       "ru": "Показать контекстное меню вкладки",
+      "es": "Mostrar menú contextual de pestaña",
       "id": 2494 }
     ,
     "vkTabPane": {
@@ -3970,6 +4523,7 @@
       "de": "Unterteilung: Setze Fokus auf nächsten sichtbaren Bereich",
       "ja": "分割:次の表示枠にフォーカスを移す",
       "ru": "Разделить: переместить фокус на следующую видимую панель",
+      "es": "Dividir: Poner el foco en el siguiente panel visible",
       "id": 2511 }
     ,
     "vkTabPaneShift": {
@@ -3978,6 +4532,7 @@
       "de": "Unterteilung: Setze Fokus auf vorigen sichtbaren Bereich",
       "ja": "分割:前の表示枠にフォーカスを移す",
       "ru": "Разделить: переместить фокус на предыдущую видимую панель",
+      "es": "Dividir: Poner el foco en el panel visible anterior",
       "id": 2512 }
     ,
     "vkTermButShell": {
@@ -3986,6 +4541,7 @@
       "de": "Beende alle bis auf die Shell-Prozesse in der aktuellen Konsole",
       "ja": "現在のコンソール内のシェルプロセスを除くすべてのプロセスを終了(強制終了)する",
       "ru": "Завершить (убить) все процессы, кроме оболочки, в текущей консоли",
+      "es": "Finalizar todos los procesos excepto la línea de comandos del terminal actual",
       "id": 2761 }
     ,
     "vkTerminateApp": {
@@ -3994,6 +4550,7 @@
       "de": "Beende aktiven Prozess in der aktuellen Konsole",
       "ja": "現在のコンソールでアクティブなプロセスを終了(強制終了)する",
       "ru": "Завершить (убить) активный процесс в текущей консоли",
+      "es": "Finalizar el proceso activo en el terminal actual",
       "id": 2261 }
     ,
     "vkTileToLeft": {
@@ -4002,6 +4559,7 @@
       "de": "ConEmu-Fenster an der linken Kante des Bildschirms fangen",
       "ja": "モニタの左端にConEmuウィンドウをスナップする",
       "ru": "Прикрепить окно ConEmu к левому краю монитора",
+      "es": "Anclar la ventana de ConEmu al lateral izquierdo del monitor",
       "id": 2596 }
     ,
     "vkTileToRight": {
@@ -4010,6 +4568,7 @@
       "de": "ConEmu-Fenster an der rechten Kante des Bildschirms fangen",
       "ja": "モニタの右端にConEmuウィンドウをスナップする",
       "ru": "Прикрепить окно ConEmu к правому краю монитора",
+      "es": "Anclar la ventana de ConEmu al borde derecho del monitor",
       "id": 2597 }
     ,
     "vkTransparencyDec": {
@@ -4018,6 +4577,7 @@
       "de": "Transparenz: undurchsichtiger",
       "ja": "透明度:より不透明",
       "ru": "Прозрачность: более непрозрачный",
+      "es": "Transparencia: más opaco",
       "id": 2648 }
     ,
     "vkTransparencyInc": {
@@ -4026,6 +4586,7 @@
       "de": "Transparenz: durchsichtiger",
       "ja": "透明度:より半透明",
       "ru": "Прозрачность: более прозрачный",
+      "es": "Transparencia: más traslúcido",
       "id": 2647 }
     ,
     "vkWinAltA": {
@@ -4034,6 +4595,7 @@
       "de": "Zeige 'Über'-Dialog",
       "ja": "'About'ダイアログを表示する",
       "ru": "Показать диалог ‘О’",
+      "es": "Mostrar diálogo 'Acerca de...'",
       "id": 2324 }
     ,
     "vkWinAltH": {
@@ -4042,6 +4604,7 @@
       "de": "Öffne Online-Hilfe/-Wiki im Browser",
       "ja": "あなたのブラウザでオンラインヘルプ/ wikiを開く",
       "ru": "Открыть онлайн-справку/вики в вашем браузере",
+      "es": "Abrir ayuda/wiki online en el navegador",
       "id": 2760 }
     ,
     "vkWinAltK": {
@@ -4050,6 +4613,7 @@
       "de": "Einrichtung 'Schnelltasten'",
       "ja": "セットアップ 'ホットキー'",
       "ru": "Настроить ‘Горячие клавиши’",
+      "es": "Configurar 'Combinaciones'",
       "id": 2500 }
     ,
     "vkWinAltP": {
@@ -4058,6 +4622,7 @@
       "de": "Einstellungen-Dialog",
       "ja": "設定ダイアログ",
       "ru": "Диалог настроек",
+      "es": "Diálogo de opciones",
       "id": 2013 }
     ,
     "vkWinAltSpace": {
@@ -4066,6 +4631,7 @@
       "de": "Zeige ConEmu-Menü",
       "ja": "メニューを表示する",
       "ru": "Показать меню ConEmu",
+      "es": "Mostrar menú de ConEmu",
       "id": 2014 }
     ,
     "vkWinAltT": {
@@ -4074,6 +4640,7 @@
       "de": "Einrichtung 'Aufgaben'",
       "ja": "セットアップ 'タスク'",
       "ru": "Настройка ‘Задачи’",
+      "es": "Configurar 'Tareas'",
       "id": 2726 }
     ,
     "vkWinDown": {
@@ -4082,6 +4649,7 @@
       "de": "Vergrößere Fensterhöhe ('Mit Pfeilen Größe anpassen' prüfen)",
       "ja": "ウィンドウの高さを上げる( '矢印でサイズ変更' をチェック)",
       "ru": "Увеличить высоту окна (проверьте ‘Изменить размер стрелками’)",
+      "es": "Aumentar la altura de la ventana (comprobar 'Redimensionar con cursores')",
       "id": 2047 }
     ,
     "vkWinLeft": {
@@ -4090,6 +4658,7 @@
       "de": "Verkleinere Fensterbreite ('Mit Pfeilen Größe anpassen' prüfen)",
       "ja": "ウィンドウの幅を小さくする( 'Resize with arrows'にチェックを入れる)",
       "ru": "Уменьшить ширину окна (проверьте ‘Изменить размер стрелками’)",
+      "es": "Reducir anchura de la ventana (comprobar 'Redimensionar con cursores')",
       "id": 2044 }
     ,
     "vkWinRight": {
@@ -4098,6 +4667,7 @@
       "de": "Vergrößere Fensterbreite ('Mit Pfeilen Größe anpassen' prüfen)",
       "ja": "ウィンドウの幅を広げる( 'Resize with arrows'にチェックを入れる)",
       "ru": "Увеличить ширину окна (проверьте ‘Изменить размер стрелками’)",
+      "es": "Aumentar la anchura de la ventana (activar 'Redimensionar con los cursores')",
       "id": 2045 }
     ,
     "vkWinUp": {
@@ -4106,6 +4676,7 @@
       "de": "Verkleinere Fensterhöhe ('Mit Pfeilen Größe anpassen' prüfen)",
       "ja": "ウィンドウの高さを下げる( 'Resize with arrows'にチェックを入れる)",
       "ru": "Уменьшить высоту окна (проверьте ‘Изменить размер стрелками’)",
+      "es": "Disminuar altura de la ventana (comprobar 'Redimensionar con cursores')",
       "id": 2046 }
     ,
     "vkWndDragKey": {
@@ -4114,6 +4685,7 @@
       "de": "Verschiebe ConEmu-Fenster durch Ziehen im Fensterbereich",
       "ja": "クライアント領域をドラッグしてConEmuウィンドウを移動する",
       "ru": "Переместить окно ConEmu, перетаскивая область клиента",
+      "es": "Mover la ventana de ConEmu arrastrando desde la zona cliente",
       "id": 2404 }
   }
   ,
@@ -4124,6 +4696,7 @@
       "zh": "显示控制台本体，并将其从ConEmu分离",
       "de": "Zeige RealConsole und kopple sie von ConEmu ab",
       "ja": "RealConsoleを表示してConEmuから切り離す",
+      "es": "Mostrar la Terminal-Real y desanclarla de ConEmu",
       "id": 43993 }
     ,
     "IDM_DONATE_LINK": {
@@ -4132,6 +4705,7 @@
       "zh": "访问https://conemu.github.io/donate.html",
       "de": "Besuche https://conemu.github.io/donate.html",
       "ja": "https://conemu.github.io/donate.htmlをご覧ください.",
+      "es": "Visita https://conemu.github.io/donate.html",
       "id": 43948 }
     ,
     "IDM_HOMEPAGE": {
@@ -4140,6 +4714,7 @@
       "zh": "访问https://conemu.github.io/",
       "de": "Besuche https://conemu.github.io/",
       "ja": "https://conemu.github.io/をご覧ください.",
+      "es": "Visitar https://conemu.github.io/",
       "id": 43962 }
     ,
     "IDM_REPORTBUG": {
@@ -4152,6 +4727,8 @@
       "de": [ "Erstelle Fehlerbericht oder Anfrage nach neuen Funktionen\r\n"
             , "https://conemu.github.io/en/Issues.html" ],
       "ja": [ "バグレポートを作成するか,新しい機能をリクエストする\r\n"
+            , "https://conemu.github.io/en/Issues.html" ],
+      "es": [ "Crear informe de errores o pedir una nueva funcionalidad\r\n"
             , "https://conemu.github.io/en/Issues.html" ],
       "id": 43961 }
     ,
@@ -4166,6 +4743,8 @@
             , "Umschalttaste halten um Neustart-Dialog aufzurufen" ],
       "ja": [ "現在のコンソールを再起動する\r\n"
             , "Shiftを押し続けると,再起動ダイアログがポップアップします" ],
+      "es": [ "Reiniciar terminal activa\r\n"
+            , "Mantén Shift para mostrar el diálogo de reinicio" ],
       "id": 43986 }
     ,
     "IDM_RESTARTAS": {
@@ -4179,6 +4758,8 @@
             , "Umschalttaste halten um Neustart-Dialog aufzurufen" ],
       "ja": [ "管理者(Vista)またはユーザー(WinXP)として現在のコンソールを再起動します.\r\n"
             , "Shiftを押し続けると,再起動ダイアログがポップアップします" ],
+      "es": [ "Reiniciar el terminal activo como Administrador (Vista+) o usuario (WinXP)\r\n"
+            , "Mantener Shift para mostrar diálogo de Reinicio" ],
       "id": 43987 }
     ,
     "IDM_RESTARTDLG": {
@@ -4187,6 +4768,7 @@
       "zh": "显示‘重启当前控制台’对话框",
       "de": "Zeige 'Starte aktuelle Konsole neu'-Dialog",
       "ja": " '現在のコンソールを再起動' ダイアログを表示する",
+      "es": "Mostrar el diálogo de 'Reiniciar terminal actual'",
       "id": 43998 }
     ,
     "IDM_TERMINATE2RIGHT": {
@@ -4195,6 +4777,7 @@
       "ja": "現在のタブの右側にあるすべてのタブを閉じる",
       "ru": "Закрыть все вкладки справа от текущей",
       "zh": "关闭右侧的所有标签页",
+      "es": "Cerrar todas las pestañas a la derecha de la actual",
       "id": 44008 }
     ,
     "IDM_TERMINATEALLCON": {
@@ -4203,6 +4786,7 @@
       "zh": "正常关闭所有控制台（标签页和窗格）",
       "de": "Normales Schließen aller Konsolen (Reiter und Bereiche)",
       "ja": "すべてのコンソール(タブとペイン)の通常のクローズを行う",
+      "es": "Hacer un cierre normal en todas las terminales (pestañas y paneles)",
       "id": 44001 }
     ,
     "IDM_TERMINATEBUTSHELL": {
@@ -4211,6 +4795,7 @@
       "zh": "活动的控制台/窗格：终止（杀死）除了根进程以外的所有进程",
       "de": "Aktive/r Konsole/Bereich: Beende alle außer den Wurzelprozess",
       "ja": "アクティブなコンソール/ペイン:ルートプロセス以外のすべてを終了する(kill)",
+      "es": "Terminal/panel activo: finalizar (matar) todos excepto los procesos 'root'",
       "id": 43991 }
     ,
     "IDM_TERMINATECON": {
@@ -4219,6 +4804,7 @@
       "zh": "活动的控制台/窗格：正常关闭",
       "de": "Aktive/r Konsole/Bereich: Normal schließen",
       "ja": "アクティブなコンソール/ペイン:通常のクローズを行う",
+      "es": "Terminal/panel activo: cierre normal",
       "id": 43989 }
     ,
     "IDM_TERMINATECONEXPT": {
@@ -4227,6 +4813,7 @@
       "zh": "关闭所有标签和窗格，活动的控制台/窗格除外",
       "de": "Alle Reiter und Bereiche außer der/des aktiven Konsole/Bereichs schließen",
       "ja": "アクティブなコンソール/ペインを除くすべてのタブとペインを閉じる",
+      "es": "Cierra todas las pestañas y paneles excepto los activos",
       "id": 44002 }
     ,
     "IDM_TERMINATEGROUP": {
@@ -4235,6 +4822,7 @@
       "zh": "活动组：正常关闭每一个窗格",
       "de": "Aktive Gruppe: Jeden Bereich normal schließen",
       "ja": "アクティブなグループ:各ペインの通常のクローズ",
+      "es": "Grupo activo: cierre normal de cada panel",
       "id": 43997 }
     ,
     "IDM_TERMINATEPRC": {
@@ -4243,6 +4831,7 @@
       "zh": "活动控制台/窗格：终止（杀死）活动进程",
       "de": "Aktive/r Konsole/Bereich: Beende aktiven Prozess",
       "ja": "アクティブなコンソール/ペイン:アクティブなプロセスを終了する(kill)",
+      "es": "Terminal/panel activo: finalizar (matar) proceso activo",
       "id": 43988 }
     ,
     "IDM_TERMINATEPRCGROUP": {
@@ -4251,6 +4840,7 @@
       "zh": "活动组：在每个窗格中终止（杀死）活动进程",
       "de": "Aktive Gruppe: Beende aktiven Prozess in jedem Bereich",
       "ja": "アクティブグループ:各ペインでアクティブなプロセスを終了(強制終了)する",
+      "es": "Grupo activo: finalizar (matar) el proceso activo en cada panel",
       "id": 44000 }
     ,
     "IDM_TERMINATEZOMBIES": {
@@ -4259,6 +4849,7 @@
       "zh": "关闭‘zombies’ （‘按下Esc关闭控制台’这一选项显示的地方）",
       "de": "Schließe 'Zombies' (bei denen 'Esc drücken um Konsole zu schließen' angezeigt wird)",
       "ja": "閉じる 'ゾンビ'(ここで 'Escを押してコンソールを閉じる'が表示されます)",
+      "es": "Cerrar 'zombies' (donde se muestra 'Pulsa Esc para cerrar la terminal')",
       "id": 44003 }
     ,
     "IDM_UNFASTEN": {
@@ -4267,6 +4858,7 @@
       "zh": "在新的ConEmu窗口里打开活动的控制台/窗格",
       "de": "Öffne aktive/n Konsole/Bereich in neuem ConEmu-Fenster",
       "ja": "新しいConEmuウィンドウでアクティブなコンソール/ペインを開く",
+      "es": "Abrir terminal/panel activo en la nueva ventana de ConEmu",
       "id": 44004 }
   }
   ,
@@ -4277,6 +4869,7 @@
       "zh": "控制台模拟程序（本地终端）",
       "de": "Konsolenemulationsprogramm (lokales Terminal)",
       "ja": "コンソールエミュレーションプログラム(ローカル端末)",
+      "es": "ConEmu: programa de emulación de terminal (local)",
       "id": 8 }
     ,
     "lng_AltNumberACP": {
@@ -4285,6 +4878,7 @@
       "zh": "使用十进制数字输入ANSI代码点",
       "de": "ANSI-Codepoint unter Verwendung dezimaler Zahlen eingeben",
       "ja": "10進数を使用してANSIコードポイントを入力",
+      "es": "Teclear código ANSI usando números decimales.",
       "id": 16 }
     ,
     "lng_AltNumberExt": {
@@ -4293,6 +4887,7 @@
       "zh": " - <Enter> 键粘贴，<Esc> 键取消",
       "de": " - <Enter> zum Einfügen, <Esc> zum Abbrechen",
       "ja": "  -  <Enter>を押して貼り付け,<Esc>を押してキャンセル",
+      "es": "- <Enter> para pegar, <Esc> para cancelar",
       "id": 14 }
     ,
     "lng_AltNumberHex": {
@@ -4301,6 +4896,7 @@
       "zh": "使用十六进制数字输入UNICODE代码点",
       "de": "UNICODE-Codepoint unter Verwendung hexadezimaler Zahlen eingeben",
       "ja": "16進数を使用してUNICODEコードポイントを入力する",
+      "es": "Teclear código UNICODE usando números hexadecimales",
       "id": 15 }
     ,
     "lng_AltNumberStdACP": {
@@ -4309,6 +4905,7 @@
       "zh": " - 释放 <Alt> 键粘贴ANSI代码点",
       "de": " - <Alt> loslassen um ANSI-Codepoint einzufügen",
       "ja": "  -  <Alt>を離してANSIコードポイントを貼り付けます",
+      "es": " - suelta <Alt> para pegar código ANSI",
       "id": 12 }
     ,
     "lng_AltNumberStdOEM": {
@@ -4317,6 +4914,7 @@
       "zh": " - 释放 <Alt> 键粘贴OEM代码点",
       "de": " - <Alt> loslassen um OEM-Codepoint einzufügen",
       "ja": "  -  <Alt>を放してOEMコードポイントを貼り付ける",
+      "es": " - soltar <Alt> para pegar código OEM",
       "id": 11 }
     ,
     "lng_AltNumberStdUCS": {
@@ -4325,6 +4923,7 @@
       "zh": " - 松开<Alt> 键粘贴UNICODE代码点",
       "de": " - <Alt> loslassen um UNICODE-Codepoint einzufügen",
       "ja": "  -  <Alt>を離してUNICODEコードポイントを貼り付ける",
+      "es": " - soltar <Alt> para pegar código UNICODE",
       "id": 13 }
     ,
     "lng_AssertAbortDescr": {
@@ -4333,6 +4932,7 @@
       "zh": "按下<Abort> 抛出异常，同时ConEmu会被终止！",
       "de": "<Abbrechen> drücken um eine Exception zu werfen, ConEmu wird beendet!",
       "ja": "<Abort>を押して例外をスローすると,ConEmuは終了します！",
+      "es": "Pulsar <Abort> para provocar una excepción, ¡ConEmu finalizará!",
       "id": 70 }
     ,
     "lng_AssertIgnoreDescr": {
@@ -4341,6 +4941,7 @@
       "zh": "按下<Ignore>以继续你的工作。",
       "de": "<Ignorieren> drücken um mit der Arbeit fortzufahren",
       "ja": "<Ignore>を押して作業を続行します.",
+      "es": "Pulsar <Ignore> para continuar tu trabajo.",
       "id": 69 }
     ,
     "lng_AssertRetryDescr": {
@@ -4354,6 +4955,8 @@
             , "und einen Fehler zu melden (öffnet Projekt-Website)." ],
       "ja": [ "テキスト情報をクリップボードにコピーするには<Retry>を押します\r\n"
             , "バグ(オープンプロジェクトのWebページ)を報告します." ],
+      "es": [ "Pulsa <Retry> para copiar el texto informativo al portapapeles\r\n"
+            , "y notificar el error (abrir página web del proyecto)." ],
       "id": 71 }
     ,
     "lng_BasicSettings": {
@@ -4362,6 +4965,7 @@
       "zh": "基本设置",
       "de": "Grundeinstellungen",
       "ja": "基本設定",
+      "es": "Opciones básicas",
       "id": 21 }
     ,
     "lng_CurClrScheme": {
@@ -4370,6 +4974,7 @@
       "zh": "<当前的配色方案>",
       "de": "<Aktuelles Farbschema>",
       "ja": "<現在の配色>",
+      "es": "<Esquema de color actual>",
       "id": 22 }
     ,
     "lng_DetachConConfirm": {
@@ -4378,6 +4983,7 @@
       "ja": "ConEmuからコンソールを切り離しますか？",
       "ru": "Отсоединить консоль от ConEmu?",
       "zh": "是否从 ConEmu 分离控制台？",
+      "es": "¿Desanclar terminal de ConEmu?",
       "id": 83 }
     ,
     "lng_DetachGuiConfirm": {
@@ -4386,6 +4992,7 @@
       "ja": "ConEmuからGUIアプリケーションを切り離しますか？",
       "ru": "Отсоединить GUI-приложение от ConEmu?",
       "zh": "是否从 ConEmu 分离 GUI 应用程序？",
+      "es": "¿Desanclar aplicación GUI de ConEmu?",
       "id": 82 }
     ,
     "lng_DlgAbout": {
@@ -4394,6 +5001,7 @@
       "zh": "关于",
       "de": "Über",
       "ja": "約",
+      "es": "Acerca de",
       "id": 6 }
     ,
     "lng_DlgAffinity": {
@@ -4402,6 +5010,7 @@
       "zh": "设置活动的控制台进程之间的关系和优先级",
       "de": "Setzt Zugehörigkeit und Priorität des aktiven Konsolenprozesses",
       "ja": "アクティブなコンソールプロセスの親和性と優先度を設定する",
+      "es": "Configurar la afinidad y prioridad de los procesos de la terminal activa",
       "id": 4 }
     ,
     "lng_DlgAttach": {
@@ -4410,6 +5019,7 @@
       "zh": "附加: 选择窗口或控制台应用程序",
       "de": "Ankoppeln: Fenster oder Konsolenanwendung wählen",
       "ja": "添付:ウィンドウまたはコンソールアプリケーションを選択",
+      "es": "Anclar: Elige una ventana o aplicación de terminal",
       "id": 5 }
     ,
     "lng_DlgCreateNewConsole": {
@@ -4418,6 +5028,7 @@
       "ja": "新しいコンソールを作成する",
       "ru": "Создать новую консоль",
       "zh": "创建新的控制台",
+      "es": "Crear nueva terminal",
       "id": 85 }
     ,
     "lng_DlgFastCfg": {
@@ -4426,6 +5037,7 @@
       "zh": "快速配置",
       "de": "Schnellanpassung",
       "ja": "高速構成",
+      "es": "configuración rápida",
       "id": 1 }
     ,
     "lng_DlgHotkey": {
@@ -4434,6 +5046,7 @@
       "zh": "选择热键",
       "de": "Tastenkürzel auswählen",
       "ja": "ホットキーを選択",
+      "es": "Seleccionar combinación",
       "id": 7 }
     ,
     "lng_DlgRenameTab": {
@@ -4442,6 +5055,7 @@
       "zh": "重命名标签页",
       "de": "Reiter umbenennen",
       "ja": "名前の変更タブ",
+      "es": "Renombrar pestaña",
       "id": 3 }
     ,
     "lng_DlgRestartConsole": {
@@ -4450,6 +5064,7 @@
       "ja": "コンソールを再起動する",
       "ru": "Перезагрузить консоль",
       "zh": "重启控制台",
+      "es": "Reiniciar terminal",
       "id": 84 }
     ,
     "lng_DlgSettings": {
@@ -4458,6 +5073,7 @@
       "zh": "设置",
       "de": "Einstellungen",
       "ja": "設定",
+      "es": "Opciones",
       "id": 2 }
     ,
     "lng_ExitCode": {
@@ -4466,6 +5082,7 @@
       "zh": "退出代码",
       "de": "Rückgabestatus",
       "ja": "終了コード",
+      "es": "código de salida",
       "id": 17 }
     ,
     "lng_HkGlblGnrlMsg": {
@@ -4474,6 +5091,7 @@
       "ja": "WinAPIの制限により,グローバルホットキーの特殊(R / L)修飾子を選択することはできません",
       "ru": "Вы не можете выбрать уникальный модификатор (R/L) для глобальных горячих клавиш из-за ограничения WinAPI",
       "zh": "因WinAPI限制，你无法为全局快捷键选择唯一确定的（R/L）调节器",
+      "es": "No se puede seleccionar el modificador (R/L) para combinaciones Globales debido a una limitación de WinAPI",
       "id": 86 }
     ,
     "lng_HotkeyDuplicated": {
@@ -4482,6 +5100,7 @@
       "ja": "ホットキー<%s>は一意ではありません",
       "ru": "Горячая клавиша <%s> не уникальна",
       "zh": "热键<%s>已被其他程序绑定而不唯一",
+      "es": "Combinación <%s> no es única",
       "id": 79 }
     ,
     "lng_HotkeysAll": {
@@ -4490,6 +5109,7 @@
       "zh": "所有热键（&A）",
       "de": "Alle Tastenkürzel",
       "ja": "すべてのホットキー",
+      "es": "Todas las combinaciones",
       "id": 58 }
     ,
     "lng_HotkeysFilter": {
@@ -4498,6 +5118,7 @@
       "zh": "过滤器热键（Alt+F）",
       "de": "Tastenkürzel filtern (Alt+F)",
       "ja": "フィルタホットキー(Alt F)",
+      "es": "Filtrar combinaciones (Alt+F)",
       "id": 57 }
     ,
     "lng_HotkeysMacro": {
@@ -4506,6 +5127,7 @@
       "zh": "宏",
       "de": "Makros",
       "ja": "マクロ",
+      "es": "Macros",
       "id": 61 }
     ,
     "lng_HotkeysSystem": {
@@ -4514,6 +5136,7 @@
       "zh": "系统",
       "de": "System",
       "ja": "システム",
+      "es": "Sistema",
       "id": 60 }
     ,
     "lng_HotkeysUser": {
@@ -4522,6 +5145,7 @@
       "zh": "用户定义的",
       "de": "Benutzerdefiniert",
       "ja": "ユーザー定義の",
+      "es": "Definido por usuario",
       "id": 59 }
     ,
     "lng_JumpListUpdated": {
@@ -4530,6 +5154,7 @@
       "de": "Taskleistensprungbefehle wurde erfolgreich aktualisiert",
       "ja": "タスクバーのジャンプリストが正常に更新されました",
       "zh": "任务栏跳转列表更新成功",
+      "es": "La lista de la barra de tareas se ha actualizado correctamente",
       "id": 81 }
     ,
     "lng_KeyNoMod": {
@@ -4538,6 +5163,7 @@
       "ja": "<No-Mod>",
       "ru": "<No-Mod>",
       "zh": "<No-Mod>",
+      "es": "<No-Mod>",
       "id": 78 }
     ,
     "lng_KeyNone": {
@@ -4546,6 +5172,7 @@
       "ja": "<なし>",
       "ru": "<Нет>",
       "zh": "<None>",
+      "es": "<Ninguno>",
       "id": 77 }
     ,
     "lng_PasteEnterConfirm": {
@@ -4579,6 +5206,11 @@
             , "<Enter>キーをコンソールに送信する！\n"
             , "\n"
             , "持続する？" ],
+      "es": [ "¡Aviso!\n"
+            , "\n"
+            , "¡Pegar texto multi-linea implica el envío <Enter> de pulsaciones de teclado al terminal!\n"
+            , "\n"
+            , "¿Continuar?" ],
       "id": 23 }
     ,
     "lng_PasteLongConfirm": {
@@ -4612,6 +5244,12 @@
             , "ペーストが終了するまで反応しません！\n"
             , "\n"
             , "持続する？" ],
+      "es": [ "¡Aviso!\n"
+            , "\n"
+            , "¡Pegar mucho texto (%u car.) puede hacer que la terminal\n"
+            , "no responda has que se termine el pegado!\n"
+            , "\n"
+            , "¿Continuar?" ],
       "id": 24 }
     ,
     "lng_PleaseCheckManually": {
@@ -4620,6 +5258,7 @@
       "zh": "请手动检查更新",
       "de": "Bitte manuell nach Aktualisierungen suchen",
       "ja": "手動でアップデートを確認してください",
+      "es": "Por favor comprueba las actualizaciones manualmente",
       "id": 68 }
     ,
     "lng_RasterAutoError": {
@@ -4628,6 +5267,7 @@
       "ja": "フォントの自動サイズは,固定ラスタフォントサイズでは許可されません. [Raster Fonts ...]の代わりに[Terminal]を選択してください",
       "ru": "Автоматический размер шрифта не разрешен для фиксированного размера растрового шрифта. Выберите ‘Терминал’ вместо ‘[Растровые шрифты ...]’",
       "zh": "自动字体设置大小不可用于固定大小的点阵字体。请选择 ‘Terminal’ 而不是 ‘[Raster Fonts ...]’",
+      "es": "No se permite auto tamaño de tipos de letra fijos. Selecciona 'Terminal' en vez de '[Tipos Raster ...]'",
       "id": 72 }
     ,
     "lng_Search": {
@@ -4636,6 +5276,7 @@
       "zh": "查找",
       "de": "Suche",
       "ja": "サーチ",
+      "es": "Buscar",
       "id": 9 }
     ,
     "lng_SearchCtrlF": {
@@ -4644,6 +5285,7 @@
       "zh": "查找 (Ctrl+F)",
       "de": "Suche (Strg+F)",
       "ja": "検索(Ctrl+F)",
+      "es": "Buscar (Ctrl+F)",
       "id": 10 }
     ,
     "lng_SelBlock": {
@@ -4652,6 +5294,7 @@
       "zh": " 块状选择",
       "de": " Blockauswahl",
       "ja": " ブロック選択",
+      "es": "bloquear selección",
       "id": 20 }
     ,
     "lng_SelChars": {
@@ -4660,6 +5303,7 @@
       "zh": " 字符 ",
       "de": " Zeichen ",
       "ja": " 文字",
+      "es": "caracteres",
       "id": 18 }
     ,
     "lng_SelStream": {
@@ -4668,6 +5312,7 @@
       "zh": " 流式选择",
       "de": " Datenstromauswahl",
       "ja": " ストリーム選択",
+      "es": "selección de flujo",
       "id": 19 }
     ,
     "lng_SizeRadioCentered": {
@@ -4676,6 +5321,7 @@
       "zh": "居中",
       "de": "Zentriert",
       "ja": "中心",
+      "es": "Centrado",
       "id": 56 }
     ,
     "lng_SizeRadioFree": {
@@ -4684,6 +5330,7 @@
       "zh": "自由",
       "de": "Frei",
       "ja": "無料",
+      "es": "Libre",
       "id": 55 }
     ,
     "lng_SpgANSI": {
@@ -4692,6 +5339,7 @@
       "ja": "ANSI実行",
       "ru": "Выполнение ANSI",
       "zh": "ANSI 转义序列",
+      "es": "Ejecución ANSI",
       "id": 80 }
     ,
     "lng_SpgAppDistinct": {
@@ -4700,6 +5348,7 @@
       "zh": "应用程序区别",
       "de": "Anwendungsspezifisch",
       "ja": "App distinct",
+      "es": "Otras App",
       "id": 42 }
     ,
     "lng_SpgAppear": {
@@ -4708,6 +5357,7 @@
       "zh": "外观",
       "de": "Erscheinungsbild",
       "ja": "外観",
+      "es": "Aspecto",
       "id": 27 }
     ,
     "lng_SpgBackgr": {
@@ -4716,6 +5366,7 @@
       "zh": "背景",
       "de": "Hintergrund",
       "ja": "バックグラウンド",
+      "es": "Fondo",
       "id": 28 }
     ,
     "lng_SpgChildGui": {
@@ -4724,6 +5375,7 @@
       "de": "Tochter-GUI",
       "ja": "チャイルドGUI",
       "zh": "子图形界面",
+      "es": "GUI hijo",
       "id": 76 }
     ,
     "lng_SpgColors": {
@@ -4732,6 +5384,7 @@
       "zh": "颜色",
       "de": "Farben",
       "ja": "色",
+      "es": "Colores",
       "id": 39 }
     ,
     "lng_SpgComSpec": {
@@ -4740,6 +5393,7 @@
       "zh": "ComSpec",
       "de": "ComSpec",
       "ja": "ComSpec",
+      "es": "ComSpec",
       "id": 35 }
     ,
     "lng_SpgConfirm": {
@@ -4748,6 +5402,7 @@
       "zh": "确认",
       "de": "Rückfragen",
       "ja": "確認",
+      "es": "Confirmar",
       "id": 30 }
     ,
     "lng_SpgCursor": {
@@ -4756,6 +5411,7 @@
       "zh": "文本光标",
       "de": "Schreibmarke",
       "ja": "テキストカーソル",
+      "es": "Cursor de texto",
       "id": 38 }
     ,
     "lng_SpgDebug": {
@@ -4764,6 +5420,7 @@
       "zh": "调试",
       "de": "Fehlersuche",
       "ja": "デバッグ",
+      "es": "Depurar",
       "id": 54 }
     ,
     "lng_SpgDefTerm": {
@@ -4772,6 +5429,7 @@
       "zh": "默认终端",
       "de": "Standardterminal",
       "ja": "デフォルトの用語",
+      "es": "Terminal predeterminada",
       "id": 44 }
     ,
     "lng_SpgEnvironment": {
@@ -4780,6 +5438,7 @@
       "zh": "环境",
       "de": "Umgebung",
       "ja": "環境",
+      "es": "Entorno",
       "id": 36 }
     ,
     "lng_SpgFarMacros": {
@@ -4788,6 +5447,7 @@
       "zh": "Far宏",
       "de": "Far-Makros",
       "ja": "Far マクロ",
+      "es": "Macros Far",
       "id": 51 }
     ,
     "lng_SpgFarManager": {
@@ -4796,6 +5456,7 @@
       "zh": "Far 管理器",
       "de": "Far-Manager",
       "ja": "Far Manager",
+      "es": "Far Manager",
       "id": 50 }
     ,
     "lng_SpgFarViews": {
@@ -4804,6 +5465,7 @@
       "zh": "面板视图",
       "de": "Panel-Ansichten",
       "ja": "パネルビュー",
+      "es": "Vistas de panel",
       "id": 52 }
     ,
     "lng_SpgFeatures": {
@@ -4812,6 +5474,7 @@
       "zh": "功能特性",
       "de": "Funktionen",
       "ja": "フィーチャー",
+      "es": "Características",
       "id": 37 }
     ,
     "lng_SpgFonts": {
@@ -4820,6 +5483,7 @@
       "zh": "字体",
       "de": "Schriftarten",
       "ja": "フォント",
+      "es": "Tipos letra",
       "id": 25 }
     ,
     "lng_SpgGeneral": {
@@ -4828,6 +5492,7 @@
       "de": "Allgemein",
       "ja": "一般",
       "zh": "通用",
+      "es": "General",
       "id": 87 }
     ,
     "lng_SpgHighlight": {
@@ -4836,6 +5501,7 @@
       "zh": "高亮",
       "de": "Hervorheben",
       "ja": "ハイライト",
+      "es": "Resaltar",
       "id": 49 }
     ,
     "lng_SpgInfo": {
@@ -4844,6 +5510,7 @@
       "zh": "信息",
       "de": "Informationen",
       "ja": "情報",
+      "es": "Info",
       "id": 53 }
     ,
     "lng_SpgIntegration": {
@@ -4852,6 +5519,7 @@
       "zh": "集成",
       "de": "Einbettung",
       "ja": "統合",
+      "es": "Integración",
       "id": 43 }
     ,
     "lng_SpgKeyboard": {
@@ -4860,6 +5528,7 @@
       "de": "Tastatur",
       "ja": "キーボード",
       "zh": "键盘",
+      "es": "Teclado",
       "id": 73 }
     ,
     "lng_SpgKeys": {
@@ -4868,6 +5537,7 @@
       "zh": "按键 & 宏",
       "de": "Tasten & Makros",
       "ja": "キーとマクロ",
+      "es": "Teclas y Macro",
       "id": 45 }
     ,
     "lng_SpgMarkCopy": {
@@ -4876,6 +5546,7 @@
       "zh": "标记/复制",
       "de": "Markieren/Kopieren",
       "ja": "マーク / コピー",
+      "es": "Marcar/Copìar",
       "id": 47 }
     ,
     "lng_SpgMouse": {
@@ -4884,6 +5555,7 @@
       "de": "Maus",
       "ja": "マウス",
       "zh": "鼠标",
+      "es": "Ratón",
       "id": 74 }
     ,
     "lng_SpgPaste": {
@@ -4892,6 +5564,7 @@
       "zh": "粘贴",
       "de": "Einfügen",
       "ja": "ペースト",
+      "es": "Pegar",
       "id": 48 }
     ,
     "lng_SpgQuake": {
@@ -4900,6 +5573,7 @@
       "de": "Quake-Modus",
       "ja": "Quake スタイル",
       "zh": "Quake 风格",
+      "es": "Estilo Quake",
       "id": 75 }
     ,
     "lng_SpgSizePos": {
@@ -4908,6 +5582,7 @@
       "zh": "大小 & 位置",
       "de": "Größe & Position",
       "ja": "サイズと位置",
+      "es": "Tam. y Pos.",
       "id": 26 }
     ,
     "lng_SpgStartup": {
@@ -4916,6 +5591,7 @@
       "zh": "启动",
       "de": "Autostart",
       "ja": "起動",
+      "es": "Arranque",
       "id": 33 }
     ,
     "lng_SpgStatusBar": {
@@ -4924,6 +5600,7 @@
       "zh": "状态栏",
       "de": "Statusleiste",
       "ja": "ステータスバー",
+      "es": "Barra de estado",
       "id": 41 }
     ,
     "lng_SpgTabBar": {
@@ -4932,6 +5609,7 @@
       "zh": "标签栏",
       "de": "Reiter-Leiste",
       "ja": "タブバー",
+      "es": "Pestañas",
       "id": 29 }
     ,
     "lng_SpgTaskBar": {
@@ -4940,6 +5618,7 @@
       "zh": "任务栏",
       "de": "Taskleiste",
       "ja": "タスクバー",
+      "es": "Barra de tareas",
       "id": 31 }
     ,
     "lng_SpgTasks": {
@@ -4948,6 +5627,7 @@
       "zh": "任务",
       "de": "Aufgaben",
       "ja": "タスク",
+      "es": "Tareas",
       "id": 34 }
     ,
     "lng_SpgTransparent": {
@@ -4956,6 +5636,7 @@
       "zh": "透明度",
       "de": "Transparenz",
       "ja": "透明度",
+      "es": "Transparencia",
       "id": 40 }
     ,
     "lng_SpgUpdate": {
@@ -4964,6 +5645,7 @@
       "zh": "更新",
       "de": "Aktualisierung",
       "ja": "更新",
+      "es": "Actualizar",
       "id": 32 }
     ,
     "lng_UnknownSwitch1": {
@@ -4972,6 +5654,7 @@
       "zh": "指定的未知开关：",
       "de": "Unbekanntes Argument angegeben:",
       "ja": "不明なスイッチが指定されました:",
+      "es": "Opción desconocida: ",
       "id": 62 }
     ,
     "lng_UnknownSwitch2": {
@@ -4980,6 +5663,7 @@
       "zh": "访问网站，以获得更详尽的命令行开关使用介绍：",
       "de": "Website besuchen um die Argumentebeschreibung einzusehen:",
       "ja": "徹底的なスイッチの説明を取得するにはウェブサイトをご覧ください",
+      "es": "Visitar el sitio web para obtener una descripción detallada de las opciones:",
       "id": 63 }
     ,
     "lng_UnknownSwitch3": {
@@ -4988,6 +5672,7 @@
       "zh": "或者运行‘ConEmu.exe -?’获得简介。",
       "de": "Oder 'ConEmu.exe -?' aufrufen um eine Kurzinfo zu erhalten.",
       "ja": "または, ‘ConEmu.exe -?’ を実行して概要を取得します.",
+      "es": "O ejecute 'ConEmu.exe -?' para obtener un resumen.",
       "id": 64 }
     ,
     "lng_UnknownSwitch4": {
@@ -4996,6 +5681,7 @@
       "zh": "开关‘-new_console’必须在‘-cmd’或者‘-cmdlist’的*后面*！",
       "de": "Der Parameter '-new_console' muss *nach* '-cmd' oder '-cmdlist' stehen!",
       "ja": "スイッチ '-new_console'は,* '* -cmd'または '-cmdlist'の後に指定する必要があります！",
+      "es": "¡La opción ‘-new_console’ debe ponerse *después* ‘-cmd’ o ‘-cmdlist’!",
       "id": 65 }
     ,
     "lng_UpdateCloseMsg1": {
@@ -5004,6 +5690,7 @@
       "_zh": "继续之前请关闭所有ConEmu实例",
       "de": "Bitte vor dem Fortfahren alle ConEmu-Instanzen schließen",
       "ja": "続行する前に,すべてのConEmuインスタンスを閉じてください",
+      "es": "Por favor, cierra todas las instancias de ConEmu antes de continuar",
       "id": 66 }
     ,
     "lng_UpdateCloseMsg2": {
@@ -5012,6 +5699,7 @@
       "zh": "ConEmu仍在运行：",
       "de": "ConEmu läuft noch:",
       "ja": "ConEmuはまだ動作しています:",
+      "es": "ConEmu se está ejecutando:",
       "id": 67 }
   }
   ,
