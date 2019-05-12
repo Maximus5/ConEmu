@@ -15,7 +15,7 @@
     "bRealConsoleSettings": {
       "en": "You may change font face and size in the Real console. Console restart required.",
       "ru": "Вы можете изменить имя шрифта и размер для RealConsole. Требуется перезапуск консоли.",
-      "zh": "你可以改变真实控制台（Real console）的字体外观和大小。需要重启控制台（Console）。",
+      "zh": "你可以改变控制台本体的字体外观和大小。需要重启控制台。",
       "de": "Schriftart und -größe können für die tatsächliche Konsole geändert. Benötigt einen Neustart der Konsole.",
       "ja": "リアルコンソールでフォントのフェイスとサイズを変更することができます。コンソールの再起動が必要です。",
       "id": 1608 }
@@ -40,7 +40,7 @@
       "en": [ "Save settings to registry/xml\r\n"
             , "Don't close dialog if Shift pressed" ],
       "zh": [ "保存设置到注册表或xml文件\r\n"
-            , "如果按下Shift键不会关闭对话框" ],
+            , "如果按下Shift键则不会关闭对话框" ],
       "de": [ "Speichert Einstellungen in Registry/XML\r\n"
             , "Lässt den Dialog geöffnet, wenn Umschalttaste gedrückt" ],
       "ja": [ "設定をレジストリ/ xmlに保存する\r\n"
@@ -73,8 +73,8 @@
     "cbAdminSuffix": {
       "en": [ "When this is checked - specified suffix will be appended in tabs titles, started ‘As administrator’.\r\n"
             , "You may choose insertion place with ‘%a’ var, otherwise suffix will be at the tab end." ],
-      "zh": [ "如果选中此处 - 指定的后缀会被追加在Tab页的标题上，以管理员权限“As administrator”启动.\r\n"
-            , "你可以使用变量‘%a’选择插入位置，否则后缀会插入在Tab最后面" ],
+      "zh": [ "如果选中此处 - 指定的后缀会被追加在Tab页的标题上，以管理员权限启动。\r\n"
+            , "你可以使用变量‘%a’选择插入位置，否则后缀会插入在Tab最后面。" ],
       "de": [ "Wenn ausgewählt, wird der angegebene Text an Reitertitel angehängt, die mit 'Als Administrator' gestartet wurden.\r\n"
             , "Der Einfügepunkt kann mit der Variable '%a' festgelegt werden. Andernfalls wird er am Reiterende hinzugefügt." ],
       "ja": [ "チェックすると、指定された接尾辞がタブのタイトルに追加され、 '管理者' として開始されます.\r\n"
@@ -122,6 +122,8 @@
             , "(affects new consoles only)" ],
       "ru": [ "Запись в журнал ANSI последовательности\r\n"
             , "(влияет только на новые консоли)" ],
+      "zh": [ "记录ANSI序列并将其写入控制台中\r\n"
+            , "（仅对新控制台有效）" ],
       "id": 3105 }
     ,
     "cbAutoRegFonts": {
@@ -129,7 +131,7 @@
             , "*.ttf, *.otf and *.bdf files are supported." ],
       "ru": [ "Загружать и подключать шрифты из папки ConEmu.\r\n"
             , "Поддерживаются: *.ttf, *.otf и *.bdf." ],
-      "zh": [ "用于ConEmu字体，字体位于ConEmu文件夹。\r\n"
+      "zh": [ "用于ConEmu的字体，字体位于ConEmu文件夹。\r\n"
             , "支持*.ttf、*.otf和*.bdf文件。" ],
       "de": [ "Verwendet in ConEmu Schriftarten, die im ConEmu-Ordner liegen.\r\n"
             , "Es werden *.ttf-, *.otf- und *.bdf-Dateien unterstützt." ],
@@ -186,7 +188,7 @@
     ,
     "cbCloseConsoleConfirm": {
       "en": "Show confirmation before closing tab or page (tab ‘Close’ menu item)",
-      "zh": "关闭标签（Tab）或页面时需要确认 （标签页“关闭”菜单项）",
+      "zh": "关闭标签或页面时需要确认 （标签页“关闭”菜单项）",
       "de": "Zeigt Rückfragedialog vor dem Schließen eines Reiters oder einer Seite (Reiter 'Schließen' Menüeintrag)",
       "ja": "タブまたはページを閉じる前に確認を表示する（[閉じる]メニュー項目のタブ）",
       "ru": "Показать подтверждение перед закрытием вкладки или страницы (пункт меню ‘Закрыть’)",
@@ -334,7 +336,7 @@
       "en": [ "When ‘Off’ - only characters ends selection\r\n"
             , "When ‘On’ - any key ends selection (Arrows, PgUp, End, etc.)" ],
       "zh": [ "当为‘Off’时 - 仅字符键结束选择\r\n"
-            , "当为‘On’时 - 任意键结束选择（Arrows, PgUp, End等）" ],
+            , "当为‘On’时 - 任意键结束选择（方向键, PgUp, End等）" ],
       "de": [ "Wenn 'Aus' beenden nur Zeichen die Auswahl\r\n"
             , "Wenn 'Ein' beendet jede Taste die Auswahl (Pfeile, BildAuf, Ende, usw.)" ],
       "ja": [ "‘Off’の場合 - 選択を終了は文字のみ\r\n"
@@ -368,7 +370,7 @@
     ,
     "cbCTSFreezeBeforeSelect": {
       "en": "Freeze console contents before selection (may cause small lag)",
-      "zh": "在选择前冻结控制台内容（可能导致轻微滞后）",
+      "zh": "在选择前先冻结控制台内容（可能导致轻微延迟）",
       "de": "Friert Konsoleninhalte vor der Auswahl ein (kann kurze Verzögerung verursachen)",
       "ja": "選択前にコンソールの内容をフリーズする(小さなラグを引き起こす可能性がある)",
       "ru": "Заморозить содержимое консоли перед выделением (может вызвать небольшие задержки)",
@@ -447,7 +449,7 @@
     ,
     "cbCursorIgnoreSize": {
       "en": "Ignore cursor size in real console, always show cursor with specified size",
-      "zh": "忽略在真实控制台（real console）中的光标大小，总是以指定大小显示光标",
+      "zh": "忽略在控制台本体中的光标大小，总是以指定大小显示光标",
       "de": "Ignoriert Schreibmarkengröße in tatsächlicher Konsole, Schreibmarke wird immer in angegebener Größe gezeigt",
       "ja": "実際のコンソールでカーソルサイズを無視し,常に指定されたサイズのカーソルを表示する",
       "ru": "Игнорировать размер курсора в реальной консоли, всегда показывать курсор с заданным размером",
@@ -477,8 +479,8 @@
     "cbDisableAllFlashing": {
       "en": [ "Disable all flashing (from consoles) on Windows taskbar.\r\n"
             , "3rd-state - allow short flashing." ],
-      "zh": [ "停止Windows任务栏上所有来自控制台（Console）的闪烁。\r\n"
-            , "第三种情况 - 允许较短闪烁" ],
+      "zh": [ "停止Windows任务栏上所有（来自控制台）的闪烁。\r\n"
+            , "第3种情况 - 允许较短闪烁" ],
       "de": [ "Deaktiviert jegliches Blinken (der Konsole) in der Windows-Taskleiste.\r\n"
             , "3.-Zustand - Erlaubt kurzes Aufblinken." ],
       "ja": [ "Windowsタスクバーのすべての点滅(コンソールから)を無効にします.\r\n"
@@ -643,7 +645,7 @@
       "en": [ "ConEmu is able to use normal, bold and italic fonts side by side.\r\n"
             , "This feature may be useful for prompt decoration or with Colorer plugin for Far Manager (1.7x, 2.x)." ],
       "zh": [ "ConEmu可以同时使用正常、粗体和斜体字体。\r\n"
-            , "这个特征可能对于提示性装饰很有用或者和Far Manager的颜色插件配合使用（1.7x, 2.x）。" ],
+            , "这个特征对于提示文本的装饰会很有用，或者和Far Manager的颜色插件配合使用（1.7x, 2.x）。" ],
       "de": [ "ConEmu ist in der Lage normale, fette und kursive Schriften nebeneinander zu verwenden.\r\n"
             , "Diese Funktion ist für die Prompt-Gestaltung oder in Verwendung zusammen mit dem Colorer-PlugIn für den Far-Manager nützlich (1.7x, 2.x)." ],
       "ja": [ "ConEmuは,標準,太字,斜体のフォントを並べて使用できます.\r\n"
@@ -662,7 +664,7 @@
     ,
     "cbFadeInactive": {
       "en": "When ConEmu loses focus, its contents may be faded. You may specify most bright color.",
-      "zh": "当不再聚焦在ConEmu上时，它的内容可能会褪色。你可以指定比较明亮的颜色。",
+      "zh": "当不再聚焦在ConEmu上时，它的内容可能会变淡。你可以指定比较明亮的颜色。",
       "de": "Wenn ConEmu den Fokus verliert, werden seine Inhalte verblassen. Es kann die hellste Farbe angegeben werden.",
       "ja": "ConEmu 非アクティブ時の透明度を上げる.最も明るい色を指定できます.",
       "ru": "Когда ConEmu теряет фокус, его содержимое может исчезнуть. Вы можете указать наиболее яркий цвет.",
@@ -728,11 +730,13 @@
             , "正確な偽像がよりよく見えます." ],
       "ru": [ "Включить или отключить ‘Clear Type’ для альтернативного шрифта.\n"
             , "Точная псевдография выглядит лучше." ],
+      "zh": [ "对备用字体启用或禁用“Clear Type”，\n"
+            , "这能够使经过精确设计的伪字符（psuedographics）看起来效果更好。" ],
       "id": 2883 }
     ,
     "cbFontAuto": {
       "en": "Automatic font resize for the fixed real console width",
-      "zh": "对于固定宽度的真实控制台（real console）自动重新设置字体大小",
+      "zh": "对于固定宽度的控制台本体，自动重新设置字体大小",
       "de": "Automatische Schriftgrößenanpassung bei fester Breite der tatsächlichen Konsole",
       "ja": "実際のコンソール幅で自動的にフォントをリサイズする",
       "ru": "Автоматический размер шрифта для фиксированной реальной ширины консоли",
@@ -849,10 +853,10 @@
             , "console commands. Full console output\r\n"
             , "(up to specified count of lines) will be\r\n"
             , "available via Far macro (CtrlO.reg)" ],
-      "zh": [ "当Far执行控制台（console）命令时，\r\n"
+      "zh": [ "当Far执行控制台命令时，\r\n"
             , "自动扩展缓存高度至指定行数。\r\n"
             , "完整的控制台输出\r\n"
-            , "（行数达到指定的数目） 将会\r\n"
+            , "（行数达到指定的数目） 将\r\n"
             , "可以通过Far宏使用 - （CtrlO.reg）" ],
       "de": [ "Erhöht automatisch die Puffergröße auf angegebene\r\n"
             , "Anzahl an Zeilen, während Far \r\n"
@@ -897,7 +901,7 @@
     "cbMonitorConsoleLang": {
       "en": [ "Monitor input language change in real\r\n"
             , "console (e.g. Far Manager XLat switching support)" ],
-      "zh": [ "监视在真实控制台里输入语言的改变\r\n"
+      "zh": [ "监视在控制台本体里输入语言的改变\r\n"
             , "（例如 Far Manager XLat切换支持）" ],
       "de": [ "Überwacht Wechsel der Eingabesprache in real\r\n"
             , "console (z.B. Unterstützung für Far-Manager-XLat-Wechsel)" ],
@@ -953,9 +957,9 @@
       "en": [ "Confirm new console creation.\r\n"
             , "You may change cmd line for it, or turn on \"Run as...\" feature.\r\n"
             , "Even if unchecked, You may hold \"Shift\" to display dialog." ],
-      "zh": [ "确认创建新的控制台（console）\r\n"
-            , "你可以为它改变cmd命令行，或者关闭\"Run as...\" 特征。\r\n"
-            , "即使没有选中，你可以按住 \"Shift\" 来显示对话框。" ],
+      "zh": [ "确认创建新的控制台\r\n"
+            , "你可以为它改变cmd命令行，或者是打开“运行\"功能。\r\n"
+            , "即使没有选中，你也可以按住 \"Shift\" 来显示对话框。" ],
       "de": [ "Fragt bei Konsolenerzeugung nach.\r\n"
             , "Dafür kann die Befehlszeile geändert oder die \"Ausführen als...\"-Funktion eingeschaltet werden.\r\n"
             , "Selbst wenn abgewählt, kann der Dialog mit \"Umslt\" angezeigt werden." ],
@@ -993,7 +997,7 @@
     ,
     "cbProcessCmdStart": {
       "en": "Hook 'start' command in your cmd's prompt and batches started in ConEmu tabs to run console applications in new ConEmu tabs",
-      "zh": "Hook你cmd prompt里的'start' 命令 ，以及在ConEmu标签页里开始的批处理中的'start' 命令，然后在新的ConEmu标签页运行console程序",
+      "zh": "Hook你cmd prompt里的'start' 命令 ，以及在ConEmu标签页里开始的批处理中的'start' 命令，然后在新的ConEmu标签页运行控制台程序",
       "de": "Den 'start'-Befehl in, in ConEmu-Reitern gestarteten, CMD-Prompts und Batch-Skripten abfangen, um Konsolenanwendungen in neuen ConEmu-Reitern zu starten",
       "ja": "cmdプロンプトで'start'コマンドをフックし,新しいConEmuタブでコンソールアプリケーションを実行するためにConEmuタブでバッチを開始しました",
       "ru": "Перхватывать команду 'start' в командной строке и запустите пакетно на вкладках ConEmu для запуска консольных приложений на новых вкладках ConEmu",
@@ -1069,6 +1073,7 @@
       "de": "Inaktives Fenster durch die 'Minimieren/Wiederherstellen'-Schnelltaste wiederherstellen und fokussieren",
       "ja": " '最小化 / 復元' ホットキーで非アクティブウィンドウを復元してフォーカス",
       "ru": "Восстановить и выделить неактивное окно с помощью клавиши ‘Свернуть/Восстановить’",
+      "zh": "按“最小化/恢复”热键以恢复并聚焦非活动窗口",
       "id": 3099 }
     ,
     "cbRetardInactivePanes": {
@@ -1082,7 +1087,7 @@
     "cbRSelectionFix": {
       "en": [ "Fix dashed selection with fast right mouse drag\r\n"
             , "Far 3: restore files selection instead of EMenu" ],
-      "zh": [ "修复右键快速拖放时“破碎”状的选择\r\n"
+      "zh": [ "修复右键快速拖放时出现的选区“破碎”\r\n"
             , "Far 3:恢复文件选择而不是EMenu" ],
       "de": [ "Behebt gestrichelte Auswahl mit schnellem Ziehen der rechten Maustaste\r\n"
             , "Far 3: Dateiauswahl statt EMenu wiederherstellen" ],
@@ -1094,7 +1099,7 @@
     ,
     "cbSafeFarClose": {
       "en": "Try to close Far Manager softly, instead of closing console window, when you close ConEmu window",
-      "zh": "当你关闭ConEmu窗口时，尝试轻柔的关闭Far Manager，取代关闭console窗口",
+      "zh": "当你关闭ConEmu窗口时，尝试软关闭Far Manager，以此来取代关闭控制台窗口",
       "de": "Versucht Far-Manager vorsichtig zu schließen, anstatt einfach das Konsolenfenster zu schließen, wenn das ConEmu-Fenster geschlossen wird",
       "ja": "ConEmuウィンドウを閉じたときにコンソールウィンドウではなく Far Manager を閉じるように試みる",
       "ru": "Попробуйте закрыть Far Manager мягко, вместо закрытия окна консоли, когда вы закрываете окно ConEmu",
@@ -1105,6 +1110,7 @@
       "de": "Erhöht maximale Scrollleistenposition in dem Maß wie die Konsolenausgabe anwächst",
       "ja": "コンソール出力での最大スクロールバー位置の増加",
       "ru": "Увеличение максимальной позиции прокрутки при увеличении вывода консоли",
+      "zh": "随控制台输出内容的增加而同时增加滚动条的最远位置",
       "id": 3090 }
     ,
     "cbSendAltEsc": {
@@ -1178,7 +1184,7 @@
     ,
     "cbShowWasHiddenMsg": {
       "en": "Show ‘ConEmu was hidden from some program’ message in TSA",
-      "zh": "在任务栏状态区域（TSA）显示消息“ConEmu被一些程序隐藏”",
+      "zh": "在任务栏状态区域显示“ConEmu被一些程序隐藏”的消息",
       "de": "Zeigt eine 'ConEmu wurde von einem Programm minimiert'-Nachricht im Infobereich",
       "ja": "TSAの 'ConEmuがいくつかのプログラムから隠されていた' というメッセージを表示する",
       "ru": "Показать ‘ConEmu был скрыт от сообщений какой-либо программы’ в TSA",
@@ -1221,8 +1227,8 @@
     "cbSkipFocusEvents": {
       "en": [ "Don't send focus events to console to disable\r\n"
             , "autoclosing of fast search dialog in panels" ],
-      "zh": [ "不要发送聚焦事件到控制台（console）以致失效\r\n"
-            , "自动关闭面板中快速查找对话框" ],
+      "zh": [ "不要发送聚焦事件到控制台来借此\r\n"
+            , "禁止自动关闭面板中的快速查找对话框" ],
       "de": [ "Kein Fokusereignisse an die Konsole senden um\r\n"
             , "das Autoschließen des Schnellsuche-Dialogs in Panels zu deaktivieren" ],
       "ja": [ "コンソールにフォーカスイベントを送信して無効にしないでください\r\n"
@@ -1246,7 +1252,7 @@
     ,
     "cbSleepInBackground": {
       "en": "Reduce FPS when ConEmu loses focus",
-      "zh": "当ConEmu失去焦点，减少FPS",
+      "zh": "当ConEmu失去焦点时，减少帧率",
       "de": "FPS reduzieren wenn ConEmu den Fokus verliert",
       "ja": "ConEmuがフォーカスを失ったときにFPSを減らす",
       "ru": "Уменьшает FPS при потере фокуса ConEmu",
@@ -1374,7 +1380,7 @@
     ,
     "cbThumbLoadFiles": {
       "en": "Generate previews for files",
-      "zh": "生成预览文件",
+      "zh": "生成文件的预览",
       "de": "Erzeugt Vorschauansichten für Dateien",
       "ja": "ファイルのプレビューを生成する",
       "ru": "Генерация превью для файлов",
@@ -1429,6 +1435,7 @@
       "de": "Nicht vergessen den manuell eingegebenen UCS-Bereich anzuwenden um das Ergebnis zu sehen.",
       "ja": "手動で入力したUCS範囲を適用するなら結果をきちんと確認して下さい。",
       "ru": "Не забудьте применить введенный вручную диапазон UCS, чтобы увидеть результат.",
+      "zh": "不要忘记应用手动输入的 UCS 范围以查看结果。",
       "id": 2838 }
     ,
     "cbUseAltGrayPlus": {
@@ -1462,8 +1469,8 @@
     "cbUseInjects": {
       "en": [ "Allow injecting ConEmuHk.dll in every process of ConEmu console window.\r\n"
             , "Required for many features (ANSI X3.64, -new_console argument, GUI apps in ConEmu tabs, ...) and elimination of several problems (telnet in Windows 7, dialogs and menus behind of ConEmu window, chcp hungs, and so on...)" ],
-      "zh": [ "允许在ConEmu控制台窗口的每个进程注入ConEmuHk.dll。\r\n"
-            , "被许多功能所需要 （ANSI X3.64, -new_console argument, ConEmu标签页中的GUI程序, ...） 并且消除若干问题（Windows 7的telnet，对话框和菜单位于ConEmu窗口之后， chcp 挂起，等等……）" ],
+      "zh": [ "允许向ConEmu控制台窗口的每个进程注入ConEmuHk.dll。\r\n"
+            , "本特性被许多功能所需要 （ANSI X3.64, -new_console argument, ConEmu标签页中的GUI程序, ...） 并且可消除若干问题（Windows 7的telnet，对话框和菜单位于ConEmu窗口之后， chcp 挂起，等等……）" ],
       "de": [ "Erlaubt das Einschleusen der ConEmuHk.dll in jeden Prozess des ConEmu-Konsolenfensters.\r\n"
             , "Für viele Funktionen erforderlich (ANSI X3.64, -new_console-Parameter, GUI-Anwendungen in ConEmu-Reitern, ...) und Beseitigung verschiedener Probleme (Telnet in Windows 7, Dialoge und Menüs hinter dem ConEmu-Fenster, chcp hungs, usw.)" ],
       "ja": [ "ConEmuコンソールウィンドウのすべてのプロセスで ConEmuHk.dllを注入できるようにする.\r\n"
@@ -1514,7 +1521,7 @@
     ,
     "cbVisible": {
       "en": "Show real console on startup",
-      "zh": "启动时显示真实控制台（real console）",
+      "zh": "启动时显示控制台本体",
       "de": "Zeigt eine tatsächliche Konsole beim Start",
       "ja": "起動時に実際のコンソールを表示する",
       "ru": "Показать реальную консоль при запуске",
@@ -1529,6 +1536,7 @@
             , "テキストと背景の区別がつかない" ],
       "ru": [ "Измените яркость текста, если разница в цвете\r\n"
             , "между текстом и фоном не различима" ],
+      "zh": "当文字与背景的颜色差异难以辨别时，更改文字的亮度",
       "id": 3056 }
     ,
     "lbColorsOverride": {
@@ -1575,7 +1583,7 @@
     ,
     "lbConClrText": {
       "en": "Specify default foreground (font) text color for new consoles",
-      "zh": "为新的控制台（console）指定默认的前台（字体）文本颜色",
+      "zh": "为新的控制台指定默认的前台（字体）文本颜色",
       "de": "Legt Standard-Vordergrund-(Schriftart)-Text-Farbe für neue Konsolen fest",
       "ja": "新しいコンソールのデフォルトのフォアグラウンド(フォント)テキストカラーを指定する",
       "ru": "Укажите цвет текста по умолчанию (шрифт) для новых консолей",
@@ -1598,7 +1606,7 @@
     ,
     "lbCTSBlockSelection": {
       "en": "Choose modifier to starting ‘Block selection’ with mouse LeftClick+Drag",
-      "zh": "使用鼠标LeftClick+Drag选择修改器来启动“块状选择”（‘Block selection’）",
+      "zh": "使用鼠标左键单击+拖动，选择修改器来启动“块状选择”（‘Block selection’）",
       "ja": "モディファイアを選択して,マウスで 'ブロック選択' を開始する LeftClick+Drag",
       "ru": "Выберите модификатор для начала ‘Блокировки’ с помощью мыши LeftClick+Drag",
       "id": 1633 }
@@ -1613,7 +1621,7 @@
     ,
     "lbCTSTextSelection": {
       "en": "Choose modifier to starting ‘Text selection’ with mouse LeftClick+Drag",
-      "zh": "使用鼠标LeftClick+Drag选择修改器来启动“文本选择”（‘Text selection’）",
+      "zh": "选择调节器，以使用鼠标左击+拖放来启动“文本选择”",
       "de": "Modifizierer auswählen für Start von 'Textauswahl' mit linker_Mausklick+Ziehen",
       "ja": "マウスで 'テキスト選択' を開始するための修飾子を選択するLeftClick Drag",
       "ru": "Выберите модификатор для начала ‘выделения текста’ с помощью мыши LeftClick+Drag",
@@ -1692,7 +1700,7 @@
     ,
     "lbRDragKey": {
       "en": "Drag with right mouse button, only when pressed...",
-      "zh": "用鼠标右键拖放，仅当按下……时",
+      "zh": "仅当按下……时，用鼠标右键拖放",
       "de": "Ziehen mit der rechten Maustaste, nur wenn ... gedrückt",
       "ja": "マウスの右ボタンでドラッグします.",
       "ru": "Перетаскивание правой кнопкой мыши, только при нажатии ...",
@@ -1735,6 +1743,8 @@
             , " 'Inject ConEmuHk' が必要です" ],
       "ru": [ "Войти в консоль.\r\n"
             , "Требуется ‘Inject ConEmuHk’" ],
+      "zh": [ "将进程创建的状态记录到控制台中。\n"
+            , "要求“注入 ConEmuHk”已启用" ],
       "id": 3057 }
     ,
     "rbActivityShell": {
@@ -1759,7 +1769,7 @@
     ,
     "rbComspec_OSbit": {
       "en": "64bit OS only, (System32 or SysWOW64) - use System32",
-      "zh": "仅64bit操作系统， （System32 or SysWOW64） - 使用System32",
+      "zh": "仅适用于64bit操作系统， （System32 or SysWOW64） - 使用System32",
       "de": "Nur 64Bit-BS, (System32 oder SysWOW64) - Verwendet System32",
       "ja": "64ビットOSのみ,(System32またはSysWOW64) -  System32を使用する",
       "ru": "Только на 64бит ОС, (System32 или SysWOW64) - используйте System32",
@@ -1807,7 +1817,7 @@
     ,
     "rbScrollbarAuto": {
       "en": "Show scrollbar on mousehover or scroll position change",
-      "zh": "在鼠标悬停或滚动位置改变时显示滚动栏",
+      "zh": "在鼠标悬停或滚动位置改变时显示滚动条",
       "de": "Zeige Scrollleiste beim Darauf-Zeigen mit der Maus oder beim Scrollpositionswechsel",
       "ja": "マウスオーバーまたはスクロール位置の変更時にスクロールバーを表示する",
       "ru": "Показывать полосу прокрутки при наведении мыши или изменении положения прокрутки",
@@ -1815,7 +1825,7 @@
     ,
     "rbScrollbarHide": {
       "en": "Don't show scrollbar",
-      "zh": "不要显示滚动栏",
+      "zh": "不显示滚动条",
       "de": "Verberge Scrollleiste",
       "ja": "スクロールバーを表示しない",
       "ru": "Не показывать прокрутку",
@@ -1823,7 +1833,7 @@
     ,
     "rbScrollbarShow": {
       "en": "Always show scrollbar on the right edge of window",
-      "zh": "总是在窗口右边边缘显示滚动栏",
+      "zh": "总是在窗口右边边缘显示滚动条",
       "de": "Zeige Scrollbar immer an der rechten Kante des Fensters",
       "ja": "ウインドウの右端に常にスクロールバーを表示する",
       "ru": "Всегда показывать полосу прокрутки на правом краю окна",
@@ -1839,7 +1849,7 @@
     ,
     "rbStartNamedTask": {
       "en": "Starts ConEmu with several (one or more) tabs, commands located in ConEmu Settings, Tasks page",
-      "zh": "以若干（一个或多个）标签页以及位于ConEmu设置，任务页面的命令启动ConEmu",
+      "zh": "启动ConEmu时创建若干标签页（一个或多个）。这些标签页的起始命令位于ConEmu设置的”任务“页",
       "de": "Startet ConEmu mit einem oder mehreren Reitern, nach Befehlen aus den ConEmu-Einstellungen, Seite Aufgaben",
       "ja": "ConEmuを複数の(1つ以上の)タブで開始します.コマンドは,ConEmuの設定,タスクページにあります.",
       "ru": "Запускает ConEmu с несколькими (одной или несколькими) вкладками, команды, расположенные в настройках ConEmu, страница Задачи",
@@ -1897,7 +1907,7 @@
       "en": [ "You may choose folder for in-console log files\r\n"
             , "(affect new consoles only)" ],
       "zh": [ "你可以为in-console日志文件选择文件夹\r\n"
-            , "（仅影响以后新建的控制台（console））" ],
+            , "（仅影响之后新建的控制台）" ],
       "ja": [ "コンソール内のログファイルのフォルダを選択することができます\r\n"
             , "(新しいコンソールにのみ影響する)" ],
       "ru": [ "Вы можете выбрать папку для файлов журнала в консоли\r\n"
@@ -2274,10 +2284,10 @@
             , "Blt: Average duration of blit operation from memory DC to screen DC\r\n"
             , "RPS: Average counts of reads real console data per second" ],
       "zh": [ "FPS: 每秒帧数\r\n"
-            , "Data: 从真实到虚拟控制台传输数据的平均时间\r\n"
+            , "Data: 从控制台本体到虚拟控制台传输数据的平均时间\r\n"
             , "Render: 渲染文本到内存DC的平均时间\r\n"
             , "Blt: 从内存DC到屏幕DC的blit操作的平均时间\r\n"
-            , "RPS: 每秒读取真实控制台数据的平均计数" ],
+            , "RPS: 每秒读取控制台本体数据的平均计数" ],
       "de": [ "FPS: Frames pro Sekunde\r\n"
             , "Daten: Durchschnittliche Dauer der Datenübertragung von der tatsächlichen zu virtuellen Konsole\r\n"
             , "Rendern: Durchschnittliche Dauer des Renderns von Text im Speicher-DC\r\n"
@@ -2312,7 +2322,7 @@
       "en": [ "Far Manager macro for EMenu of file panel selected items\r\n"
             , "Clear field to reset to defaults" ],
       "zh": [ "文件面板选定项目的EMenu的Far Manager宏\r\n"
-            , "清除字段重置为默认值" ],
+            , "清除字段以重置为默认值" ],
       "de": [ "Far-Manager-Makro für das EMenü von auf dem Datei-Panel ausgewählten Einträgen\r\n"
             , "Feld leeren um auf Standards zu setzen" ],
       "ja": [ "ファイルパネル選択項目のEMenuのFar Managerマクロ\r\n"
@@ -2507,7 +2517,7 @@
     ,
     "tTabViewer": {
       "en": "Tab template for Far Manager internal viewers",
-      "zh": "Far Manager内部视图的标签模板",
+      "zh": "Far 管理器内部视图的标签模板",
       "de": "Reitervorlage für Far-Manager-interne Betrachter",
       "ja": "Far Managerの内部ビューア用のタブテンプレート",
       "ru": "Шаблон вкладки для Far Manager internal viewers",
@@ -2692,6 +2702,8 @@
             , "リストからあらかじめ定義されたものを選択します." ],
       "ru": [ "Определите свой собственный диапазон UCS или\n"
             , "выберите предварительно определенный из списка." ],
+      "zh": [ "指定你自己的UCS范围，\n"
+            , "或者是使用列表中预先定义好的选项。" ],
       "id": 2835 }
     ,
     "tUpdateVerLocation": {
@@ -2700,7 +2712,7 @@
             , "Erase text box to revert to default URL." ],
       "zh": [ "接收最新版本的信息的URL \r\n"
             , "默认为： https://conemu.github.io/version.ini\r\n"
-            , "删除文本框，以恢复默认的网址。" ],
+            , "清空该文本框来恢复到默认的网址。" ],
       "de": [ "URL um die neusten Versionsinformationen zu erhalten,\r\n"
             , "Vorgabe ist: https://conemu.github.io/version.ini\r\n"
             , "Textfeld leeren um auf Vorgabe-URL zurückzusetzen." ],
@@ -2719,8 +2731,8 @@
             , "Use ‘px’ suffix (e.g. ‘800px’) for strict pixel size" ],
       "zh": [ "控制台窗口的高度\r\n"
             , "使用单元格的数目作为大小\r\n"
-            , "使用百分比标识（比如 ‘40%’）相对于显示屏的大小\r\n"
-            , "使用‘px’后缀 （比如 ‘800px’） 作为严格的像素大小" ],
+            , "使用百分比标识（比如 ‘40%’）以设置相对于显示屏的大小\r\n"
+            , "使用‘px’后缀 （比如 ‘800px’） 以设置精确的像素大小" ],
       "de": [ "Höhe des Konsolenfensters\r\n"
             , "Zahlen für die Höhe in Zeichen verwenden\r\n"
             , "Prozentzeichen (z.B. '40%') verwenden für Höhe relativ zur Bildschirmhöhe\r\n"
@@ -2742,8 +2754,8 @@
             , "Use ‘px’ suffix (e.g. ‘800px’) for strict pixel size" ],
       "zh": [ "控制台窗口的宽度\r\n"
             , "使用单元格的数目作为大小\r\n"
-            , "使用百分比标识（比如 ‘40%’）相对于显示屏的大小\r\n"
-            , "使用‘px’后缀 （比如 ‘800px’） 作为严格的像素大小" ],
+            , "使用百分比标识（比如 ‘40%’）来指定相对于显示屏的大小\r\n"
+            , "使用‘px’后缀 （比如 ‘800px’） 来指定绝对确切的像素大小" ],
       "de": [ "Breite des Konsolenfensters\r\n"
             , "Zahlen für die Breite in Zeichen verwenden\r\n"
             , "Prozentzeichen (z.B. '40%') verwenden für Breite relativ zur Bildschirmbreite\r\n"
@@ -2834,7 +2846,7 @@
     ,
     "vkAppsPgDn": {
       "en": "Scroll buffer one half-page down",
-      "zh": "滚动缓存至半页下面",
+      "zh": "向下滚动缓冲区半页",
       "de": "Puffer eine halbe Seite nach unten scrollen",
       "ja": "バッファを半ページ下にスクロール",
       "ru": "Прокручивать буфер на половину страницы вниз",
@@ -2861,11 +2873,12 @@
       "de": "Nach Aktualisierungen suchen",
       "ja": "アップデートを確認",
       "ru": "Проверка обновлений",
+      "zh": "检查更新",
       "id": 3101 }
     ,
     "vkChildSystemMenu": {
       "en": "Child GUI window system menu (PuTTY, Notepad, etc.)",
-      "zh": "子GUI窗口系统菜单（PuTTY, Notepad, etc.）",
+      "zh": "子图形界面窗口系统菜单（PuTTY, Notepad, 等等）",
       "de": "Tocher-GUI-Fenster-Systemmenü (PuTTY, Notepad, usw.)",
       "ja": "チャイルドGUIウィンドウシステムメニュー(PuTTY,メモ帳など)",
       "ru": "Системное меню дочернего окна GUI (PuTTY, Блокнот и т.д.)",
@@ -2876,6 +2889,7 @@
       "de": "Rechts schließen",
       "ja": "右に近い",
       "ru": "Закрыть вправо",
+      "zh": "关闭右侧",
       "id": 3091 }
     ,
     "vkCloseAllCon": {
@@ -2888,7 +2902,7 @@
     ,
     "vkCloseConEmu": {
       "en": "Close all tabs (same as ‘Cross’ click)",
-      "zh": "关闭所有标签页 （同点击‘叉号’）",
+      "zh": "关闭所有标签页 （与点击‘叉号’相同）",
       "de": "Alle Reiter schließen (ist das Gleiche wie 'X' anklicken)",
       "ja": "すべてのタブを閉じる(「×」クリックと同じ)",
       "ru": "Закрыть все вкладки (так же как клик по ‘Крест’",
@@ -2936,7 +2950,7 @@
     ,
     "vkConDetach": {
       "en": "Detach active RealConsole from ConEmu",
-      "zh": "从ConEmu分离活动的真实控制台（RealConsole）",
+      "zh": "将活动的控制台本体从ConEmu分离",
       "de": "Aktive RealConsole von ConEmu abkoppeln",
       "ja": "ConEmuからアクティブなRealConsoleを切り離す",
       "ru": "Отключить активную RealConsole от ConEmu",
@@ -3024,7 +3038,7 @@
     ,
     "vkConUnfasten": {
       "en": "Unfasten active RealConsole from active ConEmu window",
-      "zh": "从ConEmu窗口解开活动的真实控制台（RealConsole）",
+      "zh": "从ConEmu窗口解除与活动控制台本体的联系",
       "de": "Aktive RealConsole von aktivem ConEmu-Fenster ablösen",
       "ja": "アクティブなConEmuウィンドウからアクティブなRealConsoleを解除する",
       "ru": "Отключить активную RealConsole из активного окна ConEmu",
@@ -3072,7 +3086,7 @@
     ,
     "vkCtrlTab_Down": {
       "en": "Switch tab to right (while Ctrl-Tab was pressed and Ctrl - hold)",
-      "zh": "切换标签页到右边 （当 Ctrl-Tab按下并按住 Ctrl）",
+      "zh": "切换标签页到右边 （当 Ctrl-Tab按下且同时按住 Ctrl）",
       "de": "Wechsle einen Reiter nach rechts (während Strg-Tab gedrückt und Strg gehalten wurde)",
       "ja": "タブを右に切り替えます(Ctrl + Tabを押しながらCtrlキーを押しながら)",
       "ru": "Переключить вкладку вправо (при нажатой клавише Ctrl-Tab и удержании Ctrl)",
@@ -3112,7 +3126,7 @@
     ,
     "vkCtrlWinAltSpace": {
       "en": "Show real console",
-      "zh": "像素真实控制台",
+      "zh": "显示控制台本体",
       "de": "Zeige echte Konsole",
       "ja": "実際のコンソールを表示する",
       "ru": "Показать реальную консоль",
@@ -3128,7 +3142,7 @@
     ,
     "vkCTSCopyHtml0": {
       "en": "Copy: Current selection as plain text",
-      "zh": "复制： 当前选择为普通文本",
+      "zh": "复制： 将当前选区复制为普通文本",
       "de": "Kopieren: Aktuelle Auswahl als reinen Text",
       "ja": "コピー:プレーンテキストとしての現在の選択",
       "ru": "Копировать: текущее выделение как простой текст",
@@ -3298,7 +3312,7 @@
     ,
     "vkDuplicateRoot": {
       "en": "Duplicate tab with current state of root process",
-      "zh": "复制标签页及根进程的当前状态",
+      "zh": "将标签页复制一份，包含根进程的当前状态",
       "de": "Reiter mit aktuellem Zustand des Wurzelprozesses verdoppeln",
       "ja": "現在のルートプロセスの状態と重複するタブ",
       "ru": "Дублировать вкладку с текущим состоянием корневого процесса",
@@ -3522,7 +3536,7 @@
     ,
     "vkMultiGroup": {
       "en": "Group keyboard input for visible splits",
-      "zh": "可见的分屏组键盘输入",
+      "zh": "将键盘输入分组以用于不同的分屏",
       "de": "Gruppiere Tastatureingabe für sichtbare Unterteilungen",
       "ja": "目に見える分割のためのグループキーボード入力",
       "ru": "Групповой ввод с клавиатуры для видимых разделений",
@@ -3533,6 +3547,7 @@
       "de": "Gruppiere Tastatureingabe für alle Konsolen",
       "ja": "すべてのコンソール用のグループキーボード入力",
       "ru": "Групповой ввод с клавиатуры для всех консолей",
+      "zh": "对所有控制台进行键盘输入分组",
       "id": 3079 }
     ,
     "vkMultiGroupKey": {
@@ -3540,6 +3555,7 @@
       "de": "Aktive Konsole zur Tastatureingabengruppe hinzufügen",
       "ja": "グループキーボード入力にアクティブなコンソールを追加する",
       "ru": "Добавить активную консоль в групповой ввод с клавиатуры",
+      "zh": "将活动控制台加入键盘输入分组中",
       "id": 3085 }
     ,
     "vkMultiNew": {
@@ -3619,6 +3635,7 @@
       "de": "Neues Fenster erzeugen",
       "ja": "新しいウィンドウを作成する",
       "ru": "Открыть в новом окне",
+      "zh": "创建新窗口",
       "id": 3092 }
     ,
     "vkMultiWndConfirm": {
@@ -3719,7 +3736,7 @@
     ,
     "vkScreenshot": {
       "en": "Make screenshot of active window",
-      "zh": "活动窗口截图",
+      "zh": "对活动窗口截图",
       "de": "Bildschirmfoto des aktiven Fensters erstellen",
       "ja": "アクティブなウィンドウのスクリーンショットを作る",
       "ru": "Сделать скриншот активного окна",
@@ -3727,7 +3744,7 @@
     ,
     "vkScreenshotFull": {
       "en": "Make screenshot of entire desktop",
-      "zh": "整个桌面截屏",
+      "zh": "对整个桌面截屏",
       "de": "Bildschirmfoto der gesamten Arbeitsfläche erstellen",
       "ja": "デスクトップ全体のスクリーンショットを作成する",
       "ru": "Сделать скриншот всего рабочего стола",
@@ -3735,7 +3752,7 @@
     ,
     "vkSetFocusChild": {
       "en": "Set focus to child GUI application",
-      "zh": "将焦点集中在子GUI应用程序",
+      "zh": "将焦点集中在子图形界面应用程序",
       "de": "Setze Fokus auf Tochter-GUI-Anwendung",
       "ja": "子GUIアプリケーションにフォーカスを設定する",
       "ru": "Установить фокус на дочернее приложение GUI",
@@ -3882,6 +3899,7 @@
       "de": "Unterteilung: Mit nächstem Bereich vertauschen",
       "ja": "分割:最も近いウィンドウで交換(交換)",
       "ru": "Разделить: Обмен (своп) с ближайшей панелью",
+      "zh": "分屏：与最近的窗格交换（互换）",
       "id": 3084 }
     ,
     "vkSplitSwapDown": {
@@ -3889,6 +3907,7 @@
       "de": "Unterteilung: Mit nächstem Bereich unten vertauschen",
       "ja": "分割:最も近いペインを下にしてExchange(スワップ)する",
       "ru": "Разделить: Обмен (своп) с ближайшей панкой вниз",
+      "zh": "拆分：与后面距离最近的分栏进行交换（互换）",
       "id": 3081 }
     ,
     "vkSplitSwapLeft": {
@@ -3910,6 +3929,7 @@
       "de": "Unterteilung: Mit nächstem Bereich oben vertauschen",
       "ja": "分割:最も近いペインを上にして交換(交換)",
       "ru": "Разделить: Обмен (своп) с ближайшей панелью вверх",
+      "zh": "分屏：与前方最近的分栏彼此交换（互换）",
       "id": 3080 }
     ,
     "vkSystemMenu": {
@@ -3986,7 +4006,7 @@
     ,
     "vkTileToRight": {
       "en": "Snap ConEmu window to the monitor's right edge",
-      "zh": "快闪ConEmu窗口至右边缘",
+      "zh": "快速移动ConEmu窗口至显示器右边缘",
       "de": "ConEmu-Fenster an der rechten Kante des Bildschirms fangen",
       "ja": "モニタの右端にConEmuウィンドウをスナップする",
       "ru": "Прикрепить окно ConEmu к правому краю монитора",
@@ -3994,7 +4014,7 @@
     ,
     "vkTransparencyDec": {
       "en": "Transparency: more opaque",
-      "zh": "透明度：更不透明",
+      "zh": "透明度：更加不透明",
       "de": "Transparenz: undurchsichtiger",
       "ja": "透明度:より不透明",
       "ru": "Прозрачность: более непрозрачный",
@@ -4026,7 +4046,7 @@
     ,
     "vkWinAltK": {
       "en": "Setup ‘Hotkeys’",
-      "zh": "安装 ‘热键’",
+      "zh": "注册 ‘热键’",
       "de": "Einrichtung 'Schnelltasten'",
       "ja": "セットアップ 'ホットキー'",
       "ru": "Настроить ‘Горячие клавиши’",
@@ -4074,7 +4094,7 @@
     ,
     "vkWinRight": {
       "en": "Increase window width (check ‘Resize with arrows’)",
-      "zh": "增加窗口宽度（选中‘使用箭头键调整大小’）",
+      "zh": "增加窗口宽度（选中‘使用方向键调整大小’）",
       "de": "Vergrößere Fensterbreite ('Mit Pfeilen Größe anpassen' prüfen)",
       "ja": "ウィンドウの幅を広げる( 'Resize with arrows'にチェックを入れる)",
       "ru": "Увеличить ширину окна (проверьте ‘Изменить размер стрелками’)",
@@ -4101,7 +4121,7 @@
     "IDM_DETACH": {
       "en": "Show RealConsole and detach it from ConEmu",
       "ru": "Показать RealConsole и отцепить ее от ConEmu",
-      "zh": "显示并从ConEmu分离真实控制台（RealConsole）",
+      "zh": "显示控制台本体，并将其从ConEmu分离",
       "de": "Zeige RealConsole und kopple sie von ConEmu ab",
       "ja": "RealConsoleを表示してConEmuから切り離す",
       "id": 43993 }
@@ -4127,7 +4147,7 @@
             , "https://conemu.github.io/en/Issues.html" ],
       "ru": [ "Сообщить об ошибке или предложить улучшение\r\n"
             , "https://conemu.github.io/en/Issues.html" ],
-      "zh": [ "创建错误报告或要求新功能\r\n"
+      "zh": [ "创建错误报告或请求加入新功能\r\n"
             , "https://conemu.github.io/en/Issues.html" ],
       "de": [ "Erstelle Fehlerbericht oder Anfrage nach neuen Funktionen\r\n"
             , "https://conemu.github.io/en/Issues.html" ],
@@ -4174,6 +4194,7 @@
       "de": "Schließe alle Reiter rechts des aktuellen",
       "ja": "現在のタブの右側にあるすべてのタブを閉じる",
       "ru": "Закрыть все вкладки справа от текущей",
+      "zh": "关闭右侧的所有标签页",
       "id": 44008 }
     ,
     "IDM_TERMINATEALLCON": {
@@ -4203,7 +4224,7 @@
     "IDM_TERMINATECONEXPT": {
       "en": "Close all tabs and panes except active console/pane",
       "ru": "Закрыть все консоли (табы и сплиты) кроме текущей",
-      "zh": "关闭所有标签和窗格除了活动的控制台/窗格",
+      "zh": "关闭所有标签和窗格，活动的控制台/窗格除外",
       "de": "Alle Reiter und Bereiche außer der/des aktiven Konsole/Bereichs schließen",
       "ja": "アクティブなコンソール/ペインを除くすべてのタブとペインを閉じる",
       "id": 44002 }
@@ -4235,7 +4256,7 @@
     "IDM_TERMINATEZOMBIES": {
       "en": "Close ‘zombies’ (where ‘Press Esc to close console’ is displayed)",
       "ru": "Закрыть ‘зомби’ (консоли, ожидающие ‘Press Esc to close console’)",
-      "zh": "关闭‘zombies’ （‘按下Esc关闭console’显示的地方）",
+      "zh": "关闭‘zombies’ （‘按下Esc关闭控制台’这一选项显示的地方）",
       "de": "Schließe 'Zombies' (bei denen 'Esc drücken um Konsole zu schließen' angezeigt wird)",
       "ja": "閉じる 'ゾンビ'(ここで 'Escを押してコンソールを閉じる'が表示されます)",
       "id": 44003 }
@@ -4253,7 +4274,7 @@
     "lng_AboutAppName": {
       "en": "Console Emulation program (local terminal)",
       "ru": "Эмулятор консоли (локальный терминал)",
-      "zh": "控制台模拟器（Console Emulation）（本地终端）",
+      "zh": "控制台模拟程序（本地终端）",
       "de": "Konsolenemulationsprogramm (lokales Terminal)",
       "ja": "コンソールエミュレーションプログラム(ローカル端末)",
       "id": 8 }
@@ -4301,7 +4322,7 @@
     "lng_AltNumberStdUCS": {
       "en": " - release <Alt> to paste UNICODE code point",
       "ru": " - отпустите <Alt> для вставки UNICODE-символа",
-      "zh": " - 释放 <Alt> 键粘贴UNICODE代码点",
+      "zh": " - 松开<Alt> 键粘贴UNICODE代码点",
       "de": " - <Alt> loslassen um UNICODE-Codepoint einzufügen",
       "ja": "  -  <Alt>を離してUNICODEコードポイントを貼り付ける",
       "id": 13 }
@@ -4309,7 +4330,7 @@
     "lng_AssertAbortDescr": {
       "en": "Press <Abort> to throw exception, ConEmu will be terminated!",
       "ru": "<Прервать> для вызова исключения, ConEmu будет завершен!",
-      "zh": "按下<退出>抛出异常，同时ConEmu会被终止！",
+      "zh": "按下<Abort> 抛出异常，同时ConEmu会被终止！",
       "de": "<Abbrechen> drücken um eine Exception zu werfen, ConEmu wird beendet!",
       "ja": "<Abort>を押して例外をスローすると,ConEmuは終了します！",
       "id": 70 }
@@ -4317,7 +4338,7 @@
     "lng_AssertIgnoreDescr": {
       "en": "Press <Ignore> to continue your work.",
       "ru": "Нажмите <Пропустить> для продолжения работы.",
-      "zh": "按下<忽略>继续你的工作。",
+      "zh": "按下<Ignore>以继续你的工作。",
       "de": "<Ignorieren> drücken um mit der Arbeit fortzufahren",
       "ja": "<Ignore>を押して作業を続行します.",
       "id": 69 }
@@ -4356,6 +4377,7 @@
       "de": "Konsole von ConEmu abkoppeln?",
       "ja": "ConEmuからコンソールを切り離しますか？",
       "ru": "Отсоединить консоль от ConEmu?",
+      "zh": "是否从 ConEmu 分离控制台？",
       "id": 83 }
     ,
     "lng_DetachGuiConfirm": {
@@ -4363,6 +4385,7 @@
       "de": "Grafische Anwendung von ConEmu abkoppeln?",
       "ja": "ConEmuからGUIアプリケーションを切り離しますか？",
       "ru": "Отсоединить GUI-приложение от ConEmu?",
+      "zh": "是否从 ConEmu 分离 GUI 应用程序？",
       "id": 82 }
     ,
     "lng_DlgAbout": {
@@ -4376,7 +4399,7 @@
     "lng_DlgAffinity": {
       "en": "Set active console processes affinity and priority",
       "ru": "Задать процессов активной консоли сходство и приоритет",
-      "zh": "设置活动的控制台进程之间的关系和优先权",
+      "zh": "设置活动的控制台进程之间的关系和优先级",
       "de": "Setzt Zugehörigkeit und Priorität des aktiven Konsolenprozesses",
       "ja": "アクティブなコンソールプロセスの親和性と優先度を設定する",
       "id": 4 }
@@ -4384,7 +4407,7 @@
     "lng_DlgAttach": {
       "en": "Attach: Choose window or console application",
       "ru": "Attach: Выберите окно или консольное приложение",
-      "zh": "Attach: 选择窗口或控制台应用程序",
+      "zh": "附加: 选择窗口或控制台应用程序",
       "de": "Ankoppeln: Fenster oder Konsolenanwendung wählen",
       "ja": "添付:ウィンドウまたはコンソールアプリケーションを選択",
       "id": 5 }
@@ -4394,6 +4417,7 @@
       "de": "Erstelle neue Konsole",
       "ja": "新しいコンソールを作成する",
       "ru": "Создать новую консоль",
+      "zh": "创建新的控制台",
       "id": 85 }
     ,
     "lng_DlgFastCfg": {
@@ -4415,7 +4439,7 @@
     "lng_DlgRenameTab": {
       "en": "Rename tab",
       "ru": "Переименовать таб",
-      "zh": "重命名标签页（tab）",
+      "zh": "重命名标签页",
       "de": "Reiter umbenennen",
       "ja": "名前の変更タブ",
       "id": 3 }
@@ -4425,6 +4449,7 @@
       "de": "Konsole neustarten",
       "ja": "コンソールを再起動する",
       "ru": "Перезагрузить консоль",
+      "zh": "重启控制台",
       "id": 84 }
     ,
     "lng_DlgSettings": {
@@ -4448,6 +4473,7 @@
       "de": "Es kann auf Grund von Einschränkungen der WinAPI kein spezieller Modifizierer (R/L) für globale Tastenkürzel ausgewählt werden.",
       "ja": "WinAPIの制限により,グローバルホットキーの特殊(R / L)修飾子を選択することはできません",
       "ru": "Вы не можете выбрать уникальный модификатор (R/L) для глобальных горячих клавиш из-за ограничения WinAPI",
+      "zh": "因WinAPI限制，你无法为全局快捷键选择唯一确定的（R/L）调节器",
       "id": 86 }
     ,
     "lng_HotkeyDuplicated": {
@@ -4455,6 +4481,7 @@
       "de": "Das Tastenkürzel <%s> wird bereits verwendet",
       "ja": "ホットキー<%s>は一意ではありません",
       "ru": "Горячая клавиша <%s> не уникальна",
+      "zh": "热键<%s>已被其他程序绑定而不唯一",
       "id": 79 }
     ,
     "lng_HotkeysAll": {
@@ -4502,6 +4529,7 @@
       "ru": "Списки переходов панели задач обновлены успешно",
       "de": "Taskleistensprungbefehle wurde erfolgreich aktualisiert",
       "ja": "タスクバーのジャンプリストが正常に更新されました",
+      "zh": "任务栏跳转列表更新成功",
       "id": 81 }
     ,
     "lng_KeyNoMod": {
@@ -4509,6 +4537,7 @@
       "de": "<Kein-Mod>",
       "ja": "<No-Mod>",
       "ru": "<No-Mod>",
+      "zh": "<No-Mod>",
       "id": 78 }
     ,
     "lng_KeyNone": {
@@ -4516,6 +4545,7 @@
       "de": "<Kein>",
       "ja": "<なし>",
       "ru": "<Нет>",
+      "zh": "<None>",
       "id": 77 }
     ,
     "lng_PasteEnterConfirm": {
@@ -4533,10 +4563,10 @@
             , "Продолжить?" ],
       "zh": [ "警告！\n"
             , "\n"
-            , "粘贴多行文本会导致\n"
-            , "发送<Enter>按键至控制台！\n"
+            , "粘贴多行文本会连带\n"
+            , "将<Enter>按键发送到至控制台！\n"
             , "\n"
-            , "继续？" ],
+            , "确定继续吗？" ],
       "de": [ "Warnung!\n"
             , "\n"
             , "Das Einfügen von mehrzeiligem Text schließt das\n"
@@ -4566,10 +4596,10 @@
             , "Продолжить?" ],
       "zh": [ "警告！\n"
             , "\n"
-            , "粘贴长文本（%u字符）可能使控制台\n"
+            , "粘贴长文本（%u字符）可能会导致控制台\n"
             , "在粘贴结束前不响应！\n"
             , "\n"
-            , "继续？" ],
+            , "确定继续吗？" ],
       "de": [ "Warnung!\n"
             , "\n"
             , "Das Einfügen lange Texte (%u Zeichen) kann zum Blockieren\n"
@@ -4597,6 +4627,7 @@
       "de": "Schriftart-Autogröße ist für eine Festraster-Schriftart nicht erlaubt. 'Terminal' statt 'Raster-Schriftarten ...' auswählen",
       "ja": "フォントの自動サイズは,固定ラスタフォントサイズでは許可されません. [Raster Fonts ...]の代わりに[Terminal]を選択してください",
       "ru": "Автоматический размер шрифта не разрешен для фиксированного размера растрового шрифта. Выберите ‘Терминал’ вместо ‘[Растровые шрифты ...]’",
+      "zh": "自动字体设置大小不可用于固定大小的点阵字体。请选择 ‘Terminal’ 而不是 ‘[Raster Fonts ...]’",
       "id": 72 }
     ,
     "lng_Search": {
@@ -4610,7 +4641,7 @@
     "lng_SearchCtrlF": {
       "en": "Search (Ctrl+F)",
       "ru": "Поиск (Ctrl+F)",
-      "zh": "查找 （Ctrl+F）",
+      "zh": "查找 (Ctrl+F)",
       "de": "Suche (Strg+F)",
       "ja": "検索(Ctrl+F)",
       "id": 10 }
@@ -4634,7 +4665,7 @@
     "lng_SelStream": {
       "en": " stream selection",
       "ru": " текстовое выделение",
-      "zh": " 流选择",
+      "zh": " 流式选择",
       "de": " Datenstromauswahl",
       "ja": " ストリーム選択",
       "id": 19 }
@@ -4642,7 +4673,7 @@
     "lng_SizeRadioCentered": {
       "en": "Centered",
       "ru": "По центру",
-      "zh": "在中心",
+      "zh": "居中",
       "de": "Zentriert",
       "ja": "中心",
       "id": 56 }
@@ -4660,6 +4691,7 @@
       "de": "ANSI-Ausführung",
       "ja": "ANSI実行",
       "ru": "Выполнение ANSI",
+      "zh": "ANSI 转义序列",
       "id": 80 }
     ,
     "lng_SpgAppDistinct": {
@@ -4691,6 +4723,7 @@
       "ru": "Дочерние GUI",
       "de": "Tochter-GUI",
       "ja": "チャイルドGUI",
+      "zh": "子图形界面",
       "id": 76 }
     ,
     "lng_SpgColors": {
@@ -4736,7 +4769,7 @@
     "lng_SpgDefTerm": {
       "en": "Default term",
       "ru": "Терминал ОС",
-      "zh": "默认项目",
+      "zh": "默认终端",
       "de": "Standardterminal",
       "ja": "デフォルトの用語",
       "id": 44 }
@@ -4760,7 +4793,7 @@
     "lng_SpgFarManager": {
       "en": "Far Manager",
       "ru": "Far Manager",
-      "zh": "Far Manager",
+      "zh": "Far 管理器",
       "de": "Far-Manager",
       "ja": "Far Manager",
       "id": 50 }
@@ -4776,7 +4809,7 @@
     "lng_SpgFeatures": {
       "en": "Features",
       "ru": "Параметры",
-      "zh": "特征",
+      "zh": "功能特性",
       "de": "Funktionen",
       "ja": "フィーチャー",
       "id": 37 }
@@ -4784,7 +4817,7 @@
     "lng_SpgFonts": {
       "en": "Fonts",
       "ru": "Шрифты",
-      "_zh": "主要",
+      "zh": "字体",
       "de": "Schriftarten",
       "ja": "フォント",
       "id": 25 }
@@ -4794,6 +4827,7 @@
       "ru": "Основные",
       "de": "Allgemein",
       "ja": "一般",
+      "zh": "通用",
       "id": 87 }
     ,
     "lng_SpgHighlight": {
@@ -4825,6 +4859,7 @@
       "ru": "Клавиатура",
       "de": "Tastatur",
       "ja": "キーボード",
+      "zh": "键盘",
       "id": 73 }
     ,
     "lng_SpgKeys": {
@@ -4848,6 +4883,7 @@
       "ru": "Мышь",
       "de": "Maus",
       "ja": "マウス",
+      "zh": "鼠标",
       "id": 74 }
     ,
     "lng_SpgPaste": {
@@ -4863,6 +4899,7 @@
       "ru": "Quake режим",
       "de": "Quake-Modus",
       "ja": "Quake スタイル",
+      "zh": "Quake 风格",
       "id": 75 }
     ,
     "lng_SpgSizePos": {
@@ -4940,7 +4977,7 @@
     "lng_UnknownSwitch2": {
       "en": "Visit website to get thorough switches description:",
       "ru": "Посетите веб-страницу с подробным описанием ключей:",
-      "zh": "访问网站，以获得彻底的开关说明：",
+      "zh": "访问网站，以获得更详尽的命令行开关使用介绍：",
       "de": "Website besuchen um die Argumentebeschreibung einzusehen:",
       "ja": "徹底的なスイッチの説明を取得するにはウェブサイトをご覧ください",
       "id": 63 }
