@@ -14,9 +14,17 @@ from requests.auth import HTTPBasicAuth
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=
+        'Usage examples:\n'
+        'Create new language and pull it from Transifex (TX_TOKEN env var should be defined):\n'
+        '  Deploy/l10n.py --l10n Release/ConEmu/ConEmu.l10n --add-lng es Español --tx-pull es --write-l10n\n')
     parser.add_argument('--l10n', required=True,
                         help='Filepath to ConEmu.l10n')
+    parser.add_argument('--add-lng', nargs=2, action='append',
+                        metavar=('ID', 'NAME'),
+                        help='Create new language with <ID> and <NAME>')
     parser.add_argument('--lng-l10n', nargs=2, action='append',
                         metavar=('LNG', 'L10N'),
                         help='Append <LNG> data from <L10N> file')
@@ -52,10 +60,29 @@ class LangData:
         resource[set_lng_id] = {
                 'item': LangData._get_str(item), 'deprecated': deprecated}
 
+    def add_language(self, lng_id, lng_name):
+        if lng_id is None or lng_id == '':
+            raise Exception('lng_id is empty', lng_id)
+        if lng_name is None or lng_name == '':
+            raise Exception('lng_name is empty', lng_name)
+        if lng_id in self.languages:
+            if lng_name != self.languages[lng_id]:
+                print('Language name changed, id={}, old_name={}'
+                      ', new_name={}'.format(
+                      lng_id, self.languages[lng_id], lng_name))
+                self.languages[lng_id] = lng_name
+            else:
+                print('Language exists, id={}, name={}'.format(
+                    lng_id, self.languages[lng_id]))
+        else:
+            print('New language, id={}, name={}'.format(
+                  lng_id, lng_name))
+            self.languages.setdefault(lng_id, lng_name)
+
     def _add_languages(self, new_langs, selected_lang=''):
         for lang in new_langs:
             if selected_lang == '' or selected_lang == lang['id']:
-                self.languages[lang['id']] = lang['name']
+                self.add_language(lang['id'], lang['name'])
         return
 
     def get_translation_lang_ids(self, tx_langs=[]):
@@ -90,9 +117,8 @@ class LangData:
         with open(file_name, 'r', encoding='utf-8-sig') as l10n_file:
             l10n = json.load(l10n_file, object_pairs_hook=OrderedDict)
             # Copy language descriptions to our dict
-            print('langs before:', [id for id in self.languages])
             self._add_languages(l10n['languages'], selected_lang)
-            print('langs after:', [id for id in self.languages])
+            print('Languages:', [id for id in self.languages])
             # Copy string blocks to our dict
             total_count = 0
             for block_id in l10n:
@@ -142,8 +168,8 @@ class LangData:
             def write_language(file, lng_id, name, indent):
                 file.write(
                     indent +
-                    '{"id": "' + escape(lng_id) + '",' +
-                    ' "name": "' + escape(self.languages[lng_id]) + '" }' +
+                    '{"id": "' + self.escape(lng_id) + '",' +
+                    ' "name": "' + self.escape(self.languages[lng_id]) + '" }' +
                     endl)
 
             file.write(indent + '"languages": [' + endl)
@@ -163,7 +189,7 @@ class LangData:
         def write_blocks(file, indent):
             def make_string(item, indent):
                 if not '\n' in item:
-                    return '"' + escape(item) + '"'
+                    return '"' + self.escape(item) + '"'
                 data = '['
                 is_first = True
                 for line in item.splitlines(keepends=True):
@@ -172,7 +198,7 @@ class LangData:
                     else:
                         data += endl + indent + '      ,'
                     data += ' "'
-                    data += escape(line)
+                    data += self.escape(line)
                     data += '"'
                 data = data + ' ]'
                 return data
@@ -182,7 +208,7 @@ class LangData:
                     return
                 id = lng_id if not resource['deprecated'] else '_' + lng_id
                 file.write(
-                    indent + '"' + escape(id) + '": ' +
+                    indent + '"' + self.escape(id) + '": ' +
                     make_string(resource['item'], indent) +
                     ',' + endl)
                 return
@@ -196,7 +222,7 @@ class LangData:
                     else:
                         file.write(indent + ',' + endl)
                     file.write(
-                        indent + '"' + escape(str_id) + '": {' +
+                        indent + '"' + self.escape(str_id) + '": {' +
                         endl)
                     rsrc = block[str_id]
                     for lng_id in rsrc:
@@ -209,7 +235,7 @@ class LangData:
 
             for block_id in self.blocks:
                 file.write(indent + ',' + endl)
-                file.write(indent + '"' + escape(block_id) + '": {' + endl)
+                file.write(indent + '"' + self.escape(block_id) + '": {' + endl)
                 write_block(file, self.blocks[block_id], indent + '  ')
                 file.write(indent + '}' + endl)
                 file.write('')
@@ -255,7 +281,7 @@ class Transifex:
             auth=HTTPBasicAuth('api', self.tx_token))
         print(result)
         if result.status_code == 200:
-            print(result.encoding)
+            # print(result.encoding)
             result.encoding = 'utf-8'
             data = yaml.load(result.text)
             # pp = pprint.PrettyPrinter(indent=2)
@@ -273,6 +299,9 @@ def main(args):
         for lng_pair in args.lng_l10n:
             l10n.load_l10n_file(selected_lang=lng_pair[0],
                                 file_name=lng_pair[1])
+    if not args.add_lng is None:
+        for lng_pair in args.add_lng:
+            l10n.add_language(lng_pair[0], lng_pair[1])
     if not args.tx_pull is None:
         tx = Transifex()
         for lng_id in l10n.get_translation_lang_ids(args.tx_pull):
