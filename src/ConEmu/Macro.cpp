@@ -31,27 +31,32 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include "../common/EnvVar.h"
 #include "../common/MGuiMacro.h"
 #include "../common/MStrEsc.h"
+#include "../common/ProcessSetEnv.h"
 #include "../common/WFiles.h"
 
-#include "RealConsole.h"
-#include "VirtualConsole.h"
-#include "Options.h"
-#include "OptionsClass.h"
-#include "TrayIcon.h"
-#include "ConEmu.h"
-#include "TabBar.h"
-#include "TrayIcon.h"
-#include "ConEmuPipe.h"
-#include "Macro.h"
-#include "VConGroup.h"
-#include "Menu.h"
+#include <set>
+
 #include "AboutDlg.h"
 #include "Attach.h"
-#include "SetDlgButtons.h"
+#include "ConEmu.h"
+#include "ConEmuPipe.h"
+#include "Macro.h"
+#include "Menu.h"
+#include "Options.h"
+#include "OptionsClass.h"
+#include "RealConsole.h"
 #include "SetCmdTask.h"
 #include "SetColorPalette.h"
+#include "SetDlgButtons.h"
+#include "SystemEnvironment.h"
+#include "TabBar.h"
+#include "TrayIcon.h"
+#include "TrayIcon.h"
+#include "VConGroup.h"
+#include "VirtualConsole.h"
 
 
 /* ********************************* */
@@ -153,6 +158,9 @@ namespace ConEmuMacro
 	LPWSTR Debug(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Detach
 	LPWSTR Detach(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// Environment variables
+	LPWSTR EnvironmentReload(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	LPWSTR EnvironmentList(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Найти окно и активировать его. // int nWindowType/*Panels=1, Viewer=2, Editor=3*/, LPWSTR asName
 	LPWSTR FindEditor(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	LPWSTR FindFarWindow(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
@@ -279,6 +287,8 @@ namespace ConEmuMacro
 		{Copy, {L"Copy"}},
 		{Debug, {L"Debug"}, gmf_MainThread},
 		{Detach, {L"Detach"}, gmf_MainThread},
+		{EnvironmentReload, {L"EnvironmentReload", L"EnvReload"}, gmf_MainThread},
+		{EnvironmentList, {L"EnvironmentList", L"EnvList"}},
 		{FindEditor, {L"FindEditor"}},
 		{FindFarWindow, {L"FindFarWindow"}},
 		{FindViewer, {L"FindViewer"}},
@@ -1000,6 +1010,8 @@ void ConEmuMacro::UnitTests()
 	_ASSERTE(p && p->argc==1 && lstrcmp(p->argv[0].Str,L"def")==0);
 	SafeFree(p);
 
+	CEStr env_list(EnvironmentList(nullptr, nullptr, false));
+
 	gbUnitTest = false;
 }
 #endif
@@ -1693,6 +1705,80 @@ LPWSTR ConEmuMacro::Context(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 		}
 	}
 	return lstrdup(L"");
+}
+
+LPWSTR ConEmuMacro::EnvironmentReload(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	gpConEmu->ReloadEnvironmentVariables();
+	return lstrdup(L"OK");
+}
+
+namespace {
+void AppendExpandedValue(CEStrConcat& ss, const bool expandable, const wchar_t* data)
+{
+	if (expandable)
+	{
+		CEStr value(ExpandEnvStr(data));
+		if (!value.IsEmpty())
+		{
+			ss.Append(value.c_str(L""));
+			return;
+		}
+	}
+	ss.Append(data);
+}
+};
+
+LPWSTR ConEmuMacro::EnvironmentList(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+	CEStrConcat ss;
+
+	// Pairs `name=value` from registry
+	std::shared_ptr<SystemEnvironment> data_ptr = gpConEmu->GetEnvironmentVariables();
+	const auto& data = data_ptr->env_data;
+	for (const auto& key : data_ptr->GetKeys())
+	{
+		const auto& v = data.at(key);
+		ss.Append(v.name.c_str());
+		ss.Append(L"=");
+		AppendExpandedValue(ss, v.expandable, v.data.c_str());
+		ss.Append(L"\n");
+	}
+
+	// Pairs `name=value` from ConEmu settings
+	if (gpSet->psEnvironmentSet)
+	{
+		CProcessEnvCmd env;
+		env.AddLines(gpSet->psEnvironmentSet, true);
+
+		class Apply : public CStartEnvBase
+		{
+		private:
+			CEStrConcat& ss_;
+		public:
+			Apply(CEStrConcat& ss) : ss_(ss) {}
+			void Alias(LPCWSTR asName, LPCWSTR asValue) override {}
+			void ChCp(LPCWSTR asCP) override {}
+			void Echo(LPCWSTR asSwitches, LPCWSTR asText) override {}
+			void Title(LPCWSTR asTitle) override {}
+			void Type(LPCWSTR asSwitches, LPCWSTR asFile) override {}
+			void Set(LPCWSTR asName, LPCWSTR asValue) override
+			{
+				if (asName && *asName && asValue)
+				{
+					ss_.Append(asName);
+					ss_.Append(L"=");
+					AppendExpandedValue(ss_, true, asValue);
+					ss_.Append(L"\n");
+				}
+			}
+		};
+
+		Apply apply(ss);
+		env.Apply(&apply);
+	}
+
+	return ss.GetData().Detach();
 }
 
 // Найти окно и активировать его. // LPWSTR asName

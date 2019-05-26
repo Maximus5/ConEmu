@@ -45,6 +45,16 @@ void SystemEnvironment::LoadFromRegistry()
 		SysEnvValueCallback, (LPARAM)this, true);
 }
 
+std::set<std::wstring> SystemEnvironment::GetKeys() const
+{
+	std::set<std::wstring> keys;
+	for (const auto& v : env_data)
+	{
+		keys.insert(v.first);
+	}
+	return keys;
+}
+
 std::wstring SystemEnvironment::MakeEnvName(const std::wstring& s)
 {
 	// Windows environment names are case-insensitive

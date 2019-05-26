@@ -8292,7 +8292,15 @@ void CConEmuMain::ReloadEnvironmentVariables()
 		}
 	}
 
+	std::lock_guard<std::mutex> lock(saved_environment_mutex_);
 	saved_environment_ = new_environment;
+}
+
+std::shared_ptr<SystemEnvironment> CConEmuMain::GetEnvironmentVariables() const
+{
+	std::lock_guard<std::mutex> lock(saved_environment_mutex_);
+	std::shared_ptr<SystemEnvironment> data = saved_environment_;
+	return data;
 }
 
 void CConEmuMain::OnGlobalSettingsChanged()

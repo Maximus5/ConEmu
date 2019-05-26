@@ -109,6 +109,14 @@ class MArray
 		{
 			return data.end();
 		};
+		const_iterator begin() const
+		{
+			return data.cbegin();
+		};
+		const_iterator end() const
+		{
+			return data.cend();
+		};
 		const_iterator cbegin() const
 		{
 			return data.cbegin();

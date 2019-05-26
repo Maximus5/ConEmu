@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "defines.h"
+#include "MArray.h"
 
 // CEStr
 struct CEStr
@@ -108,4 +109,15 @@ public:
 
 public:
 	char* ms_Val = nullptr;
+};
+
+// Implements string concatenation
+class CEStrConcat
+{
+private:
+	MArray<std::pair<ssize_t, CEStr>> strings_;
+	ssize_t total_ = 0;
+public:
+	void Append(const wchar_t* str);
+	CEStr GetData() const;
 };

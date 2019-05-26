@@ -259,6 +259,11 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"Detach([<Flags>])\r\n" \
 	L"  - Detach active RealConsole from ConEmu\r\n" \
 	L"    Flags=1: don't show confirm message\r\n" \
+	L"EnvironmentReload\r\n" \
+	L"  - Reload environment variables from system registry\r\n" \
+	L"EnvironmentList\r\n" \
+	L"  - Print actual `name=value` environment pairs\r\n" \
+	L"    Variables from ConEmu settings go after system ones\r\n" \
 	L"FindEditor(\"<FullEditFileName>\")\r\n" \
 	L"FindViewer(\"<FullViewerFileName>\")\r\n" \
 	L"FindFarWindow(<WindowType>,\"<WindowTitle>\")\r\n" \

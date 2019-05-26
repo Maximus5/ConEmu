@@ -88,6 +88,8 @@ struct ConsoleInfoArg
 };
 
 #include <memory>
+#include <mutex>
+
 #include "DwmHelper.h"
 #include "TaskBar.h"
 #include "FrameHolder.h"
@@ -850,8 +852,10 @@ class CConEmuMain
 
 	public:
 		void ReloadEnvironmentVariables();
+		std::shared_ptr<SystemEnvironment> GetEnvironmentVariables() const;
 	private:
 		std::shared_ptr<SystemEnvironment> saved_environment_;
+		mutable std::mutex saved_environment_mutex_;
 };
 
 // Message Logger

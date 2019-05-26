@@ -501,3 +501,26 @@ char* CEStrA::release()
 	clear(); // JIC
 	return ptr;
 }
+
+// CEStrConcat
+void CEStrConcat::Append(const wchar_t* str)
+{
+	if (!str || !*str) return;
+	CEStr new_str(str);
+	ssize_t new_len = new_str.GetLen();
+	total_ += new_len;
+	strings_.push_back({new_len, std::move(new_str)});
+}
+
+CEStr CEStrConcat::GetData() const
+{
+	CEStr result;
+	wchar_t* buffer = result.GetBuffer(total_);
+	for (const auto& str : strings_)
+	{
+		wmemmove_s(buffer, str.first, str.second, str.first);
+		buffer += str.first;
+	}
+	*buffer = 0;
+	return result;
+}

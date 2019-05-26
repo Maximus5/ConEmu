@@ -29,13 +29,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <unordered_map>
+#include <set>
 #include <string>
+#include <unordered_map>
 
 // The class is not thread-safe
 struct SystemEnvironment
 {
 	void LoadFromRegistry();
+	std::set<std::wstring> GetKeys() const;
 
 	static std::wstring MakeEnvName(const std::wstring& s);
 	static bool WINAPI SysEnvValueCallback(HKEY hk, LPCWSTR pszName, DWORD dwType, LPARAM lParam);
