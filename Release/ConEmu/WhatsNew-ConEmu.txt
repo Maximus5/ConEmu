@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2019.5.26
+* gh-1906: Add missed 'ru' l10n strings.
+* L10N: Add Español translation, pull translations from Transifex.
+* gh-468: Auto update environment variables, changes are applied to new consoles only.
+  * GuiMacro functions `EnvironmentReload` and `EnvironmentList`.
+  * Switch `-NoAutoEnvReload` disables env.reloading for session.
+
+
 2019.3.31
 * gh-1877: Option 'Snap to desktop edges' was broken (regression 663a216).
 * gh-1878: Enable log in `ConEmuC /c` when started from Far.exe.
