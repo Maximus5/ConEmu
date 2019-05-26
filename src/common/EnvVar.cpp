@@ -155,7 +155,7 @@ void CEnvRestorer::SavePathVar(const wchar_t* asCurPath)
 	}
 }
 
-void CEnvRestorer::SaveEnvVar(LPCWSTR asVarName, LPCWSTR asNewValue)
+void CEnvRestorer::SaveEnvVar(const wchar_t*  asVarName, const wchar_t*  asNewValue)
 {
 	if (!asVarName || !*asVarName)
 		return;
