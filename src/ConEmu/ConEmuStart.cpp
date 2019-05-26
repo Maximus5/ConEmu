@@ -1034,6 +1034,10 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				{
 					opt.NoAutoClose = true;
 				}
+				else if (szArg.IsSwitch(L"-NoAutoEnvReload"))
+				{
+					opt.NoAutoEnvReload = true;
+				}
 				else if (szArg.IsSwitch(L"-here"))
 				{
 					gpConEmu->mb_ConEmuHere = true;

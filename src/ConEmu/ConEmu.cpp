@@ -13782,7 +13782,7 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 			}
 
 			if (change_verb && 0 == wcscmp(change_verb, kEnvironmentVerb)
-				&& gpSet->AutoReloadEnvironment)
+				&& gpSet->AutoReloadEnvironment && !gpConEmu->opt.NoAutoEnvReload)
 			{
 				ReloadEnvironmentVariables();
 			}
