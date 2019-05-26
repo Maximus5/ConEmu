@@ -52,6 +52,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //typedef HRESULT(WINAPI* FDwmIsCompositionEnabled)(BOOL *pfEnabled);
 
+class CAltNumpad;
 class CAttachDlg;
 class CConEmuBack;
 class CConEmuChild;
@@ -60,6 +61,7 @@ class CConEmuMacro;
 class CConEmuMenu;
 class CDefaultTerminal;
 class CGestures;
+class CPushInfo;
 class CRecreateDlg;
 class CRunQueue;
 class CStatus;
@@ -68,15 +70,13 @@ class CToolTip;
 class CVConGroup;
 class CVConGuard;
 class MFileLogEx;
-struct MSectionSimple;
-struct MSectionLockSimple;
 enum ConEmuWindowMode;
 struct CEFindDlg;
-union CESize;
-class CPushInfo;
-class CAltNumpad;
 struct HandleMonitor;
+struct MSectionLockSimple;
+struct MSectionSimple;
 struct SystemEnvironment;
+union CESize;
 
 struct ConsoleInfoArg
 {
