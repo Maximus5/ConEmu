@@ -36,7 +36,7 @@ typedef bool (WINAPI* RegEnumKeysCallback)(HKEY hk, LPCWSTR pszSubkeyName, LPARA
 int RegEnumKeys(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumKeysCallback fn, LPARAM lParam);
 
 typedef bool (WINAPI* RegEnumValuesCallback)(HKEY hk, LPCWSTR pszName, DWORD dwType, LPARAM lParam);
-int RegEnumValues(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumValuesCallback fn, LPARAM lParam);
+int RegEnumValues(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumValuesCallback fn, LPARAM lParam, const bool one_bitness_only = false);
 
 int RegGetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, CEStr& rszData, DWORD Wow64Flags = 0);
 LONG RegSetStringValue(HKEY hk, LPCWSTR pszSubKey, LPCWSTR pszValueName, LPCWSTR pszData, DWORD Wow64Flags = 0);

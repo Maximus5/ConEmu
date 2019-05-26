@@ -87,7 +87,7 @@ int RegEnumKeys(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumKeysCallback fn, LPAR
 	return iRc;
 }
 
-int RegEnumValues(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumValuesCallback fn, LPARAM lParam)
+int RegEnumValues(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumValuesCallback fn, LPARAM lParam, const bool one_bitness_only)
 {
 	int iRc = -1;
 	HKEY hk = NULL;
@@ -131,6 +131,9 @@ int RegEnumValues(HKEY hkRoot, LPCWSTR pszParentPath, RegEnumValuesCallback fn, 
 			}
 
 			RegCloseKey(hk);
+
+			if (one_bitness_only)
+				break;
 		}
 	}
 
