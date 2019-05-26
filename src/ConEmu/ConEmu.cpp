@@ -93,6 +93,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgDebug.h"
 #include "SetPgInfo.h"
 #include "Status.h"
+#include "SystemEnvironment.h"
 #include "TabBar.h"
 #include "TrayIcon.h"
 #include "Update.h"
@@ -131,6 +132,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRDPI(s) DEBUGSTR(s)
 #define DEBUGSTRNOLOG(s) //DEBUGSTR(s)
 #define DEBUGSTRDESTROY(s) DEBUGSTR(s)
+#define DEBUGSTRSETCHANGE(s) DEBUGSTR(s)
 #ifdef _DEBUG
 //#define DEBUGSHOWFOCUS(s) DEBUGSTR(s)
 #endif
@@ -386,6 +388,8 @@ CConEmuMain::CConEmuMain()
 		}
 	}
 
+	saved_environment_ = std::make_shared<SystemEnvironment>();
+	saved_environment_->LoadFromRegistry();
 
 	// Load current comspec form registry
 	HKEY hk;
@@ -8239,6 +8243,58 @@ void CConEmuMain::RefreshWindowStyles()
 	//OnTransparent();
 }
 
+void CConEmuMain::ReloadEnvironmentVariables()
+{
+	const wchar_t dbg_msg[] = L"Reloading environment variables from system registry";
+	if (!LogString(dbg_msg)) DEBUGSTRSETCHANGE(dbg_msg);
+
+
+	auto new_environment = std::make_shared<SystemEnvironment>();
+	new_environment->LoadFromRegistry();
+
+	const auto& old_data = saved_environment_->env_data;
+	const auto& new_data = new_environment->env_data;
+	for (const auto& old_var : old_data)
+	{
+		if (!new_data.count(old_var.first))
+		{
+			std::wstring dbg_log(L"  Erased: `" + old_var.second.name
+				+ L"`, old value: `" + old_var.second.data + L"`");
+			if (!LogString(dbg_log.c_str())) DEBUGSTRSETCHANGE(dbg_log.c_str());
+
+			SetEnvironmentVariable(old_var.second.name.c_str(), nullptr);
+		}
+	}
+	for (const auto& new_var : new_data)
+	{
+		auto old_iter = old_data.find(new_var.first);
+		if (old_iter == old_data.end()
+			|| (old_iter->second.data != new_var.second.data))
+		{
+			std::wstring old_value((old_iter == old_data.end())
+					? std::wstring(L"Absent")
+					: std::wstring(L"`" + old_iter->second.data + L"`"));
+			std::wstring dbg_log(L"  Changed: `" + new_var.second.name
+				+ L"`, new value: `" + new_var.second.data + L"`, old_value: "
+				+ old_value);
+			if (!LogString(dbg_log.c_str())) DEBUGSTRSETCHANGE(dbg_log.c_str());
+
+			if (new_var.second.expandable)
+			{
+				CEStr value(ExpandEnvStr(new_var.second.data.c_str()));
+				if (!value.IsEmpty())
+				{
+					SetEnvironmentVariable(new_var.second.name.c_str(), value);
+					continue;
+				}
+			}
+			SetEnvironmentVariable(new_var.second.name.c_str(), new_var.second.data.c_str());
+		}
+	}
+
+	saved_environment_ = new_environment;
+}
+
 void CConEmuMain::OnGlobalSettingsChanged()
 {
 	UpdateGuiInfoMapping();
@@ -13693,6 +13749,18 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		case WM_SETTINGCHANGE:
 		{
+			const wchar_t* change_verb = nullptr;
+			const wchar_t kEnvironmentVerb[] = L"Environment";
+			wchar_t szDbg[128]; swprintf_c(szDbg, L"WM_SETTINGCHANGE: W=x%04X, L=x%04X", (DWORD)wParam, (DWORD)lParam);
+			if (lParam && !IsBadStringPtr((LPCWSTR)lParam, 64))
+			{
+				change_verb = (LPCWSTR)lParam;
+				wcscat_c(szDbg, L", ");
+				size_t cur_len = wcslen(szDbg);
+				lstrcpyn(szDbg + cur_len, change_verb, std::size(szDbg) - cur_len);
+			}
+			if (!LogString(szDbg)) DEBUGSTRSETCHANGE(szDbg);
+
 			if (wParam == SPI_SETWORKAREA)
 			{
 				ReloadMonitorInfo();
@@ -13703,6 +13771,12 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				auto wm = GetWindowMode();
 				if (wm != wmNormal && !isIconic() && isMeForeground())
 					SetWindowMode(wm);
+			}
+
+			if (change_verb && 0 == wcscmp(change_verb, kEnvironmentVerb)
+				&& gpSet->AutoReloadEnvironment)
+			{
+				ReloadEnvironmentVariables();
 			}
 		} break;
 

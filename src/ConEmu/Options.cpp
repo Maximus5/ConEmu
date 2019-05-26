@@ -456,6 +456,7 @@ void Settings::InitSettings()
 		}
 	}
 
+	AutoReloadEnvironment = true;
 	psEnvironmentSet = lstrdup(
 		L"set PATH=%ConEmuBaseDir%\\Scripts;%PATH%\r\n"
 		L"\r\n"
@@ -2719,6 +2720,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		//FindComspec(&ComSpec);
 		//Update Comspec(&ComSpec); --> CSettings::SettingsLoaded
 
+		reg->Load(L"AutoReloadEnvironment", AutoReloadEnvironment);
 		this->LoadMSZ(reg, L"EnvironmentSet", psEnvironmentSet, L"\r\n", true);
 
 		reg->Load(L"CTS.Intelligent", isCTSIntelligent);
@@ -3784,6 +3786,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"ComSpec.EnvAddExePath", _bool((ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) == CEAP_AddConEmuExeDir));
 		reg->Save(L"ComSpec.UncPaths", _bool(ComSpec.isAllowUncPaths));
 		reg->Save(L"ComSpec.Path", ComSpec.ComspecExplicit);
+		reg->Save(L"AutoReloadEnvironment", AutoReloadEnvironment);
 		this->SaveMSZ(reg, L"EnvironmentSet", psEnvironmentSet, L"\r\n", false);
 		reg->Save(L"CTS.Intelligent", isCTSIntelligent);
 		{

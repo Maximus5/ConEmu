@@ -407,6 +407,7 @@
     <ClInclude Include="ConEmu\ShObjIdl_Part.h" />
     <ClInclude Include="ConEmu\SizeInfo.h" />
     <ClInclude Include="ConEmu\Status.h" />
+    <ClInclude Include="ConEmu\SystemEnvironment.h" />
     <ClInclude Include="ConEmu\TabBar.h" />
     <ClInclude Include="ConEmu\TabCtrlBase.h" />
     <ClInclude Include="ConEmu\TabCtrlWin.h" />
@@ -637,6 +638,7 @@
     <ClCompile Include="ConEmu\SetPgViews.cpp" />
     <ClCompile Include="ConEmu\SizeInfo.cpp" />
     <ClCompile Include="ConEmu\Status.cpp" />
+    <ClCompile Include="ConEmu\SystemEnvironment.cpp" />
     <ClCompile Include="ConEmu\TabBar.cpp" />
     <ClCompile Include="ConEmu\TabCtrlBase.cpp" />
     <ClCompile Include="ConEmu\TabCtrlWin.cpp" />

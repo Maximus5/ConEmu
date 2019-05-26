@@ -194,6 +194,8 @@ struct Settings
 
 		ConEmuComspec ComSpec;
 
+		//reg->Load(L"AutoReloadEnvironment", AutoReloadEnvironment);
+		bool AutoReloadEnvironment;
 		//reg->LoadMSZ(L"EnvironmentSet", psEnvironmentSet);
 		wchar_t* psEnvironmentSet; // commands: multiline, "\r\n" separated
 

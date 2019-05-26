@@ -932,14 +932,16 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Set up environment variables, cmd.exe aliases, codepage",gbSetAlias,4,1,375,206
+    GROUPBOX        "Set up environment variables, cmd.exe aliases, codepage",gbSetAlias,4,1,375,196
     LTEXT           "Here you may set up your environment variables, default code page, and so on...\r\nOne line may have only one command! You may comment lines with # sign.",stSetCommands,10,13,363,17,SS_NOPREFIX
     LTEXT           "set ""PATH=%ConEmuBaseDir%\\Scripts;%PATH%""\r\nchcp utf-8\r\nalias st=start $* -cur_console:n",stSetCommands2,22,32,352,24,SS_NOPREFIX
-    EDITTEXT        tSetCommands,9,61,365,140,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
-    GROUPBOX        "Add to %PATH% environment variable",gbAddToPath,4,211,375,28
-    CONTROL         "Add %ConEmuDir% to %PATH%",cbAddConEmu2Path,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,224,176,8
+    EDITTEXT        tSetCommands,9,61,365,130,ES_MULTILINE | ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_WANTRETURN | WS_VSCROLL | WS_HSCROLL
+    GROUPBOX        "",IDC_STATIC,4,199,375,41
+    CONTROL         "Add %ConEmuDir% to %PATH%",cbAddConEmu2Path,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,210,176,8
     CONTROL         "Add %ConEmuBaseDir% to %PATH%",cbAddConEmuBase2Path,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,224,176,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,194,210,176,8
+    CONTROL         "Reload environment variables automatically",cbAutoReloadEnvironment,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,11,225,176,8
 END
 
 IDD_SPG_MARKCOPY DIALOGEX 0, 0, 381, 242

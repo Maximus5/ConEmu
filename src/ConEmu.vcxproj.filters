@@ -390,6 +390,9 @@
     <ClInclude Include="ConEmu\Status.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\SystemEnvironment.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmu\TabBar.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -1074,6 +1077,9 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Status.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SystemEnvironment.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\TabBar.cpp">

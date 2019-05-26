@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2016-present Maximus5
+Copyright (c) 2019-present Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,42 +31,55 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
+#include <cwctype>
 
-#include "SetPgEnvironment.h"
+#include "../common/WRegistry.h"
+#include "SystemEnvironment.h"
 
-CSetPgEnvironment::CSetPgEnvironment()
+void SystemEnvironment::LoadFromRegistry()
 {
+	env_data.clear();
+	RegEnumValues(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment",
+		SysEnvValueCallback, (LPARAM)this, true);
+	RegEnumValues(HKEY_CURRENT_USER, L"Environment",
+		SysEnvValueCallback, (LPARAM)this, true);
 }
 
-CSetPgEnvironment::~CSetPgEnvironment()
+std::wstring SystemEnvironment::MakeEnvName(const std::wstring& s)
 {
-}
-
-LRESULT CSetPgEnvironment::OnInitDialog(HWND hDlg, bool abInitial)
-{
-	checkDlgButton(hDlg, cbAddConEmu2Path, (gpSet->ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hDlg, cbAddConEmuBase2Path, (gpSet->ComSpec.AddConEmu2Path & CEAP_AddConEmuBaseDir) ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hDlg, cbAutoReloadEnvironment, (gpSet->AutoReloadEnvironment) ? BST_CHECKED : BST_UNCHECKED);
-
-	SetDlgItemText(hDlg, tSetCommands, gpSet->psEnvironmentSet ? gpSet->psEnvironmentSet : L"");
-
-	return 0;
-}
-
-LRESULT CSetPgEnvironment::OnEditChanged(HWND hDlg, WORD nCtrlId)
-{
-	switch (nCtrlId)
+	// Windows environment names are case-insensitive
+	std::wstring lc_str; lc_str.reserve(s.size());
+	for (const auto& c : s)
 	{
-	case tSetCommands:
+		lc_str.push_back(std::towlower(c));
+	}
+	return lc_str;
+}
+
+bool SystemEnvironment::SysEnvValueCallback(HKEY hk, LPCWSTR pszName, DWORD dwType, LPARAM lParam)
+{
+	if (!pszName || !*pszName || !(dwType == REG_SZ || dwType == REG_EXPAND_SZ))
+		return true;
+	CEStr reg_data;
+	if (RegGetStringValue(hk, nullptr, pszName, reg_data) < 0)
+		return true;
+	auto& env_data = ((SystemEnvironment*)lParam)->env_data;
+	const auto key = MakeEnvName(pszName);
+	auto& data = env_data[key];
+	data.expandable = (dwType == REG_EXPAND_SZ);
+	if (data.name.empty())
+		data.name = pszName;
+	if (key == L"path")
 	{
-		size_t cchMax = gpSet->psEnvironmentSet ? (_tcslen(gpSet->psEnvironmentSet)+1) : 0;
-		MyGetDlgItemText(hDlg, tSetCommands, cchMax, gpSet->psEnvironmentSet);
+		// concatenate "%PATH%" as "USER;SYSTEM"
+		if (!reg_data.IsEmpty())
+			data.data = reg_data.c_str(L"")
+				+ std::wstring(data.data.empty() ? L"" : L";")
+				+ data.data;
 	}
-	break;
-
-	default:
-		_ASSERTE(FALSE && "EditBox was not processed");
+	else
+	{
+		data.data = reg_data.c_str(L"");
 	}
-
-	return 0;
+	return true;
 }

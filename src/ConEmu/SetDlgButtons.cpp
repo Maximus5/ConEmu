@@ -189,6 +189,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbComspecUpdateEnv:
 			OnBtn_ComspecUpdateEnv(hDlg, CB, uCheck);
 			break;
+		case cbAutoReloadEnvironment:
+			OnBtn_AutoReloadEnvironment(hDlg, CB, uCheck);
+			break;
 		case cbAddConEmu2Path:
 			OnBtn_AddConEmu2Path(hDlg, CB, uCheck);
 			break;
@@ -2083,6 +2086,16 @@ void CSetDlgButtons::OnBtn_ComspecUpdateEnv(HWND hDlg, WORD CB, BYTE uCheck)
 	gpConEmu->OnGlobalSettingsChanged();
 
 } // cbComspecUpdateEnv
+
+
+// cbAutoReloadEnvironment
+void CSetDlgButtons::OnBtn_AutoReloadEnvironment(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB==cbAutoReloadEnvironment);
+
+	gpSet->AutoReloadEnvironment = uCheck;
+
+} // cbAutoReloadEnvironment
 
 
 // cbAddConEmu2Path

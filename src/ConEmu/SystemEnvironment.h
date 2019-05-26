@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2016-present Maximus5
+Copyright (c) 2019-present Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,46 +27,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#define HIDE_USE_EXCEPTION_INFO
-#define SHOWDEBUGSTR
+#pragma once
 
-#include "Header.h"
+#include <unordered_map>
+#include <string>
 
-#include "SetPgEnvironment.h"
-
-CSetPgEnvironment::CSetPgEnvironment()
+// The class is not thread-safe
+struct SystemEnvironment
 {
-}
+	void LoadFromRegistry();
 
-CSetPgEnvironment::~CSetPgEnvironment()
-{
-}
+	static std::wstring MakeEnvName(const std::wstring& s);
+	static bool WINAPI SysEnvValueCallback(HKEY hk, LPCWSTR pszName, DWORD dwType, LPARAM lParam);
 
-LRESULT CSetPgEnvironment::OnInitDialog(HWND hDlg, bool abInitial)
-{
-	checkDlgButton(hDlg, cbAddConEmu2Path, (gpSet->ComSpec.AddConEmu2Path & CEAP_AddConEmuExeDir) ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hDlg, cbAddConEmuBase2Path, (gpSet->ComSpec.AddConEmu2Path & CEAP_AddConEmuBaseDir) ? BST_CHECKED : BST_UNCHECKED);
-	checkDlgButton(hDlg, cbAutoReloadEnvironment, (gpSet->AutoReloadEnvironment) ? BST_CHECKED : BST_UNCHECKED);
-
-	SetDlgItemText(hDlg, tSetCommands, gpSet->psEnvironmentSet ? gpSet->psEnvironmentSet : L"");
-
-	return 0;
-}
-
-LRESULT CSetPgEnvironment::OnEditChanged(HWND hDlg, WORD nCtrlId)
-{
-	switch (nCtrlId)
+	struct VariableData
 	{
-	case tSetCommands:
-	{
-		size_t cchMax = gpSet->psEnvironmentSet ? (_tcslen(gpSet->psEnvironmentSet)+1) : 0;
-		MyGetDlgItemText(hDlg, tSetCommands, cchMax, gpSet->psEnvironmentSet);
-	}
-	break;
-
-	default:
-		_ASSERTE(FALSE && "EditBox was not processed");
-	}
-
-	return 0;
-}
+		bool expandable;   // for REG_EXPAND_SZ
+		std::wstring name; // original case
+		std::wstring data; // contents
+	};
+	std::unordered_map<std::wstring, VariableData> env_data;
+};

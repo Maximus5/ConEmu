@@ -76,6 +76,7 @@ union CESize;
 class CPushInfo;
 class CAltNumpad;
 struct HandleMonitor;
+struct SystemEnvironment;
 
 struct ConsoleInfoArg
 {
@@ -86,6 +87,7 @@ struct ConsoleInfoArg
 	TOPLEFTCOORD TopLeft;
 };
 
+#include <memory>
 #include "DwmHelper.h"
 #include "TaskBar.h"
 #include "FrameHolder.h"
@@ -845,6 +847,11 @@ class CConEmuMain
 			MSectionLockSimple* pcsLock;
 			bool wait;
 		} m_LockConhostStart = {};
+
+	public:
+		void ReloadEnvironmentVariables();
+	private:
+		std::shared_ptr<SystemEnvironment> saved_environment_;
 };
 
 // Message Logger
