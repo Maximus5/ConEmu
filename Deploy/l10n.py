@@ -234,7 +234,9 @@ class LangData:
                         indent + '"' + self.escape(str_id) + '": {' +
                         endl)
                     rsrc = block[str_id]
-                    for lng_id in rsrc:
+                    for lng_id in self.languages:
+                    	if lng_id not in rsrc:
+                    		continue
                         write_resource(
                             file, lng_id, rsrc[lng_id], indent + '  ')
                     file.write(
@@ -329,6 +331,7 @@ def main(args):
             l10n.update_lang(lng_id, tx.pull(lng_id), args.verbose)
     if args.write_l10n:
         with open(args.l10n, 'w', encoding='utf-8-sig') as l10n_file:
+            print('Writing l10n to {}'.format(args.l10n))
             l10n.write_l10n(l10n_file)
     if args.write_yaml:
         l10n.write_yaml(args.write_yaml)
