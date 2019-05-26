@@ -721,7 +721,7 @@ function UpdateConEmuL10N()
   Write-Host "Updating: $target_l10n"
   Set-Content $target_l10n $script:l10n -Encoding UTF8
 
-  WriteL10nYaml
+  # WriteL10nYaml
 }
 
 # $loop is $TRUE when called from NewLngResourceLoop
