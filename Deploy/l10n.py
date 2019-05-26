@@ -235,8 +235,8 @@ class LangData:
                         endl)
                     rsrc = block[str_id]
                     for lng_id in self.languages:
-                    	if lng_id not in rsrc:
-                    		continue
+                        if lng_id not in rsrc:
+                            continue
                         write_resource(
                             file, lng_id, rsrc[lng_id], indent + '  ')
                     file.write(

@@ -785,7 +785,6 @@ controls:
   cbVisible: "Zeige echte Konsole"
   cbVividColors: "Passe Stärke ununterscheidbaren Textes an"
   gbActivityLog: "Shell-Aktivität"
-  gbAddToPath: "Zur %PATH%-Umgebungsvariable hinzufügen"
   gbAlphaTransparency: "Alpha-Transparenz"
   gbAnsiSecureExec: "Erlaube GuiMakro und Prozessausführung"
   gbAnsiSequences: "ANSI-Sequenzen"

@@ -790,7 +790,6 @@ controls:
   cbVisible: "実際のコンソールを表示する"
   cbVividColors: "区別できないテキストの明るさを調整する"
   gbActivityLog: "シェルの活動"
-  gbAddToPath: "%PATH%環境変数に追加する"
   gbAlphaTransparency: "アルファ透明度"
   gbAnsiSecureExec: "GuiMacroとプロセスの実行を許可する"
   gbAnsiSequences: "ANSIシーケンス"

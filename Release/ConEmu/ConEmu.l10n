@@ -4965,7 +4965,7 @@
       "zh": "基本设置",
       "de": "Grundeinstellungen",
       "ja": "基本設定",
-      "es": "Opciones básicas",
+      "es": "Configuración básica",
       "id": 21 }
     ,
     "lng_CurClrScheme": {
@@ -4988,7 +4988,7 @@
     ,
     "lng_DetachGuiConfirm": {
       "en": "Detach GUI application from ConEmu?",
-      "ru": "Отсоединить GUI-приложение от ConEmu?",
+      "ru": "Отцепить GUI приложение от ConEmu?",
       "zh": "是否从 ConEmu 分离 GUI 应用程序？",
       "de": "Grafische Anwendung von ConEmu abkoppeln?",
       "ja": "ConEmuからGUIアプリケーションを切り離しますか？",
@@ -5060,7 +5060,7 @@
     ,
     "lng_DlgRestartConsole": {
       "en": "Restart console",
-      "ru": "Перезагрузить консоль",
+      "ru": "Перезапустить консоль",
       "zh": "重启控制台",
       "de": "Konsole neustarten",
       "ja": "コンソールを再起動する",
@@ -5073,7 +5073,7 @@
       "zh": "设置",
       "de": "Einstellungen",
       "ja": "設定",
-      "es": "Opciones",
+      "es": "Configuración",
       "id": 2 }
     ,
     "lng_ExitCode": {
@@ -5087,7 +5087,7 @@
     ,
     "lng_HkGlblGnrlMsg": {
       "en": "You can't choose distinctive (R/L) modifier for Global hotkeys due to WinAPI limitation",
-      "ru": "Вы не можете выбрать уникальный модификатор (R/L) для глобальных горячих клавиш из-за ограничения WinAPI",
+      "ru": "Нельзя выбирать левый/правый модификтор для глобальных хоткеев из-за ограничений WinAPI",
       "zh": "因WinAPI限制，你无法为全局快捷键选择唯一确定的（R/L）调节器",
       "de": "Es kann auf Grund von Einschränkungen der WinAPI kein spezieller Modifizierer (R/L) für globale Tastenkürzel ausgewählt werden.",
       "ja": "WinAPIの制限により,グローバルホットキーの特殊(R / L)修飾子を選択することはできません",
@@ -5168,7 +5168,7 @@
     ,
     "lng_KeyNone": {
       "en": "<None>",
-      "ru": "<Нет>",
+      "ru": "<None>",
       "zh": "<None>",
       "de": "<Kein>",
       "ja": "<なし>",
@@ -5461,7 +5461,7 @@
     ,
     "lng_SpgFarViews": {
       "en": "Panel Views",
-      "ru": "Вид панели",
+      "ru": "Panel Views",
       "zh": "面板视图",
       "de": "Panel-Ansichten",
       "ja": "パネルビュー",
@@ -5605,7 +5605,7 @@
     ,
     "lng_SpgTabBar": {
       "en": "Tab bar",
-      "ru": "Панель вкладок",
+      "ru": "Панель табов",
       "zh": "标签栏",
       "de": "Reiter-Leiste",
       "ja": "タブバー",
@@ -5710,6 +5710,7 @@
       "zh": "应用（&A）",
       "de": "&Anwenden",
       "ja": "適用（&A）",
+      "es": "&Aplicar",
       "id": 1715 }
     ,
     "bCmdAutoClear": {
@@ -5718,6 +5719,7 @@
       "zh": "清除",
       "de": "Leeren",
       "ja": "クリア",
+      "es": "Limpiar",
       "id": 2424 }
     ,
     "bCmdAutoRegister": {
@@ -5726,6 +5728,7 @@
       "zh": "注册ConEmu自动运行",
       "de": "ConEmu im Autostart registrieren",
       "ja": "ConEmuの自動実行を登録する",
+      "es": "Registrar autoejecución ConEmu",
       "id": 2395 }
     ,
     "bCmdAutoUnregister": {
@@ -5734,6 +5737,7 @@
       "zh": "反注册",
       "de": "Deregistrieren",
       "ja": "登録を解除する",
+      "es": "Des-registrar",
       "id": 2396 }
     ,
     "bConFontAdd2HKLM": {
@@ -5742,6 +5746,7 @@
       "zh": "添加字体到‘...\\Console\\TrueTypeFont’",
       "de": "Füge Schriftart zu '...\\Console\\TrueTypeFont' hinzu",
       "ja": "'... \\Console\\TrueTypeFont'にフォントを追加",
+      "es": "Añadir tipo de letra a '...\\Console\\TrueTypeFont'",
       "id": 1730 }
     ,
     "bConFontCancel": {
@@ -5750,6 +5755,7 @@
       "zh": "取消",
       "de": "Abbrechen",
       "ja": "キャンセル",
+      "es": "Cancelar",
       "id": 1726 }
     ,
     "bConFontOK": {
@@ -5758,6 +5764,7 @@
       "zh": "确定",
       "de": "OK",
       "ja": "OK",
+      "es": "Aceptar",
       "id": 1716 }
     ,
     "bHereRegister": {
@@ -5766,6 +5773,7 @@
       "zh": "注册",
       "de": "Registrieren",
       "ja": "登録",
+      "es": "Registrar",
       "id": 2392 }
     ,
     "bHereUnregister": {
@@ -5774,6 +5782,7 @@
       "zh": "反注册",
       "de": "Deregistrieren",
       "ja": "登録を解除",
+      "es": "Des-registrar",
       "id": 2393 }
     ,
     "bImportSettings": {
@@ -5782,6 +5791,7 @@
       "zh": "导入...",
       "de": "Importieren...",
       "ja": "インポート...",
+      "es": "Importar...",
       "id": 2664 }
     ,
     "bInsideRegister": {
@@ -5790,6 +5800,7 @@
       "zh": "注册",
       "de": "Registrieren",
       "ja": "登録",
+      "es": "Registrar",
       "id": 2387 }
     ,
     "bInsideUnregister": {
@@ -5798,6 +5809,7 @@
       "zh": "反注册",
       "de": "Deregistrieren",
       "ja": "登録を解除",
+      "es": "Des-registrar",
       "id": 2388 }
     ,
     "bReloadSettings": {
@@ -5806,6 +5818,7 @@
       "zh": "重新加载...",
       "de": "Neuladen...",
       "ja": "再読込み...",
+      "es": "Recargar...",
       "id": 1596 }
     ,
     "bResetSettings": {
@@ -5814,6 +5827,7 @@
       "zh": "重置...",
       "de": "Zurücksetzen...",
       "ja": "リセット...",
+      "es": "Reiniciar...",
       "id": 1595 }
     ,
     "bSaveSettings": {
@@ -5822,6 +5836,7 @@
       "zh": "保存设置",
       "de": "Einstellungen speichern",
       "ja": "設定を保存",
+      "es": "Guardar configuración",
       "id": 1610 }
     ,
     "cbActivateSplitMouseOver": {
@@ -5830,6 +5845,7 @@
       "zh": "鼠标悬停时激活分屏/窗格",
       "de": "Unterteilung/Bereich beim Zeigen mit der Maus aktivieren",
       "ja": "マウスのホバーで分割/ペインを有効にする",
+      "es": "Activar división/panel al pasar ratón",
       "id": 2601 }
     ,
     "cbActivityReset": {
@@ -5838,6 +5854,7 @@
       "zh": "重置（&R）",
       "de": "&Zurücksetzen",
       "ja": "リセット(&R)",
+      "es": "&Reiniciar",
       "id": 1717 }
     ,
     "cbActivitySaveAs": {
@@ -5846,6 +5863,7 @@
       "zh": "另存为（&a）...",
       "de": "Speichern &als...",
       "ja": "名前を付けて保存...(&a)",
+      "es": "Gu&ardar como...",
       "id": 1746 }
     ,
     "cbAddConEmu2Path": {
@@ -5854,6 +5872,7 @@
       "zh": "添加%ConEmuDir%到%PATH%",
       "de": "Füge %ConEmuDir% zu %PATH% hinzu",
       "ja": "%ConEmuDir% を %PATH% に追加する",
+      "es": "Añadir %ConEmuDir% a %PATH%",
       "id": 2423 }
     ,
     "cbAddConEmuBase2Path": {
@@ -5862,6 +5881,7 @@
       "zh": "添加%ConEmuBaseDir%到%PATH%",
       "de": "Füge %ConEmuBaseDir% zu %PATH% hinzu",
       "ja": "%ConEmuBaseDir% を %PATH% に追加する",
+      "es": "Añadir %ConEmuBaseDir% a %PATH%",
       "id": 2584 }
     ,
     "cbAddDefaults": {
@@ -5870,6 +5890,7 @@
       "_zh": "添加默认任务...",
       "de": "Standardaufgaben erweitern...",
       "ja": "デフォルトタスクの追加/更新...",
+      "es": "Añadir/recargar tareas por defecto...",
       "id": 2632 }
     ,
     "cbAdminShield": {
@@ -5878,6 +5899,7 @@
       "zh": "管理员盾牌",
       "de": "Admin-Schild",
       "ja": "管理者の盾",
+      "es": "Escudo de Admin",
       "id": 2109 }
     ,
     "cbAdminSuffix": {
@@ -5886,6 +5908,7 @@
       "zh": "后缀",
       "de": "Anhang",
       "ja": "接尾辞",
+      "es": "sufijo",
       "id": 2110 }
     ,
     "cbAlwaysOnTop": {
@@ -5894,6 +5917,7 @@
       "zh": "总是置顶",
       "de": "Immer oben",
       "ja": "常に手前",
+      "es": "Siempre encima",
       "id": 1572 }
     ,
     "cbAlwaysShowTrayIcon": {
@@ -5902,6 +5926,7 @@
       "zh": "总是显示任务栏状态区域图标",
       "de": "Zeige immer Infobereichssymbol",
       "ja": "常にTSAアイコンを表示する",
+      "es": "Mostrar siempre icono de barra de tareas",
       "id": 1736 }
     ,
     "cbAnsiLog": {
@@ -5910,11 +5935,13 @@
       "zh": "记录控制台输出日志（*）",
       "de": "Protokolliere Konsolenausgabe (*)",
       "ja": "ログコンソール出力(*)",
+      "es": "Registrar salida del terminal (*)",
       "id": 2679 }
     ,
     "cbAnsiLogCodes": {
       "en": "Log ANSI sequences (*)",
       "ru": "Журнал ANSI последовательности (*)",
+      "es": "Registrar secuencias ANSI (*)",
       "id": 3105 }
     ,
     "cbAppDistinctDown": {
@@ -5923,6 +5950,7 @@
       "zh": "向下",
       "de": "Hoch",
       "ja": "Down",
+      "es": "Abajo",
       "id": 2139 }
     ,
     "cbAppDistinctReload": {
@@ -5931,6 +5959,7 @@
       "zh": "重新加载...",
       "de": "Neu Laden...",
       "ja": "再読込...",
+      "es": "Recargar...",
       "id": 2140 }
     ,
     "cbAppDistinctUp": {
@@ -5939,6 +5968,7 @@
       "zh": "向上",
       "de": "Runter",
       "ja": "Up",
+      "es": "Arriba",
       "id": 2138 }
     ,
     "cbApplyDefTerm": {
@@ -5947,6 +5977,7 @@
       "zh": "应用",
       "de": "Anwenden",
       "ja": "適用",
+      "es": "Aplicar",
       "id": 2865 }
     ,
     "cbApplyPos": {
@@ -5955,6 +5986,7 @@
       "zh": "应用",
       "de": "Anwenden",
       "ja": "適用",
+      "es": "Aplicar",
       "id": 1520 }
     ,
     "cbAutoRegFonts": {
@@ -5963,7 +5995,12 @@
       "_zh": "自动注册字体",
       "de": "Schriften im ConEmu-Ordner automatisch registrieren",
       "ja": "ConEmuフォルダのフォントを自動登録",
+      "es": "Auto registrar tipos de letra de la carpeta de ConEmu",
       "id": 1550 }
+    ,
+    "cbAutoReloadEnvironment": {
+      "en": "Reload environment variables automatically",
+      "id": 3106 }
     ,
     "cbAutoSaveSizePos": {
       "en": "Auto save window size and position on exit",
@@ -5971,11 +6008,13 @@
       "zh": "自动保存窗口大小和位置",
       "de": "Fenstergröße und Position beim Verlassen automatisch speichern",
       "ja": "終了時にウィンドウのサイズと位置を自動的に保存",
+      "es": "Auto guardar el tamaño y posición de la ventana al salir",
       "id": 1723 }
     ,
     "cbAutoTrimSingleLine": {
       "en": "Automatically remove newline when pasting single line",
       "ru": "Автоматически удалять новую строку при вставке одной строки",
+      "es": "Eliminar automáticamente salo de línea al pegar una línea",
       "id": 3102 }
     ,
     "cbBgAllowPlugin": {
@@ -5984,6 +6023,7 @@
       "zh": "允许背景插件（Far Manager）",
       "de": "Erlaube Hintergrund-PlugIns (Far-Manager)",
       "ja": "バックグラウンドプラグインを許可(Far Manager)",
+      "es": "Permitir plugins de fondo (Far Manager)",
       "id": 1734 }
     ,
     "cbBgImage": {
@@ -5992,6 +6032,7 @@
       "zh": "背景图片（bmp, jpg, png, tif）:",
       "de": "&Hintergrundbild (bmp, jpg, png, tif):",
       "ja": "背景画像(&g) (bmp,jpg,png,tif):",
+      "es": "Ima&gen de fondo (bmp, jpg, png, tif):",
       "id": 1699 }
     ,
     "cbBold": {
@@ -6000,6 +6041,7 @@
       "zh": "粗体（&B）",
       "de": "&Fett",
       "ja": "太字(&B)",
+      "es": "&Negrita",
       "id": 2278 }
     ,
     "cbClipboardOverride": {
@@ -6008,6 +6050,7 @@
       "zh": "覆盖（复制/粘贴）剪贴板",
       "de": "Zwischenablage (Kopieren/Einfügen) überschreiben",
       "ja": "クリップボード(コピー/ペースト)オーバーライド",
+      "es": "Anular portapapeles (Copiar/Pegar)",
       "id": 2172 }
     ,
     "cbClipConfirmEnter": {
@@ -6016,6 +6059,7 @@
       "zh": "多行粘贴：避免由于<Enter>按键执行非预期命令",
       "de": "Mehrzeiliges Einfügen: Verhindere versehentliche Befehlsausführung durch <Enter>",
       "ja": "複数行のペースト:<Enter>キーで予期しないコマンド実行を避ける",
+      "es": "Pegado multi-línea: evitar ejecución de comandos al pulsar <Enter>",
       "id": 2171 }
     ,
     "cbClipConfirmLimit": {
@@ -6024,6 +6068,7 @@
       "zh": "长文本粘贴：避免控制台在粘贴完成前不响应",
       "de": "Langtext einfügen: Verhindere blockierende Konsole bis Einfügen abgeschlossen ist",
       "ja": "長いテキストの貼り付け:ペーストが終了するまで応答しないコンソールを避ける",
+      "es": "Pegado de textos largos: evitar el bloqueo de la terminal mientras se realiza el pegado",
       "id": 2225 }
     ,
     "cbCloseConEmuOnCrossClicking": {
@@ -6032,6 +6077,7 @@
       "zh": "关闭时退出程序 （比如 标题栏点击叉号）",
       "de": "Beim Schließen beenden (z.B. Klick auf Titelleisten-X)",
       "ja": "閉じると終了(例:キャプションバーの[x]ボタン).",
+      "es": "Finalizar al cerrar (ej.: pulsar en la X de la barra de título)",
       "id": 2585 }
     ,
     "cbCloseConEmuWithLastTab": {
@@ -6040,6 +6086,7 @@
       "zh": "关闭最后标签页时关闭ConEmu",
       "de": "Schließe ConEmu mit dem letzten Reiter",
       "ja": "最後のタブでConEmuを閉じる",
+      "es": "Cerrar ConEmu con la última pestaña",
       "id": 2588 }
     ,
     "cbCloseConsoleConfirm": {
@@ -6048,6 +6095,7 @@
       "zh": "确认标签页关闭",
       "de": "Rückfrage beim Schließen von Reitern",
       "ja": "タブを閉じる時に確認する",
+      "es": "Confirmar cierre de pestañas",
       "id": 2179 }
     ,
     "cbCloseEditViewConfirm": {
@@ -6056,6 +6104,7 @@
       "zh": "确认Far Manager编辑器/视图标签页关闭",
       "de": "Rückfrage beim Schließen des Far-Manager-Editors/-Betrachters",
       "ja": "Far Manager の エディタ / ビューア タブを閉じる時に確認",
+      "es": "Confirmar cierre de las pestañas de Editor/Visor de Far Manager",
       "id": 2517 }
     ,
     "cbCloseWindowConfirm": {
@@ -6064,6 +6113,7 @@
       "zh": "确认窗口关闭（点击叉号）",
       "de": "Rückfrage beim Schließen von Fenstern (X anklicken)",
       "ja": "ウィンドウを閉じる時に確認([x]クリック)",
+      "es": "Confirmar cerrado de ventana (pulsar en X)",
       "id": 2757 }
     ,
     "cbCmdAutorunNewWnd": {
@@ -6072,6 +6122,7 @@
       "zh": "强制新建ConEmu窗口",
       "de": "Erzwinge neues ConEmu-Fenster",
       "ja": "新しいConEmuウィンドウを強制する",
+      "es": "Forzar nueva ventana de ConEmu",
       "id": 2411 }
     ,
     "cbCmdGroupApp": {
@@ -6080,6 +6131,7 @@
       "zh": "标签页...",
       "de": "Reiter...",
       "ja": "タブ...",
+      "es": "Pestaña...",
       "id": 2128 }
     ,
     "cbCmdGrpDefaultCmd": {
@@ -6088,6 +6140,7 @@
       "zh": "默认shell （Win+X）",
       "de": "Standardkonsole (Win+X)",
       "ja": "デフォルトシェル(Win+X)",
+      "es": "Intérprete de comandos predeterminado (Win+X)",
       "id": 2751 }
     ,
     "cbCmdGrpDefaultNew": {
@@ -6096,6 +6149,7 @@
       "zh": "新建控制台的默认任务",
       "de": "Standardaufgabe für neue Konsole",
       "ja": "新しいコンソールのデフォルトタスク",
+      "es": "Tarea por defecto para nuevo terminal",
       "id": 2750 }
     ,
     "cbCmdGrpTaskbar": {
@@ -6104,6 +6158,7 @@
       "zh": "任务栏跳转列表",
       "de": "Taskleisten-Sprungbefehle",
       "ja": "タスクバーのジャンプリスト",
+      "es": "Lista de tareas de la barra de tareas",
       "id": 2752 }
     ,
     "cbCmdGrpToolbar": {
@@ -6112,6 +6167,7 @@
       "zh": "工具栏",
       "de": "Werkzeugleiste",
       "ja": "ツールバー",
+      "es": "Barra de herramientas",
       "id": 2753 }
     ,
     "cbCmdTaskbarCommands": {
@@ -6120,6 +6176,7 @@
       "_zh": "从历史添加命令",
       "de": "Fügt Befehle aus dem Verlauf hinzu",
       "ja": "履歴からコマンドを追加する",
+      "es": "Añadir comandos desde historial",
       "id": 2133 }
     ,
     "cbCmdTaskbarTasks": {
@@ -6128,6 +6185,7 @@
       "_zh": "添加ConEmu任务至任务栏",
       "de": "ConEmu-Aufgaben hinzufügen",
       "ja": "ConEmuタスクを追加する",
+      "es": "Añadir tareas de ConEmu",
       "id": 2132 }
     ,
     "cbCmdTaskbarUpdate": {
@@ -6136,6 +6194,7 @@
       "zh": "现在更新！",
       "de": "Jetzt aktualisieren!",
       "ja": "今すぐアップデート！",
+      "es": "¡Actualizar ahora!",
       "id": 2320 }
     ,
     "cbCmdTasksActive": {
@@ -6144,6 +6203,7 @@
       "zh": "活动的标签页",
       "de": "Aktive Reiter",
       "ja": "アクティブなタブ",
+      "es": "Pestañas activas",
       "id": 2493 }
     ,
     "cbCmdTasksDir": {
@@ -6152,6 +6212,7 @@
       "zh": "启动目录...",
       "de": "Startverzeichnis",
       "ja": "開始時のディレクトリ...",
+      "es": "Carpeta de inicio...",
       "id": 2452 }
     ,
     "cbCmdTasksDown": {
@@ -6160,6 +6221,7 @@
       "zh": "向下（&D）",
       "de": "&Runter",
       "ja": "&Down",
+      "es": "A&bajo",
       "id": 2127 }
     ,
     "cbCmdTasksDup": {
@@ -6167,6 +6229,7 @@
       "ru": "Клонировать",
       "de": "Klonen",
       "ja": "クローン",
+      "es": "Clonar",
       "id": 3087 }
     ,
     "cbCmdTasksParm": {
@@ -6175,6 +6238,7 @@
       "zh": "文件路径...",
       "de": "Dateipfad...",
       "ja": "ファイルパス...",
+      "es": "Ruta de archivos...",
       "id": 2129 }
     ,
     "cbCmdTasksReload": {
@@ -6183,6 +6247,7 @@
       "zh": "重新加载...",
       "de": "Neuladen...",
       "ja": "再読込み...",
+      "es": "Recargar...",
       "id": 2131 }
     ,
     "cbCmdTasksUp": {
@@ -6191,6 +6256,7 @@
       "zh": "向上（&U）",
       "de": "&Hoch",
       "ja": "&Up",
+      "es": "&Arriba",
       "id": 2126 }
     ,
     "cbColorKeyTransparent": {
@@ -6199,6 +6265,7 @@
       "zh": "‘颜色键’ 透明度",
       "de": "'Schlüsselfarben'-Transparenz",
       "ja": "'カラーキー' 透明度",
+      "es": "'Color' para transparencia",
       "id": 2312 }
     ,
     "cbColorSchemeDelete": {
@@ -6207,6 +6274,7 @@
       "zh": "删除...",
       "de": "Löschen...",
       "ja": "削除...",
+      "es": "Borrar...",
       "id": 2125 }
     ,
     "cbColorSchemeSave": {
@@ -6215,6 +6283,7 @@
       "zh": "保存",
       "de": "Speichern",
       "ja": "保存",
+      "es": "Guardar",
       "id": 2123 }
     ,
     "cbColorsOverride": {
@@ -6223,6 +6292,7 @@
       "zh": "覆盖调色板",
       "de": "Farbpalette überschreiben",
       "ja": "カラーパレットオーバーライド",
+      "es": "Sustituir color de paleta",
       "id": 2146 }
     ,
     "cbCompressLongStrings": {
@@ -6230,6 +6300,7 @@
       "ru": "Обрезать длинные строки",
       "de": "Komprimiere lange Texte",
       "ja": "スペースに合うように長い文字列を圧縮する",
+      "es": "Comprimir textos largos para que entren",
       "id": 3074 }
     ,
     "cbComspecTest": {
@@ -6238,6 +6309,7 @@
       "zh": "测试",
       "de": "Test",
       "ja": "テスト",
+      "es": "Prueba",
       "id": 2162 }
     ,
     "cbComspecUncPaths": {
@@ -6246,6 +6318,7 @@
       "zh": "在cmd.exe里支持UNC路径（\\\\server\\share\\folder）",
       "de": "Unterstütze UNC-Pfade in cmd.exe (\\\\Server\\Freigabe\\Ordner)",
       "ja": "cmd.exe(\\\\server\\share\\folder)のUNCパスをサポート",
+      "es": "Permitir rutas UNC en cmd.exe (\\\\server\\share\\folder)",
       "id": 2451 }
     ,
     "cbComspecUpdateEnv": {
@@ -6254,6 +6327,7 @@
       "zh": "为子进程设置环境变量ComSpec为指定值",
       "de": "Setzte ComSpec-Umgebungsvariable für Tochterprozesse auf ausgewählten Wert",
       "ja": "子プロセスのComSpec環境変数を選択した値に設定する",
+      "es": "Colocar el valor seleccionado en la variable de entorno ComSpec para procesos hijos",
       "id": 2160 }
     ,
     "cbConfirmCloseRunning": {
@@ -6262,6 +6336,7 @@
       "zh": "当运行中的进程被分离时",
       "de": "Wenn laufender Prozess entdeckt wurde",
       "ja": "実行プロセスが検出されたとき",
+      "es": "Cuando se detecte el proceso en ejecución",
       "id": 2758 }
     ,
     "cbConfirmDetach": {
@@ -6270,6 +6345,7 @@
       "zh": "确认控制台分离",
       "de": "Rückfrage beim Konsolenabkoppeln",
       "ja": "コンソールの取り外しを確認する",
+      "es": "Confirmar desanclar el terminal",
       "id": 2689 }
     ,
     "cbConsoleExceptionHandler": {
@@ -6278,6 +6354,7 @@
       "zh": "移除处理程序（调试）",
       "de": "Exception-Handler (Fehlersuche)",
       "ja": "例外ハンドラ(デバッグ)",
+      "es": "Manejador de excepciones (depuración)",
       "id": 2622 }
     ,
     "cbCTSAutoCopy": {
@@ -6286,6 +6363,7 @@
       "zh": "鼠标左键释放时复制",
       "de": "Beim Loslassen der linken Maustaste kopieren",
       "ja": "左ボタンリリースでのコピー",
+      "es": "Copiar al soltar Botón Izquierdo",
       "id": 2340 }
     ,
     "cbCTSBashMargin": {
@@ -6294,6 +6372,7 @@
       "zh": "Bash边缘",
       "de": "Bash-Rand",
       "ja": "Bashマージン",
+      "es": "Margen para bash",
       "id": 2359 }
     ,
     "cbCTSBlockSelection": {
@@ -6302,6 +6381,7 @@
       "zh": "块状模式（矩形） 选择",
       "de": "(Rechteckige) Blockauswahl",
       "ja": "ブロック(矩形)選択",
+      "es": "Selección de bloque (rectangular)",
       "id": 1635 }
     ,
     "cbCTSClickPromptPosition": {
@@ -6310,6 +6390,7 @@
       "zh": "右击改变prompt （cmd, powershell）文本光标位置",
       "de": "Ändere Schreibmarkenposition (CMD, PowerShell) mit Linksklick",
       "ja": "左クリックでプロンプト(cmd,powershell)のテキストカーソル位置を変更する",
+      "es": "Cambiar la posición del cursor de texto (cmd, powershell) con Click Izquierdo",
       "id": 2344 }
     ,
     "cbCTSDeleteLeftWord": {
@@ -6318,6 +6399,7 @@
       "zh": "Ctrl+BackSpace - 删除文本光标左边的单词",
       "de": "Strg+Rück - Löscht Worte links der Schreibmarke",
       "ja": "Ctrl+BackSpace  - テキストカーソルの左に単語を削除する",
+      "es": "Ctrl+Retroceso - borrar palabra a la izquierda del cursor",
       "id": 2526 }
     ,
     "cbCTSDetectLineEnd": {
@@ -6326,6 +6408,7 @@
       "zh": "探测行尾",
       "de": "Erkenne Zeilenenden",
       "ja": "行末を検出",
+      "es": "Detectar fin de línea",
       "id": 2358 }
     ,
     "cbCTSEndCopyBefore": {
@@ -6334,6 +6417,7 @@
       "zh": "重置之前复制",
       "de": "Vor dem Zurücksetzen kopieren",
       "ja": "リセット前にコピー",
+      "es": "copiar antes de reiniciar",
       "id": 2579 }
     ,
     "cbCTSEndOnKeyPress": {
@@ -6342,6 +6426,7 @@
       "zh": "任意非字母数字键",
       "de": "Jede nicht-alphanumerische Taste",
       "ja": "任意の非英数字キー",
+      "es": "cualquier tecla no-alfanumérica",
       "id": 2436 }
     ,
     "cbCTSEndOnTyping": {
@@ -6350,6 +6435,7 @@
       "zh": "输入时重置选择",
       "de": "Auswahl beim Einfügen zurücksetzen",
       "ja": "入力時に選択をリセットする",
+      "es": "Reiniciar selección al teclear",
       "id": 2412 }
     ,
     "cbCTSEraseBeforeReset": {
@@ -6358,6 +6444,7 @@
       "zh": "重置前尝试剪切/擦除选择",
       "de": "Versuche vor Zurücksetzen Auswahl auszuschneiden/zu löschen",
       "ja": "リセット前に カット/消去 を試みてください",
+      "es": "intentar cortar/borrar selección antes de reiniciar",
       "id": 3030 }
     ,
     "cbCTSFreezeBeforeSelect": {
@@ -6366,6 +6453,7 @@
       "zh": "在选择前冻结控制台的内容（可能会导致轻微滞后）",
       "de": "Friere Konsoleninhalte vor Auswahl ein (Kann kurze Verzögerungen verursachen)",
       "ja": "選択前にコンソールの内容をフリーズする(小さなラグを引き起こす可能性がある)",
+      "es": "Inmovilizar contenidos del terminal antes de seleccionar (puede provocar parones)",
       "id": 2257 }
     ,
     "cbCTSIBeam": {
@@ -6374,6 +6462,7 @@
       "zh": "显示IBeam光标",
       "de": "Zeige IBeam-Schreibmarke",
       "ja": "IBeamカーソルを表示する",
+      "es": "Mostrar cursor IBeam",
       "id": 2603 }
     ,
     "cbCTSIntelligent": {
@@ -6382,6 +6471,7 @@
       "zh": "智能模式",
       "de": "Intelligenter Modus",
       "ja": "インテリジェントモード",
+      "es": "Modo inteligente",
       "id": 2657 }
     ,
     "cbCTSResetOnRelease": {
@@ -6390,6 +6480,7 @@
       "zh": "鼠标左键释放时重置选择",
       "de": "Auswahl beim Loslassen der linken Maustaste zurücksetzen",
       "ja": "左ボタンリリースで選択をリセットする",
+      "es": "Reiniciar selección al soltar Botón Izquierdo",
       "id": 3029 }
     ,
     "cbCTSShiftArrowStartSel": {
@@ -6398,6 +6489,7 @@
       "zh": "使用Shift+箭头键开始选择 （文本模式 = Left/Right/Home/End, 块状模式 = Up/Down）",
       "de": "Auswahl mit Umslt+Pfeil beginnen (Text = Links/Rechts/Pos1/Ende, Block = Hoch/Runter)",
       "ja": "Shiftキーを押しながら選択を開始します(テキスト=Left/Right/Home/End,ブロック=Up/Down)",
+      "es": "Iniciar selección con Shift+Cursores (Texto = Izquierda/Derecha/Inicio/Fin, Bloque = Arriba/Abajo)",
       "id": 2553 }
     ,
     "cbCTSTextSelection": {
@@ -6406,6 +6498,7 @@
       "zh": "文本选择",
       "de": "Textauswahl",
       "ja": "テキスト選択",
+      "es": "Selección de texto",
       "id": 1630 }
     ,
     "cbCTSTrimTrailing": {
@@ -6414,6 +6507,7 @@
       "zh": "修剪尾随空格",
       "de": "Anhängende Leerzeichen abschneiden",
       "ja": "末尾のスペースを削除する",
+      "es": "Eliminar espacios finales",
       "id": 2365 }
     ,
     "cbCursorBlink": {
@@ -6422,6 +6516,7 @@
       "zh": "闪烁",
       "de": "Blinken",
       "ja": "点滅",
+      "es": "Parpadeo",
       "id": 1522 }
     ,
     "cbCursorColor": {
@@ -6430,6 +6525,7 @@
       "zh": "颜色（光标形状下的逆屏幕部分）",
       "de": "Farbe (invertiere Bildschirmteil unter Schreibmarke)",
       "ja": "色(カーソル形状の反対色)",
+      "es": "Color (invertir pantalla tras el cursor)",
       "id": 1210 }
     ,
     "cbCursorIgnoreSize": {
@@ -6438,6 +6534,7 @@
       "zh": "固定光标大小",
       "de": "Feste Zeigergröße",
       "ja": "固定カーソルサイズ",
+      "es": "Tamaño del cursor fijo",
       "id": 1655 }
     ,
     "cbCursorOverride": {
@@ -6446,6 +6543,7 @@
       "zh": "覆盖光标",
       "de": "Schreibmarke überschreiben",
       "ja": "カーソルオーバーライド",
+      "es": "Invalidar cursor",
       "id": 2145 }
     ,
     "cbDebugLog": {
@@ -6454,6 +6552,7 @@
       "zh": "内部日志文件的位置",
       "de": "Pfad zu internen Protokolldateien",
       "ja": "内部ログファイルの場所",
+      "es": "Ruta de los archivo de log internos",
       "id": 3031 }
     ,
     "cbDebugSteps": {
@@ -6462,6 +6561,7 @@
       "zh": "标题里显示调试步骤",
       "de": "Schritte zur Fehlersuche im Titel",
       "ja": "キャプション内のデバッグステップ",
+      "es": "Depurar pasos en título",
       "id": 1551 }
     ,
     "cbDefaultTerminal": {
@@ -6470,6 +6570,7 @@
       "zh": "强制使用ConEmu作为控制台应用程序的默认终端",
       "de": "Erzwinge ConEmu als Standardterminal für Konsolenanwendungen",
       "ja": "コンソールアプリケーションのデフォルト端末としてConEmuを強制する",
+      "es": "Forzar ConEmu como terminal por defecto para aplicaciones de consola",
       "id": 2515 }
     ,
     "cbDefaultTerminalDebugLog": {
@@ -6478,6 +6579,7 @@
       "zh": "启用hooked进程的日志（调试目的）",
       "de": "Aktiviere Protokollierung von angezapften Prozessen (zu Fehlersuchzwecken)",
       "ja": "フックされたプロセスのロギングを有効にする(デバッグの目的)",
+      "es": "Activar traza de procesos enganchados (depuración)",
       "id": 2866 }
     ,
     "cbDefaultTerminalNoInjects": {
@@ -6486,6 +6588,7 @@
       "zh": "不要在启动的控制台里使用ConEmuHk.dll",
       "de": "Verwende nicht ConEmuHk.dll in der gestarteten Konsole",
       "ja": "ConEmuHk.dllを起動したコンソールで使用しない",
+      "es": "No usar ConEmuHk.dll en terminales iniciadas",
       "id": 2518 }
     ,
     "cbDefaultTerminalStartup": {
@@ -6494,6 +6597,7 @@
       "zh": "在系统启动时注册",
       "de": "Für Systemstart registrieren",
       "ja": "OS起動時に登録する",
+      "es": "Registrar al inicio del SO",
       "id": 2547 }
     ,
     "cbDefaultTerminalTSA": {
@@ -6502,6 +6606,7 @@
       "zh": "留在任务栏状态区域（TSA）",
       "de": "Im Infobereich lassen",
       "ja": "TSAに残す",
+      "es": "Dejar en zona de notificaciones",
       "id": 2627 }
     ,
     "cbDefaultTerminalUseExisting": {
@@ -6510,6 +6615,7 @@
       "zh": "使用现有的ConEmu窗口（如果可用）",
       "de": "Verwende vorhandenes ConEmu-Fenster falls möglich",
       "ja": "可能であれば既存のConEmuウィンドウを使用する",
+      "es": "Usar ventana de ConEmu si está disponible",
       "id": 2661 }
     ,
     "cbDefTermAgressive": {
@@ -6518,6 +6624,7 @@
       "zh": "攻击模式",
       "de": "Agressiver Modus",
       "ja": "アグレッシブモード",
+      "es": "Modo agresivo",
       "id": 2684 }
     ,
     "cbDisableAllFlashing": {
@@ -6526,6 +6633,7 @@
       "zh": "禁用所有闪烁",
       "de": "Jegliches Blinken deaktivieren",
       "ja": "すべての点滅を無効にする",
+      "es": "Desactivar parpadeo",
       "id": 1719 }
     ,
     "cbDisableConImeFast": {
@@ -6534,6 +6642,7 @@
       "zh": " 禁用ConIme.exe自动启动（仅Vista）",
       "de": " Deaktiviere Autostart der ConIme.exe (Nur Vista)",
       "ja": " ConIme.exeの自動実行を無効にする(Vistaのみ)",
+      "es": "Desactivar autoejecución de ConIme.exe (sólo Vista)",
       "id": 2090 }
     ,
     "cbDisableFarFlashing": {
@@ -6542,6 +6651,7 @@
       "zh": "禁用Far的闪烁",
       "de": "Deaktiviere Far-Blinken",
       "ja": "Far点滅を無効にする",
+      "es": "Desactivar parpadeo de Far",
       "id": 1718 }
     ,
     "cbDnDCopy": {
@@ -6550,6 +6660,7 @@
       "zh": "默认复制",
       "de": "Standardmäßig kopieren",
       "ja": "デフォルトでコピー",
+      "es": "Copiar por defecto",
       "id": 2287 }
     ,
     "cbDosBox": {
@@ -6558,6 +6669,7 @@
       "zh": "DosBox （DOS程序）",
       "de": "DosBox (DOS-Apps)",
       "ja": "DosBox(DOSアプリケーション)",
+      "es": "DosBox (aplicaciones DOS)",
       "id": 1753 }
     ,
     "cbDragIcons": {
@@ -6566,6 +6678,7 @@
       "zh": "Shell图标",
       "de": "Shell-Symbole",
       "ja": "Shellアイコン",
+      "es": "Iconos del shell",
       "id": 1553 }
     ,
     "cbDragImage": {
@@ -6574,6 +6687,7 @@
       "zh": "叠加",
       "de": "Überlagern",
       "ja": "オーバーレイ",
+      "es": "Superposición",
       "id": 1548 }
     ,
     "cbDragL": {
@@ -6582,6 +6696,7 @@
       "zh": "LDrag",
       "de": "LDrag",
       "ja": "左ドラッグ",
+      "es": "ArrastreIzq",
       "id": 1504 }
     ,
     "cbDragPanel": {
@@ -6590,6 +6705,7 @@
       "zh": "鼠标调整面板大小",
       "de": "Größe der Panels mit der Maus ändern",
       "ja": "マウスでパネルのサイズを変更する",
+      "es": "Redimensionar paneles con el ratón",
       "id": 1568 }
     ,
     "cbDragPanelBothEdges": {
@@ -6598,6 +6714,7 @@
       "zh": "使用面板两个边缘",
       "de": "Beide Panel-Kanten nutzen",
       "ja": "両方のパネルエッジを使用する",
+      "es": "usar ambos extremos del panel",
       "id": 2102 }
     ,
     "cbDragR": {
@@ -6606,6 +6723,7 @@
       "zh": "RDrag",
       "de": "RDrag",
       "ja": "右ドラッグ",
+      "es": "ArrastreDer",
       "id": 1505 }
     ,
     "cbDropEnabled": {
@@ -6614,6 +6732,7 @@
       "zh": "下拉 && 确认",
       "de": "Ausklappen && Bestätigung",
       "ja": "ドロップ &",
+      "es": "Soltar && Confirmar",
       "id": 1502 }
     ,
     "cbDropUseMenu": {
@@ -6622,6 +6741,7 @@
       "zh": "使用下拉菜单",
       "de": "Ausklappmenü nutzen",
       "ja": "ドロップメニューを使用する",
+      "es": "Usar menú para soltar",
       "id": 2246 }
     ,
     "cbDupConfirm": {
@@ -6630,6 +6750,7 @@
       "zh": "确认标签页复制（复制根菜单项）",
       "de": "Rückfrage bei Reiter-Duplizierung (Dupliziere Wurzelmenüeintrag)",
       "ja": "タブの複製を確認する(重複したルートメニュー項目)",
+      "es": "Confirmar duplicar pestaña (duplicar elemento del menú raíz)",
       "id": 2688 }
     ,
     "cbEnableAutoUpdateFast": {
@@ -6638,6 +6759,7 @@
       "zh": "启用自动更新",
       "de": "Automatische Aktualisierungen aktivieren",
       "ja": "自動更新を有効にする",
+      "es": "Activar actualizaciones automáticas",
       "id": 2087 }
     ,
     "cbEnableMouse": {
@@ -6646,6 +6768,7 @@
       "zh": "发送鼠标消息到控制台（console）",
       "de": "Mausereignisse an Konsole senden",
       "ja": "マウスイベントをコンソールに送信する",
+      "es": "Enviar eventos del ratón al terminal",
       "id": 2313 }
     ,
     "cbEnhanceGraphics": {
@@ -6654,6 +6777,7 @@
       "zh": "增强进度栏和滚动栏",
       "de": "Fortschrittsbalken und Scrollleisten verbessern",
       "ja": "進捗バーとスクロールバーを強化する",
+      "es": "Mejorar barras de progreso y de scroll",
       "id": 2289 }
     ,
     "cbExportConfig": {
@@ -6662,6 +6786,7 @@
       "zh": "导出...",
       "de": "Exportieren...",
       "ja": "エクスポート...",
+      "es": "Exportar...",
       "id": 2572 }
     ,
     "cbExtendFonts": {
@@ -6670,6 +6795,7 @@
       "_zh": "扩展字体",
       "de": "Schriftstile erweitern",
       "ja": "フォントスタイルを拡張する",
+      "es": "Extender estilos de texto",
       "id": 1576 }
     ,
     "cbExtendFontsOverride": {
@@ -6678,6 +6804,7 @@
       "_zh": "覆盖扩展字体",
       "de": "Schriftstilerweiterung überschreiben",
       "ja": "フォントスタイルを拡張する",
+      "es": "Invalidar extender estilos de texto",
       "id": 2144 }
     ,
     "cbExtendUCharMap": {
@@ -6686,6 +6813,7 @@
       "zh": "扩展Unicode字符表",
       "de": "Unicode-Zeichenkarte erweitern",
       "ja": "Unicode CharMapを拡張する",
+      "es": "Extender mapa Unicode",
       "id": 1722 }
     ,
     "cbFadeInactive": {
@@ -6694,6 +6822,7 @@
       "zh": "不活动时褪色",
       "de": "Verblassen, wenn inaktiv",
       "ja": "非アクティブ時にフェードする",
+      "es": "Difuminar cuando inactiva",
       "id": 1581 }
     ,
     "cbFarGotoEditor": {
@@ -6702,6 +6831,7 @@
       "zh": "高亮并转到",
       "de": "Hervorhebung und GeheZu",
       "ja": "ハイライトと移動",
+      "es": "Resaltar e ir",
       "id": 1765 }
     ,
     "cbFarHourglass": {
@@ -6710,6 +6840,7 @@
       "_zh": "如果没有响应，鼠标变沙漏形状",
       "de": "Mauszeiger ändern wenn beschäftigt",
       "ja": "ビジー状態の場合はマウスカーソルを変更する",
+      "es": "Cambiar cursor del ratón si está ocupado",
       "id": 1563 }
     ,
     "cbFARuseASCIIsort": {
@@ -6718,6 +6849,7 @@
       "zh": "Far里的ASCII排序函数",
       "de": "ASCII-Sortierfunktion in Far",
       "ja": "FarでのASCIIソート機能",
+      "es": "Función de ordenación ASCII en Far",
       "id": 1561 }
     ,
     "cbFindFreezeConsole": {
@@ -6726,6 +6858,7 @@
       "zh": "冻结（&F）console",
       "de": "Konsole ein&frieren",
       "ja": "コンソールをフリーズする(&F)",
+      "es": "&Inmovilizar terminal",
       "id": 2176 }
     ,
     "cbFindHighlightAll": {
@@ -6734,6 +6867,7 @@
       "zh": "高亮（&H）所有匹配的",
       "de": "Alle Treffer &hervorheben",
       "ja": "一致した全てをハイライト(&H)",
+      "es": "&Resaltar coincidencias",
       "id": 2228 }
     ,
     "cbFindMatchCase": {
@@ -6742,6 +6876,7 @@
       "zh": "匹配（&c）",
       "de": "Trefferschreibung",
       "ja": "マッチケース(&c)",
+      "es": "Coincidir &may./min.",
       "id": 2175 }
     ,
     "cbFindNext": {
@@ -6750,6 +6885,7 @@
       "zh": "下一个（&N）",
       "de": "&Nächster",
       "ja": "次(&N)",
+      "es": "&Siguiente",
       "id": 2177 }
     ,
     "cbFindPrev": {
@@ -6758,6 +6894,7 @@
       "zh": "前一个（&P）",
       "de": "&Voriger",
       "ja": "前(&P)",
+      "es": "&Anterior",
       "id": 2178 }
     ,
     "cbFindTransparent": {
@@ -6766,6 +6903,7 @@
       "zh": "透明（&T）",
       "de": "&Transparent",
       "ja": "透明(&T)",
+      "es": "&Transparente",
       "id": 2232 }
     ,
     "cbFindWholeWords": {
@@ -6774,6 +6912,7 @@
       "zh": "匹配整个单词（&w）",
       "de": "Ganze Worte suchen",
       "ja": "単語全体にマッチ(&w)",
+      "es": "Coincidir &palabras completas",
       "id": 2174 }
     ,
     "cbFixAltOnAltTab": {
@@ -6782,6 +6921,7 @@
       "zh": "修复Alt于AltTab/AltF9 （避免执行Far Manager宏, 连接到Alt-release）",
       "de": "Fixieren von Alt bei AltTab/AltF9 (um Ausführung von Far-Manager-Makros zu verhindern, die an Alt-Loslassen gebunden sind)",
       "ja": "AltTab/AltF9 で Alt を修正する (Alt-releaseにリンクされたFar Managerマクロの実行を避けるため)",
+      "es": "Corregir Alt en Alt-Tab/Alt-F9 (evitar ejecución de macro de Far Manager, ligada a Alt-soltar)",
       "id": 1562 }
     ,
     "cbFixFarBorders": {
@@ -6790,6 +6930,7 @@
       "zh": "替代字体（错误代码页，中日韩，等。）",
       "de": "Alternative Schriftart (Pseudografik, CJK, usw.)",
       "ja": "代替フォント (pseudographics, CJK, etc.)",
+      "es": "Tipo de letra alternativo (pseudográficos, CJK, etc...)",
       "id": 1207 }
     ,
     "cbFocusInChildWindows": {
@@ -6798,6 +6939,7 @@
       "zh": "聚焦在子窗口",
       "de": "Fokus in Tochterfenster",
       "ja": "子ウィンドウにフォーカスする",
+      "es": "Poner foco en ventanas hijas",
       "id": 2568 }
     ,
     "cbFont2AA": {
@@ -6806,6 +6948,7 @@
       "zh": "抗锯齿",
       "de": "Kantenglättung",
       "ja": "アンチエイリアス",
+      "es": "Suavizado",
       "id": 2883 }
     ,
     "cbFontAsDeviceUnits": {
@@ -6814,6 +6957,7 @@
       "zh": "把字体高度作为设备单位",
       "de": "Behandle Schrifthöhen als Geräteeinheiten",
       "ja": "フォントの高さをデバイス単位として扱う",
+      "es": "Tratar altura de letra como unidades de dispositivo",
       "id": 2692 }
     ,
     "cbFontAuto": {
@@ -6822,6 +6966,7 @@
       "zh": "自动设置大小（固定的控制台大小-以单元格为单位）",
       "de": "Autogröße (feste Konsolengröße in Zeichen)",
       "ja": "自動サイズ(セル内の固定コンソールサイズ)",
+      "es": "Tamaño automático (tamaño de terminal en celdas)",
       "id": 1566 }
     ,
     "cbFontMonitorDpi": {
@@ -6830,6 +6975,7 @@
       "_zh": "确定字体大小时考虑显示器分辨率",
       "de": "Passe Schriftgröße an Monitor-DPI an",
       "ja": "モニタDPIのフォントサイズを調整する",
+      "es": "Ajustar tamaño de letra al DPI del monitor",
       "id": 2691 }
     ,
     "cbFullscreenFixedConSize": {
@@ -6838,6 +6984,7 @@
       "zh": "固定的控制台（console）大小",
       "de": "Feste Konsolengröße",
       "ja": "固定コンソールサイズ",
+      "es": "Tamaño de terminal fijo",
       "id": 2469 }
     ,
     "cbFullscreenNoBars": {
@@ -6846,6 +6993,7 @@
       "zh": "隐藏标签页 && 状态栏",
       "de": "Verberge Reiter && Statusleisten",
       "ja": "タブ&&ステータスバーを隠す",
+      "es": "Ocultar pestaña && barra de estado",
       "id": 2468 }
     ,
     "cbHideCaption": {
@@ -6854,6 +7002,7 @@
       "zh": "最大化时隐藏标题",
       "de": "Verberge Titel wenn maximiert",
       "ja": "最大化時にキャプションを隠す",
+      "es": "Ocultar título al maximizar",
       "id": 1565 }
     ,
     "cbHideCaptionAlways": {
@@ -6862,6 +7011,7 @@
       "zh": "总是隐藏标题",
       "de": "Titel immer ausblenden",
       "ja": "キャプションを常に隠す",
+      "es": "Ocultar título siempre",
       "id": 1569 }
     ,
     "cbHideChildCaption": {
@@ -6870,6 +7020,7 @@
       "zh": "隐藏ConEmu里启动的GUI窗口的标题",
       "de": "Verberge Titel von Tochter-GUI-Fenstern die in ConEmu gestartet wurden",
       "ja": "ConEmuで開始された子GUIウィンドウのキャプションを隠す",
+      "es": "Ocultar título para ventanas hijas GUI iniciadas en ConEmu",
       "id": 2562 }
     ,
     "cbHideInactiveConTabs": {
@@ -6878,6 +7029,7 @@
       "zh": "仅活动的控制台",
       "de": "Nur aktive Konsole",
       "ja": "アクティブなコンソールのみ",
+      "es": "Sólo terminal activo",
       "id": 1642 }
     ,
     "cbHideOnLastTabClose": {
@@ -6886,6 +7038,7 @@
       "zh": "隐藏至任务栏状态区域（TSA）",
       "de": "In den Infobereich verschieben",
       "ja": "TSAに隠す",
+      "es": "Ocultar en zona de notificaciones",
       "id": 2587 }
     ,
     "cbHighlightMouseCol": {
@@ -6894,6 +7047,7 @@
       "zh": "高亮显示在鼠标光标下的整个列",
       "de": "Ganze Spalte unter dem Mauszeiger hervorheben",
       "ja": "マウスカーソルの下の列全体を強調表示する",
+      "es": "Resaltar toda la columna bajo el cursor de ratón",
       "id": 2642 }
     ,
     "cbHighlightMouseRow": {
@@ -6902,6 +7056,7 @@
       "zh": "高亮显示在鼠标光标下的整个行",
       "de": "Ganze Zeile unter dem Mauszeiger hervorheben",
       "ja": "マウスカーソルの下の行全体を強調表示する",
+      "es": "Resaltar toda la final bajo el cursor del ratón",
       "id": 2641 }
     ,
     "cbHotkeysAssignedOnly": {
@@ -6910,6 +7065,7 @@
       "zh": "隐藏未分配（&H）",
       "de": "Nicht-zugewiesene &ausblenden",
       "ja": "未割り当ての非表示(&H)",
+      "es": "&Ocultar no asignadas",
       "id": 2514 }
     ,
     "cbInactiveCursor": {
@@ -6918,6 +7074,7 @@
       "zh": "不活动的控制台文本光标",
       "de": "Schreibmarke inaktiver Konsole",
       "ja": "非アクティブなコンソールのテキストカーソル",
+      "es": "Cursor para terminales inactivos",
       "id": 2544 }
     ,
     "cbInactiveCursorBlink": {
@@ -6926,6 +7083,7 @@
       "zh": "闪烁",
       "de": "Blinken",
       "ja": "点滅",
+      "es": "Parpadeo",
       "id": 2545 }
     ,
     "cbInactiveCursorColor": {
@@ -6934,6 +7092,7 @@
       "zh": "颜色（在光标下的逆屏幕部分）",
       "de": "Farbe (Invertiere Bildschirmfarbe unter der Schreibmarke)",
       "ja": "色(カーソル形状の逆の画面部分)",
+      "es": "Color (invertir pantalla bajo el cursor)",
       "id": 2538 }
     ,
     "cbInactiveCursorIgnoreSize": {
@@ -6942,6 +7101,7 @@
       "zh": "固定光标大小",
       "de": "Feste Schreibmarkengröße",
       "ja": "固定カーソルサイズ",
+      "es": "Tamaño fijo del cursor",
       "id": 2539 }
     ,
     "cbInactiveCursorSubstHidden": {
@@ -6949,6 +7109,7 @@
       "ru": "Считать скрытый курсор неактивным",
       "de": "Betrachte ausgeblendete Schreibmarke als inaktiv",
       "ja": "非表示カーソルを非アクティブとして扱う",
+      "es": "Tratar cursor oculto como inactivo",
       "id": 3100 }
     ,
     "cbInjectConEmuHkFast": {
@@ -6957,6 +7118,7 @@
       "zh": "向ConEmu标签页里启动的所有进程注入ConEmuHk.dll",
       "de": "In alle in ConEmu-Reitern gestarteten Prozesse ConEmuHk.dll einschleusen",
       "ja": "ConEmuHk.dll を ConEmuタブで開始されたすべてのプロセスに注入する",
+      "es": "Inyectar ConEmuHk.dll en todos los procesos iniciados en pestañas de ConEmu",
       "id": 2098 }
     ,
     "cbInsideSyncDir": {
@@ -6965,6 +7127,7 @@
       "zh": "同步目录",
       "de": "Sync-Verz.",
       "ja": "同期ディレクトリ",
+      "es": "Sincronizar carpeta",
       "id": 2397 }
     ,
     "cbInstallKeybHooks": {
@@ -6973,6 +7136,7 @@
       "_zh": "安装键盘hooks",
       "de": "Besondere Tastenkürzel unterstützen",
       "ja": "スペシャルホットキーをサポート",
+      "es": "Soportar combinaciones epeciales",
       "id": 1649 }
     ,
     "cbIntegralSize": {
@@ -6981,6 +7145,7 @@
       "zh": "对齐ConEmu窗口大小至单元格",
       "de": "ConEmu-Fenstergröße an den Zeichen ausrichten",
       "ja": "ConEmuウィンドウのサイズをセルに合わせる",
+      "es": "Alinear tamaño de ventana de ConEmu a celdas",
       "id": 2594 }
     ,
     "cbItalic": {
@@ -6989,6 +7154,7 @@
       "zh": "斜体（&I）",
       "de": "&Kursiv",
       "ja": "斜体(&I)",
+      "es": "&Cursiva",
       "id": 2280 }
     ,
     "cbJumpListAutoUpdate": {
@@ -6996,6 +7162,7 @@
       "ru": "Сразу",
       "de": "Autoaktualisierung",
       "ja": "自動更新",
+      "es": "Autoactualizar",
       "id": 3073 }
     ,
     "cbKeyBarRClick": {
@@ -7004,6 +7171,7 @@
       "zh": "KeyBar RClick",
       "de": "KeyBar RClick",
       "ja": "KeyBar 右クリック",
+      "es": "ClickDer Barra",
       "id": 2114 }
     ,
     "cbKillSshAgent": {
@@ -7011,6 +7179,7 @@
       "ru": "Убить ssh агент с ConEmu",
       "de": "Beende SSH-Agenten durch ConEmu",
       "ja": "ConEmuでssh-agentを終了させる",
+      "es": "Finalizar ssh-agent con ConEmu",
       "id": 3075 }
     ,
     "cbLongOutput": {
@@ -7019,6 +7188,7 @@
       "zh": "长控制台输出",
       "de": "Lange Konsolenausgabe",
       "ja": "ロングコンソール出力",
+      "es": "Salida de terminal larga",
       "id": 1534 }
     ,
     "cbMapShiftEscToEsc": {
@@ -7027,6 +7197,7 @@
       "zh": "关联Shift+Esc到Esc",
       "de": "Umslt+Esc auf Esc abbilden",
       "ja": "Shift+Esc を Escにマップする",
+      "es": "Mapear Shift+Esc a Esc",
       "id": 2563 }
     ,
     "cbMinimizeOnLastTabClose": {
@@ -7035,6 +7206,7 @@
       "zh": "关闭最后一个标签时最小化",
       "de": "Beim Schließen des letzten Reiters minimieren",
       "ja": "最後のタブを閉じる時に最小化",
+      "es": "Minimizar al cerrar última pestaña",
       "id": 2586 }
     ,
     "cbMinimizeOnLoseFocus": {
@@ -7043,6 +7215,7 @@
       "zh": "失去焦点时最小化（不使用Quake方式）",
       "de": "Bei Fokusverlust minimieren (nicht im Quake-Modus)",
       "ja": "フォーカスを最小限に抑える(Quakeスタイルではない)",
+      "es": "Minimizar al perder foco (no en modo Quake)",
       "id": 2567 }
     ,
     "cbMinToTray": {
@@ -7051,6 +7224,7 @@
       "zh": "自动最小化到任务栏状态区域（TSA）",
       "de": "Automatisch in den Infobereich minimieren",
       "ja": "TSAに自動的に最小化",
+      "es": "Auto minimizar a zona de notificaciones",
       "id": 1507 }
     ,
     "cbMonitorConsoleLang": {
@@ -7059,6 +7233,7 @@
       "zh": "监视控制台（console）语言",
       "de": "Überwache Konsolensprache",
       "ja": "監視コンソールlang",
+      "es": "Comprobar idioma de terminal",
       "id": 1537 }
     ,
     "cbMonospace": {
@@ -7067,6 +7242,7 @@
       "zh": "等宽（&M）",
       "de": "&Festbreitenschrift",
       "ja": "等幅(&Monospace)",
+      "es": "&Monoespaciado",
       "id": 2283 }
     ,
     "cbMouseDragWindow": {
@@ -7074,6 +7250,7 @@
       "ru": "Ctrl+Alt - перетащить окно по клиентской области",
       "de": "Strg+Alt - Ziehe Fenster mittels Client-Bereich",
       "ja": "Ctrl+Alt - クライアント領域別ウィンドウをドラッグ",
+      "es": "Ctrl+Alt - arrastrar ventana desde zona cliente",
       "id": 3060 }
     ,
     "cbMultiCon": {
@@ -7082,6 +7259,7 @@
       "zh": "多个consoles在一个ConEmu窗口里",
       "de": "Mehrere Konsolen in einem ConEmu-Fenster",
       "ja": "1つのConEmuウィンドウに複数のコンソール",
+      "es": "Múltiples terminales en una ventana ConEmu",
       "id": 1506 }
     ,
     "cbMultiIterate": {
@@ -7090,6 +7268,7 @@
       "zh": "‘Host-key’+数字迭代Far窗口",
       "de": "'Host-Taste'+Zahl wechselt durch die Far-Fenster",
       "ja": "‘Host-key’+Numキー で Farウィンドウを循環",
+      "es": "'Tecla-Host'+Número itera ventanas Far",
       "id": 2104 }
     ,
     "cbMultiShowButtons": {
@@ -7098,6 +7277,7 @@
       "zh": "在标签栏显示按钮（工具栏）",
       "de": "Zeige Schaltflächen (Werkzeugleiste) in der Reiterleiste",
       "ja": "タブバーにボタン (ツールバー) を表示する",
+      "es": "Mostrar botones en barra de pestañas",
       "id": 2549 }
     ,
     "cbMultiShowSearch": {
@@ -7106,6 +7286,7 @@
       "zh": "在标签页栏显示搜索栏",
       "de": "Zeige Suchfeld in der Reiterleiste",
       "ja": "タブバーに検索フィールドを表示する",
+      "es": "Mostrar campo de búsqueda en barra de pestañas                                                                                                                                                                                                                                                               ",
       "id": 2715 }
     ,
     "cbNewConfirm": {
@@ -7114,6 +7295,7 @@
       "zh": "确认创建新的控制台/标签 （Win+W, 工具栏 [+]）",
       "de": "Rückfrage beim Erzeugen einer/s neuen Konsole/Fensters (Win+W, Werkzeugleiste [+])",
       "ja": "新しいコンソール/タブの作成を確認する(Win+W,ツールバー [+])",
+      "es": "Confirmar creación de nuevo terminal/pestaña (Win+W, toolbar [+])",
       "id": 1546 }
     ,
     "cbNumberInCaption": {
@@ -7122,6 +7304,7 @@
       "zh": "总是显示数字 [n/m]",
       "de": "Zeige immer Anzahl [n/m]",
       "ja": "常に数字を表示する[n/m]",
+      "es": "Mostrar siempre números [n/m]",
       "id": 2480 }
     ,
     "cbOneTabPerGroup": {
@@ -7130,6 +7313,7 @@
       "zh": "仅每组活动的窗格",
       "de": "Nur aktive Fläche der Gruppe",
       "ja": "グループのアクティブペインのみ",
+      "es": "Sólo panel activo del grupo",
       "id": 2599 }
     ,
     "cbPasteM1Posix": {
@@ -7137,6 +7321,7 @@
       "ru": "Преобразование пути Windows в POSIX",
       "de": "Erlaube Windows-zu-POSIX-Pfadkonvertierung",
       "ja": "WindowsからPOSIXへのパス変換を許可する",
+      "es": "Permitir conversión de rutas de Windows a POSIX",
       "id": 3088 }
     ,
     "cbPasteM2Posix": {
@@ -7144,6 +7329,7 @@
       "ru": "Преобразование пути Windows в POSIX",
       "de": "Erlaube Windows-zu-POSIX-Pfadkonvertierung",
       "ja": "WindowsからPOSIXへのパス変換を許可する",
+      "es": "Permitir conversión de rutas de Windows a POSIX",
       "id": 3089 }
     ,
     "cbProcessAnsi": {
@@ -7152,6 +7338,7 @@
       "_zh": "ANSI X3.64 / xterm 256 色",
       "de": "ANSI- und xterm-Sequenzen",
       "ja": "ANSIおよびxtermシーケンス",
+      "es": "Secuencias ANSI y xterm",
       "id": 2253 }
     ,
     "cbProcessCmdStart": {
@@ -7160,6 +7347,7 @@
       "zh": "处理 'start'",
       "de": "Verarbeite 'start'",
       "ja": "プロセス '開始'",
+      "es": "Procesar 'inicio'",
       "id": 2740 }
     ,
     "cbProcessCtrlZ": {
@@ -7168,6 +7356,7 @@
       "zh": "在ReadConsole里处理 Ctrl-Z",
       "de": "Verarbeite Strg+Z in RealConsole",
       "ja": "ReadConsoleでCtrl+Zを処理する",
+      "es": "Procesar Ctrl-Z en ReadConsole",
       "id": 2878 }
     ,
     "cbProcessNewConArg": {
@@ -7176,6 +7365,7 @@
       "zh": "进行 '-new_console' 和 '-cur_console' 切换",
       "de": "Verarbeite '-new_console'- und '-cur_console'-Parameter",
       "ja": "'-new_console'と '-cur_console'スイッチを処理する",
+      "es": "Procesar opciones '-new_console' y '-cur_console'",
       "id": 2640 }
     ,
     "cbQuakeAutoHide": {
@@ -7184,6 +7374,7 @@
       "zh": "失去焦点时自动隐藏",
       "de": "Bei Fokusverlust automatisch ausblenden",
       "ja": "非アクティブ時に自動的に非表示",
+      "es": "Auto-ocultar al perder foco",
       "id": 2466 }
     ,
     "cbQuakeFast": {
@@ -7192,6 +7383,7 @@
       "zh": "从屏幕顶部Quake式向下滑动",
       "de": "Quake-artiges Herein-/Herausgleiten von der Bildschirmoberkante",
       "ja": "スクリーン上部から Quakeスタイルでスライド",
+      "es": "Modo-Quake: mostrar desde la parte superior de la pantalla",
       "id": 2846 }
     ,
     "cbQuakeStyle": {
@@ -7200,6 +7392,7 @@
       "zh": "Quake式向下滑动",
       "de": "Quake-artiges Hereingleiten",
       "ja": "Quakeスタイル スライドダウン",
+      "es": "Modo-Quake",
       "id": 2333 }
     ,
     "cbRClick": {
@@ -7208,6 +7401,7 @@
       "zh": "右击（&R） 4 EMenu",
       "de": "&Rechtsklick für EMenü",
       "ja": "右クリック(&R) 4 EMenu",
+      "es": "&ClickDerecho para EMenu",
       "id": 1696 }
     ,
     "cbRestore2ActiveMonitor": {
@@ -7216,6 +7410,7 @@
       "zh": "恢复至活动的显示屏",
       "de": "Auf aktivem Monitor wiederherstellen",
       "ja": "アクティブなモニターに復元する",
+      "es": "Restaurar al monitor activo",
       "id": 2867 }
     ,
     "cbRestoreInactive": {
@@ -7223,6 +7418,7 @@
       "ru": "Восстановить неактивное окно горячей клавишей",
       "de": "Inaktives Fenster durch Tastenkürzel wiederherstellen",
       "ja": "ホットキーで非アクティブウィンドウを復元する",
+      "es": "Restaurar ventana inactiva por teclado",
       "id": 3099 }
     ,
     "cbRetardInactivePanes": {
@@ -7231,6 +7427,7 @@
       "zh": "延缓不活动的窗格",
       "de": "Verzögere inaktive Bereiche",
       "ja": "非アクティブなペインを遅らせる",
+      "es": "Retrasar paneles inactivos",
       "id": 2665 }
     ,
     "cbRSelectionFix": {
@@ -7239,6 +7436,7 @@
       "zh": "修复为正确的选择",
       "de": "Rechtsauswahl fest",
       "ja": "右の選択肢の修正",
+      "es": "Corregir selección por la derecha",
       "id": 1536 }
     ,
     "cbRunAsAdmin": {
@@ -7247,6 +7445,7 @@
       "zh": "以管理员身份运行（&R）",
       "de": "Als &Administrator ausführen",
       "ja": "管理者として実行(&R)",
+      "es": "&Ejecutar como administrador",
       "id": 1547 }
     ,
     "cbRunAsNetOnly": {
@@ -7254,6 +7453,7 @@
       "ru": "Использовать учетные данные только для сетевых ресурсов",
       "de": "Verwende Anmeldedaten &nur für Netzwerkressourcen",
       "ja": "ネットワークリソースにのみ資格情報を使用する(&y)",
+      "es": "Usar credenciales sólo para recursos de &red",
       "id": 1651 }
     ,
     "cbRunAsRestricted": {
@@ -7262,6 +7462,7 @@
       "zh": "受限的（&d）当前用户",
       "de": "Eingeschränkte Benutzerrechte",
       "ja": "現在のユーザーの制限(&d)",
+      "es": "Usuario actual restringi&do",
       "id": 1650 }
     ,
     "cbRunInNewWindow": {
@@ -7270,6 +7471,7 @@
       "_zh": "新建（&w）窗口",
       "de": "Neues &Fenster erstellen",
       "ja": "新しいウィンドウを作成する(&w)",
+      "es": "Crear nueva &ventana",
       "id": 2330 }
     ,
     "cbSafeFarClose": {
@@ -7278,6 +7480,7 @@
       "zh": "安全关闭Far",
       "de": "Siches Schließen von Far",
       "ja": "セーフFarクローズ",
+      "es": "Cerrar de forma segura Far",
       "id": 1654 }
     ,
     "cbScrollbarDynamic": {
@@ -7285,6 +7488,7 @@
       "ru": "Диапазон динамической прокрутки (буфер обратной прокрутки)",
       "de": "Dynamischer Scrollbereich (Rückscrollpuffer)",
       "ja": "ダイナミックスクロールバー範囲(バックスクロールバッファ)",
+      "es": "Rango dinámico de barra de scroll (buffer)",
       "id": 3090 }
     ,
     "cbSendAltEsc": {
@@ -7293,6 +7497,7 @@
       "zh": "Alt+Esc",
       "de": "Alt+Esc",
       "ja": "Alt+Esc",
+      "es": "Alt+Esc",
       "id": 1778 }
     ,
     "cbSendAltPrintScrn": {
@@ -7301,6 +7506,7 @@
       "zh": "Alt+PrScrn",
       "de": "Alt+Druck",
       "ja": "Alt+PrScrn",
+      "es": "Alt+ImprPant",
       "id": 1779 }
     ,
     "cbSendAltTab": {
@@ -7309,6 +7515,7 @@
       "zh": "Alt+Tab",
       "de": "Alt+Tab",
       "ja": "Alt+Tab",
+      "es": "Alt+Tab",
       "id": 1777 }
     ,
     "cbSendCtrlEsc": {
@@ -7317,6 +7524,7 @@
       "zh": "Ctrl+Esc",
       "de": "Strg+Esc",
       "ja": "Ctrl+Esc",
+      "es": "Ctrl+Esc",
       "id": 1781 }
     ,
     "cbSendPrintScrn": {
@@ -7325,6 +7533,7 @@
       "zh": "PrntScrn",
       "de": "Druck",
       "ja": "PrntScrn",
+      "es": "ImprPant",
       "id": 1780 }
     ,
     "cbShellNoZoneCheck": {
@@ -7333,6 +7542,7 @@
       "zh": "没有区域检查",
       "de": "Keine Zonenprüfung",
       "ja": "ゾーンチェックなし",
+      "es": "No comprobar zona",
       "id": 1725 }
     ,
     "cbShowFarWindows": {
@@ -7341,6 +7551,7 @@
       "zh": "Far窗口",
       "de": "Far-Fenster",
       "ja": "Farウィンドウ",
+      "es": "Ventanas Far",
       "id": 2053 }
     ,
     "cbShowHelpTooltips": {
@@ -7349,6 +7560,7 @@
       "zh": "显示气球帮助提示",
       "de": "Zeige Sprechblasen mit Kurzinformationen",
       "ja": "バルーンヘルプツールチップを表示する",
+      "es": "Mostrar bocadillos de ayuda",
       "id": 2592 }
     ,
     "cbShowStatusBar": {
@@ -7357,6 +7569,7 @@
       "zh": "显示状态栏",
       "de": "Zeige Statusleiste",
       "ja": "ステータスバーを表示",
+      "es": "Mostrar barra de estado",
       "id": 2262 }
     ,
     "cbShowWasHiddenMsg": {
@@ -7365,6 +7578,7 @@
       "zh": "在任务栏状态区域显示“... 被隐藏”警告",
       "de": "Zeige '... wurde versteckt'-Warnung im Infobereich",
       "ja": "'...隠された' TSAの警告を表示",
+      "es": "Mostrar aviso '... estaba oculto' en zona notificación",
       "id": 2435 }
     ,
     "cbShowWasSetOnTopMsg": {
@@ -7373,6 +7587,7 @@
       "zh": "显示“...置顶ConEmu。 恢复？” 确认框",
       "de": "Zeige '... holte ConEmu in den Vordergrund. Rückgängig?'-Bestätigungsdialog",
       "ja": "'... ConEmu OnTopをもたらした.復帰？ '確認ボックスを表示",
+      "es": "Mostrar confirmación '... trajo ConEmu al frente. ¿Deshacer?'",
       "id": 2854 }
     ,
     "cbSingleInstance": {
@@ -7381,6 +7596,7 @@
       "zh": "单实例模式（使用现有窗口而不是运行新实例）",
       "de": "Einzelinstanzmodus (verwendet vorhandene Fenster, anstatt neue Instanzen zu starten)",
       "ja": "シングルインスタンスモード (新しいインスタンスを実行する代わりに既存のウィンドウを使用)",
+      "es": "Instancia única (usar la ventana existente en vez de crear una nueva instancia)",
       "id": 2578 }
     ,
     "cbSkipActivation": {
@@ -7389,6 +7605,7 @@
       "zh": "激活时跳过点击",
       "de": "Ignoriere Klick bei Aktivierung",
       "ja": "アクティブ化をスキップする",
+      "es": "Saltar click al activar",
       "id": 1542 }
     ,
     "cbSkipFocusEvents": {
@@ -7397,6 +7614,7 @@
       "zh": "跳过焦点事件（FOCUS_EVENT不发送到控制台，对于Far Manager有用）",
       "de": "Ignoriere Fokusereignisse (Sendet kein FOCUS_EVENT an die Konsole, nützlich bei Verwendung von Far-Manager)",
       "ja": "フォーカスイベントをスキップします(コンソールFOCUS_EVENTには送信しないでください,Far Managerで便利です)",
+      "es": "Saltar eventos de foco (no enviar FOCUS_EVENT al terminal, útil con Far Manager)",
       "id": 1538 }
     ,
     "cbSkipMove": {
@@ -7405,6 +7623,7 @@
       "zh": "跳过背景鼠标事件",
       "de": "Ignoriere Mausereignisse im Hintergrund",
       "ja": "バックグランドのマウスイベントをスキップする",
+      "es": "Saltar eventos del ratón en el fondo",
       "id": 1543 }
     ,
     "cbSleepInBackground": {
@@ -7413,6 +7632,7 @@
       "zh": "在后端Sleep",
       "de": "Im Hintergrund schlafen",
       "ja": "バックグラウンドでスリープ",
+      "es": "Dormir en el fondo",
       "id": 1721 }
     ,
     "cbSnapToDesktopEdges": {
@@ -7421,6 +7641,7 @@
       "zh": "快闪至桌面边缘",
       "de": "An Desktop-Kanten fangen",
       "ja": "デスクトップの端にスナップ",
+      "es": "Anclar a bordes del escritorio",
       "id": 2403 }
     ,
     "cbStartFarRestoreEditors": {
@@ -7429,6 +7650,7 @@
       "zh": "Far编辑器/视图也",
       "de": "auch Far-Editoren/-Betrachter",
       "ja": "Far エディタ/ビュー",
+      "es": "También editores/visores Far",
       "id": 2238 }
     ,
     "cbStartFarRestoreFolders": {
@@ -7437,6 +7659,7 @@
       "zh": "Far文件夹也",
       "de": "auch Far-Ordner",
       "ja": "Farフォルダ",
+      "es": "También carpetas Far",
       "id": 2237 }
     ,
     "cbStatusHorzSep": {
@@ -7445,6 +7668,7 @@
       "zh": "水平",
       "de": "Horizontal",
       "ja": "水平",
+      "es": "Horizontal",
       "id": 2422 }
     ,
     "cbStatusSystemColors": {
@@ -7453,6 +7677,7 @@
       "zh": "系统颜色",
       "de": "Systemfarben",
       "ja": "システムカラー",
+      "es": "Colores del sistema",
       "id": 2496 }
     ,
     "cbStatusVertPad": {
@@ -7461,6 +7686,7 @@
       "zh": "使用垂直填充",
       "de": "Verwende vertikal. Auffüllen",
       "ja": "垂直パディングを使用する",
+      "es": "Usar espaciado vertical",
       "id": 2615 }
     ,
     "cbStatusVertSep": {
@@ -7469,6 +7695,7 @@
       "zh": "垂直",
       "de": "Vertikal",
       "ja": "垂直",
+      "es": "Vertical",
       "id": 2421 }
     ,
     "cbSuppressBells": {
@@ -7477,6 +7704,7 @@
       "_zh": "抑制bell声",
       "de": "Unterdrücke Beeps",
       "ja": "鐘を鳴らさない(ビープ音)",
+      "es": "Eliminar timbres (beeps)",
       "id": 2598 }
     ,
     "cbTabLazy": {
@@ -7485,6 +7713,7 @@
       "zh": "懒人标签开关",
       "de": "Bequem. Reiterwechsel",
       "ja": "Lazyタブスイッチ",
+      "es": "Cambio de pestaña 'lazy'",
       "id": 1532 }
     ,
     "cbTabRecent": {
@@ -7493,6 +7722,7 @@
       "zh": "最近模式",
       "de": "'Kürzlich'-Modus",
       "ja": "最近使った モード",
+      "es": "Modo reciente",
       "id": 1533 }
     ,
     "cbTabSelf": {
@@ -7501,6 +7731,7 @@
       "zh": "内部Ctrl+Tab",
       "de": "Internes Strg+Tag",
       "ja": "内部Ctrl+Tab",
+      "es": "Ctrl+Tab interno",
       "id": 1531 }
     ,
     "cbTabsLocationBottom": {
@@ -7509,6 +7740,7 @@
       "zh": "标签在底部",
       "de": "Reiter unten",
       "ja": "タブを下に表示",
+      "es": "Pestañas abajo",
       "id": 2481 }
     ,
     "cbTaskbarOverlay": {
@@ -7517,6 +7749,7 @@
       "zh": "显示覆盖图标（win7或更高）",
       "de": "Zeige Überdeckungssymbol (Win7 und neuer)",
       "ja": "オーバーレイアイコン(Win7以上)",
+      "es": "Mostrar icono superpuesto (Win7 o posterior)",
       "id": 2491 }
     ,
     "cbTaskbarProgress": {
@@ -7525,6 +7758,7 @@
       "zh": "显示进度指示器（win7或更高）",
       "de": "Zeige Fortschrittsanzeige (Win7 und neuer)",
       "ja": "進行状況インジケータを表示(Win7以上)",
+      "es": "Mostrar indicador de progreso (Win7 o posterior)",
       "id": 2656 }
     ,
     "cbThumbCacheFolder": {
@@ -7533,6 +7767,7 @@
       "zh": "选择...",
       "de": "Auswählen...",
       "ja": "選択...",
+      "es": "Seleccionar...",
       "id": 1691 }
     ,
     "cbThumbLoadFiles": {
@@ -7541,6 +7776,7 @@
       "zh": "文件加载预览",
       "de": "Lade Vorschau für Dateien",
       "ja": "ファイルのプレビューを読み込む",
+      "es": "Cargar previsualización de archivos",
       "id": 1664 }
     ,
     "cbThumbLoadFolders": {
@@ -7549,6 +7785,7 @@
       "zh": "子文件夹中加载预览",
       "de": "Lade Vorschau in Unterordnern",
       "ja": "サブフォルダにプレビューをロードする",
+      "es": "Cargar previsualización de carpetas",
       "id": 1663 }
     ,
     "cbThumbPreviewBox": {
@@ -7557,6 +7794,7 @@
       "zh": "预览框",
       "de": "Dialogvorschau",
       "ja": "プレビューフレーム",
+      "es": "Marco de previsualización",
       "id": 1667 }
     ,
     "cbThumbRestoreOnStartup": {
@@ -7565,6 +7803,7 @@
       "zh": "恢复Far启动",
       "de": "Wiederherst. beim Starten von Far",
       "ja": "起動時にFarを復元",
+      "es": "Restaurar al iniciar Far",
       "id": 1720 }
     ,
     "cbThumbSelectionBox": {
@@ -7573,6 +7812,7 @@
       "zh": "当前项目框架",
       "de": "Aktueller Eintragsdialog",
       "ja": "現在のアイテムフレーム",
+      "es": "Marco del elemento actual",
       "id": 1668 }
     ,
     "cbThumbUsePicView2": {
@@ -7581,6 +7821,7 @@
       "zh": "使用picview2用于预览",
       "de": "Verwende PicView2 für Vorschau",
       "ja": "プレビュー用にPicView2を使用する",
+      "es": "Usar PicView2 para previsualización",
       "id": 1680 }
     ,
     "cbTransparent": {
@@ -7589,6 +7830,7 @@
       "zh": "活动窗口透明度",
       "de": "Transparenz aktiver Fenster",
       "ja": "アクティブウィンドウの透明度",
+      "es": "Activar transparencia de ventanas",
       "id": 1574 }
     ,
     "cbTransparentSeparate": {
@@ -7597,6 +7839,7 @@
       "zh": "为不活动窗口使用单独的透明度",
       "de": "Verwende separaten Transparenzwert für inaktive Fenster",
       "ja": "非アクティブウィンドウに別の透明度値を使用する",
+      "es": "Usar otro valor de transparencia para ventana inactiva",
       "id": 2381 }
     ,
     "cbTrueColorer": {
@@ -7605,6 +7848,7 @@
       "zh": "TrueMod（24位色）的支持",
       "de": "TrueMod-(24Bit-Farbe)-Unterstützung",
       "ja": "TrueMod(24ビットカラー)のサポート",
+      "es": "Soporte TrueMod (color 24bit)",
       "id": 1578 }
     ,
     "cbTryToCenter": {
@@ -7613,6 +7857,7 @@
       "zh": "使控制台位于ConEmu工作空间中心",
       "de": "Zentriere Konsole im ConEmu-Arbeitsbereich",
       "ja": "ConEmuワークスペースのセンターコンソール",
+      "es": "Centrar terminal en el área de ConEmu",
       "id": 1570 }
     ,
     "cbUnicodeRangesApply": {
@@ -7621,6 +7866,7 @@
       "zh": "应用",
       "de": "Anwenden",
       "ja": "適用",
+      "es": "Aplicar",
       "id": 2838 }
     ,
     "cbUpdateCheck": {
@@ -7629,6 +7875,7 @@
       "zh": "应用 && 检查",
       "de": "Anwenden && Prüfen",
       "ja": "適用 && 確認",
+      "es": "Aplicar && Comprobar",
       "id": 2877 }
     ,
     "cbUpdateCheckHourly": {
@@ -7637,6 +7884,7 @@
       "zh": "每小时",
       "de": "Stündlich",
       "ja": "毎時",
+      "es": "Cada hora",
       "id": 2067 }
     ,
     "cbUpdateCheckOnStartup": {
@@ -7645,6 +7893,7 @@
       "zh": "启动时",
       "de": "Systemstart",
       "ja": "起動",
+      "es": "Inicio",
       "id": 2058 }
     ,
     "cbUpdateConfirmDownload": {
@@ -7653,6 +7902,7 @@
       "zh": "仅在任务栏状态区域通知",
       "de": "Nur Infobereichsbenachrichtigung",
       "ja": "TSA通知のみ",
+      "es": "Sólo zona notificación",
       "id": 2068 }
     ,
     "cbUpdateInetTool": {
@@ -7661,6 +7911,7 @@
       "zh": "外部下载器",
       "de": "Externer Downloader",
       "ja": "外部ダウンローダ",
+      "es": "Descargar externamente",
       "id": 2856 }
     ,
     "cbUpdateLeavePackages": {
@@ -7669,6 +7920,7 @@
       "zh": "保留下载的软件包",
       "de": "Heruntergeladene Pakete behalten",
       "ja": "ダウンロードしたパッケージを残す",
+      "es": "Mantener paquetes descargados",
       "id": 2065 }
     ,
     "cbUpdateUseProxy": {
@@ -7677,6 +7929,7 @@
       "zh": "代理",
       "de": "Proxy",
       "ja": "プロキシ",
+      "es": "Proxy",
       "id": 2059 }
     ,
     "cbUseAltGrayPlus": {
@@ -7684,6 +7937,7 @@
       "ru": "Alt+NumpadAdd - юникод в шестнадцатеричном формате",
       "de": "Alt+NumPad-Plus - Unicode Hex-Codebasis",
       "ja": "Alt+NumpadAdd - unicode 16進コードベース",
+      "es": "Alt+TeclNúmSuma - código unicode hexadecimal",
       "id": 3061 }
     ,
     "cbUseClink": {
@@ -7692,6 +7946,7 @@
       "zh": "命令行提示符里使用Clink",
       "de": "Verwende Clink in der Eingabeaufforderung",
       "ja": "プロンプトでClinkを使う",
+      "es": "Usar Clink en símbolo de sistema",
       "id": 2418 }
     ,
     "cbUseCurrentSizePos": {
@@ -7700,6 +7955,7 @@
       "zh": "显示 && 储存当前窗口的大小和位置",
       "de": "Zeige && Speichere aktuelle Fenstergröße und -position",
       "ja": "カレントウィンドウのサイズと位置を保存して表示する",
+      "es": "Mostrar && almacenar la posición y tamaño de la ventana",
       "id": 2417 }
     ,
     "cbUseInjects": {
@@ -7708,6 +7964,7 @@
       "zh": "注入ConEmuHk",
       "de": "Einschleusen von ConEmuHk",
       "ja": "ConEmuHk を注入する",
+      "es": "Inyectar ConEmuHk",
       "id": 1752 }
     ,
     "cbUseKeyboardHooksFast": {
@@ -7716,6 +7973,7 @@
       "_zh": "安装键盘hooks （被Win+Number, Win+Tab, PrntScrn等等所需要）",
       "de": "Unterstütze spezielle Tastenkürzel (Win+Zahl, Win+Tab, Druck, usw.)",
       "ja": "スペシャルホットキーのサポート (Win+Num, Win+Tab, PrntScrn など)",
+      "es": "Soporte de combinaciones especiales (Win+Número, Win+Tab, ImprPant, ...)",
       "id": 2086 }
     ,
     "cbUserScreenTransparent": {
@@ -7724,6 +7982,7 @@
       "zh": "‘用户屏幕’ 透明度 （Far Manager的特征）",
       "de": "'Benutzerbildschirm'-Transparenz (Far-Manager-Funktion)",
       "ja": "'ユーザー画面'の透過性(Far Manager 機能)",
+      "es": "Transparencia 'pantalla de usuario' (opción de Far Manager)",
       "id": 1573 }
     ,
     "cbUseWinArrows": {
@@ -7732,6 +7991,7 @@
       "zh": "Win+箭头-调整窗口大小",
       "de": "Win+Pfeile - Fenstergröße anpassen",
       "ja": "勝利矢印 - ウィンドウのサイズ変更",
+      "es": "Win+Cursores - redimensionar ventana",
       "id": 1768 }
     ,
     "cbUseWinNumber": {
@@ -7740,6 +8000,7 @@
       "zh": "Win+数字 - 激活控制台（console）",
       "de": "Win+Zahl - Aktiviere Konsole",
       "ja": "勝つ数 - コンソールをアクティブにする",
+      "es": "Win+Número - activar terminal",
       "id": 1648 }
     ,
     "cbUseWinTab": {
@@ -7748,6 +8009,7 @@
       "zh": "Win+Tab - 切换控制台consoles （标签页）",
       "de": "Win+Tab - Wechsle zwischen Konsolen (-Reitern)",
       "ja": "Winタブ - スイッチコンソール(タブ)",
+      "es": "Win+Tab - cambiar terminal (pestañas)",
       "id": 1764 }
     ,
     "cbVisible": {
@@ -7756,6 +8018,7 @@
       "zh": "显示真实控制台",
       "de": "Zeige echte Konsole",
       "ja": "実際のコンソールを表示する",
+      "es": "Mostrar terminal real",
       "id": 1545 }
     ,
     "cbVividColors": {
@@ -7763,6 +8026,7 @@
       "ru": "Регулировать яркость неразличимого текста",
       "de": "Passe Stärke ununterscheidbaren Textes an",
       "ja": "区別できないテキストの明るさを調整する",
+      "es": "Ajustar claridad de texto ilegible",
       "id": 3056 }
     ,
     "gbActivityLog": {
@@ -7771,15 +8035,8 @@
       "zh": "Shell活动",
       "de": "Shell-Aktivität",
       "ja": "シェルの活動",
+      "es": "Actividad de línea de comandos",
       "id": 1744 }
-    ,
-    "gbAddToPath": {
-      "en": "Add to %PATH% environment variable",
-      "ru": "Добавить в переменную %PATH%",
-      "zh": "添加到%PATH%环境变量",
-      "de": "Zur %PATH%-Umgebungsvariable hinzufügen",
-      "ja": "%PATH%環境変数に追加する",
-      "id": 2974 }
     ,
     "gbAlphaTransparency": {
       "en": "Alpha transparency",
@@ -7787,6 +8044,7 @@
       "zh": "Alpha透明度",
       "de": "Alpha-Transparenz",
       "ja": "アルファ透明度",
+      "es": "Transparencia alfa",
       "id": 2936 }
     ,
     "gbAnsiSecureExec": {
@@ -7794,6 +8052,7 @@
       "ru": "Разрешить выполнение GuiMacro и Process",
       "de": "Erlaube GuiMakro und Prozessausführung",
       "ja": "GuiMacroとプロセスの実行を許可する",
+      "es": "Permitir ejecución de GuiMacro y Process",
       "id": 3063 }
     ,
     "gbAnsiSequences": {
@@ -7801,6 +8060,7 @@
       "ru": "Последовательности ANSI",
       "de": "ANSI-Sequenzen",
       "ja": "ANSIシーケンス",
+      "es": "Secuencias ANSI",
       "id": 3072 }
     ,
     "gbAntiAliasing": {
@@ -7809,6 +8069,7 @@
       "zh": "抗锯齿",
       "de": "Kantenglättung",
       "ja": "アンチエイリアシング",
+      "es": "Anti-aliasing",
       "id": 2677 }
     ,
     "gbAppDistinct": {
@@ -7817,6 +8078,7 @@
       "zh": "应用不同的设置",
       "de": "Anwendungsspezifische Einstellungen",
       "ja": "アプリケーションの個別設定",
+      "es": "Opciones de otras aplicaciones",
       "id": 2317 }
     ,
     "gbChildGui": {
@@ -7824,6 +8086,7 @@
       "ru": "ChildGui в ConEmu (mintty, PuTTY, и т.п.)",
       "de": "Tochter-GUI in ConEmu (mintty, PuTTY, usw.)",
       "ja": "ConEmuのChildGui(ミント,パティなど)",
+      "es": "GUI hijo en ConEmu (mintty, PuTTY, etc...)",
       "id": 3059 }
     ,
     "gbCmdAutoAttach": {
@@ -7832,6 +8095,7 @@
       "zh": "自动附加cmd && Tcc/Le到ConEmu （如果不存在ConEmu，会启动新的ConEmu窗口）",
       "de": "Automatisches Ankoppeln von CMD && TCC/LE an ConEmu (Falls nichts gefunden, wird neues Fenster gestartet)",
       "ja": "cmd&",
+      "es": "Anclar cmd automáticamente && Tcc/Le a ConEmu (se abrirá una nueva ventana si no hay)",
       "id": 2955 }
     ,
     "gbCmdTasks": {
@@ -7840,6 +8104,7 @@
       "zh": "预定义的任务（命令组）（&P）",
       "de": "&Vordefinierte Aufgaben (Befehlsgruppen)",
       "ja": "定義済みのタスク(コマンドグループ)(&P)",
+      "es": "Tareas &predefinidas (grupos de comandos)",
       "id": 2115 }
     ,
     "gbCmdTasks7": {
@@ -7848,6 +8113,7 @@
       "zh": "Windows 7任务栏（跳转列表）",
       "de": "Windows 7-Taskleiste (Sprungbefehle)",
       "ja": "Windows 7のタスクバー(ジャンプリスト)",
+      "es": "Barra de tareas de Windows 7",
       "id": 2134 }
     ,
     "gbColorEnhancement": {
@@ -7856,6 +8122,7 @@
       "zh": "图形增强",
       "de": "Grafikverbesserung",
       "ja": "グラフィックの強化",
+      "es": "Mejoras gráficas",
       "id": 2928 }
     ,
     "gbComspec": {
@@ -7864,6 +8131,7 @@
       "zh": "使用的命令处理器",
       "de": "Verwendeten Befehlsprozesser",
       "ja": "使用されているコマンドプロセッサ",
+      "es": "Intérprete de comandos usado",
       "id": 2155 }
     ,
     "gbComspecBits": {
@@ -7872,6 +8140,7 @@
       "zh": "选择首选的命令处理器平台（bits）",
       "de": "Bevorzugte Prozesserplattform (Bits) auswählen",
       "ja": "優先コマンドプロセッサプラットフォーム(ビット)を選択する",
+      "es": "Elegir el intérprete de comandos de la plataforma",
       "id": 2156 }
     ,
     "gbConfirmActions": {
@@ -7880,6 +8149,7 @@
       "zh": "确认动作",
       "de": "Rückfrage bei Aktionen",
       "ja": "アクションを確認する",
+      "es": "Confirmar acciones",
       "id": 2686 }
     ,
     "gbConfirmClose": {
@@ -7888,6 +8158,7 @@
       "zh": "关闭确认",
       "de": "Rückfragen beim Schließen",
       "ja": "確認を閉じる",
+      "es": "Confirmación de cerrado",
       "id": 2756 }
     ,
     "gbConfirmCloseFar": {
@@ -7896,6 +8167,7 @@
       "zh": "Far Manager",
       "de": "Far-Manager",
       "ja": "Far Manager",
+      "es": "Far Manager",
       "id": 2759 }
     ,
     "gbConfirmMisc": {
@@ -7904,6 +8176,7 @@
       "zh": "其他",
       "de": "Verschiedenes",
       "ja": "雑",
+      "es": "Miscelánea",
       "id": 2687 }
     ,
     "gbConsoleBuffer": {
@@ -7912,6 +8185,7 @@
       "zh": "Console缓存高度",
       "de": "Zeilenpuffer",
       "ja": "コンソールバッファの高さ",
+      "es": "Altura del buffer del terminal",
       "id": 2894 }
     ,
     "gbCopyingOverride": {
@@ -7920,6 +8194,7 @@
       "zh": "覆盖复制文本",
       "de": "Text kopieren überschreiben",
       "ja": "テキストの上書きのコピー",
+      "es": "Invalidar copiado de texto",
       "id": 2348 }
     ,
     "gbCtrlIntercept": {
@@ -7928,6 +8203,7 @@
       "_zh": "拦截按键",
       "de": "Tastenkürzel werden verarbeitet",
       "ja": "ホットキー処理",
+      "es": "Procesado de combinaciones de teclas",
       "id": 3017 }
     ,
     "gbCtrlMisc": {
@@ -7936,6 +8212,7 @@
       "zh": "其他",
       "de": "Verschiedenes",
       "ja": "雑",
+      "es": "Miscelánea",
       "id": 3019 }
     ,
     "gbCtrlMouse": {
@@ -7944,6 +8221,7 @@
       "zh": "鼠标选项",
       "de": "Mauseinstellungen",
       "ja": "マウスオプション",
+      "es": "Opciones del ratón",
       "id": 3016 }
     ,
     "gbCtrlMouseBtns": {
@@ -7952,6 +8230,7 @@
       "zh": "鼠标按钮行为",
       "de": "Maustastenaktionen",
       "ja": "マウスボタンの操作",
+      "es": "Acciones de botones del ratón",
       "id": 3021 }
     ,
     "gbCtrlPrompt": {
@@ -7960,6 +8239,7 @@
       "zh": "读行功能增强（command prompt, ReadConsoleW）",
       "de": "Eingabezeilenerweiterungen (Befehls-Prompt, ReadConsoleW)",
       "ja": "Read Line Enhancements(コマンドプロンプト,ReadConsoleW)",
+      "es": "Mejoras de lectura de línea (símbolo del sistema, ReadConsoleW)",
       "id": 3020 }
     ,
     "gbCtrlSeizeKeys": {
@@ -7968,6 +8248,7 @@
       "zh": "抓取按键 / 发送至控制台",
       "de": "Tastendrücke einfangen / An Konsole senden",
       "ja": "キーを押す/コンソールに送信",
+      "es": "Interceptar teclas / Enviar a terminal",
       "id": 3018 }
     ,
     "gbCursorActive": {
@@ -7976,6 +8257,7 @@
       "zh": "活动控制台的文本光标",
       "de": "Schreibmarke der aktiven Konsole",
       "ja": "アクティブなコンソールのテキストカーソル",
+      "es": "Cursor del terminal activo",
       "id": 2913 }
     ,
     "gbDefaultTermConfClose": {
@@ -7984,6 +8266,7 @@
       "zh": "确认关闭（按下回车键或ESC键关闭控制台）",
       "de": "Rückfrage beim Schließen (Enter oder Esc drücken um Konsole zu schließen)",
       "ja": "閉じるを確認する(EnterまたはEscを押してコンソールを閉じる)",
+      "es": "Confirmar cierre (pulsar Enter o Esca para cerrar terminal)",
       "id": 2660 }
     ,
     "gbDefTerm": {
@@ -7992,6 +8275,7 @@
       "zh": "警告！！！ 启用此选项会导致杀毒软件假的警报！！！",
       "de": "WARNUNG!!! Das Aktivieren dieser Option kann zu Fehlalarmen von Antivirenprogrammen führen!!!",
       "ja": "警告！！！このオプションを有効にすると,ウイルス対策プログラムで誤ったアラームが発生する可能性があります.",
+      "es": "¡¡¡AVISO!!! ¡Activar esta opción puede causar falsas alarmas en los antivirus!",
       "id": 2926 }
     ,
     "gbFarDragDrop": {
@@ -8000,6 +8284,7 @@
       "zh": "Shell风格的拖放 （仅Far Manager）",
       "de": "Shell-artiges Ziehen-und-Ablegen (nur Far-Manager)",
       "ja": "シェルスタイルのドラッグ&ドロップ(Far Managerのみ)",
+      "es": "Estilo de arrastrar y soltar (sólo Far Manager)",
       "id": 2957 }
     ,
     "gbFarMacros": {
@@ -8008,6 +8293,7 @@
       "zh": "Far Manager的宏",
       "de": "Far-Manager Makros",
       "ja": "Far Manager マクロ",
+      "es": "Macros de Far Manager",
       "id": 2965 }
     ,
     "gbFarOptions": {
@@ -8016,6 +8302,7 @@
       "zh": "Far Manager选项",
       "de": "Far-Manager Einstellungen",
       "ja": "Far Manager オプション",
+      "es": "Opciones de Far Manager",
       "id": 2958 }
     ,
     "gbFarPanelViews": {
@@ -8024,6 +8311,7 @@
       "zh": "Far面板视图",
       "de": "Far-Panel Ansichten",
       "ja": "Farパネルビュー",
+      "es": "Vistar del panel de Far",
       "id": 2992 }
     ,
     "gbFarPreviewBg": {
@@ -8032,6 +8320,7 @@
       "zh": "预览背景",
       "de": "Hintergrundvorschau",
       "ja": "プレビューの背景",
+      "es": "Previsualizar fondo",
       "id": 3005 }
     ,
     "gbFarTabTemplates": {
@@ -8040,6 +8329,7 @@
       "zh": "标签页（Tab）模版",
       "de": "Reiter-Vorlagen",
       "ja": "タブテンプレート",
+      "es": "Plantillas de pestaña",
       "id": 2959 }
     ,
     "gbFarThumbnails": {
@@ -8048,6 +8338,7 @@
       "zh": "缩略图模式",
       "de": "Miniaturansichtenmodus",
       "ja": "サムネイルモード",
+      "es": "Modo miniaturas",
       "id": 2993 }
     ,
     "gbFarTiles": {
@@ -8056,6 +8347,7 @@
       "zh": "Tiles模式",
       "de": "Kachelmodus",
       "ja": "タイルモード",
+      "es": "Modo baldosas",
       "id": 2994 }
     ,
     "gbFeatureAppear": {
@@ -8064,6 +8356,7 @@
       "zh": "外观",
       "de": "Erscheinungsbild",
       "ja": "外観",
+      "es": "Aspecto",
       "id": 2164 }
     ,
     "gbFeatureCaption": {
@@ -8072,6 +8365,7 @@
       "zh": "标题栏（标题）和边框选项",
       "de": "Titelleisten- und Ränder-Einstellungen",
       "ja": "タイトルバー (キャプション) と境界オプション",
+      "es": "Opciones de barra de título y borde",
       "id": 2165 }
     ,
     "gbFeatureClipboard": {
@@ -8080,6 +8374,7 @@
       "zh": "粘贴文本行为（Far Manager除外）",
       "de": "Text-Einfügeverhalten (ausgenommen Far-Manager)",
       "ja": "テキストの動作を貼り付ける(Far Managerを除く)",
+      "es": "Comportamiento pegado de texto (no afecta a Far Manager)",
       "id": 2166 }
     ,
     "gbFeatureDebug": {
@@ -8088,6 +8383,7 @@
       "zh": "调试选项",
       "de": "Fehlersuchoptionen",
       "ja": "デバッグオプション",
+      "es": "Opciones de depuración",
       "id": 2747 }
     ,
     "gbFeatureInConsole": {
@@ -8096,6 +8392,7 @@
       "zh": "控制台内部选项",
       "de": "Einstellungen für innerhalb der Konsole",
       "ja": "コンソール内のオプション",
+      "es": "Opciones en-terminal",
       "id": 2746 }
     ,
     "gbFeatureMisc": {
@@ -8104,6 +8401,7 @@
       "zh": "杂项选项",
       "de": "Verschiedene Einstellungen",
       "ja": "その他のオプション",
+      "es": "Otras opciones",
       "id": 2163 }
     ,
     "gbFeatureRetard": {
@@ -8112,6 +8410,7 @@
       "zh": "CPU消耗",
       "de": "CPU-Last",
       "ja": "CPU消費",
+      "es": "Consumo de CPU",
       "id": 2748 }
     ,
     "gbFindText": {
@@ -8120,6 +8419,7 @@
       "zh": "查找选项（&F）",
       "de": "Suchoptionen",
       "ja": "オプションを探す(&F)",
+      "es": "Opciones de &búsqueda",
       "id": 2229 }
     ,
     "gbHighlightRowCol": {
@@ -8128,6 +8428,7 @@
       "zh": "高亮行/列",
       "de": "Hervorhebung der Zeilen/Spalten",
       "ja": "行/列を強調表示する",
+      "es": "Resaltar filas/columnas",
       "id": 2973 }
     ,
     "gbHotkeys": {
@@ -8136,6 +8437,7 @@
       "zh": "热键，修改器，宏",
       "de": "Tastenkürzel, Modifizierer, Makros",
       "ja": "ホットキー, モデファイヤ, マクロ",
+      "es": "Combinaciones, modificadores, macros",
       "id": 3014 }
     ,
     "gbHyperlinks": {
@@ -8144,6 +8446,7 @@
       "zh": "超链接和编译错误（转到编辑器）",
       "de": "Hyperlinks und Compiler-Fehler (GeheZu Editor)",
       "ja": "ハイパーリンクとコンパイラエラー(gotoエディタ)",
+      "es": "Hipervínculos y errores de compilador (ir al editor)",
       "id": 2972 }
     ,
     "gbInfoCmdLine": {
@@ -8152,6 +8455,7 @@
       "zh": "当前命令行",
       "de": "Aktuelle Befehlszeile",
       "ja": "カレントコマンドライン",
+      "es": "Línea de comando actual",
       "id": 2944 }
     ,
     "gbInfoProcesses": {
@@ -8160,6 +8464,7 @@
       "zh": "进程",
       "de": "Prozesse",
       "ja": "プロセス",
+      "es": "Procesos",
       "id": 2942 }
     ,
     "gbInfoSizes": {
@@ -8168,6 +8473,7 @@
       "zh": "大小",
       "de": "Größen",
       "ja": "サイズ",
+      "es": "Tamaños",
       "id": 2943 }
     ,
     "gbIntgrHere": {
@@ -8176,6 +8482,7 @@
       "zh": "这里打开ConEmu - Explorer右键菜单集成",
       "de": "ConEmu - Explorer-Kontextmenü-Integration",
       "ja": "ConEmu Here  -  Explorerのコンテキストメニューの統合",
+      "es": "Abrir ConEmu aquí - integración menú contextual del Explorador",
       "id": 2915 }
     ,
     "gbIntgrInside": {
@@ -8184,6 +8491,7 @@
       "zh": "里面打开ConEmu - Explorer右键菜单集成",
       "de": "ConEmu-Intern - Explorer-Kontextmenü-Integration",
       "ja": "ConEmu Inside -  Explorerのコンテキストメニューの統合",
+      "es": "ConEmu dentro - integración menú contextual del Explorador",
       "id": 2916 }
     ,
     "gbMainConFont": {
@@ -8192,6 +8500,7 @@
       "zh": "控制台主要字体",
       "de": "Hauptschriftart",
       "ja": "メイン コンソール フォント",
+      "es": "Tipo de letra de terminal principal",
       "id": 2678 }
     ,
     "gbMinimizeAction": {
@@ -8200,6 +8509,7 @@
       "zh": "自动最小化ConEmu",
       "de": "Minimiere ConEmu automatisch",
       "ja": "自動的にConEmuを最小化する",
+      "es": "Minimizar ConEmu automáticamente",
       "id": 2911 }
     ,
     "gbMinimizeOnEsc": {
@@ -8208,6 +8518,7 @@
       "zh": "按下Esc时最小化",
       "de": "Minimieren wenn Esc gedrückt",
       "ja": "Escを押したときに最小化",
+      "es": "Minimizar cuando se pulse Esc",
       "id": 2912 }
     ,
     "gbNtvdm": {
@@ -8216,6 +8527,7 @@
       "zh": "DOS应用程序（ntvdm）",
       "de": "DOS-Anwendungen (ntvdm)",
       "ja": "DOSアプリケーション (ntvdm)",
+      "es": "Aplicación DOS (ntvdm)",
       "id": 2895 }
     ,
     "gbPasteConfirm": {
@@ -8224,6 +8536,7 @@
       "zh": "确认关键行为",
       "de": "Rückfrage bei kritischen Aktionen",
       "ja": "重要なアクションは実行前に確認",
+      "es": "Confirmar acciones críticas",
       "id": 3049 }
     ,
     "gbPasteM1": {
@@ -8232,6 +8545,7 @@
       "zh": "粘贴模式 #1 （Shift+Ins）",
       "de": "Einfügenmodus #1 (Umslt+Einfg)",
       "ja": "ペーストモード #1 (Shift+Ins)",
+      "es": "Modo de pegado #1 (Shift+Ins)",
       "id": 3047 }
     ,
     "gbPasteM2": {
@@ -8240,6 +8554,7 @@
       "zh": "粘贴模式 #2 （Ctrl+V）",
       "de": "Einfügenmodus #2 (Strg+V)",
       "ja": "ペーストモード #2 (Ctrl+V)",
+      "es": "Modo de pegado #2 (Ctrl+V)",
       "id": 3048 }
     ,
     "gbPerformance": {
@@ -8248,6 +8563,7 @@
       "zh": "性能计数器",
       "de": "Leistungszähler",
       "ja": "パフォーマンスカウンター",
+      "es": "Indicadores de rendimiento",
       "id": 1400 }
     ,
     "gbPromptOverride": {
@@ -8256,6 +8572,7 @@
       "zh": "覆盖Prompt",
       "de": "Prompt überschreiben",
       "ja": "プロンプトを上書き",
+      "es": "Invalidar símbolo sistema",
       "id": 2347 }
     ,
     "gbQuakeFrame": {
@@ -8263,6 +8580,7 @@
       "ru": "Настройки рамки окна ConEmu",
       "de": "ConEmu-Fensteroptionen",
       "ja": "ConEmuウィンドウフレームオプション",
+      "es": "Opciones del marco de la ventana ConEmu",
       "id": 3058 }
     ,
     "gbQuakeStyle": {
@@ -8271,6 +8589,7 @@
       "zh": "Quake风格",
       "de": "Quake-Modus",
       "ja": "Quakeスタイル",
+      "es": "Modo Quake",
       "id": 2907 }
     ,
     "gbRecreateSplit": {
@@ -8279,6 +8598,7 @@
       "zh": "新建console分屏",
       "de": "Neue Konsolenteilung",
       "ja": "新しい分割コンソール",
+      "es": "Nueva división del terminal",
       "id": 2440 }
     ,
     "gbRestoreMinimize": {
@@ -8286,6 +8606,7 @@
       "ru": "Активация и минимизация",
       "de": "Aktivierung und Minimierung",
       "ja": "アクティベーションと最小化",
+      "es": "Activación y minimizar",
       "id": 3098 }
     ,
     "gbSelectColorIdx": {
@@ -8294,6 +8615,7 @@
       "zh": "颜色索引",
       "de": "Farbindizes",
       "ja": "カラーインデックス",
+      "es": "Índices de color",
       "id": 2976 }
     ,
     "gbSelectingOverride": {
@@ -8302,6 +8624,7 @@
       "zh": "使用箭头键开始选择",
       "de": "Auswahl mit Pfeiltasten beginnen",
       "ja": "矢印キーで選択を開始する",
+      "es": "Iniciar selección con cursores",
       "id": 2558 }
     ,
     "gbSelectKeyboard": {
@@ -8310,6 +8633,7 @@
       "zh": "使用键盘选择文本（Keys&Macro页面也有两个热键）",
       "de": "Text mit der Tastatur auswählen (Es gibt auch zwei Tastenkürzel auf der Tasten&Makros-Seite)",
       "ja": "キーボードでテキストを選択 (Keys&Macro ページには2つのホットキーもあります)",
+      "es": "Seleccionar texto con teclado (hay dos combinaciones en la página Teclas y Macro)",
       "id": 2980 }
     ,
     "gbSelectMouse": {
@@ -8318,6 +8642,7 @@
       "zh": "使用鼠标选择文本（LeftClick+Drag）",
       "de": "Text mit der Maus auswählen (Linksklick+Ziehen)",
       "ja": "マウスでテキストを選択する (右クリック+ドラッグ)",
+      "es": "Seleccionar texto con ratón (ClickIzq+Arrastrar)",
       "id": 2979 }
     ,
     "gbSetAlias": {
@@ -8326,6 +8651,7 @@
       "zh": "设置环境变量，cmd.exe的别名，代码页",
       "de": "Umgebungsvariablen, cmd.exe-Aliase, Zeichentabelle einrichten",
       "ja": "環境変数,cmd.exe エイリアス,コードページを設定する",
+      "es": "Configurar variables de entorno, alias de cmd.exe, página de códigos",
       "id": 2850 }
     ,
     "gbSettingsGeneral": {
@@ -8333,6 +8659,7 @@
       "ru": "Основные настройки",
       "de": "Allgemeine Einstellungen",
       "ja": "一般設定",
+      "es": "Opciones generales",
       "id": 3097 }
     ,
     "gbShowGeneric": {
@@ -8341,6 +8668,7 @@
       "zh": "通用",
       "de": "Allgemein",
       "ja": "一般",
+      "es": "General",
       "id": 2900 }
     ,
     "gbShowScrollBar": {
@@ -8349,6 +8677,7 @@
       "zh": "滚动条",
       "de": "Scrollleiste",
       "ja": "スクロールバー",
+      "es": "Barra de scroll",
       "id": 2901 }
     ,
     "gbStandardColors": {
@@ -8357,6 +8686,7 @@
       "zh": "标准颜色：",
       "de": "Standardfarben:",
       "ja": "標準色:",
+      "es": "Colores estándar:",
       "id": 1544 }
     ,
     "gbStartGroupCommands": {
@@ -8365,6 +8695,7 @@
       "zh": "选定的任务内容（只查看，可在任务页面更改）",
       "de": "Ausgewählte Aufgabeninhalte (Nur anzeigen. Ändern auf der Aufgaben-Seite)",
       "ja": "選択したタスクの内容(表示のみ,[タスク]ページで変更)",
+      "es": "Contenidos de la tarea seleccionada (sólo ver, cambiar en página Tareas)",
       "id": 2754 }
     ,
     "gbStartupOptions": {
@@ -8373,6 +8704,7 @@
       "zh": "启动选项（可能在下面情况下被覆盖： \"-run\" 或 \"-runlist\" ConEmu.exe的参数）",
       "de": "Startoptionen (können mit dem \"-run\"- oder \"-runlist\"-Parameter der ConEmu.exe überschrieben werden)",
       "ja": "起動オプション(ConEmu.exeの \"/cmd\"または \"/cmdlist\" 引数で上書きすることができます)",
+      "es": "Opciones de inicio (se pueden invalidar con los parámetros ConEmu \"-run\" o \"-runlist\")",
       "id": 2868 }
     ,
     "gbStaticTransparency": {
@@ -8381,6 +8713,7 @@
       "zh": "静态透明",
       "de": "Statische Transparenz",
       "ja": "Static透過性",
+      "es": "Transparencia estática",
       "id": 2939 }
     ,
     "gbStatusFontColor": {
@@ -8389,6 +8722,7 @@
       "zh": "字体和颜色",
       "de": "Schriftart und Farbe",
       "ja": "フォントと色",
+      "es": "Tipo de letra y color",
       "id": 2986 }
     ,
     "gbTabDblClkActions": {
@@ -8397,6 +8731,7 @@
       "zh": "标签页（Tab）双击行为",
       "de": "Reiter-Doppelklick-Aktionen",
       "ja": "タブのダブルクリックアクション",
+      "es": "Acciones de doble-click en pestaña",
       "id": 3055 }
     ,
     "gbTabs": {
@@ -8405,6 +8740,7 @@
       "zh": "标签页（控制台，Far Manager面板/编辑器/视图）",
       "de": "Reiter (Konsolen, Far-Manager-Panels/-Editoren/-Betrachter)",
       "ja": "タブ (コンソール, Far Managerパネル / エディタ / ビューア)",
+      "es": "Pestañas (terminales, paneles/editores/visores de Far Manager)",
       "id": 2981 }
     ,
     "gbTaskBarButton": {
@@ -8413,6 +8749,7 @@
       "zh": "任务栏按钮",
       "de": "Taskleistenschaltflächen",
       "ja": "タスクバーのボタン",
+      "es": "Botones barra de tareas",
       "id": 2909 }
     ,
     "gbTaskBarNotify": {
@@ -8421,6 +8758,7 @@
       "zh": "任务栏状态区域（TSA）",
       "de": "Taskleisten-Infobereich",
       "ja": "タスクバーステータスエリア(TSA)",
+      "es": "Zona notificaciones de barra de tareas",
       "id": 2908 }
     ,
     "gbTextSelection": {
@@ -8429,6 +8767,7 @@
       "zh": "文本选择",
       "de": "Textauswahl",
       "ja": "テキスト選択",
+      "es": "Selección de texto",
       "id": 2975 }
     ,
     "gbUpdate": {
@@ -8437,6 +8776,7 @@
       "zh": "更新设置",
       "de": "Aktualisierungseinstellungen",
       "ja": "設定を更新",
+      "es": "Opciones de actualización",
       "id": 2864 }
     ,
     "gbVConAlignment": {
@@ -8445,6 +8785,7 @@
       "zh": "对齐",
       "de": "Ausrichtung",
       "ja": "整列",
+      "es": "Alinear",
       "id": 2897 }
     ,
     "gbVConFont": {
@@ -8453,6 +8794,7 @@
       "zh": "字体",
       "de": "Schriftart",
       "ja": "フォント",
+      "es": "Tipo letra",
       "id": 2951 }
     ,
     "gbWindowPos": {
@@ -8461,6 +8803,7 @@
       "zh": "窗口位置（像素）",
       "de": "Fensterposition (Pixel)",
       "ja": "ウィンドウの位置(ピクセル)",
+      "es": "Posición de ventana (pixels)",
       "id": 2890 }
     ,
     "gbWindowSize": {
@@ -8469,6 +8812,7 @@
       "zh": "窗口大小（单元格，像素或百分比）",
       "de": "Fenstergröße (Zeichen, Pixel oder Prozent)",
       "ja": "ウィンドウサイズ(セル,ピクセルまたはパーセント)",
+      "es": "Tamaño de ventana (celdas, pixels o porcentual)",
       "id": 2893 }
     ,
     "gbWindowSizePos": {
@@ -8477,6 +8821,7 @@
       "zh": "Console大小和窗口位置",
       "de": "Konsolengröße und Fensterposition",
       "ja": "コンソール の サイズ と ウィンドウ の位置",
+      "es": "Tamaño de terminal y posición de ventana",
       "id": 2889 }
     ,
     "gbWndCloseAction": {
@@ -8485,6 +8830,7 @@
       "zh": "关闭最后一个console（tab）和“点击叉号”时的动作",
       "de": "Aktion beim Schließen der letzen Konsole (Reiter) und beim 'X'-Ankllicken",
       "ja": "最後のコンソール(タブ)を閉じるときのアクションと '[x]クリック'",
+      "es": "Acción al cerrar último terminal (pestaña) y pulsar 'X'",
       "id": 2910 }
     ,
     "ID_ATTACH": {
@@ -8493,6 +8839,7 @@
       "zh": "附加",
       "de": "Ankoppeln",
       "ja": "アタッチ",
+      "es": "Anclar",
       "id": 21 }
     ,
     "IDC_ATTACH_ALT": {
@@ -8501,6 +8848,7 @@
       "zh": "可选（&A）模式",
       "de": "&Alternativmodus",
       "ja": "代替モード(&A)",
+      "es": "Modo &alternativo",
       "id": 2405 }
     ,
     "IDC_ATTACH_LEAVE_OPEN": {
@@ -8508,6 +8856,7 @@
       "ru": "Оставлять открытым",
       "de": "Ge&öffnet lassen",
       "ja": "開いたままにする(&L)",
+      "es": "Mantener &abierto",
       "id": 3078 }
     ,
     "IDC_CONSOLE_STATES": {
@@ -8516,6 +8865,7 @@
       "zh": "Console 状态",
       "de": "Konsolenzustände",
       "ja": "コンソールの状態",
+      "es": "Estados del terminal",
       "id": 1560 }
     ,
     "IDC_REFRESH": {
@@ -8524,6 +8874,7 @@
       "zh": "刷新（&R）",
       "de": "&Aktualisieren",
       "ja": "リフレッシュ(&R)",
+      "es": "&Refrescar",
       "id": 1776 }
     ,
     "IDC_START": {
@@ -8532,6 +8883,7 @@
       "zh": "重启（&s）",
       "de": "&Neustart",
       "ja": "再起動(&s)",
+      "es": "Re&iniciar",
       "id": 1524 }
     ,
     "IDC_TERMINATE": {
@@ -8540,6 +8892,7 @@
       "zh": "终止（&T）",
       "de": "&Beenden",
       "ja": "終了する(&T)",
+      "es": "&Finalizar",
       "id": 1525 }
     ,
     "IDC_WARNING": {
@@ -8548,6 +8901,7 @@
       "zh": "警告，为保存的工作会丢失！",
       "de": "Warnung, ungespeicherte Änderungen gehen verloren!",
       "ja": "警告,保存されていない作業が失われる可能性があります！",
+      "es": "Aviso, ¡se pueden perder los datos no guardados!",
       "id": 1530 }
     ,
     "IDCANCEL": {
@@ -8556,6 +8910,7 @@
       "zh": "取消",
       "de": "Abbrechen",
       "ja": "キャンセル",
+      "es": "Cancelar",
       "id": 2 }
     ,
     "IDOK": {
@@ -8564,6 +8919,7 @@
       "zh": "确定",
       "de": "OK",
       "ja": "OK",
+      "es": "Aceptar",
       "id": 1 }
     ,
     "rbActivityComm": {
@@ -8572,6 +8928,7 @@
       "zh": "Comm",
       "de": "Comm",
       "ja": "Comm",
+      "es": "Comm",
       "id": 2069 }
     ,
     "rbActivityDisabled": {
@@ -8580,6 +8937,7 @@
       "zh": "禁用（&D）",
       "de": "&Deaktiviert",
       "ja": "無効(&D)",
+      "es": "&Desactivado",
       "id": 1747 }
     ,
     "rbActivityInput": {
@@ -8588,6 +8946,7 @@
       "zh": "输入（&I）",
       "de": "&Eingabe",
       "ja": "入力(&I)",
+      "es": "En&trada",
       "id": 1762 }
     ,
     "rbActivityProcess": {
@@ -8595,6 +8954,7 @@
       "ru": "&Exec",
       "de": "&Prozess",
       "ja": "実行(&E)",
+      "es": "&Ejecutar",
       "id": 3057 }
     ,
     "rbActivityShell": {
@@ -8603,6 +8963,7 @@
       "zh": "S&hell",
       "de": "S&hell",
       "ja": "S&hell",
+      "es": "Sím&bolo sistema",
       "id": 1748 }
     ,
     "rbAnotherUser": {
@@ -8611,6 +8972,7 @@
       "zh": "另一个（&A）用户",
       "de": "Anderer Benutzer",
       "ja": "別のユーザー(&A)",
+      "es": "&Otro usuario",
       "id": 1657 }
     ,
     "rbAnsiSecureAny": {
@@ -8618,6 +8980,7 @@
       "ru": "Разрешить везде",
       "de": "Überall erlauben",
       "ja": "どこでも許可",
+      "es": "Permitir en cualquier sitio",
       "id": 3067 }
     ,
     "rbAnsiSecureCmd": {
@@ -8625,6 +8988,7 @@
       "ru": "Разрешить только в cmd.exe",
       "de": "Erlaube nur in cmd.exe",
       "ja": "cmd.exeのみで許可する",
+      "es": "Permitir sólo en cmd.exe",
       "id": 3068 }
     ,
     "rbAnsiSecureOff": {
@@ -8632,6 +8996,7 @@
       "ru": "Запрещено везде",
       "de": "Überall verbieten",
       "ja": "どこからも許可しない",
+      "es": "Impedir en cualquier sitio",
       "id": 3069 }
     ,
     "rbAppDistinctElevatedIgnore": {
@@ -8640,6 +9005,7 @@
       "zh": "无关紧要",
       "de": "Egal",
       "ja": "関係ない",
+      "es": "No importa",
       "id": 2143 }
     ,
     "rbAppDistinctElevatedOff": {
@@ -8648,6 +9014,7 @@
       "zh": "非提升的",
       "de": "Nicht erhöht",
       "ja": "非昇降",
+      "es": "No elevado",
       "id": 2142 }
     ,
     "rbAppDistinctElevatedOn": {
@@ -8656,6 +9023,7 @@
       "zh": "提升的",
       "de": "Erhöht",
       "ja": "上昇した",
+      "es": "Elevado",
       "id": 2141 }
     ,
     "rbAutoUpdateDeveloperFast": {
@@ -8664,6 +9032,7 @@
       "_zh": "‘开发者’ builds",
       "de": "'Alpha'-Versionen",
       "ja": " ' Alpha ' ビルド",
+      "es": "Builds 'alfa'",
       "id": 2591 }
     ,
     "rbAutoUpdatePreviewFast": {
@@ -8672,6 +9041,7 @@
       "zh": "‘预览’",
       "de": "'Vorschau'",
       "ja": "' Preview '",
+      "es": "'Preview'",
       "id": 2590 }
     ,
     "rbAutoUpdateStableFast": {
@@ -8680,6 +9050,7 @@
       "zh": "‘稳定’",
       "de": "'Stabil'",
       "ja": "' Stable '",
+      "es": "'Estable'",
       "id": 2589 }
     ,
     "rbColorBgrHex": {
@@ -8688,6 +9059,7 @@
       "zh": "0xBBGGRR（十六进制）",
       "de": "0xBBGGRR (hex)",
       "ja": "0xBBGGRR (16進数)",
+      "es": "0xBBGGRR (hex)",
       "id": 2722 }
     ,
     "rbColorRgbDec": {
@@ -8696,6 +9068,7 @@
       "zh": "RRR GGG BBB（十进制）",
       "de": "RRR GGG BBB (dez)",
       "ja": "RRR GGG BBB (十進数)",
+      "es": "RRR GGG BBB (dec)",
       "id": 2720 }
     ,
     "rbColorRgbHex": {
@@ -8704,6 +9077,7 @@
       "zh": "#RRGGBB（十六进制）",
       "de": "#RRGGBB (hex)",
       "ja": "#RRGGBB (16進数)",
+      "es": "#RRGGBB (hex)",
       "id": 2721 }
     ,
     "rbComspec_AppBit": {
@@ -8712,6 +9086,7 @@
       "zh": "与正在运行的程序相同",
       "de": "Wie die laufende Anwendung",
       "ja": "実行中のアプリケーションと同じ",
+      "es": "Igual que la aplicación en ejecución",
       "id": 2158 }
     ,
     "rbComspec_OSbit": {
@@ -8720,6 +9095,7 @@
       "zh": "与操作系统相同",
       "de": "Wie das Betriebssystem",
       "ja": "OSと同じ",
+      "es": "Igual que el SO",
       "id": 2157 }
     ,
     "rbComspec_x32": {
@@ -8728,6 +9104,7 @@
       "zh": "总是x32",
       "de": "Immer x32",
       "ja": "常にx32",
+      "es": "Siempre x32",
       "id": 2159 }
     ,
     "rbComspecAuto": {
@@ -8736,6 +9113,7 @@
       "zh": "自动 （tcc - 如果已安装, %ComSpec% - 否则）",
       "de": "Auto (TCC - falls installiert, sonst %ComSpec%)",
       "ja": "自動(tcc-インストールされている場合は%ComSpec%-それ以外)",
+      "es": "Auto (tcc - si instalado, %ComSpec% - si no)",
       "id": 2148 }
     ,
     "rbComspecCmd": {
@@ -8744,6 +9122,7 @@
       "zh": "cmd",
       "de": "cmd",
       "ja": "cmd",
+      "es": "cmd",
       "id": 2150 }
     ,
     "rbComspecEnvVar": {
@@ -8752,6 +9131,7 @@
       "zh": "%ComSpec%（env.var.）",
       "de": "%ComSpec% (Umgeb.var.)",
       "ja": "%ComSpec% (env.var.)",
+      "es": "%ComSpec% (env.var.)",
       "id": 2149 }
     ,
     "rbComspecExplicit": {
@@ -8760,6 +9140,7 @@
       "zh": "显式可执行文件（允许使用ConEmu.exe的env.var.）",
       "de": "Genaue ausführbare Datei (env.var. von ConEmu.exe erlaubt)",
       "ja": "明示的な実行可能ファイル(例. ConEmu.exe)",
+      "es": "Ejecutable (se permite env.var. de ConEmu)",
       "id": 2151 }
     ,
     "rbCurrentUser": {
@@ -8768,6 +9149,7 @@
       "zh": "以当前用户身份运行（&u） <UserName>",
       "de": "Starte als aktueller &Benutzer <UserName>",
       "ja": "現在のユーザーとして実行(&u) <ユーザー名>",
+      "es": "Ejecutar como &usuario actual <UserName>",
       "id": 1656 }
     ,
     "rbDefaultTerminalConfAlways": {
@@ -8776,6 +9158,7 @@
       "zh": "总是",
       "de": "Immer",
       "ja": "常に",
+      "es": "Siempre",
       "id": 2520 }
     ,
     "rbDefaultTerminalConfAuto": {
@@ -8784,6 +9167,7 @@
       "zh": "自动",
       "de": "Automatisch",
       "ja": "自動",
+      "es": "Automático",
       "id": 2519 }
     ,
     "rbDefaultTerminalConfNever": {
@@ -8792,6 +9176,7 @@
       "zh": "从不",
       "de": "Niemals",
       "ja": "絶対に",
+      "es": "Nunca",
       "id": 2521 }
     ,
     "rbMinByEscAlways": {
@@ -8800,6 +9185,7 @@
       "zh": "总是",
       "de": "Immer",
       "ja": "常に",
+      "es": "Siempre",
       "id": 2559 }
     ,
     "rbMinByEscEmpty": {
@@ -8808,6 +9194,7 @@
       "zh": "如果所有控制台已关闭",
       "de": "Wenn alle Konsolen geschlossen",
       "ja": "すべてのコンソールが閉じた場合",
+      "es": "Si todos los terminales cerrados",
       "id": 2560 }
     ,
     "rbMinByEscNever": {
@@ -8816,6 +9203,7 @@
       "zh": "从不",
       "de": "Niemals",
       "ja": "絶対に",
+      "es": "Nunca",
       "id": 2561 }
     ,
     "rbPriorityAbove": {
@@ -8824,6 +9212,7 @@
       "zh": "高于（&A）正常",
       "de": "&Über normal",
       "ja": "ノーマル以上(&A)",
+      "es": "Encim&a de lo normal",
       "id": 2765 }
     ,
     "rbPriorityBelow": {
@@ -8832,6 +9221,7 @@
       "zh": "低于（&B）正常",
       "de": "&Unter normal",
       "ja": "ノーマル以下(&B)",
+      "es": "Ba&jo lo normal",
       "id": 2767 }
     ,
     "rbPriorityHigh": {
@@ -8840,6 +9230,7 @@
       "zh": "高（&H）",
       "de": "&Hoch",
       "ja": "高い(&H)",
+      "es": "&Alto",
       "id": 2764 }
     ,
     "rbPriorityIdle": {
@@ -8848,6 +9239,7 @@
       "zh": "闲置（&I）",
       "de": "&Leerlauf",
       "ja": "アイドル(&I)",
+      "es": "&Sin actividad",
       "id": 2768 }
     ,
     "rbPriorityNormal": {
@@ -8856,6 +9248,7 @@
       "zh": "正常（&N）",
       "de": "&Normal",
       "ja": "ノーマル(&N)",
+      "es": "&Normal",
       "id": 2766 }
     ,
     "rbPriorityRealtime": {
@@ -8864,6 +9257,7 @@
       "zh": "实时（&R）",
       "de": "Echtzeit",
       "ja": "リアルタイム(&R)",
+      "es": "Tiempo &real",
       "id": 2763 }
     ,
     "rbRecreateSplit2Bottom": {
@@ -8872,6 +9266,7 @@
       "zh": "到底部（&b）",
       "de": "Nach &Unten",
       "ja": "下に(&b)",
+      "es": "Hacia a&bajo",
       "id": 2443 }
     ,
     "rbRecreateSplit2Right": {
@@ -8880,6 +9275,7 @@
       "zh": "到右边（&g）",
       "de": "Nach &rechts",
       "ja": "右に(&g)",
+      "es": "Hacia de&recha",
       "id": 2442 }
     ,
     "rbRecreateSplitNone": {
@@ -8888,6 +9284,7 @@
       "zh": "分层的（&L）",
       "de": "&Überlagernd",
       "ja": "レイヤード(&L)",
+      "es": "En &capas",
       "id": 2441 }
     ,
     "rbScrollbarAuto": {
@@ -8896,6 +9293,7 @@
       "zh": "自动",
       "de": "Auto",
       "ja": "自動",
+      "es": "Auto",
       "id": 2489 }
     ,
     "rbScrollbarHide": {
@@ -8904,6 +9302,7 @@
       "zh": "隐藏",
       "de": "Ausblenden",
       "ja": "隠す",
+      "es": "Ocultar",
       "id": 2487 }
     ,
     "rbScrollbarShow": {
@@ -8912,6 +9311,7 @@
       "zh": "显示",
       "de": "Zeigen",
       "ja": "表示",
+      "es": "Mostrar",
       "id": 2488 }
     ,
     "rbStartLastTabs": {
@@ -8920,6 +9320,7 @@
       "zh": "自动保存/恢复打开的标签页（tab）",
       "de": "Geöffnete Reiter automatisch Speichern/Wiederherstellen",
       "ja": "開いたタブの自動保存/復元",
+      "es": "Auto guardar/recuperar pestañas abiertas",
       "id": 2236 }
     ,
     "rbStartNamedTask": {
@@ -8928,6 +9329,7 @@
       "zh": "指定命名任务",
       "de": "Angegebene benannte Aufgabe",
       "ja": "名前付きタスクの指定",
+      "es": "Tarea específica",
       "id": 2235 }
     ,
     "rbStartSingleApp": {
@@ -8936,6 +9338,7 @@
       "zh": "命令行",
       "de": "Befehlszeile",
       "ja": "コマンドライン",
+      "es": "Línea de comandos",
       "id": 2233 }
     ,
     "rbStartTasksFile": {
@@ -8944,6 +9347,7 @@
       "zh": "任务文件",
       "de": "Aufgabendatei",
       "ja": "タスクファイル",
+      "es": "Archivo de tareas",
       "id": 2234 }
     ,
     "rbTabsAlways": {
@@ -8952,6 +9356,7 @@
       "zh": "总是显示",
       "de": "Immer zeigen",
       "ja": "常に表示",
+      "es": "Mostrar siempre",
       "id": 2476 }
     ,
     "rbTabsAuto": {
@@ -8960,6 +9365,7 @@
       "zh": "自动显示",
       "de": "Automatisch zeigen",
       "ja": "自動的に表示",
+      "es": "Auto mostrar",
       "id": 2477 }
     ,
     "rbTabsNone": {
@@ -8968,6 +9374,7 @@
       "zh": "不要显示",
       "de": "Nicht zeigen",
       "ja": "表示しない",
+      "es": "No mostrar",
       "id": 2478 }
     ,
     "rbTaskbarBtnActive": {
@@ -8976,6 +9383,7 @@
       "zh": "仅活动控制台 （ConEmu窗口）",
       "de": "Nur aktive Konsole (ConEmu-Fenster)",
       "ja": "アクティブコンソールのみ(ConEmuウィンドウ)",
+      "es": "Sólo terminal activo (ventana ConEmu)",
       "id": 2472 }
     ,
     "rbTaskbarBtnAll": {
@@ -8984,6 +9392,7 @@
       "zh": "显示所有控制台（所有系统）",
       "de": "Zeige alle Konsolen (alle BS)",
       "ja": "すべてのコンソールを表示(すべてのOS)",
+      "es": "Mostrar todos los terminales (todo SO)",
       "id": 2473 }
     ,
     "rbTaskbarBtnHidden": {
@@ -8992,6 +9401,7 @@
       "zh": "不在任务栏上显示ConEmu窗口",
       "de": "Zeige ConEmu-Fenster nicht in der Taskleiste",
       "ja": "タスクバーにConEmuウィンドウを表示しない",
+      "es": "No mostrar ventana ConEmu en barra de tareas",
       "id": 2475 }
     ,
     "rbTaskbarBtnWin7": {
@@ -9000,6 +9410,7 @@
       "zh": "显示所有控制台（Win7或更高）",
       "de": "Zeige alle Konsolen (Win7 und neuer)",
       "ja": "すべてのコンソールを表示(Win7以上)",
+      "es": "Mostrar todos los terminales (Win7 o posterior)",
       "id": 2474 }
     ,
     "rbThumbBackColorIdx": {
@@ -9008,6 +9419,7 @@
       "zh": "颜色索引",
       "de": "Farbindex",
       "ja": "カラーインデックス",
+      "es": "Indice color",
       "id": 1670 }
     ,
     "rbThumbBackColorRGB": {
@@ -9016,6 +9428,7 @@
       "zh": "RGB",
       "de": "RGB",
       "ja": "RGB",
+      "es": "RGB",
       "id": 1671 }
     ,
     "rbThumbCacheDisabled": {
@@ -9024,6 +9437,7 @@
       "zh": "无缓存",
       "de": "Kein Puffern",
       "ja": "キャッシュなし",
+      "es": "Sin cache",
       "id": 1689 }
     ,
     "rbThumbCachePluginFolder": {
@@ -9032,6 +9446,7 @@
       "zh": "插件文件夹",
       "de": "PlugIn-Ordner",
       "ja": "プラグインフォルダ",
+      "es": "carpeta de plugins",
       "id": 1687 }
     ,
     "rbThumbCacheSpecifiedFolder": {
@@ -9040,6 +9455,7 @@
       "zh": "指定的文件夹",
       "de": "angegebener Ordner",
       "ja": "指定されたフォルダ",
+      "es": "carpeta especificada",
       "id": 1690 }
     ,
     "rbThumbCacheUserFolder": {
@@ -9048,6 +9464,7 @@
       "zh": "用户文件夹",
       "de": "Benutzerordner",
       "ja": "ユーザーフォルダ",
+      "es": "carpeta de usuario",
       "id": 1688 }
     ,
     "rbThumbPreviewBoxColorIdx": {
@@ -9056,6 +9473,7 @@
       "zh": "颜色索引",
       "de": "Farbindex",
       "ja": "カラーインデックス",
+      "es": "Indice de color",
       "id": 1673 }
     ,
     "rbThumbPreviewBoxColorRGB": {
@@ -9064,6 +9482,7 @@
       "zh": "RGB",
       "de": "RGB",
       "ja": "RGB",
+      "es": "RGB",
       "id": 1674 }
     ,
     "rbThumbSelectionBoxColorIdx": {
@@ -9072,6 +9491,7 @@
       "zh": "Color索引",
       "de": "Farbindex",
       "ja": "カラーインデックス",
+      "es": "Indice de color",
       "id": 1676 }
     ,
     "rbThumbSelectionBoxColorRGB": {
@@ -9080,6 +9500,7 @@
       "zh": "RGB",
       "de": "RGB",
       "ja": "RGB",
+      "es": "RGB",
       "id": 1677 }
     ,
     "rbUpdateLatestAvailable": {
@@ -9088,6 +9509,7 @@
       "zh": "最新",
       "de": "Neustes",
       "ja": "最新",
+      "es": "Último",
       "id": 2056 }
     ,
     "rbUpdatePreview": {
@@ -9096,6 +9518,7 @@
       "zh": "预览",
       "de": "Vorschau",
       "ja": "Preview",
+      "es": "Previsualizar",
       "id": 2055 }
     ,
     "rbUpdateStableOnly": {
@@ -9104,6 +9527,7 @@
       "zh": "稳定",
       "de": "Stabil",
       "ja": "Stable",
+      "es": "Estable",
       "id": 2054 }
     ,
     "rbUpdateUseArc": {
@@ -9112,6 +9536,7 @@
       "zh": "7-Zip文档（ConEmu.7z），需要WinRar或者7-Zip",
       "de": "7-Zip-Archive (ConEmu.7z), WinRar oder 7-Zip benötigt",
       "ja": "7-Zipアーカイブ(ConEmu.7z),WinRarまたは7-Zipが必要",
+      "es": "Se requiere archivo 7-Zip (ConEmu.7z), WinRar o 7-Zip",
       "id": 2071 }
     ,
     "rbUpdateUseExe": {
@@ -9120,6 +9545,7 @@
       "zh": "安装程序 （ConEmuSetup.exe /p:%s）",
       "de": "Installationsassistent (ConEmuSetup.exe /p:%s)",
       "ja": "インストーラ(ConEmuSetup.exe /p:%s)",
+      "es": "Instalador (ConEmuSetup.exe /p:%s)",
       "id": 2070 }
     ,
     "rCascade": {
@@ -9128,6 +9554,7 @@
       "zh": "Cascade",
       "de": "Kaskade",
       "ja": "カスケード",
+      "es": "Cascada",
       "id": 2302 }
     ,
     "rCTAA": {
@@ -9136,6 +9563,7 @@
       "zh": "&Clear Type",
       "de": "&Clear Type",
       "ja": "&Clear Type",
+      "es": "&Clear Type",
       "id": 1204 }
     ,
     "rCursorB": {
@@ -9144,6 +9572,7 @@
       "zh": "块状",
       "de": "Block",
       "ja": "ブロック",
+      "es": "Bloque",
       "id": 2532 }
     ,
     "rCursorH": {
@@ -9152,6 +9581,7 @@
       "zh": "水平（类似console）",
       "de": "Horizontal (wie Konsole)",
       "ja": "水平 (コンソールとして)",
+      "es": "Horizontal (como terminal)",
       "id": 2530 }
     ,
     "rCursorR": {
@@ -9160,6 +9590,7 @@
       "zh": "矩形",
       "de": "Rechteck",
       "ja": "矩形",
+      "es": "Rectángulo",
       "id": 2533 }
     ,
     "rCursorV": {
@@ -9168,6 +9599,7 @@
       "zh": "垂直（类似GUI）",
       "de": "Vertikal (wie GUI)",
       "ja": "垂直 (GUIとして)",
+      "es": "Vertical (como GUI)",
       "id": 2531 }
     ,
     "rFixed": {
@@ -9176,6 +9608,7 @@
       "zh": "固定的",
       "de": "Fest",
       "ja": "固定",
+      "es": "Fijo",
       "id": 2303 }
     ,
     "rFullScreen": {
@@ -9184,6 +9617,7 @@
       "zh": "全屏",
       "de": "Vollbild",
       "ja": "全画面表示",
+      "es": "Pantalla completa",
       "id": 1313 }
     ,
     "rInactiveCursorB": {
@@ -9192,6 +9626,7 @@
       "zh": "块状",
       "de": "Block",
       "ja": "ブロック",
+      "es": "Bloque",
       "id": 2536 }
     ,
     "rInactiveCursorH": {
@@ -9200,6 +9635,7 @@
       "zh": "水平 （如同console）",
       "de": "Horizontal (wie Konsole)",
       "ja": "水平 (コンソールとして)",
+      "es": "Horizontal (como terminal)",
       "id": 2534 }
     ,
     "rInactiveCursorR": {
@@ -9208,6 +9644,7 @@
       "zh": "矩形",
       "de": "Rechteck",
       "ja": "矩形",
+      "es": "Rectangular",
       "id": 2537 }
     ,
     "rInactiveCursorV": {
@@ -9216,6 +9653,7 @@
       "zh": "垂直 （如同GUI）",
       "de": "Vertikal (wie GUI)",
       "ja": "垂直 (GUIとして)",
+      "es": "Vertical (como GUI)",
       "id": 2535 }
     ,
     "rMaximized": {
@@ -9224,6 +9662,7 @@
       "zh": "最大化",
       "de": "Maximiert",
       "ja": "最大化",
+      "es": "Maximizado",
       "id": 1312 }
     ,
     "rNoneAA": {
@@ -9232,6 +9671,7 @@
       "zh": "无（&N）",
       "de": "&Keine",
       "ja": "なし(&N)",
+      "es": "&Ninguno",
       "id": 1202 }
     ,
     "rNormal": {
@@ -9240,6 +9680,7 @@
       "zh": "正常",
       "de": "Normal",
       "ja": "通常",
+      "es": "Normal",
       "id": 1311 }
     ,
     "rPasteM1FirstLine": {
@@ -9248,6 +9689,7 @@
       "zh": "第一行",
       "de": "Erste Zeile",
       "ja": "最初の行",
+      "es": "Primera línea",
       "id": 3035 }
     ,
     "rPasteM1MultiLine": {
@@ -9256,6 +9698,7 @@
       "zh": "多行",
       "de": "Mehrere Zeilen",
       "ja": "複数行",
+      "es": "Multi línea",
       "id": 3033 }
     ,
     "rPasteM1Nothing": {
@@ -9264,6 +9707,7 @@
       "zh": "什么也不做",
       "de": "Nichts tun",
       "ja": "何もしない",
+      "es": "No hacer nada",
       "id": 3036 }
     ,
     "rPasteM1SingleLine": {
@@ -9272,6 +9716,7 @@
       "zh": "单行",
       "de": "Einzelne Zeile",
       "ja": "単一の行",
+      "es": "Línea única",
       "id": 3034 }
     ,
     "rPasteM2FirstLine": {
@@ -9280,6 +9725,7 @@
       "zh": "第一行",
       "de": "Erste Zeile",
       "ja": "最初の行",
+      "es": "Primera línea",
       "id": 3042 }
     ,
     "rPasteM2MultiLine": {
@@ -9288,6 +9734,7 @@
       "zh": "多行",
       "de": "Mehrere Zeilen",
       "ja": "複数行",
+      "es": "Multi línea",
       "id": 3040 }
     ,
     "rPasteM2Nothing": {
@@ -9296,6 +9743,7 @@
       "zh": "什么也不做",
       "de": "Nichts tun",
       "ja": "何もしない",
+      "es": "No hacer nada",
       "id": 3043 }
     ,
     "rPasteM2SingleLine": {
@@ -9304,6 +9752,7 @@
       "zh": "单行",
       "de": "Einzelne Zeile",
       "ja": "単一の行",
+      "es": "Una línea",
       "id": 3041 }
     ,
     "rStandardAA": {
@@ -9312,6 +9761,7 @@
       "zh": "标准的（&S）",
       "de": "&Standard",
       "ja": "標準(&S)",
+      "es": "&Estándar",
       "id": 1203 }
     ,
     "stAffinityBox": {
@@ -9320,6 +9770,7 @@
       "zh": "关联",
       "de": "Zugehörigkeit",
       "ja": "親和性",
+      "es": "Afinidad",
       "id": 2769 }
     ,
     "stAnsiSecureExec1": {
@@ -9327,6 +9778,7 @@
       "ru": "Используйте `^]]9;6;\"*macro*\"^]\\` для выполнения GuiMacro",
       "de": "Verwende '^]]9;6;\"*Makro*\"^]\\' für die Ausführung von GuiMakros",
       "ja": "GuiMacroの実行には `^]] 9; 6;\" * macro * \"^] \\`を使います",
+      "es": "Usar '^]]9;6;\"*macro*\"^]\\' para ejecutar GuiMacro",
       "id": 3064 }
     ,
     "stAnsiSecureExec2": {
@@ -9334,6 +9786,7 @@
       "ru": "Используйте `^]]9;7;\"*cmd*\"^]\\` для создания процесса (требуется GitShowBranch.cmd)",
       "de": "Verwende '^]]9;7;\"*cmd*\"^]\\' zur Prozesserzeugung (für GitShowBranch.cmd erforderlich)",
       "ja": "プロセス作成のために `^]] 9; 7;\" * cmd * \"^] \\`を使用する(GitShowBranch.cmdに必要)",
+      "es": "Usar '^]]9;7;\"*cmd*\"^]\\' para creación de procesos (p.ej. para GitShowBranch.cmd)",
       "id": 3065 }
     ,
     "stAnsiSecureExec3": {
@@ -9341,6 +9794,7 @@
       "ru": "Список разрешенных команд (можно использовать `*`)",
       "de": "Liste mit erlaubten Befehlen (es kann '*' verwendet werden)",
       "ja": "許可されたコマンドのリスト( `*`を使うかもしれない)",
+      "es": "Mostrar comandos permitidos (puedes usar '*')",
       "id": 3071 }
     ,
     "stAppDistinctBottom": {
@@ -9349,6 +9803,7 @@
       "zh": "滚动区域末尾",
       "de": "Ende des Scrollbereichs",
       "ja": "スクロール領域の終わり",
+      "es": "Fin de la zona de scroll",
       "id": 2357 }
     ,
     "stAppDistinctName": {
@@ -9357,6 +9812,7 @@
       "zh": "用\"|\"分割开来的可执行文件，比如 \"tcc.exe|cmd.exe\":",
       "de": "Ausführbare Dateien, getrennt durch \"|\", z.B. \"tcc.exe|cmd.exe\":",
       "ja": "\"|\"で区切られた実行可能ファイル. \"tcc.exe | cmd.exe\":",
+      "es": "Ejecutables, delimitados por\"|\", ej. \"tcc.exe|cmd.exe\":",
       "id": 2319 }
     ,
     "stBgImage": {
@@ -9365,6 +9821,7 @@
       "zh": "路径：",
       "de": "Dateipfad:",
       "ja": "パス:",
+      "es": "Ruta:",
       "id": 2671 }
     ,
     "stBgPlacement": {
@@ -9373,6 +9830,7 @@
       "zh": "位置：",
       "de": "Platzierung:",
       "ja": "配置:",
+      "es": "Localización:",
       "id": 2338 }
     ,
     "stBgReplaceIndexes": {
@@ -9381,6 +9839,7 @@
       "zh": "替换颜色索引：",
       "de": "Farbindizes ersetzen:",
       "ja": "カラーインデックスを置き換える:",
+      "es": "Sustituir índices de color:",
       "id": 3051 }
     ,
     "stClipConfirmLimit": {
@@ -9389,6 +9848,7 @@
       "zh": "字符:",
       "de": "Zeichen:",
       "ja": "chars:",
+      "es": "caracteres:",
       "id": 2227 }
     ,
     "stCloseTabMacro": {
@@ -9397,6 +9857,7 @@
       "zh": "关闭标签页（面板，编辑器，视图）：",
       "de": "Schließe Reiter (Panel, Editor, Betrachter):",
       "ja": "タブを閉じる(パネル,エディタ,ビューア):",
+      "es": "Cerrar pestaña (Panel, Editor, Visor):",
       "id": 2966 }
     ,
     "stCmdAutoAttach": {
@@ -9410,6 +9871,8 @@
             , "Aktueller, in der Registry 'AutoRun' gespeicherter, Befehl (HKLM-Wert wird hier nicht verarbeitet):" ],
       "ja": [ "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\n"
             , "レジストリ 'AutoRun'に格納されている現在のコマンド(HKLM値はここでは処理されません):" ],
+      "es": [ "[HKEY_CURRENT_USER\\Software\\Microsoft\\Command Processor]\n"
+            , "Comando almacenado en la clave del registro 'AutoRun' (valor HKLM no se procesa aquí):" ],
       "id": 2956 }
     ,
     "stCmdGroupCommands": {
@@ -9438,6 +9901,11 @@
             , "グループ起動時に,各コマンドでConEmuにタブが作成されます\n"
             , "アクティブなコンソールタブに '>'記号を付ける\n"
             , "'*' 記号付きの '管理者として' コンソールを起動する" ],
+      "es": [ "&Comandos (aplicación, argumentos, parámetros \"-new_console\")\n"
+            , "Delimitar comandos con líneas en blanco\n"
+            , "Cada comando crea una pestaña en ConEmu cuando se inicia el grupo\n"
+            , "Marcar la pestaña del terminal activo con '>'\n"
+            , "Iniciar terminal 'como Administrador' con '*'" ],
       "id": 2121 }
     ,
     "stCmdGroupGuiArg": {
@@ -9446,6 +9914,7 @@
       "zh": "任务参数。例子： /dir \"C:\\\" /icon \"cmd.exe\" /single",
       "de": "Aufgabenparameter. Beispiel: /dir \"C:\\\" /icon \"cmd.exe\" /single",
       "ja": "タスクパラメータ 例:/ dir \"C:\\\" / icon \"cmd.exe\" / single",
+      "es": "Parámetros de la tarea. Ej.: /dir \"C:\\\" /icon \"cmd.exe\" /single",
       "id": 2323 }
     ,
     "stCmdGroupKey": {
@@ -9454,6 +9923,7 @@
       "zh": "热键（&H）:",
       "de": "&Kürzel",
       "ja": "ホットキー:(&H)",
+      "es": "&Combinación:",
       "id": 3024 }
     ,
     "stCmdTaskAdd": {
@@ -9462,6 +9932,7 @@
       "zh": "添加：",
       "de": "Hinzufügen:",
       "ja": "追加:",
+      "es": "Añadir:",
       "id": 2884 }
     ,
     "stColorBack": {
@@ -9470,6 +9941,7 @@
       "zh": "背部：",
       "de": "Hintergrund:",
       "ja": "背景:",
+      "es": "Atrás:",
       "id": 2933 }
     ,
     "stColorFadeHigh": {
@@ -9478,6 +9950,7 @@
       "zh": "高：",
       "de": "Hoch",
       "ja": "高い:",
+      "es": "Alto:",
       "id": 2930 }
     ,
     "stColorFadeLow": {
@@ -9486,6 +9959,7 @@
       "zh": "低：",
       "de": "Niedrig",
       "ja": "低い:",
+      "es": "Bajo:",
       "id": 2929 }
     ,
     "stColorPopupBack": {
@@ -9494,6 +9968,7 @@
       "zh": "背部：",
       "de": "Hintergrund:",
       "ja": "背景:",
+      "es": "Atrás:",
       "id": 2935 }
     ,
     "stColorPopupText": {
@@ -9502,6 +9977,7 @@
       "zh": "弹出：",
       "de": "PopUp:",
       "ja": "ポップアップ:",
+      "es": "Popup:",
       "id": 2934 }
     ,
     "stColorSchemeFast": {
@@ -9510,6 +9986,7 @@
       "_zh": "选择最喜欢的颜色方案：",
       "de": "Farbschema wählen:",
       "ja": "配色を選択:",
+      "es": "Elegir esquema de color:",
       "id": 2845 }
     ,
     "stColorSchemes": {
@@ -9518,6 +9995,7 @@
       "zh": "方案:",
       "de": "Schemata",
       "ja": "スキーム:",
+      "es": "Esquemas:",
       "id": 2931 }
     ,
     "stColorText": {
@@ -9526,6 +10004,7 @@
       "zh": "文本：",
       "de": "Text",
       "ja": "テキスト:",
+      "es": "Texto:",
       "id": 2932 }
     ,
     "stConEmuVersion": {
@@ -9534,6 +10013,7 @@
       "zh": "版本状态：",
       "de": "Versionsstatus",
       "ja": "バージョンステータス:",
+      "es": "Estado de la versión:",
       "id": 2683 }
     ,
     "stConsoleSizeChars": {
@@ -9542,6 +10022,7 @@
       "zh": "控制台（字符）：",
       "de": "Konsole (Zeichen):",
       "ja": "コンソール(文字):",
+      "es": "Terminar (cars.):",
       "id": 2945 }
     ,
     "stConsoleSizePixels": {
@@ -9550,6 +10031,7 @@
       "zh": "（像素）：",
       "de": "(Pixel):",
       "ja": "(ピクセル):",
+      "es": "(pixels):",
       "id": 2946 }
     ,
     "stCopyFormat": {
@@ -9558,6 +10040,7 @@
       "zh": "复制的格式：",
       "de": "Kopierformat:",
       "ja": "コピー形式:",
+      "es": "Formato de copia:",
       "id": 2872 }
     ,
     "stCTSBackColor": {
@@ -9566,6 +10049,7 @@
       "zh": "背景：",
       "de": "Hintergrund:",
       "ja": "バックグラウンド:",
+      "es": "Fondo:",
       "id": 2978 }
     ,
     "stCTSEOL": {
@@ -9574,6 +10058,7 @@
       "zh": "EOL:",
       "de": "EOL:",
       "ja": "EOL:",
+      "es": "EOL:",
       "id": 2366 }
     ,
     "stCTSIntelligentExceptions": {
@@ -9582,6 +10067,7 @@
       "zh": "例外（\"|\"-分隔符）:",
       "de": "Ausnahmen (\"|\"-getrennt):",
       "ja": "例外( \"|\" - 分離):",
+      "es": "Excepciones (separadas por \"|\"):",
       "id": 2659 }
     ,
     "stCTSMBtnAction": {
@@ -9590,6 +10076,7 @@
       "zh": "中间：",
       "de": "Mitte:",
       "ja": "中間:",
+      "es": "Medio:",
       "id": 3023 }
     ,
     "stCTSRBtnAction": {
@@ -9598,6 +10085,7 @@
       "zh": "右：",
       "de": "Rechts",
       "ja": "右:",
+      "es": "Derecha:",
       "id": 3022 }
     ,
     "stCTSRMCondition": {
@@ -9605,6 +10093,7 @@
       "ru": "Условие:",
       "de": "Modifizierer:",
       "ja": "コンディション:",
+      "es": "Condición:",
       "id": 3062 }
     ,
     "stCTSTextColor": {
@@ -9613,6 +10102,7 @@
       "zh": "前景：",
       "de": "Vordergrund:",
       "ja": "フォアグラウンド:",
+      "es": "Primer plano:",
       "id": 2977 }
     ,
     "stCursorMinSize": {
@@ -9621,6 +10111,7 @@
       "zh": "最小尺寸（像素）：",
       "de": "Min. Größe (Pixel)",
       "ja": "最小サイズ(pix):",
+      "es": "Tam. mín. (pix):",
       "id": 2371 }
     ,
     "stDarker": {
@@ -9629,6 +10120,7 @@
       "zh": "改变暗度：",
       "de": "Abdunkeln:",
       "ja": "暗くなる:",
+      "es": "Oscurecer:",
       "id": 2672 }
     ,
     "stDarkerPlugin": {
@@ -9637,6 +10129,7 @@
       "zh": "改变暗度：",
       "de": "Abdunkeln",
       "ja": "暗くなる:",
+      "es": "Oscurecer:",
       "id": 2673 }
     ,
     "stDcWndSize": {
@@ -9645,6 +10138,7 @@
       "zh": "DC窗口",
       "de": "DC-Fenster:",
       "ja": "DCウィンドウ:",
+      "es": "Ventana DC:",
       "id": 2947 }
     ,
     "stDefaultTerminal": {
@@ -9658,6 +10152,8 @@
             , "Beispiel: explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow" ],
       "ja": [ "'|'で区切られたフックされた実行ファイルまたはウィンドウクラス名のリスト\r\n"
             , "例:explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow" ],
+      "es": [ "Lista de ejecutables anclados o clases de ventanas delimitados con '|'\r\n"
+            , "Ej.: explorer.exe|devenv.exe|wdexpress.exe|totalcmd.exe|TaskManagerWindow" ],
       "id": 2663 }
     ,
     "stDefaultTerminalSwitchInfo": {
@@ -9687,6 +10183,7 @@
       "zh": "提升的控制台：",
       "de": "Admin-Konsolen:",
       "ja": "高いコンソール:",
+      "es": "Terminales modo admin.:",
       "id": 3054 }
     ,
     "stEnableAutoUpdateFast": {
@@ -9695,6 +10192,7 @@
       "_zh": "你可以以后在设置对话框“更新”页面改变下面内容",
       "de": "Es kann Folgendes auf der Seite 'Aktualisierung' des Einstellungen-Dialogs geändert werden",
       "ja": "設定ダイアログの '更新' ページで以下を変更することができます",
+      "es": "Puedes modificar lo siguiente en página 'Actualizar' del diálogo de Opciones",
       "id": 2093 }
     ,
     "stExtendFontBoldIdx": {
@@ -9703,6 +10201,7 @@
       "zh": "粗体：",
       "de": "Fett:",
       "ja": "太字:",
+      "es": "Negrita:",
       "id": 2241 }
     ,
     "stExtendFontItalicIdx": {
@@ -9711,6 +10210,7 @@
       "zh": "斜体：",
       "de": "Kursiv:",
       "ja": "斜体:",
+      "es": "Cursiva:",
       "id": 2242 }
     ,
     "stExtendFontNormalIdx": {
@@ -9719,6 +10219,7 @@
       "zh": "替换：",
       "de": "Ersetzen:",
       "ja": "置換:",
+      "es": "Sustituir:",
       "id": 2243 }
     ,
     "stExtendFonts": {
@@ -9727,6 +10228,7 @@
       "zh": "由于背景颜色反差的原因，你可以改变使用的字体为加粗或斜体",
       "de": "Auf Kosten der Hintergrundfarben kann die verwendete Schriftart auf fett oder kursiv geändert werden",
       "ja": "背景色のコストでフォントを太字または斜体に変更",
+      "es": "Al coste de los colores de fondo podrá cambiar la letra a negrita o cursiva",
       "id": 2836 }
     ,
     "stFarPanelLeft": {
@@ -9735,6 +10237,7 @@
       "zh": "左：",
       "de": "Links",
       "ja": "左:",
+      "es": "Izquierda:",
       "id": 2949 }
     ,
     "stFarPanelRight": {
@@ -9743,6 +10246,7 @@
       "zh": "右：",
       "de": "Rechts",
       "ja": "右:",
+      "es": "Derecha:",
       "id": 2950 }
     ,
     "stFarPID": {
@@ -9751,6 +10255,7 @@
       "zh": "Far PID:",
       "de": "Far-PID:",
       "ja": "Far PID:",
+      "es": "PID de Far:",
       "id": 2940 }
     ,
     "stFarTabTemplates": {
@@ -9776,6 +10281,7 @@
       "zh": "字体的字符集：",
       "de": "Schriftzeichensatz:",
       "ja": "フォントの文字セット:",
+      "es": "Tipo de letra:",
       "id": 2666 }
     ,
     "stFontSizeX": {
@@ -9784,6 +10290,7 @@
       "zh": "宽度：",
       "de": "Breite:",
       "ja": "幅:",
+      "es": "Ancho:",
       "id": 2668 }
     ,
     "stFontSizeX2": {
@@ -9792,6 +10299,7 @@
       "zh": "宽度：",
       "de": "Breite:",
       "ja": "幅:",
+      "es": "Ancho:",
       "id": 2670 }
     ,
     "stFontSizeX3": {
@@ -9800,6 +10308,7 @@
       "zh": "单元：",
       "de": "Zeichen:",
       "ja": "セル:",
+      "es": "Celda:",
       "id": 2669 }
     ,
     "stFontSizeY": {
@@ -9808,6 +10317,7 @@
       "zh": "大小：",
       "de": "Größe:",
       "ja": "サイズ:",
+      "es": "Tam.:",
       "id": 2667 }
     ,
     "stFrameAppear": {
@@ -9816,6 +10326,7 @@
       "zh": "显示延迟：",
       "de": "Anzeigeverzögerung:",
       "ja": "表示まで:",
+      "es": "Retardo aparición:",
       "id": 2905 }
     ,
     "stFrameDisappear": {
@@ -9824,6 +10335,7 @@
       "zh": "消失：",
       "de": "Ausblenden:",
       "ja": "消えるまで:",
+      "es": "Desaparecer:",
       "id": 2906 }
     ,
     "stFrameWidth": {
@@ -9832,6 +10344,7 @@
       "zh": "框架宽度：",
       "de": "Rahmenbreite:",
       "ja": "フレーム幅:",
+      "es": "Ancho borde:",
       "id": 2904 }
     ,
     "stGotoEditorCmd": {
@@ -9840,6 +10353,7 @@
       "zh": "当Far未启动时，外部编辑器：",
       "de": "Externer Editor, falls Far nicht gestartet:",
       "ja": "Farが起動していないときの外部エディタ:",
+      "es": "Editor externo, cuando Far no se ha iniciado:",
       "id": 2256 }
     ,
     "stGotoEditorCmdHelp": {
@@ -9866,6 +10380,7 @@
       "zh": "描述：",
       "de": "Beschreibung:",
       "ja": "説明:",
+      "es": "Descripción:",
       "id": 2189 }
     ,
     "stHotKeySelect": {
@@ -9874,6 +10389,7 @@
       "zh": "选择热键：",
       "de": "Tastenkürzel auswählen:",
       "ja": "ホットキーを選択:",
+      "es": "Elegir combinación:",
       "id": 1769 }
     ,
     "stInactiveCursorMinSize": {
@@ -9882,6 +10398,7 @@
       "zh": "最小尺寸（像素）：",
       "de": "Min. Größe (Pixel):",
       "ja": "最小サイズ(pix):",
+      "es": "Tam. mín. (pix):",
       "id": 2542 }
     ,
     "stInjectConEmuHkFast": {
@@ -9890,6 +10407,7 @@
       "_zh": "你可以以后在设置对话框“特征”页面改变下面内容",
       "de": "Folgendes kann auf der Seite 'Funktionen' des Einstellungen-Dialogs geändert werden",
       "ja": "[設定]ダイアログの[機能]ページで以下を変更できます",
+      "es": "Puedes cambiar lo siguiente en la página de 'Características' del diálogo de opciones",
       "id": 2744 }
     ,
     "stInterfaceLanguage": {
@@ -9897,6 +10415,7 @@
       "ru": "Язык интерфейса:",
       "de": "Sprache der Oberfläche:",
       "ja": "インターフェイス言語:",
+      "es": "Idioma del interface:",
       "id": 3093 }
     ,
     "stIntgrHereCfg": {
@@ -9905,6 +10424,7 @@
       "zh": "配置：",
       "de": "Einrichtung:",
       "ja": "構成:",
+      "es": "Opciones:",
       "id": 2918 }
     ,
     "stIntgrHereCmd": {
@@ -9913,6 +10433,7 @@
       "zh": "命令：",
       "de": "Befehl:",
       "ja": "コマンド:",
+      "es": "Comando:",
       "id": 2919 }
     ,
     "stIntgrHereIcon": {
@@ -9977,6 +10498,7 @@
       "zh": "键：",
       "de": "Taste:",
       "ja": "キー:",
+      "es": "Tecla:",
       "id": 2885 }
     ,
     "stKeySelectMod": {
@@ -9985,6 +10507,7 @@
       "zh": "修改器：",
       "de": "Modifizierer:",
       "ja": "モデファイヤ:",
+      "es": "Modificadores:",
       "id": 3025 }
     ,
     "stMoreConfont1": {
@@ -9993,6 +10516,7 @@
       "zh": "警告！！！",
       "de": "WARNUNG!!!",
       "ja": "警告！！！",
+      "es": "¡¡¡AVISO!!!",
       "id": 3006 }
     ,
     "stMoreConfont2": {
@@ -10001,6 +10525,7 @@
       "zh": "改变这些设置时请非常小心！！！",
       "de": "Die Einstellungen mit Bedacht verändern!!!",
       "ja": "これらの設定は最新の注意を払って変更してください！",
+      "es": "¡¡¡Cambia estas opciones con sumo cuidado!!!",
       "id": 3007 }
     ,
     "stMoreConfont3": {
