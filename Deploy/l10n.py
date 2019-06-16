@@ -31,6 +31,8 @@ def parse_args():
     parser.add_argument('--tx-pull', action='append', metavar='LNG',
                         help='Pull <LNG> translation from Transifex; '
                              'use <all> for all translations')
+    parser.add_argument('--tx-push', action='append', metavar='LNG',
+                        help='Push <LNG> translation to Transifex')
     parser.add_argument('--write-l10n', action='store_true',
                         help='Update contents in <L10N> file')
     parser.add_argument('--write-yaml', metavar='DIR',
@@ -260,20 +262,30 @@ class LangData:
 
     def write_yaml(self, folder):
         print('Writing yamls to {}'.format(folder))
-        endl = '\n'
         for lng_id in self.languages:
             file_path = os.path.join(folder, 'ConEmu_{}.yaml'.format(lng_id))
             print('  {}'.format(file_path))
             with open(file_path, 'w', encoding='utf-8-sig') as file:
-                for block_id in self.blocks:
-                    file.write(block_id + ':' + endl)
-                    block = self.blocks[block_id]
-                    for str_id in sorted(block, key=lambda s: s.lower()):
-                        resource = block[str_id]
-                        if lng_id in resource:
-                            file.write('  ' + str_id + ': "' +
-                                       self.escape(resource[lng_id]['item']) +
-                                       '"' + endl)
+                self.write_yaml_file(file, lng_id)
+        return
+
+    def create_yaml_string(self, lng_id):
+        from io import StringIO
+        file_str = StringIO()
+        self.write_yaml_file(file_str, lng_id)
+        return file_str.getvalue()
+
+    def write_yaml_file(self, file, lng_id):
+        endl = '\n'
+        for block_id in self.blocks:
+            file.write(block_id + ':' + endl)
+            block = self.blocks[block_id]
+            for str_id in sorted(block, key=lambda s: s.lower()):
+                resource = block[str_id]
+                if lng_id in resource:
+                    file.write('  ' + str_id + ': "' +
+                               self.escape(resource[lng_id]['item']) +
+                               '"' + endl)
         return
 
 
@@ -291,11 +303,11 @@ class Transifex:
             '{}/translation/{}/?{}'.format(
                 self.base_url, lang_id, self.file_format),
             auth=HTTPBasicAuth('api', self.tx_token))
-        print(result)
+        print(' TX result: %s' % result.status_code)
         if result.status_code == 200:
             # print(result.encoding)
             result.encoding = 'utf-8'
-            data = yaml.load(result.text)
+            data = yaml.load(result.text, Loader=yaml.SafeLoader)
             # pp = pprint.PrettyPrinter(indent=2)
             # pp.pprint(data)
             return data
@@ -306,10 +318,25 @@ class Transifex:
             '{}/content/{}/'.format(self.base_url, lang_id),
             auth=HTTPBasicAuth('api', self.tx_token),
             json=json_data)
-        print(result)
+        print(' TX result: %s' % result.status_code)
         if result.status_code == 200:
-            return data
+            return
         raise Exception("No Transifex data", result)
+
+    def push_translation_data(self, lang_id, yaml_data):
+        print('Pushing language {} to Transifex'.format(lang_id))
+        result = requests.put(
+            '{}/translation/{}/'.format(self.base_url, lang_id),
+            auth=HTTPBasicAuth('api', self.tx_token),
+            files={'file': ('ConEmu_%s.yaml' % lang_id, yaml_data)})
+        print(' TX result: %s' % result.status_code)
+        if result.status_code == 200:
+            import_result = result.json()
+            print('  added:   %s' % import_result['strings_added'])
+            print('  updated: %s' % import_result['strings_updated'])
+            print('  deleted: %s' % import_result['strings_delete'])
+            return
+        raise Exception("No Transifex data", result, result.text)
 
 
 
@@ -318,17 +345,21 @@ def main(args):
     l10n = LangData()
     l10n.load_l10n_file(file_name=args.l10n)
 
-    if not args.lng_l10n is None:
+    if args.lng_l10n is not None:
         for lng_pair in args.lng_l10n:
             l10n.load_l10n_file(selected_lang=lng_pair[0],
                                 file_name=lng_pair[1])
-    if not args.add_lng is None:
+    if args.add_lng is not None:
         for lng_pair in args.add_lng:
             l10n.add_language(lng_pair[0], lng_pair[1])
-    if not args.tx_pull is None:
+    if args.tx_pull is not None:
         tx = Transifex()
         for lng_id in l10n.get_translation_lang_ids(args.tx_pull):
             l10n.update_lang(lng_id, tx.pull(lng_id), args.verbose)
+    if args.tx_push is not None:
+        tx = Transifex()
+        for lng_id in l10n.get_translation_lang_ids(args.tx_push):
+            tx.push_translation_data(lng_id, l10n.create_yaml_string(lng_id))
     if args.write_l10n:
         with open(args.l10n, 'w', encoding='utf-8-sig') as l10n_file:
             print('Writing l10n to {}'.format(args.l10n))
