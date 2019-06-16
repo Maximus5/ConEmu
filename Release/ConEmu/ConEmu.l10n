@@ -6000,6 +6000,7 @@
     ,
     "cbAutoReloadEnvironment": {
       "en": "Reload environment variables automatically",
+      "ru": "Автоматически обновлять переменные окружения",
       "id": 3106 }
     ,
     "cbAutoSaveSizePos": {
