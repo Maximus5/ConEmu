@@ -41,13 +41,13 @@ protected:
 		bool bAdmin;
 		bool bWasNotLoaded;
 	};
-	MSectionSimple* mpcs;
+	MSectionSimple* mpcs = nullptr;
 	MArray<TabIconCache> m_Icons;
-	int mn_CxIcon, mn_CyIcon;
+	int mn_CxIcon = -1, mn_CyIcon = -1;
 	int CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWorkDir);
 public:
-	HIMAGELIST mh_TabIcons;
-	int mn_AdminIcon;
+	HIMAGELIST mh_TabIcons = nullptr;
+	int mn_AdminIcon = -1;
 public:
 	CIconList();
 	~CIconList();

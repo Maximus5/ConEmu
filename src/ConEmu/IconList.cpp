@@ -51,8 +51,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 CIconList::CIconList()
 {
-	mh_TabIcons = NULL;
-	mn_AdminIcon = -1;
 	mpcs = new MSectionSimple(true);
 }
 
