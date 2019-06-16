@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RefRelease.h"
 #include "../common/RConStartArgsEx.h"
 #include "../common/MArray.h"
+#include <functional>
 
 class CVirtualConsole;
 class CVConGuard;
@@ -39,7 +40,7 @@ struct AppSettings;
 
 
 // used with enum EnumVConFlags, callback for EnumVCon
-typedef bool (*EnumVConProc)(CVirtualConsole* pVCon, LPARAM lParam);
+using EnumVConProc = std::function<bool(CVirtualConsole* pVCon, LPARAM lParam)>;
 
 
 class CVConGroup : public CRefRelease
