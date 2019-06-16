@@ -365,7 +365,8 @@ int CVirtualConsole::Index()
 
 LPCWSTR CVirtualConsole::IndexStr()
 {
-	ltow_s(mn_Index, ms_Idx, 10);
+	// Used for logging and user UX, 1-based indexes
+	ltow_s(mn_Index + 1, ms_Idx, 10);
 	return ms_Idx;
 }
 

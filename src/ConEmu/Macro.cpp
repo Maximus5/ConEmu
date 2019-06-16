@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/EnvVar.h"
 #include "../common/MGuiMacro.h"
 #include "../common/MStrEsc.h"
+#include "../common/MStrSafe.h"
 #include "../common/ProcessSetEnv.h"
 #include "../common/WFiles.h"
 
@@ -3793,6 +3794,19 @@ LPWSTR ConEmuMacro::Tab(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 				{
 					pszResult = lstrdup(L"OK");
 				}
+			}
+			break;
+		case ctc_GetTabsList: // return list of tabs in format "1: name1\n2: name2\n..."
+			{
+				CEStrConcat data;
+				CVConGroup::EnumVCon(evf_All, [&data](CVirtualConsole* pVCon, LPARAM lParam){
+					data.Append(pVCon->IndexStr());
+					data.Append(L": ");
+					data.Append(pVCon->RCon()->GetTitle());
+					data.Append(L"\n");
+					return true;
+				}, 0);
+				return data.GetData().Detach();
 			}
 			break;
 		}

@@ -461,6 +461,7 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"     Cmd==9: close active tab, same as Close(3)\r\n" \
 	L"     Cmd==10: switches visible split-panes, Parm=(1,-1)\r\n" \
 	L"     Cmd==11: activates tab by name, title or process name\r\n" \
+	L"     Cmd==12: return tabs list \"1: tab1\\n2: tab2\\n...\"\r\n" \
 	L"Task(Index[,\"Dir\"])\r\n" \
 	L"  - start task with 1-based index\r\n" \
 	L"Task(\"Name\"[,\"Dir\"])\r\n" \

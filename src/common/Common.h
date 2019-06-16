@@ -314,12 +314,12 @@ typedef struct _CONSOLE_SELECTION_INFO
 // Команды из плагина ConEmu и для GUI Macro
 enum ConEmuTabCommand
 {
-	// Эти команды приходят из плагина ConEmu
+	// These commands go from ConEmu Far plugin and GuiMacro
 	ctc_ShowHide = 0,
 	ctc_SwitchCommit = 1,
 	ctc_SwitchNext = 2,
 	ctc_SwitchPrev = 3,
-	// Далее идут параметры только для GUI Macro
+	// GuiMacro commands only
 	ctc_SwitchDirect = 4,
 	ctc_SwitchRecent = 5,
 	ctc_SwitchConsoleDirect = 6,
@@ -328,6 +328,7 @@ enum ConEmuTabCommand
 	ctc_CloseTab = 9,
 	ctc_SwitchPaneDirect = 10,
 	ctc_ActivateByName = 11,
+	ctc_GetTabsList = 12,
 };
 
 enum ConEmuStatusCommand
