@@ -6001,6 +6001,7 @@
     "cbAutoReloadEnvironment": {
       "en": "Reload environment variables automatically",
       "ru": "Автоматически обновлять переменные окружения",
+      "es": "Recargar variables de entorno automáticamente",
       "id": 3106 }
     ,
     "cbAutoSaveSizePos": {
@@ -10168,6 +10169,8 @@
             , "Beispiel: \"cmd.exe -new_console:z\"" ],
       "ja": [ "'既定の端末'が有効になっているときにフックされた実行可能ファイルからWindowsの標準コンソールウィンドウでいくつかのコマンドを開始するには,単に \"-new_console:z\"スイッチを使用します.\r\n"
             , "例: \"cmd.exe -new_console:z\"" ],
+      "es": [ "Si quieres iniciar algún comando en el terminal estándar de Windows desde un ejecutable enganchado cuando está activado 'Terminal por defecto', usa la opción \"-new_console:z\"\r\n"
+            , "Ejemplo: \"cmd.exe -new_console:z\"" ],
       "id": 2662 }
     ,
     "stDisableConImeFast1": {
@@ -10176,6 +10179,7 @@
       "zh": "注册表参数‘LoadConIme’多余的值！这可能会导致其他控制台应用程序挂起！ConEmu可以通过注册表禁用ConIme.exe：",
       "de": "Unerwünschter Wert vom 'LoadConIme'-Registry-Parameter! Das kann zum Aufhängen anderer Konsolenanwendungen führen! ConEmu kann ConIme.exe mittel Registry deaktivieren:",
       "ja": "'LoadConIme'レジストリパラメータの不要な値！これにより,他のコンソールアプリケーションが停止することがあります. ConEmuはレジストリを介してConIme.exeを無効にすることがあります:",
+      "es": "¡Valor no aceptado del parámetro de registro 'LoadConIme'! ¡Esto puede provocar que se cuelguen otras aplicaciones de terminal! ConEmu puede desactivar ConIme.exe a través del registro:",
       "id": 2094 }
     ,
     "stElevatedConsolesGroup": {
@@ -10274,6 +10278,9 @@
       "ja": [ "%s - タイトル, %c - コンソール番号, %n - アクティブなプロセス名, %p - PID, %a - 'Admin', %% - %,\n"
             , "%m...m, %M...M - アクティブ(m)および非アクティブ(M)タブのM'...'\n"
             , "%i  - Farウィンドウ番号(標準のF12メニューで見ることができます)" ],
+      "es": [ "%s - Título, %c - Nº terminal, %n - Nombre del proceso, %p - PID, %a - ‘Admin’, %% - %,\n"
+            , "%m...m, %M...M - marcar '...' pestaña activa (m) e inactiva (M)\n"
+            , "%i - Nº de ventana Far (puedes verlo en el menú F12)" ],
       "id": 2960 }
     ,
     "stFontCharset": {
@@ -10373,6 +10380,9 @@
       "ja": [ "利用可能なマクロ: '%1' - 行番号, '%2' - 列番号\n"
             , "'%3' - C:\\Path\\File, '%4' - C:/Path/File, '%5' - /C/Path/File\n"
             , "ConEmuの外部でエディタを実行するには '#'接頭辞を使用してください" ],
+      "es": [ "Macros disponibles: '%1' - nº línea, '%2' - nº columna\n"
+            , "'%3' - C:\\Ruta\\Archivo, '%4' - C:/Ruta/Archivo, '%5' - /C/Ruta/Archivo\n"
+            , "Usa el prefijo '#' para ejecutar el editor fuera de ConEmu" ],
       "id": 2681 }
     ,
     "stGuiMacro": {
@@ -10443,6 +10453,7 @@
       "zh": "图标文件：",
       "de": "Icon-Datei:",
       "ja": "アイコンファイル:",
+      "es": "Archivo del icono:",
       "id": 2920 }
     ,
     "stIntgrHereItem": {
@@ -10451,6 +10462,7 @@
       "zh": "菜单项：",
       "de": "Menüeintrag:",
       "ja": "メニュー項目:",
+      "es": "Elemento de menú:",
       "id": 2917 }
     ,
     "stIntgrInsideCfg": {
@@ -10459,6 +10471,7 @@
       "zh": "配置：",
       "de": "Einrichtung:",
       "ja": "構成:",
+      "es": "Configuración:",
       "id": 2923 }
     ,
     "stIntgrInsideCmd": {
@@ -10467,6 +10480,7 @@
       "zh": "命令：",
       "de": "Befehl:",
       "ja": "コマンド:",
+      "es": "Comando:",
       "id": 2924 }
     ,
     "stIntgrInsideIcon": {
@@ -10475,6 +10489,7 @@
       "zh": "图标文件：",
       "de": "Icon-Datei:",
       "ja": "アイコンファイル:",
+      "es": "Archivo del icono:",
       "id": 2925 }
     ,
     "stIntgrInsideItem": {
@@ -10483,6 +10498,7 @@
       "zh": "菜单项：",
       "de": "Menüeintrag:",
       "ja": "メニュー項目:",
+      "es": "Elemento de menú:",
       "id": 2922 }
     ,
     "stIntgrInsideNote": {
@@ -10491,6 +10507,7 @@
       "zh": "使用此功能 - 如果你希望ConEmu作为Windows Explorer窗口的一个页面",
       "de": "Dies verwenden, wenn ConEmu als Seite im Windows Explorer-Fenster arbeiten soll",
       "ja": "ConEmuをWindowsエクスプローラウィンドウのページとして機能させたい場合に使用します",
+      "es": "Usa esto si quieres que ConEmu aparezca como una página del Explorador de Windows",
       "id": 2921 }
     ,
     "stKeySelect": {
@@ -10535,6 +10552,7 @@
       "zh": "字体必须是Unicode的并且必须小于主字体！！！",
       "de": "Die Schriftart muss Unicode und kleiner als die Hauptschriftart sein!!!",
       "ja": "フォントはUnicodeで,メインフォントより小さくする必要があります.",
+      "es": "¡El tipo de letra debe ser Unicode y debe ser más pequeño que el principal!",
       "id": 3008 }
     ,
     "stMoreConfont4": {
@@ -10543,6 +10561,7 @@
       "zh": "例如： True Type 字体 ‘Lucida Console’ 5x3",
       "de": "Zum Beispiel: True-Type-Schrift 'Lucida Console' 5x3",
       "ja": "例:True Typeフォント 'Lucida Console' 5x3",
+      "es": "Por ejemplo: tipo de letra True Type 'Lucida Console' 5x3",
       "id": 3009 }
     ,
     "stMoreConfont5": {
@@ -10551,6 +10570,7 @@
       "zh": "字体必须在HKLM\\Software\\Microsoft\\里声明",
       "de": "Die Schriftart muss in HKLM\\Software\\Microsoft\\ deklariert sein",
       "ja": "フォントはHKLM\\Software\\Microsoft\\で宣言する必要があります.",
+      "es": "El tipo de letra debe estar registrado en: HKLM\\Software\\Microsoft\\",
       "id": 3010 }
     ,
     "stMoreConfont6": {
@@ -10559,6 +10579,7 @@
       "zh": "\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
       "de": "\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
       "ja": "\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
+      "es": "\\Windows NT\\CurrentVersion\\Console\\TrueTypeFont",
       "id": 3011 }
     ,
     "stNewTabName": {
@@ -10567,6 +10588,7 @@
       "zh": "新建（&N）标签页名称 （清除并恢复）:",
       "de": "&Neuer Reitername (Leeren zum Zurücksetzen):",
       "ja": "新しいタブ名(元に戻すにはクリア):(&N)",
+      "es": "&Nuevo nombre de pestaña (ninguno=por defecto):",
       "id": 2336 }
     ,
     "stNtvdmHeight": {
@@ -10575,6 +10597,7 @@
       "zh": "16bit高度：",
       "de": "16Bit-Höhe:",
       "ja": "16ビットの高さ:",
+      "es": "Altura 16bit:",
       "id": 2896 }
     ,
     "stOpaqueActive": {
@@ -10583,6 +10606,7 @@
       "zh": "不透明",
       "de": "Undurchsichtig",
       "ja": "不透明",
+      "es": "Opaco",
       "id": 2938 }
     ,
     "stOpaqueInactive": {
@@ -10591,6 +10615,7 @@
       "zh": "不透明",
       "de": "Undurchsichtig",
       "ja": "不透明",
+      "es": "Opaco",
       "id": 2383 }
     ,
     "stPriorityBox": {
@@ -10599,6 +10624,7 @@
       "zh": "优先权",
       "de": "Priorität",
       "ja": "優先",
+      "es": "Prioridad",
       "id": 2762 }
     ,
     "stQuakeAnimation": {
@@ -10607,6 +10633,7 @@
       "zh": "动画时间（毫秒）:",
       "de": "Animationsdauer (ms)",
       "ja": "アニメーション時間(ms):",
+      "es": "Tiempo de animación (ms):",
       "id": 2565 }
     ,
     "stQuakeKeyFast": {
@@ -10614,6 +10641,7 @@
       "ru": "Хоткей активации ConEmu:",
       "de": "Tastenkürzel Minimieren/Wiederherstellen:",
       "ja": "最小化 / 復元 ホットキー:",
+      "es": "Combinación para Minimizar/Restaurar:",
       "id": 3096 }
     ,
     "stRConCursorInfo": {
@@ -10622,6 +10650,7 @@
       "zh": "光标(x,y,h):",
       "de": "Zeiger (x,y,h):",
       "ja": "カーソル(x,y,h):",
+      "es": "Cursor (x,y,h):",
       "id": 2948 }
     ,
     "stRConStates": {
@@ -10630,6 +10659,7 @@
       "zh": "状态：",
       "de": "Zustände:",
       "ja": "州:",
+      "es": "Estados:",
       "id": 2941 }
     ,
     "stRestartCmd": {
@@ -10637,6 +10667,7 @@
       "ru": "Команда запуска или имя {Task}; -new_console switches:",
       "de": "Start-Befehl oder {Aufgaben}-Name; -new_console Parameter:",
       "ja": "起動コマンドまたは{タスク}名; -new_console スイッチ:",
+      "es": "Comando de inicio o nombre de {Tarea}; opciones de -new_console:",
       "id": 3086 }
     ,
     "stRunAsPassword": {
@@ -10645,6 +10676,7 @@
       "zh": "密码（&P）:",
       "de": "&Kennwort:",
       "ja": "パスワード:(&P)",
+      "es": "C&ontraseña:",
       "id": 2970 }
     ,
     "stRunAsUser": {
@@ -10653,6 +10685,7 @@
       "zh": "用户名（&n）:",
       "de": "Benutzer&name:",
       "ja": "ユーザー名:(&n)",
+      "es": "&Nombre de usuario:",
       "id": 2969 }
     ,
     "stSaveAllMacro": {
@@ -10661,6 +10694,7 @@
       "zh": "保存所有编辑器：",
       "de": "Alle Editoren speichern:",
       "ja": "すべてのエディタを保存:",
+      "es": "Guardar los editores:",
       "id": 2967 }
     ,
     "stScrollAppear": {
@@ -10669,6 +10703,7 @@
       "zh": "显示延迟：",
       "de": "Anzeigeverzög.:",
       "ja": "表示まで:",
+      "es": "Retraso de aparición:",
       "id": 2902 }
     ,
     "stScrollDisappear": {
@@ -10677,6 +10712,7 @@
       "zh": "消失：",
       "de": "Ausblenden:",
       "ja": "消えるまで:",
+      "es": "Desaparición:",
       "id": 2903 }
     ,
     "stSetCommands": {
@@ -10690,6 +10726,8 @@
             , "Jede Zeile darf nur einen Befehl enthalten! Zeilen können mit '#' auskommentiert werden." ],
       "ja": [ "ここでは,環境変数,デフォルトのコードページなどを設定することができます.\r\n"
             , "1行には1つのコマンドしかないかもしれません！ #記号で行をコメントすることができます." ],
+      "es": [ "Aquñi puedes configurar tus variables de entorno, página de código predeterminada, etc...\r\n"
+            , "¡Un comando en cada línea! Puedes usar # para comentar las líneas." ],
       "id": 2852 }
     ,
     "stSingleInstance": {
@@ -10698,6 +10736,7 @@
       "_zh": "你可以以后在设置对话框“外观”页面改变下面内容",
       "de": "Auf der Seite 'Erscheinungsbild' des Einstellungen-Dialogs kann folgendes angepasst werden",
       "ja": "[設定]ダイアログの[外観]ページで以下を変更できます",
+      "es": "Puedes cambiar lo siguiente en la página de 'Apariencia' del diálogo de opciones",
       "id": 2742 }
     ,
     "stStartCreateDelay": {
@@ -10706,6 +10745,7 @@
       "zh": "控制台（console）初始化之间的延迟 （ms）:",
       "de": "Verzögerung zwischen Konsoleninitialisierungen (ms):",
       "ja": "コンソール間の遅延初期化(ミリ秒):",
+      "es": "Retraso entre inicialización de terminales (ms):",
       "id": 2870 }
     ,
     "stStartupDir": {
@@ -10714,6 +10754,7 @@
       "zh": "新进程的启动目录（&d）",
       "de": "Start&verzeichnis für einen neuen Prozess:",
       "ja": "新しいプロセスのスタートアップディレクトリ:(&d)",
+      "es": "&Carpeta de inicio para procesos nuevos:",
       "id": 2968 }
     ,
     "stStartupShellFast": {
@@ -10722,6 +10763,7 @@
       "zh": "选择你的启动任务或者带参数的shell:",
       "de": "Startaufgabe, oder auch Shell mit Argumenten, auswählen:",
       "ja": "あなたのスタートアップタスク あるいは引数のついたシェルを選んでください:",
+      "es": "Selecciona la tarea de inicio o un intérprete de comandos con opciones:",
       "id": 2843 }
     ,
     "stStatusAvailCol": {
@@ -10730,6 +10772,7 @@
       "zh": "可用的列：",
       "de": "Verfügbare Spalten:",
       "ja": "使用可能な列:",
+      "es": "Columnas disponibles:",
       "id": 2990 }
     ,
     "stStatusColorBack": {
@@ -10738,6 +10781,7 @@
       "zh": "背景：",
       "de": "Hintergr.:",
       "ja": "バック:",
+      "es": "Atrás:",
       "id": 2497 }
     ,
     "stStatusColorDark": {
@@ -10746,6 +10790,7 @@
       "zh": "暗度：",
       "de": "Dunkel:",
       "ja": "ダーク:",
+      "es": "Oscuro:",
       "id": 2499 }
     ,
     "stStatusColorLight": {
@@ -10754,6 +10799,7 @@
       "zh": "亮度：",
       "de": "Hell:",
       "ja": "光:",
+      "es": "Claro:",
       "id": 2498 }
     ,
     "stStatusFontCharset": {
@@ -10762,6 +10808,7 @@
       "zh": "字符集：",
       "de": "Zeichens.:",
       "ja": "Charset:",
+      "es": "Juego de caracteres:",
       "id": 2988 }
     ,
     "stStatusFontFace": {
@@ -10770,6 +10817,7 @@
       "zh": "名称：",
       "de": "Name:",
       "ja": "名:",
+      "es": "Nombre:",
       "id": 2987 }
     ,
     "stStatusLines": {
@@ -10778,6 +10826,7 @@
       "zh": "行：",
       "de": "Zeilen:",
       "ja": "ライン:",
+      "es": "Lineas:",
       "id": 2989 }
     ,
     "stStatusSelCol": {
@@ -10786,6 +10835,7 @@
       "zh": "选中的列：",
       "de": "Ausgewählte Spalten:",
       "ja": "選択した列:",
+      "es": "Columnas seleccionadas:",
       "id": 2991 }
     ,
     "stStorage": {
@@ -10794,6 +10844,7 @@
       "zh": "储存位置：",
       "de": "Speicherort:",
       "ja": "ストレージ:",
+      "es": "Almacenamiento:",
       "id": 2573 }
     ,
     "stStorageLocation": {
@@ -10802,6 +10853,7 @@
       "zh": "选择ConEmu设置储存位置（你可以在这里打开/关闭便携模式）",
       "de": "Speicherort für ConEmu-Einstellungen auswählen (Hier kann der portable Modus ein-/ausgeschaltet werden)",
       "ja": "ConEmuの設定保存場所を選択してください(ここではポータブルモードをオン/オフすることができます)",
+      "es": "Selecciona dónde almacenar la configuración de ConEmu (puedes activar/desactivar el modo portable aquí)",
       "id": 2741 }
     ,
     "stTabBarDblClickAction": {
@@ -10810,6 +10862,7 @@
       "zh": "标签栏：",
       "de": "Taskleiste:",
       "ja": "タブバー:",
+      "es": "Barra de pestañas:",
       "id": 2733 }
     ,
     "stTabBtnDblClickAction": {
@@ -10818,6 +10871,7 @@
       "zh": "标签页按钮（标签）：",
       "de": "Reiterschaltfläche (Beschriftungen):",
       "ja": "タブボタン(ラベル):",
+      "es": "Etiquetas de pestañas:",
       "id": 2732 }
     ,
     "stTabConsole": {
@@ -10826,6 +10880,7 @@
       "zh": "控制台：",
       "de": "Konsole:",
       "ja": "コンソール:",
+      "es": "Terminal:",
       "id": 2735 }
     ,
     "stTabEditor": {
@@ -10834,6 +10889,7 @@
       "zh": "编辑器：",
       "de": "Editor:",
       "ja": "エディタ:",
+      "es": "Editor:",
       "id": 2962 }
     ,
     "stTabEditorMod": {
@@ -10842,6 +10898,7 @@
       "zh": "修改：",
       "de": "Verändert:",
       "ja": "変更された:",
+      "es": "Modificado:",
       "id": 2964 }
     ,
     "stTabFlashCounter": {
@@ -10850,6 +10907,7 @@
       "zh": "隐形标签页的活动的闪光计数：",
       "de": "Aktivitäts-Blinkzähler unsichtbarer Reiter:",
       "ja": "見えないタブアクティビティのフラッシュカウント:",
+      "es": "Número de parpadeos de actividad de pestaña:",
       "id": 2983 }
     ,
     "stTabFontCharset": {
@@ -10858,6 +10916,7 @@
       "zh": "字符集：",
       "de": "Zeichensatz:",
       "ja": "Charset:",
+      "es": "Juego de caracteres:",
       "id": 2731 }
     ,
     "stTabFontFace": {
@@ -10866,6 +10925,7 @@
       "zh": "标签页字体：",
       "de": "Reiterschriftart:",
       "ja": "タブフォント:",
+      "es": "Tipo de letra pestaña:",
       "id": 2730 }
     ,
     "stTabLenMax": {
@@ -10874,6 +10934,7 @@
       "zh": "标签页最大宽度（以字符计）：",
       "de": "Maximale Reiterbreite (in Zeichen):",
       "ja": "最大タブ幅(文字数):",
+      "es": "Tamaño máx. pestaña (caracteres):",
       "id": 2985 }
     ,
     "stTabModifiedSuffix": {
@@ -10882,6 +10943,7 @@
       "zh": "修改后的后缀：",
       "de": "Modifizierungs-Anhang:",
       "ja": "変更された接尾辞:",
+      "es": "Sufijo de modificada:",
       "id": 2982 }
     ,
     "stTabPanels": {
@@ -10890,6 +10952,7 @@
       "zh": "面板：",
       "de": "Panels:",
       "ja": "パネル:",
+      "es": "Paneles:",
       "id": 2961 }
     ,
     "stTabSkipWords": {
@@ -10898,6 +10961,7 @@
       "zh": "从标题跳过单词：",
       "de": "Ignoriere Worte des Titels:",
       "ja": "タイトルからの単語をスキップ:",
+      "es": "Saltar palabras del título:",
       "id": 2984 }
     ,
     "stTabTemplateDescr": {
@@ -10915,6 +10979,9 @@
       "ja": [ "%s - タイトル, %c - コンソール番号, %n - アクティブなプロセス名, %p - PID,\n"
             , "%m...m, %M...M - アクティブ(m)および非アクティブ(M)タブのM'...'\n"
             , "%a - 'Admin', %d - 現在のシェルディレクトリ, %f - フォルダ, %% - %" ],
+      "es": [ "%s - Título, %c - Nº terminal, %n - Nombre del proceso, %p - PID,\n"
+            , "%m...m, %M...M - marcar '...' pestaña activa (m) e inactiva (M)\n"
+            , "%a - ‘Admin’, %d - carpeta activa, %f - carpeta, %% - %" ],
       "id": 2737 }
     ,
     "stTabTemplateGroup": {
@@ -10923,6 +10990,7 @@
       "zh": "标签页（Tab）模版 （Far Manager 的放置在 'Far Manager' 页）",
       "de": "Reitervorlagen (Far-Manager-Vorlagen sind auf der Seite 'Far-Manager')",
       "ja": "タブテンプレート(Far Managerのものは 'Far Manager'ページにあります)",
+      "es": "Plantillas de pestaña (las de Far Manager están en la página 'Far Manager')",
       "id": 2736 }
     ,
     "stTabViewer": {
@@ -10931,6 +10999,7 @@
       "zh": "视图：",
       "de": "Betrachter:",
       "ja": "ビューア:",
+      "es": "Visor:",
       "id": 2963 }
     ,
     "stThumbLoadingTimeout": {
@@ -10939,6 +11008,7 @@
       "zh": "加载超时（秒）:",
       "de": "Lade-Auszeit (Sek.):",
       "ja": "読み込みタイムアウト(秒):",
+      "es": "Timeout de carga (seg.):",
       "id": 3004 }
     ,
     "stThumbMaxZoom": {
@@ -10947,6 +11017,7 @@
       "zh": "最大缩放：",
       "de": "Max. Lupe:",
       "ja": "最大ズーム:",
+      "es": "Zoom máx.:",
       "id": 3003 }
     ,
     "stThumbsFontName": {
@@ -10955,6 +11026,7 @@
       "zh": "标签字体：",
       "de": "Bez.Schrift:",
       "ja": "ラベルフォント:",
+      "es": "Tipo letra pestaña:",
       "id": 2995 }
     ,
     "stThumbsImgSize": {
@@ -10963,6 +11035,7 @@
       "zh": "图像大小：",
       "de": "Bildgröße:",
       "ja": "画像サイズ:",
+      "es": "Tam. imágen:",
       "id": 2996 }
     ,
     "stThumbsPadding": {
@@ -10971,6 +11044,7 @@
       "zh": "水平pad:",
       "de": "Horiz. Füllung:",
       "ja": "水平pad:",
+      "es": "Separ.horiz.:",
       "id": 2998 }
     ,
     "stThumbsSpacing": {
@@ -10979,6 +11053,7 @@
       "zh": "垂直pad:",
       "de": "Vertik. Füllung:",
       "ja": "垂直pad:",
+      "es": "Separ.vert.:",
       "id": 2997 }
     ,
     "stTilesFontName": {
@@ -10987,6 +11062,7 @@
       "zh": "标签字体：",
       "de": "Bez.-Schrift:",
       "ja": "ラベルフォント:",
+      "es": "Tipo letra etiqueta:",
       "id": 2999 }
     ,
     "stTilesImgSize": {
@@ -10995,6 +11071,7 @@
       "zh": "图像大小：",
       "de": "Bildgröße:",
       "ja": "画像サイズ:",
+      "es": "Tam. imágen:",
       "id": 3000 }
     ,
     "stTilesPadding": {
@@ -11003,6 +11080,7 @@
       "zh": "右pad:",
       "de": "Rechte Füllung:",
       "ja": "右パッド:",
+      "es": "Sep. derecha:",
       "id": 3002 }
     ,
     "stTilesSpacing": {
@@ -11011,6 +11089,7 @@
       "zh": "左pad:",
       "de": "Linke Füllung:",
       "ja": "左パッド:",
+      "es": "Sep. izquierda:",
       "id": 3001 }
     ,
     "stTransparentActive": {
@@ -11019,6 +11098,7 @@
       "zh": "透明",
       "de": "Transparent",
       "ja": "透明",
+      "es": "Transparente",
       "id": 2937 }
     ,
     "stTransparentInactive": {
@@ -11027,6 +11107,7 @@
       "zh": "透明",
       "de": "Transparent",
       "ja": "透明",
+      "es": "Transparente",
       "id": 2382 }
     ,
     "stUnicodeRanges": {
@@ -11035,6 +11116,7 @@
       "zh": "Unicode范围，默认为 \"2013-25C4;\":",
       "de": "Unicode-Bereiche, Vorgabe ist \"2013-25C4;\":",
       "ja": "Unicode範囲 デフォルトは \"2013-25C4;\"",
+      "es": "Rangos Unicode, por defecto \"2013-25C4;\":",
       "id": 2837 }
     ,
     "stUpdateCheck": {
@@ -11043,6 +11125,7 @@
       "zh": "自动检查更新",
       "de": "Automatisch prüfen",
       "ja": "自動チェックを行う",
+      "es": "Hacer control automático",
       "id": 2863 }
     ,
     "stUpdateCommand": {
@@ -11051,6 +11134,7 @@
       "zh": "更新命令 （%1 - package, %2 - ConEmu.exe文件夹, %3 - x86/x64, %4 - PID）",
       "de": "Aktualisierungsbefehl (%1 - Paket, %2 - ConEmu.exe-Ordner, %3 - x86/x64, %4 - PID)",
       "ja": "アップデートコマンド(%1 - パッケージ, %2 - ConEmu.exeフォルダ, %3 - x86/x64, %4 - PID)",
+      "es": "Comando de actualización (%1 - paquete, %2 - carpeta de ConEmu.exe, %3 - x86/x64, %4 - PID)",
       "id": 2859 }
     ,
     "stUpdatePostCommand": {
@@ -11059,6 +11143,7 @@
       "zh": "更新后命令，不要忘记从批处理“调用”",
       "de": "Befehl nach Aktualisierung, für Batch 'call' nicht vergessen",
       "ja": "更新後のコマンド,バッチの 'call' を忘れないでください",
+      "es": "Comando post-actualización, no olvides 'invocar' los procesos batch",
       "id": 2860 }
     ,
     "stUpdateProxy": {
@@ -11067,6 +11152,7 @@
       "zh": "服务器:端口",
       "de": "Server:Port",
       "ja": "サーバポート",
+      "es": "Servidor:puerto",
       "id": 2083 }
     ,
     "stUpdateProxyPassword": {
@@ -11075,6 +11161,7 @@
       "zh": "密码",
       "de": "Kennwort",
       "ja": "パスワード",
+      "es": "Contraseña",
       "id": 2085 }
     ,
     "stUpdateProxyUser": {
@@ -11083,6 +11170,7 @@
       "zh": "用户",
       "de": "Benutzer",
       "ja": "ユーザー",
+      "es": "Usuario",
       "id": 2084 }
     ,
     "stUpdateReleaseType": {
@@ -11091,6 +11179,7 @@
       "zh": "最喜爱的release类型",
       "de": "Bevorzugter Veröffentlichungstyp",
       "ja": "好ましいリリースタイプ",
+      "es": "Tipo de versión",
       "id": 2862 }
     ,
     "stUpdateVerLocation": {
@@ -11099,6 +11188,7 @@
       "zh": "ConEmu最新版本信息位置",
       "de": "Adresse mit Info über die neuste ConEmu-Version",
       "ja": "ConEmu最新バージョンの位置情報",
+      "es": "Información sobre localización de última versión de ConEmu",
       "id": 2861 }
     ,
     "stUseKeyboardHooksFast": {
@@ -11107,6 +11197,7 @@
       "_zh": "你可以以后在设置对话框“控件”页面改变下面内容",
       "de": "Auf der Seite 'Tastatur' des Einstellungen-Dialogs kann folgende angepasst werden",
       "ja": "[設定]ダイアログの[キーボード]ページで以下を変更できます",
+      "es": "Puedes cambiar lo siguiente en la página 'Teclado' del diálogo de opciones",
       "id": 2743 }
     ,
     "stVConFontFix": {
@@ -11115,6 +11206,7 @@
       "zh": "修复：",
       "de": "Fest:",
       "ja": "修正:",
+      "es": "Fijo:",
       "id": 2953 }
     ,
     "stVConFontMain": {
@@ -11123,6 +11215,7 @@
       "zh": "主要：",
       "de": "Haupt:",
       "ja": "メイン:",
+      "es": "Principal:",
       "id": 2952 }
     ,
     "stVConPadSize": {
@@ -11131,6 +11224,7 @@
       "zh": "Pad大小（像素）：",
       "de": "Abstand-Größe (Pixel):",
       "ja": "Pad(隙間)サイズ(ピクセル):",
+      "es": "Espaciado (pixels):",
       "id": 2898 }
     ,
     "stWndHeight": {
@@ -11139,6 +11233,7 @@
       "zh": "高度：",
       "de": "Höhe:",
       "ja": "高さ:",
+      "es": "Altura:",
       "id": 2439 }
     ,
     "stWndWidth": {
@@ -11147,6 +11242,7 @@
       "zh": "宽度：",
       "de": "Breite:",
       "ja": "幅:",
+      "es": "Anchura:",
       "id": 2438 }
     ,
     "tConsoleFontConsoleNote": {
@@ -11155,6 +11251,7 @@
       "zh": "可能需要重启Console",
       "de": "Möglicherweise Konsolenneustart erforderlich",
       "ja": "コンソールの再起動が必要な場合があります",
+      "es": "Se requiere reinicio del terminal",
       "id": 1732 }
     ,
     "tConsoleFontHklmNote": {
@@ -11163,6 +11260,7 @@
       "zh": "注意！！！ 应用注册表改动可能需要计算机重启",
       "de": "HINWEIS!!! Möglicherweise Rechnerneustart erforderlich um Registry-Änderungen anzuwenden",
       "ja": "注意！！！レジストリの変更を適用するにはコンピュータの再起動が必要な場合があります",
+      "es": "¡¡¡AVISO!!! puede que sea necesario reiniciar el PC para aplicar los cambios en el registro",
       "id": 1731 }
   }
 }
