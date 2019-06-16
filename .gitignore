@@ -58,3 +58,4 @@ Release/**/*.lib
 
 pvs-studio*.*
 /src/*.PVS-Studio.*
+/src/.pvs/
