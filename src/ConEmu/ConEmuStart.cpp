@@ -1012,6 +1012,10 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 				{
 					gpConEmu->opt.WindowModeVal = wmMaximized;
 				}
+				else if (szArg.OneOfSwitches(L"-nor", L"-normal"))
+				{
+					gpConEmu->opt.WindowModeVal = wmNormal;
+				}
 				else if (szArg.OneOfSwitches(L"-min", L"-MinTSA", L"-StartTSA"))
 				{
 					gpConEmu->WindowStartMinimized = true;

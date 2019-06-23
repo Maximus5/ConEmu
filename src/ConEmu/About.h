@@ -47,7 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"-Config <configname> - Use alternative named configuration.\r\n" \
 	L"-Dir <workdir> - Set startup directory for ConEmu and consoles.\r\n" \
 	L"-Here - Force using of ‘inherited’ startup directory. An alternative to ‘-Dir’ switch.\r\n" \
-	L"-FS | -Max | -Min - (Full screen), (Maximized) or (Minimized) mode.\r\n" \
+	L"-FS | -Max | -Nor | -Min - (Full screen), (Maximized), (Normal) or (Minimized) mode.\r\n" \
 	L"-TSA - Override (enable) minimize to taskbar status area.\r\n" \
 	L"-MinTSA - start minimized in taskbar status area, hide to TSA after console close.\r\n" \
 	L"-StartTSA - start minimized in taskbar status area, exit after console close.\r\n" \
