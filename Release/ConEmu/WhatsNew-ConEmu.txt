@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2019.6.23
+* gh-1889: GuiMacro `Tabs 12` returns list of opened tabs: `1: tab1\n2: tab2\n...`.
+* Let's `ConEmu.exe -nor` force start ConEmu in normal window mode.
+* Don't start root process under local security token, use inherited instead.
+* l10n: Implement upload translation to Transifex.
+* l10n: Español translations updated.
+
+
 2019.5.26
 * gh-1906: Add missed 'ru' l10n strings.
 * L10N: Add Español translation, pull translations from Transifex.
