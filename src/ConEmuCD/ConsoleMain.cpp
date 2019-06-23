@@ -1723,7 +1723,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 
 		// ConEmuC должен быть максимально прозрачен для конечного процесса
 		WARNING("При компиляции gcc все равно прозрачно не получается");
-		BOOL lbInheritHandle = (gnRunMode!=RM_SERVER);
+		BOOL lbInheritHandle = TRUE;
 		// Если не делать вставку ConEmuC.exe в промежуток между g++.exe и (as.exe или cc1plus.exe)
 		// то все хорошо, если вставлять - то лезет куча ошибок вида
 		// c:/gcc/mingw/bin/../libexec/gcc/mingw32/4.3.2/cc1plus.exe:1: error: stray '\220' in program
@@ -1756,7 +1756,7 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 			}
 		}
 
-		LPSECURITY_ATTRIBUTES lpSec = LocalSecurity();
+		LPSECURITY_ATTRIBUTES lpSec = NULL; //LocalSecurity();
 		//#ifdef _DEBUG
 		//		lpSec = NULL;
 		//#endif
