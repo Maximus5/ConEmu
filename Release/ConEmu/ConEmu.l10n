@@ -7992,7 +7992,7 @@
       "ru": "Win+Arrows - изменить размер окна",
       "zh": "Win+箭头-调整窗口大小",
       "de": "Win+Pfeile - Fenstergröße anpassen",
-      "ja": "勝利矢印 - ウィンドウのサイズ変更",
+      "ja": "Win+矢印 - ウィンドウのリサイズ",
       "es": "Win+Cursores - redimensionar ventana",
       "id": 1768 }
     ,
@@ -8001,7 +8001,7 @@
       "ru": "Win+Numbers - активировать консоль",
       "zh": "Win+数字 - 激活控制台（console）",
       "de": "Win+Zahl - Aktiviere Konsole",
-      "ja": "勝つ数 - コンソールをアクティブにする",
+      "ja": "Win+数字 - コンソールをアクティブにする",
       "es": "Win+Número - activar terminal",
       "id": 1648 }
     ,
@@ -8010,7 +8010,7 @@
       "ru": "Win+Tab - переключение консолей (вкладки)",
       "zh": "Win+Tab - 切换控制台consoles （标签页）",
       "de": "Win+Tab - Wechsle zwischen Konsolen (-Reitern)",
-      "ja": "Winタブ - スイッチコンソール(タブ)",
+      "ja": "Win+Tab - コンソール(タブ)の切り替え",
       "es": "Win+Tab - cambiar terminal (pestañas)",
       "id": 1764 }
     ,
