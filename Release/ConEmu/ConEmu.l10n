@@ -5329,7 +5329,7 @@
       "ru": "Свободное",
       "zh": "自由",
       "de": "Frei",
-      "ja": "無料",
+      "ja": "自由",
       "es": "Libre",
       "id": 55 }
     ,
@@ -5428,7 +5428,7 @@
       "ru": "Терминал ОС",
       "zh": "默认终端",
       "de": "Standardterminal",
-      "ja": "デフォルトの用語",
+      "ja": "デフォルトターミナル",
       "es": "Terminal predeterminada",
       "id": 44 }
     ,
@@ -6571,7 +6571,7 @@
       "ru": "Принудительно ConEmu как терминал по умолчанию для консольных приложений",
       "zh": "强制使用ConEmu作为控制台应用程序的默认终端",
       "de": "Erzwinge ConEmu als Standardterminal für Konsolenanwendungen",
-      "ja": "コンソールアプリケーションのデフォルト端末としてConEmuを強制する",
+      "ja": "コンソールアプリケーションのデフォルトターミナルとしてConEmuを強制する",
       "es": "Forzar ConEmu como terminal por defecto para aplicaciones de consola",
       "id": 2515 }
     ,
@@ -7234,7 +7234,7 @@
       "ru": "Отслеживание языка консоли",
       "zh": "监视控制台（console）语言",
       "de": "Überwache Konsolensprache",
-      "ja": "監視コンソールlang",
+      "ja": "コンソールの言語をモニターする",
       "es": "Comprobar idioma de terminal",
       "id": 1537 }
     ,
