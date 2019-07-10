@@ -247,7 +247,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey('W',VK_LWIN,VK_SHIFT);
 	Add(vkMultiCmd,       chk_User,  NULL,    L"Multi.CmdKey",          CConEmuCtrl::key_MultiCmd)
 		->SetHotKey('X',VK_LWIN);
-	Add(vkMultiWnd,       chk_User,  NULL,    L"Multi.NewWndConfirm",   CConEmuCtrl::key_GuiMacro, false, L"Create(2)")
+	Add(vkMultiWnd,       chk_User,  NULL,    L"Multi.NewWnd",   CConEmuCtrl::key_GuiMacro, false, L"Create(2)")
 		;
 	Add(vkMultiWndConfirm,chk_User,  NULL,    L"Multi.NewWndConfirm",   CConEmuCtrl::key_GuiMacro, false, L"Create(2,1)")
 		;
