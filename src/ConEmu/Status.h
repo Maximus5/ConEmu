@@ -49,6 +49,7 @@ enum CEStatusItems
 	csi_NumLock,
 	csi_ScrollLock,
 	csi_ViewLock,
+	csi_InputGrouping,
 	csi_InputLocale,
 	csi_KeyHooks,
 	csi_TermModes,
@@ -174,6 +175,7 @@ private:
 	bool LoadActiveProcess(CRealConsole* pRCon, wchar_t* pszText, int cchMax);
 
 	bool mb_Caps, mb_Num, mb_Scroll;
+	bool mb_InputGrouping;
 	bool mb_KeyHooks;
 	DWORD_PTR mhk_Locale; // CConEmuMain::GetActiveKeyboardLayout()
 	bool IsKeyboardChanged();
