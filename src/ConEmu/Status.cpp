@@ -108,6 +108,10 @@ static StatusColInfo gStatusCols[] =
 						L"Scroll Lock state",
 						L"Scroll Lock state, left click to change"},
 
+	{csi_InputGrouping,	L"StatusBar.Hide.InputGrouping",
+						L"Input Grouping state",
+						L"Input Grouping state"},
+
 	{csi_KeyHooks,		L"StatusBar.Hide.KeyHooks",
 						L"Keyboard hooks",
 						L"Install keyboard hooks status"},
@@ -651,6 +655,10 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				wcscpy_c(m_Items[nDrawCount].sText, m_Values[csi_ViewLock].sText);
 				wcscpy_c(m_Items[nDrawCount].szFormat, m_Values[csi_ViewLock].szFormat);
 				break;
+			case csi_InputGrouping:
+				wcscpy_c(m_Items[nDrawCount].sText, L"InpGrp");
+				wcscpy_c(m_Items[nDrawCount].szFormat, L"InpGrp");
+				break;
 			case csi_InputLocale:
 				// чтобы не задавали вопросов, нафига дублируется.
 				if (LOWORD((DWORD)mhk_Locale) == HIWORD((DWORD)mhk_Locale))
@@ -907,6 +915,9 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				break;
 			case csi_ViewLock:
 				SetTextColor(hDrawDC, mb_ViewLock ? crText : crDash);
+				break;
+			case csi_InputGrouping:
+				SetTextColor(hDrawDC, mb_InputGrouping ? crText : crDash);
 				break;
 			case csi_KeyHooks:
 				SetTextColor(hDrawDC, mb_KeyHooks ? crText : crDash);
@@ -1959,6 +1970,7 @@ bool CStatus::IsKeyboardChanged()
 	bool bNum = ((states[1] = GetKeyState(VK_NUMLOCK)) & 1) == 1;
 	bool bScroll = ((states[2] = GetKeyState(VK_SCROLL)) & 1) == 1;
 	bool bKeyHooks = gpConEmu->IsKeyboardHookRegistered();
+	bool bGrouping = gpConEmu->isInputGrouped();
 	DWORD_PTR hkl = gpConEmu->GetActiveKeyboardLayout();
 
 	if (bCaps != mb_Caps)
@@ -1979,6 +1991,11 @@ bool CStatus::IsKeyboardChanged()
 	if (bKeyHooks != mb_KeyHooks)
 	{
 		mb_KeyHooks = bKeyHooks; bChanged = true;
+	}
+
+	if (bGrouping != mb_InputGrouping)
+	{
+		mb_InputGrouping = bGrouping; bChanged = true;
 	}
 
 	if (hkl != mhk_Locale)
