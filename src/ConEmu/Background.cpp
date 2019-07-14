@@ -182,17 +182,14 @@ bool CBackground::FillBackground(
 		return false;
 	}
 
-	DWORD       nBitSize = apBkImgData->bfSize - apBkImgData->bfOffBits;
-	TODO("Stride?");
-	DWORD       nCalcSize = (pHdr->biWidth * pHdr->biHeight * pHdr->biBitCount) >> 3;
-
-	if (nBitSize > nCalcSize)
-		nBitSize = nCalcSize;
+	const size_t stride_size = ((pHdr->biWidth * pHdr->biBitCount + 31) >> 5) << 2;
+	const size_t row_size = std::min<size_t>(stride_size, (apBkImgData->bfSize - apBkImgData->bfOffBits) / pHdr->biHeight);
+	const size_t nBitSize = std::min<size_t>(apBkImgData->bfSize - apBkImgData->bfOffBits, row_size * pHdr->biHeight);
 
 	if (!gpSet->isFadeInactive)
 		abFade = false;
 
-	// Создать MemoryDC
+	// Create the MemoryDC
 	const HDC hScreenDC = GetDC(ghWnd);
 
 	if (hScreenDC)
@@ -206,11 +203,28 @@ bool CBackground::FillBackground(
 
 			if (hLoadBmp && pDstBits)
 			{
-				// Поместить биты из apBkImgData в hLoadDC
+				BITMAP created_bmp = {};
+				GetObject(hLoadBmp, sizeof(created_bmp), &created_bmp);
+				const size_t dib_size = created_bmp.bmWidthBytes * created_bmp.bmHeight;
+				// Copy bits from apBkImgData into hLoadDC
 				HBITMAP hOldLoadBmp = (HBITMAP)SelectObject(hLoadDC, hLoadBmp);
-				memmove(pDstBits, pBits, nBitSize);
-				GdiFlush(); // Гарантировать commit битов
-				// Теперь - скопировать биты из hLoadDC в hBgDc с учетом положения и Operation
+				if (created_bmp.bmWidthBytes == row_size)
+				{
+					memmove_s(pDstBits, dib_size, pBits, std::min(nBitSize, dib_size));
+				} else {
+					LPCBYTE src_bits = pBits;
+					LPBYTE dst_bits = (LPBYTE)pDstBits;
+					const int max_rows = std::min<int>(created_bmp.bmHeight, pHdr->biHeight);
+					const size_t max_row_size = std::min<size_t>(created_bmp.bmWidthBytes, row_size);
+					for (int row = 0; row < max_rows; ++row)
+					{
+						memmove_s(dst_bits, created_bmp.bmWidthBytes, src_bits, max_row_size);
+						dst_bits += created_bmp.bmWidthBytes;
+						src_bits += row_size;
+					}
+				}
+				GdiFlush(); // bits committed guarantee
+				// Copy bits from hLoadDC into hBgDc taking into account location and operation
 				BLENDFUNCTION bf = {AC_SRC_OVER, 0, gpSet->bgImageDarker, 0};
 
 				if (abFade)

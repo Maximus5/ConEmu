@@ -496,9 +496,11 @@ BITMAPFILEHEADER* LoadImageGdip(LPCWSTR asImgPath)
 		goto wrap;
 
 	{
-		UINT lWidth0 = lWidth; //((lWidth + 7) >> 3) << 3;
-		UINT lStride = lWidth0*3;
-		size_t nAllSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO) + lHeight*lStride; //(bmd.Stride>0?bmd.Stride:-bmd.Stride);
+		const UINT lWidth0 = lWidth;
+		const UINT lStride = ((lWidth0 * 24 + 31) >> 5) << 2;
+		const UINT data_size = lHeight * lStride;
+		const UINT offset_size = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO);
+		size_t nAllSize = offset_size + data_size;
 
 		pBkImgData = (BITMAPFILEHEADER*)malloc(nAllSize);
 		if (pBkImgData)
@@ -508,19 +510,19 @@ BITMAPFILEHEADER* LoadImageGdip(LPCWSTR asImgPath)
 			pBkImgData->bfType = 0x4D42/*BM*/;
 			pBkImgData->bfSize = (DWORD)nAllSize;
 			pBkImgData->bfReserved1 = pBkImgData->bfReserved2 = 0;
-			pBkImgData->bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO);
+			pBkImgData->bfOffBits = offset_size;
 			pBmp->biSize = sizeof(BITMAPINFOHEADER);
 			pBmp->biWidth = lWidth0;
 			pBmp->biHeight = lHeight;
 			pBmp->biPlanes = 1;
 			pBmp->biBitCount = 24;
 			pBmp->biCompression = BI_RGB;
-			pBmp->biSizeImage = 0;
+			pBmp->biSizeImage = data_size;
 			pBmp->biXPelsPerMeter = 72;
 			pBmp->biYPelsPerMeter = 72;
 			pBmp->biClrUsed = 0;
 			pBmp->biClrImportant = 0;
-			LPBYTE pDst = ((LPBYTE)(pBkImgData)) + pBkImgData->bfOffBits;
+			LPBYTE pDst = ((LPBYTE)(pBkImgData)) + offset_size;
 
 			LPBYTE pDstBits = NULL;
 			hDestBmp = CreateDIBSection(hdcDst, (BITMAPINFO*)pBmp, DIB_RGB_COLORS, (void**)&pDstBits, NULL, 0);
@@ -532,10 +534,13 @@ BITMAPFILEHEADER* LoadImageGdip(LPCWSTR asImgPath)
 			}
 			hOldDst = (HBITMAP)SelectObject(hdcDst, hDestBmp);
 
+			BITMAP dib_info = {};
+			GetObject(hDestBmp, sizeof(dib_info), &dib_info);
+
 			BitBlt(hdcDst, 0,0,lWidth,lHeight, hdcSrc, 0,0, SRCCOPY);
 			GdiFlush();
 
-			memmove(pDst, pDstBits, pBmp->biWidth*lHeight*3);
+			memmove(pDst, pDstBits, data_size);
 			pBmp->biWidth = lWidth;
 		}
 	}
