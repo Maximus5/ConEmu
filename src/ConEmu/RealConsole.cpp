@@ -7012,7 +7012,8 @@ void CRealConsole::OnKeyboardInt(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lP
 					|| (vk && vk != VK_LWIN && vk != VK_RWIN
 						&& vk != VK_CONTROL && vk != VK_LCONTROL && vk != VK_RCONTROL
 						&& vk != VK_MENU && vk != VK_LMENU && vk != VK_RMENU
-						&& vk != VK_SHIFT && vk != VK_LSHIFT && vk != VK_RSHIFT)))
+						&& vk != VK_SHIFT && vk != VK_LSHIFT && vk != VK_RSHIFT
+						&& !(vk >= VK_BROWSER_BACK/*0xA6*/ && vk < VK_OEM_1/*0xBA*/))))
 			{
 				mp_RBuf->OnKeysSending();
 			}
