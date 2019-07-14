@@ -20,6 +20,11 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2019.7.14
+* gh-1948: Don't reset scroll position on Multimedia keypresses.
+* gh-1943: Fix background bug for 10x10 image.
+
+
 2019.6.23
 * gh-1889: GuiMacro `Tabs 12` returns list of opened tabs: `1: tab1\n2: tab2\n...`.
 * Let's `ConEmu.exe -nor` force start ConEmu in normal window mode.
