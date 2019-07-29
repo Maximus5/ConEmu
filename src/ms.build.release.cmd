@@ -29,6 +29,11 @@ for /f "usebackq tokens=1* delims=: " %%i in (`tools\vswhere -latest -requires M
   if /i "%%i"=="installationPath" set VSInstallDir=%%j
 )
 if not defined VSInstallDir (
+  if exist "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools" (
+    set "VSInstallDir=C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools"
+  )
+)
+if not defined VSInstallDir (
   echo Visual Studio 2017 not found
   exit /b 1
 )
