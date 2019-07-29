@@ -10,3 +10,6 @@
 [submodule "src/modules/rapidxml"]
 	path = src/modules/rapidxml
 	url = https://github.com/Maximus5/RapidXml.git
+[submodule "src/modules/googletest"]
+	path = src/modules/googletest
+	url = https://github.com/Maximus5/googletest.git
