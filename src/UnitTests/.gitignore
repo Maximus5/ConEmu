@@ -1,5 +1,6 @@
 *.obj
 *.log
 *.fail
+*.ilk
 /test1/Debug
 /test1vc9

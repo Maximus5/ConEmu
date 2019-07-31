@@ -1,5 +1,6 @@
 .svn
 .svnignore
+.vscode
 .wsl
 Descript.ion
 premake5.exe

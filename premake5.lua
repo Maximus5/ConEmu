@@ -9,6 +9,7 @@ workspace "CE"
    
   startproject "ConEmu"
 
+  staticruntime "On"
   flags { "StaticRuntime", "Maps" }
   filter "configurations:Release"
     flags { "NoIncrementalLink" }
@@ -207,6 +208,46 @@ project "common-user"
 -- end of "common-user"
 
 
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "Tests"
+  kind "ConsoleApp"
+  language "C++"
+  exceptionhandling "On"
+
+  files {
+    "src/modules/googletest/googletest/src/gtest-all.cc",
+    "src/UnitTests/*_test.cpp",
+  }
+
+  includedirs {
+    "src/modules/googletest/googletest/include",
+    "src/modules/googletest/googletest",
+  }
+
+  targetname ("Tests_%{cfg.buildcfg}_%{cfg.platform}")
+  targetdir ("src/UnitTests")
+
+  links {
+    -- "common-kernel",
+    -- "common-user",
+    "comctl32",
+    "shlwapi",
+    "version",
+    "gdiplus",
+    "winmm",
+    "netapi32",
+  }
+
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
+
+  postbuildcommands {"$(SolutionDir)UnitTests\\Tests_%{cfg.buildcfg}_%{cfg.platform}.exe"}
+
+  filter {}
+-- end of "Tests"
 
 
 -- ############################### --

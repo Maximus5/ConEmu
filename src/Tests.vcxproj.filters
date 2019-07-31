@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="UnitTests">
+      <UniqueIdentifier>{F8411ACB-64AC-CE41-ADEA-7FE71994AC96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="modules">
+      <UniqueIdentifier>{FEAC8BD4-6A8C-0A70-73A4-9546DF0271D1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="modules\googletest">
+      <UniqueIdentifier>{CA63A526-B647-667C-1FA8-60CF0BAB50FE}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="modules\googletest\googletest">
+      <UniqueIdentifier>{16C36F5D-82DB-5687-4B88-E620B75FEB20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="modules\googletest\googletest\src">
+      <UniqueIdentifier>{2D1C4347-998A-98C6-E273-53C64E218E62}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="UnitTests\main_test.cpp">
+      <Filter>UnitTests</Filter>
+    </ClCompile>
+    <ClCompile Include="modules\googletest\googletest\src\gtest-all.cc">
+      <Filter>modules\googletest\googletest\src</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
