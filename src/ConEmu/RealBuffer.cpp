@@ -3904,12 +3904,12 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		)
 	{
 		bool lbStreamSelection = false;
-		BYTE vkMod = 0; // Если удерживается модификатор - его нужно "отпустить" в консоль
+		BYTE vk = 0; // If selection was started with "modifier" we need to "release" it in the console
 		bool bTripleClick = (con.m_sel.dwFlags & CONSOLE_DBLCLICK_SELECTION) && ((GetTickCount() - con.m_SelDblClickTick) <= GetDoubleClickTime());
 
 		if (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION))
 		{
-			// Выделение запущено из меню
+			// Selection was started from the Menu
 			lbStreamSelection = (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION)) == CONSOLE_TEXT_SELECTION;
 		}
 		else
@@ -3919,16 +3919,16 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 			{
 				// OK
 				lbStreamSelection = ((nPressed & CONSOLE_TEXT_SELECTION) != 0);
-				vkMod = gpSet->GetHotkeyById(lbStreamSelection ? vkCTSVkText : vkCTSVkBlock);
+				vk = LOBYTE(gpSet->GetHotkeyById(lbStreamSelection ? vkCTSVkText : vkCTSVkBlock));
 			}
 			else
 			{
-				return false; // модификатор не разрешен
+				return false; // modifier is not allowed
 			}
 		}
 
 		con.m_sel.dwFlags &= ~CONSOLE_KEYMOD_MASK;
-		con.m_sel.dwFlags |= ((DWORD)vkMod) << 24;
+		con.m_sel.dwFlags |= ((DWORD)vk) << 24;
 
 		COORD crTo = cr;
 		if (bTripleClick)
