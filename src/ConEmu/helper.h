@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-present Maximus5
+Copyright (c) 2009-present Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,22 +28,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#define GUI_MACRO_VERSION 2
+#include "../common/defines.h"
 
-struct CESERVER_REQ_GUIMACRO;
+extern BOOL gbInDisplayLastError;
+int DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0, DWORD dwMsgFlags = 0, LPCWSTR asTitle = NULL, HWND hParent = NULL);
 
-namespace ConEmuMacro
-{
-	// Общая функция, для обработки любого известного макроса
-	LPWSTR ExecuteMacro(LPWSTR asMacro, CRealConsole* apRCon, bool abFromPlugin = false, CESERVER_REQ_GUIMACRO* Opt = NULL);
-	// Конвертация из "старого" в "новый" формат
-	// Старые макросы хранились как "Verbatim" но без префикса
-	LPWSTR ConvertMacro(LPCWSTR asMacro, BYTE FromVersion, bool bShowErrorTip = true);
-	// Some functions must be executed in main thread
-	// but they may be called from console
-	LRESULT ExecuteMacroSync(WPARAM wParam, LPARAM lParam);
-	// Helper to concatenate macros.
-	// They must be ‘concatenatable’, example: Print("abc"); Print("Qqq")
-	// But following WILL NOT work: Print: Abd qqq
-	LPCWSTR ConcatMacro(LPWSTR& rsMacroList, LPCWSTR asAddMacro);
-};
+// All window/gdi related code must be run in main thread
+bool isMainThread();
+void initMainThread();
+
+const wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix, CEStr& path);
+LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath);
+wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath);
+bool FixDirEndSlash(wchar_t* rsPath);
+
+extern HWND ghDlgPendingFrom;
+extern LONG gnInMsgBox;
+int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND ahParent = (HWND)-1, bool abModal = true);
+void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam);

@@ -112,6 +112,7 @@ local common_remove = {
   "**/*.bak",
   "**/!*.*",
   "**/_*.*",
+  "**/*_test.cpp",
 }
 
 local common_kernel = {
@@ -850,7 +851,7 @@ project "Tests"
 
   files {
     -- tests
-    "src/UnitTests/*_test.cpp",
+    "src/**/*_test.cpp",
     -- common files
     "src/common/CEStr.cpp",
     "src/common/CmdLine.cpp",
@@ -866,11 +867,33 @@ project "Tests"
     "src/common/WObjects.cpp",
     "src/common/WThreads.cpp",
     "src/common/WUser.cpp",
+    "src/ConEmu/Registry.cpp",
+    "src/ConEmu/Hotkeys.cpp",
+    "src/ConEmu/Macro.cpp",
+    "src/ConEmu/Match.cpp",
+    "src/ConEmu/DynDialog.cpp",
+    "src/common/ProcessSetEnv.cpp",
+    "src/common/MJsonReader.cpp",
+    "src/common/MSectionSimple.cpp",
+    "src/common/MSetter.cpp",
+    "src/common/WFiles.cpp",
+    "src/ConEmu/helper.cpp",
+    "src/ConEmu/VConText.cpp",
+    "src/ConEmu/HotkeyChord.cpp",
+    "src/ConEmu/Options.cpp",
+    "src/ConEmu/Options.cpp",
+    "src/ConEmu/RConData.cpp",
+    "src/ConEmu/MyClipboard.cpp",
+    "src/ConEmu/AboutDlg.cpp",
     -- googletest
     "src/modules/googletest/googletest/src/gtest-all.cc",
   }
 
   files (common_kernel)
+
+  vpaths {
+    { ["tests"] = {"**/*_test.*"} },
+  }
 
   includedirs {
     "src/modules/googletest/googletest/include",

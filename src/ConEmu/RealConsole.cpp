@@ -38,9 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include <Tlhelp32.h>
-#pragma warning(disable: 4091)
-#include <ShlObj.h>
-#pragma warning(default: 4091)
+#include "../common/shlobj.h"
 
 #include "../common/ConEmuCheck.h"
 #include "../common/ConEmuPipeMode.h"
@@ -3467,9 +3465,6 @@ DWORD CRealConsole::MonitorThreadWorker(bool bDetached, bool& rbChildProcessCrea
 		{
 			bException = TRUE;
 			// Assertion is shown in WorkerExFilter
-			#if 0
-			AssertBox(L"Exception triggered in CRealConsole::MonitorThread", _T(__FILE__), __LINE__, pExc);
-			#endif
 		}
 		// Чтобы не было слишком быстрой отрисовки (тогда процессор загружается на 100%)
 		// делаем такой расчет задержки

@@ -114,10 +114,6 @@ struct ConEmuHotKey
 	// Duplicate hotkeys
 	static LPCWSTR CreateNotUniqueWarning(LPCWSTR asHotkey, LPCWSTR asDescr1, LPCWSTR asDescr2, CEStr& rsWarning);
 
-	#ifdef _DEBUG
-	static void HotkeyNameUnitTests();
-	#endif
-
 	// nHostMod в младших 3-х байтах может содержать VK (модификаторы).
 	// Функция проверяет, чтобы они не дублировались
 	static void TestHostkeyModifiers(DWORD& nHostMod);

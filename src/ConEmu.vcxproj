@@ -338,6 +338,7 @@
     <ClInclude Include="ConEmu\LngRc.h" />
     <ClInclude Include="ConEmu\LoadImg.h" />
     <ClInclude Include="ConEmu\Macro.h" />
+    <ClInclude Include="ConEmu\MacroFwd.h" />
     <ClInclude Include="ConEmu\Match.h" />
     <ClInclude Include="ConEmu\Menu.h" />
     <ClInclude Include="ConEmu\MenuIds.h" />
@@ -429,6 +430,7 @@
     <ClInclude Include="ConEmu\VirtualConsole.h" />
     <ClInclude Include="ConEmu\WinObjBase.h" />
     <ClInclude Include="ConEmu\globals.h" />
+    <ClInclude Include="ConEmu\helper.h" />
     <ClInclude Include="ConEmu\resource.h" />
     <ClInclude Include="ConEmu\version.h" />
     <ClInclude Include="ConEmu\version_macro.h" />
@@ -658,6 +660,7 @@
     <ClCompile Include="ConEmu\VConText.cpp" />
     <ClCompile Include="ConEmu\VirtualConsole.cpp" />
     <ClCompile Include="ConEmu\WinObjBase.cpp" />
+    <ClCompile Include="ConEmu\helper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ConEmu\ConEmu.ico" />

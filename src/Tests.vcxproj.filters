@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="UnitTests">
-      <UniqueIdentifier>{F8411ACB-64AC-CE41-ADEA-7FE71994AC96}</UniqueIdentifier>
+    <Filter Include="ConEmu">
+      <UniqueIdentifier>{8CCC3EAC-786E-6982-6129-7DD64D6AF0D2}</UniqueIdentifier>
     </Filter>
     <Filter Include="common">
       <UniqueIdentifier>{AEFEE3F6-9AA0-0ECD-835B-22216F9C951D}</UniqueIdentifier>
@@ -18,6 +18,9 @@
     </Filter>
     <Filter Include="modules\googletest\googletest\src">
       <UniqueIdentifier>{2D1C4347-998A-98C6-E273-53C64E218E62}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="tests">
+      <UniqueIdentifier>{78756B10-E489-93C1-AD0B-372119DF8FF2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -119,8 +122,53 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConEmu\AboutDlg.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\DynDialog.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\HotkeyChord.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Hotkeys.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Hotkeys_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Macro.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Macro_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Match.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\MyClipboard.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Options.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\RConData.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Registry.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\VConText.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\all_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\helper.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
     <ClCompile Include="UnitTests\main_test.cpp">
-      <Filter>UnitTests</Filter>
+      <Filter>tests</Filter>
     </ClCompile>
     <ClCompile Include="common\CEHandle.cpp">
       <Filter>common</Filter>
@@ -167,6 +215,9 @@
     <ClCompile Include="common\MFileLog.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\MJsonReader.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
     <ClCompile Include="common\MModule.cpp">
       <Filter>common</Filter>
     </ClCompile>
@@ -188,6 +239,9 @@
     <ClCompile Include="common\MSecurity.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\MSetter.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
     <ClCompile Include="common\MStrDup.cpp">
       <Filter>common</Filter>
     </ClCompile>
@@ -195,6 +249,9 @@
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\Memory.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\ProcessSetEnv.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\RConStartArgs.cpp">
@@ -207,6 +264,9 @@
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\WConsole.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\WFiles.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\WModuleCheck.cpp">

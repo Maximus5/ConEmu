@@ -193,6 +193,7 @@ bool LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true)
 //#endif
 //#endif
 
+#include "helper.h"
 
 
 
@@ -242,10 +243,6 @@ void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst);
 //#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
 
 wchar_t* getFocusedExplorerWindowPath();
-const wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix, CEStr& path);
-LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath);
-wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath);
-bool FixDirEndSlash(wchar_t* rsPath);
 enum CESelectFileFlags
 {
 	sff_Default      = 0,
@@ -804,9 +801,6 @@ void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark);
 
 // One message cycle step
 bool ProcessMessage(MSG& Msg);
-
-// All window/gdi related code must be run in main thread
-bool isMainThread();
 
 // Predefined user messages
 #define UM_USER_CONTROLS    (WM_APP+33)

@@ -288,6 +288,21 @@
     <ClInclude Include="common\execute.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConEmu\AboutDlg.cpp" />
+    <ClCompile Include="ConEmu\DynDialog.cpp" />
+    <ClCompile Include="ConEmu\HotkeyChord.cpp" />
+    <ClCompile Include="ConEmu\Hotkeys.cpp" />
+    <ClCompile Include="ConEmu\Hotkeys_test.cpp" />
+    <ClCompile Include="ConEmu\Macro.cpp" />
+    <ClCompile Include="ConEmu\Macro_test.cpp" />
+    <ClCompile Include="ConEmu\Match.cpp" />
+    <ClCompile Include="ConEmu\MyClipboard.cpp" />
+    <ClCompile Include="ConEmu\Options.cpp" />
+    <ClCompile Include="ConEmu\RConData.cpp" />
+    <ClCompile Include="ConEmu\Registry.cpp" />
+    <ClCompile Include="ConEmu\VConText.cpp" />
+    <ClCompile Include="ConEmu\all_test.cpp" />
+    <ClCompile Include="ConEmu\helper.cpp" />
     <ClCompile Include="UnitTests\main_test.cpp" />
     <ClCompile Include="common\CEHandle.cpp" />
     <ClCompile Include="common\CEStr.cpp" />
@@ -304,6 +319,7 @@
     <ClCompile Include="common\MAssert.cpp" />
     <ClCompile Include="common\MConHandle.cpp" />
     <ClCompile Include="common\MFileLog.cpp" />
+    <ClCompile Include="common\MJsonReader.cpp" />
     <ClCompile Include="common\MModule.cpp" />
     <ClCompile Include="common\MProcess.cpp" />
     <ClCompile Include="common\MProcessBits.cpp" />
@@ -311,13 +327,16 @@
     <ClCompile Include="common\MSection.cpp" />
     <ClCompile Include="common\MSectionSimple.cpp" />
     <ClCompile Include="common\MSecurity.cpp" />
+    <ClCompile Include="common\MSetter.cpp" />
     <ClCompile Include="common\MStrDup.cpp" />
     <ClCompile Include="common\MStrSafe.cpp" />
     <ClCompile Include="common\Memory.cpp" />
+    <ClCompile Include="common\ProcessSetEnv.cpp" />
     <ClCompile Include="common\RConStartArgs.cpp" />
     <ClCompile Include="common\RConStartArgsEx.cpp" />
     <ClCompile Include="common\WCodePage.cpp" />
     <ClCompile Include="common\WConsole.cpp" />
+    <ClCompile Include="common\WFiles.cpp" />
     <ClCompile Include="common\WModuleCheck.cpp" />
     <ClCompile Include="common\WObjects.cpp" />
     <ClCompile Include="common\WThreads.cpp" />

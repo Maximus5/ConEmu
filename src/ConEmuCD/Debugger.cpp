@@ -32,9 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRCP(x) DEBUGSTR(x)
 
 #include "ConEmuSrv.h"
-#pragma warning(disable: 4091)
-#include <ShlObj.h>
-#pragma warning(default: 4091)
+#include "../common/shlobj.h"
 #include "../ConEmu/version.h"
 #include "../common/CEStr.h"
 #include "../common/MMap.h"

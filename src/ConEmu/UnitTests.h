@@ -31,10 +31,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/defines.h"
 
-#ifdef _DEBUG
-void DebugUnitTests();
-#endif
-
 #if defined(__GNUC__) || defined(_DEBUG)
 void GnuUnitTests();
 #endif

@@ -40,9 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <TCHAR.h>
 #include <Tlhelp32.h>
 #include <shlwapi.h>
-#pragma warning(disable: 4091)
-#include <Shlobj.h>
-#pragma warning(default: 4091)
+#include "../common/shlobj.h"
 #include "../common/CmdLine.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/execute.h"

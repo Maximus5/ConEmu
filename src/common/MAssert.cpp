@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuCheck.h"
 #endif
 #ifdef _DEBUG
-#include <ShlObj.h>
+#include "../common/shlobj.h"
 #include "../ConEmu/version.h"
 #endif
 

@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSetter.h"
 #include "../common/MStrEsc.h"
 #include "../common/WFiles.h"
+#include "helper.h"
 #include "AboutDlg.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
@@ -630,221 +631,6 @@ bool GetColorRef(LPCWSTR pszText, COLORREF* pCR)
 	return result;
 }
 
-/// Converts Windows path "C:\path 1" to Posix "'/c/path 1'" or "/c/path\ 1"
-/// @param asWinPath   Source Windows path, double-quotes ("\"C:\path\"") are not expected here
-/// @param bAutoQuote  if true - use strong quoting for strings with special characters
-/// @param asMntPrefix Mount prefix from RCon: "/mnt", "/cygdrive", "" or NULL
-/// @param path        Buffer for result
-/// @return NULL on errors or the pointer to converted #path
-const wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix, CEStr& path)
-{
-	if (!asWinPath || !*asWinPath)
-	{
-		_ASSERTE(asWinPath && *asWinPath);
-		path.Clear();
-		return NULL;
-	}
-
-	const wchar_t* unquotedSpecials = L" ()$!'\"";
-	const wchar_t* quotedSpecials = L"'";
-	_ASSERTE(wcslen(quotedSpecials)==1 && wcschr(unquotedSpecials, quotedSpecials[0]));
-
-	// We expect either: cd 'c:\folder with space\spaces and bang !! bang'
-	//               or: cd /c/folder\ with\ space/spaces\ and\ bang\ \!\!\ bang
-	// Here we use single-quote (strong quotation) and if string contains
-
-	bool useQuote = bAutoQuote ? (wcspbrk(asWinPath, unquotedSpecials) != nullptr) : false;
-
-	// Some chars must be escaped
-	const wchar_t* posixSpec = useQuote ? quotedSpecials : unquotedSpecials;
-
-	size_t cchLen = _tcslen(asWinPath)
-		+ (useQuote ? 3 : 1) // two or zero quotes + null-termination
-		+ (asMntPrefix ? _tcslen(asMntPrefix) : 0) // '/cygwin' or '/mnt' prefix
-		+ 1/*Possible space-termination on paste*/;
-	if (wcspbrk(asWinPath, posixSpec) != NULL)
-	{
-		const wchar_t *pch = wcspbrk(asWinPath, posixSpec);
-		while (pch)
-		{
-			cchLen += useQuote ? 3 : 1;
-			pch = wcspbrk(pch+1, posixSpec);
-		}
-	}
-	wchar_t* pszResult = path.GetBuffer(cchLen+1);
-	if (!pszResult)
-		return NULL;
-	wchar_t* psz = pszResult;
-
-	if (useQuote)
-	{
-		*(psz++) = L'\'';
-	}
-
-	bool stripDoubleQuot = (asWinPath[0] == L'"');
-	if (stripDoubleQuot)
-		++asWinPath;
-
-	// Drive letter!
-	if (asWinPath[0] && (asWinPath[1] == L':'))
-	{
-		// '/cygwin' or '/mnt' prefix
-		LPCWSTR pszPrefix = asMntPrefix;
-		if (pszPrefix)
-			while (*pszPrefix)
-				*(psz++) = *(pszPrefix++);
-		*(psz++) = L'/';
-		*(psz++) = static_cast<wchar_t>(tolower(asWinPath[0]));
-		asWinPath += 2;
-	}
-	else
-	{
-		// А bash понимает сетевые пути?
-		_ASSERTE((psz[0] == L'\\' && psz[1] == L'\\') || (wcschr(psz, L'\\')==NULL));
-	}
-
-	while (*asWinPath)
-	{
-		if (stripDoubleQuot && *asWinPath == L'"' && !*(asWinPath+1))
-			break;
-		if (*asWinPath == L'\\')
-		{
-			*(psz++) = L'/';
-			asWinPath++;
-		}
-		else
-		{
-			if (wcschr(posixSpec, *asWinPath))
-			{
-				if (!useQuote)
-					*(psz++) = L'\\';
-				else
-				{
-					_ASSERTE(*asWinPath == L'\'');
-					*(psz++) = L'\''; *(psz++) = L'\\'; *(psz++) = L'\'';
-				}
-			}
-			*(psz++) = *(asWinPath++);
-		}
-	}
-
-	if (useQuote)
-		*(psz++) = L'\'';
-	*psz = 0;
-
-	return pszResult;
-}
-
-// Вернуть путь с обратными слешами, если диск указан в cygwin-формате - добавить двоеточие
-// asAnyPath может быть полным или относительным путем, например
-// C:\Src\file.c
-// C:/Src/file.c
-// /C/Src/file.c
-// //server/share/file
-// \\server\share/path/file
-// /cygdrive/C/Src/file.c
-// ..\folder/file.c
-LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath)
-{
-	// Drop spare prefix, point to "/" after "/cygdrive"
-	int iSkip = startswith(asAnyPath, pszMntPrefix ? pszMntPrefix : L"/cygdrive", true);
-	if (iSkip > 0 && asAnyPath[iSkip] != L'/')
-		iSkip = 0;
-	LPCWSTR pszSrc = asAnyPath + ((iSkip > 0) ? iSkip : 0);
-
-	// Prepare buffer
-	int iLen = lstrlen(pszSrc);
-	if (iLen < 1)
-	{
-		_ASSERTE(lstrlen(pszSrc) > 0);
-		szWinPath.Clear();
-		return NULL;
-	}
-
-	// #CYGDRIVE In some cases we may try to select real location of "~" folder (cygwin and msys)
-	if (pszSrc[0] == L'~' && (pszSrc[1] == 0 || pszSrc[1] == L'/'))
-	{
-		szWinPath.Set(pszSrc);
-		return szWinPath;
-	}
-
-	// Диск в cygwin формате?
-	wchar_t cDrive = 0;
-	if ((pszSrc[0] == L'/' || pszSrc[0] == L'\\')
-		&& isDriveLetter(pszSrc[1])
-		&& (pszSrc[2] == L'/' || pszSrc[2] == L'\\' || pszSrc[2] == 0))
-	{
-		cDrive = pszSrc[1];
-		CharUpperBuff(&cDrive, 1);
-		pszSrc += 2;
-		iLen++;
-	}
-
-	// Формируем буфер
-	wchar_t* pszRc = szWinPath.GetBuffer(iLen);
-	if (!pszRc)
-	{
-		_ASSERTE(pszRc && "malloc failed");
-		szWinPath.Clear();
-		return NULL;
-	}
-	// Make path
-	wchar_t* pszDst = pszRc;
-	if (cDrive)
-	{
-		*(pszDst++) = cDrive;
-		*(pszDst++) = L':';
-		*(pszDst) = 0;
-		iLen -= 2;
-	}
-	else
-	{
-		*(pszDst) = 0;
-	}
-	if (*pszSrc)
-		_wcscpy_c(pszDst, iLen+1, pszSrc);
-	else
-		_wcscpy_c(pszDst, iLen+1, L"\\");
-	// Convert slashes
-	pszDst = wcschr(pszDst, L'/');
-	while (pszDst)
-	{
-		*pszDst = L'\\';
-		pszDst = wcschr(pszDst+1, L'/');
-	}
-	// Ready
-	return pszRc;
-}
-
-wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath)
-{
-	wchar_t* pszSlashed = lstrdup(asWinPath);
-	wchar_t* p = wcschr(pszSlashed, L'\\');
-	while (p)
-	{
-		*p = L'/';
-		p = wcschr(p+1, L'\\');
-	}
-	return pszSlashed;
-}
-
-bool FixDirEndSlash(wchar_t* rsPath)
-{
-	int nLen = rsPath ? lstrlen(rsPath) : 0;
-	// Do not cut slash from "C:\"
-	if ((nLen > 3) && (rsPath[nLen-1] == L'\\'))
-	{
-		rsPath[nLen-1] = 0;
-		return true;
-	}
-	else if ((nLen > 0) && (rsPath[nLen-1] == L':'))
-	{
-		// The root of drive must have end slash
-		rsPath[nLen] = L'\\'; rsPath[nLen+1] = 0;
-		return true;
-	}
-	return false;
-}
 
 wchar_t* SelectFolder(LPCWSTR asTitle, LPCWSTR asDefFolder /*= NULL*/, HWND hParent /*= ghWnd*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= NULL*/)
 {
@@ -1343,7 +1129,7 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahPare
 	HooksUnlocker;
 	MSetter lInCall(&gnInMsgBox);
 
-	if (gpSet->isLogging())
+	if (gpSet && gpSet->isLogging())
 	{
 		CEStr lsLog(lpCaption, lpCaption ? L":: " : NULL, lpText);
 		LogString(lsLog);
@@ -1360,7 +1146,6 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahPare
 	UNREFERENCED_PARAMETER(nErr);
 	return nBtn;
 }
-
 
 // Возвращает текст с информацией о пути к сохраненному дампу
 // DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024], LPCWSTR pszComment = NULL);
@@ -1765,13 +1550,6 @@ bool ProcessMessage(MSG& Msg)
 
 wrap:
 	return bRc;
-}
-
-static DWORD gn_MainThreadId;
-bool isMainThread()
-{
-	DWORD dwTID = GetCurrentThreadId();
-	return (dwTID == gn_MainThreadId);
 }
 
 HWND FindTopExplorerWindow()
@@ -2914,7 +2692,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HeapInitialize();
 	AssertMsgBox = MsgBox;
 	gfnHooksUnlockerProc = HooksUnlockerProc;
-	gn_MainThreadId = GetCurrentThreadId();
+	initMainThread();
 	gfnSearchAppPaths = SearchAppPaths;
 
 	srand(GetTickCount() + GetCurrentProcessId());

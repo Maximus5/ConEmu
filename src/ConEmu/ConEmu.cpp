@@ -43,12 +43,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "AboutDlg.h"
 #include <Tlhelp32.h>
-#pragma warning(disable: 4091)
-#include <Shlobj.h>
-#pragma warning(default: 4091)
+
+#include "../common/shlobj.h"
 #include "ShObjIdl_Part.h"
-//#include <lm.h>
-//#include "../common/ConEmuCheck.h"
 
 #include "../common/execute.h"
 #include "../common/EnvVar.h"

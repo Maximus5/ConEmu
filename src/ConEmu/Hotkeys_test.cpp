@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-present Maximus5
+Copyright (c) 2013-present Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -26,23 +26,50 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #define HIDE_USE_EXCEPTION_INFO
-#define SHOWDEBUGSTR
 
 #include "Header.h"
-#include "../common/shlobj.h"
+#include "../UnitTests/gtest.h"
 
-#if defined(__GNUC__) || defined(_DEBUG)
-void GnuUnitTests()
+#include "Hotkeys.h"
+#include "ConEmu.h"
+#include "LngRc.h"
+#include "Options.h"
+#include "OptionsClass.h"
+#include "SetCmdTask.h"
+#include "VirtualConsole.h"
+
+TEST(ConEmuHotKey,Tests)
 {
-	int nRegW = RegisterClipboardFormatW(CFSTR_FILENAMEW/*L"FileNameW"*/);
-	int nRegA = RegisterClipboardFormatA("FileNameW");
-	Assert(nRegW && nRegA && nRegW==nRegA);
+	// Key names order:
+	//    Win, Apps, Ctrl, Alt, Shift
+	// Modifiers:
+	//    if "Ctrl" (any) - only cvk_Ctrl must be set
+	//    if "RCtrl" (or L) - then cvk_Ctrl AND cvk_RCtrl must be set
+	//    if both "LCtrl+RCtrl" - then ALL cvk_Ctrl, cvk_LCtrl, cvk_RCtrl must be set
+	struct {
+		BYTE Vk;
+		BYTE Mod[3];
+		ConEmuModifiers ModTest;
+		LPCWSTR KeyName;
+	} Tests[] = {
+			{VK_OEM_5/*'|\'*/, {VK_LCONTROL, VK_RCONTROL}, cvk_Ctrl|cvk_LCtrl|cvk_RCtrl, L"LCtrl+RCtrl+\\"},
+			{VK_SPACE, {VK_CONTROL, VK_LWIN, VK_MENU}, cvk_Ctrl|cvk_Alt|cvk_Win, L"Win+Ctrl+Alt+Space"},
+			{'W', {VK_LWIN, VK_SHIFT}, cvk_Win|cvk_Shift, L"Win+Shift+W"},
+			{'L', {VK_RCONTROL}, cvk_Ctrl|cvk_RCtrl, L"RCtrl+L"},
+			{'C', {VK_CONTROL}, cvk_Ctrl, L"Ctrl+C"},
+			{0, {}, cvk_Naked, gsNoHotkey},
+	};
 
-	wchar_t szHex[] = L"\x2018"/*�*/ L"\x2019"/*�*/;
-	wchar_t szNum[] = {0x2018, 0x2019, 0};
-	int iDbg = lstrcmp(szHex, szNum);
-	Assert(iDbg==0);
+	ConEmuHotKey HK = {0, chk_User};
+	wchar_t szFull[128];
+	int iCmp;
+
+	for (size_t i = 0; i < countof(Tests); i++)
+	{
+		HK.SetHotKey(Tests[i].Vk, Tests[i].Mod[0], Tests[i].Mod[1], Tests[i].Mod[2]);
+		_ASSERTE(HK.Key.Mod == Tests[i].ModTest);
+		iCmp = wcscmp(HK.GetHotkeyName(szFull, true), Tests[i].KeyName);
+		_ASSERTE(iCmp == 0);
+	}
 }
-#endif

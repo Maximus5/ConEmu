@@ -183,6 +183,9 @@
     <ClInclude Include="ConEmu\Macro.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\MacroFwd.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmu\Match.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -454,6 +457,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\globals.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\helper.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\resource.h">
@@ -1137,6 +1143,9 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\WinObjBase.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\helper.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
   </ItemGroup>
