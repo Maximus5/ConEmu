@@ -68,14 +68,14 @@ const wchar_t gszSpacing[] = MATCH_SPACINGS; // Пробел, таб, остал
 const wchar_t gszQuotStart[] = L"‘«`\'([<{";
 const wchar_t gszQuotEnd[] = L"’»`\')]>}";
 
-CMatch::CMatch(CRealConsole* apRCon)
+CMatch::CMatch(std::function<LPCWSTR(LPCWSTR asSrc, CEStr& szFull)>&& GetFileFromConsole)
 	:m_Type(etr_None)
 	,mn_Row(-1), mn_Col(-1)
 	,mn_MatchLeft(-1), mn_MatchRight(-1)
 	,mn_Start(-1), mn_End(-1)
 	,mn_SrcLength(-1)
 	,mn_SrcFrom(-1)
-	,mp_RCon(apRCon)
+	,GetFileFromConsole_(std::move(GetFileFromConsole))
 {
 	ms_Protocol[0] = 0;
 }
@@ -439,11 +439,8 @@ bool CMatch::IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPC
 		return false;
 
 	CEStr szFullPath;
-	if (mp_RCon)
-	{
-		if (!mp_RCon->GetFileFromConsole(pszFile, szFullPath))
-			return false;
-	}
+	if (!GetFileFromConsole_(pszFile, szFullPath))
+		return false;
 
 	rnLen = anLen;
 	return true;

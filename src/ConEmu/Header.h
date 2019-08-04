@@ -216,8 +216,6 @@ bool LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true)
 //}
 //#endif
 
-extern BOOL gbInDisplayLastError;
-int DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0, DWORD dwMsgFlags = 0, LPCWSTR asTitle = NULL, HWND hParent = NULL);
 void WarnCreateWindowFail(LPCWSTR pszDescription, HWND hParent, DWORD nErrCode);
 RECT CenterInParent(RECT rcDlg, HWND hParent);
 BOOL MoveWindowRect(HWND hWnd, const RECT& rcWnd, BOOL bRepaint = FALSE);
@@ -237,9 +235,6 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*
 BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes = false*/);
 bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);
 
-//wchar_t* EscapeString(bool bSet, LPCWSTR pszSrc);
-void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst);
-
 //#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'
 
 wchar_t* getFocusedExplorerWindowPath();
@@ -255,8 +250,6 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile = NULL, LPCWSTR asDefPath
 
 #include "../common/RConStartArgsEx.h"
 
-
-bool isKey(DWORD wp,DWORD vk);
 
 void RaiseTestException();
 
@@ -792,12 +785,6 @@ typedef struct tagMYRGB
 	};
 } MYRGB, MYCOLORREF;
 #include <poppack.h>
-
-// pszWords - '|'separated
-void StripWords(wchar_t* pszText, const wchar_t* pszWords);
-
-// pszCommentMark - for example L"#"
-void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark);
 
 // One message cycle step
 bool ProcessMessage(MSG& Msg);

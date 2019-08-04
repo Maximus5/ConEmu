@@ -338,7 +338,7 @@
     <ClInclude Include="ConEmu\LngRc.h" />
     <ClInclude Include="ConEmu\LoadImg.h" />
     <ClInclude Include="ConEmu\Macro.h" />
-    <ClInclude Include="ConEmu\MacroFwd.h" />
+    <ClInclude Include="ConEmu\MacroImpl.h" />
     <ClInclude Include="ConEmu\Match.h" />
     <ClInclude Include="ConEmu\Menu.h" />
     <ClInclude Include="ConEmu\MenuIds.h" />
@@ -575,6 +575,7 @@
     <ClCompile Include="ConEmu\LngRc.cpp" />
     <ClCompile Include="ConEmu\LoadImg.cpp" />
     <ClCompile Include="ConEmu\Macro.cpp" />
+    <ClCompile Include="ConEmu\MacroImpl.cpp" />
     <ClCompile Include="ConEmu\Match.cpp" />
     <ClCompile Include="ConEmu\Menu.cpp" />
     <ClCompile Include="ConEmu\MyClipboard.cpp" />

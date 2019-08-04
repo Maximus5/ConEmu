@@ -456,80 +456,6 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*
 	return nLen;
 }
 
-// TODO: Optimize: Now pszDst must be (4x len in maximum for "\xFF" form) for bSet==true
-void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
-{
-	if (bSet)
-	{
-		// Set escapes: wchar(13) --> "\\r"
-		EscapeChar(pszSrc, pszDst);
-	}
-	else
-	{
-		// Remove escapes: "\\r" --> wchar(13), etc.
-		UnescapeChar(pszSrc, pszDst);
-	}
-}
-
-#if 0
-wchar_t* EscapeString(bool bSet, LPCWSTR pszSrc)
-{
-	wchar_t* pszBuf = NULL;
-
-	if (!pszSrc || !*pszSrc)
-	{
-		return lstrdup(L"");
-	}
-
-	if (bSet)
-	{
-		// Set escapes: wchar(13) --> "\\r"
-		pszBuf = (wchar_t*)malloc((_tcslen(pszSrc)*2+1)*sizeof(*pszBuf));
-		if (!pszBuf)
-		{
-			MBoxAssert(pszBuf && "Memory allocation failed");
-			return NULL;
-		}
-
-		// This func is used mostly for print("...") GuiMacro, So, we don't need to set escapes on quotas
-
-		wchar_t* pszDst = pszBuf;
-
-		LPCWSTR  pszCtrl = L"rntae\\\"";
-
-		while (*pszSrc)
-		{
-			EscapeChar(bSet, pszSrc, pszDst);
-		}
-		*pszDst = 0;
-	}
-	else
-	{
-		// Remove escapes: "\\r" --> wchar(13)
-		pszBuf = lstrdup(pszSrc);
-		if (!pszBuf)
-		{
-			MBoxAssert(pszBuf && "Memory allocation failed");
-			return NULL;
-		}
-
-		wchar_t* pszEsc = wcschr(pszBuf, L'\\');
-		if (pszEsc)
-		{
-			wchar_t* pszDst = pszEsc;
-			pszSrc = pszEsc;
-			while (*pszSrc)
-			{
-				EscapeChar(bSet, pszSrc, pszDst);
-			}
-			*pszDst = 0;
-		}
-	}
-
-	return pszBuf;
-}
-#endif
-
 BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes*/ /*= false*/)
 {
 	wchar_t* pszBuf = NULL;
@@ -738,105 +664,14 @@ wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDef
 	return pszResult;
 }
 
-// pszWords - '|'separated
-void StripWords(wchar_t* pszText, const wchar_t* pszWords)
+
+// Defined by user char range for using alternative font
+bool isCharAltFont(ucs32 inChar)
 {
-	wchar_t dummy[MAX_PATH];
-	LPCWSTR pszWord = pszWords;
-	while (pszWord && *pszWord)
-	{
-		LPCWSTR pszNext = wcschr(pszWord, L'|');
-		if (!pszNext) pszNext = pszWord + _tcslen(pszWord);
-
-		int nLen = (int)(pszNext - pszWord);
-		if (nLen > 0)
-		{
-			lstrcpyn(dummy, pszWord, std::min((int)countof(dummy),(nLen+1)));
-			wchar_t* pszFound;
-			while ((pszFound = StrStrI(pszText, dummy)) != NULL)
-			{
-				size_t nLeft = _tcslen(pszFound);
-				size_t nCurLen = nLen;
-				// Strip spaces after replaced token
-				while (pszFound[nCurLen] == L' ')
-					nCurLen++;
-				if (nLeft <= nCurLen)
-				{
-					*pszFound = 0;
-					break;
-				}
-				else
-				{
-					wmemmove(pszFound, pszFound+nCurLen, nLeft - nCurLen + 1);
-				}
-			}
-		}
-
-		if (!*pszNext)
-			break;
-		pszWord = pszNext + 1;
-	}
-}
-
-void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark)
-{
-	if (!pszText || !*pszText || !pszCommentMark || !*pszCommentMark)
-		return;
-
-	wchar_t* pszSrc = pszText;
-	wchar_t* pszDst = pszText;
-	INT_PTR iLeft = wcslen(pszText) + 1;
-	INT_PTR iCmp = wcslen(pszCommentMark);
-
-	while (iLeft > 1)
-	{
-		wchar_t* pszEOL = wcspbrk(pszSrc, L"\r\n");
-		if (!pszEOL)
-			pszEOL = pszSrc + iLeft;
-		else if (pszEOL[0] == L'\r' && pszEOL[1] == L'\n')
-			pszEOL += 2;
-		else
-			pszEOL ++;
-
-		INT_PTR iLine = pszEOL - pszSrc;
-
-		if (wcsncmp(pszSrc, pszCommentMark, iCmp) == 0)
-		{
-			// Drop this line
-			if (iLeft <= iLine)
-			{
-				_ASSERTE(iLeft >= iLine);
-				*pszDst = 0;
-				break;
-			}
-			else
-			{
-				wmemmove(pszDst, pszEOL, iLeft - iLine);
-				iLeft -= iLine;
-			}
-		}
-		else
-		{
-			// Skip to next line
-			iLeft -= iLine;
-			pszSrc += iLine;
-			pszDst += iLine;
-		}
-	}
-
-	*pszDst = 0;
+	return gpSet->CheckCharAltFont(inChar);
 }
 
 
-
-bool isKey(DWORD wp,DWORD vk)
-{
-	bool bEq = ((wp==vk)
-		|| ((vk==VK_LSHIFT||vk==VK_RSHIFT)&&wp==VK_SHIFT)
-		|| ((vk==VK_LCONTROL||vk==VK_RCONTROL)&&wp==VK_CONTROL)
-		|| ((vk==VK_LMENU||vk==VK_RMENU)&&wp==VK_MENU));
-	return bEq;
-}
 
 #ifdef DEBUG_MSG_HOOKS
 HHOOK ghDbgHook = NULL;
@@ -1251,41 +1086,6 @@ void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS 
 	}
 
 	SafeFree(pszDumpMessage);
-}
-
-BOOL gbInDisplayLastError = FALSE;
-
-int DisplayLastError(LPCTSTR asLabel, DWORD dwError /* =0 */, DWORD dwMsgFlags /* =0 */, LPCWSTR asTitle /*= NULL*/, HWND hParent /*= NULL*/)
-{
-	int nBtn = 0;
-	DWORD dw = dwError ? dwError : GetLastError();
-	wchar_t* lpMsgBuf = NULL;
-	wchar_t *out = NULL;
-	MCHKHEAP
-
-	if (dw && (dw != (DWORD)-1))
-	{
-		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
-		INT_PTR nLen = _tcslen(asLabel)+64+(lpMsgBuf ? _tcslen(lpMsgBuf) : 0);
-		out = new wchar_t[nLen];
-		swprintf_c(out, nLen/*#SECURELEN*/, _T("%s\nLastError=0x%08X\n%s"), asLabel, dw, lpMsgBuf);
-	}
-
-	if (gbMessagingStarted) apiSetForegroundWindow(hParent ? hParent : ghWnd);
-
-	if (!dwMsgFlags) dwMsgFlags = MB_SYSTEMMODAL | MB_ICONERROR;
-
-	BOOL lb = gbInDisplayLastError; gbInDisplayLastError = TRUE;
-	nBtn = MsgBox(out ? out : asLabel, dwMsgFlags, asTitle, hParent);
-	gbInDisplayLastError = lb;
-
-	MCHKHEAP
-	if (lpMsgBuf)
-		LocalFree(lpMsgBuf);
-	if (out)
-		delete [] out;
-	MCHKHEAP
-	return nBtn;
 }
 
 void WarnCreateWindowFail(LPCWSTR pszDescription, HWND hParent, DWORD nErrCode)

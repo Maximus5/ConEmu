@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "../common/MSetter.h"
+#include "../common/MStrEsc.h"
 #include "../common/WUser.h"
 
 #include "AboutDlg.h"
@@ -299,4 +300,117 @@ bool FixDirEndSlash(wchar_t* rsPath)
 		return true;
 	}
 	return false;
+}
+
+// TODO: Optimize: Now pszDst must be (4x len in maximum for "\xFF" form) for bSet==true
+void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
+{
+	if (bSet)
+	{
+		// Set escapes: wchar(13) --> "\\r"
+		EscapeChar(pszSrc, pszDst);
+	}
+	else
+	{
+		// Remove escapes: "\\r" --> wchar(13), etc.
+		UnescapeChar(pszSrc, pszDst);
+	}
+}
+
+bool isKey(DWORD wp,DWORD vk)
+{
+	bool bEq = ((wp==vk)
+		|| ((vk==VK_LSHIFT||vk==VK_RSHIFT)&&wp==VK_SHIFT)
+		|| ((vk==VK_LCONTROL||vk==VK_RCONTROL)&&wp==VK_CONTROL)
+		|| ((vk==VK_LMENU||vk==VK_RMENU)&&wp==VK_MENU));
+	return bEq;
+}
+
+// pszWords - '|'separated
+void StripWords(wchar_t* pszText, const wchar_t* pszWords)
+{
+	wchar_t dummy[MAX_PATH];
+	LPCWSTR pszWord = pszWords;
+	while (pszWord && *pszWord)
+	{
+		LPCWSTR pszNext = wcschr(pszWord, L'|');
+		if (!pszNext) pszNext = pszWord + _tcslen(pszWord);
+
+		int nLen = (int)(pszNext - pszWord);
+		if (nLen > 0)
+		{
+			lstrcpyn(dummy, pszWord, std::min((int)countof(dummy),(nLen+1)));
+			wchar_t* pszFound;
+			while ((pszFound = StrStrI(pszText, dummy)) != NULL)
+			{
+				size_t nLeft = _tcslen(pszFound);
+				size_t nCurLen = nLen;
+				// Strip spaces after replaced token
+				while (pszFound[nCurLen] == L' ')
+					nCurLen++;
+				if (nLeft <= nCurLen)
+				{
+					*pszFound = 0;
+					break;
+				}
+				else
+				{
+					wmemmove(pszFound, pszFound+nCurLen, nLeft - nCurLen + 1);
+				}
+			}
+		}
+
+		if (!*pszNext)
+			break;
+		pszWord = pszNext + 1;
+	}
+}
+
+void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark)
+{
+	if (!pszText || !*pszText || !pszCommentMark || !*pszCommentMark)
+		return;
+
+	wchar_t* pszSrc = pszText;
+	wchar_t* pszDst = pszText;
+	INT_PTR iLeft = wcslen(pszText) + 1;
+	INT_PTR iCmp = wcslen(pszCommentMark);
+
+	while (iLeft > 1)
+	{
+		wchar_t* pszEOL = wcspbrk(pszSrc, L"\r\n");
+		if (!pszEOL)
+			pszEOL = pszSrc + iLeft;
+		else if (pszEOL[0] == L'\r' && pszEOL[1] == L'\n')
+			pszEOL += 2;
+		else
+			pszEOL ++;
+
+		INT_PTR iLine = pszEOL - pszSrc;
+
+		if (wcsncmp(pszSrc, pszCommentMark, iCmp) == 0)
+		{
+			// Drop this line
+			if (iLeft <= iLine)
+			{
+				_ASSERTE(iLeft >= iLine);
+				*pszDst = 0;
+				break;
+			}
+			else
+			{
+				wmemmove(pszDst, pszEOL, iLeft - iLine);
+				iLeft -= iLine;
+			}
+		}
+		else
+		{
+			// Skip to next line
+			iLeft -= iLine;
+			pszSrc += iLine;
+			pszDst += iLine;
+		}
+	}
+
+	*pszDst = 0;
 }

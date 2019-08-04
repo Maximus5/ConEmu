@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2009-present Maximus5
+Copyright (c) 2011-present Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -29,26 +29,62 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/defines.h"
-#include "../common/CEStr.h"
 
-extern BOOL gbInDisplayLastError;
-int DisplayLastError(LPCTSTR asLabel, DWORD dwError = 0, DWORD dwMsgFlags = 0, LPCWSTR asTitle = NULL, HWND hParent = NULL);
+/* ********************************* */
+/* ****** Forward definitions ****** */
+/* ********************************* */
+class CRealConsole;
 
-// All window/gdi related code must be run in main thread
-bool isMainThread();
-void initMainThread();
+struct GuiMacro;
+struct GuiMacroArg;
 
-const wchar_t* DupCygwinPath(LPCWSTR asWinPath, bool bAutoQuote, LPCWSTR asMntPrefix, CEStr& path);
-LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath);
-wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath);
-bool FixDirEndSlash(wchar_t* rsPath);
+enum GuiMacroArgType
+{
+	gmt_Int,
+	gmt_Hex,
+	gmt_Str,
+	gmt_VStr,
+	gmt_Fn, // Reserved
+};
 
-void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst);
+struct GuiMacroArg
+{
+	GuiMacroArgType Type;
 
-bool isKey(DWORD wp,DWORD vk);
+	#ifdef _WIN64
+	DWORD Pad;
+	#endif
 
-// pszWords - '|'separated
-void StripWords(wchar_t* pszText, const wchar_t* pszWords);
+	int Int;
+	LPWSTR Str;
+	GuiMacro* Macro;
+};
 
-// pszCommentMark - for example L"#"
-void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark);
+struct GuiMacro
+{
+	size_t  cbSize;
+	LPCWSTR szFunc;
+	wchar_t chFuncTerm; // L'(', L':', L' ' - delimiter between func name and arguments
+
+	size_t  argc;
+	GuiMacroArg* argv; // No need to release mem, buffer allocated for the full GuiMacro data
+
+	wchar_t* AsString();
+	bool GetIntArg(size_t idx, int& val);
+	bool GetStrArg(size_t idx, LPWSTR& val);
+	bool GetRestStrArgs(size_t idx, LPWSTR& val);
+	bool IsIntArg(size_t idx);
+	bool IsStrArg(size_t idx);
+};
+
+namespace ConEmuMacro
+{
+	/* ****************************** */
+	/* ****** Helper functions ****** */
+	/* ****************************** */
+	LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim, bool& bEndBracket);
+	LPWSTR GetNextInt(LPWSTR& rsArguments, GuiMacroArg& rnValue);
+	void SkipWhiteSpaces(LPWSTR& rsString);
+	LPWSTR Int2Str(UINT nValue, bool bSigned);
+	GuiMacro* GetNextMacro(LPWSTR& asString, bool abConvert, wchar_t** rsErrMsg);
+}

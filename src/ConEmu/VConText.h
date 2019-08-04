@@ -82,7 +82,6 @@ enum TextCharType
 };
 
 class CVConLine;
-class CRealConsole;
 
 #if 0
 // Used as array[TextCharType::TCF_WidthLast]
@@ -137,7 +136,8 @@ struct VConTextPart
 class CVConLine
 {
 public:
-	CVConLine(CRealConsole* apRCon);
+	CVConLine(const bool isFar);
+	CVConLine() = delete;
 	~CVConLine();
 
 public:
@@ -204,7 +204,7 @@ protected:
 	unsigned TotalLineWidth;
 
 	// Pseudographics alignments
-	bool isFixFrameCoord;
+	const bool isFixFrameCoord;
 	bool NextDialog;
 	int NextDialogX, CurDialogX1, CurDialogX2, CurDialogI; // !!! SIGNED !!!
 	DWORD CurDialogFlags;

@@ -122,9 +122,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ConEmu\AboutDlg.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
     <ClCompile Include="ConEmu\DynDialog.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
@@ -137,25 +134,19 @@
     <ClCompile Include="ConEmu\Hotkeys_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
-    <ClCompile Include="ConEmu\Macro.cpp">
+    <ClCompile Include="ConEmu\LngData.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\LngRc.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\MacroImpl.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Macro_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Match.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\MyClipboard.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\Options.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\RConData.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\Registry.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\VConText.cpp">
@@ -245,6 +236,9 @@
     <ClCompile Include="common\MStrDup.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\MStrEsc.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
     <ClCompile Include="common\MStrSafe.cpp">
       <Filter>common</Filter>
     </ClCompile>
@@ -282,6 +276,12 @@
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\execute.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\wcchars.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\wcwidth.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="modules\googletest\googletest\src\gtest-all.cc">

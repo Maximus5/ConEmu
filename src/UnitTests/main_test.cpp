@@ -1,6 +1,25 @@
 #include "tests.h"
 #include <gtest/gtest.h>
+#include "../common/wcwidth.h"
 #include "../ConEmu/helper.h"
+
+HWND ghWnd = NULL;
+HINSTANCE g_hInstance = NULL;
+bool gbMessagingStarted = false;
+namespace FastConfig
+{
+HWND ghFastCfg = NULL;
+}
+
+int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahParent /*= (HWND)-1*/, bool abModal /*= true*/)
+{
+	return IDCANCEL;
+}
+
+bool isCharAltFont(ucs32 inChar)
+{
+	return false;
+}
 
 TEST(ConEmuTest, Main) {
 	const int val = 1;

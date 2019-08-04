@@ -10,6 +10,9 @@
     <Filter Include="Headers">
       <UniqueIdentifier>{C196CD9C-2D76-4C38-368E-D70EA2ECB299}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Macro">
+      <UniqueIdentifier>{F743A70D-6358-CFBE-2CDA-721E98ADCBEF}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Resources">
       <UniqueIdentifier>{000BCD17-6C75-818E-B5B3-3234215D5FE3}</UniqueIdentifier>
     </Filter>
@@ -181,10 +184,10 @@
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\Macro.h">
-      <Filter>Headers</Filter>
+      <Filter>Macro</Filter>
     </ClInclude>
-    <ClInclude Include="ConEmu\MacroFwd.h">
-      <Filter>Headers</Filter>
+    <ClInclude Include="ConEmu\MacroImpl.h">
+      <Filter>Macro</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\Match.h">
       <Filter>Headers</Filter>
@@ -888,7 +891,10 @@
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Macro.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Macro</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\MacroImpl.cpp">
+      <Filter>Macro</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Match.cpp">
       <Filter>Sources</Filter>

@@ -2768,7 +2768,7 @@ void CVirtualConsole::UpdateText()
 	unsigned partIndex;
 	VConTextPart *part, *nextPart;
 
-	CVConLine lp(mp_RCon); // Line parser
+	CVConLine lp(mp_RCon->isFar()); // Line parser
 	lp.SetDialogs(mn_DialogsCount, mrc_Dialogs, mn_DialogFlags, mn_DialogAllFlags, mrc_UCharMap);
 
 	bool bFixFrameCoord = mp_RCon->isFar();

@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/CmdLine.h"
+#include <functional>
 
 class CMatch;
 class CRealConsole;
@@ -59,10 +60,10 @@ public:
 	int mn_SrcFrom/*Cursor pos*/;
 
 protected:
-	CRealConsole* mp_RCon;
+	std::function<LPCWSTR(LPCWSTR asSrc, CEStr& szFull)> GetFileFromConsole_;
 
 public:
-	CMatch(CRealConsole* apRCon);
+	CMatch(std::function<LPCWSTR(LPCWSTR asSrc, CEStr& szFull)>&& GetFileFromConsole);
 	~CMatch();
 
 public:
