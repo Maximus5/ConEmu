@@ -315,11 +315,13 @@
     <ClCompile Include="common\MStrSafe.cpp" />
     <ClCompile Include="common\Memory.cpp" />
     <ClCompile Include="common\RConStartArgs.cpp" />
+    <ClCompile Include="common\RConStartArgsEx.cpp" />
     <ClCompile Include="common\WCodePage.cpp" />
     <ClCompile Include="common\WConsole.cpp" />
     <ClCompile Include="common\WModuleCheck.cpp" />
     <ClCompile Include="common\WObjects.cpp" />
     <ClCompile Include="common\WThreads.cpp" />
+    <ClCompile Include="common\WUser.cpp" />
     <ClCompile Include="common\execute.cpp" />
     <ClCompile Include="modules\googletest\googletest\src\gtest-all.cc" />
   </ItemGroup>

@@ -1,3 +1,7 @@
+-- ConEmu's solution generator script
+-- 1. Download premake5 from https://premake.github.io/download.html
+-- 2. Run `premake5 vs2017`
+
 workspace "CE"
   configurations { "Release", "Debug", "Remote" }
   platforms { "Win32", "x64" }
@@ -10,7 +14,7 @@ workspace "CE"
   startproject "ConEmu"
 
   staticruntime "On"
-  flags { "StaticRuntime", "Maps" }
+  flags { "Maps" }
   filter "configurations:Release"
     flags { "NoIncrementalLink" }
 
@@ -207,50 +211,6 @@ project "common-user"
   filter {}
 -- end of "common-user"
 
-
-
--- ############################### --
--- ############################### --
--- ############################### --
-project "Tests"
-  kind "ConsoleApp"
-  language "C++"
-  exceptionhandling "On"
-
-  defines {"TESTS_MEMORY_MODE"}
-
-  files {
-    "src/modules/googletest/googletest/src/gtest-all.cc",
-    "src/UnitTests/*_test.cpp",
-  }
-
-  files (common_kernel)
-
-  includedirs {
-    "src/modules/googletest/googletest/include",
-    "src/modules/googletest/googletest",
-  }
-
-  targetname ("Tests_%{cfg.buildcfg}_%{cfg.platform}")
-  targetdir ("src/UnitTests")
-
-  links {
-    -- don't link "common-kernel" or  "common-user"!
-    "comctl32",
-    "shlwapi",
-    "version",
-    "gdiplus",
-    "winmm",
-    "netapi32",
-  }
-
-  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
-  implibdir ("%{cfg.objdir}")
-
-  -- postbuildcommands {"$(SolutionDir)UnitTests\\Tests_%{cfg.buildcfg}_%{cfg.platform}.exe"}
-
-  filter {}
--- end of "Tests"
 
 
 -- ############################### --
@@ -875,3 +835,65 @@ project "Far.ExtendedConsole"
     targetsuffix "64"
   filter {}
 -- end of "Far.ExtendedConsole"
+
+
+
+-- ############################### --
+-- ############################### --
+-- ############################### --
+project "Tests"
+  kind "ConsoleApp"
+  language "C++"
+  exceptionhandling "On"
+
+  defines {"TESTS_MEMORY_MODE"}
+
+  files {
+    -- tests
+    "src/UnitTests/*_test.cpp",
+    -- common files
+    "src/common/CEStr.cpp",
+    "src/common/CmdLine.cpp",
+    "src/common/EnvVar.cpp",
+    "src/common/MAssert.cpp",
+    "src/common/Memory.cpp",
+    "src/common/MModule.cpp",
+    "src/common/MProcess.cpp",
+    "src/common/MStrDup.cpp",
+    "src/common/MStrSafe.cpp",
+    "src/common/RConStartArgs.cpp",
+    "src/common/RConStartArgsEx.cpp",
+    "src/common/WObjects.cpp",
+    "src/common/WThreads.cpp",
+    "src/common/WUser.cpp",
+    -- googletest
+    "src/modules/googletest/googletest/src/gtest-all.cc",
+  }
+
+  files (common_kernel)
+
+  includedirs {
+    "src/modules/googletest/googletest/include",
+    "src/modules/googletest/googletest",
+  }
+
+  targetname ("Tests_%{cfg.buildcfg}_%{cfg.platform}")
+  targetdir ("src/UnitTests")
+
+  links {
+    -- don't link "common-kernel" or  "common-user"!
+    "comctl32",
+    "shlwapi",
+    "version",
+    "gdiplus",
+    "winmm",
+    "netapi32",
+  }
+
+  objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
+  implibdir ("%{cfg.objdir}")
+
+  -- postbuildcommands {"$(SolutionDir)UnitTests\\Tests_%{cfg.buildcfg}_%{cfg.platform}.exe"}
+
+  filter {}
+-- end of "Tests"

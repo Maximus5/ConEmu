@@ -159,7 +159,7 @@
       <GenerateMapFile>true</GenerateMapFile>
     </Link>
     <Manifest>
-      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -188,7 +188,7 @@
       <GenerateMapFile>true</GenerateMapFile>
     </Link>
     <Manifest>
-      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -211,7 +211,7 @@
       <GenerateMapFile>true</GenerateMapFile>
     </Link>
     <Manifest>
-      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -234,7 +234,7 @@
       <GenerateMapFile>true</GenerateMapFile>
     </Link>
     <Manifest>
-      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
@@ -257,7 +257,7 @@
       <GenerateMapFile>true</GenerateMapFile>
     </Link>
     <Manifest>
-      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
@@ -280,7 +280,7 @@
       <GenerateMapFile>true</GenerateMapFile>
     </Link>
     <Manifest>
-      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest %(AdditionalManifestFiles)</AdditionalManifestFiles>
+      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>

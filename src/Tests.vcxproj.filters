@@ -200,6 +200,9 @@
     <ClCompile Include="common\RConStartArgs.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\RConStartArgsEx.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
     <ClCompile Include="common\WCodePage.cpp">
       <Filter>common</Filter>
     </ClCompile>
@@ -213,6 +216,9 @@
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\WThreads.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\WUser.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\execute.cpp">
