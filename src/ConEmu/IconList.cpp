@@ -150,6 +150,15 @@ bool CIconList::Initialize()
 			if (nFirstAdd >= 0)
 			{
 				mn_AdminIcon = nFirstAdd + ((gOSVer.dwMajorVersion >= 6) ? 0 : 1);
+				int overlayIndex = 1;
+				if (ImageList_SetOverlayImage(mh_TabIcons, mn_AdminIcon + 2, overlayIndex))
+				{
+					mn_AdminOverlayIndex = overlayIndex;
+				}
+				else
+				{
+					gpConEmu->LogString(L"Setting up the overlay admin icon failed");
+				}
 			}
 			else
 			{
@@ -293,37 +302,28 @@ int CIconList::CreateTabIconInt(LPCWSTR asIconDescr, bool bAdmin, LPCWSTR asWork
 		TabIconCache NewIcon = {lstrdup(asIconDescr), iIconIdx, false};
 		m_Icons.push_back(NewIcon);
 
-		if (mn_AdminIcon >= 0)
+		if (mn_AdminOverlayIndex >= 0)
 		{
-			HIMAGELIST hAdmList = ImageList_Merge(mh_TabIcons, iIconIdx, mh_TabIcons, mn_AdminIcon+2, 0,0);
-			if (hAdmList)
+			HICON hNewIcon = ImageList_GetIcon(mh_TabIcons, iIconIdx, ILD_TRANSPARENT | INDEXTOOVERLAYMASK(mn_AdminOverlayIndex));
+			if (hNewIcon)
 			{
-				HICON hNewIcon = ImageList_GetIcon(hAdmList, 0, ILD_TRANSPARENT);
-				if (hNewIcon)
+				CEStr lsLog(L"Admin icon `", asIconDescr, L"` was created: ", GetIconInfoStr(hNewIcon, szMergedInfo));
+				gpConEmu->LogString(lsLog);
+
+				iIconIdxAdm = ImageList_ReplaceIcon(mh_TabIcons, -1, hNewIcon);
+				DestroyIcon(hNewIcon);
+
+				TabIconCache AdmIcon = {lstrdup(asIconDescr), iIconIdxAdm, true};
+				m_Icons.push_back(AdmIcon);
+
+				if (bAdmin && (iIconIdxAdm > 0))
 				{
-					CEStr lsLog(L"Admin icon `", asIconDescr, L"` was created: ", GetIconInfoStr(hNewIcon, szMergedInfo));
-					gpConEmu->LogString(lsLog);
-
-					iIconIdxAdm = ImageList_ReplaceIcon(mh_TabIcons, -1, hNewIcon);
-					DestroyIcon(hNewIcon);
-
-					TabIconCache AdmIcon = {lstrdup(asIconDescr), iIconIdxAdm, true};
-					m_Icons.push_back(AdmIcon);
-
-					if (bAdmin && (iIconIdxAdm > 0))
-					{
-						iIconIdx = iIconIdxAdm;
-					}
+					iIconIdx = iIconIdxAdm;
 				}
-				else
-				{
-					gpConEmu->LogString(L"GetIcon for admin icon was failed");
-				}
-				ImageList_Destroy(hAdmList);
 			}
 			else
 			{
-				gpConEmu->LogString(L"Admin icon merging was failed");
+				gpConEmu->LogString(L"GetIcon for admin icon was failed");
 			}
 		}
 

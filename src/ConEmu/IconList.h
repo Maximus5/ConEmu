@@ -48,6 +48,7 @@ protected:
 public:
 	HIMAGELIST mh_TabIcons = nullptr;
 	int mn_AdminIcon = -1;
+	int mn_AdminOverlayIndex = -1;
 public:
 	CIconList();
 	~CIconList();
