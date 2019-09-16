@@ -1,4 +1,4 @@
-
+﻿
 /*
 Copyright (c) 2011-present Maximus5
 All rights reserved.
@@ -3296,7 +3296,8 @@ LPWSTR ConEmuMacro::SetParentHWND(GuiMacro* p, CRealConsole* apRCon, bool abFrom
 		hNewParent.u = static_cast<DWORD>(hwnd_int);
 	}
 
-	// TODO: Call here smth. like gpConEmu->SetInsideParent((HWND)hNewParent);
+	gpConEmu->SetParent(hNewParent);
+	gpConEmu->mp_Inside->InitInside(NULL, false, NULL, NULL, hNewParent);
 
 	return lstrdup(L"OK");
 }
