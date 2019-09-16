@@ -1,4 +1,4 @@
-﻿
+
 /*
 Copyright (c) 2011-present Maximus5
 All rights reserved.
@@ -58,6 +58,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TrayIcon.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
+#include "Inside.h"
 
 
 /* ********************************* */
@@ -221,6 +222,8 @@ namespace ConEmuMacro
 	LPWSTR SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// SetParentHWND(<NewParentHWND>)
 	LPWSTR SetParentHWND(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+    // SetFocus
+    LPWSTR Focus(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Open Settings dialog
 	LPWSTR Settings(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Shell (ShellExecute)
@@ -320,6 +323,7 @@ namespace ConEmuMacro
 		{SetDpi, {L"SetDpi"}, gmf_MainThread},
 		{SetOption, {L"SetOption"}, gmf_MainThread},
 		{SetParentHWND, {L"SetParentHWND"}, gmf_MainThread},
+        {Focus, {L"SetFocus"}, gmf_MainThread},
 		{Settings, {L"Settings"}, gmf_MainThread},
 		{Shell, {L"Shell", L"ShellExecute"}, gmf_MainThread},
 		{Sleep, {L"Sleep"}},
@@ -3269,6 +3273,13 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 	}
 
 	return pszResult ? pszResult : lstrdup(L"UnknownOption");
+}
+
+// SetFocus
+LPWSTR ConEmuMacro::Focus(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+{
+    gpConEmu->setFocus();
+    return lstrdup(L"OK");
 }
 
 // SetParentHWND(<NewParentHWND>)
