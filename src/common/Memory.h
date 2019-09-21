@@ -33,21 +33,30 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 
-extern HANDLE ghHeap;
-
+#if defined(TESTS_MEMORY_MODE)
+#undef TRACK_MEMORY_ALLOCATIONS
+#undef MVALIDATE_POINTERS
+#else
 #if defined(_DEBUG) || (ConEmuVersionStage == CEVS_ALPHA)
 #define TRACK_MEMORY_ALLOCATIONS
+#endif
+#if defined(_DEBUG) || defined(TRACK_MEMORY_ALLOCATIONS)
+#define MVALIDATE_POINTERS
+#endif
 #endif
 
 // Heap allocation routines
 
+bool IsHeapInitialized();
 bool HeapInitialize();
 void HeapDeinitialize();
 
+#if !defined(TESTS_MEMORY_MODE)
 void * __cdecl operator new(size_t size);
 void * __cdecl operator new[](size_t size);
 void __cdecl operator delete(void *block);
 void __cdecl operator delete[](void *ptr);
+#endif
 
 #ifdef TRACK_MEMORY_ALLOCATIONS
 	struct xf_mem_block
@@ -83,10 +92,12 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF);
 }
 #endif
 
+#if !defined(TESTS_MEMORY_MODE)
 #define malloc(s) xf_malloc(s XF_PLACE_ARGS_VAL)
 #define calloc(c,s) xf_calloc(c,s XF_PLACE_ARGS_VAL)
 #define realloc(p,s) xf_realloc(p,s XF_PLACE_ARGS_VAL)
 #define free(p) xf_free(p XF_PLACE_ARGS_VAL)
+#endif
 
 
 #undef USE_XF_DUMP
@@ -142,7 +153,7 @@ bool __cdecl xf_validate(void * _Memory = NULL);
 #ifdef TRACK_MEMORY_ALLOCATIONS
 #define SafeFree(p) if ((p)!=NULL) { xf_free((p),__FILE__,__LINE__); (p) = NULL; }
 #else
-#define SafeFree(p) if ((p)!=NULL) { xf_free((p)); (p) = NULL; }
+#define SafeFree(p) if ((p)!=NULL) { free((p)); (p) = NULL; }
 #endif
 #endif
 

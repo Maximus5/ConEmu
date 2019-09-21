@@ -185,8 +185,6 @@ struct CpConv gCpConv = {};
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
-extern HANDLE ghHeap;
-//extern HMODULE ghKernel32, ghUser32, ghShell32, ghAdvapi32;
 extern HMODULE ghUser32;
 //extern const wchar_t *kernel32;// = L"kernel32.dll";
 extern const wchar_t *user32  ;// = L"user32.dll";
@@ -1888,10 +1886,6 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 	#endif
 	DLOGEND1();
 
-	//_ASSERTE(ghHeap == NULL);
-	//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
-
-
 	DLOG1_("DllMain.DllStart",ul_reason_for_call);
 	if (DllStart(NULL) != 0)
 	{
@@ -1967,7 +1961,7 @@ BOOL DllMain_ThreadDetach(HANDLE hModule, DWORD  ul_reason_for_call)
 		gnDllState |= ds_DllDeinitializing;
 	}
 
-	if (ghHeap)
+	if (IsHeapInitialized())
 	{
 		gStartedThreads.Del(nTID);
 	}

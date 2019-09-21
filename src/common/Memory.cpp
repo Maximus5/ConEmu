@@ -40,8 +40,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _ASSERTE(x)
 #endif
 
+namespace {
 static std::atomic_int gHeapInit, gHeapCounter;
 HANDLE ghHeap = NULL;
+}  // namespace
 
 // Debugging purposes
 void* g_LastDeletePtr = NULL;
@@ -81,6 +83,11 @@ static const char* _PointToName(const char* asFileOrPath)
 	return asFileOrPath;
 }
 #endif
+
+bool IsHeapInitialized()
+{
+	return (ghHeap != NULL);
+}
 
 bool HeapInitialize()
 {
@@ -321,7 +328,7 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF)
 
 	#endif // #ifdef TRACK_MEMORY_ALLOCATIONS
 
-	#ifdef _DEBUG
+	#if defined(_DEBUG) && !defined(TESTS_MEMORY_MODE)
 	size_t _Size1 = HeapSize(ghHeap, 0, _Memory);
 	_ASSERTE(_Size1 > 0);
 	#endif
@@ -575,7 +582,7 @@ bool __cdecl xf_validate(void * _Memory /*= NULL*/)
 	return bValid;
 }
 
-
+#if !defined(TESTS_MEMORY_MODE)
 void * __cdecl operator new(size_t _Size)
 {
 	void * p = xf_malloc(_Size XF_PLACE_ARGS_VAL);
@@ -621,3 +628,4 @@ void __cdecl operator delete[](void *p)
 {
 	xf_free(p XF_PLACE_ARGS_VAL);
 }
+#endif

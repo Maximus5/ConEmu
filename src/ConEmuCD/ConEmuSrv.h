@@ -62,17 +62,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "LogFunction.h"
 
-#ifdef _DEBUG
-//CRITICAL_ SECTION gcsHeap;
-//#define MCHKHEAP { Enter CriticalSection(&gcsHeap); int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); LeaveCriticalSection(&gcsHeap); }
-//#define MCHKHEAP HeapValidate(ghHeap, 0, NULL);
-//#define MCHKHEAP { int MDEBUG_CHK=_CrtCheckMemory(); _ASSERTE(MDEBUG_CHK); }
-//#define HEAP_LOGGING
-#else
-//#define MCHKHEAP
-#endif
-
-
 
 
 #define CSECTION_NON_RAISE
@@ -152,13 +141,10 @@ extern BOOL    gbAlienMode;  // сервер НЕ является владел�
 extern BOOL    gbDontInjectConEmuHk;
 extern BOOL    gbForceHideConWnd;
 extern DWORD   gdwMainThreadId;
-//int       gnBufferHeight = 0;
 extern wchar_t* gpszRunCmd;
 extern wchar_t* gpszRootExe;
 extern bool    gbRunInBackgroundTab;
 extern DWORD   gnImageSubsystem;
-//HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
-extern HANDLE ghHeap; //HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
 #ifdef _DEBUG
 extern size_t gnHeapUsed, gnHeapMax;
 extern HANDLE ghFarInExecuteEvent;
