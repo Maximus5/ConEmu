@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Attach.h"
 #include "ConEmu.h"
 #include "ConEmuPipe.h"
+#include "Inside.h"
 #include "Macro.h"
 #include "MacroImpl.h"
 #include "Menu.h"
@@ -59,7 +60,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TrayIcon.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
-#include "Inside.h"
 
 
 /* ********************************* */
@@ -163,12 +163,12 @@ namespace ConEmuMacro
 	LPWSTR Select(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// SetDpi(dpi)
 	LPWSTR SetDpi(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
+	// SetFocus
+	LPWSTR SetFocus(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// SetOption("<Name>",<Value>)
 	LPWSTR SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// SetParentHWND(<NewParentHWND>)
 	LPWSTR SetParentHWND(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
-    // SetFocus
-    LPWSTR Focus(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Open Settings dialog
 	LPWSTR Settings(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin);
 	// Shell (ShellExecute)
@@ -266,9 +266,9 @@ namespace ConEmuMacro
 		{Scroll, {L"Scroll"}, gmf_MainThread},
 		{Select, {L"Select"}},
 		{SetDpi, {L"SetDpi"}, gmf_MainThread},
+		{SetFocus, {L"SetFocus"}, gmf_MainThread},
 		{SetOption, {L"SetOption"}, gmf_MainThread},
 		{SetParentHWND, {L"SetParentHWND"}, gmf_MainThread},
-        {Focus, {L"SetFocus"}, gmf_MainThread},
 		{Settings, {L"Settings"}, gmf_MainThread},
 		{Shell, {L"Shell", L"ShellExecute"}, gmf_MainThread},
 		{Sleep, {L"Sleep"}},
@@ -2414,10 +2414,10 @@ LPWSTR ConEmuMacro::SetOption(GuiMacro* p, CRealConsole* apRCon, bool abFromPlug
 }
 
 // SetFocus
-LPWSTR ConEmuMacro::Focus(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
+LPWSTR ConEmuMacro::SetFocus(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
-    gpConEmu->setFocus();
-    return lstrdup(L"OK");
+	gpConEmu->setFocus();
+	return lstrdup(L"OK");
 }
 
 // SetParentHWND(<NewParentHWND>)
