@@ -398,6 +398,8 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"  - Use to stop selection\r\n" \
 	L"SetDpi(<DPI>)\r\n" \
 	L"  - Change effective dpi for ConEmu window: 96, 120, 144, 192\r\n" \
+	L"SetFocus()\r\n" \
+	L"  - Try to set focus in ConEmu window\r\n" \
 	L"SetOption('\"Check\",<ID>,<Value>)\r\n" \
 	L"  - Set one of checkbox/radio ConEmu's options\r\n" \
 	L"    ID: numeric identifier of checkbox (ConEmu.rc, resource.h)\r\n" \
@@ -424,6 +426,8 @@ _DBGHLP(L"-ZoneId - Try to drop :Zone.Identifier without confirmation.\r\n") \
 	L"    \"Scheme\": switch color scheme for the whole ConEmu window\r\n" \
 	L"    \"VConScheme\": switch color scheme for the active console\r\n" \
 	L"      Value: color palette name, e.g. \"<Solarized>\"\r\n" \
+	L"SetParentHWND(<HWND>)\r\n" \
+	L"  - Change ConEmu parent window during Inside mode\r\n" \
 	L"Settings([<PageResourceId>])\r\n" \
 	L"  - Show ‘Settings’ dialog with specified page activated (optionally)\r\n" \
 	L"      PageResourceId: integer DialogID from ‘resource.h’\r\n" \
