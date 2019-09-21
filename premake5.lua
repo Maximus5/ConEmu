@@ -217,10 +217,14 @@ project "Tests"
   language "C++"
   exceptionhandling "On"
 
+  defines {"TESTS_MEMORY_MODE"}
+
   files {
     "src/modules/googletest/googletest/src/gtest-all.cc",
     "src/UnitTests/*_test.cpp",
   }
+
+  files (common_kernel)
 
   includedirs {
     "src/modules/googletest/googletest/include",
@@ -231,8 +235,7 @@ project "Tests"
   targetdir ("src/UnitTests")
 
   links {
-    -- "common-kernel",
-    -- "common-user",
+    -- don't link "common-kernel" or  "common-user"!
     "comctl32",
     "shlwapi",
     "version",
@@ -244,7 +247,7 @@ project "Tests"
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
 
-  postbuildcommands {"$(SolutionDir)UnitTests\\Tests_%{cfg.buildcfg}_%{cfg.platform}.exe"}
+  -- postbuildcommands {"$(SolutionDir)UnitTests\\Tests_%{cfg.buildcfg}_%{cfg.platform}.exe"}
 
   filter {}
 -- end of "Tests"
