@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="ConEmu">
-      <UniqueIdentifier>{8CCC3EAC-786E-6982-6129-7DD64D6AF0D2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="common">
       <UniqueIdentifier>{AEFEE3F6-9AA0-0ECD-835B-22216F9C951D}</UniqueIdentifier>
     </Filter>
@@ -39,13 +36,52 @@
     <ClInclude Include="common\ConEmuCheck.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="common\ConEmuCheckEx.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ConEmuColors.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ConEmuColors3.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ConEmuInOut.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ConEmuPipeMode.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ConsoleAnnotation.h">
+      <Filter>common</Filter>
+    </ClInclude>
     <ClInclude Include="common\ConsoleMixAttr.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="common\ConsoleRead.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="common\ConsoleTrueMod.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\DbgHlpGcc.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\DefTermBase.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\Dump.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\EmergencyShow.h">
+      <Filter>common</Filter>
+    </ClInclude>
     <ClInclude Include="common\EnvVar.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\FarVersion.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\GdiPlusLt.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="common\HandleKeeper.h">
@@ -60,16 +96,52 @@
     <ClInclude Include="common\Keyboard.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="common\MArray.h">
+      <Filter>common</Filter>
+    </ClInclude>
     <ClInclude Include="common\MAssert.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MBSTR.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MCircular.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="common\MConHandle.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="common\MEvent.h">
+      <Filter>common</Filter>
+    </ClInclude>
     <ClInclude Include="common\MFileLog.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="common\MFileLogEx.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MFileMapping.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MGlobal.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MGuiMacro.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MJsonReader.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MMap.h">
+      <Filter>common</Filter>
+    </ClInclude>
     <ClInclude Include="common\MModule.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MPerfCounter.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MPipe.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="common\MProcess.h">
@@ -90,16 +162,79 @@
     <ClInclude Include="common\MSecurity.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="common\MSetter.h">
+      <Filter>common</Filter>
+    </ClInclude>
     <ClInclude Include="common\MStrDup.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MStrEsc.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="common\MStrSafe.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="common\MStream.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MTimer.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MToolHelp.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MToolTip.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\MWow64Disable.h">
+      <Filter>common</Filter>
+    </ClInclude>
     <ClInclude Include="common\Memory.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="common\Monitors.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\PipeServer.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ProcessData.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ProcessSetEnv.h">
+      <Filter>common</Filter>
+    </ClInclude>
     <ClInclude Include="common\RConStartArgs.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\RConStartArgsEx.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\RgnDetect.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\SetEnvVar.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\SetExport.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\StartupEnv.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\StartupEnvDef.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\StartupEnvEx.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\TerminalMode.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\TokenHelper.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\UnicodeChars.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="common\WCodePage.h">
@@ -108,56 +243,68 @@
     <ClInclude Include="common\WConsole.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="common\WConsoleEx.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\WConsoleInfo.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\WErrGuard.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\WFiles.h">
+      <Filter>common</Filter>
+    </ClInclude>
     <ClInclude Include="common\WModuleCheck.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="common\WObjects.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="common\WRegistry.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\WSession.h">
+      <Filter>common</Filter>
+    </ClInclude>
     <ClInclude Include="common\WThreads.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\WUser.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\clink.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\defines.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="common\execute.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="common\md5.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\plugin_helper.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\shlobj.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\stdint_.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\wcchars.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\wcwidth.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\xmllite.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ConEmu\DynDialog.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\HotkeyChord.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\Hotkeys.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\Hotkeys_test.cpp">
-      <Filter>tests</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\LngData.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\LngRc.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\MacroImpl.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\Macro_test.cpp">
-      <Filter>tests</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\Match.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\VConText.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\all_test.cpp">
-      <Filter>tests</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\helper.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
     <ClCompile Include="UnitTests\main_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
@@ -176,10 +323,16 @@
     <ClCompile Include="common\ConEmuCheck.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\ConEmuCheckEx.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
     <ClCompile Include="common\ConsoleMixAttr.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\ConsoleRead.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\EmergencyShow.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\EnvVar.cpp">
@@ -200,16 +353,34 @@
     <ClCompile Include="common\MAssert.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\MBSTR.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
     <ClCompile Include="common\MConHandle.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\MEvent.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
     <ClCompile Include="common\MFileLog.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MFileLogEx.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MGlobal.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MGuiMacro.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\MJsonReader.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\MModule.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MPerfCounter.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\MProcess.cpp">
@@ -242,7 +413,16 @@
     <ClCompile Include="common\MStrSafe.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\MTimer.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\MToolTip.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
     <ClCompile Include="common\Memory.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\Monitors.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\ProcessSetEnv.cpp">
@@ -254,10 +434,22 @@
     <ClCompile Include="common\RConStartArgsEx.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\RgnDetect.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\SetEnvVar.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
     <ClCompile Include="common\WCodePage.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\WConsole.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\WConsoleEx.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\WConsoleInfo.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\WFiles.cpp">
@@ -269,6 +461,12 @@
     <ClCompile Include="common\WObjects.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\WRegistry.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\WSession.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
     <ClCompile Include="common\WThreads.cpp">
       <Filter>common</Filter>
     </ClCompile>
@@ -276,6 +474,9 @@
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\execute.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\md5.cpp">
       <Filter>common</Filter>
     </ClCompile>
     <ClCompile Include="common\wcchars.cpp">

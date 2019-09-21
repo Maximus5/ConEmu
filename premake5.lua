@@ -112,6 +112,9 @@ local common_remove = {
   "**/*.bak",
   "**/!*.*",
   "**/_*.*",
+}
+
+local tests_remove = {
   "**/*_test.cpp",
 }
 
@@ -164,6 +167,7 @@ project "common-kernel"
   files (common_kernel)
 
   removefiles (common_remove)
+  removefiles (tests_remove)
 
   vpaths {
     ["Headers"] = {"**.h"},
@@ -197,6 +201,7 @@ project "common-user"
 
   removefiles (common_remove)
   removefiles (common_kernel)
+  removefiles (tests_remove)
 
   vpaths {
     ["Headers"] = {"**.h"},
@@ -269,6 +274,7 @@ project "ConEmu"
   }
 
   removefiles (common_remove)
+  removefiles (tests_remove)
 
   vpaths {
     { ["Common"]    = {"src/common/*.h"} },
@@ -852,46 +858,28 @@ project "Tests"
 
   files {
     -- tests
-    "src/**/*_test.cpp",
+    "src/UnitTests/*_test.cpp",
+    -- "src/**/*_test.cpp",
     -- common files
-    "src/common/Common.cpp",
-    "src/common/MSecurity.cpp",
-    "src/common/CEStr.cpp",
-    "src/common/CmdLine.cpp",
-    "src/common/EnvVar.cpp",
-    "src/common/MAssert.cpp",
-    "src/common/Memory.cpp",
-    "src/common/MJsonReader.cpp",
-    "src/common/MModule.cpp",
-    "src/common/MProcess.cpp",
-    "src/common/MSectionSimple.cpp",
-    "src/common/MSetter.cpp",
-    "src/common/MStrDup.cpp",
-    "src/common/MStrEsc.cpp",
-    "src/common/MStrSafe.cpp",
-    "src/common/ProcessSetEnv.cpp",
-    "src/common/RConStartArgs.cpp",
-    "src/common/RConStartArgsEx.cpp",
-    "src/common/wcchars.cpp",
-    "src/common/wcwidth.cpp",
-    "src/common/WFiles.cpp",
-    "src/common/WObjects.cpp",
-    "src/common/WThreads.cpp",
-    "src/common/WUser.cpp",
-    "src/ConEmu/helper.cpp",
-    "src/ConEmu/DynDialog.cpp",
-    "src/ConEmu/HotkeyChord.cpp",
-    "src/ConEmu/LngData.cpp",
-    "src/ConEmu/LngRc.cpp",
-    "src/ConEmu/Hotkeys.cpp",
-    "src/ConEmu/MacroImpl.cpp",
-    "src/ConEmu/Match.cpp",
-    "src/ConEmu/VConText.cpp",
+    "src/common/*.cpp",
+    "src/common/*.h",
+    -- main sources
+    -- "src/ConEmu/helper.cpp",
+    -- "src/ConEmu/DynDialog.cpp",
+    -- "src/ConEmu/HotkeyChord.cpp",
+    -- "src/ConEmu/LngData.cpp",
+    -- "src/ConEmu/LngRc.cpp",
+    -- "src/ConEmu/Hotkeys.cpp",
+    -- "src/ConEmu/MacroImpl.cpp",
+    -- "src/ConEmu/Match.cpp",
+    -- "src/ConEmu/RConData.cpp",
+    -- "src/ConEmu/Registry.cpp",
+    -- "src/ConEmu/VConText.cpp",
     -- googletest
     "src/modules/googletest/googletest/src/gtest-all.cc",
   }
 
-  files (common_kernel)
+  removefiles (common_remove)
 
   vpaths {
     { ["tests"] = {"**/*_test.*"} },

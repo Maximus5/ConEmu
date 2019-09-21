@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MModule.h"
 #include "WUser.h"
 #include <limits>
+#include <stdexcept>
 
 #ifndef NOMINMAX
 #error NOMINMAX was not defined
