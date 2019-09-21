@@ -115,7 +115,7 @@ public:
 	{
 		// Don't use ‘Release()’ if heap is already deinitialized
 		// That may happen because MMap is used for global static variables
-		if (ghHeap)
+		if (IsHeapInitialized())
 		{
 			Release();
 		}

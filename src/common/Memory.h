@@ -33,21 +33,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 
-extern HANDLE ghHeap;
-
-#if defined(_DEBUG) || (ConEmuVersionStage == CEVS_ALPHA)
+#if defined(TESTS_MEMORY_MODE)
+#undef TRACK_MEMORY_ALLOCATIONS
+#elif defined(_DEBUG) || (ConEmuVersionStage == CEVS_ALPHA)
 #define TRACK_MEMORY_ALLOCATIONS
 #endif
 
 // Heap allocation routines
 
+bool IsHeapInitialized();
 bool HeapInitialize();
 void HeapDeinitialize();
 
+#if !defined(TESTS_MEMORY_MODE)
 void * __cdecl operator new(size_t size);
 void * __cdecl operator new[](size_t size);
 void __cdecl operator delete(void *block);
 void __cdecl operator delete[](void *ptr);
+#endif
 
 #ifdef TRACK_MEMORY_ALLOCATIONS
 	struct xf_mem_block

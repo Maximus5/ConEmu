@@ -64,8 +64,6 @@ extern UINT gnMsgHookedKey;        // RegisterWindowMessage(CONEMUMSG_HOOKEDKEY)
 
 #define isPressed(inp) ((GetKeyState(inp) & 0x8000) == 0x8000)
 
-extern HANDLE ghHeap;
-
 //enum CONSOLE_KEY_ID
 //{
 //	ID_ALTTAB,

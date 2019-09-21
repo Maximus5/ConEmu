@@ -36,12 +36,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MAssert.h"
 #endif
 
+#include <atomic>
+#include <stdexcept>
+
 #ifndef _ASSERTE
 #define _ASSERTE(x)
 #endif
 
 static std::atomic_int gHeapInit, gHeapCounter;
-HANDLE ghHeap = NULL;
 
 // Debugging purposes
 void* g_LastDeletePtr = NULL;
@@ -82,40 +84,81 @@ static const char* _PointToName(const char* asFileOrPath)
 }
 #endif
 
+enum class GetHeapMode
+{
+	Auto,
+	Initialize,
+	GetOnly,
+	Destroy,
+};
+
+// TODO: Need refactoring: try to use RAII everywhere, containers instead of pointers, try to switch to std memory manager
+static HANDLE GetHeap(const GetHeapMode mode = GetHeapMode::Auto)
+{
+	static std::atomic<HANDLE> ghHeap = NULL;
+	HANDLE heap = ghHeap.load(std::memory_order_relaxed);
+	if (mode == GetHeapMode::Destroy)
+	{
+		if (heap)
+		{
+			ghHeap.store(NULL);
+			HeapDestroy(heap);
+		}
+		return NULL;
+	}
+	if (mode == GetHeapMode::GetOnly)
+	{
+		return heap;
+	}
+	if (!heap)
+	{
+		HANDLE _null = NULL;
+		heap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
+		if (!ghHeap.compare_exchange_strong(_null, heap))
+		{
+			HeapDestroy(heap);
+			if (!ghHeap.load())
+			{
+				throw std::runtime_error("Heap was not initialized");
+			}
+		}
+		heap = ghHeap.load();
+		if (mode == GetHeapMode::Auto)
+		{
+			// WARNING: expected in tests only!
+			++gHeapInit;
+		}
+	}
+	return heap;
+}
+
+bool IsHeapInitialized()
+{
+	return GetHeap(GetHeapMode::GetOnly);
+}
+
 bool HeapInitialize()
 {
 	// Our allocator is used in construction of global MArrays
 	++gHeapInit;
-
-	if (ghHeap == NULL)
-	{
-		//#ifdef MVALIDATE_POINTERS
-		//	ghHeap = HeapCreate(0, 200000, 0);
-		//#else
-		ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
-		//#endif
-		_ASSERTE(gHeapInit == 1);
-	}
-
-	return (ghHeap != NULL);
+	return GetHeap(GetHeapMode::Initialize);
 }
 
 static void HeapDeinitializeImpl()
 {
-	if (!ghHeap || gHeapCounter > 0 || gHeapInit > 0)
+	if (!GetHeap(GetHeapMode::GetOnly) || gHeapCounter > 0 || gHeapInit > 0)
 	{
-		_ASSERTE(ghHeap && gHeapCounter == 0 && gHeapInit == 0);
+		_ASSERTE(FALSE && "ghHeap && gHeapCounter == 0 && gHeapInit == 0");
 	}
 	else
 	{
-		HeapDestroy(ghHeap);
-		ghHeap = NULL;
+		GetHeap(GetHeapMode::Destroy);
 	}
 }
 
 void HeapDeinitialize()
 {
-	if (--gHeapInit == 0 && ghHeap && gHeapCounter <= 0)
+	if (--gHeapInit == 0 && GetHeap(GetHeapMode::GetOnly) && gHeapCounter <= 0)
 	{
 		HeapDeinitializeImpl();
 	}
@@ -149,7 +192,8 @@ void xf_set_tag(void* _Memory, LPCSTR lpszFileName, int nLine, bool bAlloc /*= t
 
 void * __cdecl xf_malloc(size_t _Size XF_PLACE_ARGS_DEF)
 {
-	_ASSERTE(ghHeap);
+	const auto heap = GetHeap();
+	_ASSERTE(heap);
 	_ASSERTE(_Size>0);
 	void* p;
 #ifdef TRACK_MEMORY_ALLOCATIONS
@@ -158,7 +202,7 @@ void * __cdecl xf_malloc(size_t _Size XF_PLACE_ARGS_DEF)
 	#endif
 
 	size_t nTotalSize = _Size+sizeof(xf_mem_block)+8;
-	xf_mem_block* pTrack = (xf_mem_block*)HeapAlloc(ghHeap, 0, nTotalSize);
+	xf_mem_block* pTrack = (xf_mem_block*)HeapAlloc(heap, 0, nTotalSize);
 	if (pTrack)
 	{
 		pTrack->bBlockUsed = TRUE;
@@ -178,7 +222,7 @@ void * __cdecl xf_malloc(size_t _Size XF_PLACE_ARGS_DEF)
 	}
 	p = pTrack?(pTrack+1):pTrack;
 #else
-	p = HeapAlloc(ghHeap, 0, _Size);
+	p = HeapAlloc(heap, 0, _Size);
 #endif
 	if (p)
 		++gHeapCounter;
@@ -188,7 +232,8 @@ void * __cdecl xf_malloc(size_t _Size XF_PLACE_ARGS_DEF)
 
 void * __cdecl xf_calloc(size_t _Count, size_t _Size XF_PLACE_ARGS_DEF)
 {
-	_ASSERTE(ghHeap);
+	const auto heap = GetHeap();
+	_ASSERTE(heap);
 	_ASSERTE((_Count*_Size)>0);
 	void* p;
 #ifdef TRACK_MEMORY_ALLOCATIONS
@@ -197,7 +242,7 @@ void * __cdecl xf_calloc(size_t _Count, size_t _Size XF_PLACE_ARGS_DEF)
 	#endif
 
 	size_t nTotalSize = _Count*_Size+sizeof(xf_mem_block)+8;
-	xf_mem_block* pTrack = (xf_mem_block*)HeapAlloc(ghHeap, HEAP_ZERO_MEMORY, nTotalSize);
+	xf_mem_block* pTrack = (xf_mem_block*)HeapAlloc(heap, HEAP_ZERO_MEMORY, nTotalSize);
 	if (pTrack)
 	{
 		pTrack->bBlockUsed = TRUE;
@@ -213,7 +258,7 @@ void * __cdecl xf_calloc(size_t _Count, size_t _Size XF_PLACE_ARGS_DEF)
 	}
 	p = pTrack?(pTrack+1):pTrack;
 #else
-	p = HeapAlloc(ghHeap, HEAP_ZERO_MEMORY, _Count*_Size);
+	p = HeapAlloc(heap, HEAP_ZERO_MEMORY, _Count*_Size);
 #endif
 	if (p)
 		++gHeapCounter;
@@ -223,7 +268,8 @@ void * __cdecl xf_calloc(size_t _Count, size_t _Size XF_PLACE_ARGS_DEF)
 
 void* __cdecl xf_realloc(void * _Memory, size_t _Size XF_PLACE_ARGS_DEF)
 {
-	_ASSERTE(ghHeap);
+	const auto heap = GetHeap();
+	_ASSERTE(heap);
 	_ASSERTE(_Size>0);
 	if (!_Memory)
 	{
@@ -236,7 +282,7 @@ void* __cdecl xf_realloc(void * _Memory, size_t _Size XF_PLACE_ARGS_DEF)
 #ifdef TRACK_MEMORY_ALLOCATIONS
 	xf_mem_block* pOld = ((xf_mem_block*)_Memory)-1;
 
-	size_t _Size1 = HeapSize(ghHeap, 0, pOld);
+	size_t _Size1 = HeapSize(heap, 0, pOld);
 	//_ASSERTE(_Size1 < (_Size+sizeof(xf_mem_block)+8));
 	_ASSERTE(_Size1 > (sizeof(xf_mem_block)+8));
 	size_t _Size2 = 0;
@@ -255,7 +301,7 @@ void* __cdecl xf_realloc(void * _Memory, size_t _Size XF_PLACE_ARGS_DEF)
 			_Size2 = _Size1 - (sizeof(xf_mem_block)+8);
 	}
 
-	xf_mem_block* p = (xf_mem_block*)HeapReAlloc(ghHeap, 0, pOld, _Size+sizeof(xf_mem_block)+8);
+	xf_mem_block* p = (xf_mem_block*)HeapReAlloc(heap, 0, pOld, _Size+sizeof(xf_mem_block)+8);
 	if (p)
 	{
 		p->bBlockUsed = TRUE;
@@ -275,7 +321,7 @@ void* __cdecl xf_realloc(void * _Memory, size_t _Size XF_PLACE_ARGS_DEF)
 	}
 	return p?(p+1):p;
 #else
-	void* p = HeapReAlloc(ghHeap, HEAP_ZERO_MEMORY, _Memory, _Size);
+	void* p = HeapReAlloc(heap, HEAP_ZERO_MEMORY, _Memory, _Size);
 	return p;
 #endif
 }
@@ -287,9 +333,10 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF)
 	{
 		return; // Nothing to do
 	}
-	if (!ghHeap)
+	const auto heap = GetHeap();
+	if (!heap)
 	{
-		//_ASSERTE(ghHeap && _Memory);
+		//_ASSERTE(heap && _Memory);
 		#ifdef _DEBUG
 		_CrtDbgBreak();
 		#endif
@@ -321,12 +368,12 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF)
 
 	#endif // #ifdef TRACK_MEMORY_ALLOCATIONS
 
-	#ifdef _DEBUG
-	size_t _Size1 = HeapSize(ghHeap, 0, _Memory);
+	#if defined(_DEBUG) && !defined(TESTS_MEMORY_MODE)
+	size_t _Size1 = HeapSize(heap, 0, _Memory);
 	_ASSERTE(_Size1 > 0);
 	#endif
 
-	HeapFree(ghHeap, 0, _Memory);
+	HeapFree(heap, 0, _Memory);
 
 	if (--gHeapCounter <= 0 && gHeapInit <= 0)
 	{
@@ -343,13 +390,14 @@ void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF)
 void __cdecl xf_dump_chk()
 {
 #ifndef CONEMU_MINIMAL
+	const auto heap = GetHeap();
 	PROCESS_HEAP_ENTRY ent = {NULL};
-	HeapLock(ghHeap);
-	//HeapCompact(ghHeap,0);
+	HeapLock(heap);
+	//HeapCompact(heap,0);
 	char sBlockInfo[255];
 	PVOID pLast = NULL;
 
-	while(HeapWalk(ghHeap, &ent))
+	while(HeapWalk(heap, &ent))
 	{
 		if (pLast == ent.lpData)
 		{
@@ -368,7 +416,7 @@ void __cdecl xf_dump_chk()
 		}
 	}
 
-	HeapUnlock(ghHeap);
+	HeapUnlock(heap);
 #endif // #ifndef CONEMU_MINIMAL
 }
 
@@ -464,16 +512,17 @@ protected:
 void __cdecl xf_dump()
 {
 #ifndef CONEMU_MINIMAL
+	const auto heap = GetHeap();
 	PROCESS_HEAP_ENTRY ent = {NULL};
-	HeapLock(ghHeap);
-	//HeapCompact(ghHeap,0);
+	HeapLock(heap);
+	//HeapCompact(heap,0);
 	char sBlockInfo[255];
 	PVOID pLast = NULL;
 	DWORD cCount = 0;
 
 	CTrackBlocks ourBlocks(true), extBlocks(false);
 
-	while (HeapWalk(ghHeap, &ent))
+	while (HeapWalk(heap, &ent))
 	{
 		if (pLast == ent.lpData)
 		{
@@ -510,7 +559,7 @@ void __cdecl xf_dump()
 		}
 	}
 
-	HeapUnlock(ghHeap);
+	HeapUnlock(heap);
 
 	extBlocks.DumpBlocks();
 	ourBlocks.DumpBlocks();
@@ -534,7 +583,8 @@ void __cdecl xf_dump()
 bool __cdecl xf_validate(void * _Memory /*= NULL*/)
 {
 	bool bValid = true;
-	_ASSERTE(ghHeap);
+	const auto heap = GetHeap();
+	_ASSERTE(heap);
 
 	#ifdef TRACK_MEMORY_ALLOCATIONS
 	if (_Memory)
@@ -565,7 +615,7 @@ bool __cdecl xf_validate(void * _Memory /*= NULL*/)
 	#endif
 
 	#ifdef MVALIDATE_POINTERS
-	if (!HeapValidate(ghHeap, 0, _Memory))
+	if (!HeapValidate(heap, 0, _Memory))
 	{
 		_ASSERTE(FALSE && "HeapValidate failed");
 		bValid = false;
@@ -575,7 +625,7 @@ bool __cdecl xf_validate(void * _Memory /*= NULL*/)
 	return bValid;
 }
 
-
+#if !defined(TESTS_MEMORY_MODE)
 void * __cdecl operator new(size_t _Size)
 {
 	void * p = xf_malloc(_Size XF_PLACE_ARGS_VAL);
@@ -621,3 +671,4 @@ void __cdecl operator delete[](void *p)
 {
 	xf_free(p XF_PLACE_ARGS_VAL);
 }
+#endif

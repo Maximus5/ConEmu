@@ -220,8 +220,6 @@ wchar_t gszComSpec[MAX_PATH+1] = {0};
 bool    gbRunInBackgroundTab = false;
 BOOL    gbRunViaCmdExe = FALSE;
 DWORD   gnImageSubsystem = 0, gnImageBits = 32;
-//HANDLE  ghCtrlCEvent = NULL, ghCtrlBreakEvent = NULL;
-//HANDLE ghHeap = NULL; //HeapCreate(HEAP_GENERATE_EXCEPTIONS, nMinHeapSize, 0);
 #ifdef _DEBUG
 size_t gnHeapUsed = 0, gnHeapMax = 0;
 HANDLE ghFarInExecuteEvent;
@@ -699,8 +697,6 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &dwConMode);
 			#endif
 
-			//_ASSERTE(ghHeap == NULL);
-			//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 			HeapInitialize();
 
 			/* *** DEBUG PURPOSES */
@@ -865,17 +861,8 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 			Shutdown::ProcessShutdown();
 
-			//#ifndef TESTLINK
 			CommonShutdown();
 
-			//ReleaseConsoleInputSemaphore();
-
-			//#endif
-			//if (ghHeap)
-			//{
-			//	HeapDestroy(ghHeap);
-			//	ghHeap = NULL;
-			//}
 			HeapDeinitialize();
 
 			ShutdownSrvStep(L"DLL_PROCESS_DETACH done");
@@ -1363,9 +1350,6 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	DWORD dwErr = 0, nWait = 0, nWaitExitEvent = -1, nWaitDebugExit = -1, nWaitComspecExit = -1;
 	DWORD dwWaitGui = -1, dwWaitRoot = -1;
 	BOOL lbRc = FALSE;
-	//DWORD mode = 0;
-	//BOOL lb = FALSE;
-	//ghHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 200000, 0);
 	memset(&gOSVer, 0, sizeof(gOSVer));
 	gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
 	GetOsVersionInformational(&gOSVer);
@@ -2475,12 +2459,7 @@ wrap:
 
 	ShutdownSrvStep(L"Finalizing.5");
 
-	// -> DllMain
-	//if (ghHeap)
-	//{
-	//	HeapDestroy(ghHeap);
-	//	ghHeap = NULL;
-	//}
+	// Heap is initialized in DllMain
 
 	// борьба с оптимизатором
 	if (szDebugCmdLine[0] != 0)
@@ -7338,85 +7317,3 @@ void CheckKeyboardLayout()
 		}
 	}
 }
-
-
-/*
-LPVOID calloc(size_t nCount, size_t nSize)
-{
-	#ifdef _DEBUG
-	//HeapValidate(ghHeap, 0, NULL);
-	#endif
-
-	size_t nWhole = nCount * nSize;
-	_ASSERTE(nWhole>0);
-	LPVOID ptr = HeapAlloc ( ghHeap, HEAP_GENERATE_EXCEPTIONS|HEAP_ZERO_MEMORY, nWhole );
-
-	#ifdef HEAP_LOGGING
-	wchar_t szDbg[64];
-	swprintf_c(szDbg, L"%i: ALLOCATED   0x%08X..0x%08X   (%i bytes)\n", GetCurrentThreadId(), (DWORD)ptr, ((DWORD)ptr)+nWhole, nWhole);
-	DEBUGSTR(szDbg);
-	#endif
-
-	#ifdef _DEBUG
-	HeapValidate(ghHeap, 0, NULL);
-	if (ptr)
-	{
-		gnHeapUsed += nWhole;
-		if (gnHeapMax < gnHeapUsed)
-			gnHeapMax = gnHeapUsed;
-	}
-	#endif
-
-	return ptr;
-}
-
-void free(LPVOID ptr)
-{
-	if (ptr && ghHeap)
-	{
-		#ifdef _DEBUG
-		//HeapValidate(ghHeap, 0, NULL);
-		size_t nMemSize = HeapSize(ghHeap, 0, ptr);
-		#endif
-		#ifdef HEAP_LOGGING
-		wchar_t szDbg[64];
-		swprintf_c(szDbg, L"%i: FREE BLOCK  0x%08X..0x%08X   (%i bytes)\n", GetCurrentThreadId(), (DWORD)ptr, ((DWORD)ptr)+nMemSize, nMemSize);
-		DEBUGSTR(szDbg);
-		#endif
-
-		HeapFree ( ghHeap, 0, ptr );
-
-		#ifdef _DEBUG
-		HeapValidate(ghHeap, 0, NULL);
-		if (gnHeapUsed > nMemSize)
-			gnHeapUsed -= nMemSize;
-		#endif
-	}
-}
-*/
-
-/* Используются как extern в ConEmuCheck.cpp */
-/*
-LPVOID _calloc(size_t nCount,size_t nSize) {
-	return calloc(nCount,nSize);
-}
-LPVOID _malloc(size_t nCount) {
-	return calloc(nCount,1);
-}
-void   _free(LPVOID ptr) {
-	free(ptr);
-}
-*/
-
-/*
-void * __cdecl operator new(size_t _Size)
-{
-	void * p = calloc(_Size,1);
-	return p;
-}
-
-void __cdecl operator delete(void *p)
-{
-	free(p);
-}
-*/
