@@ -59,13 +59,6 @@ HHOOK CConEmuCtrl::mh_SkipOneAppsRelease = NULL;
 
 CConEmuCtrl::CConEmuCtrl()
 {
-	mb_InWinTabSwitch = mb_InCtrlTabSwitch = FALSE;
-	dwControlKeyState = 0;
-	bWin = bApps = bCaps = bNum = bScroll = bLAlt = bRAlt = bLCtrl = bRCtrl = bLShift = bRShift = false;
-	m_SkippedMsg = 0; m_SkippedMsgWParam = 0; m_SkippedMsgLParam = 0;
-	mb_LastSingleModifier = FALSE;
-	mn_LastSingleModifier = mn_SingleModifierFixKey = mn_SingleModifierFixState = 0;
-	mn_DoubleKeyConsoleNum = 0;
 }
 
 CConEmuCtrl::~CConEmuCtrl()
@@ -306,7 +299,8 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 				{
 					// Больше не нужно
 					mb_LastSingleModifier = FALSE;
-					mn_LastSingleModifier = mn_SingleModifierFixKey = mn_SingleModifierFixState = 0;
+					mn_LastSingleModifier = mn_SingleModifierFixState = 0;
+					mn_SingleModifierFixKey = 0;
 				}
 			}
 		}
@@ -333,7 +327,7 @@ bool CConEmuCtrl::ProcessHotKeyMsg(UINT messg, WPARAM wParam, LPARAM lParam, con
 		if (bKeyDown)
 		{
 			// Раз мы попали сюда - значит сам Apps у нас не хоткей, но может быть модификатором?
-			if ((vk == VK_APPS) && gpSet->isModifierExist(vk))
+			if ((vk == VK_APPS) && gpSet->isModifierExist(LOBYTE(vk)))
 			{
 				m_SkippedMsg = messg; m_SkippedMsgWParam = wParam; m_SkippedMsgLParam = lParam;
 				// Откладываем либо до
@@ -408,7 +402,8 @@ void CConEmuCtrl::FixSingleModifier(DWORD Vk, CRealConsole* pRCon)
 	}
 	// Больше не нужно
 	mb_LastSingleModifier = FALSE;
-	mn_LastSingleModifier = mn_SingleModifierFixKey = mn_SingleModifierFixState = 0;
+	mn_LastSingleModifier = mn_SingleModifierFixState = 0;
+	mn_SingleModifierFixKey = 0;
 }
 
 // User (Keys)
