@@ -190,8 +190,8 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 	if (!mpsz_DefCmd && pArgs)
 	{
 		RConStartArgsEx tempArgs;
-		tempArgs.AssignFrom(pArgs);
-		tempArgs.CleanSecure();
+		tempArgs.AssignFrom(*pArgs);
+		tempArgs.CleanPermissions();
 		tempArgs.RunAsSystem = pArgs->RunAsSystem;
 		tempArgs.eSplit = RConStartArgsEx::eSplitNone;
 		SafeFree(tempArgs.pszSpecialCmd);

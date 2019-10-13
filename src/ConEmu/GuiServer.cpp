@@ -300,16 +300,16 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 
 					// New tab must be started with same credentials that calling tab if others was not specified
 					{
-						if (!rTest.HasInheritedArgs())
+						if (!rTest.HasPermissionsArgs())
 						{
 							CVConGuard VCon;
 							if ((pIn->NewCmd.hFromConWnd || pIn->NewCmd.hFromDcWnd)
 								&& CVConGroup::GetVConByHWND(pIn->NewCmd.hFromConWnd, pIn->NewCmd.hFromDcWnd, &VCon))
 							{
 								const RConStartArgsEx& r = VCon->RCon()->GetArgs();
-								if (r.HasInheritedArgs())
+								if (r.HasPermissionsArgs())
 								{
-									pArgs->AssignInheritedArgs(&r);
+									pArgs->AssignPermissionsArgs(r);
 								}
 							}
 						}

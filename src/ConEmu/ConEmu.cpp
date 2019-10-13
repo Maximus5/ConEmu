@@ -3386,7 +3386,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 
 		if (apDefArgs)
 		{
-			args.AssignFrom(apDefArgs);
+			args.AssignFrom(*apDefArgs);
 
 			// If the caller has specified exact split configuration - use it only for the first creating pane
 			if (lbOneCreated && args.eSplit)
@@ -4565,7 +4565,7 @@ bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 		if ((GetActiveVCon(&VCon) >= 0) && VCon->RCon())
 		{
 			const RConStartArgsEx& CurArgs = VCon->RCon()->GetArgs();
-			args.AssignFrom(&CurArgs);
+			args.AssignFrom(CurArgs);
 			//args.pszSpecialCmd = CurArgs.CreateCommandLine();
 		}
 	}

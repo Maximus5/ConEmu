@@ -1521,7 +1521,7 @@ CESERVER_REQ* CRealServer::cmdGetTaskCmd(LPVOID pInst, CESERVER_REQ* pIn, UINT n
 				// Parse all -new_console's
 				args.ProcessNewConArg();
 				// Prohbit external requests for credentials
-				args.CleanSecure();
+				args.CleanPermissions();
 				// Directory?
 				if (!args.pszStartupDir && pTask->pszGuiArgs)
 					pTask->ParseGuiArgs(&args);

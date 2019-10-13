@@ -325,16 +325,14 @@ RConStartArgsEx::~RConStartArgsEx()
 }
 
 
-bool RConStartArgsEx::AssignFrom(const struct RConStartArgsEx* args, bool abConcat /*= false*/)
+bool RConStartArgsEx::AssignFrom(const RConStartArgsEx& args, bool abConcat /*= false*/)
 {
-	_ASSERTE(args!=NULL);
-
-	if (args->pszSpecialCmd)
+	if (args.pszSpecialCmd)
 	{
 		SafeFree(this->pszSpecialCmd);
 
-		//_ASSERTE(args->bDetached == FALSE); -- Allowed. While duplicating root.
-		this->pszSpecialCmd = lstrdup(args->pszSpecialCmd);
+		//_ASSERTE(args.bDetached == FALSE); -- Allowed. While duplicating root.
+		this->pszSpecialCmd = lstrdup(args.pszSpecialCmd);
 
 		if (!this->pszSpecialCmd)
 			return false;
@@ -346,13 +344,13 @@ bool RConStartArgsEx::AssignFrom(const struct RConStartArgsEx* args, bool abConc
 
 	struct CopyValues { wchar_t** ppDst; LPCWSTR pSrc; } values[] =
 	{
-		{&this->pszStartupDir, args->pszStartupDir},
-		{&this->pszRenameTab, args->pszRenameTab},
-		{&this->pszIconFile, args->pszIconFile},
-		{&this->pszPalette, args->pszPalette},
-		{&this->pszWallpaper, args->pszWallpaper},
-		{&this->pszMntRoot, args->pszMntRoot},
-		{&this->pszAnsiLog, args->pszAnsiLog},
+		{&this->pszStartupDir, args.pszStartupDir},
+		{&this->pszRenameTab, args.pszRenameTab},
+		{&this->pszIconFile, args.pszIconFile},
+		{&this->pszPalette, args.pszPalette},
+		{&this->pszWallpaper, args.pszWallpaper},
+		{&this->pszMntRoot, args.pszMntRoot},
+		{&this->pszAnsiLog, args.pszAnsiLog},
 		{NULL}
 	};
 
@@ -370,78 +368,78 @@ bool RConStartArgsEx::AssignFrom(const struct RConStartArgsEx* args, bool abConc
 		}
 	}
 
-	if (!AssignUserArgs(args, abConcat))
+	if (!AssignPermissionsArgs(args, abConcat))
 	{
 		return false;
 	}
 
-	if (!abConcat || args->BackgroundTab || args->ForegroungTab)
+	if (!abConcat || args.BackgroundTab || args.ForegroungTab)
 	{
-		this->BackgroundTab = args->BackgroundTab;
-		this->ForegroungTab = args->ForegroungTab;
+		this->BackgroundTab = args.BackgroundTab;
+		this->ForegroungTab = args.ForegroungTab;
 	}
-	if (!abConcat || args->NoDefaultTerm)
+	if (!abConcat || args.NoDefaultTerm)
 	{
-		this->NoDefaultTerm = args->NoDefaultTerm; _ASSERTE(args->NoDefaultTerm == crb_Undefined);
+		this->NoDefaultTerm = args.NoDefaultTerm; _ASSERTE(args.NoDefaultTerm == crb_Undefined);
 	}
-	if (!abConcat || args->BufHeight)
+	if (!abConcat || args.BufHeight)
 	{
-		this->BufHeight = args->BufHeight;
-		this->nBufHeight = args->nBufHeight;
+		this->BufHeight = args.BufHeight;
+		this->nBufHeight = args.nBufHeight;
 	}
-	if (!abConcat || args->eConfirmation)
-		this->eConfirmation = args->eConfirmation;
-	if (!abConcat || args->ForceUserDialog)
-		this->ForceUserDialog = args->ForceUserDialog;
-	if (!abConcat || args->InjectsDisable)
-		this->InjectsDisable = args->InjectsDisable;
-	if (!abConcat || args->ForceNewWindow)
-		this->ForceNewWindow = args->ForceNewWindow;
-	if (!abConcat || args->ForceHooksServer)
-		this->ForceHooksServer = args->ForceHooksServer;
-	if (!abConcat || args->LongOutputDisable)
-		this->LongOutputDisable = args->LongOutputDisable;
-	if (!abConcat || args->OverwriteMode)
-		this->OverwriteMode = args->OverwriteMode;
-	if (!abConcat || args->nPTY)
-		this->nPTY = args->nPTY;
+	if (!abConcat || args.eConfirmation)
+		this->eConfirmation = args.eConfirmation;
+	if (!abConcat || args.ForceUserDialog)
+		this->ForceUserDialog = args.ForceUserDialog;
+	if (!abConcat || args.InjectsDisable)
+		this->InjectsDisable = args.InjectsDisable;
+	if (!abConcat || args.ForceNewWindow)
+		this->ForceNewWindow = args.ForceNewWindow;
+	if (!abConcat || args.ForceHooksServer)
+		this->ForceHooksServer = args.ForceHooksServer;
+	if (!abConcat || args.LongOutputDisable)
+		this->LongOutputDisable = args.LongOutputDisable;
+	if (!abConcat || args.OverwriteMode)
+		this->OverwriteMode = args.OverwriteMode;
+	if (!abConcat || args.nPTY)
+		this->nPTY = args.nPTY;
 
 	if (!abConcat)
 	{
-		this->eSplit = args->eSplit;
-		this->nSplitValue = args->nSplitValue;
-		this->nSplitPane = args->nSplitPane;
+		this->eSplit = args.eSplit;
+		this->nSplitValue = args.nSplitValue;
+		this->nSplitPane = args.nSplitPane;
 	}
 
 	// Environment: Internal for GUI tab creation
 	SafeFree(this->pszEnvStrings);
-	this->cchEnvStrings = args->cchEnvStrings;
-	if (args->cchEnvStrings && args->pszEnvStrings)
+	this->cchEnvStrings = args.cchEnvStrings;
+	if (args.cchEnvStrings && args.pszEnvStrings)
 	{
-		size_t cbBytes = args->cchEnvStrings*sizeof(*this->pszEnvStrings);
+		size_t cbBytes = args.cchEnvStrings * sizeof(*this->pszEnvStrings);
 		this->pszEnvStrings = (wchar_t*)malloc(cbBytes);
 		if (this->pszEnvStrings)
 		{
-			memmove(this->pszEnvStrings, args->pszEnvStrings, cbBytes);
+			memmove(this->pszEnvStrings, args.pszEnvStrings, cbBytes);
 		}
 	}
 	// Task name
 	SafeFree(this->pszTaskName);
-	if (args->pszTaskName && *args->pszTaskName)
-		this->pszTaskName = lstrdup(args->pszTaskName);
+	if (args.pszTaskName && *args.pszTaskName)
+		this->pszTaskName = lstrdup(args.pszTaskName);
 
 	return true;
 }
 
 
-bool RConStartArgsEx::AssignUserArgs(const struct RConStartArgsEx* args, bool abConcat /*= false*/)
+bool RConStartArgsEx::AssignPermissionsArgs(const RConStartArgsEx& args, bool abConcat /*= false*/)
 {
-	if (!abConcat || (args->RunAsRestricted || args->RunAsAdministrator || args->RunAsSystem || args->pszUserName))
+	if (!abConcat || args.HasPermissionsArgs())
 	{
-		this->RunAsRestricted    = args->RunAsRestricted;
-		this->RunAsAdministrator = args->RunAsAdministrator;
-		this->RunAsSystem        = args->RunAsSystem;
-		this->RunAsNetOnly       = args->RunAsNetOnly;
+		this->RunAsRestricted    = args.RunAsRestricted;
+		this->RunAsAdministrator = args.RunAsAdministrator;
+		this->RunAsSystem        = args.RunAsSystem;
+		this->RunAsNetOnly       = args.RunAsNetOnly;
 	}
 	else
 	{
@@ -450,22 +448,15 @@ bool RConStartArgsEx::AssignUserArgs(const struct RConStartArgsEx* args, bool ab
 
 	SafeFree(this->pszUserName); //SafeFree(this->pszUserPassword);
 	SafeFree(this->pszDomain);
-	//SafeFree(this->pszUserProfile);
 
-	//if (this->hLogonToken) { CloseHandle(this->hLogonToken); this->hLogonToken = NULL; }
-	if (args->pszUserName)
+	if (args.pszUserName)
 	{
-		this->pszUserName = lstrdup(args->pszUserName);
-		if (args->pszDomain)
-			this->pszDomain = lstrdup(args->pszDomain);
-		lstrcpy(this->szUserPassword, args->szUserPassword);
-		this->UseEmptyPassword = args->UseEmptyPassword;
-		//this->pszUserProfile = args->pszUserProfile ? lstrdup(args->pszUserProfile) : NULL;
+		this->pszUserName = lstrdup(args.pszUserName);
+		if (args.pszDomain)
+			this->pszDomain = lstrdup(args.pszDomain);
+		lstrcpy(this->szUserPassword, args.szUserPassword);
+		this->UseEmptyPassword = args.UseEmptyPassword;
 
-		//SecureZeroMemory(args->szUserPassword, sizeof(args->szUserPassword));
-
-		//this->pszUserPassword = lstrdup(args->pszUserPassword ? args->pszUserPassword : L"");
-		//this->hLogonToken = args->hLogonToken; args->hLogonToken = NULL;
 		// -- Do NOT fail when password is empty !!!
 		if (!this->pszUserName /*|| !*this->szUserPassword*/)
 			return false;
@@ -475,19 +466,11 @@ bool RConStartArgsEx::AssignUserArgs(const struct RConStartArgsEx* args, bool ab
 }
 
 
-bool RConStartArgsEx::HasInheritedArgs() const
+bool RConStartArgsEx::HasPermissionsArgs() const
 {
 	if (RunAsAdministrator || RunAsSystem || RunAsRestricted || pszUserName || RunAsNetOnly)
 		return true;
 	return false;
-}
-
-
-bool RConStartArgsEx::AssignInheritedArgs(const struct RConStartArgsEx* args, bool abConcat /*= false*/)
-{
-	if (!AssignUserArgs(args, abConcat))
-		return false;
-	return true;
 }
 
 

@@ -41,10 +41,9 @@ public:
 	bool CheckUserToken(HWND hPwd);
 	HANDLE CheckUserToken();
 	wchar_t* CreateCommandLine(bool abForTasks = false) const;
-	bool AssignFrom(const struct RConStartArgsEx* args, bool abConcat = false);
-	bool AssignUserArgs(const struct RConStartArgsEx* args, bool abConcat = false);
-	bool HasInheritedArgs() const;
-	bool AssignInheritedArgs(const struct RConStartArgsEx* args, bool abConcat = false);
+	bool AssignFrom(const RConStartArgsEx& args, bool abConcat = false);
+	bool AssignPermissionsArgs(const RConStartArgsEx& args, bool abConcat = false);
+	bool HasPermissionsArgs() const;
 
 #ifdef _DEBUG
 	static void RunArgTests();

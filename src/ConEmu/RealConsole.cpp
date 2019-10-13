@@ -376,7 +376,7 @@ bool CRealConsole::Construct(CVirtualConsole* apVCon, RConStartArgsEx *args)
 	m_RootInfo = {};
 	//m_RootInfo.nExitCode = STILL_ACTIVE;
 	m_ServerClosing = {};
-	m_Args = {};
+	m_Args.AssignFrom(RConStartArgsEx());
 	ms_RootProcessName[0] = 0;
 	mn_RootProcessIcon = -1;
 	mb_NeedLoadRootProcessIcon = true;
@@ -566,7 +566,12 @@ CVirtualConsole* CRealConsole::VCon()
 
 bool CRealConsole::PreCreate(RConStartArgsEx *args)
 {
-	_ASSERTE(args!=NULL);
+	if (!args)
+	{
+		_ASSERTE(args != NULL);
+		mp_ConEmu->LogString("ERROR: nullptr passed to PreCreate");
+		return false;
+	}
 
 	// В этот момент логи данной консоли еще не созданы, пишем в GUI-шный
 	if (gpSet->isLogging())
@@ -581,7 +586,7 @@ bool CRealConsole::PreCreate(RConStartArgsEx *args)
 		mp_ConEmu->LogString(szInfo ? szInfo.ms_Val : szPrefix);
 	}
 
-	bool bCopied = m_Args.AssignFrom(args);
+	bool bCopied = m_Args.AssignFrom(*args);
 
 	// Don't leave security information (passwords) in memory
 	if (bCopied && args->pszUserName)
@@ -4178,7 +4183,7 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 
 	// CreateOrRunAs needs to know how "original" process was started...
 	RConStartArgsEx Args;
-	Args.AssignFrom(&m_Args);
+	Args.AssignFrom(m_Args);
 	SafeFree(Args.pszSpecialCmd);
 
 	// If process was started under different credentials, most probably
@@ -4622,7 +4627,7 @@ bool CRealConsole::StartProcess()
 		if (nBrc == IDYES)
 		{
 			RConStartArgsEx args;
-			args.AssignFrom(&m_Args);
+			args.AssignFrom(m_Args);
 			args.aRecreate = cra_CreateTab; // cra_EditTab; -- button "Start" is expected instead of ambiguous "Save"
 
 			int nCreateRc = mp_ConEmu->RecreateDlg(&args);
@@ -4636,7 +4641,7 @@ bool CRealConsole::StartProcess()
 				SafeFree(m_Args.pszSpecialCmd);
 				SafeFree(m_Args.pszStartupDir);
 				// Rest of fields will be cleared by AssignFrom
-				m_Args.AssignFrom(&args);
+				m_Args.AssignFrom(args);
 				lpszCmd = m_Args.pszSpecialCmd;
 			}
 		}
@@ -10137,7 +10142,7 @@ bool CRealConsole::RecreateProcess(RConStartArgsEx *args)
 		SafeFree(pszInfo);
 	}
 
-	bool bCopied = m_Args.AssignFrom(args, true);
+	bool bCopied = m_Args.AssignFrom(*args, true);
 
 	// Don't leave security information (passwords) in memory
 	if (args->pszUserName)
@@ -11418,7 +11423,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 		{
 			bool bRootCmdRedefined = false;
 			RConStartArgsEx args;
-			args.AssignFrom(&m_Args);
+			args.AssignFrom(m_Args);
 
 			// If user want to run anything else, just inheriting current console state
 			if (asApp && *asApp)
