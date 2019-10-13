@@ -591,7 +591,6 @@ void * __cdecl operator new(size_t _Size)
 	if (p == NULL)
 	{
 		_ASSERTE(p != NULL);
-		InvalidOp();
 	}
 	#endif
 
@@ -610,7 +609,6 @@ void * __cdecl operator new[](size_t _Size)
 	if (p == NULL)
 	{
 		_ASSERTE(p != NULL);
-		InvalidOp();
 	}
 	#endif
 
