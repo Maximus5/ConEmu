@@ -97,7 +97,7 @@ private:
 	static CVConGroup* CreateVConGroup();
 	CVConGroup* SplitVConGroup(RConStartArgsEx::SplitType aSplitType = RConStartArgsEx::eSplitHorz/*eSplitVert*/, UINT anPercent10 = 500);
 
-	void PopulateSplitPanes(UINT nParent, UINT& nSplits, MArray<CVConGuard*>& VCons) const;
+	void PopulateSplitPanes(MArray<CVConGuard*>& VCons) const;
 	CVConGroup* GetLeafLeft() const;
 	CVConGroup* GetLeafRight() const;
 

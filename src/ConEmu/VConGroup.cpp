@@ -5883,17 +5883,16 @@ CVConGroup* CVConGroup::GetLeafRight() const
 	return p->GetLeafLeft();
 }
 
-void CVConGroup::PopulateSplitPanes(UINT nParent, UINT& nSplits, MArray<CVConGuard*>& VCons) const
+void CVConGroup::PopulateSplitPanes(MArray<CVConGuard*>& VCons) const
 {
 	UINT nSecond = 0;
+	UINT nParent = VCons.size() + 1;
 
 	// Only for the root
 	// The code may be in the caller (before recursion starts),
 	// but it's here for simplification
-	if (nSplits == 0)
+	if (VCons.empty() || (this == GetRootGroup()))
 	{
-		nParent = nSplits = 1;
-
 		CVConGroup* pFirst = GetLeafLeft();
 		CVConGuard* pFirstVCon = pFirst ? new CVConGuard(pFirst->mp_Item) : NULL;
 		if (!pFirstVCon || !pFirstVCon->VCon())
@@ -5925,19 +5924,19 @@ void CVConGroup::PopulateSplitPanes(UINT nParent, UINT& nSplits, MArray<CVConGua
 		// Update split properties
 		_ASSERTE(m_SplitType != RConStartArgsEx::eSplitNone);
 		pSecondVCon->VCon()->RCon()->SetSplitProperties(m_SplitType, mn_SplitPercent10, nParent);
-		nSecond = ++nSplits;
 		// Remember we have processed
 		VCons.push_back(pSecondVCon);
+		nSecond = VCons.size();
 	}
 
 	if (mp_Grp1)
 	{
-		mp_Grp1->PopulateSplitPanes(nParent, nSplits, VCons);
+		mp_Grp1->PopulateSplitPanes(VCons);
 	}
 	if (mp_Grp2)
 	{
 		_ASSERTE(nSecond!=0);
-		mp_Grp2->PopulateSplitPanes(nSecond, nSplits, VCons);
+		mp_Grp2->PopulateSplitPanes(VCons);
 	}
 }
 
@@ -5976,8 +5975,7 @@ wchar_t* CVConGroup::GetTasks()
 		}
 		if (q == groups.size())
 		{
-			UINT nStart = 0;
-			pRoot->PopulateSplitPanes(0, nStart, addVCon);
+			pRoot->PopulateSplitPanes(addVCon);
 			// It's ready
 			groups.push_back(pRoot);
 		}
