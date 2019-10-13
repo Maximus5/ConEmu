@@ -5707,7 +5707,7 @@
     "bApplyViewSettings": {
       "en": "&Apply",
       "ru": "Применить",
-      "zh": "应用（&A）",
+      "zh": "应用(&A)",
       "de": "&Anwenden",
       "ja": "適用（&A）",
       "es": "&Aplicar",
@@ -5734,7 +5734,7 @@
     "bCmdAutoUnregister": {
       "en": "Unregister",
       "ru": "Отключить",
-      "zh": "反注册",
+      "zh": "取消注册",
       "de": "Deregistrieren",
       "ja": "登録を解除する",
       "es": "Des-registrar",
@@ -5743,7 +5743,7 @@
     "bConFontAdd2HKLM": {
       "en": "Add font to ‘...\\Console\\TrueTypeFont’",
       "ru": "Добавить шрифт в ‘...\\Console\\TrueTypeFont’",
-      "zh": "添加字体到‘...\\Console\\TrueTypeFont’",
+      "zh": "添加字体到 ‘...\\Console\\TrueTypeFont’",
       "de": "Füge Schriftart zu '...\\Console\\TrueTypeFont' hinzu",
       "ja": "'... \\Console\\TrueTypeFont'にフォントを追加",
       "es": "Añadir tipo de letra a '...\\Console\\TrueTypeFont'",
@@ -5914,7 +5914,7 @@
     "cbAlwaysOnTop": {
       "en": "Always on top",
       "ru": "Поверх всех окон",
-      "zh": "总是置顶",
+      "zh": "始终在顶层",
       "de": "Immer oben",
       "ja": "常に手前",
       "es": "Siempre encima",
@@ -5923,7 +5923,7 @@
     "cbAlwaysShowTrayIcon": {
       "en": "Always show TSA icon",
       "ru": "Всегда показывать иконку в TSA",
-      "zh": "总是显示任务栏状态区域图标",
+      "zh": "始终显示TSA图标",
       "de": "Zeige immer Infobereichssymbol",
       "ja": "常にTSAアイコンを表示する",
       "es": "Mostrar siempre icono de barra de tareas",
@@ -5992,7 +5992,7 @@
     "cbAutoRegFonts": {
       "en": "Auto register fonts in ConEmu folder",
       "ru": "Загружать шрифты из папки ConEmu",
-      "_zh": "自动注册字体",
+      "zh": "自动注册ConEmu目录下的字体",
       "de": "Schriften im ConEmu-Ordner automatisch registrieren",
       "ja": "ConEmuフォルダのフォントを自動登録",
       "es": "Auto registrar tipos de letra de la carpeta de ConEmu",
@@ -6001,13 +6001,14 @@
     "cbAutoReloadEnvironment": {
       "en": "Reload environment variables automatically",
       "ru": "Автоматически обновлять переменные окружения",
+      "zh": "自动重新加载环境变量",
       "es": "Recargar variables de entorno automáticamente",
       "id": 3106 }
     ,
     "cbAutoSaveSizePos": {
       "en": "Auto save window size and position on exit",
       "ru": "Запоминать размер и положение окна при выходе",
-      "zh": "自动保存窗口大小和位置",
+      "zh": "退出时自动保存窗口大小和位置",
       "de": "Fenstergröße und Position beim Verlassen automatisch speichern",
       "ja": "終了時にウィンドウのサイズと位置を自動的に保存",
       "es": "Auto guardar el tamaño y posición de la ventana al salir",
@@ -6016,6 +6017,7 @@
     "cbAutoTrimSingleLine": {
       "en": "Automatically remove newline when pasting single line",
       "ru": "Автоматически удалять новую строку при вставке одной строки",
+      "zh": "当粘贴单行文本时自动移除换行符",
       "es": "Eliminar automáticamente salo de línea al pegar una línea",
       "id": 3102 }
     ,
@@ -6094,7 +6096,7 @@
     "cbCloseConsoleConfirm": {
       "en": "Confirm tab closing",
       "ru": "Подтверждение закрытия вкладки",
-      "zh": "确认标签页关闭",
+      "zh": "确认标签关闭",
       "de": "Rückfrage beim Schließen von Reitern",
       "ja": "タブを閉じる時に確認する",
       "es": "Confirmar cierre de pestañas",
@@ -6130,7 +6132,7 @@
     "cbCmdGroupApp": {
       "en": "Tab...",
       "ru": "Вкладка...",
-      "zh": "标签页...",
+      "zh": "标签...",
       "de": "Reiter...",
       "ja": "タブ...",
       "es": "Pestaña...",
@@ -6139,7 +6141,7 @@
     "cbCmdGrpDefaultCmd": {
       "en": "Default shell (Win+X)",
       "ru": "Оболочка по умолчанию (Win+X)",
-      "zh": "默认shell （Win+X）",
+      "zh": "默认shell (WIn+X)",
       "de": "Standardkonsole (Win+X)",
       "ja": "デフォルトシェル(Win+X)",
       "es": "Intérprete de comandos predeterminado (Win+X)",
@@ -6148,7 +6150,7 @@
     "cbCmdGrpDefaultNew": {
       "en": "Default task for new console",
       "ru": "По умолчанию для новой консоли",
-      "zh": "新建控制台的默认任务",
+      "zh": "新窗口默认任务",
       "de": "Standardaufgabe für neue Konsole",
       "ja": "新しいコンソールのデフォルトタスク",
       "es": "Tarea por defecto para nuevo terminal",
@@ -6166,7 +6168,7 @@
     "cbCmdGrpToolbar": {
       "en": "Toolbar",
       "ru": "Панель",
-      "zh": "工具栏",
+      "zh": "工具条",
       "de": "Werkzeugleiste",
       "ja": "ツールバー",
       "es": "Barra de herramientas",
@@ -6175,7 +6177,7 @@
     "cbCmdTaskbarCommands": {
       "en": "Add commands from history",
       "ru": "Добавить команды из истории",
-      "_zh": "从历史添加命令",
+      "zh": "添加历史命令",
       "de": "Fügt Befehle aus dem Verlauf hinzu",
       "ja": "履歴からコマンドを追加する",
       "es": "Añadir comandos desde historial",
@@ -6193,7 +6195,7 @@
     "cbCmdTaskbarUpdate": {
       "en": "Update Now!",
       "ru": "Обновить!",
-      "zh": "现在更新！",
+      "zh": "现在更新!",
       "de": "Jetzt aktualisieren!",
       "ja": "今すぐアップデート！",
       "es": "¡Actualizar ahora!",
@@ -6202,7 +6204,7 @@
     "cbCmdTasksActive": {
       "en": "Active tabs",
       "ru": "Активные вкладки",
-      "zh": "活动的标签页",
+      "zh": "激活标签",
       "de": "Aktive Reiter",
       "ja": "アクティブなタブ",
       "es": "Pestañas activas",
@@ -6229,6 +6231,7 @@
     "cbCmdTasksDup": {
       "en": "Clone",
       "ru": "Клонировать",
+      "zh": "克隆",
       "de": "Klonen",
       "ja": "クローン",
       "es": "Clonar",
@@ -6246,7 +6249,7 @@
     "cbCmdTasksReload": {
       "en": "Reload...",
       "ru": "Перечитать...",
-      "zh": "重新加载...",
+      "zh": "重载...",
       "de": "Neuladen...",
       "ja": "再読込み...",
       "es": "Recargar...",
@@ -6506,7 +6509,7 @@
     "cbCTSTrimTrailing": {
       "en": "Trim trailing spaces",
       "ru": "Удалять замыкающие пробелы",
-      "zh": "修剪尾随空格",
+      "zh": "移除首尾空格",
       "de": "Anhängende Leerzeichen abschneiden",
       "ja": "末尾のスペースを削除する",
       "es": "Eliminar espacios finales",
@@ -8685,7 +8688,7 @@
     "gbStandardColors": {
       "en": "Standard colors:",
       "ru": "Стандарт. цвета:",
-      "zh": "标准颜色：",
+      "zh": "标准颜色:",
       "de": "Standardfarben:",
       "ja": "標準色:",
       "es": "Colores estándar:",
@@ -9040,7 +9043,7 @@
     "rbAutoUpdatePreviewFast": {
       "en": "‘Preview’",
       "ru": "‘Рекомендуемая’",
-      "zh": "‘预览’",
+      "zh": "'预览版'",
       "de": "'Vorschau'",
       "ja": "' Preview '",
       "es": "'Preview'",
@@ -9049,7 +9052,7 @@
     "rbAutoUpdateStableFast": {
       "en": "‘Stable’",
       "ru": "‘Стабильная’",
-      "zh": "‘稳定’",
+      "zh": "'稳定版'",
       "de": "'Stabil'",
       "ja": "' Stable '",
       "es": "'Estable'",
@@ -9094,7 +9097,7 @@
     "rbComspec_OSbit": {
       "en": "Same as OS",
       "ru": "Такой же как OS",
-      "zh": "与操作系统相同",
+      "zh": "与操作系统一致",
       "de": "Wie das Betriebssystem",
       "ja": "OSと同じ",
       "es": "Igual que el SO",
@@ -9157,7 +9160,7 @@
     "rbDefaultTerminalConfAlways": {
       "en": "Always",
       "ru": "Всегда",
-      "zh": "总是",
+      "zh": "始终",
       "de": "Immer",
       "ja": "常に",
       "es": "Siempre",
@@ -9175,7 +9178,7 @@
     "rbDefaultTerminalConfNever": {
       "en": "Never",
       "ru": "Никогда",
-      "zh": "从不",
+      "zh": "永不",
       "de": "Niemals",
       "ja": "絶対に",
       "es": "Nunca",
@@ -9184,7 +9187,7 @@
     "rbMinByEscAlways": {
       "en": "Always",
       "ru": "Всегда",
-      "zh": "总是",
+      "zh": "始终",
       "de": "Immer",
       "ja": "常に",
       "es": "Siempre",
@@ -9193,7 +9196,7 @@
     "rbMinByEscEmpty": {
       "en": "If all consoles closed",
       "ru": "Без открытых консолей",
-      "zh": "如果所有控制台已关闭",
+      "zh": "如果所有窗口关闭",
       "de": "Wenn alle Konsolen geschlossen",
       "ja": "すべてのコンソールが閉じた場合",
       "es": "Si todos los terminales cerrados",
@@ -9202,7 +9205,7 @@
     "rbMinByEscNever": {
       "en": "Never",
       "ru": "Никогда",
-      "zh": "从不",
+      "zh": "永不",
       "de": "Niemals",
       "ja": "絶対に",
       "es": "Nunca",
@@ -9607,7 +9610,7 @@
     "rFixed": {
       "en": "Fixed",
       "ru": "Фиксированный",
-      "zh": "固定的",
+      "zh": "固定",
       "de": "Fest",
       "ja": "固定",
       "es": "Fijo",
@@ -9688,7 +9691,7 @@
     "rPasteM1FirstLine": {
       "en": "First line",
       "ru": "Первая строка",
-      "zh": "第一行",
+      "zh": "首行",
       "de": "Erste Zeile",
       "ja": "最初の行",
       "es": "Primera línea",
@@ -9724,7 +9727,7 @@
     "rPasteM2FirstLine": {
       "en": "First line",
       "ru": "Первая строка",
-      "zh": "第一行",
+      "zh": "首行",
       "de": "Erste Zeile",
       "ja": "最初の行",
       "es": "Primera línea",
@@ -9820,7 +9823,7 @@
     "stBgImage": {
       "en": "Path:",
       "ru": "Путь:",
-      "zh": "路径：",
+      "zh": "路径:",
       "de": "Dateipfad:",
       "ja": "パス:",
       "es": "Ruta:",
@@ -9931,7 +9934,7 @@
     "stCmdTaskAdd": {
       "en": "Add:",
       "ru": "Добавить:",
-      "zh": "添加：",
+      "zh": "添加:",
       "de": "Hinzufügen:",
       "ja": "追加:",
       "es": "Añadir:",
