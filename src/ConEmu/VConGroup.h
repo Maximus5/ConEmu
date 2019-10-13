@@ -63,13 +63,13 @@ protected:
 
 	void SetResizeFlags();
 
-	CVConGroup* GetRootGroup();
+	CVConGroup* GetRootGroup() const;
 	static CVConGroup* GetRootOfVCon(CVirtualConsole* apVCon);
-	CVConGroup* GetAnotherGroup();
+	CVConGroup* GetAnotherGroup() const;
 	void MoveToParent(CVConGroup* apParent);
 	void RepositionVCon(RECT rcNewCon, bool bVisible);
-	void CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter);
-	void CalcSplitRootRect(RECT rcAll, RECT& rcCon, CVConGroup* pTarget = NULL);
+	void CalcSplitRect(UINT nSplitPercent10, RECT rcNewCon, RECT& rcCon1, RECT& rcCon2, RECT& rcSplitter) const;
+	void CalcSplitRootRect(RECT rcAll, RECT& rcCon, const CVConGroup* pTarget = NULL) const;
 	#if 0
 	void CalcSplitConSize(COORD size, COORD& sz1, COORD& sz2);
 	#endif
@@ -83,7 +83,7 @@ protected:
 	bool ReSizeSplitter(int iCells);
 	void OnPaintSplitter(HDC hdc, HBRUSH hbr);
 
-	CVConGroup* FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/);
+	CVConGroup* FindNextPane(const RECT& rcPrev, int nHorz /*= 0*/, int nVert /*= 0*/) const;
 
 	static CVConGroup* mp_GroupSplitDragging;
 	static LPARAM ReSizeSplitterHelper(LPARAM lParam);
@@ -97,9 +97,9 @@ private:
 	static CVConGroup* CreateVConGroup();
 	CVConGroup* SplitVConGroup(RConStartArgsEx::SplitType aSplitType = RConStartArgsEx::eSplitHorz/*eSplitVert*/, UINT anPercent10 = 500);
 
-	void PopulateSplitPanes(UINT nParent, UINT& nSplits, MArray<CVConGuard*>& VCons);
-	CVConGroup* GetLeafLeft();
-	CVConGroup* GetLeafRight();
+	void PopulateSplitPanes(UINT nParent, UINT& nSplits, MArray<CVConGuard*>& VCons) const;
+	CVConGroup* GetLeafLeft() const;
+	CVConGroup* GetLeafRight() const;
 
 public:
 	// Если rPanes==NULL - просто вернуть количество сплитов
