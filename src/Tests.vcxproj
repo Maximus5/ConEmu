@@ -350,6 +350,9 @@
     <ClInclude Include="common\xmllite.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConEmu\Hotkeys_test.cpp" />
+    <ClCompile Include="ConEmu\Macro_test.cpp" />
+    <ClCompile Include="ConEmu\all_test.cpp" />
     <ClCompile Include="UnitTests\main_test.cpp" />
     <ClCompile Include="common\CEHandle.cpp" />
     <ClCompile Include="common\CEStr.cpp" />

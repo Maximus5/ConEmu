@@ -859,7 +859,7 @@ project "Tests"
   files {
     -- tests
     "src/UnitTests/*_test.cpp",
-    -- "src/**/*_test.cpp",
+    "src/**/*_test.cpp",
     -- common files
     "src/common/*.cpp",
     "src/common/*.h",

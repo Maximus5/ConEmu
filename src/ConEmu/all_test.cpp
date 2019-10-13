@@ -682,7 +682,7 @@ void XmlValueConvertTest()
 
 } // end of namespace
 
-TEST(ConEmuTest,AllTests)
+TEST(ConEmuTest,DebugUnitTests)
 {
 	DebugNeedCmdUnitTests();
 	DebugCmdParserTests();

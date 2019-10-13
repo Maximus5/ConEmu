@@ -2605,9 +2605,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gAllowAssertThread = am_Thread;
 	#endif
 
-	#if defined(_DEBUG)
-	DebugUnitTests();
-	#endif
 	#if defined(__GNUC__) || defined(_DEBUG)
 	GnuUnitTests();
 	#endif

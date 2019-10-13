@@ -305,6 +305,15 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConEmu\Hotkeys_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Macro_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\all_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="UnitTests\main_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
