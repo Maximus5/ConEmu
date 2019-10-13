@@ -20,6 +20,19 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2019.10.12
+* gh-1984: Add SetFocus macro which sets keyboard focus to ConEmu ghWnd handle (by stevium).
+  Useful for ConEmu Inside scenario, where focus needs to be set programatically.
+* gh-1984: Complete SetParentHWND macro by adding corresponding calls to gpConEmu (by stevium).
+  Useful for ConEmu Inside scenario in case when there's a need for switching ConEmu parent to different HWND.
+* gh-1072, gh-1973: Use 32-bit color in the tab headers (by ForNeVeR).
+* gh-1072, gh-1973: Set up tab overlays using ImageList_SetOverlayImage (by ForNeVeR).
+* gh-1949: Add Keyboard Input Grouping status item (by tkatz77).
+* ConEmu.l10n: Improved Japanese translation.
+* gh-1994: Fix panes order on saving active tabs.
+* ConEmu.l10n: Update Chinese translations.
+
+
 2019.7.14
 * gh-1948: Don't reset scroll position on Multimedia keypresses.
 * gh-1943: Fix background bug for 10x10 image.
