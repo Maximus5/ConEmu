@@ -15302,10 +15302,13 @@ bool CRealConsole::ReloadFarWorkDir()
 
 const SYSTEMTIME& CRealConsole::GetStartTime() const
 {
-	if (!this)
-		return {};
-	else
+	// TODO: use shared_ptr, drop this
+	if (!this) {
+		static SYSTEMTIME null_time = {};
+		return null_time;
+	} else {
 		return m_StartTime;
+	}
 }
 
 LPCWSTR CRealConsole::GetConsoleStartDir(CEStr& szDir)
