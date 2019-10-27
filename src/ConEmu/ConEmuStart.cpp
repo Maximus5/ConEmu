@@ -1002,7 +1002,7 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 						goto wrap;
 					}
 					gpConEmu->AppendExtraArgs(L"-FontDir", szDir.GetStr());
-					gpFontMgr->RegisterFontsDir(szDir.GetStr());
+					gpFontMgr->AddFontsDir(szDir.GetStr());
 				}
 				else if (szArg.IsSwitch(L"-fs"))
 				{

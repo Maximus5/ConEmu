@@ -118,6 +118,8 @@ private:
 
 	BOOL mb_Name1Ok, mb_Name2Ok;
 
+	std::vector<CEStr> m_AddFontsDir;
+
 	// When font size is used as character size (negative LF.lfHeight)
 	// we need to evaluate real font size... Only for vector fonts!
 	MArray<FontHeightInfo> m_FontHeights;
@@ -127,6 +129,7 @@ private:
 	BOOL mb_StopRegisterFonts;
 
 public:
+	void    AddFontsDir(LPCWSTR asFromDir);
 	bool    AutoRecreateFont(int nFontW, int nFontH);
 	BYTE    BorderFontCharSet();
 	LPCWSTR BorderFontFaceName();
@@ -160,7 +163,6 @@ public:
 	bool    RecreateFontByDpi(int dpiX, int dpiY, LPRECT prcSuggested);
 	BOOL    RegisterFont(LPCWSTR asFontFile, BOOL abDefault);
 	void    RegisterFonts();
-	void    RegisterFontsDir(LPCWSTR asFromDir);
 	void    UnregisterFonts();
 
 public:
@@ -179,6 +181,7 @@ private:
 	bool    MacroFontSetSizeInt(LOGFONT& LF, int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/);
 	void    RecreateAlternativeFont();
 	void    RecreateFont(bool abReset, bool abRecreateControls = false);
+	void    RegisterFontsDir(LPCWSTR asFromDir);
 	void    ResetFontWidth();
 	void    SaveFontSizes(bool bAuto, bool bSendChanges);
 };

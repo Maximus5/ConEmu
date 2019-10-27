@@ -85,6 +85,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "version.h"
 #include "VirtualConsole.h"
 
+#include <set>
+
 
 const int CFontMgr::FontDefWidthMin = 0;
 const int CFontMgr::FontDefWidthMax = 99;
@@ -1631,41 +1633,67 @@ BOOL CFontMgr::RegisterFont(LPCWSTR asFontFile, BOOL abDefault)
 	return TRUE;
 }
 
+// Command line switch -FontDir
+void CFontMgr::AddFontsDir(LPCWSTR asFromDir)
+{
+	if (!asFromDir || !*asFromDir) return;
+	CEStr dir(asFromDir);
+	// cut trailing slash
+	const auto len = dir.GetLen() - 1;
+	_ASSERTE(len >= 0);
+	if (dir[len] == '\\' || dir[len] == '/')
+		dir[len] = 0;
+	m_AddFontsDir.push_back(std::move(dir));
+}
+
 void CFontMgr::RegisterFonts()
 {
-	if (!gpSet->isAutoRegisterFonts || gpConEmu->DisableRegisterFonts)
-		return; // Если поиск шрифтов не требуется
+	// -NoRegFont disable the feature completely
+	if (gpConEmu->DisableRegisterFonts)
+		return;
+	// Do we need to register something?
+	if (!gpSet->isAutoRegisterFonts && m_RegFonts.empty())
+		return;
 
 	DEBUGSTRSTARTUPLOG(L"Registering local fonts");
 
-	// Сначала - регистрация шрифтов в папке программы
-	RegisterFontsDir(gpConEmu->ms_ConEmuExeDir);
-
-	// Если папка запуска отличается от папки программы
-	if (lstrcmpW(gpConEmu->ms_ConEmuExeDir, gpConEmu->ms_ConEmuBaseDir))
-		RegisterFontsDir(gpConEmu->ms_ConEmuBaseDir); // зарегистрировать шрифты и из базовой папки
-
-	// Если папка запуска отличается от папки программы
-	if (lstrcmpiW(gpConEmu->ms_ConEmuExeDir, gpConEmu->WorkDir()))
-	{
-		BOOL lbSkipCurDir = FALSE;
-		wchar_t szFontsDir[MAX_PATH+1];
-
-		if (SHGetSpecialFolderPath(ghWnd, szFontsDir, CSIDL_FONTS, FALSE))
-		{
-			// Oops, папка запуска совпала с системной папкой шрифтов?
-			lbSkipCurDir = (lstrcmpiW(szFontsDir, gpConEmu->WorkDir()) == 0);
-		}
-
-		if (!lbSkipCurDir)
-		{
-			// зарегистрировать шрифты и из папки запуска
-			RegisterFontsDir(gpConEmu->WorkDir());
-		}
+	wchar_t sys_font_dir[MAX_PATH+1] = L"";
+	if (!SHGetSpecialFolderPath(ghWnd, sys_font_dir, CSIDL_FONTS, FALSE)) {
+		sys_font_dir[0] = 0;
+	} else {
+		int len = wcslen(sys_font_dir);
+		if (len > 0 && sys_font_dir[len - 1] == '\\')
+			sys_font_dir[len - 1] = 0;
 	}
 
-	// Теперь можно смотреть, зарегистрировались ли какие-то шрифты... И выбрать из них подходящие
-	// Это делается в InitFont
+	auto comparator = [](const wchar_t* l, const wchar_t* r) {
+		return lstrcmpi(l, r) < 0;
+	};
+	std::set<const wchar_t*, comparator> processed;
+	auto process_dir = [this, &processed, &sys_font_dir](const wchar_t* dir) {
+		if (!dir || !*dir) return;
+		if (!processed.insert(dir)->second)) return;
+		if (*sys_font_dir && lstrcmpi(sys_font_dir, dir) == 0)
+		RegisterFontsDir(dir);
+	};
+
+	// Folders specified by user via "-FontDir" switch
+	for (const auto& dir : m_AddFontsDir)
+	{
+		process_dir(dir.c_str());
+	}
+
+	if (!gpSet->isAutoRegisterFonts)
+	{
+		// Program folder
+		process_dir(gpConEmu->ms_ConEmuExeDir);
+
+		// Program base folder
+		process_dir(gpConEmu->ms_ConEmuBaseDir);
+	}
+
+	// Now we may check (in InitFont) if fonts were registered,
+	// and select some default from them
 }
 
 void CFontMgr::RegisterFontsDir(LPCWSTR asFromDir)
@@ -1673,8 +1701,7 @@ void CFontMgr::RegisterFontsDir(LPCWSTR asFromDir)
 	if (!asFromDir || !*asFromDir)
 		return;
 
-	// Регистрация шрифтов в папке ConEmu
-	WIN32_FIND_DATA fnd;
+	WIN32_FIND_DATA fnd{};
 	wchar_t szFind[MAX_PATH*2]; wcscpy_c(szFind, asFromDir);
 	wchar_t* pszSlash = szFind + lstrlenW(szFind);
 	_ASSERTE(pszSlash > szFind);
