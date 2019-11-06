@@ -1323,7 +1323,7 @@ bool CFontMgr::RecreateFontByDpi(int dpiX, int dpiY, LPRECT prcSuggested)
 	_dpi_font.SetDpi(dpiX, dpiY);
 	//Raster fonts???
 	EvalLogfontSizes(LogFont, gpSet->FontSizeY, gpSet->FontSizeX);
-	RecreateFont(true);
+	RecreateFont(true, true);
 
 	return true;
 }
