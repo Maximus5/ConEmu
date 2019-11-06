@@ -5347,8 +5347,6 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 		#endif
 
 		SizeInfo::RequestDpi(DpiValue(dpiX, dpiY));
-		if (prcSuggested)
-			SizeInfo::RequestRect(*prcSuggested);
 
 		// it returns false if DPI was not changed
 		if (gpFontMgr->RecreateFontByDpi(dpiX, dpiY, prcSuggested))
@@ -5389,6 +5387,9 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 				}
 			}
 		}
+
+		if (prcSuggested)
+			SizeInfo::RequestRect(*prcSuggested);
 	}
 
 	return lRc;
