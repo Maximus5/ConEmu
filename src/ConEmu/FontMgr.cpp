@@ -1642,7 +1642,7 @@ void CFontMgr::AddFontsDir(LPCWSTR asFromDir)
 	const auto len = dir.GetLen() - 1;
 	_ASSERTE(len >= 0);
 	if (dir[len] == '\\' || dir[len] == '/')
-		dir[len] = 0;
+		dir.SetAt(len, 0);
 	m_AddFontsDir.push_back(std::move(dir));
 }
 
