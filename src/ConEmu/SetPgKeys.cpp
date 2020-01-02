@@ -402,7 +402,7 @@ LRESULT CSetPgKeys::OnHotkeysNotify(HWND hDlg, WPARAM wParam, LPARAM lParam)
 
 				//nVK = pk ? *pk->VkPtr : 0;
 				//if ((pk->Type == 0) || (pk->Type == 2))
-				BYTE vk = ConEmuHotKey::GetHotkey(VkMod);
+				BYTE vk = ConEmuChord::GetHotkey(VkMod);
 				if (bHotKeyEnabled)
 				{
 					CHotKeyDialog::SetHotkeyField(hHk, vk);
@@ -449,7 +449,7 @@ LRESULT CSetPgKeys::OnHotkeysNotify(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		BOOL bShow = (mp_ActiveHotKey && (mp_ActiveHotKey->HkType != chk_Modifier));
 		for (int n = 0; n < 3; n++)
 		{
-			BYTE b = (bShow && VkMod) ? ConEmuHotKey::GetModifier(VkMod,n+1) : 0;
+			BYTE b = (bShow && VkMod) ? ConEmuChord::GetModifier(VkMod, n+1) : 0;
 			//FillListBoxByte(hDlg, lbHotKeyMod1+n, SettingsNS::Modifiers, b);
 			CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbHotKeyMod1+n), CSetDlgLists::eModifiers, b, false);
 			EnableWindow(GetDlgItem(hDlg, lbHotKeyMod1+n), bEnabled);
@@ -779,7 +779,7 @@ INT_PTR CSetPgKeys::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 				}
 
 				if (vk)
-					nModifers = ConEmuHotKey::SetModifier(nModifers, vk, false);
+					nModifers = ConEmuChord::SetModifier(nModifers, vk, false);
 			}
 
 			_ASSERTE((nModifers & 0xFF) == 0); // Модификаторы должны быть строго в старших 3-х байтах

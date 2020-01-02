@@ -4991,7 +4991,7 @@ void Settings::IsModifierPressed(int nDescrID, bool* pbNoEmpty, bool* pbAllowEmp
 	if (pbNoEmpty) *pbNoEmpty = false;
 	if (pbAllowEmpty) *pbAllowEmpty = false;
 
-	DWORD vk = ConEmuHotKey::GetHotkey(GetHotkeyById(nDescrID));
+	DWORD vk = ConEmuChord::GetHotkey(GetHotkeyById(nDescrID));
 
 	// если НЕ 0 - должен быть нажат
 	if (vk)
@@ -5772,8 +5772,8 @@ DWORD Settings::GetHotkeyById(int nDescrID, const ConEmuHotKey** ppHK)
 			DWORD VkMod = pHK->GetVkMod();
 			if (pHK->HkType == chk_Modifier)
 			{
-				_ASSERTE(VkMod == ConEmuHotKey::GetHotkey(VkMod));
-				VkMod = ConEmuHotKey::GetHotkey(VkMod); // младший байт
+				_ASSERTE(VkMod == ConEmuChord::GetHotkey(VkMod));
+				VkMod = ConEmuChord::GetHotkey(VkMod); // младший байт
 			}
 
 			if (ppHK)
@@ -5804,7 +5804,7 @@ LPCWSTR Settings::GetHotkeyNameById(int nDescrID, wchar_t (&szFull)[128], bool b
 // nDescrID = vkXXX (e.g. vkMinimizeRestore)
 bool Settings::IsHotkey(int nDescrID)
 {
-	DWORD nVk = ConEmuHotKey::GetHotkey(GetHotkeyById(nDescrID));
+	DWORD nVk = ConEmuChord::GetHotkey(GetHotkeyById(nDescrID));
 	return (nVk != 0);
 }
 
@@ -5856,13 +5856,13 @@ bool Settings::isModifierExist(BYTE Mod/*VK*/, bool abStrictSingle /*= false*/)
 		}
 		else if (!abStrictSingle)
 		{
-			if (ConEmuHotKey::HasModifier(ppHK->GetVkMod(), Mod))
+			if (ConEmuChord::HasModifier(ppHK->GetVkMod(), Mod))
 				return true;
 		}
 		else
 		{
 			DWORD VkMod = ppHK->GetVkMod();
-			if ((ConEmuHotKey::GetModifier(VkMod, 1) == Mod) && !ConEmuHotKey::GetModifier(VkMod, 2))
+			if ((ConEmuChord::GetModifier(VkMod, 1) == Mod) && !ConEmuChord::GetModifier(VkMod, 2))
 				return true;
 		}
 	}
@@ -5885,7 +5885,7 @@ bool Settings::isKeyOrModifierExist(BYTE Mod/*VK*/)
 		if (ppHK->HkType == chk_Modifier)
 			continue; // эти не рассматриваем
 
-		if ((ppHK->Key.Vk == Mod) || ConEmuHotKey::HasModifier(ppHK->GetVkMod(), Mod))
+		if ((ppHK->Key.Vk == Mod) || ConEmuChord::HasModifier(ppHK->GetVkMod(), Mod))
 			return true;
 	}
 
@@ -5932,8 +5932,8 @@ void Settings::LoadHotkeys(SettingsBase* reg, const bool& bSendAltEnter, const b
 	BYTE MacroVersion = 0;
 	reg->Load(L"KeyMacroVersion", MacroVersion);
 
-	reg->Load(L"Multi.Modifier", nHostkeyNumberModifier); ConEmuHotKey::TestHostkeyModifiers(nHostkeyNumberModifier);
-	reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); ConEmuHotKey::TestHostkeyModifiers(nHostkeyArrowModifier);
+	reg->Load(L"Multi.Modifier", nHostkeyNumberModifier); ConEmuChord::TestHostkeyModifiers(nHostkeyNumberModifier);
+	reg->Load(L"Multi.ArrowsModifier", nHostkeyArrowModifier); ConEmuChord::TestHostkeyModifiers(nHostkeyArrowModifier);
 
 	INT_PTR iMax = gpHotKeys->size();
 	for (int i = 0; i < iMax; i++)

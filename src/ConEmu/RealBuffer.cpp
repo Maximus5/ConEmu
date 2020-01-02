@@ -5574,7 +5574,7 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 			if (vkPostKey)
 			{
 				int iScanCode = 0; DWORD dwControlState = 0;
-				UINT VK = ConEmuHotKey::GetVkByKeyName(pszKey, &iScanCode, &dwControlState);
+				UINT VK = ConEmuChord::GetVkByKeyName(pszKey, &iScanCode, &dwControlState);
 				INPUT_RECORD r[2] = { { KEY_EVENT },{ KEY_EVENT } };
 				TranslateKeyPress(VK, dwControlState, (VK == VK_BACK) ? (wchar_t)VK_BACK : 0, iScanCode, r, r + 1);
 

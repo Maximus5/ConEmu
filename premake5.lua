@@ -867,8 +867,10 @@ project "Tests"
     "src/common/*.cpp",
     "src/common/*.h",
     -- main sources
+    "src/ConEmu/*.rc",
     "src/ConEmu/*.cpp",
     "src/ConEmu/*.h",
+    "src/ConEmu/conemu.gcc.manifest",
     -- googletest
     "src/modules/googletest/googletest/src/gtest-all.cc",
   }
@@ -881,6 +883,7 @@ project "Tests"
 
   vpaths {
     { ["tests"] = {"**/*_test.*", "**/test_stubs.cpp"} },
+    { ["Resources"] = {"**/*.rc", "**/*.rc2", "**/*.manifest", "**/*.bmp", "**/*.cur", "**/*.ico"} },
   }
 
   includedirs {

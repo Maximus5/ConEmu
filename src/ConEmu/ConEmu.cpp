@@ -4036,10 +4036,10 @@ void CConEmuMain::RegisterMinRestore(bool abRegister)
 
 			const ConEmuHotKey* pHk = NULL;
 			DWORD VkMod = gpSet->GetHotkeyById(gRegisteredHotKeys[i].DescrID, &pHk);
-			UINT vk = ConEmuHotKey::GetHotkey(VkMod);
+			UINT vk = ConEmuChord::GetHotkey(VkMod);
 			if (!vk)
 				continue;  // не просили
-			UINT nMOD = ConEmuHotKey::GetHotKeyMod(VkMod);
+			UINT nMOD = ConEmuChord::GetHotKeyMod(VkMod);
 
 			if (gRegisteredHotKeys[i].RegisteredID
 					&& ((gRegisteredHotKeys[i].VK != vk) || (gRegisteredHotKeys[i].MOD != nMOD)))
@@ -4179,10 +4179,10 @@ void CConEmuMain::RegisterGlobalHotKeys(bool bRegister)
 			{
 				const ConEmuHotKey* pHk = NULL;
 				DWORD VkMod = gpSet->GetHotkeyById(gActiveOnlyHotKeys[i].DescrID, &pHk);
-				vk = ConEmuHotKey::GetHotkey(VkMod);
+				vk = ConEmuChord::GetHotkey(VkMod);
 				if (!vk)
 					continue;  // не просили
-				mod = ConEmuHotKey::GetHotKeyMod(VkMod);
+				mod = ConEmuChord::GetHotKeyMod(VkMod);
 			}
 
 			BOOL bRegRc = RegisterHotKey(ghWnd, id, mod, vk);

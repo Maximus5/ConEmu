@@ -2174,7 +2174,7 @@ LPCWSTR CConEmuMenu::MenuAccel(int DescrID, LPCWSTR asText)
 
 	const ConEmuHotKey* pHK = NULL;
 	DWORD VkMod = gpSet->GetHotkeyById(DescrID, &pHK);
-	if (!VkMod || !ConEmuHotKey::GetHotkey(VkMod) || !pHK)
+	if (!VkMod || !ConEmuChord::GetHotkey(VkMod) || !pHK)
 		return asText;
 
 	pHK->GetHotkeyName(szKey);

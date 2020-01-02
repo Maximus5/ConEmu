@@ -31,34 +31,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "HotkeyChord.h"
 
-// Strings
-#define gsNoHotkey L"<None>"
-
 // Forward
 struct ConEmuHotKey;
 class CHotKeyDialog;
 
 // Некоторые комбинации нужно обрабатывать "на отпускание" во избежание глюков с интерфейсом
 extern const struct ConEmuHotKey* ConEmuSkipHotKey; // = ((ConEmuHotKey*)INVALID_HANDLE_VALUE)
-
-#define CEHOTKEY_MODMASK    0xFFFFFF00
-#define CEHOTKEY_NUMHOSTKEY 0xFFFFFF00
-#define CEHOTKEY_ARRHOSTKEY 0xFEFEFE00
-#define CEHOTKEY_NOMOD      0x80808000
-
-enum ConEmuHotKeyType
-{
-	chk_User = 0,  // обычный настраиваемый hotkey
-	chk_Modifier,  // для драга, например
-	chk_Modifier2, // для драга, например (когда нужно задать более одного модификатора)
-	chk_NumHost,   // system hotkey (<HostKey>-Number, и БЫЛ РАНЬШЕ <HostKey>-Arrows)
-	chk_ArrHost,   // system hotkey (<HostKey>-Number, и БЫЛ РАНЬШЕ <HostKey>-Arrows)
-	chk_System,    // predefined hotkeys, ненастраиваемые (пока?)
-	chk_Global,    // globally registered hotkey
-	chk_Local,     // locally registered hotkey
-	chk_Macro,     // GUI Macro
-	chk_Task,      // Task hotkey
-};
 
 // Check if enabled in current context
 typedef bool (*HotkeyEnabled_t)();
@@ -106,33 +84,11 @@ struct ConEmuHotKey
 
 	void Free();
 
-	// *** Service functions ***
-	// Вернуть имя модификатора (типа "Apps+Space")
+	// Return user-friendly key name (e.g. "Apps+Space")
 	LPCWSTR GetHotkeyName(wchar_t (&szFull)[128], bool bShowNone = true) const;
-	static LPCWSTR GetHotkeyName(DWORD aVkMod, wchar_t (&szFull)[128], bool bShowNone = true);
 
 	// Duplicate hotkeys
 	static LPCWSTR CreateNotUniqueWarning(LPCWSTR asHotkey, LPCWSTR asDescr1, LPCWSTR asDescr2, CEStr& rsWarning);
-
-	// nHostMod в младших 3-х байтах может содержать VK (модификаторы).
-	// Функция проверяет, чтобы они не дублировались
-	static void TestHostkeyModifiers(DWORD& nHostMod);
-	// набор флагов MOD_xxx для RegisterHotKey
-	static DWORD GetHotKeyMod(DWORD VkMod);
-	// Сервисная функция для инициализации. Формирует готовый VkMod
-	static DWORD MakeHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
-	// Извлечь сам VK
-	static DWORD GetHotkey(DWORD VkMod);
-	// Вернуть имя клавишы (Apps, Win, Pause, ...)
-	static void GetVkKeyName(BYTE vk, wchar_t (&szName)[32], bool bSingle = true);
-	// Вернуть VK по имени клавиши (Apps, Win, Pause, ...)
-	static UINT GetVkByKeyName(LPCWSTR asName, int* pnScanCode = NULL, DWORD* pnControlState = NULL);
-	// Есть ли в этом (VkMod) хоткее - модификатор Mod (VK)
-	static bool HasModifier(DWORD VkMod, BYTE Mod/*VK*/);
-	// Задать или сбросить модификатор в VkMod
-	static DWORD SetModifier(DWORD VkMod, BYTE Mod/*VK*/, bool Xor=true);
-	// Вернуть назначенные модификаторы (idx = 1..3). Возвращает 0 (нету) или VK
-	static DWORD GetModifier(DWORD VkMod, int idx/*1..3*/);
 
 	static bool UseWinNumber();
 	static bool UseWinArrows();

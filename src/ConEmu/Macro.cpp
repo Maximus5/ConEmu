@@ -1696,7 +1696,7 @@ LPWSTR ConEmuMacro::Keys(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			// Trim brackets from "{Enter}" for example
 			pszKey++; *p = 0;
 		}
-		VK = ConEmuHotKey::GetVkByKeyName(pszKey, &iScanCode, &dwControlState);
+		VK = ConEmuChord::GetVkByKeyName(pszKey, &iScanCode, &dwControlState);
 		switch (VK)
 		{
 		case VK_WHEEL_UP: case VK_WHEEL_DOWN: case VK_WHEEL_LEFT: case VK_WHEEL_RIGHT:

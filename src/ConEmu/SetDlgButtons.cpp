@@ -943,7 +943,7 @@ void CSetDlgButtons::OnBtn_MinMaxKey(HWND hDlg, WORD CB, BYTE uCheck)
 		{
 			gpSet->SetHotkeyById(vkMinimizeRestore, VkMod);
 			wchar_t szKey[128] = L"";
-			SetDlgItemText(hDlg, tQuakeKeyFast, ConEmuHotKey::GetHotkeyName(VkMod, szKey));
+			SetDlgItemText(hDlg, tQuakeKeyFast, pHK->GetHotkeyName(szKey));
 		}
 	}
 } // cbQuakeKeyFast
@@ -1441,7 +1441,7 @@ void CSetDlgButtons::OnBtn_CmdGroupKey(HWND hDlg, WORD CB, BYTE uCheck)
 	{
 		gpSet->CmdTaskSetVkMod(iCur, VkMod);
 		wchar_t szKey[128] = L"";
-		SetDlgItemText(hDlg, tCmdGroupKey, ConEmuHotKey::GetHotkeyName(pCmd->HotKey.GetVkMod(), szKey));
+		SetDlgItemText(hDlg, tCmdGroupKey, pCmd->HotKey.GetHotkeyName(szKey));
 	}
 } // cbCmdGroupKey
 

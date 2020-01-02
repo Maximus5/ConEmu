@@ -31,13 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "../UnitTests/gtest.h"
 
-#include "Hotkeys.h"
-#include "ConEmu.h"
-#include "LngRc.h"
-#include "Options.h"
-#include "OptionsClass.h"
-#include "SetCmdTask.h"
-#include "VirtualConsole.h"
+#include "HotkeyChord.h"
 
 TEST(ConEmuHotKey,Tests)
 {
@@ -61,15 +55,14 @@ TEST(ConEmuHotKey,Tests)
 			{0, {}, cvk_Naked, gsNoHotkey},
 	};
 
-	ConEmuHotKey HK = {0, chk_User};
+	const ConEmuHotKeyType HkType = chk_User;
+	ConEmuChord HK = {};
 	wchar_t szFull[128];
-	int iCmp;
 
 	for (size_t i = 0; i < countof(Tests); i++)
 	{
-		HK.SetHotKey(Tests[i].Vk, Tests[i].Mod[0], Tests[i].Mod[1], Tests[i].Mod[2]);
-		_ASSERTE(HK.Key.Mod == Tests[i].ModTest);
-		iCmp = wcscmp(HK.GetHotkeyName(szFull, true), Tests[i].KeyName);
-		_ASSERTE(iCmp == 0);
+		HK.SetHotKey(HkType, Tests[i].Vk, Tests[i].Mod[0], Tests[i].Mod[1], Tests[i].Mod[2]);
+		EXPECT_EQ(HK.Mod, Tests[i].ModTest);
+		EXPECT_STREQ(ConEmuChord::GetHotkeyName(szFull, HK.GetVkMod(HkType), HkType, true), Tests[i].KeyName);
 	}
 }

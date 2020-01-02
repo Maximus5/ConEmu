@@ -241,7 +241,7 @@ INT_PTR CHotKeyDialog::hkDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lP
 								BYTE vk = 0;
 								CSetDlgLists::GetListBoxItem(hDlg, lbHotKeyMod1+i, CSetDlgLists::eModifiers, vk);
 								if (vk)
-									nModifers = ConEmuHotKey::SetModifier(nModifers, vk, false);
+									nModifers = ConEmuChord::SetModifier(nModifers, vk, false);
 							}
 
 							_ASSERTE((nModifers & 0xFF) == 0); // Модификаторы должны быть строго в старших 3-х байтах

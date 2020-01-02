@@ -366,7 +366,7 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 
 			DWORD VkMod = pHK->GetVkMod();
 
-			if (!ConEmuHotKey::HasModifier(VkMod, VK_LWIN))
+			if (!ConEmuChord::HasModifier(VkMod, VK_LWIN))
 				continue;
 
 			if (pHK->Enabled && !pHK->Enabled())
@@ -375,10 +375,10 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 			if (pHK->DontWinHook && pHK->DontWinHook(pHK))
 				continue;
 
-			DWORD nFlags = ConEmuHotKey::GetHotkey(VkMod);
+			DWORD nFlags = ConEmuChord::GetHotkey(VkMod);
 			for (int i = 1; i <= 3; i++)
 			{
-				switch (ConEmuHotKey::GetModifier(VkMod, i))
+				switch (ConEmuChord::GetModifier(VkMod, i))
 				{
 				case 0:
 					break;
@@ -1489,7 +1489,7 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 				)
 			{
 				wchar_t szMod[32] = L"";
-				ConEmuHotKey::GetVkKeyName(Keys[i].Vk, szMod, true);
+				ConEmuChord::GetVkKeyName(Keys[i].Vk, szMod, true);
 				CEStr szInfo;
 				ConEmuHotKey::CreateNotUniqueWarning(szMod, Keys[i].Descr, Keys[j].Descr, szInfo);
 				HWND hDlg = hWnd2;
@@ -1508,12 +1508,12 @@ void CSettings::CheckSelectionModifiers(HWND hWnd2)
 		//if (!Keys[i].Vk) // Check or skip?
 		//	continue;
 		ConEmuHotKey check;
-		check.SetVkMod(ConEmuHotKey::MakeHotKey(Keys[i].nMouseBtn, Keys[i].Vk));
+		check.SetVkMod(ConEmuChord::MakeHotKey(Keys[i].nMouseBtn, Keys[i].Vk));
 		const ConEmuHotKey* pFound = gpHotKeys->FindHotKey(check.Key, NULL);
 		if (pFound)
 		{
 			wchar_t szMod[32] = L"", szDescr2[512];
-			ConEmuHotKey::GetVkKeyName(Keys[i].Vk, szMod, true);
+			ConEmuChord::GetVkKeyName(Keys[i].Vk, szMod, true);
 			pFound->GetDescription(szDescr2, countof(szDescr2));
 			CEStr szFailMsg;
 			ConEmuHotKey::CreateNotUniqueWarning(szMod, Keys[i].Descr, szDescr2, szFailMsg);
