@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <deque>
 #include <vector>
 #include <string>
+#include <stdexcept>
 #include "../common/CEStr.h"
 #include "../common/ConsoleMixAttr.h"
 #include "../common/MArray.h"
