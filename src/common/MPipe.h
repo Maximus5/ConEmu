@@ -71,7 +71,7 @@ class MPipeBase
 		size_t mn_OutSize = 0, mn_MaxOutSize = 0;
 		DWORD mn_ErrCode = 0;
 
-		std::atomic_int mn_OpenCount, mn_CloseCount, mn_FailCount;
+		std::atomic_int mn_OpenCount{0}, mn_CloseCount{0}, mn_FailCount{0};
 
 		void SetErrorCode(DWORD nCode)
 		{
