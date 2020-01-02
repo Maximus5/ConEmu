@@ -1859,11 +1859,8 @@ BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
 		return LoadFullConsoleDataReal(in, out);
 	else if (gPrimaryBuffer.HasHandle())
 		return LoadFullConsoleData(gPrimaryBuffer, gnPrimaryBufferLastRow, out);
-	else //if (!isReopenHandleAllowed())
+	else
 		return LoadConsoleMapData(out);
-
-	_ASSERTE(FALSE && "Unsupported retrieve mode!");
-	return FALSE;
 }
 
 BOOL cmd_SetFullScreen(CESERVER_REQ& in, CESERVER_REQ** out)
