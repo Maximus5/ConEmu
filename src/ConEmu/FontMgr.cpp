@@ -1666,13 +1666,16 @@ void CFontMgr::RegisterFonts()
 			sys_font_dir[len - 1] = 0;
 	}
 
-	auto comparator = [](const wchar_t* l, const wchar_t* r) {
-		return lstrcmpi(l, r) < 0;
+	struct comparator
+	{
+		bool operator()(const wchar_t* l, const wchar_t* r) const {
+			return lstrcmpi(l, r) < 0;
+		}
 	};
 	std::set<const wchar_t*, comparator> processed;
 	auto process_dir = [this, &processed, &sys_font_dir](const wchar_t* dir) {
 		if (!dir || !*dir) return;
-		if (!processed.insert(dir)->second)) return;
+		if (!processed.insert(dir).second) return;
 		if (*sys_font_dir && lstrcmpi(sys_font_dir, dir) == 0)
 		RegisterFontsDir(dir);
 	};
