@@ -32,6 +32,54 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define LPCBYTE const BYTE*
 #endif
 
+
+#define CONEMU_ROOT_KEY L"Software\\ConEmu"
+
+
+enum class StorageType : int
+{
+	BASIC,
+	REG,
+	XML,
+	INI,
+};
+
+struct SettingsStorage
+{
+	StorageType Type = StorageType::BASIC;
+	LPCWSTR     File = nullptr;   // NULL or full path to storage file
+	LPCWSTR     Config = nullptr; // Name of configuration
+	bool        ReadOnly = false; // If xml file is write-prohibited (created in "C:\Program Files"?)
+
+	static LPCWSTR getTypeName(const StorageType t)
+	{
+		return (t == StorageType::REG) ? L"[reg]"
+			: (t == StorageType::XML) ? L"[xml]"
+			: (t == StorageType::INI) ? L"[ini]"
+			: L"[basic]";
+	};
+	LPCWSTR getTypeName() const
+	{
+		return  getTypeName(Type);
+	};
+
+	bool isFileType() const
+	{
+		return (Type == StorageType::XML || Type == StorageType::INI);
+	};
+
+	bool hasFile() const
+	{
+		return isFileType() && (File && *File);
+	};
+
+	bool hasConfig() const
+	{
+		return (Config && *Config);
+	};
+};
+
+
 struct SettingsBase
 {
 	public:

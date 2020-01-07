@@ -357,7 +357,6 @@
     <ClInclude Include="ConEmu\RealServer.h" />
     <ClInclude Include="ConEmu\Recreate.h" />
     <ClInclude Include="ConEmu\RefRelease.h" />
-    <ClInclude Include="ConEmu\Registry.h" />
     <ClInclude Include="ConEmu\RunQueue.h" />
     <ClInclude Include="ConEmu\ScreenDump.h" />
     <ClInclude Include="ConEmu\SearchCtrl.h" />
@@ -405,6 +404,7 @@
     <ClInclude Include="ConEmu\SetPgUpdate.h" />
     <ClInclude Include="ConEmu\SetPgViews.h" />
     <ClInclude Include="ConEmu\SetTypes.h" />
+    <ClInclude Include="ConEmu\SettingsStorage.h" />
     <ClInclude Include="ConEmu\ShObjIdl_Part.h" />
     <ClInclude Include="ConEmu\SizeInfo.h" />
     <ClInclude Include="ConEmu\Status.h" />
@@ -592,7 +592,6 @@
     <ClCompile Include="ConEmu\RealConsole.cpp" />
     <ClCompile Include="ConEmu\RealServer.cpp" />
     <ClCompile Include="ConEmu\Recreate.cpp" />
-    <ClCompile Include="ConEmu\Registry.cpp" />
     <ClCompile Include="ConEmu\RunQueue.cpp" />
     <ClCompile Include="ConEmu\ScreenDump.cpp" />
     <ClCompile Include="ConEmu\SearchCtrl.cpp" />
@@ -639,6 +638,7 @@
     <ClCompile Include="ConEmu\SetPgTransparent.cpp" />
     <ClCompile Include="ConEmu\SetPgUpdate.cpp" />
     <ClCompile Include="ConEmu\SetPgViews.cpp" />
+    <ClCompile Include="ConEmu\SettingsStorage.cpp" />
     <ClCompile Include="ConEmu\SizeInfo.cpp" />
     <ClCompile Include="ConEmu\Status.cpp" />
     <ClCompile Include="ConEmu\SystemEnvironment.cpp" />
