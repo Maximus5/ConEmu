@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MModule.h"
 
 #include "ConEmu.h"
+#include "DontEnable.h"
 #include "RealConsole.h"
 #include "VConRelease.h"
 #include "VirtualConsole.h"

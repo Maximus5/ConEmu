@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "About.h"
 #include "AboutDlg.h"
 #include "ConEmu.h"
+#include "DontEnable.h"
 #include "DpiAware.h"
 #include "DynDialog.h"
 #include "ImgButton.h"

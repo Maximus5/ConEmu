@@ -87,6 +87,9 @@
     <ClInclude Include="ConEmu\DlgItemHelper.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\DontEnable.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmu\DpiAware.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -813,6 +816,9 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\DlgItemHelper.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\DontEnable.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\DpiAware.cpp">

@@ -69,6 +69,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "ConEmuPipe.h"
 #include "DefaultTerm.h"
+#include "DontEnable.h"
 #include "DpiAware.h"
 #include "DragDrop.h"
 #include "FindDlg.h"

@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <lm.h>
 #include "../common/shlobj.h"
 #include "ConEmu.h"
+#include "DontEnable.h"
 #include "DpiAware.h"
 #include "DynDialog.h"
 #include "LngRc.h"

@@ -305,6 +305,7 @@
     <ClInclude Include="ConEmu\DebugMsgLog.h" />
     <ClInclude Include="ConEmu\DefaultTerm.h" />
     <ClInclude Include="ConEmu\DlgItemHelper.h" />
+    <ClInclude Include="ConEmu\DontEnable.h" />
     <ClInclude Include="ConEmu\DpiAware.h" />
     <ClInclude Include="ConEmu\DragDrop.h" />
     <ClInclude Include="ConEmu\DragDropData.h" />
@@ -549,6 +550,7 @@
     <ClCompile Include="ConEmu\CustomFonts.cpp" />
     <ClCompile Include="ConEmu\DefaultTerm.cpp" />
     <ClCompile Include="ConEmu\DlgItemHelper.cpp" />
+    <ClCompile Include="ConEmu\DontEnable.cpp" />
     <ClCompile Include="ConEmu\DpiAware.cpp" />
     <ClCompile Include="ConEmu\DragDrop.cpp" />
     <ClCompile Include="ConEmu\DragDropData.cpp" />

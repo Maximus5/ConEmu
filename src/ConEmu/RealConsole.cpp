@@ -66,6 +66,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuPipe.h"
 #include "ConfirmDlg.h"
 #include "CreateProcess.h"
+#include "DontEnable.h"
 #include "DynDialog.h"
 #include "Inside.h"
 #include "LngRc.h"

@@ -56,6 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "ConfirmDlg.h"
 #include "DefaultTerm.h"
+#include "DontEnable.h"
 #include "DpiAware.h"
 #include "DwmHelper.h"
 #include "FontMgr.h"
@@ -141,34 +142,6 @@ HICON hClassIcon = NULL, hClassIconSm = NULL;
 BOOL gbDebugLogStarted = FALSE;
 BOOL gbDebugShowRects = FALSE;
 CEStartupEnv* gpStartEnv = NULL;
-
-LONG DontEnable::gnDontEnable = 0;
-LONG DontEnable::gnDontEnableCount = 0;
-//LONG nPrev;   // Informational!
-//bool bLocked; // Proceed only main thread
-DontEnable::DontEnable(bool abLock /*= true*/)
-{
-	bLocked = abLock && isMainThread();
-	if (bLocked)
-	{
-		_ASSERTE(gnDontEnable>=0);
-		nPrev = InterlockedIncrement(&gnDontEnable) - 1;
-	}
-	InterlockedIncrement(&gnDontEnableCount);
-};
-DontEnable::~DontEnable()
-{
-	if (bLocked)
-	{
-		InterlockedDecrement(&gnDontEnable);
-	}
-	InterlockedDecrement(&gnDontEnableCount);
-	_ASSERTE(gnDontEnable>=0);
-};
-bool DontEnable::isDontEnable()
-{
-	return (gnDontEnable > 0);
-};
 
 
 const TCHAR *const gsClassName = VirtualConsoleClass; // окна отрисовки

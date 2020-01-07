@@ -61,21 +61,6 @@ extern HWND ghConWnd;
 #endif
 
 extern bool gbMessagingStarted;
-
-class DontEnable
-{
-private:
-	LONG nPrev; // Informational!
-	static LONG gnDontEnable;
-	static LONG gnDontEnableCount;
-	bool bLocked;
-public:
-	DontEnable(bool abLock = true);
-	~DontEnable();
-public:
-	static bool isDontEnable();
-};
-
 extern OSVERSIONINFO gOSVer;
 extern WORD gnOsVer;
 extern bool gbIsWine;
