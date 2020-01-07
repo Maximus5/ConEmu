@@ -59,7 +59,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #ifdef _DEBUG
-#include "Registry.h"
+#include "SettingsStorage.h"
 #endif
 
 // Hide from global namespace

@@ -170,6 +170,7 @@ struct ConsoleInfoArg;
 
 #include "HotkeyChord.h"
 #include "RealServer.h"
+#include "SetTypes.h"
 #include "TabID.h"
 
 class CRealConsole

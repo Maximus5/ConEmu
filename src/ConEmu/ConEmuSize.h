@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/MSectionSimple.h"
 
+#include "SetTypes.h"
 #include "SizeInfo.h"
 
 class CConEmuMain;

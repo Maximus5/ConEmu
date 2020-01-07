@@ -32,15 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 #include "SetTypes.h"
 
-typedef BYTE PasteLinesMode;
-const PasteLinesMode
-	plm_Default    = 1,
-	plm_MultiLine  = 2,
-	plm_SingleLine = 3,
-	plm_FirstLine  = 4,
-	plm_Nothing    = 0
-;
-
 struct AppSettings
 {
 	size_t   cchNameMax;

@@ -100,3 +100,144 @@ enum AdminTabStyle
 	ats_ShieldSuffix = 3,
 	ats_Disabled     = 4,
 };
+
+// Allow or not to convert pasted Windows path into Posix notation
+typedef BYTE PosixPasteMode;
+const PosixPasteMode
+	pxm_Convert    = 1,  // always try to convert
+	pxm_Intact     = 2,  // never convert
+	pxm_Auto       = 0   // autoselect on certain conditions and m_Args.pszMntRoot value
+;
+
+typedef BYTE PasteLinesMode;
+const PasteLinesMode
+	plm_Default    = 1,
+	plm_MultiLine  = 2,
+	plm_SingleLine = 3,
+	plm_FirstLine  = 4,
+	plm_Nothing    = 0
+;
+
+
+enum CESizeStyle
+{
+	ss_Standard = 0,
+	ss_Pixels = 1,
+	ss_Percents = 2,
+};
+
+union CESize
+{
+	DWORD Raw;
+
+	struct
+	{
+		int         Value : 24;
+		CESizeStyle Style : 8;
+
+		wchar_t TempSZ[12];
+	};
+
+	const wchar_t* AsString()
+	{
+		switch (Style)
+		{
+		case ss_Pixels:
+			swprintf_c(TempSZ, L"%ipx", Value);
+			break;
+		case ss_Percents:
+			swprintf_c(TempSZ, L"%i%%", Value);
+			break;
+			//case ss_Standard:
+		default:
+			swprintf_c(TempSZ, L"%i", Value);
+		}
+		return TempSZ;
+	};
+
+	bool IsValid(bool IsWidth) const
+	{
+		bool bValid;
+		switch (Style)
+		{
+		case ss_Percents:
+			bValid = (Value >= 1 && Value <= 100);
+			break;
+		case ss_Pixels:
+			// Treat width/height as values for font size 4x2 (minimal)
+			if (IsWidth)
+				bValid = (Value >= (MIN_CON_WIDTH * 4));
+			else
+				bValid = (Value >= (MIN_CON_HEIGHT * 2));
+			break;
+		default:
+			if (IsWidth)
+				bValid = (Value >= MIN_CON_WIDTH);
+			else
+				bValid = (Value >= MIN_CON_HEIGHT);
+		}
+		return bValid;
+	};
+
+	bool Set(bool IsWidth, CESizeStyle NewStyle, int NewValue)
+	{
+		if (NewStyle == ss_Standard)
+		{
+			int nDef = IsWidth ? 80 : 25;
+			int nMax = IsWidth ? 1000 : 500;
+			if (NewValue <= 0) NewValue = nDef; else if (NewValue > nMax) NewValue = nMax;
+		}
+		else if (NewStyle == ss_Percents)
+		{
+			int nDef = IsWidth ? 50 : 30;
+			int nMax = 100;
+			if (NewValue <= 0) NewValue = nDef; else if (NewValue > nMax) NewValue = nMax;
+		}
+
+		if (!NewValue)
+		{
+			// Size can't be empty
+			_ASSERTE(NewValue);  // -V571
+			// Fail
+			return false;
+		}
+
+		Value = NewValue;
+		Style = NewStyle;
+		return true;
+	};
+
+	void SetFromRaw(bool IsWidth, DWORD aRaw)
+	{
+		CESize v; v.Raw = aRaw;
+		if (v.Style == ss_Standard || v.Style == ss_Pixels || v.Style == ss_Percents)
+		{
+			this->Set(IsWidth, v.Style, v.Value);
+		}
+	};
+
+	bool SetFromString(bool IsWidth, const wchar_t* sValue)
+	{
+		if (!sValue || !*sValue)
+			return false;
+		wchar_t* pszEnd = NULL;
+		// Try to convert
+		int NewValue = wcstol(sValue, &pszEnd, 10);
+		if (!NewValue)
+			return false;
+
+		CESizeStyle NewStyle = ss_Standard;
+		if (pszEnd)
+		{
+			switch (*SkipNonPrintable(pszEnd))
+			{
+			case L'%':
+				NewStyle = ss_Percents; break;
+			case L'p':
+				NewStyle = ss_Pixels; break;
+			}
+		}
+		// Done
+		return Set(IsWidth, NewStyle, NewValue);
+	};
+};
