@@ -243,29 +243,6 @@ bool LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*=
 	return gpConEmu->LogString(asInfo, abWriteTime, abWriteLine);
 }
 
-LPCWSTR GetWindowModeName(ConEmuWindowMode wm)
-{
-	static wchar_t swmCurrent[] = L"wmCurrent";
-	static wchar_t swmNotChanging[] = L"wmNotChanging";
-	static wchar_t swmNormal[] = L"wmNormal";
-	static wchar_t swmMaximized[] = L"wmMaximized";
-	static wchar_t swmFullScreen[] = L"wmFullScreen";
-	switch (wm)
-	{
-	case wmCurrent:
-		return swmCurrent;
-	case wmNotChanging:
-		return swmNotChanging;
-	case wmNormal:
-		return swmNormal;
-	case wmMaximized:
-		return swmMaximized;
-	case wmFullScreen:
-		return swmFullScreen;
-	}
-	return L"INVALID";
-}
-
 void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/)
 {
 	wchar_t szFull[512];
@@ -287,48 +264,6 @@ void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int
 		return;
 	DEBUGSTRSHUTSTEP(szFull);
 #endif
-}
-
-/* Используются как extern в ConEmuCheck.cpp */
-/*
-LPVOID _calloc(size_t nCount,size_t nSize) {
-	return calloc(nCount,nSize);
-}
-LPVOID _malloc(size_t nCount) {
-	return malloc(nCount);
-}
-void   _free(LPVOID ptr) {
-	free(ptr);
-}
-*/
-
-
-bool IntFromString(int& rnValue, LPCWSTR asValue, int anBase /*= 10*/, LPCWSTR* rsEnd /*= NULL*/)
-{
-	bool bOk = false;
-	wchar_t* pszEnd = NULL;
-
-	if (!asValue || !*asValue)
-	{
-		rnValue = 0;
-	}
-	else
-	{
-		// Skip hex prefix if exists
-		if (anBase == 16)
-		{
-			if (asValue[0] == L'x' || asValue[0] == L'X')
-				asValue += 1;
-			else if (asValue[0] == L'0' && (asValue[1] == L'x' || asValue[1] == L'X'))
-				asValue += 2;
-		}
-
-		rnValue = wcstol(asValue, &pszEnd, anBase);
-		bOk = (pszEnd && (pszEnd != asValue));
-	}
-
-	if (rsEnd) *rsEnd = pszEnd;
-	return bOk;
 }
 
 bool GetDlgItemSigned(HWND hDlg, WORD nID, int& nValue, int nMin /*= 0*/, int nMax /*= 0*/)
@@ -2458,8 +2393,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	_ASSERTE(sizeof(CESERVER_REQ_STARTSTOPRET) <= sizeof(CESERVER_REQ_STARTSTOP));
-	ZeroStruct(gOSVer);
-	gOSVer.dwOSVersionInfoSize = sizeof(gOSVer);
+	gOSVer = {sizeof(gOSVer)};
 	GetOsVersionInformational(&gOSVer);
 	gnOsVer = ((gOSVer.dwMajorVersion & 0xFF) << 8) | (gOSVer.dwMinorVersion & 0xFF);
 	HeapInitialize();
@@ -2578,10 +2512,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	gAllowAssertThread = am_Thread;
 	#endif
 
-	#if defined(__GNUC__) || defined(_DEBUG)
-	GnuUnitTests();
-	#endif
-
+	RunDebugTests();
 
 	// If possible, open our windows on the monitor where user have clicked
 	// our icon (shortcut on the desktop or TaskBar)

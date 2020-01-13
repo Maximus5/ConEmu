@@ -414,3 +414,54 @@ void StripLines(wchar_t* pszText, LPCWSTR pszCommentMark)
 
 	*pszDst = 0;
 }
+
+bool IntFromString(int& rnValue, LPCWSTR asValue, int anBase /*= 10*/, LPCWSTR* rsEnd /*= NULL*/)
+{
+	bool bOk = false;
+	wchar_t* pszEnd = NULL;
+
+	if (!asValue || !*asValue)
+	{
+		rnValue = 0;
+	}
+	else
+	{
+		// Skip hex prefix if exists
+		if (anBase == 16)
+		{
+			if (asValue[0] == L'x' || asValue[0] == L'X')
+				asValue += 1;
+			else if (asValue[0] == L'0' && (asValue[1] == L'x' || asValue[1] == L'X'))
+				asValue += 2;
+		}
+
+		rnValue = wcstol(asValue, &pszEnd, anBase);
+		bOk = (pszEnd && (pszEnd != asValue));
+	}
+
+	if (rsEnd) *rsEnd = pszEnd;
+	return bOk;
+}
+
+LPCWSTR GetWindowModeName(ConEmuWindowMode wm)
+{
+	static wchar_t swmCurrent[] = L"wmCurrent";
+	static wchar_t swmNotChanging[] = L"wmNotChanging";
+	static wchar_t swmNormal[] = L"wmNormal";
+	static wchar_t swmMaximized[] = L"wmMaximized";
+	static wchar_t swmFullScreen[] = L"wmFullScreen";
+	switch (wm)
+	{
+	case wmCurrent:
+		return swmCurrent;
+	case wmNotChanging:
+		return swmNotChanging;
+	case wmNormal:
+		return swmNormal;
+	case wmMaximized:
+		return swmMaximized;
+	case wmFullScreen:
+		return swmFullScreen;
+	}
+	return L"INVALID";
+}

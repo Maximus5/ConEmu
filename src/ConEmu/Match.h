@@ -60,10 +60,10 @@ public:
 	int mn_SrcFrom/*Cursor pos*/;
 
 protected:
-	std::function<LPCWSTR(LPCWSTR asSrc, CEStr& szFull)> GetFileFromConsole_;
+	std::function<bool(LPCWSTR asSrc, CEStr& szFull)> GetFileFromConsole_;
 
 public:
-	CMatch(std::function<LPCWSTR(LPCWSTR asSrc, CEStr& szFull)>&& GetFileFromConsole);
+	CMatch(std::function<bool(LPCWSTR asSrc, CEStr& szFull)>&& GetFileFromConsole);
 	~CMatch();
 
 public:
@@ -83,13 +83,4 @@ protected:
 protected:
 	CEStr ms_FileCheck;
 	bool IsValidFile(LPCWSTR asFrom, int anLen, LPCWSTR pszInvalidChars, LPCWSTR pszSpacing, int& rnLen);
-
-public:
-	#ifdef _DEBUG
-	static void UnitTests();
-	void UnitTestMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anMatchStart, int anMatchEnd, LPCWSTR asMatchText);
-	void UnitTestNoMatch(ExpandTextRangeType etr, LPCWSTR asLine, int anLineLen, int anStart, int anEnd);
-	void UnitTestAlert(LPCWSTR asLine, LPCWSTR asExpected, LPCWSTR pszText);
-	void UnitMatchTestAlert();
-	#endif
 };

@@ -6872,7 +6872,7 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 		_ASSERTE(lcrTo.Y>=0 && lcrTo.Y<GetTextHeight());
 
 		if (!mp_Match)
-			mp_Match = new CMatch([this](LPCWSTR asSrc, CEStr& szFull) -> LPCWSTR {
+			mp_Match = new CMatch([this](LPCWSTR asSrc, CEStr& szFull) -> bool {
 				return mp_RCon->GetFileFromConsole(asSrc, szFull);
 			});
 

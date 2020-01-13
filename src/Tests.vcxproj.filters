@@ -4,6 +4,9 @@
     <Filter Include="ConEmu">
       <UniqueIdentifier>{8CCC3EAC-786E-6982-6129-7DD64D6AF0D2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{000BCD17-6C75-818E-B5B3-3234215D5FE3}</UniqueIdentifier>
+    </Filter>
     <Filter Include="common">
       <UniqueIdentifier>{AEFEE3F6-9AA0-0ECD-835B-22216F9C951D}</UniqueIdentifier>
     </Filter>
@@ -82,6 +85,9 @@
       <Filter>ConEmu</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\DlgItemHelper.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\DontEnable.h">
       <Filter>ConEmu</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\DpiAware.h">
@@ -240,9 +246,6 @@
     <ClInclude Include="ConEmu\RefRelease.h">
       <Filter>ConEmu</Filter>
     </ClInclude>
-    <ClInclude Include="ConEmu\Registry.h">
-      <Filter>ConEmu</Filter>
-    </ClInclude>
     <ClInclude Include="ConEmu\RunQueue.h">
       <Filter>ConEmu</Filter>
     </ClInclude>
@@ -382,6 +385,9 @@
       <Filter>ConEmu</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\SetTypes.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SettingsStorage.h">
       <Filter>ConEmu</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\ShObjIdl_Part.h">
@@ -809,6 +815,9 @@
     <ClCompile Include="ConEmu\DlgItemHelper.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmu\DontEnable.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
     <ClCompile Include="ConEmu\DpiAware.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
@@ -857,6 +866,9 @@
     <ClCompile Include="ConEmu\HotkeyChord.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmu\HotkeyChord_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="ConEmu\HotkeyDlg.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
@@ -898,6 +910,9 @@
     </ClCompile>
     <ClCompile Include="ConEmu\Match.cpp">
       <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Match_test.cpp">
+      <Filter>tests</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Menu.cpp">
       <Filter>ConEmu</Filter>
@@ -942,9 +957,6 @@
       <Filter>ConEmu</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Recreate.cpp">
-      <Filter>ConEmu</Filter>
-    </ClCompile>
-    <ClCompile Include="ConEmu\Registry.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\RunQueue.cpp">
@@ -1083,6 +1095,9 @@
       <Filter>ConEmu</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\SetPgViews.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SettingsStorage.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\SizeInfo.cpp">
@@ -1343,5 +1358,15 @@
     <ClCompile Include="modules\googletest\googletest\src\gtest-all.cc">
       <Filter>modules\googletest\googletest\src</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ConEmu\conemu.gcc.manifest">
+      <Filter>Resources</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ConEmu\ConEmu.rc">
+      <Filter>Resources</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

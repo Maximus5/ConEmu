@@ -148,6 +148,10 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;HIDE_TODO;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -156,6 +160,9 @@
       <AdditionalDependencies>comctl32.lib;shlwapi.lib;version.lib;gdiplus.lib;winmm.lib;netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateMapFile>true</GenerateMapFile>
     </Link>
+    <Manifest>
+      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -172,6 +179,10 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN64;_WIN64;NDEBUG;HIDE_TODO;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -180,6 +191,9 @@
       <AdditionalDependencies>comctl32.lib;shlwapi.lib;version.lib;gdiplus.lib;winmm.lib;netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateMapFile>true</GenerateMapFile>
     </Link>
+    <Manifest>
+      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -192,12 +206,19 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>comctl32.lib;shlwapi.lib;version.lib;gdiplus.lib;winmm.lib;netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateMapFile>true</GenerateMapFile>
     </Link>
+    <Manifest>
+      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -210,12 +231,19 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>comctl32.lib;shlwapi.lib;version.lib;gdiplus.lib;winmm.lib;netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateMapFile>true</GenerateMapFile>
     </Link>
+    <Manifest>
+      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
     <ClCompile>
@@ -228,12 +256,19 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>comctl32.lib;shlwapi.lib;version.lib;gdiplus.lib;winmm.lib;netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateMapFile>true</GenerateMapFile>
     </Link>
+    <Manifest>
+      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
     <ClCompile>
@@ -246,12 +281,19 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <ExceptionHandling>Sync</ExceptionHandling>
     </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>comctl32.lib;shlwapi.lib;version.lib;gdiplus.lib;winmm.lib;netapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateMapFile>true</GenerateMapFile>
     </Link>
+    <Manifest>
+      <AdditionalManifestFiles>ConEmu/conemu.gcc.manifest;%(AdditionalManifestFiles)</AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ConEmu\About.h" />
@@ -274,6 +316,7 @@
     <ClInclude Include="ConEmu\DebugMsgLog.h" />
     <ClInclude Include="ConEmu\DefaultTerm.h" />
     <ClInclude Include="ConEmu\DlgItemHelper.h" />
+    <ClInclude Include="ConEmu\DontEnable.h" />
     <ClInclude Include="ConEmu\DpiAware.h" />
     <ClInclude Include="ConEmu\DragDrop.h" />
     <ClInclude Include="ConEmu\DragDropData.h" />
@@ -326,7 +369,6 @@
     <ClInclude Include="ConEmu\RealServer.h" />
     <ClInclude Include="ConEmu\Recreate.h" />
     <ClInclude Include="ConEmu\RefRelease.h" />
-    <ClInclude Include="ConEmu\Registry.h" />
     <ClInclude Include="ConEmu\RunQueue.h" />
     <ClInclude Include="ConEmu\ScreenDump.h" />
     <ClInclude Include="ConEmu\SearchCtrl.h" />
@@ -374,6 +416,7 @@
     <ClInclude Include="ConEmu\SetPgUpdate.h" />
     <ClInclude Include="ConEmu\SetPgViews.h" />
     <ClInclude Include="ConEmu\SetTypes.h" />
+    <ClInclude Include="ConEmu\SettingsStorage.h" />
     <ClInclude Include="ConEmu\ShObjIdl_Part.h" />
     <ClInclude Include="ConEmu\SizeInfo.h" />
     <ClInclude Include="ConEmu\Status.h" />
@@ -517,6 +560,7 @@
     <ClCompile Include="ConEmu\CustomFonts.cpp" />
     <ClCompile Include="ConEmu\DefaultTerm.cpp" />
     <ClCompile Include="ConEmu\DlgItemHelper.cpp" />
+    <ClCompile Include="ConEmu\DontEnable.cpp" />
     <ClCompile Include="ConEmu\DpiAware.cpp" />
     <ClCompile Include="ConEmu\DragDrop.cpp" />
     <ClCompile Include="ConEmu\DragDropData.cpp" />
@@ -533,6 +577,7 @@
     <ClCompile Include="ConEmu\GuiServer.cpp" />
     <ClCompile Include="ConEmu\HooksUnlocker.cpp" />
     <ClCompile Include="ConEmu\HotkeyChord.cpp" />
+    <ClCompile Include="ConEmu\HotkeyChord_test.cpp" />
     <ClCompile Include="ConEmu\HotkeyDlg.cpp" />
     <ClCompile Include="ConEmu\HotkeyList.cpp" />
     <ClCompile Include="ConEmu\Hotkeys.cpp" />
@@ -547,6 +592,7 @@
     <ClCompile Include="ConEmu\MacroImpl.cpp" />
     <ClCompile Include="ConEmu\Macro_test.cpp" />
     <ClCompile Include="ConEmu\Match.cpp" />
+    <ClCompile Include="ConEmu\Match_test.cpp" />
     <ClCompile Include="ConEmu\Menu.cpp" />
     <ClCompile Include="ConEmu\MyClipboard.cpp" />
     <ClCompile Include="ConEmu\OleInitializer.cpp" />
@@ -562,7 +608,6 @@
     <ClCompile Include="ConEmu\RealConsole.cpp" />
     <ClCompile Include="ConEmu\RealServer.cpp" />
     <ClCompile Include="ConEmu\Recreate.cpp" />
-    <ClCompile Include="ConEmu\Registry.cpp" />
     <ClCompile Include="ConEmu\RunQueue.cpp" />
     <ClCompile Include="ConEmu\ScreenDump.cpp" />
     <ClCompile Include="ConEmu\SearchCtrl.cpp" />
@@ -609,6 +654,7 @@
     <ClCompile Include="ConEmu\SetPgTransparent.cpp" />
     <ClCompile Include="ConEmu\SetPgUpdate.cpp" />
     <ClCompile Include="ConEmu\SetPgViews.cpp" />
+    <ClCompile Include="ConEmu\SettingsStorage.cpp" />
     <ClCompile Include="ConEmu\SizeInfo.cpp" />
     <ClCompile Include="ConEmu\Status.cpp" />
     <ClCompile Include="ConEmu\SystemEnvironment.cpp" />
@@ -695,6 +741,12 @@
     <ClCompile Include="common\wcchars.cpp" />
     <ClCompile Include="common\wcwidth.cpp" />
     <ClCompile Include="modules\googletest\googletest\src\gtest-all.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ConEmu\conemu.gcc.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ConEmu\ConEmu.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -75,7 +75,6 @@ public:
 	ConEmuModifiers Mod;
 
 	#ifdef _DEBUG
-	static void ChordUnitTests();
 	static void ValidateChordMod(ConEmuModifiers aMod);
 	#endif
 

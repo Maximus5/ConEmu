@@ -46,3 +46,10 @@ void GnuUnitTests()
 	Assert(iDbg==0);
 }
 #endif
+
+void RunDebugTests()
+{
+	#if defined(__GNUC__) || defined(_DEBUG)
+	GnuUnitTests();
+	#endif
+}

@@ -34,3 +34,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #if defined(__GNUC__) || defined(_DEBUG)
 void GnuUnitTests();
 #endif
+
+void RunDebugTests();
