@@ -157,7 +157,7 @@ public:
 		mb_Started = false;
 		mn_Position = 0;
 
-		m_Items.swap(MArray<T>());
+		m_Items.clear();
 	};
 
 	bool Open()
