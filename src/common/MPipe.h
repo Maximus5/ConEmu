@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WUser.h"
 #include <limits>
 #include <stdexcept>
+#include <iterator>
 
 #ifndef NOMINMAX
 #error NOMINMAX was not defined
