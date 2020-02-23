@@ -67,6 +67,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	//GetVersionEx(&osv);
 	//DWORD nOsVer = (osv.dwMajorVersion << 8) | (osv.dwMinorVersion & 0xFF);
 
+	PBYTE ptr_jne = nullptr;
 
 	if (ptrAllocated)
 		*ptrAllocated = 0;
@@ -301,8 +302,6 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	*ip.pB++ = 0x15;
 	*ip.pI   = -(int)(ip.pB + 4 - code - 16);  ip.pI++; // -- pointer to procedure address // GCC do the INC before rvalue eval
 	#endif
-
-	PBYTE ptr_jne = nullptr;
 
 	// Due to ASLR of Kernel32.dll in Windows 8 RC x64 we need this workaround
 	// JIC expanded to Windows 7 too.
