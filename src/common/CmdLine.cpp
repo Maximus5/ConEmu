@@ -710,6 +710,7 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 	int nLastChar;
 	#ifdef _DEBUG
 	CmdArg szDbgFirst;
+	bool bIsBatch = false;
 	#endif
 
 	if (!asCmdLine || !*asCmdLine)
@@ -720,7 +721,6 @@ bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 
 	#ifdef _DEBUG
 	// Это минимальные проверки, собственно к коду - не относятся
-	bool bIsBatch = false;
 	{
 		NextArg(asCmdLine, szDbgFirst);
 		LPCWSTR psz = PointToExt(szDbgFirst);
