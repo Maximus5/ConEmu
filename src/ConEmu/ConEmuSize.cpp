@@ -4596,6 +4596,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 	DEBUGTEST(BOOL bIsVisible = IsWindowVisible(ghWnd););
 
+	LPCWSTR pszInfo;	
+
 	//!!!
 	switch (NewMode)
 	{
@@ -4908,7 +4910,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 		_ASSERTE(FALSE && "Unsupported mode");
 	}
 
-	LPCWSTR pszInfo = L"SetWindowMode done";
+	pszInfo = L"SetWindowMode done";
 	if (!LogString(pszInfo)) { DEBUGSTRWMODE(pszInfo); }
 
 	//WindowMode = inMode; // Запомним!
