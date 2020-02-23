@@ -25,11 +25,15 @@ USERLIBS += -ladvapi32 -lshell32 -lgdi32 -lcomdlg32 -lole32 -luuid -lcomctl32
 
 SRCS = \
 		../common/CEStr.cpp          \
+		../common/CEHandle.cpp       \
 		../common/CmdLine.cpp        \
 		../common/Common.cpp         \
 		../common/ConEmuCheck.cpp    \
+		../common/ConsoleMixAttr.cpp \
+		../common/EnvVar.cpp         \
 		../common/execute.cpp        \
 		../common/HkFunc.cpp         \
+		../common/Keyboard.cpp       \
 		../common/MAssert.cpp        \
 		../common/MBSTR.cpp          \
 		../common/md5.cpp            \
@@ -100,6 +104,7 @@ SRCS = \
 		GdiObjects.cpp     \
 		GestureEngine.cpp  \
 		GuiServer.cpp      \
+		helper.cpp         \
 		HooksUnlocker.cpp  \
 		HotkeyChord.cpp    \
 		HotkeyDlg.cpp      \
@@ -112,9 +117,11 @@ SRCS = \
 		LngRc.cpp          \
 		LoadImg.cpp        \
 		Macro.cpp          \
+		MacroImpl.cpp      \
 		Match.cpp          \
 		Menu.cpp           \
 		MyClipboard.cpp    \
+		OleInitializer.cpp \
 		Options.cpp        \
 		OptionsClass.cpp   \
 		OptionsFast.cpp    \
@@ -155,6 +162,7 @@ SRCS = \
 		SetPgFarMacro.cpp  \
 		SetPgFeatures.cpp  \
 		SetPgFonts.cpp     \
+		SetPgGeneral.cpp   \
 		SetPgHilight.cpp   \
 		SetPgInfo.cpp      \
 		SetPgIntegr.cpp    \
@@ -175,6 +183,7 @@ SRCS = \
 		SetPgViews.cpp     \
 		SizeInfo.cpp       \
 		Status.cpp         \
+		SystemEnvironment.cpp \
 		TabBar.cpp         \
 		TabCtrlBase.cpp    \
 		TabCtrlWin.cpp     \

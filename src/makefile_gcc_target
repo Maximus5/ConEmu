@@ -83,7 +83,7 @@ $(RES2): $(RES_NAME2).res
 	@$(MKDIR) -p $(@D)
 	@$(WINDRES) $(RCFLAGS) -i $< -o $@
 
-$(RELEASEFULLNAME): $(OBJS) $(DEF)
+$(RELEASEFULLNAME): $(OBJS)
 	@echo linking $@
 	@$(MKDIR) -p $(@D)
 ifeq ($(EXT),exe)

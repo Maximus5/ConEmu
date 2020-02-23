@@ -490,6 +490,7 @@ TaskSchedulerState CTaskScheduler2::GetState()
 // Task Scheduler 1.0 (pre-Vista)
 // ******************************
 
+#if !defined(__GNUC__) || !defined(__MINGW64_VERSION_MAJOR)
 // {148BD52A-A2AB-11CE-B11F-00AA00530503}
 DEFINE_GUID(CLSID_CTaskScheduler, 0x148BD52A, 0xA2AB, 0x11CE, 0xB1, 0x1F, 0x00, 0xAA, 0x00, 0x53, 0x05, 0x03);
 // {148BD527-A2AB-11CE-B11F-00AA00530503}
@@ -498,6 +499,7 @@ DEFINE_GUID(IID_ITaskScheduler, 0x148BD527L, 0xA2AB, 0x11CE, 0xB1, 0x1F, 0x00, 0
 DEFINE_GUID(CLSID_CTask, 0x148BD520, 0xA2AB, 0x11CE, 0xB1, 0x1F, 0x00, 0xAA, 0x00, 0x53, 0x05, 0x03);
 // {148BD524-A2AB-11CE-B11F-00AA00530503}
 DEFINE_GUID(IID_ITask, 0x148BD524L, 0xA2AB, 0x11CE, 0xB1, 0x1F, 0x00, 0xAA, 0x00, 0x53, 0x05, 0x03);
+#endif
 
 // class CTaskScheduler1 : public CTaskSchedulerBase
 // ITaskScheduler *pITS;

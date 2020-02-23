@@ -19,7 +19,7 @@ BASEADDRESS =
 
 include ../makefile_gcc_inc
 
-USERLIBS += -lAdvapi32 -lGdi32 -lShell32 -lShlwapi -lOleAut32
+USERLIBS += -lAdvapi32 -lGdi32 -lShell32 -lShlwapi -lOleAut32 -lwinmm
 
 SRCS = \
 		../common/CEStr.cpp         \
@@ -29,9 +29,12 @@ SRCS = \
 		../common/ConsoleMixAttr.cpp \
 		../common/ConsoleRead.cpp    \
 		../common/EmergencyShow.cpp  \
+		../common/EnvVar.cpp         \
 		../common/execute.cpp        \
+		../common/HandleKeeper.cpp         \
 		../common/HkFunc.cpp         \
 		../common/InQueue.cpp        \
+		../common/Keyboard.cpp       \
 		../common/MAssert.cpp        \
 		../common/MConHandle.cpp     \
 		../common/Memory.cpp         \
@@ -64,6 +67,9 @@ SRCS = \
 		../common/WUser.cpp          \
 		../ConEmuHk/Injects.cpp      \
 		Actions.cpp        \
+		ConAnsi.cpp        \
+		ConAnsiImpl.cpp    \
+		ConData.cpp        \
 		ConEmuCmd.cpp      \
 		ConEmuSrv.cpp      \
 		ConProcess.cpp     \
@@ -74,8 +80,10 @@ SRCS = \
 		GuiMacro.cpp       \
 		Infiltrate.cpp     \
 		InjectRemote.cpp   \
+		LogFunction.cpp    \
 		MapDump.cpp        \
 		Queue.cpp          \
+		Shutdown.cpp       \
 		SrvCommands.cpp    \
 		SrvPipes.cpp       \
 		StartEnv.cpp       \
