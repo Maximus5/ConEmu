@@ -1413,7 +1413,7 @@ RECT CConEmuChild::CalcDCMargins(const RECT& arcBack)
 
 	// Actual gaps
 	if ((gpSet->isTryToCenter && (gpConEmu->isZoomed() || gpConEmu->isFullScreen() || gpSet->isQuakeStyle))
-		|| mp_VCon->RCon()->isNtvdm())
+		|| (mp_VCon->RCon() && mp_VCon->RCon()->isNtvdm()))
 	{
 		// Precise shifts calculation
 		if (nDeltaX > 0)
@@ -1429,7 +1429,7 @@ RECT CConEmuChild::CalcDCMargins(const RECT& arcBack)
 	}
 
 	if ((gpSet->isTryToCenter && (gpConEmu->isZoomed() || gpConEmu->isFullScreen()))
-		|| mp_VCon->RCon()->isNtvdm())
+		|| (mp_VCon->RCon() && mp_VCon->RCon()->isNtvdm()))
 	{
 		if (nDeltaY > 0)
 		{

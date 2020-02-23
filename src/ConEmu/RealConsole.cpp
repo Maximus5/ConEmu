@@ -13771,7 +13771,6 @@ bool CRealConsole::isViewer()
 
 bool CRealConsole::isNtvdm()
 {
-	if (!this) return false;
 
 	if (mn_ProgramStatus & CES_NTVDM)
 	{
