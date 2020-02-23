@@ -216,11 +216,11 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	#define HL(fore) Highlighter hl(hOut, csbi.wAttributes, fore)
 
 	#if defined(__GNUC__)
-	lstrcpyn(szCLVer, "GNUC");
+	strcpy(szCLVer, "GNUC");
 	#elif defined(_MSC_VER)
 	sprintf_c(szCLVer, "VC %u.%u", (int)(_MSC_VER / 100), (int)(_MSC_VER % 100));
 	#else
-	lstrcpyn(szCLVer, "<Unknown CL>");
+	strcpy(szCLVer, "<Unknown CL>");
 	#endif
 
 	sprintf_c(szLine, "main arguments (count %i) {%s}\n", gn_argc, szCLVer);
