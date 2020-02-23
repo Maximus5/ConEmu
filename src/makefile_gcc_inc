@@ -100,11 +100,11 @@ GCCWARNINGS += -Wwrite-strings
 GCCWARNINGS += -Wparentheses
 GCCWARNINGS += -Wnarrowing
 
-FCPPOPT = -fstrict-aliasing -funsigned-char
-FCPPOPT += -fno-rtti
+FCPPOPT = -fstrict-aliasing -funsigned-char -fpermissive
+#FCPPOPT += -fno-rtti
 #FCPPOPT += -fno-exceptions
 
 CFLAGS = -pipe $(CCWIDE) $(BITDEF) $(USERCPPFLAGS) $(DEBUGFLAGS) $(COPTIMIZE) $(USERCPP) $(WINVER)
 
-CXXFLAGS = $(CFLAGS) $(ENCFLAGS)  -Os $(FCPPOPT) $(GCCWARNINGS) $(CXXWIDE) -std=c++11
+CXXFLAGS = $(CFLAGS) $(ENCFLAGS)  -Os $(FCPPOPT) $(GCCWARNINGS) $(CXXWIDE) -std=c++17
 CCFLAGS = $(CFLAGS)

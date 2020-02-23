@@ -12,7 +12,7 @@
 NAME = ConEmuHk
 EXT = dll
 RELEASESUBDIR = /ConEmu
-DEF = export.gcc.def
+DEF = export.gcc${DIRBIT}.def
 USERCPP = -D CONEMU_MINIMAL
 LNKPLATFORM = -mwindows
 BASEADDRESS = 0x7E110000
@@ -21,7 +21,7 @@ include ../makefile_gcc_inc
 
 USERLIBS += -luuid
 
-FCPPOPT += -fomit-frame-pointer -fstrict-aliasing -fno-exceptions
+FCPPOPT += -fomit-frame-pointer -fstrict-aliasing
 COPTIMIZE =
 
 SRCS = \
@@ -31,10 +31,12 @@ SRCS = \
 		../common/ConEmuCheck.cpp    \
 		../common/ConsoleMixAttr.cpp \
 		../common/ConsoleRead.cpp    \
+		../common/EnvVar.cpp         \
 		../common/execute.cpp        \
 		../common/HandleKeeper.cpp   \
 		../common/HkFunc.cpp         \
 		../common/InQueue.cpp        \
+		../common/Keyboard.cpp       \
 		../common/MAssert.cpp        \
 		../common/MConHandle.cpp     \
 		../common/Memory.cpp         \

@@ -231,7 +231,7 @@ extern "C" {
 	FARPROC WINAPI GetWriteConsoleW();
 	int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
 	FARPROC WINAPI GetLoadLibraryW();
-	BOOL WINAPI RequestTrampolines(HMODULE hModule);
+	BOOL WINAPI RequestTrampolines(LPCWSTR asModule, HMODULE hModule);
 #if defined(__GNUC__)
 };
 #endif

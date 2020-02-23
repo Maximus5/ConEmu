@@ -24,9 +24,11 @@ USERLIBS += -lShlwapi -lgdi32 -lshell32
 SRCS = \
 		../common/CEStr.cpp         \
 		../common/CmdLine.cpp        \
+		../common/EnvVar.cpp         \
 		../common/HkFunc.cpp         \
 		../common/MAssert.cpp        \
 		../common/Memory.cpp         \
+		../common/MModule.cpp        \
 		../common/MSectionSimple.cpp \
 		../common/MStrDup.cpp        \
 		../common/MStrSafe.cpp       \
