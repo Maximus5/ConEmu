@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include <vector>
+#include <type_traits>
 
 #ifndef NOMARRAYSORT
 #include <algorithm>
@@ -59,12 +60,12 @@ public:
 	MArrayAllocator()
 	{
 		HeapInitialize();
-	};
+	}
 	template<class U> MArrayAllocator(const MArrayAllocator<U>& other)
 	{
 		HeapInitialize();
-	};
-	template<class U> MArrayAllocator(MArrayAllocator<U>&& other) = delete;
+	}
+	template<class U, std::enable_if_t<!std::is_same_v<T, U>>> MArrayAllocator(MArrayAllocator<U>&& other) = delete;
 	template<class U> MArrayAllocator<T>& operator=(const MArrayAllocator<U>& other) = delete;
 	template<class U> bool operator==(const MArrayAllocator<U>& other) const { return true; };
 	template<class U> bool operator!=(const MArrayAllocator<U>& other) const { return false; };
