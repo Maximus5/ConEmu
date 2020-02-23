@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
+VisualStudioVersion = 15.0.28307.1022
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmu", "ConEmu.vcxproj", "{8CCC3EAC-786E-6982-6129-7DD64D6AF0D2}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConEmuC", "ConEmuC.vcxproj", "{4F5E1834-BB3D-97CF-C455-22A630B4FD30}"
@@ -28,8 +30,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ConEmuTh.pe", "Far.ConEmuTh.pe.vcxproj", "{72AEC016-DE39-2EDB-E74A-B1CF53558ADB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Far.ExtendedConsole", "Far.ExtendedConsole.vcxproj", "{3044E8BC-9CA5-C5CA-2513-0C7D9173FC89}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tests", "Tests.vcxproj", "{5865280E-C479-50BF-8DFB-F31EF9CE4CF0}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "common-kernel", "common-kernel.vcxproj", "{9CA77168-0868-ED9E-D1A2-361C3D22327B}"
 EndProject
@@ -189,18 +189,6 @@ Global
 		{3044E8BC-9CA5-C5CA-2513-0C7D9173FC89}.Remote|Win32.Build.0 = Remote|Win32
 		{3044E8BC-9CA5-C5CA-2513-0C7D9173FC89}.Remote|x64.ActiveCfg = Remote|x64
 		{3044E8BC-9CA5-C5CA-2513-0C7D9173FC89}.Remote|x64.Build.0 = Remote|x64
-		{5865280E-C479-50BF-8DFB-F31EF9CE4CF0}.Debug|Win32.ActiveCfg = Debug|Win32
-		{5865280E-C479-50BF-8DFB-F31EF9CE4CF0}.Debug|Win32.Build.0 = Debug|Win32
-		{5865280E-C479-50BF-8DFB-F31EF9CE4CF0}.Debug|x64.ActiveCfg = Debug|x64
-		{5865280E-C479-50BF-8DFB-F31EF9CE4CF0}.Debug|x64.Build.0 = Debug|x64
-		{5865280E-C479-50BF-8DFB-F31EF9CE4CF0}.Release|Win32.ActiveCfg = Release|Win32
-		{5865280E-C479-50BF-8DFB-F31EF9CE4CF0}.Release|Win32.Build.0 = Release|Win32
-		{5865280E-C479-50BF-8DFB-F31EF9CE4CF0}.Release|x64.ActiveCfg = Release|x64
-		{5865280E-C479-50BF-8DFB-F31EF9CE4CF0}.Release|x64.Build.0 = Release|x64
-		{5865280E-C479-50BF-8DFB-F31EF9CE4CF0}.Remote|Win32.ActiveCfg = Remote|Win32
-		{5865280E-C479-50BF-8DFB-F31EF9CE4CF0}.Remote|Win32.Build.0 = Remote|Win32
-		{5865280E-C479-50BF-8DFB-F31EF9CE4CF0}.Remote|x64.ActiveCfg = Remote|x64
-		{5865280E-C479-50BF-8DFB-F31EF9CE4CF0}.Remote|x64.Build.0 = Remote|x64
 		{9CA77168-0868-ED9E-D1A2-361C3D22327B}.Debug|Win32.ActiveCfg = Debug|Win32
 		{9CA77168-0868-ED9E-D1A2-361C3D22327B}.Debug|Win32.Build.0 = Debug|Win32
 		{9CA77168-0868-ED9E-D1A2-361C3D22327B}.Debug|x64.ActiveCfg = Debug|x64
@@ -228,5 +216,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A64F75C2-5BD0-41D5-824F-C15D460E3F9F}
 	EndGlobalSection
 EndGlobal

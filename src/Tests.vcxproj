@@ -93,42 +93,42 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>UnitTests\</OutDir>
+    <OutDir>..\Release\</OutDir>
     <IntDir>_VCBUILD\Release\Tests_Win32\</IntDir>
     <TargetName>Tests_Release_Win32</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>UnitTests\</OutDir>
+    <OutDir>..\Release\</OutDir>
     <IntDir>_VCBUILD\Release\Tests_x64\</IntDir>
     <TargetName>Tests_Release_x64</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>UnitTests\</OutDir>
+    <OutDir>..\Debug\</OutDir>
     <IntDir>_VCBUILD\Debug\Tests_Win32\</IntDir>
     <TargetName>Tests_Debug_Win32</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>UnitTests\</OutDir>
+    <OutDir>..\Debug\</OutDir>
     <IntDir>_VCBUILD\Debug\Tests_x64\</IntDir>
     <TargetName>Tests_Debug_x64</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>UnitTests\</OutDir>
+    <OutDir>Z:\</OutDir>
     <IntDir>_VCBUILD\Remote\Tests_Win32\</IntDir>
     <TargetName>Tests_Remote_Win32</TargetName>
     <TargetExt>.exe</TargetExt>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Remote|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>UnitTests\</OutDir>
+    <OutDir>Z:\</OutDir>
     <IntDir>_VCBUILD\Remote\Tests_x64\</IntDir>
     <TargetName>Tests_Remote_x64</TargetName>
     <TargetExt>.exe</TargetExt>
@@ -254,6 +254,156 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ConEmu\About.h" />
+    <ClInclude Include="ConEmu\AboutDlg.h" />
+    <ClInclude Include="ConEmu\AltNumpad.h" />
+    <ClInclude Include="ConEmu\Attach.h" />
+    <ClInclude Include="ConEmu\Background.h" />
+    <ClInclude Include="ConEmu\BaseDragDrops.h" />
+    <ClInclude Include="ConEmu\CmdHistory.h" />
+    <ClInclude Include="ConEmu\ColorFix.h" />
+    <ClInclude Include="ConEmu\ConEmu.h" />
+    <ClInclude Include="ConEmu\ConEmuCtrl.h" />
+    <ClInclude Include="ConEmu\ConEmuPipe.h" />
+    <ClInclude Include="ConEmu\ConEmuSize.h" />
+    <ClInclude Include="ConEmu\ConEmuStart.h" />
+    <ClInclude Include="ConEmu\ConfirmDlg.h" />
+    <ClInclude Include="ConEmu\ConsoleMessages.h" />
+    <ClInclude Include="ConEmu\CreateProcess.h" />
+    <ClInclude Include="ConEmu\CustomFonts.h" />
+    <ClInclude Include="ConEmu\DebugMsgLog.h" />
+    <ClInclude Include="ConEmu\DefaultTerm.h" />
+    <ClInclude Include="ConEmu\DlgItemHelper.h" />
+    <ClInclude Include="ConEmu\DpiAware.h" />
+    <ClInclude Include="ConEmu\DragDrop.h" />
+    <ClInclude Include="ConEmu\DragDropData.h" />
+    <ClInclude Include="ConEmu\DwmApi_Part.h" />
+    <ClInclude Include="ConEmu\DwmHelper.h" />
+    <ClInclude Include="ConEmu\DynDialog.h" />
+    <ClInclude Include="ConEmu\FindDlg.h" />
+    <ClInclude Include="ConEmu\FindPanel.h" />
+    <ClInclude Include="ConEmu\Font.h" />
+    <ClInclude Include="ConEmu\FontInfo.h" />
+    <ClInclude Include="ConEmu\FontMgr.h" />
+    <ClInclude Include="ConEmu\FontPtr.h" />
+    <ClInclude Include="ConEmu\FrameHolder.h" />
+    <ClInclude Include="ConEmu\GdiObjects.h" />
+    <ClInclude Include="ConEmu\GestureEngine.h" />
+    <ClInclude Include="ConEmu\GuiServer.h" />
+    <ClInclude Include="ConEmu\Header.h" />
+    <ClInclude Include="ConEmu\HooksUnlocker.h" />
+    <ClInclude Include="ConEmu\HotkeyChord.h" />
+    <ClInclude Include="ConEmu\HotkeyDlg.h" />
+    <ClInclude Include="ConEmu\HotkeyList.h" />
+    <ClInclude Include="ConEmu\Hotkeys.h" />
+    <ClInclude Include="ConEmu\HtmlCopy.h" />
+    <ClInclude Include="ConEmu\IconList.h" />
+    <ClInclude Include="ConEmu\ImgButton.h" />
+    <ClInclude Include="ConEmu\Inside.h" />
+    <ClInclude Include="ConEmu\LngData.h" />
+    <ClInclude Include="ConEmu\LngDataEnum.h" />
+    <ClInclude Include="ConEmu\LngDataHints.h" />
+    <ClInclude Include="ConEmu\LngDataRsrcs.h" />
+    <ClInclude Include="ConEmu\LngRc.h" />
+    <ClInclude Include="ConEmu\LoadImg.h" />
+    <ClInclude Include="ConEmu\Macro.h" />
+    <ClInclude Include="ConEmu\MacroImpl.h" />
+    <ClInclude Include="ConEmu\Match.h" />
+    <ClInclude Include="ConEmu\Menu.h" />
+    <ClInclude Include="ConEmu\MenuIds.h" />
+    <ClInclude Include="ConEmu\MyClipboard.h" />
+    <ClInclude Include="ConEmu\OleInitializer.h" />
+    <ClInclude Include="ConEmu\Options.h" />
+    <ClInclude Include="ConEmu\OptionsClass.h" />
+    <ClInclude Include="ConEmu\OptionsFast.h" />
+    <ClInclude Include="ConEmu\OptionsHelp.h" />
+    <ClInclude Include="ConEmu\PushInfo.h" />
+    <ClInclude Include="ConEmu\RConData.h" />
+    <ClInclude Include="ConEmu\RConFiles.h" />
+    <ClInclude Include="ConEmu\RConPalette.h" />
+    <ClInclude Include="ConEmu\RealBuffer.h" />
+    <ClInclude Include="ConEmu\RealConsole.h" />
+    <ClInclude Include="ConEmu\RealServer.h" />
+    <ClInclude Include="ConEmu\Recreate.h" />
+    <ClInclude Include="ConEmu\RefRelease.h" />
+    <ClInclude Include="ConEmu\Registry.h" />
+    <ClInclude Include="ConEmu\RunQueue.h" />
+    <ClInclude Include="ConEmu\ScreenDump.h" />
+    <ClInclude Include="ConEmu\SearchCtrl.h" />
+    <ClInclude Include="ConEmu\SetAppSettings.h" />
+    <ClInclude Include="ConEmu\SetCmdTask.h" />
+    <ClInclude Include="ConEmu\SetColorPalette.h" />
+    <ClInclude Include="ConEmu\SetDlgButtons.h" />
+    <ClInclude Include="ConEmu\SetDlgColors.h" />
+    <ClInclude Include="ConEmu\SetDlgFonts.h" />
+    <ClInclude Include="ConEmu\SetDlgLists.h" />
+    <ClInclude Include="ConEmu\SetPgANSI.h" />
+    <ClInclude Include="ConEmu\SetPgAppear.h" />
+    <ClInclude Include="ConEmu\SetPgApps.h" />
+    <ClInclude Include="ConEmu\SetPgBackgr.h" />
+    <ClInclude Include="ConEmu\SetPgBase.h" />
+    <ClInclude Include="ConEmu\SetPgChildGui.h" />
+    <ClInclude Include="ConEmu\SetPgColors.h" />
+    <ClInclude Include="ConEmu\SetPgComspec.h" />
+    <ClInclude Include="ConEmu\SetPgConfirm.h" />
+    <ClInclude Include="ConEmu\SetPgCursor.h" />
+    <ClInclude Include="ConEmu\SetPgDebug.h" />
+    <ClInclude Include="ConEmu\SetPgDefTerm.h" />
+    <ClInclude Include="ConEmu\SetPgEnvironment.h" />
+    <ClInclude Include="ConEmu\SetPgFar.h" />
+    <ClInclude Include="ConEmu\SetPgFarMacro.h" />
+    <ClInclude Include="ConEmu\SetPgFeatures.h" />
+    <ClInclude Include="ConEmu\SetPgFonts.h" />
+    <ClInclude Include="ConEmu\SetPgGeneral.h" />
+    <ClInclude Include="ConEmu\SetPgHilight.h" />
+    <ClInclude Include="ConEmu\SetPgInfo.h" />
+    <ClInclude Include="ConEmu\SetPgIntegr.h" />
+    <ClInclude Include="ConEmu\SetPgKeyboard.h" />
+    <ClInclude Include="ConEmu\SetPgKeys.h" />
+    <ClInclude Include="ConEmu\SetPgMarkCopy.h" />
+    <ClInclude Include="ConEmu\SetPgMouse.h" />
+    <ClInclude Include="ConEmu\SetPgPaste.h" />
+    <ClInclude Include="ConEmu\SetPgQuake.h" />
+    <ClInclude Include="ConEmu\SetPgSizePos.h" />
+    <ClInclude Include="ConEmu\SetPgStartup.h" />
+    <ClInclude Include="ConEmu\SetPgStatus.h" />
+    <ClInclude Include="ConEmu\SetPgTabs.h" />
+    <ClInclude Include="ConEmu\SetPgTaskbar.h" />
+    <ClInclude Include="ConEmu\SetPgTasks.h" />
+    <ClInclude Include="ConEmu\SetPgTransparent.h" />
+    <ClInclude Include="ConEmu\SetPgUpdate.h" />
+    <ClInclude Include="ConEmu\SetPgViews.h" />
+    <ClInclude Include="ConEmu\SetTypes.h" />
+    <ClInclude Include="ConEmu\ShObjIdl_Part.h" />
+    <ClInclude Include="ConEmu\SizeInfo.h" />
+    <ClInclude Include="ConEmu\Status.h" />
+    <ClInclude Include="ConEmu\SystemEnvironment.h" />
+    <ClInclude Include="ConEmu\TabBar.h" />
+    <ClInclude Include="ConEmu\TabCtrlBase.h" />
+    <ClInclude Include="ConEmu\TabCtrlWin.h" />
+    <ClInclude Include="ConEmu\TabID.h" />
+    <ClInclude Include="ConEmu\TaskBar.h" />
+    <ClInclude Include="ConEmu\TaskBarGhost.h" />
+    <ClInclude Include="ConEmu\TaskScheduler.h" />
+    <ClInclude Include="ConEmu\TermX.h" />
+    <ClInclude Include="ConEmu\ToolImg.h" />
+    <ClInclude Include="ConEmu\TrayIcon.h" />
+    <ClInclude Include="ConEmu\UnitTests.h" />
+    <ClInclude Include="ConEmu\Update.h" />
+    <ClInclude Include="ConEmu\UpdateConst.h" />
+    <ClInclude Include="ConEmu\UpdateSet.h" />
+    <ClInclude Include="ConEmu\VConChild.h" />
+    <ClInclude Include="ConEmu\VConGroup.h" />
+    <ClInclude Include="ConEmu\VConRelease.h" />
+    <ClInclude Include="ConEmu\VConText.h" />
+    <ClInclude Include="ConEmu\VirtualConsole.h" />
+    <ClInclude Include="ConEmu\WinObjBase.h" />
+    <ClInclude Include="ConEmu\globals.h" />
+    <ClInclude Include="ConEmu\helper.h" />
+    <ClInclude Include="ConEmu\resource.h" />
+    <ClInclude Include="ConEmu\version.h" />
+    <ClInclude Include="ConEmu\version_macro.h" />
+    <ClInclude Include="ConEmu\version_stage.h" />
     <ClInclude Include="common\CEHandle.h" />
     <ClInclude Include="common\CEStr.h" />
     <ClInclude Include="common\CmdLine.h" />
@@ -350,10 +500,141 @@
     <ClInclude Include="common\xmllite.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConEmu\AboutDlg.cpp" />
+    <ClCompile Include="ConEmu\AltNumpad.cpp" />
+    <ClCompile Include="ConEmu\Attach.cpp" />
+    <ClCompile Include="ConEmu\Background.cpp" />
+    <ClCompile Include="ConEmu\BaseDragDrops.cpp" />
+    <ClCompile Include="ConEmu\CmdHistory.cpp" />
+    <ClCompile Include="ConEmu\ColorFix.cpp" />
+    <ClCompile Include="ConEmu\ConEmu.cpp" />
+    <ClCompile Include="ConEmu\ConEmuCtrl.cpp" />
+    <ClCompile Include="ConEmu\ConEmuPipe.cpp" />
+    <ClCompile Include="ConEmu\ConEmuSize.cpp" />
+    <ClCompile Include="ConEmu\ConEmuStart.cpp" />
+    <ClCompile Include="ConEmu\ConfirmDlg.cpp" />
+    <ClCompile Include="ConEmu\CreateProcess.cpp" />
+    <ClCompile Include="ConEmu\CustomFonts.cpp" />
+    <ClCompile Include="ConEmu\DefaultTerm.cpp" />
+    <ClCompile Include="ConEmu\DlgItemHelper.cpp" />
+    <ClCompile Include="ConEmu\DpiAware.cpp" />
+    <ClCompile Include="ConEmu\DragDrop.cpp" />
+    <ClCompile Include="ConEmu\DragDropData.cpp" />
+    <ClCompile Include="ConEmu\DwmHelper.cpp" />
+    <ClCompile Include="ConEmu\DynDialog.cpp" />
+    <ClCompile Include="ConEmu\FindDlg.cpp" />
+    <ClCompile Include="ConEmu\FindPanel.cpp" />
+    <ClCompile Include="ConEmu\Font.cpp" />
+    <ClCompile Include="ConEmu\FontMgr.cpp" />
+    <ClCompile Include="ConEmu\FontPtr.cpp" />
+    <ClCompile Include="ConEmu\FrameHolder.cpp" />
+    <ClCompile Include="ConEmu\GdiObjects.cpp" />
+    <ClCompile Include="ConEmu\GestureEngine.cpp" />
+    <ClCompile Include="ConEmu\GuiServer.cpp" />
+    <ClCompile Include="ConEmu\HooksUnlocker.cpp" />
+    <ClCompile Include="ConEmu\HotkeyChord.cpp" />
+    <ClCompile Include="ConEmu\HotkeyDlg.cpp" />
+    <ClCompile Include="ConEmu\HotkeyList.cpp" />
+    <ClCompile Include="ConEmu\Hotkeys.cpp" />
     <ClCompile Include="ConEmu\Hotkeys_test.cpp" />
+    <ClCompile Include="ConEmu\IconList.cpp" />
+    <ClCompile Include="ConEmu\ImgButton.cpp" />
+    <ClCompile Include="ConEmu\Inside.cpp" />
+    <ClCompile Include="ConEmu\LngData.cpp" />
+    <ClCompile Include="ConEmu\LngRc.cpp" />
+    <ClCompile Include="ConEmu\LoadImg.cpp" />
+    <ClCompile Include="ConEmu\Macro.cpp" />
+    <ClCompile Include="ConEmu\MacroImpl.cpp" />
     <ClCompile Include="ConEmu\Macro_test.cpp" />
+    <ClCompile Include="ConEmu\Match.cpp" />
+    <ClCompile Include="ConEmu\Menu.cpp" />
+    <ClCompile Include="ConEmu\MyClipboard.cpp" />
+    <ClCompile Include="ConEmu\OleInitializer.cpp" />
+    <ClCompile Include="ConEmu\Options.cpp" />
+    <ClCompile Include="ConEmu\OptionsClass.cpp" />
+    <ClCompile Include="ConEmu\OptionsFast.cpp" />
+    <ClCompile Include="ConEmu\OptionsHelp.cpp" />
+    <ClCompile Include="ConEmu\PushInfo.cpp" />
+    <ClCompile Include="ConEmu\RConData.cpp" />
+    <ClCompile Include="ConEmu\RConFiles.cpp" />
+    <ClCompile Include="ConEmu\RConPalette.cpp" />
+    <ClCompile Include="ConEmu\RealBuffer.cpp" />
+    <ClCompile Include="ConEmu\RealConsole.cpp" />
+    <ClCompile Include="ConEmu\RealServer.cpp" />
+    <ClCompile Include="ConEmu\Recreate.cpp" />
+    <ClCompile Include="ConEmu\Registry.cpp" />
+    <ClCompile Include="ConEmu\RunQueue.cpp" />
+    <ClCompile Include="ConEmu\ScreenDump.cpp" />
+    <ClCompile Include="ConEmu\SearchCtrl.cpp" />
+    <ClCompile Include="ConEmu\SetAppSettings.cpp" />
+    <ClCompile Include="ConEmu\SetCmdTask.cpp" />
+    <ClCompile Include="ConEmu\SetColorPalette.cpp" />
+    <ClCompile Include="ConEmu\SetDlgButtons.cpp" />
+    <ClCompile Include="ConEmu\SetDlgColors.cpp" />
+    <ClCompile Include="ConEmu\SetDlgFonts.cpp" />
+    <ClCompile Include="ConEmu\SetDlgLists.cpp" />
+    <ClCompile Include="ConEmu\SetPgANSI.cpp" />
+    <ClCompile Include="ConEmu\SetPgAppear.cpp" />
+    <ClCompile Include="ConEmu\SetPgApps.cpp" />
+    <ClCompile Include="ConEmu\SetPgBackgr.cpp" />
+    <ClCompile Include="ConEmu\SetPgBase.cpp" />
+    <ClCompile Include="ConEmu\SetPgChildGui.cpp" />
+    <ClCompile Include="ConEmu\SetPgColors.cpp" />
+    <ClCompile Include="ConEmu\SetPgComspec.cpp" />
+    <ClCompile Include="ConEmu\SetPgConfirm.cpp" />
+    <ClCompile Include="ConEmu\SetPgCursor.cpp" />
+    <ClCompile Include="ConEmu\SetPgDebug.cpp" />
+    <ClCompile Include="ConEmu\SetPgDefTerm.cpp" />
+    <ClCompile Include="ConEmu\SetPgEnvironment.cpp" />
+    <ClCompile Include="ConEmu\SetPgFar.cpp" />
+    <ClCompile Include="ConEmu\SetPgFarMacro.cpp" />
+    <ClCompile Include="ConEmu\SetPgFeatures.cpp" />
+    <ClCompile Include="ConEmu\SetPgFonts.cpp" />
+    <ClCompile Include="ConEmu\SetPgGeneral.cpp" />
+    <ClCompile Include="ConEmu\SetPgHilight.cpp" />
+    <ClCompile Include="ConEmu\SetPgInfo.cpp" />
+    <ClCompile Include="ConEmu\SetPgIntegr.cpp" />
+    <ClCompile Include="ConEmu\SetPgKeyboard.cpp" />
+    <ClCompile Include="ConEmu\SetPgKeys.cpp" />
+    <ClCompile Include="ConEmu\SetPgMarkCopy.cpp" />
+    <ClCompile Include="ConEmu\SetPgMouse.cpp" />
+    <ClCompile Include="ConEmu\SetPgPaste.cpp" />
+    <ClCompile Include="ConEmu\SetPgQuake.cpp" />
+    <ClCompile Include="ConEmu\SetPgSizePos.cpp" />
+    <ClCompile Include="ConEmu\SetPgStartup.cpp" />
+    <ClCompile Include="ConEmu\SetPgStatus.cpp" />
+    <ClCompile Include="ConEmu\SetPgTabs.cpp" />
+    <ClCompile Include="ConEmu\SetPgTaskbar.cpp" />
+    <ClCompile Include="ConEmu\SetPgTasks.cpp" />
+    <ClCompile Include="ConEmu\SetPgTransparent.cpp" />
+    <ClCompile Include="ConEmu\SetPgUpdate.cpp" />
+    <ClCompile Include="ConEmu\SetPgViews.cpp" />
+    <ClCompile Include="ConEmu\SizeInfo.cpp" />
+    <ClCompile Include="ConEmu\Status.cpp" />
+    <ClCompile Include="ConEmu\SystemEnvironment.cpp" />
+    <ClCompile Include="ConEmu\TabBar.cpp" />
+    <ClCompile Include="ConEmu\TabCtrlBase.cpp" />
+    <ClCompile Include="ConEmu\TabCtrlWin.cpp" />
+    <ClCompile Include="ConEmu\TabID.cpp" />
+    <ClCompile Include="ConEmu\TaskBar.cpp" />
+    <ClCompile Include="ConEmu\TaskBarGhost.cpp" />
+    <ClCompile Include="ConEmu\TaskScheduler.cpp" />
+    <ClCompile Include="ConEmu\TermX.cpp" />
+    <ClCompile Include="ConEmu\ToolImg.cpp" />
+    <ClCompile Include="ConEmu\TrayIcon.cpp" />
+    <ClCompile Include="ConEmu\UnitTests.cpp" />
+    <ClCompile Include="ConEmu\Update.cpp" />
+    <ClCompile Include="ConEmu\UpdateSet.cpp" />
+    <ClCompile Include="ConEmu\VConChild.cpp" />
+    <ClCompile Include="ConEmu\VConGroup.cpp" />
+    <ClCompile Include="ConEmu\VConRelease.cpp" />
+    <ClCompile Include="ConEmu\VConText.cpp" />
+    <ClCompile Include="ConEmu\VirtualConsole.cpp" />
+    <ClCompile Include="ConEmu\WinObjBase.cpp" />
     <ClCompile Include="ConEmu\all_test.cpp" />
+    <ClCompile Include="ConEmu\helper.cpp" />
     <ClCompile Include="UnitTests\main_test.cpp" />
+    <ClCompile Include="UnitTests\test_stubs.cpp" />
     <ClCompile Include="common\CEHandle.cpp" />
     <ClCompile Include="common\CEStr.cpp" />
     <ClCompile Include="common\CmdLine.cpp" />

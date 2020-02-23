@@ -152,8 +152,27 @@ local common_kernel = {
   "src/common/WModuleCheck.*",
   "src/common/WObjects.*",
   "src/common/WThreads.*",
-
 }
+
+local conemu_remove = {
+  "**/ConEmuMinGW.rc",
+  "**/ToolBarClass.*",
+  "**/Theming.*",
+  "**/FontRanges.*",
+  "**/*-old.*",
+  "**/RegExp.*",
+  "**/ConsoleTrueMod_Concept.h",
+  "**/hourglass.bmp",
+  "**/UserImages.bmp",
+  "**/User16.bmp",
+  "**/Shield32*.bmp",
+  "**/Scroll256.bmp",
+  "**/Scroll16.bmp",
+  "**/Scroll0.bmp",
+  "**/base64.h",
+  "**/!*.*",
+}
+
 
 
 -- ############################### --
@@ -254,25 +273,8 @@ project "ConEmu"
     "src/ConEmu/*.ico",
     "src/ConEmu/conemu.gcc.manifest",
   }
-  removefiles {
-    "**/ConEmuMinGW.rc",
-    "**/ToolBarClass.*",
-    "**/Theming.*",
-    "**/FontRanges.*",
-    "**/*-old.*",
-    "**/RegExp.*",
-    "**/ConsoleTrueMod_Concept.h",
-    "**/hourglass.bmp",
-    "**/UserImages.bmp",
-    "**/User16.bmp",
-    "**/Shield32*.bmp",
-    "**/Scroll256.bmp",
-    "**/Scroll16.bmp",
-    "**/Scroll0.bmp",
-    "**/base64.h",
-    "**/!*.*",
-  }
 
+  removefiles (conemu_remove)
   removefiles (common_remove)
   removefiles (tests_remove)
 
@@ -283,7 +285,7 @@ project "ConEmu"
     { ["Macro"]     = {"**/Macro*.*"} },
     { ["Graphics"]  = {"**/GdiObjects.*", "**/Font*.*", "**/CustomFonts.*", "**/Background.*", "**/ColorFix.*",
                        "**/IconList.*", "**/ImgButton.*", "**/LoadImg.*", "**/ScreenDump.*", "**/ToolImg.*"} },
-    { ["Settings"]  = {"**/SetPg*.*", "**/Options*.*"} },
+    { ["Settings"]  = {"**/SetPg*.*", "**/Options*.*", "**/SettingsStorage.*"} },
     { ["Headers"]   = {"**/*.h"} },
     { ["Sources"]   = {"**/*.cpp"} },
   }
@@ -859,39 +861,32 @@ project "Tests"
   files {
     -- tests
     "src/UnitTests/*_test.cpp",
+    "src/UnitTests/test_stubs.cpp",
     "src/**/*_test.cpp",
     -- common files
     "src/common/*.cpp",
     "src/common/*.h",
     -- main sources
-    -- "src/ConEmu/helper.cpp",
-    -- "src/ConEmu/DynDialog.cpp",
-    -- "src/ConEmu/HotkeyChord.cpp",
-    -- "src/ConEmu/LngData.cpp",
-    -- "src/ConEmu/LngRc.cpp",
-    -- "src/ConEmu/Hotkeys.cpp",
-    -- "src/ConEmu/MacroImpl.cpp",
-    -- "src/ConEmu/Match.cpp",
-    -- "src/ConEmu/RConData.cpp",
-    -- "src/ConEmu/Registry.cpp",
-    -- "src/ConEmu/VConText.cpp",
+    "src/ConEmu/*.cpp",
+    "src/ConEmu/*.h",
     -- googletest
     "src/modules/googletest/googletest/src/gtest-all.cc",
   }
 
   removefiles (common_remove)
+  removefiles (conemu_remove)
+  removefiles {
+    "src/ConEmu/ConEmuApp.*",
+  }
 
   vpaths {
-    { ["tests"] = {"**/*_test.*"} },
+    { ["tests"] = {"**/*_test.*", "**/test_stubs.cpp"} },
   }
 
   includedirs {
     "src/modules/googletest/googletest/include",
     "src/modules/googletest/googletest",
   }
-
-  targetname ("Tests_%{cfg.buildcfg}_%{cfg.platform}")
-  targetdir ("src/UnitTests")
 
   links {
     -- don't link "common-kernel" or  "common-user"!
@@ -903,6 +898,8 @@ project "Tests"
     "netapi32",
   }
 
+  target_dir("")
+  targetname ("Tests_%{cfg.buildcfg}_%{cfg.platform}")
   objdir ("%{wks.location}/"..build_dir.."/%{cfg.buildcfg}/%{prj.name}_%{cfg.platform}")
   implibdir ("%{cfg.objdir}")
 

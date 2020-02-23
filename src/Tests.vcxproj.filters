@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="ConEmu">
+      <UniqueIdentifier>{8CCC3EAC-786E-6982-6129-7DD64D6AF0D2}</UniqueIdentifier>
+    </Filter>
     <Filter Include="common">
       <UniqueIdentifier>{AEFEE3F6-9AA0-0ECD-835B-22216F9C951D}</UniqueIdentifier>
     </Filter>
@@ -21,6 +24,456 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ConEmu\About.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\AboutDlg.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\AltNumpad.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Attach.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Background.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\BaseDragDrops.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\CmdHistory.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\ColorFix.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\ConEmu.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\ConEmuCtrl.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\ConEmuPipe.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\ConEmuSize.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\ConEmuStart.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\ConfirmDlg.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\ConsoleMessages.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\CreateProcess.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\CustomFonts.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\DebugMsgLog.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\DefaultTerm.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\DlgItemHelper.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\DpiAware.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\DragDrop.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\DragDropData.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\DwmApi_Part.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\DwmHelper.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\DynDialog.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\FindDlg.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\FindPanel.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Font.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\FontInfo.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\FontMgr.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\FontPtr.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\FrameHolder.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\GdiObjects.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\GestureEngine.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\GuiServer.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Header.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\HooksUnlocker.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\HotkeyChord.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\HotkeyDlg.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\HotkeyList.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Hotkeys.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\HtmlCopy.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\IconList.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\ImgButton.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Inside.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\LngData.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\LngDataEnum.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\LngDataHints.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\LngDataRsrcs.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\LngRc.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\LoadImg.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Macro.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\MacroImpl.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Match.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Menu.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\MenuIds.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\MyClipboard.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\OleInitializer.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Options.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\OptionsClass.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\OptionsFast.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\OptionsHelp.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\PushInfo.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\RConData.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\RConFiles.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\RConPalette.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\RealBuffer.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\RealConsole.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\RealServer.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Recreate.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\RefRelease.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Registry.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\RunQueue.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\ScreenDump.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SearchCtrl.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetAppSettings.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetCmdTask.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetColorPalette.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetDlgButtons.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetDlgColors.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetDlgFonts.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetDlgLists.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgANSI.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgAppear.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgApps.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgBackgr.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgBase.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgChildGui.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgColors.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgComspec.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgConfirm.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgCursor.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgDebug.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgDefTerm.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgEnvironment.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgFar.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgFarMacro.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgFeatures.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgFonts.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgGeneral.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgHilight.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgInfo.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgIntegr.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgKeyboard.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgKeys.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgMarkCopy.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgMouse.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgPaste.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgQuake.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgSizePos.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgStartup.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgStatus.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgTabs.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgTaskbar.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgTasks.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgTransparent.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgUpdate.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetPgViews.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SetTypes.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\ShObjIdl_Part.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SizeInfo.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Status.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\SystemEnvironment.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\TabBar.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\TabCtrlBase.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\TabCtrlWin.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\TabID.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\TaskBar.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\TaskBarGhost.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\TaskScheduler.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\TermX.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\ToolImg.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\TrayIcon.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\UnitTests.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\Update.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\UpdateConst.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\UpdateSet.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\VConChild.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\VConGroup.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\VConRelease.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\VConText.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\VirtualConsole.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\WinObjBase.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\globals.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\helper.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\resource.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\version.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\version_macro.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmu\version_stage.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
     <ClInclude Include="common\CEHandle.h">
       <Filter>common</Filter>
     </ClInclude>
@@ -305,16 +758,409 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConEmu\AboutDlg.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\AltNumpad.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Attach.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Background.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\BaseDragDrops.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\CmdHistory.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\ColorFix.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\ConEmu.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\ConEmuCtrl.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\ConEmuPipe.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\ConEmuSize.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\ConEmuStart.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\ConfirmDlg.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\CreateProcess.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\CustomFonts.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\DefaultTerm.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\DlgItemHelper.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\DpiAware.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\DragDrop.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\DragDropData.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\DwmHelper.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\DynDialog.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\FindDlg.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\FindPanel.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Font.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\FontMgr.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\FontPtr.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\FrameHolder.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\GdiObjects.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\GestureEngine.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\GuiServer.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\HooksUnlocker.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\HotkeyChord.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\HotkeyDlg.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\HotkeyList.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Hotkeys.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
     <ClCompile Include="ConEmu\Hotkeys_test.cpp">
       <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\IconList.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\ImgButton.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Inside.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\LngData.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\LngRc.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\LoadImg.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Macro.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\MacroImpl.cpp">
+      <Filter>ConEmu</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Macro_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmu\Match.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Menu.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\MyClipboard.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\OleInitializer.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Options.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\OptionsClass.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\OptionsFast.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\OptionsHelp.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\PushInfo.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\RConData.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\RConFiles.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\RConPalette.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\RealBuffer.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\RealConsole.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\RealServer.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Recreate.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Registry.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\RunQueue.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\ScreenDump.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SearchCtrl.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetAppSettings.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetCmdTask.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetColorPalette.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetDlgButtons.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetDlgColors.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetDlgFonts.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetDlgLists.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgANSI.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgAppear.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgApps.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgBackgr.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgBase.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgChildGui.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgColors.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgComspec.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgConfirm.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgCursor.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgDebug.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgDefTerm.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgEnvironment.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgFar.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgFarMacro.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgFeatures.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgFonts.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgGeneral.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgHilight.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgInfo.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgIntegr.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgKeyboard.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgKeys.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgMarkCopy.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgMouse.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgPaste.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgQuake.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgSizePos.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgStartup.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgStatus.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgTabs.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgTaskbar.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgTasks.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgTransparent.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgUpdate.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SetPgViews.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SizeInfo.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Status.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\SystemEnvironment.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\TabBar.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\TabCtrlBase.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\TabCtrlWin.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\TabID.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\TaskBar.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\TaskBarGhost.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\TaskScheduler.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\TermX.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\ToolImg.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\TrayIcon.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\UnitTests.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\Update.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\UpdateSet.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\VConChild.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\VConGroup.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\VConRelease.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\VConText.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\VirtualConsole.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\WinObjBase.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
     <ClCompile Include="ConEmu\all_test.cpp">
       <Filter>tests</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmu\helper.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
     <ClCompile Include="UnitTests\main_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
+    <ClCompile Include="UnitTests\test_stubs.cpp">
       <Filter>tests</Filter>
     </ClCompile>
     <ClCompile Include="common\CEHandle.cpp">
