@@ -16404,13 +16404,15 @@ bool CRealConsole::DetachRCon(bool bPosted /*= false*/, bool bSendCloseConsole /
 
 	LogString(L"CRealConsole::Detach");
 
+	SIZE cellSize;
+
 	if (InRecreate())
 	{
 		LogString(L"CRealConsole::Detach - Restricted, InRecreate!");
 		goto wrap;
 	}
 
-	SIZE cellSize = mp_VCon->GetCellSize();
+	cellSize = mp_VCon->GetCellSize();
 
 	if (m_ChildGui.hGuiWnd)
 	{
