@@ -4707,6 +4707,8 @@ int ExitWaitForKey(DWORD vkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontS
 	PRINT_COMSPEC(L"Finalizing. gbInShutdown=%i\n", gbInShutdown);
 	GetNumberOfConsoleInputEvents(hIn, &nPostFlush);
 
+	DWORD nStartTick = GetTickCount(), nDelta = 0;
+	
 	if (gbInShutdown)
 		goto wrap; // Event закрытия мог припоздниться
 
@@ -4718,7 +4720,7 @@ int ExitWaitForKey(DWORD vkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontS
 		_wprintf(asConfirm);
 	}
 
-	DWORD nStartTick = GetTickCount(), nDelta = 0;
+	nStartTick = GetTickCount(), nDelta = 0;
 
 	while (TRUE)
 	{
