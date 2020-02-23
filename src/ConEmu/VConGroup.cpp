@@ -4626,7 +4626,7 @@ RECT CVConGroup::CalcRect(enum ConEmuRect tWhat, RECT rFrom, enum ConEmuRect tFr
 			_ASSERTE(tWhat!=CER_DC || (tFrom==CER_BACK || tFrom==CER_CONSOLE_CUR || tFrom == CER_MAINCLIENT || tFrom == CER_WORKSPACE));
 
 			COORD crConFixSize = {};
-			if ((tWhat == CER_CONSOLE_CUR) && pVCon->RCon()->isFixAndCenter(&crConFixSize))
+			if ((tWhat == CER_CONSOLE_CUR) && pVCon->RCon() && pVCon->RCon()->isFixAndCenter(&crConFixSize))
 			{
 				_ASSERTE(crConFixSize.X==80 && (crConFixSize.Y==25 || crConFixSize.Y==28 || crConFixSize.Y==43 || crConFixSize.Y==50));
 				rc = MakeRect(crConFixSize.X, crConFixSize.Y);
