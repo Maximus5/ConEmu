@@ -1307,6 +1307,9 @@
     <ClCompile Include="common\RConStartArgsEx.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\RConStartArgsEx_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="common\RgnDetect.cpp">
       <Filter>common</Filter>
     </ClCompile>

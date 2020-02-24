@@ -44,8 +44,4 @@ public:
 	bool AssignFrom(const RConStartArgsEx& args, bool abConcat = false);
 	bool AssignPermissionsArgs(const RConStartArgsEx& args, bool abConcat = false);
 	bool HasPermissionsArgs() const;
-
-#ifdef _DEBUG
-	static void RunArgTests();
-#endif
 };

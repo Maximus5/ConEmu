@@ -353,8 +353,6 @@ void DebugNeedCmdUnitTests()
 
 void DebugCmdParserTests()
 {
-	RConStartArgsEx::RunArgTests();
-
 	struct strTests { wchar_t szTest[100], szCmp[100]; }
 	Tests[] = {
 		{ L"\"Test1 & ^ \"\" Test2\"  Test3  \"Test \"\" 4\"", L"Test1 & ^ \" Test2\0Test3\0Test \" 4\0\0" }

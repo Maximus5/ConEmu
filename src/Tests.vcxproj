@@ -724,6 +724,7 @@
     <ClCompile Include="common\ProcessSetEnv.cpp" />
     <ClCompile Include="common\RConStartArgs.cpp" />
     <ClCompile Include="common\RConStartArgsEx.cpp" />
+    <ClCompile Include="common\RConStartArgsEx_test.cpp" />
     <ClCompile Include="common\RgnDetect.cpp" />
     <ClCompile Include="common\SetEnvVar.cpp" />
     <ClCompile Include="common\WCodePage.cpp" />
