@@ -663,7 +663,7 @@ static LRESULT WINAPI EditIconHintOtherProc(HWND hCtrl, UINT Msg, WPARAM wParam,
 	case WM_KILLFOCUS:
 		// Problem with tAboutText is that it autoselect whole contents
 		// when focused via Tab keypress (can't be disabled with styles?)
-		wID = GetWindowLong(hCtrl, GWL_ID);
+		wID = LOWORD(GetWindowLong(hCtrl, GWL_ID));
 		if (wID == tAboutText)
 		{
 			SendMessage(iho.hRootDlg, UM_EDIT_KILL_FOCUS, 0, (LPARAM)hCtrl);
