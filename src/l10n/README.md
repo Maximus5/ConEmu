@@ -1,6 +1,6 @@
 # Localization
 
-https://www.transifex.com/conemu/conemu-sources/conemu_src/
+https://www.transifex.com/conemu/conemu-sources/languages/
 
 
 ## Download translations (yaml)
