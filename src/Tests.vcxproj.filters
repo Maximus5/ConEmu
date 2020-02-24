@@ -833,6 +833,9 @@
     <ClCompile Include="ConEmu\DynDialog.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmu\DynDialog_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="ConEmu\FindDlg.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>

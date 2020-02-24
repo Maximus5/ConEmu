@@ -63,10 +63,6 @@ public:
 	bool LoadTemplate();
 	UINT GetFontPointSize();
 
-	#ifdef _DEBUG
-	static void UnitTests();
-	#endif
-
 public:
 	static wchar_t Button[]; // = L"Button";
 	static wchar_t Edit[]; // = L"Edit";

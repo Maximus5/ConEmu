@@ -736,13 +736,6 @@ TEST(ConEmuTest, DebugCpUnitTest)
 {
 	DebugCpUnitTest();
 }
-TEST(ConEmuTest, DynDlgUnitTests)
-{
-	extern size_t gMsgBoxCallCount;
-	gMsgBoxCallCount = 0;
-	CDynDialog::UnitTests();
-	EXPECT_EQ(gMsgBoxCallCount, 0);
-}
 TEST(ConEmuTest, DebugProcessNameTest)
 {
 	DebugProcessNameTest();

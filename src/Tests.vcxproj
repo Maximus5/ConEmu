@@ -566,6 +566,7 @@
     <ClCompile Include="ConEmu\DragDropData.cpp" />
     <ClCompile Include="ConEmu\DwmHelper.cpp" />
     <ClCompile Include="ConEmu\DynDialog.cpp" />
+    <ClCompile Include="ConEmu\DynDialog_test.cpp" />
     <ClCompile Include="ConEmu\FindDlg.cpp" />
     <ClCompile Include="ConEmu\FindPanel.cpp" />
     <ClCompile Include="ConEmu\Font.cpp" />
