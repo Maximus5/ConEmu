@@ -36,31 +36,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(disable: 4091)
 #include <ShlObj.h>
 
+#include "../common/EnvVar.h"
+#include "../common/MJsonReader.h"
+#include "../common/ProcessData.h"
+#include "../common/ProcessSetEnv.h"
+#include "../common/WFiles.h"
+#include "../common/WModuleCheck.h"
+#include "../common/WUser.h"
 #include "ConEmu.h"
 #include "Hotkeys.h"
 #include "Macro.h"
 #include "Match.h"
-#include "../common/EnvVar.h"
-#include "../common/WFiles.h"
-#include "../common/WUser.h"
-
-#ifdef _DEBUG
-#include "DynDialog.h"
-#include "../common/ProcessData.h"
-#include "../common/ProcessSetEnv.h"
-#endif
-
-#ifdef _DEBUG
-#include "../common/WModuleCheck.h"
-#endif
-
-#ifdef _DEBUG
-#include "../common/MJsonReader.h"
-#endif
-
-#ifdef _DEBUG
 #include "SettingsStorage.h"
-#endif
+
 
 // Hide from global namespace
 namespace {

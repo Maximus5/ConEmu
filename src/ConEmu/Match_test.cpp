@@ -31,15 +31,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <gtest/gtest.h>
 #include "Header.h"
+#include "ConEmu.h"
 #include "Match.h"
 #include "RConData.h"
 #include "RealConsole.h"
 #include "VConText.h"
 #include <unordered_set>
 
-#ifdef _DEBUG
-#include "ConEmu.h"
-#endif
 
 TEST(CMatch, UnitTests)
 {

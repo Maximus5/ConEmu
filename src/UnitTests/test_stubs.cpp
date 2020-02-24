@@ -112,7 +112,6 @@ BOOL MoveWindowRect(HWND hWnd, const RECT& rcWnd, BOOL bRepaint) { return FALSE;
 size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*, bool bEscapes = false*/) { return 0; }
 BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes*/ /*= false*/) { return FALSE; }
 void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) {}
-BOOL POSTMESSAGE(HWND h,UINT m,WPARAM w,LPARAM l,BOOL extra) { return FALSE; }
 bool ProcessMessage(MSG& Msg) { return false; }
 void RaiseTestException() {}
 wchar_t* SelectFile(LPCWSTR asTitle, LPCWSTR asDefFile /*= NULL*/, LPCWSTR asDefPath /*= NULL*/, HWND hParent /*= ghWnd*/, LPCWSTR asFilter /*= NULL*/, DWORD/*CESelectFileFlags*/ nFlags /*= sff_AutoQuote*/, CRealConsole* apRCon /*= NULL*/) { return nullptr; }
@@ -122,6 +121,9 @@ void ShutdownGuiStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int
 bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/) { return false; }
 void WarnCreateWindowFail(LPCWSTR pszDescription, HWND hParent, DWORD nErrCode) {}
 
+#if defined(_DEBUG)
+BOOL POSTMESSAGE(HWND h, UINT m, WPARAM w, LPARAM l, BOOL extra) { return FALSE; }
+#endif
 
 namespace conemu {
 namespace tests {
