@@ -16404,7 +16404,7 @@ bool CRealConsole::DetachRCon(bool bPosted /*= false*/, bool bSendCloseConsole /
 
 	LogString(L"CRealConsole::Detach");
 
-	SIZE cellSize;
+	SIZE cellSize = {};
 
 	if (InRecreate())
 	{

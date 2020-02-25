@@ -4596,7 +4596,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 	DEBUGTEST(BOOL bIsVisible = IsWindowVisible(ghWnd););
 
-	LPCWSTR pszInfo;	
+	LPCWSTR pszInfo = NULL;
 
 	//!!!
 	switch (NewMode)
