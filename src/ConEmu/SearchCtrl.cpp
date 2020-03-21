@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "OptionsClass.h"
-#include "Resource.h"
+#include "resource.h"
 #include "ToolImg.h"
 #include "../common/MMap.h"
 #include "../common/MSetter.h"

@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRSEL(s) DEBUGSTR(s)
 
 #include "../common/defines.h"
-#include "header.h"
+#include "Header.h"
 #include "TabBar.h"
 #include "TabCtrlBase.h"
 #include "Options.h"

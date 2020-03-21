@@ -28,8 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 
-#include <Windows.h>
-#include <WinCon.h>
+#include <windows.h>
+#include <wincon.h>
 #ifdef _DEBUG
 #include <stdio.h>
 #endif

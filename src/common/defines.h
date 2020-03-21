@@ -44,7 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning(push)
 #pragma warning(disable: 4091)
 #endif
-#include <Windows.h>
+#include <windows.h>
 #if !defined(__GNUC__) || defined(__MINGW32__)
 #pragma warning(pop)
 #endif

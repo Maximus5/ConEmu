@@ -27,7 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
-#include "header.h"
+#include "Header.h"
 #include "TaskBar.h"
 #include "ConEmu.h"
 #include "Inside.h"
@@ -45,7 +45,7 @@ const IID IID_ITaskbarList2 = {0x602D4995, 0xB13A, 0x429b, {0xA6, 0x6E, 0x19, 0x
 const IID IID_ITaskbarList  = {0x56FDF342, 0xFD6D, 0x11d0, {0x95, 0x8A, 0x00, 0x60, 0x97, 0xC9, 0xA0, 0x90}};
 #define IDI_SHIELD 32518
 #else
-#include <ShObjIdl.h>
+#include <shobjidl.h>
 #endif
 //#else
 //#include <ShObjIdl.h>

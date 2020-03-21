@@ -32,7 +32,7 @@ TMPDIR ?= ../../gcc
 
 DIRBIT ?= 32
 
-USERLIBS = -lKernel32 -lUser32
+USERLIBS = -lkernel32 -luser32
 ENCFLAGS = -finput-charset=utf-8
 
 ifndef DEBUG

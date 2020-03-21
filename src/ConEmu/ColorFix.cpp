@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 
-#include <Windows.h>
+#include <windows.h>
 #include <math.h>
 #include "ColorFix.h"
 

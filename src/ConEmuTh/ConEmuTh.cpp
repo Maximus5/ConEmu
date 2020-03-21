@@ -56,7 +56,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuTh_Lang.h"
 #include "ImgCache.h"
 
-#include <Tlhelp32.h>
+#include <tlhelp32.h>
 
 using ConEmu::PaletteColors;
 

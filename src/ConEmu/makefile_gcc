@@ -20,8 +20,8 @@ RES_NAME2 = ConEmuMinGW
 
 include ../makefile_gcc_inc
 
-USERLIBS += -lversion -lshlwapi -loleaut32 -lNetapi32 -lwinmm
-USERLIBS += -ladvapi32 -lshell32 -lgdi32 -lcomdlg32 -lole32 -luuid -lcomctl32
+USERLIBS += -lversion -lshlwapi -loleaut32 -lnetapi32 -lwinmm
+USERLIBS += -ladvapi32 -lshell32 -lgdi32 -lcomdlg32 -lole32 -luuid -lcomctl32 mstask.lib
 
 SRCS = \
 		../common/CEStr.cpp          \

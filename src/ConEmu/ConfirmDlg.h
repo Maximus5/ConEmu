@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <CommCtrl.h>
+#include <commctrl.h>
 
 // IDYES    - Close All consoles
 // IDNO     - Close active console only

@@ -28,9 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "ConsoleMain.h"
-#include <WinError.h>
-#include <WinNT.h>
-#include <TCHAR.h>
+#include <winerror.h>
+#include <winnt.h>
+#include <tchar.h>
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/ConEmuColors3.h"

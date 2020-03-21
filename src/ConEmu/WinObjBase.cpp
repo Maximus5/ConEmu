@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRWIN(s) //DEBUGSTR(s)
 
 #include "../common/defines.h"
-#include "header.h"
+#include "Header.h"
 #include "WinObjBase.h"
 #include "../common/MMap.h"
 

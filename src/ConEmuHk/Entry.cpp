@@ -60,7 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "../common/defines.h"
-#include <Tlhelp32.h>
+#include <tlhelp32.h>
 
 #ifndef TESTLINK
 #include "../common/Common.h"

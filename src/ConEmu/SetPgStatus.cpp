@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetDlgColors.h"
 #include "SetDlgLists.h"
 #include "SetDlgFonts.h"
-#include "SetpgFonts.h"
+#include "SetPgFonts.h"
 #include "SetPgStatus.h"
 #include "Status.h"
 

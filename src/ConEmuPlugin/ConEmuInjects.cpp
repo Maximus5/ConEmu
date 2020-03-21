@@ -37,8 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _WIN32_WINNT 0x0501
 
 #include "../common/defines.h"
-#include <TCHAR.h>
-#include <Tlhelp32.h>
+#include <tchar.h>
+#include <tlhelp32.h>
 #include <shlwapi.h>
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"

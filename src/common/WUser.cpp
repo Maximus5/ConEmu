@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "Common.h"
-#include <Sddl.h> // ConvertSidToStringSid
+#include <sddl.h> // ConvertSidToStringSid
 #include "CmdLine.h"
 #include "EnvVar.h"
 #include "MModule.h"

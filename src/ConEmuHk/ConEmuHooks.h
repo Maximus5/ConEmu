@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // This file is used in ConEmuPlugin and ExtendedConsole modules
 
-#include <Windows.h>
+#include <windows.h>
 
 // Options are set when the process is Far Manager
 struct HookModeFar

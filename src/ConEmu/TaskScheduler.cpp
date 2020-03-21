@@ -39,11 +39,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 // Task Scheduler v1.0 (Win2k, WinXP, Win2k3)
-#include <MSTask.h>
+#include <mstask.h>
 // And some crazyness with ‘hidden features’
-#include <LMCons.h>
-#include <LMErr.h>
-#include <Lmat.h>
+#include <lmcons.h>
+#include <lmerr.h>
+#include <lmat.h>
 
 #include "../common/MBSTR.h"
 #include "../common/MModule.h"

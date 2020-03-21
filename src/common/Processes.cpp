@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "defines.h"
-#include <TlHelp32.h>
+#include <tlhelp32.h>
 #include "MAssert.h"
 #include "Memory.h"
 #include "MArray.h"

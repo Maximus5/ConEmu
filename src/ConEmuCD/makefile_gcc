@@ -19,7 +19,7 @@ BASEADDRESS =
 
 include ../makefile_gcc_inc
 
-USERLIBS += -lAdvapi32 -lGdi32 -lShell32 -lShlwapi -lOleAut32 -lwinmm
+USERLIBS += -ladvapi32 -lgdi32 -lshell32 -lshlwapi -loleaut32 -lwinmm
 
 SRCS = \
 		../common/CEStr.cpp         \

@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define HIDE_USE_EXCEPTION_INFO
 #include "../common/defines.h"
-#include "header.h"
+#include "Header.h"
 #include "SettingsStorage.h"
 #include "ConEmu.h"
 

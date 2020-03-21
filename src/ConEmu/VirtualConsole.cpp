@@ -63,7 +63,7 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #endif
 
 #include "Header.h"
-#include <Tlhelp32.h>
+#include <tlhelp32.h>
 
 #include "Background.h"
 #include "ConEmu.h"

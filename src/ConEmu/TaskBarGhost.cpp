@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SHOWDEBUGSTR
 #define HIDE_USE_EXCEPTION_INFO
-#include "header.h"
+#include "Header.h"
 #include "TaskBarGhost.h"
 #include "ConEmu.h"
 #include "VirtualConsole.h"

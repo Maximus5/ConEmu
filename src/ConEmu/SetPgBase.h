@@ -31,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/defines.h"
 
-#include <CommCtrl.h>
+#include <commctrl.h>
 #include "LngDataEnum.h"
 #include "Options.h"
 #include "DlgItemHelper.h"

@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 
 #include "Header.h"
-#include <Tlhelp32.h>
+#include <tlhelp32.h>
 #include "DefaultTerm.h"
 #include "ConEmu.h"
 #include "ConEmuStart.h"

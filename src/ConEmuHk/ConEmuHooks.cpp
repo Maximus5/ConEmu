@@ -76,10 +76,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DECLARE_CONEMU_HOOK_FUNCTION_ID
 
 #include "../common/defines.h"
-#include <WinError.h>
-#include <WinNT.h>
-#include <TCHAR.h>
-#include <Tlhelp32.h>
+#include <winerror.h>
+#include <winnt.h>
+#include <tchar.h>
+#include <tlhelp32.h>
 #include <shlwapi.h>
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
