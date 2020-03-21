@@ -35,7 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/defines.h"
 #include <commctrl.h>
-#include "header.h"
+#include "Header.h"
 #include "ConEmu.h"
 #include "IconList.h"
 #include "Options.h"

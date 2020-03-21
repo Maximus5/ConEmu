@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Windows.h>
+#include <windows.h>
 
 #ifndef COMMON_LVB_LEADING_BYTE
 #define COMMON_LVB_LEADING_BYTE    0x0100 // Leading Byte of DBCS

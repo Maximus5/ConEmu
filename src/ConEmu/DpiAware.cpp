@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 
 #include "Header.h"
-#include <Commctrl.h>
+#include <commctrl.h>
 #include "DpiAware.h"
 #include "DynDialog.h"
 #include "SearchCtrl.h"

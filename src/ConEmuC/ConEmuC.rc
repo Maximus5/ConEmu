@@ -11,9 +11,9 @@
 
 // Manifest 4 GCC
 #if defined(__GNUC__)
-1 24 DISCARDABLE "../conemu/conemu.gcc.manifest"
+1 24 DISCARDABLE "../ConEmu/conemu.gcc.manifest"
 #elif defined(SELF_MANIFEST)
-1 24 DISCARDABLE "../conemu/conemu.gcc.manifest"
+1 24 DISCARDABLE "../ConEmu/conemu.gcc.manifest"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -81,7 +81,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON1               ICON                    "..\\ConEmu\\ConEmu.ico"
+IDI_ICON1               ICON                    "../ConEmu/ConEmu.ico"
 #endif    // Russian resources
 /////////////////////////////////////////////////////////////////////////////
 

@@ -30,8 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 
-#include <Windows.h>
-#include <WinCon.h>
+#include <windows.h>
+#include <wincon.h>
 
 
 /*  Global  */

@@ -30,11 +30,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/defines.h"
-#include <WinCon.h>
+#include <wincon.h>
 #ifdef _DEBUG
 #include <stdio.h>
 #endif
-#include <Shlwapi.h>
+#include <shlwapi.h>
 
 #include "../common/RConStartArgs.h"
 

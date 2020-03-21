@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define USEDEBUGSTRDEFTERM
 #endif
 
-#include <Windows.h>
+#include <windows.h>
 #include "Common.h"
 #include "MArray.h"
 #include "MSectionSimple.h"
@@ -46,7 +46,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WObjects.h"
 #include "WThreads.h"
 #include "../ConEmuCD/ExitCodes.h"
-#include <TlHelp32.h>
+#include <tlhelp32.h>
 
 #define DEF_TERM_ALIVE_CHECK_TIMEOUT 750
 #define DEF_TERM_ALIVE_RECHECK_TIMEOUT 1500

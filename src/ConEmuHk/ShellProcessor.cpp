@@ -37,8 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 
-#include <TCHAR.h>
-#include <Tlhelp32.h>
+#include <tchar.h>
+#include <tlhelp32.h>
 #include <shlwapi.h>
 #include "../common/shlobj.h"
 #include "../common/CmdLine.h"

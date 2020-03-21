@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/MMap.h"
-#include <Tlhelp32.h>
+#include <tlhelp32.h>
 
 extern MMap<DWORD,BOOL> gStartedThreads;
 

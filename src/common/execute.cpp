@@ -31,9 +31,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Common.h"
 #include "CmdLine.h"
 #include "EnvVar.h"
-#include "Execute.h"
+#include "execute.h"
 #include "WObjects.h"
-#include <TlHelp32.h>
+#include <tlhelp32.h>
 
 
 

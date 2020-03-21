@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Windows.h>
+#include <windows.h>
 
 SHORT MakeShort(int32_t X);
 USHORT MakeUShort(uint32_t X);

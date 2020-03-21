@@ -27,7 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
-#include "header.h"
+#include "Header.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/ConEmuPipeMode.h"
 #include "ConEmuPipe.h"

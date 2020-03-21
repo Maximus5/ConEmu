@@ -29,9 +29,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // #ANSI This file is expected to be moved almost completely to ConEmuCD
 
 #include "../common/defines.h"
-#include <WinError.h>
-#include <WinNT.h>
-#include <TCHAR.h>
+#include <winerror.h>
+#include <winnt.h>
+#include <tchar.h>
 #include <limits>
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"

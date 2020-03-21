@@ -28,7 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Windows.h>
+#include <windows.h>
 #include "RConStartArgs.h"
 
 struct RConStartArgsEx : public RConStartArgs

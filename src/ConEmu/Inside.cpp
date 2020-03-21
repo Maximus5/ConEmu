@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define DEBUGSTRINSIDE(s) //DEBUGSTR(s)
 
-#include "header.h"
+#include "Header.h"
 
 #include "../common/MProcess.h"
 

@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "WSession.h"
 #include "WUser.h"
 #include "../ConEmu/version.h"
-#include <TlHelp32.h>
+#include <tlhelp32.h>
 
 class LoadStartupEnvEx : public LoadStartupEnv
 {

@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 
-#include <CommCtrl.h>
+#include <commctrl.h>
 
 #include "AboutDlg.h"
 #include "DpiAware.h"

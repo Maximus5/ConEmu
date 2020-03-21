@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "LogFunction.h"
 #include "ConEmuSrv.h"
 #include <algorithm>
-#include <Windows.h>
+#include <windows.h>
 
 namespace {
 const wchar_t kFnBegin[] = L" [begin]";

@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "Header.h"
-#include <Ole2.h>
+#include <ole2.h>
 #include "OleInitializer.h"
 
 OleInitializer::OleInitializer()
