@@ -2,7 +2,7 @@ EXPORTS
 ; functions
 	LLKeybHook=LLKeybHook@12
 	ConsoleMain2=ConsoleMain2@4
-	ConsoleMain3=ConsoleMain2@8
+	ConsoleMain3=ConsoleMain3@8
 	HandlerRoutine=HandlerRoutine@4
 	PrivateEntry=RequestLocalServer@4
 	DownloadCommand=DownloadCommand@12
