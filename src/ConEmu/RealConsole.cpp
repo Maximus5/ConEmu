@@ -8241,11 +8241,16 @@ LPCWSTR CRealConsole::GetActiveProcessInfo(CEStr& rsInfo)
 			wchar_t szExitInfo[80];
 			if (m_RootInfo.bRunning)
 				swprintf_c(szExitInfo, L":%u", m_RootInfo.nPID);
-			else
+			else if (static_cast<int32_t>(m_RootInfo.nExitCode) >= -255)
 				swprintf_c(szExitInfo, L":%u %s %i",
 					m_RootInfo.nPID,
 					CLngRc::getRsrc(lng_ExitCode/*"exit code"*/),
-					(int)m_RootInfo.nExitCode);
+					static_cast<int32_t>(m_RootInfo.nExitCode));
+			else
+				swprintf_c(szExitInfo, L":%u %s 0x%08X",
+					m_RootInfo.nPID,
+					CLngRc::getRsrc(lng_ExitCode/*"exit code"*/),
+					m_RootInfo.nExitCode);
 			rsInfo = lstrmerge(ms_RootProcessName, szExitInfo);
 		}
 		else if ((m_StartState < rss_ProcessActive) && ms_RootProcessName[0])
