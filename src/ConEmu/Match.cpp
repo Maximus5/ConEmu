@@ -277,17 +277,18 @@ bool CMatch::FindRangeStart(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool
 
 		if (!bUrlMode && pChar[crFrom] == L'/')
 		{
-			if ((crFrom >= 2) && ((crFrom + 1) < nLen)
-				&& ((pChar[crFrom+1] == L'/') && (pChar[crFrom-1] == L':')
-					&& wcschr(pszUrl, pChar[crFrom-2]))) // как минимум одна буква на протокол
+			if ((crFrom >= 2) && ((crFrom + 1) < nLen)   // valid range
+				&& (pChar[crFrom-1] == L':')             // powershell shows e.g. "http:/go/fwlink/?LinkID=1234."
+				&& wcschr(pszProtocol, pChar[crFrom-2])) // at least one letter for protocol
 			{
 				crFrom++;
 			}
 
 			if ((crFrom >= 3)
-				&& ((pChar[crFrom-1] == L'/') // как минимум одна буква на протокол
-					&& (((pChar[crFrom-2] == L':') && wcschr(pszUrl, pChar[crFrom-3])) // http://www.ya.ru
-						|| ((crFrom >= 4) && (pChar[crFrom-2] == L'/') && (pChar[crFrom-3] == L':') && wcschr(pszUrl, pChar[crFrom-4])) // file:///c:\file.html
+				&& ((pChar[crFrom-1] == L'/') // at least one letter for protocol
+					&& (((pChar[crFrom-2] == L':') && wcschr(pszProtocol, pChar[crFrom-3])) // http://www.ya.ru
+						|| ((crFrom >= 4) && (pChar[crFrom-2] == L'/') && (pChar[crFrom-3] == L':')
+							&& wcschr(pszUrl, pChar[crFrom-4])) // file:///c:\file.html
 					))
 				)
 			{
@@ -342,12 +343,15 @@ bool CMatch::CheckValidUrl(int& crFrom/*[In/Out]*/, int& crTo/*[In/Out]*/, bool&
 
 	WARNING("Тут пока работаем в экранных координатах");
 
-	// URL? (Курсор мог стоять над протоколом)
+	// URL? Skip protocol letters
 	while ((crTo < nLen) && wcschr(pszProtocol, pChar[crTo]))
 		crTo++;
 	if (((crTo+1) < nLen) && (pChar[crTo] == L':'))
 	{
-		if (((crTo+4) < nLen) && (pChar[crTo+1] == L'/') && (pChar[crTo+2] == L'/'))
+		// powershell shows e.g. "http:/go/fwlink/?LinkID=1234."
+		// so we support here one or two slashes
+		if (((crTo+4) < nLen) && (pChar[crTo+1] == L'/')
+			&& (pChar[crTo+2] == L'/' || wcschr(pszProtocol, pChar[crTo+2])))
 		{
 			bUrlMode = true;
 			if (wcschr(pszUrl+2 /*пропустить ":/"*/, pChar[crTo+3])
