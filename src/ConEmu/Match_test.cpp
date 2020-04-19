@@ -83,10 +83,14 @@ TEST(CMatch, UnitTests)
 			etr_AnyClickable, true, {L"file:///c:\\temp\\qqq.html"}},
 		{L"\t" L"http://www.farmanager.com" L"\t",
 			etr_AnyClickable, true, {L"http://www.farmanager.com"}},
-		{L"\t" L"$ http://www.KKK.ru - левее слеша - не срабатывает" L"\t",
+		{L"\t" L"$ http://www.KKK.ru - some text - more text" L"\t",
 			etr_AnyClickable, true, {L"http://www.KKK.ru"}},
 		{L"\t" L"C:\\ConEmu>http://www.KKK.ru - ..." L"\t",
 			etr_AnyClickable, true, {L"http://www.KKK.ru"}},
+		{L"\t" L"http:/go/fwlink/?LinkID=1234." L"\t",
+			etr_AnyClickable, true, {L"http:/go/fwlink/?LinkID=1234"}},
+		{L"\t" L"http://go/fwlink/?LinkID=1234." L"\t",
+			etr_AnyClickable, true, {L"http://go/fwlink/?LinkID=1234"}},
 
 		// Just a text files
 		{L"\t" L"License.txt	Portable.txt    WhatsNew-ConEmu.txt" L"\t",
