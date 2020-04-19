@@ -6215,9 +6215,6 @@ void Settings::SaveHotkeys(SettingsBase* reg, int SaveDescrLangID /*= 0*/)
 			{
 				wcscpy_c(szMacroName, ppHK->Name);
 				wcscat_c(szMacroName, L".Text");
-				//wchar_t* pszEsc = EscapeString(true, ppHK->GuiMacro);
-				//reg->Save(szMacroName, pszEsc);
-				//SafeFree(pszEsc);
 				reg->Save(szMacroName, ppHK->GuiMacro);
 			}
 		}

@@ -320,7 +320,7 @@ int MyGetDlgItemText(HWND hDlg, WORD nID, wchar_t (&rszText)[size])
 	return true;
 }
 
-size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*, bool bEscapes*/ /*= false*/)
+size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText)
 {
 	HWND hEdit;
 
@@ -362,25 +362,6 @@ size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*
 	}
 
 	return nLen;
-}
-
-BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes*/ /*= false*/)
-{
-	wchar_t* pszBuf = NULL;
-
-	//// -- Must be the same set in MyGetDlgItemText
-	//if (lpString && bEscapes /*&& wcspbrk(lpString, L"\r\n\t\\")*/)
-	//{
-	//	pszBuf = EscapeString(true, lpString);
-	//	if (!pszBuf)
-	//		return FALSE; // Уже ругнулись
-	//	lpString = pszBuf;
-	//}
-
-	BOOL lbRc = SetDlgItemText(hDlg, nIDDlgItem, lpString);
-
-	SafeFree(pszBuf);
-	return lbRc;
 }
 
 bool GetColorRef(LPCWSTR pszText, COLORREF* pCR)

@@ -109,8 +109,7 @@ bool isCharAltFont(ucs32 inChar) { return false; }
 bool LogString(LPCWSTR asText) { return false; }
 bool LogString(LPCWSTR asInfo, bool abWriteTime /*= true*/, bool abWriteLine /*= true*/) { return false; }
 BOOL MoveWindowRect(HWND hWnd, const RECT& rcWnd, BOOL bRepaint) { return FALSE; }
-size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*, bool bEscapes = false*/) { return 0; }
-BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes*/ /*= false*/) { return FALSE; }
+size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText) { return 0; }
 void PatchMsgBoxIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam) {}
 bool ProcessMessage(MSG& Msg) { return false; }
 void RaiseTestException() {}

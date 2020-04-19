@@ -265,7 +265,7 @@ void CSetPgKeys::FillHotKeysList(HWND hDlg, bool abInitial)
 
 			if (nItem == -1)
 			{
-				lvi.iItem = ItemsCount + 1; // в конец
+				lvi.iItem = ItemsCount + 1; // to the end
 				lvi.lParam = (LPARAM)ppHK;
 				nItem = ListView_InsertItem(hList, &lvi);
 				//_ASSERTE(nItem==ItemsCount && nItem>=0);
@@ -282,13 +282,10 @@ void CSetPgKeys::FillHotKeysList(HWND hDlg, bool abInitial)
 
 			if (ppHK->HkType == chk_Macro)
 			{
-				//wchar_t* pszBuf = EscapeString(true, ppHK->GuiMacro);
-				//LPCWSTR pszMacro = pszBuf;
 				LPCWSTR pszMacro = ppHK->GuiMacro;
 				if (!pszMacro || !*pszMacro)
 					pszMacro = L"<Not set>";
 				ListView_SetItemText(hList, nItem, klc_Desc, (wchar_t*)pszMacro);
-				//SafeFree(pszBuf);
 			}
 			else
 			{
@@ -437,7 +434,7 @@ LRESULT CSetPgKeys::OnHotkeysNotify(HWND hDlg, WPARAM wParam, LPARAM lParam)
 		HWND hMacro = GetDlgItem(hDlg, tGuiMacro);
 		EnableWindow(hMacro, (mp_ActiveHotKey!=NULL));
 		SendMessage(hMacro, EM_SETREADONLY, !bMacroEnabled, 0);
-		MySetDlgItemText(hDlg, tGuiMacro, pszDescription/*, bMacroEnabled*/);
+		SetDlgItemText(hDlg, tGuiMacro, pszDescription);
 		EnableWindow(GetDlgItem(hDlg, cbGuiMacroHelp), (mp_ActiveHotKey!=NULL) && (bMacroEnabled || mp_ActiveHotKey->GuiMacro));
 		if (!bHotKeyEnabled)
 			CHotKeyDialog::SetHotkeyField(hHk, 0);

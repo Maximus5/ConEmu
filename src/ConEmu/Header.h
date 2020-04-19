@@ -231,8 +231,7 @@ bool GetDlgItemSigned(HWND hDlg, WORD nID, int& nValue, int nMin = 0, int nMax =
 bool GetDlgItemUnsigned(HWND hDlg, WORD nID, DWORD& nValue, DWORD nMin = 0, DWORD nMax = 0);
 wchar_t* GetDlgItemTextPtr(HWND hDlg, WORD nID);
 template <size_t size> bool MyGetDlgItemText(HWND hDlg, WORD nID, wchar_t (&rszText)[size]);
-size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText/*, bool bEscapes = false*/);
-BOOL MySetDlgItemText(HWND hDlg, int nIDDlgItem, LPCTSTR lpString/*, bool bEscapes = false*/);
+size_t MyGetDlgItemText(HWND hDlg, WORD nID, size_t& cchMax, wchar_t*& pszText);
 bool GetColorRef(LPCWSTR pszText, COLORREF* pCR);
 
 //#pragma warning(disable: 4311) // 'type cast' : pointer truncation from 'HBRUSH' to 'BOOL'

@@ -43,9 +43,6 @@ wchar_t* GuiMacro::AsString()
 		return lstrdup(L"");
 	}
 
-	// Можно использовать EscapeChar, только нужно учесть,
-	// что кавычки ВНУТРИ Arg.Str нужно эскейпить...
-
 	size_t cchTotal = _tcslen(szFunc) + 5;
 
 	wchar_t** pszArgs = NULL;
