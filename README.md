@@ -1,7 +1,7 @@
 ## About ConEmu
 
-[![master build status](https://ci.appveyor.com/api/projects/status/lvyjxh56o8dkt4wa/branch/master?svg=true&passingText=master%20-%20OK&failingText=master%20-%20failing)](https://ci.appveyor.com/project/Maximus5/conemu/branch/master)
-[![daily build status](https://ci.appveyor.com/api/projects/status/lvyjxh56o8dkt4wa/branch/daily?svg=true&passingText=daily%20-%20OK&failingText=daily%20-%20failing)](https://ci.appveyor.com/project/Maximus5/conemu/branch/daily)
+[![master build status](https://dev.azure.com/MaksimMoisiuk/conemu/_apis/build/status/Maximus5.ConEmu?branchName=master&label=master)](https://dev.azure.com/MaksimMoisiuk/conemu/_build/latest?definitionId=1&branchName=master&label=master)
+[![daily build status](https://dev.azure.com/MaksimMoisiuk/conemu/_apis/build/status/Maximus5.ConEmu?branchName=daily&label=daily)](https://dev.azure.com/MaksimMoisiuk/conemu/_build/latest?definitionId=1&branchName=daily&label=daily)
 
 [ConEmu-Maximus5](https://conemu.github.io) is a Windows console emulator with tabs, which represents
 multiple consoles as one customizable GUI window with various features.

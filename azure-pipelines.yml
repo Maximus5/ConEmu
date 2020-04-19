@@ -1,0 +1,98 @@
+# .NET Desktop
+# Build and run tests for .NET Desktop or Windows classic desktop solutions.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/apps/windows/dot-net
+
+trigger:
+  branches:
+    include:
+    - master
+    - daily
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: 'src/CE.sln'
+
+jobs:
+
+- job: 'x64_Release'
+  displayName: 'x64|Release'
+  variables:
+    platform: 'x64'
+    configuration: 'Release'
+  steps:
+  - checkout: self
+    submodules: true
+  - task: VSBuild@1
+    displayName: 'Build $(platform)|$(configuration)'
+    inputs:
+      solution: '$(solution)'
+      platform: '$(platform)'
+      configuration: '$(configuration)'
+  - script: |
+      cd
+      call "$(configuration)\Tests_$(configuration)_$(platform).exe" --gtest_color=yes
+    displayName: 'Tests $(platform)|$(configuration)'
+    failOnStderr: false
+
+- job: 'x64_Debug'
+  displayName: 'x64|Debug'
+  variables:
+    platform: 'x64'
+    configuration: 'Debug'
+  steps:
+  - checkout: self
+    submodules: true
+  - task: VSBuild@1
+    displayName: 'Build $(platform)|$(configuration)'
+    inputs:
+      solution: '$(solution)'
+      platform: '$(platform)'
+      configuration: '$(configuration)'
+  - script: |
+      cd
+      call "$(configuration)\Tests_$(configuration)_$(platform).exe" --gtest_color=yes
+    displayName: 'Tests $(platform)|$(configuration)'
+    failOnStderr: false
+
+- job: 'Win32_Release'
+  displayName: 'Win32|Release'
+  variables:
+    platform: 'Win32'
+    configuration: 'Release'
+  steps:
+  - checkout: self
+    submodules: true
+  - task: VSBuild@1
+    displayName: 'Build $(platform)|$(configuration)'
+    inputs:
+      solution: '$(solution)'
+      platform: '$(platform)'
+      configuration: '$(configuration)'
+  - script: |
+      cd
+      call "$(configuration)\Tests_$(configuration)_$(platform).exe" --gtest_color=yes
+    displayName: 'Tests $(platform)|$(configuration)'
+    failOnStderr: false
+
+- job: 'Win32_Debug'
+  displayName: 'Win32|Debug'
+  variables:
+    platform: 'Win32'
+    configuration: 'Debug'
+  steps:
+  - checkout: self
+    submodules: true
+  - task: VSBuild@1
+    displayName: 'Build $(platform)|$(configuration)'
+    inputs:
+      solution: '$(solution)'
+      platform: '$(platform)'
+      configuration: '$(configuration)'
+  - script: |
+      cd
+      call "$(configuration)\Tests_$(configuration)_$(platform).exe" --gtest_color=yes
+    displayName: 'Tests $(platform)|$(configuration)'
+    failOnStderr: false
