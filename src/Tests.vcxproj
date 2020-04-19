@@ -716,6 +716,7 @@
     <ClCompile Include="common\MSetter.cpp" />
     <ClCompile Include="common\MStrDup.cpp" />
     <ClCompile Include="common\MStrEsc.cpp" />
+    <ClCompile Include="common\MStrEsc_test.cpp" />
     <ClCompile Include="common\MStrSafe.cpp" />
     <ClCompile Include="common\MTimer.cpp" />
     <ClCompile Include="common\MToolTip.cpp" />

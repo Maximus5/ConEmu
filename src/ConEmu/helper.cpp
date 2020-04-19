@@ -302,21 +302,6 @@ bool FixDirEndSlash(wchar_t* rsPath)
 	return false;
 }
 
-// TODO: Optimize: Now pszDst must be (4x len in maximum for "\xFF" form) for bSet==true
-void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst)
-{
-	if (bSet)
-	{
-		// Set escapes: wchar(13) --> "\\r"
-		EscapeChar(pszSrc, pszDst);
-	}
-	else
-	{
-		// Remove escapes: "\\r" --> wchar(13), etc.
-		UnescapeChar(pszSrc, pszDst);
-	}
-}
-
 bool isKey(DWORD wp,DWORD vk)
 {
 	bool bEq = ((wp==vk)

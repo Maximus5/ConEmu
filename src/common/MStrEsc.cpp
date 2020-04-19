@@ -32,15 +32,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /// Set escapes: wchar(13) --> "\\r", etc.
 /// pszSrc and pszDst must point to different memory blocks
-/// pszDst must have at least 5 bytes available (four "\\xFF" and final "\0")
-void EscapeChar(LPCWSTR& pszSrc, LPWSTR& pszDst)
+/// pszDst must have at least 5 wchars available (four "\\xFF" and final "\0")
+bool EscapeChar(LPCWSTR& pszSrc, LPWSTR& pszDst)
 {
-	_ASSERTE(pszSrc && pszDst);
-	_ASSERTE(pszSrc != pszDst);
+	if (!pszSrc || !pszDst)
+	{
+		_ASSERTE(pszSrc && pszDst);
+		return false;
+	}
+	if (pszSrc == pszDst)
+	{
+		_ASSERTE(pszSrc != pszDst);
+		return false;
+	}
 
-	LPCWSTR  pszCtrl = L"rntae\\\"";
-
-	wchar_t wc = *pszSrc;
+	const wchar_t wc = *pszSrc;
 	switch (wc)
 	{
 	case L'"': // 34
@@ -50,9 +56,8 @@ void EscapeChar(LPCWSTR& pszSrc, LPWSTR& pszDst)
 		break;
 	case L'\\': // 92
 		*(pszDst++) = L'\\';
+		*(pszDst++) = L'\\';
 		pszSrc++;
-		if (!*pszSrc || !wcschr(pszCtrl, *pszSrc))
-			*(pszDst++) = L'\\';
 		break;
 	case L'\r': // 13
 		*(pszDst++) = L'\\';
@@ -102,12 +107,18 @@ void EscapeChar(LPCWSTR& pszSrc, LPWSTR& pszDst)
 		}
 		*(pszDst++) = *(pszSrc++);
 	}
+
+	return true;
 }
 
 /// Remove escapes: "\\r" --> wchar(13), etc.
-void UnescapeChar(LPCWSTR& pszSrc, LPWSTR& pszDst)
+bool UnescapeChar(LPCWSTR& pszSrc, LPWSTR& pszDst)
 {
-	_ASSERTE(pszSrc && pszDst);
+	if (!pszSrc || !pszDst)
+	{
+		_ASSERTE(pszSrc && pszDst);
+		return false;
+	}
 
 	if (*pszSrc == L'\\')
 	{
@@ -171,16 +182,60 @@ void UnescapeChar(LPCWSTR& pszSrc, LPWSTR& pszDst)
 	{
 		*(pszDst++) = *(pszSrc++);
 	}
+
+	return true;
 }
 
+/// Set escapes: wchar(13) --> "\\r", etc.
+/// pszSrc and pszDst must point to different memory blocks
+/// pszDst must have at least 1+4*len(pszSrc) wchars available (four "\\xFF" and final "\0")
+bool EscapeString(LPCWSTR& pszSrc, LPWSTR& pszDst)
+{
+	if (!pszSrc || !pszDst)
+	{
+		_ASSERTE(pszSrc && pszDst);
+		return false;
+	}
+	if (pszSrc == pszDst)
+	{
+		_ASSERTE(pszSrc != pszDst);
+		return false;
+	}
+
+	while (*pszSrc)
+	{
+		EscapeChar(pszSrc, pszDst);
+	}
+
+	*pszDst = 0;
+
+	return true;
+}
+
+bool UnescapeString(LPCWSTR& pszSrc, LPWSTR& pszDst)
+{
+	if (!pszSrc || !pszDst)
+	{
+		_ASSERTE(pszSrc && pszDst);
+		return false;
+	}
+
+	while (*pszSrc)
+	{
+		UnescapeChar(pszSrc, pszDst);
+	}
+
+	*pszDst = 0;
+
+	return true;
+}
+
+/// Intended for GuiMacro representation
+/// If *pszStr* doesn't contain special symbols with ONLY exception of "\" (paths)
+/// it's more convenient to represent it as *Verbatim* string, otherwise - *C-String*.
+/// Always show as *C-String* those strings, which contain CRLF, Esc, tabs etc.
 bool CheckStrForSpecials(LPCWSTR pszStr, bool* pbSlash /*= NULL*/, bool* pbOthers /*= NULL*/)
 {
-	// Intended for GuiMacro representation
-	// Если строка содержит из спец-символов ТОЛЬКО "\" (пути)
-	// то ее удобнее показывать как "Verbatim", иначе - C-String
-	// Однозначно показывать как C-String нужно те строки, которые
-	// содержат переводы строк, Esc, табуляции и пр.
-
 	bool bSlash = false, bOthers = false;
 
 	if (pszStr && *pszStr)

@@ -30,7 +30,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "defines.h"
 
-void EscapeChar(LPCWSTR& pszSrc, LPWSTR& pszDst);
-void UnescapeChar(LPCWSTR& pszSrc, LPWSTR& pszDst);
+bool EscapeChar(LPCWSTR& pszSrc, LPWSTR& pszDst);
+bool UnescapeChar(LPCWSTR& pszSrc, LPWSTR& pszDst);
+
+bool EscapeString(LPCWSTR& pszSrc, LPWSTR& pszDst);
+bool UnescapeString(LPCWSTR& pszSrc, LPWSTR& pszDst);
 
 bool CheckStrForSpecials(LPCWSTR pszStr, bool* pbSlash = NULL, bool* pbOthers = NULL);

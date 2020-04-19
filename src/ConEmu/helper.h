@@ -43,8 +43,6 @@ LPCWSTR MakeWinPath(LPCWSTR asAnyPath, LPCWSTR pszMntPrefix, CEStr& szWinPath);
 wchar_t* MakeStraightSlashPath(LPCWSTR asWinPath);
 bool FixDirEndSlash(wchar_t* rsPath);
 
-void EscapeChar(bool bSet, LPCWSTR& pszSrc, LPWSTR& pszDst);
-
 bool isKey(DWORD wp,DWORD vk);
 
 // pszWords - '|'separated
