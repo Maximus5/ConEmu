@@ -3104,15 +3104,15 @@ bool CConEmuMain::ConActivateByName(LPCWSTR asName)
 	return CVConGroup::ConActivateByName(asName);
 }
 
-bool CConEmuMain::CreateWnd(RConStartArgsEx *args)
+bool CConEmuMain::CreateWnd(RConStartArgsEx& args)
 {
-	if (!args || !args->pszSpecialCmd || !*args->pszSpecialCmd)
+	if (!args.pszSpecialCmd || !*args.pszSpecialCmd)
 	{
-		_ASSERTE(args && args->pszSpecialCmd && *args->pszSpecialCmd);
+		_ASSERTE(args.pszSpecialCmd && *args.pszSpecialCmd);
 		return false;
 	}
 
-	_ASSERTE(args->aRecreate == cra_CreateWindow);
+	_ASSERTE(args.aRecreate == cra_CreateWindow);
 
 	BOOL bStart = FALSE;
 
@@ -3124,9 +3124,9 @@ bool CConEmuMain::CreateWnd(RConStartArgsEx *args)
 	PROCESS_INFORMATION pi = {};
 	wchar_t* pszCmdLine = NULL;
 	size_t cchMaxLen = _tcslen(ms_ConEmuExe)
-		+ _tcslen(args->pszSpecialCmd)
+		+ _tcslen(args.pszSpecialCmd)
 		+ (pszAddArgs ? (_tcslen(pszAddArgs) + 2) : 0)
-		+ (args->pszAddGuiArg ? _tcslen(args->pszAddGuiArg) : 0)
+		+ (args.pszAddGuiArg ? _tcslen(args.pszAddGuiArg) : 0)
 		+ 170; // other flags and `-new_console`
 	if ((pszCmdLine = (wchar_t*)malloc(cchMaxLen*sizeof(*pszCmdLine))) == NULL)
 	{
@@ -3151,40 +3151,35 @@ bool CConEmuMain::CreateWnd(RConStartArgsEx *args)
 			_wcscat_c(pszCmdLine, cchMaxLen, L"-NoQuake ");
 
 		// Some arguments may be defined in the RConStartArgsEx
-		if (args->pszAddGuiArg)
-			_wcscat_c(pszCmdLine, cchMaxLen, args->pszAddGuiArg);
+		if (args.pszAddGuiArg)
+			_wcscat_c(pszCmdLine, cchMaxLen, args.pszAddGuiArg);
 
 		// The starting command
 		_wcscat_c(pszCmdLine, cchMaxLen, L"-run ");
-		_wcscat_c(pszCmdLine, cchMaxLen, args->pszSpecialCmd);
-		if ((args->RunAsAdministrator == crb_On) || (args->RunAsRestricted == crb_On) || args->pszUserName)
+		_wcscat_c(pszCmdLine, cchMaxLen, args.pszSpecialCmd);
+		if ((args.RunAsAdministrator == crb_On) || (args.RunAsRestricted == crb_On) || args.pszUserName)
 		{
-			if (args->RunAsAdministrator == crb_On)
+			if (args.RunAsAdministrator == crb_On)
 			{
 				// Create ConEmu.exe with current credentials, implying elevation for the console
 				_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:a");
 			}
-			else if (args->RunAsRestricted == crb_On)
+			else if (args.RunAsRestricted == crb_On)
 			{
 				_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:r");
 			}
-			//else if (args->pszUserName)
-			//{
-			//	_wcscat_c(pszCmdLine, cchMaxLen, L" -new_console:u:");
-			//	_wcscat_c(pszCmdLine, cchMaxLen, args->pszUserName);
-			//}
 		}
 
-		if ((args->RunAsAdministrator != crb_On) && (args->RunAsRestricted != crb_On) && (args->pszUserName && *args->pszUserName))
+		if ((args.RunAsAdministrator != crb_On) && (args.RunAsRestricted != crb_On) && (args.pszUserName && *args.pszUserName))
 		{
-			DWORD nFlags = (args->RunAsNetOnly == crb_On) ? LOGON_NETCREDENTIALS_ONLY : LOGON_WITH_PROFILE;
-			bStart = CreateProcessWithLogonW(args->pszUserName, args->pszDomain, args->szUserPassword,
+			DWORD nFlags = (args.RunAsNetOnly == crb_On) ? LOGON_NETCREDENTIALS_ONLY : LOGON_WITH_PROFILE;
+			bStart = CreateProcessWithLogonW(args.pszUserName, args.pszDomain, args.szUserPassword,
 		                           nFlags, NULL, pszCmdLine,
 		                           NORMAL_PRIORITY_CLASS|CREATE_DEFAULT_ERROR_MODE
-		                           , NULL, args->pszStartupDir, &si, &pi);
+		                           , NULL, args.pszStartupDir, &si, &pi);
 		}
 		else
-			bStart = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, args->pszStartupDir, &si, &pi);
+			bStart = CreateProcess(NULL, pszCmdLine, NULL, NULL, FALSE, NORMAL_PRIORITY_CLASS, NULL, args.pszStartupDir, &si, &pi);
 
 		if (!bStart)
 		{
@@ -3203,9 +3198,8 @@ bool CConEmuMain::CreateWnd(RConStartArgsEx *args)
 }
 
 // Also, called from mn_MsgCreateCon
-CVirtualConsole* CConEmuMain::CreateCon(RConStartArgsEx *args, bool abAllowScripts /*= false*/, bool abForceCurConsole /*= false*/)
+CVirtualConsole* CConEmuMain::CreateCon(RConStartArgsEx& args, bool abAllowScripts /*= false*/, bool abForceCurConsole /*= false*/)
 {
-	_ASSERTE(args!=NULL);
 	if (!isMainThread())
 	{
 		// Создание VCon в фоновых потоках не допускается, т.к. здесь создаются HWND
@@ -3220,8 +3214,16 @@ CVirtualConsole* CConEmuMain::CreateCon(RConStartArgsEx *args, bool abAllowScrip
 
 // args должен быть выделен через "new"
 // по завершении - на него будет вызван "delete"
-void CConEmuMain::PostCreateCon(RConStartArgsEx *pArgs)
+void CConEmuMain::PostCreateCon(const RConStartArgsEx& args)
 {
+	RConStartArgsEx* pArgs = new RConStartArgsEx;
+	if (!pArgs)
+	{
+		_ASSERTE(pArgs != nullptr);
+		return;
+	}
+	pArgs->AssignFrom(args);
+
 	_ASSERTE((pArgs->pszStartupDir == NULL) || (*pArgs->pszStartupDir != 0));
 
 	struct impl {
@@ -3231,7 +3233,7 @@ void CConEmuMain::PostCreateCon(RConStartArgsEx *pArgs)
 		static LRESULT CreateConMainThread(LPARAM lParam)
 		{
 			impl *p = (impl*)lParam;
-			CVirtualConsole* pVCon = p->pObj->CreateCon(p->pArgs, true);
+			CVirtualConsole* pVCon = p->pObj->CreateCon(*p->pArgs, true);
 			delete p->pArgs;
 			delete p;
 			return (LRESULT)pVCon;
@@ -3365,7 +3367,7 @@ LPCWSTR CConEmuMain::ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive
 
 // Возвращает указатель на АКТИВНУЮ консоль (при создании группы)
 // apszScript содержит строки команд, разделенные \r\n
-CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsAdmin /*= false*/, LPCWSTR asStartupDir /*= NULL*/, const RConStartArgsEx *apDefArgs /*= NULL*/)
+CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, const RConStartArgsEx *apDefArgs /*= NULL*/)
 {
 	CVirtualConsole* pVConResult = NULL;
 	// Поехали
@@ -3400,13 +3402,8 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 
 		if (apDefArgs && apDefArgs->pszStartupDir && *apDefArgs->pszStartupDir)
 			args.pszStartupDir = lstrdup(apDefArgs->pszStartupDir);
-		else if (asStartupDir && *asStartupDir)
-			args.pszStartupDir = lstrdup(asStartupDir);
 		else
 			SafeFree(args.pszStartupDir);
-
-		if (abForceAsAdmin)
-			args.RunAsAdministrator = crb_On;
 
 
 		// Task pre-options, for example ">* /dir c:\sources cmd"
@@ -3441,7 +3438,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, bool abForceAsA
 			if (pSetActive && CVConGroup::isValid(pSetActive))
 				args.BackgroundTab = crb_On;
 
-			pVCon = CreateCon(&args, false, true);
+			pVCon = CreateCon(args, false, true);
 
 			if (!pVCon)
 			{
@@ -4624,7 +4621,7 @@ bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 		if (args.aRecreate == cra_CreateTab)
 		{
 			//Собственно, запуск
-			if (CreateCon(&args, true))
+			if (CreateCon(args, true))
 				bExecRc = true;
 		}
 		else
@@ -4643,7 +4640,7 @@ bool CConEmuMain::RecreateAction(RecreateActionParm aRecreate, BOOL abConfirm, R
 			else
 			{
 				// Start new ConEmu.exe process with chosen arguments...
-				if (CreateWnd(&args))
+				if (CreateWnd(args))
 					bExecRc = true;
 			}
 		}
@@ -7058,7 +7055,13 @@ bool CConEmuMain::CreateStartupConsoles()
 	BOOL lbCreated = FALSE;
 	bool isScript = false;
 	LPCWSTR pszCmd = GetCmd(&isScript);
-	_ASSERTE(pszCmd != NULL && *pszCmd != 0); // Must be!
+
+	if (!pszCmd || !*pszCmd)
+	{
+		_ASSERTE(pszCmd != NULL && *pszCmd != 0); // Must be!
+		LogString(L"CreateStartupConsoles failed: pszCmd is null");
+		return false;
+	}
 
 	if (isScript)
 	{
@@ -7077,7 +7080,7 @@ bool CConEmuMain::CreateStartupConsoles()
 		LogString(L"Creating console group using `|||` script");
 
 		// GO
-		if (!CreateConGroup(szDataW, FALSE, NULL/*pszStartupDir*/))
+		if (!CreateConGroup(szDataW))
 		{
 			Destroy();
 			return false;
@@ -7105,7 +7108,7 @@ bool CConEmuMain::CreateStartupConsoles()
 		}
 
 		// GO
-		if (!CreateConGroup(szDataW, FALSE, NULL/*ignored when 'args' specified*/, &args))
+		if (!CreateConGroup(szDataW, &args))
 		{
 			Destroy();
 			return false;
@@ -7125,7 +7128,7 @@ bool CConEmuMain::CreateStartupConsoles()
 		CEStr lsLog(L"Creating console using command ", args.pszSpecialCmd);
 		LogString(lsLog);
 
-		if (!CreateCon(&args, TRUE))
+		if (!CreateCon(args, TRUE))
 		{
 			CEStr szFailMsg(L"Can't create new virtual console!\n"
 				, L"{CConEmuMain::CreateStartupConsoles}\n"

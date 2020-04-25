@@ -2562,7 +2562,7 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 			if (bNewOper || (pszParm && wcsstr(pszParm, L"-new_console")))
 			{
 				size_t nAllLen;
-				RConStartArgsEx *pArgs = new RConStartArgsEx;
+				RConStartArgsEx args;
 
 				// It's allowed now to append user arguments to named task contents
 				{
@@ -2577,38 +2577,38 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 							bNewOper = false;
 					}
 
-					pArgs->pszSpecialCmd = (wchar_t*)malloc(nAllLen*sizeof(wchar_t));
-					pArgs->pszSpecialCmd[0] = 0;
+					args.pszSpecialCmd = (wchar_t*)malloc(nAllLen*sizeof(wchar_t));
+					args.pszSpecialCmd[0] = 0;
 
 					if (*pszFile)
 					{
 						if (!bDontQuote && (*pszFile != L'"') && (wcschr(pszFile, L' ') != NULL))
 						{
-							pArgs->pszSpecialCmd[0] = L'"';
-							_wcscpy_c(pArgs->pszSpecialCmd+1, nAllLen-1, pszFile);
-							_wcscat_c(pArgs->pszSpecialCmd, nAllLen, (pszParm && *pszParm) ? L"\" " : L"\"");
+							args.pszSpecialCmd[0] = L'"';
+							_wcscpy_c(args.pszSpecialCmd+1, nAllLen-1, pszFile);
+							_wcscat_c(args.pszSpecialCmd, nAllLen, (pszParm && *pszParm) ? L"\" " : L"\"");
 						}
 						else
 						{
-							_wcscpy_c(pArgs->pszSpecialCmd, nAllLen, pszFile);
+							_wcscpy_c(args.pszSpecialCmd, nAllLen, pszFile);
 							if (pszParm && *pszParm)
 							{
-								_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" ");
+								_wcscat_c(args.pszSpecialCmd, nAllLen, L" ");
 							}
 						}
 					}
 
 					if (pszParm && *pszParm)
 					{
-						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, pszParm);
+						_wcscat_c(args.pszSpecialCmd, nAllLen, pszParm);
 					}
 
 					// Параметры запуска консоли могли передать в первом аргуементе (например "new_console:b")
 					if (bNewOper)
 					{
-						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L" \"-");
-						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, pszOper);
-						_wcscat_c(pArgs->pszSpecialCmd, nAllLen, L"\"");
+						_wcscat_c(args.pszSpecialCmd, nAllLen, L" \"-");
+						_wcscat_c(args.pszSpecialCmd, nAllLen, pszOper);
+						_wcscat_c(args.pszSpecialCmd, nAllLen, L"\"");
 					}
 				}
 
@@ -2622,10 +2622,10 @@ LPWSTR ConEmuMacro::Shell(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 					pszDir = szRConCD.ms_Val;
 				}
 				if (pszDir)
-					pArgs->pszStartupDir = lstrdup(pszDir);
+					args.pszStartupDir = lstrdup(pszDir);
 
 				// Don't use PostCreateCon here, otherwise Context function will fail
-				gpConEmu->CreateCon(pArgs, true);
+				gpConEmu->CreateCon(args, true);
 
 				pszRc = lstrdup(L"OK");
 				goto wrap;
@@ -3015,15 +3015,15 @@ LPWSTR ConEmuMacro::Task(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 
 	if (pszName && *pszName)
 	{
-		RConStartArgsEx *pArgs = new RConStartArgsEx;
-		pArgs->pszSpecialCmd = lstrdup(pszName);
+		RConStartArgsEx args;
+		args.pszSpecialCmd = lstrdup(pszName);
 
 		LPWSTR pszDir = NULL;
 		if (p->GetStrArg(1, pszDir) && pszDir && *pszDir)
-			pArgs->pszStartupDir = lstrdup(pszDir);
+			args.pszStartupDir = lstrdup(pszDir);
 
 		// Don't use PostCreateCon here, otherwise Context function will fail
-		gpConEmu->CreateCon(pArgs, true);
+		gpConEmu->CreateCon(args, true);
 
 		pszResult = L"OK";
 		if (needToFreeName)

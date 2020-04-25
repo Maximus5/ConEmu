@@ -4205,9 +4205,9 @@ bool CRealConsole::StartDebugger(StartDebugType sdt)
 			return false;
 
 		if (gpSetCls->IsMulti() && (Args.aRecreate != cra_CreateWindow))
-			lbRc = (gpConEmu->CreateCon(&Args) != NULL);
+			lbRc = (gpConEmu->CreateCon(Args) != NULL);
 		else
-			lbRc = gpConEmu->CreateWnd(&Args);
+			lbRc = gpConEmu->CreateWnd(Args);
 	}
 	else
 	{
@@ -11470,7 +11470,7 @@ bool CRealConsole::DuplicateRoot(bool bSkipMsg /*= false*/, bool bRunAsAdmin /*=
 			args.eSplit = RConStartArgsEx::eSplitNone;
 
 			// Create (detached) tab ready for attach
-			CVirtualConsole *pVCon = mp_ConEmu->CreateCon(&args);
+			CVirtualConsole *pVCon = mp_ConEmu->CreateCon(args);
 
 			if (pVCon)
 			{

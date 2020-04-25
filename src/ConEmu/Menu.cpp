@@ -660,11 +660,11 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= NULL*/, DWORD nFlags /*= 
 			if ((gpSetCls->IsMulti() || !gpConEmu->isVConExists(0))
 					&& (con.aRecreate != cra_CreateWindow))
 			{
-				gpConEmu->CreateCon(&con, true);
+				gpConEmu->CreateCon(con, true);
 			}
 			else
 			{
-				gpConEmu->CreateWnd(&con);
+				gpConEmu->CreateWnd(con);
 			}
 		}
 	}
@@ -812,9 +812,9 @@ void CConEmuMenu::OnNewConPopupMenuRClick(HMENU hMenu, UINT nItemPos)
 
 				//Собственно, запуск
 				if (gpSetCls->IsMulti())
-					gpConEmu->CreateCon(&con, true);
+					gpConEmu->CreateCon(con, true);
 				else
-					gpConEmu->CreateWnd(&con);
+					gpConEmu->CreateWnd(con);
 			}
 		}
 

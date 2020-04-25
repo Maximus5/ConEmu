@@ -92,7 +92,7 @@ protected:
 	static void StopSplitDragging();
 
 private:
-	static CVirtualConsole* CreateVCon(RConStartArgsEx *args, CVirtualConsole*& ppVConI, int index);
+	static CVirtualConsole* CreateVCon(RConStartArgsEx& args, CVirtualConsole*& ppVConI, int index);
 
 	static CVConGroup* CreateVConGroup();
 	CVConGroup* SplitVConGroup(RConStartArgsEx::SplitType aSplitType = RConStartArgsEx::eSplitHorz/*eSplitVert*/, UINT anPercent10 = 500);
@@ -129,7 +129,7 @@ public:
 public:
 	static void Initialize();
 	static void Deinitialize();
-	static CVirtualConsole* CreateCon(RConStartArgsEx *args, bool abAllowScripts = false, bool abForceCurConsole = false);
+	static CVirtualConsole* CreateCon(RConStartArgsEx& args, bool abAllowScripts = false, bool abForceCurConsole = false);
 	static void OnVConDestroyed(CVirtualConsole* apVCon);
 
 	static bool InCreateGroup();

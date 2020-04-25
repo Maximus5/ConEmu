@@ -614,9 +614,9 @@ class CConEmuMain
 		bool ConActivate(int nCon);
 		bool ConActivateByName(LPCWSTR asName);
 		bool ConActivateNext(bool abNext);
-		bool CreateWnd(RConStartArgsEx *args);
-		CVirtualConsole* CreateCon(RConStartArgsEx *args, bool abAllowScripts = false, bool abForceCurConsole = false);
-		CVirtualConsole* CreateConGroup(LPCWSTR apszScript, bool abForceAsAdmin = false, LPCWSTR asStartupDir = NULL, const RConStartArgsEx *apDefArgs = NULL);
+		bool CreateWnd(RConStartArgsEx& args);
+		CVirtualConsole* CreateCon(RConStartArgsEx& args, bool abAllowScripts = false, bool abForceCurConsole = false);
+		CVirtualConsole* CreateConGroup(LPCWSTR apszScript, const RConStartArgsEx *apDefArgs = nullptr);
 		LPCWSTR ParseScriptLineOptions(LPCWSTR apszLine, bool* rpbSetActive, RConStartArgsEx* pArgs);
 		void CreateGhostVCon(CVirtualConsole* apVCon);
 		BOOL CreateMainWindow();
@@ -706,7 +706,7 @@ class CConEmuMain
 		void OnMainCreateFinished();
 		bool CreateStartupConsoles();
 	public:
-		void PostCreateCon(RConStartArgsEx *pArgs);
+		void PostCreateCon(const RConStartArgsEx& args);
 		HWND PostCreateView(CConEmuChild* pChild);
 		void PostFontSetSize(int nRelative/*0/1/2*/, int nValue/*для nRelative==0 - высота, для ==1 - +-1, +-2,... | 100%*/);
 		void PostMacro(LPCWSTR asMacro);

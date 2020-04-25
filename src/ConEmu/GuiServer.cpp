@@ -296,7 +296,7 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 				// Может быть пусто
 				if (bCreateTab && pszCommand[0])
 				{
-					RConStartArgsEx *pArgs = new RConStartArgsEx;
+					RConStartArgsEx args;
 
 					// New tab must be started with same credentials that calling tab if others was not specified
 					{
@@ -309,44 +309,43 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 								const RConStartArgsEx& r = VCon->RCon()->GetArgs();
 								if (r.HasPermissionsArgs())
 								{
-									pArgs->AssignPermissionsArgs(r);
+									args.AssignPermissionsArgs(r);
 								}
 							}
 						}
 					}
 
-					pArgs->Detached = (pIn->NewCmd.ShowHide == sih_StartDetached) ? crb_On : crb_Off;
-					pArgs->pszSpecialCmd = lstrdup(pszCommand);
+					args.Detached = (pIn->NewCmd.ShowHide == sih_StartDetached) ? crb_On : crb_Off;
+					args.pszSpecialCmd = lstrdup(pszCommand);
 					if (pIn->NewCmd.szCurDir[0] == 0)
 					{
 						_ASSERTE(pIn->NewCmd.szCurDir[0] != 0);
 					}
 					else
 					{
-						pArgs->pszStartupDir = lstrdup(pIn->NewCmd.szCurDir);
+						args.pszStartupDir = lstrdup(pIn->NewCmd.szCurDir);
 					}
 
 					LPCWSTR pszStrings = pIn->NewCmd.GetEnvStrings();
 					if (pszStrings && pIn->NewCmd.cchEnvStrings)
 					{
-						size_t cbBytes = pIn->NewCmd.cchEnvStrings*sizeof(*pArgs->pszEnvStrings);
-						pArgs->pszEnvStrings = (wchar_t*)malloc(cbBytes);
-						if (pArgs->pszEnvStrings)
+						size_t cbBytes = pIn->NewCmd.cchEnvStrings * sizeof(*args.pszEnvStrings);
+						args.pszEnvStrings = (wchar_t*)malloc(cbBytes);
+						if (args.pszEnvStrings)
 						{
-							memmove(pArgs->pszEnvStrings, pszStrings, cbBytes);
-							pArgs->cchEnvStrings = pIn->NewCmd.cchEnvStrings;
+							memmove_s(args.pszEnvStrings, cbBytes, pszStrings, cbBytes);
+							args.cchEnvStrings = pIn->NewCmd.cchEnvStrings;
 						}
 					}
 
 					if (gpSetCls->IsMulti() || CVConGroup::isDetached())
 					{
-						gpConEmu->PostCreateCon(pArgs);
+						gpConEmu->PostCreateCon(args);
 					}
 					else
 					{
-						// Если хотят в одном окне - только одну консоль
-						gpConEmu->CreateWnd(pArgs);
-						SafeDelete(pArgs);
+						// if only one console per window
+						gpConEmu->CreateWnd(args);
 						// New window created? Don't activate this one.
 						bSkipActivation = true;
 					}

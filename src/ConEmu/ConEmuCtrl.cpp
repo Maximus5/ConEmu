@@ -557,7 +557,7 @@ bool CConEmuCtrl::key_MultiCmd(const ConEmuChord& VkState, bool TestOnly, const 
 	CEStr lsTitle;
 	gpSet->CmdTaskGetDefaultShell(args, lsTitle);
 
-	gpConEmu->CreateCon(&args, true);
+	gpConEmu->CreateCon(args, true);
 	return true;
 }
 

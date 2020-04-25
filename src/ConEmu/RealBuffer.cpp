@@ -3266,7 +3266,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 										}
 										else
 										{
-											gpConEmu->CreateCon(&args);
+											gpConEmu->CreateCon(args);
 										}
 									}
 								}

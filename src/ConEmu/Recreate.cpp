@@ -451,8 +451,12 @@ INT_PTR CRecreateDlg::OnCtlColorStatic(HWND hDlg, UINT messg, WPARAM wParam, LPA
 
 INT_PTR CRecreateDlg::OnFillCmdList(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
+	if (!mp_Args)
+	{
+		_ASSERTE(mp_Args);
+		return FALSE;
+	}
 	RConStartArgsEx* pArgs = mp_Args;
-	_ASSERTE(pArgs);
 
 	AddCommandList(pArgs->pszSpecialCmd);
 	AddCommandList(mpsz_SysCmd, pArgs->pszSpecialCmd ? -1 : 0);
