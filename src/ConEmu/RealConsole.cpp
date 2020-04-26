@@ -1081,6 +1081,14 @@ bool CRealConsole::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, D
 	return (mp_RBuf->SetConsoleSize(sizeX, sizeY, sizeBuffer, anCmdID) != FALSE);
 }
 
+void CRealConsole::EndSizing()
+{
+	if (m_ConStatus.szText[0])
+	{
+		SetConStatus(nullptr);
+	}
+}
+
 void CRealConsole::SyncGui2Window(const RECT rcVConBack)
 {
 	if (!this)

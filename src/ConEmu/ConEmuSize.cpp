@@ -5838,6 +5838,12 @@ void CConEmuSize::EndSizing(UINT nMouseMsg/*=0*/)
 	{
 		LogString(L"EndSizing: Sync console sizes after resize");
 		CVConGroup::SyncConsoleToWindow();
+		LogString(L"EndSizing: Inform consoles on EndSizing");
+		CVConGroup::EnumVCon(evf_All, [](CVirtualConsole* pVCon, LPARAM) -> bool
+			{
+				pVCon->RCon()->EndSizing();
+				return true;
+			}, 0);
 	}
 
 	if (!isIconic())

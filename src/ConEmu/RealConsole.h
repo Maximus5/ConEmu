@@ -312,6 +312,7 @@ class CRealConsole
 		void DoLockUnlock(bool bLock);
 
 		bool SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer=0, DWORD anCmdID=CECMD_SETSIZESYNC);
+		void EndSizing();
 	private:
 		bool SetActiveBuffer(CRealBuffer* aBuffer, bool abTouchMonitorEvent = true);
 		bool LoadAlternativeConsole(LoadAltMode iMode = lam_Default);
