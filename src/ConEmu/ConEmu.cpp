@@ -3435,7 +3435,7 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, const RConStart
 
 			// If any previous tab was marked as "active"/"foreground" for starting group,
 			// we need to run others tabs in "background"
-			if (pSetActive && CVConGroup::isValid(pSetActive))
+			if (!lbSetActive && pSetActive && CVConGroup::isValid(pSetActive))
 				args.BackgroundTab = crb_On;
 
 			pVCon = CreateCon(args, false, true);
@@ -3458,13 +3458,10 @@ CVirtualConsole* CConEmuMain::CreateConGroup(LPCWSTR apszScript, const RConStart
 			else
 			{
 				lbOneCreated = true;
+				pLastVCon = pVCon;
 
 				const RConStartArgsEx& modArgs = pVCon->RCon()->GetArgs();
-				if (modArgs.ForegroungTab == crb_On)
-					lbSetActive = true;
-
-				pLastVCon = pVCon;
-				if (lbSetActive && !pSetActive)
+				if (lbSetActive || (!pSetActive && (modArgs.ForegroungTab == crb_On)))
 					pSetActive = pVCon;
 
 				if (CVConGroup::isVConExists((int)MAX_CONSOLE_COUNT-1))
