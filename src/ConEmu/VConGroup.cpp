@@ -5921,7 +5921,8 @@ void CVConGroup::PopulateSplitPanes(MArray<CVConGuard*>& VCons) const
 		_ASSERTE(VCons.empty());
 
 		// First pane, the anchor, is started layered!
-		pFirst->mp_Item->RCon()->SetSplitProperties(RConStartArgsEx::eSplitNone, DefaultSplitValue, 0);
+		pFirst->mp_Item->RCon()->UpdateStartArgs(
+			RConStartArgsEx::eSplitNone, DefaultSplitValue, 0, (pFirst->mp_Item == gp_VActive));
 
 		// Remember we have processed
 		CVConGuard* pFirstVCon = new CVConGuard(pFirst->mp_Item);
@@ -5943,7 +5944,8 @@ void CVConGroup::PopulateSplitPanes(MArray<CVConGuard*>& VCons) const
 		// Update split properties
 		_ASSERTE(m_SplitType != RConStartArgsEx::eSplitNone);
 		_ASSERTE(nParent != 0 && nParent <= (UINT)VCons.size());
-		pSecond->mp_Item->RCon()->SetSplitProperties(m_SplitType, mn_SplitPercent10, nParent);
+		pSecond->mp_Item->RCon()->UpdateStartArgs(
+			m_SplitType, mn_SplitPercent10, nParent, (pSecond->mp_Item == gp_VActive));
 
 		// Remember we have processed
 		UINT nSecond = findVCon(pSecond->mp_Item);
@@ -6012,7 +6014,6 @@ wchar_t* CVConGroup::GetTasks()
 	}
 
 	_ASSERTE(GetConCount() == addVCon.size());
-
 
 	for (ssize_t i = 0; i < addVCon.size(); i++)
 	{

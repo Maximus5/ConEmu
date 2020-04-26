@@ -14611,7 +14611,7 @@ void CRealConsole::StoreGuiChildRect(LPRECT prcNewPos)
 	m_ChildGui.rcLastGuiWnd = rcChild;
 }
 
-void CRealConsole::SetSplitProperties(RConStartArgsEx::SplitType aSplitType, UINT aSplitValue, UINT aSplitPane)
+void CRealConsole::UpdateStartArgs(RConStartArgsEx::SplitType aSplitType, UINT aSplitValue, UINT aSplitPane, bool active)
 {
 	if (!this)
 	{
@@ -14622,6 +14622,13 @@ void CRealConsole::SetSplitProperties(RConStartArgsEx::SplitType aSplitType, UIN
 	m_Args.eSplit = aSplitType;
 	m_Args.nSplitValue = aSplitValue;
 	m_Args.nSplitPane = aSplitPane;
+
+	// Ensure non-active consoles does not have 'Foreground' flag
+	// Ensure than active console does not have 'Background' flag
+	if (active && m_Args.BackgroundTab)
+		m_Args.BackgroundTab = crb_Undefined;
+	if (!active && m_Args.ForegroungTab)
+		m_Args.ForegroungTab = crb_Undefined;
 }
 
 void CRealConsole::SetGuiMode(DWORD anFlags, HWND ahGuiWnd, DWORD anStyle, DWORD anStyleEx, LPCWSTR asAppFileName, DWORD anAppPID, int anBits, RECT arcPrev)
