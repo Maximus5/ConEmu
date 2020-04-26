@@ -5886,48 +5886,78 @@ CVConGroup* CVConGroup::GetLeafRight() const
 
 void CVConGroup::PopulateSplitPanes(MArray<CVConGuard*>& VCons) const
 {
-	UINT nSecond = 0;
-	UINT nParent = VCons.size() + 1;
-
-	// Only for the root
-	// The code may be in the caller (before recursion starts),
-	// but it's here for simplification
-	if (VCons.empty() || (this == GetRootGroup()))
+	CVConGroup* pFirst = GetLeafLeft();
+	if (!pFirst || !pFirst->mp_Item)
 	{
-		CVConGroup* pFirst = GetLeafLeft();
-		CVConGuard* pFirstVCon = pFirst ? new CVConGuard(pFirst->mp_Item) : NULL;
-		if (!pFirstVCon || !pFirstVCon->VCon())
-		{
-			_ASSERTE(pFirstVCon && pFirstVCon->VCon());
-			_ASSERTE(GetLeafRight() == NULL);
-			SafeDelete(pFirstVCon);
-			return;
-		}
-		// First pane, the anchor, is started layered!
-		pFirstVCon->VCon()->RCon()->SetSplitProperties(RConStartArgsEx::eSplitNone, DefaultSplitValue, 0);
-
-		// Remember we have processed
-		VCons.push_back(pFirstVCon);
+		_ASSERTE(pFirst && pFirst->mp_Item);
+		_ASSERTE(GetLeafRight() == NULL);
+		LogString(L"PopulateSplitPanes error: left leaf is null");
+		return;
 	}
 
-	// Now update split properties of second pane (the splitter)
+	auto findVCon = [&VCons](const CVirtualConsole* pVCon)
+	{
+		UINT nIndex = 0; // 0 - split active console, otherwise - 1-based index of the console to split
+		for (ssize_t i = 0; i < VCons.size(); ++i)
+		{
+			if (VCons[i]->VCon() == pVCon)
+			{
+				nIndex = static_cast<UINT>(i) + 1;
+				break;
+			}
+		}
+		return nIndex;
+	};
+
+	// VConGroup node has left and right leafs. Splits are always done via splitting *left* node.
+	// We need to know the index of *left* node to make proper split.
+
+	// 0 - split active console, otherwise - 1-based index of the console to split
+	UINT nParent = findVCon(pFirst->mp_Item);
+	if (nParent == 0)
+	{
+		// Should be executer only for the root
+		_ASSERTE(this == GetRootGroup());
+		_ASSERTE(VCons.empty());
+
+		// First pane, the anchor, is started layered!
+		pFirst->mp_Item->RCon()->SetSplitProperties(RConStartArgsEx::eSplitNone, DefaultSplitValue, 0);
+
+		// Remember we have processed
+		CVConGuard* pFirstVCon = new CVConGuard(pFirst->mp_Item);
+		VCons.push_back(pFirstVCon);
+		nParent = static_cast<UINT>(VCons.size());
+		_ASSERTE(nParent == findVCon(pFirst->mp_Item));
+	}
+
+	// Now update split properties of the second pane (the splitter)
 	CVConGroup* pSecond = GetLeafRight();
-	CVConGuard* pSecondVCon = pSecond ? new CVConGuard(pSecond->mp_Item) : NULL;
-	if (!pSecondVCon || !pSecondVCon->VCon())
+	if (!pSecond || !pSecond->mp_Item)
 	{
 		// No splits?
 		_ASSERTE(m_SplitType == RConStartArgsEx::eSplitNone);
-		SafeDelete(pSecondVCon);
-		pSecond = NULL;
+		pSecond = nullptr;
 	}
 	else
 	{
 		// Update split properties
 		_ASSERTE(m_SplitType != RConStartArgsEx::eSplitNone);
-		pSecondVCon->VCon()->RCon()->SetSplitProperties(m_SplitType, mn_SplitPercent10, nParent);
+		_ASSERTE(nParent != 0 && nParent <= (UINT)VCons.size());
+		pSecond->mp_Item->RCon()->SetSplitProperties(m_SplitType, mn_SplitPercent10, nParent);
+
 		// Remember we have processed
-		VCons.push_back(pSecondVCon);
-		nSecond = VCons.size();
+		UINT nSecond = findVCon(pSecond->mp_Item);
+		if (nSecond == 0)
+		{
+			CVConGuard* pSecondVCon = new CVConGuard(pSecond->mp_Item);
+			VCons.push_back(pSecondVCon);
+			_ASSERTE(findVCon(pSecond->mp_Item) == static_cast<UINT>(VCons.size()));
+		}
+		else
+		{
+			_ASSERTE(nSecond == 0);
+			LogString(L"PopulateSplitPanes error: right leaf should not be stored yet");
+		}
 	}
 
 	if (mp_Grp1)
@@ -5936,7 +5966,6 @@ void CVConGroup::PopulateSplitPanes(MArray<CVConGuard*>& VCons) const
 	}
 	if (mp_Grp2)
 	{
-		_ASSERTE(nSecond!=0);
 		mp_Grp2->PopulateSplitPanes(VCons);
 	}
 }
@@ -5967,7 +5996,7 @@ wchar_t* CVConGroup::GetTasks()
 			continue;
 		}
 		// Already appended?
-		INT_PTR q = 0;
+		ssize_t q = 0;
 		while (q < groups.size())
 		{
 			if (groups[q] == pRoot)
@@ -5985,7 +6014,7 @@ wchar_t* CVConGroup::GetTasks()
 	_ASSERTE(GetConCount() == addVCon.size());
 
 
-	for (INT_PTR i = 0; i < addVCon.size(); i++)
+	for (ssize_t i = 0; i < addVCon.size(); i++)
 	{
 		CVConGuard* VCon = addVCon[i];
 		if (!VCon)
