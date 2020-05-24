@@ -1,4 +1,17 @@
 #!/usr/bin/python3
+
+"""
+Prerequisities:
+1. pip3 install PyYAML requests
+2. set TX_TOKEN env.var. to your API token obtained at https://www.transifex.com/user/settings/api/
+
+Add new language, e.g. Polish:
+l10n.py --l10n ..\Release\ConEmu\ConEmu.l10n --add-lng pl Polskie --write-l10n
+
+Refresh all translations:
+l10n.py --l10n ..\Release\ConEmu\ConEmu.l10n --tx-pull all --write-l10n
+"""
+
 import argparse
 import json
 import os
