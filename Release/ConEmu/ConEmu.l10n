@@ -11,6 +11,8 @@
     {"id": "ja", "name": "日本語" }
     ,
     {"id": "es", "name": "Español" }
+    ,
+    {"id": "pl", "name": "Polskie" }
   ]
   ,
   "cmnhints": {
@@ -21,6 +23,7 @@
       "de": "Schriftart und -größe können für die tatsächliche Konsole geändert. Benötigt einen Neustart der Konsole.",
       "ja": "リアルコンソールでフォントのフェイスとサイズを変更することができます。コンソールの再起動が必要です。",
       "es": "Puedes cambiar el tipo y tamaño de letra en el terminal Real. Se necesita reiniciar el terminal.",
+      "pl": "Możesz zmienić czcionkę i rozmiar czcionki w konsoli Real. Wymagane ponowne uruchomienie konsoli.",
       "id": 1608 }
     ,
     "bReloadSettings": {
@@ -30,6 +33,7 @@
       "de": "Lädt alle Einstellungen erneut aus der Registry/XML",
       "ja": "レジストリ/ xmlからすべての設定を再読込みする",
       "es": "Recargar las opciones desde el registro/XML",
+      "pl": "Załaduj ponownie wszystkie ustawienia z rejestru / xml",
       "id": 1596 }
     ,
     "bResetSettings": {
@@ -39,6 +43,7 @@
       "de": "Setzt alle Einstellungen auf Vorgabewerte zurück",
       "ja": "すべての設定をデフォルトにリセットする",
       "es": "Reiniciar las opciones a sus valores por defecto",
+      "pl": "Zresetuj wszystkie ustawienia do wartości domyślnych",
       "id": 1595 }
     ,
     "bSaveSettings": {
@@ -54,6 +59,8 @@
             , "Shiftを押したときにダイアログを閉じない" ],
       "es": [ "Guardar la configuración en el registro/xml\r\n"
             , "No cerrar el diálogo si está pulsado Shift" ],
+      "pl": [ "Zapisz ustawienia w rejestrze / xml\n"
+            , "Nie zamykaj okna dialogowego, jeśli Shift jest wciśnięty" ],
       "id": 1610 }
     ,
     "cbActivateSplitMouseOver": {
@@ -69,6 +76,8 @@
             , "3番目 -  'Active window tracking' システム設定" ],
       "es": [ "Cuando hay varios paneles (divisiones) visibles activar (poner foco) pasando el ratón encima,\r\n"
             , "3er-estado - igual que las opciones de 'Seguimiento de ventana activa'" ],
+      "pl": [ "Gdy kilka paneli (podziałów) jest widocznych, jednocześnie aktywuj (ustaw fokus) konsolę za pomocą kursora myszy,\n"
+            , "3. stan - dopasuj ustawienia systemowe „Aktywne śledzenie okien”" ],
       "id": 2601 }
     ,
     "cbAdminShield": {
@@ -78,6 +87,7 @@
       "de": "Wenn ausgewählt, wird ein 'Schild'-Symbol in Reitern gezeigt, die 'Als Administrator' gestartet wurden",
       "ja": "チェックすると、'Shield'アイコンがタブに表示され、 '管理者' として開始されます",
       "es": "Cuando se activa - se mostrará el icono del 'Escudo' en las pestañas que se inician 'Como administrador'",
+      "pl": "Gdy ta opcja jest zaznaczona - ikona „Tarcza” będzie wyświetlana na kartach, uruchomiona „Jako administrator”",
       "id": 2109 }
     ,
     "cbAdminSuffix": {
@@ -93,6 +103,8 @@
             , "'%a' varで挿入場所を指定できます。指定がない場合タブの最後に接尾辞が付きます。" ],
       "es": [ "Cuando se activa - el sufijo especificado se añadirá a los títulos de las pestañas, que comiencen por ‘Como administrador’.\r\n"
             , "Puedes elegir el punto de inserción con '%a', en otro caso se añadirá al final de la pestaña." ],
+      "pl": [ "Gdy ta opcja jest zaznaczona - określony sufiks zostanie dołączony do tytułów zakładek, rozpoczynając „Jako administrator”.\n"
+            , "Możesz wybrać miejsce wstawiania z „%a” gdzie, w przeciwnym razie przyrostek będzie na końcu karty." ],
       "id": 2110 }
     ,
     "cbAlwaysOnTop": {
@@ -102,6 +114,7 @@
       "de": "Zeigt das ConEmu-Fenster über allen Fenstern, die nicht als 'zuoberst' festgelegt wurden. Das Fenster behält seine oberste Position auch wenn es inaktiv ist",
       "ja": "ConEmuウィンドウを 常に手前 に表示します。ウィンドウは、非アクティブ化されても最前面に居座ります",
       "es": "Coloca la ventana de ConEmu sobre todas las demás. La ventana mantiene su posición incluso cuando se desactiva",
+      "pl": "Umieszcza okno \"ConEmu\" nad wszystkimi oknami, które nie są najwyższe. Okno zachowuje najwyższą pozycję, nawet gdy jest wyłączone",
       "id": 1572 }
     ,
     "cbAlwaysShowTrayIcon": {
@@ -111,6 +124,7 @@
       "de": "Zeigt das ConEmu-Symbol immer im Taskleisten-Infobereich",
       "ja": "ConEmuアイコンをタスクバーステータスエリア（TSA）に常に表示する",
       "es": "Mostrar siempre el icono de ConEmu en el área de notificación",
+      "pl": "Zawsze pokazuj ikonę ConEmu w obszarze stanu paska zadań (TSA)",
       "id": 1736 }
     ,
     "cbAnsiLog": {
@@ -132,6 +146,9 @@
       "es": [ "Registrar salida del terminar en ficheros de texto\r\n"
             , "ConEmu-YYYY-MM-DD-pNNNN.log\r\n"
             , "(sólo afecta a terminales nuevos)" ],
+      "pl": [ "Zaloguj dane wyjściowe konsoli do plików tekstowych\n"
+            , "ConEmu-YYYY-MM-DD-pNNNN.log\n"
+            , "(dotyczy tylko nowych konsol)" ],
       "id": 2679 }
     ,
     "cbAnsiLogCodes": {
@@ -143,6 +160,8 @@
             , "（仅对新控制台有效）" ],
       "es": [ "Escribir secuencias ANSI al log del terminal\r\n"
             , "(afecta sólo a terminales nuevos)" ],
+      "pl": [ "Napisz do sekwencji ANSI dziennika konsoli\n"
+            , "(dotyczy tylko nowych konsol)" ],
       "id": 3105 }
     ,
     "cbAutoRegFonts": {
@@ -158,6 +177,8 @@
             , "*.ttf, *.otf and *.bdf ファイルがサポートされています。" ],
       "es": [ "Usar en tipos de letra de ConEmu, en la carpeta de ConEmu.\r\n"
             , "*.ttf, *.otf y *.bdf files están soportados." ],
+      "pl": [ "ConEmu używa czcionek znajdujących się w folderze ConEmu.\n"
+            , "Obsługiwane są pliki *.ttf, *.otf i *.bdf." ],
       "id": 1550 }
     ,
     "cbBgAllowPlugin": {
@@ -173,6 +194,8 @@
             , "3番目 - ビューア/エディタで描画しない" ],
       "es": [ "Activar plugins de fondo de Far (ej.: Panel Colorer),\r\n"
             , "3er-estado - no dibujar en visor/editor" ],
+      "pl": [ "Włącz wtyczki \"Far\" w tle (np. Panel Colorer),\n"
+            , "3. stan - nie rysuj w przeglądarce / edytorze" ],
       "id": 1734 }
     ,
     "cbBgImage": {
@@ -194,6 +217,9 @@
       "es": [ "Mostrar imagen de fondo en vez de los\r\n"
             , "colores estándar #0 y #1 (Negro y Azul)\r\n"
             , "3er-estado - no dibujar en visor/editor" ],
+      "pl": [ "Pokaż obraz tła zamiast standardowego\n"
+            , "kolory #0 i #1  (czarny i niebieski)\n"
+            , "3. stan - nie rysuj w przeglądarce / edytorze" ],
       "id": 1699 }
     ,
     "cbBold": {
@@ -203,6 +229,7 @@
       "de": "Hauptschrift fett",
       "ja": "メインフォントの太さ",
       "es": "Peso del tipo de letra principal",
+      "pl": "Główna waga czcionki",
       "id": 2278 }
     ,
     "cbClinkWebPage": {
@@ -212,6 +239,7 @@
       "de": "Öffnet clinks Website https://mridgers.github.io/clink/ im Browser",
       "ja": "あなたのブラウザで clinkのウェブページ https://mridgers.github.io/clink/ を開きます",
       "es": "Abrir página web de clink https://mridgers.github.io/clink/ en el navegador",
+      "pl": "Otwórz stronę internetową \"Clink\" https://mridgers.github.io/clink/ w przeglądarce",
       "id": 2614 }
     ,
     "cbCloseConsoleConfirm": {
@@ -221,6 +249,7 @@
       "de": "Zeigt Rückfragedialog vor dem Schließen eines Reiters oder einer Seite (Reiter 'Schließen' Menüeintrag)",
       "ja": "タブまたはページを閉じる前に確認を表示する（[閉じる]メニュー項目のタブ）",
       "es": "Mostrar confirmación antes de cerrar una pestaña o página (opción 'Cerrar' del menú de pestaña)",
+      "pl": "Pokaż potwierdzenie przed zamknięciem karty lub strony (element menu „Zamknij”)",
       "id": 2179 }
     ,
     "cbCloseEditViewConfirm": {
@@ -230,6 +259,7 @@
       "de": "Zeigt Rückfragedialog vor dem Schließen eines Far-Manager-Editor- oder Betrachter-Reiters",
       "ja": "Far Manager エディタまたはビューアタブを閉じる前に確認を表示する",
       "es": "Pedir confirmación antes de cerrar la pestaña de editor o visor de Far Manager",
+      "pl": "Pokaż potwierdzenie przed zamknięciem edytora lub przeglądarki przeglądarki Far Manager",
       "id": 2517 }
     ,
     "cbCloseWindowConfirm": {
@@ -239,6 +269,7 @@
       "de": "Zeigt Rückfragedialog vor Schließen des ConEmu-Fensters (X anklicken)",
       "ja": "ConEmuウィンドウを閉じる前に確認を表示する (cross clicking)",
       "es": "Mostrar confirmación antes de cerrar ConEmu (pulsando en la X)",
+      "pl": "Pokaż potwierdzenie przed zamknięciem okna ConEmu (kliknięcie krzyżowe)",
       "id": 2757 }
     ,
     "cbCmdTaskbarCommands": {
@@ -248,6 +279,7 @@
       "de": "Zeigt verwendete Taskleisten-Sprungbefehle um Konsolen zu starten (Verlauf)",
       "ja": "タスクバーで表示するコンソールを実行するために使用するジャンプコマンド(履歴)",
       "es": "Mostrar en la Lista de Tareas los comandos para iniciar terminales (histórico)",
+      "pl": "Pokaż w liście paska zadań komendy używane do uruchamiania konsol (historia)",
       "id": 2133 }
     ,
     "cbCmdTaskbarTasks": {
@@ -257,6 +289,7 @@
       "de": "Zeigt passende Aufgaben in den Taskleisten-Sprungbefehlen (Prüfe Aufgabeneigenschaften)",
       "ja": "タスクバーのジャンプリストにタスクを表示する(タスクのプロパティをチェック)",
       "es": "Mostrar en la lista de la Barra de Tareas las tareas correspondientes (comprobar las propiedades de las tareas)",
+      "pl": "Pokaż na liście zadań Lista zadań spełniających kryteria (sprawdź właściwości zadania)",
       "id": 2132 }
     ,
     "cbCmdTaskbarUpdate": {
@@ -266,6 +299,7 @@
       "de": "Vergiss nicht Sprungbefehle zu aktualisieren, besonders wenn 'Autoupdate' abgewählt ist",
       "ja": "ジャンプリストを更新することを忘れないでください.特に, '自動更新' がチェックされていない場合",
       "es": "No olvides actualizar la Lista de Tareas, especialmente si no está activado 'Autoactualizar'",
+      "pl": "Nie zapomnij zaktualizować list szybkiego dostępu, zwłaszcza jeśli „Autoupdate” nie jest zaznaczone",
       "id": 2320 }
     ,
     "cbComspecTest": {
@@ -275,6 +309,7 @@
       "de": "Zeigt 'berechneten' ComSpec-Pfad",
       "ja": "'計算された' ComSpecパスを表示する",
       "es": "Mostrar la ruta ComSpec 'calculada'",
+      "pl": "Pokaż „obliczoną” ścieżkę ComSpec",
       "id": 2162 }
     ,
     "cbComspecUpdateEnv": {
@@ -284,6 +319,7 @@
       "de": "ConEmu darf die Variable %ComSpec% auf den ausgewählten Befehlsprozesser ändern",
       "ja": "ConEmuは %ComSpec% 変数を選択されたコマンドプロセッサに更新することがあります",
       "es": "ConEmu puede actualizar la variable %ComSpec% para el intérprete de comandos seleccionado",
+      "pl": "ConEmu może zaktualizować zmienną %ComSpec% do wybranego procesora poleceń",
       "id": 2160 }
     ,
     "cbConfirmCloseRunning": {
@@ -293,6 +329,7 @@
       "de": "Wenn es in der Konsole zwei oder mehr Benutzerprozesse gibt",
       "ja": "コンソールに2つ以上のユーザープロセスがある場合",
       "es": "Si hay dos o más procesos de usuario en el terminal",
+      "pl": "Jeśli w konsoli są dwa lub więcej procesów użytkownika",
       "id": 2758 }
     ,
     "cbConsoleExceptionHandler": {
@@ -308,6 +345,8 @@
             , "しかし,デバッグの目的で有効にすることができます" ],
       "es": [ "Por defecto ConEmu no hace SetUnhandledExceptionFilter en servidores alternativos (Far, Telnet, etc.)\r\n"
             , "Pero se puede activar por motivos de depuración" ],
+      "pl": [ "Domyślnie ConEmu nie wykonuje SetUnhandledExceptionFilter na alternatywnych serwerach (Far, Telnet itp.)\n"
+            , "Ale może być włączony do celów debugowania" ],
       "id": 2622 }
     ,
     "cbCTSAutoCopy": {
@@ -317,6 +356,7 @@
       "de": "Kopiert sofort beim Loslassen der linken Maustaste (bei Auswahl mit Maus)",
       "ja": "マウスの左ボタンですぐにコピーする(マウスで選択する場合)",
       "es": "Copiar inmediatamente al soltar el botón izquierdo del ratón (cuando se selecciona con ratón)",
+      "pl": "Skopiuj natychmiast lewym przyciskiem myszy w górę (przy wybieraniu myszą)",
       "id": 2340 }
     ,
     "cbCTSBashMargin": {
@@ -326,6 +366,7 @@
       "de": "Bash hinterlässt beim automatischen Zeilenumbruch ein Leerzeichen an der rechten Kante der Konsole. Diese Option überspringt dieses, wenn in die Zwischenablage kopiert wird",
       "ja": "行を折り返すときにBashはコンソールの右端に1つのスペース文字を残し,クリップボードにコピーするときはこれらのスペースをスキップします",
       "es": "Bash deja un espacio en el lateral derecho del terminal cuando corta las lineas, eliminar estos espacios cuando se copie al portapapeles",
+      "pl": "\"Bash\" zostaw jeden znak spacji na prawej krawędzi konsoli podczas owijania linii, pomiń te spacje podczas kopiowania do schowka",
       "id": 2359 }
     ,
     "cbCTSBlockSelection": {
@@ -335,6 +376,7 @@
       "de": "Aktiviert rechteckige Auswahl (wie die Standard-Windows-Konsole)",
       "ja": "ブロック選択を有効にする(標準のWindowsコンソールなど)",
       "es": "Activar selección rectangular (como en el terminal estándar de Windows)",
+      "pl": "Włącz zaznaczanie prostokątne (jak standardowa konsola Windows)",
       "id": 1635 }
     ,
     "cbCTSClickPromptPosition": {
@@ -344,6 +386,7 @@
       "de": "3.-Zustand bedeutet: 'Versuche herauszufinden, ob die Konsole sich in ReadConsole befindet', falls dies mit der Bash verwendet werden soll: 'Ein' auswählen (Verwendet dritten Zustand nicht)",
       "ja": "3rd-state 手段とは,コンソールがReadConsoleにあるかどうかを検出しようとすることです.これをbashで使用する場合は,チェックボックスを 'On' にします(third stateは使用しないでください).",
       "es": "3er-estado indica que 'intenta detectar si el terminal está en modo ReadConsole', si lo quieres usar con bash - activa la casilla (no uses el 3er-estado)",
+      "pl": "3-stan oznacza „spróbuj wykryć, czy konsola jest w ReadConsole”, jeśli chcesz używać tego z bash - zaznacz pole wyboru „Włącz” (nie używaj trzeciego stanu)",
       "id": 2344 }
     ,
     "cbCTSDeleteLeftWord": {
@@ -359,6 +402,8 @@
             , "3rd-state means ‘try to detect if console is in ReadConsole’, if you want to use this with bash - turn checkbox to ‘On’ (don't use third state)" ],
       "es": [ "Borrar la palabra a la izquierda del cursor (sé ignora en Far),\r\n"
             , "3er-estado indica 'intentar detectar si el terminal está en modo ReadConsole', si quieres usar esto con bash - activa la casilla (no uses el 3er-estado)" ],
+      "pl": [ "Usuń słowo kursor w lewo do kursora (ignorowane w Dalekim),\n"
+            , "3-stan oznacza „spróbuj wykryć, czy konsola jest w ReadConsole”, jeśli chcesz używać tego z bash - zaznacz pole wyboru „Włącz” (nie używaj trzeciego stanu)" ],
       "id": 2526 }
     ,
     "cbCTSDetectLineEnd": {
@@ -368,6 +413,7 @@
       "de": "Versucht umgebrochene Texte als eine Zeile zu kopieren (Textauswahl)",
       "ja": "可能であれば自動改行されたテキストを1行にコピーする(テキスト選択)",
       "es": "Intentar copiar textos multilínea como una sola línea cuando sea posible (selección de texto)",
+      "pl": "Jeśli to możliwe, spróbuj skopiować zawinięty tekst jako pojedynczą linię (zaznaczanie tekstu)",
       "id": 2358 }
     ,
     "cbCTSEndCopyBefore": {
@@ -377,6 +423,7 @@
       "de": "Kopiert Auswahl in die Zwischenablage vor dem Zurücksetzen des Auswahlbereichs",
       "ja": "選択領域をリセットする前に選択をクリップボードにコピーする",
       "es": "Copiar la selección al portapapeles antes de reiniciar la zona seleccionada",
+      "pl": "Skopiuj zaznaczenie do schowka przed zresetowaniem regionu wyboru",
       "id": 2579 }
     ,
     "cbCTSEndOnKeyPress": {
@@ -392,6 +439,8 @@
             , "‘On’の場合 - 任意のキーで選択を終了する (矢印キー, PgUp, End など)" ],
       "es": [ "Cuando está ‘inactiva’ - sólo los caracteres finalizan la selección\r\n"
             , "Cuando está ‘activa’ - cualquier tecla finaliza la selección (Flechas, RePag, Fin, etc.)" ],
+      "pl": [ "Kiedy „Off” - tylko znaki kończą wybór\n"
+            , "Kiedy „On” - dowolny klawisz kończy wybór (strzałki, PgUp, End, itp.)" ],
       "id": 2436 }
     ,
     "cbCTSEndOnTyping": {
@@ -401,6 +450,7 @@
       "de": "Setzt Auswahlbereich bei Tastendruck zurück",
       "ja": "キーを押したときに選択範囲をリセットする",
       "es": "Reiniciar la zona seleccionada al pulsar una tecla",
+      "pl": "Zresetuj region wyboru po naciśnięciu klawisza",
       "id": 2412 }
     ,
     "cbCTSEraseBeforeReset": {
@@ -419,6 +469,9 @@
       "es": [ "Intentar el borrado de la zona seleccionada si es posible\r\n"
             , "enviando la secuencia Supr/Retroceso al terminal.\r\n"
             , "Implementar las combinaciones Ctrl+X, Shift+Supr, Retroceso and Supr." ],
+      "pl": [ "Spróbuj skasować wybrany region, jeśli to możliwe\n"
+            , "wysyłając sekwencję Del / BS do konsoli\n"
+            , "Zaimplementuj „zwykłe” skróty klawiszowe Ctrl + X, Shift + Del, BS i Del." ],
       "id": 3030 }
     ,
     "cbCTSFreezeBeforeSelect": {
@@ -428,6 +481,7 @@
       "de": "Friert Konsoleninhalte vor der Auswahl ein (kann kurze Verzögerung verursachen)",
       "ja": "選択前にコンソールの内容をフリーズする(小さなラグを引き起こす可能性がある)",
       "es": "Inmovilizar los contenidos de la terminal antes de seleccionar (puede causar un pequeño retardo)",
+      "pl": "Zatrzymaj zawartość konsoli przed wyborem (może powodować małe opóźnienie)",
       "id": 2257 }
     ,
     "cbCTSIBeam": {
@@ -437,6 +491,7 @@
       "de": "Zeigt IBeam-(Textauswahl)-Zeiger wenn verfügbar und durch Einstellungen und Tastenmodifizierer erlaubt",
       "ja": "設定およびモデファイヤキーで使用可能な時 Iビーム(テキスト選択)カーソルを表示する",
       "es": "Mostrar el cursor IBeam (selección de texto) cuando esté disponible y permitido por la configuración y modificadores",
+      "pl": "Pokaż kursor IBeam (wybór tekstu), jeśli jest dostępny i dozwolony przez ustawienia i modyfikatory klawiszy",
       "id": 2603 }
     ,
     "cbCTSResetOnRelease": {
@@ -446,6 +501,7 @@
       "de": "Setzt Auswahlbereich beim Loslassen der linken Maustaste zurück (bei Auswahl mit Maus)",
       "ja": "マウスの左ボタンで選択領域をリセット(マウスで選択した場合)",
       "es": "Reiniciar la zona seleccionada cuando se levante el botón izquierdo del ratón (cuando se selecciona con ratón)",
+      "pl": "Resetuj region wyboru lewym przyciskiem myszy w górę (podczas wybierania myszą)",
       "id": 3029 }
     ,
     "cbCTSShiftArrowStartSel": {
@@ -455,6 +511,7 @@
       "de": "Beginnt Textauswahl mit Umslt+Links/Rechts/Pos1/Ende oder Blockauswahl mit Umslt+Hoch/Runter",
       "ja": "Shift+Left/Right/Home/End でテキスト選択を開始するか,Shift+Up/Downでブロック選択を開始する",
       "es": "Iniciar la selección de texto con Shift+Izquierda/Derecha/Inicio/Fin o selección de bloque con Shift+Arriba/Abajo",
+      "pl": "Rozpocznij zaznaczanie tekstu za pomocą Shift+Left/Right/Home/End lub zablokuj wybór za pomocą Shift+Up/Down",
       "id": 2553 }
     ,
     "cbCTSTextSelection": {
@@ -464,6 +521,7 @@
       "de": "Aktiviert Streaming-Auswahl (wie GUI-Texteditoren)",
       "ja": "ストリーミング選択を有効にする(GUIテキストエディタのように)",
       "es": "Activar selección en línea (como editores GUI)",
+      "pl": "Włącz zaznaczanie strumieniowe (np. Edytory tekstowe GUI)",
       "id": 1630 }
     ,
     "cbCTSTrimTrailing": {
@@ -473,6 +531,7 @@
       "de": "3.-Zustand bedeutet 'Nur für Textauswahl'",
       "ja": "3番目は 'テキスト選択のみ' を意味します",
       "es": "3er-estado indica 'Sólo para selección de texto'",
+      "pl": "3-stan oznacza „Tylko do zaznaczania tekstu”",
       "id": 2365 }
     ,
     "cbCursorBlink": {
@@ -488,6 +547,8 @@
             , "標準的なカーソルの点滅速度で." ],
       "es": [ "Cuando está activo \"Parpadear\" - el cursor parpadea\r\n"
             , "con la velocidad de parpadeo estándar." ],
+      "pl": [ "Gdy „Miga” jest WŁĄCZONE - kursor miga\n"
+            , "ze standardową częstotliwością migania kursora." ],
       "id": 1522 }
     ,
     "cbCursorColor": {
@@ -509,6 +570,9 @@
       "es": [ "ON - cursor emula comportamiento del terminal (inversión de colores)\r\n"
             , "OFF - cursor es blanco (color#15) en fondos oscuros,\r\n"
             , "y negro (color#0) en fondos claros; esta opción también afecta la apariencia de los cursores 'Bloque'" ],
+      "pl": [ "ON - kursor emuluje zachowanie konsoli (rodzaj odwrócenia kolorów)\n"
+            , "OFF - kursor jest biały (color#15) na ciemnym tle,\n"
+            , "i czarny (color#0) na jasnym tle; również to pole wyboru wpływa na wygląd kursorów „Block”" ],
       "id": 1210 }
     ,
     "cbCursorIgnoreSize": {
@@ -518,6 +582,7 @@
       "de": "Ignoriert Schreibmarkengröße in tatsächlicher Konsole, Schreibmarke wird immer in angegebener Größe gezeigt",
       "ja": "実際のコンソールでカーソルサイズを無視し,常に指定されたサイズのカーソルを表示する",
       "es": "Ignorar tamaño del cursor en el terminal real, mostrar siempre el cursor con el tamaño especificado",
+      "pl": "Zignoruj ​​rozmiar kursora w prawdziwej konsoli, zawsze pokazuj kursor o określonym rozmiarze",
       "id": 1655 }
     ,
     "cbDebugSteps": {
@@ -533,6 +598,8 @@
             , "例えば.プラグインの通信手順." ],
       "es": [ "Mostrar información de depuración en la barra de título de ConEmu\r\n"
             , "Ej.: pasos de comunicación con plugin." ],
+      "pl": [ "Pokaż informacje o debugowaniu w tytule ConEmu\n"
+            , "Na przykład. plugin \"kroki komunikacji\"." ],
       "id": 1551 }
     ,
     "cbDefTermAgressive": {
@@ -542,6 +609,7 @@
       "de": "Wenn aktiviert, wird keine ConEmu-Instanz benötigt um neue Prozesse anzuzapfen. Ein bereits angezapfter Prozess, z.B. 'Explorer.exe', wird genügen.",
       "ja": "有効にすると,新しいプロセスをフックするためにConEmuインスタンスを実行しません.既にフックされた単一の 'Explorer.exe'プロセスを使います.",
       "es": "Si está activo, no se requiere ejecutar la instancia de ConEmu para anclar nuevos procesos. Será suficiente un proceso ya anclado, ej.: 'Explorer.exe'",
+      "pl": "Jeśli ta opcja jest włączona, uruchomienie instancji ConEmu nie będzie wymagane do zaczepiania nowych procesów. Jeden już uzależniony proces, np.„Explorer.exe” już wystarczy.",
       "id": 2684 }
     ,
     "cbDisableAllFlashing": {
@@ -557,6 +625,8 @@
             , "3番目 - 短期間の点滅は許可" ],
       "es": [ "Desactivar los parpadeos (de los terminales) en la barra de tareas de Windows.\r\n"
             , "3er-estado - permitir pequeño parpadeo." ],
+      "pl": [ "Wyłącz wszystkie flashowanie (z konsoli) na pasku zadań systemu Windows.\n"
+            , "3. stan - pozwala na krótkie flashowanie." ],
       "id": 1719 }
     ,
     "cbDisableFarFlashing": {
@@ -572,6 +642,8 @@
             , "3番目 - 短期間の点滅は許可" ],
       "es": [ "Desactivar parpadeo (de Far Manager) en la barra de tareas de Windows.\r\n"
             , "3er-estado - permitir parpadeo corto." ],
+      "pl": [ "Wyłącz flashowanie (od Far Managera) na pasku zadań Windows.\n"
+            , "3. stan - pozwala na krótkie flashowanie." ],
       "id": 1718 }
     ,
     "cbDnDCopy": {
@@ -593,6 +665,9 @@
       "es": [ "Forzar la acción \"Copiar\" por defecto,\r\n"
             , "Puedes usar Ctrl, Shift o Alt\r\n"
             , "durante el arrastre para cambiar la acción" ],
+      "pl": [ "Wymuszone działanie „Kopiuj” jako domyślne,\n"
+            , "Możesz użyć Ctrl, Shift lub Alt\n"
+            , "podczas przeciągania, aby zmienić akcję" ],
       "id": 2287 }
     ,
     "cbDosBox": {
@@ -602,6 +677,7 @@
       "de": "Aktiviert DosBox-Integration",
       "ja": "DosBoxの統合を可能にする",
       "es": "Activar la integración con DosBox",
+      "pl": "Umożliwia integrację z DosBox",
       "id": 1753 }
     ,
     "cbDragIcons": {
@@ -611,6 +687,7 @@
       "de": "Zeigt Symbole von gezogenen Einträgen",
       "ja": "ドラッグされたアイテムのアイコンを表示する",
       "es": "Mostrar iconos de elementos arrastrados",
+      "pl": "Pokaż ikony przeciągniętych elementów",
       "id": 1553 }
     ,
     "cbDragImage": {
@@ -620,6 +697,7 @@
       "de": "Erzeugt und zeigt überlagernde, durchsichtige Schnappschüsse von gezogenen Dateien",
       "ja": "ファイルのオーバーレイ透明スナップショットを作成して表示する",
       "es": "Crear y visualizar una imagen transparente de los archivos arrastrados",
+      "pl": "Utwórz i wyświetl przezroczystą nakładkę migawki plików \"przeciągnij\"",
       "id": 1548 }
     ,
     "cbDragL": {
@@ -629,6 +707,7 @@
       "de": "Erlaubt das Ziehen mit der linken Maustaste",
       "ja": "左マウスボタンでドラッグを許可する",
       "es": "Permitir arrastrar con el botón izquierdo del ratón",
+      "pl": "Zezwól na przeciąganie lewym przyciskiem myszy",
       "id": 1504 }
     ,
     "cbDragPanel": {
@@ -644,6 +723,8 @@
             , "3番目 - マクロによるボタンリリース時のサイズ変更." ],
       "es": [ "Activar redimensionamiento de paneles izquierdo y derecho arrastrando con el ratón.\r\n"
             , "3er-estado - redimensionar al soltar botón con macros." ],
+      "pl": [ "Włącz zmianę rozmiaru lewego i prawego panelu, przeciągając myszką.\n"
+            , "3. stan - zmiana rozmiaru po zwolnieniu przycisku za pomocą makr." ],
       "id": 1568 }
     ,
     "cbDragR": {
@@ -653,6 +734,7 @@
       "de": "Erlaubt das Ziehen mit der rechten Maustaste",
       "ja": "マウスの右ボタンでドラッグを許可する",
       "es": "Permitir arrastrar con el botón derecho del ratón",
+      "pl": "Zezwól na przeciąganie prawym przyciskiem myszy",
       "id": 1505 }
     ,
     "cbDropEnabled": {
@@ -674,6 +756,9 @@
       "es": [ "Off - ConEmu NO recibirá elementos arrastrados externos \r\n"
             , "On - Se permiten elementos arrastrados (diálogo de confirmación de Far)\r\n"
             , "3er-estado - igual que 'On', pero sin confirmación" ],
+      "pl": [ "OFF - ConEmu NIE będzie otrzymywać zrzutów zewnętrznych\n"
+            , "ON - Upuszczanie dozwolone (potwierdzenie okna dialogowego -daleko-)\n"
+            , "3rd-state to samo co „Wł.”, ale bez potwierdzenia" ],
       "id": 1502 }
     ,
     "cbDropUnlocked": {
@@ -683,6 +768,7 @@
       "de": "Entsperrt Quell- und Zielfenster bei Ablegeoperationen. Dies kann zu unvorhergesehenen Ergebnissen führen, wenn die ZiehQuelle temporär gezogene Dateien NUR für die Zieh-Lebenszeit erzeugt.",
       "ja": "ドロップ操作でソースウィンドウとターゲットウィンドウのロックを解除します. ドラッグソースが一時的にドラッグされたファイルをドラッグライフタイムのために作成すると,予期しない結果が生じることがあります.",
       "es": "Desbloquear las ventanas origen y destino en operaciones de arrastrar y soltar. Esto puede causar resultados imprevistos, cuando el origen crea archivos temporales sólo mientras dura el arrastre.",
+      "pl": "Odblokuj okno źródłowe i docelowe podczas operacji Drop. Może to powodować nieprzewidywalne wyniki, gdy DragSource tworzy pliki przeciągane tymczasowo TYLKO na cały okres przeciągania.",
       "id": 1579 }
     ,
     "cbDropUseBCopy": {
@@ -692,6 +778,7 @@
       "de": "Verwendet den BCopy-Dienst für Ablegeoperationen ('Entsperrtes Ablegen' muss angewählt sein)",
       "ja": "ドロップ操作にBCopyサービスを使用する( 'Unlocked drop'をチェックする必要があります)",
       "es": "Usar el servicio BCopy para las operaciones de 'soltar' (debe estar activado 'Desbloquear soltar')",
+      "pl": "Użyj usługi BCopy do operacji upuszczania (należy zaznaczyć „Unlocked drop”)",
       "id": 1580 }
     ,
     "cbEnableMouse": {
@@ -701,6 +788,7 @@
       "de": "Abwählen um das Senden von Mausereignissen an die Konsole zu unterdrücken, die Maus wird intern von ConEmu verarbeitet (z.B. Textauswahl)",
       "ja": "マウスイベントをコンソールに送信しないようにするにはこれをオフにします.マウスはConEmuによって内部的に処理されます(テキスト選択など)",
       "es": "Desactiva esto para evitar enviar eventos del ratón al terminal, el ratón se manejará internamente por ConEmu (por ejemplo, selección de texto)",
+      "pl": "Odznacz to, aby zatrzymać wysyłanie zdarzeń myszy do konsoli, mysz będzie przetwarzana wewnętrznie przez ConEmu (na przykład zaznaczanie tekstu)",
       "id": 2313 }
     ,
     "cbEnhanceGraphics": {
@@ -710,6 +798,7 @@
       "de": "Verbessert das Erscheinungsbild von Fortschrittsbalken und Scrollleisten",
       "ja": "進捗バーとスクロールバーの外観を強化する",
       "es": "Mejorar el aspecto de las barras de progreso y desplazamiento",
+      "pl": "Popraw wygląd pasków postępu i pasków przewijania ",
       "id": 2289 }
     ,
     "cbExportConfig": {
@@ -731,6 +820,8 @@
       "es": [ "Exportar la configuración a archivo xml\r\n"
             , "\r\n"
             , "¡Cuidado con no sobreescribir la configuración actual si estás usando ConEmu en modo portable!" ],
+      "pl": [ "Wyeksportuj bieżące ustawienia do pliku xml\n"
+            , "Uważaj, aby nadpisać obecny ConEmu.xml, jeśli używasz trybu przenośnego ConEmu!" ],
       "id": 2572 }
     ,
     "cbExtendFonts": {
@@ -746,6 +837,8 @@
             , "この機能は,プロンプトの装飾やFar Manager(1.7x,2.x)のColorerプラグインで便利です." ],
       "es": [ "Permite a ConEmu usar tipos de letra normal, negrita e itálica a la vez.\r\n"
             , "Esta característica puede ser útil para adornar el símbolo del sistema o con el plugin Colorer de Far Manager (1.7x, 2.x)." ],
+      "pl": [ "ConEmu może używać normalnych, pogrubionych i kursywnych czcionek obok siebie.\n"
+            , "Ta funkcja może być przydatna do szybkiej dekoracji lub z wtyczką Colorer dla Far Managera (1.7x, 2.x)." ],
       "id": 1576 }
     ,
     "cbExtendUCharMap": {
@@ -755,6 +848,7 @@
       "de": "Zeigt Glyphen der ausgewählten Schriftart im 'Unicode CharMap'-PlugIn (nur FAR2)",
       "ja": "選択したフォントのグリフを 'Unicode CharMap' プラグインで表示する(FAR2のみ)",
       "es": "Mostrar glifos del tipo de letra seleccionado en el plugin 'Unicode CharMap' (sólo FAR2)",
+      "pl": "Pokaż glify z wybranej czcionki we wtyczce „Unicode CharMap” (tylko FAR2)",
       "id": 1722 }
     ,
     "cbFadeInactive": {
@@ -764,6 +858,7 @@
       "de": "Wenn ConEmu den Fokus verliert, werden seine Inhalte verblassen. Es kann die hellste Farbe angegeben werden.",
       "ja": "ConEmu 非アクティブ時の透明度を上げる.最も明るい色を指定できます.",
       "es": "Cuando ConEmu pierde el foco, sus contenidos pueden quedar descoloridos. Puedes especificar colores con más brillo.",
+      "pl": "Gdy ConEmu traci ostrość, jego zawartość może być wyblakła. Możesz określić najjaśniejszy kolor.",
       "id": 1581 }
     ,
     "cbFarHourglass": {
@@ -773,6 +868,7 @@
       "de": "Zeigt 'Beschäftigt'-Mauszeiger (Pfeil mit einer kleinen Sanduhr oder einem Kreis) wenn Far beschäftigt ist (nicht während langer Operationen reagiert)",
       "ja": "Farがビジー状態のときに,マウスカーソル(小さい砂時計または円のある矢印)を表示する(長い操作中に応答しない)",
       "es": "Mostar el cursor del ratón InicioApp (flecha con un pequeño reloj o círculo) cuando Far está ocupado (no responde durante operaciones largas)",
+      "pl": "Pokaż kursor myszy podczas uruchamiania aplikacji (strzałka z małą klepsydrą lub kółkiem), gdy Far jest zajęty (nie reaguje podczas długich operacji)",
       "id": 1563 }
     ,
     "cbFARuseASCIIsort": {
@@ -788,6 +884,8 @@
             , "!!!ハイライト実験!!!" ],
       "es": [ "Anclar funciones de ordenación de cadenas de Far.\r\n"
             , "¡¡¡MUY EXPERIMENTAL!!!" ],
+      "pl": [ "Funkcje sortowania łańcuchów dalekiego zasięgu.\n"
+            , "!!!HIGHLY EXPERIMENTAL!!!" ],
       "id": 1561 }
     ,
     "cbFixAltOnAltTab": {
@@ -797,6 +895,7 @@
       "de": "Wenn ein Makro auf Alt (RAlt) gesetzt wird kann das zu unerwarteten Aktionen bei AltTab oder AltF9 führen. Dieses Problem kann behoben werden, in dem Steuerung-Loslassen vor dem Alt-Loslassen an die Konsole gesendet wird.",
       "ja": "Alt(右Alt)でマクロを設定すると,AltTabまたはAltF9で予期せず起動することがあります.この問題は,Altキーを押す前にコンソールControlを送信することで修正できます.",
       "es": "Cuando asignas una macro a Alt (RAlt) podría activarse con Alt-Tab o Alt-F9. Este problema se puede solucionar enviando al terminal la pulsación de Ctrl antes de soltar Alt.",
+      "pl": "Gdy ustawisz makro na Alt (RAlt), może ono niespodziewanie aktywować się na AltTab lub AltF9. Ten problem można rozwiązać, wysyłając do konsoli naciśnięcie klawisza Control przed wydaniem klawisza Alt.",
       "id": 1562 }
     ,
     "cbFixFarBorders": {
@@ -813,6 +912,8 @@
             , "例) メイン -  \"Consolas\", 追加 -  \"Segoe UI\"" ],
       "es": [ "Puedes especificar tipos de letra adicionales para dibujar pseudo-gráficos o un conjunto de símbolos.\r\n"
             , "Ej.: principal - \"Consolas\",  adicional - \"Segoe UI\"." ],
+      "pl": [ "Możesz określić dodatkową czcionkę do rysowania pseudografii lub określony zakres symboli.\n"
+            , "Na przykład. główny- „Consolas”, dodatkowe - „Segoe UI”." ],
       "id": 1207 }
     ,
     "cbFocusInChildWindows": {
@@ -822,6 +923,7 @@
       "de": "Setzt den Fokus auf xshell/PuTTY/Notepad/usw., wenn ConEmu aktiviert oder ein Reiter gewechselt wird.",
       "ja": "ConEmuが起動されたとき,またはタブが切り替わったときに xshell/putty/notepad/etc にフォーカスを設定します",
       "es": "Hacer foco en xshell/putty/notepad/etc... cuando se activa ConEmu, o se cambia de pestaña.",
+      "pl": "Ustaw fokus w xshell / putty / notepad / itp. po aktywacji ConEmu lub przełączeniu tabulatora.",
       "id": 2568 }
     ,
     "cbFont2AA": {
@@ -837,6 +939,8 @@
             , "正確な偽像がよりよく見えます." ],
       "es": [ "Activar o desactivar 'Clear Type' para tipo de letra alternativo.\n"
             , "Se verán mejor los pseudo-gráficos." ],
+      "pl": [ "Włącz lub wyłącz „Wyczyść typ” dla alternatywnej czcionki.\n"
+            , "Dokładna pseudografia wygląda lepiej." ],
       "id": 2883 }
     ,
     "cbFontAuto": {
@@ -846,6 +950,7 @@
       "de": "Automatische Schriftgrößenanpassung bei fester Breite der tatsächlichen Konsole",
       "ja": "実際のコンソール幅で自動的にフォントをリサイズする",
       "es": "Redimensionar automáticamente el tipo de letra para la anchura fija del terminal real",
+      "pl": "Automatyczna zmiana rozmiaru czcionki dla ustalonej rzeczywistej szerokości konsoli",
       "id": 1566 }
     ,
     "cbHandleFarDetach": {
@@ -855,6 +960,7 @@
       "de": "Automatisches Ankoppeln einer neuen, beim Abkoppeln erzeugten, Far-Manager-Konsole an ConEmu (StrgAltTab)",
       "ja": "DetEach(CtrlAltTab)で作成されたConEmuの新しいFar Manager コンソールへの自動接続",
       "es": "Enganchar automáticamente a ConEmu el nuevo terminal de Far manager, creado al desenganchar (CtrlAltTab) ",
+      "pl": "Automatyczne dołączanie do nowej konsoli Far Manager ConEmu, utworzonej przy odłączeniu (CtrlAltTab)",
       "id": 1619 }
     ,
     "cbHereName": {
@@ -870,6 +976,8 @@
             , "`&`記号を使ってメニュー項目のホットキーを設定することができます" ],
       "es": [ "Lo que se verá en el menú contextual del Explorador\r\n"
             , " Puedes usar el símbolo '&' para elegir la tecla activa del elemento" ],
+      "pl": [ "Co zobaczysz w menu podręcznym Eksploratora\n"
+            , "Możesz użyć znaku `&`, aby ustawić skrót klawiszowy dla pozycji menu" ],
       "id": 2407 }
     ,
     "cbHideCaption": {
@@ -879,6 +987,7 @@
       "de": "Blendet Hauptfenstertitel aus, wenn maximiert (Alt-F9)",
       "ja": "最大化するとメインウィンドウのキャプションを隠す(Alt-F9)",
       "es": "Ocultar la barra de título de la ventana principal, cuando está maximizada (Alt-F9)",
+      "pl": "Ukryj podpis okna głównego po zmaksymalizowaniu (Alt-F9)",
       "id": 1565 }
     ,
     "cbHideCaptionAlways": {
@@ -888,6 +997,7 @@
       "de": "Fensterrahmen und -titel entfernen. Es werden nur Konsole, Reiter und Statusleiste angezeigt.",
       "ja": "ウィンドウ枠とキャプションを削除します.コンソール,タブ,ステータスバーのみが表示されます.",
       "es": "Eliminar el borde y barra de título de la ventana. Sólo se mostrarán el terminal, las pestañas y la barra de estado.",
+      "pl": "Usuń obramowanie okna i podpis. Wyświetlana będzie tylko konsola, karty i pasek stanu.",
       "id": 1569 }
     ,
     "cbHideInactiveConTabs": {
@@ -897,6 +1007,7 @@
       "de": "Zeigt nur Reiter der aktiven Konsole",
       "ja": "アクティブなコンソールからのみタブを表示する",
       "es": "Mostrar sólo pestañas del terminal activo",
+      "pl": "Pokaż karty tylko z aktywnej konsoli",
       "id": 1642 }
     ,
     "cbInjectConEmuHkFast": {
@@ -906,6 +1017,7 @@
       "de": "Erforderlich für viele Funktionen (ANSI X3.64, -new_console-Parameter, GUI-Anwendungen in ConEmu-Reitern, ...) und Behebung verschiedener Probleme (Absturz in Windows 8, Telnet in Windows 7, Dialoge und Menüs hinter dem ConEmu-Fenster, Aufhängen von chcp, usw.)",
       "ja": "多くの機能(ConEmuタブのANSI X3.64, -new_console 引数, GUIアプリケーション,...)といくつかの問題(Windows8でのクラッシュ, Windows7での telnet, ConEmuウィンドウの後ろのダイアログとメニュー, chcp hungs , 等々...)",
       "es": "Se necesita para varias características (ANSI X3.64, parámentro -new_console, aplicaciones GUI en pestañas de ConEmu, ...) y para evitar varios problemas (casques en Windows 8, telnet en Windows 7, diálogos y menús que se quedan detrás de la ventana de ConEmu, cuelgues de chcp, ...)",
+      "pl": "Wymagane dla wielu funkcji (ANSI X3.64, -new_console argument, GUI aplikacje na kartach ConEmu , ...) i wyeliminowanie kilku problemów (awaria w Windows 8, telnet w Windows 7, okna dialogowe i menu za oknem ConEmu, chcp hungs itd.)",
       "id": 2098 }
     ,
     "cbInsideName": {
@@ -921,6 +1033,8 @@
             , "`&`記号を使ってメニュー項目のホットキーを設定することができます" ],
       "es": [ "Lo que se verá en el menú contextual del Explorador\r\n"
             , "Puedes usar '&' para definir la tecla de activación del elemento de menú" ],
+      "pl": [ "Co zobaczysz w menu podręcznym Eksploratora\n"
+            , "Możesz użyć znaku `&`, aby ustawić skrót klawiszowy dla pozycji menu" ],
       "id": 2406 }
     ,
     "cbInsideSyncDir": {
@@ -930,6 +1044,7 @@
       "de": "Synchronisiert aktuelles Verzeichnis (Explorer -> ConEmu)",
       "ja": "現在のディレクトリを同期する(Explorer  - > ConEmu)",
       "es": "Sincronizar carpeta actual (Explorador -> ConEmu)",
+      "pl": "Synchronizuj bieżący katalog (Explorer -> ConEmu)",
       "id": 2397 }
     ,
     "cbInstallKeybHooks": {
@@ -938,6 +1053,7 @@
       "zh": "允许拦截Win+Number, Win+Arrows, Alt+Esc, Alt+Tab,等等。",
       "ja": "Win Number,Win Arrows,Alt Esc,Alt Tabなどの傍受を許可します.",
       "es": "Permite interceptar combinaciones Win+Número, Win+Cursores, Alt+Esc, Alt+Tab, etc...",
+      "pl": "Umożliwia przechwytywanie Win + Number, Win + strzałki, Alt + Esc, Alt + Tab itp.",
       "id": 1649 }
     ,
     "cbItalic": {
@@ -947,6 +1063,7 @@
       "de": "Hauptschrift kursiv",
       "ja": "メイン フォント 斜体",
       "es": "Tipo de letra itálica principal",
+      "pl": "Główna czcionka kursywą",
       "id": 2280 }
     ,
     "cbJumpListAutoUpdate": {
@@ -956,6 +1073,7 @@
       "de": "Wenn angewählt, werden die Sprungbefehle automatisch aktualisiert, wenn ein Benutzer in den Aufgabeneigenschaften das 'Taskleisten-Sprungbefehle'-Kästchen an-/abwählt.",
       "ja": "ユーザーがタスクプロパティの[タスクバージャンプリスト]チェックボックスをOn/OFFしたときに、ジャンプリストを自動的に更新する",
       "es": "Si se selecciona, las Listas de Tareas se actualizarán automáticamente cuando el usuario (des)marque la casilla de 'Lista de tareas' de las propiedades de la tarea",
+      "pl": "Jeśli ta opcja jest zaznaczona, Listy szybkiego dostępu będą aktualizowane automatycznie, gdy użytkownik (od) zaznaczy pole wyboru „Listy szybkiego dostępu na pasku zadań” we właściwościach zadania.",
       "id": 3073 }
     ,
     "cbKillSshAgent": {
@@ -965,6 +1083,7 @@
       "de": "Beendet beim ConEmu-Beenden alle 'ssh-agent.exe'-Prozesse die aus ConEmu-Konsolen heraus gestartet wurden.",
       "ja": "ConEmuの終了時にConEmuのコンソールから起動したすべての `ssh-agent.exe`プロセスを終了します.",
       "es": "Finalizar todos los procesos 'ssh-agent.exe' iniciados por terminales de ConEmu al salir de ConEmu.",
+      "pl": "Zakończ wszystkie procesy `ssh-agent.exe` uruchomione z konsol ConEmu przy zakończeniu ConEmu.",
       "id": 3075 }
     ,
     "cbLongOutput": {
@@ -998,6 +1117,11 @@
             , "comandos de terminal. La salida del terminal\r\n"
             , "(hasta el número de líneas especificado) estará\r\n"
             , "disponible con la macro de Far (CtrlO.reg)" ],
+      "pl": [ "Automatycznie rozwiń wysokość bufora do określonej wartości\n"
+            , "liczba linii, podczas gdy Far wykonuje\n"
+            , "polecenia konsoli. Pełna moc wyjściowa konsoli\n"
+            , "(do określonej liczby linii) będzie\n"
+            , "dostępne poprzez Far makro (CtrlO.reg)" ],
       "id": 1534 }
     ,
     "cbMinToTray": {
@@ -1025,6 +1149,10 @@
             , "Pulsa con el botón derecho en el botón de cierre\r\n"
             , "de ConEmu para minimizar a la zona de estado,\r\n"
             , "cuando esta opción está desactivada" ],
+      "pl": [ "Automatyczne minimalizowanie do obszaru stanu paska zadań (TSA)\n"
+            , "Kliknij prawym przyciskiem myszy przycisk „Zamknij okno”\n"
+            , "w tytule ConEmu dla minimalizacji do TSA,\n"
+            , "gdy to pole wyboru jest wyłączone-" ],
       "id": 1507 }
     ,
     "cbMonitorConsoleLang": {
@@ -1040,6 +1168,8 @@
             , "コンソール(Far Manager XLatスイッチングサポートなど)" ],
       "es": [ "Monitorizar el cambio del idioma de entrada del terminal\r\n"
             , "en tiempo real (ej.: soporte para cambio XLat de Far Manager XLat)" ],
+      "pl": [ "Monitoruj zmianę języka wprowadzania w czasie rzeczywistym\n"
+            , "konsola (np. obsługa przełączania Far Manager XLat)" ],
       "id": 1537 }
     ,
     "cbMonospace": {
