@@ -1732,6 +1732,29 @@ void CConEmuSize::SetRequestedMonitor(HMONITOR hNewMon)
 	mh_RequestedMonitor = hNewMon ? hNewMon : FindInitialMonitor();
 
 	MonitorInfoCache mi = NearestMonitorInfo(mh_RequestedMonitor);
+
+	// During change of per-monitor dpi window is resized before we receive WM_DISPLAYCHANGE
+	// and therefore ReloadMonitorInfo() is not called yet
+	DpiValue dpi;
+	CDpiAware::QueryDpiForMonitor(mi.hMon, &dpi);
+	if (mi.Xdpi != dpi.Xdpi || mi.Ydpi != mi.Ydpi)
+	{
+		wchar_t log_info[128];
+		swprintf_c(log_info, L"WARNING: Cached monitor dpi is obsolete, old={%i,%i}, new={%i,%i}",
+			mi.Ydpi, mi.Ydpi, dpi.Ydpi, dpi.Xdpi);
+		DEBUGSTRDPI(log_info);
+		LogString(log_info);
+
+		ReloadMonitorInfo();
+
+		mi = NearestMonitorInfo(mh_RequestedMonitor);
+		if (mi.Xdpi != dpi.Xdpi || mi.Ydpi != mi.Ydpi)
+		{
+			Assert(mi.Xdpi == dpi.Xdpi && mi.Ydpi == mi.Ydpi);
+			mi.Xdpi = dpi.Xdpi; mi.Ydpi = dpi.Ydpi;
+		}
+	}
+
 	gpSetCls->SetRequestedDpi(mi.Xdpi, mi.Ydpi);
 	SizeInfo::RequestDpi({mi.Xdpi, mi.Ydpi});
 }
@@ -1758,16 +1781,22 @@ CConEmuSize::MonitorInfoCache CConEmuSize::NearestMonitorInfo(HMONITOR hNewMon) 
 
 	HMONITOR hTargetMon = hNewMon ? hNewMon : mh_RequestedMonitor;
 
-	int iPrimary = 0;
+	ssize_t iPrimary = 0;
+	ssize_t iFound = -1;
 	for (int i = 0; i < monitors.size(); ++i)
 	{
 		if (monitors[i].hMon == hTargetMon)
-			return monitors[i];
+		{
+			iFound = i;
+			break;
+		}
 		if (monitors[i].mi.dwFlags & MONITORINFOF_PRIMARY)
+		{
 			iPrimary = i;
+		}
 	}
 
-	return monitors[iPrimary];
+	return monitors[(iFound >= 0) ? iFound : iPrimary];
 }
 
 RECT CConEmuSize::GetVirtualScreenRect(bool abFullScreen)
@@ -5302,37 +5331,23 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 	wchar_t szInfo[255], szPrefix[40];
 	RECT rc = {}; if (prcSuggested) rc = *prcSuggested;
 	static UINT oldDpiX, oldDpiY;
-	bool bChanged = (dpiX != oldDpiX) || (dpiY != oldDpiY);
+	const bool bChanged = (dpiX != oldDpiX) || (dpiY != oldDpiY);
 	oldDpiX = dpiX; oldDpiY = dpiY;
 
-	if (prcSuggested)
-		SetRequestedMonitor(MonitorFromRect(prcSuggested, MONITOR_DEFAULTTONEAREST));
+	// If window jump between monitors was made from e.g. ChangeTileMode
+	// the API may suggest in that case incorrect value in the prcSuggested
+	// Proper size was already calculated, don't change it
+	const bool ignoreSuggestedRect = IsWindowModeChanging();
 
 	swprintf_c(szPrefix, bChanged ? L"DpiChanged(%s)" : L"DpiNotChanged(%s)",
 		(src == dcs_Api) ? L"Api" : (src == dcs_Macro) ? L"Mcr" : (src == dcs_Jump) ? L"Jmp" : (src == dcs_Snap) ? L"Snp" : L"Int");
-	swprintf_c(szInfo, L"%s: dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)",
-		szPrefix, dpiX, dpiY, LOGRECTCOORDS(rc), LOGRECTSIZE(rc));
+	swprintf_c(szInfo, L"%s: dpi={%u,%u}, rect={%i,%i}-{%i,%i} (%ix%i)%s",
+		szPrefix, dpiX, dpiY, LOGRECTCOORDS(rc), LOGRECTSIZE(rc),
+		ignoreSuggestedRect ? L" {SuggestedRect was dropped}" : L"");
+	DEBUGSTRDPI(szInfo);
+	LogString(szInfo, true);
 
-	/*
-	if (m_JumpMonitor.bInJump || mn_IgnoreSizeChange)
-	{
-		wcscat_c(szInfo, L" - SKIPPED because of moving");
-		DEBUGSTRDPI(szInfo);
-		LogString(szInfo, true);
-		goto wrap;
-	}
-	*/
-
-	// Если прыжок на другой монитор был сделан из ChangeTileMode (например)
-	// то API может предложить некорректное значение в prcSuggested
-	// Корректный размер уже установлен, на менять его
-	if (IsWindowModeChanging())
-	{
-		prcSuggested = NULL;
-		wcscat_c(szInfo, L" {SuggestedRect was dropped}");
-	}
-
-	// Работать нужно в основном потоке!
+	// All windows operations only in the main thread!
 	if (!isMainThread())
 	{
 		OnDpiChangedArg args(this, dpiX, dpiY, prcSuggested, bResizeWindow, src);
@@ -5340,8 +5355,13 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 	}
 	else
 	{
-		DEBUGSTRDPI(szInfo);
-		LogString(szInfo, true);
+		if (prcSuggested)
+		{
+			if (ignoreSuggestedRect)
+				prcSuggested = nullptr;
+			else
+				SetRequestedMonitor(MonitorFromRect(prcSuggested, MONITOR_DEFAULTTONEAREST));
+		}
 
 		#ifdef _DEBUG
 		if ((rc.bottom - rc.top) > 1200)
@@ -5391,7 +5411,9 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 		}
 
 		if (prcSuggested)
+		{
 			SizeInfo::RequestRect(*prcSuggested);
+		}
 	}
 
 	return lRc;
@@ -5399,11 +5421,14 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 
 LRESULT CConEmuSize::OnDisplayChanged(UINT bpp, UINT screenWidth, UINT screenHeight)
 {
-	wchar_t szInfo[255];
+	wchar_t szInfo[80];
 	swprintf_c(szInfo, L"WM_DISPLAYCHANGED: bpp=%u, size={%u,%u}\r\n",
 		bpp, screenWidth, screenHeight);
 	DEBUGSTRDPI(szInfo);
 	LogString(szInfo, true, false);
+
+	ReloadMonitorInfo();
+
 	return 0;
 }
 

@@ -429,8 +429,8 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 	{
 		wchar_t szPos[100]; RECT rcScreen = rcStatus;
 		MapWindowPoints(ghWnd, NULL, (LPPOINT)&rcScreen, 2);
-		swprintf_c(szPos, L"StatusBar painted at {%i,%i}-{%i,%i} screen coords (%s)",
-			LOGRECTCOORDS(rcScreen), prcStatus ? L"PTR" : L"calc");
+		swprintf_c(szPos, L"StatusBar painted at {%i,%i}-{%i,%i} (%ix%i) screen coords (%s)",
+			LOGRECTCOORDS(rcScreen), LOGRECTSIZE(rcScreen), prcStatus ? L"PTR" : L"calc");
 		DEBUGSTRPAINT(szPos);
 		//OutputDebugStringW(szPos); OutputDebugStringW(L"\n");
 	}
@@ -1235,7 +1235,7 @@ void CStatus::DoStatusResize(const POINT& ptScr)
 	RECT rcAfter = {}; GetWindowRect(ghWnd, &rcAfter);
 	#endif
 
-	// Force repaint to avoid artefacts
+	// Force repaint to avoid artifacts
 	RedrawWindow(ghWnd, NULL, NULL, RDW_UPDATENOW);
 
 	// Store last point

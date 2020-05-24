@@ -13788,7 +13788,6 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 
 		case WM_DISPLAYCHANGE:
 		{
-			ReloadMonitorInfo();
 			OnDisplayChanged(LOWORD(wParam), LOWORD(lParam), HIWORD(lParam));
 			result = ::DefWindowProc(hWnd, messg, wParam, lParam);
 			auto wm = GetWindowMode();
