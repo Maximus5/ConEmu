@@ -8,6 +8,7 @@ rem   11: Visual Studio 2012
 rem   12: Visual Studio 2013
 rem   14: Visual Studio 2015
 rem   15: Visual Studio 2017
+rem   16: Visual Studio 2019
 rem Script supports optional arguments:
 rem   [VS_VERSION [full|nofull] [core] [x86|x64] [noclean] [dosign|nosign]]
 rem Example:
@@ -115,17 +116,12 @@ exit /b 1
 :do_sign
 if "%VS_SIGN%" == "NOSIGN" goto skip_sign
 Echo .
-Echo Signing release code
 cd /d "%~dp0"
-if exist "%~dp0sign2.bat" (
-  call "%~dp0sign2.bat"
-  cd /d "%~dp0"
-  
-  if exist "%~dp0scan.release.avp.bat" (
-    call "%~dp0scan.release.avp.bat"
-    cd /d "%~dp0"
-  )
+if exist "%~dp0..\Deploy\sign_release.cmd" (
+  Echo Signing release code
+  call "%~dp0..\Deploy\sign_release.cmd"
 )
+cd /d "%~dp0"
 :skip_sign
 
 echo Compilation finished time

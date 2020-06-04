@@ -18,7 +18,7 @@ if (($build -eq $null) -Or (-Not ($build -match "\b\d\d\d\d\d\d(\w*)\b"))) {
   exit 
 }
 
-$ConEmuSetup = Join-Path $Script_File_path "..\..\ConEmu-Deploy\Setup\ConEmuSetup.$build.exe"
+$ConEmuSetup = Join-Path $env:CONEMU_DEPLOY "Setup\ConEmuSetup.$build.exe"
 
 # PowerShell v4 function
 $sha = (Get-FileHash $ConEmuSetup -Algorithm sha256).Hash

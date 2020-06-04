@@ -34,17 +34,30 @@ rem call "%~dp0..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu %~1 Installer" /du %
 echo .
 echo Creating ConEmuSetup.%1.exe
 
-call "%~dp0Executor\gccbuild.cmd" /nosign
+if exist "%~dp0Setupper\Setupper.exe" del "%~dp0Setupper\Setupper.exe" > nul
+if exist "%~dp0Setupper\Executor.exe" del "%~dp0Setupper\Executor.exe" > nul
+
+call "%~dp0Executor\build.cmd" /nosign
 if errorlevel 1 goto errs
 if not exist "%~dp0Setupper\Executor.exe" goto errs
-call "%~dp0..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu %~1 Installer" /du %ConEmuHttp% "%~dp0Setupper\Executor.exe" "%~dp0%CAB_NAME%" "%~dp0ConEmu.%1.x86.msi" "%~dp0ConEmu.%1.x64.msi"
+
+if exist "%~dp0..\..\Deploy\sign_any.cmd" (
+  call "%~dp0..\..\Deploy\sign_any.cmd" /d "ConEmu %~1 Installer" /du %ConEmuHttp% "%~dp0Setupper\Executor.exe" "%~dp0%CAB_NAME%" "%~dp0ConEmu.%1.x86.msi" "%~dp0ConEmu.%1.x64.msi"
+) else (
+  echo ***********************************
+  echo ***********************************
+  echo **  Setup files were not signed  **
+  echo ***********************************
+  echo ***********************************
+)
 if errorlevel 1 goto errs
 
 :setupper
-call "%~dp0Setupper\gccbuild.cmd" /nosign
+call "%~dp0Setupper\build.cmd" /nosign
 if errorlevel 1 goto errs
 if not exist "%~dp0Setupper\Setupper.exe" goto errs
 
+timeout /t 1 1> nul
 set "ConEmuInstaller=%~dp0ConEmuSetup.%1.exe"
 move "%~dp0Setupper\Setupper.exe" "%ConEmuInstaller%"
 if errorlevel 1 (
@@ -52,7 +65,15 @@ if errorlevel 1 (
   move "%~dp0Setupper\Setupper.exe" "%ConEmuInstaller%"
   if errorlevel 1 goto errs
 )
-call "%~dp0..\..\..\ConEmu-key\sign_any.bat" /d "ConEmu %~1 Installer" /du %ConEmuHttp% "%ConEmuInstaller%"
+if exist "%~dp0..\..\Deploy\sign_any.cmd" (
+  call "%~dp0..\..\Deploy\sign_any.cmd" /d "ConEmu %~1 Installer" /du %ConEmuHttp% "%ConEmuInstaller%"
+) else (
+  echo ***********************************
+  echo ***********************************
+  echo **  Setup files were not signed  **
+  echo ***********************************
+  echo ***********************************
+)
 if errorlevel 1 goto errs
 
 goto fin

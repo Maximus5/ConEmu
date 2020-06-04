@@ -30,7 +30,7 @@ c:\windows\system32\cmd.exe -new_console /k "%~0" tab1
 c:\windows\syswow64\cmd.exe -new_console:s2TV /k "%~0" tab2
 c:\windows\syswow64\cmd.exe -new_console:b:h999 /k "%~0" tab3
 c:\windows\syswow64\cmd.exe -new_console:ba /k "%~0" tab4
-c:\windows\syswow64\cmd.exe -new_console:bt:"Far":C:"%ConEmuDrive%\Far30.Latest\far-bis\Far.exe" /c "%~0" tab5
+c:\windows\syswow64\cmd.exe -new_console:bt:"Far":C:"%FARHOME%\Far.exe" /c "%~0" tab5
 c:\windows\syswow64\cmd.exe -new_console:abP:"<Monokai>":t:Tab6 /k "%~0" tab6
 c:\windows\syswow64\cmd.exe -new_console:b:t:Tab7 /k "%~0" tab7
 c:\windows\syswow64\cmd.exe -new_console:b:t:Tab8 /k "%~0" tab8
@@ -77,10 +77,13 @@ echo Errorlevel=%errorlevel%
 goto fin
 
 :tab5
-conemuc /async /c %ConEmuDrive%\Far30.Latest\far-bis\Far.exe /w- /x /p%ConEmuDir%\Plugins\ConEmu;%ConEmuDrive%\Far30.Latest\far-bis\Plugins;%ConEmuDrive%\Far30.Latest\Plugins;%ConEmuDrive%\Far30.Latest\Plugins.My
+echo This tab starts Far Manager asynchronously.
+echo Root cmd.exe is expected to terminate normally.
+conemuc /async /c "%FARHOME%\Far.exe" /w- /x /p"%ConEmuDir%\Plugins\ConEmu;%FARHOME%\Plugins"
 goto :EOF
 
 :tab6
+echo This tab is elevated cmd.exe started with ^<Monokai^> color scheme.
 goto :EOF
 
 :tab7

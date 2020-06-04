@@ -6,6 +6,8 @@ Bmp.16x16.png
 Bmp_Dialog.xcf
 *.cab
 *.msi
+*.obj
+*.res
 _FarMakeLog.txt
 /setup_exe
 /obj

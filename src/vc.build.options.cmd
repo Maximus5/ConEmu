@@ -17,7 +17,7 @@ set VS_SIGN=YES
 
 :switches_loop
 if "%~1" == "" goto switches_done
-for %%i in (9,10,11,12,14) do (if "%%i" == "%~1" (set "VS_VERSION=%%i"))
+for %%i in (9,10,11,12,14,15,16) do (if "%%i" == "%~1" (set "VS_VERSION=%%i"))
 if /I "%~1" == "nofull"  set VS_MAKE_FULL=NO
 if /I "%~1" == "full"    set VS_MAKE_FULL=YES
 if /I "%~1" == "noclean" set VS_CLEAN_DBG=NO

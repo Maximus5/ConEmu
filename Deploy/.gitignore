@@ -10,11 +10,15 @@ ConEmuPortableRarInfo.txt
 Portable_Test
 BartPE
 
+av_scan_release.*
+
 Deploy.cmd
 Deploy_msi.cmd
 MinGW_deploy.cmd
 PortableApps_Config.cmd
 PortableApps_Update.txt
+sign_any.cmd
+user_env.cmd
 
 downloads-*.txt
 downloads-*.json

@@ -2,6 +2,12 @@
 
 setlocal
 
+if exist "%~dp0user_env.cmd" (
+  call "%~dp0user_env.cmd"
+) else (
+  call "%~dp0user_env.default.cmd"
+)
+
 set ConEmuHttp=http://conemu.github.io/
 
 if "%~1" == "" (
@@ -21,7 +27,7 @@ set AppTempl=%~dp0..\PortableApps
 rem Temporary directory to build "installer sources" from template and ConEmuPack...7z
 set AppSetup=%~dp0..\PortableApps_Installer
 rem Full path to ConEmuPack...7z, it will be unpacked to %AppSetup% folder
-set AppPack7z=%~dp0..\..\ConEmu-Deploy\Pack\ConEmuPack.%BUILD_NO%.7z
+set "AppPack7z=%CONEMU_DEPLOY%Pack\ConEmuPack.%BUILD_NO%.7z"
 if NOT exist "%AppPack7z%" (
 echo File not found!
 echo %AppPack7z%
@@ -34,14 +40,22 @@ call cecho "Failed to erase: %AppSetup%"
 goto err
 )
 
-set "PATH=%~dp0..\..\Tools\Arch;%PATH%"
+call cecho /yellow "Copying template files"
+echo\  Src: %AppTempl%
+echo\  Dst: %AppSetup%
 xcopy.exe /E "%AppTempl%\*.*" "%AppSetup%\"
 if errorlevel 1 goto err
 
-rem Copy app files!
+call cecho /yellow "Extracting package"
+echo\  Creating folder "%AppSetup%\App\ConEmu"
+cd /d "%AppSetup%\App"
+if errorlevel 1 goto err
+if not exist ConEmu mkdir ConEmu
+echo\  cd "%AppSetup%\App\ConEmu"
 cd /d "%AppSetup%\App\ConEmu"
 if errorlevel 1 goto err
-7z x "%AppPack7z%"
+echo\  "%ZIP7%" x "%AppPack7z%"
+"%ZIP7%" x "%AppPack7z%"
 if errorlevel 1 goto err
 
 cd /d "%~dp0..\"
@@ -59,26 +73,29 @@ if exist "%inst_name%" del "%inst_name%"
 set SetIniCmd=ver "%AppInfoDir%\appinfo.ini" Version PackageVersion %BUILD_NO%
 set SetIniCmd=%SetIniCmd% set "%AppInfoDir%\appinfo.ini" Version DisplayVersion %BUILD_NO%
 
-echo Updating ini files with version info
+call cecho /yellow "Updating ini files with version info"
 "%~dp0..\src\tools\SetIni.exe" %SetIniCmd%
+if errorlevel 1 goto err
 
-echo Creating PortableApps.com installer
+call cecho /yellow "Creating PortableApps.com installer"
 start "Portable" /MIN /WAIT "%~dp0..\..\Tools\Portable\PortableApps\PortableApps.comInstaller\PortableApps.comInstaller.exe" "%AppSetup%"
 if errorlevel 1 goto err
-timeout /t 3
+timeout /t 3 1> nul
 echo PortableApps.com installer created successfully
 
-if exist "%~dp0..\..\ConEmu-key\sign_any.bat" (
+if exist "%~dp0sign_any.cmd" (
 call cecho /green "Signing..."
-call "%~dp0..\..\ConEmu-key\sign_any.bat" /d "ConEmu %BUILD_NO% & PortableApps.com" /du %ConEmuHttp% "%~dp0..\%inst_name%"
+call "%~dp0sign_any.cmd" /d "ConEmu %BUILD_NO% & PortableApps.com" /du %ConEmuHttp% "%~dp0..\%inst_name%"
 if errorlevel 1 goto err
 )
 
+call cecho /yellow "Moving %inst_name% to %CONEMU_DEPLOY%Setup\"
+if not exist "%CONEMU_DEPLOY%Setup" mkdir "%CONEMU_DEPLOY%Setup"
 :do_move
 cd /d "%~dp0..\"
 call cecho /green "Waiting for file: %inst_name%"
-timeout /t 2
-move "%inst_name%" ..\ConEmu-Deploy\Setup\
+timeout /t 2 1> nul
+move "%inst_name%" "%CONEMU_DEPLOY%Setup\"
 if errorlevel 1 (
 call cecho "Failed to move file, will retry: %inst_name%"
 rem pause
@@ -94,7 +111,7 @@ if exist "%AppSetup%" (
 call csleep 1000
 goto do_del
 )
-
+echo Temp folder "%AppSetup%" was cleaned
 goto :EOF
 
 :err

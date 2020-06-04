@@ -10,11 +10,20 @@ call "%~dp0Deploy\GetCurDate.cmd"
 
 set ConEmuHooks=Enabled
 
-rem set PATH=%PATH%
-set MINGWRT=
-if exist %~d0\MinGW\msys\1.0\bin\head.exe set MINGWRT=%~d0\MinGW\msys\1.0\bin
-if exist %~d0\MinGW\msys32\bin\head.exe set MINGWRT=%~d0\MinGW\msys32\bin
-if exist %~d0..\Tools\MSYS\msys2-x64\usr\bin\head.exe set MINGWRT=%~d0..\Tools\MSYS\msys2-x64\usr\bin
+if exist "%~dp0Deploy\user_env.cmd" (
+  call "%~dp0Deploy\user_env.cmd"
+) else (
+  call "%~dp0Deploy\user_env.default.cmd"
+)
+
+if not exist "%MINGWRT%head.exe" (
+  echo head.exe tool not found, exiting
+  exit /b 1
+)
+if not exist "%CONEMU_WWW%index.html" (
+  echo conemu.github.io sources not found, exiting
+  exit /b 1
+)
 
 set BUILD_NO=
 set BUILD_STAGE=
@@ -53,10 +62,13 @@ pause
 call "%~dp0\src\ConEmu\gen_version.cmd" %BUILD_NO% %BUILD_STAGE%
 if errorlevel 1 goto err
 
+rem Download new translations from Transifex
+call "%~dp0Deploy\l10n_refresh.cmd"
+
 rem This will create ".daily.md"
 call "%~dp0Deploy\git2log.cmd" -skip_upd
-farrun -new_console:b -e5 "%~dp0..\ConEmu-GitHub-io\ConEmu.github.io\_posts\.daily.md"
-farrun -new_console:b -e23 "%~dp0Release\ConEmu\WhatsNew-ConEmu.txt"
+call :edit -e5 "%CONEMU_WWW%_posts\.daily.md"
+call :edit -e23 "%~dp0Release\ConEmu\WhatsNew-ConEmu.txt"
 
 if /I "%~2" == "-build" goto do_build
 if /I "%~2" == "-deploy" goto do_deploy
@@ -120,13 +132,18 @@ rem Sign code
 call "%~dp0src\vc.build.release.cmd" dosign
 if errorlevel 1 goto err
 
-if exist "%~dp0..\..\Google\Check-VirusTotal.cmd" (
+if exist "%UPLOADERS%Check-VirusTotal.cmd" (
 	pushd "%~dp0Release"
 	echo Starting Check-VirusTotal
-	call cmd /c "%~dp0..\..\Google\Check-VirusTotal.cmd" -new_console:bc
+	call cmd /c "%UPLOADERS%Check-VirusTotal.cmd" -new_console:bc
 	popd
 ) else (
 	echo Check-VirusTotal script not found
+)
+
+if exist "%~dp0..\Deploy\av_scan_release.cmd" (
+  Echo Scanning release files with av engine
+  call "%~dp0..\Deploy\av_scan_release.cmd"
 )
 
 if exist "%~dp0Release\UnitTests.cmd" call "%~dp0Release\UnitTests.cmd"
@@ -146,6 +163,14 @@ goto fin
 cd %1
 %MINGWRT%\touch %2 %3 %4
 cd ..
+goto :EOF
+
+:edit
+if "%FARRUN_EXIST%" == "NO" (
+  start notepad.exe %2
+  goto :EOF
+)
+farrun -new_console:b %1 %2
 goto :EOF
 
 :noparm

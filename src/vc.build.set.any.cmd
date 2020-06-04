@@ -10,7 +10,7 @@ rem VS100COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 10.0\Common7\T
 rem VS90COMNTOOLS=C:\Program Files (x86)\Microsoft Visual Studio 9.0\Common7\Tools\
 
 set VS_VERSION=%~1
-if "%VS_VERSION%" == "" set VS_VERSION=9
+if "%VS_VERSION%" == "" set VS_VERSION=15
 
 if "%VS_VERSION%" == "9"  goto ver_9
 if "%VS_VERSION%" == "10" goto ver_10

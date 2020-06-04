@@ -7,10 +7,10 @@
 #include "VersionI.h"
 
 // Installer files
-Ver86 "DATA" MSI86
-Ver64 "DATA" MSI64
-CABFILE "DATA" "../ConEmu.cab"
-EXEFILE "DATA" "Executor.exe"
+Ver86 DATA MSI86
+Ver64 DATA MSI64
+CABFILE DATA "../ConEmu.cab"
+EXEFILE DATA "Executor.exe"
 
 /////////////////////////////////////////////////////////////////////////////
 //

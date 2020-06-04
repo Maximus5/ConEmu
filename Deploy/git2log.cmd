@@ -14,7 +14,8 @@ setlocal
 
 set FORCE_MD=NO
 set SKIP_UPD=NO
-set COMMIT_SHA=
+set COMMIT_SHA=HEAD
+set PREV_RELEASE_SHA=v-release
 
 :parm_loop
 if "%~1" == "" goto parm_done
@@ -31,9 +32,11 @@ goto parm_loop
 
 echo COMMIT_SHA=`%COMMIT_SHA%`
 
-set git=%~d0\gitsdk\cmd\git.exe
-rem set git=%~d0\Utils\Lans\GIT\cmd\git.exe
-if NOT EXIST "%git%" set git=git.exe
+if exist "%~dp0user_env.cmd" (
+  call "%~dp0user_env.cmd"
+) else (
+  call "%~dp0user_env.default.cmd"
+)
 
 cd /d "%~dp0.."
 call "%~dp0GetCurVer.cmd"
@@ -43,7 +46,7 @@ if "%SKIP_UPD%" == "YES" goto skip_upd
 powershell -noprofile -command "%~dp0UpdateDeployVersions.ps1" %CurVerBuild%
 :skip_upd
 
-set daily_md=%~dp0..\..\ConEmu-GitHub-io\ConEmu.github.io\_posts\.daily.md
+set "daily_md=%CONEMU_WWW%_posts\.daily.md"
 rem May be file was already created and prepared?
 if exist "%daily_md%" (
   type "%daily_md%" | %windir%\system32\find "build: %CurVerBuild%"
@@ -84,19 +87,20 @@ set git_out=%gitlogpath%\conemu_git_%ConEmuServerPID%_1.log
 set git_err=%gitlogpath%\conemu_git_%ConEmuServerPID%_2.log
 
 if "%~1" NEQ "" (
+  rem if current commit was passed (usually, it's head) check its validity
   call "%git%" log "%~1" -1 --oneline 1>"%git_out%" 2>"%git_err%"
   if errorlevel 1 (
     call cecho "Invalid commit-sha specified: %~1"
     exit /B 1
   )
-  set commit_range=master...%~1
+  set commit_range=%PREV_RELEASE_SHA%...%~1
   goto commit_sha
 )
 
 "%git%" -c color.status=false status --short --branch --porcelain 1>"%git_out%" 2>"%git_err%"
 "%WINDIR%\system32\find.exe" "## preview" "%git_out%" > nul
 if errorlevel 1 (
-  set commit_range=daily...origin/master
+  set commit_range=daily...%PREV_RELEASE_SHA%
 ) else (
   set commit_range=preview...v-preview
 )
