@@ -20,6 +20,23 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2020.6.4
+* gh-2009: Don't register ttf files in the working directory.
+* StatusBar: Show negative (lesser than -255) process exit codes as hex. E.g. `example.exe:1234 exit code 0xC0000409`.
+* Hyperlinks: support one slash after `protocol:`. Powershell example: `https:/go.microsoft.com/fwlink/?LinkID=135170`.
+* gh-2095: Fix escaping of postponed GuiMacro scripts.
+* gh-1994: Fix pane orders while saving opened tabs.
+* Prefer to activate during startup the console marked by '>'.
+* Fix opened tabs save: foregroud/background cur_console switches weren't dropped.
+* gh-1844: Status was not cleared after window drag in some cases.
+* gh-2112: Polish translation in progress.
+* Fix wrong tab- and statusbar placement after dpi change.
+* gh-275: Fix cropped scrollbar on high-dpi second monitor.
+* Warnings and UB fixes by FrankHB.
+* Set up CI with Azure Pipelines
+* Update build system to VS2019.
+
+
 2019.10.12
 * gh-1984: Add SetFocus macro which sets keyboard focus to ConEmu ghWnd handle (by stevium).
   Useful for ConEmu Inside scenario, where focus needs to be set programatically.
