@@ -554,7 +554,7 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 {
 	MSG msg;
 	HANDLE hReady = (HANDLE)lpvParam;
-	CoInitialize(NULL);
+	const bool comInitialized = SUCCEEDED(CoInitialize(NULL));
 	_ASSERTE(gpImgCache);
 	gnConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWFADE);
 	gnConEmuSettingsMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWSETTINGS);
@@ -613,7 +613,10 @@ DWORD WINAPI CeFullPanelInfo::DisplayThread(LPVOID lpvParam)
 	pviLeft.FinalRelease();
 	pviRight.FinalRelease();
 	UpdateEnvVar(FALSE);
-	CoUninitialize();
+	if (comInitialized)
+	{
+		CoUninitialize();
+	}
 	return 0;
 }
 

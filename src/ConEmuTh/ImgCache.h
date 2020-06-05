@@ -71,30 +71,30 @@ class CImgLoader;
 class CImgCache
 {
 	protected:
-		wchar_t ms_CachePath[MAX_PATH];
-		wchar_t ms_LastStoragePath[32768];
-		int nPreviewSize; // 96x96
+		wchar_t ms_CachePath[MAX_PATH] = L"";
+		wchar_t ms_LastStoragePath[32768] = L"";
+		int nPreviewSize = 0; // 96x96
 		//int nXIcon, nYIcon, nXIconSpace, nYIconSpace;
 		COLORREF crBackground;
-		HBRUSH hbrBack;
+		HBRUSH hbrBack = NULL;
 		// Теперь - собственно поле кеша
 #define FIELD_MAX_COUNT 1000
 		//#define ITEMS_IN_FIELD 10 // количество в "строке"
 		//int nFieldX, nFieldY; // реальное количество в "строке"/"столбце" (не больше ITEMS_IN_FIELD)
 		//HDC hField[FIELD_MAX_COUNT]; HBITMAP hFieldBmp[FIELD_MAX_COUNT], hOldBmp[FIELD_MAX_COUNT];
-		IMAGE_CACHE_INFO CacheInfo[FIELD_MAX_COUNT];
-		HDC mh_LoadDC, mh_DrawDC;
-		HBITMAP mh_OldLoadBmp, mh_OldDrawBmp, mh_LoadDib, mh_DrawDib;
+		IMAGE_CACHE_INFO CacheInfo[FIELD_MAX_COUNT] = {};
+		HDC mh_LoadDC = NULL, mh_DrawDC = NULL;
+		HBITMAP mh_OldLoadBmp = NULL, mh_OldDrawBmp = NULL, mh_LoadDib = NULL, mh_DrawDib = NULL;
 		COORD mcr_LoadDibSize, mcr_DrawDibSize;
-		LPBYTE  mp_LoadDibBytes; DWORD mn_LoadDibBytes;
-		LPBYTE  mp_DrawDibBytes; DWORD mn_DrawDibBytes;
+		LPBYTE  mp_LoadDibBytes = NULL; DWORD mn_LoadDibBytes = 0;
+		LPBYTE  mp_DrawDibBytes = NULL; DWORD mn_DrawDibBytes = 0;
 		BOOL CheckLoadDibCreated();
 		BOOL CheckDrawDibCreated();
 		//void UpdateCell(struct IMAGE_CACHE_INFO* pInfo, BOOL abLoadPreview);
 		BOOL FindInCache(CePluginPanelItem* pItem, int* pnIndex, ImgLoadType aLoadType);
 		void CopyBits(COORD crSrcSize, LPBYTE lpSrc, DWORD nSrcStride, COORD crDstSize, LPBYTE lpDst);
 
-		CImgLoader *mp_ShellLoader;
+		CImgLoader *mp_ShellLoader = NULL;
 
 #define MAX_MODULES 20
 		struct tag_Module
@@ -106,11 +106,11 @@ class CImgCache
 			CET_Free_t FreeInfo;
 			CET_Cancel_t Cancel;
 			LPVOID pContext;
-		} Modules[MAX_MODULES];
-		int mn_ModuleCount;
+		} Modules[MAX_MODULES] = {};
+		int mn_ModuleCount = 0;
 		void LoadModules();
 		void FreeModules();
-		wchar_t ms_ModulePath[MAX_PATH], *mpsz_ModuleSlash;
+		wchar_t ms_ModulePath[MAX_PATH] = L"", *mpsz_ModuleSlash;
 		//// Alpha blending
 		//HMODULE mh_MsImg32;
 		//AlphaBlend_t fAlphaBlend;
@@ -129,9 +129,8 @@ class CImgCache
 		BOOL LoadShellIcon(struct IMAGE_CACHE_INFO* pItem, BOOL bLargeIcon = TRUE);
 
 	protected:
-		BOOL mb_Quit;
-		static DWORD WINAPI ShellExtractionThread(LPVOID apArg);
-		IStorage *mp_RootStorage, *mp_CurrentStorage;
+		bool mb_comInitialized = false;
+		IStorage *mp_RootStorage = nullptr, *mp_CurrentStorage = nullptr;
 		BOOL LoadPreview();
 };
 
@@ -189,13 +188,20 @@ class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 		// Здесь потомок может выполнить CoInitialize например
 		virtual HRESULT OnThreadStarted()
 		{
-			CoInitialize(NULL);
+			if (!mb_comInitialized)
+			{
+				mb_comInitialized = SUCCEEDED(CoInitialize(NULL));
+			}
 			return S_OK;
 		}
 		// Здесь потомок может выполнить CoUninitialize например
 		virtual void OnThreadStopped()
 		{
-			CoUninitialize();
+			if (mb_comInitialized)
+			{
+				mb_comInitialized = false;
+				CoUninitialize();
+			}
 			return;
 		};
 		// Можно переопределить для изменения логики сравнения (используется при поиске)
@@ -210,4 +216,7 @@ class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 			// для текущей картинки, но пользователь уже улистал с нее на другую
 			return true;
 		};
+
+	private:
+		bool mb_comInitialized = false;
 };

@@ -47,41 +47,25 @@ inline void SafeRelease(T *&p)
 
 CImgCache::CImgCache(HMODULE hSelf)
 {
-	mb_Quit = FALSE;
-	mp_ShellLoader = NULL;
-	ms_CachePath[0] = ms_LastStoragePath[0] = 0;
-	//nWidth = nHeight = 0;
-	nPreviewSize = 0; //nXIcon = nYIcon = nXIconSpace = nYIconSpace = 0;
-	hbrBack = NULL;
-	//nFieldX = nFieldY = 0;
-	//memset(hField,0,sizeof(hField));
-	//memset(hFieldBmp,0,sizeof(hFieldBmp));
-	//memset(hOldBmp,0,sizeof(hOldBmp));
-	memset(CacheInfo,0,sizeof(CacheInfo));
-	mh_LoadDC = mh_DrawDC = NULL;
-	mh_OldLoadBmp = mh_OldDrawBmp = mh_LoadDib = mh_DrawDib = NULL;
-	mp_LoadDibBytes = NULL; mn_LoadDibBytes = 0;
-	mp_DrawDibBytes = NULL; mn_DrawDibBytes = 0;
-	memset(Modules,0,sizeof(Modules));
-	mn_ModuleCount = 0;
 	mpsz_ModuleSlash = ms_ModulePath;
-
 	if (GetModuleFileName(hSelf, ms_ModulePath, countof(ms_ModulePath)))
 	{
 		wchar_t* pszSlash = wcsrchr(ms_ModulePath, L'\\');
 
 		if (pszSlash) mpsz_ModuleSlash = pszSlash+1;
 	}
-
 	*mpsz_ModuleSlash = 0;
+
 	// Prepare root storage file pathname
-	SetCacheLocation(NULL); // По умолчанию - в %TEMP%
-	// Загрузить "модули"
+	SetCacheLocation(NULL); // Use %TEMP% by default
+
 	LoadModules();
-	// Initialize interfaces
-	mp_RootStorage = mp_CurrentStorage = NULL;
+
 	// Initialize Com
-	CoInitialize(NULL);
+	HRESULT hr = CoInitialize(NULL);
+	_ASSERTE(SUCCEEDED(hr));
+	mb_comInitialized = SUCCEEDED(hr);
+
 	//// Alpha blending
 	//mh_MsImg32 = LoadLibrary(L"Msimg32.dll");
 	//if (mh_MsImg32) {
@@ -131,7 +115,10 @@ CImgCache::~CImgCache(void)
 	}
 
 	// Done Com
-	CoUninitialize();
+	if (mb_comInitialized)
+	{
+		CoUninitialize();
+	}
 }
 
 void CImgCache::LoadModules()
@@ -272,17 +259,6 @@ void CImgCache::SetCacheLocation(LPCWSTR asCachePath)
 
 	// add our storage file name
 	lstrcpy(ms_CachePath+nLen, ImgCacheFileName);
-}
-
-DWORD CImgCache::ShellExtractionThread(LPVOID apArg)
-{
-	CImgCache *pImgCache = (CImgCache*)apArg;
-	// Initialize Com
-	CoInitialize(NULL);
-	// Loop
-	// Done Com
-	CoUninitialize();
-	return 0;
 }
 
 BOOL CImgCache::LoadPreview()
