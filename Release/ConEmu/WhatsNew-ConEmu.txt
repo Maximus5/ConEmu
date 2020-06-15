@@ -20,6 +20,12 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2020.6.15
+* gh-2127: Fix broken `-FontDir` command line option.
+* gh-2087: Fix unbalanced CoUninitialize call in ConEmu Panel Views plugin.
+* l10n: updated translations.
+
+
 2020.6.4
 * gh-2009: Don't register ttf files in the working directory.
 * StatusBar: Show negative (lesser than -255) process exit codes as hex. E.g. `example.exe:1234 exit code 0xC0000409`.
