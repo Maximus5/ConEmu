@@ -6734,7 +6734,7 @@
       "de": "Fenstergröße und Position beim Verlassen automatisch speichern",
       "ja": "終了時にウィンドウのサイズと位置を自動的に保存",
       "es": "Auto guardar el tamaño y posición de la ventana al salir",
-      "pl": "Rozmiar i pozycja automatycznego zapisywania okna przy wyjściu",
+      "pl": "Auto-zapis rozmiaru okna przy wyjściu",
       "id": 1723 }
     ,
     "cbAutoTrimSingleLine": {
@@ -7061,7 +7061,7 @@
       "de": "Komprimiere lange Texte",
       "ja": "スペースに合うように長い文字列を圧縮する",
       "es": "Comprimir textos largos para que entren",
-      "pl": "Kompresuj długie sznurki, aby dopasować je do miejsca",
+      "pl": "Kompresuj długie znaki, aby dopasować przestrzeń",
       "id": 3074 }
     ,
     "cbComspecTest": {
@@ -7781,7 +7781,7 @@
       "de": "Kantenglättung",
       "ja": "アンチエイリアス",
       "es": "Suavizado",
-      "pl": "Wygładzanie krawędzi -Anti-aliasing-",
+      "pl": "Wygładzanie krawędzi",
       "id": 2883 }
     ,
     "cbFontAsDeviceUnits": {
@@ -7801,7 +7801,7 @@
       "de": "Autogröße (feste Konsolengröße in Zeichen)",
       "ja": "自動サイズ(セル内の固定コンソールサイズ)",
       "es": "Tamaño automático (tamaño de terminal en celdas)",
-      "pl": "Rozmiar automatyczny (naprawiono rozmiar konsoli w komórkach)",
+      "pl": "Rozmiar automat (naprawiono rozmiar w komórkach)",
       "id": 1566 }
     ,
     "cbFontMonitorDpi": {
@@ -9028,7 +9028,7 @@
       "de": "Kantenglättung",
       "ja": "アンチエイリアシング",
       "es": "Anti-aliasing",
-      "pl": "Anti-aliasing-Wygładzanie krawędzi",
+      "pl": "Wygładzanie krawędzi",
       "id": 2677 }
     ,
     "gbAppDistinct": {
@@ -10099,7 +10099,7 @@
       "de": "'Alpha'-Versionen",
       "ja": " ' Alpha ' ビルド",
       "es": "Builds 'alfa'",
-      "pl": "Kompilacje \"alfa\"",
+      "pl": "Aplha \"testowa\"",
       "id": 2591 }
     ,
     "rbAutoUpdatePreviewFast": {
@@ -10109,7 +10109,7 @@
       "de": "'Vorschau'",
       "ja": "' Preview '",
       "es": "'Preview'",
-      "pl": "\"Zapowiedź\"",
+      "pl": "Zapowiedź",
       "id": 2590 }
     ,
     "rbAutoUpdateStableFast": {
@@ -10119,7 +10119,7 @@
       "de": "'Stabil'",
       "ja": "' Stable '",
       "es": "'Estable'",
-      "pl": "\"Stabilny\"",
+      "pl": "Stabilna",
       "id": 2589 }
     ,
     "rbColorBgrHex": {
@@ -10639,7 +10639,7 @@
       "de": "Vorschau",
       "ja": "Preview",
       "es": "Previsualizar",
-      "pl": "Zapowiedz",
+      "pl": "Zapowiedź",
       "id": 2055 }
     ,
     "rbUpdateStableOnly": {
@@ -10649,7 +10649,7 @@
       "de": "Stabil",
       "ja": "Stable",
       "es": "Estable",
-      "pl": "Stabilny",
+      "pl": "Stabilna",
       "id": 2054 }
     ,
     "rbUpdateUseArc": {
@@ -10679,7 +10679,7 @@
       "de": "Kaskade",
       "ja": "カスケード",
       "es": "Cascada",
-      "pl": "Kaskada",
+      "pl": "Kaskadowa",
       "id": 2302 }
     ,
     "rCTAA": {
@@ -10739,7 +10739,7 @@
       "de": "Fest",
       "ja": "固定",
       "es": "Fijo",
-      "pl": "Naprawiony",
+      "pl": "Poprawiona",
       "id": 2303 }
     ,
     "rFullScreen": {
@@ -11414,7 +11414,7 @@
       "de": "Kursiv:",
       "ja": "斜体:",
       "es": "Cursiva:",
-      "pl": "Italic:",
+      "pl": "Kursywa:",
       "id": 2242 }
     ,
     "stExtendFontNormalIdx": {
@@ -11547,7 +11547,7 @@
       "de": "Anzeigeverzögerung:",
       "ja": "表示まで:",
       "es": "Retardo aparición:",
-      "pl": "Wyświetl opóźnienie:",
+      "pl": "Wyświetlanie:",
       "id": 2905 }
     ,
     "stFrameDisappear": {
@@ -11557,7 +11557,7 @@
       "de": "Ausblenden:",
       "ja": "消えるまで:",
       "es": "Desaparecer:",
-      "pl": "Znikać:",
+      "pl": "Zanikanie:",
       "id": 2906 }
     ,
     "stFrameWidth": {
@@ -11968,7 +11968,7 @@
       "de": "Ausblenden:",
       "ja": "消えるまで:",
       "es": "Desaparición:",
-      "pl": "Znikać:",
+      "pl": "Ukryj:",
       "id": 2903 }
     ,
     "stSetCommands": {
