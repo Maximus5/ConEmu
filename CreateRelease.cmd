@@ -29,18 +29,25 @@ set BUILD_NO=
 set BUILD_STAGE=
 
 if "%~1"=="" goto noparm
-set BUILD_NO=%~1
 
-if /I "%~2" == "ALPHA" (
+:loop_param
+if /I "%~1" == "ALPHA" (
   set BUILD_STAGE=ALPHA
-  shift /2
-) else if /I "%~2" == "PREVIEW" (
+  shift /1
+) else if /I "%~1" == "PREVIEW" (
   set BUILD_STAGE=PREVIEW
-  shift /2
-) else if /I "%~2" == "STABLE" (
+  shift /1
+) else if /I "%~1" == "STABLE" (
   set BUILD_STAGE=STABLE
-  shift /2
+  shift /1
+) else if /I "%~1" == "SIGN" (
+  shift /1
+  goto do_sign
+) else (
+  set BUILD_NO=%~1
+  shift /1
 )
+if "%~1" NEQ "" goto loop_param
 
 :oneparm
 
@@ -128,6 +135,7 @@ rd /S /Q "%~dp0src\_VCBUILD\Release"
 rem Compile x86/x64
 call "%~dp0src\ms.build.release.cmd"
 if errorlevel 1 goto err
+:do_sign
 rem Sign code
 call "%~dp0src\vc.build.release.cmd" dosign
 if errorlevel 1 goto err
