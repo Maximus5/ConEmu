@@ -1674,9 +1674,12 @@ void CFontMgr::RegisterFonts()
 	};
 	std::set<const wchar_t*, comparator> processed;
 	auto process_dir = [this, &processed, &sys_font_dir](const wchar_t* dir) {
-		if (!dir || !*dir) return;
-		if (!processed.insert(dir).second) return;
+		if (!dir || !*dir)
+			return; // invalid dir
+		if (!processed.insert(dir).second)
+			return; // already processed
 		if (*sys_font_dir && lstrcmpi(sys_font_dir, dir) == 0)
+			return; // this is a system font dir, skip it
 		RegisterFontsDir(dir);
 	};
 
