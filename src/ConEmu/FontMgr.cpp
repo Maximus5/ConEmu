@@ -1651,8 +1651,11 @@ void CFontMgr::RegisterFonts()
 	// -NoRegFont disable the feature completely
 	if (gpConEmu->DisableRegisterFonts)
 		return;
-	// Do we need to register something?
-	if (!gpSet->isAutoRegisterFonts && m_RegFonts.empty())
+	// Do we need still to register something?
+	// If automatic registration is disabled by user in settings
+	// AND there were no `-FontDir` command line switches - don't
+	// NB. Switch `-FontFile` should be processed already
+	if (!gpSet->isAutoRegisterFonts && m_AddFontsDir.empty())
 		return;
 
 	DEBUGSTRSTARTUPLOG(L"Registering local fonts");
@@ -1689,14 +1692,11 @@ void CFontMgr::RegisterFonts()
 		process_dir(dir.c_str());
 	}
 
-	if (!gpSet->isAutoRegisterFonts)
-	{
-		// Program folder
-		process_dir(gpConEmu->ms_ConEmuExeDir);
+	// Program folder
+	process_dir(gpConEmu->ms_ConEmuExeDir);
 
-		// Program base folder
-		process_dir(gpConEmu->ms_ConEmuBaseDir);
-	}
+	// Program base folder
+	process_dir(gpConEmu->ms_ConEmuBaseDir);
 
 	// Now we may check (in InitFont) if fonts were registered,
 	// and select some default from them
