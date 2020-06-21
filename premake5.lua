@@ -10,7 +10,7 @@ workspace "CE"
   --basedir "%{cfg.location}"
   -- Subdir for temporary files
   local build_dir = "_VCBUILD"
-   
+
   startproject "ConEmu"
 
   staticruntime "On"
@@ -26,6 +26,8 @@ workspace "CE"
     architecture "x64"
     defines { "WIN64", "_WIN64" }
 
+  filter { "action:vs2019", "configurations:Release", "platforms:x64" }
+    toolset "v141_xp"
   filter "action:vs2017"
     toolset "v141_xp"
   filter "action:vs2015"
