@@ -50,9 +50,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmuHk/Injects.h"
 #include "../ConEmu/version.h"
 
-#include "ConEmuSrv.h"
 #include "Actions.h"
+#include "ConsoleMain.h"
 #include "GuiMacro.h"
+#include "InjectRemote.h"
 #include "MapDump.h"
 #include "UnicodeTest.h"
 

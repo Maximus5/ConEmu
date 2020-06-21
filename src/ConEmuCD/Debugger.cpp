@@ -31,6 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DEBUGSTRFIN(x) DEBUGSTR(x)
 #define DEBUGSTRCP(x) DEBUGSTR(x)
 
+#include "ConsoleMain.h"
 #include "ConEmuSrv.h"
 #include "../common/shlobj.h"
 #include "../ConEmu/version.h"

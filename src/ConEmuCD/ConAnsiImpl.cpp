@@ -27,7 +27,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include "../common/defines.h"
+#include "ConsoleMain.h"
 #include <WinError.h>
 #include <WinNT.h>
 #include <TCHAR.h>

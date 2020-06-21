@@ -57,3 +57,5 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR*
 extern "C"
 #endif
 int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, BSTR* bsResult = NULL);
+
+int GuiMacroCommandLine(LPCWSTR asCmdLine);

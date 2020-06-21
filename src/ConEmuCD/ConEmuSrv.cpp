@@ -30,7 +30,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #undef TEST_REFRESH_DELAYED
 
+#include "ConsoleMain.h"
 #include "ConEmuSrv.h"
+#include "LogFunction.h"
+#include "InjectRemote.h"
+#include "InputLogger.h"
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConsoleRead.h"
@@ -78,9 +82,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef ASSERT_UNWANTED_SIZE
 #endif
 
-extern BOOL gbTerminateOnExit; // для отладчика
-extern BOOL gbTerminateOnCtrlBreak;
-extern OSVERSIONINFO gOSVer;
+/* Console Handles */
+MConHandle ghConOut(L"CONOUT$");
+//Used to store and restore console screen buffers in cmd_AltBuffer
+MConHandle gPrimaryBuffer(NULL), gAltBuffer(NULL);
+USHORT gnPrimaryBufferLastRow = 0; // last detected written row in gPrimaryBuffer
+
+BOOL    gbTerminateOnExit = FALSE;  // for debugging purposed
 
 // Some forward definitions
 bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn);
@@ -192,191 +200,6 @@ void ServerInitFont()
 
 		if (gpLogSize) LogSize(NULL, 0, ":SetConsoleFontSizeTo.after");
 	}
-}
-
-LGSResult LoadGuiSettingsPtr(ConEmuGuiMapping& GuiMapping, const ConEmuGuiMapping* pInfo, bool abNeedReload, bool abForceCopy, DWORD& rnWrongValue)
-{
-	LGSResult liRc = lgs_Failed;
-	DWORD cbSize = 0;
-	bool lbNeedCopy = false;
-	bool lbCopied = false;
-	wchar_t szLog[80];
-
-	if (!pInfo)
-	{
-		liRc = lgs_MapPtr;
-		wcscpy_c(szLog, L"LoadGuiSettings(Failed, MapPtr is null)");
-		LogFunction(szLog);
-		goto wrap;
-	}
-
-	if (abForceCopy)
-	{
-		cbSize = std::min<DWORD>(sizeof(GuiMapping), pInfo->cbSize);
-		memmove(&GuiMapping, pInfo, cbSize);
-		gpSrv->guiSettings.cbSize = cbSize;
-		lbCopied = true;
-	}
-
-	if (pInfo->cbSize >= (size_t)(sizeof(pInfo->nProtocolVersion) + ((LPBYTE)&pInfo->nProtocolVersion) - (LPBYTE)pInfo))
-	{
-		if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
-		{
-			liRc = lgs_WrongVersion;
-			rnWrongValue = pInfo->nProtocolVersion;
-			wcscpy_c(szLog, L"LoadGuiSettings(Failed, MapPtr is null)");
-			swprintf_c(szLog, L"LoadGuiSettings(Failed, Version=%u, Required=%u)", rnWrongValue, (DWORD)CESERVER_REQ_VER);
-			LogFunction(szLog);
-			goto wrap;
-		}
-	}
-
-	if (pInfo->cbSize != sizeof(ConEmuGuiMapping))
-	{
-		liRc = lgs_WrongSize;
-		rnWrongValue = pInfo->cbSize;
-		swprintf_c(szLog, L"LoadGuiSettings(Failed, cbSize=%u, Required=%u)", pInfo->cbSize, (DWORD)sizeof(ConEmuGuiMapping));
-		LogFunction(szLog);
-		goto wrap;
-	}
-
-	lbNeedCopy = abNeedReload
-		|| (gpSrv->guiSettingsChangeNum != pInfo->nChangeNum)
-		|| (GuiMapping.bGuiActive != pInfo->bGuiActive)
-		;
-
-	if (lbNeedCopy)
-	{
-		wcscpy_c(szLog, L"LoadGuiSettings(Changed)");
-		LogFunction(szLog);
-		if (!lbCopied)
-			memmove(&GuiMapping, pInfo, pInfo->cbSize);
-		_ASSERTE(GuiMapping.ComSpec.ConEmuExeDir[0]!=0 && GuiMapping.ComSpec.ConEmuBaseDir[0]!=0);
-		liRc = lgs_Updated;
-	}
-	else if (GuiMapping.dwActiveTick != pInfo->dwActiveTick)
-	{
-		// But active consoles list may be changed
-		if (!lbCopied)
-			memmove(GuiMapping.Consoles, pInfo->Consoles, sizeof(GuiMapping.Consoles));
-		liRc = lgs_ActiveChanged;
-	}
-	else
-	{
-		liRc = lgs_Succeeded;
-	}
-
-wrap:
-	return liRc;
-}
-
-LGSResult LoadGuiSettings(ConEmuGuiMapping& GuiMapping, DWORD& rnWrongValue)
-{
-	LGSResult liRc = lgs_Failed;
-	bool lbNeedReload = false;
-	DWORD dwGuiThreadId, dwGuiProcessId;
-	HWND hGuiWnd = ghConEmuWnd ? ghConEmuWnd : gpSrv->hGuiWnd;
-	const ConEmuGuiMapping* pInfo = NULL;
-
-	if (!hGuiWnd || !IsWindow(hGuiWnd))
-	{
-		LogFunction(L"LoadGuiSettings(Invalid window)");
-		goto wrap;
-	}
-
-	if (!gpSrv->pGuiInfoMap || (gpSrv->hGuiInfoMapWnd != hGuiWnd))
-	{
-		lbNeedReload = true;
-	}
-
-	if (lbNeedReload)
-	{
-		LogFunction(L"LoadGuiSettings(Opening)");
-
-		dwGuiThreadId = GetWindowThreadProcessId(hGuiWnd, &dwGuiProcessId);
-		if (!dwGuiThreadId)
-		{
-			_ASSERTE(dwGuiProcessId);
-			LogFunction(L"LoadGuiSettings(Failed, dwGuiThreadId==0)");
-			goto wrap;
-		}
-
-		if (!gpSrv->pGuiInfoMap)
-			gpSrv->pGuiInfoMap = new MFileMapping<ConEmuGuiMapping>;
-		else
-			gpSrv->pGuiInfoMap->CloseMap();
-
-		gpSrv->pGuiInfoMap->InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
-		pInfo = gpSrv->pGuiInfoMap->Open();
-
-		if (pInfo)
-		{
-			gpSrv->hGuiInfoMapWnd = hGuiWnd;
-		}
-	}
-	else
-	{
-		pInfo = gpSrv->pGuiInfoMap->Ptr();
-	}
-
-	liRc = LoadGuiSettingsPtr(GuiMapping, pInfo, lbNeedReload, false, rnWrongValue);
-wrap:
-	return liRc;
-}
-
-LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue /*= NULL*/)
-{
-	bool lbChanged = false;
-	LGSResult lgsResult = lgs_Failed;
-	DWORD nWrongValue = 0;
-
-	if (apFromCmd)
-	{
-		LogFunction(L"ReloadGuiSettings(apFromCmd)");
-		lgsResult = LoadGuiSettingsPtr(gpSrv->guiSettings, apFromCmd, false, true, nWrongValue);
-		lbChanged = (lgsResult >= lgs_Succeeded);
-	}
-	else
-	{
-		gpSrv->guiSettings.cbSize = sizeof(ConEmuGuiMapping);
-		lgsResult = LoadGuiSettings(gpSrv->guiSettings, nWrongValue);
-		lbChanged = (lgsResult >= lgs_Succeeded)
-			&& ((gpSrv->guiSettingsChangeNum != gpSrv->guiSettings.nChangeNum)
-				|| (gpSrv->pConsole && gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0] == 0));
-	}
-
-	if (pnWrongValue)
-		*pnWrongValue = nWrongValue;
-
-	if (lbChanged)
-	{
-		LogFunction(L"ReloadGuiSettings(Apply)");
-
-		gpSrv->guiSettingsChangeNum = gpSrv->guiSettings.nChangeNum;
-
-		gbLogProcess = (gpSrv->guiSettings.nLoggingType == glt_Processes);
-
-		UpdateComspec(&gpSrv->guiSettings.ComSpec); // isAddConEmu2Path, ...
-
-		SetConEmuFolders(gpSrv->guiSettings.ComSpec.ConEmuExeDir, gpSrv->guiSettings.ComSpec.ConEmuBaseDir);
-
-		// Не будем ставить сами, эту переменную заполняет Gui при своем запуске
-		// соответственно, переменная наследуется серверами
-		//SetEnvironmentVariableW(L"ConEmuArgs", pInfo->sConEmuArgs);
-
-		//wchar_t szHWND[16]; swprintf_c(szHWND, L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
-		//SetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, szHWND);
-		SetConEmuWindows(gpSrv->guiSettings.hGuiWnd, ghConEmuWndDC, ghConEmuWndBack);
-
-		if (gpSrv->pConsole)
-		{
-			CopySrvMapFromGuiMap();
-
-			UpdateConsoleMapHeader(L"guiSettings were changed");
-		}
-	}
-
-	return lgsResult;
 }
 
 // AutoAttach делать нельзя, когда ConEmu запускает процесс обновления
@@ -2169,94 +1992,6 @@ void CmdOutputRestore(bool abSimpleMode)
 	LogString("CmdOutputRestore finished");
 }
 
-static BOOL CALLBACK FindConEmuByPidProc(HWND hwnd, LPARAM lParam)
-{
-	DWORD dwPID;
-	GetWindowThreadProcessId(hwnd, &dwPID);
-	if (dwPID == gnConEmuPID)
-	{
-		wchar_t szClass[128];
-		if (GetClassName(hwnd, szClass, countof(szClass)))
-		{
-			if (lstrcmp(szClass, VirtualConsoleClassMain) == 0)
-			{
-				*(HWND*)lParam = hwnd;
-				return FALSE;
-			}
-		}
-	}
-	return TRUE;
-}
-
-HWND FindConEmuByPID(DWORD anSuggestedGuiPID /*= 0*/)
-{
-	LogFunction(L"FindConEmuByPID");
-
-	HWND hConEmuWnd = NULL;
-	DWORD nConEmuPID = anSuggestedGuiPID ? anSuggestedGuiPID : gnConEmuPID;
-	DWORD dwGuiThreadId = 0, dwGuiProcessId = 0;
-
-	// В большинстве случаев PID GUI передан через параметры
-	if (nConEmuPID == 0)
-	{
-		// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshot
-		//TODO: Reuse MToolHelp.h
-		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-
-		if (hSnap != INVALID_HANDLE_VALUE)
-		{
-			PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
-
-			if (Process32First(hSnap, &prc))
-			{
-				do
-				{
-					if (prc.th32ProcessID == gnSelfPID)
-					{
-						nConEmuPID = prc.th32ParentProcessID;
-						break;
-					}
-				}
-				while (Process32Next(hSnap, &prc));
-			}
-
-			CloseHandle(hSnap);
-		}
-	}
-
-	if (nConEmuPID)
-	{
-		HWND hGui = NULL;
-
-		while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL)
-		{
-			dwGuiThreadId = GetWindowThreadProcessId(hGui, &dwGuiProcessId);
-
-			if (dwGuiProcessId == nConEmuPID)
-			{
-				hConEmuWnd = hGui;
-				break;
-			}
-		}
-
-		// Если "в лоб" по имени класса ничего не нашли - смотрим
-		// среди всех дочерних для текущего десктопа
-		if ((hConEmuWnd == NULL) && !anSuggestedGuiPID)
-		{
-			HWND hDesktop = GetDesktopWindow();
-			EnumChildWindows(hDesktop, FindConEmuByPidProc, (LPARAM)&hConEmuWnd);
-		}
-	}
-
-	// Ensure that returned hConEmuWnd match gnConEmuPID
-	if (!anSuggestedGuiPID && hConEmuWnd)
-	{
-		GetWindowThreadProcessId(hConEmuWnd, &gnConEmuPID);
-	}
-
-	return hConEmuWnd;
-}
-
 void SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir)
 {
 	_ASSERTE(asExeDir && *asExeDir!=0 && asBaseDir && *asBaseDir);
@@ -2332,10 +2067,8 @@ void CheckConEmuHwnd()
 {
 	LogFunction(L"CheckConEmuHwnd");
 
-	WARNING("Подозрение, что слишком много вызовов при старте сервера");
+	// #WARNING too many calls during server start?
 
-	//HWND hWndFore = GetForegroundWindow();
-	//HWND hWndFocus = GetFocus();
 	DWORD dwGuiThreadId = 0;
 
 	if (gpSrv->DbgInfo.bDebuggerActive)
@@ -3695,111 +3428,21 @@ void InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 	SetEnvironmentVariable(ENV_CONEMUANSILOG_VAR_W, log_file);
 }
 
-#if 0
-// Возвращает TRUE - если меняет РАЗМЕР видимой области (что нужно применить в консоль)
-BOOL CorrectVisibleRect(CONSOLE_SCREEN_BUFFER_INFO* pSbi)
-{
-	BOOL lbChanged = FALSE;
-	_ASSERTE(gcrVisibleSize.Y<200); // высота видимой области
-	// Игнорируем горизонтальный скроллинг
-	SHORT nLeft = 0;
-	SHORT nRight = pSbi->dwSize.X - 1;
-	SHORT nTop = pSbi->srWindow.Top;
-	SHORT nBottom = pSbi->srWindow.Bottom;
-
-	if (gnBufferHeight == 0)
-	{
-		// Сервер мог еще не успеть среагировать на изменение режима BufferHeight
-		if (pSbi->dwMaximumWindowSize.Y < pSbi->dwSize.Y)
-		{
-			// Это однозначно буферный режим, т.к. высота буфера больше максимально допустимого размера окна
-			// Вполне нормальная ситуация. Запуская VBinDiff который ставит свой буфер,
-			// соответственно сам убирая прокрутку, а при выходе возвращая ее...
-			//_ASSERTE(pSbi->dwMaximumWindowSize.Y >= pSbi->dwSize.Y);
-			gnBufferHeight = pSbi->dwSize.Y;
-		}
-	}
-
-	// Игнорируем вертикальный скроллинг для обычного режима
-	if (gnBufferHeight == 0)
-	{
-		nTop = 0;
-		nBottom = pSbi->dwSize.Y - 1;
-	}
-	else if (gpSrv->nTopVisibleLine != -1)
-	{
-		// А для 'буферного' режима позиция может быть заблокирована
-		nTop = gpSrv->nTopVisibleLine;
-		nBottom = std::min((pSbi->dwSize.Y-1), (gpSrv->nTopVisibleLine+gcrVisibleSize.Y-1)); //-V592
-	}
-	else
-	{
-		// Просто корректируем нижнюю строку по отображаемому в GUI региону
-		// хорошо бы эту коррекцию сделать так, чтобы курсор был видим
-		if (pSbi->dwCursorPosition.Y == pSbi->srWindow.Bottom)
-		{
-			// Если курсор находится в нижней видимой строке (теоретически, это может быть единственная видимая строка)
-			nTop = pSbi->dwCursorPosition.Y - gcrVisibleSize.Y + 1; // раздвигаем область вверх от курсора
-		}
-		else
-		{
-			// Иначе - раздвигаем вверх (или вниз) минимально, чтобы курсор стал видим
-			if ((pSbi->dwCursorPosition.Y < pSbi->srWindow.Top) || (pSbi->dwCursorPosition.Y > pSbi->srWindow.Bottom))
-			{
-				nTop = pSbi->dwCursorPosition.Y - gcrVisibleSize.Y + 1;
-			}
-		}
-
-		// Страховка от выхода за пределы
-		if (nTop<0) nTop = 0;
-
-		// Корректируем нижнюю границу по верхней + желаемой высоте видимой области
-		nBottom = (nTop + gcrVisibleSize.Y - 1);
-
-		// Если же расчетный низ вылезает за пределы буфера (хотя не должен бы?)
-		if (nBottom >= pSbi->dwSize.Y)
-		{
-			// корректируем низ
-			nBottom = pSbi->dwSize.Y - 1;
-			// и верх по желаемому размеру
-			nTop = std::max(0, (nBottom - gcrVisibleSize.Y + 1));
-		}
-	}
-
-#ifdef _DEBUG
-
-	if ((pSbi->srWindow.Bottom - pSbi->srWindow.Top)>pSbi->dwMaximumWindowSize.Y)
-	{
-		_ASSERTE((pSbi->srWindow.Bottom - pSbi->srWindow.Top)<pSbi->dwMaximumWindowSize.Y);
-	}
-
-#endif
-
-	if (nLeft != pSbi->srWindow.Left
-	        || nRight != pSbi->srWindow.Right
-	        || nTop != pSbi->srWindow.Top
-	        || nBottom != pSbi->srWindow.Bottom)
-		lbChanged = TRUE;
-
-	return lbChanged;
-}
-#endif
-
 
 bool CheckWasFullScreen()
 {
 	bool bFullScreenHW = false;
 
-	if (gpSrv->pfnWasFullscreenMode)
+	if (gpSrv->wasFullscreenMode && pfnGetConsoleDisplayMode)
 	{
-		DWORD nModeFlags = 0; gpSrv->pfnWasFullscreenMode(&nModeFlags);
+		DWORD nModeFlags = 0; pfnGetConsoleDisplayMode(&nModeFlags);
 		if (nModeFlags & CONSOLE_FULLSCREEN_HARDWARE)
 		{
 			bFullScreenHW = true;
 		}
 		else
 		{
-			gpSrv->pfnWasFullscreenMode = NULL;
+			gpSrv->wasFullscreenMode = false;
 		}
 	}
 

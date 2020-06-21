@@ -276,15 +276,19 @@
     <ClInclude Include="ConEmuCD\ConAnsi.h" />
     <ClInclude Include="ConEmuCD\ConAnsiImpl.h" />
     <ClInclude Include="ConEmuCD\ConData.h" />
+    <ClInclude Include="ConEmuCD\ConEmuCmd.h" />
     <ClInclude Include="ConEmuCD\ConEmuSrv.h" />
     <ClInclude Include="ConEmuCD\ConProcess.h" />
     <ClInclude Include="ConEmuCD\ConsoleHelp.h" />
+    <ClInclude Include="ConEmuCD\ConsoleMain.h" />
     <ClInclude Include="ConEmuCD\Debugger.h" />
     <ClInclude Include="ConEmuCD\DownloaderCall.h" />
     <ClInclude Include="ConEmuCD\ExitCodes.h" />
     <ClInclude Include="ConEmuCD\GuiHooks.h" />
     <ClInclude Include="ConEmuCD\GuiMacro.h" />
     <ClInclude Include="ConEmuCD\Infiltrate.h" />
+    <ClInclude Include="ConEmuCD\InjectRemote.h" />
+    <ClInclude Include="ConEmuCD\InputLogger.h" />
     <ClInclude Include="ConEmuCD\LogFunction.h" />
     <ClInclude Include="ConEmuCD\MapDump.h" />
     <ClInclude Include="ConEmuCD\Queue.h" />
@@ -313,6 +317,7 @@
     <ClCompile Include="ConEmuCD\GuiMacro.cpp" />
     <ClCompile Include="ConEmuCD\Infiltrate.cpp" />
     <ClCompile Include="ConEmuCD\InjectRemote.cpp" />
+    <ClCompile Include="ConEmuCD\InputLogger.cpp" />
     <ClCompile Include="ConEmuCD\LogFunction.cpp" />
     <ClCompile Include="ConEmuCD\MapDump.cpp" />
     <ClCompile Include="ConEmuCD\Queue.cpp" />

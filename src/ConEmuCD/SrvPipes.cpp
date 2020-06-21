@@ -26,7 +26,10 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "ConsoleMain.h"
 #include "ConEmuSrv.h"
+#include "InputLogger.h"
+#include "SrvCommands.h"
 #include "Queue.h"
 
 #define DEBUGSTRINPUTPIPE(s) //DEBUGSTR(s) // ConEmuC: Received key... / ConEmuC: Received input

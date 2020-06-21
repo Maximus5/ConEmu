@@ -30,6 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
+#include "ConsoleMain.h"
+
 #include "../common/Common.h"
 #include "../common/ConsoleRead.h"
 #include "../common/EnvVar.h"

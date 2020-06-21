@@ -30,12 +30,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
+#include "ConsoleMain.h"
 #include "../common/Common.h"
 #include "../common/CEStr.h"
 #include "../common/CmdLine.h"
 #include "../common/MStrDup.h"
 #include <stdlib.h>
-#include "ConEmuSrv.h"
 #include "MapDump.h"
 
 enum MapDumpEnum

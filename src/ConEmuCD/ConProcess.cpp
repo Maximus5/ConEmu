@@ -29,10 +29,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 #define DEBUGSTRPROC(x) DEBUGSTR(x)
 
+#include "ConsoleMain.h"
 #include "ConEmuSrv.h"
 #include "ConProcess.h"
 #include "../common/MSection.h"
 #include "../common/ProcessData.h"
+#include <TlHelp32.h>
 
 #define XTERM_PID_TIMEOUT 2500
 

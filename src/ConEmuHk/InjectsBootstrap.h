@@ -60,7 +60,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 
 	_ASSERTE(pfn->szKernelName && *pfn->szKernelName);
 	size_t pnKernelNameLen = lstrlen(pfn->szKernelName);
-	size_t pstrSize = sizeof(USTR) + 8/*alignment*/ + sizeof(wchar_t)*(pnKernelNameLen+1); // UNICODE_STRING ( "kernel32.dll" | "kernelbase.dll" )
+	size_t pstrSize = sizeof(USTR) + 8/*alignment*/ + sizeof(wchar_t) * (pnKernelNameLen + 1); // UNICODE_STRING ( "kernel32.dll" | "kernelbase.dll" )
 
 
 	//OSVERSIONINFO osv = {sizeof(osv)};
@@ -154,7 +154,7 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	memmove(code + codeSize, strHookDllPath, memLen);
 
 	pStr = (PUSTR)((((DWORD_PTR)(code + codeSize + memLen + 7))>>3)<<3);
-	pStr->Length = pnKernelNameLen*sizeof(wchar_t);
+	pStr->Length = pnKernelNameLen * sizeof(wchar_t);
 	pStr->MaximumLength = (pnKernelNameLen+1)*sizeof(wchar_t);
 	#ifdef _WIN64
 	pStr->Pad = 0;

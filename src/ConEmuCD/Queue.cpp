@@ -28,7 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SHOWDEBUGSTR
 
+#include "ConsoleMain.h"
 #include "ConEmuSrv.h"
+#include "InputLogger.h"
 #include "Queue.h"
 
 #include "../common/Keyboard.h"

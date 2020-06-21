@@ -29,8 +29,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef VALIDATE_AND_DELAY_ON_TERMINATE
 
 #ifdef _DEBUG
-//  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-//	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_ADMIN_STARTED_MSGBOX
 //	#define SHOW_MAIN_MSGBOX
 //	#define SHOW_ALTERNATIVE_MSGBOX
@@ -50,16 +48,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define USE_PIPE_DEBUG_BOXES
 //	#define SHOW_SETCONTITLE_MSGBOX
 	#define SHOW_LOADCFGFILE_MSGBOX
+	#define SHOW_SHUTDOWNSRV_STEPS
 
 //	#define DEBUG_ISSUE_623
 
 //	#define VALIDATE_AND_DELAY_ON_TERMINATE
-
-#elif defined(__GNUC__)
-//  Раскомментировать, чтобы сразу после запуска процесса (conemuc.exe) показать MessageBox, чтобы прицепиться дебаггером
-//  #define SHOW_STARTED_MSGBOX
-#else
-//
 #endif
 
 #define SHOWDEBUGSTR
@@ -71,7 +64,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define SHOW_INJECT_MSGBOX
 
+#include "ConsoleMain.h"
 #include "ConEmuSrv.h"
+#include "ConEmuCmd.h"
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/ConsoleMixAttr.h"
@@ -120,6 +115,7 @@ WARNING("Обязательно после запуска сделать apiSetF
 WARNING("Обязательно получить код и имя родительского процесса");
 
 #ifdef USEPIPELOG
+// required global variables for PipeServer.h
 namespace PipeServerLogger
 {
 	Event g_events[BUFFER_SIZE];
@@ -151,13 +147,6 @@ FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit = NULL;
 FGetConsoleDisplayMode pfnGetConsoleDisplayMode = NULL;
 
 
-/* Console Handles */
-//MConHandle ghConIn ( L"CONIN$" );
-MConHandle ghConOut(L"CONOUT$");
-//Used to store and restore console screen buffers in cmd_AltBuffer
-MConHandle gPrimaryBuffer(NULL), gAltBuffer(NULL);
-USHORT gnPrimaryBufferLastRow = 0; // last detected written row in gPrimaryBuffer
-
 // Время ожидания завершения консольных процессов, когда юзер нажал крестик в КОНСОЛЬНОМ окне
 // The system also displays this dialog box if the process does not respond within a certain time-out period
 // (5 seconds for CTRL_CLOSE_EVENT, and 20 seconds for CTRL_LOGOFF_EVENT or CTRL_SHUTDOWN_EVENT).
@@ -172,8 +161,6 @@ wchar_t gsModuleName[32] = L"";
 wchar_t gsVersion[20] = L"";
 wchar_t gsSelfExe[MAX_PATH] = L"";  // Full path+exe to our executable
 wchar_t gsSelfPath[MAX_PATH] = L""; // Directory of our executable
-BOOL    gbTerminateOnExit = FALSE;
-//HANDLE  ghConIn = NULL, ghConOut = NULL;
 HWND    ghConWnd = NULL;
 DWORD   gnConEmuPID = 0; // PID of ConEmu[64].exe (ghConEmuWnd)
 HWND    ghConEmuWnd = NULL; // Root! window
@@ -240,7 +227,7 @@ BOOL  gbConsoleModeFlags = TRUE;
 DWORD gnConsoleModeFlags = 0; //(ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE);
 WORD  gnDefTextColors = 0, gnDefPopupColors = 0; // Передаются через "/TA=..."
 BOOL  gbVisibleOnStartup = FALSE;
-OSVERSIONINFO gOSVer;
+OSVERSIONINFO gOSVer = {};
 WORD gnOsVer = 0x500;
 bool gbIsWine = false;
 bool gbIsDBCS = false;
@@ -264,13 +251,6 @@ MFileLogEx* gpLogSize = NULL;
 
 BOOL gbInRecreateRoot = FALSE;
 
-
-namespace InputLogger
-{
-	Event g_evt[BUFFER_INFO_SIZE];
-	LONG g_evtidx = -1;
-	LONG g_overflow = 0;
-};
 
 
 namespace StdCon {
@@ -4882,6 +4862,93 @@ bool isConEmuTerminated()
 	return true;
 }
 
+static BOOL CALLBACK FindConEmuByPidProc(HWND hwnd, LPARAM lParam)
+{
+	DWORD dwPID;
+	GetWindowThreadProcessId(hwnd, &dwPID);
+	if (dwPID == gnConEmuPID)
+	{
+		wchar_t szClass[128];
+		if (GetClassName(hwnd, szClass, countof(szClass)))
+		{
+			if (lstrcmp(szClass, VirtualConsoleClassMain) == 0)
+			{
+				*(HWND*)lParam = hwnd;
+				return FALSE;
+			}
+		}
+	}
+	return TRUE;
+}
+
+HWND FindConEmuByPID(DWORD anSuggestedGuiPID /*= 0*/)
+{
+	LogFunction(L"FindConEmuByPID");
+
+	HWND hConEmuWnd = NULL;
+	DWORD nConEmuPID = anSuggestedGuiPID ? anSuggestedGuiPID : gnConEmuPID;
+	DWORD dwGuiThreadId = 0, dwGuiProcessId = 0;
+
+	// В большинстве случаев PID GUI передан через параметры
+	if (nConEmuPID == 0)
+	{
+		// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshot
+		//TODO: Reuse MToolHelp.h
+		HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
+
+		if (hSnap != INVALID_HANDLE_VALUE)
+		{
+			PROCESSENTRY32 prc = {sizeof(PROCESSENTRY32)};
+
+			if (Process32First(hSnap, &prc))
+			{
+				do
+				{
+					if (prc.th32ProcessID == gnSelfPID)
+					{
+						nConEmuPID = prc.th32ParentProcessID;
+						break;
+					}
+				}
+				while (Process32Next(hSnap, &prc));
+			}
+
+			CloseHandle(hSnap);
+		}
+	}
+
+	if (nConEmuPID)
+	{
+		HWND hGui = NULL;
+
+		while ((hGui = FindWindowEx(NULL, hGui, VirtualConsoleClassMain, NULL)) != NULL)
+		{
+			dwGuiThreadId = GetWindowThreadProcessId(hGui, &dwGuiProcessId);
+
+			if (dwGuiProcessId == nConEmuPID)
+			{
+				hConEmuWnd = hGui;
+				break;
+			}
+		}
+
+		// Если "в лоб" по имени класса ничего не нашли - смотрим
+		// среди всех дочерних для текущего десктопа
+		if ((hConEmuWnd == NULL) && !anSuggestedGuiPID)
+		{
+			HWND hDesktop = GetDesktopWindow();
+			EnumChildWindows(hDesktop, FindConEmuByPidProc, (LPARAM)&hConEmuWnd);
+		}
+	}
+
+	// Ensure that returned hConEmuWnd match gnConEmuPID
+	if (!anSuggestedGuiPID && hConEmuWnd)
+	{
+		GetWindowThreadProcessId(hConEmuWnd, &gnConEmuPID);
+	}
+
+	return hConEmuWnd;
+}
 
 void SendStarted()
 {
@@ -5430,6 +5497,190 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 	return pOut;
 }
 
+LGSResult LoadGuiSettingsPtr(ConEmuGuiMapping& GuiMapping, const ConEmuGuiMapping* pInfo, bool abNeedReload, bool abForceCopy, DWORD& rnWrongValue)
+{
+	LGSResult liRc = lgs_Failed;
+	DWORD cbSize = 0;
+	bool lbNeedCopy = false;
+	bool lbCopied = false;
+	wchar_t szLog[80];
+
+	if (!pInfo)
+	{
+		liRc = lgs_MapPtr;
+		wcscpy_c(szLog, L"LoadGuiSettings(Failed, MapPtr is null)");
+		LogFunction(szLog);
+		goto wrap;
+	}
+
+	if (abForceCopy)
+	{
+		cbSize = std::min<DWORD>(sizeof(GuiMapping), pInfo->cbSize);
+		memmove(&GuiMapping, pInfo, cbSize);
+		gpSrv->guiSettings.cbSize = cbSize;
+		lbCopied = true;
+	}
+
+	if (pInfo->cbSize >= (size_t)(sizeof(pInfo->nProtocolVersion) + ((LPBYTE)&pInfo->nProtocolVersion) - (LPBYTE)pInfo))
+	{
+		if (pInfo->nProtocolVersion != CESERVER_REQ_VER)
+		{
+			liRc = lgs_WrongVersion;
+			rnWrongValue = pInfo->nProtocolVersion;
+			wcscpy_c(szLog, L"LoadGuiSettings(Failed, MapPtr is null)");
+			swprintf_c(szLog, L"LoadGuiSettings(Failed, Version=%u, Required=%u)", rnWrongValue, (DWORD)CESERVER_REQ_VER);
+			LogFunction(szLog);
+			goto wrap;
+		}
+	}
+
+	if (pInfo->cbSize != sizeof(ConEmuGuiMapping))
+	{
+		liRc = lgs_WrongSize;
+		rnWrongValue = pInfo->cbSize;
+		swprintf_c(szLog, L"LoadGuiSettings(Failed, cbSize=%u, Required=%u)", pInfo->cbSize, (DWORD)sizeof(ConEmuGuiMapping));
+		LogFunction(szLog);
+		goto wrap;
+	}
+
+	lbNeedCopy = abNeedReload
+		|| (gpSrv->guiSettingsChangeNum != pInfo->nChangeNum)
+		|| (GuiMapping.bGuiActive != pInfo->bGuiActive)
+		;
+
+	if (lbNeedCopy)
+	{
+		wcscpy_c(szLog, L"LoadGuiSettings(Changed)");
+		LogFunction(szLog);
+		if (!lbCopied)
+			memmove(&GuiMapping, pInfo, pInfo->cbSize);
+		_ASSERTE(GuiMapping.ComSpec.ConEmuExeDir[0]!=0 && GuiMapping.ComSpec.ConEmuBaseDir[0]!=0);
+		liRc = lgs_Updated;
+	}
+	else if (GuiMapping.dwActiveTick != pInfo->dwActiveTick)
+	{
+		// But active consoles list may be changed
+		if (!lbCopied)
+			memmove(GuiMapping.Consoles, pInfo->Consoles, sizeof(GuiMapping.Consoles));
+		liRc = lgs_ActiveChanged;
+	}
+	else
+	{
+		liRc = lgs_Succeeded;
+	}
+
+wrap:
+	return liRc;
+}
+
+LGSResult LoadGuiSettings(ConEmuGuiMapping& GuiMapping, DWORD& rnWrongValue)
+{
+	LGSResult liRc = lgs_Failed;
+	bool lbNeedReload = false;
+	DWORD dwGuiThreadId, dwGuiProcessId;
+	HWND hGuiWnd = ghConEmuWnd ? ghConEmuWnd : gpSrv->hGuiWnd;
+	const ConEmuGuiMapping* pInfo = NULL;
+
+	if (!hGuiWnd || !IsWindow(hGuiWnd))
+	{
+		LogFunction(L"LoadGuiSettings(Invalid window)");
+		goto wrap;
+	}
+
+	if (!gpSrv->pGuiInfoMap || (gpSrv->hGuiInfoMapWnd != hGuiWnd))
+	{
+		lbNeedReload = true;
+	}
+
+	if (lbNeedReload)
+	{
+		LogFunction(L"LoadGuiSettings(Opening)");
+
+		dwGuiThreadId = GetWindowThreadProcessId(hGuiWnd, &dwGuiProcessId);
+		if (!dwGuiThreadId)
+		{
+			_ASSERTE(dwGuiProcessId);
+			LogFunction(L"LoadGuiSettings(Failed, dwGuiThreadId==0)");
+			goto wrap;
+		}
+
+		if (!gpSrv->pGuiInfoMap)
+			gpSrv->pGuiInfoMap = new MFileMapping<ConEmuGuiMapping>;
+		else
+			gpSrv->pGuiInfoMap->CloseMap();
+
+		gpSrv->pGuiInfoMap->InitName(CEGUIINFOMAPNAME, dwGuiProcessId);
+		pInfo = gpSrv->pGuiInfoMap->Open();
+
+		if (pInfo)
+		{
+			gpSrv->hGuiInfoMapWnd = hGuiWnd;
+		}
+	}
+	else
+	{
+		pInfo = gpSrv->pGuiInfoMap->Ptr();
+	}
+
+	liRc = LoadGuiSettingsPtr(GuiMapping, pInfo, lbNeedReload, false, rnWrongValue);
+wrap:
+	return liRc;
+}
+
+LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue /*= NULL*/)
+{
+	bool lbChanged = false;
+	LGSResult lgsResult = lgs_Failed;
+	DWORD nWrongValue = 0;
+
+	if (apFromCmd)
+	{
+		LogFunction(L"ReloadGuiSettings(apFromCmd)");
+		lgsResult = LoadGuiSettingsPtr(gpSrv->guiSettings, apFromCmd, false, true, nWrongValue);
+		lbChanged = (lgsResult >= lgs_Succeeded);
+	}
+	else
+	{
+		gpSrv->guiSettings.cbSize = sizeof(ConEmuGuiMapping);
+		lgsResult = LoadGuiSettings(gpSrv->guiSettings, nWrongValue);
+		lbChanged = (lgsResult >= lgs_Succeeded)
+			&& ((gpSrv->guiSettingsChangeNum != gpSrv->guiSettings.nChangeNum)
+				|| (gpSrv->pConsole && gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0] == 0));
+	}
+
+	if (pnWrongValue)
+		*pnWrongValue = nWrongValue;
+
+	if (lbChanged)
+	{
+		LogFunction(L"ReloadGuiSettings(Apply)");
+
+		gpSrv->guiSettingsChangeNum = gpSrv->guiSettings.nChangeNum;
+
+		gbLogProcess = (gpSrv->guiSettings.nLoggingType == glt_Processes);
+
+		UpdateComspec(&gpSrv->guiSettings.ComSpec); // isAddConEmu2Path, ...
+
+		SetConEmuFolders(gpSrv->guiSettings.ComSpec.ConEmuExeDir, gpSrv->guiSettings.ComSpec.ConEmuBaseDir);
+
+		// Не будем ставить сами, эту переменную заполняет Gui при своем запуске
+		// соответственно, переменная наследуется серверами
+		//SetEnvironmentVariableW(L"ConEmuArgs", pInfo->sConEmuArgs);
+
+		//wchar_t szHWND[16]; swprintf_c(szHWND, L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
+		//SetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, szHWND);
+		SetConEmuWindows(gpSrv->guiSettings.hGuiWnd, ghConEmuWndDC, ghConEmuWndBack);
+
+		if (gpSrv->pConsole)
+		{
+			CopySrvMapFromGuiMap();
+
+			UpdateConsoleMapHeader(L"guiSettings were changed");
+		}
+	}
+
+	return lgsResult;
+}
 
 void CreateLogSizeFile(int nLevel, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo /*= NULL*/)
 {
@@ -6682,6 +6933,7 @@ void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, const WORD
 // crNewSize     - размер ОКНА (ширина окна == ширине буфера)
 // rNewRect      - для (BufferHeight!=0) определяет new upper-left and lower-right corners of the window
 //	!!! rNewRect по идее вообще не нужен, за блокировку при прокрутке отвечает nSendTopLine
+// #PTY move to Server part
 BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel, bool bForceWriteLog)
 {
 	_ASSERTE(ghConWnd);

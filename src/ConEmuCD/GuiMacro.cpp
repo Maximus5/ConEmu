@@ -30,6 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
+#include "ConsoleMain.h"
+
 #include "../common/Common.h"
 #include "../common/CmdLine.h"
 #include "../common/ConEmuCheck.h"
@@ -38,7 +40,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ProcessData.h"
 
 #include "Actions.h"
-#include "ConEmuSrv.h"
 #include "GuiMacro.h"
 
 bool    gbPreferSilentMode = false;

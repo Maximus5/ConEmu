@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2011-present Maximus5
+Copyright (c) 2013-present Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -28,13 +28,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-//#define CE_MAX_INPUT_QUEUE_BUFFER 255
-
-#define ALL_MODIFIERS (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED)
-#define CTRL_MODIFIERS (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)
-
-BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r);
-//BOOL WriteInputQueue(const INPUT_RECORD *pr, BOOL bSetEvent = TRUE);
-DWORD WINAPI InputThread(LPVOID lpvParam);
-
-BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount);
+CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly = false, LPDWORD pnErrCode = NULL);
+CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, LPCWSTR dll);

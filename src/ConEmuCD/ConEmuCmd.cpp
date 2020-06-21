@@ -27,6 +27,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#include "ConsoleMain.h"
+#include "ConEmuCmd.h"
 #include "ConEmuSrv.h"
 #include "../common/WFiles.h"
 

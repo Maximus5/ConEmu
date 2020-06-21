@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //#define SHOW_INJECT_MSGBOX
 
-#include "../common/defines.h"
+#include "ConsoleMain.h"
 #include "ConEmuSrv.h"
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
@@ -452,11 +452,6 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 			ResetEvent(gpSrv->hAllowInputEvent);
 			gpSrv->bInSyncResize = TRUE;
 		}
-
-		#if 0
-		// Блокировка при прокрутке, значение используется только "виртуально" в CorrectVisibleRect
-		gpSrv->TopLeft = in.SetSize.TopLeft;
-		#endif
 
 		nTick1 = GetTickCount();
 		csRead.Unlock();
@@ -1780,6 +1775,7 @@ BOOL LoadFullConsoleData(HANDLE hOutput, WORD max_height, CESERVER_REQ** out)
 		COORD BufSize = {lsbi.dwSize.X, lsbi.dwSize.Y};
 		SMALL_RECT ReadRect = {0, 0, lsbi.dwSize.X-1, lsbi.dwSize.Y-1};
 
+		// #PTY Use proper server implementation
 		lbRc = MyReadConsoleOutput(hOutput, pData->Data, BufSize, ReadRect);
 
 		if (lbRc)
@@ -1890,7 +1886,7 @@ BOOL cmd_SetFullScreen(CESERVER_REQ& in, CESERVER_REQ** out)
 			if (!(*out)->FullScreenRet.bSucceeded)
 				(*out)->FullScreenRet.nErrCode = GetLastError();
 			else
-				gpSrv->pfnWasFullscreenMode = pfnGetConsoleDisplayMode;
+				gpSrv->wasFullscreenMode = true;
 		}
 		lbRc = TRUE;
 	}
