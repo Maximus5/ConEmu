@@ -1190,6 +1190,9 @@
     <ClCompile Include="common\CmdLine.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\CmdLine_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="common\Common.cpp">
       <Filter>common</Filter>
     </ClCompile>

@@ -695,6 +695,7 @@
     <ClCompile Include="common\CEHandle.cpp" />
     <ClCompile Include="common\CEStr.cpp" />
     <ClCompile Include="common\CmdLine.cpp" />
+    <ClCompile Include="common\CmdLine_test.cpp" />
     <ClCompile Include="common\Common.cpp" />
     <ClCompile Include="common\ConEmuCheck.cpp" />
     <ClCompile Include="common\ConEmuCheckEx.cpp" />
