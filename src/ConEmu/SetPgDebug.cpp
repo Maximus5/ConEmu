@@ -252,6 +252,33 @@ void CSetPgDebug::debugLogShell(DWORD nParentPID, CESERVER_REQ_ONCREATEPROCESS* 
 				{
 					debugLogShellText(pszParamEx, szArg);
 				}
+				else if ((szArg.Compare(L"@") == 0) && pszNext && (*pszNext == L'"'))
+				{
+					pszNext = NextArg(pszNext, szArg);
+					if (!pszNext)
+						break;
+					if (!*szArg)
+						continue;
+
+					CEStr lsPath;
+
+					if (IsFilePath(szArg, true))
+					{
+						// Full path to "arguments file"
+						lsPath.Set(szArg);
+					}
+					else if ((szArg[0] != L'\\' && szArg[0] != L'/')
+						&& (pszDir && *pszDir))
+					{
+						// Relative path to "arguments file"
+						lsPath = JoinPath(pszDir, szArg);
+					}
+
+					if (!lsPath.IsEmpty())
+					{
+						debugLogShellText(pszParamEx, lsPath);
+					}
+				}
 				else if (szArg[0] == L'@')
 				{
 					CEStr lsPath;

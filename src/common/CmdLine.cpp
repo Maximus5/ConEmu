@@ -382,8 +382,7 @@ const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** 
 	size_t nArgLen = 0;
 	bool lbQMode = false;
 
-	// аргумент начинается с "
-	if (*psCmdLine == L'"')
+	if (*psCmdLine == L'"')  // if starts with `"`
 	{
 		lbQMode = true;
 		psCmdLine++;
