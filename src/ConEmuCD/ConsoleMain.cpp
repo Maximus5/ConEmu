@@ -6299,11 +6299,13 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 			// ??? Польза здесь сомнительная
 			if (crMax.X > 0 && crMax.X < gpSrv->crReqSizeNewSize.X)
 			{
+				PreConsoleSize(crMax.X, gpSrv->crReqSizeNewSize.Y);
 				gpSrv->crReqSizeNewSize.X = crMax.X;
 				TODO("Обновить gcrVisibleSize");
 			}
 			if (crMax.Y > 0 && crMax.Y < gpSrv->crReqSizeNewSize.Y)
 			{
+				PreConsoleSize(gpSrv->crReqSizeNewSize.X, crMax.Y);
 				gpSrv->crReqSizeNewSize.Y = crMax.Y;
 				TODO("Обновить gcrVisibleSize");
 			}
@@ -6929,6 +6931,22 @@ void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, const WORD
 }
 
 
+// For debugging purposes
+void PreConsoleSize(const int width, const int height)
+{
+	// Is visible area size too big?
+	_ASSERTE(width <= 500);
+	_ASSERTE(height <= 300);
+	// And positive
+	_ASSERTE(width > 0);
+	_ASSERTE(height > 0);
+}
+
+void PreConsoleSize(const COORD crSize)
+{
+	PreConsoleSize(crSize.X, crSize.Y);
+}
+
 // BufferHeight  - высота БУФЕРА (0 - без прокрутки)
 // crNewSize     - размер ОКНА (ширина окна == ширине буфера)
 // rNewRect      - для (BufferHeight!=0) определяет new upper-left and lower-right corners of the window
@@ -6938,6 +6956,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 {
 	_ASSERTE(ghConWnd);
 	_ASSERTE(BufferHeight==0 || BufferHeight>crNewSize.Y); // Otherwise - it will be NOT a bufferheight...
+	PreConsoleSize(crNewSize);
 
 	if (!ghConWnd)
 	{
@@ -7066,7 +7085,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	gnBufferHeight = BufferHeight;
 
 	// Размер видимой области (слишком большой?)
-	_ASSERTE(crNewSize.X<=500 && crNewSize.Y<=300);
+	PreConsoleSize(crNewSize.X, crNewSize.Y);
 	gcrVisibleSize = crNewSize;
 
 	if (gnRunMode == RM_SERVER || gnRunMode == RM_ALTSERVER)

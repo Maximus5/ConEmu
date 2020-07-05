@@ -553,33 +553,50 @@ wrap:
 	return iRc;
 }
 
-int ServerInitConsoleSize()
+void ServerInitConsoleSize(bool allowUseCurrent, CONSOLE_SCREEN_BUFFER_INFO* pSbiOut = nullptr)
 {
 	LogFunction(L"ServerInitConsoleSize");
 
-	if ((gbParmVisibleSize || gbParmBufSize) && gcrVisibleSize.X && gcrVisibleSize.Y)
+	HANDLE hOut = static_cast<HANDLE>(ghConOut);
+
+	if (allowUseCurrent && gcrVisibleSize.X && gcrVisibleSize.Y)
 	{
 		SMALL_RECT rc = {0};
 		SetConsoleSize(gnBufferHeight, gcrVisibleSize, rc, ":ServerInit.SetFromArg"); // может обломаться? если шрифт еще большой
+
+		if (pSbiOut)
+		{
+			if (!GetConsoleScreenBufferInfo(hOut, pSbiOut))
+			{
+				_ASSERTE(FALSE && "GetConsoleScreenBufferInfo failed");
+			}
+		}
 	}
 	else
 	{
-		HANDLE hOut = (HANDLE)ghConOut;
-		CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}}; // интересует реальное положение дел
+		CONSOLE_SCREEN_BUFFER_INFO lsbi = {}; // we need to know real values
 
-		if (GetConsoleScreenBufferInfo(hOut, &lsbi))
+		if (!GetConsoleScreenBufferInfo(hOut, &lsbi))
 		{
-			gpSrv->crReqSizeNewSize = lsbi.dwSize;
-			_ASSERTE(gpSrv->crReqSizeNewSize.X!=0);
-
+			_ASSERTE(FALSE && "GetConsoleScreenBufferInfo failed");
+		}
+		else
+		{
 			gcrVisibleSize.X = lsbi.srWindow.Right - lsbi.srWindow.Left + 1;
 			gcrVisibleSize.Y = lsbi.srWindow.Bottom - lsbi.srWindow.Top + 1;
 			gnBufferHeight = (lsbi.dwSize.Y == gcrVisibleSize.Y) ? 0 : lsbi.dwSize.Y;
 			gnBufferWidth = (lsbi.dwSize.X == gcrVisibleSize.X) ? 0 : lsbi.dwSize.X;
+
+			PreConsoleSize(gcrVisibleSize);
+			gpSrv->crReqSizeNewSize = gcrVisibleSize;
+			_ASSERTE(gpSrv->crReqSizeNewSize.X!=0);
+
+			if (pSbiOut)
+			{
+				*pSbiOut = lsbi;
+			}
 		}
 	}
-
-	return 0;
 }
 
 int ServerInitAttach2Gui()
@@ -1168,7 +1185,7 @@ int ServerInit()
 	}
 
 	// Ensure the console has proper size before further steps (echo for example)
-	ServerInitConsoleSize();
+	ServerInitConsoleSize(gbParmVisibleSize || gbParmBufSize);
 
 	// Ensure that "set" commands in the command line will override ConEmu's default environment (settings page)
 	// This function also process all other "configuration" and "output" commands like 'echo', 'type', 'chcp' etc.
@@ -2727,15 +2744,7 @@ HWND Attach2Gui(DWORD nTimeout)
 	pIn->StartStop.bUserIsAdmin = IsUserAdmin();
 	HANDLE hOut = (HANDLE)ghConOut;
 
-	if (!GetConsoleScreenBufferInfo(hOut, &pIn->StartStop.sbi))
-	{
-		_ASSERTE(FALSE);
-	}
-	else
-	{
-		gpSrv->crReqSizeNewSize = pIn->StartStop.sbi.dwSize;
-		_ASSERTE(gpSrv->crReqSizeNewSize.X!=0);
-	}
+	ServerInitConsoleSize(false, &pIn->StartStop.sbi);
 
 	pIn->StartStop.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
 
