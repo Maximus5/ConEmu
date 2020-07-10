@@ -100,6 +100,7 @@ enum FarMacroVersion
 #include "SetAppSettings.h"
 #include "SetCmdTask.h"
 #include "UpdateSet.h"
+#include "../common/PaletteColors.h"
 #include "../common/wcwidth.h"
 
 class CSettings;
@@ -225,11 +226,14 @@ struct Settings
 	public:
 		int GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated);
 		const AppSettings* GetAppSettings(int anAppId=-1);
-		const COLORREF* GetDefColors(LPCWSTR asDefName = NULL);
-		COLORREF* GetColors(int anAppId=-1, BOOL abFade = FALSE);
-		COLORREF* GetColorsPrepare(COLORREF *pColors, COLORREF *pColorsFade, bool* pbFadeInitialized, BOOL abFade);
-		void PrepareFadeColors(COLORREF *pColors, COLORREF *pColorsFade, bool* pbFadeInitialized);
-		COLORREF* GetPaletteColors(LPCWSTR asPalette, BOOL abFade = FALSE);
+	private:
+		static bool GetDefColors(LPCWSTR asDefName, PaletteColors& colors);
+		static void GetWindowsColors(PaletteColors& colors);
+	public:
+		const PaletteColors& GetColors(int anAppId=-1, BOOL abFade = FALSE);
+		const PaletteColors& GetColorsPrepare(const PaletteColors& colors, PaletteColors& colorsFade, bool* pbFadeInitialized, BOOL abFade);
+		void PrepareFadeColors(const PaletteColors& colors, PaletteColors& colorsFade, bool* pbFadeInitialized);
+		const PaletteColors& GetPaletteColors(LPCWSTR asPalette, BOOL abFade = FALSE);
 		COLORREF GetFadeColor(COLORREF cr);
 		void ResetFadeColors();
 
@@ -246,7 +250,7 @@ struct Settings
 		const ColorPalette* PaletteFindByColors(bool bMatchAttributes, const ColorPalette* pCur);
 		int PaletteGetIndex(LPCWSTR asName);
 		void PaletteSaveAs(LPCWSTR asName); // Save active colors to named palette
-		void PaletteSaveAs(LPCWSTR asName, BYTE anTextColorIdx, BYTE anBackColorIdx, BYTE anPopTextColorIdx, BYTE anPopBackColorIdx, const COLORREF (&aColors)[0x10], bool abSaveSettings);
+		void PaletteSaveAs(LPCWSTR asName, BYTE anTextColorIdx, BYTE anBackColorIdx, BYTE anPopTextColorIdx, BYTE anPopBackColorIdx, const PaletteColors& aColors, bool abSaveSettings);
 		void PaletteDelete(LPCWSTR asName); // Delete named palette
 		void PaletteSetStdIndexes();
 		int PaletteSetActive(LPCWSTR asName);
@@ -307,22 +311,15 @@ struct Settings
 
 	private:
 		// reg->Load(L"ColorTableNN", Colors[i]);
-		COLORREF Colors[0x10];
-		COLORREF ColorsFade[0x10];
-		bool mb_FadeInitialized;
-
-		//struct CEAppColors
-		//{
-		//	COLORREF Colors[0x10];
-		//	COLORREF ColorsFade[0x10];
-		//	bool FadeInitialized;
-		//} **AppColors; // [AppCount]
+		PaletteColors Colors{};
+		PaletteColors ColorsFade{};
+		bool mb_FadeInitialized = false;
 
 		void LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECursorType* pInactive);
 
 		void LoadAppsSettings(SettingsBase* reg, bool abFromOpDlg = false);
-		void LoadAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/);
-		void SaveAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF* pColors*/);
+		void LoadAppSettings(SettingsBase* reg, AppSettings* pApp);
+		void SaveAppSettings(SettingsBase* reg, AppSettings* pApp);
 
 		void SaveStdColors(SettingsBase* reg);
 		void SaveStartCommands(SettingsBase* reg);

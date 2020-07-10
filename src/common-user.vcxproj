@@ -267,6 +267,7 @@
     <ClInclude Include="common\MToolTip.h" />
     <ClInclude Include="common\MWow64Disable.h" />
     <ClInclude Include="common\Monitors.h" />
+    <ClInclude Include="common\PaletteColors.h" />
     <ClInclude Include="common\PipeServer.h" />
     <ClInclude Include="common\ProcessData.h" />
     <ClInclude Include="common\ProcessSetEnv.h" />

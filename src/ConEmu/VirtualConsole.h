@@ -154,7 +154,7 @@ class CVirtualConsole :
 		RECT    mrc_Client, mrc_Back;
 		CEDC    m_DC;
 		HBRUSH  hOldBrush, hSelectedBrush;
-		HBRUSH  CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COLORREF *pColors = NULL);
+		HBRUSH  CreateBackBrush(bool bGuiVisible, bool& rbNonSystem);
 		CEFontStyles m_SelectedFont;
 		//CEFONT  mh_FontByIndex[MAX_FONT_STYLES_EX]; // pointers to Normal/Bold/Italic/Bold&Italic/...Underline
 		CFontPtr m_UCharMapFont;
@@ -234,10 +234,11 @@ class CVirtualConsole :
 
 		const AppSettings* mp_Set;
 
+		PaletteColors m_Colors{};
+		BYTE attrBackLast = 0;
+
 	public:
 		bool isEditor, isViewer, isFilePanel, isFade, isForeground;
-		BYTE attrBackLast;
-		COLORREF *mp_Colors;
 
 		// In some cases (Win+G attach of external console)
 		// we use original RealConsole palette instead of ConEmu's default one
@@ -265,8 +266,8 @@ class CVirtualConsole :
 		void PaintBackgroundImage(HDC hdc, const RECT& rcText, const COLORREF crBack, bool Background = false);
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
-		COLORREF* GetColors();
-		COLORREF* GetColors(bool bFade);
+		const PaletteColors& GetColors();
+		const PaletteColors& GetColors(bool bFade);
 		int GetPaletteIndex();
 		bool ChangePalette(int aNewPaletteIdx);
 		bool ChangePalette(LPCWSTR asNewPalette);

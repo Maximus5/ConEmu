@@ -654,6 +654,9 @@
     <ClInclude Include="common\Monitors.h">
       <Filter>Common</Filter>
     </ClInclude>
+    <ClInclude Include="common\PaletteColors.h">
+      <Filter>Common</Filter>
+    </ClInclude>
     <ClInclude Include="common\PipeServer.h">
       <Filter>Common</Filter>
     </ClInclude>
@@ -876,6 +879,9 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\Hotkeys.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\HtmlCopy.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\IconList.cpp">

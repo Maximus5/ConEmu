@@ -47,7 +47,7 @@ protected:
 	static ColorPalette gLastColors; // {}
 
 	static HBRUSH mh_CtlColorBrush;
-	static COLORREF acrCustClr[16]; // array of custom colors, используется в ChooseColor(...)
+	static PaletteColors m_CustClr; // array of custom colors, используется в ChooseColor(...)
 
 public:
 	static bool GetColorById(WORD nID, COLORREF* color);
@@ -58,8 +58,8 @@ public:
 	static void FillBgImageColors(HWND hWnd2);
 	static INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
 	static bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
-public:
-	static void OnSettingsLoaded(const COLORREF (&Colors)[0x10]);
+
+	static void OnSettingsLoaded(const PaletteColors &Colors);
 	static void ReleaseHandles();
 
 protected:

@@ -1653,9 +1653,9 @@ void CRgnDetect::OnWindowSizeChanged()
 //A pointer to a SMALL_RECT structure. On input, the structure members specify the upper-left and lower-right
 //coordinates of the console screen buffer rectangle to write to.
 //On output, the structure members specify the actual rectangle that was used.
-void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion, const COLORREF *apColors)
+void CRgnDetect::OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord,PSMALL_RECT lpWriteRegion, const PaletteColors& apColors)
 {
-	mp_Colors = apColors;
+	m_Colors = apColors;
 
 	if (!mb_SBI_Loaded)
 	{
@@ -1768,12 +1768,12 @@ void CRgnDetect::SetFarRect(SMALL_RECT *prcFarRect)
 	}
 }
 
-BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
+BOOL CRgnDetect::InitializeSBI(const PaletteColors& apColors)
 {
 	//if (mb_SBI_Loaded) - всегда. Если вызвали - значит нужно все перечитать
 	//	return TRUE;
 	m_DetectedDialogs.AllFlags = 0;
-	mp_Colors = apColors;
+	m_Colors = apColors;
 	//if (!mb_TableCreated) - тоже всегда. цвета могли измениться
 	{
 		mb_TableCreated = true;
@@ -1788,8 +1788,8 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 				memset(&lca, 0, sizeof(lca));
 				lca.nForeIdx = nFore;
 				lca.nBackIdx = nBack;
-				lca.crForeColor = lca.crOrigForeColor = mp_Colors[lca.nForeIdx];
-				lca.crBackColor = lca.crOrigBackColor = mp_Colors[lca.nBackIdx];
+				lca.crForeColor = lca.crOrigForeColor = m_Colors[lca.nForeIdx];
+				lca.crBackColor = lca.crOrigBackColor = m_Colors[lca.nBackIdx];
 				mca_Table[nColorIndex] = lca;
 			}
 		}
@@ -1905,7 +1905,7 @@ BOOL CRgnDetect::InitializeSBI(const COLORREF *apColors)
 	// Console API uses SHORT
 	_ASSERTE(!HIWORD(nTextWidth) && !HIWORD(nTextHeight));
 	COORD crSize = {(SHORT)nTextWidth, (SHORT)nTextHeight};
-	OnWriteConsoleOutput(pCharInfo, crSize, crNul, &m_sbi.srWindow, mp_Colors);
+	OnWriteConsoleOutput(pCharInfo, crSize, crNul, &m_sbi.srWindow, m_Colors);
 	// Буфер CHAR_INFO больше не нужен
 	free(pCharInfo);
 	return TRUE;
@@ -1960,13 +1960,13 @@ BOOL CRgnDetect::GetCharAttr(int x, int y, wchar_t& rc, CharAttr& ra)
 
 
 // Эта функция вызывается из плагинов (ConEmuTh)
-void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const COLORREF *apColors, bool bFarUserscreen)
+void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const PaletteColors& apColors, bool bFarUserscreen)
 {
 	if (gbInTransparentAssert)
 		return;
 
 	mp_FarInfo = apFarInfo;
-	mp_Colors = apColors;
+	m_Colors = apColors;
 	// Сброс флагов и прямоугольников панелей
 	m_DetectedDialogs.AllFlags = 0; mn_NextDlgId = 0; mb_NeedPanelDetect = TRUE;
 	memset(&mrc_LeftPanel,0,sizeof(mrc_LeftPanel));
@@ -1983,13 +1983,13 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 }
 
 // Эта функция вызывается из GUI
-void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const COLORREF *apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi,
+void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const PaletteColors& apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi,
                                     wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, bool bFarUserscreen)
 {
 	_ASSERTE(pAttr!=mp_Attrs);
 	mp_FarInfo = apFarInfo;
-	mp_Colors = apColors;
-	_ASSERTE(mp_Colors && (mp_Colors[1] || mp_Colors[2]));
+	m_Colors = apColors;
+	_ASSERTE(m_Colors[1] || m_Colors[2]);
 	_ASSERTE(pChar[nWidth*nHeight] == 0); // Должен быть ASCIIZ
 
 	if (apSbi != &m_sbi)
@@ -2020,19 +2020,19 @@ void CRgnDetect::PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const C
 	//COLORREF crColorKey = gSet.ColorKey;
 	// реальный цвет, заданный в фаре
 	nUserBackIdx = CONBACKCOLOR(mp_FarInfo->nFarColors[col_CommandLineUserScreen]);
-	crUserBack = mp_Colors[nUserBackIdx];
+	crUserBack = m_Colors[nUserBackIdx];
 	nMenuBackIdx = CONBACKCOLOR(mp_FarInfo->nFarColors[col_HMenuText]);
-	crMenuTitleBack = mp_Colors[nMenuBackIdx];
+	crMenuTitleBack = m_Colors[nMenuBackIdx];
 	// COL_PANELBOX
 	int nPanelBox = CONBACKCOLOR(mp_FarInfo->nFarColors[col_PanelBox]);
-	crPanelsBorderBack = mp_Colors[nPanelBox];
+	crPanelsBorderBack = m_Colors[nPanelBox];
 	nPanelBox = CONFORECOLOR(mp_FarInfo->nFarColors[col_PanelBox]);
-	crPanelsBorderFore = mp_Colors[nPanelBox];
+	crPanelsBorderFore = m_Colors[nPanelBox];
 	// COL_PANELSCREENSNUMBER
 	int nPanelNum = CONBACKCOLOR(mp_FarInfo->nFarColors[col_PanelScreensNumber]);
-	crPanelsNumberBack = mp_Colors[nPanelNum];
+	crPanelsNumberBack = m_Colors[nPanelNum];
 	nPanelNum = CONFORECOLOR(mp_FarInfo->nFarColors[col_PanelScreensNumber]);
-	crPanelsNumberFore = mp_Colors[nPanelNum];
+	crPanelsNumberFore = m_Colors[nPanelNum];
 	// Цвета диалогов
 	nDlgBorderBackIdx = CONBACKCOLOR(mp_FarInfo->nFarColors[col_DialogBox]);
 	nDlgBorderForeIdx = CONFORECOLOR(mp_FarInfo->nFarColors[col_DialogBox]);

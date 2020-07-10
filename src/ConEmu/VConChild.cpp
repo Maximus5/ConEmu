@@ -1049,12 +1049,7 @@ LRESULT CConEmuChild::OnPaintGaps(HDC hdc)
 	}
 
 	int nColorIdx = RELEASEDEBUGTEST(0/*Black*/,1/*Blue*/);
-	COLORREF* clrPalette = VCon->GetColors();
-	if (!clrPalette)
-	{
-		_ASSERTE(clrPalette!=NULL);
-		return 0;
-	}
+	const auto& clrPalette = VCon->GetColors();
 
 	CRealConsole* pRCon = VCon->RCon();
 	if (pRCon)

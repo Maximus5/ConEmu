@@ -5071,11 +5071,11 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 
 	nSelHeight--;
 
-	COLORREF *pPal = mp_RCon->VCon()->GetColors();
+	const auto& pPal = mp_RCon->VCon()->GetColors();
 
 	bool bUseHtml = (nFormat != 0);
 
-	CFormatCopy* html = NULL;
+	CFormatCopy* html = nullptr;
 
 	if (bUseHtml)
 	{
@@ -6303,8 +6303,8 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 	m_Rgn.SetNeedTransparency(gpSet->isUserScreenTransparent);
 	m_Rgn.SetFarRect(&rcFarRect);
 	TODO("При загрузке дампа хорошо бы из него и палитру фара доставать/отдавать");
-	bool bFarUserscreen = mp_RCon->isFar() && (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU));
-	m_Rgn.PrepareTransparent(pFI, mp_RCon->mp_VCon->GetColors(), pSbi, pChar, pAttr, nWidth, nHeight, bFarUserscreen);
+	const bool bFarUserScreen = mp_RCon->isFar() && (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU));
+	m_Rgn.PrepareTransparent(pFI, mp_RCon->mp_VCon->GetColors(), pSbi, pChar, pAttr, nWidth, nHeight, bFarUserScreen);
 
 	free(pFI);
 

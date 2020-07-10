@@ -1487,19 +1487,18 @@ CESERVER_REQ* CRealServer::cmdSshAgentStarted(LPVOID pInst, CESERVER_REQ* pIn, U
 
 CESERVER_REQ* CRealServer::cmdQueryPalette(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
-	COLORREF* pcrColors = mp_RCon->VCon()->GetColors(false);
-	COLORREF* pcrFadeColors = mp_RCon->VCon()->GetColors(true);
-	CESERVER_REQ* pOut = NULL;
-	if (pcrColors)
+	const auto& pcrColors = mp_RCon->VCon()->GetColors(false);
+	const auto& pcrFadeColors = mp_RCon->VCon()->GetColors(true);
+	CESERVER_REQ* pOut = nullptr;
+	if ((pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_PALETTE))) != nullptr)
 	{
-		if ((pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_PALETTE))) != NULL)
-		{
-			_ASSERTE(sizeof(pOut->Palette.crPalette) == sizeof(COLORREF)*16);
-			memmove(pOut->Palette.crPalette, pcrColors, sizeof(pOut->Palette.crPalette));
+		_ASSERTE(sizeof(pOut->Palette.crPalette) == sizeof(COLORREF)*16);
+		memmove_s(pOut->Palette.crPalette, sizeof(pOut->Palette.crPalette),
+			pcrColors.data(), sizeof(pOut->Palette.crPalette));
 
-			_ASSERTE(sizeof(pOut->Palette.crFadePalette) == sizeof(COLORREF)*16);
-			memmove(pOut->Palette.crFadePalette, pcrFadeColors, sizeof(pOut->Palette.crFadePalette));
-		}
+		_ASSERTE(sizeof(pOut->Palette.crFadePalette) == sizeof(COLORREF)*16);
+		memmove_s(pOut->Palette.crFadePalette, sizeof(pOut->Palette.crFadePalette),
+			pcrFadeColors.data(), sizeof(pOut->Palette.crFadePalette));
 	}
 	return pOut;
 }

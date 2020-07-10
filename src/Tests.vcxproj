@@ -515,6 +515,7 @@
     <ClInclude Include="common\MWow64Disable.h" />
     <ClInclude Include="common\Memory.h" />
     <ClInclude Include="common\Monitors.h" />
+    <ClInclude Include="common\PaletteColors.h" />
     <ClInclude Include="common\PipeServer.h" />
     <ClInclude Include="common\ProcessData.h" />
     <ClInclude Include="common\ProcessSetEnv.h" />
@@ -593,6 +594,7 @@
     <ClCompile Include="ConEmu\HotkeyList.cpp" />
     <ClCompile Include="ConEmu\Hotkeys.cpp" />
     <ClCompile Include="ConEmu\Hotkeys_test.cpp" />
+    <ClCompile Include="ConEmu\HtmlCopy.cpp" />
     <ClCompile Include="ConEmu\IconList.cpp" />
     <ClCompile Include="ConEmu\ImgButton.cpp" />
     <ClCompile Include="ConEmu\Inside.cpp" />

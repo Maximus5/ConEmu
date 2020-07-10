@@ -124,7 +124,7 @@ TODO("Load/Save Settings::bHideDisabledTabs?");
 struct CONEMUDEFCOLORS
 {
 	const wchar_t* pszTitle;
-	DWORD dwDefColors[0x10];
+	PaletteColors dwDefColors;
 	BYTE  nIndexes[4]; // Text/Back/PopupText/PopupBack
 	struct {
 	bool  isBackground;
@@ -535,56 +535,18 @@ void Settings::InitSettings()
 	ConsoleFont.lfWidth = 3;
 	wcscpy_c(ConsoleFont.lfFaceName, gsDefConFont);
 
-	const COLORREF* pcrColors;
-	const COLORREF* pcrStd = DefColors[0].dwDefColors;
 	// Standard <Solarized> has too many monotones
 	// which made it unpleasant with a lot of tools, especially
 	// those which were designed for 8-color consoles (cygwin)
-	if ((pcrColors = GetDefColors(L"<ConEmu>")) != NULL)
+	if (GetDefColors(L"<ConEmu>", Colors))
 	{
-		for (unsigned i = 0x10; i--;)
-		{
-			Colors[i] = pcrColors[i]; // SolarMe color palette
-			Colors[i+0x10] = pcrStd[i]; // Windows standard colors
-		}
+		// Initialized
 	}
 	else
 	{
 		// Default palette MUST exists in our list!
 		_ASSERTE(FALSE && "Must not get here");
-
-		SettingsRegistry RegConColors, RegConDef;
-
-		if (RegConColors.OpenKey(L"Console", KEY_READ))
-		{
-			RegConDef.OpenKey(HKEY_USERS, L".DEFAULT\\Console", KEY_READ);
-			TCHAR ColorName[] = L"ColorTable00";
-			bool  lbBlackFound = false;
-
-			for (unsigned i = 0x10; i--;)
-			{
-				// L"ColorTableNN"
-				ColorName[10] = i/10 + '0';
-				ColorName[11] = i%10 + '0';
-
-				if (!RegConColors.Load(ColorName, (LPBYTE)&(Colors[i]), sizeof(Colors[0])))
-					if (!RegConDef.Load(ColorName, (LPBYTE)&(Colors[i]), sizeof(Colors[0])))
-						Colors[i] = pcrStd[i]; //-V108
-
-				if (Colors[i] == 0)
-				{
-					if (!lbBlackFound)
-						lbBlackFound = true;
-					else if (lbBlackFound)
-						Colors[i] = pcrStd[i]; //-V108
-				}
-
-				Colors[i+0x10] = pcrStd[i]; // Умолчания
-			}
-
-			RegConDef.CloseKey();
-			RegConColors.CloseKey();
-		}
+		GetWindowsColors(Colors);
 	}
 
 	isTrueColorer = true; // включим по умолчанию, ибо Far3
@@ -1223,10 +1185,11 @@ void Settings::LoadAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF*
 	if (bStd)
 	{
 		TCHAR ColorName[] = L"ColorTable00";
-		for (size_t i = countof(Colors)/*0x10*/; i--;)
+		const size_t digitPos = _tcslen(ColorName) - 2;
+		for (size_t i = Colors.size(); i--;)
 		{
-			ColorName[10] = i/10 + '0';
-			ColorName[11] = i%10 + '0';
+			ColorName[digitPos] = TCHAR(i/10 + '0');
+			ColorName[digitPos + 1] = TCHAR(i%10 + '0');
 			reg->Load(ColorName, Colors[i]);
 		}
 
@@ -1253,8 +1216,6 @@ void Settings::LoadAppSettings(SettingsBase* reg, AppSettings* pApp/*, COLORREF*
 		pApp->nBackColorIdx = pPal->nBackColorIdx;
 		pApp->nPopTextColorIdx = pPal->nPopTextColorIdx;
 		pApp->nPopBackColorIdx = pPal->nPopBackColorIdx;
-
-		//memmove(pColors, pPal->Colors, sizeof(pPal->Colors));
 	}
 
 	pApp->OverrideExtendFonts = bStd;
@@ -1307,7 +1268,7 @@ void Settings::FreeStartupTask()
 	if (StartupTask)
 	{
 		StartupTask->FreePtr();
-		StartupTask = NULL; // освобождается в FreePtr
+		StartupTask = nullptr; // освобождается в FreePtr
 	}
 }
 
@@ -1322,7 +1283,7 @@ void Settings::LoadCmdTasks(SettingsBase* reg, bool abFromOpDlg /*= false*/)
 			return;
 		}
 
-		reg = CreateSettings(NULL);
+		reg = CreateSettings(nullptr);
 		if (!reg)
 		{
 			_ASSERTE(reg!=NULL);
@@ -1397,7 +1358,7 @@ bool Settings::SaveCmdTasks(SettingsBase* reg)
 	bool lbDelete = false;
 	if (!reg)
 	{
-		reg = CreateSettings(NULL);
+		reg = CreateSettings(nullptr);
 		if (!reg)
 		{
 			_ASSERTE(reg!=NULL);
@@ -1428,7 +1389,7 @@ bool Settings::SaveCmdTasks(SettingsBase* reg)
 	{
 		for (int i = 0; i < CmdTaskCount; i++)
 		{
-			if (CmdTasks[i] == NULL)
+			if (CmdTasks[i] == nullptr)
 				continue;
 
 			swprintf_c(pszCmdKey, 32/*#SECURELEN*/, L"\\Task%i", NewTaskCount+1); // 1-based
@@ -1542,9 +1503,8 @@ void Settings::CreatePredefinedPalettes(int iAddUserCount)
 		Palettes[n]->bPredefined = true;
 		Palettes[n]->nTextColorIdx = Palettes[n]->nBackColorIdx = CEDEF_BackColorAuto/*16*/;
 		Palettes[n]->nPopTextColorIdx = Palettes[n]->nPopBackColorIdx = CEDEF_BackColorAuto/*16*/;
-		_ASSERTE(countof(Palettes[n]->Colors)==0x10 && countof(DefColors[n].dwDefColors)==0x10);
-		memmove_s(Palettes[n]->Colors, sizeof(Palettes[n]->Colors),
-			DefColors[n].dwDefColors, sizeof(DefColors[n].dwDefColors));
+		_ASSERTE((Palettes[n]->Colors.size()==0x10) && (DefColors[n].dwDefColors.size()==0x10));
+		Palettes[n]->Colors = DefColors[n].dwDefColors;
 		if (DefColors[n].isIndexes())
 		{
 			Palettes[n]->nTextColorIdx = DefColors[n].nIndexes[0];
@@ -1566,6 +1526,7 @@ void Settings::CreatePredefinedPalettes(int iAddUserCount)
 void Settings::LoadPalettes(SettingsBase* reg)
 {
 	TCHAR ColorName[] = L"ColorTable00";
+	const size_t digitPos = _tcslen(ColorName) - 2;
 
 	bool lbDelete = false;
 	if (!reg)
@@ -1624,11 +1585,11 @@ void Settings::LoadPalettes(SettingsBase* reg)
 				reg->Load(L"PopTextColorIdx", Palettes[PaletteCount]->nPopTextColorIdx); MinMax(Palettes[PaletteCount]->nPopTextColorIdx,16);
 				reg->Load(L"PopBackColorIdx", Palettes[PaletteCount]->nPopBackColorIdx); MinMax(Palettes[PaletteCount]->nPopBackColorIdx,16);
 
-				_ASSERTE(countof(Colors) == countof(Palettes[PaletteCount]->Colors));
-				for (size_t k = 0; k < countof(Palettes[PaletteCount]->Colors)/*0x10*/; k++)
+				_ASSERTE(Colors.size() == Palettes[PaletteCount]->Colors.size());
+				for (size_t k = 0; k < Palettes[PaletteCount]->Colors.size()/*0x10*/; ++k)
 				{
-					ColorName[10] = k/10 + '0';
-					ColorName[11] = k%10 + '0';
+					ColorName[digitPos] = TCHAR(k / 10 + '0');
+					ColorName[digitPos + 1] = TCHAR(k % 10 + '0');
 					reg->Load(ColorName, Palettes[PaletteCount]->Colors[k]);
 				}
 
@@ -1649,6 +1610,7 @@ void Settings::LoadPalettes(SettingsBase* reg)
 void Settings::SavePalettes(SettingsBase* reg)
 {
 	TCHAR ColorName[] = L"ColorTable00";
+	const size_t digitPos = _tcslen(ColorName) - 2;
 
 	bool lbDelete = false;
 	if (!reg)
@@ -1709,11 +1671,11 @@ void Settings::SavePalettes(SettingsBase* reg)
 			reg->Save(L"PopTextColorIdx", Palettes[i]->nPopTextColorIdx);
 			reg->Save(L"PopBackColorIdx", Palettes[i]->nPopBackColorIdx);
 
-			_ASSERTE(countof(Colors) == countof(Palettes[i]->Colors));
-			for (size_t k = 0; k < countof(Palettes[i]->Colors)/*0x10*/; k++)
+			_ASSERTE(Colors.size() == Palettes[i]->Colors.size());
+			for (size_t k = 0; k < Palettes[i]->Colors.size()/*0x10*/; ++k)
 			{
-				ColorName[10] = k/10 + '0';
-				ColorName[11] = k%10 + '0';
+				ColorName[digitPos] = TCHAR(k / 10 + '0');
+				ColorName[digitPos + 1] = TCHAR(k % 10 + '0');
 				reg->Save(ColorName, Palettes[i]->Colors[k]);
 			}
 
@@ -1800,9 +1762,9 @@ const ColorPalette* Settings::PaletteFindCurrent(bool bMatchAttributes)
 
 const ColorPalette* Settings::PaletteFindByColors(bool bMatchAttributes, const ColorPalette* pCur)
 {
-	const ColorPalette* pFound = NULL;
-	const ColorPalette* pPal = NULL;
-	for (int i = 0; (pPal = PaletteGetPtr(i)) != NULL; i++)
+	const ColorPalette* pFound = nullptr;
+	const ColorPalette* pPal = nullptr;
+	for (int i = 0; (pPal = PaletteGetPtr(i)) != nullptr; i++)
 	{
 		if (!bMatchAttributes
 				|| ((pCur->nTextColorIdx == pPal->nTextColorIdx)
@@ -1811,9 +1773,7 @@ const ColorPalette* Settings::PaletteFindByColors(bool bMatchAttributes, const C
 					&& (pCur->nPopBackColorIdx == pPal->nPopBackColorIdx))
 			)
 		{
-			size_t cmpSize = sizeof(pPal->Colors);
-			int iCmp = memcmp(pCur->Colors, pPal->Colors, cmpSize);
-			if (iCmp == 0)
+			if (pCur->Colors == pPal->Colors)
 			{
 				pFound = pPal;
 				// Do not break, prefer last palette (use saved)
@@ -1852,8 +1812,8 @@ ColorPalette* Settings::PaletteGetPtr(int anIndex)
 	StdPal.nPopTextColorIdx = AppStd.nPopTextColorIdx;
 	StdPal.nPopBackColorIdx = AppStd.nPopBackColorIdx;
 
-	_ASSERTE(sizeof(StdPal.Colors) == sizeof(this->Colors));
-	memmove(StdPal.Colors, this->Colors, sizeof(StdPal.Colors));
+	_ASSERTE(StdPal.Colors.size() == this->Colors.size());
+	StdPal.Colors = this->Colors;
 	return &StdPal;
 }
 
@@ -1934,9 +1894,7 @@ int Settings::PaletteSetActive(LPCWSTR asName)
 
 	if (pPal)
 	{
-		unsigned nCount = countof(pPal->Colors);
-
-		for (unsigned i = 0; i < nCount; i++)
+		for (size_t i = 0; i < pPal->Colors.size(); ++i)
 		{
 			Colors[i] = pPal->Colors[i]; //-V108
 		}
@@ -1964,7 +1922,7 @@ void Settings::PaletteSaveAs(LPCWSTR asName)
 
 void Settings::PaletteSaveAs(LPCWSTR asName,
 		BYTE anTextColorIdx, BYTE anBackColorIdx, BYTE anPopTextColorIdx, BYTE anPopBackColorIdx,
-		const COLORREF (&aColors)[0x10], bool abSaveSettings)
+		const PaletteColors& aColors, bool abSaveSettings)
 {
 	// Пользовательские палитры не могут именоваться как "<...>"
 	if (!asName || !*asName || wcspbrk(asName, L"<>"))
@@ -1976,7 +1934,7 @@ void Settings::PaletteSaveAs(LPCWSTR asName,
 	int nIndex = PaletteGetIndex(asName);
 
 	// "Предопределенные" палитры перезаписывать нельзя
-	if ((nIndex != -1) && Palettes && Palettes[nIndex]->bPredefined)
+	if ((nIndex != -1) && (Palettes != nullptr) && Palettes[nIndex]->bPredefined)
 		nIndex = -1;
 
 	bool bNewPalette = false;
@@ -1993,7 +1951,7 @@ void Settings::PaletteSaveAs(LPCWSTR asName,
 			_ASSERTE(ppNew!=NULL);
 			return;
 		}
-		if ((PaletteCount > 0) && Palettes)
+		if ((PaletteCount > 0) && (Palettes != nullptr))
 		{
 			memmove(ppNew, Palettes, PaletteCount*sizeof(ColorPalette*));
 		}
@@ -2029,8 +1987,8 @@ void Settings::PaletteSaveAs(LPCWSTR asName,
 	Palettes[nIndex]->nPopTextColorIdx = anPopTextColorIdx;
 	Palettes[nIndex]->nPopBackColorIdx = anPopBackColorIdx;
 
-	_ASSERTE(sizeof(Palettes[nIndex]->Colors) == sizeof(aColors));
-	memmove(Palettes[nIndex]->Colors, aColors, sizeof(Palettes[nIndex]->Colors));
+	_ASSERTE(Palettes[nIndex]->Colors.size() == aColors.size());
+	Palettes[nIndex]->Colors = aColors;
 	_ASSERTE(nIndex < PaletteCount);
 
 	if (abSaveSettings)
@@ -3500,12 +3458,13 @@ void Settings::SaveAppsSettings(SettingsBase* reg)
 void Settings::SaveStdColors(SettingsBase* reg)
 {
 	TCHAR ColorName[] = L"ColorTable00";
+	const size_t digitPos = _tcslen(ColorName) - 2;
 
-	for(unsigned i = 0; i<countof(Colors)/*0x10*/; i++)
+	for (size_t i = 0; i < Colors.size()/*0x10*/; ++i)
 	{
-		ColorName[10] = i/10 + '0';
-		ColorName[11] = i%10 + '0';
-		reg->Save(ColorName, (DWORD)Colors[i]);
+		ColorName[digitPos] = TCHAR(i / 10 + '0');
+		ColorName[digitPos + 1] = TCHAR(i % 10 + '0');
+		reg->Save(ColorName, static_cast<DWORD>(Colors[i]));
 	}
 
 	reg->Save(L"TextColorIdx", AppStd.nTextColorIdx);
@@ -4821,84 +4780,116 @@ void Settings::ResetFadeColors()
 	}
 }
 
-COLORREF* Settings::GetPaletteColors(LPCWSTR asPalette, BOOL abFade /*= FALSE*/)
+const PaletteColors& Settings::GetPaletteColors(LPCWSTR asPalette, BOOL abFade /*= FALSE*/)
 {
-	COLORREF *pColors = Colors;
-	COLORREF *pColorsFade = ColorsFade;
-	bool* pbFadeInitialized = &mb_FadeInitialized;
-
 	_ASSERTE(asPalette && *asPalette);
-	int iPalIdx = PaletteGetIndex(asPalette);
+	const int iPalIdx = PaletteGetIndex(asPalette);
 	if (iPalIdx >= 0)
 	{
 		ColorPalette* palPtr = PaletteGetPtr(iPalIdx);
-		_ASSERTE(palPtr && countof(Colors)==countof(palPtr->Colors) && countof(ColorsFade)==countof(palPtr->ColorsFade));
-
-		pColors = palPtr->Colors;
-		pColorsFade = palPtr->ColorsFade;
-		pbFadeInitialized = &palPtr->FadeInitialized;
+		if (!palPtr)
+		{
+			_ASSERTE(palPtr);
+		}
+		else
+		{
+			return GetColorsPrepare(palPtr->Colors, palPtr->ColorsFade, &palPtr->FadeInitialized, abFade);
+		}
 	}
 
-	return GetColorsPrepare(pColors, pColorsFade, pbFadeInitialized, abFade);
+	return GetColorsPrepare(Colors, ColorsFade, &mb_FadeInitialized, abFade);
 }
 
-const COLORREF* Settings::GetDefColors(LPCWSTR asDefName /*= NULL*/)
+const PaletteColors& Settings::GetColors(int anAppId/*=-1*/, BOOL abFade)
 {
-	const COLORREF* pcrColors = NULL;
+	LPCWSTR pszPalette = nullptr;
 
+	if ((anAppId >= 0) && (anAppId < AppCount) && Apps[anAppId]->OverridePalette && Apps[anAppId]->szPaletteName[0])
+	{
+		pszPalette = Apps[anAppId]->szPaletteName;
+
+		return GetPaletteColors(pszPalette, abFade);
+	}
+
+	return GetColorsPrepare(Colors, ColorsFade, &mb_FadeInitialized, abFade);
+}
+
+bool Settings::GetDefColors(LPCWSTR asDefName, PaletteColors& colors)
+{
+	bool result = false;
 	if (asDefName && *asDefName)
 	{
-		for (int i = 0; i < (int)countof(DefColors); i++)
+		for (const auto& defColor : DefColors)
 		{
-			if (lstrcmpi(DefColors[i].pszTitle, asDefName) == 0)
+			if (lstrcmpi(defColor.pszTitle, asDefName) == 0)
 			{
-				pcrColors = (const COLORREF*)DefColors[i].dwDefColors;
-				break;
+				colors = defColor.dwDefColors;
+				result = true;
 			}
 		}
 	}
 	else
 	{
 		// Windows standard
-		pcrColors = (const COLORREF*)DefColors[0].dwDefColors;
+		colors = DefColors[0].dwDefColors;
+		result = true;
 	}
 
-	return pcrColors;
+	return result;
 }
 
-COLORREF* Settings::GetColors(int anAppId/*=-1*/, BOOL abFade)
+void Settings::GetWindowsColors(PaletteColors& colors)
 {
-	COLORREF *pColors = Colors;
-	COLORREF *pColorsFade = ColorsFade;
-	bool* pbFadeInitialized = &mb_FadeInitialized;
+	SettingsRegistry RegConColors, RegConDef;
 
-	if ((anAppId >= 0) && (anAppId < AppCount) && Apps[anAppId]->OverridePalette && Apps[anAppId]->szPaletteName[0])
+	const auto& pcrStd = DefColors[0].dwDefColors;
+	if (RegConColors.OpenKey(L"Console", KEY_READ))
 	{
-		ColorPalette* palPtr = PaletteGetPtr(Apps[anAppId]->GetPaletteIndex());
-		_ASSERTE(palPtr && countof(Colors)==countof(palPtr->Colors) && countof(ColorsFade)==countof(palPtr->ColorsFade));
+		RegConDef.OpenKey(HKEY_USERS, L".DEFAULT\\Console", KEY_READ);
+		TCHAR ColorName[] = L"ColorTable00";
+		const size_t digitPos = _tcslen(ColorName) - 2;
+		bool  lbBlackFound = false;
 
-		pColors = palPtr->Colors;
-		pColorsFade = palPtr->ColorsFade;
-		pbFadeInitialized = &palPtr->FadeInitialized;
+		for (unsigned i = 0x10; i--;)
+		{
+			// L"ColorTableNN"
+			ColorName[digitPos] = TCHAR(i / 10 + '0');
+			ColorName[digitPos + 1] = TCHAR(i % 10 + '0');
+
+			if (!RegConColors.Load(ColorName, LPBYTE(&(colors[i])), sizeof(colors[i])))
+				if (!RegConDef.Load(ColorName, LPBYTE(&(colors[i])), sizeof(colors[i])))
+					colors[i] = pcrStd[i]; //-V108
+
+			if (colors[i] == 0)
+			{
+				if (!lbBlackFound)
+					lbBlackFound = true;
+				else if (lbBlackFound)
+					colors[i] = pcrStd[i]; //-V108
+			}
+
+			colors[i+0x10] = pcrStd[i]; // Умолчания  // TODO: REMOVE THIS
+		}
+
+		RegConDef.CloseKey();
+		RegConColors.CloseKey();
 	}
-
-	return GetColorsPrepare(pColors, pColorsFade, pbFadeInitialized, abFade);
 }
 
-COLORREF* Settings::GetColorsPrepare(COLORREF *pColors, COLORREF *pColorsFade, bool* pbFadeInitialized, BOOL abFade)
+const PaletteColors& Settings::GetColorsPrepare(const PaletteColors& colors, PaletteColors& colorsFade, bool* pbFadeInitialized, BOOL abFade)
 {
 	if (!abFade || !isFadeInactive)
-		return pColors;
+		return colors;
 
 	if (!*pbFadeInitialized)
 	{
-		PrepareFadeColors(pColors, pColorsFade, pbFadeInitialized);
+		PrepareFadeColors(colors, colorsFade, pbFadeInitialized);
 	}
 
-	return pColorsFade;
+	return colorsFade;
 }
 
-void Settings::PrepareFadeColors(COLORREF *pColors, COLORREF *pColorsFade, bool* pbFadeInitialized)
+void Settings::PrepareFadeColors(const PaletteColors& colors, PaletteColors& colorsFade, bool* pbFadeInitialized)
 {
 	// GetFadeColor cache the result
 	mn_LastFadeSrc = mn_LastFadeDst = -1;
@@ -4914,9 +4905,9 @@ void Settings::PrepareFadeColors(COLORREF *pColors, COLORREF *pColorsFade, bool*
 	*pbFadeInitialized = true;
 
 	// Evaluate fade color
-	for (size_t i = 0; i < countof(ColorsFade); i++)
+	for (size_t i = 0; i < ColorsFade.size(); ++i)
 	{
-		pColorsFade[i] = GetFadeColor(pColors[i]);
+		colorsFade[i] = GetFadeColor(colors[i]);
 	}
 }
 

@@ -8321,8 +8321,8 @@ void CConEmuMain::OnPanelViewSettingsChanged(BOOL abSendChanges/*=TRUE*/)
 	}
 
 	// Заполнить цвета gpSet->ThSet.crPalette[16], gpSet->ThSet.crFadePalette[16]
-	COLORREF *pcrNormal = gpSet->GetColors(-1, FALSE);
-	COLORREF *pcrFade = gpSet->GetColors(-1, TRUE);
+	const auto& pcrNormal = gpSet->GetColors(-1, FALSE);
+	const auto& pcrFade = gpSet->GetColors(-1, TRUE);
 
 	for(int i=0; i<16; i++)
 	{

@@ -108,6 +108,9 @@
     <ClInclude Include="common\Monitors.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="common\PaletteColors.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="common\PipeServer.h">
       <Filter>Headers</Filter>
     </ClInclude>

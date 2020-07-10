@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-present Maximus5
+Copyright (c) 2016-present Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,22 +27,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#define HIDE_USE_EXCEPTION_INFO
-#define SHOWDEBUGSTR
+#pragma once
 
-#include "Header.h"
+#include "../common/defines.h"
+#include <array>
 
-#include "Options.h"
-#include "SetColorPalette.h"
+constexpr size_t CE_COLOR_PALETTE_SIZE = 16;
 
-void ColorPalette::FreePtr()
-{
-	SafeFree(pszName);
-	ColorPalette* p = this;
-	SafeFree(p);
-}
-
-const PaletteColors& ColorPalette::GetColors(bool abFade)
-{
-	return gpSet->GetColorsPrepare(Colors, ColorsFade, &FadeInitialized, abFade);
-}
+// ReSharper disable once CppInconsistentNaming
+using PaletteColors = std::array<COLORREF, CE_COLOR_PALETTE_SIZE>;

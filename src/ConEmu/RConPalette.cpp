@@ -40,29 +40,20 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 CRConPalette::CRConPalette(CRealConsole* apRCon)
 	: mp_RCon(apRCon)
-	, mb_Initialized(false)
-	, mb_VividColors(false)
-	, mb_ExtendFonts(false)
-	, mn_FontNormalColor(0)
-	, mn_FontBoldColor(0)
-	, mn_FontItalicColor(0)
-{
-	ZeroStruct(m_TableOrg);
-	ZeroStruct(m_TableExt);
-	ZeroStruct(m_Colors);
-}
-
-CRConPalette::~CRConPalette()
 {
 }
 
-void CRConPalette::UpdateColorTable(COLORREF *apColors/*[32]*/,
+CRConPalette::~CRConPalette()  // NOLINT(modernize-use-equals-default)
+{
+}
+
+void CRConPalette::UpdateColorTable(const PaletteColors& colors,
 		bool bVividColors,
 		bool bExtendFonts, BYTE nFontNormalColor, BYTE nFontBoldColor, BYTE nFontItalicColor)
 {
 	bool bMainChanged = !mb_Initialized
 		|| (mb_VividColors != bVividColors)
-		|| (memcmp(m_Colors, apColors, sizeof(m_Colors)) != 0);
+		|| (m_Colors != colors);
 	bool bExtChanged = bMainChanged
 		|| ((mb_ExtendFonts != bExtendFonts)
 			|| (bExtendFonts
@@ -87,11 +78,11 @@ void CRConPalette::UpdateColorTable(COLORREF *apColors/*[32]*/,
 		{
 			for (uint32_t nFore = 0; nFore <= 0xF; nFore++, nColorIndex++)
 			{
-				memset(&lca, 0, sizeof(lca));
+				lca = CharAttr{};
 				lca.nForeIdx = nFore;
 				lca.nBackIdx = nBack;
-				lca.crForeColor = lca.crOrigForeColor = apColors[lca.nForeIdx];
-				lca.crBackColor = lca.crOrigBackColor = apColors[lca.nBackIdx];
+				lca.crForeColor = lca.crOrigForeColor = colors[lca.nForeIdx];
+				lca.crBackColor = lca.crOrigBackColor = colors[lca.nBackIdx];
 
 				// New feature, apply modified lightness for text colors
 				// if text color is indistinguishable with background
@@ -119,7 +110,7 @@ void CRConPalette::UpdateColorTable(COLORREF *apColors/*[32]*/,
 		}
 	}
 
-	memmove(m_TableExt, m_TableOrg, sizeof(m_TableExt));
+	memmove_s(m_TableExt, sizeof(m_TableExt), m_TableOrg, sizeof(m_TableExt));
 
 	// And ExtendFonts/ExtendColors features (if required)
 	// m_TableExt is the same as m_TableOrg with exception of nFontBoldColor and nFontItalicColor backrounds
@@ -158,8 +149,8 @@ void CRConPalette::UpdateColorTable(COLORREF *apColors/*[32]*/,
 				// -- store ‘real’ color palette indexes?
 				//lca.nForeIdx = nFore;
 				//lca.nBackIdx = nBack;
-				//lca.crOrigForeColor = apColors[lca.nForeIdx];
-				//lca.crOrigBackColor = apColors[lca.nBackIdx];
+				//lca.crOrigForeColor = colors[lca.nForeIdx];
+				//lca.crOrigBackColor = colors[lca.nBackIdx];
 
 				m_TableExt[nColorIndex] = lca;
 			}
@@ -173,5 +164,5 @@ void CRConPalette::UpdateColorTable(COLORREF *apColors/*[32]*/,
 	mn_FontNormalColor = nFontNormalColor;
 	mn_FontBoldColor = nFontBoldColor;
 	mn_FontItalicColor = nFontItalicColor;
-	memmove(m_Colors, apColors, sizeof(m_Colors));
+	m_Colors = colors;
 }

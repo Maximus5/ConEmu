@@ -277,7 +277,6 @@ CVirtualConsole::CVirtualConsole(CConEmuMain* pOwner, int index)
 	, TransparentInfo()
 	, isFade(false)
 	, isForeground(true)
-	, mp_Colors(NULL)
 	, m_SelfPalette()
 	, mn_AppSettingsChangCount()
 	, m_LeftPanelView()
@@ -424,7 +423,7 @@ bool CVirtualConsole::Constructor(RConStartArgsEx *args)
 	mp_BgInfo = args->pszWallpaper ? CBackgroundInfo::CreateBackgroundObject(args->pszWallpaper, false) : NULL;
 	#endif
 
-	mp_Colors = gpSet->GetColors(-1);
+	m_Colors = gpSet->GetColors(-1);
 
 	m_Sizes.nFontHeight = gpFontMgr->FontHeight();
 	m_Sizes.nFontWidth = gpFontMgr->FontWidth();
@@ -2405,12 +2404,12 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 	Invalidate();
 }
 
-COLORREF* CVirtualConsole::GetColors()
+const PaletteColors& CVirtualConsole::GetColors()
 {
 	return GetColors(isFade);
 }
 
-COLORREF* CVirtualConsole::GetColors(bool bFade)
+const PaletteColors& CVirtualConsole::GetColors(bool bFade)
 {
 	if (!this || !mp_RCon)
 	{
@@ -2418,25 +2417,27 @@ COLORREF* CVirtualConsole::GetColors(bool bFade)
 	}
 
 	// Was specified palette forced to this console?
-	LPCWSTR pszPalName = NULL;
+	LPCWSTR pszPalName = nullptr;
 
 	if (m_SelfPalette.bPredefined)
 	{
-		mp_Colors = m_SelfPalette.GetColors(bFade);
+		// original palette from attached RealConsole
+		m_Colors = m_SelfPalette.GetColors(bFade);
 	}
-	else if (((pszPalName = mp_RCon->GetArgs().pszPalette) != NULL) && *pszPalName)
+	else if (((pszPalName = mp_RCon->GetArgs().pszPalette) != nullptr) && *pszPalName)
 	{
-		mp_Colors = gpSet->GetPaletteColors(pszPalName, bFade);
+		// Pallette was set by VCon menu or -new_console:P:...
+		m_Colors = gpSet->GetPaletteColors(pszPalName, bFade);
 	}
 	else
 	{
 		// Update AppID if needed
-		int nCurAppId = mp_RCon ? mp_RCon->GetActiveAppSettingsId() : -1;
+		const int nCurAppId = mp_RCon ? mp_RCon->GetActiveAppSettingsId() : -1;
 
-		mp_Colors = gpSet->GetColors(nCurAppId, bFade);
+		m_Colors = gpSet->GetColors(nCurAppId, bFade);
 	}
 
-	return mp_Colors;
+	return m_Colors;
 }
 
 int CVirtualConsole::GetPaletteIndex()
@@ -3347,7 +3348,7 @@ void CVirtualConsole::UpdateCursorDraw(HDC hPaintDC, RECT rcClient, COORD pos, U
 	BYTE G = (BYTE)((clr & 0xFF00) >> 8);
 	BYTE B = (BYTE)((clr & 0xFF0000) >> 16);
 	lbDark = (R <= 0xC0) && (G <= 0xC0) && (B <= 0xC0);
-	clr = lbDark ? mp_Colors[15] : mp_Colors[0];
+	clr = lbDark ? m_Colors[15] : m_Colors[0];
 	HBRUSH hBr = CreateSolidBrush(clr);
 	if (curStyle != cur_Rect)
 	{
@@ -3592,9 +3593,9 @@ bool CVirtualConsole::StretchPaint(HDC hPaintDC, int anX, int anY, int anShowWid
 	return bPaintRC;
 }
 
-HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COLORREF *pColors /*= NULL*/)
+HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem)
 {
-	HBRUSH hBr = NULL;
+	HBRUSH hBr = nullptr;
 
 	if (bGuiVisible)
 	{
@@ -3603,19 +3604,14 @@ HBRUSH CVirtualConsole::CreateBackBrush(bool bGuiVisible, bool& rbNonSystem, COL
 	}
 	else
 	{
-		if (!pColors)
-		{
-			pColors = gpSet->GetColors(mp_RCon->GetActiveAppSettingsId());
-		}
-
-		// Залить цветом 0
-		int nBackColorIdx = mp_RCon->GetDefaultBackColorIdx(); // Black
+		// Fill with coloridx 0
+		const int nBackColorIdx = mp_RCon->GetDefaultBackColorIdx(); // Black
 		//#ifdef _DEBUG
 		//nBackColorIdx = 2; // Green
 		//#endif
 
-		hBr = CreateSolidBrush(pColors[nBackColorIdx]);
-		rbNonSystem = (hBr != NULL);
+		hBr = CreateSolidBrush(m_Colors[nBackColorIdx]);
+		rbNonSystem = (hBr != nullptr);
 	}
 
 	return hBr;
@@ -3778,10 +3774,10 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, bool bGuiVisi
 	// Сброс блокировки, если была
 	LockDcRect(false);
 
-	COLORREF *pColors = GetColors();
+	const auto& colors = GetColors();
 
 	bool lbDelBrush = false;
-	HBRUSH hBr = CreateBackBrush(bGuiVisible, lbDelBrush, pColors);
+	HBRUSH hBr = CreateBackBrush(bGuiVisible, lbDelBrush);
 
 	//#ifndef SKIP_ALL_FILLRECT
 	FillRect(hPaintDc, &rcClient, hBr);
@@ -3807,8 +3803,8 @@ void CVirtualConsole::PaintVConSimple(HDC hPaintDc, RECT rcClient, bool bGuiVisi
 		if (pszStarting != NULL)
 		{
 			UINT nFlags = ETO_CLIPPED;
-			cePaintDc.SetTextColor(pColors[7]);
-			cePaintDc.SetBkColor(pColors[0]);
+			cePaintDc.SetTextColor(colors[7]);
+			cePaintDc.SetBkColor(colors[0]);
 			cePaintDc.TextDraw(rcClient.left, rcClient.top, nFlags, &rcClient,
 				        pszStarting, _tcslen(pszStarting), 0);
 		}
@@ -3879,7 +3875,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 
 	if (((ULONG)(client.right-client.left)) > m_Sizes.Width)
 	{
-		if (!hBr) hBr = CreateSolidBrush(mp_Colors[mn_BackColorIdx]);
+		if (!hBr) hBr = CreateSolidBrush(m_Colors[mn_BackColorIdx]);
 
 		RECT rcFill = MakeRect(client.left + m_Sizes.Width, client.top, client.right, client.bottom);
 #ifndef SKIP_ALL_FILLRECT
@@ -3890,7 +3886,7 @@ void CVirtualConsole::PaintVConNormal(HDC hPaintDc, RECT rcClient)
 
 	if (((ULONG)(client.bottom-client.top)) > m_Sizes.Height)
 	{
-		if (!hBr) hBr = CreateSolidBrush(mp_Colors[mn_BackColorIdx]);
+		if (!hBr) hBr = CreateSolidBrush(m_Colors[mn_BackColorIdx]);
 
 		RECT rcFill = MakeRect(client.left, client.top + m_Sizes.Height, client.right, client.bottom);
 #ifndef SKIP_ALL_FILLRECT
@@ -4866,7 +4862,7 @@ bool CVirtualConsole::UpdatePanelView(bool abLeftPanel, bool abOnRegister/*=fals
 
 	// Чтобы плагин знал, что поменялась палитра (это или Fade, или реальная перенастройка цветов).
 	//for (int i=0; i<16; i++)
-	//	SetWindowLong(pp->hWnd, i*4, mp_Colors[i]);
+	//	SetWindowLong(pp->hWnd, i*4, m_Colors[i]);
 	if (!mn_ConEmuFadeMsg)
 		mn_ConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWFADE);
 
@@ -5068,8 +5064,8 @@ void CVirtualConsole::CharAttrFromConAttr(WORD conAttr, CharAttr* pAttr)
 	memset(pAttr, 0, sizeof(CharAttr));
 	pAttr->nForeIdx = CONFORECOLOR(conAttr);
 	pAttr->nBackIdx = CONBACKCOLOR(conAttr);
-	pAttr->crForeColor = pAttr->crOrigForeColor = mp_Colors[pAttr->nForeIdx];
-	pAttr->crBackColor = pAttr->crOrigBackColor = mp_Colors[pAttr->nBackIdx];
+	pAttr->crForeColor = pAttr->crOrigForeColor = m_Colors[pAttr->nForeIdx];
+	pAttr->crBackColor = pAttr->crOrigBackColor = m_Colors[pAttr->nBackIdx];
 	pAttr->ConAttr = conAttr;
 }
 
