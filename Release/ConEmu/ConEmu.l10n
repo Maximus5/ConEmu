@@ -5997,7 +5997,7 @@
       "de": "Anwendungsspezifisch",
       "ja": "App distinct",
       "es": "Otras App",
-      "pl": "Aplikacja odrębna",
+      "pl": "Apka odrębna",
       "id": 42 }
     ,
     "lng_SpgAppear": {
@@ -6782,7 +6782,7 @@
       "de": "Zwischenablage (Kopieren/Einfügen) überschreiben",
       "ja": "クリップボード(コピー/ペースト)オーバーライド",
       "es": "Anular portapapeles (Copiar/Pegar)",
-      "pl": "Zastąpienie Schowka (Kopiuj / Wklej)",
+      "pl": "Zastąpienie Schowka (Kopiuj/Wklej)",
       "id": 2172 }
     ,
     "cbClipConfirmEnter": {
@@ -7022,7 +7022,7 @@
       "de": "'Schlüsselfarben'-Transparenz",
       "ja": "'カラーキー' 透明度",
       "es": "'Color' para transparencia",
-      "pl": "Przezroczystość \"klucza koloru\"",
+      "pl": "\"klucza koloru\"",
       "id": 2312 }
     ,
     "cbColorSchemeDelete": {
@@ -7121,7 +7121,7 @@
       "de": "Exception-Handler (Fehlersuche)",
       "ja": "例外ハンドラ(デバッグ)",
       "es": "Manejador de excepciones (depuración)",
-      "pl": "Moduł obsługi wyjątków (debugowanie)",
+      "pl": "Moduł obsługi wyjątków (debug)",
       "id": 2622 }
     ,
     "cbCTSAutoCopy": {
@@ -7221,7 +7221,7 @@
       "de": "Versuche vor Zurücksetzen Auswahl auszuschneiden/zu löschen",
       "ja": "リセット前に カット/消去 を試みてください",
       "es": "intentar cortar/borrar selección antes de reiniciar",
-      "pl": "spróbuj wyciąć / usunąć zaznaczenie przed zresetowaniem",
+      "pl": "spróbuj wyciąć/usunąć zaznaczenie przed resetem",
       "id": 3030 }
     ,
     "cbCTSFreezeBeforeSelect": {
@@ -7231,7 +7231,7 @@
       "de": "Friere Konsoleninhalte vor Auswahl ein (Kann kurze Verzögerungen verursachen)",
       "ja": "選択前にコンソールの内容をフリーズする(小さなラグを引き起こす可能性がある)",
       "es": "Inmovilizar contenidos del terminal antes de seleccionar (puede provocar parones)",
-      "pl": "Zatrzymaj zawartość konsoli przed wyborem (może powodować małe opóźnienie)",
+      "pl": "Zatrzymaj zawartość konsoli przed wyborem (może powodować opóźnienie)",
       "id": 2257 }
     ,
     "cbCTSIBeam": {
@@ -7271,7 +7271,7 @@
       "de": "Auswahl mit Umslt+Pfeil beginnen (Text = Links/Rechts/Pos1/Ende, Block = Hoch/Runter)",
       "ja": "Shiftキーを押しながら選択を開始します(テキスト=Left/Right/Home/End,ブロック=Up/Down)",
       "es": "Iniciar selección con Shift+Cursores (Texto = Izquierda/Derecha/Inicio/Fin, Bloque = Arriba/Abajo)",
-      "pl": "Rozpocznij wybór za pomocą Shift + strzałka (Text = Left/Right/Home/End, Block = Up/Down)",
+      "pl": "Rozpocznij wybór za pomocą Shift+strzałka (Text=Left/Right/Home/End, Block=Up/Down)",
       "id": 2553 }
     ,
     "cbCTSTextSelection": {
@@ -7321,7 +7321,7 @@
       "de": "Feste Zeigergröße",
       "ja": "固定カーソルサイズ",
       "es": "Tamaño del cursor fijo",
-      "pl": "Naprawiono rozmiar kursora",
+      "pl": "Poprawka rozmiar kursora",
       "id": 1655 }
     ,
     "cbCursorOverride": {
@@ -7391,7 +7391,7 @@
       "de": "Für Systemstart registrieren",
       "ja": "OS起動時に登録する",
       "es": "Registrar al inicio del SO",
-      "pl": "Zarejestruj się podczas uruchamiania systemu operacyjnego",
+      "pl": "Zarejestruj podczas uruchamiania systemu",
       "id": 2547 }
     ,
     "cbDefaultTerminalTSA": {
@@ -7621,7 +7621,7 @@
       "de": "Schriftstilerweiterung überschreiben",
       "ja": "フォントスタイルを拡張する",
       "es": "Invalidar extender estilos de texto",
-      "pl": "Rozszerz style zastępowania czcionek",
+      "pl": "Rozszerz styl nadpisania czcio..",
       "id": 2144 }
     ,
     "cbExtendUCharMap": {
@@ -7821,7 +7821,7 @@
       "de": "Feste Konsolengröße",
       "ja": "固定コンソールサイズ",
       "es": "Tamaño de terminal fijo",
-      "pl": "Naprawiono rozmiar konsoli",
+      "pl": "Poprawka rozmiar konsoli",
       "id": 2469 }
     ,
     "cbFullscreenNoBars": {
@@ -7921,7 +7921,7 @@
       "de": "Schreibmarke inaktiver Konsole",
       "ja": "非アクティブなコンソールのテキストカーソル",
       "es": "Cursor para terminales inactivos",
-      "pl": "Nieaktywny kursor tekstowy konsoli",
+      "pl": "Nieaktywna konsola Kursor tekstu",
       "id": 2544 }
     ,
     "cbInactiveCursorBlink": {
@@ -7951,7 +7951,7 @@
       "de": "Feste Schreibmarkengröße",
       "ja": "固定カーソルサイズ",
       "es": "Tamaño fijo del cursor",
-      "pl": "Naprawiono rozmiar kursora",
+      "pl": "Poprawka rozm.. kursora",
       "id": 2539 }
     ,
     "cbInactiveCursorSubstHidden": {
@@ -7980,7 +7980,7 @@
       "de": "Sync-Verz.",
       "ja": "同期ディレクトリ",
       "es": "Sincronizar carpeta",
-      "pl": "Synchronizacja reż",
+      "pl": "Synchron...",
       "id": 2397 }
     ,
     "cbInstallKeybHooks": {
@@ -8019,7 +8019,7 @@
       "de": "Autoaktualisierung",
       "ja": "自動更新",
       "es": "Autoactualizar",
-      "pl": "Automatyczna aktualizacja",
+      "pl": "Auto Update",
       "id": 3073 }
     ,
     "cbKeyBarRClick": {
@@ -8196,7 +8196,7 @@
       "de": "Erlaube Windows-zu-POSIX-Pfadkonvertierung",
       "ja": "WindowsからPOSIXへのパス変換を許可する",
       "es": "Permitir conversión de rutas de Windows a POSIX",
-      "pl": "Zezwalaj na konwersję ścieżki systemu Windows do POSIX",
+      "pl": "Zezwalaj na konwert ścieżki systemu do POSIX",
       "id": 3088 }
     ,
     "cbPasteM2Posix": {
@@ -8205,7 +8205,7 @@
       "de": "Erlaube Windows-zu-POSIX-Pfadkonvertierung",
       "ja": "WindowsからPOSIXへのパス変換を許可する",
       "es": "Permitir conversión de rutas de Windows a POSIX",
-      "pl": "Zezwalaj na konwersję ścieżki systemu Windows do POSIX",
+      "pl": "Zezwalaj na konwert ścieżki systemu do POSIX",
       "id": 3089 }
     ,
     "cbProcessAnsi": {
@@ -8592,7 +8592,7 @@
       "de": "Systemfarben",
       "ja": "システムカラー",
       "es": "Colores del sistema",
-      "pl": "Kolory systemowe",
+      "pl": "Kolory systemu",
       "id": 2496 }
     ,
     "cbStatusVertPad": {
@@ -8688,7 +8688,7 @@
     "cbThumbCacheFolder": {
       "en": "Choose...",
       "ru": "Выберите...",
-      "zh": "选择...",
+      "zh": "选择…",
       "de": "Auswählen...",
       "ja": "選択...",
       "es": "Seleccionar...",
@@ -8732,7 +8732,7 @@
       "de": "Wiederherst. beim Starten von Far",
       "ja": "起動時にFarを復元",
       "es": "Restaurar al iniciar Far",
-      "pl": "Przywróć przy starszym uruchomieniu",
+      "pl": "Przywróć przy starym włączeniu",
       "id": 1720 }
     ,
     "cbThumbSelectionBox": {
@@ -8798,7 +8798,7 @@
     "cbUnicodeRangesApply": {
       "en": "Apply",
       "ru": "Применить",
-      "zh": "应用",
+      "zh": "确认",
       "de": "Anwenden",
       "ja": "適用",
       "es": "Aplicar",
@@ -8808,7 +8808,7 @@
     "cbUpdateCheck": {
       "en": "Apply && Check",
       "ru": "Применить && Проверить",
-      "zh": "应用 && 检查",
+      "zh": "确认并保存",
       "de": "Anwenden && Prüfen",
       "ja": "適用 && 確認",
       "es": "Aplicar && Comprobar",
@@ -8832,7 +8832,7 @@
       "de": "Systemstart",
       "ja": "起動",
       "es": "Inicio",
-      "pl": "Uruchomienie",
+      "pl": "PrzyStarcie",
       "id": 2058 }
     ,
     "cbUpdateConfirmDownload": {
@@ -8931,7 +8931,7 @@
       "de": "'Benutzerbildschirm'-Transparenz (Far-Manager-Funktion)",
       "ja": "'ユーザー画面'の透過性(Far Manager 機能)",
       "es": "Transparencia 'pantalla de usuario' (opción de Far Manager)",
-      "pl": "Przezroczystość \"ekranu użytkownika\" (funkcja Far Managera)",
+      "pl": "\"ekranu użytkownika\" (funkcja Far Managera)",
       "id": 1573 }
     ,
     "cbUseWinArrows": {
@@ -9193,7 +9193,7 @@
     "gbCtrlMouse": {
       "en": "Mouse options",
       "ru": "Опции мыши",
-      "zh": "鼠标选项",
+      "zh": "鼠标设置",
       "de": "Mauseinstellungen",
       "ja": "マウスオプション",
       "es": "Opciones del ratón",
@@ -9203,7 +9203,7 @@
     "gbCtrlMouseBtns": {
       "en": "Mouse button actions",
       "ru": "Действия кнопки мыши",
-      "zh": "鼠标按钮行为",
+      "zh": "鼠标按键活动",
       "de": "Maustastenaktionen",
       "ja": "マウスボタンの操作",
       "es": "Acciones de botones del ratón",
@@ -9283,7 +9283,7 @@
     "gbFarOptions": {
       "en": "Far Manager options",
       "ru": "Настройки Far Manager",
-      "zh": "Far Manager选项",
+      "zh": "Far Manager 设置",
       "de": "Far-Manager Einstellungen",
       "ja": "Far Manager オプション",
       "es": "Opciones de Far Manager",
@@ -9303,7 +9303,7 @@
     "gbFarPreviewBg": {
       "en": "Preview background",
       "ru": "Фон предпросмотра",
-      "zh": "预览背景",
+      "zh": "背景预览",
       "de": "Hintergrundvorschau",
       "ja": "プレビューの背景",
       "es": "Previsualizar fondo",
@@ -9373,7 +9373,7 @@
     "gbFeatureDebug": {
       "en": "Debugging options",
       "ru": "Опции отладки",
-      "zh": "调试选项",
+      "zh": "调试设置",
       "de": "Fehlersuchoptionen",
       "ja": "デバッグオプション",
       "es": "Opciones de depuración",
@@ -9383,7 +9383,7 @@
     "gbFeatureInConsole": {
       "en": "In-console options",
       "ru": "Параметры в консоли",
-      "zh": "控制台内部选项",
+      "zh": "控制台内设置",
       "de": "Einstellungen für innerhalb der Konsole",
       "ja": "コンソール内のオプション",
       "es": "Opciones en-terminal",
@@ -9393,7 +9393,7 @@
     "gbFeatureMisc": {
       "en": "Miscellaneous options",
       "ru": "Разные опции",
-      "zh": "杂项选项",
+      "zh": "其他设置",
       "de": "Verschiedene Einstellungen",
       "ja": "その他のオプション",
       "es": "Otras opciones",
@@ -9635,7 +9635,7 @@
       "de": "Farbindizes",
       "ja": "カラーインデックス",
       "es": "Índices de color",
-      "pl": "Indeksy kolorów",
+      "pl": "Indeksy kolor",
       "id": 2976 }
     ,
     "gbSelectingOverride": {
@@ -10279,7 +10279,7 @@
       "de": "Wenn alle Konsolen geschlossen",
       "ja": "すべてのコンソールが閉じた場合",
       "es": "Si todos los terminales cerrados",
-      "pl": "Jeśli wszystkie konsole są zamknięte",
+      "pl": "Jeśli konsole są zamknięte",
       "id": 2560 }
     ,
     "rbMinByEscNever": {
@@ -10469,7 +10469,7 @@
       "de": "Automatisch zeigen",
       "ja": "自動的に表示",
       "es": "Auto mostrar",
-      "pl": "Auto show",
+      "pl": "Auto-Pokaż",
       "id": 2477 }
     ,
     "rbTabsNone": {
@@ -10529,7 +10529,7 @@
       "de": "Farbindex",
       "ja": "カラーインデックス",
       "es": "Indice color",
-      "pl": "Indeks kolorów",
+      "pl": "Indeks kolor",
       "id": 1670 }
     ,
     "rbThumbBackColorRGB": {
@@ -10589,7 +10589,7 @@
       "de": "Farbindex",
       "ja": "カラーインデックス",
       "es": "Indice de color",
-      "pl": "Indeks kolorów",
+      "pl": "Indeks kolor",
       "id": 1673 }
     ,
     "rbThumbPreviewBoxColorRGB": {
@@ -10609,7 +10609,7 @@
       "de": "Farbindex",
       "ja": "カラーインデックス",
       "es": "Indice de color",
-      "pl": "Indeks kolorów",
+      "pl": "Indeks kolor",
       "id": 1676 }
     ,
     "rbThumbSelectionBoxColorRGB": {
@@ -10629,7 +10629,7 @@
       "de": "Neustes",
       "ja": "最新",
       "es": "Último",
-      "pl": "Najnowszy",
+      "pl": "Alpha \"testowa\"",
       "id": 2056 }
     ,
     "rbUpdatePreview": {
@@ -11363,7 +11363,7 @@
             , "例: \"cmd.exe -new_console:z\"" ],
       "es": [ "Si quieres iniciar algún comando en el terminal estándar de Windows desde un ejecutable enganchado cuando está activado 'Terminal por defecto', usa la opción \"-new_console:z\"\r\n"
             , "Ejemplo: \"cmd.exe -new_console:z\"" ],
-      "pl": [ "Jeśli chcesz uruchomić jakieś polecenie w standardowym oknie konsoli Windows z zaczepionego pliku wykonywalnego, gdy włączony jest \"Domyślny terminal\", po prostu użyj przełącznika \"-new_console: z\"\n"
+      "pl": [ "Jeśli chcesz uruchomić polecenie w domyślnym oknie konsoli Windows z zaczepionego pliku wykonywalnego, gdy włączony jest \"Domyślny cmd\", po prostu użyj przełącznika \"-new_console: z\"\n"
             , "Przykład: \"cmd.exe -new_console: z\"" ],
       "id": 2662 }
     ,
@@ -11850,7 +11850,7 @@
       "de": "Undurchsichtig",
       "ja": "不透明",
       "es": "Opaco",
-      "pl": "Nieprzezroczysty",
+      "pl": "Nieprzez..",
       "id": 2938 }
     ,
     "stOpaqueInactive": {
@@ -11860,7 +11860,7 @@
       "de": "Undurchsichtig",
       "ja": "不透明",
       "es": "Opaco",
-      "pl": "Nieprzezroczysty",
+      "pl": "Nieprzez..",
       "id": 2383 }
     ,
     "stPriorityBox": {
@@ -12201,7 +12201,7 @@
     "stTabFontFace": {
       "en": "Tab font:",
       "ru": "Шрифт:",
-      "zh": "标签页字体：",
+      "zh": "标签字体:",
       "de": "Reiterschriftart:",
       "ja": "タブフォント:",
       "es": "Tipo de letra pestaña:",
@@ -12231,7 +12231,7 @@
     "stTabPanels": {
       "en": "Panels:",
       "ru": "Панели:",
-      "zh": "面板：",
+      "zh": "面板:",
       "de": "Panels:",
       "ja": "パネル:",
       "es": "Paneles:",
@@ -12544,7 +12544,7 @@
     "stWndHeight": {
       "en": "Height:",
       "ru": "Высота:",
-      "zh": "高度：",
+      "zh": "高度:",
       "de": "Höhe:",
       "ja": "高さ:",
       "es": "Altura:",
@@ -12554,7 +12554,7 @@
     "stWndWidth": {
       "en": "Width:",
       "ru": "Ширина:",
-      "zh": "宽度：",
+      "zh": "宽度:",
       "de": "Breite:",
       "ja": "幅:",
       "es": "Anchura:",
