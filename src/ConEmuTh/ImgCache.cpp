@@ -57,7 +57,7 @@ CImgCache::CImgCache(HMODULE hSelf)
 	*mpsz_ModuleSlash = 0;
 
 	// Prepare root storage file pathname
-	SetCacheLocation(nullptr); // Use %TEMP% by default
+	SetCacheLocation(NULL); // Use %TEMP% by default
 
 	LoadModules();
 

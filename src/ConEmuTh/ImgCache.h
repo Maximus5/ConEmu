@@ -190,7 +190,7 @@ class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 		{
 			if (!mb_comInitialized)
 			{
-				mb_comInitialized = SUCCEEDED(CoInitialize(NULL));
+				mb_comInitialized = SUCCEEDED(CoInitializeEx(nullptr, COINIT_MULTITHREADED));
 			}
 			return S_OK;
 		}

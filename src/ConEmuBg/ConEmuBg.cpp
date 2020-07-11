@@ -629,8 +629,9 @@ struct GDIPlusDecoder
 		}
 
 		bool result = false;
-		HRESULT hrCoInitialized = CoInitialize(NULL);
+		HRESULT hrCoInitialized = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 		bCoInitialized = SUCCEEDED(hrCoInitialized);
+		_ASSERTE(bCoInitialized);
 		//wchar_t FullPath[MAX_PATH*2+15]; FullPath[0] = 0;
 		hGDIPlus = LoadLibraryW(L"GdiPlus.dll");
 

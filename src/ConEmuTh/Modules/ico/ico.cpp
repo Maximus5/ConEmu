@@ -784,7 +784,7 @@ struct ICODecoder
 	BOOL Init(struct CET_Init* pInit)
 	{
 		pInit->pContext = this;
-		HRESULT hrCoInitialized = CoInitialize(NULL);
+		HRESULT hrCoInitialized = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 		gbCoInitialized = SUCCEEDED(hrCoInitialized);
 		Gdiplus::GdiplusStartupInput gdiplusStartupInput;
 		Gdiplus::Status lRc = GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);

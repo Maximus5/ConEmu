@@ -193,7 +193,7 @@ struct GDIPlusDecoder
 		nErrNumber = 0;
 		//pszPluginKey = pInit->pRegKey;
 		//ReloadConfig();
-		HRESULT hrCoInitialized = CoInitialize(NULL);
+		HRESULT hrCoInitialized = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 		bCoInitialized = SUCCEEDED(hrCoInitialized);
 		wchar_t FullPath[MAX_PATH*2+15]; FullPath[0] = 0;
 		//if (ghModule)

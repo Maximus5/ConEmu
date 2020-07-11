@@ -601,7 +601,7 @@ class CQueueProcessor
 		{
 			return mb_TerminateRequested;
 		};
-		// Здесь потомок может выполнить CoInitialize например
+		// Здесь потомок может выполнить CoInitializeEx например
 		virtual HRESULT OnThreadStarted()
 		{
 			return S_OK;

@@ -80,7 +80,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //
 //			if (!gbMStreamCoInitialized)
 //			{
-//				HRESULT hr = CoInitialize(NULL);
+//				HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 //				gbMStreamCoInitialized = TRUE;
 //			}
 //		};
@@ -99,7 +99,7 @@ static GdipCreateBitmapFromHBITMAP_t GdipCreateBitmapFromHBITMAP = NULL;
 //
 //			if (!gbMStreamCoInitialized)
 //			{
-//				HRESULT hr = CoInitialize(NULL);
+//				HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 //				gbMStreamCoInitialized = TRUE;
 //			}
 //		};
