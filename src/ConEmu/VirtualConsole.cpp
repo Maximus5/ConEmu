@@ -4866,10 +4866,10 @@ bool CVirtualConsole::UpdatePanelView(bool abLeftPanel, bool abOnRegister/*=fals
 	if (!mn_ConEmuFadeMsg)
 		mn_ConEmuFadeMsg = RegisterWindowMessage(CONEMUMSG_PNLVIEWFADE);
 
-	LONG nNewFadeValue = isFade ? 2 : 1;
+	const auto nNewFadeValue = static_cast<LONG>(isFade ? ConEmuPanelViewFade::Fade : ConEmuPanelViewFade::Normal);
 	WARNING("Нифига не будет работать на Win7 RunAsAdmin");
 
-	if (GetWindowLong(pp->hWnd, 16*4) != nNewFadeValue)
+	if (GetWindowLong(pp->hWnd, PANEL_VIEW_WINDOW_LONG_FADE) != nNewFadeValue)
 		PostMessage(pp->hWnd, mn_ConEmuFadeMsg, 100, nNewFadeValue);
 
 	// Подготовить размеры

@@ -311,6 +311,15 @@ typedef struct _CONSOLE_SELECTION_INFO
 //#define CONEMUMSG_PNLVIEWLBTNDOWN L"ConEmuTh::LBtnDown"
 #define CONEMUMSG_RESTORECHILDFOCUS L"ConEmu::RestoreChildFocus"
 
+
+constexpr int PANEL_VIEW_WINDOW_LONG_FADE = static_cast<int>(16 * sizeof(DWORD));
+
+enum class ConEmuPanelViewFade
+{
+	Normal = 1, // normal, bright colors
+	Fade = 2,   // fade colors, when ConEmu is out of focus and fade option is enabled
+};
+
 // Команды из плагина ConEmu и для GUI Macro
 enum ConEmuTabCommand
 {

@@ -83,8 +83,6 @@ MFileLog* gpLogLoad = NULL;
 MFileLog* gpLogPaint = NULL;
 #endif
 
-#define WINDOW_LONG_FADE (16*sizeof(DWORD))
-
 void ResetUngetBuffer();
 int ShowLastError();
 
@@ -271,7 +269,7 @@ HWND CeFullPanelInfo::CreateView()
 
 LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	switch(uMsg)
+	switch (uMsg)
 	{
 		case WM_CREATE:
 		{
@@ -280,8 +278,8 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
 			SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pi); //-V107
-			TODO("Вроде WINDOW_LONG_FADE не используется нигде?");
-			SetWindowLong(hwnd, WINDOW_LONG_FADE, 1); // Fade == false
+			SetWindowLong(hwnd, PANEL_VIEW_WINDOW_LONG_FADE,
+				static_cast<LONG>(ConEmuPanelViewFade::Normal)); // Fade == false
 			return 0; //continue creation
 		}
 		#ifdef _DEBUG
@@ -459,9 +457,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 
 			if (uMsg == gnConEmuFadeMsg)
 			{
-				TODO("Вроде WINDOW_LONG_FADE не используется нигде?");
-				SetWindowLong(hwnd, WINDOW_LONG_FADE, (DWORD)lParam);
-
+				SetWindowLong(hwnd, PANEL_VIEW_WINDOW_LONG_FADE, static_cast<LONG>(lParam));
 				RefreshPalette(lParam == static_cast<LPARAM>(ConEmuPanelViewFade::Fade));
 				return 0;
 			}
@@ -1844,11 +1840,13 @@ int CeFullPanelInfo::RegisterPanelView()
 		//	gcrFadeColors[i] = pvi.crFadePalette[i];
 		//}
 		this->WorkRect = pvi.WorkRect;
+
 		// Are we active? We should, during plugin activation
 		const auto isFade = pvi.bFadeColors != FALSE;
 		const auto& palette = RefreshPalette(isFade);
-		TODO("Вроде WINDOW_LONG_FADE не используется нигде?");
-		SetWindowLong(this->hView, WINDOW_LONG_FADE, gbFadeColors ? 2 : 1);
+		SetWindowLong(this->hView, PANEL_VIEW_WINDOW_LONG_FADE,
+			static_cast<LONG>(isFade ? ConEmuPanelViewFade::Fade : ConEmuPanelViewFade::Normal));
+		
 		// Подготовить детектор диалогов
 		_ASSERTE(gpRgnDetect!=NULL);
 		SMALL_RECT rcFarRect; GetFarRect(&rcFarRect);
