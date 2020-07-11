@@ -143,7 +143,7 @@ class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 		// S_OK    - Элемент успешно обработан, будет установлен статус eItemReady
 		// S_FALSE - ошибка обработки, будет установлен статус eItemFailed
 		// FAILED()- статус eItemFailed И нить обработчика будет ЗАВЕРШЕНА
-		virtual HRESULT ProcessItem(IMAGE_CACHE_INFO*& pItem, LONG_PTR lParam)
+		HRESULT ProcessItem(IMAGE_CACHE_INFO*& pItem, LONG_PTR lParam) override
 		{
 			if (!gpImgCache)
 			{
@@ -180,13 +180,13 @@ class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 		//// После завершения этих функций ячейка стирается!
 
 		// Если требуется останов всех запросов и выход из нити обработчика
-		virtual bool IsTerminationRequested()
+		bool IsTerminationRequested() override
 		{
 			TODO("Вернуть TRUE при ExitFar");
 			return CQueueProcessor<IMAGE_CACHE_INFO*>::IsTerminationRequested();
 		};
 		// Здесь потомок может выполнить CoInitialize например
-		virtual HRESULT OnThreadStarted()
+		HRESULT OnThreadStarted() override
 		{
 			if (!mb_comInitialized)
 			{
@@ -195,7 +195,7 @@ class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 			return S_OK;
 		}
 		// Здесь потомок может выполнить CoUninitialize например
-		virtual void OnThreadStopped()
+		void OnThreadStopped() override
 		{
 			if (mb_comInitialized)
 			{
@@ -205,12 +205,12 @@ class CImgLoader : public CQueueProcessor<IMAGE_CACHE_INFO*>
 			return;
 		};
 		// Можно переопределить для изменения логики сравнения (используется при поиске)
-		virtual bool IsEqual(const IMAGE_CACHE_INFO*& pItem1, LONG_PTR lParam1, IMAGE_CACHE_INFO*& pItem2, LONG_PTR lParam2)
+		bool IsEqual(IMAGE_CACHE_INFO* const& pItem1, LONG_PTR lParam1, IMAGE_CACHE_INFO* const& pItem2, LONG_PTR lParam2) override
 		{
 			return (pItem1 == pItem2) && (lParam1 == lParam2);
 		};
 		// Если элемент потерял актуальность - стал НЕ высокоприоритетным
-		virtual bool CheckHighPriority(const IMAGE_CACHE_INFO*& pItem)
+		bool CheckHighPriority(IMAGE_CACHE_INFO* const& pItem) override
 		{
 			// Перекрыть в потомке и вернуть false, если, например, был запрос
 			// для текущей картинки, но пользователь уже улистал с нее на другую
