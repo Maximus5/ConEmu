@@ -47,7 +47,7 @@ protected:
 	static ColorPalette gLastColors; // {}
 
 	static HBRUSH mh_CtlColorBrush;
-	static PaletteColors m_CustClr; // array of custom colors, используется в ChooseColor(...)
+	static ConEmu::PaletteColors m_CustClr; // array of custom colors, используется в ChooseColor(...)
 
 public:
 	static bool GetColorById(WORD nID, COLORREF* color);
@@ -59,7 +59,7 @@ public:
 	static INT_PTR ColorCtlStatic(HWND hWnd2, WORD c, HWND hItem);
 	static bool ShowColorDialog(HWND HWndOwner, COLORREF *inColor);
 
-	static void OnSettingsLoaded(const PaletteColors &Colors);
+	static void OnSettingsLoaded(const ConEmu::PaletteColors &Colors);
 	static void ReleaseHandles();
 
 protected:

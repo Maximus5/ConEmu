@@ -51,11 +51,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"
 #include "../common/WFiles.h"
-#include "../common/WUser.h"
+#include "../common/WObjects.h"
 #include "ConEmuTh.h"
+#include "ConEmuTh_Lang.h"
 #include "ImgCache.h"
 
 #include <Tlhelp32.h>
+
+using ConEmu::PaletteColors;
 
 #define Free free
 #define Alloc calloc
@@ -92,7 +95,7 @@ CRgnDetect *gpRgnDetect = NULL;
 CImgCache  *gpImgCache = NULL;
 CEFAR_INFO_MAPPING gFarInfo = {0};
 CESERVER_PALETTE gThPal = {};
-COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors = gThPal.crPalette;
+PaletteColors gcrCurColors; // << gThPal.crPalette; use RefreshPalette
 bool gbFadeColors = false;
 //bool gbLastCheckWindow = false;
 bool gbFarPanelsReady = false;
@@ -2337,6 +2340,31 @@ int WINAPI ProcessSynchroEventW(int Event, void *Param)
 	return ProcessSynchroEventCommon(Event, Param);
 }
 
+const PaletteColors& RefreshPalette()
+{
+	return RefreshPalette(gbFadeColors);
+}
+
+const PaletteColors& RefreshPalette(const bool isFade)
+{
+	gbFadeColors = isFade;
+	_ASSERTE(gcrCurColors.size() == countof(gThPal.crFadePalette) && gcrCurColors.size() == countof(gThPal.crPalette));
+	const auto elements = std::min(gcrCurColors.size(), countof(gThPal.crFadePalette));
+	if (isFade)
+	{
+		std::copy(gThPal.crFadePalette, gThPal.crFadePalette + elements, gcrCurColors.begin());
+	}
+	else
+	{
+		std::copy(gThPal.crPalette, gThPal.crPalette + elements, gcrCurColors.begin());
+	}
+	return gcrCurColors;
+}
+
+const PaletteColors& GetPalette()
+{
+	return gcrCurColors;
+}
 
 BOOL LoadThSet(DWORD anGuiPid/* =-1 */)
 {
@@ -2373,8 +2401,11 @@ BOOL LoadThSet(DWORD anGuiPid/* =-1 */)
 				CESERVER_REQ* pOut = ExecuteGuiCmd(hRealConWnd, pIn, hRealConWnd);
 				if (pOut->DataSize() >= sizeof(CESERVER_PALETTE))
 				{
-					memmove(gThPal.crPalette, pOut->Palette.crPalette, sizeof(gThPal.crPalette));
-					memmove(gThPal.crFadePalette, pOut->Palette.crFadePalette, sizeof(gThPal.crFadePalette));
+					std::copy(pOut->Palette.crPalette, pOut->Palette.crPalette + countof(pOut->Palette.crPalette),
+						gThPal.crPalette);
+					std::copy(pOut->Palette.crFadePalette, pOut->Palette.crFadePalette + countof(pOut->Palette.crFadePalette),
+						gThPal.crFadePalette);
+					RefreshPalette();
 					lbRc = TRUE;
 				}
 				ExecuteFreeResult(pOut);

@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning( default : 4995 )
 #include "../common/plugin_helper.h"
 #include "ConEmuTh.h"
+#include "ConEmuTh_Lang.h"
 #include "../common/farcolor3.hpp"
 #include "../common/ConEmuColors3.h"
 #include "../ConEmu/version.h" // Far3

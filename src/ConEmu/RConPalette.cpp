@@ -38,6 +38,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RealConsole.h"
 #include "SetDlgColors.h"
 
+using ConEmu::PaletteColors;
+
 CRConPalette::CRConPalette(CRealConsole* apRCon)
 	: mp_RCon(apRCon)
 {

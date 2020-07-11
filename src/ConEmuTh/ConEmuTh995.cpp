@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma warning( default : 4995 )
 #include "../common/plugin_helper.h"
 #include "ConEmuTh.h"
+#include "ConEmuTh_Lang.h"
 #include "../common/farcolor2.hpp"
 
 //#define FCTL_GETPANELDIR FCTL_GETCURRENTDIRECTORY

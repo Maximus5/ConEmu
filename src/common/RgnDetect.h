@@ -141,13 +141,13 @@ class CRgnDetect
 		// Public methods
 		int GetDetectedDialogs(int anMaxCount, SMALL_RECT* rc, DWORD* rf, DWORD anMask=-1, DWORD anTest=-1) const;
 		DWORD GetDialog(DWORD nDlgID, SMALL_RECT* rc) const;
-		void PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const PaletteColors& apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, bool bFarUserScreen);
+		void PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const ConEmu::PaletteColors& apColors, const CONSOLE_SCREEN_BUFFER_INFO *apSbi, wchar_t* pChar, CharAttr* pAttr, int nWidth, int nHeight, bool bFarUserScreen);
 		DWORD GetFlags() const;
 		// Methods for plugins
-		void PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const PaletteColors& apColors, bool bFarUserScreen);
+		void PrepareTransparent(const CEFAR_INFO_MAPPING *apFarInfo, const ConEmu::PaletteColors& apColors, bool bFarUserScreen);
 		void OnWindowSizeChanged();
-		void OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord, PSMALL_RECT lpWriteRegion, const PaletteColors& apColors);
-		BOOL InitializeSBI(const PaletteColors& apColors);
+		void OnWriteConsoleOutput(const CHAR_INFO *lpBuffer,COORD dwBufferSize,COORD dwBufferCoord, PSMALL_RECT lpWriteRegion, const ConEmu::PaletteColors& apColors);
+		BOOL InitializeSBI(const ConEmu::PaletteColors& apColors);
 		void SetFarRect(SMALL_RECT *prcFarRect);
 		BOOL GetCharAttr(int x, int y, wchar_t& rc, CharAttr& ra);
 		// Sizes
@@ -189,7 +189,7 @@ class CRgnDetect
 	protected:
 		// Members
 		const CEFAR_INFO_MAPPING *mp_FarInfo;
-		PaletteColors m_Colors;
+		ConEmu::PaletteColors m_Colors;
 		CONSOLE_SCREEN_BUFFER_INFO m_sbi;
 		bool   mb_BufferHeight;
 		bool   mb_NeedTransparency;

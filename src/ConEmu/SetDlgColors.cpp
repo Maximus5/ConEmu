@@ -39,6 +39,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
+using ConEmu::PaletteColors;
+
 const int CSetDlgColors::MAX_COLOR_EDT_ID = c15;
 
 BOOL CSetDlgColors::gbLastColorsOk = FALSE;

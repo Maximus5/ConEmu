@@ -30,8 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/pluginA.hpp"
 #include "../common/plugin_helper.h"
 #include "ConEmuTh.h"
+#include "ConEmuTh_Lang.h"
 #include "../common/farcolor1.hpp"
-#include "ImgCache.h"
 
 //#define SHOW_DEBUG_EVENTS
 

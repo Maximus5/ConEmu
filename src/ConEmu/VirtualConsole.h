@@ -234,7 +234,7 @@ class CVirtualConsole :
 
 		const AppSettings* mp_Set;
 
-		PaletteColors m_Colors{};
+		ConEmu::PaletteColors m_Colors{};
 		BYTE attrBackLast = 0;
 
 	public:
@@ -266,8 +266,8 @@ class CVirtualConsole :
 		void PaintBackgroundImage(HDC hdc, const RECT& rcText, const COLORREF crBack, bool Background = false);
 		bool CheckSelection(const CONSOLE_SELECTION_INFO& select, SHORT row, SHORT col);
 		//bool GetCharAttr(wchar_t ch, WORD atr, wchar_t& rch, BYTE& foreColorNum, BYTE& backColorNum, FONT* pFont);
-		const PaletteColors& GetColors();
-		const PaletteColors& GetColors(bool bFade);
+		const ConEmu::PaletteColors& GetColors();
+		ConEmu::PaletteColors GetColors(bool bFade);
 		int GetPaletteIndex();
 		bool ChangePalette(int aNewPaletteIdx);
 		bool ChangePalette(LPCWSTR asNewPalette);

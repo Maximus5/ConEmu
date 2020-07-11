@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 class CRealConsole;
 
-constexpr size_t CE_COLOR_PALETTE_TABLE_SIZE = CE_COLOR_PALETTE_SIZE * CE_COLOR_PALETTE_SIZE; // 256
+constexpr size_t CE_COLOR_PALETTE_TABLE_SIZE = ConEmu::CE_COLOR_PALETTE_SIZE * ConEmu::CE_COLOR_PALETTE_SIZE; // 256
 
 class CRConPalette
 {
@@ -44,7 +44,7 @@ public:
 	CRealConsole* mp_RCon = nullptr;
 	CharAttr m_TableOrg[CE_COLOR_PALETTE_TABLE_SIZE]{};
 	CharAttr m_TableExt[CE_COLOR_PALETTE_TABLE_SIZE]{};
-	PaletteColors m_Colors{};
+	ConEmu::PaletteColors m_Colors{};
 
 protected:
 	bool mb_Initialized = false;
@@ -58,8 +58,8 @@ public:
 
 public:
 	// Methods
-	void UpdateColorTable(const PaletteColors& colors,
-		bool bVividColors,
+	void UpdateColorTable(
+		const ConEmu::PaletteColors& colors, bool bVividColors,
 		bool bExtendFonts, BYTE nFontNormalColor, BYTE nFontBoldColor, BYTE nFontItalicColor);
 
 };

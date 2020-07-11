@@ -53,13 +53,13 @@ struct ColorPalette
 	BYTE nPopBackColorIdx; // 0..15,16
 
 	// Loaded
-	PaletteColors Colors;
+	ConEmu::PaletteColors Colors;
 
 	// Computed
-	PaletteColors ColorsFade;
+	ConEmu::PaletteColors ColorsFade;
 	bool FadeInitialized;
 
-	const PaletteColors& GetColors(bool abFade);
+	const ConEmu::PaletteColors& GetColors(bool abFade);
 
 	void FreePtr();
 };

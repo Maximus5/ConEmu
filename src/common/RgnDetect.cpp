@@ -41,6 +41,8 @@ WARNING("Заменить *mp_FarInfo на instance копию m_FarInfo");
 
 static bool gbInTransparentAssert = false;
 
+using ConEmu::PaletteColors;
+
 //#ifdef _DEBUG
 //	#undef _ASSERTE
 //	#define _ASSERTE(expr) gbInTransparentAssert=true; _ASSERT_EXPR((expr), _CRT_WIDE(#expr)); gbInTransparentAssert=false;

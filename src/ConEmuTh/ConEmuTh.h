@@ -30,8 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "../common/Common.h"
-#include "../Common/WObjects.h"
-#include "ConEmuTh_Lang.h"
+#include "../common/PaletteColors.h"
 #include "ImgCache.h"
 
 //#define SafeCloseHandle(h) { if ((h)!=NULL) { HANDLE hh = (h); (h) = NULL; if (hh!=INVALID_HANDLE_VALUE) CloseHandle(hh); } }
@@ -258,8 +257,10 @@ extern CEFarInterfaceSettings gFarInterfaceSettings;
 extern wchar_t gsFolder[64], /*gsHardLink[64],*/ gsSymLink[64], gsJunction[64], gsTitleThumbs[64], gsTitleTiles[64];
 // *** lng resources end ***
 
-extern COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors;
-extern bool gbFadeColors;
+const ConEmu::PaletteColors& RefreshPalette();
+const ConEmu::PaletteColors& RefreshPalette(bool isFade);
+const ConEmu::PaletteColors& GetPalette();
+
 extern bool gbFarPanelsReady;
 
 class CRgnDetect;

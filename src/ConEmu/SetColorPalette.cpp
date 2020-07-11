@@ -35,6 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "SetColorPalette.h"
 
+using ConEmu::PaletteColors;
+
 void ColorPalette::FreePtr()
 {
 	SafeFree(pszName);

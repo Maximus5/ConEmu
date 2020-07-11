@@ -227,13 +227,14 @@ struct Settings
 		int GetAppSettingsId(LPCWSTR asExeAppName, bool abElevated);
 		const AppSettings* GetAppSettings(int anAppId=-1);
 	private:
-		static bool GetDefColors(LPCWSTR asDefName, PaletteColors& colors);
-		static void GetWindowsColors(PaletteColors& colors);
+		static bool GetDefColors(LPCWSTR asDefName, ConEmu::PaletteColors& colors);
+		static void GetWindowsColors(ConEmu::PaletteColors& colors);
 	public:
-		const PaletteColors& GetColors(int anAppId=-1, BOOL abFade = FALSE);
-		const PaletteColors& GetColorsPrepare(const PaletteColors& colors, PaletteColors& colorsFade, bool* pbFadeInitialized, BOOL abFade);
-		void PrepareFadeColors(const PaletteColors& colors, PaletteColors& colorsFade, bool* pbFadeInitialized);
-		const PaletteColors& GetPaletteColors(LPCWSTR asPalette, BOOL abFade = FALSE);
+		const ConEmu::PaletteColors& GetColors(int anAppId=-1, BOOL abFade = FALSE);
+		const ConEmu::PaletteColors& GetColorsPrepare(const ConEmu::PaletteColors& colors,
+			ConEmu::PaletteColors& colorsFade, bool* pbFadeInitialized, BOOL abFade);
+		void PrepareFadeColors(const ConEmu::PaletteColors& colors, ConEmu::PaletteColors& colorsFade, bool* pbFadeInitialized);
+		const ConEmu::PaletteColors& GetPaletteColors(LPCWSTR asPalette, BOOL abFade = FALSE);
 		COLORREF GetFadeColor(COLORREF cr);
 		void ResetFadeColors();
 
@@ -250,7 +251,7 @@ struct Settings
 		const ColorPalette* PaletteFindByColors(bool bMatchAttributes, const ColorPalette* pCur);
 		int PaletteGetIndex(LPCWSTR asName);
 		void PaletteSaveAs(LPCWSTR asName); // Save active colors to named palette
-		void PaletteSaveAs(LPCWSTR asName, BYTE anTextColorIdx, BYTE anBackColorIdx, BYTE anPopTextColorIdx, BYTE anPopBackColorIdx, const PaletteColors& aColors, bool abSaveSettings);
+		void PaletteSaveAs(LPCWSTR asName, BYTE anTextColorIdx, BYTE anBackColorIdx, BYTE anPopTextColorIdx, BYTE anPopBackColorIdx, const ConEmu::PaletteColors& aColors, bool abSaveSettings);
 		void PaletteDelete(LPCWSTR asName); // Delete named palette
 		void PaletteSetStdIndexes();
 		int PaletteSetActive(LPCWSTR asName);
@@ -311,8 +312,8 @@ struct Settings
 
 	private:
 		// reg->Load(L"ColorTableNN", Colors[i]);
-		PaletteColors Colors{};
-		PaletteColors ColorsFade{};
+		ConEmu::PaletteColors Colors{};
+		ConEmu::PaletteColors ColorsFade{};
 		bool mb_FadeInitialized = false;
 
 		void LoadCursorSettings(SettingsBase* reg, CECursorType* pActive, CECursorType* pInactive);

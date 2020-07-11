@@ -75,7 +75,7 @@ public:
 
 	virtual HGLOBAL CreateResult() = 0;
 
-	virtual void LineAdd(LPCWSTR asText, const WORD* apAttr, const PaletteColors& pPal, INT_PTR nLen);
+	virtual void LineAdd(LPCWSTR asText, const WORD* apAttr, const ConEmu::PaletteColors& pPal, INT_PTR nLen);
 
 	virtual void LineAdd(LPCWSTR asText, const CharAttr* apAttr, INT_PTR nLen);
 
@@ -118,12 +118,12 @@ class CAnsiCopy : public CFormatCopy
 protected:
 	bool mb_ParOpened;
 	wchar_t szSeq[80], szTemp[256];
-	const PaletteColors clrPalette;
+	const ConEmu::PaletteColors clrPalette;
 	bool mb_Bold, mb_Italic, mb_Underline;
 protected:
 	LPCWSTR FormatColor(COLORREF crFore, COLORREF crBack, bool Bold, bool Italic, bool Underline, wchar_t (&rsBuf)[80]);
 public:
-	CAnsiCopy(const PaletteColors& pclrPalette, COLORREF crFore, COLORREF crBack);
+	CAnsiCopy(const ConEmu::PaletteColors& pclrPalette, COLORREF crFore, COLORREF crBack);
 
 	virtual ~CAnsiCopy();
 

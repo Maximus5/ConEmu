@@ -50,7 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WThreads.h"
 #include "../common/WUser.h"
 #include "ConEmuTh.h"
-#include "resource.h"
+#include "ConEmuTh_Lang.h"
 #include "ImgCache.h"
 
 #pragma warning( disable : 4995 )
@@ -71,24 +71,12 @@ static bool gbIgnoreAsserts = false;
 
 
 static ATOM hClass = NULL;
-//LRESULT CALLBACK DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-//DWORD WINAPI DisplayThread(LPVOID lpvParam);
-//void Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc, CeFullPanelInfo* pi);
 const wchar_t gsDisplayClassName[] = ConEmuPanelViewClass;
 HANDLE ghCreateEvent = NULL;
-//extern HICON ghUpIcon;
 int gnCreateViewError = 0;
 DWORD gnWin32Error = 0;
-//ITEMIDLIST DesktopID = {{0}};
-//IShellFolder *gpDesktopFolder = NULL;
 BOOL gbCancelAll = FALSE;
-//extern COLORREF /*gcrActiveColors[16], gcrFadeColors[16],*/ *gcrCurColors;
-//extern bool gbFadeColors;
-//extern bool gbFarPanelsReady;
-UINT gnConEmuFadeMsg = 0, gnConEmuSettingsMsg = 0, gnMapCoordMsg = 0; //, gnConEmuLBtnDown = 0;
-//extern CRgnDetect *gpRgnDetect;
-//extern CEFAR_INFO_MAPPING gFarInfo;
-//extern DWORD gnRgnDetectFlags;
+UINT gnConEmuFadeMsg = 0, gnConEmuSettingsMsg = 0, gnMapCoordMsg = 0;
 
 #ifdef CONEMU_LOG_FILES
 MFileLog* gpLogLoad = NULL;
@@ -330,7 +318,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 			_ASSERTE(pi && pi->cbSize==sizeof(CeFullPanelInfo));
 			_ASSERTE(pi == (&pviLeft) || pi == (&pviRight));
 			BYTE nPanelColorIdx = pi->nFarColors[col_PanelText];
-			COLORREF nBackColor = gcrCurColors[CONBACKCOLOR(nPanelColorIdx)]; //GetWindowLong(hwnd, 4*((nPanelColorIdx & 0xF0)>>4));
+			COLORREF nBackColor = GetPalette()[CONBACKCOLOR(nPanelColorIdx)]; //GetWindowLong(hwnd, 4*((nPanelColorIdx & 0xF0)>>4));
 			RECT rc; GetClientRect(hwnd, &rc);
 			HBRUSH hbr = CreateSolidBrush(nBackColor);
 			_ASSERTE(wParam!=0);
@@ -474,13 +462,7 @@ LRESULT CALLBACK CeFullPanelInfo::DisplayWndProc(HWND hwnd, UINT uMsg, WPARAM wP
 				TODO("Вроде WINDOW_LONG_FADE не используется нигде?");
 				SetWindowLong(hwnd, WINDOW_LONG_FADE, (DWORD)lParam);
 
-				if (gbFadeColors != (lParam == 2))
-				{
-					gbFadeColors = (lParam == 2);
-					//gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
-					gcrCurColors = gbFadeColors ? gThPal.crFadePalette : gThPal.crPalette;
-					//Inva lidateRect(hwnd, NULL, FALSE); -- не требуется
-				}
+				RefreshPalette(lParam == static_cast<LPARAM>(ConEmuPanelViewFade::Fade));
 				return 0;
 			}
 			else if (uMsg == gnConEmuSettingsMsg)
@@ -790,10 +772,11 @@ BOOL CeFullPanelInfo::PaintItem(
 
 			if (gThSet.crSelectFrame.UseIndex)
 			{
-				if (gThSet.crSelectFrame.ColorIdx <= 15)
-					crPen = gcrCurColors[gThSet.crSelectFrame.ColorIdx];
+				const auto& palette = GetPalette();
+				if (gThSet.crSelectFrame.ColorIdx < palette.size())
+					crPen = palette[gThSet.crSelectFrame.ColorIdx];
 				else
-					crPen = gcrCurColors[7];
+					crPen = palette[7];
 			}
 			else
 			{
@@ -1071,6 +1054,8 @@ BOOL CeFullPanelInfo::GetConCoordFromIndex(INT_PTR nIndex, COORD& rCoord)
 
 void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, CePluginPanelItemColor* pItemColor, BOOL abCurrentItem, BOOL abStrictConsole)
 {
+	const auto& palette = GetPalette();
+
 	// Только если активны "Панели". Над элементом может висеть диалог, и цвет будет "левым".
 	if (gbFarPanelsReady)
 	{
@@ -1080,13 +1065,15 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 		{
 			TODO("Для TrueColor сделать Fade!");
 
+			const auto& palette = GetPalette();
+
 			if (pItem->BisInfo.Flags & FCF_BG_4BIT)
-				pItemColor->crBack = gcrCurColors[pItem->BisInfo.BackgroundColor & 0xF];
+				pItemColor->crBack = palette[pItem->BisInfo.BackgroundColor & 0xF];
 			else
 				pItemColor->crBack = pItem->BisInfo.BackgroundColor & 0xFFFFFF;
 
 			if (pItem->BisInfo.Flags & FCF_FG_4BIT)
-				pItemColor->crFore = gcrCurColors[pItem->BisInfo.ForegroundColor & 0xF];
+				pItemColor->crFore = palette[pItem->BisInfo.ForegroundColor & 0xF];
 			else
 				pItemColor->crFore = pItem->BisInfo.ForegroundColor & 0xFFFFFF;
 
@@ -1103,8 +1090,8 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 			// Если первым идет символ пометки (NM в настройках панелей) - это не страшно
 			if (gpRgnDetect->GetCharAttr(crItem.X+1, crItem.Y, c, a))
 			{
-				pItemColor->crBack = gcrCurColors[a.nBackIdx];
-				pItemColor->crFore = gcrCurColors[a.nForeIdx];
+				pItemColor->crBack = palette[a.nBackIdx];
+				pItemColor->crFore = palette[a.nForeIdx];
 				pItemColor->bItemColorLoaded = TRUE;
 				return;
 			}
@@ -1162,8 +1149,8 @@ void CeFullPanelInfo::LoadItemColors(INT_PTR nIndex, CePluginPanelItem* pItem, C
 			int nIdx = ((pItem->Flags & (0x40000000/*PPIF_SELECTED*/)) ?
 			            ((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelSelectedCursor : col_PanelSelectedText) :
 				            ((abCurrentItem/*nItem==nCurrentItem*/) ? col_PanelCursor : col_PanelText));
-			pItemColor->crBack = gcrCurColors[CONBACKCOLOR(nFarColors[nIdx])];
-			pItemColor->crFore = gcrCurColors[CONFORECOLOR(nFarColors[nIdx])];
+			pItemColor->crBack = palette[CONBACKCOLOR(nFarColors[nIdx])];
+			pItemColor->crFore = palette[CONFORECOLOR(nFarColors[nIdx])];
 		}
 
 		//// Для папок - ставим белый шрифт
@@ -1355,14 +1342,15 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	//	nForeColor[i] = gcrCurColors[(nIndexes[i] & 0xF)];
 	//	hBack[i] = CreateSolidBrush(nBackColor[i]);
 	//}
-	COLORREF crGray = gcrCurColors[8];
-	COLORREF crPanel = gcrCurColors[CONBACKCOLOR(nFarColors[col_PanelText])]; //nBackColor[0]; //gcrColors[15];
+	const auto& palette = GetPalette();
+	COLORREF crGray = palette[8];
+	COLORREF crPanel = palette[CONBACKCOLOR(nFarColors[col_PanelText])]; //nBackColor[0]; //gcrColors[15];
 	COLORREF crBack = crPanel;
 
 	if (gThSet.crBackground.UseIndex)
 	{
 		if (gThSet.crBackground.ColorIdx <= 15)
-			crBack = gcrCurColors[gThSet.crBackground.ColorIdx];
+			crBack = palette[gThSet.crBackground.ColorIdx];
 	}
 	else
 	{
@@ -1372,7 +1360,7 @@ void CeFullPanelInfo::Paint(HWND hwnd, PAINTSTRUCT& ps, RECT& rc)
 	if (gThSet.crPreviewFrame.UseIndex)
 	{
 		if (gThSet.crPreviewFrame.ColorIdx <= 15)
-			crGray = gcrCurColors[gThSet.crPreviewFrame.ColorIdx];
+			crGray = palette[gThSet.crPreviewFrame.ColorIdx];
 	}
 	else
 	{
@@ -1856,10 +1844,9 @@ int CeFullPanelInfo::RegisterPanelView()
 		//	gcrFadeColors[i] = pvi.crFadePalette[i];
 		//}
 		this->WorkRect = pvi.WorkRect;
-		// Мы активны? По идее должны, при активации плагина-то
-		gbFadeColors = (pvi.bFadeColors!=FALSE);
-		//gcrCurColors = gbFadeColors ? gcrFadeColors : gcrActiveColors;
-		gcrCurColors = gbFadeColors ? gThPal.crFadePalette : gThPal.crPalette;
+		// Are we active? We should, during plugin activation
+		const auto isFade = pvi.bFadeColors != FALSE;
+		const auto& palette = RefreshPalette(isFade);
 		TODO("Вроде WINDOW_LONG_FADE не используется нигде?");
 		SetWindowLong(this->hView, WINDOW_LONG_FADE, gbFadeColors ? 2 : 1);
 		// Подготовить детектор диалогов
@@ -1867,10 +1854,10 @@ int CeFullPanelInfo::RegisterPanelView()
 		SMALL_RECT rcFarRect; GetFarRect(&rcFarRect);
 		gpRgnDetect->SetFarRect(&rcFarRect);
 
-		if (gpRgnDetect->InitializeSBI(gcrCurColors))
+		if (gpRgnDetect->InitializeSBI(palette))
 		{
-			bool bFarUserscreen = (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU));
-			gpRgnDetect->PrepareTransparent(&gFarInfo, gcrCurColors, bFarUserscreen);
+			const bool bFarUserscreen = (isPressed(VK_CONTROL) && isPressed(VK_SHIFT) && isPressed(VK_MENU));
+			gpRgnDetect->PrepareTransparent(&gFarInfo, palette, bFarUserscreen);
 		}
 
 		// Сразу скопировать параметры соответствующего режима к себе

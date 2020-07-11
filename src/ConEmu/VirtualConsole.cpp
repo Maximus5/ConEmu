@@ -86,6 +86,8 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "../common/MSetter.h"
 #include "../common/MModule.h"
 
+using ConEmu::PaletteColors;
+
 
 #ifdef _DEBUG
 #define DEBUGDRAW_RCONPOS VK_SCROLL // -- при включенном ScrollLock отрисовать прямоугольник, соответствующий положению окна RealConsole
@@ -2406,10 +2408,11 @@ void CVirtualConsole::SetSelfPalette(WORD wAttributes, WORD wPopupAttributes, co
 
 const PaletteColors& CVirtualConsole::GetColors()
 {
-	return GetColors(isFade);
+	m_Colors = GetColors(isFade);
+	return m_Colors;
 }
 
-const PaletteColors& CVirtualConsole::GetColors(bool bFade)
+PaletteColors CVirtualConsole::GetColors(const bool bFade)
 {
 	if (!this || !mp_RCon)
 	{
@@ -2422,22 +2425,19 @@ const PaletteColors& CVirtualConsole::GetColors(bool bFade)
 	if (m_SelfPalette.bPredefined)
 	{
 		// original palette from attached RealConsole
-		m_Colors = m_SelfPalette.GetColors(bFade);
+		return m_SelfPalette.GetColors(bFade);
 	}
 	else if (((pszPalName = mp_RCon->GetArgs().pszPalette) != nullptr) && *pszPalName)
 	{
-		// Pallette was set by VCon menu or -new_console:P:...
-		m_Colors = gpSet->GetPaletteColors(pszPalName, bFade);
+		// Palette was set by VCon menu or -new_console:P:...
+		return gpSet->GetPaletteColors(pszPalName, bFade);
 	}
 	else
 	{
 		// Update AppID if needed
 		const int nCurAppId = mp_RCon ? mp_RCon->GetActiveAppSettingsId() : -1;
-
-		m_Colors = gpSet->GetColors(nCurAppId, bFade);
+		return gpSet->GetColors(nCurAppId, bFade);
 	}
-
-	return m_Colors;
 }
 
 int CVirtualConsole::GetPaletteIndex()

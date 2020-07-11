@@ -32,7 +32,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 #include <array>
 
+namespace ConEmu {
+
 constexpr size_t CE_COLOR_PALETTE_SIZE = 16;
 
 // ReSharper disable once CppInconsistentNaming
 using PaletteColors = std::array<COLORREF, CE_COLOR_PALETTE_SIZE>;
+
+}

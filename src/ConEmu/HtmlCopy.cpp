@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include "HtmlCopy.h"
 
+using ConEmu::PaletteColors;
 
 
 CFormatCopy::CFormatCopy()
