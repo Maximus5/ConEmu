@@ -81,11 +81,17 @@ bool SystemEnvironment::SysEnvValueCallback(HKEY hk, LPCWSTR pszName, DWORD dwTy
 		data.name = pszName;
 	if (key == L"path")
 	{
-		// concatenate "%PATH%" as "USER;SYSTEM"
+		// it stored in registry as REG_SZ, but we need to expand it!
+		data.expandable = true;
+		// concatenate "%PATH%" as "SYSTEM;USER"
 		if (!reg_data.IsEmpty())
-			data.data = reg_data.c_str(L"")
-				+ std::wstring(data.data.empty() ? L"" : L";")
-				+ data.data;
+		{
+			const std::wstring append_data(reg_data.c_str(L""));
+			_ASSERTE(!append_data.empty());
+			if (!data.data.empty() && (data.data.back() != L';'))
+				data.data.append(L";");
+			data.data.append(append_data);
+		}
 	}
 	else
 	{
