@@ -57,12 +57,12 @@ CImgCache::CImgCache(HMODULE hSelf)
 	*mpsz_ModuleSlash = 0;
 
 	// Prepare root storage file pathname
-	SetCacheLocation(NULL); // Use %TEMP% by default
+	SetCacheLocation(nullptr); // Use %TEMP% by default
 
 	LoadModules();
 
 	// Initialize Com
-	HRESULT hr = CoInitialize(NULL);
+	HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 	_ASSERTE(SUCCEEDED(hr));
 	mb_comInitialized = SUCCEEDED(hr);
 
