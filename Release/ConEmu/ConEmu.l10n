@@ -7817,7 +7817,7 @@
     "cbFullscreenFixedConSize": {
       "en": "Fixed console size",
       "ru": "Фикс. размер консоли",
-      "zh": "固定的控制台（console）大小",
+      "zh": "修复控制台大小",
       "de": "Feste Konsolengröße",
       "ja": "固定コンソールサイズ",
       "es": "Tamaño de terminal fijo",
