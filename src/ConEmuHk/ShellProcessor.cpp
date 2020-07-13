@@ -3168,6 +3168,7 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
 		(m_SrvMapping.cbSize && (m_SrvMapping.nLoggingType == glt_Processes)),
 		pszDllDir);
 
+#ifdef SHOW_INJECT_MSGBOX
 	if (iHookRc != CIH_OK/*0*/)
 	{
 		DWORD nErrCode = GetLastError();
@@ -3180,6 +3181,7 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
 			gsExeName, GetCurrentProcessId(), lpPI->dwProcessId, iHookRc, nErrCode);
 		GuiMessageBox(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 	}
+#endif	
 
 	// Release process, it called was not set CREATE_SUSPENDED flag
 	if (!mb_WasSuspended)
