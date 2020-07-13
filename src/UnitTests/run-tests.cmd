@@ -55,15 +55,17 @@ goto :EOF
 
 :gtests
 call cecho /yellow "  Tests_Release_Win32.exe"
-..\..\Release\Tests_Release_Win32.exe 1> nul
+..\..\Release\Tests_Release_Win32.exe 1>> unittests.log
 if errorlevel 1 (
+  echo/  Tests_Release_Win32.exe exitcode=%errorlevel%
   echo Tests_Release_Win32.exe failed > tests.fail
 ) else (
   call cecho /green "  Tests_Release_Win32.exe succeeded as expected"
 )
 call cecho /yellow "  Tests_Release_x64.exe"
-..\..\Release\Tests_Release_x64.exe 1> nul
+..\..\Release\Tests_Release_x64.exe 1>> unittests.log
 if errorlevel 1 (
+  echo/  Tests_Release_x64.exe exitcode=%errorlevel%
   echo Tests_Release_x64.exe failed > tests.fail
 ) else (
   call cecho /green "  Tests_Release_x64.exe succeeded as expected"

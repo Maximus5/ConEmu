@@ -20,6 +20,20 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2020.7.13
+* gh-2009: Autoload font files from ConEmuDir/ConEmuBaseDir (fix).
+* gh-2130: Use v141_xp toolset to build Release|x86.
+* Fix 'Settings/Debug/Exec' monitoring: files weren't loaded after '@'.
+* Button 'Register ConEmu autorun' didn't work in some cases.
+* Fix console lags and size during ConEmu cmd autoattach initialization.
+* gh-2145: Fix crash (read access violation).
+* l10n: translations were updated
+* gh-468: Fix for environment reload from registry (expand variables in PATH).
+  The problem was with `PATH` variable, it contains substitutes `%SystemRoot%`,
+  but they were not expanded during environment refresh.
+* Code refactoring.
+
+
 2020.6.15
 * gh-2127: Fix broken `-FontDir` command line option.
 * gh-2087: Fix unbalanced CoUninitialize call in ConEmu Panel Views plugin.
