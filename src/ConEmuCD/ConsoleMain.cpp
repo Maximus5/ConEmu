@@ -1844,7 +1844,8 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 					// Теперь ставим хуки
 					iHookRc = InjectHooks(pi, gbLogProcess);
 				}
-
+				
+#ifdef SHOW_INJECT_MSGBOX
 				if (iHookRc != CIH_OK/*0*/)
 				{
 					DWORD nErrCode = GetLastError();
@@ -1854,7 +1855,8 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 					swprintf_c(szDbgMsg, L"ConEmuC.M, PID=%u\nInjecting hooks into PID=%u\nFAILED, code=%i:0x%08X", GetCurrentProcessId(), pi.dwProcessId, iHookRc, nErrCode);
 					MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
 				}
-
+#endif
+				
 				if (gbUseDosBox)
 				{
 					// Если запустился - то сразу добавим в список процессов (хотя он и не консольный)
