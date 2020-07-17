@@ -230,6 +230,9 @@ class CConEmuMain
 			int  iRc;
 		};
 		static BOOL CALLBACK EnumWindowsOverQuake(HWND hWnd, LPARAM lpData);
+
+		std::mutex mcs_Log; // for create mp_Log
+		std::shared_ptr<MFileLogEx> mp_Log;
 	public:
 		//CConEmuChild *m_Child;
 		//CConEmuBack  *m_Back;
@@ -239,14 +242,13 @@ class CConEmuMain
 		CConEmuInside *mp_Inside = nullptr;
 		CStatus *mp_Status;
 		CToolTip *mp_Tip = nullptr;
-		MFileLogEx *mp_Log = nullptr;
-		MSectionSimple* mpcs_Log; // mcs_Log - для создания
 		CDefaultTerminal *mp_DefTrm;
 		CEFindDlg *mp_Find;
 		CRunQueue *mp_RunQueue;
 		HandleMonitor *mp_HandleMonitor = nullptr;
 
 		bool CreateLog();
+		std::shared_ptr<MFileLogEx> GetLogger() const;
 		bool LogString(LPCWSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
 		bool LogString(LPCSTR asInfo, bool abWriteTime = true, bool abWriteLine = true);
 		bool LogMessage(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

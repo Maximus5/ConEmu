@@ -306,8 +306,6 @@ CConEmuMain::CConEmuMain()
 
 	_ASSERTE(gOSVer.dwMajorVersion>=5);
 
-	mpcs_Log = new MSectionSimple(true);
-
 	wchar_t szVer4[8] = L""; lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
 	// Same as ConsoleMain.cpp::SetWorkEnvVar()
 	swprintf_c(ms_ConEmuBuild, L"%02u%02u%02u%s%s",
@@ -1833,29 +1831,33 @@ HWND CConEmuMain::GetRootHWND()
 	return hRoot;
 }
 
+std::shared_ptr<MFileLogEx> CConEmuMain::GetLogger() const
+{
+	return mp_Log;
+}
+
 bool CConEmuMain::CreateLog()
 {
 	_ASSERTE(gpSet->isLogging());
 
-	if (mp_Log!=NULL)
+	if (mp_Log)
 	{
 		// Logging service is already created
 		return true;
 	}
 
 	bool bRc = false;
-	MSectionLockSimple CS;
-	CS.Lock(mpcs_Log);
+	std::lock_guard<std::mutex> lock(mcs_Log);
 
-	mp_Log = new MFileLogEx(L"ConEmu-gui", ms_ConEmuExeDir, GetCurrentProcessId());
+	mp_Log = std::make_shared<MFileLogEx>(L"ConEmu-gui", ms_ConEmuExeDir, GetCurrentProcessId());
 
-	HRESULT hr = mp_Log ? mp_Log->CreateLogFile(L"ConEmu-gui", GetCurrentProcessId(), gpSet->isLogging()) : E_UNEXPECTED;
+	const HRESULT hr = mp_Log ? mp_Log->CreateLogFile(L"ConEmu-gui", GetCurrentProcessId(), gpSet->isLogging()) : E_UNEXPECTED;
 	if (hr != 0)
 	{
 		wchar_t szError[MAX_PATH*2];
-		swprintf_c(szError, L"Create log file failed! ErrCode=0x%08X\n%s\n", (DWORD)hr, mp_Log->GetLogFileName());
+		swprintf_c(szError, L"Create log file failed! ErrCode=0x%08X\n%s\n", static_cast<DWORD>(hr), mp_Log->GetLogFileName());
 		MBoxA(szError);
-		SafeDelete(mp_Log);
+		mp_Log.reset();
 		// Failed to start logging, don't try again
 		gpSet->DisableLogging();
 	}
@@ -2593,8 +2595,7 @@ CConEmuMain::~CConEmuMain()
 
 	SafeDelete(m_SshAgentsLock);
 
-	SafeDelete(mp_Log);
-	SafeDelete(mpcs_Log);
+	mp_Log.reset();
 
 	_ASSERTE(mh_LLKeyHookDll==NULL);
 	CommonShutdown();
@@ -4447,6 +4448,10 @@ void CConEmuMain::UnRegisterHooks(bool abFinal/*=false*/)
 // (nTime is GetTickCount() where msg was generated)
 void CConEmuMain::OnWmHotkey(WPARAM wParam, DWORD nTime /*= 0*/)
 {
+	wchar_t dbgMsg[80];
+	swprintf_s(dbgMsg, L"OnWmHotkey(ID=0x%04X, time=%u)", LODWORD(wParam), nTime);
+	LogString(dbgMsg);
+	
 	switch (LODWORD(wParam))
 	{
 

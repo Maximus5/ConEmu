@@ -45,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "RealConsole.h"
 #include "TabBar.h"
+#include "../common/MFileLogEx.h"
 
 #if defined(__GNUC__) && (WINVER < 0x0601)
 	/*
@@ -137,12 +138,13 @@ CGestures::~CGestures()
 
 void CGestures::StartGestureLog()
 {
-	if (!gpConEmu->mp_Log)
+	const auto pLogger = gpConEmu->GetLogger();
+	if (!pLogger)
 		return;
 
 	wchar_t szInfo[100];
 	swprintf_c(szInfo, L"Gestures: TabletPC=%u, Gestures=%u, Enabled=%u", (int)_isTabletPC, (int)_isGestures, (int)IsGesturesEnabled());
-	gpConEmu->LogString(szInfo);
+	pLogger->LogString(szInfo);
 }
 
 bool CGestures::IsGesturesEnabled()

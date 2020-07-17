@@ -36,6 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "SetPgFeatures.h"
 
+#include "../common/MFileLogEx.h"
+
 CSetPgFeatures::CSetPgFeatures()
 {
 }
@@ -93,10 +95,11 @@ LRESULT CSetPgFeatures::OnInitDialog(HWND hDlg, bool abInitial)
 	return 0;
 }
 
-void CSetPgFeatures::UpdateLogLocation()
+void CSetPgFeatures::UpdateLogLocation() const
 {
 	// Cut log file to directory only
-	CEStr lsLogPath(gpSet->GetLogFileName());
+	const auto pLogger = gpConEmu->GetLogger();
+	CEStr lsLogPath(pLogger ? pLogger->GetLogFileName() : L"");
 	LPCWSTR pszName = lsLogPath.IsEmpty() ? NULL : PointToName(lsLogPath.ms_Val);
 	if (pszName)
 		*(wchar_t*)pszName = 0;

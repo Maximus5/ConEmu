@@ -703,7 +703,6 @@ struct Settings
 		unsigned isLogging(unsigned level = 1);
 		void EnableLogging();
 		void DisableLogging();
-		LPCWSTR GetLogFileName();
 
 		//reg->Load(L"EnhanceGraphics", isEnhanceGraphics);
 		bool isEnhanceGraphics; // Progressbars and scrollbars (pseudographics)

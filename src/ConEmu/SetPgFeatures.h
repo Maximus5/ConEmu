@@ -54,6 +54,6 @@ public:
 protected:
 	friend class CSetDlgButtons;
 	// Members
-	void UpdateLogLocation();
+	void UpdateLogLocation() const;
 };
 

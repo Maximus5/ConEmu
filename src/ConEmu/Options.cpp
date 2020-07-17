@@ -318,6 +318,7 @@ Settings::Settings()
 
 void Settings::ResetSettings()
 {
+	*this = Settings();
 	#ifdef OPTION_TYPES_USED
 	PRAGMA_ERROR("memset not allowed for classes!");
 
@@ -5050,11 +5051,6 @@ void Settings::EnableLogging()
 void Settings::DisableLogging()
 {
 	mb_DisableLogging = true;
-}
-
-LPCWSTR Settings::GetLogFileName()
-{
-	return gpConEmu->mp_Log ? gpConEmu->mp_Log->GetLogFileName() : L"";
 }
 
 bool Settings::isCloseOnLastTabClose()
