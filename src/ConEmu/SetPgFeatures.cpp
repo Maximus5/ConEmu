@@ -111,11 +111,12 @@ LRESULT CSetPgFeatures::OnEditChanged(HWND hDlg, WORD nCtrlId)
 	switch (nCtrlId)
 	{
 	case tAnsiLogPath:
-	{
 		SafeFree(gpSet->pszAnsiLog);
 		gpSet->pszAnsiLog = GetDlgItemTextPtr(hDlg, tAnsiLogPath);
-	}
-	break;
+		break;
+
+	case tDebugLogDir:
+		break; // read-only
 
 	default:
 		_ASSERTE(FALSE && "EditBox was not processed");

@@ -2621,9 +2621,9 @@ void CSetDlgButtons::OnBtn_DebugLog(HWND hDlg, WORD CB, BYTE uCheck)
 	{
 		if (!gpSet->isDebugLog && !gpConEmu->opt.AdvLogging.Exists)
 			gpSet->isDebugLog = 1;
-		_ASSERTE(gpSet->isLogging());
 		gpSet->EnableLogging();
-		CSetPgFeatures* pFeat = NULL;
+		_ASSERTE(gpSet->isLogging());
+		CSetPgFeatures* pFeat = nullptr;
 		if (gpSetCls->GetPageObj(pFeat))
 			pFeat->UpdateLogLocation();
 	}
@@ -2632,6 +2632,7 @@ void CSetDlgButtons::OnBtn_DebugLog(HWND hDlg, WORD CB, BYTE uCheck)
 		if (gpSet->isDebugLog && !gpConEmu->opt.AdvLogging.Exists)
 			gpSet->isDebugLog = 0;
 		gpSet->DisableLogging();
+		_ASSERTE(!gpSet->isLogging());
 	}
 
 } // cbDebugLog
