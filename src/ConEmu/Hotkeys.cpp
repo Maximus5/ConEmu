@@ -195,7 +195,11 @@ bool ConEmuHotKey::Equal(BYTE Vk, BYTE vkMod1/*=0*/, BYTE vkMod2/*=0*/, BYTE vkM
 LPCWSTR ConEmuHotKey::GetHotkeyName(wchar_t(&szFull)[128], bool bShowNone /*= true*/) const
 {
 	_ASSERTE(this && this != ConEmuSkipHotKey);
-	return ConEmuChord::GetHotkeyName(szFull, Key.GetVkMod(HkType), HkType, bShowNone);
+	const auto mod = (HkType == chk_NumHost) ? CEHOTKEY_NUMHOSTKEY
+		                 : (HkType == chk_ArrHost) ? CEHOTKEY_ARRHOSTKEY
+		                 : Key.GetVkMod(HkType);
+	const auto vkMod = static_cast<DWORD>(Key.Vk) | mod;
+	return ConEmuChord::GetHotkeyName(szFull, vkMod, HkType, bShowNone);
 }
 
 LPCWSTR ConEmuHotKey::CreateNotUniqueWarning(LPCWSTR asHotkey, LPCWSTR asDescr1, LPCWSTR asDescr2, CEStr& rsWarning)

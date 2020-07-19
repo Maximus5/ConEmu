@@ -171,21 +171,21 @@ void ConEmuChord::SetHotKey(const ConEmuHotKeyType HkType, BYTE Vk, BYTE vkMod1/
 void ConEmuChord::SetVkMod(const ConEmuHotKeyType HkType, DWORD VkMod)
 {
 	// Init
-	BYTE Vk = LOBYTE(VkMod);
+	const BYTE Vk = LOBYTE(VkMod);
 	ConEmuModifiers Mod = cvk_NULL;
 
 	// Check modifiers
-	DWORD vkLeft = (VkMod & CEHOTKEY_MODMASK);
+	const DWORD vkLeft = (VkMod & CEHOTKEY_MODMASK);
 
 	if ((HkType == chk_NumHost) || (vkLeft == CEHOTKEY_NUMHOSTKEY))
 	{
-		_ASSERTE((HkType == chk_NumHost) && (vkLeft == CEHOTKEY_NUMHOSTKEY))
-			Mod = cvk_NumHost;
+		_ASSERTE((HkType == chk_NumHost) && (vkLeft == CEHOTKEY_NUMHOSTKEY));
+		Mod = cvk_NumHost;
 	}
 	else if ((HkType == chk_ArrHost) || (vkLeft == CEHOTKEY_ARRHOSTKEY))
 	{
-		_ASSERTE((HkType == chk_ArrHost) && (vkLeft == CEHOTKEY_ARRHOSTKEY))
-			Mod = cvk_ArrHost;
+		_ASSERTE((HkType == chk_ArrHost) && (vkLeft == CEHOTKEY_ARRHOSTKEY));
+		Mod = cvk_ArrHost;
 	}
 	else if (vkLeft == CEHOTKEY_NOMOD)
 	{

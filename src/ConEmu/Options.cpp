@@ -318,7 +318,6 @@ Settings::Settings()
 
 void Settings::ResetSettings()
 {
-	*this = Settings();
 	#ifdef OPTION_TYPES_USED
 	PRAGMA_ERROR("memset not allowed for classes!");
 
