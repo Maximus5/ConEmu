@@ -331,6 +331,7 @@
     <ClInclude Include="ConEmu\FrameHolder.h" />
     <ClInclude Include="ConEmu\GdiObjects.h" />
     <ClInclude Include="ConEmu\GestureEngine.h" />
+    <ClInclude Include="ConEmu\GlobalHotkeys.h" />
     <ClInclude Include="ConEmu\GuiServer.h" />
     <ClInclude Include="ConEmu\Header.h" />
     <ClInclude Include="ConEmu\HooksUnlocker.h" />
@@ -575,6 +576,7 @@
     <ClCompile Include="ConEmu\FrameHolder.cpp" />
     <ClCompile Include="ConEmu\GdiObjects.cpp" />
     <ClCompile Include="ConEmu\GestureEngine.cpp" />
+    <ClCompile Include="ConEmu\GlobalHotkeys.cpp" />
     <ClCompile Include="ConEmu\GuiServer.cpp" />
     <ClCompile Include="ConEmu\HooksUnlocker.cpp" />
     <ClCompile Include="ConEmu\HotkeyChord.cpp" />

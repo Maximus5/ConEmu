@@ -60,9 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WSession.h"
 #include "../common/WThreads.h"
 #include "../common/WUser.h"
-#include "AltNumpad.h"
 #include "ConEmu.h"
-#include "ConEmuApp.h"
 #include "ConEmuPipe.h"
 #include "ConfirmDlg.h"
 #include "CreateProcess.h"
@@ -78,6 +76,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "RConPalette.h"
 #include "RealBuffer.h"
 #include "RealConsole.h"
+
+#include "GlobalHotkeys.h"
 #include "RunQueue.h"
 #include "SetColorPalette.h"
 #include "SetPgDebug.h"
@@ -10753,7 +10753,7 @@ void CRealConsole::OnActivate(int nNewNum, int nOldNum)
 
 	if (isActive(false))
 	{
-		mp_ConEmu->UpdateActiveGhost(mp_VCon);
+		mp_ConEmu->GetGlobalHotkeys().UpdateActiveGhost(mp_VCon);
 		mp_ConEmu->OnSetCursor(-1,-1);
 		mp_ConEmu->UpdateWindowRgn();
 	}

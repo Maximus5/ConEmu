@@ -36,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include <Tlhelp32.h>
 #include "../common/ConEmuCheck.h"
-#include "../common/RgnDetect.h"
 #include "../common/Execute.h"
 #include "../common/PipeServer.h"
 #include "../common/WConsole.h"
@@ -47,11 +46,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VirtualConsole.h"
 #include "TabBar.h"
 #include "ConEmu.h"
-#include "ConEmuApp.h"
 #include "SetPgDebug.h"
 #include "VConChild.h"
 #include "VConGroup.h"
-#include "ConEmuPipe.h"
+#include "GlobalHotkeys.h"
 #include "Macro.h"
 #include "OptionsClass.h"
 
@@ -1235,7 +1233,7 @@ CESERVER_REQ* CRealServer::cmdOnSetConsoleKeyShortcuts(LPVOID pInst, CESERVER_RE
 	DEBUGSTRCMD(L"GUI recieved CECMD_KEYSHORTCUTS\n");
 
 	mp_RCon->m_ConsoleKeyShortcuts = pIn->Data[0] ? pIn->Data[1] : 0;
-	gpConEmu->UpdateWinHookSettings();
+	gpConEmu->GetGlobalHotkeys().UpdateWinHookSettings();
 
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR));
 	return pOut;

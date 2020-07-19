@@ -135,6 +135,9 @@
     <ClInclude Include="ConEmu\GestureEngine.h">
       <Filter>ConEmu</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmu\GlobalHotkeys.h">
+      <Filter>ConEmu</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmu\GuiServer.h">
       <Filter>ConEmu</Filter>
     </ClInclude>
@@ -861,6 +864,9 @@
       <Filter>ConEmu</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\GestureEngine.cpp">
+      <Filter>ConEmu</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmu\GlobalHotkeys.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\GuiServer.cpp">

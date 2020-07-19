@@ -269,6 +269,7 @@ public:
 	void DoFullScreen();
 	void DoMaximizeRestore();
 	void DoMinimizeRestore(SingleInstanceShowHideType ShowHideType = sih_None);
+	void ProcessMinRestoreHotkey(int hotkeyId, DWORD nTime);
 	void DoForcedFullScreen(bool bSet = true);
 	void DoAlwaysOnTopSwitch();
 	void DoDesktopModeSwitch();

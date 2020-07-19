@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2014-present Maximus5
+Copyright (c) 2009-present Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,35 +27,50 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#define HIDE_USE_EXCEPTION_INFO
-#define SHOWDEBUGSTR
+#pragma once
 
-#include "Header.h"
-#include "ConEmu.h"
-#include "HooksUnlocker.h"
-#include "GlobalHotkeys.h"
+#include "../common/defines.h"
 
-bool HooksUnlockerProc(bool bUnlock)
+class CVirtualConsole;
+
+class GlobalHotkeys final
 {
-	bool lbUnlocked = false;
+public:
+	GlobalHotkeys() = default;
+	~GlobalHotkeys() = default;
 
-	if (bUnlock)
-	{
-		// Unlock keyboard hooks to avoid problem with debuggers
-		if (gpConEmu && (gpConEmu->GetStartupStage() > CConEmuMain::ss_Starting))
-		{
-			gpConEmu->GetGlobalHotkeys().UnRegisterHooks();
-			lbUnlocked = true;
-		}
-	}
-	else
-	{
-		// Return normal behavior
-		if (gpConEmu)
-		{
-			gpConEmu->GetGlobalHotkeys().RegisterHooks();
-		}
-	}
+	bool IsKeyboardHookRegistered() const;
+	bool IsActiveHotkeyRegistered() const;
+	void RegisterHotKeys();
+	void RegisterGlobalHotKeys(bool bRegister);
+	void UnRegisterHotKeys(bool abFinal=false);
+	void GlobalHotKeyChanged();
+	void RegisterMinRestore(bool abRegister) const;
+	void RegisterHooks();
+	void UnRegisterHooks(bool abFinal=false);
+	void OnWmHotkey(WPARAM wParam, DWORD nTime = 0) const;
+	void UpdateWinHookSettings() const;
+	void UpdateActiveGhost(CVirtualConsole* apVCon) const;
+	void OnTerminate() const;
 
-	return lbUnlocked;
-}
+	struct RegisteredHotKeys
+	{
+		int DescrID;
+		int RegisteredID; // wParam for WM_HOTKEY
+		UINT VK, MOD;     // to react on changes
+		BOOL IsRegistered;
+	};
+	
+protected:
+	HMODULE LoadConEmuCD();
+	bool RegisterHotkey(RegisteredHotKeys& hotkey, DWORD vk, DWORD mod, DWORD globalId, const wchar_t* description) const;
+	void UnregisterHotkey(RegisteredHotKeys& hotkey) const;
+
+	// hotkeys, which are registered only during ConEmu has focus
+	bool mb_HotKeyRegistered = false;
+
+	// variables to support global keyboard hooks
+	HMODULE mh_LLKeyHookDll = nullptr;
+	HHOOK mh_LLKeyHook = nullptr;
+	HWND* mph_HookedGhostWnd = nullptr;
+};

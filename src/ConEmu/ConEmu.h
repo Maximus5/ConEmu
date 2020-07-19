@@ -70,6 +70,7 @@ class CToolTip;
 class CVConGroup;
 class CVConGuard;
 class MFileLogEx;
+class GlobalHotkeys;
 enum ConEmuWindowMode;
 struct CEFindDlg;
 struct HandleMonitor;
@@ -482,17 +483,10 @@ class CConEmuMain
 		HANDLE mh_ConEmuAliveEvent = NULL; bool mb_ConEmuAliveOwned = false; DWORD mn_ConEmuAliveEventErr = 0;
 		HANDLE mh_ConEmuAliveEventNoDir = NULL; bool mb_ConEmuAliveOwnedNoDir = false; DWORD mn_ConEmuAliveEventErrNoDir = 0;
 		//
-		bool mb_HotKeyRegistered = false;
-		HHOOK mh_LLKeyHook = NULL;
-		HMODULE mh_LLKeyHookDll = NULL;
-		HWND* mph_HookedGhostWnd = nullptr;
-		HMODULE LoadConEmuCD();
-		void RegisterHotKeys();
-		void RegisterGlobalHotKeys(bool bRegister);
+		std::shared_ptr<GlobalHotkeys> m_Hotkeys;
 	public:
-		void GlobalHotKeyChanged();
+		GlobalHotkeys& GetGlobalHotkeys() const;
 	protected:
-		void UnRegisterHotKeys(bool abFinal=false);
 		HBITMAP mh_RightClickingBmp = NULL; HDC mh_RightClickingDC = NULL;
 		POINT m_RightClickingSize = {}; // {384 x 16} 24 фрейма, считаем, что четверть отведенного времени прошла до начала показа
 		int m_RightClickingFrames = 0, m_RightClickingCurrent = -1;
@@ -511,12 +505,6 @@ class CConEmuMain
 		wchar_t* LoadConsoleBatch_Task(LPCWSTR asSource, RConStartArgsEx* pArgs = NULL);
 	public:
 		void RightClickingPaint(HDC hdcIntVCon, CVirtualConsole* apVCon);
-		void RegisterMinRestore(bool abRegister);
-		bool IsKeyboardHookRegistered();
-		void RegisterHooks();
-		void UnRegisterHooks(bool abFinal=false);
-		void OnWmHotkey(WPARAM wParam, DWORD nTime = 0);
-		void UpdateWinHookSettings();
 		void CtrlWinAltSpace();
 		void DeleteVConMainThread(CVirtualConsole* apVCon);
 		UINT GetRegisteredMessage(LPCSTR asLocal, LPCWSTR asGlobal = NULL);
@@ -737,7 +725,6 @@ class CConEmuMain
 		BOOL TrackMouse();
 		void SetSkipMouseEvent(UINT nMsg1, UINT nMsg2, UINT nReplaceDblClk);
 		void Update(bool isForce = false);
-		void UpdateActiveGhost(CVirtualConsole* apVCon);
 	protected:
 		void UpdateImeComposition();
 	public:

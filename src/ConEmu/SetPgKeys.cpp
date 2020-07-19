@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConEmu.h"
 #include "LngRc.h"
+#include "GlobalHotkeys.h"
 #include "OptionsClass.h"
 #include "HotkeyDlg.h"
 #include "HotkeyList.h"
@@ -846,6 +847,6 @@ void CSetPgKeys::SetHotkeyVkMod(ConEmuHotKey *pHK, DWORD VkMod)
 	// Global? Need to re-register?
 	if (pHK->HkType == chk_Local)
 	{
-		gpConEmu->GlobalHotKeyChanged();
+		gpConEmu->GetGlobalHotkeys().GlobalHotKeyChanged();
 	}
 }

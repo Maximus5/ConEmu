@@ -44,6 +44,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuApp.h"
 #include "ConfirmDlg.h"
 #include "DefaultTerm.h"
+#include "GlobalHotkeys.h"
 #include "HotkeyDlg.h"
 #include "LngRc.h"
 #include "Options.h"
@@ -57,7 +58,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetPgComspec.h"
 #include "SetPgDebug.h"
 #include "SetPgFeatures.h"
-#include "SetPgIntegr.h"
 #include "SetPgKeys.h"
 #include "SetPgPaste.h"
 #include "SetPgSizePos.h"
@@ -68,6 +68,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "TrayIcon.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
+
 
 #ifdef _DEBUG
 void CSetDlgButtons::UnitTests()
@@ -1922,7 +1923,7 @@ void CSetDlgButtons::OnBtn_MultiCon(HWND hDlg, WORD CB, BYTE uCheck)
 	_ASSERTE(CB==cbMultiCon);
 
 	gpSet->mb_isMulti = _bool(uCheck);
-	gpConEmu->UpdateWinHookSettings();
+	gpConEmu->GetGlobalHotkeys().UpdateWinHookSettings();
 
 } // cbMultiCon
 
@@ -3481,7 +3482,7 @@ void CSetDlgButtons::OnBtn_UseWinArrowNumTab(HWND hDlg, WORD CB, BYTE uCheck)
 	#endif
 	}
 
-	gpConEmu->UpdateWinHookSettings();
+	gpConEmu->GetGlobalHotkeys().UpdateWinHookSettings();
 
 } // cbUseWinArrows || cbUseWinNumber || cbUseWinTab
 
@@ -3517,7 +3518,7 @@ void CSetDlgButtons::OnBtn_SendConsoleSpecials(HWND hDlg, WORD CB, BYTE uCheck)
 	#endif
 	}
 
-	gpConEmu->UpdateWinHookSettings();
+	gpConEmu->GetGlobalHotkeys().UpdateWinHookSettings();
 
 } // cbSendAltTab || cbSendAltEsc || cbSendAltPrintScrn || cbSendPrintScrn || cbSendCtrlEsc
 
@@ -3529,12 +3530,19 @@ void CSetDlgButtons::OnBtn_InstallKeybHooks(HWND hDlg, WORD CB, BYTE uCheck)
 
 	switch (uCheck)
 	{
-		// Разрешено
-	case BST_CHECKED: gpSet->m_isKeyboardHooks = 1; gpConEmu->RegisterHooks(); break;
-		// Запрещено
-	case BST_UNCHECKED: gpSet->m_isKeyboardHooks = 2; gpConEmu->UnRegisterHooks(); break;
-		// Запрос при старте
-	case BST_INDETERMINATE: gpSet->m_isKeyboardHooks = 0; break;
+	case BST_CHECKED: // allowed
+		gpSet->m_isKeyboardHooks = 1;
+		gpConEmu->GetGlobalHotkeys().RegisterHooks();
+		break;
+
+	case BST_UNCHECKED: // prohibited
+		gpSet->m_isKeyboardHooks = 2;
+		gpConEmu->GetGlobalHotkeys().UnRegisterHooks();
+		break;
+
+	case BST_INDETERMINATE: // ask on startup
+		gpSet->m_isKeyboardHooks = 0;
+		break;
 	}
 } // cbInstallKeybHooks
 

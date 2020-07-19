@@ -6409,6 +6409,19 @@ void CConEmuSize::LogMinimizeRestoreSkip(LPCWSTR asMsgFormat, DWORD nParm1, DWOR
 	LogFocusInfo(szInfo);
 }
 
+void CConEmuSize::ProcessMinRestoreHotkey(const int hotkeyId, const DWORD nTime)
+{
+	if (!nTime || !mn_LastQuakeShowHide || (static_cast<int>(nTime - mn_LastQuakeShowHide) >= 0))
+	{
+		DoMinimizeRestore((hotkeyId == vkGlobalRestore) ? sih_Show : sih_None);
+	}
+	else
+	{
+		LogMinimizeRestoreSkip(L"DoMinimizeRestore skipped, vk=%u time=%u delay=%i",
+			hotkeyId, nTime, static_cast<int>(nTime - mn_LastQuakeShowHide));
+	}
+}
+
 void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= sih_None*/)
 {
 	if (mp_ConEmu->mp_Inside)

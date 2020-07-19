@@ -48,7 +48,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "RealConsole.h"
 #include "Status.h"
-#include "TabBar.h"
+
+#include "GlobalHotkeys.h"
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
@@ -660,7 +661,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"InpGrp");
 				break;
 			case csi_InputLocale:
-				// чтобы не задавали вопросов, нафига дублируется.
+				// don't duplicate
 				if (LOWORD((DWORD)mhk_Locale) == HIWORD((DWORD)mhk_Locale))
 				{
 					swprintf_c(m_Items[nDrawCount].sText, countof(m_Items[nDrawCount].sText)-1/*#SECURELEN*/, L"%04X", LOWORD((DWORD)mhk_Locale));
@@ -674,7 +675,7 @@ void CStatus::PaintStatus(HDC hPaint, LPRECT prcStatus /*= NULL*/)
 				break;
 			case csi_KeyHooks:
 				wcscpy_c(m_Items[nDrawCount].sText,
-					(gpConEmu->IsKeyboardHookRegistered() || gpSet->isKeyboardHooks(false, true))
+					(gpConEmu->GetGlobalHotkeys().IsKeyboardHookRegistered() || gpSet->isKeyboardHooks(false, true))
 					? L"KH" : L"––");
 				wcscpy_c(m_Items[nDrawCount].szFormat, L"XX");
 				break;
@@ -1966,12 +1967,12 @@ bool CStatus::IsKeyboardChanged()
 	bool bChanged = false;
 
 	SHORT states[3];
-	bool bCaps = ((states[0] = GetKeyState(VK_CAPITAL)) & 1) == 1;
-	bool bNum = ((states[1] = GetKeyState(VK_NUMLOCK)) & 1) == 1;
-	bool bScroll = ((states[2] = GetKeyState(VK_SCROLL)) & 1) == 1;
-	bool bKeyHooks = gpConEmu->IsKeyboardHookRegistered();
-	bool bGrouping = gpConEmu->isInputGrouped();
-	DWORD_PTR hkl = gpConEmu->GetActiveKeyboardLayout();
+	const bool bCaps = ((states[0] = GetKeyState(VK_CAPITAL)) & 1) == 1;
+	const bool bNum = ((states[1] = GetKeyState(VK_NUMLOCK)) & 1) == 1;
+	const bool bScroll = ((states[2] = GetKeyState(VK_SCROLL)) & 1) == 1;
+	const bool bKeyHooks = gpConEmu->GetGlobalHotkeys().IsKeyboardHookRegistered();
+	const bool bGrouping = gpConEmu->isInputGrouped();
+	const DWORD_PTR hkl = gpConEmu->GetActiveKeyboardLayout();
 
 	if (bCaps != mb_Caps)
 	{

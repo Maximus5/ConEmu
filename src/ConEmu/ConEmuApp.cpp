@@ -48,7 +48,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/EnvVar.h"
 #include "../common/MBSTR.h"
 #include "../common/MSetter.h"
-#include "../common/MStrEsc.h"
 #include "../common/WFiles.h"
 #include "helper.h"
 #include "AboutDlg.h"
@@ -58,8 +57,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DefaultTerm.h"
 #include "DontEnable.h"
 #include "DpiAware.h"
-#include "DwmHelper.h"
 #include "FontMgr.h"
+#include "GlobalHotkeys.h"
 #include "HooksUnlocker.h"
 #include "IconList.h"
 #include "Inside.h"
@@ -1204,7 +1203,7 @@ bool ProcessMessage(MSG& Msg)
 				goto wrap;
 			break;
 		case WM_HOTKEY:
-			gpConEmu->OnWmHotkey(Msg.wParam, Msg.time);
+			gpConEmu->GetGlobalHotkeys().OnWmHotkey(Msg.wParam, Msg.time);
 			goto wrap;
 		case WM_LBUTTONDOWN:
 		case WM_RBUTTONDOWN:

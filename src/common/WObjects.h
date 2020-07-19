@@ -92,3 +92,10 @@ void ApplyExportEnvVar(LPCWSTR asEnvNameVal);
 bool CoordInSmallRect(const COORD& cr, const SMALL_RECT& rc);
 
 UINT GetCpFromString(LPCWSTR asString, LPCWSTR* ppszEnd = NULL);
+
+template <typename Func>
+Func GetProcAddress(Func& fn, HMODULE module, const char* name)
+{
+	fn = reinterpret_cast<Func>(module ? ::GetProcAddress(module, name) : nullptr);
+	return fn;
+}
