@@ -4726,20 +4726,11 @@ void CConEmuMain::UpdateSizes()
 	{
 		SetDlgItemText(hInfo, tConBufferChr, _T("?"));
 		SetDlgItemText(hInfo, tConSizeChr, _T("?"));
-		SetDlgItemText(hInfo, tConSizePix, _T("?"));
+		SetDlgItemText(hInfo, tConLeftTop, _T("?"));
+		SetDlgItemText(hInfo, tDCSize, L"?");
+		SetDlgItemText(hInfo, tCursorPos, L"?");
 		SetDlgItemText(hInfo, tPanelLeft, _T("?"));
 		SetDlgItemText(hInfo, tPanelRight, _T("?"));
-	}
-
-	if (pVCon && pVCon->GetView())
-	{
-		RECT rcClient = pVCon->GetDcClientRect();
-		TCHAR szSize[32]; swprintf_c(szSize, _T("%ix%i"), rcClient.right, rcClient.bottom);
-		SetDlgItemText(hInfo, tDCSize, szSize);
-	}
-	else
-	{
-		SetDlgItemText(hInfo, tDCSize, L"<none>");
 	}
 }
 

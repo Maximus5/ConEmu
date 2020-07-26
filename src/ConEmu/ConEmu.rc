@@ -645,25 +645,25 @@ BEGIN
     GROUPBOX        "Current command line",gbInfoCmdLine,4,211,375,29
     EDITTEXT        tCurCmdLine,9,222,363,12,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "Sizes",gbInfoSizes,214,65,165,144
-    RTEXT           "Buffer (chars):",stConsoleBufferChars,218,77,78,8
-    EDITTEXT        tConBufferChr,300,75,75,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Console (chars):",stConsoleSizeChars,218,93,78,8
-    EDITTEXT        tConSizeChr,299,91,75,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "(pixels):",stConsoleSizePixels,218,108,78,8
-    EDITTEXT        tConSizePix,299,106,75,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "DC window:",stDcWndSize,218,124,78,8
-    EDITTEXT        tDCSize,299,122,75,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Buffer (chars):",stConsoleBufferChars,217,77,66,8
+    EDITTEXT        tConBufferChr,284,75,90,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Console (chars):",stConsoleSizeChars,217,93,66,8
+    EDITTEXT        tConSizeChr,284,91,90,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Left x Top:",stConsoleLeftTop,217,108,66,8
+    EDITTEXT        tConLeftTop,284,106,90,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "DC window:",stDcWndSize,217,124,66,8
+    EDITTEXT        tDCSize,284,122,90,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Left:",stFarPanelLeft,217,156,66,8
     EDITTEXT        tPanelLeft,284,154,90,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Right:",stFarPanelRight,216,172,66,8
+    RTEXT           "Right:",stFarPanelRight,217,172,66,8
     EDITTEXT        tPanelRight,284,170,90,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Main:",stVConFontMain,218,194,40,8
     EDITTEXT        tRealFontMain,262,192,46,12,ES_AUTOHSCROLL | ES_READONLY
     RTEXT           "Fix:",stVConFontFix,310,194,29,8
     EDITTEXT        tRealFontBorders,343,192,31,12,ES_AUTOHSCROLL | ES_READONLY
     GROUPBOX        "Font",gbVConFont,214,183,165,26
-    EDITTEXT        tCursorPos,299,138,75,12,ES_AUTOHSCROLL | ES_READONLY
-    RTEXT           "Cursor (x,y,h):",stRConCursorInfo,218,140,78,8
+    EDITTEXT        tCursorPos,284,138,90,12,ES_AUTOHSCROLL | ES_READONLY
+    RTEXT           "Cursor (x,y,h):",stRConCursorInfo,217,140,66,8
     RTEXT           "Far PID:",stFarPID,8,47,29,8
     RTEXT           "States:",stRConStates,113,47,36,8
     EDITTEXT        tsRConFlags,152,45,222,12,ES_AUTOHSCROLL | ES_READONLY

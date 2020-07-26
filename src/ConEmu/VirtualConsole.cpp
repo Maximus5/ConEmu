@@ -65,26 +65,26 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #include "Header.h"
 #include <Tlhelp32.h>
 
-#include "ScreenDump.h"
-#include "VirtualConsole.h"
-#include "RealConsole.h"
+#include "Background.h"
 #include "ConEmu.h"
+#include "ConEmuPipe.h"
 #include "Font.h"
 #include "FontMgr.h"
+#include "FontPtr.h"
 #include "Options.h"
 #include "OptionsClass.h"
-#include "Background.h"
-#include "ConEmuPipe.h"
-#include "FontMgr.h"
-#include "FontPtr.h"
-#include "TabID.h"
+#include "RealConsole.h"
+#include "ScreenDump.h"
+#include "SetPgInfo.h"
 #include "TabBar.h"
 #include "TaskBarGhost.h"
 #include "VConGroup.h"
 #include "VConText.h"
+#include "VirtualConsole.h"
 
+
+#include "LngRc.h"
 #include "../common/MSetter.h"
-#include "../common/MModule.h"
 
 using ConEmu::PaletteColors;
 
@@ -4178,45 +4178,59 @@ void CVirtualConsole::UpdateInfo()
 		return;
 
 	if (!isMainThread())
-	{
 		return;
-	}
+
+	HWND hInfo = gpSetCls->GetPage(thi_Info);
+	if (hInfo == nullptr)
+		return;
 
 	wchar_t szSize[128];
 
+	const RECT rcClient = GetDcClientRect();
+	swprintf_c(szSize, _T("%ix%i / %ix%i"), RectWidth(rcClient), RectHeight(rcClient), m_Sizes.Width, m_Sizes.Height);
+	SetDlgItemText(hInfo, tDCSize, szSize);
+	
 	if (!mp_RCon)
 	{
-		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConBufferChr, L"(None)");
-		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConSizeChr, L"(None)");
-		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConSizePix, L"(None)");
-		SetDlgItemText(gpSetCls->GetPage(thi_Info), tPanelLeft,  L"(None)");
-		SetDlgItemText(gpSetCls->GetPage(thi_Info), tPanelRight, L"(None)");
+		const auto szNone = CLngRc::getRsrc(lng_SetPgInfoNone/*"(None)"*/);
+		SetDlgItemText(hInfo, tConBufferChr, szNone);
+		SetDlgItemText(hInfo, tConSizeChr, szNone);
+		SetDlgItemText(hInfo, tConLeftTop, szNone);
+		SetDlgItemText(hInfo, tCursorPos, szNone);
+		SetDlgItemText(hInfo, tPanelLeft,  szNone);
+		SetDlgItemText(hInfo, tPanelRight, szNone);
 	}
 	else
 	{
 		swprintf_c(szSize, _T("%ix%i"), mp_RCon->BufferWidth(), mp_RCon->BufferHeight());
-		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConBufferChr, szSize);
+		SetDlgItemText(hInfo, tConBufferChr, szSize);
+
 		swprintf_c(szSize, _T("%ix%i"), mp_RCon->TextWidth(), mp_RCon->TextHeight());
-		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConSizeChr, szSize);
-		swprintf_c(szSize, _T("%ix%i"), m_Sizes.Width, m_Sizes.Height);
-		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConSizePix, szSize);
+		SetDlgItemText(hInfo, tConSizeChr, szSize);
+
+		CONSOLE_SCREEN_BUFFER_INFO sbi{};
+		mp_RCon->GetConsoleScreenBufferInfo(&sbi);
+		swprintf_c(szSize, _T("%ix%i"), static_cast<int>(sbi.srWindow.Left)+1, static_cast<int>(sbi.srWindow.Top)+1);
+		SetDlgItemText(hInfo, tConLeftTop, szSize);
+
+		ConsoleInfoArg cursorInfo = {};
+		mp_RCon->GetConsoleInfo(&cursorInfo);
+		CSetPgInfo::FillCursorInfo(hInfo, &cursorInfo);
+		
 		RECT rcPanel;
 		RCon()->GetPanelRect(FALSE, &rcPanel);
-
 		if (rcPanel.right>rcPanel.left)
 			swprintf_c(szSize, L"(%i, %i)-(%i, %i), %ix%i", rcPanel.left+1, rcPanel.top+1, rcPanel.right+1, rcPanel.bottom+1, rcPanel.right-rcPanel.left+1, rcPanel.bottom-rcPanel.top+1);
 		else
 			wcscpy_c(szSize, L"<Absent>");
-
-		SetDlgItemText(gpSetCls->GetPage(thi_Info), tPanelLeft, szSize);
+		SetDlgItemText(hInfo, tPanelLeft, szSize);
+		
 		RCon()->GetPanelRect(TRUE, &rcPanel);
-
 		if (rcPanel.right>rcPanel.left)
 			swprintf_c(szSize, L"(%i, %i)-(%i, %i), %ix%i", rcPanel.left+1, rcPanel.top+1, rcPanel.right+1, rcPanel.bottom+1, rcPanel.right-rcPanel.left+1, rcPanel.bottom-rcPanel.top+1);
 		else
 			wcscpy_c(szSize, L"<Absent>");
-
-		SetDlgItemText(gpSetCls->GetPage(thi_Info), tPanelRight, szSize);
+		SetDlgItemText(hInfo, tPanelRight, szSize);
 	}
 }
 

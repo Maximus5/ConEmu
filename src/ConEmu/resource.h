@@ -204,7 +204,7 @@
 #define bResetSettings                  1595
 #define bReloadSettings                 1596
 #define tConSizeChr                     1597
-#define tConSizePix                     1598
+#define tConLeftTop                     1598
 #define tDCSize                         1599
 #define tPanelLeft                      1600
 #define tPanelRight                     1601
@@ -1190,7 +1190,7 @@
 #define gbInfoSizes                     2943
 #define gbInfoCmdLine                   2944
 #define stConsoleSizeChars              2945
-#define stConsoleSizePixels             2946
+#define stConsoleLeftTop                2946
 #define stDcWndSize                     2947
 #define stRConCursorInfo                2948
 #define stFarPanelLeft                  2949
