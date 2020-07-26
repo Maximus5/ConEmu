@@ -4186,6 +4186,7 @@ void CVirtualConsole::UpdateInfo()
 
 	if (!mp_RCon)
 	{
+		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConBufferChr, L"(None)");
 		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConSizeChr, L"(None)");
 		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConSizePix, L"(None)");
 		SetDlgItemText(gpSetCls->GetPage(thi_Info), tPanelLeft,  L"(None)");
@@ -4193,6 +4194,8 @@ void CVirtualConsole::UpdateInfo()
 	}
 	else
 	{
+		swprintf_c(szSize, _T("%ix%i"), mp_RCon->BufferWidth(), mp_RCon->BufferHeight());
+		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConBufferChr, szSize);
 		swprintf_c(szSize, _T("%ix%i"), mp_RCon->TextWidth(), mp_RCon->TextHeight());
 		SetDlgItemText(gpSetCls->GetPage(thi_Info), tConSizeChr, szSize);
 		swprintf_c(szSize, _T("%ix%i"), m_Sizes.Width, m_Sizes.Height);

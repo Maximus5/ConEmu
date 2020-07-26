@@ -4724,6 +4724,7 @@ void CConEmuMain::UpdateSizes()
 	}
 	else
 	{
+		SetDlgItemText(hInfo, tConBufferChr, _T("?"));
 		SetDlgItemText(hInfo, tConSizeChr, _T("?"));
 		SetDlgItemText(hInfo, tConSizePix, _T("?"));
 		SetDlgItemText(hInfo, tPanelLeft, _T("?"));
