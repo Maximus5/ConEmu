@@ -50,8 +50,8 @@ LRESULT CSetPgKeyboard::OnInitDialog(HWND hDlg, bool abInitial)
 	               (gpSet->m_isKeyboardHooks == 1) ? BST_CHECKED :
 	               ((gpSet->m_isKeyboardHooks == 0) ? BST_INDETERMINATE : BST_UNCHECKED));
 
-	setHotkeyCheckbox(hDlg, cbUseWinNumber, vkConsole_1, L"+1", L"+Numbers", gpSet->isUseWinNumber);
-	setHotkeyCheckbox(hDlg, cbUseWinArrows, vkWinLeft, L"+Left", L"+Arrows", gpSet->isUseWinArrows);
+	checkDlgButton(hDlg, cbUseWinNumber, gpSet->isUseWinNumber);
+	checkDlgButton(hDlg, cbUseWinArrows, gpSet->isUseWinArrows);
 
 	checkDlgButton(hDlg, cbUseWinTab, gpSet->isUseWinTab);
 
@@ -66,10 +66,20 @@ LRESULT CSetPgKeyboard::OnInitDialog(HWND hDlg, bool abInitial)
 	checkDlgButton(hDlg, cbFixAltOnAltTab, gpSet->isFixAltOnAltTab);
 
 	// Ctrl+BS - del left word
-	setHotkeyCheckbox(hDlg, cbCTSDeleteLeftWord, vkDeleteLeftWord, NULL, NULL, gpSet->AppStd.isCTSDeleteLeftWord);
+	checkDlgButton(hDlg, cbCTSDeleteLeftWord, gpSet->AppStd.isCTSDeleteLeftWord);
 
 	// !!!
 	gpSetCls->CheckSelectionModifiers(hDlg);
 
 	return 0;
+}
+
+void CSetPgKeyboard::OnPostLocalize(HWND hDlg)
+{
+	// Ctrl+Numbers - activate console
+	setHotkeyGroupTitleByHotkey(hDlg, cbUseWinNumber, vkConsole_1, L"+1", L"+Numbers");
+	// Win+Arrows - resize window
+	setHotkeyGroupTitleByHotkey(hDlg, cbUseWinArrows, vkWinLeft, L"+Left", L"+Arrows");
+	// Ctrl+BS - del left word
+	setHotkeyGroupTitleByHotkey(hDlg, cbCTSDeleteLeftWord, vkDeleteLeftWord, NULL, NULL);
 }

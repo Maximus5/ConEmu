@@ -502,39 +502,38 @@ INT_PTR CSetPgBase::pageOpProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lPar
 	return 0;
 }
 
-void CSetPgBase::setHotkeyCheckbox(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWSTR pszFrom, LPCWSTR pszTo, UINT uChecked)
+void CSetPgBase::setHotkeyGroupTitleByHotkey(HWND hDlg, const WORD nCtrlId, const int iHotkeyId, const LPCWSTR pszFirst, const LPCWSTR pszGroup)
 {
 	wchar_t szKeyFull[128] = L"";
 	gpSet->GetHotkeyNameById(iHotkeyId, szKeyFull, false);
 	if (szKeyFull[0] == 0)
 	{
+		_ASSERTE(szKeyFull[0] != 0);
 		EnableWindow(GetDlgItem(hDlg, nCtrlId), FALSE);
 		checkDlgButton(hDlg, nCtrlId, BST_UNCHECKED);
 	}
 	else
 	{
-		if (pszFrom)
+		if (pszFirst)
 		{
-			wchar_t* ptr = (wchar_t*)wcsstr(szKeyFull, pszFrom);
+			auto* ptr = static_cast<wchar_t*>(wcsstr(szKeyFull, pszFirst));
 			if (ptr)
 			{
 				*ptr = 0;
-				if (pszTo)
+				if (pszGroup)
 				{
-					wcscat_c(szKeyFull, pszTo);
+					wcscat_c(szKeyFull, pszGroup);
 				}
 			}
 		}
 
-		CEStr lsText(GetDlgItemTextPtr(hDlg, nCtrlId));
-		LPCWSTR pszTail = lsText.IsEmpty() ? NULL : wcsstr(lsText, L" - ");
+		const CEStr lsText(GetDlgItemTextPtr(hDlg, nCtrlId));
+		const LPCWSTR pszTail = lsText.IsEmpty() ? nullptr : wcsstr(lsText, L" - ");
 		if (pszTail)
 		{
-			CEStr lsNew(szKeyFull, pszTail);
+			const CEStr lsNew(szKeyFull, pszTail);
 			SetDlgItemText(hDlg, nCtrlId, lsNew);
 		}
-
-		checkDlgButton(hDlg, nCtrlId, uChecked);
 	}
 }
 

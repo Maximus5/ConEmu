@@ -103,7 +103,7 @@ public:
 	static DWORD GetModifier(DWORD VkMod, int idx/*1..3*/);
 
 	void  SetHotKey(const ConEmuHotKeyType HkType, BYTE Vk, BYTE vkMod1 = 0, BYTE vkMod2 = 0, BYTE vkMod3 = 0);
-	void  SetVkMod(const ConEmuHotKeyType HkType, DWORD VkMod);
+	void  SetVkMod(const ConEmuHotKeyType HkType, DWORD VkMod, bool rawMod = false);
 	DWORD GetVkMod(const ConEmuHotKeyType HkType) const;
 
 	void  Set(BYTE aVk = 0, ConEmuModifiers aMod = cvk_NULL);

@@ -168,7 +168,8 @@ void ConEmuChord::SetHotKey(const ConEmuHotKeyType HkType, BYTE Vk, BYTE vkMod1/
 	SetVkMod(HkType, MakeHotKey(Vk, vkMod1, vkMod2, vkMod3));
 }
 
-void ConEmuChord::SetVkMod(const ConEmuHotKeyType HkType, DWORD VkMod)
+// rawMod==true: don't substitute CEHOTKEY_NUMHOSTKEY/CEHOTKEY_ARRHOSTKEY
+void ConEmuChord::SetVkMod(const ConEmuHotKeyType HkType, DWORD VkMod, bool rawMod)
 {
 	// Init
 	const BYTE Vk = LOBYTE(VkMod);
@@ -177,12 +178,12 @@ void ConEmuChord::SetVkMod(const ConEmuHotKeyType HkType, DWORD VkMod)
 	// Check modifiers
 	const DWORD vkLeft = (VkMod & CEHOTKEY_MODMASK);
 
-	if ((HkType == chk_NumHost) || (vkLeft == CEHOTKEY_NUMHOSTKEY))
+	if (!rawMod && ((HkType == chk_NumHost) || (vkLeft == CEHOTKEY_NUMHOSTKEY)))
 	{
 		_ASSERTE((HkType == chk_NumHost) && (vkLeft == CEHOTKEY_NUMHOSTKEY));
 		Mod = cvk_NumHost;
 	}
-	else if ((HkType == chk_ArrHost) || (vkLeft == CEHOTKEY_ARRHOSTKEY))
+	else if (!rawMod && ((HkType == chk_ArrHost) || (vkLeft == CEHOTKEY_ARRHOSTKEY)))
 	{
 		_ASSERTE((HkType == chk_ArrHost) && (vkLeft == CEHOTKEY_ARRHOSTKEY));
 		Mod = cvk_ArrHost;
@@ -255,8 +256,8 @@ DWORD ConEmuChord::GetVkMod(const ConEmuHotKeyType HkType) const
 
 LPCWSTR ConEmuChord::GetHotkeyName(wchar_t(&szFull)[128], const DWORD aVkMod, const ConEmuHotKeyType HkType, const bool bShowNone)
 {
-	ConEmuChord Key;
-	Key.SetVkMod(HkType, aVkMod);
+	ConEmuChord Key{};
+	Key.SetVkMod(HkType, aVkMod, true);
 
 	wchar_t szName[32];
 	szFull[0] = 0;

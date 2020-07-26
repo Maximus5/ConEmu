@@ -46,7 +46,8 @@ public:
 
 public:
 	// Methods
-	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
+	LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
+	void OnPostLocalize(HWND hDlg) override;
 
 protected:
 	// Members

@@ -186,7 +186,12 @@ public:
 	virtual bool SelectNextItem(bool bNext, bool bProcess) { return false; };
 
 public:
-	// Members
-	static void setHotkeyCheckbox(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWSTR pszFrom, LPCWSTR pszTo, UINT uChecked);
+	// Update string like "Win+Numbers - activate console" to actual hotkey
+	// Function took proper hotkey and appends the tail (text after " - ")
+	// pszFirst - nullptr or the key of the iHotkeyId, e.g. "+1" (numbers are Ctrl+1, Ctrl+2, ... Ctrl+0)
+	// pszGroup - replace pszFirst with, .e.g. "+Numbers"
+	static void setHotkeyGroupTitleByHotkey(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWSTR pszFirst, LPCWSTR pszGroup);
+	// "Paste mode #1 (Shift+Ins)"
+	// "Ctrl+Alt - drag ConEmu window"
 	static void setCtrlTitleByHotkey(HWND hDlg, WORD nCtrlId, int iHotkeyId, LPCWSTR pszFrom, LPCWSTR pszTo);
 };
