@@ -48,19 +48,29 @@ static struct StrDistinctControls
 	DWORD nOverrideID;
 	DWORD nCtrls[32];
 } DistinctControls[] = {
-	{0, {rbAppDistinctElevatedOn, rbAppDistinctElevatedOff, rbAppDistinctElevatedIgnore, stAppDistinctName, tAppDistinctName}},
-	{cbExtendFontsOverride, {cbExtendFonts, stExtendFontBoldIdx, lbExtendFontBoldIdx, stExtendFontItalicIdx, lbExtendFontItalicIdx, stExtendFontNormalIdx, lbExtendFontNormalIdx}},
-	{cbCursorOverride, {
-		rCursorV, rCursorH, rCursorB/**/, rCursorR/**/, cbCursorColor, cbCursorBlink, cbCursorIgnoreSize, tCursorFixedSize, stCursorFixedSize, tCursorMinSize, stCursorMinSize,
-		cbInactiveCursor/**/, rInactiveCursorV/**/, rInactiveCursorH/**/, rInactiveCursorB/**/, rInactiveCursorR/**/, cbInactiveCursorColor/**/, cbInactiveCursorBlink/**/, cbInactiveCursorIgnoreSize/**/, tInactiveCursorFixedSize/**/, stInactiveCursorFixedSize, tInactiveCursorMinSize, stInactiveCursorMinSize,
+	{0, {
+		rbAppDistinctElevatedOn, rbAppDistinctElevatedOff, rbAppDistinctElevatedIgnore, stAppDistinctName, tAppDistinctName,
 	}},
-	{cbColorsOverride, {lbColorsOverride}},
+	{cbExtendFontsOverride, {
+		cbExtendFonts, stExtendFontBoldIdx, lbExtendFontBoldIdx, stExtendFontItalicIdx, lbExtendFontItalicIdx, stExtendFontNormalIdx,
+		lbExtendFontNormalIdx,
+	}},
+	{cbCursorOverride, {
+		rCursorV, rCursorH, rCursorB, rCursorR, cbCursorColor, cbCursorBlink, cbCursorIgnoreSize, tCursorFixedSize, stCursorFixedSize, tCursorMinSize,
+		stCursorMinSize, cbInactiveCursor, rInactiveCursorV, rInactiveCursorH, rInactiveCursorB, rInactiveCursorR, cbInactiveCursorColor,
+		cbInactiveCursorBlink, cbInactiveCursorIgnoreSize, cbInactiveCursorSubstHidden, tInactiveCursorFixedSize, stInactiveCursorFixedSize,
+		tInactiveCursorMinSize, stInactiveCursorMinSize,
+	}},
+	{cbColorsOverride, {
+		lbColorsOverride
+	}},
 	{cbClipboardOverride, {
 		gbCopyingOverride, cbCTSDetectLineEnd, cbCTSBashMargin, cbCTSTrimTrailing, stCTSEOL, lbCTSEOL,
 		gbSelectingOverride, cbCTSShiftArrowStartSel,
 		gbPasteM1, rPasteM1MultiLine, rPasteM1SingleLine, rPasteM1FirstLine, rPasteM1Nothing, cbPasteM1Posix,
 		gbPasteM2, rPasteM2MultiLine, rPasteM2SingleLine, rPasteM2FirstLine, rPasteM2Nothing, cbPasteM2Posix,
-		gbPromptOverride, cbCTSClickPromptPosition, cbCTSDeleteLeftWord}},
+		gbPromptOverride, cbCTSClickPromptPosition, cbCTSDeleteLeftWord
+	}},
 };
 
 CSetPgApps::CSetPgApps()
@@ -570,7 +580,8 @@ INT_PTR CSetPgApps::OnButtonClicked(HWND hDlg, HWND hBtn, WORD nCtrlId)
 	case cbInactiveCursorColor:
 	case cbInactiveCursorBlink:
 	case cbInactiveCursorIgnoreSize:
-		OnButtonClicked_Cursor(mh_Child, nCtrlId, isChecked(hDlg, nCtrlId), pApp);
+	case cbInactiveCursorSubstHidden:
+		OnButtonClicked_Cursor(mh_Child, nCtrlId, isChecked(mh_Child, nCtrlId), pApp);
 		mb_Redraw = true;
 		break;
 
