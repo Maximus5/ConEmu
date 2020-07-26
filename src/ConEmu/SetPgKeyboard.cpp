@@ -77,9 +77,9 @@ LRESULT CSetPgKeyboard::OnInitDialog(HWND hDlg, bool abInitial)
 void CSetPgKeyboard::OnPostLocalize(HWND hDlg)
 {
 	// Ctrl+Numbers - activate console
-	setHotkeyGroupTitleByHotkey(hDlg, cbUseWinNumber, vkConsole_1, L"+1", L"+Numbers");
+	setCtrlTitleByHotkey(hDlg, cbUseWinNumber, vkConsole_1, nullptr, L" - ", L"Numbers");
 	// Win+Arrows - resize window
-	setHotkeyGroupTitleByHotkey(hDlg, cbUseWinArrows, vkWinLeft, L"+Left", L"+Arrows");
+	setCtrlTitleByHotkey(hDlg, cbUseWinArrows, vkWinLeft, nullptr, L" - ", L"Arrows");
 	// Ctrl+BS - del left word
-	setHotkeyGroupTitleByHotkey(hDlg, cbCTSDeleteLeftWord, vkDeleteLeftWord, NULL, NULL);
+	setCtrlTitleByHotkey(hDlg, cbCTSDeleteLeftWord, vkDeleteLeftWord, nullptr, L" - ", nullptr);
 }

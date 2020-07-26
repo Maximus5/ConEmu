@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../UnitTests/gtest.h"
 
 #include "HotkeyChord.h"
+#include "SetPgBase.h"
 
 TEST(ConEmuHotKey,Tests)
 {
@@ -64,5 +65,44 @@ TEST(ConEmuHotKey,Tests)
 		HK.SetHotKey(HkType, Tests[i].Vk, Tests[i].Mod[0], Tests[i].Mod[1], Tests[i].Mod[2]);
 		EXPECT_EQ(HK.Mod, Tests[i].ModTest);
 		EXPECT_STREQ(ConEmuChord::GetHotkeyName(szFull, HK.GetVkMod(HkType), HkType, true), Tests[i].KeyName);
+	}
+}
+
+TEST(ConEmuHotKey, GroupReplacement)
+{
+	wchar_t szFull[128];
+
+	wcscpy_s(szFull, L"Left");
+	CSetPgBase::ApplyHotkeyGroupName(szFull, L"Arrows");
+	EXPECT_STREQ(szFull, L"Arrows");
+
+	wcscpy_s(szFull, L"Win+Left");
+	CSetPgBase::ApplyHotkeyGroupName(szFull, L"Arrows");
+	EXPECT_STREQ(szFull, L"Win+Arrows");
+
+	wcscpy_s(szFull, L"Ctrl+Alt+1");
+	CSetPgBase::ApplyHotkeyGroupName(szFull, L"Numbers");
+	EXPECT_STREQ(szFull, L"Ctrl+Alt+Numbers");
+}
+
+TEST(ConEmuHotKey, LabelHotkeyReplacement)
+{
+	struct TestCases
+	{
+		LPCWSTR label;
+		LPCWSTR hotkey;
+		LPCWSTR from;
+		LPCWSTR to;
+		LPCWSTR expected;
+	} tests[] = {
+		{L"Paste mode #1 (Shift+Ins)", L"Ctrl+V", L"(", L")", L"Paste mode #1 (Ctrl+V)"},
+		{L"Ctrl+Alt - drag ConEmu window", L"Win", nullptr, L" - ", L"Win - drag ConEmu window"},
+		{L"Win+Number - activate console", L"Ctrl+Number", nullptr, L" - ", L"Ctrl+Number - activate console"},
+	};
+	for (const auto& test : tests)
+	{
+		CEStr label(test.label);
+		const CEStr result = CSetPgBase::ApplyHotkeyToTitle(label, test.from, test.to, test.hotkey);
+		EXPECT_STREQ(result.ms_Val, test.expected);
 	}
 }

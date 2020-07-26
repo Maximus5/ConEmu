@@ -73,8 +73,8 @@ LRESULT CSetPgPaste::OnInitDialog(HWND hDlg, bool abInitial)
 
 void CSetPgPaste::OnPostLocalize(HWND hDlg)
 {
-	setCtrlTitleByHotkey(hDlg, gbPasteM1, vkPasteText, L"(", L")");
-	setCtrlTitleByHotkey(hDlg, gbPasteM2, vkPasteFirstLine, L"(", L")");
+	setCtrlTitleByHotkey(hDlg, gbPasteM1, vkPasteText, L"(", L")", nullptr);
+	setCtrlTitleByHotkey(hDlg, gbPasteM2, vkPasteFirstLine, L"(", L")", nullptr);
 }
 
 // cbClipShiftIns, rPasteM1MultiLine, rPasteM1FirstLine, rPasteM1SingleLine, rPasteM1Nothing
