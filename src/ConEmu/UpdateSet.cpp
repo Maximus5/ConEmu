@@ -27,16 +27,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #define HIDE_USE_EXCEPTION_INFO
-#include "header.h"
-#include "UpdateSet.h"
+
+#include "Header.h"
+
 #include "ConEmu.h"
 #include "OptionsClass.h"
+#include "UpdateSet.h"
 
 ConEmuUpdateSettings::ConEmuUpdateSettings()
 {
 }
 
-LPCWSTR ConEmuUpdateSettings::UpdateVerLocation()
+LPCWSTR ConEmuUpdateSettings::UpdateVerLocation() const
 {
 	if (szUpdateVerLocation && *szUpdateVerLocation)
 		return szUpdateVerLocation;
@@ -53,7 +55,7 @@ LPCWSTR ConEmuUpdateSettings::UpdateVerLocationDefault()
 	return pszDefault;
 }
 
-bool ConEmuUpdateSettings::IsVerLocationDeprecated(LPCWSTR asNewIniLocation)
+bool ConEmuUpdateSettings::IsVerLocationDeprecated(LPCWSTR asNewIniLocation) const
 {
 	if (!asNewIniLocation || !*asNewIniLocation)
 	{
@@ -138,7 +140,8 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	SafeFree(szUpdateExeCmdLine);
 
 	bool bWinRar = false;
-	wchar_t* pszArcPath = NULL; BOOL bWin64 = IsWindows64();
+	wchar_t* pszArcPath = nullptr;
+	const BOOL bWin64 = IsWindows64();
 	for (int i = 0; !(pszArcPath && *pszArcPath) && (i <= 5); i++)
 	{
 		SettingsRegistry regArc;
@@ -186,6 +189,8 @@ void ConEmuUpdateSettings::ResetToDefaults()
 				}
 			}
 			break;
+		default:
+			_ASSERTE(FALSE && "case was not processed");
 		}
 	}
 	if (!pszArcPath || !*pszArcPath)
@@ -195,8 +200,8 @@ void ConEmuUpdateSettings::ResetToDefaults()
 	else
 	{
 		LPCWSTR pszExt = PointToExt(pszArcPath);
-		int cchMax = lstrlen(pszArcPath)+64;
-		szUpdateArcCmdLineDef = (wchar_t*)malloc(cchMax*sizeof(wchar_t));
+		const auto cchMax = wcslen(pszArcPath) + 64;
+		szUpdateArcCmdLineDef = static_cast<wchar_t*>(malloc(cchMax * sizeof(wchar_t)));
 		if (szUpdateArcCmdLineDef)
 		{
 			if (pszExt && lstrcmpi(pszExt, L".exe") == 0)
@@ -399,7 +404,7 @@ BYTE ConEmuUpdateSettings::UpdateDownloadSetup()
 	return isSetupDetected ? isSetupDetected : 2;
 }
 
-LPCWSTR ConEmuUpdateSettings::UpdateExeCmdLine(wchar_t (&szCPU)[4])
+LPCWSTR ConEmuUpdateSettings::UpdateExeCmdLine(wchar_t (&szCPU)[4]) const
 {
 	wcscpy_c(szCPU, isSetup64 ? L"x64" : L"x86");
 	if (szUpdateExeCmdLine && *szUpdateExeCmdLine)
@@ -407,14 +412,14 @@ LPCWSTR ConEmuUpdateSettings::UpdateExeCmdLine(wchar_t (&szCPU)[4])
 	return szUpdateExeCmdLineDef ? szUpdateExeCmdLineDef : L"";
 }
 
-LPCWSTR ConEmuUpdateSettings::UpdateArcCmdLine()
+LPCWSTR ConEmuUpdateSettings::UpdateArcCmdLine() const
 {
 	if (szUpdateArcCmdLine && *szUpdateArcCmdLine)
 		return szUpdateArcCmdLine;
 	return szUpdateArcCmdLineDef ? szUpdateArcCmdLineDef : L"";;
 }
 
-LPCWSTR ConEmuUpdateSettings::GetUpdateInetToolCmd()
+LPCWSTR ConEmuUpdateSettings::GetUpdateInetToolCmd() const
 {
 	static wchar_t szDefault[] = L"\"%ConEmuBaseDir%\\ConEmuC.exe\" -download %1 %2";
 	LPCWSTR pszCommand = (isUpdateInetTool && szUpdateInetTool && *szUpdateInetTool)
@@ -424,17 +429,18 @@ LPCWSTR ConEmuUpdateSettings::GetUpdateInetToolCmd()
 
 void ConEmuUpdateSettings::CheckHourlyUpdate()
 {
-	const DWORD dwCurTick = GetTickCount();
-	if (!dwLastUpdateCheck)
+	const auto updateDelaySeconds = std::chrono::minutes(60);
+	const auto now = std::chrono::system_clock::now();
+	if (lastUpdateCheck == std::chrono::system_clock::time_point{})
 	{
-		dwLastUpdateCheck = dwCurTick;
+		lastUpdateCheck = now;
 	}
 	else
 	{
-		DWORD dwDelta = (dwCurTick - dwLastUpdateCheck);
-		if (dwDelta >= (60*60*1000))
+		const auto dwDelta = std::chrono::duration_cast<std::chrono::seconds>(now - lastUpdateCheck);
+		if (dwDelta >= updateDelaySeconds)
 		{
-			dwLastUpdateCheck = dwCurTick;
+			lastUpdateCheck = now;
 			gpConEmu->CheckUpdates(FALSE);
 		}
 	}

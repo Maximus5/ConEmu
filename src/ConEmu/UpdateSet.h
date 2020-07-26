@@ -29,14 +29,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <chrono>
+
 struct ConEmuUpdateSettings
 {
 public:
 	wchar_t *szUpdateVerLocation = nullptr; // ConEmu latest version location info
-	LPCWSTR UpdateVerLocation();
-	LPCWSTR UpdateVerLocationDefault();
+	LPCWSTR UpdateVerLocation() const;
+	static LPCWSTR UpdateVerLocationDefault();
 	void SetUpdateVerLocation(LPCWSTR asNewIniLocation);
-	bool IsVerLocationDeprecated(LPCWSTR asNewIniLocation);
+	bool IsVerLocationDeprecated(LPCWSTR asNewIniLocation) const;
 
 	bool isUpdateCheckOnStartup = false;
 	bool isUpdateCheckHourly = false;
@@ -57,7 +59,7 @@ public:
 
 	bool isUpdateInetTool = false; // Use external downloader like `wget` or `curl`
 	wchar_t *szUpdateInetTool = nullptr; // "<path>\curl.exe" -L %1 -o %2  :: %1 is url address, %2 is dst file name
-	LPCWSTR GetUpdateInetToolCmd();
+	LPCWSTR GetUpdateInetToolCmd() const;
 
 	bool isUpdateUseProxy = false;
 	wchar_t *szUpdateProxy = nullptr; // "Server:port"
@@ -66,16 +68,16 @@ public:
 
 	// "%1"-archive or setup file, "%2"-ConEmu.exe folder, "%3"-x86/x64, "%4"-ConEmu PID
 	wchar_t *szUpdateExeCmdLine = nullptr, *szUpdateExeCmdLineDef = nullptr; // isUpdateDownloadSetup==1
-	LPCWSTR UpdateExeCmdLine(wchar_t (&szCPU)[4]);
+	LPCWSTR UpdateExeCmdLine(wchar_t (&szCPU)[4]) const;
 	wchar_t *szUpdateArcCmdLine = nullptr, *szUpdateArcCmdLineDef = nullptr; // isUpdateDownloadSetup==2
-	LPCWSTR UpdateArcCmdLine();
+	LPCWSTR UpdateArcCmdLine() const;
 
 	wchar_t *szUpdatePostUpdateCmd = nullptr; // Юзер может чего-то свое делать с распакованными файлами
 
 	wchar_t *szUpdateDownloadPath = nullptr; // "%TEMP%\\ConEmu"
 	bool isUpdateLeavePackages = false;
 
-	DWORD dwLastUpdateCheck = 0;
+	std::chrono::system_clock::time_point lastUpdateCheck{};
 
 public:
 	ConEmuUpdateSettings();

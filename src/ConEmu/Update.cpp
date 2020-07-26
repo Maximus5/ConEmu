@@ -171,7 +171,7 @@ void CConEmuUpdate::StartCheckProcedure(UINT abShowMessages)
 {
 	//DWORD nWait = WAIT_OBJECT_0;
 
-	if (InUpdate() != us_NotStarted)
+	if ((InUpdate() != us_NotStarted) || (mn_InShowMsgBox > 0))
 	{
 		// Already in update procedure
 		if ((m_UpdateStep == us_PostponeUpdate) || (m_UpdateStep == us_ExitAndUpdate))
@@ -197,7 +197,7 @@ void CConEmuUpdate::StartCheckProcedure(UINT abShowMessages)
 		return;
 	}
 
-	gpSet->UpdSet.dwLastUpdateCheck = GetTickCount();
+	gpSet->UpdSet.lastUpdateCheck = std::chrono::system_clock::now();
 
 	// Сразу проверим, как нужно будет запускаться
 	bNeedRunElevation = NeedRunElevation();
