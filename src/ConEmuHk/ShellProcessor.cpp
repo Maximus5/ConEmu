@@ -334,6 +334,21 @@ HWND CShellProc::FindCheckConEmuWindow()
 	return h;
 }
 
+void CShellProc::LogExitLine(const int rc, const int line) const
+{
+	wchar_t szInfo[200];
+	msprintf(szInfo, countof(szInfo),
+		L"PrepareExecuteParms rc=%i T:%u %u:%u:%u W:%u I:%u,%u,%u D:%u H:%u S:%u,%u line=%i",
+		/*rc*/(rc), /*T:*/gbPrepareDefaultTerminal ? 1 : 0,
+		(UINT)mn_ImageSubsystem, (UINT)mn_ImageBits, (UINT)mb_isCurrentGuiClient,
+		/*W:*/(UINT)mb_WasSuspended,
+		/*I:*/(UINT)mb_NeedInjects, (UINT)mb_PostInjectWasRequested, (UINT)mb_Opt_DontInject,
+		/*D:*/(UINT)mb_DebugWasRequested, /*H:*/(UINT)mb_HiddenConsoleDetachNeed,
+		/*S:*/(UINT)mb_Opt_SkipNewConsole, (UINT)mb_Opt_SkipCmdStart,
+		line);
+	LogShellString(szInfo);
+}
+
 wchar_t* CShellProc::str2wcs(const char* psz, UINT anCP)
 {
 	if (!psz)
@@ -634,7 +649,7 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 	BOOL lbUseDosBox = FALSE;
 	CEStr szDosBoxExe, szDosBoxCfg;
 	BOOL lbComSpec = FALSE; // TRUE - если %COMSPEC% отбрасывается
-	int nCchSize = 0;
+	size_t nCchSize = 0;
 	BOOL lbEndQuote = FALSE, lbCheckEndQuote = FALSE;
 	#if 0
 	bool lbNewGuiConsole = false;
@@ -1019,12 +1034,12 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 		goto wrap;
 	}
 
-	nCchSize = (asFile ? lstrlen(asFile) : 0) + (asParam ? lstrlen(asParam) : 0) + 64;
+	nCchSize = (asFile ? wcslen(asFile) : 0) + (asParam ? wcslen(asParam) : 0) + 64;
 	if (lbUseDosBox)
 	{
 		// Escaping of special symbols, dosbox arguments, etc.
 		nCchSize += (nCchSize)
-			+ lstrlen(szDosBoxExe) + lstrlen(szDosBoxCfg) + 128
+			+ wcslen(szDosBoxExe) + wcslen(szDosBoxCfg) + 128
 			+ (MAX_PATH * 2/*cd and others*/);
 	}
 
@@ -1422,6 +1437,324 @@ void CShellProc::CheckIsCurrentGuiClient()
 	mb_isCurrentGuiClient = ((gbAttachGuiClient != FALSE) || (ghAttachGuiClient != NULL));
 }
 
+bool CShellProc::IsAnsiConLoader(LPCWSTR asFile, LPCWSTR asParam)
+{
+	bool bAnsiCon = false;
+	LPCWSTR params[] = { asFile, asParam };
+
+	for (const auto* psz : params)
+	{
+		if (!psz || !*psz)
+			continue;
+
+		#ifdef _DEBUG
+		bool bAnsiConFound = false;
+		LPCWSTR pszDbg = psz;
+		ms_ExeTmp.Empty();
+		if ((pszDbg = NextArg(pszDbg, ms_ExeTmp)))
+		{
+			CharUpperBuff(ms_ExeTmp.ms_Val, lstrlen(ms_ExeTmp));
+			LPCWSTR names[] = { L"ANSI-LLW", L"ANSICON" };
+			for (const auto* name : names)
+			{
+				pszDbg = wcsstr(ms_ExeTmp, name);
+				if (pszDbg && (pszDbg[lstrlen(name)] != L'\\'))
+				{
+					bAnsiConFound = true;
+					break;
+				}
+			}
+		}
+		#endif
+
+		ms_ExeTmp.Empty();
+		if (!NextArg(psz, ms_ExeTmp))
+		{
+			// AnsiCon exists in command line?
+			_ASSERTEX(bAnsiConFound==false);
+			continue;
+		}
+
+		CharUpperBuff(ms_ExeTmp.ms_Val, lstrlen(ms_ExeTmp));
+		psz = PointToName(ms_ExeTmp);
+		if ((lstrcmp(psz, L"ANSI-LLW.EXE") == 0) || (lstrcmp(psz, L"ANSI-LLW") == 0)
+			|| (lstrcmp(psz, L"ANSICON.EXE") == 0) || (lstrcmp(psz, L"ANSICON") == 0))
+		{
+			bAnsiCon = true;
+			break;
+		}
+
+		_ASSERTEX(bAnsiConFound==false);
+	}
+
+	if (bAnsiCon)
+	{
+		//_ASSERTEX(FALSE && "AnsiCon execution will be blocked");
+		HANDLE hStdOut = GetStdHandle(STD_ERROR_HANDLE);
+		LPCWSTR sErrMsg = L"\nConEmu blocks ANSICON injection\n";
+		CONSOLE_SCREEN_BUFFER_INFO csbi = {sizeof(csbi)};
+		if (GetConsoleScreenBufferInfo(hStdOut, &csbi) && (csbi.dwCursorPosition.X == 0))
+		{
+			sErrMsg++;
+		}
+		DWORD nLen = lstrlen(sErrMsg);
+		WriteConsoleW(hStdOut, sErrMsg, nLen, &nLen, NULL);
+		LogShellString(L"ANSICON was blocked");
+		return true;
+	}
+
+	return false;
+}
+
+// In some cases we need to pre-replace command line,
+// for example, in cmd prompt: start -new_console:z
+bool CShellProc::PrepareNewConsoleInFile(
+	const CmdOnCreateType aCmd, LPCWSTR& asFile, LPCWSTR& asParam, CEStr& lsReplaceFile, CEStr& lsReplaceParm, CEStr& exeName)
+{
+	if (!asFile || !*asFile)
+		return false;
+	if ((wcsstr(asFile, L"-new_console") == nullptr)
+		&& (wcsstr(asFile, L"-cur_console") == nullptr))
+		return false;
+
+	bool isNewConsoleArg = false;
+	// To be sure, it's our "-new_console" or "-cur_console" switch,
+	// but not a something else...
+	RConStartArgs lTestArg;
+	lTestArg.pszSpecialCmd = lstrdup(asFile);
+	if (lTestArg.ProcessNewConArg() > 0)
+	{
+		// pszSpecialCmd is supposed to be empty now, because asFile can contain only one "token"
+		_ASSERTE(lTestArg.pszSpecialCmd == NULL || *lTestArg.pszSpecialCmd == 0);
+		lsReplaceParm = lstrmerge(asFile, (asFile && *asFile && asParam && *asParam) ? L" " : nullptr, asParam);
+		_ASSERTE(!lsReplaceParm.IsEmpty());
+		if (gbIsCmdProcess
+			&& !GetStartingExeName(nullptr, lsReplaceParm, exeName)
+			)
+		{
+			// when just "start" is executed from "cmd.exe" - it starts itself in the new console
+			CEStr lsTempCmd;
+			if (GetModulePathName(nullptr, lsTempCmd))
+			{
+				exeName.Set(PointToName(lsTempCmd));
+				// It's supposed to be "cmd.exe", so there must not be spaces in file name
+				_ASSERTE(!wcschr(exeName, L' '));
+				// Insert "cmd.exe " before "-new_console" switches for clearness
+				if (aCmd == eCreateProcess)
+				{
+					lsReplaceParm = lstrmerge(exeName, L" ", lsReplaceParm);
+				}
+			}
+		}
+		if (!exeName.IsEmpty())
+		{
+			lsReplaceFile.Set(exeName.ms_Val);
+			asFile = lsReplaceFile.ms_Val;
+		}
+		isNewConsoleArg = true;
+		asParam = lsReplaceParm.ms_Val;
+	}
+
+	return isNewConsoleArg;
+}
+
+#define LogExit(frc) LogExitLine(frc, __LINE__)
+
+bool CShellProc::CheckForDefaultTerminal(
+	CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags, const DWORD* anCreateFlags, const DWORD* anShowCmd,
+	bool& bIgnoreSuspended, bool& bDebugWasRequested, bool& lbGnuDebugger, bool& bConsoleMode)
+{
+	if (!gbPrepareDefaultTerminal)
+		return true; // nothing to do
+	
+	lbGnuDebugger = IsGDB(ms_ExeTmp); // Allow GDB in Lazarus etc.
+
+	if (aCmd == eCreateProcess)
+	{
+		if (anCreateFlags && ((*anCreateFlags) & (CREATE_NO_WINDOW|DETACHED_PROCESS))
+			&& !lbGnuDebugger
+			)
+		{
+			if (gbIsVsCode
+				&& (lstrcmpi(PointToName(ms_ExeTmp), L"cmd.exe") == 0))
+			{
+				// :: Code.exe >> "cmd /c start /wait" >> "cmd.exe"
+				// :: have to hook both cmd to get second in ConEmu tab
+				// :: first cmd is started with CREATE_NO_WINDOW flag!
+				LogShellString(L"Forcing mb_NeedInjects for cmd.exe started from VisuaStudio Code");
+				mb_NeedInjects = true;
+				bConsoleMode = true;
+			}
+
+			// Creating process without console window, not our case
+			LogExit(0);
+			return false;
+		}
+		// GDB console debugging
+		if (gbIsGdbHost
+			&& (anCreateFlags && ((*anCreateFlags) & (DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS)))
+			)
+		{
+			if (FindImageSubsystem(ms_ExeTmp, mn_ImageSubsystem, mn_ImageBits))
+			{
+				if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+				{
+					mb_DebugWasRequested = TRUE;
+					LogExit(0);
+					return false;
+				}
+			}
+		}
+	}
+	else if (aCmd == eShellExecute)
+	{
+		// We need to hook only "Run as administrator" action, and only console applications (Subsystem will be checked below)
+		if (!asAction || (lstrcmpi(asAction, L"runas") != 0))
+		{
+			// This may be, for example, starting of "Taskmgr.exe" from "explorer.exe"
+			LogExit(0);
+			return false;
+		}
+		// Skip some executions
+		if (anShellFlags
+			&& ((*anShellFlags) & (SEE_MASK_CLASSNAME|SEE_MASK_CLASSKEY|SEE_MASK_IDLIST|SEE_MASK_INVOKEIDLIST)))
+		{
+			LogExit(0);
+			return false;
+		}
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Unsupported in Default terminal");
+		LogExit(0);
+		return false;
+	}
+
+	if (anShowCmd && (*anShowCmd == SW_HIDE)
+		&& !lbGnuDebugger
+		)
+	{
+		// Creating process with window initially hidden, not our case
+		LogExit(0);
+		return false;
+	}
+
+	// Started from explorer/taskmgr - CREATE_SUSPENDED is set (why?)
+	if (mb_WasSuspended && anCreateFlags)
+	{
+		_ASSERTE(anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED));
+		_ASSERTE(aCmd == eCreateProcess);
+		_ASSERTE(gbPrepareDefaultTerminal);
+		// Actually, this branch can be activated from any GUI application
+		// For example, Issue 1516: Dopus, notepad, etc.
+		if (!((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS)))
+		{
+			// Well, there is a chance, that CREATE_SUSPENDED was intended for
+			// setting hooks from current process with SetThreadContext, but
+			// on the other hand, we get here if only user himself activates
+			// "Default terminal" feature for this process. So, I believe,
+			// this decision is almost safe.
+			bIgnoreSuspended = true;
+		}
+	}
+
+	// Issue 1312: .Net applications runs as "CREATE_SUSPENDED" when debugging in VS
+	//    Also: How to Disable the Hosting Process
+	//    http://msdn.microsoft.com/en-us/library/ms185330.aspx
+	if (anCreateFlags && ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS|(bIgnoreSuspended?0:CREATE_SUSPENDED))))
+	{
+		#if 0
+		// Для поиска трапов в дереве запускаемых процессов
+		if (m_SrvMapping.Flags & CECF_BlockChildDbg)
+		{
+			(*anCreateFlags) &= ~(DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS);
+		}
+		else
+		#endif
+		{
+			bDebugWasRequested = true;
+		}
+		// Пока продолжим, нам нужно определить, а консольное ли это приложение?
+	}
+
+	return true;
+}
+
+void CShellProc::CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlags, bool lbGnuDebugger,
+		bool& bDebugWasRequested, bool& lbGuiApp, bool& bVsNetHostRequested)
+{
+	if (exeName.IsEmpty())
+		return;
+
+	const auto nLen = exeName.GetLen();
+	// Длина больше 0 и не заканчивается слешом
+	const BOOL lbMayBeFile = (nLen > 0) && (exeName[nLen - 1] != L'\\') && (exeName[nLen - 1] != L'/');
+
+	mn_ImageBits = 0;
+	mn_ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
+
+	if (!lbMayBeFile)
+	{
+		mn_ImageBits = 0;
+		mn_ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
+	}
+	else if (FindImageSubsystem(exeName, mn_ImageSubsystem, mn_ImageBits))
+	{
+		// gh-681: NodeJSPortable.exe just runs "Server.cmd"
+		if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE)
+			mn_ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+		lbGuiApp = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
+		if (gbPrepareDefaultTerminal)
+		{
+			if (IsVsNetHostExe(exeName))
+			{
+				// *.vshost.exe
+				bVsNetHostRequested = true;
+				// Intended for .Net debugging?
+				if (anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED))
+				{
+					bDebugWasRequested = true;
+				}
+			} // end of check "starting *.vshost.exe" (seems like not used in latest VS & .Net)
+			else if (gbIsVSDebug && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI))
+			{
+				// Intended for .Net debugging (without native support)
+				if (anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED)
+					// DEBUG_XXX flags are processed above explicitly
+					&& !((*anCreateFlags) & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS)))
+				{
+					bDebugWasRequested = true;
+				}
+			} // end of check "starting C# console app from msvsmon.exe"
+			else if (lbGnuDebugger)
+			{
+				bDebugWasRequested = true;
+				mb_PostInjectWasRequested = true;
+			} // end of check "starting new gnu debugger"
+			else if (lstrcmpi(gsExeName, exeName))
+			{
+				// Idle from (Pythonw.exe, gh-457), VisualStudio Code (code.exe), and so on
+				// -- bVsNetHostRequested = true;
+				CEStr lsMsg(L"Forcing mb_NeedInjects for `", gsExeName, L"` started from `", gsExeName, L"`");
+				LogShellString(lsMsg);
+				mb_NeedInjects = true;
+			} // end of check "<starting exe> == <current exe>"
+		}
+	}
+
+#ifdef _DEBUG
+	const LPCWSTR pszName = PointToName(exeName);
+	if (lstrcmpi(pszName, L"ANSI-LLW.exe") == 0)
+	{
+		_ASSERTEX(FALSE && "Trying to start 'ANSI-LLW.exe'");
+	}
+	else if (lstrcmpi(pszName, L"ansicon.exe") == 0)
+	{
+		_ASSERTEX(FALSE && "Trying to start 'ansicon.exe'");
+	}
+#endif
+}
+
 // -1: if need to block execution
 //  0: continue
 //  1: continue, changes was made
@@ -1485,66 +1818,12 @@ int CShellProc::PrepareExecuteParms(
 		CEAnsi::WriteAnsiLogW(L"\n", 1);
 	}
 
-
-	// #HOOKS Move to external function
-	bool bAnsiCon = false;
-	for (int i = 0; (i <= 1); i++)
+	if (IsAnsiConLoader(asFile, asParam))
 	{
-		LPCWSTR psz = (i == 0) ? asFile : asParam;
-		if (!psz || !*psz)
-			continue;
-
-		#ifdef _DEBUG
-		bool bAnsiConFound = false;
-		LPCWSTR pszDbg = psz;
-		ms_ExeTmp.Empty();
-		if ((pszDbg = NextArg(pszDbg, ms_ExeTmp)))
-		{
-			CharUpperBuff(ms_ExeTmp.ms_Val, lstrlen(ms_ExeTmp));
-			if ((pszDbg = wcsstr(ms_ExeTmp, L"ANSI-LLW")) && (pszDbg[lstrlen(L"ANSI-LLW")] != L'\\'))
-				bAnsiConFound = true;
-			else if ((pszDbg = wcsstr(ms_ExeTmp, L"ANSICON")) && (pszDbg[lstrlen(L"ANSICON")] != L'\\'))
-				bAnsiConFound = true;
-		}
-		#endif
-
-		ms_ExeTmp.Empty();
-		if (!NextArg(psz, ms_ExeTmp))
-		{
-			// AnsiCon exists in command line?
-			_ASSERTEX(bAnsiConFound==false);
-			continue;
-		}
-
-		CharUpperBuff(ms_ExeTmp.ms_Val, lstrlen(ms_ExeTmp));
-		psz = PointToName(ms_ExeTmp);
-		if ((lstrcmp(psz, L"ANSI-LLW.EXE") == 0) || (lstrcmp(psz, L"ANSI-LLW") == 0)
-			|| (lstrcmp(psz, L"ANSICON.EXE") == 0) || (lstrcmp(psz, L"ANSICON") == 0))
-		{
-			bAnsiCon = true;
-			break;
-		}
-
-		_ASSERTEX(bAnsiConFound==false);
-	}
-
-	if (bAnsiCon)
-	{
-		//_ASSERTEX(FALSE && "AnsiCon execution will be blocked");
-		HANDLE hStdOut = GetStdHandle(STD_ERROR_HANDLE);
-		LPCWSTR sErrMsg = L"\nConEmu blocks ANSICON injection\n";
-		CONSOLE_SCREEN_BUFFER_INFO csbi = {sizeof(csbi)};
-		if (GetConsoleScreenBufferInfo(hStdOut, &csbi) && (csbi.dwCursorPosition.X == 0))
-		{
-			sErrMsg++;
-		}
-		DWORD nLen = lstrlen(sErrMsg);
-		WriteConsoleW(hStdOut, sErrMsg, nLen, &nLen, NULL);
-		LogShellString(L"ANSICON was blocked");
 		return -1;
 	}
-	ms_ExeTmp.Empty();
 
+	ms_ExeTmp.Empty();
 
 	BOOL bGoChangeParm = FALSE;
 	bool bConsoleMode = false;
@@ -1556,17 +1835,6 @@ int CShellProc::PrepareExecuteParms(
 
 	// DefTerm logging
 	wchar_t szInfo[200];
-	#define LogExit(frc) \
-		msprintf(szInfo, countof(szInfo), \
-			L"PrepareExecuteParms rc=%i T:%u %u:%u:%u W:%u I:%u,%u,%u D:%u H:%u S:%u,%u line=%i", \
-			/*rc*/(frc), /*T:*/gbPrepareDefaultTerminal ? 1 : 0, \
-			(UINT)mn_ImageSubsystem, (UINT)mn_ImageBits, (UINT)mb_isCurrentGuiClient, \
-			/*W:*/(UINT)mb_WasSuspended, \
-			/*I:*/(UINT)mb_NeedInjects, (UINT)mb_PostInjectWasRequested, (UINT)mb_Opt_DontInject, \
-			/*D:*/(UINT)mb_DebugWasRequested, /*H:*/(UINT)mb_HiddenConsoleDetachNeed, \
-			/*S:*/(UINT)mb_Opt_SkipNewConsole, (UINT)mb_Opt_SkipCmdStart, \
-			__LINE__); \
-		LogShellString(szInfo);
 
 	{ // Log PrepareExecuteParms function call -begin
 	lstrcpyn(szInfo, asAction ? asAction : L"-exec-", countof(szInfo));
@@ -1689,6 +1957,7 @@ int CShellProc::PrepareExecuteParms(
 	}
 
 	// Проверяем настройку ConEmuGuiMapping.useInjects
+	// #HOOKS Check if there is -new_console, if so - allow even if ConEmuUseInjects::DontUse
 	if (!LoadSrvMapping() || !(m_SrvMapping.cbSize && ((m_SrvMapping.useInjects == ConEmuUseInjects::Use) || gbPrepareDefaultTerminal)))
 	{
 		// -- зависимо только от флажка "Use Injects", иначе нельзя управлять добавлением "ConEmuC.exe" из ConEmu --
@@ -1707,257 +1976,26 @@ int CShellProc::PrepareExecuteParms(
 
 	// We need the get executable name before some other checks
 	mn_ImageSubsystem = mn_ImageBits = 0;
+	bool bForceCutNewConsole = false;
+	
 	// In some cases we need to pre-replace command line,
 	// for example, in cmd prompt: start -new_console:z
-	ms_ExeTmp.Empty();
-	bool bForceCutNewConsole = false;
 	CEStr lsReplaceFile, lsReplaceParm;
-	if (asFile && *asFile && (wcsstr(asFile, L"-new_console") || wcsstr(asFile, L"-cur_console")))
-	{
-		// To be sure, it's our "-new_console" or "-cur_console" switch,
-		// but not a something else...
-		RConStartArgs lTestArg;
-		lTestArg.pszSpecialCmd = lstrdup(asFile);
-		if (lTestArg.ProcessNewConArg() > 0)
-		{
-			// pszSpecialCmd is supposed to be empty now, because asFile can contain only one "token"
-			_ASSERTE(lTestArg.pszSpecialCmd == NULL || *lTestArg.pszSpecialCmd == 0);
-			lsReplaceParm = lstrmerge(asFile, (asFile && *asFile && asParam && *asParam) ? L" " : NULL, asParam);
-			_ASSERTE(!lsReplaceParm.IsEmpty());
-			if (gbIsCmdProcess
-				&& !GetStartingExeName(NULL, lsReplaceParm, ms_ExeTmp)
-				)
-			{
-				// when just "start" is executed from "cmd.exe" - it starts itself in the new console
-				CEStr lsTempCmd;
-				if (GetModulePathName(NULL, lsTempCmd))
-				{
-					ms_ExeTmp.Set(PointToName(lsTempCmd));
-					// It's supposed to be "cmd.exe", so there must not be spaces in file name
-					_ASSERTE(!wcschr(ms_ExeTmp, L' '));
-					// Insert "cmd.exe " before "-new_console" switches for clearness
-					if (aCmd == eCreateProcess)
-					{
-						lsReplaceParm = lstrmerge(ms_ExeTmp, L" ", lsReplaceParm);
-					}
-				}
-			}
-			if (!ms_ExeTmp.IsEmpty())
-			{
-				lsReplaceFile.Set(ms_ExeTmp.ms_Val);
-				asFile = lsReplaceFile.ms_Val;
-			}
-			bForceCutNewConsole = true;
-			asParam = lsReplaceParm.ms_Val;
-		}
-	}
+	ms_ExeTmp.Empty();
+	bForceCutNewConsole |= PrepareNewConsoleInFile(aCmd, asFile, asParam, lsReplaceFile, lsReplaceParm, ms_ExeTmp);
+
 	if (ms_ExeTmp.IsEmpty())
 		GetStartingExeName(asFile, asParam, ms_ExeTmp);
 
 	bool lbGnuDebugger = false;
 
 	// Some additional checks for "Default terminal" mode
-	if (gbPrepareDefaultTerminal)
-	{
-		lbGnuDebugger = IsGDB(ms_ExeTmp); // Allow GDB in Lazarus etc.
+	if (!CheckForDefaultTerminal(
+		aCmd, asAction, anShellFlags, anCreateFlags, anShowCmd,
+		bIgnoreSuspended, bDebugWasRequested, lbGnuDebugger, bConsoleMode))
+		return 0;
 
-		if (aCmd == eCreateProcess)
-		{
-			if (anCreateFlags && ((*anCreateFlags) & (CREATE_NO_WINDOW|DETACHED_PROCESS))
-				&& !lbGnuDebugger
-				)
-			{
-				if (gbIsVsCode
-					&& (lstrcmpi(PointToName(ms_ExeTmp), L"cmd.exe") == 0))
-				{
-					// :: Code.exe >> "cmd /c start /wait" >> "cmd.exe"
-					// :: have to hook both cmd to get second in ConEmu tab
-					// :: first cmd is started with CREATE_NO_WINDOW flag!
-					LogShellString(L"Forcing mb_NeedInjects for cmd.exe started from VisuaStudio Code");
-					mb_NeedInjects = true;
-					bConsoleMode = true;
-				}
-
-				// Creating process without console window, not our case
-				LogExit(0);
-				return 0;
-			}
-			// GDB console debugging
-			if (gbIsGdbHost
-				&& (anCreateFlags && ((*anCreateFlags) & (DEBUG_ONLY_THIS_PROCESS|DEBUG_PROCESS)))
-				)
-			{
-				if (FindImageSubsystem(ms_ExeTmp, mn_ImageSubsystem, mn_ImageBits))
-				{
-					if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
-					{
-						mb_DebugWasRequested = TRUE;
-						LogExit(0);
-						return 0;
-					}
-				}
-			}
-		}
-		else if (aCmd == eShellExecute)
-		{
-			// We need to hook only "Run as administrator" action, and only console applications (Subsystem will be checked below)
-			if (!asAction || (lstrcmpi(asAction, L"runas") != 0))
-			{
-				// This may be, for example, starting of "Taskmgr.exe" from "explorer.exe"
-				LogExit(0);
-				return 0;
-			}
-			// Skip some executions
-			if (anShellFlags
-				&& ((*anShellFlags) & (SEE_MASK_CLASSNAME|SEE_MASK_CLASSKEY|SEE_MASK_IDLIST|SEE_MASK_INVOKEIDLIST)))
-			{
-				LogExit(0);
-				return 0;
-			}
-		}
-		else
-		{
-			_ASSERTE(FALSE && "Unsupported in Default terminal");
-			LogExit(0);
-			return 0;
-		}
-
-		if (anShowCmd && (*anShowCmd == SW_HIDE)
-			&& !lbGnuDebugger
-			)
-		{
-			// Creating process with window initially hidden, not our case
-			LogExit(0);
-			return 0;
-		}
-
-		// Started from explorer/taskmgr - CREATE_SUSPENDED is set (why?)
-		if (mb_WasSuspended && anCreateFlags)
-		{
-			_ASSERTE(anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED));
-			_ASSERTE(aCmd == eCreateProcess);
-			_ASSERTE(gbPrepareDefaultTerminal);
-			// Actually, this branch can be activated from any GUI application
-			// For example, Issue 1516: Dopus, notepad, etc.
-			if (!((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS)))
-			{
-				// Well, there is a chance, that CREATE_SUSPENDED was intended for
-				// setting hooks from current process with SetThreadContext, but
-				// on the other hand, we get here if only user himself activates
-				// "Default terminal" feature for this process. So, I believe,
-				// this decision is almost safe.
-				bIgnoreSuspended = true;
-			}
-		}
-
-		// Issue 1312: .Net applications runs as "CREATE_SUSPENDED" when debugging in VS
-		//    Also: How to Disable the Hosting Process
-		//    http://msdn.microsoft.com/en-us/library/ms185330.aspx
-		if (anCreateFlags && ((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS|(bIgnoreSuspended?0:CREATE_SUSPENDED))))
-		{
-			#if 0
-			// Для поиска трапов в дереве запускаемых процессов
-			if (m_SrvMapping.Flags & CECF_BlockChildDbg)
-			{
-				(*anCreateFlags) &= ~(DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS);
-			}
-			else
-			#endif
-			{
-				bDebugWasRequested = true;
-			}
-			// Пока продолжим, нам нужно определить, а консольное ли это приложение?
-		}
-	}
-
-	// Может быть указан *.lnk а не физический файл...
-	if (aCmd == eShellExecute)
-	{
-#if 1
-		bool bDbg = 1;
-#else
-		// Считаем, что один файл (*.exe, *.cmd, ...) или ярлык (*.lnk)
-		// это одна запускаемая консоль в ConEmu.
-		CEStr szPart[MAX_PATH+1]
-		wchar_t szExe[MAX_PATH+1], szArguments[32768], szDir[MAX_PATH+1];
-		HRESULT hr = S_OK;
-		IShellLinkW* pShellLink = NULL;
-		IPersistFile* pFile = NULL;
-		if (StrStrI(asSource, L".lnk"))
-		{
-			hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (void**)&pShellLink);
-			if (FAILED(hr) || !pShellLink)
-			{
-				DisplayLastError(L"Can't create IID_IShellLinkW", (DWORD)hr);
-				LogExit(0);
-				return 0;
-			}
-			hr = pShellLink->QueryInterface(IID_IPersistFile, (void**)&pFile);
-			if (FAILED(hr) || !pFile)
-			{
-				DisplayLastError(L"Can't create IID_IPersistFile", (DWORD)hr);
-				pShellLink->Release();
-				LogExit(0);
-				return 0;
-			}
-		}
-
-		// Поехали
-		LPWSTR pszConsoles[MAX_CONSOLE_COUNT] = {};
-		size_t cchLen, cchAllLen = 0, iCount = 0;
-		while ((iCount < MAX_CONSOLE_COUNT) && (asSource = NextArg(asSource, szPart)))
-		{
-			if (lstrcmpi(PointToExt(szPart), L".lnk") == 0)
-			{
-				// Ярлык
-				hr = pFile->Load(szPart, STGM_READ);
-				if (SUCCEEDED(hr))
-				{
-					hr = pShellLink->GetPath(szExe, countof(szExe), NULL, 0);
-					if (SUCCEEDED(hr) && *szExe)
-					{
-						hr = pShellLink->GetArguments(szArguments, countof(szArguments));
-						if (FAILED(hr))
-							szArguments[0] = 0;
-						hr = pShellLink->GetWorkingDirectory(szDir, countof(szDir));
-						if (FAILED(hr))
-							szDir[0] = 0;
-
-						cchLen = _tcslen(szExe)+3
-							+ _tcslen(szArguments)+1
-							+ (*szDir ? (_tcslen(szDir)+32) : 0); // + "-new_console:d<Dir>
-						pszConsoles[iCount] = (wchar_t*)malloc(cchLen*sizeof(wchar_t));
-						swprintf_c(pszConsoles[iCount], cchLen/*#SECURELEN*/, L"\"%s\"%s%s",
-							Unquote(szExe), *szArguments ? L" " : L"", szArguments);
-						if (*szDir)
-						{
-							_wcscat_c(pszConsoles[iCount], cchLen, L" \"-new_console:d");
-							_wcscat_c(pszConsoles[iCount], cchLen, Unquote(szDir));
-							_wcscat_c(pszConsoles[iCount], cchLen, L"\"");
-						}
-						iCount++;
-
-						cchAllLen += cchLen+3;
-					}
-				}
-			}
-			else
-			{
-				cchLen = _tcslen(szPart) + 3;
-				pszConsoles[iCount] = (wchar_t*)malloc(cchLen*sizeof(wchar_t));
-				swprintf_c(pszConsoles[iCount], cchLen/*#SECURELEN*/, L"\"%s\"", szPart);
-				iCount++;
-
-				cchAllLen += cchLen+3;
-			}
-		}
-
-		if (pShellLink)
-			pShellLink->Release();
-		if (pFile)
-			pFile->Release();
-#endif
-	}
+	// #HOOKS try to process *.lnk files?
 
 	//wchar_t *szTest = (wchar_t*)malloc(MAX_PATH*2*sizeof(wchar_t)); //[MAX_PATH*2]
 	//wchar_t *szExe = (wchar_t*)malloc((MAX_PATH+1)*sizeof(wchar_t)); //[MAX_PATH+1];
@@ -1967,77 +2005,10 @@ int CShellProc::PrepareExecuteParms(
 	//int nFileLen = (asFile ? lstrlen(asFile) : 0)+1;
 	//int nParamLen = (asParam ? lstrlen(asParam) : 0)+1;
 
-	if (ms_ExeTmp[0])
+	if (!ms_ExeTmp.IsEmpty())
 	{
-		int nLen = lstrlen(ms_ExeTmp);
-		// Длина больше 0 и не заканчивается слешом
-		BOOL lbMayBeFile = (nLen > 0) && (ms_ExeTmp[nLen-1] != L'\\') && (ms_ExeTmp[nLen-1] != L'/');
-
-		BOOL lbSubsystemOk = FALSE;
-		mn_ImageBits = 0;
-		mn_ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
-
-		if (!lbMayBeFile)
-		{
-			mn_ImageBits = 0;
-			mn_ImageSubsystem = IMAGE_SUBSYSTEM_UNKNOWN;
-		}
-		else if (FindImageSubsystem(ms_ExeTmp, mn_ImageSubsystem, mn_ImageBits))
-		{
-			// gh-681: NodeJSPortable.exe just runs "Server.cmd"
-			if (mn_ImageSubsystem == IMAGE_SUBSYSTEM_BATCH_FILE)
-				mn_ImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-			lbGuiApp = (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI);
-			lbSubsystemOk = TRUE;
-			if (gbPrepareDefaultTerminal)
-			{
-				if (IsVsNetHostExe(ms_ExeTmp))
-				{
-					// *.vshost.exe
-					bVsNetHostRequested = true;
-					// Intended for .Net debugging?
-					if (anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED))
-					{
-						bDebugWasRequested = true;
-					}
-				} // end of check "starting *.vshost.exe" (seems like not used in latest VS & .Net)
-				else if (gbIsVSDebug && (mn_ImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI))
-				{
-					// Intended for .Net debugging (without native support)
-					if (anCreateFlags && ((*anCreateFlags) & CREATE_SUSPENDED)
-						// DEBUG_XXX flags are processed above explicitly
-						&& !((*anCreateFlags) & (DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS)))
-					{
-						bDebugWasRequested = true;
-					}
-				} // end of check "starting C# console app from msvsmon.exe"
-				else if (lbGnuDebugger)
-				{
-					bDebugWasRequested = true;
-					mb_PostInjectWasRequested = true;
-				} // end of check "starting new gnu debugger"
-				else if (lstrcmpi(gsExeName, ms_ExeTmp))
-				{
-					// Idle from (Pythonw.exe, gh-457), VisualStudio Code (code.exe), and so on
-					// -- bVsNetHostRequested = true;
-					CEStr lsMsg(L"Forcing mb_NeedInjects for `", gsExeName, L"` started from `", gsExeName, L"`");
-					LogShellString(lsMsg);
-					mb_NeedInjects = true;
-				} // end of check "<starting exe> == <current exe>"
-			}
-		}
-
-
-		LPCWSTR pszName = PointToName(ms_ExeTmp);
-
-		if (lstrcmpi(pszName, L"ANSI-LLW.exe") == 0)
-		{
-			_ASSERTEX(FALSE && "Trying to start 'ANSI-LLW.exe'");
-		}
-		else if (lstrcmpi(pszName, L"ansicon.exe") == 0)
-		{
-			_ASSERTEX(FALSE && "Trying to start 'ansicon.exe'");
-		}
+		// check image subsystem, vsnet debugger helpers, etc.
+		CheckForExeName(ms_ExeTmp, anCreateFlags, lbGnuDebugger, bDebugWasRequested, lbGuiApp, bVsNetHostRequested);
 	}
 
 	BOOL lbChanged = FALSE;
@@ -2114,7 +2085,7 @@ int CShellProc::PrepareExecuteParms(
 					mn_ImageSubsystem = IMAGE_SUBSYSTEM_DOS_EXECUTABLE;
 					mn_ImageBits = 16;
 					bLongConsoleOutput = FALSE;
-					lbGuiApp = FALSE;
+					lbGuiApp = false;
 				}
 
 				if (m_Args.LongOutputDisable == crb_On)
@@ -3284,7 +3255,7 @@ void CShellProc::OnShellFinished(BOOL abSucceeded, HINSTANCE ahInstApp, HANDLE a
 	}
 }
 
-void CShellProc::LogShellString(LPCWSTR asMessage)
+void CShellProc::LogShellString(LPCWSTR asMessage) const
 {
 	DefTermLogString(asMessage);
 

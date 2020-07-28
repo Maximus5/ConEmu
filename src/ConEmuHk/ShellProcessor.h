@@ -79,7 +79,7 @@ private:
 	bool mb_Opt_SkipNewConsole = false; // ConEmuHooks=NOARG
 	bool mb_Opt_SkipCmdStart = false; // ConEmuHooks=NOSTART
 	void CheckHooksDisabled();
-	bool GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsExeTmp);
+	static bool GetStartingExeName(LPCWSTR asFile, LPCWSTR asParam, CEStr& rsExeTmp);
 
 	BOOL mb_isCurrentGuiClient = FALSE;
 	void CheckIsCurrentGuiClient();
@@ -95,6 +95,16 @@ private:
 private:
 	wchar_t* str2wcs(const char* psz, UINT anCP);
 	char* wcs2str(const wchar_t* pwsz, UINT anCP);
+	bool IsAnsiConLoader(LPCWSTR asFile, LPCWSTR asParam);
+	static bool PrepareNewConsoleInFile(
+				CmdOnCreateType aCmd, LPCWSTR& asFile, LPCWSTR& asParam,
+				CEStr& lsReplaceFile, CEStr& lsReplaceParm, CEStr& exeName);
+	bool CheckForDefaultTerminal(
+				enum CmdOnCreateType aCmd, LPCWSTR asAction, const DWORD* anShellFlags, const DWORD* anCreateFlags,
+				const DWORD* anShowCmd,
+				bool& bIgnoreSuspended, bool& bDebugWasRequested, bool& lbGnuDebugger, bool& bConsoleMode);
+	void CheckForExeName(const CEStr& exeName, const DWORD* anCreateFlags, bool lbGnuDebugger,
+		bool& bDebugWasRequested, bool& lbGuiApp, bool& bVsNetHostRequested);
 	int PrepareExecuteParms(
 				enum CmdOnCreateType aCmd,
 				LPCWSTR asAction, LPCWSTR asFile, LPCWSTR asParam, LPCWSTR asDir,
@@ -108,7 +118,8 @@ private:
 				LPWSTR* psFile, LPWSTR* psParam);
 	BOOL FixShellArgs(DWORD afMask, HWND ahWnd, DWORD* pfMask, HWND* phWnd);
 	HWND FindCheckConEmuWindow();
-	void LogShellString(LPCWSTR asMessage);
+	void LogExitLine(int rc, int line) const;
+	void LogShellString(LPCWSTR asMessage) const;
 	void RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI);
 public:
 	CESERVER_REQ* NewCmdOnCreate(enum CmdOnCreateType aCmd,
