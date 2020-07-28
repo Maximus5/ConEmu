@@ -12479,11 +12479,11 @@ void CConEmuMain::OnVConCreated(CVirtualConsole* apVCon, const RConStartArgsEx *
 // Зависит от настроек и того, как закрывали
 bool CConEmuMain::isDestroyOnClose(bool ScCloseOnEmpty /*= false*/)
 {
-	CConEmuUpdate::UpdateStep step = gpUpd ? gpUpd->InUpdate() : CConEmuUpdate::us_NotStarted;
+	CConEmuUpdate::UpdateStep step = gpUpd ? gpUpd->InUpdate() : CConEmuUpdate::UpdateStep::NotStarted;
 
 	bool bNeedDestroy = false;
 
-	if ((step == CConEmuUpdate::us_ExitAndUpdate) || (step == CConEmuUpdate::us_PostponeUpdate))
+	if ((step == CConEmuUpdate::UpdateStep::ExitAndUpdate) || (step == CConEmuUpdate::UpdateStep::PostponeUpdate))
 	{
 		bNeedDestroy = true; // Иначе облом при обновлении
 	}

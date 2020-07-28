@@ -1211,7 +1211,7 @@ bool CDragDropData::CheckIsUpdatePackage(IDataObject * pDataObject)
 		mpsz_UpdatePackage = NULL;
 	}
 
-	if (gpUpd && gpUpd->InUpdate())
+	if (gpUpd && (gpUpd->InUpdate() != CConEmuUpdate::UpdateStep::NotStarted))
 	{
 		// Already in Update stage
 		goto wrap;

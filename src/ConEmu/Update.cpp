@@ -49,9 +49,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WThreads.h"
 #include "../common/WUser.h"
 
-CConEmuUpdate* gpUpd = NULL;
+CConEmuUpdate* gpUpd = nullptr;
 
-#define UPDATETHREADTIMEOUT 2500
+// Timeout for mh_CheckThread in milliseconds
+const DWORD UPDATE_THREAD_TIMEOUT = 2500;
 
 
 CConEmuUpdate::CConEmuUpdate()
@@ -74,7 +75,7 @@ CConEmuUpdate::CConEmuUpdate()
 	mpsz_DeleteIniFile = nullptr;
 	mpsz_DeletePackageFile = mpsz_DeleteBatchFile = nullptr;
 	mpsz_PendingPackageFile = mpsz_PendingBatchFile = nullptr;
-	m_UpdateStep = us_NotStarted;
+	m_UpdateStep = UpdateStep::NotStarted;
 	mb_NewVersionAvailable = false;
 	ms_NewVersion[0] = ms_SkipVersion[0] = 0;
 	ms_VerOnServer[0] = ms_VerOnServerRA[0] = ms_CurVerInfo[0] = 0;
@@ -99,7 +100,7 @@ CConEmuUpdate::~CConEmuUpdate()
 		if ((nWait = WaitForSingleObject(mh_CheckThread, 0)) == WAIT_TIMEOUT)
 		{
 			RequestTerminate();
-			nWait = WaitForSingleObject(mh_CheckThread, UPDATETHREADTIMEOUT);
+			nWait = WaitForSingleObject(mh_CheckThread, UPDATE_THREAD_TIMEOUT);
 		}
 
 		if (nWait != WAIT_OBJECT_0)
@@ -124,22 +125,23 @@ CConEmuUpdate::~CConEmuUpdate()
 
 	SafeFree(mpsz_ConfirmSource);
 
-	if (((m_UpdateStep == us_ExitAndUpdate) || (m_UpdateStep == us_PostponeUpdate)) && mpsz_PendingBatchFile)
+	if (((m_UpdateStep == UpdateStep::ExitAndUpdate) || (m_UpdateStep == UpdateStep::PostponeUpdate)) && mpsz_PendingBatchFile)
 	{
 		WaitAllInstances();
 
-		wchar_t *pszCmd = lstrdup(L"cmd.exe"); // Мало ли что в ComSpec пользователь засунул...
-		size_t cchParmMax = lstrlen(mpsz_PendingBatchFile)+16;
+		wchar_t szCmd[] = L"cmd.exe";
+		const size_t cchParmMax = wcslen(mpsz_PendingBatchFile) + wcslen(szCmd) + 16;
 		wchar_t *pszParm = (wchar_t*)calloc(cchParmMax,sizeof(*pszParm));
-		// Обязательно двойное окавычивание. cmd.exe отбрасывает кавычки,
-		// и при наличии разделителей (пробелы, скобки,...) получаем проблемы
-		swprintf_c(pszParm, cchParmMax/*#SECURELEN*/, L"/c \"\"%s\"\"", mpsz_PendingBatchFile);
+		// Double quotation is required due to cmd dequote rules
+		const CEStr szParm(L"/c \"\"", mpsz_PendingBatchFile, L"\"\"");
 
 		// Наверное на Elevated процесс это не распространится, но для четкости - взведем флажок
 		SetEnvironmentVariable(ENV_CONEMU_INUPDATE_W, ENV_CONEMU_INUPDATE_YES);
 
 		// ghWnd уже закрыт
-		INT_PTR nShellRc = (INT_PTR)ShellExecute(NULL, bNeedRunElevation ? L"runas" : L"open", pszCmd, pszParm, NULL, SW_SHOWMINIMIZED);
+		const auto nShellRc = INT_PTR(ShellExecute(
+			nullptr, bNeedRunElevation ? L"runas" : L"open", szCmd, szParm.ms_Val,
+			nullptr, SW_SHOWMINIMIZED));
 		if (nShellRc <= 32)
 		{
 			wchar_t szErrInfo[MAX_PATH*4];
@@ -151,8 +153,6 @@ CConEmuUpdate::~CConEmuUpdate()
 			if (!(mp_Set && mp_Set->isUpdateLeavePackages))
 				DeleteFile(mpsz_PendingPackageFile);
 		}
-		SafeFree(pszCmd);
-		SafeFree(pszParm);
 	}
 	SafeFree(mpsz_PendingBatchFile);
 	SafeFree(mpsz_PendingPackageFile);
@@ -171,17 +171,17 @@ void CConEmuUpdate::StartCheckProcedure(UINT abShowMessages)
 {
 	//DWORD nWait = WAIT_OBJECT_0;
 
-	if ((InUpdate() != us_NotStarted) || (mn_InShowMsgBox > 0))
+	if ((InUpdate() != UpdateStep::NotStarted) || (mn_InShowMsgBox > 0))
 	{
 		// Already in update procedure
-		if ((m_UpdateStep == us_PostponeUpdate) || (m_UpdateStep == us_ExitAndUpdate))
+		if ((m_UpdateStep == UpdateStep::PostponeUpdate) || (m_UpdateStep == UpdateStep::ExitAndUpdate))
 		{
-			if (gpConEmu && (m_UpdateStep == us_ExitAndUpdate))
+			if (gpConEmu && (m_UpdateStep == UpdateStep::ExitAndUpdate))
 			{
 				// Повторно?
 				gpConEmu->CallMainThread(true, RequestExitUpdate, 0);
 			}
-			else if (ms_NewVersion[0] && (m_UpdateStep == us_PostponeUpdate))
+			else if (ms_NewVersion[0] && (m_UpdateStep == UpdateStep::PostponeUpdate))
 			{
 				CEStr lsMsg;
 				LPCWSTR pszFormat = L"Update to version %s will be started when you close ConEmu window";
@@ -267,7 +267,7 @@ void CConEmuUpdate::StopChecking()
 		if ((nWait = WaitForSingleObject(mh_CheckThread, 0)) == WAIT_TIMEOUT)
 		{
 			RequestTerminate();
-			nWait = WaitForSingleObject(mh_CheckThread, UPDATETHREADTIMEOUT);
+			nWait = WaitForSingleObject(mh_CheckThread, UPDATE_THREAD_TIMEOUT);
 		}
 
 		if (nWait != WAIT_OBJECT_0)
@@ -278,7 +278,7 @@ void CConEmuUpdate::StopChecking()
 	}
 
 	DeleteBadTempFiles();
-	m_UpdateStep = us_NotStarted;
+	m_UpdateStep = UpdateStep::NotStarted;
 
 	if (mpsz_PendingBatchFile)
 	{
@@ -459,7 +459,7 @@ bool CConEmuUpdate::StartLocalUpdate(LPCWSTR asDownloadedPackage)
 
 	_ASSERTE(gpConEmu && isMainThread());
 
-	if (InUpdate() != us_NotStarted)
+	if (InUpdate() != UpdateStep::NotStarted)
 	{
 		MBoxError(L"Checking for updates already started");
 		goto wrap;
@@ -629,7 +629,7 @@ wrap:
 
 	if (!lbExecuteRc)
 	{
-		m_UpdateStep = us_NotStarted;
+		m_UpdateStep = UpdateStep::NotStarted;
 		mb_DroppedMode = false;
 	}
 
@@ -706,8 +706,8 @@ DWORD CConEmuUpdate::CheckProcInt()
 		Sleep(2500);
 	#endif
 
-	_ASSERTE(m_UpdateStep==us_NotStarted);
-	m_UpdateStep = us_Check;
+	_ASSERTE(m_UpdateStep==UpdateStep::NotStarted);
+	m_UpdateStep = UpdateStep::Check;
 
 	DeleteBadTempFiles();
 
@@ -755,7 +755,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 		if (mb_ManualCallMode)
 		{
 			// No newer %s version is available
-			gpConEmu->CallMainThread(true, QueryConfirmationCallback, us_NotStarted);
+			gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::NotStarted));
 		}
 
 		goto wrap;
@@ -789,7 +789,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	SafeFree(mpsz_ConfirmSource);
 	mpsz_ConfirmSource = lstrdup(pszSource);
 
-	if (gpConEmu && !gpConEmu->CallMainThread(true, QueryConfirmationCallback, us_ConfirmDownload))
+	if (gpConEmu && !gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::ConfirmDownload)))
 	{
 		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
 		wcscpy_c(ms_SkipVersion, ms_NewVersion);
@@ -797,7 +797,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	}
 
 	mn_InternetContentReady = 0;
-	m_UpdateStep = us_Downloading;
+	m_UpdateStep = UpdateStep::Downloading;
 	// May be null, if update package was dropped on ConEmu icon
 	if (gpConEmu && ghWnd)
 	{
@@ -880,7 +880,7 @@ DWORD CConEmuUpdate::CheckProcInt()
 	if (!pszBatchFile)
 		goto wrap;
 
-	iConfirmUpdate = gpConEmu->CallMainThread(true, QueryConfirmationCallback, us_ConfirmUpdate);
+	iConfirmUpdate = gpConEmu->CallMainThread(true, QueryConfirmationCallback, static_cast<LPARAM>(UpdateStep::ConfirmUpdate));
 	if ((iConfirmUpdate <= 0) || (iConfirmUpdate == IDCANCEL))
 	{
 		// Если пользователь отказался от обновления в этом сеансе - не предлагать ту же версию при ежечасных проверках
@@ -888,19 +888,19 @@ DWORD CConEmuUpdate::CheckProcInt()
 		goto wrap;
 	}
 	mpsz_PendingPackageFile = pszLocalPackage;
-	pszLocalPackage = NULL;
+	pszLocalPackage = nullptr;
 	mpsz_PendingBatchFile = pszBatchFile;
-	pszBatchFile = NULL;
+	pszBatchFile = nullptr;
 	if (gpConEmu)
 		gpConEmu->LogString(L"Update: Ready to update on exit");
 	if (iConfirmUpdate == IDYES)
 	{
-		m_UpdateStep = us_ExitAndUpdate;
+		m_UpdateStep = UpdateStep::ExitAndUpdate;
 		if (gpConEmu) gpConEmu->CallMainThread(false, RequestExitUpdate, 0);
 	}
 	else
 	{
-		m_UpdateStep = us_PostponeUpdate;
+		m_UpdateStep = UpdateStep::PostponeUpdate;
 		if (gpConEmu) gpConEmu->UpdateProgress();
 	}
 	lbExecuteRc = TRUE;
@@ -934,7 +934,7 @@ wrap:
 	}
 
 	if (!lbExecuteRc)
-		m_UpdateStep = us_NotStarted;
+		m_UpdateStep = UpdateStep::NotStarted;
 
 	Inet.Deinit(true);
 
@@ -1318,7 +1318,7 @@ CConEmuUpdate::UpdateStep CConEmuUpdate::InUpdate()
 	if (!this)
 	{
 		_ASSERTE(this);
-		return us_NotStarted;
+		return UpdateStep::NotStarted;
 	}
 
 	DWORD nWait = WAIT_OBJECT_0;
@@ -1328,14 +1328,14 @@ CConEmuUpdate::UpdateStep CConEmuUpdate::InUpdate()
 
 	switch (m_UpdateStep)
 	{
-	case us_Check:
-	case us_ConfirmDownload:
-	case us_ConfirmUpdate:
+	case UpdateStep::Check:
+	case UpdateStep::ConfirmDownload:
+	case UpdateStep::ConfirmUpdate:
 		if (nWait == WAIT_OBJECT_0)
-			m_UpdateStep = us_NotStarted;
+			m_UpdateStep = UpdateStep::NotStarted;
 		break;
-	case us_PostponeUpdate:
-	case us_ExitAndUpdate:
+	case UpdateStep::PostponeUpdate:
+	case UpdateStep::ExitAndUpdate:
 		// Тут у нас нить уже имеет право завершиться
 		break;
 	default:
@@ -1847,7 +1847,7 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 
 	switch (step)
 	{
-	case us_ConfirmDownload:
+	case UpdateStep::ConfirmDownload:
 		{
 			mb_NewVersionAvailable = true;
 			m_UpdateStep = step;
@@ -1877,7 +1877,7 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 		}
 		break;
 
-	case us_ConfirmUpdate:
+	case UpdateStep::ConfirmUpdate:
 		m_UpdateStep = step;
 		lRc = QueryConfirmationUpdate();
 		break;
@@ -1885,9 +1885,9 @@ int CConEmuUpdate::QueryConfirmation(CConEmuUpdate::UpdateStep step)
 	default:
 		lRc = false;
 		_ASSERTE(mb_NewVersionAvailable == false);
-		if (step > us_Check)
+		if (step > UpdateStep::Check)
 		{
-			_ASSERTE(step<=us_Check);
+			_ASSERTE(step<=UpdateStep::Check);
 			break;
 		}
 
@@ -2159,14 +2159,14 @@ short CConEmuUpdate::GetUpdateProgress()
 
 	switch (InUpdate())
 	{
-	case us_NotStarted:
-	case us_PostponeUpdate:
+	case UpdateStep::NotStarted:
+	case UpdateStep::PostponeUpdate:
 		return -1;
-	case us_Check:
+	case UpdateStep::Check:
 		return mb_ManualCallMode ? 1 : -1;
-	case us_ConfirmDownload:
+	case UpdateStep::ConfirmDownload:
 		return UPD_PROGRESS_CONFIRM_DOWNLOAD;
-	case us_Downloading:
+	case UpdateStep::Downloading:
 		if (mn_PackageSize > 0)
 		{
 			int nValue = (mn_InternetContentReady * 88 / mn_PackageSize);
@@ -2177,9 +2177,9 @@ short CConEmuUpdate::GetUpdateProgress()
 			return nValue+UPD_PROGRESS_DOWNLOAD_START;
 		}
 		return UPD_PROGRESS_DOWNLOAD_START;
-	case us_ConfirmUpdate:
+	case UpdateStep::ConfirmUpdate:
 		return UPD_PROGRESS_CONFIRM_UPDATE;
-	case us_ExitAndUpdate:
+	case UpdateStep::ExitAndUpdate:
 		return UPD_PROGRESS_EXIT_AND_UPDATE;
 	}
 

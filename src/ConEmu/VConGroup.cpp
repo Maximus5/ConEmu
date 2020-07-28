@@ -2459,7 +2459,7 @@ bool CVConGroup::CloseQuery(MArray<CVConGuard*>* rpPanes, bool* rbMsgConfirmed /
 	{
 		// Если только что был запрос на обновление-и-закрытие, то нет смысла подтверждать закрытие
 		CConEmuUpdate::UpdateStep step = gpUpd->InUpdate();
-		if (step == CConEmuUpdate::us_ExitAndUpdate)
+		if (step == CConEmuUpdate::UpdateStep::ExitAndUpdate)
 		{
 			bCloseConfirmSet = false;
 		}
