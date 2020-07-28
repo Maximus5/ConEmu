@@ -2569,7 +2569,7 @@ int DuplicateRoot(CESERVER_REQ_DUPLICATE* Duplicate)
 	_ASSERTEX(GuiMapping->ComSpec.ConEmuBaseDir[0]!=0);
 	lstrcpy(pszCmd+1, GuiMapping->ComSpec.ConEmuBaseDir);
 	pszName = pszCmd + lstrlen(pszCmd);
-	lstrcpy(pszName, WIN3264TEST(L"\\ConEmuC.exe",L"\\ConEmuC64.exe"));
+	lstrcpy(pszName, L"\\" ConEmuC_EXE_3264);
 	bSrvFound = FileExists(pszCmd+1);
 	#ifdef _WIN64
 	if (!bSrvFound)
@@ -2743,7 +2743,7 @@ BOOL WINAPI HookServerCommand(LPVOID pInst, CESERVER_REQ* pCmd, CESERVER_REQ* &p
 			if (GetModuleFileName(ghOurModule, szSrvPathName, MAX_PATH) && ((pszNamePtr = (wchar_t*)PointToName(szSrvPathName)) != NULL))
 			{
 				// Запускаем сервер той же битности, что и текущий процесс
-				_wcscpy_c(pszNamePtr, 16, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
+				_wcscpy_c(pszNamePtr, 16, ConEmuC_EXE_3264);
 
 				if (gnImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_GUI)
 				{

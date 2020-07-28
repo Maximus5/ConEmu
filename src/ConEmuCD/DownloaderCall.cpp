@@ -503,7 +503,7 @@ protected:
 				goto wrap;
 			}
 			psz[1] = 0;
-			wcscat_c(szConEmuC, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
+			wcscat_c(szConEmuC, ConEmuC_EXE_3264);
 
 			/*
 			ConEmuC -download [-debug]

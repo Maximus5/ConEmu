@@ -310,7 +310,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	HMODULE hHkDll = NULL;
 	RequestLocalServer_t fRequestLocalServer = NULL;
 	wchar_t *pszSlash, szFile[MAX_PATH+1] = {};
-	LPCWSTR pszSrvName = WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll");
+	LPCWSTR pszSrvName = ConEmuHk_DLL_3264;
 
 	GetModuleFileName(ghOurModule, szFile, MAX_PATH);
 	pszSlash = wcsrchr(szFile, L'\\');
@@ -1406,7 +1406,7 @@ BOOL WINAPI WriteText(HANDLE hConsoleOutput, const AnnotationInfo* Attributes, c
 
 	if (!fnWriteConsoleW)
 	{
-		HANDLE hHooks = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+		HANDLE hHooks = GetModuleHandle(ConEmuHk_DLL_3264);
 		if (hHooks)
 		{
 			GetWriteConsoleW_t getf = (GetWriteConsoleW_t)GetProcAddress(hHooks, "GetWriteConsoleW");

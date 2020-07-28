@@ -61,7 +61,7 @@ UINT_PTR GetLoadLibraryAddress()
 		return 0;
 	}
 
-	HMODULE hConEmuHk = ::GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll", L"ConEmuHk64.dll"));
+	HMODULE hConEmuHk = ::GetModuleHandle(ConEmuHk_DLL_3264);
 	if (hConEmuHk && (hConEmuHk != ghOurModule))
 	{
 		typedef FARPROC (WINAPI* GetLoadLibraryW_t)();

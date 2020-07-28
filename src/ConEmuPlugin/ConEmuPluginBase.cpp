@@ -1595,11 +1595,7 @@ bool CPluginBase::Attach2Gui(bool bLeaveOpened /*= false*/)
 	{
 		wchar_t szHookLib[MAX_PATH+16];
 		wcscpy_c(szHookLib, szConEmuBase);
-		#ifdef _WIN64
-			wcscat_c(szHookLib, L"\\ConEmuHk64.dll");
-		#else
-			wcscat_c(szHookLib, L"\\ConEmuHk.dll");
-		#endif
+		wcscat_c(szHookLib, L"\\" ConEmuHk_DLL_3264);
 		ghHooksModule = LoadLibrary(szHookLib);
 		if (ghHooksModule)
 		{

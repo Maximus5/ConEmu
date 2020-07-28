@@ -982,7 +982,7 @@ int WriteOutput(LPCWSTR pszText, DWORD cchLen /*= -1*/, DWORD* pdwWritten /*= nu
 		if (bProcessed && (!WriteProcessed || !WriteProcessedA))
 		{
 			// ConEmuHk.dll / ConEmuHk64.dll
-			if (ConEmuHk.Load(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll")))
+			if (ConEmuHk.Load(ConEmuHk_DLL_3264))
 			{
 				ConEmuHk.GetProcAddress("WriteProcessed", WriteProcessed);
 				ConEmuHk.GetProcAddress("WriteProcessedA", WriteProcessedA);

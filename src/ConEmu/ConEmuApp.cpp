@@ -2060,9 +2060,9 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 		NULL};
 	LPCWSTR pszFiles[] = {
 		L"ConEmu.exe", L"ConEmu64.exe",
-		L"ConEmuC.exe", L"ConEmuC64.exe",
-		L"ConEmuCD.dll", L"ConEmuCD64.dll",
-		L"ConEmuHk.dll", L"ConEmuHk64.dll",
+		ConEmuC_32_EXE, ConEmuC_64_EXE,
+		ConEmuCD_32_DLL, ConEmuCD_64_DLL,
+		ConEmuHk_32_DLL, ConEmuHk_64_DLL,
 		NULL};
 
 	for (int i = 0; i <= 1; i++)
@@ -2385,7 +2385,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	srand(GetTickCount() + GetCurrentProcessId());
 
 	#ifdef _DEBUG
-	HMODULE hConEmuHk = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+	HMODULE hConEmuHk = GetModuleHandle(ConEmuHk_DLL_3264);
 	_ASSERTE(hConEmuHk==NULL && "Hooks must not be loaded into ConEmu[64].exe!");
 	#endif
 

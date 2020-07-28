@@ -3109,7 +3109,7 @@ void CShellProc::OnCreateProcessFinished(BOOL abSucceeded, PROCESS_INFORMATION *
 				{
 					_ASSERTEX(m_SrvMapping.ComSpec.ConEmuBaseDir[0]!=0);
 					msprintf(pszCmdLine, cchMax, L"\"%s\\%s\" /ATTACH /CONPID=%u%s",
-						m_SrvMapping.ComSpec.ConEmuBaseDir, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"),
+						m_SrvMapping.ComSpec.ConEmuBaseDir, ConEmuC_EXE_3264,
 						lpPI->dwProcessId,
 						(LPCWSTR)szSrvArgs);
 					STARTUPINFO si = {sizeof(si)};

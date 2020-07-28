@@ -54,7 +54,7 @@ bool HkFunc::Init(LPCWSTR asModule, HMODULE hModule)
 
 	// WARNING! Heap may be not initialized in this step!
 
-	HMODULE hConEmuHk = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+	HMODULE hConEmuHk = GetModuleHandle(ConEmuHk_DLL_3264);
 	if (hConEmuHk != NULL)
 	{
 		fnRequestTrampolines = (RequestTrampolines_t)GetProcAddress(hConEmuHk, "RequestTrampolines");

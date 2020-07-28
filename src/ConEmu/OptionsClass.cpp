@@ -3462,10 +3462,10 @@ bool CSettings::CheckConsoleFontFast(LPCWSTR asCheckName /*= NULL*/)
 		wchar_t szCmd[MAX_PATH+64] = L"\"";
 		wcscat_c(szCmd, gpConEmu->ms_ConEmuBaseDir);
 		wchar_t* psz = szCmd + _tcslen(szCmd);
-		_wcscpy_c(psz, 64, L"\\ConEmuC.exe");
+		_wcscpy_c(psz, 64, L"\\" ConEmuC_32_EXE);
 		if (IsWindows64() && !FileExists(szCmd+1))
 		{
-			_wcscpy_c(psz, 64, L"\\ConEmuC64.exe");
+			_wcscpy_c(psz, 64, L"\\" ConEmuC_64_EXE);
 		}
 		wcscat_c(szCmd, L"\" /CheckUnicode");
 

@@ -77,9 +77,18 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEC_INITTITLE       L"ConEmu"
 
 // Our binaries
+#define ConEmu_32_EXE L"ConEmu.exe"
+#define ConEmu_64_EXE L"ConEmu64.exe"
+#define ConEmu_EXE_3264 WIN3264TEST(ConEmu_32_EXE,ConEmu_64_EXE)
+#define ConEmuC_32_EXE L"ConEmuC.exe"
+#define ConEmuC_64_EXE L"ConEmuC64.exe"
+#define ConEmuC_EXE_3264 WIN3264TEST(ConEmuC_32_EXE,ConEmuC_64_EXE)
 #define ConEmuCD_32_DLL L"ConEmuCD.dll"
 #define ConEmuCD_64_DLL L"ConEmuCD64.dll"
 #define ConEmuCD_DLL_3264 WIN3264TEST(ConEmuCD_32_DLL,ConEmuCD_64_DLL)
+#define ConEmuHk_32_DLL L"ConEmuHk.dll"
+#define ConEmuHk_64_DLL L"ConEmuHk64.dll"
+#define ConEmuHk_DLL_3264 WIN3264TEST(ConEmuHk_32_DLL,ConEmuHk_64_DLL)
 
 // Windows and Classes
 #define VirtualConsoleClass L"VirtualConsoleClass" // DC Window

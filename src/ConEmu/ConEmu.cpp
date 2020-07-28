@@ -1034,7 +1034,7 @@ bool CConEmuMain::CheckBaseDir() const
 	#ifdef WIN64
 	if (!lbBaseFound)
 	{
-		lstrcpy(pszSlash, L"\\ConEmuC64.exe");
+		lstrcpy(pszSlash, L"\\" ConEmuC_64_EXE);
 
 		if (FileExists(szBaseFile))
 		{

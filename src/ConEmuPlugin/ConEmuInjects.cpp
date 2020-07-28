@@ -83,12 +83,7 @@ bool StartupHooks(HMODULE ahOurDll)
 
 	if (ghHooksModule == NULL)
 	{
-		wchar_t szHkModule[64];
-		#ifdef WIN64
-			wcscpy_c(szHkModule, L"ConEmuHk64.dll");
-		#else
-			wcscpy_c(szHkModule, L"ConEmuHk.dll");
-		#endif
+		LPCWSTR szHkModule = ConEmuHk_DLL_3264;
 		ghHooksModule = GetModuleHandle(szHkModule);
 
 		if ((ghHooksModule == NULL) && (ghConEmuWndDC != NULL))

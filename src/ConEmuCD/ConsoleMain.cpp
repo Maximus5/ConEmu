@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef VALIDATE_AND_DELAY_ON_TERMINATE
 
 #ifdef _DEBUG
+//  SHOW_STARTED_MSGBOX may be defined in ConsoleMain.h
 //	#define SHOW_ADMIN_STARTED_MSGBOX
 //	#define SHOW_MAIN_MSGBOX
 //	#define SHOW_ALTERNATIVE_MSGBOX
@@ -667,9 +668,11 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			#ifdef SHOW_STARTED_MSGBOX
 			if (!IsDebuggerPresent())
 			{
-				char szMsg[128] = ""; msprintf(szMsg, countof(szMsg), WIN3264TEST("ConEmuCD.dll","ConEmuCD64.dll") " loaded, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-				char szFile[MAX_PATH] = ""; GetModuleFileNameA(NULL, szFile, countof(szFile));
-				MessageBoxA(NULL, szMsg, PointToName(szFile), 0);
+				wchar_t szMsg[128] = L"";
+				msprintf(szMsg, countof(szMsg), ConEmuCD_DLL_3264 L" loaded, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+				wchar_t szFile[MAX_PATH] = L"";
+				GetModuleFileNameW(nullptr, szFile, countof(szFile));
+				MessageBoxW(nullptr, szMsg, PointToName(szFile), 0);
 			}
 			#endif
 			#ifdef _DEBUG
@@ -1235,10 +1238,11 @@ int __stdcall ConsoleMain3(int anWorkMode/*0-Server&ComSpec,1-AltServer,2-Reserv
 	#endif
 	if (bShowWarn)
 	{
-		char szMsg[MAX_PATH+128]; msprintf(szMsg, countof(szMsg), WIN3264TEST("ConEmuCD.dll","ConEmuCD64.dll") " loaded, PID=%u, TID=%u\r\n", GetCurrentProcessId(), GetCurrentThreadId());
-		int nMsgLen = lstrlenA(szMsg);
-		GetModuleFileNameA(NULL, szMsg+nMsgLen, countof(szMsg)-nMsgLen);
-		MessageBoxA(NULL, szMsg, "ConEmu server" WIN3264TEST(""," x64"), 0);
+		wchar_t szMsg[MAX_PATH+128] = L"";
+		msprintf(szMsg, countof(szMsg), ConEmuCD_DLL_3264 L" loaded, PID=%u, TID=%u\r\n", GetCurrentProcessId(), GetCurrentThreadId());
+		const auto nMsgLen = wcslen(szMsg);
+		GetModuleFileNameW(nullptr, szMsg + nMsgLen, static_cast<DWORD>(countof(szMsg) - nMsgLen));
+		MessageBoxW(nullptr, szMsg, L"ConEmu server" WIN3264TEST(""," x64"), 0);
 	}
 	#endif
 
@@ -2525,8 +2529,9 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 		#ifdef SHOW_ALTERNATIVE_MSGBOX
 		if (!IsDebuggerPresent())
 		{
-			char szMsg[128]; msprintf(szMsg, countof(szMsg), "AltServer: " WIN3264TEST("ConEmuCD.dll","ConEmuCD64.dll") " loaded, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-			MessageBoxA(NULL, szMsg, "ConEmu AltServer" WIN3264TEST(""," x64"), 0);
+			wchar_t szMsg[128] = L"";
+			msprintf(szMsg, countof(szMsg), L"AltServer: " ConEmuCD_DLL_3264 L" loaded, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+			MessageBoxW(nullptr, szMsg, L"ConEmu AltServer" WIN3264TEST(""," x64"), 0);
 		}
 		#endif
 
@@ -5374,7 +5379,7 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 	if (gnRunMode == RM_ALTSERVER)
 	{
 		// сообщение о завершении будет посылать ConEmuHk.dll
-		HMODULE hHooks = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+		HMODULE hHooks = GetModuleHandle(ConEmuHk_DLL_3264);
 		RequestLocalServer_t fRequestLocalServer = (RequestLocalServer_t)(hHooks ? GetProcAddress(hHooks, "RequestLocalServer") : NULL);
 		if (fRequestLocalServer)
 		{

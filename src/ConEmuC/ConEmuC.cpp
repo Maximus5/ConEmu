@@ -324,7 +324,7 @@ bool ProcessCommandLine(int& iRc, HMODULE& hConEmu)
 			if ((lsArg.ms_Val[0] != L'/') && bWasFirst)
 			{
 				LPCWSTR pszName = PointToName(lsArg.ms_Val);
-				if (pszName && (lstrcmpi(pszName, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe")) == 0))
+				if (pszName && (lstrcmpi(pszName, ConEmuC_EXE_3264) == 0))
 					continue;
 			}
 
@@ -403,7 +403,7 @@ int main(int argc, char** argv)
 	ConsoleMain2_t lfConsoleMain2;
 
 	#ifdef _DEBUG
-	HMODULE hConEmuHk = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+	HMODULE hConEmuHk = GetModuleHandle(ConEmuHk_DLL_3264);
 	_ASSERTE(hConEmuHk==NULL && "Hooks must not be loaded into ConEmuC[64].exe!");
 	#endif
 

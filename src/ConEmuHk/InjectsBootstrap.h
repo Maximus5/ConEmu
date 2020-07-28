@@ -38,10 +38,10 @@ int InjectHookDLL(PROCESS_INFORMATION pi, InjectHookFunctions* pfn /*UINT_PTR fn
 	DWORD 		dwErrCode = 0;
 #ifndef _WIN64
 	// starting a 32-bit process
-	LPCWSTR		pszDllName = L"\\ConEmuHk.dll";
+	LPCWSTR		pszDllName = L"\\" ConEmuHk_32_DLL;
 #else
 	// starting a 64-bit process
-	LPCWSTR		pszDllName = L"\\ConEmuHk64.dll";
+	LPCWSTR		pszDllName = L"\\" ConEmuHk_64_DLL;
 	DWORD_PTR   nLoadLibraryProcShift;
 #endif
 

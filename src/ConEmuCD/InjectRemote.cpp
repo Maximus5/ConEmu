@@ -604,7 +604,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 
 
 	// Let's do the inject
-	_wcscpy_c(pszNamePtr, 16, is32bit ? L"ConEmuHk.dll" : L"ConEmuHk64.dll");
+	_wcscpy_c(pszNamePtr, 16, is32bit ? ConEmuHk_32_DLL : ConEmuHk_64_DLL);
 	if (!FileExists(szHooks))
 	{
 		iRc = CIR_ConEmuHkNotFound/*-250*/;

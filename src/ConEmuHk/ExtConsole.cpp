@@ -889,7 +889,7 @@ BOOL WINAPI apiWriteConsoleW(HANDLE hConsoleOutput, const VOID *lpBuffer, DWORD 
 	{
 		_ASSERTE(FALSE && "Is not supposed to be used out of ConEmuHk itself, therefore lpfn must be passed into");
 		{
-			HMODULE hHooks = GetModuleHandle(WIN3264TEST(L"ConEmuHk.dll",L"ConEmuHk64.dll"));
+			HMODULE hHooks = GetModuleHandle(ConEmuHk_DLL_3264);
 			if (hHooks && (hHooks != ghOurModule))
 			{
 				typedef FARPROC (WINAPI* GetWriteConsoleW_t)();
