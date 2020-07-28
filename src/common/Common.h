@@ -1222,6 +1222,12 @@ struct ConEmuComspec
 };
 
 
+enum class ConEmuUseInjects : DWORD
+{
+	DontUse = 0,
+	Use = 1,
+};
+
 
 typedef DWORD ConEmuConsoleFlags;
 const ConEmuConsoleFlags
@@ -1281,17 +1287,17 @@ struct ConEmuGuiMapping
 	DWORD    nChangeNum; // incremental change number of structure
 	HWND2    hGuiWnd; // основное (корневое) окно ConEmu
 	DWORD    nGuiPID; // PID ConEmu.exe
-	
+
 	DWORD    nLoggingType; // enum GuiLoggingType
-	
+
 	wchar_t  sConEmuExe[MAX_PATH+1]; // полный путь к ConEmu.exe (GUI)
 	// --> ComSpec.ConEmuBaseDir:  wchar_t  sConEmuDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmu.exe
 	// --> ComSpec.ConEmuBaseDir:  wchar_t  sConEmuBaseDir[MAX_PATH+1]; // БЕЗ завершающего слеша. Папка содержит ConEmuC.exe, ConEmuHk.dll, ConEmu.xml
 	wchar_t  sConEmuArgs[MAX_PATH*2];
 
 
-	DWORD    bUseInjects;   // 0-off, 1-on, 3-exe only. Далее могут быть (пока не используется) доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
-	
+	ConEmuUseInjects   useInjects;
+
 	ConEmuConsoleFlags Flags;
 	//BOOL     bUseTrueColor; // включен флажок "TrueMod support"
 	//BOOL     bProcessAnsi;  // ANSI X3.64 & XTerm-256-colors Support
@@ -1308,7 +1314,7 @@ struct ConEmuGuiMapping
 
 	/* Main font in GUI */
 	struct ConEmuMainFont MainFont;
-	
+
 	// DosBox
 	//BOOL     bDosBox; // наличие DosBox
 	//wchar_t  sDosBoxExe[MAX_PATH+1]; // полный путь к DosBox.exe
@@ -1453,7 +1459,7 @@ struct CESERVER_CONSAVE_MAP
 {
 	CESERVER_REQ_HDR hdr; // Для унификации
 	CONSOLE_SCREEN_BUFFER_INFO info;
-	
+
 	DWORD MaxCellCount;
 	int   CurrentIndex;
 	BOOL  Succeeded;
@@ -1598,7 +1604,7 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 	HWND2 hConEmuWndBack;
 
 	DWORD nLoggingType;  // enum GuiLoggingType
-	DWORD bUseInjects;   // 0-off, 1-on, 3-exe only. Далее могут быть доп.флаги (битмаск)? chcp, Hook HKCU\FAR[2] & HKLM\FAR and translate them to hive, ...
+	ConEmuUseInjects useInjects;
 
 	ConEmuConsoleFlags Flags;
 	//BOOL  bDosBox;       // DosBox установлен, можно пользоваться
@@ -1608,7 +1614,7 @@ struct CESERVER_CONSOLE_MAPPING_HDR
 
 	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
 	ConEmuAnsiLog AnsiLog;
-	
+
 	// Разрешенный размер видимой области
 	BOOL  bLockVisibleArea;
 	COORD crLockedVisible;
@@ -2183,7 +2189,7 @@ struct CESERVER_REQ_ATTACHGUIAPP
 	RECT  rcWindow;     // координаты
 	DWORD Reserved;     // зарезервировано под флаги, вроде "Показывать заголовок"
 	//DWORD nStyle, nStyleEx;
-	//BOOL  bHideCaption; // 
+	//BOOL  bHideCaption; //
 	struct GuiStylesAndShifts Styles;
 	wchar_t sAppFilePathName[MAX_PATH*2];
 };
@@ -2501,7 +2507,7 @@ const RequestLocalServerFlags
 struct RequestLocalServerParm
 {
 	DWORD     StructSize;
-	
+
 	RequestLocalServerFlags Flags;
 
 	/*[IN]*/  HANDLE* ppConOutBuffer;

@@ -443,7 +443,7 @@ BOOL CShellProc::LoadSrvMapping(BOOL bLightCheck /*= FALSE*/)
 		m_SrvMapping.hConEmuWndDc = NULL;
 		m_SrvMapping.hConEmuWndBack = NULL;
 		m_SrvMapping.Flags = pOpt->nConsoleFlags;
-		m_SrvMapping.bUseInjects = pOpt->bNoInjects ? 0 : 1;
+		m_SrvMapping.useInjects = pOpt->bNoInjects ? ConEmuUseInjects::DontUse : ConEmuUseInjects::Use;
 		// Пути
 		lstrcpy(m_SrvMapping.sConEmuExe, pOpt->pszConEmuExe ? pOpt->pszConEmuExe : L"");
 		lstrcpy(m_SrvMapping.ComSpec.ConEmuBaseDir, pOpt->pszConEmuBaseDir ? pOpt->pszConEmuBaseDir : L"");
@@ -1688,11 +1688,11 @@ int CShellProc::PrepareExecuteParms(
 		}
 	}
 
-	// Проверяем настройку ConEmuGuiMapping.bUseInjects
-	if (!LoadSrvMapping() || !(m_SrvMapping.cbSize && ((m_SrvMapping.bUseInjects & 1) || gbPrepareDefaultTerminal)))
+	// Проверяем настройку ConEmuGuiMapping.useInjects
+	if (!LoadSrvMapping() || !(m_SrvMapping.cbSize && ((m_SrvMapping.useInjects == ConEmuUseInjects::Use) || gbPrepareDefaultTerminal)))
 	{
 		// -- зависимо только от флажка "Use Injects", иначе нельзя управлять добавлением "ConEmuC.exe" из ConEmu --
-		// Настройка в ConEmu ConEmuGuiMapping.bUseInjects, или gFarMode.bFarHookMode. Иначе - сразу выходим
+		// Настройка в ConEmu ConEmuGuiMapping.useInjects, или gFarMode.bFarHookMode. Иначе - сразу выходим
 		if (!bLongConsoleOutput)
 		{
 			LogExit(0);
@@ -2307,7 +2307,7 @@ int CShellProc::PrepareExecuteParms(
 		if (lbGuiApp && (NewConsoleFlags || bForceNewConsole))
 			bGoChangeParm = true;
 		// eCreateProcess перехватывать не нужно (сами сделаем InjectHooks после CreateProcess)
-		else if ((mn_ImageBits != 16) && (m_SrvMapping.bUseInjects & 1)
+		else if ((mn_ImageBits != 16) && (m_SrvMapping.useInjects == ConEmuUseInjects::Use)
 				&& (NewConsoleFlags // CEF_NEWCON_SWITCH | CEF_NEWCON_PREPEND
 					|| (bLongConsoleOutput &&
 						(((aCmd == eShellExecute)

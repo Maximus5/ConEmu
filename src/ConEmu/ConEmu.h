@@ -187,6 +187,7 @@ class CConEmuMain
 		} m_DbgInfo;
 	private:
 		bool CheckBaseDir() const const;
+		bool mb_DontUseInjects = false;
 		bool mb_ForceUseRegistry = false;
 		bool mb_SpecialConfigPath = false;
 		wchar_t ms_ConEmuXml[MAX_PATH+1] = L"";       // полный путь к портабельным настройкам
@@ -597,6 +598,7 @@ class CConEmuMain
 		void AttachToDialog();
 		void CheckFocus(LPCWSTR asFrom);
 		bool CheckRequiredFiles();
+		bool CanUseInjects() const;
 		bool CheckUpdates(UINT abShowMessages);
 		DWORD isSelectionModifierPressed(bool bAllowEmpty);
 		void ForceSelectionModifierPressed(DWORD nValue);

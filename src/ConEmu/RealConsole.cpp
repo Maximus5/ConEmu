@@ -589,6 +589,9 @@ bool CRealConsole::PreCreate(RConStartArgsEx *args)
 
 	bool bCopied = m_Args.AssignFrom(*args);
 
+	if (!gpConEmu->CanUseInjects())
+		m_Args.InjectsDisable = crb_On;
+
 	// Don't leave security information (passwords) in memory
 	if (bCopied && args->pszUserName)
 	{

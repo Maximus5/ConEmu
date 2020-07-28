@@ -940,81 +940,95 @@ bool CConEmuMain::CheckRequiredFiles()
 {
 	wchar_t szPath[MAX_PATH+32];
 	struct ReqFile {
-		int  Bits;
-		BOOL Req;
-		wchar_t File[16];
-	} Files[] = {
-		{32, TRUE, L"ConEmuC.exe"},
-		{64, TRUE, L"ConEmuC64.exe"},
-		{32, TRUE, L"ConEmuCD.dll"},
-		{64, TRUE, L"ConEmuCD64.dll"},
-		{32, gpSet->isUseInjects, L"ConEmuHk.dll"},
-		{64, gpSet->isUseInjects, L"ConEmuHk64.dll"},
+		int  bits;
+		bool isRequired;
+		wchar_t name[16];
+	} requiredFiles[] = {
+		{32, true, ConEmuC_32_EXE},
+		{64, true, ConEmuC_64_EXE},
+		{32, true, ConEmuCD_32_DLL},
+		{64, true, ConEmuCD_64_DLL},
+		{32, gpSet->isUseInjects, ConEmuHk_32_DLL},
+		{64, gpSet->isUseInjects, ConEmuHk_64_DLL},
 	};
 
-	wchar_t szRequired[128], szRecommended[128]; szRequired[0] = szRecommended[0] = 0;
-	bool isWin64 = IsWindows64();
-	int  nExeBits = WIN3264TEST(32,64);
+	std::wstring szRequired, szRecommended;
+	const bool isWin64 = IsWindows64();
+	const int  nExeBits = WIN3264TEST(32,64);
 
 	wcscpy_c(szPath, ms_ConEmuBaseDir);
 	wcscat_c(szPath, L"\\");
 	wchar_t* pszSlash = szPath + _tcslen(szPath);
 	DWORD nFileSize = 0;
+	size_t missedRequired = 0;
+	// on 32bit os we check only ConEmuHk_32_DLL
+	const size_t countToDisableInjects = isWin64 ? 2 : 1;
 
-	for (size_t i = 0; i < countof(Files); i++)
+	for (const auto& requiredFile : requiredFiles)
 	{
-		if (Files[i].Bits == 64)
+		if (requiredFile.bits == 64)
 		{
 			if (!isWin64)
 				continue; // 64битные файлы в 32битных ОС не нужны
 		}
 
-		_wcscpy_c(pszSlash, 32, Files[i].File);
+		_wcscpy_c(pszSlash, 32, requiredFile.name);
 		if (!FileExists(szPath, &nFileSize) || !nFileSize)
 		{
-			if (!Files[i].Req)
+			if (!requiredFile.isRequired)
+			{
+				++missedRequired;
 				continue;
-			wchar_t* pszList = (Files[i].Bits == nExeBits) ? szRequired : szRecommended;
-			if (*pszList)
-				_wcscat_c(pszList, countof(szRequired), L", ");
-			_wcscat_c(pszList, countof(szRequired), Files[i].File);
+			}
+			auto& pszList = (requiredFile.bits == nExeBits) ? szRequired : szRecommended;
+			if (!pszList.empty())
+				pszList += L", ";;
+			pszList += requiredFile.name;
 		}
 	}
 
-	if (*szRequired || *szRecommended)
+	// if both ConEmuHk.dll and ConEmuHk64.dll were deleted
+	if (missedRequired >= countToDisableInjects)
 	{
-		size_t cchMax = _tcslen(szRequired) + _tcslen(szRecommended) + _tcslen(ms_ConEmuExe) + 255;
-		wchar_t* pszMsg = (wchar_t*)calloc(cchMax, sizeof(*pszMsg));
-		if (pszMsg)
-		{
-			_wcscpy_c(pszMsg, cchMax, *szRequired ? L"Critical error\n\n" : L"Warning\n\n");
-			if (*szRequired)
-			{
-				_wcscat_c(pszMsg, cchMax, L"Required files not found!\n");
-				_wcscat_c(pszMsg, cchMax, szRequired);
-				_wcscat_c(pszMsg, cchMax, L"\n\n");
-			}
-			if (*szRecommended)
-			{
-				_wcscat_c(pszMsg, cchMax, L"Recommended files not found!\n");
-				_wcscat_c(pszMsg, cchMax, szRecommended);
-				_wcscat_c(pszMsg, cchMax, L"\n\n");
-			}
-			_wcscat_c(pszMsg, cchMax, L"ConEmu was started from:\n");
-			_wcscat_c(pszMsg, cchMax, ms_ConEmuExe);
-			_wcscat_c(pszMsg, cchMax, L"\n");
-			if (*szRequired)
-			{
-				_wcscat_c(pszMsg, cchMax, L"\nConEmu will exit now");
-			}
-			MsgBox(pszMsg, MB_SYSTEMMODAL|(*szRequired ? MB_ICONSTOP : MB_ICONWARNING), GetDefaultTitle(), NULL);
-			free(pszMsg);
-		}
+		LogString(L"Injects are disabled for root processes");
+		mb_DontUseInjects = true;
 	}
 
-	if (*szRequired)
+	if (szRequired[0] || szRecommended[0])
+	{
+		std::wstring szMsg;
+		szMsg.reserve(szRequired.length() + szRecommended.length() + wcslen(ms_ConEmuExe) + 255);
+		szMsg += !szRequired.empty() ? L"Critical error\n\n" : L"Warning\n\n";
+		if (!szRequired.empty())
+		{
+			szMsg += L"Required files not found!\n";
+			szMsg += szRequired;
+			szMsg += L"\n\n";
+		}
+		if (!szRecommended.empty())
+		{
+			szMsg += L"Recommended files not found!\n";
+			szMsg += szRecommended;
+			szMsg += L"\n\n";
+		}
+		szMsg += L"ConEmu was started from:\n";
+		szMsg += ms_ConEmuExe;
+		szMsg += L"\n";
+		if (!szRequired.empty())
+		{
+			szMsg += L"\nConEmu will exit now";
+		}
+		MsgBox(szMsg.c_str(), MB_SYSTEMMODAL|(!szRequired.empty() ? MB_ICONSTOP : MB_ICONWARNING), GetDefaultTitle(), nullptr);
+	}
+
+	if (!szRequired.empty())
 		return false;
-	return true; // Можно продолжать
+	return true; // allowed to continue
+}
+
+bool CConEmuMain::CanUseInjects() const
+{
+	return !mb_DontUseInjects;
 }
 
 bool CConEmuMain::CheckBaseDir() const
@@ -2174,7 +2188,7 @@ void CConEmuMain::UpdateGuiInfoMapping()
 	m_GuiInfo.nGuiPID = GetCurrentProcessId();
 
 	m_GuiInfo.nLoggingType = CSetPgDebug::GetActivityLoggingType();
-	m_GuiInfo.bUseInjects = (gpSet->isUseInjects ? 1 : 0) ; // ((gpSet->isUseInjects == BST_CHECKED) ? 1 : (gpSet->isUseInjects == BST_INDETERMINATE) ? 3 : 0);
+	m_GuiInfo.useInjects = (gpSet->isUseInjects ? ConEmuUseInjects::Use : ConEmuUseInjects::DontUse);
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_UseTrueColor,(gpSet->isTrueColorer ? CECF_UseTrueColor : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_ProcessAnsi,(gpSet->isProcessAnsi ? CECF_ProcessAnsi : 0));
 	SetConEmuFlags(m_GuiInfo.Flags,CECF_AnsiExecAny|CECF_AnsiExecCmd,((gpSet->isAnsiExec==ansi_Allowed) ? CECF_AnsiExecAny : (gpSet->isAnsiExec==ansi_CmdOnly) ? CECF_AnsiExecCmd : 0));

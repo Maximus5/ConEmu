@@ -46,65 +46,80 @@ enum MapDumpEnum
 	mde_All,
 };
 
-static void DumpMember(const WORD& dwData, LPCWSTR szName, LPCWSTR szIndent)
+namespace
 {
-	wchar_t szData[32]; CEStr lsLine;
-	lsLine = lstrmerge(szIndent, szName, L": ", ultow_s(dwData, szData, 10), L"\r\n");
-	_wprintf(lsLine);
-}
-
-static void DumpMember(const DWORD& dwData, LPCWSTR szName, LPCWSTR szIndent)
-{
-	wchar_t szData[32]; CEStr lsLine;
-	lsLine = lstrmerge(szIndent, szName, L": ", ultow_s(dwData, szData, 10), L"\r\n");
-	_wprintf(lsLine);
-}
-
-static void DumpMember(const int& iData, LPCWSTR szName, LPCWSTR szIndent)
+template<typename T>
+void DumpMember(const T& data, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szData[32];
-	CEStr lsLine(szIndent, szName, L": ", ltow_s(iData, szData, 10), L"\r\n");
+	CEStr lsLine(szIndent, szName, L": ", ltow_s(static_cast<int>(data), szData, 10), L"\r\n");
 	_wprintf(lsLine);
 }
 
-static void DumpMember(const wchar_t* pszData, LPCWSTR szName, LPCWSTR szIndent)
+template<>
+void DumpMember<WORD>(const WORD& data, LPCWSTR szName, LPCWSTR szIndent)
 {
-	CEStr lsLine(szIndent, szName, L": `", pszData, L"`\r\n");
+	wchar_t szData[32];
+	CEStr lsLine;
+	lsLine = lstrmerge(szIndent, szName, L": ", ultow_s(data, szData, 10), L"\r\n");
 	_wprintf(lsLine);
 }
 
-static void DumpMember(const uint64_t& llData, LPCWSTR szName, LPCWSTR szIndent)
+template<>
+void DumpMember<DWORD>(const DWORD& data, LPCWSTR szName, LPCWSTR szIndent)
+{
+	wchar_t szData[32];
+	CEStr lsLine;
+	lsLine = lstrmerge(szIndent, szName, L": ", ultow_s(data, szData, 10), L"\r\n");
+	_wprintf(lsLine);
+}
+
+template<typename T, size_t N>
+void DumpMember(const T (&data)[N], LPCWSTR szName, LPCWSTR szIndent)
+{
+	CEStr lsLine(szIndent, szName, L": `", data, L"`\r\n");
+	_wprintf(lsLine);
+}
+
+template<>
+void DumpMember<uint64_t>(const uint64_t& data, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szData[64];
-	swprintf_c(szData, L"0x%p", (LPVOID)llData);
+	swprintf_c(szData, L"0x%p", reinterpret_cast<LPCVOID>(data));
 	CEStr lsLine(szIndent, szName, L": ", szData, L"\r\n");
 	_wprintf(lsLine);
 }
 
-static void DumpMember(const HWND2& hWnd, LPCWSTR szName, LPCWSTR szIndent)
+template<>
+void DumpMember<const HWND2&>(const HWND2& data, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szData[32];
-	swprintf_c(szData, L"0x%08X", (DWORD)hWnd);
+	swprintf_c(szData, L"0x%08X", LODWORD(data));
 	CEStr lsLine(szIndent, szName, L": ", szData, L"\r\n");
 	_wprintf(lsLine);
 }
 
-static void DumpMember(const CONSOLE_SCREEN_BUFFER_INFO& cs, LPCWSTR szName, LPCWSTR szIndent)
+template<>
+void DumpMember<CONSOLE_SCREEN_BUFFER_INFO>(const CONSOLE_SCREEN_BUFFER_INFO& data, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szText[255];
-	swprintf_c(szText, L"%s%s: Size={%i,%i} Cursor={%i,%i} Attr=0x%02X Wnd={%i,%i}-{%i,%i} Max={%i,%i}\r\n",
-		szIndent, szName, cs.dwSize.X, cs.dwSize.Y, cs.dwCursorPosition.X, cs.dwCursorPosition.Y,
-		cs.wAttributes, cs.srWindow.Left, cs.srWindow.Top, cs.srWindow.Right, cs.srWindow.Bottom,
-		cs.dwMaximumWindowSize.X, cs.dwMaximumWindowSize.Y);
+	swprintf_c(
+		szText, L"%s%s: Size={%i,%i} Cursor={%i,%i} Attr=0x%02X Wnd={%i,%i}-{%i,%i} Max={%i,%i}\r\n",
+		szIndent, szName, data.dwSize.X, data.dwSize.Y, data.dwCursorPosition.X, data.dwCursorPosition.Y,
+		data.wAttributes, data.srWindow.Left, data.srWindow.Top, data.srWindow.Right, data.srWindow.Bottom,
+		data.dwMaximumWindowSize.X, data.dwMaximumWindowSize.Y);
 	_wprintf(szText);
 }
 
-static void DumpMember(const COORD& cr, LPCWSTR szName, LPCWSTR szIndent)
+template<>
+void DumpMember<COORD>(const COORD& data, LPCWSTR szName, LPCWSTR szIndent)
 {
 	wchar_t szText[80];
-	swprintf_c(szText, L"%s%s: {%i,%i}\r\n",
-		szIndent, szName, cr.X, cr.Y);
+	swprintf_c(
+		szText, L"%s%s: {%i,%i}\r\n",
+		szIndent, szName, data.X, data.Y);
 	_wprintf(szText);
+}
 }
 
 static void DumpConsoleInfo(const ConEmuConsoleInfo& con, LPCWSTR szIndent)
@@ -204,7 +219,7 @@ static void DumpStructPtr(void* ptrData, MapDumpEnum type, LPCWSTR szIndent)
 			dumpMember(nLoggingType);
 			dumpMember(sConEmuExe);
 			dumpMember(sConEmuArgs);
-			dumpMember(bUseInjects);
+			dumpMember(useInjects);
 			DumpConsoleFlags(p->Flags, L"Flags", szIndent);
 			dumpMember(bGuiActive);
 			dumpMember(dwActiveTick);
@@ -241,7 +256,7 @@ static void DumpStructPtr(void* ptrData, MapDumpEnum type, LPCWSTR szIndent)
 			dumpMember(hConEmuWndDc);
 			dumpMember(hConEmuWndBack);
 			dumpMember(nLoggingType);
-			dumpMember(bUseInjects);
+			dumpMember(useInjects);
 			DumpConsoleFlags(p->Flags, L"Flags", szIndent);
 			dumpMember(AnsiLog.Enabled);
 			dumpMember(AnsiLog.Path);

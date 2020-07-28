@@ -2840,7 +2840,7 @@ void CopySrvMapFromGuiMap()
 	}
 
 	gpSrv->pConsole->hdr.nLoggingType = gpSrv->guiSettings.nLoggingType;
-	gpSrv->pConsole->hdr.bUseInjects = gpSrv->guiSettings.bUseInjects;
+	gpSrv->pConsole->hdr.useInjects = gpSrv->guiSettings.useInjects;
 	//gpSrv->pConsole->hdr.bDosBox = gpSrv->guiSettings.bDosBox;
 	//gpSrv->pConsole->hdr.bUseTrueColor = gpSrv->guiSettings.bUseTrueColor;
 	//gpSrv->pConsole->hdr.bProcessAnsi = gpSrv->guiSettings.bProcessAnsi;
