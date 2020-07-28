@@ -134,7 +134,7 @@ int RConStartArgs::ProcessNewConArg(bool bForceCurConsole /*= false*/)
 			L"ConEmuPortable.exe", L"ConEmuPortable",
 			L"DosKey", L"DosKey.exe",
 			NULL};
-		while (!pszStopAt && (pszTemp = NextArg(pszTemp, szExe)))
+		while (!pszStopAt && ((pszTemp = NextArg(pszTemp, szExe))))
 		{
 			if (szExe.ms_Val[0] != L'-')
 			{

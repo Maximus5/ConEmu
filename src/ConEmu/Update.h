@@ -167,6 +167,5 @@ protected:
 	#endif
 	bool StartLocalUpdate(LPCWSTR asDownloadedPackage);
 	bool LoadVersionInfoFromServer();
-	bool LoadPackageFromServer();
 	wchar_t* CreateVersionOnServerInfo(bool abRightAligned, LPCWSTR asSuffix = NULL);
 };

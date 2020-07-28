@@ -159,7 +159,7 @@ class CConEmuMain
 		LPWSTR  mps_ConEmuExtraArgs = NULL;            // Used with TaskBar jump list creation (/FontDir, /FontFile, etc.)
 		public:
 		void AppendExtraArgs(LPCWSTR asSwitch, LPCWSTR asSwitchValue = NULL);
-		LPCWSTR MakeConEmuStartArgs(CEStr& rsArgs, LPCWSTR asOtherConfig = NULL);
+		LPCWSTR MakeConEmuStartArgs(CEStr& rsArgs, LPCWSTR asOtherConfig = NULL) const;
 		wchar_t ms_ComSpecInitial[MAX_PATH] = L"";
 		CEStr ms_PostGuiMacro;
 		void SetPostGuiMacro(LPCWSTR asGuiMacro);
@@ -186,7 +186,7 @@ class CConEmuMain
 			bool  bBlockChildrenDebuggers;
 		} m_DbgInfo;
 	private:
-		bool CheckBaseDir();
+		bool CheckBaseDir() const const;
 		bool mb_ForceUseRegistry = false;
 		bool mb_SpecialConfigPath = false;
 		wchar_t ms_ConEmuXml[MAX_PATH+1] = L"";       // полный путь к портабельным настройкам
@@ -571,8 +571,8 @@ class CConEmuMain
 		DWORD GetFarPID(bool abPluginRequired=false);
 
 	public:
-		LPCWSTR GetDefaultTitle(); // вернуть ms_ConEmuDefTitle
-		LPCWSTR GetDefaultTabLabel(); // L"ConEmu"
+		LPCWSTR GetDefaultTitle() const; // ms_ConEmuDefTitle
+		LPCWSTR GetDefaultTabLabel() const; // L"ConEmu"
 		LPCTSTR GetLastTitle(bool abUseDefault=true);
 		LPCTSTR GetVConTitle(int nIdx);
 		void SetTitle(HWND ahWnd, LPCWSTR asTitle, bool abTrySync = false);

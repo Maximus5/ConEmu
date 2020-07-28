@@ -880,7 +880,7 @@ void CConEmuMain::AppendExtraArgs(LPCWSTR asSwitch, LPCWSTR asSwitchValue /*= NU
 }
 
 // Returns either NULL string, or arguments with *trailing space*
-LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs, LPCWSTR asOtherConfig /*= NULL*/)
+LPCWSTR CConEmuMain::MakeConEmuStartArgs(CEStr& rsArgs, LPCWSTR asOtherConfig /*= NULL*/) const
 {
 	bool bSpecialXml = false;
 	LPCWSTR pszXmlFile = gpConEmu->ConEmuXml(&bSpecialXml);
@@ -959,7 +959,7 @@ bool CConEmuMain::CheckRequiredFiles()
 	wcscpy_c(szPath, ms_ConEmuBaseDir);
 	wcscat_c(szPath, L"\\");
 	wchar_t* pszSlash = szPath + _tcslen(szPath);
-	DWORD nFileSize;
+	DWORD nFileSize = 0;
 
 	for (size_t i = 0; i < countof(Files); i++)
 	{
@@ -1017,7 +1017,7 @@ bool CConEmuMain::CheckRequiredFiles()
 	return true; // Можно продолжать
 }
 
-bool CConEmuMain::CheckBaseDir()
+bool CConEmuMain::CheckBaseDir() const
 {
 	bool lbBaseFound = false;
 	wchar_t szBaseFile[MAX_PATH+12];
@@ -3536,12 +3536,12 @@ DWORD_PTR CConEmuMain::GetActiveKeyboardLayout()
 //	return Title;
 //}
 
-LPCWSTR CConEmuMain::GetDefaultTitle()
+LPCWSTR CConEmuMain::GetDefaultTitle() const
 {
 	return ms_ConEmuDefTitle;
 }
 
-LPCWSTR CConEmuMain::GetDefaultTabLabel()
+LPCWSTR CConEmuMain::GetDefaultTabLabel() const
 {
 	return L"ConEmu";
 }
