@@ -308,6 +308,7 @@
     <ClInclude Include="ConEmuCD\SrvPipes.h" />
     <ClInclude Include="ConEmuCD\StartEnv.h" />
     <ClInclude Include="ConEmuCD\UnicodeTest.h" />
+    <ClInclude Include="ConEmuCD\WorkerBase.h" />
     <ClInclude Include="ConEmuCD\crc32.h" />
     <ClInclude Include="ConEmuCD\resource.h" />
     <ClInclude Include="ConEmuHk\Injects.h" />
@@ -337,6 +338,7 @@
     <ClCompile Include="ConEmuCD\SrvPipes.cpp" />
     <ClCompile Include="ConEmuCD\StartEnv.cpp" />
     <ClCompile Include="ConEmuCD\UnicodeTest.cpp" />
+    <ClCompile Include="ConEmuCD\WorkerBase.cpp" />
     <ClCompile Include="ConEmuHk\Injects.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -356,4 +358,4 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-</Project> 
+</Project>

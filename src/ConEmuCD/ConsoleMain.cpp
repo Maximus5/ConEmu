@@ -1118,7 +1118,7 @@ void UnlockCurrentDirectory()
 }
 
 
-bool CheckAndWarnHookers()
+bool CheckAndWarnHookSetters()
 {
 	if (gbSkipHookersCheck)
 	{
@@ -1260,36 +1260,29 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	switch (anWorkMode)
 	{
 	case ConsoleMainMode::Server:
-		gnRunMode = RunMode::Server; break;
+		gnRunMode = RunMode::Server;
+		gpWorker = new WorkerServer;
+		break;
 	case ConsoleMainMode::AltServer:
-		gnRunMode = RunMode::AltServer; break;
+		gnRunMode = RunMode::AltServer;
+		gpWorker = new WorkerServer;
+		break;
 	case ConsoleMainMode::GuiMacro:
-		_ASSERTE(FALSE && "not expected to be here - GuiMacro");
-		gnRunMode = RunMode::GuiMacro; break;
+		gnRunMode = RunMode::GuiMacro;
+		break;
 	default:
-		_ASSERTE(FALSE && "not expected to be here - Undefined");
 		gnRunMode = RunMode::Undefined;
+		gpWorker = new WorkerComspec;
 	}
 
 	// Check linker fails!
-	if (ghOurModule == NULL)
+	if (ghOurModule == nullptr)
 	{
-		wchar_t szTitle[128]; swprintf_c(szTitle, WIN3264TEST(L"ConEmuCD",L"ConEmuCD64") L", PID=%u", GetCurrentProcessId());
+		wchar_t szTitle[128]; swprintf_c(szTitle, ConEmuCD_DLL_3264 L", PID=%u", GetCurrentProcessId());
 		MessageBox(NULL, L"ConsoleMain2: ghOurModule is NULL\nDllMain was not executed", szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 		return CERR_DLLMAIN_SKIPPED;
 	}
 
-	if (!gpSrv && (gnRunMode != RunMode::GuiMacro))
-		gpSrv = (SrvInfo*)calloc(sizeof(SrvInfo),1);
-	if (gpSrv)
-	{
-		gpSrv->InitFields();
-
-		if (ghConEmuWnd)
-		{
-			GetWindowThreadProcessId(ghConEmuWnd, &gnConEmuPID);
-		}
-	}
 
 #if defined(SHOW_STARTED_PRINT)
 	BOOL lbDbgWrite; DWORD nDbgWrite; HANDLE hDbg; char szDbgString[255], szHandles[128];
@@ -1427,7 +1420,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		_ASSERTE(iRc == CERR_GUIMACRO_SUCCEEDED || iRc == CERR_GUIMACRO_FAILED);
 		goto wrap;
 	}
-	else if (anWorkMode != ConsoleMainMode::Server)
+	else if (anWorkMode == ConsoleMainMode::AltServer)
 	{
 		// Alternative mode
 		_ASSERTE(anWorkMode==ConsoleMainMode::AltServer);
@@ -1464,7 +1457,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	// По идее, при вызове дебаггера ParseCommandLine сразу должна послать на выход.
 	_ASSERTE(!(gpSrv->DbgInfo.bDebuggerActive || gpSrv->DbgInfo.bDebugProcess || gpSrv->DbgInfo.bDebugProcessTree));
 
-	// Force change current handles to STD ConIn/ConOut?
+	// Force change current handles to STD ConIn/ConOut? "-STD" switch in the command line
 	if (StdCon::gbReopenConsole)
 	{
 		StdCon::ReopenConsoleHandles(&si);
@@ -1493,8 +1486,8 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		}
 		#endif
 
-		// Warn about external hookers
-		CheckAndWarnHookers();
+		// Warn about external hook setters
+		CheckAndWarnHookSetters();
 	}
 
 	_ASSERTE(!gpSrv->hRootProcessGui || ((LODWORD(gpSrv->hRootProcessGui))!=0xCCCCCCCC && IsWindow(gpSrv->hRootProcessGui)));
@@ -1564,7 +1557,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 				GetModuleFileName(NULL, szFile, countof(szFile));
 				msprintf(szDbgMsg, countof(szDbgMsg), L"%s: PID=%u: GetConsoleProcessList failed, code=%u\r\n", PointToName(szFile), gnSelfPID, nErr);
 				_wprintf(szDbgMsg);
-				pfnGetConsoleProcessList = NULL;
+				pfnGetConsoleProcessList = nullptr;
 			}
 		}
 	}
@@ -1577,7 +1570,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	if (gnRunMode == RunMode::Server || gnRunMode == RunMode::AltServer || gnRunMode == RunMode::AutoAttach)
 	{
 		_ASSERTE((anWorkMode != ConsoleMainMode::Server) == (gnRunMode == RunMode::AltServer));
-		if ((iRc = ServerInit()) != 0)
+		if ((iRc = gpWorker->Init()) != 0)
 		{
 			nExitPlaceStep = 250;
 			goto wrap;
@@ -1587,7 +1580,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	{
 		xf_check();
 
-		if ((iRc = ComspecInit()) != 0)
+		if ((iRc = gpWorker->Init()) != 0)
 		{
 			nExitPlaceStep = 300;
 			goto wrap;
@@ -2372,7 +2365,8 @@ wrap:
 
 	if (gnRunMode == RunMode::Server)
 	{
-		ServerDone(iRc, true);
+		gpWorker->Done(iRc, true);
+		
 		//MessageBox(0,L"Server done...",L"ConEmuC",0);
 		SafeCloseHandle(gpSrv->DbgInfo.hDebugReady);
 		SafeCloseHandle(gpSrv->DbgInfo.hDebugThread);
@@ -2382,7 +2376,7 @@ wrap:
 		_ASSERTE(iRc==CERR_RUNNEWCONSOLE || gbComspecInitCalled);
 		if (gbComspecInitCalled)
 		{
-			ComspecDone(iRc);
+			gpWorker->Done(iRc, false);
 		}
 		//MessageBox(0,L"Comspec done...",L"ConEmuC",0);
 	}
@@ -4067,7 +4061,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 			if (gnRunMode == RunMode::Comspec)
 			{
-				gpSrv->bK = (szArg[1] & ~0x20) == L'K';
+				gpWorker->SetCmdK((szArg[1] & ~0x20) == L'K');
 			}
 
 			if (lsCmdLine && (lsCmdLine[0] == TaskBracketLeft) && wcschr(lsCmdLine, TaskBracketRight))
@@ -4310,123 +4304,27 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		// New console was requested?
 		if (IsNewConsoleArg(lsCmdLine))
 		{
-			HWND hConWnd = ghConWnd, hConEmu = ghConEmuWnd;
-			if (!hConWnd)
+			auto* comspec = dynamic_cast<WorkerComspec*>(gpWorker);
+			if (!comspec)
 			{
-				// This may be ConEmuC started from WSL or connector
-				CEStr guiPid(GetEnvVar(ENV_CONEMUPID_VAR_W));
-				CEStr srvPid(GetEnvVar(ENV_CONEMUSERVERPID_VAR_W));
-				if (guiPid && srvPid)
-				{
-					DWORD GuiPID = wcstoul(guiPid, NULL, 10);
-					DWORD SrvPID = wcstoul(srvPid, NULL, 10);
-					ConEmuGuiMapping GuiMapping = {sizeof(GuiMapping)};
-					if (GuiPID && LoadGuiMapping(GuiPID, GuiMapping))
-					{
-						for (size_t i = 0; i < countof(GuiMapping.Consoles); ++i)
-						{
-							if (GuiMapping.Consoles[i].ServerPID == SrvPID)
-							{
-								hConWnd = GuiMapping.Consoles[i].Console;
-								hConEmu = GuiMapping.hGuiWnd;
-								break;
-							}
-						}
-					}
-				}
-			}
-
-			if (!hConWnd)
-			{
-				// Executed outside of ConEmu, impossible to continue
-				_ASSERTE(hConWnd != NULL);
+				_ASSERTE(comspec != nullptr);
 			}
 			else
 			{
-				xf_check();
-				// тогда обрабатываем
-				gpSrv->bNewConsole = TRUE;
-
-				// По идее, должен запускаться в табе ConEmu (в существующей консоли), но если нет
-				if (!hConEmu || !IsWindow(hConEmu))
+				const auto iNewConRc = comspec->ProcessNewConsoleArg(lsCmdLine);
+				if (iNewConRc != 0)
 				{
-					// попытаться найти открытый ConEmu
-					hConEmu = FindWindowEx(NULL, NULL, VirtualConsoleClassMain, NULL);
-					if (hConEmu)
-						gbNonGuiMode = TRUE; // Чтобы не пытаться выполнить SendStopped (ибо некому)
+					return iNewConRc;
 				}
-
-				int iNewConRc = CERR_RUNNEWCONSOLE;
-
-				// Query current environment
-				CEnvStrings strs(GetEnvironmentStringsW());
-
-				DWORD nCmdLen = lstrlen(lsCmdLine)+1;
-				CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_NEWCMD, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_NEWCMD)+((nCmdLen+strs.mcch_Length)*sizeof(wchar_t)));
-				if (pIn)
-				{
-					pIn->NewCmd.hFromConWnd = hConWnd;
-
-					// hConWnd may differ from parent process, but ENV_CONEMUDRAW_VAR_W would be inherited
-					wchar_t* pszDcWnd = GetEnvVar(ENV_CONEMUDRAW_VAR_W);
-					if (pszDcWnd && (pszDcWnd[0] == L'0') && (pszDcWnd[1] == L'x'))
-					{
-						wchar_t* pszEnd = NULL;
-						pIn->NewCmd.hFromDcWnd.u = wcstoul(pszDcWnd+2, &pszEnd, 16);
-					}
-					SafeFree(pszDcWnd);
-
-					GetCurrentDirectory(countof(pIn->NewCmd.szCurDir), pIn->NewCmd.szCurDir);
-					pIn->NewCmd.SetCommand(lsCmdLine);
-					pIn->NewCmd.SetEnvStrings(strs.ms_Strings, static_cast<DWORD>(strs.mcch_Length));
-
-					CESERVER_REQ* pOut = ExecuteGuiCmd(hConEmu, pIn, hConWnd);
-					if (pOut)
-					{
-						if (pOut->hdr.cbSize <= sizeof(pOut->hdr) || pOut->Data[0] == FALSE)
-						{
-							iNewConRc = CERR_RUNNEWCONSOLEFAILED;
-						}
-						ExecuteFreeResult(pOut);
-					}
-					else
-					{
-						_ASSERTE(pOut!=NULL);
-						iNewConRc = CERR_RUNNEWCONSOLEFAILED;
-					}
-					ExecuteFreeResult(pIn);
-				}
-				else
-				{
-					iNewConRc = CERR_NOTENOUGHMEM1;
-				}
-
-				DisableAutoConfirmExit();
-				return iNewConRc;
 			}
 		}
-
-		//pwszCopy = lsCmdLine;
-		//if ((iRc = NextArg(&pwszCopy, szArg)) != 0) {
-		//    wprintf (L"Parsing command line failed:\n%s\n", lsCmdLine);
-		//    return iRc;
-		//}
-		//pwszCopy = wcsrchr(szArg, L'\\'); if (!pwszCopy) pwszCopy = szArg;
-		//#pragma warning( push )
-		//#pragma warning(disable : 6400)
-		//if (lstrcmpiW(pwszCopy, L"cmd")==0 || lstrcmpiW(pwszCopy, L"cmd.exe")==0) {
-		//    gbRunViaCmdExe = FALSE; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
-		//}
-		//#pragma warning( pop )
-		//} else {
-		//    gbRunViaCmdExe = FALSE; // командным процессором выступает сам ConEmuC (серверный режим)
 	}
 
 	LPCWSTR pszArguments4EnvVar = NULL;
 
 	if (gnRunMode == RunMode::Comspec && (!lsCmdLine || !*lsCmdLine))
 	{
-		if (gpSrv->bK)
+		if (gpWorker->IsCmdK())
 		{
 			gbRunViaCmdExe = TRUE;
 		}
@@ -4545,7 +4443,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		gpszRunCmd[0] = L'"';
 		_wcscpy_c(gpszRunCmd+1, nCchLen-1, gszComSpec);
 
-		_wcscat_c(gpszRunCmd, nCchLen, gpSrv->bK ? L"\" /K " : L"\" /C ");
+		_wcscat_c(gpszRunCmd, nCchLen, gpWorker->IsCmdK() ? L"\" /K " : L"\" /C ");
 
 		// Собственно, командная строка
 		_wcscat_c(gpszRunCmd, nCchLen, lsCmdLine);

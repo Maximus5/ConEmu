@@ -36,6 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include <Shlwapi.h>
 
+
+#include "WorkerBase.h"
 #include "../common/Common.h"
 #include "../common/MConHandle.h"
 #include "../common/MFileMapping.h"
@@ -50,8 +52,6 @@ bool CheckWasFullScreen();
 DWORD WINAPI RefreshThread(LPVOID lpvParam); // Thread reloading console contents
 bool FreezeRefreshThread();
 bool ThawRefreshThread();
-int ServerInit(); // Создать необходимые события и нити
-void ServerDone(int aiRc, bool abReportShutdown = false);
 BOOL ServerInitConsoleMode();
 BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RECT& rgn);
 BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn);
@@ -270,12 +270,21 @@ struct SrvInfo
 	// Console Aliases
 	wchar_t* pszAliases; DWORD nAliasesSize;
 
-	// ComSpec mode
-	BOOL  bK;
-	BOOL  bNewConsole;
-	wchar_t szComSpecName[32];
-	wchar_t szSelfName[32];
-	wchar_t *pszPreAliases;
-	DWORD nPreAliasSize;
+};
+
+class WorkerServer : public WorkerBase
+{
+public:
+	virtual ~WorkerServer();
+	
+	WorkerServer();
+
+	WorkerServer(const WorkerServer&) = delete;
+	WorkerServer(WorkerServer&&) = delete;
+	WorkerServer& operator=(const WorkerServer&) = delete;
+	WorkerServer& operator=(WorkerServer&&) = delete;
+	
+	int Init() override;
+	void Done(int exitCode, bool reportShutdown = false) override;
 
 };

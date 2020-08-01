@@ -394,7 +394,7 @@ project "ConEmuCD"
     { ["Interface"] = {"**/Common.h", "**/SrvCommands.*", "**/Queue.*", "**/SrvPipes.*"} },
     { ["Automation"] = {"**/Actions.*", "**/GuiMacro.*"} },
     { ["Console"] = {"**/ConAnsi.*", "**/ConAnsiImpl.*", "**/ConData.*"} },
-    { ["Server"] = {"**/ServerLegacy.*", "**/ConEmuSrv.*"} },
+    { ["Server"] = {"**/ConEmuSrv.*", "**/ConEmuCmd.*", "**/WorkerBase.*"} },
     { ["Headers"] = {"**.h"} },
     { ["Sources"] = {"**.cpp"} },
     { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },

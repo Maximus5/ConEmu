@@ -40,7 +40,7 @@
       <Filter>Console</Filter>
     </ClInclude>
     <ClInclude Include="ConEmuCD\ConEmuCmd.h">
-      <Filter>Headers</Filter>
+      <Filter>Server</Filter>
     </ClInclude>
     <ClInclude Include="ConEmuCD\ConEmuSrv.h">
       <Filter>Server</Filter>
@@ -105,6 +105,9 @@
     <ClInclude Include="ConEmuCD\UnicodeTest.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmuCD\WorkerBase.h">
+      <Filter>Server</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmuCD\crc32.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -132,7 +135,7 @@
       <Filter>Console</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuCD\ConEmuCmd.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Server</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuCD\ConEmuSrv.cpp">
       <Filter>Server</Filter>
@@ -187,6 +190,9 @@
     </ClCompile>
     <ClCompile Include="ConEmuCD\UnicodeTest.cpp">
       <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\WorkerBase.cpp">
+      <Filter>Server</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuHk\Injects.cpp">
       <Filter>Sources</Filter>

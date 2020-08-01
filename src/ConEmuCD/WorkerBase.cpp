@@ -26,39 +26,15 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#pragma once
-
-#include <Windows.h>
 #include "WorkerBase.h"
 
-class WorkerComspec : public WorkerBase
+WorkerBase* gpWorker = nullptr;
+
+bool WorkerBase::IsCmdK() const
 {
-public:
-	virtual ~WorkerComspec();
-	
-	WorkerComspec();
+	return false;
+}
 
-	WorkerComspec(const WorkerComspec&) = delete;
-	WorkerComspec(WorkerComspec&&) = delete;
-	WorkerComspec& operator=(const WorkerComspec&) = delete;
-	WorkerComspec& operator=(WorkerComspec&&) = delete;
-	
-	int Init() override;
-	void Done(int exitCode, bool reportShutdown = false) override;
-	
-	int ProcessNewConsoleArg(LPCWSTR asCmdLine);
-
-	bool IsCmdK() const override;
-	void SetCmdK(bool useCmdK) override;
-	
-private:
-	bool GetAliases(wchar_t* asExeName, wchar_t** rsAliases, LPDWORD rnAliasesSize) const;
-
-	bool bK = false; // when started as "ConEmuC -k"
-	bool bNewConsole = false;
-	wchar_t szComSpecName[32] = L"";
-	wchar_t szSelfName[32] = L"";
-	wchar_t *pszPreAliases = nullptr;
-	DWORD nPreAliasSize = 0;
-};
+void WorkerBase::SetCmdK(bool useCmdK)
+{
+}

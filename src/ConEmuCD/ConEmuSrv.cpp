@@ -111,6 +111,28 @@ void SrvInfo::FinalizeFields()
 	SafeDelete(processes);
 }
 
+WorkerServer::~WorkerServer()
+{
+}
+
+WorkerServer::WorkerServer()
+{
+	// #SERVER remove gpSrv
+	if (!gpSrv)
+	{
+		gpSrv = static_cast<SrvInfo*>(calloc(sizeof(SrvInfo), 1));
+	}
+
+	if (gpSrv)
+	{
+		gpSrv->InitFields();
+
+		if (ghConEmuWnd)
+		{
+			GetWindowThreadProcessId(ghConEmuWnd, &gnConEmuPID);
+		}
+	}
+}
 
 
 // Установить мелкий шрифт, иначе может быть невозможно увеличение размера GUI окна
@@ -879,7 +901,7 @@ void ServerInitEnvVars()
 
 
 // Создать необходимые события и нити
-int ServerInit()
+int WorkerServer::Init()
 {
 	LogFunction(L"ServerInit");
 
@@ -1417,7 +1439,7 @@ wrap:
 }
 
 // Завершить все нити и закрыть дескрипторы
-void ServerDone(int aiRc, bool abReportShutdown /*= false*/)
+void WorkerServer::Done(int aiRc, bool abReportShutdown /*= false*/)
 {
 	LogFunction(L"ServerDone");
 

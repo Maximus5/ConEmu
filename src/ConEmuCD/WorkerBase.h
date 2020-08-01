@@ -26,39 +26,28 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
 #pragma once
 
-#include <Windows.h>
-#include "WorkerBase.h"
-
-class WorkerComspec : public WorkerBase
+class WorkerBase
 {
 public:
-	virtual ~WorkerComspec();
-	
-	WorkerComspec();
+	virtual ~WorkerBase() = default;
 
-	WorkerComspec(const WorkerComspec&) = delete;
-	WorkerComspec(WorkerComspec&&) = delete;
-	WorkerComspec& operator=(const WorkerComspec&) = delete;
-	WorkerComspec& operator=(WorkerComspec&&) = delete;
-	
-	int Init() override;
-	void Done(int exitCode, bool reportShutdown = false) override;
-	
-	int ProcessNewConsoleArg(LPCWSTR asCmdLine);
+	WorkerBase() = default;
 
-	bool IsCmdK() const override;
-	void SetCmdK(bool useCmdK) override;
-	
-private:
-	bool GetAliases(wchar_t* asExeName, wchar_t** rsAliases, LPDWORD rnAliasesSize) const;
+	WorkerBase(const WorkerBase&) = delete;
+	WorkerBase(WorkerBase&&) = delete;
+	WorkerBase& operator=(const WorkerBase&) = delete;
+	WorkerBase& operator=(WorkerBase&&) = delete;
 
-	bool bK = false; // when started as "ConEmuC -k"
-	bool bNewConsole = false;
-	wchar_t szComSpecName[32] = L"";
-	wchar_t szSelfName[32] = L"";
-	wchar_t *pszPreAliases = nullptr;
-	DWORD nPreAliasSize = 0;
+	virtual int Init() = 0;
+	virtual void Done(int exitCode, bool reportShutdown = false) = 0;
+
+	virtual bool IsCmdK() const;
+	virtual void SetCmdK(bool useCmdK);
+
+protected:
+	// Fields
 };
+
+extern WorkerBase* gpWorker;
