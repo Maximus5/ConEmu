@@ -5771,6 +5771,10 @@
       "pl": "Zdefiniowane przez użytkownika",
       "id": 59 }
     ,
+    "lng_HotkeyUnset": {
+      "en": "<unset>",
+      "id": 88 }
+    ,
     "lng_JumpListUpdated": {
       "en": "Taskbar jump list was updated successfully",
       "ru": "Списки переходов панели задач обновлены успешно",
@@ -5959,6 +5963,10 @@
       "es": "selección de flujo",
       "pl": "wybór strumienia",
       "id": 19 }
+    ,
+    "lng_SetPgInfoNone": {
+      "en": "(None)",
+      "id": 89 }
     ,
     "lng_SizeRadioCentered": {
       "en": "Centered",
@@ -6267,7 +6275,7 @@
       "de": "Autostart",
       "ja": "起動",
       "es": "Arranque",
-      "pl": "Uruchomienie",
+      "pl": "PrzyStarcie",
       "id": 33 }
     ,
     "lng_SpgStatusBar": {
@@ -11194,6 +11202,14 @@
       "pl": "Status wersji:",
       "id": 2683 }
     ,
+    "stConsoleBufferChars": {
+      "en": "Buffer (chars):",
+      "id": 2954 }
+    ,
+    "stConsoleLeftTop": {
+      "en": "Left x Top:",
+      "id": 2946 }
+    ,
     "stConsoleSizeChars": {
       "en": "Console (chars):",
       "ru": "Консоль (символы):",
@@ -11203,16 +11219,6 @@
       "es": "Terminar (cars.):",
       "pl": "Konsola (znaki):",
       "id": 2945 }
-    ,
-    "stConsoleSizePixels": {
-      "en": "(pixels):",
-      "ru": "(пиксели):",
-      "zh": "（像素）：",
-      "de": "(Pixel):",
-      "ja": "(ピクセル):",
-      "es": "(pixels):",
-      "pl": "(pixels):",
-      "id": 2946 }
     ,
     "stCopyFormat": {
       "en": "Copying format:",
@@ -12015,7 +12021,7 @@
       "de": "Start&verzeichnis für einen neuen Prozess:",
       "ja": "新しいプロセスのスタートアップディレクトリ:(&d)",
       "es": "&Carpeta de inicio para procesos nuevos:",
-      "pl": "Uruchomienie &katalog nowego procesu:",
+      "pl": "Uruchom &katalog nowego procesu:",
       "id": 2968 }
     ,
     "stStartupShellFast": {
@@ -12568,7 +12574,7 @@
       "de": "Möglicherweise Konsolenneustart erforderlich",
       "ja": "コンソールの再起動が必要な場合があります",
       "es": "Se requiere reinicio del terminal",
-      "pl": "Może być konieczne ponowne uruchomienie konsoli",
+      "pl": "Może być konieczne ponowne włączenie konsoli",
       "id": 1732 }
     ,
     "tConsoleFontHklmNote": {
