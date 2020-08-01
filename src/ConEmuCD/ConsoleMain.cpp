@@ -69,8 +69,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuSrv.h"
 #include "ConEmuCmd.h"
 #include "../common/CmdLine.h"
-#include "../common/ConsoleAnnotation.h"
-#include "../common/ConsoleMixAttr.h"
 #include "../common/ConsoleRead.h"
 #include "../common/EmergencyShow.h"
 #include "../common/EnvVar.h"
@@ -79,7 +77,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MArray.h"
 #include "../common/MPerfCounter.h"
 #include "../common/MProcess.h"
-#include "../common/MMap.h"
 #include "../common/MModule.h"
 #include "../common/MRect.h"
 #include "../common/MSectionSimple.h"
@@ -89,8 +86,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/RConStartArgs.h"
 #include "../common/SetEnvVar.h"
 #include "../common/StartupEnvEx.h"
-#include "../common/wcwidth.h"
-#include "../common/WCodePage.h"
 #include "../common/WConsole.h"
 #include "../common/WFiles.h"
 #include "../common/WThreads.h"
@@ -104,7 +99,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Debugger.h"
 #include "Shutdown.h"
 #include "StartEnv.h"
-#include "UnicodeTest.h"
 
 
 #ifndef __GNUC__

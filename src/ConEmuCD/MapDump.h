@@ -29,7 +29,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "../common/Common.h"
-
 int DumpStructData(LPCWSTR asMappingName);
 int DoDumpStruct(LPCWSTR asCmdLine);

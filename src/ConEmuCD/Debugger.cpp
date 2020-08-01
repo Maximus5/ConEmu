@@ -33,18 +33,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConsoleMain.h"
 #include "ConEmuSrv.h"
-#include "../common/shlobj.h"
-#include "../ConEmu/version.h"
+#include "ExitCodes.h"
+
 #include "../common/CEStr.h"
 #include "../common/MMap.h"
 #include "../common/MProcess.h"
 #include "../common/MProcessBits.h"
 #include "../common/MStrDup.h"
+#include "../common/shlobj.h"
 #include "../common/TokenHelper.h"
 #include "../common/WFiles.h"
 #include "../common/WThreads.h"
-#include "ConsoleHelp.h"
-#include "UnicodeTest.h"
+#include "../ConEmu/version.h"
+#include "../ConEmuHk/hkWindow.h"
 
 #if !defined(__GNUC__) || defined(__MINGW32__)
 	#pragma warning(disable: 4091)

@@ -30,7 +30,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
-#include "../common/execute.h"
 #include "../common/WModuleCheck.h"
 #include "Injects.h"
 #include "InjectsBootstrap.h"

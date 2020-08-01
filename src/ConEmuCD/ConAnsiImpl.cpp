@@ -35,10 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/CmdLine.h"
-#include "../common/ConsoleAnnotation.h"
-#include "../common/UnicodeChars.h"
 #include "../common/WConsole.h"
-#include "../common/WErrGuard.h"
 #include "../ConEmu/version.h"
 
 #include "ConAnsiImpl.h"

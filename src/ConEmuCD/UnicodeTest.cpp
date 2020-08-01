@@ -31,6 +31,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "ConsoleMain.h"
+#include "ConEmuSrv.h"
+#include "ExitCodes.h"
+#include "UnicodeTest.h"
 
 #include "../common/Common.h"
 #include "../common/ConsoleRead.h"
@@ -38,10 +41,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/StartupEnvEx.h"
 #include "../common/UnicodeChars.h"
 #include "../common/WCodePage.h"
-#include "../ConEmu/version.h"
-
-#include "ConEmuSrv.h"
-#include "UnicodeTest.h"
 
 void PrintConsoleInfo()
 {

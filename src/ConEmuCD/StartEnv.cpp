@@ -37,6 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Actions.h"
 #include "StartEnv.h"
 
+#include "../ConEmuHk/SetHook.h"
+
 wchar_t* gpszForcedTitle = NULL;
 
 // old-issues#60: On some systems (Win2k3, WinXP) SetConsoleCP and SetConsoleOutputCP just hangs!

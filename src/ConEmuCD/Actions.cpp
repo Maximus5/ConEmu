@@ -44,7 +44,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MProcess.h"
 #include "../common/MStrDup.h"
 #include "../common/ProcessData.h"
-#include "../common/WCodePage.h"
 #include "../common/WFiles.h"
 #include "../common/WUser.h"
 #include "../ConEmuHk/Injects.h"

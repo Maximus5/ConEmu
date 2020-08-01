@@ -31,13 +31,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <WinError.h>
 #include <WinNT.h>
 #include <TCHAR.h>
-#include <limits>
 #include "../common/Common.h"
 #include "../common/ConEmuCheck.h"
 #include "../common/ConEmuColors3.h"
-#include "../common/CmdLine.h"
-#include "../common/ConsoleAnnotation.h"
-#include "../common/UnicodeChars.h"
 #include "../common/WConsole.h"
 #include "../common/WConsoleInfo.h"
 #include "../common/WErrGuard.h"

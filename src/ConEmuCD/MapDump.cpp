@@ -31,11 +31,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "ConsoleMain.h"
-#include "../common/Common.h"
+#include "ExitCodes.h"
+#include "MapDump.h"
+
 #include "../common/CEStr.h"
 #include "../common/CmdLine.h"
+#include "../common/Common.h"
+#include "../common/MFileMapping.h"
 #include "../common/MStrDup.h"
-#include "MapDump.h"
 
 enum MapDumpEnum
 {

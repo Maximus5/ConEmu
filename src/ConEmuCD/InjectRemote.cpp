@@ -29,13 +29,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConsoleMain.h"
 #include "InjectRemote.h"
 #include "Infiltrate.h"
+
 #include "../common/MAssert.h"
 #include "../common/MProcessBits.h"
+#include "../common/shlobj.h"
 #include "../common/WFiles.h"
 #include "../common/WModuleCheck.h"
-#include "../ConEmuHk/Injects.h"
 #include "../ConEmu/version.h"
-#include "../common/shlobj.h"
+#include "../ConEmuHk/Injects.h"
+
 #include <Tlhelp32.h>
 
 // 0 - OK, иначе - ошибка

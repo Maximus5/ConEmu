@@ -36,20 +36,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #include <Shlwapi.h>
 
-#include "../common/RConStartArgs.h"
-
-
-
 #include "../common/Common.h"
-#include "../common/ConEmuCheck.h"
 #include "../common/MConHandle.h"
 #include "../common/MFileMapping.h"
-#include "../common/MFileLogEx.h"
 #include "../common/MSection.h"
-#include "../common/WObjects.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/InQueue.h"
-#include "ExitCodes.h"
 
 
 

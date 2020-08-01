@@ -32,8 +32,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifndef TESTLINK
 #include "../common/Common.h"
-#include "../common/ConEmuCheck.h"
-#include "../common/execute.h"
 #endif
 
 #include "ConEmuSrv.h"

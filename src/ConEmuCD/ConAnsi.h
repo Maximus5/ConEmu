@@ -29,7 +29,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <mutex>
-#include "../common/ConsoleMixAttr.h"
 #include "../common/MPipe.h"
 #include "../common/WCodePage.h"
 #include "../common/WThreads.h"

@@ -135,15 +135,7 @@ extern HANDLE ghFarInExecuteEvent;
 #endif
 
 #include "../common/Common.h"
-#include "../common/ConEmuCheck.h"
-#include "../common/MConHandle.h"
-#include "../common/MFileMapping.h"
 #include "../common/MFileLogEx.h"
-#include "../common/MSection.h"
-#include "../common/WObjects.h"
-#include "../common/ConsoleAnnotation.h"
-#include "../common/InQueue.h"
-#include "ExitCodes.h"
 #include "LogFunction.h"
 
 
@@ -308,11 +300,8 @@ extern BOOL  gbVisibleOnStartup;
 
 #include "../common/PipeServer.h"
 #include "../common/MArray.h"
-#include "../common/MMap.h"
 
 struct ConProcess;
-
-#include "Debugger.h"
 
 struct SrvInfo;
 extern SrvInfo *gpSrv;

@@ -31,16 +31,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define SHOWDEBUGSTR
 
 #include "ConsoleMain.h"
-
-#include "../common/Common.h"
-#include "../common/CmdLine.h"
-#include "../common/ConEmuCheck.h"
-#include "../common/CEStr.h"
-#include "../common/MStrDup.h"
-#include "../common/ProcessData.h"
-
 #include "Actions.h"
 #include "GuiMacro.h"
+#include "ExitCodes.h"
+
+#include "../common/CEStr.h"
+#include "../common/CmdLine.h"
+#include "../common/Common.h"
+#include "../common/ConEmuCheck.h"
+#include "../common/MFileMapping.h"
+#include "../common/MStrDup.h"
+#include "../common/ProcessData.h"
 
 bool    gbPreferSilentMode = false;
 bool    gbMacroExportResult = false;

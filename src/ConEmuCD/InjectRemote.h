@@ -28,5 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly = false, LPDWORD pnErrCode = NULL);
-CINFILTRATE_EXIT_CODES InfiltrateDll(HANDLE hProcess, LPCWSTR dll);
+#include "../ConEmu/DefaultTerm.h"
+
+CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly = false, LPDWORD pnErrCode = nullptr);
