@@ -98,7 +98,7 @@ int GuiMacroCommandLine(LPCWSTR asCmdLine)
 			// Return result via EnvVar only
 			gbPreferSilentMode = true;
 
-			_ASSERTE(gnRunMode == RM_GUIMACRO);
+			_ASSERTE(gnRunMode == RunMode::GuiMacro);
 			iRc = DoGuiMacro(lsCmdLine, MacroInst, gmf_SetEnvVar);
 
 			// We've done

@@ -179,7 +179,7 @@ bool DoStateCheck(ConEmuStateCheck eStateCheck)
 int DoInjectHooks(LPWSTR asCmdArg)
 {
 	gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
-	gnRunMode = RM_SETHOOK64;
+	gnRunMode = RunMode::SetHook64;
 	LPWSTR pszNext = asCmdArg;
 	LPWSTR pszEnd = NULL;
 	BOOL lbForceGui = FALSE;
@@ -258,7 +258,7 @@ int DoInjectHooks(LPWSTR asCmdArg)
 int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 {
 	gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
-	gnRunMode = RM_SETHOOK64;
+	gnRunMode = RunMode::SetHook64;
 	LPWSTR pszNext = asCmdArg;
 	LPWSTR pszEnd = NULL;
 	DWORD nRemotePID = wcstoul(pszNext, &pszEnd, 10);
@@ -1108,9 +1108,9 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 			LogString(L"DoExecAction: DoGuiMacro");
 			GuiMacroFlags Flags = gmf_SetEnvVar
 				// If current RealConsole was already started in ConEmu, try to export variable
-				| ((gbMacroExportResult && (gnRunMode != RM_GUIMACRO) && (ghConEmuWnd != NULL)) ? gmf_ExportEnvVar : gmf_None)
+				| ((gbMacroExportResult && (gnRunMode != RunMode::GuiMacro) && (ghConEmuWnd != NULL)) ? gmf_ExportEnvVar : gmf_None)
 				// Interactive mode, print output to console
-				| ((!gbPreferSilentMode && (gnRunMode != RM_GUIMACRO)) ? gmf_PrintResult : gmf_None);
+				| ((!gbPreferSilentMode && (gnRunMode != RunMode::GuiMacro)) ? gmf_PrintResult : gmf_None);
 			iRc = DoGuiMacro(asCmdArg, Inst, Flags);
 			break;
 		}

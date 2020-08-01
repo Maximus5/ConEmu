@@ -547,7 +547,7 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			BOOL lbNeedResizeGui = FALSE;
 			// {mp_RCon->TextWidth(),mp_RCon->TextHeight()} использовать нельзя,
 			// т.к. при если из фара выполняется "cmd -new_console:s" то при завершении
-			// RM_COMSPEC выполняется "возврат" размера буфера и это обламывает синхронизацию
+			// RunMode::RM_COMSPEC выполняется "возврат" размера буфера и это обламывает синхронизацию
 			// размера под измененную конфигурацию сплитов...
 			RECT rcCon = gpConEmu->CalcRect(CER_CONSOLE_CUR, mp_RCon->mp_VCon);
 			//COORD crNewSize = {mp_RCon->TextWidth(),mp_RCon->TextHeight()};

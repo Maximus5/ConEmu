@@ -87,3 +87,13 @@ MModule::operator HMODULE() const
 {
 	return mh_Module;
 }
+
+bool MModule::operator!() const
+{
+	return (mh_Module == nullptr);
+}
+
+bool MModule::IsLoaded() const
+{
+	return (mh_Module != nullptr);
+}

@@ -216,7 +216,7 @@ int RunDebugger()
 	// gpSrv->DbgInfo.bDebuggerActive was set in DebugThread
 
 	// And wait for debugger thread completion
-	_ASSERTE(gnRunMode == RM_UNDEFINED);
+	_ASSERTE(gnRunMode == RunMode::Undefined);
 	DWORD nDebugThread; // = WaitForSingleObject(gpSrv->DbgInfo.hDebugThread, INFINITE);
 	DWORD nDbgTimeout = std::min<DWORD>(std::max<DWORD>(25, gpSrv->DbgInfo.nAutoInterval), 100);
 

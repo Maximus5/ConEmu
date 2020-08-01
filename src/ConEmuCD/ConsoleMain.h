@@ -202,15 +202,6 @@ bool LogString(LPCSTR asText);
 bool LogString(LPCWSTR asText);
 void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo=NULL);
 
-#if defined(__GNUC__)
-extern "C" {
-#endif
-	BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
-	int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
-#if defined(__GNUC__)
-};
-#endif
-
 int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount);
 bool MyLoadConsolePalette(HANDLE ahConOut, CESERVER_CONSOLE_PALETTE& Palette);
 BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc);
@@ -273,18 +264,17 @@ LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue = 
 
 void DisableAutoConfirmExit(BOOL abFromFarPlugin=FALSE);
 
-
-typedef enum tag_RunMode
+enum class RunMode : int
 {
-	RM_UNDEFINED = 0,
-	RM_SERVER,
-	RM_COMSPEC,
-	RM_SETHOOK64,
-	RM_ALTSERVER,
-	RM_APPLICATION,
-	RM_GUIMACRO,
-	RM_AUTOATTACH,
-} RunMode;
+	Undefined = 0,
+	Server,
+	Comspec,
+	SetHook64,
+	AltServer,
+	Application,
+	GuiMacro,
+	AutoAttach,
+};
 
 extern RunMode gnRunMode;
 

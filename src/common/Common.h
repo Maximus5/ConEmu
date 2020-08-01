@@ -1921,14 +1921,14 @@ struct CESERVER_REQ_STARTSTOP
 	// Только при аттаче. Может быть NULL-ом
 	HANDLE2 hServerProcessHandle;
 	// При завершении
-	DWORD nOtherPID; // Для RM_COMSPEC - PID завершенного процесса (при sst_ComspecStop)
+	DWORD nOtherPID; // Для RunMode::RM_COMSPEC - PID завершенного процесса (при sst_ComspecStop)
 	// Для информации и удобства (GetModuleFileName(0))
 	wchar_t sModuleName[MAX_PATH+1];
 	// Reserved
 	DWORD nReserved0[17];
 	// Create background tab, when attaching new console
 	BOOL bRunInBackgroundTab;
-	// При запуске в режиме RM_COMSPEC, сохранение "длинного вывода"
+	// При запуске в режиме RunMode::RM_COMSPEC, сохранение "длинного вывода"
 	DWORD nParentFarPID;
 	// После детача/аттача мог остаться "альтернативный" сервер
 	DWORD nAltServerPID;

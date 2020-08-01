@@ -152,7 +152,7 @@ struct SrvInfo
 	HANDLE hFreezeRefreshThread;
 	MSectionSimple csRefreshControl;
 
-	DWORD  nPrevAltServer; // Informational, only for RM_ALTSERVER
+	DWORD  nPrevAltServer; // Informational, only for RunMode::RM_ALTSERVER
 
 	// CECMD_SETCONSCRBUF
 	HANDLE hWaitForSetConBufThread;    // Remote thread (check it for abnormal termination)

@@ -28,33 +28,43 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <Windows.h>
+#include "../common/Common.h"
 
-class MModule
+enum class ConsoleMainMode : int
 {
-protected:
-	HMODULE mh_Module = nullptr;
-	#ifdef _DEBUG
-	wchar_t ms_Module[MAX_PATH] = L"";
-	#endif
-	bool    mb_Loaded = false;
-public:
-	MModule();
-	explicit MModule(const wchar_t* asModule);
-	explicit MModule(HMODULE ahModule);
-	~MModule();
-public:
-	void Free();
-	HMODULE Load(const wchar_t* asModule);
-public:
-	template <typename FunctionType>
-	bool GetProcAddress(const char * const asFunction, FunctionType*& pfn) const
-	{
-		pfn = mh_Module ? reinterpret_cast<FunctionType*>(::GetProcAddress(mh_Module, asFunction)) : nullptr;
-		return (pfn != nullptr);
-	};
-public:
-	explicit operator HMODULE() const;
-	bool operator!() const;
-	bool IsLoaded() const;
+	Server = 0,
+	AltServer = 1,
+	Reserved = 2,
+	GuiMacro = 3,  // could be used by integrators
 };
+
+#if defined(DLL_CONEMUCD_EXPORTS)
+
+#if defined(__GNUC__)
+extern "C"
+{
+#endif
+
+	int __stdcall ConsoleMain2(ConsoleMainMode anWorkMode);
+
+	int __stdcall ConsoleMain3(ConsoleMainMode anWorkMode, LPCWSTR asCmdLine);
+
+	BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
+
+	int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
+
+#if defined(__GNUC__)
+}
+#endif
+
+#endif
+
+
+#define FN_CONSOLE_MAIN_2_NAME "ConsoleMain2"
+typedef int (__stdcall* ConsoleMain2_t)(ConsoleMainMode anWorkMode);
+
+#define FN_CONSOLE_MAIN_3_NAME "ConsoleMain3"
+typedef int (__stdcall* ConsoleMain3_t)(ConsoleMainMode anWorkMode, LPCWSTR asCmdLine);
+
+#define FN_HANDLER_ROUTINE_NAME "HandlerRoutine"
+// type is PHANDLER_ROUTINE

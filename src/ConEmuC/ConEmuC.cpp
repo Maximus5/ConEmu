@@ -39,21 +39,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 #include "../common/CmdLine.h"
+#include "../common/MModule.h"
 
 #include "../ConEmu/version.h"
 #include "../ConEmuCD/ExitCodes.h"
+#include "../ConEmuCD/ExportedFunctions.h"
 #include "../ConEmuCD/ConsoleHelp.h"
 
 #include "ConEmuC.h"
 #include "Downloader.h"
 
-PHANDLER_ROUTINE gfHandlerRoutine = NULL;
+PHANDLER_ROUTINE gfHandlerRoutine = nullptr;
 
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
 	if (gfHandlerRoutine)
 	{
-		// Вызов функи из ConEmuHk.dll
+		// Call exported function in ConEmuCD.dll
 		gfHandlerRoutine(dwCtrlType);
 	}
 
@@ -294,7 +296,7 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	return i;
 }
 
-bool ProcessCommandLine(int& iRc, HMODULE& hConEmu)
+bool ProcessCommandLine(int& iRc, MModule& hConEmu)
 {
 	LPCWSTR pszCmdLine = GetCommandLineW();
 
@@ -372,11 +374,11 @@ bool ProcessCommandLine(int& iRc, HMODULE& hConEmu)
 		{
 			if (!hConEmu)
 			{
-				// Prefere Help from ConEmuCD.dll because ConEmuC.exe may be outdated (due to stability preference)
-				hConEmu = LoadLibrary(ConEmuCD_DLL_3264);
+				// Prefer Help from ConEmuCD.dll because ConEmuC.exe may be outdated (due to stability preference)
+				hConEmu.Load(ConEmuCD_DLL_3264);
 
 				// Show internal Help variant if only ConEmuCD.dll was failed to load
-				if (hConEmu == NULL)
+				if (!hConEmu)
 				{
 					Help();
 					iRc = CERR_HELPREQUESTED;
@@ -396,15 +398,14 @@ int main(int argc, char** argv)
 	gn_argc = argc; gp_argv = argv;
 
 	int iRc = 0;
-	HMODULE hConEmu = NULL;
+	MModule hConEmu{};
 	wchar_t szErrInfo[200];
 	DWORD dwErr;
-	typedef int (__stdcall* ConsoleMain2_t)(BOOL abAlternative);
-	ConsoleMain2_t lfConsoleMain2;
+	ConsoleMain2_t lfConsoleMain2 = nullptr;
 
 	#ifdef _DEBUG
-	HMODULE hConEmuHk = GetModuleHandle(ConEmuHk_DLL_3264);
-	_ASSERTE(hConEmuHk==NULL && "Hooks must not be loaded into ConEmuC[64].exe!");
+	MModule hConEmuHk{ GetModuleHandle(ConEmuHk_DLL_3264) };
+	_ASSERTE(!hConEmuHk.IsLoaded() && "Hooks must not be loaded into ConEmuC[64].exe!");
 	#endif
 
 	#if defined(SHOW_STARTED_MSGBOX)
@@ -432,7 +433,7 @@ int main(int argc, char** argv)
 
 	// Otherwise - do the full cycle
 	if (!hConEmu)
-		hConEmu = LoadLibrary(ConEmuCD_DLL_3264);
+		hConEmu.Load(ConEmuCD_DLL_3264);
 	dwErr = GetLastError();
 
 	if (!hConEmu)
@@ -447,29 +448,30 @@ int main(int argc, char** argv)
 		goto wrap;
 	}
 
-	// Загрузить функи из ConEmuHk
-	lfConsoleMain2 = (ConsoleMain2_t)GetProcAddress(hConEmu, "ConsoleMain2");
-	gfHandlerRoutine = (PHANDLER_ROUTINE)GetProcAddress(hConEmu, "HandlerRoutine");
+	// Load exports from ConEmuHk
+	hConEmu.GetProcAddress(FN_CONSOLE_MAIN_2_NAME, lfConsoleMain2);
+	hConEmu.GetProcAddress(FN_HANDLER_ROUTINE_NAME, gfHandlerRoutine);
+
 
 	if (!lfConsoleMain2 || !gfHandlerRoutine)
 	{
 		dwErr = GetLastError();
 		swprintf_c(szErrInfo,
 		           L"Procedure \"%s\"  not found in library \"%s\"",
-		           lfConsoleMain2 ? L"HandlerRoutine" : L"ConsoleMain2",
+		           lfConsoleMain2 ? _CRT_WIDE(FN_HANDLER_ROUTINE_NAME) : _CRT_WIDE(FN_CONSOLE_MAIN_2_NAME),
 		           ConEmuCD_DLL_3264);
 		_wprintf(szErrInfo);
 		_ASSERTE(FALSE && "GetProcAddress failed");
-		FreeLibrary(hConEmu);
+		hConEmu.Free();
 		iRc = CERR_CONSOLEMAIN_NOTFOUND;
 		goto wrap;
 	}
 
 	// Main dll entry point for Server & ComSpec
-	iRc = lfConsoleMain2(0/*WorkMode*/);
+	iRc = lfConsoleMain2(ConsoleMainMode::Server);
 	// Exiting
-	gfHandlerRoutine = NULL;
-	//FreeLibrary(hConEmu); -- Shutdown Server/Comspec уже выполнен
+	gfHandlerRoutine = nullptr;
+
 wrap:
 	//-- bottle neck: relatively long deinitialization
 	ExitProcess(iRc);

@@ -1267,7 +1267,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		(*out)->StartStopRet.nBufferHeight = gnBufferHeight;
 		(*out)->StartStopRet.nWidth = gpSrv->sbi.dwSize.X;
 		(*out)->StartStopRet.nHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
-		_ASSERTE(gnRunMode==RM_SERVER);
+		_ASSERTE(gnRunMode==RunMode::Server);
 		(*out)->StartStopRet.dwMainSrvPID = GetCurrentProcessId();
 		(*out)->StartStopRet.dwAltSrvPID = gpSrv->dwAltServerPID;
 		if (in.StartStop.nStarted == sst_AltServerStart)
@@ -1701,15 +1701,15 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 
 			ThawRefreshThread();
 
-			if (gnRunMode == RM_ALTSERVER)
+			if (gnRunMode == RunMode::AltServer)
 			{
-				// OK, GUI will be informed by RM_SERVER itself
+				// OK, GUI will be informed by RunMode::RM_SERVER itself
 			}
 			else
 			{
 				swprintf_c(szLog, L"AltServer: Wrong gnRunMode=%u", gnRunMode);
 				LogString(szLog);
-				_ASSERTE(gnRunMode == RM_ALTSERVER);
+				_ASSERTE(gnRunMode == RunMode::AltServer);
 			}
 		}
 

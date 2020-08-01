@@ -1037,7 +1037,7 @@ DWORD DllStart_Continue()
 
 	//if (!gbSkipInjects)
 	{
-		//gnRunMode = RM_APPLICATION;
+		//gnRunMode = RunMode::RM_APPLICATION;
 
 		#ifdef _DEBUG
 		//wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;

@@ -194,7 +194,7 @@ BOOL apiSetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_C
 
 
 
-//Used in RM_ALTSERVER
+//Used in RunMode::RM_ALTSERVER
 BOOL apiInitConsoleFontSize(HANDLE hOutput)
 {
 	BOOL lbRc = FALSE;

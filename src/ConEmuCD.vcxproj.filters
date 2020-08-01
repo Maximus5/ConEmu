@@ -63,6 +63,9 @@
     <ClInclude Include="ConEmuCD\ExitCodes.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmuCD\ExportedFunctions.h">
+      <Filter>Exports</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmuCD\GuiHooks.h">
       <Filter>Headers</Filter>
     </ClInclude>

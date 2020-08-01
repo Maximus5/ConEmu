@@ -84,7 +84,6 @@ PipeServer<CESERVER_REQ> *gpPlugServer = NULL;
 HANDLE ghServerTerminateEvent = NULL;
 bool gbForcedServerTermination = false;
 //
-extern struct HookModeFar gFarMode;
 extern SetFarHookMode_t SetFarHookMode;
 
 BOOL WINAPI PlugServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &ppReply, DWORD &pcbReplySize, DWORD &pcbMaxReplySize, LPARAM lParam);

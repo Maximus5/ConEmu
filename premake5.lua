@@ -368,6 +368,8 @@ project "ConEmuCD"
     linkoptions { "--image-base=0x6F780000000" }
   filter {}
 
+  defines { "DLL_CONEMUCD_EXPORTS" }
+
   links {
     "common-kernel",
     "common-user",
@@ -388,6 +390,7 @@ project "ConEmuCD"
   filter {}
 
   vpaths {
+    { ["Exports"]   = {"**.def", "**/ExportedFunctions.h"} },
     { ["Interface"] = {"**/Common.h", "**/SrvCommands.*", "**/Queue.*", "**/SrvPipes.*"} },
     { ["Automation"] = {"**/Actions.*", "**/GuiMacro.*"} },
     { ["Console"] = {"**/ConAnsi.*", "**/ConAnsiImpl.*", "**/ConData.*"} },
@@ -395,7 +398,6 @@ project "ConEmuCD"
     { ["Headers"] = {"**.h"} },
     { ["Sources"] = {"**.cpp"} },
     { ["Resources"] = {"**.rc", "**.rc2", "**.manifest"} },
-    { ["Exports"]   = {"**.def"} },
   }
 
   target_dir("ConEmu/")
