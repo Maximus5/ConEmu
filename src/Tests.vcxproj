@@ -563,6 +563,7 @@
     <ClCompile Include="ConEmu\CmdHistory.cpp" />
     <ClCompile Include="ConEmu\ColorFix.cpp" />
     <ClCompile Include="ConEmu\ConEmu.cpp" />
+    <ClCompile Include="ConEmu\ConEmuCD_test.cpp" />
     <ClCompile Include="ConEmu\ConEmuCtrl.cpp" />
     <ClCompile Include="ConEmu\ConEmuPipe.cpp" />
     <ClCompile Include="ConEmu\ConEmuSize.cpp" />

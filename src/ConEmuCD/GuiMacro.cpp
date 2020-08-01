@@ -289,7 +289,8 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR* bsResult /*= NULL*/)
 {
 	// If neither hMacroInstance nor ghConEmuWnd was set - Macro will fail most likely
-	_ASSERTE(Inst.hConEmuWnd!=NULL || ghConEmuWnd!=NULL);
+	// Skip assertion show for IsConEmu, it's used in tests
+	_ASSERTE(Inst.hConEmuWnd!=NULL || ghConEmuWnd!=NULL || (wcscmp(asCmdArg, L"IsConEmu") == 0));
 
 	wchar_t szErrInst[80] = L"FAILED:Specified ConEmu instance is not found";
 	wchar_t szErrExec[80] = L"FAILED:Unknown GuiMacro execution error";

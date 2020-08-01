@@ -794,6 +794,9 @@
     <ClCompile Include="ConEmu\ConEmu.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmu\ConEmuCD_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="ConEmu\ConEmuCtrl.cpp">
       <Filter>ConEmu</Filter>
     </ClCompile>

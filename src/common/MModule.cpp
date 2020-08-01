@@ -46,6 +46,27 @@ MModule::MModule(const HMODULE ahModule)
 	_ASSERTE(mb_Loaded == false);
 }
 
+MModule::MModule(MModule&& src) noexcept
+{
+	mh_Module = src.mh_Module;
+	#ifdef _DEBUG
+	wcscpy_s(ms_Module, src.ms_Module);
+	#endif
+	mb_Loaded = src.mb_Loaded;
+	src.mb_Loaded = false;
+}
+
+MModule& MModule::operator=(MModule&& src) noexcept
+{
+	mh_Module = src.mh_Module;
+	#ifdef _DEBUG
+	wcscpy_s(ms_Module, src.ms_Module);
+	#endif
+	mb_Loaded = src.mb_Loaded;
+	src.mb_Loaded = false;
+	return *this;
+}
+
 MModule::~MModule()
 {
 	Free();

@@ -30,6 +30,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Windows.h>
 
+#include "../ConEmuCD/WorkerBase.h"
+
 class MModule
 {
 protected:
@@ -42,6 +44,12 @@ public:
 	MModule();
 	explicit MModule(const wchar_t* asModule);
 	explicit MModule(HMODULE ahModule);
+
+	MModule(const MModule&) = delete;
+	MModule(MModule&&) noexcept;
+	MModule& operator=(const MModule&) = delete;
+	MModule& operator=(MModule&&) noexcept;
+	
 	~MModule();
 public:
 	void Free();
