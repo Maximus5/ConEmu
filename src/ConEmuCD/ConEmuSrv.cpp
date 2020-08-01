@@ -4181,11 +4181,11 @@ bool FreezeRefreshThread()
 
 	csControl.Unlock();
 
-	// wait while refresh thread becomes freezed
+	// wait while refresh thread becomes frozen
 	DWORD nStartTick = GetTickCount(), nCurTick = 0; //TODO: replace with service class
 	DWORD nWait = (DWORD)-1;
 	HANDLE hWait[] = {gpSrv->hRefreshThread, ghQuitEvent};
-	while (gpSrv->hRefreshThread && (gpSrv->nRefreshIsFreezed <= 0))
+	while (gpSrv->hRefreshThread && (gpSrv->nRefreshIsFrozen <= 0))
 	{
 		nWait = WaitForMultipleObjects(countof(hWait), hWait, FALSE, 100);
 		if ((nWait == WAIT_OBJECT_0) || (nWait == (WAIT_OBJECT_0+1)))
@@ -4194,7 +4194,7 @@ bool FreezeRefreshThread()
 			break;
 	}
 
-	return (gpSrv->nRefreshIsFreezed > 0) || (gpSrv->hRefreshThread == NULL);
+	return (gpSrv->nRefreshIsFrozen > 0) || (gpSrv->hRefreshThread == NULL);
 }
 
 bool ThawRefreshThread()
@@ -4267,9 +4267,9 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		if (gpSrv->hFreezeRefreshThread)
 		{
 			HANDLE hFreeze[2] = {gpSrv->hFreezeRefreshThread, ghQuitEvent};
-			InterlockedIncrement(&gpSrv->nRefreshIsFreezed);
+			InterlockedIncrement(&gpSrv->nRefreshIsFrozen);
 			nFreezeWait = WaitForMultipleObjects(countof(hFreeze), hFreeze, FALSE, INFINITE);
-			InterlockedDecrement(&gpSrv->nRefreshIsFreezed);
+			InterlockedDecrement(&gpSrv->nRefreshIsFrozen);
 			if (nFreezeWait == (WAIT_OBJECT_0+1))
 				break; // затребовано завершение потока
 		}

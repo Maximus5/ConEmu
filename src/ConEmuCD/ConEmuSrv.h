@@ -148,7 +148,7 @@ struct SrvInfo
 	DWORD  dwRefreshThread;
 	BOOL   bRefreshTermination;
 	LONG   nRefreshFreezeRequests;
-	LONG   nRefreshIsFreezed; // atomic
+	LONG   nRefreshIsFrozen; // atomic
 	HANDLE hFreezeRefreshThread;
 	MSectionSimple csRefreshControl;
 
