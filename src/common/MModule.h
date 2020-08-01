@@ -33,26 +33,26 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class MModule
 {
 protected:
-	HMODULE mh_Module;
+	HMODULE mh_Module = nullptr;
 	#ifdef _DEBUG
-	wchar_t ms_Module[MAX_PATH];
+	wchar_t ms_Module[MAX_PATH] = L"";
 	#endif
-	bool    mb_Loaded;
+	bool    mb_Loaded = false;
 public:
 	MModule();
-	MModule(LPCWSTR asModule);
-	MModule(HMODULE ahModule);
+	explicit MModule(const wchar_t* asModule);
+	explicit MModule(HMODULE ahModule);
 	~MModule();
 public:
 	void Free();
-	HMODULE Load(LPCWSTR asModule);
+	HMODULE Load(const wchar_t* asModule);
 public:
-	template <typename FUNCTIONTYPE>
-	bool GetProcAddress(LPCSTR asFunction, FUNCTIONTYPE*& pfn) const
+	template <typename FunctionType>
+	bool GetProcAddress(const char * const asFunction, FunctionType*& pfn) const
 	{
-		pfn = mh_Module ? (FUNCTIONTYPE*)::GetProcAddress(mh_Module, asFunction) : NULL;
-		return (pfn != NULL);
+		pfn = mh_Module ? reinterpret_cast<FunctionType*>(::GetProcAddress(mh_Module, asFunction)) : nullptr;
+		return (pfn != nullptr);
 	};
 public:
-	operator HMODULE();
+	explicit operator HMODULE() const;
 };

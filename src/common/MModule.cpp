@@ -32,25 +32,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* LoadLibrary/FreeLibrary/GetProcAddress encapsulation */
 
-MModule::MModule()
-	: mh_Module(NULL)
-	, mb_Loaded(false)
+MModule::MModule()  // NOLINT(modernize-use-equals-default)
 {
-	#ifdef _DEBUG
-	ms_Module[0] = 0;
-	#endif
 }
 
-MModule::MModule(LPCWSTR asModule)
-	: mh_Module(NULL)
-	, mb_Loaded(false)
+MModule::MModule(const wchar_t* asModule)
 {
 	Load(asModule);
 }
 
-MModule::MModule(HMODULE ahModule)
+MModule::MModule(const HMODULE ahModule)
 	: mh_Module(ahModule)
-	, mb_Loaded(false)
 {
 }
 
@@ -59,18 +51,18 @@ MModule::~MModule()
 	Free();
 }
 
-HMODULE MModule::Load(LPCWSTR asModule)
+HMODULE MModule::Load(const wchar_t* asModule)
 {
 	Free(); // JIC
 
-	_ASSERTE(mh_Module==NULL && !mb_Loaded);
+	_ASSERTE(mh_Module==nullptr && !mb_Loaded);
 
 	#ifdef _DEBUG
 	lstrcpyn(ms_Module, asModule ? asModule : L"", countof(ms_Module));
 	#endif
 
 	mh_Module = LoadLibrary(asModule);
-	mb_Loaded = (mh_Module != NULL);
+	mb_Loaded = (mh_Module != nullptr);
 	return mh_Module;
 }
 
@@ -78,19 +70,20 @@ void MModule::Free()
 {
 	if (mb_Loaded && mh_Module)
 	{
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HMODULE hLib = mh_Module;
-		mh_Module = NULL;
+		mh_Module = nullptr;
 		FreeLibrary(hLib);
 	}
 
-	mh_Module = NULL;
+	mh_Module = nullptr;
 	#ifdef _DEBUG
 	ms_Module[0] = 0;
 	#endif
 	mb_Loaded = false;
 }
 
-MModule::operator HMODULE()
+MModule::operator HMODULE() const
 {
 	return mh_Module;
 }
