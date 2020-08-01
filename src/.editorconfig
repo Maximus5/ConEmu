@@ -1,6 +1,30 @@
-root = true
+root=true
 
 [*]
-end_of_line = crlf
-indent_style = tab
-indent_size = 4
+end_of_line=crlf
+indent_style=tab
+indent_size=4
+tab_width=4
+
+# ReSharper properties
+resharper_break_template_declaration=line_break
+resharper_cpp_alignment_tab_fill_style=optimal_fill
+resharper_cpp_indent_size=4
+resharper_cpp_indent_style=tab
+resharper_cpp_max_line_length=125
+resharper_invocable_declaration_braces=next_line
+resharper_js_indent_size=2
+resharper_js_indent_style=space
+resharper_namespace_indentation=none
+resharper_space_after_ref_in_data_member=true
+resharper_space_before_ref_in_abstract_decl=false
+resharper_space_before_ref_in_data_member=false
+resharper_space_before_template_params=false
+resharper_toplevel_function_definition_return_type_style=on_single_line
+
+[*.{c,c++,cc,cp,cpp,cu,cuh,cxx,h,hh,hlsl,hlsli,hpp,hxx,inc,inl,ino,ipp,mpp,tpp,usf,ush}]
+indent_style=tab
+indent_size=tab
+trim_trailing_whitespace=true
+insert_final_newline=true
+charset=utf-8-bom
