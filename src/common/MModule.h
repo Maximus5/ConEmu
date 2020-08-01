@@ -46,6 +46,7 @@ public:
 public:
 	void Free();
 	HMODULE Load(const wchar_t* asModule);
+	void SetHandle(HMODULE hModule);
 public:
 	template <typename FunctionType>
 	bool GetProcAddress(const char * const asFunction, FunctionType*& pfn) const

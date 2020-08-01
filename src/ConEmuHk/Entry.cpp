@@ -87,6 +87,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CmdLine.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/HkFunc.h"
+#include "../common/MModule.h"
 #include "../common/MStrDup.h"
 #include "../common/RConStartArgs.h"
 #include "../common/WConsole.h"
@@ -104,8 +105,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "hkCmdExe.h"
 #include "hkConsoleInput.h"
-#include "hkConsoleOutput.h"
 #include "hkEnvironment.h"
+#include "../ConEmuCD/ExportedFunctions.h"
 
 
 // Visual Studio 2015 Universal CRT
@@ -228,7 +229,6 @@ HWND    ghConWnd = NULL; // Console window
 HWND    ghConEmuWnd = NULL; // Root! window
 HWND    ghConEmuWndDC = NULL; // ConEmu DC window
 HWND    ghConEmuWndBack = NULL; // ConEmu Back window - holder for GUI client
-void    SetConEmuHkWindows(HWND hDcWnd, HWND hBackWnd);
 BOOL    gbWasBufferHeight = FALSE;
 BOOL    gbNonGuiMode = FALSE;
 DWORD   gnImageSubsystem = 0;
@@ -246,7 +246,7 @@ ConEmuInOutPipe *gpCEIO_In = NULL, *gpCEIO_Out = NULL, *gpCEIO_Err = NULL;
 void StartPTY();
 void StopPTY();
 
-HMODULE ghSrvDll = NULL;
+MModule ghSrvDll{};
 //typedef int (__stdcall* RequestLocalServer_t)(AnnotationHeader** ppAnnotation, HANDLE* ppOutBuffer);
 RequestLocalServer_t gfRequestLocalServer = NULL;
 TODO("AnnotationHeader* gpAnnotationHeader");
@@ -903,7 +903,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 	else if (gnImageSubsystem == IMAGE_SUBSYSTEM_WINDOWS_GUI)
 	{
 		print_timings(L"IMAGE_SUBSYSTEM_WINDOWS_GUI");
-		DWORD dwConEmuHwnd = 0;
+		HWND2 dwConEmuHwnd{};
 		BOOL  bAttachExistingWindow = FALSE;
 		wchar_t szVar[64], *psz;
 		ConEmuGuiMapping* GuiMapping = (ConEmuGuiMapping*)calloc(1,sizeof(*GuiMapping));
@@ -928,13 +928,13 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 			{
 				if (szVar[0] == L'0' && szVar[1] == L'x')
 				{
-					dwConEmuHwnd = wcstoul(szVar+2, &psz, 16);
-					if (!IsWindow((HWND)dwConEmuHwnd))
-						dwConEmuHwnd = 0;
-					else if (!GetClassName((HWND)dwConEmuHwnd, szVar, countof(szVar)))
-						dwConEmuHwnd = 0;
+					dwConEmuHwnd.u = wcstoul(szVar+2, &psz, 16);
+					if (!IsWindow(HWND(dwConEmuHwnd)))
+						dwConEmuHwnd.u = 0;  // NOLINT(bugprone-branch-clone)
+					else if (!GetClassName(HWND(dwConEmuHwnd), szVar, countof(szVar)))
+						dwConEmuHwnd.u = 0;
 					else if (lstrcmp(szVar, VirtualConsoleClassMain) != 0)
-						dwConEmuHwnd = 0;
+						dwConEmuHwnd.u = 0;
 				}
 			}
 
@@ -957,7 +957,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 				pIn->AttachGuiApp.hkl = (DWORD)(LONG)(LONG_PTR)GetKeyboardLayout(0);
 
 				wchar_t szGuiPipeName[128];
-				msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", dwConEmuHwnd);
+				msprintf(szGuiPipeName, countof(szGuiPipeName), CEGUIPIPENAME, L".", DWORD(dwConEmuHwnd));
 
 				CESERVER_REQ* pOut = ExecuteCmd(szGuiPipeName, pIn, 10000, NULL);
 
@@ -978,7 +978,7 @@ DWORD WINAPI DllStart(LPVOID /*apParm*/)
 							gnGuiPID = pOut->hdr.nSrcPID;
 							//ghConEmuWnd = (HWND)dwConEmuHwnd;
 							_ASSERTE(ghConEmuWnd==NULL || gnGuiPID!=0);
-							_ASSERTE(pOut->AttachGuiApp.hConEmuWnd==(HWND)dwConEmuHwnd);
+							_ASSERTE(pOut->AttachGuiApp.hConEmuWnd == HWND(dwConEmuHwnd));
 							ghConEmuWnd = pOut->AttachGuiApp.hConEmuWnd;
 							SetConEmuHkWindows(pOut->AttachGuiApp.hConEmuDc, pOut->AttachGuiApp.hConEmuBack);
 							ghConWnd = pOut->AttachGuiApp.hSrvConWnd;
@@ -2939,37 +2939,37 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 
 	if (!ghSrvDll || !gfRequestLocalServer)
 	{
-		LPCWSTR pszSrvName = ConEmuCD_DLL_3264;
+		const auto* const pszSrvName = ConEmuCD_DLL_3264;
 
 		if (!ghSrvDll)
 		{
-			gfRequestLocalServer = NULL;
-			ghSrvDll = GetModuleHandle(pszSrvName);
+			gfRequestLocalServer = nullptr;
+			ghSrvDll.SetHandle(GetModuleHandle(pszSrvName));
 		}
 
 		if (!ghSrvDll)
 		{
-			wchar_t *pszSlash, szFile[MAX_PATH+1] = {};
+			wchar_t szFile[MAX_PATH+1] = {};
 
 			GetModuleFileName(ghOurModule, szFile, MAX_PATH);
-			pszSlash = wcsrchr(szFile, L'\\');
+			wchar_t* pszSlash = wcsrchr(szFile, L'\\');
 			if (!pszSlash)
 				goto wrap;
 			pszSlash[1] = 0;
 			wcscat_c(szFile, pszSrvName);
 
-			ghSrvDll = LoadLibrary(szFile);
+			ghSrvDll.Load(szFile);
 			if (!ghSrvDll)
 				goto wrap;
 		}
 
-		gfRequestLocalServer = (RequestLocalServer_t)GetProcAddress(ghSrvDll, "PrivateEntry");
+		ghSrvDll.GetProcAddress(FN_CONEMUCD_REQUEST_LOCAL_SERVER_NAME, gfRequestLocalServer);
 	}
 
 	if (!gfRequestLocalServer)
 		goto wrap;
 
-	_ASSERTE(CheckCallbackPtr(ghSrvDll, 1, (FARPROC*)&gfRequestLocalServer, TRUE));
+	_ASSERTE(CheckCallbackPtr(HMODULE(ghSrvDll), 1, reinterpret_cast<FARPROC*>(&gfRequestLocalServer), TRUE));
 
 	if (Parm->Flags & slsf_RequestTrueColor)
 		gbTrueColorServerRequested = TRUE;
@@ -2980,7 +2980,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	{
 		// nPrevAltServerPID is DWORD_PTR for struct aligning purposes
 		if (Parm->Flags & slsf_PrevAltServerPID)
-			gnPrevAltServerPID = (DWORD)Parm->nPrevAltServerPID;
+			gnPrevAltServerPID = LODWORD(Parm->nPrevAltServerPID);
 		// Server logging callback
 		gfnSrvLogString = Parm->fSrvLogString;
 	}
@@ -3001,7 +3001,7 @@ void GuiSetProgress(WORD st, WORD pr, LPCWSTR pszName /*= NULL*/)
 		pIn->wData[1] = pr;
 		if (pszName)
 		{
-			lstrcpy((wchar_t*)(pIn->wData+2), pszName);
+			lstrcpy(reinterpret_cast<wchar_t*>(pIn->wData + 2), pszName);
 		}
 
 		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);

@@ -449,8 +449,8 @@ int main(int argc, char** argv)
 	}
 
 	// Load exports from ConEmuHk
-	hConEmu.GetProcAddress(FN_CONSOLE_MAIN_2_NAME, lfConsoleMain2);
-	hConEmu.GetProcAddress(FN_HANDLER_ROUTINE_NAME, gfHandlerRoutine);
+	hConEmu.GetProcAddress(FN_CONEMUCD_CONSOLE_MAIN_2_NAME, lfConsoleMain2);
+	hConEmu.GetProcAddress(FN_CONEMUCD_HANDLER_ROUTINE_NAME, gfHandlerRoutine);
 
 
 	if (!lfConsoleMain2 || !gfHandlerRoutine)
@@ -458,7 +458,7 @@ int main(int argc, char** argv)
 		dwErr = GetLastError();
 		swprintf_c(szErrInfo,
 		           L"Procedure \"%s\"  not found in library \"%s\"",
-		           lfConsoleMain2 ? _CRT_WIDE(FN_HANDLER_ROUTINE_NAME) : _CRT_WIDE(FN_CONSOLE_MAIN_2_NAME),
+		           lfConsoleMain2 ? _CRT_WIDE(FN_CONEMUCD_HANDLER_ROUTINE_NAME) : _CRT_WIDE(FN_CONEMUCD_CONSOLE_MAIN_2_NAME),
 		           ConEmuCD_DLL_3264);
 		_wprintf(szErrInfo);
 		_ASSERTE(FALSE && "GetProcAddress failed");

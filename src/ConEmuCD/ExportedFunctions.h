@@ -60,11 +60,14 @@ extern "C"
 #endif
 
 
-#define FN_CONSOLE_MAIN_2_NAME "ConsoleMain2"
+#define FN_CONEMUCD_CONSOLE_MAIN_2_NAME "ConsoleMain2"
 typedef int (__stdcall* ConsoleMain2_t)(ConsoleMainMode anWorkMode);
 
-#define FN_CONSOLE_MAIN_3_NAME "ConsoleMain3"
+#define FN_CONEMUCD_CONSOLE_MAIN_3_NAME "ConsoleMain3"
 typedef int (__stdcall* ConsoleMain3_t)(ConsoleMainMode anWorkMode, LPCWSTR asCmdLine);
 
-#define FN_HANDLER_ROUTINE_NAME "HandlerRoutine"
+#define FN_CONEMUCD_HANDLER_ROUTINE_NAME "HandlerRoutine"
 // type is PHANDLER_ROUTINE
+
+#define FN_CONEMUCD_REQUEST_LOCAL_SERVER_NAME "PrivateEntry"
+// type is RequestLocalServer_t

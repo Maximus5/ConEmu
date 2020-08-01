@@ -1,5 +1,4 @@
-﻿
-/*
+﻿/*
 Copyright (c) 2016-present Maximus5
 All rights reserved.
 
@@ -32,7 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* LoadLibrary/FreeLibrary/GetProcAddress encapsulation */
 
-MModule::MModule()  // NOLINT(modernize-use-equals-default)
+MModule::MModule() // NOLINT(modernize-use-equals-default)
 {
 }
 
@@ -44,6 +43,7 @@ MModule::MModule(const wchar_t* asModule)
 MModule::MModule(const HMODULE ahModule)
 	: mh_Module(ahModule)
 {
+	_ASSERTE(mb_Loaded == false);
 }
 
 MModule::~MModule()
@@ -53,17 +53,27 @@ MModule::~MModule()
 
 HMODULE MModule::Load(const wchar_t* asModule)
 {
+	_ASSERTE(mh_Module == nullptr && !mb_Loaded);
+
 	Free(); // JIC
 
-	_ASSERTE(mh_Module==nullptr && !mb_Loaded);
-
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	lstrcpyn(ms_Module, asModule ? asModule : L"", countof(ms_Module));
-	#endif
+#endif
 
 	mh_Module = LoadLibrary(asModule);
 	mb_Loaded = (mh_Module != nullptr);
 	return mh_Module;
+}
+
+void MModule::SetHandle(HMODULE hModule)
+{
+	_ASSERTE(mh_Module == nullptr && !mb_Loaded);
+
+	Free(); // JIC
+
+	mh_Module = hModule;
+	mb_Loaded = false;
 }
 
 void MModule::Free()
@@ -77,9 +87,9 @@ void MModule::Free()
 	}
 
 	mh_Module = nullptr;
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	ms_Module[0] = 0;
-	#endif
+#endif
 	mb_Loaded = false;
 }
 

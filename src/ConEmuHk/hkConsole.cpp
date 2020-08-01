@@ -1,5 +1,4 @@
-﻿
-/*
+﻿/*
 Copyright (c) 2015-present Maximus5
 All rights reserved.
 
@@ -29,9 +28,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 
 #ifdef _DEBUG
-	#define DebugString(x) //OutputDebugString(x)
-	#define DebugStringConSize(x) //OutputDebugString(x)
-	#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
+#define DebugString(x) //OutputDebugString(x)
+#define DebugStringConSize(x) //OutputDebugString(x)
+#define DefTermMsg(s) //MessageBox(NULL, s, L"ConEmuHk", MB_SYSTEMMODAL)
 #else
 	#define DebugString(x) //OutputDebugString(x)
 	#define DebugStringConSize(x) //OutputDebugString(x)
@@ -49,6 +48,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "GuiAttach.h"
 #include "hkConsole.h"
 #include "MainThread.h"
+#include "../ConEmuCD/ExportedFunctions.h"
 
 #define SETCONCP_READYTIMEOUT 5000
 #define SETCONCP_TIMEOUT 1000
@@ -83,14 +83,14 @@ BOOL WINAPI OnSetConsoleTitleW(LPCWSTR lpConsoleTitle)
 	//typedef BOOL (WINAPI* OnSetConsoleTitleW_t)(LPCWSTR lpConsoleTitle);
 	ORIGINAL_KRNL(SetConsoleTitleW);
 
-	#ifdef DEBUG_CON_TITLE
+#ifdef DEBUG_CON_TITLE
 	if (!gpLastSetConTitle)
 		gpLastSetConTitle = new CEStr(lstrdup(lpConsoleTitle));
 	else
 		gpLastSetConTitle->Set(lpConsoleTitle);
 	CEStr lsDbg(lstrmerge(L"SetConsoleTitleW('", lpConsoleTitle, L"')\n"));
 	OutputDebugString(lsDbg);
-	#endif
+#endif
 
 	BOOL bRc = FALSE;
 	if (F(SetConsoleTitleW))
@@ -104,7 +104,7 @@ DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, L
 	//typedef DWORD (WINAPI* OnGetConsoleAliasesW_t)(LPWSTR AliasBuffer, DWORD AliasBufferLength, LPWSTR ExeName);
 	ORIGINAL_KRNL(GetConsoleAliasesW);
 	DWORD nError = 0;
-	DWORD nRc = F(GetConsoleAliasesW)(AliasBuffer,AliasBufferLength,ExeName);
+	DWORD nRc = F(GetConsoleAliasesW)(AliasBuffer, AliasBufferLength, ExeName);
 
 	if (!nRc)
 	{
@@ -163,11 +163,11 @@ DWORD WINAPI OnGetConsoleAliasesW(LPWSTR AliasBuffer, DWORD AliasBufferLength, L
 
 struct SCOCP
 {
-	UINT  wCodePageID;
+	UINT wCodePageID;
 	OnSetConsoleCP_t f;
 	HANDLE hReady;
 	DWORD dwErrCode;
-	BOOL  lbRc;
+	BOOL lbRc;
 };
 
 DWORD WINAPI SetConsoleCPThread(LPVOID lpParameter)
@@ -192,9 +192,9 @@ BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
 	wchar_t szErrText[255], szTitle[64];
 	msprintf(szTitle, SKIPLEN(countof(szTitle)) L"PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 	*/
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	DWORD nPrevCP = GetConsoleCP();
-	#endif
+#endif
 	DWORD nCurCP = 0;
 	HANDLE hThread = apiCreateThread(SetConsoleCPThread, &sco, &nTID, "OnSetConsoleCP(%u)", wCodePageID);
 
@@ -223,7 +223,7 @@ BOOL WINAPI OnSetConsoleCP(UINT wCodePageID)
 		else
 		{
 			//BUGBUG: На некоторых системах (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
-			apiTerminateThread(hThread,100);
+			apiTerminateThread(hThread, 100);
 			nCurCP = GetConsoleCP();
 			if (nCurCP == wCodePageID)
 			{
@@ -271,9 +271,9 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 	wchar_t szErrText[255], szTitle[64];
 	msprintf(szTitle, SKIPLEN(countof(szTitle)) L"PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
 	*/
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	DWORD nPrevCP = GetConsoleOutputCP();
-	#endif
+#endif
 	DWORD nCurCP = 0;
 	HANDLE hThread = apiCreateThread(SetConsoleCPThread, &sco, &nTID, "OnSetConsoleOutputCP(%u)", wCodePageID);
 
@@ -302,7 +302,7 @@ BOOL WINAPI OnSetConsoleOutputCP(UINT wCodePageID)
 		else
 		{
 			//BUGBUG: На некоторых системах (Win2k3, WinXP) SetConsoleCP (и иже с ними) просто зависают
-			apiTerminateThread(hThread,100);
+			apiTerminateThread(hThread, 100);
 			nCurCP = GetConsoleOutputCP();
 			if (nCurCP == wCodePageID)
 			{
@@ -402,11 +402,11 @@ BOOL WINAPI OnAllocConsole(void)
 			if (GetConsoleScreenBufferInfo(hStdOut, &csbi))
 			{
 				//specified width and height cannot be less than the width and height of the console screen buffer's window
-				SMALL_RECT rNewRect = {0, 0, crLocked.X-1, crLocked.Y-1};
+				SMALL_RECT rNewRect = {0, 0, crLocked.X - 1, crLocked.Y - 1};
 				OnSetConsoleWindowInfo(hStdOut, TRUE, &rNewRect);
-				#ifdef _DEBUG
+#ifdef _DEBUG
 				COORD crNewSize = {crLocked.X, std::max(crLocked.Y, csbi.dwSize.Y)};
-				#endif
+#endif
 				SetConsoleScreenBufferSize(hStdOut, crLocked);
 			}
 		}
@@ -415,7 +415,7 @@ BOOL WINAPI OnAllocConsole(void)
 		{
 			int (WINAPI* fnRequestLocalServer)(/*[IN/OUT]*/RequestLocalServerParm* Parm);
 			MModule server(ConEmuCD_DLL_3264);
-			if (server.GetProcAddress("PrivateEntry",fnRequestLocalServer))
+			if (server.GetProcAddress(FN_CONEMUCD_REQUEST_LOCAL_SERVER_NAME, fnRequestLocalServer))
 			{
 				RequestLocalServerParm args = {sizeof(args)};
 				args.Flags = slsf_OnAllocConsole;
@@ -434,16 +434,18 @@ BOOL WINAPI OnAllocConsole(void)
 
 	HWND hNewConWnd = GetRealConsoleWindow();
 
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	//_ASSERTEX(lbRc && ghConWnd);
 	wchar_t szAlloc[500], szFile[MAX_PATH];
 	GetModuleFileName(NULL, szFile, countof(szFile));
-	msprintf(szAlloc, countof(szAlloc), L"OnAllocConsole\nOld=x%08X, New=x%08X, ghConWnd=x%08X\ngbPrepareDefaultTerminal=%i, gbIsNetVsHost=%i\n%s",
+	msprintf(
+		szAlloc, countof(szAlloc),
+		L"OnAllocConsole\nOld=x%08X, New=x%08X, ghConWnd=x%08X\ngbPrepareDefaultTerminal=%i, gbIsNetVsHost=%i\n%s",
 		LODWORD(hOldConWnd), LODWORD(hNewConWnd), LODWORD(ghConWnd), gbPrepareDefaultTerminal, gbIsNetVsHost, szFile);
 	// VisualStudio host file calls AllocConsole TWICE(!)
 	// Second call is totally spare (console already created)
 	//MessageBox(NULL, szAlloc, L"OnAllocConsole called", MB_SYSTEMMODAL);
-	#endif
+#endif
 
 	if (hNewConWnd)
 	{
@@ -498,7 +500,7 @@ BOOL WINAPI OnFreeConsole(void)
 		CLastErrorGuard guard;
 		int (WINAPI* fnRequestLocalServer)(/*[IN/OUT]*/RequestLocalServerParm* Parm);
 		MModule server(GetModuleHandle(ConEmuCD_DLL_3264));
-		if (server.GetProcAddress("PrivateEntry",fnRequestLocalServer))
+		if (server.GetProcAddress(FN_CONEMUCD_REQUEST_LOCAL_SERVER_NAME, fnRequestLocalServer))
 		{
 			RequestLocalServerParm args = {sizeof(args)};
 			args.Flags = slsf_OnFreeConsole;
@@ -561,8 +563,8 @@ BOOL WINAPI OnSetConsoleKeyShortcuts(BOOL bSet, BYTE bReserveKeys, LPVOID p1, DW
 	if (ghConEmuWnd && IsWindow(ghConEmuWnd))
 	{
 		DWORD nLastErr = GetLastError();
-		DWORD nSize = sizeof(CESERVER_REQ_HDR)+sizeof(BYTE)*2;
-		CESERVER_REQ *pIn = ExecuteNewCmd(CECMD_KEYSHORTCUTS, nSize);
+		DWORD nSize = sizeof(CESERVER_REQ_HDR) + sizeof(BYTE) * 2;
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_KEYSHORTCUTS, nSize);
 		if (pIn)
 		{
 			pIn->Data[0] = bSet;
@@ -620,23 +622,25 @@ COORD WINAPI OnGetConsoleFontSize(HANDLE hConsoleOutput, DWORD nFont)
 }
 
 
-HANDLE WINAPI OnCreateConsoleScreenBuffer(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData)
+HANDLE WINAPI OnCreateConsoleScreenBuffer(
+	DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES* lpSecurityAttributes, DWORD dwFlags,
+	LPVOID lpScreenBufferData)
 {
 	//typedef HANDLE(WINAPI* OnCreateConsoleScreenBuffer_t)(DWORD dwDesiredAccess, DWORD dwShareMode, const SECURITY_ATTRIBUTES *lpSecurityAttributes, DWORD dwFlags, LPVOID lpScreenBufferData);
 	ORIGINAL_KRNL(CreateConsoleScreenBuffer);
 
-	#ifdef SHOWCREATEBUFFERINFO
+#ifdef SHOWCREATEBUFFERINFO
 	wchar_t szDebugInfo[255];
 	msprintf(szDebugInfo, countof(szDebugInfo), L"CreateConsoleScreenBuffer(0x%X,0x%X,0x%X,0x%X,0x%X)",
 		dwDesiredAccess, dwShareMode, (DWORD)(DWORD_PTR)lpSecurityAttributes, dwFlags, (DWORD)(DWORD_PTR)lpScreenBufferData);
 
-	#endif
+#endif
 
-	if ((dwShareMode & (FILE_SHARE_READ|FILE_SHARE_WRITE)) != (FILE_SHARE_READ|FILE_SHARE_WRITE))
-		dwShareMode |= (FILE_SHARE_READ|FILE_SHARE_WRITE);
+	if ((dwShareMode & (FILE_SHARE_READ | FILE_SHARE_WRITE)) != (FILE_SHARE_READ | FILE_SHARE_WRITE))
+		dwShareMode |= (FILE_SHARE_READ | FILE_SHARE_WRITE);
 
-	if ((dwDesiredAccess & (GENERIC_READ|GENERIC_WRITE)) != (GENERIC_READ|GENERIC_WRITE))
-		dwDesiredAccess |= (GENERIC_READ|GENERIC_WRITE);
+	if ((dwDesiredAccess & (GENERIC_READ | GENERIC_WRITE)) != (GENERIC_READ | GENERIC_WRITE))
+		dwDesiredAccess |= (GENERIC_READ | GENERIC_WRITE);
 
 	if (!ghStdOutHandle)
 		ghStdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -665,11 +669,11 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 	if (!ghStdOutHandle)
 		ghStdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-	HANDLE hIn  = GetStdHandle(STD_INPUT_HANDLE);
+	HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
 	HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
-	#endif
+#endif
 
 	BOOL lbRc = FALSE;
 	if (F(SetConsoleActiveScreenBuffer))
@@ -677,12 +681,12 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 
 	if (lbRc && (ghCurrentOutBuffer || (hConsoleOutput != ghStdOutHandle)))
 	{
-		#ifdef SHOWCREATEBUFFERINFO
+#ifdef SHOWCREATEBUFFERINFO
 		CONSOLE_SCREEN_BUFFER_INFO lsbi = {};
 		BOOL lbTest = GetConsoleScreenBufferInfo(hConsoleOutput, &lsbi);
 		DWORD nErrCode = GetLastError();
 		_ASSERTE(lbTest && lsbi.dwSize.Y && "GetConsoleScreenBufferInfo(hConsoleOutput) failed");
-		#endif
+#endif
 
 		ghCurrentOutBuffer = hConsoleOutput;
 		RequestLocalServerParm Parm = {(DWORD)sizeof(Parm), slsf_SetOutHandle, &ghCurrentOutBuffer};
@@ -695,7 +699,8 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 	if (gfnSrvLogString && gbIsFarProcess)
 	{
 		wchar_t szLog[120];
-		msprintf(szLog, std::size(szLog),
+		msprintf(
+			szLog, std::size(szLog),
 			L"Far.exe: SetConsoleActiveScreenBuffer(x%08X)",
 			LODWORD(hConsoleOutput));
 		gfnSrvLogString(szLog);
@@ -705,7 +710,7 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 }
 
 
-BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow)
+BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT* lpConsoleWindow)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleWindowInfo_t)(HANDLE hConsoleOutput, BOOL bAbsolute, const SMALL_RECT *lpConsoleWindow);
 	ORIGINAL_KRNL(SetConsoleWindowInfo);
@@ -713,19 +718,21 @@ BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const 
 	SMALL_RECT tmp;
 	COORD crLocked;
 
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	CONSOLE_SCREEN_BUFFER_INFO sbi = {};
 	BOOL lbSbi = GetConsoleScreenBufferInfo(hConsoleOutput, &sbi);
 	UNREFERENCED_PARAMETER(lbSbi);
 
 	wchar_t szDbgSize[512];
-	msprintf(szDbgSize, countof(szDbgSize), L"SetConsoleWindowInfo(%08X, %s, {%ix%i}-{%ix%i}), Current={%ix%i}, Wnd={%ix%i}-{%ix%i}\n",
+	msprintf(
+		szDbgSize, countof(szDbgSize),
+		L"SetConsoleWindowInfo(%08X, %s, {%ix%i}-{%ix%i}), Current={%ix%i}, Wnd={%ix%i}-{%ix%i}\n",
 		LODWORD(hConsoleOutput), bAbsolute ? L"ABS" : L"REL",
 		lpConsoleWindow->Left, lpConsoleWindow->Top, lpConsoleWindow->Right, lpConsoleWindow->Bottom,
 		sbi.dwSize.X, sbi.dwSize.Y,
 		sbi.srWindow.Left, sbi.srWindow.Top, sbi.srWindow.Right, sbi.srWindow.Bottom);
 	DebugStringConSize(szDbgSize);
-	#endif
+#endif
 
 	BOOL lbLocked = IsVisibleRectLocked(crLocked);
 
@@ -734,7 +741,6 @@ BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const 
 		tmp = *lpConsoleWindow;
 		if (((tmp.Right - tmp.Left + 1) != crLocked.X) || ((tmp.Bottom - tmp.Top + 1) != crLocked.Y))
 		{
-
 			// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
 			// Размер может менять только пользователь ресайзом окна ConEmu
 			if ((tmp.Right - tmp.Left + 1) != crLocked.X)
@@ -768,11 +774,12 @@ BOOL WINAPI OnSetConsoleWindowInfo(HANDLE hConsoleOutput, BOOL bAbsolute, const 
 
 			lpConsoleWindow = &tmp;
 
-			#ifdef _DEBUG
-			msprintf(szDbgSize, countof(szDbgSize), L"---> IsVisibleRectLocked, lpConsoleWindow was patched {%ix%i}-{%ix%i}\n",
+#ifdef _DEBUG
+			msprintf(
+				szDbgSize, countof(szDbgSize), L"---> IsVisibleRectLocked, lpConsoleWindow was patched {%ix%i}-{%ix%i}\n",
 				tmp.Left, tmp.Top, tmp.Right, tmp.Bottom);
 			DebugStringConSize(szDbgSize);
-			#endif
+#endif
 		}
 	}
 
@@ -797,13 +804,14 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 	BOOL lbSbi = GetConsoleScreenBufferInfo(hConsoleOutput, &sbi);
 	UNREFERENCED_PARAMETER(lbSbi);
 
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	wchar_t szDbgSize[512];
-	msprintf(szDbgSize, countof(szDbgSize), L"SetConsoleScreenBufferSize(%08X, {%ix%i}), Current={%ix%i}, Wnd={%ix%i}\n",
+	msprintf(
+		szDbgSize, countof(szDbgSize), L"SetConsoleScreenBufferSize(%08X, {%ix%i}), Current={%ix%i}, Wnd={%ix%i}\n",
 		LODWORD(hConsoleOutput), dwSize.X, dwSize.Y, sbi.dwSize.X, sbi.dwSize.Y,
-		sbi.srWindow.Right-sbi.srWindow.Left+1, sbi.srWindow.Bottom-sbi.srWindow.Top+1);
+		sbi.srWindow.Right - sbi.srWindow.Left + 1, sbi.srWindow.Bottom - sbi.srWindow.Top + 1);
 	DebugStringConSize(szDbgSize);
-	#endif
+#endif
 
 	BOOL lbLocked = IsVisibleRectLocked(crLocked);
 
@@ -816,11 +824,12 @@ BOOL WINAPI OnSetConsoleScreenBufferSize(HANDLE hConsoleOutput, COORD dwSize)
 		if (crLocked.Y > dwSize.Y)
 			dwSize.Y = crLocked.Y;
 
-		#ifdef _DEBUG
-		msprintf(szDbgSize, countof(szDbgSize), L"---> IsVisibleRectLocked, dwSize was patched {%ix%i}\n",
+#ifdef _DEBUG
+		msprintf(
+			szDbgSize, countof(szDbgSize), L"---> IsVisibleRectLocked, dwSize was patched {%ix%i}\n",
 			dwSize.X, dwSize.Y);
 		DebugStringConSize(szDbgSize);
-		#endif
+#endif
 	}
 
 	// Do not do useless calls
@@ -873,7 +882,8 @@ wrap:
 
 // WARNING!!! This function exist in Vista and higher OS only!!!
 // Issue 1410
-BOOL WINAPI OnSetCurrentConsoleFontEx(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx)
+BOOL WINAPI OnSetCurrentConsoleFontEx(
+	HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx)
 {
 	//typedef BOOL (WINAPI* OnSetCurrentConsoleFontEx_t)(HANDLE hConsoleOutput, BOOL bMaximumWindow, MY_CONSOLE_FONT_INFOEX* lpConsoleCurrentFontEx);
 	ORIGINAL_KRNL_EX(SetCurrentConsoleFontEx);
@@ -898,14 +908,16 @@ wrap:
 
 
 // WARNING!!! This function exist in Vista and higher OS only!!!
-BOOL WINAPI OnSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx)
+BOOL WINAPI OnSetConsoleScreenBufferInfoEx(
+	HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleScreenBufferInfoEx_t)(HANDLE hConsoleOutput, MY_CONSOLE_SCREEN_BUFFER_INFOEX* lpConsoleScreenBufferInfoEx);
 	ORIGINAL_KRNL_EX(SetConsoleScreenBufferInfoEx);
 	BOOL lbRc = FALSE;
 
 	if (lpConsoleScreenBufferInfoEx)
-		CEAnsi::WriteAnsiLogFormat("SetConsoleScreenBufferInfoEx(curPos={%i,%i} attr=0x%02X)",
+		CEAnsi::WriteAnsiLogFormat(
+			"SetConsoleScreenBufferInfoEx(curPos={%i,%i} attr=0x%02X)",
 			lpConsoleScreenBufferInfoEx->dwCursorPosition.X, lpConsoleScreenBufferInfoEx->dwCursorPosition.Y,
 			lpConsoleScreenBufferInfoEx->wAttributes);
 
@@ -916,20 +928,22 @@ BOOL WINAPI OnSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCR
 	BOOL lbSbi = GetConsoleScreenBufferInfo(hConsoleOutput, &sbi);
 	UNREFERENCED_PARAMETER(lbSbi);
 
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	wchar_t szDbgSize[512];
 	if (lpConsoleScreenBufferInfoEx)
 	{
-		msprintf(szDbgSize, countof(szDbgSize), L"SetConsoleScreenBufferInfoEx(%08X, {%ix%i}), Current={%ix%i}, Wnd={%ix%i}\n",
-			LODWORD(hConsoleOutput), lpConsoleScreenBufferInfoEx->dwSize.X, lpConsoleScreenBufferInfoEx->dwSize.Y, sbi.dwSize.X, sbi.dwSize.Y,
-			sbi.srWindow.Right-sbi.srWindow.Left+1, sbi.srWindow.Bottom-sbi.srWindow.Top+1);
+		msprintf(
+			szDbgSize, countof(szDbgSize), L"SetConsoleScreenBufferInfoEx(%08X, {%ix%i}), Current={%ix%i}, Wnd={%ix%i}\n",
+			LODWORD(hConsoleOutput), lpConsoleScreenBufferInfoEx->dwSize.X, lpConsoleScreenBufferInfoEx->dwSize.Y,
+			sbi.dwSize.X, sbi.dwSize.Y,
+			sbi.srWindow.Right - sbi.srWindow.Left + 1, sbi.srWindow.Bottom - sbi.srWindow.Top + 1);
 	}
 	else
 	{
 		lstrcpyn(szDbgSize, L"SetConsoleScreenBufferInfoEx(%08X, NULL)\n", LODWORD(hConsoleOutput));
 	}
 	DebugStringConSize(szDbgSize);
-	#endif
+#endif
 
 	BOOL lbLocked = IsVisibleRectLocked(crLocked);
 
@@ -943,11 +957,12 @@ BOOL WINAPI OnSetConsoleScreenBufferInfoEx(HANDLE hConsoleOutput, MY_CONSOLE_SCR
 		if (crLocked.Y > lpConsoleScreenBufferInfoEx->dwSize.Y)
 			lpConsoleScreenBufferInfoEx->dwSize.Y = crLocked.Y;
 
-		#ifdef _DEBUG
-		msprintf(szDbgSize, countof(szDbgSize), L"---> IsVisibleRectLocked, dwSize was patched {%ix%i}\n",
+#ifdef _DEBUG
+		msprintf(
+			szDbgSize, countof(szDbgSize), L"---> IsVisibleRectLocked, dwSize was patched {%ix%i}\n",
 			lpConsoleScreenBufferInfoEx->dwSize.X, lpConsoleScreenBufferInfoEx->dwSize.Y);
 		DebugStringConSize(szDbgSize);
-		#endif
+#endif
 	}
 
 	if (F(SetConsoleScreenBufferInfoEx))
@@ -972,7 +987,7 @@ COORD WINAPI OnGetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 {
 	//typedef COORD (WINAPI* OnGetLargestConsoleWindowSize_t)(HANDLE hConsoleOutput);
 	ORIGINAL_KRNL(GetLargestConsoleWindowSize);
-	COORD cr = {80,25}, crLocked = {0,0};
+	COORD cr = {80, 25}, crLocked = {0, 0};
 
 	if (ghConEmuWndDC && IsVisibleRectLocked(crLocked))
 	{
@@ -1009,10 +1024,10 @@ BOOL WINAPI OnSetConsoleCursorPosition(HANDLE hConsoleOutput, COORD dwCursorPosi
 
 	if (gbIsVimAnsi)
 	{
-		#ifdef DUMP_VIM_SETCURSORPOS
+#ifdef DUMP_VIM_SETCURSORPOS
 		wchar_t szDbg[80]; msprintf(szDbg, countof(szDbg), L"ViM trying to set cursor pos: {%i,%i}\n", (UINT)dwCursorPosition.X, (UINT)dwCursorPosition.Y);
 		OutputDebugString(szDbg);
-		#endif
+#endif
 		lbRc = FALSE;
 	}
 	else
@@ -1034,12 +1049,13 @@ BOOL WINAPI OnSetConsoleCursorPosition(HANDLE hConsoleOutput, COORD dwCursorPosi
 }
 
 
-BOOL WINAPI OnSetConsoleCursorInfo(HANDLE hConsoleOutput, const CONSOLE_CURSOR_INFO *lpConsoleCursorInfo)
+BOOL WINAPI OnSetConsoleCursorInfo(HANDLE hConsoleOutput, const CONSOLE_CURSOR_INFO* lpConsoleCursorInfo)
 {
 	//typedef BOOL (WINAPI* OnSetConsoleCursorInfo_t)(HANDLE,const CONSOLE_CURSOR_INFO *);
 	ORIGINAL_KRNL(SetConsoleCursorInfo);
 
-	CEAnsi::WriteAnsiLogFormat("SetConsoleCursorInfo(%i,%i)",
+	CEAnsi::WriteAnsiLogFormat(
+		"SetConsoleCursorInfo(%i,%i)",
 		lpConsoleCursorInfo ? lpConsoleCursorInfo->dwSize : 0,
 		lpConsoleCursorInfo ? lpConsoleCursorInfo->bVisible : 0);
 
