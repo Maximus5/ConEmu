@@ -1628,6 +1628,19 @@ void WorkerServer::Done(const int exitCode, const bool reportShutdown /*= false*
 	WorkerBase::Done(exitCode, reportShutdown);
 }
 
+void WorkerServer::EnableProcessMonitor(const bool enable)
+{
+	if (enable)
+	{
+		if (!gpSrv->processes->nProcessStartTick) // could be already initialized from cmd_CmdStartStop
+			gpSrv->processes->nProcessStartTick = GetTickCount();
+	}
+	else
+	{
+		gpSrv->processes->nProcessStartTick = 0;
+	}
+}
+
 // Консоль любит глючить, при попытках запроса более определенного количества ячеек.
 // MAX_CONREAD_SIZE подобрано экспериментально
 BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RECT& rgn)
@@ -1680,7 +1693,7 @@ BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& 
 		//bufSize.X = TextWidth;
 		bufSize.Y = 1;
 		bufCoord.X = 0; bufCoord.Y = 0;
-		//rgn = gpSrv->sbi.srWindow;
+		//rgn = this->consoleInfo.sbi.srWindow;
 
 		int Y1 = rgn.Top;
 		int Y2 = rgn.Bottom;
@@ -3480,7 +3493,7 @@ bool CheckWasFullScreen()
 	return bFullScreenHW;
 }
 
-static int ReadConsoleInfo()
+int WorkerServer::ReadConsoleInfo()
 {
 	// Need to block all requests to output buffer in other threads
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
@@ -3599,7 +3612,7 @@ static int ReadConsoleInfo()
 		DWORD dwErr = GetLastError();
 		_ASSERTE(FALSE && "!!! ReadConsole::MyGetConsoleScreenBufferInfo failed !!!");
 
-		gpSrv->dwSbiRc = dwErr; if (!gpSrv->dwSbiRc) gpSrv->dwSbiRc = -1;
+		this->consoleInfo.dwSbiRc = dwErr ? dwErr : -1;
 
 		//liRc = -1;
 		return -1;
@@ -3616,7 +3629,7 @@ static int ReadConsoleInfo()
 		// These values are stored in RConBuffer::con.TopLeft
 		if (bSuccess)
 		{
-			//rgn = gpSrv->sbi.srWindow;
+			//rgn = this->consoleInfo.sbi.srWindow;
 			if (!(nNewScroll & rbs_Horz))
 			{
 				lsbi.srWindow.Left = 0;
@@ -3632,7 +3645,7 @@ static int ReadConsoleInfo()
 			}
 		}
 
-		if (memcmp(&gpSrv->sbi, &lsbi, sizeof(gpSrv->sbi)))
+		if (memcmp(&this->consoleInfo.sbi, &lsbi, sizeof(this->consoleInfo.sbi)))
 		{
 			InputLogger::Log(InputLogger::Event::evt_ConSbiChanged);
 
@@ -3668,8 +3681,8 @@ static int ReadConsoleInfo()
 					gcrVisibleSize.Y = lsbi.dwSize.Y;
 				}
 
-				if (lsbi.dwSize.X != gpSrv->sbi.dwSize.X
-				        || (lsbi.srWindow.Bottom - lsbi.srWindow.Top) != (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top))
+				if (lsbi.dwSize.X != this->consoleInfo.sbi.dwSize.X
+				        || (lsbi.srWindow.Bottom - lsbi.srWindow.Top) != (this->consoleInfo.sbi.srWindow.Bottom - this->consoleInfo.sbi.srWindow.Top))
 				{
 					// При изменении размера видимой области - обязательно передернуть данные
 					gpSrv->pConsole->bDataChanged = TRUE;
@@ -3698,16 +3711,16 @@ static int ReadConsoleInfo()
 
 			if (gpLogSize) LogSize(NULL, 0, ":ReadConsoleInfo");
 
-			gpSrv->sbi = lsbi;
+			this->consoleInfo.sbi = lsbi;
 			lbChanged = TRUE;
 		}
 	}
 
 	if (!gnBufferHeight)
 	{
-		int nWndHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
+		int nWndHeight = (this->consoleInfo.sbi.srWindow.Bottom - this->consoleInfo.sbi.srWindow.Top + 1);
 
-		if (gpSrv->sbi.dwSize.Y > (std::max<int>(gcrVisibleSize.Y, nWndHeight)+200)
+		if (this->consoleInfo.sbi.dwSize.Y > (std::max<int>(gcrVisibleSize.Y, nWndHeight)+200)
 		        || ((gpSrv->nRequestChangeSize > 0) && gpSrv->nReqSizeBufferHeight))
 		{
 			// Приложение изменило размер буфера!
@@ -3718,12 +3731,12 @@ static int ReadConsoleInfo()
 				//EmergencyShow(ghConWnd);
 				//#endif
 				WARNING("###: Приложение изменило вертикальный размер буфера");
-				if (gpSrv->sbi.dwSize.Y > 200)
+				if (this->consoleInfo.sbi.dwSize.Y > 200)
 				{
-					//_ASSERTE(gpSrv->sbi.dwSize.Y <= 200);
-					DEBUGLOGSIZE(L"!!! gpSrv->sbi.dwSize.Y > 200 !!! in ConEmuC.ReloadConsoleInfo\n");
+					//_ASSERTE(this->consoleInfo.sbi.dwSize.Y <= 200);
+					DEBUGLOGSIZE(L"!!! this->consoleInfo.sbi.dwSize.Y > 200 !!! in ConEmuC.ReloadConsoleInfo\n");
 				}
-				gpSrv->nReqSizeBufferHeight = gpSrv->sbi.dwSize.Y;
+				gpSrv->nReqSizeBufferHeight = this->consoleInfo.sbi.dwSize.Y;
 			}
 
 			gnBufferHeight = gpSrv->nReqSizeBufferHeight;
@@ -3747,8 +3760,8 @@ static int ReadConsoleInfo()
 	gpSrv->pConsole->ConState.dwConsoleOutputCP = gpSrv->dwConsoleOutputCP;
 	gpSrv->pConsole->ConState.dwConsoleInMode = gpSrv->dwConsoleInMode;
 	gpSrv->pConsole->ConState.dwConsoleOutMode = gpSrv->dwConsoleOutMode;
-	gpSrv->pConsole->ConState.dwSbiSize = sizeof(gpSrv->sbi);
-	gpSrv->pConsole->ConState.sbi = gpSrv->sbi;
+	gpSrv->pConsole->ConState.dwSbiSize = sizeof(this->consoleInfo.sbi);
+	gpSrv->pConsole->ConState.sbi = this->consoleInfo.sbi;
 	gpSrv->pConsole->ConState.ConsolePalette = gpSrv->ConsolePalette;
 
 
@@ -3781,7 +3794,7 @@ static int ReadConsoleInfo()
 // !!! А выигрыш за счет частичного чтения - незначителен и создает риск некорректного чтения.
 
 
-static BOOL ReadConsoleData()
+bool WorkerServer::ReadConsoleData()
 {
 	// Need to block all requests to output buffer in other threads
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
@@ -3789,7 +3802,7 @@ static BOOL ReadConsoleData()
 	BOOL lbRc = FALSE, lbChanged = FALSE;
 	bool lbDataChanged = false;
 #ifdef _DEBUG
-	CONSOLE_SCREEN_BUFFER_INFO dbgSbi = gpSrv->sbi;
+	CONSOLE_SCREEN_BUFFER_INFO dbgSbi = this->consoleInfo.sbi;
 #endif
 	HANDLE hOut = NULL;
 	//USHORT TextWidth=0, TextHeight=0;
@@ -3798,8 +3811,8 @@ static BOOL ReadConsoleData()
 	SMALL_RECT rgn;
 	DWORD nCurSize, nHdrSize;
 	// -- начинаем потихоньку горизонтальную прокрутку
-	_ASSERTE(gpSrv->sbi.srWindow.Left == 0); // этот пока оставим
-	//_ASSERTE(gpSrv->sbi.srWindow.Right == (gpSrv->sbi.dwSize.X - 1));
+	_ASSERTE(this->consoleInfo.sbi.srWindow.Left == 0); // этот пока оставим
+	//_ASSERTE(this->consoleInfo.sbi.srWindow.Right == (this->consoleInfo.sbi.dwSize.X - 1));
 	DWORD nCurScroll = (gnBufferHeight ? rbs_Vert : 0) | (gnBufferWidth ? rbs_Horz : 0);
 	DWORD nNewScroll = 0;
 	int TextWidth = 0, TextHeight = 0;
@@ -3807,11 +3820,11 @@ static BOOL ReadConsoleData()
 	char sFailedInfo[128];
 
 	// sbi считывается в ReadConsoleInfo
-	BOOL bSuccess = ::GetConWindowSize(gpSrv->sbi, gcrVisibleSize.X, gcrVisibleSize.Y, nCurScroll, &TextWidth, &TextHeight, &nNewScroll);
+	BOOL bSuccess = ::GetConWindowSize(this->consoleInfo.sbi, gcrVisibleSize.X, gcrVisibleSize.Y, nCurScroll, &TextWidth, &TextHeight, &nNewScroll);
 
 	UNREFERENCED_PARAMETER(bSuccess);
-	//TextWidth  = gpSrv->sbi.dwSize.X;
-	//TextHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
+	//TextWidth  = this->consoleInfo.sbi.dwSize.X;
+	//TextHeight = (this->consoleInfo.sbi.srWindow.Bottom - this->consoleInfo.sbi.srWindow.Top + 1);
 	TextLen = TextWidth * TextHeight;
 
 	if (!gpSrv->pConsole)
@@ -3821,29 +3834,29 @@ static BOOL ReadConsoleData()
 		goto wrap;
 	}
 
-	//rgn = gpSrv->sbi.srWindow;
+	//rgn = this->consoleInfo.sbi.srWindow;
 	if (nNewScroll & rbs_Horz)
 	{
-		rgn.Left = gpSrv->sbi.srWindow.Left;
-		rgn.Right = std::min<int>(gpSrv->sbi.srWindow.Left+TextWidth,gpSrv->sbi.dwSize.X)-1;
+		rgn.Left = this->consoleInfo.sbi.srWindow.Left;
+		rgn.Right = std::min<int>(this->consoleInfo.sbi.srWindow.Left+TextWidth,this->consoleInfo.sbi.dwSize.X)-1;
 	}
 	else
 	{
 		rgn.Left = 0;
-		nMaxWidth = std::max<int>(gpSrv->pConsole->hdr.crMaxConSize.X,(gpSrv->sbi.srWindow.Right-gpSrv->sbi.srWindow.Left+1));
-		rgn.Right = std::min<int>(nMaxWidth,(gpSrv->sbi.dwSize.X-1));
+		nMaxWidth = std::max<int>(gpSrv->pConsole->hdr.crMaxConSize.X,(this->consoleInfo.sbi.srWindow.Right-this->consoleInfo.sbi.srWindow.Left+1));
+		rgn.Right = std::min<int>(nMaxWidth,(this->consoleInfo.sbi.dwSize.X-1));
 	}
 
 	if (nNewScroll & rbs_Vert)
 	{
-		rgn.Top = gpSrv->sbi.srWindow.Top;
-		rgn.Bottom = std::min<int>(gpSrv->sbi.srWindow.Top+TextHeight,gpSrv->sbi.dwSize.Y)-1;
+		rgn.Top = this->consoleInfo.sbi.srWindow.Top;
+		rgn.Bottom = std::min<int>(this->consoleInfo.sbi.srWindow.Top+TextHeight,this->consoleInfo.sbi.dwSize.Y)-1;
 	}
 	else
 	{
 		rgn.Top = 0;
-		nMaxHeight = std::max<int>(gpSrv->pConsole->hdr.crMaxConSize.Y,(gpSrv->sbi.srWindow.Bottom-gpSrv->sbi.srWindow.Top+1));
-		rgn.Bottom = std::min<int>(nMaxHeight,(gpSrv->sbi.dwSize.Y-1));
+		nMaxHeight = std::max<int>(gpSrv->pConsole->hdr.crMaxConSize.Y,(this->consoleInfo.sbi.srWindow.Bottom-this->consoleInfo.sbi.srWindow.Top+1));
+		rgn.Bottom = std::min<int>(nMaxHeight,(this->consoleInfo.sbi.dwSize.Y-1));
 	}
 
 
@@ -3900,7 +3913,7 @@ static BOOL ReadConsoleData()
 	{
 		bufSize.X = TextWidth; bufSize.Y = TextHeight;
 		//bufCoord.X = 0; bufCoord.Y = 0;
-		//rgn = gpSrv->sbi.srWindow;
+		//rgn = this->consoleInfo.sbi.srWindow;
 
 		//if (ReadConsoleOutput(hOut, gpSrv->pConsoleDataCopy, bufSize, bufCoord, &rgn))
 		if (MyReadConsoleOutput(hOut, gpSrv->pConsoleDataCopy, bufSize, rgn))
@@ -3910,7 +3923,7 @@ static BOOL ReadConsoleData()
 			//gh-1164, gh-1216, gh-1219: workaround for Window 10 conhost bug
 			if (IsWin10())
 			{
-				WORD defAttr = gpSrv->sbi.wAttributes;
+				WORD defAttr = this->consoleInfo.sbi.wAttributes;
 				//if (CONFORECOLOR(defAttr) == CONBACKCOLOR(defAttr))
 				//	defAttr = 7; // Really? There would be nothing visible at all...
 				int max_cells = bufSize.X * bufSize.Y;
@@ -3932,7 +3945,7 @@ static BOOL ReadConsoleData()
 	//	// Придется читать построчно
 	//	bufSize.X = TextWidth; bufSize.Y = 1;
 	//	bufCoord.X = 0; bufCoord.Y = 0;
-	//	//rgn = gpSrv->sbi.srWindow;
+	//	//rgn = this->consoleInfo.sbi.srWindow;
 	//	CHAR_INFO* pLine = gpSrv->pConsoleDataCopy;
 
 	//	for(int y = 0; y < (int)TextHeight; y++, rgn.Top++, pLine+=TextWidth)
@@ -4045,8 +4058,11 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 
 	nTick2 = GetTickCount();
 
+	// #SERVER remove this
+	auto* server = dynamic_cast<WorkerServer*>(gpWorker);
+
 	// Read sizes flags and other information
-	int iInfoRc = ReadConsoleInfo();
+	const int iInfoRc = server->ReadConsoleInfo();
 
 	nTick3 = GetTickCount();
 
@@ -4060,7 +4076,7 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 			lbChanged = TRUE;
 
 		// Read chars and attributes for visible (or locked) area
-		if (ReadConsoleData())
+		if (server->ReadConsoleData())
 			lbChanged = lbDataChanged = TRUE;
 
 		nTick4 = GetTickCount();

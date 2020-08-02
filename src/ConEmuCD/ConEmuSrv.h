@@ -213,7 +213,7 @@ struct SrvInfo
 	DWORD dwCiRc; CONSOLE_CURSOR_INFO ci; // GetConsoleCursorInfo
 	DWORD dwConsoleCP, dwConsoleOutputCP;
 	WORD dwConsoleInMode, dwConsoleOutMode;
-	DWORD dwSbiRc; CONSOLE_SCREEN_BUFFER_INFO sbi; // MyGetConsoleScreenBufferInfo
+
 	CESERVER_CONSOLE_PALETTE ConsolePalette;
 	DWORD dwDisplayMode;
 	BOOL  bAltBufferEnabled;
@@ -266,7 +266,7 @@ struct SrvInfo
 
 };
 
-class WorkerServer : public WorkerBase
+class WorkerServer final : public WorkerBase
 {
 public:
 	virtual ~WorkerServer();
@@ -281,4 +281,10 @@ public:
 	int Init() override;
 	void Done(int exitCode, bool reportShutdown = false) override;
 
+	void EnableProcessMonitor(bool enable) override;
+
+	// #SERVER Recheck visibility
+public:
+	int ReadConsoleInfo();
+	bool ReadConsoleData();
 };

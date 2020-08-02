@@ -69,6 +69,10 @@ public:
 	HWND RootProcessGui() const;
 	void CloseRootProcessHandles();
 
+	const CONSOLE_SCREEN_BUFFER_INFO& GetSbi() const;
+
+	virtual void EnableProcessMonitor(bool enable);
+
 	bool IsDebuggerActive() const;
 	bool IsDebugProcess() const;
 	bool IsDebugProcessTree() const;
@@ -94,6 +98,12 @@ protected:
 	{
 		DWORD dwParentFarPid;
 	} farManagerInfo = {};
+
+	struct ConsoleInfo
+	{
+		DWORD dwSbiRc;
+		CONSOLE_SCREEN_BUFFER_INFO sbi; // MyGetConsoleScreenBufferInfo
+	} consoleInfo = {};
 
 	std::unique_ptr<DebuggerInfo> dbgInfo;
 };

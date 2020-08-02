@@ -145,5 +145,9 @@ TEST(ConEmuCD, RunCmdExe)
 		return; // nothing to check more
 	}
 
-	const auto cmdRc = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c echo RunCmdExe test");
+	const auto cmdRc1 = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c echo echo from cmd.exe");
+	EXPECT_EQ(0, cmdRc1);
+
+	const auto cmdRc2 = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c exit 3");
+	EXPECT_EQ(3, cmdRc2);
 }

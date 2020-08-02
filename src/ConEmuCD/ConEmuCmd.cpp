@@ -95,10 +95,6 @@ int WorkerComspec::Init()
 #ifdef SHOW_STARTED_MSGBOX
 	MessageBox(GetConEmuHWND(2), L"ConEmuC (comspec mode) is about to START", L"ConEmuC.ComSpec", 0);
 #endif
-	//int nNewBufferHeight = 0;
-	//COORD crNewSize = {0,0};
-	//SMALL_RECT rNewWindow = gpSrv->sbi.srWindow;
-	BOOL lbSbiRc = FALSE;
 	gbRootWasFoundInCon = 2; // не добавлять к "Press Enter to close console" - "or wait"
 	gbComspecInitCalled = TRUE; // Нельзя вызывать ComspecDone, если не было вызова ComspecInit
 	// в режиме ComSpec - запрещено!
@@ -107,13 +103,20 @@ int WorkerComspec::Init()
 	xf_validate();
 	xf_dump_chk();
 #endif
-	// Это наверное и не нужно, просто для информации...
-	lbSbiRc = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &gpSrv->sbi);
-	#ifdef _DEBUG
-	DWORD nErrCode = lbSbiRc ? 0 : GetLastError();
-	// Процесс запущен с редиректом вывода?
-	_ASSERTE(lbSbiRc || (nErrCode == ERROR_INVALID_HANDLE));
-	#endif
+
+	// sbi is used to restore properties
+	const auto lbSbiRc = GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &this->consoleInfo.sbi);
+	if (!lbSbiRc)
+	{
+		if (!((this->consoleInfo.dwSbiRc = GetLastError())))
+			this->consoleInfo.dwSbiRc = -1;
+	}
+	else
+	{
+		this->consoleInfo.dwSbiRc = 0;
+	}
+	// Process was started with redirection?
+	_ASSERTE(lbSbiRc || (this->consoleInfo.dwSbiRc == ERROR_INVALID_HANDLE));
 
 	wchar_t szComSpec[MAX_PATH+1];
 	const wchar_t* pszComSpecName = nullptr;
@@ -285,12 +288,6 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 
 	if (!gbNonGuiMode && (gpWorker->ParentFarPid() != 0))
 	{
-		//// Вернуть размер буфера (высота И ширина)
-		//if (gpSrv->sbi.dwSize.X && gpSrv->sbi.dwSize.Y) {
-		//	SMALL_RECT rc = {0};
-		//	SetConsoleSize(0, gpSrv->sbi.dwSize, rc, "ComspecDone");
-		//}
-		//ConOutCloseHandle()
 		CONSOLE_SCREEN_BUFFER_INFO l_csbi = {{0}};
 		lbRc2 = GetConsoleScreenBufferInfo(hOut2 = GetStdHandle(STD_OUTPUT_HANDLE), &l_csbi);
 
@@ -300,7 +297,6 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 		{
 			if (!pOut->StartStopRet.bWasBufferHeight)
 			{
-				//gpSrv->sbi.dwSize = pIn->StartStop.sbi.dwSize;
 				lbRc1 = FALSE; // Консольное приложение самостоятельно сбросило буферный режим. Не дергаться...
 			}
 			else
@@ -325,9 +321,9 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 
 			if (lbRc1 && lbRc2 && sbi2.dwSize.Y == sbi1.dwSize.Y)
 			{
-				// GUI не смог вернуть высоту буфера...
-				// Это плохо, т.к. фар высоту буфера не меняет и будет сильно глючить на N сотнях строк...
-				int nNeedHeight = gpSrv->sbi.dwSize.Y;
+				// If ConEmu GUI fails to return buffer height, it could be bad for Far Manager
+				// Far does not change buffer height and could feel dizzy on thousands of rows
+				int nNeedHeight = this->consoleInfo.sbi.dwSize.Y;
 
 				if (nNeedHeight < 10)
 				{

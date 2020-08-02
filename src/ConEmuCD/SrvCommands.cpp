@@ -378,10 +378,10 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		if (nBufferHeight == (USHORT)-1)
 		{
 			// Для 'far /w' нужно оставить высоту буфера!
-			if (in.SetSize.size.Y < gpSrv->sbi.dwSize.Y
-			        && gpSrv->sbi.dwSize.Y > (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1))
+			if ((in.SetSize.size.Y < gpWorker->GetSbi().dwSize.Y)
+				&& gpWorker->GetSbi().dwSize.Y >= SRectHeight(gpWorker->GetSbi().srWindow))
 			{
-				nBufferHeight = gpSrv->sbi.dwSize.Y;
+				nBufferHeight = gpWorker->GetSbi().dwSize.Y;
 			}
 			else
 			{
@@ -1264,8 +1264,8 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		(*out)->StartStopRet.hWndBack = ghConEmuWndBack;
 		(*out)->StartStopRet.dwPID = gnConEmuPID;
 		(*out)->StartStopRet.nBufferHeight = gnBufferHeight;
-		(*out)->StartStopRet.nWidth = gpSrv->sbi.dwSize.X;
-		(*out)->StartStopRet.nHeight = (gpSrv->sbi.srWindow.Bottom - gpSrv->sbi.srWindow.Top + 1);
+		(*out)->StartStopRet.nWidth = gpWorker->GetSbi().dwSize.X;
+		(*out)->StartStopRet.nHeight = (gpWorker->GetSbi().srWindow.Bottom - gpWorker->GetSbi().srWindow.Top + 1);
 		_ASSERTE(gnRunMode==RunMode::Server);
 		(*out)->StartStopRet.dwMainSrvPID = GetCurrentProcessId();
 		(*out)->StartStopRet.dwAltSrvPID = gpSrv->dwAltServerPID;

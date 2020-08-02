@@ -1608,7 +1608,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	// We need to set `0` before CreateProcess, otherwise we may get timeout,
 	// due to misc antivirus software, BEFORE CreateProcess finishes
 	if (!(gbAttachMode & am_Modes))
-		gpSrv->processes->nProcessStartTick = 0;
+		gpWorker->EnableProcessMonitor(false);
 
 	if (gbNoCreateProcess)
 	{
@@ -1911,8 +1911,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	}
 	else
 	{
-		if (!gpSrv->processes->nProcessStartTick) // Уже мог быть проинициализирован из cmd_CmdStartStop
-			gpSrv->processes->nProcessStartTick = GetTickCount();
+		gpWorker->EnableProcessMonitor(true);
 	}
 
 	if (pi.dwProcessId)
@@ -2894,66 +2893,66 @@ void SetWorkEnvVar()
 	SetConEmuWorkEnvVar(ghOurModule);
 }
 
-// 1. Заменить подстановки вида: !ConEmuHWND!, !ConEmuDrawHWND!, !ConEmuBackHWND!, !ConEmuWorkDir!
-// 2. Развернуть переменные окружения (PowerShell, например, не признает переменные в качестве параметров)
+// 1. Substitute vars like: !ConEmuHWND!, !ConEmuDrawHWND!, !ConEmuBackHWND!, !ConEmuWorkDir!
+// 2. Expand environment variables (e.g. PowerShell doesn't accept %vars% as arguments)
 wchar_t* ParseConEmuSubst(LPCWSTR asCmd)
 {
 	if (!asCmd || !*asCmd)
 	{
 		LogFunction(L"ParseConEmuSubst - skipped");
-		return NULL;
+		return nullptr;
 	}
 
 	LogFunction(L"ParseConEmuSubst");
 
-	// Другие имена нет смысла передавать через "!" вместо "%"
+	// Only these "ConEmuXXX" variables make sense to pass by "!" instead of "%"
 	LPCWSTR szNames[] = {ENV_CONEMUHWND_VAR_W, ENV_CONEMUDRAW_VAR_W, ENV_CONEMUBACK_VAR_W, ENV_CONEMUWORKDIR_VAR_W};
 
+	// If neither of our variables are defined - nothing to do
+	wchar_t szFind[] = L"!ConEmu";
+	const bool bExclSubst = (StrStrI(asCmd, szFind) != nullptr);
+	if (!bExclSubst && (wcschr(asCmd, L'%') == nullptr))
+		return nullptr;
+
 #ifdef _DEBUG
-	// Переменные уже должны быть определены!
-	for (size_t i = 0; i < countof(szNames); ++i)
+	// Variables should be already set for processing
+	for (const auto& varName : szNames)
 	{
-		LPCWSTR pszName = szNames[i];
-		wchar_t szDbg[MAX_PATH+1] = L"";
-		GetEnvironmentVariable(pszName, szDbg, countof(szDbg));
+		wchar_t szDbg[MAX_PATH + 1] = L"";
+		GetEnvironmentVariable(varName, szDbg, countof(szDbg));
 		if (!*szDbg)
 		{
 			LogFunction(L"Variables must be set already!");
-			_ASSERTE(*szDbg && "Variables must be set already!");
-			break; // другие не проверять - лишние ассерты
+			_ASSERTE(*szDbg && "ConEmuXXX variables should be set already!");
+			break; // skip other debug asserts
 		}
 	}
 #endif
-
-	// Если ничего похожего нет, то и не дергаться
-	wchar_t szFind[] = L"!ConEmu";
-	bool bExclSubst = (StrStrI(asCmd, szFind) != NULL);
-	if (!bExclSubst && (wcschr(asCmd, L'%') == NULL))
-		return NULL;
-
+	
 	//_ASSERTE(FALSE && "Continue to ParseConEmuSubst");
 
-	wchar_t* pszCmdCopy = NULL;
+	wchar_t* pszCmdCopy = nullptr;
 
 	if (bExclSubst)
 	{
-		if (!(pszCmdCopy = lstrdup(asCmd)))
-			return NULL;
+		if (!((pszCmdCopy = lstrdup(asCmd))))
+			return nullptr;
 
-		for (size_t i = 0; i < countof(szNames); ++i)
+		for (const auto& varName : szNames)
 		{
-			wchar_t szName[64]; swprintf_c(szName, L"!%s!", szNames[i]);
-			size_t iLen = lstrlen(szName);
+			wchar_t szName[64]; swprintf_c(szName, L"!%s!", varName);
+			const size_t iLen = lstrlen(szName);
 
 			wchar_t* pszStart = StrStrI(pszCmdCopy, szName);
 			if (!pszStart)
 				continue;
+
 			while (pszStart)
 			{
 				pszStart[0] = L'%';
-				pszStart[iLen-1] = L'%';
+				pszStart[iLen - 1] = L'%';
 
-				pszStart = StrStrI(pszStart+iLen, szName);
+				pszStart = StrStrI(pszStart + iLen, szName);
 			}
 		}
 
@@ -5841,7 +5840,7 @@ static void UndoConsoleWindowZoom()
 		}
 
 		// И вернуть тот видимый прямоугольник, который был получен в последний раз (успешный раз)
-		lbRc = SetConsoleWindowInfo(ghConOut, TRUE, &gpSrv->sbi.srWindow);
+		lbRc = SetConsoleWindowInfo(ghConOut, TRUE, &gpWorker->GetSbi().srWindow);
 	}
 
 	UNREFERENCED_PARAMETER(lbRc);

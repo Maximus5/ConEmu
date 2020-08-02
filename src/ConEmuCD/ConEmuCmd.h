@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Windows.h>
 #include "WorkerBase.h"
 
-class WorkerComspec : public WorkerBase
+class WorkerComspec final : public WorkerBase
 {
 public:
 	virtual ~WorkerComspec();

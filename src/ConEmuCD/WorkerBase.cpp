@@ -125,6 +125,16 @@ void WorkerBase::CloseRootProcessHandles()
 	SafeCloseHandle(this->rootProcess.threadHandle);
 }
 
+const CONSOLE_SCREEN_BUFFER_INFO& WorkerBase::GetSbi() const
+{
+	return this->consoleInfo.sbi;
+}
+
+void WorkerBase::EnableProcessMonitor(bool enable)
+{
+	// nothing to do in base
+}
+
 bool WorkerBase::IsDebuggerActive() const
 {
 	if (!dbgInfo)
