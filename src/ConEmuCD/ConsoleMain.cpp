@@ -579,7 +579,7 @@ void LoadSrvInfoMap(LPCWSTR pszExeName = NULL, LPCWSTR pszDllName = NULL)
 			{
 				if (pInfo->hConEmuRoot && IsWindow(pInfo->hConEmuRoot))
 				{
-					SetConEmuWindows(pInfo->hConEmuRoot, pInfo->hConEmuWndDc, pInfo->hConEmuWndBack);
+					WorkerServer::Instance().SetConEmuWindows(pInfo->hConEmuRoot, pInfo->hConEmuWndDc, pInfo->hConEmuWndBack);
 				}
 				if (pInfo->nServerPID && pInfo->nServerPID != gnSelfPID)
 				{
@@ -1438,7 +1438,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		gpWorker->SetRootProcessHandle(GetCurrentProcess());
 		//gnConEmuPID = ...;
 		gpszRunCmd = (wchar_t*)calloc(1,2);
-		CreateColorerHeader();
+		WorkerServer::Instance().CreateColorerHeader();
 	}
 	else if ((iRc = ParseCommandLine(pszFullCmdLine)) != 0)
 	{
@@ -2571,7 +2571,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	// Если поток RefreshThread был "заморожен" при запуске другого сервера
 	if ((gpSrv->nRefreshFreezeRequests > 0) && !(Parm->Flags & slsf_OnAllocConsole))
 	{
-		ThawRefreshThread();
+		WorkerServer::Instance().ThawRefreshThread();
 	}
 
 	TODO("Инициализация TrueColor буфера - Parm->ppAnnotation");
@@ -2611,7 +2611,7 @@ DoEvents:
 
 	if (Parm->Flags & slsf_OnFreeConsole)
 	{
-		FreezeRefreshThread();
+		WorkerServer::Instance().FreezeRefreshThread();
 	}
 
 	if (Parm->Flags & slsf_OnAllocConsole)
@@ -2620,7 +2620,7 @@ DoEvents:
 		LoadSrvInfoMap();
 		//TODO: Request AltServer state from MainServer?
 
-		ThawRefreshThread();
+		WorkerServer::Instance().ThawRefreshThread();
 	}
 
 	Parm->fSrvLogString = LogHooksFunction;
@@ -3510,7 +3510,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			//ConEmu autorun (c) Maximus5
 			//Starting "%ConEmuPath%" in "Attach" mode (NewWnd=%FORCE_NEW_WND%)
 
-			if (!IsAutoAttachAllowed())
+			if (!WorkerServer::Instance().IsAutoAttachAllowed())
 			{
 				if (ghConWnd && IsWindowVisible(ghConWnd))
 				{
@@ -4065,7 +4065,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		BOOL lbIsWindowVisible = FALSE;
 		// Добавим проверку на telnet
 		if (!ghConWnd
-			|| !(lbIsWindowVisible = IsAutoAttachAllowed())
+			|| !(lbIsWindowVisible = WorkerServer::Instance().IsAutoAttachAllowed())
 			|| isTerminalMode())
 		{
 			if (gpLogSize)
@@ -4416,7 +4416,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 		// Поскольку ключик указан через "-cur_console/-new_console"
 		// смену режима нужно сделать сразу, т.к. функа зовется только для сервера
-		ServerInitConsoleMode();
+		WorkerServer::Instance().ServerInitConsoleMode();
 	}
 
 	#ifdef _DEBUG
@@ -5098,7 +5098,7 @@ void SendStarted()
 			bSent = true;
 			BOOL  bAlreadyBufferHeight = pOut->StartStopRet.bWasBufferHeight;
 			DWORD nGuiPID = pOut->StartStopRet.dwPID;
-			SetConEmuWindows(pOut->StartStopRet.hWnd, pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
+			WorkerServer::Instance().SetConEmuWindows(pOut->StartStopRet.hWnd, pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
 			if (gpSrv)
 			{
 				_ASSERTE(gnConEmuPID == pOut->StartStopRet.dwPID);
@@ -5121,7 +5121,7 @@ void SendStarted()
 				}
 			}
 
-			UpdateConsoleMapHeader(L"SendStarted");
+			WorkerServer::Instance().UpdateConsoleMapHeader(L"SendStarted");
 
 			_ASSERTE(gnMainServerPID==0 || gnMainServerPID==pOut->StartStopRet.dwMainSrvPID || (gbAttachMode && gbAlienMode && (pOut->StartStopRet.dwMainSrvPID==gnSelfPID)));
 			gnMainServerPID = pOut->StartStopRet.dwMainSrvPID;
@@ -5483,7 +5483,7 @@ LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue /*
 
 		UpdateComspec(&gpSrv->guiSettings.ComSpec); // isAddConEmu2Path, ...
 
-		SetConEmuFolders(gpSrv->guiSettings.ComSpec.ConEmuExeDir, gpSrv->guiSettings.ComSpec.ConEmuBaseDir);
+		WorkerServer::Instance().SetConEmuFolders(gpSrv->guiSettings.ComSpec.ConEmuExeDir, gpSrv->guiSettings.ComSpec.ConEmuBaseDir);
 
 		// Не будем ставить сами, эту переменную заполняет Gui при своем запуске
 		// соответственно, переменная наследуется серверами
@@ -5491,13 +5491,13 @@ LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue /*
 
 		//wchar_t szHWND[16]; swprintf_c(szHWND, L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
 		//SetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, szHWND);
-		SetConEmuWindows(gpSrv->guiSettings.hGuiWnd, ghConEmuWndDC, ghConEmuWndBack);
+		WorkerServer::Instance().SetConEmuWindows(gpSrv->guiSettings.hGuiWnd, ghConEmuWndDC, ghConEmuWndBack);
 
 		if (gpSrv->pConsole)
 		{
-			CopySrvMapFromGuiMap();
+			WorkerServer::Instance().CopySrvMapFromGuiMap();
 
-			UpdateConsoleMapHeader(L"guiSettings were changed");
+			WorkerServer::Instance().UpdateConsoleMapHeader(L"guiSettings were changed");
 		}
 	}
 
@@ -6786,7 +6786,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 		return FALSE;
 	}
 
-	if (CheckWasFullScreen())
+	if (WorkerServer::Instance().CheckWasFullScreen())
 	{
 		DEBUGSTRSIZE(L"SetConsoleSize was skipped due to CONSOLE_FULLSCREEN_HARDWARE");
 		LogString("SetConsoleSize was skipped due to CONSOLE_FULLSCREEN_HARDWARE");
@@ -6911,7 +6911,7 @@ BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, L
 	gcrVisibleSize = crNewSize;
 
 	if (gnRunMode == RunMode::Server || gnRunMode == RunMode::AltServer)
-		UpdateConsoleMapHeader(L"SetConsoleSize"); // Обновить pConsoleMap.crLockedVisible
+		WorkerServer::Instance().UpdateConsoleMapHeader(L"SetConsoleSize"); // Обновить pConsoleMap.crLockedVisible
 
 	if (gnBufferHeight)
 	{

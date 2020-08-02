@@ -45,52 +45,16 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ConsoleAnnotation.h"
 #include "../common/InQueue.h"
 
-
-
-BOOL ReloadFullConsoleInfo(BOOL abForceSend);
-bool CheckWasFullScreen();
-DWORD WINAPI RefreshThread(LPVOID lpvParam); // Thread reloading console contents
-bool FreezeRefreshThread();
-bool ThawRefreshThread();
-BOOL ServerInitConsoleMode();
-BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RECT& rgn);
-BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn);
-
-void CmdOutputStore(bool abCreateOnly = false);
-void CmdOutputRestore(bool abSimpleMode);
-
-void CheckConEmuHwnd();
-
-HWND Attach2Gui(DWORD nTimeout);
-
-bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw = false);
-
-int CreateMapHeader();
-void CloseMapHeader();
-void CopySrvMapFromGuiMap();
-void UpdateConsoleMapHeader(LPCWSTR asReason = NULL);
-void InitAnsiLog(const ConEmuAnsiLog& AnsiLog);
-int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2);
-void FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR *pMap);
-
-int CreateColorerHeader(bool bForceRecreate = false);
-
-int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn);
-
-bool IsAutoAttachAllowed();
-
 /* Console Handles */
 extern MConHandle ghConOut;
 extern MConHandle gPrimaryBuffer, gAltBuffer;
 extern USHORT gnPrimaryBufferLastRow;
-void ConOutCloseHandle();
-bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*& pHdr, CESERVER_CONSAVE_MAP*& pData);
-bool isReopenHandleAllowed();
 
 #ifdef WIN64
 #ifndef __GNUC__
-#pragma message("ComEmuC compiled in X64 mode")
+#pragma message("ComEmuC compiled in X64 mode")  // NOLINT(clang-diagnostic-#pragma-messages)
 #endif
+// ReSharper disable once IdentifierTypo
 #define NTVDMACTIVE FALSE
 #else
 #ifndef __GNUC__
@@ -108,6 +72,13 @@ struct AltServerInfo
 	DWORD  nPID; // informational
 	HANDLE hPrev;
 	DWORD  nPrevPID;
+};
+
+enum SleepIndicatorType
+{
+	sit_None = 0,
+	sit_Num,
+	sit_Title,
 };
 
 struct ConProcess;
@@ -258,9 +229,6 @@ struct SrvInfo
 	// Когда была последняя пользовательская активность
 	DWORD dwLastUserTick;
 
-	// Если нужно заблокировать нить RefreshThread
-	//HANDLE hLockRefreshBegin, hLockRefreshReady;
-
 	// Console Aliases
 	wchar_t* pszAliases; DWORD nAliasesSize;
 
@@ -272,6 +240,8 @@ public:
 	virtual ~WorkerServer();
 
 	WorkerServer();
+
+	static WorkerServer& Instance();
 
 	WorkerServer(const WorkerServer&) = delete;
 	WorkerServer(WorkerServer&&) = delete;
@@ -287,4 +257,58 @@ public:
 public:
 	int ReadConsoleInfo();
 	bool ReadConsoleData();
+	BOOL ReloadFullConsoleInfo(BOOL abForceSend);
+
+	static DWORD WINAPI RefreshThread(LPVOID lpvParam); // Thread reloading console contents
+	static DWORD WINAPI SetOemCpProc(LPVOID lpParameter);
+
+public:
+	void ServerInitFont();
+	void WaitForServerActivated(DWORD anServerPID, HANDLE ahServer, DWORD nTimeout = 30000);
+	int AttachRootProcess();
+	int ServerInitCheckExisting(bool abAlternative);
+	void ServerInitConsoleSize(bool allowUseCurrent, CONSOLE_SCREEN_BUFFER_INFO* pSbiOut = nullptr);
+	int ServerInitAttach2Gui();
+	int ServerInitGuiTab();
+	void ServerInitEnvVars();
+	void SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir);
+	void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd);
+	bool TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn);
+	CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr();
+	SleepIndicatorType CheckIndicateSleepNum();
+	void ShowSleepIndicator(SleepIndicatorType sleepType, bool bSleeping);
+	
+	void ConOutCloseHandle();
+	bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*& pHdr, CESERVER_CONSAVE_MAP*& pData);
+	bool IsReopenHandleAllowed();
+	
+	bool CheckWasFullScreen();
+	bool FreezeRefreshThread();
+	bool ThawRefreshThread();
+	BOOL ServerInitConsoleMode();
+	BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO* pData, COORD& bufSize, SMALL_RECT& rgn);
+	BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO* pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn);
+
+	void CmdOutputStore(bool abCreateOnly = false);
+	void CmdOutputRestore(bool abSimpleMode);
+
+	void CheckConEmuHwnd();
+
+	HWND Attach2Gui(DWORD nTimeout);
+
+	bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool forceThaw = false);
+
+	int CreateMapHeader();
+	void CloseMapHeader();
+	void CopySrvMapFromGuiMap();
+	void UpdateConsoleMapHeader(LPCWSTR asReason = NULL);
+	void InitAnsiLog(const ConEmuAnsiLog& AnsiLog);
+	int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2);
+	void FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR* pMap);
+
+	int CreateColorerHeader(bool bForceRecreate = false);
+
+	int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn);
+
+	bool IsAutoAttachAllowed();
 };

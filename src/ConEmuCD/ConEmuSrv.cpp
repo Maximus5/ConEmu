@@ -134,9 +134,21 @@ WorkerServer::WorkerServer()
 	}
 }
 
+WorkerServer& WorkerServer::Instance()
+{
+	auto* server = dynamic_cast<WorkerServer*>(gpWorker);
+	if (!server)
+	{
+		_ASSERTE(server != nullptr);
+		LogString("!!! WorkerServer was not initialized !!!");
+		ExitProcess(CERR_SERVER_WAS_NOT_INITIALIZED);
+	}
+	return *server;
+}
+
 
 // Установить мелкий шрифт, иначе может быть невозможно увеличение размера GUI окна
-void ServerInitFont()
+void WorkerServer::ServerInitFont()
 {
 	LogFunction(L"ServerInitFont");
 
@@ -223,7 +235,7 @@ void ServerInitFont()
 }
 
 // AutoAttach делать нельзя, когда ConEmu запускает процесс обновления
-bool IsAutoAttachAllowed()
+bool WorkerServer::IsAutoAttachAllowed()
 {
 	if (!ghConWnd)
 		return false;
@@ -240,7 +252,7 @@ bool IsAutoAttachAllowed()
 	return true;
 }
 
-void WaitForServerActivated(DWORD anServerPID, HANDLE ahServer, DWORD nTimeout = 30000)
+void WorkerServer::WaitForServerActivated(DWORD anServerPID, HANDLE ahServer, DWORD nTimeout /*= 30000*/)
 {
 	if (!gpSrv || !gpSrv->pConsoleMap || !gpSrv->pConsoleMap->IsValid())
 	{
@@ -282,7 +294,7 @@ void WaitForServerActivated(DWORD anServerPID, HANDLE ahServer, DWORD nTimeout =
 }
 
 // Вызывается при запуске сервера: (gbNoCreateProcess && (gbAttachMode || gpWorker->IsDebuggerActive))
-int AttachRootProcess()
+int WorkerServer::AttachRootProcess()
 {
 	LogFunction(L"AttachRootProcess");
 
@@ -486,7 +498,7 @@ int AttachRootProcess()
 	return 0; // OK
 }
 
-BOOL ServerInitConsoleMode()
+BOOL WorkerServer::ServerInitConsoleMode()
 {
 	LogFunction(L"ServerInitConsoleMode");
 
@@ -518,7 +530,7 @@ BOOL ServerInitConsoleMode()
 	return bConRc;
 }
 
-int ServerInitCheckExisting(bool abAlternative)
+int WorkerServer::ServerInitCheckExisting(bool abAlternative)
 {
 	LogFunction(L"ServerInitCheckExisting");
 
@@ -573,7 +585,7 @@ wrap:
 	return iRc;
 }
 
-void ServerInitConsoleSize(bool allowUseCurrent, CONSOLE_SCREEN_BUFFER_INFO* pSbiOut = nullptr)
+void WorkerServer::ServerInitConsoleSize(bool allowUseCurrent, CONSOLE_SCREEN_BUFFER_INFO* pSbiOut /*= nullptr*/)
 {
 	LogFunction(L"ServerInitConsoleSize");
 
@@ -619,7 +631,7 @@ void ServerInitConsoleSize(bool allowUseCurrent, CONSOLE_SCREEN_BUFFER_INFO* pSb
 	}
 }
 
-int ServerInitAttach2Gui()
+int WorkerServer::ServerInitAttach2Gui()
 {
 	LogFunction(L"ServerInitAttach2Gui");
 
@@ -663,7 +675,7 @@ wrap:
 
 // Дернуть ConEmu, чтобы он отдал HWND окна отрисовки
 // (!gbAttachMode && !gpWorker->IsDebuggerActive)
-int ServerInitGuiTab()
+int WorkerServer::ServerInitGuiTab()
 {
 	LogFunction(L"ServerInitGuiTab");
 
@@ -733,11 +745,11 @@ wrap:
 	return iRc;
 }
 
-bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw)
+bool WorkerServer::AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool forceThaw)
 {
 	wchar_t szFnArg[200];
 	swprintf_c(szFnArg, L"AltServerWasStarted PID=%u H=x%p ForceThaw=%s ",
-		nPID, hAltServer, ForceThaw ? L"true" : L"false");
+		nPID, hAltServer, forceThaw ? L"true" : L"false");
 	if (gpLogSize)
 	{
 		PROCESSENTRY32 AltSrv;
@@ -807,7 +819,7 @@ bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw)
 	}
 
 
-	if (ForceThaw)
+	if (forceThaw)
 	{
 		// Отпустить новый сервер (который раньше замораживался)
 		CESERVER_REQ* pFreezeIn = ExecuteNewCmd(CECMD_FREEZEALTSRV, sizeof(CESERVER_REQ_HDR)+2*sizeof(DWORD));
@@ -824,7 +836,7 @@ bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool ForceThaw)
 	return (hAltServer != NULL);
 }
 
-DWORD WINAPI SetOemCpProc(LPVOID lpParameter)
+DWORD WorkerServer::SetOemCpProc(LPVOID lpParameter)
 {
 	UINT nCP = (UINT)(DWORD_PTR)lpParameter;
 	SetConsoleCP(nCP);
@@ -833,7 +845,7 @@ DWORD WINAPI SetOemCpProc(LPVOID lpParameter)
 }
 
 
-void ServerInitEnvVars()
+void WorkerServer::ServerInitEnvVars()
 {
 	LogFunction(L"ServerInitEnvVars");
 
@@ -1643,7 +1655,7 @@ void WorkerServer::EnableProcessMonitor(const bool enable)
 
 // Консоль любит глючить, при попытках запроса более определенного количества ячеек.
 // MAX_CONREAD_SIZE подобрано экспериментально
-BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RECT& rgn)
+BOOL WorkerServer::MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RECT& rgn)
 {
 	MSectionLock RCS;
 	if (gpSrv->pReqSizeSection && !RCS.Lock(gpSrv->pReqSizeSection, TRUE, 30000))
@@ -1659,7 +1671,7 @@ BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, SMALL_RE
 
 // Консоль любит глючить, при попытках запроса более определенного количества ячеек.
 // MAX_CONREAD_SIZE подобрано экспериментально
-BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn)
+BOOL WorkerServer::MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn)
 {
 	LogFunction(L"MyWriteConsoleOutput");
 
@@ -1709,9 +1721,9 @@ BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO *pData, COORD& bufSize, COORD& 
 	return lbRc;
 }
 
-void ConOutCloseHandle()
+void WorkerServer::ConOutCloseHandle()
 {
-	if (isReopenHandleAllowed())
+	if (IsReopenHandleAllowed())
 	{
 		// Need to block all requests to output buffer in other threads
 		MSectionLockSimple csRead;
@@ -1724,7 +1736,7 @@ void ConOutCloseHandle()
 
 // В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!
 // В итоге, буфер вывода telnet'а схлопывается!
-bool isReopenHandleAllowed()
+bool WorkerServer::IsReopenHandleAllowed()
 {
 	// Windows 7 has a bug which makes impossible to utilize ScreenBuffers
 	// https://conemu.github.io/en/MicrosoftBugs.html#CorruptedScreenBuffer
@@ -1733,7 +1745,7 @@ bool isReopenHandleAllowed()
 	return true;
 }
 
-bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*& pHdr, CESERVER_CONSAVE_MAP*& pData)
+bool WorkerServer::CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*& pHdr, CESERVER_CONSAVE_MAP*& pData)
 {
 	LogFunction(L"CmdOutputOpenMap");
 
@@ -1856,11 +1868,11 @@ wrap:
 }
 
 // Сохранить данные ВСЕЙ консоли в mapping
-void CmdOutputStore(bool abCreateOnly /*= false*/)
+void WorkerServer::CmdOutputStore(bool abCreateOnly /*= false*/)
 {
 	LogFunction(L"CmdOutputStore");
 
-	const bool reopen_allowed = isReopenHandleAllowed();
+	const bool reopen_allowed = IsReopenHandleAllowed();
 
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {};
 	CESERVER_CONSAVE_MAPHDR* pHdr = NULL;
@@ -1922,11 +1934,11 @@ void CmdOutputStore(bool abCreateOnly /*= false*/)
 // abSimpleMode==true  - просто восстановить экран на момент вызова CmdOutputStore
 //             ==false - пытаться подгонять строки вывода под текущее состояние
 //                       задел на будущее для выполнения команд из Far (без /w), mc, или еще кого.
-void CmdOutputRestore(bool abSimpleMode)
+void WorkerServer::CmdOutputRestore(bool abSimpleMode)
 {
 	LogFunction(L"CmdOutputRestore");
 
-	const bool reopen_allowed = isReopenHandleAllowed();
+	const bool reopen_allowed = IsReopenHandleAllowed();
 
 	if (!abSimpleMode)
 	{
@@ -2044,7 +2056,7 @@ void CmdOutputRestore(bool abSimpleMode)
 	LogString("CmdOutputRestore finished");
 }
 
-void SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir)
+void WorkerServer::SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir)
 {
 	_ASSERTE(asExeDir && *asExeDir!=0 && asBaseDir && *asBaseDir);
 	SetEnvironmentVariable(ENV_CONEMUDIR_VAR_W, asExeDir);
@@ -2053,7 +2065,7 @@ void SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir)
 	SetEnvironmentVariable(ENV_CONEMUBASEDIRSHORT_VAR_W, BaseShort.IsEmpty() ? asBaseDir : BaseShort.ms_Val);
 }
 
-void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
+void WorkerServer::SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 {
 	LogFunction(L"SetConEmuWindows");
 
@@ -2115,7 +2127,7 @@ void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 	}
 }
 
-void CheckConEmuHwnd()
+void WorkerServer::CheckConEmuHwnd()
 {
 	LogFunction(L"CheckConEmuHwnd");
 
@@ -2206,7 +2218,7 @@ void CheckConEmuHwnd()
 	}
 }
 
-void FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR *pMap)
+void WorkerServer::FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR *pMap)
 {
 	pMap->nGuiPID = gnConEmuPID;
 	pMap->hConEmuRoot = ghConEmuWnd;
@@ -2214,7 +2226,7 @@ void FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR *pMap)
 	pMap->hConEmuWndBack = ghConEmuWndBack;
 }
 
-bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
+bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 {
 	LogFunction(L"TryConnect2Gui");
 
@@ -2248,7 +2260,7 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 			DWORD  nGuiPid = 0;
 
 			if ((hGui && GetWindowThreadProcessId(hGui, &nGuiPid) && nGuiPid)
-				|| ((nGuiPid = anGuiPID) != 0))
+				|| ((nGuiPid = anGuiPid) != 0))
 			{
 				// Issue 791: Fails, when GUI started under different credentials (login) as server
 				HANDLE hGuiHandle = OpenProcess(PROCESS_DUP_HANDLE, FALSE, nGuiPid);
@@ -2296,13 +2308,13 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn)
 	{
 		swprintf_c(szServerPipe, CEGUIPIPENAME, L".", LODWORD(hGui)); //-V205
 	}
-	else if (anGuiPID)
+	else if (anGuiPid)
 	{
-		swprintf_c(szServerPipe, CESERVERPIPENAME, L".", anGuiPID);
+		swprintf_c(szServerPipe, CESERVERPIPENAME, L".", anGuiPid);
 	}
 	else
 	{
-		_ASSERTEX((hGui!=NULL) || (anGuiPID!=0));
+		_ASSERTEX((hGui!=NULL) || (anGuiPid!=0));
 		goto wrap;
 	}
 
@@ -2490,7 +2502,7 @@ wrap:
 	return bConnected;
 }
 
-HWND Attach2Gui(DWORD nTimeout)
+HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 {
 	LogFunction(L"Attach2Gui");
 
@@ -2843,7 +2855,7 @@ HWND Attach2Gui(DWORD nTimeout)
 
 
 
-void CopySrvMapFromGuiMap()
+void WorkerServer::CopySrvMapFromGuiMap()
 {
 	LogFunction(L"CopySrvMapFromGuiMap");
 
@@ -2913,7 +2925,7 @@ void CopySrvMapFromGuiMap()
 */
 
 
-int CreateMapHeader()
+int WorkerServer::CreateMapHeader()
 {
 	LogFunction(L"CreateMapHeader");
 
@@ -3113,14 +3125,14 @@ wrap:
 	return iRc;
 }
 
-CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr()
+CESERVER_CONSOLE_APP_MAPPING* WorkerServer::GetAppMapPtr()
 {
 	if (!gpSrv || !gpSrv->pAppMap)
 		return NULL;
 	return gpSrv->pAppMap->Ptr();
 }
 
-int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2)
+int WorkerServer::Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2)
 {
 	if (!p1 || !p2)
 	{
@@ -3142,7 +3154,7 @@ int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPI
 	return nCmp;
 };
 
-void UpdateConsoleMapHeader(LPCWSTR asReason /*= NULL*/)
+void WorkerServer::UpdateConsoleMapHeader(LPCWSTR asReason /*= NULL*/)
 {
 	CEStr lsLog(L"UpdateConsoleMapHeader{", asReason, L"}");
 	LogFunction(lsLog);
@@ -3260,7 +3272,7 @@ void UpdateConsoleMapHeader(LPCWSTR asReason /*= NULL*/)
 	}
 }
 
-int CreateColorerHeader(bool bForceRecreate /*= false*/)
+int WorkerServer::CreateColorerHeader(bool bForceRecreate /*= false*/)
 {
 	LogFunction(L"CreateColorerHeader");
 
@@ -3388,7 +3400,7 @@ wrap:
 	return iRc;
 }
 
-void CloseMapHeader()
+void WorkerServer::CloseMapHeader()
 {
 	LogFunction(L"CloseMapHeader");
 
@@ -3419,7 +3431,7 @@ void CloseMapHeader()
 
 
 // Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
-void InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
+void WorkerServer::InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 {
 	LogFunction(L"InitAnsiLog");
 	// Reset first
@@ -3473,7 +3485,7 @@ void InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 }
 
 
-bool CheckWasFullScreen()
+bool WorkerServer::CheckWasFullScreen()
 {
 	bool bFullScreenHW = false;
 
@@ -4006,7 +4018,7 @@ wrap:
 
 // abForceSend выставляется в TRUE, чтобы гарантированно
 // передернуть GUI по таймауту (не реже 1 сек).
-BOOL ReloadFullConsoleInfo(BOOL abForceSend)
+BOOL WorkerServer::ReloadFullConsoleInfo(BOOL abForceSend)
 {
 	if (CheckWasFullScreen())
 	{
@@ -4059,10 +4071,10 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 	nTick2 = GetTickCount();
 
 	// #SERVER remove this
-	auto* server = dynamic_cast<WorkerServer*>(gpWorker);
+	auto& server = WorkerServer::Instance();
 
 	// Read sizes flags and other information
-	const int iInfoRc = server->ReadConsoleInfo();
+	const int iInfoRc = server.ReadConsoleInfo();
 
 	nTick3 = GetTickCount();
 
@@ -4076,7 +4088,7 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 			lbChanged = TRUE;
 
 		// Read chars and attributes for visible (or locked) area
-		if (server->ReadConsoleData())
+		if (server.ReadConsoleData())
 			lbChanged = lbDataChanged = TRUE;
 
 		nTick4 = GetTickCount();
@@ -4127,15 +4139,7 @@ BOOL ReloadFullConsoleInfo(BOOL abForceSend)
 	return lbChanged;
 }
 
-
-enum SleepIndicatorType
-{
-	sit_None = 0,
-	sit_Num,
-	sit_Title,
-};
-
-SleepIndicatorType CheckIndicateSleepNum()
+SleepIndicatorType WorkerServer::CheckIndicateSleepNum()
 {
 	static SleepIndicatorType bCheckIndicateSleepNum = sit_None;
 	static DWORD nLastCheckTick = 0;
@@ -4163,9 +4167,9 @@ SleepIndicatorType CheckIndicateSleepNum()
 	return bCheckIndicateSleepNum;
 }
 
-void ShowSleepIndicator(SleepIndicatorType SleepType, bool bSleeping)
+void WorkerServer::ShowSleepIndicator(SleepIndicatorType sleepType, bool bSleeping)
 {
-	switch (SleepType)
+	switch (sleepType)
 	{
 	case sit_Num:
 		{
@@ -4182,16 +4186,16 @@ void ShowSleepIndicator(SleepIndicatorType SleepType, bool bSleeping)
 			const wchar_t szSleepPrefix[] = L"[Sleep] ";
 			const int nPrefixLen = lstrlen(szSleepPrefix);
 			static wchar_t szTitle[2000];
-			DWORD nLen = GetConsoleTitle(szTitle+nPrefixLen, countof(szTitle)-nPrefixLen);
-			bool bOld = (wcsstr(szTitle+nPrefixLen, szSleepPrefix) != NULL);
+			DWORD nLen = GetConsoleTitle(szTitle + nPrefixLen, countof(szTitle) - nPrefixLen);
+			bool bOld = (wcsstr(szTitle + nPrefixLen, szSleepPrefix) != NULL);
 			if (bOld && !bSleeping)
 			{
 				wchar_t* psz;
-				while ((psz = wcsstr(szTitle+nPrefixLen, szSleepPrefix)) != NULL)
+				while ((psz = wcsstr(szTitle + nPrefixLen, szSleepPrefix)) != NULL)
 				{
-					wmemmove(psz, psz+nPrefixLen, wcslen(psz+nPrefixLen)+1);
+					wmemmove(psz, psz + nPrefixLen, wcslen(psz + nPrefixLen) + 1);
 				}
-				SetConsoleTitle(szTitle+nPrefixLen);
+				SetConsoleTitle(szTitle + nPrefixLen);
 			}
 			else if (!bOld && bSleeping)
 			{
@@ -4203,7 +4207,7 @@ void ShowSleepIndicator(SleepIndicatorType SleepType, bool bSleeping)
 }
 
 
-bool FreezeRefreshThread()
+bool WorkerServer::FreezeRefreshThread()
 {
 	MSectionLockSimple csControl;
 	csControl.Lock(&gpSrv->csRefreshControl, LOCK_REFRESH_CONTROL_TIMEOUT);
@@ -4237,7 +4241,7 @@ bool FreezeRefreshThread()
 	return (gpSrv->nRefreshIsFrozen > 0) || (gpSrv->hRefreshThread == NULL);
 }
 
-bool ThawRefreshThread()
+bool WorkerServer::ThawRefreshThread()
 {
 	MSectionLockSimple csControl;
 	csControl.Lock(&gpSrv->csRefreshControl, LOCK_REFRESH_CONTROL_TIMEOUT);
@@ -4259,8 +4263,10 @@ bool ThawRefreshThread()
 }
 
 
-DWORD WINAPI RefreshThread(LPVOID lpvParam)
+DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 {
+	auto& server = WorkerServer::Instance();
+	
 	DWORD nWait = 0, nAltWait = 0, nFreezeWait = 0, nThreadWait = 0;
 
 	HANDLE hEvents[4] = {ghQuitEvent, gpSrv->hRefreshEvent};
@@ -4381,12 +4387,12 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 									// Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer
 									// Активировать альтернативный сервер (повторно), отпустить его нити чтения
 									nAltServerWasStarted = info.nPrevPID;
-									AltServerWasStarted(info.nPrevPID, info.hPrev, true);
+									server.AltServerWasStarted(info.nPrevPID, info.hPrev, true);
 								}
 							}
 							// Обновить мэппинг
 							wchar_t szLog[80]; swprintf_c(szLog, L"RefreshThread, new AltServer=%u", gpSrv->dwAltServerPID);
-							UpdateConsoleMapHeader(szLog);
+							server.UpdateConsoleMapHeader(szLog);
 						}
 
 						CsAlt.Unlock();
@@ -4452,12 +4458,12 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		// Always update con handle, мягкий вариант
 		// !!! В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ. В итоге, буфер вывода telnet'а схлопывается! !!!
 		// 120507 - Если крутится альт.сервер - то игнорировать
-		if (isReopenHandleAllowed()
+		if (server.IsReopenHandleAllowed()
 			&& !nAltWait
 			&& ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT))
 		{
 			// Need to block all requests to output buffer in other threads
-			ConOutCloseHandle();
+			server.ConOutCloseHandle();
 			nLastConHandleTick = GetTickCount();
 		}
 
@@ -4719,7 +4725,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 
 		// Обновляется по таймауту
-		SleepType = CheckIndicateSleepNum();
+		SleepType = server.CheckIndicateSleepNum();
 
 
 		// Чтобы не грузить процессор неактивными консолями спим, если
@@ -4741,7 +4747,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			if (SleepType)
 			{
 				// Выключить индикатор (low speed)
-				ShowSleepIndicator(SleepType, true);
+				server.ShowSleepIndicator(SleepType, true);
 			}
 
 			// #define MAX_FORCEREFRESH_INTERVAL 500
@@ -4753,7 +4759,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		}
 		else if (SleepType)
 		{
-			ShowSleepIndicator(SleepType, false);
+			server.ShowSleepIndicator(SleepType, false);
 		}
 
 
@@ -4768,10 +4774,10 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 		if (ghConEmuWndDC && isConEmuTerminated())
 		{
 			gpSrv->bWasDetached = TRUE;
-			SetConEmuWindows(NULL, NULL, NULL);
+			server.SetConEmuWindows(NULL, NULL, NULL);
 			_ASSERTE(!ghConEmuWnd && !ghConEmuWndDC && !ghConEmuWndBack);
 			gnConEmuPID = 0;
-			UpdateConsoleMapHeader(L"RefreshThread: GUI was crashed or was detached?");
+			server.UpdateConsoleMapHeader(L"RefreshThread: GUI was crashed or was detached?");
 			EmergencyShow(ghConWnd);
 		}
 
@@ -4783,7 +4789,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 			{
 				// Reset GUI HWND's
 				_ASSERTE(!gnConEmuPID);
-				SetConEmuWindows(pMap->hConEmuRoot, pMap->hConEmuWndDc, pMap->hConEmuWndBack);
+				server.SetConEmuWindows(pMap->hConEmuRoot, pMap->hConEmuWndDc, pMap->hConEmuWndBack);
 				_ASSERTE(gnConEmuPID && ghConEmuWnd && ghConEmuWndDC && ghConEmuWndBack);
 
 				// To be sure GUI will be updated with full info
@@ -4835,7 +4841,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 			if (lbReloadNow)
 			{
-				lbChanged = ReloadFullConsoleInfo(gpSrv->bWasReattached/*lbForceSend*/);
+				lbChanged = server.ReloadFullConsoleInfo(gpSrv->bWasReattached/*lbForceSend*/);
 			}
 
 			#if defined(TEST_REFRESH_DELAYED)
@@ -4878,7 +4884,7 @@ DWORD WINAPI RefreshThread(LPVOID lpvParam)
 
 
 
-int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
+int WorkerServer::MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
 {
 	if (!pRgn)
 	{

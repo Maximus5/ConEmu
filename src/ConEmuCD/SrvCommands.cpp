@@ -122,7 +122,7 @@ void OnAltServerChanged(int nStep, StartStopType nStarted, DWORD nAltServerPID, 
 		{
 			if (AS.nAltServerWasStarted)
 			{
-				AltServerWasStarted(AS.nAltServerWasStarted, AS.hAltServerWasStarted, AS.ForceThawAltServer);
+				WorkerServer::Instance().AltServerWasStarted(AS.nAltServerWasStarted, AS.hAltServerWasStarted, AS.ForceThawAltServer);
 			}
 			else if (AS.nCurAltServerPID && (nAltServerPID == AS.nCurAltServerPID))
 			{
@@ -424,7 +424,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			// Сохранить данные ВСЕЙ консоли
 			PRINT_COMSPEC(L"Storing long output\n", 0);
-			CmdOutputStore();
+			WorkerServer::Instance().CmdOutputStore();
 			PRINT_COMSPEC(L"Storing long output (done)\n", 0);
 		}
 
@@ -491,7 +491,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 			csRead.Unlock();
 
 			// Передернуть RefreshThread - перечитать консоль
-			ReloadFullConsoleInfo(FALSE); // вызовет Refresh в Refresh thread
+			WorkerServer::Instance().ReloadFullConsoleInfo(FALSE); // вызовет Refresh в Refresh thread
 
 			// вернуть блокировку
 			csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
@@ -503,7 +503,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			// Восстановить текст скрытой (прокрученной вверх) части консоли
 			// #LongConsoleOutput This does not work
-			CmdOutputRestore(false);
+			WorkerServer::Instance().CmdOutputRestore(false);
 		}
 	}
 
@@ -584,7 +584,7 @@ BOOL cmd_Attach2Gui(CESERVER_REQ& in, CESERVER_REQ** out)
 	gpSrv->hGuiWnd = FindConEmuByPID(in.hdr.nSrcPID);
 
 	// Может придти из Attach2Gui() плагина
-	HWND hDc = Attach2Gui(ATTACH2GUI_TIMEOUT);
+	HWND hDc = WorkerServer::Instance().Attach2Gui(ATTACH2GUI_TIMEOUT);
 
 	if (hDc != NULL)
 	{
@@ -835,7 +835,7 @@ BOOL cmd_FarDetached(CESERVER_REQ& in, CESERVER_REQ** out)
 	}
 
 	// Обновить мэппинг
-	UpdateConsoleMapHeader(L"CECMD_FARDETACHED");
+	WorkerServer::Instance().UpdateConsoleMapHeader(L"CECMD_FARDETACHED");
 
 	CsAlt.Unlock();
 
@@ -868,7 +868,7 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			// Warning: If refresh thread is in an AltServerStop
 			// transaction, ReloadFullConsoleInfo with (TRUE) will deadlock.
-			ReloadFullConsoleInfo(FALSE);
+			WorkerServer::Instance().ReloadFullConsoleInfo(FALSE);
 			// Force refresh thread to cycle
 			SetEvent(gpSrv->hRefreshEvent);
 		}
@@ -960,7 +960,7 @@ BOOL cmd_SetWindowRgn(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	BOOL lbRc = FALSE;
 
-	MySetWindowRgn(&in.SetWndRgn);
+	WorkerServer::Instance().MySetWindowRgn(&in.SetWndRgn);
 
 	return lbRc;
 }
@@ -1045,9 +1045,9 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	g_IgnoreSetLargeFont = true;
 	#endif
 	ghConEmuWnd = NULL;
-	SetConEmuWindows(NULL, NULL, NULL);
+	WorkerServer::Instance().SetConEmuWindows(nullptr, nullptr, nullptr);
 	gnConEmuPID = 0;
-	UpdateConsoleMapHeader(L"CECMD_DETACHCON");
+	WorkerServer::Instance().UpdateConsoleMapHeader(L"CECMD_DETACHCON");
 
 	HWND hGuiApp = NULL;
 	if (in.DataSize() >= sizeof(DWORD))
@@ -1249,7 +1249,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	}
 
 	// Обновить мэппинг
-	UpdateConsoleMapHeader(L"CECMD_CMDSTARTSTOP");
+	WorkerServer::Instance().UpdateConsoleMapHeader(L"CECMD_CMDSTARTSTOP");
 
 	CsAlt.Unlock();
 
@@ -1287,7 +1287,7 @@ BOOL cmd_SetFarPID(CESERVER_REQ& in, CESERVER_REQ** out)
 	gpSrv->nActiveFarPID = in.hdr.nSrcPID;
 
 	// Will update mapping using MainServer if this is Alternative
-	UpdateConsoleMapHeader(L"CECMD_SETFARPID");
+	WorkerServer::Instance().UpdateConsoleMapHeader(L"CECMD_SETFARPID");
 
 	return lbRc;
 }
@@ -1692,13 +1692,13 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			gpSrv->nPrevAltServer = in.dwData[1];
 
-			FreezeRefreshThread();
+			WorkerServer::Instance().FreezeRefreshThread();
 		}
 		else
 		{
 			std::swap(nPrevAltServer, gpSrv->nPrevAltServer);
 
-			ThawRefreshThread();
+			WorkerServer::Instance().ThawRefreshThread();
 
 			if (gnRunMode == RunMode::AltServer)
 			{
@@ -1758,7 +1758,7 @@ BOOL LoadFullConsoleData(HANDLE hOutput, WORD max_height, CESERVER_REQ** out)
 		SMALL_RECT ReadRect = {0, 0, lsbi.dwSize.X-1, lsbi.dwSize.Y-1};
 
 		// #PTY Use proper server implementation
-		lbRc = MyReadConsoleOutput(hOutput, pData->Data, BufSize, ReadRect);
+		lbRc = WorkerServer::Instance().MyReadConsoleOutput(hOutput, pData->Data, BufSize, ReadRect);
 
 		if (lbRc)
 		{
@@ -1791,7 +1791,7 @@ BOOL LoadConsoleMapData(CESERVER_REQ** out)
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {{0,0}};
 	CESERVER_CONSAVE_MAPHDR* pMapHdr = NULL;
 	CESERVER_CONSAVE_MAP* pMapData = NULL;
-	if (!CmdOutputOpenMap(lsbi, pMapHdr, pMapData))
+	if (!WorkerServer::Instance().CmdOutputOpenMap(lsbi, pMapHdr, pMapData))
 		return FALSE;
 	// #AltBuffer try to detect max used row
 	const size_t max_cells = std::min<DWORD>(lsbi.dwSize.X * lsbi.dwSize.Y, pMapData->MaxCellCount);
@@ -1818,9 +1818,9 @@ BOOL LoadFullConsoleDataReal(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	// В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ!!!
 	// В итоге, буфер вывода telnet'а схлопывается!
-	if (isReopenHandleAllowed())
+	if (WorkerServer::Instance().IsReopenHandleAllowed())
 	{
-		ConOutCloseHandle();
+		WorkerServer::Instance().ConOutCloseHandle();
 	}
 
 	return LoadFullConsoleData(ghConOut, (in.DataSize() >= sizeof(DWORD)) ? LOWORD(in.dwData[0]) : 0, out);
@@ -2122,15 +2122,15 @@ BOOL cmd_AltBuffer(CESERVER_REQ& in, CESERVER_REQ** out)
 		};
 
 		// In Windows 7 we have to use legacy mode
-		if (!isReopenHandleAllowed()
+		if (!WorkerServer::Instance().IsReopenHandleAllowed()
 			|| !(in.AltBuf.AbFlags & abf_Connector))
 		{
 			if (in.AltBuf.AbFlags & abf_SaveContents)
-				CmdOutputStore();
+				WorkerServer::Instance().CmdOutputStore();
 			if (in.AltBuf.AbFlags & (abf_BufferOn|abf_BufferOff))
 				lbRc = do_resize_buffer();
 			if (in.AltBuf.AbFlags & abf_RestoreContents)
-				CmdOutputRestore(true/*Simple*/);
+				WorkerServer::Instance().CmdOutputRestore(true/*Simple*/);
 		}
 		// Switch console buffer handles
 		else if (in.AltBuf.AbFlags & (abf_SaveContents|abf_RestoreContents))
@@ -2257,7 +2257,7 @@ BOOL cmd_UpdConMapHdr(CESERVER_REQ& in, CESERVER_REQ** out)
 
 			if (gpSrv->pConsoleMap)
 			{
-				FixConsoleMappingHdr(&in.ConInfo);
+				WorkerServer::Instance().FixConsoleMappingHdr(&in.ConInfo);
 				gpSrv->pConsoleMap->SetFrom(&in.ConInfo);
 			}
 
@@ -2656,7 +2656,7 @@ BOOL cmd_StartXTerm(CESERVER_REQ& in, CESERVER_REQ** out)
 		if (in.DataSize() >= 4*sizeof(DWORD))
 		{
 			gpSrv->pConsole->hdr.stdConBlockingPID = in.dwData[3];
-			UpdateConsoleMapHeader(L"CECMD_STARTXTERM");
+			WorkerServer::Instance().UpdateConsoleMapHeader(L"CECMD_STARTXTERM");
 		}
 	}
 
