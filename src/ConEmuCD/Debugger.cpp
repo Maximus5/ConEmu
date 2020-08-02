@@ -96,13 +96,13 @@ void UpdateDebuggerTitle()
 	SetTitle(szTitle);
 }
 
-int ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= NULL*/)
+DumpProcessType ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= NULL*/)
 {
 	if (gpSrv->DbgInfo.bAutoDump)
 		return 2; // Automatic MINI-dumps
 
-	if (gpSrv->DbgInfo.nDebugDumpProcess == 2 || gpSrv->DbgInfo.nDebugDumpProcess == 3)
-		return gpSrv->DbgInfo.nDebugDumpProcess;
+	if (gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::MiniDump || gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::FullDump)
+		return gpSrv->DbgInfo.debugDumpProcess;
 
 	// ANSI is used because of asConfirmText created as ANSI
 	char szTitleA[64];
@@ -113,11 +113,11 @@ int ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= NULL*/)
 	switch (nBtn)
 	{
 	case IDYES:
-		return 2; // mini dump
+		return DumpProcessType::MiniDump;
 	case IDNO:
-		return 3; // full dump
+		return DumpProcessType::FullDump;
 	default:
-		return 0;
+		return DumpProcessType::None;
 	}
 }
 
@@ -180,16 +180,16 @@ int RunDebugger()
 	_ASSERTE(((gpSrv->hRootProcess!=NULL) || (gpSrv->DbgInfo.pszDebuggingCmdLine!=NULL)) && "Process handle must be opened");
 
 	// Если просили сделать дамп нескольких процессов - нужно сразу уточнить его тип
-	if (gpSrv->DbgInfo.bDebugMultiProcess && (gpSrv->DbgInfo.nDebugDumpProcess == 1))
+	if (gpSrv->DbgInfo.bDebugMultiProcess && (gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::AskUser))
 	{
 		// 2 - minidump, 3 - fulldump
-		int nConfirmDumpType = ConfirmDumpType(gpSrv->dwRootProcess, NULL);
-		if (nConfirmDumpType < 2)
+		const auto nConfirmDumpType = ConfirmDumpType(gpSrv->dwRootProcess, nullptr);
+		if (nConfirmDumpType < DumpProcessType::MiniDump)
 		{
 			// Отмена
 			return CERR_CANTSTARTDEBUGGER;
 		}
-		gpSrv->DbgInfo.nDebugDumpProcess = nConfirmDumpType;
+		gpSrv->DbgInfo.debugDumpProcess = nConfirmDumpType;
 	}
 
 	// gpSrv->DbgInfo.bDebuggerActive must be set in DebugThread
@@ -414,7 +414,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	gpSrv->DbgInfo.bDebuggerActive = TRUE;
 
 	// If dump was requested
-	if (gpSrv->DbgInfo.nDebugDumpProcess)
+	if (gpSrv->DbgInfo.debugDumpProcess != DumpProcessType::None)
 	{
 		gpSrv->DbgInfo.bUserRequestDump = TRUE;
 		gpSrv->DbgInfo.bDebuggerRequestDump = TRUE;
@@ -572,9 +572,9 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 
 			szOtherDebugCmd.Attach(lstrmerge(L"\"", szExe, L"\" "
 				L"/DEBUGPID=", szOtherBitPids.ms_Val,
-				(gpSrv->DbgInfo.nDebugDumpProcess == 1) ? L" /DUMP" :
-				(gpSrv->DbgInfo.nDebugDumpProcess == 2) ? L" /MINIDUMP" :
-				(gpSrv->DbgInfo.nDebugDumpProcess == 3) ? L" /FULLDUMP" : L""));
+				(gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::AskUser) ? L" /DUMP" :
+				(gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::MiniDump) ? L" /MINIDUMP" :
+				(gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::FullDump) ? L" /FULLDUMP" : L""));
 
 			STARTUPINFO si = {sizeof(si)};
 			PROCESS_INFORMATION pi = {};
@@ -747,8 +747,8 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR asConfirmText /*= NULL*/, BOOL bTreeBreak /*= FALSE*/)
 {
 	// 2 - minidump, 3 - fulldump
-	int nConfirmDumpType = ConfirmDumpType(dwProcessId, asConfirmText);
-	if (nConfirmDumpType < 2)
+	const auto nConfirmDumpType = ConfirmDumpType(dwProcessId, asConfirmText);
+	if (nConfirmDumpType < DumpProcessType::MiniDump)
 	{
 		// Отмена
 		return;
@@ -758,9 +758,9 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 
 	// Т.к. в режиме "ProcessTree" мы пишем пачку дампов - спрашивать тип дампа будем один раз.
 	if (IsDumpMulti() // several processes were attached
-		&& (gpSrv->DbgInfo.nDebugDumpProcess <= 1)) // 2 - minidump, 3 - fulldump
+		&& (gpSrv->DbgInfo.debugDumpProcess <= DumpProcessType::AskUser)) // 2 - minidump, 3 - fulldump
 	{
-		gpSrv->DbgInfo.nDebugDumpProcess = nConfirmDumpType;
+		gpSrv->DbgInfo.debugDumpProcess = nConfirmDumpType;
 	}
 
 	if (bTreeBreak)
@@ -944,7 +944,7 @@ void ProcessDebugEvent()
 				if (!bFirstExitThreadEvent && evt.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT)
 				{
 					bFirstExitThreadEvent = true;
-					if (gpSrv->DbgInfo.nDebugDumpProcess == 0)
+					if (gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::None)
 					{
 						_printf(CE_CONEMUC_NAME_A ": Press Ctrl+Break to create minidump of debugging process\n");
 					}
@@ -1212,7 +1212,7 @@ void ProcessDebugEvent()
 
 					if (evt.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
 					{
-						if (gpSrv->DbgInfo.nDebugDumpProcess || gpSrv->DbgInfo.bAutoDump)
+						if (gpSrv->DbgInfo.debugDumpProcess >= DumpProcessType::AskUser || gpSrv->DbgInfo.bAutoDump)
 							szConfirm[0] = 0;
 						else
 							lstrcpynA(szConfirm, szDbgText, countof(szConfirm));
@@ -1346,6 +1346,16 @@ void GenerateMiniDumpFromCtrlBreak()
 	{
 		_printf(CE_CONEMUC_NAME_A ": DebugBreakProcess not found in kernel32.dll\n");
 	}
+}
+
+DebuggerInfo::DebuggerInfo()
+{
+}
+
+DebuggerInfo::~DebuggerInfo()
+{
+	SafeCloseHandle(hDebugReady);
+	SafeCloseHandle(hDebugThread);
 }
 
 void GenerateTreeDebugBreak(DWORD nExcludePID)

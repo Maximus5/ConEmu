@@ -119,10 +119,6 @@ struct SrvInfo
 	void InitFields();
 	void FinalizeFields();
 
-	HANDLE hRootProcess, hRootThread;
-	DWORD dwRootProcess, dwRootThread; DWORD dwRootStartTime;
-	DWORD dwParentFarPID;
-
 	// Full information about our console processes
 	ConProcess* processes;
 
@@ -160,7 +156,6 @@ struct SrvInfo
 	HANDLE hOutWaitForSetConBufThread; // signal that RefreshThread may continue
 
 	HWND   hRootProcessGui; // Если работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
-	DebuggerInfo DbgInfo;
 	DWORD  dwGuiAID; // ConEmu internal ID of started CRealConsole
 	HWND   hGuiWnd; // передается через аргумент "/GHWND=%08X", чтобы окно не искать
 	BOOL   bRequestNewGuiWnd;
@@ -276,14 +271,14 @@ class WorkerServer : public WorkerBase
 {
 public:
 	virtual ~WorkerServer();
-	
+
 	WorkerServer();
 
 	WorkerServer(const WorkerServer&) = delete;
 	WorkerServer(WorkerServer&&) = delete;
 	WorkerServer& operator=(const WorkerServer&) = delete;
 	WorkerServer& operator=(WorkerServer&&) = delete;
-	
+
 	int Init() override;
 	void Done(int exitCode, bool reportShutdown = false) override;
 

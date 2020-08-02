@@ -28,6 +28,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include <memory>
+
+struct DebuggerInfo;
+enum class DumpProcessType;
+
 class WorkerBase
 {
 public:
@@ -41,13 +46,28 @@ public:
 	WorkerBase& operator=(WorkerBase&&) = delete;
 
 	virtual int Init() = 0;
-	virtual void Done(int exitCode, bool reportShutdown = false) = 0;
+	virtual void Done(int exitCode, bool reportShutdown = false);
 
 	virtual bool IsCmdK() const;
 	virtual void SetCmdK(bool useCmdK);
 
+	void SetRootProcessPid(DWORD pid);
+
+	bool IsDebuggerActive() const;
+	bool IsDebugProcess() const;
+	bool IsDebugProcessTree() const;
+	int SetDebuggingPid(const wchar_t* pidList);
+	int SetDebuggingExe(const wchar_t* commandLine, bool debugTree);
+	void SetDebugDumpType(DumpProcessType dumpType);
+	void SetDebugAutoDump(const wchar_t* interval);
+	DebuggerInfo& DbgInfo();
+
 protected:
-	// Fields
+	HANDLE hRootProcess = nullptr, hRootThread = nullptr;
+	DWORD dwRootProcess = 0, dwRootThread = 0, dwRootStartTime = 0;
+	DWORD dwParentFarPID = 0;
+
+	std::unique_ptr<DebuggerInfo> dbgInfo;
 };
 
 extern WorkerBase* gpWorker;

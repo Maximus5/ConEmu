@@ -1452,10 +1452,18 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	}
 
 	if (gbInShutdown)
+	{
 		goto wrap;
+	}
 
-	// По идее, при вызове дебаггера ParseCommandLine сразу должна послать на выход.
-	_ASSERTE(!(gpSrv->DbgInfo.bDebuggerActive || gpSrv->DbgInfo.bDebugProcess || gpSrv->DbgInfo.bDebugProcessTree));
+	if (!gpWorker)
+	{
+		_ASSERTE(gpWorker != nullptr);
+		goto wrap;
+	}
+
+	// After debugger call the flow after ParseCommandLine is expected to be sent to exit
+	_ASSERTE(!(gpWorker->IsDebuggerActive() || gpWorker->IsDebugProcess() || gpWorker->IsDebugProcessTree()));
 
 	// Force change current handles to STD ConIn/ConOut? "-STD" switch in the command line
 	if (StdCon::gbReopenConsole)
@@ -1935,7 +1943,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		gpSrv->processes->CheckProcessCount(TRUE);
 
 		#ifdef _DEBUG
-		if (gpSrv->processes->nProcessCount && !gpSrv->DbgInfo.bDebuggerActive)
+		if (gpSrv->processes->nProcessCount && !gpWorker->IsDebuggerActive())
 		{
 			_ASSERTE(gpSrv->processes->pnProcesses[gpSrv->processes->nProcessCount-1]!=0);
 		}
@@ -1976,7 +1984,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 				+ (((gpSrv->processes->nProcessCount==1) && gbUseDosBox && (WaitForSingleObject(ghDosBoxProcess,0)==WAIT_TIMEOUT)) ? 1 : 0);
 
 			// И процессов в консоли все еще нет
-			if (iRc == 1 && !gpSrv->DbgInfo.bDebuggerActive)
+			if (iRc == 1 && !gpWorker->IsDebuggerActive())
 			{
 				if (!gbInShutdown)
 				{
@@ -2061,7 +2069,7 @@ wait:
 		// There is at least one process in console. Wait until there would be nobody except us.
 		nWait = WAIT_TIMEOUT; nWaitExitEvent = -2;
 
-		_ASSERTE(!gpSrv->DbgInfo.bDebuggerActive);
+		_ASSERTE(!gpWorker->IsDebuggerActive());
 
 		#ifdef _DEBUG
 		while (nWait == WAIT_TIMEOUT)
@@ -2333,7 +2341,7 @@ wrap:
 			int nCount = gpSrv->processes->nProcessCount;
 
 			if ((gpSrv->ConnectInfo.bConnected && (nCount > 1))
-				|| gpSrv->DbgInfo.bDebuggerActive)
+				|| gpWorker->IsDebuggerActive())
 			{
 				// OK, new root found, wait for it
 				goto wait;
@@ -2366,10 +2374,7 @@ wrap:
 	if (gnRunMode == RunMode::Server)
 	{
 		gpWorker->Done(iRc, true);
-		
 		//MessageBox(0,L"Server done...",L"ConEmuC",0);
-		SafeCloseHandle(gpSrv->DbgInfo.hDebugReady);
-		SafeCloseHandle(gpSrv->DbgInfo.hDebugThread);
 	}
 	else if (gnRunMode == RunMode::Comspec)
 	{
@@ -2453,7 +2458,11 @@ wrap:
 		free(gpSrv);
 		gpSrv = NULL;
 	}
+
 AltServerDone:
+
+	SafeDelete(gpWorker);
+	
 	ShutdownSrvStep(L"Finalizing done");
 	UNREFERENCED_PARAMETER(gpszCheck4NeedCmd);
 	UNREFERENCED_PARAMETER(nWaitDebugExit);
@@ -3856,122 +3865,41 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		}
 		else if (lstrcmpni(szArg, L"/DEBUGPID=", 10)==0)
 		{
-			//gnRunMode = RunMode::RM_SERVER; -- не будем ставить, RunMode::RM_UNDEFINED будет признаком того, что просто хотят дебаггер
-
-			gbNoCreateProcess = TRUE;
-			gpSrv->DbgInfo.bDebugProcess = TRUE;
-			gpSrv->DbgInfo.bDebugProcessTree = FALSE;
-
-			wchar_t* pszEnd = NULL;
-			gpSrv->dwRootProcess = wcstoul(szArg.Mid(10), &pszEnd, 10);
-
-			if (gpSrv->dwRootProcess == 0)
-			{
-				LogString(L"CERR_CARGUMENT: Debug of process was requested, but invalid PID specified");
-				_printf("Debug of process was requested, but invalid PID specified:\n");
-				_wprintf(GetCommandLineW());
-				_printf("\n");
-				_ASSERTE(FALSE);
-				return CERR_CARGUMENT;
-			}
-
-			// "Comma" is a mark that debug/dump was requested for a bunch of processes
-			if (pszEnd && (*pszEnd == L','))
-			{
-				gpSrv->DbgInfo.bDebugMultiProcess = TRUE;
-				gpSrv->DbgInfo.pDebugAttachProcesses = new MArray<DWORD>;
-				while (pszEnd && (*pszEnd == L',') && *(pszEnd+1))
-				{
-					DWORD nPID = wcstoul(pszEnd+1, &pszEnd, 10);
-					if (nPID != 0)
-						gpSrv->DbgInfo.pDebugAttachProcesses->push_back(nPID);
-				}
-			}
+			//gnRunMode = RunMode::RM_SERVER; -- don't set, the RunMode::RM_UNDEFINED is flag for debugger only
+			const auto dbgRc = gpWorker->SetDebuggingPid(szArg.Mid(10));
+			if (dbgRc != 0)
+				return dbgRc;
 		}
 		else if (lstrcmpi(szArg, L"/DEBUGEXE")==0 || lstrcmpi(szArg, L"/DEBUGTREE")==0)
 		{
-			//gnRunMode = RunMode::RM_SERVER; -- не будем ставить, RunMode::RM_UNDEFINED будет признаком того, что просто хотят дебаггер
-
-			_ASSERTE(gpSrv->DbgInfo.bDebugProcess==FALSE);
-
-			gbNoCreateProcess = TRUE;
-			gpSrv->DbgInfo.bDebugProcess = TRUE;
-			gpSrv->DbgInfo.bDebugProcessTree = (lstrcmpi(szArg, L"/DEBUGTREE")==0);
-
-			wchar_t* pszLine = lstrdup(GetCommandLineW());
-			if (!pszLine || !*pszLine)
-			{
-				LogString(L"CERR_CARGUMENT: Debug of process was requested, but GetCommandLineW failed");
-				_printf("Debug of process was requested, but GetCommandLineW failed\n");
-				_ASSERTE(FALSE);
-				return CERR_CARGUMENT;
-			}
-
-			LPWSTR pszDebugCmd = wcsstr(pszLine, szArg);
-
-			if (pszDebugCmd)
-			{
-				pszDebugCmd = (LPWSTR)SkipNonPrintable(pszDebugCmd + lstrlen(szArg));
-			}
-
-			if (!pszDebugCmd || !*pszDebugCmd)
-			{
-				LogString(L"CERR_CARGUMENT: Debug of process was requested, but command was not found");
-				_printf("Debug of process was requested, but command was not found\n");
-				_ASSERTE(FALSE);
-				return CERR_CARGUMENT;
-			}
-
-			gpSrv->DbgInfo.pszDebuggingCmdLine = pszDebugCmd;
-
+			//gnRunMode = RunMode::RM_SERVER; -- don't set, the RunMode::RM_UNDEFINED is flag for debugger only
+			const bool debugTree = (lstrcmpi(szArg, L"/DEBUGTREE") == 0);
+			const auto dbgRc = gpWorker->SetDebuggingExe(lsCmdLine, debugTree);
+			if (dbgRc != 0)
+				return dbgRc;
+			// STOP processing rest of command line, it goes to debugger
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/DUMP")==0)
 		{
-			gpSrv->DbgInfo.nDebugDumpProcess = 1;
+			gpWorker->SetDebugDumpType(DumpProcessType::AskUser);
 		}
 		else if (lstrcmpi(szArg, L"/MINIDUMP")==0 || lstrcmpi(szArg, L"/MINI")==0)
 		{
-			gpSrv->DbgInfo.nDebugDumpProcess = 2;
+			gpWorker->SetDebugDumpType(DumpProcessType::MiniDump);
 		}
 		else if (lstrcmpi(szArg, L"/FULLDUMP")==0 || lstrcmpi(szArg, L"/FULL")==0)
 		{
-			gpSrv->DbgInfo.nDebugDumpProcess = 3;
+			gpWorker->SetDebugDumpType(DumpProcessType::FullDump);
 		}
 		else if (lstrcmpi(szArg, L"/AUTOMINI")==0)
 		{
 			//_ASSERTE(FALSE && "Continue to /AUTOMINI");
-			gpSrv->DbgInfo.nDebugDumpProcess = 0;
-			gpSrv->DbgInfo.bAutoDump = TRUE;
-			gpSrv->DbgInfo.nAutoInterval = 1000;
+			const wchar_t* interval = nullptr;
 			if (lsCmdLine && *lsCmdLine && isDigit(lsCmdLine[0])
-				&& (lsCmdLine = NextArg(lsCmdLine, szArg, &pszArgStarts)))
-			{
-				wchar_t* pszEnd;
-				DWORD nVal = wcstol(szArg, &pszEnd, 10);
-				if (nVal)
-				{
-					if (pszEnd && *pszEnd)
-					{
-						if (lstrcmpni(pszEnd, L"ms", 2) == 0)
-						{
-							// Already milliseconds
-							pszEnd += 2;
-						}
-						else if (lstrcmpni(pszEnd, L"s", 1) == 0)
-						{
-							nVal *= 60; // seconds
-							pszEnd++;
-						}
-						else if (lstrcmpni(pszEnd, L"m", 2) == 0)
-						{
-							nVal *= 60*60; // minutes
-							pszEnd++;
-						}
-					}
-					gpSrv->DbgInfo.nAutoInterval = nVal;
-				}
-			}
+				&& ((lsCmdLine = NextArg(lsCmdLine, szArg, &pszArgStarts))))
+				interval = szArg.ms_Val;
+			gpWorker->SetDebugAutoDump(interval);
 		}
 		else if (lstrcmpi(szArg, L"/PROFILECD")==0)
 		{
@@ -4184,7 +4112,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 	// Switches ‘/DEBUGPID=PID1[,PID2[...]]’ to debug already running process
 	// or ‘/DEBUGEXE <your command line>’ or ‘/DEBUGTREE <your command line>’
 	// to start new process and debug it (and its children if ‘/DEBUGTREE’)
-	if (gpSrv->DbgInfo.bDebugProcess)
+	if (gpWorker->IsDebugProcess())
 	{
 		_ASSERTE(gnRunMode == RunMode::Undefined);
 		// Run debugger thread and wait for its completion
@@ -4969,7 +4897,7 @@ void SendStarted()
 		LPCWSTR pszTemp = gpszRunCmd;
 		CmdArg lsRoot;
 
-		if (gnRunMode == RunMode::Server && gpSrv->DbgInfo.bDebuggerActive)
+		if (gnRunMode == RunMode::Server && gpWorker->IsDebuggerActive())
 		{
 			// "Отладчик"
 			gnImageSubsystem = 0x101;
@@ -5214,7 +5142,7 @@ void SendStarted()
 			if ((gnRunMode == RunMode::Server) || (gnRunMode == RunMode::AltServer))
 			{
 				// Если режим отладчика - принудительно включить прокрутку
-				if (gpSrv->DbgInfo.bDebuggerActive && !gnBufferHeight)
+				if (gpWorker->IsDebuggerActive() && !gnBufferHeight)
 				{
 					_ASSERTE(gnRunMode != RunMode::AltServer);
 					gnBufferHeight = LONGOUTPUTHEIGHT_MAX;
@@ -7062,7 +6990,7 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 			gbStopExitWaitForKey = TRUE;
 
 		// Our debugger is running?
-		if (gpSrv->DbgInfo.bDebuggerActive)
+		if (gpWorker->IsDebuggerActive())
 		{
 			// pfnDebugActiveProcessStop is useless, because
 			// 1. pfnDebugSetProcessKillOnExit was called already
@@ -7101,7 +7029,7 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 			PRINT_COMSPEC(L"Ctrl+Break received, server will be terminated\n", 0);
 			gbInShutdown = TRUE;
 		}
-		else if (gpSrv->DbgInfo.bDebugProcess)
+		else if (gpWorker->IsDebugProcess())
 		{
 			DWORD nWait = WaitForSingleObject(gpSrv->hRootProcess, 0);
 			#ifdef _DEBUG

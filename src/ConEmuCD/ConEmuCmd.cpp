@@ -357,8 +357,8 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 		pszPreAliases = nullptr;
 	}
 
-	//SafeCloseHandle(ghCtrlCEvent);
-	//SafeCloseHandle(ghCtrlBreakEvent);
+	// Final steps
+	WorkerBase::Done(exitCode, reportShutdown);
 }
 
 int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)

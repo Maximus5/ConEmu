@@ -26,9 +26,21 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#include "../common/defines.h"
+#include "../common/MAssert.h"
 #include "WorkerBase.h"
 
+
+#include "ConsoleMain.h"
+#include "Debugger.h"
+#include "ExitCodes.h"
+
 WorkerBase* gpWorker = nullptr;
+
+void WorkerBase::Done(const int /*exitCode*/, const bool /*reportShutdown*/)
+{
+	dbgInfo.reset();
+}
 
 bool WorkerBase::IsCmdK() const
 {
@@ -37,4 +49,149 @@ bool WorkerBase::IsCmdK() const
 
 void WorkerBase::SetCmdK(bool useCmdK)
 {
+}
+
+void WorkerBase::SetRootProcessPid(DWORD pid)
+{
+	_ASSERTE(pid != 0);
+	dwRootProcess = pid;
+}
+
+bool WorkerBase::IsDebuggerActive() const
+{
+	if (!dbgInfo)
+		return false;
+	return dbgInfo->bDebuggerActive;
+}
+
+bool WorkerBase::IsDebugProcess() const
+{
+	if (!dbgInfo)
+		return false;
+	return dbgInfo->bDebugProcess;
+}
+
+bool WorkerBase::IsDebugProcessTree() const
+{
+	if (!dbgInfo)
+		return false;
+	return dbgInfo->bDebugProcessTree;
+}
+
+int WorkerBase::SetDebuggingPid(const wchar_t* const pidList)
+{
+	if (!dbgInfo)
+		dbgInfo.reset(new DebuggerInfo);
+
+	gbNoCreateProcess = TRUE;
+	dbgInfo->bDebugProcess = TRUE;
+	dbgInfo->bDebugProcessTree = FALSE;
+
+	wchar_t* pszEnd = nullptr;
+	SetRootProcessPid(wcstoul(pidList, &pszEnd, 10));
+
+	if (dwRootProcess == 0)
+	{
+		LogString(L"CERR_CARGUMENT: Debug of process was requested, but invalid PID specified");
+		_printf("Debug of process was requested, but invalid PID specified:\n");
+		_wprintf(GetCommandLineW());
+		_printf("\n");
+		_ASSERTE(FALSE && "Invalid PID specified for debugging");
+		return CERR_CARGUMENT;
+	}
+
+	// "Comma" is a mark that debug/dump was requested for a bunch of processes
+	if (pszEnd && (*pszEnd == L','))
+	{
+		dbgInfo->bDebugMultiProcess = TRUE;
+		dbgInfo->pDebugAttachProcesses = new MArray<DWORD>;
+		while (pszEnd && (*pszEnd == L',') && *(pszEnd + 1))
+		{
+			DWORD nPID = wcstoul(pszEnd + 1, &pszEnd, 10);
+			if (nPID != 0)
+			{
+				dbgInfo->pDebugAttachProcesses->push_back(nPID);
+			}
+		}
+	}
+
+	return 0;
+}
+
+int WorkerBase::SetDebuggingExe(const wchar_t* const commandLine, const bool debugTree)
+{
+	_ASSERTE(gpWorker->IsDebugProcess() == false); // should not be set yet
+
+	if (!dbgInfo)
+		dbgInfo.reset(new DebuggerInfo);
+
+	gbNoCreateProcess = TRUE;
+	dbgInfo->bDebugProcess = true;
+	dbgInfo->bDebugProcessTree = debugTree;
+
+	dbgInfo->szDebuggingCmdLine = SkipNonPrintable(commandLine);
+
+	if (dbgInfo->szDebuggingCmdLine.IsEmpty())
+	{
+		LogString(L"CERR_CARGUMENT: Debug of process was requested, but command was not found");
+		_printf("Debug of process was requested, but command was not found\n");
+		_ASSERTE(FALSE && "Invalid command line for debugger was passed");
+		return CERR_CARGUMENT;
+	}
+
+	return 0;
+}
+
+void WorkerBase::SetDebugDumpType(DumpProcessType dumpType)
+{
+	if (!dbgInfo)
+		dbgInfo.reset(new DebuggerInfo);
+
+	dbgInfo->debugDumpProcess = dumpType;
+}
+
+void WorkerBase::SetDebugAutoDump(const wchar_t* interval)
+{
+	if (!dbgInfo)
+		dbgInfo.reset(new DebuggerInfo);
+
+	dbgInfo->debugDumpProcess = DumpProcessType::None;
+	dbgInfo->bAutoDump = true;
+	dbgInfo->nAutoInterval = 1000;
+
+	if (interval && *interval && isDigit(interval[0]))
+	{
+		wchar_t* pszEnd = nullptr;
+		DWORD nVal = wcstol(interval, &pszEnd, 10);
+		if (nVal)
+		{
+			if (pszEnd && *pszEnd)
+			{
+				if (lstrcmpni(pszEnd, L"ms", 2) == 0)
+				{
+					// Already milliseconds
+				}
+				else if (lstrcmpni(pszEnd, L"s", 1) == 0)
+				{
+					nVal *= 60; // seconds
+				}
+				else if (lstrcmpni(pszEnd, L"m", 2) == 0)
+				{
+					nVal *= 60 * 60; // minutes
+				}
+			}
+			dbgInfo->nAutoInterval = nVal;
+		}
+	}
+}
+
+DebuggerInfo& WorkerBase::DbgInfo()
+{
+	if (!dbgInfo)
+	{
+		_ASSERTE(FALSE && "dbgInfo should be set already");
+		dbgInfo.reset(new DebuggerInfo);
+	}
+
+	return *dbgInfo;
 }

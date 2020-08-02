@@ -699,7 +699,7 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 		nProcessCount = 1;
 	}
 
-	if (gpSrv->DbgInfo.bDebuggerActive)
+	if (gpWorker->IsDebuggerActive())
 	{
 		//if (gpSrv->hRootProcess) {
 		//	if (WaitForSingleObject(gpSrv->hRootProcess, 0) == WAIT_OBJECT_0) {

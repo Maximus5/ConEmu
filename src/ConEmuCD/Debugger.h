@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "../common/CEStr.h"
+#include "../common/MArray.h"
 #include "../common/MMap.h"
 
 void ProcessDebugEvent();
@@ -42,28 +44,44 @@ struct CEDebugProcessInfo
 	HANDLE hProcess;
 };
 
+enum class DumpProcessType
+{
+	None = 0,
+	AskUser = 1,
+	MiniDump = 2,
+	FullDump = 3,
+};
+
 struct DebuggerInfo
 {
-	LPWSTR pszDebuggingCmdLine;
-	BOOL   bDebuggerActive;
-	BOOL   bDebuggerRequestDump;
-	BOOL   bUserRequestDump;
-	HANDLE hDebugThread;
-	HANDLE hDebugReady;
-	DWORD  dwDebugThreadId;
+	DebuggerInfo();
+	~DebuggerInfo();
 
-	MMap<DWORD,CEDebugProcessInfo>* pDebugTreeProcesses /*= NULL*/;
-	MArray<DWORD>* pDebugAttachProcesses /*= NULL*/;
-	BOOL  bDebugProcess /*= FALSE*/;
-	BOOL  bDebugProcessTree /*= FALSE*/;
-	int   nDebugDumpProcess /*= 0*/; // 1 - ask user, 2 - minidump, 3 - fulldump
-	BOOL  bDebugMultiProcess; // Debugger was asked for multiple processes simultaneously
-	int   nProcessCount;
-	int   nWaitTreeBreaks;
-	BOOL  bAutoDump; // For creating series of mini-dumps, useful for "snapshotting" running application
-	DWORD nAutoInterval;
-	LONG  nDumpsCounter;
+	DebuggerInfo(const DebuggerInfo&) = delete;
+	DebuggerInfo(DebuggerInfo&&) = delete;
+	DebuggerInfo& operator=(const DebuggerInfo&) = delete;
+	DebuggerInfo& operator=(DebuggerInfo&&) = delete;
 
-	HMODULE hDbghelp;
-	FARPROC MiniDumpWriteDump_f;
+	CEStr  szDebuggingCmdLine;
+	bool   bDebuggerActive = false;
+	bool   bDebuggerRequestDump = false;
+	bool   bUserRequestDump = false;
+	HANDLE hDebugThread = nullptr;
+	HANDLE hDebugReady = nullptr;
+	DWORD  dwDebugThreadId = 0;
+
+	MMap<DWORD,CEDebugProcessInfo>* pDebugTreeProcesses = nullptr;
+	MArray<DWORD>* pDebugAttachProcesses = nullptr;
+	bool  bDebugProcess = false;
+	bool  bDebugProcessTree = false;
+	DumpProcessType debugDumpProcess = DumpProcessType::None;
+	bool  bDebugMultiProcess = false; // Debugger was asked for multiple processes simultaneously
+	int   nProcessCount = 0;
+	int   nWaitTreeBreaks = 0;
+	bool  bAutoDump = false; // For creating series of mini-dumps, useful for "snapshotting" running application
+	DWORD nAutoInterval = 0; // milliseconds
+	LONG  nDumpsCounter = 0;
+
+	HMODULE hDbghelp = nullptr;
+	FARPROC MiniDumpWriteDump_f = nullptr;
 };

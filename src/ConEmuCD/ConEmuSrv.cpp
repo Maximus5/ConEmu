@@ -1439,7 +1439,7 @@ wrap:
 }
 
 // Завершить все нити и закрыть дескрипторы
-void WorkerServer::Done(int aiRc, bool abReportShutdown /*= false*/)
+void WorkerServer::Done(const int exitCode, const bool reportShutdown /*= false*/)
 {
 	LogFunction(L"ServerDone");
 
@@ -1624,6 +1624,9 @@ void WorkerServer::Done(int aiRc, bool abReportShutdown /*= false*/)
 
 	SafeCloseHandle(gpSrv->hReqSizeChanged);
 	SafeDelete(gpSrv->pReqSizeSection);
+
+	// Final steps
+	WorkerBase::Done(exitCode, reportShutdown);
 }
 
 // Консоль любит глючить, при попытках запроса более определенного количества ячеек.

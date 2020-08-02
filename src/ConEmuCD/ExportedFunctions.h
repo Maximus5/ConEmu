@@ -34,7 +34,7 @@ enum class ConsoleMainMode : int
 {
 	Server = 0,
 	AltServer = 1,
-	Reserved = 2,
+	Comspec = 2,
 	GuiMacro = 3,  // could be used by integrators
 };
 
