@@ -98,6 +98,62 @@ CESERVER_REQ* ExecuteHkCmd(DWORD dwHkPID, CESERVER_REQ* pIn, HWND hOwner, BOOL b
 CESERVER_REQ* ExecuteCmd(const wchar_t* szGuiPipeName, CESERVER_REQ* pIn, DWORD nWaitPipe, HWND hOwner, BOOL bAsyncNoResult = FALSE, DWORD nServerPID = 0, BOOL bIgnoreAbsence = FALSE);
 void ExecuteFreeResult(CESERVER_REQ* &pOut);
 
+
+class ConEmuRpc
+{
+public:
+	ConEmuRpc();
+	~ConEmuRpc();
+
+	ConEmuRpc(const ConEmuRpc&) = delete;
+	ConEmuRpc(ConEmuRpc&&) = delete;
+	ConEmuRpc& operator=(const ConEmuRpc&) = delete;
+	ConEmuRpc& operator=(ConEmuRpc&&) = delete;
+
+	ConEmuRpc& SetStopHandle(HANDLE ahStop);
+	ConEmuRpc& SetOwner(HWND ahOwner);
+	ConEmuRpc& SetModuleName(const wchar_t* asModule);
+	ConEmuRpc& SetAsyncNoResult(bool abAsyncNoResult = true);
+	ConEmuRpc& SetOverlapped(bool abOverlapped = true);
+	ConEmuRpc& SetIgnoreAbsence(bool abIgnoreAbsence = true);
+	ConEmuRpc& SetTimeout(DWORD anTimeoutMs);
+
+	CESERVER_REQ* Execute(CESERVER_REQ* pIn) const;
+	CESERVER_REQ* Execute(CECMD nCmd, const void* data, size_t cbDataSize) const;
+
+	LPCWSTR GetErrorText() const;
+	
+protected:
+	DWORD nPreLastError = 0;
+	
+	DWORD nServerPID = 0;
+	wchar_t szPipeName[MAX_PATH];
+	mutable wchar_t szError[MAX_PATH * 2];
+
+	HANDLE hStop = nullptr;
+	HWND hOwner = nullptr;
+	const wchar_t* szModule = nullptr;
+	bool bAsyncNoResult = false;
+	bool bOverlapped = false;
+	bool bIgnoreAbsence = false;
+	DWORD nTimeoutMs = 1000;
+};
+
+class ConEmuGuiRpc : public ConEmuRpc
+{
+public:
+	ConEmuGuiRpc(HWND ahConWnd);
+	~ConEmuGuiRpc();
+
+	ConEmuGuiRpc(const ConEmuGuiRpc&) = delete;
+	ConEmuGuiRpc(ConEmuGuiRpc&&) = delete;
+	ConEmuGuiRpc& operator=(const ConEmuGuiRpc&) = delete;
+	ConEmuGuiRpc& operator=(ConEmuGuiRpc&&) = delete;
+
+protected:
+	const HWND hConWnd = nullptr;
+};
+
 bool AllocateSendCurrentDirectory(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, LPCWSTR asDirectory, LPCWSTR asPassiveDirectory = NULL);
 void SendCurrentDirectory(HWND hConWnd, LPCWSTR asDirectory, LPCWSTR asPassiveDirectory = NULL);
 

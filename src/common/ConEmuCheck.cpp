@@ -1012,6 +1012,138 @@ void ExecuteFreeResult(CESERVER_REQ* &pOut)
 	free(p);
 }
 
+ConEmuRpc::ConEmuRpc()
+{
+	nPreLastError = GetLastError();
+	szPipeName[0] = 0;
+	szError[0] = 0;
+}
+
+ConEmuRpc::~ConEmuRpc()
+{
+	// Don't harm active process with possible pipe errors
+	SetLastError(nPreLastError);
+}
+
+ConEmuRpc& ConEmuRpc::SetStopHandle(HANDLE ahStop)
+{
+	this->hStop = ahStop;
+	return *this;
+}
+
+ConEmuRpc& ConEmuRpc::SetOwner(HWND ahOwner)
+{
+	this->hOwner = ahOwner;
+	return *this;
+}
+
+ConEmuRpc& ConEmuRpc::SetModuleName(const wchar_t* asModule)
+{
+	this->szModule = asModule;
+	return *this;
+}
+
+ConEmuRpc& ConEmuRpc::SetAsyncNoResult(const bool abAsyncNoResult)
+{
+	this->bAsyncNoResult = abAsyncNoResult;
+	return *this;
+}
+
+ConEmuRpc& ConEmuRpc::SetOverlapped(const bool abOverlapped)
+{
+	this->bOverlapped = abOverlapped;
+	return *this;
+}
+
+ConEmuRpc& ConEmuRpc::SetIgnoreAbsence(const bool abIgnoreAbsence)
+{
+	this->bIgnoreAbsence = abIgnoreAbsence;
+	return *this;
+}
+
+ConEmuRpc& ConEmuRpc::SetTimeout(const DWORD anTimeoutMs)
+{
+	this->nTimeoutMs = anTimeoutMs;
+	return *this;
+}
+
+CESERVER_REQ* ConEmuRpc::Execute(CESERVER_REQ* pIn) const
+{
+	if (szPipeName[0] == L'\0')
+	{
+		_ASSERTE(szPipeName[0] != L'\0');
+		return nullptr;
+	}
+	if (!pIn)
+	{
+		_ASSERTE(pIn != NULL);
+		return nullptr;
+	}
+	
+	#ifdef _DEBUG
+	const DWORD nStartTick = GetTickCount();
+	#endif
+
+	CESERVER_REQ* lpRet = ExecuteCmd(szPipeName, pIn, nTimeoutMs, hOwner, bAsyncNoResult, nServerPID, bIgnoreAbsence);
+
+	#ifdef _DEBUG
+	const DWORD nEndTick = GetTickCount();
+	const DWORD nDelta = nEndTick - nStartTick;
+	const DWORD nWarnExecutionTime = (pIn->hdr.nCmd == CECMD_CMDSTARTSTOP) ? EXECUTE_CMD_WARN_TIMEOUT2 : EXECUTE_CMD_WARN_TIMEOUT;
+	if (nDelta >= EXECUTE_CMD_WARN_TIMEOUT)
+	{
+		if (!IsDebuggerPresent())
+		{
+			if (lpRet)
+			{
+				_ASSERTE(nDelta <= nWarnExecutionTime || lpRet->hdr.IsDebugging);
+			}
+			else
+			{
+				_ASSERTE(nDelta <= EXECUTE_CMD_TIMEOUT_SRV_ABSENT || bIgnoreAbsence);
+			}
+		}
+	}
+	#endif
+
+	return lpRet;
+}
+
+CESERVER_REQ* ConEmuRpc::Execute(const CECMD nCmd, const void* const data, const size_t cbDataSize) const
+{
+	CESERVER_REQ* pOut = nullptr;
+	CESERVER_REQ* pIn = ExecuteNewCmd(nCmd, sizeof(CESERVER_REQ_HDR) + cbDataSize);
+
+	if (pIn)
+	{
+		if (cbDataSize)
+		{
+			_ASSERTEX(data != NULL);
+			memmove_s(pIn->Data, cbDataSize, data, cbDataSize);
+		}
+
+		pOut = this->Execute(pIn);
+
+		ExecuteFreeResult(pIn);
+	}
+
+	return pOut;
+}
+
+LPCWSTR ConEmuRpc::GetErrorText() const
+{
+	return this->szError;
+}
+
+ConEmuGuiRpc::ConEmuGuiRpc(HWND ahConWnd)
+	: ConEmuRpc(), hConWnd(ahConWnd)
+{
+	msprintf(szPipeName, countof(szPipeName), CEGUIPIPENAME, L".", LODWORD(hConWnd));
+}
+
+ConEmuGuiRpc::~ConEmuGuiRpc()
+= default;
+
 bool AllocateSendCurrentDirectory(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, LPCWSTR asDirectory, LPCWSTR asPassiveDirectory /*= NULL*/)
 {
 	int iALen = asDirectory ? (lstrlen(asDirectory)+1) : 0;

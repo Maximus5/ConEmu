@@ -29,13 +29,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
-#include "Font.h"
 #include "../common/defines.h"
+#include "../common/CmdLine.h"
 #include "../common/MFileMapping.h"
 #include "../common/MModule.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../UnitTests/gtest.h"
 #include "../ConEmuCD/ExportedFunctions.h"
+#include <iostream>
 
 
 namespace
@@ -43,7 +44,7 @@ namespace
 MModule LoadConEmuCD()
 {
 	wchar_t szConEmuCD[MAX_PATH] = L"";
-	if (!GetModuleFileName(nullptr, szConEmuCD, std::size(szConEmuCD)))
+	if (!GetModuleFileName(nullptr, szConEmuCD, LODWORD(std::size(szConEmuCD))))
 		return {};
 	auto* slash = const_cast<wchar_t*>(PointToName(szConEmuCD));
 	if (!slash)
@@ -81,9 +82,11 @@ HWND GetRealConsoleWindow()
 		EXPECT_TRUE(ConEmuHk.GetProcAddress("GetRealConsoleWindow", getConsoleWindow));
 		if (getConsoleWindow)
 		{
+			std::wcerr << L"Calling GetRealConsoleWindow from " << ConEmuHk_DLL_3264 << std::endl;
 			return getConsoleWindow();
 		}
 	}
+	std::wcerr << L"Calling GetConsoleWindow from WinAPI" << std::endl;
 	return GetConsoleWindow();
 }
 
@@ -99,17 +102,20 @@ bool IsConEmu()
 
 }
 
-TEST(ConEmuCD,RunGuiMacro_DLL)
+TEST(ConEmuCD, RunGuiMacro_DLL)
 {
 	const auto ConEmuCD = LoadConEmuCD();
 	EXPECT_TRUE(ConEmuCD.IsLoaded());
 
 	const auto isConEmu = IsConEmu();
+	std::cerr << "Test started " << (isConEmu ? "inside" : "outside") << " of ConEmu" << std::endl;
 
 	ConsoleMain3_t consoleMain3 = nullptr;
 	EXPECT_TRUE(ConEmuCD.GetProcAddress(FN_CONEMUCD_CONSOLE_MAIN_3_NAME, consoleMain3));
 	if (!consoleMain3)
+	{
 		return; // nothing to check more
+	}
 
 	SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
 	wchar_t szResult[64] = L"";
@@ -117,12 +123,12 @@ TEST(ConEmuCD,RunGuiMacro_DLL)
 	const auto macroRc = consoleMain3(ConsoleMainMode::GuiMacro, L"-GuiMacro IsConEmu");
 	if (!isConEmu)
 	{
-		EXPECT_EQ(CERR_GUIMACRO_FAILED, macroRc);
+		EXPECT_EQ(CERR_GUIMACRO_FAILED, macroRc) << "isConEmu==false";
 	}
 	else
 	{
-		EXPECT_EQ(0, macroRc);
-		GetEnvironmentVariable(CEGUIMACRORETENVVAR, szResult, std::size(szResult));
-		EXPECT_STREQ(L"Yes", szResult);
+		EXPECT_EQ(0, macroRc) << "isConEmu==true";
+		GetEnvironmentVariable(CEGUIMACRORETENVVAR, szResult, LODWORD(std::size(szResult)));
+		EXPECT_STREQ(L"Yes", szResult) << "isConEmu==true";
 	}
 }

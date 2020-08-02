@@ -330,7 +330,7 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR*
 
 	LogString(L"DoGuiMacro: executing CECMD_GUIMACRO");
 
-	pOut = ExecuteGuiCmd(hCallWnd, pIn, ghConWnd);
+	pOut = ConEmuGuiRpc(hCallWnd).SetOwner(ghConWnd).SetIgnoreAbsence().Execute(pIn);
 
 	LogString(L"DoGuiMacro: CECMD_GUIMACRO finished");
 
