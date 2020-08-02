@@ -56,63 +56,73 @@ void WorkerBase::SetCmdK(bool useCmdK)
 void WorkerBase::SetRootProcessId(const DWORD pid)
 {
 	_ASSERTE(pid != 0);
-	dwRootProcess = pid;
+	this->rootProcess.processId = pid;
 }
 
 void WorkerBase::SetRootProcessHandle(HANDLE processHandle)
 {
-	hRootProcess = processHandle;
+	this->rootProcess.processHandle = processHandle;
 }
 
 void WorkerBase::SetRootThreadId(const DWORD tid)
 {
-	dwRootThread = tid;
+	this->rootProcess.threadId = tid;
 }
 
 void WorkerBase::SetRootThreadHandle(HANDLE threadHandle)
 {
-	hRootThread = threadHandle;
+	this->rootProcess.threadHandle = threadHandle;
 }
 
 void WorkerBase::SetRootStartTime(const DWORD ticks)
 {
-	dwRootStartTime = ticks;
+	this->rootProcess.startTime = ticks;
 }
 
 void WorkerBase::SetParentFarPid(DWORD pid)
 {
-	dwParentFarPid = pid;
+	this->farManagerInfo.dwParentFarPid = pid;
+}
+
+void WorkerBase::SetRootProcessGui(HWND hwnd)
+{
+	this->rootProcess.childGuiWnd = hwnd;
 }
 
 DWORD WorkerBase::RootProcessId() const
 {
-	return dwRootProcess;
+	return this->rootProcess.processId;
 }
 
 DWORD WorkerBase::RootThreadId() const
 {
-	return dwRootThread;
+	return this->rootProcess.threadId;
 }
 
 DWORD WorkerBase::RootProcessStartTime() const
 {
-	return dwRootStartTime;
+	return this->rootProcess.startTime;
 }
 
 DWORD WorkerBase::ParentFarPid() const
 {
-	return dwParentFarPid;
+	return this->farManagerInfo.dwParentFarPid;
 }
 
 HANDLE WorkerBase::RootProcessHandle() const
 {
-	return hRootProcess;
+	return this->rootProcess.processHandle;
+}
+
+HWND WorkerBase::RootProcessGui() const
+{
+	return this->rootProcess.childGuiWnd;
 }
 
 void WorkerBase::CloseRootProcessHandles()
 {
-	SafeCloseHandle(this->hRootProcess);
-	SafeCloseHandle(this->hRootThread);
+	SafeCloseHandle(this->rootProcess.processHandle);
+	SafeCloseHandle(this->rootProcess.threadHandle);
 }
 
 bool WorkerBase::IsDebuggerActive() const
@@ -148,8 +158,9 @@ int WorkerBase::SetDebuggingPid(const wchar_t* const pidList)
 	wchar_t* pszEnd = nullptr;
 	SetRootProcessId(wcstoul(pidList, &pszEnd, 10));
 
-	if (dwRootProcess == 0)
+	if (RootProcessId() == 0)
 	{
+		// ReSharper disable twice StringLiteralTypo
 		LogString(L"CERR_CARGUMENT: Debug of process was requested, but invalid PID specified");
 		_printf("Debug of process was requested, but invalid PID specified:\n");
 		_wprintf(GetCommandLineW());
@@ -191,6 +202,7 @@ int WorkerBase::SetDebuggingExe(const wchar_t* const commandLine, const bool deb
 
 	if (dbgInfo->szDebuggingCmdLine.IsEmpty())
 	{
+		// ReSharper disable twice StringLiteralTypo
 		LogString(L"CERR_CARGUMENT: Debug of process was requested, but command was not found");
 		_printf("Debug of process was requested, but command was not found\n");
 		_ASSERTE(FALSE && "Invalid command line for debugger was passed");

@@ -155,7 +155,6 @@ struct SrvInfo
 	HANDLE hInWaitForSetConBufThread;  // signal that RefreshThread is ready to wait for hWaitForSetConBufThread
 	HANDLE hOutWaitForSetConBufThread; // signal that RefreshThread may continue
 
-	HWND   hRootProcessGui; // Если работаем в Gui-режиме (Notepad, Putty, ...), ((HWND)-1) пока фактичеки окно еще не создано, но exe-шник уже есть
 	DWORD  dwGuiAID; // ConEmu internal ID of started CRealConsole
 	HWND   hGuiWnd; // передается через аргумент "/GHWND=%08X", чтобы окно не искать
 	BOOL   bRequestNewGuiWnd;

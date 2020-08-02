@@ -717,7 +717,7 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 	#endif
 
 	bool bProcFound = false;
-	bool bConsoleOnly = (gpSrv->hRootProcessGui == NULL);
+	bool bConsoleOnly = (gpWorker->RootProcessGui() == NULL);
 	bool bMayBeConsolePaf = gpSrv->Portable.nPID && (gpSrv->Portable.nSubsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI);
 
 	if (pfnGetConsoleProcessList && (bConsoleOnly || bMayBeConsolePaf))
@@ -914,9 +914,9 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 				nProcessCount = 2;
 			}
 		}
-		else if (gpSrv->hRootProcessGui)
+		else if (gpWorker->RootProcessGui())
 		{
-			if (!IsWindow(gpSrv->hRootProcessGui))
+			if (!IsWindow(gpWorker->RootProcessGui()))
 			{
 				// Process handle must be opened!
 				_ASSERTE(gpWorker->RootProcessHandle() != NULL);

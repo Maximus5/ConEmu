@@ -33,6 +33,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class DebuggerInfo;
 enum class DumpProcessType;
 
+// If we are in ChildGui mode (notepad, putty, etc.)
+#define GUI_NOT_CREATED_YET (HWND(-1))
+
 class WorkerBase
 {
 public:
@@ -57,11 +60,13 @@ public:
 	void SetRootThreadHandle(HANDLE threadHandle);
 	void SetRootStartTime(DWORD ticks);
 	void SetParentFarPid(DWORD pid);
+	void SetRootProcessGui(HWND hwnd);
 	DWORD RootProcessId() const;
 	DWORD RootThreadId() const;
 	DWORD RootProcessStartTime() const;
 	DWORD ParentFarPid() const;
 	HANDLE RootProcessHandle() const;
+	HWND RootProcessGui() const;
 	void CloseRootProcessHandles();
 
 	bool IsDebuggerActive() const;
@@ -74,9 +79,21 @@ public:
 	DebuggerInfo& DbgInfo();
 
 protected:
-	HANDLE hRootProcess = nullptr, hRootThread = nullptr;
-	DWORD dwRootProcess = 0, dwRootThread = 0, dwRootStartTime = 0;
-	DWORD dwParentFarPid = 0;
+	struct RootProcessInfo
+	{
+		HANDLE processHandle;
+		HANDLE threadHandle;
+		DWORD processId;
+		DWORD threadId;
+		DWORD startTime;
+
+		HWND childGuiWnd; // could be GUI_NOT_CREATED_YET
+	} rootProcess = {};
+
+	struct FarManagerInfo
+	{
+		DWORD dwParentFarPid;
+	} farManagerInfo = {};
 
 	std::unique_ptr<DebuggerInfo> dbgInfo;
 };

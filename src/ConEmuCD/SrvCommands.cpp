@@ -1547,14 +1547,14 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 		wchar_t szInfo[MAX_PATH*2];
 
 		// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
-		if (gbAttachMode || (gpSrv->hRootProcessGui == NULL))
+		if (gbAttachMode || (gpWorker->RootProcessGui() == NULL))
 		{
 			swprintf_c(szInfo, L"GUI application (PID=%u) was attached to ConEmu:\n%s\n",
 				in.AttachGuiApp.nPID, in.AttachGuiApp.sAppFilePathName);
 			_wprintf(szInfo);
 		}
 
-		if (in.AttachGuiApp.hAppWindow && (gbAttachMode || (gpSrv->hRootProcessGui != in.AttachGuiApp.hAppWindow)))
+		if (in.AttachGuiApp.hAppWindow && (gbAttachMode || (gpWorker->RootProcessGui() != in.AttachGuiApp.hAppWindow)))
 		{
 			wchar_t szTitle[MAX_PATH] = {};
 			GetWindowText(in.AttachGuiApp.hAppWindow, szTitle, countof(szTitle));
@@ -1568,11 +1568,11 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		if (in.AttachGuiApp.hAppWindow == NULL)
 		{
-			gpSrv->hRootProcessGui = (HWND)-1;
+			gpWorker->SetRootProcessGui(GUI_NOT_CREATED_YET);
 		}
 		else
 		{
-			gpSrv->hRootProcessGui = in.AttachGuiApp.hAppWindow;
+			gpWorker->SetRootProcessGui(in.AttachGuiApp.hAppWindow);
 		}
 		// Смысла в подтверждении нет - GUI приложение в консоль ничего не выводит
 		gbAlwaysConfirmExit = FALSE;

@@ -1387,21 +1387,21 @@ int WorkerServer::Init()
 	ReloadGuiSettings(NULL);
 
 	// Если мы аттачим существующее GUI окошко
-	if (gbNoCreateProcess && gbAttachMode && gpSrv->hRootProcessGui)
+	if (gbNoCreateProcess && gbAttachMode && gpWorker->RootProcessGui())
 	{
 		// Его нужно дернуть, чтобы инициализировать цикл аттача во вкладку ConEmu
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ATTACHGUIAPP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP));
-		_ASSERTE(LODWORD(gpSrv->hRootProcessGui)!=0xCCCCCCCC);
+		_ASSERTE(LODWORD(gpWorker->RootProcessGui())!=0xCCCCCCCC);
 		_ASSERTE(IsWindow(ghConEmuWnd));
 		_ASSERTE(IsWindow(ghConEmuWndDC));
 		_ASSERTE(IsWindow(ghConEmuWndBack));
-		_ASSERTE(IsWindow(gpSrv->hRootProcessGui));
+		_ASSERTE(IsWindow(gpWorker->RootProcessGui()));
 		_ASSERTE(gpSrv->dwMainServerPID && (gpSrv->dwMainServerPID==GetCurrentProcessId()));
 		pIn->AttachGuiApp.nServerPID = gpSrv->dwMainServerPID;
 		pIn->AttachGuiApp.hConEmuWnd = ghConEmuWnd;
 		pIn->AttachGuiApp.hConEmuDc = ghConEmuWndDC;
 		pIn->AttachGuiApp.hConEmuBack = ghConEmuWndBack;
-		pIn->AttachGuiApp.hAppWindow = gpSrv->hRootProcessGui;
+		pIn->AttachGuiApp.hAppWindow = gpWorker->RootProcessGui();
 		pIn->AttachGuiApp.hSrvConWnd = ghConWnd;
 		wchar_t szPipe[MAX_PATH];
 		_ASSERTE(gpWorker->RootProcessId()!=0);
@@ -1410,7 +1410,7 @@ int WorkerServer::Init()
 		CESERVER_REQ* pOut = ExecuteCmd(szPipe, pIn, GUIATTACH_TIMEOUT, ghConWnd);
 		if (!pOut
 			|| (pOut->hdr.cbSize < (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)))
-			|| (pOut->dwData[0] != LODWORD(gpSrv->hRootProcessGui)))
+			|| (pOut->dwData[0] != LODWORD(gpWorker->RootProcessGui())))
 		{
 			iRc = CERR_ATTACH_NO_GUIWND;
 		}

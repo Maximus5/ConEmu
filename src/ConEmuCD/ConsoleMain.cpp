@@ -1498,7 +1498,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		CheckAndWarnHookSetters();
 	}
 
-	_ASSERTE(!gpSrv->hRootProcessGui || ((LODWORD(gpSrv->hRootProcessGui))!=0xCCCCCCCC && IsWindow(gpSrv->hRootProcessGui)));
+	_ASSERTE(!gpWorker->RootProcessGui() || ((LODWORD(gpWorker->RootProcessGui()))!=0xCCCCCCCC && IsWindow(gpWorker->RootProcessGui())));
 
 	//#ifdef _DEBUG
 	//CreateLogSizeFile();
@@ -2738,24 +2738,24 @@ int CheckAttachProcess()
 	wchar_t szProc[255] = {}, szTmp[10] = {};
 	DWORD nFindId = 0;
 
-	if (gpSrv->hRootProcessGui)
+	if (gpWorker->RootProcessGui())
 	{
-		if (!IsWindow(gpSrv->hRootProcessGui))
+		if (!IsWindow(gpWorker->RootProcessGui()))
 		{
 			swprintf_c(szFailMsg, L"Attach of GUI application was requested,\n"
-				L"but required HWND(0x%08X) not found!", LODWORD(gpSrv->hRootProcessGui));
+				L"but required HWND(0x%08X) not found!", LODWORD(gpWorker->RootProcessGui()));
 			LogString(szFailMsg);
 			liArgsFailed = 1;
 			// will return CERR_CARGUMENT
 		}
 		else
 		{
-			DWORD nPid = 0; GetWindowThreadProcessId(gpSrv->hRootProcessGui, &nPid);
+			DWORD nPid = 0; GetWindowThreadProcessId(gpWorker->RootProcessGui(), &nPid);
 			if (gpWorker->RootProcessId() && nPid && (gpWorker->RootProcessId() != nPid))
 			{
 				swprintf_c(szFailMsg, L"Attach of GUI application was requested,\n"
 					L"but PID(%u) of HWND(0x%08X) does not match Root(%u)!",
-					nPid, LODWORD(gpSrv->hRootProcessGui), gpWorker->RootProcessId());
+					nPid, LODWORD(gpWorker->RootProcessGui()), gpWorker->RootProcessId());
 				LogString(szFailMsg);
 				liArgsFailed = 2;
 				// will return CERR_CARGUMENT
@@ -3537,10 +3537,9 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 				gbAttachMode |= am_Simple;
 			lbAttachGuiApp = TRUE;
 			wchar_t* pszEnd;
-			// suppress warning C4312 'type cast': conversion from 'unsigned long' to 'HWND' of greater size
-			HWND hAppWnd = (HWND)(UINT_PTR)wcstoul(szArg.Mid(11), &pszEnd, 16);
+			HWND2 hAppWnd{ wcstoul(szArg.Mid(11), &pszEnd, 16) };
 			if (IsWindow(hAppWnd))
-				gpSrv->hRootProcessGui = hAppWnd;
+				gpWorker->SetRootProcessGui(hAppWnd);
 			gnRunMode = RunMode::Server;
 		}
 		else if (wcscmp(szArg, L"/NOCMD")==0)
