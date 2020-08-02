@@ -132,3 +132,18 @@ TEST(ConEmuCD, RunGuiMacro_DLL)
 		EXPECT_STREQ(L"Yes", szResult) << "isConEmu==true";
 	}
 }
+
+TEST(ConEmuCD, RunCmdExe)
+{
+	const auto ConEmuCD = LoadConEmuCD();
+	EXPECT_TRUE(ConEmuCD.IsLoaded());
+
+	ConsoleMain3_t consoleMain3 = nullptr;
+	EXPECT_TRUE(ConEmuCD.GetProcAddress(FN_CONEMUCD_CONSOLE_MAIN_3_NAME, consoleMain3));
+	if (!consoleMain3)
+	{
+		return; // nothing to check more
+	}
+
+	const auto cmdRc = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c echo RunCmdExe test");
+}
