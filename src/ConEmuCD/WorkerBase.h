@@ -30,7 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-struct DebuggerInfo;
+class DebuggerInfo;
 enum class DumpProcessType;
 
 class WorkerBase
@@ -51,7 +51,14 @@ public:
 	virtual bool IsCmdK() const;
 	virtual void SetCmdK(bool useCmdK);
 
-	void SetRootProcessPid(DWORD pid);
+	void SetRootProcessId(DWORD pid);
+	void SetRootProcessHandle(HANDLE processHandle);
+	void SetRootThreadId(DWORD tid);
+	void SetRootThreadHandle(HANDLE threadHandle);
+	void SetRootStartTime(DWORD ticks);
+	DWORD RootProcessId() const;
+	DWORD RootThreadId() const;
+	HANDLE RootProcessHandle() const;
 
 	bool IsDebuggerActive() const;
 	bool IsDebugProcess() const;

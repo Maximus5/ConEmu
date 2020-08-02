@@ -52,8 +52,9 @@ enum class DumpProcessType
 	FullDump = 3,
 };
 
-struct DebuggerInfo
+class DebuggerInfo
 {
+public:
 	DebuggerInfo();
 	~DebuggerInfo();
 
@@ -61,6 +62,23 @@ struct DebuggerInfo
 	DebuggerInfo(DebuggerInfo&&) = delete;
 	DebuggerInfo& operator=(const DebuggerInfo&) = delete;
 	DebuggerInfo& operator=(DebuggerInfo&&) = delete;
+
+	static DWORD WINAPI DebugThread(LPVOID lpvParam);
+	
+	void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR asConfirmText = NULL, BOOL bTreeBreak = FALSE);
+	void GenerateTreeDebugBreak(DWORD nExcludePID);
+	void PrintDebugInfo();
+	void UpdateDebuggerTitle();
+	DumpProcessType ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= NULL*/);
+	int RunDebugger();
+	HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = nullptr);
+	int AttachRootProcessHandle();
+	void AttachConHost(DWORD nConHostPID);
+	bool IsDumpMulti();
+	wchar_t* FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, bool bTrap, bool bFull);
+	bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchMaxDmpFile);
+	void ProcessDebugEvent();
+	void GenerateMiniDumpFromCtrlBreak();
 
 	CEStr  szDebuggingCmdLine;
 	bool   bDebuggerActive = false;

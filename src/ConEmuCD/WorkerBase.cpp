@@ -49,12 +49,49 @@ bool WorkerBase::IsCmdK() const
 
 void WorkerBase::SetCmdK(bool useCmdK)
 {
+	_ASSERTE(useCmdK == false);
+	// nothing to do in base!
 }
 
-void WorkerBase::SetRootProcessPid(DWORD pid)
+void WorkerBase::SetRootProcessId(const DWORD pid)
 {
 	_ASSERTE(pid != 0);
 	dwRootProcess = pid;
+}
+
+void WorkerBase::SetRootProcessHandle(HANDLE processHandle)
+{
+	hRootProcess = processHandle;
+}
+
+void WorkerBase::SetRootThreadId(const DWORD tid)
+{
+	dwRootThread = tid;
+}
+
+void WorkerBase::SetRootThreadHandle(HANDLE threadHandle)
+{
+	hRootThread = threadHandle;
+}
+
+void WorkerBase::SetRootStartTime(const DWORD ticks)
+{
+	dwRootStartTime = ticks;
+}
+
+DWORD WorkerBase::RootProcessId() const
+{
+	return dwRootProcess;
+}
+
+DWORD WorkerBase::RootThreadId() const
+{
+	return dwRootThread;
+}
+
+HANDLE WorkerBase::RootProcessHandle() const
+{
+	return hRootProcess;
 }
 
 bool WorkerBase::IsDebuggerActive() const
@@ -88,7 +125,7 @@ int WorkerBase::SetDebuggingPid(const wchar_t* const pidList)
 	dbgInfo->bDebugProcessTree = FALSE;
 
 	wchar_t* pszEnd = nullptr;
-	SetRootProcessPid(wcstoul(pidList, &pszEnd, 10));
+	SetRootProcessId(wcstoul(pidList, &pszEnd, 10));
 
 	if (dwRootProcess == 0)
 	{

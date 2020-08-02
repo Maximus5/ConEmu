@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/CEStr.h"
 #include "../common/MMap.h"
+#include "../common/MModule.h"
 #include "../common/MProcess.h"
 #include "../common/MProcessBits.h"
 #include "../common/MStrDup.h"
@@ -61,24 +62,29 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 
-DWORD WINAPI DebugThread(LPVOID lpvParam);
-void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR asConfirmText = NULL, BOOL bTreeBreak = FALSE);
-void GenerateTreeDebugBreak(DWORD nExcludePID);
-
 #define CE_CONEMUC_NAME_W WIN3264TEST(L"ConEmuC[32]",L"ConEmuC[64]")
 #define CE_CONEMUC_NAME_A WIN3264TEST("ConEmuC[32]","ConEmuC[64]")
 #define CE_TREE_TEMPLATE CE_CONEMUC_NAME_W L": DebuggerPID=%u RootPID=%u Count=%i"
 
-
-void PrintDebugInfo()
+DebuggerInfo::DebuggerInfo()
 {
-	_printf("Debugger successfully attached to PID=%u\n", gpSrv->dwRootProcess);
+}
+
+DebuggerInfo::~DebuggerInfo()
+{
+	SafeCloseHandle(hDebugReady);
+	SafeCloseHandle(hDebugThread);
+}
+
+void DebuggerInfo::PrintDebugInfo()
+{
+	_printf("Debugger successfully attached to PID=%u\n", gpWorker->RootProcessId());
 	TODO("Вывести информацию о загруженных модулях, потоках, и стеке потоков");
 }
 
-void UpdateDebuggerTitle()
+void DebuggerInfo::UpdateDebuggerTitle()
 {
-	if (!gpSrv->DbgInfo.bDebugProcessTree)
+	if (!this->bDebugProcessTree)
 		return;
 
 	wchar_t szTitle[100];
@@ -92,23 +98,23 @@ void UpdateDebuggerTitle()
 	}
 
 	swprintf_c(szTitle, pszTemplate,
-		GetCurrentProcessId(), gpSrv->dwRootProcess, gpSrv->DbgInfo.nProcessCount);
+		GetCurrentProcessId(), gpWorker->RootProcessId(), this->nProcessCount);
 	SetTitle(szTitle);
 }
 
-DumpProcessType ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= NULL*/)
+DumpProcessType DebuggerInfo::ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= nullptr*/)
 {
-	if (gpSrv->DbgInfo.bAutoDump)
-		return 2; // Automatic MINI-dumps
+	if (this->bAutoDump)
+		return DumpProcessType::MiniDump; // Automatic MINI-dumps
 
-	if (gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::MiniDump || gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::FullDump)
-		return gpSrv->DbgInfo.debugDumpProcess;
+	if (this->debugDumpProcess == DumpProcessType::MiniDump || this->debugDumpProcess == DumpProcessType::FullDump)
+		return this->debugDumpProcess;
 
 	// ANSI is used because of asConfirmText created as ANSI
 	char szTitleA[64];
 	sprintf_c(szTitleA, CE_CONEMUC_NAME_A " Debugging PID=%u, Debugger PID=%u", dwProcessId, GetCurrentProcessId());
 
-	int nBtn = MessageBoxA(NULL, asConfirmText ? asConfirmText : "Create minidump (<No> - fulldump)?", szTitleA, MB_YESNOCANCEL|MB_SYSTEMMODAL);
+	int nBtn = MessageBoxA(nullptr, asConfirmText ? asConfirmText : "Create minidump (<No> - fulldump)?", szTitleA, MB_YESNOCANCEL|MB_SYSTEMMODAL);
 
 	switch (nBtn)
 	{
@@ -121,12 +127,12 @@ DumpProcessType ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= NULL
 	}
 }
 
-int RunDebugger()
+int DebuggerInfo::RunDebugger()
 {
-	if (!gpSrv->DbgInfo.pDebugTreeProcesses)
+	if (!this->pDebugTreeProcesses)
 	{
-		gpSrv->DbgInfo.pDebugTreeProcesses = (MMap<DWORD,CEDebugProcessInfo>*)calloc(1,sizeof(*gpSrv->DbgInfo.pDebugTreeProcesses));
-		gpSrv->DbgInfo.pDebugTreeProcesses->Init(1024);
+		this->pDebugTreeProcesses = (MMap<DWORD,CEDebugProcessInfo>*)calloc(1,sizeof(*this->pDebugTreeProcesses));
+		this->pDebugTreeProcesses->Init(1024);
 	}
 
 	UpdateDebuggerTitle();
@@ -155,19 +161,19 @@ int RunDebugger()
 	#ifdef SHOW_DEBUG_STARTED_MSGBOX
 	wchar_t szInfo[128];
 	StringCchPrintf(szInfo, countof(szInfo), L"Attaching debugger...\n" CE_CONEMUC_NAME_W " PID = %u\nDebug PID = %u",
-	                GetCurrentProcessId(), gpSrv->dwRootProcess);
+	                GetCurrentProcessId(), gpWorker->RootProcessId());
 	MessageBox(GetConEmuHWND(2), szInfo, CE_CONEMUC_NAME_W L".Debugger", 0);
 	#endif
 
-	if (gpSrv->DbgInfo.pszDebuggingCmdLine == NULL)
+	if (this->szDebuggingCmdLine.IsEmpty())
 	{
-		int iAttachRc = AttachRootProcessHandle();
+		const int iAttachRc = AttachRootProcessHandle();
 		if (iAttachRc != 0)
 			return iAttachRc;
 	}
 	else
 	{
-		_ASSERTE(!gpSrv->DbgInfo.bDebuggerActive);
+		_ASSERTE(!this->bDebuggerActive);
 	}
 
 	gpszRunCmd = (wchar_t*)calloc(1,sizeof(*gpszRunCmd));
@@ -177,64 +183,64 @@ int RunDebugger()
 		return CERR_NOTENOUGHMEM1;
 	}
 
-	_ASSERTE(((gpSrv->hRootProcess!=NULL) || (gpSrv->DbgInfo.pszDebuggingCmdLine!=NULL)) && "Process handle must be opened");
+	_ASSERTE(((gpWorker->RootProcessHandle()!=nullptr) || (!this->szDebuggingCmdLine.IsEmpty())) && "Process handle must be opened");
 
 	// Если просили сделать дамп нескольких процессов - нужно сразу уточнить его тип
-	if (gpSrv->DbgInfo.bDebugMultiProcess && (gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::AskUser))
+	if (this->bDebugMultiProcess && (this->debugDumpProcess == DumpProcessType::AskUser))
 	{
 		// 2 - minidump, 3 - fulldump
-		const auto nConfirmDumpType = ConfirmDumpType(gpSrv->dwRootProcess, nullptr);
+		const auto nConfirmDumpType = ConfirmDumpType(gpWorker->RootProcessId(), nullptr);
 		if (nConfirmDumpType < DumpProcessType::MiniDump)
 		{
 			// Отмена
 			return CERR_CANTSTARTDEBUGGER;
 		}
-		gpSrv->DbgInfo.debugDumpProcess = nConfirmDumpType;
+		this->debugDumpProcess = nConfirmDumpType;
 	}
 
-	// gpSrv->DbgInfo.bDebuggerActive must be set in DebugThread
+	// this->bDebuggerActive must be set in DebugThread
 
-	if (gpSrv->DbgInfo.bAutoDump)
-		gpSrv->DbgInfo.bDebuggerRequestDump = TRUE;
+	if (this->bAutoDump)
+		this->bDebuggerRequestDump = TRUE;
 
 	// Run DebugThread
-	gpSrv->DbgInfo.hDebugReady = CreateEvent(NULL, FALSE, FALSE, NULL);
+	this->hDebugReady = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
 	// All debugger events are processed in special thread
-	gpSrv->DbgInfo.hDebugThread = apiCreateThread(DebugThread, NULL, &gpSrv->DbgInfo.dwDebugThreadId, "DebugThread");
-	HANDLE hEvents[2] = {gpSrv->DbgInfo.hDebugReady, gpSrv->DbgInfo.hDebugThread};
+	this->hDebugThread = apiCreateThread(DebugThread, nullptr, &this->dwDebugThreadId, "DebugThread");
+	HANDLE hEvents[2] = {this->hDebugReady, this->hDebugThread};
 
 	// First we must wait for debugger thread initialization finish
 	DWORD nReady = WaitForMultipleObjects(countof(hEvents), hEvents, FALSE, INFINITE);
 	if (nReady != WAIT_OBJECT_0)
 	{
 		DWORD nExit = 0;
-		GetExitCodeThread(gpSrv->DbgInfo.hDebugThread, &nExit);
+		GetExitCodeThread(this->hDebugThread, &nExit);
 		return nExit;
 	}
 
-	// gpSrv->DbgInfo.bDebuggerActive was set in DebugThread
+	// this->bDebuggerActive was set in DebugThread
 
 	// And wait for debugger thread completion
 	_ASSERTE(gnRunMode == RunMode::Undefined);
-	DWORD nDebugThread; // = WaitForSingleObject(gpSrv->DbgInfo.hDebugThread, INFINITE);
-	DWORD nDbgTimeout = std::min<DWORD>(std::max<DWORD>(25, gpSrv->DbgInfo.nAutoInterval), 100);
+	DWORD nDebugThread; // = WaitForSingleObject(this->hDebugThread, INFINITE);
+	DWORD nDbgTimeout = std::min<DWORD>(std::max<DWORD>(25, this->nAutoInterval), 100);
 
-	LONG nLastCounter = gpSrv->DbgInfo.nDumpsCounter - 1; // First dump create always
+	LONG nLastCounter = this->nDumpsCounter - 1; // First dump create always
 	DWORD nLastTick = GetTickCount();
-	while ((nDebugThread = WaitForSingleObject(gpSrv->DbgInfo.hDebugThread, nDbgTimeout)) == WAIT_TIMEOUT)
+	while ((nDebugThread = WaitForSingleObject(this->hDebugThread, nDbgTimeout)) == WAIT_TIMEOUT)
 	{
 		TODO("Add console input reader");
 
 		DWORD nDelta = GetTickCount() - nLastTick;
-		if (gpSrv->DbgInfo.bAutoDump)
+		if (this->bAutoDump)
 		{
-			if ((nDelta + 10) >= gpSrv->DbgInfo.nAutoInterval)
+			if ((nDelta + 10) >= this->nAutoInterval)
 			{
 				// Don't request next dump until previous was finished
-				if (nLastCounter != gpSrv->DbgInfo.nDumpsCounter)
+				if (nLastCounter != this->nDumpsCounter)
 				{
-					nLastCounter = gpSrv->DbgInfo.nDumpsCounter;
+					nLastCounter = this->nDumpsCounter;
 					// Request mini-dump
 					GenerateMiniDumpFromCtrlBreak();
 				}
@@ -249,22 +255,22 @@ int RunDebugger()
 	return 0;
 }
 
-HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = NULL)
+HANDLE DebuggerInfo::GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode /*= nullptr*/)
 {
-	_ASSERTE(gpSrv->DbgInfo.bDebugProcess);
+	_ASSERTE(this->bDebugProcess);
 
-	HANDLE hProcess = NULL;
+	HANDLE hProcess = nullptr;
 	DWORD  nErrCode = 0;
 
-	if ((nPID == gpSrv->dwRootProcess) && gpSrv->hRootProcess)
+	if ((nPID == gpWorker->RootProcessId()) && gpWorker->RootProcessHandle())
 	{
-		hProcess = gpSrv->hRootProcess;
+		hProcess = gpWorker->RootProcessHandle();
 	}
 	else
 	{
 		CEDebugProcessInfo pi = {};
 
-		if (gpSrv->DbgInfo.pDebugTreeProcesses->Get(nPID, &pi) && pi.hProcess)
+		if (this->pDebugTreeProcesses->Get(nPID, &pi) && pi.hProcess)
 		{
 			// Уже
 			hProcess = pi.hProcess;
@@ -275,7 +281,7 @@ HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = NULL)
 
 			DWORD dwFlags = PROCESS_QUERY_INFORMATION|SYNCHRONIZE;
 
-			if (gpSrv->DbgInfo.bDebuggerActive || gpSrv->DbgInfo.bDebugProcessTree)
+			if (this->bDebuggerActive || this->bDebugProcessTree)
 				dwFlags |= PROCESS_VM_READ;
 
 			CAdjustProcessToken token;
@@ -298,13 +304,13 @@ HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = NULL)
 
 			token.Release();
 
-			if (nPID != gpSrv->dwRootProcess)
+			if (nPID != gpWorker->RootProcessId())
 			{
 				// Запомнить дескриптор
 				_ASSERTE(pi.nPID == nPID || pi.nPID == 0); // уже должен быть
 				pi.nPID = nPID;
 				pi.hProcess = hProcess;
-				gpSrv->DbgInfo.pDebugTreeProcesses->Set(nPID, pi);
+				this->pDebugTreeProcesses->Set(nPID, pi);
 			}
 		}
 	}
@@ -316,47 +322,47 @@ HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = NULL)
 }
 
 // Используется и в обычном, и в "отладочном" режиме
-int AttachRootProcessHandle()
+int DebuggerInfo::AttachRootProcessHandle()
 {
-	if (gpSrv->DbgInfo.pszDebuggingCmdLine != NULL)
+	if (!this->szDebuggingCmdLine.IsEmpty())
 	{
-		_ASSERTE(gpSrv->DbgInfo.bDebuggerActive);
+		_ASSERTE(this->bDebuggerActive);
 		return 0; // Started from DebuggingThread
 	}
 
 	DWORD dwErr = 0;
 	// Нужно открыть HANDLE корневого процесса
-	_ASSERTE(gpSrv->hRootProcess==NULL || gpSrv->hRootProcess==GetCurrentProcess());
-	if (gpSrv->dwRootProcess == GetCurrentProcessId())
+	_ASSERTE(gpWorker->RootProcessHandle()==nullptr || gpWorker->RootProcessHandle()==GetCurrentProcess());
+	if (gpWorker->RootProcessId() == GetCurrentProcessId())
 	{
-		if (gpSrv->hRootProcess == NULL)
+		if (gpWorker->RootProcessHandle() == nullptr)
 		{
-			gpSrv->hRootProcess = GetCurrentProcess();
+			gpWorker->SetRootProcessHandle(GetCurrentProcess());
 		}
 	}
-	else if (gpSrv->DbgInfo.bDebuggerActive)
+	else if (this->bDebuggerActive)
 	{
-		if (gpSrv->hRootProcess == NULL)
+		if (gpWorker->RootProcessHandle() == nullptr)
 		{
-			gpSrv->hRootProcess = GetProcessHandleForDebug(gpSrv->dwRootProcess);
+			gpWorker->SetRootProcessHandle(GetProcessHandleForDebug(gpWorker->RootProcessId()));
 		}
 	}
-	else if (gpSrv->hRootProcess == NULL)
+	else if (gpWorker->RootProcessHandle() == nullptr)
 	{
-		gpSrv->hRootProcess = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, gpSrv->dwRootProcess);
-		if (gpSrv->hRootProcess == NULL)
+		gpWorker->SetRootProcessHandle(OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, gpWorker->RootProcessId()));
+		if (gpWorker->RootProcessHandle() == nullptr)
 		{
-			gpSrv->hRootProcess = OpenProcess(SYNCHRONIZE|PROCESS_QUERY_INFORMATION, FALSE, gpSrv->dwRootProcess);
+			gpWorker->SetRootProcessHandle(OpenProcess(SYNCHRONIZE|PROCESS_QUERY_INFORMATION, FALSE, gpWorker->RootProcessId()));
 		}
 	}
 
-	if (!gpSrv->hRootProcess)
+	if (!gpWorker->RootProcessHandle())
 	{
 		dwErr = GetLastError();
-		wchar_t* lpMsgBuf = NULL;
-		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, NULL);
+		wchar_t* lpMsgBuf = nullptr;
+		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, dwErr, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPWSTR)&lpMsgBuf, 0, nullptr);
 		_printf("\nCan't open process (%i) handle, ErrCode=0x%08X, Description:\n", //-V576
-		        gpSrv->dwRootProcess, dwErr, (lpMsgBuf == NULL) ? L"<Unknown error>" : lpMsgBuf);
+		        gpWorker->RootProcessId(), dwErr, (lpMsgBuf == nullptr) ? L"<Unknown error>" : lpMsgBuf);
 
 		if (lpMsgBuf) LocalFree(lpMsgBuf);
 		SetLastError(dwErr);
@@ -364,10 +370,10 @@ int AttachRootProcessHandle()
 		return CERR_CREATEPROCESS;
 	}
 
-	if (gpSrv->DbgInfo.bDebuggerActive)
+	if (this->bDebuggerActive)
 	{
 		wchar_t szTitle[64];
-		swprintf_c(szTitle, L"Debugging PID=%u, Debugger PID=%u", gpSrv->dwRootProcess, GetCurrentProcessId());
+		swprintf_c(szTitle, L"Debugging PID=%u, Debugger PID=%u", gpWorker->RootProcessId(), GetCurrentProcessId());
 		SetTitle(szTitle);
 
 		UpdateDebuggerTitle();
@@ -376,7 +382,7 @@ int AttachRootProcessHandle()
 	return 0;
 }
 
-void AttachConHost(DWORD nConHostPID)
+void DebuggerInfo::AttachConHost(DWORD nConHostPID)
 {
 	DWORD  nErrCode = 0;
 	HANDLE hConHost = GetProcessHandleForDebug(nConHostPID, &nErrCode);
@@ -397,63 +403,66 @@ void AttachConHost(DWORD nConHostPID)
 	}
 }
 
-DWORD WINAPI DebugThread(LPVOID lpvParam)
+DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 {
 	DWORD nWait = WAIT_TIMEOUT;
-	wchar_t szInfo[1024];
-	wchar_t szPID[20];
+	wchar_t szInfo[1024] = L"";
+	wchar_t szPID[20] = L"";
 	int iAttachedCount = 0;
 	CEStr szOtherBitPids, szOtherDebugCmd;
 
+	auto& dbgInfo = gpWorker->DbgInfo();
+
 	// Дополнительная инициализация, чтобы закрытие дебагера (наш процесс) не привело
 	// к закрытию "отлаживаемой" программы
-	pfnDebugActiveProcessStop = (FDebugActiveProcessStop)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugActiveProcessStop");
-	pfnDebugSetProcessKillOnExit = (FDebugSetProcessKillOnExit)GetProcAddress(GetModuleHandle(L"kernel32.dll"),"DebugSetProcessKillOnExit");
+	MModule kernel(GetModuleHandle(L"kernel32.dll"));
+	kernel.GetProcAddress("DebugActiveProcessStop", pfnDebugActiveProcessStop);
+	kernel.GetProcAddress("DebugSetProcessKillOnExit", pfnDebugSetProcessKillOnExit);
 
 	// Affect GetProcessHandleForDebug
-	gpSrv->DbgInfo.bDebuggerActive = TRUE;
+	dbgInfo.bDebuggerActive = TRUE;
 
 	// If dump was requested
-	if (gpSrv->DbgInfo.debugDumpProcess != DumpProcessType::None)
+	if (dbgInfo.debugDumpProcess != DumpProcessType::None)
 	{
-		gpSrv->DbgInfo.bUserRequestDump = TRUE;
-		gpSrv->DbgInfo.bDebuggerRequestDump = TRUE;
+		dbgInfo.bUserRequestDump = TRUE;
+		dbgInfo.bDebuggerRequestDump = TRUE;
 	}
 
 	// "/DEBUGEXE" or "/DEBUGTREE"
-	if (gpSrv->DbgInfo.pszDebuggingCmdLine != NULL)
+	if (!dbgInfo.szDebuggingCmdLine.IsEmpty())
 	{
 		STARTUPINFO si = {sizeof(si)};
 		PROCESS_INFORMATION pi = {};
 
-		if (gpSrv->DbgInfo.bDebugProcessTree)
+		if (dbgInfo.bDebugProcessTree)
 		{
 			SetEnvironmentVariable(ENV_CONEMU_BLOCKCHILDDEBUGGERS_W, ENV_CONEMU_BLOCKCHILDDEBUGGERS_YES);
 		}
 
-		if (!CreateProcess(NULL, gpSrv->DbgInfo.pszDebuggingCmdLine, NULL, NULL, FALSE,
+		if (!CreateProcess(nullptr, dbgInfo.szDebuggingCmdLine.ms_Val, nullptr, nullptr, FALSE,
 			NORMAL_PRIORITY_CLASS|CREATE_NEW_CONSOLE|
-			DEBUG_PROCESS | (gpSrv->DbgInfo.bDebugProcessTree ? 0 : DEBUG_ONLY_THIS_PROCESS),
-			NULL, NULL, &si, &pi))
+			DEBUG_PROCESS | (dbgInfo.bDebugProcessTree ? 0 : DEBUG_ONLY_THIS_PROCESS),
+			nullptr, nullptr, &si, &pi))
 		{
 			DWORD dwErr = GetLastError();
 
 			wchar_t szProc[64]; szProc[0] = 0;
 			PROCESSENTRY32 pi = {sizeof(pi)};
-			if (GetProcessInfo(gpSrv->dwRootProcess, &pi))
+			if (GetProcessInfo(gpWorker->RootProcessId(), &pi))
 				_wcscpyn_c(szProc, countof(szProc), pi.szExeFile, countof(szProc));
 
 			swprintf_c(szInfo, L"Can't start debugging process. ErrCode=0x%08X\n", dwErr);
-			CEStr lsInfo(lstrmerge(szInfo, gpSrv->DbgInfo.pszDebuggingCmdLine, L"\n"));
+			CEStr lsInfo(lstrmerge(szInfo, dbgInfo.szDebuggingCmdLine, L"\n"));
 			_wprintf(lsInfo);
 			return CERR_CANTSTARTDEBUGGER;
 		}
 
-		gpSrv->hRootProcess = pi.hProcess;
-		gpSrv->hRootThread = pi.hThread;
-		gpSrv->dwRootProcess = pi.dwProcessId;
-		gpSrv->dwRootThread = pi.dwThreadId;
-		gpSrv->dwRootStartTime = GetTickCount();
+		gpWorker->SetRootProcessHandle(pi.hProcess);
+		gpWorker->SetRootThreadHandle(pi.hThread);
+		gpWorker->SetRootProcessId(pi.dwProcessId);
+		gpWorker->SetRootThreadId(pi.dwThreadId);
+		gpWorker->SetRootStartTime(GetTickCount());
 
 		// Let's know that at least one process is debugging
 		iAttachedCount++;
@@ -466,31 +475,31 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 
 	while (true)
 	{
-		HANDLE hDbgProcess = NULL;
+		HANDLE hDbgProcess = nullptr;
 		DWORD  nDbgProcessID = 0;
 
 		if ((iDbgIdx++) == 0)
 		{
-			hDbgProcess = gpSrv->hRootProcess;
-			nDbgProcessID = gpSrv->dwRootProcess;
+			hDbgProcess = gpWorker->RootProcessHandle();
+			nDbgProcessID = gpWorker->RootProcessId();
 		}
 		else
 		{
 			// Взять из pDebugAttachProcesses
-			if (!gpSrv->DbgInfo.pDebugAttachProcesses)
+			if (!dbgInfo.pDebugAttachProcesses)
 				break;
-			if (!gpSrv->DbgInfo.pDebugAttachProcesses->pop_back(nDbgProcessID))
+			if (!dbgInfo.pDebugAttachProcesses->pop_back(nDbgProcessID))
 				break;
-			hDbgProcess = GetProcessHandleForDebug(nDbgProcessID);
+			hDbgProcess = dbgInfo.GetProcessHandleForDebug(nDbgProcessID);
 			if (!hDbgProcess)
 			{
-				_ASSERTE(hDbgProcess!=NULL && "Can't open debugging process handle");
+				_ASSERTE(hDbgProcess!=nullptr && "Can't open debugging process handle");
 				continue;
 			}
 		}
 
 
-		_ASSERTE(hDbgProcess!=NULL && "Process handle must be opened");
+		_ASSERTE(hDbgProcess!=nullptr && "Process handle must be opened");
 
 
 		// Битность отладчика должна соответствовать битности приложения!
@@ -500,7 +509,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 			if ((nBits == 32 || nBits == 64) && (nBits != WIN3264TEST(32,64)))
 			{
 				// If /DEBUGEXE or /DEBUGTREE was used
-				if (gpSrv->DbgInfo.pszDebuggingCmdLine != NULL)
+				if (!dbgInfo.szDebuggingCmdLine.IsEmpty())
 				{
 					_printf("Bitness of ConEmuC and debugging program does not match\n");
 					continue;
@@ -515,7 +524,7 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 			}
 		}
 
-		if (gpSrv->DbgInfo.pszDebuggingCmdLine == NULL)
+		if (dbgInfo.szDebuggingCmdLine.IsEmpty())
 		{
 			if (DebugActiveProcess(nDbgProcessID))
 			{
@@ -554,14 +563,14 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	if (szOtherBitPids.ms_Val && *szOtherBitPids.ms_Val)
 	{
 		wchar_t szExe[MAX_PATH+5], *pszName;
-		if (!GetModuleFileName(NULL, szExe, MAX_PATH))
+		if (!GetModuleFileName(nullptr, szExe, MAX_PATH))
 		{
-			swprintf_c(szInfo, L"GetModuleFileName(NULL) failed. ErrCode=0x%08X\n", GetLastError());
+			swprintf_c(szInfo, L"GetModuleFileName(nullptr) failed. ErrCode=0x%08X\n", GetLastError());
 			_wprintf(szInfo);
 		}
 		else if (!(pszName = (wchar_t*)PointToName(szExe)))
 		{
-			swprintf_c(szInfo, L"GetModuleFileName(NULL) returns invalid path\n%s\n", szExe);
+			swprintf_c(szInfo, L"GetModuleFileName(nullptr) returns invalid path\n%s\n", szExe);
 			_wprintf(szInfo);
 		}
 		else
@@ -572,13 +581,13 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 
 			szOtherDebugCmd.Attach(lstrmerge(L"\"", szExe, L"\" "
 				L"/DEBUGPID=", szOtherBitPids.ms_Val,
-				(gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::AskUser) ? L" /DUMP" :
-				(gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::MiniDump) ? L" /MINIDUMP" :
-				(gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::FullDump) ? L" /FULLDUMP" : L""));
+				(dbgInfo.debugDumpProcess == DumpProcessType::AskUser) ? L" /DUMP" :
+				(dbgInfo.debugDumpProcess == DumpProcessType::MiniDump) ? L" /MINIDUMP" :
+				(dbgInfo.debugDumpProcess == DumpProcessType::FullDump) ? L" /FULLDUMP" : L""));
 
 			STARTUPINFO si = {sizeof(si)};
 			PROCESS_INFORMATION pi = {};
-			if (CreateProcess(NULL, szOtherDebugCmd.ms_Val, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi))
+			if (CreateProcess(nullptr, szOtherDebugCmd.ms_Val, nullptr, nullptr, TRUE, NORMAL_PRIORITY_CLASS, nullptr, nullptr, &si, &pi))
 			{
 				// Ждать не будем
 			}
@@ -597,18 +606,18 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	// If neither /DEBUG[EXE|TREE] nor /DEBUGPID was not succeeded
 	if (iAttachedCount == 0)
 	{
-		gpSrv->DbgInfo.bDebuggerActive = FALSE;
+		dbgInfo.bDebuggerActive = FALSE;
 		return CERR_CANTSTARTDEBUGGER;
 	}
 	else if (iAttachedCount > 1)
 	{
-		_ASSERTE(gpSrv->DbgInfo.bDebugMultiProcess && "Already must be set from arguments parser");
-		gpSrv->DbgInfo.bDebugMultiProcess = TRUE;
+		_ASSERTE(dbgInfo.bDebugMultiProcess && "Already must be set from arguments parser");
+		dbgInfo.bDebugMultiProcess = TRUE;
 	}
 
-	if (gpSrv->DbgInfo.bUserRequestDump)
+	if (dbgInfo.bUserRequestDump)
 	{
-		gpSrv->DbgInfo.nWaitTreeBreaks = iAttachedCount;
+		dbgInfo.nWaitTreeBreaks = iAttachedCount;
 	}
 
 	/* **************** */
@@ -623,13 +632,13 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 		}
 	}
 
-	PrintDebugInfo();
-	SetEvent(gpSrv->DbgInfo.hDebugReady);
+	dbgInfo.PrintDebugInfo();
+	SetEvent(dbgInfo.hDebugReady);
 
 
 	while (nWait == WAIT_TIMEOUT)
 	{
-		ProcessDebugEvent();
+		dbgInfo.ProcessDebugEvent();
 
 		if (ghExitQueryEvent)
 			nWait = WaitForSingleObject(ghExitQueryEvent, 0);
@@ -648,14 +657,14 @@ DWORD WINAPI DebugThread(LPVOID lpvParam)
 	return 0;
 }
 
-bool IsDumpMulti()
+bool DebuggerInfo::IsDumpMulti()
 {
-	if (gpSrv->DbgInfo.bDebugProcessTree || gpSrv->DbgInfo.bDebugMultiProcess)
+	if (this->bDebugProcessTree || this->bDebugMultiProcess)
 		return true;
 	return false;
 }
 
-wchar_t* FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, bool bTrap, bool bFull)
+wchar_t* DebuggerInfo::FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, bool bTrap, bool bFull)
 {
 	//TODO: Добавить в DmpFile имя без пути? <exename>-<ver>-<pid>-<yymmddhhmmss>.[m]dmp
 	wchar_t szMinor[8] = L""; lstrcpyn(szMinor, _T(MVV_4a), countof(szMinor));
@@ -668,14 +677,14 @@ wchar_t* FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, b
 	return DmpFile;
 }
 
-bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchMaxDmpFile)
+bool DebuggerInfo::GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchMaxDmpFile)
 {
 	bool bRc = false;
 
-	HMODULE hCOMDLG32 = NULL;
+	HMODULE hCOMDLG32 = nullptr;
 	typedef BOOL (WINAPI* GetSaveFileName_t)(LPOPENFILENAMEW lpofn);
-	GetSaveFileName_t _GetSaveFileName = NULL;
-	bool bDumpMulti = IsDumpMulti() || gpSrv->DbgInfo.bAutoDump;
+	GetSaveFileName_t _GetSaveFileName = nullptr;
+	bool bDumpMulti = IsDumpMulti() || this->bAutoDump;
 
 	if (!bDumpMulti)
 	{
@@ -688,7 +697,7 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 		{
 			OPENFILENAMEW ofn; memset(&ofn,0,sizeof(ofn));
 			ofn.lStructSize=sizeof(ofn);
-			ofn.hwndOwner = NULL;
+			ofn.hwndOwner = nullptr;
 			ofn.lpstrFilter = L"Debug dumps (*.mdmp)\0*.mdmp;*.dmp\0Debug dumps (*.dmp)\0*.dmp;*.mdmp\0\0";
 			ofn.nFilterIndex = bFull ? 2 : 1;
 			ofn.lpstrFile = dmpfile;
@@ -712,7 +721,7 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 
 	if (bDumpMulti || !_GetSaveFileName)
 	{
-		HRESULT dwErr = SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, 0/*SHGFP_TYPE_CURRENT*/, dmpfile);
+		HRESULT dwErr = SHGetFolderPath(nullptr, CSIDL_DESKTOPDIRECTORY, nullptr, 0/*SHGFP_TYPE_CURRENT*/, dmpfile);
 		if (FAILED(dwErr))
 		{
 			memset(dmpfile, 0, cchMaxDmpFile*sizeof(*dmpfile));
@@ -730,11 +739,11 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 				_wcscat_c(dmpfile, cchMaxDmpFile, L"\\");
 
 			_wcscat_c(dmpfile, cchMaxDmpFile, L"ConEmuTrap");
-			CreateDirectory(dmpfile, NULL);
+			CreateDirectory(dmpfile, nullptr);
 
 			INT_PTR nLen = lstrlen(dmpfile);
 			dmpfile[nLen++] = L'\\'; dmpfile[nLen] = 0;
-			FormatDumpName(dmpfile+nLen, cchMaxDmpFile-nLen, dwProcessId, (gpSrv->DbgInfo.bDebuggerRequestDump!=FALSE), bFull);
+			FormatDumpName(dmpfile+nLen, cchMaxDmpFile-nLen, dwProcessId, (this->bDebuggerRequestDump!=FALSE), bFull);
 
 			bRc = true;
 		}
@@ -743,8 +752,8 @@ bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchM
 	return bRc;
 }
 
-// gpSrv->dwRootProcess
-void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR asConfirmText /*= NULL*/, BOOL bTreeBreak /*= FALSE*/)
+// gpWorker->RootProcessPid()
+void DebuggerInfo::WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR asConfirmText /*= nullptr*/, BOOL bTreeBreak /*= FALSE*/)
 {
 	// 2 - minidump, 3 - fulldump
 	const auto nConfirmDumpType = ConfirmDumpType(dwProcessId, asConfirmText);
@@ -754,13 +763,13 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 		return;
 	}
 
-	MINIDUMP_TYPE dumpType = (nConfirmDumpType == 2) ? MiniDumpNormal : MiniDumpWithFullMemory;
+	MINIDUMP_TYPE dumpType = (nConfirmDumpType == DumpProcessType::MiniDump) ? MiniDumpNormal : MiniDumpWithFullMemory;
 
 	// Т.к. в режиме "ProcessTree" мы пишем пачку дампов - спрашивать тип дампа будем один раз.
 	if (IsDumpMulti() // several processes were attached
-		&& (gpSrv->DbgInfo.debugDumpProcess <= DumpProcessType::AskUser)) // 2 - minidump, 3 - fulldump
+		&& (this->debugDumpProcess <= DumpProcessType::AskUser)) // 2 - minidump, 3 - fulldump
 	{
-		gpSrv->DbgInfo.debugDumpProcess = nConfirmDumpType;
+		this->debugDumpProcess = nConfirmDumpType;
 	}
 
 	if (bTreeBreak)
@@ -769,8 +778,8 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 	}
 
 	bool bDumpSucceeded = false;
-	HANDLE hDmpFile = NULL;
-	//HMODULE hDbghelp = NULL;
+	HANDLE hDmpFile = nullptr;
+	//HMODULE hDbghelp = nullptr;
 	wchar_t szErrInfo[MAX_PATH*2];
 
 	wchar_t szTitle[64];
@@ -782,71 +791,71 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 	typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
 	        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
 	        PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
-	MiniDumpWriteDump_t MiniDumpWriteDump_f = NULL;
+	MiniDumpWriteDump_t MiniDumpWriteDump_f = nullptr;
 
 	while (GetSaveDumpName(dwProcessId, (dumpType == MiniDumpWithFullMemory), dmpfile, countof(dmpfile)))
 	{
-		if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != NULL)
+		if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != nullptr)
 		{
-			CloseHandle(hDmpFile); hDmpFile = NULL;
+			CloseHandle(hDmpFile); hDmpFile = nullptr;
 		}
 
-		hDmpFile = CreateFileW(dmpfile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL|FILE_FLAG_WRITE_THROUGH, NULL);
+		hDmpFile = CreateFileW(dmpfile, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL|FILE_FLAG_WRITE_THROUGH, nullptr);
 
 		if (hDmpFile == INVALID_HANDLE_VALUE)
 		{
 			DWORD nErr = GetLastError();
 			swprintf_c(szErrInfo, L"Can't create debug dump file\n%s\nErrCode=0x%08X\n\nChoose another name?", dmpfile, nErr);
 
-			if (MessageBoxW(NULL, szErrInfo, szTitle, MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
+			if (MessageBoxW(nullptr, szErrInfo, szTitle, MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
 				break;
 
 			continue; // еще раз выбрать
 		}
 
-		if (!gpSrv->DbgInfo.hDbghelp)
+		if (!this->hDbghelp)
 		{
-			gpSrv->DbgInfo.hDbghelp = LoadLibraryW(L"Dbghelp.dll");
+			this->hDbghelp = LoadLibraryW(L"Dbghelp.dll");
 
-			if (gpSrv->DbgInfo.hDbghelp == NULL)
+			if (this->hDbghelp == nullptr)
 			{
 				DWORD nErr = GetLastError();
 				swprintf_c(szErrInfo, L"Can't load debug library 'Dbghelp.dll'\nErrCode=0x%08X\n\nTry again?", nErr);
 
-				if (MessageBoxW(NULL, szErrInfo, szTitle, MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
+				if (MessageBoxW(nullptr, szErrInfo, szTitle, MB_YESNO|MB_SYSTEMMODAL|MB_ICONSTOP)!=IDYES)
 					break;
 
 				continue; // еще раз выбрать
 			}
 		}
 
-		if (gpSrv->DbgInfo.MiniDumpWriteDump_f)
+		if (this->MiniDumpWriteDump_f)
 		{
-			MiniDumpWriteDump_f = (MiniDumpWriteDump_t)gpSrv->DbgInfo.MiniDumpWriteDump_f;
+			MiniDumpWriteDump_f = (MiniDumpWriteDump_t)this->MiniDumpWriteDump_f;
 		}
 		else if (!MiniDumpWriteDump_f)
 		{
-			MiniDumpWriteDump_f = (MiniDumpWriteDump_t)GetProcAddress(gpSrv->DbgInfo.hDbghelp, "MiniDumpWriteDump");
+			MiniDumpWriteDump_f = (MiniDumpWriteDump_t)GetProcAddress(this->hDbghelp, "MiniDumpWriteDump");
 
 			if (!MiniDumpWriteDump_f)
 			{
 				DWORD nErr = GetLastError();
 				swprintf_c(szErrInfo, L"Can't locate 'MiniDumpWriteDump' in library 'Dbghelp.dll', ErrCode=%u", nErr);
-				MessageBoxW(NULL, szErrInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+				MessageBoxW(nullptr, szErrInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 				break;
 			}
 
-			gpSrv->DbgInfo.MiniDumpWriteDump_f = (FARPROC)MiniDumpWriteDump_f;
+			this->MiniDumpWriteDump_f = (FARPROC)MiniDumpWriteDump_f;
 		}
 
 		if (MiniDumpWriteDump_f)
 		{
 			MINIDUMP_EXCEPTION_INFORMATION mei = {dwThreadId};
 			EXCEPTION_POINTERS ep = {pExceptionRecord};
-			ep.ContextRecord = NULL; // Непонятно, откуда его можно взять
+			ep.ContextRecord = nullptr; // Непонятно, откуда его можно взять
 			mei.ExceptionPointers = &ep;
 			mei.ClientPointers = FALSE;
-			PMINIDUMP_EXCEPTION_INFORMATION pmei = NULL; // пока
+			PMINIDUMP_EXCEPTION_INFORMATION pmei = nullptr; // пока
 			_printf("Creating minidump: ");
 			_wprintf(dmpfile);
 			_printf("...");
@@ -858,18 +867,18 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 			                    hDmpFile,
 			                    dumpType,
 			                    pmei,
-			                    NULL, NULL);
+			                    nullptr, nullptr);
 
 			if (!lbDumpRc)
 			{
 				DWORD nErr = GetLastError();
 				swprintf_c(szErrInfo, L"MiniDumpWriteDump failed.\nErrorCode=0x%08X", nErr);
 				_printf("\nFailed, ErrorCode=0x%08X\n", nErr);
-				MessageBoxW(NULL, szErrInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
+				MessageBoxW(nullptr, szErrInfo, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL);
 			}
 			else
 			{
-				int iLeft = (gpSrv->DbgInfo.nWaitTreeBreaks > 0) ? (gpSrv->DbgInfo.nWaitTreeBreaks - 1) : 0;
+				int iLeft = (this->nWaitTreeBreaks > 0) ? (this->nWaitTreeBreaks - 1) : 0;
 				swprintf_c(szErrInfo, L"\nMiniDumpWriteDump succeeded, %i left\n", iLeft);
 				bDumpSucceeded = true;
 			}
@@ -879,7 +888,7 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 
 	} // end while (GetSaveDumpName(dwProcessId, (dumpType == MiniDumpWithFullMemory), dmpfile, countof(dmpfile)))
 
-	if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != NULL)
+	if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != nullptr)
 	{
 		CloseHandle(hDmpFile);
 	}
@@ -887,11 +896,11 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 
 	// В Win2k еще не было функции "отцепиться от процесса"
 	if ((gnOsVer >= 0x0501)
-		&& bDumpSucceeded && gpSrv->DbgInfo.bUserRequestDump
+		&& bDumpSucceeded && this->bUserRequestDump
 		// И все дампы были созданы
-		&& (gpSrv->DbgInfo.nWaitTreeBreaks <= 1)
+		&& (this->nWaitTreeBreaks <= 1)
 		// И это не ключи /DEBUGEXE или /DEBUGTREE
-		&& !gpSrv->DbgInfo.pszDebuggingCmdLine
+		&& !this->szDebuggingCmdLine
 		)
 	{
 		// По завершении создания дампов - выйти
@@ -899,7 +908,7 @@ void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExcep
 	}
 }
 
-void ProcessDebugEvent()
+void DebuggerInfo::ProcessDebugEvent()
 {
 	static wchar_t wszDbgText[1024];
 	static char szDbgText[1024];
@@ -910,9 +919,9 @@ void ProcessDebugEvent()
 	DWORD dwErr = GetLastError();
 	#endif
 	static bool bFirstExitThreadEvent = false; // Чтобы вывести на экран подсказку по возможностям "дебаггера"
-	//HMODULE hCOMDLG32 = NULL;
+	//HMODULE hCOMDLG32 = nullptr;
 	//typedef BOOL (WINAPI* GetSaveFileName_t)(LPOPENFILENAMEW lpofn);
-	//GetSaveFileName_t _GetSaveFileName = NULL;
+	//GetSaveFileName_t _GetSaveFileName = nullptr;
 	DWORD dwContinueStatus = DBG_EXCEPTION_NOT_HANDLED;
 
 
@@ -944,7 +953,7 @@ void ProcessDebugEvent()
 				if (!bFirstExitThreadEvent && evt.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT)
 				{
 					bFirstExitThreadEvent = true;
-					if (gpSrv->DbgInfo.debugDumpProcess == DumpProcessType::None)
+					if (this->debugDumpProcess == DumpProcessType::None)
 					{
 						_printf(CE_CONEMUC_NAME_A ": Press Ctrl+Break to create minidump of debugging process\n");
 					}
@@ -957,26 +966,26 @@ void ProcessDebugEvent()
 
 				if (evt.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT)
 				{
-					gpSrv->DbgInfo.nProcessCount++;
+					this->nProcessCount++;
 
-					_ASSERTE(gpSrv->DbgInfo.pDebugTreeProcesses!=NULL);
+					_ASSERTE(this->pDebugTreeProcesses!=nullptr);
 					CEDebugProcessInfo pi = {evt.dwProcessId};
-					gpSrv->DbgInfo.pDebugTreeProcesses->Set(evt.dwProcessId, pi);
+					this->pDebugTreeProcesses->Set(evt.dwProcessId, pi);
 
 					UpdateDebuggerTitle();
 				}
 				else if (evt.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT)
 				{
 					CEDebugProcessInfo pi = {};
-					if (gpSrv->DbgInfo.pDebugTreeProcesses
-						&& gpSrv->DbgInfo.pDebugTreeProcesses->Get(evt.dwProcessId, &pi, true)
+					if (this->pDebugTreeProcesses
+						&& this->pDebugTreeProcesses->Get(evt.dwProcessId, &pi, true)
 						&& pi.hProcess)
 					{
 						CloseHandle(pi.hProcess);
 					}
 
-					if (gpSrv->DbgInfo.nProcessCount > 0)
-						gpSrv->DbgInfo.nProcessCount--;
+					if (this->nProcessCount > 0)
+						this->nProcessCount--;
 
 					UpdateDebuggerTitle();
 				}
@@ -997,7 +1006,7 @@ void ProcessDebugEvent()
 					WCHAR FileName[1];
 				};
 				typedef BOOL (WINAPI* GetFileInformationByHandleEx_t)(HANDLE hFile, int FileInformationClass, LPVOID lpFileInformation, DWORD dwBufferSize);
-				static GetFileInformationByHandleEx_t _GetFileInformationByHandleEx = NULL;
+				static GetFileInformationByHandleEx_t _GetFileInformationByHandleEx = nullptr;
 
 				switch (evt.dwDebugEventCode)
 				{
@@ -1157,7 +1166,7 @@ void ProcessDebugEvent()
 					}
 				}
 
-				BOOL bDumpOnBreakPoint = gpSrv->DbgInfo.bDebuggerRequestDump;
+				BOOL bDumpOnBreakPoint = this->bDebuggerRequestDump;
 
 				// Если просили цеплять к отладчику создаваемые дочерние процессы
 				// или сделать дампы пачки процессов сразу
@@ -1166,14 +1175,14 @@ void ProcessDebugEvent()
 				{
 					// Когда отладчик цепляется к процессу в первый раз - возникает EXCEPTION_BREAKPOINT
 					CEDebugProcessInfo pi = {};
-					if (gpSrv->DbgInfo.pDebugTreeProcesses
-						&& gpSrv->DbgInfo.pDebugTreeProcesses->Get(evt.dwProcessId, &pi))
+					if (this->pDebugTreeProcesses
+						&& this->pDebugTreeProcesses->Get(evt.dwProcessId, &pi))
 					{
 						if (!pi.bWasBreak)
 						{
 							pi.bWasBreak = TRUE;
-							gpSrv->DbgInfo.pDebugTreeProcesses->Set(evt.dwProcessId, pi);
-							if (gpSrv->DbgInfo.bUserRequestDump)
+							this->pDebugTreeProcesses->Set(evt.dwProcessId, pi);
+							if (this->bUserRequestDump)
 								bDumpOnBreakPoint = TRUE;
 						}
 						else
@@ -1183,8 +1192,8 @@ void ProcessDebugEvent()
 					}
 				}
 
-				if (gpSrv->DbgInfo.bDebuggerRequestDump
-					|| (!lbNonContinuable && !gpSrv->DbgInfo.bDebugProcessTree
+				if (this->bDebuggerRequestDump
+					|| (!lbNonContinuable && !this->bDebugProcessTree
 						&& (evt.u.Exception.ExceptionRecord.ExceptionCode != MS_VC_THREADNAME_EXCEPTION)
 						&& (evt.u.Exception.ExceptionRecord.ExceptionCode != EXCEPTION_BREAKPOINT))
 					|| (IsDumpMulti()
@@ -1192,27 +1201,27 @@ void ProcessDebugEvent()
 							|| (bDumpOnBreakPoint && (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT))))
 					)
 				{
-					BOOL bGenerateTreeBreak = gpSrv->DbgInfo.bDebugProcessTree
-						&& (gpSrv->DbgInfo.bDebuggerRequestDump || lbNonContinuable);
+					BOOL bGenerateTreeBreak = this->bDebugProcessTree
+						&& (this->bDebuggerRequestDump || lbNonContinuable);
 
-					if (gpSrv->DbgInfo.bDebugProcessTree
+					if (this->bDebugProcessTree
 						&& !bGenerateTreeBreak
 						&& (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT))
 					{
-						if (gpSrv->DbgInfo.nWaitTreeBreaks == 0)
+						if (this->nWaitTreeBreaks == 0)
 						{
 							bGenerateTreeBreak = TRUE;
-							gpSrv->DbgInfo.nWaitTreeBreaks++;
+							this->nWaitTreeBreaks++;
 						}
 					}
 
-					gpSrv->DbgInfo.bDebuggerRequestDump = FALSE; // один раз
+					this->bDebuggerRequestDump = FALSE; // один раз
 
 					char szConfirm[2048];
 
 					if (evt.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
 					{
-						if (gpSrv->DbgInfo.debugDumpProcess >= DumpProcessType::AskUser || gpSrv->DbgInfo.bAutoDump)
+						if (this->debugDumpProcess >= DumpProcessType::AskUser || this->bAutoDump)
 							szConfirm[0] = 0;
 						else
 							lstrcpynA(szConfirm, szDbgText, countof(szConfirm));
@@ -1232,11 +1241,11 @@ void ProcessDebugEvent()
 
 					if (IsDumpMulti() && (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT))
 					{
-						if (gpSrv->DbgInfo.nWaitTreeBreaks > 0)
-							gpSrv->DbgInfo.nWaitTreeBreaks--;
+						if (this->nWaitTreeBreaks > 0)
+							this->nWaitTreeBreaks--;
 					}
 
-					gpSrv->DbgInfo.nDumpsCounter++;
+					this->nDumpsCounter++;
 				}
 
 				if (!lbNonContinuable /*|| (evt.u.Exception.ExceptionRecord.ExceptionCode==EXCEPTION_BREAKPOINT)*/)
@@ -1277,9 +1286,9 @@ void ProcessDebugEvent()
 					static int nPrefixLen = lstrlen(CONEMU_CONHOST_CREATED_MSG);
 					if (memcmp(pwszDbg, CONEMU_CONHOST_CREATED_MSG, nPrefixLen*sizeof(pwszDbg[0])) == 0)
 					{
-						LPWSTR pszEnd = NULL;
+						LPWSTR pszEnd = nullptr;
 						DWORD nConHostPID = wcstoul(pwszDbg+nPrefixLen, &pszEnd, 10);
-						if (nConHostPID && !gpSrv->DbgInfo.pDebugTreeProcesses->Get(nConHostPID, NULL))
+						if (nConHostPID && !this->pDebugTreeProcesses->Get(nConHostPID, nullptr))
 						{
 							AttachConHost(nConHostPID);
 						}
@@ -1322,24 +1331,24 @@ void ProcessDebugEvent()
 	//	FreeLibrary(hCOMDLG32);
 }
 
-void GenerateMiniDumpFromCtrlBreak()
+void DebuggerInfo::GenerateMiniDumpFromCtrlBreak()
 {
 	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
 	typedef BOOL (WINAPI* DebugBreakProcess_t)(HANDLE Process);
-	DebugBreakProcess_t DebugBreakProcess_f = (DebugBreakProcess_t)(hKernel ? GetProcAddress(hKernel, "DebugBreakProcess") : NULL);
+	DebugBreakProcess_t DebugBreakProcess_f = (DebugBreakProcess_t)(hKernel ? GetProcAddress(hKernel, "DebugBreakProcess") : nullptr);
 	if (DebugBreakProcess_f)
 	{
 		_printf(CE_CONEMUC_NAME_A ": Sending DebugBreak event to process\n");
-		gpSrv->DbgInfo.bDebuggerRequestDump = TRUE;
+		this->bDebuggerRequestDump = TRUE;
 		DWORD dwErr = 0;
-		_ASSERTE(gpSrv->hRootProcess!=NULL);
-		if (!DebugBreakProcess_f(gpSrv->hRootProcess))
+		_ASSERTE(gpWorker->RootProcessHandle()!=nullptr);
+		if (!DebugBreakProcess_f(gpWorker->RootProcessHandle()))
 		{
 			dwErr = GetLastError();
 			//_ASSERTE(FALSE && dwErr==0);
 			_printf(CE_CONEMUC_NAME_A ": Sending DebugBreak event failed, Code=x%X, WriteMiniDump on the fly\n", dwErr);
-			gpSrv->DbgInfo.bDebuggerRequestDump = FALSE;
-			WriteMiniDump(gpSrv->dwRootProcess, gpSrv->dwRootThread, NULL);
+			this->bDebuggerRequestDump = FALSE;
+			WriteMiniDump(gpWorker->RootProcessId(), gpWorker->RootThreadId(), nullptr);
 		}
 	}
 	else
@@ -1348,34 +1357,24 @@ void GenerateMiniDumpFromCtrlBreak()
 	}
 }
 
-DebuggerInfo::DebuggerInfo()
+void DebuggerInfo::GenerateTreeDebugBreak(DWORD nExcludePID)
 {
-}
-
-DebuggerInfo::~DebuggerInfo()
-{
-	SafeCloseHandle(hDebugReady);
-	SafeCloseHandle(hDebugThread);
-}
-
-void GenerateTreeDebugBreak(DWORD nExcludePID)
-{
-	_ASSERTE(gpSrv->DbgInfo.bDebugProcessTree);
+	_ASSERTE(this->bDebugProcessTree);
 
 	DWORD dwErr = 0;
 	HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
 	typedef BOOL (WINAPI* DebugBreakProcess_t)(HANDLE Process);
-	DebugBreakProcess_t DebugBreakProcess_f = (DebugBreakProcess_t)(hKernel ? GetProcAddress(hKernel, "DebugBreakProcess") : NULL);
+	DebugBreakProcess_t DebugBreakProcess_f = (DebugBreakProcess_t)(hKernel ? GetProcAddress(hKernel, "DebugBreakProcess") : nullptr);
 	if (DebugBreakProcess_f)
 	{
 		_printf(CE_CONEMUC_NAME_A ": Sending DebugBreak event to processes:");
 
-		DWORD nPID = 0; HANDLE hProcess = NULL;
+		DWORD nPID = 0; HANDLE hProcess = nullptr;
 
-		MMap<DWORD,CEDebugProcessInfo>* pDebugTreeProcesses = gpSrv->DbgInfo.pDebugTreeProcesses;
+		MMap<DWORD,CEDebugProcessInfo>* pDebugTreeProcesses = this->pDebugTreeProcesses;
 		CEDebugProcessInfo pi = {};
 
-		if (pDebugTreeProcesses->GetNext(NULL, &nPID, &pi))
+		if (pDebugTreeProcesses->GetNext(nullptr, &nPID, &pi))
 		{
 			while (nPID)
 			{
@@ -1390,7 +1389,7 @@ void GenerateTreeDebugBreak(DWORD nExcludePID)
 
 					if (DebugBreakProcess_f(pi.hProcess))
 					{
-						gpSrv->DbgInfo.nWaitTreeBreaks++;
+						this->nWaitTreeBreaks++;
 					}
 					else
 					{
