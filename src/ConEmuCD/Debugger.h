@@ -31,11 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/CEStr.h"
 #include "../common/MArray.h"
 #include "../common/MMap.h"
-
-void ProcessDebugEvent();
-int AttachRootProcessHandle();
-int RunDebugger();
-void GenerateMiniDumpFromCtrlBreak();
+#include "../common/MModule.h"
 
 struct CEDebugProcessInfo
 {
@@ -67,16 +63,16 @@ public:
 	
 	void WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_RECORD *pExceptionRecord, LPCSTR asConfirmText = NULL, BOOL bTreeBreak = FALSE);
 	void GenerateTreeDebugBreak(DWORD nExcludePID);
-	void PrintDebugInfo();
-	void UpdateDebuggerTitle();
-	DumpProcessType ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= NULL*/);
+	void PrintDebugInfo() const;
+	void UpdateDebuggerTitle() const;
+	DumpProcessType ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= NULL*/) const;
 	int RunDebugger();
-	HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = nullptr);
-	int AttachRootProcessHandle();
-	void AttachConHost(DWORD nConHostPID);
-	bool IsDumpMulti();
-	wchar_t* FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, bool bTrap, bool bFull);
-	bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpfile, DWORD cchMaxDmpFile);
+	HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = nullptr) const;
+	int AttachRootProcessHandle() const;
+	void AttachConHost(DWORD nConHostPID) const;
+	bool IsDumpMulti() const;
+	wchar_t* FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, bool bTrap, bool bFull) const;
+	bool GetSaveDumpName(DWORD dwProcessId, bool bFull, wchar_t* dmpFile, DWORD cchMaxDmpFile) const;
 	void ProcessDebugEvent();
 	void GenerateMiniDumpFromCtrlBreak();
 
@@ -100,6 +96,6 @@ public:
 	DWORD nAutoInterval = 0; // milliseconds
 	LONG  nDumpsCounter = 0;
 
-	HMODULE hDbghelp = nullptr;
+	MModule dbgHelpDll{};
 	FARPROC MiniDumpWriteDump_f = nullptr;
 };
