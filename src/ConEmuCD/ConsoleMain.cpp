@@ -270,7 +270,7 @@ namespace StdCon {
 			ghConWnd = NULL;
 
 			// Issue 998: Need to wait, while real console will appear
-			// gpSrv->hRootProcess еще не открыт
+			// gpWorker->RootProcessHandle() еще не открыт
 			HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, parent_pid);
 			while (hProcess && hProcess != INVALID_HANDLE_VALUE)
 			{
@@ -1434,8 +1434,8 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
 		gbNoCreateProcess = TRUE;
 		gbAlienMode = TRUE;
-		gpSrv->dwRootProcess = GetCurrentProcessId();
-		gpSrv->hRootProcess = GetCurrentProcess();
+		gpWorker->SetRootProcessId(GetCurrentProcessId());
+		gpWorker->SetRootProcessHandle(GetCurrentProcess());
 		//gnConEmuPID = ...;
 		gpszRunCmd = (wchar_t*)calloc(1,2);
 		CreateColorerHeader();
@@ -1614,8 +1614,8 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	{
 		// Process already started, just attach RealConsole to ConEmu (VirtualConsole)
 		lbRc = TRUE;
-		pi.hProcess = gpSrv->hRootProcess;
-		pi.dwProcessId = gpSrv->dwRootProcess;
+		pi.hProcess = gpWorker->RootProcessHandle();
+		pi.dwProcessId = gpWorker->RootProcessId();
 	}
 	else
 	{
@@ -1934,11 +1934,11 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		//DWORD dwWaitGui = -1;
 
 		nExitPlaceStep = 500;
-		gpSrv->hRootProcess  = pi.hProcess; pi.hProcess = NULL; // Required for Win2k
-		gpSrv->hRootThread   = pi.hThread;  pi.hThread  = NULL;
-		gpSrv->dwRootProcess = pi.dwProcessId;
-		gpSrv->dwRootThread  = pi.dwThreadId;
-		gpSrv->dwRootStartTime = GetTickCount();
+		gpWorker->SetRootProcessHandle(pi.hProcess); pi.hProcess = nullptr; // Required for Win2k
+		gpWorker->SetRootThreadHandle(pi.hThread);  pi.hThread  = nullptr;
+		gpWorker->SetRootProcessId(pi.dwProcessId);
+		gpWorker->SetRootThreadId(pi.dwThreadId);
+		gpWorker->SetRootStartTime(GetTickCount());
 		// Скорее всего процесс в консольном списке уже будет
 		gpSrv->processes->CheckProcessCount(TRUE);
 
@@ -2001,7 +2001,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 
 						if (nWaitExitEvent == WAIT_OBJECT_0)
 						{
-							dwWaitRoot = WaitForSingleObject(gpSrv->hRootProcess, 0);
+							dwWaitRoot = WaitForSingleObject(gpWorker->RootProcessHandle(), 0);
 							if (dwWaitRoot == WAIT_OBJECT_0)
 							{
 								gbTerminateOnCtrlBreak = FALSE;
@@ -2033,8 +2033,8 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	{
 		// В режиме ComSpec нас интересует завершение ТОЛЬКО дочернего процесса
 		_ASSERTE(pi.dwProcessId!=0);
-		gpSrv->dwRootProcess = pi.dwProcessId;
-		gpSrv->dwRootThread = pi.dwThreadId;
+		gpWorker->SetRootProcessId(pi.dwProcessId);
+		gpWorker->SetRootThreadId(pi.dwThreadId);
 	}
 
 	/* *************************** */
@@ -2090,7 +2090,7 @@ wait:
 
 
 		// Root ExitCode
-		GetExitCodeProcess(gpSrv->hRootProcess, &gnExitCode);
+		GetExitCodeProcess(gpWorker->RootProcessHandle(), &gnExitCode);
 
 		nExitPlaceStep = EPS_ROOTPROCFINISHED/*560*/;
 
@@ -2178,21 +2178,21 @@ wrap:
 		iRc = 0;
 	}
 
-	if (gnRunMode == RunMode::Server && gpSrv->hRootProcess)
-		GetExitCodeProcess(gpSrv->hRootProcess, &gnExitCode);
+	if (gnRunMode == RunMode::Server && gpWorker->RootProcessHandle())
+		GetExitCodeProcess(gpWorker->RootProcessHandle(), &gnExitCode);
 	else if (pi.hProcess)
 		GetExitCodeProcess(pi.hProcess, &gnExitCode);
 	// Ассерт может быть если был запрос на аттач, который не удался
 	_ASSERTE(gnExitCode!=STILL_ACTIVE || (iRc==CERR_ATTACHFAILED) || (iRc==CERR_RUNNEWCONSOLE) || gbAsyncRun);
 
 	// Log exit code
-	if (((gnRunMode == RunMode::Server && gpSrv->hRootProcess) ? gpSrv->dwRootProcess : pi.dwProcessId) != 0)
+	if (((gnRunMode == RunMode::Server && gpWorker->RootProcessHandle()) ? gpWorker->RootProcessId() : pi.dwProcessId) != 0)
 	{
 		wchar_t szInfo[80];
-		LPCWSTR pszName = (gnRunMode == RunMode::Server && gpSrv->hRootProcess) ? L"Shell" : L"Process";
-		DWORD nPID = (gnRunMode == RunMode::Server && gpSrv->hRootProcess) ? gpSrv->dwRootProcess : pi.dwProcessId;
+		LPCWSTR pszName = (gnRunMode == RunMode::Server && gpWorker->RootProcessHandle()) ? L"Shell" : L"Process";
+		DWORD nPID = (gnRunMode == RunMode::Server && gpWorker->RootProcessHandle()) ? gpWorker->RootProcessId() : pi.dwProcessId;
 		if (gnExitCode >= 0x80000000)
-			swprintf_c(szInfo, L"\n%s PID=%u ExitCode=%u (%i) {x%08X}", pszName, nPID, gnExitCode, (int)gnExitCode, gnExitCode);
+			swprintf_c(szInfo, L"\n%s PID=%u ExitCode=%u (%i) {x%08X}", pszName, nPID, gnExitCode, static_cast<int>(gnExitCode), gnExitCode);
 		else
 			swprintf_c(szInfo, L"\n%s PID=%u ExitCode=%u {x%08X}", pszName, nPID, gnExitCode, gnExitCode);
 		LogFunction(szInfo+1);
@@ -2256,7 +2256,7 @@ wrap:
 				DWORD nValid = 0;
 				for (DWORD i = 0; i < nProcCount; i++)
 				{
-					if ((nProcesses[i] != gpSrv->dwRootProcess)
+					if ((nProcesses[i] != gpWorker->RootProcessId())
 						#ifndef WIN64
 						&& (nProcesses[i] != gpSrv->processes->nNtvdmPID)
 						#endif
@@ -2733,10 +2733,10 @@ int CheckAttachProcess()
 	int liArgsFailed = 0;
 	wchar_t szFailMsg[512]; szFailMsg[0] = 0;
 	DWORD nProcesses[20] = {};
-	DWORD nProcCount;
+	DWORD nProcCount = 0;
 	BOOL lbRootExists = FALSE;
 	wchar_t szProc[255] = {}, szTmp[10] = {};
-	DWORD nFindId;
+	DWORD nFindId = 0;
 
 	if (gpSrv->hRootProcessGui)
 	{
@@ -2750,19 +2750,19 @@ int CheckAttachProcess()
 		}
 		else
 		{
-			DWORD nPid; GetWindowThreadProcessId(gpSrv->hRootProcessGui, &nPid);
-			if (!gpSrv->dwRootProcess || (gpSrv->dwRootProcess != nPid))
+			DWORD nPid = 0; GetWindowThreadProcessId(gpSrv->hRootProcessGui, &nPid);
+			if (gpWorker->RootProcessId() && nPid && (gpWorker->RootProcessId() != nPid))
 			{
 				swprintf_c(szFailMsg, L"Attach of GUI application was requested,\n"
 					L"but PID(%u) of HWND(0x%08X) does not match Root(%u)!",
-					nPid, LODWORD(gpSrv->hRootProcessGui), gpSrv->dwRootProcess);
+					nPid, LODWORD(gpSrv->hRootProcessGui), gpWorker->RootProcessId());
 				LogString(szFailMsg);
 				liArgsFailed = 2;
 				// will return CERR_CARGUMENT
 			}
 		}
 	}
-	else if (pfnGetConsoleProcessList==NULL)
+	else if (pfnGetConsoleProcessList == nullptr)
 	{
 		wcscpy_c(szFailMsg, L"Attach to console app was requested, but required WinXP or higher!");
 		LogString(szFailMsg);
@@ -2775,8 +2775,9 @@ int CheckAttachProcess()
 
 		if ((nProcCount == 1) && gbCreatingHiddenConsole)
 		{
-			// Подождать, пока вызвавший процесс прицепится к нашей созданной консоли
-			DWORD nStart = GetTickCount(), nMaxDelta = 30000, nDelta = 0;
+			const DWORD nStart = GetTickCount();
+			const DWORD nMaxDelta = 30000;
+			DWORD nDelta = 0;
 			while (nDelta < nMaxDelta)
 			{
 				Sleep(100);
@@ -2799,22 +2800,22 @@ int CheckAttachProcess()
 		// не помню, зачем такая проверка была введена, но (nProcCount > 2) мешает аттачу.
 		// в момент запуска сервера (/ATTACH /PID=n) еще жив родительский (/ATTACH /NOCMD)
 		//// Если cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
-		else if ((gpSrv->dwRootProcess != 0) || (nProcCount > 2))
+		else if ((gpWorker->RootProcessId() != 0) || (nProcCount > 2))
 		{
-			lbRootExists = (gpSrv->dwRootProcess == 0);
+			lbRootExists = (gpWorker->RootProcessId() == 0);
 			// И ругаться только под отладчиком
 			nFindId = 0;
 
-			for (int n = ((int)nProcCount-1); n >= 0; n--)
+			for (int n = (static_cast<int>(nProcCount)-1); n >= 0; n--)
 			{
 				if (szProc[0]) wcscat_c(szProc, L", ");
 
 				swprintf_c(szTmp, L"%i", nProcesses[n]);
 				wcscat_c(szProc, szTmp);
 
-				if (gpSrv->dwRootProcess)
+				if (gpWorker->RootProcessId())
 				{
-					if (!lbRootExists && nProcesses[n] == gpSrv->dwRootProcess)
+					if (!lbRootExists && nProcesses[n] == gpWorker->RootProcessId())
 						lbRootExists = TRUE;
 				}
 				else if ((nFindId == 0) && (nProcesses[n] != gnSelfPID))
@@ -2826,20 +2827,20 @@ int CheckAttachProcess()
 				}
 			}
 
-			if ((gpSrv->dwRootProcess == 0) && (nFindId != 0))
+			if ((gpWorker->RootProcessId() == 0) && (nFindId != 0))
 			{
-				gpSrv->dwRootProcess = nFindId;
+				gpWorker->SetRootProcessId(nFindId);
 				lbRootExists = TRUE;
 			}
 
-			if ((gpSrv->dwRootProcess != 0) && !lbRootExists)
+			if ((gpWorker->RootProcessId() != 0) && !lbRootExists)
 			{
-				swprintf_c(szFailMsg, L"Attach to GUI was requested, but\n" L"root process (%u) does not exists", gpSrv->dwRootProcess);
+				swprintf_c(szFailMsg, L"Attach to GUI was requested, but\n" L"root process (%u) does not exists", gpWorker->RootProcessId());
 				LogString(szFailMsg);
 				liArgsFailed = 5;
 				//will return CERR_CARGUMENT
 			}
-			else if ((gpSrv->dwRootProcess == 0) && (nProcCount > 2))
+			else if ((gpWorker->RootProcessId() == 0) && (nProcCount > 2))
 			{
 				swprintf_c(szFailMsg, L"Attach to GUI was requested, but\n" L"there is more than 2 console processes: %s\n", szProc);
 				LogString(szFailMsg);
@@ -3553,7 +3554,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			// Для режима RunMode::RM_COMSPEC нужно будет сохранить "длинный вывод"
 			wchar_t* pszEnd = NULL, *pszStart;
 			pszStart = szArg.ms_Val+14;
-			gpSrv->dwParentFarPID = wcstoul(pszStart, &pszEnd, 10);
+			gpWorker->SetParentFarPid(wcstoul(pszStart, &pszEnd, 10));
 		}
 		else if (wcscmp(szArg, L"/CREATECON")==0)
 		{
@@ -3598,25 +3599,25 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 				pszStart = szArg.ms_Val+5;
 			}
 
-			gpSrv->dwRootProcess = wcstoul(pszStart, &pszEnd, 10);
+			gpWorker->SetRootProcessId(wcstoul(pszStart, &pszEnd, 10));
 
-			if ((gpSrv->dwRootProcess == 0) && gbCreatingHiddenConsole)
+			if ((gpWorker->RootProcessId() == 0) && gbCreatingHiddenConsole)
 			{
-				gpSrv->dwRootProcess = WaitForRootConsoleProcess(30000);
+				gpWorker->SetRootProcessId(WaitForRootConsoleProcess(30000));
 			}
 
 			// --
-			//if (gpSrv->dwRootProcess)
+			//if (gpWorker->RootProcessId())
 			//{
-			//	_ASSERTE(gpSrv->hRootProcess==NULL); // Еще не должен был быть открыт
-			//	gpSrv->hRootProcess = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, gpSrv->dwRootProcess);
-			//	if (gpSrv->hRootProcess == NULL)
+			//	_ASSERTE(gpWorker->RootProcessHandle()==NULL); // Еще не должен был быть открыт
+			//	gpWorker->RootProcessHandle() = OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, gpWorker->RootProcessId());
+			//	if (gpWorker->RootProcessHandle() == NULL)
 			//	{
-			//		gpSrv->hRootProcess = OpenProcess(SYNCHRONIZE|PROCESS_QUERY_INFORMATION, FALSE, gpSrv->dwRootProcess);
+			//		gpWorker->RootProcessHandle() = OpenProcess(SYNCHRONIZE|PROCESS_QUERY_INFORMATION, FALSE, gpWorker->RootProcessId());
 			//	}
 			//}
 
-			if (gbAlternativeAttach && gpSrv->dwRootProcess)
+			if (gbAlternativeAttach && gpWorker->RootProcessId())
 			{
 				// Если процесс был запущен "с консольным окном"
 				if (ghConWnd)
@@ -3626,12 +3627,12 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 					#endif
 				}
 
-				BOOL bAttach = StdCon::AttachParentConsole(gpSrv->dwRootProcess);
+				BOOL bAttach = StdCon::AttachParentConsole(gpWorker->RootProcessId());
 				if (!bAttach)
 				{
 					gbInShutdown = TRUE;
 					gbAlwaysConfirmExit = FALSE;
-					LogString(L"CERR_CARGUMENT: (gbAlternativeAttach && gpSrv->dwRootProcess)");
+					LogString(L"CERR_CARGUMENT: (gbAlternativeAttach && gpWorker->RootProcessId())");
 					return CERR_CARGUMENT;
 				}
 
@@ -3643,7 +3644,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 				_ASSERTE(ghConWnd!=NULL);
 				#endif
 			}
-			else if (gpSrv->dwRootProcess == 0)
+			else if (gpWorker->RootProcessId() == 0)
 			{
 				LogString("CERR_CARGUMENT: Attach to GUI was requested, but invalid PID specified");
 				_printf("Attach to GUI was requested, but invalid PID specified:\n");
@@ -4093,7 +4094,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			}
 		}
 
-		if (!gbAlternativeAttach && !(gbAttachMode & am_DefTerm) && !gpSrv->dwRootProcess)
+		if (!gbAlternativeAttach && !(gbAttachMode & am_DefTerm) && !gpWorker->RootProcessId())
 		{
 			// В принципе, сюда мы можем попасть при запуске, например: "ConEmuC.exe /ADMIN /ROOT cmd"
 			// Но только не при запуске "из ConEmu" (т.к. будут установлены gpSrv->hGuiWnd, gnConEmuPID)
@@ -4116,7 +4117,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 	{
 		_ASSERTE(gnRunMode == RunMode::Undefined);
 		// Run debugger thread and wait for its completion
-		int iDbgRc = RunDebugger();
+		int iDbgRc = gpWorker->DbgInfo().RunDebugger();
 		return iDbgRc;
 	}
 
@@ -4872,7 +4873,7 @@ void SendStarted()
 			IsKeyboardLayoutChanged(pIn->StartStop.dwKeybLayout);
 			break;
 		case RunMode::Comspec:
-			pIn->StartStop.nParentFarPID = gpSrv->dwParentFarPID;
+			pIn->StartStop.nParentFarPID = gpWorker->ParentFarPid();
 			pIn->StartStop.nStarted = sst_ComspecStart;
 			break;
 		default:
@@ -5251,8 +5252,8 @@ CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi)
 			break;
 		case RunMode::Comspec:
 			pIn->StartStop.nStarted = sst_ComspecStop;
-			pIn->StartStop.nOtherPID = gpSrv->dwRootProcess;
-			pIn->StartStop.nParentFarPID = gpSrv->dwParentFarPID;
+			pIn->StartStop.nOtherPID = gpWorker->RootProcessId();
+			pIn->StartStop.nParentFarPID = gpWorker->ParentFarPid();
 			break;
 		default:
 			pIn->StartStop.nStarted = sst_AppStop;
@@ -7031,22 +7032,22 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 		}
 		else if (gpWorker->IsDebugProcess())
 		{
-			DWORD nWait = WaitForSingleObject(gpSrv->hRootProcess, 0);
+			const DWORD nWait = WaitForSingleObject(gpWorker->RootProcessHandle(), 0);
 			#ifdef _DEBUG
-			DWORD nErr = GetLastError();
+			const DWORD nErr = GetLastError();
 			#endif
 			if (nWait == WAIT_OBJECT_0)
 			{
 				_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
 				PRINT_COMSPEC(L"Ctrl+Break received, debugger will be stopped\n", 0);
-				//if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(gpSrv->dwRootProcess);
+				//if (pfnDebugActiveProcessStop) pfnDebugActiveProcessStop(gpWorker->RootProcessId());
 				//gpSrv->DbgInfo.bDebuggerActive = FALSE;
 				//gbInShutdown = TRUE;
 				SetTerminateEvent(ste_HandlerRoutine);
 			}
 			else
 			{
-				GenerateMiniDumpFromCtrlBreak();
+				gpWorker->DbgInfo().GenerateMiniDumpFromCtrlBreak();
 			}
 		}
 	}

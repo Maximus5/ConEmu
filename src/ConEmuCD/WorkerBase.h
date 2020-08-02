@@ -56,9 +56,13 @@ public:
 	void SetRootThreadId(DWORD tid);
 	void SetRootThreadHandle(HANDLE threadHandle);
 	void SetRootStartTime(DWORD ticks);
+	void SetParentFarPid(DWORD pid);
 	DWORD RootProcessId() const;
 	DWORD RootThreadId() const;
+	DWORD RootProcessStartTime() const;
+	DWORD ParentFarPid() const;
 	HANDLE RootProcessHandle() const;
+	void CloseRootProcessHandles();
 
 	bool IsDebuggerActive() const;
 	bool IsDebugProcess() const;
@@ -72,7 +76,7 @@ public:
 protected:
 	HANDLE hRootProcess = nullptr, hRootThread = nullptr;
 	DWORD dwRootProcess = 0, dwRootThread = 0, dwRootStartTime = 0;
-	DWORD dwParentFarPID = 0;
+	DWORD dwParentFarPid = 0;
 
 	std::unique_ptr<DebuggerInfo> dbgInfo;
 };

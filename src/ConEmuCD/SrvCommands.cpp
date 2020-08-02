@@ -215,9 +215,9 @@ bool TerminateOneProcess(DWORD nPID, DWORD& nErrCode)
 
 	if (gpSrv && gpSrv->pConsole)
 	{
-		if (nPID == gpSrv->dwRootProcess)
+		if (nPID == gpWorker->RootProcessId())
 		{
-			hProcess = gpSrv->hRootProcess;
+			hProcess = gpWorker->RootProcessHandle();
 			bNeedClose = FALSE;
 		}
 	}
@@ -282,7 +282,7 @@ bool TerminateProcessGroup(int nCount, LPDWORD pPID, DWORD& nErrCode)
 
 		for (int i = 0; i < nCount; i++)
 		{
-			if (pPID[i] == gpSrv->dwRootProcess)
+			if (pPID[i] == gpWorker->RootProcessId())
 				continue;
 
 			hProcess = OpenProcess(PROCESS_TERMINATE|PROCESS_SET_QUOTA, FALSE, pPID[i]);
@@ -624,8 +624,8 @@ BOOL cmd_FarLoaded(CESERVER_REQ& in, CESERVER_REQ** out)
 	swprintf_c(szTitle, L"cmd_FarLoaded: %s", PointToName(szExe));
 	swprintf_c(szDbg,
 		L"cmd_FarLoaded was received\nServerPID=%u, name=%s\nFarPID=%u\nRootPID=%u\nDisablingConfirm=%s",
-		GetCurrentProcessId(), PointToName(szExe), in.hdr.nSrcPID, gpSrv->dwRootProcess,
-		((gbAutoDisableConfirmExit || (gnConfirmExitParm == 1)) && gpSrv->dwRootProcess == in.dwData[0]) ? L"YES" :
+		GetCurrentProcessId(), PointToName(szExe), in.hdr.nSrcPID, gpWorker->RootProcessId(),
+		((gbAutoDisableConfirmExit || (gnConfirmExitParm == 1)) && gpWorker->RootProcessId() == in.dwData[0]) ? L"YES" :
 		gbAlwaysConfirmExit ? L"AlreadyOFF" : L"NO");
 	MessageBox(NULL, szDbg, szTitle, MB_SYSTEMMODAL);
 	#endif
@@ -633,7 +633,7 @@ BOOL cmd_FarLoaded(CESERVER_REQ& in, CESERVER_REQ** out)
 	// gnConfirmExitParm==1 получается, когда консоль запускалась через "-new_console"
 	// Если плагин фара загрузился - думаю можно отключить подтверждение закрытия консоли
 	if ((gbAutoDisableConfirmExit || (gnConfirmExitParm == RConStartArgs::eConfAlways))
-		&& gpSrv->dwRootProcess == in.dwData[0])
+		&& gpWorker->RootProcessId() == in.dwData[0])
 	{
 		// FAR нормально запустился, считаем что все ок и подтверждения закрытия консоли не потребуется
 		DisableAutoConfirmExit(TRUE);
@@ -1074,8 +1074,7 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		DisableAutoConfirmExit(FALSE);
 
-		SafeCloseHandle(gpSrv->hRootProcess);
-		SafeCloseHandle(gpSrv->hRootThread);
+		gpWorker->CloseRootProcessHandles();
 
 		//apiShowWindow(ghConWnd, SW_SHOWMINIMIZED);
 		apiSetForegroundWindow(hGuiApp);
@@ -1105,7 +1104,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	DWORD nPID = in.StartStop.dwPID;
 	DWORD nPrevAltServerPID = gpSrv->dwAltServerPID;
 
-	if (!gpSrv->processes->nProcessStartTick && (gpSrv->dwRootProcess == in.StartStop.dwPID))
+	if (!gpSrv->processes->nProcessStartTick && (gpWorker->RootProcessId() == in.StartStop.dwPID))
 	{
 		gpSrv->processes->nProcessStartTick = GetTickCount();
 	}
@@ -1200,7 +1199,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			|| (in.StartStop.nStarted == sst_AppStop))
 	{
 		// Issue 623: Не удалять из списка корневой процесс _сразу_, пусть он "отвалится" обычным образом
-		if (nPID != gpSrv->dwRootProcess)
+		if (nPID != gpWorker->RootProcessId())
 		{
 			// Удалить процесс из списка
 			// _ASSERTE могут приводить к ошибкам блокировки gpSrv->processes->csProc в других потоках. Но ассертов быть не должно )
@@ -1543,7 +1542,7 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 	}
 	else
 	{
-		_ASSERTEX((in.AttachGuiApp.nPID == gpSrv->dwRootProcess || in.AttachGuiApp.nPID == gpSrv->Portable.nPID) && gpSrv->dwRootProcess && in.AttachGuiApp.nPID);
+		_ASSERTEX((in.AttachGuiApp.nPID == gpWorker->RootProcessId() || in.AttachGuiApp.nPID == gpSrv->Portable.nPID) && gpWorker->RootProcessId() && in.AttachGuiApp.nPID);
 
 		wchar_t szInfo[MAX_PATH*2];
 

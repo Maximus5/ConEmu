@@ -91,7 +91,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 			msprintf(psz, (psz - szCountInfo), L"\r\n                        ActivePID: %u, Name: ", nPID);
 			psz += lstrlen(psz);
 			CProcessData procName;
-			procName.GetProcessName(nPID, psz, (psz - szCountInfo), NULL, 0, NULL);
+			procName.GetProcessName(nPID, psz, LODWORD(psz - szCountInfo), nullptr, 0, nullptr);
 		}
 
 		LogString(szCountInfo);
@@ -203,7 +203,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 	if (gbAlwaysConfirmExit  // если уже не сброшен
 	        && gbAutoDisableConfirmExit // требуется ли вообще такая проверка (10 сек)
 	        && anPrevCount > 1 // если в консоли был зафиксирован запущенный процесс
-	        && gpSrv->hRootProcess) // и корневой процесс был вообще запущен
+	        && gpWorker->RootProcessHandle()) // и корневой процесс был вообще запущен
 	{
 		if ((dwProcessLastCheckTick - nProcessStartTick) > CHECK_ROOTOK_TIMEOUT)
 		{
@@ -211,7 +211,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 			// эта проверка выполняется один раз
 			gbAutoDisableConfirmExit = FALSE;
 			// 10 сек. прошло, теперь необходимо проверить, а жив ли процесс?
-			DWORD dwProcWait = WaitForSingleObject(gpSrv->hRootProcess, 0);
+			DWORD dwProcWait = WaitForSingleObject(gpWorker->RootProcessHandle(), 0);
 
 			if (dwProcWait == WAIT_OBJECT_0)
 			{
@@ -227,9 +227,9 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 		}
 	}
 
-	if (gbRootWasFoundInCon == 0 && nProcessCount > 1 && gpSrv->hRootProcess && gpSrv->dwRootProcess)
+	if (gbRootWasFoundInCon == 0 && nProcessCount > 1 && gpWorker->RootProcessHandle() && gpWorker->RootProcessId())
 	{
-		if (WaitForSingleObject(gpSrv->hRootProcess, 0) == WAIT_OBJECT_0)
+		if (WaitForSingleObject(gpWorker->RootProcessHandle(), 0) == WAIT_OBJECT_0)
 		{
 			gbRootWasFoundInCon = 2; // в консоль процесс не попал, и уже завершился
 		}
@@ -237,7 +237,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 		{
 			for (UINT n = 0; n < nProcessCount; n++)
 			{
-				if (gpSrv->dwRootProcess == pnProcesses[n])
+				if (gpWorker->RootProcessId() == pnProcesses[n])
 				{
 					// Процесс попал в консоль
 					gbRootWasFoundInCon = 1; break;
@@ -278,7 +278,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 		&& ((dwProcessLastCheckTick - nProcessStartTick) > CHECK_ROOTSTART_TIMEOUT)
 		&& (nWaitDbg1 = WaitForSingleObject(ghExitQueryEvent,0)) == WAIT_TIMEOUT
 		// выходить можно только если корневой процесс завершился
-		&& gpSrv->hRootProcess && ((nWaitDbg2 = WaitForSingleObject(gpSrv->hRootProcess,0)) != WAIT_TIMEOUT))
+		&& gpWorker->RootProcessHandle() && ((nWaitDbg2 = WaitForSingleObject(gpWorker->RootProcessHandle(),0)) != WAIT_TIMEOUT))
 	{
 		anPrevCount = 2; // чтобы сработало следующее условие
 		bForcedTo2 = true;
@@ -564,7 +564,7 @@ void ConProcess::CheckXRequests(MSectionLock& CS)
 			// Did process appeared in console?
 			if (x.tick)
 			{
-				if (x.pid == gpSrv->dwRootProcess && gbRootWasFoundInCon)
+				if (x.pid == gpWorker->RootProcessId() && gbRootWasFoundInCon)
 					x.tick = 0;
 				else
 				{
@@ -701,8 +701,8 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 
 	if (gpWorker->IsDebuggerActive())
 	{
-		//if (gpSrv->hRootProcess) {
-		//	if (WaitForSingleObject(gpSrv->hRootProcess, 0) == WAIT_OBJECT_0) {
+		//if (gpWorker->RootProcessHandle()) {
+		//	if (WaitForSingleObject(gpWorker->RootProcessHandle(), 0) == WAIT_OBJECT_0) {
 		//		nProcessCount = 1;
 		//		return TRUE;
 		//	}
@@ -753,8 +753,8 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 			HWND hConWnd = GetConsoleWindow(); nErr = GetLastError();
 			HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE); nErr = GetLastError();
 			CONSOLE_SCREEN_BUFFER_INFO sbi = {}; BOOL bSbi = GetConsoleScreenBufferInfo(hOut, &sbi); nErr = GetLastError();
-			DWORD nWait = WaitForSingleObject(gpSrv->hRootProcess, 0);
-			GetExitCodeProcess(gpSrv->hRootProcess, &nErr);
+			DWORD nWait = WaitForSingleObject(gpWorker->RootProcessHandle(), 0);
+			GetExitCodeProcess(gpWorker->RootProcessHandle(), &nErr);
 			#endif
 
 			// Это значит в Win7 свалился conhost.exe
@@ -883,8 +883,8 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 		_ASSERTE(pnProcesses[0] == gnSelfPID);
 		pnProcesses[0] = gnSelfPID;
 
-		HANDLE hRootProcess = gpSrv->hRootProcess;
-		DWORD  nRootPID = gpSrv->dwRootProcess;
+		HANDLE hRootProcess = gpWorker->RootProcessHandle();
+		DWORD  nRootPID = gpWorker->RootProcessId();
 
 		if (hRootProcess || gpSrv->Portable.hProcess)
 		{
@@ -919,7 +919,7 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 			if (!IsWindow(gpSrv->hRootProcessGui))
 			{
 				// Process handle must be opened!
-				_ASSERTE(gpSrv->hRootProcess != NULL);
+				_ASSERTE(gpWorker->RootProcessHandle() != NULL);
 				// Fin
 				pnProcesses[1] = 0;
 				lbChanged = nProcessCount != 1;
@@ -942,22 +942,22 @@ bool ConProcess::GetRootInfo(CESERVER_REQ* pReq)
 {
 	if (!pReq)
 		return false;
-	if (!gpSrv || !gpSrv->dwRootProcess || !gpSrv->hRootProcess)
+	if (!gpSrv || !gpWorker->RootProcessId() || !gpWorker->RootProcessHandle())
 		return false;
 
-	DWORD nWait = WaitForSingleObject(gpSrv->hRootProcess, 0);
+	DWORD nWait = WaitForSingleObject(gpWorker->RootProcessHandle(), 0);
 	pReq->RootInfo.bRunning = (nWait == WAIT_TIMEOUT);
-	pReq->RootInfo.nPID = gpSrv->dwRootProcess;
+	pReq->RootInfo.nPID = gpWorker->RootProcessId();
 	pReq->RootInfo.nExitCode = (nWait == WAIT_TIMEOUT) ? STILL_ACTIVE : 999;
-	GetExitCodeProcess(gpSrv->hRootProcess, &pReq->RootInfo.nExitCode);
+	GetExitCodeProcess(gpWorker->RootProcessHandle(), &pReq->RootInfo.nExitCode);
 	if (nWait == WAIT_TIMEOUT)
 	{
-		pReq->RootInfo.nUpTime = (GetTickCount() - gpSrv->dwRootStartTime);
+		pReq->RootInfo.nUpTime = (GetTickCount() - gpWorker->RootProcessStartTime());
 	}
 	else
 	{
 		FILETIME ftCreation = {}, ftExit = {}, ftKernel = {}, ftUser = {};
-		GetProcessTimes(gpSrv->hRootProcess, &ftCreation, &ftExit, &ftKernel, &ftUser);
+		GetProcessTimes(gpWorker->RootProcessHandle(), &ftCreation, &ftExit, &ftKernel, &ftUser);
 		__int64 upTime = ((*(uint64_t*)&ftExit) - (*(uint64_t*)&ftCreation)) / 10000LL;
 		pReq->RootInfo.nUpTime = (LODWORD(upTime) == upTime) ? LODWORD(upTime) : (DWORD)-1;
 	}

@@ -283,7 +283,7 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 	xf_validate(NULL);
 	#endif
 
-	if (!gbNonGuiMode && (gpSrv->dwParentFarPID != 0))
+	if (!gbNonGuiMode && (gpWorker->ParentFarPid() != 0))
 	{
 		//// Вернуть размер буфера (высота И ширина)
 		//if (gpSrv->sbi.dwSize.X && gpSrv->sbi.dwSize.Y) {

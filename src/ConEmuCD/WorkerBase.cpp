@@ -79,6 +79,11 @@ void WorkerBase::SetRootStartTime(const DWORD ticks)
 	dwRootStartTime = ticks;
 }
 
+void WorkerBase::SetParentFarPid(DWORD pid)
+{
+	dwParentFarPid = pid;
+}
+
 DWORD WorkerBase::RootProcessId() const
 {
 	return dwRootProcess;
@@ -89,9 +94,25 @@ DWORD WorkerBase::RootThreadId() const
 	return dwRootThread;
 }
 
+DWORD WorkerBase::RootProcessStartTime() const
+{
+	return dwRootStartTime;
+}
+
+DWORD WorkerBase::ParentFarPid() const
+{
+	return dwParentFarPid;
+}
+
 HANDLE WorkerBase::RootProcessHandle() const
 {
 	return hRootProcess;
+}
+
+void WorkerBase::CloseRootProcessHandles()
+{
+	SafeCloseHandle(this->hRootProcess);
+	SafeCloseHandle(this->hRootThread);
 }
 
 bool WorkerBase::IsDebuggerActive() const
