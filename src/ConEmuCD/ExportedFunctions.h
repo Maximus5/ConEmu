@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 enum class ConsoleMainMode : int
 {
-	Server = 0,
+	Normal = 0,
 	AltServer = 1,
 	Comspec = 2,
 	GuiMacro = 3,  // could be used by integrators

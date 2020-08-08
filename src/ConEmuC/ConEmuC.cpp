@@ -468,7 +468,7 @@ int main(int argc, char** argv)
 	}
 
 	// Main dll entry point for Server & ComSpec
-	iRc = lfConsoleMain2(ConsoleMainMode::Server);
+	iRc = lfConsoleMain2(ConsoleMainMode::Normal);
 	// Exiting
 	gfHandlerRoutine = nullptr;
 

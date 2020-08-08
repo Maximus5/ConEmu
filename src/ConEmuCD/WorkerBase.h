@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <memory>
+#include "../common/MModule.h"
 
 class DebuggerInfo;
 enum class DumpProcessType;
@@ -41,7 +42,7 @@ class WorkerBase
 public:
 	virtual ~WorkerBase() = default;
 
-	WorkerBase() = default;
+	WorkerBase();
 
 	WorkerBase(const WorkerBase&) = delete;
 	WorkerBase(WorkerBase&&) = delete;
@@ -76,11 +77,15 @@ public:
 	bool IsDebuggerActive() const;
 	bool IsDebugProcess() const;
 	bool IsDebugProcessTree() const;
+	bool IsDebugCmdLineSet() const;
 	int SetDebuggingPid(const wchar_t* pidList);
 	int SetDebuggingExe(const wchar_t* commandLine, bool debugTree);
 	void SetDebugDumpType(DumpProcessType dumpType);
 	void SetDebugAutoDump(const wchar_t* interval);
 	DebuggerInfo& DbgInfo();
+
+	void CheckKeyboardLayout();
+	bool IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode = NULL);
 
 protected:
 	struct RootProcessInfo
@@ -106,6 +111,13 @@ protected:
 	} consoleInfo = {};
 
 	std::unique_ptr<DebuggerInfo> dbgInfo;
+
+	// Keyboard layout name
+	wchar_t szKeybLayout[KL_NAMELENGTH+1] = L"";
+	typedef BOOL (__stdcall *FGetConsoleKeyboardLayoutName)(wchar_t*);
+	FGetConsoleKeyboardLayoutName pfnGetConsoleKeyboardLayoutName = nullptr;
+
+	MModule kernel32;
 };
 
-extern WorkerBase* gpWorker;
+extern WorkerBase* gpWorker;  // NOLINT(readability-redundant-declaration)

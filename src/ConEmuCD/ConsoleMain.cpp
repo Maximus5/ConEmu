@@ -136,7 +136,6 @@ WARNING("В некоторых случаях не срабатывает ни E
 
 
 
-FGetConsoleKeyboardLayoutName pfnGetConsoleKeyboardLayoutName = NULL;
 FGetConsoleProcessList pfnGetConsoleProcessList = NULL;
 FDebugActiveProcessStop pfnDebugActiveProcessStop = NULL;
 FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit = NULL;
@@ -579,7 +578,7 @@ void LoadSrvInfoMap(LPCWSTR pszExeName = NULL, LPCWSTR pszDllName = NULL)
 			{
 				if (pInfo->hConEmuRoot && IsWindow(pInfo->hConEmuRoot))
 				{
-					WorkerServer::Instance().SetConEmuWindows(pInfo->hConEmuRoot, pInfo->hConEmuWndDc, pInfo->hConEmuWndBack);
+					WorkerServer::SetConEmuWindows(pInfo->hConEmuRoot, pInfo->hConEmuWndDc, pInfo->hConEmuWndBack);
 				}
 				if (pInfo->nServerPID && pInfo->nServerPID != gnSelfPID)
 				{
@@ -944,7 +943,7 @@ void SetupCreateDumpOnException()
 
 	// По умолчанию - фильтр в AltServer не включается, но в настройках ConEmu есть опция
 	// gpSet->isConsoleExceptionHandler --> CECF_ConExcHandler
-	_ASSERTE((gnRunMode == RunMode::AltServer) && (gpSrv->pConsole && (gpSrv->pConsole->hdr.Flags & CECF_ConExcHandler)));
+	_ASSERTE((gnRunMode == RunMode::AltServer) && gpSrv && (gpSrv->pConsole && (gpSrv->pConsole->hdr.Flags & CECF_ConExcHandler)));
 
 	// Far 3.x, telnet, Vim, etc.
 	// В этих программах ConEmuCD.dll может загружаться для работы с альтернативными буферами и TrueColor
@@ -1094,6 +1093,69 @@ bool CheckAndWarnHookSetters()
 	return bHooked;
 }
 
+// Is used both in normal (server) and debugging mode
+int AttachRootProcessHandle()
+{
+	if (gpWorker->IsDebugCmdLineSet())
+	{
+		_ASSERTE(gpWorker->IsDebuggerActive());
+		return 0; // Started from DebuggingThread
+	}
+
+	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
+	DWORD dwErr = 0;
+	// Нужно открыть HANDLE корневого процесса
+	_ASSERTE(gpWorker->RootProcessHandle()==nullptr || gpWorker->RootProcessHandle()==GetCurrentProcess());
+	if (gpWorker->RootProcessId() == GetCurrentProcessId())
+	{
+		if (gpWorker->RootProcessHandle() == nullptr)
+		{
+			gpWorker->SetRootProcessHandle(GetCurrentProcess());
+		}
+	}
+	else if (gpWorker->IsDebuggerActive())
+	{
+		if (gpWorker->RootProcessHandle() == nullptr)
+		{
+			gpWorker->SetRootProcessHandle(gpWorker->DbgInfo().GetProcessHandleForDebug(gpWorker->RootProcessId()));
+		}
+	}
+	else if (gpWorker->RootProcessHandle() == nullptr)
+	{
+		gpWorker->SetRootProcessHandle(OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, gpWorker->RootProcessId()));
+		if (gpWorker->RootProcessHandle() == nullptr)
+		{
+			gpWorker->SetRootProcessHandle(OpenProcess(SYNCHRONIZE|PROCESS_QUERY_INFORMATION, FALSE, gpWorker->RootProcessId()));
+		}
+	}
+
+	if (!gpWorker->RootProcessHandle())
+	{
+		dwErr = GetLastError();
+		wchar_t* lpMsgBuf = nullptr;
+		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, dwErr,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&lpMsgBuf), 0, nullptr);
+		_printf("\nCan't open process (%i) handle, ErrCode=0x%08X, Description:\n", //-V576
+		        gpWorker->RootProcessId(), dwErr, (lpMsgBuf == nullptr) ? L"<Unknown error>" : lpMsgBuf);
+
+		if (lpMsgBuf) LocalFree(lpMsgBuf);
+		SetLastError(dwErr);
+
+		return CERR_CREATEPROCESS;
+	}
+
+	if (gpWorker->IsDebuggerActive())
+	{
+		wchar_t szTitle[64];
+		swprintf_c(szTitle, L"Debugging PID=%u, Debugger PID=%u", gpWorker->RootProcessId(), GetCurrentProcessId());
+		SetTitle(szTitle);
+
+		gpWorker->DbgInfo().UpdateDebuggerTitle();
+	}
+
+	return 0;
+}
+
 
 
 
@@ -1118,7 +1180,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	}
 	#endif
 
-	if (anWorkMode == ConsoleMainMode::Server)
+	if (anWorkMode == ConsoleMainMode::Normal)
 	{
 		if (!IsDebuggerPresent())
 		{
@@ -1136,23 +1198,39 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		#endif
 	}
 
+	LPCWSTR pszFullCmdLine = asCmdLine;
+	wchar_t szDebugCmdLine[MAX_PATH];
+	lstrcpyn(szDebugCmdLine, pszFullCmdLine ? pszFullCmdLine : L"", countof(szDebugCmdLine));
 
 	switch (anWorkMode)
 	{
-	case ConsoleMainMode::Server:
-		gnRunMode = RunMode::Server;
-		gpWorker = new WorkerServer;
-		break;
 	case ConsoleMainMode::AltServer:
 		gnRunMode = RunMode::AltServer;
-		gpWorker = new WorkerServer;
 		break;
 	case ConsoleMainMode::GuiMacro:
 		gnRunMode = RunMode::GuiMacro;
 		break;
 	default:
-		gnRunMode = RunMode::Undefined;
+		gnRunMode = DetectRunModeFromCmdLine(pszFullCmdLine);
+		break;
+	}
+
+	switch (gnRunMode)
+	{
+	case RunMode::Server:
+	case RunMode::AltServer:
+	case RunMode::AutoAttach:
+		gpWorker = new WorkerServer;
+		break;
+	case RunMode::Comspec:
+	case RunMode::Undefined:
 		gpWorker = new WorkerComspec;
+		break;
+	case RunMode::GuiMacro:
+		break;
+	default:
+		_ASSERTE(FALSE && "Run mode should be known already");
+		break;
 	}
 
 	// Check linker fails!
@@ -1231,7 +1309,6 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	DWORD nCurrentPIDCount = 0, nCurrentPIDs[64] = {};
 	if (hKernel)
 	{
-		pfnGetConsoleKeyboardLayoutName = (FGetConsoleKeyboardLayoutName)GetProcAddress(hKernel, "GetConsoleKeyboardLayoutNameW");
 		pfnGetConsoleProcessList = (FGetConsoleProcessList)GetProcAddress(hKernel, "GetConsoleProcessList");
 		pfnGetConsoleDisplayMode = (FGetConsoleDisplayMode)GetProcAddress(hKernel, "GetConsoleDisplayMode");
 	}
@@ -1288,10 +1365,6 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	{
 		ghExitQueryEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
 	}
-
-	LPCWSTR pszFullCmdLine = asCmdLine;
-	wchar_t szDebugCmdLine[MAX_PATH];
-	lstrcpyn(szDebugCmdLine, pszFullCmdLine ? pszFullCmdLine : L"", countof(szDebugCmdLine));
 
 	if (gnRunMode == RunMode::GuiMacro)
 	{
@@ -1457,7 +1530,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	/* ******************************** */
 	if (gnRunMode == RunMode::Server || gnRunMode == RunMode::AltServer || gnRunMode == RunMode::AutoAttach)
 	{
-		_ASSERTE((anWorkMode != ConsoleMainMode::Server) == (gnRunMode == RunMode::AltServer));
+		_ASSERTE((anWorkMode != ConsoleMainMode::Normal) == (gnRunMode == RunMode::AltServer));
 		if ((iRc = gpWorker->Init()) != 0)
 		{
 			nExitPlaceStep = 250;
@@ -2341,9 +2414,12 @@ wrap:
 	}
 
 AltServerDone:
+	// In alternative server mode worker lives in background
+	if (gnRunMode != RunMode::AltServer)
+	{
+		SafeDelete(gpWorker);
+	}
 
-	SafeDelete(gpWorker);
-	
 	ShutdownSrvStep(L"Finalizing done");
 	UNREFERENCED_PARAMETER(gpszCheck4NeedCmd);
 	UNREFERENCED_PARAMETER(nWaitDebugExit);
@@ -2451,7 +2527,7 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 	}
 
 	// Если поток RefreshThread был "заморожен" при запуске другого сервера
-	if ((gpSrv->nRefreshFreezeRequests > 0) && !(Parm->Flags & slsf_OnAllocConsole))
+	if (gpSrv && (gpSrv->nRefreshFreezeRequests > 0) && !(Parm->Flags & slsf_OnAllocConsole))
 	{
 		WorkerServer::Instance().ThawRefreshThread();
 	}
@@ -2474,7 +2550,7 @@ DoEvents:
 		Parm->hFarCommitEvent = OpenEvent(EVENT_MODIFY_STATE, FALSE, szName);
 		_ASSERTE(Parm->hFarCommitEvent!=NULL);
 
-		if (Parm->Flags & slsf_FarCommitForce)
+		if (Parm->Flags & slsf_FarCommitForce && gpSrv)
 		{
 			gpSrv->bFarCommitRegistered = TRUE;
 		}
@@ -2482,13 +2558,16 @@ DoEvents:
 
 	if (Parm->Flags & slsf_GetCursorEvent)
 	{
-		_ASSERTE(gpSrv->hCursorChangeEvent != NULL); // Уже должно быть создано!
+		_ASSERTE(gpSrv && gpSrv->hCursorChangeEvent != NULL); // Уже должно быть создано!
 
 		swprintf_c(szName, CECURSORCHANGEEVENT, gnSelfPID);
 		Parm->hCursorChangeEvent = OpenEvent(EVENT_MODIFY_STATE, FALSE, szName);
 		_ASSERTE(Parm->hCursorChangeEvent!=NULL);
 
-		gpSrv->bCursorChangeRegistered = TRUE;
+		if (gpSrv)
+		{
+			gpSrv->bCursorChangeRegistered = TRUE;
+		}
 	}
 
 	if (Parm->Flags & slsf_OnFreeConsole)
@@ -2810,7 +2889,7 @@ wchar_t* ParseConEmuSubst(LPCWSTR asCmd)
 		}
 	}
 #endif
-	
+
 	//_ASSERTE(FALSE && "Continue to ParseConEmuSubst");
 
 	wchar_t* pszCmdCopy = nullptr;
@@ -3566,6 +3645,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		else if (wcsncmp(szArg, L"/F", 2)==0 && szArg[2] && szArg[3] == L'=')
 		{
 			wchar_t* pszEnd = NULL;
+			_ASSERTE(gpSrv != nullptr);
 
 			if (wcsncmp(szArg, L"/FN=", 4)==0) //-V112
 			{
@@ -3902,21 +3982,21 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 	}
 
 	// Some checks or actions
-	if (eStateCheck || eExecAction)
+	if ((eStateCheck != ConEmuStateCheck::None) || (eExecAction != ConEmuExecAction::None))
 	{
 		int iFRc = CERR_CARGUMENT;
 
-		if (eStateCheck)
+		if (eStateCheck != ConEmuStateCheck::None)
 		{
 			bool bOn = DoStateCheck(eStateCheck);
 			iFRc = bOn ? CERR_CHKSTATE_ON : CERR_CHKSTATE_OFF;
 		}
-		else if (eExecAction)
+		else if (eExecAction != ConEmuExecAction::None)
 		{
 			iFRc = DoExecAction(eExecAction, lsCmdLine, MacroInst);
 		}
 
-		// И сразу на выход
+		// immediately go to exit
 		gbInShutdown = TRUE;
 		return iFRc;
 	}
@@ -4309,6 +4389,115 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 	return 0;
 }
 
+RunMode DetectRunModeFromCmdLine(LPCWSTR asCmdLine)
+{
+	CmdArg szArg;
+	CEStr szExeTest;
+	LPCWSTR pwszStartCmdLine = asCmdLine;
+	LPCWSTR lsCmdLine = asCmdLine;
+	LPCWSTR pszArgStarts = nullptr;
+
+	if (!lsCmdLine || !*lsCmdLine)
+	{
+		return RunMode::Undefined;
+	}
+
+	RunMode runMode = RunMode::Undefined;
+
+	while ((lsCmdLine = NextArg(lsCmdLine, szArg, &pszArgStarts)))
+	{
+		if ((szArg[0] == L'/' || szArg[0] == L'-')
+		        && (szArg[1] == L'?' || ((szArg[1] & ~0x20) == L'H'))
+		        && szArg[2] == 0)
+		{
+			break; // help requested
+		}
+
+		// Following code wants '/'style arguments
+		// Change '-'style to '/'style
+		if (szArg[0] == L'-')
+			szArg.SetAt(0, L'/');
+		else if (szArg[0] != L'/')
+			continue;
+
+		if ((wcscmp(szArg, L"/ADMIN")==0)
+			|| (wcscmp(szArg, L"/ATTACH")==0)
+			|| (wcsncmp(szArg, L"/GUIATTACH=", 11)==0)
+			|| (wcscmp(szArg, L"/NOCMD")==0)
+			|| (wcscmp(szArg, L"/ROOTEXE")==0)
+			|| (wcsncmp(szArg, L"/PID=", 5)==0 || wcsncmp(szArg, L"/TRMPID=", 8)==0
+			|| wcsncmp(szArg, L"/FARPID=", 8)==0 || wcsncmp(szArg, L"/CONPID=", 8)==0)
+			|| (wcsncmp(szArg, L"/GID=", 5)==0)
+			)
+		{
+			runMode = RunMode::Server;
+		}
+		else if ((lstrcmpi(szArg, L"/AUTOATTACH")==0) || (lstrcmpi(szArg, L"/ATTACHDEFTERM")==0))
+		{
+			if (lstrcmpi(szArg, L"/AUTOATTACH")==0)
+			{
+				runMode = RunMode::AutoAttach;
+				gbAttachMode |= am_Async;
+			}
+			else //if (lstrcmpi(szArg, L"/ATTACHDEFTERM")==0)
+			{
+				runMode = RunMode::Server;
+			}
+		}
+		else if (wcsncmp(szArg, L"/GHWND=", 7)==0)
+		{
+			if (runMode == RunMode::Undefined)
+			{
+				runMode = RunMode::Server;
+			}
+		}
+		// После этих аргументов - идет то, что передается в CreateProcess!
+		else if (lstrcmpi(szArg, L"/ROOT")==0)
+		{
+			runMode = RunMode::Server;
+			break; // lsCmdLine points to starting app
+		}
+		else if ((lstrcmpi(szArg, L"/ConInfo")==0)
+			|| (lstrcmpi(szArg, L"/CheckUnicode")==0))
+		{
+			break;
+		}
+		else if ((wcscmp(szArg, L"/CONFIRM") == 0)
+			|| (wcscmp(szArg, L"/CONFHALT") == 0)
+			|| (wcscmp(szArg, L"/CREATECON")==0)
+			|| (wcsncmp(szArg, L"/CONPID=", 8)==0)
+			|| (wcsncmp(szArg, L"/CINMODE=", 9)==0)
+			|| (lstrcmpi(szArg, L"/CONFIG")==0)
+			)
+		{
+			continue;
+		}
+		// COMSPEC (CreateProcess)!
+		else if (szArg[0] == L'/' && (((szArg[1] & ~0x20) == L'C') || ((szArg[1] & ~0x20) == L'K')))
+		{
+			if (szArg[2] == 0)  // "/c" или "/k"
+			{
+				runMode = RunMode::Comspec;
+			}
+
+			if (runMode == RunMode::Undefined && szArg[4] == 0
+			        && ((szArg[2] & ~0x20) == L'M') && ((szArg[3] & ~0x20) == L'D'))
+			{
+				_ASSERTE(FALSE && "'/cmd' obsolete switch. use /c, /k, /root");
+				runMode = RunMode::Server;
+			}
+
+			if (runMode == RunMode::Undefined)
+			{
+				runMode = RunMode::Comspec;
+			}
+			break; // lsCmdLine уже указывает на запускаемую программу
+		}
+	}
+
+	return runMode;
+}
+
 // Проверить, что nPID это "ConEmuC.exe" или "ConEmuC64.exe"
 bool IsMainServerPID(DWORD nPID)
 {
@@ -4392,7 +4581,7 @@ int ExitWaitForKey(DWORD vkKeys, LPCWSTR asConfirm, BOOL abNewLine, BOOL abDontS
 	GetNumberOfConsoleInputEvents(hIn, &nPostFlush);
 
 	DWORD nStartTick = 0, nDelta = 0;
-	
+
 	if (gbInShutdown)
 		goto wrap; // Event закрытия мог припоздниться
 
@@ -4654,6 +4843,14 @@ HWND FindConEmuByPID(DWORD anSuggestedGuiPID /*= 0*/)
 	return hConEmuWnd;
 }
 
+CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr()
+{
+	if (!gpSrv || !gpSrv->pAppMap)
+		return nullptr;
+	return gpSrv->pAppMap->Ptr();
+}
+
+
 void SendStarted()
 {
 	LogFunction(L"SendStarted");
@@ -4746,11 +4943,11 @@ void SendStarted()
 		{
 		case RunMode::Server:
 			pIn->StartStop.nStarted = sst_ServerStart;
-			IsKeyboardLayoutChanged(pIn->StartStop.dwKeybLayout);
+			gpWorker->IsKeyboardLayoutChanged(pIn->StartStop.dwKeybLayout);
 			break;
 		case RunMode::AltServer:
 			pIn->StartStop.nStarted = sst_AltServerStart;
-			IsKeyboardLayoutChanged(pIn->StartStop.dwKeybLayout);
+			gpWorker->IsKeyboardLayoutChanged(pIn->StartStop.dwKeybLayout);
 			break;
 		case RunMode::Comspec:
 			pIn->StartStop.nParentFarPID = gpWorker->ParentFarPid();
@@ -7148,146 +7345,5 @@ void DisableAutoConfirmExit(BOOL abFromFarPlugin)
 		gbAutoDisableConfirmExit = FALSE; gbAlwaysConfirmExit = FALSE;
 		// менять nProcessStartTick не нужно. проверка только по флажкам
 		//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
-	}
-}
-
-bool IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode /*= NULL*/)
-{
-	bool bChanged = false;
-
-	if (!gpSrv)
-	{
-		_ASSERTE(gpSrv!=NULL);
-		return false;
-	}
-
-	static bool bGetConsoleKeyboardLayoutNameImplemented = true;
-	if (bGetConsoleKeyboardLayoutNameImplemented && pfnGetConsoleKeyboardLayoutName)
-	{
-		wchar_t szCurKeybLayout[32] = L"";
-
-		//#ifdef _DEBUG
-		//wchar_t szDbgKeybLayout[KL_NAMELENGTH/*==9*/];
-		//BOOL lbGetRC = GetKeyboardLayoutName(szDbgKeybLayout); // -- не дает эффекта, поскольку "на процесс", а не на консоль
-		//#endif
-
-		// The expected result of GetConsoleKeyboardLayoutName is like "00000419"
-		BOOL bConApiRc = pfnGetConsoleKeyboardLayoutName(szCurKeybLayout) && szCurKeybLayout[0];
-
-		DWORD nErr = bConApiRc ? 0 : GetLastError();
-		if (pdwErrCode)
-			*pdwErrCode = nErr;
-
-		/*
-		if (!bConApiRc && (nErr == ERROR_GEN_FAILURE))
-		{
-			_ASSERTE(FALSE && "ConsKeybLayout failed");
-			MModule kernel(GetModuleHandle(L"kernel32.dll"));
-			BOOL (WINAPI* getLayoutName)(LPWSTR,int);
-			if (kernel.GetProcAddress("GetConsoleKeyboardLayoutNameW", getLayoutName))
-			{
-				bConApiRc = getLayoutName(szCurKeybLayout, countof(szCurKeybLayout));
-				nErr = bConApiRc ? 0 : GetLastError();
-			}
-		}
-		*/
-
-		if (!bConApiRc)
-		{
-			// If GetConsoleKeyboardLayoutName is not implemented in Windows, ERROR_MR_MID_NOT_FOUND or E_NOTIMPL will be returned.
-			// (there is no matching DOS/Win32 error code for NTSTATUS code returned)
-			// When this happens, we don't want to continue to call the function.
-			if (nErr == ERROR_MR_MID_NOT_FOUND || LOWORD(nErr) == LOWORD(E_NOTIMPL))
-			{
-				bGetConsoleKeyboardLayoutNameImplemented = false;
-			}
-
-			if (gpSrv->szKeybLayout[0])
-			{
-				// Log only first error per session
-				wcscpy_c(szCurKeybLayout, gpSrv->szKeybLayout);
-			}
-			else
-			{
-				wchar_t szErr[80];
-				swprintf_c(szErr, L"ConsKeybLayout failed with code=%u forcing to GetKeyboardLayoutName or 0409", nErr);
-				_ASSERTE(!bGetConsoleKeyboardLayoutNameImplemented && "ConsKeybLayout failed");
-				LogString(szErr);
-				if (!GetKeyboardLayoutName(szCurKeybLayout) || (szCurKeybLayout[0] == 0))
-				{
-					wcscpy_c(szCurKeybLayout, L"00000419");
-				}
-			}
-		}
-
-		if (szCurKeybLayout[0])
-		{
-			if (lstrcmpW(szCurKeybLayout, gpSrv->szKeybLayout))
-			{
-				#ifdef _DEBUG
-				wchar_t szDbg[128];
-				swprintf_c(szDbg,
-				          L"ConEmuC: InputLayoutChanged (GetConsoleKeyboardLayoutName returns) '%s'\n",
-				          szCurKeybLayout);
-				OutputDebugString(szDbg);
-				#endif
-
-				if (gpLogSize)
-				{
-					char szInfo[128]; wchar_t szWide[128];
-					swprintf_c(szWide, L"ConsKeybLayout changed from '%s' to '%s'", gpSrv->szKeybLayout, szCurKeybLayout);
-					WideCharToMultiByte(CP_ACP,0,szWide,-1,szInfo,128,0,0);
-					LogFunction(szInfo);
-				}
-
-				// Сменился
-				wcscpy_c(gpSrv->szKeybLayout, szCurKeybLayout);
-				bChanged = true;
-			}
-		}
-	}
-	else if (pdwErrCode)
-	{
-		*pdwErrCode = (DWORD)-1;
-	}
-
-	// The result, if possible
-	{
-		wchar_t *pszEnd = NULL; //szCurKeybLayout+8;
-		//WARNING("BUGBUG: 16 цифр не вернет"); -- тут именно 8 цифр. Это LayoutNAME, а не string(HKL)
-		// LayoutName: "00000409", "00010409", ...
-		// А HKL от него отличается, так что передаем DWORD
-		// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
-		pdwLayout = wcstoul(gpSrv->szKeybLayout, &pszEnd, 16);
-	}
-
-	return bChanged;
-}
-
-//WARNING("BUGBUG: x64 US-Dvorak"); - done
-void CheckKeyboardLayout()
-{
-	DWORD dwLayout = 0;
-
-	//WARNING("BUGBUG: 16 цифр не вернет"); -- тут именно 8 цифр. Это LayoutNAME, а не string(HKL)
-	// LayoutName: "00000409", "00010409", ...
-	// А HKL от него отличается, так что передаем DWORD
-	// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
-
-	if (IsKeyboardLayoutChanged(dwLayout))
-	{
-		// Сменился, Отошлем в GUI
-		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)); //-V119
-
-		if (pIn)
-		{
-			//memmove(pIn->Data, &dwLayout, 4);
-			pIn->dwData[0] = dwLayout;
-
-			CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-
-			ExecuteFreeResult(pOut);
-			ExecuteFreeResult(pIn);
-		}
 	}
 }

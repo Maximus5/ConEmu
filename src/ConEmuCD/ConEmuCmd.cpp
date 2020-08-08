@@ -77,10 +77,13 @@ PRAGMA_ERROR("AddConsoleAlias was not defined");
 
 WorkerComspec::~WorkerComspec()  // NOLINT(modernize-use-equals-default)
 {
+	_ASSERTE(gnRunMode == RunMode::Comspec || gnRunMode == RunMode::Undefined);
 }
 
 WorkerComspec::WorkerComspec()  // NOLINT(modernize-use-equals-default)
+	: WorkerBase()
 {
+	_ASSERTE(gnRunMode == RunMode::Comspec || gnRunMode == RunMode::Undefined);
 }
 
 int WorkerComspec::Init()

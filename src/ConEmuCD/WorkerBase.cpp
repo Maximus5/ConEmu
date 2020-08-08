@@ -37,6 +37,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 WorkerBase* gpWorker = nullptr;
 
+WorkerBase::WorkerBase()
+	: kernel32(GetModuleHandleW(L"kernel32.dll"))
+{
+	kernel32.GetProcAddress("GetConsoleKeyboardLayoutNameW", pfnGetConsoleKeyboardLayoutName);
+}
+
 void WorkerBase::Done(const int /*exitCode*/, const bool /*reportShutdown*/)
 {
 	dbgInfo.reset();
@@ -154,6 +160,13 @@ bool WorkerBase::IsDebugProcessTree() const
 	if (!dbgInfo)
 		return false;
 	return dbgInfo->bDebugProcessTree;
+}
+
+bool WorkerBase::IsDebugCmdLineSet() const
+{
+	if (!dbgInfo)
+		return false;
+	return !dbgInfo->szDebuggingCmdLine.IsEmpty();
 }
 
 int WorkerBase::SetDebuggingPid(const wchar_t* const pidList)
@@ -274,4 +287,156 @@ DebuggerInfo& WorkerBase::DbgInfo()
 	}
 
 	return *dbgInfo;
+}
+
+bool WorkerBase::IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode /*= NULL*/)
+{
+	bool bChanged = false;
+
+	if (!gpWorker)
+	{
+		_ASSERTE(gpWorker!=nullptr);
+		return false;
+	}
+
+	static bool bGetConsoleKeyboardLayoutNameImplemented = true;
+	if (bGetConsoleKeyboardLayoutNameImplemented && pfnGetConsoleKeyboardLayoutName)
+	{
+		wchar_t szCurKeybLayout[32] = L"";
+
+		//#ifdef _DEBUG
+		//wchar_t szDbgKeybLayout[KL_NAMELENGTH/*==9*/];
+		//BOOL lbGetRC = GetKeyboardLayoutName(szDbgKeybLayout); // -- не дает эффекта, поскольку "на процесс", а не на консоль
+		//#endif
+
+		// The expected result of GetConsoleKeyboardLayoutName is like "00000419"
+		const BOOL bConApiRc = pfnGetConsoleKeyboardLayoutName(szCurKeybLayout) && szCurKeybLayout[0];
+
+		const DWORD nErr = bConApiRc ? 0 : GetLastError();
+		if (pdwErrCode)
+			*pdwErrCode = nErr;
+
+		/*
+		if (!bConApiRc && (nErr == ERROR_GEN_FAILURE))
+		{
+			_ASSERTE(FALSE && "ConsKeybLayout failed");
+			MModule kernel(GetModuleHandle(L"kernel32.dll"));
+			BOOL (WINAPI* getLayoutName)(LPWSTR,int);
+			if (kernel.GetProcAddress("GetConsoleKeyboardLayoutNameW", getLayoutName))
+			{
+				bConApiRc = getLayoutName(szCurKeybLayout, countof(szCurKeybLayout));
+				nErr = bConApiRc ? 0 : GetLastError();
+			}
+		}
+		*/
+
+		if (!bConApiRc)
+		{
+			// If GetConsoleKeyboardLayoutName is not implemented in Windows, ERROR_MR_MID_NOT_FOUND or E_NOTIMPL will be returned.
+			// (there is no matching DOS/Win32 error code for NTSTATUS code returned)
+			// When this happens, we don't want to continue to call the function.
+			if (nErr == ERROR_MR_MID_NOT_FOUND || LOWORD(nErr) == LOWORD(E_NOTIMPL))
+			{
+				bGetConsoleKeyboardLayoutNameImplemented = false;
+			}
+
+			if (this->szKeybLayout[0])
+			{
+				// Log only first error per session
+				wcscpy_c(szCurKeybLayout, this->szKeybLayout);
+			}
+			else
+			{
+				wchar_t szErr[80];
+				swprintf_c(szErr, L"ConsKeybLayout failed with code=%u forcing to GetKeyboardLayoutName or 0409", nErr);
+				_ASSERTE(!bGetConsoleKeyboardLayoutNameImplemented && "ConsKeybLayout failed");
+				LogString(szErr);
+				if (!GetKeyboardLayoutName(szCurKeybLayout) || (szCurKeybLayout[0] == 0))
+				{
+					wcscpy_c(szCurKeybLayout, L"00000419");
+				}
+			}
+		}
+
+		if (szCurKeybLayout[0])
+		{
+			if (lstrcmpW(szCurKeybLayout, this->szKeybLayout))
+			{
+				#ifdef _DEBUG
+				wchar_t szDbg[128];
+				swprintf_c(szDbg,
+				          L"ConEmuC: InputLayoutChanged (GetConsoleKeyboardLayoutName returns) '%s'\n",
+				          szCurKeybLayout);
+				OutputDebugString(szDbg);
+				#endif
+
+				if (gpLogSize)
+				{
+					char szInfo[128]; wchar_t szWide[128];
+					swprintf_c(szWide, L"ConsKeybLayout changed from '%s' to '%s'", this->szKeybLayout, szCurKeybLayout);
+					WideCharToMultiByte(CP_ACP,0,szWide,-1,szInfo,128,0,0);
+					LogFunction(szInfo);
+				}
+
+				// was changed
+				wcscpy_c(this->szKeybLayout, szCurKeybLayout);
+				bChanged = true;
+			}
+		}
+	}
+	else if (pdwErrCode)
+	{
+		*pdwErrCode = static_cast<DWORD>(-1);
+	}
+
+	// The result, if possible
+	{
+		wchar_t *pszEnd = nullptr; //szCurKeybLayout+8;
+		//WARNING("BUGBUG: 16 цифр не вернет"); -- тут именно 8 цифр. Это LayoutNAME, а не string(HKL)
+		// LayoutName: "00000409", "00010409", ...
+		// HKL differs, so we pass DWORD
+		// HKL in x64 looks like: "0x0000000000020409", "0xFFFFFFFFF0010409"
+		pdwLayout = wcstoul(this->szKeybLayout, &pszEnd, 16);
+	}
+
+	return bChanged;
+}
+
+//WARNING("BUGBUG: x64 US-Dvorak"); - done
+void WorkerBase::CheckKeyboardLayout()
+{
+	if (!gpWorker)
+	{
+		_ASSERTE(gpWorker != nullptr);
+		return;
+	}
+
+	if (pfnGetConsoleKeyboardLayoutName == nullptr)
+	{
+		return;
+	}
+
+	DWORD dwLayout = 0;
+
+	//WARNING("BUGBUG: 16 цифр не вернет"); -- тут именно 8 цифр. Это LayoutNAME, а не string(HKL)
+	// LayoutName: "00000409", "00010409", ...
+	// А HKL от него отличается, так что передаем DWORD
+	// HKL в x64 выглядит как: "0x0000000000020409", "0xFFFFFFFFF0010409"
+
+	if (IsKeyboardLayoutChanged(dwLayout))
+	{
+		// Сменился, Отошлем в GUI
+		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_LANGCHANGE,sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)); //-V119
+
+		if (pIn)
+		{
+			//memmove(pIn->Data, &dwLayout, 4);
+			pIn->dwData[0] = dwLayout;
+
+			CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+
+			ExecuteFreeResult(pOut);
+			ExecuteFreeResult(pIn);
+		}
+	}
 }

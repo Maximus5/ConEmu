@@ -215,9 +215,6 @@ struct SrvInfo
 	//
 	LONG nLastPacketID; // ИД пакета для отправки в GUI
 
-	// Keyboard layout name
-	wchar_t szKeybLayout[KL_NAMELENGTH+1];
-
 	// Optional console font (may be specified in registry)
 	wchar_t szConsoleFont[LF_FACESIZE];
 	//wchar_t szConsoleFontFile[MAX_PATH]; -- не помогает
@@ -272,16 +269,15 @@ public:
 	int ServerInitGuiTab();
 	void ServerInitEnvVars();
 	void SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir);
-	void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd);
+	static void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd);
 	bool TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn);
-	CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr();
 	SleepIndicatorType CheckIndicateSleepNum();
 	void ShowSleepIndicator(SleepIndicatorType sleepType, bool bSleeping);
-	
+
 	void ConOutCloseHandle();
 	bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*& pHdr, CESERVER_CONSAVE_MAP*& pData);
 	bool IsReopenHandleAllowed();
-	
+
 	bool CheckWasFullScreen();
 	bool FreezeRefreshThread();
 	bool ThawRefreshThread();

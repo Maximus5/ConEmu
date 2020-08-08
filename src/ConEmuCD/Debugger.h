@@ -68,7 +68,6 @@ public:
 	DumpProcessType ConfirmDumpType(DWORD dwProcessId, LPCSTR asConfirmText /*= NULL*/) const;
 	int RunDebugger();
 	HANDLE GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode = nullptr) const;
-	int AttachRootProcessHandle() const;
 	void AttachConHost(DWORD nConHostPID) const;
 	bool IsDumpMulti() const;
 	wchar_t* FormatDumpName(wchar_t* DmpFile, size_t cchDmpMax, DWORD dwProcessId, bool bTrap, bool bFull) const;

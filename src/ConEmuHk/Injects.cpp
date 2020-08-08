@@ -34,7 +34,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Injects.h"
 #include "InjectsBootstrap.h"
 #include "hlpProcess.h"
-#include "../ConEmuCD/ConEmuSrv.h"
 
 extern HMODULE ghOurModule;
 extern HWND ghConWnd;
@@ -423,7 +422,9 @@ wrap:
 			_ASSERTEX(ghInjectsInMainThread!=NULL);
 		}
 
-		CESERVER_CONSOLE_APP_MAPPING* pAppMap = WorkerServer::Instance().GetAppMapPtr();
+		// ReSharper disable once CppDeclaratorDisambiguatedAsFunction
+		extern CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr();
+		CESERVER_CONSOLE_APP_MAPPING* pAppMap = GetAppMapPtr();
 		if (pAppMap)
 		{
 			pAppMap->HookedPids.AddValue(pi.dwProcessId);

@@ -322,69 +322,6 @@ HANDLE DebuggerInfo::GetProcessHandleForDebug(DWORD nPID, LPDWORD pnErrCode /*= 
 	return hProcess;
 }
 
-// Используется и в обычном, и в "отладочном" режиме
-int DebuggerInfo::AttachRootProcessHandle() const
-{
-	if (!this->szDebuggingCmdLine.IsEmpty())
-	{
-		_ASSERTE(this->bDebuggerActive);
-		return 0; // Started from DebuggingThread
-	}
-
-	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
-	DWORD dwErr = 0;
-	// Нужно открыть HANDLE корневого процесса
-	_ASSERTE(gpWorker->RootProcessHandle()==nullptr || gpWorker->RootProcessHandle()==GetCurrentProcess());
-	if (gpWorker->RootProcessId() == GetCurrentProcessId())
-	{
-		if (gpWorker->RootProcessHandle() == nullptr)
-		{
-			gpWorker->SetRootProcessHandle(GetCurrentProcess());
-		}
-	}
-	else if (this->bDebuggerActive)
-	{
-		if (gpWorker->RootProcessHandle() == nullptr)
-		{
-			gpWorker->SetRootProcessHandle(GetProcessHandleForDebug(gpWorker->RootProcessId()));
-		}
-	}
-	else if (gpWorker->RootProcessHandle() == nullptr)
-	{
-		gpWorker->SetRootProcessHandle(OpenProcess(MY_PROCESS_ALL_ACCESS, FALSE, gpWorker->RootProcessId()));
-		if (gpWorker->RootProcessHandle() == nullptr)
-		{
-			gpWorker->SetRootProcessHandle(OpenProcess(SYNCHRONIZE|PROCESS_QUERY_INFORMATION, FALSE, gpWorker->RootProcessId()));
-		}
-	}
-
-	if (!gpWorker->RootProcessHandle())
-	{
-		dwErr = GetLastError();
-		wchar_t* lpMsgBuf = nullptr;
-		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, dwErr,
-			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(&lpMsgBuf), 0, nullptr);
-		_printf("\nCan't open process (%i) handle, ErrCode=0x%08X, Description:\n", //-V576
-		        gpWorker->RootProcessId(), dwErr, (lpMsgBuf == nullptr) ? L"<Unknown error>" : lpMsgBuf);
-
-		if (lpMsgBuf) LocalFree(lpMsgBuf);
-		SetLastError(dwErr);
-
-		return CERR_CREATEPROCESS;
-	}
-
-	if (this->bDebuggerActive)
-	{
-		wchar_t szTitle[64];
-		swprintf_c(szTitle, L"Debugging PID=%u, Debugger PID=%u", gpWorker->RootProcessId(), GetCurrentProcessId());
-		SetTitle(szTitle);
-
-		UpdateDebuggerTitle();
-	}
-
-	return 0;
-}
-
 void DebuggerInfo::AttachConHost(DWORD nConHostPID) const
 {
 	DWORD  nErrCode = 0;

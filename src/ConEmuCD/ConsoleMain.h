@@ -188,6 +188,7 @@ extern HANDLE ghFarInExecuteEvent;
 //#undef USE_WINEVENT_SRV
 
 BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
+int AttachRootProcessHandle();
 void SetupCreateDumpOnException();
 void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, const WORD wOldText, const WORD wNewText);
 void PreConsoleSize(const int width, const int height);
@@ -204,6 +205,7 @@ int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount);
 bool MyLoadConsolePalette(HANDLE ahConOut, CESERVER_CONSOLE_PALETTE& Palette);
 BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc);
 HWND FindConEmuByPID(DWORD anSuggestedGuiPID = 0);
+CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr();
 
 void CheckKeyboardLayout();
 bool IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode = NULL);
@@ -273,6 +275,8 @@ enum class RunMode : int
 	GuiMacro,
 	AutoAttach,
 };
+
+RunMode DetectRunModeFromCmdLine(LPCWSTR asCmdLine);
 
 extern RunMode gnRunMode;
 

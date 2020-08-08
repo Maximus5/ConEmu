@@ -113,10 +113,14 @@ void SrvInfo::FinalizeFields()
 
 WorkerServer::~WorkerServer()
 {
+	_ASSERTE(gnRunMode == RunMode::Server || gnRunMode == RunMode::AltServer || gnRunMode == RunMode::AutoAttach)
 }
 
 WorkerServer::WorkerServer()
+	: WorkerBase()
 {
+	_ASSERTE(gnRunMode == RunMode::Server || gnRunMode == RunMode::AltServer || gnRunMode == RunMode::AutoAttach)
+
 	// #SERVER remove gpSrv
 	if (!gpSrv)
 	{
@@ -190,11 +194,11 @@ void WorkerServer::ServerInitFont()
 		gpSrv->nConFontWidth = 3; gpSrv->nConFontHeight = 5;
 	}
 
-	if (gbAttachMode && gbNoCreateProcess && gpWorker->RootProcessId() && gbAttachFromFar)
+	if (gbAttachMode && gbNoCreateProcess && this->RootProcessId() && gbAttachFromFar)
 	{
 		// Скорее всего это аттач из Far плагина. Попробуем установить шрифт в консоли через плагин.
 		wchar_t szPipeName[128];
-		swprintf_c(szPipeName, CEPLUGINPIPENAME, L".", gpWorker->RootProcessId());
+		swprintf_c(szPipeName, CEPLUGINPIPENAME, L".", this->RootProcessId());
 		CESERVER_REQ In;
 		ExecutePrepareCmd(&In, CMD_SET_CON_FONT, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETFONT));
 		In.Font.cbSize = sizeof(In.Font);
@@ -300,9 +304,9 @@ int WorkerServer::AttachRootProcess()
 
 	DWORD dwErr = 0;
 
-	_ASSERTE((gpWorker->RootProcessHandle() == NULL || gpWorker->RootProcessHandle() == GetCurrentProcess()) && "Must not be opened yet");
+	_ASSERTE((this->RootProcessHandle() == NULL || this->RootProcessHandle() == GetCurrentProcess()) && "Must not be opened yet");
 
-	if (!gpWorker->IsDebuggerActive() && !IsAutoAttachAllowed() && !(gnConEmuPID || gbAttachFromFar))
+	if (!this->IsDebuggerActive() && !IsAutoAttachAllowed() && !(gnConEmuPID || gbAttachFromFar))
 	{
 		PRINT_COMSPEC(L"Console windows is not visible. Attach is unavailable. Exiting...\n", 0);
 		DisableAutoConfirmExit();
@@ -315,15 +319,15 @@ int WorkerServer::AttachRootProcess()
 	}
 
 	// "/AUTOATTACH" must be asynchronous
-	if ((gbAttachMode & am_Async) || (gpWorker->RootProcessId() == 0 && !gpWorker->IsDebuggerActive()))
+	if ((gbAttachMode & am_Async) || (this->RootProcessId() == 0 && !this->IsDebuggerActive()))
 	{
 		// Нужно попытаться определить PID корневого процесса.
 		// Родительским может быть cmd (comspec, запущенный из FAR)
 		DWORD dwParentPID = 0, dwFarPID = 0;
 		DWORD dwServerPID = 0; // Вдруг в этой консоли уже есть сервер?
-		_ASSERTE(!gpWorker->IsDebuggerActive());
+		_ASSERTE(!this->IsDebuggerActive());
 
-		if (gpSrv->processes->nProcessCount >= 2 && !gpWorker->IsDebuggerActive())
+		if (gpSrv->processes->nProcessCount >= 2 && !this->IsDebuggerActive())
 		{
 			//TODO: Reuse MToolHelp.h
 			HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
@@ -401,9 +405,9 @@ int WorkerServer::AttachRootProcess()
 		}
 
 		// Нужно открыть HANDLE корневого процесса
-		gpWorker->SetRootProcessHandle(OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, dwParentPID));
+		this->SetRootProcessHandle(OpenProcess(PROCESS_QUERY_INFORMATION|SYNCHRONIZE, FALSE, dwParentPID));
 
-		if (!gpWorker->RootProcessHandle())
+		if (!this->RootProcessHandle())
 		{
 			dwErr = GetLastError();
 			wchar_t* lpMsgBuf = NULL;
@@ -417,9 +421,9 @@ int WorkerServer::AttachRootProcess()
 			return CERR_CREATEPROCESS;
 		}
 
-		gpWorker->SetRootProcessId(dwParentPID);
+		this->SetRootProcessId(dwParentPID);
 
-		int nParentBitness = GetProcessBits(gpWorker->RootProcessId(), gpWorker->RootProcessHandle());
+		const int nParentBitness = GetProcessBits(this->RootProcessId(), this->RootProcessHandle());
 
 		// Запустить вторую копию ConEmuC НЕМОДАЛЬНО!
 		wchar_t szSelf[MAX_PATH+1];
@@ -490,7 +494,7 @@ int WorkerServer::AttachRootProcess()
 	}
 	else
 	{
-		const int iAttachRc = gpWorker->DbgInfo().AttachRootProcessHandle();
+		const int iAttachRc = AttachRootProcessHandle();
 		if (iAttachRc != 0)
 			return iAttachRc;
 	}
@@ -916,6 +920,7 @@ void WorkerServer::ServerInitEnvVars()
 int WorkerServer::Init()
 {
 	LogFunction(L"ServerInit");
+	_ASSERTE(gnRunMode == RunMode::Server || gnRunMode == RunMode::AltServer || gnRunMode == RunMode::AutoAttach)
 
 	int iRc = 0;
 	DWORD dwErr = 0;
@@ -991,7 +996,7 @@ int WorkerServer::Init()
 	}
 
 	// Шрифт в консоли нужно менять в самом начале, иначе могут быть проблемы с установкой размера консоли
-	if ((gnRunMode == RunMode::Server) && !gpWorker->IsDebuggerActive() && !gbNoCreateProcess)
+	if ((gnRunMode == RunMode::Server) && !this->IsDebuggerActive() && !gbNoCreateProcess)
 		//&& (!gbNoCreateProcess || (gbAttachMode && gbNoCreateProcess && gpWorker->RootProcessId()))
 		//)
 	{
@@ -1077,7 +1082,7 @@ int WorkerServer::Init()
 	}
 
 	//2009-08-27 Перенес снизу
-	if (!gpSrv->hConEmuGuiAttached && (!gpWorker->IsDebugProcess() || gnConEmuPID || gpSrv->hGuiWnd))
+	if (!gpSrv->hConEmuGuiAttached && (!this->IsDebugProcess() || gnConEmuPID || gpSrv->hGuiWnd))
 	{
 		wchar_t szTempName[MAX_PATH];
 		swprintf_c(szTempName, CEGUIRCONSTARTED, LODWORD(ghConWnd)); //-V205
@@ -1146,7 +1151,7 @@ int WorkerServer::Init()
 	// в принципе, серверный режим может быть вызван из фара, чтобы подцепиться к GUI.
 	// больше двух процессов в консоли вполне может быть, например, еще не отвалился
 	// предыдущий conemuc.exe, из которого этот запущен немодально.
-	_ASSERTE(gpWorker->IsDebuggerActive() || (gpSrv->processes->nProcessCount<=2) || ((gpSrv->processes->nProcessCount>2) && gbAttachMode && gpWorker->RootProcessId()));
+	_ASSERTE(this->IsDebuggerActive() || (gpSrv->processes->nProcessCount<=2) || ((gpSrv->processes->nProcessCount>2) && gbAttachMode && this->RootProcessId()));
 
 	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
 	if (gnRunMode == RunMode::Server)
@@ -1198,9 +1203,9 @@ int WorkerServer::Init()
 
 	// Проверка. Для дебаггера должен быть RunMode::RM_UNDEFINED!
 	// И он не должен быть "сервером" - работает как обычное приложение!
-	_ASSERTE(!(gpWorker->IsDebuggerActive() || gpWorker->IsDebugProcess() || gpWorker->IsDebugProcessTree()));
+	_ASSERTE(!(this->IsDebuggerActive() || this->IsDebugProcess() || this->IsDebugProcessTree()));
 
-	if (!gbAttachMode && !gpWorker->IsDebuggerActive())
+	if (!gbAttachMode && !this->IsDebuggerActive())
 	{
 		DumpInitStatus("\nServerInit: ServerInitGuiTab");
 		iRc = ServerInitGuiTab();
@@ -1225,7 +1230,7 @@ int WorkerServer::Init()
 
 	// Если "корневой" процесс консоли запущен не нами (аттач или дебаг)
 	// то нужно к нему "подцепиться" (открыть HANDLE процесса)
-	if (gbNoCreateProcess && (gbAttachMode || (gpWorker->IsDebuggerActive() && (gpWorker->RootProcessHandle() == NULL))))
+	if (gbNoCreateProcess && (gbAttachMode || (this->IsDebuggerActive() && (this->RootProcessHandle() == NULL))))
 	{
 		DumpInitStatus("\nServerInit: AttachRootProcess");
 		iRc = AttachRootProcess();
@@ -1327,13 +1332,13 @@ int WorkerServer::Init()
 		// External attach to running process, required ConEmuHk is not loaded yet
 		if (!gbAlternativeAttach && gbNoCreateProcess && gbAlienMode && !gbDontInjectConEmuHk)
 		{
-			if (gpWorker->RootProcessId())
+			if (this->RootProcessId())
 			{
 				DumpInitStatus("\nServerInit: InjectRemote (gbAlienMode)");
-				CINFILTRATE_EXIT_CODES iRemote = InjectRemote(gpWorker->RootProcessId());
+				CINFILTRATE_EXIT_CODES iRemote = InjectRemote(this->RootProcessId());
 				if (iRemote != CIR_OK/*0*/ && iRemote != CIR_AlreadyInjected/*1*/)
 				{
-					_printf("ServerInit warning: InjectRemote PID=%u failed, Code=%i\n", gpWorker->RootProcessId(), iRemote);
+					_printf("ServerInit warning: InjectRemote PID=%u failed, Code=%i\n", this->RootProcessId(), iRemote);
 				}
 			}
 			else
@@ -1399,30 +1404,30 @@ int WorkerServer::Init()
 	ReloadGuiSettings(NULL);
 
 	// Если мы аттачим существующее GUI окошко
-	if (gbNoCreateProcess && gbAttachMode && gpWorker->RootProcessGui())
+	if (gbNoCreateProcess && gbAttachMode && this->RootProcessGui())
 	{
 		// Его нужно дернуть, чтобы инициализировать цикл аттача во вкладку ConEmu
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ATTACHGUIAPP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP));
-		_ASSERTE(LODWORD(gpWorker->RootProcessGui())!=0xCCCCCCCC);
+		_ASSERTE(LODWORD(this->RootProcessGui())!=0xCCCCCCCC);
 		_ASSERTE(IsWindow(ghConEmuWnd));
 		_ASSERTE(IsWindow(ghConEmuWndDC));
 		_ASSERTE(IsWindow(ghConEmuWndBack));
-		_ASSERTE(IsWindow(gpWorker->RootProcessGui()));
+		_ASSERTE(IsWindow(this->RootProcessGui()));
 		_ASSERTE(gpSrv->dwMainServerPID && (gpSrv->dwMainServerPID==GetCurrentProcessId()));
 		pIn->AttachGuiApp.nServerPID = gpSrv->dwMainServerPID;
 		pIn->AttachGuiApp.hConEmuWnd = ghConEmuWnd;
 		pIn->AttachGuiApp.hConEmuDc = ghConEmuWndDC;
 		pIn->AttachGuiApp.hConEmuBack = ghConEmuWndBack;
-		pIn->AttachGuiApp.hAppWindow = gpWorker->RootProcessGui();
+		pIn->AttachGuiApp.hAppWindow = this->RootProcessGui();
 		pIn->AttachGuiApp.hSrvConWnd = ghConWnd;
 		wchar_t szPipe[MAX_PATH];
-		_ASSERTE(gpWorker->RootProcessId()!=0);
-		swprintf_c(szPipe, CEHOOKSPIPENAME, L".", gpWorker->RootProcessId());
+		_ASSERTE(this->RootProcessId()!=0);
+		swprintf_c(szPipe, CEHOOKSPIPENAME, L".", this->RootProcessId());
 		DumpInitStatus("\nServerInit: CECMD_ATTACHGUIAPP");
 		CESERVER_REQ* pOut = ExecuteCmd(szPipe, pIn, GUIATTACH_TIMEOUT, ghConWnd);
 		if (!pOut
 			|| (pOut->hdr.cbSize < (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)))
-			|| (pOut->dwData[0] != LODWORD(gpWorker->RootProcessGui())))
+			|| (pOut->dwData[0] != LODWORD(this->RootProcessGui())))
 		{
 			iRc = CERR_ATTACH_NO_GUIWND;
 		}
@@ -1454,6 +1459,7 @@ wrap:
 void WorkerServer::Done(const int exitCode, const bool reportShutdown /*= false*/)
 {
 	LogFunction(L"ServerDone");
+	_ASSERTE(gnRunMode == RunMode::Server || gnRunMode == RunMode::AltServer || gnRunMode == RunMode::AutoAttach)
 
 	gbQuit = true;
 	gbTerminateOnExit = FALSE;
@@ -1512,13 +1518,13 @@ void WorkerServer::Done(const int exitCode, const bool reportShutdown /*= false*
 	}
 
 	// Our debugger is running?
-	if (gpWorker->IsDebuggerActive())
+	if (this->IsDebuggerActive())
 	{
 		// pfnDebugActiveProcessStop is useless, because
 		// 1. pfnDebugSetProcessKillOnExit was called already
 		// 2. we can debug more than a one process
 
-		//gpWorker->IsDebuggerActive = FALSE;
+		//this->IsDebuggerActive = FALSE;
 	}
 
 
@@ -1621,7 +1627,7 @@ void WorkerServer::Done(const int exitCode, const bool reportShutdown /*= false*
 	//Delete Critical Section(&gpSrv->csChar);
 	//Delete Critical Section(&gpSrv->csChangeSize);
 	SafeCloseHandle(gpSrv->hAllowInputEvent);
-	gpWorker->CloseRootProcessHandles();
+	this->CloseRootProcessHandles();
 
 	SafeDelete(gpSrv->csAltSrv);
 
@@ -2135,7 +2141,7 @@ void WorkerServer::CheckConEmuHwnd()
 
 	DWORD dwGuiThreadId = 0;
 
-	if (gpWorker->IsDebuggerActive())
+	if (this->IsDebuggerActive())
 	{
 		HWND  hDcWnd = NULL;
 		ghConEmuWnd = FindConEmuByPID();
@@ -2763,11 +2769,11 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 	}
 
 	//TODO: In the (gbAttachMode & am_Async) mode dwRootProcess is expected to be determined already
-	_ASSERTE(bCmdSet || ((gbAttachMode & (am_Async|am_Simple)) && gpWorker->RootProcessId()));
-	if (!bCmdSet && gpWorker->RootProcessId())
+	_ASSERTE(bCmdSet || ((gbAttachMode & (am_Async|am_Simple)) && this->RootProcessId()));
+	if (!bCmdSet && this->RootProcessId())
 	{
 		PROCESSENTRY32 pi;
-		if (GetProcessInfo(gpWorker->RootProcessId(), &pi))
+		if (GetProcessInfo(this->RootProcessId(), &pi))
 		{
 			msprintf(pIn->StartStop.sCmdLine, cchCmdMax, L"\"%s\"", pi.szExeFile);
 		}
@@ -3123,13 +3129,6 @@ int WorkerServer::CreateMapHeader()
 	UpdateConsoleMapHeader(L"CreateMapHeader");
 wrap:
 	return iRc;
-}
-
-CESERVER_CONSOLE_APP_MAPPING* WorkerServer::GetAppMapPtr()
-{
-	if (!gpSrv || !gpSrv->pAppMap)
-		return NULL;
-	return gpSrv->pAppMap->Ptr();
 }
 
 int WorkerServer::Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2)
@@ -3596,7 +3595,7 @@ int WorkerServer::ReadConsoleInfo()
 			{
 				pIn->dwData[0] = tmc_ConInMode;
 				pIn->dwData[1] = ldwConsoleMode;
-				pIn->dwData[2] = gpWorker->RootProcessId();
+				pIn->dwData[2] = this->RootProcessId();
 				CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
 				ExecuteFreeResult(pIn);
 				ExecuteFreeResult(pOut);
@@ -4265,8 +4264,6 @@ bool WorkerServer::ThawRefreshThread()
 
 DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 {
-	auto& server = WorkerServer::Instance();
-	
 	DWORD nWait = 0, nAltWait = 0, nFreezeWait = 0, nThreadWait = 0;
 
 	HANDLE hEvents[4] = {ghQuitEvent, gpSrv->hRefreshEvent};
@@ -4387,12 +4384,12 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 									// Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer
 									// Активировать альтернативный сервер (повторно), отпустить его нити чтения
 									nAltServerWasStarted = info.nPrevPID;
-									server.AltServerWasStarted(info.nPrevPID, info.hPrev, true);
+									WorkerServer::Instance().AltServerWasStarted(info.nPrevPID, info.hPrev, true);
 								}
 							}
 							// Обновить мэппинг
 							wchar_t szLog[80]; swprintf_c(szLog, L"RefreshThread, new AltServer=%u", gpSrv->dwAltServerPID);
-							server.UpdateConsoleMapHeader(szLog);
+							WorkerServer::Instance().UpdateConsoleMapHeader(szLog);
 						}
 
 						CsAlt.Unlock();
@@ -4458,12 +4455,12 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 		// Always update con handle, мягкий вариант
 		// !!! В Win7 закрытие дескриптора в ДРУГОМ процессе - закрывает консольный буфер ПОЛНОСТЬЮ. В итоге, буфер вывода telnet'а схлопывается! !!!
 		// 120507 - Если крутится альт.сервер - то игнорировать
-		if (server.IsReopenHandleAllowed()
+		if (WorkerServer::Instance().IsReopenHandleAllowed()
 			&& !nAltWait
 			&& ((GetTickCount() - nLastConHandleTick) > UPDATECONHANDLE_TIMEOUT))
 		{
 			// Need to block all requests to output buffer in other threads
-			server.ConOutCloseHandle();
+			WorkerServer::Instance().ConOutCloseHandle();
 			nLastConHandleTick = GetTickCount();
 		}
 
@@ -4725,7 +4722,7 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 
 
 		// Обновляется по таймауту
-		SleepType = server.CheckIndicateSleepNum();
+		SleepType = WorkerServer::Instance().CheckIndicateSleepNum();
 
 
 		// Чтобы не грузить процессор неактивными консолями спим, если
@@ -4747,7 +4744,7 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 			if (SleepType)
 			{
 				// Выключить индикатор (low speed)
-				server.ShowSleepIndicator(SleepType, true);
+				WorkerServer::Instance().ShowSleepIndicator(SleepType, true);
 			}
 
 			// #define MAX_FORCEREFRESH_INTERVAL 500
@@ -4759,7 +4756,7 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 		}
 		else if (SleepType)
 		{
-			server.ShowSleepIndicator(SleepType, false);
+			WorkerServer::Instance().ShowSleepIndicator(SleepType, false);
 		}
 
 
@@ -4774,10 +4771,10 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 		if (ghConEmuWndDC && isConEmuTerminated())
 		{
 			gpSrv->bWasDetached = TRUE;
-			server.SetConEmuWindows(NULL, NULL, NULL);
+			WorkerServer::Instance().SetConEmuWindows(NULL, NULL, NULL);
 			_ASSERTE(!ghConEmuWnd && !ghConEmuWndDC && !ghConEmuWndBack);
 			gnConEmuPID = 0;
-			server.UpdateConsoleMapHeader(L"RefreshThread: GUI was crashed or was detached?");
+			WorkerServer::Instance().UpdateConsoleMapHeader(L"RefreshThread: GUI was crashed or was detached?");
 			EmergencyShow(ghConWnd);
 		}
 
@@ -4789,7 +4786,7 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 			{
 				// Reset GUI HWND's
 				_ASSERTE(!gnConEmuPID);
-				server.SetConEmuWindows(pMap->hConEmuRoot, pMap->hConEmuWndDc, pMap->hConEmuWndBack);
+				WorkerServer::Instance().SetConEmuWindows(pMap->hConEmuRoot, pMap->hConEmuWndDc, pMap->hConEmuWndBack);
 				_ASSERTE(gnConEmuPID && ghConEmuWnd && ghConEmuWndDC && ghConEmuWndBack);
 
 				// To be sure GUI will be updated with full info
@@ -4808,17 +4805,16 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 
 		// Если можем - проверим текущую раскладку в консоли
 		// 120507 - Если крутится альт.сервер - то игнорировать
-		if (!nAltWait && !gpWorker->IsDebuggerActive())
+		if (!nAltWait && !WorkerServer::Instance().IsDebuggerActive())
 		{
-			if (pfnGetConsoleKeyboardLayoutName)
-				CheckKeyboardLayout();
+			gpWorker->CheckKeyboardLayout();
 		}
 
 		/* ****************** */
 		/* Перечитать консоль */
 		/* ****************** */
 		// 120507 - Если крутится альт.сервер - то игнорировать
-		if (!nAltWait && !gpWorker->IsDebuggerActive())
+		if (!nAltWait && !WorkerServer::Instance().IsDebuggerActive())
 		{
 			bool lbReloadNow = true;
 			#if defined(TEST_REFRESH_DELAYED)
@@ -4841,7 +4837,7 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 
 			if (lbReloadNow)
 			{
-				lbChanged = server.ReloadFullConsoleInfo(gpSrv->bWasReattached/*lbForceSend*/);
+				lbChanged = WorkerServer::Instance().ReloadFullConsoleInfo(gpSrv->bWasReattached/*lbForceSend*/);
 			}
 
 			#if defined(TEST_REFRESH_DELAYED)
