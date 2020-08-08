@@ -779,7 +779,7 @@ int DoParseArgs(LPCWSTR asCmdLine)
 	_printf("ConEmu `NextArg` splitter\n");
 	while ((asCmdLine = NextArg(asCmdLine, szArg)))
 	{
-		if (szArg.mb_Quoted)
+		if (szArg.m_bQuoted)
 			DemangleArg(szArg, true);
 		_printf("  %u: `", ++i);
 		_wprintf(szArg);
@@ -874,7 +874,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 				wchar_t szInfo[100];
 				swprintf_c(szInfo, L"\r\nCode=%i, Error=%u\r\n", iRead, nErrCode);
 				szTemp = lstrmerge(L"Reading source file failed!\r\n", szArg, szInfo);
-				cchLen = szTemp.GetLen();
+				cchLen = static_cast<DWORD>(szTemp.GetLen());
 				bAsciiPrint = false;
 				iRc = 4;
 			}
@@ -903,13 +903,13 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 			}
 
 			// Replace two double-quotes with one double-quotes
-			if (szArg.mb_Quoted
+			if (szArg.m_bQuoted
 				// Process special symbols: ^e^[^r^n^t^b
 				|| (bProcessed && wcschr(pszAdd, L'^'))
 				)
 			{
 				lsDemangle.Set(pszAdd);
-				if (DemangleArg(lsDemangle, szArg.mb_Quoted, bProcessed))
+				if (DemangleArg(lsDemangle, szArg.m_bQuoted, bProcessed))
 					pszAdd = lsDemangle.ms_Val;
 			}
 
@@ -1074,7 +1074,7 @@ int DoStoreCWD(LPCWSTR asCmdArg)
 
 	if (!NextArg(asCmdArg, szDir) || szDir.IsEmpty())
 	{
-		if (GetDirectory(szDir) == NULL)
+		if (GetDirectory(szDir) == nullptr)
 			goto wrap;
 	}
 
