@@ -112,7 +112,7 @@ bool CmdArg::IsPossibleSwitch() const
 	return true;
 }
 
-bool CmdArg::CompareSwitch(LPCWSTR asSwitch) const
+bool CmdArg::CompareSwitch(LPCWSTR asSwitch, bool caseSensitive /*= false*/) const
 {
 	if ((asSwitch[0] == L'-') || (asSwitch[0] == L'/'))
 	{
@@ -123,7 +123,9 @@ bool CmdArg::CompareSwitch(LPCWSTR asSwitch) const
 		_ASSERTE((asSwitch[0] == L'-') || (asSwitch[0] == L'/'));
 	}
 
-	int iCmp = lstrcmpi(ms_Val+1, asSwitch);
+	int iCmp = caseSensitive
+		? lstrcmp(ms_Val + 1, asSwitch)
+		: lstrcmpi(ms_Val + 1, asSwitch);
 	if (iCmp == 0)
 		return true;
 
@@ -139,7 +141,7 @@ bool CmdArg::CompareSwitch(LPCWSTR asSwitch) const
 	return false;
 }
 
-bool CmdArg::IsSwitch(LPCWSTR asSwitch) const
+bool CmdArg::IsSwitch(LPCWSTR asSwitch, const bool caseSensitive /*= false*/) const
 {
 	// Not a switch?
 	if (!IsPossibleSwitch())
@@ -153,7 +155,7 @@ bool CmdArg::IsSwitch(LPCWSTR asSwitch) const
 		return false;
 	}
 
-	return CompareSwitch(asSwitch);
+	return CompareSwitch(asSwitch, caseSensitive);
 }
 
 // Stops on first NULL

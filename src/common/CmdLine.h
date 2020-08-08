@@ -56,7 +56,7 @@ public:
 	#endif
 
 private:
-	bool CompareSwitch(LPCWSTR asSwitch) const;
+	bool CompareSwitch(LPCWSTR asSwitch, bool caseSensitive = false) const;
 
 public:
 	void Empty();
@@ -66,7 +66,7 @@ public:
 	// If this may be supported switch like "-run"
 	bool IsPossibleSwitch() const;
 	// For example, compare if ms_Val is "-run"
-	bool IsSwitch(LPCWSTR asSwitch) const;
+	bool IsSwitch(LPCWSTR asSwitch, bool caseSensitive = false) const;
 	// Stops checking on first NULL
 	bool OneOfSwitches(LPCWSTR asSwitch1, LPCWSTR asSwitch2 = NULL, LPCWSTR asSwitch3 = NULL, LPCWSTR asSwitch4 = NULL, LPCWSTR asSwitch5 = NULL, LPCWSTR asSwitch6 = NULL, LPCWSTR asSwitch7 = NULL, LPCWSTR asSwitch8 = NULL, LPCWSTR asSwitch9 = NULL, LPCWSTR asSwitch10 = NULL) const;
 
