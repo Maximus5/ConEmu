@@ -61,7 +61,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VConGroup.h"
 #include "VirtualConsole.h"
 
-namespace ConEmuMacro {
+using namespace ConEmuMacro;
+
 TEST(ConEmuMacro,Tests)
 {
 	wchar_t szMacro[] = L"Function1 +1 \"Arg2\" -3 -guimacro Function2(@\"Arg1\"\"\\n999\",0x999); Function3: \"abc\\t\\e\\\"\\\"\\n999\"; Function4 abc def; InvalidArg(9q)";
@@ -135,4 +136,3 @@ TEST(ConEmuMacro,Tests)
 	//CEStr env_list(EnvironmentList(nullptr, nullptr, false));
 	//EXPECT_FALSE(env_list.IsEmpty());
 }
-}  // namespace ConEmuMacro

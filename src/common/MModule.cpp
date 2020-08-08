@@ -58,6 +58,14 @@ MModule::MModule(MModule&& src) noexcept
 
 MModule& MModule::operator=(MModule&& src) noexcept
 {
+	if (mh_Module == src.mh_Module)
+	{
+		_ASSERTE((mh_Module == nullptr) && "Already has this HMODULE");
+		return *this;
+	}
+	
+	Free();
+
 	mh_Module = src.mh_Module;
 	#ifdef _DEBUG
 	wcscpy_s(ms_Module, src.ms_Module);

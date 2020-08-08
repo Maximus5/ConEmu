@@ -511,6 +511,13 @@ bool ExecuteNewCmd(CESERVER_REQ* &ppCmd, DWORD &pcbCurMaxSize, DWORD nCmd, size_
 }
 
 // hConWnd - HWND _реальной_ консоли
+
+/// <summary>
+/// Loads CESERVER_CONSOLE_MAPPING_HDR data for specified hConWnd
+/// </summary>
+/// <param name="hConWnd">HWND of the <b>REAL</b> console</param>
+/// <param name="SrvMapping">CESERVER_CONSOLE_MAPPING_HDR& [OUT]</param>
+/// <returns>TRUE if mapping was successfully loaded</returns>
 BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& SrvMapping)
 {
 	if (!hConWnd)

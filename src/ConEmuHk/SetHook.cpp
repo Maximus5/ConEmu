@@ -831,7 +831,9 @@ bool StartupHooks()
 
 	#ifdef _DEBUG
 	// Консольное окно уже должно быть инициализировано в DllMain
-	_ASSERTE(gbAttachGuiClient || gbDosBoxProcess || gbPrepareDefaultTerminal || (ghConWnd != NULL && ghConWnd == GetRealConsoleWindow()));
+	// real console window handle should be already initialized in DllMain
+	HWND hRealConsole = GetRealConsoleWindow();
+	_ASSERTE(gbAttachGuiClient || gbDosBoxProcess || gbPrepareDefaultTerminal || (hRealConsole == NULL) || (ghConWnd != NULL && ghConWnd == hRealConsole));
 	wchar_t sClass[128];
 	if (ghConWnd)
 	{

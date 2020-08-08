@@ -29,15 +29,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
-#include <gtest/gtest.h>
 #include <iostream>
 #include "Header.h"
 #include "ConEmu.h"
 #include "Match.h"
 #include "RConData.h"
 #include "RealConsole.h"
-#include "VConText.h"
 #include <unordered_set>
+#include "../UnitTests/gtest.h"
+
 
 #define NEED_FIX_FAILED_TEST L"\1"
 
@@ -210,7 +210,7 @@ TEST(CMatch, UnitTests)
 	{
 		if (Tests[i].src[0] == NEED_FIX_FAILED_TEST[0])
 		{
-			std::wcerr << L"FIX_ME: " << (Tests[i].src + wcslen(NEED_FIX_FAILED_TEST)) << std::endl;
+			wcdbg("FIX_ME") << (Tests[i].src + wcslen(NEED_FIX_FAILED_TEST)) << std::endl;
 			continue;
 		}
 

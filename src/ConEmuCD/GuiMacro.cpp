@@ -56,9 +56,9 @@ BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
 		return TRUE; // continue search
 
 	// If called "-GuiMacro:0" we need to find first GUI window!
-	bool bConClass = isConsoleClass(szClass);
+	const bool bConClass = isConsoleClass(szClass);
 	if (!p->nPID && bConClass)
-		return TRUE;
+		return TRUE; // continue search
 
 	const bool bGuiClass = (lstrcmp(szClass, VirtualConsoleClassMain) == 0);
 	if (!bGuiClass && !bConClass)
@@ -429,6 +429,6 @@ int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, BSTR* bsResult /*= N
 	else if (bsResult == static_cast<BSTR*>(INVALID_HANDLE_VALUE))
 		bsResult = nullptr;
 
-	int iRc = DoGuiMacro(asMacro, Inst, Flags, bsResult);
+	const int iRc = DoGuiMacro(asMacro, Inst, Flags, bsResult);
 	return iRc;
 }

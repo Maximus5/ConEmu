@@ -31,85 +31,242 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/defines.h"
 #include "../common/CmdLine.h"
-#include "../common/MFileMapping.h"
+#include "../common/ConEmuCheck.h"
 #include "../common/MModule.h"
 #include "../ConEmuCD/ExitCodes.h"
 #include "../UnitTests/gtest.h"
 #include "../ConEmuCD/ExportedFunctions.h"
-#include <iostream>
 
 
-namespace
+class OutputWasRedirected final : public std::runtime_error
 {
-MModule LoadConEmuCD()
+public:
+	using std::runtime_error::runtime_error;
+};
+
+struct ConsoleOutputCapture
 {
-	wchar_t szConEmuCD[MAX_PATH] = L"";
-	if (!GetModuleFileName(nullptr, szConEmuCD, LODWORD(std::size(szConEmuCD))))
-		return {};
-	auto* slash = const_cast<wchar_t*>(PointToName(szConEmuCD));
-	if (!slash)
-		return {};
-	wcscpy_s(slash, std::size(szConEmuCD) - (slash - szConEmuCD), L"\\ConEmu\\" ConEmuCD_DLL_3264);
-	return MModule(szConEmuCD);
-}
-
-// hConWnd - HWND of the _real_ console
-BOOL LoadSrvMapping(HWND hConWnd, CESERVER_CONSOLE_MAPPING_HDR& srvMapping)
-{
-	if (!hConWnd)
-		return FALSE;
-
-	MFileMapping<CESERVER_CONSOLE_MAPPING_HDR> SrvInfoMapping;
-	SrvInfoMapping.InitName(CECONMAPNAME, LODWORD(hConWnd));
-	const CESERVER_CONSOLE_MAPPING_HDR* pInfo = SrvInfoMapping.Open();
-	if (!pInfo || pInfo->nProtocolVersion != CESERVER_REQ_VER)
-		return FALSE;
-
-	memmove_s(&srvMapping, sizeof(srvMapping),
-		pInfo, std::min<size_t>(pInfo->cbSize, sizeof(srvMapping)));
-
-	SrvInfoMapping.CloseMap();
-
-	return (srvMapping.cbSize != 0);
-}
-
-HWND GetRealConsoleWindow()
-{
-	const MModule ConEmuHk(GetModuleHandle(ConEmuHk_DLL_3264));
-	if (ConEmuHk.IsLoaded())
+	ConsoleOutputCapture(bool change = false)
 	{
-		HWND (WINAPI* getConsoleWindow)() = nullptr;
-		EXPECT_TRUE(ConEmuHk.GetProcAddress("GetRealConsoleWindow", getConsoleWindow));
-		if (getConsoleWindow)
-		{
-			std::wcerr << L"Calling GetRealConsoleWindow from " << ConEmuHk_DLL_3264 << std::endl;
-			return getConsoleWindow();
-		}
+		hPrevOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		hPrevErr = GetStdHandle(STD_ERROR_HANDLE);
+		hBuffer = CreateConsoleScreenBuffer(GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+			nullptr, CONSOLE_TEXTMODE_BUFFER, nullptr);
+		if (!hBuffer || hBuffer == INVALID_HANDLE_VALUE)
+			throw std::runtime_error("CreateConsoleScreenBuffer, error=" + std::to_string(GetLastError()));
+		SetConsoleScreenBufferSize(hBuffer, COORD{ 80, 25 });
+		SetConsoleCursorPosition(hBuffer, COORD{ 0, 0 });
+		//if (change)
+		//{
+		//	hPrevBuffer = CreateFileW(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
+		//		nullptr, OPEN_EXISTING, 0, nullptr);
+		//	changed = SetConsoleActiveScreenBuffer(hBuffer);
+		//}
+		SetStdHandle(STD_OUTPUT_HANDLE, hBuffer);
+		SetStdHandle(STD_ERROR_HANDLE, hBuffer);
 	}
-	std::wcerr << L"Calling GetConsoleWindow from WinAPI" << std::endl;
-	return GetConsoleWindow();
-}
 
-HWND GetConEmuRoot()
+	~ConsoleOutputCapture()
+	{
+		//if (hPrevBuffer && hPrevBuffer != INVALID_HANDLE_VALUE)
+		//	SetConsoleActiveScreenBuffer(hPrevBuffer);
+		SetStdHandle(STD_OUTPUT_HANDLE, hPrevOut);
+		SetStdHandle(STD_ERROR_HANDLE, hPrevErr);
+		CloseHandle(hBuffer);
+	}
+
+	std::wstring GetTopString() const
+	{
+		std::wstring result;
+		result.resize(80);
+		DWORD readChars = 0;
+		if (!ReadConsoleOutputCharacterW(hBuffer, &(result[0]), 80, COORD{ 0, 0 }, &readChars))
+		{
+			OutputDebugStringW(L"GetTopString is empty\n");
+			return {};
+		}
+		result.resize(readChars);
+		const auto pos = result.find_last_not_of(L' ');
+		if (pos == std::string::npos)
+		{
+			OutputDebugStringW(L"GetTopString is empty\n");
+			return {};
+		}
+		result.resize(pos + 1);
+		OutputDebugStringW((L"GetTopString=`" + result + L"`\n").c_str());
+		return result;
+	}
+
+	static std::wstring GetPrevString()
+	{
+		// ReSharper disable once CppLocalVariableMayBeConst
+		HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
+		if (!GetConsoleScreenBufferInfo(hStdOut, &csbi))
+		{
+			throw OutputWasRedirected("GetConsoleScreenBufferInfo failed, error=" + std::to_string(GetLastError()));
+		}
+		if (csbi.dwCursorPosition.Y <= 0 || csbi.dwCursorPosition.X != 0)
+		{
+			throw std::runtime_error("Unexpected cursor position={" + std::to_string(csbi.dwCursorPosition.X) + "," + std::to_string(csbi.dwCursorPosition.Y) + "}");
+		}
+		std::wstring result;
+		result.resize(80);
+		DWORD readChars = 0;
+		if (!ReadConsoleOutputCharacterW(hStdOut, &(result[0]), 80, COORD{ 0, csbi.dwCursorPosition.Y - 1}, &readChars))
+		{
+			OutputDebugStringW(L"GetPrevString is empty\n");
+			return {};
+		}
+		result.resize(readChars);
+		const auto pos = result.find_last_not_of(L' ');
+		if (pos == std::string::npos)
+		{
+			OutputDebugStringW(L"GetPrevString is empty\n");
+			return {};
+		}
+		result.resize(pos + 1);
+		OutputDebugStringW((L"GetPrevString=`" + result + L"`\n").c_str());
+		return result;
+	}
+
+	ConsoleOutputCapture(const ConsoleOutputCapture&) = delete;
+	ConsoleOutputCapture(ConsoleOutputCapture&&) = delete;
+	ConsoleOutputCapture& operator=(const ConsoleOutputCapture&) = delete;
+	ConsoleOutputCapture& operator=(ConsoleOutputCapture&&) = delete;
+
+private:
+	HANDLE hBuffer = nullptr;
+	//HANDLE hPrevBuffer = nullptr;
+	HANDLE hPrevOut = nullptr;
+	HANDLE hPrevErr = nullptr;
+	//bool changed = false;
+};
+
+
+class ServerDllTest : public testing::Test
 {
-	CESERVER_CONSOLE_MAPPING_HDR srvMap{};
-	if (!LoadSrvMapping(GetRealConsoleWindow(), srvMap))
-		return nullptr;
-	if (!srvMap.hConEmuWndDc || !IsWindow(srvMap.hConEmuWndDc))
-		return nullptr;
-	return srvMap.hConEmuRoot;
-}
+protected:
+	// ReSharper disable once CppInconsistentNaming
+	MModule ConEmuCD;
+	wchar_t szConEmuCD[MAX_PATH] = L"";
+	wchar_t szResult[64] = L"";
+	HWND hCurrentConEmu = nullptr;
+	HWND hTopConEmu = nullptr;
+	HWND hByConEmuHWND = nullptr;
 
-}
+public:
+	void SetUp() override
+	{
+		ConEmuCD = LoadServerDll();
+		EXPECT_NE(nullptr, wcsstr(szConEmuCD, ConEmuCD_DLL_3264));
+		if (!ConEmuCD.IsLoaded())
+		{
+			FAIL() << L"Failed to load " << ConEmuCD_DLL_3264;
+		}
+		// ReSharper disable once CppLocalVariableMayBeConst
+		HMODULE hConEmuCD = GetModuleHandle(ConEmuCD_DLL_3264);
+		EXPECT_NE(nullptr, hConEmuCD);
+		EXPECT_EQ(hConEmuCD, static_cast<HMODULE>(ConEmuCD));
 
-TEST(ConEmuCD, RunGuiMacro_CMD)
+		// ReSharper disable once CppLocalVariableMayBeConst
+		hCurrentConEmu = GetCurrentConEmuRoot();
+		// ReSharper disable once CppLocalVariableMayBeConst
+		hTopConEmu = FindTopConEmu();
+		cdbg() << "Test started " << (hCurrentConEmu ? "inside" : "outside") << " of ConEmu"
+			<< ((hTopConEmu && hTopConEmu == hCurrentConEmu) ? ", this is top instance" : "")
+			<< ((hTopConEmu && hTopConEmu != hCurrentConEmu) ? ", other ConEmu exists" : "")
+			<< (!hTopConEmu ? ", other ConEmu doesn't exist" : "")
+			<< std::endl;
+		hByConEmuHWND = hCurrentConEmu ? hCurrentConEmu : hTopConEmu;
+	}
+
+	void TearDown() override
+	{
+		ConEmuCD.Free();
+		// ReSharper disable once CppLocalVariableMayBeConst
+		HMODULE hConEmuCD = GetModuleHandle(ConEmuCD_DLL_3264);
+		EXPECT_EQ(nullptr, hConEmuCD);
+	}
+
+protected:
+	LPCWSTR GetEnvVar()
+	{
+		const auto rc = GetEnvironmentVariable(CEGUIMACRORETENVVAR, szResult, LODWORD(std::size(szResult)));
+		if (rc == 0 && ::GetLastError() == ERROR_ENVVAR_NOT_FOUND)
+			return nullptr;
+		return szResult;
+	};
+
+	MModule LoadServerDll()
+	{
+		if (!GetModuleFileName(nullptr, szConEmuCD, LODWORD(std::size(szConEmuCD))))
+			return {};
+		auto* slash = const_cast<wchar_t*>(PointToName(szConEmuCD));
+		if (!slash)
+			return {};
+		wcscpy_s(slash, std::size(szConEmuCD) - (slash - szConEmuCD), L"\\ConEmu\\" ConEmuCD_DLL_3264);
+		return MModule(szConEmuCD);
+	}
+
+	static HWND GetRealConsoleWindow()
+	{
+		const MModule ConEmuHk(GetModuleHandle(ConEmuHk_DLL_3264));
+		if (ConEmuHk.IsLoaded())
+		{
+			HWND(WINAPI * getConsoleWindow)() = nullptr;
+			EXPECT_TRUE(ConEmuHk.GetProcAddress("GetRealConsoleWindow", getConsoleWindow));
+			if (getConsoleWindow)
+			{
+				wcdbg() << L"Calling GetRealConsoleWindow from " << ConEmuHk_DLL_3264 << std::endl;
+				return getConsoleWindow();
+			}
+		}
+		wcdbg() << L"Calling GetConsoleWindow from WinAPI" << std::endl;
+		return GetConsoleWindow();
+	}
+
+	static HWND GetCurrentConEmuRoot()
+	{
+		CESERVER_CONSOLE_MAPPING_HDR srvMap{};
+		if (!LoadSrvMapping(GetRealConsoleWindow(), srvMap))
+			return nullptr;
+		if (!srvMap.hConEmuWndDc || !IsWindow(srvMap.hConEmuWndDc))
+			return nullptr;
+		return srvMap.hConEmuRoot;
+	}
+
+	static BOOL CALLBACK FindTopGui(HWND hWnd, LPARAM lParam)
+	{
+		HWND* pResult = reinterpret_cast<HWND*>(lParam);
+		wchar_t szClass[MAX_PATH];
+		if (GetClassName(hWnd, szClass, countof(szClass)) < 1)
+			return TRUE; // continue search
+
+		const bool bConClass = isConsoleClass(szClass);
+		if (bConClass)
+			return TRUE; // continue search
+
+		const bool bGuiClass = (lstrcmp(szClass, VirtualConsoleClassMain) == 0);
+		if (!bGuiClass && !bConClass)
+			return TRUE; // continue search
+
+		*pResult = hWnd;
+		return FALSE; // Found! stop search
+	}
+
+	static HWND FindTopConEmu()
+	{
+		HWND hConEmu = nullptr;
+		EnumWindows(FindTopGui, reinterpret_cast<LPARAM>(&hConEmu));
+		return hConEmu;
+	}
+
+};
+
+TEST_F(ServerDllTest, RunGuiMacro_CMD_NoPrint)
 {
-	const auto ConEmuCD = LoadConEmuCD();
-	EXPECT_TRUE(ConEmuCD.IsLoaded());
-
-	// ReSharper disable once CppLocalVariableMayBeConst
-	HWND hConEmu = GetConEmuRoot();
-	std::cerr << "Test started " << (hConEmu ? "inside" : "outside") << " of ConEmu" << std::endl;
+	const ConsoleOutputCapture capture;
 
 	ConsoleMain3_t consoleMain3 = nullptr;
 	EXPECT_TRUE(ConEmuCD.GetProcAddress(FN_CONEMUCD_CONSOLE_MAIN_3_NAME, consoleMain3));
@@ -118,31 +275,66 @@ TEST(ConEmuCD, RunGuiMacro_CMD)
 		return; // nothing to check more, test failed
 	}
 
-	SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
-	wchar_t szResult[64] = L"";
+	{
+		SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
 
-	const auto macroRc = consoleMain3(ConsoleMainMode::GuiMacro, L"-GuiMacro IsConEmu");
-	if (!hConEmu)
-	{
-		EXPECT_EQ(CERR_GUIMACRO_FAILED, macroRc) << "isConEmu==false";
+		const auto macroRc = consoleMain3(ConsoleMainMode::GuiMacro, L"-GuiMacro IsConEmu");
+		if (!hCurrentConEmu)
+		{
+			EXPECT_EQ(CERR_GUIMACRO_FAILED, macroRc) << "isConEmu==false";
+			EXPECT_EQ(nullptr, GetEnvVar()) << "isConEmu==false";
+		}
+		else
+		{
+			EXPECT_EQ(0, macroRc) << "isConEmu==true";
+			EXPECT_TRUE(capture.GetTopString().empty());
+			EXPECT_STREQ(L"Yes", GetEnvVar()) << "isConEmu==true";
+		}
 	}
-	else
+
+	// ReSharper disable once CppLocalVariableMayBeConst
+	if (hByConEmuHWND)
 	{
-		EXPECT_EQ(0, macroRc) << "isConEmu==true";
-		GetEnvironmentVariable(CEGUIMACRORETENVVAR, szResult, LODWORD(std::size(szResult)));
-		EXPECT_STREQ(L"Yes", szResult) << "isConEmu==true";
+		SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
+
+		wchar_t command[64] = L"";
+		swprintf_s(command, L"-GuiMacro:x%p IsConEmu", hByConEmuHWND);
+
+		const auto macroRc = consoleMain3(ConsoleMainMode::GuiMacro, command);
+		EXPECT_EQ(0, macroRc) << "hByConEmuHWND!=NULL";
+		EXPECT_TRUE(capture.GetTopString().empty());
+		EXPECT_STREQ(L"Yes", GetEnvVar()) << "hByConEmuHWND!=NULL";
 	}
 }
 
-TEST(ConEmuCD, RunGuiMacro_API)
+TEST_F(ServerDllTest, RunGuiMacro_CMD_Print)
 {
-	const auto ConEmuCD = LoadConEmuCD();
-	EXPECT_TRUE(ConEmuCD.IsLoaded());
+	const ConsoleOutputCapture capture;
+	
+	ConsoleMain3_t consoleMain3 = nullptr;
+	EXPECT_TRUE(ConEmuCD.GetProcAddress(FN_CONEMUCD_CONSOLE_MAIN_3_NAME, consoleMain3));
+	if (!consoleMain3)
+	{
+		return; // nothing to check more, test failed
+	}
 
-	// ReSharper disable once CppLocalVariableMayBeConst
-	HWND hConEmu = GetConEmuRoot();
-	std::cerr << "Test started " << (hConEmu ? "inside" : "outside") << " of ConEmu" << std::endl;
+	if (hByConEmuHWND)
+	{
+		SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
 
+		wchar_t command[64] = L"";
+		swprintf_s(command, L"-GuiMacro:x%p IsConEmu", hByConEmuHWND);
+
+		const auto macroRc = consoleMain3(ConsoleMainMode::Server, command);
+		EXPECT_EQ(0, macroRc) << "hByConEmuHWND!=NULL";
+		EXPECT_EQ(std::wstring(L"Yes"), capture.GetTopString());
+		EXPECT_STREQ(L"Yes", GetEnvVar()) << "hByConEmuHWND!=NULL";
+	}
+}
+
+TEST_F(ServerDllTest, RunGuiMacro_API)
+{
+	const ConsoleOutputCapture capture;
 
 	GuiMacro_t guiMacro = nullptr;
 	EXPECT_TRUE(ConEmuCD.GetProcAddress(FN_CONEMUCD_GUIMACRO_NAME, guiMacro));
@@ -151,19 +343,67 @@ TEST(ConEmuCD, RunGuiMacro_API)
 		return; // nothing to check more, test failed
 	}
 
+	
+	wchar_t szInstance[128] = L"";
+
+	// Expected to be execute in CURRENT ConEmu instance
 	{
 		SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
-		const auto fnRc = guiMacro(nullptr, L"IsConEmu", nullptr);
+		const auto macroRc = guiMacro(nullptr, L"IsConEmu", nullptr);
+		if (!hCurrentConEmu)
+		{
+			EXPECT_EQ(CERR_GUIMACRO_FAILED, macroRc) << "isConEmu==false";
+			EXPECT_EQ(nullptr, GetEnvVar()) << "isConEmu==false";
+		}
+		else
+		{
+			EXPECT_EQ(CERR_GUIMACRO_SUCCEEDED, macroRc) << "isConEmu==true";
+			EXPECT_TRUE(capture.GetTopString().empty());
+			EXPECT_STREQ(L"Yes", GetEnvVar()) << "isConEmu==true";
+		}
 	}
 
-	//BSTR result = nullptr;
+	// Execute by HWND instance
+	if (!hByConEmuHWND)
+	{
+		cdbg() << "Skipping ByHWND test" << std::endl;
+	}
+	else
+	{
+		SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
+		swprintf_s(szInstance, L"0x%p", static_cast<void*>(hTopConEmu));
+		const auto macroRc = guiMacro(szInstance, L"IsConEmu", nullptr);
+		EXPECT_EQ(CERR_GUIMACRO_SUCCEEDED, macroRc) << "hByConEmuHWND!=NULL";
+		EXPECT_TRUE(capture.GetTopString().empty());
+		EXPECT_STREQ(L"Yes", GetEnvVar()) << "hByConEmuHWND!=NULL";
+	}
+
+	// With BSTR result
+	if (hByConEmuHWND)
+	{
+		SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
+		BSTR result = nullptr;
+		const auto macroRc = guiMacro(szInstance, L"IsConEmu", &result);
+		EXPECT_EQ(CERR_GUIMACRO_SUCCEEDED, macroRc) << "hByConEmuHWND!=NULL";
+		EXPECT_EQ(nullptr, GetEnvVar()) << "hByConEmuHWND!=NULL";
+		EXPECT_TRUE(capture.GetTopString().empty());
+		EXPECT_STREQ(L"Yes", result);
+		SysFreeString(result);
+	}
+
+	// (-1)
+	if (hByConEmuHWND)
+	{
+		SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
+		const auto macroRc = guiMacro(szInstance, L"IsConEmu", static_cast<BSTR*>(INVALID_HANDLE_VALUE));
+		EXPECT_EQ(CERR_GUIMACRO_SUCCEEDED, macroRc) << "hByConEmuHWND!=NULL";
+		EXPECT_TRUE(capture.GetTopString().empty());
+		EXPECT_EQ(nullptr, GetEnvVar()) << "hByConEmuHWND!=NULL";
+	}
 }
 
-TEST(ConEmuCD, RunCmdExe)
+TEST_F(ServerDllTest, RunCmdExe)
 {
-	const auto ConEmuCD = LoadConEmuCD();
-	EXPECT_TRUE(ConEmuCD.IsLoaded());
-
 	ConsoleMain3_t consoleMain3 = nullptr;
 	EXPECT_TRUE(ConEmuCD.GetProcAddress(FN_CONEMUCD_CONSOLE_MAIN_3_NAME, consoleMain3));
 	if (!consoleMain3)
@@ -173,6 +413,15 @@ TEST(ConEmuCD, RunCmdExe)
 
 	const auto cmdRc1 = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c echo echo from cmd.exe");
 	EXPECT_EQ(0, cmdRc1);
+	try
+	{
+		const auto prevString = ConsoleOutputCapture::GetPrevString();
+		EXPECT_EQ(std::wstring(L"echo from cmd.exe"), prevString);
+	}
+	catch (const OutputWasRedirected& ex)
+	{
+		cdbg() << "Skipping cmd echo output test: " << ex.what() << std::endl;
+	}
 
 	const auto cmdRc2 = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c exit 3");
 	EXPECT_EQ(3, cmdRc2);

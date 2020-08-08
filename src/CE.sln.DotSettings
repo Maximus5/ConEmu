@@ -13,6 +13,10 @@
 	<s:String x:Key="/Default/CodeStyle/CodeFormatting/CppFormatting/TOPLEVEL_FUNCTION_DEFINITION_RETURN_TYPE_STYLE/@EntryValue">ON_SINGLE_LINE</s:String>
 	<s:Boolean x:Key="/Default/CodeStyle/CodeFormatting/CppFormatting/WRAP_AFTER_DECLARATION_LPAR/@EntryValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/CodeStyle/CodeFormatting/CppFormatting/WRAP_AFTER_INVOCATION_LPAR/@EntryValue">True</s:Boolean>
+	<s:String x:Key="/Default/CodeStyle/Naming/CppNaming/Abbreviations/=CD/@EntryIndexedValue">CD</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/CppNaming/Abbreviations/=CWD/@EntryIndexedValue">CWD</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/CppNaming/Abbreviations/=HK/@EntryIndexedValue">HK</s:String>
+	<s:String x:Key="/Default/CodeStyle/Naming/CppNaming/Abbreviations/=HWND/@EntryIndexedValue">HWND</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CppNaming/Rules/=Classes_0020and_0020structs/@EntryIndexedValue">&lt;NamingElement Priority="1"&gt;&lt;Descriptor Static="Indeterminate" Constexpr="Indeterminate" Const="Indeterminate" Volatile="Indeterminate" Accessibility="NOT_APPLICABLE"&gt;&lt;type Name="__interface" /&gt;&lt;type Name="class" /&gt;&lt;type Name="struct" /&gt;&lt;/Descriptor&gt;&lt;Policy Inspect="True" Prefix="" Suffix="" Style="AaBb" /&gt;&lt;/NamingElement&gt;</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CppNaming/Rules/=Class_0020and_0020struct_0020fields/@EntryIndexedValue">&lt;NamingElement Priority="11"&gt;&lt;Descriptor Static="Indeterminate" Constexpr="Indeterminate" Const="Indeterminate" Volatile="Indeterminate" Accessibility="NOT_APPLICABLE"&gt;&lt;type Name="class field" /&gt;&lt;type Name="struct field" /&gt;&lt;/Descriptor&gt;&lt;Policy Inspect="True" Prefix="" Suffix="" Style="aaBb" /&gt;&lt;/NamingElement&gt;</s:String>
 	<s:String x:Key="/Default/CodeStyle/Naming/CppNaming/Rules/=Class_0020and_0020struct_0020public_0020fields/@EntryIndexedValue">&lt;NamingElement Priority="12"&gt;&lt;Descriptor Static="Indeterminate" Constexpr="Indeterminate" Const="Indeterminate" Volatile="Indeterminate" Accessibility="PUBLIC"&gt;&lt;type Name="class field" /&gt;&lt;type Name="struct field" /&gt;&lt;/Descriptor&gt;&lt;Policy Inspect="True" Prefix="" Suffix="" Style="aaBb" /&gt;&lt;/NamingElement&gt;</s:String>
@@ -23,12 +27,14 @@
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Bitness/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=Comspec/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=CONEMUC/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=CONOUT/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=csbi/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=DEBUGPID/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=DEBUGSTRCMD/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=DEBUGSTRCP/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=DEBUGSTRFIN/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=fulldump/@EntryIndexedValue">True</s:Boolean>
+	<s:Boolean x:Key="/Default/UserDictionary/Words/=HWND/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=minidump/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=SHOWDEBUGSTR/@EntryIndexedValue">True</s:Boolean>
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=te_002C_0020/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>
