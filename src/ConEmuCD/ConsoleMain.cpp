@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //  SHOW_STARTED_MSGBOX may be defined in ConsoleMain.h
 //	#define SHOW_ADMIN_STARTED_MSGBOX
 //	#define SHOW_MAIN_MSGBOX
-	#define SHOW_ALTERNATIVE_MSGBOX
+//	#define SHOW_ALTERNATIVE_MSGBOX
 //  #define SHOW_DEBUG_STARTED_MSGBOX
 //	#define SHOW_COMSPEC_STARTED_MSGBOX
 //	#define SHOW_SERVER_STARTED_MSGBOX
@@ -692,129 +692,15 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			//gnMsgActivateCon = RegisterWindowMessage(CONEMUMSG_ACTIVATECON);
 			gnMsgSwitchCon = RegisterWindowMessage(CONEMUMSG_SWITCHCON);
 			gnMsgHookedKey = RegisterWindowMessage(CONEMUMSG_HOOKEDKEY);
-			//gnMsgConsoleHookedKey = RegisterWindowMessage(CONEMUMSG_CONSOLEHOOKEDKEY);
-			//#endif
-			//wchar_t szSkipEventName[128];
-			//swprintf_c(szSkipEventName, CEHOOKDISABLEEVENT, GetCurrentProcessId());
-			//HANDLE hSkipEvent = OpenEvent(EVENT_ALL_ACCESS , FALSE, szSkipEventName);
-			////BOOL lbSkipInjects = FALSE;
-
-			//if (hSkipEvent)
-			//{
-			//	gbSkipInjects = (WaitForSingleObject(hSkipEvent, 0) == WAIT_OBJECT_0);
-			//	CloseHandle(hSkipEvent);
-			//}
-			//else
-			//{
-			//	gbSkipInjects = FALSE;
-			//}
 
 			// Открыть мэппинг консоли и попытаться получить HWND GUI, PID сервера, и пр...
 			if (ghConWnd)
 				LoadSrvInfoMap(szExeName, szDllName);
-
-
-			//if (!gbSkipInjects && ghConWnd)
-			//{
-			//	InitializeConsoleInputSemaphore();
-			//}
-
-
-			//#ifdef _WIN64
-			//DWORD nImageBits = 64, nImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-			//#else
-			//DWORD nImageBits = 32, nImageSubsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
-			//#endif
-			//GetImageSubsystem(nImageSubsystem,nImageBits);
-
-			//CShellProc sp;
-			//if (sp.LoadGuiMapping())
-			//{
-			//	wchar_t szExeName[MAX_PATH+1]; //, szBaseDir[MAX_PATH+2];
-			//	//BOOL lbDosBoxAllowed = FALSE;
-			//	if (!GetModuleFileName(NULL, szExeName, countof(szExeName))) szExeName[0] = 0;
-			//	CESERVER_REQ* pIn = sp.NewCmdOnCreate(
-			//		gbSkipInjects ? eHooksLoaded : eInjectingHooks,
-			//		L"", szExeName, GetCommandLineW(),
-			//		NULL, NULL, NULL, NULL, // flags
-			//		nImageBits, nImageSubsystem,
-			//		GetStdHandle(STD_INPUT_HANDLE), GetStdHandle(STD_OUTPUT_HANDLE), GetStdHandle(STD_ERROR_HANDLE));
-			//	if (pIn)
-			//	{
-			//		//HWND hConWnd = GetConEmuHWND(2);
-			//		CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
-			//		ExecuteFreeResult(pIn);
-			//		if (pOut) ExecuteFreeResult(pOut);
-			//	}
-			//}
-
-			//if (!gbSkipInjects)
-			//{
-			//	#ifdef _DEBUG
-			//	wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
-			//	#endif
-
-			//	#ifdef SHOW_INJECT_MSGBOX
-			//	wchar_t szDbgMsg[1024], szTitle[128];//, szModule[MAX_PATH];
-			//	if (!GetModuleFileName(NULL, szModule, countof(szModule)))
-			//		wcscpy_c(szModule, L"GetModuleFileName failed");
-			//	swprintf_c(szTitle, L"ConEmuHk, PID=%u", GetCurrentProcessId());
-			//	swprintf_c(szDbgMsg, L"SetAllHooks, ConEmuHk, PID=%u\n%s", GetCurrentProcessId(), szModule);
-			//	MessageBoxW(NULL, szDbgMsg, szTitle, MB_SYSTEMMODAL);
-			//	#endif
-			//	gnRunMode = RunMode::RM_APPLICATION;
-
-			//	#ifdef _DEBUG
-			//	//wchar_t szModule[MAX_PATH+1]; szModule[0] = 0;
-			//	GetModuleFileName(NULL, szModule, countof(szModule));
-			//	const wchar_t* pszName = PointToName(szModule);
-			//	_ASSERTE((nImageSubsystem==IMAGE_SUBSYSTEM_WINDOWS_CUI) || (lstrcmpi(pszName, L"DosBox.exe")==0));
-			//	//if (!lstrcmpi(pszName, L"far.exe") || !lstrcmpi(pszName, L"mingw32-make.exe"))
-			//	//if (!lstrcmpi(pszName, L"as.exe"))
-			//	//	MessageBoxW(NULL, L"as.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
-			//	//else if (!lstrcmpi(pszName, L"cc1plus.exe"))
-			//	//	MessageBoxW(NULL, L"cc1plus.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
-			//	//else if (!lstrcmpi(pszName, L"mingw32-make.exe"))
-			//	//	MessageBoxW(NULL, L"mingw32-make.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
-			//	//if (!lstrcmpi(pszName, L"g++.exe"))
-			//	//	MessageBoxW(NULL, L"g++.exe loaded!", L"ConEmuHk", MB_SYSTEMMODAL);
-			//	//{
-			//	#endif
-
-			//	gbHooksWasSet = StartupHooks(ghOurModule);
-
-			//	#ifdef _DEBUG
-			//	//}
-			//	#endif
-
-			//	// Если NULL - значит это "Detached" консольный процесс, посылать "Started" в сервер смысла нет
-			//	if (ghConWnd != NULL)
-			//	{
-			//		SendStarted();
-			//		//#ifdef _DEBUG
-			//		//// Здесь это приводит к обвалу _chkstk,
-			//		//// похоже из-за того, что dll-ка загружена НЕ из известных модулей,
-			//		//// а из специально сформированного блока памяти
-			//		// -- в одной из функций, под локальные переменные выделялось слишком много памяти
-			//		// -- переделал в malloc/free, все заработало
-			//		//TestShellProcessor();
-			//		//#endif
-			//	}
-			//}
-			//else
-			//{
-			//	gbHooksWasSet = FALSE;
-			//}
 		}
 		break;
 		case DLL_PROCESS_DETACH:
 		{
 			ShutdownSrvStep(L"DLL_PROCESS_DETACH");
-			//if (!gbSkipInjects && gbHooksWasSet)
-			//{
-			//	gbHooksWasSet = FALSE;
-			//	ShutdownHooks();
-			//}
 
 			#ifdef _DEBUG
 			if ((gnRunMode == RunMode::Server) && (nExitPlaceStep == EPS_WAITING4PROCESS/*550*/))
@@ -830,12 +716,6 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 			{
 				SendStopped();
 			}
-			//else if (gnRunMode == RunMode::RM_ALTSERVER)
-			//{
-			//	WARNING("RunMode::RM_ALTSERVER тоже должен посылать уведомление в главный сервер о своем завершении");
-			//	// Но пока - оставим, для отладки ситуации, когда процесс завершается аварийно (Kill).
-			//	_ASSERTE(gnRunMode != RunMode::RM_ALTSERVER && "AltServer must inform MainServer about self-termination");
-			//}
 
 			Shutdown::ProcessShutdown();
 
@@ -1784,7 +1664,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 			{
 				TODO("Не только в сервере, но и в ComSpec, чтобы дочерние КОНСОЛЬНЫЕ процессы могли пользоваться редиректами");
 				//""F:\VCProject\FarPlugin\ConEmu\Bugs\DOS\TURBO.EXE ""
-				TODO("При выполнении DOS приложений - VirtualAllocEx(hProcess, обламывается!");
+				// #TODO При выполнении DOS приложений - VirtualAllocEx(hProcess, обламывается!
 				TODO("В принципе - завелось, но в сочетании с Anamorphosis получается странное зацикливание far->conemu->anamorph->conemu");
 
 				#ifdef SHOW_INJECT_MSGBOX
@@ -1939,6 +1819,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		gpWorker->SetRootThreadId(pi.dwThreadId);
 		gpWorker->SetRootStartTime(GetTickCount());
 		// Скорее всего процесс в консольном списке уже будет
+		_ASSERTE(gpSrv != nullptr);
 		gpSrv->processes->CheckProcessCount(TRUE);
 
 		#ifdef _DEBUG
@@ -2203,6 +2084,7 @@ wrap:
 		}
 
 		// Post information to GUI
+		_ASSERTE(gpSrv != nullptr);
 		if (gnMainServerPID && !gpSrv->bWasDetached)
 		{
 			CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETROOTINFO, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_ROOT_INFO));
