@@ -1202,6 +1202,9 @@
     <ClCompile Include="common\CEStr.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\CEStr_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="common\CmdLine.cpp">
       <Filter>common</Filter>
     </ClCompile>

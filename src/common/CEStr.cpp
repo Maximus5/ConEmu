@@ -346,7 +346,9 @@ const wchar_t* CEStr::Set(const wchar_t* asNewValue, ssize_t anChars /*= -1*/)
 
 	if (asNewValue)
 	{
-		ssize_t nNewLen = (anChars < 0) ? (ssize_t)wcslen(asNewValue) : std::min<ssize_t>(anChars, wcslen(asNewValue));
+		const ssize_t nNewLen = (anChars < 0)
+			? ssize_t(wcslen(asNewValue))
+			: std::min<ssize_t>(anChars, wcslen(asNewValue));
 
 		// Assign empty but NOT NULL string
 		if (nNewLen <= 0)

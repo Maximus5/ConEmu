@@ -186,7 +186,7 @@ class CConEmuMain
 			bool  bBlockChildrenDebuggers;
 		} m_DbgInfo;
 	private:
-		bool CheckBaseDir() const const;
+		bool CheckBaseDir() const;
 		bool mb_DontUseInjects = false;
 		bool mb_ForceUseRegistry = false;
 		bool mb_SpecialConfigPath = false;

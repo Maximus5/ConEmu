@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HotkeyChord.h"
 #include "SetPgBase.h"
 
-TEST(ConEmuHotKey,Tests)
+TEST(Hotkeys,Tests)
 {
 	// Key names order:
 	//    Win, Apps, Ctrl, Alt, Shift
@@ -68,7 +68,7 @@ TEST(ConEmuHotKey,Tests)
 	}
 }
 
-TEST(ConEmuHotKey, GroupReplacement)
+TEST(Hotkeys, GroupReplacement)
 {
 	wchar_t szFull[128];
 
@@ -85,7 +85,7 @@ TEST(ConEmuHotKey, GroupReplacement)
 	EXPECT_STREQ(szFull, L"Ctrl+Alt+Numbers");
 }
 
-TEST(ConEmuHotKey, LabelHotkeyReplacement)
+TEST(Hotkeys, LabelHotkeyReplacement)
 {
 	struct TestCases
 	{

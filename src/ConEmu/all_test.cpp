@@ -670,79 +670,79 @@ void XmlValueConvertTest()
 
 } // end of namespace
 
-TEST(ConEmuTest, DebugNeedCmdUnitTests)
+TEST(General, DebugNeedCmdUnitTests)
 {
 	DebugNeedCmdUnitTests();
 }
-TEST(ConEmuTest, DebugCmdParserTests)
+TEST(General, DebugCmdParserTests)
 {
 	DebugCmdParserTests();
 }
-TEST(ConEmuTest, UnitMaskTests)
+TEST(General, UnitMaskTests)
 {
 	UnitMaskTests();
 }
-TEST(ConEmuTest, UnitDriveTests)
+TEST(General, UnitDriveTests)
 {
 	UnitDriveTests();
 }
-TEST(ConEmuTest, UnitPathTests)
+TEST(General, UnitPathTests)
 {
 	UnitPathTests();
 }
-TEST(ConEmuTest, UnitFileNamesTest)
+TEST(General, UnitFileNamesTest)
 {
 	UnitFileNamesTest();
 }
-TEST(ConEmuTest, UnitExpandTest)
+TEST(General, UnitExpandTest)
 {
 	UnitExpandTest();
 }
-TEST(ConEmuTest, UnitModuleTest)
+TEST(General, UnitModuleTest)
 {
 	UnitModuleTest();
 }
-TEST(ConEmuTest, DebugUnitMprintfTest)
+TEST(General, DebugUnitMprintfTest)
 {
 	DebugUnitMprintfTest();
 }
-TEST(ConEmuTest, DebugVersionTest)
+TEST(General, DebugVersionTest)
 {
 	DebugVersionTest();
 }
-TEST(ConEmuTest, DebugFileExistTests)
+TEST(General, DebugFileExistTests)
 {
 	DebugFileExistTests();
 }
-TEST(ConEmuTest, DebugStrUnitTest)
+TEST(General, DebugStrUnitTest)
 {
 	DebugStrUnitTest();
 }
-TEST(ConEmuTest, DebugCpUnitTest)
+TEST(General, DebugCpUnitTest)
 {
 	DebugCpUnitTest();
 }
-TEST(ConEmuTest, DebugProcessNameTest)
+TEST(General, DebugProcessNameTest)
 {
 	DebugProcessNameTest();
 }
-TEST(ConEmuTest, DebugTestSetParser)
+TEST(General, DebugTestSetParser)
 {
 	DebugTestSetParser();
 }
-TEST(ConEmuTest, DebugMapsTests)
+TEST(General, DebugMapsTests)
 {
 	DebugMapsTests();
 }
-TEST(ConEmuTest, DebugArrayTests)
+TEST(General, DebugArrayTests)
 {
 	DebugArrayTests();
 }
-TEST(ConEmuTest, DebugJsonTest)
+TEST(General, DebugJsonTest)
 {
 	DebugJsonTest();
 }
-TEST(ConEmuTest, XmlValueConvertTest)
+TEST(General, XmlValueConvertTest)
 {
 	XmlValueConvertTest();
 }
