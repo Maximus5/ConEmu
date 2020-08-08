@@ -55,12 +55,17 @@ TEST(CmdLine, NextArg)
 	EXPECT_TRUE(ls.OneOfSwitches(L"/cmd",L"/run"));
 	EXPECT_FALSE(ls.OneOfSwitches(L"/cmd",L"/cmdlist"));
 	EXPECT_TRUE(ls.IsSwitch(L"-run"));
+	EXPECT_FALSE(ls.IsSwitch(L"-run:"));
+	EXPECT_FALSE(ls.IsSwitch(L"-run="));
+	EXPECT_STREQ(L"", ls.GetExtra());
 
 	EXPECT_NE(nullptr, (pszCmd=NextArg(pszCmd,ls)));
 	EXPECT_STREQ(ls.c_str(), L"-inside=0x800");
 	EXPECT_TRUE(ls.IsSwitch(L"-inside="));
-	EXPECT_TRUE(ls.OneOfSwitches(L"-inside",L"-inside="));
+	EXPECT_TRUE(ls.IsSwitch(L"-inside:"));
 	EXPECT_FALSE(ls.IsSwitch(L"-inside"));
+	EXPECT_TRUE(ls.OneOfSwitches(L"-inside",L"-inside="));
+	EXPECT_STREQ(L"0x800", ls.GetExtra());
 
 	EXPECT_NE(nullptr, (pszCmd=NextArg(pszCmd,ls)));
 	EXPECT_STREQ(ls.c_str(), L"/cmdlist");
@@ -69,6 +74,7 @@ TEST(CmdLine, NextArg)
 	EXPECT_NE(nullptr, (pszCmd=NextArg(pszCmd,ls)));
 	EXPECT_STREQ(ls.c_str(), L"-inside=\\eCD /d %1");
 	EXPECT_TRUE(ls.IsSwitch(L"-inside:"));
+	EXPECT_STREQ(L"\\eCD /d %1", ls.GetExtra());
 
 	// #NextArg '@' used in debugLogShell
 	EXPECT_NE(nullptr, (pszCmd=NextArg(pszCmd,ls)));

@@ -37,22 +37,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct CmdArg : public CEStr
 {
 public:
-	// Point to the end dblquot, if we need drop first and last quotation marks
-	LPCWSTR mpsz_Dequoted = nullptr;
-	// true if it's a double-quoted argument from NextArg
-	bool mb_Quoted = false;
-	// if 0 - this is must be first call (first token of command line)
-	// so, we need to test for mpsz_Dequoted
-	int mn_TokenNo = 0;
-	// To bee able corretly parse double quotes in commands like
-	// "C:\Windows\system32\cmd.exe" /C ""C:\Python27\python.EXE""
-	// "reg.exe add "HKEY_CLASSES_ROOT\Directory\Background\shell\Command Prompt\command" /ve /t REG_EXPAND_SZ /d "\"D:\Applications\ConEmu\ConEmuPortable.exe\" /Dir \"%V\" /cmd \"cmd.exe\" \"-new_console:nC:cmd.exe\" \"-cur_console:d:%V\"" /f"
-	enum { cc_Undefined, cc_CmdExeFound, cc_CmdCK, cc_CmdCommand } mn_CmdCall = cc_Undefined;
+	/// Point to the end dblquot, if we need drop first and last quotation marks
+	LPCWSTR m_pszDequoted = nullptr;
+	/// true if it's a double-quoted argument from NextArg
+	bool m_bQuoted = false;
+	/// if 0 - this is must be first call (first token of command line)
+	/// so, we need to test for mpsz_Dequoted
+	int m_nTokenNo = 0;
+
+	enum class CmdCall { Undefined, CmdExeFound, CmdK, CmdC };
+	/// To be able correctly parse double quotes in commands like <br>
+	/// "C:\Windows\system32\cmd.exe" /C ""C:\Python27\python.EXE"" <br>
+	/// "reg.exe add "HKEY_CLASSES_ROOT\Directory\Background\shell\Command Prompt\command" /ve /t REG_EXPAND_SZ /d "\"D:\Applications\ConEmu\ConEmuPortable.exe\" /Dir \"%V\" /cmd \"cmd.exe\" \"-new_console:nC:cmd.exe\" \"-cur_console:d:%V\"" /f"
+	CmdCall m_nCmdCall = CmdCall::Undefined;
 
 	#ifdef _DEBUG
-	// Debug, для отлова "не сброшенных" вызовов
-	LPCWSTR ms_LastTokenEnd = nullptr;
-	wchar_t ms_LastTokenSave[32] = L"";
+	// Debug to catch dirty calls
+	LPCWSTR m_sLastTokenEnd = nullptr;
+	wchar_t m_sLastTokenSave[32] = L"";
 	#endif
 
 private:
@@ -61,20 +63,30 @@ private:
 public:
 	void Empty();
 
-	void GetPosFrom(const CmdArg& arg);
+	/// Copy service info from other CmdArg
+	/// Used during NextArg evaluation to use different CmdArg objects
+	void LoadPosFrom(const CmdArg& arg);
 
-	// If this may be supported switch like "-run"
+	/// If this may be supported switch like "-run", "/run", "/inside=...", "-regfont:...", etc.
 	bool IsPossibleSwitch() const;
-	// For example, compare if ms_Val is "-run"
+	/// For example, compare if ms_Val is "-run", "/run", "/inside=...", "-regfont:...", etc.
 	bool IsSwitch(LPCWSTR asSwitch, bool caseSensitive = false) const;
-	// Stops checking on first NULL
-	bool OneOfSwitches(LPCWSTR asSwitch1, LPCWSTR asSwitch2 = NULL, LPCWSTR asSwitch3 = NULL, LPCWSTR asSwitch4 = NULL, LPCWSTR asSwitch5 = NULL, LPCWSTR asSwitch6 = NULL, LPCWSTR asSwitch7 = NULL, LPCWSTR asSwitch8 = NULL, LPCWSTR asSwitch9 = NULL, LPCWSTR asSwitch10 = NULL) const;
+	/// Stops checking on first nullptr
+	bool OneOfSwitches(LPCWSTR asSwitch1, LPCWSTR asSwitch2 = nullptr, LPCWSTR asSwitch3 = nullptr, LPCWSTR asSwitch4 = nullptr, LPCWSTR asSwitch5 = nullptr, LPCWSTR asSwitch6 = nullptr, LPCWSTR asSwitch7 = nullptr, LPCWSTR asSwitch8 = nullptr, LPCWSTR asSwitch9 = nullptr, LPCWSTR asSwitch10 = nullptr) const;
+	/// <summary>
+	/// Returns tail of argument after ":" or "=". <br>
+	/// Examples: "0xABC" for switch "-inside:0xABC"
+	/// </summary>
+	/// <returns>non-null string</returns>
+	LPCWSTR GetExtra() const;
 
 	CmdArg(CmdArg&&) = delete;
+	CmdArg(const CmdArg&) = delete;
 
 	CmdArg& operator=(const wchar_t* str);
 	CmdArg& operator=(wchar_t*&& str) = delete;
 	CmdArg& operator=(CmdArg&& str) = delete;
+	CmdArg& operator=(const CmdArg&) = delete;
 
 	CmdArg();
 	CmdArg(const wchar_t* str);
@@ -82,7 +94,7 @@ public:
 };
 
 
-const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg& rsArg, const wchar_t** rsArgStart=NULL);
+const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg& rsArg, const wchar_t** rsArgStart=nullptr);
 bool DemangleArg(CmdArg& rsDemangle, bool bDeQuote = true, bool bDeEscape = false);
 
 typedef DWORD NEXTLINEFLAGS;
@@ -99,7 +111,7 @@ LPCWSTR GetDirectory(CEStr& szDir);
 bool CompareProcessNames(LPCWSTR pszProcess1, LPCWSTR pszProcess2);
 bool CheckProcessName(LPCWSTR pszProcessName, LPCWSTR* lsNames);
 
-bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars = NULL);
+bool IsExecutable(LPCWSTR aszFilePathName, wchar_t** rsExpandedVars = nullptr);
 bool IsFarExe(LPCWSTR asModuleName);
 bool IsCmdProcessor(LPCWSTR asModuleName);
 bool IsConEmuGui(LPCWSTR pszProcessName);
@@ -110,15 +122,15 @@ bool IsTerminalServer(LPCWSTR pszProcessName);
 bool IsGitBashHelper(LPCWSTR pszProcessName);
 bool IsSshAgentHelper(LPCWSTR pszProcessName);
 bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
-			   LPCWSTR* rsArguments = NULL, BOOL* rpbNeedCutStartEndQuot = NULL,
-			   BOOL* rpbRootIsCmdExe = NULL, BOOL* rpbAlwaysConfirmExit = NULL, BOOL* rpbAutoDisableConfirmExit = NULL);
+			   LPCWSTR* rsArguments = nullptr, BOOL* rpbNeedCutStartEndQuot = nullptr,
+			   BOOL* rpbRootIsCmdExe = nullptr, BOOL* rpbAlwaysConfirmExit = nullptr, BOOL* rpbAutoDisableConfirmExit = nullptr);
 
 bool IsQuotationNeeded(LPCWSTR pszPath);
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
 
 int AddEndSlash(wchar_t* rsPath, int cchMax);
 wchar_t* MergeCmdLine(LPCWSTR asExe, LPCWSTR asParams);
-wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 = NULL);
+wchar_t* JoinPath(LPCWSTR asPath, LPCWSTR asPart1, LPCWSTR asPart2 = nullptr);
 wchar_t* GetParentPath(LPCWSTR asPath);
 
 bool IsFilePath(LPCWSTR asFilePath, bool abFullRequired = false);

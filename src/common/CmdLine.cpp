@@ -64,26 +64,26 @@ void CmdArg::Empty()
 {
 	CEStr::Empty();
 
-	mn_TokenNo = 0;
-	mn_CmdCall = cc_Undefined;
-	mpsz_Dequoted = nullptr;
-	mb_Quoted = false;
+	m_nTokenNo = 0;
+	m_nCmdCall = CmdCall::Undefined;
+	m_pszDequoted = nullptr;
+	m_bQuoted = false;
 
 	#ifdef _DEBUG
-	ms_LastTokenEnd = nullptr;
-	ms_LastTokenSave[0] = 0;
+	m_sLastTokenEnd = nullptr;
+	m_sLastTokenSave[0] = 0;
 	#endif
 }
 
-void CmdArg::GetPosFrom(const CmdArg& arg)
+void CmdArg::LoadPosFrom(const CmdArg& arg)
 {
-	mpsz_Dequoted = arg.mpsz_Dequoted;
-	mb_Quoted = arg.mb_Quoted;
-	mn_TokenNo = arg.mn_TokenNo;
-	mn_CmdCall = arg.mn_CmdCall;
+	m_pszDequoted = arg.m_pszDequoted;
+	m_bQuoted = arg.m_bQuoted;
+	m_nTokenNo = arg.m_nTokenNo;
+	m_nCmdCall = arg.m_nCmdCall;
 	#ifdef _DEBUG
-	ms_LastTokenEnd = arg.ms_LastTokenEnd;
-	lstrcpyn(ms_LastTokenSave, arg.ms_LastTokenSave, countof(ms_LastTokenSave));
+	m_sLastTokenEnd = arg.m_sLastTokenEnd;
+	lstrcpyn(m_sLastTokenSave, arg.m_sLastTokenSave, countof(m_sLastTokenSave));
 	#endif
 }
 
@@ -130,7 +130,7 @@ bool CmdArg::CompareSwitch(LPCWSTR asSwitch, bool caseSensitive /*= false*/) con
 		return true;
 
 	// Support partial comparison for L"-inside=..." when (asSwitch == L"-inside=")
-	int len = lstrlen(asSwitch);
+	const int len = lstrlen(asSwitch);
 	if ((len > 1) && ((asSwitch[len-1] == L'=') || (asSwitch[len-1] == L':')))
 	{
 		iCmp = lstrcmpni(ms_Val+1, asSwitch, (len - 1));
@@ -169,37 +169,26 @@ bool CmdArg::OneOfSwitches(LPCWSTR asSwitch1, LPCWSTR asSwitch2, LPCWSTR asSwitc
 
 	LPCWSTR switches[] = {asSwitch1, asSwitch2, asSwitch3, asSwitch4, asSwitch5, asSwitch6, asSwitch7, asSwitch8, asSwitch9, asSwitch10};
 
-	for (size_t i = 0; (i < countof(switches)) && switches[i]; i++)
+	for (const auto& name : switches)
 	{
-		if (CompareSwitch(switches[i]))
+		if (!name)
+			break;
+		if (CompareSwitch(name))
 			return true;
 	}
 
 	return false;
-
-#if 0
-	// Variable argument list is not so safe...
-
-	bool bMatch = false;
-	va_list argptr;
-	va_start(argptr, asSwitch1);
-
-	LPCWSTR pszSwitch = va_arg( argptr, LPCWSTR );
-	while (pszSwitch)
-	{
-		if (CompareSwitch(pszSwitch))
-		{
-			bMatch = true; break;
-		}
-		pszSwitch = va_arg( argptr, LPCWSTR );
-	}
-
-	va_end(argptr);
-
-	return bMatch;
-#endif
 }
 
+LPCWSTR CmdArg::GetExtra() const
+{
+	if (!IsPossibleSwitch())
+		return L"";
+	const auto* delimiter = wcspbrk(ms_Val, L":=");
+	if (!delimiter)
+		return L"";
+	return (delimiter + 1);
+}
 
 
 // Returns true on changes
@@ -354,9 +343,9 @@ const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** 
 		return NULL;
 
 	#ifdef _DEBUG
-	if ((rsArg.mn_TokenNo==0) // first token
-		|| ((rsArg.mn_TokenNo>0) && (rsArg.ms_LastTokenEnd==asCmdLine)
-			&& (wcsncmp(asCmdLine, rsArg.ms_LastTokenSave, countof(rsArg.ms_LastTokenSave)-1))==0))
+	if ((rsArg.m_nTokenNo==0) // first token
+		|| ((rsArg.m_nTokenNo>0) && (rsArg.m_sLastTokenEnd==asCmdLine)
+			&& (wcsncmp(asCmdLine, rsArg.m_sLastTokenSave, countof(rsArg.m_sLastTokenSave)-1))==0))
 	{
 		// OK, параметры корректны
 	}
@@ -373,12 +362,12 @@ const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** 
 	// Remote surrounding quotes, in certain cases
 	// Example: ""7z.exe" /?"
 	// Example: "C:\Windows\system32\cmd.exe" /C ""C:\Python27\python.EXE""
-	if ((rsArg.mn_TokenNo == 0) || (rsArg.mn_CmdCall == CmdArg::cc_CmdCK))
+	if ((rsArg.m_nTokenNo == 0) || (rsArg.m_nCmdCall == CmdArg::CmdCall::CmdK))
 	{
-		if (IsNeedDequote(psCmdLine, (rsArg.mn_CmdCall == CmdArg::cc_CmdCK), &rsArg.mpsz_Dequoted))
+		if (IsNeedDequote(psCmdLine, (rsArg.m_nCmdCall == CmdArg::CmdCall::CmdK), &rsArg.m_pszDequoted))
 			psCmdLine++;
-		if (rsArg.mn_CmdCall == CmdArg::cc_CmdCK)
-			rsArg.mn_CmdCall = CmdArg::cc_CmdCommand;
+		if (rsArg.m_nCmdCall == CmdArg::CmdCall::CmdK)
+			rsArg.m_nCmdCall = CmdArg::CmdCall::CmdC;
 	}
 
 	size_t nArgLen = 0;
@@ -430,7 +419,7 @@ const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** 
 		if (!pch)
 			return NULL;
 
-		while (pch[1] == L'"' && (!rsArg.mpsz_Dequoted || ((pch+1) < rsArg.mpsz_Dequoted)))
+		while (pch[1] == L'"' && (!rsArg.m_pszDequoted || ((pch+1) < rsArg.m_pszDequoted)))
 		{
 			pch += 2;
 			pch = wcschr(pch, L'"');
@@ -464,35 +453,35 @@ const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** 
 	// concatenate environment or smth, losing quotes and others
 	if (!rsArg.Set(psCmdLine, nArgLen))
 		return NULL;
-	rsArg.mb_Quoted = lbQMode;
-	rsArg.mn_TokenNo++;
+	rsArg.m_bQuoted = lbQMode;
+	rsArg.m_nTokenNo++;
 
 	if (rsArgStart) *rsArgStart = psCmdLine;
 
 	psCmdLine = pch;
 	// Finalize
-	if ((*psCmdLine == L'"') && (lbQMode || (rsArg.mpsz_Dequoted == psCmdLine)))
+	if ((*psCmdLine == L'"') && (lbQMode || (rsArg.m_pszDequoted == psCmdLine)))
 		psCmdLine++; // was pointed to closing quotation mark
 
 	psCmdLine = SkipNonPrintable(psCmdLine);
 	// When whole line was dequoted
-	if ((*psCmdLine == L'"') && (rsArg.mpsz_Dequoted == psCmdLine))
+	if ((*psCmdLine == L'"') && (rsArg.m_pszDequoted == psCmdLine))
 		psCmdLine++;
 
 	#ifdef _DEBUG
-	rsArg.ms_LastTokenEnd = psCmdLine;
-	lstrcpyn(rsArg.ms_LastTokenSave, psCmdLine, countof(rsArg.ms_LastTokenSave));
+	rsArg.m_sLastTokenEnd = psCmdLine;
+	lstrcpyn(rsArg.m_sLastTokenSave, psCmdLine, countof(rsArg.m_sLastTokenSave));
 	#endif
 
-	switch (rsArg.mn_CmdCall)
+	switch (rsArg.m_nCmdCall)
 	{
-	case CmdArg::cc_Undefined:
+	case CmdArg::CmdCall::Undefined:
 		// Если это однозначно "ключ" - то на имя файла не проверяем
 		if (*rsArg.ms_Val == L'/' || *rsArg.ms_Val == L'-')
 		{
 			// Это для парсинга (чтобы ассертов не было) параметров из ShellExecute (там cmd.exe указывается в другом аргументе)
-			if ((rsArg.mn_TokenNo == 1) && (lstrcmpi(rsArg.ms_Val, L"/C") == 0 || lstrcmpi(rsArg.ms_Val, L"/K") == 0))
-				rsArg.mn_CmdCall = CmdArg::cc_CmdCK;
+			if ((rsArg.m_nTokenNo == 1) && (lstrcmpi(rsArg.ms_Val, L"/C") == 0 || lstrcmpi(rsArg.ms_Val, L"/K") == 0))
+				rsArg.m_nCmdCall = CmdArg::CmdCall::CmdK;
 		}
 		else
 		{
@@ -503,16 +492,16 @@ const wchar_t* NextArg(const wchar_t* asCmdLine, CmdArg &rsArg, const wchar_t** 
 					|| (lstrcmpi(pch, L"ConEmuC") == 0 || lstrcmpi(pch, L"ConEmuC.exe") == 0)
 					|| (lstrcmpi(pch, L"ConEmuC64") == 0 || lstrcmpi(pch, L"ConEmuC64.exe") == 0))
 				{
-					rsArg.mn_CmdCall = CmdArg::cc_CmdExeFound;
+					rsArg.m_nCmdCall = CmdArg::CmdCall::CmdExeFound;
 				}
 			}
 		}
 		break;
-	case CmdArg::cc_CmdExeFound:
+	case CmdArg::CmdCall::CmdExeFound:
 		if (lstrcmpi(rsArg.ms_Val, L"/C") == 0 || lstrcmpi(rsArg.ms_Val, L"/K") == 0)
-			rsArg.mn_CmdCall = CmdArg::cc_CmdCK;
+			rsArg.m_nCmdCall = CmdArg::CmdCall::CmdK;
 		else if ((rsArg.ms_Val[0] != L'/') && (rsArg.ms_Val[0] != L'-'))
-			rsArg.mn_CmdCall = CmdArg::cc_Undefined;
+			rsArg.m_nCmdCall = CmdArg::CmdCall::Undefined;
 		break;
 	}
 

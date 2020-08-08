@@ -280,9 +280,9 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 				bTokenOk = true;
 				lstrmerge(&lsAdd.ms_Val,
 					lsAdd.IsEmpty() ? NULL : L" ",
-					lsSet.mb_Quoted ? L"\"" : NULL,
+					lsSet.m_bQuoted ? L"\"" : NULL,
 					lsSet.ms_Val,
-					lsSet.mb_Quoted ? L"\"" : NULL);
+					lsSet.m_bQuoted ? L"\"" : NULL);
 				lsCmdLine = SkipNonPrintable(lsCmdLine);
 				if (!*lsCmdLine || (*lsCmdLine == L'&') || (*lsCmdLine == L'|'))
 					break;
@@ -301,8 +301,8 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 		// Well, known command was detected. What is next?
 		if (lsNameVal || bTokenOk)
 		{
-			lsAmp.GetPosFrom(lsSet);
-			if (!(lsCmdLine = NextArg(lsCmdLine, lsAmp)))
+			lsAmp.LoadPosFrom(lsSet);
+			if (!((lsCmdLine = NextArg(lsCmdLine, lsAmp))))
 			{
 				// End of command? User called only "set" without following app? Run simple "cmd" in that case
 				_ASSERTE(bAlone || (lsCmdLine!=NULL && *lsCmdLine==0));
@@ -316,7 +316,7 @@ bool CProcessEnvCmd::AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd/*= NULL*/,
 					bTokenOk = true; // And process SetEnvironmentVariable
 				}
 				// Update last pointer (debug and asserts purposes)
-				lsSet.GetPosFrom(lsAmp);
+				lsSet.LoadPosFrom(lsAmp);
 			}
 		}
 

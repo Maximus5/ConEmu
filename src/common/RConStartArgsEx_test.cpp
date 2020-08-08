@@ -105,7 +105,7 @@ TEST(RConStartArgsEx, ArgTests)
 			}
 			else
 			{
-				DemangleArg(s, s.mb_Quoted);
+				DemangleArg(s, s.m_bQuoted);
 				nDbg = lstrcmp(s, lsArgTest[i].pszCmp[j]);
 				if (nDbg != 0)
 				{
