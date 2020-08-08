@@ -3234,8 +3234,8 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 	BOOL lbNeedCutStartEndQuot = FALSE;
 	bool lbNeedCdToProfileDir = false;
 
-	ConEmuStateCheck eStateCheck = ec_None;
-	ConEmuExecAction eExecAction = ea_None;
+	ConEmuStateCheck eStateCheck = ConEmuStateCheck::None;
+	ConEmuExecAction eExecAction = ConEmuExecAction::None;
 	MacroInstance MacroInst = {}; // Special ConEmu instance for GUIMACRO and other options
 
 	if (!lsCmdLine || !*lsCmdLine)
@@ -3302,32 +3302,32 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		// **** Unit tests ****
 		if (lstrcmpi(szArg, L"/Args")==0 || lstrcmpi(szArg, L"/ParseArgs")==0)
 		{
-			eExecAction = ea_ParseArgs;
+			eExecAction = ConEmuExecAction::ParseArgs;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/ConInfo")==0)
 		{
-			eExecAction = ea_PrintConsoleInfo;
+			eExecAction = ConEmuExecAction::PrintConsoleInfo;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/CheckUnicode")==0)
 		{
-			eExecAction = ea_CheckUnicodeFont;
+			eExecAction = ConEmuExecAction::CheckUnicodeFont;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/TestUnicode")==0)
 		{
-			eExecAction = ea_TestUnicodeCvt;
+			eExecAction = ConEmuExecAction::TestUnicodeCvt;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/OsVerInfo")==0)
 		{
-			eExecAction = ea_OsVerInfo;
+			eExecAction = ConEmuExecAction::OsVerInfo;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/ErrorLevel")==0)
 		{
-			eExecAction = ea_ErrorLevel;
+			eExecAction = ConEmuExecAction::ErrorLevel;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/Result")==0)
@@ -3336,36 +3336,36 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		}
 		else if (lstrcmpi(szArg, L"/echo")==0 || lstrcmpi(szArg, L"/e")==0)
 		{
-			eExecAction = ea_OutEcho;
+			eExecAction = ConEmuExecAction::OutEcho;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/type")==0 || lstrcmpi(szArg, L"/t")==0)
 		{
-			eExecAction = ea_OutType;
+			eExecAction = ConEmuExecAction::OutType;
 			break;
 		}
 		// **** Regular use ****
 		else if (wcsncmp(szArg, L"/REGCONFONT=", 12)==0)
 		{
-			eExecAction = ea_RegConFont;
+			eExecAction = ConEmuExecAction::RegConFont;
 			lsCmdLine = szArg.Mid(12);
 			break;
 		}
 		else if (wcsncmp(szArg, L"/SETHOOKS=", 10) == 0)
 		{
-			eExecAction = ea_InjectHooks;
+			eExecAction = ConEmuExecAction::InjectHooks;
 			lsCmdLine = szArg.Mid(10);
 			break;
 		}
 		else if (wcsncmp(szArg, L"/INJECT=", 8) == 0)
 		{
-			eExecAction = ea_InjectRemote;
+			eExecAction = ConEmuExecAction::InjectRemote;
 			lsCmdLine = szArg.Mid(8);
 			break;
 		}
 		else if (wcsncmp(szArg, L"/DEFTRM=", 8) == 0)
 		{
-			eExecAction = ea_InjectDefTrm;
+			eExecAction = ConEmuExecAction::InjectDefTrm;
 			lsCmdLine = szArg.Mid(8);
 			break;
 		}
@@ -3374,17 +3374,17 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		{
 			// Все что в lsCmdLine - выполнить в Gui
 			ArgGuiMacro(szArg, MacroInst);
-			eExecAction = ea_GuiMacro;
+			eExecAction = ConEmuExecAction::GuiMacro;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/STORECWD") == 0)
 		{
-			eExecAction = ea_StoreCWD;
+			eExecAction = ConEmuExecAction::StoreCWD;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/STRUCT") == 0)
 		{
-			eExecAction = ea_DumpStruct;
+			eExecAction = ConEmuExecAction::DumpStruct;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/SILENT")==0)
@@ -3399,38 +3399,38 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		{
 			//_ASSERTE(FALSE && "Continue to export");
 			if (lstrcmpi(szArg, L"/EXPORT=ALL")==0 || lstrcmpi(szArg, L"/EXPORTALL")==0)
-				eExecAction = ea_ExportAll;
+				eExecAction = ConEmuExecAction::ExportAll;
 			else if (lstrcmpi(szArg, L"/EXPORT=CON")==0 || lstrcmpi(szArg, L"/EXPORTCON")==0)
-				eExecAction = ea_ExportCon;
+				eExecAction = ConEmuExecAction::ExportCon;
 			else if (lstrcmpi(szArg, L"/EXPORT=GUI")==0 || lstrcmpi(szArg, L"/EXPORTGUI")==0)
-				eExecAction = ea_ExportGui;
+				eExecAction = ConEmuExecAction::ExportGui;
 			else
-				eExecAction = ea_ExportTab;
+				eExecAction = ConEmuExecAction::ExportTab;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/IsConEmu")==0)
 		{
-			eStateCheck = ec_IsConEmu;
+			eStateCheck = ConEmuStateCheck::IsConEmu;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/IsTerm")==0)
 		{
-			eStateCheck = ec_IsTerm;
+			eStateCheck = ConEmuStateCheck::IsTerm;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/IsAnsi")==0)
 		{
-			eStateCheck = ec_IsAnsi;
+			eStateCheck = ConEmuStateCheck::IsAnsi;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/IsAdmin")==0)
 		{
-			eStateCheck = ec_IsAdmin;
+			eStateCheck = ConEmuStateCheck::IsAdmin;
 			break;
 		}
 		else if (lstrcmpi(szArg, L"/IsRedirect")==0)
 		{
-			eStateCheck = ec_IsRedirect;
+			eStateCheck = ConEmuStateCheck::IsRedirect;
 			break;
 		}
 		else if ((wcscmp(szArg, L"/CONFIRM")==0)

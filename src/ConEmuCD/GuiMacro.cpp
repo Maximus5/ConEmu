@@ -370,7 +370,7 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR*
 				// This would work only if ‘Inject ConEmuHk’ is enabled
 				// However, it's ignored by some shells
 				LogString(L"DoGuiMacro: exporting result");
-				DoExportEnv(CEGUIMACRORETENVVAR, ea_ExportCon, true/*bSilent*/);
+				DoExportEnv(CEGUIMACRORETENVVAR, ConEmuExecAction::ExportCon, true/*bSilent*/);
 				LogString(L"DoGuiMacro: DoExportEnv finished");
 			}
 

@@ -112,7 +112,7 @@ void CStartEnv::ChCp(LPCWSTR asCP)
 void CStartEnv::Echo(LPCWSTR asSwitches, LPCWSTR asText)
 {
 	CEStr lsFull = lstrmerge(asSwitches, (asSwitches && *asSwitches) ? L" " : NULL, L"\"", asText, L"\"");
-	DoOutput(ea_OutEcho, lsFull);
+	DoOutput(ConEmuExecAction::OutEcho, lsFull);
 }
 
 void CStartEnv::Set(LPCWSTR asName, LPCWSTR asValue)
@@ -192,7 +192,7 @@ void CStartEnv::Title(LPCWSTR asTitle)
 void CStartEnv::Type(LPCWSTR asSwitches, LPCWSTR asFile)
 {
 	CEStr lsFull = lstrmerge(asSwitches, (asSwitches && *asSwitches) ? L" " : NULL, L"\"", asFile, L"\"");
-	DoOutput(ea_OutType, lsFull);
+	DoOutput(ConEmuExecAction::OutType, lsFull);
 }
 
 #ifdef _DEBUG

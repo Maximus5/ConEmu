@@ -131,8 +131,8 @@ bool DoStateCheck(ConEmuStateCheck eStateCheck)
 
 	switch (eStateCheck)
 	{
-	case ec_IsConEmu:
-	case ec_IsAnsi:
+	case ConEmuStateCheck::IsConEmu:
+	case ConEmuStateCheck::IsAnsi:
 		if (ghConWnd)
 		{
 			CESERVER_CONSOLE_MAPPING_HDR* pInfo = (CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(*pInfo));
@@ -145,10 +145,10 @@ bool DoStateCheck(ConEmuStateCheck eStateCheck)
 				{
 					switch (eStateCheck)
 					{
-					case ec_IsConEmu:
+					case ConEmuStateCheck::IsConEmu:
 						bOn = true;
 						break;
-					case ec_IsAnsi:
+					case ConEmuStateCheck::IsAnsi:
 						bOn = ((pInfo->Flags & CECF_ProcessAnsi) != 0);
 						break;
 					default:
@@ -159,13 +159,13 @@ bool DoStateCheck(ConEmuStateCheck eStateCheck)
 			SafeFree(pInfo);
 		}
 		break;
-	case ec_IsAdmin:
+	case ConEmuStateCheck::IsAdmin:
 		bOn = IsUserAdmin();
 		break;
-	case ec_IsRedirect:
+	case ConEmuStateCheck::IsRedirect:
 		bOn = IsOutputRedirected();
 		break;
-	case ec_IsTerm:
+	case ConEmuStateCheck::IsTerm:
 		bOn = isTerminalMode();
 		break;
 	default:
@@ -608,7 +608,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	// Go, build tree (first step - query all running PIDs in the system)
 	nParentPID = nSelfPID;
 	// Don't do snapshot if only GUI was requested
-	h = (eExecAction != ea_ExportGui) ? CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) : NULL;
+	h = (eExecAction != ConEmuExecAction::ExportGui) ? CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0) : NULL;
 	// Snapshot opened?
 	if (h && (h != INVALID_HANDLE_VALUE))
 	{
@@ -717,9 +717,9 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	}
 
 	// Если просили во все табы - тогда досылаем и в GUI
-	if ((eExecAction != ea_ExportCon) && lbMapExist && test.hConEmuRoot && IsWindow((HWND)test.hConEmuRoot))
+	if ((eExecAction != ConEmuExecAction::ExportCon) && lbMapExist && test.hConEmuRoot && IsWindow((HWND)test.hConEmuRoot))
 	{
-		if (eExecAction == ea_ExportAll)
+		if (eExecAction == ConEmuExecAction::ExportAll)
 		{
 			pIn->hdr.nCmd = CECMD_EXPORTVARSALL;
 		}
@@ -836,12 +836,12 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 		// Use Ascii functions to print text (RAW data, don't convert to unicode)
 		else if (lstrcmpi(szArg, L"-a") == 0)
 		{
-			if (eExecAction == ea_OutType) bAsciiPrint = true;
+			if (eExecAction == ConEmuExecAction::OutType) bAsciiPrint = true;
 		}
 		// For testing purposes, stream characters one-by-one
 		else if (lstrcmpi(szArg, L"-s") == 0)
 		{
-			if (eExecAction == ea_OutType) bStreamBy1 = true;
+			if (eExecAction == ConEmuExecAction::OutType) bStreamBy1 = true;
 		}
 		// Forced codepage of typed text file
 		else // `-65001`, `-utf8`, `-oemcp`, etc.
@@ -854,7 +854,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	_ASSERTE(asCmdArg && (*asCmdArg != L' '));
 	asCmdArg = SkipNonPrintable(asCmdArg);
 
-	if (eExecAction == ea_OutType)
+	if (eExecAction == ConEmuExecAction::OutType)
 	{
 		if ((asCmdArg = NextArg(asCmdArg, szArg)))
 		{
@@ -873,7 +873,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 			pszText = szTemp.ms_Val;
 		}
 	}
-	else if (eExecAction == ea_OutEcho)
+	else if (eExecAction == ConEmuExecAction::OutEcho)
 	{
 		_ASSERTE(szTemp.ms_Val == NULL);
 
@@ -918,7 +918,7 @@ int DoOutput(ConEmuExecAction eExecAction, LPCWSTR asCmdArg)
 	#ifdef _DEBUG
 	if (bAsciiPrint)
 	{
-		_ASSERTE(eExecAction == ea_OutType);
+		_ASSERTE(eExecAction == ConEmuExecAction::OutType);
 	}
 	#endif
 
@@ -1077,33 +1077,33 @@ wrap:
 	return iRc;
 }
 
-int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdline */, MacroInstance& Inst)
+int DoExecAction(const ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdline */, MacroInstance& Inst)
 {
 	int iRc = CERR_CARGUMENT;
 
 	switch (eExecAction)
 	{
-	case ea_RegConFont:
+	case ConEmuExecAction::RegConFont:
 		{
 			LogString(L"DoExecAction: ea_RegConFont");
 			RegisterConsoleFontHKLM(asCmdArg);
 			iRc = CERR_EMPTY_COMSPEC_CMDLINE;
 			break;
 		}
-	case ea_InjectHooks:
+	case ConEmuExecAction::InjectHooks:
 		{
 			LogString(L"DoExecAction: DoInjectHooks");
 			iRc = DoInjectHooks((LPWSTR)asCmdArg);
 			break;
 		}
-	case ea_InjectRemote:
-	case ea_InjectDefTrm:
+	case ConEmuExecAction::InjectRemote:
+	case ConEmuExecAction::InjectDefTrm:
 		{
 			LogString(L"DoExecAction: DoInjectRemote");
-			iRc = DoInjectRemote((LPWSTR)asCmdArg, (eExecAction == ea_InjectDefTrm));
+			iRc = DoInjectRemote((LPWSTR)asCmdArg, (eExecAction == ConEmuExecAction::InjectDefTrm));
 			break;
 		}
-	case ea_GuiMacro: // ConEmuC -GuiMacro
+	case ConEmuExecAction::GuiMacro: // ConEmuC -GuiMacro
 		{
 			LogString(L"DoExecAction: DoGuiMacro");
 			GuiMacroFlags Flags = gmf_SetEnvVar
@@ -1114,67 +1114,67 @@ int DoExecAction(ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of cmdli
 			iRc = DoGuiMacro(asCmdArg, Inst, Flags);
 			break;
 		}
-	case ea_CheckUnicodeFont: // ConEmuC -CheckUnicode
+	case ConEmuExecAction::CheckUnicodeFont: // ConEmuC -CheckUnicode
 		{
 			LogString(L"DoExecAction: ea_CheckUnicodeFont");
 			iRc = CheckUnicodeFont();
 			break;
 		}
-	case ea_PrintConsoleInfo: // ConEmuC -ConInfo
+	case ConEmuExecAction::PrintConsoleInfo: // ConEmuC -ConInfo
 		{
 			LogString(L"DoExecAction: ea_PrintConsoleInfo");
 			PrintConsoleInfo();
 			iRc = 0;
 			break;
 		}
-	case ea_TestUnicodeCvt: // ConEmuC -TestUnicode
+	case ConEmuExecAction::TestUnicodeCvt: // ConEmuC -TestUnicode
 		{
 			LogString(L"DoExecAction: ea_TestUnicodeCvt");
 			iRc = TestUnicodeCvt();
 			break;
 		}
-	case ea_OsVerInfo: // ConEmuC -OsVerInfo
+	case ConEmuExecAction::OsVerInfo: // ConEmuC -OsVerInfo
 		{
 			LogString(L"DoExecAction: ea_OsVerInfo");
 			iRc = OsVerInfo();
 			break;
 		}
-	case ea_ExportCon: // ConEmuC -Export ...
-	case ea_ExportTab:
-	case ea_ExportGui:
-	case ea_ExportAll:
+	case ConEmuExecAction::ExportCon: // ConEmuC -Export ...
+	case ConEmuExecAction::ExportTab:
+	case ConEmuExecAction::ExportGui:
+	case ConEmuExecAction::ExportAll:
 		{
 			LogString(L"DoExecAction: DoExportEnv");
 			iRc = DoExportEnv(asCmdArg, eExecAction, gbPreferSilentMode);
 			break;
 		}
-	case ea_ParseArgs: // ConEmuC -Args ... | ConEmuC -ParseArgs
+	case ConEmuExecAction::ParseArgs: // ConEmuC -Args ... | ConEmuC -ParseArgs
 		{
 			LogString(L"DoExecAction: DoParseArgs");
 			iRc = DoParseArgs(asCmdArg);
 			break;
 		}
-	case ea_ErrorLevel: // ConEmuC -ErrorLevel
+	case ConEmuExecAction::ErrorLevel: // ConEmuC -ErrorLevel
 		{
 			LogString(L"DoExecAction: ea_ErrorLevel");
 			wchar_t* pszEnd = NULL;
 			iRc = wcstol(asCmdArg, &pszEnd, 10);
 			break;
 		}
-	case ea_OutEcho: // ConEmuC -e ...
-	case ea_OutType: // ConEmuC -t
+	case ConEmuExecAction::OutEcho: // ConEmuC -e ...
+	case ConEmuExecAction::OutType: // ConEmuC -t
 		{
 			LogString(L"DoExecAction: DoOutput");
 			iRc = DoOutput(eExecAction, asCmdArg);
 			break;
 		}
-	case ea_StoreCWD: // ConEmuC -StoreCWD
+	case ConEmuExecAction::StoreCWD: // ConEmuC -StoreCWD
 		{
 			LogString(L"DoExecAction: DoStoreCWD");
 			iRc = DoStoreCWD(asCmdArg);
 			break;
 		}
-	case ea_DumpStruct: // ConEmuC -STRUCT
+	case ConEmuExecAction::DumpStruct: // ConEmuC -STRUCT
 		{
 			LogString(L"DoExecAction: DoDumpStruct");
 			iRc = DoDumpStruct(asCmdArg);
