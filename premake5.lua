@@ -187,6 +187,7 @@ project "common-kernel"
   exceptionhandling "Off"
 
   files (common_kernel)
+  files {"src/common/defines.h"}
 
   removefiles (common_remove)
   removefiles (tests_remove)

@@ -72,7 +72,7 @@ class CImgCache
 {
 	protected:
 		wchar_t ms_CachePath[MAX_PATH] = L"";
-		wchar_t ms_LastStoragePath[32768] = L"";
+		wchar_t ms_LastStoragePath[MAX_WIDE_PATH_LENGTH] = L"";
 		int nPreviewSize = 0; // 96x96
 		//int nXIcon, nYIcon, nXIconSpace, nYIconSpace;
 		COLORREF crBackground;

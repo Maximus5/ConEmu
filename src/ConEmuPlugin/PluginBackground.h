@@ -17,8 +17,8 @@ class CPluginBackground
 		struct PaintBackgroundArg m_Default, m_Last;
 		bool IsParmChanged(struct PaintBackgroundArg* p1, struct PaintBackgroundArg* p2);
 		//// Buffers
-		//wchar_t ms_LeftCurDir[32768], ms_LeftFormat[MAX_PATH], ms_LeftHostFile[32768];
-		//wchar_t ms_RightCurDir[32768], ms_RightFormat[MAX_PATH], ms_RightHostFile[32768];
+		//wchar_t ms_LeftCurDir[MAX_WIDE_PATH_LENGTH], ms_LeftFormat[MAX_PATH], ms_LeftHostFile[MAX_WIDE_PATH_LENGTH];
+		//wchar_t ms_RightCurDir[MAX_WIDE_PATH_LENGTH], ms_RightFormat[MAX_PATH], ms_RightHostFile[MAX_WIDE_PATH_LENGTH];
 
 		// bitmask values
 		enum RequiredActions

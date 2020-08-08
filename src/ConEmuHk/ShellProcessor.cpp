@@ -71,6 +71,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #endif
 
+static const DWORD HIDDEN_SCREEN_POSITION = 32767;
 
 #ifdef _DEBUG
 #ifndef CONEMU_MINIMAL
@@ -2837,7 +2838,7 @@ BOOL CShellProc::OnCreateProcessW(LPCWSTR* asFile, LPCWSTR* asCmdLine, LPCWSTR* 
 		: SW_SHOWNORMAL;
 
 	// Console.exe starts cmd.exe with STARTF_USEPOSITION flag
-	if ((lpSI->dwFlags & STARTF_USEPOSITION) && (lpSI->dwX == 32767) && (lpSI->dwY == 32767))
+	if ((lpSI->dwFlags & STARTF_USEPOSITION) && (lpSI->dwX == HIDDEN_SCREEN_POSITION) && (lpSI->dwY == HIDDEN_SCREEN_POSITION))
 		nShowCmd = SW_HIDE; // Lets thing it is stating hidden
 
 	mb_WasSuspended = ((*anCreationFlags) & CREATE_SUSPENDED) == CREATE_SUSPENDED;

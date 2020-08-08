@@ -102,6 +102,9 @@
     <ClInclude Include="common\WThreads.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="common\defines.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="common\execute.h">
       <Filter>Headers</Filter>
     </ClInclude>

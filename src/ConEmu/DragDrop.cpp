@@ -515,7 +515,7 @@ HRESULT CDragDrop::DropFromStream(IDataObject* pDataObject, BOOL abActive)
 	BOOL lbWide = FALSE;
 	HRESULT hr = S_OK;
 	HRESULT hrStg = S_OK;
-	INT_PTR cchSubFolder = 32768;
+	INT_PTR cchSubFolder = MAX_WIDE_PATH_LENGTH;
 	wchar_t* pszSubFolder = (wchar_t*)calloc(cchSubFolder, sizeof(*pszSubFolder));
 
 	if (!cBuffer || !pszSubFolder)

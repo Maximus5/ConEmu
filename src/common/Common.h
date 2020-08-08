@@ -990,9 +990,9 @@ enum PaintBackgroundPlaces
 	pbp_None = 0,
 };
 
-#define BkPanelInfo_CurDirMax 32768
+#define BkPanelInfo_CurDirMax MAX_WIDE_PATH_LENGTH
 #define BkPanelInfo_FormatMax MAX_PATH
-#define BkPanelInfo_HostFileMax 32768
+#define BkPanelInfo_HostFileMax MAX_WIDE_PATH_LENGTH
 
 struct BkPanelInfo
 {
@@ -1000,9 +1000,9 @@ struct BkPanelInfo
 	BOOL bFocused;   // В фокусе
 	BOOL bPlugin;    // Плагиновая панель
 	int  nPanelType; // enum PANELINFOTYPE
-	wchar_t *szCurDir/*[32768]*/;    // Текущая папка на панели
+	wchar_t *szCurDir/*[MAX_WIDE_PATH_LENGTH]*/;    // Текущая папка на панели
 	wchar_t *szFormat/*[MAX_PATH]*/; // Доступно только в FAR2, в FAR3 это может быть префикс, если "формат" плагином не определен
-	wchar_t *szHostFile/*[32768]*/;  // Доступно только в FAR2
+	wchar_t *szHostFile/*[MAX_WIDE_PATH_LENGTH]*/;  // Доступно только в FAR2
 	RECT rcPanelRect; // Консольные координаты панели. В FAR 2+ с ключом /w верх может быть != {0,0}
 };
 
@@ -1553,7 +1553,7 @@ struct CEFAR_INFO_MAPPING
 	// Far current panel directories
 	// These MUST be last members!
 	LONG nPanelDirIdx; // Separately of nFarInfoIdx
-	wchar_t sActiveDir[0x8000], sPassiveDir[0x8000];
+	wchar_t sActiveDir[MAX_WIDE_PATH_LENGTH], sPassiveDir[MAX_WIDE_PATH_LENGTH];
 };
 
 

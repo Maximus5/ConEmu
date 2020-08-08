@@ -140,7 +140,15 @@ int apiSearchPath(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, CEStr
 		}
 	}
 
-	return bFound ? rsPath.GetLen() : 0;
+	int result = 0;
+	if (bFound)
+	{
+		const auto len = rsPath.GetLen();
+		// no sense in path strings greater than supported by OS
+		_ASSERTE(len >= 0 && len <= MAX_WIDE_PATH_LENGTH);
+		result = static_cast<int>(len);
+	}
+	return result;
 }
 
 int apiGetFullPathName(LPCWSTR lpFileName, CEStr& rsPath)
@@ -498,10 +506,13 @@ DWORD GetModulePathName(HMODULE hModule, CEStr& lsPathName)
 	if (!nRc)
 		return 0;
 
+	const DWORD errCode = GetLastError();
+	_ASSERTE(errCode == ERROR_INSUFFICIENT_BUFFER);
+
 	// Not enough space?
 	if (nRc == cchMax)
 	{
-		cchMax = 32767;
+		cchMax = MAX_WIDE_PATH_LENGTH;
 		wchar_t* pszData = lsPathName.GetBuffer(cchMax);
 		if (!pszData)
 			return 0; // Memory allocation error

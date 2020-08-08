@@ -37,6 +37,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/EnvVar.h"
 #include "../common/MSection.h"
 
+static const int MAX_DC_PIXELS = 32767;
+
 CBackground::CBackground()
 {
 	bgSize = MakeCoord(-1,-1);
@@ -129,8 +131,8 @@ bool CBackground::CreateField(int anWidth, int anHeight)
 
 	if (hBgDc)
 	{
-		bgSize.X = std::min(32767,anWidth);
-		bgSize.Y = std::min(32767,anHeight);
+		bgSize.X = SHORT(std::min(MAX_DC_PIXELS,anWidth));
+		bgSize.Y = SHORT(std::min(MAX_DC_PIXELS,anHeight));
 		hBgBitmap = CreateCompatibleBitmap(hScreenDC, bgSize.X, bgSize.Y);
 
 		if (hBgBitmap)

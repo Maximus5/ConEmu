@@ -513,7 +513,7 @@ bool CConEmuStart::GetCfgParm(LPCWSTR& cmdLineRest, CESwitch& Val, int nMaxLen, 
 	if (bExpandAndDup)
 		Val.Str = GetFullPathNameEx(curCommand); // it allocates memory
 	else
-		Val.SetStr(curCommand, Val.Type);
+		Val.SetStr(curCommand, Val.Type); // #OPTIMIZE - no need to copy, move instead
 
 	// Ok
 	Val.Exists = (Val.Str && *Val.Str);
@@ -671,8 +671,6 @@ bool CConEmuStart::ParseCommandLine(LPCWSTR pszCmdLine, int& iResult)
 
 		while ((cmdLineRest = NextArg(cmdLineRest, szArg, &pszArgStart)))
 		{
-			bool lbNotFound = false;
-
 			TODO("Replace NeedNextArg with GetCfgParm?")
 			#define NeedNextArg() \
 				if (!(cmdLineRest = NextArg(cmdLineRest, szNext))) { iResult = CERR_CARGUMENT; goto wrap; }

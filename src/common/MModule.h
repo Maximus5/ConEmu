@@ -30,8 +30,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <Windows.h>
 
-#include "../ConEmuCD/WorkerBase.h"
-
 class MModule
 {
 protected:

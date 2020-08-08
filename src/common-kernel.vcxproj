@@ -271,6 +271,7 @@
     <ClInclude Include="common\WModuleCheck.h" />
     <ClInclude Include="common\WObjects.h" />
     <ClInclude Include="common\WThreads.h" />
+    <ClInclude Include="common\defines.h" />
     <ClInclude Include="common\execute.h" />
   </ItemGroup>
   <ItemGroup>
