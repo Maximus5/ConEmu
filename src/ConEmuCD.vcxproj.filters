@@ -48,10 +48,16 @@
     <ClInclude Include="ConEmuCD\ConProcess.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmuCD\ConsoleArgs.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmuCD\ConsoleHelp.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmuCD\ConsoleMain.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\ConsoleState.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmuCD\Debugger.h">
@@ -89,6 +95,9 @@
     </ClInclude>
     <ClInclude Include="ConEmuCD\Queue.h">
       <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ConEmuCD\RunMode.h">
+      <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmuCD\Shutdown.h">
       <Filter>Headers</Filter>
@@ -143,7 +152,13 @@
     <ClCompile Include="ConEmuCD\ConProcess.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="ConEmuCD\ConsoleArgs.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
     <ClCompile Include="ConEmuCD\ConsoleMain.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\ConsoleState.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuCD\Debugger.cpp">
@@ -175,6 +190,9 @@
     </ClCompile>
     <ClCompile Include="ConEmuCD\Queue.cpp">
       <Filter>Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\RunMode.cpp">
+      <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuCD\Shutdown.cpp">
       <Filter>Sources</Filter>

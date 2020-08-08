@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 #include <WinCon.h>
 #ifdef _DEBUG
-#include <stdio.h>
+#include <cstdio>
 #endif
 #include <Shlwapi.h>
 
@@ -215,11 +215,6 @@ struct SrvInfo
 	//
 	LONG nLastPacketID; // ИД пакета для отправки в GUI
 
-	// Optional console font (may be specified in registry)
-	wchar_t szConsoleFont[LF_FACESIZE];
-	//wchar_t szConsoleFontFile[MAX_PATH]; -- не помогает
-	SHORT nConFontWidth, nConFontHeight;
-
 	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
 	ConEmuAnsiLog AnsiLog;
 
@@ -306,5 +301,12 @@ public:
 
 	int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn);
 
-	bool IsAutoAttachAllowed();
+private:
+	/// Optional console font (may be specified in registry). Up to LF_FACESIZE chars, including \0.
+	CEStr consoleFontName_;
+	/// Width for real console font
+	SHORT consoleFontWidth_ = 0;
+	/// Height for real console font
+	SHORT consoleFontHeight_ = 0;
+
 };

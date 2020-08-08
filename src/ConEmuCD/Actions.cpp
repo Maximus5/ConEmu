@@ -50,6 +50,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 
 #include "Actions.h"
+
+
+#include "ConsoleArgs.h"
+#include "ConsoleState.h"
 #include "ConsoleMain.h"
 #include "GuiMacro.h"
 #include "InjectRemote.h"
@@ -133,10 +137,10 @@ bool DoStateCheck(ConEmuStateCheck eStateCheck)
 	{
 	case ConEmuStateCheck::IsConEmu:
 	case ConEmuStateCheck::IsAnsi:
-		if (ghConWnd)
+		if (gpState->realConWnd)
 		{
 			CESERVER_CONSOLE_MAPPING_HDR* pInfo = (CESERVER_CONSOLE_MAPPING_HDR*)malloc(sizeof(*pInfo));
-			if (pInfo && LoadSrvMapping(ghConWnd, *pInfo))
+			if (pInfo && LoadSrvMapping(gpState->realConWnd, *pInfo))
 			{
 				_ASSERTE(pInfo->ComSpec.ConEmuExeDir[0] && pInfo->ComSpec.ConEmuBaseDir[0]);
 
@@ -179,7 +183,7 @@ bool DoStateCheck(ConEmuStateCheck eStateCheck)
 int DoInjectHooks(LPWSTR asCmdArg)
 {
 	gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
-	gnRunMode = RunMode::SetHook64;
+	gpState->runMode_ = RunMode::SetHook64;
 	LPWSTR pszNext = asCmdArg;
 	LPWSTR pszEnd = NULL;
 	BOOL lbForceGui = FALSE;
@@ -266,7 +270,7 @@ int DoInjectHooks(LPWSTR asCmdArg)
 int DoInjectRemote(LPWSTR asCmdArg, bool abDefTermOnly)
 {
 	gbInShutdown = TRUE; // чтобы не возникло вопросов при выходе
-	gnRunMode = RunMode::SetHook64;
+	gpState->runMode_ = RunMode::SetHook64;
 	LPWSTR pszNext = asCmdArg;
 	LPWSTR pszEnd = NULL;
 	DWORD nRemotePID = wcstoul(pszNext, &pszEnd, 10);
@@ -404,11 +408,11 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 
 	#define ExpFailedPref WIN3264TEST("ConEmuC","ConEmuC64") ": can't export environment"
 
-	if (!ghConWnd)
+	if (!gpState->realConWnd)
 	{
-		_ASSERTE(ghConWnd);
+		_ASSERTE(gpState->realConWnd);
 		if (!bSilent)
-			_printf(ExpFailedPref ", ghConWnd was not set\n");
+			_printf(ExpFailedPref ", gpState->realConWnd was not set\n");
 		goto wrap;
 	}
 
@@ -598,7 +602,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 	pIn->hdr.cbSize = sizeof(CESERVER_REQ_HDR)+(DWORD)cchMaxEnvLen*sizeof(wchar_t);
 
 	// Find current server (even if no server or no GUI - apply environment to parent tree)
-	lbMapExist = LoadSrvMapping(ghConWnd, test);
+	lbMapExist = LoadSrvMapping(gpState->realConWnd, test);
 	if (lbMapExist)
 	{
 		_ASSERTE(test.ComSpec.ConEmuExeDir[0] && test.ComSpec.ConEmuBaseDir[0]);
@@ -689,7 +693,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 			LogString(szInfo);
 
 			// Apply environment
-			CESERVER_REQ *pOut = ExecuteHkCmd(nTestPID, pIn, ghConWnd, FALSE, TRUE);
+			CESERVER_REQ *pOut = ExecuteHkCmd(nTestPID, pIn, gpState->realConWnd, FALSE, TRUE);
 
 			if (!pOut && !bSilent)
 			{
@@ -711,7 +715,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 		LogString(szInfo);
 
 		// Server found? Try to apply environment
-		CESERVER_REQ *pOut = ExecuteSrvCmd(nSrvPID, pIn, ghConWnd);
+		CESERVER_REQ *pOut = ExecuteSrvCmd(nSrvPID, pIn, gpState->realConWnd);
 
 		if (!pOut)
 		{
@@ -739,7 +743,7 @@ int DoExportEnv(LPCWSTR asCmdArg, ConEmuExecAction eExecAction, bool bSilent /*=
 		LogString(L"DoExportEnv: ConEmu GUI");
 
 		// ea_ExportTab, ea_ExportGui, ea_ExportAll -> export to ConEmu window
-		ExecuteGuiCmd(ghConWnd, pIn, ghConWnd, TRUE);
+		ExecuteGuiCmd(gpState->realConWnd, pIn, gpState->realConWnd, TRUE);
 	}
 
 	swprintf_c(szInfo, WIN3264TEST(L"ConEmuC",L"ConEmuC64") L": %i %s processed", iVarCount, (iVarCount == 1) ? L"variable was" : L"variables were");
@@ -1079,7 +1083,7 @@ int DoStoreCWD(LPCWSTR asCmdArg)
 	}
 
 	// Sends CECMD_STORECURDIR into RConServer
-	SendCurrentDirectory(ghConWnd, szDir);
+	SendCurrentDirectory(gpState->realConWnd, szDir);
 	iRc = 0;
 wrap:
 	return iRc;
@@ -1114,11 +1118,11 @@ int DoExecAction(const ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of
 	case ConEmuExecAction::GuiMacro: // ConEmuC -GuiMacro
 		{
 			LogString(L"DoExecAction: DoGuiMacro");
-			GuiMacroFlags Flags = gmf_SetEnvVar
+			GuiMacroFlags Flags = int(GuiMacroFlags::SetEnvVar)
 				// If current RealConsole was already started in ConEmu, try to export variable
-				| ((gbMacroExportResult && (gnRunMode != RunMode::GuiMacro) && (ghConEmuWnd != NULL)) ? gmf_ExportEnvVar : gmf_None)
+				| ((gpConsoleArgs->macroExportResult_ && (gpState->runMode_ != RunMode::GuiMacro) && (ghConEmuWnd != nullptr)) ? GuiMacroFlags::ExportEnvVar : GuiMacroFlags::None)
 				// Interactive mode, print output to console
-				| ((!gbPreferSilentMode && (gnRunMode != RunMode::GuiMacro)) ? gmf_PrintResult : gmf_None);
+				| ((!gpConsoleArgs->preferSilentMode_ && (gpState->runMode_ != RunMode::GuiMacro)) ? GuiMacroFlags::PrintResult : GuiMacroFlags::None);
 			iRc = DoGuiMacro(asCmdArg, Inst, Flags);
 			break;
 		}
@@ -1153,7 +1157,7 @@ int DoExecAction(const ConEmuExecAction eExecAction, LPCWSTR asCmdArg /* rest of
 	case ConEmuExecAction::ExportAll:
 		{
 			LogString(L"DoExecAction: DoExportEnv");
-			iRc = DoExportEnv(asCmdArg, eExecAction, gbPreferSilentMode);
+			iRc = DoExportEnv(asCmdArg, eExecAction, gpConsoleArgs->preferSilentMode_.GetBool());
 			break;
 		}
 	case ConEmuExecAction::ParseArgs: // ConEmuC -Args ... | ConEmuC -ParseArgs

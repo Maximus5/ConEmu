@@ -36,6 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ProcessData.h"
 #include <TlHelp32.h>
 
+#include "ConsoleState.h"
+
 #define XTERM_PID_TIMEOUT 2500
 
 BOOL   gbUseDosBox = FALSE;
@@ -198,25 +200,25 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 
 	dwProcessLastCheckTick = GetTickCount();
 
-	// Если корневой процесс проработал достаточно (10 сек), значит он живой и gbAlwaysConfirmExit можно сбросить
-	// Если gbAutoDisableConfirmExit==FALSE - сброс подтверждение закрытия консоли не выполняется
-	if (gbAlwaysConfirmExit  // если уже не сброшен
-	        && gbAutoDisableConfirmExit // требуется ли вообще такая проверка (10 сек)
+	// Если корневой процесс проработал достаточно (10 сек), значит он живой и gpState->alwaysConfirmExit_ можно сбросить
+	// Если gpState->autoDisableConfirmExit_==FALSE - сброс подтверждение закрытия консоли не выполняется
+	if (gpState->alwaysConfirmExit_  // если уже не сброшен
+	        && gpState->autoDisableConfirmExit_ // требуется ли вообще такая проверка (10 сек)
 	        && anPrevCount > 1 // если в консоли был зафиксирован запущенный процесс
 	        && gpWorker->RootProcessHandle()) // и корневой процесс был вообще запущен
 	{
-		if ((dwProcessLastCheckTick - nProcessStartTick) > CHECK_ROOTOK_TIMEOUT)
+		if ((dwProcessLastCheckTick - nProcessStartTick) > CHECK_ROOT_OK_TIMEOUT)
 		{
-			_ASSERTE(gnConfirmExitParm==0);
+			_ASSERTE(gpConsoleArgs->confirmExitParm_==0);
 			// эта проверка выполняется один раз
-			gbAutoDisableConfirmExit = FALSE;
+			gpState->autoDisableConfirmExit_ = false;
 			// 10 сек. прошло, теперь необходимо проверить, а жив ли процесс?
 			DWORD dwProcWait = WaitForSingleObject(gpWorker->RootProcessHandle(), 0);
 
 			if (dwProcWait == WAIT_OBJECT_0)
 			{
 				// Корневой процесс завершен, возможно, была какая-то проблема?
-				gbRootAliveLess10sec = TRUE; // корневой процесс проработал менее 10 сек
+				gpState->rootAliveLess10sec_ = TRUE; // корневой процесс проработал менее 10 сек
 			}
 			else
 			{
@@ -260,7 +262,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 		        || (pnProcesses[1] == gnSelfPID && pnProcesses[0] == nNtvdmPID))
 		{
 			// Послать в нашу консоль команду закрытия
-			PostMessage(ghConWnd, WM_CLOSE, 0, 0);
+			PostMessage(gpState->realConWnd, WM_CLOSE, 0, 0);
 		}
 	}
 	#endif
@@ -275,7 +277,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 	// -- количество процессов ОСТАЕТСЯ 5 и ни одно из ниже условий не проходит
 	if (anPrevCount == 1 && nProcessCount == 1
 		&& nProcessStartTick && dwProcessLastCheckTick
-		&& ((dwProcessLastCheckTick - nProcessStartTick) > CHECK_ROOTSTART_TIMEOUT)
+		&& ((dwProcessLastCheckTick - nProcessStartTick) > CHECK_ROOT_START_TIMEOUT)
 		&& (nWaitDbg1 = WaitForSingleObject(ghExitQueryEvent,0)) == WAIT_TIMEOUT
 		// выходить можно только если корневой процесс завершился
 		&& gpWorker->RootProcessHandle() && ((nWaitDbg2 = WaitForSingleObject(gpWorker->RootProcessHandle(),0)) != WAIT_TIMEOUT))
@@ -283,7 +285,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 		anPrevCount = 2; // чтобы сработало следующее условие
 		bForcedTo2 = true;
 		//2010-03-06 - установка флажка должна быть при старте сервера
-		//if (!gbAlwaysConfirmExit) gbAlwaysConfirmExit = TRUE; // чтобы консоль не схлопнулась
+		//if (!gpState->alwaysConfirmExit_) gpState->alwaysConfirmExit_ = TRUE; // чтобы консоль не схлопнулась
 	}
 
 	if (anPrevCount > 1 && nProcessCount == 1)
@@ -309,11 +311,11 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 			CS.Unlock();
 
 			//2010-03-06 это не нужно, проверки делаются по другому
-			//if (!gbAlwaysConfirmExit && (dwProcessLastCheckTick - nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT) {
-			//	gbAlwaysConfirmExit = TRUE; // чтобы консоль не схлопнулась
+			//if (!gpState->alwaysConfirmExit_ && (dwProcessLastCheckTick - nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT) {
+			//	gpState->alwaysConfirmExit_ = TRUE; // чтобы консоль не схлопнулась
 			//}
-			if (gbAlwaysConfirmExit && (dwProcessLastCheckTick - nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT)
-				gbRootAliveLess10sec = TRUE; // корневой процесс проработал менее 10 сек
+			if (gpState->alwaysConfirmExit_ && (dwProcessLastCheckTick - nProcessStartTick) <= CHECK_ROOT_START_TIMEOUT)
+				gpState->rootAliveLess10sec_ = TRUE; // корневой процесс проработал менее 10 сек
 
 			if (bForcedTo2)
 				nExitPlaceAdd = bPrevCount2 ? 3 : 4;
@@ -495,7 +497,7 @@ void ConProcess::RefreshXRequests(MSectionLock& CS)
 				in->dwData[0] = (TermModeCommand)m;
 				in->dwData[1] = value;
 				in->dwData[2] = pid;
-				CESERVER_REQ* pGuiOut = ExecuteGuiCmd(ghConWnd, in, ghConWnd);
+				CESERVER_REQ* pGuiOut = ExecuteGuiCmd(gpState->realConWnd, in, gpState->realConWnd);
 				ExecuteFreeResult(pGuiOut);
 			}
 		}
@@ -516,7 +518,7 @@ void ConProcess::OnAttached()
 			in->dwData[0] = (TermModeCommand)m;
 			in->dwData[1] = xFixedRequests[m];
 			in->dwData[2] = gnSelfPID; // doesn't matter
-			CESERVER_REQ* pGuiOut = ExecuteGuiCmd(ghConWnd, in, ghConWnd);
+			CESERVER_REQ* pGuiOut = ExecuteGuiCmd(gpState->realConWnd, in, gpState->realConWnd);
 			ExecuteFreeResult(pGuiOut);
 		}
 	}

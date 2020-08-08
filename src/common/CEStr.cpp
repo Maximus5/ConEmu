@@ -374,6 +374,7 @@ const wchar_t* CEStr::Set(const wchar_t* asNewValue, ssize_t anChars /*= -1*/)
 		{
 			_ASSERTE(mn_MaxCount > nNewLen); // Must be set in GetBuffer
 			_wcscpyn_c(ms_Val, mn_MaxCount, asNewValue, nNewLen);
+			ms_Val[nNewLen] = 0;
 		}
 	}
 	else

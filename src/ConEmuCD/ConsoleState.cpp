@@ -1,6 +1,6 @@
 ﻿
 /*
-Copyright (c) 2016-present Maximus5
+Copyright (c) 2015-present Maximus5
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -27,40 +27,41 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#pragma once
+#define HIDE_USE_EXCEPTION_INFO
+#define SHOWDEBUGSTR
 
-#include "../common/defines.h"
-#include "../common/CEStr.h"
+#ifdef _DEBUG
+//#define SHOW_ATTACH_MSGBOX
+#endif
 
-struct MacroInstance
+#include "ConsoleState.h"
+
+#include "ConsoleArgs.h"
+
+
+ConsoleState* gpState = nullptr;
+
+
+
+// ********************************************
+ConsoleState::ConsoleState()  // NOLINT(modernize-use-equals-default)
 {
-	HWND  hConEmuWnd;  // Root! window
-	DWORD nTabIndex;   // Specially selected tab, 1-based
-	DWORD nSplitIndex; // Specially selected split, 1-based
-	DWORD nPID;
-};
+}
 
-/// Bitmasked flags to execute GuiMacro
-enum class GuiMacroFlags
+ConsoleState::~ConsoleState()  // NOLINT(modernize-use-equals-default)
 {
-	None = 0,
-	SetEnvVar = 1,
-	ExportEnvVar = 2,
-	PrintResult = 4,
-	/// Return result via EnvVar only
-	PreferSilentMode = 8,
-};
+}
 
-/// test if all flags of f2 are set in f1
-bool operator&(GuiMacroFlags f1, GuiMacroFlags f2);
-/// append flags from f2 to f1
-GuiMacroFlags operator|(GuiMacroFlags f1, GuiMacroFlags f2);
-
-void ArgGuiMacro(CEStr& szArg, MacroInstance& inst);
-
-int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR* bsResult = nullptr);
-
-// defined in ExportedFunctions.h
-// int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, BSTR* bsResult = NULL);
-
-int GuiMacroCommandLine(LPCWSTR asCmdLine);
+void ConsoleState::DisableAutoConfirmExit(const bool fromFarPlugin)
+{
+	// Console could be attached to our GUI in the moment, when server awaits
+	// from the user "console close confirmation"
+	if (!gpState->inExitWaitForKey_)
+	{
+		_ASSERTE(gpConsoleArgs->confirmExitParm_ == RConStartArgs::eConfDefault || fromFarPlugin);
+		this->autoDisableConfirmExit_ = false;
+		this->alwaysConfirmExit_ = false;
+		// no need to change nProcessStartTick, the check is done by flags
+		// gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
+	}
+}

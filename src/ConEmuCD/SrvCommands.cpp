@@ -171,7 +171,7 @@ void OnAltServerChanged(int nStep, StartStopType nStarted, DWORD nAltServerPID, 
 						pGuiIn->StartStop.bMainServerClosing = gbQuit || (WaitForSingleObject(ghExitQueryEvent,0) == WAIT_OBJECT_0);
 					}
 
-					pGuiOut = ExecuteGuiCmd(ghConWnd, pGuiIn, ghConWnd);
+					pGuiOut = ExecuteGuiCmd(gpState->realConWnd, pGuiIn, gpState->realConWnd);
 
 					_ASSERTE(pGuiOut!=NULL && "Can not switch GUI to alt server?"); // успешное выполнение?
 					ExecuteFreeResult(pGuiOut);
@@ -478,7 +478,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 				//pPlgIn = ExecuteNewCmd(CMD_SETSIZE, sizeof(CESERVER_REQ_HDR)+sizeof(nHILO));
 				pPlgIn = ExecuteNewCmd(CMD_REDRAWFAR, sizeof(CESERVER_REQ_HDR));
 				//pPlgIn->dwData[0] = nHILO;
-				pPlgOut = ExecuteCmd(szPipeName, pPlgIn, 500, ghConWnd);
+				pPlgOut = ExecuteCmd(szPipeName, pPlgIn, 500, gpState->realConWnd);
 
 				if (pPlgOut) ExecuteFreeResult(pPlgOut);
 			}
@@ -625,14 +625,14 @@ BOOL cmd_FarLoaded(CESERVER_REQ& in, CESERVER_REQ** out)
 	swprintf_c(szDbg,
 		L"cmd_FarLoaded was received\nServerPID=%u, name=%s\nFarPID=%u\nRootPID=%u\nDisablingConfirm=%s",
 		GetCurrentProcessId(), PointToName(szExe), in.hdr.nSrcPID, gpWorker->RootProcessId(),
-		((gbAutoDisableConfirmExit || (gnConfirmExitParm == 1)) && gpWorker->RootProcessId() == in.dwData[0]) ? L"YES" :
-		gbAlwaysConfirmExit ? L"AlreadyOFF" : L"NO");
+		((gpState->autoDisableConfirmExit_ || (gpConsoleArgs->confirmExitParm_ == 1)) && gpWorker->RootProcessId() == in.dwData[0]) ? L"YES" :
+		gpState->alwaysConfirmExit_ ? L"AlreadyOFF" : L"NO");
 	MessageBox(NULL, szDbg, szTitle, MB_SYSTEMMODAL);
 	#endif
 
-	// gnConfirmExitParm==1 получается, когда консоль запускалась через "-new_console"
+	// gpConsoleArgs->confirmExitParm_==1 получается, когда консоль запускалась через "-new_console"
 	// Если плагин фара загрузился - думаю можно отключить подтверждение закрытия консоли
-	if ((gbAutoDisableConfirmExit || (gnConfirmExitParm == RConStartArgs::eConfAlways))
+	if ((gpState->autoDisableConfirmExit_ || (gpConsoleArgs->confirmExitParm_ == RConStartArgs::eConfAlways))
 		&& gpWorker->RootProcessId() == in.dwData[0])
 	{
 		// FAR нормально запустился, считаем что все ок и подтверждения закрытия консоли не потребуется
@@ -656,7 +656,7 @@ BOOL cmd_PostConMsg(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	HWND hSendWnd = (HWND)in.Msg.hWnd;
 
-	if ((in.Msg.nMsg == WM_CLOSE) && (hSendWnd == ghConWnd))
+	if ((in.Msg.nMsg == WM_CLOSE) && (hSendWnd == gpState->realConWnd))
 	{
 		// Чтобы при закрытии не _мелькало_ "Press Enter to Close console"
 		gbInShutdown = TRUE;
@@ -803,8 +803,8 @@ BOOL cmd_FarDetached(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	// После детача в фаре команда (например dir) схлопнется, чтобы
 	// консоль неожиданно не закрылась...
-	gbAutoDisableConfirmExit = FALSE;
-	gbAlwaysConfirmExit = TRUE;
+	gpState->autoDisableConfirmExit_ = FALSE;
+	gpState->alwaysConfirmExit_ = TRUE;
 
 	MSectionLock CS; CS.Lock(gpSrv->processes->csProc);
 	UINT nPrevCount = gpSrv->processes->nProcessCount;
@@ -859,7 +859,7 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 			CESERVER_REQ* pAltIn = ExecuteNewCmd(CECMD_ONACTIVATION, sizeof(CESERVER_REQ_HDR));
 			if (pAltIn)
 			{
-				CESERVER_REQ* pAltOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pAltIn, ghConWnd);
+				CESERVER_REQ* pAltOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pAltIn, gpState->realConWnd);
 				ExecuteFreeResult(pAltIn);
 				ExecuteFreeResult(pAltOut);
 			}
@@ -883,7 +883,7 @@ BOOL cmd_SetWindowPos(CESERVER_REQ& in, CESERVER_REQ** out)
 	BOOL lbWndRc = FALSE, lbShowRc = FALSE;
 	DWORD nErrCode[2] = {};
 
-	if ((in.SetWndPos.hWnd == ghConWnd) && gpLogSize)
+	if ((in.SetWndPos.hWnd == gpState->realConWnd) && gpLogSize)
 		LogSize(NULL, 0, ":SetWindowPos.before");
 
 	if (!(in.SetWndPos.uFlags & (SWP_NOMOVE|SWP_NOSIZE)))
@@ -903,7 +903,7 @@ BOOL cmd_SetWindowPos(CESERVER_REQ& in, CESERVER_REQ** out)
 		nErrCode[1] = lbShowRc ? 0 : GetLastError();
 	}
 
-	if ((in.SetWndPos.hWnd == ghConWnd) && gpLogSize)
+	if ((in.SetWndPos.hWnd == gpState->realConWnd) && gpLogSize)
 		LogSize(NULL, 0, ":SetWindowPos.after");
 
 	// Результат
@@ -984,7 +984,7 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	//		if (apiGetConsoleFontSize(hOutput, curSizeY, curSizeX, sFontName) && curSizeY && curSizeX)
 	//		{
 	//			COORD crLargest = MyGetLargestConsoleWindowSize(hOutput);
-	//			HMONITOR hMon = MonitorFromWindow(ghConWnd, MONITOR_DEFAULTTOPRIMARY);
+	//			HMONITOR hMon = MonitorFromWindow(gpState->realConWnd, MONITOR_DEFAULTTOPRIMARY);
 	//			MONITORINFO mi = {sizeof(mi)};
 	//			int nMaxX = 0, nMaxY = 0;
 	//			if (GetMonitorInfo(hMon, &mi))
@@ -1061,13 +1061,13 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		if (hGuiApp)
 			PostMessage(hGuiApp, WM_CLOSE, 0, 0);
-		PostMessage(ghConWnd, WM_CLOSE, 0, 0);
+		PostMessage(gpState->realConWnd, WM_CLOSE, 0, 0);
 	}
 	else
 	{
 		// Без мелькания консольного окошка почему-то пока не получается
 		// Наверх выносится ConEmu вместо "отцепленного" GUI приложения
-		EmergencyShow(ghConWnd, (int)in.dwData[2], (int)in.dwData[3]);
+		EmergencyShow(gpState->realConWnd, (int)in.dwData[2], (int)in.dwData[3]);
 	}
 
 	if (hGuiApp != NULL)
@@ -1076,13 +1076,13 @@ BOOL cmd_DetachCon(CESERVER_REQ& in, CESERVER_REQ** out)
 
 		gpWorker->CloseRootProcessHandles();
 
-		//apiShowWindow(ghConWnd, SW_SHOWMINIMIZED);
+		//apiShowWindow(gpState->realConWnd, SW_SHOWMINIMIZED);
 		apiSetForegroundWindow(hGuiApp);
 
 		SetTerminateEvent(ste_CmdDetachCon);
 	}
 
-	gbAttachMode = am_None;
+	gpState->attachMode_ = am_None;
 
 	int nOutSize = sizeof(CESERVER_REQ_HDR);
 	*out = ExecuteNewCmd(CECMD_DETACHCON,nOutSize);
@@ -1212,7 +1212,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 			{
 				// В консоли был успешный вызов ReadConsole/ReadConsoleInput.
 				// Отключить "Press enter to close console".
-				if (gbAutoDisableConfirmExit && (gnConfirmExitParm == 0))
+				if (gpState->autoDisableConfirmExit_ && (gpConsoleArgs->confirmExitParm_ == 0))
 				{
 					DisableAutoConfirmExit(FALSE);
 				}
@@ -1266,7 +1266,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		(*out)->StartStopRet.nBufferHeight = gnBufferHeight;
 		(*out)->StartStopRet.nWidth = gpWorker->GetSbi().dwSize.X;
 		(*out)->StartStopRet.nHeight = (gpWorker->GetSbi().srWindow.Bottom - gpWorker->GetSbi().srWindow.Top + 1);
-		_ASSERTE(gnRunMode==RunMode::Server);
+		_ASSERTE(gpState->runMode_==RunMode::Server);
 		(*out)->StartStopRet.dwMainSrvPID = GetCurrentProcessId();
 		(*out)->StartStopRet.dwAltSrvPID = gpSrv->dwAltServerPID;
 		if (in.StartStop.nStarted == sst_AltServerStart)
@@ -1414,11 +1414,11 @@ BOOL cmd_Pause(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 	case CEPause_On:
 		SetConEmuFlags(gpSrv->pConsole->ConState.Flags, CECI_Paused, CECI_Paused);
-		bOk = apiPauseConsoleOutput(ghConWnd, true);
+		bOk = apiPauseConsoleOutput(gpState->realConWnd, true);
 		break;
 	case CEPause_Off:
 		SetConEmuFlags(gpSrv->pConsole->ConState.Flags, CECI_Paused, CECI_None);
-		bOk = apiPauseConsoleOutput(ghConWnd, false);
+		bOk = apiPauseConsoleOutput(gpState->realConWnd, false);
 		break;
 	}
 
@@ -1547,14 +1547,14 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 		wchar_t szInfo[MAX_PATH*2];
 
 		// Вызывается два раза. Первый (при запуске exe) ahGuiWnd==NULL, второй - после фактического создания окна
-		if (gbAttachMode || (gpWorker->RootProcessGui() == NULL))
+		if (gpState->attachMode_ || (gpWorker->RootProcessGui() == NULL))
 		{
 			swprintf_c(szInfo, L"GUI application (PID=%u) was attached to ConEmu:\n%s\n",
 				in.AttachGuiApp.nPID, in.AttachGuiApp.sAppFilePathName);
 			_wprintf(szInfo);
 		}
 
-		if (in.AttachGuiApp.hAppWindow && (gbAttachMode || (gpWorker->RootProcessGui() != in.AttachGuiApp.hAppWindow)))
+		if (in.AttachGuiApp.hAppWindow && (gpState->attachMode_ || (gpWorker->RootProcessGui() != in.AttachGuiApp.hAppWindow)))
 		{
 			wchar_t szTitle[MAX_PATH] = {};
 			GetWindowText(in.AttachGuiApp.hAppWindow, szTitle, countof(szTitle));
@@ -1575,7 +1575,7 @@ BOOL cmd_GuiAppAttached(CESERVER_REQ& in, CESERVER_REQ** out)
 			gpWorker->SetRootProcessGui(in.AttachGuiApp.hAppWindow);
 		}
 		// Смысла в подтверждении нет - GUI приложение в консоль ничего не выводит
-		gbAlwaysConfirmExit = FALSE;
+		gpState->alwaysConfirmExit_ = FALSE;
 		gpSrv->processes->CheckProcessCount(TRUE);
 		lbRc = TRUE;
 	}
@@ -1700,15 +1700,15 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 
 			WorkerServer::Instance().ThawRefreshThread();
 
-			if (gnRunMode == RunMode::AltServer)
+			if (gpState->runMode_ == RunMode::AltServer)
 			{
 				// OK, GUI will be informed by RunMode::RM_SERVER itself
 			}
 			else
 			{
-				swprintf_c(szLog, L"AltServer: Wrong gnRunMode=%u", gnRunMode);
+				swprintf_c(szLog, L"AltServer: Wrong gpStatus->runMode_=%u", gpState->runMode_);
 				LogString(szLog);
-				_ASSERTE(gnRunMode == RunMode::AltServer);
+				_ASSERTE(gpState->runMode_ == RunMode::AltServer);
 			}
 		}
 
@@ -1933,14 +1933,14 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 					csbi6.wPopupAttributes = in.SetConColor.NewPopupAttributes;
 					if (bPopupChanged)
 					{
-						BOOL bIsVisible = IsWindowVisible(ghConWnd);
+						BOOL bIsVisible = IsWindowVisible(gpState->realConWnd);
 						LogString(L"CECMD_SETCONCOLORS: applying CONSOLE_SCREEN_BUFFER_INFOEX");
 						bOk = apiSetConsoleScreenBufferInfoEx(ghConOut, &csbi6);
 						bNeedRepaint = FALSE;
-						if (!bIsVisible && IsWindowVisible(ghConWnd))
+						if (!bIsVisible && IsWindowVisible(gpState->realConWnd))
 						{
 							LogString(L"CECMD_SETCONCOLORS: RealConsole was shown unexpectedly");
-							apiShowWindow(ghConWnd, SW_HIDE);
+							apiShowWindow(gpState->realConWnd, SW_HIDE);
 						}
 						if (bOk)
 						{
@@ -2374,7 +2374,7 @@ BOOL cmd_PortableStarted(CESERVER_REQ& in, CESERVER_REQ** out)
 		{
 			pIn->PortableStarted = in.PortableStarted;
 			pIn->PortableStarted.hProcess = NULL; // hProcess is valid for our server only
-			CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+			CESERVER_REQ* pOut = ExecuteGuiCmd(gpState->realConWnd, pIn, gpState->realConWnd);
 			ExecuteFreeResult(pOut);
 			ExecuteFreeResult(pIn);
 		}
@@ -2625,7 +2625,7 @@ bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 			}
 		}
 
-		(*out) = ExecuteSrvCmd(gpSrv->dwAltServerPID, &in, ghConWnd);
+		(*out) = ExecuteSrvCmd(gpSrv->dwAltServerPID, &in, gpState->realConWnd);
 		lbProcessed = ((*out) != NULL);
 		lbRc = lbProcessed;
 
@@ -2661,7 +2661,7 @@ BOOL cmd_StartXTerm(CESERVER_REQ& in, CESERVER_REQ** out)
 	}
 
 	// Inform the GUI
-	CESERVER_REQ* pGuiOut = ExecuteGuiCmd(ghConWnd, &in, ghConWnd);
+	CESERVER_REQ* pGuiOut = ExecuteGuiCmd(gpState->realConWnd, &in, gpState->realConWnd);
 	ExecuteFreeResult(pGuiOut);
 
 	*out = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR));

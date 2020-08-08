@@ -87,8 +87,7 @@ extern wchar_t gsVersion[20];
 extern wchar_t gsSelfExe[MAX_PATH];  // Full path+exe to our executable
 extern wchar_t gsSelfPath[MAX_PATH]; // Directory of our executable
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
-extern HWND    ghConWnd;
-extern DWORD   gnConEmuPID; // PID of ConEmu[64].exe (ghConEmuWnd)
+extern HWND    gpState->realConWnd;
 extern HWND    ghConEmuWnd; // Root! window
 extern HWND    ghConEmuWndDC; // ConEmu DC window
 extern HWND    ghConEmuWndBack; // ConEmu Back window
@@ -102,29 +101,12 @@ extern HANDLE  ghExitQueryEvent; // выставляется когда в ко�
 extern int nExitQueryPlace, nExitPlaceStep, nExitPlaceThread;
 extern HANDLE  ghQuitEvent;      // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
 extern bool    gbQuit;           // когда мы в процессе закрытия (юзер уже нажал кнопку "Press to close console")
-extern bool    gbSkipHookersCheck;
-extern RConStartArgs::CloseConfirm gnConfirmExitParm;
-extern BOOL    gbAlwaysConfirmExit, gbInShutdown, gbAutoDisableConfirmExit;
+//extern bool    gbSkipHookersCheck;
+extern BOOL    gbInShutdown;
 extern int     gbRootWasFoundInCon;
 extern BOOL    gbComspecInitCalled;
-typedef DWORD AttachModeEnum;
-const AttachModeEnum
-	am_Simple  = 0x0001,    // As is
-	am_Auto    = 0x0002,    // Same as am_Simple, but always return 0 as errorlevel
-	am_Modes   = (am_Simple|am_Auto),
-	am_Async   = 0x0010,    // "/AUTOATTACH" must be async to be able to call from cmd prompt
-	am_DefTerm = 0x0020,    // "/
-	am_Admin   = 0x1000,    // Special "attach" when ConEmu is run under "User" and console "As admin"
-	am_None    = 0
-;
-extern AttachModeEnum gbAttachMode; // сервер запущен НЕ из conemu.exe (а из плагина, из CmdAutoAttach, или -new_console)
-extern BOOL    gbAlternativeAttach; // TRUE - Подцепиться к существующей консоли, без внедрения в процесс ConEmuHk.dll
-extern BOOL    gbAlienMode;  // сервер НЕ является владельцем консоли (корневым процессом этого консольного окна)
-extern BOOL    gbDontInjectConEmuHk;
-extern BOOL    gbForceHideConWnd;
 extern DWORD   gdwMainThreadId;
 extern wchar_t* gpszRunCmd;
-extern wchar_t* gpszRootExe;
 extern bool    gbRunInBackgroundTab;
 extern DWORD   gnImageSubsystem;
 #ifdef _DEBUG
@@ -140,11 +122,11 @@ extern HANDLE ghFarInExecuteEvent;
 #define START_MAX_PROCESSES 1000
 #define CHECK_PROCESSES_TIMEOUT 500
 #define CHECK_ANTIVIRUS_TIMEOUT (6*1000)
-#define CHECK_ROOTSTART_TIMEOUT (10*1000)
+#define CHECK_ROOT_START_TIMEOUT (10*1000)
 #ifdef _DEBUG
-	#define CHECK_ROOTOK_TIMEOUT (IsDebuggerPresent() ? ((DWORD)-1) : (10*1000)) // while debugging - wait infinitive
+	#define CHECK_ROOT_OK_TIMEOUT (IsDebuggerPresent() ? ((DWORD)-1) : (10*1000)) // while debugging - wait infinitive
 #else
-	#define CHECK_ROOTOK_TIMEOUT (10*1000)
+	#define CHECK_ROOT_OK_TIMEOUT (10*1000)
 #endif
 #define MAX_FORCEREFRESH_INTERVAL 500
 #define MAX_SYNCSETSIZE_WAIT 1000
@@ -194,7 +176,7 @@ void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, const WORD
 void PreConsoleSize(const int width, const int height);
 void PreConsoleSize(const COORD crSize);
 BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = NULL, bool bForceWriteLog = false);
-void CreateLogSizeFile(int nLevel, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo = NULL);
+void CreateLogSizeFile(int /* level */, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo = nullptr);
 void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bForceWriteLog = false);
 void LogModeChange(LPCWSTR asName, DWORD oldVal, DWORD newVal);
 bool LogString(LPCSTR asText);
@@ -262,31 +244,7 @@ enum LGSResult
 };
 LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue = NULL);
 
-void DisableAutoConfirmExit(BOOL abFromFarPlugin=FALSE);
-
-enum class RunMode : int
-{
-	Undefined = 0,
-	Server,
-	Comspec,
-	SetHook64,
-	AltServer,
-	Application,
-	GuiMacro,
-	AutoAttach,
-};
-
-RunMode DetectRunModeFromCmdLine(LPCWSTR asCmdLine);
-
-extern RunMode gnRunMode;
-
 extern BOOL gbDumpServerInitStatus;
-extern BOOL gbNoCreateProcess;
-extern BOOL gbRootIsCmdExe;
-extern BOOL gbAttachFromFar;
-extern BOOL gbDefTermCall;
-extern BOOL gbConsoleModeFlags;
-extern DWORD gnConsoleModeFlags;
 extern WORD  gnDefTextColors, gnDefPopupColors;
 extern BOOL  gbVisibleOnStartup;
 
@@ -301,7 +259,6 @@ extern OSVERSIONINFO gOSVer;
 extern WORD gnOsVer;
 extern bool gbIsWine;
 extern bool gbIsDBCS;
-extern BOOL gbRootAliveLess10sec;
 extern BOOL	gbTerminateOnCtrlBreak;
 
 extern HMODULE ghOurModule;

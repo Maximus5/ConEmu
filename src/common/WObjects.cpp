@@ -507,10 +507,9 @@ DWORD GetModulePathName(HMODULE hModule, CEStr& lsPathName)
 		return 0;
 
 	const DWORD errCode = GetLastError();
-	_ASSERTE(errCode == ERROR_INSUFFICIENT_BUFFER);
 
 	// Not enough space?
-	if (nRc == cchMax)
+	if (nRc == cchMax || errCode == ERROR_INSUFFICIENT_BUFFER)
 	{
 		cchMax = MAX_WIDE_PATH_LENGTH;
 		wchar_t* pszData = lsPathName.GetBuffer(cchMax);

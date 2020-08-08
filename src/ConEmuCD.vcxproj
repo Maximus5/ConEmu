@@ -289,8 +289,10 @@
     <ClInclude Include="ConEmuCD\ConEmuCmd.h" />
     <ClInclude Include="ConEmuCD\ConEmuSrv.h" />
     <ClInclude Include="ConEmuCD\ConProcess.h" />
+    <ClInclude Include="ConEmuCD\ConsoleArgs.h" />
     <ClInclude Include="ConEmuCD\ConsoleHelp.h" />
     <ClInclude Include="ConEmuCD\ConsoleMain.h" />
+    <ClInclude Include="ConEmuCD\ConsoleState.h" />
     <ClInclude Include="ConEmuCD\Debugger.h" />
     <ClInclude Include="ConEmuCD\DownloaderCall.h" />
     <ClInclude Include="ConEmuCD\ExitCodes.h" />
@@ -303,6 +305,7 @@
     <ClInclude Include="ConEmuCD\LogFunction.h" />
     <ClInclude Include="ConEmuCD\MapDump.h" />
     <ClInclude Include="ConEmuCD\Queue.h" />
+    <ClInclude Include="ConEmuCD\RunMode.h" />
     <ClInclude Include="ConEmuCD\Shutdown.h" />
     <ClInclude Include="ConEmuCD\SrvCommands.h" />
     <ClInclude Include="ConEmuCD\SrvPipes.h" />
@@ -322,7 +325,9 @@
     <ClCompile Include="ConEmuCD\ConEmuCmd.cpp" />
     <ClCompile Include="ConEmuCD\ConEmuSrv.cpp" />
     <ClCompile Include="ConEmuCD\ConProcess.cpp" />
+    <ClCompile Include="ConEmuCD\ConsoleArgs.cpp" />
     <ClCompile Include="ConEmuCD\ConsoleMain.cpp" />
+    <ClCompile Include="ConEmuCD\ConsoleState.cpp" />
     <ClCompile Include="ConEmuCD\Debugger.cpp" />
     <ClCompile Include="ConEmuCD\DownloaderCall.cpp" />
     <ClCompile Include="ConEmuCD\GuiHooks.cpp" />
@@ -333,6 +338,7 @@
     <ClCompile Include="ConEmuCD\LogFunction.cpp" />
     <ClCompile Include="ConEmuCD\MapDump.cpp" />
     <ClCompile Include="ConEmuCD\Queue.cpp" />
+    <ClCompile Include="ConEmuCD\RunMode.cpp" />
     <ClCompile Include="ConEmuCD\Shutdown.cpp" />
     <ClCompile Include="ConEmuCD\SrvCommands.cpp" />
     <ClCompile Include="ConEmuCD\SrvPipes.cpp" />

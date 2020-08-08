@@ -174,7 +174,7 @@ int WorkerBase::SetDebuggingPid(const wchar_t* const pidList)
 	if (!dbgInfo)
 		dbgInfo.reset(new DebuggerInfo);
 
-	gbNoCreateProcess = TRUE;
+	gpState->noCreateProcess_ = TRUE;
 	dbgInfo->bDebugProcess = TRUE;
 	dbgInfo->bDebugProcessTree = FALSE;
 
@@ -217,7 +217,7 @@ int WorkerBase::SetDebuggingExe(const wchar_t* const commandLine, const bool deb
 	if (!dbgInfo)
 		dbgInfo.reset(new DebuggerInfo);
 
-	gbNoCreateProcess = TRUE;
+	gpState->noCreateProcess_ = TRUE;
 	dbgInfo->bDebugProcess = true;
 	dbgInfo->bDebugProcessTree = debugTree;
 
@@ -433,7 +433,7 @@ void WorkerBase::CheckKeyboardLayout()
 			//memmove(pIn->Data, &dwLayout, 4);
 			pIn->dwData[0] = dwLayout;
 
-			CESERVER_REQ* pOut = ExecuteGuiCmd(ghConWnd, pIn, ghConWnd);
+			CESERVER_REQ* pOut = ExecuteGuiCmd(gpState->realConWnd, pIn, gpState->realConWnd);
 
 			ExecuteFreeResult(pOut);
 			ExecuteFreeResult(pIn);

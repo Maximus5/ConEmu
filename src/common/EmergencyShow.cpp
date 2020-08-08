@@ -40,7 +40,7 @@ int EvaluateDefaultFontWidth(int inSizeY, const wchar_t *asFontName)
 
 	int nDefaultX = inSizeY * 10 / 16; // rough
 	LOGFONT lf = {inSizeY};
-	lstrcpyn(lf.lfFaceName, asFontName ? asFontName : L"Lucida Console", countof(lf.lfFaceName));
+	lstrcpyn(lf.lfFaceName, asFontName ? asFontName : DEFAULT_CONSOLE_FONT_NAME, countof(lf.lfFaceName));
 	HFONT hFont = CreateFontIndirect(&lf);
 	if (hFont)
 	{
@@ -160,7 +160,7 @@ void SetUserFriendlyFont(HWND hConWnd, int newFontY = 0, int newFontX = 0)
 	if ((newFontY > 0) && (newFontX > 0))
 	{
 		if (!*sFontName)
-			lstrcpyn(sFontName, L"Lucida Console", countof(sFontName));
+			lstrcpyn(sFontName, DEFAULT_CONSOLE_FONT_NAME, countof(sFontName));
 		apiSetConsoleFontSize(hOutput, newFontY, newFontX, sFontName);
 	}
 }

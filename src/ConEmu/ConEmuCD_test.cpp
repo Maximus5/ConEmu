@@ -325,7 +325,7 @@ TEST_F(ServerDllTest, RunGuiMacro_CMD_Print)
 		wchar_t command[64] = L"";
 		swprintf_s(command, L"-GuiMacro:x%p IsConEmu", hByConEmuHWND);
 
-		const auto macroRc = consoleMain3(ConsoleMainMode::Server, command);
+		const auto macroRc = consoleMain3(ConsoleMainMode::Normal, command);
 		EXPECT_EQ(0, macroRc) << "hByConEmuHWND!=NULL";
 		EXPECT_EQ(std::wstring(L"Yes"), capture.GetTopString());
 		EXPECT_STREQ(L"Yes", GetEnvVar()) << "hByConEmuHWND!=NULL";
@@ -421,6 +421,10 @@ TEST_F(ServerDllTest, RunCmdExe)
 	catch (const OutputWasRedirected& ex)
 	{
 		cdbg() << "Skipping cmd echo output test: " << ex.what() << std::endl;
+	}
+	catch (const std::exception& ex)
+	{
+		FAIL() << ex.what();
 	}
 
 	const auto cmdRc2 = consoleMain3(ConsoleMainMode::Comspec, L"-c cmd.exe /c exit 3");

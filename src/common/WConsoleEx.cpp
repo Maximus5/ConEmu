@@ -340,7 +340,7 @@ void SetConsoleFontSizeTo(HWND inConWnd, int inSizeY, int inSizeX, const wchar_t
 		gsMapHelper.pConsoleInfo->FontSize.Y				= inSizeY;
 		gsMapHelper.pConsoleInfo->FontFamily				= 0;//0x30;//FF_MODERN|FIXED_PITCH;//0x30;
 		gsMapHelper.pConsoleInfo->FontWeight				= 0;//0x400;
-		lstrcpynW(gsMapHelper.pConsoleInfo->FaceName, asFontName ? asFontName : L"Lucida Console", countof(gsMapHelper.pConsoleInfo->FaceName)); //-V303
+		lstrcpynW(gsMapHelper.pConsoleInfo->FaceName, asFontName ? asFontName : DEFAULT_CONSOLE_FONT_NAME, countof(gsMapHelper.pConsoleInfo->FaceName)); //-V303
 		gsMapHelper.pConsoleInfo->CursorSize				= 25;
 		gsMapHelper.pConsoleInfo->FullScreen				= FALSE;
 		gsMapHelper.pConsoleInfo->QuickEdit					= FALSE;

@@ -44,8 +44,8 @@ enum MapDumpEnum
 {
 	mde_Unknown = 0,
 	mde_GuiMapping, // struct ConEmuGuiMapping :: CEGUIINFOMAPNAME L"ConEmuGuiInfoMapping.%u" ( % == dwGuiProcessId )
-	mde_ConMapping, // struct CESERVER_CONSOLE_MAPPING_HDR :: CECONMAPNAME L"ConEmuFileMapping.%08X" ( % == (DWORD)ghConWnd )
-	mde_AppMapping, // struct CESERVER_CONSOLE_APP_MAPPING :: CECONAPPMAPNAME L"ConEmuAppMapping.%08X" ( % == (DWORD)ghConWnd )
+	mde_ConMapping, // struct CESERVER_CONSOLE_MAPPING_HDR :: CECONMAPNAME L"ConEmuFileMapping.%08X" ( % == (DWORD)gpState->realConWnd )
+	mde_AppMapping, // struct CESERVER_CONSOLE_APP_MAPPING :: CECONAPPMAPNAME L"ConEmuAppMapping.%08X" ( % == (DWORD)gpState->realConWnd )
 	mde_All,
 };
 

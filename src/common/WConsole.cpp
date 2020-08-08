@@ -263,7 +263,7 @@ BOOL apiSetConsoleFontSize(HANDLE hOutput, int inSizeY, int inSizeX, const wchar
 		//apiGetCurrentConsoleFontEx(GetStdHandle(STD_OUTPUT_HANDLE), FALSE, &cfi);
 		cfi.dwFontSize.X = inSizeX;
 		cfi.dwFontSize.Y = inSizeY;
-		lstrcpynW(cfi.FaceName, asFontName ? asFontName : L"Lucida Console", countof(cfi.FaceName));
+		lstrcpynW(cfi.FaceName, asFontName ? asFontName : DEFAULT_CONSOLE_FONT_NAME, countof(cfi.FaceName));
 
 		HANDLE hConOut = GetStdHandle(STD_OUTPUT_HANDLE);
 		lbRc = apiSetCurrentConsoleFontEx(hConOut, FALSE, &cfi);

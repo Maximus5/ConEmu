@@ -64,9 +64,9 @@ void PrintConsoleInfo()
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	CONSOLE_CURSOR_INFO ci = {};
 
-	msprintf(szInfo, countof(szInfo), L"ConHWND=0x%08X, Class=\"", LODWORD(ghConWnd));
-	if (ghConWnd)
-		GetClassName(ghConWnd, szInfo+lstrlen(szInfo), 255);
+	msprintf(szInfo, countof(szInfo), L"ConHWND=0x%08X, Class=\"", LODWORD(gpState->realConWnd));
+	if (gpState->realConWnd)
+		GetClassName(gpState->realConWnd, szInfo+lstrlen(szInfo), 255);
 	lstrcpyn(szInfo+lstrlen(szInfo), L"\"\r\n", 4);
 	_wprintf(szInfo);
 

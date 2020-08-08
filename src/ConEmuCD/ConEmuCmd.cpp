@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConsoleMain.h"
 #include "ConEmuCmd.h"
 #include "ConEmuSrv.h"
+#include "ConsoleState.h"
 #include "ExitCodes.h"
 #include "../common/EnvVar.h"
 #include "../common/WFiles.h"
@@ -77,13 +78,13 @@ PRAGMA_ERROR("AddConsoleAlias was not defined");
 
 WorkerComspec::~WorkerComspec()  // NOLINT(modernize-use-equals-default)
 {
-	_ASSERTE(gnRunMode == RunMode::Comspec || gnRunMode == RunMode::Undefined);
+	_ASSERTE(gpState->runMode_ == RunMode::Comspec || gpState->runMode_ == RunMode::Undefined);
 }
 
 WorkerComspec::WorkerComspec()  // NOLINT(modernize-use-equals-default)
 	: WorkerBase()
 {
-	_ASSERTE(gnRunMode == RunMode::Comspec || gnRunMode == RunMode::Undefined);
+	_ASSERTE(gpState->runMode_ == RunMode::Comspec || gpState->runMode_ == RunMode::Undefined);
 }
 
 int WorkerComspec::Init()
@@ -101,7 +102,8 @@ int WorkerComspec::Init()
 	gbRootWasFoundInCon = 2; // не добавлять к "Press Enter to close console" - "or wait"
 	gbComspecInitCalled = TRUE; // Нельзя вызывать ComspecDone, если не было вызова ComspecInit
 	// в режиме ComSpec - запрещено!
-	gbAlwaysConfirmExit = FALSE; gbAutoDisableConfirmExit = FALSE;
+	gpState->alwaysConfirmExit_ = false;
+	gpState->autoDisableConfirmExit_ = false;
 #ifdef _DEBUG
 	xf_validate();
 	xf_dump_chk();
@@ -362,7 +364,7 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 
 int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 {
-	HWND hConWnd = ghConWnd, hConEmu = ghConEmuWnd;
+	HWND hConWnd = gpState->realConWnd, hConEmu = ghConEmuWnd;
 	if (!hConWnd)
 	{
 		// This may be ConEmuC started from WSL or connector

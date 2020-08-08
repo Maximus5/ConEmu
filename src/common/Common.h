@@ -117,8 +117,8 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CTRL(x) ((x)&0x1F)
 
 
-#define CECOPYRIGHTSTRING_A "(c) 2009-2017, ConEmu.Maximus5@gmail.com"
-#define CECOPYRIGHTSTRING_W L"© 2009-2017 ConEmu.Maximus5@gmail.com"
+#define CECOPYRIGHTSTRING_A "(c) 2009-2020, ConEmu.Maximus5@gmail.com"
+#define CECOPYRIGHTSTRING_W L"© 2009-2020 ConEmu.Maximus5@gmail.com"
 
 
 #define CEHOMEPAGE_A    "https://conemu.github.io/"
@@ -136,6 +136,9 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEREPORTCRASH  CEWIKIBASE L"Issues.html"
 #define CEWHATSNEW     CEWIKIBASE L"Whats_New.html"
 #define CEZONEID       CEWIKIBASE L"ZoneId.html"
+
+
+#define DEFAULT_CONSOLE_FONT_NAME L"Lucida Console"
 
 
 // Tasks related

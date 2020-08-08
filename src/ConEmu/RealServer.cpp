@@ -490,15 +490,15 @@ CESERVER_REQ* CRealServer::cmdStartStop(LPVOID pInst, CESERVER_REQ* pIn, UINT nD
 			{
 				pOut->StartStopRet.nWidth = mp_RCon->mp_RBuf->GetBufferWidth()/*con.m_sbi.dwSize.X*/;
 
-				//0x101 - запуск отладчика
-				if (nSubSystem != 0x100   // 0x100 - Аттач из фар-плагина
+				//0x101 - debugger start
+				if (nSubSystem != IMAGE_SUBSYSTEM_FAR_PLUGIN   // 0x100 - attach from Far Manager plugin
 				        && (mp_RCon->mp_RBuf->isScroll()
 				            || (mp_RCon->mn_DefaultBufferHeight && bRunViaCmdExe)))
 				{
 					// Смысл ассерта в том, что консоль запускаемая ИЗ ConEmu должна стартовать
 					// с корректным размером (заранее заданные через параметры для ConEmuC)
 					// А вот если идет аттач внешних консолей - то размер будет отличаться (и это нормально)
-					_ASSERTE(mp_RCon->mb_WasStartDetached || mp_RCon->mn_DefaultBufferHeight == mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/ || mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/ == mp_RCon->TextHeight());
+					_ASSERTE(mp_RCon->mb_WasStartDetached || mp_RCon->mn_DefaultBufferHeight == mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/ || static_cast<int>(mp_RCon->mp_RBuf->GetBufferHeight())/*con.m_sbi.dwSize.Y*/ == static_cast<int>(mp_RCon->TextHeight()));
 
 					pOut->StartStopRet.nBufferHeight = std::max<int>(mp_RCon->mp_RBuf->GetBufferHeight()/*con.m_sbi.dwSize.Y*/,mp_RCon->mn_DefaultBufferHeight);
 					_ASSERTE(mp_RCon->mp_RBuf->TextHeight()/*con.nTextHeight*/ >= 1);
