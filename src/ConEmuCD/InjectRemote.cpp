@@ -463,7 +463,7 @@ CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly /*= fal
 		goto wrap;
 	}
 	wcscpy_c(szKernelName, gfLoadLibrary.szModule);
-	CharLowerBuff(szKernelName, wcslen(szKernelName));
+	CharLowerBuff(szKernelName, static_cast<DWORD>(wcslen(szKernelName)));
 
 
 	LogString(L"CreateToolhelp32Snapshot(TH32CS_SNAPMODULE)");

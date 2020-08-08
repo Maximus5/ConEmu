@@ -28,6 +28,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include "../ConEmu/DefaultTerm.h"
+#include "../common/DefTermBase.h"
 
 CINFILTRATE_EXIT_CODES InjectRemote(DWORD nRemotePID, bool abDefTermOnly = false, LPDWORD pnErrCode = nullptr);

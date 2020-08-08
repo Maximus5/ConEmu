@@ -54,8 +54,6 @@ LONG gnMessageNestingLevel = 0;
 	#define MSGLOGGER
 #endif
 #define MSGLOGGER_MOUSE
-#include "../common/Keyboard.h"
-#include "../ConEmu/ConsoleMessages.h"
 #include "../ConEmu/DebugMsgLog.h"
 #endif
 

@@ -71,6 +71,8 @@ public:
 	// Not copyable!
 	CESwitch& operator=(const CESwitch&) = delete;
 	CESwitch(const CESwitch&) = delete;
+	CESwitch& operator=(CESwitch&&) = delete;
+	CESwitch(CESwitch&&) = delete;
 
 	void Clear();
 
@@ -93,7 +95,7 @@ public:
 
 public:
 	operator bool();
-	// other operators are not defined to avoid unambiguous calls
+	// other operators are not defined to avoid ambiguous calls
 };
 
 class CConEmuStart

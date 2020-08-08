@@ -183,10 +183,18 @@ int DoInjectHooks(LPWSTR asCmdArg)
 	LPWSTR pszNext = asCmdArg;
 	LPWSTR pszEnd = NULL;
 	BOOL lbForceGui = FALSE;
-	PROCESS_INFORMATION pi = {NULL};
+	PROCESS_INFORMATION pi = {};
 
+	auto strToHandle = [](LPWSTR pszNext, LPWSTR* ppszEnd) -> HANDLE
+	{
+#ifdef _WIN64
+		return HANDLE(wcstoull(pszNext, ppszEnd, 16));
+#else
+		return HANDLE(wcstoul(pszNext, ppszEnd, 16));
+#endif
+	};
 
-	pi.hProcess = (HANDLE)wcstoul(pszNext, &pszEnd, 16);
+	pi.hProcess = strToHandle(pszNext, &pszEnd);
 
 	if (pi.hProcess && pszEnd && *pszEnd)
 	{
@@ -197,7 +205,7 @@ int DoInjectHooks(LPWSTR asCmdArg)
 	if (pi.dwProcessId && pszEnd && *pszEnd)
 	{
 		pszNext = pszEnd+1;
-		pi.hThread = (HANDLE)wcstoul(pszNext, &pszEnd, 16);
+		pi.hThread = strToHandle(pszNext, &pszEnd);
 	}
 
 	if (pi.hThread && pszEnd && *pszEnd)
