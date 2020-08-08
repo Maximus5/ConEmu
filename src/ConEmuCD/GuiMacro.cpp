@@ -32,8 +32,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConsoleMain.h"
 #include "Actions.h"
-#include "GuiMacro.h"
 #include "ExitCodes.h"
+#include "GuiMacro.h"
+#include "ExportedFunctions.h"
 
 #include "../common/CEStr.h"
 #include "../common/CmdLine.h"
@@ -49,7 +50,7 @@ bool    gbMacroExportResult = false;
 
 BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
 {
-	MacroInstance* p = (MacroInstance*)lParam;
+	auto* p = reinterpret_cast<MacroInstance*>(lParam);
 	wchar_t szClass[MAX_PATH];
 	if (GetClassName(hWnd, szClass, countof(szClass)) < 1)
 		return TRUE; // continue search
@@ -59,7 +60,7 @@ BOOL CALLBACK FindTopGuiOrConsole(HWND hWnd, LPARAM lParam)
 	if (!p->nPID && bConClass)
 		return TRUE;
 
-	bool bGuiClass = (lstrcmp(szClass, VirtualConsoleClassMain) == 0);
+	const bool bGuiClass = (lstrcmp(szClass, VirtualConsoleClassMain) == 0);
 	if (!bGuiClass && !bConClass)
 		return TRUE; // continue search
 
@@ -77,7 +78,7 @@ int GuiMacroCommandLine(LPCWSTR asCmdLine)
 {
 	int iRc = CERR_CMDLINEEMPTY;
 	CmdArg szArg;
-	LPCWSTR pszArgStarts = NULL;
+	LPCWSTR pszArgStarts = nullptr;
 	LPCWSTR lsCmdLine = asCmdLine;
 	MacroInstance MacroInst = {}; // Special ConEmu instance for GUIMACRO and other options
 
@@ -90,7 +91,7 @@ int GuiMacroCommandLine(LPCWSTR asCmdLine)
 		else if (szArg[0] != L'/')
 			continue;
 
-		// -GUIMACRO[:PID|HWND] <Macro string>
+		// -GUIMACRO[:PID|0xHWND][:T<tab>][:S<split>] <Macro string>
 		if (lstrcmpni(szArg, L"/GUIMACRO", 9) == 0)
 		{
 			ArgGuiMacro(szArg, MacroInst);
@@ -112,6 +113,9 @@ int GuiMacroCommandLine(LPCWSTR asCmdLine)
 
 HWND GetConEmuExeHWND(DWORD nConEmuPID)
 {
+	if (!nConEmuPID)
+		return nullptr;
+
 	HWND hConEmu = NULL;
 
 	// EnumThreadWindows will not find child window,
@@ -172,50 +176,51 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst)
 				Inst.nPID = wcstoul(pszID, &pszEnd, 10);
 
 				wchar_t szExe[MAX_PATH] = L"";
+				if (Inst.nPID != 0)
 				{
 					CProcessData proc;
 					if (!proc.GetProcessName(Inst.nPID, szExe, countof(szExe), NULL, 0, NULL))
 						szExe[0] = 0;
-				}
 
-				// Using mapping information may be preferable due to speed
-				// and more, ConEmu may be started as Child window
-				if (!(Inst.hConEmuWnd = GetConEmuExeHWND(Inst.nPID))
-					&& IsConEmuGui(szExe))
-				{
-					// If ConEmu.exe has just been started, mapping may be not ready yet
-					HANDLE hWaitProcess = OpenProcess(SYNCHRONIZE|PROCESS_QUERY_INFORMATION, FALSE, Inst.nPID);
-					if (!hWaitProcess && IsWin6())
-						hWaitProcess = OpenProcess(SYNCHRONIZE|0x1000/*PROCESS_QUERY_LIMITED_INFORMATION*/, FALSE, Inst.nPID);
-					DWORD nStartTick = GetTickCount();
-					DWORD nWait, nDelay = hWaitProcess ? 60000 : 10000;
-					// Until succeeded?
-					do
+					// Using mapping information may be preferable due to speed
+					// and more, ConEmu may be started as Child window
+					if (!((Inst.hConEmuWnd = GetConEmuExeHWND(Inst.nPID)))
+						&& IsConEmuGui(szExe))
 					{
-						// Wait a little while ConEmu is initializing
-						if (hWaitProcess)
+						// If ConEmu.exe has just been started, mapping may be not ready yet
+						HANDLE hWaitProcess = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION, FALSE, Inst.nPID);
+						if (!hWaitProcess && IsWin6())
+							hWaitProcess = OpenProcess(SYNCHRONIZE | 0x1000/*PROCESS_QUERY_LIMITED_INFORMATION*/, FALSE, Inst.nPID);
+						DWORD nStartTick = GetTickCount();
+						DWORD nWait, nDelay = hWaitProcess ? 60000 : 10000;
+						// Until succeeded?
+						do
 						{
-							nWait = WaitForSingleObject(hWaitProcess, 100);
-							if (nWait == WAIT_OBJECT_0)
-								break; // ConEmu.exe was terminated
-						}
-						else
-						{
-							Sleep(100);
-						}
-						// Recheck
-						if ((Inst.hConEmuWnd = GetConEmuExeHWND(Inst.nPID)) != NULL)
-							break; // Found
-					} while ((GetTickCount() - nStartTick) <= nDelay);
-					// Stop checking
-					SafeCloseHandle(hWaitProcess);
+							// Wait a little while ConEmu is initializing
+							if (hWaitProcess)
+							{
+								nWait = WaitForSingleObject(hWaitProcess, 100);
+								if (nWait == WAIT_OBJECT_0)
+									break; // ConEmu.exe was terminated
+							}
+							else
+							{
+								Sleep(100);
+							}
+							// Recheck
+							if ((Inst.hConEmuWnd = GetConEmuExeHWND(Inst.nPID)) != NULL)
+								break; // Found
+						} while ((GetTickCount() - nStartTick) <= nDelay);
+						// Stop checking
+						SafeCloseHandle(hWaitProcess);
+					}
 				}
 
 				// If mapping with GUI PID does not exist - try to enum all Top level windows
 				// We are searching for RealConsole or ConEmu window
 				if (!Inst.hConEmuWnd)
 				{
-					EnumWindows(FindTopGuiOrConsole, (LPARAM)&Inst);
+					EnumWindows(FindTopGuiOrConsole, reinterpret_cast<LPARAM>(&Inst));
 				}
 
 				if (gpLogSize)
@@ -396,6 +401,14 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR*
 	return iRc;
 }
 
+/// <summary>
+/// Execute GuiMacro in (optionally) specified instance of ConEmu console/tab/split
+/// </summary>
+/// <param name="asInstance">Colon-delimited arguments for instance selection [PID|0xHWND]:[T<tab>]:[S<split>]</param>
+/// <param name="asMacro">The macro command(s)</param>
+/// <param name="bsResult">nullptr - to return result via environment variable "ConEmuMacroResult",
+/// INVALID_HANDLE_VALUE</param>
+/// <returns></returns>
 int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, BSTR* bsResult /*= NULL*/)
 {
 	LogString(L"GuiMacro function called");
@@ -411,10 +424,10 @@ int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, BSTR* bsResult /*= N
 	}
 
 	GuiMacroFlags Flags = gmf_None;
-	if (bsResult == NULL)
+	if (bsResult == nullptr)
 		Flags = gmf_SetEnvVar;
-	else if (bsResult == (BSTR*)-1)
-		bsResult = NULL;
+	else if (bsResult == static_cast<BSTR*>(INVALID_HANDLE_VALUE))
+		bsResult = nullptr;
 
 	int iRc = DoGuiMacro(asMacro, Inst, Flags, bsResult);
 	return iRc;

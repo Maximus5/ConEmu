@@ -90,38 +90,39 @@ HWND GetRealConsoleWindow()
 	return GetConsoleWindow();
 }
 
-bool IsConEmu()
+HWND GetConEmuRoot()
 {
 	CESERVER_CONSOLE_MAPPING_HDR srvMap{};
 	if (!LoadSrvMapping(GetRealConsoleWindow(), srvMap))
-		return false;
+		return nullptr;
 	if (!srvMap.hConEmuWndDc || !IsWindow(srvMap.hConEmuWndDc))
-		return false;
-	return true;
+		return nullptr;
+	return srvMap.hConEmuRoot;
 }
 
 }
 
-TEST(ConEmuCD, RunGuiMacro_DLL)
+TEST(ConEmuCD, RunGuiMacro_CMD)
 {
 	const auto ConEmuCD = LoadConEmuCD();
 	EXPECT_TRUE(ConEmuCD.IsLoaded());
 
-	const auto isConEmu = IsConEmu();
-	std::cerr << "Test started " << (isConEmu ? "inside" : "outside") << " of ConEmu" << std::endl;
+	// ReSharper disable once CppLocalVariableMayBeConst
+	HWND hConEmu = GetConEmuRoot();
+	std::cerr << "Test started " << (hConEmu ? "inside" : "outside") << " of ConEmu" << std::endl;
 
 	ConsoleMain3_t consoleMain3 = nullptr;
 	EXPECT_TRUE(ConEmuCD.GetProcAddress(FN_CONEMUCD_CONSOLE_MAIN_3_NAME, consoleMain3));
 	if (!consoleMain3)
 	{
-		return; // nothing to check more
+		return; // nothing to check more, test failed
 	}
 
 	SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
 	wchar_t szResult[64] = L"";
 
 	const auto macroRc = consoleMain3(ConsoleMainMode::GuiMacro, L"-GuiMacro IsConEmu");
-	if (!isConEmu)
+	if (!hConEmu)
 	{
 		EXPECT_EQ(CERR_GUIMACRO_FAILED, macroRc) << "isConEmu==false";
 	}
@@ -131,6 +132,31 @@ TEST(ConEmuCD, RunGuiMacro_DLL)
 		GetEnvironmentVariable(CEGUIMACRORETENVVAR, szResult, LODWORD(std::size(szResult)));
 		EXPECT_STREQ(L"Yes", szResult) << "isConEmu==true";
 	}
+}
+
+TEST(ConEmuCD, RunGuiMacro_API)
+{
+	const auto ConEmuCD = LoadConEmuCD();
+	EXPECT_TRUE(ConEmuCD.IsLoaded());
+
+	// ReSharper disable once CppLocalVariableMayBeConst
+	HWND hConEmu = GetConEmuRoot();
+	std::cerr << "Test started " << (hConEmu ? "inside" : "outside") << " of ConEmu" << std::endl;
+
+
+	GuiMacro_t guiMacro = nullptr;
+	EXPECT_TRUE(ConEmuCD.GetProcAddress(FN_CONEMUCD_GUIMACRO_NAME, guiMacro));
+	if (!guiMacro)
+	{
+		return; // nothing to check more, test failed
+	}
+
+	{
+		SetEnvironmentVariable(CEGUIMACRORETENVVAR, nullptr);
+		const auto fnRc = guiMacro(nullptr, L"IsConEmu", nullptr);
+	}
+
+	//BSTR result = nullptr;
 }
 
 TEST(ConEmuCD, RunCmdExe)

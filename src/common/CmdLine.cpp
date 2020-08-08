@@ -662,11 +662,17 @@ LPCWSTR GetDrive(LPCWSTR pszPath, wchar_t* szDrive, int/*countof(szDrive)*/ cchD
 	return szDrive;
 }
 
+/// <summary>
+/// Returns current directory using buffer in szDir
+/// </summary>
+/// <param name="szDir">Buffer where current directory is set</param>
+/// <returns>(LPCWSTR)szDir</returns>
 LPCWSTR GetDirectory(CEStr& szDir)
 {
+	// ReSharper disable twice CppJoinDeclarationAndAssignment
 	DWORD nLen, nMax;
 
-	nMax = GetCurrentDirectory(MAX_PATH, szDir.GetBuffer(MAX_PATH));
+	nMax = GetCurrentDirectoryW(MAX_PATH, szDir.GetBuffer(MAX_PATH));
 	if (!nMax)
 	{
 		szDir.Empty();
@@ -674,7 +680,7 @@ LPCWSTR GetDirectory(CEStr& szDir)
 	}
 	else if (nMax > MAX_PATH)
 	{
-		nLen = GetCurrentDirectory(nMax, szDir.GetBuffer(nMax));
+		nLen = GetCurrentDirectoryW(nMax, szDir.GetBuffer(nMax));
 		if (!nLen || (nLen > nMax))
 		{
 			szDir.Empty();

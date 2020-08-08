@@ -49,6 +49,8 @@ extern "C"
 
 	int __stdcall ConsoleMain3(ConsoleMainMode anWorkMode, LPCWSTR asCmdLine);
 
+	int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, BSTR* bsResult = nullptr);
+
 	BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 
 	int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm);
@@ -71,3 +73,9 @@ typedef int (__stdcall* ConsoleMain3_t)(ConsoleMainMode anWorkMode, LPCWSTR asCm
 
 #define FN_CONEMUCD_REQUEST_LOCAL_SERVER_NAME "PrivateEntry"
 // type is RequestLocalServer_t
+
+#define FN_CONEMUCD_GUIMACRO_NAME "GuiMacro"
+/// <summary>
+/// 
+/// </summary>
+typedef int(__stdcall* GuiMacro_t)(LPCWSTR asInstance, LPCWSTR asMacro, BSTR* bsResult /*= nullptr*/);

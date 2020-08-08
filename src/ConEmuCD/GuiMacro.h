@@ -53,9 +53,7 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& Inst);
 
 int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& Inst, GuiMacroFlags Flags, BSTR* bsResult = NULL);
 
-#if defined(__GNUC__)
-extern "C"
-#endif
-int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, BSTR* bsResult = NULL);
+// defined in ExportedFunctions.h
+// int __stdcall GuiMacro(LPCWSTR asInstance, LPCWSTR asMacro, BSTR* bsResult = NULL);
 
 int GuiMacroCommandLine(LPCWSTR asCmdLine);
