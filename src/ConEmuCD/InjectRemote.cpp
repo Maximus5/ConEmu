@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/version.h"
 #include "../ConEmuHk/Injects.h"
 
-#include <Tlhelp32.h>
+#include <tlhelp32.h>
 
 // 0 - OK, иначе - ошибка
 // Здесь вызывается CreateRemoteThread

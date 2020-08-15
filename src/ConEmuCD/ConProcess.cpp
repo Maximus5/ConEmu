@@ -36,7 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MSection.h"
 #include "../common/ProcessData.h"
 #include "../common/WUser.h"
-#include <TlHelp32.h>
+#include <tlhelp32.h>
 
 
 #include "ConsoleArgs.h"
