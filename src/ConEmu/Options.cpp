@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 
 #ifdef _DEBUG
-#include <TlHelp32.h>
+#include <tlhelp32.h>
 #endif
 #include "../common/clink.h"
 #include "../common/CEHandle.h"

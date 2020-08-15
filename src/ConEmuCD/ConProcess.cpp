@@ -34,7 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConProcess.h"
 #include "../common/MSection.h"
 #include "../common/ProcessData.h"
-#include <TlHelp32.h>
+#include <tlhelp32.h>
 
 #define XTERM_PID_TIMEOUT 2500
 

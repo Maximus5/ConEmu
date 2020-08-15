@@ -4,7 +4,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <tchar.h>
-#include <TlHelp32.h>
+#include <tlhelp32.h>
 
 #if defined(_MSC_VER) && (_MSC_VER >= 1900)
 	#if defined(_DEBUG)
