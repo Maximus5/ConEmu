@@ -81,14 +81,14 @@ void __cdecl operator delete[](void *ptr);
 	#define XF_PLACE_ARGS_VAL
 #endif
 
-#if defined(__CYGWIN__)
+#if defined(__CYGWIN__) || defined(__MINGW32__)
 extern "C" {
 #endif
 void * __cdecl xf_malloc(size_t _Size XF_PLACE_ARGS_DEF);
 void * __cdecl xf_calloc(size_t _Count, size_t _Size XF_PLACE_ARGS_DEF);
 void * __cdecl xf_realloc(void * _Memory, size_t _Size XF_PLACE_ARGS_DEF);
 void __cdecl xf_free(void * _Memory XF_PLACE_ARGS_DEF);
-#if defined(__CYGWIN__)
+#if defined(__CYGWIN__) || defined(__MINGW32__)
 }
 #endif
 
