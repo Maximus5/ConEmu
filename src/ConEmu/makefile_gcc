@@ -90,6 +90,7 @@ SRCS = \
 		CustomFonts.cpp    \
 		DefaultTerm.cpp    \
 		DlgItemHelper.cpp  \
+		DontEnable.cpp     \
 		DpiAware.cpp       \
 		DragDrop.cpp       \
 		DragDropData.cpp   \
@@ -110,6 +111,7 @@ SRCS = \
 		HotkeyDlg.cpp      \
 		HotkeyList.cpp     \
 		Hotkeys.cpp        \
+		HtmlCopy.cpp       \
 		IconList.cpp       \
 		ImgButton.cpp      \
 		Inside.cpp         \
@@ -134,7 +136,6 @@ SRCS = \
 		RealConsole.cpp    \
 		RealServer.cpp     \
 		Recreate.cpp       \
-		Registry.cpp       \
 		RunQueue.cpp       \
 		ScreenDump.cpp     \
 		SearchCtrl.cpp     \
@@ -181,6 +182,7 @@ SRCS = \
 		SetPgTransparent.cpp\
 		SetPgUpdate.cpp    \
 		SetPgViews.cpp     \
+		SettingsStorage.cpp     \
 		SizeInfo.cpp       \
 		Status.cpp         \
 		SystemEnvironment.cpp \

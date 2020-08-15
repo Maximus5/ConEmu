@@ -80,6 +80,7 @@ SRCS = \
 		GuiMacro.cpp       \
 		Infiltrate.cpp     \
 		InjectRemote.cpp   \
+		InputLogger.cpp    \
 		LogFunction.cpp    \
 		MapDump.cpp        \
 		Queue.cpp          \
