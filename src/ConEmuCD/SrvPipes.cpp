@@ -285,19 +285,28 @@ BOOL WINAPI DataServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		gpSrv->pConsole->bDataChanged = FALSE;
 
 		SMALL_RECT rc = gpSrv->pConsole->ConState.sbi.srWindow;
-		int iWidth = rc.Right - rc.Left + 1;
-		int iHeight = rc.Bottom - rc.Top + 1;
+		const int iWidth = rc.Right - rc.Left + 1;
+		const int iHeight = rc.Bottom - rc.Top + 1;
+		if (iWidth < 0 || iHeight < 0)
+		{
+			_ASSERTE(iWidth >= 0 && iHeight >= 0);
+			return FALSE;
+		}
 		DWORD ccCells = iWidth * iHeight;
 
-		// Такого быть не должно, ReadConsoleData корректирует возможный размер
-		if (ccCells > (size_t)(gpSrv->pConsole->ConState.crMaxSize.X * gpSrv->pConsole->ConState.crMaxSize.Y))
+		const auto& crMaxSize = gpSrv->pConsole->ConState.crMaxSize;
+		_ASSERTE(crMaxSize.X >= 0 && crMaxSize.Y < 0);
+		// We should fit, ReadConsoleData corrects possible size. But check.
+		const DWORD ccMaxSizeCells = static_cast<uint32_t>(static_cast<uint16_t>(crMaxSize.X))
+			* static_cast<uint32_t>(static_cast<uint16_t>(crMaxSize.Y));
+		if (ccCells > ccMaxSizeCells)
 		{
-			_ASSERTE(ccCells <= (size_t)(gpSrv->pConsole->ConState.crMaxSize.X * gpSrv->pConsole->ConState.crMaxSize.Y));
-			ccCells = (gpSrv->pConsole->ConState.crMaxSize.X * gpSrv->pConsole->ConState.crMaxSize.Y);
+			_ASSERTE(ccCells <= ccMaxSizeCells);
+			ccCells = ccMaxSizeCells;
 		}
 
 		gpSrv->pConsole->ConState.nDataCount = ccCells;
-		size_t cbDataSize = sizeof(gpSrv->pConsole->ConState) + ccCells * sizeof(CHAR_INFO);
+		const size_t cbDataSize = sizeof(gpSrv->pConsole->ConState) + ccCells * sizeof(CHAR_INFO);
 		pcbReplySize = sizeof(CESERVER_REQ_HDR) + cbDataSize;
 		if (ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
 		{
