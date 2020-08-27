@@ -32,6 +32,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #ifdef _DEBUG
 //#define SHOW_ATTACH_MSGBOX
+//#define SHOW_LOADCFGFILE_MSGBOX
+//#define SHOW_SERVER_STARTED_MSGBOX
+//#define SHOW_COMSPEC_STARTED_MSGBOX
 #endif
 
 #include "ConsoleArgs.h"
@@ -71,7 +74,8 @@ void Switch::Clear()
 }
 
 SwitchBool::SwitchBool(const bool defaultValue /*= false*/)
-	: Switch(SwitchType::Simple), value(defaultValue)
+	: Switch(SwitchType::Simple)
+	, value(defaultValue)
 {
 }
 
@@ -142,6 +146,11 @@ void SwitchInt::Clear()
 	Switch::Clear();
 }
 
+bool SwitchInt::IsValid() const
+{
+	return exists && switchType == SwitchType::Int;
+}
+
 SwitchInt::ValueType_t SwitchInt::GetInt() const
 {
 	_ASSERTE(switchType==SwitchType::Int || (switchType==SwitchType::None && !exists));
@@ -165,6 +174,7 @@ SwitchInt::ValueType_t SwitchInt::SetInt(const wchar_t* const newVal, const int 
 	if (!newVal || !*newVal)
 	{
 		Clear();
+		exists = true;
 	}
 	else
 	{
@@ -259,7 +269,7 @@ bool ConsoleArgs::GetCfgParam(LPCWSTR& cmdLineRest, SwitchStr& Val)
 // ReSharper disable once CppMemberFunctionMayBeStatic
 void ConsoleArgs::ShowAttachMsgBox(const CEStr& szArg) const
 {
-#if defined(SHOW_ATTACH_MSGBOX)
+#ifdef SHOW_ATTACH_MSGBOX
 	if (!IsDebuggerPresent())
 	{
 		wchar_t szTitle[100]; swprintf_c(szTitle, L"%s PID=%u %s", gsModuleName, gnSelfPID, szArg.c_str(L""));
@@ -268,10 +278,49 @@ void ConsoleArgs::ShowAttachMsgBox(const CEStr& szArg) const
 #endif
 }
 
+void ConsoleArgs::ShowConfigMsgBox(const CEStr& szArg, LPCWSTR cmdLineRest)
+{
+#ifdef SHOW_LOADCFGFILE_MSGBOX
+	MessageBox(NULL, lsCmdLine, szArg.c_str(L""), MB_SYSTEMMODAL);
+#endif
+}
+
+void ConsoleArgs::ShowServerStartedMsgBox(LPCWSTR asCmdLine)
+{
+#ifdef SHOW_SERVER_STARTED_MSGBOX
+	wchar_t szTitle[100]; swprintf_c(szTitle, L"ConEmuC [Server] started (PID=%i)", gnSelfPID);
+	const wchar_t* pszCmdLine = asCmdLine;
+	MessageBox(NULL,pszCmdLine,szTitle,0);
+#endif
+}
+
+void ConsoleArgs::ShowComspecStartedMsgBox(LPCWSTR asCmdLine)
+{
+#ifdef SHOW_COMSPEC_STARTED_MSGBOX
+	wchar_t szTitle[100]; swprintf_c(szTitle, L"ConEmuC [ComSpec] started (PID=%i)", gnSelfPID);
+	const wchar_t* pszCmdLine = asCmdLine;
+	MessageBox(NULL,pszCmdLine,szTitle,0);
+#endif
+}
+
+void ConsoleArgs::AddConEmuArg(LPCWSTR asSwitch, LPCWSTR asValue)
+{
+	lstrmerge(&conemuAddArgs_.ms_Val, asSwitch);
+	if (asValue && *asValue)
+	{
+		const bool needQuot = IsQuotationNeeded(asValue);
+		lstrmerge(&conemuAddArgs_.ms_Val,
+			needQuot ? L" \"" : L" ",
+			asValue,
+			needQuot ? L"\"" : NULL);
+	}
+	SetEnvironmentVariable(ENV_CONEMU_EXEARGS_W, conemuAddArgs_);
+}
+
 /// AutoAttach is not allowed in some cases
 bool ConsoleArgs::IsAutoAttachAllowed() const
 {
-	if (!gpState->realConWnd)
+	if (!gpState->realConWnd_)
 	{
 		LogString("IsAutoAttachAllowed is not allowed, gpState->realConWnd is not null");
 		return false;
@@ -283,7 +332,7 @@ bool ConsoleArgs::IsAutoAttachAllowed() const
 		return true;
 	}
 
-	if (!IsWindowVisible(gpState->realConWnd))
+	if (!IsWindowVisible(gpState->realConWnd_))
 	{
 		if (defTermCall_ || attachFromFar_)
 		{
@@ -296,7 +345,7 @@ bool ConsoleArgs::IsAutoAttachAllowed() const
 		return false;
 	}
 
-	if (IsIconic(gpState->realConWnd))
+	if (IsIconic(gpState->realConWnd_))
 	{
 		LogString("IsAutoAttachAllowed is not allowed, gpState->realConWnd is iconic");
 		return false;
@@ -352,7 +401,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 		}
 	}
 
-	int iResult = 100;
+	int iResult = 0;
 	LPCWSTR pszArgStart;
 	LPCWSTR psUnknown = nullptr;
 	CmdArg szNext;

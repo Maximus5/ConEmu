@@ -36,6 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ExitCodes.h"
 #include "ExportedFunctions.h"
 #include "GuiMacro.h"
+
+#include "ConsoleState.h"
 #include "RunMode.h"
 
 #include "../common/CEStr.h"
@@ -305,9 +307,9 @@ void ArgGuiMacro(CEStr& szArg, MacroInstance& inst)
 
 int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR* bsResult /*= NULL*/)
 {
-	// If neither hMacroInstance nor ghConEmuWnd was set - Macro will fail most likely
+	// If neither hMacroInstance nor gpState->conemuWnd_ was set - Macro will fail most likely
 	// Skip assertion show for IsConEmu, it's used in tests
-	_ASSERTE(inst.hConEmuWnd!=NULL || ghConEmuWnd!=NULL || (wcscmp(asCmdArg, L"IsConEmu") == 0));
+	_ASSERTE(inst.hConEmuWnd!=NULL || gpState->conemuWnd_!=NULL || (wcscmp(asCmdArg, L"IsConEmu") == 0));
 
 	wchar_t szErrInst[80] = L"FAILED:Specified ConEmu instance is not found";
 	wchar_t szErrExec[80] = L"FAILED:Unknown GuiMacro execution error";
@@ -334,7 +336,7 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR*
 		return CERR_GUIMACRO_FAILED;
 	}
 
-	HWND hCallWnd = inst.hConEmuWnd ? inst.hConEmuWnd : gpState->realConWnd;
+	HWND hCallWnd = inst.hConEmuWnd ? inst.hConEmuWnd : gpState->realConWnd_;
 
 	// Все что в asCmdArg - выполнить в Gui
 	int iRc = CERR_GUIMACRO_FAILED;
@@ -348,7 +350,7 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR*
 
 	LogString(L"DoGuiMacro: executing CECMD_GUIMACRO");
 
-	pOut = ConEmuGuiRpc(hCallWnd).SetOwner(gpState->realConWnd).SetIgnoreAbsence().Execute(pIn);
+	pOut = ConEmuGuiRpc(hCallWnd).SetOwner(gpState->realConWnd_).SetIgnoreAbsence().Execute(pIn);
 
 	LogString(L"DoGuiMacro: CECMD_GUIMACRO finished");
 

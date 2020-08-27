@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "ConsoleMain.h"
+#include "ConsoleState.h"
 #include "Debugger.h"
 #include "ExitCodes.h"
 
@@ -433,7 +434,7 @@ void WorkerBase::CheckKeyboardLayout()
 			//memmove(pIn->Data, &dwLayout, 4);
 			pIn->dwData[0] = dwLayout;
 
-			CESERVER_REQ* pOut = ExecuteGuiCmd(gpState->realConWnd, pIn, gpState->realConWnd);
+			CESERVER_REQ* pOut = ExecuteGuiCmd(gpState->realConWnd_, pIn, gpState->realConWnd_);
 
 			ExecuteFreeResult(pOut);
 			ExecuteFreeResult(pIn);

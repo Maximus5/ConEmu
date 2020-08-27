@@ -364,7 +364,7 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 
 int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 {
-	HWND hConWnd = gpState->realConWnd, hConEmu = ghConEmuWnd;
+	HWND hConWnd = gpState->realConWnd_, hConEmu = gpState->conemuWnd_;
 	if (!hConWnd)
 	{
 		// This may be ConEmuC started from WSL or connector

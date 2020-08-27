@@ -87,10 +87,6 @@ extern wchar_t gsVersion[20];
 extern wchar_t gsSelfExe[MAX_PATH];  // Full path+exe to our executable
 extern wchar_t gsSelfPath[MAX_PATH]; // Directory of our executable
 //HANDLE  ghConIn = NULL, ghConOut = NULL;
-extern HWND    gpState->realConWnd;
-extern HWND    ghConEmuWnd; // Root! window
-extern HWND    ghConEmuWndDC; // ConEmu DC window
-extern HWND    ghConEmuWndBack; // ConEmu Back window
 extern DWORD   gnMainServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
 extern DWORD   gnAltServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
 extern BOOL    gbLogProcess; // (pInfo->nLoggingType == glt_Processes)

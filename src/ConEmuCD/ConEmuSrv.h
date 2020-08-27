@@ -126,9 +126,6 @@ struct SrvInfo
 	HANDLE hInWaitForSetConBufThread;  // signal that RefreshThread is ready to wait for hWaitForSetConBufThread
 	HANDLE hOutWaitForSetConBufThread; // signal that RefreshThread may continue
 
-	DWORD  dwGuiAID; // ConEmu internal ID of started CRealConsole
-	HWND   hGuiWnd; // передается через аргумент "/GHWND=%08X", чтобы окно не искать
-	BOOL   bRequestNewGuiWnd;
 	DWORD  nActiveFarPID; // PID последнего активного Far
 	BOOL   bWasDetached; // Выставляется в TRUE при получении CECMD_DETACHCON
 	BOOL   bWasReattached; // Если TRUE - то при следующем цикле нужно передернуть ReloadFullConsoleInfo(true)

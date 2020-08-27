@@ -111,6 +111,7 @@ public:
 	SwitchInt& operator=(ValueType_t newVal);
 
 	void Clear();
+	bool IsValid() const;
 };
 
 struct SwitchStr : public Switch
@@ -154,6 +155,10 @@ protected:
 	/* Processing helpers */
 	static bool GetCfgParam(LPCWSTR& cmdLineRest, SwitchStr& Val);
 	void ShowAttachMsgBox(const CEStr& szArg) const;
+	static void ShowConfigMsgBox(const CEStr& szArg, LPCWSTR cmdLineRest);
+	static void ShowServerStartedMsgBox(LPCWSTR asCmdLine);
+	static void ShowComspecStartedMsgBox(LPCWSTR asCmdLine);
+	void AddConEmuArg(LPCWSTR asSwitch, LPCWSTR asValue);
 public:
 	int ParseCommandLine(LPCWSTR pszCmdLine);
 	bool IsAutoAttachAllowed() const;
@@ -164,7 +169,11 @@ public:
 	// Some variables
 	CEStr fullCmdLine_;       // All arguments, except our executable
 	CEStr command_;    // The shell command line or script. e.g. "cmd.exe" or "cmd ||| powershell"
+	CEStr conemuAddArgs_; // config and xml file to pass
 	int   params_ = 0;
+
+	/// If something unknown appeared in command line
+	SwitchStr unknownSwitch_;
 
 	/// Perform the check (e.g. IsConEmu) and return result as errorlevel (exit code):
 	/// CERR_CHKSTATE_ON if true and CERR_CHKSTATE_OFF if false.
@@ -190,7 +199,7 @@ public:
 	SwitchBool skipHookSettersCheck_;
 
 	/// ChildGui attach, should contains hex HWND
-	SwitchInt attachGuiApp_;
+	SwitchInt attachGuiAppWnd_;
 	/// PID of already created process which is console root
 	SwitchInt rootPid_;
 	/// may be set with '/ROOTEXE' switch if used with '/TRMPID'. full path to root exe
@@ -208,6 +217,25 @@ public:
 	SwitchBool attachFromFar_;
 	/// Attach to existing real console without ConEmuHk injection
 	SwitchBool alternativeAttach_;
+	/// Don't wait for created process termination. Used to run processes in background.
+	SwitchBool asyncRun_;
+	/// Use "cmd /k ..." to run commands
+	SwitchBool cmdK_;
+
+	/// PID to attach the debugger
+	SwitchInt debugPid_;
+	/// Start debugger only for command_
+	SwitchBool debugExe_;
+	/// Start debugger for command_ and for its child processes
+	SwitchBool debugTree_;
+	/// Dump debugging process memory and ask user for dump type
+	SwitchBool debugDump_;
+	/// Dump debugging process memory using mini-dump
+	SwitchBool debugMiniDump_;
+	/// Dump debugging process memory using full-dump
+	SwitchBool debugFullDump_;
+	/// Dump debugging process memory using optional time interval
+	SwitchStr debugAutoMini_;
 
 	/// (ENABLE_QUICK_EDIT_MODE|ENABLE_INSERT_MODE) etc.
 	SwitchInt consoleModeFlags_;
@@ -228,9 +256,24 @@ public:
 	SwitchInt consoleFontWidth_;
 	/// Height for real console font
 	SwitchInt consoleFontHeight_;
+	/// Text, Back, PopText & PopBack color indexes for new real console
+	SwitchInt consoleColorIndexes_;
+	/// CD to %USERPROFILE% before creating root process. ConEmu can't CD during RunAs.
+	SwitchBool needCdToProfileDir_;
 
 	/// Enable internal logging
 	SwitchBool isLogging_;
+
+	/// PID of ConEmu[64].exe (gpState->conemuWnd_)
+	SwitchInt conemuPid_;
+	/// HWND of ConEmu instance (root window)
+	SwitchInt conemuHwnd_;
+	/// If we need new ConEmu window
+	SwitchBool requestNewGuiWnd_;
+	/// Config name (passed via -config to ConEmu)
+	SwitchStr configName_;
+	/// Config file (usually xml, passed as -LoadCfgFile to ConEmu)
+	SwitchStr configFile_;
 
 };
 

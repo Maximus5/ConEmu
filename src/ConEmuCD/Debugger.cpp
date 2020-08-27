@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConsoleMain.h"
 #include "ConEmuSrv.h"
+#include "ConsoleState.h"
 #include "ExitCodes.h"
 
 #include "../common/CEStr.h"
@@ -142,7 +143,7 @@ int DebuggerInfo::RunDebugger()
 		HANDLE hCon = ghConOut;
 		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 		GetConsoleScreenBufferInfo(hCon, &csbi);
-		if (IsWindowVisible(gpState->realConWnd) && (csbi.dwSize.X < 260))
+		if (IsWindowVisible(gpState->realConWnd_) && (csbi.dwSize.X < 260))
 		{
 			// Enlarge both width and height
 			const COORD crNewSize = {260, 32000};

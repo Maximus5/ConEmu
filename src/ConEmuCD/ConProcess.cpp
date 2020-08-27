@@ -36,13 +36,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/ProcessData.h"
 #include <TlHelp32.h>
 
+
+#include "ConsoleArgs.h"
 #include "ConsoleState.h"
 
 #define XTERM_PID_TIMEOUT 2500
-
-BOOL   gbUseDosBox = FALSE;
-HANDLE ghDosBoxProcess = NULL;
-DWORD  gnDosBoxPID = 0;
 
 ConProcess::ConProcess()
 {
@@ -209,7 +207,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 	{
 		if ((dwProcessLastCheckTick - nProcessStartTick) > CHECK_ROOT_OK_TIMEOUT)
 		{
-			_ASSERTE(gpConsoleArgs->confirmExitParm_==0);
+			_ASSERTE(gpConsoleArgs->confirmExitParm_ == RConStartArgs::eConfDefault);
 			// эта проверка выполняется один раз
 			gpState->autoDisableConfirmExit_ = false;
 			// 10 сек. прошло, теперь необходимо проверить, а жив ли процесс?
@@ -223,7 +221,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 			else
 			{
 				// Корневой процесс все еще работает, считаем что все ок и подтверждения закрытия консоли не потребуется
-				DisableAutoConfirmExit();
+				gpState->DisableAutoConfirmExit();
 				//nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT; // менять nProcessStartTick не нужно. проверка только по флажкам
 			}
 		}
@@ -262,7 +260,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 		        || (pnProcesses[1] == gnSelfPID && pnProcesses[0] == nNtvdmPID))
 		{
 			// Послать в нашу консоль команду закрытия
-			PostMessage(gpState->realConWnd, WM_CLOSE, 0, 0);
+			PostMessage(gpState->realConWnd_, WM_CLOSE, 0, 0);
 		}
 	}
 	#endif
@@ -497,7 +495,7 @@ void ConProcess::RefreshXRequests(MSectionLock& CS)
 				in->dwData[0] = (TermModeCommand)m;
 				in->dwData[1] = value;
 				in->dwData[2] = pid;
-				CESERVER_REQ* pGuiOut = ExecuteGuiCmd(gpState->realConWnd, in, gpState->realConWnd);
+				CESERVER_REQ* pGuiOut = ExecuteGuiCmd(gpState->realConWnd_, in, gpState->realConWnd_);
 				ExecuteFreeResult(pGuiOut);
 			}
 		}
@@ -518,7 +516,7 @@ void ConProcess::OnAttached()
 			in->dwData[0] = (TermModeCommand)m;
 			in->dwData[1] = xFixedRequests[m];
 			in->dwData[2] = gnSelfPID; // doesn't matter
-			CESERVER_REQ* pGuiOut = ExecuteGuiCmd(gpState->realConWnd, in, gpState->realConWnd);
+			CESERVER_REQ* pGuiOut = ExecuteGuiCmd(gpState->realConWnd_, in, gpState->realConWnd_);
 			ExecuteFreeResult(pGuiOut);
 		}
 	}
@@ -802,16 +800,16 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 			// PID-ы процессов в консоли могут оказаться перемешаны. Нас же интересует gnSelfPID на первом месте
 			pnProcesses[0] = gnSelfPID;
 			DWORD nCorrect = 1, nMax = nMaxProcesses, nDosBox = 0;
-			if (gbUseDosBox)
+			if (gpState->dosbox_.use_)
 			{
-				if (ghDosBoxProcess && WaitForSingleObject(ghDosBoxProcess, 0) == WAIT_TIMEOUT)
+				if (gpState->dosbox_.handle_ && WaitForSingleObject(gpState->dosbox_.handle_, 0) == WAIT_TIMEOUT)
 				{
-					pnProcesses[nCorrect++] = gnDosBoxPID;
+					pnProcesses[nCorrect++] = gpState->dosbox_.pid_;
 					nDosBox = 1;
 				}
-				else if (ghDosBoxProcess)
+				else if (gpState->dosbox_.handle_)
 				{
-					ghDosBoxProcess = NULL;
+					gpState->dosbox_.handle_ = NULL;
 				}
 			}
 			for (DWORD n = 0; n < nCurCount && nCorrect < nMax; n++)

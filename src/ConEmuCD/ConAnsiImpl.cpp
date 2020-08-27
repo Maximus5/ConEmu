@@ -40,6 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConAnsiImpl.h"
 #include "ConEmuSrv.h"
+#include "ConsoleState.h"
 
 #ifdef _DEBUG
 	#define DUMP_CONSOLE_OUTPUT
@@ -147,12 +148,12 @@ bool SrvAnsiImpl::OurWriteConsole(const wchar_t* lpBuffer, DWORD nNumberOfCharsT
 		{
 			ExecutePrepareCmd(pIn, CECMD_FLASHWINDOW, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_FLASHWINFO)); //-V119
 			pIn->Flash.fType = eFlashBeep;
-			pIn->Flash.hWnd = gpState->realConWnd;
+			pIn->Flash.hWnd = gpState->realConWnd_;
 			pIn->Flash.bInvert = FALSE;
 			pIn->Flash.dwFlags = FLASHW_ALL;
 			pIn->Flash.uCount = 1;
 			pIn->Flash.dwTimeout = 0;
-			auto pOut = ExecuteGuiCmd(gpState->realConWnd, pIn, gpState->realConWnd);
+			auto pOut = ExecuteGuiCmd(gpState->realConWnd_, pIn, gpState->realConWnd_);
 			if (pOut) ExecuteFreeResult(pOut);
 			ExecuteFreeResult(pIn);
 		}
@@ -767,7 +768,7 @@ void SrvAnsiImpl::DoMessage(LPCWSTR asMsg, ssize_t cchLen)
 		wchar_t szTitle[MAX_PATH+64];
 		msprintf(szTitle, countof(szTitle), L"PID=%u, %s", GetCurrentProcessId(), PointToName(szExe));
 
-		GuiMessageBox(ghConEmuWnd, pszText, szTitle, MB_ICONINFORMATION|MB_SYSTEMMODAL);
+		GuiMessageBox(gpState->conemuWnd_, pszText, szTitle, MB_ICONINFORMATION|MB_SYSTEMMODAL);
 
 		free(pszText);
 	}
@@ -811,7 +812,7 @@ bool SrvAnsiImpl::IsAnsiExecAllowed(LPCWSTR asCmd)
 		_ASSERTE(sizeof(pIn->wData[0])==sizeof(*asCmd));
 		memmove(pIn->wData, asCmd, cchLen*sizeof(pIn->wData[0]));
 
-		pOut = ExecuteGuiCmd(gpState->realConWnd, pIn, gpState->realConWnd);
+		pOut = ExecuteGuiCmd(gpState->realConWnd_, pIn, gpState->realConWnd_);
 		if (pOut && (pOut->DataSize() == sizeof(pOut->dwData[0])))
 		{
 			bAllowed = (pOut->dwData[0] == TRUE);
@@ -836,7 +837,7 @@ void SrvAnsiImpl::DoGuiMacro(LPCWSTR asCmd, ssize_t cchLen)
 
 		if (IsAnsiExecAllowed(pIn->GuiMacro.sMacro))
 		{
-			pOut = ExecuteGuiCmd(gpState->realConWnd, pIn, gpState->realConWnd);
+			pOut = ExecuteGuiCmd(gpState->realConWnd_, pIn, gpState->realConWnd_);
 		}
 	}
 
@@ -941,7 +942,7 @@ void SrvAnsiImpl::DoSendCWD(LPCWSTR asCmd, ssize_t cchLen)
 		EscCopyCtrlString(pszCWD, asCmd, cchLen);
 
 		// Sends CECMD_STORECURDIR into RConServer
-		SendCurrentDirectory(gpState->realConWnd, pszCWD);
+		SendCurrentDirectory(gpState->realConWnd_, pszCWD);
 
 		free(pszCWD);
 	}
@@ -963,7 +964,7 @@ void SrvAnsiImpl::DoSetProgress(WORD st, WORD pr, LPCWSTR pszName /*= NULL*/)
 			lstrcpy((wchar_t*)(pIn->wData+2), pszName);
 		}
 
-		CESERVER_REQ* pOut = ExecuteGuiCmd(gpState->realConWnd, pIn, gpState->realConWnd);
+		CESERVER_REQ* pOut = ExecuteGuiCmd(gpState->realConWnd_, pIn, gpState->realConWnd_);
 		ExecuteFreeResult(pIn);
 		ExecuteFreeResult(pOut);
 	}
@@ -1023,13 +1024,13 @@ void SrvAnsiImpl::ReportTerminalPixelSize()
 	int width = 0, height = 0;
 	RECT rcWnd = {};
 
-	if (ghConEmuWndDC && GetClientRect(ghConEmuWndDC, &rcWnd))
+	if (gpState->conemuWndDC_ && GetClientRect(gpState->conemuWndDC_, &rcWnd))
 	{
 		width = RectWidth(rcWnd);
 		height = RectHeight(rcWnd);
 	}
 
-	if ((width <= 0 || height <= 0) && gpState->realConWnd && GetClientRect(gpState->realConWnd, &rcWnd))
+	if ((width <= 0 || height <= 0) && gpState->realConWnd_ && GetClientRect(gpState->realConWnd_, &rcWnd))
 	{
 		width = RectWidth(rcWnd);
 		height = RectHeight(rcWnd);
@@ -2244,7 +2245,7 @@ void SrvAnsiImpl::WriteAnsiCode_OSC(AnsiEscCode& Code)
 				if (pIn)
 				{
 					EscCopyCtrlString((wchar_t*)pIn->wData, Code.ArgSZ+4, Code.cchArgSZ-4);
-					CESERVER_REQ* pOut = ExecuteGuiCmd(gpState->realConWnd, pIn, gpState->realConWnd);
+					CESERVER_REQ* pOut = ExecuteGuiCmd(gpState->realConWnd_, pIn, gpState->realConWnd_);
 					ExecuteFreeResult(pIn);
 					ExecuteFreeResult(pOut);
 				}

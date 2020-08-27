@@ -112,7 +112,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 				// Issue 590: GenerateConsoleCtrlEvent does not break ReadConsole[A|W] function!
 				SetLastError(0);
 				LRESULT lSendRc =
-				SendMessage(gpState->realConWnd, WM_KEYDOWN, r.Event.KeyEvent.wVirtualKeyCode, 0);
+				SendMessage(gpState->realConWnd_, WM_KEYDOWN, r.Event.KeyEvent.wVirtualKeyCode, 0);
 				DWORD nErrCode = GetLastError();
 				msprintf(szLog, countof(szLog), L"  ---  CtrlC/CtrlBreak sent (%u,%u)", LODWORD(lSendRc), nErrCode);
 				LogString(szLog);

@@ -1,5 +1,4 @@
-﻿
-/*
+﻿/*
 Copyright (c) 2015-present Maximus5
 All rights reserved.
 
@@ -34,14 +33,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 typedef DWORD AttachModeEnum;
 const AttachModeEnum
-	am_Simple  = 0x0001,    // As is
-	am_Auto    = 0x0002,    // Same as am_Simple, but always return 0 as errorlevel
-	am_Modes   = (am_Simple|am_Auto),
-	am_Async   = 0x0010,    // "/AUTOATTACH" must be async to be able to call from cmd prompt
-	am_DefTerm = 0x0020,    // "/
-	am_Admin   = 0x1000,    // Special "attach" when ConEmu is run under "User" and console "As admin"
-	am_None    = 0
-;
+	am_Simple = 0x0001, // As is
+	am_Auto = 0x0002,   // Same as am_Simple, but always return 0 as errorlevel
+	am_Modes = (am_Simple | am_Auto),
+	am_Async = 0x0010,   // "/AUTOATTACH" must be async to be able to call from cmd prompt
+	am_DefTerm = 0x0020, // "/
+	am_Admin = 0x1000,   // Special "attach" when ConEmu is run under "User" and console "As admin"
+	am_None = 0;
 
 struct ConsoleState final
 {
@@ -66,6 +64,8 @@ struct ConsoleState final
 	/// If true - we don't create a process in console. <br>
 	/// It slightly differs from alienMode_ because is used in any run mode (comspec, etc.)
 	bool noCreateProcess_ = false;
+	/// Force reattach StdIn/StdOut/StdErr to real conhost instead of inherited redirected handles
+	bool reopenStdHandles_ = false;
 
 	/// If true - show "Press Enter or Esc to close..."
 	bool alwaysConfirmExit_ = false;
@@ -80,15 +80,27 @@ struct ConsoleState final
 	bool rootIsCmdExe_ = true;
 
 	/// Real console window handle
-	HWND    gpState->realConWnd = nullptr;
-	/// PID of ConEmu[64].exe (ghConEmuWnd)
-	DWORD   gnConEmuPID = 0;
+	HWND realConWnd_ = nullptr;
+	/// PID of ConEmu[64].exe (gpState->conemuWnd_)
+	DWORD conemuPid_ = 0;
 	/// Root! window
-	HWND    ghConEmuWnd = nullptr;
+	HWND conemuWnd_ = nullptr;
 	/// ConEmu DC window
-	HWND    ghConEmuWndDC = nullptr;
+	HWND conemuWndDC_ = nullptr;
 	/// ConEmu Back window
-	HWND    ghConEmuWndBack = nullptr;
+	HWND conemuWndBack_ = nullptr;
+	/// ConEmu internal ID of started CRealConsole
+	DWORD  dwGuiAID = 0;
+	/// passed via "/GHWND=%08X" switch to skip window search
+	HWND   hGuiWnd = nullptr;
+
+	/// Use DosBox emulator to run legacy applications
+	struct DosBoxInfo
+	{
+		bool use_ = false;
+		HANDLE handle_ = nullptr;
+		DWORD  pid_ = 0;
+	} dosbox_;
 
 };
 

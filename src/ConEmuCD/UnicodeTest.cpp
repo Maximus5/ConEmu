@@ -35,6 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ExitCodes.h"
 #include "UnicodeTest.h"
 
+
+#include "ConsoleState.h"
 #include "../common/Common.h"
 #include "../common/ConsoleRead.h"
 #include "../common/EnvVar.h"
@@ -64,9 +66,9 @@ void PrintConsoleInfo()
 	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 	CONSOLE_CURSOR_INFO ci = {};
 
-	msprintf(szInfo, countof(szInfo), L"ConHWND=0x%08X, Class=\"", LODWORD(gpState->realConWnd));
-	if (gpState->realConWnd)
-		GetClassName(gpState->realConWnd, szInfo+lstrlen(szInfo), 255);
+	msprintf(szInfo, countof(szInfo), L"ConHWND=0x%08X, Class=\"", LODWORD(gpState->realConWnd_));
+	if (gpState->realConWnd_)
+		GetClassName(gpState->realConWnd_, szInfo+lstrlen(szInfo), 255);
 	lstrcpyn(szInfo+lstrlen(szInfo), L"\"\r\n", 4);
 	_wprintf(szInfo);
 
@@ -75,7 +77,7 @@ void PrintConsoleInfo()
 	if (gui.GetLen() > 64) gui.ms_Val[64] = 0;
 	CEStr srv(GetEnvVar(L"ConEmuServerPID"));
 	if (srv.GetLen() > 64) srv.ms_Val[64] = 0;
-	msprintf(szInfo, countof(szInfo), L"GuiPID=%u, ConEmuPID=%s, ConEmuServerPID=%s\n", gnConEmuPID, gui.c_str(L""), srv.c_str(L""));
+	msprintf(szInfo, countof(szInfo), L"GuiPID=%u, ConEmuPID=%s, ConEmuServerPID=%s\n", gpState->conemuPid_, gui.c_str(L""), srv.c_str(L""));
 	_wprintf(szInfo);
 	}
 

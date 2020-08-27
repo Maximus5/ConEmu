@@ -30,10 +30,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/MArray.h"
 
-extern BOOL   gbUseDosBox;
-extern HANDLE ghDosBoxProcess;
-extern DWORD  gnDosBoxPID;
-
 class MSectionLock;
 
 struct ConProcess
