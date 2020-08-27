@@ -3138,7 +3138,7 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
 
 	CINJECTHK_EXIT_CODES iHookRc = InjectHooks(*lpPI,
 		(m_SrvMapping.cbSize && (m_SrvMapping.nLoggingType == glt_Processes)),
-		pszDllDir);
+		pszDllDir, ghConWnd);
 
 	if (iHookRc != CIH_OK/*0*/)
 	{

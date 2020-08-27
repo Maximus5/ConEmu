@@ -1779,7 +1779,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 					}
 
 					// Теперь ставим хуки
-					iHookRc = InjectHooks(pi, gbLogProcess);
+					iHookRc = InjectHooks(pi, gbLogProcess, gsSelfPath, gpState->realConWnd_);
 				}
 
 				if (iHookRc != CIH_OK/*0*/)
