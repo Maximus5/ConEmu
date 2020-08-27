@@ -1844,7 +1844,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 					pi.hProcess = NULL; pi.dwProcessId = 0;
 					pi.hThread = NULL; pi.dwThreadId = 0;
 					// т.к. запустилась новая консоль - подтверждение на закрытие этой точно не нужно
-					DisableAutoConfirmExit();
+					gpState->DisableAutoConfirmExit();
 					iRc = 0; goto wrap;
 				}
 			}
@@ -2155,7 +2155,7 @@ wrap:
 			swprintf_c(szInfo, L"\n%s PID=%u ExitCode=%u {x%08X}", pszName, nPID, gnExitCode, gnExitCode);
 		LogFunction(szInfo+1);
 
-		if (gpConsoleArgs && gpConsoleArgs->opt.printRetErrLevel)
+		if (gpConsoleArgs && gpConsoleArgs->printRetErrLevel_)
 		{
 			wcscat_c(szInfo, L"\n");
 			_wprintf(szInfo);
@@ -5872,22 +5872,6 @@ void LogModeChange(LPCWSTR asName, DWORD oldVal, DWORD newVal)
 	swprintf_c(lsInfo.GetBuffer(cchLen), cchLen/*#SECURELEN*/, L"Mode %s changed: old=x%04X new=x%04X", pszLabel, oldVal, newVal);
 	LogString(lsInfo);
 }
-
-
-
-
-int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam)
-{
-	if ((FontType & TRUETYPE_FONTTYPE) == TRUETYPE_FONTTYPE)
-	{
-		// OK, подходит
-		wcscpy_c(gpSrv->szConsoleFont, lpelfe->elfLogFont.lfFaceName);
-		return 0;
-	}
-
-	return TRUE; // ищем следующий фонт
-}
-
 
 
 static void UndoConsoleWindowZoom()

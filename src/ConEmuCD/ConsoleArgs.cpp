@@ -355,14 +355,6 @@ bool ConsoleArgs::IsAutoAttachAllowed() const
 	return true;
 }
 
-bool ConsoleArgs::IsConsoleModeFlags() const
-{
-	if (!consoleModeFlags_.exists)
-		return true; // set defaults
-	// {old comment}: if 0 - set (ENABLE_QUICK_EDIT_MODE|ENABLE_EXTENDED_FLAGS|ENABLE_INSERT_MODE)
-	return consoleModeFlags_.GetInt() != 0;
-}
-
 /// Are we sure to hide RealConsole window
 bool ConsoleArgs::IsForceHideConWnd() const
 {

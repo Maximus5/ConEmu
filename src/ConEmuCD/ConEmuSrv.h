@@ -298,6 +298,9 @@ public:
 
 	int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn);
 
+protected:
+	static int CALLBACK FontEnumProc(ENUMLOGFONTEX* lpelfe, NEWTEXTMETRICEX* lpntme, DWORD FontType, LPARAM lParam);
+
 private:
 	/// Optional console font (may be specified in registry). Up to LF_FACESIZE chars, including \0.
 	CEStr consoleFontName_;

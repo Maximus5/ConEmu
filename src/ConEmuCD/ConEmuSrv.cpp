@@ -152,76 +152,101 @@ WorkerServer& WorkerServer::Instance()
 	return *server;
 }
 
+// static callback for ServerInitFont
+int WorkerServer::FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *, DWORD FontType, LPARAM lParam)
+{
+	if ((FontType & TRUETYPE_FONTTYPE) == TRUETYPE_FONTTYPE)
+	{
+		// OK, suitable
+		*reinterpret_cast<bool*>(lParam) = true;
+		Instance().consoleFontName_.Set(lpelfe->elfLogFont.lfFaceName);
+		return FALSE;
+	}
 
-// Установить мелкий шрифт, иначе может быть невозможно увеличение размера GUI окна
+	return TRUE; // find next suitable
+}
+
+// Ensure we use proper font (name,size) to allow Unicode and GUI window increase
 void WorkerServer::ServerInitFont()
 {
 	LogFunction(L"ServerInitFont");
 
-	// Размер шрифта и Lucida. Обязательно для серверного режима.
-	// no sense to do this check is it's already "Lucida Console"
-	if (gpSrv->szConsoleFont[0] && wcscmp(gpSrv->szConsoleFont, DEFAULT_CONSOLE_FONT_NAME) != 0)
+	if (!gpConsoleArgs->consoleFontName_.IsEmpty())
+		consoleFontName_.Set(gpConsoleArgs->consoleFontName_.GetStr(), LF_FACESIZE - 1);
+
+	// Size and font name. It's required for server mode that conhost is configured
+	// to use TrueType (aka Unicode) font. Otherwise it's impossible to read/write Unicode glyphs.
+	// And we set small font size to allow increase of GUI window in advance.
+	// No sense to do this check is it's already "Lucida Console"
+	if (!consoleFontName_.IsEmpty() && consoleFontName_.Compare(DEFAULT_CONSOLE_FONT_NAME) != 0)
 	{
-		// Требуется проверить наличие такого шрифта!
 		LOGFONT fnt = {0};
-		lstrcpynW(fnt.lfFaceName, gpSrv->szConsoleFont, LF_FACESIZE);
-		gpSrv->szConsoleFont[0] = 0; // сразу сбросим. Если шрифт есть - имя будет скопировано в FontEnumProc
-		HDC hdc = GetDC(NULL);
-		EnumFontFamiliesEx(hdc, &fnt, (FONTENUMPROCW) FontEnumProc, (LPARAM)&fnt, 0);
+		// Is it installed in the system?
+		wcscpy_s(fnt.lfFaceName, consoleFontName_.c_str());
+		bool ttfFontExists = false;
+		HDC hdc = GetDC(nullptr);
+		EnumFontFamiliesEx(hdc, &fnt, reinterpret_cast<FONTENUMPROCW>(FontEnumProc), reinterpret_cast<LPARAM>(&ttfFontExists), 0);
 		DeleteDC(hdc);
+		// if ttfFontExists is true, consoleFontName_ could be updated
+		if (!ttfFontExists)
+			consoleFontName_.Empty(); // fill it with "Lucida Console" below
 	}
 
-	if (gpSrv->szConsoleFont[0] == 0)
+	if (consoleFontName_.IsEmpty())
 	{
-		lstrcpyW(gpSrv->szConsoleFont, DEFAULT_CONSOLE_FONT_NAME);
-		gpSrv->nConFontWidth = 3; gpSrv->nConFontHeight = 5;
+		consoleFontName_.Set(DEFAULT_CONSOLE_FONT_NAME);
+		consoleFontWidth_ = 3; consoleFontHeight_ = 5;
 	}
 
-	if (gpSrv->nConFontHeight<5) gpSrv->nConFontHeight = 5;
-
-	if (gpSrv->nConFontWidth==0 && gpSrv->nConFontHeight==0)
+	if (consoleFontHeight_ < 5)
 	{
-		gpSrv->nConFontWidth = 3; gpSrv->nConFontHeight = 5;
-	}
-	else if (gpSrv->nConFontWidth==0)
-	{
-		gpSrv->nConFontWidth = gpSrv->nConFontHeight * 2 / 3;
-	}
-	else if (gpSrv->nConFontHeight==0)
-	{
-		gpSrv->nConFontHeight = gpSrv->nConFontWidth * 3 / 2;
+		consoleFontHeight_ = 5;
 	}
 
-	if (gpSrv->nConFontHeight<5 || gpSrv->nConFontWidth <3)
+	if (consoleFontWidth_ == 0 && consoleFontHeight_ == 0)
 	{
-		gpSrv->nConFontWidth = 3; gpSrv->nConFontHeight = 5;
+		consoleFontWidth_ = 3; consoleFontHeight_ = 5;
+	}
+	else if (consoleFontWidth_ == 0)
+	{
+		consoleFontWidth_ = consoleFontHeight_ * 2 / 3;
+	}
+	else if (consoleFontHeight_ == 0)
+	{
+		consoleFontHeight_ = consoleFontWidth_ * 3 / 2;
+	}
+
+	if (consoleFontHeight_ < 5 || consoleFontWidth_ < 3)
+	{
+		consoleFontWidth_ = 3; consoleFontHeight_ = 5;
 	}
 
 	if (gpState->attachMode_ && gpState->noCreateProcess_ && this->RootProcessId() && gpConsoleArgs->attachFromFar_)
 	{
-		// Скорее всего это аттач из Far плагина. Попробуем установить шрифт в консоли через плагин.
+		// It's expected to be attach from Far Manager. Let's set console font via plugin.
 		wchar_t szPipeName[128];
 		swprintf_c(szPipeName, CEPLUGINPIPENAME, L".", this->RootProcessId());
-		CESERVER_REQ In;
-		ExecutePrepareCmd(&In, CMD_SET_CON_FONT, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETFONT));
+		CESERVER_REQ In;  // NOLINT(cppcoreguidelines-pro-type-member-init)
+		ExecutePrepareCmd(&In, CMD_SET_CON_FONT, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETFONT));
 		In.Font.cbSize = sizeof(In.Font);
-		In.Font.inSizeX = gpSrv->nConFontWidth;
-		In.Font.inSizeY = gpSrv->nConFontHeight;
-		lstrcpy(In.Font.sFontName, gpSrv->szConsoleFont);
+		In.Font.inSizeX = consoleFontWidth_;
+		In.Font.inSizeY = consoleFontHeight_;
+		wcscpy_s(In.Font.sFontName, consoleFontName_.c_str());
 		CESERVER_REQ *pPlgOut = ExecuteCmd(szPipeName, &In, 500, gpState->realConWnd_);
 
 		if (pPlgOut) ExecuteFreeResult(pPlgOut);
 	}
 	else if ((!gpState->alienMode_ || gOSVer.dwMajorVersion >= 6) && !gpStartEnv->bIsReactOS)
 	{
-		if (gpLogSize) LogSize(NULL, 0, ":SetConsoleFontSizeTo.before");
+		if (gpLogSize)
+			LogSize(NULL, 0, ":SetConsoleFontSizeTo.before");
 
 		#ifdef _DEBUG
-		if (gpSrv->nConFontHeight >= 10)
+		if (consoleFontHeight_ >= 10)
 			g_IgnoreSetLargeFont = true;
 		#endif
 
-		SetConsoleFontSizeTo(gpState->realConWnd_, gpSrv->nConFontHeight, gpSrv->nConFontWidth, gpSrv->szConsoleFont, gnDefTextColors, gnDefPopupColors);
+		SetConsoleFontSizeTo(gpState->realConWnd_, consoleFontHeight_, consoleFontWidth_, consoleFontName_, gnDefTextColors, gnDefPopupColors);
 
 		if (gpLogSize)
 		{
@@ -372,8 +397,8 @@ int WorkerServer::AttachRootProcess()
 		{
 			AllowSetForegroundWindow(dwServerPID);
 			PRINT_COMSPEC(L"Server was already started. PID=%i. Exiting...\n", dwServerPID);
-			DisableAutoConfirmExit(); // сервер уже есть?
-			// менять nProcessStartTick не нужно. проверка только по флажкам
+			gpState->DisableAutoConfirmExit(); // server already exists?
+			// no need to change nProcessStartTick. check is done by flags only
 			//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
 			#ifdef _DEBUG
 			xf_validate();
@@ -468,8 +493,8 @@ int WorkerServer::AttachRootProcess()
 		WaitForServerActivated(pi.dwProcessId, pi.hProcess, 30000);
 
 		SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
-		DisableAutoConfirmExit(); // сервер запущен другим процессом, чтобы не блокировать bat файлы
-		// менять nProcessStartTick не нужно. проверка только по флажкам
+		gpState->DisableAutoConfirmExit(); // server was started by other process to avoid bat file locking
+		// no need to change nProcessStartTick. check is done by flags only
 		//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
 		#ifdef _DEBUG
 		xf_validate();
@@ -498,17 +523,20 @@ BOOL WorkerServer::ServerInitConsoleMode()
 	bConRc = GetConsoleMode(h, &dwFlags);
 	LogModeChange(L"[GetConInMode]", 0, dwFlags);
 
-	// This can be passed with "/CINMODE=..." or "-cur_console:w" switches
-	if (!gnConsoleModeFlags)
+	const DWORD nConsoleModeFlags = static_cast<DWORD>(gpConsoleArgs->consoleModeFlags_.GetInt());
+
+	// This can be passed with "/CINMODE=..."
+	// oWerwrite mode could be enabled with "-cur_console:w" switch (processed in GUI)
+	if (!nConsoleModeFlags)
 	{
-		// Умолчание (параметр /CINMODE= не указан)
+		// Use defaults (switch /CINMODE= was not specified)
 		// DON'T turn on ENABLE_QUICK_EDIT_MODE by default, let console applications "use" mouse
-		dwFlags |= (ENABLE_EXTENDED_FLAGS|ENABLE_INSERT_MODE);
+		dwFlags |= (ENABLE_EXTENDED_FLAGS | ENABLE_INSERT_MODE);
 	}
 	else
 	{
-		DWORD nMask = (gnConsoleModeFlags & 0xFFFF0000) >> 16;
-		DWORD nOr   = (gnConsoleModeFlags & 0xFFFF);
+		DWORD nMask = (nConsoleModeFlags & 0xFFFF0000) >> 16;
+		DWORD nOr   = (nConsoleModeFlags & 0xFFFF);
 		dwFlags &= ~nMask;
 		dwFlags |= (nOr | ENABLE_EXTENDED_FLAGS);
 	}
@@ -642,7 +670,7 @@ int WorkerServer::ServerInitAttach2Gui()
 		swprintf_c(szTitle, WIN3264TEST(L"ConEmuC",L"ConEmuC64") L" PID=%u", GetCurrentProcessId());
 		if (MessageBox(NULL, L"Available ConEmu GUI window not found!", szTitle,
 		              MB_RETRYCANCEL|MB_SYSTEMMODAL|MB_ICONQUESTION) != IDRETRY)
-			break; // Отказ
+			break; // Reject
 	}
 
 	// 090719 попробуем в сервере это делать всегда. Нужно передать в GUI - TID нити ввода
@@ -652,9 +680,9 @@ int WorkerServer::ServerInitAttach2Gui()
 
 	if (!hDcWnd)
 	{
-		//_printf("Available ConEmu GUI window not found!\n"); -- не будем гадить в консоль
+		//_printf("Available ConEmu GUI window not found!\n"); -- don't put rubbish to console
 		gbInShutdown = TRUE;
-		DisableAutoConfirmExit();
+		gpState->DisableAutoConfirmExit();
 		iRc = CERR_ATTACHFAILED; goto wrap;
 	}
 
@@ -1059,8 +1087,8 @@ int WorkerServer::Init()
 	}
 
 
-	// Включить по умолчанию выделение мышью
-	if ((gpState->runMode_ == RunMode::Server) && !gpState->noCreateProcess_ && gpConsoleArgs->IsConsoleModeFlags())
+	// Configure mouse selection and other flags in conhost
+	if ((gpState->runMode_ == RunMode::Server) && !gpState->noCreateProcess_)
 	{
 		//DumpInitStatus("\nServerInit: ServerInitConsoleMode");
 		ServerInitConsoleMode();
@@ -2234,7 +2262,7 @@ bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 	//	lbNeedSetFont = FALSE;
 	//
 	//    if (gpLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
-	//    SetConsoleFontSizeTo(gpState->realConWnd, gpSrv->nConFontHeight, gpSrv->nConFontWidth, gpSrv->szConsoleFont);
+	//    SetConsoleFontSizeTo(gpState->realConWnd, consoleFontHeight_, consoleFontWidth_, gpSrv->szConsoleFont);
 	//    if (gpLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
 	//}
 
@@ -2732,7 +2760,7 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 	if (gpConsoleArgs->attachFromFar_)
 		pIn->StartStop.bRootIsCmdExe = FALSE;
 	else
-		pIn->StartStop.bRootIsCmdExe =  || (gpState->attachMode_ && !gpState->noCreateProcess_);
+		pIn->StartStop.bRootIsCmdExe = gpState->rootIsCmdExe_ || (gpState->attachMode_ && !gpState->noCreateProcess_);
 
 	pIn->StartStop.bRunInBackgroundTab = gbRunInBackgroundTab;
 

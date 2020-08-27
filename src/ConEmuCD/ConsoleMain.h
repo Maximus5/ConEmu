@@ -185,12 +185,9 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 HWND FindConEmuByPID(DWORD anSuggestedGuiPID = 0);
 CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr();
 
-void CheckKeyboardLayout();
-bool IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode = NULL);
 typedef BOOL (__stdcall *FGetConsoleKeyboardLayoutName)(wchar_t*);
 extern FGetConsoleKeyboardLayoutName pfnGetConsoleKeyboardLayoutName;
 
-int CALLBACK FontEnumProc(ENUMLOGFONTEX *lpelfe, NEWTEXTMETRICEX *lpntme, DWORD FontType, LPARAM lParam);
 typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dwProcessCount);
 extern FGetConsoleProcessList pfnGetConsoleProcessList;
 

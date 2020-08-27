@@ -162,7 +162,6 @@ protected:
 public:
 	int ParseCommandLine(LPCWSTR pszCmdLine);
 	bool IsAutoAttachAllowed() const;
-	bool IsConsoleModeFlags() const;
 	bool IsForceHideConWnd() const;
 
 public:

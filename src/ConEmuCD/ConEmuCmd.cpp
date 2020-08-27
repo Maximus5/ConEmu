@@ -450,7 +450,7 @@ int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 			iNewConRc = CERR_NOTENOUGHMEM1;
 		}
 
-		DisableAutoConfirmExit();
+		gpState->DisableAutoConfirmExit();
 		return iNewConRc;
 	}
 

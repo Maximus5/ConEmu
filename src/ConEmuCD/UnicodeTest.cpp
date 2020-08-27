@@ -151,7 +151,7 @@ void PrintConsoleInfo()
 	CPINFOEX cpinfo = {};
 	DWORD dwLayout = 0, dwLayoutRc = -1;
 	SetLastError(0);
-	IsKeyboardLayoutChanged(dwLayout, &dwLayoutRc);
+	gpWorker->IsKeyboardLayoutChanged(dwLayout, &dwLayoutRc);
 
 	msprintf(szInfo, countof(szInfo), L"ConsoleCP=%u, ConsoleOutputCP=%u, Layout=%08X (%s errcode=%u)\r\n",
 		nCP, nOutCP, dwLayout, dwLayoutRc ? L"failed" : L"OK", dwLayoutRc);
