@@ -37,14 +37,32 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConsoleState.h"
 
 #include "ConsoleArgs.h"
+#include "../common/WObjects.h"
 
 
 ConsoleState* gpState = nullptr;
 
+namespace
+{
+STARTUPINFOW LoadStartupInfo()
+{
+	STARTUPINFOW si = {sizeof(STARTUPINFOW)};  // NOLINT(clang-diagnostic-missing-field-initializers)
+	GetStartupInfoW(&si);
+	return si;
+}
+
+OSVERSIONINFOW LoadOsVersionInfo()
+{
+	OSVERSIONINFOW osv = { sizeof(OSVERSIONINFOW)};  // NOLINT(clang-diagnostic-missing-field-initializers)
+	GetOsVersionInformational(&osv);
+	return osv;
+}
+}
 
 
 // ********************************************
 ConsoleState::ConsoleState()  // NOLINT(modernize-use-equals-default)
+	: si_(LoadStartupInfo()), osVerInfo_(LoadOsVersionInfo()), isWine_(IsWine()), isDBCS_(IsWinDBCS())
 {
 }
 
@@ -63,5 +81,9 @@ void ConsoleState::DisableAutoConfirmExit(const bool fromFarPlugin)
 		this->alwaysConfirmExit_ = false;
 		// no need to change nProcessStartTick, the check is done by flags
 		// gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
+	}
+	else
+	{
+		_ASSERTE(FALSE && "Validate if we can't disable confirm exit atm");
 	}
 }

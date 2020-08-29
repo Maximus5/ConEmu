@@ -28,20 +28,37 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/defines.h"
 #include "../common/MAssert.h"
+#include "../common/WObjects.h"
 #include "WorkerBase.h"
 
-
+#include "ConProcess.h"
 #include "ConsoleMain.h"
 #include "ConsoleState.h"
 #include "Debugger.h"
 #include "ExitCodes.h"
 
+/* Console Handles */
+MConHandle ghConOut(L"CONOUT$");
+
 WorkerBase* gpWorker = nullptr;
 
+namespace
+{
+bool IsWin10Build9879()
+{
+	if (!IsWin10())
+		return false;
+	_ASSERTE(gpState != NULL);
+	return gpState->osVerInfo_.dwBuildNumber == 9879;
+}
+}
+
 WorkerBase::WorkerBase()
-	: kernel32(GetModuleHandleW(L"kernel32.dll"))
+	: kernel32(L"kernel32.dll")
+	, processes_(std::make_shared<ConProcess>(kernel32))
 {
 	kernel32.GetProcAddress("GetConsoleKeyboardLayoutNameW", pfnGetConsoleKeyboardLayoutName);
+	kernel32.GetProcAddress("GetConsoleDisplayMode", pfnGetConsoleDisplayMode);
 }
 
 void WorkerBase::Done(const int /*exitCode*/, const bool /*reportShutdown*/)
@@ -130,6 +147,17 @@ void WorkerBase::CloseRootProcessHandles()
 {
 	SafeCloseHandle(this->rootProcess.processHandle);
 	SafeCloseHandle(this->rootProcess.threadHandle);
+}
+
+ConProcess& WorkerBase::Processes()
+{
+	if (!processes_)
+	{
+		_ASSERTE(FALSE && "processes_ should be set already");
+		processes_.reset(new ConProcess(kernel32));
+	}
+
+	return *processes_;
 }
 
 const CONSOLE_SCREEN_BUFFER_INFO& WorkerBase::GetSbi() const
@@ -403,6 +431,11 @@ bool WorkerBase::IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode /*
 	return bChanged;
 }
 
+const MModule& WorkerBase::KernelModule() const
+{
+	return kernel32;
+}
+
 //WARNING("BUGBUG: x64 US-Dvorak"); - done
 void WorkerBase::CheckKeyboardLayout()
 {
@@ -440,4 +473,57 @@ void WorkerBase::CheckKeyboardLayout()
 			ExecuteFreeResult(pIn);
 		}
 	}
+}
+
+bool WorkerBase::CheckHwFullScreen()
+{
+	bool bFullScreenHw = false;
+
+	// #Server this should be wrap in the method. and there is a note of a bug in Windows 10 b9879
+	if (wasFullscreenMode_ && pfnGetConsoleDisplayMode)
+	{
+		DWORD nModeFlags = 0;
+		pfnGetConsoleDisplayMode(&nModeFlags);
+		// The bug of Windows 10 b9879
+		if (IsWin10Build9879())
+		{
+			nModeFlags = 0;
+		}
+
+		gpState->consoleDisplayMode_ = nModeFlags;
+		if (nModeFlags & CONSOLE_FULLSCREEN_HARDWARE)
+		{
+			bFullScreenHw = true;
+		}
+		else
+		{
+			wasFullscreenMode_ = false;
+		}
+	}
+
+	return bFullScreenHw;
+}
+
+bool WorkerBase::EnterHwFullScreen(PCOORD pNewSize /*= nullptr*/)
+{
+	if (!pfnSetConsoleDisplayMode)
+	{
+		if (!kernel32.GetProcAddress("SetConsoleDisplayMode", pfnSetConsoleDisplayMode))
+		{
+			SetLastError(ERROR_INVALID_FUNCTION);
+			return false;
+		}
+	}
+
+	COORD crNewSize = {};
+	const bool result = pfnSetConsoleDisplayMode(ghConOut, 1/*CONSOLE_FULLSCREEN_MODE*/, &crNewSize);
+
+	if (result)
+	{
+		wasFullscreenMode_ = true;
+		if (pNewSize)
+			*pNewSize = crNewSize;
+	}
+
+	return result;
 }

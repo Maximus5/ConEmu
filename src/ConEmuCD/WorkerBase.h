@@ -28,11 +28,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#include <memory>
 #include "../common/MModule.h"
+#include "../common/MConHandle.h"
+#include "WinConExports.h"
 
+#include <memory>
+
+struct ConProcess;
 class DebuggerInfo;
 enum class DumpProcessType;
+
+extern MConHandle ghConOut;
 
 // If we are in ChildGui mode (notepad, putty, etc.)
 #define GUI_NOT_CREATED_YET (HWND(-1))
@@ -49,7 +55,7 @@ public:
 	WorkerBase& operator=(const WorkerBase&) = delete;
 	WorkerBase& operator=(WorkerBase&&) = delete;
 
-	virtual int Init() = 0;
+	virtual int Init() { return 0; };
 	virtual void Done(int exitCode, bool reportShutdown = false);
 
 	virtual bool IsCmdK() const;
@@ -69,8 +75,18 @@ public:
 	HANDLE RootProcessHandle() const;
 	HWND RootProcessGui() const;
 	void CloseRootProcessHandles();
+	ConProcess& Processes();
 
 	const CONSOLE_SCREEN_BUFFER_INFO& GetSbi() const;
+
+	/// Try to detect if our real console is in hardware fullscreen
+	bool CheckHwFullScreen();
+	/// <summary>
+	/// Try to switch our real console to hardware fullscreen
+	/// </summary>
+	/// <param name="pNewSize">[OUT] dimension of new hardware console on success</param>
+	/// <returns>true on success</returns>
+	bool EnterHwFullScreen(PCOORD pNewSize = nullptr);
 
 	virtual void EnableProcessMonitor(bool enable);
 
@@ -85,9 +101,13 @@ public:
 	DebuggerInfo& DbgInfo();
 
 	void CheckKeyboardLayout();
-	bool IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode = NULL);
+	bool IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode = nullptr);
+
+	const MModule& KernelModule() const;
 
 protected:
+	MModule kernel32;
+	
 	struct RootProcessInfo
 	{
 		HANDLE processHandle;
@@ -112,12 +132,18 @@ protected:
 
 	std::unique_ptr<DebuggerInfo> dbgInfo;
 
+	// Full information about our console processes
+	std::shared_ptr<ConProcess> processes_;
+
 	// Keyboard layout name
 	wchar_t szKeybLayout[KL_NAMELENGTH+1] = L"";
-	typedef BOOL (__stdcall *FGetConsoleKeyboardLayoutName)(wchar_t*);
-	FGetConsoleKeyboardLayoutName pfnGetConsoleKeyboardLayoutName = nullptr;
 
-	MModule kernel32;
+	FGetConsoleKeyboardLayoutName pfnGetConsoleKeyboardLayoutName = nullptr;
+	
+	FGetConsoleDisplayMode pfnGetConsoleDisplayMode = nullptr;
+	SetConsoleDisplayMode_t pfnSetConsoleDisplayMode = nullptr;
+
+	bool wasFullscreenMode_ = false;
 };
 
 extern WorkerBase* gpWorker;  // NOLINT(readability-redundant-declaration)

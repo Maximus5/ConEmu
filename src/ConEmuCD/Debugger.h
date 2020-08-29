@@ -97,4 +97,10 @@ public:
 
 	MModule dbgHelpDll{};
 	FARPROC MiniDumpWriteDump_f = nullptr;
+
+	typedef BOOL (WINAPI *FDebugActiveProcessStop)(DWORD dwProcessId);
+	FDebugActiveProcessStop pfnDebugActiveProcessStop = nullptr;
+
+	typedef BOOL (WINAPI *FDebugSetProcessKillOnExit)(BOOL KillOnExit);
+	FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit = nullptr;
 };

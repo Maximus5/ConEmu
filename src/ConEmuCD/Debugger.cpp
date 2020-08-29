@@ -356,11 +356,10 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 
 	auto& dbgInfo = gpWorker->DbgInfo();
 
-	// Дополнительная инициализация, чтобы закрытие дебагера (наш процесс) не привело
-	// к закрытию "отлаживаемой" программы
-	MModule kernel(GetModuleHandle(L"kernel32.dll"));
-	kernel.GetProcAddress("DebugActiveProcessStop", pfnDebugActiveProcessStop);
-	kernel.GetProcAddress("DebugSetProcessKillOnExit", pfnDebugSetProcessKillOnExit);
+	// Avoid killing debugging program on when the debugger (our process) exits
+	const auto& kernel = gpWorker->KernelModule();
+	kernel.GetProcAddress("DebugActiveProcessStop", dbgInfo.pfnDebugActiveProcessStop);
+	kernel.GetProcAddress("DebugSetProcessKillOnExit", dbgInfo.pfnDebugSetProcessKillOnExit);
 
 	// Affect GetProcessHandleForDebug
 	dbgInfo.bDebuggerActive = TRUE;
@@ -492,10 +491,10 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 		}
 
 		// To avoid debugged processes killing
-		if (bSetKillOnExit && pfnDebugSetProcessKillOnExit)
+		if (bSetKillOnExit && dbgInfo.pfnDebugSetProcessKillOnExit)
 		{
 			// affects all current and future debuggees connected to the calling thread
-			if (pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/))
+			if (dbgInfo.pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/))
 			{
 				bSetKillOnExit = false;
 			}
@@ -566,10 +565,10 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 	/* **************** */
 
 	// To avoid debugged processes killing (JIC, must be called already)
-	if (bSetKillOnExit && pfnDebugSetProcessKillOnExit)
+	if (bSetKillOnExit && dbgInfo.pfnDebugSetProcessKillOnExit)
 	{
 		// affects all current and future debuggees connected to the calling thread
-		if (pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/))
+		if (dbgInfo.pfnDebugSetProcessKillOnExit(FALSE/*KillOnExit*/))
 		{
 			bSetKillOnExit = false;
 		}
@@ -839,16 +838,15 @@ void DebuggerInfo::WriteMiniDump(DWORD dwProcessId, DWORD dwThreadId, EXCEPTION_
 	}
 
 
-	// В Win2k еще не было функции "отцепиться от процесса"
-	if ((gnOsVer >= 0x0501)
+	if (IsWinXP() // Win2k had no function to detach from process
 		&& bDumpSucceeded && this->bUserRequestDump
-		// И все дампы были созданы
+		// check if all dumps were created
 		&& (this->nWaitTreeBreaks <= 1)
-		// И это не ключи /DEBUGEXE или /DEBUGTREE
+		// check if that's not a /DEBUGEXE or /DEBUGTREE
 		&& !this->szDebuggingCmdLine
 		)
 	{
-		// По завершении создания дампов - выйти
+		// After completing all dumps - exit
 		SetTerminateEvent(ste_WriteMiniDump);
 	}
 }
@@ -961,7 +959,7 @@ void DebuggerInfo::ProcessDebugEvent()
 
 						if (evt.u.LoadDll.hFile)
 						{
-							if (gnOsVer >= 0x0600)
+							if (IsWin6())
 							{
 								if (!_GetFileInformationByHandleEx)
 									MModule(GetModuleHandle(L"kernel32.dll")).GetProcAddress("GetFileInformationByHandleEx", _GetFileInformationByHandleEx);

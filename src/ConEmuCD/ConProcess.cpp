@@ -32,8 +32,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConsoleMain.h"
 #include "ConEmuSrv.h"
 #include "ConProcess.h"
+#include "../common/MProcess.h"
 #include "../common/MSection.h"
 #include "../common/ProcessData.h"
+#include "../common/WUser.h"
 #include <TlHelp32.h>
 
 
@@ -42,8 +44,36 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define XTERM_PID_TIMEOUT 2500
 
-ConProcess::ConProcess()
+#define MAX_GET_PROC_COUNT 128
+
+#ifdef _DEBUG
+#define WINE_PRINT_PROC_INFO
+#define DUMP_PROC_INFO(s,n,p) //DumpProcInfo(s,n,p)
+#else
+#undef WINE_PRINT_PROC_INFO
+#define DUMP_PROC_INFO(s,n,p)
+#endif
+
+
+ConProcess::ConProcess(const MModule& kernel32)
 {
+	if (kernel32.GetProcAddress("GetConsoleProcessList", pfnGetConsoleProcessList))
+	{
+		SetLastError(0);
+		startProcessCount_ = pfnGetConsoleProcessList(startProcessIds_, countof(startProcessIds_));
+		// Wine bug validation
+		if (!startProcessCount_)
+		{
+			const DWORD nErr = GetLastError();
+			_ASSERTE(startProcessCount_ || gpState->isWine_);
+			wchar_t szDbgMsg[512], szFile[MAX_PATH] = {};
+			GetModuleFileName(nullptr, szFile, countof(szFile));
+			msprintf(szDbgMsg, countof(szDbgMsg), L"%s: PID=%u: GetConsoleProcessList failed, code=%u\r\n", PointToName(szFile), gnSelfPID, nErr);
+			_wprintf(szDbgMsg);
+			pfnGetConsoleProcessList = nullptr;
+		}
+	}
+	
 	csProc = new MSection();
 
 	if (pnProcesses.resize(START_MAX_PROCESSES)
@@ -52,11 +82,10 @@ ConProcess::ConProcess()
 		nMaxProcesses = START_MAX_PROCESSES;
 
 	// Let use pid==0 for SetConsoleMode requests
-	XTermRequest x{};
-	xRequests.push_back(x);
+	xRequests.push_back(XTermRequest{});
 }
 
-ConProcess::~ConProcess()
+ConProcess::~ConProcess()  // NOLINT(modernize-use-equals-default)
 {
 }
 
@@ -69,7 +98,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 	if (abChanged && RELEASEDEBUGTEST((gpLogSize!=NULL),true))
 	{
 		DWORD nPID, nLastPID = 0, nFoundPID = 0;
-		swprintf_c(szCountInfo, L"Process list was changed: %u -> %i", anPrevCount, gpSrv ? nProcessCount : -1);
+		swprintf_c(szCountInfo, L"Process list was changed: %u -> %i", anPrevCount, nProcessCount);
 
 		wcscat_c(szCountInfo, L"\r\n                        Processes:");
 		INT_PTR iLen = lstrlen(szCountInfo);
@@ -640,59 +669,54 @@ void ConProcess::StartStopXTermMode(const TermModeCommand cmd, const DWORD value
 
 	if (value)
 	{
-		gpSrv->processes->ProcessAdd(pid, CS);
+		ProcessAdd(pid, CS);
 	}
 }
 
-#ifdef _DEBUG
-void ConProcess::DumpProcInfo(LPCWSTR sLabel, DWORD nCount, DWORD* pPID)
+void ConProcess::DumpProcInfo(LPCWSTR sLabel, DWORD nCount, DWORD* pPID) const
 {
 #ifdef WINE_PRINT_PROC_INFO
-	DWORD nErr = GetLastError();
+	const DWORD nErr = GetLastError();
 	wchar_t szDbgMsg[255];
 	msprintf(szDbgMsg, countof(szDbgMsg), L"%s: Err=%u, Count=%u:", sLabel ? sLabel : L"", nErr, nCount);
-	nCount = std::min(nCount,10);
+	nCount = std::min<DWORD>(nCount,10);
 	for (DWORD i = 0; pPID && (i < nCount); i++)
 	{
-		int nLen = lstrlen(szDbgMsg);
+		const int nLen = lstrlen(szDbgMsg);
 		msprintf(szDbgMsg+nLen, countof(szDbgMsg)-nLen, L" %u", pPID[i]);
 	}
 	wcscat_c(szDbgMsg, L"\r\n");
 	_wprintf(szDbgMsg);
 #endif
 }
-#define DUMP_PROC_INFO(s,n,p) //DumpProcInfo(s,n,p)
-#else
-#define DUMP_PROC_INFO(s,n,p)
-#endif
 
-bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
+bool ConProcess::CheckProcessCount(const bool abForce/*=FALSE*/)
 {
-	//static DWORD dwLastCheckTick = GetTickCount();
-	UINT nPrevCount = nProcessCount;
-#ifdef _DEBUG
-	DWORD nCurProcessesDbg[128] = {}; // для отладки, получение текущего состояния консоли
-	DWORD nPrevProcessedDbg[128] = {}; // для отладки, запомнить предыдущее состояние консоли
-	if (pnProcesses.size() && nProcessCount)
-		memmove(nPrevProcessedDbg, &pnProcesses[0], std::min<DWORD>(countof(nPrevProcessedDbg), nProcessCount) * sizeof(pnProcesses[0]));
-#endif
-
-	if (nProcessCount <= 0)
+	if (!(abForce || nProcessCount <= 0))
 	{
-		abForce = TRUE;
-	}
+		const DWORD dwCurTick = GetTickCount();
 
-	if (!abForce)
-	{
-		DWORD dwCurTick = GetTickCount();
-
-		if ((dwCurTick - dwProcessLastCheckTick) < (DWORD)CHECK_PROCESSES_TIMEOUT)
+		if ((dwCurTick - dwProcessLastCheckTick) < static_cast<DWORD>(CHECK_PROCESSES_TIMEOUT))
 			return FALSE;
 	}
 
 	BOOL lbChanged = FALSE;
 	MSectionLock CS; CS.Lock(csProc);
 
+	const UINT nPrevCount = nProcessCount;
+#ifdef _DEBUG
+	// for debugging, get current console state
+	DWORD nCurProcessesDbg[MAX_GET_PROC_COUNT] = {};
+	// for debugging, save previous console state
+	DWORD nPrevProcessedDbg[MAX_GET_PROC_COUNT] = {};
+	// 
+	if (!pnProcesses.empty() && nProcessCount)
+	{
+		memmove_s(nPrevProcessedDbg, sizeof(nPrevProcessedDbg), &pnProcesses[0],
+			std::min<DWORD>(countof(nPrevProcessedDbg), nProcessCount) * sizeof(pnProcesses[0]));
+	}
+#endif
+	
 	if (nProcessCount == 0)
 	{
 		pnProcesses[0] = gnSelfPID;
@@ -713,7 +737,7 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 	}
 
 	#ifdef _DEBUG
-	bool bDumpProcInfo = gbIsWine;
+	bool bDumpProcInfo = gpState->isWine_;
 	#endif
 
 	bool bProcFound = false;
@@ -758,7 +782,7 @@ bool ConProcess::CheckProcessCount(BOOL abForce/*=FALSE*/)
 			#endif
 
 			// Это значит в Win7 свалился conhost.exe
-			//if ((gnOsVer >= 0x601) && !gbIsWine)
+			//if ((gnOsVer >= 0x601) && !gpState->isWine_)
 			{
 				#ifdef _DEBUG
 				DWORD dwErr = GetLastError();
@@ -983,4 +1007,111 @@ bool ConProcess::GetProcesses(DWORD* processes, UINT count)
 		memmove(nLastRetProcesses, gpSrv->pConsole->ConState.nProcesses, cmp_size);
 	}
 	return lbChanged;
+}
+
+// When DefTerm debug console is started for Win32 app
+// we need to allocate hidden console, and there is no
+// active process, until parent DevEnv successfully starts
+// new debugging process session
+DWORD ConProcess::WaitForRootConsoleProcess(DWORD nTimeout) const
+{
+	if (pfnGetConsoleProcessList == nullptr)
+	{
+		_ASSERTE(FALSE && "Attach to console app was requested, but required WinXP or higher!");
+		return 0;
+	}
+
+	_ASSERTE(gpConsoleArgs->creatingHiddenConsole_);
+	_ASSERTE(gpState->realConWnd_!=NULL);
+
+	const DWORD nStart = GetTickCount();
+	DWORD nFoundPID = 0;
+	DWORD nDelta = 0;
+	DWORD nProcesses[20] = {};
+	// ReSharper disable once CppJoinDeclarationAndAssignment
+	DWORD nProcCount;
+	// ReSharper disable once CppJoinDeclarationAndAssignment
+	DWORD i;
+
+	PROCESSENTRY32 pi = {};
+	GetProcessInfo(gnSelfPID, &pi);
+
+	while (!nFoundPID && (nDelta < nTimeout))
+	{
+		Sleep(50);
+		// ReSharper disable once CppJoinDeclarationAndAssignment
+		nProcCount = pfnGetConsoleProcessList(nProcesses, countof(nProcesses));
+
+		for (i = 0; i < nProcCount; i++)
+		{
+			const DWORD nPID = nProcesses[i];
+			if (nPID && (nPID != gnSelfPID) && (nPID != pi.th32ParentProcessID))
+			{
+				nFoundPID = nPID;
+				break;
+			}
+		}
+
+		nDelta = (GetTickCount() - nStart);
+	}
+
+	if (!nFoundPID)
+	{
+		apiShowWindow(gpState->realConWnd_, SW_SHOWNORMAL);
+		_ASSERTE(FALSE && "Was unable to find starting process");
+	}
+
+	return nFoundPID;
+}
+
+bool ConProcess::IsConsoleProcessCountSupported() const
+{
+	return pfnGetConsoleProcessList != nullptr;
+}
+
+MArray<DWORD> ConProcess::GetSpawnedProcesses() const
+{
+	if (!pfnGetConsoleProcessList)
+		return {};
+
+	MArray<DWORD> result;
+	DWORD nProcesses[MAX_GET_PROC_COUNT] = {};
+	const DWORD nProcCount = pfnGetConsoleProcessList(nProcesses, countof(nProcesses));
+	const DWORD maxCount = std::max<DWORD>(nProcCount, countof(nProcesses));
+	
+	result.reserve(maxCount);
+
+	for (DWORD i = 0; i < maxCount; i++)
+	{
+		if ((nProcesses[i] == gpWorker->RootProcessId())
+			|| (nProcesses[i] == gnSelfPID)
+#ifndef WIN64
+			|| (nProcesses[i] == nNtvdmPID)
+#endif
+			)
+			continue;
+		result.push_back(nProcesses[i]);
+	}
+
+	return result;
+}
+
+MArray<DWORD> ConProcess::GetAllProcesses() const
+{
+	if (!pfnGetConsoleProcessList)
+		return {};
+
+	MArray<DWORD> result;
+	DWORD nProcesses[MAX_GET_PROC_COUNT] = {};
+	const DWORD nProcCount = pfnGetConsoleProcessList(nProcesses, countof(nProcesses));
+	const DWORD maxCount = std::max<DWORD>(nProcCount, countof(nProcesses));
+	
+	result.resize(maxCount);
+
+	for (DWORD i = 0; i < maxCount; i++)
+	{
+		result[i] = nProcesses[i];
+	}
+
+	return result;
 }

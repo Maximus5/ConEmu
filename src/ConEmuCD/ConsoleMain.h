@@ -86,7 +86,7 @@ extern wchar_t gsModuleName[32];
 extern wchar_t gsVersion[20];
 extern wchar_t gsSelfExe[MAX_PATH];  // Full path+exe to our executable
 extern wchar_t gsSelfPath[MAX_PATH]; // Directory of our executable
-//HANDLE  ghConIn = NULL, ghConOut = NULL;
+//HANDLE  ghConIn = nullptr, ghConOut = nullptr;
 extern DWORD   gnMainServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
 extern DWORD   gnAltServerPID; // PID сервера (инициализируется на старте, при загрузке Dll)
 extern BOOL    gbLogProcess; // (pInfo->nLoggingType == glt_Processes)
@@ -171,13 +171,13 @@ void SetupCreateDumpOnException();
 void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, const WORD wOldText, const WORD wNewText);
 void PreConsoleSize(const int width, const int height);
 void PreConsoleSize(const COORD crSize);
-BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = NULL, bool bForceWriteLog = false);
+BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = nullptr, bool bForceWriteLog = false);
 void CreateLogSizeFile(int /* level */, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo = nullptr);
 void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bForceWriteLog = false);
 void LogModeChange(LPCWSTR asName, DWORD oldVal, DWORD newVal);
 bool LogString(LPCSTR asText);
 bool LogString(LPCWSTR asText);
-void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo=NULL);
+void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo = nullptr);
 
 int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount);
 bool MyLoadConsolePalette(HANDLE ahConOut, CESERVER_CONSOLE_PALETTE& Palette);
@@ -185,31 +185,16 @@ BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO a
 HWND FindConEmuByPID(DWORD anSuggestedGuiPID = 0);
 CESERVER_CONSOLE_APP_MAPPING* GetAppMapPtr();
 
-typedef BOOL (__stdcall *FGetConsoleKeyboardLayoutName)(wchar_t*);
-extern FGetConsoleKeyboardLayoutName pfnGetConsoleKeyboardLayoutName;
-
-typedef DWORD (WINAPI* FGetConsoleProcessList)(LPDWORD lpdwProcessList, DWORD dwProcessCount);
-extern FGetConsoleProcessList pfnGetConsoleProcessList;
-
 void SendStarted();
-CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi = NULL);
-
-typedef BOOL (WINAPI *FDebugActiveProcessStop)(DWORD dwProcessId);
-extern FDebugActiveProcessStop pfnDebugActiveProcessStop;
-
-typedef BOOL (WINAPI *FDebugSetProcessKillOnExit)(BOOL KillOnExit);
-extern FDebugSetProcessKillOnExit pfnDebugSetProcessKillOnExit;
-
-typedef BOOL (WINAPI* FGetConsoleDisplayMode)(LPDWORD);
-extern FGetConsoleDisplayMode pfnGetConsoleDisplayMode;
+CESERVER_REQ* SendStopped(CONSOLE_SCREEN_BUFFER_INFO* psbi = nullptr);
 
 bool IsOutputRedirected();
 void _wprintf(LPCWSTR asBuffer);
 void _printf(LPCSTR asBuffer);
 void _printf(LPCSTR asFormat, DWORD dwErr);
 void _printf(LPCSTR asFormat, DWORD dwErr, LPCWSTR asAddLine);
-void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine=NULL);
-void print_error(DWORD dwErr = 0, LPCSTR asFormat = NULL);
+void _printf(LPCSTR asFormat, DWORD dw1, DWORD dw2, LPCWSTR asAddLine = nullptr);
+void print_error(DWORD dwErr = 0, LPCSTR asFormat = nullptr);
 
 int ParseCommandLine(LPCWSTR asCmdLine);
 wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
@@ -235,7 +220,7 @@ enum LGSResult
 	lgs_ActiveChanged,
 	lgs_Updated,
 };
-LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue = NULL);
+LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue = nullptr);
 
 extern BOOL gbDumpServerInitStatus;
 extern WORD  gnDefTextColors, gnDefPopupColors;
@@ -248,10 +233,6 @@ struct ConProcess;
 
 struct SrvInfo;
 extern SrvInfo *gpSrv;
-extern OSVERSIONINFO gOSVer;
-extern WORD gnOsVer;
-extern bool gbIsWine;
-extern bool gbIsDBCS;
 extern BOOL	gbTerminateOnCtrlBreak;
 
 extern HMODULE ghOurModule;

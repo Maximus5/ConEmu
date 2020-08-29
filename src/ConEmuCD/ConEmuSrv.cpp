@@ -82,8 +82,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #undef ASSERT_UNWANTED_SIZE
 #endif
 
-/* Console Handles */
-MConHandle ghConOut(L"CONOUT$");
 //Used to store and restore console screen buffers in cmd_AltBuffer
 MConHandle gPrimaryBuffer(NULL), gAltBuffer(NULL);
 USHORT gnPrimaryBufferLastRow = 0; // last detected written row in gPrimaryBuffer
@@ -97,7 +95,6 @@ bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn);
 
 void SrvInfo::InitFields()
 {
-	processes = new ConProcess;
 	csColorerMappingCreate.Init();
 	csReadConsoleInfo.Init();
 	csRefreshControl.Init();
@@ -110,7 +107,6 @@ void SrvInfo::FinalizeFields()
 	csReadConsoleInfo.Close();
 	csRefreshControl.Close();
 	AltServers.Release();
-	SafeDelete(processes);
 }
 
 WorkerServer::~WorkerServer()
@@ -236,7 +232,7 @@ void WorkerServer::ServerInitFont()
 
 		if (pPlgOut) ExecuteFreeResult(pPlgOut);
 	}
-	else if ((!gpState->alienMode_ || gOSVer.dwMajorVersion >= 6) && !gpStartEnv->bIsReactOS)
+	else if ((!gpState->alienMode_ || IsWin6()) && !gpStartEnv->bIsReactOS)
 	{
 		if (gpLogSize)
 			LogSize(NULL, 0, ":SetConsoleFontSizeTo.before");
@@ -337,7 +333,7 @@ int WorkerServer::AttachRootProcess()
 		DWORD dwServerPID = 0; // Вдруг в этой консоли уже есть сервер?
 		_ASSERTE(!this->IsDebuggerActive());
 
-		if (gpSrv->processes->nProcessCount >= 2 && !this->IsDebuggerActive())
+		if (gpWorker->Processes().nProcessCount >= 2 && !this->IsDebuggerActive())
 		{
 			//TODO: Reuse MToolHelp.h
 			HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
@@ -350,10 +346,10 @@ int WorkerServer::AttachRootProcess()
 				{
 					do
 					{
-						for (UINT i = 0; i < gpSrv->processes->nProcessCount; i++)
+						for (UINT i = 0; i < gpWorker->Processes().nProcessCount; i++)
 						{
 							if (prc.th32ProcessID != gnSelfPID
-							        && prc.th32ProcessID == gpSrv->processes->pnProcesses[i])
+							        && prc.th32ProcessID == gpWorker->Processes().pnProcesses[i])
 							{
 								if (lstrcmpiW(prc.szExeFile, L"conemuc.exe")==0
 								        /*|| lstrcmpiW(prc.szExeFile, L"conemuc64.exe")==0*/)
@@ -952,7 +948,7 @@ int WorkerServer::Init()
 
 		_ASSERTE(gpState->runMode_==RunMode::Server);
 
-		if (gbIsDBCS)
+		if (gpState->isDBCS_)
 		{
 			UINT nOemCP = GetOEMCP();
 			UINT nConCP = GetConsoleOutputCP();
@@ -1061,7 +1057,7 @@ int WorkerServer::Init()
 	// при показе консоли через Ctrl+Win+Alt+Space
 	// Но вот если консоль уже видима, и это "/root", тогда
 	// попытаемся поставить окну консоли флаг "OnTop"
-	if (!gpState->noCreateProcess_ && !gbIsWine)
+	if (!gpState->noCreateProcess_ && !gpState->isWine_)
 	{
 		//if (!gbVisibleOnStartup)
 		//	apiShowWindow(gpState->realConWnd, SW_HIDE);
@@ -1136,11 +1132,6 @@ int WorkerServer::Init()
 
 	_ASSERTE((gpState->conemuWndDC_==NULL) || (gpSrv->pColorerMapping!=NULL));
 
-	if ((gpState->runMode_ == RunMode::AltServer) && gpSrv->pConsole && (gpSrv->pConsole->hdr.Flags & CECF_ConExcHandler))
-	{
-		SetupCreateDumpOnException();
-	}
-
 	gpSrv->csAltSrv = new MSection();
 	gpSrv->nMainTimerElapse = 10;
 	gpSrv->TopLeft.Reset(); // блокировка прокрутки не включена
@@ -1152,19 +1143,19 @@ int WorkerServer::Init()
 	swprintf_c(gpSrv->szDataReadyEvent, CEDATAREADYEVENT, gnSelfPID);
 	MCHKHEAP;
 
-	if (gpSrv->processes->pnProcesses.empty() || gpSrv->processes->pnProcessesGet.empty() || gpSrv->processes->pnProcessesCopy.empty())
+	if (gpWorker->Processes().pnProcesses.empty() || gpWorker->Processes().pnProcessesGet.empty() || gpWorker->Processes().pnProcessesCopy.empty())
 	{
-		_printf("Can't allocate %i DWORDS!\n", gpSrv->processes->nMaxProcesses);
+		_printf("Can't allocate %i DWORDS!\n", gpWorker->Processes().nMaxProcesses);
 		iRc = CERR_NOTENOUGHMEM1; goto wrap;
 	}
 
 	//DumpInitStatus("\nServerInit: CheckProcessCount");
-	gpSrv->processes->CheckProcessCount(TRUE); // Сначала добавит себя
+	gpWorker->Processes().CheckProcessCount(TRUE); // Сначала добавит себя
 
 	// в принципе, серверный режим может быть вызван из фара, чтобы подцепиться к GUI.
 	// больше двух процессов в консоли вполне может быть, например, еще не отвалился
 	// предыдущий conemuc.exe, из которого этот запущен немодально.
-	_ASSERTE(this->IsDebuggerActive() || (gpSrv->processes->nProcessCount<=2) || ((gpSrv->processes->nProcessCount>2) && gpState->attachMode_ && this->RootProcessId()));
+	_ASSERTE(this->IsDebuggerActive() || (gpWorker->Processes().nProcessCount<=2) || ((gpWorker->Processes().nProcessCount>2) && gpState->attachMode_ && this->RootProcessId()));
 
 	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
 	if (gpState->runMode_ == RunMode::Server)
@@ -1503,9 +1494,9 @@ void WorkerServer::Done(const int exitCode, const bool reportShutdown /*= false*
 		}
 
 		#ifdef _DEBUG
-		UINT nCurProcCount = std::min(gpSrv->processes->nProcessCount, (UINT)gpSrv->processes->pnProcesses.size());
+		UINT nCurProcCount = std::min(gpWorker->Processes().nProcessCount, (UINT)gpWorker->Processes().pnProcesses.size());
 		DWORD nCurProcs[20];
-		memmove(nCurProcs, &gpSrv->processes->pnProcesses[0], std::min<DWORD>(nCurProcCount, 20) * sizeof(DWORD));
+		memmove(nCurProcs, &gpWorker->Processes().pnProcesses[0], std::min<DWORD>(nCurProcCount, 20) * sizeof(DWORD));
 		_ASSERTE(nCurProcCount <= 1);
 		#endif
 
@@ -1663,12 +1654,13 @@ void WorkerServer::EnableProcessMonitor(const bool enable)
 {
 	if (enable)
 	{
-		if (!gpSrv->processes->nProcessStartTick) // could be already initialized from cmd_CmdStartStop
-			gpSrv->processes->nProcessStartTick = GetTickCount();
+		// could be already initialized from cmd_CmdStartStop
+		if (!gpWorker->Processes().nProcessStartTick)
+			gpWorker->Processes().nProcessStartTick = GetTickCount();
 	}
 	else
 	{
-		gpSrv->processes->nProcessStartTick = 0;
+		gpWorker->Processes().nProcessStartTick = 0;
 	}
 }
 
@@ -2501,7 +2493,7 @@ bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 	if (gpState->conemuWnd_)
 	{
 		CheckConEmuHwnd();
-		gpSrv->processes->OnAttached();
+		gpWorker->Processes().OnAttached();
 		gpSrv->ConnectInfo.bConnected = TRUE;
 		bConnected = true;
 	}
@@ -2595,7 +2587,7 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 			{
 				do
 				{
-					for (UINT i = 0; i < gpSrv->processes->nProcessCount; i++)
+					for (UINT i = 0; i < gpWorker->Processes().nProcessCount; i++)
 					{
 						if (lstrcmpiW(prc.szExeFile, L"conemu.exe")==0
 							|| lstrcmpiW(prc.szExeFile, L"conemu64.exe")==0)
@@ -2958,7 +2950,7 @@ int WorkerServer::CreateMapHeader()
 	{
 #ifdef _DEBUG
 		DWORD dwErr = GetLastError();
-		if (gbIsWine)
+		if (gpState->isWine_)
 		{
 			wchar_t szDbgMsg[512], szTitle[128];
 			szDbgMsg[0] = 0;
@@ -3493,33 +3485,12 @@ void WorkerServer::InitAnsiLog(const ConEmuAnsiLog& AnsiLog)
 	SetEnvironmentVariable(ENV_CONEMUANSILOG_VAR_W, log_file);
 }
 
-
-bool WorkerServer::CheckWasFullScreen()
-{
-	bool bFullScreenHW = false;
-
-	if (gpSrv->wasFullscreenMode && pfnGetConsoleDisplayMode)
-	{
-		DWORD nModeFlags = 0; pfnGetConsoleDisplayMode(&nModeFlags);
-		if (nModeFlags & CONSOLE_FULLSCREEN_HARDWARE)
-		{
-			bFullScreenHW = true;
-		}
-		else
-		{
-			gpSrv->wasFullscreenMode = false;
-		}
-	}
-
-	return bFullScreenHW;
-}
-
 int WorkerServer::ReadConsoleInfo()
 {
 	// Need to block all requests to output buffer in other threads
 	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 
-	if (CheckWasFullScreen())
+	if (CheckHwFullScreen())
 	{
 		LogString("!!! ReadConsoleInfo was skipped due to CONSOLE_FULLSCREEN_HARDWARE !!!");
 		return -1;
@@ -3790,14 +3761,14 @@ int WorkerServer::ReadConsoleInfo()
 	//CheckProcessCount(); -- уже должно быть вызвано !!!
 	//2010-05-26 Изменения в списке процессов не приходили в GUI до любого чиха в консоль.
 	#ifdef _DEBUG
-	_ASSERTE(gpSrv->processes->pnProcesses.size() > 0);
-	if (!gpSrv->processes->nProcessCount)
+	_ASSERTE(gpWorker->Processes().pnProcesses.size() > 0);
+	if (!gpWorker->Processes().nProcessCount)
 	{
-		_ASSERTE(gpSrv->processes->nProcessCount); //CheckProcessCount(); -- must be already initialized !!!
+		_ASSERTE(gpWorker->Processes().nProcessCount); //CheckProcessCount(); -- must be already initialized !!!
 	}
 	#endif
 
-	if (gpSrv->processes->GetProcesses(gpSrv->pConsole->ConState.nProcesses, countof(gpSrv->pConsole->ConState.nProcesses)))
+	if (gpWorker->Processes().GetProcesses(gpSrv->pConsole->ConState.nProcesses, countof(gpSrv->pConsole->ConState.nProcesses)))
 	{
 		// Process list was changed
 		lbChanged = TRUE;
@@ -4029,7 +4000,7 @@ wrap:
 // передернуть GUI по таймауту (не реже 1 сек).
 BOOL WorkerServer::ReloadFullConsoleInfo(BOOL abForceSend)
 {
-	if (CheckWasFullScreen())
+	if (CheckHwFullScreen())
 	{
 		LogString("ReloadFullConsoleInfo was skipped due to CONSOLE_FULLSCREEN_HARDWARE");
 		return FALSE;
@@ -4527,7 +4498,7 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 		//lbProcessChanged = CheckProcessCount();
 		// Функция срабатывает только через интервал CHECK_PROCESSES_TIMEOUT (внутри защита от частых вызовов)
 		// #define CHECK_PROCESSES_TIMEOUT 500
-		gpSrv->processes->CheckProcessCount();
+		gpWorker->Processes().CheckProcessCount();
 
 		// While station is locked - no sense to scan console contents
 		if (gpSrv->bStationLocked)

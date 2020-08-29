@@ -53,6 +53,17 @@ struct ConsoleState final
 
 	void DisableAutoConfirmExit(bool fromFarPlugin = false);
 
+	/// Startup info of OUR process
+	const STARTUPINFOW si_;
+
+	/// Should be informational only
+	const OSVERSIONINFOW osVerInfo_;
+
+	/// Are we started from Wine? Informational.
+	const bool isWine_;
+	/// Does current OS has double-byte character set support? CJK systems.
+	const bool isDBCS_;
+
 	/// Running mode: server, comspec, guimacro, attach, etc.
 	RunMode runMode_ = RunMode::Undefined;
 
@@ -66,6 +77,8 @@ struct ConsoleState final
 	bool noCreateProcess_ = false;
 	/// Force reattach StdIn/StdOut/StdErr to real conhost instead of inherited redirected handles
 	bool reopenStdHandles_ = false;
+	/// Last retrieved value from GetConsoleDisplayMode
+	DWORD consoleDisplayMode_ = 0;
 
 	/// If true - show "Press Enter or Esc to close..."
 	bool alwaysConfirmExit_ = false;
@@ -78,6 +91,9 @@ struct ConsoleState final
 	bool rootAliveLess10sec_ = false;
 	/// if true - triggers bufferheight during sst_ServerStart
 	bool rootIsCmdExe_ = true;
+
+	/// Started child process
+	PROCESS_INFORMATION pi_ = {};
 
 	/// Real console window handle
 	HWND realConWnd_ = nullptr;

@@ -114,6 +114,9 @@
     <ClInclude Include="ConEmuCD\UnicodeTest.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmuCD\WinConExports.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmuCD\WorkerBase.h">
       <Filter>Server</Filter>
     </ClInclude>

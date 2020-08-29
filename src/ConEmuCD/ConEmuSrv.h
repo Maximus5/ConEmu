@@ -39,14 +39,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "WorkerBase.h"
 #include "../common/Common.h"
-#include "../common/MConHandle.h"
 #include "../common/MFileMapping.h"
 #include "../common/MSection.h"
 #include "../common/ConsoleAnnotation.h"
 #include "../common/InQueue.h"
 
 /* Console Handles */
-extern MConHandle ghConOut;
 extern MConHandle gPrimaryBuffer, gAltBuffer;
 extern USHORT gnPrimaryBufferLastRow;
 
@@ -60,7 +58,7 @@ extern USHORT gnPrimaryBufferLastRow;
 #ifndef __GNUC__
 #pragma message("ComEmuC compiled in X86 mode")
 #endif
-#define NTVDMACTIVE (gpSrv->processes->bNtvdmActive)
+#define NTVDMACTIVE (gpWorker->Processes().bNtvdmActive)
 #endif
 
 #include "../common/PipeServer.h"
@@ -89,9 +87,6 @@ struct SrvInfo
 {
 	void InitFields();
 	void FinalizeFields();
-
-	// Full information about our console processes
-	ConProcess* processes;
 
 	CESERVER_REQ_PORTABLESTARTED Portable;
 
@@ -158,7 +153,6 @@ struct SrvInfo
 	CESERVER_REQ_CONINFO_FULL *pConsole;
 	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)
 	MSectionSimple csReadConsoleInfo;
-	bool wasFullscreenMode;
 	// Input
 	HANDLE hInputThread;
 	DWORD dwInputThread; BOOL bInputTermination;
@@ -183,7 +177,6 @@ struct SrvInfo
 	WORD dwConsoleInMode, dwConsoleOutMode;
 
 	CESERVER_CONSOLE_PALETTE ConsolePalette;
-	DWORD dwDisplayMode;
 	BOOL  bAltBufferEnabled;
 	//USHORT nUsedHeight; // Высота, используемая в GUI - вместо него используем gcrBufferSize.Y
 	TOPLEFTCOORD TopLeft; // Прокрутка в GUI может быть заблокирована. Если -1 - без блокировки, используем текущее значение
@@ -270,7 +263,6 @@ public:
 	bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*& pHdr, CESERVER_CONSAVE_MAP*& pData);
 	bool IsReopenHandleAllowed();
 
-	bool CheckWasFullScreen();
 	bool FreezeRefreshThread();
 	bool ThawRefreshThread();
 	BOOL ServerInitConsoleMode();
@@ -308,5 +300,4 @@ private:
 	SHORT consoleFontWidth_ = 0;
 	/// Height for real console font
 	SHORT consoleFontHeight_ = 0;
-
 };
