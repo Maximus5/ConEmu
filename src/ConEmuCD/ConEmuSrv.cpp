@@ -57,6 +57,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConProcess.h"
 #include "ConsoleArgs.h"
 #include "ConsoleState.h"
+#include "DumpOnException.h"
 #include "SrvPipes.h"
 #include "Queue.h"
 
@@ -1132,6 +1133,12 @@ int WorkerServer::Init()
 
 	_ASSERTE((gpState->conemuWndDC_==NULL) || (gpSrv->pColorerMapping!=NULL));
 
+	_ASSERTE(gpSrv->pConsole != nullptr);
+	if ((gpState->runMode_ == RunMode::AltServer) && IsCrashHandlerAllowed())
+	{
+		SetupCreateDumpOnException();
+	}
+
 	gpSrv->csAltSrv = new MSection();
 	gpSrv->nMainTimerElapse = 10;
 	gpSrv->TopLeft.Reset(); // блокировка прокрутки не включена
@@ -1650,6 +1657,35 @@ void WorkerServer::Done(const int exitCode, const bool reportShutdown /*= false*
 	WorkerBase::Done(exitCode, reportShutdown);
 }
 
+int WorkerServer::ProcessCommandLineArgs()
+{
+	LogFunction(L"ParseCommandLine{in-progress-server}");
+
+	if (gpState->runMode_ == RunMode::Undefined || gpState->runMode_ == RunMode::AltServer)
+	{
+		_ASSERTE(gpConsoleArgs->fullCmdLine_.IsEmpty());
+		gpState->runMode_ = RunMode::AltServer;
+		_ASSERTE(!IsCreateDumpOnExceptionInstalled());
+		_ASSERTE(gpState->attachMode_==am_None);
+		if (!(gpState->attachMode_ & am_Modes))
+			gpState->attachMode_ |= am_Simple;
+		gpState->DisableAutoConfirmExit();
+		gpState->noCreateProcess_ = TRUE;
+		gpState->alienMode_ = TRUE;
+		gpWorker->SetRootProcessId(GetCurrentProcessId());
+		gpWorker->SetRootProcessHandle(GetCurrentProcess());
+		//gpState->conemuPid_ = ...;
+		
+		gpszRunCmd = (wchar_t*)calloc(1,2);
+
+		CreateColorerHeader();
+	}
+	
+	int iRc = WorkerBase::ProcessCommandLineArgs();
+
+	return iRc;
+}
+
 void WorkerServer::EnableProcessMonitor(const bool enable)
 {
 	if (enable)
@@ -1753,6 +1789,20 @@ bool WorkerServer::IsReopenHandleAllowed()
 	// https://conemu.github.io/en/MicrosoftBugs.html#CorruptedScreenBuffer
 	if (IsWin7Eql())
 		return false;
+	return true;
+}
+
+bool WorkerServer::IsCrashHandlerAllowed()
+{
+	if (gpState->runMode_ == RunMode::AltServer)
+	{
+		// By default, handler is not installed in AltServer
+		// gpSet->isConsoleExceptionHandler --> CECF_ConExcHandler
+		const bool allowHandler = gpSrv && gpSrv->pConsole && (gpSrv->pConsole->hdr.Flags & CECF_ConExcHandler);
+		if (!allowHandler)
+			return false; // disabled in ConEmu settings
+	}
+
 	return true;
 }
 

@@ -362,6 +362,13 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 	WorkerBase::Done(exitCode, reportShutdown);
 }
 
+int WorkerComspec::ProcessCommandLineArgs()
+{
+	LogFunction(L"ParseCommandLine{in-progress-comspec}");
+
+	return WorkerBase::ProcessCommandLineArgs();
+}
+
 int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 {
 	HWND hConWnd = gpState->realConWnd_, hConEmu = gpState->conemuWnd_;

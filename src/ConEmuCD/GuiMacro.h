@@ -56,7 +56,7 @@ bool operator&(GuiMacroFlags f1, GuiMacroFlags f2);
 /// append flags from f2 to f1
 GuiMacroFlags operator|(GuiMacroFlags f1, GuiMacroFlags f2);
 
-void ArgGuiMacro(CEStr& szArg, MacroInstance& inst);
+void ArgGuiMacro(const CEStr& szArg, MacroInstance& inst);
 
 int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR* bsResult = nullptr);
 

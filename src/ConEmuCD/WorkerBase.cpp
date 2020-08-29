@@ -28,13 +28,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/defines.h"
 #include "../common/MAssert.h"
+#include "../common/MStrDup.h"
+#include "../common/shlobj.h"
 #include "../common/WObjects.h"
+
 #include "WorkerBase.h"
 
 #include "ConProcess.h"
+#include "ConsoleArgs.h"
 #include "ConsoleMain.h"
 #include "ConsoleState.h"
 #include "Debugger.h"
+#include "DumpOnException.h"
 #include "ExitCodes.h"
 
 /* Console Handles */
@@ -53,17 +58,54 @@ bool IsWin10Build9879()
 }
 }
 
+WorkerBase::~WorkerBase()
+{
+	DoneCreateDumpOnException();
+}
+
 WorkerBase::WorkerBase()
 	: kernel32(L"kernel32.dll")
 	, processes_(std::make_shared<ConProcess>(kernel32))
 {
+	SetupCreateDumpOnException();
+
 	kernel32.GetProcAddress("GetConsoleKeyboardLayoutNameW", pfnGetConsoleKeyboardLayoutName);
 	kernel32.GetProcAddress("GetConsoleDisplayMode", pfnGetConsoleDisplayMode);
+
+	gpLocalSecurity = LocalSecurity();
+
+	// This could be nullptr when process was started as detached
+	gpState->realConWnd_ = GetConEmuHWND(2);
+	gbVisibleOnStartup = IsWindowVisible(gpState->realConWnd_);
+	gnSelfPID = GetCurrentProcessId();
+	gdwMainThreadId = GetCurrentThreadId();
+
+	#ifdef _DEBUG
+	if (gpState->realConWnd_)
+	{
+		// This event could be used in debug version of Far Manager
+		wchar_t szEvtName[64] = L"";
+		swprintf_c(szEvtName, L"FARconEXEC:%08X", LODWORD(gpState->realConWnd_));
+		ghFarInExecuteEvent = CreateEvent(0, TRUE, FALSE, szEvtName);
+	}
+	#endif
 }
 
 void WorkerBase::Done(const int /*exitCode*/, const bool /*reportShutdown*/)
 {
 	dbgInfo.reset();
+}
+
+int WorkerBase::ProcessCommandLineArgs()
+{
+	LogFunction(L"ParseCommandLine{in-progress-base}");
+
+	if (gpConsoleArgs->needCdToProfileDir_)
+	{
+		CdToProfileDir();
+	}
+
+	return 0;
 }
 
 bool WorkerBase::IsCmdK() const
@@ -526,4 +568,22 @@ bool WorkerBase::EnterHwFullScreen(PCOORD pNewSize /*= nullptr*/)
 	}
 
 	return result;
+}
+
+void WorkerBase::CdToProfileDir()
+{
+	BOOL bRc = FALSE;
+	wchar_t szPath[MAX_PATH] = L"";
+	HRESULT hr = SHGetFolderPath(NULL, CSIDL_PROFILE, NULL, 0, szPath);
+	if (FAILED(hr))
+		GetEnvironmentVariable(L"USERPROFILE", szPath, countof(szPath));
+	if (szPath[0])
+		bRc = SetCurrentDirectory(szPath);
+	// Write action to log file
+	if (gpLogSize)
+	{
+		wchar_t* pszMsg = lstrmerge(bRc ? L"Work dir changed to %USERPROFILE%: " : L"CD failed to %USERPROFILE%: ", szPath);
+		LogFunction(pszMsg);
+		SafeFree(pszMsg);
+	}
 }

@@ -165,10 +165,13 @@ public:
 	bool IsForceHideConWnd() const;
 
 public:
-	// Some variables
-	CEStr fullCmdLine_;       // All arguments, except our executable
-	CEStr command_;    // The shell command line or script. e.g. "cmd.exe" or "cmd ||| powershell"
-	CEStr conemuAddArgs_; // config and xml file to pass
+	/// All arguments, except our executable
+	CEStr fullCmdLine_;
+	/// The shell command line or script. e.g. "cmd.exe" or "cmd ||| powershell"
+	CEStr command_;
+	/// config and xml file to pass
+	CEStr conemuAddArgs_;
+	/// number of parsed arguments, informational
 	int   params_ = 0;
 
 	/// If something unknown appeared in command line

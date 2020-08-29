@@ -66,6 +66,9 @@
     <ClInclude Include="ConEmuCD\DownloaderCall.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmuCD\DumpOnException.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmuCD\ExitCodes.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -168,6 +171,9 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuCD\DownloaderCall.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\DumpOnException.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuCD\GuiHooks.cpp">

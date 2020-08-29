@@ -147,7 +147,7 @@ static HWND GetConEmuExeHWND(DWORD nConEmuPid)
 	return hConEmu;
 }
 
-void ArgGuiMacro(CEStr& szArg, MacroInstance& inst)
+void ArgGuiMacro(const CEStr& szArg, MacroInstance& inst)
 {
 	wchar_t szLog[200];
 	if (gpLogSize) gpLogSize->LogString(szArg);

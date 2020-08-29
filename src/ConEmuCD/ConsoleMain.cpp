@@ -791,150 +791,6 @@ BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCom
 	return lbRc;
 }
 
-// Возвращает текст с информацией о пути к сохраненному дампу
-// DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024], LPWSTR pszComment = NULL);
-#include "../common/Dump.h"
-
-bool CopyToClipboard(LPCWSTR asText)
-{
-	if (!asText)
-		return false;
-
-	bool bCopied = false;
-
-	if (OpenClipboard(NULL))
-	{
-		DWORD cch = lstrlen(asText);
-		HGLOBAL hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (cch + 1) * sizeof(*asText));
-		if (hglbCopy)
-		{
-			wchar_t* lptstrCopy = (wchar_t*)GlobalLock(hglbCopy);
-			if (lptstrCopy)
-			{
-				_wcscpy_c(lptstrCopy, cch+1, asText);
-				GlobalUnlock(hglbCopy);
-
-				EmptyClipboard();
-				bCopied = (SetClipboardData(CF_UNICODETEXT, hglbCopy) != NULL);
-			}
-		}
-
-		CloseClipboard();
-	}
-
-	return bCopied;
-}
-
-LPTOP_LEVEL_EXCEPTION_FILTER gpfnPrevExFilter = NULL;
-bool gbCreateDumpOnExceptionInstalled = false;
-LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
-{
-	bool bKernelTrap = (gnInReadConsoleOutput > 0);
-	wchar_t szExcptInfo[1024] = L"";
-	wchar_t szDmpFile[MAX_PATH+64] = L"";
-	wchar_t szAdd[2000];
-
-	DWORD dwErr = CreateDumpForReport(ExceptionInfo, szExcptInfo, szDmpFile);
-
-	szAdd[0] = 0;
-
-	if (bKernelTrap)
-	{
-		wcscat_c(szAdd, L"Due to Microsoft kernel bug the crash was occurred\r\n");
-		wcscat_c(szAdd, CEMSBUGWIKI /* http://conemu.github.io/en/MicrosoftBugs.html */);
-		wcscat_c(szAdd, L"\r\n\r\n" L"The only possible workaround: enabling ‘Inject ConEmuHk’\r\n");
-		wcscat_c(szAdd, CEHOOKSWIKI /* http://conemu.github.io/en/ConEmuHk.html */);
-		wcscat_c(szAdd, L"\r\n\r\n");
-	}
-
-	wcscat_c(szAdd, szExcptInfo);
-
-	if (szDmpFile[0])
-	{
-		wcscat_c(szAdd, L"\r\n\r\n" L"Memory dump was saved to\r\n");
-		wcscat_c(szAdd, szDmpFile);
-
-		if (!bKernelTrap)
-		{
-			wcscat_c(szAdd, L"\r\n\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n");
-			wcscat_c(szAdd, CEREPORTCRASH /* http://conemu.github.io/en/Issues.html... */);
-		}
-	}
-
-	wcscat_c(szAdd, L"\r\n\r\nPress <Yes> to copy this text to clipboard");
-	if (!bKernelTrap)
-	{
-		wcscat_c(szAdd, L"\r\nand open project web page");
-	}
-
-	// Message title
-	wchar_t szTitle[100], szExe[MAX_PATH] = L"", *pszExeName;
-	GetModuleFileName(NULL, szExe, countof(szExe));
-	pszExeName = (wchar_t*)PointToName(szExe);
-	if (pszExeName && lstrlen(pszExeName) > 63) pszExeName[63] = 0;
-	swprintf_c(szTitle, L"%s crashed, PID=%u", pszExeName ? pszExeName : L"<process>", GetCurrentProcessId());
-
-	DWORD nMsgFlags = MB_YESNO|MB_ICONSTOP|MB_SYSTEMMODAL
-		| (bKernelTrap ? MB_DEFBUTTON2 : 0);
-
-	int nBtn = MessageBox(NULL, szAdd, szTitle, nMsgFlags);
-	if (nBtn == IDYES)
-	{
-		CopyToClipboard(szAdd);
-		if (!bKernelTrap)
-		{
-			ShellExecute(NULL, L"open", CEREPORTCRASH, NULL, NULL, SW_SHOWNORMAL);
-		}
-	}
-
-	LONG lExRc = EXCEPTION_EXECUTE_HANDLER;
-
-	if (gpfnPrevExFilter)
-	{
-		// если фильтр уже был установлен перед нашим - будем звать его
-		// все-равно уже свалились, на валидность адреса можно не проверяться
-		lExRc = gpfnPrevExFilter(ExceptionInfo);
-	}
-
-	return lExRc;
-}
-
-void SetupCreateDumpOnException()
-{
-	if (gpState->runMode_ == RunMode::GuiMacro)
-	{
-		// Must not be called in GuiMacro mode!
-		_ASSERTE(gpState->runMode_!=RunMode::GuiMacro);
-		return;
-	}
-
-	if (gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::Comspec)
-	{
-		// ok, allow
-	}
-	else if (gpState->runMode_ == RunMode::AltServer)
-	{
-		// By default, handler is not installed in AltServer
-		// gpSet->isConsoleExceptionHandler --> CECF_ConExcHandler
-		const bool allowHandler = gpSrv && gpSrv->pConsole && (gpSrv->pConsole->hdr.Flags & CECF_ConExcHandler);
-		if (!allowHandler)
-			return; // disabled in ConEmu settings
-	}
-	else
-	{
-		// disallow in all other modes
-		return;
-	}
-
-	// Far 3.x, telnet, Vim, etc.
-	// In these programs ConEmuCD.dll could be loaded to deal with alternative buffer and TrueColor
-	if (!gpfnPrevExFilter && !IsDebuggerPresent())
-	{
-		gpfnPrevExFilter = SetUnhandledExceptionFilter(CreateDumpOnException);
-		gbCreateDumpOnExceptionInstalled = true;
-	}
-}
-
 void ShowServerStartedMsgBox(LPCWSTR asCmdLine)
 {
 #ifdef SHOW_SERVER_STARTED_MSGBOX
@@ -998,6 +854,28 @@ void ShowMainStartedMsgBox(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	_wprintf(szDbgMsg);
 	gbDumpServerInitStatus = TRUE;
 #endif
+}
+
+void ShowStartedMsgBox()
+{
+	#if defined(SHOW_STARTED_MSGBOX) || defined(SHOW_COMSPEC_STARTED_MSGBOX)
+	if (!IsDebuggerPresent())
+	{
+		wchar_t szTitle[100]; swprintf_c(szTitle, L"ConEmuCD[%u]: PID=%u", WIN3264TEST(32,64), GetCurrentProcessId());
+		MessageBox(NULL, asCmdLine, szTitle, MB_SYSTEMMODAL);
+	}
+	#endif
+
+}
+
+void ShowStartedAssert()
+{
+	#ifdef SHOW_STARTED_ASSERT
+	if (!IsDebuggerPresent())
+	{
+		_ASSERT(FALSE);
+	}
+	#endif
 }
 
 
@@ -1218,6 +1096,18 @@ bool CheckDllMainLinkerFailure()
 	return true;
 }
 
+void PrintConsoleOutputCP()
+{
+	#ifdef _DEBUG
+	{
+		wchar_t szCpInfo[128];
+		DWORD nCP = GetConsoleOutputCP();
+		swprintf_c(szCpInfo, L"Current Output CP = %u\n", nCP);
+		DEBUGSTRCP(szCpInfo);
+	}
+	#endif
+}
+
 
 
 // Main entry point for ConEmuC.exe
@@ -1274,8 +1164,6 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		break;
 	}
 
-	SetupCreateDumpOnException();
-
 	switch (gpState->runMode_)
 	{
 	case RunMode::Server:
@@ -1307,59 +1195,16 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	DWORD dwWaitGui = -1, dwWaitRoot = -1;
 	BOOL lbRc = FALSE;
 
-	gpLocalSecurity = LocalSecurity();
-
-	// This could be nullptr when process was started as detached
-	gpState->realConWnd_ = GetConEmuHWND(2);
-	gbVisibleOnStartup = IsWindowVisible(gpState->realConWnd_);
-	gnSelfPID = GetCurrentProcessId();
-	gdwMainThreadId = GetCurrentThreadId();
-
-
-	#ifdef _DEBUG
-	if (gpState->realConWnd_)
-	{
-		// Это событие дергается в отладочной (мной поправленной) версии фара
-		// Suppress warning C4311 'type cast': pointer truncation from 'HWND' to 'DWORD'
-		wchar_t szEvtName[64] = L"";
-		swprintf_c(szEvtName, L"FARconEXEC:%08X", LODWORD(gpState->realConWnd_));
-		ghFarInExecuteEvent = CreateEvent(0, TRUE, FALSE, szEvtName);
-	}
-	#endif
-
-
-	#if defined(SHOW_STARTED_MSGBOX) || defined(SHOW_COMSPEC_STARTED_MSGBOX)
-	if (!IsDebuggerPresent())
-	{
-		wchar_t szTitle[100]; swprintf_c(szTitle, L"ConEmuCD[%u]: PID=%u", WIN3264TEST(32,64), GetCurrentProcessId());
-		MessageBox(NULL, asCmdLine, szTitle, MB_SYSTEMMODAL);
-	}
-	#endif
-
-
-	#ifdef SHOW_STARTED_ASSERT
-	if (!IsDebuggerPresent())
-	{
-		_ASSERT(FALSE);
-	}
-	#endif
-
+	ShowStartedMsgBox();
+	ShowStartedAssert();
 
 	LoadExePath();
-
 
 	PRINT_COMSPEC(L"ConEmuC started: %s\n", asCmdLine);
 	nExitPlaceStep = 50;
 	xf_check();
 
-	#ifdef _DEBUG
-	{
-		wchar_t szCpInfo[128];
-		DWORD nCP = GetConsoleOutputCP();
-		swprintf_c(szCpInfo, L"Current Output CP = %u\n", nCP);
-		DEBUGSTRCP(szCpInfo);
-	}
-	#endif
+	PrintConsoleOutputCP();
 
 	// Event is used in almost all modes, even in "debugger"
 	if (!ghExitQueryEvent
@@ -1369,33 +1214,34 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		ghExitQueryEvent = CreateEvent(NULL, TRUE/*используется в нескольких нитях, manual*/, FALSE, NULL);
 	}
 
+	// Checks and actions which are done without starting processes
 	if (gpState->runMode_ == RunMode::GuiMacro)
 	{
 		// Separate parser function
 		iRc = GuiMacroCommandLine(pszFullCmdLine);
 		_ASSERTE(iRc == CERR_GUIMACRO_SUCCEEDED || iRc == CERR_GUIMACRO_FAILED);
+		gbInShutdown = true;
 		goto wrap;
 	}
-	else if (anWorkMode == ConsoleMainMode::AltServer)
+	if (gpConsoleArgs->eStateCheck_ != ConEmuStateCheck::None)
 	{
-		// Alternative mode
-		_ASSERTE(anWorkMode==ConsoleMainMode::AltServer);
-		_ASSERTE(gpState->runMode_ == RunMode::Undefined || gpState->runMode_ == RunMode::AltServer);
-		gpState->runMode_ = RunMode::AltServer;
-		_ASSERTE(!gbCreateDumpOnExceptionInstalled);
-		_ASSERTE(gpState->attachMode_==am_None);
-		if (!(gpState->attachMode_ & am_Modes))
-			gpState->attachMode_ |= am_Simple;
-		gpState->DisableAutoConfirmExit();
-		gpState->noCreateProcess_ = TRUE;
-		gpState->alienMode_ = TRUE;
-		gpWorker->SetRootProcessId(GetCurrentProcessId());
-		gpWorker->SetRootProcessHandle(GetCurrentProcess());
-		//gpState->conemuPid_ = ...;
-		gpszRunCmd = (wchar_t*)calloc(1,2);
-		WorkerServer::Instance().CreateColorerHeader();
+		bool bOn = DoStateCheck(gpConsoleArgs->eStateCheck_);
+		iRc = bOn ? CERR_CHKSTATE_ON : CERR_CHKSTATE_OFF;
+		gbInShutdown = true;
+		goto wrap;
 	}
-	else if ((iRc = ParseCommandLine(pszFullCmdLine)) != 0)
+	if (gpConsoleArgs->eExecAction_ != ConEmuExecAction::None)
+	{
+		MacroInstance macroInst{};
+		if (!gpConsoleArgs->guiMacro_.IsEmpty())
+			ArgGuiMacro(gpConsoleArgs->guiMacro_.GetStr(), macroInst);
+		iRc = DoExecAction(gpConsoleArgs->eExecAction_, gpConsoleArgs->command_, macroInst);
+		gbInShutdown = true;
+		goto wrap;
+	}
+	
+	_ASSERTE((anWorkMode == ConsoleMainMode::AltServer) == (GetRunMode() == RunMode::AltServer));
+	if ((iRc = gpWorker->ProcessCommandLineArgs()) != 0)
 	{
 		wchar_t szLog[80];
 		swprintf_c(szLog, L"ParseCommandLine returns %i, exiting", iRc);
@@ -1408,12 +1254,6 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 
 	if (gbInShutdown)
 	{
-		goto wrap;
-	}
-
-	if (!gpWorker)
-	{
-		_ASSERTE(gpWorker != nullptr);
 		goto wrap;
 	}
 
@@ -2948,24 +2788,6 @@ void UpdateConsoleTitle()
 	SafeFree(pszBuffer);
 }
 
-void CdToProfileDir()
-{
-	BOOL bRc = FALSE;
-	wchar_t szPath[MAX_PATH] = L"";
-	HRESULT hr = SHGetFolderPath(NULL, CSIDL_PROFILE, NULL, 0, szPath);
-	if (FAILED(hr))
-		GetEnvironmentVariable(L"USERPROFILE", szPath, countof(szPath));
-	if (szPath[0])
-		bRc = SetCurrentDirectory(szPath);
-	// Write action to log file
-	if (gpLogSize)
-	{
-		wchar_t* pszMsg = lstrmerge(bRc ? L"Work dir changed to %USERPROFILE%: " : L"CD failed to %USERPROFILE%: ", szPath);
-		LogFunction(pszMsg);
-		SafeFree(pszMsg);
-	}
-}
-
 #ifndef WIN64
 void CheckNeedSkipWowChange(LPCWSTR asCmdLine)
 {
@@ -4288,6 +4110,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 }
 #endif
 
+#if 0
 RunMode DetectRunModeFromCmdLine(LPCWSTR asCmdLine)
 {
 	CmdArg szArg;
@@ -4396,6 +4219,7 @@ RunMode DetectRunModeFromCmdLine(LPCWSTR asCmdLine)
 
 	return runMode;
 }
+#endif
 
 // Проверить, что nPID это "ConEmuC.exe" или "ConEmuC64.exe"
 bool IsMainServerPID(DWORD nPID)

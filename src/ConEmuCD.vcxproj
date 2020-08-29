@@ -295,6 +295,7 @@
     <ClInclude Include="ConEmuCD\ConsoleState.h" />
     <ClInclude Include="ConEmuCD\Debugger.h" />
     <ClInclude Include="ConEmuCD\DownloaderCall.h" />
+    <ClInclude Include="ConEmuCD\DumpOnException.h" />
     <ClInclude Include="ConEmuCD\ExitCodes.h" />
     <ClInclude Include="ConEmuCD\ExportedFunctions.h" />
     <ClInclude Include="ConEmuCD\GuiHooks.h" />
@@ -331,6 +332,7 @@
     <ClCompile Include="ConEmuCD\ConsoleState.cpp" />
     <ClCompile Include="ConEmuCD\Debugger.cpp" />
     <ClCompile Include="ConEmuCD\DownloaderCall.cpp" />
+    <ClCompile Include="ConEmuCD\DumpOnException.cpp" />
     <ClCompile Include="ConEmuCD\GuiHooks.cpp" />
     <ClCompile Include="ConEmuCD\GuiMacro.cpp" />
     <ClCompile Include="ConEmuCD\Infiltrate.cpp" />

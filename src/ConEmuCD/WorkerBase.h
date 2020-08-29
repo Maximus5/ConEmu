@@ -46,7 +46,7 @@ extern MConHandle ghConOut;
 class WorkerBase
 {
 public:
-	virtual ~WorkerBase() = default;
+	virtual ~WorkerBase();
 
 	WorkerBase();
 
@@ -57,6 +57,8 @@ public:
 
 	virtual int Init() { return 0; };
 	virtual void Done(int exitCode, bool reportShutdown = false);
+
+	virtual int ProcessCommandLineArgs();
 
 	virtual bool IsCmdK() const;
 	virtual void SetCmdK(bool useCmdK);
@@ -99,6 +101,8 @@ public:
 	void SetDebugDumpType(DumpProcessType dumpType);
 	void SetDebugAutoDump(const wchar_t* interval);
 	DebuggerInfo& DbgInfo();
+
+	void CdToProfileDir();
 
 	void CheckKeyboardLayout();
 	bool IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode = nullptr);

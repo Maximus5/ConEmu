@@ -233,6 +233,8 @@ public:
 	int Init() override;
 	void Done(int exitCode, bool reportShutdown = false) override;
 
+	int ProcessCommandLineArgs() override;
+
 	void EnableProcessMonitor(bool enable) override;
 
 	// #SERVER Recheck visibility
@@ -261,7 +263,8 @@ public:
 
 	void ConOutCloseHandle();
 	bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*& pHdr, CESERVER_CONSAVE_MAP*& pData);
-	bool IsReopenHandleAllowed();
+	static bool IsReopenHandleAllowed();
+	static bool IsCrashHandlerAllowed();
 
 	bool FreezeRefreshThread();
 	bool ThawRefreshThread();
