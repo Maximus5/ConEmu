@@ -371,6 +371,8 @@ bool ConsoleArgs::IsForceHideConWnd() const
 /// <returns>0 on success or error code otherwise</returns>
 int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 {
+	LogFunction(L"ParseCommandLine");
+	
 	_ASSERTE(pszCmdLine!=nullptr);
 	fullCmdLine_.Set(pszCmdLine ? pszCmdLine : L"");
 
@@ -638,25 +640,10 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 				gpState->attachMode_ |= am_DefTerm;
 			}
 
-			/*
-			#TODO process am_Auto flag
-
 			// Below is also "/GHWND=NEW". There would be "requestNewGuiWnd_" set to "true"
 
 			//ConEmu autorun (c) Maximus5
 			//Starting "%ConEmuPath%" in "Attach" mode (NewWnd=%FORCE_NEW_WND%)
-
-			if (!IsAutoAttachAllowed())
-			{
-				if (gpState->realConWnd_ && IsWindowVisible(gpState->realConWnd_))
-				{
-					_printf("AutoAttach was requested, but skipped\n");
-				}
-				gpState->DisableAutoConfirmExit();
-				//_ASSERTE(FALSE && "AutoAttach was called while Update process is in progress?");
-				return CERR_AUTOATTACH_NOT_ALLOWED;
-			}
-			*/
 		}
 		else if (szArg.IsSwitch(L"/GuiAttach="))
 		{
@@ -666,24 +653,6 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			if (!(gpState->attachMode_ & am_Modes))
 				gpState->attachMode_ |= am_Simple;
 			attachGuiAppWnd_.SetInt(szArg.GetExtra(), 16);
-
-			/*
-			#TODO process in worker
-			if (!attachGuiAppWnd_.IsValid())
-			{
-				LogString(L"CERR_CARGUMENT: Invalid Child HWND was specified in /GuiAttach arg");
-				_printf("Invalid Child HWND specified: ");
-				_wprintf(szArg);
-				_printf("\n" "Command line:\n");
-				_wprintf(GetCommandLineW());
-				_printf("\n");
-				_ASSERTE(FALSE && "Invalid window was specified in /GuiAttach arg");
-				return CERR_CARGUMENT;
-			}
-			HWND2 hAppWnd{ attachGuiApp_.value };
-			if (IsWindow(hAppWnd))
-				gpWorker->SetRootProcessGui(hAppWnd);
-			*/
 		}
 		else if (szArg.IsSwitch(L"/NoCmd"))
 		{
@@ -738,49 +707,6 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			}
 
 			rootPid_.SetInt(szArg.GetExtra(), 10);
-
-			/*
-			#TODO process in worker
-			gpWorker->SetRootProcessId(wcstoul(pszStart, &pszEnd, 10));
-
-			if ((gpWorker->RootProcessId() == 0) && gpConsoleArgs->creatingHiddenConsole_)
-			{
-				gpWorker->SetRootProcessId(WaitForRootConsoleProcess(30000));
-			}
-
-			if (gbAlternativeAttach && gpWorker->RootProcessId())
-			{
-				// if process was started "with console window"
-				if (gpState->realConWnd)
-				{
-					DEBUGTEST(SafeCloseHandle(ghFarInExecuteEvent));
-				}
-
-				BOOL bAttach = StdCon::AttachParentConsole(gpWorker->RootProcessId());
-				if (!bAttach)
-				{
-					gbInShutdown = TRUE;
-					gpState->alwaysConfirmExit_ = FALSE;
-					LogString(L"CERR_CARGUMENT: (gbAlternativeAttach && gpWorker->RootProcessId())");
-					return CERR_CARGUMENT;
-				}
-
-				// Need to be set, because of new console === new handler
-				SetConsoleCtrlHandler((PHANDLER_ROUTINE)HandlerRoutine, true);
-
-				_ASSERTE(ghFarInExecuteEvent == NULL);
-				_ASSERTE(gpState->realConWnd != NULL);
-			}
-			else if (gpWorker->RootProcessId() == 0)
-			{
-				LogString("CERR_CARGUMENT: Attach to GUI was requested, but invalid PID specified");
-				_printf("Attach to GUI was requested, but invalid PID specified:\n");
-				_wprintf(GetCommandLineW());
-				_printf("\n");
-				_ASSERTE(FALSE && "Attach to GUI was requested, but invalid PID specified");
-				return CERR_CARGUMENT;
-			}
-			*/
 		}
 		else if (szArg.IsSwitch(L"/CInMode="))
 		{
@@ -819,7 +745,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			else if (szArg.IsSwitch(L"/BX="))
 			{
 				bufferWidth_.SetInt(szArg.GetExtra(), 10);
-				// #TODO BufferWidth
+				// #ConsoleArgs BufferWidth
 			}
 			else
 			{
@@ -848,7 +774,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			// for now, levels are ignored, so just /LOG
 			isLogging_.SetBool(true);
 			/*
-			#TODO
+			#ConsoleArgs
 			CreateLogSizeFile(0);
 			*/
 		}
@@ -857,7 +783,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			gpState->runMode_ = RunMode::Server;
 			conemuPid_.SetInt(szArg.GetExtra(), 10);
 			/*
-			#TODO Init and validate gpState->conemuPid_
+			#ConsoleArgs Init and validate gpState->conemuPid_
 			wchar_t* pszEnd = nullptr;
 			gpState->conemuPid_ = wcstoul(szArg.GetExtra(), &pszEnd, 10);
 
@@ -894,7 +820,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			{
 				requestNewGuiWnd_.SetBool(true);
 				/*
-				#TODO reset gpState->conemuPid_ & gpState->hGuiWnd
+				#ConsoleArgs reset gpState->conemuPid_ & gpState->hGuiWnd
 				gpState->hGuiWnd = nullptr;
 				_ASSERTE(gpState->conemuPid_ == 0);
 				gpState->conemuPid_ = 0;
@@ -910,7 +836,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 
 
 				/*
-				#TODO apply gpState->hGuiWnd=conemuHwnd_ and check it
+				#ConsoleArgs apply gpState->hGuiWnd=conemuHwnd_ and check it
 				wchar_t szLog[120];
 				const bool isWnd = gpState->hGuiWnd ? IsWindow(gpState->hGuiWnd) : FALSE;
 				const DWORD nErr = gpState->hGuiWnd ? GetLastError() : 0;
@@ -943,7 +869,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 		{
 			consoleColorIndexes_.SetInt(szArg.GetExtra(), 16);
 			/*
-			#TODO process nColors = DWORD(consoleColorIndexes_) and apply them
+			#ConsoleArgs process nColors = DWORD(consoleColorIndexes_) and apply them
 			if (nColors)
 			{
 				DWORD nTextIdx = (nColors & 0xFF);
@@ -1028,7 +954,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			//gpStatus->runMode_ = RunMode::RM_SERVER; -- don't set, the RM_UNDEFINED is flag for debugger only
 			debugPid_.SetInt(szArg.GetExtra(), 10);
 			/*
-			#TODO init debugger
+			#ConsoleArgs init debugger
 			const auto dbgRc = gpWorker->SetDebuggingPid(szArg.Mid(10));
 			if (dbgRc != 0)
 				return dbgRc;
@@ -1043,7 +969,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 				debugTree_.SetBool(true);
 			command_.Set(cmdLineRest);
 			/*
-			#TODO init debugger
+			#ConsoleArgs init debugger
 			const bool debugTree = (lstrcmpi(szArg, L"/DEBUGTREE") == 0);
 			const auto dbgRc = gpWorker->SetDebuggingExe(lsCmdLine, debugTree);
 			if (dbgRc != 0)
@@ -1056,7 +982,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 		{
 			debugDump_.SetBool(true);
 			/*
-			#TODO init debugger
+			#ConsoleArgs init debugger
 			gpWorker->SetDebugDumpType(DumpProcessType::AskUser);
 			*/
 		}
@@ -1065,7 +991,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			debugDump_.SetBool(true);
 			debugMiniDump_.SetBool(true);
 			/*
-			#TODO init debugger
+			#ConsoleArgs init debugger
 			gpWorker->SetDebugDumpType(DumpProcessType::MiniDump);
 			*/
 		}
@@ -1074,7 +1000,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			debugDump_.SetBool(true);
 			debugFullDump_.SetBool(true);
 			/*
-			#TODO init debugger
+			#ConsoleArgs init debugger
 			gpWorker->SetDebugDumpType(DumpProcessType::FullDump);
 			*/
 		}
@@ -1091,7 +1017,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			debugAutoMini_.SetStr(interval);
 
 			/*
-			#TODO init debugger
+			#ConsoleArgs init debugger
 			gpWorker->SetDebugAutoDump(interval);
 			*/
 		}
@@ -1153,7 +1079,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			gpConsoleArgs->asyncRun_ = FALSE;
 			command_.Set(cmdLineRest);
 			/*
-			#TODO init variables
+			#ConsoleArgs init variables
 			SetWorkEnvVar();
 			*/
 			break;
@@ -1192,13 +1118,13 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			{
 				cmdK_.SetBool(szArg.IsSwitch(L"/K"));
 				/*
-				#TODO init worker
+				#ConsoleArgs init worker
 				gpWorker->SetCmdK((szArg[1] & ~0x20) == L'K');
 				*/
 			}
 
 			/*
-			#TODO expand ConEmu {Task}
+			#ConsoleArgs expand ConEmu {Task}
 			if (lsCmdLine && (lsCmdLine[0] == TaskBracketLeft) && wcschr(lsCmdLine, TaskBracketRight))
 			{
 				// Allow smth like: ConEmuC -c {Far} /e text.txt

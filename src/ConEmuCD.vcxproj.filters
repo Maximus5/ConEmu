@@ -114,6 +114,9 @@
     <ClInclude Include="ConEmuCD\StartEnv.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ConEmuCD\StdCon.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
     <ClInclude Include="ConEmuCD\UnicodeTest.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -213,6 +216,9 @@
       <Filter>Interface</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuCD\StartEnv.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ConEmuCD\StdCon.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmuCD\UnicodeTest.cpp">

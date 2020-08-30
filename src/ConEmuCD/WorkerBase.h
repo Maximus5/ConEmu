@@ -110,6 +110,11 @@ public:
 	const MModule& KernelModule() const;
 
 protected:
+	int ParamAlienAttachProcess();
+	int ParamAttachGuiApp();
+	int ParamAutoAttach() const;
+	
+protected:
 	MModule kernel32;
 	
 	struct RootProcessInfo

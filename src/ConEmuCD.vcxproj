@@ -311,6 +311,7 @@
     <ClInclude Include="ConEmuCD\SrvCommands.h" />
     <ClInclude Include="ConEmuCD\SrvPipes.h" />
     <ClInclude Include="ConEmuCD\StartEnv.h" />
+    <ClInclude Include="ConEmuCD\StdCon.h" />
     <ClInclude Include="ConEmuCD\UnicodeTest.h" />
     <ClInclude Include="ConEmuCD\WinConExports.h" />
     <ClInclude Include="ConEmuCD\WorkerBase.h" />
@@ -346,6 +347,7 @@
     <ClCompile Include="ConEmuCD\SrvCommands.cpp" />
     <ClCompile Include="ConEmuCD\SrvPipes.cpp" />
     <ClCompile Include="ConEmuCD\StartEnv.cpp" />
+    <ClCompile Include="ConEmuCD\StdCon.cpp" />
     <ClCompile Include="ConEmuCD\UnicodeTest.cpp" />
     <ClCompile Include="ConEmuCD\WorkerBase.cpp" />
     <ClCompile Include="ConEmuHk\Injects.cpp" />

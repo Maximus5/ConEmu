@@ -41,6 +41,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Debugger.h"
 #include "DumpOnException.h"
 #include "ExitCodes.h"
+#include "ExportedFunctions.h"
+#include "StdCon.h"
 
 /* Console Handles */
 MConHandle ghConOut(L"CONOUT$");
@@ -100,9 +102,113 @@ int WorkerBase::ProcessCommandLineArgs()
 {
 	LogFunction(L"ParseCommandLine{in-progress-base}");
 
+	int iRc = 0;
+
 	if (gpConsoleArgs->needCdToProfileDir_)
 	{
 		CdToProfileDir();
+	}
+
+	if (gpState->attachMode_ & am_Auto)
+	{
+		if ((iRc = ParamAutoAttach()) != 0)
+			return iRc;
+	}
+
+	if (gpConsoleArgs->attachGuiAppWnd_.exists)
+	{
+		if ((iRc = ParamAttachGuiApp()) != 0)
+			return iRc;
+	}
+
+	if (gpConsoleArgs->rootPid_.exists)
+	{
+		if ((iRc = ParamAlienAttachProcess()) != 0)
+			return iRc;
+	}
+
+	return 0;
+}
+
+int WorkerBase::ParamAlienAttachProcess()
+{
+	SetRootProcessId(LODWORD(gpConsoleArgs->rootPid_.GetInt()));
+
+	if ((RootProcessId() == 0) && gpConsoleArgs->creatingHiddenConsole_)
+	{
+		SetRootProcessId(Processes().WaitForRootConsoleProcess(30000));
+	}
+
+	if (gpConsoleArgs->alternativeAttach_ && RootProcessId())
+	{
+		// if process was started "with console window"
+		if (gpState->realConWnd_)
+		{
+			DEBUGTEST(SafeCloseHandle(ghFarInExecuteEvent));
+		}
+
+		const BOOL bAttach = StdCon::AttachParentConsole(RootProcessId());
+		if (!bAttach)
+		{
+			gbInShutdown = TRUE;
+			gpState->alwaysConfirmExit_ = FALSE;
+			LogString(L"CERR_CARGUMENT: (gbAlternativeAttach && RootProcessId())");
+			return CERR_CARGUMENT;
+		}
+
+		// Need to be set, because of new console === new handler
+		SetConsoleCtrlHandler(HandlerRoutine, true);
+
+		_ASSERTE(ghFarInExecuteEvent == nullptr);
+		_ASSERTE(gpState->realConWnd_ != nullptr);
+	}
+	else if (RootProcessId() == 0)
+	{
+		LogString("CERR_CARGUMENT: Attach to GUI was requested, but invalid PID specified");
+		_printf("Attach to GUI was requested, but invalid PID specified:\n");
+		_wprintf(gpConsoleArgs->fullCmdLine_);
+		_printf("\n");
+		_ASSERTE(FALSE && "Attach to GUI was requested, but invalid PID specified");
+		return CERR_CARGUMENT;
+	}
+
+	return 0;
+}
+
+int WorkerBase::ParamAttachGuiApp()
+{
+	if (!gpConsoleArgs->attachGuiAppWnd_.IsValid())
+	{
+		LogString(L"CERR_CARGUMENT: Invalid Child HWND was specified in /GuiAttach arg");
+		_printf("Invalid Child HWND specified: /GuiAttach");
+		_printf("\n" "Command line:\n");
+		_wprintf(gpConsoleArgs->fullCmdLine_);
+		_printf("\n");
+		_ASSERTE(FALSE && "Invalid window was specified in /GuiAttach arg");
+		return CERR_CARGUMENT;
+	}
+
+	const HWND2 hAppWnd{ LODWORD(gpConsoleArgs->attachGuiAppWnd_.value) };
+	if (IsWindow(hAppWnd))
+		SetRootProcessGui(hAppWnd);
+
+	return 0;
+}
+
+int WorkerBase::ParamAutoAttach() const
+{
+	//ConEmu autorun (c) Maximus5
+	//Starting "%ConEmuPath%" in "Attach" mode (NewWnd=%FORCE_NEW_WND%)
+
+	if (!gpConsoleArgs->IsAutoAttachAllowed())
+	{
+		if (gpState->realConWnd_ && IsWindowVisible(gpState->realConWnd_))
+		{
+			_printf("AutoAttach was requested, but skipped\n");
+		}
+		gpState->DisableAutoConfirmExit();
+		//_ASSERTE(FALSE && "AutoAttach was called while Update process is in progress?");
+		return CERR_AUTOATTACH_NOT_ALLOWED;
 	}
 
 	return 0;

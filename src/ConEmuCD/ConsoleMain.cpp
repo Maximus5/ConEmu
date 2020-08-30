@@ -65,42 +65,46 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#define SHOW_INJECT_MSGBOX
 
 #include "ConsoleMain.h"
-#include "ConEmuSrv.h"
-#include "ConEmuCmd.h"
-#include "../common/CmdLine.h"
-#include "../common/ConsoleRead.h"
-#include "../common/EmergencyShow.h"
-#include "../common/EnvVar.h"
-#include "../common/execute.h"
-#include "../common/HkFunc.h"
-#include "../common/MArray.h"
-#include "../common/MPerfCounter.h"
-#include "../common/MProcess.h"
-#include "../common/MRect.h"
-#include "../common/MSectionSimple.h"
-#include "../common/MWow64Disable.h"
-#include "../common/ProcessSetEnv.h"
-#include "../common/RConStartArgs.h"
-#include "../common/SetEnvVar.h"
-#include "../common/StartupEnvEx.h"
-#include "../common/WConsole.h"
-#include "../common/WFiles.h"
-#include "../common/WThreads.h"
-#include "../common/WUser.h"
-#include "../ConEmu/version.h"
-#include "../ConEmuHk/Injects.h"
+
 #include "Actions.h"
+#include "ConEmuCmd.h"
+#include "ConEmuSrv.h"
 #include "ConProcess.h"
 #include "ConsoleArgs.h"
-#include "ConsoleState.h"
 #include "ConsoleHelp.h"
+#include "ConsoleState.h"
+#include "Debugger.h"
 #include "ExportedFunctions.h"
 #include "GuiMacro.h"
-#include "Debugger.h"
 #include "Shutdown.h"
 #include "StartEnv.h"
+#include "StdCon.h"
+
+#include "../ConEmuHk/Injects.h"
+#include "../ConEmu/version.h"
+#include "../common/WUser.h"
+#include "../common/WThreads.h"
+#include "../common/WFiles.h"
+#include "../common/WConsole.h"
+#include "../common/StartupEnvEx.h"
+#include "../common/SetEnvVar.h"
+#include "../common/RConStartArgs.h"
+#include "../common/ProcessSetEnv.h"
+#include "../common/MWow64Disable.h"
+#include "../common/MSectionSimple.h"
+#include "../common/MRect.h"
+#include "../common/MProcess.h"
+#include "../common/MPerfCounter.h"
+#include "../common/MArray.h"
+#include "../common/HkFunc.h"
+#include "../common/execute.h"
+#include "../common/EnvVar.h"
+#include "../common/EmergencyShow.h"
+#include "../common/ConsoleRead.h"
+#include "../common/CmdLine.h"
 
 #include <tuple>
+
 
 
 #ifndef __GNUC__
@@ -209,274 +213,6 @@ MFileLogEx* gpLogSize = NULL;
 
 BOOL gbInRecreateRoot = FALSE;
 
-
-
-namespace StdCon {
-
-	bool AttachParentConsole(DWORD parent_pid)
-	{
-		BOOL bAttach = FALSE;
-
-		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
-		AttachConsole_t AttachConsole_f = hKernel ? (AttachConsole_t)GetProcAddress(hKernel,"AttachConsole") : NULL;
-
-		HWND hSaveCon = GetConsoleWindow();
-
-		RetryAttach:
-
-		if (AttachConsole_f)
-		{
-			// FreeConsole нужно дергать даже если gpState->realConWnd уже NULL. Что-то в винде глючит и
-			// AttachConsole вернет ERROR_ACCESS_DENIED, если FreeConsole не звать...
-			FreeConsole();
-			gpState->realConWnd_ = NULL;
-
-			// Issue 998: Need to wait, while real console will appear
-			// gpWorker->RootProcessHandle() еще не открыт
-			HANDLE hProcess = OpenProcess(SYNCHRONIZE, FALSE, parent_pid);
-			while (hProcess && hProcess != INVALID_HANDLE_VALUE)
-			{
-				DWORD nConPid = 0;
-				HWND hNewCon = FindWindowEx(NULL, NULL, RealConsoleClass, NULL);
-				while (hNewCon)
-				{
-					if (GetWindowThreadProcessId(hNewCon, &nConPid) && (nConPid == parent_pid))
-						break;
-					hNewCon = FindWindowEx(NULL, hNewCon, RealConsoleClass, NULL);
-				}
-
-				if ((hNewCon != NULL) || (WaitForSingleObject(hProcess, 100) == WAIT_OBJECT_0))
-					break;
-			}
-			SafeCloseHandle(hProcess);
-
-			// Sometimes conhost handles are created with lags, wait for a while
-			DWORD nStartTick = GetTickCount();
-			const DWORD reattach_duration = 5000; // 5 sec
-			while (!bAttach)
-			{
-				// The action
-				bAttach = AttachConsole_f(parent_pid);
-				if (bAttach)
-				{
-					gpState->realConWnd_ = GetConEmuHWND(2);
-					gbVisibleOnStartup = IsWindowVisible(gpState->realConWnd_);
-					break;
-				}
-				// failes, try again?
-				Sleep(50);
-				DWORD nDelta = (GetTickCount() - nStartTick);
-				if (nDelta >= reattach_duration)
-					break;
-				LogString(L"Retrying AttachConsole after 50ms delay");
-			}
-		}
-		else
-		{
-			SetLastError(ERROR_PROC_NOT_FOUND);
-		}
-
-		if (!bAttach)
-		{
-			DWORD nErr = GetLastError();
-			size_t cchMsgMax = 10*MAX_PATH;
-			wchar_t* pszMsg = (wchar_t*)calloc(cchMsgMax,sizeof(*pszMsg));
-			wchar_t szTitle[MAX_PATH];
-			HWND hFindConWnd = FindWindowEx(NULL, NULL, RealConsoleClass, NULL);
-			DWORD nFindConPID = 0; if (hFindConWnd) GetWindowThreadProcessId(hFindConWnd, &nFindConPID);
-
-			PROCESSENTRY32 piCon = {}, piRoot = {};
-			GetProcessInfo(parent_pid, &piRoot);
-			if (nFindConPID == parent_pid)
-				piCon = piRoot;
-			else if (nFindConPID)
-				GetProcessInfo(nFindConPID, &piCon);
-
-			if (hFindConWnd)
-				GetWindowText(hFindConWnd, szTitle, countof(szTitle));
-			else
-				szTitle[0] = 0;
-
-			_wsprintf(pszMsg, SKIPLEN(cchMsgMax)
-				L"AttachConsole(PID=%u) failed, code=%u\n"
-				L"[%u]: %s\n"
-				L"Top console HWND=x%08X, PID=%u, %s\n%s\n---\n"
-				L"Prev (self) console HWND=x%08X\n\n"
-				L"Retry?",
-				parent_pid, nErr,
-				parent_pid, piRoot.szExeFile,
-				LODWORD(hFindConWnd), nFindConPID, piCon.szExeFile, szTitle,
-				LODWORD(hSaveCon)
-				);
-
-			swprintf_c(szTitle, L"%s: PID=%u", gsModuleName, GetCurrentProcessId());
-
-			int nBtn = MessageBox(NULL, pszMsg, szTitle, MB_ICONSTOP|MB_SYSTEMMODAL|MB_RETRYCANCEL);
-
-			free(pszMsg);
-
-			if (nBtn == IDRETRY)
-			{
-				goto RetryAttach;
-			}
-
-			return false;
-		}
-
-		return bAttach;
-	}
-
-	struct ReopenedHandles;
-	ReopenedHandles* gReopenedHandles = nullptr;
-
-	struct ReopenedHandles
-	{
-		struct {
-			DWORD channel;
-			const wchar_t* name;
-			MConHandle* handle;
-			HANDLE prev_handle;
-		} handles[3] = {
-			{ STD_INPUT_HANDLE, L"CONIN$" },
-			{ STD_OUTPUT_HANDLE, L"CONOUT$" },
-			{ STD_ERROR_HANDLE, L"CONOUT$" }, // "CONERR$" does not exist
-		};
-		bool reopened = false;
-		SECURITY_ATTRIBUTES sec = {sizeof(sec), nullptr, TRUE};
-
-		static void deleter(LPARAM lParam)
-		{
-			SafeDelete(gReopenedHandles);
-		}
-
-		ReopenedHandles()
-		{
-			for (size_t i = 0; i < countof(handles); ++i)
-			{
-				auto& h = handles[i];
-				h.prev_handle = GetStdHandle(h.channel);
-			}
-			Shutdown::RegisterEvent(deleter, 0);
-		}
-
-		~ReopenedHandles()
-		{
-			for (size_t i = 0; i < countof(handles); ++i)
-			{
-				auto& h = handles[i];
-				if (h.handle)
-				{
-					SetStdHandle(h.channel, h.prev_handle);
-					delete h.handle;
-				}
-			}
-		};
-
-		bool Reopen(STARTUPINFO* si)
-		{
-			bool success = true;
-			// "Connect" to the real console
-			if (success && !gpState->realConWnd_)
-			{
-				_ASSERTE(GetConsoleWindow() == gpState->realConWnd_);
-				CEStr srv_pid(GetEnvVar(ENV_CONEMUSERVERPID_VAR_W));
-				DWORD pid = srv_pid ? wcstoul(srv_pid.c_str(L""), NULL, 10) : 0;
-				success = pid ? AttachParentConsole(pid) : false;
-				DWORD err = success ? 0 : GetLastError();
-				if (success)
-				{
-					if (!gnMainServerPID)
-						gnMainServerPID = pid;
-				}
-				else
-				{
-					wchar_t szError[120];
-					msprintf(szError, countof(szError),
-						L"ConEmuC: AttachConsole failed, code=%u (x%04X), can't initialize ConIn/ConOut\n",
-						err, err);
-					_wprintf(szError);
-				}
-			}
-			if (success)
-			{
-				for (size_t i = 0; i < countof(handles); ++i)
-				{
-					auto& h = handles[i];
-					if (!h.handle)
-						h.handle = new MConHandle(h.name, &sec);
-					if (!(success = (h.handle->GetHandle() != INVALID_HANDLE_VALUE)))
-						break;
-				}
-			}
-			// Change Std handles
-			if (success)
-			{
-				for (size_t i = 0; i < countof(handles); ++i)
-				{
-					auto& h = handles[i];
-					if (!(success = SetStdHandle(h.channel, h.handle->GetHandle())))
-						break;
-				}
-			}
-			// And modify current si
-			if (success && si)
-			{
-				si->hStdInput = handles[0].handle->GetHandle();
-				si->hStdOutput = handles[1].handle->GetHandle();
-				si->hStdError = handles[2].handle->GetHandle();
-			}
-			// On errors - reverts what was done
-			if (!success)
-			{
-				for (size_t i = 0; i < countof(handles); ++i)
-				{
-					auto& h = handles[i];
-					SetStdHandle(h.channel, h.prev_handle);
-					SafeDelete(h.handle);
-				}
-			}
-			return success;
-		};
-	};
-
-	void SetWin32TermMode()
-	{
-		//_ASSERTE(FALSE && "Continue to CECMD_STARTXTERM");
-		if (!gnMainServerPID)
-		{
-			_wprintf(L"ERROR: ConEmuC was unable to detect console server PID\n");
-			return;
-		}
-
-		CESERVER_REQ* pIn2 = ExecuteNewCmd(CECMD_STARTXTERM, sizeof(CESERVER_REQ_HDR)+4*sizeof(DWORD));
-		if (pIn2)
-		{
-			pIn2->dwData[0] = tmc_TerminalType;
-			pIn2->dwData[1] = te_win32;
-			pIn2->dwData[2] = GetCurrentProcessId();
-			pIn2->dwData[3] = GetCurrentProcessId(); /// Block connector reading thread by our PID
-			CESERVER_REQ* pOut = ExecuteSrvCmd(gnMainServerPID, pIn2, gpState->realConWnd_);
-			ExecuteFreeResult(pIn2);
-			ExecuteFreeResult(pOut);
-		}
-	}
-
-	// Restore "native" console functionality on cygwin/msys/wsl handles?
-	void ReopenConsoleHandles(STARTUPINFO* si)
-	{
-		// _ASSERTE(FALSE && "ReopenConsoleHandles");
-		if (!gpState->reopenStdHandles_)
-			return;
-		gpState->reopenStdHandles_ = false; // do it only once
-		if (!gReopenedHandles)
-			gReopenedHandles = new ReopenedHandles();
-		if (!gReopenedHandles->Reopen(si))
-			_wprintf(L"ERROR: ConEmuC was unable to set STD console mode\n");
-		else
-			SetWin32TermMode();
-		// #CONNECTOR On exit we shall return current mode (retrieved from server?)
-	}
-};
 
 void ShutdownSrvStep(LPCWSTR asInfo, int nParm1 /*= 0*/, int nParm2 /*= 0*/, int nParm3 /*= 0*/, int nParm4 /*= 0*/)
 {

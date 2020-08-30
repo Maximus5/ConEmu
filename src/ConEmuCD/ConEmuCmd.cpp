@@ -364,9 +364,12 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 
 int WorkerComspec::ProcessCommandLineArgs()
 {
+	const int baseRc = WorkerBase::ProcessCommandLineArgs();
+	if (!baseRc)
+		return baseRc;
+	
 	LogFunction(L"ParseCommandLine{in-progress-comspec}");
-
-	return WorkerBase::ProcessCommandLineArgs();
+	return 0;
 }
 
 int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)

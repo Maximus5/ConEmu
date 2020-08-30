@@ -1659,6 +1659,10 @@ void WorkerServer::Done(const int exitCode, const bool reportShutdown /*= false*
 
 int WorkerServer::ProcessCommandLineArgs()
 {
+	const int baseRc = WorkerBase::ProcessCommandLineArgs();
+	if (!baseRc)
+		return baseRc;
+	
 	LogFunction(L"ParseCommandLine{in-progress-server}");
 
 	if (gpState->runMode_ == RunMode::Undefined || gpState->runMode_ == RunMode::AltServer)
@@ -1681,9 +1685,7 @@ int WorkerServer::ProcessCommandLineArgs()
 		CreateColorerHeader();
 	}
 	
-	int iRc = WorkerBase::ProcessCommandLineArgs();
-
-	return iRc;
+	return 0;
 }
 
 void WorkerServer::EnableProcessMonitor(const bool enable)
