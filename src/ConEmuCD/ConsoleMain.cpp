@@ -2369,11 +2369,6 @@ int CheckAttachProcess()
 	return 0; // OK
 }
 
-void SetWorkEnvVar()
-{
-	_ASSERTE(gpState->runMode_ == RunMode::Server && !gpState->noCreateProcess_);
-	SetConEmuWorkEnvVar(ghOurModule);
-}
 
 // 1. Substitute vars like: !ConEmuHWND!, !ConEmuDrawHWND!, !ConEmuBackHWND!, !ConEmuWorkDir!
 // 2. Expand environment variables (e.g. PowerShell doesn't accept %vars% as arguments)

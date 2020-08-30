@@ -773,30 +773,11 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			// we use here lstrcmpni, because different logging levels are possible (e.g. /LOG1)
 			// for now, levels are ignored, so just /LOG
 			isLogging_.SetBool(true);
-			/*
-			#ConsoleArgs
-			CreateLogSizeFile(0);
-			*/
 		}
 		else if (szArg.IsSwitch(L"/GID="))
 		{
 			gpState->runMode_ = RunMode::Server;
 			conemuPid_.SetInt(szArg.GetExtra(), 10);
-			/*
-			#ConsoleArgs Init and validate gpState->conemuPid_
-			wchar_t* pszEnd = nullptr;
-			gpState->conemuPid_ = wcstoul(szArg.GetExtra(), &pszEnd, 10);
-
-			if (gpState->conemuPid_ == 0)
-			{
-				LogString(L"CERR_CARGUMENT: Invalid GUI PID specified");
-				_printf("Invalid GUI PID specified:\n");
-				_wprintf(GetCommandLineW());
-				_printf("\n");
-				_ASSERTE(FALSE);
-				return CERR_CARGUMENT;
-			}
-			*/
 		}
 		else if (szArg.IsSwitch(L"/AID="))
 		{
@@ -819,12 +800,6 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			if (lstrcmpi(szArg.GetExtra(), L"NEW") == 0)
 			{
 				requestNewGuiWnd_.SetBool(true);
-				/*
-				#ConsoleArgs reset gpState->conemuPid_ & gpState->hGuiWnd
-				gpState->hGuiWnd = nullptr;
-				_ASSERTE(gpState->conemuPid_ == 0);
-				gpState->conemuPid_ = 0;
-				*/
 			}
 			else
 			{
@@ -833,132 +808,16 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 					pszDescriptor += 2; // That may be useful for calling from batch files
 				conemuHwnd_.SetInt(pszDescriptor, 16);
 				requestNewGuiWnd_.SetBool(false);
-
-
-				/*
-				#ConsoleArgs apply gpState->hGuiWnd=conemuHwnd_ and check it
-				wchar_t szLog[120];
-				const bool isWnd = gpState->hGuiWnd ? IsWindow(gpState->hGuiWnd) : FALSE;
-				const DWORD nErr = gpState->hGuiWnd ? GetLastError() : 0;
-
-				swprintf_c(
-					szLog, L"GUI HWND=0x%08X, %s, ErrCode=%u",
-					LODWORD(gpState->hGuiWnd), isWnd ? L"Valid" : L"Invalid", nErr);
-				LogString(szLog);
-
-				if (!isWnd)
-				{
-					LogString(L"CERR_CARGUMENT: Invalid GUI HWND was specified in /GHWND arg");
-					_printf("Invalid GUI HWND specified: ");
-					_wprintf(szArg);
-					_printf("\n" "Command line:\n");
-					_wprintf(GetCommandLineW());
-					_printf("\n");
-					_ASSERTE(FALSE && "Invalid window was specified in /GHWND arg");
-					return CERR_CARGUMENT;
-				}
-
-				DWORD nPID = 0;
-				GetWindowThreadProcessId(gpState->hGuiWnd, &nPID);
-				_ASSERTE(gpState->conemuPid_ == 0 || gpState->conemuPid_ == nPID);
-				gpState->conemuPid_ = nPID;
-				*/
 			}
 		}
 		else if (szArg.IsSwitch(L"/TA="))
 		{
 			consoleColorIndexes_.SetInt(szArg.GetExtra(), 16);
-			/*
-			#ConsoleArgs process nColors = DWORD(consoleColorIndexes_) and apply them
-			if (nColors)
-			{
-				DWORD nTextIdx = (nColors & 0xFF);
-				DWORD nBackIdx = ((nColors >> 8) & 0xFF);
-				DWORD nPopTextIdx = ((nColors >> 16) & 0xFF);
-				DWORD nPopBackIdx = ((nColors >> 24) & 0xFF);
-
-				if ((nTextIdx <= 15) && (nBackIdx <= 15) && (nTextIdx != nBackIdx))
-					gnDefTextColors = MAKECONCOLOR(nTextIdx, nBackIdx);
-
-				if ((nPopTextIdx <= 15) && (nPopBackIdx <= 15) && (nPopTextIdx != nPopBackIdx))
-					gnDefPopupColors = MAKECONCOLOR(nPopTextIdx, nPopBackIdx);
-
-				HANDLE hConOut = ghConOut;
-				CONSOLE_SCREEN_BUFFER_INFO csbi5 = {};
-				GetConsoleScreenBufferInfo(hConOut, &csbi5);
-
-				if (gnDefTextColors || gnDefPopupColors)
-				{
-					BOOL bPassed = FALSE;
-
-					if (gnDefPopupColors && (gnOsVer >= 0x600))
-					{
-						MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = {sizeof(csbi)};
-						if (apiGetConsoleScreenBufferInfoEx(hConOut, &csbi))
-						{
-							// Microsoft bug? When console is started elevated - it does NOT show
-							// required attributes, BUT GetConsoleScreenBufferInfoEx returns them.
-							if (!(gpState->attachMode_ & am_Admin)
-								&& (!gnDefTextColors || (csbi.wAttributes = gnDefTextColors))
-								&& (!gnDefPopupColors || (csbi.wPopupAttributes = gnDefPopupColors)))
-							{
-								bPassed = TRUE; // Менять не нужно, консоль соответствует
-							}
-							else
-							{
-								if (gnDefTextColors)
-									csbi.wAttributes = gnDefTextColors;
-								if (gnDefPopupColors)
-									csbi.wPopupAttributes = gnDefPopupColors;
-
-								_ASSERTE(FALSE && "Continue to SetConsoleScreenBufferInfoEx");
-
-								// Vista/Win7. _SetConsoleScreenBufferInfoEx unexpectedly SHOWS console window
-								//if (gnOsVer == 0x0601)
-								//{
-								//	RECT rcGui = {};
-								//	if (gpState->hGuiWnd)
-								//		GetWindowRect(gpState->hGuiWnd, &rcGui);
-								//	//SetWindowPos(gpState->realConWnd, HWND_BOTTOM, rcGui.left+3, rcGui.top+3, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
-								//	SetWindowPos(gpState->realConWnd, NULL, -30000, -30000, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
-								//	apiShowWindow(gpState->realConWnd, SW_SHOWMINNOACTIVE);
-								//	#ifdef _DEBUG
-								//	apiShowWindow(gpState->realConWnd, SW_SHOWNORMAL);
-								//	apiShowWindow(gpState->realConWnd, SW_HIDE);
-								//	#endif
-								//}
-
-								bPassed = apiSetConsoleScreenBufferInfoEx(hConOut, &csbi);
-
-								// Что-то Win7 хулиганит
-								if (!gbVisibleOnStartup)
-								{
-									apiShowWindow(gpState->realConWnd_, SW_HIDE);
-								}
-							}
-						}
-					}
-
-
-					if (!bPassed && gnDefTextColors)
-					{
-						SetConsoleTextAttribute(hConOut, gnDefTextColors);
-						RefillConsoleAttributes(csbi5, csbi5.wAttributes, gnDefTextColors);
-					}
-				}
-			}
-			*/
 		}
 		else if (szArg.IsSwitch(L"/DEBUGPID="))
 		{
 			//gpStatus->runMode_ = RunMode::RM_SERVER; -- don't set, the RM_UNDEFINED is flag for debugger only
-			debugPid_.SetInt(szArg.GetExtra(), 10);
-			/*
-			#ConsoleArgs init debugger
-			const auto dbgRc = gpWorker->SetDebuggingPid(szArg.Mid(10));
-			if (dbgRc != 0)
-				return dbgRc;
-			*/
+			debugPidList_.SetStr(szArg.GetExtra());
 		}
 		else if (szArg.OneOfSwitches(L"/DebugExe", L"/DebugTree"))
 		{
@@ -968,41 +827,22 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			else
 				debugTree_.SetBool(true);
 			command_.Set(cmdLineRest);
-			/*
-			#ConsoleArgs init debugger
-			const bool debugTree = (lstrcmpi(szArg, L"/DEBUGTREE") == 0);
-			const auto dbgRc = gpWorker->SetDebuggingExe(lsCmdLine, debugTree);
-			if (dbgRc != 0)
-				return dbgRc;
-			*/
 			// STOP processing rest of command line, it goes to debugger
 			break;
 		}
 		else if (szArg.IsSwitch(L"/DUMP"))
 		{
 			debugDump_.SetBool(true);
-			/*
-			#ConsoleArgs init debugger
-			gpWorker->SetDebugDumpType(DumpProcessType::AskUser);
-			*/
 		}
 		else if (szArg.OneOfSwitches(L"/MINIDUMP", L"/MINI"))
 		{
 			debugDump_.SetBool(true);
 			debugMiniDump_.SetBool(true);
-			/*
-			#ConsoleArgs init debugger
-			gpWorker->SetDebugDumpType(DumpProcessType::MiniDump);
-			*/
 		}
 		else if (szArg.OneOfSwitches(L"/FULLDUMP", L"/FULL"))
 		{
 			debugDump_.SetBool(true);
 			debugFullDump_.SetBool(true);
-			/*
-			#ConsoleArgs init debugger
-			gpWorker->SetDebugDumpType(DumpProcessType::FullDump);
-			*/
 		}
 		else if (szArg.IsSwitch(L"/AutoMini"))
 		{
@@ -1015,11 +855,6 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 					interval = szArg.ms_Val;
 			}
 			debugAutoMini_.SetStr(interval);
-
-			/*
-			#ConsoleArgs init debugger
-			gpWorker->SetDebugAutoDump(interval);
-			*/
 		}
 		else if (szArg.IsSwitch(L"/ProfileCd"))
 		{
@@ -1078,10 +913,6 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			gpState->noCreateProcess_ = FALSE;
 			gpConsoleArgs->asyncRun_ = FALSE;
 			command_.Set(cmdLineRest);
-			/*
-			#ConsoleArgs init variables
-			SetWorkEnvVar();
-			*/
 			break;
 		}
 			// После этих аргументов - идет то, что передается в COMSPEC (CreateProcess)!
@@ -1117,10 +948,6 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			if (gpState->runMode_ == RunMode::Comspec)
 			{
 				cmdK_.SetBool(szArg.IsSwitch(L"/K"));
-				/*
-				#ConsoleArgs init worker
-				gpWorker->SetCmdK((szArg[1] & ~0x20) == L'K');
-				*/
 			}
 
 			/*

@@ -225,7 +225,7 @@ public:
 	SwitchBool cmdK_;
 
 	/// PID to attach the debugger
-	SwitchInt debugPid_;
+	SwitchStr debugPidList_;
 	/// Start debugger only for command_
 	SwitchBool debugExe_;
 	/// Start debugger for command_ and for its child processes

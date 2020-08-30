@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConsoleMain.h"
 #include "ConEmuCmd.h"
 #include "ConEmuSrv.h"
+#include "ConsoleArgs.h"
 #include "ConsoleState.h"
 #include "ExitCodes.h"
 #include "../common/EnvVar.h"
@@ -369,6 +370,9 @@ int WorkerComspec::ProcessCommandLineArgs()
 		return baseRc;
 	
 	LogFunction(L"ParseCommandLine{in-progress-comspec}");
+
+	SetCmdK(gpConsoleArgs->cmdK_.GetBool());
+	
 	return 0;
 }
 

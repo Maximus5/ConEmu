@@ -30,7 +30,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MAssert.h"
 #include "../common/MStrDup.h"
 #include "../common/shlobj.h"
+#include "../common/WConsole.h"
 #include "../common/WObjects.h"
+#include "../common/WUser.h"
 
 #include "WorkerBase.h"
 
@@ -43,6 +45,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ExitCodes.h"
 #include "ExportedFunctions.h"
 #include "StdCon.h"
+#include "../common/SetEnvVar.h"
 
 /* Console Handles */
 MConHandle ghConOut(L"CONOUT$");
@@ -102,8 +105,14 @@ int WorkerBase::ProcessCommandLineArgs()
 {
 	LogFunction(L"ParseCommandLine{in-progress-base}");
 
+	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
 	int iRc = 0;
 
+	if (gpConsoleArgs->isLogging_.exists)
+	{
+		CreateLogSizeFile(0);
+	}
+	
 	if (gpConsoleArgs->needCdToProfileDir_)
 	{
 		CdToProfileDir();
@@ -125,6 +134,221 @@ int WorkerBase::ProcessCommandLineArgs()
 	{
 		if ((iRc = ParamAlienAttachProcess()) != 0)
 			return iRc;
+	}
+
+	if (gpConsoleArgs->consoleColorIndexes_.exists)
+	{
+		if ((iRc = ParamColorIndexes()) != 0)
+			return iRc;
+	}
+
+	if (gpConsoleArgs->conemuPid_.exists)
+	{
+		if ((iRc = ParamConEmuGuiPid()) != 0)
+			return iRc;
+	}
+
+	if (gpConsoleArgs->requestNewGuiWnd_.exists)
+	{
+		if ((iRc = ParamConEmuGuiWnd()))
+			return iRc;
+	}
+
+	if (gpConsoleArgs->debugPidList_.exists)
+	{
+		if ((iRc = ParamDebugPid()) != 0)
+			return iRc;
+	}
+
+	if (gpConsoleArgs->debugExe_.exists || gpConsoleArgs->debugTree_.exists)
+	{
+		if ((iRc = ParamDebugExeOrTree()) != 0)
+			return iRc;
+	}
+
+	if (gpConsoleArgs->debugDump_.exists)
+	{
+		if ((iRc = ParamDebugDump()) != 0)
+			return iRc;
+	}
+
+	return 0;
+}
+
+int WorkerBase::ParamDebugDump()
+{
+	if (gpConsoleArgs->debugMiniDump_.GetBool())
+		SetDebugDumpType(DumpProcessType::MiniDump);
+	else if (gpConsoleArgs->debugFullDump_.GetBool())
+		SetDebugDumpType(DumpProcessType::FullDump);
+	else if (gpConsoleArgs->debugAutoMini_.exists)
+		SetDebugAutoDump(gpConsoleArgs->debugAutoMini_.GetStr());
+	else // if just "/DUMP"
+		SetDebugDumpType(DumpProcessType::AskUser);
+
+	return 0;
+}
+
+int WorkerBase::ParamDebugExeOrTree()
+{
+	const bool debugTree = gpConsoleArgs->debugTree_.GetBool();
+	const auto dbgRc = SetDebuggingExe(gpConsoleArgs->command_, debugTree);
+	if (dbgRc != 0)
+		return dbgRc;
+	return 0;
+}
+
+int WorkerBase::ParamDebugPid()
+{
+	const auto dbgRc = SetDebuggingPid(gpConsoleArgs->debugPidList_.GetStr());
+	if (dbgRc != 0)
+		return dbgRc;
+	return 0;
+}
+
+int WorkerBase::ParamConEmuGuiWnd() const
+{
+	_ASSERTE(gpState->runMode_ == RunMode::AutoAttach
+		|| gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AltServer);
+
+	if (gpConsoleArgs->requestNewGuiWnd_.GetBool())
+	{
+		gpState->hGuiWnd = nullptr;
+		_ASSERTE(gpState->conemuPid_ == 0);
+		gpState->conemuPid_ = 0;
+	}
+	else
+	{
+		wchar_t szLog[120];
+		const bool isWnd = gpState->hGuiWnd ? IsWindow(gpState->hGuiWnd) : FALSE;
+		const DWORD nErr = gpState->hGuiWnd ? GetLastError() : 0;
+
+		swprintf_c(
+			szLog, L"GUI HWND=0x%08X, %s, ErrCode=%u",
+			LODWORD(gpState->hGuiWnd), isWnd ? L"Valid" : L"Invalid", nErr);
+		LogString(szLog);
+
+		if (!isWnd)
+		{
+			LogString(L"CERR_CARGUMENT: Invalid GUI HWND was specified in /GHWND arg");
+			_printf("Invalid GUI HWND specified: /GHWND");
+			_printf("\n" "Command line:\n");
+			_wprintf(gpConsoleArgs->fullCmdLine_);
+			_printf("\n");
+			_ASSERTE(FALSE && "Invalid window was specified in /GHWND arg");
+			return CERR_CARGUMENT;
+		}
+
+		DWORD nPid = 0;
+		GetWindowThreadProcessId(gpState->hGuiWnd, &nPid);
+		_ASSERTE(gpState->conemuPid_ == 0 || gpState->conemuPid_ == nPid);
+		gpState->conemuPid_ = nPid;
+	}
+
+	return 0;
+}
+
+int WorkerBase::ParamConEmuGuiPid() const
+{
+	_ASSERTE(gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AltServer);
+
+	gpState->conemuPid_ = LODWORD(gpConsoleArgs->conemuPid_.GetInt());
+
+	if (gpState->conemuPid_ == 0)
+	{
+		LogString(L"CERR_CARGUMENT: Invalid GUI PID specified");
+		_printf("Invalid GUI PID specified:\n");
+		_wprintf(gpConsoleArgs->fullCmdLine_);
+		_printf("\n");
+		_ASSERTE(FALSE);
+		return CERR_CARGUMENT;
+	}
+
+	return 0;
+}
+
+// ReSharper disable once CppMemberFunctionMayBeStatic
+int WorkerBase::ParamColorIndexes() const
+{
+	const DWORD nColors = LODWORD(gpConsoleArgs->consoleColorIndexes_.GetInt());
+
+	if (nColors)
+	{
+		const DWORD nTextIdx = (nColors & 0xFF);
+		const DWORD nBackIdx = ((nColors >> 8) & 0xFF);
+		const DWORD nPopTextIdx = ((nColors >> 16) & 0xFF);
+		const DWORD nPopBackIdx = ((nColors >> 24) & 0xFF);
+
+		if ((nTextIdx <= 15) && (nBackIdx <= 15) && (nTextIdx != nBackIdx))
+			gnDefTextColors = MAKECONCOLOR(nTextIdx, nBackIdx);
+
+		if ((nPopTextIdx <= 15) && (nPopBackIdx <= 15) && (nPopTextIdx != nPopBackIdx))
+			gnDefPopupColors = MAKECONCOLOR(nPopTextIdx, nPopBackIdx);
+
+		// ReSharper disable once CppLocalVariableMayBeConst
+		HANDLE hConOut = ghConOut;
+		CONSOLE_SCREEN_BUFFER_INFO csbi5 = {};
+		GetConsoleScreenBufferInfo(hConOut, &csbi5);
+
+		if (gnDefTextColors || gnDefPopupColors)
+		{
+			BOOL bPassed = FALSE;
+
+			if (gnDefPopupColors && IsWin6())
+			{
+				MY_CONSOLE_SCREEN_BUFFER_INFOEX csbi = { sizeof(csbi) };  // NOLINT(clang-diagnostic-missing-field-initializers)
+				if (apiGetConsoleScreenBufferInfoEx(hConOut, &csbi))
+				{
+					// Microsoft bug? When console is started elevated - it does NOT show
+					// required attributes, BUT GetConsoleScreenBufferInfoEx returns them.
+					if (!(gpState->attachMode_ & am_Admin)
+						&& (!gnDefTextColors || ((csbi.wAttributes = gnDefTextColors)))
+						&& (!gnDefPopupColors || ((csbi.wPopupAttributes = gnDefPopupColors))))
+					{
+						bPassed = TRUE; // nothing to change, console matches
+					}
+					else
+					{
+						if (gnDefTextColors)
+							csbi.wAttributes = gnDefTextColors;
+						if (gnDefPopupColors)
+							csbi.wPopupAttributes = gnDefPopupColors;
+
+						_ASSERTE(FALSE && "Continue to SetConsoleScreenBufferInfoEx");
+
+						// Vista/Win7. _SetConsoleScreenBufferInfoEx unexpectedly SHOWS console window
+						//if (gnOsVer == 0x0601)
+						//{
+						//	RECT rcGui = {};
+						//	if (gpState->hGuiWnd)
+						//		GetWindowRect(gpState->hGuiWnd, &rcGui);
+						//	//SetWindowPos(gpState->realConWnd, HWND_BOTTOM, rcGui.left+3, rcGui.top+3, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+						//	SetWindowPos(gpState->realConWnd, NULL, -30000, -30000, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+						//	apiShowWindow(gpState->realConWnd, SW_SHOWMINNOACTIVE);
+						//	#ifdef _DEBUG
+						//	apiShowWindow(gpState->realConWnd, SW_SHOWNORMAL);
+						//	apiShowWindow(gpState->realConWnd, SW_HIDE);
+						//	#endif
+						//}
+
+						bPassed = apiSetConsoleScreenBufferInfoEx(hConOut, &csbi);
+
+						// Fix problems of Windows 7
+						if (!gbVisibleOnStartup)
+						{
+							apiShowWindow(gpState->realConWnd_, SW_HIDE);
+						}
+					}
+				}
+			}
+
+
+			if (!bPassed && gnDefTextColors)
+			{
+				SetConsoleTextAttribute(hConOut, gnDefTextColors);
+				RefillConsoleAttributes(csbi5, csbi5.wAttributes, gnDefTextColors);
+			}
+		}
 	}
 
 	return 0;

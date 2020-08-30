@@ -102,6 +102,7 @@ public:
 	void SetDebugAutoDump(const wchar_t* interval);
 	DebuggerInfo& DbgInfo();
 
+	/// ConEmu can't CD to home directory of another user during "run as"
 	void CdToProfileDir();
 
 	void CheckKeyboardLayout();
@@ -110,8 +111,23 @@ public:
 	const MModule& KernelModule() const;
 
 protected:
+	/// Process any of "/Dump", "/Mini", "/MiniDump", "/Full", "/FullDump", "/AutoMini"
+	int ParamDebugDump();
+	/// Process any of "/DebugExe", "/DebugTree"
+	int ParamDebugExeOrTree();
+	/// Process /DEBUGPID=Pid1[,Pid2[,...]]
+	int ParamDebugPid();
+	/// Process /GHWND=[NEW|HWND]
+	int ParamConEmuGuiWnd() const;
+	/// Process /GID=PID
+	int ParamConEmuGuiPid() const;
+	/// Process /TA=XX
+	int ParamColorIndexes() const;
+	/// Process any of "/PID=", "/TRMPID=", "/FARPID=", "/CONPID="
 	int ParamAlienAttachProcess();
+	/// Process /GuiAttach=HWND
 	int ParamAttachGuiApp();
+	/// Process any of "/AutoAttach", "/AttachDefTerm"
 	int ParamAutoAttach() const;
 	
 protected:

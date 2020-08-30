@@ -1665,6 +1665,9 @@ int WorkerServer::ProcessCommandLineArgs()
 	
 	LogFunction(L"ParseCommandLine{in-progress-server}");
 
+	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
+	int iRc = 0;
+
 	if (gpState->runMode_ == RunMode::Undefined || gpState->runMode_ == RunMode::AltServer)
 	{
 		_ASSERTE(gpConsoleArgs->fullCmdLine_.IsEmpty());
@@ -1680,10 +1683,23 @@ int WorkerServer::ProcessCommandLineArgs()
 		gpWorker->SetRootProcessHandle(GetCurrentProcess());
 		//gpState->conemuPid_ = ...;
 		
-		gpszRunCmd = (wchar_t*)calloc(1,2);
+		gpszRunCmd = static_cast<wchar_t*>(calloc(1, 2));
 
 		CreateColorerHeader();
 	}
+
+	if (gpState->runMode_ == RunMode::Server)
+	{
+		_ASSERTE(!gpState->noCreateProcess_);
+		SetConEmuWorkEnvVar(ghOurModule);
+	}
+
+	if (gpConsoleArgs->conemuPid_.exists)
+	{
+		if ((iRc = ParamConEmuGuiPid()) != 0)
+			return iRc;
+	}
+
 	
 	return 0;
 }
