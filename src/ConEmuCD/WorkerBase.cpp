@@ -1570,3 +1570,43 @@ int WorkerBase::CheckAttachProcess()
 
 	return 0; // OK
 }
+
+void WorkerBase::CheckNeedSkipWowChange(LPCWSTR asCmdLine)
+{
+	// Only for 32-bit builds
+#ifndef WIN64
+	LogFunction(L"CheckNeedSkipWowChange");
+
+	// Команды вида: C:\Windows\SysNative\reg.exe Query "HKCU\Software\Far2"|find "Far"
+	// Для них нельзя отключать редиректор (wow.Disable()), иначе SysNative будет недоступен
+	if (IsWindows64())
+	{
+		LPCWSTR pszTest = asCmdLine;
+		CmdArg szApp;
+
+		if ((pszTest = NextArg(pszTest, szApp)))
+		{
+			wchar_t szSysNative[MAX_PATH+32] = L"";
+			int nLen = GetWindowsDirectory(szSysNative, MAX_PATH);
+
+			if (nLen >= 2 && nLen < MAX_PATH)
+			{
+				AddEndSlash(szSysNative, countof(szSysNative));
+				wcscat_c(szSysNative, L"Sysnative\\");
+				nLen = lstrlenW(szSysNative);
+				const int nAppLen = lstrlenW(szApp);
+
+				if (nAppLen > nLen)
+				{
+					szApp.ms_Val[nLen] = 0;
+
+					if (lstrcmpiW(szApp, szSysNative) == 0)
+					{
+						gState.bSkipWowChange_ = TRUE;
+					}
+				}
+			}
+		}
+	}
+#endif
+}

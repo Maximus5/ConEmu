@@ -102,6 +102,8 @@ struct ConsoleState final
 	bool bWasReattached_ = false;
 	/// Don't read console output while station is locked
 	bool bStationLocked_ = false;
+	///if true (could be in 32-build only) - don't enable wow64 redirector
+	bool bSkipWowChange_ = false;
 	
 
 	/// Started child process

@@ -151,6 +151,8 @@ protected:
 	int CheckAttachProcess();
 	/// Check if the GUI version is compatible
 	int CheckGuiVersion();
+	// To access "Sysnative" from 32-bit builds - don't disable redirection
+	static void CheckNeedSkipWowChange(LPCWSTR asCmdLine);
 	
 	// ReSharper disable once CppRedundantAccessSpecifier
 protected:

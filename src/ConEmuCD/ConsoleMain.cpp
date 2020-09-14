@@ -187,7 +187,6 @@ HANDLE ghFarInExecuteEvent;
 
 BOOL  gbDumpServerInitStatus = FALSE;
 UINT  gnPTYmode = 0; // 1 enable PTY, 2 - disable PTY (work as plain console), 0 - don't change
-BOOL  gbSkipWowChange = FALSE;
 WORD  gnDefTextColors = 0, gnDefPopupColors = 0; // Передаются через "/TA=..."
 BOOL  gbVisibleOnStartup = FALSE;
 
@@ -1170,7 +1169,8 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 				if ((psz = NextArg(psz, szExe, &pszStart)))
 				{
 					MWow64Disable wow;
-					if (!gbSkipWowChange) wow.Disable();
+					if (!gState.bSkipWowChange_)
+						wow.Disable();
 
 					DWORD RunImageSubsystem = 0, RunImageBits = 0, RunFileAttrs = 0;
 					bool bSubSystem = GetImageSubsystem(szExe, RunImageSubsystem, RunImageBits, RunFileAttrs);
@@ -1209,11 +1209,6 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		// Возможно, проблема в наследовании pipe-ов, проверить бы... или в другом SecurityDescriptor.
 
 
-		//MWow64Disable wow;
-		////#ifndef _DEBUG
-		//if (!gbSkipWowChange) wow.Disable();
-		////#endif
-
 		#ifdef _DEBUG
 		LPCWSTR pszRunCmpApp = NULL;
 		#endif
@@ -1237,7 +1232,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		//		lpSec = NULL;
 		//#endif
 		// Не будем разрешать наследование, если нужно - сделаем DuplicateHandle
-		lbRc = createProcess(!gbSkipWowChange, NULL, gpszRunCmd, lpSec,lpSec, lbInheritHandle,
+		lbRc = createProcess(!gState.bSkipWowChange_, NULL, gpszRunCmd, lpSec,lpSec, lbInheritHandle,
 		                      NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
 		                      |CREATE_SUSPENDED/*((gpStatus->runMode_ == RunMode::RM_SERVER) ? CREATE_SUSPENDED : 0)*/,
 		                      NULL, pszCurDir, &si, &pi);
@@ -1264,7 +1259,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 						SetCurrentDirectory(pszCurDir);
 						// Пробуем еще раз, в родительской директории
 						// Не будем разрешать наследование, если нужно - сделаем DuplicateHandle
-						lbRc = createProcess(!gbSkipWowChange, NULL, gpszRunCmd, NULL,NULL, FALSE/*TRUE*/,
+						lbRc = createProcess(!gState.bSkipWowChange_, NULL, gpszRunCmd, NULL,NULL, FALSE/*TRUE*/,
 						                      NORMAL_PRIORITY_CLASS/*|CREATE_NEW_PROCESS_GROUP*/
 						                      |CREATE_SUSPENDED/*((gpStatus->runMode_ == RunMode::RM_SERVER) ? CREATE_SUSPENDED : 0)*/,
 						                      NULL, pszCurDir, &si, &pi);
@@ -2365,45 +2360,6 @@ void UpdateConsoleTitle()
 	SafeFree(pszBuffer);
 }
 
-#ifndef WIN64
-void CheckNeedSkipWowChange(LPCWSTR asCmdLine)
-{
-	LogFunction(L"CheckNeedSkipWowChange");
-
-	// Команды вида: C:\Windows\SysNative\reg.exe Query "HKCU\Software\Far2"|find "Far"
-	// Для них нельзя отключать редиректор (wow.Disable()), иначе SysNative будет недоступен
-	if (IsWindows64())
-	{
-		LPCWSTR pszTest = asCmdLine;
-		CmdArg szApp;
-
-		if ((pszTest = NextArg(pszTest, szApp)))
-		{
-			wchar_t szSysnative[MAX_PATH+32];
-			int nLen = GetWindowsDirectory(szSysnative, MAX_PATH);
-
-			if (nLen >= 2 && nLen < MAX_PATH)
-			{
-				AddEndSlash(szSysnative, countof(szSysnative));
-				wcscat_c(szSysnative, L"Sysnative\\");
-				nLen = lstrlenW(szSysnative);
-				int nAppLen = lstrlenW(szApp);
-
-				if (nAppLen > nLen)
-				{
-					szApp.ms_Val[nLen] = 0;
-
-					if (lstrcmpiW(szApp, szSysnative) == 0)
-					{
-						gbSkipWowChange = TRUE;
-					}
-				}
-			}
-		}
-	}
-}
-#endif
-
 // Allow smth like: ConEmuC -c {Far} /e text.txt
 wchar_t* ExpandTaskCmd(LPCWSTR asCmdLine)
 {
@@ -2443,6 +2399,7 @@ wchar_t* ExpandTaskCmd(LPCWSTR asCmdLine)
 	return pszResult;
 }
 
+// #ConsoleArgs remove ParseCommandLine
 #if 0
 // Parse ConEmuC command line switches
 int ParseCommandLine(LPCWSTR asCmdLine)
@@ -4260,7 +4217,8 @@ void SendStarted()
 			PRINT_COMSPEC(L"Starting: <%s>", lsRoot);
 
 			MWow64Disable wow;
-			if (!gbSkipWowChange) wow.Disable();
+			if (!gState.bSkipWowChange_)
+				wow.Disable();
 
 			DWORD nImageFileAttr = 0;
 			if (!GetImageSubsystem(lsRoot, gnImageSubsystem, gnImageBits, nImageFileAttr))
