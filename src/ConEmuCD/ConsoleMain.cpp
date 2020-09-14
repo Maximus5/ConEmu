@@ -617,7 +617,9 @@ void LoadExePath()
 	if (gsSelfExe[0] && gsSelfPath[0])
 		return;
 
-	DWORD nSelfLen = GetModuleFileNameW(NULL, gsSelfExe, countof(gsSelfExe));
+	_ASSERTE(ghOurModule != nullptr);
+
+	const DWORD nSelfLen = GetModuleFileNameW(ghOurModule, gsSelfExe, countof(gsSelfExe));
 	if (!nSelfLen || (nSelfLen >= countof(gsSelfExe)))
 	{
 		_ASSERTE(FALSE && "GetModuleFileNameW(NULL) failed");
@@ -626,7 +628,7 @@ void LoadExePath()
 	else
 	{
 		lstrcpyn(gsSelfPath, gsSelfExe, countof(gsSelfPath));
-		wchar_t* pszSlash = (wchar_t*)PointToName(gsSelfPath);
+		wchar_t* pszSlash = const_cast<wchar_t*>(PointToName(gsSelfPath));
 		if (pszSlash && (pszSlash > gsSelfPath))
 			*pszSlash = 0;
 		else
