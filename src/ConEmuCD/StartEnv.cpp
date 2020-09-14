@@ -39,7 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../ConEmuHk/SetHook.h"
 
-wchar_t* gpszForcedTitle = NULL;
+wchar_t* gpszForcedTitle = nullptr;
 
 // old-issues#60: On some systems (Win2k3, WinXP) SetConsoleCP and SetConsoleOutputCP just hangs!
 // That's why we call them in background thread, and if it hangs - TerminateThread it.

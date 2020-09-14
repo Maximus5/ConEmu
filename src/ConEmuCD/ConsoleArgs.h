@@ -165,7 +165,7 @@ public:
 	bool IsForceHideConWnd() const;
 
 public:
-	/// All arguments, except our executable
+	/// All arguments (unstripped command line)
 	CEStr fullCmdLine_;
 	/// The shell command line or script. e.g. "cmd.exe" or "cmd ||| powershell"
 	CEStr command_;

@@ -34,6 +34,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
+#include "../common/RConStartArgs.h"
+
+class CProcessEnvCmd;
 struct ConProcess;
 class DebuggerInfo;
 enum class DumpProcessType;
@@ -58,7 +61,16 @@ public:
 	virtual int Init() { return 0; };
 	virtual void Done(int exitCode, bool reportShutdown = false);
 
+	/// Apply known switches one by one
 	virtual int ProcessCommandLineArgs();
+	/// Apply logic on all processes params
+	virtual int PostProcessParams();
+	/// Returns our instance of environment processor
+	CProcessEnvCmd* EnvCmdProcessor();
+
+	/// Update ConIn INSERT and other flags. The desired modes
+	/// could be specified via /CInMode=XXX or -new_console:w switch
+	void InitConsoleInputMode() const;
 
 	virtual bool IsCmdK() const;
 	virtual void SetCmdK(bool useCmdK);
@@ -129,7 +141,18 @@ protected:
 	int ParamAttachGuiApp();
 	/// Process any of "/AutoAttach", "/AttachDefTerm"
 	int ParamAutoAttach() const;
+
+	/// Check if we allowed to attach
+	int PostProcessCanAttach() const;
+	/// Expand variables, parse -new_console, do other final preparations
+	int PostProcessPrepareCommandLine();
+
+	/// Check processes in the console and select one we consider as "root"
+	int CheckAttachProcess();
+	/// Check if the GUI version is compatible
+	int CheckGuiVersion();
 	
+	// ReSharper disable once CppRedundantAccessSpecifier
 protected:
 	MModule kernel32;
 	
@@ -169,6 +192,13 @@ protected:
 	SetConsoleDisplayMode_t pfnSetConsoleDisplayMode = nullptr;
 
 	bool wasFullscreenMode_ = false;
+
+	// parsed from command line
+	RConStartArgs args_;
+
+	std::shared_ptr<CProcessEnvCmd> pSetEnv_{};
+	LPCWSTR pszCheck4NeedCmd_ = nullptr; // debugging purposes
+	wchar_t gszComSpec[MAX_PATH+1] = {0};
 };
 
 extern WorkerBase* gpWorker;  // NOLINT(readability-redundant-declaration)

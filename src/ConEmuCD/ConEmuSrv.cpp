@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DumpOnException.h"
 #include "SrvPipes.h"
 #include "Queue.h"
+#include "StartEnv.h"
 
 //#define DEBUGSTRINPUTEVENT(s) //DEBUGSTR(s) // SetEvent(gpSrv->hInputEvent)
 //#define DEBUGLOGINPUT(s) DEBUGSTR(s) // ConEmuC.MouseEvent(X=
@@ -507,41 +508,6 @@ int WorkerServer::AttachRootProcess()
 	}
 
 	return 0; // OK
-}
-
-BOOL WorkerServer::ServerInitConsoleMode()
-{
-	LogFunction(L"ServerInitConsoleMode");
-
-	BOOL bConRc = FALSE;
-
-	HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
-	DWORD dwFlags = 0;
-	bConRc = GetConsoleMode(h, &dwFlags);
-	LogModeChange(L"[GetConInMode]", 0, dwFlags);
-
-	const DWORD nConsoleModeFlags = static_cast<DWORD>(gpConsoleArgs->consoleModeFlags_.GetInt());
-
-	// This can be passed with "/CINMODE=..."
-	// oWerwrite mode could be enabled with "-cur_console:w" switch (processed in GUI)
-	if (!nConsoleModeFlags)
-	{
-		// Use defaults (switch /CINMODE= was not specified)
-		// DON'T turn on ENABLE_QUICK_EDIT_MODE by default, let console applications "use" mouse
-		dwFlags |= (ENABLE_EXTENDED_FLAGS | ENABLE_INSERT_MODE);
-	}
-	else
-	{
-		DWORD nMask = (nConsoleModeFlags & 0xFFFF0000) >> 16;
-		DWORD nOr   = (nConsoleModeFlags & 0xFFFF);
-		dwFlags &= ~nMask;
-		dwFlags |= (nOr | ENABLE_EXTENDED_FLAGS);
-	}
-
-	bConRc = SetConsoleMode(h, dwFlags); //-V519
-	LogModeChange(L"[SetConInMode]", 0, dwFlags);
-
-	return bConRc;
 }
 
 int WorkerServer::ServerInitCheckExisting(bool abAlternative)
@@ -1081,14 +1047,6 @@ int WorkerServer::Init()
 	else
 	{
 		_ASSERTE(gpState->runMode_==RunMode::AutoAttach);
-	}
-
-
-	// Configure mouse selection and other flags in conhost
-	if ((gpState->runMode_ == RunMode::Server) && !gpState->noCreateProcess_)
-	{
-		//DumpInitStatus("\nServerInit: ServerInitConsoleMode");
-		ServerInitConsoleMode();
 	}
 
 	//2009-08-27 Перенес снизу
@@ -1683,7 +1641,7 @@ int WorkerServer::ProcessCommandLineArgs()
 		gpWorker->SetRootProcessHandle(GetCurrentProcess());
 		//gpState->conemuPid_ = ...;
 		
-		gpszRunCmd = static_cast<wchar_t*>(calloc(1, 2));
+		gpszRunCmd = lstrdup(L"");
 
 		CreateColorerHeader();
 	}
@@ -5006,4 +4964,27 @@ int WorkerServer::MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
 	if (hCombine) { DeleteObject(hCombine); hCombine = NULL; }
 
 	return iRc;
+}
+
+void WorkerServer::ApplyProcessSetEnvCmd()
+{
+	#ifdef _DEBUG
+	CStartEnv::UnitTests();
+	#endif
+
+	CStartEnv setEnv;
+	EnvCmdProcessor()->Apply(&setEnv);
+}
+
+// Lines come from Settings/Environment page
+void WorkerServer::ApplyEnvironmentCommands(LPCWSTR pszCommands)
+{
+	if (!pszCommands || !*pszCommands)
+	{
+		_ASSERTE(pszCommands && *pszCommands);
+		return;
+	}
+
+	// These must be applied before commands from CommandLine
+	EnvCmdProcessor()->AddLines(pszCommands, true);
 }

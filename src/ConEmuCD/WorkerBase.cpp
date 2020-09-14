@@ -36,6 +36,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "WorkerBase.h"
 
+
+#include "ConEmuCmd.h"
 #include "ConProcess.h"
 #include "ConsoleArgs.h"
 #include "ConsoleMain.h"
@@ -44,8 +46,12 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DumpOnException.h"
 #include "ExitCodes.h"
 #include "ExportedFunctions.h"
+#include "StartEnv.h"
 #include "StdCon.h"
+#include "../common/MProcess.h"
+#include "../common/ProcessSetEnv.h"
 #include "../common/SetEnvVar.h"
+#include "../common/TerminalMode.h"
 
 /* Console Handles */
 MConHandle ghConOut(L"CONOUT$");
@@ -105,6 +111,8 @@ int WorkerBase::ProcessCommandLineArgs()
 {
 	LogFunction(L"ParseCommandLine{in-progress-base}");
 
+	xf_check();
+
 	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
 	int iRc = 0;
 
@@ -112,7 +120,27 @@ int WorkerBase::ProcessCommandLineArgs()
 	{
 		CreateLogSizeFile(0);
 	}
-	
+
+	if (!gpConsoleArgs->unknownSwitch_.IsEmpty())
+	{
+		if (gpConsoleArgs->command_.IsEmpty())
+		{
+			Help();
+			_printf("\n\nParsing command line failed (/C argument not found):\n");
+			_wprintf(gpConsoleArgs->fullCmdLine_.c_str(L""));
+
+		}
+		else
+		{
+			_printf("Parsing command line failed:\n");
+			_wprintf(gpConsoleArgs->fullCmdLine_.c_str(L""));
+		}
+		_printf("\nUnknown parameter:\n");
+		_wprintf(gpConsoleArgs->unknownSwitch_.GetStr());
+		_printf("\n");
+		return CERR_CMDLINEEMPTY;
+	}
+
 	if (gpConsoleArgs->needCdToProfileDir_)
 	{
 		CdToProfileDir();
@@ -170,6 +198,410 @@ int WorkerBase::ProcessCommandLineArgs()
 	{
 		if ((iRc = ParamDebugDump()) != 0)
 			return iRc;
+	}
+
+	return 0;
+}
+
+int WorkerBase::PostProcessParams()
+{
+	int iRc = 0;
+
+	xf_check();
+
+	if ((gpState->attachMode_ & am_DefTerm) && !gbParmVisibleSize)
+	{
+		// To avoid "small" and trimmed text after starting console
+		_ASSERTE(gcrVisibleSize.X==80 && gcrVisibleSize.Y==25);
+		gbParmVisibleSize = true;
+	}
+
+	if (gpState->attachMode_)
+	{
+		if ((iRc = PostProcessCanAttach()) != 0)
+			return iRc;
+	}
+
+	// Debugger or minidump requested?
+	// Switches ‘/DEBUGPID=PID1[,PID2[...]]’ to debug already running process
+	// or ‘/DEBUGEXE <your command line>’ or ‘/DEBUGTREE <your command line>’
+	// to start new process and debug it (and its children if ‘/DEBUGTREE’)
+	if (gpWorker->IsDebugProcess())
+	{
+		_ASSERTE(gpState->runMode_ == RunMode::Undefined);
+		// Run debugger thread and wait for its completion
+		iRc = gpWorker->DbgInfo().RunDebugger();
+		return iRc;
+	}
+
+	if ((iRc = PostProcessPrepareCommandLine()) != 0)
+	{
+		return iRc;
+	}
+
+	InitConsoleInputMode();
+
+	return 0;
+}
+
+CProcessEnvCmd* WorkerBase::EnvCmdProcessor()
+{
+	if (!pSetEnv_)
+		pSetEnv_ = std::make_shared<CProcessEnvCmd>();
+	return pSetEnv_.get();
+}
+
+int WorkerBase::PostProcessPrepareCommandLine()
+{
+	int iRc = 0;
+
+	// Validate Сonsole (find it may be) or ChildGui process we need to attach into ConEmu window
+	if (((gpState->runMode_ == RunMode::Server) || (gpState->runMode_ == RunMode::AutoAttach))
+		&& (gpState->noCreateProcess_ && gpState->attachMode_))
+	{
+		// Проверить процессы в консоли, подобрать тот, который будем считать "корневым"
+		const int nChk = CheckAttachProcess();
+
+		if (nChk != 0)
+			return nChk;
+
+		gpszRunCmd = lstrdup(L"");
+
+		if (!gpszRunCmd)
+		{
+			_printf("Can't allocate 1 wchar!\n");
+			return CERR_NOTENOUGHMEM1;
+		}
+
+		return 0;
+	}
+
+	xf_check();
+
+	if (gpState->runMode_ == RunMode::Undefined)
+	{
+		LogString(L"CERR_CARGUMENT: Parsing command line failed (/C argument not found)");
+		_printf("Parsing command line failed (/C argument not found):\n");
+		_wprintf(gpConsoleArgs->fullCmdLine_.c_str(L""));
+		_printf("\n");
+		_ASSERTE(FALSE);
+		return CERR_CARGUMENT;
+	}
+
+	xf_check();
+
+	// Prepare our environment and GUI window
+	if (gpState->runMode_ == RunMode::Server)
+	{
+		if ((iRc = CheckGuiVersion()) != 0)
+			return iRc;
+	}
+
+	xf_check();
+
+	LPCWSTR lsCmdLine = gpConsoleArgs->command_.c_str(L"");
+
+	if (gpState->runMode_ == RunMode::Comspec)
+	{
+		// New console was requested?
+		if (IsNewConsoleArg(lsCmdLine))
+		{
+			auto* comspec = dynamic_cast<WorkerComspec*>(gpWorker);
+			if (!comspec)
+			{
+				_ASSERTE(comspec != nullptr);
+			}
+			else
+			{
+				const auto iNewConRc = comspec->ProcessNewConsoleArg(lsCmdLine);
+				if (iNewConRc != 0)
+				{
+					return iNewConRc;
+				}
+			}
+		}
+	}
+
+	LPCWSTR pszArguments4EnvVar = nullptr;
+	CEStr szExeTest;
+
+	if (gpState->runMode_ == RunMode::Comspec && (!lsCmdLine || !*lsCmdLine))
+	{
+		if (gpWorker->IsCmdK())
+		{
+			gpState->runViaCmdExe_ = true;
+		}
+		else
+		{
+			// In Far Manager user may set up an empty association for file mask (execution)
+			// e.g: *.ini -> "@"
+			// in that case it looks like Far does not do anything, but it calls ComSpec
+			gbNonGuiMode = TRUE;
+			gpState->DisableAutoConfirmExit();
+			return CERR_EMPTY_COMSPEC_CMDLINE;
+		}
+	}
+	else
+	{
+		bool bAlwaysConfirmExit = gpState->alwaysConfirmExit_;
+		bool bAutoDisableConfirmExit = gpState->autoDisableConfirmExit_;
+
+		if (gpState->runMode_ == RunMode::Server)
+		{
+			LogFunction(L"ProcessSetEnvCmd {set, title, chcp, etc.}");
+			// Console may be started as follows:
+			// "set PATH=C:\Program Files;%PATH%" & ... & cmd
+			// Supported commands:
+			//  set abc=val
+			//  "set PATH=C:\Program Files;%PATH%"
+			//  chcp [utf8|ansi|oem|<cp_no>]
+			//  title "Console init title"
+			auto* pSetEnv = EnvCmdProcessor();
+			CStartEnvTitle setTitleVar(&gpszForcedTitle);
+			ProcessSetEnvCmd(lsCmdLine, pSetEnv, &setTitleVar);
+		}
+
+		pszCheck4NeedCmd_ = lsCmdLine;
+
+		gpState->runViaCmdExe_ = IsNeedCmd((gpState->runMode_ == RunMode::Server), lsCmdLine, szExeTest,
+			&pszArguments4EnvVar, &gpState->needCutStartEndQuot_, &gpState->rootIsCmdExe_, &bAlwaysConfirmExit, &bAutoDisableConfirmExit);
+
+		if (gpConsoleArgs->confirmExitParm_ == RConStartArgs::eConfDefault)
+		{
+			gpState->alwaysConfirmExit_ = bAlwaysConfirmExit;
+			gpState->autoDisableConfirmExit_ = bAutoDisableConfirmExit;
+		}
+	}
+
+
+	#ifndef WIN64
+	// Команды вида: C:\Windows\SysNative\reg.exe Query "HKCU\Software\Far2"|find "Far"
+	// Для них нельзя отключать редиректор (wow.Disable()), иначе SysNative будет недоступен
+	CheckNeedSkipWowChange(lsCmdLine);
+	#endif
+
+	int nCmdLine = lstrlenW(lsCmdLine);
+
+	if (!gpState->runViaCmdExe_)
+	{
+		nCmdLine += 1; // только место под 0
+		if (pszArguments4EnvVar && *szExeTest)
+			nCmdLine += lstrlen(szExeTest)+3;
+	}
+	else
+	{
+		gszComSpec[0] = 0;
+		LPCWSTR pszFind = GetComspecFromEnvVar(gszComSpec, countof(gszComSpec));
+		if (!pszFind || !wcschr(pszFind, L'\\') || !FileExists(pszFind))
+		{
+			_ASSERTE("cmd.exe not found!");
+			_printf("Can't find cmd.exe!\n");
+			return CERR_CMDEXENOTFOUND;
+		}
+
+		nCmdLine += lstrlenW(gszComSpec) + 15; // "/C" + quotation + possible "/U"
+	}
+
+	// nCmdLine counts length of lsCmdLine + gszComSpec + something for "/C" and things
+	size_t nCchLen = nCmdLine+1;
+	gpszRunCmd = (wchar_t*)calloc(nCchLen,sizeof(wchar_t));
+
+	if (!gpszRunCmd)
+	{
+		_printf("Can't allocate %i wchars!\n", (DWORD)nCmdLine);
+		return CERR_NOTENOUGHMEM1;
+	}
+
+	// это нужно для смены заголовка консоли. при необходимости COMSPEC впишем ниже, после смены
+	if (pszArguments4EnvVar && *szExeTest && !gpState->runViaCmdExe_)
+	{
+		gpszRunCmd[0] = L'"';
+		_wcscat_c(gpszRunCmd, nCchLen, szExeTest);
+		if (*pszArguments4EnvVar)
+		{
+			_wcscat_c(gpszRunCmd, nCchLen, L"\" ");
+			_wcscat_c(gpszRunCmd, nCchLen, pszArguments4EnvVar);
+		}
+		else
+		{
+			_wcscat_c(gpszRunCmd, nCchLen, L"\"");
+		}
+	}
+	else
+	{
+		_wcscpy_c(gpszRunCmd, nCchLen, lsCmdLine);
+	}
+	// !!! gpszRunCmd может поменяться ниже!
+
+	// ====
+	if (gpState->runViaCmdExe_)
+	{
+		// -- always quote
+		gpszRunCmd[0] = L'"';
+		_wcscpy_c(gpszRunCmd+1, nCchLen-1, gszComSpec);
+
+		_wcscat_c(gpszRunCmd, nCchLen, gpWorker->IsCmdK() ? L"\" /K " : L"\" /C ");
+
+		// The command line itself
+		_wcscat_c(gpszRunCmd, nCchLen, lsCmdLine);
+	}
+	else if (gpState->needCutStartEndQuot_)
+	{
+		// ""c:\arc\7z.exe -?"" - would not start!
+		_wcscpy_c(gpszRunCmd, nCchLen, lsCmdLine+1);
+		wchar_t *pszEndQ = gpszRunCmd + lstrlenW(gpszRunCmd) - 1;
+		_ASSERTE(pszEndQ && *pszEndQ == L'"');
+
+		if (pszEndQ && *pszEndQ == L'"') *pszEndQ = 0;
+	}
+
+	// Cut and process the "-new_console" / "-cur_console"
+	SafeFree(args_.pszSpecialCmd);
+	args_.pszSpecialCmd = gpszRunCmd;
+	args_.ProcessNewConArg();
+	args_.pszSpecialCmd = nullptr; // this point to global gpszRunCmd
+	// Если указана рабочая папка
+	if (args_.pszStartupDir && *args_.pszStartupDir)
+	{
+		SetCurrentDirectory(args_.pszStartupDir);
+	}
+	//
+	gbRunInBackgroundTab = (args_.BackgroundTab == crb_On);
+	if (args_.BufHeight == crb_On)
+	{
+		TODO("gcrBufferSize - и ширину буфера");
+		gnBufferHeight = args_.nBufHeight;
+		gbParmBufSize = TRUE;
+	}
+	// DosBox?
+	if (args_.ForceDosBox == crb_On)
+	{
+		gpState->dosbox_.use_ = TRUE;
+	}
+
+	#ifdef _DEBUG
+	OutputDebugString(gpszRunCmd); OutputDebugString(L"\n");
+	#endif
+
+	return 0;
+}
+
+int WorkerBase::CheckGuiVersion()
+{
+	// If we already know the ConEmu HWND (root window)
+	if (!gpState->hGuiWnd)
+		return 0;
+
+	// try to validate it's version
+	DWORD nGuiPid = 0; GetWindowThreadProcessId(gpState->hGuiWnd, &nGuiPid);
+	DWORD nWrongValue = 0;
+	SetLastError(0);
+	const LGSResult lgsRc = ReloadGuiSettings(nullptr, &nWrongValue);
+	if (lgsRc >= lgs_Succeeded)
+		return 0;
+
+	wchar_t szLgs[80];
+	swprintf_c(szLgs, L"LGS=%u, Code=%u, GUI PID=%u, Srv PID=%u", lgsRc, GetLastError(), nGuiPid, GetCurrentProcessId());
+
+	wchar_t szLgsError[200];
+	switch (lgsRc)
+	{
+	case lgs_WrongVersion:
+		swprintf_c(szLgsError, L"Failed to load ConEmu info!\n"
+			L"Found ProtocolVer=%u but Required=%u.\n"
+			L"%s.\n"
+			L"Please update all ConEmu components!",
+			nWrongValue, static_cast<DWORD>(CESERVER_REQ_VER), szLgs);
+		break;
+	case lgs_WrongSize:
+		swprintf_c(szLgsError, L"Failed to load ConEmu info!\n"
+			L"Found MapSize=%u but Required=%u."
+			L"%s.\n"
+			L"Please update all ConEmu components!",
+			nWrongValue, static_cast<DWORD>(sizeof(ConEmuGuiMapping)), szLgs);
+		break;
+	default:
+		swprintf_c(szLgsError, L"Failed to load ConEmu info!\n"
+			L"%s.\n"
+			L"Please update all ConEmu components!",
+			szLgs);
+	}
+
+	// Add log info
+	LogFunction(szLgs);
+
+	// Show user message
+	wchar_t szTitle[128];
+	swprintf_c(szTitle, L"ConEmuC[Srv]: PID=%u", GetCurrentProcessId());
+	MessageBox(nullptr, szLgsError, szTitle, MB_ICONSTOP | MB_SYSTEMMODAL);
+
+	return CERR_WRONG_GUI_VERSION;
+}
+
+int WorkerBase::PostProcessCanAttach() const
+{
+	// Параметры из комстроки разобраны. Здесь могут уже быть известны
+	// gpState->hGuiWnd {/GHWND}, gpState->conemuPid_ {/GPID}, gpState->dwGuiAID {/AID}
+	// gpStatus->attachMode_ для ключей {/ADMIN}, {/ATTACH}, {/AUTOATTACH}, {/GUIATTACH}
+
+	// В принципе, gpStatus->attachMode_ включается и при "/ADMIN", но при запуске из ConEmu такого быть не может,
+	// будут установлены и gpState->hGuiWnd, и gpState->conemuPid_
+
+	// Issue 364, например, идет билд в VS, запускается CustomStep, в этот момент автоаттач нафиг не нужен
+	// Теоретически, в Студии не должно бы быть запуска ConEmuC.exe, но он может оказаться в "COMSPEC", так что проверим.
+	if (gpState->attachMode_
+		&& ((gpState->runMode_ == RunMode::Server) || (gpState->runMode_ == RunMode::AutoAttach))
+		&& (gpState->conemuPid_ == 0))
+	{
+		//-- ассерт не нужен вроде
+		//_ASSERTE(!gbAlternativeAttach && "Alternative mode must be already processed!");
+
+		_ASSERTE(!gpConsoleArgs->debugPidList_.exists);
+
+		BOOL lbIsWindowVisible = FALSE;
+		// Добавим проверку на telnet
+		if (!gpState->realConWnd_
+			|| !(lbIsWindowVisible = gpConsoleArgs->IsAutoAttachAllowed())
+			|| isTerminalMode())
+		{
+			if (gpLogSize)
+			{
+				if (!gpState->realConWnd_) { LogFunction(L"!gpState->realConWnd"); }
+				else if (!lbIsWindowVisible) { LogFunction(L"!IsAutoAttachAllowed"); }
+				else { LogFunction(L"isTerminalMode"); }
+			}
+			// Но это может быть все-таки наше окошко. Как проверить...
+			// Найдем первый параметр
+			// #Server suspicious: previously used in 200713 lsCmdLine should contain empty string on attach
+			const auto* lsCmdLine = gpConsoleArgs->command_.c_str();
+			LPCWSTR pszSlash = lsCmdLine ? wcschr(lsCmdLine, L'/') : nullptr;
+			if (pszSlash)
+			{
+				LogFunction(pszSlash);
+				// И сравним с используемыми у нас. Возможно потом еще что-то добавить придется
+				if (wmemcmp(pszSlash, L"/DEBUGPID=", 10) != 0)
+					pszSlash = NULL;
+			}
+			if (pszSlash == NULL)
+			{
+				// Не наше окошко, выходим
+				gbInShutdown = TRUE;
+				return CERR_ATTACH_NO_CONWND;
+			}
+		}
+
+		if (!gpConsoleArgs->alternativeAttach_ && !(gpState->attachMode_ & am_DefTerm) && !gpWorker->RootProcessId())
+		{
+			// В принципе, сюда мы можем попасть при запуске, например: "ConEmuC.exe /ADMIN /ROOT cmd"
+			// Но только не при запуске "из ConEmu" (т.к. будут установлены gpState->hGuiWnd, gpState->conemuPid_)
+
+			// Из батника убрал, покажем инфу тут
+			PrintVersion();
+			char szAutoRunMsg[128];
+			sprintf_c(szAutoRunMsg, "Starting attach autorun (NewWnd=%s)\n",
+				gpConsoleArgs->requestNewGuiWnd_ ? "YES" : "NO");
+			_printf(szAutoRunMsg);
+		}
 	}
 
 	return 0;
@@ -440,6 +872,7 @@ int WorkerBase::ParamAutoAttach() const
 
 bool WorkerBase::IsCmdK() const
 {
+	_ASSERTE(gpConsoleArgs->cmdK_.GetBool() == false);
 	return false;
 }
 
@@ -916,4 +1349,228 @@ void WorkerBase::CdToProfileDir()
 		LogFunction(pszMsg);
 		SafeFree(pszMsg);
 	}
+}
+
+void WorkerBase::InitConsoleInputMode() const
+{
+	LogFunction(L"InitConsoleInputMode");
+
+	BOOL bConRc = FALSE;
+	wchar_t szErr[128];
+
+	// ReSharper disable once CppLocalVariableMayBeConst
+	HANDLE h = GetStdHandle(STD_INPUT_HANDLE);
+	DWORD dwOldFlags = 0;
+	bConRc = GetConsoleMode(h, &dwOldFlags);
+	if (!bConRc)
+	{
+		swprintf_c(szErr, countof(szErr),
+			L"ERROR: GetConsoleMode failed, handle=%p, error=%u",
+			h, GetLastError());
+		LogString(szErr);
+	}
+
+	LogModeChange(L"[GetConInMode]", 0, dwOldFlags);
+
+	DWORD dwFlags = dwOldFlags;
+
+	// For ComSpec mode it is just 0
+	auto nConsoleModeFlags = static_cast<DWORD>(gpConsoleArgs->consoleModeFlags_.GetInt());
+
+	// Overwrite mode in Prompt? This has priority.
+	if (args_.OverwriteMode != crb_Undefined)
+	{
+		nConsoleModeFlags |= (ENABLE_INSERT_MODE << 16); // Mask
+		if (args_.OverwriteMode == crb_On)
+			nConsoleModeFlags &= ~ENABLE_INSERT_MODE; // Turn bit OFF
+		else if (args_.OverwriteMode == crb_Off)
+			nConsoleModeFlags |= ENABLE_INSERT_MODE; // Turn bit ON
+	}
+
+	// This can be passed with "/CINMODE=..."
+	// oWerwrite mode could be enabled with "-cur_console:w" switch (processed in GUI)
+	if (!nConsoleModeFlags)
+	{
+		// Use defaults (switch /CINMODE= was not specified)
+		// DON'T turn on ENABLE_QUICK_EDIT_MODE by default, let console applications "use" mouse
+		dwFlags |= (ENABLE_EXTENDED_FLAGS | ENABLE_INSERT_MODE);
+	}
+	else
+	{
+		const DWORD nMask = (nConsoleModeFlags & 0xFFFF0000) >> 16;
+		const DWORD nOr   = (nConsoleModeFlags & 0xFFFF);
+		dwFlags &= ~nMask;
+		dwFlags |= (nOr | ENABLE_EXTENDED_FLAGS);
+	}
+
+	bConRc = SetConsoleMode(h, dwFlags); //-V519
+	LogModeChange(L"[SetConInMode]", dwOldFlags, dwFlags);
+
+	if (!bConRc)
+	{
+		swprintf_c(szErr, countof(szErr),
+			L"ERROR: SetConsoleMode failed, handle=%p, flags=0x%X, error=%u",
+			h, dwFlags, GetLastError());
+		LogString(szErr);
+	}
+}
+
+int WorkerBase::CheckAttachProcess()
+{
+	LogFunction(L"CheckAttachProcess");
+
+	int liArgsFailed = 0;
+	wchar_t szFailMsg[512]; szFailMsg[0] = 0;
+	BOOL lbRootExists = FALSE;
+	wchar_t szProc[255] = {}, szTmp[10] = {};
+	DWORD nFindId = 0;
+
+	if (this->RootProcessGui())
+	{
+		if (!IsWindow(this->RootProcessGui()))
+		{
+			swprintf_c(szFailMsg, L"Attach of GUI application was requested,\n"
+				L"but required HWND(0x%08X) not found!", LODWORD(this->RootProcessGui()));
+			LogString(szFailMsg);
+			liArgsFailed = 1;
+			// will return CERR_CARGUMENT
+		}
+		else
+		{
+			DWORD nPid = 0; GetWindowThreadProcessId(this->RootProcessGui(), &nPid);
+			if (this->RootProcessId() && nPid && (this->RootProcessId() != nPid))
+			{
+				swprintf_c(szFailMsg, L"Attach of GUI application was requested,\n"
+					L"but PID(%u) of HWND(0x%08X) does not match Root(%u)!",
+					nPid, LODWORD(this->RootProcessGui()), this->RootProcessId());
+				LogString(szFailMsg);
+				liArgsFailed = 2;
+				// will return CERR_CARGUMENT
+			}
+		}
+	}
+	else if (!this->Processes().IsConsoleProcessCountSupported())
+	{
+		wcscpy_c(szFailMsg, L"Attach to console app was requested, but required WinXP or higher!");
+		LogString(szFailMsg);
+		liArgsFailed = 3;
+		// will return CERR_CARGUMENT
+	}
+	else
+	{
+		auto processes = this->Processes().GetAllProcesses();
+
+		if ((processes.size() == 1) && gpConsoleArgs->creatingHiddenConsole_)
+		{
+			const DWORD nStart = GetTickCount();
+			const DWORD nMaxDelta = 30000;
+			DWORD nDelta = 0;
+			while (nDelta < nMaxDelta)
+			{
+				Sleep(100);
+				processes = this->Processes().GetAllProcesses();
+				if (processes.size() > 1)
+					break;
+				nDelta = (GetTickCount() - nStart);
+			}
+		}
+
+		// 2 процесса, потому что это мы сами и минимум еще один процесс в этой консоли,
+		// иначе смысла в аттаче нет
+		if (processes.size() < 2)
+		{
+			wcscpy_c(szFailMsg, L"Attach to console app was requested, but there is no console processes!");
+			LogString(szFailMsg);
+			liArgsFailed = 4;
+			//will return CERR_CARGUMENT
+		}
+		// не помню, зачем такая проверка была введена, но (nProcCount > 2) мешает аттачу.
+		// в момент запуска сервера (/ATTACH /PID=n) еще жив родительский (/ATTACH /NOCMD)
+		//// Если cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
+		else if ((this->RootProcessId() != 0) || (processes.size() > 2))
+		{
+			lbRootExists = (this->RootProcessId() == 0);
+			// И ругаться только под отладчиком
+			nFindId = 0;
+
+			for (int n = (static_cast<int>(processes.size()) - 1); n >= 0; n--)
+			{
+				if (szProc[0]) wcscat_c(szProc, L", ");
+
+				swprintf_c(szTmp, L"%i", processes[n]);
+				wcscat_c(szProc, szTmp);
+
+				if (this->RootProcessId())
+				{
+					if (!lbRootExists && processes[n] == this->RootProcessId())
+						lbRootExists = TRUE;
+				}
+				else if ((nFindId == 0) && (processes[n] != gnSelfPID))
+				{
+					// Будем считать его корневым.
+					// Собственно, кого считать корневым не важно, т.к.
+					// сервер не закроется до тех пор пока жив хотя бы один процесс
+					nFindId = processes[n];
+				}
+			}
+
+			if ((this->RootProcessId() == 0) && (nFindId != 0))
+			{
+				this->SetRootProcessId(nFindId);
+				lbRootExists = TRUE;
+			}
+
+			if ((this->RootProcessId() != 0) && !lbRootExists)
+			{
+				swprintf_c(szFailMsg, L"Attach to GUI was requested, but\n" L"root process (%u) does not exists", this->RootProcessId());
+				LogString(szFailMsg);
+				liArgsFailed = 5;
+				//will return CERR_CARGUMENT
+			}
+			else if ((this->RootProcessId() == 0) && (processes.size() > 2))
+			{
+				swprintf_c(szFailMsg, L"Attach to GUI was requested, but\n" L"there is more than 2 console processes: %s\n", szProc);
+				LogString(szFailMsg);
+				liArgsFailed = 6;
+				//will return CERR_CARGUMENT
+			}
+		}
+	}
+
+	if (liArgsFailed)
+	{
+		const DWORD nSelfPID = GetCurrentProcessId();
+		PROCESSENTRY32 self = {sizeof(self)}, parent = {sizeof(parent)};
+		// Not optimal, needs refactoring
+		if (GetProcessInfo(nSelfPID, &self))
+			GetProcessInfo(self.th32ParentProcessID, &parent);
+
+		LPCWSTR pszCmdLine = GetCommandLineW(); if (!pszCmdLine) pszCmdLine = L"";
+
+		wchar_t szTitle[MAX_PATH*2];
+		swprintf_c(szTitle,
+			L"ConEmuC %s [%u], PID=%u, Code=%i" L"\r\n"
+			L"ParentPID=%u: %s" L"\r\n"
+			L"  ", // szFailMsg follows this
+			gsVersion, WIN3264TEST(32,64), nSelfPID, liArgsFailed,
+			self.th32ParentProcessID, parent.szExeFile[0] ? parent.szExeFile : L"<terminated>");
+
+		CEStr lsMsg = lstrmerge(szTitle, szFailMsg, L"\r\nCommand line:\r\n  ", pszCmdLine);
+
+		// Avoid automatic termination of ExitWaitForKey
+		gbInShutdown = FALSE;
+
+		// Force light-red on black for error message
+		MSetConTextAttr setAttr(ghConOut, 12);
+
+		const DWORD nAttachErrorTimeoutMessage = 15*1000; // 15 sec
+		ExitWaitForKey(VK_RETURN|(VK_ESCAPE<<8), lsMsg, true, true, nAttachErrorTimeoutMessage);
+
+		LogString(L"CheckAttachProcess: CERR_CARGUMENT after ExitWaitForKey");
+
+		gbInShutdown = TRUE;
+		return CERR_CARGUMENT;
+	}
+
+	return 0; // OK
 }

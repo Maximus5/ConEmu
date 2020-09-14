@@ -197,8 +197,6 @@ void print_error(DWORD dwErr = 0, LPCSTR asFormat = nullptr);
 
 int ParseCommandLine(LPCWSTR asCmdLine);
 wchar_t* ParseConEmuSubst(LPCWSTR asCmd);
-void ApplyEnvironmentCommands(LPCWSTR pszCommands);
-void ApplyProcessSetEnvCmd();
 void UpdateConsoleTitle();
 BOOL SetTitle(LPCWSTR lsTitle);
 void Help();

@@ -475,6 +475,7 @@ int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 
 bool WorkerComspec::IsCmdK() const
 {
+	_ASSERTE(gpConsoleArgs->cmdK_.GetBool() == bK);
 	return bK;
 }
 

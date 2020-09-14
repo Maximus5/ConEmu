@@ -268,7 +268,6 @@ public:
 
 	bool FreezeRefreshThread();
 	bool ThawRefreshThread();
-	BOOL ServerInitConsoleMode();
 	BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO* pData, COORD& bufSize, SMALL_RECT& rgn);
 	BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO* pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn);
 
@@ -295,6 +294,9 @@ public:
 
 protected:
 	static int CALLBACK FontEnumProc(ENUMLOGFONTEX* lpelfe, NEWTEXTMETRICEX* lpntme, DWORD FontType, LPARAM lParam);
+
+	void ApplyProcessSetEnvCmd();
+	void ApplyEnvironmentCommands(LPCWSTR pszCommands);
 
 private:
 	/// Optional console font (may be specified in registry). Up to LF_FACESIZE chars, including \0.

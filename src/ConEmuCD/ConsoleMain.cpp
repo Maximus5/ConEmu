@@ -178,11 +178,7 @@ BOOL    gbComspecInitCalled = FALSE;
 DWORD   gdwMainThreadId = 0;
 wchar_t* gpszRunCmd = NULL;
 wchar_t* gpszTaskCmd = NULL;
-CProcessEnvCmd* gpSetEnv = NULL;
-LPCWSTR gpszCheck4NeedCmd = NULL; // Для отладки
-wchar_t gszComSpec[MAX_PATH+1] = {0};
 bool    gbRunInBackgroundTab = false;
-BOOL    gbRunViaCmdExe = FALSE;
 DWORD   gnImageSubsystem = 0, gnImageBits = 32;
 #ifdef _DEBUG
 size_t gnHeapUsed = 0, gnHeapMax = 0;
@@ -980,7 +976,17 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	if ((iRc = gpWorker->ProcessCommandLineArgs()) != 0)
 	{
 		wchar_t szLog[80];
-		swprintf_c(szLog, L"ParseCommandLine returns %i, exiting", iRc);
+		swprintf_c(szLog, L"ProcessCommandLineArgs returns %i, exiting", iRc);
+		LogFunction(szLog);
+		// Especially if our process was started under non-interactive account,
+		// than ExitWaitForKey causes the infinitely running process, which user can't kill easily
+		gbInShutdown = true;
+		goto wrap;
+	}
+	if ((iRc = gpWorker->PostProcessParams()) != 0)
+	{
+		wchar_t szLog[80];
+		swprintf_c(szLog, L"PostProcessParams returns %i, exiting", iRc);
 		LogFunction(szLog);
 		// Especially if our process was started under non-interactive account,
 		// than ExitWaitForKey causes the infinitely running process, which user can't kill easily
@@ -1148,7 +1154,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		{
 			DosBoxHelp();
 		}
-		else if (gpState->runMode_ == RunMode::Server && !gbRunViaCmdExe)
+		else if (gpState->runMode_ == RunMode::Server && !gpState->runViaCmdExe_)
 		{
 			// Проверить, может пытаются запустить GUI приложение как вкладку в ConEmu?
 			if (((si.dwFlags & STARTF_USESHOWWINDOW) && (si.wShowWindow == SW_HIDE))
@@ -1944,7 +1950,6 @@ AltServerDone:
 	}
 
 	ShutdownSrvStep(L"Finalizing done");
-	UNREFERENCED_PARAMETER(gpszCheck4NeedCmd);
 	UNREFERENCED_PARAMETER(nWaitDebugExit);
 	UNREFERENCED_PARAMETER(nWaitComspecExit);
 #if 0
@@ -2209,167 +2214,6 @@ void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo/*=NULL*
 	_printf("\n");
 }
 
-int CheckAttachProcess()
-{
-	LogFunction(L"CheckAttachProcess");
-
-	int liArgsFailed = 0;
-	wchar_t szFailMsg[512]; szFailMsg[0] = 0;
-	BOOL lbRootExists = FALSE;
-	wchar_t szProc[255] = {}, szTmp[10] = {};
-	DWORD nFindId = 0;
-
-	if (gpWorker->RootProcessGui())
-	{
-		if (!IsWindow(gpWorker->RootProcessGui()))
-		{
-			swprintf_c(szFailMsg, L"Attach of GUI application was requested,\n"
-				L"but required HWND(0x%08X) not found!", LODWORD(gpWorker->RootProcessGui()));
-			LogString(szFailMsg);
-			liArgsFailed = 1;
-			// will return CERR_CARGUMENT
-		}
-		else
-		{
-			DWORD nPid = 0; GetWindowThreadProcessId(gpWorker->RootProcessGui(), &nPid);
-			if (gpWorker->RootProcessId() && nPid && (gpWorker->RootProcessId() != nPid))
-			{
-				swprintf_c(szFailMsg, L"Attach of GUI application was requested,\n"
-					L"but PID(%u) of HWND(0x%08X) does not match Root(%u)!",
-					nPid, LODWORD(gpWorker->RootProcessGui()), gpWorker->RootProcessId());
-				LogString(szFailMsg);
-				liArgsFailed = 2;
-				// will return CERR_CARGUMENT
-			}
-		}
-	}
-	else if (!gpWorker->Processes().IsConsoleProcessCountSupported())
-	{
-		wcscpy_c(szFailMsg, L"Attach to console app was requested, but required WinXP or higher!");
-		LogString(szFailMsg);
-		liArgsFailed = 3;
-		// will return CERR_CARGUMENT
-	}
-	else
-	{
-		auto processes = gpWorker->Processes().GetAllProcesses();
-
-		if ((processes.size() == 1) && gpConsoleArgs->creatingHiddenConsole_)
-		{
-			const DWORD nStart = GetTickCount();
-			const DWORD nMaxDelta = 30000;
-			DWORD nDelta = 0;
-			while (nDelta < nMaxDelta)
-			{
-				Sleep(100);
-				processes = gpWorker->Processes().GetAllProcesses();
-				if (processes.size() > 1)
-					break;
-				nDelta = (GetTickCount() - nStart);
-			}
-		}
-
-		// 2 процесса, потому что это мы сами и минимум еще один процесс в этой консоли,
-		// иначе смысла в аттаче нет
-		if (processes.size() < 2)
-		{
-			wcscpy_c(szFailMsg, L"Attach to console app was requested, but there is no console processes!");
-			LogString(szFailMsg);
-			liArgsFailed = 4;
-			//will return CERR_CARGUMENT
-		}
-		// не помню, зачем такая проверка была введена, но (nProcCount > 2) мешает аттачу.
-		// в момент запуска сервера (/ATTACH /PID=n) еще жив родительский (/ATTACH /NOCMD)
-		//// Если cmd.exe запущен из cmd.exe (в консоли уже больше двух процессов) - ничего не делать
-		else if ((gpWorker->RootProcessId() != 0) || (processes.size() > 2))
-		{
-			lbRootExists = (gpWorker->RootProcessId() == 0);
-			// И ругаться только под отладчиком
-			nFindId = 0;
-
-			for (int n = (static_cast<int>(processes.size()) - 1); n >= 0; n--)
-			{
-				if (szProc[0]) wcscat_c(szProc, L", ");
-
-				swprintf_c(szTmp, L"%i", processes[n]);
-				wcscat_c(szProc, szTmp);
-
-				if (gpWorker->RootProcessId())
-				{
-					if (!lbRootExists && processes[n] == gpWorker->RootProcessId())
-						lbRootExists = TRUE;
-				}
-				else if ((nFindId == 0) && (processes[n] != gnSelfPID))
-				{
-					// Будем считать его корневым.
-					// Собственно, кого считать корневым не важно, т.к.
-					// сервер не закроется до тех пор пока жив хотя бы один процесс
-					nFindId = processes[n];
-				}
-			}
-
-			if ((gpWorker->RootProcessId() == 0) && (nFindId != 0))
-			{
-				gpWorker->SetRootProcessId(nFindId);
-				lbRootExists = TRUE;
-			}
-
-			if ((gpWorker->RootProcessId() != 0) && !lbRootExists)
-			{
-				swprintf_c(szFailMsg, L"Attach to GUI was requested, but\n" L"root process (%u) does not exists", gpWorker->RootProcessId());
-				LogString(szFailMsg);
-				liArgsFailed = 5;
-				//will return CERR_CARGUMENT
-			}
-			else if ((gpWorker->RootProcessId() == 0) && (processes.size() > 2))
-			{
-				swprintf_c(szFailMsg, L"Attach to GUI was requested, but\n" L"there is more than 2 console processes: %s\n", szProc);
-				LogString(szFailMsg);
-				liArgsFailed = 6;
-				//will return CERR_CARGUMENT
-			}
-		}
-	}
-
-	if (liArgsFailed)
-	{
-		DWORD nSelfPID = GetCurrentProcessId();
-		PROCESSENTRY32 self = {sizeof(self)}, parent = {sizeof(parent)};
-		// Not optimal, needs refactoring
-		if (GetProcessInfo(nSelfPID, &self))
-			GetProcessInfo(self.th32ParentProcessID, &parent);
-
-		LPCWSTR pszCmdLine = GetCommandLineW(); if (!pszCmdLine) pszCmdLine = L"";
-
-		wchar_t szTitle[MAX_PATH*2];
-		swprintf_c(szTitle,
-			L"ConEmuC %s [%u], PID=%u, Code=%i" L"\r\n"
-			L"ParentPID=%u: %s" L"\r\n"
-			L"  ", // szFailMsg follows this
-			gsVersion, WIN3264TEST(32,64), nSelfPID, liArgsFailed,
-			self.th32ParentProcessID, parent.szExeFile[0] ? parent.szExeFile : L"<terminated>");
-
-		CEStr lsMsg = lstrmerge(szTitle, szFailMsg, L"\r\nCommand line:\r\n  ", pszCmdLine);
-
-		// Avoid automatic termination of ExitWaitForKey
-		gbInShutdown = FALSE;
-
-		// Force light-red on black for error message
-		MSetConTextAttr setAttr(ghConOut, 12);
-
-		const DWORD nAttachErrorTimeoutMessage = 15*1000; // 15 sec
-		ExitWaitForKey(VK_RETURN|(VK_ESCAPE<<8), lsMsg, true, true, nAttachErrorTimeoutMessage);
-
-		LogString(L"CheckAttachProcess: CERR_CARGUMENT after ExitWaitForKey");
-
-		gbInShutdown = TRUE;
-		return CERR_CARGUMENT;
-	}
-
-	return 0; // OK
-}
-
-
 // 1. Substitute vars like: !ConEmuHWND!, !ConEmuDrawHWND!, !ConEmuBackHWND!, !ConEmuWorkDir!
 // 2. Expand environment variables (e.g. PowerShell doesn't accept %vars% as arguments)
 wchar_t* ParseConEmuSubst(LPCWSTR asCmd)
@@ -2557,37 +2401,6 @@ void CheckNeedSkipWowChange(LPCWSTR asCmdLine)
 	}
 }
 #endif
-
-void ApplyProcessSetEnvCmd()
-{
-	#ifdef _DEBUG
-	CStartEnv::UnitTests();
-	#endif
-
-	if (gpSetEnv)
-	{
-		CStartEnv setEnv;
-		gpSetEnv->Apply(&setEnv);
-	}
-}
-
-// Lines come from Settings/Environment page
-void ApplyEnvironmentCommands(LPCWSTR pszCommands)
-{
-	if (!pszCommands || !*pszCommands)
-	{
-		_ASSERTE(pszCommands && *pszCommands);
-		return;
-	}
-
-	UINT nSetCP = 0; // Postponed
-
-	if (!gpSetEnv)
-		gpSetEnv = new CProcessEnvCmd();
-
-	// These must be applied before commands from CommandLine
-	gpSetEnv->AddLines(pszCommands, true);
-}
 
 // Allow smth like: ConEmuC -c {Far} /e text.txt
 wchar_t* ExpandTaskCmd(LPCWSTR asCmdLine)
@@ -3542,7 +3355,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 		if (nChk != 0)
 			return nChk;
 
-		gpszRunCmd = (wchar_t*)calloc(1,2);
+		gpszRunCmd = lstrdup(L"");
 
 		if (!gpszRunCmd)
 		{
@@ -3550,7 +3363,6 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 			return CERR_NOTENOUGHMEM1;
 		}
 
-		gpszRunCmd[0] = 0;
 		return 0;
 	}
 
@@ -3779,7 +3591,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 	// ====
 	if (gbRunViaCmdExe)
 	{
-		// -- always quotate
+		// -- always quote
 		gpszRunCmd[0] = L'"';
 		_wcscpy_c(gpszRunCmd+1, nCchLen-1, gszComSpec);
 
@@ -3829,6 +3641,7 @@ int ParseCommandLine(LPCWSTR asCmdLine)
 
 		// Поскольку ключик указан через "-cur_console/-new_console"
 		// смену режима нужно сделать сразу, т.к. функа зовется только для сервера
+		// #Server this is called twice during startup
 		WorkerServer::Instance().ServerInitConsoleMode();
 	}
 

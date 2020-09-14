@@ -91,6 +91,10 @@ struct ConsoleState final
 	bool rootAliveLess10sec_ = false;
 	/// if true - triggers bufferheight during sst_ServerStart
 	bool rootIsCmdExe_ = true;
+	/// if command line is double-double-quoted: ""file" ... args"
+	bool needCutStartEndQuot_ = false;
+	/// if true - we need to run the command through cmd.exe
+	bool runViaCmdExe_ = false;
 
 	/// Started child process
 	PROCESS_INFORMATION pi_ = {};
