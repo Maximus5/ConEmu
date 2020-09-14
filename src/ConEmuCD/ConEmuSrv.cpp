@@ -1623,7 +1623,7 @@ void WorkerServer::Done(const int exitCode, const bool reportShutdown /*= false*
 int WorkerServer::ProcessCommandLineArgs()
 {
 	const int baseRc = WorkerBase::ProcessCommandLineArgs();
-	if (!baseRc)
+	if (baseRc != 0)
 		return baseRc;
 	
 	LogFunction(L"ParseCommandLine{in-progress-server}");
@@ -2127,7 +2127,11 @@ void WorkerServer::SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 
 		// Than check GuiPID
 		DWORD nGuiPid = 0;
-		if (GetWindowThreadProcessId(hRootWnd, &nGuiPid) && nGuiPid)
+		if (!hRootWnd)
+		{
+			gState.conemuPid_ = 0;
+		}
+		else if (GetWindowThreadProcessId(hRootWnd, &nGuiPid) && nGuiPid)
 		{
 			gState.conemuPid_ = nGuiPid;
 		}
@@ -2163,7 +2167,7 @@ void WorkerServer::SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 		SetConEmuEnvVarChild(hDcWnd, hBackWnd);
 	}
 
-	if (gpLogSize && *szInfo)
+	if (gpLogSize && szInfo[0])
 	{
 		LogFunction(szInfo);
 	}

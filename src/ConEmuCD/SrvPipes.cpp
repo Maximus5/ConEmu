@@ -295,7 +295,7 @@ BOOL WINAPI DataServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ* &pp
 		DWORD ccCells = iWidth * iHeight;
 
 		const auto& crMaxSize = gpSrv->pConsole->ConState.crMaxSize;
-		_ASSERTE(crMaxSize.X >= 0 && crMaxSize.Y < 0);
+		_ASSERTE(crMaxSize.X > 0 && crMaxSize.Y > 0);
 		// We should fit, ReadConsoleData corrects possible size. But check.
 		const DWORD ccMaxSizeCells = static_cast<uint32_t>(static_cast<uint16_t>(crMaxSize.X))
 			* static_cast<uint32_t>(static_cast<uint16_t>(crMaxSize.Y));

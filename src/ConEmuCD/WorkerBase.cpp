@@ -647,13 +647,14 @@ int WorkerBase::ParamConEmuGuiWnd() const
 	}
 	else
 	{
-		wchar_t szLog[120];
-		const bool isWnd = gState.hGuiWnd ? IsWindow(gState.hGuiWnd) : FALSE;
-		const DWORD nErr = gState.hGuiWnd ? GetLastError() : 0;
+		const HWND2 hGuiWnd{ LODWORD(gpConsoleArgs->conemuHwnd_.GetInt()) };
+		const bool isWnd = hGuiWnd ? IsWindow(hGuiWnd) : FALSE;
+		const DWORD nErr = hGuiWnd ? GetLastError() : 0;
 
+		wchar_t szLog[120];
 		swprintf_c(
 			szLog, L"GUI HWND=0x%08X, %s, ErrCode=%u",
-			LODWORD(gState.hGuiWnd), isWnd ? L"Valid" : L"Invalid", nErr);
+			LODWORD(hGuiWnd), isWnd ? L"Valid" : L"Invalid", nErr);
 		LogString(szLog);
 
 		if (!isWnd)
@@ -668,9 +669,10 @@ int WorkerBase::ParamConEmuGuiWnd() const
 		}
 
 		DWORD nPid = 0;
-		GetWindowThreadProcessId(gState.hGuiWnd, &nPid);
+		GetWindowThreadProcessId(hGuiWnd, &nPid);
 		_ASSERTE(gState.conemuPid_ == 0 || gState.conemuPid_ == nPid);
 		gState.conemuPid_ = nPid;
+		gState.hGuiWnd = hGuiWnd;
 	}
 
 	return 0;
