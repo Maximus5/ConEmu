@@ -60,10 +60,10 @@ bool StdCon::AttachParentConsole(const DWORD parentPid)
 
 		if (attachConsoleFn)
 		{
-			// FreeConsole is required to call even if gpState->realConWnd is already null
+			// FreeConsole is required to call even if gState.realConWnd is already null
 			// Otherwise the AttachConsole will return ERROR_ACCESS_DENIED
 			FreeConsole();
-			gpState->realConWnd_ = nullptr;
+			gState.realConWnd_ = nullptr;
 
 			// Issue 998: Need to wait, while real console will appear
 			// gpWorker->RootProcessHandle() еще не открыт
@@ -93,8 +93,8 @@ bool StdCon::AttachParentConsole(const DWORD parentPid)
 				bAttach = attachConsoleFn(parentPid);
 				if (bAttach)
 				{
-					gpState->realConWnd_ = GetConEmuHWND(2);
-					gbVisibleOnStartup = IsWindowVisible(gpState->realConWnd_);
+					gState.realConWnd_ = GetConEmuHWND(2);
+					gbVisibleOnStartup = IsWindowVisible(gState.realConWnd_);
 					break;
 				}
 				// fails, try again?
@@ -180,7 +180,7 @@ void StdCon::SetWin32TermMode()
 		// Block connector reading thread by our PID
 		pIn2->dwData[3] = GetCurrentProcessId(); // NOLINT(clang-diagnostic-array-bounds)
 
-		CESERVER_REQ* pOut = ExecuteSrvCmd(gnMainServerPID, pIn2, gpState->realConWnd_);
+		CESERVER_REQ* pOut = ExecuteSrvCmd(gnMainServerPID, pIn2, gState.realConWnd_);
 		ExecuteFreeResult(pIn2);
 		ExecuteFreeResult(pOut);
 	}
@@ -190,9 +190,9 @@ void StdCon::SetWin32TermMode()
 void StdCon::ReopenConsoleHandles(STARTUPINFO* si)
 {
 	// _ASSERTE(FALSE && "ReopenConsoleHandles");
-	if (!gpState->reopenStdHandles_)
+	if (!gState.reopenStdHandles_)
 		return;
-	gpState->reopenStdHandles_ = false; // do it only once
+	gState.reopenStdHandles_ = false; // do it only once
 	if (!gReopenedHandles)
 		gReopenedHandles = new ReopenedHandles();
 	if (!gReopenedHandles->Reopen(si))
@@ -232,9 +232,9 @@ bool ReopenedHandles::Reopen(STARTUPINFO* si)
 {
 	bool success = true;
 	// "Connect" to the real console
-	if (success && !gpState->realConWnd_)
+	if (success && !gState.realConWnd_)
 	{
-		_ASSERTE(GetConsoleWindow() == gpState->realConWnd_);
+		_ASSERTE(GetConsoleWindow() == gState.realConWnd_);
 		const CEStr srv_pid(GetEnvVar(ENV_CONEMUSERVERPID_VAR_W));
 		const DWORD pid = srv_pid ? wcstoul(srv_pid.c_str(L""), nullptr, 10) : 0;
 		success = pid ? AttachParentConsole(pid) : false;

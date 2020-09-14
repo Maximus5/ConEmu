@@ -65,7 +65,7 @@ ConProcess::ConProcess(const MModule& kernel32)
 		if (!startProcessCount_)
 		{
 			const DWORD nErr = GetLastError();
-			_ASSERTE(startProcessCount_ || gpState->isWine_);
+			_ASSERTE(startProcessCount_ || gState.isWine_);
 			wchar_t szDbgMsg[512], szFile[MAX_PATH] = {};
 			GetModuleFileName(nullptr, szFile, countof(szFile));
 			msprintf(szDbgMsg, countof(szDbgMsg), L"%s: PID=%u: GetConsoleProcessList failed, code=%u\r\n", PointToName(szFile), gnSelfPID, nErr);
@@ -227,10 +227,10 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 
 	dwProcessLastCheckTick = GetTickCount();
 
-	// Если корневой процесс проработал достаточно (10 сек), значит он живой и gpState->alwaysConfirmExit_ можно сбросить
-	// Если gpState->autoDisableConfirmExit_==FALSE - сброс подтверждение закрытия консоли не выполняется
-	if (gpState->alwaysConfirmExit_  // если уже не сброшен
-	        && gpState->autoDisableConfirmExit_ // требуется ли вообще такая проверка (10 сек)
+	// Если корневой процесс проработал достаточно (10 сек), значит он живой и gState.alwaysConfirmExit_ можно сбросить
+	// Если gState.autoDisableConfirmExit_==FALSE - сброс подтверждение закрытия консоли не выполняется
+	if (gState.alwaysConfirmExit_  // если уже не сброшен
+	        && gState.autoDisableConfirmExit_ // требуется ли вообще такая проверка (10 сек)
 	        && anPrevCount > 1 // если в консоли был зафиксирован запущенный процесс
 	        && gpWorker->RootProcessHandle()) // и корневой процесс был вообще запущен
 	{
@@ -238,19 +238,19 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 		{
 			_ASSERTE(gpConsoleArgs->confirmExitParm_ == RConStartArgs::eConfDefault);
 			// эта проверка выполняется один раз
-			gpState->autoDisableConfirmExit_ = false;
+			gState.autoDisableConfirmExit_ = false;
 			// 10 сек. прошло, теперь необходимо проверить, а жив ли процесс?
 			DWORD dwProcWait = WaitForSingleObject(gpWorker->RootProcessHandle(), 0);
 
 			if (dwProcWait == WAIT_OBJECT_0)
 			{
 				// Корневой процесс завершен, возможно, была какая-то проблема?
-				gpState->rootAliveLess10sec_ = TRUE; // корневой процесс проработал менее 10 сек
+				gState.rootAliveLess10sec_ = TRUE; // корневой процесс проработал менее 10 сек
 			}
 			else
 			{
 				// Корневой процесс все еще работает, считаем что все ок и подтверждения закрытия консоли не потребуется
-				gpState->DisableAutoConfirmExit();
+				gState.DisableAutoConfirmExit();
 				//nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT; // менять nProcessStartTick не нужно. проверка только по флажкам
 			}
 		}
@@ -289,7 +289,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 		        || (pnProcesses[1] == gnSelfPID && pnProcesses[0] == nNtvdmPID))
 		{
 			// Послать в нашу консоль команду закрытия
-			PostMessage(gpState->realConWnd_, WM_CLOSE, 0, 0);
+			PostMessage(gState.realConWnd_, WM_CLOSE, 0, 0);
 		}
 	}
 	#endif
@@ -312,7 +312,7 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 		anPrevCount = 2; // чтобы сработало следующее условие
 		bForcedTo2 = true;
 		//2010-03-06 - установка флажка должна быть при старте сервера
-		//if (!gpState->alwaysConfirmExit_) gpState->alwaysConfirmExit_ = TRUE; // чтобы консоль не схлопнулась
+		//if (!gState.alwaysConfirmExit_) gState.alwaysConfirmExit_ = TRUE; // чтобы консоль не схлопнулась
 	}
 
 	if (anPrevCount > 1 && nProcessCount == 1)
@@ -338,11 +338,11 @@ void ConProcess::ProcessCountChanged(BOOL abChanged, UINT anPrevCount, MSectionL
 			CS.Unlock();
 
 			//2010-03-06 это не нужно, проверки делаются по другому
-			//if (!gpState->alwaysConfirmExit_ && (dwProcessLastCheckTick - nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT) {
-			//	gpState->alwaysConfirmExit_ = TRUE; // чтобы консоль не схлопнулась
+			//if (!gState.alwaysConfirmExit_ && (dwProcessLastCheckTick - nProcessStartTick) <= CHECK_ROOTSTART_TIMEOUT) {
+			//	gState.alwaysConfirmExit_ = TRUE; // чтобы консоль не схлопнулась
 			//}
-			if (gpState->alwaysConfirmExit_ && (dwProcessLastCheckTick - nProcessStartTick) <= CHECK_ROOT_START_TIMEOUT)
-				gpState->rootAliveLess10sec_ = TRUE; // корневой процесс проработал менее 10 сек
+			if (gState.alwaysConfirmExit_ && (dwProcessLastCheckTick - nProcessStartTick) <= CHECK_ROOT_START_TIMEOUT)
+				gState.rootAliveLess10sec_ = TRUE; // корневой процесс проработал менее 10 сек
 
 			if (bForcedTo2)
 				nExitPlaceAdd = bPrevCount2 ? 3 : 4;
@@ -524,7 +524,7 @@ void ConProcess::RefreshXRequests(MSectionLock& CS)
 				in->dwData[0] = (TermModeCommand)m;
 				in->dwData[1] = value;
 				in->dwData[2] = pid;
-				CESERVER_REQ* pGuiOut = ExecuteGuiCmd(gpState->realConWnd_, in, gpState->realConWnd_);
+				CESERVER_REQ* pGuiOut = ExecuteGuiCmd(gState.realConWnd_, in, gState.realConWnd_);
 				ExecuteFreeResult(pGuiOut);
 			}
 		}
@@ -545,7 +545,7 @@ void ConProcess::OnAttached()
 			in->dwData[0] = (TermModeCommand)m;
 			in->dwData[1] = xFixedRequests[m];
 			in->dwData[2] = gnSelfPID; // doesn't matter
-			CESERVER_REQ* pGuiOut = ExecuteGuiCmd(gpState->realConWnd_, in, gpState->realConWnd_);
+			CESERVER_REQ* pGuiOut = ExecuteGuiCmd(gState.realConWnd_, in, gState.realConWnd_);
 			ExecuteFreeResult(pGuiOut);
 		}
 	}
@@ -737,7 +737,7 @@ bool ConProcess::CheckProcessCount(const bool abForce/*=FALSE*/)
 	}
 
 	#ifdef _DEBUG
-	bool bDumpProcInfo = gpState->isWine_;
+	bool bDumpProcInfo = gState.isWine_;
 	#endif
 
 	bool bProcFound = false;
@@ -782,7 +782,7 @@ bool ConProcess::CheckProcessCount(const bool abForce/*=FALSE*/)
 			#endif
 
 			// Это значит в Win7 свалился conhost.exe
-			//if ((gnOsVer >= 0x601) && !gpState->isWine_)
+			//if ((gnOsVer >= 0x601) && !gState.isWine_)
 			{
 				#ifdef _DEBUG
 				DWORD dwErr = GetLastError();
@@ -824,16 +824,16 @@ bool ConProcess::CheckProcessCount(const bool abForce/*=FALSE*/)
 			// PID-ы процессов в консоли могут оказаться перемешаны. Нас же интересует gnSelfPID на первом месте
 			pnProcesses[0] = gnSelfPID;
 			DWORD nCorrect = 1, nMax = nMaxProcesses, nDosBox = 0;
-			if (gpState->dosbox_.use_)
+			if (gState.dosbox_.use_)
 			{
-				if (gpState->dosbox_.handle_ && WaitForSingleObject(gpState->dosbox_.handle_, 0) == WAIT_TIMEOUT)
+				if (gState.dosbox_.handle_ && WaitForSingleObject(gState.dosbox_.handle_, 0) == WAIT_TIMEOUT)
 				{
-					pnProcesses[nCorrect++] = gpState->dosbox_.pid_;
+					pnProcesses[nCorrect++] = gState.dosbox_.pid_;
 					nDosBox = 1;
 				}
-				else if (gpState->dosbox_.handle_)
+				else if (gState.dosbox_.handle_)
 				{
-					gpState->dosbox_.handle_ = NULL;
+					gState.dosbox_.handle_ = NULL;
 				}
 			}
 			for (DWORD n = 0; n < nCurCount && nCorrect < nMax; n++)
@@ -1022,7 +1022,7 @@ DWORD ConProcess::WaitForRootConsoleProcess(DWORD nTimeout) const
 	}
 
 	_ASSERTE(gpConsoleArgs->creatingHiddenConsole_);
-	_ASSERTE(gpState->realConWnd_!=NULL);
+	_ASSERTE(gState.realConWnd_!=NULL);
 
 	const DWORD nStart = GetTickCount();
 	DWORD nFoundPID = 0;
@@ -1057,7 +1057,7 @@ DWORD ConProcess::WaitForRootConsoleProcess(DWORD nTimeout) const
 
 	if (!nFoundPID)
 	{
-		apiShowWindow(gpState->realConWnd_, SW_SHOWNORMAL);
+		apiShowWindow(gState.realConWnd_, SW_SHOWNORMAL);
 		_ASSERTE(FALSE && "Was unable to find starting process");
 	}
 

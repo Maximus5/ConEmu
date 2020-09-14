@@ -113,13 +113,18 @@ void SrvInfo::FinalizeFields()
 
 WorkerServer::~WorkerServer()
 {
-	_ASSERTE(gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AltServer || gpState->runMode_ == RunMode::AutoAttach)
+	_ASSERTE(gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AltServer || gState.runMode_ == RunMode::AutoAttach)
 }
 
 WorkerServer::WorkerServer()
 	: WorkerBase()
 {
-	_ASSERTE(gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AltServer || gpState->runMode_ == RunMode::AutoAttach)
+	_ASSERTE(gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AltServer || gState.runMode_ == RunMode::AutoAttach);
+
+	if (gState.runMode_ == RunMode::Server)
+	{
+		SetupCreateDumpOnException();
+	}
 
 	// #SERVER remove gpSrv
 	if (!gpSrv)
@@ -131,9 +136,9 @@ WorkerServer::WorkerServer()
 	{
 		gpSrv->InitFields();
 
-		if (gpState->conemuWnd_)
+		if (gState.conemuWnd_)
 		{
-			GetWindowThreadProcessId(gpState->conemuWnd_, &gpState->conemuPid_);
+			GetWindowThreadProcessId(gState.conemuWnd_, &gState.conemuPid_);
 		}
 	}
 }
@@ -219,7 +224,7 @@ void WorkerServer::ServerInitFont()
 		consoleFontWidth_ = 3; consoleFontHeight_ = 5;
 	}
 
-	if (gpState->attachMode_ && gpState->noCreateProcess_ && this->RootProcessId() && gpConsoleArgs->attachFromFar_)
+	if (gState.attachMode_ && gState.noCreateProcess_ && this->RootProcessId() && gpConsoleArgs->attachFromFar_)
 	{
 		// It's expected to be attach from Far Manager. Let's set console font via plugin.
 		wchar_t szPipeName[128];
@@ -230,11 +235,11 @@ void WorkerServer::ServerInitFont()
 		In.Font.inSizeX = consoleFontWidth_;
 		In.Font.inSizeY = consoleFontHeight_;
 		wcscpy_s(In.Font.sFontName, consoleFontName_.c_str());
-		CESERVER_REQ *pPlgOut = ExecuteCmd(szPipeName, &In, 500, gpState->realConWnd_);
+		CESERVER_REQ *pPlgOut = ExecuteCmd(szPipeName, &In, 500, gState.realConWnd_);
 
 		if (pPlgOut) ExecuteFreeResult(pPlgOut);
 	}
-	else if ((!gpState->alienMode_ || IsWin6()) && !gpStartEnv->bIsReactOS)
+	else if ((!gState.alienMode_ || IsWin6()) && !gpStartEnv->bIsReactOS)
 	{
 		if (gpLogSize)
 			LogSize(NULL, 0, ":SetConsoleFontSizeTo.before");
@@ -244,7 +249,7 @@ void WorkerServer::ServerInitFont()
 			g_IgnoreSetLargeFont = true;
 		#endif
 
-		SetConsoleFontSizeTo(gpState->realConWnd_, consoleFontHeight_, consoleFontWidth_, consoleFontName_, gnDefTextColors, gnDefPopupColors);
+		SetConsoleFontSizeTo(gState.realConWnd_, consoleFontHeight_, consoleFontWidth_, consoleFontName_, gnDefTextColors, gnDefPopupColors);
 
 		if (gpLogSize)
 		{
@@ -314,10 +319,10 @@ int WorkerServer::AttachRootProcess()
 
 	_ASSERTE((this->RootProcessHandle() == NULL || this->RootProcessHandle() == GetCurrentProcess()) && "Must not be opened yet");
 
-	if (!this->IsDebuggerActive() && !gpConsoleArgs->IsAutoAttachAllowed() && !(gpState->conemuPid_ || gpConsoleArgs->attachFromFar_))
+	if (!this->IsDebuggerActive() && !gpConsoleArgs->IsAutoAttachAllowed() && !(gState.conemuPid_ || gpConsoleArgs->attachFromFar_))
 	{
 		PRINT_COMSPEC(L"Console windows is not visible. Attach is unavailable. Exiting...\n", 0);
-		gpState->DisableAutoConfirmExit();
+		gState.DisableAutoConfirmExit();
 		//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT; // менять nProcessStartTick не нужно. проверка только по флажкам
 		#ifdef _DEBUG
 		xf_validate();
@@ -327,7 +332,7 @@ int WorkerServer::AttachRootProcess()
 	}
 
 	// "/AUTOATTACH" must be asynchronous
-	if ((gpState->attachMode_ & am_Async) || (this->RootProcessId() == 0 && !this->IsDebuggerActive()))
+	if ((gState.attachMode_ & am_Async) || (this->RootProcessId() == 0 && !this->IsDebuggerActive()))
 	{
 		// Нужно попытаться определить PID корневого процесса.
 		// Родительским может быть cmd (comspec, запущенный из FAR)
@@ -357,7 +362,7 @@ int WorkerServer::AttachRootProcess()
 								        /*|| lstrcmpiW(prc.szExeFile, L"conemuc64.exe")==0*/)
 								{
 									CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, 0);
-									CESERVER_REQ* pOut = ExecuteSrvCmd(prc.th32ProcessID, pIn, gpState->realConWnd_);
+									CESERVER_REQ* pOut = ExecuteSrvCmd(prc.th32ProcessID, pIn, gState.realConWnd_);
 
 									if (pOut) dwServerPID = prc.th32ProcessID;
 
@@ -395,7 +400,7 @@ int WorkerServer::AttachRootProcess()
 		{
 			AllowSetForegroundWindow(dwServerPID);
 			PRINT_COMSPEC(L"Server was already started. PID=%i. Exiting...\n", dwServerPID);
-			gpState->DisableAutoConfirmExit(); // server already exists?
+			gState.DisableAutoConfirmExit(); // server already exists?
 			// no need to change nProcessStartTick. check is done by flags only
 			//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
 			#ifdef _DEBUG
@@ -461,8 +466,8 @@ int WorkerServer::AttachRootProcess()
 		wchar_t szGuiWnd[32];
 		if (gpConsoleArgs->requestNewGuiWnd_)
 			wcscpy_c(szGuiWnd, L"/GHWND=NEW");
-		else if (gpState->hGuiWnd)
-			swprintf_c(szGuiWnd, L"/GHWND=%08X", (DWORD)(DWORD_PTR)gpState->hGuiWnd);
+		else if (gState.hGuiWnd)
+			swprintf_c(szGuiWnd, L"/GHWND=%08X", (DWORD)(DWORD_PTR)gState.hGuiWnd);
 		else
 			szGuiWnd[0] = 0;
 
@@ -491,7 +496,7 @@ int WorkerServer::AttachRootProcess()
 		WaitForServerActivated(pi.dwProcessId, pi.hProcess, 30000);
 
 		SafeCloseHandle(pi.hProcess); SafeCloseHandle(pi.hThread);
-		gpState->DisableAutoConfirmExit(); // server was started by other process to avoid bat file locking
+		gState.DisableAutoConfirmExit(); // server was started by other process to avoid bat file locking
 		// no need to change nProcessStartTick. check is done by flags only
 		//gpSrv->nProcessStartTick = GetTickCount() - 2*CHECK_ROOTSTART_TIMEOUT;
 		#ifdef _DEBUG
@@ -517,12 +522,12 @@ int WorkerServer::ServerInitCheckExisting(bool abAlternative)
 	int iRc = 0;
 	CESERVER_CONSOLE_MAPPING_HDR test = {};
 
-	BOOL lbExist = LoadSrvMapping(gpState->realConWnd_, test);
+	BOOL lbExist = LoadSrvMapping(gState.realConWnd_, test);
 	_ASSERTE(!lbExist || (test.ComSpec.ConEmuExeDir[0] && test.ComSpec.ConEmuBaseDir[0]));
 
 	if (!abAlternative)
 	{
-		_ASSERTE(gpState->runMode_==RunMode::Server);
+		_ASSERTE(gState.runMode_==RunMode::Server);
 		// Основной сервер! Мэппинг консоли по идее создан еще быть не должен!
 		// Это должно быть ошибка - попытка запуска второго сервера в той же консоли!
 		if (lbExist)
@@ -546,7 +551,7 @@ int WorkerServer::ServerInitCheckExisting(bool abAlternative)
 	}
 	else
 	{
-		_ASSERTE(gpState->runMode_==RunMode::AltServer);
+		_ASSERTE(gState.runMode_==RunMode::AltServer);
 		// По идее, в консоли должен быть _живой_ сервер.
 		_ASSERTE(lbExist && test.nServerPID != 0);
 		if (test.nServerPID == 0)
@@ -645,7 +650,7 @@ int WorkerServer::ServerInitAttach2Gui()
 	{
 		//_printf("Available ConEmu GUI window not found!\n"); -- don't put rubbish to console
 		gbInShutdown = TRUE;
-		gpState->DisableAutoConfirmExit();
+		gState.DisableAutoConfirmExit();
 		iRc = CERR_ATTACHFAILED; goto wrap;
 	}
 
@@ -665,7 +670,7 @@ int WorkerServer::ServerInitGuiTab()
 
 	if (hGuiWnd == NULL)
 	{
-		if (gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AltServer)
+		if (gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AltServer)
 		{
 			// Если запускается сервер - то он должен смочь найти окно ConEmu в которое его просят
 			_ASSERTEX((hGuiWnd!=NULL));
@@ -674,12 +679,12 @@ int WorkerServer::ServerInitGuiTab()
 		}
 		else
 		{
-			_ASSERTEX(gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AltServer);
+			_ASSERTEX(gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AltServer);
 		}
 	}
 	else
 	{
-		_ASSERTE(gpState->realConWnd_!=NULL);
+		_ASSERTE(gState.realConWnd_!=NULL);
 
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOP));
 		if (!pIn)
@@ -689,7 +694,7 @@ int WorkerServer::ServerInitGuiTab()
 			goto wrap;
 		}
 		pIn->SrvStartStop.Started = srv_Started; // сервер запущен
-		pIn->SrvStartStop.hConWnd = gpState->realConWnd_;
+		pIn->SrvStartStop.hConWnd = gState.realConWnd_;
 		// Сразу передать текущий KeyboardLayout
 		IsKeyboardLayoutChanged(pIn->SrvStartStop.dwKeybLayout);
 
@@ -764,7 +769,7 @@ bool WorkerServer::AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool force
 		{
 			pFreezeIn->dwData[0] = 1;
 			pFreezeIn->dwData[1] = nPID;
-			CESERVER_REQ* pFreezeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pFreezeIn, gpState->realConWnd_);
+			CESERVER_REQ* pFreezeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pFreezeIn, gState.realConWnd_);
 			ExecuteFreeResult(pFreezeIn);
 			ExecuteFreeResult(pFreezeOut);
 		}
@@ -807,7 +812,7 @@ bool WorkerServer::AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool force
 		{
 			pFreezeIn->dwData[0] = 0;
 			pFreezeIn->dwData[1] = 0;
-			CESERVER_REQ* pFreezeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pFreezeIn, gpState->realConWnd_);
+			CESERVER_REQ* pFreezeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pFreezeIn, gState.realConWnd_);
 			ExecuteFreeResult(pFreezeIn);
 			ExecuteFreeResult(pFreezeOut);
 		}
@@ -836,7 +841,7 @@ void WorkerServer::ServerInitEnvVars()
 
 	SetEnvironmentVariable(ENV_CONEMU_HOOKS_W, ENV_CONEMU_HOOKS_ENABLED);
 
-	if (gpState->runMode_ == RunMode::Server)
+	if (gState.runMode_ == RunMode::Server)
 	{
 		swprintf_c(szValue, L"%u", GetCurrentProcessId());
 		SetEnvironmentVariable(ENV_CONEMUSERVERPID_VAR_W, szValue);
@@ -852,7 +857,7 @@ void WorkerServer::ServerInitEnvVars()
 
 		//wchar_t szHWND[16]; swprintf_c(szHWND, L"0x%08X", gpSrv->guiSettings.hGuiWnd.u);
 		//SetEnvironmentVariable(ENV_CONEMUHWND_VAR_W, szHWND);
-		SetConEmuWindows(gpSrv->guiSettings.hGuiWnd, gpState->conemuWndDC_, gpState->conemuWndBack_);
+		SetConEmuWindows(gpSrv->guiSettings.hGuiWnd, gState.conemuWndDC_, gState.conemuWndBack_);
 
 		#ifdef _DEBUG
 		bool bNewConArg = ((gpSrv->guiSettings.Flags & CECF_ProcessNewCon) != 0);
@@ -896,7 +901,7 @@ void WorkerServer::ServerInitEnvVars()
 int WorkerServer::Init()
 {
 	LogFunction(L"ServerInit");
-	_ASSERTE(gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AltServer || gpState->runMode_ == RunMode::AutoAttach)
+	_ASSERTE(gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AltServer || gState.runMode_ == RunMode::AutoAttach)
 
 	int iRc = 0;
 	DWORD dwErr = 0;
@@ -906,16 +911,16 @@ int WorkerServer::Init()
 	if (gbDumpServerInitStatus) { _printf("ServerInit: started"); }
 	#define DumpInitStatus(fmt) if (gbDumpServerInitStatus) { DWORD nCurTick = GetTickCount(); _printf(" - %ums" fmt, (nCurTick-nTick)); nTick = nCurTick; }
 
-	if (gpState->runMode_ == RunMode::Server)
+	if (gState.runMode_ == RunMode::Server)
 	{
-		_ASSERTE(!(gpState->attachMode_ & am_Async));
+		_ASSERTE(!(gState.attachMode_ & am_Async));
 
 		gpSrv->dwMainServerPID = GetCurrentProcessId();
 		gpSrv->hMainServer = GetCurrentProcess();
 
-		_ASSERTE(gpState->runMode_==RunMode::Server);
+		_ASSERTE(gState.runMode_==RunMode::Server);
 
-		if (gpState->isDBCS_)
+		if (gState.isDBCS_)
 		{
 			UINT nOemCP = GetOEMCP();
 			UINT nConCP = GetConsoleOutputCP();
@@ -950,29 +955,29 @@ int WorkerServer::Init()
 	// Межпроцессный семафор не помогает, оставил пока только в качестве заглушки
 	//InitializeConsoleInputSemaphore();
 
-	if (gpState->runMode_ == RunMode::Server)
+	if (gState.runMode_ == RunMode::Server)
 	{
 		if (!gpConsoleArgs->confirmExitParm_)
 		{
-			gpState->alwaysConfirmExit_ = TRUE; gpState->autoDisableConfirmExit_ = TRUE;
+			gState.alwaysConfirmExit_ = TRUE; gState.autoDisableConfirmExit_ = TRUE;
 		}
 	}
 	else
 	{
-		_ASSERTE(gpState->runMode_==RunMode::AltServer || gpState->runMode_==RunMode::AutoAttach);
+		_ASSERTE(gState.runMode_==RunMode::AltServer || gState.runMode_==RunMode::AutoAttach);
 		// По идее, включены быть не должны, но убедимся
-		_ASSERTE(!gpState->alwaysConfirmExit_);
-		gpState->autoDisableConfirmExit_ = FALSE; gpState->alwaysConfirmExit_ = FALSE;
+		_ASSERTE(!gState.alwaysConfirmExit_);
+		gState.autoDisableConfirmExit_ = FALSE; gState.alwaysConfirmExit_ = FALSE;
 	}
 
 	// Remember RealConsole font at the startup moment
-	if (gpState->runMode_ == RunMode::AltServer)
+	if (gState.runMode_ == RunMode::AltServer)
 	{
 		apiInitConsoleFontSize(ghConOut);
 	}
 
 	// Шрифт в консоли нужно менять в самом начале, иначе могут быть проблемы с установкой размера консоли
-	if ((gpState->runMode_ == RunMode::Server) && !this->IsDebuggerActive() && !gpState->noCreateProcess_)
+	if ((gState.runMode_ == RunMode::Server) && !this->IsDebuggerActive() && !gState.noCreateProcess_)
 		//&& (!gpStatus->noCreateProcess_ || (gpStatus->attachMode_ && gpStatus->noCreateProcess_ && gpWorker->RootProcessId()))
 		//)
 	{
@@ -983,77 +988,77 @@ int WorkerServer::Init()
 
 		// Minimized окошко нужно развернуть!
 		// Не помню уже зачем, возможно, что-то с мышкой связано...
-		if (IsIconic(gpState->realConWnd_))
+		if (IsIconic(gState.realConWnd_))
 		{
 			//WINDOWPLACEMENT wplGui = {sizeof(wplGui)};
 			//// По идее, HWND гуя нам уже должен быть известен (передан аргументом)
-			//if (gpState->hGuiWnd)
-			//	GetWindowPlacement(gpState->hGuiWnd, &wplGui);
-			//SendMessage(gpState->realConWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+			//if (gState.hGuiWnd)
+			//	GetWindowPlacement(gState.hGuiWnd, &wplGui);
+			//SendMessage(gState.realConWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 			WINDOWPLACEMENT wplCon = {sizeof(wplCon)};
-			GetWindowPlacement(gpState->realConWnd_, &wplCon);
+			GetWindowPlacement(gState.realConWnd_, &wplCon);
 			//wplCon.showCmd = SW_SHOWNA;
 			////RECT rc = {wplGui.rcNormalPosition.left+3,wplGui.rcNormalPosition.top+3,wplCon.rcNormalPosition.right-wplCon.rcNormalPosition.left,wplCon.rcNormalPosition.bottom-wplCon.rcNormalPosition.top};
-			//// т.к. ниже все равно делается "SetWindowPos(gpState->realConWnd, NULL, 0, 0, ..." - можем задвинуть подальше
+			//// т.к. ниже все равно делается "SetWindowPos(gState.realConWnd, NULL, 0, 0, ..." - можем задвинуть подальше
 			//RECT rc = {-30000,-30000,-30000+wplCon.rcNormalPosition.right-wplCon.rcNormalPosition.left,-30000+wplCon.rcNormalPosition.bottom-wplCon.rcNormalPosition.top};
 			//wplCon.rcNormalPosition = rc;
-			////SetWindowPos(gpState->realConWnd, HWND_BOTTOM, 0, 0, 0,0, SWP_NOSIZE|SWP_NOMOVE);
-			//SetWindowPlacement(gpState->realConWnd, &wplCon);
+			////SetWindowPos(gState.realConWnd, HWND_BOTTOM, 0, 0, 0,0, SWP_NOSIZE|SWP_NOMOVE);
+			//SetWindowPlacement(gState.realConWnd, &wplCon);
 			wplCon.showCmd = SW_RESTORE;
-			SetWindowPlacement(gpState->realConWnd_, &wplCon);
+			SetWindowPlacement(gState.realConWnd_, &wplCon);
 			//bMovedBottom = true;
 		}
 
-		if (!gbVisibleOnStartup && IsWindowVisible(gpState->realConWnd_))
+		if (!gbVisibleOnStartup && IsWindowVisible(gState.realConWnd_))
 		{
 			//DumpInitStatus("\nServerInit: Hiding console");
-			apiShowWindow(gpState->realConWnd_, SW_HIDE);
+			apiShowWindow(gState.realConWnd_, SW_HIDE);
 			//if (bMovedBottom)
 			//{
-			//	SetWindowPos(gpState->realConWnd, HWND_TOP, 0, 0, 0,0, SWP_NOSIZE|SWP_NOMOVE);
+			//	SetWindowPos(gState.realConWnd, HWND_TOP, 0, 0, 0,0, SWP_NOSIZE|SWP_NOMOVE);
 			//}
 		}
 
 		//DumpInitStatus("\nServerInit: Set console window pos {0,0}");
 		// -- чтобы на некоторых системах не возникала проблема с позиционированием -> {0,0}
 		// Issue 274: Окно реальной консоли позиционируется в неудобном месте
-		SetWindowPos(gpState->realConWnd_, NULL, 0, 0, 0,0, SWP_NOSIZE|SWP_NOZORDER);
+		SetWindowPos(gState.realConWnd_, NULL, 0, 0, 0,0, SWP_NOSIZE|SWP_NOZORDER);
 	}
 
 	// Не будем, наверное. OnTop попытается поставить сервер,
 	// при показе консоли через Ctrl+Win+Alt+Space
 	// Но вот если консоль уже видима, и это "/root", тогда
 	// попытаемся поставить окну консоли флаг "OnTop"
-	if (!gpState->noCreateProcess_ && !gpState->isWine_)
+	if (!gState.noCreateProcess_ && !gState.isWine_)
 	{
 		//if (!gbVisibleOnStartup)
-		//	apiShowWindow(gpState->realConWnd, SW_HIDE);
+		//	apiShowWindow(gState.realConWnd, SW_HIDE);
 		//DumpInitStatus("\nServerInit: Set console window TOP_MOST");
-		SetWindowPos(gpState->realConWnd_, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
+		SetWindowPos(gState.realConWnd_, HWND_TOPMOST, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE);
 	}
-	//if (!gbVisibleOnStartup && IsWindowVisible(gpState->realConWnd))
+	//if (!gbVisibleOnStartup && IsWindowVisible(gState.realConWnd))
 	//{
-	//	apiShowWindow(gpState->realConWnd, SW_HIDE);
+	//	apiShowWindow(gState.realConWnd, SW_HIDE);
 	//}
 
 	// Подготовить буфер для длинного вывода
 	// RunMode::RM_SERVER - создать и считать текущее содержимое консоли
 	// RunMode::RM_ALTSERVER - только создать (по факту - выполняется открытие созданного в RunMode::RM_SERVER)
-	if (gpState->runMode_==RunMode::Server || gpState->runMode_==RunMode::AltServer)
+	if (gState.runMode_==RunMode::Server || gState.runMode_==RunMode::AltServer)
 	{
 		DumpInitStatus("\nServerInit: CmdOutputStore");
 		CmdOutputStore(true/*abCreateOnly*/);
 	}
 	else
 	{
-		_ASSERTE(gpState->runMode_==RunMode::AutoAttach);
+		_ASSERTE(gState.runMode_==RunMode::AutoAttach);
 	}
 
 	//2009-08-27 Перенес снизу
-	if (!gpSrv->hConEmuGuiAttached && (!this->IsDebugProcess() || gpState->conemuPid_ || gpState->hGuiWnd))
+	if (!gpSrv->hConEmuGuiAttached && (!this->IsDebugProcess() || gState.conemuPid_ || gState.hGuiWnd))
 	{
 		wchar_t szTempName[MAX_PATH];
-		swprintf_c(szTempName, CEGUIRCONSTARTED, LODWORD(gpState->realConWnd_)); //-V205
+		swprintf_c(szTempName, CEGUIRCONSTARTED, LODWORD(gState.realConWnd_)); //-V205
 
 		gpSrv->hConEmuGuiAttached = CreateEvent(gpLocalSecurity, TRUE, FALSE, szTempName);
 
@@ -1069,15 +1074,15 @@ int WorkerServer::Init()
 		SetEvent(ghFarInExecuteEvent);
 	#endif
 
-	if (gpState->conemuWndDC_ == NULL)
+	if (gState.conemuWndDC_ == NULL)
 	{
 		// в AltServer режиме HWND уже должен быть известен
-		_ASSERTE((gpState->runMode_ == RunMode::Server) || (gpState->runMode_ == RunMode::AutoAttach) || (gpState->conemuWndDC_ != NULL));
+		_ASSERTE((gState.runMode_ == RunMode::Server) || (gState.runMode_ == RunMode::AutoAttach) || (gState.conemuWndDC_ != NULL));
 	}
 	else
 	{
 		DumpInitStatus("\nServerInit: ServerInitCheckExisting");
-		iRc = ServerInitCheckExisting((gpState->runMode_ != RunMode::Server));
+		iRc = ServerInitCheckExisting((gState.runMode_ != RunMode::Server));
 		if (iRc != 0)
 			goto wrap;
 	}
@@ -1089,10 +1094,10 @@ int WorkerServer::Init()
 	if (iRc != 0)
 		goto wrap;
 
-	_ASSERTE((gpState->conemuWndDC_==NULL) || (gpSrv->pColorerMapping!=NULL));
+	_ASSERTE((gState.conemuWndDC_==NULL) || (gpSrv->pColorerMapping!=NULL));
 
 	_ASSERTE(gpSrv->pConsole != nullptr);
-	if ((gpState->runMode_ == RunMode::AltServer) && IsCrashHandlerAllowed())
+	if ((gState.runMode_ == RunMode::AltServer) && IsCrashHandlerAllowed())
 	{
 		SetupCreateDumpOnException();
 	}
@@ -1120,10 +1125,10 @@ int WorkerServer::Init()
 	// в принципе, серверный режим может быть вызван из фара, чтобы подцепиться к GUI.
 	// больше двух процессов в консоли вполне может быть, например, еще не отвалился
 	// предыдущий conemuc.exe, из которого этот запущен немодально.
-	_ASSERTE(this->IsDebuggerActive() || (gpWorker->Processes().nProcessCount<=2) || ((gpWorker->Processes().nProcessCount>2) && gpState->attachMode_ && this->RootProcessId()));
+	_ASSERTE(this->IsDebuggerActive() || (gpWorker->Processes().nProcessCount<=2) || ((gpWorker->Processes().nProcessCount>2) && gState.attachMode_ && this->RootProcessId()));
 
 	// Запустить нить обработки событий (клавиатура, мышь, и пр.)
-	if (gpState->runMode_ == RunMode::Server)
+	if (gState.runMode_ == RunMode::Server)
 	{
 		gpSrv->hInputEvent = CreateEvent(NULL,FALSE,FALSE,NULL);
 		gpSrv->hInputWasRead = CreateEvent(NULL,FALSE,FALSE,NULL);
@@ -1158,7 +1163,7 @@ int WorkerServer::Init()
 	}
 
 	// Пайп возврата содержимого консоли
-	if ((gpState->runMode_ == RunMode::Server) || (gpState->runMode_ == RunMode::AltServer))
+	if ((gState.runMode_ == RunMode::Server) || (gState.runMode_ == RunMode::AltServer))
 	{
 		DumpInitStatus("\nServerInit: DataServerStart");
 		if (!DataServerStart())
@@ -1174,7 +1179,7 @@ int WorkerServer::Init()
 	// И он не должен быть "сервером" - работает как обычное приложение!
 	_ASSERTE(!(this->IsDebuggerActive() || this->IsDebugProcess() || this->IsDebugProcessTree()));
 
-	if (!gpState->attachMode_ && !this->IsDebuggerActive())
+	if (!gState.attachMode_ && !this->IsDebuggerActive())
 	{
 		DumpInitStatus("\nServerInit: ServerInitGuiTab");
 		iRc = ServerInitGuiTab();
@@ -1182,7 +1187,7 @@ int WorkerServer::Init()
 			goto wrap;
 	}
 
-	if ((gpState->runMode_ == RunMode::Server) && (gpState->attachMode_ & ~am_Async) && !(gpState->attachMode_ & am_Async))
+	if ((gState.runMode_ == RunMode::Server) && (gState.attachMode_ & ~am_Async) && !(gState.attachMode_ & am_Async))
 	{
 		DumpInitStatus("\nServerInit: ServerInitAttach2Gui");
 		iRc = ServerInitAttach2Gui();
@@ -1199,14 +1204,14 @@ int WorkerServer::Init()
 
 	// Если "корневой" процесс консоли запущен не нами (аттач или дебаг)
 	// то нужно к нему "подцепиться" (открыть HANDLE процесса)
-	if (gpState->noCreateProcess_ && (gpState->attachMode_ || (this->IsDebuggerActive() && (this->RootProcessHandle() == NULL))))
+	if (gState.noCreateProcess_ && (gState.attachMode_ || (this->IsDebuggerActive() && (this->RootProcessHandle() == NULL))))
 	{
 		DumpInitStatus("\nServerInit: AttachRootProcess");
 		iRc = AttachRootProcess();
 		if (iRc != 0)
 			goto wrap;
 
-		if (gpState->attachMode_ & am_Async)
+		if (gState.attachMode_ & am_Async)
 		{
 			_ASSERTE(FALSE && "Not expected to be here!");
 			iRc = CERR_CARGUMENT;
@@ -1226,12 +1231,12 @@ int WorkerServer::Init()
 	//gpSrv->pConsole->hdr.bThawRefreshThread = TRUE;
 
 	//// Minimized окошко нужно развернуть!
-	//if (IsIconic(gpState->realConWnd))
+	//if (IsIconic(gState.realConWnd))
 	//{
 	//	WINDOWPLACEMENT wplCon = {sizeof(wplCon)};
-	//	GetWindowPlacement(gpState->realConWnd, &wplCon);
+	//	GetWindowPlacement(gState.realConWnd, &wplCon);
 	//	wplCon.showCmd = SW_RESTORE;
-	//	SetWindowPlacement(gpState->realConWnd, &wplCon);
+	//	SetWindowPlacement(gState.realConWnd, &wplCon);
 	//}
 
 	// Сразу получить текущее состояние консоли
@@ -1296,10 +1301,10 @@ int WorkerServer::Init()
 	}
 	gpSrv->pReqSizeSection = new MSection();
 
-	if ((gpState->runMode_ == RunMode::Server) && gpState->attachMode_)
+	if ((gState.runMode_ == RunMode::Server) && gState.attachMode_)
 	{
 		// External attach to running process, required ConEmuHk is not loaded yet
-		if (!gpConsoleArgs->alternativeAttach_ && gpState->noCreateProcess_ && gpState->alienMode_ && !gpConsoleArgs->doNotInjectConEmuHk_)
+		if (!gpConsoleArgs->alternativeAttach_ && gState.noCreateProcess_ && gState.alienMode_ && !gpConsoleArgs->doNotInjectConEmuHk_)
 		{
 			if (this->RootProcessId())
 			{
@@ -1358,7 +1363,7 @@ int WorkerServer::Init()
 	UpdateConsoleMapHeader(L"ServerInit");
 
 	// Set console title in server mode
-	if (gpState->runMode_ == RunMode::Server)
+	if (gState.runMode_ == RunMode::Server)
 	{
 		UpdateConsoleTitle();
 	}
@@ -1373,27 +1378,27 @@ int WorkerServer::Init()
 	ReloadGuiSettings(NULL);
 
 	// Если мы аттачим существующее GUI окошко
-	if (gpState->noCreateProcess_ && gpState->attachMode_ && this->RootProcessGui())
+	if (gState.noCreateProcess_ && gState.attachMode_ && this->RootProcessGui())
 	{
 		// Его нужно дернуть, чтобы инициализировать цикл аттача во вкладку ConEmu
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_ATTACHGUIAPP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_ATTACHGUIAPP));
 		_ASSERTE(LODWORD(this->RootProcessGui())!=0xCCCCCCCC);
-		_ASSERTE(IsWindow(gpState->conemuWnd_));
-		_ASSERTE(IsWindow(gpState->conemuWndDC_));
-		_ASSERTE(IsWindow(gpState->conemuWndBack_));
+		_ASSERTE(IsWindow(gState.conemuWnd_));
+		_ASSERTE(IsWindow(gState.conemuWndDC_));
+		_ASSERTE(IsWindow(gState.conemuWndBack_));
 		_ASSERTE(IsWindow(this->RootProcessGui()));
 		_ASSERTE(gpSrv->dwMainServerPID && (gpSrv->dwMainServerPID==GetCurrentProcessId()));
 		pIn->AttachGuiApp.nServerPID = gpSrv->dwMainServerPID;
-		pIn->AttachGuiApp.hConEmuWnd = gpState->conemuWnd_;
-		pIn->AttachGuiApp.hConEmuDc = gpState->conemuWndDC_;
-		pIn->AttachGuiApp.hConEmuBack = gpState->conemuWndBack_;
+		pIn->AttachGuiApp.hConEmuWnd = gState.conemuWnd_;
+		pIn->AttachGuiApp.hConEmuDc = gState.conemuWndDC_;
+		pIn->AttachGuiApp.hConEmuBack = gState.conemuWndBack_;
 		pIn->AttachGuiApp.hAppWindow = this->RootProcessGui();
-		pIn->AttachGuiApp.hSrvConWnd = gpState->realConWnd_;
+		pIn->AttachGuiApp.hSrvConWnd = gState.realConWnd_;
 		wchar_t szPipe[MAX_PATH];
 		_ASSERTE(this->RootProcessId()!=0);
 		swprintf_c(szPipe, CEHOOKSPIPENAME, L".", this->RootProcessId());
 		DumpInitStatus("\nServerInit: CECMD_ATTACHGUIAPP");
-		CESERVER_REQ* pOut = ExecuteCmd(szPipe, pIn, GUIATTACH_TIMEOUT, gpState->realConWnd_);
+		CESERVER_REQ* pOut = ExecuteCmd(szPipe, pIn, GUIATTACH_TIMEOUT, gState.realConWnd_);
 		if (!pOut
 			|| (pOut->hdr.cbSize < (sizeof(CESERVER_REQ_HDR)+sizeof(DWORD)))
 			|| (pOut->dwData[0] != LODWORD(this->RootProcessGui())))
@@ -1428,7 +1433,7 @@ wrap:
 void WorkerServer::Done(const int exitCode, const bool reportShutdown /*= false*/)
 {
 	LogFunction(L"ServerDone");
-	_ASSERTE(gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AltServer || gpState->runMode_ == RunMode::AutoAttach)
+	_ASSERTE(gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AltServer || gState.runMode_ == RunMode::AutoAttach)
 
 	gbQuit = true;
 	gbTerminateOnExit = FALSE;
@@ -1449,7 +1454,7 @@ void WorkerServer::Done(const int exitCode, const bool reportShutdown /*= false*
 
 	if (ghQuitEvent) SetEvent(ghQuitEvent);
 
-	if (gpState->conemuWnd_ && IsWindow(gpState->conemuWnd_))
+	if (gState.conemuWnd_ && IsWindow(gState.conemuWnd_))
 	{
 		if (gpSrv->pConsole && gpSrv->pConsoleMap)
 		{
@@ -1466,20 +1471,20 @@ void WorkerServer::Done(const int exitCode, const bool reportShutdown /*= false*
 		#endif
 
 		wchar_t szServerPipe[MAX_PATH];
-		swprintf_c(szServerPipe, CEGUIPIPENAME, L".", LODWORD(gpState->conemuWnd_)); //-V205
+		swprintf_c(szServerPipe, CEGUIPIPENAME, L".", LODWORD(gState.conemuWnd_)); //-V205
 
 		CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SRVSTARTSTOP, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SRVSTARTSTOP));
 		if (pIn)
 		{
 			pIn->SrvStartStop.Started = srv_Stopped/*101*/;
-			pIn->SrvStartStop.hConWnd = gpState->realConWnd_;
+			pIn->SrvStartStop.hConWnd = gState.realConWnd_;
 			pIn->SrvStartStop.nShellExitCode = gnExitCode;
 			// Здесь dwKeybLayout уже не интересен
 
 			// Послать в GUI уведомление, что сервер закрывается
 			/*CallNamedPipe(szServerPipe, &In, In.hdr.cbSize, &Out, sizeof(Out), &dwRead, 1000);*/
 			// 131017 При закрытии не успевает отработать. Серверу нужно дождаться ответа как обычно
-			CESERVER_REQ* pOut = ExecuteCmd(szServerPipe, pIn, 1000, gpState->realConWnd_, FALSE/*bAsyncNoResult*/);
+			CESERVER_REQ* pOut = ExecuteCmd(szServerPipe, pIn, 1000, gState.realConWnd_, FALSE/*bAsyncNoResult*/);
 
 			ExecuteFreeResult(pIn);
 			ExecuteFreeResult(pOut);
@@ -1626,29 +1631,29 @@ int WorkerServer::ProcessCommandLineArgs()
 	// ReSharper disable once CppInitializedValueIsAlwaysRewritten
 	int iRc = 0;
 
-	if (gpState->runMode_ == RunMode::Undefined || gpState->runMode_ == RunMode::AltServer)
+	if (gState.runMode_ == RunMode::Undefined || gState.runMode_ == RunMode::AltServer)
 	{
 		_ASSERTE(gpConsoleArgs->fullCmdLine_.IsEmpty());
-		gpState->runMode_ = RunMode::AltServer;
+		gState.runMode_ = RunMode::AltServer;
 		_ASSERTE(!IsCreateDumpOnExceptionInstalled());
-		_ASSERTE(gpState->attachMode_==am_None);
-		if (!(gpState->attachMode_ & am_Modes))
-			gpState->attachMode_ |= am_Simple;
-		gpState->DisableAutoConfirmExit();
-		gpState->noCreateProcess_ = TRUE;
-		gpState->alienMode_ = TRUE;
+		_ASSERTE(gState.attachMode_==am_None);
+		if (!(gState.attachMode_ & am_Modes))
+			gState.attachMode_ |= am_Simple;
+		gState.DisableAutoConfirmExit();
+		gState.noCreateProcess_ = TRUE;
+		gState.alienMode_ = TRUE;
 		gpWorker->SetRootProcessId(GetCurrentProcessId());
 		gpWorker->SetRootProcessHandle(GetCurrentProcess());
-		//gpState->conemuPid_ = ...;
+		//gState.conemuPid_ = ...;
 		
 		gpszRunCmd = lstrdup(L"");
 
 		CreateColorerHeader();
 	}
 
-	if (gpState->runMode_ == RunMode::Server)
+	if (gState.runMode_ == RunMode::Server)
 	{
-		_ASSERTE(!gpState->noCreateProcess_);
+		_ASSERTE(!gState.noCreateProcess_);
 		SetConEmuWorkEnvVar(ghOurModule);
 	}
 
@@ -1770,7 +1775,7 @@ bool WorkerServer::IsReopenHandleAllowed()
 
 bool WorkerServer::IsCrashHandlerAllowed()
 {
-	if (gpState->runMode_ == RunMode::AltServer)
+	if (gState.runMode_ == RunMode::AltServer)
 	{
 		// By default, handler is not installed in AltServer
 		// gpSet->isConsoleExceptionHandler --> CECF_ConExcHandler
@@ -1795,7 +1800,7 @@ bool WorkerServer::CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_C
 	if (!gpSrv->pStoredOutputHdr)
 	{
 		gpSrv->pStoredOutputHdr = new MFileMapping<CESERVER_CONSAVE_MAPHDR>;
-		gpSrv->pStoredOutputHdr->InitName(CECONOUTPUTNAME, LODWORD(gpState->realConWnd_)); //-V205
+		gpSrv->pStoredOutputHdr->InitName(CECONOUTPUTNAME, LODWORD(gState.realConWnd_)); //-V205
 		if (!(pHdr = gpSrv->pStoredOutputHdr->Create()))
 		{
 			_ASSERTE(FALSE && "Failed to create mapping: CESERVER_CONSAVE_MAPHDR");
@@ -1864,7 +1869,7 @@ bool WorkerServer::CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_C
 
 		if (lbNeedReopen || lbNeedRecreate || !gpSrv->pStoredOutputItem->IsValid())
 		{
-			LPCWSTR pszName = gpSrv->pStoredOutputItem->InitName(CECONOUTPUTITEMNAME, LODWORD(gpState->realConWnd_), nNewIndex); //-V205
+			LPCWSTR pszName = gpSrv->pStoredOutputItem->InitName(CECONOUTPUTITEMNAME, LODWORD(gState.realConWnd_), nNewIndex); //-V205
 			DWORD nMaxSize = sizeof(*pData) + cchMaxBufferSize * sizeof(pData->Data[0]);
 
 			if (!(pData = gpSrv->pStoredOutputItem->Create(nMaxSize)))
@@ -2115,29 +2120,29 @@ void WorkerServer::SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 		hRootWnd = NULL;
 	}
 	// Changed?
-	if (gpState->conemuWnd_ != hRootWnd)
+	if (gState.conemuWnd_ != hRootWnd)
 	{
 		sprintf_c(szInfo+lstrlenA(szInfo), 30/*#SECURELEN*/, "ConEmuWnd=x%08X ", (DWORD)(DWORD_PTR)hRootWnd);
-		gpState->conemuWnd_ = hRootWnd;
+		gState.conemuWnd_ = hRootWnd;
 
 		// Than check GuiPID
 		DWORD nGuiPid = 0;
 		if (GetWindowThreadProcessId(hRootWnd, &nGuiPid) && nGuiPid)
 		{
-			gpState->conemuPid_ = nGuiPid;
+			gState.conemuPid_ = nGuiPid;
 		}
 	}
 	// Do AllowSetForegroundWindow
 	if (hRootWnd)
 	{
-		DWORD dwGuiThreadId = GetWindowThreadProcessId(hRootWnd, &gpState->conemuPid_);
-		AllowSetForegroundWindow(gpState->conemuPid_);
+		DWORD dwGuiThreadId = GetWindowThreadProcessId(hRootWnd, &gState.conemuPid_);
+		AllowSetForegroundWindow(gState.conemuPid_);
 	}
 	// "ConEmuHWND"="0x%08X", "ConEmuPID"="%u"
-	SetConEmuEnvVar(gpState->conemuWnd_);
+	SetConEmuEnvVar(gState.conemuWnd_);
 
 	// Drawing canvas & Background windows
-	_ASSERTE(gpState->conemuWnd_!=NULL || (hDcWnd==NULL && hBackWnd==NULL));
+	_ASSERTE(gState.conemuWnd_!=NULL || (hDcWnd==NULL && hBackWnd==NULL));
 	if (hDcWnd && !IsWindow(hDcWnd))
 	{
 		_ASSERTE(FALSE && "hDcWnd is invalid");
@@ -2149,11 +2154,11 @@ void WorkerServer::SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 		hBackWnd = NULL;
 	}
 	// Set new descriptors
-	if ((gpState->conemuWndDC_ != hDcWnd) || (gpState->conemuWndBack_ != hBackWnd))
+	if ((gState.conemuWndDC_ != hDcWnd) || (gState.conemuWndBack_ != hBackWnd))
 	{
 		sprintf_c(szInfo+lstrlenA(szInfo), 60/*#SECURELEN*/, "WndDC=x%08X WndBack=x%08X", (DWORD)(DWORD_PTR)hDcWnd, (DWORD)(DWORD_PTR)hBackWnd);
-		gpState->conemuWndDC_ = hDcWnd;
-		gpState->conemuWndBack_ = hBackWnd;
+		gState.conemuWndDC_ = hDcWnd;
+		gState.conemuWndBack_ = hBackWnd;
 		// "ConEmuDrawHWND"="0x%08X", "ConEmuBackHWND"="0x%08X"
 		SetConEmuEnvVarChild(hDcWnd, hBackWnd);
 	}
@@ -2175,13 +2180,13 @@ void WorkerServer::CheckConEmuHwnd()
 	if (this->IsDebuggerActive())
 	{
 		HWND  hDcWnd = NULL;
-		gpState->conemuWnd_ = FindConEmuByPID();
+		gState.conemuWnd_ = FindConEmuByPID();
 
-		if (gpState->conemuWnd_)
+		if (gState.conemuWnd_)
 		{
-			GetWindowThreadProcessId(gpState->conemuWnd_, &gpState->conemuPid_);
+			GetWindowThreadProcessId(gState.conemuWnd_, &gState.conemuPid_);
 			// Просто для информации
-			hDcWnd = FindWindowEx(gpState->conemuWnd_, NULL, VirtualConsoleClass, NULL);
+			hDcWnd = FindWindowEx(gState.conemuWnd_, NULL, VirtualConsoleClass, NULL);
 		}
 		else
 		{
@@ -2193,74 +2198,74 @@ void WorkerServer::CheckConEmuHwnd()
 		return;
 	}
 
-	if (gpState->conemuWnd_ == NULL)
+	if (gState.conemuWnd_ == NULL)
 	{
 		SendStarted(); // Он и окно проверит, и параметры перешлет и размер консоли скорректирует
 	}
 
 	// GUI может еще "висеть" в ожидании или в отладчике, так что пробуем и через Snapshot
-	if (gpState->conemuWnd_ == NULL)
+	if (gState.conemuWnd_ == NULL)
 	{
-		gpState->conemuWnd_ = FindConEmuByPID();
+		gState.conemuWnd_ = FindConEmuByPID();
 	}
 
-	if (gpState->conemuWnd_ == NULL)
+	if (gState.conemuWnd_ == NULL)
 	{
 		// Если уж ничего не помогло...
 		LogFunction(L"GetConEmuHWND");
-		gpState->conemuWnd_ = GetConEmuHWND(1/*Gui Main window*/);
+		gState.conemuWnd_ = GetConEmuHWND(1/*Gui Main window*/);
 	}
 
-	if (gpState->conemuWnd_)
+	if (gState.conemuWnd_)
 	{
-		if (!gpState->conemuWndDC_)
+		if (!gState.conemuWndDC_)
 		{
-			// gpState->conemuWndDC_ по идее уже должен быть получен из GUI через пайпы
-			LogFunction(L"Warning, gpState->conemuWndDC_ still not initialized");
-			_ASSERTE(gpState->conemuWndDC_!=NULL);
+			// gState.conemuWndDC_ по идее уже должен быть получен из GUI через пайпы
+			LogFunction(L"Warning, gState.conemuWndDC_ still not initialized");
+			_ASSERTE(gState.conemuWndDC_!=NULL);
 			wchar_t szClass[128];
 			HWND hBack = NULL;
-			while (!gpState->conemuWndDC_)
+			while (!gState.conemuWndDC_)
 			{
-				hBack = FindWindowEx(gpState->conemuWnd_, hBack, VirtualConsoleClassBack, NULL);
+				hBack = FindWindowEx(gState.conemuWnd_, hBack, VirtualConsoleClassBack, NULL);
 				if (!hBack)
 					break;
-				if (GetWindowLong(hBack, WindowLongBack_ConWnd) == LOLONG(gpState->realConWnd_))
+				if (GetWindowLong(hBack, WindowLongBack_ConWnd) == LOLONG(gState.realConWnd_))
 				{
 					const HWND2 hDc{(DWORD)GetWindowLong(hBack, WindowLongBack_DCWnd)};
 					if (IsWindow(hDc) && GetClassName(hDc, szClass, countof(szClass)
 						&& (0 == lstrcmp(szClass, VirtualConsoleClass))))
 					{
-						SetConEmuWindows(gpState->conemuWnd_, hDc, hBack);
+						SetConEmuWindows(gState.conemuWnd_, hDc, hBack);
 						break;
 					}
 				}
 			}
-			_ASSERTE(gpState->conemuWndDC_!=NULL);
+			_ASSERTE(gState.conemuWndDC_!=NULL);
 		}
 
 		// Установить переменную среды с дескриптором окна
-		SetConEmuWindows(gpState->conemuWnd_, gpState->conemuWndDC_, gpState->conemuWndBack_);
+		SetConEmuWindows(gState.conemuWnd_, gState.conemuWndDC_, gState.conemuWndBack_);
 
-		//if (hWndFore == gpState->realConWnd || hWndFocus == gpState->realConWnd)
-		//if (hWndFore != gpState->conemuWnd_)
+		//if (hWndFore == gState.realConWnd || hWndFocus == gState.realConWnd)
+		//if (hWndFore != gState.conemuWnd_)
 
-		if (GetForegroundWindow() == gpState->realConWnd_)
-			apiSetForegroundWindow(gpState->conemuWnd_); // 2009-09-14 почему-то было было gpState->realConWnd ?
+		if (GetForegroundWindow() == gState.realConWnd_)
+			apiSetForegroundWindow(gState.conemuWnd_); // 2009-09-14 почему-то было было gState.realConWnd ?
 	}
 	else
 	{
 		// да и фиг с ним. нас могли просто так, без gui запустить
-		//_ASSERTE(gpState->conemuWnd_!=NULL);
+		//_ASSERTE(gState.conemuWnd_!=NULL);
 	}
 }
 
 void WorkerServer::FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR *pMap)
 {
-	pMap->nGuiPID = gpState->conemuPid_;
-	pMap->hConEmuRoot = gpState->conemuWnd_;
-	pMap->hConEmuWndDc = gpState->conemuWndDC_;
-	pMap->hConEmuWndBack = gpState->conemuWndBack_;
+	pMap->nGuiPID = gState.conemuPid_;
+	pMap->hConEmuRoot = gState.conemuWnd_;
+	pMap->hConEmuWndDc = gState.conemuWndDC_;
+	pMap->hConEmuWndBack = gState.conemuWndBack_;
 }
 
 bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
@@ -2271,7 +2276,7 @@ bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 	CESERVER_REQ *pOut = NULL;
 	CESERVER_REQ_SRVSTARTSTOPRET* pStartStopRet = NULL;
 
-	_ASSERTE(pIn && ((pIn->hdr.nCmd==CECMD_ATTACH2GUI && gpState->attachMode_) || (pIn->hdr.nCmd==CECMD_SRVSTARTSTOP && !gpState->attachMode_)));
+	_ASSERTE(pIn && ((pIn->hdr.nCmd==CECMD_ATTACH2GUI && gState.attachMode_) || (pIn->hdr.nCmd==CECMD_SRVSTARTSTOP && !gState.attachMode_)));
 
 	ZeroStruct(gpSrv->ConnectInfo);
 	gpSrv->ConnectInfo.hGuiWnd = hGui;
@@ -2280,7 +2285,7 @@ bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 	//	lbNeedSetFont = FALSE;
 	//
 	//    if (gpLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.before");
-	//    SetConsoleFontSizeTo(gpState->realConWnd, consoleFontHeight_, consoleFontWidth_, gpSrv->szConsoleFont);
+	//    SetConsoleFontSizeTo(gState.realConWnd, consoleFontHeight_, consoleFontWidth_, gpSrv->szConsoleFont);
 	//    if (gpLogSize) LogSize(NULL, ":SetConsoleFontSizeTo.after");
 	//}
 
@@ -2292,7 +2297,7 @@ bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 		_ASSERTE(pIn->DataSize() >= sizeof(pIn->StartStop));
 		pIn->StartStop.hServerProcessHandle = NULL;
 
-		if (pIn->StartStop.bUserIsAdmin || gpState->attachMode_)
+		if (pIn->StartStop.bUserIsAdmin || gState.attachMode_)
 		{
 			DWORD  nGuiPid = 0;
 
@@ -2362,7 +2367,7 @@ bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 		gpSrv->ConnectInfo.nStartTick = GetTickCount();
 
 		ExecuteFreeResult(pOut);
-		pOut = ExecuteCmd(szServerPipe, pIn, EXECUTE_CONNECT_GUI_CALL_TIMEOUT, gpState->realConWnd_);
+		pOut = ExecuteCmd(szServerPipe, pIn, EXECUTE_CONNECT_GUI_CALL_TIMEOUT, gState.realConWnd_);
 		gpSrv->ConnectInfo.bCallRc = (pOut->DataSize() >= sizeof(CESERVER_REQ_STARTSTOPRET));
 
 		gpSrv->ConnectInfo.nErr = GetLastError();
@@ -2435,9 +2440,9 @@ bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 
 	// Also calls SetConEmuEnvVar
 	SetConEmuWindows(pStartStopRet->Info.hWnd, pStartStopRet->Info.hWndDc, pStartStopRet->Info.hWndBack);
-	_ASSERTE(gpState->conemuPid_ == pStartStopRet->Info.dwPID);
-	gpState->conemuPid_ = pStartStopRet->Info.dwPID;
-	_ASSERTE(gpState->conemuWnd_!=NULL && "Must be set!");
+	_ASSERTE(gState.conemuPid_ == pStartStopRet->Info.dwPID);
+	gState.conemuPid_ = pStartStopRet->Info.dwPID;
+	_ASSERTE(gState.conemuWnd_!=NULL && "Must be set!");
 
 	// Refresh settings
 	ReloadGuiSettings(&pStartStopRet->GuiMapping);
@@ -2445,14 +2450,14 @@ bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 	// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
 	InitAnsiLog(pStartStopRet->AnsiLog);
 
-	if (!gpState->attachMode_) // Часть с "обычным" запуском сервера
+	if (!gState.attachMode_) // Часть с "обычным" запуском сервера
 	{
 		#ifdef _DEBUG
-		DWORD nGuiPID; GetWindowThreadProcessId(gpState->conemuWnd_, &nGuiPID);
+		DWORD nGuiPID; GetWindowThreadProcessId(gState.conemuWnd_, &nGuiPID);
 		_ASSERTEX(pOut->hdr.nSrcPID==nGuiPID);
 		#endif
 
-		gpSrv->bWasDetached = FALSE;
+		gState.bWasDetached_ = FALSE;
 		UpdateConsoleMapHeader(L"TryConnect2Gui, !gpStatus->attachMode_");
 	}
 	else // Запуск сервера "с аттачем" (это может быть RunAsAdmin и т.п.)
@@ -2465,20 +2470,20 @@ bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 		CESERVER_CONSOLE_MAPPING_HDR *pMap = gpSrv->pConsoleMap->Ptr();
 		if (pMap)
 		{
-			_ASSERTE(gpState->conemuPid_ == pStartStopRet->Info.dwPID);
+			_ASSERTE(gState.conemuPid_ == pStartStopRet->Info.dwPID);
 			FixConsoleMappingHdr(pMap);
 			_ASSERTE(pMap->hConEmuRoot==NULL || pMap->nGuiPID!=0);
 		}
 
 		// Только если подцепились успешно
-		if (gpState->conemuWnd_)
+		if (gState.conemuWnd_)
 		{
 			//DisableAutoConfirmExit();
 
 			if (gpConsoleArgs->IsForceHideConWnd())
 			{
 				if (!(gpSrv->guiSettings.Flags & CECF_RealConVisible))
-					apiShowWindow(gpState->realConWnd_, SW_HIDE);
+					apiShowWindow(gState.realConWnd_, SW_HIDE);
 			}
 
 			// Установить шрифт в консоли
@@ -2504,7 +2509,7 @@ bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 				//pSizeIn->SetSize.nSendTopLine = -1;
 				//pSizeIn->SetSize.rcWindow = rcWnd;
 
-				pSizeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pSizeIn, gpState->realConWnd_);
+				pSizeOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pSizeIn, gState.realConWnd_);
 			}
 			else
 			{
@@ -2516,7 +2521,7 @@ bool WorkerServer::TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn)
 	}
 
 	// Только если подцепились успешно
-	if (gpState->conemuWnd_)
+	if (gState.conemuWnd_)
 	{
 		CheckConEmuHwnd();
 		gpWorker->Processes().OnAttached();
@@ -2540,7 +2545,7 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 {
 	LogFunction(L"Attach2Gui");
 
-	if (!gpSrv->bWasDetached && isTerminalMode())
+	if (!gState.bWasDetached_ && isTerminalMode())
 	{
 		_ASSERTE(FALSE && "Attach is not allowed in telnet");
 		return NULL;
@@ -2548,7 +2553,7 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 
 	// Нить Refresh НЕ должна быть запущена, иначе в мэппинг могут попасть данные из консоли
 	// ДО того, как отработает ресайз (тот размер, который указал установить GUI при аттаче)
-	_ASSERTE(gpSrv->dwRefreshThread==0 || gpSrv->bWasDetached);
+	_ASSERTE(gpSrv->dwRefreshThread==0 || gState.bWasDetached_);
 	HWND hGui = NULL;
 	DWORD nToolhelpFoundGuiPID = 0;
 	//UINT nMsg = RegisterWindowMessage(CONEMUMSG_ATTACH);
@@ -2557,12 +2562,12 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 	DWORD dwErr = 0;
 	DWORD dwStartWaitIdleResult = -1;
 	// Будем подцепляться заново
-	if (gpSrv->bWasDetached)
+	if (gState.bWasDetached_)
 	{
-		gpSrv->bWasDetached = FALSE;
-		_ASSERTE(gpState->attachMode_==am_None);
-		if (!(gpState->attachMode_ & am_Modes))
-			gpState->attachMode_ |= am_Simple;
+		gState.bWasDetached_ = FALSE;
+		_ASSERTE(gState.attachMode_==am_None);
+		if (!(gState.attachMode_ & am_Modes))
+			gState.attachMode_ |= am_Simple;
 		if (gpSrv->pConsole)
 			gpSrv->pConsole->bDataChanged = TRUE;
 	}
@@ -2577,23 +2582,23 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 		gpSrv->pConsoleMap->Ptr()->bDataReady = FALSE;
 	}
 
-	if (gpConsoleArgs->requestNewGuiWnd_ && !gpState->conemuPid_ && !gpState->hGuiWnd)
+	if (gpConsoleArgs->requestNewGuiWnd_ && !gState.conemuPid_ && !gState.hGuiWnd)
 	{
 		bNeedStartGui = TRUE;
 		hGui = (HWND)-1;
 	}
-	else if (gpState->hGuiWnd)
+	else if (gState.hGuiWnd)
 	{
 		// Only HWND may be (was) specified, especially when running from batches
-		if (!gpState->conemuPid_)
-			GetWindowThreadProcessId(gpState->hGuiWnd, &gpState->conemuPid_);
+		if (!gState.conemuPid_)
+			GetWindowThreadProcessId(gState.hGuiWnd, &gState.conemuPid_);
 
 		wchar_t szClass[128] = L"";
-		GetClassName(gpState->hGuiWnd, szClass, countof(szClass));
-		if (gpState->conemuPid_ && lstrcmp(szClass, VirtualConsoleClassMain) == 0)
-			hGui = gpState->hGuiWnd;
+		GetClassName(gState.hGuiWnd, szClass, countof(szClass));
+		if (gState.conemuPid_ && lstrcmp(szClass, VirtualConsoleClassMain) == 0)
+			hGui = gState.hGuiWnd;
 		else
-			gpState->hGuiWnd = NULL;
+			gState.hGuiWnd = NULL;
 	}
 
 	// That may fail if processes are running under different credentials or permissions
@@ -2760,9 +2765,9 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 	pIn = ExecuteNewCmd(CECMD_ATTACH2GUI, nInSize);
 	pIn->StartStop.nStarted = sst_ServerStart;
 	wcscpy_c(pIn->StartStop.sIcon, gpSrv->pConsole->hdr.sIcon);
-	pIn->StartStop.hWnd = gpState->realConWnd_;
+	pIn->StartStop.hWnd = gState.realConWnd_;
 	pIn->StartStop.dwPID = gnSelfPID;
-	pIn->StartStop.dwAID = gpState->dwGuiAID;
+	pIn->StartStop.dwAID = gState.dwGuiAID;
 	//pIn->StartStop.dwInputTID = gpSrv->dwInputPipeThreadId;
 	pIn->StartStop.nSubSystem = gnImageSubsystem;
 	// Сразу передать текущий KeyboardLayout
@@ -2778,7 +2783,7 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 	if (gpConsoleArgs->attachFromFar_)
 		pIn->StartStop.bRootIsCmdExe = FALSE;
 	else
-		pIn->StartStop.bRootIsCmdExe = gpState->rootIsCmdExe_ || (gpState->attachMode_ && !gpState->noCreateProcess_);
+		pIn->StartStop.bRootIsCmdExe = gState.rootIsCmdExe_ || (gState.attachMode_ && !gState.noCreateProcess_);
 
 	pIn->StartStop.bRunInBackgroundTab = gbRunInBackgroundTab;
 
@@ -2797,7 +2802,7 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 	}
 
 	//TODO: In the (gpStatus->attachMode_ & am_Async) mode dwRootProcess is expected to be determined already
-	_ASSERTE(bCmdSet || ((gpState->attachMode_ & (am_Async|am_Simple)) && this->RootProcessId()));
+	_ASSERTE(bCmdSet || ((gState.attachMode_ & (am_Async|am_Simple)) && this->RootProcessId()));
 	if (!bCmdSet && this->RootProcessId())
 	{
 		PROCESSENTRY32 pi;
@@ -2834,17 +2839,17 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 	// другого процесса - шрифт все-равно поменять не получится
 	//BOOL lbNeedSetFont = TRUE;
 
-	_ASSERTE(gpState->conemuWndDC_==NULL);
-	gpState->conemuWndDC_ = NULL;
+	_ASSERTE(gState.conemuWndDC_==NULL);
+	gState.conemuWndDC_ = NULL;
 
 	// Если с первого раза не получится (GUI мог еще не загрузиться) пробуем еще
 	_ASSERTE(dwDelta < nTimeout); // Must runs at least once!
 	while (dwDelta <= nTimeout)
 	{
-		if (gpState->hGuiWnd)
+		if (gState.hGuiWnd)
 		{
-			// On success, it will set gpState->conemuWndDC_ and others...
-			TryConnect2Gui(gpState->hGuiWnd, 0, pIn);
+			// On success, it will set gState.conemuWndDC_ and others...
+			TryConnect2Gui(gState.hGuiWnd, 0, pIn);
 		}
 		else
 		{
@@ -2866,13 +2871,13 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 						continue;
 				}
 
-				// On success, it will set gpState->conemuWndDC_ and others...
+				// On success, it will set gState.conemuWndDC_ and others...
 				if (TryConnect2Gui(hFindGui, 0, pIn))
 					break; // OK
 			} while ((hFindGui = FindWindowEx(NULL, hFindGui, VirtualConsoleClassMain, NULL)) != NULL);
 		}
 
-		if (gpState->conemuWndDC_)
+		if (gState.conemuWndDC_)
 			break;
 
 		dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
@@ -2884,7 +2889,7 @@ HWND WorkerServer::Attach2Gui(DWORD nTimeout)
 		dwCur = GetTickCount(); dwDelta = dwCur - dwStart;
 	}
 
-	return gpState->conemuWndDC_;
+	return gState.conemuWndDC_;
 }
 
 
@@ -2976,7 +2981,7 @@ int WorkerServer::CreateMapHeader()
 	{
 #ifdef _DEBUG
 		DWORD dwErr = GetLastError();
-		if (gpState->isWine_)
+		if (gState.isWine_)
 		{
 			wchar_t szDbgMsg[512], szTitle[128];
 			szDbgMsg[0] = 0;
@@ -2997,7 +3002,7 @@ int WorkerServer::CreateMapHeader()
 	}
 
 	// Размер шрифта может быть еще не уменьшен? Прикинем размер по максимуму?
-	HMONITOR hMon = MonitorFromWindow(gpState->realConWnd_, MONITOR_DEFAULTTOPRIMARY);
+	HMONITOR hMon = MonitorFromWindow(gState.realConWnd_, MONITOR_DEFAULTTOPRIMARY);
 	MONITORINFO mi = {sizeof(MONITORINFO)};
 
 	if (GetMonitorInfo(hMon, &mi))
@@ -3061,10 +3066,10 @@ int WorkerServer::CreateMapHeader()
 		goto wrap;
 	}
 
-	gpSrv->pConsoleMap->InitName(CECONMAPNAME, LODWORD(gpState->realConWnd_)); //-V205
-	gpSrv->pAppMap->InitName(CECONAPPMAPNAME, LODWORD(gpState->realConWnd_)); //-V205
+	gpSrv->pConsoleMap->InitName(CECONMAPNAME, LODWORD(gState.realConWnd_)); //-V205
+	gpSrv->pAppMap->InitName(CECONAPPMAPNAME, LODWORD(gState.realConWnd_)); //-V205
 
-	if (gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AutoAttach)
+	if (gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AutoAttach)
 	{
 		lbCreated = (gpSrv->pConsoleMap->Create() != NULL)
 			&& (gpSrv->pAppMap->Create() != NULL);
@@ -3082,7 +3087,7 @@ int WorkerServer::CreateMapHeader()
 		SafeDelete(gpSrv->pConsoleMap);
 		iRc = CERR_CREATEMAPPINGERR; goto wrap;
 	}
-	else if (gpState->runMode_ == RunMode::AltServer)
+	else if (gState.runMode_ == RunMode::AltServer)
 	{
 		// На всякий случай, перекинем параметры
 		if (gpSrv->pConsoleMap->GetTo(&gpSrv->pConsole->hdr))
@@ -3095,7 +3100,7 @@ int WorkerServer::CreateMapHeader()
 			}
 		}
 	}
-	else if (gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AutoAttach)
+	else if (gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AutoAttach)
 	{
 		CESERVER_CONSOLE_APP_MAPPING init = {sizeof(CESERVER_CONSOLE_APP_MAPPING), CESERVER_REQ_VER};
 		init.HookedPids.Init();
@@ -3109,9 +3114,9 @@ int WorkerServer::CreateMapHeader()
 		gpSrv->pConsole->hdr.nLogLevel = (gpLogSize!=NULL) ? 1 : 0;
 	gpSrv->pConsole->hdr.crMaxConSize = crMax;
 	gpSrv->pConsole->hdr.bDataReady = FALSE;
-	gpSrv->pConsole->hdr.hConWnd = gpState->realConWnd_; _ASSERTE(gpState->realConWnd_!=NULL);
-	_ASSERTE((gpSrv->dwMainServerPID!=0) || (gpState->attachMode_ & am_Async));
-	if (gpState->attachMode_ & am_Async)
+	gpSrv->pConsole->hdr.hConWnd = gState.realConWnd_; _ASSERTE(gState.realConWnd_!=NULL);
+	_ASSERTE((gpSrv->dwMainServerPID!=0) || (gState.attachMode_ & am_Async));
+	if (gState.attachMode_ & am_Async)
 	{
 		_ASSERTE(gpSrv->dwMainServerPID == 0);
 		gpSrv->pConsole->hdr.nServerPID = 0;
@@ -3120,18 +3125,18 @@ int WorkerServer::CreateMapHeader()
 	{
 		gpSrv->pConsole->hdr.nServerPID = gpSrv->dwMainServerPID;
 	}
-	gpSrv->pConsole->hdr.nAltServerPID = (gpState->runMode_==RunMode::AltServer) ? GetCurrentProcessId() : gpSrv->dwAltServerPID;
-	gpSrv->pConsole->hdr.nGuiPID = gpState->conemuPid_;
-	gpSrv->pConsole->hdr.hConEmuRoot = gpState->conemuWnd_;
-	gpSrv->pConsole->hdr.hConEmuWndDc = gpState->conemuWndDC_;
-	gpSrv->pConsole->hdr.hConEmuWndBack = gpState->conemuWndBack_;
+	gpSrv->pConsole->hdr.nAltServerPID = (gState.runMode_==RunMode::AltServer) ? GetCurrentProcessId() : gpSrv->dwAltServerPID;
+	gpSrv->pConsole->hdr.nGuiPID = gState.conemuPid_;
+	gpSrv->pConsole->hdr.hConEmuRoot = gState.conemuWnd_;
+	gpSrv->pConsole->hdr.hConEmuWndDc = gState.conemuWndDC_;
+	gpSrv->pConsole->hdr.hConEmuWndBack = gState.conemuWndBack_;
 	_ASSERTE(gpSrv->pConsole->hdr.hConEmuRoot==NULL || gpSrv->pConsole->hdr.nGuiPID!=0);
 	gpSrv->pConsole->hdr.nServerInShutdown = 0;
 	gpSrv->pConsole->hdr.nProtocolVersion = CESERVER_REQ_VER;
-	gpSrv->pConsole->hdr.nActiveFarPID = gpSrv->nActiveFarPID; // PID последнего активного фара
+	gpSrv->pConsole->hdr.nActiveFarPID = this->nActiveFarPID_;
 
 	// Обновить переменные окружения (через ConEmuGuiMapping)
-	if (gpState->conemuWnd_) // если уже известен - тогда можно
+	if (gState.conemuWnd_) // если уже известен - тогда можно
 		ReloadGuiSettings(NULL);
 
 	// По идее, уже должно быть настроено
@@ -3141,11 +3146,11 @@ int WorkerServer::CreateMapHeader()
 	}
 	else
 	{
-		_ASSERTE(gpSrv->guiSettings.cbSize==sizeof(ConEmuGuiMapping) || (gpState->attachMode_ && !gpState->conemuWnd_));
+		_ASSERTE(gpSrv->guiSettings.cbSize==sizeof(ConEmuGuiMapping) || (gState.attachMode_ && !gState.conemuWnd_));
 	}
 
 
-	gpSrv->pConsole->ConState.hConWnd = gpState->realConWnd_; _ASSERTE(gpState->realConWnd_!=NULL);
+	gpSrv->pConsole->ConState.hConWnd = gState.realConWnd_; _ASSERTE(gState.realConWnd_!=NULL);
 	gpSrv->pConsole->ConState.crMaxSize = crMax;
 
 	// Проверять, нужно ли реестр хукать, будем в конце ServerInit
@@ -3190,17 +3195,17 @@ void WorkerServer::UpdateConsoleMapHeader(LPCWSTR asReason /*= NULL*/)
 
 	if (gpSrv && gpSrv->pConsole)
 	{
-		if (gpState->runMode_ == RunMode::Server) // !!! RunMode::RM_ALTSERVER - ниже !!!
+		if (gState.runMode_ == RunMode::Server) // !!! RunMode::RM_ALTSERVER - ниже !!!
 		{
-			if (gpState->conemuWndDC_ && (!gpSrv->pColorerMapping || (gpSrv->pConsole->hdr.hConEmuWndDc != gpState->conemuWndDC_)))
+			if (gState.conemuWndDC_ && (!gpSrv->pColorerMapping || (gpSrv->pConsole->hdr.hConEmuWndDc != gState.conemuWndDC_)))
 			{
-				bool bRecreate = (gpSrv->pColorerMapping && (gpSrv->pConsole->hdr.hConEmuWndDc != gpState->conemuWndDC_));
+				bool bRecreate = (gpSrv->pColorerMapping && (gpSrv->pConsole->hdr.hConEmuWndDc != gState.conemuWndDC_));
 				CreateColorerHeader(bRecreate);
 			}
 			gpSrv->pConsole->hdr.nServerPID = GetCurrentProcessId();
 			gpSrv->pConsole->hdr.nAltServerPID = gpSrv->dwAltServerPID;
 		}
-		else if (gpState->runMode_ == RunMode::AltServer)
+		else if (gState.runMode_ == RunMode::AltServer)
 		{
 			DWORD nCurServerInMap = 0;
 			if (gpSrv->pConsoleMap && gpSrv->pConsoleMap->IsValid())
@@ -3223,7 +3228,7 @@ void WorkerServer::UpdateConsoleMapHeader(LPCWSTR asReason /*= NULL*/)
 			gpSrv->pConsole->hdr.nAltServerPID = GetCurrentProcessId();
 		}
 
-		if (gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AltServer)
+		if (gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AltServer)
 		{
 			// Размер _видимой_ области. Консольным приложениям запрещено менять его "изнутри".
 			// Размер может менять только пользователь ресайзом окна ConEmu
@@ -3233,14 +3238,14 @@ void WorkerServer::UpdateConsoleMapHeader(LPCWSTR asReason /*= NULL*/)
 			// Какая прокрутка допустима. Пока - любая.
 			gpSrv->pConsole->hdr.rbsAllowed = rbs_Any;
 		}
-		gpSrv->pConsole->hdr.nGuiPID = gpState->conemuPid_;
-		gpSrv->pConsole->hdr.hConEmuRoot = gpState->conemuWnd_;
-		gpSrv->pConsole->hdr.hConEmuWndDc = gpState->conemuWndDC_;
-		gpSrv->pConsole->hdr.hConEmuWndBack = gpState->conemuWndBack_;
+		gpSrv->pConsole->hdr.nGuiPID = gState.conemuPid_;
+		gpSrv->pConsole->hdr.hConEmuRoot = gState.conemuWnd_;
+		gpSrv->pConsole->hdr.hConEmuWndDc = gState.conemuWndDC_;
+		gpSrv->pConsole->hdr.hConEmuWndBack = gState.conemuWndBack_;
 		_ASSERTE(gpSrv->pConsole->hdr.hConEmuRoot==NULL || gpSrv->pConsole->hdr.nGuiPID!=0);
-		gpSrv->pConsole->hdr.nActiveFarPID = gpSrv->nActiveFarPID;
+		gpSrv->pConsole->hdr.nActiveFarPID = this->nActiveFarPID_;
 
-		if (gpState->runMode_ == RunMode::Server)
+		if (gState.runMode_ == RunMode::Server)
 		{
 			// Limited logging of console contents (same output as processed by CECF_ProcessAnsi)
 			gpSrv->pConsole->hdr.AnsiLog = gpSrv->AnsiLog;
@@ -3253,9 +3258,9 @@ void WorkerServer::UpdateConsoleMapHeader(LPCWSTR asReason /*= NULL*/)
 		#endif
 
 		// Нельзя альт.серверу мэппинг менять - подерутся
-		if ((gpState->runMode_ != RunMode::Server) && (gpState->runMode_ != RunMode::AutoAttach))
+		if ((gState.runMode_ != RunMode::Server) && (gState.runMode_ != RunMode::AutoAttach))
 		{
-			_ASSERTE(gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AltServer || gpState->runMode_ == RunMode::AutoAttach);
+			_ASSERTE(gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AltServer || gState.runMode_ == RunMode::AutoAttach);
 			// Могли измениться: gcrVisibleSize, nActiveFarPID
 			if (gpSrv->dwMainServerPID && gpSrv->dwMainServerPID != GetCurrentProcessId())
 			{
@@ -3264,7 +3269,7 @@ void WorkerServer::UpdateConsoleMapHeader(LPCWSTR asReason /*= NULL*/)
 				if (pIn)
 				{
 					pIn->ConInfo = gpSrv->pConsole->hdr;
-					CESERVER_REQ* pOut = ExecuteSrvCmd(gpSrv->dwMainServerPID, pIn, gpState->realConWnd_);
+					CESERVER_REQ* pOut = ExecuteSrvCmd(gpSrv->dwMainServerPID, pIn, gState.realConWnd_);
 					ExecuteFreeResult(pIn);
 					ExecuteFreeResult(pOut);
 				}
@@ -3276,7 +3281,7 @@ void WorkerServer::UpdateConsoleMapHeader(LPCWSTR asReason /*= NULL*/)
 		{
 			if (gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0]==0 || gpSrv->pConsole->hdr.ComSpec.ConEmuBaseDir[0]==0)
 			{
-				_ASSERTE((gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0]!=0 && gpSrv->pConsole->hdr.ComSpec.ConEmuBaseDir[0]!=0) || (gpState->attachMode_ && !gpState->conemuWnd_));
+				_ASSERTE((gpSrv->pConsole->hdr.ComSpec.ConEmuExeDir[0]!=0 && gpSrv->pConsole->hdr.ComSpec.ConEmuBaseDir[0]!=0) || (gState.attachMode_ && !gState.conemuWnd_));
 				wchar_t szSelfPath[MAX_PATH+1];
 				if (GetModuleFileName(NULL, szSelfPath, countof(szSelfPath)))
 				{
@@ -3291,7 +3296,7 @@ void WorkerServer::UpdateConsoleMapHeader(LPCWSTR asReason /*= NULL*/)
 
 			if (gpSrv->pConsole->hdr.sConEmuExe[0] == 0)
 			{
-				_ASSERTE((gpSrv->pConsole->hdr.sConEmuExe[0]!=0) || (gpState->attachMode_ && !gpState->conemuWnd_));
+				_ASSERTE((gpSrv->pConsole->hdr.sConEmuExe[0]!=0) || (gState.attachMode_ && !gState.conemuWnd_));
 			}
 
 			gpSrv->pConsoleMap->SetFrom(&(gpSrv->pConsole->hdr));
@@ -3319,7 +3324,7 @@ int WorkerServer::CreateColorerHeader(bool bForceRecreate /*= false*/)
 	CS.Lock(&gpSrv->csColorerMappingCreate);
 
 	// По идее, не должно быть пересоздания TrueColor мэппинга, разве что при Detach/Attach
-	_ASSERTE((gpSrv->pColorerMapping == NULL) || (gpState->attachMode_ == am_Simple));
+	_ASSERTE((gpSrv->pColorerMapping == NULL) || (gState.attachMode_ == am_Simple));
 
 	if (bForceRecreate)
 	{
@@ -3341,7 +3346,7 @@ int WorkerServer::CreateColorerHeader(bool bForceRecreate /*= false*/)
 	}
 
 	// 111101 - было "GetConEmuHWND(2)", но GetConsoleWindow теперь перехватывается.
-	lhConWnd = gpState->conemuWndDC_; // GetConEmuHWND(2);
+	lhConWnd = gState.conemuWndDC_; // GetConEmuHWND(2);
 
 	if (!lhConWnd)
 	{
@@ -3409,7 +3414,7 @@ int WorkerServer::CreateColorerHeader(bool bForceRecreate /*= false*/)
 
 	//pHdr->struct_size = sizeof(AnnotationHeader);
 	//pHdr->bufferSize = nMapCells;
-	_ASSERTE((gpState->runMode_ == RunMode::AltServer) || (pHdr->locked == 0 && pHdr->flushCounter == 0));
+	_ASSERTE((gState.runMode_ == RunMode::AltServer) || (pHdr->locked == 0 && pHdr->flushCounter == 0));
 	//pHdr->locked = 0;
 	//pHdr->flushCounter = 0;
 	gpSrv->ColorerHdr = *pHdr;
@@ -3603,7 +3608,7 @@ int WorkerServer::ReadConsoleInfo()
 				pIn->dwData[0] = tmc_ConInMode;
 				pIn->dwData[1] = ldwConsoleMode;
 				pIn->dwData[2] = this->RootProcessId();
-				CESERVER_REQ* pOut = ExecuteGuiCmd(gpState->realConWnd_, pIn, gpState->realConWnd_);
+				CESERVER_REQ* pOut = ExecuteGuiCmd(gState.realConWnd_, pIn, gState.realConWnd_);
 				ExecuteFreeResult(pIn);
 				ExecuteFreeResult(pOut);
 			}
@@ -3711,7 +3716,7 @@ int WorkerServer::ReadConsoleInfo()
 			COORD crReq = gpSrv->crReqSizeNewSize;
 			COORD crSize = lsbi.dwSize;
 
-			if (crReq.X != crSize.X && !gpSrv->dwDisplayMode && !IsZoomed(gpState->realConWnd_))
+			if (crReq.X != crSize.X && !gpSrv->dwDisplayMode && !IsZoomed(gState.realConWnd_))
 			{
 				// Только если не было запрошено изменение размера консоли!
 				if (!gpSrv->nRequestChangeSize)
@@ -3746,7 +3751,7 @@ int WorkerServer::ReadConsoleInfo()
 			if (!gpSrv->nReqSizeBufferHeight)
 			{
 				//#ifdef _DEBUG
-				//EmergencyShow(gpState->realConWnd);
+				//EmergencyShow(gState.realConWnd);
 				//#endif
 				WARNING("###: Приложение изменило вертикальный размер буфера");
 				if (this->consoleInfo.sbi.dwSize.Y > 200)
@@ -3766,10 +3771,10 @@ int WorkerServer::ReadConsoleInfo()
 	}
 
 	// Лучше всегда делать, чтобы данные были гарантированно актуальные
-	gpSrv->pConsole->hdr.hConWnd = gpSrv->pConsole->ConState.hConWnd = gpState->realConWnd_;
+	gpSrv->pConsole->hdr.hConWnd = gpSrv->pConsole->ConState.hConWnd = gState.realConWnd_;
 	_ASSERTE(gpSrv->dwMainServerPID!=0);
 	gpSrv->pConsole->hdr.nServerPID = gpSrv->dwMainServerPID;
-	gpSrv->pConsole->hdr.nAltServerPID = (gpState->runMode_==RunMode::AltServer) ? GetCurrentProcessId() : gpSrv->dwAltServerPID;
+	gpSrv->pConsole->hdr.nAltServerPID = (gState.runMode_==RunMode::AltServer) ? GetCurrentProcessId() : gpSrv->dwAltServerPID;
 	//gpSrv->pConsole->info.nInputTID = gpSrv->dwInputThreadId;
 	gpSrv->pConsole->ConState.nReserved0 = 0;
 	gpSrv->pConsole->ConState.dwCiSize = sizeof(gpSrv->ci);
@@ -3989,7 +3994,7 @@ bool WorkerServer::ReadConsoleData()
 		lbChanged = TRUE;
 		LogString("ReadConsoleData: content was changed");
 	}
-	else if (gpSrv->bWasReattached)
+	else if (gState.bWasReattached_)
 	{
 		gpSrv->pConsole->bDataChanged = TRUE;
 	}
@@ -4106,7 +4111,7 @@ BOOL WorkerServer::ReloadFullConsoleInfo(BOOL abForceSend)
 
 		//if (memcmp(&(gpSrv->pConsole->hdr), gpSrv->pConsoleMap->Ptr(), gpSrv->pConsole->hdr.cbSize))
 		int iMapCmp = Compare(&gpSrv->pConsole->hdr, gpSrv->pConsoleMap->Ptr());
-		if (iMapCmp || gpSrv->bWasReattached)
+		if (iMapCmp || gState.bWasReattached_)
 		{
 			lbChanged = TRUE;
 
@@ -4416,7 +4421,7 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 							pGuiIn->StartStop.hServerProcessHandle = 0; // для GUI смысла не имеет
 							pGuiIn->StartStop.nStarted = nAltServerWasStarted ? sst_AltServerStart : sst_AltServerStop;
 
-							pGuiOut = ExecuteGuiCmd(gpState->realConWnd_, pGuiIn, gpState->realConWnd_);
+							pGuiOut = ExecuteGuiCmd(gState.realConWnd_, pGuiIn, gState.realConWnd_);
 
 							_ASSERTE(pGuiOut!=NULL && "Can not switch GUI to alt server?"); // успешное выполнение?
 							ExecuteFreeResult(pGuiIn);
@@ -4495,10 +4500,10 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 		// 120507 - Если крутится альт.сервер - то игнорировать
 		if (!nAltWait && (gpSrv->nRequestChangeSize > 0))
 		{
-			if (gpSrv->bStationLocked)
+			if (gState.bStationLocked_)
 			{
 				LogString("!!! Change size request received while station is LOCKED !!!");
-				_ASSERTE(!gpSrv->bStationLocked);
+				_ASSERTE(!gState.bStationLocked_);
 			}
 
 			InterlockedDecrement(&gpSrv->nRequestChangeSize);
@@ -4527,7 +4532,7 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 		gpWorker->Processes().CheckProcessCount();
 
 		// While station is locked - no sense to scan console contents
-		if (gpSrv->bStationLocked)
+		if (gState.bStationLocked_)
 		{
 			nWait = WaitForSingleObject(ghQuitEvent, 50);
 			if (nWait == WAIT_OBJECT_0)
@@ -4656,7 +4661,7 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 		{
 			ReloadGuiSettings(NULL);
 			BOOL lbDCWndVisible = bDCWndVisible;
-			bDCWndVisible = (IsWindowVisible(gpState->conemuWndDC_) != FALSE);
+			bDCWndVisible = (IsWindowVisible(gState.conemuWndDC_) != FALSE);
 			gpSrv->nLastConsoleActiveTick = GetTickCount();
 
 			if (gpLogSize && (bDCWndVisible != lbDCWndVisible))
@@ -4672,7 +4677,7 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 			if ((ci.Flags & ccf_Active) && (HWND)ci.Console)
 			{
 				lbOneConActive = TRUE;
-				if (gpState->realConWnd_ == (HWND)ci.Console)
+				if (gState.realConWnd_ == (HWND)ci.Console)
 				{
 					lbOurConActive = TRUE;
 					break;
@@ -4743,7 +4748,7 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 		            || bFellInSleep)
 		        // и не дернули событие gpSrv->hRefreshEvent
 		        && (nWait != nRefreshEventId)
-				&& !gpSrv->bWasReattached)
+				&& !gState.bWasReattached_)
 		{
 			DWORD nCurTick = GetTickCount();
 			nDelta = nCurTick - nLastReadTick;
@@ -4775,26 +4780,26 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 		#endif
 
 		// GUI was crashed or was detached?
-		if (gpState->conemuWndDC_ && isConEmuTerminated())
+		if (gState.conemuWndDC_ && isConEmuTerminated())
 		{
-			gpSrv->bWasDetached = TRUE;
+			gState.bWasDetached_ = TRUE;
 			WorkerServer::Instance().SetConEmuWindows(NULL, NULL, NULL);
-			_ASSERTE(!gpState->conemuWnd_ && !gpState->conemuWndDC_ && !gpState->conemuWndBack_);
-			gpState->conemuPid_ = 0;
+			_ASSERTE(!gState.conemuWnd_ && !gState.conemuWndDC_ && !gState.conemuWndBack_);
+			gState.conemuPid_ = 0;
 			WorkerServer::Instance().UpdateConsoleMapHeader(L"RefreshThread: GUI was crashed or was detached?");
-			EmergencyShow(gpState->realConWnd_);
+			EmergencyShow(gState.realConWnd_);
 		}
 
 		// Reattach?
-		if (!gpState->conemuWndDC_ && gpSrv->bWasDetached && (gpState->runMode_ == RunMode::AltServer))
+		if (!gState.conemuWndDC_ && gState.bWasDetached_ && (gState.runMode_ == RunMode::AltServer))
 		{
 			CESERVER_CONSOLE_MAPPING_HDR* pMap = gpSrv->pConsoleMap->Ptr();
 			if (pMap && pMap->hConEmuWndDc && IsWindow(pMap->hConEmuWndDc))
 			{
 				// Reset GUI HWND's
-				_ASSERTE(!gpState->conemuPid_);
+				_ASSERTE(!gState.conemuPid_);
 				WorkerServer::Instance().SetConEmuWindows(pMap->hConEmuRoot, pMap->hConEmuWndDc, pMap->hConEmuWndBack);
-				_ASSERTE(gpState->conemuPid_ && gpState->conemuWnd_ && gpState->conemuWndDC_ && gpState->conemuWndBack_);
+				_ASSERTE(gState.conemuPid_ && gState.conemuWnd_ && gState.conemuWndDC_ && gState.conemuWndBack_);
 
 				// To be sure GUI will be updated with full info
 				gpSrv->pConsole->bDataChanged = TRUE;
@@ -4802,10 +4807,10 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 		}
 
 		// 17.12.2009 Maks - попробую убрать
-		//if (gpState->conemuWnd_ && GetForegroundWindow() == gpState->realConWnd) {
-		//	if (lbFirstForeground || !IsWindowVisible(gpState->realConWnd)) {
-		//		DEBUGSTR(L"...apiSetForegroundWindow(gpState->conemuWnd_);\n");
-		//		apiSetForegroundWindow(gpState->conemuWnd_);
+		//if (gState.conemuWnd_ && GetForegroundWindow() == gState.realConWnd) {
+		//	if (lbFirstForeground || !IsWindowVisible(gState.realConWnd)) {
+		//		DEBUGSTR(L"...apiSetForegroundWindow(gState.conemuWnd_);\n");
+		//		apiSetForegroundWindow(gState.conemuWnd_);
 		//		lbFirstForeground = FALSE;
 		//	}
 		//}
@@ -4844,7 +4849,7 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 
 			if (lbReloadNow)
 			{
-				lbChanged = WorkerServer::Instance().ReloadFullConsoleInfo(gpSrv->bWasReattached/*lbForceSend*/);
+				lbChanged = WorkerServer::Instance().ReloadFullConsoleInfo(gState.bWasReattached_/*lbForceSend*/);
 			}
 
 			#if defined(TEST_REFRESH_DELAYED)
@@ -4852,11 +4857,11 @@ DWORD WorkerServer::RefreshThread(LPVOID lpvParam)
 			#endif
 
 			// При этом должно передернуться gpSrv->hDataReadyEvent
-			if (gpSrv->bWasReattached)
+			if (gState.bWasReattached_)
 			{
 				_ASSERTE(lbChanged);
 				_ASSERTE(gpSrv->pConsole && gpSrv->pConsole->bDataChanged);
-				gpSrv->bWasReattached = FALSE;
+				gState.bWasReattached_ = FALSE;
 			}
 		}
 		else
@@ -4966,12 +4971,21 @@ int WorkerServer::MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn)
 	return iRc;
 }
 
+void WorkerServer::SetFarPid(DWORD pid)
+{
+	this->nActiveFarPID_ = pid;
+
+	// update mapping using MainServer if this is Alternative
+	UpdateConsoleMapHeader(L"SetFarPid");
+}
+
+DWORD WorkerServer::GetLastActiveFarPid() const
+{
+	return this->nActiveFarPID_;
+}
+
 void WorkerServer::ApplyProcessSetEnvCmd()
 {
-	#ifdef _DEBUG
-	CStartEnv::UnitTests();
-	#endif
-
 	CStartEnv setEnv;
 	EnvCmdProcessor()->Apply(&setEnv);
 }

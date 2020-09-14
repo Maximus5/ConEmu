@@ -149,18 +149,18 @@ void SetupCreateDumpOnException()
 		return;
 	}
 
-	if (gpState->runMode_ == RunMode::GuiMacro)
+	if (gState.runMode_ == RunMode::GuiMacro)
 	{
 		// Must not be called in GuiMacro mode!
-		_ASSERTE(gpState->runMode_!=RunMode::GuiMacro);
+		_ASSERTE(gState.runMode_!=RunMode::GuiMacro);
 		return;
 	}
 
-	if (gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::Comspec)
+	if (gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::Comspec)
 	{
 		// ok, allow
 	}
-	else if (gpState->runMode_ == RunMode::AltServer)
+	else if (gState.runMode_ == RunMode::AltServer)
 	{
 		// By default, handler is not installed in AltServer
 		// gpSet->isConsoleExceptionHandler --> CECF_ConExcHandler

@@ -143,7 +143,7 @@ int DebuggerInfo::RunDebugger()
 		HANDLE hCon = ghConOut;
 		CONSOLE_SCREEN_BUFFER_INFO csbi = {};
 		GetConsoleScreenBufferInfo(hCon, &csbi);
-		if (IsWindowVisible(gpState->realConWnd_) && (csbi.dwSize.X < 260))
+		if (IsWindowVisible(gState.realConWnd_) && (csbi.dwSize.X < 260))
 		{
 			// Enlarge both width and height
 			const COORD crNewSize = {260, 32000};
@@ -223,7 +223,7 @@ int DebuggerInfo::RunDebugger()
 	// this->bDebuggerActive was set in DebugThread
 
 	// And wait for debugger thread completion
-	_ASSERTE(gpState->runMode_ == RunMode::Undefined);
+	_ASSERTE(gState.runMode_ == RunMode::Undefined);
 	DWORD nDebugThread; // = WaitForSingleObject(this->hDebugThread, INFINITE);
 	const DWORD nDbgTimeout = std::min<DWORD>(std::max<DWORD>(25, this->nAutoInterval), 100);
 
@@ -587,9 +587,9 @@ DWORD DebuggerInfo::DebugThread(LPVOID lpvParam)
 	}
 
 //done:
-	gpState->rootAliveLess10sec_ = FALSE;
+	gState.rootAliveLess10sec_ = FALSE;
 	gbInShutdown = TRUE;
-	gpState->alwaysConfirmExit_ = FALSE;
+	gState.alwaysConfirmExit_ = FALSE;
 
 	_ASSERTE(gbTerminateOnCtrlBreak==FALSE);
 

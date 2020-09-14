@@ -40,7 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WObjects.h"
 
 
-ConsoleState* gpState = nullptr;
+ConsoleState gState{};
 
 namespace
 {
@@ -74,7 +74,7 @@ void ConsoleState::DisableAutoConfirmExit(const bool fromFarPlugin)
 {
 	// Console could be attached to our GUI in the moment, when server awaits
 	// from the user "console close confirmation"
-	if (!gpState->inExitWaitForKey_)
+	if (!gState.inExitWaitForKey_)
 	{
 		_ASSERTE(gpConsoleArgs->confirmExitParm_ == RConStartArgs::eConfDefault || fromFarPlugin);
 		this->autoDisableConfirmExit_ = false;

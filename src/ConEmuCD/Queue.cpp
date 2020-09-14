@@ -112,7 +112,7 @@ BOOL ProcessInputMessage(MSG64::MsgStr &msg, INPUT_RECORD &r)
 				// Issue 590: GenerateConsoleCtrlEvent does not break ReadConsole[A|W] function!
 				SetLastError(0);
 				LRESULT lSendRc =
-				SendMessage(gpState->realConWnd_, WM_KEYDOWN, r.Event.KeyEvent.wVirtualKeyCode, 0);
+				SendMessage(gState.realConWnd_, WM_KEYDOWN, r.Event.KeyEvent.wVirtualKeyCode, 0);
 				DWORD nErrCode = GetLastError();
 				msprintf(szLog, countof(szLog), L"  ---  CtrlC/CtrlBreak sent (%u,%u)", LODWORD(lSendRc), nErrCode);
 				LogString(szLog);
@@ -715,7 +715,7 @@ BOOL SendConsoleEvent(INPUT_RECORD* pr, UINT nCount)
 		&& pr[0].Event.KeyEvent.bKeyDown
 		&& ((pr[0].Event.KeyEvent.dwControlKeyState & (LEFT_ALT_PRESSED|RIGHT_ALT_PRESSED|LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED|SHIFT_PRESSED))
 			== (pr[0].Event.KeyEvent.dwControlKeyState & (LEFT_CTRL_PRESSED|RIGHT_CTRL_PRESSED)));
-	_ASSERTE((fSuccess && (cbWritten==nCount || bEaten)) || (!fSuccess && dwErr==ERROR_INVALID_HANDLE && gpState->attachMode_));
+	_ASSERTE((fSuccess && (cbWritten==nCount || bEaten)) || (!fSuccess && dwErr==ERROR_INVALID_HANDLE && gState.attachMode_));
 #endif
 
 	if (prNew) free(prNew);

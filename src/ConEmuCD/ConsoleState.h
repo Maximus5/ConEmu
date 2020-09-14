@@ -96,12 +96,20 @@ struct ConsoleState final
 	/// if true - we need to run the command through cmd.exe
 	bool runViaCmdExe_ = false;
 
+	/// set to true during CECMD_DETACHCON
+	bool bWasDetached_ = false;
+	/// if it's true we need a refresh on next cycle - ReloadFullConsoleInfo(true)
+	bool bWasReattached_ = false;
+	/// Don't read console output while station is locked
+	bool bStationLocked_ = false;
+	
+
 	/// Started child process
 	PROCESS_INFORMATION pi_ = {};
 
 	/// Real console window handle
 	HWND realConWnd_ = nullptr;
-	/// PID of ConEmu[64].exe (gpState->conemuWnd_)
+	/// PID of ConEmu[64].exe (gState.conemuWnd_)
 	DWORD conemuPid_ = 0;
 	/// Root! window
 	HWND conemuWnd_ = nullptr;
@@ -124,4 +132,4 @@ struct ConsoleState final
 
 };
 
-extern ConsoleState* gpState;
+extern ConsoleState gState;

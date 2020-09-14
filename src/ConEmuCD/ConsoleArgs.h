@@ -266,7 +266,7 @@ public:
 	/// Enable internal logging
 	SwitchBool isLogging_;
 
-	/// PID of ConEmu[64].exe (gpState->conemuWnd_)
+	/// PID of ConEmu[64].exe (gState.conemuWnd_)
 	SwitchInt conemuPid_;
 	/// HWND of ConEmu instance (root window)
 	SwitchInt conemuHwnd_;

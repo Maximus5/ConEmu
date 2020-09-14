@@ -320,19 +320,19 @@ void ConsoleArgs::AddConEmuArg(LPCWSTR asSwitch, LPCWSTR asValue)
 /// AutoAttach is not allowed in some cases
 bool ConsoleArgs::IsAutoAttachAllowed() const
 {
-	if (!gpState->realConWnd_)
+	if (!gState.realConWnd_)
 	{
-		LogString("IsAutoAttachAllowed is not allowed, gpState->realConWnd is not null");
+		LogString("IsAutoAttachAllowed is not allowed, gState.realConWnd is not null");
 		return false;
 	}
 
-	if (gpState->attachMode_ & am_Admin)
+	if (gState.attachMode_ & am_Admin)
 	{
 		LogString("IsAutoAttachAllowed is allowed due to am_Admin");
 		return true;
 	}
 
-	if (!IsWindowVisible(gpState->realConWnd_))
+	if (!IsWindowVisible(gState.realConWnd_))
 	{
 		if (defTermCall_ || attachFromFar_)
 		{
@@ -345,9 +345,9 @@ bool ConsoleArgs::IsAutoAttachAllowed() const
 		return false;
 	}
 
-	if (IsIconic(gpState->realConWnd_))
+	if (IsIconic(gState.realConWnd_))
 	{
-		LogString("IsAutoAttachAllowed is not allowed, gpState->realConWnd is iconic");
+		LogString("IsAutoAttachAllowed is not allowed, gState.realConWnd is iconic");
 		return false;
 	}
 
@@ -361,7 +361,7 @@ bool ConsoleArgs::IsForceHideConWnd() const
 	// В принципе, консоль может действительно запуститься видимой. В этом случае ее скрывать не нужно
 	// Но скорее всего, консоль запущенная под Админом в Win7 будет отображена ошибочно
 	// 110807 - Если gpStatus->attachMode_, тоже консоль нужно спрятать
-	return forceHideConWnd_ || (gpState->attachMode_ && (gpState->attachMode_ != am_Admin));
+	return forceHideConWnd_ || (gState.attachMode_ && (gState.attachMode_ != am_Admin));
 }
 
 /// <summary>
@@ -523,6 +523,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 		else if (szArg.OneOfSwitches(L"/GuiMacro", L"/GuiMacro="))
 		{
 			// Execute rest of the command line as GuiMacro
+			//gState.runMode_ = RunMode::GuiMacro;
 			guiMacro_.SetStr(szArg);
 			eExecAction_ = ConEmuExecAction::GuiMacro;
 			command_.Set(cmdLineRest);
@@ -597,14 +598,14 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 								   : (lstrcmpi(name, L"ConfHalt") == 0)
 								   ? RConStartArgs::eConfHalt
 								   : RConStartArgs::eConfEmpty;
-			gpState->alwaysConfirmExit_ = true;
-			gpState->autoDisableConfirmExit_ = false;
+			gState.alwaysConfirmExit_ = true;
+			gState.autoDisableConfirmExit_ = false;
 		}
 		else if (szArg.IsSwitch(L"/NoConfirm"))
 		{
 			confirmExitParm_ = RConStartArgs::eConfNever;
-			gpState->alwaysConfirmExit_ = false;
-			gpState->autoDisableConfirmExit_ = false;
+			gState.alwaysConfirmExit_ = false;
+			gState.autoDisableConfirmExit_ = false;
 		}
 		else if (szArg.IsSwitch(L"/OmitHooksWarn"))
 		{
@@ -613,31 +614,31 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 		else if (szArg.IsSwitch(L"/ADMIN"))
 		{
 			ShowAttachMsgBox(szArg);
-			gpState->attachMode_ |= am_Admin;
-			gpState->runMode_ = RunMode::Server;
+			gState.attachMode_ |= am_Admin;
+			gState.runMode_ = RunMode::Server;
 		}
 		else if (szArg.IsSwitch(L"/ATTACH"))
 		{
 			ShowAttachMsgBox(szArg);
-			if (!(gpState->attachMode_ & am_Modes))
-				gpState->attachMode_ |= am_Simple;
-			gpState->runMode_ = RunMode::Server;
+			if (!(gState.attachMode_ & am_Modes))
+				gState.attachMode_ |= am_Simple;
+			gState.runMode_ = RunMode::Server;
 		}
 		else if (szArg.OneOfSwitches(L"/AutoAttach", L"/AttachDefTerm"))
 		{
 			ShowAttachMsgBox(szArg);
-			gpState->attachMode_ |= am_Auto;
-			gpState->alienMode_ = true;
-			gpState->noCreateProcess_ = true;
+			gState.attachMode_ |= am_Auto;
+			gState.alienMode_ = true;
+			gState.noCreateProcess_ = true;
 			if (szArg.IsSwitch(L"/AutoAttach"))
 			{
-				gpState->runMode_ = RunMode::AutoAttach;
-				gpState->attachMode_ |= am_Async;
+				gState.runMode_ = RunMode::AutoAttach;
+				gState.attachMode_ |= am_Async;
 			}
 			if (szArg.IsSwitch(L"/AttachDefTerm"))
 			{
-				gpState->runMode_ = RunMode::Server;
-				gpState->attachMode_ |= am_DefTerm;
+				gState.runMode_ = RunMode::Server;
+				gState.attachMode_ |= am_DefTerm;
 			}
 
 			// Below is also "/GHWND=NEW". There would be "requestNewGuiWnd_" set to "true"
@@ -649,16 +650,16 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 		{
 			ShowAttachMsgBox(szArg);
 
-			gpState->runMode_ = RunMode::Server;
-			if (!(gpState->attachMode_ & am_Modes))
-				gpState->attachMode_ |= am_Simple;
+			gState.runMode_ = RunMode::Server;
+			if (!(gState.attachMode_ & am_Modes))
+				gState.attachMode_ |= am_Simple;
 			attachGuiAppWnd_.SetInt(szArg.GetExtra(), 16);
 		}
 		else if (szArg.IsSwitch(L"/NoCmd"))
 		{
-			gpState->runMode_ = RunMode::Server;
-			gpState->noCreateProcess_ = true;
-			gpState->alienMode_ = true;
+			gState.runMode_ = RunMode::Server;
+			gState.noCreateProcess_ = true;
+			gState.alienMode_ = true;
 		}
 		else if (szArg.IsSwitch(L"/ParentFarPid="))
 		{
@@ -676,9 +677,9 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 		}
 		else if (szArg.OneOfSwitches(L"/PID=", L"/TRMPID=", L"/FARPID=", L"/CONPID="))
 		{
-			gpState->runMode_ = RunMode::Server;
-			gpState->noCreateProcess_ = true; // process already started
-			gpState->alienMode_ = true;       // console was not created by us
+			gState.runMode_ = RunMode::Server;
+			gState.noCreateProcess_ = true; // process already started
+			gState.alienMode_ = true;       // console was not created by us
 
 			if (szArg.IsSwitch(L"/TRMPID="))
 			{
@@ -689,13 +690,13 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 			else if (szArg.IsSwitch(L"/FARPID="))
 			{
 				attachFromFar_.SetBool(true);
-				gpState->rootIsCmdExe_ = false;
+				gState.rootIsCmdExe_ = false;
 			}
 			else if (szArg.IsSwitch(L"/CONPID="))
 			{
 				//_ASSERTE(FALSE && "Continue to alternative attach mode");
 				alternativeAttach_.SetBool(true);
-				gpState->rootIsCmdExe_ = false;
+				gState.rootIsCmdExe_ = false;
 			}
 			else if (szArg.IsSwitch(L"/CONPID="))
 			{
@@ -776,25 +777,25 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 		}
 		else if (szArg.IsSwitch(L"/GID="))
 		{
-			gpState->runMode_ = RunMode::Server;
+			gState.runMode_ = RunMode::Server;
 			conemuPid_.SetInt(szArg.GetExtra(), 10);
 		}
 		else if (szArg.IsSwitch(L"/AID="))
 		{
 			wchar_t* pszEnd = nullptr;
-			gpState->dwGuiAID = wcstoul(szArg.Mid(5), &pszEnd, 10);
+			gState.dwGuiAID = wcstoul(szArg.Mid(5), &pszEnd, 10);
 		}
 		else if (szArg.IsSwitch(L"/GHWND="))
 		{
-			if (gpState->runMode_ == RunMode::Undefined)
+			if (gState.runMode_ == RunMode::Undefined)
 			{
-				gpState->runMode_ = RunMode::Server;
+				gState.runMode_ = RunMode::Server;
 			}
 			else
 			{
 				_ASSERTE(
-					gpState->runMode_ == RunMode::AutoAttach
-					|| gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AltServer);
+					gState.runMode_ == RunMode::AutoAttach
+					|| gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AltServer);
 			}
 
 			if (lstrcmpi(szArg.GetExtra(), L"NEW") == 0)
@@ -899,18 +900,18 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 		}
 		else if (szArg.IsSwitch(L"/DOSBOX"))
 		{
-			gpState->dosbox_.use_ = true;
+			gState.dosbox_.use_ = true;
 		}
 		else if (szArg.IsSwitch(L"-STD"))
 		{
-			gpState->reopenStdHandles_ = true;
+			gState.reopenStdHandles_ = true;
 		}
 			// После этих аргументов - идет то, что передается в CreateProcess!
 		else if (szArg.IsSwitch(L"/ROOT"))
 		{
 			ShowServerStartedMsgBox(cmdLineRest);
-			gpState->runMode_ = RunMode::Server;
-			gpState->noCreateProcess_ = FALSE;
+			gState.runMode_ = RunMode::Server;
+			gState.noCreateProcess_ = FALSE;
 			gpConsoleArgs->asyncRun_ = FALSE;
 			command_.Set(cmdLineRest);
 			break;
@@ -920,23 +921,23 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 		else if (szArg.OneOfSwitches(L"/C", L"/K"))
 		{
 			ShowComspecStartedMsgBox(cmdLineRest);
-			gpState->noCreateProcess_ = FALSE;
+			gState.noCreateProcess_ = FALSE;
 
 			//_ASSERTE(FALSE && "ConEmuC -c ...");
 
 			if (szArg.GetLen() == 2) // "/c" or "/k"
-				gpState->runMode_ = RunMode::Comspec;
+				gState.runMode_ = RunMode::Comspec;
 
-			if (gpState->runMode_ == RunMode::Undefined && szArg[4] == 0
+			if (gState.runMode_ == RunMode::Undefined && szArg[4] == 0
 				&& ((szArg[2] & ~0x20) == L'M') && ((szArg[3] & ~0x20) == L'D'))
 			{
 				_ASSERTE(FALSE && "'/cmd' obsolete switch. use /c, /k, /root");
-				gpState->runMode_ = RunMode::Server;
+				gState.runMode_ = RunMode::Server;
 			}
 
-			if (gpState->runMode_ == RunMode::Undefined)
+			if (gState.runMode_ == RunMode::Undefined)
 			{
-				gpState->runMode_ = RunMode::Comspec;
+				gState.runMode_ = RunMode::Comspec;
 				// Support weird legacy "cmd /cecho xxx"
 				command_.Set(SkipNonPrintable(pszArgStart + 2));
 			}
@@ -945,7 +946,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 				command_.Set(cmdLineRest);
 			}
 
-			if (gpState->runMode_ == RunMode::Comspec)
+			if (gState.runMode_ == RunMode::Comspec)
 			{
 				cmdK_.SetBool(szArg.IsSwitch(L"/K"));
 			}

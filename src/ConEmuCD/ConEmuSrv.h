@@ -121,10 +121,6 @@ struct SrvInfo
 	HANDLE hInWaitForSetConBufThread;  // signal that RefreshThread is ready to wait for hWaitForSetConBufThread
 	HANDLE hOutWaitForSetConBufThread; // signal that RefreshThread may continue
 
-	DWORD  nActiveFarPID; // PID последнего активного Far
-	BOOL   bWasDetached; // Выставляется в TRUE при получении CECMD_DETACHCON
-	BOOL   bWasReattached; // Если TRUE - то при следующем цикле нужно передернуть ReloadFullConsoleInfo(true)
-	BOOL   bStationLocked; // Don't read console output while station is locked
 	//
 	PipeServer<CESERVER_REQ> CmdServer;
 	PipeServer<MSG64> InputServer;
@@ -292,6 +288,9 @@ public:
 
 	int MySetWindowRgn(CESERVER_REQ_SETWINDOWRGN* pRgn);
 
+	void SetFarPid(DWORD pid);
+	DWORD GetLastActiveFarPid() const;
+
 protected:
 	static int CALLBACK FontEnumProc(ENUMLOGFONTEX* lpelfe, NEWTEXTMETRICEX* lpntme, DWORD FontType, LPARAM lParam);
 
@@ -305,4 +304,7 @@ private:
 	SHORT consoleFontWidth_ = 0;
 	/// Height for real console font
 	SHORT consoleFontHeight_ = 0;
+
+	/// Last active Far Manager PID
+	DWORD  nActiveFarPID_ = 0;
 };

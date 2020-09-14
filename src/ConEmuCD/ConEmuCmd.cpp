@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuSrv.h"
 #include "ConsoleArgs.h"
 #include "ConsoleState.h"
+#include "DumpOnException.h"
 #include "ExitCodes.h"
 #include "../common/EnvVar.h"
 #include "../common/WFiles.h"
@@ -79,13 +80,14 @@ PRAGMA_ERROR("AddConsoleAlias was not defined");
 
 WorkerComspec::~WorkerComspec()  // NOLINT(modernize-use-equals-default)
 {
-	_ASSERTE(gpState->runMode_ == RunMode::Comspec || gpState->runMode_ == RunMode::Undefined);
+	_ASSERTE(gState.runMode_ == RunMode::Comspec || gState.runMode_ == RunMode::Undefined);
 }
 
 WorkerComspec::WorkerComspec()  // NOLINT(modernize-use-equals-default)
 	: WorkerBase()
 {
-	_ASSERTE(gpState->runMode_ == RunMode::Comspec || gpState->runMode_ == RunMode::Undefined);
+	_ASSERTE(gState.runMode_ == RunMode::Comspec || gState.runMode_ == RunMode::Undefined);
+	SetupCreateDumpOnException();
 }
 
 int WorkerComspec::Init()
@@ -103,8 +105,8 @@ int WorkerComspec::Init()
 	gbRootWasFoundInCon = 2; // не добавлять к "Press Enter to close console" - "or wait"
 	gbComspecInitCalled = TRUE; // Нельзя вызывать ComspecDone, если не было вызова ComspecInit
 	// в режиме ComSpec - запрещено!
-	gpState->alwaysConfirmExit_ = false;
-	gpState->autoDisableConfirmExit_ = false;
+	gState.alwaysConfirmExit_ = false;
+	gState.autoDisableConfirmExit_ = false;
 #ifdef _DEBUG
 	xf_validate();
 	xf_dump_chk();
@@ -378,7 +380,7 @@ int WorkerComspec::ProcessCommandLineArgs()
 
 int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 {
-	HWND hConWnd = gpState->realConWnd_, hConEmu = gpState->conemuWnd_;
+	HWND hConWnd = gState.realConWnd_, hConEmu = gState.conemuWnd_;
 	if (!hConWnd)
 	{
 		// This may be ConEmuC started from WSL or connector
@@ -464,7 +466,7 @@ int WorkerComspec::ProcessNewConsoleArg(LPCWSTR asCmdLine)
 			iNewConRc = CERR_NOTENOUGHMEM1;
 		}
 
-		gpState->DisableAutoConfirmExit();
+		gState.DisableAutoConfirmExit();
 		return iNewConRc;
 	}
 

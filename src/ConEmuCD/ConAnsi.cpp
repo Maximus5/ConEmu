@@ -462,7 +462,7 @@ void SrvAnsi::GetFeatures(bool* pbAnsiAllowed, bool* pbSuppressBells) const
 		CESERVER_CONSOLE_MAPPING_HDR* pMap = GetConMap();
 		if (pMap)
 		{
-			//if (!::LoadSrvMapping(gpState->realConWnd, *pMap) || !pMap->bProcessAnsi)
+			//if (!::LoadSrvMapping(gState.realConWnd, *pMap) || !pMap->bProcessAnsi)
 			//	bAnsiAllowed = false;
 			//else
 			//	bAnsiAllowed = true;

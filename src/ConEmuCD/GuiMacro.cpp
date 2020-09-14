@@ -154,9 +154,15 @@ void ArgGuiMacro(const CEStr& szArg, MacroInstance& inst)
 
 	ZeroStruct(inst);
 
+	if (szArg.IsEmpty())
+	{
+		_ASSERTE(!szArg.IsEmpty());
+		return;
+	}
+
 	// Caller may specify PID/HWND of desired ConEmu instance,
 	// or some other switches, like Tab or Split index
-	_ASSERTE(!szArg.IsEmpty() && (lstrcmpni(szArg.ms_Val, L"/GuiMacro", 9) == 0));
+	_ASSERTE((lstrcmpni(szArg.ms_Val, L"/GuiMacro", 9) == 0) || (lstrcmpni(szArg.ms_Val, L"-GuiMacro", 9) == 0));
 	if (szArg[9] == L':' || szArg[9] == L'=')
 	{
 		wchar_t* pszEnd = nullptr;
@@ -307,9 +313,9 @@ void ArgGuiMacro(const CEStr& szArg, MacroInstance& inst)
 
 int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR* bsResult /*= NULL*/)
 {
-	// If neither hMacroInstance nor gpState->conemuWnd_ was set - Macro will fail most likely
+	// If neither hMacroInstance nor gState.conemuWnd_ was set - Macro will fail most likely
 	// Skip assertion show for IsConEmu, it's used in tests
-	_ASSERTE(inst.hConEmuWnd!=NULL || gpState->conemuWnd_!=NULL || (wcscmp(asCmdArg, L"IsConEmu") == 0));
+	_ASSERTE(inst.hConEmuWnd!=NULL || gState.conemuWnd_!=NULL || (wcscmp(asCmdArg, L"IsConEmu") == 0));
 
 	wchar_t szErrInst[80] = L"FAILED:Specified ConEmu instance is not found";
 	wchar_t szErrExec[80] = L"FAILED:Unknown GuiMacro execution error";
@@ -336,7 +342,7 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR*
 		return CERR_GUIMACRO_FAILED;
 	}
 
-	HWND hCallWnd = inst.hConEmuWnd ? inst.hConEmuWnd : gpState->realConWnd_;
+	HWND hCallWnd = inst.hConEmuWnd ? inst.hConEmuWnd : gState.realConWnd_;
 
 	// Все что в asCmdArg - выполнить в Gui
 	int iRc = CERR_GUIMACRO_FAILED;
@@ -350,7 +356,7 @@ int DoGuiMacro(LPCWSTR asCmdArg, MacroInstance& inst, GuiMacroFlags flags, BSTR*
 
 	LogString(L"DoGuiMacro: executing CECMD_GUIMACRO");
 
-	pOut = ConEmuGuiRpc(hCallWnd).SetOwner(gpState->realConWnd_).SetIgnoreAbsence().Execute(pIn);
+	pOut = ConEmuGuiRpc(hCallWnd).SetOwner(gState.realConWnd_).SetIgnoreAbsence().Execute(pIn);
 
 	LogString(L"DoGuiMacro: CECMD_GUIMACRO finished");
 

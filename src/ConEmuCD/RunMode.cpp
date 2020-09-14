@@ -31,5 +31,5 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RunMode GetRunMode()
 {
-	return gpState->runMode_;
+	return gState.runMode_;
 }

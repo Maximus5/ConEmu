@@ -50,8 +50,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "StdCon.h"
 #include "../common/MProcess.h"
 #include "../common/ProcessSetEnv.h"
-#include "../common/SetEnvVar.h"
-#include "../common/TerminalMode.h"
 
 /* Console Handles */
 MConHandle ghConOut(L"CONOUT$");
@@ -64,8 +62,8 @@ bool IsWin10Build9879()
 {
 	if (!IsWin10())
 		return false;
-	_ASSERTE(gpState != NULL);
-	return gpState->osVerInfo_.dwBuildNumber == 9879;
+	_ASSERTE(gState.osVerInfo_.dwMajorVersion != 0);
+	return gState.osVerInfo_.dwBuildNumber == 9879;
 }
 }
 
@@ -78,25 +76,23 @@ WorkerBase::WorkerBase()
 	: kernel32(L"kernel32.dll")
 	, processes_(std::make_shared<ConProcess>(kernel32))
 {
-	SetupCreateDumpOnException();
-
 	kernel32.GetProcAddress("GetConsoleKeyboardLayoutNameW", pfnGetConsoleKeyboardLayoutName);
 	kernel32.GetProcAddress("GetConsoleDisplayMode", pfnGetConsoleDisplayMode);
 
 	gpLocalSecurity = LocalSecurity();
 
 	// This could be nullptr when process was started as detached
-	gpState->realConWnd_ = GetConEmuHWND(2);
-	gbVisibleOnStartup = IsWindowVisible(gpState->realConWnd_);
+	gState.realConWnd_ = GetConEmuHWND(2);
+	gbVisibleOnStartup = IsWindowVisible(gState.realConWnd_);
 	gnSelfPID = GetCurrentProcessId();
 	gdwMainThreadId = GetCurrentThreadId();
 
 	#ifdef _DEBUG
-	if (gpState->realConWnd_)
+	if (gState.realConWnd_)
 	{
 		// This event could be used in debug version of Far Manager
 		wchar_t szEvtName[64] = L"";
-		swprintf_c(szEvtName, L"FARconEXEC:%08X", LODWORD(gpState->realConWnd_));
+		swprintf_c(szEvtName, L"FARconEXEC:%08X", LODWORD(gState.realConWnd_));
 		ghFarInExecuteEvent = CreateEvent(0, TRUE, FALSE, szEvtName);
 	}
 	#endif
@@ -146,7 +142,7 @@ int WorkerBase::ProcessCommandLineArgs()
 		CdToProfileDir();
 	}
 
-	if (gpState->attachMode_ & am_Auto)
+	if (gState.attachMode_ & am_Auto)
 	{
 		if ((iRc = ParamAutoAttach()) != 0)
 			return iRc;
@@ -209,14 +205,14 @@ int WorkerBase::PostProcessParams()
 
 	xf_check();
 
-	if ((gpState->attachMode_ & am_DefTerm) && !gbParmVisibleSize)
+	if ((gState.attachMode_ & am_DefTerm) && !gbParmVisibleSize)
 	{
 		// To avoid "small" and trimmed text after starting console
 		_ASSERTE(gcrVisibleSize.X==80 && gcrVisibleSize.Y==25);
 		gbParmVisibleSize = true;
 	}
 
-	if (gpState->attachMode_)
+	if (gState.attachMode_)
 	{
 		if ((iRc = PostProcessCanAttach()) != 0)
 			return iRc;
@@ -228,7 +224,7 @@ int WorkerBase::PostProcessParams()
 	// to start new process and debug it (and its children if ‘/DEBUGTREE’)
 	if (gpWorker->IsDebugProcess())
 	{
-		_ASSERTE(gpState->runMode_ == RunMode::Undefined);
+		_ASSERTE(gState.runMode_ == RunMode::Undefined);
 		// Run debugger thread and wait for its completion
 		iRc = gpWorker->DbgInfo().RunDebugger();
 		return iRc;
@@ -256,8 +252,8 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	int iRc = 0;
 
 	// Validate Сonsole (find it may be) or ChildGui process we need to attach into ConEmu window
-	if (((gpState->runMode_ == RunMode::Server) || (gpState->runMode_ == RunMode::AutoAttach))
-		&& (gpState->noCreateProcess_ && gpState->attachMode_))
+	if (((gState.runMode_ == RunMode::Server) || (gState.runMode_ == RunMode::AutoAttach))
+		&& (gState.noCreateProcess_ && gState.attachMode_))
 	{
 		// Проверить процессы в консоли, подобрать тот, который будем считать "корневым"
 		const int nChk = CheckAttachProcess();
@@ -278,7 +274,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 
 	xf_check();
 
-	if (gpState->runMode_ == RunMode::Undefined)
+	if (gState.runMode_ == RunMode::Undefined)
 	{
 		LogString(L"CERR_CARGUMENT: Parsing command line failed (/C argument not found)");
 		_printf("Parsing command line failed (/C argument not found):\n");
@@ -291,7 +287,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	xf_check();
 
 	// Prepare our environment and GUI window
-	if (gpState->runMode_ == RunMode::Server)
+	if (gState.runMode_ == RunMode::Server)
 	{
 		if ((iRc = CheckGuiVersion()) != 0)
 			return iRc;
@@ -301,7 +297,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 
 	LPCWSTR lsCmdLine = gpConsoleArgs->command_.c_str(L"");
 
-	if (gpState->runMode_ == RunMode::Comspec)
+	if (gState.runMode_ == RunMode::Comspec)
 	{
 		// New console was requested?
 		if (IsNewConsoleArg(lsCmdLine))
@@ -325,11 +321,11 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	LPCWSTR pszArguments4EnvVar = nullptr;
 	CEStr szExeTest;
 
-	if (gpState->runMode_ == RunMode::Comspec && (!lsCmdLine || !*lsCmdLine))
+	if (gState.runMode_ == RunMode::Comspec && (!lsCmdLine || !*lsCmdLine))
 	{
 		if (gpWorker->IsCmdK())
 		{
-			gpState->runViaCmdExe_ = true;
+			gState.runViaCmdExe_ = true;
 		}
 		else
 		{
@@ -337,16 +333,16 @@ int WorkerBase::PostProcessPrepareCommandLine()
 			// e.g: *.ini -> "@"
 			// in that case it looks like Far does not do anything, but it calls ComSpec
 			gbNonGuiMode = TRUE;
-			gpState->DisableAutoConfirmExit();
+			gState.DisableAutoConfirmExit();
 			return CERR_EMPTY_COMSPEC_CMDLINE;
 		}
 	}
 	else
 	{
-		bool bAlwaysConfirmExit = gpState->alwaysConfirmExit_;
-		bool bAutoDisableConfirmExit = gpState->autoDisableConfirmExit_;
+		bool bAlwaysConfirmExit = gState.alwaysConfirmExit_;
+		bool bAutoDisableConfirmExit = gState.autoDisableConfirmExit_;
 
-		if (gpState->runMode_ == RunMode::Server)
+		if (gState.runMode_ == RunMode::Server)
 		{
 			LogFunction(L"ProcessSetEnvCmd {set, title, chcp, etc.}");
 			// Console may be started as follows:
@@ -363,13 +359,13 @@ int WorkerBase::PostProcessPrepareCommandLine()
 
 		pszCheck4NeedCmd_ = lsCmdLine;
 
-		gpState->runViaCmdExe_ = IsNeedCmd((gpState->runMode_ == RunMode::Server), lsCmdLine, szExeTest,
-			&pszArguments4EnvVar, &gpState->needCutStartEndQuot_, &gpState->rootIsCmdExe_, &bAlwaysConfirmExit, &bAutoDisableConfirmExit);
+		gState.runViaCmdExe_ = IsNeedCmd((gState.runMode_ == RunMode::Server), lsCmdLine, szExeTest,
+			&pszArguments4EnvVar, &gState.needCutStartEndQuot_, &gState.rootIsCmdExe_, &bAlwaysConfirmExit, &bAutoDisableConfirmExit);
 
 		if (gpConsoleArgs->confirmExitParm_ == RConStartArgs::eConfDefault)
 		{
-			gpState->alwaysConfirmExit_ = bAlwaysConfirmExit;
-			gpState->autoDisableConfirmExit_ = bAutoDisableConfirmExit;
+			gState.alwaysConfirmExit_ = bAlwaysConfirmExit;
+			gState.autoDisableConfirmExit_ = bAutoDisableConfirmExit;
 		}
 	}
 
@@ -382,7 +378,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 
 	int nCmdLine = lstrlenW(lsCmdLine);
 
-	if (!gpState->runViaCmdExe_)
+	if (!gState.runViaCmdExe_)
 	{
 		nCmdLine += 1; // только место под 0
 		if (pszArguments4EnvVar && *szExeTest)
@@ -413,7 +409,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	}
 
 	// это нужно для смены заголовка консоли. при необходимости COMSPEC впишем ниже, после смены
-	if (pszArguments4EnvVar && *szExeTest && !gpState->runViaCmdExe_)
+	if (pszArguments4EnvVar && *szExeTest && !gState.runViaCmdExe_)
 	{
 		gpszRunCmd[0] = L'"';
 		_wcscat_c(gpszRunCmd, nCchLen, szExeTest);
@@ -434,7 +430,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	// !!! gpszRunCmd может поменяться ниже!
 
 	// ====
-	if (gpState->runViaCmdExe_)
+	if (gState.runViaCmdExe_)
 	{
 		// -- always quote
 		gpszRunCmd[0] = L'"';
@@ -445,7 +441,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 		// The command line itself
 		_wcscat_c(gpszRunCmd, nCchLen, lsCmdLine);
 	}
-	else if (gpState->needCutStartEndQuot_)
+	else if (gState.needCutStartEndQuot_)
 	{
 		// ""c:\arc\7z.exe -?"" - would not start!
 		_wcscpy_c(gpszRunCmd, nCchLen, lsCmdLine+1);
@@ -476,7 +472,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	// DosBox?
 	if (args_.ForceDosBox == crb_On)
 	{
-		gpState->dosbox_.use_ = TRUE;
+		gState.dosbox_.use_ = TRUE;
 	}
 
 	#ifdef _DEBUG
@@ -489,11 +485,11 @@ int WorkerBase::PostProcessPrepareCommandLine()
 int WorkerBase::CheckGuiVersion()
 {
 	// If we already know the ConEmu HWND (root window)
-	if (!gpState->hGuiWnd)
+	if (!gState.hGuiWnd)
 		return 0;
 
 	// try to validate it's version
-	DWORD nGuiPid = 0; GetWindowThreadProcessId(gpState->hGuiWnd, &nGuiPid);
+	DWORD nGuiPid = 0; GetWindowThreadProcessId(gState.hGuiWnd, &nGuiPid);
 	DWORD nWrongValue = 0;
 	SetLastError(0);
 	const LGSResult lgsRc = ReloadGuiSettings(nullptr, &nWrongValue);
@@ -541,17 +537,17 @@ int WorkerBase::CheckGuiVersion()
 int WorkerBase::PostProcessCanAttach() const
 {
 	// Параметры из комстроки разобраны. Здесь могут уже быть известны
-	// gpState->hGuiWnd {/GHWND}, gpState->conemuPid_ {/GPID}, gpState->dwGuiAID {/AID}
+	// gState.hGuiWnd {/GHWND}, gState.conemuPid_ {/GPID}, gState.dwGuiAID {/AID}
 	// gpStatus->attachMode_ для ключей {/ADMIN}, {/ATTACH}, {/AUTOATTACH}, {/GUIATTACH}
 
 	// В принципе, gpStatus->attachMode_ включается и при "/ADMIN", но при запуске из ConEmu такого быть не может,
-	// будут установлены и gpState->hGuiWnd, и gpState->conemuPid_
+	// будут установлены и gState.hGuiWnd, и gState.conemuPid_
 
 	// Issue 364, например, идет билд в VS, запускается CustomStep, в этот момент автоаттач нафиг не нужен
 	// Теоретически, в Студии не должно бы быть запуска ConEmuC.exe, но он может оказаться в "COMSPEC", так что проверим.
-	if (gpState->attachMode_
-		&& ((gpState->runMode_ == RunMode::Server) || (gpState->runMode_ == RunMode::AutoAttach))
-		&& (gpState->conemuPid_ == 0))
+	if (gState.attachMode_
+		&& ((gState.runMode_ == RunMode::Server) || (gState.runMode_ == RunMode::AutoAttach))
+		&& (gState.conemuPid_ == 0))
 	{
 		//-- ассерт не нужен вроде
 		//_ASSERTE(!gbAlternativeAttach && "Alternative mode must be already processed!");
@@ -560,13 +556,13 @@ int WorkerBase::PostProcessCanAttach() const
 
 		BOOL lbIsWindowVisible = FALSE;
 		// Добавим проверку на telnet
-		if (!gpState->realConWnd_
+		if (!gState.realConWnd_
 			|| !(lbIsWindowVisible = gpConsoleArgs->IsAutoAttachAllowed())
 			|| isTerminalMode())
 		{
 			if (gpLogSize)
 			{
-				if (!gpState->realConWnd_) { LogFunction(L"!gpState->realConWnd"); }
+				if (!gState.realConWnd_) { LogFunction(L"!gState.realConWnd"); }
 				else if (!lbIsWindowVisible) { LogFunction(L"!IsAutoAttachAllowed"); }
 				else { LogFunction(L"isTerminalMode"); }
 			}
@@ -590,10 +586,10 @@ int WorkerBase::PostProcessCanAttach() const
 			}
 		}
 
-		if (!gpConsoleArgs->alternativeAttach_ && !(gpState->attachMode_ & am_DefTerm) && !gpWorker->RootProcessId())
+		if (!gpConsoleArgs->alternativeAttach_ && !(gState.attachMode_ & am_DefTerm) && !gpWorker->RootProcessId())
 		{
 			// В принципе, сюда мы можем попасть при запуске, например: "ConEmuC.exe /ADMIN /ROOT cmd"
-			// Но только не при запуске "из ConEmu" (т.к. будут установлены gpState->hGuiWnd, gpState->conemuPid_)
+			// Но только не при запуске "из ConEmu" (т.к. будут установлены gState.hGuiWnd, gState.conemuPid_)
 
 			// Из батника убрал, покажем инфу тут
 			PrintVersion();
@@ -640,24 +636,24 @@ int WorkerBase::ParamDebugPid()
 
 int WorkerBase::ParamConEmuGuiWnd() const
 {
-	_ASSERTE(gpState->runMode_ == RunMode::AutoAttach
-		|| gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AltServer);
+	_ASSERTE(gState.runMode_ == RunMode::AutoAttach
+		|| gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AltServer);
 
 	if (gpConsoleArgs->requestNewGuiWnd_.GetBool())
 	{
-		gpState->hGuiWnd = nullptr;
-		_ASSERTE(gpState->conemuPid_ == 0);
-		gpState->conemuPid_ = 0;
+		gState.hGuiWnd = nullptr;
+		_ASSERTE(gState.conemuPid_ == 0);
+		gState.conemuPid_ = 0;
 	}
 	else
 	{
 		wchar_t szLog[120];
-		const bool isWnd = gpState->hGuiWnd ? IsWindow(gpState->hGuiWnd) : FALSE;
-		const DWORD nErr = gpState->hGuiWnd ? GetLastError() : 0;
+		const bool isWnd = gState.hGuiWnd ? IsWindow(gState.hGuiWnd) : FALSE;
+		const DWORD nErr = gState.hGuiWnd ? GetLastError() : 0;
 
 		swprintf_c(
 			szLog, L"GUI HWND=0x%08X, %s, ErrCode=%u",
-			LODWORD(gpState->hGuiWnd), isWnd ? L"Valid" : L"Invalid", nErr);
+			LODWORD(gState.hGuiWnd), isWnd ? L"Valid" : L"Invalid", nErr);
 		LogString(szLog);
 
 		if (!isWnd)
@@ -672,9 +668,9 @@ int WorkerBase::ParamConEmuGuiWnd() const
 		}
 
 		DWORD nPid = 0;
-		GetWindowThreadProcessId(gpState->hGuiWnd, &nPid);
-		_ASSERTE(gpState->conemuPid_ == 0 || gpState->conemuPid_ == nPid);
-		gpState->conemuPid_ = nPid;
+		GetWindowThreadProcessId(gState.hGuiWnd, &nPid);
+		_ASSERTE(gState.conemuPid_ == 0 || gState.conemuPid_ == nPid);
+		gState.conemuPid_ = nPid;
 	}
 
 	return 0;
@@ -682,11 +678,11 @@ int WorkerBase::ParamConEmuGuiWnd() const
 
 int WorkerBase::ParamConEmuGuiPid() const
 {
-	_ASSERTE(gpState->runMode_ == RunMode::Server || gpState->runMode_ == RunMode::AltServer);
+	_ASSERTE(gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AltServer);
 
-	gpState->conemuPid_ = LODWORD(gpConsoleArgs->conemuPid_.GetInt());
+	gState.conemuPid_ = LODWORD(gpConsoleArgs->conemuPid_.GetInt());
 
-	if (gpState->conemuPid_ == 0)
+	if (gState.conemuPid_ == 0)
 	{
 		LogString(L"CERR_CARGUMENT: Invalid GUI PID specified");
 		_printf("Invalid GUI PID specified:\n");
@@ -733,7 +729,7 @@ int WorkerBase::ParamColorIndexes() const
 				{
 					// Microsoft bug? When console is started elevated - it does NOT show
 					// required attributes, BUT GetConsoleScreenBufferInfoEx returns them.
-					if (!(gpState->attachMode_ & am_Admin)
+					if (!(gState.attachMode_ & am_Admin)
 						&& (!gnDefTextColors || ((csbi.wAttributes = gnDefTextColors)))
 						&& (!gnDefPopupColors || ((csbi.wPopupAttributes = gnDefPopupColors))))
 					{
@@ -752,14 +748,14 @@ int WorkerBase::ParamColorIndexes() const
 						//if (gnOsVer == 0x0601)
 						//{
 						//	RECT rcGui = {};
-						//	if (gpState->hGuiWnd)
-						//		GetWindowRect(gpState->hGuiWnd, &rcGui);
-						//	//SetWindowPos(gpState->realConWnd, HWND_BOTTOM, rcGui.left+3, rcGui.top+3, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
-						//	SetWindowPos(gpState->realConWnd, NULL, -30000, -30000, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
-						//	apiShowWindow(gpState->realConWnd, SW_SHOWMINNOACTIVE);
+						//	if (gState.hGuiWnd)
+						//		GetWindowRect(gState.hGuiWnd, &rcGui);
+						//	//SetWindowPos(gState.realConWnd, HWND_BOTTOM, rcGui.left+3, rcGui.top+3, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+						//	SetWindowPos(gState.realConWnd, NULL, -30000, -30000, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+						//	apiShowWindow(gState.realConWnd, SW_SHOWMINNOACTIVE);
 						//	#ifdef _DEBUG
-						//	apiShowWindow(gpState->realConWnd, SW_SHOWNORMAL);
-						//	apiShowWindow(gpState->realConWnd, SW_HIDE);
+						//	apiShowWindow(gState.realConWnd, SW_SHOWNORMAL);
+						//	apiShowWindow(gState.realConWnd, SW_HIDE);
 						//	#endif
 						//}
 
@@ -768,7 +764,7 @@ int WorkerBase::ParamColorIndexes() const
 						// Fix problems of Windows 7
 						if (!gbVisibleOnStartup)
 						{
-							apiShowWindow(gpState->realConWnd_, SW_HIDE);
+							apiShowWindow(gState.realConWnd_, SW_HIDE);
 						}
 					}
 				}
@@ -798,7 +794,7 @@ int WorkerBase::ParamAlienAttachProcess()
 	if (gpConsoleArgs->alternativeAttach_ && RootProcessId())
 	{
 		// if process was started "with console window"
-		if (gpState->realConWnd_)
+		if (gState.realConWnd_)
 		{
 			DEBUGTEST(SafeCloseHandle(ghFarInExecuteEvent));
 		}
@@ -807,7 +803,7 @@ int WorkerBase::ParamAlienAttachProcess()
 		if (!bAttach)
 		{
 			gbInShutdown = TRUE;
-			gpState->alwaysConfirmExit_ = FALSE;
+			gState.alwaysConfirmExit_ = FALSE;
 			LogString(L"CERR_CARGUMENT: (gbAlternativeAttach && RootProcessId())");
 			return CERR_CARGUMENT;
 		}
@@ -816,7 +812,7 @@ int WorkerBase::ParamAlienAttachProcess()
 		SetConsoleCtrlHandler(HandlerRoutine, true);
 
 		_ASSERTE(ghFarInExecuteEvent == nullptr);
-		_ASSERTE(gpState->realConWnd_ != nullptr);
+		_ASSERTE(gState.realConWnd_ != nullptr);
 	}
 	else if (RootProcessId() == 0)
 	{
@@ -858,11 +854,11 @@ int WorkerBase::ParamAutoAttach() const
 
 	if (!gpConsoleArgs->IsAutoAttachAllowed())
 	{
-		if (gpState->realConWnd_ && IsWindowVisible(gpState->realConWnd_))
+		if (gState.realConWnd_ && IsWindowVisible(gState.realConWnd_))
 		{
 			_printf("AutoAttach was requested, but skipped\n");
 		}
-		gpState->DisableAutoConfirmExit();
+		gState.DisableAutoConfirmExit();
 		//_ASSERTE(FALSE && "AutoAttach was called while Update process is in progress?");
 		return CERR_AUTOATTACH_NOT_ALLOWED;
 	}
@@ -1008,7 +1004,7 @@ int WorkerBase::SetDebuggingPid(const wchar_t* const pidList)
 	if (!dbgInfo)
 		dbgInfo.reset(new DebuggerInfo);
 
-	gpState->noCreateProcess_ = TRUE;
+	gState.noCreateProcess_ = TRUE;
 	dbgInfo->bDebugProcess = TRUE;
 	dbgInfo->bDebugProcessTree = FALSE;
 
@@ -1051,7 +1047,7 @@ int WorkerBase::SetDebuggingExe(const wchar_t* const commandLine, const bool deb
 	if (!dbgInfo)
 		dbgInfo.reset(new DebuggerInfo);
 
-	gpState->noCreateProcess_ = TRUE;
+	gState.noCreateProcess_ = TRUE;
 	dbgInfo->bDebugProcess = true;
 	dbgInfo->bDebugProcessTree = debugTree;
 
@@ -1272,7 +1268,7 @@ void WorkerBase::CheckKeyboardLayout()
 			//memmove(pIn->Data, &dwLayout, 4);
 			pIn->dwData[0] = dwLayout;
 
-			CESERVER_REQ* pOut = ExecuteGuiCmd(gpState->realConWnd_, pIn, gpState->realConWnd_);
+			CESERVER_REQ* pOut = ExecuteGuiCmd(gState.realConWnd_, pIn, gState.realConWnd_);
 
 			ExecuteFreeResult(pOut);
 			ExecuteFreeResult(pIn);
@@ -1295,7 +1291,7 @@ bool WorkerBase::CheckHwFullScreen()
 			nModeFlags = 0;
 		}
 
-		gpState->consoleDisplayMode_ = nModeFlags;
+		gState.consoleDisplayMode_ = nModeFlags;
 		if (nModeFlags & CONSOLE_FULLSCREEN_HARDWARE)
 		{
 			bFullScreenHw = true;
