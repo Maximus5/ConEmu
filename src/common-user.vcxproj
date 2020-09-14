@@ -240,6 +240,7 @@
     <ClInclude Include="common\ConEmuInOut.h" />
     <ClInclude Include="common\ConEmuPipeMode.h" />
     <ClInclude Include="common\ConsoleAnnotation.h" />
+    <ClInclude Include="common\ConsoleMessages.h" />
     <ClInclude Include="common\ConsoleTrueMod.h" />
     <ClInclude Include="common\DbgHlpGcc.h" />
     <ClInclude Include="common\DefTermBase.h" />

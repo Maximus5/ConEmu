@@ -128,7 +128,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define POST_UPDATE_TIMEOUT   2000
 
 // Undocumented messages
-#include "ConsoleMessages.h"
+#include "../common/ConsoleMessages.h"
 
 #define MAX_CMD_HISTORY 100
 #define MAX_CMD_HISTORY_SHOW 16

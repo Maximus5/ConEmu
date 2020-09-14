@@ -309,7 +309,6 @@
     <ClInclude Include="ConEmu\ConEmuSize.h" />
     <ClInclude Include="ConEmu\ConEmuStart.h" />
     <ClInclude Include="ConEmu\ConfirmDlg.h" />
-    <ClInclude Include="ConEmu\ConsoleMessages.h" />
     <ClInclude Include="ConEmu\CreateProcess.h" />
     <ClInclude Include="ConEmu\CustomFonts.h" />
     <ClInclude Include="ConEmu\DebugMsgLog.h" />
@@ -458,6 +457,7 @@
     <ClInclude Include="common\ConEmuInOut.h" />
     <ClInclude Include="common\ConEmuPipeMode.h" />
     <ClInclude Include="common\ConsoleAnnotation.h" />
+    <ClInclude Include="common\ConsoleMessages.h" />
     <ClInclude Include="common\ConsoleMixAttr.h" />
     <ClInclude Include="common\ConsoleRead.h" />
     <ClInclude Include="common\ConsoleTrueMod.h" />

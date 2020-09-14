@@ -69,9 +69,6 @@
     <ClInclude Include="ConEmu\ConfirmDlg.h">
       <Filter>ConEmu</Filter>
     </ClInclude>
-    <ClInclude Include="ConEmu\ConsoleMessages.h">
-      <Filter>ConEmu</Filter>
-    </ClInclude>
     <ClInclude Include="ConEmu\CreateProcess.h">
       <Filter>ConEmu</Filter>
     </ClInclude>
@@ -514,6 +511,9 @@
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="common\ConsoleAnnotation.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\ConsoleMessages.h">
       <Filter>common</Filter>
     </ClInclude>
     <ClInclude Include="common\ConsoleMixAttr.h">

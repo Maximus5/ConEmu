@@ -1,5 +1,8 @@
 ﻿#pragma once
 
+#include "../common/ConsoleMessages.h"
+#include "../common/Keyboard.h"
+
 #ifdef MSGLOGGER
 
 void DebugLogFile(LPCSTR asMessage);
