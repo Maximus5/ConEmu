@@ -327,7 +327,7 @@ TEST_F(ServerDllTest, RunGuiMacro_CMD_Print)
 
 		const auto macroRc = consoleMain3(ConsoleMainMode::Normal, command);
 		EXPECT_EQ(0, macroRc) << "hByConEmuHWND!=NULL";
-		EXPECT_EQ(std::wstring(L"Yes"), capture.GetTopString());
+		EXPECT_EQ(std::wstring(L"Yes"), capture.GetTopString()) << "should print to console";
 		EXPECT_STREQ(L"Yes", GetEnvVar()) << "hByConEmuHWND!=NULL";
 	}
 }

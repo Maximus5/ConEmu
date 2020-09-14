@@ -137,7 +137,7 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;HIDE_TODO;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;HIDE_TODO;NOMINMAX;TESTS_MEMORY_MODE;CE_UNIT_TEST=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>MinSpace</Optimization>
@@ -150,7 +150,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;HIDE_TODO;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;HIDE_TODO;NOMINMAX;TESTS_MEMORY_MODE;CE_UNIT_TEST=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -169,7 +169,7 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN64;_WIN64;NDEBUG;HIDE_TODO;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_WIN64;NDEBUG;HIDE_TODO;NOMINMAX;TESTS_MEMORY_MODE;CE_UNIT_TEST=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>MinSpace</Optimization>
@@ -182,7 +182,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN64;_WIN64;NDEBUG;HIDE_TODO;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_WIN64;NDEBUG;HIDE_TODO;NOMINMAX;TESTS_MEMORY_MODE;CE_UNIT_TEST=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -201,7 +201,7 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;CE_UNIT_TEST=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
@@ -211,7 +211,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;CE_UNIT_TEST=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -228,7 +228,7 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;CE_UNIT_TEST=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
@@ -238,7 +238,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;CE_UNIT_TEST=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -255,7 +255,7 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;CE_UNIT_TEST=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
@@ -265,7 +265,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;CE_UNIT_TEST=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -282,7 +282,7 @@
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;CE_UNIT_TEST=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
@@ -292,7 +292,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <ResourceCompile>
-      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_WIN64;_DEBUG;HIDE_TODO;MSGLOGGER;NOMINMAX;TESTS_MEMORY_MODE;CE_UNIT_TEST=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>modules\googletest\googletest\include;modules\googletest\googletest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
@@ -695,6 +695,8 @@
     <ClCompile Include="ConEmu\WinObjBase.cpp" />
     <ClCompile Include="ConEmu\all_test.cpp" />
     <ClCompile Include="ConEmu\helper.cpp" />
+    <ClCompile Include="ConEmuCD\StartEnv.cpp" />
+    <ClCompile Include="ConEmuCD\StartEnv_test.cpp" />
     <ClCompile Include="UnitTests\main_test.cpp" />
     <ClCompile Include="UnitTests\test_stubs.cpp" />
     <ClCompile Include="common\CEHandle.cpp" />

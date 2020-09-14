@@ -34,11 +34,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../ConEmu/ConEmu.h"
 #include "../ConEmu/FontMgr.h"
 #include "../ConEmu/HotkeyList.h"
-#include "../ConEmu/SettingsStorage.h"
 #include "../ConEmu/Options.h"
 #include "../ConEmu/OptionsClass.h"
 
 #include <iostream>
+
+
+bool gbVerifyFailed = false;
+bool gbVerifyStepFailed = false;
+bool gbVerifyVerbose = false;
 
 
 OSVERSIONINFO gOSVer = {};

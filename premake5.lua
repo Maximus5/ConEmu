@@ -330,6 +330,8 @@ project "ConEmuC"
     "src/ConEmuC/ConEmuC.exe.manifest",
   }
 
+  removefiles (tests_remove)
+
   vpaths {
     { ["Headers"] = {"**.h"} },
     { ["Sources"] = {"**.cpp"} },
@@ -383,6 +385,8 @@ project "ConEmuCD"
     "src/ConEmuHk/Injects.*",
     "src/ConEmuCD/*.rc",
   }
+
+  removefiles (tests_remove)
 
   filter "action:vs*"
     files "src/ConEmuCD/export.def"
@@ -461,6 +465,7 @@ project "ConEmuHk"
     "**/CETaskBar_.*",
     "**/*-orig.*",
   }
+  removefiles (tests_remove)
 
   filter { "files:**/HDE/*.*" }
     flags {"ExcludeFromBuild"}
@@ -863,7 +868,7 @@ project "Tests"
   language "C++"
   exceptionhandling "On"
 
-  defines {"TESTS_MEMORY_MODE"}
+  defines {"TESTS_MEMORY_MODE", "CE_UNIT_TEST=1"}
 
   files {
     -- tests
@@ -878,6 +883,8 @@ project "Tests"
     "src/ConEmu/*.cpp",
     "src/ConEmu/*.h",
     "src/ConEmu/conemu.gcc.manifest",
+    -- server sources
+    "src/ConEmuCD/StartEnv.cpp",
     -- googletest
     "src/modules/googletest/googletest/src/gtest-all.cc",
   }

@@ -44,10 +44,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WModuleCheck.h"
 #include "../common/WUser.h"
 #include "ConEmu.h"
-#include "Hotkeys.h"
-#include "Macro.h"
-#include "Match.h"
 #include "SettingsStorage.h"
+
+#if CE_UNIT_TEST==1
+#include "../common/MAssert.h"
+extern bool gbVerifyVerbose;
+#else
+#error "CE_UNIT_TEST should be defined for unit tests"
+#endif
 
 
 // Hide from global namespace
@@ -671,79 +675,95 @@ void XmlValueConvertTest()
 
 } // end of namespace
 
-TEST(General, DebugNeedCmdUnitTests)
+class General : public testing::Test
+{
+public:
+	void SetUp() override
+	{
+		gbVerifyFailed = false;
+		gbVerifyStepFailed = false;
+		gbVerifyVerbose = false;
+	}
+
+	void TearDown() override
+	{
+	}
+};
+
+
+TEST_F(General, DebugNeedCmdUnitTests)
 {
 	DebugNeedCmdUnitTests();
 }
-TEST(General, DebugCmdParserTests)
+TEST_F(General, DebugCmdParserTests)
 {
 	DebugCmdParserTests();
 }
-TEST(General, UnitMaskTests)
+TEST_F(General, UnitMaskTests)
 {
 	UnitMaskTests();
 }
-TEST(General, UnitDriveTests)
+TEST_F(General, UnitDriveTests)
 {
 	UnitDriveTests();
 }
-TEST(General, UnitPathTests)
+TEST_F(General, UnitPathTests)
 {
 	UnitPathTests();
 }
-TEST(General, UnitFileNamesTest)
+TEST_F(General, UnitFileNamesTest)
 {
 	UnitFileNamesTest();
 }
-TEST(General, UnitExpandTest)
+TEST_F(General, UnitExpandTest)
 {
 	UnitExpandTest();
 }
-TEST(General, UnitModuleTest)
+TEST_F(General, UnitModuleTest)
 {
 	UnitModuleTest();
 }
-TEST(General, DebugUnitMprintfTest)
+TEST_F(General, DebugUnitMprintfTest)
 {
 	DebugUnitMprintfTest();
 }
-TEST(General, DebugVersionTest)
+TEST_F(General, DebugVersionTest)
 {
 	DebugVersionTest();
 }
-TEST(General, DebugFileExistTests)
+TEST_F(General, DebugFileExistTests)
 {
 	DebugFileExistTests();
 }
-TEST(General, DebugStrUnitTest)
+TEST_F(General, DebugStrUnitTest)
 {
 	DebugStrUnitTest();
 }
-TEST(General, DebugCpUnitTest)
+TEST_F(General, DebugCpUnitTest)
 {
 	DebugCpUnitTest();
 }
-TEST(General, DebugProcessNameTest)
+TEST_F(General, DebugProcessNameTest)
 {
 	DebugProcessNameTest();
 }
-TEST(General, DebugTestSetParser)
+TEST_F(General, DebugTestSetParser)
 {
 	DebugTestSetParser();
 }
-TEST(General, DebugMapsTests)
+TEST_F(General, DebugMapsTests)
 {
 	DebugMapsTests();
 }
-TEST(General, DebugArrayTests)
+TEST_F(General, DebugArrayTests)
 {
 	DebugArrayTests();
 }
-TEST(General, DebugJsonTest)
+TEST_F(General, DebugJsonTest)
 {
 	DebugJsonTest();
 }
-TEST(General, XmlValueConvertTest)
+TEST_F(General, XmlValueConvertTest)
 {
 	XmlValueConvertTest();
 }
