@@ -1036,7 +1036,7 @@ LPCWSTR GetComspecFromEnvVar(wchar_t* pszComspec, DWORD cchMax, ComSpecBits Bits
 	}
 
 	*pszComspec = 0;
-	BOOL bWin64 = IsWindows64();
+	const auto bWin64 = IsWindows64();
 
 	if (!((Bits == csb_x32) || (Bits == csb_x64)))
 	{

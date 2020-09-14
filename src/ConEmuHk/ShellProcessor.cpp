@@ -886,11 +886,13 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 
 		if (lbNewCmdCheck)
 		{
-			BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
-			BOOL lbNeedCutStartEndQuot = FALSE;
+			bool lbRootIsCmdExe = FALSE;
+			bool lbAlwaysConfirmExit = FALSE;
+			bool lbAutoDisableConfirmExit = FALSE;
+			bool lbNeedCutStartEndQuot = FALSE;
 			//DWORD nFileAttrs = (DWORD)-1;
 			ms_ExeTmp.Empty();
-			IsNeedCmd(false, SkipNonPrintable(asParam), ms_ExeTmp, NULL, &lbNeedCutStartEndQuot, &lbRootIsCmdExe, &lbAlwaysConfirmExit, &lbAutoDisableConfirmExit);
+			IsNeedCmd(false, SkipNonPrintable(asParam), ms_ExeTmp, nullptr, &lbNeedCutStartEndQuot, &lbRootIsCmdExe, &lbAlwaysConfirmExit, &lbAutoDisableConfirmExit);
 			// это может быть команда ком.процессора!
 			// поэтому, наверное, искать и проверять битность будем только для
 			// файлов с указанным расширением.
@@ -1252,8 +1254,10 @@ BOOL CShellProc::ChangeExecuteParms(enum CmdOnCreateType aCmd, bool bConsoleMode
 			if (!asFile || !*asFile)
 			{
 				// exe-шника в asFile указано НЕ было, значит он в asParam, нужно его вытащить, и сформировать команду DosBox
-				BOOL lbRootIsCmdExe = FALSE, lbAlwaysConfirmExit = FALSE, lbAutoDisableConfirmExit = FALSE;
-				BOOL lbNeedCutStartEndQuot = FALSE;
+				bool lbRootIsCmdExe = FALSE;
+				bool lbAlwaysConfirmExit = FALSE;
+				bool lbAutoDisableConfirmExit = FALSE;
+				bool lbNeedCutStartEndQuot = FALSE;
 				ms_ExeTmp.Empty();
 				IsNeedCmd(false, SkipNonPrintable(asParam), ms_ExeTmp, NULL, &lbNeedCutStartEndQuot, &lbRootIsCmdExe, &lbAlwaysConfirmExit, &lbAutoDisableConfirmExit);
 

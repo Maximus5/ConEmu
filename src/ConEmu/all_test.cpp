@@ -327,13 +327,14 @@ void DebugNeedCmdUnitTests()
 		{L"notepad text & start explorer", FALSE},
 	};
 	LPCWSTR psArgs;
-	BOOL bNeedCut, bRootIsCmd, bAlwaysConfirm, bAutoDisable;
+	bool bNeedCut, bRootIsCmd, bAlwaysConfirm, bAutoDisable;
 	CEStr szExe;
 	for (INT_PTR i = 0; i < countof(Tests); i++)
 	{
 		szExe.Empty();
 		RConStartArgsEx rcs; rcs.pszSpecialCmd = lstrdup(Tests[i].pszCmd);
 		rcs.ProcessNewConArg();
+		// ReSharper disable once CppJoinDeclarationAndAssignment
 		b = IsNeedCmd(TRUE, rcs.pszSpecialCmd, szExe, &psArgs, &bNeedCut, &bRootIsCmd, &bAlwaysConfirm, &bAutoDisable);
 		_ASSERTE(b == Tests[i].bNeed);
 	}

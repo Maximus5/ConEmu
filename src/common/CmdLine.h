@@ -121,9 +121,9 @@ bool IsConsoleHelper(LPCWSTR pszProcessName);
 bool IsTerminalServer(LPCWSTR pszProcessName);
 bool IsGitBashHelper(LPCWSTR pszProcessName);
 bool IsSshAgentHelper(LPCWSTR pszProcessName);
-bool IsNeedCmd(BOOL bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
-			   LPCWSTR* rsArguments = nullptr, BOOL* rpbNeedCutStartEndQuot = nullptr,
-			   BOOL* rpbRootIsCmdExe = nullptr, BOOL* rpbAlwaysConfirmExit = nullptr, BOOL* rpbAutoDisableConfirmExit = nullptr);
+bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
+			   LPCWSTR* rsArguments = nullptr, bool* rpbNeedCutStartEndQuot = nullptr,
+			   bool* rpbRootIsCmdExe = nullptr, bool* rpbAlwaysConfirmExit = nullptr, bool* rpbAutoDisableConfirmExit = nullptr);
 
 bool IsQuotationNeeded(LPCWSTR pszPath);
 const wchar_t* SkipNonPrintable(const wchar_t* asParams);
