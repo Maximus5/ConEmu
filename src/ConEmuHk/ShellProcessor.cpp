@@ -3139,8 +3139,10 @@ void CShellProc::RunInjectHooks(LPCWSTR asFrom, PROCESS_INFORMATION *lpPI)
 	LPCWSTR pszDllDir = NULL;
 	if (isDefTermEnabled() && gpDefTerm)
 		pszDllDir = gpDefTerm->GetOpt()->pszConEmuBaseDir;
+	else
+		pszDllDir = gsConEmuBaseDir;
 
-	CINJECTHK_EXIT_CODES iHookRc = InjectHooks(*lpPI,
+	const CINJECTHK_EXIT_CODES iHookRc = InjectHooks(*lpPI,
 		(m_SrvMapping.cbSize && (m_SrvMapping.nLoggingType == glt_Processes)),
 		pszDllDir, ghConWnd);
 

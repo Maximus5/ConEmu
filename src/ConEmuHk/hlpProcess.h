@@ -37,6 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*  Global  */
 extern bool    gbConEmuCProcess;
 extern DWORD   gnSelfPID;
+extern wchar_t gsConEmuBaseDir[MAX_PATH + 1]; // "%ConEmuBaseDir%"
 extern wchar_t gsExeName[80];       // Only exe name of current process
 extern CEActiveAppFlags gnExeFlags; // cygwin/msys/clink and so on...
 /*  ConEmu/Console */

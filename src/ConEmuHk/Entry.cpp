@@ -165,6 +165,7 @@ extern "C" {
 //HWND  ghKeyHookConEmuRoot = NULL;
 
 extern HMODULE ghOurModule;
+wchar_t gsConEmuBaseDir[MAX_PATH + 1] = L"";
 //HMODULE ghOurModule = NULL; // ConEmu.dll - сам плагин
 //UINT gnMsgActivateCon = 0; //RegisterWindowMessage(CONEMUMSG_LLKEYHOOK);
 //SECURITY_ATTRIBUTES* gpLocalSecurity = NULL;
@@ -1382,6 +1383,34 @@ void InitExeName()
 	}
 }
 
+void InitBaseDir()
+{	
+	const auto cchMax = static_cast<DWORD>(countof(gsConEmuBaseDir));
+	const DWORD modResult = ghOurModule ? GetModuleFileName(ghOurModule, gsConEmuBaseDir, cchMax) : 0;
+	if (modResult > 0 && modResult < cchMax)
+	{
+		auto* pchName = const_cast<wchar_t*>(PointToName(gsConEmuBaseDir));
+		if (pchName && pchName > gsConEmuBaseDir)
+		{
+			_ASSERTE(*(pchName - 1) == L'\\' || *(pchName - 1) == L'/');
+			*(pchName - 1) = L'\0';
+			return;
+		}
+	}
+	
+	_ASSERTE(FALSE && "GetModuleFileName(ghOurModule) failed, getting ConEmuBaseDir from env.var");
+	gsConEmuBaseDir[0] = L'\0';
+	const DWORD envResult = GetEnvironmentVariable(ENV_CONEMUBASEDIR_VAR_W, gsConEmuBaseDir, cchMax);
+	if (envResult > 0 && envResult < cchMax)
+	{
+		_ASSERTE(gsConEmuBaseDir[0] != 0);
+		return; // OK
+	}
+
+	_ASSERTE(FALSE && "GetEnvironmentVariable(ConEmuBaseDir) failed");
+	gsConEmuBaseDir[0] = L'\0';
+}
+
 
 void FlushMouseEvents()
 {
@@ -1695,6 +1724,8 @@ BOOL DllMain_ProcessAttach(HANDLE hModule, DWORD  ul_reason_for_call)
 
 	ghOurModule = (HMODULE)hModule;
 	ghWorkingModule = hModule;
+
+	InitBaseDir();
 
 	#ifdef USEHOOKLOG
 	QueryPerformanceFrequency(&HookLogger::g_freq);

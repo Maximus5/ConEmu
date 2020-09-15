@@ -176,7 +176,8 @@ CINJECTHK_EXIT_CODES InjectHooks(PROCESS_INFORMATION pi, BOOL abLogProcess, LPCW
 	else
 	{
 		#ifdef _DEBUG
-		_CrtDbgBreak();
+		//_CrtDbgBreak();
+		_ASSERTE(FALSE && "asConEmuHkDir is empty, can't set hooks");
 		#endif
 		//_printf("GetModuleFileName failed! ErrCode=0x%08X\n", dwErr);
 		iRc = CIH_GetModuleFileName/*-501*/;

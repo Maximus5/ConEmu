@@ -237,7 +237,7 @@ int DoInjectHooks(LPWSTR asCmdArg)
 
 	if (pi.hProcess && pi.hThread && pi.dwProcessId && pi.dwThreadId)
 	{
-		CINJECTHK_EXIT_CODES iHookRc = InjectHooks(pi, gbLogProcess, gsSelfPath, gState.realConWnd_);
+		const CINJECTHK_EXIT_CODES iHookRc = InjectHooks(pi, gbLogProcess, gsSelfPath, gState.realConWnd_);
 
 		if (iHookRc == CIH_OK/*0*/)
 		{
