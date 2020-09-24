@@ -521,12 +521,14 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 		GetWindowRect(ghWnd, &rcMain);
 	}
 
+	RECT result;
 	if (tWhat == CER_MAIN)
-	{
-		return rcMain;
-	}
+		result = rcMain;
+	else
+		result = CalcRect(tWhat, rcMain, CER_MAIN, pVCon);
 
-	return CalcRect(tWhat, rcMain, CER_MAIN, pVCon);
+	std::ignore = nGetStyle;
+	return result;
 }
 
 // Для приблизительного расчета размеров - нужен только (размер главного окна)|(размер консоли)
