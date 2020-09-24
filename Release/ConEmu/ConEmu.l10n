@@ -1536,7 +1536,7 @@
       "de": "Zeigt einen 'Ein externes Programm hat ConEmu in den Vordergrund geholt. Rückgängig?'-Bestätigungsdialog",
       "ja": "Show 'いくつかの外部プログラムがConEmu OnTopをもたらしました.復帰？ '確認ボックス",
       "es": "Mostrar el mensaje de confirmación 'Algún programa externo trajo a ConEmu a primer plano. ¿Deshacer?'",
-      "pl": "Pokaż „Niektóre zewnętrzne programy przyniosły ConEmu OnTop. Cofnij\" pole potwierdzenia?",
+      "pl": "Pokaż „Niektóre zewnętrzne programy na wierzchu ConEmu. Cofnij\" pole potwierdzenia?",
       "id": 2854 }
     ,
     "cbSingleInstance": {
@@ -6557,7 +6557,7 @@
       "de": "Markieren/Kopieren",
       "ja": "マーク / コピー",
       "es": "Marcar/Copìar",
-      "pl": "Znak/Kopiuj",
+      "pl": "Oznacz/Kopiuj",
       "id": 47 }
     ,
     "lng_SpgMouse": {
@@ -7292,7 +7292,7 @@
       "de": "Aktive Reiter",
       "ja": "アクティブなタブ",
       "es": "Pestañas activas",
-      "pl": "Aktywne zakładki",
+      "pl": "Active zakładki",
       "id": 2493 }
     ,
     "cbCmdTasksDir": {
@@ -7561,7 +7561,7 @@
       "de": "Versuche vor Zurücksetzen Auswahl auszuschneiden/zu löschen",
       "ja": "リセット前に カット/消去 を試みてください",
       "es": "intentar cortar/borrar selección antes de reiniciar",
-      "pl": "spróbuj wyciąć/usunąć zaznaczenie przed resetem",
+      "pl": "spróbuj usunąć zaznaczenie przed resetem",
       "id": 3030 }
     ,
     "cbCTSFreezeBeforeSelect": {
@@ -7571,7 +7571,7 @@
       "de": "Friere Konsoleninhalte vor Auswahl ein (Kann kurze Verzögerungen verursachen)",
       "ja": "選択前にコンソールの内容をフリーズする(小さなラグを引き起こす可能性がある)",
       "es": "Inmovilizar contenidos del terminal antes de seleccionar (puede provocar parones)",
-      "pl": "Zatrzymaj zawartość konsoli przed wyborem (może powodować opóźnienie)",
+      "pl": "Zatrzymaj zawartość konsoli przed wyborem (małe opóźnienie)",
       "id": 2257 }
     ,
     "cbCTSIBeam": {
@@ -7631,7 +7631,7 @@
       "de": "Anhängende Leerzeichen abschneiden",
       "ja": "末尾のスペースを削除する",
       "es": "Eliminar espacios finales",
-      "pl": "Przycinaj końcowe spacje",
+      "pl": "Przytnij końc. spacje",
       "id": 2365 }
     ,
     "cbCursorBlink": {
@@ -7661,7 +7661,7 @@
       "de": "Feste Zeigergröße",
       "ja": "固定カーソルサイズ",
       "es": "Tamaño del cursor fijo",
-      "pl": "Poprawka rozmiar kursora",
+      "pl": "Poprawka roz. kursora",
       "id": 1655 }
     ,
     "cbCursorOverride": {
@@ -8291,7 +8291,7 @@
       "de": "Feste Schreibmarkengröße",
       "ja": "固定カーソルサイズ",
       "es": "Tamaño fijo del cursor",
-      "pl": "Poprawka rozm.. kursora",
+      "pl": "Poprawka roz. kursor",
       "id": 2539 }
     ,
     "cbInactiveCursorSubstHidden": {
@@ -8832,7 +8832,7 @@
       "de": "Zeige '... holte ConEmu in den Vordergrund. Rückgängig?'-Bestätigungsdialog",
       "ja": "'... ConEmu OnTopをもたらした.復帰？ '確認ボックスを表示",
       "es": "Mostrar confirmación '... trajo ConEmu al frente. ¿Deshacer?'",
-      "pl": "Pokaż \"… przyniósł ConEmu Na górze. Cofnij?\" pole potwierdzenia",
+      "pl": "Pokaż \"…  ConEmu na wierzchu. Cofnij?\" pole potwierdzenia",
       "id": 2854 }
     ,
     "cbSingleInstance": {
