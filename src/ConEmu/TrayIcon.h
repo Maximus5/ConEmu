@@ -28,6 +28,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+// #include "LngRc.h"
 #define TRAY_ITEM_HIDE_NAME     CLngRc::getRsrc(lng_MenuHideToTray/*"Hide to &TSA"*/)
 #define TRAY_ITEM_RESTORE_NAME  CLngRc::getRsrc(lng_MenuRestoreFromTray/*"Restore from &TSA"*/)
 
@@ -63,19 +64,19 @@ class TrayIcon
 			WCHAR  szInfoTitle[64];
 			DWORD dwInfoFlags;
 		};
-		NOTIFYICONDATA_Win2k IconData;
+		NOTIFYICONDATA_Win2k IconData{};
 
-		void SetMenuItemText(HMENU hMenu, UINT nID, LPCWSTR pszText);
+		static void SetMenuItemText(HMENU hMenu, UINT nID, LPCWSTR pszText);
 
 		//UINT mn_SysItemId[5];
 		//UINT mn_SysItemState[5];
 
-		bool mb_InHidingToTray;
-		bool mb_WindowInTray;
-		TrayIconMsgSource m_MsgSource;
-		bool mb_SecondTimeoutMsg;
-		DWORD mn_BalloonShowTick;
-		HWND mh_Balloon;
+		bool mb_InHidingToTray = false;
+		bool mb_WindowInTray = false;
+		TrayIconMsgSource m_MsgSource = tsa_Source_None;
+		bool mb_SecondTimeoutMsg = false;
+		DWORD mn_BalloonShowTick = 0;
+		HWND mh_Balloon = nullptr;
 
 	public:
 		bool isWindowInTray() { return mb_WindowInTray; }

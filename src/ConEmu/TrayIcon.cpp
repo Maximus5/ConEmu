@@ -28,12 +28,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #define SHOWDEBUGSTR
 
+// ReSharper disable once IdentifierTypo
 #define DEBUGSTRICON(x) //DEBUGSTR(x)
 
 #define HIDE_USE_EXCEPTION_INFO
-#include "header.h"
+#include "Header.h"
 #include "TrayIcon.h"
 #include "ConEmu.h"
+#include "LngRc.h"
 #include "Options.h"
 #include "OptionsClass.h"
 #include "Menu.h"
@@ -50,31 +52,19 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 TrayIcon Icon;
 
-TrayIcon::TrayIcon()
+TrayIcon::TrayIcon()  // NOLINT(modernize-use-equals-default)
 {
-	memset(&IconData, 0, sizeof(IconData));
-	mb_WindowInTray = false;
-	mb_InHidingToTray = false;
-	m_MsgSource = tsa_Source_None;
-	mb_SecondTimeoutMsg = false; mn_BalloonShowTick = 0;
-	//mn_SysItemId[0] = SC_MINIMIZE;
-	//mn_SysItemId[1] = SC_MAXIMIZE_SECRET;
-	//mn_SysItemId[2] = SC_RESTORE_SECRET;
-	//mn_SysItemId[3] = SC_SIZE;
-	//mn_SysItemId[4] = SC_MOVE;
-	//memset(mn_SysItemState, 0, sizeof(mn_SysItemState));
-	mh_Balloon = NULL;
 }
 
-TrayIcon::~TrayIcon()
+TrayIcon::~TrayIcon()  // NOLINT(modernize-use-equals-default)
 {
 }
 
 void TrayIcon::SettingsChanged()
 {
-	bool bShowTSA = gpSet->isAlwaysShowTrayIcon();
+	const bool bShowTsa = gpSet->isAlwaysShowTrayIcon();
 
-	if (bShowTSA)
+	if (bShowTsa)
 	{
 		AddTrayIcon(); // добавит или обновит tooltip
 	}
@@ -86,7 +76,7 @@ void TrayIcon::SettingsChanged()
 
 	if (gpSetCls->GetPage(thi_Taskbar))
 	{
-		CheckDlgButton(gpSetCls->GetPage(thi_Taskbar), cbAlwaysShowTrayIcon, bShowTSA);
+		CheckDlgButton(gpSetCls->GetPage(thi_Taskbar), cbAlwaysShowTrayIcon, bShowTsa);
 	}
 }
 
@@ -98,7 +88,7 @@ void TrayIcon::AddTrayIcon()
 	{
 		mb_SecondTimeoutMsg = false; mn_BalloonShowTick = 0;
 		GetWindowText(ghWnd, IconData.szTip, countof(IconData.szTip));
-		Shell_NotifyIcon(NIM_ADD, (NOTIFYICONDATA*)&IconData);
+		Shell_NotifyIcon(NIM_ADD, reinterpret_cast<NOTIFYICONDATA*>(&IconData));
 		mb_WindowInTray = true;
 	}
 	else
@@ -112,9 +102,9 @@ void TrayIcon::RemoveTrayIcon(bool bForceRemove /*= false*/)
 	if (mb_WindowInTray && (bForceRemove || (m_MsgSource == tsa_Source_None)))
 	{
 		mb_SecondTimeoutMsg = false; mn_BalloonShowTick = 0;
-		Shell_NotifyIcon(NIM_DELETE, (NOTIFYICONDATA*)&IconData);
+		Shell_NotifyIcon(NIM_DELETE, reinterpret_cast<NOTIFYICONDATA*>(&IconData));
 		mb_WindowInTray = false;
-		mh_Balloon = NULL;
+		mh_Balloon = nullptr;
 	}
 }
 
@@ -133,7 +123,7 @@ void TrayIcon::UpdateTitle()
 		IconData.szInfo[0] = 0;
 		IconData.szInfoTitle[0] = 0;
 		lstrcpyn(IconData.szTip, szTitle, countof(IconData.szTip));
-		Shell_NotifyIcon(NIM_MODIFY, (NOTIFYICONDATA*)&IconData);
+		Shell_NotifyIcon(NIM_MODIFY, reinterpret_cast<NOTIFYICONDATA*>(&IconData));
 	}
 }
 
@@ -180,7 +170,7 @@ void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
 	{
 		gpConEmu->ShowMainWindow(SW_HIDE);
 	}
-	HMENU hMenu = gpConEmu->mp_Menu->GetSysMenu(/*ghWnd, false*/);
+	const HMENU hMenu = gpConEmu->mp_Menu->GetSysMenu(/*ghWnd, false*/);
 	SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_RESTORE_NAME);
 	mb_InHidingToTray = false;
 	//for (int i = 0; i < countof(mn_SysItemId); i++)
@@ -193,7 +183,7 @@ void TrayIcon::HideWindowToTray(LPCTSTR asInfoTip /* = NULL */)
 	//}
 }
 
-void TrayIcon::RestoreWindowFromTray(bool abIconOnly /*= false*/, bool abDontCallShowWindow /*= false*/)
+void TrayIcon::RestoreWindowFromTray(bool abIconOnly /*= false*/, const bool abDontCallShowWindow /*= false*/)
 {
 	if (!abIconOnly)
 	{
@@ -210,7 +200,7 @@ void TrayIcon::RestoreWindowFromTray(bool abIconOnly /*= false*/, bool abDontCal
 	if (IsWindowVisible(ghWnd))
 	{
 		//EnableMenuItem(GetSystemMenu(ghWnd, false), ID_TOTRAY, MF_BYCOMMAND | MF_ENABLED);
-		HMENU hMenu = gpConEmu->mp_Menu->GetSysMenu(/*ghWnd, false*/);
+		const HMENU hMenu = gpConEmu->mp_Menu->GetSysMenu(/*ghWnd, false*/);
 		SetMenuItemText(hMenu, ID_TOTRAY, TRAY_ITEM_HIDE_NAME);
 	}
 
@@ -250,7 +240,7 @@ void TrayIcon::LoadIcon(HWND inWnd, int inIconResource)
 //	}
 //}
 
-LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
+LRESULT TrayIcon::OnTryIcon(HWND hWnd, const UINT messg, const WPARAM wParam, const LPARAM lParam)
 {
 	#ifdef _DEBUG
 	wchar_t szMsg[128];
@@ -261,14 +251,15 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		case WM_LBUTTONUP:
 		case NIN_BALLOONUSERCLICK:
 			#ifdef _DEBUG
-			swprintf_c(szMsg, (lParam==WM_LBUTTONUP) ? L"TSA: WM_LBUTTONUP(%i,0x%08X)\n" : L"TSA: NIN_BALLOONUSERCLICK(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
+			swprintf_c(szMsg, (lParam==WM_LBUTTONUP) ? L"TSA: WM_LBUTTONUP(%i,0x%08X)\n" : L"TSA: NIN_BALLOONUSERCLICK(%i,0x%08X)\n",
+				static_cast<int>(wParam), static_cast<DWORD>(lParam));
 			DEBUGSTRICON(szMsg);
 			#endif
 			if (gpSet->isQuakeStyle)
 			{
 				bool bJustActivate = false;
 				SingleInstanceShowHideType sih = sih_QuakeShowHide;
-				SingleInstanceShowHideType sihHide = gpSet->isMinToTray() ? sih_HideTSA : sih_Minimize;
+				const SingleInstanceShowHideType sihHide = gpSet->isMinToTray() ? sih_HideTSA : sih_Minimize;
 
 				if (IsWindowVisible(ghWnd) && !gpConEmu->isIconic())
 				{
@@ -278,7 +269,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 					}
 					else
 					{
-						UINT nVisiblePart = gpConEmu->IsQuakeVisible();
+						const UINT nVisiblePart = gpConEmu->IsQuakeVisible();
 						if (nVisiblePart >= QUAKEVISIBLELIMIT)
 						{
 							sih = sihHide;
@@ -327,7 +318,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 			break;
 		case NIN_BALLOONSHOW:
 			#ifdef _DEBUG
-			swprintf_c(szMsg, L"TSA: NIN_BALLOONSHOW(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
+			swprintf_c(szMsg, L"TSA: NIN_BALLOONSHOW(%i,0x%08X)\n", static_cast<int>(wParam), static_cast<DWORD>(lParam));
 			DEBUGSTRICON(szMsg);
 			#endif
 			mn_BalloonShowTick = GetTickCount();
@@ -335,7 +326,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		case NIN_BALLOONTIMEOUT:
 			{
 				#ifdef _DEBUG
-				swprintf_c(szMsg, L"TSA: NIN_BALLOONTIMEOUT(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
+				swprintf_c(szMsg, L"TSA: NIN_BALLOONTIMEOUT(%i,0x%08X)\n", static_cast<int>(wParam), static_cast<DWORD>(lParam));
 				DEBUGSTRICON(szMsg);
 				#endif
 
@@ -354,7 +345,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 		case WM_RBUTTONUP:
 		{
 			#ifdef _DEBUG
-			swprintf_c(szMsg, L"TSA: WM_RBUTTONUP(%i,0x%08X)\n", (int)wParam, (DWORD)lParam);
+			swprintf_c(szMsg, L"TSA: WM_RBUTTONUP(%i,0x%08X)\n", static_cast<int>(wParam), static_cast<DWORD>(lParam));
 			DEBUGSTRICON(szMsg);
 			#endif
 			POINT mPos;
@@ -370,7 +361,7 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 
 	#ifdef _DEBUG
 	default:
-		swprintf_c(szMsg, L"TSA: OnTryIcon(uMsg, wParam=%i, lParam=0x%04X)\n", messg, (int)wParam, (DWORD)lParam);
+		swprintf_c(szMsg, L"TSA: OnTryIcon(uMsg, wParam=%i, lParam=0x%04X)\n", messg, static_cast<int>(wParam), static_cast<DWORD>(lParam));
 		DEBUGSTRICON(szMsg);
 	#endif
 	}
@@ -378,10 +369,11 @@ LRESULT TrayIcon::OnTryIcon(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-void TrayIcon::SetMenuItemText(HMENU hMenu, UINT nID, LPCWSTR pszText)
+void TrayIcon::SetMenuItemText(HMENU hMenu, const UINT nID, LPCWSTR pszText)
 {
 	wchar_t szText[128];
-	MENUITEMINFO mi = {sizeof(MENUITEMINFO)};
+	MENUITEMINFO mi{};
+	mi.cbSize = sizeof(MENUITEMINFO);
 	mi.fMask = MIIM_STRING;
 	lstrcpyn(szText, pszText, countof(szText));
 	mi.dwTypeData = szText;
