@@ -198,9 +198,10 @@ CConEmuStart::~CConEmuStart()
 
 void CConEmuStart::SetDefaultCmd(LPCWSTR asCmd)
 {
-	// !!! gpConEmu may be NULL due starting time !!!
+	// !!! gpConEmu may be NULL during starting time !!!
 	if (gpConEmu && gpConEmu->isMingwMode() && gpConEmu->isMSysStartup())
 	{
+		// Here we get from CConEmuMain constructor.
 		CEStr szSearch;
 		FindBashLocation(szSearch);
 
@@ -245,7 +246,7 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 	if (pIsCmdList)
 		*pIsCmdList = false;
 
-	// User've choosed default task?
+	// User's chosen default task?
 	if (mp_ConEmu->GetStartupStage() >= CConEmuMain::ss_Started)
 	{
 		if ((pszCmd = GetDefaultTask()) != NULL)
@@ -253,7 +254,7 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 	}
 
 	// Current command line, specified with "-run","-runlist" switches (or old "-cmd and "-cmdlist")
-	if ((pszCmd = GetCurCmd(pIsCmdList)) != NULL)
+	if ((pszCmd = GetCurCmd(pIsCmdList)) != nullptr)
 		return pszCmd;
 
 	switch (gpSet->nStartType)
@@ -278,16 +279,18 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 		if (bNoTask)
 			return NULL;
 		return AutoStartTaskName;
+	default:
+		break; // try to determine default command automatically
 	}
 
-	// User've choosed default task?
+	// User's chosen default task?
 	if (mp_ConEmu->GetStartupStage() < CConEmuMain::ss_Started)
 	{
-		if ((pszCmd = GetDefaultTask()) != NULL)
+		if ((pszCmd = GetDefaultTask()) != nullptr)
 			return pszCmd;
 	}
 
-	wchar_t* pszNewCmd = NULL;
+	wchar_t* pszNewCmd = nullptr;
 
 	// Хорошо бы более корректно определить версию фара, но это не всегда просто
 	// Например x64 файл сложно обработать в x86 ConEmu.
@@ -296,10 +299,10 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 	if (lstrcmpi(GetDefaultCmd(), L"far") == 0)
 	{
 		// Ищем фар. (1) В папке ConEmu, (2) в текущей директории, (2) на уровень вверх от папки ConEmu
-		wchar_t szFar[MAX_PATH*2], *pszSlash;
+		wchar_t szFar[MAX_PATH*2];
 		szFar[0] = L'"';
 		wcscpy_add(1, szFar, gpConEmu->ms_ConEmuExeDir); // Теперь szFar содержит путь запуска программы
-		pszSlash = szFar + _tcslen(szFar);
+		wchar_t* pszSlash = szFar + _tcslen(szFar);
 		_ASSERTE(pszSlash > szFar);
 		BOOL lbFound = FALSE;
 
@@ -371,22 +374,26 @@ LPCTSTR CConEmuStart::GetCmd(bool *pIsCmdList, bool bNoTask /*= false*/)
 	return GetCurCmd(pIsCmdList);
 }
 
+/// <summary>
+/// Returns the name of the task marked as "Default task for new console" on the Tasks settings page.
+/// </summary>
+/// <returns>The "{Task}" name or nullptr if no task has _default_ flag</returns>
 LPCTSTR CConEmuStart::GetDefaultTask()
 {
 	int nGroup = 0;
-	const CommandTasks* pGrp = NULL;
+	const CommandTasks* pGrp = nullptr;
 
 	while ((pGrp = gpSet->CmdTaskGet(nGroup++)))
 	{
 		if (pGrp->pszName && *pGrp->pszName
 			&& (pGrp->Flags & CETF_NEW_DEFAULT))
 		{
-			ms_DefNewTaskName = (LPCWSTR)pGrp->pszName;
-			return ms_DefNewTaskName.ms_Val;
+			ms_DefNewTaskName.Set(pGrp->pszName);
+			return ms_DefNewTaskName.c_str();
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 // TODO: Option for default task?

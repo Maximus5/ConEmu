@@ -437,7 +437,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 	WINDOWPLACEMENT wpl = {sizeof(wpl)};
 	int nGetStyle = 0;
 
-	bool bNeedCalc = (isIconic() || InMinimizing() || mp_ConEmu->mp_Menu->GetRestoreFromMinimized() || !IsWindowVisible(ghWnd));
+	const bool bNeedCalc = (isIconic() || InMinimizing() || mp_ConEmu->mp_Menu->GetRestoreFromMinimized() || !IsWindowVisible(ghWnd));
 
 	if (mp_ConEmu->mp_Inside)
 	{
@@ -448,8 +448,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 			return rcMain;
 		}
 	}
-	else
-	if (bNeedCalc)
+	else if (bNeedCalc)
 	{
 		nGetStyle = 1;
 
@@ -508,11 +507,11 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 				}
 			}
 
-			// Если окно было свернуто из Maximized/FullScreen состояния
+			// If the window was minimized from Maximized/FullScreen state
 			if ((WindowMode == wmMaximized) || (WindowMode == wmFullScreen))
 			{
-				ConEmuRect t = (WindowMode == wmMaximized) ? CER_MAXIMIZED : CER_FULLSCREEN;
-				rcMain = CalcRect(t, rcMain, t);
+				const ConEmuRect what = (WindowMode == wmMaximized) ? CER_MAXIMIZED : CER_FULLSCREEN;
+				rcMain = CalcRect(what, rcMain, CER_MAIN);
 				nGetStyle += 10;
 			}
 		}

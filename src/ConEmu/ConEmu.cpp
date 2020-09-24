@@ -465,7 +465,7 @@ CConEmuMain::CConEmuMain()
 	if (isMingwMode() && isMSysStartup())
 	{
 		// This is example. Will be replaced with full path.
-		SetDefaultCmd(NULL /*L"bash.exe --login -i"*/);
+		SetDefaultCmd(nullptr /*L"bash.exe --login -i"*/);
 	}
 
 	if (!isMingwMode())
