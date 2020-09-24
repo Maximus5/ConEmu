@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "LngDataEnum.h"
+
 static LngPredefined gsDataRsrcs[] = {
 	{ lng_AboutAppName,             L"Console Emulation program (local terminal)" },
 	{ lng_AltNumberACP,             L"Type ANSI code point using decimal numbers" },

@@ -29,7 +29,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+// ReSharper disable once CppUnusedIncludeDirective
 #include "MenuIds.h"
+
+#include <vector>
 
 enum MenuItemType
 {
@@ -44,7 +47,7 @@ struct MenuItem
 	MenuItemType mit;
 	UINT_PTR     MenuId;  // HMENU for mit_Popup is here
 	UINT         HotkeyId;
-	LONG         Flags; // MF_xxx are declared as LONG constants
+	UINT         Flags; // MF_xxx are declared as LONG constants
 	LPCWSTR      pszText;
 };
 
@@ -55,7 +58,7 @@ public:
 	~CConEmuMenu();
 
 public:
-	void OnNewConPopupMenu(POINT* ptWhere = NULL, DWORD nFlags = 0, bool bShowTaskItems = false);
+	void OnNewConPopupMenu(POINT* ptWhere = nullptr, DWORD nFlags = 0, bool bShowTaskItems = false);
 
 	LRESULT OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam);
 	bool OnMenuSelected(HMENU hMenu, WORD nID, WORD nFlags);
@@ -68,14 +71,14 @@ public:
 	void OnNcIconLClick();
 
 	HMENU CreateDebugMenuPopup();
-	HMENU CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = NULL);
-	HMENU CreateViewMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = NULL);
+	HMENU CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = nullptr);
+	HMENU CreateViewMenuPopup(CVirtualConsole* apVCon, HMENU ahExist = nullptr);
 	HMENU CreateHelpMenuPopup();
-	HMENU CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly);
+	static HMENU CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly);
 	HMENU CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, bool abAddNew, bool abFromConsole);
-	bool  CreateOrUpdateMenu(HMENU& hMenu, const MenuItem* Items, size_t ItemsCount);
+	bool  CreateOrUpdateMenu(HMENU& hMenu, const MenuItem* items, size_t ItemsCount);
 
-	int trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, HWND hWnd, RECT *prcRect = NULL);
+	int trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, HWND hWnd, RECT *prcRect = nullptr);
 
 	void ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Align = TPM_LEFTALIGN, bool abFromConsole = false);
 	void ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon, int nCmd);
@@ -84,13 +87,13 @@ public:
 
 	// Returns previous value
 	bool SetPassSysCommand(bool abPass = true);
-	bool GetPassSysCommand();
+	bool GetPassSysCommand() const;
 	bool SetInScMinimize(bool abInScMinimize);
-	bool GetInScMinimize();
+	bool GetInScMinimize() const;
 	bool SetRestoreFromMinimized(bool abInRestore);
-	bool GetRestoreFromMinimized();
+	bool GetRestoreFromMinimized() const;
 	TrackMenuPlace SetTrackMenuPlace(TrackMenuPlace tmpPlace);
-	TrackMenuPlace GetTrackMenuPlace();
+	TrackMenuPlace GetTrackMenuPlace() const;
 
 private:
 	bool OnMenuSelected_NewCon(HMENU hMenu, WORD nID, WORD nFlags);
@@ -99,26 +102,28 @@ private:
 	void UpdateSysMenu(HMENU hSysMenu);
 
 	void ShowMenuHint(HMENU hMenu, WORD nID, WORD nFlags);
-	void ShowMenuHint(LPCWSTR pszText, POINT* ppt = NULL);
+	void ShowMenuHint(LPCWSTR pszText, POINT* ppt = nullptr);
 
 	// В режиме "правый клик по keybar в FarManager" - при выделении
 	// пункта (например Alt+Shift+F9) "нажать" в консоли Alt+Shift
 	// чтобы Far перерисовал панель кнопок (показал подсказку для Alt+Shift+...)
 	void ShowKeyBarHint(HMENU hMenu, WORD nID, WORD nFlags);
 
-	LPCWSTR MenuAccel(int DescrID, LPCWSTR asText);
+	LPCWSTR MenuAccel(int descrId, LPCWSTR asText);
 
 private:
-	bool  mb_InNewConPopup, mb_InNewConRPopup;
+	bool  mb_InNewConPopup = false;
+	bool mb_InNewConRPopup = false;
 	//int   mn_FirstTaskID, mn_LastTaskID; // MenuItemID for Tasks, when mb_InNewConPopup==true
-	DWORD mn_SysMenuOpenTick, mn_SysMenuCloseTick;
-	bool  mb_PassSysCommand;
-	bool  mb_InScMinimize;
-	bool  mb_InRestoreFromMinimized;
+	DWORD mn_SysMenuOpenTick = 0;
+	DWORD mn_SysMenuCloseTick = 0;
+	bool  mb_PassSysCommand = false;
+	bool  mb_InScMinimize = false;
+	bool  mb_InRestoreFromMinimized = false;
 	UINT  mn_MsgOurSysCommand;
-	bool  mb_FromConsoleMenu;
+	bool  mb_FromConsoleMenu = false;
 
-	TrackMenuPlace mn_TrackMenuPlace;
+	TrackMenuPlace mn_TrackMenuPlace = tmp_None;
 
 	//struct CmdHistory
 	//{
@@ -129,35 +134,45 @@ private:
 
 	struct CmdTaskPopupItem
 	{
-		enum CmdTaskPopupItemType { eNone, eTaskPopup, eTaskAll, eTaskCmd, eMore, eCmd, eNewDlg, eSetupTasks, eClearHistory } ItemType;
-		int nCmd;
-		const void/*CommandTasks*/* pGrp;
-		LPCWSTR pszCmd;
-		wchar_t szShort[64];
-		HMENU hPopup;
-		wchar_t* pszTaskBuf;
-		BOOL bPopupInitialized;
+		enum CmdTaskPopupItemType { eNone, eTaskPopup, eTaskAll, eTaskCmd, eMore, eCmd, eNewDlg, eSetupTasks, eClearHistory } ItemType = {};
+		int nCmd = 0;
+		const void/*CommandTasks*/* pGrp = nullptr;
+		LPCWSTR pszCmd = nullptr;
+		wchar_t szShort[64] = L"";
+		HMENU hPopup = nullptr;
+		wchar_t* pszTaskBuf = nullptr;
+		bool bPopupInitialized = false;
 
-		void Reset(CmdTaskPopupItemType newItemType, int newCmdId, LPCWSTR asName = NULL);
-		void SetShortName(LPCWSTR asName, bool bRightQuote = false, LPCWSTR asHotKey = NULL);
-		static void SetMenuName(wchar_t* pszDisplay, INT_PTR cchDisplayMax, LPCWSTR asName, bool bTrailingPeriod, bool bRightQuote = false, LPCWSTR asHotKey = NULL);
+		void Reset(CmdTaskPopupItemType newItemType, int newCmdId, LPCWSTR asName = nullptr);
+		void SetShortName(LPCWSTR asName, bool bRightQuote = false, LPCWSTR asHotKey = nullptr);
+		static void SetMenuName(wchar_t* pszDisplay, size_t cchDisplayMax, LPCWSTR asName, bool bTrailingPeriod, bool bRightQuote = false, LPCWSTR asHotKey = nullptr);
 	};
-	bool mb_CmdShowTaskItems;
+	bool mb_CmdShowTaskItems = false;
 	MArray<CmdTaskPopupItem> m_CmdTaskPopup;
-	int mn_CmdLastID;
-	CmdTaskPopupItem* mp_CmdRClickForce;
+	int mn_CmdLastID = 0;
+	CmdTaskPopupItem* mp_CmdRClickForce = nullptr;
+
 	int FillTaskPopup(HMENU hMenu, CmdTaskPopupItem* pParent);
 
-	// Эти из CConEmuMain
-	HMENU mh_SysDebugPopup, mh_SysEditPopup, mh_ActiveVConPopup, mh_TerminateVConPopup, mh_VConListPopup, mh_HelpPopup; // Popup's для SystemMenu
-	HMENU mh_InsideSysMenu;
-	// А это из VirtualConsole
-	HMENU mh_PopupMenu;
-	HMENU mh_TerminatePopup;
-	HMENU mh_RestartPopup;
-	HMENU mh_VConDebugPopup;
-	HMENU mh_VConEditPopup;
-	HMENU mh_VConViewPopup;
+	// Used in CConEmuMain
+
+	// Popup's for SystemMenu
+	HMENU mh_SysDebugPopup = nullptr;
+	HMENU mh_SysEditPopup = nullptr;
+	HMENU mh_ActiveVConPopup = nullptr;
+	HMENU mh_TerminateVConPopup = nullptr;
+	HMENU mh_VConListPopup = nullptr;
+	HMENU mh_HelpPopup = nullptr;
+
+	HMENU mh_InsideSysMenu = nullptr;
+
+	// Used in VirtualConsole
+	HMENU mh_PopupMenu = nullptr;
+	HMENU mh_TerminatePopup = nullptr;
+	HMENU mh_RestartPopup = nullptr;
+	HMENU mh_VConDebugPopup = nullptr;
+	HMENU mh_VConEditPopup = nullptr;
+	HMENU mh_VConViewPopup = nullptr;
 	// Array
-	size_t mn_MenusCount; HMENU** mph_Menus;
+	const std::vector<HMENU*> m_phMenus;
 };

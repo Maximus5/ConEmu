@@ -32,6 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 
 // enum LngResources
+// ReSharper disable once CppUnusedIncludeDirective
 #include "LngDataEnum.h"
 
 class CLngPredefined

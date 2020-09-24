@@ -275,6 +275,7 @@ project "ConEmu"
     "src/ConEmu/*.bmp",
     "src/ConEmu/*.cur",
     "src/ConEmu/*.ico",
+    "Release/ConEmu/ConEmu.l10n",
     "src/ConEmu/conemu.gcc.manifest",
   }
 
@@ -285,6 +286,7 @@ project "ConEmu"
   vpaths {
     { ["Common"]    = {"src/common/*.h"} },
     { ["Resources"] = {"**/*.rc", "**/*.rc2", "**/*.manifest", "**/*.bmp", "**/*.cur", "**/*.ico"} },
+    { ["Localizations"] = {"**/Lng*.*", "Release/ConEmu/ConEmu.l10n"} },
     { ["Exports"]   = {"**.def"} },
     { ["Macro"]     = {"**/Macro*.*"} },
     { ["Graphics"]  = {"**/GdiObjects.*", "**/Font*.*", "**/CustomFonts.*", "**/Background.*", "**/ColorFix.*",

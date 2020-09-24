@@ -680,6 +680,7 @@
     <ClCompile Include="ConEmu\helper.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Release\ConEmu\ConEmu.l10n" />
     <None Include="ConEmu\ConEmu.ico" />
     <None Include="ConEmu\CursorDragCopy.cur" />
     <None Include="ConEmu\CursorDragLink.cur" />

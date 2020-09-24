@@ -34,16 +34,22 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MArray.h"
 
 // enum LngResources
+// ReSharper disable once CppUnusedIncludeDirective
 #include "LngDataEnum.h"
 
 //struct MSectionSimple;
 class MJsonValue;
 
-class CLngRc
+class CLngRc final
 {
 public:
 	CLngRc();
 	~CLngRc();
+
+	CLngRc(const CLngRc&) = delete;
+	CLngRc(CLngRc&&) = delete;
+	CLngRc& operator=(const CLngRc&) = delete;
+	CLngRc& operator=(CLngRc&&) = delete;
 
 	static bool isLocalized();
 	static void Initialize();

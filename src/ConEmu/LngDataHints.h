@@ -28,6 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
+#include "MenuIds.h"
+
 static LngPredefined gsDataHints[] = {
 	{ IDM_DETACH,              L"Show RealConsole and detach it from ConEmu" },
 	{ IDM_DONATE_LINK,         L"Visit https://conemu.github.io/donate.html" },

@@ -10,6 +10,9 @@
     <Filter Include="Headers">
       <UniqueIdentifier>{C196CD9C-2D76-4C38-368E-D70EA2ECB299}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Localizations">
+      <UniqueIdentifier>{E1A406F7-4D65-822D-16A0-CBAA821FC709}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Macro">
       <UniqueIdentifier>{F743A70D-6358-CFBE-2CDA-721E98ADCBEF}</UniqueIdentifier>
     </Filter>
@@ -169,19 +172,19 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\LngData.h">
-      <Filter>Headers</Filter>
+      <Filter>Localizations</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\LngDataEnum.h">
-      <Filter>Headers</Filter>
+      <Filter>Localizations</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\LngDataHints.h">
-      <Filter>Headers</Filter>
+      <Filter>Localizations</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\LngDataRsrcs.h">
-      <Filter>Headers</Filter>
+      <Filter>Localizations</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\LngRc.h">
-      <Filter>Headers</Filter>
+      <Filter>Localizations</Filter>
     </ClInclude>
     <ClInclude Include="ConEmu\LoadImg.h">
       <Filter>Graphics</Filter>
@@ -900,10 +903,10 @@
       <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\LngData.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Localizations</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\LngRc.cpp">
-      <Filter>Sources</Filter>
+      <Filter>Localizations</Filter>
     </ClCompile>
     <ClCompile Include="ConEmu\LoadImg.cpp">
       <Filter>Graphics</Filter>
@@ -1174,6 +1177,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\Release\ConEmu\ConEmu.l10n">
+      <Filter>Localizations</Filter>
+    </None>
     <None Include="ConEmu\ConEmu.ico">
       <Filter>Resources</Filter>
     </None>
