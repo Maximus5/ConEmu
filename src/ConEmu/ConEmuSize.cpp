@@ -1737,7 +1737,7 @@ void CConEmuSize::SetRequestedMonitor(HMONITOR hNewMon)
 	// and therefore ReloadMonitorInfo() is not called yet
 	DpiValue dpi;
 	CDpiAware::QueryDpiForMonitor(mi.hMon, &dpi);
-	if (mi.Xdpi != dpi.Xdpi || mi.Ydpi != mi.Ydpi)
+	if (mi.Xdpi != dpi.Xdpi || mi.Ydpi != dpi.Ydpi)
 	{
 		wchar_t log_info[128];
 		swprintf_c(log_info, L"WARNING: Cached monitor dpi is obsolete, old={%i,%i}, new={%i,%i}",
@@ -1748,9 +1748,9 @@ void CConEmuSize::SetRequestedMonitor(HMONITOR hNewMon)
 		ReloadMonitorInfo();
 
 		mi = NearestMonitorInfo(mh_RequestedMonitor);
-		if (mi.Xdpi != dpi.Xdpi || mi.Ydpi != mi.Ydpi)
+		if (mi.Xdpi != dpi.Xdpi || mi.Ydpi != dpi.Ydpi)
 		{
-			Assert(mi.Xdpi == dpi.Xdpi && mi.Ydpi == mi.Ydpi);
+			Assert(mi.Xdpi == dpi.Xdpi && mi.Ydpi == dpi.Ydpi);
 			mi.Xdpi = dpi.Xdpi; mi.Ydpi = dpi.Ydpi;
 		}
 	}
