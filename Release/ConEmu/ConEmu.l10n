@@ -5805,6 +5805,338 @@
       "pl": "<None>",
       "id": 77 }
     ,
+    "lng_MenuAbout": {
+      "en": "&About / Help",
+      "id": 138 }
+    ,
+    "lng_MenuAllTaskTabs": {
+      "en": "All task tabs",
+      "id": 158 }
+    ,
+    "lng_MenuAlwaysOnTop": {
+      "en": "Al&ways on top",
+      "id": 153 }
+    ,
+    "lng_MenuAttachTo": {
+      "en": "Attach to...",
+      "id": 116 }
+    ,
+    "lng_MenuAutoScroll": {
+      "en": "Auto scro&ll",
+      "id": 154 }
+    ,
+    "lng_MenuBringHere": {
+      "en": "Bring &here",
+      "id": 145 }
+    ,
+    "lng_MenuChangeAffinity": {
+      "en": "A&ffinity/priority...",
+      "id": 111 }
+    ,
+    "lng_MenuCheckUpdate": {
+      "en": "&Check for updates",
+      "id": 129 }
+    ,
+    "lng_MenuChildSysMenu": {
+      "en": "Child system menu...",
+      "id": 114 }
+    ,
+    "lng_MenuClearHistory": {
+      "en": "Clear history...",
+      "id": 139 }
+    ,
+    "lng_MenuCloseConsole": {
+      "en": "&Close console",
+      "id": 107 }
+    ,
+    "lng_MenuCloseGroup": {
+      "en": "&Close tab group",
+      "id": 108 }
+    ,
+    "lng_MenuCloseTab": {
+      "en": "&Close tab",
+      "id": 109 }
+    ,
+    "lng_MenuConCopy": {
+      "en": "Cop&y",
+      "id": 119 }
+    ,
+    "lng_MenuConCopyAll": {
+      "en": "Copy &all",
+      "id": 120 }
+    ,
+    "lng_MenuConCopyFmt0": {
+      "en": "Plain &text only",
+      "id": 123 }
+    ,
+    "lng_MenuConCopyFmt1": {
+      "en": "Copy &HTML format",
+      "id": 124 }
+    ,
+    "lng_MenuConCopyFmt2": {
+      "en": "Copy a&s HTML",
+      "id": 125 }
+    ,
+    "lng_MenuConCopyFmt3": {
+      "en": "A&NSI sequences",
+      "id": 126 }
+    ,
+    "lng_MenuConFind": {
+      "en": "&Find text...",
+      "id": 127 }
+    ,
+    "lng_MenuConMarkBlock": {
+      "en": "Mark &block",
+      "id": 117 }
+    ,
+    "lng_MenuConMarkText": {
+      "en": "Mar&k text",
+      "id": 118 }
+    ,
+    "lng_MenuConPaste": {
+      "en": "&Paste",
+      "id": 121 }
+    ,
+    "lng_MenuConProperties": {
+      "en": "&Properties...",
+      "id": 160 }
+    ,
+    "lng_MenuConToggleVisible": {
+      "en": "&Real console",
+      "id": 159 }
+    ,
+    "lng_MenuDebugActive": {
+      "en": "Debug &active process...",
+      "id": 170 }
+    ,
+    "lng_MenuDebugAssert": {
+      "en": "Show assertion",
+      "id": 168 }
+    ,
+    "lng_MenuDebugGui": {
+      "en": "Debug &log (GUI)",
+      "id": 164 }
+    ,
+    "lng_MenuDebugShowRects": {
+      "en": "Show debug rec&ts",
+      "id": 165 }
+    ,
+    "lng_MenuDebugTrap": {
+      "en": "Raise exception (Main thread)",
+      "id": 166 }
+    ,
+    "lng_MenuDebugTrap2": {
+      "en": "Raise exception (Monitor thread)",
+      "id": 167 }
+    ,
+    "lng_MenuDetach": {
+      "en": "Detach",
+      "id": 99 }
+    ,
+    "lng_MenuDonateLink": {
+      "en": "&Donate ConEmu",
+      "id": 131 }
+    ,
+    "lng_MenuDumpConsole": {
+      "en": "&Dump screen...",
+      "id": 162 }
+    ,
+    "lng_MenuDumpMemBlk": {
+      "en": "Dump used memory blocks",
+      "id": 169 }
+    ,
+    "lng_MenuDuplicate": {
+      "en": "Duplica&te root...",
+      "id": 101 }
+    ,
+    "lng_MenuHelp": {
+      "en": "&Help",
+      "id": 135 }
+    ,
+    "lng_MenuHideToTray": {
+      "en": "Hide to &TSA",
+      "id": 149 }
+    ,
+    "lng_MenuHomePage": {
+      "en": "&Visit home page",
+      "id": 130 }
+    ,
+    "lng_MenuHotkeys": {
+      "en": "Hot&keys",
+      "id": 136 }
+    ,
+    "lng_MenuLoadDumpConsole": {
+      "en": "&Load screen dump...",
+      "id": 163 }
+    ,
+    "lng_MenuMiniDump": {
+      "en": "Active process &memory dump...",
+      "id": 171 }
+    ,
+    "lng_MenuMiniDumpTree": {
+      "en": "Active &tree memory dump...",
+      "id": 172 }
+    ,
+    "lng_MenuMoreTasks": {
+      "en": "&More tasks",
+      "id": 141 }
+    ,
+    "lng_MenuNewConsole": {
+      "en": "New console dialog...",
+      "id": 115 }
+    ,
+    "lng_MenuOnlineHelp": {
+      "en": "Online &Help",
+      "id": 137 }
+    ,
+    "lng_MenuPopupActiveCon": {
+      "en": "Acti&ve console",
+      "id": 152 }
+    ,
+    "lng_MenuPopupConList": {
+      "en": "Console &list",
+      "id": 151 }
+    ,
+    "lng_MenuPopupDebug": {
+      "en": "&Debug",
+      "id": 144 }
+    ,
+    "lng_MenuPopupEdit": {
+      "en": "Ed&it",
+      "id": 142 }
+    ,
+    "lng_MenuPopupHelp": {
+      "en": "Hel&p",
+      "id": 146 }
+    ,
+    "lng_MenuPopupPalettes": {
+      "en": "&View (palettes)",
+      "id": 143 }
+    ,
+    "lng_MenuPopupRestart": {
+      "en": "&Restart or duplicate",
+      "id": 112 }
+    ,
+    "lng_MenuPopupSysDebug": {
+      "en": "&Debug",
+      "id": 147 }
+    ,
+    "lng_MenuPopupSysEdit": {
+      "en": "&Edit",
+      "id": 148 }
+    ,
+    "lng_MenuPopupTerminate": {
+      "en": "Close or &kill",
+      "id": 113 }
+    ,
+    "lng_MenuRenameTab": {
+      "en": "Rena&me tab...",
+      "id": 110 }
+    ,
+    "lng_MenuReportBug": {
+      "en": "&Report a bug...",
+      "id": 134 }
+    ,
+    "lng_MenuResetTerminal": {
+      "en": "&Reset terminal",
+      "id": 122 }
+    ,
+    "lng_MenuRestart": {
+      "en": "&Restart",
+      "id": 105 }
+    ,
+    "lng_MenuRestartAs": {
+      "en": "Restart as Admin",
+      "id": 106 }
+    ,
+    "lng_MenuRestartDlg": {
+      "en": "&Restart...",
+      "id": 104 }
+    ,
+    "lng_MenuRestoreFromTray": {
+      "en": "Restore from &TSA",
+      "id": 150 }
+    ,
+    "lng_MenuScreenshot": {
+      "en": "Make &screenshot...",
+      "id": 161 }
+    ,
+    "lng_MenuSettings": {
+      "en": "Sett&ings...",
+      "id": 155 }
+    ,
+    "lng_MenuSetupTasks": {
+      "en": "Setup tasks...",
+      "id": 140 }
+    ,
+    "lng_MenuSplit2Bottom": {
+      "en": "Split to &bottom",
+      "id": 103 }
+    ,
+    "lng_MenuSplit2Right": {
+      "en": "Split to ri&ght",
+      "id": 102 }
+    ,
+    "lng_MenuStopUpdate": {
+      "en": "&Stop updates checking",
+      "id": 128 }
+    ,
+    "lng_MenuSysAttachTo": {
+      "en": "Attach t&o...",
+      "id": 156 }
+    ,
+    "lng_MenuSysNewConsole": {
+      "en": "New console dialog...",
+      "id": 157 }
+    ,
+    "lng_MenuTerminate2Right": {
+      "en": "Close to the &right",
+      "id": 98 }
+    ,
+    "lng_MenuTerminateAllCon": {
+      "en": "Close &all consoles",
+      "id": 95 }
+    ,
+    "lng_MenuTerminateButShell": {
+      "en": "Kill all but &shell",
+      "id": 92 }
+    ,
+    "lng_MenuTerminateCon": {
+      "en": "Close active &console",
+      "id": 90 }
+    ,
+    "lng_MenuTerminateConExpt": {
+      "en": "Close e&xcept active",
+      "id": 97 }
+    ,
+    "lng_MenuTerminateGroup": {
+      "en": "Close active &group",
+      "id": 93 }
+    ,
+    "lng_MenuTerminatePrc": {
+      "en": "Kill &active process",
+      "id": 91 }
+    ,
+    "lng_MenuTerminatePrcGroup": {
+      "en": "Kill active &processes",
+      "id": 94 }
+    ,
+    "lng_MenuTerminateZombies": {
+      "en": "Close all &zombies",
+      "id": 96 }
+    ,
+    "lng_MenuUnfasten": {
+      "en": "Unfasten",
+      "id": 100 }
+    ,
+    "lng_MenuWhatsNewFile": {
+      "en": "Whats &new (local)",
+      "id": 132 }
+    ,
+    "lng_MenuWhatsNewWeb": {
+      "en": "Whats new (&web)",
+      "id": 133 }
+    ,
     "lng_PasteEnterConfirm": {
       "en": [ "Warning!\n"
             , "\n"

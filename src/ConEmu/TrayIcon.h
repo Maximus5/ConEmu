@@ -28,8 +28,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #pragma once
 
-#define TRAY_ITEM_HIDE_NAME     L"Hide to &TSA"
-#define TRAY_ITEM_RESTORE_NAME  L"Restore from &TSA"
+#define TRAY_ITEM_HIDE_NAME     CLngRc::getRsrc(lng_MenuHideToTray/*"Hide to &TSA"*/)
+#define TRAY_ITEM_RESTORE_NAME  CLngRc::getRsrc(lng_MenuRestoreFromTray/*"Restore from &TSA"*/)
 
 enum TrayIconMsgSource
 {

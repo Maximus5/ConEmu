@@ -334,7 +334,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= nullptr*/, DWORD nFlags /
 				if ((nCurGroupCount++) >= MAX_CMD_GROUP_SHOW)
 				{
 					itm.Reset(CmdTaskPopupItem::eMore, -1);
-					wcscpy_c(itm.szShort, L"&More tasks"); // отдельной функцией, т.к. "Reset" - экранирует "&"
+					wcscpy_c(itm.szShort, CLngRc::getRsrc(lng_MenuMoreTasks/*"&More tasks"*/)); // separate, because "Reset" - escapes "&"
 					itm.hPopup = CreatePopupMenu();
 					if (!InsertMenu(hCurPopup, nInsertPos, MF_BYPOSITION|MF_POPUP|MF_STRING|MF_ENABLED, (UINT_PTR)itm.hPopup, itm.szShort))
 						break;
@@ -380,7 +380,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= nullptr*/, DWORD nFlags /
 		//// was any task appended?
 		//bSeparator = bWasTasks;
 
-		itm.Reset(CmdTaskPopupItem::eSetupTasks, ++mn_CmdLastID, MenuAccel(vkWinAltT,L"Setup tasks..."));
+		itm.Reset(CmdTaskPopupItem::eSetupTasks, ++mn_CmdLastID, MenuAccel(vkWinAltT, CLngRc::getRsrc(lng_MenuSetupTasks/*"Setup tasks..."*/)));
 		InsertMenu(hPopup, nInsertPos, MF_BYPOSITION|MF_ENABLED|MF_STRING, itm.nCmd, itm.szShort);
 		m_CmdTaskPopup.push_back(itm);
 		bSeparator = true;
@@ -414,7 +414,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= nullptr*/, DWORD nFlags /
 			nCount++;
 		}
 
-		itm.Reset(CmdTaskPopupItem::eClearHistory, ++mn_CmdLastID, L"Clear history...");
+		itm.Reset(CmdTaskPopupItem::eClearHistory, ++mn_CmdLastID, CLngRc::getRsrc(lng_MenuClearHistory/*"Clear history..."*/));
 		InsertMenu(hPopup, nInsertPos, MF_BYPOSITION|MF_STRING|MF_ENABLED, itm.nCmd, itm.szShort);
 		m_CmdTaskPopup.push_back(itm);
 	}
@@ -839,15 +839,15 @@ void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Alig
 
 		_ASSERTE(mh_VConEditPopup == nullptr);
 		mh_VConEditPopup = CreateEditMenuPopup(apVCon);
-		AppendMenu(mh_PopupMenu, MF_POPUP|MF_ENABLED, (UINT_PTR)mh_VConEditPopup, _T("Ed&it"));
+		AppendMenu(mh_PopupMenu, MF_POPUP|MF_ENABLED, (UINT_PTR)mh_VConEditPopup, CLngRc::getRsrc(lng_MenuPopupEdit/*"Ed&it"*/));
 
 		_ASSERTE(mh_VConViewPopup == nullptr);
 		mh_VConViewPopup = CreateViewMenuPopup(apVCon);
-		AppendMenu(mh_PopupMenu, MF_POPUP|MF_ENABLED, (UINT_PTR)mh_VConViewPopup, _T("&View (palettes)"));
+		AppendMenu(mh_PopupMenu, MF_POPUP|MF_ENABLED, (UINT_PTR)mh_VConViewPopup, CLngRc::getRsrc(lng_MenuPopupPalettes/*"&View (palettes)"*/));
 
 		_ASSERTE(mh_VConDebugPopup == nullptr);
 		mh_VConDebugPopup = CreateDebugMenuPopup();
-		AppendMenu(mh_PopupMenu, MF_POPUP|MF_ENABLED, (UINT_PTR)mh_VConDebugPopup, _T("&Debug"));
+		AppendMenu(mh_PopupMenu, MF_POPUP|MF_ENABLED, (UINT_PTR)mh_VConDebugPopup, CLngRc::getRsrc(lng_MenuPopupDebug/*"&Debug"*/));
 	}
 	else
 	{
@@ -1072,7 +1072,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		if (!gpConEmu->mp_Inside)
 		{
 			if (!gpSet->isQuakeStyle)
-				InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_TOMONITOR, MenuAccel(vkJumpActiveMonitor,L"Bring &here"));
+				InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_TOMONITOR, MenuAccel(vkJumpActiveMonitor, CLngRc::getRsrc(lng_MenuBringHere/*"Bring &here"*/)));
 			InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_TOTRAY, TRAY_ITEM_HIDE_NAME/* L"Hide to &TSA" */);
 		}
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
@@ -1080,7 +1080,7 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 		//InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_ABOUT, _T("&About / Help"));
 		if (mh_HelpPopup) DestroyMenu(mh_HelpPopup);
 		mh_HelpPopup = CreateHelpMenuPopup();
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_POPUP|MF_ENABLED, (UINT_PTR)mh_HelpPopup, _T("Hel&p"));
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_POPUP|MF_ENABLED, (UINT_PTR)mh_HelpPopup, CLngRc::getRsrc(lng_MenuPopupHelp/*"Hel&p"*/));
 		//if (ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
 		//	InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_HELP, _T("&Help"));
 
@@ -1089,38 +1089,38 @@ void CConEmuMenu::UpdateSysMenu(HMENU hSysMenu)
 
 		if (mh_SysDebugPopup) DestroyMenu(mh_SysDebugPopup);
 		mh_SysDebugPopup = CreateDebugMenuPopup();
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_POPUP|MF_ENABLED, (UINT_PTR)mh_SysDebugPopup, _T("&Debug"));
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_POPUP|MF_ENABLED, (UINT_PTR)mh_SysDebugPopup, CLngRc::getRsrc(lng_MenuPopupSysDebug/*"&Debug"*/));
 
 		if (mh_SysEditPopup) DestroyMenu(mh_SysEditPopup);
 		mh_SysEditPopup = CreateEditMenuPopup(nullptr);
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_POPUP|MF_ENABLED, (UINT_PTR)mh_SysEditPopup, _T("&Edit"));
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_POPUP|MF_ENABLED, (UINT_PTR)mh_SysEditPopup, CLngRc::getRsrc(lng_MenuPopupSysEdit/*"&Edit"*/));
 
 		// --------------------
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
 
 		if (mh_VConListPopup) DestroyMenu(mh_VConListPopup);
 		mh_VConListPopup = CreateVConListPopupMenu(mh_VConListPopup, TRUE/*abFirstTabOnly*/);
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_POPUP|MF_ENABLED, (UINT_PTR)mh_VConListPopup, _T("Console &list"));
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_POPUP|MF_ENABLED, (UINT_PTR)mh_VConListPopup, CLngRc::getRsrc(lng_MenuPopupConList/*"Console &list"*/));
 
 		if (mh_ActiveVConPopup) DestroyMenu(mh_ActiveVConPopup);
 		if (mh_TerminateVConPopup) { DestroyMenu(mh_TerminateVConPopup); mh_TerminateVConPopup = nullptr; }
 		mh_ActiveVConPopup = CreateVConPopupMenu(nullptr, nullptr, false, false);
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_POPUP|MF_ENABLED, (UINT_PTR)mh_ActiveVConPopup, _T("Acti&ve console"));
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_POPUP|MF_ENABLED, (UINT_PTR)mh_ActiveVConPopup, CLngRc::getRsrc(lng_MenuPopupActiveCon/*"Acti&ve console"*/));
 
 		// --------------------
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, 0);
 		if (!gpConEmu->mp_Inside)
 		{
 			InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED|(gpSet->isAlwaysOnTop ? MF_CHECKED : 0),
-				ID_ALWAYSONTOP, MenuAccel(vkAlwaysOnTop,L"Al&ways on top"));
+				ID_ALWAYSONTOP, MenuAccel(vkAlwaysOnTop, CLngRc::getRsrc(lng_MenuAlwaysOnTop/*"Al&ways on top"*/)));
 		}
 		#ifdef SHOW_AUTOSCROLL
 		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED|(gpSetCls->AutoScroll ? MF_CHECKED : 0),
-			ID_AUTOSCROLL, _T("Auto scro&ll"));
+			ID_AUTOSCROLL, CLngRc::getRsrc(lng_MenuAutoScroll/*"Auto scro&ll"*/));
 		#endif
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_SETTINGS,   MenuAccel(vkWinAltP,L"Sett&ings..."));
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, IDM_ATTACHTO,  MenuAccel(vkMultiNewAttach,L"Attach t&o..."));
-		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_NEWCONSOLE, MenuAccel(vkMultiNewConfirm,L"New console dialog..."));
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_SETTINGS,   MenuAccel(vkWinAltP, CLngRc::getRsrc(lng_MenuSettings/*"Sett&ings..."*/)));
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, IDM_ATTACHTO,  MenuAccel(vkMultiNewAttach, CLngRc::getRsrc(lng_MenuSysAttachTo/*"Attach t&o..."*/)));
+		InsertMenu(hSysMenu, 0, MF_BYPOSITION|MF_STRING|MF_ENABLED, ID_NEWCONSOLE, MenuAccel(vkMultiNewConfirm, CLngRc::getRsrc(lng_MenuSysNewConsole/*"New console dialog..."*/)));
 	}
 }
 
@@ -1409,7 +1409,7 @@ LRESULT CConEmuMenu::OnInitMenuPopup(HWND hWnd, HMENU hMenu, LPARAM lParam)
 					CmdTaskPopupItem itm = {CmdTaskPopupItem::eNone};
 					InsertMenu(hMenu, 0, MF_BYPOSITION|MF_SEPARATOR, 0, nullptr);
 
-					itm.Reset(CmdTaskPopupItem::eTaskAll, ++mn_CmdLastID, L"All task tabs");
+					itm.Reset(CmdTaskPopupItem::eTaskAll, ++mn_CmdLastID, CLngRc::getRsrc(lng_MenuAllTaskTabs/*"All task tabs"*/));
 					itm.pGrp = pGrp;
 					InsertMenu(hMenu, 0, MF_BYPOSITION|MF_ENABLED|MF_STRING, itm.nCmd, itm.szShort);
 					m_CmdTaskPopup.push_back(itm);
@@ -1705,28 +1705,28 @@ void CConEmuMenu::ShowSysmenu(int x, int y, DWORD nFlags /*= 0*/)
 HMENU CConEmuMenu::CreateDebugMenuPopup()
 {
 	const HMENU hDebug = CreatePopupMenu();
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_CON_TOGGLE_VISIBLE, MenuAccel(vkCtrlWinAltSpace,L"&Real console"));
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_CONPROP, _T("&Properties..."));
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_SCREENSHOT, MenuAccel(vkScreenshot,L"Make &screenshot..."));
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DUMPCONSOLE, _T("&Dump screen..."));
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_LOADDUMPCONSOLE, _T("&Load screen dump..."));
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUGGUI, _T("Debug &log (GUI)"));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_CON_TOGGLE_VISIBLE, MenuAccel(vkCtrlWinAltSpace, CLngRc::getRsrc(lng_MenuConToggleVisible/*"&Real console"*/)));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_CONPROP, CLngRc::getRsrc(lng_MenuConProperties/*"&Properties..."*/));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_SCREENSHOT, MenuAccel(vkScreenshot, CLngRc::getRsrc(lng_MenuScreenshot/*"Make &screenshot..."*/)));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DUMPCONSOLE, CLngRc::getRsrc(lng_MenuDumpConsole/*""&Dump screen..."*/));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_LOADDUMPCONSOLE, CLngRc::getRsrc(lng_MenuLoadDumpConsole/*"&Load screen dump..."*/));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUGGUI, CLngRc::getRsrc(lng_MenuDebugGui/*"Debug &log (GUI)"*/));
 //#ifdef _DEBUG
 //	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_MONITOR_SHELLACTIVITY, _T("Enable &shell log..."));
 //#endif
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUG_SHOWRECTS, _T("Show debug rec&ts"));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUG_SHOWRECTS, CLngRc::getRsrc(lng_MenuDebugShowRects/*"Show debug rec&ts"*/));
 	AppendMenu(hDebug, MF_SEPARATOR, 0, nullptr);
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUG_TRAP, _T("Raise exception (Main thread)"));
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUG_TRAP2, _T("Raise exception (Monitor thread)"));
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUG_ASSERT, _T("Show assertion"));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUG_TRAP, CLngRc::getRsrc(lng_MenuDebugTrap/*"Raise exception (Main thread)"*/));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUG_TRAP2, CLngRc::getRsrc(lng_MenuDebugTrap2/*"Raise exception (Monitor thread)"*/));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUG_ASSERT, CLngRc::getRsrc(lng_MenuDebugAssert/*"Show assertion"*/));
 	#ifdef TRACK_MEMORY_ALLOCATIONS
 	AppendMenu(hDebug, MF_SEPARATOR, 0, nullptr);
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DUMP_MEM_BLK, _T("Dump used memory blocks"));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DUMP_MEM_BLK, CLngRc::getRsrc(lng_MenuDumpMemBlk/*"Dump used memory blocks"*/));
 	#endif
 	AppendMenu(hDebug, MF_SEPARATOR, 0, nullptr);
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUGCON, MenuAccel(vkDebugProcess,L"Debug &active process..."));
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_MINIDUMP, MenuAccel(vkDumpProcess,L"Active process &memory dump..."));
-	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_MINIDUMPTREE, MenuAccel(vkDumpTree,L"Active &tree memory dump..."));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_DEBUGCON, MenuAccel(vkDebugProcess, CLngRc::getRsrc(lng_MenuDebugActive/*"Debug &active process..."*/)));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_MINIDUMP, MenuAccel(vkDumpProcess, CLngRc::getRsrc(lng_MenuMiniDump/*"Active process &memory dump..."*/)));
+	AppendMenu(hDebug, MF_STRING|MF_ENABLED, ID_MINIDUMPTREE, MenuAccel(vkDumpTree, CLngRc::getRsrc(lng_MenuMiniDumpTree/*"Active &tree memory dump..."*/)));
 	return hDebug;
 }
 
@@ -1755,7 +1755,7 @@ HMENU CConEmuMenu::CreateVConListPopupMenu(HMENU ahExist, BOOL abFirstTabOnly)
 		CRealConsole* pRCon = VCon->RCon();
 		if (!pRCon)
 		{
-			wsprintf(szText, L"%i: VConsole", V+1);
+			wsprintf(szText, L"%i: VConsole", V + 1);
 			AppendMenu(h, MF_STRING|nAddFlags, MAKELONG(1, V+1), szText);
 		}
 		else
@@ -1843,20 +1843,20 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, b
 	HMENU& hTerminate = mh_TerminatePopup;
 	{
 		const MenuItem terminateItems[] = {
-			{ mit_Command,   IDM_TERMINATECON,      vkMultiClose,     con_flags,  L"Close active &console"  },
-			{ mit_Command,   IDM_TERMINATEPRC,      vkTerminateApp,   con_flags,  L"Kill &active process"   },
-			{ mit_Command,   IDM_TERMINATEBUTSHELL, vkTermButShell,   con_flags,  L"Kill all but &shell"    },
+			{ mit_Command,   IDM_TERMINATECON,      vkMultiClose,     con_flags,  CLngRc::getRsrc(lng_MenuTerminateCon/*"Close active &console"*/) },
+			{ mit_Command,   IDM_TERMINATEPRC,      vkTerminateApp,   con_flags,  CLngRc::getRsrc(lng_MenuTerminatePrc/*"Kill &active process"*/) },
+			{ mit_Command,   IDM_TERMINATEBUTSHELL, vkTermButShell,   con_flags,  CLngRc::getRsrc(lng_MenuTerminateButShell/*"Kill all but &shell"*/) },
 			{ mit_Separator, 0, 0, 0, nullptr},
-			{ mit_Command,   IDM_TERMINATEGROUP,    vkCloseGroup,     con_flags,  L"Close active &group"    },
-			{ mit_Command,   IDM_TERMINATEPRCGROUP, vkCloseGroupPrc,  con_flags,  L"Kill active &processes" },
+			{ mit_Command,   IDM_TERMINATEGROUP,    vkCloseGroup,     con_flags,  CLngRc::getRsrc(lng_MenuTerminateGroup/*"Close active &group"*/) },
+			{ mit_Command,   IDM_TERMINATEPRCGROUP, vkCloseGroupPrc,  con_flags,  CLngRc::getRsrc(lng_MenuTerminatePrcGroup/*"Kill active &processes"*/) },
 			{ mit_Separator, 0, 0, 0, nullptr},
-			{ mit_Command,   IDM_TERMINATEALLCON,   vkCloseAllCon,    MF_ENABLED, L"Close &all consoles"    },
-			{ mit_Command,   IDM_TERMINATEZOMBIES,  vkCloseZombies,   MF_ENABLED, L"Close all &zombies"     },
-			{ mit_Command,   IDM_TERMINATECONEXPT,  vkCloseExceptCon, MF_ENABLED, L"Close e&xcept active"   },
-			{ mit_Command,   IDM_TERMINATE2RIGHT,   vkClose2Right,    con_flags,  L"Close to the &right"    },
+			{ mit_Command,   IDM_TERMINATEALLCON,   vkCloseAllCon,    MF_ENABLED, CLngRc::getRsrc(lng_MenuTerminateAllCon/*"Close &all consoles"*/) },
+			{ mit_Command,   IDM_TERMINATEZOMBIES,  vkCloseZombies,   MF_ENABLED, CLngRc::getRsrc(lng_MenuTerminateZombies/*"Close all &zombies"*/) },
+			{ mit_Command,   IDM_TERMINATECONEXPT,  vkCloseExceptCon, MF_ENABLED, CLngRc::getRsrc(lng_MenuTerminateConExpt/*"Close e&xcept active"*/) },
+			{ mit_Command,   IDM_TERMINATE2RIGHT,   vkClose2Right,    con_flags,  CLngRc::getRsrc(lng_MenuTerminate2Right/*"Close to the &right"*/) },
 			{ mit_Separator, 0, 0, 0, nullptr},
-			{ mit_Command,   IDM_DETACH,            vkConDetach,      con_flags,  L"Detach"                 },
-			{ mit_Command,   IDM_UNFASTEN,          vkConUnfasten,    con_flags,  L"Unfasten"               }
+			{ mit_Command,   IDM_DETACH,            vkConDetach,      con_flags,  CLngRc::getRsrc(lng_MenuDetach/*"Detach"*/) },
+			{ mit_Command,   IDM_UNFASTEN,          vkConUnfasten,    con_flags,  CLngRc::getRsrc(lng_MenuUnfasten/*"Unfasten"*/) }
 		};
 		CreateOrUpdateMenu(hTerminate, terminateItems, countof(terminateItems));
 	}
@@ -1865,43 +1865,43 @@ HMENU CConEmuMenu::CreateVConPopupMenu(CVirtualConsole* apVCon, HMENU ahExist, b
 	HMENU& hRestart = mh_RestartPopup;
 	{
 		const MenuItem restartItems[] = {
-			{ mit_Command,   IDM_DUPLICATE,        vkDuplicateRoot,   con_flags,  L"Duplica&te root..."     },
+			{ mit_Command,   IDM_DUPLICATE,        vkDuplicateRoot,   con_flags,  CLngRc::getRsrc(lng_MenuDuplicate/*"Duplica&te root..."*/) },
 			//{ mit_Command, IDM_ADMIN_DUPLICATE,  vkDuplicateRootAs, con_flags,  L"Duplica&te as Admin..." },
 			{ mit_Separator, 0, 0, 0, nullptr},
-			{ mit_Command,   IDM_SPLIT2RIGHT,      vkSplitNewConH,    con_flags,  L"Split to ri&ght"        },
-			{ mit_Command,   IDM_SPLIT2BOTTOM,     vkSplitNewConV,    con_flags,  L"Split to &bottom"       },
+			{ mit_Command,   IDM_SPLIT2RIGHT,      vkSplitNewConH,    con_flags,  CLngRc::getRsrc(lng_MenuSplit2Right/*"Split to ri&ght"*/) },
+			{ mit_Command,   IDM_SPLIT2BOTTOM,     vkSplitNewConV,    con_flags,  CLngRc::getRsrc(lng_MenuSplit2Bottom/*"Split to &bottom"*/) },
 			{ mit_Separator, 0, 0, 0, nullptr},
-			{ mit_Command,   IDM_RESTARTDLG,       vkMultiRecreate,   con_flags,  L"&Restart..."            },
-			{ mit_Command,   IDM_RESTART,          0,                 con_flags,  L"&Restart"               },
-			{ mit_Command,   IDM_RESTARTAS,        0,                 con_flags,  L"Restart as Admin"       }
+			{ mit_Command,   IDM_RESTARTDLG,       vkMultiRecreate,   con_flags,  CLngRc::getRsrc(lng_MenuRestartDlg/*"&Restart..."*/) },
+			{ mit_Command,   IDM_RESTART,          0,                 con_flags,  CLngRc::getRsrc(lng_MenuRestart/*"&Restart"*/) },
+			{ mit_Command,   IDM_RESTARTAS,        0,                 con_flags,  CLngRc::getRsrc(lng_MenuRestartAs/*"Restart as Admin"*/) }
 		};
 		CreateOrUpdateMenu(hRestart, restartItems, countof(restartItems));
 	}
 
 	CEStr lsCloseText;
 	if (abFromConsole)
-		lsCloseText.Set(L"&Close console");
+		lsCloseText.Set(CLngRc::getRsrc(lng_MenuCloseConsole/*"&Close console"*/));
 	else if (gpSet->isOneTabPerGroup && CVConGroup::isGroup(apVCon))
-		lsCloseText.Set(L"&Close tab group");
+		lsCloseText.Set(CLngRc::getRsrc(lng_MenuCloseGroup/*"&Close tab group"*/));
 	else
-		lsCloseText.Set(L"&Close tab");
+		lsCloseText.Set(CLngRc::getRsrc(lng_MenuCloseTab/*"&Close tab"*/));
 
 	// Root menu if (abAddNew == true) or (SysMenu->Active Console) if (abAddNew == false)
 	{
 		const MenuItem vConItems[] = {
 			{ mit_Command,   IDM_CLOSE,            vkCloseTab,        close_flags, lsCloseText },
-			{ mit_Command,   IDM_RENAMETAB,        vkRenameTab,       con_flags,   L"Rena&me tab..." },
-			{ mit_Command,   IDM_CHANGEAFFINITY,   vkAffinity,        con_flags,   L"A&ffinity/priority..." },
+			{ mit_Command,   IDM_RENAMETAB,        vkRenameTab,       con_flags,   CLngRc::getRsrc(lng_MenuRenameTab/*"Rena&me tab..."*/) },
+			{ mit_Command,   IDM_CHANGEAFFINITY,   vkAffinity,        con_flags,   CLngRc::getRsrc(lng_MenuChangeAffinity/*"A&ffinity/priority..."*/) },
 			// ReSharper disable once CppCStyleCast
-			{ mit_Popup,     (UINT_PTR)hRestart,   0,                 MF_ENABLED,  L"&Restart or duplicate" },
+			{ mit_Popup,     (UINT_PTR)hRestart,   0,                 MF_ENABLED,  CLngRc::getRsrc(lng_MenuPopupRestart/*"&Restart or duplicate"*/) },
 			// ReSharper disable once CppCStyleCast
-			{ mit_Popup,     (UINT_PTR)hTerminate, 0,                 MF_ENABLED,  L"Close or &kill" },
-			{ mit_Command,   IDM_CHILDSYSMENU,     vkChildSystemMenu, gui_flags,   L"Child system menu..." },
-			// abAddNew - if "false" the result is inserted as PopupMenu into top-level menu 
+			{ mit_Popup,     (UINT_PTR)hTerminate, 0,                 MF_ENABLED,  CLngRc::getRsrc(lng_MenuPopupTerminate/*"Close or &kill"*/) },
+			{ mit_Command,   IDM_CHILDSYSMENU,     vkChildSystemMenu, gui_flags,   CLngRc::getRsrc(lng_MenuChildSysMenu/*"Child system menu..."*/) },
+			// abAddNew - if "false" the result is inserted as PopupMenu into top-level menu
 			// These three items are visible in the popup menu (Shift+RClick on VCon)
 			{ mit_Separator, 0, 0, 0, nullptr},
-			{ mit_Command,   ID_NEWCONSOLE,        vkMultiNewConfirm, MF_ENABLED,  L"New console dialog..." },
-			{ mit_Command,   IDM_ATTACHTO,         vkMultiNewAttach,  MF_ENABLED,  L"Attach to..." }
+			{ mit_Command,   ID_NEWCONSOLE,        vkMultiNewConfirm, MF_ENABLED,  CLngRc::getRsrc(lng_MenuNewConsole/*"New console dialog..."*/) },
+			{ mit_Command,   IDM_ATTACHTO,         vkMultiNewAttach,  MF_ENABLED,  CLngRc::getRsrc(lng_MenuAttachTo/*"Attach to..."*/) }
 		};
 
 		CreateOrUpdateMenu(hMenu, vConItems, countof(vConItems) - (abAddNew ? 0 : 3));
@@ -1936,21 +1936,21 @@ HMENU CConEmuMenu::CreateEditMenuPopup(CVirtualConsole* apVCon, HMENU ahExist /*
 	const BYTE fmt = gpSet->isCTSHtmlFormat;
 	// MenuItemType mit; UINT MenuId; UINT HotkeyId; UINT Flags; LPCWSTR pszText;
 	const MenuItem items[] = {
-		{ mit_Command,   ID_CON_MARKBLOCK,  vkCTSVkBlockStart, (lbEnabled?fEnabled:fGrayed), L"Mark &block"       },
-		{ mit_Command,   ID_CON_MARKTEXT,   vkCTSVkTextStart,  (lbEnabled?fEnabled:fGrayed), L"Mar&k text"        },
+		{ mit_Command,   ID_CON_MARKBLOCK,  vkCTSVkBlockStart, (lbEnabled?fEnabled:fGrayed), CLngRc::getRsrc(lng_MenuConMarkBlock/*"Mark &block"*/) },
+		{ mit_Command,   ID_CON_MARKTEXT,   vkCTSVkTextStart,  (lbEnabled?fEnabled:fGrayed), CLngRc::getRsrc(lng_MenuConMarkText/*"Mar&k text"*/) },
 		{ mit_Separator, 0, 0, 0, nullptr},
-		{ mit_Command,   ID_CON_COPY,       0,          (lbSelectionExist?fEnabled:fGrayed), L"Cop&y"             },
-		{ mit_Command,   ID_CON_COPY_ALL,   vkCTSVkCopyAll,    (lbEnabled?fEnabled:fGrayed), L"Copy &all"         },
-		{ mit_Command,   ID_CON_PASTE,      vkPasteText,       (lbEnabled?fEnabled:fGrayed), L"&Paste"            },
+		{ mit_Command,   ID_CON_COPY,       0,          (lbSelectionExist?fEnabled:fGrayed), CLngRc::getRsrc(lng_MenuConCopy/*"Cop&y"*/) },
+		{ mit_Command,   ID_CON_COPY_ALL,   vkCTSVkCopyAll,    (lbEnabled?fEnabled:fGrayed), CLngRc::getRsrc(lng_MenuConCopyAll/*"Copy &all"*/) },
+		{ mit_Command,   ID_CON_PASTE,      vkPasteText,       (lbEnabled?fEnabled:fGrayed), CLngRc::getRsrc(lng_MenuConPaste/*"&Paste"*/) },
 		{ mit_Separator, 0, 0, 0, nullptr},
-		{ mit_Command,   ID_RESET_TERMINAL, vkResetTerminal,   (lbEnabled?fEnabled:fGrayed), L"&Reset terminal"   },
+		{ mit_Command,   ID_RESET_TERMINAL, vkResetTerminal,   (lbEnabled?fEnabled:fGrayed), CLngRc::getRsrc(lng_MenuResetTerminal/*"&Reset terminal"*/) },
 		{ mit_Separator, 0, 0, 0, nullptr},
-		{ mit_Option,    ID_CON_COPY_HTML0, 0,             ((fmt == 0)?fChecked:fUnchecked), L"Plain &text only"  },
-		{ mit_Option,    ID_CON_COPY_HTML1, 0,             ((fmt == 1)?fChecked:fUnchecked), L"Copy &HTML format" },
-		{ mit_Option,    ID_CON_COPY_HTML2, 0,             ((fmt == 2)?fChecked:fUnchecked), L"Copy a&s HTML"     },
-		{ mit_Option,    ID_CON_COPY_HTML3, 0,             ((fmt == 3)?fChecked:fUnchecked), L"A&NSI sequences"   },
+		{ mit_Option,    ID_CON_COPY_HTML0, 0,             ((fmt == 0)?fChecked:fUnchecked), CLngRc::getRsrc(lng_MenuConCopyFmt0/*"Plain &text only"*/) },
+		{ mit_Option,    ID_CON_COPY_HTML1, 0,             ((fmt == 1)?fChecked:fUnchecked), CLngRc::getRsrc(lng_MenuConCopyFmt1/*"Copy &HTML format"*/) },
+		{ mit_Option,    ID_CON_COPY_HTML2, 0,             ((fmt == 2)?fChecked:fUnchecked), CLngRc::getRsrc(lng_MenuConCopyFmt2/*"Copy a&s HTML"*/) },
+		{ mit_Option,    ID_CON_COPY_HTML3, 0,             ((fmt == 3)?fChecked:fUnchecked), CLngRc::getRsrc(lng_MenuConCopyFmt3/*"A&NSI sequences"*/) },
 		{ mit_Separator, 0, 0, 0, nullptr},
-		{ mit_Command,   ID_CON_FIND,       vkFindTextDlg,     (lbEnabled?fEnabled:fGrayed), L"&Find text..."     },
+		{ mit_Command,   ID_CON_FIND,       vkFindTextDlg,     (lbEnabled?fEnabled:fGrayed), CLngRc::getRsrc(lng_MenuConFind/*"&Find text..."*/) },
 	};
 
 	CreateOrUpdateMenu(hMenu, items, countof(items));
@@ -2021,29 +2021,29 @@ HMENU CConEmuMenu::CreateHelpMenuPopup()
 	if (gpConEmu->isUpdateAllowed())
 	{
 		if (gpUpd && (gpUpd->InUpdate() != CConEmuUpdate::UpdateStep::NotStarted))
-			AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_STOPUPDATE, _T("&Stop updates checking"));
+			AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_STOPUPDATE, CLngRc::getRsrc(lng_MenuStopUpdate/*"&Stop updates checking"*/));
 		else
-			AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_CHECKUPDATE, MenuAccel(vkCheckUpdates, L"&Check for updates"));
+			AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_CHECKUPDATE, MenuAccel(vkCheckUpdates, CLngRc::getRsrc(lng_MenuCheckUpdate/*"&Check for updates"*/)));
 
 		AppendMenu(hHelp, MF_SEPARATOR, 0, nullptr);
 	}
 
-	AppendMenu(hHelp, MF_STRING|MF_ENABLED, IDM_HOMEPAGE, _T("&Visit home page"));
-	AppendMenu(hHelp, MF_STRING|MF_ENABLED, IDM_DONATE_LINK, _T("&Donate ConEmu"));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, IDM_HOMEPAGE, CLngRc::getRsrc(lng_MenuHomePage/*"&Visit home page"*/));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, IDM_DONATE_LINK, CLngRc::getRsrc(lng_MenuDonateLink/*"&Donate ConEmu"*/));
 
-	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_WHATS_NEW_FILE, _T("Whats &new (local)"));
-	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_WHATS_NEW_WWW, _T("Whats new (&web)"));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_WHATS_NEW_FILE, CLngRc::getRsrc(lng_MenuWhatsNewFile/*"Whats &new (local)"*/));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_WHATS_NEW_WWW, CLngRc::getRsrc(lng_MenuWhatsNewWeb/*"Whats new (&web)"*/));
 	AppendMenu(hHelp, MF_SEPARATOR, 0, nullptr);
 
-	AppendMenu(hHelp, MF_STRING|MF_ENABLED, IDM_REPORTBUG, _T("&Report a bug..."));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, IDM_REPORTBUG, CLngRc::getRsrc(lng_MenuReportBug/*"&Report a bug..."*/));
 
 	if (gpConEmu->ms_ConEmuChm[0])  //Показывать пункт только если есть conemu.chm
-		AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_HELP, _T("&Help"));
+		AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_HELP, CLngRc::getRsrc(lng_MenuHelp/*"&Help"*/));
 
 	AppendMenu(hHelp, MF_SEPARATOR, 0, nullptr);
-	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_HOTKEYS, MenuAccel(vkWinAltK,L"Hot&keys"));
-	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_ONLINEHELP, MenuAccel(vkWinAltH,L"Online &Help"));
-	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_ABOUT, MenuAccel(vkWinAltA,L"&About / Help"));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_HOTKEYS, MenuAccel(vkWinAltK, CLngRc::getRsrc(lng_MenuHotkeys/*"Hot&keys"*/)));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_ONLINEHELP, MenuAccel(vkWinAltH, CLngRc::getRsrc(lng_MenuOnlineHelp/*"Online &Help"*/)));
+	AppendMenu(hHelp, MF_STRING|MF_ENABLED, ID_ABOUT, MenuAccel(vkWinAltA, CLngRc::getRsrc(lng_MenuAbout/*"&About / Help"*/)));
 
 	return hHelp;
 }
