@@ -812,6 +812,25 @@ void CConEmuMenu::OnMenuRClick(HMENU hMenu, UINT nItemPos)
 	}
 }
 
+void CConEmuMenu::ShowEditMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Align)
+{
+	if (!apVCon)
+		return;
+
+	const auto hVConEditPopup = CreateEditMenuPopup(apVCon);
+
+	int nCmd = trackPopupMenu(tmp_VCon, hVConEditPopup,
+	                          Align | TPM_RIGHTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
+	                          ptCur.x, ptCur.y, ghWnd);
+
+	if (nCmd)
+	{
+		ExecPopupMenuCmd(tmp_VCon, apVCon, nCmd);
+	}
+
+	DestroyMenu(hVConEditPopup);
+}
+
 // Показать контекстное меню для ТЕКУЩЕЙ закладки консоли
 // ptCur - экранные координаты
 void CConEmuMenu::ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Align /* = TPM_LEFTALIGN */, bool abFromConsole /*= false*/)

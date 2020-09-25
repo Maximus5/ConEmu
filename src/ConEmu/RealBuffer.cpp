@@ -3606,10 +3606,10 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			}
 		}
 
-		if (((gpSet->isCTSRBtnAction == 2/*Paste*/) || ((gpSet->isCTSRBtnAction == 3/*Auto*/) && !isSelectionPresent()))
+		if (((gpSet->isCTSRBtnAction == MouseButtonAction::Paste) || ((gpSet->isCTSRBtnAction == MouseButtonAction::Auto) && !isSelectionPresent()))
 				&& (messg == WM_RBUTTONDOWN || messg == WM_RBUTTONUP))
 		{
-			bool bAllowAutoPaste = !mp_RCon->isFar() && !mp_RCon->m_Term.nMouseMode;
+			const bool bAllowAutoPaste = !mp_RCon->isFar() && !mp_RCon->m_Term.nMouseMode;
 			if (gpSet->IsModifierPressed(vkCTSVkAct, bAllowAutoPaste))
 			{
 				if (messg == WM_RBUTTONUP)
@@ -3636,7 +3636,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 			}
 		}
 
-		if (((gpSet->isCTSMBtnAction == 2) || ((gpSet->isCTSMBtnAction == 3) && !isSelectionPresent()))
+		if (((gpSet->isCTSMBtnAction == MouseButtonAction::Paste) || ((gpSet->isCTSMBtnAction == MouseButtonAction::Auto) && !isSelectionPresent()))
 				&& (messg == WM_MBUTTONDOWN || messg == WM_MBUTTONUP))
 		{
 			if (gpSet->IsModifierPressed(vkCTSVkAct, !mp_RCon->isFar()))
@@ -3649,6 +3649,24 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 
 				goto wrap;
 			}
+		}
+	}
+
+	if ((gpSet->isCTSMBtnAction == MouseButtonAction::Menu) || (gpSet->isCTSRBtnAction == MouseButtonAction::Menu))
+	{
+		if (((messg == WM_MBUTTONDOWN || messg == WM_MBUTTONDBLCLK) && (gpSet->isCTSMBtnAction == MouseButtonAction::Menu))
+			|| ((messg == WM_RBUTTONDOWN || messg == WM_RBUTTONDBLCLK) && (gpSet->isCTSRBtnAction == MouseButtonAction::Menu)))
+		{
+			goto wrap; // show menu on Up
+		}
+		if ((messg == WM_MBUTTONUP && gpSet->isCTSMBtnAction == MouseButtonAction::Menu)
+			|| (messg == WM_RBUTTONUP && gpSet->isCTSRBtnAction == MouseButtonAction::Menu))
+		{
+			POINT ptCur = {-32000,-32000};
+			GetCursorPos(&ptCur);
+			LogString(L"EditMenu called by mouse click");
+			gpConEmu->mp_Menu->ShowEditMenu(mp_RCon->VCon(), ptCur);
+			goto wrap;
 		}
 	}
 
@@ -4046,24 +4064,22 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 	}
 	else if ((messg == WM_RBUTTONUP || messg == WM_MBUTTONUP) && (con.m_sel.dwFlags & (CONSOLE_TEXT_SELECTION|CONSOLE_BLOCK_SELECTION)))
 	{
-		BYTE bAction = (messg == WM_RBUTTONUP) ? gpSet->isCTSRBtnAction : gpSet->isCTSMBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
+		const auto bAction = (messg == WM_RBUTTONUP) ? gpSet->isCTSRBtnAction : gpSet->isCTSMBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
 
 		// On mouse selection, when LBtn is still down, and RBtn is clicked - Do "Internal Copy & Paste"
 
-		bool bDoCopyWin = (bAction == 1);
+		const bool bDoCopyWin = (bAction == MouseButtonAction::Copy);
 		bool bDoPaste = false;
 
-		if (bAction == 3)
+		if (bAction == MouseButtonAction::Auto)
 		{
-			if ((con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN))
-			{
-				// LBtn is pressed now
-				bDoPaste = true;
-			}
-			else if (gpSet->isCTSIntelligent && isMouseInsideSelection(x, y))
-			{
+			if (// LBtn is pressed now
+				((con.m_sel.dwFlags & CONSOLE_MOUSE_DOWN))
 				// If LBtn was released, but RBtn was pressed **over** selection
 				// That allows DblClick on file and RClick on it to paste selection into CmdLine
+				|| (gpSet->isCTSIntelligent && isMouseInsideSelection(x, y))
+				)
+			{
 				bDoPaste = true;
 			}
 		}
@@ -4072,7 +4088,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		if (!bDoPaste)
 		{
 			// While "Paste" was not requested - that means "Copy to Windows clipboard"
-			bool bDoCopy = bDoCopyWin || (bAction == 3);
+			const bool bDoCopy = bDoCopyWin || (bAction == MouseButtonAction::Auto);
 			DoSelectionFinalize(bDoCopy);
 		}
 		else

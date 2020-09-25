@@ -80,6 +80,7 @@ public:
 
 	int trackPopupMenu(TrackMenuPlace place, HMENU hMenu, UINT uFlags, int x, int y, HWND hWnd, RECT *prcRect = nullptr);
 
+	void ShowEditMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Align = TPM_LEFTALIGN);
 	void ShowPopupMenu(CVirtualConsole* apVCon, POINT ptCur, DWORD Align = TPM_LEFTALIGN, bool abFromConsole = false);
 	void ExecPopupMenuCmd(TrackMenuPlace place, CVirtualConsole* apVCon, int nCmd);
 

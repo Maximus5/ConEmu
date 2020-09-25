@@ -711,8 +711,8 @@ void Settings::InitSettings()
 	#ifdef _DEBUG
 	isCTSForceLocale = 0x0419; // russian locale
 	#endif
-	isCTSRBtnAction = 3; // Auto (Выделения нет - Paste, Есть - Copy)
-	isCTSMBtnAction = 0; // <None>
+	isCTSRBtnAction = MouseButtonAction::Auto;
+	isCTSMBtnAction = MouseButtonAction::None;
 	isCTSColorIndex = DefaultSelectionConsoleColor/*0xE0*/;
 	isPasteConfirmEnter = true;
 	nPasteConfirmLonger = 200;
@@ -2698,9 +2698,11 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"CTS.HtmlFormat", isCTSHtmlFormat);
 		reg->Load(L"CTS.ForceLocale", isCTSForceLocale);
 
-		reg->Load(L"CTS.RBtnAction", isCTSRBtnAction); if (isCTSRBtnAction>3) isCTSRBtnAction = 0;
+		reg->Load(L"CTS.RBtnAction", reinterpret_cast<BYTE&>(isCTSRBtnAction));
+		if (isCTSRBtnAction >= MouseButtonAction::MaxId) isCTSRBtnAction = MouseButtonAction::None;
 
-		reg->Load(L"CTS.MBtnAction", isCTSMBtnAction); if (isCTSMBtnAction>3) isCTSMBtnAction = 0;
+		reg->Load(L"CTS.MBtnAction", reinterpret_cast<BYTE&>(isCTSMBtnAction));
+		if (isCTSMBtnAction >= MouseButtonAction::MaxId) isCTSMBtnAction = MouseButtonAction::None;
 
 		reg->Load(L"CTS.ColorIndex", isCTSColorIndex); if (CONFORECOLOR(isCTSColorIndex) == CONBACKCOLOR(isCTSColorIndex)) isCTSColorIndex = DefaultSelectionConsoleColor;
 
@@ -3759,8 +3761,8 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"CTS.SelectText", isCTSSelectText);
 		reg->Save(L"CTS.HtmlFormat", isCTSHtmlFormat);
 		reg->Save(L"CTS.ForceLocale", isCTSForceLocale);
-		reg->Save(L"CTS.RBtnAction", isCTSRBtnAction);
-		reg->Save(L"CTS.MBtnAction", isCTSMBtnAction);
+		reg->Save(L"CTS.RBtnAction", static_cast<BYTE>(isCTSRBtnAction));
+		reg->Save(L"CTS.MBtnAction", static_cast<BYTE>(isCTSMBtnAction));
 		reg->Save(L"CTS.ColorIndex", isCTSColorIndex);
 
 		reg->Save(L"ClipboardConfirmEnter", isPasteConfirmEnter);

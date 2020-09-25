@@ -158,6 +158,23 @@ struct TabBtnDblClick
 #define HI_GOTO_EDITOR_CMD     L"cmd.exe /c \"echo Starting \"%3\" & \"%3\"\""
 #define HI_GOTO_EDITOR_CMD_NC  L"cmd.exe /c \"echo Starting \"%3\" & \"%3\"\" -new_console:n"
 
+enum class MouseButtonAction : uint8_t
+{
+	// Mouse button click does nothing.
+	None = 0,
+	// Copy selected text to Windows clipboard if selection exists.
+	Copy = 1,
+	// Always paste text from Windows clipboard.
+	Paste = 2,
+	// If there is no selection in console - do paste from Windows clipboard.
+	// If selection exists and mouse cursor is *outside* the  - do copy to Windows cliboard.
+	// If mouse cursor is *inside* the selection region - do paste of selected text without touching Windows clipboard.
+	Auto = 3,
+	Menu = 4,
+	// Last one for comparison.
+	MaxId,
+};
+
 
 extern const wchar_t gsDefaultColorScheme[64]; // = L"<ConEmu>";
 
@@ -573,9 +590,9 @@ struct Settings
 		DWORD isCTSForceLocale; // Try to bypass clipboard locale problems (pasting to old non-unicode apps)
 
 		//reg->Load(L"CTS.RBtnAction", isCTSRBtnAction);
-		BYTE isCTSRBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
+		MouseButtonAction isCTSRBtnAction;
 		//reg->Load(L"CTS.MBtnAction", isCTSMBtnAction);
-		BYTE isCTSMBtnAction; // enum: 0-off, 1-copy, 2-paste, 3-auto
+		MouseButtonAction isCTSMBtnAction;
 		//reg->Load(L"CTS.ColorIndex", isCTSColorIndex);
 		BYTE isCTSColorIndex;
 		//reg->Load(L"ClipboardConfirmEnter", isPasteConfirmEnter);

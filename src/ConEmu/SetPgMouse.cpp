@@ -58,9 +58,12 @@ LRESULT CSetPgMouse::OnInitDialog(HWND hDlg, bool abInitial)
 	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSClickPromptPosition), CSetDlgLists::eKeysAct, VkMod, false);
 
 	VkMod = gpSet->GetHotkeyById(vkCTSVkAct);
-	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSActAlways), CSetDlgLists::eKeysAct, VkMod, false);
-	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSRBtnAction), CSetDlgLists::eClipAct, gpSet->isCTSRBtnAction, false);
-	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSMBtnAction), CSetDlgLists::eClipAct, gpSet->isCTSMBtnAction, false);
+	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSActAlways), CSetDlgLists::eKeysAct,
+		VkMod, false);
+	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSRBtnAction), CSetDlgLists::eClipAct,
+		reinterpret_cast<BYTE&>(gpSet->isCTSRBtnAction), false);
+	CSetDlgLists::FillListBoxItems(GetDlgItem(hDlg, lbCTSMBtnAction), CSetDlgLists::eClipAct,
+		reinterpret_cast<BYTE&>(gpSet->isCTSMBtnAction), false);
 
 	gpSetCls->CheckSelectionModifiers(hDlg);
 
@@ -89,11 +92,13 @@ INT_PTR CSetPgMouse::OnComboBox(HWND hDlg, WORD nCtrlId, WORD code)
 			} break;
 		case lbCTSRBtnAction:
 			{
-				CSetDlgLists::GetListBoxItem(hDlg, lbCTSRBtnAction, CSetDlgLists::eClipAct, gpSet->isCTSRBtnAction);
+				CSetDlgLists::GetListBoxItem(hDlg, lbCTSRBtnAction, CSetDlgLists::eClipAct,
+					reinterpret_cast<BYTE&>(gpSet->isCTSRBtnAction));
 			} break;
 		case lbCTSMBtnAction:
 			{
-				CSetDlgLists::GetListBoxItem(hDlg, lbCTSMBtnAction, CSetDlgLists::eClipAct, gpSet->isCTSMBtnAction);
+				CSetDlgLists::GetListBoxItem(hDlg, lbCTSMBtnAction, CSetDlgLists::eClipAct,
+					reinterpret_cast<BYTE&>(gpSet->isCTSMBtnAction));
 			} break;
 		default:
 			_ASSERTE(FALSE && "ListBox was not processed");
