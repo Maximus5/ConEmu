@@ -34,6 +34,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HotkeyChord.h"
 #include "SetPgBase.h"
 
+#undef gsNoHotkey
+#define gsNoHotkey L"<None>"
+
 TEST(Hotkeys,Tests)
 {
 	// Key names order:

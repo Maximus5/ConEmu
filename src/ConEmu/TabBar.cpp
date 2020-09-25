@@ -101,7 +101,9 @@ WARNING("TB_GETIDEALSIZE - awailable on XP only, use insted TB_GETMAXSIZE");
 CTabBarClass::CTabBarClass()
 {
 	mp_DummyTab = new CTabID(NULL, NULL, fwt_Panels|fwt_CurrentFarWnd, 0, 0, 0);
+	#ifdef _DEBUG // due to unittests
 	_ASSERTE(mp_DummyTab->RefCount()==1);
+	#endif
 
 	#ifdef TAB_REF_PLACE
 	m_Tabs.SetPlace("TabBar.cpp:tabs.m_Tabs",0);
@@ -455,7 +457,9 @@ bool CTabBarClass::IsTabsActive() const
 		_ASSERTE(this!=NULL);
 		return false;
 	}
+	#ifdef _DEBUG // due to unittests
 	_ASSERTE(!_active || inActivate.load()>0 || IsTabsCreated());
+	#endif
 	return _active;
 }
 

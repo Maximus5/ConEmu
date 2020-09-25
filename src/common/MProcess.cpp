@@ -75,7 +75,9 @@ bool isTerminalMode()
 			{
 				if (!prc.Find(nParentPID, &P))
 				{
+					#ifdef _DEBUG // due to unittests
 					_ASSERTE((nParentPID != nSelfParentPID) && "Failed to load parent process information");
+					#endif
 					break;
 				}
 

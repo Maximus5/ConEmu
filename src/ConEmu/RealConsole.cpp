@@ -14266,7 +14266,9 @@ HWND CRealConsole::isPictureView(bool abIgnoreNonModal/*=FALSE*/)
 		HWND hBack = mp_VCon->GetBack();
 		HWND hChild = NULL;
 		DEBUGTEST(DWORD nSelf = GetCurrentProcessId());
+		#ifdef _DEBUG // due to unittests
 		_ASSERTE(nSelf != m_ChildGui.Process.ProcessID);
+		#endif
 
 		while ((hChild = FindWindowEx(hBack, hChild, NULL, NULL)) != NULL)
 		{

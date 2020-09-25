@@ -2955,7 +2955,9 @@ LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		// Ignore window size changes until station will be unlocked
 		if (nSessionCode == WTS_SESSION_LOCK)
 		{
+			#ifdef _DEBUG // due to unittests
 			_ASSERTE(bPrevConnected && (mn_IgnoreSizeChange >= 0));
+			#endif
 
 			if (!session.bWasLocked)
 			{
@@ -2965,7 +2967,9 @@ LRESULT CConEmuMain::OnSessionChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		}
 		else if (nSessionCode == WTS_SESSION_UNLOCK)
 		{
+			#ifdef _DEBUG // due to unittests
 			_ASSERTE(!bPrevConnected && (mn_IgnoreSizeChange > 0));
+			#endif
 			if (session.bWasLocked && (mn_IgnoreSizeChange > 0))
 			{
 				session.bWasLocked = FALSE;
@@ -6071,7 +6075,9 @@ LRESULT CConEmuMain::OnCreate(HWND hWnd, LPCREATESTRUCT lpCreate)
 	mb_ShellHookRegistered = mb_ShellHookRegistered
 		|| RegisterShellHookWindow(hWnd);
 
+	#ifdef _DEBUG // due to unittests
 	_ASSERTE(ghConWnd==NULL && "ConWnd must not be created yet");
+	#endif
 	OnActiveConWndStore(NULL); // Refresh window data
 
 	// Create or update SystemMenu
@@ -7722,7 +7728,10 @@ void CConEmuMain::RefreshWindowStyles()
 void CConEmuMain::ReloadEnvironmentVariables()
 {
 	const wchar_t dbg_msg[] = L"Reloading environment variables from system registry";
-	if (!LogString(dbg_msg)) DEBUGSTRSETCHANGE(dbg_msg);
+	if (!LogString(dbg_msg))
+	{
+		DEBUGSTRSETCHANGE(dbg_msg);
+	}
 
 
 	auto new_environment = std::make_shared<SystemEnvironment>();
@@ -7736,7 +7745,10 @@ void CConEmuMain::ReloadEnvironmentVariables()
 		{
 			std::wstring dbg_log(L"  Erased: `" + old_var.second.name
 				+ L"`, old value: `" + old_var.second.data + L"`");
-			if (!LogString(dbg_log.c_str())) DEBUGSTRSETCHANGE(dbg_log.c_str());
+			if (!LogString(dbg_log.c_str()))
+			{
+				DEBUGSTRSETCHANGE(dbg_log.c_str());
+			}
 
 			SetEnvironmentVariable(old_var.second.name.c_str(), nullptr);
 		}
@@ -7753,7 +7765,10 @@ void CConEmuMain::ReloadEnvironmentVariables()
 			std::wstring dbg_log(L"  Changed: `" + new_var.second.name
 				+ L"`, new value: `" + new_var.second.data + L"`, old_value: "
 				+ old_value);
-			if (!LogString(dbg_log.c_str())) DEBUGSTRSETCHANGE(dbg_log.c_str());
+			if (!LogString(dbg_log.c_str()))
+			{
+				DEBUGSTRSETCHANGE(dbg_log.c_str());
+			}
 
 			if (new_var.second.expandable)
 			{
@@ -9125,7 +9140,9 @@ LRESULT CConEmuMain::OnLangChange(UINT messg, WPARAM wParam, LPARAM lParam)
 	if (iUnused != -1)
 	{
 		DEBUGTEST(HKL hkl = GetKeyboardLayout(0));
+		#ifdef _DEBUG // due to unittests
 		_ASSERTE((DWORD_PTR)hkl == (DWORD_PTR)lParam);
+		#endif
 		StoreLayoutName(iUnused, dwLayoutAfterChange, (HKL)(DWORD_PTR)lParam);
 	}
 
@@ -13243,7 +13260,10 @@ LRESULT CConEmuMain::WndProc(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam
 				size_t cur_len = wcslen(szDbg);
 				lstrcpyn(szDbg + cur_len, change_verb, std::size(szDbg) - cur_len);
 			}
-			if (!LogString(szDbg)) DEBUGSTRSETCHANGE(szDbg);
+			if (!LogString(szDbg))
+			{
+				DEBUGSTRSETCHANGE(szDbg);
+			}
 
 			if (wParam == SPI_SETWORKAREA)
 			{

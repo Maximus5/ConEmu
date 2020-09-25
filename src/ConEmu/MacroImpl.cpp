@@ -581,7 +581,9 @@ LPWSTR GetNextInt(LPWSTR& rsArguments, GuiMacroArg& rnValue)
 	else
 		rnValue.Int = wcstol(pszArg, &pszEnd, 10);
 
+	#ifdef _DEBUG // due to unittests
 	_ASSERTE(pszEnd == pszTestEnd);
+	#endif
 
 	if (pszEnd && *pszEnd)
 	{
@@ -658,7 +660,9 @@ LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim, bo
 					pszTemp = szTemp;
 					UnescapeChar(pszSrc, pszTemp);
 					UnescapeChar(pszSrc, pszTemp);
+					#ifdef _DEBUG // due to unittests
 					_ASSERTE((pszTemp==(szTemp+2)) && (pszSrc==(pszStart+3) || pszSrc==(pszStart+4)));
+					#endif
 					pszTemp = szTemp;
 					LPCWSTR pszReent = szTemp;
 					UnescapeChar(pszReent, pszDst);
@@ -751,18 +755,24 @@ LPWSTR GetNextString(LPWSTR& rsArguments, LPWSTR& rsString, bool bColonDelim, bo
 
 	if (*rsArguments)
 	{
+		#ifdef _DEBUG // due to unittests
 		_ASSERTE(rsArguments>=pszArgStart && rsArguments<pszArgEnd);
+		#endif
 
 		SkipWhiteSpaces(rsArguments);
 		if (*rsArguments == L',')
 			rsArguments++;
 
+		#ifdef _DEBUG // due to unittests
 		_ASSERTE(rsArguments>=pszArgStart && rsArguments<=pszArgEnd);
+		#endif
 	}
 
 wrap:
-	// Тут уже NULL-а не будет, допускаются пустые строки ("")
+	// Here nullptr is not expected, but empty string ("") is allowed
+	#ifdef _DEBUG // due to unittests
 	_ASSERTE(rsString!=NULL);
+	#endif
 	return rsString;
 }
 

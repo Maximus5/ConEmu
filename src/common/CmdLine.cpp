@@ -1011,7 +1011,9 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 	{
 		rbRootIsCmdExe = TRUE; // уже должен быть выставлен, но проверим
 		rbAlwaysConfirmExit = TRUE; rbAutoDisableConfirmExit = FALSE;
+		#ifdef _DEBUG // due to unittests
 		_ASSERTE(!bIsBatch);
+		#endif
 		lbRc = false; goto wrap; // уже указан командный процессор, cmd.exe в начало добавлять не нужно
 	}
 
@@ -1055,7 +1057,9 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 		{
 			rbAutoDisableConfirmExit = TRUE;
 			rbRootIsCmdExe = FALSE; // FAR!
+			#ifdef _DEBUG // due to unittests
 			_ASSERTE(!bIsBatch);
+			#endif
 			lbRc = false; goto wrap; // уже указан исполняемый файл, cmd.exe в начало добавлять не нужно
 		}
 	}
@@ -1063,7 +1067,9 @@ bool IsNeedCmd(bool bRootCmd, LPCWSTR asCmdLine, CEStr &szExe,
 	if (IsExecutable(szExe))
 	{
 		rbRootIsCmdExe = FALSE; // Для других программ - буфер не включаем
+		#ifdef _DEBUG // due to unittests
 		_ASSERTE(!bIsBatch);
+		#endif
 		lbRc = false; goto wrap; // Запускается конкретная консольная программа. cmd.exe не требуется
 	}
 

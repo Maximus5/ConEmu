@@ -630,7 +630,9 @@ bool CRealBuffer::LoadAlternativeConsole(LoadAltMode iMode /*= lam_Default*/)
 		wchar_t szLog[80];
 		swprintf_c(szLog, L"!!! CRealBuffer::LoadAlternativeConsole takes %u ms !!!", nDurationTick);
 		if (!mp_RCon->LogString(szLog))
+		{
 			DEBUGSTRTIMEOUTS(szLog);
+		}
 		_ASSERTE(!lbRc || (nDurationTick < 1000));
 	}
 	return lbRc;

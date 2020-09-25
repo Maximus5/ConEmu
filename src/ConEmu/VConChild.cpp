@@ -1270,7 +1270,9 @@ LRESULT CConEmuChild::OnSize(WPARAM wParam, LPARAM lParam)
 		wchar_t szInfo[128];
 		swprintf_c(szInfo, L"VCon(0x%08X).OnSize(%u,%u)", LODWORD(mh_WndDC), (UINT)LOWORD(lParam), (UINT)HIWORD(lParam));
 		if (!gpConEmu->LogString(szInfo))
+		{
 			DEBUGSTRSIZE(szInfo);
+		}
 	}
 
 	// Вроде это и не нужно. Ни для Ansi ни для Unicode версии плагина

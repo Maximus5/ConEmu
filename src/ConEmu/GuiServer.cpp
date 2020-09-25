@@ -376,7 +376,9 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 		{
 			// 0: спрятать/показать табы, 1: перейти на следующую, 2: перейти на предыдущую, 3: commit switch
 			DEBUGSTRCMD(L"GUI recieved CECMD_TABSCMD\n");
+			#ifdef _DEBUG // due to unittests
 			_ASSERTE(nDataSize>=1);
+			#endif
 			DWORD nTabCmd = pIn->Data[0];
 			gpConEmu->TabCommand((ConEmuTabCommand)nTabCmd);
 

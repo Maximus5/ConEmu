@@ -777,11 +777,15 @@ bool CTabStack::UpdateFarWindow(HANDLE hUpdate, CVirtualConsole* apVCon, LPCWSTR
 	{
 		// это новая вкладка, добавляемая в конец
 		pTab = new CTabID(apVCon, asName, anType, anPID, anFarWindowID, anViewEditID);
+		#ifdef _DEBUG // due to unittests
 		_ASSERTE(pTab->RefCount()==1);
+		#endif
 		_ASSERTE(mn_Used == i);
 
 		i = AppendInt(pTab, FALSE/*abMoveFirst*/, pUpdateLock);
+		#ifdef _DEBUG // due to unittests
 		_ASSERTE(pTab->RefCount()==2);
+		#endif
 		if (anType & fwt_CurrentFarWnd)
 			rActiveTab.Init(pTab);
 		pTab->Release();
@@ -1318,7 +1322,9 @@ bool CTabStack::RefreshFarStatus(DWORD nFarPID, CTab& rActiveTab, int& rnActiveI
 		}
 	}
 
+	#ifdef _DEBUG // due to unittests
 	_ASSERTE(iPanelsCount==1);
+	#endif
 
 	// Во время закрытия фара могут быть пертурбации
 	if (iActive < 0)

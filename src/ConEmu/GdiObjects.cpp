@@ -58,7 +58,9 @@ void HandleMonitor::DoCheck()
 	{
 		swprintf_c(szInfo, L"GDIObjects increase: %u >> %u", m_GDIObjects, GdiObjCount);
 		if (!gpConEmu->LogString(szInfo))
+		{
 			DEBUGSTRCOUNT(szInfo);
+		}
 		m_GDIObjects = GdiObjCount;
 	}
 
@@ -68,7 +70,9 @@ void HandleMonitor::DoCheck()
 	{
 		swprintf_c(szInfo, L"UserObjects increase: %u >> %u", m_UserObjects, UserObjCount);
 		if (!gpConEmu->LogString(szInfo))
+		{
 			DEBUGSTRCOUNT(szInfo);
+		}
 		m_UserObjects = UserObjCount;
 	}
 }

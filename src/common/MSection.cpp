@@ -451,7 +451,9 @@ BOOL MSection::Lock(BOOL abExclusive, DWORD anTimeout/*=-1*/)
 		}
 
 		// 120710 - добавил "|| (mn_TID==dwTID)". Это в том случае, если предыдущая ExclusiveThread была прибита.
+		#ifdef _DEBUG // due to unittests
 		_ASSERTEX(!(lbPrev && mb_Exclusive) || (mn_TID==dwTID)); // После LeaveCriticalSection mb_Exclusive УЖЕ должен быть сброшен
+		#endif
 		mn_TID = dwTID; // И запомним, в какой нити это произошло
 
 		HANDLE h = mh_ExclusiveThread;
