@@ -17,3 +17,15 @@ goto :EOF
 curl -k -L --user api:%TX_TOKEN% -X GET https://www.transifex.com/api/2/project/conemu-sources/resource/conemu-en-yaml--daily/translation/%1/?file=YAML_GENERIC -o %2
 goto :EOF
 ```
+
+## Upload english resources (yaml)
+
+Refresh yaml files
+```
+Deploy\l10n_write_yaml.cmd
+```
+
+Upload `ConEmu_en.yaml` to transifex if it was not done automatically.
+
+Use the button "Update source file" on the right-top of the page:
+https://www.transifex.com/conemu/conemu-sources/conemu-en-yaml--daily/
