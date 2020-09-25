@@ -34,11 +34,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "HotkeyChord.h"
 #include "SetPgBase.h"
 
-#undef gsNoHotkey
-#define gsNoHotkey L"<None>"
+#include "LngRc.h"
 
 TEST(Hotkeys,Tests)
 {
+	if (!gpLng)
+	{
+		CLngRc::Initialize();
+	}
+	// Should be initialized now
+	EXPECT_STREQ(L"<None>", gsNoHotkey);
+	
 	// Key names order:
 	//    Win, Apps, Ctrl, Alt, Shift
 	// Modifiers:
@@ -50,7 +56,7 @@ TEST(Hotkeys,Tests)
 		BYTE Mod[3];
 		ConEmuModifiers ModTest;
 		LPCWSTR KeyName;
-	} Tests[] = {
+	} tests[] = {
 			{VK_OEM_5/*'|\'*/, {VK_LCONTROL, VK_RCONTROL}, cvk_Ctrl|cvk_LCtrl|cvk_RCtrl, L"LCtrl+RCtrl+\\"},
 			{VK_SPACE, {VK_CONTROL, VK_LWIN, VK_MENU}, cvk_Ctrl|cvk_Alt|cvk_Win, L"Win+Ctrl+Alt+Space"},
 			{'W', {VK_LWIN, VK_SHIFT}, cvk_Win|cvk_Shift, L"Win+Shift+W"},
@@ -63,11 +69,11 @@ TEST(Hotkeys,Tests)
 	ConEmuChord HK = {};
 	wchar_t szFull[128];
 
-	for (size_t i = 0; i < countof(Tests); i++)
+	for (auto& test : tests)
 	{
-		HK.SetHotKey(HkType, Tests[i].Vk, Tests[i].Mod[0], Tests[i].Mod[1], Tests[i].Mod[2]);
-		EXPECT_EQ(HK.Mod, Tests[i].ModTest);
-		EXPECT_STREQ(ConEmuChord::GetHotkeyName(szFull, HK.GetVkMod(HkType), HkType, true), Tests[i].KeyName);
+		HK.SetHotKey(HkType, test.Vk, test.Mod[0], test.Mod[1], test.Mod[2]);
+		EXPECT_EQ(HK.Mod, test.ModTest);
+		EXPECT_STREQ(ConEmuChord::GetHotkeyName(szFull, HK.GetVkMod(HkType), HkType, true), test.KeyName);
 	}
 }
 
