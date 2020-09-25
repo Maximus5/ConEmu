@@ -57,7 +57,6 @@ static LngPredefined gsDataRsrcs[] = {
 	{ lng_ExitCode,                 L"exit code" },
 	{ lng_HkGlblGnrlMsg,            L"You can't choose distinctive (R/L) modifier for Global hotkeys due to WinAPI limitation" },
 	{ lng_HotkeyDuplicated,         L"Hotkey <%s> is not unique" },
-	{ lng_HotkeyUnset,              L"<unset>" },
 	{ lng_HotkeysAll,               L"All hotkeys" },
 	{ lng_HotkeysFilter,            L"Filter hotkeys (Alt+F)" },
 	{ lng_HotkeysMacro,             L"Macros" },

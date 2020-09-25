@@ -516,7 +516,7 @@ void CSetPgBase::setCtrlTitleByHotkey(HWND hDlg, const WORD nCtrlId, const int i
 	if (szKeyFull[0] == 0)
 	{
 		_ASSERTE(FALSE && "Failed to acquire HotKey");
-		wcscpy_c(szKeyFull, CLngRc::getRsrc(lng_HotkeyUnset/*"<unset>"*/));
+		wcscpy_c(szKeyFull, CLngRc::getRsrc(lng_KeyNone/*"<None>"*/));
 
 		EnableWindow(GetDlgItem(hDlg, nCtrlId), FALSE);
 	}
@@ -545,7 +545,7 @@ void CSetPgBase::ApplyHotkeyGroupName(wchar_t(& szFull)[128], LPCWSTR pszGroup)
 {
 	if (szFull[0] == L'\0')
 	{
-		wcscpy_c(szFull, CLngRc::getRsrc(lng_HotkeyUnset/*"<unset>"*/));
+		wcscpy_c(szFull, CLngRc::getRsrc(lng_KeyNone/*"<None>"*/));
 		return;
 	}
 

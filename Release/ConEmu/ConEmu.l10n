@@ -5771,10 +5771,6 @@
       "pl": "Zdefiniowane przez użytkownika",
       "id": 59 }
     ,
-    "lng_HotkeyUnset": {
-      "en": "<unset>",
-      "id": 88 }
-    ,
     "lng_JumpListUpdated": {
       "en": "Taskbar jump list was updated successfully",
       "ru": "Списки переходов панели задач обновлены успешно",

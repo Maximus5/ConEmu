@@ -118,7 +118,6 @@ enum LngResources
 	lng_DlgCreateNewConsole       = 85,
 	lng_HkGlblGnrlMsg             = 86,
 	lng_SpgGeneral                = 87,
-	lng_HotkeyUnset               = 88,
 	lng_SetPgInfoNone             = 89,
 	lng_MenuTerminateCon          = 90,
 	lng_MenuTerminatePrc          = 91,

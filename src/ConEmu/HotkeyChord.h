@@ -31,8 +31,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/Common.h"
 
-// Strings
-#define gsNoHotkey L"<None>"
+// #include "LngRc.h"
+#define gsNoHotkey CLngRc::getRsrc(lng_KeyNone/*"<None>"*/)
 
 #define CEHOTKEY_MODMASK    0xFFFFFF00
 #define CEHOTKEY_NUMHOSTKEY 0xFFFFFF00
