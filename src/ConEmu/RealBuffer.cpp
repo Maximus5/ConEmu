@@ -40,9 +40,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <Tlhelp32.h>
 
 #include "../common/ConEmuCheck.h"
-#include "../common/ConsoleMixAttr.h"
 #include "../common/EnvVar.h"
-#include "../common/Execute.h"
 #include "../common/MGlobal.h"
 #include "../common/MSetter.h"
 #include "../common/RgnDetect.h"
@@ -52,11 +50,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WFiles.h"
 #include "ConEmu.h"
 #include "ConEmuApp.h"
-#include "ConEmuPipe.h"
 #include "FindDlg.h"
-#include "HooksUnlocker.h"
 #include "HtmlCopy.h"
-#include "Macro.h"
 #include "Match.h"
 #include "Menu.h"
 #include "MyClipboard.h"
@@ -126,7 +121,7 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType /*= rbt_Prim
 
 	ZeroStruct(con);
 	con.TopLeft.Reset();
-	mp_Match = NULL;
+	mp_Match = nullptr;
 
 	mb_BuferModeChangeLocked = FALSE;
 	mcr_LastMousePos = MakeCoord(-1,-1);
@@ -138,10 +133,10 @@ CRealBuffer::CRealBuffer(CRealConsole* apRCon, RealBufferType aType /*= rbt_Prim
 	ZeroStruct(dump);
 
 	m_TrueMode.pcsLock = new MSectionSimple(true);
-	m_TrueMode.mp_Cmp = NULL;
+	m_TrueMode.mp_Cmp = nullptr;
 	m_TrueMode.nCmpMax = 0;
 
-	mpp_RunHyperlink = NULL;
+	mpp_RunHyperlink = nullptr;
 }
 
 CRealBuffer::~CRealBuffer()
@@ -184,8 +179,8 @@ void CRealBuffer::DumpConsole(HANDLE ahFile)
 	{
 		MSectionLock sc; sc.Lock(&csCON, FALSE);
 		DWORD cchMax = std::min((DWORD)(con.nTextWidth * con.nTextHeight), LODWORD(data->nMaxCells));
-		lbRc = WriteFile(ahFile, data->pConChar, cchMax*sizeof(*data->pConChar), &dw, NULL);
-		lbRc &= WriteFile(ahFile, data->pConAttr, cchMax*sizeof(*data->pConAttr), &dw, NULL);
+		lbRc = WriteFile(ahFile, data->pConChar, cchMax*sizeof(*data->pConChar), &dw, nullptr);
+		lbRc &= WriteFile(ahFile, data->pConAttr, cchMax*sizeof(*data->pConAttr), &dw, nullptr);
 	}
 
 	UNREFERENCED_PARAMETER(lbRc);
@@ -195,7 +190,7 @@ void CRealBuffer::DumpConsole(HANDLE ahFile)
 bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 {
 	bool lbRc = false;
-	HANDLE hFile = NULL;
+	HANDLE hFile = nullptr;
 	LARGE_INTEGER liSize;
 	COORD cr = {};
 	wchar_t* pszDumpTitle, *pszRN, *pszSize;
@@ -210,11 +205,11 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 
 	if (!asDumpFile || !*asDumpFile)
 	{
-		_ASSERTE(asDumpFile!=NULL && *asDumpFile);
+		_ASSERTE(asDumpFile!=nullptr && *asDumpFile);
 		goto wrap;
 	}
 
-	hFile = CreateFile(asDumpFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+	hFile = CreateFile(asDumpFile, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 	if (!hFile || hFile == INVALID_HANDLE_VALUE)
 	{
 		DisplayLastError(L"Can't open dump file for reading");
@@ -229,17 +224,17 @@ bool CRealBuffer::LoadDumpConsole(LPCWSTR asDumpFile)
 	dump.ptrData = (LPBYTE)malloc(liSize.LowPart);
 	if (!dump.ptrData)
 	{
-		_ASSERTE(dump.ptrData!=NULL);
+		_ASSERTE(dump.ptrData!=nullptr);
 		goto wrap;
 	}
 	dump.cbDataSize = liSize.LowPart;
 
-	if (!ReadFile(hFile, dump.ptrData, liSize.LowPart, (LPDWORD)&liSize.HighPart, NULL) || (liSize.LowPart != (DWORD)liSize.HighPart))
+	if (!ReadFile(hFile, dump.ptrData, liSize.LowPart, (LPDWORD)&liSize.HighPart, nullptr) || (liSize.LowPart != (DWORD)liSize.HighPart))
 	{
 		DisplayLastError(L"Dump file reading failed");
 		goto wrap;
 	}
-	CloseHandle(hFile); hFile = NULL;
+	CloseHandle(hFile); hFile = nullptr;
 
 	// Поехали
 	pszDumpTitle = (wchar_t*)dump.ptrData;
@@ -434,7 +429,7 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 	dump.ptrData = (LPBYTE)malloc(liSize.LowPart);
 	if (!dump.ptrData)
 	{
-		_ASSERTE(dump.ptrData!=NULL);
+		_ASSERTE(dump.ptrData!=nullptr);
 		goto wrap;
 	}
 	dump.cbDataSize = liSize.LowPart;
@@ -469,7 +464,7 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 
 	TOPLEFTCOORD NewTopLeft; NewTopLeft.Reset();
 	if (mp_RCon->mp_ABuf && (mp_RCon->mp_ABuf != this))
-		mp_RCon->mp_ABuf->ConsoleScreenBufferInfo(NULL, NULL, &NewTopLeft);
+		mp_RCon->mp_ABuf->ConsoleScreenBufferInfo(nullptr, nullptr, &NewTopLeft);
 	Assert(m_Type != rbt_Primary); // Dumps must NOT be loaded into Primary buffer
 	SetTopLeft(NewTopLeft.y, NewTopLeft.x, false);
 
@@ -504,8 +499,8 @@ bool CRealBuffer::LoadDataFromDump(const CONSOLE_SCREEN_BUFFER_INFO& storedSbi, 
 		wchar_t*  pszDst = dump.pszBlock1;
 		wchar_t   ch;
 
-		CharAttr *lcaTableOrg = NULL;
-		PrepareColorTable(NULL, NULL, &lcaTableOrg);
+		CharAttr *lcaTableOrg = nullptr;
+		PrepareColorTable(nullptr, nullptr, &lcaTableOrg);
 
 		DWORD nMax = std::min(cchCellCount,cchMaxCellCount);
 		// Расфуговка буфера на консольные атрибуты
@@ -669,7 +664,7 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	DWORD nInSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_SETSIZE);
 	DWORD nOutSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_RETSIZE);
 	CESERVER_REQ* pIn = ExecuteNewCmd(anCmdID, nInSize);
-	CESERVER_REQ* pOut = NULL; //ExecuteNewCmd(anCmdID, nOutSize);
+	CESERVER_REQ* pOut = nullptr; //ExecuteNewCmd(anCmdID, nOutSize);
 	SMALL_RECT rect = {0};
 	//bool bLargestReached = false;
 	bool bSecondTry = false;
@@ -796,9 +791,9 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 		&& (anCmdID == CECMD_SETSIZESYNC)
 		&& (mp_RCon->mn_MonitorThreadID != GetCurrentThreadId());
 
-	_ASSERTE(pOut==NULL);
+	_ASSERTE(pOut==nullptr);
 	pOut = ExecuteCmd(mp_RCon->ms_ConEmuC_Pipe, pIn, nCallTimeout, ghWnd);
-	fSuccess = (pOut != NULL);
+	fSuccess = (pOut != nullptr);
 
 	if (mp_RCon->isServerClosing())
 		goto wrap;
@@ -807,7 +802,7 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 	{
 		int nSetWidth = sizeX, nSetHeight = sizeY;
 		int nSetWidth2 = -1, nSetHeight2 = -1;
-		if (GetConWindowSize(pOut->SetSizeRet.SetSizeRet, &nSetWidth, &nSetHeight, NULL))
+		if (GetConWindowSize(pOut->SetSizeRet.SetSizeRet, &nSetWidth, &nSetHeight, nullptr))
 		{
 			// If change-size (enlarging) was failed
 			if ((sizeX > (UINT)nSetWidth) || (sizeY > (UINT)nSetHeight))
@@ -828,12 +823,12 @@ bool CRealBuffer::SetConsoleSizeSrv(USHORT sizeX, USHORT sizeY, USHORT sizeBuffe
 				if (bSecondTry)
 				{
 					CESERVER_REQ* pOut2 = ExecuteCmd(mp_RCon->ms_ConEmuC_Pipe, pIn, nCallTimeout, ghWnd);
-					fSuccess = (pOut2 != NULL);
+					fSuccess = (pOut2 != nullptr);
 					if (pOut2)
 					{
 						ExecuteFreeResult(pOut);
 						pOut = pOut2;
-						if (GetConWindowSize(pOut->SetSizeRet.SetSizeRet, &nSetWidth2, &nSetHeight2, NULL))
+						if (GetConWindowSize(pOut->SetSizeRet.SetSizeRet, &nSetWidth2, &nSetHeight2, nullptr))
 						{
 							nSetWidth = nSetWidth2; nSetHeight = nSetHeight2;
 						}
@@ -1084,7 +1079,7 @@ bool CRealBuffer::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DW
 	}
 
 	// Если была блокировка DC - сбросим ее
-	mp_RCon->mp_VCon->LockDcRect(FALSE, NULL);
+	mp_RCon->mp_VCon->LockDcRect(FALSE, nullptr);
 
 	if (m_Type != rbt_Primary)
 	{
@@ -1097,7 +1092,7 @@ bool CRealBuffer::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DW
 
 		if (mp_RCon->isActive(false))
 		{
-			gpConEmu->mp_Status->OnConsoleChanged(&con.m_sbi, &con.m_ci, NULL, true);
+			gpConEmu->mp_Status->OnConsoleChanged(&con.m_sbi, &con.m_ci, nullptr, true);
 		}
 
 		return TRUE;
@@ -1114,7 +1109,7 @@ bool CRealBuffer::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DW
 		// Это должно быть только на этапе создания новой консоли (например, появилась панель табов)
 		if (con.nTextWidth != sizeX || con.nTextHeight != sizeY)
 		{
-			_ASSERTE(mp_RCon->hConWnd==NULL || mp_RCon->mb_InCloseConsole);
+			_ASSERTE(mp_RCon->hConWnd==nullptr || mp_RCon->mb_InCloseConsole);
 			con.nTextWidth = sizeX;
 			con.nTextHeight = sizeY;
 			InitBuffers(sizeX*sizeY, sizeX, sizeY);
@@ -1202,7 +1197,7 @@ bool CRealBuffer::SetConsoleSize(SHORT sizeX, SHORT sizeY, USHORT sizeBuffer, DW
 	HEAPVAL;
 	}
 
-	mp_RCon->SetConStatus(NULL);
+	mp_RCon->SetConStatus(nullptr);
 
 	goto wrap;
 #if 0
@@ -1484,7 +1479,7 @@ bool CRealBuffer::InitBuffers(CRConDataGuard* pData)
 	return InitBuffers(0/*anCellCount*/, 0/*anWidth*/, 0/*anHeight*/, pData);
 }
 
-bool CRealBuffer::InitBuffers(DWORD anCellCount /*= 0*/, int anWidth /*= 0*/, int anHeight /*= 0*/, CRConDataGuard* pData /*= NULL*/)
+bool CRealBuffer::InitBuffers(DWORD anCellCount /*= 0*/, int anWidth /*= 0*/, int anHeight /*= 0*/, CRConDataGuard* pData /*= nullptr*/)
 {
 	bool lbRc = false;
 	int nNewWidth = 0, nNewHeight = 0;
@@ -1497,7 +1492,7 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount /*= 0*/, int anWidth /*= 0*/, in
 	#ifdef _DEBUG
 	DWORD dwCurThId = GetCurrentThreadId();
 	_ASSERTE((mp_RCon->mn_MonitorThreadID==0 || dwCurThId==mp_RCon->mn_MonitorThreadID
-				|| (mp_RCon->m_StartState <= rss_StartingServer) || mp_RCon->hConWnd==NULL)
+				|| (mp_RCon->m_StartState <= rss_StartingServer) || mp_RCon->hConWnd==nullptr)
 		|| ((m_Type==rbt_DumpScreen || m_Type==rbt_Alternative || m_Type==rbt_Selection || m_Type==rbt_Find)
 				&& isMainThread()));
 	#endif
@@ -1510,7 +1505,7 @@ bool CRealBuffer::InitBuffers(DWORD anCellCount /*= 0*/, int anWidth /*= 0*/, in
 	}
 	else
 	{
-		if (!GetConWindowSize(con.m_sbi, &nNewWidth, &nNewHeight, NULL))
+		if (!GetConWindowSize(con.m_sbi, &nNewWidth, &nNewHeight, nullptr))
 		{
 			if (pData)
 				pData->Release();
@@ -1728,7 +1723,7 @@ int CRealBuffer::TextWidth() const
 {
 	if (!this)
 	{
-		_ASSERTE(this!=NULL);
+		_ASSERTE(this!=nullptr);
 		return MIN_CON_WIDTH;
 	}
 
@@ -1743,7 +1738,7 @@ int CRealBuffer::GetTextWidth() const
 {
 	if (!this)
 	{
-		_ASSERTE(this!=NULL);
+		_ASSERTE(this!=nullptr);
 		return MIN_CON_WIDTH;
 	}
 
@@ -1755,7 +1750,7 @@ int CRealBuffer::TextHeight() const
 {
 	if (!this)
 	{
-		_ASSERTE(this!=NULL);
+		_ASSERTE(this!=nullptr);
 		return MIN_CON_HEIGHT;
 	}
 
@@ -1780,7 +1775,7 @@ int CRealBuffer::GetTextHeight() const
 {
 	if (!this)
 	{
-		_ASSERTE(this!=NULL);
+		_ASSERTE(this!=nullptr);
 		return MIN_CON_HEIGHT;
 	}
 
@@ -2357,7 +2352,7 @@ bool CRealBuffer::ApplyConsoleInfo()
 	bool bSetApplyFinished = !con.bLockChange2Text;
 	mp_RCon->mh_ApplyFinished.Reset();
 
-	const CESERVER_REQ* pInfo = NULL;
+	const CESERVER_REQ* pInfo = nullptr;
 	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_CONSOLEDATA, sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_CONINFO));
 
 	// Request exact TopLeft position if it is locked in GUI
@@ -2446,7 +2441,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 		if (!hWnd || (hWnd != mp_RCon->hConWnd))
 		{
 			// Wine bug ? Incomplete packet?
-			_ASSERTE(hWnd!=NULL);
+			_ASSERTE(hWnd!=nullptr);
 			_ASSERTE(hWnd==mp_RCon->hConWnd);
 		}
 		#endif
@@ -2657,7 +2652,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 
 			DWORD CharCount = nNewWidth * nNewHeight;
 			DWORD nCalcCount = 0;
-			CHAR_INFO *pData = NULL;
+			CHAR_INFO *pData = nullptr;
 
 			// Если вместе с заголовком пришли измененные данные
 			if (pInfo->ConState.nDataCount)
@@ -2729,7 +2724,7 @@ void CRealBuffer::ApplyConsoleInfo(const CESERVER_REQ* pInfo, bool& bSetApplyFin
 
 			if (mp_RCon->m_ConStatus.Options & CRealConsole::cso_ResetOnConsoleReady)
 			{
-				mp_RCon->SetConStatus(NULL);
+				mp_RCon->SetConStatus(nullptr);
 				//_ASSERTE(mp_RCon->m_ConStatus.Options==0);
 			}
 		}
@@ -3017,7 +3012,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 		{
 			if (rc & etr_Url)
 			{
-				INT_PTR iRc = (INT_PTR)ShellExecute(ghWnd, L"open", szText, NULL, NULL, SW_SHOWNORMAL);
+				INT_PTR iRc = (INT_PTR)ShellExecute(ghWnd, L"open", szText, nullptr, nullptr, SW_SHOWNORMAL);
 				if (iRc <= 32)
 				{
 					DisplayLastError(szText, iRc, MB_ICONSTOP, L"URL open failed");
@@ -3059,7 +3054,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 						cmd.nColon = 1;
 					if (rc & etr_Row)
 						pszText[nLen-1] = 0;
-					while ((pszEnd = wcschr(pszText, L'/')) != NULL)
+					while ((pszEnd = wcschr(pszText, L'/')) != nullptr)
 						*pszEnd = L'\\'; // заменить прямые слеши на обратные
 
 					CEStr szWinPath;
@@ -3072,7 +3067,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 						if (!FileExists(cmd.szFile))
 						{
 							// Not found
-							pszWinPath = NULL;
+							pszWinPath = nullptr;
 						}
 					}
 					// Not found?
@@ -3109,7 +3104,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 							if (cmd.nLine > 0)
 							{
 								wchar_t szMacro[96];
-								_ASSERTE(VCon.VCon()!=NULL);
+								_ASSERTE(VCon.VCon()!=nullptr);
 								CRealConsole* pRCon = VCon->RCon();
 
 								if (pRCon->m_FarInfo.FarVer.dwVerMajor == 1)
@@ -3141,7 +3136,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 							CVConGuard VCon;
 							if (!pszWinPath || !*pszWinPath)
 							{
-								//_ASSERTE(pszWinPath!=NULL); // must not be here!
+								//_ASSERTE(pszWinPath!=nullptr); // must not be here!
 								//pszWinPath = cmd.szFile; -- file not found, do not open absent files!
 								CEStr szDir;
 								wchar_t* pszErrMsg = lstrmerge(L"File '", cmd.szFile, L"' not found!\nDirectory: ", mp_RCon->GetConsoleCurDir(szDir, false));
@@ -3151,7 +3146,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 									free(pszErrMsg);
 								}
 							}
-							else if (bUseExtEditor || !CVConGroup::isFarExist(fwt_NonModal|fwt_PluginRequired, NULL, &VCon))
+							else if (bUseExtEditor || !CVConGroup::isFarExist(fwt_NonModal|fwt_PluginRequired, nullptr, &VCon))
 							{
 								if (gpSet->sFarGotoEditor && *gpSet->sFarGotoEditor)
 								{
@@ -3181,16 +3176,16 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 										}
 										else
 										{
-											args.pszSpecialCmd = pszCmd; pszCmd = NULL;
+											args.pszSpecialCmd = pszCmd; pszCmd = nullptr;
 										}
 
 										WARNING("Здесь нужно бы попытаться взять текущую директорию из шелла. Точнее, из консоли НА МОМЕНТ выдачи этой строки.");
-										args.pszStartupDir = mp_RCon->m_Args.pszStartupDir ? lstrdup(mp_RCon->m_Args.pszStartupDir) : NULL;
+										args.pszStartupDir = mp_RCon->m_Args.pszStartupDir ? lstrdup(mp_RCon->m_Args.pszStartupDir) : nullptr;
 										args.RunAsAdministrator = mp_RCon->m_Args.RunAsAdministrator;
 										args.ForceUserDialog = (
 												(mp_RCon->m_Args.ForceUserDialog == crb_On)
 												|| (mp_RCon->m_Args.RunAsRestricted == crb_On)
-												|| (mp_RCon->m_Args.pszUserName != NULL))
+												|| (mp_RCon->m_Args.pszUserName != nullptr))
 											? crb_On : crb_Off;
 										args.BufHeight = crb_On;
 										//args.eConfirmation = RConStartArgsEx::eConfNever;
@@ -3201,7 +3196,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 											LPCWSTR pszTemp = args.pszSpecialCmd;
 											CmdArg szExe;
 											CEnvRestorer szPrevPath;
-											wchar_t* pszPrevPath = NULL;
+											wchar_t* pszPrevPath = nullptr;
 											if ((pszTemp = NextArg(pszTemp, szExe)))
 											{
 												if (SearchAppPaths((LPCWSTR)szExe, szExe, true, &szPrevPath))
@@ -3223,7 +3218,7 @@ bool CRealBuffer::ProcessFarHyperlink(UINT messg, COORD crFrom, bool bUpdateScre
 
 											if (CRealConsole::CreateOrRunAs(mp_RCon, args, args.pszSpecialCmd, pszDir, si, pi, mpp_RunHyperlink, dwLastError, true))
 											{
-												HANDLE hProcess = NULL;
+												HANDLE hProcess = nullptr;
 												if (mpp_RunHyperlink)
 												{
 													hProcess = mpp_RunHyperlink->hProcess;
@@ -3398,7 +3393,7 @@ void CRealBuffer::OnTimerCheckSelection()
 		return;
 
 	POINT ptCur = {}; GetCursorPos(&ptCur);
-	MapWindowPoints(NULL, mp_RCon->VCon()->GetView(), &ptCur, 1);
+	MapWindowPoints(nullptr, mp_RCon->VCon()->GetView(), &ptCur, 1);
 	int nVConHeight = mp_RCon->VCon()->GetVConHeight();
 
 	if ((ptCur.y < SELMOUSEAUTOSCROLLPIX) || (ptCur.y > (nVConHeight-SELMOUSEAUTOSCROLLPIX)))
@@ -3728,7 +3723,7 @@ bool CRealBuffer::OnMouse(UINT messg, WPARAM wParam, int x, int y, COORD crMouse
 		if (messg == WM_RBUTTONDOWN)
 		{
 			MSectionLock csData;
-			const wchar_t* pChar = NULL;
+			const wchar_t* pChar = nullptr;
 			int nLen = 0;
 			COORD lcrScr = BufferToScreen(crMouse);
 			CRConDataGuard data;
@@ -3945,7 +3940,7 @@ bool CRealBuffer::OnMouseSelection(UINT messg, WPARAM wParam, int x, int y)
 		#endif
 
 		// Если дошли сюда - значит или модификатор нажат, или из меню выделение запустили
-		StartSelection(lbStreamSelection, cr.X, cr.Y, TRUE, bTripleClick ? WM_LBUTTONDBLCLK : WM_LBUTTONDOWN, bTripleClick ? &crTo : NULL);
+		StartSelection(lbStreamSelection, cr.X, cr.Y, TRUE, bTripleClick ? WM_LBUTTONDBLCLK : WM_LBUTTONDOWN, bTripleClick ? &crTo : nullptr);
 
 		//WARNING!!! После StartSelection - ничего не делать! Мог смениться буфер!
 
@@ -4097,12 +4092,12 @@ void CRealBuffer::DoCopyPaste(bool abCopy, bool abPaste)
 	const bool bDoCopyWin = abCopy && !abPaste;
 	bool bDoPaste = abPaste;
 	const bool bClipOpen = bDoCopyWin ? MyOpenClipboard(L"Copy&Paste") : false;
-	HGLOBAL hUnicode = NULL;
-	bool bCopyOk = DoSelectionFinalize(abCopy, bDoCopyWin ? cm_CopySel : cm_CopyInt, 0, abPaste ? &hUnicode : NULL);
+	HGLOBAL hUnicode = nullptr;
+	bool bCopyOk = DoSelectionFinalize(abCopy, bDoCopyWin ? cm_CopySel : cm_CopyInt, 0, abPaste ? &hUnicode : nullptr);
 
 	if (bCopyOk && bDoPaste)
 	{
-		LPCWSTR pszText = NULL;
+		LPCWSTR pszText = nullptr;
 		if (hUnicode)
 		{
 			pszText = (LPCWSTR)GlobalLock(hUnicode);
@@ -4137,8 +4132,8 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 {
 	bool bFound = false;
 	COORD crStart = {}, crEnd = {};
-	LPCWSTR pszFrom = NULL, pszDataStart = NULL, pszEnd = NULL;
-	LPCWSTR pszFrom1 = NULL, pszEnd1 = NULL;
+	LPCWSTR pszFrom = nullptr, pszDataStart = nullptr, pszEnd = nullptr;
+	LPCWSTR pszFrom1 = nullptr, pszEnd1 = nullptr;
 	size_t nWidth = 0, nHeight = 0;
 	CRConDataGuard data;
 
@@ -4176,7 +4171,7 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 	{
 		int nFindLen = lstrlen(asText);
 		const wchar_t* szWordDelim = L"~!%^&*()+|{}:\"<>?`-=\\[];',./";
-		LPCWSTR pszFound = NULL;
+		LPCWSTR pszFound = nullptr;
 		int nStepMax = 0;
 		INT_PTR nFrom = -1;
 
@@ -4221,7 +4216,7 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 				{
 					if (abWholeWords)
 					{
-						#define isWordDelim(ch) (!ch || (wcschr(szWordDelim,ch)!=NULL) || (ch>=0x2100 && ch<0x2800) || (ch<=32))
+						#define isWordDelim(ch) (!ch || (wcschr(szWordDelim,ch)!=nullptr) || (ch>=0x2100 && ch<0x2800) || (ch<=32))
 						if (pszFrom > pszDataStart)
 						{
 							if (!isWordDelim(*(pszFrom-1)))
@@ -4248,7 +4243,7 @@ void CRealBuffer::MarkFindText(int nDirection, LPCWSTR asText, bool abCaseSensit
 						}
 						else
 						{
-							pszFrom = NULL;
+							pszFrom = nullptr;
 						}
 					}
 					bFound = true;
@@ -4358,7 +4353,7 @@ done:
 	UpdateSelection();
 }
 
-void CRealBuffer::StartSelection(bool abTextMode, SHORT anX /*= -1*/, SHORT anY /*= -1*/, bool abByMouse /*= false*/, UINT anFromMsg /*= 0*/, COORD *pcrTo /*= NULL*/, DWORD anAnchorFlag /*= 0*/)
+void CRealBuffer::StartSelection(bool abTextMode, SHORT anX /*= -1*/, SHORT anY /*= -1*/, bool abByMouse /*= false*/, UINT anFromMsg /*= 0*/, COORD *pcrTo /*= nullptr*/, DWORD anAnchorFlag /*= 0*/)
 {
 	_ASSERTE(anY==-1 || anY>=GetBufferPosY());
 	_ASSERTE(anAnchorFlag==0 || anAnchorFlag==CONSOLE_LEFT_ANCHOR || anAnchorFlag==CONSOLE_RIGHT_ANCHOR);
@@ -4384,7 +4379,7 @@ void CRealBuffer::StartSelection(bool abTextMode, SHORT anX /*= -1*/, SHORT anY 
 				_ASSERTE(mp_RCon->mp_ABuf->m_Type==rbt_Alternative);
 				mp_RCon->mp_ABuf->m_Type = rbt_Selection; // Изменить, чтобы по завершении выделения - буфер закрыть
 
-				mp_RCon->mp_ABuf->StartSelection(abTextMode, anX, anY, abByMouse, anFromMsg, NULL, anAnchorFlag);
+				mp_RCon->mp_ABuf->StartSelection(abTextMode, anX, anY, abByMouse, anFromMsg, nullptr, anAnchorFlag);
 				return;
 			}
 		}
@@ -4583,7 +4578,7 @@ void CRealBuffer::ChangeSelectionByKey(UINT vkKey, bool bCtrl, bool bShift)
 	{
 		//TODO: Extend to text line ending first
 		SHORT X = (GetBufferWidth() - 1);
-		const wchar_t* pszLine = NULL; int nLineLen = 0;
+		const wchar_t* pszLine = nullptr; int nLineLen = 0;
 		COORD lcrScr = BufferToScreen(cr);
 		// Find last non-spacing character
 		MSectionLock csData; csData.Lock(&csCON);
@@ -4792,7 +4787,7 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 		con.m_sel.srSelection.Bottom = cr.Y;
 	}
 
-	bool bChanged = (memcmp(&cur_sel, &con.m_sel, sizeof(cur_sel)) != 0);
+	const bool bChanged = (memcmp(&cur_sel, &con.m_sel, sizeof(cur_sel)) != 0);
 
 	if (!bWasSelection || bChanged)
 	{
@@ -4802,7 +4797,7 @@ void CRealBuffer::ExpandSelection(SHORT anX, SHORT anY, bool bWasSelection)
 
 void CRealBuffer::DoSelectionStop()
 {
-	BYTE vkMod = HIBYTE(HIWORD(con.m_sel.dwFlags));
+	const BYTE vkMod = HIBYTE(HIWORD(con.m_sel.dwFlags));
 
 	if (vkMod)
 	{
@@ -4821,7 +4816,7 @@ void CRealBuffer::DoSelectionStop()
 	con.m_sel.dwFlags = 0;
 }
 
-bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFormat /*= CTSFormatDefault*/ /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile /*= NULL*/, HGLOBAL* phUnicode /*= NULL*/)
+bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFormat /*= CTSFormatDefault*/ /* use gpSet->isCTSHtmlFormat */, LPCWSTR pszDstFile /*= nullptr*/, HGLOBAL* phUnicode /*= nullptr*/)
 {
 	bool bRc = false;
 
@@ -4839,17 +4834,17 @@ bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFo
 	}
 	else
 	{
-		bool  lbStreamMode = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
+		const bool lbStreamMode = (con.m_sel.dwFlags & CONSOLE_TEXT_SELECTION) == CONSOLE_TEXT_SELECTION;
 		bool  lbProcessed = false;
 
 		// Сначала проверим, помещается ли "выделенная область" в "ВИДИМУЮ область"
 		if (m_Type == rbt_Primary)
 		{
-			COORD crStart = BufferToScreen(MakeCoord(con.m_sel.srSelection.Left, con.m_sel.srSelection.Top), false);
-			COORD crEnd = BufferToScreen(MakeCoord(con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom), false);
+			const COORD crStart = BufferToScreen(MakeCoord(con.m_sel.srSelection.Left, con.m_sel.srSelection.Top), false);
+			const COORD crEnd = BufferToScreen(MakeCoord(con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom), false);
 
-			int nTextWidth = this->GetTextWidth();
-			int nTextHeight = this->GetTextHeight();
+			const int nTextWidth = this->GetTextWidth();
+			const int nTextHeight = this->GetTextHeight();
 
 			if ((crStart.X < 0) || (crStart.X >= nTextWidth)
 				|| (crStart.Y < 0) || (crStart.Y >= nTextHeight)
@@ -4905,9 +4900,9 @@ bool CRealBuffer::DoSelectionCopy(CECopyMode CopyMode /*= cm_CopySel*/, BYTE nFo
 
 int CRealBuffer::GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, int* pnSelWidth, int* pnSelHeight, int nNewLineLen)
 {
-	int   nCharCount = 0;
-	int   nSelWidth = srSelection_X2 - srSelection_X1 + 1;
-	int   nSelHeight = srSelection_Y2 - srSelection_Y1 + 1;
+	int nCharCount = 0;
+	const int nSelWidth = srSelection_X2 - srSelection_X1 + 1;
+	const int nSelHeight = srSelection_Y2 - srSelection_Y1 + 1;
 
 	_ASSERTE(nNewLineLen==0 || nNewLineLen==1 || nNewLineLen==2);
 
@@ -4944,13 +4939,13 @@ int CRealBuffer::GetSelectionCharCount(bool bStreamMode, int srSelection_X1, int
 }
 
 // Здесь CopyMode уже не используется, передается для информации
-bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat /*= CTSFormatDefault*/, LPCWSTR pszDstFile /*= NULL*/, HGLOBAL* phUnicode /*= NULL*/)
+bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int srSelection_X1, int srSelection_Y1, int srSelection_X2, int srSelection_Y2, BYTE nFormat /*= CTSFormatDefault*/, LPCWSTR pszDstFile /*= nullptr*/, HGLOBAL* phUnicode /*= nullptr*/)
 {
 	// Warning!!! Здесь уже нельзя ориентироваться на con.m_sel !!!
 
-	LPCWSTR pszDataStart = NULL;
-	WORD* pAttrStart = NULL;
-	CharAttr* pAttrStartEx = NULL;
+	LPCWSTR pszDataStart = nullptr;
+	WORD* pAttrStart = nullptr;
+	CharAttr* pAttrStartEx = nullptr;
 	int nTextWidth = 0, nTextHeight = 0;
 	CRConDataGuard data;
 
@@ -4993,14 +4988,14 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 
 	if (!pszDataStart || !nTextWidth || !nTextHeight)
 	{
-		Assert(pszDataStart != NULL);
+		Assert(pszDataStart != nullptr);
 		return false;
 	}
 
 	const AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
-	if (pApp == NULL)
+	if (pApp == nullptr)
 	{
-		Assert(pApp!=NULL);
+		Assert(pApp!=nullptr);
 		return false;
 	}
 	BYTE nEOL = pApp->CTSEOL();
@@ -5037,12 +5032,12 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	int   nCharCount = GetSelectionCharCount(bStreamMode, srSelection_X1, srSelection_Y1, srSelection_X2, srSelection_Y2, &nSelWidth, &nSelHeight, nNewLineLen);
 	_ASSERTE((nSelWidth>-(srSelection_X1-srSelection_X2)) && (nSelHeight>0) && (nCharCount>0));
 
-	HGLOBAL hUnicode = NULL;
+	HGLOBAL hUnicode = nullptr;
 	hUnicode = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT, (nCharCount+1)*sizeof(wchar_t));
 
-	if (hUnicode == NULL)
+	if (hUnicode == nullptr)
 	{
-		Assert(hUnicode != NULL);
+		Assert(hUnicode != nullptr);
 		return false;
 	}
 
@@ -5050,7 +5045,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 
 	if (!pch)
 	{
-		Assert(pch != NULL);
+		Assert(pch != nullptr);
 		GlobalFree(hUnicode);
 		return false;
 	}
@@ -5109,7 +5104,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 		// Блоковое выделение
 		for (int Y = 0; Y <= nSelHeight; Y++)
 		{
-			LPCWSTR pszCon = NULL;
+			LPCWSTR pszCon = nullptr;
 
 			if (m_Type == rbt_Primary)
 			{
@@ -5183,19 +5178,19 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 		{
 			nX1 = (Y == 0) ? srSelection_X1 : 0;
 			nX2 = (Y == nSelHeight) ? srSelection_X2 : (con.nTextWidth-1);
-			LPCWSTR pszCon = NULL;
-			LPCWSTR pszNextLine = NULL;
+			LPCWSTR pszCon = nullptr;
+			LPCWSTR pszNextLine = nullptr;
 
 			if (m_Type == rbt_Primary)
 			{
 				pszCon = pszDataStart + con.nTextWidth*(Y+srSelection_Y1) + nX1;
-				pszNextLine = ((Y + 1) <= nSelHeight) ? (pszDataStart + con.nTextWidth*(Y+1+srSelection_Y1)) : NULL;
+				pszNextLine = ((Y + 1) <= nSelHeight) ? (pszDataStart + con.nTextWidth*(Y+1+srSelection_Y1)) : nullptr;
 			}
 			else if (pszDataStart && (Y < nTextHeight))  // -V560
 			{
 				WARNING("Проверить для режима с прокруткой!");
 				pszCon = pszDataStart + dump.crSize.X*(Y+srSelection_Y1) + nX1;
-				pszNextLine = ((Y + 1) <= nSelHeight) ? (pszDataStart + dump.crSize.X*(Y+1+srSelection_Y1)) : NULL;
+				pszNextLine = ((Y + 1) <= nSelHeight) ? (pszDataStart + dump.crSize.X*(Y+1+srSelection_Y1)) : nullptr;
 			}
 
 			LPCWSTR pszDstStart = pch;
@@ -5300,7 +5295,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 	}
 
 	// HTML?
-	HGLOBAL hHtml = NULL;
+	HGLOBAL hHtml = nullptr;
 	if (bUseHtml)
 	{
 		hHtml = html->CreateResult();
@@ -5320,7 +5315,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 		WARNING("hUnicode Overhead...");
 		GlobalFree(hUnicode);
 		hUnicode = hHtml;
-		hHtml = NULL;
+		hHtml = nullptr;
 		bUseHtml = false;
 	}
 
@@ -5368,8 +5363,8 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 
 		if (IDRETRY != DisplayLastError(L"SetClipboardData(CF_UNICODETEXT, ...) failed!", dwErr, MB_RETRYCANCEL|MB_ICONSTOP))
 		{
-			GlobalFree(hUnicode); hUnicode = NULL;
-			if (hHtml) GlobalFree(hHtml); hHtml = NULL;
+			GlobalFree(hUnicode); hUnicode = nullptr;
+			if (hHtml) GlobalFree(hHtml); hHtml = nullptr;
 			break;
 		}
 
@@ -5396,7 +5391,7 @@ bool CRealBuffer::DoSelectionCopyInt(CECopyMode CopyMode, bool bStreamMode, int 
 			}
 			if (i_CF_MICROSOFT_IDE)
 			{
-				MySetClipboardData(i_CF_MICROSOFT_IDE, NULL);
+				MySetClipboardData(i_CF_MICROSOFT_IDE, nullptr);
 			}
 		}
 
@@ -5425,7 +5420,7 @@ int CRealBuffer::GetSelectionCellsCount()
 	{
 		nCharCount = GetSelectionCharCount(isStreamSelection(),
 			con.m_sel.srSelection.Left, con.m_sel.srSelection.Top,
-			con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, NULL, NULL, 0);
+			con.m_sel.srSelection.Right, con.m_sel.srSelection.Bottom, nullptr, nullptr, 0);
 	}
 	return nCharCount;
 }
@@ -5483,7 +5478,7 @@ bool CRealBuffer::DoSelectionFinalize(bool abCopy, CECopyMode CopyMode, WPARAM w
 
 	if (abCopy)
 	{
-		bCopied = DoSelectionCopy(CopyMode, CTSFormatDefault, NULL, phUnicode);
+		bCopied = DoSelectionCopy(CopyMode, CTSFormatDefault, nullptr, phUnicode);
 	}
 
 	mp_RCon->mn_SelectModeSkipVk = wParam;
@@ -5506,11 +5501,11 @@ bool CRealBuffer::DoSelectionFinalize(bool abCopy, CECopyMode CopyMode, WPARAM w
 	return bCopied;
 }
 
-// pszChars may be NULL
+// pszChars may be nullptr
 const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkState, bool bKeyDown, const wchar_t *pszChars)
 {
 	if (!this || !con.m_sel.dwFlags)
-		return NULL;
+		return nullptr;
 
 	// If these was not processed by user HotKeys, lets do it...
 	// Ctrl+C or Ctrl+Ins must copy current selection to clipboard
@@ -5532,7 +5527,7 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 		{
 			mp_RCon->DoSelectionFinalize();
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	// Del/Shift-Del/BS/Ctrl-X - try to "edit" prompt
@@ -5560,7 +5555,7 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 		{
 			DoSelectionFinalize(bCopyBeforeErase, cm_CopySel, VkState.Vk);
 			// Now post sequence of keys
-			UINT vkPostKey = 0; LPCWSTR pszKey = NULL;
+			UINT vkPostKey = 0; LPCWSTR pszKey = nullptr;
 			if ((anch.X == sel.srSelection.Left) && (cur.X == anch.X)
 				&& (sel.srSelection.Right >= sel.srSelection.Left))
 			{
@@ -5589,10 +5584,10 @@ const ConEmuHotKey* CRealBuffer::ProcessSelectionHotKey(const ConEmuChord& VkSta
 		return ConEmuSkipHotKey;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
-// pszChars may be NULL
+// pszChars may be nullptr
 bool CRealBuffer::OnKeyboard(HWND hWnd, UINT messg, WPARAM wParam, LPARAM lParam, const wchar_t *pszChars)
 {
 	// Обработка Left/Right/Up/Down при выделении
@@ -5734,7 +5729,7 @@ const CONSOLE_SCREEN_BUFFER_INFO* CRealBuffer::GetSBI()
 //	return con.bConsoleDataChanged;
 //}
 
-bool CRealBuffer::GetConsoleLine(/*[OUT]*/CRConDataGuard& data, int nLine, const wchar_t*& rpChar, int& rnLen, MSectionLock* pcsData /*= NULL*/)
+bool CRealBuffer::GetConsoleLine(/*[OUT]*/CRConDataGuard& data, int nLine, const wchar_t*& rpChar, int& rnLen, MSectionLock* pcsData /*= nullptr*/)
 {
 	ConsoleLinePtr line = {};
 	if (!GetConsoleLine(nLine, data, line, pcsData))
@@ -5744,7 +5739,7 @@ bool CRealBuffer::GetConsoleLine(/*[OUT]*/CRConDataGuard& data, int nLine, const
 	return true;
 }
 
-bool CRealBuffer::GetConsoleLine(int nLine, /*[OUT]*/CRConDataGuard& data, ConsoleLinePtr& rpLine, MSectionLock* pcsData /*= NULL*/)
+bool CRealBuffer::GetConsoleLine(int nLine, /*[OUT]*/CRConDataGuard& data, ConsoleLinePtr& rpLine, MSectionLock* pcsData /*= nullptr*/)
 {
 	// Может быть уже заблокировано
 	MSectionLock csData;
@@ -5868,7 +5863,7 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 		StoreLastTextRange(etr_None);
 	WARNING("lbIsFar - хорошо бы заменить на привязку к конкретным приложениям?");
 	const AppSettings* pApp = gpSet->GetAppSettings(mp_RCon->GetActiveAppSettingsId());
-	_ASSERTE(pApp!=NULL);
+	_ASSERTE(pApp!=nullptr);
 	// 120331 - зачем ограничивать настройку доп.цветов?
 	bool bExtendFonts = pApp->ExtendFonts();
 	bool lbFade = mp_RCon->mp_VCon->isFade;
@@ -6309,7 +6304,7 @@ void CRealBuffer::PrepareTransparent(wchar_t* pChar, CharAttr* pAttr, int nWidth
 	free(pFI);
 
 	#ifdef _DEBUG
-	int nCount = m_Rgn.GetDetectedDialogs(0,NULL,NULL);
+	int nCount = m_Rgn.GetDetectedDialogs(0,nullptr,nullptr);
 
 	if (nCount == 1)
 	{
@@ -6498,7 +6493,7 @@ bool CRealBuffer::isSelectionAllowed()
 					else
 					{
 						DWORD nDlgFlags = m_Rgn.GetFlags();
-						int nDialogs = m_Rgn.GetDetectedDialogs(3,NULL,NULL);
+						int nDialogs = m_Rgn.GetDetectedDialogs(3,nullptr,nullptr);
 						if ((nDialogs > 0) && !((nDialogs == 1) && (nDlgFlags == FR_MENUBAR)))
 							return false; // Any dialog on screen? Don't select
 						return true;
@@ -6676,7 +6671,7 @@ bool CRealBuffer::isCursorVisible()
 	return true;
 }
 
-void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* psbi, SMALL_RECT* psrRealWindow /*= NULL*/, TOPLEFTCOORD* pTopLeft /*= NULL*/)
+void CRealBuffer::ConsoleScreenBufferInfo(CONSOLE_SCREEN_BUFFER_INFO* psbi, SMALL_RECT* psrRealWindow /*= nullptr*/, TOPLEFTCOORD* pTopLeft /*= nullptr*/)
 {
 	if (!this) return;
 
@@ -6759,7 +6754,7 @@ void CRealBuffer::ResetBuffer()
 {
 	if (!this)
 	{
-		_ASSERTE(this!=NULL);
+		_ASSERTE(this!=nullptr);
 		return;
 	}
 	con.m_ci.bVisible = TRUE;
@@ -6848,7 +6843,7 @@ WORD CRealBuffer::GetConOutMode()
 	return con.m_dwConsoleOutMode;
 }
 
-ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CEStr* psText /*= NULL*/)
+ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COORD& crTo/*[Out]*/, ExpandTextRangeType etr, CEStr* psText /*= nullptr*/)
 {
 	ExpandTextRangeType result = etr_None;
 
@@ -6862,11 +6857,11 @@ ExpandTextRangeType CRealBuffer::ExpandTextRange(COORD& crFrom/*[In/Out]*/, COOR
 	{
 	MSectionLock csData; csData.Lock(&csCON);
 	CRConDataGuard data;
-	const wchar_t* pChar = NULL;
+	const wchar_t* pChar = nullptr;
 	int nLen = 0;
 
 	// GetConsoleLine requires visual-screen-buffer coordinates (but not absolute ones, coming from crFrom/crTo)
-	if (mp_RCon->mp_VCon && GetConsoleLine(data, lcrFrom.Y, pChar, /*NULL,*/ nLen, &csData) && pChar)
+	if (mp_RCon->mp_VCon && GetConsoleLine(data, lcrFrom.Y, pChar, /*nullptr,*/ nLen, &csData) && pChar)
 	{
 		_ASSERTE(lcrFrom.Y>=0 && lcrFrom.Y<GetTextHeight());
 		_ASSERTE(lcrTo.Y>=0 && lcrTo.Y<GetTextHeight());
@@ -7166,5 +7161,5 @@ const CRgnDetect* CRealBuffer::GetDetector()
 {
 	if (this)
 		return &m_Rgn;
-	return NULL;
+	return nullptr;
 }

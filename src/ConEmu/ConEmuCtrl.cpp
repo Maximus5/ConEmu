@@ -588,7 +588,7 @@ bool CConEmuCtrl::key_CTSVkTextStart(const ConEmuChord& VkState, bool TestOnly, 
 }
 
 // pRCon may be NULL
-bool CConEmuCtrl::key_SystemMenu(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+bool CConEmuCtrl::key_SystemMenu(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* /*hk*/, CRealConsole* /*pRCon*/)
 {
 	if (TestOnly)
 		return true;
