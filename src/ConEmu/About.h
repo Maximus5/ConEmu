@@ -86,6 +86,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 	L"-Bypass -run <command> - Just execute the command detached.\r\n" \
 	L"-Reset - Don't load settings from registry/xml.\r\n" \
 	L"-UpdateJumpList - Update Windows 7 taskbar jump list.\r\n" \
+	L"-LngFile <file> - Use specified l10n file as localization storage.\r\n" \
+	L"-Lng <en|ru|de|...> - Use specified language id.\r\n" \
 	L"-LoadCfgFile <file> - Use specified xml file as configuration storage.\r\n" \
 	L"-SaveCfgFile <file> - Save configuration to the specified xml file.\r\n" \
 	L"-LoadRegistry - Use Windows registry as configuration storage.\r\n" \
