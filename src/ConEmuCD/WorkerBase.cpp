@@ -50,6 +50,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "StdCon.h"
 #include "../common/MProcess.h"
 #include "../common/ProcessSetEnv.h"
+#include "../common/SetEnvVar.h"
 
 /* Console Handles */
 MConHandle ghConOut(L"CONOUT$");
@@ -576,9 +577,9 @@ int WorkerBase::PostProcessCanAttach() const
 				LogFunction(pszSlash);
 				// И сравним с используемыми у нас. Возможно потом еще что-то добавить придется
 				if (wmemcmp(pszSlash, L"/DEBUGPID=", 10) != 0)
-					pszSlash = NULL;
+					pszSlash = nullptr;
 			}
-			if (pszSlash == NULL)
+			if (pszSlash == nullptr)
 			{
 				// Не наше окошко, выходим
 				gbInShutdown = TRUE;
@@ -753,7 +754,7 @@ int WorkerBase::ParamColorIndexes() const
 						//	if (gState.hGuiWnd)
 						//		GetWindowRect(gState.hGuiWnd, &rcGui);
 						//	//SetWindowPos(gState.realConWnd, HWND_BOTTOM, rcGui.left+3, rcGui.top+3, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
-						//	SetWindowPos(gState.realConWnd, NULL, -30000, -30000, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+						//	SetWindowPos(gState.realConWnd, nullptr, -30000, -30000, 0,0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
 						//	apiShowWindow(gState.realConWnd, SW_SHOWMINNOACTIVE);
 						//	#ifdef _DEBUG
 						//	apiShowWindow(gState.realConWnd, SW_SHOWNORMAL);
@@ -1121,7 +1122,7 @@ DebuggerInfo& WorkerBase::DbgInfo()
 	return *dbgInfo;
 }
 
-bool WorkerBase::IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode /*= NULL*/)
+bool WorkerBase::IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode /*= nullptr*/)
 {
 	bool bChanged = false;
 
@@ -1335,7 +1336,7 @@ void WorkerBase::CdToProfileDir()
 {
 	BOOL bRc = FALSE;
 	wchar_t szPath[MAX_PATH] = L"";
-	HRESULT hr = SHGetFolderPath(NULL, CSIDL_PROFILE, NULL, 0, szPath);
+	HRESULT hr = SHGetFolderPath(nullptr, CSIDL_PROFILE, nullptr, 0, szPath);
 	if (FAILED(hr))
 		GetEnvironmentVariable(L"USERPROFILE", szPath, countof(szPath));
 	if (szPath[0])
@@ -1611,4 +1612,70 @@ void WorkerBase::CheckNeedSkipWowChange(LPCWSTR asCmdLine)
 		}
 	}
 #endif
+}
+
+void WorkerBase::SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
+{
+	LogFunction(L"SetConEmuWindows");
+
+	char szInfo[100] = "";
+
+	// Main ConEmu window
+	if (hRootWnd && !IsWindow(hRootWnd))
+	{
+		_ASSERTE(FALSE && "hRootWnd is invalid");
+		hRootWnd = nullptr;
+	}
+	// Changed?
+	if (gState.conemuWnd_ != hRootWnd)
+	{
+		sprintf_c(szInfo+lstrlenA(szInfo), 30/*#SECURELEN*/, "ConEmuWnd=x%08X ", (DWORD)(DWORD_PTR)hRootWnd);
+		gState.conemuWnd_ = hRootWnd;
+
+		// Than check GuiPID
+		DWORD nGuiPid = 0;
+		if (!hRootWnd)
+		{
+			gState.conemuPid_ = 0;
+		}
+		else if (GetWindowThreadProcessId(hRootWnd, &nGuiPid) && nGuiPid)
+		{
+			gState.conemuPid_ = nGuiPid;
+		}
+	}
+	// Do AllowSetForegroundWindow
+	if (hRootWnd)
+	{
+		DWORD dwGuiThreadId = GetWindowThreadProcessId(hRootWnd, &gState.conemuPid_);
+		AllowSetForegroundWindow(gState.conemuPid_);
+	}
+	// "ConEmuHWND"="0x%08X", "ConEmuPID"="%u"
+	SetConEmuEnvVar(gState.conemuWnd_);
+
+	// Drawing canvas & Background windows
+	_ASSERTE(gState.conemuWnd_!=nullptr || (hDcWnd==nullptr && hBackWnd==nullptr));
+	if (hDcWnd && !IsWindow(hDcWnd))
+	{
+		_ASSERTE(FALSE && "hDcWnd is invalid");
+		hDcWnd = nullptr;
+	}
+	if (hBackWnd && !IsWindow(hBackWnd))
+	{
+		_ASSERTE(FALSE && "hBackWnd is invalid");
+		hBackWnd = nullptr;
+	}
+	// Set new descriptors
+	if ((gState.conemuWndDC_ != hDcWnd) || (gState.conemuWndBack_ != hBackWnd))
+	{
+		sprintf_c(szInfo+lstrlenA(szInfo), 60/*#SECURELEN*/, "WndDC=x%08X WndBack=x%08X", (DWORD)(DWORD_PTR)hDcWnd, (DWORD)(DWORD_PTR)hBackWnd);
+		gState.conemuWndDC_ = hDcWnd;
+		gState.conemuWndBack_ = hBackWnd;
+		// "ConEmuDrawHWND"="0x%08X", "ConEmuBackHWND"="0x%08X"
+		SetConEmuEnvVarChild(hDcWnd, hBackWnd);
+	}
+
+	if (gpLogSize && szInfo[0])
+	{
+		LogFunction(szInfo);
+	}
 }

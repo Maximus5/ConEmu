@@ -252,7 +252,6 @@ public:
 	int ServerInitGuiTab();
 	void ServerInitEnvVars();
 	void SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir);
-	static void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd);
 	bool TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn);
 	SleepIndicatorType CheckIndicateSleepNum();
 	void ShowSleepIndicator(SleepIndicatorType sleepType, bool bSleeping);

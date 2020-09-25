@@ -897,6 +897,13 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		break;
 	}
 
+	// #SERVER remove gpSrv
+	if (!gpSrv)
+	{
+		gpSrv = static_cast<SrvInfo*>(calloc(sizeof(SrvInfo), 1));
+		gpSrv->InitFields();
+	}
+
 	switch (gState.runMode_)
 	{
 	case RunMode::Server:
@@ -4248,7 +4255,9 @@ void SendStarted()
 		{
 			HANDLE hOut;
 			// Need to block all requests to output buffer in other threads
-			MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+			MSectionLockSimple csRead;
+			if (gpSrv != nullptr)
+				csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 
 			if ((gState.runMode_ == RunMode::Server) || (gState.runMode_ == RunMode::AltServer))
 				hOut = (HANDLE)ghConOut;
@@ -4386,7 +4395,8 @@ void SendStarted()
 
 
 
-		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd finished)\n",(RunMode==RunMode::Server) ? L"Server" : (RunMode==RunMode::AltServer) ? L"AltServer" : L"ComSpec");
+		PRINT_COMSPEC(L"Starting %s mode (ExecuteGuiCmd finished)\n",
+			(gState.runMode_ == RunMode::Server) ? L"Server" : (gState.runMode_ == RunMode::AltServer) ? L"AltServer" : L"ComSpec");
 
 		if (pOut == NULL)
 		{
@@ -4403,9 +4413,11 @@ void SendStarted()
 		else
 		{
 			bSent = true;
-			BOOL  bAlreadyBufferHeight = pOut->StartStopRet.bWasBufferHeight;
-			DWORD nGuiPID = pOut->StartStopRet.dwPID;
-			WorkerServer::Instance().SetConEmuWindows(pOut->StartStopRet.hWnd, pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
+			const BOOL bAlreadyBufferHeight = pOut->StartStopRet.bWasBufferHeight;
+			nGuiPID = pOut->StartStopRet.dwPID;
+
+			WorkerServer::SetConEmuWindows(pOut->StartStopRet.hWnd, pOut->StartStopRet.hWndDc, pOut->StartStopRet.hWndBack);
+
 			if (gpSrv)
 			{
 				_ASSERTE(gState.conemuPid_ == pOut->StartStopRet.dwPID);
@@ -4426,9 +4438,9 @@ void SendStarted()
 				{
 					_ASSERTE(gpSrv!=NULL);
 				}
-			}
 
-			WorkerServer::Instance().UpdateConsoleMapHeader(L"SendStarted");
+				WorkerServer::Instance().UpdateConsoleMapHeader(L"SendStarted");
+			}
 
 			_ASSERTE(gnMainServerPID==0 || gnMainServerPID==pOut->StartStopRet.dwMainSrvPID || (gState.attachMode_ && gState.alienMode_ && (pOut->StartStopRet.dwMainSrvPID==gnSelfPID)));
 			gnMainServerPID = pOut->StartStopRet.dwMainSrvPID;

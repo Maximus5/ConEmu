@@ -404,6 +404,18 @@ TEST_F(ServerDllTest, RunGuiMacro_API)
 
 TEST_F(ServerDllTest, RunCmdExe)
 {
+	/*
+	cdbg() << "Sleeping 15 sec" << std::endl;
+	const auto start = GetTickCount();
+	while (!IsDebuggerPresent())
+	{
+		Sleep(100);
+		const auto delay = GetTickCount() - start;
+		if (delay >= 15000)
+			break;
+	}
+	*/
+	
 	ConsoleMain3_t consoleMain3 = nullptr;
 	EXPECT_TRUE(ConEmuCD.GetProcAddress(FN_CONEMUCD_CONSOLE_MAIN_3_NAME, consoleMain3));
 	if (!consoleMain3)

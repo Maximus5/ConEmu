@@ -126,20 +126,9 @@ WorkerServer::WorkerServer()
 		SetupCreateDumpOnException();
 	}
 
-	// #SERVER remove gpSrv
-	if (!gpSrv)
+	if (gState.conemuWnd_)
 	{
-		gpSrv = static_cast<SrvInfo*>(calloc(sizeof(SrvInfo), 1));
-	}
-
-	if (gpSrv)
-	{
-		gpSrv->InitFields();
-
-		if (gState.conemuWnd_)
-		{
-			GetWindowThreadProcessId(gState.conemuWnd_, &gState.conemuPid_);
-		}
+		GetWindowThreadProcessId(gState.conemuWnd_, &gState.conemuPid_);
 	}
 }
 
@@ -150,6 +139,7 @@ WorkerServer& WorkerServer::Instance()
 	{
 		_ASSERTE(server != nullptr);
 		LogString("!!! WorkerServer was not initialized !!!");
+		_printf("\n!!! WorkerServer was not initialized !!!\n\n");
 		ExitProcess(CERR_SERVER_WAS_NOT_INITIALIZED);
 	}
 	return *server;
@@ -2105,72 +2095,6 @@ void WorkerServer::SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir)
 	SetEnvironmentVariable(ENV_CONEMUBASEDIR_VAR_W, asBaseDir);
 	CEStr BaseShort(GetShortFileNameEx(asBaseDir, false));
 	SetEnvironmentVariable(ENV_CONEMUBASEDIRSHORT_VAR_W, BaseShort.IsEmpty() ? asBaseDir : BaseShort.ms_Val);
-}
-
-void WorkerServer::SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
-{
-	LogFunction(L"SetConEmuWindows");
-
-	char szInfo[100] = "";
-
-	// Main ConEmu window
-	if (hRootWnd && !IsWindow(hRootWnd))
-	{
-		_ASSERTE(FALSE && "hRootWnd is invalid");
-		hRootWnd = NULL;
-	}
-	// Changed?
-	if (gState.conemuWnd_ != hRootWnd)
-	{
-		sprintf_c(szInfo+lstrlenA(szInfo), 30/*#SECURELEN*/, "ConEmuWnd=x%08X ", (DWORD)(DWORD_PTR)hRootWnd);
-		gState.conemuWnd_ = hRootWnd;
-
-		// Than check GuiPID
-		DWORD nGuiPid = 0;
-		if (!hRootWnd)
-		{
-			gState.conemuPid_ = 0;
-		}
-		else if (GetWindowThreadProcessId(hRootWnd, &nGuiPid) && nGuiPid)
-		{
-			gState.conemuPid_ = nGuiPid;
-		}
-	}
-	// Do AllowSetForegroundWindow
-	if (hRootWnd)
-	{
-		DWORD dwGuiThreadId = GetWindowThreadProcessId(hRootWnd, &gState.conemuPid_);
-		AllowSetForegroundWindow(gState.conemuPid_);
-	}
-	// "ConEmuHWND"="0x%08X", "ConEmuPID"="%u"
-	SetConEmuEnvVar(gState.conemuWnd_);
-
-	// Drawing canvas & Background windows
-	_ASSERTE(gState.conemuWnd_!=NULL || (hDcWnd==NULL && hBackWnd==NULL));
-	if (hDcWnd && !IsWindow(hDcWnd))
-	{
-		_ASSERTE(FALSE && "hDcWnd is invalid");
-		hDcWnd = NULL;
-	}
-	if (hBackWnd && !IsWindow(hBackWnd))
-	{
-		_ASSERTE(FALSE && "hBackWnd is invalid");
-		hBackWnd = NULL;
-	}
-	// Set new descriptors
-	if ((gState.conemuWndDC_ != hDcWnd) || (gState.conemuWndBack_ != hBackWnd))
-	{
-		sprintf_c(szInfo+lstrlenA(szInfo), 60/*#SECURELEN*/, "WndDC=x%08X WndBack=x%08X", (DWORD)(DWORD_PTR)hDcWnd, (DWORD)(DWORD_PTR)hBackWnd);
-		gState.conemuWndDC_ = hDcWnd;
-		gState.conemuWndBack_ = hBackWnd;
-		// "ConEmuDrawHWND"="0x%08X", "ConEmuBackHWND"="0x%08X"
-		SetConEmuEnvVarChild(hDcWnd, hBackWnd);
-	}
-
-	if (gpLogSize && szInfo[0])
-	{
-		LogFunction(szInfo);
-	}
 }
 
 void WorkerServer::CheckConEmuHwnd()

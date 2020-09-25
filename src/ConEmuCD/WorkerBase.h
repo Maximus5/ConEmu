@@ -122,6 +122,8 @@ public:
 
 	const MModule& KernelModule() const;
 
+	static void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd);
+	
 protected:
 	/// Process any of "/Dump", "/Mini", "/MiniDump", "/Full", "/FullDump", "/AutoMini"
 	int ParamDebugDump();
