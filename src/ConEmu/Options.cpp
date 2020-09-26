@@ -2487,7 +2487,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"DefaultTerminalDebugLog", isDefaultTerminalDebugLog);
 		reg->Load(L"DefaultTerminalConfirm", nDefaultTerminalConfirmClose);
 		{
-		wchar_t* pszApps = NULL;
+		wchar_t* pszApps = nullptr;
 		reg->Load(L"DefaultTerminalApps", &pszApps);
 		SetDefaultTerminalApps((pszApps && *pszApps) ? pszApps : DEFAULT_TERMINAL_APPS); // "|"-delimited string -> MSZ
 		SafeFree(pszApps);

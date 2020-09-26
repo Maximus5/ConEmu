@@ -39,14 +39,19 @@ class CSetPgConfirm
 public:
 	static CSetPgBase* Create() { return new CSetPgConfirm(); };
 	static TabHwndIndex PageType() { return thi_Confirm; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	TabHwndIndex GetPageType() override { return PageType(); };
 public:
 	CSetPgConfirm();
 	virtual ~CSetPgConfirm();
 
+	CSetPgConfirm(const CSetPgConfirm&) = delete;
+	CSetPgConfirm(CSetPgConfirm&&) = delete;
+	CSetPgConfirm& operator=(const CSetPgConfirm&) = delete;
+	CSetPgConfirm& operator=(CSetPgConfirm&&) = delete;
+
 public:
 	// Methods
-	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
+	LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
 
 protected:
 	// Members

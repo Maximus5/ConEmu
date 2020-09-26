@@ -45,7 +45,7 @@ const wchar_t gsResourceFileName[] = L"ConEmu.l10n";
 
 //#include "../common/MSectionSimple.h"
 
-CLngRc* gpLng = NULL;
+CLngRc* gpLng = nullptr;
 
 CLngRc::CLngRc()
 {
@@ -180,10 +180,9 @@ bool CLngRc::LoadResources(LPCWSTR asLanguage, LPCWSTR asFile)
 	bool  bOk = false;
 	CEStr lsJsonData;
 	DWORD jsonDataSize = 0, nErrCode = 0;
-	MJsonValue* jsonFile = NULL;
+	MJsonValue* jsonFile = nullptr;
 	MJsonValue jsonSection;
 	DWORD nStartTick = 0, nLoadTick = 0, nFinTick = 0, nDelTick = 0;
-	int iRc;
 	struct { LPCWSTR pszSection; MArray<LngRcItem>* arr; int idDiff; }
 	sections[] = {
 		{ L"cmnhints", &m_CmnHints, 0 },
@@ -194,11 +193,11 @@ bool CLngRc::LoadResources(LPCWSTR asLanguage, LPCWSTR asFile)
 
 	if (gpSet->isLogging())
 	{
-		CEStr lsLog(L"Loading resources: Lng=`", asLanguage, L"` File=`", asFile, L"`");
+		const CEStr lsLog(L"Loading resources: Lng=`", asLanguage, L"` File=`", asFile, L"`");
 		gpConEmu->LogString(lsLog);
 	}
 
-	iRc = ReadTextFile(asFile, 1<<24 /*16Mb max*/, lsJsonData.ms_Val, jsonDataSize, nErrCode);
+	const int iRc = ReadTextFile(asFile, 1 << 24 /*16Mb max*/, lsJsonData.ms_Val, jsonDataSize, nErrCode);
 	if (iRc != 0)
 	{
 		// TODO: Log error
@@ -210,12 +209,12 @@ bool CLngRc::LoadResources(LPCWSTR asLanguage, LPCWSTR asFile)
 	if (!jsonFile->ParseJson(lsJsonData))
 	{
 		// TODO: Log error
-		CEStr lsErrMsg(
+		const CEStr lsErrMsg(
 			L"Language resources loading failed!\r\n"
 			L"File: ", asFile, L"\r\n"
 			L"Error: ", jsonFile->GetParseError());
 		gpConEmu->LogString(lsErrMsg.ms_Val);
-		DisplayLastError(lsErrMsg.ms_Val, (DWORD)-1, MB_ICONSTOP);
+		DisplayLastError(lsErrMsg.ms_Val, static_cast<DWORD>(-1), MB_ICONSTOP);
 		goto wrap;
 	}
 	nLoadTick = GetTickCount();
@@ -234,12 +233,12 @@ bool CLngRc::LoadResources(LPCWSTR asLanguage, LPCWSTR asFile)
 		LoadLanguages(&jsonSection);
 
 	// Process sections
-	for (size_t i = 0; i < countof(sections); i++)
+	for (auto& section : sections)
 	{
-		if (jsonFile->getItem(sections[i].pszSection, jsonSection) && (jsonSection.getType() == MJsonValue::json_Object))
-			bOk |= LoadSection(&jsonSection, *(sections[i].arr), sections[i].idDiff);
+		if (jsonFile->getItem(section.pszSection, jsonSection) && (jsonSection.getType() == MJsonValue::json_Object))
+			bOk |= LoadSection(&jsonSection, *(section.arr), section.idDiff);
 		else
-			Clean(*(sections[i].arr));
+			Clean(*(section.arr));
 	}
 
 	nFinTick = GetTickCount();
@@ -258,12 +257,12 @@ wrap:
 
 bool CLngRc::LoadLanguages(MJsonValue* pJson)
 {
-	bool bRc = false;
+	const bool bRc = false;
 	MJsonValue jRes, jItem;
 
 	Clear(m_Languages);
 
-	size_t iCount = pJson->getLength();
+	const size_t iCount = pJson->getLength();
 
 	for (size_t i = 0; i < iCount; i++)
 	{
@@ -291,7 +290,7 @@ bool CLngRc::LoadLanguages(MJsonValue* pJson)
 	return bRc;
 }
 
-bool CLngRc::LoadSection(MJsonValue* pJson, MArray<LngRcItem>& arr, int idDiff)
+bool CLngRc::LoadSection(MJsonValue* pJson, MArray<LngRcItem>& arr, int idDiff) const
 {
 	bool bRc = false;
 	MJsonValue jRes, jItem;
@@ -305,7 +304,7 @@ bool CLngRc::LoadSection(MJsonValue* pJson, MArray<LngRcItem>& arr, int idDiff)
 		l.Localized = false;
 	}
 
-	size_t iCount = pJson->getLength();
+	const size_t iCount = pJson->getLength();
 
 	for (size_t i = 0; i < iCount; i++)
 	{
@@ -318,12 +317,12 @@ bool CLngRc::LoadSection(MJsonValue* pJson, MArray<LngRcItem>& arr, int idDiff)
 	    //  "ru": [ "Decrease window height ", "(check ‘Resize with arrows’)" ],
 	    //  "id": 2046
 		// }
-		LPCWSTR lsLoc = NULL;
 		int64_t id = -1;
-		size_t childCount = jRes.getLength();
+		const size_t childCount = jRes.getLength();
 
 		for (INT_PTR c = (childCount - 1); c >= 0; --c)
 		{
+			// ReSharper disable once CppLocalVariableMayBeConst
 			LPCWSTR pszName = jRes.getObjectName(c);
 			if (!pszName || !*pszName)
 			{
@@ -371,7 +370,7 @@ bool CLngRc::LoadSection(MJsonValue* pJson, MArray<LngRcItem>& arr, int idDiff)
 				switch (jItem.getType())
 				{
 				case MJsonValue::json_String:
-					if (!SetResource(arr, (id - idDiff), jItem.getString(), true))
+					if (!SetResource(arr, static_cast<int>(id - idDiff), jItem.getString(), true))
 					{
 						// Already asserted
 						return false;
@@ -379,7 +378,7 @@ bool CLngRc::LoadSection(MJsonValue* pJson, MArray<LngRcItem>& arr, int idDiff)
 					bRc = true;
 					break;
 				case MJsonValue::json_Array:
-					if (!SetResource(arr, (id - idDiff), &jItem))
+					if (!SetResource(arr, static_cast<int>(id - idDiff), &jItem))
 					{
 						// Already asserted
 						return false;
@@ -404,7 +403,7 @@ bool CLngRc::LoadSection(MJsonValue* pJson, MArray<LngRcItem>& arr, int idDiff)
 }
 
 // Set resource item
-bool CLngRc::SetResource(MArray<LngRcItem>& arr, int idx, LPCWSTR asValue, bool bLocalized)
+bool CLngRc::SetResource(MArray<LngRcItem>& arr, const int idx, LPCWSTR asValue, const bool bLocalized)
 {
 	if (idx < 0)
 	{
@@ -416,7 +415,7 @@ bool CLngRc::SetResource(MArray<LngRcItem>& arr, int idx, LPCWSTR asValue, bool 
 
 	if (idx >= arr.size())
 	{
-		LngRcItem dummy = {};
+		const LngRcItem dummy = {};
 		arr.set_at(idx, dummy);
 	}
 
@@ -433,11 +432,11 @@ bool CLngRc::SetResource(MArray<LngRcItem>& arr, int idx, LPCWSTR asValue, bool 
 		return true;
 	}
 
-	size_t iLen = wcslen(asValue);
-	if (iLen >= (uint16_t)-1)
+	const size_t iLen = wcslen(asValue);
+	if (iLen >= static_cast<uint16_t>(-1))
 	{
 		// Too long string?
-		_ASSERTE(iLen < (uint16_t)-1);
+		_ASSERTE(iLen < static_cast<uint16_t>(-1));
 	}
 	else
 	{
@@ -452,7 +451,7 @@ bool CLngRc::SetResource(MArray<LngRcItem>& arr, int idx, LPCWSTR asValue, bool 
 			item.MaxLen = iLen;
 			item.Str = lstrdup(asValue);
 		}
-		bOk = (item.Str != NULL);
+		bOk = (item.Str != nullptr);
 	}
 
 	item.Processed = bOk;
@@ -468,7 +467,7 @@ bool CLngRc::SetResource(MArray<LngRcItem>& arr, int idx, MJsonValue* pJson)
 	MJsonValue jStr;
 
 	// [ "Decrease window height ", "(check ‘Resize with arrows’)" ]
-	size_t iCount = pJson->getLength();
+	const size_t iCount = pJson->getLength();
 
 	for (size_t i = 0; i < iCount; i++)
 	{
@@ -489,14 +488,14 @@ bool CLngRc::SetResource(MArray<LngRcItem>& arr, int idx, MJsonValue* pJson)
 	return SetResource(arr, idx, lsValue.ms_Val, true);
 }
 
-LPCWSTR CLngRc::getControl(LONG id, CEStr& lsText, LPCWSTR asDefault /*= NULL*/)
+LPCWSTR CLngRc::getControl(LONG id, CEStr& lsText, LPCWSTR asDefault /*= nullptr*/)
 {
 	if (!gpLng)
 	{
-		_ASSERTE(gpLng != NULL);
+		_ASSERTE(gpLng != nullptr);
 		return asDefault;
 	}
-	if (!id || (id > (uint16_t)-1))
+	if (!id || (id > static_cast<uint16_t>(-1)))
 	{
 		_ASSERTE(FALSE && "Control ID out of range");
 		return asDefault;
@@ -507,7 +506,7 @@ LPCWSTR CLngRc::getControl(LONG id, CEStr& lsText, LPCWSTR asDefault /*= NULL*/)
 	return lsText.ms_Val;
 }
 
-bool CLngRc::GetResource(MArray<LngRcItem>& arr, int idx, CEStr& lsText, LPCWSTR asDefault)
+bool CLngRc::GetResource(MArray<LngRcItem>& arr, const int idx, CEStr& lsText, LPCWSTR asDefault)
 {
 	bool bFound = false;
 
@@ -539,9 +538,9 @@ bool CLngRc::getLanguages(MArray<const wchar_t*>& languages)
 
 	if (gpLng)
 	{
-		for (INT_PTR i = 0; i < gpLng->m_Languages.size(); ++i)
+		for (auto& m_Language : gpLng->m_Languages)
 		{
-			languages.push_back(gpLng->m_Languages[i].descr);
+			languages.push_back(m_Language.descr);
 		}
 	}
 
@@ -555,13 +554,13 @@ bool CLngRc::getHint(UINT id, LPWSTR lpBuffer, size_t nBufferMax)
 {
 	if (!gpLng)
 	{
-		_ASSERTE(gpLng != NULL);
+		_ASSERTE(gpLng != nullptr);
 		return loadString(id, lpBuffer, nBufferMax);
 	}
 
 	// IDM__MIN_MNU_ITEM_ID
-	UINT idDiff = (id < IDM__MIN_MNU_ITEM_ID) ? 0 : IDM__MIN_MNU_ITEM_ID;
-	INT_PTR idx = (id - idDiff);
+	const UINT idDiff = (id < IDM__MIN_MNU_ITEM_ID) ? 0 : IDM__MIN_MNU_ITEM_ID;
+	const INT_PTR idx = (id - idDiff);
 	_ASSERTE(idx >= 0);
 
 	MArray<LngRcItem>& arr = (id < IDM__MIN_MNU_ITEM_ID) ? gpLng->m_CmnHints : gpLng->m_MnuHints;
@@ -591,7 +590,7 @@ bool CLngRc::getHint(UINT id, LPWSTR lpBuffer, size_t nBufferMax)
 	}
 
 	// Don't try to load it again
-	gpLng->SetResource(arr, idx, NULL, false);
+	gpLng->SetResource(arr, idx, nullptr, false);
 
 wrap:
 	if (lpBuffer && nBufferMax)
@@ -599,16 +598,16 @@ wrap:
 	return false;
 }
 
-LPCWSTR CLngRc::getRsrc(UINT id, CEStr* lpText /*= NULL*/)
+LPCWSTR CLngRc::getRsrc(UINT id, CEStr* lpText /*= nullptr*/)
 {
-	LPCWSTR pszRsrc = NULL;
+	LPCWSTR pszRsrc = nullptr;
 	if (!gpLng)
 	{
 		pszRsrc = CLngPredefined::getRsrc(id);
 	}
 	else
 	{
-		INT_PTR idx = (INT_PTR)id;
+		const INT_PTR idx = static_cast<INT_PTR>(id);
 		MArray<LngRcItem>& arr = gpLng->m_Strings;
 
 		if ((idx >= 0) && (arr.size() > idx))
@@ -635,15 +634,16 @@ LPCWSTR CLngRc::getRsrc(UINT id, CEStr* lpText /*= NULL*/)
 wrap:
 	if (lpText)
 		lpText->Set(pszRsrc);
-	// Don't return NULL-s ever
+	// Don't return nullptr-s ever
 	return (pszRsrc ? pszRsrc : L"");
 }
 
 // static
 bool CLngRc::loadString(UINT id, LPWSTR lpBuffer, size_t nBufferMax)
 {
+	// ReSharper disable once CppLocalVariableMayBeConst
 	LPCWSTR pszPredefined = CLngPredefined::getHint(id);
-	if (pszPredefined == NULL)
+	if (pszPredefined == nullptr)
 		return false;
 	lstrcpyn(lpBuffer, pszPredefined, nBufferMax);
 	return true;

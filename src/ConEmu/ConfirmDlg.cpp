@@ -29,7 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 #define SHOWDEBUGSTR
 
-#include "header.h"
+#include "Header.h"
 #include "../common/MModule.h"
 
 #include "ConEmu.h"
@@ -73,7 +73,7 @@ static HRESULT CALLBACK TaskDlgCallback(HWND hwnd, UINT uNotification, WPARAM wP
 		{
 			PCWSTR pszHREF = (PCWSTR)lParam;
 			if (pszHREF && *pszHREF)
-				ShellExecute(hwnd, L"open", pszHREF, NULL, NULL, SW_SHOWNORMAL);
+				ShellExecute(hwnd, L"open", pszHREF, nullptr, nullptr, SW_SHOWNORMAL);
 			break;
 		}
 	}
@@ -82,7 +82,7 @@ static HRESULT CALLBACK TaskDlgCallback(HWND hwnd, UINT uNotification, WPARAM wP
 
 static MModule gComCtl32;
 typedef HRESULT (WINAPI* TaskDialogIndirect_t)(const TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioButton, BOOL *pfVerificationFlagChecked);
-static TaskDialogIndirect_t TaskDialogIndirect_f = NULL; //(TaskDialogIndirect_t)(hDll?GetProcAddress(hDll, "TaskDialogIndirect"):NULL);
+static TaskDialogIndirect_t TaskDialogIndirect_f = nullptr; //(TaskDialogIndirect_t)(hDll?GetProcAddress(hDll, "TaskDialogIndirect"):nullptr);
 
 HRESULT TaskDialog(TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioButton, bool *pfVerificationFlagChecked)
 {
@@ -99,7 +99,7 @@ HRESULT TaskDialog(TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioBut
 
 	if (TaskDialogIndirect_f)
 	{
-		ghDlgPendingFrom = NULL;
+		ghDlgPendingFrom = nullptr;
 		if (!pTaskConfig->pfCallback)
 			pTaskConfig->pfCallback = TaskDlgCallback;
 		else if (hClassIconSm)
@@ -107,7 +107,7 @@ HRESULT TaskDialog(TASKDIALOGCONFIG *pTaskConfig, int *pnButton, int *pnRadioBut
 
 		hr = TaskDialogIndirect_f(pTaskConfig, pnButton, pnRadioButton, &bCheckBox);
 
-		ghDlgPendingFrom = NULL;
+		ghDlgPendingFrom = nullptr;
 	}
 
 	if (pfVerificationFlagChecked)
@@ -123,7 +123,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 {
 	DontEnable de;
 
-	wchar_t szText[512], *pszText;
+	wchar_t szText[512] = L"", *pszText = nullptr;
 	int nBtn = IDCANCEL;
 
 	static LONG lCounter = 0;
@@ -140,9 +140,9 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 	if (Parm.rpLeaveConEmuOpened) *Parm.rpLeaveConEmuOpened = false;
 
 	// Use TaskDialog?
-	if (gOSVer.dwMajorVersion >= 6)
+	if (IsWin6())
 	{
-		// must be already initialized: CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+		// must be already initialized: CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
 		wchar_t szMessage[128];
 		if (Parm.asSingleConsole)
@@ -190,7 +190,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 				Parm.nConsoles);
 			pszText = szCloseAll + _tcslen(szCloseAll);
 		}
-		if ((Parm.asSingleConsole == NULL) || (Parm.nOperations || Parm.nUnsavedEditors))
+		if ((Parm.asSingleConsole == nullptr) || (Parm.nOperations || Parm.nUnsavedEditors))
 		{
 			//if (nOperations)
 			{
@@ -237,7 +237,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		}
 
 		config.hwndParent                   = ghWnd;
-		config.hInstance                    = NULL /*g_hInstance*/;
+		config.hInstance                    = nullptr /*g_hInstance*/;
 		config.dwFlags                      = TDF_USE_HICON_MAIN|TDF_USE_COMMAND_LINKS|TDF_ALLOW_DIALOG_CANCELLATION
 		                                      |TDF_ENABLE_HYPERLINKS; //|TDIF_SIZE_TO_CONTENT|TDF_CAN_BE_MINIMIZED;
 		//config.pszMainIcon                  = MAKEINTRESOURCE(IDI_ICON1);
@@ -254,13 +254,13 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		//	config.pszVerificationText = L"Text on checkbox";
 		//}
 
-		HRESULT hr = TaskDialog(&config, &nButtonPressed, NULL, NULL);
+		const HRESULT hr = TaskDialog(&config, &nButtonPressed, nullptr, nullptr);
 
 		if (hr == S_OK)
 		{
 			switch (nButtonPressed)
 			{
-			case IDCANCEL: // user cancelled the dialog
+			case IDCANCEL: // user canceled the dialog
 			case IDYES:
 			case IDNO:
 				nBtn = nButtonPressed;
@@ -273,7 +273,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		}
 	}
 
-	// Иначе - через стандартный MsgBox
+	// TaskDialogs aren't available in current Windows version, use standart MsgBox instead
 
 	if (Parm.asSingleConsole)
 	{
@@ -281,14 +281,15 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 			Parm.asSingleConsole ? Parm.asSingleConsole : Parm.bForceKill ? L"Confirm killing?" : L"Confirm closing?",
 			std::min<int>(128, countof(szText)));
 		wcscat_c(szText, L"\r\n\r\n");
-		int nLen = lstrlen(szText);
+		const int nLen = lstrlen(szText);
 		lstrcpyn(szText+nLen, Parm.asSingleTitle, countof(szText)-nLen);
 	}
 	else
 	{
 		swprintf_c(szText, L"About to close %u console%s.\r\n", Parm.nConsoles, (Parm.nConsoles>1)?L"s":L"");
 	}
-	pszText = szText+_tcslen(szText);
+	// ReSharper disable once CppJoinDeclarationAndAssignment
+	pszText = szText + _tcslen(szText);
 
 	if (Parm.nOperations || Parm.nUnsavedEditors)
 	{
@@ -318,7 +319,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 
 	if (nBtn == IDOK)
 	{
-		nBtn = IDYES; // для однозначности
+		nBtn = IDYES; // for unambiguity
 	}
 
 wrap:
@@ -329,15 +330,15 @@ wrap:
 // uType - flags from MsgBox, i.e. MB_YESNOCANCEL
 int ConfirmDialog(LPCWSTR asMessage,
 	LPCWSTR asMainLabel, LPCWSTR asCaption, LPCWSTR asUrl, UINT uType, HWND ahParent,
-	LPCWSTR asBtn1Name /*= NULL*/, LPCWSTR asBtn1Hint /*= NULL*/,
-	LPCWSTR asBtn2Name /*= NULL*/, LPCWSTR asBtn2Hint /*= NULL*/,
-	LPCWSTR asBtn3Name /*= NULL*/, LPCWSTR asBtn3Hint /*= NULL*/)
+	LPCWSTR asBtn1Name /*= nullptr*/, LPCWSTR asBtn1Hint /*= nullptr*/,
+	LPCWSTR asBtn2Name /*= nullptr*/, LPCWSTR asBtn2Hint /*= nullptr*/,
+	LPCWSTR asBtn3Name /*= nullptr*/, LPCWSTR asBtn3Hint /*= nullptr*/)
 {
 	DontEnable de;
 
-	int nBtn = IDCANCEL, nBtnCount;
-	CEStr szText, szWWW, lsBtn1, lsBtn2, lsBtn3;
-	LPCWSTR pszName1 = NULL, pszName2 = NULL, pszName3 = NULL;
+	int nBtn = IDCANCEL, nBtnCount = 0;
+	CEStr szText, szWebLink, lsBtn1, lsBtn2, lsBtn3;
+	LPCWSTR pszName1 = nullptr, pszName2 = nullptr, pszName3 = nullptr;
 	TASKDIALOG_BUTTON buttons[3] = {};
 
 	static LONG lCounter = 0;
@@ -353,7 +354,7 @@ int ConfirmDialog(LPCWSTR asMessage,
 
 	if (!asUrl || !*asUrl)
 		asUrl = gsHomePage;
-	szWWW = lstrmerge(L"<a href=\"", asUrl, L"\">", asUrl, L"</a>");
+	szWebLink = lstrmerge(L"<a href=\"", asUrl, L"\">", asUrl, L"</a>");
 
 	switch (uType & 0xF)
 	{
@@ -401,7 +402,7 @@ int ConfirmDialog(LPCWSTR asMessage,
 
 		config.cButtons = nBtnCount;
 
-		// must be already initialized: CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+		// must be already initialized: CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
 		switch (uType & 0xF00)
 		{
@@ -415,17 +416,17 @@ int ConfirmDialog(LPCWSTR asMessage,
 
 		if (config.cButtons >= 1)
 		{
-			lsBtn1 = lstrmerge(asBtn1Name ? asBtn1Name : pszName1, asBtn1Hint ? L"\n" : NULL, asBtn1Hint);
+			lsBtn1 = lstrmerge(asBtn1Name ? asBtn1Name : pszName1, asBtn1Hint ? L"\n" : nullptr, asBtn1Hint);
 			buttons[0].pszButtonText = lsBtn1.ms_Val;
 		}
 		if (config.cButtons >= 2)
 		{
-			lsBtn2 = lstrmerge(asBtn2Name ? asBtn2Name : pszName2, asBtn2Hint ? L"\n" : NULL, asBtn2Hint);
+			lsBtn2 = lstrmerge(asBtn2Name ? asBtn2Name : pszName2, asBtn2Hint ? L"\n" : nullptr, asBtn2Hint);
 			buttons[1].pszButtonText = lsBtn2.ms_Val;
 		}
 		if (config.cButtons >= 3)
 		{
-			lsBtn3 = lstrmerge(asBtn3Name ? asBtn3Name : pszName3, asBtn3Hint ? L"\n" : NULL, asBtn3Hint);
+			lsBtn3 = lstrmerge(asBtn3Name ? asBtn3Name : pszName3, asBtn3Hint ? L"\n" : nullptr, asBtn3Hint);
 			buttons[2].pszButtonText = lsBtn3.ms_Val;
 		}
 
@@ -436,14 +437,14 @@ int ConfirmDialog(LPCWSTR asMessage,
 		config.pszMainInstruction           = asMainLabel;
 		config.pszContent                   = asMessage;
 		config.pButtons                     = buttons;
-		config.pszFooter                    = szWWW;
+		config.pszFooter                    = szWebLink;
 
 		config.hInstance = g_hInstance;
 		config.pszMainIcon = MAKEINTRESOURCE(IDI_ICON1);
 
 
 		// Show dialog
-		hr = TaskDialog(&config, &nButtonPressed, NULL, NULL);
+		hr = TaskDialog(&config, &nButtonPressed, nullptr, nullptr);
 
 		if (hr == S_OK)
 		{
@@ -474,7 +475,7 @@ int ConfirmDialog(LPCWSTR asMessage,
 	// **********************************
 
 	szText = lstrmerge(
-		asMainLabel, asMainLabel ? L"\r\n" : NULL,
+		asMainLabel, asMainLabel ? L"\r\n" : nullptr,
 		asMessage);
 
 	// URL hint?

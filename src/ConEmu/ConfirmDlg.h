@@ -35,26 +35,24 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // IDCANCEL - As is
 struct ConfirmCloseParam
 {
-	UINT nConsoles;
-	enum { eNormal = 0, eGroup, eNoGroup } bGroup;
-	UINT nOperations;
-	UINT nUnsavedEditors;
-	BOOL bForceKill; // Use terminate instead of "close"
-	BOOL bReserved;
-	bool* rpLeaveConEmuOpened;
-	LPCWSTR asSingleConsole;
-	LPCWSTR asSingleTitle;
-
-	ConfirmCloseParam() { memset(this,0,sizeof(*this)); };
+	UINT nConsoles = 0;
+	enum { eNormal = 0, eGroup, eNoGroup } bGroup = eNormal;
+	UINT nOperations = 0;
+	UINT nUnsavedEditors = 0;
+	BOOL bForceKill = false; // Use terminate instead of "close"
+	BOOL bReserved = false;
+	bool* rpLeaveConEmuOpened = nullptr;
+	LPCWSTR asSingleConsole = nullptr;
+	LPCWSTR asSingleTitle = nullptr;
 };
 int ConfirmCloseConsoles(const ConfirmCloseParam& Parm);
 
 // Universal
 int ConfirmDialog(LPCWSTR asMessage,
 	LPCWSTR asMainLabel, LPCWSTR asCaption, LPCWSTR asUrl, UINT uType, HWND ahParent,
-	LPCWSTR asBtn1Name = NULL, LPCWSTR asBtn1Hint = NULL,
-	LPCWSTR asBtn2Name = NULL, LPCWSTR asBtn2Hint = NULL,
-	LPCWSTR asBtn3Name = NULL, LPCWSTR asBtn3Hint = NULL);
+	LPCWSTR asBtn1Name = nullptr, LPCWSTR asBtn1Hint = nullptr,
+	LPCWSTR asBtn2Name = nullptr, LPCWSTR asBtn2Hint = nullptr,
+	LPCWSTR asBtn3Name = nullptr, LPCWSTR asBtn3Hint = nullptr);
 
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
 
