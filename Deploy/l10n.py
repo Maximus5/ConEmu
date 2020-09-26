@@ -8,8 +8,14 @@ Prerequisities:
 Add new language, e.g. Polish:
 l10n.py --l10n ..\Release\ConEmu\ConEmu.l10n --add-lng pl Polskie --write-l10n
 
-Refresh all translations:
+Download all translations from Transifex:
 l10n.py --l10n ..\Release\ConEmu\ConEmu.l10n --tx-pull all --write-l10n
+
+Write l10n file with pseudo translations:
+l10n.py --l10n ..\Release\ConEmu\ConEmu.l10n --write-pseudo ConEmu-pseudo.l10n
+
+Write yaml file with english original strings ready for manual upload to Transifex:
+l10n.py --l10n ..\Release\ConEmu\ConEmu.l10n --write-yaml ..\src\l10n
 """
 
 import argparse
@@ -50,6 +56,8 @@ def parse_args():
                         help='Update contents in <L10N> file')
     parser.add_argument('--write-yaml', metavar='DIR',
                         help='Write yaml resources to <DIR> folder')
+    parser.add_argument('--write-pseudo',
+                        help='Write l10n pseudo translation to file.')
     parser.add_argument('-v', '--verbose', action='store_true')
     return parser.parse_args()
 
@@ -103,8 +111,8 @@ class LangData:
 
     def get_translation_lang_ids(self, tx_langs=[]):
         if len(tx_langs) != 0 and not 'all' in tx_langs:
-            return list(filter(lambda x: x != 'en', tx_langs))
-        return list(filter(lambda x: x != 'en',
+            return list(filter(lambda x: x != 'en' and x != '$$', tx_langs))
+        return list(filter(lambda x: x != 'en' and x != '$$',
                     map(lambda x: x, self.languages.keys())))
 
     def _add_block(self, name, data, selected_lang=''):
@@ -227,13 +235,17 @@ class LangData:
                 data = data + ' ]'
                 return data
 
+            def pseudo(rsrc):
+                return ''.join(map(lambda x: pseudo_map[x] if x in pseudo_map else x, rsrc))
+
             def write_resource(file, lng_id, resource, indent):
                 if lng_id == 'id':
                     return
                 id = lng_id if not resource['deprecated'] else '_' + lng_id
+                lng_text = pseudo(resource['item']) if lng_id == '$$' else resource['item']
                 file.write(
                     indent + '"' + self.escape(id) + '": ' +
-                    make_string(resource['item'], indent) +
+                    make_string(lng_text, indent) +
                     ',' + endl)
                 return
 
@@ -250,6 +262,10 @@ class LangData:
                         endl)
                     rsrc = block[str_id]
                     for lng_id in self.languages:
+                        if lng_id == '$$':
+                            write_resource(
+                                file, lng_id, rsrc['en'], indent + '  ')
+                            continue
                         if lng_id not in rsrc:
                             continue
                         write_resource(
@@ -267,11 +283,19 @@ class LangData:
                 file.write('')
             return
 
+        if '$$' in self.languages:
+            pseudo_map = {}
+            eng_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+            psy_chars = 'ȧƀƈḓḗƒɠħīĵķŀḿƞǿƥɋřşŧŭṽẇẋẏžȦƁƇḒḖƑƓĦĪĴĶĿḾȠǾƤɊŘŞŦŬṼẆẊẎŽ'
+            for i in range(len(eng_chars)):
+                pseudo_map[eng_chars[i]] = psy_chars[i]
+
         file.write('{' + endl)
         write_languages(file, '  ')
         write_blocks(file, '  ')
         file.write('}' + endl)
         return
+    # end of write_l10n(self, file):
 
     def write_yaml(self, folder):
         print('Writing yamls to {}'.format(folder))
@@ -379,6 +403,11 @@ def main(args):
             l10n.write_l10n(l10n_file)
     if args.write_yaml:
         l10n.write_yaml(args.write_yaml)
+    if args.write_pseudo:
+        l10n.add_language('$$', 'Pseudo')
+        with open(args.write_pseudo, 'w', encoding='utf-8-sig') as l10n_file:
+            print('Writing l10n with pseudo translation to {}'.format(args.write_pseudo))
+            l10n.write_l10n(l10n_file)
     return
 
 
@@ -386,4 +415,3 @@ if __name__ == "__main__":
     args = parse_args()
     print(args)
     main(args)
-
