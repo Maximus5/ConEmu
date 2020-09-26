@@ -956,6 +956,7 @@
 #define gbConfirmMisc                   2687
 #define cbDupConfirm                    2688
 #define cbConfirmDetach                 2689
+#define cbConfirmResetTerminal          2690
 #define cbFontMonitorDpi                2691
 #define cbFontAsDeviceUnits             2692
 #define vkAppsPgUp                      2693
@@ -1351,7 +1352,7 @@
 //
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        247
+#define _APS_NEXT_RESOURCE_VALUE        248
 #define _APS_NEXT_COMMAND_VALUE         40010
 #define _APS_NEXT_CONTROL_VALUE         3108
 #define _APS_NEXT_SYMED_VALUE           130

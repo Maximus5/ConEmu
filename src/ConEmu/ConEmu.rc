@@ -308,26 +308,27 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD
 EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    GROUPBOX        "Confirm actions",gbConfirmActions,4,1,375,53
+    GROUPBOX        "Confirm actions",gbConfirmActions,4,1,375,66
     CONTROL         "Confirm creating new console/tab (Win+W, toolbar [+])",cbNewConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,14,363,8
     CONTROL         "Confirm tab duplicating (Duplicate root menu item)",cbDupConfirm,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,26,363,10
     CONTROL         "Confirm console detach",cbConfirmDetach,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,39,363,8
-    GROUPBOX        "Close confirmations",gbConfirmClose,4,63,375,81
+    CONTROL         "Confirm terminal reset",cbConfirmResetTerminal,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,51,363,8
+    GROUPBOX        "Close confirmations",gbConfirmClose,4,72,375,81
     CONTROL         "Confirm window closing (cross click)",cbCloseWindowConfirm,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,76,363,8
-    CONTROL         "Confirm tab closing",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,89,363,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,85,363,8
+    CONTROL         "Confirm tab closing",cbCloseConsoleConfirm,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,98,363,8
     CONTROL         "When running process was detected",cbConfirmCloseRunning,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,102,363,8
-    GROUPBOX        "Far Manager",gbConfirmCloseFar,4,115,375,29
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,111,363,8
+    GROUPBOX        "Far Manager",gbConfirmCloseFar,4,124,375,29
     CONTROL         "Confirm Far Manager Editor/Viewer tab closing",cbCloseEditViewConfirm,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,128,363,8
-    GROUPBOX        "Miscellaneous",gbConfirmMisc,4,150,375,39
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,137,363,8
+    GROUPBOX        "Miscellaneous",gbConfirmMisc,4,159,375,39
     CONTROL         "Show ‘... was hidden’ warning in TSA",cbShowWasHiddenMsg,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,163,363,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,172,363,8
     CONTROL         "Show ‘... brought ConEmu OnTop. Revert?’ confirmation box",cbShowWasSetOnTopMsg,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,176,363,8
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,10,185,363,8
 END
 
 IDD_SPG_HISTORY DIALOGEX 0, 0, 381, 242

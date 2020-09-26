@@ -35,6 +35,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AboutDlg.h"
 #include "ConEmu.h"
 #include "ConEmuCtrl.h"
+
+#include "ConfirmDlg.h"
 #include "Hotkeys.h"
 #include "FindDlg.h"
 #include "Macro.h"
@@ -1242,6 +1244,32 @@ bool CConEmuCtrl::key_AlwaysOnTop(const ConEmuChord& VkState, bool TestOnly, con
 
 	gpSet->isAlwaysOnTop = !gpSet->isAlwaysOnTop;
 	gpConEmu->DoAlwaysOnTopSwitch();
+
+	return true;
+}
+
+bool CConEmuCtrl::key_ResetTerminal(const ConEmuChord& /*VkState*/, bool TestOnly, const ConEmuHotKey* /*hk*/, CRealConsole* pRCon)
+{
+	if (TestOnly)
+		return true;
+
+	if (gpSet->isResetTerminalConfirm)
+	{
+		const auto confirmRc = ConfirmDialog(
+			L"Warning!\nThis operation could harm further output of applications.\n"
+			L"It's better to execute a dedicated command as `clear` or `cls`.",
+			L"Do you want to reset terminal contents?",
+			L"Reset terminal confirmation",
+			CECLEARSCREEN, MB_OKCANCEL, ghWnd,
+			nullptr, L"Reset terminal contents and properties",
+			nullptr, L"Cancel operation");
+		if (confirmRc != IDYES)
+			return false;
+	}
+
+	const CEStr szMacro(L"Write(\"\\ec\")");
+	const CEStr szResult = ConEmuMacro::ExecuteMacro(szMacro.ms_Val, pRCon);
+	LogString(CEStr(L"Reset terminal macro result: ", szResult));
 
 	return true;
 }

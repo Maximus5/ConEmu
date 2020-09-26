@@ -167,6 +167,9 @@ bool CSetDlgButtons::ProcessButtonClick(HWND hDlg, WORD CB, BYTE uCheck)
 		case cbConfirmDetach:
 			OnBtn_ConfirmDetach(hDlg, CB, uCheck);
 			break;
+		case cbConfirmResetTerminal:
+			OnBtn_ConfirmResetTerminal(hDlg, CB, uCheck);
+			break;
 		case cbLongOutput:
 			OnBtn_LongOutput(hDlg, CB, uCheck);
 			break;
@@ -1983,6 +1986,14 @@ void CSetDlgButtons::OnBtn_ConfirmDetach(HWND hDlg, WORD CB, BYTE uCheck)
 	gpSet->isMultiDetachConfirm = _bool(uCheck);
 
 } // cbConfirmDetach
+
+//cbConfirmResetTerminal
+void CSetDlgButtons::OnBtn_ConfirmResetTerminal(HWND hDlg, WORD CB, BYTE uCheck)
+{
+	_ASSERTE(CB == cbConfirmResetTerminal);
+
+	gpSet->isResetTerminalConfirm = _bool(uCheck);
+}  // cbConfirmResetTerminal
 
 
 // cbLongOutput

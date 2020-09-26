@@ -916,6 +916,8 @@ struct Settings
 			cc_FarEV     = 8, // was isCloseEditViewConfirm
 		};
 		BYTE nCloseConfirmFlags; // CloseConfirmOptions
+		//reg->Load(L"ResetTerminalConfirm", isResetTerminalConfirm);
+		bool isResetTerminalConfirm;
 		//reg->Load(L"Multi.CmdKey", vmMultiCmd);
 		//DWORD vmMultiCmd;
 		//reg->Load(L"Multi.AutoCreate", isMultiAutoCreate);

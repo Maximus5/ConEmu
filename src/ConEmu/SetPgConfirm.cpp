@@ -51,6 +51,7 @@ LRESULT CSetPgConfirm::OnInitDialog(HWND hDlg, bool abInitial)
 	checkDlgButton(hDlg, cbConfirmCloseRunning, (gpSet->nCloseConfirmFlags & Settings::cc_Running) ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hDlg, cbCloseEditViewConfirm, (gpSet->nCloseConfirmFlags & Settings::cc_FarEV) ? BST_CHECKED : BST_UNCHECKED);
 	checkDlgButton(hDlg, cbConfirmDetach, gpSet->isMultiDetachConfirm);
+	checkDlgButton(hDlg, cbConfirmResetTerminal, gpSet->isResetTerminalConfirm);
 	checkDlgButton(hDlg, cbShowWasHiddenMsg, gpSet->isDownShowHiddenMessage ? BST_UNCHECKED : BST_CHECKED);
 	checkDlgButton(hDlg, cbShowWasSetOnTopMsg, gpSet->isDownShowExOnTopMessage ? BST_UNCHECKED : BST_CHECKED);
 

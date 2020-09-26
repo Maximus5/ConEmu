@@ -96,6 +96,7 @@ protected:
 	static void OnBtn_NewConfirm(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_DupConfirm(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ConfirmDetach(HWND hDlg, WORD CB, BYTE uCheck);
+	static void OnBtn_ConfirmResetTerminal(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_LongOutput(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ComspecRadio(HWND hDlg, WORD CB, BYTE uCheck);
 	static void OnBtn_ComspecExplicit(HWND hDlg, WORD CB, BYTE uCheck);

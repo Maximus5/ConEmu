@@ -416,6 +416,7 @@ void Settings::InitSettings()
 	isMultiDupConfirm = true;
 	isMultiDetachConfirm = true;
 	nCloseConfirmFlags = cc_Running;
+	isResetTerminalConfirm = true;
 	isUseWinNumber = true; isUseWinArrows = false; isUseWinTab = false;
 	nSplitWidth = nSplitHeight = 4;
 	//nSplitClr1 = nSplitClr2 = RGB(160,160,160);
@@ -2581,6 +2582,7 @@ void Settings::LoadSettings(bool& rbNeedCreateVanilla, const SettingsStorage* ap
 		reg->Load(L"Multi.SplitHeight", nSplitHeight); MinMax(nSplitHeight, MAX_SPLITTER_SIZE);
 		//reg->Load(L"Multi.SplitClr1", nSplitClr1);
 		//reg->Load(L"Multi.SplitClr2", nSplitClr2);
+		reg->Load(L"ResetTerminalConfirm", isResetTerminalConfirm);
 
 		reg->Load(L"KeyboardHooks", m_isKeyboardHooks); if (m_isKeyboardHooks>2) m_isKeyboardHooks = 0;
 
@@ -3670,6 +3672,7 @@ BOOL Settings::SaveSettings(BOOL abSilent /*= FALSE*/, const SettingsStorage* ap
 		reg->Save(L"Multi.SplitHeight", nSplitHeight);
 		//reg->Save(L"Multi.SplitClr1", nSplitClr1);
 		//reg->Save(L"Multi.SplitClr2", nSplitClr2);
+		reg->Save(L"ResetTerminalConfirm", isResetTerminalConfirm);
 
 		//reg->Save(L"MinimizeRestore", vmMinimizeRestore);
 		_ASSERTE(m_isKeyboardHooks!=0);

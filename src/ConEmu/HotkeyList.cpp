@@ -453,7 +453,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_NEXT,VK_CONTROL,VK_MENU);
 	Add(vkAppsBS,         chk_User,  NULL,    L"Key.BufCursor",         CConEmuCtrl::key_GuiMacro, false, L"Scroll(4)") // Buffer scroll
 		->SetHotKey(VK_BACK,VK_APPS);
-	Add(vkResetTerminal,  chk_User,  NULL,    L"Key.ResetTerm",         CConEmuCtrl::key_GuiMacro, false, L"Write(\"\\ec\")") // Reset terminal
+	Add(vkResetTerminal,  chk_User,  NULL,    L"Key.ResetTerm",         CConEmuCtrl::key_ResetTerminal) // Reset terminal
 		;
 	/*
 			Some internal keys for Far Manager PicView plugin

@@ -136,6 +136,7 @@ typedef struct _CONSOLE_SELECTION_INFO
 #define CEREPORTCRASH  CEWIKIBASE L"Issues.html"
 #define CEWHATSNEW     CEWIKIBASE L"Whats_New.html"
 #define CEZONEID       CEWIKIBASE L"ZoneId.html"
+#define CECLEARSCREEN  CEWIKIBASE L"ClearScreen.html"
 
 
 #define DEFAULT_CONSOLE_FONT_NAME L"Lucida Console"
