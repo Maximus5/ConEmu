@@ -108,7 +108,7 @@ bool SrvAnsiImpl::OurWriteConsole(const wchar_t* lpBuffer, DWORD nNumberOfCharsT
 			if (iMBCSLen > 0)
 			{
 				CEStrA szTemp;
-				if (char* pszTemp = szTemp.getbuffer(iMBCSLen))
+				if (char* pszTemp = szTemp.GetBuffer(iMBCSLen))
 				{
 					BOOL bFailed = FALSE; // Do not do conversion if some chars can't be mapped
 					iMBCSLen = WideCharToMultiByte(m_Owner->gCpConv.nFromCP, 0, (LPCWSTR)lpBuffer, nNumberOfCharsToWrite, pszTemp, iMBCSLen, NULL, &bFailed);
