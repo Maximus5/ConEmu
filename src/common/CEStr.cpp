@@ -123,21 +123,21 @@ const wchar_t* CEStr::Right(ssize_t cchMaxCount) const
 	return ms_Val;
 }
 
-const wchar_t* CEStr::Mid(ssize_t cchOffset) const
+const wchar_t* CEStr::Mid(const ssize_t cchOffset) const
 {
-	CESTRLOG1("CEStr::Mid(%i)", cchOffset);
+	CESTRLOG1("CEStr::Mid(%i)", static_cast<int>(cchOffset));
 
 	if (!ms_Val || (cchOffset < 0))
 	{
 		_ASSERTE(cchOffset >= 0);
-		return NULL;
+		return L"";
 	}
 
-	ssize_t iLen = GetLen();
+	const ssize_t iLen = GetLen();
 	if (iLen < cchOffset)
 	{
 		_ASSERTE(iLen >= cchOffset);
-		return NULL;
+		return L"";
 	}
 
 	return (ms_Val + cchOffset);
