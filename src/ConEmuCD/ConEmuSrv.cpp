@@ -1635,7 +1635,8 @@ int WorkerServer::ProcessCommandLineArgs()
 		gpWorker->SetRootProcessId(GetCurrentProcessId());
 		gpWorker->SetRootProcessHandle(GetCurrentProcess());
 		//gState.conemuPid_ = ...;
-		
+
+		SafeFree(gpszRunCmd);
 		gpszRunCmd = lstrdup(L"");
 
 		CreateColorerHeader();

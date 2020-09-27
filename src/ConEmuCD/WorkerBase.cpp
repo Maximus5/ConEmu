@@ -253,15 +253,19 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	int iRc = 0;
 
 	// Validate Сonsole (find it may be) or ChildGui process we need to attach into ConEmu window
-	if (((gState.runMode_ == RunMode::Server) || (gState.runMode_ == RunMode::AutoAttach))
+	if (((gState.runMode_ == RunMode::Server) || (gState.runMode_ == RunMode::AltServer)  || (gState.runMode_ == RunMode::AutoAttach))
 		&& (gState.noCreateProcess_ && gState.attachMode_))
 	{
-		// Проверить процессы в консоли, подобрать тот, который будем считать "корневым"
-		const int nChk = CheckAttachProcess();
+		if (gState.runMode_ != RunMode::AltServer)
+		{
+			// Check running processes in our console and select one to be "root"
+			const int nChk = CheckAttachProcess();
 
-		if (nChk != 0)
-			return nChk;
+			if (nChk != 0)
+				return nChk;
+		}
 
+		SafeFree(gpszRunCmd);
 		gpszRunCmd = lstrdup(L"");
 
 		if (!gpszRunCmd)
@@ -400,8 +404,9 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	}
 
 	// nCmdLine counts length of lsCmdLine + gszComSpec + something for "/C" and things
-	size_t nCchLen = nCmdLine+1;
-	gpszRunCmd = (wchar_t*)calloc(nCchLen,sizeof(wchar_t));
+	const size_t nCchLen = nCmdLine + 1;
+	SafeFree(gpszRunCmd);
+	gpszRunCmd = static_cast<wchar_t*>(calloc(nCchLen, sizeof(wchar_t)));
 
 	if (!gpszRunCmd)
 	{

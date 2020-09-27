@@ -177,7 +177,8 @@ int DebuggerInfo::RunDebugger()
 		_ASSERTE(!this->bDebuggerActive);
 	}
 
-	gpszRunCmd = static_cast<wchar_t*>(calloc(1, sizeof(*gpszRunCmd)));
+	SafeFree(gpszRunCmd);
+	gpszRunCmd = lstrdup(L"");
 	if (!gpszRunCmd)
 	{
 		_printf("Can't allocate 1 wchar!\n");

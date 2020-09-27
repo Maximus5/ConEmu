@@ -859,7 +859,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 	gpConsoleArgs = new ConsoleArgs();
 
 	// Parse command line
-	const auto argsRc = gpConsoleArgs->ParseCommandLine(pszFullCmdLine);
+	const auto argsRc = gpConsoleArgs->ParseCommandLine(pszFullCmdLine, anWorkMode);
 	switch (argsRc)
 	{
 	case 0:
@@ -893,7 +893,8 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		break;
 	default:
 		_ASSERTE(gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AltServer
-			|| gState.runMode_ == RunMode::Comspec || gState.runMode_ == RunMode::Undefined);
+			|| gState.runMode_ == RunMode::Comspec || gState.runMode_ == RunMode::Undefined
+			|| gState.runMode_ == RunMode::SetHook64);
 		break;
 	}
 
@@ -916,6 +917,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		gpWorker = new WorkerComspec;
 		break;
 	case RunMode::GuiMacro:
+	case RunMode::SetHook64:
 		gpWorker = new WorkerBase;
 		break;
 	default:
@@ -1145,7 +1147,7 @@ int __stdcall ConsoleMain3(const ConsoleMainMode anWorkMode, LPCWSTR asCmdLine)
 		wchar_t* pszExpandedCmd = ParseConEmuSubst(gpszRunCmd);
 		if (pszExpandedCmd)
 		{
-			free(gpszRunCmd);
+			SafeFree(gpszRunCmd);
 			gpszRunCmd = pszExpandedCmd;
 		}
 

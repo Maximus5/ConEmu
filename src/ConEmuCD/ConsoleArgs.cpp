@@ -42,6 +42,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Actions.h"
 #include "ConsoleMain.h"
 #include "ExitCodes.h"
+#include "ExportedFunctions.h"
 
 #include "../common/CmdLine.h"
 #include "../common/MStrDup.h"
@@ -368,12 +369,21 @@ bool ConsoleArgs::IsForceHideConWnd() const
 /// Parse command line into member variables
 /// </summary>
 /// <param name="pszCmdLine">Full command line of ConEmuC.exe or argument passes to ConsoleMain3</param>
+/// <param name="anWorkMode">Passed from ConsoleMain3</param>
 /// <returns>0 on success or error code otherwise</returns>
-int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
+int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWorkMode)
 {
 	LogFunction(L"ParseCommandLine");
-	
+
 	_ASSERTE(pszCmdLine!=nullptr);
+
+	if (anWorkMode == ConsoleMainMode::AltServer)
+	{
+		// Skip argument parsing, we were loaded into already running process
+		gState.runMode_ = RunMode::AltServer;
+		return 0;
+	}
+
 	fullCmdLine_.Set(pszCmdLine ? pszCmdLine : L"");
 
 	// pszCmdLine *may* or *may not* start with our executable or full path to our executable
@@ -491,12 +501,14 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine)
 		}
 		else if (szArg.IsSwitch(L"/SetHooks="))
 		{
+			gState.runMode_ = RunMode::SetHook64;
 			eExecAction_ = ConEmuExecAction::InjectHooks;
 			command_.Set(szArg.GetExtra());
 			break;
 		}
 		else if (szArg.IsSwitch(L"/INJECT="))
 		{
+			gState.runMode_ = RunMode::SetHook64;
 			eExecAction_ = ConEmuExecAction::InjectRemote;
 			command_.Set(szArg.GetExtra());
 			break;

@@ -59,18 +59,22 @@ ConProcess::ConProcess(const MModule& kernel32)
 {
 	if (kernel32.GetProcAddress("GetConsoleProcessList", pfnGetConsoleProcessList))
 	{
-		SetLastError(0);
-		startProcessCount_ = pfnGetConsoleProcessList(startProcessIds_, countof(startProcessIds_));
-		// Wine bug validation
-		if (!startProcessCount_)
+		// Don't try to retrieve processes for service modes (e.g. /SetHook) started detached from conhost
+		if (gState.runMode_ == RunMode::Server || gState.runMode_ == RunMode::AltServer)
 		{
-			const DWORD nErr = GetLastError();
-			_ASSERTE(startProcessCount_ || gState.isWine_);
-			wchar_t szDbgMsg[512], szFile[MAX_PATH] = {};
-			GetModuleFileName(nullptr, szFile, countof(szFile));
-			msprintf(szDbgMsg, countof(szDbgMsg), L"%s: PID=%u: GetConsoleProcessList failed, code=%u\r\n", PointToName(szFile), gnSelfPID, nErr);
-			_wprintf(szDbgMsg);
-			pfnGetConsoleProcessList = nullptr;
+			SetLastError(0);
+			startProcessCount_ = pfnGetConsoleProcessList(startProcessIds_, countof(startProcessIds_));
+			// Wine bug validation
+			if (!startProcessCount_)
+			{
+				const DWORD nErr = GetLastError();
+				_ASSERTE(startProcessCount_ || gState.isWine_);
+				wchar_t szDbgMsg[512], szFile[MAX_PATH] = {};
+				GetModuleFileName(nullptr, szFile, countof(szFile));
+				msprintf(szDbgMsg, countof(szDbgMsg), L"%s: PID=%u: GetConsoleProcessList failed, code=%u\r\n", PointToName(szFile), gnSelfPID, nErr);
+				_wprintf(szDbgMsg);
+				pfnGetConsoleProcessList = nullptr;
+			}
 		}
 	}
 	

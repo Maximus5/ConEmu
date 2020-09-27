@@ -70,19 +70,20 @@ bool isTerminalMode()
 		{
 			int nSteps = 128; // protection from recursion
 			DWORD nParentPID = P.th32ParentProcessID;
-			DEBUGTEST(DWORD nSelfParentPID = P.th32ParentProcessID);
+			DEBUGTEST(const DWORD nSelfParentPID = P.th32ParentProcessID);
 			while (nSteps-- > 0)
 			{
 				if (!prc.Find(nParentPID, &P))
 				{
 					#ifdef _DEBUG // due to unittests
-					_ASSERTE((nParentPID != nSelfParentPID) && "Failed to load parent process information");
+					// May happens when ConEmuC started some process in /Async mode
+					// _ASSERTE((nParentPID != nSelfParentPID) && "Failed to load parent process information");
 					#endif
 					break;
 				}
 
-				if ((0 == lstrcmpi(P.szExeFile, L"tlntsess.exe"))
-					|| (0 == lstrcmpi(P.szExeFile, L"tlntsvr.exe")))
+				// ReSharper disable twice StringLiteralTypo
+				if ((0 == lstrcmpi(P.szExeFile, L"tlntsess.exe")) || (0 == lstrcmpi(P.szExeFile, L"tlntsvr.exe")))
 				{
 					TerminalMode = TerminalChecked = true;
 					break;

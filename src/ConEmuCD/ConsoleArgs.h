@@ -34,6 +34,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/defines.h"
 #include "../common/RConStartArgs.h"
 
+enum class ConsoleMainMode;
+
 enum class SwitchType
 {
 	None,
@@ -160,7 +162,7 @@ protected:
 	static void ShowComspecStartedMsgBox(LPCWSTR asCmdLine);
 	void AddConEmuArg(LPCWSTR asSwitch, LPCWSTR asValue);
 public:
-	int ParseCommandLine(LPCWSTR pszCmdLine);
+	int ParseCommandLine(LPCWSTR pszCmdLine, ConsoleMainMode anWorkMode);
 	bool IsAutoAttachAllowed() const;
 	bool IsForceHideConWnd() const;
 
