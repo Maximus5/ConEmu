@@ -629,7 +629,7 @@ LPCWSTR SettingsXML::utf2wcs(const char* utf8, CEStr& wc)
 // Just a wrapper for WideCharToMultiByte
 const char* SettingsXML::wcs2utf(const wchar_t* wc, CEStrA& str) const
 {
-	str.clear();
+	str.Clear();
 	int ucLen = WideCharToMultiByte(CP_UTF8, 0, wc, -1, NULL, 0, NULL, NULL);
 	str = (char*)malloc(ucLen);
 	if (!str.ms_Val)
@@ -641,7 +641,7 @@ const char* SettingsXML::wcs2utf(const wchar_t* wc, CEStrA& str) const
 	if (ucLen <= 0)
 	{
 		_ASSERTE(ucLen > 0);
-		str.clear();
+		str.Clear();
 		return nullptr;
 	}
 	return str.ms_Val;
@@ -1175,7 +1175,7 @@ bool SettingsXML::Load(const wchar_t *regName, wchar_t **value) noexcept
 			if (!lines.empty())
 			{
 				// ASCIIZ,ASCIIZ,...,ASCIIZ buffer
-				if (char* buffer = data.getbuffer(cchMax))
+				if (char* buffer = data.GetBuffer(cchMax))
 				{
 					for (INT_PTR i = 0; i < lines.size(); ++i)
 					{
@@ -1587,7 +1587,7 @@ void SettingsXML::Save(const wchar_t *regName, LPCBYTE value, const DWORD nType,
 					static char sHEX[] = "hex";
 					DWORD nLen = nSize*2 + (nSize-1);
 					CEStrA temp;
-					char* psz = temp.getbuffer(nLen);
+					char* psz = temp.GetBuffer(nLen);
 					if (!psz)
 						goto wrap;
 					LPCBYTE  ptr = value;

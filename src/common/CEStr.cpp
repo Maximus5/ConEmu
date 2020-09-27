@@ -30,14 +30,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Common.h"
 #include "CEStr.h"
 #include "MStrDup.h"
-#include "WObjects.h"
 
 #if CE_UNIT_TEST==1
-	#include <stdio.h>
+	#include <cstdio>
 	extern bool gbVerifyVerbose;
+	// ReSharper disable once IdentifierTypo
 	#define CESTRLOG0(msg) if (gbVerifyVerbose) printf("  %s\n",(msg))
+	// ReSharper disable once IdentifierTypo
 	#define CESTRLOG1(fmt,a1) if (gbVerifyVerbose) printf("  " fmt "\n",(a1))
+	// ReSharper disable once IdentifierTypo
 	#define CESTRLOG2(fmt,a1,a2) if (gbVerifyVerbose) printf("  " fmt "\n",(a1),(a2))
+	// ReSharper disable once IdentifierTypo
 	#define CESTRLOG3(fmt,a1,a2,a3) if (gbVerifyVerbose) printf("  " fmt "\n",(a1),(a2),(a3))
 #else
 	#define CESTRLOG0(msg)
@@ -53,7 +56,9 @@ CEStr::CEStr()
 	Empty();
 }
 
-CEStr::CEStr(const wchar_t* asStr1, const wchar_t* asStr2/*= NULL*/, const wchar_t* asStr3/*= NULL*/, const wchar_t* asStr4/*= NULL*/, const wchar_t* asStr5/*= NULL*/, const wchar_t* asStr6/*= NULL*/, const wchar_t* asStr7/*= NULL*/, const wchar_t* asStr8/*= NULL*/, const wchar_t* asStr9/*= NULL*/)
+CEStr::CEStr(const wchar_t* asStr1, const wchar_t* asStr2/*= nullptr*/, const wchar_t* asStr3/*= nullptr*/,
+	const wchar_t* asStr4/*= nullptr*/, const wchar_t* asStr5/*= nullptr*/, const wchar_t* asStr6/*= nullptr*/,
+	const wchar_t* asStr7/*= nullptr*/, const wchar_t* asStr8/*= nullptr*/, const wchar_t* asStr9/*= nullptr*/)
 {
 	CESTRLOG3("CEStr::CEStr(const wchar_t* x%p, x%p, x%p, ...)", asStr1, asStr2, asStr3);
 	Empty();
@@ -61,26 +66,29 @@ CEStr::CEStr(const wchar_t* asStr1, const wchar_t* asStr2/*= NULL*/, const wchar
 	AttachInt(lpszMerged);
 }
 
-CEStr::CEStr(CEStr&& asStr)
+CEStr::CEStr(CEStr&& asStr) noexcept
 {
+	CESTRLOG1("CEStr::CEStr(CEStr&& x%p)", asStr.ms_Val);
 	std::swap(ms_Val, asStr.ms_Val);
 	std::swap(mn_MaxCount, asStr.mn_MaxCount);
 }
 
 CEStr::CEStr(const CEStr& asStr)
 {
-	Set(asStr.ms_Val);
+	CESTRLOG1("CEStr::CEStr(const CEStr& x%p)", asStr.ms_Val);
+	Set(asStr.c_str());
 }
 
-CEStr::CEStr(wchar_t*&& asPtr)
+CEStr::CEStr(wchar_t*&& asPtr) noexcept
 {
 	CESTRLOG1("CEStr::CEStr(wchar_t*&& x%p)", asPtr);
-	Empty();
 	AttachInt(asPtr);
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 void CEStr::Empty()
 {
+	CESTRLOG0("CEStr::Empty()");
 	if (ms_Val)
 	{
 		*ms_Val = 0;
@@ -98,26 +106,26 @@ CEStr::operator bool() const
 	return (!IsEmpty());
 }
 
-const wchar_t* CEStr::c_str(const wchar_t* asNullSubstitute /*= NULL*/) const
+const wchar_t* CEStr::c_str(const wchar_t* asNullSubstitute /*= nullptr*/) const
 {
 	CESTRLOG0("CEStr::c_str()");
 	return ms_Val ? ms_Val : asNullSubstitute;
 }
 
 // cchMaxCount - including terminating \0
-const wchar_t* CEStr::Right(ssize_t cchMaxCount) const
+const wchar_t* CEStr::Right(const ssize_t cchMaxCount) const
 {
-	CESTRLOG1("CEStr::Right(%i)", (int)cchMaxCount);
+	CESTRLOG1("CEStr::Right(%i)", static_cast<int>(cchMaxCount));
 	if (cchMaxCount <= 0)
 	{
 		_ASSERTE(cchMaxCount > 0);
-		return NULL;
+		return nullptr;
 	}
 
 	if (!ms_Val || !*ms_Val)
 		return ms_Val;
 
-	ssize_t iLen = GetLen();
+	const ssize_t iLen = GetLen();
 	if (iLen >= cchMaxCount)
 		return (ms_Val + (iLen - cchMaxCount + 1));
 	return ms_Val;
@@ -143,9 +151,10 @@ const wchar_t* CEStr::Mid(const ssize_t cchOffset) const
 	return (ms_Val + cchOffset);
 }
 
-CEStr& CEStr::operator=(CEStr&& asStr)
+CEStr& CEStr::operator=(CEStr&& asStr) noexcept
 {
-	if (ms_Val == asStr.ms_Val)
+	CESTRLOG1("CEStr::operator=(CEStr&& x%p)", asStr.ms_Val);
+	if (ms_Val == asStr.ms_Val || this == &asStr)
 		return *this;
 	Clear();
 	std::swap(ms_Val, asStr.ms_Val);
@@ -155,23 +164,28 @@ CEStr& CEStr::operator=(CEStr&& asStr)
 
 CEStr& CEStr::operator=(const CEStr& asStr)
 {
-	if (ms_Val == asStr.ms_Val)
+	CESTRLOG1("CEStr::operator=(const CEStr& x%p)", asStr.ms_Val);
+	if (ms_Val == asStr.ms_Val || this == &asStr)
 		return *this;
 	Clear();
 	Set(asStr.ms_Val);
 	return *this;
 }
 
-CEStr& CEStr::operator=(wchar_t*&& asPtr)
+CEStr& CEStr::operator=(wchar_t*&& asPtr) noexcept
 {
 	CESTRLOG1("CEStr::operator=(wchar_t*&& x%p)", asPtr);
+	if (ms_Val == asPtr)
+		return *this;
 	AttachInt(asPtr);
 	return *this;
 }
 
 CEStr& CEStr::operator=(const wchar_t* asPtr)
 {
-	CESTRLOG1("CEStr::=(const wchar_t* x%p)", asPtr);
+	CESTRLOG1("CEStr::operator=(const wchar_t* x%p)", asPtr);
+	if (ms_Val == asPtr)
+		return *this;
 	Set(asPtr);
 	return *this;
 }
@@ -187,8 +201,9 @@ CEStr::~CEStr()
 	SafeFree(ms_Val);
 }
 
-void CEStr::swap(CEStr& asStr)
+void CEStr::swap(CEStr& asStr) noexcept
 {
+	CESTRLOG1("CEStr::swap(x%p)", asStr.ms_Val);
 	std::swap(ms_Val, asStr.ms_Val);
 	std::swap(mn_MaxCount, asStr.mn_MaxCount);
 }
@@ -197,13 +212,13 @@ ssize_t CEStr::GetLen() const
 {
 	if (!ms_Val || !*ms_Val)
 		return 0;
-	size_t iLen = wcslen(ms_Val);
-	if ((ssize_t)iLen < 0)
+	const size_t iLen = wcslen(ms_Val);
+	if (static_cast<ssize_t>(iLen) < 0)
 	{
-		_ASSERTE((ssize_t)iLen >= 0);
+		_ASSERTE(static_cast<ssize_t>(iLen) >= 0);
 		return 0;
 	}
-	return (ssize_t)iLen;
+	return static_cast<ssize_t>(iLen);
 }
 
 ssize_t CEStr::GetMaxCount()
@@ -213,38 +228,49 @@ ssize_t CEStr::GetMaxCount()
 	return mn_MaxCount;
 }
 
-wchar_t* CEStr::GetBuffer(ssize_t cchMaxLen)
+wchar_t* CEStr::GetBuffer(const ssize_t cchMaxLen)
 {
-	CESTRLOG1("CEStr::GetBuffer(%i)", (int)cchMaxLen);
+	CESTRLOG1("CEStr::GetBuffer(%i)", static_cast<int>(cchMaxLen));
 
 	if (cchMaxLen <= 0)
 	{
-		_ASSERTE(cchMaxLen>0);
-		return NULL;
+		_ASSERTE(cchMaxLen > 0);
+		return nullptr;
 	}
 
 	// if ms_Val was used externally (by lstrmerge for example),
 	// than GetMaxCount() will update mn_MaxCount
-	ssize_t nOldLen = (ms_Val && (GetMaxCount() > 0)) ? (mn_MaxCount-1) : 0;
+	const ssize_t nOldLen = (ms_Val && (GetMaxCount() > 0)) ? (mn_MaxCount - 1) : 0;
 
 	if (!ms_Val || (cchMaxLen >= mn_MaxCount))
 	{
-		ssize_t nNewMaxLen = std::max(mn_MaxCount,cchMaxLen+1);
+		const ssize_t newMaxCount = std::max(mn_MaxCount, cchMaxLen + 1);
 		if (ms_Val)
 		{
-			ms_Val = (wchar_t*)realloc(ms_Val, nNewMaxLen*sizeof(*ms_Val));
+			auto* newPtr = static_cast<wchar_t*>(realloc(ms_Val, newMaxCount * sizeof(*ms_Val)));
+			if (!newPtr)
+			{
+				_ASSERTE(newPtr != nullptr && "Failed to allocate more space");
+				return nullptr;
+			}
+			ms_Val = newPtr;
 		}
 		else
 		{
-			ms_Val = (wchar_t*)malloc(nNewMaxLen*sizeof(*ms_Val));
+			ms_Val = static_cast<wchar_t*>(malloc(newMaxCount * sizeof(*ms_Val)));
+			if (!ms_Val)
+			{
+				_ASSERTE(FALSE && "Failed to allocate buffer");
+				return nullptr;
+			}
 		}
-		mn_MaxCount = nNewMaxLen;
+		mn_MaxCount = newMaxCount;
 	}
 
 	if (ms_Val)
 	{
-		_ASSERTE(cchMaxLen>0 && nOldLen>=0);
-		ms_Val[std::min(cchMaxLen,nOldLen)] = 0;
+		_ASSERTE(cchMaxLen > 0 && nOldLen >= 0 && std::min(cchMaxLen,nOldLen) < GetMaxCount());
+		ms_Val[std::min(cchMaxLen,nOldLen)] = '\0';
 	}
 
 	CESTRLOG1("  ms_Val=x%p", ms_Val);
@@ -256,22 +282,34 @@ wchar_t* CEStr::Detach()
 {
 	CESTRLOG1("CEStr::Detach()=x%p", ms_Val);
 
-	wchar_t* psz = NULL;
+	wchar_t* psz = nullptr;
 	std::swap(psz, ms_Val);
 	mn_MaxCount = 0;
-	Empty();
+
+	_ASSERTE(IsEmpty());
 
 	return psz;
 }
 
-void CEStr::Clear()
+void CEStr::Clear(const StrClearFlags flags /*= StrClearFlags::Release*/)
 {
-	wchar_t* ptr = Detach();
-	SafeFree(ptr);
+	CESTRLOG1("CEStr::Clear(x%p)", ms_Val);
+	if (flags == StrClearFlags::Release)
+	{
+		wchar_t* ptr = Detach();
+		SafeFree(ptr);
+	}
+	else if (ms_Val)
+	{
+		ms_Val[0] = 0;
+	}
 }
 
-const wchar_t* CEStr::Append(const wchar_t* asStr1, const wchar_t* asStr2 /*= NULL*/, const wchar_t* asStr3 /*= NULL*/, const wchar_t* asStr4 /*= NULL*/, const wchar_t* asStr5 /*= NULL*/, const wchar_t* asStr6 /*= NULL*/, const wchar_t* asStr7 /*= NULL*/, const wchar_t* asStr8 /*= NULL*/)
+const wchar_t* CEStr::Append(const wchar_t* asStr1, const wchar_t* asStr2 /*= nullptr*/, const wchar_t* asStr3 /*= nullptr*/,
+	const wchar_t* asStr4 /*= nullptr*/, const wchar_t* asStr5 /*= nullptr*/, const wchar_t* asStr6 /*= nullptr*/,
+	const wchar_t* asStr7 /*= nullptr*/, const wchar_t* asStr8 /*= nullptr*/)
 {
+	CESTRLOG1("CEStr::Append:x%p(...)", ms_Val);
 	lstrmerge(&ms_Val, asStr1, asStr2, asStr3, asStr4, asStr5, asStr6, asStr7, asStr8);
 	return ms_Val;
 }
@@ -284,6 +322,7 @@ const wchar_t* CEStr::Attach(wchar_t*&& asPtr)
 
 const wchar_t* CEStr::AttachInt(wchar_t*& asPtr)
 {
+	CESTRLOG1("CEStr::Attach(wchar_t*& x%p)", asPtr);
 	if (ms_Val == asPtr)
 	{
 		return ms_Val; // Already
@@ -295,16 +334,15 @@ const wchar_t* CEStr::AttachInt(wchar_t*& asPtr)
 	SafeFree(ms_Val);
 	if (asPtr)
 	{
-		size_t len = wcslen(asPtr);
-		if ((ssize_t)len < 0)
+		const size_t len = wcslen(asPtr);
+		if (static_cast<ssize_t>(len) < 0)
 		{
-			_ASSERTE((ssize_t)len >= 0);
+			_ASSERTE(static_cast<ssize_t>(len) >= 0);
 			return ms_Val;
 		}
 
-		ms_Val = asPtr;
-		asPtr = NULL;
-		mn_MaxCount = 1 + (ssize_t)len;
+		std::swap(ms_Val, asPtr);
+		mn_MaxCount = 1 + static_cast<ssize_t>(len);
 	}
 
 	CESTRLOG1("  ms_Val=x%p", ms_Val);
@@ -313,7 +351,7 @@ const wchar_t* CEStr::AttachInt(wchar_t*& asPtr)
 }
 
 // Safe comparing function
-int CEStr::Compare(const wchar_t* asText, bool abCaseSensitive /*= false*/) const
+int CEStr::Compare(const wchar_t* asText, const bool abCaseSensitive /*= false*/) const
 {
 	if (!ms_Val && asText)
 		return -1;
@@ -340,9 +378,9 @@ bool CEStr::IsEmpty() const
 	return (!ms_Val || !*ms_Val);
 }
 
-const wchar_t* CEStr::Set(const wchar_t* asNewValue, ssize_t anChars /*= -1*/)
+const wchar_t* CEStr::Set(const wchar_t* asNewValue, const ssize_t anChars /*= -1*/)
 {
-	CESTRLOG2("CEStr::Set(x%p,%i)", asNewValue, (int)anChars);
+	CESTRLOG2("CEStr::Set(x%p,%i)", asNewValue, static_cast<int>(anChars));
 
 	if (asNewValue)
 	{
@@ -350,7 +388,7 @@ const wchar_t* CEStr::Set(const wchar_t* asNewValue, ssize_t anChars /*= -1*/)
 			? ssize_t(wcslen(asNewValue))
 			: std::min<ssize_t>(anChars, wcslen(asNewValue));
 
-		// Assign empty but NOT NULL string
+		// Assign empty but NOT nullptr string
 		if (nNewLen <= 0)
 		{
 			//_ASSERTE(FALSE && "Check, if caller really need to set empty string???");
@@ -379,7 +417,7 @@ const wchar_t* CEStr::Set(const wchar_t* asNewValue, ssize_t anChars /*= -1*/)
 	}
 	else
 	{
-		// Make it NULL
+		// Make it nullptr
 		Empty();
 	}
 
@@ -388,10 +426,11 @@ const wchar_t* CEStr::Set(const wchar_t* asNewValue, ssize_t anChars /*= -1*/)
 	return ms_Val;
 }
 
+// ReSharper disable once CppMemberFunctionMayBeConst
 wchar_t CEStr::SetAt(const ssize_t nIdx, const wchar_t wc)
 {
 	wchar_t prev = 0;
-	if (ms_Val && (nIdx < mn_MaxCount))
+	if (ms_Val && (nIdx >= 0) && (nIdx < mn_MaxCount))
 	{
 		prev = ms_Val[nIdx];
 		ms_Val[nIdx] = wc;
@@ -401,44 +440,69 @@ wchar_t CEStr::SetAt(const ssize_t nIdx, const wchar_t wc)
 
 
 
+// *********************************
+//           CEStrConcat
+// *********************************
 
-// Minimalistic storage for ANSI/UTF8 strings
 CEStrA::CEStrA()
-	: ms_Val(nullptr)
 {
+	CESTRLOG0("CEStrA::CEStrA()");
+}
+
+CEStrA::~CEStrA()
+{
+	CESTRLOG1("CEStrA::~CEStrA(x%p)", ms_Val);
+
+	#ifdef _DEBUG
+	if (ms_Val)
+		*ms_Val = 0;
+	#endif
+	SafeFree(ms_Val);
 }
 
 CEStrA::CEStrA(const char* asPtr)
 {
+	CESTRLOG1("CEStrA::~CEStrA(x%p)", asPtr);
+
 	ms_Val = asPtr ? lstrdup(asPtr) : nullptr;
 }
 
-CEStrA::CEStrA(char*&& asPtr)
-	: ms_Val(nullptr)
+CEStrA::CEStrA(char*&& asPtr) noexcept
 {
-	std::swap(ms_Val, asPtr);
+	CESTRLOG1("CEStrA::CEStrA(char*&& x%p)", asPtr);
+
+	ms_Val = asPtr;
 }
 
 CEStrA::CEStrA(const CEStrA& src)
 {
+	CESTRLOG1("CEStrA::CEStrA(const CEStrA& x%p)", src.ms_Val);
+
 	ms_Val = src.ms_Val ? lstrdup(src.ms_Val) : nullptr;
 }
 
-CEStrA::CEStrA(CEStrA&& src)
-	: ms_Val(nullptr)
+CEStrA::CEStrA(CEStrA&& src) noexcept
 {
+	CESTRLOG1("CEStrA::CEStrA(CEStrA&& x%p)", src.ms_Val);
+
 	std::swap(ms_Val, src.ms_Val);
 }
 
 CEStrA& CEStrA::operator=(const char* asPtr)
 {
+	CESTRLOG1("CEStrA::operator=(const char* x%p)", asPtr);
+	if (ms_Val == asPtr)
+		return *this;
 	SafeFree(ms_Val);
 	ms_Val = asPtr ? lstrdup(asPtr) : nullptr;
 	return *this;
 }
 
-CEStrA& CEStrA::operator=(char*&& asPtr)
+CEStrA& CEStrA::operator=(char*&& asPtr) noexcept
 {
+	CESTRLOG1("CEStrA::operator=(char*&& x%p)", asPtr);
+	if (ms_Val == asPtr)
+		return *this;
 	SafeFree(ms_Val);
 	std::swap(ms_Val, asPtr);
 	return *this;
@@ -446,13 +510,19 @@ CEStrA& CEStrA::operator=(char*&& asPtr)
 
 CEStrA& CEStrA::operator=(const CEStrA& src)
 {
+	CESTRLOG1("CEStrA::operator=(const CEStrA& x%p)", src.ms_Val);
+	if (ms_Val == src.ms_Val || this == &src)
+		return *this;
 	SafeFree(ms_Val);
 	ms_Val = src.ms_Val ? lstrdup(src.ms_Val) : nullptr;
 	return *this;
 }
 
-CEStrA& CEStrA::operator=(CEStrA&& src)
+CEStrA& CEStrA::operator=(CEStrA&& src) noexcept
 {
+	CESTRLOG1("CEStrA::operator=(CEStrA&& x%p)", src.ms_Val);
+	if (ms_Val == src.ms_Val || this == &src)
+		return *this;
 	SafeFree(ms_Val);
 	std::swap(ms_Val, src.ms_Val);
 	return *this;
@@ -468,28 +538,37 @@ CEStrA::operator bool() const
 	return (ms_Val && *ms_Val);
 }
 
-const char* CEStrA::c_str(const char* asNullSubstitute /*= NULL*/) const
+// ReSharper disable once CppInconsistentNaming
+const char* CEStrA::c_str(const char* asNullSubstitute /*= nullptr*/) const
 {
 	return ms_Val ? ms_Val : asNullSubstitute;
 }
 
-ssize_t CEStrA::length() const
+ssize_t CEStrA::GetLen() const
 {
 	return ms_Val ? strlen(ms_Val) : 0;
 }
 
-void CEStrA::clear()
+void CEStrA::Clear(const StrClearFlags flags /*= StrClearFlags::Release*/)
 {
-	SafeFree(ms_Val);
+	CESTRLOG1("CEStrA::Clear(x%p)", ms_Val);
+	if (flags == StrClearFlags::Release)
+	{
+		SafeFree(ms_Val);
+	}
+	else if (ms_Val)
+	{
+		ms_Val[0] = 0;
+	}
 }
 
-// Reset the buffer to new empty data of required size
-char* CEStrA::getbuffer(ssize_t cchMaxLen)
+char* CEStrA::GetBuffer(const ssize_t cchMaxLen)
 {
-	clear();
+	CESTRLOG1("CEStrA::GetBuffer(%i)", static_cast<int>(cchMaxLen));
+	Clear();
 	if (cchMaxLen >= 0)
 	{
-		ms_Val = (char*)malloc(cchMaxLen+1);
+		ms_Val = static_cast<char*>(malloc(cchMaxLen + 1));
 		if (ms_Val)
 			ms_Val[0] = 0;
 	}
@@ -497,15 +576,20 @@ char* CEStrA::getbuffer(ssize_t cchMaxLen)
 }
 
 // Detach the pointer
-char* CEStrA::release()
+char* CEStrA::Detach()
 {
+	CESTRLOG1("CEStrA::Detach()=x%p", ms_Val);
 	char* ptr = nullptr;
 	std::swap(ptr, ms_Val);
-	clear(); // JIC
+	Clear(); // JIC
 	return ptr;
 }
 
-// CEStrConcat
+
+// *********************************
+//           CEStrConcat
+// *********************************
+
 void CEStrConcat::Append(const wchar_t* str)
 {
 	if (!str || !*str) return;
