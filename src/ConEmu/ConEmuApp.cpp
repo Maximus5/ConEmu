@@ -733,10 +733,17 @@ void SkipOneShowWindow()
 		return; // уже
 	bProcessed = true;
 
-	STARTUPINFO si = {sizeof(si)};
+	wchar_t szInfo[128];
+	STARTUPINFO si = {}; si.cb = sizeof(si);
 	GetStartupInfo(&si);
-	if (si.wShowWindow == SW_SHOWNORMAL)
+	swprintf_c(szInfo, L"StartupInfo: flags=0x%04X showWindow=%u", si.dwFlags, static_cast<uint32_t>(si.wShowWindow));
+	
+	if (!(si.dwFlags & STARTF_USESHOWWINDOW) || (si.wShowWindow == SW_SHOWNORMAL))
+	{
+		wcscat_c(szInfo, L", SkipOneShowWindow is not required");
+		gpConEmu->LogString(szInfo);
 		return; // финты не требуются
+	}
 
 	const wchar_t szSkipClass[] = L"ConEmuSkipShowWindow";
 	WNDCLASSEX wc = {sizeof(WNDCLASSEX), 0, SkipShowWindowProc, 0, 0,
@@ -749,7 +756,8 @@ void SkipOneShowWindow()
 		return;
 
 
-	gpConEmu->LogString(L"SkipOneShowWindow");
+	wcscat_c(szInfo, L", processing SkipOneShowWindow");
+	gpConEmu->LogString(szInfo);
 
 
 	gpConEmu->Taskbar_Init();
@@ -771,7 +779,6 @@ void SkipOneShowWindow()
 
 		if (gpSet->isLogging())
 		{
-			wchar_t szInfo[128];
 			swprintf_c(szInfo, L"Skip window 0x%08X was created and destroyed", LODWORD(hSkip));
 			gpConEmu->LogString(szInfo);
 		}
