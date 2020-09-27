@@ -46,59 +46,70 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 struct Switch
 {
-	CmdArg szSwitch;
-	CEStr szOpt;
+	CmdArg switch_;
+	CEStr opt_;
+
+	Switch(const Switch&) = delete;
+	Switch(Switch&&) = delete;
+	Switch& operator=(const Switch&) = delete;
+	Switch& operator=(Switch&&) = delete;
 
 	// Format examples: `-single` or `-dir "..."`
 	Switch(wchar_t*&& asSwitch, wchar_t*&& asOpt)
 	{
-		szSwitch.Attach(std::move(asSwitch));
-		szOpt.Attach(std::move(asOpt));
+		switch_.Attach(std::move(asSwitch));
+		opt_.Attach(std::move(asOpt));
 	}
 
 	~Switch()
 	{
-	};
+	}
 };
 
 struct SwitchParser
 {
-	MArray<Switch*> stdSwitches, ourSwitches;
-	CEStr szCmd, szDirSync, szConfig;
-	bool bCmdList; // `-runlist` was used
+	MArray<Switch*> stdSwitches_, ourSwitches_;
+	CEStr cmd_, dirSync_, config_;
+	bool cmdList_ = false; // `-runlist` was used
+
+	SwitchParser(const SwitchParser&) = delete;
+	SwitchParser(SwitchParser&&) = delete;
+	SwitchParser& operator=(const SwitchParser&) = delete;
+	SwitchParser& operator=(SwitchParser&&) = delete;
 
 	static LPCWSTR* GetSkipSwitches()
 	{
+		// ReSharper disable once IdentifierTypo
 		static LPCWSTR ppszSkipStd[] = {
 			L"-dir", L"-config",
 			L"-inside", L"-inside:", L"-here",
-			L"-multi", L"-nomulti",
+			L"-multi", L"-NoMulti",
 			L"-Single", L"-NoSingle", L"-ReUse",
 			L"-NoCascade", L"-DontCascade",
-			NULL};
+			nullptr};
 		return ppszSkipStd;
-	};
+	}
 
 	SwitchParser()
-		: bCmdList(false)
 	{
-	};
+	}
 
 	void ReleaseVectors()
 	{
 		Switch* p;
-		while (stdSwitches.pop_back(p))
+		while (stdSwitches_.pop_back(p))
 			SafeDelete(p);
-		while (ourSwitches.pop_back(p))
+		while (ourSwitches_.pop_back(p))
 			SafeDelete(p);
-	};
+	}
 
 	~SwitchParser()
 	{
 		ReleaseVectors();
-	};
+	}
 
-	bool IsIgnored(Switch* ps, LPCWSTR* ppszSkip)
+	// ReSharper disable once IdentifierTypo
+	static bool IsIgnored(Switch* ps, LPCWSTR* ppszSkip)
 	{
 		if (!ps)
 		{
@@ -109,16 +120,16 @@ struct SwitchParser
 		{
 			while (*ppszSkip)
 			{
-				if (ps->szSwitch.IsSwitch(*ppszSkip))
+				if (ps->switch_.IsSwitch(*ppszSkip))
 					return true;
 				ppszSkip++;
 			}
 		}
 
 		return false;
-	};
+	}
 
-	bool IsIgnored(Switch* ps, MArray<Switch*>& Skip)
+	static bool IsIgnored(Switch* ps, MArray<Switch*>& Skip)
 	{
 		if (!ps)
 		{
@@ -127,10 +138,10 @@ struct SwitchParser
 
 		for (INT_PTR i = Skip.size()-1; i >= 0; i--)
 		{
-			if (!ps->szSwitch.IsSwitch(Skip[i]->szSwitch))
+			if (!ps->switch_.IsSwitch(Skip[i]->switch_))
 				continue;
 
-			if (0 != ps->szOpt.Compare(Skip[i]->szOpt, true))
+			if (0 != ps->opt_.Compare(Skip[i]->opt_, true))
 			{
 				// Allow to add switch?
 				return false;
@@ -139,55 +150,55 @@ struct SwitchParser
 		}
 
 		return false;
-	};
+	}
 
-	Switch* GetNextSwitch(LPCWSTR& rpsz, CEStr& szArg)
+	static Switch* GetNextSwitch(LPCWSTR& rpsz, CEStr& szArg)
 	{
 		LPCWSTR psz = rpsz;
 		CmdArg szNext;
 
-		if ((psz = NextArg(psz, szNext)) && !szNext.IsPossibleSwitch())
+		if (((psz = NextArg(psz, szNext))) && !szNext.IsPossibleSwitch())
 			rpsz = psz;
 		else
 			szNext.Clear();
 
-		Switch* ps = new Switch(szArg.Detach(), szNext.Detach());
+		auto* ps = new Switch(szArg.Detach(), szNext.Detach());
 		return ps;
-	};
+	}
 
-	Switch* GetNextPair(LPCWSTR& rpsz)
+	// ReSharper disable once IdentifierTypo
+	static Switch* GetNextPair(LPCWSTR& rpsz)
 	{
 		LPCWSTR psz = rpsz;
 		CmdArg szArg;
 
-		if (!(psz = NextArg(psz, szArg)))
+		if (!((psz = NextArg(psz, szArg))))
 		{
-			return NULL;
+			return nullptr;
 		}
 
 		// Invalid switch? or first argument (our executable)
 		if (!szArg.IsPossibleSwitch())
 		{
 			rpsz = psz;
-			return NULL;
+			return nullptr;
 		}
 
 		rpsz = psz;
 
 		return GetNextSwitch(rpsz, szArg);
-	};
+	}
 
 	// Parse switches stored in gpConEmu during initialization (AppendExtraArgs)
 	// These are, for example, `-lngfile`, `-fontdir`, and so on.
 	void ParseStdSwitches()
 	{
-		_ASSERTE(stdSwitches.empty());
+		_ASSERTE(stdSwitches_.empty());
 
-		CEStr szArg, szNext, lsExta;
-		LPCWSTR psz, pszExtraArgs;
+		CEStr szArg, szNext, lsExtra;
 
-		pszExtraArgs = gpConEmu->MakeConEmuStartArgs(lsExta);
-		psz = pszExtraArgs;
+		const LPCWSTR pszExtraArgs = gpConEmu->MakeConEmuStartArgs(lsExtra);
+		LPCWSTR psz = pszExtraArgs;
 		while (psz && *psz)
 		{
 			Switch* ps = GetNextPair(psz);
@@ -200,9 +211,9 @@ struct SwitchParser
 				SafeDelete(ps);
 				continue;
 			}
-			stdSwitches.push_back(ps);
+			stdSwitches_.push_back(ps);
 		}
-	};
+	}
 
 	// pszFull comes from registry's [HKCR\Directory\shell\...\command]
 	// Example:
@@ -212,15 +223,14 @@ struct SwitchParser
 	// No sense to show them (e.g. "-lng ru") in the Integration dialog page
 	void LoadCommand(LPCWSTR pszFull)
 	{
-		bCmdList = false;
-		szCmd = L"";
-		szDirSync = L"";
-		szConfig = L"";
+		cmdList_ = false;
+		cmd_ = L"";
+		dirSync_ = L"";
+		config_ = L"";
 		ReleaseVectors();
 
 		CmdArg  szArg, szNext;
-		LPCWSTR psz;
-		Switch* ps = NULL;
+		Switch* ps = nullptr;
 
 		// First, parse our extra args (passed to current ConEmu.exe)
 		ParseStdSwitches();
@@ -228,7 +238,7 @@ struct SwitchParser
 		// Now parse new switches (command from registry or from field on Integration page)
 		// Drop `-dir "..."` (especially from registry) always!
 
-		psz = pszFull;
+		LPCWSTR psz = pszFull;
 		while ((psz = NextArg(psz, szArg)))
 		{
 			if (!szArg.IsPossibleSwitch())
@@ -240,79 +250,78 @@ struct SwitchParser
 			}
 			else if (szArg.IsSwitch(L"-inside:")) // Both "-inside:" and "-inside=" notations are supported
 			{
-				szDirSync.Set(szArg.Mid(8)); // may be empty!
+				dirSync_.Set(szArg.Mid(8)); // may be empty!
 			}
 			else if (szArg.IsSwitch(L"-config"))
 			{
-				if (!(psz = NextArg(psz, szArg)))
+				if (!((psz = NextArg(psz, szArg))))
 					break;
-				szConfig.Set(szArg);
+				config_.Set(szArg);
 			}
 			else if (szArg.IsSwitch(L"-dir"))
 			{
-				if (!(psz = NextArg(psz, szArg)))
+				if (!((psz = NextArg(psz, szArg))))
 					break;
 				_ASSERTE(lstrcmpi(szArg, L"%1")==0);
 			}
 			else if (szArg.OneOfSwitches(L"-Single", L"-NoSingle", L"-ReUse"))
 			{
-				ps = new Switch(szArg.Detach(), NULL);
-				ourSwitches.push_back(ps);
+				ps = new Switch(szArg.Detach(), nullptr);
+				ourSwitches_.push_back(ps);
 			}
-			else if (szArg.OneOfSwitches(L"-run", L"-cmd", L"-runlist", L"-cmdlist"))
+			else if (szArg.OneOfSwitches(L"-run", L"-cmd", L"-RunList", L"-CmdList"))
 			{
 				// FIN! LAST SWITCH!
-				szCmd.Set(psz);
-				bCmdList = szArg.OneOfSwitches(L"-runlist",L"-cmdlist");
+				cmd_.Set(psz);
+				cmdList_ = szArg.OneOfSwitches(L"-RunList",L"-CmdList");
 				break;
 			}
-			else if (NULL != (ps = GetNextSwitch(psz, szArg)))
+			else if (nullptr != (ps = GetNextSwitch(psz, szArg)))
 			{
 				if (IsIgnored(ps, GetSkipSwitches())
-					|| IsIgnored(ps, stdSwitches))
+					|| IsIgnored(ps, stdSwitches_))
 				{
 					SafeDelete(ps);
 				}
 				else
 				{
-					ourSwitches.push_back(ps);
+					ourSwitches_.push_back(ps);
 				}
 			}
 		}
-	};
+	}
 
 	// Create the command to show on the Integration settings page
 	LPCWSTR CreateCommand(CEStr& rsReady)
 	{
 		rsReady = L"";
 
-		for (INT_PTR i = 0; i < ourSwitches.size(); i++)
+		for (auto* ps : ourSwitches_)
 		{
-			Switch* ps = ourSwitches[i];
-			_ASSERTE(ps && !ps->szSwitch.IsEmpty());
-			bool bOpt = !ps->szOpt.IsEmpty();
-			bool bQuot = (bOpt && IsQuotationNeeded(ps->szOpt));
+			_ASSERTE(ps && !ps->switch_.IsEmpty());
+			const bool bOpt = !ps->opt_.IsEmpty();
+			const bool bQuot = (bOpt && IsQuotationNeeded(ps->opt_));
 			lstrmerge(&rsReady.ms_Val,
-				ps->szSwitch,
-				bOpt ? L" " : NULL,
-				bQuot ? L"\"" : NULL,
-				bOpt ? ps->szOpt.c_str() : NULL,
+				ps->switch_,
+				bOpt ? L" " : nullptr,
+				bQuot ? L"\"" : nullptr,
+				bOpt ? ps->opt_.c_str() : nullptr,
 				bQuot ? L"\" " : L" ");
 		}
 
-		if (!rsReady.IsEmpty() || bCmdList)
+		if (!rsReady.IsEmpty() || cmdList_)
 		{
 			// Add "-run" without command to depict we run ConEmu "as default"
 			lstrmerge(&rsReady.ms_Val,
-				bCmdList ? L"-runlist " : L"-run ", szCmd);
+				cmdList_ ? L"-RunList " : L"-run ", cmd_);
 		}
 		else
 		{
-			rsReady.Set(szCmd);
+			rsReady.Set(cmd_);
 		}
 
 		return rsReady.c_str(L"");
-	};
+	}
 };
 
 
@@ -332,11 +341,11 @@ LRESULT CSetPgIntegr::OnInitDialog(HWND hDlg, bool abInitial)
 	int iHere = 0, iInside = 0;
 	ReloadHereList(&iHere, &iInside);
 
-	// Возвращает NULL, если строка пустая
+	// Возвращает nullptr, если строка пустая
 	wchar_t* pszCurInside = GetDlgItemTextPtr(hDlg, cbInsideName);
-	_ASSERTE((pszCurInside==NULL) || (*pszCurInside!=0));
+	_ASSERTE((pszCurInside==nullptr) || (*pszCurInside!=0));
 	wchar_t* pszCurHere   = GetDlgItemTextPtr(hDlg, cbHereName);
-	_ASSERTE((pszCurHere==NULL) || (*pszCurHere!=0));
+	_ASSERTE((pszCurHere==nullptr) || (*pszCurHere!=0));
 
 	wchar_t szIcon[MAX_PATH+32];
 	swprintf_c(szIcon, L"%s,0", gpConEmu->ms_ConEmuExe);
@@ -376,13 +385,14 @@ LRESULT CSetPgIntegr::OnInitDialog(HWND hDlg, bool abInitial)
 
 INT_PTR CSetPgIntegr::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
 {
-	INT_PTR iRc = 0;
+	const INT_PTR iRc = 0;
 
 	switch (messg)
 	{
 	case WM_NOTIFY:
 		{
-			LPNMHDR phdr = (LPNMHDR)lParam;
+			// ReSharper disable once IdentifierTypo, CppLocalVariableMayBeConst
+			LPNMHDR phdr = reinterpret_cast<LPNMHDR>(lParam);
 
 			if (phdr->code == TTN_GETDISPINFO)
 			{
@@ -402,37 +412,38 @@ INT_PTR CSetPgIntegr::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 		{
 		case BN_CLICKED:
 			{
-				WORD CB = LOWORD(wParam);
-
-				switch (CB)
+				const WORD cb = LOWORD(wParam);
+				switch (cb)
 				{
 				case cbInsideSyncDir:
 					if (gpConEmu->mp_Inside)
 					{
-						gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir = isChecked2(hDlg, CB);
+						gpConEmu->mp_Inside->mb_InsideSynchronizeCurDir = isChecked2(hDlg, cb);
 					}
 					break;
 				case bInsideRegister:
 				case bInsideUnregister:
-					ShellIntegration(hDlg, ShellIntgr_Inside, CB==bInsideRegister);
+					ShellIntegration(hDlg, ShellIntegrType::Inside, cb==bInsideRegister);
 					ReloadHereList();
-					if (CB==bInsideUnregister)
+					if (cb==bInsideUnregister)
 						FillHereValues(cbInsideName);
 					break;
 				case bHereRegister:
 				case bHereUnregister:
-					ShellIntegration(hDlg, ShellIntgr_Here, CB==bHereRegister);
+					ShellIntegration(hDlg, ShellIntegrType::Here, cb==bHereRegister);
 					ReloadHereList();
-					if (CB==bHereUnregister)
+					if (cb==bHereUnregister)
 						FillHereValues(cbHereName);
+					break;
+				default:
 					break;
 				}
 			}
 			break; // BN_CLICKED
 		case EN_CHANGE:
 			{
-				WORD EB = LOWORD(wParam);
-				switch (EB)
+				const WORD eb = LOWORD(wParam);
+				switch (eb)  // NOLINT(hicpp-multiway-paths-covered)
 				{
 				case tInsideSyncDir:
 					if (gpConEmu->mp_Inside)
@@ -441,20 +452,24 @@ INT_PTR CSetPgIntegr::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 						gpConEmu->mp_Inside->ms_InsideSynchronizeCurDir = GetDlgItemTextPtr(hDlg, tInsideSyncDir);
 					}
 					break;
+				default:
+					break;
 				}
 			}
 			break; // EN_CHANGE
 		case CBN_SELCHANGE:
 			{
-				WORD CB = LOWORD(wParam);
-				switch (CB)
+				const WORD cb = LOWORD(wParam);
+				switch (cb)
 				{
 				case cbInsideName:
 				case cbHereName:
 					if (!mb_SkipSelChange)
 					{
-						FillHereValues(CB);
+						FillHereValues(cb);
 					}
+					break;
+				default:
 					break;
 				}
 			}
@@ -462,6 +477,8 @@ INT_PTR CSetPgIntegr::PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM l
 		} // switch (HIWORD(wParam))
 		break; // WM_COMMAND
 
+	default:
+		break;
 	}
 
 	return iRc;
@@ -477,21 +494,21 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfi
 
 	asCmd = SkipNonPrintable(asCmd);
 
-	bool isExtendedItem = isPressed(VK_SHIFT);
+	const bool isExtendedItem = isPressed(VK_SHIFT);
 
 	#ifdef _DEBUG
-	CmdArg szMode(asMode);
+	const CmdArg szMode(asMode);
 	_ASSERTE(szMode.IsSwitch(L"-here") || szMode.IsSwitch(L"-inside") || szMode.IsSwitch(L"-inside:"));
 	#endif
 
-	CEStr lsExta;
-	LPCWSTR pszExtraArgs = gpConEmu->MakeConEmuStartArgs(lsExta, asConfig);
+	CEStr lsExtra;
+	const LPCWSTR pszExtraArgs = gpConEmu->MakeConEmuStartArgs(lsExtra, asConfig);
 
-	size_t cchMax = _tcslen(gpConEmu->ms_ConEmuExe)
+	const size_t cchMax = _tcslen(gpConEmu->ms_ConEmuExe)
 		+ (asMode ? (_tcslen(asMode) + 3) : 0)
 		+ (pszExtraArgs ? (_tcslen(pszExtraArgs) + 1) : 0)
 		+ _tcslen(asCmd) + 32;
-	wchar_t* pszCmd = (wchar_t*)malloc(cchMax*sizeof(*pszCmd));
+	wchar_t* pszCmd = static_cast<wchar_t*>(malloc(cchMax*sizeof(*pszCmd)));
 	if (!pszCmd)
 		return;
 
@@ -538,7 +555,7 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfi
 	//@="C:\\Program Files\\ConEmu\\ConEmu.exe /inside /config shell /dir \"%1\" /cmd {powershell} -cur_console:n"
 
 	int iSucceeded = 0;
-	bool bHasLibraries = IsWindows7;
+	const bool bHasLibraries = IsWin7();
 
 	for (int i = 1; i <= 6; i++)
 	{
@@ -549,7 +566,7 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfi
 		// `-here`, `-inside` or `-inside:cd ...`
 		if (asMode && *asMode)
 		{
-			bool bQ = IsQuotationNeeded(asMode);
+			const bool bQ = IsQuotationNeeded(asMode);
 			if (bQ) _wcscat_c(pszCmd, cchMax, L"\"");
 			_wcscat_c(pszCmd, cchMax, asMode);
 			_wcscat_c(pszCmd, cchMax, bQ ? L"\" " : L" ");
@@ -562,7 +579,7 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfi
 			_wcscat_c(pszCmd, cchMax, L" ");
 		}
 
-		LPCWSTR pszRoot = NULL;
+		LPCWSTR pszRoot = nullptr;
 		switch (i)
 		{
 		case 1:
@@ -592,6 +609,8 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfi
 			//pszRoot = L"Software\\Classes\\LibraryFolder\\shell";
 			//_wcscat_c(pszCmd, cchMax, L"-dir \"%1\" ");
 			//break;
+		default:
+			break;
 		}
 
 		if (bAddRunSwitch)
@@ -599,31 +618,31 @@ void CSetPgIntegr::RegisterShell(LPCWSTR asName, LPCWSTR asMode, LPCWSTR asConfi
 		_wcscat_c(pszCmd, cchMax, asCmd);
 
 		HKEY hkRoot;
-		if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, pszRoot, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkRoot, NULL))
+		if (0 == RegCreateKeyEx(HKEY_CURRENT_USER, pszRoot, 0, nullptr, 0, KEY_ALL_ACCESS, nullptr, &hkRoot, nullptr))
 		{
 			HKEY hkConEmu;
-			if (0 == RegCreateKeyEx(hkRoot, asName, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkConEmu, NULL))
+			if (0 == RegCreateKeyEx(hkRoot, asName, 0, nullptr, 0, KEY_ALL_ACCESS, nullptr, &hkConEmu, nullptr))
 			{
 				// gh-1395: Force Explorer to use hotkey if specified
-				RegSetValueEx(hkConEmu, NULL, 0, REG_SZ, (LPBYTE)asName, (lstrlen(asName)+1)*sizeof(*asName));
+				RegSetValueEx(hkConEmu, nullptr, 0, REG_SZ, LPBYTE(asName), (lstrlen(asName)+1)*sizeof(*asName));
 
 				// The icon, if it was set
 				if (asIcon)
-					RegSetValueEx(hkConEmu, L"Icon", 0, REG_SZ, (LPBYTE)asIcon, (lstrlen(asIcon)+1)*sizeof(*asIcon));
+					RegSetValueEx(hkConEmu, L"Icon", 0, REG_SZ, LPBYTE(asIcon), (lstrlen(asIcon)+1)*sizeof(*asIcon));
 				else
 					RegDeleteValue(hkConEmu, L"Icon");
 
 				// The command
 				HKEY hkCmd;
-				if (0 == RegCreateKeyEx(hkConEmu, L"command", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkCmd, NULL))
+				if (0 == RegCreateKeyEx(hkConEmu, L"command", 0, nullptr, 0, KEY_ALL_ACCESS, nullptr, &hkCmd, nullptr))
 				{
-					if (0 == RegSetValueEx(hkCmd, NULL, 0, REG_SZ, (LPBYTE)pszCmd, (lstrlen(pszCmd)+1)*sizeof(*pszCmd)))
+					if (0 == RegSetValueEx(hkCmd, nullptr, 0, REG_SZ, reinterpret_cast<LPBYTE>(pszCmd), (lstrlen(pszCmd)+1)*sizeof(*pszCmd)))
 						iSucceeded++;
 					RegCloseKey(hkCmd);
 				}
 
 				// Extended item - Explorer shows them when 'Shift' is pressed
-				wchar_t szDummy[1] = {0};
+				wchar_t szDummy[2] = L"";
 				if (isExtendedItem)
 					RegSetValueEx(hkConEmu, L"Extended", 0, REG_SZ, reinterpret_cast<LPBYTE>(szDummy), 1*sizeof(szDummy[0]));
 				else
@@ -663,20 +682,20 @@ void CSetPgIntegr::UnregisterShellInvalids()
 			wchar_t szName[MAX_PATH+32] = {};
 			wchar_t szCmd[MAX_PATH*4];
 			DWORD cchMax = countof(szName) - 32;
-			if (0 != RegEnumKeyEx(hkDir, i, szName, &cchMax, NULL, NULL, NULL, NULL))
+			if (0 != RegEnumKeyEx(hkDir, i, szName, &cchMax, nullptr, nullptr, nullptr, nullptr))
 				break;
 			wchar_t* pszSlash = szName + _tcslen(szName);
 			wcscat_c(szName, L"\\command");
-			HKEY hkCmd = NULL;
+			HKEY hkCmd = nullptr;
 			if (0 == RegOpenKeyEx(hkDir, szName, 0, KEY_READ, &hkCmd))
 			{
 				DWORD cbMax = sizeof(szCmd)-2;
-				if (0 == RegQueryValueEx(hkCmd, NULL, NULL, NULL, (LPBYTE)szCmd, &cbMax))
+				if (0 == RegQueryValueEx(hkCmd, nullptr, nullptr, nullptr, reinterpret_cast<LPBYTE>(szCmd), &cbMax))
 				{
 					szCmd[cbMax>>1] = 0;
 					*pszSlash = 0;
 					//LPCWSTR pszInside = StrStrI(szCmd, L"-inside");
-					LPCWSTR pszConEmu = StrStrI(szCmd, L"conemu");
+					const LPCWSTR pszConEmu = StrStrI(szCmd, L"conemu");
 					if (pszConEmu)
 						lsNames.push_back(lstrdup(szName));
 					else
@@ -705,11 +724,11 @@ void CSetPgIntegr::UnregisterShellInvalids()
 	}
 }
 
-void CSetPgIntegr::ShellIntegration(HWND hDlg, CSetPgIntegr::ShellIntegrType iMode, bool bEnabled, bool bForced /*= false*/)
+void CSetPgIntegr::ShellIntegration(HWND hDlg, const ShellIntegrType iMode, const bool bEnabled)
 {
 	switch (iMode)
 	{
-	case ShellIntgr_Inside:
+	case ShellIntegrType::Inside:
 		{
 			wchar_t szName[MAX_PATH] = {};
 			GetDlgItemText(hDlg, cbInsideName, szName, countof(szName));
@@ -722,8 +741,8 @@ void CSetPgIntegr::ShellIntegration(HWND hDlg, CSetPgIntegr::ShellIntegrType iMo
 				if (isChecked(hDlg, cbInsideSyncDir))
 				{
 					wcscpy_c(szOpt, L"-inside:");
-					int nOL = lstrlen(szOpt); _ASSERTE(nOL==8);
-					GetDlgItemText(hDlg, tInsideSyncDir, szOpt+nOL, countof(szShell)-nOL);
+					const int opeLen = lstrlen(szOpt); _ASSERTE(opeLen==8);
+					GetDlgItemText(hDlg, tInsideSyncDir, szOpt+opeLen, countof(szShell)-opeLen);
 					if (szOpt[8] == 0)
 					{
 						szOpt[0] = 0;
@@ -741,7 +760,7 @@ void CSetPgIntegr::ShellIntegration(HWND hDlg, CSetPgIntegr::ShellIntegrType iMo
 		}
 		break;
 
-	case ShellIntgr_Here:
+	case ShellIntegrType::Here:
 		{
 			wchar_t szName[MAX_PATH] = {};
 			GetDlgItemText(hDlg, cbHereName, szName, countof(szName));
@@ -764,24 +783,24 @@ void CSetPgIntegr::ShellIntegration(HWND hDlg, CSetPgIntegr::ShellIntegrType iMo
 	}
 }
 
-bool CSetPgIntegr::ReloadHereList(int* pnHere /*= NULL*/, int* pnInside /*= NULL*/)
+bool CSetPgIntegr::ReloadHereList(int* pnHere /*= nullptr*/, int* pnInside /*= nullptr*/)
 {
 	if (pnHere) *pnHere = 0;
 	if (pnInside) *pnInside = 0;
 
-	HKEY hkDir = NULL;
-	size_t cchCmdMax = 65535;
-	wchar_t* pszCmd = (wchar_t*)calloc(cchCmdMax,sizeof(*pszCmd));
+	HKEY hkDir = nullptr;
+	const size_t cchCmdMax = 65535;
+	wchar_t* pszCmd = static_cast<wchar_t*>(calloc(cchCmdMax, sizeof(*pszCmd)));
 	if (!pszCmd)
 		return false;
 
 	int iTotalCount = 0;
 
-	// Возвращает NULL, если строка пустая
+	// Возвращает nullptr, если строка пустая
 	wchar_t* pszCurInside = GetDlgItemTextPtr(mh_Dlg, cbInsideName);
-	_ASSERTE((pszCurInside==NULL) || (*pszCurInside!=0));
+	_ASSERTE((pszCurInside==nullptr) || (*pszCurInside!=0));
 	wchar_t* pszCurHere   = GetDlgItemTextPtr(mh_Dlg, cbHereName);
-	_ASSERTE((pszCurHere==NULL) || (*pszCurHere!=0));
+	_ASSERTE((pszCurHere==nullptr) || (*pszCurHere!=0));
 
 	MSetter lSkip(&mb_SkipSelChange);
 
@@ -794,15 +813,15 @@ bool CSetPgIntegr::ReloadHereList(int* pnHere /*= NULL*/, int* pnInside /*= NULL
 		{
 			wchar_t szName[MAX_PATH+32] = {};
 			DWORD cchMax = countof(szName) - 32;
-			if (0 != RegEnumKeyEx(hkDir, i, szName, &cchMax, NULL, NULL, NULL, NULL))
+			if (0 != RegEnumKeyEx(hkDir, i, szName, &cchMax, nullptr, nullptr, nullptr, nullptr))
 				break;
 			wchar_t* pszSlash = szName + _tcslen(szName);
 			wcscat_c(szName, L"\\command");
-			HKEY hkCmd = NULL;
+			HKEY hkCmd = nullptr;
 			if (0 == RegOpenKeyEx(hkDir, szName, 0, KEY_READ, &hkCmd))
 			{
 				DWORD cbMax = (cchCmdMax-2) * sizeof(*pszCmd);
-				if (0 == RegQueryValueEx(hkCmd, NULL, NULL, NULL, (LPBYTE)pszCmd, &cbMax))
+				if (0 == RegQueryValueEx(hkCmd, nullptr, nullptr, nullptr, reinterpret_cast<LPBYTE>(pszCmd), &cbMax))
 				{
 					pszCmd[cbMax>>1] = 0;
 					*pszSlash = 0;
@@ -819,7 +838,7 @@ bool CSetPgIntegr::ReloadHereList(int* pnHere /*= NULL*/, int* pnInside /*= NULL
 								{
 									bHasInside = true; break;
 								}
-								else if (szArg.OneOfSwitches(L"-run",L"-runlist",L"-cmd",L"-cmdlist"))
+								else if (szArg.OneOfSwitches(L"-run",L"-RunList",L"-cmd",L"-CmdList"))
 								{
 									break; // stop checking
 								}
@@ -834,10 +853,10 @@ bool CSetPgIntegr::ReloadHereList(int* pnHere /*= NULL*/, int* pnInside /*= NULL
 							++(*pnCounter);
 						iTotalCount++;
 
-						UINT nListID = bHasInside ? cbInsideName : cbHereName;
-						SendDlgItemMessage(mh_Dlg, nListID, CB_ADDSTRING, 0, (LPARAM)szName);
+						const UINT nListID = bHasInside ? cbInsideName : cbHereName;
+						SendDlgItemMessage(mh_Dlg, nListID, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(szName));
 
-						if ((bHasInside ? pszCurInside : pszCurHere) == NULL)
+						if ((bHasInside ? pszCurInside : pszCurHere) == nullptr)
 						{
 							if (bHasInside)
 								pszCurInside = lstrdup(szName);
@@ -868,37 +887,38 @@ bool CSetPgIntegr::ReloadHereList(int* pnHere /*= NULL*/, int* pnInside /*= NULL
 	return (iTotalCount > 0);
 }
 
-void CSetPgIntegr::FillHereValues(WORD CB)
+void CSetPgIntegr::FillHereValues(const WORD cb) const
 {
 	CEStr szCmd;
 	SwitchParser Switches;
-	wchar_t *pszIco = NULL, *pszFull = NULL;
+	wchar_t *pszIco = nullptr, *pszFull = nullptr;
 
-	INT_PTR iSel = SendDlgItemMessage(mh_Dlg, CB, CB_GETCURSEL, 0,0);
+	const INT_PTR iSel = SendDlgItemMessage(mh_Dlg, cb, CB_GETCURSEL, 0,0);
 	if (iSel >= 0)
 	{
-		INT_PTR iLen = SendDlgItemMessage(mh_Dlg, CB, CB_GETLBTEXTLEN, iSel, 0);
-		size_t cchMax = iLen+128;
-		wchar_t* pszName = (wchar_t*)calloc(cchMax,sizeof(*pszName));
+		const INT_PTR iLen = SendDlgItemMessage(mh_Dlg, cb, CB_GETLBTEXTLEN, iSel, 0);
+		const size_t cchMax = iLen+128;
+		wchar_t* pszName = static_cast<wchar_t*>(calloc(cchMax, sizeof(*pszName)));
 		if ((iLen > 0) && pszName)
 		{
 			_wcscpy_c(pszName, cchMax, L"Directory\\shell\\");
-			SendDlgItemMessage(mh_Dlg, CB, CB_GETLBTEXT, iSel, (LPARAM)(pszName+_tcslen(pszName)));
+			SendDlgItemMessage(mh_Dlg, cb, CB_GETLBTEXT, iSel, reinterpret_cast<LPARAM>(pszName + _tcslen(pszName)));
 
-			HKEY hkShell = NULL;
+			HKEY hkShell = nullptr;
 			if (0 == RegOpenKeyEx(HKEY_CLASSES_ROOT, pszName, 0, KEY_READ, &hkShell))
 			{
 				DWORD nType;
-				DWORD nSize = MAX_PATH*2*sizeof(wchar_t);
-				pszIco = (wchar_t*)calloc(nSize+2,1);
-				if (0 != RegQueryValueEx(hkShell, L"Icon", NULL, &nType, (LPBYTE)pszIco, &nSize) || nType != REG_SZ)
+				DWORD nSize = MAX_PATH * 2 * sizeof(wchar_t);
+				pszIco = static_cast<wchar_t*>(calloc(nSize + sizeof(wchar_t), 1));
+				if (0 != RegQueryValueEx(hkShell, L"Icon", nullptr, &nType, reinterpret_cast<LPBYTE>(pszIco), &nSize) || nType != REG_SZ)
 					SafeFree(pszIco);
-				HKEY hkCmd = NULL;
+
+				HKEY hkCmd = nullptr;
 				if (0 == RegOpenKeyEx(hkShell, L"command", 0, KEY_READ, &hkCmd))
 				{
-					DWORD nSize = MAX_PATH*8*sizeof(wchar_t);
-					pszFull = (wchar_t*)calloc(nSize+2,1);
-					if (0 != RegQueryValueEx(hkCmd, NULL, NULL, &nType, (LPBYTE)pszFull, &nSize) || nType != REG_SZ)
+					nSize = MAX_PATH * 8 * sizeof(wchar_t);
+					pszFull = static_cast<wchar_t*>(calloc(nSize + sizeof(wchar_t), 1));
+					if (0 != RegQueryValueEx(hkCmd, nullptr, nullptr, &nType, reinterpret_cast<LPBYTE>(pszFull), &nSize) || nType != REG_SZ)
 					{
 						SafeFree(pszIco);
 					}
@@ -914,17 +934,17 @@ void CSetPgIntegr::FillHereValues(WORD CB)
 		SafeFree(pszName);
 	}
 
-	SetDlgItemText(mh_Dlg, (CB==cbInsideName) ? tInsideConfig : tHereConfig,
-		Switches.szConfig.c_str(L""));
-	SetDlgItemText(mh_Dlg, (CB==cbInsideName) ? tInsideShell : tHereShell,
+	SetDlgItemText(mh_Dlg, (cb==cbInsideName) ? tInsideConfig : tHereConfig,
+		Switches.config_.c_str(L""));
+	SetDlgItemText(mh_Dlg, (cb==cbInsideName) ? tInsideShell : tHereShell,
 		Switches.CreateCommand(szCmd));
-	SetDlgItemText(mh_Dlg, (CB==cbInsideName) ? tInsideIcon : tHereIcon,
+	SetDlgItemText(mh_Dlg, (cb==cbInsideName) ? tInsideIcon : tHereIcon,
 		pszIco ? pszIco : L"");
 
-	if (CB==cbInsideName)
+	if (cb==cbInsideName)
 	{
-		SetDlgItemText(mh_Dlg, tInsideSyncDir, Switches.szDirSync.c_str(L""));
-		checkDlgButton(mh_Dlg, cbInsideSyncDir, Switches.szDirSync ? BST_CHECKED : BST_UNCHECKED);
+		SetDlgItemText(mh_Dlg, tInsideSyncDir, Switches.dirSync_.c_str(L""));
+		checkDlgButton(mh_Dlg, cbInsideSyncDir, Switches.dirSync_ ? BST_CHECKED : BST_UNCHECKED);
 	}
 
 	SafeFree(pszFull);

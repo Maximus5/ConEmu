@@ -33,34 +33,40 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "SetPgBase.h"
 
-class CSetPgIntegr
+class CSetPgIntegr final
 	: public CSetPgBase
 {
 public:
 	static CSetPgBase* Create() { return new CSetPgIntegr(); };
 	static TabHwndIndex PageType() { return thi_Integr; };
-	virtual TabHwndIndex GetPageType() override { return PageType(); };
+	TabHwndIndex GetPageType() override { return PageType(); };
 public:
 	CSetPgIntegr();
 	virtual ~CSetPgIntegr();
 
+	CSetPgIntegr(const CSetPgIntegr&) = delete;
+	CSetPgIntegr(CSetPgIntegr&&) = delete;
+	CSetPgIntegr& operator =(const CSetPgIntegr&) = delete;
+	CSetPgIntegr& operator =(CSetPgIntegr&&) = delete;
+
 public:
-	enum ShellIntegrType
+	enum class ShellIntegrType
 	{
-		ShellIntgr_Inside = 0,
-		ShellIntgr_Here,
+		Inside = 0,
+		Here = 1,
 	};
-	void ShellIntegration(HWND hDlg, ShellIntegrType iMode, bool bEnabled, bool bForced = false);
+
+	static void ShellIntegration(HWND hDlg, ShellIntegrType iMode, bool bEnabled);
 
 protected:
-	bool ReloadHereList(int* pnHere = NULL, int* pnInside = NULL);
-	void FillHereValues(WORD CB);
+	bool ReloadHereList(int* pnHere = nullptr, int* pnInside = nullptr);
+	void FillHereValues(WORD cb) const;
 
 public:
 	// Methods
-	virtual LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
+	LRESULT OnInitDialog(HWND hDlg, bool abInitial) override;
 
-	virtual INT_PTR PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam) override;
+	INT_PTR PageDlgProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam) override;
 
 public:
 	// Helpers
