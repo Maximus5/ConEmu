@@ -5464,6 +5464,14 @@
       "pl": "Program emulacji konsoli (terminal lokalny)",
       "id": 8 }
     ,
+    "lng_AlternativeIsOffHint": {
+      "en": "Alternative mode is off",
+      "id": 199 }
+    ,
+    "lng_AlternativeIsOnHint": {
+      "en": "Alternative mode is ON (console frozen)",
+      "id": 198 }
+    ,
     "lng_AltNumberACP": {
       "en": "Type ANSI code point using decimal numbers",
       "ru": "Введите десятичный код ANSI",
@@ -5570,6 +5578,90 @@
       "es": "Configuración básica",
       "pl": "Podstawowe ustawienia",
       "id": 21 }
+    ,
+    "lng_BufferHeightOffHint": {
+      "en": "BufferHeight mode is off",
+      "id": 197 }
+    ,
+    "lng_BufferHeightOnHint": {
+      "en": "BufferHeight mode is ON (scrolling enabled)",
+      "id": 196 }
+    ,
+    "lng_CloseAllConsolesHint": {
+      "en": "Close ALL consoles",
+      "id": 193 }
+    ,
+    "lng_ConfirmCloseActiveOnly": {
+      "en": "Close active console only",
+      "id": 178 }
+    ,
+    "lng_ConfirmCloseBtn": {
+      "en": "Close",
+      "id": 202 }
+    ,
+    "lng_ConfirmCloseBtnAll": {
+      "en": "Close all",
+      "id": 203 }
+    ,
+    "lng_ConfirmCloseBtnConsole": {
+      "en": "Close 1 console",
+      "id": 205 }
+    ,
+    "lng_ConfirmCloseBtnConsoles": {
+      "en": "consoles",
+      "id": 204 }
+    ,
+    "lng_ConfirmCloseBtnGroup": {
+      "en": "Close group of",
+      "id": 201 }
+    ,
+    "lng_ConfirmCloseChildGuiQ": {
+      "en": "Confirm closing active child window?",
+      "id": 181 }
+    ,
+    "lng_ConfirmCloseConsoleQ": {
+      "en": "Confirm closing console?",
+      "id": 182 }
+    ,
+    "lng_ConfirmCloseEditorQ": {
+      "en": "Confirm closing Far editor?",
+      "id": 184 }
+    ,
+    "lng_ConfirmCloseGroupQ": {
+      "en": "Confirm closing group?",
+      "id": 187 }
+    ,
+    "lng_ConfirmCloseViewerQ": {
+      "en": "Confirm closing Far viewer?",
+      "id": 185 }
+    ,
+    "lng_ConfirmClosingQ": {
+      "en": "Confirm closing?",
+      "id": 188 }
+    ,
+    "lng_ConfirmDontCloseAnything": {
+      "en": "Don't close anything",
+      "id": 189 }
+    ,
+    "lng_ConfirmIncompleteOperations": {
+      "en": "Incomplete operations",
+      "id": 179 }
+    ,
+    "lng_ConfirmKillButShellQ": {
+      "en": "Terminate all but shell processes?",
+      "id": 183 }
+    ,
+    "lng_ConfirmKillingQ": {
+      "en": "Confirm killing?",
+      "id": 186 }
+    ,
+    "lng_ConfirmUnsavedEditors": {
+      "en": "Unsaved editor windows",
+      "id": 180 }
+    ,
+    "lng_CreateNewConsoleHint": {
+      "en": "Create new console",
+      "id": 200 }
     ,
     "lng_CurClrScheme": {
       "en": "<Current color scheme>",
@@ -5800,6 +5892,10 @@
       "es": "<Ninguno>",
       "pl": "<None>",
       "id": 77 }
+    ,
+    "lng_MaximizeWindowHint": {
+      "en": "Maximize window",
+      "id": 194 }
     ,
     "lng_MenuAbout": {
       "en": "&About / Help",
@@ -6133,6 +6229,18 @@
       "en": "Whats new (&web)",
       "id": 133 }
     ,
+    "lng_MinimizeWindowHint": {
+      "en": "Minimize window",
+      "id": 195 }
+    ,
+    "lng_NewConsoleSaveBtn": {
+      "en": "&Save",
+      "id": 191 }
+    ,
+    "lng_NewConsoleStartBtn": {
+      "en": "&Start",
+      "id": 190 }
+    ,
     "lng_PasteEnterConfirm": {
       "en": [ "Warning!\n"
             , "\n"
@@ -6242,6 +6350,28 @@
       "pl": "Automatyczny rozmiar czcionki nie jest dozwolony dla stałego rozmiaru czcionki rastrowej. Wybierz \"Terminal\" zamiast \"[Czcionki rastrowe ...]\"",
       "id": 72 }
     ,
+    "lng_ResetTerminalCancel": {
+      "en": "Cancel operation",
+      "id": 177 }
+    ,
+    "lng_ResetTerminalConfirm": {
+      "en": "Do you want to reset terminal contents?",
+      "id": 174 }
+    ,
+    "lng_ResetTerminalOk": {
+      "en": "Reset terminal contents and properties",
+      "id": 176 }
+    ,
+    "lng_ResetTerminalTitle": {
+      "en": "Reset terminal confirmation",
+      "id": 175 }
+    ,
+    "lng_ResetTerminalWarning": {
+      "en": [ "Warning!\n"
+            , "This operation could harm further output of applications.\n"
+            , "It's better to execute a dedicated command as `clear` or `cls`." ],
+      "id": 173 }
+    ,
     "lng_Search": {
       "en": "Search",
       "ru": "Поиск",
@@ -6295,6 +6425,10 @@
     "lng_SetPgInfoNone": {
       "en": "(None)",
       "id": 89 }
+    ,
+    "lng_ShowSystemMenuHint": {
+      "en": "Show system menu (RClick for Settings)",
+      "id": 192 }
     ,
     "lng_SizeRadioCentered": {
       "en": "Centered",
@@ -7442,13 +7576,17 @@
     ,
     "cbConfirmDetach": {
       "en": "Confirm console detach",
-      "ru": "Подтверждение отсоединение консоли",
+      "ru": "Подтверждение отсоединения консоли",
       "zh": "确认控制台分离",
       "de": "Rückfrage beim Konsolenabkoppeln",
       "ja": "コンソールの取り外しを確認する",
       "es": "Confirmar desanclar el terminal",
       "pl": "Potwierdź odłączenie konsoli",
       "id": 2689 }
+    ,
+    "cbConfirmResetTerminal": {
+      "en": "Confirm terminal reset",
+      "id": 2690 }
     ,
     "cbConsoleExceptionHandler": {
       "en": "Exception handler (debug)",
@@ -10223,6 +10361,10 @@
       "pl": "Dołączać",
       "id": 21 }
     ,
+    "IDABORT": {
+      "en": "Abort",
+      "id": 3 }
+    ,
     "IDC_ATTACH_ALT": {
       "en": "&Alternative mode",
       "ru": "Альтернативный режим",
@@ -10302,6 +10444,18 @@
       "pl": "Anuluj",
       "id": 2 }
     ,
+    "IDCONTINUE": {
+      "en": "Continue",
+      "id": 11 }
+    ,
+    "IDIGNORE": {
+      "en": "Ignore",
+      "id": 5 }
+    ,
+    "IDNO": {
+      "en": "No",
+      "id": 7 }
+    ,
     "IDOK": {
       "en": "OK",
       "ru": "OK",
@@ -10311,6 +10465,18 @@
       "es": "Aceptar",
       "pl": "OK",
       "id": 1 }
+    ,
+    "IDRETRY": {
+      "en": "Retry",
+      "id": 4 }
+    ,
+    "IDTRYAGAIN": {
+      "en": "Try",
+      "id": 10 }
+    ,
+    "IDYES": {
+      "en": "Yes",
+      "id": 6 }
     ,
     "rbActivityComm": {
       "en": "Comm",
