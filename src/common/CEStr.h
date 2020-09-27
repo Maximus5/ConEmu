@@ -65,7 +65,7 @@ public:
 
 	wchar_t* GetBuffer(ssize_t cchMaxLen);
 	wchar_t* Detach();
-	const wchar_t*  Attach(wchar_t* RVAL_REF asPtr);
+	const wchar_t*  Attach(wchar_t*&& asPtr);
 	const wchar_t*  Append(const wchar_t* asStr1, const wchar_t* asStr2 = NULL, const wchar_t* asStr3 = NULL, const wchar_t* asStr4 = NULL, const wchar_t* asStr5 = NULL, const wchar_t* asStr6 = NULL, const wchar_t* asStr7 = NULL, const wchar_t* asStr8 = NULL);
 	void Clear();
 	void Empty();

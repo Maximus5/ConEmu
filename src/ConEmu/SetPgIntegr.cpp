@@ -50,11 +50,11 @@ struct Switch
 	CEStr szOpt;
 
 	// Format examples: `-single` or `-dir "..."`
-	Switch(wchar_t* RVAL_REF asSwitch, wchar_t* RVAL_REF asOpt)
+	Switch(wchar_t*&& asSwitch, wchar_t*&& asOpt)
 	{
-		szSwitch.Attach((wchar_t* RVAL_REF)asSwitch);
-		szOpt.Attach((wchar_t* RVAL_REF)asOpt);
-	};
+		szSwitch.Attach(std::move(asSwitch));
+		szOpt.Attach(std::move(asOpt));
+	}
 
 	~Switch()
 	{

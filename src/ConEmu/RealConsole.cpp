@@ -16337,7 +16337,7 @@ void CRealConsole::PostMacro(LPCWSTR asMacro, bool abAsync /*= FALSE*/)
 	}
 }
 
-wchar_t* CRealConsole::PostponeMacro(wchar_t* RVAL_REF asMacro)
+wchar_t* CRealConsole::PostponeMacro(wchar_t*&& asMacro)
 {
 	if (!this || !asMacro)
 	{

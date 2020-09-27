@@ -74,7 +74,7 @@ CEStr::CEStr(const CEStr& asStr)
 
 CEStr::CEStr(wchar_t*&& asPtr)
 {
-	CESTRLOG1("CEStr::CEStr(wchar_t* RVAL_REF x%p)", asPtr);
+	CESTRLOG1("CEStr::CEStr(wchar_t*&& x%p)", asPtr);
 	Empty();
 	AttachInt(asPtr);
 }
@@ -164,7 +164,7 @@ CEStr& CEStr::operator=(const CEStr& asStr)
 
 CEStr& CEStr::operator=(wchar_t*&& asPtr)
 {
-	CESTRLOG1("CEStr::=(wchar_t* RVAL_REF x%p)", asPtr);
+	CESTRLOG1("CEStr::operator=(wchar_t*&& x%p)", asPtr);
 	AttachInt(asPtr);
 	return *this;
 }
@@ -276,9 +276,9 @@ const wchar_t* CEStr::Append(const wchar_t* asStr1, const wchar_t* asStr2 /*= NU
 	return ms_Val;
 }
 
-const wchar_t* CEStr::Attach(wchar_t* RVAL_REF asPtr)
+const wchar_t* CEStr::Attach(wchar_t*&& asPtr)
 {
-	CESTRLOG1("CEStr::Attach(wchar_t* RVAL_REF x%p)", ms_Val);
+	CESTRLOG1("CEStr::Attach(wchar_t*&& x%p)", ms_Val);
 	return AttachInt(asPtr);
 }
 

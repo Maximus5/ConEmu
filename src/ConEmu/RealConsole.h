@@ -351,7 +351,7 @@ class CRealConsole
 		bool SetOtherWindowRgn(HWND hWnd, int nRects, LPRECT prcRects, bool bRedraw);
 		void PostDragCopy(bool abMove);
 		void PostMacro(LPCWSTR asMacro, bool abAsync = false);
-		wchar_t* PostponeMacro(wchar_t* RVAL_REF asMacro);
+		wchar_t* PostponeMacro(wchar_t*&& asMacro);
 		bool GetFarVersion(FarVersion* pfv);
 		bool IsFarLua();
 		bool StartDebugger(StartDebugType sdt);
