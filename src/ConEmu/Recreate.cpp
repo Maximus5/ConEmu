@@ -376,7 +376,8 @@ INT_PTR CRecreateDlg::OnInitDialog(HWND hDlg, UINT messg, WPARAM wParam, LPARAM 
 		MapWindowPoints(GetDlgItem(hDlg, IDC_TERMINATE), hDlg, &pt, 1);
 		DestroyWindow(GetDlgItem(hDlg, IDC_TERMINATE));
 		SetWindowPos(GetDlgItem(hDlg, IDC_START), NULL, pt.x, pt.y, 0,0, SWP_NOSIZE|SWP_NOZORDER);
-		SetDlgItemText(hDlg, IDC_START, (pArgs->aRecreate == cra_EditTab) ? L"&Save" : L"&Start");
+		SetDlgItemText(hDlg, IDC_START, (pArgs->aRecreate == cra_EditTab)
+			? CLngRc::getRsrc(lng_NewConsoleSaveBtn/*"&Save"*/) : CLngRc::getRsrc(lng_NewConsoleStartBtn/*"&Start"*/));
 		DestroyWindow(GetDlgItem(hDlg, IDC_WARNING));
 	}
 

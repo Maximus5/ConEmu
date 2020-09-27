@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConfirmDlg.h"
 #include "Hotkeys.h"
 #include "FindDlg.h"
+#include "LngRc.h"
 #include "Macro.h"
 #include "Menu.h"
 #include "OptionsClass.h"
@@ -1256,13 +1257,14 @@ bool CConEmuCtrl::key_ResetTerminal(const ConEmuChord& /*VkState*/, bool TestOnl
 	if (gpSet->isResetTerminalConfirm)
 	{
 		const auto confirmRc = ConfirmDialog(
+			CLngRc::getRsrc(lng_ResetTerminalWarning) /*
 			L"Warning!\nThis operation could harm further output of applications.\n"
-			L"It's better to execute a dedicated command as `clear` or `cls`.",
-			L"Do you want to reset terminal contents?",
-			L"Reset terminal confirmation",
+			L"It's better to execute a dedicated command as `clear` or `cls`."*/,
+			CLngRc::getRsrc(lng_ResetTerminalConfirm/*"Do you want to reset terminal contents?"*/),
+			CLngRc::getRsrc(lng_ResetTerminalTitle/*"Reset terminal confirmation"*/),
 			CECLEARSCREEN, MB_OKCANCEL, ghWnd,
-			nullptr, L"Reset terminal contents and properties",
-			nullptr, L"Cancel operation");
+			nullptr, CLngRc::getRsrc(lng_ResetTerminalOk/*"Reset terminal contents and properties"*/),
+			nullptr, CLngRc::getRsrc(lng_ResetTerminalCancel/*"Cancel operation"*/));
 		if (confirmRc != IDOK)
 			return false;
 	}

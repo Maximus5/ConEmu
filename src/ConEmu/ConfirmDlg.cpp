@@ -40,6 +40,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "ConfirmDlg.h"
 
+#include "LngRc.h"
+
 static HRESULT CALLBACK TaskDlgCallback(HWND hwnd, UINT uNotification, WPARAM wParam, LPARAM lParam, LONG_PTR dwRefData)
 {
 	switch (uNotification)
@@ -144,26 +146,31 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 	{
 		// must be already initialized: CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
+		CEStr btnYes, btnCancel;
+		CLngRc::getControl(IDYES, btnYes, L"Yes");
+		CLngRc::getControl(IDCANCEL, btnCancel, L"Cancel");
+
 		wchar_t szMessage[128];
 		if (Parm.asSingleConsole)
 			lstrcpyn(szMessage, Parm.asSingleConsole, countof(szMessage));
 		else if (Parm.bForceKill)
-			wcscpy_c(szMessage, L"Confirm killing?");
+			wcscpy_c(szMessage, CLngRc::getRsrc(lng_ConfirmKillingQ/*"Confirm killing?"*/));
 		else if (Parm.bGroup)
-			wcscpy_c(szMessage, L"Confirm closing group?");
+			wcscpy_c(szMessage, CLngRc::getRsrc(lng_ConfirmCloseGroupQ/*"Confirm closing group?"*/));
 		else
-			wcscpy_c(szMessage, L"Confirm closing?");
+			wcscpy_c(szMessage, CLngRc::getRsrc(lng_ConfirmClosingQ/*"Confirm closing?"*/));
 
-		wchar_t szWWW[MAX_PATH]; swprintf_c(szWWW, L"<a href=\"%s\">%s</a>", gsHomePage, gsHomePage);
+		wchar_t webLink[MAX_PATH]; swprintf_c(webLink, L"<a href=\"%s\">%s</a>", gsHomePage, gsHomePage);
 
-		wchar_t szCloseAll[MAX_PATH*2]; wchar_t *pszText;
+		wchar_t szCloseAll[MAX_PATH*2];
 		if (Parm.asSingleConsole)
 		{
-			wcscpy_c(szCloseAll, L"Yes\n");
+			wcscpy_c(szCloseAll, btnYes);
+			wcscat_c(szCloseAll, L"\n");
 			pszText = szCloseAll + _tcslen(szCloseAll);
-			int iLen = lstrlen(Parm.asSingleTitle);
+			const int iLen = lstrlen(Parm.asSingleTitle);
 			const int iCozyLen = 40;
-			int cchMax = (countof(szCloseAll) - (pszText - szCloseAll));
+			const int cchMax = static_cast<int>(countof(szCloseAll) - (pszText - szCloseAll));
 			if (iLen <= std::min(iCozyLen, cchMax))
 			{
 				lstrcpyn(pszText, Parm.asSingleTitle, cchMax);
@@ -179,33 +186,45 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		}
 		else
 		{
-			swprintf_c(szCloseAll,
-				(Parm.bGroup && (Parm.nConsoles>1))
-					? ((Parm.bGroup == ConfirmCloseParam::eGroup)
-						? L"Close group (%u consoles)"
-						: L"Close (%u consoles)")
-					: (Parm.nConsoles>1)
-						? L"Close all %u consoles."
-						: L"Close %u console.",
-				Parm.nConsoles);
+			wchar_t szCount[16]; swprintf_c(szCount, L" %u ", Parm.nConsoles);
+			const auto* closeGroupOf = CLngRc::getRsrc(lng_ConfirmCloseBtnGroup/*"Close group of"*/);
+			const auto* close = CLngRc::getRsrc(lng_ConfirmCloseBtn/*"Close"*/);
+			const auto* closeAll = CLngRc::getRsrc(lng_ConfirmCloseBtnAll/*"Close all"*/);
+			const auto* consoles = CLngRc::getRsrc(lng_ConfirmCloseBtnConsoles/*"consoles"*/);
+			if (Parm.bGroup && (Parm.nConsoles > 1))
+			{
+				if (Parm.bGroup == ConfirmCloseParam::eGroup)
+					wcscpy_c(szCloseAll, CEStr(closeGroupOf, szCount, consoles));
+				else
+					wcscpy_c(szCloseAll, CEStr(close, szCount, consoles));
+			}
+			else
+			{
+				if (Parm.nConsoles > 1)
+					wcscpy_c(szCloseAll, CEStr(closeAll, szCount, consoles));
+				else
+					wcscpy_c(szCloseAll, CLngRc::getRsrc(lng_ConfirmCloseBtnConsole/*"Close 1 console"*/));
+			}
 			pszText = szCloseAll + _tcslen(szCloseAll);
 		}
 		if ((Parm.asSingleConsole == nullptr) || (Parm.nOperations || Parm.nUnsavedEditors))
 		{
 			//if (nOperations)
 			{
-				swprintf_c(pszText, countof(szCloseAll)-(pszText-szCloseAll)/*#SECURELEN*/, L"\nIncomplete operations: %i", Parm.nOperations);
+				swprintf_c(pszText, countof(szCloseAll)-(pszText-szCloseAll)/*#SECURELEN*/, L"\n%s: %i",
+					CLngRc::getRsrc(lng_ConfirmIncompleteOperations/*"Incomplete operations"*/), Parm.nOperations);
 				pszText += _tcslen(pszText);
 			}
 			//if (nUnsavedEditors)
 			{
-				swprintf_c(pszText, countof(szCloseAll)-(pszText-szCloseAll)/*#SECURELEN*/, L"\nUnsaved editor windows: %i", Parm.nUnsavedEditors);
+				swprintf_c(pszText, countof(szCloseAll)-(pszText-szCloseAll)/*#SECURELEN*/, L"\n%s: %i",
+					CLngRc::getRsrc(lng_ConfirmUnsavedEditors/*"Unsaved editor windows"*/), Parm.nUnsavedEditors);
 				pszText += _tcslen(pszText);
 			}
 		}
 
 		wchar_t szCloseOne[MAX_PATH];
-		wcscpy_c(szCloseOne, L"Close active console only");
+		wcscpy_c(szCloseOne, CLngRc::getRsrc(lng_ConfirmCloseActiveOnly/*"Close active console only"*/));
 		if (Parm.nConsoles > 1)
 		{
 			CVConGuard VCon;
@@ -215,11 +234,12 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 				pszText = szCloseOne + _tcslen(szCloseOne);
 				swprintf_c(pszText, countof(szCloseOne)-(pszText-szCloseOne)/*#SECURELEN*/, L"\n#%u: ", (iCon+1));
 				pszText += _tcslen(pszText);
-				lstrcpyn(pszText, VCon->RCon()->GetTitle(true), countof(szCloseOne)-(pszText-szCloseOne));
+				const int cchMax = static_cast<int>(countof(szCloseOne) - (pszText - szCloseOne));
+				lstrcpyn(pszText, VCon->RCon()->GetTitle(true), cchMax);
 			}
 		}
 
-		const wchar_t* szCancel = L"Cancel\nDon't close anything";
+		const CEStr szCancel(btnCancel, L"\n", CLngRc::getRsrc(lng_ConfirmDontCloseAnything/*"Don't close anything"*/));
 
 
 		int nButtonPressed                  = 0;
@@ -247,7 +267,7 @@ int ConfirmCloseConsoles(const ConfirmCloseParam& Parm)
 		//config.pszContent                 = L"...";
 		config.pButtons                     = buttons;
 		config.nDefaultButton               = IDYES;
-		config.pszFooter                    = szWWW;
+		config.pszFooter                    = webLink;
 
 		//{
 		//	config.dwFlags |= TDF_VERIFICATION_FLAG_CHECKED;
@@ -341,6 +361,8 @@ int ConfirmDialog(LPCWSTR asMessage,
 	LPCWSTR pszName1 = nullptr, pszName2 = nullptr, pszName3 = nullptr;
 	TASKDIALOG_BUTTON buttons[3] = {};
 
+	CEStr btnOk, btnCancel, btnAbort, btnRetry, btnIgnore, btnTry, btnYes, btnNo, btnContinue;
+
 	static LONG lCounter = 0;
 	LONG l = InterlockedIncrement(&lCounter);
 	if (l > 1)
@@ -359,34 +381,50 @@ int ConfirmDialog(LPCWSTR asMessage,
 	switch (uType & 0xF)
 	{
 	case MB_OK:
-		pszName1 = L"OK";      buttons[0].nButtonID = IDOK;
+		pszName1 = CLngRc::getControl(IDOK, btnOk, L"OK");
+		buttons[0].nButtonID = IDOK;
 		nBtnCount = 1; break;
 	case MB_OKCANCEL:
-		pszName1 = L"OK";      buttons[0].nButtonID = IDOK;
-		pszName2 = L"Cancel";  buttons[1].nButtonID = IDCANCEL;
+		pszName1 = CLngRc::getControl(IDOK, btnOk, L"OK");
+		buttons[0].nButtonID = IDOK;
+		pszName2 = CLngRc::getControl(IDCANCEL, btnCancel, L"Cancel");
+		buttons[1].nButtonID = IDCANCEL;
 		nBtnCount = 2; break;
 	case MB_ABORTRETRYIGNORE:
-		pszName1 = L"Abort";   buttons[0].nButtonID = IDABORT;
-		pszName2 = L"Retry";   buttons[1].nButtonID = IDRETRY;
-		pszName3 = L"Ignore";  buttons[2].nButtonID = IDIGNORE;
+		pszName1 = CLngRc::getControl(IDABORT, btnAbort, L"Abort");
+		buttons[0].nButtonID = IDABORT;
+		pszName2 = CLngRc::getControl(IDRETRY, btnRetry, L"Retry");
+		buttons[1].nButtonID = IDRETRY;
+		pszName3 = CLngRc::getControl(IDIGNORE, btnIgnore, L"Ignore");
+		buttons[2].nButtonID = IDIGNORE;
 		nBtnCount = 3; break;
 	case MB_YESNOCANCEL:
-		pszName1 = L"Yes";     buttons[0].nButtonID = IDYES;
-		pszName2 = L"No";      buttons[1].nButtonID = IDNO;
-		pszName3 = L"Cancel";  buttons[2].nButtonID = IDCANCEL;
+		pszName1 = CLngRc::getControl(IDYES, btnYes, L"Yes");
+		buttons[0].nButtonID = IDYES;
+		pszName2 = CLngRc::getControl(IDNO, btnNo, L"No");
+		buttons[1].nButtonID = IDNO;
+		pszName3 = CLngRc::getControl(IDCANCEL, btnCancel, L"Cancel");
+		buttons[2].nButtonID = IDCANCEL;
 		nBtnCount = 3; break;
 	case MB_YESNO:
-		pszName1 = L"Yes";     buttons[0].nButtonID = IDYES;
-		pszName2 = L"No";      buttons[1].nButtonID = IDNO;
+		pszName1 = CLngRc::getControl(IDYES, btnYes, L"Yes");
+		buttons[0].nButtonID = IDYES;
+		pszName2 = CLngRc::getControl(IDNO, btnNo, L"No");
+		buttons[1].nButtonID = IDNO;
 		nBtnCount = 2; break;
 	case MB_RETRYCANCEL:
-		pszName1 = L"Retry";   buttons[0].nButtonID = IDRETRY;
-		pszName2 = L"Cancel";  buttons[1].nButtonID = IDCANCEL;
+		pszName1 = CLngRc::getControl(IDRETRY, btnRetry, L"Retry");
+		buttons[0].nButtonID = IDRETRY;
+		pszName2 = CLngRc::getControl(IDCANCEL, btnCancel, L"Cancel");
+		buttons[1].nButtonID = IDCANCEL;
 		nBtnCount = 2; break;
 	case MB_CANCELTRYCONTINUE:
-		pszName1 = L"Cancel";  buttons[0].nButtonID = IDCANCEL;
-		pszName2 = L"Try";     buttons[1].nButtonID = IDTRYAGAIN;
-		pszName3 = L"Continue";buttons[2].nButtonID = IDCONTINUE;
+		pszName1 = CLngRc::getControl(IDCANCEL, btnCancel, L"Cancel");
+		buttons[0].nButtonID = IDCANCEL;
+		pszName2 = CLngRc::getControl(IDTRYAGAIN, btnTry, L"Try");
+		buttons[1].nButtonID = IDTRYAGAIN;
+		pszName3 = CLngRc::getControl(IDCONTINUE, btnContinue, L"Continue");
+		buttons[2].nButtonID = IDCONTINUE;
 		nBtnCount = 3; break;
 	default:
 		_ASSERTE(FALSE && "Flag not supported");

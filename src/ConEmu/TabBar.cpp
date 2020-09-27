@@ -53,6 +53,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Options.h"
 #include "OptionsClass.h"
 #include "ConEmu.h"
+#include "LngRc.h"
 #include "VirtualConsole.h"
 #include "TrayIcon.h"
 #include "VConChild.h"
@@ -1110,33 +1111,35 @@ bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 		}
 		else if (getInfoTip.iItem == TID_CREATE_CON)
 		{
-			lstrcpyn(getInfoTip.pszText, _T("Create new console"), getInfoTip.cchTextMax);
+			lstrcpyn(getInfoTip.pszText, CLngRc::getRsrc(lng_CreateNewConsoleHint/*"Create new console"*/), getInfoTip.cchTextMax);
 		}
 		else if (getInfoTip.iItem == TID_ALTERNATIVE)
 		{
 			const bool lbChecked = mp_Rebar->GetToolBtnChecked(TID_ALTERNATIVE);
-			lstrcpyn(getInfoTip.pszText,
-			         lbChecked ? L"Alternative mode is ON (console frozen)" : L"Alternative mode is off",
-			         getInfoTip.cchTextMax);
+			lstrcpyn(getInfoTip.pszText, lbChecked
+				? CLngRc::getRsrc(lng_AlternativeIsOnHint/*"Alternative mode is ON (console frozen)"*/)
+				: CLngRc::getRsrc(lng_AlternativeIsOffHint/*"Alternative mode is off"*/),
+				getInfoTip.cchTextMax);
 		}
 		else if (getInfoTip.iItem == TID_SCROLL)
 		{
 			const bool lbChecked = mp_Rebar->GetToolBtnChecked(TID_SCROLL);
-			lstrcpyn(getInfoTip.pszText,
-			         lbChecked ? L"BufferHeight mode is ON (scrolling enabled)" : L"BufferHeight mode is off",
-			         getInfoTip.cchTextMax);
+			lstrcpyn(getInfoTip.pszText, lbChecked
+				? CLngRc::getRsrc(lng_BufferHeightOnHint/*"BufferHeight mode is ON (scrolling enabled)"*/)
+				: CLngRc::getRsrc(lng_BufferHeightOffHint/*"BufferHeight mode is off"*/),
+				getInfoTip.cchTextMax);
 		}
 		else if (getInfoTip.iItem == TID_MINIMIZE)
 		{
-			lstrcpyn(getInfoTip.pszText, _T("Minimize window"), getInfoTip.cchTextMax);
+			lstrcpyn(getInfoTip.pszText, CLngRc::getRsrc(lng_MinimizeWindowHint/*"Minimize window"*/), getInfoTip.cchTextMax);
 		}
 		else if (getInfoTip.iItem == TID_MAXIMIZE)
 		{
-			lstrcpyn(getInfoTip.pszText, _T("Maximize window"), getInfoTip.cchTextMax);
+			lstrcpyn(getInfoTip.pszText, CLngRc::getRsrc(lng_MaximizeWindowHint/*"Maximize window"*/), getInfoTip.cchTextMax);
 		}
 		else if (getInfoTip.iItem == TID_APPCLOSE)
 		{
-			lstrcpyn(getInfoTip.pszText, _T("Close ALL consoles"), getInfoTip.cchTextMax);
+			lstrcpyn(getInfoTip.pszText, CLngRc::getRsrc(lng_CloseAllConsolesHint/*"Close ALL consoles"*/), getInfoTip.cchTextMax);
 		}
 		//else if (getInfoTip.iItem == TID_COPYING)
 		//{
@@ -1144,7 +1147,7 @@ bool CTabBarClass::OnNotify(LPNMHDR nmhdr, LRESULT& lResult)
 		//}
 		else if (getInfoTip.iItem == TID_SYSMENU)
 		{
-			lstrcpyn(getInfoTip.pszText, _T("Show system menu (RClick for Settings)"), getInfoTip.cchTextMax);
+			lstrcpyn(getInfoTip.pszText, CLngRc::getRsrc(lng_ShowSystemMenuHint/*"Show system menu (RClick for Settings)"*/), getInfoTip.cchTextMax);
 		}
 		else
 		{

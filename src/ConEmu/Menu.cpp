@@ -231,7 +231,7 @@ void CConEmuMenu::OnNewConPopupMenu(POINT* ptWhere /*= nullptr*/, DWORD nFlags /
 	CmdTaskPopupItem itm = {CmdTaskPopupItem::eNone};
 
 	// "New console dialog..."
-	itm.Reset(CmdTaskPopupItem::eNewDlg, ++mn_CmdLastID, MenuAccel(vkMultiNewConfirm,L"New console dialog..."));
+	itm.Reset(CmdTaskPopupItem::eNewDlg, ++mn_CmdLastID, MenuAccel(vkMultiNewConfirm,CLngRc::getRsrc(lng_MenuNewConsole/*"New console dialog..."*/)));
 	InsertMenu(hPopup, nInsertPos, MF_BYPOSITION|MF_ENABLED|MF_STRING, itm.nCmd, itm.szShort);
 	m_CmdTaskPopup.push_back(itm);
 

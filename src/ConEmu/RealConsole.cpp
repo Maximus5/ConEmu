@@ -167,12 +167,11 @@ WARNING("Часто после разблокирования компьютер
 static BOOL gbInSendConEvent = FALSE;
 
 
-const wchar_t gsCloseGui[] = L"Confirm closing active child window?";
-const wchar_t gsCloseCon[] = L"Confirm closing console?";
-const wchar_t gsTerminateAllButShell[] = L"Terminate all but shell processes?";
-//const wchar_t gsCloseAny[] = L"Confirm closing console?";
-const wchar_t gsCloseEditor[] = L"Confirm closing Far editor?";
-const wchar_t gsCloseViewer[] = L"Confirm closing Far viewer?";
+#define gsCloseGui CLngRc::getRsrc(lng_ConfirmCloseChildGuiQ/*"Confirm closing active child window?"*/)
+#define gsCloseCon CLngRc::getRsrc(lng_ConfirmCloseConsoleQ/*"Confirm closing console?"*/)
+#define gsTerminateAllButShell CLngRc::getRsrc(lng_ConfirmKillButShellQ/*"Terminate all but shell processes?"*/)
+#define gsCloseEditor CLngRc::getRsrc(lng_ConfirmCloseEditorQ/*"Confirm closing Far editor?"*/)
+#define gsCloseViewer CLngRc::getRsrc(lng_ConfirmCloseViewerQ/*"Confirm closing Far viewer?"*/)
 
 #define GUI_MACRO_PREFIX L'#'
 
