@@ -302,6 +302,17 @@ int WorkerBase::PostProcessPrepareCommandLine()
 
 	LPCWSTR lsCmdLine = gpConsoleArgs->command_.c_str(L"");
 
+	if (lsCmdLine && (lsCmdLine[0] == TaskBracketLeft) && wcschr(lsCmdLine, TaskBracketRight))
+	{
+		// Allow smth like: ConEmuC -c {Far} /e text.txt
+		// _ASSERTE(FALSE && "Continue to ExpandTaskCmd");
+		gpConsoleArgs->taskCommand_ = ExpandTaskCmd(lsCmdLine);
+		if (!gpConsoleArgs->taskCommand_.IsEmpty())
+		{
+			lsCmdLine = gpConsoleArgs->taskCommand_.c_str();
+		}
+	}
+
 	if (gState.runMode_ == RunMode::Comspec)
 	{
 		// New console was requested?
@@ -1683,4 +1694,48 @@ void WorkerBase::SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd)
 	{
 		LogFunction(szInfo);
 	}
+}
+
+// Allow smth like: ConEmuC -c {Far} /e text.txt
+CEStr WorkerBase::ExpandTaskCmd(LPCWSTR asCmdLine) const
+{
+	if (!gState.realConWnd_)
+	{
+		_ASSERTE(gState.realConWnd_);
+		return {};
+	}
+	if (!asCmdLine || (asCmdLine[0] != TaskBracketLeft))
+	{
+		_ASSERTE(asCmdLine && (asCmdLine[0] == TaskBracketLeft));
+		return {};
+	}
+	LPCWSTR pszNameEnd = wcschr(asCmdLine, TaskBracketRight);
+	if (!pszNameEnd)
+	{
+		return {};
+	}
+	pszNameEnd++;
+
+	const size_t cchCount = (pszNameEnd - asCmdLine);
+	const DWORD cbSize = DWORD(sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_TASK) + cchCount*sizeof(asCmdLine[0]));
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETTASKCMD, cbSize);
+	if (!pIn)
+	{
+		_ASSERTE(FALSE && "Failed to allocate CECMD_GETTASKCMD");
+		return {};
+	}
+	wmemmove(pIn->GetTask.data, asCmdLine, cchCount);
+	_ASSERTE(pIn->GetTask.data[cchCount] == 0);
+
+	wchar_t* pszResult = nullptr;
+	CESERVER_REQ* pOut = ExecuteGuiCmd(gState.realConWnd_, pIn, gState.realConWnd_);
+	if (pOut && (pOut->DataSize() > sizeof(pOut->GetTask)) && pOut->GetTask.data[0])
+	{
+		const LPCWSTR pszTail = SkipNonPrintable(pszNameEnd);
+		pszResult = lstrmerge(pOut->GetTask.data, (pszTail && *pszTail) ? L" " : nullptr, pszTail);
+	}
+	ExecuteFreeResult(pIn);
+	ExecuteFreeResult(pOut);
+
+	return pszResult;
 }

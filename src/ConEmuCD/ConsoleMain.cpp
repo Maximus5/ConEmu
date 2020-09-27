@@ -177,7 +177,6 @@ int     gbRootWasFoundInCon = 0;
 BOOL    gbComspecInitCalled = FALSE;
 DWORD   gdwMainThreadId = 0;
 wchar_t* gpszRunCmd = NULL;
-wchar_t* gpszTaskCmd = NULL;
 bool    gbRunInBackgroundTab = false;
 DWORD   gnImageSubsystem = 0, gnImageBits = 32;
 #ifdef _DEBUG
@@ -594,7 +593,7 @@ void ShowStartedMsgBox()
 	if (!IsDebuggerPresent())
 	{
 		wchar_t szTitle[100]; swprintf_c(szTitle, L"ConEmuCD[%u]: PID=%u", WIN3264TEST(32,64), GetCurrentProcessId());
-		MessageBox(NULL, asCmdLine, szTitle, MB_SYSTEMMODAL);
+		MessageBox(nullptr, gpConsoleArgs->fullCmdLine_.c_str(L""), szTitle, MB_SYSTEMMODAL);
 	}
 	#endif
 
@@ -1925,7 +1924,6 @@ wrap:
 #endif
 
 	SafeFree(gpszRunCmd);
-	SafeFree(gpszTaskCmd);
 	SafeFree(gpszForcedTitle);
 
 	CommonShutdown();
@@ -2367,45 +2365,6 @@ void UpdateConsoleTitle()
 	}
 
 	SafeFree(pszBuffer);
-}
-
-// Allow smth like: ConEmuC -c {Far} /e text.txt
-wchar_t* ExpandTaskCmd(LPCWSTR asCmdLine)
-{
-	if (!gState.realConWnd_)
-	{
-		_ASSERTE(gState.realConWnd_);
-		return NULL;
-	}
-	if (!asCmdLine || (asCmdLine[0] != TaskBracketLeft))
-	{
-		_ASSERTE(asCmdLine && (asCmdLine[0] == TaskBracketLeft));
-		return NULL;
-	}
-	LPCWSTR pszNameEnd = wcschr(asCmdLine, TaskBracketRight);
-	if (!pszNameEnd)
-		return NULL;
-	pszNameEnd++;
-
-	size_t cchCount = (pszNameEnd - asCmdLine);
-	DWORD cbSize = DWORD(sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_TASK) + cchCount*sizeof(asCmdLine[0]));
-	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_GETTASKCMD, cbSize);
-	if (!pIn)
-		return NULL;
-	wmemmove(pIn->GetTask.data, asCmdLine, cchCount);
-	_ASSERTE(pIn->GetTask.data[cchCount] == 0);
-
-	wchar_t* pszResult = NULL;
-	CESERVER_REQ* pOut = ExecuteGuiCmd(gState.realConWnd_, pIn, gState.realConWnd_);
-	if (pOut && (pOut->DataSize() > sizeof(pOut->GetTask)) && pOut->GetTask.data[0])
-	{
-		LPCWSTR pszTail = SkipNonPrintable(pszNameEnd);
-		pszResult = lstrmerge(pOut->GetTask.data, (pszTail && *pszTail) ? L" " : NULL, pszTail);
-	}
-	ExecuteFreeResult(pIn);
-	ExecuteFreeResult(pOut);
-
-	return pszResult;
 }
 
 // #ConsoleArgs remove ParseCommandLine

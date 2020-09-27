@@ -171,6 +171,8 @@ public:
 	CEStr fullCmdLine_;
 	/// The shell command line or script. e.g. "cmd.exe" or "cmd ||| powershell"
 	CEStr command_;
+	/// If the command_ is a {Task} this field contains task contents (first command)
+	CEStr taskCommand_;
 	/// config and xml file to pass
 	CEStr conemuAddArgs_;
 	/// number of parsed arguments, informational

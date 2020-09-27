@@ -1623,7 +1623,7 @@ int WorkerServer::ProcessCommandLineArgs()
 
 	if (gState.runMode_ == RunMode::Undefined || gState.runMode_ == RunMode::AltServer)
 	{
-		_ASSERTE(gpConsoleArgs->fullCmdLine_.IsEmpty());
+		_ASSERTE(gpConsoleArgs->command_.IsEmpty());
 		gState.runMode_ = RunMode::AltServer;
 		_ASSERTE(!IsCreateDumpOnExceptionInstalled());
 		_ASSERTE(gState.attachMode_==am_None);

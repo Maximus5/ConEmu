@@ -377,14 +377,14 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 
 	_ASSERTE(pszCmdLine!=nullptr);
 
+	fullCmdLine_.Set(pszCmdLine ? pszCmdLine : L"");
+
 	if (anWorkMode == ConsoleMainMode::AltServer)
 	{
 		// Skip argument parsing, we were loaded into already running process
 		gState.runMode_ = RunMode::AltServer;
 		return 0;
 	}
-
-	fullCmdLine_.Set(pszCmdLine ? pszCmdLine : L"");
 
 	// pszCmdLine *may* or *may not* start with our executable or full path to our executable
 	const auto* cmdLineRest = SkipNonPrintable(fullCmdLine_);
@@ -966,17 +966,6 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 			{
 				cmdK_.SetBool(szArg.IsSwitch(L"/K"));
 			}
-
-			/*
-			#ConsoleArgs expand ConEmu {Task}
-			if (lsCmdLine && (lsCmdLine[0] == TaskBracketLeft) && wcschr(lsCmdLine, TaskBracketRight))
-			{
-				// Allow smth like: ConEmuC -c {Far} /e text.txt
-				gpszTaskCmd = ExpandTaskCmd(lsCmdLine);
-				if (gpszTaskCmd && *gpszTaskCmd)
-					lsCmdLine = gpszTaskCmd;
-			}
-			*/
 
 			break;
 		}

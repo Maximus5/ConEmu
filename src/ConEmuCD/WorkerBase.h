@@ -40,6 +40,7 @@ class CProcessEnvCmd;
 struct ConProcess;
 class DebuggerInfo;
 enum class DumpProcessType;
+struct CEStr;
 
 extern MConHandle ghConOut;
 
@@ -123,6 +124,8 @@ public:
 	const MModule& KernelModule() const;
 
 	static void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd);
+
+	CEStr ExpandTaskCmd(LPCWSTR asCmdLine) const;
 	
 protected:
 	/// Process any of "/Dump", "/Mini", "/MiniDump", "/Full", "/FullDump", "/AutoMini"
