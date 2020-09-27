@@ -70,14 +70,18 @@ public:
 	template<class U> bool operator==(const MArrayAllocator<U>& other) const { return true; };
 	template<class U> bool operator!=(const MArrayAllocator<U>& other) const { return false; };
 
+	// ReSharper disable once CppInconsistentNaming
+	// ReSharper disable once CppMemberFunctionMayBeStatic
 	T* allocate(std::size_t n)
 	{
-		T* ptr = (T*)malloc(n * sizeof(T));
+		T* ptr = static_cast<T*>(malloc(n * sizeof(T)));
 		if (!ptr)
 			throw std::bad_alloc();
 		return ptr;
 	};
 
+	// ReSharper disable once CppInconsistentNaming
+	// ReSharper disable once CppMemberFunctionMayBeStatic
 	void deallocate( T* p, std::size_t n )
 	{
 		if (p) free(p);
