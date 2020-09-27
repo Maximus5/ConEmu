@@ -1263,7 +1263,7 @@ bool CConEmuCtrl::key_ResetTerminal(const ConEmuChord& /*VkState*/, bool TestOnl
 			CECLEARSCREEN, MB_OKCANCEL, ghWnd,
 			nullptr, L"Reset terminal contents and properties",
 			nullptr, L"Cancel operation");
-		if (confirmRc != IDYES)
+		if (confirmRc != IDOK)
 			return false;
 	}
 
