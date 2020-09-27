@@ -501,6 +501,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 		}
 		else if (szArg.IsSwitch(L"/SetHooks="))
 		{
+			// _ASSERTE(FALSE && "Continue to InjectHooks");
 			gState.runMode_ = RunMode::SetHook64;
 			eExecAction_ = ConEmuExecAction::InjectHooks;
 			command_.Set(szArg.GetExtra());
@@ -508,6 +509,7 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 		}
 		else if (szArg.IsSwitch(L"/INJECT="))
 		{
+			// _ASSERTE(FALSE && "Continue to InjectRemote");
 			gState.runMode_ = RunMode::SetHook64;
 			eExecAction_ = ConEmuExecAction::InjectRemote;
 			command_.Set(szArg.GetExtra());
@@ -515,6 +517,8 @@ int ConsoleArgs::ParseCommandLine(LPCWSTR pszCmdLine, const ConsoleMainMode anWo
 		}
 		else if (szArg.IsSwitch(L"/DEFTRM="))
 		{
+			// _ASSERTE(FALSE && "Continue to InjectDefTrm");
+			gState.runMode_ = RunMode::SetHook64;
 			eExecAction_ = ConEmuExecAction::InjectDefTrm;
 			command_.Set(szArg.GetExtra());
 			break;
