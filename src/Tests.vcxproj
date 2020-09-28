@@ -742,6 +742,7 @@
     <ClCompile Include="common\Memory.cpp" />
     <ClCompile Include="common\Monitors.cpp" />
     <ClCompile Include="common\ProcessSetEnv.cpp" />
+    <ClCompile Include="common\ProcessSetEnv_test.cpp" />
     <ClCompile Include="common\RConStartArgs.cpp" />
     <ClCompile Include="common\RConStartArgsEx.cpp" />
     <ClCompile Include="common\RConStartArgsEx_test.cpp" />

@@ -1334,6 +1334,9 @@
     <ClCompile Include="common\ProcessSetEnv.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="common\ProcessSetEnv_test.cpp">
+      <Filter>tests</Filter>
+    </ClCompile>
     <ClCompile Include="common\RConStartArgs.cpp">
       <Filter>common</Filter>
     </ClCompile>
