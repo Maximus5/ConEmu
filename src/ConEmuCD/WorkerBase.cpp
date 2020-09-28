@@ -143,6 +143,11 @@ int WorkerBase::ProcessCommandLineArgs()
 		CdToProfileDir();
 	}
 
+	if (gpConsoleArgs->parentFarPid_.exists)
+	{
+		SetParentFarPid(static_cast<DWORD>(gpConsoleArgs->parentFarPid_.GetInt()));
+	}
+
 	if (gState.attachMode_ & am_Auto)
 	{
 		if ((iRc = ParamAutoAttach()) != 0)
