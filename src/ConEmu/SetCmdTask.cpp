@@ -70,7 +70,7 @@ void CommandTasks::SetName(LPCWSTR asName, int anCmdIndex)
 		SafeFree(pszName);
 
 		cchNameMax = iLen+16;
-		pszName = (wchar_t*)malloc(cchNameMax*sizeof(wchar_t));
+		pszName = static_cast<wchar_t*>(malloc(cchNameMax*sizeof(wchar_t)));
 		if (!pszName)
 		{
 			_ASSERTE(pszName!=NULL);
@@ -103,12 +103,12 @@ bool CommandTasks::SetGuiArg(LPCWSTR asGuiArg)
 	if (0 == wcscmp(asGuiArg, (pszGuiArgs ? pszGuiArgs : L"")))
 		return false;
 
-	size_t iLen = wcslen(asGuiArg);
+	const size_t iLen = wcslen(asGuiArg);
 
 	if (!pszGuiArgs || (iLen >= cchGuiArgMax))
 	{
-		size_t cchNew = iLen+256;
-		wchar_t* pszNew = (wchar_t*)malloc(cchNew*sizeof(wchar_t));
+		const size_t cchNew = iLen + 256;
+		wchar_t* pszNew = static_cast<wchar_t*>(malloc(cchNew * sizeof(wchar_t)));
 		if (!pszNew)
 		{
 			_ASSERTE(pszNew!=NULL);
@@ -133,12 +133,12 @@ bool CommandTasks::SetCommands(LPCWSTR asCommands)
 	if (0 == wcscmp(asCommands, (pszCommands ? pszCommands : L"")))
 		return false;
 
-	size_t iLen = wcslen(asCommands);
+	const size_t iLen = wcslen(asCommands);
 
 	if (!pszCommands || (iLen >= cchCmdMax))
 	{
-		size_t cchNew = iLen+1024;
-		wchar_t* pszNew = (wchar_t*)malloc(cchNew*sizeof(wchar_t));
+		const size_t cchNew = iLen + 1024;
+		wchar_t* pszNew = static_cast<wchar_t*>(malloc(cchNew * sizeof(wchar_t)));
 		if (!pszNew)
 		{
 			_ASSERTE(pszNew!=NULL);
@@ -171,11 +171,11 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 
 		if (lstrcmpi(szArg, L"/dir") == 0)
 		{
-			if (!(pszArgs = NextArg(pszArgs, szArg)))
+			if (!((pszArgs = NextArg(pszArgs, szArg))))
 				break;
 			if (*szArg)
 			{
-				wchar_t* pszExpand = NULL;
+				wchar_t* pszExpand = nullptr;
 
 				// Например, "%USERPROFILE%"
 				if (wcschr(szArg, L'%'))
@@ -189,11 +189,11 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 		}
 		else if (lstrcmpi(szArg, L"/icon") == 0)
 		{
-			if (!(pszArgs = NextArg(pszArgs, szArg)))
+			if (!((pszArgs = NextArg(pszArgs, szArg))))
 				break;
 			if (*szArg)
 			{
-				wchar_t* pszExpand = NULL;
+				wchar_t* pszExpand = nullptr;
 
 				// Например, "%USERPROFILE%"
 				if (wcschr(szArg, L'%'))
@@ -209,7 +209,7 @@ void CommandTasks::ParseGuiArgs(RConStartArgsEx* pArgs) const
 		{
 			// Used in the other parts of code
 		}
-		else if (lstrcmpi(szArg, L"/nosingle") == 0)
+		else if (lstrcmpi(szArg, L"/NoSingle") == 0)
 		{
 			// Force to run in new ConEmu window
 			pArgs->aRecreate = cra_CreateWindow;
@@ -249,7 +249,7 @@ bool CommandTasks::LoadCmdTask(SettingsBase* reg, int iIndex)
 	int iCmdMax = 0, iCmdCount = 0;
 	DWORD VkMod = 0;
 
-	wchar_t* pszNameSet = NULL;
+	wchar_t* pszNameSet = nullptr;
 	if (iIndex >= 0)
 	{
 		if (!reg->Load(L"Name", &pszNameSet) || !*pszNameSet)
@@ -301,7 +301,7 @@ bool CommandTasks::LoadCmdTask(SettingsBase* reg, int iIndex)
 	if (reg->Load(L"Count", iCmdMax) && (iCmdMax > 0))
 	{
 		size_t nTotalLen = 1024; // с запасом, для редактирования через интерфейс
-		wchar_t** pszCommands = (wchar_t**)calloc(iCmdMax, sizeof(wchar_t*));
+		wchar_t** pszCommands = static_cast<wchar_t**>(calloc(iCmdMax, sizeof(wchar_t*)));
 
 		for (int j = 0; j < iCmdMax; j++)
 		{
@@ -319,7 +319,7 @@ bool CommandTasks::LoadCmdTask(SettingsBase* reg, int iIndex)
 		if ((iCmdCount > 0) && (nTotalLen))
 		{
 			this->cchCmdMax = nTotalLen+1;
-			this->pszCommands = (wchar_t*)malloc(this->cchCmdMax*sizeof(wchar_t));
+			this->pszCommands = static_cast<wchar_t*>(malloc(this->cchCmdMax*sizeof(wchar_t)));
 			if (this->pszCommands)
 			{
 				//this->nCommands = iCmdCount;
@@ -331,7 +331,7 @@ bool CommandTasks::LoadCmdTask(SettingsBase* reg, int iIndex)
 				for (int k = 0; k < iCmdCount; k++)
 				{
 					bool bActive = false;
-					gpConEmu->ParseScriptLineOptions(pszCommands[k], &bActive, NULL);
+					gpConEmu->ParseScriptLineOptions(pszCommands[k], &bActive, nullptr);
 
 					if (((k+1) == nActive) && !bActive)
 						*(psz++) = L'>';
@@ -355,9 +355,9 @@ wrap:
 	return lbRc;
 }
 
-bool CommandTasks::SaveCmdTask(SettingsBase* reg, bool isStartup)
+bool CommandTasks::SaveCmdTask(SettingsBase* reg, bool isStartup) const
 {
-	bool lbRc = true;
+	const bool lbRc = true;
 	int iCmdCount = 0, iOldCount = 0;
 	int nActive = 0; // 1-based
 	wchar_t szVal[32];

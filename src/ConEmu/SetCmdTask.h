@@ -67,7 +67,7 @@ struct CommandTasks
 	void ParseGuiArgs(RConStartArgsEx* pArgs) const;
 
 	bool LoadCmdTask(SettingsBase* reg, int iIndex);
-	bool SaveCmdTask(SettingsBase* reg, bool isStartup);
+	bool SaveCmdTask(SettingsBase* reg, bool isStartup) const;
 
 	/// <summary>
 	/// Used when in command prompt user executes e.g. "ConEmuC -c {Far}".

@@ -1303,10 +1303,6 @@ LPCWSTR CConEmuMain::ConEmuCExeFull(LPCWSTR asCmdLine/*=NULL*/)
 			if ((psz = NextArg(psz, szTemp)))
 				asCmdLine = szTemp;
 		}
-		else
-		{
-			lbFound = true;
-		}
 
 		if (wcschr(asCmdLine, L'%'))
 		{

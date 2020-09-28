@@ -35,7 +35,7 @@ class CProcessEnvCmd;
 class CStartEnvBase;
 
 
-bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, CProcessEnvCmd* pSetEnv = NULL, CStartEnvBase* pDoSet = NULL);
+bool ProcessSetEnvCmd(LPCWSTR& asCmdLine, CProcessEnvCmd* pSetEnv = nullptr, CStartEnvBase* pDoSet = nullptr);
 
 
 // Define callback interface
@@ -43,38 +43,52 @@ class CStartEnvBase
 {
 public:
 	virtual ~CStartEnvBase() {}
+
+	CStartEnvBase() = default;
+	CStartEnvBase(const CStartEnvBase&) = delete;
+	CStartEnvBase(CStartEnvBase&&) = delete;
+	CStartEnvBase& operator=(const CStartEnvBase&) = delete;
+	CStartEnvBase& operator=(CStartEnvBase&&) = delete;
+	
 	// Methods
 	virtual void Alias(LPCWSTR asName, LPCWSTR asValue) = 0;
-	virtual void ChCp(LPCWSTR asCP) = 0;
+	virtual void ChCp(LPCWSTR asCodePage) = 0;
 	virtual void Echo(LPCWSTR asSwitches, LPCWSTR asText) = 0;
 	virtual void Set(LPCWSTR asName, LPCWSTR asValue) = 0;
 	virtual void Title(LPCWSTR asTitle) = 0;
 	virtual void Type(LPCWSTR asSwitches, LPCWSTR asFile) = 0;
 };
 
-class CStartEnvTitle : public CStartEnvBase
+class CStartEnvTitle final : public CStartEnvBase
 {
 protected:
-	wchar_t** mppsz_Title;
-	CEStr* mps_Title;
+	wchar_t** ppszTitle_;
+	CEStr* psTitle_;
 public:
-	CStartEnvTitle(wchar_t** ppszTitle);
-	CStartEnvTitle(CEStr* psTitle);
+	explicit CStartEnvTitle(wchar_t** ppszTitle);
+	explicit CStartEnvTitle(CEStr* psTitle);
 	virtual ~CStartEnvTitle() {};
+
+	CStartEnvTitle() = delete;
+	CStartEnvTitle(const CStartEnvTitle&) = delete;
+	CStartEnvTitle(CStartEnvTitle&&) = delete;
+	CStartEnvTitle& operator=(const CStartEnvTitle&) = delete;
+	CStartEnvTitle& operator=(CStartEnvTitle&&) = delete;
 
 public:
 	// Methods
-	virtual void Alias(LPCWSTR asName, LPCWSTR asValue) {};
-	virtual void ChCp(LPCWSTR asCP) {};
-	virtual void Echo(LPCWSTR asSwitches, LPCWSTR asText) {};
-	virtual void Set(LPCWSTR asName, LPCWSTR asValue) {};
-	virtual void Title(LPCWSTR asTitle);
-	virtual void Type(LPCWSTR asSwitches, LPCWSTR asFile) {};
+	void Alias(LPCWSTR asName, LPCWSTR asValue) override {};
+	void ChCp(LPCWSTR asCodePage) override {};
+	void Echo(LPCWSTR asSwitches, LPCWSTR asText) override {};
+	void Set(LPCWSTR asName, LPCWSTR asValue) override {};
+	void Type(LPCWSTR asSwitches, LPCWSTR asFile) override {};
+
+	void Title(LPCWSTR asTitle) override;
 };
 
 
 
-class CProcessEnvCmd
+class CProcessEnvCmd final
 {
 public:
 	struct Command
@@ -93,9 +107,14 @@ public:
 	CProcessEnvCmd();
 	~CProcessEnvCmd();
 
+	CProcessEnvCmd(const CProcessEnvCmd&) = delete;
+	CProcessEnvCmd(CProcessEnvCmd&&) = delete;
+	CProcessEnvCmd& operator=(const CProcessEnvCmd&) = delete;
+	CProcessEnvCmd& operator=(CProcessEnvCmd&&) = delete;
+
 public:
 	// Append helpers
-	bool AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd = NULL, bool bAlone = false, INT_PTR anBefore = -1); // May comes from Task or ConEmu's -run switch
+	bool AddCommands(LPCWSTR asCommands, LPCWSTR* ppszEnd = nullptr, bool bAlone = false, INT_PTR anBefore = -1); // May comes from Task or ConEmu's -run switch
 	void AddZeroedPairs(LPCWSTR asNameValueSeq); // Comes from GetEnvironmentStrings()
 	void AddLines(LPCWSTR asLines, bool bPriority); // Comes from ConEmu's settings (Environment setting page)
 protected:
@@ -111,5 +130,7 @@ public:
 	wchar_t* Allocate(size_t* pchSize);
 
 protected:
-	void cpyadv(wchar_t*& pszDst, LPCWSTR asStr);
+	/// \brief Copy string and advance destination pointer by copied length
+	// ReSharper disable once CppInconsistentNaming, IdentifierTypo
+	static void cpyadv(wchar_t*& pszDst, LPCWSTR asStr);
 };
