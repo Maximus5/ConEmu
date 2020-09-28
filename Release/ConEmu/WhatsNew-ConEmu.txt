@@ -20,6 +20,25 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2020.9.28
+* Internal global hotkeys refactoring + logging (ref gh-2143).
+* Fix localized labels for hotkey related settings checkboxes, e.g. ‘Ctrl+Numbers - activate console’.
+* Fix not working AppDistinct cursor related options.
+* Show console buffer size on the Settings/Info page.
+* Show console left/top on the Settings/Info page.
+* Don't try to run automatic update check if update error message was not closed yet.
+* gh-2151: Don't show injection errors if ConEmuHk was deleted.
+* gh-2135: Fix wrong assert condition.
+* gh-2177: Fix spare console resize on restore previously maximized window.
+* gh-2173: Support menu localization.
+* l10n: translations were updated.
+* gh-2118: Clink readme fix.
+* gh-977: Add option to show Edit Menu on Right/Middle mouse button click.
+* A lot of internal changes, refactoring, unit tests.
+* Add ‘Reset terminal’ confirmation.
+* Fix 'set var=value & {Task}' expansion in ConEmuC.
+
+
 2020.7.13
 * gh-2009: Autoload font files from ConEmuDir/ConEmuBaseDir (fix).
 * gh-2130: Use v141_xp toolset to build Release|x86.
