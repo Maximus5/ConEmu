@@ -748,6 +748,33 @@ BOOL CGuiServer::GuiServerCommand(LPVOID pInst, CESERVER_REQ* pIn, CESERVER_REQ*
 			break;
 		} // CECMD_CMDSTARTSTOP
 
+		case CECMD_GETTASKCMD:
+		{
+			const CommandTasks* pTask = (pIn->DataSize() > sizeof(pIn->GetTask)) ? gpSet->CmdTaskGetByName(pIn->GetTask.data) : nullptr;
+			const CEStr lsData = pTask ? pTask->GetFirstCommandForPrompt() : L"";
+
+			const ssize_t nLen = lsData.GetLen();
+
+			pcbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_GUIMACRO) + nLen * sizeof(wchar_t);
+			if (!ExecuteNewCmd(ppReply, pcbMaxReplySize, pIn->hdr.nCmd, pcbReplySize))
+			{
+				goto wrap;
+			}
+
+			if (nLen > 0)
+			{
+				ppReply->GetTask.found = TRUE;
+				lstrcpy(ppReply->GetTask.data, lsData.ms_Val);
+			}
+			else
+			{
+				ppReply->GetTask.found = FALSE;
+				ppReply->GetTask.data[0] = 0;
+			}
+			lbRc = TRUE;
+			break;
+		} // CECMD_GETTASKCMD
+
 		//case CECMD_DEFTERMSTARTED:
 		//{
 		//	if (gpConEmu->mp_DefTrm)

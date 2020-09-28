@@ -29,6 +29,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 struct ConEmuHotKey;
+struct CEStr;
 
 typedef DWORD CETASKFLAGS;
 const CETASKFLAGS
@@ -67,4 +68,11 @@ struct CommandTasks
 
 	bool LoadCmdTask(SettingsBase* reg, int iIndex);
 	bool SaveCmdTask(SettingsBase* reg, bool isStartup);
+
+	/// <summary>
+	/// Used when in command prompt user executes e.g. "ConEmuC -c {Far}".
+	/// We extract first line and strip possible credentials.
+	/// </summary>
+	/// <returns>Command line or empty string on errors.</returns>
+	CEStr GetFirstCommandForPrompt() const;
 };

@@ -302,14 +302,35 @@ int WorkerBase::PostProcessPrepareCommandLine()
 
 	LPCWSTR lsCmdLine = gpConsoleArgs->command_.c_str(L"");
 
+	if (gState.runMode_ == RunMode::Server)
+	{
+		LogFunction(L"ProcessSetEnvCmd {set, title, chcp, etc.}");
+		// Console may be started as follows:
+		// "set PATH=C:\Program Files;%PATH%" & ... & cmd
+		// Supported commands:
+		//  set abc=val
+		//  "set PATH=C:\Program Files;%PATH%"
+		//  chcp [utf8|ansi|oem|<cp_no>]
+		//  title "Console init title"
+		auto* pSetEnv = EnvCmdProcessor();
+		CStartEnvTitle setTitleVar(&gpszForcedTitle);
+		ProcessSetEnvCmd(lsCmdLine, pSetEnv, &setTitleVar);
+	}
+
 	if (lsCmdLine && (lsCmdLine[0] == TaskBracketLeft) && wcschr(lsCmdLine, TaskBracketRight))
 	{
+		LogFunction(L"ExpandTaskCmd {bash} -> wsl.exe");
 		// Allow smth like: ConEmuC -c {Far} /e text.txt
 		// _ASSERTE(FALSE && "Continue to ExpandTaskCmd");
 		gpConsoleArgs->taskCommand_ = ExpandTaskCmd(lsCmdLine);
 		if (!gpConsoleArgs->taskCommand_.IsEmpty())
 		{
 			lsCmdLine = gpConsoleArgs->taskCommand_.c_str();
+
+			LogFunction(L"ProcessSetEnvCmd {by task}");
+			auto* pSetEnv = EnvCmdProcessor();
+			CStartEnvTitle setTitleVar(&gpszForcedTitle);
+			ProcessSetEnvCmd(lsCmdLine, pSetEnv, &setTitleVar);
 		}
 	}
 
@@ -357,21 +378,6 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	{
 		bool bAlwaysConfirmExit = gState.alwaysConfirmExit_;
 		bool bAutoDisableConfirmExit = gState.autoDisableConfirmExit_;
-
-		if (gState.runMode_ == RunMode::Server)
-		{
-			LogFunction(L"ProcessSetEnvCmd {set, title, chcp, etc.}");
-			// Console may be started as follows:
-			// "set PATH=C:\Program Files;%PATH%" & ... & cmd
-			// Supported commands:
-			//  set abc=val
-			//  "set PATH=C:\Program Files;%PATH%"
-			//  chcp [utf8|ansi|oem|<cp_no>]
-			//  title "Console init title"
-			auto* pSetEnv = EnvCmdProcessor();
-			CStartEnvTitle setTitleVar(&gpszForcedTitle);
-			ProcessSetEnvCmd(lsCmdLine, pSetEnv, &setTitleVar);
-		}
 
 		pszCheck4NeedCmd_ = lsCmdLine;
 
@@ -1728,7 +1734,8 @@ CEStr WorkerBase::ExpandTaskCmd(LPCWSTR asCmdLine) const
 	_ASSERTE(pIn->GetTask.data[cchCount] == 0);
 
 	wchar_t* pszResult = nullptr;
-	CESERVER_REQ* pOut = ExecuteGuiCmd(gState.realConWnd_, pIn, gState.realConWnd_);
+	// #SERVER Use conemuPid_ instead of conemuWnd_
+	CESERVER_REQ* pOut = ExecuteGuiCmd(gState.conemuWnd_, pIn, gState.realConWnd_);
 	if (pOut && (pOut->DataSize() > sizeof(pOut->GetTask)) && pOut->GetTask.data[0])
 	{
 		const LPCWSTR pszTail = SkipNonPrintable(pszNameEnd);

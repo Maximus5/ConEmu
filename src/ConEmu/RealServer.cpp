@@ -1503,45 +1503,23 @@ CESERVER_REQ* CRealServer::cmdQueryPalette(LPVOID pInst, CESERVER_REQ* pIn, UINT
 
 CESERVER_REQ* CRealServer::cmdGetTaskCmd(LPVOID pInst, CESERVER_REQ* pIn, UINT nDataSize)
 {
-	CEStr lsData;
-	const CommandTasks* pTask = (pIn->DataSize() > sizeof(pIn->GetTask)) ? gpSet->CmdTaskGetByName(pIn->GetTask.data) : NULL;
-	if (pTask)
-	{
-		LPCWSTR pszTemp = pTask->pszCommands;
-		if ((pszTemp = NextLine(pszTemp, lsData)))
-		{
-			RConStartArgsEx args;
-			LPCWSTR pszRaw = gpConEmu->ParseScriptLineOptions(lsData.ms_Val, NULL, NULL);
-			if (pszRaw)
-			{
-				args.pszSpecialCmd = lstrdup(pszRaw);
-				// Parse all -new_console's
-				args.ProcessNewConArg();
-				// Prohbit external requests for credentials
-				args.CleanPermissions();
-				// Directory?
-				if (!args.pszStartupDir && pTask->pszGuiArgs)
-					pTask->ParseGuiArgs(&args);
-				// Prepare for execution
-				lsData = args.CreateCommandLine(false);
-			}
-		}
-	}
+	const CommandTasks* pTask = (pIn->DataSize() > sizeof(pIn->GetTask)) ? gpSet->CmdTaskGetByName(pIn->GetTask.data) : nullptr;
+	const CEStr lsData = pTask ? pTask->GetFirstCommandForPrompt() : L"";
 
-	ssize_t nLen = lsData.GetLen();
+	const ssize_t nLen = lsData.GetLen();
 
-	CESERVER_REQ* pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_TASK) + nLen*sizeof(wchar_t));
+	CESERVER_REQ* pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_TASK) + nLen * sizeof(wchar_t));
 	if (!pOut)
-		return NULL;
+		return nullptr;
 
 	if (nLen > 0)
 	{
-		pOut->GetTask.nIdx = TRUE;
+		pOut->GetTask.found = TRUE;
 		lstrcpy(pOut->GetTask.data, lsData.ms_Val);
 	}
 	else
 	{
-		pOut->GetTask.nIdx = FALSE;
+		pOut->GetTask.found = FALSE;
 		pOut->GetTask.data[0] = 0;
 	}
 

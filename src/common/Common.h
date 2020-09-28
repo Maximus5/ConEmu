@@ -2346,7 +2346,7 @@ struct CESERVER_ROOT_INFO
 // CECMD_GETTASKCMD
 struct CESERVER_REQ_TASK
 {
-	UINT    nIdx;
+	BOOL    found;
 	wchar_t data[1]; // Variable length
 };
 

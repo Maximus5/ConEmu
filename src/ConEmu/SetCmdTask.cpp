@@ -432,3 +432,30 @@ bool CommandTasks::SaveCmdTask(SettingsBase* reg, bool isStartup)
 
 	return lbRc;
 }
+
+CEStr CommandTasks::GetFirstCommandForPrompt() const
+{
+	CEStr lsData;
+	LPCWSTR pszTemp = this->pszCommands;
+	if ((pszTemp = NextLine(pszTemp, lsData)))
+	{
+		RConStartArgsEx args;
+		const auto* const pszRaw = gpConEmu->ParseScriptLineOptions(lsData.ms_Val, nullptr, nullptr);
+		if (pszRaw)
+		{
+			args.pszSpecialCmd = lstrdup(pszRaw);
+			// Parse all -new_console's
+			args.ProcessNewConArg();
+			// Prohibit external requests for credentials
+			args.CleanPermissions();
+			// Directory?
+			if (!args.pszStartupDir && this->pszGuiArgs)
+			{
+				this->ParseGuiArgs(&args);
+			}
+			// Prepare for execution
+			lsData = args.CreateCommandLine(false);
+		}
+	}
+	return lsData;
+}
