@@ -15,7 +15,8 @@ Today, ConEmu can be used with any other console application or simple GUI tools
 (like PuTTY for example). ConEmu is an active project, open to
 [suggestions](https://github.com/Maximus5/ConEmu/issues).
 
-<a href="http://www.fosshub.com/ConEmu.html">![Fosshub.com ConEmu mirror](https://github.com/Maximus5/ConEmu/wiki/Downloads.png)</a>
+<a href="https://www.fosshub.com/ConEmu.html">![Fosshub.com ConEmu mirror](https://github.com/Maximus5/ConEmu/wiki/downloads-new.png)</a>
+<a href="https://conemu.github.io/donate.html">![Donate](https://github.com/Maximus5/ConEmu/wiki/donate-new.png)</a>
 
 Take a look at [screencast](http://dotnetsurfers.com/blog/2013/12/15/developer-tools-screencast-7-conemu/) about ConEmu.
 
@@ -31,9 +32,9 @@ See [Release/ConEmu/License.txt](https://github.com/Maximus5/ConEmu/blob/master/
 
 
 ## Some links
-Wiki: https://conemu.github.io/en/TableOfContents.html  
-What's new: https://conemu.github.io/en/Whats_New.html  
-Release stages: https://conemu.github.io/en/StableVsPreview.html  
+Wiki: https://conemu.github.io/en/TableOfContents.html
+What's new: https://conemu.github.io/en/Whats_New.html
+Release stages: https://conemu.github.io/en/StableVsPreview.html
 Donate this project: <a ref="https://conemu.github.io/donate.html" rel="nofollow">https://conemu.github.io/donate.html</a>
 
 
@@ -79,7 +80,7 @@ about release stages, distro packets, some warnings and much more...
 
 ## Building from sources
 https://github.com/Maximus5/ConEmu/blob/master/src/HowToBuild.md
- 
+
 ## Screenshots
 ![Splits and tabs in ConEmu](https://github.com/Maximus5/ConEmu/wiki/ConEmuSplits.png)
 
