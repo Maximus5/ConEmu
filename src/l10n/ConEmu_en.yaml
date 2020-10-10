@@ -331,6 +331,8 @@
   vkDumpTree: "Active process tree memory dump"
   vkDuplicateRoot: "Duplicate tab with current state of root process"
   vkDuplicateRootAs: "Duplicate tab with current state of root process, run ‘As Administrator’"
+  vkEditMenu: "Show Edit context menu"
+  vkEditMenu2: "Show Edit context menu"
   vkEscNoConsoles: "Minimize ConEmu by Esc when no open consoles left (see option ‘Don't close ConEmu on last console close’)"
   vkFarGotoEditorVk: "Highlighting: hyperlinks and compiler errors (FarGotoEditor modifier)"
   vkFindTextDlg: "Find text in active console"
