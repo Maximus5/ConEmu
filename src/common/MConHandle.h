@@ -36,12 +36,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class MConHandle
 {
 	public:
-		MConHandle(LPCWSTR asName, SECURITY_ATTRIBUTES *apSec = NULL);
+		MConHandle(LPCWSTR asName);
 		~MConHandle();
 
 		// non-copyable
 		MConHandle(const MConHandle&) = delete;
 		MConHandle& operator=(const MConHandle&) = delete;
+		MConHandle(MConHandle&&) = delete;
+		MConHandle& operator=(MConHandle&&) = delete;
 
 	public:
 		bool HasHandle() const;
@@ -56,19 +58,19 @@ class MConHandle
 		void SetHandlePtr(const MConHandle& out_buffer);
 
 		enum class StdMode { None, Input, Output };
-		bool SetHandle(const HANDLE new_handle, const StdMode std_mode);
+		bool SetHandle(HANDLE newHandle, StdMode stdMode);
 
 	private:
-		wchar_t   ms_Name[10];
-		HANDLE    mh_Handle;
-		BOOL      mb_OpenFailed;
-		DWORD     mn_LastError;
-		StdMode   mn_StdMode;
+		wchar_t   ms_Name[10] = L"";
+		HANDLE    mh_Handle = INVALID_HANDLE_VALUE;
+		BOOL      mb_OpenFailed = FALSE;
+		DWORD     mn_LastError = 0;
+		StdMode   mn_StdMode = StdMode::None;
 
-		const HANDLE*  mpp_OutBuffer; // Устанавливается при SetConsoleActiveScreenBuffer
+		const HANDLE*  mpp_OutBuffer = nullptr; // is set during SetConsoleActiveScreenBuffer
 		MSectionSimple mcs_Handle;
 
-		SECURITY_ATTRIBUTES *mp_sec;
+		SECURITY_ATTRIBUTES m_sec{};
 
 		static const int HANDLE_BUFFER_SIZE = RELEASEDEBUGTEST(0x100,0x1000);   // Must be a power of 2
 		struct Event {
@@ -86,7 +88,7 @@ class MConHandle
 			} evt;
 			DEBUGTEST(DWORD time;)
 		};
-		Event m_log[HANDLE_BUFFER_SIZE];
-		LONG m_logidx;
+		Event m_log[HANDLE_BUFFER_SIZE]{};
+		LONG m_logIdx = -1;
 		void LogHandle(UINT evt, HANDLE h);
 };

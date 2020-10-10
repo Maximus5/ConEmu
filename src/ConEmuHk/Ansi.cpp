@@ -122,6 +122,8 @@ bool CEAnsi::gbWasXTermOutput = false;
 // Let RefreshXTermModes() know what to restore
 CEAnsi::TermModeSet CEAnsi::gWasXTermModeSet[tmc_Last] = {};
 
+static MConHandle ghConOut(L"CONOUT$"), ghStdOut(L""), ghStdErr(L"");
+
 /* ************ Export ANSI printings ************ */
 LONG gnWriteProcessed = 0;
 FARPROC CallWriteConsoleW = NULL;
@@ -138,7 +140,7 @@ BOOL WINAPI WriteProcessed3(LPCWSTR lpBuffer, DWORD nNumberOfCharsToWrite, LPDWO
 	InterlockedDecrement(&gnWriteProcessed);
 	return bRc;
 }
-MConHandle ghConOut(L"CONOUT$"), ghStdOut(L""), ghStdErr(L"");
+
 HANDLE GetStreamHandle(WriteProcessedStream Stream)
 {
 	HANDLE hConsoleOutput;

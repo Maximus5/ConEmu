@@ -258,7 +258,7 @@ bool ReopenedHandles::Reopen(STARTUPINFO* si)
 		for (auto& h : handles_)
 		{
 			if (!h.handle_)
-				h.handle_ = new MConHandle(h.name_, &sec_);
+				h.handle_ = new MConHandle(h.name_);
 			if (!((success = (h.handle_->GetHandle() != INVALID_HANDLE_VALUE))))
 				break;
 		}

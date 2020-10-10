@@ -67,7 +67,6 @@ namespace StdCon {
 			{ STD_ERROR_HANDLE, L"CONOUT$" },  // NOLINT(clang-diagnostic-missing-field-initializers)
 		};
 		bool reopened_ = false;
-		SECURITY_ATTRIBUTES sec_ = { sizeof(sec_), nullptr, TRUE };
 	};
 
 	// extern ReopenedHandles* gReopenedHandles = nullptr;

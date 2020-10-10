@@ -29,11 +29,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 
 #ifdef _DEBUG
-//  Раскомментировать, чтобы сразу после загрузки модуля показать MessageBox, чтобы прицепиться дебаггером
+//  Uncomment to show MsgBox on startup to let us attach a debugger
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
-	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"|vimd.exe|cmd.exe|"
+	#define SHOW_EXE_MSGBOX // show a MsgBox when we are loaded into known exe-process (SHOW_EXE_MSGBOX_NAME)
+	#define SHOW_EXE_MSGBOX_NAME L"|xxx.exe|yyy.exe|"
 //	#define SLEEP_EXE_UNTIL_DEBUGGER
 //	#define SHOW_EXE_TIMINGS
 //	#define PRINT_EXE_TIMINGS
