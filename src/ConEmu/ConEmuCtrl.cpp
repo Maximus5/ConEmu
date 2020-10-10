@@ -634,7 +634,33 @@ bool CConEmuCtrl::key_TabMenu(const ConEmuChord& VkState, bool TestOnly, const C
 		ptCur = gpConEmu->mp_Menu->CalcTabMenuPos(pRCon->VCon());
 
 	//Win-Apps
+	LogString(L"TabMenu called by hotkey");
 	gpConEmu->mp_Menu->ShowPopupMenu(pRCon->VCon(), ptCur, TPM_LEFTALIGN, true);
+	return true;
+}
+
+// pRCon may be NULL
+bool CConEmuCtrl::key_EditMenu(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon)
+{
+	if (!pRCon)
+		return false;
+	if (TestOnly)
+		return true;
+
+	POINT ptCur = {-32000,-32000};
+	if (gpCurrentHotKey)
+	{
+		DWORD vk = gpCurrentHotKey->Key.Vk;
+		if (vk == VK_LBUTTON || vk == VK_RBUTTON || vk == VK_MBUTTON)
+		{
+			GetCursorPos(&ptCur);
+		}
+	}
+	if (ptCur.x == -32000)
+		ptCur = gpConEmu->mp_Menu->CalcTabMenuPos(pRCon->VCon());
+
+	LogString(L"EditMenu called by hotkey");
+	gpConEmu->mp_Menu->ShowEditMenu(pRCon->VCon(), ptCur);
 	return true;
 }
 

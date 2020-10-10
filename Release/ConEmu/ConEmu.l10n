@@ -4271,6 +4271,14 @@
       "pl": "Zduplikuj kartę z bieżącym stanem procesu rootowania, uruchom \"Jako administrator\"",
       "id": 2504 }
     ,
+    "vkEditMenu": {
+      "en": "Show Edit context menu",
+      "id": 3108 }
+    ,
+    "vkEditMenu2": {
+      "en": "Show Edit context menu",
+      "id": 3109 }
+    ,
     "vkEscNoConsoles": {
       "en": "Minimize ConEmu by Esc when no open consoles left (see option ‘Don't close ConEmu on last console close’)",
       "ru": "Сворачивать ConEmu с помощью Esc, когда нет открытых консолей (см. Параметр ‘Не закрывать ConEmu при закрытии последней консоли’)",

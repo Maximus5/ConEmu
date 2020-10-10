@@ -380,6 +380,8 @@ static LngPredefined gsDataHints[] = {
 	{ vkDumpTree,              L"Active process tree memory dump" },
 	{ vkDuplicateRoot,         L"Duplicate tab with current state of root process" },
 	{ vkDuplicateRootAs,       L"Duplicate tab with current state of root process, run ‘As Administrator’" },
+	{ vkEditMenu,              L"Show Edit context menu" },
+	{ vkEditMenu2,             L"Show Edit context menu" },
 	{ vkEscNoConsoles,         L"Minimize ConEmu by Esc when no open consoles left (see option ‘Don't close ConEmu on last console close’)" },
 	{ vkFarGotoEditorVk,       L"Highlighting: hyperlinks and compiler errors (FarGotoEditor modifier)" },
 	{ vkFindTextDlg,           L"Find text in active console" },

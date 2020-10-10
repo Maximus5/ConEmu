@@ -396,10 +396,14 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		;
 	Add(vkTransparencyDec,chk_User,  NULL,    L"TransparencyDec",       CConEmuCtrl::key_GuiMacro, false, L"Transparency(1,+20)")
 		;
+	Add(vkEditMenu,       chk_User,  NULL,    L"Key.EditMenu",          CConEmuCtrl::key_EditMenu, true/*OnKeyUp*/) // Edit menu
+		;
+	Add(vkEditMenu2, chk_User, NULL, L"Key.EditMenu2", CConEmuCtrl::key_EditMenu, true/*OnKeyUp*/) // Edit menu
+		;
 	Add(vkTabMenu,        chk_User,  NULL,    L"Key.TabMenu",           CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/) // Tab menu
 		->SetHotKey(VK_SPACE,VK_APPS);
-	Add(vkTabMenu2,       chk_User,  NULL,    L"Key.TabMenu2",          CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/) // Tab menu
-		->SetHotKey(VK_RBUTTON,VK_SHIFT);
+	Add(vkTabMenu2, chk_User, NULL, L"Key.TabMenu2", CConEmuCtrl::key_TabMenu, true/*OnKeyUp*/) // Tab menu
+		;
 	Add(vkMaximize,       chk_User,  NULL,    L"Key.Maximize",          CConEmuCtrl::key_GuiMacro, false, L"WindowMaximize()") // Maximize window
 		->SetHotKey(VK_F9,VK_MENU);
 	Add(vkMaximizeWidth,  chk_User,  NULL,    L"Key.MaximizeWidth",     CConEmuCtrl::key_GuiMacro, false, L"WindowMode(11)") // Maximize window width

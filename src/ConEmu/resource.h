@@ -5,6 +5,7 @@
 #define IDI_ICON1                       1
 #define IDI_ICON2                       2
 #define IDI_ICON3                       3
+#define IDI_ICON4                       4
 #define ID_GO                           20
 #define ID_ATTACH                       21
 #define IDB_MAIN_TOOLBAR                101
@@ -1346,6 +1347,8 @@
 #define cbAnsiLogCodes                  3105
 #define cbAutoReloadEnvironment         3106
 #define tConBufferChr                   3107
+#define vkEditMenu                      3108
+#define vkEditMenu2                     3109
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -1354,7 +1357,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        248
 #define _APS_NEXT_COMMAND_VALUE         40010
-#define _APS_NEXT_CONTROL_VALUE         3108
+#define _APS_NEXT_CONTROL_VALUE         3110
 #define _APS_NEXT_SYMED_VALUE           130
 #endif
 #endif

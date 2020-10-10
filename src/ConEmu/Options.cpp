@@ -860,6 +860,8 @@ void Settings::InitVanilla()
 	InitVanillaFontSettings();
 	// WARNING!!! These settings MUST be saved in Settings::SaveVanilla
 
+	// to avoid hotkey conflicts for existing users we set some keys here instead of ConEmuHotKeyList::AllocateHotkeys()
+	gpSet->SetHotkeyById(vkEditMenu2, ConEmuChord::MakeHotKey(VK_RBUTTON, VK_SHIFT));
 
 	// And some settings we need to load from registry if started with "-basic" switch
 	if (gpConEmu->IsResetBasicSettings())
