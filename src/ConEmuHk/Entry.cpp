@@ -33,9 +33,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //	#define SHOW_STARTED_MSGBOX
 //	#define SHOW_INJECT_MSGBOX
 	#define SHOW_EXE_MSGBOX // показать сообщение при загрузке в определенный exe-шник (SHOW_EXE_MSGBOX_NAME)
-	#define SHOW_EXE_MSGBOX_NAME L"xxx.exe"
+	#define SHOW_EXE_MSGBOX_NAME L"|vimd.exe|cmd.exe|"
 //	#define SLEEP_EXE_UNTIL_DEBUGGER
 //	#define SHOW_EXE_TIMINGS
+//	#define PRINT_EXE_TIMINGS
 //	#define SHOW_FIRST_ANSI_CALL
 #else
 	#undef SLEEP_EXE_UNTIL_DEBUGGER
@@ -127,15 +128,19 @@ DWORD gnLastShowExeTick = 0;
 
 void force_print_timings(LPCWSTR s, HANDLE hTimingHandle, wchar_t (&szTimingMsg)[512])
 {
-	DWORD nCurTick = GetTickCount();
+	const DWORD nCurTick = GetTickCount();
 
 	#ifdef SHOW_EXE_TIMINGS
-	msprintf(szTimingMsg, countof(szTimingMsg), L">>> %s PID=%u >>> %u >>> %s\n", SHOW_EXE_MSGBOX_NAME, GetCurrentProcessId(), gnLastShowExeTick?(nCurTick - gnLastShowExeTick):0, s);
+	msprintf(szTimingMsg, countof(szTimingMsg), L">>> %s PID=%u >>> %u >>> %s\n", gsExeName, GetCurrentProcessId(), gnLastShowExeTick?(nCurTick - gnLastShowExeTick):0, s);
 	#else
 	msprintf(szTimingMsg, countof(szTimingMsg), L">>> PID=%u >>> %u >>> %s\n", GetCurrentProcessId(), (nCurTick - gnLastShowExeTick), s);
 	#endif
 
+	#ifdef PRINT_EXE_TIMINGS
 	WriteProcessed3(szTimingMsg, lstrlen(szTimingMsg), NULL, hTimingHandle);
+	#else
+	OutputDebugString(szTimingMsg);
+	#endif
 
 	gnLastShowExeTick = nCurTick;
 }
@@ -363,37 +368,20 @@ void ShutdownStep(LPCWSTR asInfo, int nParm1 = 0, int nParm2 = 0, int nParm3 = 0
 
 
 
-void ShowStartedMsgBox(LPCWSTR asLabel, LPCWSTR pszName = NULL)
+void ShowStartedMsgBox(LPCWSTR asLabel)
 {
-	wchar_t szMsg[MAX_PATH];
-	STARTUPINFO si = {sizeof(si)};
-	GetStartupInfo(&si);
-	LPCWSTR pszCmd = GetCommandLineW();
+	wchar_t szTitle[64];
+	msprintf(szTitle, countof(szTitle),
+		L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
+
+	wchar_t szStartupInfo[128];
+	msprintf(szStartupInfo, countof(szStartupInfo), L"hIn=%04X state=%i hOut=%04X state=%i",
+		LODWORD(gpStartEnv->hIn.hStd), gpStartEnv->hIn.nMode, LODWORD(gpStartEnv->hOut.hStd), gpStartEnv->hOut.nMode);
+
+	CEStr message(gsExeName, asLabel, L"\n", szStartupInfo, L"\nCmdLine: ", gpStartEnv->pszCmdLine);
+
 	// GuiMessageBox is not accepted here, ConEmu is not initialized yet, use MessageBoxW instead
-	if (!pszName || !*pszName)
-	{
-		if (!GetModuleFileName(NULL, szMsg, countof(szMsg)))
-		{
-			wcscpy_c(szMsg, L"GetModuleFileName failed");
-		}
-		else
-		{
-			// Show name only
-			pszName = PointToName(szMsg);
-			if (pszName != szMsg)
-				wmemmove(szMsg, pszName, lstrlen(pszName)+1);
-			szMsg[96] = 0; // trim if longer
-		}
-	}
-	else
-	{
-		lstrcpyn(szMsg, pszName, 96);
-	}
-
-	lstrcat(szMsg, asLabel/*L" loaded!"*/);
-
-	wchar_t szTitle[64]; msprintf(szTitle, countof(szTitle), L"ConEmuHk, PID=%u, TID=%u", GetCurrentProcessId(), GetCurrentThreadId());
-	MessageBoxW(NULL, szMsg, szTitle, MB_SYSTEMMODAL);
+	MessageBoxW(nullptr, message, szTitle, MB_SYSTEMMODAL);
 }
 
 
@@ -1172,6 +1160,7 @@ void InitExeName()
 		_ASSERTEX(wcschr(pszName,L'.')!=NULL);
 		wcscat_c(gsExeName, L".exe");
 	}
+	CharLowerBuff(gsExeName, lstrlen(gsExeName));
 	pszName = gsExeName;
 
 	InitExeFlags();
@@ -1192,7 +1181,8 @@ void InitExeName()
 	#if defined(SHOW_EXE_TIMINGS) || defined(SHOW_EXE_MSGBOX)
 		wchar_t szTimingMsg[512]; UNREFERENCED_PARAMETER(szTimingMsg[0]);
 		HANDLE hTimingHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-		if (!lstrcmpi(pszName, SHOW_EXE_MSGBOX_NAME))
+		const auto* nameFound = wcsstr(SHOW_EXE_MSGBOX_NAME, gsExeName);
+		if (nameFound && *(nameFound - 1) == L'|' && nameFound[lstrlen(gsExeName)] == L'|')
 		{
 			#ifndef SLEEP_EXE_UNTIL_DEBUGGER
 			gbShowExeMsgBox = smb_HardCoded;
@@ -1208,7 +1198,7 @@ void InitExeName()
 
 	if (gbShowExeMsgBox)
 	{
-		ShowStartedMsgBox(L" loaded!", pszName);
+		ShowStartedMsgBox(L" loaded!");
 	}
 
 	// ConEmuCpCvt=perl.exe:1252:1251;less.exe:850:866;*:1234:866;...
