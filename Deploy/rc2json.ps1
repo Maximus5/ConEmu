@@ -36,7 +36,7 @@ $linedelta = 7
 $script:ignore_ctrls = @(
   "tAppDistinctHolder", "tDefTermWikiLink", "stPalettePreviewFast",
   "stConEmuUrl", "tvSetupCategories", "stSetCommands2", "stHomePage", "stDisableConImeFast3", "stDisableConImeFast2",
-  "lbActivityLog", "lbConEmuHotKeys", "IDI_ICON1", "IDI_ICON2", "IDI_ICON3", "stConEmuAbout", "IDD_RESTART"
+  "lbActivityLog", "lbConEmuHotKeys", "stConEmuAbout", "IDD_RESTART"
 )
 
 $script:default_ctrls = @{
@@ -349,7 +349,7 @@ function ParseResIds($resh)
     $ln = $resh[$l].Trim()
     if ($ln -match "#define\s+(\w+)\s+(\-?\d+)") {
       $id = [int]$matches[2]
-      if ($script:ignore_ctrls.Contains($matches[1])) {
+      if ($script:ignore_ctrls.Contains($matches[1]) -Or $matches[1].StartsWith("IDI_ICON")) {
         ## Just skip this resource ID
       } elseif ($script:res_id.ContainsValue($id)) {
         $dup = ""; $script:res_id.Keys | % { if ($script:res_id[$_] -eq $id) { $dup = $_ } }

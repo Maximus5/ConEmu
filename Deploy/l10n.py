@@ -299,7 +299,8 @@ class LangData:
 
     def write_yaml(self, folder):
         print('Writing yamls to {}'.format(folder))
-        for lng_id in self.languages:
+        # for lng_id in self.languages:
+        for lng_id in ['en']:
             file_path = os.path.join(folder, 'ConEmu_{}.yaml'.format(lng_id))
             print('  {}'.format(file_path))
             with open(file_path, 'w', encoding='utf-8-sig') as file:
