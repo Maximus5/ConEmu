@@ -40,6 +40,7 @@ IDB_FLATTR              BITMAP                  "graphics/flattr.bmp"
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_ICON1               ICON                    "ConEmu.ico"
+IDI_ICON4               ICON                    "ConEmu15.ico"
 IDI_ICON2               ICON                    "Far.ico"
 IDI_ICON3               ICON                    "Far2.ico"
 IDI_SHIELD              ICON                    "shield.ico"

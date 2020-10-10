@@ -682,6 +682,7 @@
   <ItemGroup>
     <None Include="..\Release\ConEmu\ConEmu.l10n" />
     <None Include="ConEmu\ConEmu.ico" />
+    <None Include="ConEmu\ConEmu15.ico" />
     <None Include="ConEmu\CursorDragCopy.cur" />
     <None Include="ConEmu\CursorDragLink.cur" />
     <None Include="ConEmu\CursorDragMove.cur" />
