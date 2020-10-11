@@ -29,9 +29,13 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include "CmdLine.h"
+#include <functional>
 
 bool FilesExists(LPCWSTR asDirectory, LPCWSTR asFileList, bool abAll = false, int anListCount = -1);
 bool FileExistSubDir(LPCWSTR asDirectory, LPCWSTR asFile, int iDepth, CEStr& rsFound);
+bool EnumFiles(
+	LPCWSTR directory, LPCWSTR fileMask, const std::function<bool(const CEStr& filePath, const WIN32_FIND_DATAW& fnd, void* context)>& callback,
+	void* context, int depth = 1);
 bool DirectoryExists(LPCWSTR asPath);
 bool MyCreateDirectory(wchar_t* asPath);
 

@@ -2237,6 +2237,43 @@ static bool WINAPI CreateVCTasks(HKEY hkVS, LPCWSTR pszVer, DWORD dwType, LPARAM
 	return true; // continue reg enum
 }
 
+namespace {
+	struct VisualStudioEditions
+	{
+		AppFoundList* appList;
+		const wchar_t* version;
+	};
+}
+
+// returns true to continue enumeration
+static bool EnumVisualStudioEditions(const CEStr& directory, const WIN32_FIND_DATAW& fnd, void* context)
+{
+	if (!(fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+		return true;
+
+	auto* params = static_cast<VisualStudioEditions*>(context);
+	CreateVCTask(params->appList[0], L"x86", params->version, directory);
+	CreateVCTask(params->appList[1], L"x64", params->version, directory);
+	return true;
+}
+
+// returns true to continue enumeration
+static bool EnumVisualStudioVersions(const CEStr& filePath, const WIN32_FIND_DATAW& fnd, void* context)
+{
+	if (!(fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+		return true;
+	wchar_t* ptr = nullptr;
+	if (!wcstol(fnd.cFileName, &ptr, 10))
+		return true;
+
+	VisualStudioEditions params{
+		static_cast<AppFoundList*>(context),
+		fnd.cFileName
+	};
+	EnumFiles(filePath, L"*", EnumVisualStudioEditions, static_cast<void*>(&params), 1);
+	return true;
+}
+
 static void CreateVisualStudioTasks()
 {
 	AppFoundList App[2];
@@ -2246,8 +2283,12 @@ static void CreateVisualStudioTasks()
 		gsAppendMode = (slf_AppendTasks | slf_RewriteExisting);
 
 	// Visual Studio prompt: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio
-	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, (LPARAM)App);
-	RegEnumValues(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio\\SxS\\VS7", CreateVCTasks, (LPARAM)App);
+	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, reinterpret_cast<LPARAM>(App));
+	RegEnumValues(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio\\SxS\\VS7", CreateVCTasks, reinterpret_cast<LPARAM>(App));
+
+	const CEStr programFiles(ExpandEnvStr(IsWindows64()
+		? L"%ProgramFiles(x86)%\\Microsoft Visual Studio" : L"%ProgramFiles%\\Microsoft Visual Studio"));
+	EnumFiles(programFiles, L"*", EnumVisualStudioVersions, static_cast<void*>(App), 1);
 
 	App[0].Commit();
 	App[1].Commit();

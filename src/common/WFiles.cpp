@@ -213,7 +213,7 @@ bool FindFileName(LPCWSTR asPath, CEStr& rsName)
 	}
 
 	bool lbFileFound = false;
-	WIN32_FIND_DATAW fnd = {0};
+	WIN32_FIND_DATAW fnd = {};
 	DWORD nErrCode;
 	HANDLE hFind = FindFirstFile(asPath, &fnd);
 
@@ -582,6 +582,78 @@ bool IsDotsName(LPCWSTR asName)
 	return (asName && (asName[0] == L'.' && (asName[1] == 0 || (asName[1] == L'.' && asName[2] == 0))));
 }
 
+static bool EnumFilesInternal(
+	// ReSharper disable twice CppParameterMayBeConst
+	LPCWSTR directory, LPCWSTR fileMask, const std::function<bool(const CEStr& filePath, const WIN32_FIND_DATAW& fnd, void* context)>& callback,
+	void* context, const int depth, bool& stop)
+{
+	bool found = false;
+
+	if (depth <= 0)
+	{
+		return false;
+	}
+
+	const CEStr lsFind(JoinPath(directory, fileMask));
+
+	WIN32_FIND_DATAW fnd = {};
+	// ReSharper disable once CppLocalVariableMayBeConst
+	HANDLE hFind = FindFirstFile(lsFind, &fnd);
+	if (!hFind || (hFind == INVALID_HANDLE_VALUE))
+	{
+		return false;
+	}
+
+	do
+	{
+		if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+		{
+			// Each find returns "." and ".." items
+			// We do not need them
+			if (IsDotsName(fnd.cFileName))
+				continue;
+		}
+
+		const CEStr lsChild(JoinPath(directory, fnd.cFileName));
+		found = true;
+
+		if (callback)
+		{
+			if (!callback(lsChild, fnd, context))
+			{
+				stop = true;
+				break;
+			}
+		}
+
+		if ((fnd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY)
+		{
+			const int iChildDepth = (depth - 1);
+			if (lstrcmpi(fnd.cFileName, L".git") == 0 || lstrcmpi(fnd.cFileName, L".svn") == 0)
+				continue; // do not scan children of ".git", ".svn"
+			// Recursion
+			if (EnumFilesInternal(lsChild, fileMask, callback, context, iChildDepth, stop))
+				found = true;
+			if (stop)
+				break;
+		}
+	}
+	while (FindNextFile(hFind, &fnd));
+
+	FindClose(hFind);
+
+	return found;
+}
+
+bool EnumFiles(
+	// ReSharper disable twice CppParameterMayBeConst
+	LPCWSTR directory, LPCWSTR fileMask, const std::function<bool(const CEStr& filePath, const WIN32_FIND_DATAW& fnd, void* context)>& callback,
+	void* context, const int depth /*= 1*/)
+{
+	bool stop = false;
+	return EnumFilesInternal(directory, fileMask, callback, context, depth, stop);
+}
+
 // Useful for searching sources from compilation error log
 // #Search Implement return of more than one file
 bool FileExistSubDir(LPCWSTR asDirectory, LPCWSTR asFile, int iDepth, CEStr& rsFound)
@@ -598,7 +670,7 @@ bool FileExistSubDir(LPCWSTR asDirectory, LPCWSTR asFile, int iDepth, CEStr& rsF
 
 	CEStr lsFind(JoinPath(asDirectory, L"*"));
 
-	WIN32_FIND_DATAW fnd = {0};
+	WIN32_FIND_DATAW fnd = {};
 	HANDLE hFind = FindFirstFile(lsFind, &fnd);
 	if (!hFind || (hFind == INVALID_HANDLE_VALUE))
 	{
