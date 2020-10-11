@@ -112,30 +112,33 @@ bool FileExists(LPCWSTR asFilePath, DWORD* pnSize /*= NULL*/)
 int apiSearchPath(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, CEStr& rsPath)
 {
 	bool bFound = false;
-	wchar_t *pszFilePart, *pszBuffer = NULL;
+	wchar_t *pszFilePart = nullptr, *pszBuffer = nullptr;
 	wchar_t szFind[MAX_PATH+1];
 
-	DWORD nLen = SearchPath(lpPath, lpFileName, lpExtension, countof(szFind), szFind, &pszFilePart);
+	const DWORD nLen = SearchPath(lpPath, lpFileName, lpExtension, countof(szFind), szFind, &pszFilePart);
 	if (nLen)
 	{
 		if (nLen < countof(szFind))
 		{
-			bFound = true;
 			rsPath.Set(szFind);
+			bFound = true;
 		}
 		else
 		{
 			// Too long path, allocate more space
-			pszBuffer = (wchar_t*)malloc((++nLen)*sizeof(*pszBuffer));
+			pszBuffer = static_cast<wchar_t*>(malloc((static_cast<size_t>(nLen) + 1) * sizeof(*pszBuffer)));
 			if (pszBuffer)
 			{
-				DWORD nLen2 = SearchPath(lpPath, lpFileName, lpExtension, nLen, pszBuffer, &pszFilePart);
-				if (nLen2 && (nLen2 < nLen))
+				const DWORD nLen2 = SearchPath(lpPath, lpFileName, lpExtension, nLen + 1, pszBuffer, &pszFilePart);
+				if (nLen2 && (nLen2 <= nLen))
 				{
 					bFound = true;
-					rsPath.Set(pszBuffer);
+					rsPath.Attach(std::move(pszBuffer));  // NOLINT(performance-move-const-arg)
 				}
-				free(pszBuffer);
+				else
+				{
+					free(pszBuffer);
+				}
 			}
 		}
 	}

@@ -45,6 +45,17 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 typedef BOOL (WINAPI* AttachConsole_t)(DWORD dwProcessId);
 
 // Some WinAPI related functions
+
+/// <summary>
+/// Searches for a <ref>lpFileName</ref> with optional <ref>lpExtension</ref>
+/// in either specified <ref>lpPath</ref> or default search PATH defined in System.
+/// Look full description in WinAPI SearchPath.
+/// </summary>
+/// <param name="lpPath">nullptr or directory to search.</param>
+/// <param name="lpFileName">File name, extension is optional.</param>
+/// <param name="lpExtension">nullptr or ".ext", should start with dot.</param>
+/// <param name="rsPath">output CEStr</param>
+/// <returns></returns>
 int apiSearchPath(LPCWSTR lpPath, LPCWSTR lpFileName, LPCWSTR lpExtension, CEStr& rsPath);
 int apiGetFullPathName(LPCWSTR lpFileName, CEStr& rsPath);
 bool FileExists(LPCWSTR asFilePath, DWORD* pnSize = NULL);
