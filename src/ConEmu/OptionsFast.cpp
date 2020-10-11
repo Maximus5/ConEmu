@@ -41,7 +41,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SetCmdTask.h"
 #include "SetColorPalette.h"
 #include "SetDlgLists.h"
-#include "ConEmu.h"
 #include "ConEmuApp.h"
 #include "Update.h"
 #include "../ConEmuCD/ExitCodes.h"
@@ -51,12 +50,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/FarVersion.h"
 #include "../common/MSetter.h"
 #include "../common/MStrDup.h"
+#ifndef _WIN64
 #include "../common/MWow64Disable.h"
-#include "../common/StartupEnvDef.h"
+#endif
 #include "../common/WFiles.h"
 #include "../common/WRegistry.h"
 #include "../common/WUser.h"
 
+// ReSharper disable once IdentifierTypo
 #define DEBUGSTRTASKS(s) DEBUGSTR(s)
 
 namespace FastConfig
@@ -65,18 +66,18 @@ namespace FastConfig
 #define FOUND_APP_PATH_CHR L'\1'
 #define FOUND_APP_PATH_STR L"\1"
 
-HWND ghFastCfg = NULL;
+HWND ghFastCfg = nullptr;
 static bool bCheckHooks, bCheckUpdate, bCheckIme;
 // Если файл конфигурации пуст, то после вызова CheckOptionsFast
 // все равно будет SaveSettings(TRUE/*abSilent*/);
 // Поэтому выбранные настройки здесь можно не сохранять (кроме StopWarningConIme)
 static bool bVanilla;
-static CDpiForDialog* gp_DpiAware = NULL;
+static CDpiForDialog* gp_DpiAware = nullptr;
 static int gn_FirstFarTask = -1;
 static ConEmuHotKey ghk_MinMaxKey = {};
-static int iCreatIdx = 0;
+static int giCreatIdx = 0;
 static CEStr szConEmuDrive;
-static SettingsLoadedFlags sAppendMode = slf_None;
+static SettingsLoadedFlags gsAppendMode = slf_None;
 
 /* **************************************** */
 /*             Helper functions             */
@@ -84,7 +85,7 @@ static SettingsLoadedFlags sAppendMode = slf_None;
 
 // Special wrapper for FastConfiguration dialog,
 // we can't use here standard MsgBox, because messaging was not started yet.
-int FastMsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = NULL, HWND ahParent = (HWND)-1, bool abModal = true)
+int FastMsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption = nullptr, HWND ahParent = (HWND)-1, bool abModal = true)
 {
 	MSetter lSet(&gbMessagingStarted);
 	int iBtn = ::MsgBox(lpText, uType, lpCaption, ahParent, abModal);
@@ -748,7 +749,8 @@ static INT_PTR OnLanguageChanged(HWND hDlg)
 	return 0;
 }
 
-static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wParam, LPARAM lParam)
+// ReSharper disable once CppParameterMayBeConst
+static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, const UINT messg, const WPARAM wParam, LPARAM lParam)
 {
 	switch (messg)
 	{
@@ -770,7 +772,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 	case WM_HELP:
 		if ((wParam == 0) && (lParam != 0))
 		{
-			HELPINFO* hi = (HELPINFO*)lParam;
+			HELPINFO* hi = reinterpret_cast<HELPINFO*>(lParam);
 			if (hi->cbSize >= sizeof(HELPINFO))
 				CEHelpPopup::OpenSettingsWiki(hDlg, hi->iCtrlId);
 		}
@@ -798,7 +800,7 @@ static INT_PTR CALLBACK CheckOptionsFastProc(HWND hDlg, UINT messg, WPARAM wPara
 	case WM_SYSCOMMAND:
 		if (wParam == SC_CLOSE)
 		{
-			int iQuitBtn = FastMsgBox(L"Close dialog and terminate ConEmu?", MB_ICONQUESTION|MB_YESNO, NULL, hDlg);
+			const int iQuitBtn = FastMsgBox(L"Close dialog and terminate ConEmu?", MB_ICONQUESTION|MB_YESNO, nullptr, hDlg);
 			if (iQuitBtn == IDYES)
 				TerminateProcess(GetCurrentProcess(), CERR_FASTCONFIG_QUIT);
 			return TRUE;
@@ -828,7 +830,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 	if (gpConEmu->IsFastSetupDisabled())
 	{
 		bFastSetupDisabled = true;
-		gpConEmu->LogString(L"CheckOptionsFast was skipped due to '/basic' or '/resetdefault' switch");
+		gpConEmu->LogString(L"CheckOptionsFast was skipped due to '/Basic' or '/ResetDefault' switch");
 	}
 	else
 	{
@@ -849,7 +851,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 			//	;;    Запретить автозапуск: Внесите в реестр и перезагрузитесь
 			long  lbStopWarning = FALSE;
 
-			SettingsBase* reg = gpSet->CreateSettings(NULL);
+			SettingsBase* reg = gpSet->CreateSettings(nullptr);
 			if (reg)
 			{
 				// БЕЗ имени конфигурации!
@@ -866,14 +868,14 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 
 			if (!lbStopWarning)
 			{
-				HKEY hk = NULL;
+				HKEY hk = nullptr;
 				DWORD dwValue = 1;
 
 				if (0 == RegOpenKeyEx(HKEY_CURRENT_USER, L"Console", 0, KEY_READ, &hk))
 				{
 					DWORD dwType = REG_DWORD, nSize = sizeof(DWORD);
 
-					if (0 != RegQueryValueEx(hk, L"LoadConIme", 0, &dwType, (LPBYTE)&dwValue, &nSize))
+					if (0 != RegQueryValueEx(hk, L"LoadConIme", nullptr, &dwType, reinterpret_cast<LPBYTE>(&dwValue), &nSize))
 						dwValue = 1;
 
 					RegCloseKey(hk);
@@ -909,7 +911,7 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 
 		if (gpSetCls->IsConfigNew && gpConEmu->opt.ExitAfterActionPrm.Exists)
 		{
-			CEStr lsMsg(
+			const CEStr lsMsg(
 				L"Something is going wrong...\n\n"
 				L"Automatic action is pending, but settings weren't initialized!\n"
 				L"\n"
@@ -917,10 +919,10 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 				L"settings file you may use \"-basic\" switch.\n"
 				L"\n"
 				L"Current command line:\n",
-				(LPCWSTR)gpConEmu->opt.cmdLine,
+				gpConEmu->opt.cmdLine.c_str(),
 				L"\n\n"
 				L"Do you want to continue anyway?");
-			int iBtn = FastMsgBox(lsMsg, MB_ICONEXCLAMATION|MB_YESNO, NULL, NULL);
+			const int iBtn = FastMsgBox(lsMsg, MB_ICONEXCLAMATION|MB_YESNO, nullptr, nullptr);
 			if (iBtn == IDNO)
 				TerminateProcess(GetCurrentProcess(), CERR_FASTCONFIG_QUIT);
 		}
@@ -929,10 +931,10 @@ void CheckOptionsFast(LPCWSTR asTitle, SettingsLoadedFlags slfFlags)
 
 		// Modal dialog (CreateDialog)
 
-		CDynDialog::ExecuteDialog(IDD_FAST_CONFIG, NULL, CheckOptionsFastProc, (LPARAM)asTitle);
+		CDynDialog::ExecuteDialog(IDD_FAST_CONFIG, nullptr, CheckOptionsFastProc, reinterpret_cast<LPARAM>(asTitle));
 
 		SafeDelete(gp_DpiAware);
-		ghFastCfg = NULL;
+		ghFastCfg = nullptr;
 	}
 }
 
@@ -948,15 +950,15 @@ static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asComman
 {
 	_ASSERTE(asName && asName[0] && asName[0] != TaskBracketLeft && asName[wcslen(asName)-1] != TaskBracketRight);
 	wchar_t szLeft[2] = {TaskBracketLeft}, szRight[2] = {TaskBracketRight};
-	CEStr lsName(szLeft, asName, szRight);
+	const CEStr lsName(szLeft, asName, szRight);
 
 	// Don't add duplicates in the append mode
-	if ((sAppendMode & slf_AppendTasks))
+	if ((gsAppendMode & slf_AppendTasks))
 	{
-		CommandTasks* pTask = (CommandTasks*)gpSet->CmdTaskGetByName(lsName);
-		if (pTask != NULL)
+		CommandTasks* pTask = const_cast<CommandTasks*>(gpSet->CmdTaskGetByName(lsName));
+		if (pTask != nullptr)
 		{
-			if ((sAppendMode & slf_RewriteExisting))
+			if ((gsAppendMode & slf_RewriteExisting))
 			{
 				pTask->SetGuiArg(asGuiArg);
 				pTask->SetCommands(asCommands);
@@ -965,7 +967,7 @@ static void CreateDefaultTask(LPCWSTR asName, LPCWSTR asGuiArg, LPCWSTR asComman
 		}
 	}
 
-	gpSet->CmdTaskSet(iCreatIdx++, lsName, asGuiArg, asCommands, aFlags);
+	gpSet->CmdTaskSet(giCreatIdx++, lsName, asGuiArg, asCommands, aFlags);
 }
 
 struct FoundFile
@@ -991,6 +993,11 @@ public:
 		}
 	}
 
+	FoundFiles(const FoundFiles&) = delete;
+	FoundFiles(FoundFiles&&) = delete;
+	FoundFiles& operator=(const FoundFiles&) = delete;
+	FoundFiles& operator=(FoundFiles&&) = delete;
+
 	void Add(const wchar_t* asFound, const wchar_t* asOptionalFull)
 	{
 		if (!asFound || !*asFound)
@@ -1005,7 +1012,7 @@ public:
 				|| (f.rsOptionalFull && asOptionalFull && (lstrcmpi(f.rsOptionalFull, asOptionalFull) == 0)))
 				return;
 		}
-		FoundFile ff = {lstrdup(asFound), (asOptionalFull && *asOptionalFull) ? lstrdup(asOptionalFull) : NULL};
+		const FoundFile ff = {lstrdup(asFound), (asOptionalFull && *asOptionalFull) ? lstrdup(asOptionalFull) : nullptr};
 		this->push_back(ff);
 	}
 };
@@ -1017,7 +1024,7 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 {
 	_ASSERTE(foundFiles.size() == 0);
 	bool bFound = false;
-	wchar_t* pszExpanded = NULL;
+	wchar_t* pszExpanded = nullptr;
 	wchar_t szDrive[4]; // L"C:"
 	CEStr szTemp;
 
@@ -1036,7 +1043,7 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 		wchar_t *pszFile = wcschr(lsBuf.ms_Val, L']');
 		if (pszFile)
 		{
-			MArray<wchar_t*> RegFiles;
+			MArray<wchar_t*> regFiles;
 
 			HKEY roots[] = {HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
 			DWORD bits[] = {KEY_WOW64_64KEY, KEY_WOW64_32KEY, 0};
@@ -1054,26 +1061,28 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 					// #DEF_TASK L"[SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*:DisplayName=MSYS2 64bit:InstallLocation]\\usr\\bin\\bash.exe",
 					struct SearchImpl
 					{
-						LPCWSTR pszValName, pszFile;
+						LPCWSTR pszValName = nullptr, pszFile = nullptr;
 						CEStr lsCheckName, lsCheckValue;
-						MArray<wchar_t*>* RegFiles;
+						MArray<wchar_t*>* regFiles = nullptr;
 
-						static bool WINAPI Enum(HKEY hk, LPCWSTR pszSubkeyName, LPARAM lParam)
+						// ReSharper disable twice CppParameterMayBeConst
+						static bool WINAPI Enum(HKEY hk, LPCWSTR pszSubkeyName, const LPARAM lParam)
 						{
-							SearchImpl* i = (SearchImpl*)lParam;
+							SearchImpl* i = reinterpret_cast<SearchImpl*>(lParam);
 							CEStr lsPath;
-							if (RegGetStringValue(hk, NULL, i->lsCheckName, lsPath) <= 0)
+							if (RegGetStringValue(hk, nullptr, i->lsCheckName, lsPath) <= 0)
 								return true;
 							if (lsPath.Compare(i->lsCheckValue) != 0)
 								return true;
-							if (RegGetStringValue(hk, NULL, i->pszValName, lsPath) > 0)
+							if (RegGetStringValue(hk, nullptr, i->pszValName, lsPath) > 0)
 							{
-								i->RegFiles->push_back(JoinPath(lsPath, i->pszFile));
+								i->regFiles->push_back(JoinPath(lsPath, i->pszFile));
 							}
+							std::ignore = pszSubkeyName;
 							return true;
 						}
 					} impl;
-					impl.RegFiles = &RegFiles;
+					impl.regFiles = &regFiles;
 					impl.pszValName = lsValName;
 					impl.pszFile = pszFile;
 
@@ -1085,22 +1094,22 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 						*pszValName = 0;
 						impl.lsCheckValue.Set(++pszValName);
 
-						for (size_t r = 0; r < countof(roots); ++r)
+						for (const auto& root : roots)
 						{
-							RegEnumKeys(roots[r], lsBuf, SearchImpl::Enum, (LPARAM)&impl);
+							RegEnumKeys(root, lsBuf, SearchImpl::Enum, reinterpret_cast<LPARAM>(&impl));
 						}
 					}
 				}
 				else
 				{
 					// Evaluate HKLM, HKCU, 32bit and 64bit in all variants
-					for (size_t r = 0; r < countof(roots); ++r)
+					for (const auto& root : roots)
 					{
 						for (size_t b = IsWindows64() ? 0 : 1; b < countof(bits); ++b)
 						{
-							if (RegGetStringValue(roots[r], lsBuf, lsValName, lsVal, bits[b]) > 0)
+							if (RegGetStringValue(root, lsBuf, lsValName, lsVal, bits[b]) > 0)
 							{
-								RegFiles.push_back(JoinPath(lsVal, pszFile));
+								regFiles.push_back(JoinPath(lsVal, pszFile));
 							}
 						}
 					}
@@ -1108,9 +1117,9 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 			}
 
 			// When keys population is done
-			for (INT_PTR i = 0; i < RegFiles.size(); ++i)
+			for (auto& regFile : regFiles)
 			{
-				rsFound.Attach(STD_MOVE(RegFiles[i]));
+				rsFound.Attach(STD_MOVE(regFile));
 				if (FileExists(rsFound))
 				{
 					foundFiles.Add(rsFound, NULL);
@@ -1136,7 +1145,7 @@ static size_t FindOnDrives(LPCWSTR asFirstDrive, LPCWSTR asSearchPath, FoundFile
 	// Only executable name was specified?
 	if (!wcschr(asSearchPath, L'\\'))
 	{
-		if (apiSearchPath(NULL, asSearchPath, NULL, szTemp))
+		if (apiSearchPath(nullptr, asSearchPath, nullptr, szTemp))
 		{
 			// OK, create task with just a name of exe file
 			foundFiles.Add(asSearchPath, szTemp);
@@ -1264,6 +1273,11 @@ public:
 			SafeFree(v.pszValue);
 		}
 	};
+
+	CVarDefs(const CVarDefs&) = delete;
+	CVarDefs(CVarDefs&&) = delete;
+	CVarDefs& operator=(const CVarDefs&) = delete;
+	CVarDefs& operator=(CVarDefs&&) = delete;
 };
 
 static CVarDefs *spVars = NULL;
@@ -2013,7 +2027,7 @@ static void CreateFarTasks()
 
 			// Suggest this task as ConEmu startup default
 			if (gn_FirstFarTask == -1)
-				gn_FirstFarTask = iCreatIdx;
+				gn_FirstFarTask = giCreatIdx;
 
 			CreateDefaultTask(FI.szTaskName, NULL, pszCommand);
 		}
@@ -2084,13 +2098,13 @@ static bool WINAPI CreateWinSdkTasks(HKEY hkVer, LPCWSTR pszVer, LPARAM lParam)
 				CEStr szName(L"SDK::WinSDK ", pszVer);
 				if (szName)
 				{
-					SettingsLoadedFlags old = sAppendMode;
-					if (!(sAppendMode & slf_AppendTasks))
-						sAppendMode = (slf_AppendTasks|slf_RewriteExisting);
+					SettingsLoadedFlags old = gsAppendMode;
+					if (!(gsAppendMode & slf_AppendTasks))
+						gsAppendMode = (slf_AppendTasks|slf_RewriteExisting);
 
 					CreateDefaultTask(szName, L"", szFull);
 
-					sAppendMode = old;
+					gsAppendMode = old;
 				}
 			}
 		}
@@ -2227,9 +2241,9 @@ static void CreateVisualStudioTasks()
 {
 	AppFoundList App[2];
 
-	SettingsLoadedFlags old = sAppendMode;
-	if (!(sAppendMode & slf_AppendTasks))
-		sAppendMode = (slf_AppendTasks | slf_RewriteExisting);
+	SettingsLoadedFlags old = gsAppendMode;
+	if (!(gsAppendMode & slf_AppendTasks))
+		gsAppendMode = (slf_AppendTasks | slf_RewriteExisting);
 
 	// Visual Studio prompt: HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio
 	RegEnumKeys(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\VisualStudio", CreateVCTasks, (LPARAM)App);
@@ -2238,7 +2252,7 @@ static void CreateVisualStudioTasks()
 	App[0].Commit();
 	App[1].Commit();
 
-	sAppendMode = old;
+	gsAppendMode = old;
 }
 
 static void CreateChocolateyTask()
@@ -2621,14 +2635,14 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	LogString(L"CreateDefaultTasks:: started");
 	DEBUGSTRTASKS(L"CreateDefaultTasks:: started");
 
-	iCreatIdx = 0;
+	giCreatIdx = 0;
 
-	sAppendMode = slfFlags;
+	gsAppendMode = slfFlags;
 	gn_FirstFarTask = -1;
 
 	if (!(slfFlags & slf_AppendTasks))
 	{
-		const CommandTasks* pExist = gpSet->CmdTaskGet(iCreatIdx);
+		const CommandTasks* pExist = gpSet->CmdTaskGet(giCreatIdx);
 		if (pExist != NULL)
 		{
 			// At least one task was already created
@@ -2640,8 +2654,8 @@ void CreateDefaultTasks(SettingsLoadedFlags slfFlags)
 	else
 	{
 		// Find LAST USED index
-		while (gpSet->CmdTaskGet(iCreatIdx))
-			iCreatIdx++;
+		while (gpSet->CmdTaskGet(giCreatIdx))
+			giCreatIdx++;
 	}
 
 	CVarDefs Vars;
