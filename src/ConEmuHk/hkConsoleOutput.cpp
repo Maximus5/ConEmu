@@ -133,6 +133,14 @@ BOOL WINAPI OnSetConsoleMode(HANDLE hConsoleHandle, DWORD dwMode)
 				//	CEAnsi::ChangeTermMode(tmc_AppCursorKeys, true);
 			}
 		}
+		// don't use "else" here! first "if" could be executed.
+		//if ((dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+		//{
+		//	if (HandleKeeper::IsOutputHandle(hConsoleHandle))
+		//	{
+		//		dwMode &= ~ENABLE_VIRTUAL_TERMINAL_PROCESSING; -- no good effect, linux core writes data directly to conhost, ConEmu can't process escape sequences
+		//	}			
+		//}
 	}
 
 	#ifdef _DEBUG
