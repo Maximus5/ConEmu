@@ -20,6 +20,14 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2020.10.11
+* gh-2158: Replace control characters `\x01`..`\x1F` with unicode glyphs only for drawing.
+* gh-2183: Let reopened `CONOUT$` handle be inheritable. (Fix `shell returned 1` vim message.)
+* Support default tasks generation for Visual Studio 2019 (via search in Program Files).
+* Add default hotkey `Shift+RClick` for new configs to open Edit menu.
+* New icon design.
+
+
 2020.9.28
 * Internal global hotkeys refactoring + logging (ref gh-2143).
 * Fix localized labels for hotkey related settings checkboxes, e.g. ‘Ctrl+Numbers - activate console’.
