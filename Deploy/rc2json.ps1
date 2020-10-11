@@ -25,7 +25,7 @@ $target_yaml_path = ($path + "\..\src\l10n\")
 $conemu_page_automsg = "*This page was generated automatically from ConEmu sources*"
 $conemu_page_hotkeymark = "{% comment %} LIST OF HOTKEYS {% endcomment %}"
 
-$dest_md = ($path + "\..\..\ConEmu-GitHub-io\ConEmu.github.io\en\")
+$dest_md = ($path + "\..\..\ConEmu.github.io\en\")
 
 $conemu_hotkeys_md = Join-Path $dest_md "KeyboardShortcuts.md"
 
@@ -578,8 +578,8 @@ function InitDialogList()
   $script:dialogs += @{ id = "IDD_HOTKEY";          name = "Choose hotkey"; file = $null; }
   $script:dialogs += @{ id = "IDD_AFFINITY";        name = "Set active console processes affinity and priority"; file = $null; }
 
-  $script:dialogs += @{ id = "IDD_SPG_GENERAL";     name = "General"; file = "Settings-Fast"; }
-  $script:dialogs += @{ id = "IDD_SPG_FONTS";       name = " Fonts"; file = "Settings-Main"; }
+  $script:dialogs += @{ id = "IDD_SPG_GENERAL";     name = "General"; file = "Settings-General"; }
+  $script:dialogs += @{ id = "IDD_SPG_FONTS";       name = " Fonts"; file = "Settings-Fonts"; }
   $script:dialogs += @{ id = "IDD_SPG_SIZEPOS";     name = " Size & Pos"; file = "Settings-SizePos"; }
   $script:dialogs += @{ id = "IDD_SPG_APPEAR";      name = " Appearance"; file = "Settings-Appearance"; }
   $script:dialogs += @{ id = "IDD_SPG_QUAKE";       name = " Quake style"; file = "Settings-Quake"; } # NEW

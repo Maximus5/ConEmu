@@ -1223,6 +1223,7 @@ controls:
   stStartCreateDelay: "Delay between consoles initialization (ms):"
   stStartupDir: "Startup &directory for new process:"
   stStartupShellFast: "Choose your startup task or even a shell with arguments:"
+  stStartupShellGeneral: "Choose your startup task:"
   stStatusAvailCol: "Available columns:"
   stStatusColorBack: "Back:"
   stStatusColorDark: "Dark:"

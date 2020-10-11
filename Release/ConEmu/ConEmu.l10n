@@ -12536,6 +12536,10 @@
       "pl": "Wybierz zadanie uruchamiania lub nawet powłokę z argumentami:",
       "id": 2843 }
     ,
+    "stStartupShellGeneral": {
+      "en": "Choose your startup task:",
+      "id": 3110 }
+    ,
     "stStatusAvailCol": {
       "en": "Available columns:",
       "ru": "Доступные:",

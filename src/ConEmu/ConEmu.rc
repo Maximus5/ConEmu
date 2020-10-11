@@ -110,7 +110,7 @@ EXSTYLE WS_EX_CONTROLPARENT
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     GROUPBOX        "General settings",gbSettingsGeneral,3,1,376,239
-    LTEXT           "Choose your startup task or even a shell with arguments:",stStartupShellFast,11,16,364,8
+    LTEXT           "Choose your startup task:",stStartupShellGeneral,11,16,364,8
     COMBOBOX        lbStartupShellFast,11,27,324,156,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      ">>>",cbStartupShellFast,340,26,32,14
     LTEXT           "Interface language:",stInterfaceLanguage,11,50,116,8
