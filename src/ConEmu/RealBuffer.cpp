@@ -2200,21 +2200,16 @@ bool CRealBuffer::LoadDataFromSrv(CRConDataGuard& data, DWORD CharCount, CHAR_IN
 		HEAPVAL;
 
 		CHAR_INFO* lpCur = data->pDataCmp;
-		wchar_t ch;
 
-		// Расфуговка буфера CHAR_INFO на текст и атрибуты
+		// Strip CHAR_INFO into text and attributes
 		for (DWORD n = 0; n < nCharCmp; n++, lpCur++)
 		{
-			TODO("OPTIMIZE: *(lpAttr++) = lpCur->Attributes;");
 			*(lpAttr++) = lpCur->Attributes;
-			TODO("OPTIMIZE: ch = lpCur->Char.UnicodeChar;");
-			ch = lpCur->Char.UnicodeChar;
-			//2009-09-25. Некоторые (старые?) программы умудряются засунуть в консоль символы (ASC<32)
-			//            их нужно заменить на юникодные аналоги
-			*(lpChar++) = ((WORD)ch < 32) ? gszAnalogues[(WORD)ch] : ch;
+			// If some tool write the '\0' to the console we would not be able to copy the console contents to clipboard
+			*(lpChar++) = lpCur->Char.UnicodeChar ? lpCur->Char.UnicodeChar : L' ';
 		}
 
-		// Для использования строковых функций - гарантируем ASCIIZ буфера
+		// ASCIIZ guarantee to use string functions
 		if (lpChar < (data->pConChar + con.nConBufCells))
 		{
 			*lpChar = 0;
@@ -6025,6 +6020,19 @@ void CRealBuffer::GetConsoleData(wchar_t* pChar, CharAttr* pAttr, int nWidth, in
 			pszDst = pChar + nWidth*nYMax;
 		}
 	} // rbt_Primary
+
+	// Apply control characters substitutes for drawing only
+	{
+		const size_t checkCharsCount = nYMax * nWidth;
+		for (size_t i = 0; i < checkCharsCount; ++i)
+		{
+			const auto charIndex = static_cast<WORD>(pChar[i]);
+			if (charIndex < countof(gszAnalogues))
+			{
+				pChar[i] = gszAnalogues[charIndex];
+			}
+		}
+	}
 
 	// Clean the bottom, if requested height is greater than real one
 	for (nY = nYMax; nY < nHeight; nY++)
