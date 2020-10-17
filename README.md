@@ -32,10 +32,10 @@ See [Release/ConEmu/License.txt](https://github.com/Maximus5/ConEmu/blob/master/
 
 
 ## Some links
-Wiki: https://conemu.github.io/en/TableOfContents.html
-What's new: https://conemu.github.io/en/Whats_New.html
-Release stages: https://conemu.github.io/en/StableVsPreview.html
-Donate this project: <a ref="https://conemu.github.io/donate.html" rel="nofollow">https://conemu.github.io/donate.html</a>
+* Wiki: https://conemu.github.io/en/TableOfContents.html
+* What's new: https://conemu.github.io/en/Whats_New.html
+* Release stages: https://conemu.github.io/en/StableVsPreview.html
+* Donate this project: <a ref="https://conemu.github.io/donate.html" rel="nofollow">https://conemu.github.io/donate.html</a>
 
 
 
