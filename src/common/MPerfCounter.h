@@ -35,23 +35,23 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct PerfCounter
 {
 	// ID must be filled before calling `Start`
-	UINT ID;
+	UINT ID{};
 	// For internal use
-	BOOL Initialized;
+	BOOL Initialized{};
 	// Caller must not change this value
-	LARGE_INTEGER Start;
+	LARGE_INTEGER Start{};
 };
 
 struct PerfCounterStats
 {
 	// number of times Start was called
-	ULONG Counter;
+	ULONG Counter{};
 	// 0..100% of all counters time
-	ULONG Percentage;
+	ULONG Percentage{};
 	// human-readable duration in ms
-	ULONG MilliSeconds;
+	ULONG MilliSeconds{};
 	// duration from QueryPerformanceCounter
-	LARGE_INTEGER Duration;
+	LARGE_INTEGER Duration{};
 };
 
 class MPerfCounter
