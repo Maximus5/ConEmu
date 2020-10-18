@@ -1,7 +1,8 @@
 @echo off
 
 rem If your git log containing UTF-8 or national characters is messed,
-rem just set in the Settings/Environment proper `LANG` variable:
+rem just set in the Settings/Environment proper `LANG` variable, examples:
+rem set LANG=en_US.UTF-8
 rem set LANG=ru_RU.utf8
 rem set LANG=ru_RU.CP1251
 
