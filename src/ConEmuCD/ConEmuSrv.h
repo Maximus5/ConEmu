@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <cstdio>
 #endif
 #include <Shlwapi.h>
+#include <atomic>
 
 
 #include "WorkerBase.h"
@@ -67,9 +68,21 @@ extern USHORT gnPrimaryBufferLastRow;
 
 struct AltServerInfo
 {
-	DWORD  nPID; // informational
-	HANDLE hPrev;
-	DWORD  nPrevPID;
+	DWORD  nPID = 0; // informational
+	HANDLE hPrev = nullptr;
+	DWORD  nPrevPID = 0;
+};
+
+struct AltServerStartStop
+{
+	bool AltServerChanged = false;
+	bool ForceThawAltServer = false;
+	bool bPrevFound = false;
+	DWORD nAltServerWasStarted = 0;
+	DWORD nAltServerWasStopped= 0;
+	DWORD nCurAltServerPID = 0; // = gpSrv->dwAltServerPID;
+	HANDLE hAltServerWasStarted = nullptr;
+	AltServerInfo info{};
 };
 
 enum SleepIndicatorType
@@ -77,6 +90,17 @@ enum SleepIndicatorType
 	sit_None = 0,
 	sit_Num,
 	sit_Title,
+};
+
+enum class LgsResult
+{
+	Failed = 0,
+	MapPtr,
+	WrongVersion,
+	WrongSize,
+	Succeeded,
+	ActiveChanged,
+	Updated,
 };
 
 struct ConProcess;
@@ -97,24 +121,6 @@ struct SrvInfo
 		DWORD nInitTick, nStartTick, nEndTick, nDelta, nConnectDelta;
 		BOOL  bConnected;
 	} ConnectInfo;
-
-	HANDLE hMainServer; DWORD dwMainServerPID;
-	HANDLE hServerStartedEvent;
-
-	HANDLE hAltServer, hCloseAltServer, hAltServerChanged;
-	DWORD dwAltServerPID; DWORD dwPrevAltServerPID;
-	MMap<DWORD,AltServerInfo> AltServers;
-
-	// Refresh thread
-	HANDLE hRefreshThread;
-	DWORD  dwRefreshThread;
-	BOOL   bRefreshTermination;
-	LONG   nRefreshFreezeRequests;
-	LONG   nRefreshIsFrozen; // atomic
-	HANDLE hFreezeRefreshThread;
-	MSectionSimple csRefreshControl;
-
-	DWORD  nPrevAltServer; // Informational, only for RunMode::RM_ALTSERVER
 
 	// CECMD_SETCONSCRBUF
 	HANDLE hWaitForSetConBufThread;    // Remote thread (check it for abnormal termination)
@@ -148,7 +154,7 @@ struct SrvInfo
 	ConEmuGuiMapping guiSettings;
 	CESERVER_REQ_CONINFO_FULL *pConsole;
 	CHAR_INFO *pConsoleDataCopy; // Local (Alloc)
-	MSectionSimple csReadConsoleInfo;
+
 	// Input
 	HANDLE hInputThread;
 	DWORD dwInputThread; BOOL bInputTermination;
@@ -160,11 +166,6 @@ struct SrvInfo
 	//INPUT_RECORD* pInputQueueRead;
 	//INPUT_RECORD* pInputQueueWrite;
 	InQueue InputQueue;
-	// TrueColorer buffer
-	//HANDLE hColorerMapping;
-	MSectionSimple csColorerMappingCreate;
-	MFileMapping<const AnnotationHeader>* pColorerMapping; // поддержка Colorer TrueMod
-	AnnotationHeader ColorerHdr; // для сравнения индексов
 	//
 	HANDLE hConEmuGuiAttached;
 	HWINEVENTHOOK /*hWinHook,*/ hWinHookStartEnd; //BOOL bWinHookAllow; int nWinHookMode;
@@ -238,9 +239,20 @@ public:
 	int ReadConsoleInfo();
 	bool ReadConsoleData();
 	BOOL ReloadFullConsoleInfo(BOOL abForceSend);
+	bool SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = nullptr, bool bForceWriteLog = false) override;
+	bool ApplyConsoleSizeBuffer(USHORT BufferHeight, const COORD& crNewSize, const CONSOLE_SCREEN_BUFFER_INFO& csbi, DWORD& dwErr, bool bForceWriteLog) override;
+	// Read from the console current attributes (by line/block)
+	// Cells with attr.color matching OldText rewrite with NewText
+	void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, WORD wOldText, WORD wNewText) const override;
+	static bool AdaptConsoleFontSize(const COORD& crNewSize);
+	static void EvalVisibleResizeRect(SMALL_RECT& rNewRect, SHORT anOldBottom, const COORD& crNewSize,
+		bool bCursorInScreen, SHORT nCursorAtBottom, SHORT nScreenAtBottom, const CONSOLE_SCREEN_BUFFER_INFO& csbi);
+	static uint32_t FindFirstDirtyLine(SHORT anFrom, SHORT anTo, SHORT anWidth, WORD wDefAttrs);
 
-	static DWORD WINAPI RefreshThread(LPVOID lpvParam); // Thread reloading console contents
-	static DWORD WINAPI SetOemCpProc(LPVOID lpParameter);
+	DWORD RefreshThread(LPVOID lpvParam); // Thread reloading console contents
+	DWORD SetOemCpThread(LPVOID lpParameter);
+
+	const char* GetCurrentThreadLabel() const override;
 
 public:
 	void ServerInitFont();
@@ -251,20 +263,25 @@ public:
 	int ServerInitAttach2Gui();
 	int ServerInitGuiTab();
 	void ServerInitEnvVars();
-	void SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir);
+	void SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir) override;
 	bool TryConnect2Gui(HWND hGui, DWORD anGuiPid, CESERVER_REQ* pIn);
-	SleepIndicatorType CheckIndicateSleepNum();
-	void ShowSleepIndicator(SleepIndicatorType sleepType, bool bSleeping);
+	SleepIndicatorType CheckIndicateSleepNum() const;
+	void ShowSleepIndicator(SleepIndicatorType sleepType, bool bSleeping) const;
 
 	void ConOutCloseHandle();
 	bool CmdOutputOpenMap(CONSOLE_SCREEN_BUFFER_INFO& lsbi, CESERVER_CONSAVE_MAPHDR*& pHdr, CESERVER_CONSAVE_MAP*& pData);
 	static bool IsReopenHandleAllowed();
 	static bool IsCrashHandlerAllowed();
 
-	bool FreezeRefreshThread();
-	bool ThawRefreshThread();
+	bool IsRefreshFreezeRequests() override;
+	void FreezeRefreshThread() override;
+	void ThawRefreshThread() override;
+	DWORD GetRefreshThreadId() const;
+
 	BOOL MyReadConsoleOutput(HANDLE hOut, CHAR_INFO* pData, COORD& bufSize, SMALL_RECT& rgn);
 	BOOL MyWriteConsoleOutput(HANDLE hOut, CHAR_INFO* pData, COORD& bufSize, COORD& crBufPos, SMALL_RECT& rgn);
+	bool LoadScreenBufferInfo(ScreenBufferInfo& sbi) override;
+	MSectionLockSimple LockConsoleReaders(DWORD anWaitTimeout = -1) override;
 
 	void CmdOutputStore(bool abCreateOnly = false);
 	void CmdOutputRestore(bool abSimpleMode);
@@ -274,14 +291,23 @@ public:
 	HWND Attach2Gui(DWORD nTimeout);
 
 	bool AltServerWasStarted(DWORD nPID, HANDLE hAltServer, bool forceThaw = false);
+	DWORD GetAltServerPid() const;
+	DWORD DuplicateHandleForAltServer(HANDLE hSrc, HANDLE& hDup) const;
+	DWORD GetPrevAltServerPid() const;
+	void SetPrevAltServerPid(DWORD prevAltServerPid);
+	void OnAltServerChanged(int nStep, StartStopType nStarted, DWORD nAltServerPID, CESERVER_REQ_STARTSTOP* pStartStop, AltServerStartStop& AS);
+	void OnFarDetached(DWORD farPid);
 
 	int CreateMapHeader();
 	void CloseMapHeader();
 	void CopySrvMapFromGuiMap();
-	void UpdateConsoleMapHeader(LPCWSTR asReason = NULL);
+	void UpdateConsoleMapHeader(LPCWSTR asReason = nullptr) override;
 	void InitAnsiLog(const ConEmuAnsiLog& AnsiLog);
 	int Compare(const CESERVER_CONSOLE_MAPPING_HDR* p1, const CESERVER_CONSOLE_MAPPING_HDR* p2);
-	void FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR* pMap);
+	static void FixConsoleMappingHdr(CESERVER_CONSOLE_MAPPING_HDR* pMap);
+	LgsResult LoadGuiSettings(ConEmuGuiMapping& guiMapping, DWORD& rnWrongValue) const;
+	LgsResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue = nullptr);
+	LgsResult LoadGuiSettingsPtr(ConEmuGuiMapping& guiMapping, const ConEmuGuiMapping* pInfo, bool abNeedReload, bool abForceCopy, DWORD& rnWrongValue) const;
 
 	int CreateColorerHeader(bool bForceRecreate = false);
 
@@ -296,6 +322,9 @@ protected:
 	void ApplyProcessSetEnvCmd();
 	void ApplyEnvironmentCommands(LPCWSTR pszCommands);
 
+	/// Check if the GUI version is compatible
+	int CheckGuiVersion() override;
+
 private:
 	/// Optional console font (may be specified in registry). Up to LF_FACESIZE chars, including \0.
 	CEStr consoleFontName_;
@@ -306,4 +335,32 @@ private:
 
 	/// Last active Far Manager PID
 	DWORD  nActiveFarPID_ = 0;
+
+	// #TODO Replace TrueColorer buffer with new realization
+	// TrueColorer buffer
+	MSectionSimple csColorerMappingCreate{true};
+	MFileMapping<const AnnotationHeader>* pColorerMapping = nullptr;
+	AnnotationHeader ColorerHdr{}; // to compare index change
+
+	// Refresh thread
+	MSectionSimple csRefreshControl{true};
+	HANDLE hRefreshThread = nullptr;
+	DWORD  dwRefreshThread = 0;
+	BOOL   bRefreshTermination = false;
+	std::atomic_int32_t nRefreshFreezeRequests{0};
+	std::atomic_int32_t nRefreshIsFrozen{0};
+	HANDLE hFreezeRefreshThread = nullptr;
+
+	// Console data
+	MSectionSimple csReadConsoleInfo{true};
+
+	HANDLE hMainServer = nullptr; DWORD dwMainServerPID = 0;
+	HANDLE hServerStartedEvent = nullptr;
+
+	HANDLE hAltServer = nullptr, hCloseAltServer = nullptr, hAltServerChanged = nullptr;
+	DWORD dwAltServerPID = 0; DWORD dwPrevAltServerPID = 0;
+	MMap<DWORD,AltServerInfo> AltServers{};
+
+	DWORD  nPrevAltServer = 0; // Informational, only for RunMode::RM_ALTSERVER
+
 };

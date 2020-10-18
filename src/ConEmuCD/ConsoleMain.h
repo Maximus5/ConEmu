@@ -167,10 +167,6 @@ extern HANDLE ghFarInExecuteEvent;
 
 BOOL createProcess(BOOL abSkipWowChange, LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation);
 int AttachRootProcessHandle();
-void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, const WORD wOldText, const WORD wNewText);
-void PreConsoleSize(const int width, const int height);
-void PreConsoleSize(const COORD crSize);
-BOOL SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = nullptr, bool bForceWriteLog = false);
 void CreateLogSizeFile(int /* level */, const CESERVER_CONSOLE_MAPPING_HDR* pConsoleInfo = nullptr);
 void LogSize(const COORD* pcrSize, int newBufferHeight, LPCSTR pszLabel, bool bForceWriteLog = false);
 void LogModeChange(LPCWSTR asName, DWORD oldVal, DWORD newVal);
@@ -178,7 +174,6 @@ bool LogString(LPCSTR asText);
 bool LogString(LPCWSTR asText);
 void PrintExecuteError(LPCWSTR asCmd, DWORD dwErr, LPCWSTR asSpecialInfo = nullptr);
 
-int GetProcessCount(DWORD *rpdwPID, UINT nMaxCount);
 bool MyLoadConsolePalette(HANDLE ahConOut, CESERVER_CONSOLE_PALETTE& Palette);
 BOOL MyGetConsoleScreenBufferInfo(HANDLE ahConOut, PCONSOLE_SCREEN_BUFFER_INFO apsc);
 HWND FindConEmuByPID(DWORD anSuggestedGuiPID = 0);
@@ -206,18 +201,6 @@ bool IsMainServerPID(DWORD nPID);
 
 void LoadExePath();
 void UnlockCurrentDirectory();
-
-enum LGSResult
-{
-	lgs_Failed = 0,
-	lgs_MapPtr,
-	lgs_WrongVersion,
-	lgs_WrongSize,
-	lgs_Succeeded,
-	lgs_ActiveChanged,
-	lgs_Updated,
-};
-LGSResult ReloadGuiSettings(ConEmuGuiMapping* apFromCmd, LPDWORD pnWrongValue = nullptr);
 
 extern BOOL gbDumpServerInitStatus;
 extern WORD  gnDefTextColors, gnDefPopupColors;

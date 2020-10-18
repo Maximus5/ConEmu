@@ -56,7 +56,7 @@ public:
 	void OnAttached();
 
 	// returns true if process list was changed since last query
-	bool GetProcesses(DWORD* processes, UINT count);
+	bool GetProcesses(DWORD* processes, UINT count, DWORD dwMainServerPid);
 
 	void DumpProcInfo(LPCWSTR sLabel, DWORD nCount, DWORD* pPID) const;
 
@@ -65,12 +65,12 @@ public:
 	/// Checks if we are able to retrieve current console processes list. <br>
 	/// Note that this could not be possible on old OS or emulators.
 	bool IsConsoleProcessCountSupported() const;
-	
+
 	/// Returns PIDs of processes except of server/root/ntvdm. <br>
 	/// The function is used to check if we need to print
 	/// the "Press Enter or Esc to exit..." confirmation
 	MArray<DWORD> GetSpawnedProcesses() const;
-	
+
 	/// Returns all PIDs of processes without sorting, just as WinApi returns them.
 	MArray<DWORD> GetAllProcesses() const;
 
@@ -96,6 +96,8 @@ public:
 	#endif
 
 protected:
+	int GetProcessCount(DWORD* rpdwPID, UINT nMaxCount, DWORD dwMainServerPid);
+
 	// Hold all XTermMode requests
 	struct XTermRequest
 	{
@@ -119,7 +121,7 @@ protected:
 	DWORD startProcessCount_ = 0;
 	/// Console processes IDs on startup
 	DWORD startProcessIds_[64] = {};
-	
+
 	// create=false used to erasing on reset
 	INT_PTR GetXRequestIndex(DWORD pid, bool create);
 	// Force update xFixedRequests and inform GUI

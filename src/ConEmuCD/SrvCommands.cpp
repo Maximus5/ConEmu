@@ -60,132 +60,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* ********************************** */
 
-struct AltServerStartStop
-{
-	bool AltServerChanged; // = false;
-	bool ForceThawAltServer; // = false;
-	bool bPrevFound;
-	DWORD nAltServerWasStarted; // = 0
-	DWORD nAltServerWasStopped; // = 0;
-	DWORD nCurAltServerPID; // = gpSrv->dwAltServerPID;
-	HANDLE hAltServerWasStarted; // = NULL;
-	AltServerInfo info; // = {};
-};
-
-void OnAltServerChanged(int nStep, StartStopType nStarted, DWORD nAltServerPID, CESERVER_REQ_STARTSTOP* pStartStop, AltServerStartStop& AS)
-{
-	if (nStep == 1)
-	{
-		if (nStarted == sst_AltServerStart)
-		{
-			// Перевести нить монитора в режим ожидания завершения AltServer, инициализировать gpSrv->dwAltServerPID, gpSrv->hAltServer
-			AS.nAltServerWasStarted = nAltServerPID;
-			if (pStartStop)
-				AS.hAltServerWasStarted = (HANDLE)(DWORD_PTR)pStartStop->hServerProcessHandle;
-			AS.AltServerChanged = true;
-		}
-		else
-		{
-			AS.bPrevFound = gpSrv->AltServers.Get(nAltServerPID, &AS.info, true/*Remove*/);
-
-			// Сначала проверяем, не текущий ли альт.сервер закрывается
-			if (gpSrv->dwAltServerPID && (nAltServerPID == gpSrv->dwAltServerPID))
-			{
-				// Поскольку текущий сервер завершается - то сразу сбросим PID (его морозить уже не нужно)
-				AS.nAltServerWasStopped = nAltServerPID;
-				gpSrv->dwAltServerPID = 0;
-				// Переключаемся на "старый" (если был)
-				if (AS.bPrevFound && AS.info.nPrevPID)
-				{
-					// _ASSERTE могут приводить к ошибкам блокировки gpWorker->Processes().csProc в других потоках. Но ассертов быть не должно )
-					_ASSERTE(AS.info.hPrev!=NULL);
-					// Перевести нить монитора в обычный режим, закрыть gpSrv->hAltServer
-					// Активировать альтернативный сервер (повторно), отпустить его нити чтения
-					AS.AltServerChanged = true;
-					AS.nAltServerWasStarted = AS.info.nPrevPID;
-					AS.hAltServerWasStarted = AS.info.hPrev;
-					AS.ForceThawAltServer = true;
-				}
-				else
-				{
-					// _ASSERTE могут приводить к ошибкам блокировки gpWorker->Processes().csProc в других потоках. Но ассертов быть не должно )
-					_ASSERTE(AS.info.hPrev==NULL);
-					AS.AltServerChanged = true;
-				}
-			}
-			else
-			{
-				// _ASSERTE могут приводить к ошибкам блокировки gpWorker->Processes().csProc в других потоках. Но ассертов быть не должно )
-				_ASSERTE(((nAltServerPID == gpSrv->dwAltServerPID) || !gpSrv->dwAltServerPID || ((nStarted != sst_AltServerStop) && (nAltServerPID != gpSrv->dwAltServerPID) && !AS.bPrevFound)) && "Expected active alt.server!");
-			}
-		}
-	}
-	else if (nStep == 2)
-	{
-		if (AS.AltServerChanged)
-		{
-			if (AS.nAltServerWasStarted)
-			{
-				WorkerServer::Instance().AltServerWasStarted(AS.nAltServerWasStarted, AS.hAltServerWasStarted, AS.ForceThawAltServer);
-			}
-			else if (AS.nCurAltServerPID && (nAltServerPID == AS.nCurAltServerPID))
-			{
-				if (gpSrv->hAltServerChanged)
-				{
-					// Чтобы не подраться между потоками - закрывать хэндл только в RefreshThread
-					gpSrv->hCloseAltServer = gpSrv->hAltServer;
-					gpSrv->dwAltServerPID = 0;
-					gpSrv->hAltServer = NULL;
-					// В RefreshThread ожидание хоть и небольшое (100мс), но лучше передернуть
-					SetEvent(gpSrv->hAltServerChanged);
-				}
-				else
-				{
-					gpSrv->dwAltServerPID = 0;
-					SafeCloseHandle(gpSrv->hAltServer);
-					_ASSERTE(gpSrv->hAltServerChanged!=NULL);
-				}
-			}
-
-			if (!gState.conemuWnd_ || !IsWindow(gState.conemuWnd_))
-			{
-				_ASSERTE((gState.conemuWnd_==NULL) && "ConEmu GUI was terminated? Invalid gState.conemuWnd_");
-			}
-			else
-			{
-				CESERVER_REQ *pGuiIn = NULL, *pGuiOut = NULL;
-				int nSize = sizeof(CESERVER_REQ_HDR)+sizeof(CESERVER_REQ_STARTSTOP);
-				pGuiIn = ExecuteNewCmd(CECMD_CMDSTARTSTOP, nSize);
-
-				if (!pGuiIn)
-				{
-					_ASSERTE(pGuiIn!=NULL && "Memory allocation failed");
-				}
-				else
-				{
-					if (pStartStop)
-						pGuiIn->StartStop = *pStartStop;
-					pGuiIn->StartStop.dwPID = AS.nAltServerWasStarted ? AS.nAltServerWasStarted : AS.nAltServerWasStopped;
-					pGuiIn->StartStop.hServerProcessHandle = NULL; // для GUI смысла не имеет
-					pGuiIn->StartStop.nStarted = AS.nAltServerWasStarted ? sst_AltServerStart : sst_AltServerStop;
-					if (pGuiIn->StartStop.nStarted == sst_AltServerStop)
-					{
-						// Если это был последний процесс в консоли, то главный сервер тоже закрывается
-						// Переоткрывать пайпы в ConEmu нельзя
-						pGuiIn->StartStop.bMainServerClosing = gbQuit || (WaitForSingleObject(ghExitQueryEvent,0) == WAIT_OBJECT_0);
-					}
-
-					pGuiOut = ExecuteGuiCmd(gState.realConWnd_, pGuiIn, gState.realConWnd_);
-
-					_ASSERTE(pGuiOut!=NULL && "Can not switch GUI to alt server?"); // успешное выполнение?
-					ExecuteFreeResult(pGuiOut);
-					ExecuteFreeResult(pGuiIn);
-				}
-			}
-		}
-	}
-}
-
 // Far process console resizes only after any mouse event
 // (Probably, to avoid artifacts/problems in "far /w" mode?)
 void ForceFarResize()
@@ -365,7 +239,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 	MCHKHEAP;
 
 	// Need to block all requests to output buffer in other threads
-	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+	MSectionLockSimple csRead = gpWorker->LockConsoleReaders(LOCK_READOUTPUT_TIMEOUT);
 
 	DWORD nTick1 = 0, nTick2 = 0, nTick3 = 0, nTick4 = 0, nTick5 = 0;
 	DWORD nWasSetSize = -1;
@@ -444,12 +318,12 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 		csRead.Unlock();
 		WARNING("Если указан dwFarPID - это что-ли два раза подряд выполнится?");
 		// rNewRect по идее вообще не нужен, за блокировку при прокрутке отвечает nSendTopLine
-		nWasSetSize = SetConsoleSize(nBufferHeight, crNewSize, rNewRect, szCmdName, bForceWriteLog);
+		nWasSetSize = gpWorker->SetConsoleSize(nBufferHeight, crNewSize, rNewRect, szCmdName, bForceWriteLog);
 		WARNING("!! Не может ли возникнуть конфликт с фаровским фиксом для убирания полос прокрутки?");
 		nTick2 = GetTickCount();
 
 		// вернуть блокировку
-		csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+		csRead = gpWorker->LockConsoleReaders(LOCK_READOUTPUT_TIMEOUT);
 
 		if (in.hdr.nCmd == CECMD_SETSIZENOSYNC)
 		{
@@ -467,9 +341,6 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 			{
 				// Во избежание каких-то накладок FAR (по крайней мере с /w)
 				// стал ресайзить панели только после дерганья мышкой над консолью
-
-				// Need to block all requests to output buffer in other threads
-				MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
 
 				ForceFarResize();
 
@@ -498,7 +369,7 @@ BOOL cmd_SetSizeXXX_CmdStartedFinished(CESERVER_REQ& in, CESERVER_REQ** out)
 			WorkerServer::Instance().ReloadFullConsoleInfo(FALSE); // вызовет Refresh в Refresh thread
 
 			// вернуть блокировку
-			csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+			csRead = gpWorker->LockConsoleReaders(LOCK_READOUTPUT_TIMEOUT);
 		}
 
 		MCHKHEAP;
@@ -803,45 +674,9 @@ BOOL cmd_GetAliases(CESERVER_REQ& in, CESERVER_REQ** out)
 
 BOOL cmd_FarDetached(CESERVER_REQ& in, CESERVER_REQ** out)
 {
-	BOOL lbRc = FALSE;
+	const BOOL lbRc = FALSE;
 
-	// После детача в фаре команда (например dir) схлопнется, чтобы
-	// консоль неожиданно не закрылась...
-	gState.autoDisableConfirmExit_ = FALSE;
-	gState.alwaysConfirmExit_ = TRUE;
-
-	MSectionLock CS; CS.Lock(gpWorker->Processes().csProc);
-	UINT nPrevCount = gpWorker->Processes().nProcessCount;
-	_ASSERTE(in.hdr.nSrcPID!=0);
-	DWORD nPID = in.hdr.nSrcPID;
-	DWORD nPrevAltServerPID = gpSrv->dwAltServerPID;
-
-	BOOL lbChanged = gpWorker->Processes().ProcessRemove(in.hdr.nSrcPID, nPrevCount, CS);
-
-	MSectionLock CsAlt;
-	CsAlt.Lock(gpSrv->csAltSrv, TRUE, 1000);
-
-	AltServerStartStop AS = {};
-	AS.nCurAltServerPID = gpSrv->dwAltServerPID;
-
-	OnAltServerChanged(1, sst_AltServerStop, nPID, NULL, AS);
-
-	// ***
-	if (lbChanged)
-		gpWorker->Processes().ProcessCountChanged(TRUE, nPrevCount, CS);
-	CS.Unlock();
-	// ***
-
-	// После Unlock-а, зовем функцию
-	if (AS.AltServerChanged)
-	{
-		OnAltServerChanged(2, sst_AltServerStop, in.hdr.nSrcPID, NULL, AS);
-	}
-
-	// Обновить мэппинг
-	WorkerServer::Instance().UpdateConsoleMapHeader(L"CECMD_FARDETACHED");
-
-	CsAlt.Unlock();
+	WorkerServer::Instance().OnFarDetached(in.hdr.nSrcPID);
 
 	return lbRc;
 }
@@ -857,13 +692,14 @@ BOOL cmd_OnActivation(CESERVER_REQ& in, CESERVER_REQ** out)
 		// Принудить RefreshThread перечитать статус активности консоли
 		gpSrv->nLastConsoleActiveTick = 0;
 
+		auto& server = WorkerServer::Instance();
 
-		if (gpSrv->dwAltServerPID && (gpSrv->dwAltServerPID != gnSelfPID))
+		if (server.GetAltServerPid() && (server.GetAltServerPid() != gnSelfPID))
 		{
 			CESERVER_REQ* pAltIn = ExecuteNewCmd(CECMD_ONACTIVATION, sizeof(CESERVER_REQ_HDR));
 			if (pAltIn)
 			{
-				CESERVER_REQ* pAltOut = ExecuteSrvCmd(gpSrv->dwAltServerPID, pAltIn, gState.realConWnd_);
+				CESERVER_REQ* pAltOut = ExecuteSrvCmd(server.GetAltServerPid(), pAltIn, gState.realConWnd_);
 				ExecuteFreeResult(pAltIn);
 				ExecuteFreeResult(pAltOut);
 			}
@@ -1101,12 +937,14 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	MSectionLock CS; CS.Lock(gpWorker->Processes().csProc);
 
-	UINT nPrevCount = gpWorker->Processes().nProcessCount;
+	const UINT nPrevCount = gpWorker->Processes().nProcessCount;
 	BOOL lbChanged = FALSE;
 
+	auto& server = WorkerServer::Instance();
+
 	_ASSERTE(in.StartStop.dwPID!=0);
-	DWORD nPID = in.StartStop.dwPID;
-	DWORD nPrevAltServerPID = gpSrv->dwAltServerPID;
+	const DWORD nPID = in.StartStop.dwPID;
+	const DWORD nPrevAltServerPID = server.GetAltServerPid();
 
 	if (!gpWorker->Processes().nProcessStartTick && (gpWorker->RootProcessId() == in.StartStop.dwPID))
 	{
@@ -1115,10 +953,10 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	MSectionLock CsAlt;
 	if (((in.StartStop.nStarted == sst_AltServerStop) || (in.StartStop.nStarted == sst_AppStop))
-		&& in.StartStop.dwPID && (in.StartStop.dwPID == gpSrv->dwAltServerPID))
+		&& in.StartStop.dwPID && (in.StartStop.dwPID == server.GetAltServerPid()))
 	{
 		// _ASSERTE могут приводить к ошибкам блокировки gpWorker->Processes().csProc в других потоках. Но ассертов быть не должно )
-		_ASSERTE(GetCurrentThreadId() != gpSrv->dwRefreshThread);
+		_ASSERTE(GetCurrentThreadId() != server.GetRefreshThreadId());
 		CsAlt.Lock(gpSrv->csAltSrv, TRUE, 1000);
 	}
 
@@ -1172,22 +1010,22 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	/*
 	bool AltServerChanged = false;
 	DWORD nAltServerWasStarted = 0, nAltServerWasStopped = 0;
-	DWORD nCurAltServerPID = gpSrv->dwAltServerPID;
+	DWORD nCurAltServerPID = server.GetAltServerPid();
 	HANDLE hAltServerWasStarted = NULL;
 	bool ForceThawAltServer = false;
 	AltServerInfo info = {};
 	*/
 	AltServerStartStop AS = {};
-	AS.nCurAltServerPID = gpSrv->dwAltServerPID;
+	AS.nCurAltServerPID = server.GetAltServerPid();
 
 
 	if (in.StartStop.nStarted == sst_AltServerStart)
 	{
-		// Перевести нить монитора в режим ожидания завершения AltServer, инициализировать gpSrv->dwAltServerPID, gpSrv->hAltServer
+		// Перевести нить монитора в режим ожидания завершения AltServer, инициализировать server.GetAltServerPid(), gpSrv->hAltServer
 		// _ASSERTE могут приводить к ошибкам блокировки gpWorker->Processes().csProc в других потоках. Но ассертов быть не должно )
 		_ASSERTE(in.StartStop.hServerProcessHandle!=0);
 
-		OnAltServerChanged(1, sst_AltServerStart, in.StartStop.dwPID, &in.StartStop, AS);
+		server.OnAltServerChanged(1, sst_AltServerStart, in.StartStop.dwPID, &in.StartStop, AS);
 
 	}
 	else if ((in.StartStop.nStarted == sst_ComspecStart)
@@ -1228,7 +1066,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		// Если это закрылся AltServer
 		if (nAltPID)
 		{
-			OnAltServerChanged(1, in.StartStop.nStarted, nAltPID, NULL, AS);
+			server.OnAltServerChanged(1, in.StartStop.nStarted, nAltPID, NULL, AS);
 
 			// _ASSERTE могут приводить к ошибкам блокировки gpWorker->Processes().csProc в других потоках. Но ассертов быть не должно )
 			_ASSERTE(in.StartStop.nStarted==sst_ComspecStop || in.StartStop.nOtherPID==AS.info.nPrevPID);
@@ -1249,7 +1087,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 	// После Unlock-а, зовем функцию
 	if (AS.AltServerChanged)
 	{
-		OnAltServerChanged(2, in.StartStop.nStarted, in.StartStop.dwPID, &in.StartStop, AS);
+		server.OnAltServerChanged(2, in.StartStop.nStarted, in.StartStop.dwPID, &in.StartStop, AS);
 	}
 
 	// Обновить мэппинг
@@ -1272,7 +1110,7 @@ BOOL cmd_CmdStartStop(CESERVER_REQ& in, CESERVER_REQ** out)
 		(*out)->StartStopRet.nHeight = (gpWorker->GetSbi().srWindow.Bottom - gpWorker->GetSbi().srWindow.Top + 1);
 		_ASSERTE(gState.runMode_==RunMode::Server);
 		(*out)->StartStopRet.dwMainSrvPID = GetCurrentProcessId();
-		(*out)->StartStopRet.dwAltSrvPID = gpSrv->dwAltServerPID;
+		(*out)->StartStopRet.dwAltSrvPID = server.GetAltServerPid();
 		if (in.StartStop.nStarted == sst_AltServerStart)
 		{
 			(*out)->StartStopRet.dwPrevAltServerPID = nPrevAltServerPID;
@@ -1301,7 +1139,7 @@ BOOL cmd_GuiChanged(CESERVER_REQ& in, CESERVER_REQ** out)
 
 	if (gpSrv && gpSrv->pConsole)
 	{
-		ReloadGuiSettings(&in.GuiInfo);
+		WorkerServer::Instance().ReloadGuiSettings(&in.GuiInfo);
 	}
 
 	return lbRc;
@@ -1677,29 +1515,36 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 	{
 		_ASSERTE(gpSrv!=NULL);
 	}
+	else if (in.DataSize() < (2 * sizeof(in.dwData[0])))
+	{
+		_ASSERTE(FALSE && "DataSize should be 2*DWORD");
+	}
 	else
 	{
 		// dwData[0]=1-Freeze, 0-Thaw; dwData[1]=New Alt server PID
-		wchar_t szLog[80];
+		wchar_t szLog[80] = L"";
+
+		auto& server = WorkerServer::Instance();
 
 		if (gpLogSize)
 		{
 			if (in.dwData[0] == 1)
-				swprintf_c(szLog, L"AltServer: freeze requested, new AltServer=%u", in.dwData[1]);
+				swprintf_c(szLog, L"AltServer: freeze requested, new AltServer=%u", in.dwData[1]);  // NOLINT(clang-diagnostic-array-bounds)
 			else
-				swprintf_c(szLog, L"AltServer: thaw requested, prev AltServer=%u", gpSrv->nPrevAltServer);
+				swprintf_c(szLog, L"AltServer: thaw requested, prev AltServer=%u", server.GetPrevAltServerPid());
 			LogString(szLog);
 		}
 
 		if (in.dwData[0] == 1)
 		{
-			gpSrv->nPrevAltServer = in.dwData[1];
+			server.SetPrevAltServerPid(in.dwData[1]);  // NOLINT(clang-diagnostic-array-bounds)
 
 			WorkerServer::Instance().FreezeRefreshThread();
 		}
 		else
 		{
-			std::swap(nPrevAltServer, gpSrv->nPrevAltServer);
+			nPrevAltServer = server.GetPrevAltServerPid();
+			server.SetPrevAltServerPid(0);
 
 			WorkerServer::Instance().ThawRefreshThread();
 
@@ -1718,13 +1563,13 @@ BOOL cmd_FreezeAltServer(CESERVER_REQ& in, CESERVER_REQ** out)
 		lbRc = TRUE;
 	}
 
-	int nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD)*2;
+	const size_t nOutSize = sizeof(CESERVER_REQ_HDR) + sizeof(DWORD) * 2;
 	*out = ExecuteNewCmd(CECMD_FREEZEALTSRV, nOutSize);
 
-	if (*out != NULL)
+	if (*out != nullptr)
 	{
 		(*out)->dwData[0] = lbRc;
-		(*out)->dwData[1] = nPrevAltServer; // Informational
+		(*out)->dwData[1] = nPrevAltServer; // Informational  // NOLINT(clang-diagnostic-array-bounds)
 	}
 
 	return TRUE;
@@ -1833,7 +1678,7 @@ BOOL LoadFullConsoleDataReal(CESERVER_REQ& in, CESERVER_REQ** out)
 BOOL cmd_LoadFullConsoleData(CESERVER_REQ& in, CESERVER_REQ** out)
 {
 	// Need to block all requests to output buffer in other threads
-	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+	MSectionLockSimple csRead = gpWorker->LockConsoleReaders(LOCK_READOUTPUT_TIMEOUT);
 
 	BOOL alt_screen = (in.DataSize() >= 2 * sizeof(DWORD)) ? in.dwData[1] : FALSE;
 	if (!alt_screen)
@@ -1853,7 +1698,7 @@ BOOL cmd_SetFullScreen(CESERVER_REQ& in, CESERVER_REQ** out)
 	*out = ExecuteNewCmd(CECMD_SETFULLSCREEN, cbReplySize);
 
 	// Need to block all requests to output buffer in other threads
-	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+	MSectionLockSimple csRead = gpWorker->LockConsoleReaders(LOCK_READOUTPUT_TIMEOUT);
 
 	if ((*out) != nullptr)
 	{
@@ -1887,7 +1732,7 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 	LogString(L"CECMD_SETCONCOLORS: Received");
 
 	// Need to block all requests to output buffer in other threads
-	MSectionLockSimple csRead; csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT);
+	MSectionLockSimple csRead = gpWorker->LockConsoleReaders(LOCK_READOUTPUT_TIMEOUT);
 
 	size_t cbReplySize = sizeof(CESERVER_REQ_HDR) + sizeof(CESERVER_REQ_SETCONSOLORS);
 	*out = ExecuteNewCmd(CECMD_SETCONCOLORS, cbReplySize);
@@ -1996,7 +1841,7 @@ BOOL cmd_SetConColors(CESERVER_REQ& in, CESERVER_REQ** out)
 			// Считать из консоли текущие атрибуты (построчно/поблочно)
 			// И там, где они совпадают с OldText - заменить на in.SetConColor.NewTextAttributes
 			// #Refill Pass current DynamicHeight into
-			RefillConsoleAttributes(csbi5, OldText, in.SetConColor.NewTextAttributes);
+			gpWorker->RefillConsoleAttributes(csbi5, OldText, in.SetConColor.NewTextAttributes);
 		}
 
 		(*out)->SetConColor.ReFillConsole = bOk;
@@ -2036,8 +1881,8 @@ BOOL cmd_AltBuffer(CESERVER_REQ& in, CESERVER_REQ** out)
 	CONSOLE_SCREEN_BUFFER_INFO lsbi = {};
 
 	// Need to block all requests to output buffer in other threads
-	MSectionLockSimple csRead;
-	if (!csRead.Lock(&gpSrv->csReadConsoleInfo, LOCK_READOUTPUT_TIMEOUT))
+	MSectionLockSimple csRead = gpWorker->LockConsoleReaders(LOCK_READOUTPUT_TIMEOUT);
+	if (!csRead.IsLocked())
 	{
 		LogString("cmd_AltBuffer: csReadConsoleInfo.Lock failed");
 		lbRc = FALSE;
@@ -2600,30 +2445,21 @@ BOOL cmd_WriteText(CESERVER_REQ& in, CESERVER_REQ** out)
 bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 {
 	bool lbProcessed = false;
+	auto& server = WorkerServer::Instance();
 	// Если крутится альтернативный сервер - команду нужно выполнять в нем
-	if (gpSrv->dwAltServerPID && (gpSrv->dwAltServerPID != gnSelfPID))
+	if (server.GetAltServerPid() && (server.GetAltServerPid() != gnSelfPID))
 	{
-		HANDLE hSave = NULL, hDup = NULL; DWORD nDupError = (DWORD)-1;
+		HANDLE hSave = nullptr, hDup = nullptr; DWORD nDupError = static_cast<DWORD>(-1);
 		if ((in.hdr.nCmd == CECMD_SETCONSCRBUF) && (in.DataSize() >= sizeof(in.SetConScrBuf)) && in.SetConScrBuf.bLock)
 		{
-			if (gpSrv->hAltServer)
-			{
-				hSave = in.SetConScrBuf.hRequestor;
-				if (!hSave)
-					nDupError = (DWORD)-3;
-				else if (!DuplicateHandle(GetCurrentProcess(), hSave, gpSrv->hAltServer, &hDup, 0, FALSE, DUPLICATE_SAME_ACCESS))
-					nDupError = GetLastError();
-				else
-					in.SetConScrBuf.hRequestor = hDup;
-			}
-			else
-			{
-				nDupError = (DWORD)-2;
-			}
+			hSave = in.SetConScrBuf.hRequestor;
+			nDupError = server.DuplicateHandleForAltServer(in.SetConScrBuf.hRequestor, hDup);
+			if (nDupError == 0)
+				in.SetConScrBuf.hRequestor = hDup;
 		}
 
-		(*out) = ExecuteSrvCmd(gpSrv->dwAltServerPID, &in, gState.realConWnd_);
-		lbProcessed = ((*out) != NULL);
+		(*out) = ExecuteSrvCmd(server.GetAltServerPid(), &in, gState.realConWnd_);
+		lbProcessed = ((*out) != nullptr);
 		lbRc = lbProcessed;
 
 		if (hSave)
@@ -2632,7 +2468,7 @@ bool ProcessAltSrvCommand(CESERVER_REQ& in, CESERVER_REQ** out, BOOL& lbRc)
 			if (lbProcessed)
 				SafeCloseHandle(hSave);
 		}
-		UNREFERENCED_PARAMETER(nDupError);
+		std::ignore = nDupError;
 	}
 	return lbProcessed;
 }

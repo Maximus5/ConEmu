@@ -2514,7 +2514,7 @@ struct RequestLocalServerParm
 
 	RequestLocalServerFlags Flags;
 
-	/*[IN]*/  HANDLE* ppConOutBuffer;
+	/*[IN]*/  HANDLE* ppConOutBuffer;  // if Parm->ppConOutBuffer is set, it HAVE TO BE GLOBAL SCOPE variable!
 	/*[OUT]*/ AnnotationHeader* pAnnotation;
 	/*[OUT]*/ RequestLocalServer_t fRequestLocalServer;
 	/*[OUT]*/ ExtendedConsoleWriteText_t fExtendedConsoleWriteText;

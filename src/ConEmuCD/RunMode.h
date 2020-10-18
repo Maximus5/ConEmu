@@ -35,7 +35,6 @@ enum class RunMode : int
 	Comspec,
 	SetHook64,
 	AltServer,
-	Application,
 	GuiMacro,
 	AutoAttach,
 };

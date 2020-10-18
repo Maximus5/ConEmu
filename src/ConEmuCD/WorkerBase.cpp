@@ -26,6 +26,9 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define SHOWDEBUGSTR
+#define DEBUGSTRSIZE(x) DEBUGSTR(x)
+
 #include "../common/defines.h"
 #include "../common/MAssert.h"
 #include "../common/MStrDup.h"
@@ -102,6 +105,14 @@ WorkerBase::WorkerBase()
 void WorkerBase::Done(const int /*exitCode*/, const bool /*reportShutdown*/)
 {
 	dbgInfo.reset();
+}
+
+const char* WorkerBase::GetCurrentThreadLabel() const
+{
+	const auto dwId = GetCurrentThreadId();
+	if (dwId == gdwMainThreadId)
+		return "MainThread";
+	return " <unknown thread>";
 }
 
 int WorkerBase::ProcessCommandLineArgs()
@@ -297,11 +308,9 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	xf_check();
 
 	// Prepare our environment and GUI window
-	if (gState.runMode_ == RunMode::Server)
-	{
-		if ((iRc = CheckGuiVersion()) != 0)
-			return iRc;
-	}
+
+	if ((iRc = CheckGuiVersion()) != 0)
+		return iRc;
 
 	xf_check();
 
@@ -414,6 +423,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	else
 	{
 		gszComSpec[0] = 0;
+		// ReSharper disable once CppLocalVariableMayBeConst
 		LPCWSTR pszFind = GetComspecFromEnvVar(gszComSpec, countof(gszComSpec));
 		if (!pszFind || !wcschr(pszFind, L'\\') || !FileExists(pszFind))
 		{
@@ -426,7 +436,7 @@ int WorkerBase::PostProcessPrepareCommandLine()
 	}
 
 	// nCmdLine counts length of lsCmdLine + gszComSpec + something for "/C" and things
-	const size_t nCchLen = nCmdLine + 1;
+	const size_t nCchLen = size_t(nCmdLine) + 1;
 	SafeFree(gpszRunCmd);
 	gpszRunCmd = static_cast<wchar_t*>(calloc(nCchLen, sizeof(wchar_t)));
 
@@ -512,54 +522,8 @@ int WorkerBase::PostProcessPrepareCommandLine()
 
 int WorkerBase::CheckGuiVersion()
 {
-	// If we already know the ConEmu HWND (root window)
-	if (!gState.hGuiWnd)
-		return 0;
-
-	// try to validate it's version
-	DWORD nGuiPid = 0; GetWindowThreadProcessId(gState.hGuiWnd, &nGuiPid);
-	DWORD nWrongValue = 0;
-	SetLastError(0);
-	const LGSResult lgsRc = ReloadGuiSettings(nullptr, &nWrongValue);
-	if (lgsRc >= lgs_Succeeded)
-		return 0;
-
-	wchar_t szLgs[80];
-	swprintf_c(szLgs, L"LGS=%u, Code=%u, GUI PID=%u, Srv PID=%u", lgsRc, GetLastError(), nGuiPid, GetCurrentProcessId());
-
-	wchar_t szLgsError[200];
-	switch (lgsRc)
-	{
-	case lgs_WrongVersion:
-		swprintf_c(szLgsError, L"Failed to load ConEmu info!\n"
-			L"Found ProtocolVer=%u but Required=%u.\n"
-			L"%s.\n"
-			L"Please update all ConEmu components!",
-			nWrongValue, static_cast<DWORD>(CESERVER_REQ_VER), szLgs);
-		break;
-	case lgs_WrongSize:
-		swprintf_c(szLgsError, L"Failed to load ConEmu info!\n"
-			L"Found MapSize=%u but Required=%u."
-			L"%s.\n"
-			L"Please update all ConEmu components!",
-			nWrongValue, static_cast<DWORD>(sizeof(ConEmuGuiMapping)), szLgs);
-		break;
-	default:
-		swprintf_c(szLgsError, L"Failed to load ConEmu info!\n"
-			L"%s.\n"
-			L"Please update all ConEmu components!",
-			szLgs);
-	}
-
-	// Add log info
-	LogFunction(szLgs);
-
-	// Show user message
-	wchar_t szTitle[128];
-	swprintf_c(szTitle, L"ConEmuC[Srv]: PID=%u", GetCurrentProcessId());
-	MessageBox(nullptr, szLgsError, szTitle, MB_ICONSTOP | MB_SYSTEMMODAL);
-
-	return CERR_WRONG_GUI_VERSION;
+	_ASSERTE(gState.runMode_ != RunMode::Server);
+	return 0;
 }
 
 int WorkerBase::PostProcessCanAttach() const
@@ -996,6 +960,22 @@ const CONSOLE_SCREEN_BUFFER_INFO& WorkerBase::GetSbi() const
 	return this->consoleInfo.sbi;
 }
 
+bool WorkerBase::LoadScreenBufferInfo(ScreenBufferInfo& sbi)
+{
+	// ReSharper disable once CppLocalVariableMayBeConst
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+	const auto result = GetConsoleScreenBufferInfo(hOut, &sbi.csbi);
+	sbi.crMaxSize = MyGetLargestConsoleWindowSize(hOut);
+	return result;
+}
+
+MSectionLockSimple WorkerBase::LockConsoleReaders(DWORD anWaitTimeout)
+{
+	// Nothing to lock in base
+	return MSectionLockSimple{};
+}
+
 void WorkerBase::EnableProcessMonitor(bool enable)
 {
 	// nothing to do in base
@@ -1359,7 +1339,108 @@ bool WorkerBase::EnterHwFullScreen(PCOORD pNewSize /*= nullptr*/)
 	return result;
 }
 
-void WorkerBase::CdToProfileDir()
+// Called from SetConsoleSize for debugging purposes
+void WorkerBase::PreConsoleSize(const int width, const int height)
+{
+	// Is visible area size too big?
+	_ASSERTE(width <= 500);
+	_ASSERTE(height <= 300);
+	// And positive
+	_ASSERTE(width > 0);
+	_ASSERTE(height > 0);
+}
+
+// Called from SetConsoleSize for debugging purposes
+void WorkerBase::PreConsoleSize(const COORD crSize)
+{
+	PreConsoleSize(crSize.X, crSize.Y);
+}
+
+bool WorkerBase::ApplyConsoleSizeSimple(
+	const COORD& crNewSize, const CONSOLE_SCREEN_BUFFER_INFO& csbi, DWORD& dwErr, bool bForceWriteLog)
+{
+	bool lbRc = true;
+	dwErr = 0;
+
+	DEBUGSTRSIZE(L"SetConsoleSize: ApplyConsoleSizeSimple started");
+
+	const bool lbNeedChange = (csbi.dwSize.X != crNewSize.X) || (csbi.dwSize.Y != crNewSize.Y)
+		|| ((csbi.srWindow.Right - csbi.srWindow.Left + 1) != crNewSize.X)
+		|| ((csbi.srWindow.Bottom - csbi.srWindow.Top + 1) != crNewSize.Y);
+
+	RECT rcConPos = {};
+	GetWindowRect(gState.realConWnd_, &rcConPos);
+
+	SMALL_RECT rNewRect = {};
+
+	#ifdef _DEBUG
+	if (!lbNeedChange)
+	{
+		int nDbg = 0;
+	}
+	#endif
+
+	if (lbNeedChange)
+	{
+		// Если этого не сделать - размер консоли нельзя УМЕНЬШИТЬ
+		if (crNewSize.X <= (csbi.srWindow.Right-csbi.srWindow.Left) || crNewSize.Y <= (csbi.srWindow.Bottom-csbi.srWindow.Top))
+		{
+			rNewRect.Left = 0; rNewRect.Top = 0;
+			rNewRect.Right = std::min<int>((crNewSize.X - 1), (csbi.srWindow.Right - csbi.srWindow.Left));
+			rNewRect.Bottom = std::min<int>((crNewSize.Y - 1), (csbi.srWindow.Bottom - csbi.srWindow.Top));
+
+			if (!SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect))
+			{
+				// Last chance to shrink visible area of the console if ConApi was failed
+				MoveWindow(gState.realConWnd_, rcConPos.left, rcConPos.top, 1, 1, 1);
+			}
+		}
+
+		//specified width and height cannot be less than the width and height of the console screen buffer's window
+		if (!SetConsoleScreenBufferSize(ghConOut, crNewSize))
+		{
+			lbRc = false;
+			dwErr = GetLastError();
+		}
+
+		// #TODO: а если правый нижний край вылезет за пределы экрана?
+		rNewRect.Left = 0; rNewRect.Top = 0;
+		rNewRect.Right = crNewSize.X - 1;
+		rNewRect.Bottom = crNewSize.Y - 1;
+		if (!SetConsoleWindowInfo(ghConOut, TRUE, &rNewRect))
+		{
+			// Non-critical error?
+			dwErr = GetLastError();
+		}
+	}
+
+	LogSize(nullptr, 0, lbRc ? "ApplyConsoleSizeSimple OK" : "ApplyConsoleSizeSimple FAIL", bForceWriteLog);
+
+	return lbRc;
+}
+
+bool WorkerBase::ApplyConsoleSizeBuffer(
+	const USHORT BufferHeight, const COORD& crNewSize, const CONSOLE_SCREEN_BUFFER_INFO& csbi, DWORD& dwErr,
+	bool bForceWriteLog)
+{
+	PreConsoleSize(crNewSize);
+	_ASSERTE(FALSE && "ApplyConsoleSizeBuffer is not implemented in base");
+	return false;
+}
+
+void WorkerBase::RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, const WORD wOldText, const WORD wNewText) const
+{
+	_ASSERTE(FALSE && "RefillConsoleAttributes is not implemented in base");
+}
+
+bool WorkerBase::SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel /*= nullptr*/, bool bForceWriteLog /*= false*/)
+{
+	PreConsoleSize(crNewSize);
+	_ASSERTE(FALSE && "SetConsoleSize is not implemented in base");
+	return false;
+}
+
+void WorkerBase::CdToProfileDir() const
 {
 	BOOL bRc = FALSE;
 	wchar_t szPath[MAX_PATH] = L"";
@@ -1750,4 +1831,29 @@ CEStr WorkerBase::ExpandTaskCmd(LPCWSTR asCmdLine) const
 	ExecuteFreeResult(pOut);
 
 	return pszResult;
+}
+
+void WorkerBase::FreezeRefreshThread()
+{
+	_ASSERTE(FALSE && "FreezeRefreshThread is not implemented in base");
+}
+
+void WorkerBase::ThawRefreshThread()
+{
+	_ASSERTE(FALSE && "ThawRefreshThread is not implemented in base");
+}
+
+bool WorkerBase::IsRefreshFreezeRequests()
+{
+	return false;
+}
+
+void WorkerBase::UpdateConsoleMapHeader(LPCWSTR asReason)
+{
+	_ASSERTE(FALSE && "UpdateConsoleMapHeader is not implemented in base");
+}
+
+void WorkerBase::SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir)
+{
+	_ASSERTE(FALSE && "SetConEmuFolders is not implemented in base");
 }

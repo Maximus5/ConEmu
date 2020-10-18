@@ -36,24 +36,26 @@ class WorkerComspec final : public WorkerBase
 {
 public:
 	virtual ~WorkerComspec();
-	
+
 	WorkerComspec();
 
 	WorkerComspec(const WorkerComspec&) = delete;
 	WorkerComspec(WorkerComspec&&) = delete;
 	WorkerComspec& operator=(const WorkerComspec&) = delete;
 	WorkerComspec& operator=(WorkerComspec&&) = delete;
-	
+
 	int Init() override;
 	void Done(int exitCode, bool reportShutdown = false) override;
 
 	int ProcessCommandLineArgs() override;
-	
+
 	int ProcessNewConsoleArg(LPCWSTR asCmdLine);
 
 	bool IsCmdK() const override;
 	void SetCmdK(bool useCmdK) override;
-	
+
+	bool SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = nullptr, bool bForceWriteLog = false) override;
+
 private:
 	bool GetAliases(wchar_t* asExeName, wchar_t** rsAliases, LPDWORD rnAliasesSize) const;
 

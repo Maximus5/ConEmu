@@ -77,7 +77,7 @@ ConProcess::ConProcess(const MModule& kernel32)
 			}
 		}
 	}
-	
+
 	csProc = new MSection();
 
 	if (pnProcesses.resize(START_MAX_PROCESSES)
@@ -455,7 +455,7 @@ INT_PTR ConProcess::GetXRequestIndex(DWORD pid, bool create)
 	{
 		if (xRequests[i].pid == pid)
 		{
-			// pid==0 is used to 
+			// pid==0 is used to
 			if (create && pid)
 			{
 				// Move it to the end of the queue
@@ -713,14 +713,14 @@ bool ConProcess::CheckProcessCount(const bool abForce/*=FALSE*/)
 	DWORD nCurProcessesDbg[MAX_GET_PROC_COUNT] = {};
 	// for debugging, save previous console state
 	DWORD nPrevProcessedDbg[MAX_GET_PROC_COUNT] = {};
-	// 
+	//
 	if (!pnProcesses.empty() && nProcessCount)
 	{
 		memmove_s(nPrevProcessedDbg, sizeof(nPrevProcessedDbg), &pnProcesses[0],
 			std::min<DWORD>(countof(nPrevProcessedDbg), nProcessCount) * sizeof(pnProcesses[0]));
 	}
 #endif
-	
+
 	if (nProcessCount == 0)
 	{
 		pnProcesses[0] = gnSelfPID;
@@ -994,21 +994,21 @@ bool ConProcess::GetRootInfo(CESERVER_REQ* pReq)
 }
 
 // returns true if process list was changed since last query
-bool ConProcess::GetProcesses(DWORD* processes, UINT count)
+bool ConProcess::GetProcesses(DWORD* processes, UINT count, DWORD dwMainServerPid)
 {
 	bool lbChanged = false;
 	_ASSERTE(count*sizeof(*processes) == sizeof(nLastRetProcesses));
 	// #CONPROCESS Use current process list!
-	DWORD nCurProcCount = GetProcessCount(processes, count);
+	const DWORD nCurProcCount = GetProcessCount(processes, count, dwMainServerPid);
 	_ASSERTE(nCurProcCount && processes[0]);
-	size_t cmp_size = std::min<UINT>(sizeof(nLastRetProcesses), (count * sizeof(*processes)));
+	const size_t cmpSize = std::min<UINT>(sizeof(nLastRetProcesses), (count * sizeof(*processes)));
 	if (nCurProcCount
-		&& memcmp(nLastRetProcesses, processes, cmp_size))
+		&& (memcmp(nLastRetProcesses, processes, cmpSize) != 0))
 	{
 		// Process list was changed
 		lbChanged = true;
 		// remember it
-		memmove(nLastRetProcesses, gpSrv->pConsole->ConState.nProcesses, cmp_size);
+		memmove(nLastRetProcesses, gpSrv->pConsole->ConState.nProcesses, cmpSize);
 	}
 	return lbChanged;
 }
@@ -1082,7 +1082,7 @@ MArray<DWORD> ConProcess::GetSpawnedProcesses() const
 	DWORD nProcesses[MAX_GET_PROC_COUNT] = {};
 	const DWORD nProcCount = pfnGetConsoleProcessList(nProcesses, countof(nProcesses));
 	const DWORD maxCount = std::max<DWORD>(nProcCount, countof(nProcesses));
-	
+
 	result.reserve(maxCount);
 
 	for (DWORD i = 0; i < maxCount; i++)
@@ -1109,7 +1109,7 @@ MArray<DWORD> ConProcess::GetAllProcesses() const
 	DWORD nProcesses[MAX_GET_PROC_COUNT] = {};
 	const DWORD nProcCount = pfnGetConsoleProcessList(nProcesses, countof(nProcesses));
 	const DWORD maxCount = std::max<DWORD>(nProcCount, countof(nProcesses));
-	
+
 	result.resize(maxCount);
 
 	for (DWORD i = 0; i < maxCount; i++)
@@ -1118,4 +1118,119 @@ MArray<DWORD> ConProcess::GetAllProcesses() const
 	}
 
 	return result;
+}
+
+int ConProcess::GetProcessCount(DWORD *rpdwPID, const UINT nMaxCount, const DWORD dwMainServerPid)
+{
+	if (!rpdwPID || (nMaxCount < 3))
+	{
+		_ASSERTE(rpdwPID && (nMaxCount >= 3));
+		return this->nProcessCount;
+	}
+
+
+	UINT nRetCount = 0;
+	const UINT absentPid = static_cast<UINT>(-1);
+
+	rpdwPID[nRetCount++] = gnSelfPID;
+
+	// Windows 7 and higher: there is "conhost.exe"
+	if (IsWin7())
+	{
+		#if 0
+		typedef BOOL (WINAPI* GetNamedPipeServerProcessId_t)(HANDLE Pipe,PULONG ServerProcessId);
+		HMODULE hKernel = GetModuleHandle(L"kernel32.dll");
+		GetNamedPipeServerProcessId_t GetNamedPipeServerProcessId_f = hKernel
+			? (GetNamedPipeServerProcessId_t)GetProcAddress(hKernel, "GetNamedPipeServerProcessId") : nullptr;
+		HANDLE hOut; BOOL bSrv = FALSE; ULONG nSrvPid = 0;
+		_ASSERTE(FALSE && "calling GetNamedPipeServerProcessId_f");
+		if (GetNamedPipeServerProcessId_f)
+		{
+			hOut = (HANDLE)ghConOut;
+			if (hOut)
+			{
+				bSrv = GetNamedPipeServerProcessId_f(hOut, &nSrvPid);
+			}
+		}
+		#endif
+
+		if (!this->nConhostPID)
+		{
+			// Найти порожденный conhost.exe
+			// #TODO: Reuse MToolHelp.h
+			HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+			if (h && (h != INVALID_HANDLE_VALUE))
+			{
+				// Учтем альтернативные серверы (Far/Telnet/...)
+				const DWORD nSrvPid = dwMainServerPid ? dwMainServerPid : gnSelfPID;
+				PROCESSENTRY32 processInfo = {};
+				processInfo.dwSize = sizeof(processInfo);
+				if (Process32First(h, &processInfo))
+				{
+					do {
+						if ((processInfo.th32ParentProcessID == nSrvPid)
+							&& (lstrcmpi(processInfo.szExeFile, L"conhost.exe") == 0))
+						{
+							this->nConhostPID = processInfo.th32ProcessID;
+							break;
+						}
+					} while (Process32Next(h, &processInfo));
+				}
+
+				CloseHandle(h);
+			}
+
+			if (!this->nConhostPID)
+				this->nConhostPID = absentPid;
+		}
+
+		// #PROCESSES At the moment we assume nConhostPID is alive because console WinAPI still works
+		if (this->nConhostPID && (this->nConhostPID != absentPid))
+		{
+			rpdwPID[nRetCount++] = this->nConhostPID;
+		}
+	}
+
+
+	MSectionLock cs;
+	UINT nCurCount = 0;
+	if (cs.Lock(this->csProc, TRUE/*abExclusive*/, 200))
+	{
+		nCurCount = this->nProcessCount;
+
+		for (INT_PTR i1 = (nCurCount-1); (i1 >= 0) && (nRetCount < nMaxCount); i1--)
+		{
+			const DWORD pid = this->pnProcesses[i1];
+			if (pid && pid != gnSelfPID)
+			{
+				rpdwPID[nRetCount++] = pid;
+			}
+		}
+	}
+
+	for (size_t i = nRetCount; i < nMaxCount; i++)
+	{
+		rpdwPID[i] = 0;
+	}
+
+	//if (nSize > nMaxCount)
+	//{
+	//	memset(rpdwPID, 0, sizeof(DWORD)*nMaxCount);
+	//	rpdwPID[0] = gnSelfPID;
+
+	//	for(int i1=0, i2=(nMaxCount-1); i1<(int)nSize && i2>0; i1++, i2--)
+	//		rpdwPID[i2] = this->pnProcesses[i1]; //-V108
+
+	//	nSize = nMaxCount;
+	//}
+	//else
+	//{
+	//	memmove(rpdwPID, this->pnProcesses, sizeof(DWORD)*nSize);
+
+	//	for (UINT i=nSize; i<nMaxCount; i++)
+	//		rpdwPID[i] = 0; //-V108
+	//}
+
+	_ASSERTE(rpdwPID[0]);
+	return nRetCount;
 }

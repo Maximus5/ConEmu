@@ -27,6 +27,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#define SHOWDEBUGSTR
+#define DEBUGSTRSIZE(x) DEBUGSTR(x)
+
 #include "ConsoleMain.h"
 #include "ConEmuCmd.h"
 #include "ConEmuSrv.h"
@@ -322,7 +325,8 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 			#ifdef _DEBUG
 			if (sbi2.dwSize.Y > 200)
 			{
-				wchar_t szTitle[128]; swprintf_c(szTitle, L"ConEmuC (PID=%i)", GetCurrentProcessId());
+				wchar_t szTitle[128] = L"";
+				swprintf_c(szTitle, L"ConEmuC (PID=%i)", GetCurrentProcessId());
 				MessageBox(nullptr, L"BufferHeight was not turned OFF", szTitle, MB_SETFOREGROUND|MB_SYSTEMMODAL);
 			}
 			#endif
@@ -342,7 +346,7 @@ void WorkerComspec::Done(const int exitCode, const bool reportShutdown)
 				{
 					_ASSERTE(sbi2.dwSize.Y == nNeedHeight);
 					PRINT_COMSPEC(L"Error: BufferHeight was not changed from %i\n", sbi2.dwSize.Y);
-					SMALL_RECT rc = {0};
+					const SMALL_RECT rc = {};
 					sbi2.dwSize.Y = nNeedHeight;
 
 					if (gpLogSize) LogSize(&sbi2.dwSize, 0, ":ComspecDone.RetSize.before");
@@ -370,11 +374,11 @@ int WorkerComspec::ProcessCommandLineArgs()
 	const int baseRc = WorkerBase::ProcessCommandLineArgs();
 	if (baseRc != 0)
 		return baseRc;
-	
+
 	LogFunction(L"ParseCommandLine{in-progress-comspec}");
 
 	SetCmdK(gpConsoleArgs->cmdK_.GetBool());
-	
+
 	return 0;
 }
 
@@ -550,6 +554,70 @@ bool WorkerComspec::GetAliases(wchar_t* asExeName, wchar_t** rsAliases, LPDWORD 
 			}
 		}
 	}
+
+	return lbRc;
+}
+
+bool WorkerComspec::SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel, bool bForceWriteLog)
+{
+	_ASSERTE(gState.realConWnd_);
+	_ASSERTE(BufferHeight == 0);
+	PreConsoleSize(crNewSize);
+
+	if (!gState.realConWnd_)
+	{
+		DEBUGSTRSIZE(L"SetConsoleSize: Skipped due to gState.realConWnd==NULL");
+		return FALSE;
+	}
+
+	if (gpWorker->CheckHwFullScreen())
+	{
+		DEBUGSTRSIZE(L"SetConsoleSize was skipped due to CONSOLE_FULLSCREEN_HARDWARE");
+		LogString("SetConsoleSize was skipped due to CONSOLE_FULLSCREEN_HARDWARE");
+		return FALSE;
+	}
+
+	const DWORD dwCurThId = GetCurrentThreadId();
+	DWORD dwWait = 0;
+	DWORD dwErr = 0;
+
+	DEBUGSTRSIZE(L"SetConsoleSize: Started");
+
+	if (gpLogSize) LogSize(&crNewSize, BufferHeight, asLabel);
+
+	_ASSERTE(crNewSize.X>=MIN_CON_WIDTH && crNewSize.Y>=MIN_CON_HEIGHT);
+
+	if (crNewSize.X </*4*/MIN_CON_WIDTH)
+		crNewSize.X = /*4*/MIN_CON_WIDTH;
+
+	if (crNewSize.Y </*3*/MIN_CON_HEIGHT)
+		crNewSize.Y = /*3*/MIN_CON_HEIGHT;
+
+	CONSOLE_SCREEN_BUFFER_INFO csbi = {};
+
+	// Нам нужно реальное состояние консоли, чтобы не поломать ее вид после ресайза
+	if (!GetConsoleScreenBufferInfo(ghConOut, &csbi))
+	{
+		const DWORD nErrCode = GetLastError();
+		DEBUGSTRSIZE(L"SetConsoleSize: !!!GetConsoleScreenBufferInfo failed!!!");
+		_ASSERTE(FALSE && "GetConsoleScreenBufferInfo was failed");
+		SetLastError(nErrCode ? nErrCode : ERROR_INVALID_HANDLE);
+		return FALSE;
+	}
+
+	BOOL lbRc = TRUE;
+
+	gnBufferHeight = BufferHeight;
+
+	PreConsoleSize(crNewSize.X, crNewSize.Y);
+	gcrVisibleSize = crNewSize;
+
+	// No buffer in the console
+	lbRc = ApplyConsoleSizeSimple(crNewSize, csbi, dwErr, bForceWriteLog);
+
+	#ifdef _DEBUG
+	DEBUGSTRSIZE(lbRc ? L"SetConsoleSize: FINISHED" : L"SetConsoleSize: !!! FAILED !!!");
+	#endif
 
 	return lbRc;
 }

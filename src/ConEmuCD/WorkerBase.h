@@ -47,6 +47,14 @@ extern MConHandle ghConOut;
 // If we are in ChildGui mode (notepad, putty, etc.)
 #define GUI_NOT_CREATED_YET (HWND(-1))
 
+struct ScreenBufferInfo
+{
+	// State of the real console
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	// Maximal allowed real console size for the current font
+	COORD crMaxSize;
+};
+
 class WorkerBase
 {
 public:
@@ -61,6 +69,8 @@ public:
 
 	virtual int Init() { return 0; };
 	virtual void Done(int exitCode, bool reportShutdown = false);
+
+	virtual const char* GetCurrentThreadLabel() const;
 
 	/// Apply known switches one by one
 	virtual int ProcessCommandLineArgs();
@@ -93,6 +103,8 @@ public:
 	ConProcess& Processes();
 
 	const CONSOLE_SCREEN_BUFFER_INFO& GetSbi() const;
+	virtual bool LoadScreenBufferInfo(ScreenBufferInfo& sbi);
+	virtual MSectionLockSimple LockConsoleReaders(DWORD anWaitTimeout = -1);
 
 	/// Try to detect if our real console is in hardware fullscreen
 	bool CheckHwFullScreen();
@@ -102,6 +114,19 @@ public:
 	/// <param name="pNewSize">[OUT] dimension of new hardware console on success</param>
 	/// <returns>true on success</returns>
 	bool EnterHwFullScreen(PCOORD pNewSize = nullptr);
+	// Resize console
+	virtual bool SetConsoleSize(USHORT BufferHeight, COORD crNewSize, SMALL_RECT rNewRect, LPCSTR asLabel = nullptr, bool bForceWriteLog = false);
+	// Called from SetConsoleSize for debugging purposes
+	static void PreConsoleSize(const int width, const int height);
+	// Called from SetConsoleSize for debugging purposes
+	static void PreConsoleSize(const COORD crSize);
+	// Set console size with NO scrolling (bufferheight = 0)
+	virtual bool ApplyConsoleSizeSimple(const COORD& crNewSize, const CONSOLE_SCREEN_BUFFER_INFO& csbi, DWORD& dwErr, bool bForceWriteLog);
+	// Set console size with backscroll (bufferheight > 0)
+	virtual bool ApplyConsoleSizeBuffer(USHORT BufferHeight, const COORD& crNewSize, const CONSOLE_SCREEN_BUFFER_INFO& csbi, DWORD& dwErr, bool bForceWriteLog);
+	// Used when starting new console
+	virtual void RefillConsoleAttributes(const CONSOLE_SCREEN_BUFFER_INFO& csbi5, const WORD wOldText, const WORD wNewText) const;
+
 
 	virtual void EnableProcessMonitor(bool enable);
 
@@ -116,7 +141,7 @@ public:
 	DebuggerInfo& DbgInfo();
 
 	/// ConEmu can't CD to home directory of another user during "run as"
-	void CdToProfileDir();
+	void CdToProfileDir() const;
 
 	void CheckKeyboardLayout();
 	bool IsKeyboardLayoutChanged(DWORD& pdwLayout, LPDWORD pdwErrCode = nullptr);
@@ -126,7 +151,14 @@ public:
 	static void SetConEmuWindows(HWND hRootWnd, HWND hDcWnd, HWND hBackWnd);
 
 	CEStr ExpandTaskCmd(LPCWSTR asCmdLine) const;
-	
+
+	// Methods for server safety
+	virtual void FreezeRefreshThread();
+	virtual void ThawRefreshThread();
+	virtual bool IsRefreshFreezeRequests();
+	virtual void UpdateConsoleMapHeader(LPCWSTR asReason = nullptr);
+	virtual void SetConEmuFolders(LPCWSTR asExeDir, LPCWSTR asBaseDir);
+
 protected:
 	/// Process any of "/Dump", "/Mini", "/MiniDump", "/Full", "/FullDump", "/AutoMini"
 	int ParamDebugDump();
@@ -155,14 +187,14 @@ protected:
 	/// Check processes in the console and select one we consider as "root"
 	int CheckAttachProcess();
 	/// Check if the GUI version is compatible
-	int CheckGuiVersion();
+	virtual int CheckGuiVersion();
 	// To access "Sysnative" from 32-bit builds - don't disable redirection
 	static void CheckNeedSkipWowChange(LPCWSTR asCmdLine);
-	
+
 	// ReSharper disable once CppRedundantAccessSpecifier
 protected:
 	MModule kernel32;
-	
+
 	struct RootProcessInfo
 	{
 		HANDLE processHandle;
@@ -194,7 +226,7 @@ protected:
 	wchar_t szKeybLayout[KL_NAMELENGTH+1] = L"";
 
 	FGetConsoleKeyboardLayoutName pfnGetConsoleKeyboardLayoutName = nullptr;
-	
+
 	FGetConsoleDisplayMode pfnGetConsoleDisplayMode = nullptr;
 	SetConsoleDisplayMode_t pfnSetConsoleDisplayMode = nullptr;
 

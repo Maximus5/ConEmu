@@ -689,10 +689,13 @@ BOOL WINAPI OnSetConsoleActiveScreenBuffer(HANDLE hConsoleOutput)
 #endif
 
 		ghCurrentOutBuffer = hConsoleOutput;
-		RequestLocalServerParm Parm = {(DWORD)sizeof(Parm), slsf_SetOutHandle, &ghCurrentOutBuffer};
-		if (RequestLocalServer(&Parm) == 0)
+		RequestLocalServerParm parm = {};
+		parm.StructSize = static_cast<DWORD>(sizeof(parm));
+		parm.Flags = slsf_SetOutHandle;
+		parm.ppConOutBuffer = &ghCurrentOutBuffer;
+		if (RequestLocalServer(&parm) == 0)
 		{
-			gfnSrvLogString = Parm.fSrvLogString;
+			gfnSrvLogString = parm.fSrvLogString;
 		}
 	}
 
