@@ -97,6 +97,7 @@
              Description="Folder 'Scripts' is added to %PATH% by default and may contain predefined (e.g. 'git-log' cmd helper) and user scripts">
       <ComponentRef Id="Scripts_Readme.txt" />
       <ComponentRef Id="git_log.cmd" />
+      <ComponentRef Id="git_push_set_upstream.cmd" />
     </Feature>
     <!-- ConEmu.Addons directory -->
     <Feature Id="FConEmuAddons" AllowAdvertise="no" Title="Addons" Level="1" Display="collapse"

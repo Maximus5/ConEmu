@@ -224,6 +224,9 @@
       <Component Id="git_log.cmd" Guid="$(var.Guid.Scripts_git_log.cmd)" Win64="$(var.Win64)">
         <File Id="git_log.cmd" Source="..\..\Release\ConEmu\Scripts\git-log.cmd"  KeyPath="yes" />
       </Component>
+      <Component Id="git_push_set_upstream.cmd" Guid="$(var.Guid.Scripts_git_push_set_upstream.cmd)" Win64="$(var.Win64)">
+        <File Id="git_push_set_upstream.cmd" Source="..\..\Release\ConEmu\Scripts\git-push-set-upstream.cmd"  KeyPath="yes" />
+      </Component>
     </DirectoryRef>
 
     <!-- Windows Subsystem for Linux -->
