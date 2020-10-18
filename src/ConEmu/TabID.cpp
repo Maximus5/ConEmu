@@ -481,7 +481,7 @@ int CTabStack::AppendInt(CTabID* pTab, BOOL abMoveFirst, MSectionLockSimple* pSC
 	if (!mpp_Stack || (mn_Used == mn_MaxCount) || abMoveFirst)
 	{
 		#if 1
-		_ASSERTE(pSC->isLocked());
+		_ASSERTE(pSC->IsLocked());
 		#else
 		pSC->RelockExclusive();
 		#endif
@@ -865,7 +865,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 		if (nIndex == -1 || nIndex != mn_UpdatePos)
 		{
 			#if 1
-			_ASSERTE(pUpdateLock->isLocked());
+			_ASSERTE(pUpdateLock->IsLocked());
 			#else
 			pUpdateLock->RelockExclusive();
 			#endif
@@ -907,7 +907,7 @@ void CTabStack::UpdateAppend(HANDLE hUpdate, CTabID* pTab, BOOL abMoveFirst)
 		{
 			// Таб нужно переместить в начало списка
 			#if 1
-			_ASSERTE(pUpdateLock->isLocked());
+			_ASSERTE(pUpdateLock->IsLocked());
 			#else
 			pUpdateLock->RelockExclusive();
 			#endif
@@ -983,7 +983,7 @@ bool CTabStack::UpdateEnd(HANDLE hUpdate, DWORD anActiveFarPID)
 	bool bChanged = (mn_Used != mn_UpdatePos);
 
 	#if 1
-	_ASSERTE(pUpdateLock->isLocked());
+	_ASSERTE(pUpdateLock->IsLocked());
 	#else
 	pUpdateLock->RelockExclusive();
 	#endif

@@ -38,12 +38,12 @@ class  MSection;
 struct MSectionSimple
 {
 private:
-	CRITICAL_SECTION m_S;
-	DWORD mn_LastError;
-	bool mb_Initialized;
+	CRITICAL_SECTION m_S{};
+	DWORD mn_LastError = 0;
+	bool mb_Initialized = false;
 
 public:
-	MSectionSimple(bool bInit = false);
+	MSectionSimple(bool doInit = false);
 	~MSectionSimple();
 
 public:
@@ -71,12 +71,14 @@ protected:
 public:
 	BOOL Lock(MSectionSimple* apS, DWORD anTimeout=-1);
 	void Unlock();
-	BOOL isLocked();
+	BOOL IsLocked() const;
 public:
 	MSectionLockSimple();
-	MSectionLockSimple(MSectionSimple& cs);
+	explicit MSectionLockSimple(MSectionSimple& cs);
 	~MSectionLockSimple();
 
 	MSectionLockSimple(const MSectionLockSimple&) = delete;
-	MSectionLockSimple(MSectionLockSimple&&) = delete;
+	MSectionLockSimple& operator=(const MSectionLockSimple&) = delete;
+	MSectionLockSimple(MSectionLockSimple&&) noexcept;
+	MSectionLockSimple& operator=(MSectionLockSimple&&) noexcept;
 };

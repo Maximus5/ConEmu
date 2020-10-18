@@ -32,15 +32,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "MAssert.h"
 #include "MSectionSimple.h"
 
-MSectionSimple::MSectionSimple(bool bInit /*= false*/)
+MSectionSimple::MSectionSimple(bool doInit /*= false*/)
 {
-	mb_Initialized = false;
-	mn_LastError = 0;
-
-	if (bInit)
+	if (doInit)
 		Init();
-	else
-		ZeroStruct(m_S);
 }
 
 MSectionSimple::~MSectionSimple()
@@ -50,7 +45,7 @@ MSectionSimple::~MSectionSimple()
 
 bool MSectionSimple::IsInitialized()
 {
-	return (this && mb_Initialized);
+	return ((this != nullptr) && mb_Initialized);  // NOLINT(clang-diagnostic-tautological-undefined-compare)
 }
 
 void MSectionSimple::Init()
@@ -86,7 +81,7 @@ void MSectionSimple::Leave()
 bool MSectionSimple::TryEnter()
 {
 	_ASSERTEX(mb_Initialized);
-	BOOL brc = TryEnterCriticalSection(&m_S);
+	const BOOL brc = TryEnterCriticalSection(&m_S);
 	if (!brc)
 	{
 		mn_LastError = GetLastError();
@@ -97,14 +92,13 @@ bool MSectionSimple::TryEnter()
 
 bool MSectionSimple::RecreateAndLock()
 {
-	BOOL lbLocked;
 	CRITICAL_SECTION csNew;
 	InitializeCriticalSection(&csNew);
 
 	CRITICAL_SECTION csOld = m_S;
 	DeleteCriticalSection(&csOld);
 
-	lbLocked = TryEnterCriticalSection(&csNew);
+	const BOOL lbLocked = TryEnterCriticalSection(&csNew);
 	m_S = csNew;
 
 	return (lbLocked != FALSE);
@@ -118,6 +112,35 @@ MSectionLockSimple::MSectionLockSimple()
 MSectionLockSimple::MSectionLockSimple(MSectionSimple& cs)
 {
 	Lock(&cs);
+}
+
+MSectionLockSimple::MSectionLockSimple(MSectionLockSimple&& src) noexcept
+{
+	std::swap(mp_S, src.mp_S);
+	std::swap(mb_Locked, src.mb_Locked);
+#ifdef _DEBUG
+	std::swap(mn_LockTID, src.mn_LockTID);
+	std::swap(mn_LockTick, src.mn_LockTick);
+#endif
+}
+
+MSectionLockSimple& MSectionLockSimple::operator=(MSectionLockSimple&& src) noexcept
+{
+	if (this == &src)
+	{
+		return *this;
+	}
+
+	Unlock();
+
+	std::swap(mp_S, src.mp_S);
+	std::swap(mb_Locked, src.mb_Locked);
+#ifdef _DEBUG
+	std::swap(mn_LockTID, src.mn_LockTID);
+	std::swap(mn_LockTick, src.mn_LockTick);
+#endif
+
+	return *this;
 }
 
 MSectionLockSimple::~MSectionLockSimple()
@@ -150,7 +173,7 @@ BOOL MSectionLockSimple::Lock(MSectionSimple* apS, DWORD anTimeout/*=-1*/)
 	#endif
 
 	bool bLocked = false;
-	DWORD nStartTick = GetTickCount();
+	const DWORD nStartTick = GetTickCount();
 	DWORD nDelta = -1;
 #if 0
 	EnterCriticalS	ection(&apS->m_S);
@@ -177,7 +200,7 @@ BOOL MSectionLockSimple::Lock(MSectionSimple* apS, DWORD anTimeout/*=-1*/)
 
 		nDelta = GetTickCount() - nStartTick;
 
-		if (anTimeout != (DWORD)-1)
+		if (anTimeout != static_cast<DWORD>(-1))
 		{
 			if (nDelta >= anTimeout)
 			{
@@ -203,7 +226,7 @@ void MSectionLockSimple::Unlock()
 	}
 }
 
-BOOL MSectionLockSimple::isLocked()
+BOOL MSectionLockSimple::IsLocked() const
 {
 	return mb_Locked;
 }
