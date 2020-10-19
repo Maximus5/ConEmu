@@ -2279,7 +2279,7 @@ BOOL cmd_SetTopLeft(CESERVER_REQ& in, CESERVER_REQ** out)
 			{
 				bool bChange = false;
 				SMALL_RECT srNew = csbi.srWindow;
-				int height = srNew.Bottom - srNew.Top + 1;
+				const int height = srNew.Bottom - srNew.Top + 1;
 
 				// In some cases we can do physical scrolling
 				if ((in.ReqConInfo.TopLeft.y >= 0)
@@ -2291,7 +2291,7 @@ BOOL cmd_SetTopLeft(CESERVER_REQ& in, CESERVER_REQ** out)
 						&& (csbi.dwCursorPosition.Y < (in.ReqConInfo.TopLeft.y + height)))
 					)
 				{
-					int shiftY = in.ReqConInfo.TopLeft.y - srNew.Top;
+					const int shiftY = in.ReqConInfo.TopLeft.y - srNew.Top;
 					srNew.Top = in.ReqConInfo.TopLeft.y;
 					srNew.Bottom += shiftY;
 					bChange = true;
@@ -2309,9 +2309,9 @@ BOOL cmd_SetTopLeft(CESERVER_REQ& in, CESERVER_REQ** out)
 		_ASSERTE(FALSE && "Invalid SetTopLeft data");
 	}
 
-	size_t cbReplySize = sizeof(CESERVER_REQ_HDR);
+	const size_t cbReplySize = sizeof(CESERVER_REQ_HDR);
 	*out = ExecuteNewCmd(CECMD_SETTOPLEFT, cbReplySize);
-	lbRc = ((*out) != NULL);
+	lbRc = ((*out) != nullptr);
 
 	return lbRc;
 }

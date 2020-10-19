@@ -91,9 +91,6 @@ USHORT gnPrimaryBufferLastRow = 0; // last detected written row in gPrimaryBuffe
 
 BOOL    gbTerminateOnExit = FALSE;  // for debugging purposed
 
-// Some forward definitions
-bool TryConnect2Gui(HWND hGui, DWORD anGuiPID, CESERVER_REQ* pIn);
-
 
 namespace
 {
