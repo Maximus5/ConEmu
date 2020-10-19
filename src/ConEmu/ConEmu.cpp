@@ -42,7 +42,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "Header.h"
 #include "AboutDlg.h"
-#include <tlhelp32.h>
 
 #include "../common/shlobj.h"
 #include "ShObjIdl_Part.h"

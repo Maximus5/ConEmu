@@ -63,7 +63,6 @@ FEFF    ZERO WIDTH NO-BREAK SPACE
 #endif
 
 #include "Header.h"
-#include <tlhelp32.h>
 
 #include "Background.h"
 #include "ConEmu.h"
@@ -4189,7 +4188,7 @@ void CVirtualConsole::UpdateInfo()
 	const RECT rcClient = GetDcClientRect();
 	swprintf_c(szSize, _T("%ix%i / %ix%i"), RectWidth(rcClient), RectHeight(rcClient), m_Sizes.Width, m_Sizes.Height);
 	SetDlgItemText(hInfo, tDCSize, szSize);
-	
+
 	if (!mp_RCon)
 	{
 		const auto szNone = CLngRc::getRsrc(lng_SetPgInfoNone/*"(None)"*/);
@@ -4216,7 +4215,7 @@ void CVirtualConsole::UpdateInfo()
 		ConsoleInfoArg cursorInfo = {};
 		mp_RCon->GetConsoleInfo(&cursorInfo);
 		CSetPgInfo::FillCursorInfo(hInfo, &cursorInfo);
-		
+
 		RECT rcPanel;
 		RCon()->GetPanelRect(FALSE, &rcPanel);
 		if (rcPanel.right>rcPanel.left)
@@ -4224,7 +4223,7 @@ void CVirtualConsole::UpdateInfo()
 		else
 			wcscpy_c(szSize, L"<Absent>");
 		SetDlgItemText(hInfo, tPanelLeft, szSize);
-		
+
 		RCon()->GetPanelRect(TRUE, &rcPanel);
 		if (rcPanel.right>rcPanel.left)
 			swprintf_c(szSize, L"(%i, %i)-(%i, %i), %ix%i", rcPanel.left+1, rcPanel.top+1, rcPanel.right+1, rcPanel.bottom+1, rcPanel.right-rcPanel.left+1, rcPanel.bottom-rcPanel.top+1);

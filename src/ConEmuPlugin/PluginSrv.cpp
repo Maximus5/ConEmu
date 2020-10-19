@@ -40,20 +40,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #pragma warning( disable : 4995 )
 #endif
-#include "../common/pluginW1761.hpp"
 #ifdef _DEBUG
 #pragma warning( default : 4995 )
 #endif
-#include "../common/ConsoleAnnotation.h"
 #include "../common/WUser.h"
-#include "../common/WObjects.h"
-#include "../common/TerminalMode.h"
 #include "../common/MSection.h"
 #include "../ConEmu/version.h"
 #include "PluginHeader.h"
 #include "ConEmuPluginBase.h"
-#include "PluginBackground.h"
-#include <tlhelp32.h>
+//#include <tlhelp32.h>
 
 #include "../common/ConEmuCheck.h"
 #include "../common/PipeServer.h"

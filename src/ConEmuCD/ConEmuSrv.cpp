@@ -60,6 +60,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/WConsoleInfo.h"
 #include "../common/WFiles.h"
 #include "../common/WThreads.h"
+#include "../common/WObjects.h"
 #include "../common/WUser.h"
 //#include "TokenHelper.h"
 #include "ConProcess.h"

@@ -38,7 +38,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/Common.h"
 
 #include <tchar.h>
-#include <tlhelp32.h>
 #include <shlwapi.h>
 #include "../common/shlobj.h"
 #include "../common/CmdLine.h"
@@ -1571,7 +1570,7 @@ bool CShellProc::CheckForDefaultTerminal(
 {
 	if (!gbPrepareDefaultTerminal)
 		return true; // nothing to do
-	
+
 	lbGnuDebugger = IsGDB(ms_ExeTmp); // Allow GDB in Lazarus etc.
 
 	if (aCmd == eCreateProcess)
@@ -1982,7 +1981,7 @@ int CShellProc::PrepareExecuteParms(
 	// We need the get executable name before some other checks
 	mn_ImageSubsystem = mn_ImageBits = 0;
 	bool bForceCutNewConsole = false;
-	
+
 	// In some cases we need to pre-replace command line,
 	// for example, in cmd prompt: start -new_console:z
 	CEStr lsReplaceFile, lsReplaceParm;

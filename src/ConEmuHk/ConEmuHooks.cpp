@@ -76,26 +76,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DECLARE_CONEMU_HOOK_FUNCTION_ID
 
 #include "../common/defines.h"
-#include <winerror.h>
 #include <winnt.h>
 #include <tchar.h>
-#include <tlhelp32.h>
 #include <shlwapi.h>
 #include "../common/Common.h"
-#include "../common/ConEmuCheck.h"
 #include "SetHook.h"
-#include "../common/execute.h"
 #include "DefTermHk.h"
 #include "ShellProcessor.h"
-#include "GuiAttach.h"
-#include "Ansi.h"
-#include "MainThread.h"
 #include "../common/CmdLine.h"
-#include "../common/ConsoleAnnotation.h"
-#include "../common/ConsoleRead.h"
-#include "../common/UnicodeChars.h"
 #include "../common/WConsole.h"
-#include "../common/WThreads.h"
 
 #include "hkCmdExe.h"
 #include "hkConsole.h"

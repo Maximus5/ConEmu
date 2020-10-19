@@ -38,10 +38,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/defines.h"
 #include <tchar.h>
-#include <tlhelp32.h>
 #include <shlwapi.h>
 #include "../common/Common.h"
-#include "../common/ConEmuCheck.h"
 #include "../ConEmuHk/ConEmuHooks.h"
 #include "../ConEmuDW/ConEmuDw.h"
 #include "PluginHeader.h"

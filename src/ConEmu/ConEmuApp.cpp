@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <commctrl.h>
 #include "../common/shlobj.h"
 #include <exdisp.h>
-#include <tlhelp32.h>
 #if !defined(__GNUC__) || defined(__MINGW32__)
 #pragma warning(push)
 #pragma warning(disable: 4091)
@@ -737,7 +736,7 @@ void SkipOneShowWindow()
 	STARTUPINFO si = {}; si.cb = sizeof(si);
 	GetStartupInfo(&si);
 	swprintf_c(szInfo, L"StartupInfo: flags=0x%04X showWindow=%u", si.dwFlags, static_cast<uint32_t>(si.wShowWindow));
-	
+
 	if (!(si.dwFlags & STARTF_USESHOWWINDOW) || (si.wShowWindow == SW_SHOWNORMAL))
 	{
 		wcscat_c(szInfo, L", SkipOneShowWindow is not required");

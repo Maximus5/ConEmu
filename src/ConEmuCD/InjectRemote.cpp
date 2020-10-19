@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../common/MProcessBits.h"
 #include "../common/shlobj.h"
 #include "../common/WFiles.h"
+#include "../common/WObjects.h"
 #include "../common/WModuleCheck.h"
 #include "../ConEmu/version.h"
 #include "../ConEmuHk/Injects.h"
@@ -260,7 +261,7 @@ CINFILTRATE_EXIT_CODES PrepareHookModule(wchar_t (&szModule)[MAX_PATH+16])
 
 	wcscat_c(szNewPath, szAddName);
 
-	if ((bAlreadyExists = FileExists(szNewPath)) && FileCompare(szNewPath, szModule))
+	if (((bAlreadyExists = FileExists(szNewPath))) && FileCompare(szNewPath, szModule))
 	{
 		// OK, file exists and match the required
 	}

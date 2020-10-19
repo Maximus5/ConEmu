@@ -60,7 +60,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
 #include "../common/defines.h"
-#include <tlhelp32.h>
 
 #ifndef TESTLINK
 #include "../common/Common.h"
@@ -1374,7 +1373,7 @@ void InitExeName()
 }
 
 void InitBaseDir()
-{	
+{
 	const auto cchMax = static_cast<DWORD>(countof(gsConEmuBaseDir));
 	const DWORD modResult = ghOurModule ? GetModuleFileName(ghOurModule, gsConEmuBaseDir, cchMax) : 0;
 	if (modResult > 0 && modResult < cchMax)
@@ -1387,7 +1386,7 @@ void InitBaseDir()
 			return;
 		}
 	}
-	
+
 	_ASSERTE(FALSE && "GetModuleFileName(ghOurModule) failed, getting ConEmuBaseDir from env.var");
 	gsConEmuBaseDir[0] = L'\0';
 	const DWORD envResult = GetEnvironmentVariable(ENV_CONEMUBASEDIR_VAR_W, gsConEmuBaseDir, cchMax);

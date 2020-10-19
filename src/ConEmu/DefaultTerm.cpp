@@ -29,7 +29,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define HIDE_USE_EXCEPTION_INFO
 
 #include "Header.h"
-#include <tlhelp32.h>
 #include "DefaultTerm.h"
 #include "ConEmu.h"
 #include "ConEmuStart.h"
@@ -37,7 +36,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "OptionsClass.h"
 #include "Status.h"
 #include "TrayIcon.h"
-#include "../ConEmuCD/ExitCodes.h"
 #include "../common/WRegistry.h"
 
 #define StartupValueName L"ConEmuDefaultTerminal"

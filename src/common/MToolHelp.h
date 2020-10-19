@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <tlhelp32.h>
 
-#include "Common.h"
 #include "CmdLine.h"
 #include "MArray.h"
 #include "WObjects.h"

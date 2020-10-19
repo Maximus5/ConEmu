@@ -52,21 +52,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 #pragma warning( default : 4995 )
 #endif
-#include "../common/ConsoleAnnotation.h"
 #include "../common/SetEnvVar.h"
 #include "../common/WObjects.h"
-#include "../common/WConsole.h"
-#include "../common/TerminalMode.h"
 #include "../common/MFileMapping.h"
-#include "../common/MSection.h"
 #include "../ConEmu/version.h"
 #include "PluginHeader.h"
 #include "ConEmuPluginBase.h"
 #include "PluginBackground.h"
-#include <tlhelp32.h>
 
 #include "../common/ConEmuCheck.h"
-#include "PluginSrv.h"
 
 
 #if defined(__GNUC__)

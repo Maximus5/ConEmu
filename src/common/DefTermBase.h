@@ -43,10 +43,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ConEmuCheck.h"
 #include "MProcess.h"
 #include "MProcessBits.h"
-#include "WObjects.h"
 #include "WThreads.h"
 #include "../ConEmuCD/ExitCodes.h"
-#include <tlhelp32.h>
+
 
 #define DEF_TERM_ALIVE_CHECK_TIMEOUT 750
 #define DEF_TERM_ALIVE_RECHECK_TIMEOUT 1500
