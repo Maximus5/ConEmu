@@ -4273,10 +4273,12 @@
     ,
     "vkEditMenu": {
       "en": "Show Edit context menu",
+      "pl": "Pokaż edycje menu kontekstowego",
       "id": 3108 }
     ,
     "vkEditMenu2": {
       "en": "Show Edit context menu",
+      "pl": "Pokaż edycje menu kontekstowego",
       "id": 3109 }
     ,
     "vkEscNoConsoles": {
@@ -5474,10 +5476,12 @@
     ,
     "lng_AlternativeIsOffHint": {
       "en": "Alternative mode is off",
+      "pl": "Tryb alternatywny jest wyłączony",
       "id": 199 }
     ,
     "lng_AlternativeIsOnHint": {
       "en": "Alternative mode is ON (console frozen)",
+      "pl": "Tryb alternatywny jest włączony (konsola zawieszona)",
       "id": 198 }
     ,
     "lng_AltNumberACP": {
@@ -5589,86 +5593,107 @@
     ,
     "lng_BufferHeightOffHint": {
       "en": "BufferHeight mode is off",
+      "pl": "Tryb BufferHeight jest wyłączony",
       "id": 197 }
     ,
     "lng_BufferHeightOnHint": {
       "en": "BufferHeight mode is ON (scrolling enabled)",
+      "pl": "Tryb BufferHeight jest włączony (przewijanie włączone)",
       "id": 196 }
     ,
     "lng_CloseAllConsolesHint": {
       "en": "Close ALL consoles",
+      "pl": "Zamknij WSZYSTKIE konsole",
       "id": 193 }
     ,
     "lng_ConfirmCloseActiveOnly": {
       "en": "Close active console only",
+      "pl": "Zamknij tylko aktywną konsolę",
       "id": 178 }
     ,
     "lng_ConfirmCloseBtn": {
       "en": "Close",
+      "pl": "Zamknij",
       "id": 202 }
     ,
     "lng_ConfirmCloseBtnAll": {
       "en": "Close all",
+      "pl": "Zamknij wszystko",
       "id": 203 }
     ,
     "lng_ConfirmCloseBtnConsole": {
       "en": "Close 1 console",
+      "pl": "Zamknij 1 konsole",
       "id": 205 }
     ,
     "lng_ConfirmCloseBtnConsoles": {
       "en": "consoles",
+      "pl": "konsole",
       "id": 204 }
     ,
     "lng_ConfirmCloseBtnGroup": {
       "en": "Close group of",
+      "pl": "Zamknij grupe",
       "id": 201 }
     ,
     "lng_ConfirmCloseChildGuiQ": {
       "en": "Confirm closing active child window?",
+      "pl": "Czy potwierdzić zamknięcie aktywnego okna podrzędnego?",
       "id": 181 }
     ,
     "lng_ConfirmCloseConsoleQ": {
       "en": "Confirm closing console?",
+      "pl": "Potwierdź zamknięcie konsoli?",
       "id": 182 }
     ,
     "lng_ConfirmCloseEditorQ": {
       "en": "Confirm closing Far editor?",
+      "pl": "Potwierdź zamknięcie edytora Far?",
       "id": 184 }
     ,
     "lng_ConfirmCloseGroupQ": {
       "en": "Confirm closing group?",
+      "pl": "Potwierdzić zamykającą grupę?",
       "id": 187 }
     ,
     "lng_ConfirmCloseViewerQ": {
       "en": "Confirm closing Far viewer?",
+      "pl": "Potwierdzić zamknięcie przeglądarki Far?",
       "id": 185 }
     ,
     "lng_ConfirmClosingQ": {
       "en": "Confirm closing?",
+      "pl": "Potwierdzasz zamknięcie?",
       "id": 188 }
     ,
     "lng_ConfirmDontCloseAnything": {
       "en": "Don't close anything",
+      "pl": "Nie zamykaj niczego",
       "id": 189 }
     ,
     "lng_ConfirmIncompleteOperations": {
       "en": "Incomplete operations",
+      "pl": "Niekompletne operacje",
       "id": 179 }
     ,
     "lng_ConfirmKillButShellQ": {
       "en": "Terminate all but shell processes?",
+      "pl": "Zakończyć wszystkie procesy oprócz procesów powłoki?",
       "id": 183 }
     ,
     "lng_ConfirmKillingQ": {
       "en": "Confirm killing?",
+      "pl": "Potwierdzasz zabijanie?",
       "id": 186 }
     ,
     "lng_ConfirmUnsavedEditors": {
       "en": "Unsaved editor windows",
+      "pl": "Niezapisane okna edytora",
       "id": 180 }
     ,
     "lng_CreateNewConsoleHint": {
       "en": "Create new console",
+      "pl": "Utwórz nową konsolę",
       "id": 200 }
     ,
     "lng_CurClrScheme": {
@@ -5903,190 +5928,237 @@
     ,
     "lng_MaximizeWindowHint": {
       "en": "Maximize window",
+      "pl": "Maksymalizuj okno",
       "id": 194 }
     ,
     "lng_MenuAbout": {
       "en": "&About / Help",
+      "pl": "& Informacje / Pomoc",
       "id": 138 }
     ,
     "lng_MenuAllTaskTabs": {
       "en": "All task tabs",
+      "pl": "Wszystkie zakładki zadań",
       "id": 158 }
     ,
     "lng_MenuAlwaysOnTop": {
       "en": "Al&ways on top",
+      "pl": "Za&wsze na górze",
       "id": 153 }
     ,
     "lng_MenuAttachTo": {
       "en": "Attach to...",
+      "pl": "Dołączyć do...",
       "id": 116 }
     ,
     "lng_MenuAutoScroll": {
       "en": "Auto scro&ll",
+      "pl": "Auto Scro&ll",
       "id": 154 }
     ,
     "lng_MenuBringHere": {
       "en": "Bring &here",
+      "pl": "Przynieś &tutaj",
       "id": 145 }
     ,
     "lng_MenuChangeAffinity": {
       "en": "A&ffinity/priority...",
+      "pl": "A&ffinity/ priorytet ...",
       "id": 111 }
     ,
     "lng_MenuCheckUpdate": {
       "en": "&Check for updates",
+      "pl": "&Sprawdź aktualizacje",
       "id": 129 }
     ,
     "lng_MenuChildSysMenu": {
       "en": "Child system menu...",
+      "pl": "Menu systemowe dla dzieci ...",
       "id": 114 }
     ,
     "lng_MenuClearHistory": {
       "en": "Clear history...",
+      "pl": "Czysta historia...",
       "id": 139 }
     ,
     "lng_MenuCloseConsole": {
       "en": "&Close console",
+      "pl": "&Zamknij konsolę",
       "id": 107 }
     ,
     "lng_MenuCloseGroup": {
       "en": "&Close tab group",
+      "pl": "&Zamknij grupę kart",
       "id": 108 }
     ,
     "lng_MenuCloseTab": {
       "en": "&Close tab",
+      "pl": "&Zamknij karte",
       "id": 109 }
     ,
     "lng_MenuConCopy": {
       "en": "Cop&y",
+      "pl": "Kopiu&j",
       "id": 119 }
     ,
     "lng_MenuConCopyAll": {
       "en": "Copy &all",
+      "pl": "Kopiuj &wszystko",
       "id": 120 }
     ,
     "lng_MenuConCopyFmt0": {
       "en": "Plain &text only",
+      "pl": "Zwykły &tylko tekst",
       "id": 123 }
     ,
     "lng_MenuConCopyFmt1": {
       "en": "Copy &HTML format",
+      "pl": "Kopiuj &Format HTML",
       "id": 124 }
     ,
     "lng_MenuConCopyFmt2": {
       "en": "Copy a&s HTML",
+      "pl": "Skopiuj plik& HTML",
       "id": 125 }
     ,
     "lng_MenuConCopyFmt3": {
       "en": "A&NSI sequences",
+      "pl": "A&NSI sekwencje",
       "id": 126 }
     ,
     "lng_MenuConFind": {
       "en": "&Find text...",
+      "pl": "&Znajdź tekst...",
       "id": 127 }
     ,
     "lng_MenuConMarkBlock": {
       "en": "Mark &block",
+      "pl": "Zaznacz &zablokuj",
       "id": 117 }
     ,
     "lng_MenuConMarkText": {
       "en": "Mar&k text",
+      "pl": "Zaznacz tekst",
       "id": 118 }
     ,
     "lng_MenuConPaste": {
       "en": "&Paste",
+      "pl": "&Wklej",
       "id": 121 }
     ,
     "lng_MenuConProperties": {
       "en": "&Properties...",
+      "pl": "&Posiadłość",
       "id": 160 }
     ,
     "lng_MenuConToggleVisible": {
       "en": "&Real console",
+      "pl": "&Prawdziwa konsola",
       "id": 159 }
     ,
     "lng_MenuDebugActive": {
       "en": "Debug &active process...",
+      "pl": "Debugowanie &aktywny proces.",
       "id": 170 }
     ,
     "lng_MenuDebugAssert": {
       "en": "Show assertion",
+      "pl": "Pokaż potwierdzenie",
       "id": 168 }
     ,
     "lng_MenuDebugGui": {
       "en": "Debug &log (GUI)",
+      "pl": "Debug &log (GUI)",
       "id": 164 }
     ,
     "lng_MenuDebugShowRects": {
       "en": "Show debug rec&ts",
+      "pl": "Pokaż debugowanie rect&s",
       "id": 165 }
     ,
     "lng_MenuDebugTrap": {
       "en": "Raise exception (Main thread)",
+      "pl": "Zgłoś wyjątek (Główny wątek)",
       "id": 166 }
     ,
     "lng_MenuDebugTrap2": {
       "en": "Raise exception (Monitor thread)",
+      "pl": "Podnieś wyjątek (wątek monitora)",
       "id": 167 }
     ,
     "lng_MenuDetach": {
       "en": "Detach",
+      "pl": "Odłączyć",
       "id": 99 }
     ,
     "lng_MenuDonateLink": {
       "en": "&Donate ConEmu",
+      "pl": "&Dotacja ConEmu",
       "id": 131 }
     ,
     "lng_MenuDumpConsole": {
       "en": "&Dump screen...",
+      "pl": "&Zrzut ekranu...",
       "id": 162 }
     ,
     "lng_MenuDumpMemBlk": {
       "en": "Dump used memory blocks",
+      "pl": "Zrzuć używane bloki pamięci",
       "id": 169 }
     ,
     "lng_MenuDuplicate": {
       "en": "Duplica&te root...",
+      "pl": "Duplikuj & root...",
       "id": 101 }
     ,
     "lng_MenuHelp": {
       "en": "&Help",
+      "pl": "&Wsparcie",
       "id": 135 }
     ,
     "lng_MenuHideToTray": {
       "en": "Hide to &TSA",
+      "pl": "Ukryj się &TSA",
       "id": 149 }
     ,
     "lng_MenuHomePage": {
       "en": "&Visit home page",
+      "pl": "&Odwiedź stronę główną",
       "id": 130 }
     ,
     "lng_MenuHotkeys": {
       "en": "Hot&keys",
+      "pl": "Klawisze skrótu",
       "id": 136 }
     ,
     "lng_MenuLoadDumpConsole": {
       "en": "&Load screen dump...",
+      "pl": "&Wczytaj zrzut ekranu",
       "id": 163 }
     ,
     "lng_MenuMiniDump": {
       "en": "Active process &memory dump...",
+      "pl": "Aktywny proces &zrzut pamięci...",
       "id": 171 }
     ,
     "lng_MenuMiniDumpTree": {
       "en": "Active &tree memory dump...",
+      "pl": "Aktywny &zrzut pamięci drzewa...",
       "id": 172 }
     ,
     "lng_MenuMoreTasks": {
       "en": "&More tasks",
+      "pl": "&Więcej zadań",
       "id": 141 }
     ,
     "lng_MenuNewConsole": {
       "en": "New console dialog...",
+      "pl": "Nowe okno konsoli...",
       "id": 115 }
     ,
     "lng_MenuOnlineHelp": {
       "en": "Online &Help",
+      "pl": "Pomoc &online",
       "id": 137 }
     ,
     "lng_MenuPopupActiveCon": {
