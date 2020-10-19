@@ -422,7 +422,7 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		->SetHotKey(VK_RIGHT,VK_LWIN,VK_SHIFT);
 	Add(vkAltEnter,       chk_User,  NULL,    L"Key.FullScreen",        CConEmuCtrl::key_GuiMacro, false, L"WindowFullscreen()") // Full screen
 		->SetHotKey(VK_RETURN,VK_MENU);
-	Add(vkSystemMenu,     chk_User,  NULL,    L"Key.SysMenu",           CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/) // System menu
+	Add(vkSystemMenu,     chk_User,  NULL,    L"Key.SysMenu",           CConEmuCtrl::key_SystemMenu, false/*OnKeyUp*/) // System menu
 		->SetHotKey(VK_SPACE,VK_MENU);
 	Add(vkSystemMenu2,    chk_User,  NULL,    L"Key.SysMenu2",          CConEmuCtrl::key_SystemMenu, true/*OnKeyUp*/) // System menu
 		->SetHotKey(VK_RBUTTON,VK_CONTROL);

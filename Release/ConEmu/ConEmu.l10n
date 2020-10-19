@@ -5040,23 +5040,23 @@
       "id": 3080 }
     ,
     "vkSystemMenu": {
-      "en": "Show ConEmu System menu",
-      "ru": "Показать системное меню ConEmu",
-      "zh": "显示ConEmu系统菜单",
-      "de": "Zeige ConEmu-Systemmenü",
-      "ja": "ConEmuシステムメニューを表示する",
-      "es": "Mostrar menú del sistema de ConEmu",
-      "pl": "Pokaż system menu ConEmu",
+      "en": "Show ConEmu System menu (fires on key down)",
+      "ru": "Показать системное меню ConEmu (срабатывает по нажатию)",
+      "_zh": "显示ConEmu系统菜单",
+      "_de": "Zeige ConEmu-Systemmenü",
+      "_ja": "ConEmuシステムメニューを表示する",
+      "_es": "Mostrar menú del sistema de ConEmu",
+      "_pl": "Pokaż system menu ConEmu",
       "id": 2018 }
     ,
     "vkSystemMenu2": {
-      "en": "Show ConEmu System menu",
-      "ru": "Показать системное меню ConEmu",
-      "zh": "显示ConEmu系统菜单",
-      "de": "Zeige ConEmu-Systemmenü",
-      "ja": "ConEmuシステムメニューを表示する",
-      "es": "Mostrar menú del sistema de ConEmu",
-      "pl": "Pokaż system menu ConEmu",
+      "en": "Show ConEmu System menu (fires on key release)",
+      "ru": "Показать системное меню ConEmu (срабатывает по отпусканию)",
+      "_zh": "显示ConEmu系统菜单",
+      "_de": "Zeige ConEmu-Systemmenü",
+      "_ja": "ConEmuシステムメニューを表示する",
+      "_es": "Mostrar menú del sistema de ConEmu",
+      "_pl": "Pokaż system menu ConEmu",
       "id": 2495 }
     ,
     "vkTabMenu": {
