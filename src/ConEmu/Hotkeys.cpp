@@ -48,9 +48,10 @@ DWORD ConEmuHotKey::GetVkMod() const
 	return Key.GetVkMod(HkType);
 }
 
-void ConEmuHotKey::SetVkMod(DWORD VkMod)
+ConEmuHotKey& ConEmuHotKey::SetVkMod(DWORD VkMod)
 {
 	Key.SetVkMod(HkType, VkMod);
+	return *this;
 }
 
 bool ConEmuHotKey::CanChangeVK() const
@@ -178,17 +179,46 @@ void ConEmuHotKey::Free()
 	SafeFree(GuiMacro);
 }
 
-void ConEmuHotKey::SetHotKey(BYTE Vk, BYTE vkMod1/*=0*/, BYTE vkMod2/*=0*/, BYTE vkMod3/*=0*/)
+ConEmuHotKey& ConEmuHotKey::SetHotKey(const BYTE vk, const BYTE vkMod1/*=0*/, const BYTE vkMod2/*=0*/, const BYTE vkMod3/*=0*/)
 {
-	Key.SetHotKey(HkType, Vk, vkMod1, vkMod2, vkMod3);
+	Key.SetHotKey(HkType, vk, vkMod1, vkMod2, vkMod3);
+	return*this;
 }
 
-bool ConEmuHotKey::Equal(BYTE Vk, BYTE vkMod1/*=0*/, BYTE vkMod2/*=0*/, BYTE vkMod3/*=0*/)
+ConEmuHotKey& ConEmuHotKey::SetEnabled(const HotkeyEnabled_t enabledFunc)
+{
+	Enabled = enabledFunc;
+	return *this;
+}
+
+ConEmuHotKey& ConEmuHotKey::SetWinHookEnabled(const WinHookEnabled_t enabledFunc)
+{
+	WinHookEnabled = enabledFunc;
+	return *this;
+}
+
+ConEmuHotKey& ConEmuHotKey::SetOnKeyUp()
+{
+	OnKeyUp = true;
+	return *this;
+}
+
+ConEmuHotKey& ConEmuHotKey::SetMacro(const wchar_t* guiMacro)
+{
+	if (GuiMacro && GuiMacro != guiMacro)
+		free(GuiMacro);
+	GuiMacro = guiMacro ? lstrdup(guiMacro) : nullptr;
+	_ASSERTE(fkey == nullptr || fkey == CConEmuCtrl::key_GuiMacro);
+	fkey = CConEmuCtrl::key_GuiMacro;
+	return *this;
+}
+
+bool ConEmuHotKey::Equal(const BYTE vk, const BYTE vkMod1/*=0*/, const BYTE vkMod2/*=0*/, const BYTE vkMod3/*=0*/) const
 {
 	//TODO
-	DWORD VkMod = GetVkMod();
-	DWORD VkModCmp = ConEmuChord::MakeHotKey(Vk, vkMod1, vkMod2, vkMod3);
-	return (VkMod == VkModCmp);
+	const DWORD vkMod = GetVkMod();
+	const DWORD vkModCmp = ConEmuChord::MakeHotKey(vk, vkMod1, vkMod2, vkMod3);
+	return (vkMod == vkModCmp);
 }
 
 // Return user-friendly key name
@@ -298,22 +328,3 @@ bool ConEmuHotKey::UsePromptFind()
 		return true;
 	return false;
 }
-
-/*
-bool ConEmuHotKey::DontHookJumps(const ConEmuHotKey* pHK)
-{
-	bool bDontHook = false;
-#if 0
-	switch (pHK->DescrLangID)
-	{
-	case vkJumpPrevMonitor:
-		bDontHook = (pHK->VkMod == MakeHotKey(VK_LEFT,VK_LWIN,VK_SHIFT));
-		break;
-	case vkJumpNextMonitor:
-		bDontHook = (pHK->VkMod == MakeHotKey(VK_RIGHT,VK_LWIN,VK_SHIFT));
-		break;
-	}
-#endif
-	return bDontHook;
-}
-*/

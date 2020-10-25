@@ -353,21 +353,21 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 			if ((pHK->HkType == chk_Modifier) || (pHK->HkType == chk_Global))
 				continue;
 
-			DWORD VkMod = pHK->GetVkMod();
+			const DWORD vkMod = pHK->GetVkMod();
 
-			if (!ConEmuChord::HasModifier(VkMod, VK_LWIN))
+			if (!ConEmuChord::HasModifier(vkMod, VK_LWIN))
 				continue;
 
 			if (pHK->Enabled && !pHK->Enabled())
 				continue;
 
-			if (pHK->DontWinHook && pHK->DontWinHook(pHK))
+			if (pHK->WinHookEnabled && !pHK->WinHookEnabled(pHK))
 				continue;
 
-			DWORD nFlags = ConEmuChord::GetHotkey(VkMod);
-			for (int i = 1; i <= 3; i++)
+			DWORD nFlags = ConEmuChord::GetHotkey(vkMod);
+			for (int modIndex = 1; modIndex <= 3; modIndex++)
 			{
-				switch (ConEmuChord::GetModifier(VkMod, i))
+				switch (ConEmuChord::GetModifier(vkMod, modIndex))
 				{
 				case 0:
 					break;
@@ -378,21 +378,21 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 				case VK_CONTROL:
 					nFlags |= cvk_Ctrl; break;
 				case VK_LCONTROL:
-					nFlags |= cvk_LCtrl|cvk_Ctrl; break;
+					nFlags |= cvk_LCtrl | cvk_Ctrl; break;
 				case VK_RCONTROL:
-					nFlags |= cvk_RCtrl|cvk_Ctrl; break;
+					nFlags |= cvk_RCtrl | cvk_Ctrl; break;
 				case VK_MENU:
 					nFlags |= cvk_Alt; break;
 				case VK_LMENU:
-					nFlags |= cvk_LAlt|cvk_Alt; break;
+					nFlags |= cvk_LAlt | cvk_Alt; break;
 				case VK_RMENU:
-					nFlags |= cvk_RAlt|cvk_Alt; break;
+					nFlags |= cvk_RAlt | cvk_Alt; break;
 				case VK_SHIFT:
 					nFlags |= cvk_Shift; break;
 				case VK_LSHIFT:
-					nFlags |= cvk_LShift|cvk_Shift; break;
+					nFlags |= cvk_LShift | cvk_Shift; break;
 				case VK_RSHIFT:
-					nFlags |= cvk_RShift|cvk_Shift; break;
+					nFlags |= cvk_RShift | cvk_Shift; break;
 				}
 			}
 

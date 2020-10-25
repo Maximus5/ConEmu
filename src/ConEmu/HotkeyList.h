@@ -35,8 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 class ConEmuHotKeyList : public MArray<ConEmuHotKey>
 {
 protected:
-	ConEmuHotKey* Add(int DescrLangID, ConEmuHotKeyType HkType, HotkeyEnabled_t Enabled, LPCWSTR Name,
-		HotkeyFKey_t fkey = NULL, bool OnKeyUp = false, LPCWSTR GuiMacro = NULL);
+	ConEmuHotKey& Add(int descrLangId, ConEmuHotKeyType hkType, LPCWSTR name, HotkeyFKey_t keyFunc = nullptr);
 public:
 	int AllocateHotkeys();
 	void ReleaseHotkeys();

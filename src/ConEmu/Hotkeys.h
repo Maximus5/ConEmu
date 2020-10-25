@@ -41,45 +41,54 @@ extern const struct ConEmuHotKey* ConEmuSkipHotKey; // = ((ConEmuHotKey*)INVALID
 
 // Check if enabled in current context
 typedef bool (*HotkeyEnabled_t)();
-// true-обработали, false-пропустить в консоль
-typedef bool (WINAPI *HotkeyFKey_t)(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon); // true-обработали, false-пропустить в консоль
+typedef bool (*WinHookEnabled_t)(const ConEmuHotKey* pHK);
+// true - processed, false - pass to console
+typedef bool (WINAPI *HotkeyFKey_t)(const ConEmuChord& VkState, bool TestOnly, const ConEmuHotKey* hk, CRealConsole* pRCon);
 
 struct ConEmuHotKey
 {
+public:
 	// >0 StringTable resource ID
 	// <0 TaskIdx, 1-based
-	int DescrLangID;
+	int DescrLangID{};
 
 	// 0 - hotkey, 1 - modifier (для драга, например), 2 - system hotkey (настройка nMultiHotkeyModifier)
-	ConEmuHotKeyType HkType;
+	ConEmuHotKeyType HkType{};
 
 	// May be NULL
-	HotkeyEnabled_t Enabled;
+	HotkeyEnabled_t Enabled{ nullptr };
 
-	wchar_t Name[64];
+	wchar_t Name[64] = L"";
 
-	ConEmuChord Key;
-	DWORD GetVkMod() const;
-	void  SetVkMod(DWORD VkMod);
+	ConEmuChord Key{};
 
-	HotkeyFKey_t fkey; // true-обработали, false-пропустить в консоль
-	bool OnKeyUp; // Некоторые комбинации нужно обрабатывать "на отпускание" (показ диалогов, меню, ...)
+	HotkeyFKey_t fkey{nullptr}; // true-обработали, false-пропустить в консоль
+	bool OnKeyUp{false}; // Некоторые комбинации нужно обрабатывать "на отпускание" (показ диалогов, меню, ...)
 
-	wchar_t* GuiMacro;
+	wchar_t* GuiMacro{nullptr};
 
-	// May be NULL. if "true" - dont intercept this key with KeyboardHooks, try to pass it to Windows.
-	bool   (*DontWinHook)(const ConEmuHotKey* pHK);
+	// May be NULL. if "false" - don't intercept this key with KeyboardHooks, pass it to Windows.
+	WinHookEnabled_t WinHookEnabled{ nullptr };
 
 	// Internal
-	size_t cchGuiMacroMax;
-	bool   NotChanged;
+	size_t cchGuiMacroMax{};
+	bool   NotChanged{};
 
+public:
+	DWORD GetVkMod() const;
 	bool CanChangeVK() const;
 	bool IsTaskHotKey() const;
 	int GetTaskIndex() const; // 0-based
 	void SetTaskIndex(int iTaskIdx); // 0-based
-	void SetHotKey(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
-	bool Equal(BYTE Vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0);
+	bool Equal(BYTE vk, BYTE vkMod1=0, BYTE vkMod2=0, BYTE vkMod3=0) const;
+
+	ConEmuHotKey& SetVkMod(DWORD VkMod);
+	ConEmuHotKey& SetHotKey(BYTE vk, BYTE vkMod1 = 0, BYTE vkMod2 = 0, BYTE vkMod3 = 0);
+	ConEmuHotKey& SetEnabled(HotkeyEnabled_t enabledFunc);
+	ConEmuHotKey& SetWinHookEnabled(WinHookEnabled_t enabledFunc);
+	ConEmuHotKey& SetOnKeyUp();
+	ConEmuHotKey& SetMacro(const wchar_t* guiMacro);
+	
 
 	LPCWSTR GetDescription(wchar_t* pszDescr, int cchMaxLen, bool bAddMacroIndex = false) const;
 
@@ -101,5 +110,4 @@ struct ConEmuHotKey
 	static bool UseDndRKey();
 	static bool UseWndDragKey();
 	static bool UsePromptFind();
-	//static bool DontHookJumps(const ConEmuHotKey* pHK);
 };
