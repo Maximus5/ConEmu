@@ -1076,6 +1076,7 @@ LPWSTR ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 	LPCWSTR sNOR = L"NOR";
 	LPCWSTR sTileLeft = L"TLEFT";
 	LPCWSTR sTileRight = L"TRIGHT";
+	LPCWSTR sTileWidth = L"TWIDTH";
 	LPCWSTR sTileHeight = L"THEIGHT";
 	LPCWSTR sMonitorPrev = L"MPREV";
 	LPCWSTR sMonitorNext = L"MNEXT";
@@ -1108,6 +1109,8 @@ LPWSTR ConEmuMacro::WindowMode(GuiMacro* p, CRealConsole* apRCon, bool abFromPlu
 				Cmd = cwc_TileLeft;
 			else if (lstrcmpi(pszMode, sTileRight) == 0)
 				Cmd = cwc_TileRight;
+			else if (lstrcmpi(pszMode, sTileWidth) == 0)
+				Cmd = cwc_TileWidth;
 			else if (lstrcmpi(pszMode, sTileHeight) == 0)
 				Cmd = cwc_TileHeight;
 			else if (lstrcmpi(pszMode, sMonitorPrev) == 0)
