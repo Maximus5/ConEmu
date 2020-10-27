@@ -124,6 +124,7 @@ protected:
 
 	LONG mn_InResize = 0;
 	RECT mrc_StoredNormalRect = {};
+	RECT mrc_StoredTiledRect = {};
 
 	POINT ptFullScreenSize = {}; // size for GetMinMaxInfo in Fullscreen mode
 	

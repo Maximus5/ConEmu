@@ -7717,6 +7717,8 @@ void CConEmuMain::RefreshWindowStyles()
 		ReSize();
 	}
 
+	GetGlobalHotkeys().UpdateWinHookSettings();
+
 	//OnTransparent();
 }
 

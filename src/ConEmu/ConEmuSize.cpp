@@ -2185,61 +2185,70 @@ void CConEmuSize::StoreNormalRect(const RECT* prcWnd)
 	// Если сейчас окно в смене размера - игнорируем, размер запомнит SetWindowMode
 	if ((GetWindowMode() == wmNormal) && !mp_ConEmu->isInside() && !isIconic())
 	{
-		if (prcWnd == NULL)
+		ConEmuWindowCommand curTileMode = cwc_Current;
+
+		if (prcWnd == nullptr)
 		{
 			if (isFullScreen() || isZoomed() || isIconic())
-				return;
-
-			//131023 Otherwise, after tiling (Win+Left)
-			//       and Lose/Get focus (Alt+Tab,Alt+Tab)
-			//       StoreNormalRect will be called unexpectedly
-			// Don't call Estimate here? Avoid excess calculations?
-			ConEmuWindowCommand CurTile = GetTileMode(false/*Estimate*/);
-			if (CurTile != cwc_Current)
 				return;
 		}
 
 		RECT rcNormal = {};
 		if (prcWnd)
 		{
-			ConEmuWindowCommand rect_tile = EvalTileMode(*prcWnd);
-			if (rect_tile != cwc_Current)
-			{
-				_ASSERTE(rect_tile == cwc_Current); // Don't store tiled placement as "normal rect"
-				return;
-			}
+			curTileMode = EvalTileMode(*prcWnd);
 			rcNormal = *prcWnd;
 		}
 		else
 		{
 			GetWindowRect(ghWnd, &rcNormal);
+			curTileMode = GetTileMode(false/*Estimate*/);
 		}
 
 		if (SizeInfo::IsRectMinimized(rcNormal))
 			return;
 
-		gpSetCls->UpdatePos(rcNormal.left, rcNormal.top);
+		if (curTileMode == cwc_Current)
+		{
+			gpSetCls->UpdatePos(rcNormal.left, rcNormal.top);
+		}
 
 		// 120720 - если окно сейчас тянут мышкой, то пока не обновлять mrc_StoredNormalRect,
 		// иначе, если произошло Maximize при дотягивании до верхнего края экрана - то при
 		// восстановлении окна получаем глюк позиционирования - оно прыгает заголовком за пределы.
 		if (!isSizing())
 		{
-			if (mrc_StoredNormalRect != rcNormal)
+			if (curTileMode == cwc_Current)
 			{
-				wchar_t szLog[255];
-				swprintf_c(szLog, L"UpdateNormalRect Cur={%i,%i}-{%i,%i} (%ix%i) New={%i,%i}-{%i,%i} (%ix%i)",
-					LOGRECTCOORDS(mrc_StoredNormalRect), LOGRECTSIZE(mrc_StoredNormalRect),
-					LOGRECTCOORDS(rcNormal), LOGRECTSIZE(rcNormal));
-				LogString(szLog);
+				if (mrc_StoredNormalRect != rcNormal)
+				{
+					wchar_t szLog[255];
+					swprintf_c(szLog, L"UpdateNormalRect Cur={%i,%i}-{%i,%i} (%ix%i) New={%i,%i}-{%i,%i} (%ix%i)",
+						LOGRECTCOORDS(mrc_StoredNormalRect), LOGRECTSIZE(mrc_StoredNormalRect),
+						LOGRECTCOORDS(rcNormal), LOGRECTSIZE(rcNormal));
+					LogString(szLog);
+				}
+				mrc_StoredNormalRect = rcNormal;
+				mrc_StoredTiledRect = RECT{};
 			}
-			mrc_StoredNormalRect = rcNormal;
+			else
+			{
+				_ASSERTE(curTileMode == cwc_TileWidth || curTileMode == cwc_TileHeight || curTileMode == cwc_TileLeft || curTileMode == cwc_TileRight);
+				mrc_StoredTiledRect = rcNormal;
+				if (!IsRectMinimized(mrc_StoredNormalRect))
+				{
+					const auto miOld = GetNearestMonitorInfo(nullptr, &mrc_StoredNormalRect, nullptr);
+					const auto miNew = GetNearestMonitorInfo(nullptr, &rcNormal, nullptr);
+					EvalNewNormalPos(miOld.mi, miNew.hMon, miNew.mi, mrc_StoredNormalRect, mrc_StoredNormalRect);
+				}
+			}
 		}
 		else
 		{
 			LogString(L"StoreNormalRect skipped due to `isSizing()`, continue to UpdateSize");
 		}
 
+		if (curTileMode == cwc_Current)
 		{
 			// При ресайзе через окно настройки - mp_ VActive еще не перерисовался
 			// так что и TextWidth/TextHeight не обновился
@@ -2682,15 +2691,7 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 			if ((changeFromWindowMode == wmNotChanging) && isWindowNormal())
 			{
-				//131023 Otherwise, after tiling (Win+Left)
-				//       and Lose/Get focus (Alt+Tab,Alt+Tab)
-				//       StoreNormalRect will be called unexpectedly
-				// Don't call Estimate here? Avoid excess calculations?
-				ConEmuWindowCommand CurTile = GetTileMode(false/*Estimate*/);
-				if (CurTile == cwc_Current)
-				{
-					StoreNormalRect(&rc);
-				}
+				StoreNormalRect(&rc);
 			}
 
 			if (mb_MonitorDpiChanged)
@@ -4039,13 +4040,17 @@ RECT CConEmuSize::GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi) c
 		break;
 
 	case cwc_TileHeight:
-		rcNewWnd = const_cast<CConEmuSize*>(this)->GetDefaultRect();
+		rcNewWnd = IsRectMinimized(mrc_StoredTiledRect)
+			? const_cast<CConEmuSize*>(this)->GetDefaultRect()
+			: mrc_StoredTiledRect;
 		rcNewWnd.top = mi.rcWork.top - rcWin10.top;
 		rcNewWnd.bottom = mi.rcWork.bottom + rcWin10.bottom;
 		break;
 
 	case cwc_TileWidth:
-		rcNewWnd = const_cast<CConEmuSize*>(this)->GetDefaultRect();
+		rcNewWnd = IsRectMinimized(mrc_StoredTiledRect)
+			? const_cast<CConEmuSize*>(this)->GetDefaultRect()
+			: mrc_StoredTiledRect;
 		rcNewWnd.left = mi.rcWork.left - rcWin10.left;
 		rcNewWnd.right = mi.rcWork.right + rcWin10.right;
 		break;
@@ -4594,7 +4599,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 	// When changing more to smth else than wmNormal, and current mode is wmNormal
 	// save current window rect for further usage (when restoring from wmMaximized for example)
-	if ((inMode != wmNormal) && isWindowNormal() && !bIconic && (GetTileMode(false) == cwc_Current))
+	if ((inMode != wmNormal) && isWindowNormal() && !bIconic)
 		StoreNormalRect(&rcWnd);
 
 	// Коррекция для Quake/Inside/Desktop
@@ -4636,7 +4641,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			DEBUGLOGFILE("SetWindowMode(wmNormal)\n");
 			//RECT consoleSize;
 
-			bool bTiled = (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight || m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth);
+			const bool bTiled = (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight || m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth);
+			SetTileMode(cwc_Current);
 			RECT rcIdeal = (gpSet->isQuakeStyle || !bTiled) ? GetDefaultRect() : GetIdealRect();
 
 			if (!bTiled && !mp_ConEmu->isInside())
