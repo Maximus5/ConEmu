@@ -2028,14 +2028,14 @@ int WINAPI RequestLocalServer(/*[IN/OUT]*/RequestLocalServerParm* Parm)
 			goto wrap;
 		}
 
-		ScreenBufferInfo sbi{};
-		if (gpWorker->LoadScreenBufferInfo(sbi))
+		CONSOLE_SCREEN_BUFFER_INFO csbi{};
+		if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi))
 		{
-			gcrVisibleSize.X = sbi.csbi.srWindow.Right - sbi.csbi.srWindow.Left + 1;
-			gcrVisibleSize.Y = sbi.csbi.srWindow.Bottom - sbi.csbi.srWindow.Top + 1;
+			gcrVisibleSize.X = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+			gcrVisibleSize.Y = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 			gbParmVisibleSize = FALSE;
-			gnBufferHeight = (sbi.csbi.dwSize.Y == gcrVisibleSize.Y) ? 0 : sbi.csbi.dwSize.Y;
-			gnBufferWidth = (sbi.csbi.dwSize.X == gcrVisibleSize.X) ? 0 : sbi.csbi.dwSize.X;
+			gnBufferHeight = (csbi.dwSize.Y == gcrVisibleSize.Y) ? 0 : csbi.dwSize.Y;
+			gnBufferWidth = (csbi.dwSize.X == gcrVisibleSize.X) ? 0 : csbi.dwSize.X;
 			gbParmBufSize = (gnBufferHeight != 0);
 		}
 		_ASSERTE(gcrVisibleSize.X>0 && gcrVisibleSize.X<=400 && gcrVisibleSize.Y>0 && gcrVisibleSize.Y<=300);
