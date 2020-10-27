@@ -852,9 +852,9 @@ bool CVirtualConsole::InitDC(bool abNoDc, bool abNoWndResize, MSectionLock *pSDC
 			+ std::max<LONG>(m_Sizes.nFontHeight, m_Sizes.nFontWidth) * 3;
 
 		#ifdef _DEBUG
-		if (m_Sizes.Height > 2000)
+		if (m_Sizes.Height > 5000)
 		{
-			_ASSERTE(m_Sizes.Height <= 2000);
+			_ASSERTE(m_Sizes.Height <= 5000);
 		}
 		#endif
 
