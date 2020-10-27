@@ -638,14 +638,9 @@ void Settings::InitSettings()
 	isRetardInactivePanes = false; // не включать "засыпание в видимых-но-неактивных сплитах"
 	mb_MinimizeOnLoseFocus = false; // не "прятаться" при потере фокуса
 	RECT rcWork = {}; SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
-	if (gbIsWine)
-	{
-		_wndX = std::max<int>(90,rcWork.left); _wndY = std::max<int>(90,rcWork.top);
-	}
-	else
-	{
-		_wndX = rcWork.left; _wndY = rcWork.top;
-	}
+	// If window is started at {0,0} position, than Win+Left (on Windows 10) tiles window only on height-half
+	// Let's position by default ConEmu window in a normal position, slightly away from screen corner
+	_wndX = std::max<int>(90,rcWork.left); _wndY = std::max<int>(90,rcWork.top);
 	wndCascade = true;
 	isAutoSaveSizePos = true;
 	mb_ExitSettingsAutoSaved = false;
