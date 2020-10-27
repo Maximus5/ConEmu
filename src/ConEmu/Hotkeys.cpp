@@ -191,12 +191,6 @@ ConEmuHotKey& ConEmuHotKey::SetEnabled(const HotkeyEnabled_t enabledFunc)
 	return *this;
 }
 
-ConEmuHotKey& ConEmuHotKey::SetWinHookEnabled(const WinHookEnabled_t enabledFunc)
-{
-	WinHookEnabled = enabledFunc;
-	return *this;
-}
-
 ConEmuHotKey& ConEmuHotKey::SetOnKeyUp()
 {
 	OnKeyUp = true;
@@ -256,6 +250,15 @@ bool ConEmuHotKey::UseWinNumber()
 bool ConEmuHotKey::UseWinArrows()
 {
 	return gpSet->isUseWinArrows;
+}
+
+bool ConEmuHotKey::UseWinMove()
+{
+	if (gpConEmu->isInside())
+		return false;
+	if (gpConEmu->isCaptionHidden())
+		return true;
+	return false;
 }
 
 bool ConEmuHotKey::InSelection()

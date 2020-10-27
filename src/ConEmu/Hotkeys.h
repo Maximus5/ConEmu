@@ -67,9 +67,6 @@ public:
 
 	wchar_t* GuiMacro{nullptr};
 
-	// May be NULL. if "false" - don't intercept this key with KeyboardHooks, pass it to Windows.
-	WinHookEnabled_t WinHookEnabled{ nullptr };
-
 	// Internal
 	size_t cchGuiMacroMax{};
 	bool   NotChanged{};
@@ -85,7 +82,6 @@ public:
 	ConEmuHotKey& SetVkMod(DWORD VkMod);
 	ConEmuHotKey& SetHotKey(BYTE vk, BYTE vkMod1 = 0, BYTE vkMod2 = 0, BYTE vkMod3 = 0);
 	ConEmuHotKey& SetEnabled(HotkeyEnabled_t enabledFunc);
-	ConEmuHotKey& SetWinHookEnabled(WinHookEnabled_t enabledFunc);
 	ConEmuHotKey& SetOnKeyUp();
 	ConEmuHotKey& SetMacro(const wchar_t* guiMacro);
 	
@@ -102,6 +98,8 @@ public:
 
 	static bool UseWinNumber();
 	static bool UseWinArrows();
+	/// \brief Process hotkeys to tile window and move window accross monitors
+	static bool UseWinMove();
 	static bool UseCTSShiftArrow(); // { return gpSet->isUseWinArrows; }; // { return (OverrideClipboard || !AppNames) ? isCTSShiftArrowStart : gpSet->AppStd.isCTSShiftArrowStart; };
 	static bool UseCtrlTab();
 	static bool UseCtrlBS();

@@ -361,9 +361,6 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll) const
 			if (pHK->Enabled && !pHK->Enabled())
 				continue;
 
-			if (pHK->WinHookEnabled && !pHK->WinHookEnabled(pHK))
-				continue;
-
 			DWORD nFlags = ConEmuChord::GetHotkey(vkMod);
 			for (int modIndex = 1; modIndex <= 3; modIndex++)
 			{

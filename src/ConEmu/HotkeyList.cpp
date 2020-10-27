@@ -407,20 +407,20 @@ int ConEmuHotKeyList::AllocateHotkeys()
 		.SetOnKeyUp();
 	Add(vkMaximize,        chk_User,  L"Key.Maximize"         ).SetMacro(L"WindowMaximize()") // Maximize window
 		.SetHotKey(VK_F9,VK_MENU);
-	Add(vkMaximizeWidth,   chk_User,  L"Key.MaximizeWidth"    ).SetMacro(L"WindowMode(11)") // Maximize window width
+	Add(vkMaximizeWidth,   chk_User,  L"Key.MaximizeWidth"    ).SetMacro(L"WindowMode(TWidth)") // Maximize window width
 		.SetHotKey(VK_DOWN,VK_LWIN,VK_SHIFT);
-	Add(vkMaximizeHeight,  chk_User,  L"Key.MaximizeHeight"   ).SetMacro(L"WindowMode(8)") // Maximize window height
+	Add(vkMaximizeHeight,  chk_User,  L"Key.MaximizeHeight"   ).SetMacro(L"WindowMode(THeight)") // Maximize window height
 		.SetHotKey(VK_UP,VK_LWIN,VK_SHIFT);
-	Add(vkTileToLeft,      chk_User,  L"Key.TileToLeft"       ).SetMacro(L"WindowMode(6)")
-		.SetHotKey(VK_LEFT,VK_LWIN);
-	Add(vkTileToRight,     chk_User,  L"Key.TileToRight"      ).SetMacro(L"WindowMode(7)")
-		.SetHotKey(VK_RIGHT,VK_LWIN);
-	Add(vkJumpActiveMonitor,chk_User, L"Key.JumpActiveMonitor").SetMacro(L"WindowMode(12)")
+	Add(vkTileToLeft,      chk_User,  L"Key.TileToLeft"       ).SetMacro(L"WindowMode(TLeft)")
+		.SetHotKey(VK_LEFT,VK_LWIN).SetEnabled(ConEmuHotKey::UseWinMove);
+	Add(vkTileToRight,     chk_User,  L"Key.TileToRight"      ).SetMacro(L"WindowMode(TRight)")
+		.SetHotKey(VK_RIGHT,VK_LWIN).SetEnabled(ConEmuHotKey::UseWinMove);
+	Add(vkJumpActiveMonitor,chk_User, L"Key.JumpActiveMonitor").SetMacro(L"WindowMode(Here)")
 		;
-	Add(vkJumpPrevMonitor,chk_User,   L"Key.JumpPrevMonitor"  ).SetMacro(L"WindowMode(9)")
-		.SetHotKey(VK_LEFT,VK_LWIN,VK_SHIFT);
-	Add(vkJumpNextMonitor, chk_User,  L"Key.JumpNextMonitor"  ).SetMacro(L"WindowMode(10)")
-		.SetHotKey(VK_RIGHT,VK_LWIN,VK_SHIFT);
+	Add(vkJumpPrevMonitor,chk_User,   L"Key.JumpPrevMonitor"  ).SetMacro(L"WindowMode(MPrev)")
+		.SetHotKey(VK_LEFT,VK_LWIN,VK_SHIFT).SetEnabled(ConEmuHotKey::UseWinMove);
+	Add(vkJumpNextMonitor, chk_User,  L"Key.JumpNextMonitor"  ).SetMacro(L"WindowMode(MNext)")
+		.SetHotKey(VK_RIGHT,VK_LWIN,VK_SHIFT).SetEnabled(ConEmuHotKey::UseWinMove);
 	Add(vkAltEnter,        chk_User,  L"Key.FullScreen"       ).SetMacro(L"WindowFullscreen()") // Full screen
 		.SetHotKey(VK_RETURN,VK_MENU);
 	Add(vkSystemMenu,      chk_User,  L"Key.SysMenu",           CConEmuCtrl::key_SystemMenu) // System menu
