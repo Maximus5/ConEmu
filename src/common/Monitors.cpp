@@ -40,7 +40,7 @@ HMONITOR GetStartupMonitor()
 	STARTUPINFO si = {sizeof(si)};
 	MONITORINFO mi = {sizeof(mi)};
 	POINT ptCur = {}, ptOut = {-32000,-32000};
-	HMONITOR hStartupMonitor = NULL, hMouseMonitor, hPrimaryMonitor;
+	HMONITOR hStartupMonitor = nullptr, hMouseMonitor, hPrimaryMonitor;
 
 	GetStartupInfo(&si);
 	GetCursorPos(&ptCur);
@@ -72,7 +72,7 @@ HMONITOR GetStartupMonitor()
 	// Otherwise - return monitor where mouse cursor is located
 	return hMouseMonitor ? hMouseMonitor : hPrimaryMonitor;
 	#endif
-	return NULL;
+	return nullptr;
 }
 
 // Startup monitor ay be specified from command line
@@ -80,10 +80,10 @@ HMONITOR GetStartupMonitor()
 HMONITOR MonitorFromParam(LPCWSTR asMonitor)
 {
 	if (!asMonitor || !*asMonitor)
-		return NULL;
+		return nullptr;
 
 	wchar_t* pszEnd;
-	HMONITOR hMon = NULL;
+	HMONITOR hMon = nullptr;
 	MONITORINFO mi = {sizeof(mi)};
 
 	if (asMonitor[0] == L'x' || asMonitor[0] == L'X')
@@ -127,7 +127,7 @@ HMONITOR MonitorFromParam(LPCWSTR asMonitor)
 		Impl.nIndex = wcstoul(asMonitor, &pszEnd, 10);
 	else
 		Impl.pszName = asMonitor;
-	EnumDisplayMonitors(NULL, NULL, impl::FindMonitor, (LPARAM)&Impl);
+	EnumDisplayMonitors(nullptr, nullptr, impl::FindMonitor, (LPARAM)&Impl);
 
 	// Return what found or not
 	return Impl.hMon;
@@ -157,7 +157,7 @@ RECT GetAllMonitorsWorkspace()
 {
 	RECT rcAllMonRect = {};
 
-	if (!EnumDisplayMonitors(NULL, NULL, FindMonitorsWorkspace, (LPARAM)&rcAllMonRect) || IsRectEmpty(&rcAllMonRect))
+	if (!EnumDisplayMonitors(nullptr, nullptr, FindMonitorsWorkspace, (LPARAM)&rcAllMonRect) || IsRectEmpty(&rcAllMonRect))
 	{
 		#ifdef _DEBUG
 		DWORD nErr = GetLastError();
@@ -172,19 +172,13 @@ RECT GetAllMonitorsWorkspace()
 	return rcAllMonRect;
 }
 
-struct _FindPrimaryMonitor
-{
-	HMONITOR hMon;
-	MONITORINFO mi;
-};
-
 BOOL CALLBACK FindPrimaryMonitor(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
 	MONITORINFO mi = {sizeof(mi)};
 
 	if (GetMonitorInfo(hMonitor, &mi) && (mi.dwFlags & MONITORINFOF_PRIMARY))
 	{
-		_FindPrimaryMonitor* pMon = (_FindPrimaryMonitor*)dwData;
+		MonitorInfo* pMon = reinterpret_cast<MonitorInfo*>(dwData);
 		pMon->hMon = hMonitor;
 		pMon->mi = mi;
 		// And stop enumeration
@@ -207,20 +201,41 @@ bool GetMonitorInfoSafe(HMONITOR hMon, MONITORINFO& mi)
 	{
 		GetPrimaryMonitorInfo(&mi);
 	}
-	
+
 	return (bMonitor!=FALSE);
 }
 
-HMONITOR GetPrimaryMonitorInfo(MONITORINFO* pmi /*= NULL*/)
+// ReSharper disable once CppParameterMayBeConst
+bool GetMonitorInfoSafe(HMONITOR hMon, MonitorInfo& result)
 {
-	_FindPrimaryMonitor m = {NULL};
+	if (!hMon)
+	{
+		return false;
+	}
 
-	EnumDisplayMonitors(NULL, NULL, FindPrimaryMonitor, (LPARAM)&m);
+	result = MonitorInfo{};
+	result.hMon = hMon;
+	result.mi.cbSize = sizeof(result.mi);
+	const bool bMonitor = GetMonitorInfo(hMon, &result.mi);
+	if (!bMonitor)
+	{
+		GetPrimaryMonitorInfo(&result.mi);
+	}
+
+	return bMonitor;
+}
+
+
+MonitorInfo GetPrimaryMonitorInfo()
+{
+	MonitorInfo m = {};
+
+	EnumDisplayMonitors(nullptr, nullptr, FindPrimaryMonitor, reinterpret_cast<LPARAM>(&m));
 
 	if (!m.hMon)
 	{
 		_ASSERTE(FALSE && "FindPrimaryMonitor fails");
-		// Если облом с мониторами - берем данные по умолчанию
+		// If enumeration of monitors fails - use default data
 		m.mi.cbSize = 0;
 		SystemParametersInfo(SPI_GETWORKAREA, 0, &m.mi.rcWork, 0);
 		m.mi.rcMonitor.left = m.mi.rcMonitor.top = 0;
@@ -229,59 +244,72 @@ HMONITOR GetPrimaryMonitorInfo(MONITORINFO* pmi /*= NULL*/)
 		m.mi.dwFlags = 0;
 	}
 
-	if (pmi) *pmi = m.mi;
+	return m;
+}
+
+HMONITOR GetPrimaryMonitorInfo(MONITORINFO* pmi)
+{
+	const MonitorInfo m = GetPrimaryMonitorInfo();
+	if (pmi)
+		*pmi = m.mi;
 	return m.hMon;
 }
 
-HMONITOR GetNearestMonitorInfo(MONITORINFO* pmi /*= NULL*/, HMONITOR hDefault /*= NULL*/, LPCRECT prcWnd /*= NULL*/, HWND hWnd /*= NULL*/)
+HMONITOR GetNearestMonitorInfo(MONITORINFO* pmi, HMONITOR hDefault /*= nullptr*/, LPCRECT prcWnd /*= nullptr*/, HWND hWnd /*= nullptr*/)
 {
-	HMONITOR hMon = NULL;
-	MONITORINFO mi = {0};
+	const MonitorInfo m = GetNearestMonitorInfo(hDefault, prcWnd, hWnd);
+	if (pmi)
+		*pmi = m.mi;
+	return m.hMon;
+}
+
+MonitorInfo GetNearestMonitorInfo(HMONITOR hDefault /*= nullptr*/, LPCRECT prcWnd /*= nullptr*/, HWND hWnd /*= nullptr*/)
+{
+	MonitorInfo result{};
 
 	if (hDefault)
 	{
-		mi.cbSize = sizeof(mi);
-		if (GetMonitorInfo(hDefault, &mi))
+		result.mi.cbSize = sizeof(result.mi);
+		if (GetMonitorInfo(hDefault, &result.mi))
 		{
-			hMon = hDefault;
+			result.hMon = hDefault;
 		}
 		else
 		{
 			_ASSERTE(FALSE && "GetMonitorInfo(hDefault) failed");
-			mi.cbSize = 0;
+			result.mi.cbSize = 0;
 		}
 	}
 
-	if (!hMon)
+	if (!result.hMon)
 	{
 		if (prcWnd)
 		{
-			hMon = MonitorFromRect(prcWnd, MONITOR_DEFAULTTONEAREST);
+			result.hMon = MonitorFromRect(prcWnd, MONITOR_DEFAULTTONEAREST);
 		}
 		else if (hWnd)
 		{
-			hMon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+			result.hMon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
 		}
 
-		if (hMon)
+		if (result.hMon)
 		{
-			mi.cbSize = sizeof(mi);
-			if (!GetMonitorInfo(hMon, &mi))
+			result.mi.cbSize = sizeof(result.mi);
+			if (!GetMonitorInfo(result.hMon, &result.mi))
 			{
 				_ASSERTE(FALSE && "GetMonitorInfo(hDefault) failed");
-				mi.cbSize = 0;
+				result.mi.cbSize = 0;
 			}
 		}
 	}
-	
-	if (!hMon)
+
+	if (!result.hMon)
 	{
 		_ASSERTE(FALSE && "Nor RECT neither HWND was succeeded, defaulting to PRIMARY");
-		hMon = GetPrimaryMonitorInfo(&mi);
+		result.hMon = GetPrimaryMonitorInfo(&result.mi);
 	}
 
-	if (pmi) *pmi = mi;
-	return hMon;
+	return result;
 }
 
 struct _FindAllMonitorsItem
@@ -298,7 +326,7 @@ struct _FindAllMonitors
 
 BOOL CALLBACK EnumAllMonitors(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARAM dwData)
 {
-	_FindAllMonitors* p = (_FindAllMonitors*)dwData;
+	_FindAllMonitors* p = reinterpret_cast<_FindAllMonitors*>(dwData);
 	_FindAllMonitorsItem Info = {hMonitor, *lprcMonitor};
 	Info.ptCenter.x = (Info.rcMon.left + Info.rcMon.right) >> 1;
 	Info.ptCenter.y = (Info.rcMon.top + Info.rcMon.bottom) >> 1;
@@ -319,21 +347,29 @@ static bool MonitorSortCallback(const _FindAllMonitorsItem& e1, const _FindAllMo
 	return false;
 }
 
-HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next)
+HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool next)
+{
+	const MonitorInfo m = GetNextMonitorInfo(prcWnd, next);
+	if (pmi)
+		*pmi = m.mi;
+	return m.hMon;
+}
+
+MonitorInfo GetNextMonitorInfo(LPCRECT prcWnd, bool next)
 {
 	_FindAllMonitors Monitors;
-	
-	EnumDisplayMonitors(NULL, NULL, EnumAllMonitors, (LPARAM)&Monitors);
 
-	INT_PTR iMonCount = Monitors.MonArray.size();
+	EnumDisplayMonitors(nullptr, nullptr, EnumAllMonitors, reinterpret_cast<LPARAM>(&Monitors));
+
+	const auto iMonCount = Monitors.MonArray.size();
 	if (iMonCount < 2)
-		return NULL;
+		return {};
 
-	HMONITOR hFound = NULL;
+	HMONITOR hFound = nullptr;
 
-	_ASSERTE(prcWnd!=NULL); // Иначе будем искать от Primary
+	_ASSERTE(prcWnd!=nullptr); // Иначе будем искать от Primary
 
-	HMONITOR hNearest = prcWnd ? MonitorFromRect(prcWnd, MONITOR_DEFAULTTONEAREST) : GetPrimaryMonitorInfo(NULL);
+	HMONITOR hNearest = prcWnd ? MonitorFromRect(prcWnd, MONITOR_DEFAULTTONEAREST) : GetPrimaryMonitorInfo(nullptr);
 	#ifdef _DEBUG
 	MONITORINFO miNrst = {}; GetMonitorInfoSafe(hNearest, miNrst);
 	#endif
@@ -355,7 +391,7 @@ HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next)
 
 
 			INT_PTR j;
-			if (Next)
+			if (next)
 			{
 				j = ((i + 1) < iMonCount) ? (i + 1) : 0;
 			}
@@ -370,9 +406,9 @@ HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next)
 
 	if (!hFound)
 	{
-		_ASSERTE((hFound!=NULL) && "Can't find current monitor in monitors array");
+		_ASSERTE((hFound!=nullptr) && "Can't find current monitor in monitors array");
 
-		if (Next)
+		if (next)
 		{
 			hFound = Monitors.MonArray[0].hMon;
 		}
@@ -382,28 +418,29 @@ HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next)
 		}
 	}
 
-	if (hFound != NULL)
+	MonitorInfo result{};
+	if (hFound != nullptr)
 	{
-		MONITORINFO mi = {sizeof(mi)};
-		if (GetMonitorInfo(hFound, &mi))
+		result.mi.cbSize = sizeof(result.mi);
+		if (GetMonitorInfo(hFound, &result.mi))
 		{
-			if (pmi) *pmi = mi;
+			result.hMon = hFound;
 		}
 		else
 		{
-			hFound = NULL;
+			result.mi.cbSize = 0;
 		}
 	}
 
-	return hFound;
+	return result;
 }
 
-HWND FindTaskbarWindow(LPRECT rcMon /*= NULL*/)
+HWND FindTaskbarWindow(LPRECT rcMon /*= nullptr*/)
 {
-	HWND hTaskbar = NULL;
+	HWND hTaskbar = nullptr;
 	RECT rcTaskbar, rcMatch;
 
-	while ((hTaskbar = FindWindowEx(NULL, hTaskbar, L"Shell_TrayWnd", NULL)) != NULL)
+	while ((hTaskbar = FindWindowEx(nullptr, hTaskbar, L"Shell_TrayWnd", nullptr)) != nullptr)
 	{
 		if (!rcMon)
 		{
@@ -419,7 +456,7 @@ HWND FindTaskbarWindow(LPRECT rcMon /*= NULL*/)
 	return hTaskbar;
 }
 
-bool IsTaskbarAutoHidden(LPRECT rcMon /*= NULL*/, PUINT pEdge /*= NULL*/, HWND* pTaskbar /*= NULL*/)
+bool IsTaskbarAutoHidden(LPRECT rcMon /*= nullptr*/, PUINT pEdge /*= nullptr*/, HWND* pTaskbar /*= nullptr*/)
 {
 	HWND hTaskbar = FindTaskbarWindow(rcMon);
 	if (pTaskbar)

@@ -33,10 +33,21 @@ HMONITOR MonitorFromParam(LPCWSTR asMonitor);
 
 RECT GetAllMonitorsWorkspace();
 
-bool GetMonitorInfoSafe(HMONITOR hMon, MONITORINFO& mi);
-HMONITOR GetPrimaryMonitorInfo(MONITORINFO* pmi = NULL);
-HMONITOR GetNearestMonitorInfo(MONITORINFO* pmi = NULL, HMONITOR hDefault = NULL, LPCRECT prcWnd = NULL, HWND hWnd = NULL);
-HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool Next);
+struct MonitorInfo
+{
+	HMONITOR hMon{ nullptr };
+	MONITORINFO mi{};
+};
 
-HWND FindTaskbarWindow(LPRECT rcMon = NULL);
-bool IsTaskbarAutoHidden(LPRECT rcMon = NULL, PUINT pEdge = NULL, HWND* pTaskbar = NULL);
+bool GetMonitorInfoSafe(HMONITOR hMon, MONITORINFO& mi);
+HMONITOR GetPrimaryMonitorInfo(MONITORINFO* pmi);
+HMONITOR GetNearestMonitorInfo(MONITORINFO* pmi = nullptr, HMONITOR hDefault = nullptr, LPCRECT prcWnd = nullptr, HWND hWnd = nullptr);
+HMONITOR GetNextMonitorInfo(MONITORINFO* pmi, LPCRECT prcWnd, bool next);
+
+bool GetMonitorInfoSafe(HMONITOR hMon, MonitorInfo& result);
+MonitorInfo GetPrimaryMonitorInfo();
+MonitorInfo GetNearestMonitorInfo(HMONITOR hDefault, LPCRECT prcWnd = nullptr, HWND hWnd = nullptr);
+MonitorInfo GetNextMonitorInfo(LPCRECT prcWnd, bool next);
+
+HWND FindTaskbarWindow(LPRECT rcMon = nullptr);
+bool IsTaskbarAutoHidden(LPRECT rcMon = nullptr, PUINT pEdge = nullptr, HWND* pTaskbar = nullptr);
