@@ -317,7 +317,7 @@ class CSettings
 	private:
 		friend struct Settings;
 	public:
-		void UpdateWinHookSettings(HMODULE hLLKeyHookDll);
+		void UpdateWinHookSettings(HMODULE hLLKeyHookDll) const;
 	public:
 		bool isDialogMessage(MSG &Msg);
 	public:

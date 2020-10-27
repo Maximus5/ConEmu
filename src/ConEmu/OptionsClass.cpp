@@ -308,10 +308,10 @@ void CSettings::SetRequestedDpi(int dpiX, int dpiY)
 	_dpi.SetDpi(dpiX, dpiY);
 }
 
-void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
+void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll) const
 {
-	BOOL *pbWinTabHook = (BOOL*)GetProcAddress(hLLKeyHookDll, "gbWinTabHook");
-	BYTE *pnConsoleKeyShortcuts = (BYTE*)GetProcAddress(hLLKeyHookDll, "gnConsoleKeyShortcuts");
+	BOOL *pbWinTabHook = reinterpret_cast<BOOL*>(GetProcAddress(hLLKeyHookDll, "gbWinTabHook"));
+	BYTE *pnConsoleKeyShortcuts = reinterpret_cast<BYTE*>(GetProcAddress(hLLKeyHookDll, "gnConsoleKeyShortcuts"));
 
 	if (pbWinTabHook)
 		*pbWinTabHook = gpSet->isUseWinTab;
@@ -336,7 +336,7 @@ void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll)
 	}
 
 	// __declspec(dllexport) DWORD gnHookedKeys[HookedKeysMaxCount] = {};
-	DWORD *pnHookedKeys = (DWORD*)GetProcAddress(hLLKeyHookDll, "gnHookedKeys");
+	DWORD *pnHookedKeys = reinterpret_cast<DWORD*>(GetProcAddress(hLLKeyHookDll, "gnHookedKeys"));
 	if (pnHookedKeys)
 	{
 		DWORD *pn = pnHookedKeys;

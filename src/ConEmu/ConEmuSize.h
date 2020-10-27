@@ -256,12 +256,12 @@ public:
 	bool SetWindowMode(ConEmuWindowMode inMode, bool abForce = false, bool abFirstShow = false);
 	bool SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWSTR asH);
 	void SetWindowPosSizeParam(wchar_t acType, LPCWSTR asValue);
-	bool IsSizeFree(ConEmuWindowMode CheckMode = wmFullScreen);
-	bool IsSizePosFree(ConEmuWindowMode CheckMode = wmFullScreen);
-	bool IsCantExceedMonitor();
-	bool IsPosLocked();
-	bool IsInResize();
-	bool IsInWindowModeChange();
+	bool IsSizeFree(ConEmuWindowMode CheckMode = wmFullScreen) const;
+	bool IsSizePosFree(ConEmuWindowMode CheckMode = wmFullScreen) const;
+	bool IsCantExceedMonitor() const;
+	bool IsPosLocked() const;
+	bool IsInResize() const;
+	bool IsInWindowModeChange() const;
 	void LogMinimizeRestoreSkip(LPCWSTR asMsgFormat, DWORD nParm1 = 0, DWORD nParm2 = 0, DWORD nParm3 = 0);
 	bool JumpNextMonitor(bool Next);
 	bool JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, const RECT rcJumpWnd, LPRECT prcNewPos = NULL);
@@ -356,7 +356,7 @@ protected:
 	RECT SetNormalWindowSize();
 	void LogTileModeChange(LPCWSTR asPrefix, ConEmuWindowCommand Tile, bool bChanged, const RECT& rcSet, LPRECT prcAfter, HMONITOR hMon);
 	bool CheckDpiOnMoving(WINDOWPOS *p);
-	void EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, const MONITORINFO& miNew, const RECT& rcOld, RECT& rcNew);
+	void EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, const MONITORINFO& miNew, RECT rcOld, RECT& rcNew);
 	BOOL AnimateWindow(DWORD dwTime, DWORD dwFlags);
 
 	friend class CSettings;

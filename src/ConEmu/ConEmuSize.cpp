@@ -1270,7 +1270,7 @@ bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWST
 	}
 
 	// Запомнить "идеальный" размер окна, выбранный пользователем
-	mp_ConEmu->StoreNormalRect(NULL);
+	mp_ConEmu->StoreNormalRect(nullptr);
 
 	return true;
 }
@@ -1867,7 +1867,7 @@ RECT CConEmuSize::GetIdealRect()
 		&& (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight
 			|| m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth))
 	{
-		auto mi = NearestMonitorInfo(rcIdeal);
+		const auto mi = NearestMonitorInfo(rcIdeal);
 		rcIdeal = GetTileRect(m_TileMode, mi.mi);
 	}
 
@@ -4013,12 +4013,12 @@ RECT CConEmuSize::GetTileRect(ConEmuWindowCommand Tile, const MONITORINFO& mi) c
 	RECT rcNewWnd;
 
 	// gh-284
-	RECT rcWin10 = CalcMargins_InvisibleFrame();
+	const RECT rcWin10 = CalcMargins_InvisibleFrame();
 
 	switch (Tile)
 	{
 	case cwc_Current:
-		// Вернуться из Tile-режима в нормальный
+		// Return from Tiled mode to normal
 		rcNewWnd = const_cast<CConEmuSize*>(this)->GetDefaultRect();
 		break;
 
@@ -4218,7 +4218,7 @@ ConEmuWindowCommand CConEmuSize::GetTileMode(bool Estimate, MONITORINFO* pmi/*=N
 // В некоторых режимах менять положение/размер окна произвольно - нельзя,
 // для Quake например окно должно быть прилеплено к верхней границе экрана
 // в режиме Inside - размер окна вообще заблокирован и зависит от свободной области
-bool CConEmuSize::IsSizeFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
+bool CConEmuSize::IsSizeFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/) const
 {
 	// В некоторых режимах - нельзя
 	if (mp_ConEmu->mp_Inside)
@@ -4235,7 +4235,7 @@ bool CConEmuSize::IsSizeFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
 	// Размер И положение можно менять произвольно
 	return true;
 }
-bool CConEmuSize::IsSizePosFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
+bool CConEmuSize::IsSizePosFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/) const
 {
 	// В некоторых режимах - нельзя
 	if (gpSet->isQuakeStyle || mp_ConEmu->mp_Inside)
@@ -4249,14 +4249,14 @@ bool CConEmuSize::IsSizePosFree(ConEmuWindowMode CheckMode /*= wmFullScreen*/)
 	return true;
 }
 // В некоторых режимах - не должен выходить за пределы экрана
-bool CConEmuSize::IsCantExceedMonitor()
+bool CConEmuSize::IsCantExceedMonitor() const
 {
 	_ASSERTE(!mp_ConEmu->mp_Inside);
 	if (gpSet->isQuakeStyle)
 		return true;
 	return false;
 }
-bool CConEmuSize::IsPosLocked()
+bool CConEmuSize::IsPosLocked() const
 {
 	// В некоторых режимах - двигать окно юзеру вообще нельзя
 	if (mp_ConEmu->mp_Inside)
@@ -4265,11 +4265,11 @@ bool CConEmuSize::IsPosLocked()
 	// Положение - строго не ограничивается
 	return false;
 }
-bool CConEmuSize::IsInResize()
+bool CConEmuSize::IsInResize() const
 {
 	return (mn_InResize > 0);
 }
-bool CConEmuSize::IsInWindowModeChange()
+bool CConEmuSize::IsInWindowModeChange() const
 {
 	return (changeFromWindowMode != wmNotChanging);
 }
@@ -4317,10 +4317,10 @@ bool CConEmuSize::JumpNextMonitor(bool Next)
 		GetWindowRect(hJump, &rcMain);
 	}
 
-	return JumpNextMonitor(hJump, NULL, Next, rcMain);
+	return JumpNextMonitor(hJump, nullptr, Next, rcMain);
 }
 
-void CConEmuSize::EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, const MONITORINFO& miNew, const RECT& rcOld, RECT& rcNew)
+void CConEmuSize::EvalNewNormalPos(const MONITORINFO& miOld, HMONITOR hNextMon, const MONITORINFO& miNew, const RECT rcOld, RECT& rcNew)
 {
 	#ifdef _DEBUG
 	RECT rcPrevMon = miOld.rcWork;
@@ -4417,7 +4417,7 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 		{
 			swprintf_c(szInfo,
 				L"JumpNextMonitor(%i) skipped, GetNextMonitorInfo({%i,%i}-{%i,%i}) returns NULL",
-				(int)Next, LOGRECTCOORDS(rcMain));
+				static_cast<int>(Next), LOGRECTCOORDS(rcMain));
 			LogString(szInfo);
 		}
 		return false;
@@ -4426,14 +4426,14 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	{
 		swprintf_c(szInfo,
 			L"JumpNextMonitor(%i), GetNextMonitorInfo({%i,%i}-{%i,%i}) returns 0x%08X ({%i,%i}-{%i,%i})",
-			(int)Next, LOGRECTCOORDS(rcMain),
-			(DWORD)(DWORD_PTR)hNext, LOGRECTCOORDS(mi.rcMonitor));
+			static_cast<int>(Next), LOGRECTCOORDS(rcMain),
+			static_cast<DWORD>(reinterpret_cast<DWORD_PTR>(hNext)), LOGRECTCOORDS(mi.rcMonitor));
 		LogString(szInfo);
 	}
 
 	SetRequestedMonitor(hNext);
 
-	MONITORINFO miCur;
+	MONITORINFO miCur{};
 	DEBUGTEST(HMONITOR hCurMonitor = )
 		GetNearestMonitor(&miCur, &rcMain);
 
