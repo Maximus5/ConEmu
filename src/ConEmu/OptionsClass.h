@@ -246,10 +246,10 @@ class CSettings
 		// #DPI Move DPI members to CConEmuMain
 		DpiValue _dpi;
 		DpiValue _dpi_all;
-		int GetOverallDpi();
+		void GetOverallDpi();
 	public:
-		int QueryDpi();
-		void SetRequestedDpi(int dpiX, int dpiY);
+		int QueryDpi() const;
+		void SetRequestedDpi(const DpiValue& dpi);
 	private:
 		CEStr ms_BalloonErrTip;
 		CEStr ms_ConFontError;

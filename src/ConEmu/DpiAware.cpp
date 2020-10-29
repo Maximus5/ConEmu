@@ -1,4 +1,4 @@
-
+﻿
 /*
 Copyright (c) 2014-present Maximus5
 All rights reserved.
@@ -31,6 +31,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "Header.h"
 #include <commctrl.h>
 #include "DpiAware.h"
+
+#include <tuple>
+
 #include "DynDialog.h"
 #include "SearchCtrl.h"
 #include "../common/Monitors.h"
@@ -39,6 +42,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifdef _DEBUG
 static bool gbSkipSetDialogDPI = false;
 #endif
+
+MModule CDpiAware::shCore_{};
+MModule CDpiAware::user32_{};
+CDpiAware::GetDpiForMonitor_t CDpiAware::getDpiForMonitor_ = nullptr;
+
 
 //#define DPI_DEBUG_CUSTOM 144 // 96, 120, 144, 192 - these are standard dpi-s
 #undef DPI_DEBUG_CUSTOM
@@ -49,55 +57,34 @@ struct DpiValue
 	int Xdpi;
 */
 
+DpiValue::~DpiValue()
+{
+}
+
 DpiValue::DpiValue()
 {
 	#if defined(_DEBUG) && defined(DPI_DEBUG_CUSTOM)
 	SetDpi(DPI_DEBUG_CUSTOM,DPI_DEBUG_CUSTOM);
 	#else
-	SetDpi(96,96);
+	SetDpi(96,96, DpiSource::Default);
 	#endif
 }
 
-DpiValue::DpiValue(int xdpi, int ydpi)
+DpiValue::DpiValue(const int xDpi, const int yDpi, const DpiSource source /*= DpiSource::Explicit*/)
 {
-	SetDpi(xdpi, ydpi);
+	SetDpi(xDpi, yDpi, source);
 }
 
 DpiValue DpiValue::FromWParam(WPARAM wParam)
 {
 	DpiValue dpi;
 	#if defined(_DEBUG) && defined(DPI_DEBUG_CUSTOM)
-	dpi.SetDpi(DPI_DEBUG_CUSTOM,DPI_DEBUG_CUSTOM);
+	dpi.SetDpi(DPI_DEBUG_CUSTOM, DPI_DEBUG_CUSTOM, DpiSource::Default);
 	#else
-	dpi.SetDpi(96,96);
+	dpi.SetDpi(96,96, DpiSource::Default);
 	#endif
 	dpi.OnDpiChanged(wParam);
 	return dpi;
-}
-
-// just for debugging simplification
-DpiValue::DpiValue(const DpiValue& dpi)
-{
-	Xdpi = dpi.Xdpi; Ydpi = dpi.Ydpi;
-}
-
-// just for debugging simplification
-DpiValue& DpiValue::operator=(const DpiValue& dpi)
-{
-	Xdpi = dpi.Xdpi; Ydpi = dpi.Ydpi;
-	return *this;
-}
-
-DpiValue::operator int() const
-{
-	return Ydpi;
-}
-
-struct DpiValue& DpiValue::operator=(WORD dpi)
-{
-	Xdpi = dpi;
-	Ydpi = dpi;
-	return *this;
 }
 
 bool DpiValue::Equals(const DpiValue& dpi) const
@@ -105,23 +92,43 @@ bool DpiValue::Equals(const DpiValue& dpi) const
 	return ((Xdpi == dpi.Xdpi) && (Ydpi == dpi.Ydpi));
 }
 
-void DpiValue::SetDpi(int xdpi, int ydpi)
+bool DpiValue::operator==(const DpiValue& dpi) const
 {
-	Xdpi = xdpi; Ydpi = ydpi;
+	return Equals(dpi);
+}
+
+bool DpiValue::operator!=(const DpiValue& dpi) const
+{
+	return !Equals(dpi);
+}
+
+int DpiValue::GetDpi() const
+{
+	return Ydpi;
+}
+
+void DpiValue::SetDpi(const int xDpi, const int yDpi, const DpiSource source)
+{
+	Xdpi = xDpi; Ydpi = yDpi;
+	source_ = source;
 }
 
 void DpiValue::SetDpi(const DpiValue& dpi)
 {
-	SetDpi(dpi.Xdpi, dpi.Ydpi);
+	SetDpi(dpi.Xdpi, dpi.Ydpi, dpi.source_);
 }
 
-void DpiValue::OnDpiChanged(WPARAM wParam)
+void DpiValue::OnDpiChanged(const WPARAM wParam)
 {
 	// That comes from WM_DPICHANGED notification message
-	if ((int)LOWORD(wParam) > 0 && (int)HIWORD(wParam) > 0)
+	if (static_cast<int>(LOWORD(wParam)) > 0 && static_cast<int>(HIWORD(wParam)) > 0)
 	{
-		SetDpi((int)LOWORD(wParam), (int)HIWORD(wParam));
+		SetDpi(static_cast<int>(LOWORD(wParam)), static_cast<int>(HIWORD(wParam)), DpiSource::WParam);
 		_ASSERTE(Ydpi >= 96 && Xdpi >= 96);
+	}
+	else
+	{
+		_ASSERTE(static_cast<int>(LOWORD(wParam)) > 0 && static_cast<int>(HIWORD(wParam)) > 0);
 	}
 }
 
@@ -129,36 +136,50 @@ void DpiValue::OnDpiChanged(WPARAM wParam)
 /*
 class CDpiAware - static helper methods
 */
-HRESULT CDpiAware::setProcessDPIAwareness()
+const MModule& CDpiAware::GetShCore()
+{
+	static bool loaded = false;
+	if (!loaded)
+	{
+		// ReSharper disable once StringLiteralTypo
+		shCore_.Load(L"Shcore.dll");
+		loaded = true;
+	}
+	return shCore_;
+}
+
+const MModule& CDpiAware::GetUser32()
+{
+	static bool loaded = false;
+	if (!loaded)
+	{
+		// ReSharper disable once StringLiteralTypo
+		user32_.Load(L"user32.dll");
+		loaded = true;
+	}
+	return user32_;
+}
+
+HRESULT CDpiAware::SetProcessDpiAwareness()
 {
 	HRESULT hr = E_FAIL;
-	HMODULE hUser;
-	// Actual export name - "SetProcessDpiAwarenessInternal"
-	typedef HRESULT (WINAPI* SetProcessDPIAwareness_t)(ProcessDpiAwareness value);
-	SetProcessDPIAwareness_t fWin81;
+	// Actual export name - "SetProcessDpiAwareness"
+	typedef HRESULT (WINAPI* SetProcessDpiAwareness_t)(ProcessDpiAwareness value);
+	SetProcessDpiAwareness_t fWin81 = nullptr;
 	// "SetProcessDPIAware
-	typedef BOOL (WINAPI* SetProcessDPIAware_t)(void);
-	SetProcessDPIAware_t fVista;
+	typedef BOOL (WINAPI* SetProcessDpiAware_t)();
+	SetProcessDpiAware_t fVista = nullptr;
 
-
-	if ((hUser = GetModuleHandle(L"user32.dll")) == NULL)
+	if (IsWin8_1() && GetShCore().GetProcAddress("SetProcessDpiAwareness", fWin81))
 	{
-		goto wrap;
-	}
-
-	if ((fWin81 = (SetProcessDPIAwareness_t)GetProcAddress(hUser, "SetProcessDpiAwarenessInternal")) != NULL)
-	{
+		// E_ACCESSDENIED could be thrown because we already provide the manifest
 		hr = fWin81(Process_Per_Monitor_DPI_Aware);
-		goto wrap;
 	}
-
-	if ((fVista = (SetProcessDPIAware_t)GetProcAddress(hUser, "SetProcessDPIAware")) != NULL)
+	else if (IsWin6() && GetUser32().GetProcAddress("SetProcessDPIAware", fVista))
 	{
 		hr = fVista() ? S_OK : E_ACCESSDENIED;
-		goto wrap;
 	}
 
-wrap:
 	return hr;
 }
 
@@ -168,18 +189,18 @@ void CDpiAware::UpdateStartupInfo(CEStartupEnv* pStartEnv)
 		return;
 
 	pStartEnv->bIsPerMonitorDpi = IsPerMonitorDpi();
-	for (INT_PTR i = ((int)pStartEnv->nMonitorsCount)-1; i >= 0; i--)
+	for (INT_PTR i = static_cast<int>(pStartEnv->nMonitorsCount) - 1; i >= 0; i--)
 	{
+		// ReSharper disable once CppLocalVariableMayBeConst
 		HMONITOR hMon = MonitorFromRect(&pStartEnv->Monitors[i].rcMonitor, MONITOR_DEFAULTTONEAREST);
 		if (!hMon)
 			continue;
 
 		for (int j = MDT_Effective_DPI; j <= MDT_Raw_DPI; j++)
 		{
-			DpiValue dpi;
-			QueryDpiForMonitor(hMon, &dpi, (MonitorDpiType)j);
-			pStartEnv->Monitors[i].dpis[j+1].x = dpi.Xdpi;
-			pStartEnv->Monitors[i].dpis[j+1].y = dpi.Xdpi;
+			const DpiValue dpi = QueryDpiForMonitor(hMon, static_cast<MonitorDpiType>(j));
+			pStartEnv->Monitors[i].dpis[j + 1].x = dpi.Xdpi;
+			pStartEnv->Monitors[i].dpis[j + 1].y = dpi.Xdpi;
 		}
 	}
 }
@@ -233,7 +254,10 @@ int CDpiAware::QueryDpi(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/)
 		HMONITOR hMon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
 		if (hMon)
 		{
-			return QueryDpiForMonitor(hMon, pDpi);
+			const auto dpi = QueryDpiForMonitor(hMon);
+			if (pDpi)
+				*pDpi = dpi;
+			return dpi.GetDpi();
 		}
 	}
 
@@ -268,58 +292,43 @@ int CDpiAware::QueryDpiForWindow(HWND hWnd /*= NULL*/, DpiValue* pDpi /*= NULL*/
 	return dpi;
 }
 
-int CDpiAware::QueryDpiForRect(const RECT& rcWnd, DpiValue* pDpi /*= NULL*/, MonitorDpiType dpiType /*= MDT_Default*/)
+DpiValue CDpiAware::QueryDpiForRect(const RECT& rcWnd, const MonitorDpiType dpiType /*= MDT_Default*/)
 {
 	HMONITOR hMon = MonitorFromRect(&rcWnd, MONITOR_DEFAULTTONEAREST);
-	return QueryDpiForMonitor(hMon, pDpi, dpiType);
+	return QueryDpiForMonitor(hMon, dpiType);
 }
 
-int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, MonitorDpiType dpiType /*= MDT_Default*/)
+// ReSharper disable once CppParameterMayBeConst
+DpiValue CDpiAware::QueryDpiForMonitor(HMONITOR hMon, const MonitorDpiType dpiType /*= MDT_Default*/)
 {
+	DpiValue dpi{};
+
 	#if defined(_DEBUG) && defined(DPI_DEBUG_CUSTOM)
-	if (pDpi) pDpi->SetDpi(DPI_DEBUG_CUSTOM,DPI_DEBUG_CUSTOM);
+	dpi.SetDpi(DPI_DEBUG_CUSTOM, DPI_DEBUG_CUSTOM);
 	return DPI_DEBUG_CUSTOM;
 	#endif
 
-	int dpiX = 96, dpiY = 96;
 
-	static HMODULE Shcore = NULL;
-	typedef HRESULT (WINAPI* GetDPIForMonitor_t)(HMONITOR hmonitor, MonitorDpiType dpiType, UINT *dpiX, UINT *dpiY);
-	static GetDPIForMonitor_t getDPIForMonitor = NULL;
-
-	if (Shcore == NULL)
+	static bool loaded = false;
+	if (!loaded)
 	{
-		Shcore = LoadLibrary(L"Shcore.dll");
-		getDPIForMonitor = Shcore ? (GetDPIForMonitor_t)GetProcAddress(Shcore, "GetDpiForMonitor") : NULL;
-
-		if ((Shcore == NULL) || (getDPIForMonitor == NULL))
-		{
-			if (Shcore)
-				FreeLibrary(Shcore);
-			Shcore = (HMODULE)INVALID_HANDLE_VALUE;
-		}
+		GetShCore().GetProcAddress("GetDpiForMonitor", getDpiForMonitor_);
+		loaded = true;
 	}
 
-	UINT x = 0, y = 0;
 	HRESULT hr = E_FAIL;
-	bool bSet = false;
-	if (hmon && (Shcore != (HMODULE)INVALID_HANDLE_VALUE))
+	if (hMon && (getDpiForMonitor_ != nullptr))
 	{
-		hr = getDPIForMonitor(hmon, dpiType/*MDT_Effective_DPI*/, &x, &y);
+		int x = 0, y = 0;
+		hr = getDpiForMonitor_(hMon, dpiType, reinterpret_cast<UINT*>(&x), reinterpret_cast<UINT*>(&y));
 		if (SUCCEEDED(hr) && (x > 0) && (y > 0))
 		{
-			if (pDpi)
-			{
-				pDpi->SetDpi((int)x, (int)y);
-				bSet = true;
-			}
-			dpiX = (int)x;
-			dpiY = (int)y;
+			dpi.SetDpi(x, y, DpiValue::DpiSource::PerMonitor);
 		}
 	}
 	else
 	{
-		static int overallX = 0, overallY = 0;
+		int overallX = 0, overallY = 0;
 		if (overallX <= 0 || overallY <= 0)
 		{
 			// ReSharper disable once CppLocalVariableMayBeConst
@@ -333,16 +342,11 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, Moni
 		}
 		if (overallX > 0 && overallY > 0)
 		{
-			dpiX = overallX; dpiY = overallY;
+			dpi.SetDpi(overallX, overallY, DpiValue::DpiSource::StaticOverall);
 		}
 	}
 
-	if (pDpi && !bSet)
-	{
-		pDpi->SetDpi(dpiX, dpiY);
-	}
-
-	return dpiY;
+	return dpi;
 }
 
 void CDpiAware::GetCenteredRect(HWND hWnd, RECT& rcCentered, HMONITOR hDefault /*= NULL*/)
@@ -491,7 +495,7 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, CDynDialog* apDlgTempl
 	// we need to re-scale our dialog manually!
 	// But if one dpi was chosen for all monitors?
 
-	CDpiAware::QueryDpiForMonitor(NULL, &m_InitDpi); // Whole desktop DPI (in most cases that will be Primary monitor DPI)
+	m_InitDpi = CDpiAware::QueryDpiForMonitor(nullptr); // Whole desktop DPI (in most cases that will be Primary monitor DPI)
 	m_CurDpi.SetDpi(m_InitDpi);
 
 	if (!m_Items.Initialized())
@@ -521,10 +525,6 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, CDynDialog* apDlgTempl
 			if (!SetDialogDPI(CurMonDpi))
 				return false;
 		}
-	}
-	else
-	{
-		m_CurDpi.SetDpi(m_InitDpi.Xdpi, m_InitDpi.Ydpi);
 	}
 
 	return true;

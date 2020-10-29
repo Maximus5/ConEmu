@@ -1313,16 +1313,16 @@ bool CFontMgr::MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,..
 
 // Till now prcSuggested is not used
 // However it may be needed for 'Auto sized' fonts
-bool CFontMgr::RecreateFontByDpi(int dpiX, int dpiY, LPRECT prcSuggested)
+bool CFontMgr::RecreateFontByDpi(const DpiValue& dpi, LPRECT prcSuggested)
 {
-	if ((_dpi_font.Xdpi == dpiX && _dpi_font.Ydpi == dpiY) || (dpiY < 72) || (dpiY > 960))
+	if ((_dpi_font.Xdpi == dpi.Xdpi && _dpi_font.Ydpi == dpi.Ydpi) || (dpi.Ydpi < 72) || (dpi.Ydpi > 960))
 	{
-		_ASSERTE(dpiY >= 72 && dpiY <= 960);
+		_ASSERTE(dpi.Ydpi >= 72 && dpi.Ydpi <= 960);
 		return false;
 	}
 
-	gpSetCls->SetRequestedDpi(dpiX, dpiY);
-	_dpi_font.SetDpi(dpiX, dpiY);
+	gpSetCls->SetRequestedDpi(dpi);
+	_dpi_font.SetDpi(dpi);
 	//Raster fonts???
 	EvalLogfontSizes(LogFont, gpSet->FontSizeY, gpSet->FontSizeX);
 	RecreateFont(true, true);

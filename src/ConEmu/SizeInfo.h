@@ -134,7 +134,7 @@ protected:
 		} m_calc_source = CalcSource::eWindowRect;
 		*/
 
-		int dpi = 96;
+		int dpi = 96;  // #DPI replace with DpiValue
 		int tabbar_font = 0;
 		int statusbar_font = 0;
 	} m_opt;

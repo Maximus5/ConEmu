@@ -30,11 +30,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/MSectionSimple.h"
 
+#include "DpiAware.h"
 #include "SetTypes.h"
 #include "SizeInfo.h"
 
 class CConEmuMain;
-struct DpiValue;
 
 enum DpiChangeSource
 {
@@ -188,7 +188,7 @@ public:
 		HMONITOR hMon;
 		MONITORINFO mi;
 		// Per-monitor DPI
-		int Xdpi, Ydpi;
+		DpiValue dpi;
 		// For resizeable windows with caption
 		FrameInfoCache withCaption;
 		// And without caption
@@ -239,7 +239,7 @@ public:
 	void CascadedPosFix();
 	SIZE GetDefaultSize(bool bCells, const CESize* pSizeW = NULL, const CESize* pSizeH = NULL, HMONITOR hMon = NULL);
 	RECT GetDefaultRect();
-	int  GetInitialDpi(DpiValue* pDpi);
+	DpiValue GetInitialDpi();
 	RECT GetIdealRect();
 	void UpdateInsideRect(RECT rcNewPos);
 

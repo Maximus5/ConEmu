@@ -1,4 +1,4 @@
-
+﻿
 /*
 Copyright (c) 2014-present Maximus5
 All rights reserved.
@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../common/MArray.h"
 #include "../common/MMap.h"
+#include "../common/MModule.h"
 
 enum ProcessDpiAwareness
 {
@@ -56,20 +57,37 @@ public:
 	int Ydpi = 96;
 	int Xdpi = 96;
 
+	enum class DpiSource
+	{
+		Default,
+		WParam,
+		Explicit,
+		PerMonitor,
+		StaticOverall,
+	};
+	DpiSource source_{};
+
 public:
 	DpiValue();
-	DpiValue(int xdpi, int ydpi);
-	DpiValue(const DpiValue& dpi);
-	DpiValue& operator=(const DpiValue& dpi);
+	DpiValue(int xDpi, int yDpi, DpiSource source = DpiSource::Explicit);
+
+	DpiValue(const DpiValue& dpi) = default;
+	DpiValue& operator=(const DpiValue& dpi) = default;
+	DpiValue(DpiValue&& dpi) = default;
+	DpiValue& operator=(DpiValue&& dpi) = default;
+
+	~DpiValue();
 
 	static DpiValue FromWParam(WPARAM wParam);
 
 public:
-	operator int() const;
-	struct DpiValue& operator=(WORD dpi);
 	bool Equals(const DpiValue& dpi) const;
+	bool operator==(const DpiValue& dpi) const;
+	bool operator!=(const DpiValue& dpi) const;
 
-	void SetDpi(int xdpi, int ydpi);
+	int GetDpi() const;
+
+	void SetDpi(int xDpi, int yDpi, DpiSource source);
 	void SetDpi(const DpiValue& dpi);
 	void OnDpiChanged(WPARAM wParam);
 };
@@ -79,7 +97,7 @@ struct CEStartupEnv;
 class CDpiAware
 {
 public:
-	static HRESULT setProcessDPIAwareness();
+	static HRESULT SetProcessDpiAwareness();
 
 	static void UpdateStartupInfo(CEStartupEnv* pStartEnv);
 
@@ -90,12 +108,21 @@ public:
 	// if hWnd is NULL - returns DC's dpi
 	static int QueryDpiForWindow(HWND hWnd = NULL, DpiValue* pDpi = NULL);
 
-	static int QueryDpiForRect(const RECT& rcWnd, DpiValue* pDpi = NULL, MonitorDpiType dpiType = MDT_Default);
-	static int QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi = NULL, MonitorDpiType dpiType = MDT_Default);
+	static DpiValue QueryDpiForRect(const RECT& rcWnd, MonitorDpiType dpiType = MDT_Default);
+	static DpiValue QueryDpiForMonitor(HMONITOR hMon, MonitorDpiType dpiType = MDT_Default);
 
 	// Dialog helper
 	static void GetCenteredRect(HWND hWnd, RECT& rcCentered, HMONITOR hDefault = NULL);
 	static void CenterDialog(HWND hDialog);
+
+protected:
+	static MModule shCore_;
+	static const MModule& GetShCore();
+	static MModule user32_;
+	static const MModule& GetUser32();
+
+	typedef HRESULT (WINAPI* GetDpiForMonitor_t)(HMONITOR hMonitor, MonitorDpiType dpiType, UINT *dpiX, UINT *dpiY);
+	static GetDpiForMonitor_t getDpiForMonitor_;
 };
 
 class CDynDialog;

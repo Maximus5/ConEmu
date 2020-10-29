@@ -160,7 +160,7 @@ public:
 	void    MacroFontSetName(LPCWSTR pszFontName, WORD anHeight /*= 0*/, WORD anWidth /*= 0*/);
 	bool    MacroFontSetSize(int nRelative/*0/1/2/3*/, int nValue/*+-1,+-2,... | 100%*/);
 	bool    QueryFont(CEFontStyles fontStyle, CVirtualConsole* pVCon, CFontPtr& rpFont);
-	bool    RecreateFontByDpi(int dpiX, int dpiY, LPRECT prcSuggested);
+	bool    RecreateFontByDpi(const DpiValue& dpi, LPRECT prcSuggested);
 	BOOL    RegisterFont(LPCWSTR asFontFile, BOOL abDefault);
 	void    RegisterFonts();
 	void    UnregisterFonts();

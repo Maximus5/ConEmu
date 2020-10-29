@@ -281,31 +281,30 @@ CSettings::CSettings()
 	mb_IgnoreSelPage = false;
 }
 
-int CSettings::GetOverallDpi()
+void CSettings::GetOverallDpi()
 {
 	// Must be called during initialization only
 	_ASSERTEX(!gpConEmu || gpConEmu->GetStartupStage() < CConEmuMain::ss_PostCreate2Called);
-	CDpiAware::QueryDpiForMonitor(NULL, &_dpi_all);
+	_dpi_all = CDpiAware::QueryDpiForMonitor(nullptr);
 	_ASSERTE(_dpi_all.Xdpi >= 96 && _dpi_all.Ydpi >= 96);
 	_dpi.SetDpi(_dpi_all);
-	return _dpi.Ydpi;
 }
 
 // This returns current dpi for main window
-int CSettings::QueryDpi()
+int CSettings::QueryDpi() const
 {
 	return _dpi.Ydpi;
 }
 
 // Called during jump to monitor with different dpi
-void CSettings::SetRequestedDpi(int dpiX, int dpiY)
+void CSettings::SetRequestedDpi(const DpiValue& dpi)
 {
-	if (dpiX <= 0 || dpiY <= 0)
+	if (dpi.Xdpi <= 0 || dpi.Ydpi <= 0)
 	{
-		_ASSERTE(dpiX>0 && dpiY>0);
+		_ASSERTE(dpi.Xdpi > 0 && dpi.Ydpi > 0);
 		return;
 	}
-	_dpi.SetDpi(dpiX, dpiY);
+	_dpi.SetDpi(dpi);
 }
 
 void CSettings::UpdateWinHookSettings(HMODULE hLLKeyHookDll) const
@@ -654,9 +653,9 @@ void CSettings::SettingsLoaded(SettingsLoadedFlags slfFlags, LPCWSTR pszCmdLine 
 	}
 
 	// Recheck dpi settings?
-	if (ghWnd == NULL)
+	if (ghWnd == nullptr)
 	{
-		gpConEmu->GetInitialDpi(&_dpi);
+		_dpi = gpConEmu->GetInitialDpi();
 		wchar_t szInfo[100];
 		swprintf_c(szInfo, L"DPI initialized to {%i,%i}\r\n", _dpi.Xdpi, _dpi.Ydpi);
 		DEBUGSTRDPI(szInfo);

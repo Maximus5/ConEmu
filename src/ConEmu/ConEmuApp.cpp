@@ -2397,9 +2397,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// On Vista and higher ensure our process will be
 	// marked as fully dpi-aware, regardless of manifest
-	if (gnOsVer >= 0x600)
+	if (IsWin6())
 	{
-		CDpiAware::setProcessDPIAwareness();
+		CDpiAware::SetProcessDpiAwareness();
 	}
 
 

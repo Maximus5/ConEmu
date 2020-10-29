@@ -255,7 +255,7 @@ RECT CConEmuSize::CalcMargins_FrameCaption(DWORD/*enum ConEmuMargins*/ mg, ConEm
 		RECT rcTest = MakeRect(nTestWidth,nTestHeight);
 
 		_ASSERTE(!bHideCaption);
-		if (mp_ConEmu->AdjustWindowRectExForDpi(&rcTest, dwStyle, FALSE, dwStyleEx, mi.Ydpi))
+		if (mp_ConEmu->AdjustWindowRectExForDpi(&rcTest, dwStyle, FALSE, dwStyleEx, mi.dpi.Ydpi))
 		{
 			if ((mg & ((DWORD)CEM_FRAMECAPTION)) == CEM_CAPTION)
 			{
@@ -1187,20 +1187,15 @@ HMONITOR CConEmuSize::FindInitialMonitor(MONITORINFO* pmi /*= NULL*/)
 	return hMon;
 }
 
-int CConEmuSize::GetInitialDpi(DpiValue* pDpi)
+DpiValue CConEmuSize::GetInitialDpi()
 {
-	DpiValue dpi;
-
 	mh_RequestedMonitor = FindInitialMonitor();
 
-	int dpiY = CDpiAware::QueryDpiForMonitor(mh_RequestedMonitor, &dpi);
+	DpiValue dpi = CDpiAware::QueryDpiForMonitor(mh_RequestedMonitor);
 
 	SizeInfo::RequestDpi(dpi);
 
-	if (pDpi)
-		pDpi->SetDpi(dpi);
-
-	return dpiY;
+	return dpi;
 }
 
 bool CConEmuSize::SetWindowPosSize(LPCWSTR asX, LPCWSTR asY, LPCWSTR asW, LPCWSTR asH)
@@ -1508,10 +1503,8 @@ void CConEmuSize::ReloadMonitorInfo()
 		mi.noCaption.VisibleFrameWidth = mi.noCaption.FrameWidth = std_frame_width;
 
 		// Per-monitor DPI
-		DpiValue dpi;
-		CDpiAware::QueryDpiForMonitor(mi.hMon, &dpi);
-		mi.Xdpi = dpi.Xdpi;
-		mi.Ydpi = dpi.Ydpi;
+		DpiValue dpi = CDpiAware::QueryDpiForMonitor(mi.hMon);
+		mi.dpi = dpi;
 
 		const int nTestWidth = 100, nTestHeight = 100;
 		RECT rcTest = MakeRect(nTestWidth,nTestHeight);
@@ -1737,28 +1730,27 @@ void CConEmuSize::SetRequestedMonitor(HMONITOR hNewMon)
 
 	// During change of per-monitor dpi window is resized before we receive WM_DISPLAYCHANGE
 	// and therefore ReloadMonitorInfo() is not called yet
-	DpiValue dpi;
-	CDpiAware::QueryDpiForMonitor(mi.hMon, &dpi);
-	if (mi.Xdpi != dpi.Xdpi || mi.Ydpi != dpi.Ydpi)
+	DpiValue dpi = CDpiAware::QueryDpiForMonitor(mi.hMon);
+	if (mi.dpi.Xdpi != dpi.Xdpi || mi.dpi.Ydpi != dpi.Ydpi)
 	{
 		wchar_t log_info[128];
 		swprintf_c(log_info, L"WARNING: Cached monitor dpi is obsolete, old={%i,%i}, new={%i,%i}",
-			mi.Ydpi, mi.Ydpi, dpi.Ydpi, dpi.Xdpi);
+			mi.dpi.Ydpi, mi.dpi.Ydpi, dpi.Ydpi, dpi.Xdpi);
 		DEBUGSTRDPI(log_info);
 		LogString(log_info);
 
 		ReloadMonitorInfo();
 
 		mi = NearestMonitorInfo(mh_RequestedMonitor);
-		if (mi.Xdpi != dpi.Xdpi || mi.Ydpi != dpi.Ydpi)
+		if (mi.dpi.Xdpi != dpi.Xdpi || mi.dpi.Ydpi != dpi.Ydpi)
 		{
-			Assert(mi.Xdpi == dpi.Xdpi && mi.Ydpi == dpi.Ydpi);
-			mi.Xdpi = dpi.Xdpi; mi.Ydpi = dpi.Ydpi;
+			Assert(mi.dpi.Xdpi == dpi.Xdpi && mi.dpi.Ydpi == dpi.Ydpi);
+			mi.dpi.Xdpi = dpi.Xdpi; mi.dpi.Ydpi = dpi.Ydpi;
 		}
 	}
 
-	gpSetCls->SetRequestedDpi(mi.Xdpi, mi.Ydpi);
-	SizeInfo::RequestDpi({mi.Xdpi, mi.Ydpi});
+	gpSetCls->SetRequestedDpi(mi.dpi);
+	SizeInfo::RequestDpi(mi.dpi);
 }
 
 CConEmuSize::MonitorInfoCache CConEmuSize::NearestMonitorInfo(const RECT& rcWnd) const
@@ -2343,7 +2335,7 @@ void CConEmuSize::CascadedPosFix()
 			{
 				_ASSERTE(gpConEmu->GetStartupStage() <= CConEmuMain::ss_OnCreateCalled);
 				const int minWidth = 160, minHeight = 16;
-				SizeInfo::RequestDpi({mi.Xdpi, mi.Ydpi});
+				SizeInfo::RequestDpi(mi.dpi);
 				SizeInfo::RequestPos((rcWnd.left + rcWnd.right)/2, (rcWnd.top + rcWnd.bottom)/2);
 				SizeInfo::RequestSize(minWidth, minHeight);
 
@@ -3129,7 +3121,8 @@ bool CConEmuSize::CheckDpiOnMoving(WINDOWPOS *p)
 	// Per-monitor dpi? And moved to another monitor?
 	if (CDpiAware::IsPerMonitorDpi())
 	{
-		if (CDpiAware::QueryDpiForRect(rcNew, &dpi) > 0)
+		dpi = CDpiAware::QueryDpiForRect(rcNew);
+		if (dpi.GetDpi() > 0)
 		{
 			// Это нужно делать до изменения размеров окна,
 			// иначе будет неправильно рассчитан размер консоли
@@ -3987,8 +3980,8 @@ bool CConEmuSize::ChangeTileMode(ConEmuWindowCommand Tile)
 
 			if (CDpiAware::IsPerMonitorDpi())
 			{
-				DpiValue dpi;
-				if (CDpiAware::QueryDpiForRect(rcNewWnd, &dpi))
+				const DpiValue dpi = CDpiAware::QueryDpiForRect(rcNewWnd);
+				if (dpi.GetDpi() > 0)
 				{
 					OnDpiChanged(dpi.Xdpi, dpi.Ydpi, &rcNewWnd, false, dcs_Snap);
 				}
@@ -4464,11 +4457,8 @@ bool CConEmuSize::JumpNextMonitor(HWND hJumpWnd, HMONITOR hJumpMon, bool Next, c
 	{
 		if (CDpiAware::IsPerMonitorDpi())
 		{
-			DpiValue dpi;
-			if (CDpiAware::QueryDpiForMonitor(hNext, &dpi))
-			{
-				OnDpiChanged(dpi.Xdpi, dpi.Ydpi, &rcNewMain, false, dcs_Jump);
-			}
+			DpiValue dpi = CDpiAware::QueryDpiForMonitor(hNext);
+			OnDpiChanged(dpi.Xdpi, dpi.Ydpi, &rcNewMain, false, dcs_Jump);
 		}
 
 		// Коррекция (заранее)
@@ -5376,10 +5366,11 @@ LRESULT CConEmuSize::OnDpiChanged(UINT dpiX, UINT dpiY, LPRECT prcSuggested, boo
 			_ASSERTE((rc.bottom - rc.bottom) == 0);
 		#endif
 
-		SizeInfo::RequestDpi(DpiValue(dpiX, dpiY));
+		const DpiValue dpi(dpiX, dpiY, DpiValue::DpiSource::Explicit);
+		SizeInfo::RequestDpi(dpi);
 
 		// it returns false if DPI was not changed
-		if (gpFontMgr->RecreateFontByDpi(dpiX, dpiY, prcSuggested))
+		if (gpFontMgr->RecreateFontByDpi(dpi, prcSuggested))
 		{
 			// Вернуть флажок
 			lRc = TRUE;

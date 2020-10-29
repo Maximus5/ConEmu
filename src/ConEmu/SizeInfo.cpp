@@ -138,7 +138,7 @@ void SizeInfo::RequestRectInt(const RECT& _window, LPCWSTR asFrom)
 	{
 		const auto cur_mi = mp_ConEmu->NearestMonitorInfo(curRect);
 		const auto new_mi = mp_ConEmu->NearestMonitorInfo(_window);
-		if (cur_mi.hMon == new_mi.hMon && new_mi.Ydpi == m_opt.dpi)
+		if (cur_mi.hMon == new_mi.hMon && new_mi.dpi.Ydpi == m_opt.dpi)
 		{
 			// Ignore recalc request, just correct the window position
 			CEStr temp(asFrom, L" <pos-updated>");
@@ -154,7 +154,7 @@ void SizeInfo::RequestRectInt(const RECT& _window, LPCWSTR asFrom)
 	m_size.source_window = _window;
 	const auto new_mi = mp_ConEmu->NearestMonitorInfo(_window);
 	if (new_mi.hMon)
-		RequestDpi(DpiValue(new_mi.Xdpi, new_mi.Ydpi));
+		RequestDpi(new_mi.dpi);
 	RequestRecalc();
 }
 
