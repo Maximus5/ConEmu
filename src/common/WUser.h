@@ -53,3 +53,8 @@ void UpdateComspec(ConEmuComspec* pOpt, bool DontModifyPath = false);
 
 /// Set env.var from `asName` to *expanded* value from `asValue`
 void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue);
+
+namespace WinApi
+{
+	WINDOWPLACEMENT GetWindowPlacement(HWND hWnd);
+}

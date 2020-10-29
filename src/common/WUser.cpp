@@ -637,3 +637,14 @@ void SetEnvVarExpanded(LPCWSTR asName, LPCWSTR asValue)
 
 	SafeFree(pszTemp);
 }
+
+WINDOWPLACEMENT WinApi::GetWindowPlacement(HWND hWnd)
+{
+	WINDOWPLACEMENT wpl{};
+	wpl.length = sizeof(wpl);
+	if (!::GetWindowPlacement(hWnd, &wpl))
+	{
+		wpl = WINDOWPLACEMENT{};
+	}
+	return wpl;
+}

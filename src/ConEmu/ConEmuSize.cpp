@@ -434,7 +434,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 {
 	_ASSERTE(ghWnd!=NULL);
 	RECT rcMain = {};
-	WINDOWPLACEMENT wpl = {sizeof(wpl)};
+	WINDOWPLACEMENT wpl = {};
 	int nGetStyle = 0;
 
 	const bool bNeedCalc = (isIconic() || InMinimizing() || mp_ConEmu->mp_Menu->GetRestoreFromMinimized() || !IsWindowVisible(ghWnd));
@@ -472,7 +472,7 @@ RECT CConEmuSize::CalcRect(enum ConEmuRect tWhat, CVirtualConsole* pVCon /*= NUL
 				}
 				else
 				{
-					GetWindowPlacement(ghWnd, &wpl);
+					wpl = WinApi::GetWindowPlacement(ghWnd);
 					// Will be CalcRect(CER_MAXIMIZED/CER_FULLSCREEN,...) below
 					rcMain = wpl.rcNormalPosition;
 					nGetStyle = 4;
@@ -2407,8 +2407,7 @@ HMONITOR CConEmuSize::GetNearestMonitor(MONITORINFO* pmi /*= NULL*/, LPCRECT prc
 		_ASSERTEX(hWndFrom);
 		// !! We can't use CalcRect, it may call GetNearestMonitor in turn !!
 		//RECT rcDefault = CalcRect(CER_MAIN);
-		WINDOWPLACEMENT wpl = {sizeof(wpl)};
-		GetWindowPlacement(hWndFrom, &wpl);
+		WINDOWPLACEMENT wpl = wpl = WinApi::GetWindowPlacement(hWndFrom);
 		RECT rcDefault = wpl.rcNormalPosition;
 		hMon = GetNearestMonitorInfo(&mi, mh_MinFromMonitor, &rcDefault);
 	}
@@ -2613,7 +2612,7 @@ LRESULT CConEmuSize::OnWindowPosChanged(HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 	DWORD dwStyle = GetWindowLong(ghWnd, GWL_STYLE);
 	DWORD dwStyleEx = GetWindowLong(ghWnd, GWL_EXSTYLE);
 
-	DEBUGTEST(WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl););
+	DEBUGTEST(WINDOWPLACEMENT wpl = wpl = WinApi::GetWindowPlacement(ghWnd););
 	DEBUGTEST(WINDOWPOS ps = *p);
 
 	if (gpSet->isLogging(2))
@@ -2784,7 +2783,7 @@ LRESULT CConEmuSize::OnWindowPosChanging(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 
 	#ifdef _DEBUG
-	DEBUGTEST(WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl););
+	DEBUGTEST(WINDOWPLACEMENT wpl = WinApi::GetWindowPlacement(ghWnd););
 	_ASSERTE(zoomed == ((dwStyle & WS_MAXIMIZE) == WS_MAXIMIZE) || (zoomed && m_JumpMonitor.bInJump));
 	_ASSERTE(iconic == ((dwStyle & WS_MINIMIZE) == WS_MINIMIZE));
 	#endif
@@ -4709,7 +4708,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			}
 
 			#ifdef _DEBUG
-			WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl);
+			WINDOWPLACEMENT wpl = WinApi::GetWindowPlacement(ghWnd);
 			#endif
 
 			mp_ConEmu->RefreshWindowStyles();
@@ -4717,7 +4716,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			setWindowPos(NULL, rcIdeal.left, rcIdeal.top, RectWidth(rcIdeal), RectHeight(rcIdeal), SWP_NOZORDER);
 
 			#ifdef _DEBUG
-			GetWindowPlacement(ghWnd, &wpl);
+			wpl = WinApi::GetWindowPlacement(ghWnd);
 			#endif
 
 			gpSetCls->UpdateWindowMode(wmNormal);
@@ -4728,7 +4727,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			}
 
 			#ifdef _DEBUG
-			GetWindowPlacement(ghWnd, &wpl);
+			wpl = WinApi::GetWindowPlacement(ghWnd);
 			#endif
 
 			// On startup, before first ::ShowWindow, isIconic returns FALSE
@@ -4775,9 +4774,9 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 
 				if (!mp_ConEmu->opt.DesktopMode)
 				{
-					DEBUGTEST(WINDOWPLACEMENT wpl1 = {sizeof(wpl1)}; GetWindowPlacement(ghWnd, &wpl1););
+					DEBUGTEST(WINDOWPLACEMENT wpl1 = WinApi::GetWindowPlacement(ghWnd););
 					ShowMainWindow(SW_SHOWMAXIMIZED, abFirstShow);
-					DEBUGTEST(WINDOWPLACEMENT wpl2 = {sizeof(wpl2)}; GetWindowPlacement(ghWnd, &wpl2););
+					DEBUGTEST(WINDOWPLACEMENT wpl2 = WinApi::GetWindowPlacement(ghWnd););
 					if (changeFromWindowMode == wmFullScreen)
 					{
 						setWindowPos(HWND_TOP,
@@ -4795,7 +4794,7 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 					wpl.ptMaxPosition.x = rcMax.left;
 					wpl.ptMaxPosition.y = rcMax.top;
 					SetWindowPlacement(ghWnd, &wpl);*/
-					DWORD_PTR dwStyle = GetWindowLongPtr(ghWnd, GWL_STYLE);
+					DWORD dwStyle = static_cast<DWORD>(GetWindowLongPtr(ghWnd, GWL_STYLE));
 					mp_ConEmu->SetWindowStyle(dwStyle|WS_MAXIMIZE);
 					setWindowPos(HWND_TOP, rcMax.left, rcMax.top, rcMax.right-rcMax.left, rcMax.bottom-rcMax.top, SWP_NOCOPYBITS|SWP_SHOWWINDOW);
 				}
@@ -6676,7 +6675,7 @@ void CConEmuSize::DoMinimizeRestore(SingleInstanceShowHideType ShowHideType /*= 
 		if (::IsIconic(ghWnd))
 		{
 			MSetter lSet(&mn_IgnoreSizeChange);
-			DEBUGTEST(WINDOWPLACEMENT wpl = {sizeof(wpl)}; GetWindowPlacement(ghWnd, &wpl););
+			DEBUGTEST(WINDOWPLACEMENT wpl = WinApi::GetWindowPlacement(ghWnd););
 			bool b = mp_ConEmu->mp_Menu->SetPassSysCommand(true);
 			SendMessage(ghWnd, WM_SYSCOMMAND, SC_RESTORE, 0);
 			mp_ConEmu->mp_Menu->SetPassSysCommand(b);
