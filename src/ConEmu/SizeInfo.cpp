@@ -236,8 +236,8 @@ const SizeInfo::WindowRectangles& SizeInfo::GetRectState() const
 
 int SizeInfo::GetDefaultTabbarHeight() const
 {
-	DpiValue dpi; dpi.SetDpi(m_opt.dpi, m_opt.dpi);
-	int lfHeight = gpSetCls->EvalSize(gpSet->nTabFontHeight, esf_Vertical|esf_CanUseDpi|esf_CanUseUnits, &dpi);
+	DpiValue dpi(m_opt.dpi, m_opt.dpi, DpiValue::DpiSource::Explicit);
+	const int lfHeight = gpSetCls->EvalSize(gpSet->nTabFontHeight, esf_Vertical|esf_CanUseDpi|esf_CanUseUnits, &dpi);
 	return gpFontMgr->EvalFontHeight(gpSet->sTabFontFace, lfHeight, gpSet->nTabFontCharSet)
 		+ gpSetCls->EvalSize((lfHeight < 0) ? 8 : 9, esf_Vertical, &dpi);
 }

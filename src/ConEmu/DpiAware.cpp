@@ -322,12 +322,13 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, Moni
 		static int overallX = 0, overallY = 0;
 		if (overallX <= 0 || overallY <= 0)
 		{
-			HDC hdc = GetDC(NULL);
+			// ReSharper disable once CppLocalVariableMayBeConst
+			HDC hdc = GetDC(nullptr);
 			if (hdc)
 			{
 				overallX = GetDeviceCaps(hdc, LOGPIXELSX);
 				overallY = GetDeviceCaps(hdc, LOGPIXELSY);
-				ReleaseDC(NULL, hdc);
+				ReleaseDC(nullptr, hdc);
 			}
 		}
 		if (overallX > 0 && overallY > 0)
@@ -346,30 +347,31 @@ int CDpiAware::QueryDpiForMonitor(HMONITOR hmon, DpiValue* pDpi /*= NULL*/, Moni
 
 void CDpiAware::GetCenteredRect(HWND hWnd, RECT& rcCentered, HMONITOR hDefault /*= NULL*/)
 {
-	bool lbCentered = false;
-
-	#ifdef _DEBUG
+#ifdef _DEBUG
 	HMONITOR hMon;
 	if (hWnd)
 		hMon = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
 	else
 		hMon = MonitorFromRect(&rcCentered, MONITOR_DEFAULTTONEAREST);
-	#endif
+#endif
 
 	MONITORINFO mi = {};
-	GetNearestMonitorInfo(&mi, hDefault, hWnd ? NULL : &rcCentered, hWnd);
+	GetNearestMonitorInfo(&mi, hDefault, hWnd ? nullptr : &rcCentered, hWnd);
 
-	int iWidth  = rcCentered.right - rcCentered.left;
-	int iHeight = rcCentered.bottom - rcCentered.top;
+	const int iWidth = rcCentered.right - rcCentered.left;
+	const int iHeight = rcCentered.bottom - rcCentered.top;
 
-	RECT rcNew = {
-			(mi.rcWork.left + mi.rcWork.right - iWidth)/2,
-			(mi.rcWork.top + mi.rcWork.bottom - iHeight)/2
-	};
+	RECT rcNew{};
+	rcNew.left = (mi.rcWork.left + mi.rcWork.right - iWidth) / 2;
+	rcNew.top = (mi.rcWork.top + mi.rcWork.bottom - iHeight) / 2;
 	rcNew.right = rcNew.left + iWidth;
 	rcNew.bottom = rcNew.top + iHeight;
 
 	rcCentered = rcNew;
+
+#ifdef _DEBUG
+	std::ignore = hMon;
+#endif
 }
 
 void CDpiAware::CenterDialog(HWND hDialog)
@@ -504,7 +506,7 @@ bool CDpiForDialog::Attach(HWND hWnd, HWND hCenterParent, CDynDialog* apDlgTempl
 		// and application is marked as per-monitor-dpi aware
 		// Windows does not resize dialogs automatically.
 		// Our resources are designed for standard 96 dpi.
-		MArray<DlgItem>* p = NULL;
+		MArray<DlgItem>* p = nullptr;
 		if (m_Items.Get(m_CurDpi.Ydpi, &p) && p)
 			delete p;
 		p = LoadDialogItems(hWnd);
@@ -675,26 +677,26 @@ bool CDpiForDialog::SetDialogDPI(const DpiValue& newDpi, LPRECT lprcSuggested /*
 	{
 		const DlgItem& di = (*p)[k];
 		GetClassName(di.h, szClass, countof(szClass));
-		DWORD nCtrlID = GetWindowLong(di.h, GWL_ID);
+		DWORD nCtrlId = GetWindowLong(di.h, GWL_ID);
 		DWORD nStyles = GetWindowLong(di.h, GWL_STYLE);
 		bool bResizeCombo = (lstrcmpi(szClass, L"ComboBox") == 0);
 		int iComboFieldHeight = 0, iComboWasHeight = 0;
 		LONG_PTR lFieldHeight = 0, lNewHeight = 0;
 		RECT rcCur = {};
-		HWND hComboEdit = NULL;
-		RECT rcEdit = {}, rcClient = {};
+		HWND hComboEdit = nullptr;
+		RECT rcEdit = {}, rcItemClient = {};
 
 		if (bResizeCombo && (nStyles & CBS_OWNERDRAWFIXED))
 		{
 			GetWindowRect(di.h, &rcCur);
 			hComboEdit = FindWindowEx(di.h, NULL, L"Edit", NULL);
-			GetClientRect(di.h, &rcClient);
+			GetClientRect(di.h, &rcItemClient);
 			GetClientRect(hComboEdit, &rcEdit);
 			iComboWasHeight = (rcCur.bottom - rcCur.top);
 			lFieldHeight = SendMessage(di.h, CB_GETITEMHEIGHT, -1, 0);
-			if (lFieldHeight < iComboWasHeight)
+			if (lFieldHeight < iComboWasHeight && lFieldHeight > 0)
 			{
-				iComboFieldHeight = lFieldHeight;
+				iComboFieldHeight = static_cast<int>(lFieldHeight);
 			}
 		}
 

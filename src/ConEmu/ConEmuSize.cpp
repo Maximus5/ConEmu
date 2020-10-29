@@ -1711,9 +1711,9 @@ void CConEmuSize::ReloadMonitorInfo()
 		for (INT_PTR i = 0; i < monitors.size(); ++i)
 		{
 			auto& mi = monitors[i];
-			swprintf_c(szInfo, L"  %i: #%08X dpi=%i; Full: {%i,%i}-{%i,%i} (%ix%i); Work: {%i,%i}-{%i,%i} (%ix%i)",
-				(int)i, LODWORD(mi.hMon), mi.Ydpi, LOGRECTCOORDS(mi.mi.rcMonitor), LOGRECTSIZE(mi.mi.rcMonitor),
-				LOGRECTCOORDS(mi.mi.rcWork), LOGRECTSIZE(mi.mi.rcWork));
+			swprintf_c(szInfo, L"  %i: #%08X dpi=%i(%i); Full: {%i,%i}-{%i,%i} (%ix%i); Work: {%i,%i}-{%i,%i} (%ix%i)",
+				static_cast<int>(i), LODWORD(mi.hMon), mi.dpi.Ydpi, static_cast<int>(mi.dpi.source_),
+				LOGRECTCOORDS(mi.mi.rcMonitor), LOGRECTSIZE(mi.mi.rcMonitor), LOGRECTCOORDS(mi.mi.rcWork), LOGRECTSIZE(mi.mi.rcWork));
 			LogString(szInfo);
 			swprintf_c(szInfo, L"     Caption: %i/%i {%i,%i}-{%i,%i}; NoCaption: %i/%i {%i,%i}-{%i,%i}; TaskBar: %s%s",
 				mi.withCaption.FrameWidth, mi.withCaption.VisibleFrameWidth, LOGRECTCOORDS(mi.withCaption.FrameMargins),
@@ -1727,6 +1727,7 @@ void CConEmuSize::ReloadMonitorInfo()
 	mp_ConEmu->RecalculateFrameSizes();
 }
 
+// ReSharper disable once CppParameterMayBeConst
 void CConEmuSize::SetRequestedMonitor(HMONITOR hNewMon)
 {
 	_ASSERTE(isMainThread());
@@ -1780,6 +1781,7 @@ CConEmuSize::MonitorInfoCache CConEmuSize::NearestMonitorInfo(HMONITOR hNewMon) 
 
 	MSectionLockSimple locks; locks.Lock(&mcs_monitors);
 
+	// ReSharper disable once CppLocalVariableMayBeConst
 	HMONITOR hTargetMon = hNewMon ? hNewMon : mh_RequestedMonitor;
 
 	ssize_t iPrimary = 0;

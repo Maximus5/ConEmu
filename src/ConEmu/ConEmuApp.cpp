@@ -2409,7 +2409,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	CEStr lsCvtCmdLine;
 	if (lpCmdLine && *lpCmdLine)
 	{
-		int iLen = lstrlenA(lpCmdLine);
+		const int iLen = lstrlenA(lpCmdLine);
 		MultiByteToWideChar(CP_ACP, 0, lpCmdLine, -1, lsCvtCmdLine.GetBuffer(iLen), iLen+1);
 	}
 	// Prepared command line
