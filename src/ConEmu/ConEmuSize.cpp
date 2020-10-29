@@ -1726,31 +1726,37 @@ void CConEmuSize::SetRequestedMonitor(HMONITOR hNewMon)
 	_ASSERTE(isMainThread());
 	mh_RequestedMonitor = hNewMon ? hNewMon : FindInitialMonitor();
 
-	MonitorInfoCache mi = NearestMonitorInfo(mh_RequestedMonitor);
+	const MonitorInfoCache miPrev = NearestMonitorInfo(mh_RequestedMonitor);
 
 	// During change of per-monitor dpi window is resized before we receive WM_DISPLAYCHANGE
 	// and therefore ReloadMonitorInfo() is not called yet
-	DpiValue dpi = CDpiAware::QueryDpiForMonitor(mi.hMon);
-	if (mi.dpi.Xdpi != dpi.Xdpi || mi.dpi.Ydpi != dpi.Ydpi)
+	DpiValue dpi = CDpiAware::QueryDpiForMonitor(miPrev.hMon);
+	if (miPrev.dpi != dpi || miPrev.hMon != mh_RequestedMonitor)
 	{
-		wchar_t log_info[128];
-		swprintf_c(log_info, L"WARNING: Cached monitor dpi is obsolete, old={%i,%i}, new={%i,%i}",
-			mi.dpi.Ydpi, mi.dpi.Ydpi, dpi.Ydpi, dpi.Xdpi);
-		DEBUGSTRDPI(log_info);
-		LogString(log_info);
+		wchar_t logInfo[128] = L"";
+		swprintf_c(logInfo, L"WARNING: Cached monitor x%p dpi is obsolete, old={%i,%i}, new={%i,%i}",
+			static_cast<void*>(miPrev.hMon), miPrev.dpi.Ydpi, miPrev.dpi.Ydpi, dpi.Ydpi, dpi.Xdpi);
+		DEBUGSTRDPI(logInfo);
+		LogString(logInfo);
 
 		ReloadMonitorInfo();
 
-		mi = NearestMonitorInfo(mh_RequestedMonitor);
-		if (mi.dpi.Xdpi != dpi.Xdpi || mi.dpi.Ydpi != dpi.Ydpi)
+		const auto miNew = NearestMonitorInfo(mh_RequestedMonitor);
+		const DpiValue dpiNew = CDpiAware::QueryDpiForMonitor(miNew.hMon);
+		if (miNew.dpi != dpi)
 		{
-			Assert(mi.dpi.Xdpi == dpi.Xdpi && mi.dpi.Ydpi == dpi.Ydpi);
-			mi.dpi.Xdpi = dpi.Xdpi; mi.dpi.Ydpi = dpi.Ydpi;
+			Assert(miNew.dpi == dpiNew);
+			dpi = miNew.dpi;
 		}
+
+		std::ignore = miNew;
+		std::ignore = dpiNew;
 	}
 
-	gpSetCls->SetRequestedDpi(mi.dpi);
-	SizeInfo::RequestDpi(mi.dpi);
+	gpSetCls->SetRequestedDpi(dpi);
+	SizeInfo::RequestDpi(dpi);
+
+	std::ignore = miPrev;
 }
 
 CConEmuSize::MonitorInfoCache CConEmuSize::NearestMonitorInfo(const RECT& rcWnd) const
