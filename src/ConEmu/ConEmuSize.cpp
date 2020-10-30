@@ -4639,7 +4639,8 @@ bool CConEmuSize::SetWindowMode(ConEmuWindowMode inMode, bool abForce /*= false*
 			//RECT consoleSize;
 
 			const bool bTiled = (m_TileMode == cwc_TileLeft || m_TileMode == cwc_TileRight || m_TileMode == cwc_TileHeight || m_TileMode == cwc_TileWidth);
-			SetTileMode(cwc_Current);
+			if (!bIconic)
+				SetTileMode(cwc_Current);
 			RECT rcIdeal = (gpSet->isQuakeStyle || !bTiled) ? GetDefaultRect() : GetIdealRect();
 
 			if (!bTiled && !mp_ConEmu->isInside())
