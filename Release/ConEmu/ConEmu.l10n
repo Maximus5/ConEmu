@@ -5046,7 +5046,7 @@
       "_de": "Zeige ConEmu-Systemmenü",
       "_ja": "ConEmuシステムメニューを表示する",
       "_es": "Mostrar menú del sistema de ConEmu",
-      "_pl": "Pokaż system menu ConEmu",
+      "pl": "Pokaż menu systemowe ConEmu (uruchamia się po naciśnięciu klawisza)",
       "id": 2018 }
     ,
     "vkSystemMenu2": {
@@ -5056,7 +5056,7 @@
       "_de": "Zeige ConEmu-Systemmenü",
       "_ja": "ConEmuシステムメニューを表示する",
       "_es": "Mostrar menú del sistema de ConEmu",
-      "_pl": "Pokaż system menu ConEmu",
+      "pl": "Pokaż menu systemowe ConEmu (uruchamia się po zwolnieniu klawisza)",
       "id": 2495 }
     ,
     "vkTabMenu": {
@@ -5546,12 +5546,12 @@
     ,
     "lng_AssertIgnoreDescr": {
       "en": "Press <Cancel> to continue your work.",
-      "_ru": "Нажмите <Пропустить> для продолжения работы.",
-      "_zh": "按下<Ignore>以继续你的工作。",
-      "_de": "<Ignorieren> drücken um mit der Arbeit fortzufahren",
-      "_ja": "<Ignore>を押して作業を続行します.",
-      "_es": "Pulsar <Ignore> para continuar tu trabajo.",
-      "_pl": "Naciśnij <Ignore> aby kontynuować pracę.",
+      "ru": "Нажмите <Отмена> для продолжения работы.",
+      "zh": "按下<Cancel>以继续你的工作。",
+      "de": "<Abbrechen> drücken um mit der Arbeit fortzufahren",
+      "ja": "<Cancel>を押して作業を続行します.",
+      "es": "Pulsar <Cancel> para continuar tu trabajo.",
+      "pl": "Naciśnij <Cancel> aby kontynuować pracę.",
       "id": 69 }
     ,
     "lng_AssertRetryDescr": {
@@ -6153,162 +6153,202 @@
     ,
     "lng_MenuPopupActiveCon": {
       "en": "Acti&ve console",
+      "pl": "Aktywuj konsolę",
       "id": 152 }
     ,
     "lng_MenuPopupConList": {
       "en": "Console &list",
+      "pl": "Konsola i lista",
       "id": 151 }
     ,
     "lng_MenuPopupDebug": {
       "en": "&Debug",
+      "pl": "Debuguj",
       "id": 144 }
     ,
     "lng_MenuPopupEdit": {
       "en": "Ed&it",
+      "pl": "Edytuj",
       "id": 142 }
     ,
     "lng_MenuPopupHelp": {
       "en": "Hel&p",
+      "pl": "Wsparcie",
       "id": 146 }
     ,
     "lng_MenuPopupPalettes": {
       "en": "&View (palettes)",
+      "pl": "Widok (palety)",
       "id": 143 }
     ,
     "lng_MenuPopupRestart": {
       "en": "&Restart or duplicate",
+      "pl": "Uruchom ponownie lub zduplikuj",
       "id": 112 }
     ,
     "lng_MenuPopupSysDebug": {
       "en": "&Debug",
+      "pl": "Debugowanie",
       "id": 147 }
     ,
     "lng_MenuPopupSysEdit": {
       "en": "&Edit",
+      "pl": "Edytuj",
       "id": 148 }
     ,
     "lng_MenuPopupTerminate": {
       "en": "Close or &kill",
+      "pl": "Zamknij lub zabij",
       "id": 113 }
     ,
     "lng_MenuRenameTab": {
       "en": "Rena&me tab...",
+      "pl": "Zmień nazwę karty",
       "id": 110 }
     ,
     "lng_MenuReportBug": {
       "en": "&Report a bug...",
+      "pl": "Zgłoś błąd...",
       "id": 134 }
     ,
     "lng_MenuResetTerminal": {
       "en": "&Reset terminal",
+      "pl": "Zresetuj terminal",
       "id": 122 }
     ,
     "lng_MenuRestart": {
       "en": "&Restart",
+      "pl": "Restart",
       "id": 105 }
     ,
     "lng_MenuRestartAs": {
       "en": "Restart as Admin",
+      "pl": "Restart jako admin",
       "id": 106 }
     ,
     "lng_MenuRestartDlg": {
       "en": "&Restart...",
+      "pl": "Restartuj...",
       "id": 104 }
     ,
     "lng_MenuRestoreFromTray": {
       "en": "Restore from &TSA",
+      "pl": "Przywróć z TSA",
       "id": 150 }
     ,
     "lng_MenuScreenshot": {
       "en": "Make &screenshot...",
+      "pl": "Utwórz zrzut ekranu ...",
       "id": 161 }
     ,
     "lng_MenuSettings": {
       "en": "Sett&ings...",
+      "pl": "Ustawienia",
       "id": 155 }
     ,
     "lng_MenuSetupTasks": {
       "en": "Setup tasks...",
+      "pl": "Zadania konfiguracyjne...",
       "id": 140 }
     ,
     "lng_MenuSplit2Bottom": {
       "en": "Split to &bottom",
+      "pl": "Podziel na dół",
       "id": 103 }
     ,
     "lng_MenuSplit2Right": {
       "en": "Split to ri&ght",
+      "pl": "Podziel na prawy",
       "id": 102 }
     ,
     "lng_MenuStopUpdate": {
       "en": "&Stop updates checking",
+      "pl": "Zatrzymaj sprawdzanie aktualizacji",
       "id": 128 }
     ,
     "lng_MenuSysAttachTo": {
       "en": "Attach t&o...",
+      "pl": "Dołączyć do",
       "id": 156 }
     ,
     "lng_MenuSysNewConsole": {
       "en": "New console dialog...",
+      "pl": "Nowe okno konsoli...",
       "id": 157 }
     ,
     "lng_MenuTerminate2Right": {
       "en": "Close to the &right",
+      "pl": "Bliżej prawej",
       "id": 98 }
     ,
     "lng_MenuTerminateAllCon": {
       "en": "Close &all consoles",
+      "pl": "Zamknij wszystkie konsole",
       "id": 95 }
     ,
     "lng_MenuTerminateButShell": {
       "en": "Kill all but &shell",
+      "pl": "Zabij wszystkich oprócz powłoki",
       "id": 92 }
     ,
     "lng_MenuTerminateCon": {
       "en": "Close active &console",
+      "pl": "Zamknij aktywne konsolę",
       "id": 90 }
     ,
     "lng_MenuTerminateConExpt": {
       "en": "Close e&xcept active",
+      "pl": "Zamknij, z wyjątkiem aktywnych",
       "id": 97 }
     ,
     "lng_MenuTerminateGroup": {
       "en": "Close active &group",
+      "pl": "Zamknij aktywną grupę",
       "id": 93 }
     ,
     "lng_MenuTerminatePrc": {
       "en": "Kill &active process",
+      "pl": "Zabij i aktywuj proces",
       "id": 91 }
     ,
     "lng_MenuTerminatePrcGroup": {
       "en": "Kill active &processes",
+      "pl": "Zabij aktywne procesy",
       "id": 94 }
     ,
     "lng_MenuTerminateZombies": {
       "en": "Close all &zombies",
+      "pl": "Zamknij wszystkie zombie",
       "id": 96 }
     ,
     "lng_MenuUnfasten": {
       "en": "Unfasten",
+      "pl": "Odpiąć",
       "id": 100 }
     ,
     "lng_MenuWhatsNewFile": {
       "en": "Whats &new (local)",
+      "pl": "Co nowego (lokalne)",
       "id": 132 }
     ,
     "lng_MenuWhatsNewWeb": {
       "en": "Whats new (&web)",
+      "pl": "Co nowego (web)",
       "id": 133 }
     ,
     "lng_MinimizeWindowHint": {
       "en": "Minimize window",
+      "pl": "Zminimalizuj okno",
       "id": 195 }
     ,
     "lng_NewConsoleSaveBtn": {
       "en": "&Save",
+      "pl": "Zapisać",
       "id": 191 }
     ,
     "lng_NewConsoleStartBtn": {
       "en": "&Start",
+      "pl": "Początek",
       "id": 190 }
     ,
     "lng_PasteEnterConfirm": {
@@ -6422,24 +6462,31 @@
     ,
     "lng_ResetTerminalCancel": {
       "en": "Cancel operation",
+      "pl": "Anuluj operację",
       "id": 177 }
     ,
     "lng_ResetTerminalConfirm": {
       "en": "Do you want to reset terminal contents?",
+      "pl": "Czy chcesz zresetować zawartość terminala?",
       "id": 174 }
     ,
     "lng_ResetTerminalOk": {
       "en": "Reset terminal contents and properties",
+      "pl": "Zresetuj zawartość i właściwości terminala",
       "id": 176 }
     ,
     "lng_ResetTerminalTitle": {
       "en": "Reset terminal confirmation",
+      "pl": "Zresetuj potwierdzenie terminala",
       "id": 175 }
     ,
     "lng_ResetTerminalWarning": {
       "en": [ "Warning!\n"
             , "This operation could harm further output of applications.\n"
             , "It's better to execute a dedicated command as `clear` or `cls`." ],
+      "pl": [ "Ostrzeżenie\n"
+            , "Ta operacja może zaszkodzić dalszym produkcjom aplikacji.\n"
+            , "Lepiej jest wykonać dedykowane polecenie jako `clear` lub` cls`." ],
       "id": 173 }
     ,
     "lng_Search": {
@@ -6494,10 +6541,12 @@
     ,
     "lng_SetPgInfoNone": {
       "en": "(None)",
+      "pl": "(Żaden)",
       "id": 89 }
     ,
     "lng_ShowSystemMenuHint": {
       "en": "Show system menu (RClick for Settings)",
+      "pl": "Pokaż menu systemowe (P Kliknij, aby wyświetlić ustawienia)",
       "id": 192 }
     ,
     "lng_SizeRadioCentered": {
@@ -7656,6 +7705,7 @@
     ,
     "cbConfirmResetTerminal": {
       "en": "Confirm terminal reset",
+      "pl": "Potwierdź resetowanie terminala",
       "id": 2690 }
     ,
     "cbConsoleExceptionHandler": {
@@ -10433,6 +10483,7 @@
     ,
     "IDABORT": {
       "en": "Abort",
+      "pl": "Poronienie",
       "id": 3 }
     ,
     "IDC_ATTACH_ALT": {
@@ -10516,14 +10567,17 @@
     ,
     "IDCONTINUE": {
       "en": "Continue",
+      "pl": "Kontyntynuj",
       "id": 11 }
     ,
     "IDIGNORE": {
       "en": "Ignore",
+      "pl": "Ignorować",
       "id": 5 }
     ,
     "IDNO": {
       "en": "No",
+      "pl": "Nie",
       "id": 7 }
     ,
     "IDOK": {
@@ -10538,14 +10592,17 @@
     ,
     "IDRETRY": {
       "en": "Retry",
+      "pl": "Spróbować ponownie",
       "id": 4 }
     ,
     "IDTRYAGAIN": {
       "en": "Try",
+      "pl": "Próbuj",
       "id": 10 }
     ,
     "IDYES": {
       "en": "Yes",
+      "pl": "Tak",
       "id": 6 }
     ,
     "rbActivityComm": {
@@ -11768,10 +11825,12 @@
     ,
     "stConsoleBufferChars": {
       "en": "Buffer (chars):",
+      "pl": "Bufor (znaki):",
       "id": 2954 }
     ,
     "stConsoleLeftTop": {
       "en": "Left x Top:",
+      "pl": "Lewa x Góra:",
       "id": 2946 }
     ,
     "stConsoleSizeChars": {
@@ -12600,6 +12659,7 @@
     ,
     "stStartupShellGeneral": {
       "en": "Choose your startup task:",
+      "pl": "Wybierz zadanie startowe:",
       "id": 3110 }
     ,
     "stStatusAvailCol": {
