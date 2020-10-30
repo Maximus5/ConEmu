@@ -71,11 +71,10 @@ bool CopyToClipboard(LPCWSTR asText)
 LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 {
 	const bool bKernelTrap = (gnInReadConsoleOutput > 0);
-	wchar_t szExceptionInfo[1024] = L"";
-	wchar_t szDmpFile[MAX_PATH+64] = L"";
+	ConEmuDumpInfo dumpInfo{};
 	wchar_t szAdd[2000];
 
-	const DWORD dwErr = CreateDumpForReport(ExceptionInfo, szExceptionInfo, szDmpFile);
+	const DWORD dwErr = CreateDumpForReport(ExceptionInfo, dumpInfo);
 
 	szAdd[0] = 0;
 
@@ -88,12 +87,12 @@ LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 		wcscat_c(szAdd, L"\r\n\r\n");
 	}
 
-	wcscat_c(szAdd, szExceptionInfo);
+	wcscat_c(szAdd, dumpInfo.fullInfo);
 
-	if (szDmpFile[0])
+	if (dumpInfo.dumpFile[0])
 	{
 		wcscat_c(szAdd, L"\r\n\r\n" L"Memory dump was saved to\r\n");
-		wcscat_c(szAdd, szDmpFile);
+		wcscat_c(szAdd, dumpInfo.dumpFile);
 
 		if (!bKernelTrap)
 		{
