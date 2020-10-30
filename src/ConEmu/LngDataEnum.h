@@ -100,7 +100,6 @@ enum LngResources
 	lng_UpdateCloseMsg2           = 67,
 	lng_PleaseCheckManually       = 68,
 	lng_AssertIgnoreDescr         = 69,
-	lng_AssertAbortDescr          = 70,
 	lng_AssertRetryDescr          = 71,
 	lng_RasterAutoError           = 72,
 	lng_SpgKeyboard               = 73,

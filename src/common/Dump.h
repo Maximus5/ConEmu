@@ -30,6 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../ConEmu/version.h"
 #include "../common/shlobj.h"
+#include "../common/MModule.h"
 
 
 #if !defined(__GNUC__) || defined(__MINGW32__)
@@ -46,68 +47,82 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define _T(x)       __T(x)
 #endif
 
-// Возвращает текст с информацией о пути к сохраненному дампу
-DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024], wchar_t (&dmpfile)[MAX_PATH+64], LPWSTR pszComment = NULL)
+#define EXCEPTION_CONEMU_MEMORY_DUMP 0xCE004345
+
+struct ConEmuDumpInfo
 {
+	DWORD result = 0;
+	wchar_t fullInfo[1024] = L"";
+	wchar_t dumpFile[MAX_PATH + 64] = L"";
+	LPWSTR comment = nullptr;
+};
+
+// Возвращает текст с информацией о пути к сохраненному дампу
+inline DWORD CreateDumpForReport(LPEXCEPTION_POINTERS exceptionInfo, ConEmuDumpInfo& dumpInfo)
+{
+	// ReSharper disable CppJoinDeclarationAndAssignment
 	DWORD dwErr = 0;
-	const wchar_t *pszError = NULL;
+	const wchar_t *pszError = nullptr;
 	INT_PTR nLen;
-	MINIDUMP_TYPE dumpType = MiniDumpWithFullMemory;
+	const MINIDUMP_TYPE dumpType = MiniDumpWithFullMemory;
 	MINIDUMP_USER_STREAM_INFORMATION cmt;
 	MINIDUMP_USER_STREAM cmt1;
 	//bool bDumpSucceeded = false;
-	HANDLE hDmpFile = NULL;
-	HMODULE hDbghelp = NULL;
-	ZeroStruct(dmpfile);
+	HANDLE hDmpFile = nullptr;
+	MModule dbgHelp;
+	ZeroStruct(dumpInfo.dumpFile);
 	typedef BOOL (WINAPI* MiniDumpWriteDump_t)(HANDLE hProcess, DWORD ProcessId, HANDLE hFile, MINIDUMP_TYPE DumpType,
 	        PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
 	        PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
-	MiniDumpWriteDump_t MiniDumpWriteDump_f = NULL;
+	MiniDumpWriteDump_t MiniDumpWriteDump_f = nullptr;
 	DWORD nSharingOption;
 	wchar_t szVer4[8] = L"";
 
 	// Sequential dumps must not overwrite each other
-	static LONG nDumpIndex = 0;
+	static std::atomic_int nDumpIndex{ 0 };
 	wchar_t szDumpIndex[16] = L"";
-	if (nDumpIndex)
-		swprintf_c(szDumpIndex, L"-%i", nDumpIndex);
-	InterlockedIncrement(&nDumpIndex);
+	const int currentIndex = nDumpIndex.fetch_add(1);
+	if (currentIndex > 0)
+		swprintf_c(szDumpIndex, L"-%i", currentIndex);
 
-	SetCursor(LoadCursor(NULL, IDC_WAIT));
+	SetCursor(LoadCursor(nullptr, IDC_WAIT));
 
-	if (pszComment)
+	if (dumpInfo.comment)
 	{
 		cmt1.Type = 11/*CommentStreamW*/;
-		cmt1.BufferSize = (lstrlen(pszComment)+1)*sizeof(*pszComment);
-		cmt1.Buffer = pszComment;
+		cmt1.BufferSize = (lstrlen(dumpInfo.comment) + 1) * sizeof(*dumpInfo.comment);
+		cmt1.Buffer = dumpInfo.comment;
 		cmt.UserStreamCount = 1;
 		cmt.UserStreamArray = &cmt1;
 	}
 
-	memset(szFullInfo, 0, sizeof(szFullInfo));
+	memset(dumpInfo.fullInfo, 0, sizeof(dumpInfo.fullInfo));
 
-	dwErr = SHGetFolderPath(NULL, CSIDL_DESKTOPDIRECTORY, NULL, 0/*SHGFP_TYPE_CURRENT*/, dmpfile);
+	dwErr = SHGetFolderPath(nullptr, CSIDL_DESKTOPDIRECTORY, nullptr, 0/*SHGFP_TYPE_CURRENT*/, dumpInfo.dumpFile);
 	if (FAILED(dwErr))
 	{
-		memset(dmpfile, 0, sizeof(dmpfile));
-		if (!GetTempPath(MAX_PATH, dmpfile) || !*dmpfile)
+		memset(dumpInfo.dumpFile, 0, sizeof(dumpInfo.dumpFile));
+		if (!GetTempPath(MAX_PATH, dumpInfo.dumpFile) || !*dumpInfo.dumpFile)
 		{
 			pszError = L"CreateDumpForReport called, get desktop or temp folder failed";
 			goto wrap;
 		}
 	}
 
-	wcscat_c(dmpfile, (*dmpfile && dmpfile[lstrlen(dmpfile)-1] != L'\\') ? L"\\ConEmuTrap" : L"ConEmuTrap");
-	CreateDirectory(dmpfile, NULL);
+	wcscat_c(dumpInfo.dumpFile, (*dumpInfo.dumpFile && dumpInfo.dumpFile[lstrlen(dumpInfo.dumpFile) - 1] != L'\\')
+		? L"\\ConEmuTrap" : L"ConEmuTrap");
+	CreateDirectory(dumpInfo.dumpFile, nullptr);
 
-	nLen = lstrlen(dmpfile);
+	nLen = lstrlen(dumpInfo.dumpFile);
 	lstrcpyn(szVer4, _T(MVV_4a), countof(szVer4));
-	swprintf_c(dmpfile+nLen, countof(dmpfile)-nLen/*#SECURELEN*/, L"\\Trap-%02u%02u%02u%s-%u%s.dmp", MVV_1, MVV_2, MVV_3, szVer4, GetCurrentProcessId(), szDumpIndex);
+	swprintf_c(dumpInfo.dumpFile+nLen, countof(dumpInfo.dumpFile)-nLen/*#SECURELEN*/,
+		L"\\Trap-%02u%02u%02u%s-%u%s.dmp", MVV_1, MVV_2, MVV_3, szVer4, GetCurrentProcessId(), szDumpIndex);
 	
 	nSharingOption = /*FILE_SHARE_READ;
 	if (IsWindowsXP)
 		nSharingOption =*/ FILE_SHARE_READ|FILE_SHARE_WRITE;
-	hDmpFile = CreateFileW(dmpfile, GENERIC_READ|GENERIC_WRITE, nSharingOption, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL/*|FILE_FLAG_WRITE_THROUGH*/, NULL);
+	hDmpFile = CreateFileW(dumpInfo.dumpFile, GENERIC_READ|GENERIC_WRITE, nSharingOption,
+		nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL/*|FILE_FLAG_WRITE_THROUGH*/, nullptr);
 	if (hDmpFile == INVALID_HANDLE_VALUE)
 	{
 		pszError = L"CreateDumpForReport called, create dump file failed";
@@ -115,32 +130,31 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 	}
 
 
-	hDbghelp = LoadLibraryW(L"Dbghelp.dll");
-	if (hDbghelp == NULL)
+	if (!dbgHelp.Load(L"dbghelp.dll"))
 	{
 		pszError = L"CreateDumpForReport called, LoadLibrary(Dbghelp.dll) failed";
 		goto wrap;
 	}
 
-	MiniDumpWriteDump_f = (MiniDumpWriteDump_t)GetProcAddress(hDbghelp, "MiniDumpWriteDump");
-	if (!MiniDumpWriteDump_f)
+	if (!dbgHelp.GetProcAddress("MiniDumpWriteDump", MiniDumpWriteDump_f))
 	{
 		pszError = L"CreateDumpForReport called, MiniDumpWriteDump not found";
 		goto wrap;
 	}
 	else
 	{
-		MINIDUMP_EXCEPTION_INFORMATION mei = {GetCurrentThreadId()};
+		MINIDUMP_EXCEPTION_INFORMATION mei = {};
+		mei.ThreadId = GetCurrentThreadId();
 		// ExceptionInfo may be null
-		mei.ExceptionPointers = ExceptionInfo;
+		mei.ExceptionPointers = exceptionInfo;
 		mei.ClientPointers = FALSE;
-		BOOL lbDumpRc = MiniDumpWriteDump_f(
+		const BOOL lbDumpRc = MiniDumpWriteDump_f(
 		                    GetCurrentProcess(), GetCurrentProcessId(),
 		                    hDmpFile,
 		                    dumpType,
 		                    &mei,
-		                    pszComment ? &cmt : NULL,
-		                    NULL);
+		                    dumpInfo.comment ? &cmt : nullptr,
+		                    nullptr);
 
 		if (!lbDumpRc)
 		{
@@ -149,61 +163,14 @@ DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullIn
 		}
 	}
 
-#if 0
-	wchar_t szCmdLine[MAX_PATH*2] = L"\"";
-	wchar_t *pszSlash;
-	INT_PTR nLen;
-	PROCESS_INFORMATION pi = {};
-	STARTUPINFO si = {sizeof(si)};
-
-	if (!GetModuleFileName(NULL, szCmdLine+1, MAX_PATH))
-	{
-		pszError = L"CreateDumpForReport called, GetModuleFileName failed";
-		goto wrap;
-	}
-	if ((pszSlash = wcsrchr(szCmdLine, L'\\')) == NULL)
-	{
-		pszError = L"CreateDumpForReport called, wcsrchr failed";
-		goto wrap;
-	}
-	_wcscpy_c(pszSlash+1, 30, WIN3264TEST(L"ConEmu\\ConEmuC.exe",L"ConEmu\\ConEmuC64.exe"));
-	if (!FileExists(szCmdLine+1))
-	{
-		_wcscpy_c(pszSlash+1, 30, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
-		if (!FileExists(szCmdLine+1))
-		{
-			if (gpConEmu)
-			{
-				swprintf_c(szCmdLine, L"\"%s\\%s", gpConEmu->ms_ConEmuBaseDir, WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe"));
-			}
-			if (!FileExists(szCmdLine+1))
-			{
-				pszError = L"CreateDumpForReport called, " WIN3264TEST(L"ConEmuC.exe",L"ConEmuC64.exe") L" not found";
-				goto wrap;
-			}
-		}
-	}
-
-	nLen = _tcslen(szCmdLine);
-	swprintf_c(szCmdLine+nLen, countof(szCmdLine)-nLen/*#SECURELEN*/, L"\" /DEBUGPID=%u /FULL", GetCurrentProcessId());
-
-	if (!CreateProcess(NULL, szCmdLine, NULL, NULL, TRUE, HIGH_PRIORITY_CLASS, NULL, NULL, &si, &pi))
-	{
-		pszError = L"CreateDumpForReport called, CreateProcess failed";
-		goto wrap;
-	}
-	CloseHandle(pi.hThread);
-	CloseHandle(pi.hProcess);
-#endif
-
 wrap:
 	if (pszError)
 	{
-		lstrcpyn(szFullInfo, pszError, 255);
-		if (dmpfile[0])
+		lstrcpyn(dumpInfo.fullInfo, pszError, 255);
+		if (dumpInfo.dumpFile[0])
 		{
-			wcscat_c(szFullInfo, L"\r\n");
-			wcscat_c(szFullInfo, dmpfile);
+			wcscat_c(dumpInfo.fullInfo, L"\r\n");
+			wcscat_c(dumpInfo.fullInfo, dumpInfo.dumpFile);
 		}
 		if (!dwErr)
 			dwErr = GetLastError();
@@ -211,22 +178,24 @@ wrap:
 	else
 	{
 		wchar_t szExeName[MAX_PATH+1] = L"";
-		GetModuleFileName(NULL, szExeName, countof(szExeName)-1);
+		GetModuleFileName(nullptr, szExeName, countof(szExeName)-1);
+		// ReSharper disable once CppLocalVariableMayBeConst
 		LPCWSTR pszExeName = PointToName(szExeName);
 
-		wchar_t what[100];
-		if (ExceptionInfo && ExceptionInfo->ExceptionRecord)
+		wchar_t what[100] = L"";
+		if (exceptionInfo && exceptionInfo->ExceptionRecord
+			&& exceptionInfo->ExceptionRecord->ExceptionCode != EXCEPTION_CONEMU_MEMORY_DUMP)
 		{
-			swprintf_c(what, L"Exception 0x%08X", ExceptionInfo->ExceptionRecord->ExceptionCode);
-			if (EXCEPTION_ACCESS_VIOLATION == ExceptionInfo->ExceptionRecord->ExceptionCode
-				&& ExceptionInfo->ExceptionRecord->NumberParameters >= 2)
+			swprintf_c(what, L"Exception 0x%08X", exceptionInfo->ExceptionRecord->ExceptionCode);
+			if (EXCEPTION_ACCESS_VIOLATION == exceptionInfo->ExceptionRecord->ExceptionCode
+				&& exceptionInfo->ExceptionRecord->NumberParameters >= 2)
 			{
-				ULONG_PTR iType = ExceptionInfo->ExceptionRecord->ExceptionInformation[0];
-				ULONG_PTR iAddr = ExceptionInfo->ExceptionRecord->ExceptionInformation[1];
-				INT_PTR iLen = lstrlen(what);
-				_wsprintf(what+iLen, SKIPLEN(countof(what)-iLen)
-					WIN3264TEST(L" (%sx%08X)",L" (%s x%08X%08X)"),
-					(iType==0) ? L"Read " : (iType==1) ? L"Write " : (iType==8) ? L"DEP " : L"",
+				const ULONG_PTR iType = exceptionInfo->ExceptionRecord->ExceptionInformation[0];
+				const ULONG_PTR iAddr = exceptionInfo->ExceptionRecord->ExceptionInformation[1];
+				const INT_PTR iLen = lstrlen(what);
+				_wsprintf(what + iLen, SKIPLEN(countof(what) - iLen)
+					WIN3264TEST(L" (%sx%08X)", L" (%s x%08X%08X)"),
+					(iType == 0) ? L"Read " : (iType == 1) ? L"Write " : (iType == 8) ? L"DEP " : L"",
 					WIN3264WSPRINT(iAddr));
 			}
 		}
@@ -235,19 +204,17 @@ wrap:
 			wcscpy_c(what, L"Assertion");
 		}
 
-		swprintf_c(szFullInfo, L"%s was occurred (%s, PID=%u)\r\nConEmu build %02u%02u%02u%s %s",
+		swprintf_c(dumpInfo.fullInfo, L"%s was occurred (%s, PID=%u)\r\nConEmu build %02u%02u%02u%s %s",
 			what, pszExeName, GetCurrentProcessId(),
 			(MVV_1%100),MVV_2,MVV_3,_T(MVV_4a), WIN3264TEST(L"",L"64"));
 	}
-	if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != NULL)
+	if (hDmpFile != INVALID_HANDLE_VALUE && hDmpFile != nullptr)
 	{
 		CloseHandle(hDmpFile);
 	}
-	if (hDbghelp)
-	{
-		FreeLibrary(hDbghelp);
-	}
 
-	SetCursor(LoadCursor(NULL, IDC_ARROW));
+	SetCursor(LoadCursor(nullptr, IDC_ARROW));
+	dumpInfo.result = dwErr;
 	return dwErr;
+	// ReSharper restore CppJoinDeclarationAndAssignment
 }

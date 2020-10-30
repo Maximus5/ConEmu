@@ -876,112 +876,6 @@ int MsgBox(LPCTSTR lpText, UINT uType, LPCTSTR lpCaption /*= NULL*/, HWND ahPare
 	return nBtn;
 }
 
-// Возвращает текст с информацией о пути к сохраненному дампу
-// DWORD CreateDumpForReport(LPEXCEPTION_POINTERS ExceptionInfo, wchar_t (&szFullInfo)[1024], LPCWSTR pszComment = NULL);
-#include "../common/Dump.h"
-
-void AssertBox(LPCTSTR szText, LPCTSTR szFile, UINT nLine, LPEXCEPTION_POINTERS ExceptionInfo /*= NULL*/)
-{
-	#ifdef _DEBUG
-	//_ASSERTE(FALSE);
-	#endif
-
-	static bool bInAssert = false;
-
-	int nRet = IDRETRY;
-
-	DWORD    nPreCode = GetLastError();
-	wchar_t  szLine[16], szCodes[128];
-	wchar_t  szFullInfo[1024] = L"";
-	wchar_t  szDmpFile[MAX_PATH+64] = L"";
-	wchar_t* pszDumpMessage = NULL;
-	CEStr    szFull;
-
-	#ifdef _DEBUG
-	MyAssertDumpToFile(szFile, nLine, szText);
-	#endif
-
-	LPCWSTR  pszTitle = gpConEmu ? gpConEmu->GetDefaultTitle() : NULL;
-	if (!pszTitle || !*pszTitle) { pszTitle = L"?ConEmu?"; }
-
-	// Prepare assertion message
-	{
-		wchar_t szDashes[] = L"-----------------------\r\n", szPID[80];
-		swprintf_c(szPID, L"PID=%u, TID=%u" WIN3264TEST(L"",L"64"), GetCurrentProcessId(), GetCurrentThreadId());
-		CEStr lsBuild(L"ConEmu ", (gpConEmu && gpConEmu->ms_ConEmuBuild) ? gpConEmu->ms_ConEmuBuild : L"<UnknownBuild>",
-			L" [", WIN3264TEST(L"32",L"64"), RELEASEDEBUGTEST(NULL,L"D"), L"] ");
-		CEStr lsAssertion(L"Assertion: ", lsBuild, szPID, L"\r\n");
-		CEStr lsWhere(L"\r\n", StripSourceRoot(szFile), L":", ultow_s(nLine, szLine, 10), L"\r\n", szDashes);
-		CEStr lsHeader(lsAssertion,
-			(gpConEmu && gpConEmu->ms_ConEmuExe) ? gpConEmu->ms_ConEmuExe : L"<NULL>",
-			lsWhere, szText, L"\r\n", szDashes, L"\r\n");
-
-		szFull.Attach(lstrmerge(
-			lsHeader,
-			CLngRc::getRsrc(lng_AssertIgnoreDescr/*"Press <Ignore> to continue your work"*/), L"\r\n\r\n",
-			CLngRc::getRsrc(lng_AssertAbortDescr/*"Press <Abort> to throw exception, ConEmu will be terminated!"*/), L"\r\n\r\n",
-			CLngRc::getRsrc(lng_AssertRetryDescr/*"Press <Retry> to copy text information to clipboard\r\nand report a bug (open project web page)."*/),
-			NULL));
-
-		DWORD nPostCode = (DWORD)-1;
-
-		if (bInAssert)
-		{
-			nPostCode = (DWORD)-2;
-			nRet = IDCANCEL;
-		}
-		else
-		{
-			bInAssert = true;
-			nRet = MsgBox(szFull, MB_ABORTRETRYIGNORE|MB_ICONSTOP|MB_SYSTEMMODAL|MB_DEFBUTTON3, pszTitle, NULL);
-			bInAssert = false;
-			nPostCode = GetLastError();
-		}
-
-		swprintf_c(szCodes, L"\r\nPreError=%i, PostError=%i, Result=%i", nPreCode, nPostCode, nRet);
-		lstrmerge(&szFull.ms_Val, szCodes);
-	}
-
-	if ((nRet == IDRETRY) || (nRet == IDABORT))
-	{
-		bool bProcessed = false;
-
-		if (nRet == IDABORT)
-		{
-			RaiseTestException();
-			bProcessed = true;
-		}
-
-		if (!bProcessed)
-		{
-			//-- Не нужно, да и дамп некорректно формируется, если "руками" ex формировать.
-			//EXCEPTION_RECORD er0 = {0xC0000005}; er0.ExceptionAddress = AssertBox;
-			//EXCEPTION_POINTERS ex0 = {&er0};
-			//if (!ExceptionInfo) ExceptionInfo = &ex0;
-
-			CreateDumpForReport(ExceptionInfo, szFullInfo, szDmpFile, szFull.ms_Val);
-		}
-
-		if (szFullInfo[0])
-		{
-			wchar_t* pszFileMsg = szDmpFile[0] ? lstrmerge(L"\r\n\r\n" L"Memory dump was saved to\r\n", szDmpFile,
-				L"\r\n\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n",
-				CEREPORTCRASH /* https://conemu.github.io/en/Issues.html... */) : NULL;
-			pszDumpMessage = lstrmerge(szFull, L"\r\n\r\n", szFullInfo, pszFileMsg);
-			CopyToClipboard(pszDumpMessage ? pszDumpMessage : szFullInfo);
-			SafeFree(pszFileMsg);
-		}
-		else if (szFull)
-		{
-			CopyToClipboard(szFull);
-		}
-
-		ConEmuAbout::OnInfo_ReportCrash(pszDumpMessage ? pszDumpMessage : szFull.ms_Val);
-	}
-
-	SafeFree(pszDumpMessage);
-}
-
 void WarnCreateWindowFail(LPCWSTR pszDescription, HWND hParent, DWORD nErrCode)
 {
 	wchar_t szCreateFail[256];
@@ -993,14 +887,14 @@ void WarnCreateWindowFail(LPCWSTR pszDescription, HWND hParent, DWORD nErrCode)
 			(::IsWindow(gpConEmu->mp_Inside->mh_InsideParentWND) ? L"Valid" : L"Invalid"),
 			gpConEmu->mp_Inside->m_InsideParentInfo.ParentPID,
 			gpConEmu->mp_Inside->m_InsideParentInfo.ParentParentPID,
-			(LPVOID)gpConEmu->mp_Inside->mh_InsideParentWND);
-		CEStr lsLog(szCreateFail, gpConEmu->mp_Inside->m_InsideParentInfo.ExeName);
+			static_cast<LPVOID>(gpConEmu->mp_Inside->mh_InsideParentWND));
+		const CEStr lsLog(szCreateFail, gpConEmu->mp_Inside->m_InsideParentInfo.ExeName);
 		LogString(lsLog);
 	}
 
 	swprintf_c(szCreateFail,
 		L"Create %s FAILED (code=%u)! Parent=x%p%s%s",
-		pszDescription ? pszDescription : L"window", nErrCode, (LPVOID)hParent,
+		pszDescription ? pszDescription : L"window", nErrCode, static_cast<LPVOID>(hParent),
 		(hParent ? (::IsWindow(hParent) ? L" Valid" : L" Invalid") : L""),
 		(hParent ? (::IsWindowVisible(hParent) ? L" Visible" : L" Hidden") : L"")
 		);
@@ -1017,8 +911,8 @@ RECT CenterInParent(RECT rcDlg, HWND hParent)
 {
 	RECT rcParent; GetWindowRect(hParent, &rcParent);
 
-	int nWidth  = (rcDlg.right - rcDlg.left);
-	int nHeight = (rcDlg.bottom - rcDlg.top);
+	const int nWidth  = (rcDlg.right - rcDlg.left);
+	const int nHeight = (rcDlg.bottom - rcDlg.top);
 
 	MONITORINFO mi = {sizeof(mi)};
 	GetNearestMonitorInfo(&mi, NULL, &rcParent);
@@ -1608,11 +1502,11 @@ bool UpdateWin7TaskList(bool bForce, bool bNoSuccMsg /*= false*/)
 			pszCurCmd = NULL;
 		}
 
-		// Теперь команды из истории
+		// Commands form history
 		LPCWSTR pszCommand;
-		while ((pszCommand = gpSet->HistoryGet(nHistoryCount)) && (nHistoryCount < countof(pszHistory)))
+		while (((pszCommand = gpSet->HistoryGet(static_cast<int>(nHistoryCount)))) && (nHistoryCount < countof(pszHistory)))
 		{
-			// Текущую - к pszCommand не добавляем. Ее в конец
+			// Don't add current command to pszCommand, it goes to the end
 			if (!pszCurCmd || (lstrcmpi(pszCurCmd, pszCommand) != 0))
 			{
 				pszHistory[nHistoryCount++] = pszCommand;
@@ -2008,40 +1902,180 @@ bool CheckLockFrequentExecute(DWORD& Tick, DWORD Interval)
 	return bUnlock;
 }
 
+void RaiseTestException()
+{
+	DebugBreak();
+}
+
+#include "../common/Dump.h"
+
 LONG WINAPI CreateDumpOnException(LPEXCEPTION_POINTERS ExceptionInfo)
 {
-	wchar_t szFull[1024] = L"";
-	wchar_t szDmpFile[MAX_PATH+64] = L"";
-	DWORD dwErr = CreateDumpForReport(ExceptionInfo, szFull, szDmpFile);
+	const bool inTestException = ExceptionInfo && ExceptionInfo->ExceptionRecord
+		&& (ExceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_CONEMU_MEMORY_DUMP);
+
+	ConEmuDumpInfo dumpInfo{};
+	const DWORD dwErr = CreateDumpForReport(ExceptionInfo, dumpInfo);
 	wchar_t szAdd[1500];
-	wcscpy_c(szAdd, szFull);
-	if (szDmpFile[0])
+	wcscpy_c(szAdd, dumpInfo.fullInfo);
+	if (dumpInfo.dumpFile[0])
 	{
 		wcscat_c(szAdd, L"\r\n\r\n" L"Memory dump was saved to\r\n");
-		wcscat_c(szAdd, szDmpFile);
+		wcscat_c(szAdd, dumpInfo.dumpFile);
 		wcscat_c(szAdd, L"\r\n\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n");
 		wcscat_c(szAdd, CEREPORTCRASH /* https://conemu.github.io/en/Issues.html... */);
 	}
 	wcscat_c(szAdd, L"\r\n\r\nPress <Yes> to copy this text to clipboard\r\nand open project web page");
 
-	int nBtn = DisplayLastError(szAdd, dwErr ? dwErr : -1, MB_YESNO|MB_ICONSTOP|MB_SYSTEMMODAL);
+	const int nBtn = DisplayLastError(szAdd, dwErr ? dwErr : -1, MB_YESNO | MB_ICONSTOP | MB_SYSTEMMODAL);
 	if (nBtn == IDYES)
 	{
-		CopyToClipboard(szFull);
-		ConEmuAbout::OnInfo_ReportCrash(NULL);
+		CopyToClipboard(dumpInfo.fullInfo);
+		ConEmuAbout::OnInfo_ReportCrash(nullptr);
 	}
 
+	//if (inTestException)
+	//	return EXCEPTION_CONTINUE_EXECUTION;
 	return EXCEPTION_EXECUTE_HANDLER;
 }
 
-void RaiseTestException()
-{
-	//Removed by optimizer in "Release", need to change...
-	//OutputDebugString(L"ConEmu will now raise 'division by 0' exception by user request!\n");
-	//int ii = 1, jj = 1; jj --; ii = 1 / jj;
+namespace {
+	LONG DumpCurrentProcess(LPEXCEPTION_POINTERS ExceptionInfo)
+	{
+		if (!ExceptionInfo || !ExceptionInfo->ExceptionRecord
+			|| ExceptionInfo->ExceptionRecord->ExceptionCode != EXCEPTION_CONEMU_MEMORY_DUMP
+			|| ExceptionInfo->ExceptionRecord->NumberParameters != 1
+			|| ExceptionInfo->ExceptionRecord->ExceptionInformation[0] == 0)
+			return EXCEPTION_EXECUTE_HANDLER;
+		ConEmuDumpInfo* dumpInfo = reinterpret_cast<ConEmuDumpInfo*>(ExceptionInfo->ExceptionRecord->ExceptionInformation[0]);
 
-	DebugBreak();
+		const DWORD dwErr = CreateDumpForReport(ExceptionInfo, *dumpInfo);
+		if (dwErr != 0)
+		{
+			wchar_t szErrInfo[120] = L"";
+			swprintf_c(szErrInfo, L"\n\nCreateDumpForReport failed with code %u\n", dwErr);
+			wcscat_c(dumpInfo->fullInfo, szErrInfo);
+		}
+
+		return EXCEPTION_EXECUTE_HANDLER;
+	}
 }
+
+bool DumpCurrentProcess(ConEmuDumpInfo& dumpInfo)
+{
+	int step = 0;
+	dumpInfo.fullInfo[0] = 0;
+	dumpInfo.dumpFile[0] = 0;
+	__try
+	{
+		ULONG_PTR arguments[1] = { reinterpret_cast<ULONG_PTR>(&dumpInfo) };
+		RaiseException(EXCEPTION_CONEMU_MEMORY_DUMP, EXCEPTION_NONCONTINUABLE_EXCEPTION, 1, arguments);
+		step = 1;
+	}
+	__except (DumpCurrentProcess(GetExceptionInformation()))
+	{
+		step = 2;
+	}
+	std::ignore = step;
+	return step == 2 && dumpInfo.fullInfo[0] != 0 && dumpInfo.result == 0;
+}
+
+// ReSharper disable twice CppParameterMayBeConst
+void AssertBox(LPCTSTR szText, LPCTSTR szFile, const UINT nLine, LPEXCEPTION_POINTERS exceptionInfo /*= NULL*/)
+{
+	#ifdef _DEBUG
+	//_ASSERTE(FALSE);
+	#endif
+
+	static bool bInAssert = false;
+
+	int nRet = IDRETRY;
+
+	const DWORD nPreCode = GetLastError();
+	wchar_t szLine[16], szCodes[128];
+	ConEmuDumpInfo dumpInfo{};
+	CEStr szFull, dumpMessage;
+
+	#ifdef _DEBUG
+	MyAssertDumpToFile(szFile, nLine, szText);
+	#endif
+
+	LPCWSTR  pszTitle = gpConEmu ? gpConEmu->GetDefaultTitle() : nullptr;
+	if (!pszTitle || !*pszTitle) { pszTitle = L"?ConEmu?"; }
+
+	// Prepare assertion message
+	{
+		wchar_t szDashes[] = L"-----------------------\r\n", szPID[80];
+		swprintf_c(szPID, L"PID=%u, TID=%u" WIN3264TEST(L"",L"64"), GetCurrentProcessId(), GetCurrentThreadId());
+		const CEStr lsBuild(L"ConEmu ", (gpConEmu && gpConEmu->ms_ConEmuBuild[0]) ? gpConEmu->ms_ConEmuBuild : L"<UnknownBuild>",
+							L" [", WIN3264TEST(L"32",L"64"), RELEASEDEBUGTEST(NULL,L"D"), L"] ");
+		const CEStr lsAssertion(L"Assertion: ", lsBuild, szPID, L"\r\n");
+		const CEStr lsWhere(L"\r\n", StripSourceRoot(szFile), L":", ultow_s(nLine, szLine, 10), L"\r\n", szDashes);
+		const CEStr lsHeader(lsAssertion,
+			(gpConEmu && gpConEmu->ms_ConEmuExe[0]) ? gpConEmu->ms_ConEmuExe : L"<NULL>",
+			lsWhere, szText, L"\r\n", szDashes, L"\r\n");
+
+		szFull = CEStr(
+			lsHeader,
+			CLngRc::getRsrc(lng_AssertIgnoreDescr/*"Press <Cancel> to continue your work"*/), L"\r\n\r\n",
+			CLngRc::getRsrc(lng_AssertRetryDescr/*"Press <Retry> to copy text information to clipboard\r\nand report a bug (open project web page)."*/),
+			nullptr);
+
+		DWORD nPostCode = static_cast<DWORD>(-1);
+
+		if (bInAssert)
+		{
+			nPostCode = static_cast<DWORD>(-2);
+			nRet = IDCANCEL;
+		}
+		else
+		{
+			bInAssert = true;
+			nRet = MsgBox(szFull, MB_RETRYCANCEL | MB_ICONSTOP | MB_SYSTEMMODAL | MB_DEFBUTTON2, pszTitle, nullptr);
+			bInAssert = false;
+			nPostCode = GetLastError();
+		}
+
+		swprintf_c(szCodes, L"\r\nPreError=%i, PostError=%i, Result=%i", nPreCode, nPostCode, nRet);
+		lstrmerge(&szFull.ms_Val, szCodes);
+	}
+
+	if (nRet == IDRETRY)
+	{
+		dumpInfo.comment = szFull.ms_Val;
+
+		const bool bProcessed = DumpCurrentProcess(dumpInfo);
+
+		if (!bProcessed)
+		{
+			// This dump is created improperly, but that is last resort
+			CreateDumpForReport(exceptionInfo, dumpInfo);
+		}
+
+		if (dumpInfo.fullInfo[0])
+		{
+			const CEStr fileMsg = dumpInfo.dumpFile[0]
+				? CEStr(L"\r\n\r\n" L"Memory dump was saved to\r\n", dumpInfo.dumpFile,
+					L"\r\n\r\n" L"Assertion report was copied to clipboard"
+					L"\r\n" L"Please Zip it and send to developer (via DropBox etc.)\r\n",
+					CEREPORTCRASH /* https://conemu.github.io/en/Issues.html... */)
+				: CEStr();
+			dumpMessage = CEStr(dumpInfo.fullInfo, fileMsg);
+			const CEStr clipMessage(L"```\r\n", szFull, L"\r\n```\r\n\r\n", dumpMessage);
+			CopyToClipboard(
+				!clipMessage.IsEmpty() ? clipMessage.c_str() :
+				!dumpMessage.IsEmpty() ? dumpMessage.c_str() :
+				dumpInfo.fullInfo);
+		}
+		else if (szFull)
+		{
+			CopyToClipboard(szFull);
+		}
+
+		ConEmuAbout::OnInfo_ReportCrash(!dumpMessage.IsEmpty() ? dumpMessage.c_str() : szFull.c_str(L""));
+	}
+}
+
 
 // Clear some rubbish in the environment
 void ResetEnvironmentVariables()
@@ -2178,7 +2212,8 @@ int CheckZoneIdentifiers(bool abAutoUnblock)
 // 0 - Succeeded, otherwise - exit code
 // isScript - several tabs or splits were requested via "-cmdlist ..."
 // isBare - true if there was no switches, for example "ConEmu.exe c:\tools\far.exe". That is not correct command line actually
-int ProcessCmdArg(LPCWSTR cmdNew, bool isScript, bool isBare, CEStr& szReady, bool& rbSaveHistory)
+// ReSharper disable once CppParameterMayBeConst
+int ProcessCmdArg(LPCWSTR cmdNew, const bool isScript, const bool isBare, CEStr& szReady, bool& rbSaveHistory)
 {
 	rbSaveHistory = false;
 
@@ -2204,7 +2239,7 @@ int ProcessCmdArg(LPCWSTR cmdNew, bool isScript, bool isBare, CEStr& szReady, bo
 	}
 	else
 	{
-		int nLen = _tcslen(cmdNew)+8;
+		ssize_t nLen = _tcslen(cmdNew) + 8;
 
 		// For example "ConEmu.exe c:\tools\far.exe"
 		// That is not 'proper' command actually, but we may support this by courtesy
@@ -2223,11 +2258,11 @@ int ProcessCmdArg(LPCWSTR cmdNew, bool isScript, bool isBare, CEStr& szReady, bo
 			}
 			else
 			{
-				// Только если szExe это Far.
+				// only for Far Manager exe
 				if (IsFarExe(szExe))
 					pszDefCmd = gpSet->psStartSingleApp;
 				else
-					pszDefCmd = NULL; // Запускать будем только то, что "набросили"
+					pszDefCmd = nullptr; // Run only the "dropped" command
 			}
 
 			if (pszDefCmd)
@@ -2236,7 +2271,7 @@ int ProcessCmdArg(LPCWSTR cmdNew, bool isScript, bool isBare, CEStr& szReady, bo
 			}
 		}
 
-		wchar_t* pszReady = szReady.GetBuffer(nLen+1);
+		wchar_t* pszReady = szReady.GetBuffer(nLen + 1);
 		if (!pszReady)
 		{
 			MBoxAssert(FALSE && "Memory allocation failed");

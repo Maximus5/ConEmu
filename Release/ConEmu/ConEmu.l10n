@@ -5544,24 +5544,14 @@
       "pl": "-wydanie <Alt> wkleić punkt kodowy UNICODE",
       "id": 13 }
     ,
-    "lng_AssertAbortDescr": {
-      "en": "Press <Abort> to throw exception, ConEmu will be terminated!",
-      "ru": "<Прервать> для вызова исключения, ConEmu будет завершен!",
-      "zh": "按下<Abort> 抛出异常，同时ConEmu会被终止！",
-      "de": "<Abbrechen> drücken um eine Exception zu werfen, ConEmu wird beendet!",
-      "ja": "<Abort>を押して例外をスローすると,ConEmuは終了します！",
-      "es": "Pulsar <Abort> para provocar una excepción, ¡ConEmu finalizará!",
-      "pl": "Naciśnij <Abort> w celu zgłoszenia wyjątku ConEmu zostanie zakończone!",
-      "id": 70 }
-    ,
     "lng_AssertIgnoreDescr": {
-      "en": "Press <Ignore> to continue your work.",
-      "ru": "Нажмите <Пропустить> для продолжения работы.",
-      "zh": "按下<Ignore>以继续你的工作。",
-      "de": "<Ignorieren> drücken um mit der Arbeit fortzufahren",
-      "ja": "<Ignore>を押して作業を続行します.",
-      "es": "Pulsar <Ignore> para continuar tu trabajo.",
-      "pl": "Naciśnij <Ignore> aby kontynuować pracę.",
+      "en": "Press <Cancel> to continue your work.",
+      "_ru": "Нажмите <Пропустить> для продолжения работы.",
+      "_zh": "按下<Ignore>以继续你的工作。",
+      "_de": "<Ignorieren> drücken um mit der Arbeit fortzufahren",
+      "_ja": "<Ignore>を押して作業を続行します.",
+      "_es": "Pulsar <Ignore> para continuar tu trabajo.",
+      "_pl": "Naciśnij <Ignore> aby kontynuować pracę.",
       "id": 69 }
     ,
     "lng_AssertRetryDescr": {
