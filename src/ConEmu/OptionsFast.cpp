@@ -2413,56 +2413,12 @@ static void CreateBashTask()
 		#endif
 		wchar_t BashOnUbuntu[] = L"%windir%\\system32\\bash.exe";
 		wchar_t WslLoader[] = L"%windir%\\system32\\wsl.exe";
-		CEStr lsBashOnUbuntu(ExpandEnvStr(BashOnUbuntu));
-		CEStr lsWslLoader(ExpandEnvStr(BashOnUbuntu));
-		if (FileExists(lsWslLoader) || FileExists(lsBashOnUbuntu))
+		const CEStr lsBashOnUbuntu(ExpandEnvStr(BashOnUbuntu));
+		const CEStr lsWslLoader(ExpandEnvStr(WslLoader));
+		const bool wslExists = FileExists(lsWslLoader);
+		const bool bashExists = FileExists(lsBashOnUbuntu);
+		if (wslExists || bashExists)
 		{
-			// Prefer to run WSL via connector+wsl_bridge
-			bool use_bridge = false;
-			CEStr lsConnector;
-			const wchar_t* bridgeFiles[] = {L"wsl\\wslbridge.exe", L"wsl\\wslbridge-backend"};
-			const wchar_t* apiFiles[] = {L"wsl\\msys-2.0.dll", L"wsl\\cygwin1.dll"};
-			const wchar_t* connFiles32[] = {L"conemu-msys2-32.exe", L"conemu-cyg-32.exe"};
-			const wchar_t* connFiles64[] = {L"conemu-msys2-64.exe", L"conemu-cyg-64.exe"};
-			CEStr szBaseDir(ExpandEnvStr(L"%ConEmuBaseDir%"));
-			// Check for wslbridge files
-			DWORD bridge_bits = 0, bridge_api = -1;
-			DWORD dwSubsystem = 0, dwBits = 0, FileAttrs = 0;
-			for (size_t i = 0; i < countof(bridgeFiles); ++i)
-			{
-				CEStr lsPath(szBaseDir, L"\\", bridgeFiles[i]);
-				if (!FileExists(lsPath))
-				{
-					break;
-				}
-				// for Windows binaries
-				else if (wcschr(lsPath, L'.') != nullptr)
-				{
-					if (GetImageSubsystem(lsPath, dwSubsystem, dwBits, FileAttrs) && (dwBits == 64 || dwBits == 32))
-						bridge_bits = dwBits;
-				}
-			}
-			// wslbridge.exe found?
-			if (bridge_bits == 32 || bridge_bits == 64)
-			{
-				// Check for appropriate API (cygwin1 or msys2)
-				for (size_t i = 0; i < countof(apiFiles); ++i)
-				{
-					CEStr lsPath(szBaseDir, L"\\", apiFiles[i]);
-					if (GetImageSubsystem(lsPath, dwSubsystem, dwBits, FileAttrs) && (dwBits == bridge_bits))
-					{
-						LPCWSTR pszConnectorName = (dwBits == 32) ? connFiles32[i] : connFiles64[i];
-						lsConnector.Attach(JoinPath(szBaseDir, pszConnectorName));
-						if (FileExists(lsConnector))
-						{
-							bridge_api = (DWORD)i;
-							use_bridge = true;
-							lsConnector.Attach(JoinPath(L"%ConEmuBaseDirShort%", pszConnectorName));
-						}
-						break;
-					}
-				}
-			}
 			// Find the icon
 			CEStr wslIcon;
 			const wchar_t* iconFiles[] = {
@@ -2473,27 +2429,24 @@ static void CreateBashTask()
 				L"%ProgramW6432%\\WindowsApps\\CanonicalGroupLimited.UbuntuonWindows_1604.2017.922.0_x64__79rhkp1fndgsc\\images\\icon.ico",
 				L"%ProgramFiles%\\WindowsApps\\CanonicalGroupLimited.UbuntuonWindows_1604.2017.922.0_x64__79rhkp1fndgsc\\images\\icon.ico"
 			};
-			for (size_t i = 0; i < countof(iconFiles); ++i)
+			for (auto& iconFile : iconFiles)
 			{
-				CEStr lsPath(ExpandEnvStr(iconFiles[i]));
+				CEStr lsPath(ExpandEnvStr(iconFile));
 				if (FileExists(lsPath))
 				{
-					wslIcon.Attach(lstrmerge(L"-icon \"", iconFiles[i], L"\""));
+					wslIcon.Attach(lstrmerge(L"-icon \"", iconFile, L"\""));
 					break;
 				}
 			}
 			// Create the task
 			bash_found |= App.Add(L"Bash::bash",
-				use_bridge ? L" --wsl -cur_console:pm:/mnt" : L" -cur_console:pm:/mnt", // "--login -i" is not required yet
-				use_bridge ? L"set \"PATH=%ConEmuBaseDirShort%\\wsl;%PATH%\" & " : nullptr,
-				wslIcon.c_str(),
-				use_bridge ? lsConnector.ms_Val : BashOnUbuntu,
-				nullptr);
+				L" -cur_console:pm:/mnt", // "--login -i" is not required yet
+				nullptr, wslIcon.c_str(), wslExists ? WslLoader : BashOnUbuntu, nullptr);
 		}
 	}
 
 	// From Git-for-Windows (aka msysGit v2)
-	bool bGitBashExist = // No sense to add both `git-cmd.exe` and `bin/bash.exe`
+	const bool bGitBashExist = // No sense to add both `git-cmd.exe` and `bin/bash.exe`
 		App.Add(L"Bash::Git bash",
 			L" --no-cd --command=/usr/bin/bash.exe -l -i", nullptr, L"git",
 			L"[SOFTWARE\\GitForWindows:InstallPath]\\git-cmd.exe",
@@ -2545,17 +2498,15 @@ static void CreateBashTask()
 		App.Add(L"Bash::bash", L" --login -i", L"set CHERE_INVOKING=1 & ", nullptr, L"bash.exe", nullptr);
 
 	// Force connector
-	CEStr szBaseDir(ExpandEnvStr(L"%ConEmuBaseDir%"));
+	const CEStr szBaseDir(ExpandEnvStr(L"%ConEmuBaseDir%"));
 	bool bNeedQuot = IsQuotationNeeded(szBaseDir);
-	for (INT_PTR i = 0; i < App.Installed.size(); ++i)
+	for (auto& ai : App.Installed)
 	{
-		AppFoundList::AppInfo& ai = App.Installed[i];
 		if (!ai.szGuiArg)
 			continue;
-		DWORD bits = ai.dwBits;
-		CEStr szConnector;
+		const DWORD bits = ai.dwBits;
 		LPCWSTR szConnectorName = nullptr;
-		bool msys_git_2 = false;
+		bool msysGit2 = false;
 		if (wcscmp(ai.szGuiArg, L"cygwin") == 0)
 			szConnectorName = bits==32 ? L"conemu-cyg-32.exe"
 				: bits==64 ? L"conemu-cyg-64.exe"
@@ -2569,7 +2520,7 @@ static void CreateBashTask()
 		else if (wcscmp(ai.szGuiArg, L"msys64") == 0)
 			szConnectorName = bits==64 ? L"conemu-msys2-64.exe"
 				: nullptr;
-		else if ((msys_git_2 = (wcscmp(ai.szGuiArg, L"git") == 0)))
+		else if ((msysGit2 = (wcscmp(ai.szGuiArg, L"git") == 0)))
 			szConnectorName = bits==64 ? L"conemu-msys2-64.exe"
 				: bits==32 ? L"conemu-msys2-32.exe"
 				: nullptr;
@@ -2580,7 +2531,7 @@ static void CreateBashTask()
 
 		if (szConnectorName)
 		{
-			CEStr szConnector(JoinPath(szBaseDir, szConnectorName));
+			const CEStr szConnector(JoinPath(szBaseDir, szConnectorName));
 			if (FileExists(szConnector))
 			{
 				// For git-cmd ai.szPrefix is empty by default
@@ -2591,7 +2542,7 @@ static void CreateBashTask()
 				wchar_t* ptrFound = wcsrchr(szBinPath.ms_Val, L'\\');
 				if (ptrFound) *ptrFound = 0;
 
-				if (!msys_git_2)
+				if (!msysGit2)
 				{
 					lstrmerge(&ai.szPrefix,
 						// TODO: Optimize: Don't add PATH if required cygwin1.dll/msys2.dll is already on path
@@ -2607,11 +2558,11 @@ static void CreateBashTask()
 				else
 				{
 					_ASSERTE(ai.szArgs && wcsstr(ai.szArgs, L"--command=/usr/bin/bash.exe"));
-					const wchar_t* cmd_ptr = L"--command=";
-					wchar_t* pszCmd = wcsstr(ai.szArgs, cmd_ptr);
+					const wchar_t* cmdPtr = L"--command=";
+					wchar_t* pszCmd = wcsstr(ai.szArgs, cmdPtr);
 					if (pszCmd)
 					{
-						pszCmd += wcslen(cmd_ptr);
+						pszCmd += wcslen(cmdPtr);
 						_ASSERTE(ai.szPrefix == nullptr || !*ai.szPrefix);
 						lstrmerge(&ai.szPrefix,
 							// TODO: Optimize: Don't add PATH if required cygwin1.dll/msys2.dll is already on path
