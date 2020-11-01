@@ -20,6 +20,32 @@ https://conemu.github.io/en/Whats_New.html
 -------------------------------------------
 
 
+2020.11.1
+* Fixes for compilation with mingw64 on Linux.
+* Add sample cmd script to `git push --set-upstream ...` using current local branch.
+* gh-2191: Alt+Space - show System Menu on key down.
+* Update icon for nuget/choco packages.
+* GuiMacro: WindowMode(TWidth) maximizes window width.
+* Let `Win+Left/Right`, `Win+Shift+Left/Right` process by OS if window title/frame aren't hidden.
+  This allows to use FancyZones from Windows PowerToys.
+* Let's position by default ConEmu window in a normal position, slightly away from {0,0} screen corner.
+  If window is started at {0,0} position, than Win+Left (on Windows 10) tiles window only on height-half.
+* Fix ConEmu restore after snapping window to zone on the other monitor.
+  If ConEmu was moved to different monitor during spanned (tiled) mode,
+  minimize/restore moved the window to the monitor where ConEmu was in
+  the normal mode previously.
+* gh-2135: Try to fix dpi assertion on computer wake.
+* Fix assertion dialog and memory dump creation.
+  Only two buttons left - Retry (creates a dump for report) and Cancel (skip the assertion).
+  Retry button does not kill ConEmu process anymore.
+* l10n: translations were updated
+* Fix excessive resize on restore to maximized state after moving between monitors.
+* ANSI and GuiMacro: Support paused progress state (yellow indicator on Windows TaskBar).
+  ANSI sequence `ESC ] 9 ; 4 ; 4 ; pr ST` or GuiMacro `Progress(4, pr)` where `pr` is a percentage 0 .. 100.
+  ref: microsoft/terminal#3004
+* Don't use connector/wslbridge for Wsl by default.
+
+
 2020.10.11
 * gh-2158: Replace control characters `\x01`..`\x1F` with unicode glyphs only for drawing.
 * gh-2183: Let reopened `CONOUT$` handle be inheritable. (Fix `shell returned 1` vim message.)
