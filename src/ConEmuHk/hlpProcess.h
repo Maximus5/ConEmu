@@ -223,7 +223,7 @@ extern DWORD gnTimeEnvVarLastCheck;
 extern wchar_t gszTimeEnvVarSave[32];
 /* ************ Hooking time functions ************ */
 
-void GuiSetProgress(WORD st, WORD pr, LPCWSTR pszName = NULL);
+void GuiSetProgress(AnsiProgressStatus st, WORD pr, LPCWSTR pszName = NULL);
 
 #if defined(__GNUC__)
 extern "C" {

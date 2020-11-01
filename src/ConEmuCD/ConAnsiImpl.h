@@ -104,7 +104,7 @@ protected:
 	void DoGuiMacro(LPCWSTR asCmd, ssize_t cchLen);
 	void DoPrintEnv(LPCWSTR asCmd, ssize_t cchLen);
 	void DoSendCWD(LPCWSTR asCmd, ssize_t cchLen);
-	void DoSetProgress(WORD st, WORD pr, LPCWSTR pszName = NULL);
+	void DoSetProgress(AnsiProgressStatus st, WORD pr, LPCWSTR pszName = NULL);
 	bool IsAnsiExecAllowed(LPCWSTR asCmd);
 
 	int NextEscCode(LPCWSTR lpBuffer, LPCWSTR lpEnd, wchar_t (&szPreDump)[SrvAnsi::CEAnsi_MaxPrevPart], DWORD& cchPrevPart, LPCWSTR& lpStart, LPCWSTR& lpNext, AnsiEscCode& Code, bool ReEntrance = FALSE);

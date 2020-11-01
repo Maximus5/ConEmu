@@ -168,7 +168,7 @@ public:
 	static int  GetVConIndex(CVirtualConsole* apVCon);
 	static bool GetVCon(int nIdx, CVConGuard* pVCon = nullptr, bool bFromCycle = false);
 	static bool GetVConFromPoint(POINT ptScreen, CVConGuard* pVCon = nullptr);
-	static bool GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, BOOL* pbWasError, BOOL* pbWasIndeterminate);
+	static bool GetProgressInfo(short& pnProgress, bool& pbActiveHasProgress, AnsiProgressStatus& state);
 
 	static void StopSignalAll();
 	static void DestroyAllVCon();

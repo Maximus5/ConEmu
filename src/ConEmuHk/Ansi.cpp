@@ -327,7 +327,7 @@ void CEAnsi::WriteAnsiLogTime()
 		// We should NOT use WriteAnsiLogFormat here!
 		msprintf(time_str, std::size(time_str), "\x1B]9;11;\"%02u:%02u:%02u.%03u\"\x7",
 			st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
-		WriteAnsiLogUtf8(time_str, strlen(time_str));
+		WriteAnsiLogUtf8(time_str, static_cast<DWORD>(strlen(time_str)));
 	}
 }
 
@@ -3825,31 +3825,39 @@ void CEAnsi::WriteAnsiCode_OSC(OnWriteConsoleW_t _WriteConsoleW, HANDLE hConsole
 			}
 			else if (Code.ArgSZ[2] == L'4')
 			{
-				WORD st = 0, pr = 0;
-				LPCWSTR pszName = NULL;
+				AnsiProgressStatus st = AnsiProgressStatus::None;
+				WORD pr = 0;
+				const wchar_t* pszName = nullptr;
 				if (Code.ArgSZ[3] == L';')
 				{
 					switch (Code.ArgSZ[4])
 					{
 					case L'0':
 						break;
-					case L'1': // Normal
-					case L'2': // Error
-						st = Code.ArgSZ[4] - L'0';
+					case L'1':
+						st = AnsiProgressStatus::Running; break;
+					case L'2':
+						st = AnsiProgressStatus::Error; break;
+					case L'3':
+						st = AnsiProgressStatus::Indeterminate; break;
+					case L'4':
+						st = AnsiProgressStatus::Paused; break;
+					case L'5': // reserved for future use
+						st = AnsiProgressStatus::LongRunStart; break;
+					case L'6': // reserved for future use
+						st = AnsiProgressStatus::LongRunStop; break;
+					}
+					if (st == AnsiProgressStatus::Running || st == AnsiProgressStatus::Error || st == AnsiProgressStatus::Paused)
+					{
 						if (Code.ArgSZ[5] == L';')
 						{
 							LPCWSTR pszValue = Code.ArgSZ + 6;
 							pr = NextNumber(pszValue);
 						}
-						break;
-					case L'3':
-						st = 3; // Indeterminate
-						break;
-					case L'4':
-					case L'5':
-						st = Code.ArgSZ[4] - L'0';
-						pszName = (Code.ArgSZ[5] == L';') ? (Code.ArgSZ + 6) : NULL;
-						break;
+					}
+					if (st == AnsiProgressStatus::LongRunStart || st == AnsiProgressStatus::LongRunStop)
+					{
+						pszName = (Code.ArgSZ[5] == L';') ? (Code.ArgSZ + 6) : nullptr;
 					}
 				}
 				GuiSetProgress(st,pr,pszName);

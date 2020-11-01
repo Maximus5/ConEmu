@@ -951,14 +951,14 @@ void SrvAnsiImpl::DoSendCWD(LPCWSTR asCmd, ssize_t cchLen)
 // When _st_ is 0: remove progress.
 // When _st_ is 1: set progress value to _pr_ (number, 0-100).
 // When _st_ is 2: set error state in progress on Windows 7 taskbar
-void SrvAnsiImpl::DoSetProgress(WORD st, WORD pr, LPCWSTR pszName /*= NULL*/)
+void SrvAnsiImpl::DoSetProgress(const AnsiProgressStatus st, const WORD pr, LPCWSTR pszName /*= NULL*/)
 {
 	int nLen = pszName ? (lstrlen(pszName) + 1) : 1;
-	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETPROGRESS, sizeof(CESERVER_REQ_HDR)+sizeof(WORD)*(2+nLen));
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETPROGRESS, sizeof(CESERVER_REQ_HDR) + sizeof(WORD) * (2 + nLen));
 	if (pIn)
 	{
-		pIn->wData[0] = st;
-		pIn->wData[1] = pr;
+		pIn->wData[0] = static_cast<WORD>(st);
+		pIn->wData[1] = pr;  // NOLINT(clang-diagnostic-array-bounds)
 		if (pszName)
 		{
 			lstrcpy((wchar_t*)(pIn->wData+2), pszName);
@@ -2252,31 +2252,39 @@ void SrvAnsiImpl::WriteAnsiCode_OSC(AnsiEscCode& Code)
 			}
 			else if (Code.ArgSZ[2] == L'4')
 			{
-				WORD st = 0, pr = 0;
-				LPCWSTR pszName = NULL;
+				AnsiProgressStatus st = AnsiProgressStatus::None;
+				WORD pr = 0;
+				const wchar_t* pszName = nullptr;
 				if (Code.ArgSZ[3] == L';')
 				{
 					switch (Code.ArgSZ[4])
 					{
 					case L'0':
 						break;
-					case L'1': // Normal
-					case L'2': // Error
-						st = Code.ArgSZ[4] - L'0';
+					case L'1':
+						st = AnsiProgressStatus::Running; break;
+					case L'2':
+						st = AnsiProgressStatus::Error; break;
+					case L'3':
+						st = AnsiProgressStatus::Indeterminate; break;
+					case L'4':
+						st = AnsiProgressStatus::Paused; break;
+					case L'5': // reserved for future use
+						st = AnsiProgressStatus::LongRunStart; break;
+					case L'6': // reserved for future use
+						st = AnsiProgressStatus::LongRunStop; break;
+					}
+					if (st == AnsiProgressStatus::Running || st == AnsiProgressStatus::Error || st == AnsiProgressStatus::Paused)
+					{
 						if (Code.ArgSZ[5] == L';')
 						{
 							LPCWSTR pszValue = Code.ArgSZ + 6;
 							pr = NextNumber(pszValue);
 						}
-						break;
-					case L'3':
-						st = 3; // Indeterminate
-						break;
-					case L'4':
-					case L'5':
-						st = Code.ArgSZ[4] - L'0';
-						pszName = (Code.ArgSZ[5] == L';') ? (Code.ArgSZ + 6) : NULL;
-						break;
+					}
+					if (st == AnsiProgressStatus::LongRunStart || st == AnsiProgressStatus::LongRunStop)
+					{
+						pszName = (Code.ArgSZ[5] == L';') ? (Code.ArgSZ + 6) : nullptr;
 					}
 				}
 				DoSetProgress(st, pr, pszName);

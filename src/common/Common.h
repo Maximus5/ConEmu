@@ -450,6 +450,26 @@ enum TermMouseMode
 	tmm_SCROLL  = 0x2000, /* Send Up/Down/PgUp/PgDn instead of wheel events */
 };
 
+// Used with CECMD_SETPROGRESS and "ESC ] 9 ; 4 ; st ; pr ST" (st value)
+enum class AnsiProgressStatus : uint16_t
+{
+	// No progress indicator
+	None = 0,
+	// Process is running normally, progress = 0..100, green indicator
+	Running = 1,
+	// An error occurred, progress = 0..100, red indicator
+	Error = 2,
+	// Process is running, progress is uknown, green indeterminate indicator
+	Indeterminate = 3,
+	// Process is paused, progress = 0..100, yellow indicator
+	Paused = 4,
+
+	// Reserved for future use
+	LongRunStart,
+	// Reserved for future use
+	LongRunStop,
+};
+
 //#define CONEMUMAPPING    L"ConEmuPluginData%u"
 //#define CONEMUDRAGFROM   L"ConEmuDragFrom%u"
 //#define CONEMUDRAGTO     L"ConEmuDragTo%u"

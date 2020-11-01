@@ -4828,12 +4828,11 @@ void CConEmuMain::UpdateProgress()
 	wchar_t MultiTitle[MAX_TITLE_SIZE+30];
 	MultiTitle[0] = 0;
 	short nProgress = -1;
-	BOOL bActiveHasProgress = FALSE;
-	BOOL bNeedAddToTitle = FALSE;
-	BOOL bWasError = FALSE;
-	BOOL bWasIndeterminate = FALSE;
+	bool bActiveHasProgress = FALSE;
+	bool bNeedAddToTitle = FALSE;
+	AnsiProgressStatus progressState = AnsiProgressStatus::None;
 
-	CVConGroup::GetProgressInfo(&nProgress, &bActiveHasProgress, &bWasError, &bWasIndeterminate);
+	CVConGroup::GetProgressInfo(nProgress, bActiveHasProgress, progressState);
 
 	mn_Progress = std::min<short>(nProgress, 100);
 
@@ -4844,40 +4843,49 @@ void CConEmuMain::UpdateProgress()
 	}
 
 	static short nLastProgress = -1;
-	static BOOL  bLastProgressError = FALSE;
-	static BOOL  bLastProgressIndeterminate = FALSE;
+	static bool bLastProgressError = FALSE;
+	static bool bLastProgressIndeterminate = FALSE;
+	static bool bLastProgressPaused = FALSE;
 
-	if (nLastProgress != mn_Progress  || bLastProgressError != bWasError || bLastProgressIndeterminate != bWasIndeterminate)
+	const bool stateChanged = bLastProgressError != (progressState == AnsiProgressStatus::Error)
+		|| bLastProgressIndeterminate != (progressState == AnsiProgressStatus::Indeterminate)
+		|| bLastProgressPaused != (progressState == AnsiProgressStatus::Paused);
+
+	const UINT newApiState = (progressState == AnsiProgressStatus::Running) ? TBPF_NORMAL
+		: (progressState == AnsiProgressStatus::Error) ? TBPF_ERROR
+		: (progressState == AnsiProgressStatus::Paused) ? TBPF_PAUSED
+		: (progressState == AnsiProgressStatus::Indeterminate) ? TBPF_INDETERMINATE
+		: TBPF_NOPROGRESS;
+
+	if (nLastProgress != mn_Progress || stateChanged)
 	{
 		HRESULT hr = S_OK;
 
-		//if (mp_TaskBar3)
-		//{
 		if ((mn_Progress >= 0) && gpSet->isTaskbarProgress)
 		{
 			hr = Taskbar_SetProgressValue(mn_Progress);
 
-			if (nLastProgress == -1 || bLastProgressError != bWasError || bLastProgressIndeterminate != bWasIndeterminate)
-				hr = Taskbar_SetProgressState(bWasError ? TBPF_ERROR : bWasIndeterminate ? TBPF_INDETERMINATE : TBPF_NORMAL);
+			if (nLastProgress == -1 || stateChanged)
+				hr = Taskbar_SetProgressState(newApiState);
 		}
 		else
 		{
 			hr = Taskbar_SetProgressState(TBPF_NOPROGRESS);
 		}
-		//}
 
-		// Запомнить последнее
+		// Update last state
 		nLastProgress = mn_Progress;
-		bLastProgressError = bWasError;
-		bLastProgressIndeterminate = bWasIndeterminate;
+		bLastProgressError = (progressState == AnsiProgressStatus::Error);
+		bLastProgressIndeterminate = (progressState == AnsiProgressStatus::Indeterminate);
+		bLastProgressPaused = (progressState == AnsiProgressStatus::Paused);
 		UNREFERENCED_PARAMETER(hr);
 	}
 
 	if ((mn_Progress >= 0) && bNeedAddToTitle)
 	{
 		psTitle = MultiTitle;
-		INT_PTR nCurTtlLen = _tcslen(MultiTitle);
-		if ((mn_Progress == 0) && bWasIndeterminate)
+		const INT_PTR nCurTtlLen = _tcslen(MultiTitle);
+		if ((mn_Progress == 0) && (progressState == AnsiProgressStatus::Indeterminate))
 			_wcscpy_c(MultiTitle+nCurTtlLen, countof(MultiTitle)-nCurTtlLen, L"{*%%} ");
 		else
 			swprintf_c(MultiTitle+nCurTtlLen, countof(MultiTitle)-nCurTtlLen/*#SECURELEN*/, L"{*%i%%} ", mn_Progress);

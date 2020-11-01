@@ -369,7 +369,7 @@ void CheckPowershellProgressPresence()
 
 	// При возврате в Prompt - сброс прогресса
 	gnPowerShellProgressValue = -1;
-	GuiSetProgress(0,0);
+	GuiSetProgress(AnsiProgressStatus::None, 0);
 }
 
 // PowerShell AI для определения прогресса в консоли
@@ -414,7 +414,7 @@ void CheckPowerShellProgress(HANDLE hConsoleOutput,const CHAR_INFO *lpBuffer,COO
 	if (nProgress != gnPowerShellProgressValue)
 	{
 		gnPowerShellProgressValue = nProgress;
-		GuiSetProgress((nProgress != -1) ? 1 : 0, nProgress);
+		GuiSetProgress((nProgress != -1) ? AnsiProgressStatus::Running : AnsiProgressStatus::None, nProgress);
 	}
 }
 

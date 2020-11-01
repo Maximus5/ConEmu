@@ -141,12 +141,12 @@ void GlobalHotkeys::RegisterHooks()
 		{
 			static LRESULT CallRegisterHooks(LPARAM lParam)
 			{
-				_ASSERTE(gpConEmu == reinterpret_cast<CConEmuMain*>(lParam));
+				_ASSERTE((&gpConEmu->GetGlobalHotkeys()) == reinterpret_cast<GlobalHotkeys*>(lParam));
 				gpConEmu->GetGlobalHotkeys().RegisterHooks();
 				return 0;
 			}
 		};
-		gpConEmu->CallMainThread(false, Impl::CallRegisterHooks, reinterpret_cast<LPARAM>(this));
+		gpConEmu->CallMainThread(false, Impl::CallRegisterHooks, reinterpret_cast<LPARAM>( this));
 		return;
 	}
 

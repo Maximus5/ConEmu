@@ -1516,7 +1516,7 @@ void DoDllStop(bool bFinal, ConEmuHkDllState bFromTerminate)
 	{
 		DLOG1("GuiSetProgress(0,0)",0);
 		gnPowerShellProgressValue = -1;
-		GuiSetProgress(0,0);
+		GuiSetProgress(AnsiProgressStatus::None, 0);
 		DLOGEND1();
 	}
 
@@ -3011,14 +3011,14 @@ wrap:
 // When _st_ is 0: remove progress.
 // When _st_ is 1: set progress value to _pr_ (number, 0-100).
 // When _st_ is 2: set error state in progress on Windows 7 taskbar
-void GuiSetProgress(WORD st, WORD pr, LPCWSTR pszName /*= NULL*/)
+void GuiSetProgress(const AnsiProgressStatus st, const WORD pr, LPCWSTR pszName /*= NULL*/)
 {
-	int nLen = pszName ? (lstrlen(pszName) + 1) : 1;
-	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETPROGRESS, sizeof(CESERVER_REQ_HDR)+sizeof(WORD)*(2+nLen));
+	const int nLen = pszName ? (lstrlen(pszName) + 1) : 1;
+	CESERVER_REQ* pIn = ExecuteNewCmd(CECMD_SETPROGRESS, sizeof(CESERVER_REQ_HDR) + sizeof(WORD) * (2 + nLen));
 	if (pIn)
 	{
-		pIn->wData[0] = st;
-		pIn->wData[1] = pr;
+		pIn->wData[0] = static_cast<uint16_t>(st);
+		pIn->wData[1] = pr;  // NOLINT(clang-diagnostic-array-bounds)
 		if (pszName)
 		{
 			lstrcpy(reinterpret_cast<wchar_t*>(pIn->wData + 2), pszName);

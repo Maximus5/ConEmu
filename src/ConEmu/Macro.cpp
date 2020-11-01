@@ -1941,24 +1941,33 @@ LPWSTR ConEmuMacro::Palette(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin
 // Progress(<Type>[,<Value>])
 LPWSTR ConEmuMacro::Progress(GuiMacro* p, CRealConsole* apRCon, bool abFromPlugin)
 {
-	int nType = 0, nValue = 0;
+	int nState = 0, nValue = 0;
 	LPWSTR pszName = nullptr;
 	if (!apRCon)
 		return lstrdup(L"InvalidArg");
 
-	if (p->GetIntArg(0, nType))
+	if (p->GetIntArg(0, nState))
 	{
-		if (!(nType >= 0 && nType <= 5))
+		const auto state = static_cast<AnsiProgressStatus>(nState);
+		if (!(state >= AnsiProgressStatus::None && state <= AnsiProgressStatus::LongRunStop))
 		{
 			return lstrdup(L"InvalidArg");
 		}
 
-		if (nType <= 2)
+		if (state == AnsiProgressStatus::Running || state == AnsiProgressStatus::Error || state == AnsiProgressStatus::Paused)
+		{
 			p->GetIntArg(1, nValue);
-		else if (nType == 4 || nType == 5)
+			if (nValue < 0 || nValue > 100)
+				return lstrdup(L"InvalidArg");
+		}
+		else if (state == AnsiProgressStatus::LongRunStart || state == AnsiProgressStatus::LongRunStop)
+		{
 			p->GetStrArg(1, pszName);
+			if (!pszName || !*pszName)
+				return lstrdup(L"InvalidArg");
+		}
 
-		apRCon->SetProgress(nType, nValue, pszName);
+		apRCon->SetProgress(state, static_cast<short>(nValue), pszName);
 
 		return lstrdup(L"OK");
 	}

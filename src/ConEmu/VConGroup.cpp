@@ -1803,15 +1803,17 @@ int CVConGroup::GetVConIndex(CVirtualConsole* apVCon)
 	return -1;
 }
 
-bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, BOOL* pbWasError, BOOL* pbWasIndeterminate)
+bool CVConGroup::GetProgressInfo(short& pnProgress, bool& pbActiveHasProgress, AnsiProgressStatus& state)
 {
 	short nProgress = -1;
-	short nUpdateProgress = gpUpd ? gpUpd->GetUpdateProgress() : -1;
-	short n;
-	BOOL bActiveHasProgress = FALSE;
-	BOOL bWasError = FALSE;
-	BOOL bWasIndeterminate = FALSE;
-	int  nState = 0;
+	const short nUpdateProgress = gpUpd ? gpUpd->GetUpdateProgress() : -1;
+	// ReSharper disable once CppJoinDeclarationAndAssignment
+	short n = -1;
+	bool bActiveHasProgress = FALSE;
+	bool wasError = FALSE;
+	bool wasIndeterminate = FALSE;
+	bool wasPaused = false;
+	AnsiProgressStatus nState{};
 
 	CVConGuard VCon;
 
@@ -1824,8 +1826,17 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 		}
 		else if ((nProgress = VCon->RCon()->GetProgress(&nState, &lbNotFromTitle)) >= 0)
 		{
-			bWasError = (nState & 1) == 1;
-			bWasIndeterminate = (nState & 2) == 2;
+			switch (nState)
+			{
+			case AnsiProgressStatus::Error:
+				wasError = true; break;
+			case AnsiProgressStatus::Indeterminate:
+				wasIndeterminate = true; break;
+			case AnsiProgressStatus::Paused:
+				wasPaused = true; break;
+			default:
+				break;
+			}
 			bActiveHasProgress = TRUE;
 			_ASSERTE(lbNotFromTitle==FALSE); // CRealConsole должен проценты добавлять в GetTitle сам
 		}
@@ -1834,36 +1845,47 @@ bool CVConGroup::GetProgressInfo(short* pnProgress, BOOL* pbActiveHasProgress, B
 	if (!bActiveHasProgress && nUpdateProgress >= 0)
 	{
 		if (nUpdateProgress <= UPD_PROGRESS_DOWNLOAD_START)
-			bWasIndeterminate = TRUE;
+			wasIndeterminate = TRUE;
 		nProgress = std::max(nProgress, nUpdateProgress);
 	}
 
 	// нас интересует возможное наличие ошибки во всех остальных консолях
-	for (size_t i = 0; i < countof(gp_VCon); i++)
+	for (auto& iterCon : gp_VCon)
 	{
-		if (VCon.Attach(gp_VCon[i]))
+		if (VCon.Attach(iterCon))
 		{
-			int nCurState = 0;
+			AnsiProgressStatus nCurState{};
 			n = VCon->RCon()->GetProgress(&nCurState);
 
-			if ((nCurState & 1) == 1)
-				bWasError = TRUE;
-			if ((nCurState & 2) == 2)
-				bWasIndeterminate = TRUE;
+			switch (nCurState)
+			{
+			case AnsiProgressStatus::Error:
+				wasError = true; break;
+			case AnsiProgressStatus::Indeterminate:
+				wasIndeterminate = true; break;
+			case AnsiProgressStatus::Paused:
+				wasPaused = true; break;
+			default:
+				break;
+			}
 
 			if (!bActiveHasProgress && n > nProgress)
 				nProgress = n;
 		}
 	}
 
-	if (pnProgress)
-		*pnProgress = nProgress;
-	if (pbActiveHasProgress)
-		*pbActiveHasProgress = bActiveHasProgress;
-	if (pbWasError)
-		*pbWasError = bWasError;
-	if (pbWasIndeterminate)
-		*pbWasIndeterminate = bWasIndeterminate;
+	pnProgress = nProgress;
+	pbActiveHasProgress = bActiveHasProgress;
+	if (wasError)
+		state = AnsiProgressStatus::Error;
+	else if (wasPaused)
+		state = AnsiProgressStatus::Paused;
+	else if (wasIndeterminate)
+		state = AnsiProgressStatus::Indeterminate;
+	else if (nProgress >= 0)
+		state = AnsiProgressStatus::Running;
+	else
+		state = AnsiProgressStatus::None;
 
 	return (nProgress >= 0);
 }

@@ -568,8 +568,15 @@ class CRealConsole
 		LPCWSTR GetStartupDir();
 		wchar_t* CreateCommandLine(bool abForTasks = false);
 		bool GetUserPwd(const wchar_t** ppszUser, const wchar_t** ppszDomain, bool* pbRestricted);
-		short GetProgress(int* rpnState/*1-error,2-ind*/, bool* rpbNotFromTitle = nullptr);
-		bool SetProgress(short nState, short nValue, LPCWSTR pszName = nullptr);
+		short GetProgress(AnsiProgressStatus* rpnState/*1-error,2-ind*/, bool* rpbNotFromTitle = nullptr);
+		/// <summary>
+		/// Set progress state for the console
+		/// </summary>
+		/// <param name="state">AnsiProgressStatus</param>
+		/// <param name="value">0..100 for nState = (Running, Puased, Error)</param>
+		/// <param name="pszName">Reserved for future use - exe name of the running process</param>
+		/// <returns>true on success</returns>
+		bool SetProgress(AnsiProgressStatus state, short value, LPCWSTR pszName = nullptr);
 		void UpdateGuiInfoMapping(const ConEmuGuiMapping* apGuiInfo);
 		void UpdateFarSettings(DWORD anFarPID = 0, FAR_REQ_FARSETCHANGED* rpSetEnvVar = nullptr);
 		void UpdateTextColorSettings(bool ChangeTextAttr = true, bool ChangePopupAttr = true, const AppSettings* apDistinct = nullptr);
@@ -677,7 +684,10 @@ class CRealConsole
 			short Progress, LastShownProgress;
 			short PreWarningProgress; DWORD LastWarnCheckTick;
 			short ConsoleProgress, LastConsoleProgress; DWORD LastConProgrTick;
-			short AppProgressState, AppProgress; // Может быть задан из консоли (Ansi codes, Macro)
+			// Could be set from the console (Ansi codes, Macro)
+			AnsiProgressStatus AppProgressState;
+			// Could be set from the console (Ansi codes, Macro)
+			short AppProgress;
 		} m_Progress;
 		// a-la properties
 		void setProgress(short value);
@@ -685,7 +695,7 @@ class CRealConsole
 		void setPreWarningProgress(short value);
 		void setConsoleProgress(short value);
 		void setLastConsoleProgress(short value, bool UpdateTick);
-		void setAppProgress(short AppProgressState, short AppProgress);
+		void setAppProgress(AnsiProgressStatus AppProgressState, short AppProgress);
 		void logProgress(LPCWSTR asFormat, int V1, int V2 = 0);
 		// method
 		short CheckProgressInTitle();

@@ -1364,11 +1364,14 @@ CESERVER_REQ* CRealServer::cmdSetProgress(LPVOID pInst, CESERVER_REQ* pIn, UINT 
 	DEBUGSTRCMD(L"GUI recieved CECMD_SETPROGRESS\n");
 
 	bool lbOk = false;
-	if (nDataSize >= 2*sizeof(pIn->wData[0]))
+	if (nDataSize >= (2 * sizeof(pIn->wData[0])))
 	{
-		LPCWSTR pszName = (nDataSize >= 4*sizeof(pIn->wData[0])) ? (LPCWSTR)(pIn->wData+2) : nullptr;
+		const wchar_t* pszName = (nDataSize >= (4 * sizeof(pIn->wData[0])))
+			? reinterpret_cast<const wchar_t*>(pIn->wData + 2)
+			: nullptr;
 
-		mp_RCon->SetProgress(pIn->wData[0], pIn->wData[1], pszName);
+		const auto state = static_cast<AnsiProgressStatus>(pIn->wData[0]);
+		lbOk = mp_RCon->SetProgress(state, pIn->wData[1], pszName);  // NOLINT(clang-diagnostic-array-bounds)
 	}
 
 	pOut = ExecuteNewCmd(pIn->hdr.nCmd, sizeof(CESERVER_REQ_HDR)+sizeof(DWORD));

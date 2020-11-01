@@ -13399,19 +13399,18 @@ void CRealConsole::OnTitleChanged()
 		}
 	}
 
-	// Обработка прогресса операций
-	//short nLastProgress = m_Progress.Progress;
-	short nNewProgress;
 	TitleFull[0] = 0;
-	nNewProgress = CheckProgressInTitle();
+	short nNewProgress = CheckProgressInTitle();
 
 	if (nNewProgress == -1)
 	{
 		// mn_ConsoleProgress обновляется в FindPanels, должен быть уже вызван
 		// mn_AppProgress обновляется через Esc-коды, GuiMacro или через команду пайпа
-		short nConProgr =
-			((m_Progress.AppProgressState == 1) || (m_Progress.AppProgressState == 2)) ? m_Progress.AppProgress
-			: (m_Progress.AppProgressState == 3) ? 0 // Indeterminate
+		const short nConProgr =
+			((m_Progress.AppProgressState == AnsiProgressStatus::Running)
+				|| (m_Progress.AppProgressState == AnsiProgressStatus::Error)
+				|| (m_Progress.AppProgressState == AnsiProgressStatus::Paused)) ? m_Progress.AppProgress
+			: (m_Progress.AppProgressState == AnsiProgressStatus::Indeterminate) ? 0
 			: m_Progress.ConsoleProgress;
 
 		if ((nConProgr >= 0) && (nConProgr <= 100))
@@ -13424,7 +13423,7 @@ void CRealConsole::OnTitleChanged()
 
 			// Подготовим строку с процентами
 			wchar_t szPercents[5];
-			if ((nConProgr == 0) && (m_Progress.AppProgressState == 3))
+			if ((nConProgr == 0) && (m_Progress.AppProgressState == AnsiProgressStatus::Indeterminate))
 				wcscpy_c(szPercents, L"%%");
 			else
 				swprintf_c(szPercents, L"%i%%", nConProgr);
@@ -13819,9 +13818,9 @@ void CRealConsole::setLastConsoleProgress(short value, bool UpdateTick)
 	}
 }
 
-void CRealConsole::setAppProgress(short AppProgressState, short AppProgress)
+void CRealConsole::setAppProgress(const AnsiProgressStatus AppProgressState, const short AppProgress)
 {
-	logProgress(L"RCon::setAppProgress(%i,%i)", AppProgressState, AppProgress);
+	logProgress(L"RCon::setAppProgress(%i,%i)", int(AppProgressState), int(AppProgress));
 
 	if (m_Progress.AppProgressState != AppProgressState)
 		m_Progress.AppProgressState = AppProgressState;
@@ -13829,16 +13828,15 @@ void CRealConsole::setAppProgress(short AppProgressState, short AppProgress)
 		m_Progress.AppProgress = AppProgress;
 }
 
-short CRealConsole::GetProgress(int* rpnState/*1-error,2-ind*/, bool* rpbNotFromTitle)
+short CRealConsole::GetProgress(AnsiProgressStatus* rpnState/*1-error,2-ind*/, bool* rpbNotFromTitle)
 {
-	if (!this)
-		return -1;
+	AssertThisRet(-1);
 
-	if (m_Progress.AppProgressState > 0)
+	if (m_Progress.AppProgressState > AnsiProgressStatus::None)
 	{
 		if (rpnState)
 		{
-			*rpnState = (m_Progress.AppProgressState == 2) ? 1 : (m_Progress.AppProgressState == 3) ? 2 : 0;
+			*rpnState = m_Progress.AppProgressState;
 		}
 		if (rpbNotFromTitle)
 		{
@@ -13860,7 +13858,11 @@ short CRealConsole::GetProgress(int* rpnState/*1-error,2-ind*/, bool* rpbNotFrom
 	}
 
 	if (m_Progress.Progress >= 0)
+	{
+		if (rpnState)
+			*rpnState = AnsiProgressStatus::Running;
 		return m_Progress.Progress;
+	}
 
 	if (m_Progress.PreWarningProgress >= 0)
 	{
@@ -13868,7 +13870,8 @@ short CRealConsole::GetProgress(int* rpnState/*1-error,2-ind*/, bool* rpbNotFrom
 		// по после завершения процесса - он может еще быть не сброшен
 		if (rpnState)
 		{
-			*rpnState = ((mn_FarStatus & CES_OPER_ERROR) == CES_OPER_ERROR) ? 1 : 0;
+			*rpnState = ((mn_FarStatus & CES_OPER_ERROR) == CES_OPER_ERROR)
+				? AnsiProgressStatus::Error : AnsiProgressStatus::Running;
 		}
 
 		//if (mn_LastProgressTick != 0 && rpbError) {
@@ -13880,10 +13883,12 @@ short CRealConsole::GetProgress(int* rpnState/*1-error,2-ind*/, bool* rpbNotFrom
 		return m_Progress.PreWarningProgress;
 	}
 
+	if (rpnState)
+		*rpnState = AnsiProgressStatus::None;
 	return -1;
 }
 
-bool CRealConsole::SetProgress(short nState, short nValue, LPCWSTR pszName /*= nullptr*/)
+bool CRealConsole::SetProgress(const AnsiProgressStatus state, const short value, LPCWSTR pszName /*= nullptr*/)
 {
 	AssertThisRet(false);
 
@@ -13893,35 +13898,35 @@ bool CRealConsole::SetProgress(short nState, short nValue, LPCWSTR pszName /*= n
 	//  -- Remove progress
 	//SetProgress 1 <Value>
 	//  -- Set progress value to <Value> (0-100)
-	//SetProgress 2
+	//SetProgress 2 <Value>
 	//  -- Set error state in progress
 	//SetProgress 3
 	//  -- Set indeterminate state in progress
-	//SetProgress 4 <Name>
+	//SetProgress 4 <Value>
 	//  -- Start progress for some long process
 	//SetProgress 5 <Name>
 	//  -- Stop progress started with "4"
 
-	switch (nState)
+	switch (state)
 	{
-	case 0:
-		setAppProgress(0, 0);
+	case AnsiProgressStatus::None:
+		setAppProgress(state, 0);
 		lbOk = true;
 		break;
-	case 1:
-		setAppProgress(1, std::min<short>(std::max<short>(nValue,0),100));
+	case AnsiProgressStatus::Running:
+		setAppProgress(state, std::min<short>(std::max<short>(value,0),100));
 		lbOk = true;
 		break;
-	case 2:
-		setAppProgress(2, (nValue > 0) ? std::min<short>(std::max<short>(nValue,0),100) : m_Progress.AppProgress);
+	case AnsiProgressStatus::Error:
+	case AnsiProgressStatus::Paused:
+		setAppProgress(state, (value > 0) ? std::min<short>(std::max<short>(value,0),100) : m_Progress.AppProgress);
 		lbOk = true;
 		break;
-	case 3:
-		setAppProgress(3, m_Progress.AppProgress);
+	case AnsiProgressStatus::Indeterminate:
+		setAppProgress(state, m_Progress.AppProgress);
 		lbOk = true;
 		break;
-	case 4:
-	case 5:
+	default:
 		_ASSERTE(FALSE && "TODO: Estimation of process duration");
 		break;
 	}
